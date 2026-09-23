@@ -253,8 +253,9 @@ rt_edit_arb_prim_edit_create(struct rt_edit *UNUSED(s))
 }
 
 C_DECL void
-rt_edit_arb_prim_edit_destroy(struct rt_arb8_edit *a)
+rt_edit_arb_prim_edit_destroy(void *ptr)
 {
+    struct rt_arb8_edit *a = (struct rt_arb8_edit *)ptr;
     if (!a)
 	return;
     BU_PUT(a, struct rt_arb8_edit);

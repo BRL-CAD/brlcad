@@ -97,8 +97,9 @@ rt_edit_bot_prim_edit_create(struct rt_edit *UNUSED(s))
 }
 
 C_DECL void
-rt_edit_bot_prim_edit_destroy(struct rt_bot_edit *b)
+rt_edit_bot_prim_edit_destroy(void *ptr)
 {
+    struct rt_bot_edit *b = (struct rt_bot_edit *)ptr;
     if (!b)
 	return;
 
@@ -352,29 +353,65 @@ ecmd_bot_orient(struct rt_edit *s)
 int
 ecmd_bot_thick(struct rt_edit *s)
 {
+    struct rt_bot_internal *bot = (struct rt_bot_internal *)s->es_int.idb_ptr;
+    struct rt_bot_edit *b = (struct rt_bot_edit *)s->ipe_ptr;
+    bu_clbk_t callback = NULL;
+    void *callback_data = NULL;
+    size_t face_no;
+
+    RT_BOT_CK_MAGIC(bot);
+    face_no = bot->num_faces;
 
     if (s->e_inpara != 1) {
-	bu_vls_printf(s->log_str, "ERROR: only one argument needed\n");
+	bu_vls_printf(s->log_str, "ERROR: one thickness value is required\n");
 	s->e_inpara = 0;
 	return BRLCAD_ERROR;
     }
 
-    if (s->e_para[0] <= 0.0) {
-	bu_vls_printf(s->log_str, "ERROR: SCALE FACTOR <= 0\n");
+    fastf_t thickness = s->e_para[0] * s->local2base;
+    if (!isfinite(thickness) || thickness <= 0.0) {
+	bu_vls_printf(s->log_str, "ERROR: face thickness must be positive\n");
 	s->e_inpara = 0;
 	return BRLCAD_ERROR;
     }
 
-    /* must convert to base units */
-    s->e_para[0] *= s->local2base;
+    rt_edit_map_clbk_get(&callback, &callback_data, s->m,
+	    ECMD_BOT_THICK, BU_CLBK_DURING);
+    if (callback && callback(0, NULL, callback_data, s) != BRLCAD_OK) {
+	s->e_inpara = 0;
+	return BRLCAD_ERROR;
+    }
 
-    // Set bot->thickness array using the callback
-    bu_clbk_t f = NULL;
-    void *d = NULL;
-    rt_edit_map_clbk_get(&f, &d, s->m, ECMD_BOT_THICK, BU_CLBK_DURING);
-    if (f)
-	(*f)(0, NULL, d, s);
+    if ((bot->mode != RT_BOT_PLATE && bot->mode != RT_BOT_PLATE_NOCOS) ||
+	!bot->thickness) {
+	bu_vls_printf(s->log_str, "ERROR: face thickness requires a plate BOT\n");
+	s->e_inpara = 0;
+	return BRLCAD_ERROR;
+    }
 
+    if (b->bot_verts[0] >= 0 && b->bot_verts[1] >= 0 && b->bot_verts[2] >= 0) {
+	for (size_t i = 0; i < bot->num_faces; i++) {
+	    if (bot->faces[3*i] == b->bot_verts[0] &&
+		bot->faces[3*i+1] == b->bot_verts[1] &&
+		bot->faces[3*i+2] == b->bot_verts[2]) {
+		face_no = i;
+		break;
+	    }
+	}
+	if (face_no == bot->num_faces) {
+	    bu_vls_printf(s->log_str, "ERROR: selected BOT face was not found\n");
+	    s->e_inpara = 0;
+	    return BRLCAD_ERROR;
+	}
+    }
+
+    if (face_no == bot->num_faces) {
+	for (size_t i = 0; i < bot->num_faces; i++)
+	    bot->thickness[i] = thickness;
+    } else {
+	bot->thickness[face_no] = thickness;
+    }
+    s->e_inpara = 0;
     return BRLCAD_OK;
 }
 

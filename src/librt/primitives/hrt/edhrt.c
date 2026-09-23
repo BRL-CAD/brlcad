@@ -122,6 +122,7 @@ rt_edit_hrt_edit(struct rt_edit *s)
 {
     struct rt_hrt_internal *h = (struct rt_hrt_internal *)s->es_int.idb_ptr;
     RT_HRT_CK_MAGIC(h);
+    struct rt_hrt_internal candidate = *h;
 
     switch (s->edit_flag) {
 	case ECMD_HRT_SET_CENTER:
@@ -129,51 +130,56 @@ rt_edit_hrt_edit(struct rt_edit *s)
 		bu_vls_printf(s->log_str, "set_center requires x y z\n");
 		return BRLCAD_ERROR;
 	    }
-	    VSET(h->v,
+	    VSET(candidate.v,
 		s->e_para[0] * s->local2base,
 		s->e_para[1] * s->local2base,
 		s->e_para[2] * s->local2base);
-	    return _hrt_validate(s, h);
+	    break;
 	case ECMD_HRT_SET_XDIR:
 	    if (s->e_inpara < 3) {
 		bu_vls_printf(s->log_str, "set_xdir requires x y z\n");
 		return BRLCAD_ERROR;
 	    }
-	    VSET(h->xdir,
+	    VSET(candidate.xdir,
 		s->e_para[0] * s->local2base,
 		s->e_para[1] * s->local2base,
 		s->e_para[2] * s->local2base);
-	    return _hrt_validate(s, h);
+	    break;
 	case ECMD_HRT_SET_YDIR:
 	    if (s->e_inpara < 3) {
 		bu_vls_printf(s->log_str, "set_ydir requires x y z\n");
 		return BRLCAD_ERROR;
 	    }
-	    VSET(h->ydir,
+	    VSET(candidate.ydir,
 		s->e_para[0] * s->local2base,
 		s->e_para[1] * s->local2base,
 		s->e_para[2] * s->local2base);
-	    return _hrt_validate(s, h);
+	    break;
 	case ECMD_HRT_SET_ZDIR:
 	    if (s->e_inpara < 3) {
 		bu_vls_printf(s->log_str, "set_zdir requires x y z\n");
 		return BRLCAD_ERROR;
 	    }
-	    VSET(h->zdir,
+	    VSET(candidate.zdir,
 		s->e_para[0] * s->local2base,
 		s->e_para[1] * s->local2base,
 		s->e_para[2] * s->local2base);
-	    return _hrt_validate(s, h);
+	    break;
 	case ECMD_HRT_SET_D:
 	    if (s->e_inpara < 1) {
 		bu_vls_printf(s->log_str, "set_d requires a scalar value\n");
 		return BRLCAD_ERROR;
 	    }
-	    h->d = s->e_para[0] * s->local2base;
-	    return _hrt_validate(s, h);
+	    candidate.d = s->e_para[0] * s->local2base;
+	    break;
 	default:
 	    return edit_generic(s);
     }
+
+    if (_hrt_validate(s, &candidate) != BRLCAD_OK)
+	return BRLCAD_ERROR;
+    *h = candidate;
+    return BRLCAD_OK;
 }
 
 C_DECL int

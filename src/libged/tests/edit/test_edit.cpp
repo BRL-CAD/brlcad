@@ -3213,6 +3213,21 @@ main(int ac, char *av[])
         test_unit_sensitive_knob_translation(gedp);
         ged_close(gedp);
     }
+    {
+        struct ged *gedp = open_fixture(bu_vls_cstr(&units_path));
+        if (!gedp) {
+            bu_log("ERROR: cannot reopen unit fixture\n");
+            bu_vls_free(&units_path);
+            return 1;
+        }
+        struct rt_ell_internal ell;
+        const fastf_t inch = 25.4;
+        CHECK(read_ell(gedp, "sph.s", &ell) == BRLCAD_OK &&
+              NEAR_EQUAL(ell.v[Y], 3.0 * inch, NEAR_ENOUGH) &&
+              NEAR_EQUAL(MAGNITUDE(ell.a), 2.0 * inch, NEAR_ENOUGH),
+              "inch edits survive closing and reopening the database");
+        ged_close(gedp);
+    }
     bu_vls_free(&units_path);
 
     /* ---------------------------------------------------------------- *

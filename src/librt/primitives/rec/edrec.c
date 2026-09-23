@@ -348,7 +348,7 @@ rt_edit_rec_get_params(struct rt_edit *s, int cmd_id, fastf_t *vals)
 {
     struct rt_tgc_internal *tgc;
     if (!s || !vals)
-	return BRLCAD_ERROR;
+	return -1;
     tgc = (struct rt_tgc_internal *)s->es_int.idb_ptr;
     RT_TGC_CK_MAGIC(tgc);
 
@@ -357,25 +357,25 @@ rt_edit_rec_get_params(struct rt_edit *s, int cmd_id, fastf_t *vals)
 	    vals[0] = tgc->v[X] * s->base2local;
 	    vals[1] = tgc->v[Y] * s->base2local;
 	    vals[2] = tgc->v[Z] * s->base2local;
-	    return BRLCAD_OK;
+	    return 3;
 	case ECMD_REC_SET_H:
 	    vals[0] = tgc->h[X] * s->base2local;
 	    vals[1] = tgc->h[Y] * s->base2local;
 	    vals[2] = tgc->h[Z] * s->base2local;
-	    return BRLCAD_OK;
+	    return 3;
 	case ECMD_REC_SCALE_R1:
 	    vals[0] = MAGNITUDE(tgc->a) * s->base2local;
-	    return BRLCAD_OK;
+	    return 1;
 	case ECMD_REC_SCALE_R2:
 	    vals[0] = MAGNITUDE(tgc->b) * s->base2local;
-	    return BRLCAD_OK;
+	    return 1;
 	case ECMD_REC_SCALE_R:
 	    vals[0] = (MAGNITUDE(tgc->a) + MAGNITUDE(tgc->b)) * 0.5 * s->base2local;
-	    return BRLCAD_OK;
+	    return 1;
 	default:
 	    break;
     }
-    return BRLCAD_ERROR;
+    return 0;
 }
 
 /*

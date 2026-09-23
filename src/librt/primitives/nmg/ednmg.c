@@ -100,8 +100,9 @@ rt_edit_nmg_prim_edit_create(struct rt_edit *UNUSED(s))
 }
 
 C_DECL void
-rt_edit_nmg_prim_edit_destroy(struct rt_nmg_edit *e)
+rt_edit_nmg_prim_edit_destroy(void *ptr)
 {
+    struct rt_nmg_edit *e = (struct rt_nmg_edit *)ptr;
     if (!e)
 	return;
 

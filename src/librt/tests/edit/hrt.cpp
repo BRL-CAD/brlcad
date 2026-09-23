@@ -165,7 +165,7 @@ rt_edit_test_hrt(void)
      * v → (0,0,0), xdir → (2,0,0), ydir → (0,2,0), zdir → (0,0,2)
      * d unchanged.
      * ================================================================*/
-    /* HRT has no ft_set_edit_mode (NULL); set the flag directly. */
+    /* Select the generic edit flag directly. */
     rt_edit_set_edflag(s, RT_PARAMS_EDIT_SCALE);
     s->e_inpara = 0;
     s->es_scale = 2.0;
@@ -361,6 +361,70 @@ rt_edit_test_hrt(void)
 		    V3ARGS(kp_world));
 	bu_log("RT_MATRIX_EDIT_TRANS_MODEL_XYZ SUCCESS: "
 	       "keypoint maps to (%g,%g,%g)\n", V3ARGS(kp_world));
+    }
+
+    /* Exercise every HRT-specific command with database-local lengths. */
+    {
+        const fastf_t inch = 25.4;
+        hrt_reset(s, edit_hrt);
+        s->local2base = inch;
+        s->base2local = 1.0 / inch;
+
+        const struct rt_edit_prim_desc *desc = EDOBJ[ID_HRT].ft_edit_desc();
+        if (!desc || desc->ncmd != 5)
+            bu_exit(1, "HRT descriptor is incomplete\n");
+
+        struct hrt_vector_case {
+            int command_id;
+            fastf_t *field;
+            point_t local;
+        };
+        struct hrt_vector_case vector_cases[] = {
+            {desc->cmds[0].cmd_id, edit_hrt->v,    {1.0, 2.0, 3.0}},
+            {desc->cmds[1].cmd_id, edit_hrt->xdir, {2.0, 0.0, 0.0}},
+            {desc->cmds[2].cmd_id, edit_hrt->ydir, {0.0, 3.0, 0.0}},
+            {desc->cmds[3].cmd_id, edit_hrt->zdir, {0.0, 0.0, 4.0}}
+        };
+
+        for (const struct hrt_vector_case &tc : vector_cases) {
+            EDOBJ[ID_HRT].ft_set_edit_mode(s, tc.command_id);
+            s->e_inpara = 3;
+            VMOVE(s->e_para, tc.local);
+            rt_edit_process(s);
+
+            vect_t expected;
+            VSCALE(expected, tc.local, inch);
+            fastf_t values[3] = {0.0, 0.0, 0.0};
+            if (!VNEAR_EQUAL(tc.field, expected, VUNITIZE_TOL) ||
+                EDOBJ[ID_HRT].ft_edit_get_params(s, tc.command_id, values) != 3 ||
+                !VNEAR_EQUAL(values, tc.local, VUNITIZE_TOL))
+                bu_exit(1, "HRT vector command failed for ID %d\n", tc.command_id);
+        }
+
+        EDOBJ[ID_HRT].ft_set_edit_mode(s, desc->cmds[4].cmd_id);
+        s->e_inpara = 1;
+        s->e_para[0] = 0.75;
+        rt_edit_process(s);
+        fastf_t value = 0.0;
+        if (!NEAR_EQUAL(edit_hrt->d, 0.75 * inch, VUNITIZE_TOL) ||
+            EDOBJ[ID_HRT].ft_edit_get_params(s, desc->cmds[4].cmd_id, &value) != 1 ||
+            !NEAR_EQUAL(value, 0.75, VUNITIZE_TOL))
+            bu_exit(1, "HRT cusp-distance command did not convert local units\n");
+
+        EDOBJ[ID_HRT].ft_set_edit_mode(s, desc->cmds[1].cmd_id);
+        s->e_inpara = 3;
+        VSET(s->e_para, 0.0, 1.0, 0.0);
+        vect_t valid_xdir = {2.0 * inch, 0.0, 0.0};
+        if (EDOBJ[ID_HRT].ft_edit(s) != BRLCAD_ERROR ||
+            !VNEAR_EQUAL(edit_hrt->xdir, valid_xdir, VUNITIZE_TOL))
+            bu_exit(1, "HRT accepted an axis parallel to another axis\n");
+
+        EDOBJ[ID_HRT].ft_set_edit_mode(s, desc->cmds[4].cmd_id);
+        s->e_inpara = 1;
+        s->e_para[0] = 0.0;
+        if (EDOBJ[ID_HRT].ft_edit(s) != BRLCAD_ERROR ||
+            !NEAR_EQUAL(edit_hrt->d, 0.75 * inch, VUNITIZE_TOL))
+            bu_exit(1, "HRT accepted a nonpositive cusp distance\n");
     }
 
     rt_edit_destroy(s);

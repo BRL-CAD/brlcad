@@ -50,9 +50,12 @@
 #include "common.h"
 
 #include <math.h>
+#include <stdio.h>
 #include <string.h>
 
 #include "vmath.h"
+#include "bu/app.h"
+#include "bu/file.h"
 #include "bu/log.h"
 #include "bu/malloc.h"
 #include "bu/str.h"
@@ -66,6 +69,15 @@
 #define ECMD_VOL_THRESH_LO	13050
 #define ECMD_VOL_THRESH_HI	13051
 #define ECMD_VOL_FNAME		13052
+
+
+static int
+vol_filename_callback(int UNUSED(argc), const char **UNUSED(argv),
+                      void *data, void *result)
+{
+    *(char **)result = (char *)data;
+    return BRLCAD_OK;
+}
 
 
 struct directory *
@@ -362,8 +374,42 @@ bu_log("RT_MATRIX_EDIT_TRANS_MODEL_XYZ SUCCESS: "
 	    bu_exit(1, "ERROR: VOL cell size did not use local units\n");
     }
 
+    /* Filename and file dimensions are not length-valued parameters. */
+    char data_path[MAXPATHLEN] = {0};
+    FILE *data = bu_temp_file(data_path, sizeof(data_path));
+    if (!data)
+        bu_exit(1, "ERROR: Cannot create VOL data file\n");
+    unsigned char voxels[4 * 4 * 4] = {0};
+    size_t written = fwrite(voxels, 1, sizeof(voxels), data);
+    int close_status = fclose(data);
+    if (written != sizeof(voxels) || close_status != 0)
+        bu_exit(1, "ERROR: Cannot write VOL data file\n");
+
+    if (rt_edit_map_clbk_set(s->m, ECMD_GET_FILENAME, BU_CLBK_DURING,
+                             vol_filename_callback, data_path) != BRLCAD_OK)
+        bu_exit(1, "ERROR: Unable to register VOL filename callback\n");
+    EDOBJ[dp->d_minor_type].ft_set_edit_mode(s, ECMD_VOL_FNAME);
+    rt_edit_process(s);
+    if (!BU_STR_EQUAL(edit_vol->name, data_path))
+        bu_exit(1, "ERROR: VOL filename command did not select the file\n");
+
+    EDOBJ[dp->d_minor_type].ft_set_edit_mode(s, ECMD_VOL_FSIZE);
+    s->e_inpara = 3;
+    VSET(s->e_para, 2.0, 4.0, 8.0);
+    rt_edit_process(s);
+    if (edit_vol->xdim != 2 || edit_vol->ydim != 4 || edit_vol->zdim != 8)
+        bu_exit(1, "ERROR: VOL dimensions were converted as lengths\n");
+
+    s->e_inpara = 3;
+    VSET(s->e_para, 5.0, 5.0, 5.0);
+    if (EDOBJ[dp->d_minor_type].ft_edit(s) == BRLCAD_OK ||
+        edit_vol->xdim != 2 || edit_vol->ydim != 4 || edit_vol->zdim != 8)
+        bu_exit(1, "ERROR: VOL accepted dimensions larger than its file\n");
+
     rt_edit_destroy(s);
     db_close(dbip);
+    if (!bu_file_delete(data_path))
+        bu_exit(1, "ERROR: Cannot remove VOL data file\n");
     return 0;
 }
 

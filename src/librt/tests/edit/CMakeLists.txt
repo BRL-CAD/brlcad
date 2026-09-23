@@ -19,12 +19,15 @@ set(
   epa
   eto
   extrude
+  fuzz
+  half
   hrt
   hyp
   metaball
   nmg
   part
   pipe
+  rec
   revolve
   rhc
   rpc
@@ -55,8 +58,9 @@ target_include_directories(rt_edit_test PRIVATE "${CMAKE_CURRENT_BINARY_DIR}")
 foreach(edit_case IN LISTS edit_cases)
   brlcad_add_test(NAME rt_edit_test_${edit_case} COMMAND rt_edit_test ${edit_case})
 endforeach()
+brlcad_add_test(NAME rt_edit_test_inventory COMMAND rt_edit_test --check-inventory)
 
-set(distcheck_files CMakeLists.txt cases.inc.in ${edit_sources})
+set(distcheck_files CMakeLists.txt cases.inc.in operations.inc ${edit_sources})
 cmakefiles(${distcheck_files})
 
 # Local Variables:

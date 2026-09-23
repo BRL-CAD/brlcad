@@ -609,6 +609,39 @@ bu_log("RT_MATRIX_EDIT_TRANS_MODEL_XYZ SUCCESS: "
 	bu_log("Metaball non-mm dimensionless edits SUCCESS\n");
     }
 
+    /* Pick and navigate control points using local coordinates. */
+    {
+        const fastf_t inch = 25.4;
+        mb_reset(s, edit_mb);
+        s->local2base = inch;
+        s->base2local = 1.0 / inch;
+        struct wdb_metaball_pnt *first = mb_first_pt(s);
+        struct wdb_metaball_pnt *second = mb_second_pt(s);
+        VSET(first->coord, inch, 0.0, 0.0);
+        VSET(second->coord, -inch, 0.0, 0.0);
+
+        EDOBJ[dp->d_minor_type].ft_set_edit_mode(s, ECMD_METABALL_PT_PICK);
+        s->e_inpara = 3;
+        VSET(s->e_para, 1.0, 0.0, 0.0);
+        rt_edit_process(s);
+        if (m->es_metaball_pnt != first)
+            bu_exit(1, "ERROR: Metaball point pick did not use local units\n");
+
+        EDOBJ[dp->d_minor_type].ft_set_edit_mode(s, ECMD_METABALL_PT_NEXT);
+        if (m->es_metaball_pnt != second)
+            bu_exit(1, "ERROR: Metaball next did not select the second point\n");
+        EDOBJ[dp->d_minor_type].ft_set_edit_mode(s, ECMD_METABALL_PT_NEXT);
+        if (m->es_metaball_pnt != second)
+            bu_exit(1, "ERROR: Metaball next passed the final point\n");
+
+        EDOBJ[dp->d_minor_type].ft_set_edit_mode(s, ECMD_METABALL_PT_PREV);
+        if (m->es_metaball_pnt != first)
+            bu_exit(1, "ERROR: Metaball previous did not select the first point\n");
+        EDOBJ[dp->d_minor_type].ft_set_edit_mode(s, ECMD_METABALL_PT_PREV);
+        if (m->es_metaball_pnt != first)
+            bu_exit(1, "ERROR: Metaball previous passed the first point\n");
+    }
+
     /* ================================================================
      * write_params / read_params round-trip
      *

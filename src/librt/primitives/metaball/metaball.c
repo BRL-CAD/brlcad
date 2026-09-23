@@ -728,7 +728,7 @@ rt_metaball_import5(struct rt_db_internal *ip, const struct bu_external *ep, reg
     if (dbip) RT_CK_DBI(dbip);
 
     BU_CK_EXTERNAL(ep);
-    metaball_count = ntohl(*(uint32_t *)ep->ext_buf);
+    metaball_count = BU_GLONG((const unsigned char *)ep->ext_buf);
     buf = (double *)bu_malloc((metaball_count*5+1)*SIZEOF_NETWORK_DOUBLE, "rt_metaball_import5: buf");
     bu_cv_ntohd((unsigned char *)buf, (unsigned char *)ep->ext_buf+2*SIZEOF_NETWORK_LONG, metaball_count*5+1);
 
@@ -740,7 +740,7 @@ rt_metaball_import5(struct rt_db_internal *ip, const struct bu_external *ep, reg
 
     mb = (struct rt_metaball_internal *)ip->idb_ptr;
     mb->magic = RT_METABALL_INTERNAL_MAGIC;
-    mb->method = ntohl(*(uint32_t *)(ep->ext_buf + SIZEOF_NETWORK_LONG));
+    mb->method = BU_GLONG((const unsigned char *)(ep->ext_buf + SIZEOF_NETWORK_LONG));
     mb->threshold = buf[0];
 
     /* Assign values */

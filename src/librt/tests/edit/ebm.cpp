@@ -21,11 +21,8 @@
  *
  * Test editing of EBM (extruded bitmap) primitive parameters.
  *
- * Reference EBM: name="rt_edit_test_ebm.data", xdim=4, ydim=4,
- *   tallness=10.0mm, mat=IDN.
- *
- * A temporary data file with at least xdim*ydim=16 bytes is created
- * in /tmp, and dbi_filepath is set so the import can find it.
+ * Reference EBM: xdim=4, ydim=4, tallness=10.0mm, mat=IDN.
+ * A platform temporary file supplies the bitmap samples.
  *
  * ECMD_EBM_HEIGHT (e_inpara=1, e_para[0]=20):
  *   ecmd_ebm_height sets ebm->tallness = e_para[0] * local2base = 20.
@@ -48,6 +45,8 @@
 #include <string.h>
 
 #include "vmath.h"
+#include "bu/app.h"
+#include "bu/file.h"
 #include "bu/log.h"
 #include "bu/malloc.h"
 #include "bu/str.h"
@@ -61,41 +60,45 @@
 #define ECMD_EBM_HEIGHT		12055
 
 
-static const char *EBM_DATA_FILE = "/tmp/rt_edit_test_ebm.data";
+static int
+ebm_filename_callback(int UNUSED(argc), const char **UNUSED(argv),
+                      void *data, void *result)
+{
+    *(const char **)result = (const char *)data;
+    return BRLCAD_OK;
+}
 
 
 static void
-create_ebm_data_file(unsigned int xdim, unsigned int ydim)
+create_ebm_data_file(char *path, size_t path_len,
+                     unsigned int xdim, unsigned int ydim)
 {
-    FILE *f = fopen(EBM_DATA_FILE, "wb");
+    FILE *f = bu_temp_file(path, path_len);
     if (!f)
-	bu_exit(1, "ERROR: Cannot create EBM data file %s\n", EBM_DATA_FILE);
+	bu_exit(1, "ERROR: Cannot create EBM data file\n");
     /* EBM data: xdim*ydim bytes (1 byte per pixel) */
     unsigned int n = xdim * ydim;
     unsigned char *buf = (unsigned char *)bu_calloc(n, 1, "ebm tmp");
     /* Set a checkerboard pattern so the data is non-trivial */
     for (unsigned int i = 0; i < n; i++)
 	buf[i] = (unsigned char)((i % 2) ? 0xFF : 0x00);
-    fwrite(buf, 1, n, f);
+    size_t written = fwrite(buf, 1, n, f);
     bu_free(buf, "ebm tmp");
-    fclose(f);
+    int close_status = fclose(f);
+    if (written != n || close_status != 0)
+        bu_exit(1, "ERROR: Cannot write EBM data file\n");
 }
 
 
 struct directory *
-make_ebm(struct rt_wdb *wdbp)
+make_ebm(struct rt_wdb *wdbp, const char *data_path)
 {
     const char *objname = "ebm";
     unsigned int xdim = 4, ydim = 4;
 
-    create_ebm_data_file(xdim, ydim);
-
-    /* Set dbi_filepath so EBM can find the temp file in /tmp */
-    /* db_close calls bu_argv_free(2, dbi_filepath), so use bu_malloc/bu_strdup */
-    char **filepath = (char **)bu_malloc(3 * sizeof(char *), "dbi_filepath[3]");
+    /* EBM import requires a non-null search path even for a rooted name. */
+    char **filepath = (char **)bu_calloc(2, sizeof(char *), "dbi_filepath");
     filepath[0] = bu_strdup(".");
-    filepath[1] = bu_strdup("/tmp");
-    filepath[2] = NULL;
     wdbp->dbip->dbi_filepath = filepath;
 
     struct rt_ebm_internal *ebm;
@@ -109,7 +112,7 @@ make_ebm(struct rt_wdb *wdbp)
     ebm->buf = NULL;
     ebm->mp  = NULL;
     ebm->bip = NULL;
-    bu_strlcpy(ebm->name, "rt_edit_test_ebm.data", RT_EBM_NAME_LEN);
+    bu_strlcpy(ebm->name, data_path, RT_EBM_NAME_LEN);
 
     wdb_export(wdbp, objname, (void *)ebm, ID_EBM, 1.0);
 
@@ -145,7 +148,9 @@ rt_edit_test_ebm(void)
 
     struct rt_wdb *wdbp = wdb_dbopen(dbip, RT_WDB_TYPE_DB_INMEM);
 
-    struct directory *dp = make_ebm(wdbp);
+    char data_path[MAXPATHLEN] = {0};
+    create_ebm_data_file(data_path, sizeof(data_path), 4, 4);
+    struct directory *dp = make_ebm(wdbp, data_path);
 
     struct bn_tol tol = BN_TOL_INIT_TOL;
     struct db_full_path fp;
@@ -338,8 +343,32 @@ bu_log("RT_MATRIX_EDIT_TRANS_MODEL_XYZ SUCCESS: "
 	    bu_exit(1, "ERROR: EBM height did not use local units\n");
     }
 
+    /* File selection and bitmap dimensions are independent of length units. */
+    if (rt_edit_map_clbk_set(s->m, ECMD_GET_FILENAME, BU_CLBK_DURING,
+                             ebm_filename_callback, data_path) != BRLCAD_OK)
+        bu_exit(1, "ERROR: Unable to register EBM filename callback\n");
+    EDOBJ[dp->d_minor_type].ft_set_edit_mode(s, ECMD_EBM_FNAME);
+    if (!BU_STR_EQUAL(edit_ebm->name, data_path))
+        bu_exit(1, "ERROR: EBM filename command did not select the file\n");
+
+    s->e_inpara = 2;
+    s->e_para[0] = 2.0;
+    s->e_para[1] = 8.0;
+    EDOBJ[dp->d_minor_type].ft_set_edit_mode(s, ECMD_EBM_FSIZE);
+    if (edit_ebm->xdim != 2 || edit_ebm->ydim != 8)
+        bu_exit(1, "ERROR: EBM dimensions were converted as lengths\n");
+
+    s->e_inpara = 2;
+    s->e_para[0] = 5.0;
+    s->e_para[1] = 5.0;
+    if (EDOBJ[dp->d_minor_type].ft_edit(s) == BRLCAD_OK ||
+        edit_ebm->xdim != 2 || edit_ebm->ydim != 8)
+        bu_exit(1, "ERROR: EBM accepted dimensions larger than its file\n");
+
     rt_edit_destroy(s);
     db_close(dbip);
+    if (!bu_file_delete(data_path))
+        bu_exit(1, "ERROR: Cannot remove EBM data file\n");
     return 0;
 }
 

@@ -251,7 +251,7 @@ const struct rt_edit_functab EDOBJ[] = {
 	EDFUNCTAB_FUNC_EDIT_CAST(rt_edit_arb_edit),    /* edit */
 	EDFUNCTAB_FUNC_EDITXY_CAST(rt_edit_arb_edit_xy), /* edit xy */
 	EDFUNCTAB_FUNC_PRIMEDIT_CREATE_CAST(rt_edit_arb_prim_edit_create),    /* prim edit create */
-	EDFUNCTAB_FUNC_PRIMEDIT_DESTROY_CAST(rt_edit_arb_prim_edit_destroy),  /* prim edit destroy */
+	rt_edit_arb_prim_edit_destroy,  /* prim edit destroy */
        	NULL,  /* prim edit reset*/
 	EDFUNCTAB_FUNC_MENU_STR_CAST(rt_edit_arb_menu_str),   /* menu_str */
 	EDFUNCTAB_FUNC_SET_EDIT_MODE_CAST(rt_edit_arb_set_edit_mode), /* set edit mode */
@@ -272,7 +272,7 @@ const struct rt_edit_functab EDOBJ[] = {
 	EDFUNCTAB_FUNC_EDIT_CAST(rt_edit_ars_edit),    /* edit */
 	EDFUNCTAB_FUNC_EDITXY_CAST(rt_edit_ars_edit_xy), /* edit xy */
 	EDFUNCTAB_FUNC_PRIMEDIT_CREATE_CAST(rt_edit_ars_prim_edit_create),    /* prim edit create */
-	EDFUNCTAB_FUNC_PRIMEDIT_DESTROY_CAST(rt_edit_ars_prim_edit_destroy),  /* prim edit destroy */
+	rt_edit_ars_prim_edit_destroy,  /* prim edit destroy */
        	NULL,  /* prim edit reset*/
 	EDFUNCTAB_FUNC_MENU_STR_CAST(rt_edit_ars_menu_str),   /* menu_str */
 	EDFUNCTAB_FUNC_SET_EDIT_MODE_CAST(rt_edit_ars_set_edit_mode), /* set edit mode */
@@ -356,7 +356,7 @@ const struct rt_edit_functab EDOBJ[] = {
 	EDFUNCTAB_FUNC_EDIT_CAST(rt_edit_bspline_edit),    /* edit */
 	EDFUNCTAB_FUNC_EDITXY_CAST(rt_edit_bspline_edit_xy), /* edit xy */
 	EDFUNCTAB_FUNC_PRIMEDIT_CREATE_CAST(rt_edit_bspline_prim_edit_create),    /* prim edit create */
-	EDFUNCTAB_FUNC_PRIMEDIT_DESTROY_CAST(rt_edit_bspline_prim_edit_destroy),  /* prim edit destroy */
+	rt_edit_bspline_prim_edit_destroy,  /* prim edit destroy */
        	NULL,  /* prim edit reset*/
 	EDFUNCTAB_FUNC_MENU_STR_CAST(edit_menu_str),   /* menu_str */
 	EDFUNCTAB_FUNC_SET_EDIT_MODE_CAST(rt_edit_bspline_set_edit_mode), /* set edit mode */
@@ -398,7 +398,7 @@ const struct rt_edit_functab EDOBJ[] = {
 	EDFUNCTAB_FUNC_EDIT_CAST(rt_edit_nmg_edit),    /* edit */
 	EDFUNCTAB_FUNC_EDITXY_CAST(rt_edit_nmg_edit_xy), /* edit xy */
 	EDFUNCTAB_FUNC_PRIMEDIT_CREATE_CAST(rt_edit_nmg_prim_edit_create),    /* prim edit create */
-	EDFUNCTAB_FUNC_PRIMEDIT_DESTROY_CAST(rt_edit_nmg_prim_edit_destroy),  /* prim edit destroy */
+	rt_edit_nmg_prim_edit_destroy,  /* prim edit destroy */
 	EDFUNCTAB_FUNC_PRIMEDIT_RESET_CAST(rt_edit_nmg_prim_edit_reset),  /* prim edit reset */
 	EDFUNCTAB_FUNC_MENU_STR_CAST(edit_menu_str),   /* menu_str */
 	EDFUNCTAB_FUNC_SET_EDIT_MODE_CAST(rt_edit_nmg_set_edit_mode), /* set edit mode */
@@ -461,7 +461,7 @@ const struct rt_edit_functab EDOBJ[] = {
 	EDFUNCTAB_FUNC_EDIT_CAST(rt_edit_arbn_edit), /* edit */
 	EDFUNCTAB_FUNC_EDITXY_CAST(rt_edit_arbn_edit_xy), /* edit xy */
 	EDFUNCTAB_FUNC_PRIMEDIT_CREATE_CAST(rt_edit_arbn_prim_edit_create),    /* prim edit create */
-	EDFUNCTAB_FUNC_PRIMEDIT_DESTROY_CAST(rt_edit_arbn_prim_edit_destroy),  /* prim edit destroy */
+	rt_edit_arbn_prim_edit_destroy,  /* prim edit destroy */
 	EDFUNCTAB_FUNC_PRIMEDIT_RESET_CAST(rt_edit_arbn_prim_edit_reset),      /* prim edit reset */
 	EDFUNCTAB_FUNC_MENU_STR_CAST(edit_menu_str),   /* menu_str */
 	EDFUNCTAB_FUNC_SET_EDIT_MODE_CAST(rt_edit_arbn_set_edit_mode), /* set edit mode */
@@ -482,7 +482,7 @@ const struct rt_edit_functab EDOBJ[] = {
 	EDFUNCTAB_FUNC_EDIT_CAST(rt_edit_pipe_edit),    /* edit */
 	EDFUNCTAB_FUNC_EDITXY_CAST(rt_edit_pipe_edit_xy), /* edit xy */
 	EDFUNCTAB_FUNC_PRIMEDIT_CREATE_CAST(rt_edit_pipe_prim_edit_create),    /* prim edit create */
-	EDFUNCTAB_FUNC_PRIMEDIT_DESTROY_CAST(rt_edit_pipe_prim_edit_destroy),  /* prim edit destroy */
+	rt_edit_pipe_prim_edit_destroy,  /* prim edit destroy */
 	EDFUNCTAB_FUNC_PRIMEDIT_RESET_CAST(rt_edit_pipe_prim_edit_reset),  /* prim edit reset */
 	EDFUNCTAB_FUNC_MENU_STR_CAST(edit_menu_str),   /* menu_str */
 	EDFUNCTAB_FUNC_SET_EDIT_MODE_CAST(rt_edit_pipe_set_edit_mode), /* set edit mode */
@@ -717,7 +717,7 @@ const struct rt_edit_functab EDOBJ[] = {
 	EDFUNCTAB_FUNC_EDIT_CAST(rt_edit_sketch_edit),    /* edit */
 	EDFUNCTAB_FUNC_EDITXY_CAST(rt_edit_sketch_edit_xy), /* edit xy */
 	EDFUNCTAB_FUNC_PRIMEDIT_CREATE_CAST(rt_edit_sketch_prim_edit_create), /* prim edit create */
-	EDFUNCTAB_FUNC_PRIMEDIT_DESTROY_CAST(rt_edit_sketch_prim_edit_destroy), /* prim edit destroy */
+	rt_edit_sketch_prim_edit_destroy, /* prim edit destroy */
 	EDFUNCTAB_FUNC_PRIMEDIT_RESET_CAST(rt_edit_sketch_prim_edit_reset), /* prim edit reset */
 	EDFUNCTAB_FUNC_MENU_STR_CAST(edit_menu_str),   /* menu_str */
 	EDFUNCTAB_FUNC_SET_EDIT_MODE_CAST(rt_edit_sketch_set_edit_mode), /* set edit mode */
@@ -801,7 +801,7 @@ const struct rt_edit_functab EDOBJ[] = {
 	EDFUNCTAB_FUNC_EDIT_CAST(rt_edit_bot_edit),    /* edit */
 	EDFUNCTAB_FUNC_EDITXY_CAST(rt_edit_bot_edit_xy), /* edit xy */
 	EDFUNCTAB_FUNC_PRIMEDIT_CREATE_CAST(rt_edit_bot_prim_edit_create),    /* prim edit create */
-	EDFUNCTAB_FUNC_PRIMEDIT_DESTROY_CAST(rt_edit_bot_prim_edit_destroy),  /* prim edit destroy */
+	rt_edit_bot_prim_edit_destroy,  /* prim edit destroy */
 	EDFUNCTAB_FUNC_PRIMEDIT_RESET_CAST(rt_edit_bot_prim_edit_reset),  /* prim edit reset */
 	EDFUNCTAB_FUNC_MENU_STR_CAST(edit_menu_str),   /* menu_str */
 	EDFUNCTAB_FUNC_SET_EDIT_MODE_CAST(rt_edit_bot_set_edit_mode), /* set edit mode */
@@ -822,7 +822,7 @@ const struct rt_edit_functab EDOBJ[] = {
 	EDFUNCTAB_FUNC_EDIT_CAST(rt_edit_comb_edit),              /* edit */
 	EDFUNCTAB_FUNC_EDITXY_CAST(rt_edit_comb_edit_xy),         /* edit xy */
 	EDFUNCTAB_FUNC_PRIMEDIT_CREATE_CAST(rt_edit_comb_prim_edit_create),   /* prim edit create */
-	EDFUNCTAB_FUNC_PRIMEDIT_DESTROY_CAST(rt_edit_comb_prim_edit_destroy), /* prim edit destroy */
+	rt_edit_comb_prim_edit_destroy, /* prim edit destroy */
 	NULL,  /* prim edit reset */
 	EDFUNCTAB_FUNC_MENU_STR_CAST(edit_menu_str),              /* menu_str */
 	EDFUNCTAB_FUNC_SET_EDIT_MODE_CAST(rt_edit_comb_set_edit_mode), /* set edit mode */
@@ -931,7 +931,7 @@ const struct rt_edit_functab EDOBJ[] = {
 	EDFUNCTAB_FUNC_EDIT_CAST(rt_edit_metaball_edit),    /* edit */
 	EDFUNCTAB_FUNC_EDITXY_CAST(rt_edit_metaball_edit_xy), /* edit xy */
 	EDFUNCTAB_FUNC_PRIMEDIT_CREATE_CAST(rt_edit_metaball_prim_edit_create),    /* prim edit create */
-	EDFUNCTAB_FUNC_PRIMEDIT_DESTROY_CAST(rt_edit_metaball_prim_edit_destroy),  /* prim edit destroy */
+	rt_edit_metaball_prim_edit_destroy,  /* prim edit destroy */
 	EDFUNCTAB_FUNC_PRIMEDIT_RESET_CAST(rt_edit_metaball_prim_edit_reset),      /* prim edit reset */
 	EDFUNCTAB_FUNC_MENU_STR_CAST(edit_menu_str),   /* menu_str */
 	EDFUNCTAB_FUNC_SET_EDIT_MODE_CAST(rt_edit_metaball_set_edit_mode), /* set edit mode */
@@ -953,7 +953,7 @@ const struct rt_edit_functab EDOBJ[] = {
 	EDFUNCTAB_FUNC_EDIT_CAST(rt_edit_brep_edit), /* edit */
 	EDFUNCTAB_FUNC_EDITXY_CAST(rt_edit_brep_edit_xy), /* edit xy */
 	EDFUNCTAB_FUNC_PRIMEDIT_CREATE_CAST(rt_edit_brep_prim_edit_create),    /* prim edit create */
-	EDFUNCTAB_FUNC_PRIMEDIT_DESTROY_CAST(rt_edit_brep_prim_edit_destroy),  /* prim edit destroy */
+	rt_edit_brep_prim_edit_destroy,  /* prim edit destroy */
 	EDFUNCTAB_FUNC_PRIMEDIT_RESET_CAST(rt_edit_brep_prim_edit_reset),      /* prim edit reset */
 	EDFUNCTAB_FUNC_MENU_STR_CAST(edit_menu_str),   /* menu_str */
 	EDFUNCTAB_FUNC_SET_EDIT_MODE_CAST(rt_edit_brep_set_edit_mode), /* set edit mode */
@@ -1016,7 +1016,7 @@ const struct rt_edit_functab EDOBJ[] = {
 	EDFUNCTAB_FUNC_EDIT_CAST(rt_edit_revolve_edit), /* edit */
 	EDFUNCTAB_FUNC_EDITXY_CAST(rt_edit_revolve_edit_xy), /* edit xy */
 	EDFUNCTAB_FUNC_PRIMEDIT_CREATE_CAST(rt_edit_revolve_prim_edit_create),    /* prim edit create */
-	EDFUNCTAB_FUNC_PRIMEDIT_DESTROY_CAST(rt_edit_revolve_prim_edit_destroy),  /* prim edit destroy */
+	rt_edit_revolve_prim_edit_destroy,  /* prim edit destroy */
 	EDFUNCTAB_FUNC_PRIMEDIT_RESET_CAST(rt_edit_revolve_prim_edit_reset),      /* prim edit reset */
 	EDFUNCTAB_FUNC_MENU_STR_CAST(edit_menu_str),   /* menu_str */
 	EDFUNCTAB_FUNC_SET_EDIT_MODE_CAST(rt_edit_revolve_set_edit_mode), /* set edit mode */
@@ -1058,7 +1058,7 @@ const struct rt_edit_functab EDOBJ[] = {
 	EDFUNCTAB_FUNC_EDIT_CAST(rt_edit_annot_edit), /* edit */
 	EDFUNCTAB_FUNC_EDITXY_CAST(rt_edit_annot_edit_xy), /* edit xy */
 	EDFUNCTAB_FUNC_PRIMEDIT_CREATE_CAST(rt_edit_annot_prim_edit_create),    /* prim edit create */
-	EDFUNCTAB_FUNC_PRIMEDIT_DESTROY_CAST(rt_edit_annot_prim_edit_destroy),  /* prim edit destroy */
+	rt_edit_annot_prim_edit_destroy,  /* prim edit destroy */
 	EDFUNCTAB_FUNC_PRIMEDIT_RESET_CAST(rt_edit_annot_prim_edit_reset),      /* prim edit reset */
 	EDFUNCTAB_FUNC_MENU_STR_CAST(edit_menu_str),   /* menu_str */
 	EDFUNCTAB_FUNC_SET_EDIT_MODE_CAST(rt_edit_annot_set_edit_mode), /* set edit mode */
@@ -1101,7 +1101,7 @@ const struct rt_edit_functab EDOBJ[] = {
 	EDFUNCTAB_FUNC_EDIT_CAST(rt_edit_datum_edit), /* edit */
 	EDFUNCTAB_FUNC_EDITXY_CAST(rt_edit_datum_edit_xy), /* edit xy */
 	EDFUNCTAB_FUNC_PRIMEDIT_CREATE_CAST(rt_edit_datum_prim_edit_create),    /* prim edit create */
-	EDFUNCTAB_FUNC_PRIMEDIT_DESTROY_CAST(rt_edit_datum_prim_edit_destroy),  /* prim edit destroy */
+	rt_edit_datum_prim_edit_destroy,  /* prim edit destroy */
 	EDFUNCTAB_FUNC_PRIMEDIT_RESET_CAST(rt_edit_datum_prim_edit_reset),      /* prim edit reset */
 	EDFUNCTAB_FUNC_MENU_STR_CAST(edit_menu_str),   /* menu_str */
 	EDFUNCTAB_FUNC_SET_EDIT_MODE_CAST(rt_edit_datum_set_edit_mode), /* set edit mode */

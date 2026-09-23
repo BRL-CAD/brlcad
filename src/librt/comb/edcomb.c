@@ -159,10 +159,20 @@ comb_write_back(struct rt_edit *s)
 	return BRLCAD_ERROR;
     }
 
-    if (rt_db_put_internal(dp, dbip, &s->es_int) < 0) {
+    int write_failed = (rt_db_put_internal(dp, dbip, &s->es_int) < 0);
+
+    /* rt_db_put_internal releases the internal even on failure.  Keep the
+     * edit session usable for the caller and for subsequent commands. */
+    if (rt_db_get_internal(&s->es_int, dp, dbip, NULL) < 0) {
+	bu_vls_printf(s->log_str,
+		"ERROR: comb_write_back: failed to reload '%s'\n", dp->d_namep);
+	return BRLCAD_ERROR;
+    }
+
+    if (write_failed) {
 	bu_vls_printf(s->log_str,
 		"ERROR: comb_write_back: rt_db_put_internal failed for '%s'\n",
-		comb->src_objname);
+		dp->d_namep);
 	return BRLCAD_ERROR;
     }
 
@@ -773,8 +783,9 @@ rt_edit_comb_prim_edit_create(struct rt_edit *s)
 }
 
 C_DECL void
-rt_edit_comb_prim_edit_destroy(struct rt_comb_edit *ce)
+rt_edit_comb_prim_edit_destroy(void *ptr)
 {
+    struct rt_comb_edit *ce = (struct rt_comb_edit *)ptr;
     if (!ce)
 	return;
     bu_vls_free(&ce->es_name);

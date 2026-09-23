@@ -203,6 +203,8 @@ rt_edit_test_comb(void)
     s->e_para[0] = (fastf_t)OP_SUBTRACT;
 
     rt_edit_process(s);
+    if (s->es_int.idb_type != ID_COMBINATION || !s->es_int.idb_ptr)
+        bu_exit(1, "ADD_MEMBER left the edit session without a combination\n");
     bu_vls_trunc(s->log_str, 0);
 
     /* Reload and verify 4 leaves */

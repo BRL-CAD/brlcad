@@ -955,7 +955,7 @@ rt_arbn_import4(struct rt_db_internal *ip, const struct bu_external *ep, const f
 
     aip = (struct rt_arbn_internal *)ip->idb_ptr;
     aip->magic = RT_ARBN_INTERNAL_MAGIC;
-    aip->neqn = ntohl(*(uint32_t *)rp->n.n_neqn);
+    aip->neqn = BU_GLONG((const unsigned char *)rp->n.n_neqn);
     if (aip->neqn <= 0) return -1;
 
     aip->eqn = (plane_t *)bu_malloc(aip->neqn*sizeof(plane_t), "arbn plane eqn[]");
@@ -1117,7 +1117,7 @@ rt_arbn_import5(struct rt_db_internal *ip, const struct bu_external *ep, const f
     BU_CK_EXTERNAL(ep);
     if (dbip) RT_CK_DBI(dbip);
 
-    neqn = ntohl(*(uint32_t *)ep->ext_buf);
+    neqn = BU_GLONG((const unsigned char *)ep->ext_buf);
     double_count = neqn * ELEMENTS_PER_PLANE;
     byte_count = double_count * SIZEOF_NETWORK_DOUBLE;
 

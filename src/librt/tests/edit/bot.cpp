@@ -52,6 +52,7 @@
 #include <string.h>
 
 #include "vmath.h"
+#include "bu/bitv.h"
 #include "bu/log.h"
 #include "bu/malloc.h"
 #include "bu/str.h"
@@ -99,6 +100,16 @@ capture_bot_pick(int UNUSED(argc), const char **UNUSED(argv), void *data, void *
     capture->calls++;
     bu_vls_strcpy(&capture->candidates, bu_vls_cstr((struct bu_vls *)edit->u_ptr));
     return BRLCAD_OK;
+}
+
+
+static int
+deny_bot_thickness(int UNUSED(argc), const char **UNUSED(argv), void *data,
+		   void *UNUSED(context))
+{
+    int *calls = (int *)data;
+    ++*calls;
+    return BRLCAD_ERROR;
 }
 
 
@@ -728,6 +739,143 @@ bu_log("RT_MATRIX_EDIT_TRANS_MODEL_XYZ SUCCESS: "
 	VSET(expected, 1.0, 2.0, 3.0);
 	if (!VNEAR_EQUAL(actual, expected, VUNITIZE_TOL))
 	    bu_exit(1, "ERROR: BOT vertex getter did not use local units\n");
+    }
+
+    {
+	const fastf_t inch = 25.4;
+	bot_reset(s, bot, b);
+	s->local2base = inch;
+	s->base2local = 1.0 / inch;
+
+	EDOBJ[ID_BOT].ft_set_edit_mode(s, ECMD_BOT_MODE);
+	s->e_inpara = 1;
+	s->e_para[0] = RT_BOT_PLATE;
+	rt_edit_process(s);
+	if (bot->mode != RT_BOT_PLATE || !bot->thickness || !bot->face_mode)
+	    bu_exit(1, "ERROR: BOT plate mode did not allocate face data\n");
+
+	EDOBJ[ID_BOT].ft_set_edit_mode(s, ECMD_BOT_THICK);
+	s->e_inpara = 1;
+	s->e_para[0] = 0.0;
+	rt_edit_process(s);
+	for (size_t i = 0; i < bot->num_faces; i++) {
+	    if (!ZERO(bot->thickness[i]))
+		bu_exit(1, "ERROR: rejected BOT thickness changed a face\n");
+	}
+
+	EDOBJ[ID_BOT].ft_set_edit_mode(s, ECMD_BOT_THICK);
+	s->e_inpara = 1;
+	s->e_para[0] = 2.0;
+	rt_edit_process(s);
+	for (size_t i = 0; i < bot->num_faces; i++) {
+	    if (!NEAR_EQUAL(bot->thickness[i], 2.0 * inch, VUNITIZE_TOL))
+		bu_exit(1, "ERROR: BOT all-face thickness ignored inch units\n");
+	}
+
+	int denied_calls = 0;
+	if (rt_edit_map_clbk_set(s->m, ECMD_BOT_THICK, BU_CLBK_DURING,
+		deny_bot_thickness, &denied_calls) != BRLCAD_OK)
+	    bu_exit(1, "ERROR: unable to register BOT confirmation callback\n");
+	EDOBJ[ID_BOT].ft_set_edit_mode(s, ECMD_BOT_THICK);
+	s->e_inpara = 1;
+	s->e_para[0] = 4.0;
+	rt_edit_process(s);
+	rt_edit_map_clbk_set(s->m, ECMD_BOT_THICK, BU_CLBK_DURING, NULL, NULL);
+	if (denied_calls != 1 ||
+	    !NEAR_EQUAL(bot->thickness[0], 2.0 * inch, VUNITIZE_TOL))
+	    bu_exit(1, "ERROR: rejected BOT thickness edit changed a face\n");
+
+	b->bot_verts[0] = 0;
+	b->bot_verts[1] = 1;
+	b->bot_verts[2] = 2;
+	EDOBJ[ID_BOT].ft_set_edit_mode(s, ECMD_BOT_THICK);
+	s->e_inpara = 1;
+	s->e_para[0] = 3.0;
+	rt_edit_process(s);
+	fastf_t value[3] = {0};
+	if (!NEAR_EQUAL(bot->thickness[0], 3.0 * inch, VUNITIZE_TOL) ||
+	    !NEAR_EQUAL(bot->thickness[1], 2.0 * inch, VUNITIZE_TOL) ||
+	    EDOBJ[ID_BOT].ft_edit_get_params(s, ECMD_BOT_THICK, value) != 1 ||
+	    !NEAR_EQUAL(value[0], 3.0, VUNITIZE_TOL))
+	    bu_exit(1, "ERROR: BOT selected-face thickness or units failed\n");
+
+	EDOBJ[ID_BOT].ft_set_edit_mode(s, ECMD_BOT_FMODE);
+	s->e_inpara = 1;
+	s->e_para[0] = 1.0;
+	rt_edit_process(s);
+	if (!BU_BITTEST(bot->face_mode, 0) || BU_BITTEST(bot->face_mode, 1))
+	    bu_exit(1, "ERROR: BOT selected-face mode failed\n");
+
+	EDOBJ[ID_BOT].ft_set_edit_mode(s, ECMD_BOT_FDEL);
+	rt_edit_process(s);
+	if (bot->num_faces != 3 || bot->faces[0] != 0 ||
+	    bot->faces[1] != 1 || bot->faces[2] != 3 ||
+	    !NEAR_EQUAL(bot->thickness[0], 2.0 * inch, VUNITIZE_TOL))
+	    bu_exit(1, "ERROR: BOT face deletion damaged face data\n");
+
+	EDOBJ[ID_BOT].ft_set_edit_mode(s, ECMD_BOT_MODE);
+	s->e_inpara = 1;
+	s->e_para[0] = RT_BOT_SOLID;
+	rt_edit_process(s);
+	if (bot->mode != RT_BOT_SOLID || bot->thickness || bot->face_mode)
+	    bu_exit(1, "ERROR: BOT solid mode retained plate data\n");
+
+	EDOBJ[ID_BOT].ft_set_edit_mode(s, ECMD_BOT_ORIENT);
+	s->e_inpara = 1;
+	s->e_para[0] = RT_BOT_CW;
+	rt_edit_process(s);
+	if (bot->orientation != RT_BOT_CW)
+	    bu_exit(1, "ERROR: BOT orientation edit failed\n");
+
+	EDOBJ[ID_BOT].ft_set_edit_mode(s, ECMD_BOT_FLAGS);
+	s->e_inpara = 1;
+	s->e_para[0] = RT_BOT_USE_FLOATS;
+	rt_edit_process(s);
+	if (bot->bot_flags != RT_BOT_USE_FLOATS)
+	    bu_exit(1, "ERROR: BOT flags edit failed\n");
+
+	EDOBJ[ID_BOT].ft_set_edit_mode(s, ECMD_BOT_THICK);
+	s->e_inpara = 1;
+	s->e_para[0] = 1.0;
+	rt_edit_process(s);
+	if (bot->thickness)
+	    bu_exit(1, "ERROR: non-plate BOT accepted face thickness\n");
+
+	bot_reset(s, bot, b);
+	b->bot_verts[0] = 0;
+	b->bot_verts[1] = 1;
+	EDOBJ[ID_BOT].ft_set_edit_mode(s, ECMD_BOT_MOVEE);
+	s->e_inpara = 3;
+	VSET(s->e_para, 1.0, 0, 0);
+	rt_edit_process(s);
+	point_t edge0 = {inch, 0, 0};
+	point_t edge1 = {inch + 1, 0, 0};
+	point_t unchanged = {0, 1, 0};
+	if (!VNEAR_EQUAL(&bot->vertices[0], edge0, VUNITIZE_TOL) ||
+	    !VNEAR_EQUAL(&bot->vertices[3], edge1, VUNITIZE_TOL) ||
+	    !VNEAR_EQUAL(&bot->vertices[6], unchanged, VUNITIZE_TOL))
+	    bu_exit(1, "ERROR: BOT edge move ignored inch units\n");
+
+	bot_reset(s, bot, b);
+	b->bot_verts[0] = 0;
+	b->bot_verts[1] = 1;
+	b->bot_verts[2] = 2;
+	EDOBJ[ID_BOT].ft_set_edit_mode(s, ECMD_BOT_MOVET);
+	s->e_inpara = 3;
+	VSET(s->e_para, 0, 1.0, 0);
+	rt_edit_process(s);
+	point_t face0 = {0, inch, 0};
+	point_t face1 = {1, inch, 0};
+	point_t face2 = {0, inch + 1, 0};
+	point_t face3 = {0, 0, 1};
+	if (!VNEAR_EQUAL(&bot->vertices[0], face0, VUNITIZE_TOL) ||
+	    !VNEAR_EQUAL(&bot->vertices[3], face1, VUNITIZE_TOL) ||
+	    !VNEAR_EQUAL(&bot->vertices[6], face2, VUNITIZE_TOL) ||
+	    !VNEAR_EQUAL(&bot->vertices[9], face3, VUNITIZE_TOL))
+	    bu_exit(1, "ERROR: BOT face move ignored inch units\n");
+
+	s->local2base = 1.0;
+	s->base2local = 1.0;
     }
 
     bu_log("All BOT tests PASSED\n");

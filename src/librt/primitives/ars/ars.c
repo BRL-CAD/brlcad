@@ -28,6 +28,9 @@
 #include "common.h"
 
 #include <stdlib.h>
+#include <errno.h>
+#include <stdint.h>
+#include <limits.h>
 #include <stdio.h>
 #include <string.h>
 #include <math.h>
@@ -35,6 +38,7 @@
 #include "bnetwork.h"
 
 #include "bu/cv.h"
+#include "bu/opt.h"
 #include "vmath.h"
 #include "rt/db4.h"
 #include "nmg.h"
@@ -293,7 +297,7 @@ rt_ars_mat(struct rt_db_internal *rop, const mat_t mat, const struct rt_db_inter
 	    fp += ELEMENTS_PER_POINT;
 	    ofp += ELEMENTS_PER_POINT;
 	}
-	VMOVE(fp, top->curves[i]);	/* duplicate first point */
+	VMOVE(ofp, top->curves[i]);	/* duplicate first point */
     }
 
    return BRLCAD_OK;
@@ -330,9 +334,9 @@ rt_ars_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fa
     ari->magic = RT_ARS_INTERNAL_MAGIC;
 
     cp = (unsigned char *)ep->ext_buf;
-    ari->ncurves = ntohl(*(uint32_t *)cp);
+    ari->ncurves = BU_GLONG((const unsigned char *)cp);
     cp += SIZEOF_NETWORK_LONG;
-    ari->pts_per_curve = ntohl(*(uint32_t *)cp);
+    ari->pts_per_curve = BU_GLONG((const unsigned char *)cp);
     cp += SIZEOF_NETWORK_LONG;
 
     /*
@@ -912,37 +916,102 @@ rt_ars_get(struct bu_vls *logstr, const struct rt_db_internal *intern, const cha
 }
 
 
+static int
+ars_adjust_index(size_t *index, const char *text, const char **suffix)
+{
+    char *end;
+    unsigned long long value;
+
+    if (!text || !isdigit((unsigned char)text[0]))
+	return BRLCAD_ERROR;
+
+    errno = 0;
+    value = strtoull(text, &end, 10);
+    if (errno == ERANGE || value > SIZE_MAX)
+	return BRLCAD_ERROR;
+
+    *index = (size_t)value;
+    if (suffix)
+	*suffix = end;
+    else if (*end != '\0')
+	return BRLCAD_ERROR;
+    return BRLCAD_OK;
+}
+
+
+static int
+ars_adjust_coordinates(fastf_t *values, size_t count, const char *input)
+{
+    char *copy;
+    const char **args = NULL;
+    int argc = 0;
+    int result = BRLCAD_OK;
+
+    if (!input || count > INT_MAX)
+	return BRLCAD_ERROR;
+
+    copy = bu_strdup(input);
+    for (char *ptr = copy; *ptr; ptr++) {
+	if (*ptr == '{' || *ptr == '}')
+	    *ptr = ' ';
+    }
+    if (bu_argv_from_tcl_list(copy, &argc, &args) != 0 || argc != (int)count) {
+	result = BRLCAD_ERROR;
+    } else {
+	for (size_t i = 0; i < count; i++) {
+	    if (bu_opt_fastf_t(NULL, 1, &args[i], &values[i]) != 1 ||
+		!isfinite(values[i])) {
+		result = BRLCAD_ERROR;
+		break;
+	    }
+	}
+    }
+
+    if (args)
+	bu_free((void *)args, "ARS adjustment arguments");
+    bu_free(copy, "ARS adjustment string");
+    return result;
+}
+
+
 C_DECL int
 rt_ars_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, const char **argv)
 {
     struct rt_ars_internal *ars;
     size_t i, j, k;
-    int len;
-    fastf_t *array;
 
     RT_CK_DB_INTERNAL(intern);
 
     ars = (struct rt_ars_internal *)intern->idb_ptr;
     RT_ARS_CK_MAGIC(ars);
 
+    if (argc % 2) {
+	bu_vls_printf(logstr, "ERROR: ARS adjustments require key/value pairs\n");
+	return BRLCAD_ERROR;
+    }
+
     while (argc >= 2) {
 	if (BU_STR_EQUAL(argv[0], "NC")) {
 	    /* change number of curves */
-	    i = atoi(argv[1]);
+	    if (ars_adjust_index(&i, argv[1], NULL) != BRLCAD_OK ||
+		i > SIZE_MAX / sizeof(fastf_t *) - 1) {
+		bu_vls_printf(logstr, "ERROR: Invalid ARS curve count\n");
+		return BRLCAD_ERROR;
+	    }
 	    if (i < ars->ncurves) {
 		for (j=i; j<ars->ncurves; j++)
 		    bu_free((char *)ars->curves[j], "ars->curves[j]");
 		ars->curves = (fastf_t **)bu_realloc(ars->curves,
-						     i*sizeof(fastf_t *), "ars->curves");
+						     (i+1)*sizeof(fastf_t *), "ars->curves");
 		ars->ncurves = i;
 	    } else if (i > ars->ncurves) {
 		ars->curves = (fastf_t **)bu_realloc(ars->curves,
-						     i*sizeof(fastf_t *), "ars->curves");
+						     (i+1)*sizeof(fastf_t *), "ars->curves");
 		if (ars->pts_per_curve) {
 		    /* new curves are duplicates of the last */
 		    for (j=ars->ncurves; j<i; j++) {
 			ars->curves[j] = (fastf_t *)bu_malloc(
-			    ars->pts_per_curve * 3 * sizeof(fastf_t),
+			    (ars->pts_per_curve + 1) * 3 * sizeof(fastf_t),
 			    "ars->curves[j]");
 			for (k = 0; k < ars->pts_per_curve; k++) {
 			    if (j) {
@@ -962,7 +1031,11 @@ rt_ars_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, co
 	    }
 	} else if (BU_STR_EQUAL(argv[0], "PPC")) {
 	    /* change the number of points per curve */
-	    i = atoi(argv[1]);
+	    if (ars_adjust_index(&i, argv[1], NULL) != BRLCAD_OK ||
+		i > INT_MAX / ELEMENTS_PER_POINT) {
+		bu_vls_printf(logstr, "ERROR: Invalid ARS points per curve\n");
+		return BRLCAD_ERROR;
+	    }
 	    if (i < 3) {
 		bu_vls_printf(logstr,
 			      "ERROR: must have at least 3 points per curve\n");
@@ -971,14 +1044,14 @@ rt_ars_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, co
 	    if (i < ars->pts_per_curve) {
 		for (j = 0; j < ars->ncurves; j++) {
 		    ars->curves[j] = (fastf_t *)bu_realloc(ars->curves[j],
-						i * 3 * sizeof(fastf_t),
+						(i + 1) * 3 * sizeof(fastf_t),
 						"ars->curves[j]");
 		}
 		ars->pts_per_curve = i;
 	    } else if (i > ars->pts_per_curve) {
 		for (j = 0; j < ars->ncurves; j++) {
 		    ars->curves[j] = (fastf_t *)bu_realloc(ars->curves[j],
-						i * 3 * sizeof(fastf_t),
+						(i + 1) * 3 * sizeof(fastf_t),
 						"ars->curves[j]");
 		    /* new points are duplicates of last */
 		    for (k = ars->pts_per_curve; k < i; k++) {
@@ -993,49 +1066,49 @@ rt_ars_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, co
 		ars->pts_per_curve = i;
 	    }
 	} else if (argv[0][0] == 'C') {
-	    if (isdigit((int)argv[0][1])) {
-		const char *ptr;
-
-		/* a specific curve */
-		ptr = strchr(argv[0], 'P');
-		if (ptr) {
-		    /* a specific point on this curve */
-		    i = atoi(&argv[0][1]);
-		    j = atoi(ptr+1);
-		    len = 3;
-		    array = &ars->curves[i][j*3];
-		    if (_rt_tcl_list_to_fastf_array(argv[1], &array, &len)!= len) {
-			bu_vls_printf(logstr, "WARNING: incorrect number of parameters provided for a point\n");
-		    }
-		} else {
-		    char *dupstr;
-		    char *ptr2;
-
-		    /* one complete curve */
-		    i = atoi(&argv[0][1]);
-		    len = (int)ars->pts_per_curve * 3;
-		    dupstr = bu_strdup(argv[1]);
-		    ptr2 = dupstr;
-		    while (*ptr2) {
-			if (*ptr2 == '{' || *ptr2 == '}')
-			    *ptr2 = ' ';
-			ptr2++;
-		    }
-		    if (!ars->curves[i]) {
-			ars->curves[i] = (fastf_t *)bu_calloc(ars->pts_per_curve * 3, sizeof(fastf_t), "ars->curves[i]");
-		    }
-		    if (_rt_tcl_list_to_fastf_array(dupstr, &ars->curves[i], &len) != len) {
-			bu_vls_printf(logstr, "WARNING: incorrect number of parameters provided for a curve\n");
-		    }
-		    bu_free(dupstr, "bu_strdup ars curve");
+	    const char *suffix = NULL;
+	    if (ars_adjust_index(&i, &argv[0][1], &suffix) != BRLCAD_OK ||
+		i >= ars->ncurves) {
+		bu_vls_printf(logstr, "ERROR: Invalid ARS curve index\n");
+		return BRLCAD_ERROR;
+	    }
+	    if (*suffix == 'P') {
+		if (ars_adjust_index(&j, suffix + 1, NULL) != BRLCAD_OK ||
+		    j >= ars->pts_per_curve || !ars->curves[i]) {
+		    bu_vls_printf(logstr, "ERROR: Invalid ARS point index\n");
+		    return BRLCAD_ERROR;
 		}
+		fastf_t values[ELEMENTS_PER_POINT];
+		if (ars_adjust_coordinates(values, ELEMENTS_PER_POINT, argv[1]) != BRLCAD_OK) {
+		    bu_vls_printf(logstr, "ERROR: Incorrect ARS point coordinates\n");
+		    return BRLCAD_ERROR;
+		}
+		VMOVE(&ars->curves[i][j*ELEMENTS_PER_POINT], values);
+	    } else if (*suffix == '\0') {
+		size_t count = ars->pts_per_curve * ELEMENTS_PER_POINT;
+		fastf_t *values = (fastf_t *)bu_calloc(
+		    (ars->pts_per_curve + 1) * ELEMENTS_PER_POINT,
+		    sizeof(fastf_t), "ARS curve adjustment");
+		if (ars_adjust_coordinates(values, count, argv[1]) != BRLCAD_OK) {
+		    bu_free(values, "ARS curve adjustment");
+		    bu_vls_printf(logstr, "ERROR: Incorrect ARS curve coordinates\n");
+		    return BRLCAD_ERROR;
+		}
+		if (ars->curves[i])
+		    bu_free(ars->curves[i], "old ARS curve");
+		ars->curves[i] = values;
 	    } else {
-		bu_vls_printf(logstr, "ERROR: Illegal argument, must be NC, PPC, C#, or C#P#\n");
+		bu_vls_printf(logstr, "ERROR: Invalid ARS curve selector\n");
 		return BRLCAD_ERROR;
 	    }
 	} else {
 	    bu_vls_printf(logstr, "ERROR: Illegal argument, must be NC, PPC, C#, or C#P#\n");
 	    return BRLCAD_ERROR;
+	}
+	/* Keep every completed pair valid if a later pair is rejected. */
+	for (j = 0; j < ars->ncurves; j++) {
+	    if (ars->curves[j])
+		VMOVE(&ars->curves[j][ars->pts_per_curve * ELEMENTS_PER_POINT], ars->curves[j]);
 	}
 	argc -= 2;
 	argv += 2;

@@ -1134,7 +1134,7 @@ rt_nurb_import5(struct rt_db_internal *ip, const struct bu_external *ep, const f
 
     cp = (unsigned char *)ep->ext_buf;
 
-    sip->nsrf = ntohl(*(uint32_t *)cp);
+    sip->nsrf = BU_GLONG((const unsigned char *)cp);
     cp += SIZEOF_NETWORK_LONG;
 
     if (sip->nsrf > 0)
@@ -1152,19 +1152,19 @@ rt_nurb_import5(struct rt_db_internal *ip, const struct bu_external *ep, const f
 	double *vknots;
 	double *points;
 
-	pt_type = ntohl(*(uint32_t *)cp);
+	pt_type = BU_GLONG((const unsigned char *)cp);
 	cp += SIZEOF_NETWORK_LONG;
-	order[0] = ntohl(*(uint32_t *)cp);
+	order[0] = BU_GLONG((const unsigned char *)cp);
 	cp += SIZEOF_NETWORK_LONG;
-	order[1] = ntohl(*(uint32_t *)cp);
+	order[1] = BU_GLONG((const unsigned char *)cp);
 	cp += SIZEOF_NETWORK_LONG;
-	u_size = ntohl(*(uint32_t *)cp);
+	u_size = BU_GLONG((const unsigned char *)cp);
 	cp += SIZEOF_NETWORK_LONG;
-	v_size = ntohl(*(uint32_t *)cp);
+	v_size = BU_GLONG((const unsigned char *)cp);
 	cp += SIZEOF_NETWORK_LONG;
-	s_size[0] = ntohl(*(uint32_t *)cp);
+	s_size[0] = BU_GLONG((const unsigned char *)cp);
 	cp += SIZEOF_NETWORK_LONG;
-	s_size[1] = ntohl(*(uint32_t *)cp);
+	s_size[1] = BU_GLONG((const unsigned char *)cp);
 	cp += SIZEOF_NETWORK_LONG;
 	if (pt_type == 3)
 	    pt_type = RT_NURB_MAKE_PT_TYPE(3, RT_NURB_PT_XYZ, RT_NURB_PT_NONRAT);

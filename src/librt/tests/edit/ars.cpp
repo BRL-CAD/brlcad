@@ -168,6 +168,83 @@ rt_edit_test_ars(void)
     struct rt_ars_edit_local *ae =
 	(struct rt_ars_edit_local *)s->ipe_ptr;
 
+    {
+	struct rt_db_internal adjusted;
+	RT_DB_INTERNAL_INIT(&adjusted);
+	if (rt_db_get_internal(&adjusted, dp, dbip, NULL) < 0)
+	    bu_exit(1, "ERROR: Unable to import ARS adjustment target\n");
+	struct rt_ars_internal *ars = (struct rt_ars_internal *)adjusted.idb_ptr;
+	struct bu_vls log = BU_VLS_INIT_ZERO;
+	auto adjust = [&](const char *key, const char *value) {
+	    const char *args[] = {key, value};
+	    if (OBJ[ID_ARS].ft_adjust(&log, &adjusted, 2, args) != BRLCAD_OK)
+		bu_exit(1, "ERROR: ARS adjustment %s=%s failed: %s\n",
+			key, value, bu_vls_cstr(&log));
+	};
+
+	adjust("PPC", "3");
+	if (ars->pts_per_curve != 3 ||
+	    !VNEAR_EQUAL(ARS_PT(ars, 0, 2), ARS_PT(ars, 0, 1), VUNITIZE_TOL) ||
+	    !VNEAR_EQUAL(ARS_PT(ars, 0, 3), ARS_PT(ars, 0, 0), VUNITIZE_TOL))
+	    bu_exit(1, "ERROR: ARS PPC growth damaged closure\n");
+
+	adjust("NC", "3");
+	if (ars->ncurves != 3 ||
+	    !VNEAR_EQUAL(ARS_PT(ars, 2, 1), ARS_PT(ars, 1, 1), VUNITIZE_TOL) ||
+	    !VNEAR_EQUAL(ARS_PT(ars, 2, 3), ARS_PT(ars, 2, 0), VUNITIZE_TOL))
+	    bu_exit(1, "ERROR: ARS NC growth damaged closure\n");
+
+	adjust("C0P0", "2 3 4");
+	point_t changed = {2, 3, 4};
+	if (!VNEAR_EQUAL(ARS_PT(ars, 0, 0), changed, VUNITIZE_TOL) ||
+	    !VNEAR_EQUAL(ARS_PT(ars, 0, 3), changed, VUNITIZE_TOL))
+	    bu_exit(1, "ERROR: ARS point adjustment damaged closure\n");
+
+	adjust("PPC", "4");
+	adjust("PPC", "3");
+	adjust("NC", "2");
+	if (ars->pts_per_curve != 3 || ars->ncurves != 2 ||
+	    !VNEAR_EQUAL(ARS_PT(ars, 0, 3), changed, VUNITIZE_TOL) ||
+	    !VNEAR_EQUAL(ARS_PT(ars, 1, 3), ARS_PT(ars, 1, 0), VUNITIZE_TOL))
+	    bu_exit(1, "ERROR: ARS adjustment shrink damaged closure\n");
+
+	adjust("C1", "0 0 1 1 0 1 0 1 1");
+	point_t exp_c1p2 = {0, 1, 1};
+	if (!VNEAR_EQUAL(ARS_PT(ars, 1, 2), exp_c1p2, VUNITIZE_TOL) ||
+	    !VNEAR_EQUAL(ARS_PT(ars, 1, 3), ARS_PT(ars, 1, 0), VUNITIZE_TOL))
+	    bu_exit(1, "ERROR: ARS curve adjustment damaged closure\n");
+
+	const char *invalid[][2] = {
+	    {"NC", "-1"},
+	    {"NC", "999999999999999999999999"},
+	    {"NC", "18446744073709551615"},
+	    {"PPC", "18446744073709551615"},
+	    {"PPC", "2"},
+	    {"C9P0", "0 0 0"},
+	    {"C0P99", "0 0 0"},
+	    {"C0P0", "2 3"},
+	    {"C0P0", "2 3 4 5"},
+	    {"C0P0", "nan 3 4"},
+	    {"C0", "0 0 0"}
+	};
+	for (const auto &entry : invalid) {
+	    const char *args[] = {entry[0], entry[1]};
+	    if (OBJ[ID_ARS].ft_adjust(&log, &adjusted, 2, args) != BRLCAD_ERROR)
+		bu_exit(1, "ERROR: ARS accepted invalid adjustment %s=%s\n",
+			entry[0], entry[1]);
+	    if (ars->ncurves != 2 || ars->pts_per_curve != 3 ||
+		!VNEAR_EQUAL(ARS_PT(ars, 0, 0), changed, VUNITIZE_TOL) ||
+		!VNEAR_EQUAL(ARS_PT(ars, 1, 2), exp_c1p2, VUNITIZE_TOL))
+		bu_exit(1, "ERROR: ARS invalid adjustment changed geometry\n");
+	}
+	const char *incomplete[] = {"C0P0"};
+	if (OBJ[ID_ARS].ft_adjust(&log, &adjusted, 1, incomplete) != BRLCAD_ERROR)
+	    bu_exit(1, "ERROR: ARS accepted an unmatched adjustment key\n");
+
+	bu_vls_free(&log);
+	rt_db_free_internal(&adjusted);
+    }
+
     vect_t mousevec;
 
     /* ================================================================
@@ -443,7 +520,8 @@ bu_log("RT_MATRIX_EDIT_TRANS_MODEL_XYZ SUCCESS: "
 	point_t exp0 = {-0.5, 0, 0};
 	point_t exp1 = { 1.5, 0, 0};
 	if (!VNEAR_EQUAL(ARS_PT(edit_ars,0,0), exp0, VUNITIZE_TOL) ||
-	    !VNEAR_EQUAL(ARS_PT(edit_ars,0,1), exp1, VUNITIZE_TOL))
+	    !VNEAR_EQUAL(ARS_PT(edit_ars,0,1), exp1, VUNITIZE_TOL) ||
+	    !VNEAR_EQUAL(ARS_PT(edit_ars,0,2), exp0, VUNITIZE_TOL))
 	    bu_exit(1, "ERROR: ECMD_ARS_SCALE_CRV failed: "
 		    "c0p0=%g,%g,%g c0p1=%g,%g,%g (expected -0.5,0,0 and 1.5,0,0)\n",
 		    V3ARGS(ARS_PT(edit_ars,0,0)), V3ARGS(ARS_PT(edit_ars,0,1)));
@@ -469,13 +547,121 @@ bu_log("RT_MATRIX_EDIT_TRANS_MODEL_XYZ SUCCESS: "
 	point_t exp_c0 = {0, 0, -1.0};
 	point_t exp_c1 = {0, 0,  2.0};
 	if (!VNEAR_EQUAL(ARS_PT(edit_ars,0,0), exp_c0, VUNITIZE_TOL) ||
-	    !VNEAR_EQUAL(ARS_PT(edit_ars,1,0), exp_c1, VUNITIZE_TOL))
+	    !VNEAR_EQUAL(ARS_PT(edit_ars,1,0), exp_c1, VUNITIZE_TOL) ||
+	    !VNEAR_EQUAL(ARS_PT(edit_ars,0,2), exp_c0, VUNITIZE_TOL) ||
+	    !VNEAR_EQUAL(ARS_PT(edit_ars,1,2), exp_c1, VUNITIZE_TOL))
 	    bu_exit(1, "ERROR: ECMD_ARS_SCALE_COL failed: "
 		    "c0p0=%g,%g,%g c1p0=%g,%g,%g (expected 0,0,-1 and 0,0,2)\n",
 		    V3ARGS(ARS_PT(edit_ars,0,0)), V3ARGS(ARS_PT(edit_ars,1,0)));
 	bu_log("ECMD_ARS_SCALE_COL SUCCESS: c0p0=%g,%g,%g c1p0=%g,%g,%g\n",
 	       V3ARGS(ARS_PT(edit_ars,0,0)), V3ARGS(ARS_PT(edit_ars,1,0)));
     }
+
+    {
+	const fastf_t inch = 25.4;
+	point_t exp_c0p0 = {2, 0, 0};
+	point_t exp_c0p1 = {3, 0, 0};
+	point_t exp_c1p0 = {0, 0, 1};
+
+	ars_reset(s, edit_ars, ae);
+	ae->es_ars_crv = 0;
+	ae->es_ars_col = 0;
+	s->local2base = inch;
+	s->base2local = 1.0 / inch;
+	EDOBJ[dp->d_minor_type].ft_set_edit_mode(s, ECMD_ARS_MOVE_CRV);
+	s->e_inpara = 3;
+	VSET(s->e_para, 2.0 / inch, 0, 0);
+	rt_edit_process(s);
+	if (!VNEAR_EQUAL(ARS_PT(edit_ars, 0, 0), exp_c0p0, VUNITIZE_TOL) ||
+	    !VNEAR_EQUAL(ARS_PT(edit_ars, 0, 1), exp_c0p1, VUNITIZE_TOL) ||
+	    !VNEAR_EQUAL(ARS_PT(edit_ars, 0, 2), exp_c0p0, VUNITIZE_TOL) ||
+	    !VNEAR_EQUAL(ARS_PT(edit_ars, 1, 0), exp_c1p0, VUNITIZE_TOL))
+	    bu_exit(1, "ERROR: ECMD_ARS_MOVE_CRV inch conversion failed\n");
+
+	ars_reset(s, edit_ars, ae);
+	ae->es_ars_crv = 0;
+	ae->es_ars_col = 0;
+	EDOBJ[dp->d_minor_type].ft_set_edit_mode(s, ECMD_ARS_MOVE_COL);
+	s->e_inpara = 3;
+	VSET(s->e_para, 0, 0, 1);
+	rt_edit_process(s);
+	point_t exp_c0 = {0, 0, inch};
+	point_t exp_c1 = {0, 0, inch + 1};
+	if (!VNEAR_EQUAL(ARS_PT(edit_ars, 0, 0), exp_c0, VUNITIZE_TOL) ||
+	    !VNEAR_EQUAL(ARS_PT(edit_ars, 1, 0), exp_c1, VUNITIZE_TOL) ||
+	    !VNEAR_EQUAL(ARS_PT(edit_ars, 0, 2), exp_c0, VUNITIZE_TOL) ||
+	    !VNEAR_EQUAL(ARS_PT(edit_ars, 1, 2), exp_c1, VUNITIZE_TOL))
+	    bu_exit(1, "ERROR: ECMD_ARS_MOVE_COL inch conversion failed\n");
+
+	ars_reset(s, edit_ars, ae);
+	EDOBJ[dp->d_minor_type].ft_set_edit_mode(s, ECMD_ARS_PICK);
+	s->e_inpara = 3;
+	VSET(s->e_para, 1.0 / inch, 0, 1.0 / inch);
+	rt_edit_process(s);
+	if (ae->es_ars_crv != 1 || ae->es_ars_col != 1)
+	    bu_exit(1, "ERROR: ECMD_ARS_PICK inch conversion failed\n");
+
+	EDOBJ[dp->d_minor_type].ft_set_edit_mode(s, ECMD_ARS_NEXT_PT);
+	rt_edit_process(s);
+	if (ae->es_ars_crv != 1 || ae->es_ars_col != 0)
+	    bu_exit(1, "ERROR: ECMD_ARS_NEXT_PT failed\n");
+
+	EDOBJ[dp->d_minor_type].ft_set_edit_mode(s, ECMD_ARS_PREV_PT);
+	rt_edit_process(s);
+	if (ae->es_ars_crv != 1 || ae->es_ars_col != 1)
+	    bu_exit(1, "ERROR: ECMD_ARS_PREV_PT failed\n");
+
+	EDOBJ[dp->d_minor_type].ft_set_edit_mode(s, ECMD_ARS_NEXT_CRV);
+	rt_edit_process(s);
+	if (ae->es_ars_crv != 0 || ae->es_ars_col != 1)
+	    bu_exit(1, "ERROR: ECMD_ARS_NEXT_CRV failed\n");
+
+	EDOBJ[dp->d_minor_type].ft_set_edit_mode(s, ECMD_ARS_PREV_CRV);
+	rt_edit_process(s);
+	if (ae->es_ars_crv != 1 || ae->es_ars_col != 1)
+	    bu_exit(1, "ERROR: ECMD_ARS_PREV_CRV failed\n");
+
+	s->local2base = 1.0;
+	s->base2local = 1.0;
+    }
+
+    point_t exp_c0p1 = {1, 0, 0};
+    point_t exp_c1p1 = {1, 0, 1};
+    ars_reset(s, edit_ars, ae);
+    ae->es_ars_crv = 0;
+    ae->es_ars_col = 0;
+    EDOBJ[dp->d_minor_type].ft_set_edit_mode(s, ECMD_ARS_DUP_CRV);
+    rt_edit_process(s);
+    if (edit_ars->ncurves != 3 ||
+	!VNEAR_EQUAL(ARS_PT(edit_ars, 1, 1), ARS_PT(edit_ars, 0, 1), VUNITIZE_TOL) ||
+	!VNEAR_EQUAL(ARS_PT(edit_ars, 1, 2), ARS_PT(edit_ars, 1, 0), VUNITIZE_TOL))
+	bu_exit(1, "ERROR: ECMD_ARS_DUP_CRV failed\n");
+
+    ae->es_ars_crv = 1;
+    EDOBJ[dp->d_minor_type].ft_set_edit_mode(s, ECMD_ARS_DEL_CRV);
+    rt_edit_process(s);
+    if (edit_ars->ncurves != 2 ||
+	!VNEAR_EQUAL(ARS_PT(edit_ars, 1, 1), exp_c1p1, VUNITIZE_TOL))
+	bu_exit(1, "ERROR: ECMD_ARS_DEL_CRV failed\n");
+
+    ars_reset(s, edit_ars, ae);
+    ae->es_ars_crv = 0;
+    ae->es_ars_col = 0;
+    EDOBJ[dp->d_minor_type].ft_set_edit_mode(s, ECMD_ARS_DUP_COL);
+    rt_edit_process(s);
+    if (edit_ars->pts_per_curve != 3 ||
+	!VNEAR_EQUAL(ARS_PT(edit_ars, 0, 1), ARS_PT(edit_ars, 0, 0), VUNITIZE_TOL) ||
+	!VNEAR_EQUAL(ARS_PT(edit_ars, 0, 2), exp_c0p1, VUNITIZE_TOL) ||
+	!VNEAR_EQUAL(ARS_PT(edit_ars, 1, 3), ARS_PT(edit_ars, 1, 0), VUNITIZE_TOL))
+	bu_exit(1, "ERROR: ECMD_ARS_DUP_COL failed\n");
+
+    ae->es_ars_col = 1;
+    EDOBJ[dp->d_minor_type].ft_set_edit_mode(s, ECMD_ARS_DEL_COL);
+    rt_edit_process(s);
+    if (edit_ars->pts_per_curve != 2 ||
+	!VNEAR_EQUAL(ARS_PT(edit_ars, 0, 1), exp_c0p1, VUNITIZE_TOL) ||
+	!VNEAR_EQUAL(ARS_PT(edit_ars, 0, 2), ARS_PT(edit_ars, 0, 0), VUNITIZE_TOL))
+	bu_exit(1, "ERROR: ECMD_ARS_DEL_COL failed\n");
 
     /* ================================================================
      * ECMD_ARS_INSERT_CRV: insert interpolated curve after curve 0
@@ -496,7 +682,8 @@ bu_log("RT_MATRIX_EDIT_TRANS_MODEL_XYZ SUCCESS: "
 	point_t exp_new0 = {0, 0, 0.5};
 	point_t exp_new1 = {1, 0, 0.5};
 	if (!VNEAR_EQUAL(ARS_PT(edit_ars,1,0), exp_new0, VUNITIZE_TOL) ||
-	    !VNEAR_EQUAL(ARS_PT(edit_ars,1,1), exp_new1, VUNITIZE_TOL))
+	    !VNEAR_EQUAL(ARS_PT(edit_ars,1,1), exp_new1, VUNITIZE_TOL) ||
+	    !VNEAR_EQUAL(ARS_PT(edit_ars,1,2), exp_new0, VUNITIZE_TOL))
 	    bu_exit(1, "ERROR: ECMD_ARS_INSERT_CRV: new curve wrong: "
 		    "c1p0=%g,%g,%g c1p1=%g,%g,%g (expected 0,0,0.5 and 1,0,0.5)\n",
 		    V3ARGS(ARS_PT(edit_ars,1,0)), V3ARGS(ARS_PT(edit_ars,1,1)));

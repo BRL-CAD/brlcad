@@ -117,6 +117,20 @@ if(TARGET libged)
 
 endif(TARGET libged)
 
+if(TARGET librt AND FUZZER_SUPPORTED)
+  set(RT_EDIT_FUZZ_DIR "${CMAKE_SOURCE_DIR}/src/librt/tests/edit")
+  brlcad_addexec(
+    fuzz_rt_edit_test
+    "${RT_EDIT_FUZZ_DIR}/fuzz.cpp;${RT_EDIT_FUZZ_DIR}/ars.cpp;${RT_EDIT_FUZZ_DIR}/bot.cpp"
+    "libbu;librt;libnmg;libwdb;libbrep"
+    TEST
+  )
+  set_target_properties(fuzz_rt_edit_test PROPERTIES UNITY_BUILD OFF)
+  target_compile_options(fuzz_rt_edit_test PRIVATE ${FUZZER_EXE_COMPILE_OPTIONS})
+  target_link_options(fuzz_rt_edit_test PRIVATE ${FUZZER_LINK_OPTIONS})
+  BRLCAD_ADD_TEST(NAME fuzz_rt_edit_smoke COMMAND fuzz_rt_edit_test -runs=1 -max_total_time=5)
+endif()
+
 cmakefiles(
   CMakeLists.txt
   fuzz_ged.cpp

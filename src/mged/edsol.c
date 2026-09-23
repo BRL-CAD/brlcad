@@ -255,50 +255,24 @@ ecmd_bot_thick_clbk(int UNUSED(ac), const char **UNUSED(av), void *d, void *UNUS
     struct rt_bot_edit *b = (struct rt_bot_edit *)MEDIT(s)->ipe_ptr;
     RT_BOT_CK_MAGIC(bot);
 
-    size_t face_no = 0;
-    int face_state = 0;
-
     if (bot->mode != RT_BOT_PLATE && bot->mode != RT_BOT_PLATE_NOCOS) {
 	if (Tcl_VarEval(s->interp, "cad_dialog ", ".bot_err ", "$mged_gui(mged,screen) ", "{Not Plate Mode} ",
 		    "{Cannot edit face thickness in a non-plate BOT} ", "\"\" ", "0 ", "OK ",
 		    (char *)NULL) != TCL_OK)
-	{
 	    bu_log("cad_dialog failed: %s\n", Tcl_GetStringResult(s->interp));
-	}
 	return BRLCAD_ERROR;
     }
 
     if (b->bot_verts[0] < 0 || b->bot_verts[1] < 0 || b->bot_verts[2] < 0) {
-	/* setting thickness for all faces */
-	(void)Tcl_VarEval(s->interp, "cad_dialog ", ".bot_err ",
+	if (Tcl_VarEval(s->interp, "cad_dialog ", ".bot_err ",
 		"$mged_gui(mged,screen) ", "{Setting Thickness for All Faces} ",
 		"{No face is selected, so this operation will modify all the faces in this BOT} ",
-		"\"\" ", "0 ", "OK ", "CANCEL ", (char *)NULL);
+		"\"\" ", "0 ", "OK ", "CANCEL ", (char *)NULL) != TCL_OK) {
+	    bu_log("cad_dialog failed: %s\n", Tcl_GetStringResult(s->interp));
+	    return BRLCAD_ERROR;
+	}
 	if (atoi(Tcl_GetStringResult(s->interp)))
 	    return BRLCAD_ERROR;
-
-	for (size_t i=0; i<bot->num_faces; i++)
-	    bot->thickness[i] = MEDIT(s)->e_para[0];
-    } else {
-	/* setting thickness for just one face */
-
-	face_state = -1;
-	for (size_t i=0; i < bot->num_faces; i++) {
-	    if (b->bot_verts[0] == bot->faces[i*3] &&
-		    b->bot_verts[1] == bot->faces[i*3+1] &&
-		    b->bot_verts[2] == bot->faces[i*3+2])
-	    {
-		face_no = i;
-		face_state = 0;
-		break;
-	    }
-	}
-	if (face_state > -1) {
-	    bu_log("Cannot find face with vertices %d %d %d!\n", V3ARGS(b->bot_verts));
-	    return BRLCAD_ERROR;
-	}
-
-	bot->thickness[face_no] = MEDIT(s)->e_para[0];
     }
 
     return BRLCAD_OK;

@@ -87,8 +87,9 @@ rt_edit_ars_prim_edit_create(struct rt_edit *UNUSED(s))
 }
 
 C_DECL void
-rt_edit_ars_prim_edit_destroy(struct rt_ars_edit *e)
+rt_edit_ars_prim_edit_destroy(void *ptr)
 {
+    struct rt_ars_edit *e = (struct rt_ars_edit *)ptr;
     if (!e)
 	return;
 
@@ -564,7 +565,7 @@ ecmd_ars_dup_crv(struct rt_edit *s)
     for (size_t i=0; i<ars->ncurves+1; i++) {
 	size_t j, k;
 
-	curves[i] = (fastf_t *)bu_malloc(ars->pts_per_curve * 3 * sizeof(fastf_t),
+	curves[i] = (fastf_t *)bu_malloc((ars->pts_per_curve + 1) * 3 * sizeof(fastf_t),
 		"new curves[i]");
 
 	if (i <= (size_t)a->es_ars_crv)
@@ -572,7 +573,7 @@ ecmd_ars_dup_crv(struct rt_edit *s)
 	else
 	    k = i - 1;
 
-	for (j=0; j<ars->pts_per_curve*3; j++)
+	for (j=0; j<(ars->pts_per_curve + 1)*3; j++)
 	    curves[i][j] = ars->curves[k][j];
     }
 
@@ -605,7 +606,7 @@ ecmd_ars_dup_col(struct rt_edit *s)
     for (size_t i=0; i<ars->ncurves; i++) {
 	size_t j, k;
 
-	curves[i] = (fastf_t *)bu_malloc((ars->pts_per_curve + 1) * 3 * sizeof(fastf_t),
+	curves[i] = (fastf_t *)bu_malloc((ars->pts_per_curve + 2) * 3 * sizeof(fastf_t),
 		"new curves[i]");
 
 	for (j=0; j<ars->pts_per_curve+1; j++) {
@@ -618,6 +619,7 @@ ecmd_ars_dup_col(struct rt_edit *s)
 	    curves[i][j*3+1] = ars->curves[i][k*3+1];
 	    curves[i][j*3+2] = ars->curves[i][k*3+2];
 	}
+	VMOVE(&curves[i][(ars->pts_per_curve + 1)*3], curves[i]);
     }
 
     for (size_t i=0; i<ars->ncurves; i++)
@@ -747,22 +749,22 @@ ecmd_ars_insert_crv(struct rt_edit *s)
 
     for (size_t i = 0; i < ars->ncurves + 1; i++) {
 	curves[i] = (fastf_t *)bu_malloc(
-		ars->pts_per_curve * 3 * sizeof(fastf_t),
+		(ars->pts_per_curve + 1) * 3 * sizeof(fastf_t),
 		"ars insert curves[i]");
 
 	if ((int)i <= ins_after) {
 	    /* before or at insertion point: copy as-is */
-	    for (size_t j = 0; j < ars->pts_per_curve * 3; j++)
+	    for (size_t j = 0; j < (ars->pts_per_curve + 1) * 3; j++)
 		curves[i][j] = ars->curves[i][j];
 	} else if ((int)i == ins_after + 1) {
 	    /* the new interpolated curve */
 	    fastf_t *c0 = ars->curves[ins_after];
 	    fastf_t *c1 = ars->curves[next_crv];
-	    for (size_t j = 0; j < ars->pts_per_curve * 3; j++)
+	    for (size_t j = 0; j < (ars->pts_per_curve + 1) * 3; j++)
 		curves[i][j] = 0.5 * (c0[j] + c1[j]);
 	} else {
 	    /* after insertion point: copy from i-1 */
-	    for (size_t j = 0; j < ars->pts_per_curve * 3; j++)
+	    for (size_t j = 0; j < (ars->pts_per_curve + 1) * 3; j++)
 		curves[i][j] = ars->curves[i - 1][j];
 	}
     }
@@ -808,10 +810,10 @@ ecmd_ars_del_crv(struct rt_edit *s)
 	if (i == (size_t)a->es_ars_crv)
 	    continue;
 
-	curves[k] = (fastf_t *)bu_malloc(ars->pts_per_curve * 3 * sizeof(fastf_t),
+	curves[k] = (fastf_t *)bu_malloc((ars->pts_per_curve + 1) * 3 * sizeof(fastf_t),
 		"new curves[k]");
 
-	for (j=0; j<ars->pts_per_curve*3; j++)
+	for (j=0; j<(ars->pts_per_curve + 1)*3; j++)
 	    curves[k][j] = ars->curves[i][j];
 
 	k++;
@@ -843,7 +845,7 @@ ecmd_ars_del_col(struct rt_edit *s)
 	return;
     }
 
-    if (a->es_ars_col == 0 || (size_t)a->es_ars_col == ars->ncurves - 1) {
+    if (a->es_ars_col == 0 || (size_t)a->es_ars_col == ars->pts_per_curve - 1) {
 	bu_log("Cannot delete first or last column\n");
 	return;
     }
@@ -860,7 +862,7 @@ ecmd_ars_del_col(struct rt_edit *s)
 	size_t j, k;
 
 
-	curves[i] = (fastf_t *)bu_malloc((ars->pts_per_curve - 1) * 3 * sizeof(fastf_t),
+	curves[i] = (fastf_t *)bu_malloc(ars->pts_per_curve * 3 * sizeof(fastf_t),
 		"new curves[i]");
 
 	k = 0;
@@ -873,6 +875,7 @@ ecmd_ars_del_col(struct rt_edit *s)
 	    curves[i][k*3+2] = ars->curves[i][j*3+2];
 	    k++;
 	}
+	VMOVE(&curves[i][(ars->pts_per_curve - 1)*3], curves[i]);
     }
 
     for (size_t i=0; i<ars->ncurves; i++)
@@ -1155,6 +1158,11 @@ rt_edit_ars_edit(struct rt_edit *s)
 	default:
 	    return edit_generic(s);
     }
+
+    /* Native edits may move the first point or resize a curve. */
+    struct rt_ars_internal *ars = (struct rt_ars_internal *)s->es_int.idb_ptr;
+    for (size_t i = 0; i < ars->ncurves; i++)
+	VMOVE(&ars->curves[i][ars->pts_per_curve * 3], ars->curves[i]);
 
     return 0;
 }

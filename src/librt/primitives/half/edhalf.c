@@ -159,14 +159,14 @@ rt_edit_hlf_get_params(struct rt_edit *s, int cmd_id, fastf_t *vals)
 {
     struct rt_half_internal *haf;
     if (!s || !vals)
-	return BRLCAD_ERROR;
+	return -1;
     haf = (struct rt_half_internal *)s->es_int.idb_ptr;
     RT_HALF_CK_MAGIC(haf);
     if (cmd_id == ECMD_HALF_SET_D) {
 	vals[0] = haf->eqn[W] * s->base2local;
-	return BRLCAD_OK;
+	return 1;
     }
-    return BRLCAD_ERROR;
+    return 0;
 }
 
 /*

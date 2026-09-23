@@ -3991,7 +3991,7 @@ rt_pipe_import4(
 
     pip = (struct rt_pipe_internal *)ip->idb_ptr;
     pip->pipe_magic = RT_PIPE_INTERNAL_MAGIC;
-    pip->pipe_count = ntohl(*(uint32_t *)rp->pwr.pwr_pt_count);
+    pip->pipe_count = BU_GLONG((const unsigned char *)rp->pwr.pwr_pt_count);
 
     /*
      * Walk the array of segments in reverse order, allocating a
@@ -4166,7 +4166,7 @@ rt_pipe_import5(
     }
     BU_CK_EXTERNAL(ep);
 
-    pipe_count = ntohl(*(uint32_t *)ep->ext_buf);
+    pipe_count = BU_GLONG((const unsigned char *)ep->ext_buf);
     double_count = pipe_count * 6;
     byte_count = double_count * SIZEOF_NETWORK_DOUBLE;
     total_count = 4 + byte_count;

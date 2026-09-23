@@ -27,7 +27,7 @@
  * Reference SPH: center=(0,0,0), radius=1.0.
  * Internally: V=(0,0,0), A=(1,0,0), B=(0,1,0), C=(0,0,1).
  *
- * SPH has no ft_set_edit_mode (NULL). It uses the ELL edit path
+ * SPH uses the ELL edit path for generic transforms
  * which falls back to edit_generic for RT_PARAMS_EDIT_SCALE/TRANS/ROT.
  *
  * RT_PARAMS_EDIT_SCALE (es_scale=2, keypoint=(0,0,0)):
@@ -144,12 +144,44 @@ rt_edit_test_sph(void)
     struct rt_ell_internal *ell =
 	(struct rt_ell_internal *)s->es_int.idb_ptr;
 
+    /* Parameter getters must report value counts and return local lengths. */
+    {
+        const fastf_t inch = 25.4;
+        const struct rt_edit_prim_desc *desc = EDOBJ[ID_SPH].ft_edit_desc();
+        if (!desc || desc->ncmd != 2)
+            bu_exit(1, "SPH descriptor is incomplete\n");
+        VSET(ell->v, inch, 2.0 * inch, 3.0 * inch);
+        VSET(ell->a, inch, 0.0, 0.0);
+        VSET(ell->b, 0.0, inch, 0.0);
+        VSET(ell->c, 0.0, 0.0, inch);
+        s->local2base = inch;
+        s->base2local = 1.0 / inch;
+        fastf_t values[3] = {0.0, 0.0, 0.0};
+        if (EDOBJ[ID_SPH].ft_edit_get_params(s, desc->cmds[0].cmd_id,
+                                             values) != 3 ||
+            !NEAR_EQUAL(values[0], 1.0, VUNITIZE_TOL) ||
+            !NEAR_EQUAL(values[1], 2.0, VUNITIZE_TOL) ||
+            !NEAR_EQUAL(values[2], 3.0, VUNITIZE_TOL))
+            bu_exit(1, "SPH center getter did not return local units\n");
+        if (EDOBJ[ID_SPH].ft_edit_get_params(s, desc->cmds[1].cmd_id,
+                                             values) != 1 ||
+            !NEAR_EQUAL(values[0], 1.0, VUNITIZE_TOL))
+            bu_exit(1, "SPH radius getter did not return local units\n");
+        if (EDOBJ[ID_SPH].ft_edit_get_params(s, -1, values) != 0 ||
+            EDOBJ[ID_SPH].ft_edit_get_params(s, desc->cmds[0].cmd_id,
+                                             NULL) >= 0)
+            bu_exit(1, "SPH getter accepted invalid arguments\n");
+        sph_reset(s, ell);
+        s->local2base = 1.0;
+        s->base2local = 1.0;
+    }
+
     vect_t mousevec;
 
     /* ================================================================
      * RT_PARAMS_EDIT_SCALE (scale=2 about keypoint (0,0,0))
      *
-     * SPH has no ft_set_edit_mode (NULL), so use rt_edit_set_edflag directly.
+     * Select the generic edit flag directly.
      * Uniform scale: all axis vectors double in length.
      *   V=(0,0,0) → (0,0,0)
      *   A=(1,0,0) → (2,0,0)
@@ -341,6 +373,51 @@ rt_edit_test_sph(void)
 		    V3ARGS(kp_world));
 	bu_log("RT_MATRIX_EDIT_TRANS_MODEL_XYZ SUCCESS: "
 	       "keypoint maps to (%g,%g,%g)\n", V3ARGS(kp_world));
+    }
+
+    /* Native sphere commands accept database-local lengths. */
+    {
+        const fastf_t inch = 25.4;
+        sph_reset(s, ell);
+        s->local2base = inch;
+        s->base2local = 1.0 / inch;
+
+        EDOBJ[ID_SPH].ft_set_edit_mode(s, EDOBJ[ID_SPH].ft_edit_desc()->cmds[0].cmd_id);
+        s->e_inpara = 3;
+        VSET(s->e_para, 2.0, 3.0, 4.0);
+        rt_edit_process(s);
+        point_t expected_center = {2.0 * inch, 3.0 * inch, 4.0 * inch};
+        if (!VNEAR_EQUAL(ell->v, expected_center, VUNITIZE_TOL))
+            bu_exit(1, "SPH center command did not convert local units\n");
+
+        EDOBJ[ID_SPH].ft_set_edit_mode(s, EDOBJ[ID_SPH].ft_edit_desc()->cmds[1].cmd_id);
+        s->e_inpara = 1;
+        s->e_para[0] = 2.5;
+        rt_edit_process(s);
+        if (!NEAR_EQUAL(MAGNITUDE(ell->a), 2.5 * inch, VUNITIZE_TOL) ||
+            !NEAR_EQUAL(MAGNITUDE(ell->b), 2.5 * inch, VUNITIZE_TOL) ||
+            !NEAR_EQUAL(MAGNITUDE(ell->c), 2.5 * inch, VUNITIZE_TOL))
+            bu_exit(1, "SPH radius command did not convert local units\n");
+
+        s->e_inpara = 1;
+        s->e_para[0] = 0.0;
+        if (EDOBJ[ID_SPH].ft_edit(s) != BRLCAD_ERROR ||
+            !NEAR_EQUAL(MAGNITUDE(ell->a), 2.5 * inch, VUNITIZE_TOL))
+            bu_exit(1, "SPH radius command accepted an invalid radius\n");
+
+        VSETALL(ell->a, 0.0);
+        VSETALL(ell->b, 0.0);
+        VSETALL(ell->c, 0.0);
+        s->e_inpara = 1;
+        s->e_para[0] = 2.0;
+        rt_edit_process(s);
+        vect_t expected_a = {2.0 * inch, 0.0, 0.0};
+        vect_t expected_b = {0.0, 2.0 * inch, 0.0};
+        vect_t expected_c = {0.0, 0.0, 2.0 * inch};
+        if (!VNEAR_EQUAL(ell->a, expected_a, VUNITIZE_TOL) ||
+            !VNEAR_EQUAL(ell->b, expected_b, VUNITIZE_TOL) ||
+            !VNEAR_EQUAL(ell->c, expected_c, VUNITIZE_TOL))
+            bu_exit(1, "SPH radius command did not restore degenerate axes\n");
     }
 
     rt_edit_destroy(s);

@@ -22,7 +22,7 @@
  * Test editing of DSP (displaced surface) primitive parameters.
  *
  * Reference DSP: dsp_stom = IDN, dsp_mtos = IDN, dsp_xcnt=8, dsp_ycnt=8.
- * No data file; dsp_buf=NULL (matrix edit operations don't need data).
+ * A platform temporary file supplies the displacement samples.
  *
  * ECMD_DSP_SCALE_X (e_inpara=1, e_para[0]=2):
  *   dsp_scale sets m=IDN, m[MSX=0]=2, then applies xform about keypoint.
@@ -51,6 +51,8 @@
 
 #include "bnetwork.h"
 #include "vmath.h"
+#include "bu/app.h"
+#include "bu/file.h"
 #include "bu/log.h"
 #include "bu/malloc.h"
 #include "bu/str.h"
@@ -69,14 +71,13 @@
 #define ECMD_DSP_SET_DATASRC    25062
 
 
-static const char *DSP_DATA_FILE = "/tmp/rt_edit_test_dsp.data";
-
 static void
-create_dsp_data_file(unsigned int xcnt, unsigned int ycnt)
+create_dsp_data_file(char *path, size_t path_len,
+		     unsigned int xcnt, unsigned int ycnt)
 {
-    FILE *f = fopen(DSP_DATA_FILE, "wb");
+    FILE *f = bu_temp_file(path, path_len);
     if (!f)
-	bu_exit(1, "ERROR: Cannot create DSP data file %s\n", DSP_DATA_FILE);
+	bu_exit(1, "ERROR: Cannot create DSP data file\n");
     size_t n = xcnt * ycnt;
     uint16_t *buf = (uint16_t *)bu_calloc(n, sizeof(uint16_t), "dsp tmp");
     for (size_t i = 0; i < n; i++)
@@ -84,28 +85,23 @@ create_dsp_data_file(unsigned int xcnt, unsigned int ycnt)
     if (fwrite(buf, sizeof(uint16_t), n, f) != n) {
 	bu_free(buf, "dsp tmp");
 	fclose(f);
-	bu_exit(1, "ERROR: Cannot write DSP data file %s\n", DSP_DATA_FILE);
+	bu_exit(1, "ERROR: Cannot write DSP data file\n");
     }
     bu_free(buf, "dsp tmp");
     if (fclose(f) != 0)
-	bu_exit(1, "ERROR: Cannot close DSP data file %s\n", DSP_DATA_FILE);
+	bu_exit(1, "ERROR: Cannot close DSP data file\n");
 }
 
 
 struct directory *
-make_dsp(struct rt_wdb *wdbp)
+make_dsp(struct rt_wdb *wdbp, const char *data_path,
+	 unsigned int xcnt, unsigned int ycnt)
 {
     const char *objname = "dsp";
-    unsigned int xcnt = 8, ycnt = 8;
 
-    create_dsp_data_file(xcnt, ycnt);
-
-    /* Set dbi_filepath so DSP can find the temp file in /tmp */
-    /* Matches format expected by db_close: bu_argv_free(2, ...) */
-    char **filepath = (char **)bu_malloc(3 * sizeof(char *), "dbi_filepath[3]");
+    /* DSP import requires a search path even for a rooted filename. */
+    char **filepath = (char **)bu_calloc(2, sizeof(char *), "dbi_filepath");
     filepath[0] = bu_strdup(".");
-    filepath[1] = bu_strdup("/tmp");
-    filepath[2] = NULL;
     wdbp->dbip->dbi_filepath = filepath;
 
     struct rt_dsp_internal *dsp;
@@ -122,8 +118,7 @@ make_dsp(struct rt_wdb *wdbp)
     MAT_IDN(dsp->dsp_stom);
     MAT_IDN(dsp->dsp_mtos);
     BU_VLS_INIT(&dsp->dsp_name);
-    /* Use just the filename (not the /tmp/ path) so bu_open_mapped_file_with_path can find it */
-    bu_vls_strcpy(&dsp->dsp_name, "rt_edit_test_dsp.data");
+    bu_vls_strcpy(&dsp->dsp_name, data_path);
 
     wdb_export(wdbp, objname, (void *)dsp, ID_DSP, 1.0);
 
@@ -159,7 +154,10 @@ rt_edit_test_dsp(void)
 
     struct rt_wdb *wdbp = wdb_dbopen(dbip, RT_WDB_TYPE_DB_INMEM);
 
-    struct directory *dp = make_dsp(wdbp);
+    const unsigned int xcnt = 8, ycnt = 8;
+    char data_path[MAXPATHLEN] = {0};
+    create_dsp_data_file(data_path, sizeof(data_path), xcnt, ycnt);
+    struct directory *dp = make_dsp(wdbp, data_path, xcnt, ycnt);
 
     struct bn_tol tol = BN_TOL_INIT_TOL;
     struct db_full_path fp;
@@ -499,6 +497,8 @@ bu_log("RT_MATRIX_EDIT_TRANS_MODEL_XYZ SUCCESS: "
 
     rt_edit_destroy(s);
     db_close(dbip);
+    if (!bu_file_delete(data_path))
+	bu_exit(1, "ERROR: Cannot remove DSP data file\n");
     return 0;
 }
 

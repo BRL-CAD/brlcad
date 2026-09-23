@@ -194,7 +194,7 @@ rt_edit_sph_get_params(struct rt_edit *s, int cmd_id, fastf_t *vals)
 {
     struct rt_ell_internal *ell;
     if (!s || !vals)
-	return BRLCAD_ERROR;
+	return -1;
     ell = (struct rt_ell_internal *)s->es_int.idb_ptr;
     RT_ELL_CK_MAGIC(ell);
 
@@ -203,14 +203,14 @@ rt_edit_sph_get_params(struct rt_edit *s, int cmd_id, fastf_t *vals)
 	    vals[0] = ell->v[X] * s->base2local;
 	    vals[1] = ell->v[Y] * s->base2local;
 	    vals[2] = ell->v[Z] * s->base2local;
-	    return BRLCAD_OK;
+	    return 3;
 	case ECMD_SPH_SCALE_R:
 	    vals[0] = MAGNITUDE(ell->a) * s->base2local;
-	    return BRLCAD_OK;
+	    return 1;
 	default:
 	    break;
     }
-    return BRLCAD_ERROR;
+    return 0;
 }
 
 /*
