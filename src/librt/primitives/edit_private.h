@@ -55,6 +55,14 @@ edit_sscale(struct rt_edit *s);
 int
 edit_prepare_length_scale(struct rt_edit *s, fastf_t current);
 
+/* Scale one vector magnitude or scalar length. */
+int
+edit_scale_length(struct rt_edit *s, vect_t *axis, fastf_t *scalar);
+
+/* Scale A to a requested length, then match B and C to it. */
+int
+edit_scale_equal_axes(struct rt_edit *s, vect_t a, vect_t b, vect_t c);
+
 /* translate solid */
 void
 edit_stra(struct rt_edit *s);

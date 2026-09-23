@@ -303,110 +303,24 @@ rt_edit_superell_read_params(
     return BRLCAD_OK;
 }
 
-/* scale vector A */
-void
-ecmd_superell_scale_a(struct rt_edit *s)
-{
-    struct rt_superell_internal *superell =
-	(struct rt_superell_internal *)s->es_int.idb_ptr;
-    RT_SUPERELL_CK_MAGIC(superell);
-    if (s->e_inpara) {
-	/* take s->e_mat[15] (path scaling) into account */
-	s->es_scale = s->e_para[0] * s->e_mat[15] /
-	    MAGNITUDE(superell->a);
-    }
-    VSCALE(superell->a, superell->a, s->es_scale);
-}
-
-/* scale vector B */
-void
-ecmd_superell_scale_b(struct rt_edit *s)
-{
-    struct rt_superell_internal *superell =
-	(struct rt_superell_internal *)s->es_int.idb_ptr;
-    RT_SUPERELL_CK_MAGIC(superell);
-    if (s->e_inpara) {
-	/* take s->e_mat[15] (path scaling) into account */
-	s->es_scale = s->e_para[0] * s->e_mat[15] /
-	    MAGNITUDE(superell->b);
-    }
-    VSCALE(superell->b, superell->b, s->es_scale);
-}
-
-/* scale vector C */
-void
-ecmd_superell_scale_c(struct rt_edit *s)
-{
-    struct rt_superell_internal *superell =
-	(struct rt_superell_internal *)s->es_int.idb_ptr;
-    RT_SUPERELL_CK_MAGIC(superell);
-    if (s->e_inpara) {
-	/* take s->e_mat[15] (path scaling) into account */
-	s->es_scale = s->e_para[0] * s->e_mat[15] /
-	    MAGNITUDE(superell->c);
-    }
-    VSCALE(superell->c, superell->c, s->es_scale);
-}
-
-/* set A, B, and C length the same */
-void
-ecmd_superell_scale_abc(struct rt_edit *s)
-{
-    fastf_t ma, mb;
-    struct rt_superell_internal *superell =
-	(struct rt_superell_internal *)s->es_int.idb_ptr;
-    RT_SUPERELL_CK_MAGIC(superell);
-    if (s->e_inpara) {
-	/* take s->e_mat[15] (path scaling) into account */
-	s->es_scale = s->e_para[0] * s->e_mat[15] /
-	    MAGNITUDE(superell->a);
-    }
-    VSCALE(superell->a, superell->a, s->es_scale);
-    ma = MAGNITUDE(superell->a);
-    mb = MAGNITUDE(superell->b);
-    VSCALE(superell->b, superell->b, ma/mb);
-    mb = MAGNITUDE(superell->c);
-    VSCALE(superell->c, superell->c, ma/mb);
-}
-
 static int
 rt_edit_superell_pscale(struct rt_edit *s)
 {
-    if (s->e_inpara > 1) {
-	bu_vls_printf(s->log_str, "ERROR: only one argument needed\n");
-	s->e_inpara = 0;
-	return BRLCAD_ERROR;
-    }
-
-    if (s->e_inpara) {
-	if (s->e_para[0] <= 0.0) {
-	    bu_vls_printf(s->log_str, "ERROR: SCALE FACTOR <= 0\n");
-	    s->e_inpara = 0;
-	    return BRLCAD_ERROR;
-	}
-
-	/* must convert to base units */
-	s->e_para[0] *= s->local2base;
-	s->e_para[1] *= s->local2base;
-	s->e_para[2] *= s->local2base;
-    }
-
+    struct rt_superell_internal *superell =
+	(struct rt_superell_internal *)s->es_int.idb_ptr;
+    RT_SUPERELL_CK_MAGIC(superell);
     switch (s->edit_flag) {
 	case ECMD_SUPERELL_SCALE_A:
-	    ecmd_superell_scale_a(s);
-	    break;
+	    return edit_scale_length(s, &superell->a, NULL);
 	case ECMD_SUPERELL_SCALE_B:
-	    ecmd_superell_scale_b(s);
-	    break;
+	    return edit_scale_length(s, &superell->b, NULL);
 	case ECMD_SUPERELL_SCALE_C:
-	    ecmd_superell_scale_c(s);
-	    break;
+	    return edit_scale_length(s, &superell->c, NULL);
 	case ECMD_SUPERELL_SCALE_ABC:
-	    ecmd_superell_scale_abc(s);
-	    break;
-    };
-
-    return 0;
+	    return edit_scale_equal_axes(s, superell->a, superell->b, superell->c);
+	default:
+	    return BRLCAD_ERROR;
+    }
 }
 
 C_DECL int

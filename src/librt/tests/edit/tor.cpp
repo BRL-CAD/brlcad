@@ -24,6 +24,8 @@
 
 #include "common.h"
 
+#include <math.h>
+
 #include "vmath.h"
 #include "bu/avs.h"
 #include "bu/env.h"
@@ -604,6 +606,67 @@ if (!VNEAR_EQUAL(kp_world, expected, VUNITIZE_TOL))
 bu_log("RT_MATRIX_EDIT_TRANS_MODEL_XYZ SUCCESS: "
        "keypoint maps to (%g,%g,%g)\n", V3ARGS(kp_world));
     }
+
+    const fastf_t inch = 25.4;
+    tor_reset(s, edit_tor, cmp_tor, orig_tor);
+    s->local2base = inch;
+    s->base2local = 1.0 / inch;
+    EDOBJ[dp->d_minor_type].ft_set_edit_mode(s, ECMD_TOR_R1);
+    s->e_inpara = 1;
+    s->e_para[0] = 1.0;
+    if (rt_edit_process(s) != BRLCAD_OK ||
+	!NEAR_EQUAL(edit_tor->r_a, inch, VUNITIZE_TOL) ||
+	!NEAR_EQUAL(s->e_para[0], 1.0, VUNITIZE_TOL))
+	bu_exit(1, "ERROR: TOR major radius did not preserve local input\n");
+    s->e_inpara = 1;
+    if (rt_edit_process(s) != BRLCAD_OK ||
+	!NEAR_EQUAL(edit_tor->r_a, inch, VUNITIZE_TOL))
+	bu_exit(1, "ERROR: TOR repeated major radius edit compounded units\n");
+
+    tor_reset(s, edit_tor, cmp_tor, orig_tor);
+    EDOBJ[dp->d_minor_type].ft_set_edit_mode(s, ECMD_TOR_R2);
+    s->e_inpara = 1;
+    s->e_para[0] = 0.1;
+    if (rt_edit_process(s) != BRLCAD_OK ||
+	!NEAR_EQUAL(edit_tor->r_h, 0.1 * inch, VUNITIZE_TOL))
+	bu_exit(1, "ERROR: TOR minor radius ignored local units\n");
+
+    tor_reset(s, edit_tor, cmp_tor, orig_tor);
+    EDOBJ[dp->d_minor_type].ft_set_edit_mode(s, ECMD_TOR_R1);
+    s->e_inpara = 1;
+    s->e_para[0] = 0.05;
+    if (rt_edit_process(s) != BRLCAD_ERROR ||
+	!NEAR_EQUAL(edit_tor->r_a, orig_tor->r_a, VUNITIZE_TOL))
+	bu_exit(1, "ERROR: TOR accepted a major radius below its minor radius\n");
+
+    tor_reset(s, edit_tor, cmp_tor, orig_tor);
+    EDOBJ[dp->d_minor_type].ft_set_edit_mode(s, ECMD_TOR_R2);
+    s->e_inpara = 1;
+    s->e_para[0] = 1.0;
+    if (rt_edit_process(s) != BRLCAD_ERROR ||
+	!NEAR_EQUAL(edit_tor->r_h, orig_tor->r_h, VUNITIZE_TOL))
+	bu_exit(1, "ERROR: TOR accepted a minor radius above its major radius\n");
+
+    tor_reset(s, edit_tor, cmp_tor, orig_tor);
+    EDOBJ[dp->d_minor_type].ft_set_edit_mode(s, ECMD_TOR_R2);
+    if (rt_edit_process(s) != BRLCAD_OK ||
+	!NEAR_EQUAL(edit_tor->r_h, orig_tor->r_h, VUNITIZE_TOL))
+	bu_exit(1, "ERROR: empty TOR minor radius edit changed geometry\n");
+
+    tor_reset(s, edit_tor, cmp_tor, orig_tor);
+    EDOBJ[dp->d_minor_type].ft_set_edit_mode(s, ECMD_TOR_R1);
+    s->es_scale = 2.5;
+    if (rt_edit_process(s) != BRLCAD_OK ||
+	!NEAR_EQUAL(edit_tor->r_a, 2.5 * orig_tor->r_a, VUNITIZE_TOL))
+	bu_exit(1, "ERROR: TOR knob scale incorrectly used local units\n");
+
+    tor_reset(s, edit_tor, cmp_tor, orig_tor);
+    EDOBJ[dp->d_minor_type].ft_set_edit_mode(s, ECMD_TOR_R2);
+    s->e_inpara = 1;
+    s->e_para[0] = NAN;
+    if (rt_edit_process(s) != BRLCAD_ERROR ||
+	!NEAR_EQUAL(edit_tor->r_h, orig_tor->r_h, VUNITIZE_TOL))
+	bu_exit(1, "ERROR: TOR accepted a non-finite radius\n");
 
     rt_edit_destroy(s);
 

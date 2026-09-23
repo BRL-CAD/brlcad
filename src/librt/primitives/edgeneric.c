@@ -115,6 +115,7 @@ edit_prepare_length_scale(struct rt_edit *s, fastf_t current)
 	bu_vls_printf(s->log_str, "Cannot scale an invalid length\n");
 	return BRLCAD_ERROR;
     }
+    fastf_t scale = s->es_scale;
 
     if (s->e_inpara) {
 	/* Numeric lengths are local; e_mat[15] accounts for path scaling. */
@@ -124,13 +125,71 @@ edit_prepare_length_scale(struct rt_edit *s, fastf_t current)
 	    bu_vls_printf(s->log_str, "Length must be finite and positive\n");
 	    return BRLCAD_ERROR;
 	}
-	s->es_scale = requested / current;
+	scale = requested / current;
     }
 
-    if (!isfinite(s->es_scale) || s->es_scale <= 0.0) {
+    if (!isfinite(scale) || scale <= 0.0) {
 	bu_vls_printf(s->log_str, "Scale must be finite and positive\n");
 	return BRLCAD_ERROR;
     }
+    s->es_scale = scale;
+    return BRLCAD_OK;
+}
+
+int
+edit_scale_length(struct rt_edit *s, vect_t *axis, fastf_t *scalar)
+{
+    if ((axis && scalar) || (!axis && !scalar)) {
+	bu_vls_printf(s->log_str, "Exactly one length target is required\n");
+	return BRLCAD_ERROR;
+    }
+    if (!s->e_inpara && ZERO(s->es_scale))
+	return BRLCAD_OK;
+
+    fastf_t current = axis ? MAGNITUDE(*axis) : *scalar;
+    if (edit_prepare_length_scale(s, current) != BRLCAD_OK)
+	return BRLCAD_ERROR;
+    fastf_t target = current * s->es_scale;
+    if (!isfinite(target) || target <= 0.0) {
+	bu_vls_printf(s->log_str, "Length must be finite and positive\n");
+	return BRLCAD_ERROR;
+    }
+    if (axis)
+	VSCALE(*axis, *axis, s->es_scale);
+    else
+	*scalar = target;
+    return BRLCAD_OK;
+}
+
+int
+edit_scale_equal_axes(struct rt_edit *s, vect_t a, vect_t b, vect_t c)
+{
+    if (!s->e_inpara && ZERO(s->es_scale))
+	return BRLCAD_OK;
+
+    fastf_t a_length = MAGNITUDE(a);
+    if (edit_prepare_length_scale(s, a_length) != BRLCAD_OK)
+	return BRLCAD_ERROR;
+    fastf_t b_length = MAGNITUDE(b);
+    fastf_t c_length = MAGNITUDE(c);
+    fastf_t target = a_length * s->es_scale;
+    if (!isfinite(b_length) || b_length <= 0.0 ||
+	!isfinite(c_length) || c_length <= 0.0 ||
+	!isfinite(target) || target <= 0.0) {
+	bu_vls_printf(s->log_str, "Cannot scale invalid axes\n");
+	return BRLCAD_ERROR;
+    }
+
+    fastf_t b_scale = target / b_length;
+    fastf_t c_scale = target / c_length;
+    if (!isfinite(b_scale) || !isfinite(c_scale)) {
+	bu_vls_printf(s->log_str, "Cannot scale invalid axes\n");
+	return BRLCAD_ERROR;
+    }
+
+    VSCALE(a, a, s->es_scale);
+    VSCALE(b, b, b_scale);
+    VSCALE(c, c, c_scale);
     return BRLCAD_OK;
 }
 

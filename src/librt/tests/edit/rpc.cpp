@@ -406,6 +406,47 @@ bu_log("RT_MATRIX_EDIT_TRANS_MODEL_XYZ SUCCESS: "
        "keypoint maps to (%g,%g,%g)\n", V3ARGS(kp_world));
     }
 
+    const fastf_t inch = 25.4;
+    s->local2base = inch;
+    s->base2local = 1.0 / inch;
+    const struct {
+	int mode;
+	fastf_t length;
+    } length_cases[] = {
+	{ECMD_RPC_B, 0.25},
+	{ECMD_RPC_H, 0.5},
+	{ECMD_RPC_R, 0.1}
+    };
+    for (const auto &c : length_cases) {
+	rpc_reset(s, edit_rpc, orig_rpc, cmp_rpc);
+	EDOBJ[dp->d_minor_type].ft_set_edit_mode(s, c.mode);
+	s->e_inpara = 1;
+	s->e_para[0] = c.length;
+	if (rt_edit_process(s) != BRLCAD_OK ||
+	    !NEAR_EQUAL(s->e_para[0], c.length, VUNITIZE_TOL))
+	    bu_exit(1, "ERROR: RPC length edit changed its local input\n");
+	s->e_inpara = 1;
+	if (rt_edit_process(s) != BRLCAD_OK)
+	    bu_exit(1, "ERROR: RPC repeated length edit failed\n");
+	fastf_t actual = c.mode == ECMD_RPC_B ? MAGNITUDE(edit_rpc->rpc_B) :
+	    c.mode == ECMD_RPC_H ? MAGNITUDE(edit_rpc->rpc_H) : edit_rpc->rpc_r;
+	if (!NEAR_EQUAL(actual, c.length * inch, VUNITIZE_TOL))
+	    bu_exit(1, "ERROR: RPC length edit ignored local units\n");
+    }
+
+    rpc_reset(s, edit_rpc, orig_rpc, cmp_rpc);
+    EDOBJ[dp->d_minor_type].ft_set_edit_mode(s, ECMD_RPC_R);
+    if (rt_edit_process(s) != BRLCAD_OK ||
+	!NEAR_EQUAL(edit_rpc->rpc_r, orig_rpc->rpc_r, VUNITIZE_TOL))
+	bu_exit(1, "ERROR: empty RPC radius edit changed geometry\n");
+
+    rpc_reset(s, edit_rpc, orig_rpc, cmp_rpc);
+    EDOBJ[dp->d_minor_type].ft_set_edit_mode(s, ECMD_RPC_R);
+    s->es_scale = 2.5;
+    if (rt_edit_process(s) != BRLCAD_OK ||
+	!NEAR_EQUAL(edit_rpc->rpc_r, 2.5 * orig_rpc->rpc_r, VUNITIZE_TOL))
+	bu_exit(1, "ERROR: RPC knob scale incorrectly used local units\n");
+
     rt_edit_destroy(s);
     db_close(dbip);
     return 0;

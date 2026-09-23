@@ -41,6 +41,9 @@
 #define ECMD_ETO_RD		21058
 #define ECMD_ETO_SCALE_C	21059
 
+/* Keep edited radii safely above the geometric zero tolerance. */
+#define ETO_RADIUS_FLOOR (4.0 * SQRT_SMALL_FASTF)
+
 C_DECL void
 rt_edit_eto_set_edit_mode(struct rt_edit *s, int mode)
 {
@@ -229,37 +232,42 @@ rt_edit_eto_read_params(
 }
 
 /* scale radius 1 (r) of ETO */
-void
+static int
 ecmd_eto_r(struct rt_edit *s)
 {
     struct rt_eto_internal *eto =
 	(struct rt_eto_internal *)s->es_int.idb_ptr;
-    fastf_t ch, cv, dh, newrad;
+    fastf_t ch, cv, dh;
     vect_t Nu;
 
     RT_ETO_CK_MAGIC(eto);
-    if (s->e_inpara) {
-	/* take s->e_mat[15] (path scaling) into account */
-	s->e_para[0] *= s->e_mat[15];
-	newrad = s->e_para[0];
-    } else {
-	newrad = eto->eto_r * s->es_scale;
+    fastf_t newrad = eto->eto_r * s->es_scale;
+    fastf_t c_length = MAGNITUDE(eto->eto_C);
+    if (!isfinite(newrad) || !isfinite(c_length) || c_length <= 0.0) {
+	bu_vls_printf(s->log_str, "Cannot scale an invalid ETO radius\n");
+	return BRLCAD_ERROR;
     }
-    if (newrad < SQRT_SMALL_FASTF) newrad = 4*SQRT_SMALL_FASTF;
+    if (newrad < SQRT_SMALL_FASTF)
+	newrad = ETO_RADIUS_FLOOR;
     VMOVE(Nu, eto->eto_N);
     VUNITIZE(Nu);
     /* get horiz and vert components of C and Rd */
     cv = VDOT(eto->eto_C, Nu);
-    ch = sqrt(VDOT(eto->eto_C, eto->eto_C) - cv * cv);
+    ch = sqrt(fmax(0.0, VDOT(eto->eto_C, eto->eto_C) - cv * cv));
     /* angle between C and Nu */
-    dh = eto->eto_rd * cv / MAGNITUDE(eto->eto_C);
+    dh = eto->eto_rd * cv / c_length;
     /* make sure revolved ellipse doesn't overlap itself */
-    if (ch <= newrad && dh <= newrad)
+
+    if (isfinite(ch) && isfinite(dh) && ch <= newrad && dh <= newrad) {
 	eto->eto_r = newrad;
+	return BRLCAD_OK;
+    }
+    bu_vls_printf(s->log_str, "ETO major radius is too small for its ellipse\n");
+    return BRLCAD_ERROR;
 }
 
 /* scale Rd, ellipse semi-minor axis length, of ETO */
-void
+static int
 ecmd_eto_rd(struct rt_edit *s)
 {
     struct rt_eto_internal *eto =
@@ -268,27 +276,30 @@ ecmd_eto_rd(struct rt_edit *s)
     vect_t Nu;
 
     RT_ETO_CK_MAGIC(eto);
-    if (s->e_inpara) {
-	/* take s->e_mat[15] (path scaling) into account */
-	s->e_para[0] *= s->e_mat[15];
-	newrad = s->e_para[0];
-    } else {
-	newrad = eto->eto_rd * s->es_scale;
-    }
-    if (newrad < SQRT_SMALL_FASTF) newrad = 4*SQRT_SMALL_FASTF;
+    newrad = eto->eto_rd * s->es_scale;
     work = MAGNITUDE(eto->eto_C);
+    if (!isfinite(newrad) || !isfinite(work) || work <= 0.0) {
+	bu_vls_printf(s->log_str, "Cannot scale an invalid ETO tube radius\n");
+	return BRLCAD_ERROR;
+    }
+    if (newrad < SQRT_SMALL_FASTF)
+	newrad = ETO_RADIUS_FLOOR;
     if (newrad <= work) {
 	VMOVE(Nu, eto->eto_N);
 	VUNITIZE(Nu);
 	dh = newrad * VDOT(eto->eto_C, Nu) / work;
 	/* make sure revolved ellipse doesn't overlap itself */
-	if (dh <= eto->eto_r)
+	if (isfinite(dh) && dh <= eto->eto_r) {
 	    eto->eto_rd = newrad;
+	    return BRLCAD_OK;
+	}
     }
+    bu_vls_printf(s->log_str, "ETO tube radius exceeds its major axis or radius\n");
+    return BRLCAD_ERROR;
 }
 
 /* scale vector C */
-void
+static int
 ecmd_eto_scale_c(struct rt_edit *s)
 {
     struct rt_eto_internal *eto =
@@ -297,21 +308,25 @@ ecmd_eto_scale_c(struct rt_edit *s)
     vect_t Nu, Work;
 
     RT_ETO_CK_MAGIC(eto);
-    if (s->e_inpara) {
-	/* take s->e_mat[15] (path scaling) into account */
-	s->e_para[0] *= s->e_mat[15];
-	s->es_scale = s->e_para[0] / MAGNITUDE(eto->eto_C);
+    fastf_t new_length = s->es_scale * MAGNITUDE(eto->eto_C);
+    if (!isfinite(new_length) || new_length <= 0.0) {
+	bu_vls_printf(s->log_str, "ETO axis length must be finite and positive\n");
+	return BRLCAD_ERROR;
     }
-    if (s->es_scale * MAGNITUDE(eto->eto_C) >= eto->eto_rd) {
+    if (new_length >= eto->eto_rd) {
 	VMOVE(Nu, eto->eto_N);
 	VUNITIZE(Nu);
 	VSCALE(Work, eto->eto_C, s->es_scale);
 	/* get horiz and vert comps of C and Rd */
 	cv = VDOT(Work, Nu);
-	ch = sqrt(VDOT(Work, Work) - cv * cv);
-	if (ch <= eto->eto_r)
+	ch = sqrt(fmax(0.0, VDOT(Work, Work) - cv * cv));
+	if (isfinite(ch) && ch <= eto->eto_r) {
 	    VMOVE(eto->eto_C, Work);
+	    return BRLCAD_OK;
+	}
     }
+    bu_vls_printf(s->log_str, "ETO major axis violates its radius constraints\n");
+    return BRLCAD_ERROR;
 }
 
 /* rotate ellipse semi-major axis vector */
@@ -386,38 +401,37 @@ ecmd_eto_rot_c(struct rt_edit *s)
 static int
 rt_edit_eto_pscale(struct rt_edit *s)
 {
-    if (s->e_inpara > 1) {
-	bu_vls_printf(s->log_str, "ERROR: only one argument needed\n");
-	s->e_inpara = 0;
-	return BRLCAD_ERROR;
-    }
+    struct rt_eto_internal *eto = (struct rt_eto_internal *)s->es_int.idb_ptr;
+    RT_ETO_CK_MAGIC(eto);
+    if (!s->e_inpara && ZERO(s->es_scale))
+	return BRLCAD_OK;
 
-    if (s->e_inpara) {
-	if (s->e_para[0] <= 0.0) {
-	    bu_vls_printf(s->log_str, "ERROR: SCALE FACTOR <= 0\n");
-	    s->e_inpara = 0;
+    fastf_t current;
+    switch (s->edit_flag) {
+	case ECMD_ETO_R:
+	    current = eto->eto_r;
+	    break;
+	case ECMD_ETO_RD:
+	    current = eto->eto_rd;
+	    break;
+	case ECMD_ETO_SCALE_C:
+	    current = MAGNITUDE(eto->eto_C);
+	    break;
+	default:
 	    return BRLCAD_ERROR;
-	}
-
-	/* must convert to base units */
-	s->e_para[0] *= s->local2base;
-	s->e_para[1] *= s->local2base;
-	s->e_para[2] *= s->local2base;
     }
+    if (edit_prepare_length_scale(s, current) != BRLCAD_OK)
+	return BRLCAD_ERROR;
 
     switch (s->edit_flag) {
 	case ECMD_ETO_R:
-	    ecmd_eto_r(s);
-	    break;
+	    return ecmd_eto_r(s);
 	case ECMD_ETO_RD:
-	    ecmd_eto_rd(s);
-	    break;
+	    return ecmd_eto_rd(s);
 	case ECMD_ETO_SCALE_C:
-	    ecmd_eto_scale_c(s);
-	    break;
-    };
-
-    return 0;
+	    return ecmd_eto_scale_c(s);
+    }
+    return BRLCAD_ERROR;
 }
 
 C_DECL int

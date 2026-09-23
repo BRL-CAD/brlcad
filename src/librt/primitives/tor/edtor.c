@@ -37,6 +37,9 @@
 #define ECMD_TOR_R1		1021
 #define ECMD_TOR_R2		1022
 
+/* Keep edited radii safely above the geometric zero tolerance. */
+#define TOR_RADIUS_FLOOR (4.0 * SQRT_SMALL_FASTF)
+
 C_DECL void
 rt_edit_tor_set_edit_mode(struct rt_edit *s, int mode)
 {
@@ -272,78 +275,43 @@ rt_edit_tor_read_params(
     return BRLCAD_OK;
 }
 
-/* scale radius 1 of TOR */
-void
-ecmd_tor_r1(struct rt_edit *s)
-{
-    struct rt_tor_internal *tor =
-	(struct rt_tor_internal *)s->es_int.idb_ptr;
-    fastf_t newrad;
-    RT_TOR_CK_MAGIC(tor);
-    if (s->e_inpara) {
-	/* take s->e_mat[15] (path scaling) into account */
-	s->e_para[0] *= s->e_mat[15];
-	newrad = s->e_para[0];
-    } else {
-	newrad = tor->r_a * s->es_scale;
-    }
-    if (newrad < SQRT_SMALL_FASTF) newrad = 4*SQRT_SMALL_FASTF;
-    if (tor->r_h <= newrad)
-	tor->r_a = newrad;
-}
-
-/* scale radius 2 of TOR */
-void
-ecmd_tor_r2(struct rt_edit *s)
-{
-    struct rt_tor_internal *tor =
-	(struct rt_tor_internal *)s->es_int.idb_ptr;
-    fastf_t newrad;
-    RT_TOR_CK_MAGIC(tor);
-    if (s->e_inpara) {
-	/* take s->e_mat[15] (path scaling) into account */
-	s->e_para[0] *= s->e_mat[15];
-	newrad = s->e_para[0];
-    } else {
-	newrad = tor->r_h * s->es_scale;
-    }
-    if (newrad < SQRT_SMALL_FASTF) newrad = 4*SQRT_SMALL_FASTF;
-    if (newrad <= tor->r_a)
-	tor->r_h = newrad;
-}
-
 static int
 rt_edit_tor_pscale(struct rt_edit *s)
 {
-    if (s->e_inpara > 1) {
-	bu_vls_printf(s->log_str, "ERROR: only one argument needed\n");
-	s->e_inpara = 0;
-	return BRLCAD_ERROR;
-    }
+    struct rt_tor_internal *tor = (struct rt_tor_internal *)s->es_int.idb_ptr;
+    RT_TOR_CK_MAGIC(tor);
 
-    if (s->e_inpara) {
-	if (s->e_para[0] <= 0.0) {
-	    bu_vls_printf(s->log_str, "ERROR: SCALE FACTOR <= 0\n");
-	    s->e_inpara = 0;
-	    return BRLCAD_ERROR;
-	}
+    if (!s->e_inpara && ZERO(s->es_scale))
+	return BRLCAD_OK;
 
-	/* must convert to base units */
-	s->e_para[0] *= s->local2base;
-	s->e_para[1] *= s->local2base;
-	s->e_para[2] *= s->local2base;
-    }
-
+    fastf_t *radius;
     switch (s->edit_flag) {
 	case ECMD_TOR_R1:
-	    ecmd_tor_r1(s);
+	    radius = &tor->r_a;
 	    break;
 	case ECMD_TOR_R2:
-	    ecmd_tor_r2(s);
+	    radius = &tor->r_h;
 	    break;
-    };
+	default:
+	    return BRLCAD_ERROR;
+    }
+    if (edit_prepare_length_scale(s, *radius) != BRLCAD_OK)
+	return BRLCAD_ERROR;
 
-    return 0;
+    fastf_t newrad = *radius * s->es_scale;
+    if (!isfinite(newrad)) {
+	bu_vls_printf(s->log_str, "Torus radius must be finite\n");
+	return BRLCAD_ERROR;
+    }
+    if (newrad < SQRT_SMALL_FASTF)
+	newrad = TOR_RADIUS_FLOOR;
+    if ((s->edit_flag == ECMD_TOR_R1 && newrad < tor->r_h) ||
+	(s->edit_flag == ECMD_TOR_R2 && newrad > tor->r_a)) {
+	bu_vls_printf(s->log_str, "Torus minor radius cannot exceed major radius\n");
+	return BRLCAD_ERROR;
+    }
+    *radius = newrad;
+    return BRLCAD_OK;
 }
 
 C_DECL int

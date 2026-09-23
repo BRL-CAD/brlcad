@@ -338,110 +338,23 @@ rt_edit_ell_read_params(
     return BRLCAD_OK;
 }
 
-/* scale vector A */
-void
-ecmd_ell_scale_a(struct rt_edit *s)
-{
-    struct rt_ell_internal *ell =
-	(struct rt_ell_internal *)s->es_int.idb_ptr;
-    RT_ELL_CK_MAGIC(ell);
-    if (s->e_inpara) {
-	/* take s->e_mat[15] (path scaling) into account */
-	s->es_scale = s->e_para[0] * s->e_mat[15] /
-	    MAGNITUDE(ell->a);
-    }
-    VSCALE(ell->a, ell->a, s->es_scale);
-}
-
-/* scale vector B */
-void
-ecmd_ell_scale_b(struct rt_edit *s)
-{
-    struct rt_ell_internal *ell =
-	(struct rt_ell_internal *)s->es_int.idb_ptr;
-    RT_ELL_CK_MAGIC(ell);
-    if (s->e_inpara) {
-	/* take s->e_mat[15] (path scaling) into account */
-	s->es_scale = s->e_para[0] * s->e_mat[15] /
-	    MAGNITUDE(ell->b);
-    }
-    VSCALE(ell->b, ell->b, s->es_scale);
-}
-
-/* scale vector C */
-void
-ecmd_ell_scale_c(struct rt_edit *s)
-{
-    struct rt_ell_internal *ell =
-	(struct rt_ell_internal *)s->es_int.idb_ptr;
-    RT_ELL_CK_MAGIC(ell);
-    if (s->e_inpara) {
-	/* take s->e_mat[15] (path scaling) into account */
-	s->es_scale = s->e_para[0] * s->e_mat[15] /
-	    MAGNITUDE(ell->c);
-    }
-    VSCALE(ell->c, ell->c, s->es_scale);
-}
-
-/* set A, B, and C length the same */
-void
-ecmd_ell_scale_abc(struct rt_edit *s)
-{
-    fastf_t ma, mb;
-    struct rt_ell_internal *ell =
-	(struct rt_ell_internal *)s->es_int.idb_ptr;
-    RT_ELL_CK_MAGIC(ell);
-    if (s->e_inpara) {
-	/* take s->e_mat[15] (path scaling) into account */
-	s->es_scale = s->e_para[0] * s->e_mat[15] /
-	    MAGNITUDE(ell->a);
-    }
-    VSCALE(ell->a, ell->a, s->es_scale);
-    ma = MAGNITUDE(ell->a);
-    mb = MAGNITUDE(ell->b);
-    VSCALE(ell->b, ell->b, ma/mb);
-    mb = MAGNITUDE(ell->c);
-    VSCALE(ell->c, ell->c, ma/mb);
-}
-
 static int
 rt_edit_ell_pscale(struct rt_edit *s)
 {
-    if (s->e_inpara > 1) {
-	bu_vls_printf(s->log_str, "ERROR: only one argument needed\n");
-	s->e_inpara = 0;
-	return BRLCAD_ERROR;
-    }
-
-    if (s->e_inpara) {
-	if (s->e_para[0] <= 0.0) {
-	    bu_vls_printf(s->log_str, "ERROR: SCALE FACTOR <= 0\n");
-	    s->e_inpara = 0;
-	    return BRLCAD_ERROR;
-	}
-
-	/* must convert to base units */
-	s->e_para[0] *= s->local2base;
-	s->e_para[1] *= s->local2base;
-	s->e_para[2] *= s->local2base;
-    }
-
+    struct rt_ell_internal *ell = (struct rt_ell_internal *)s->es_int.idb_ptr;
+    RT_ELL_CK_MAGIC(ell);
     switch (s->edit_flag) {
 	case ECMD_ELL_SCALE_A:
-	    ecmd_ell_scale_a(s);
-	    break;
-	case ECMD_ELL_SCALE_B:
-	    ecmd_ell_scale_b(s);
-	    break;
-	case ECMD_ELL_SCALE_C:
-	    ecmd_ell_scale_c(s);
-	    break;
+	    return edit_scale_length(s, &ell->a, NULL);
 	case ECMD_ELL_SCALE_ABC:
-	    ecmd_ell_scale_abc(s);
-	    break;
-    };
-
-    return 0;
+	    return edit_scale_equal_axes(s, ell->a, ell->b, ell->c);
+	case ECMD_ELL_SCALE_B:
+	    return edit_scale_length(s, &ell->b, NULL);
+	case ECMD_ELL_SCALE_C:
+	    return edit_scale_length(s, &ell->c, NULL);
+	default:
+	    return BRLCAD_ERROR;
+    }
 }
 
 C_DECL int

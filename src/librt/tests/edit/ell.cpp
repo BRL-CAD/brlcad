@@ -24,6 +24,8 @@
 
 #include "common.h"
 
+#include <math.h>
+
 #include "vmath.h"
 #include "bu/log.h"
 #include "bu/malloc.h"
@@ -593,6 +595,72 @@ if (!VNEAR_EQUAL(kp_world, expected, VUNITIZE_TOL))
 bu_log("RT_MATRIX_EDIT_TRANS_MODEL_XYZ SUCCESS: "
        "keypoint maps to (%g,%g,%g)\n", V3ARGS(kp_world));
     }
+
+    const fastf_t inch = 25.4;
+    s->local2base = inch;
+    s->base2local = 1.0 / inch;
+    const struct {
+	int mode;
+	fastf_t length;
+    } length_cases[] = {
+	{ECMD_ELL_SCALE_A, 0.25},
+	{ECMD_ELL_SCALE_B, 0.2},
+	{ECMD_ELL_SCALE_C, 0.1},
+	{ECMD_ELL_SCALE_ABC, 0.3}
+    };
+    for (const auto &c : length_cases) {
+	ell_reset(s, edit_ell, orig_ell, cmp_ell);
+	EDOBJ[dp->d_minor_type].ft_set_edit_mode(s, c.mode);
+	s->e_inpara = 1;
+	s->e_para[0] = c.length;
+	if (rt_edit_process(s) != BRLCAD_OK ||
+	    !NEAR_EQUAL(s->e_para[0], c.length, VUNITIZE_TOL))
+	    bu_exit(1, "ERROR: ELL length edit changed its local input\n");
+	s->e_inpara = 1;
+	if (rt_edit_process(s) != BRLCAD_OK)
+	    bu_exit(1, "ERROR: ELL repeated length edit failed\n");
+	fastf_t expected = c.length * inch;
+	if ((c.mode == ECMD_ELL_SCALE_A || c.mode == ECMD_ELL_SCALE_ABC) &&
+	    !NEAR_EQUAL(MAGNITUDE(edit_ell->a), expected, VUNITIZE_TOL))
+	    bu_exit(1, "ERROR: ELL A length ignored local units\n");
+	if ((c.mode == ECMD_ELL_SCALE_B || c.mode == ECMD_ELL_SCALE_ABC) &&
+	    !NEAR_EQUAL(MAGNITUDE(edit_ell->b), expected, VUNITIZE_TOL))
+	    bu_exit(1, "ERROR: ELL B length ignored local units\n");
+	if ((c.mode == ECMD_ELL_SCALE_C || c.mode == ECMD_ELL_SCALE_ABC) &&
+	    !NEAR_EQUAL(MAGNITUDE(edit_ell->c), expected, VUNITIZE_TOL))
+	    bu_exit(1, "ERROR: ELL C length ignored local units\n");
+    }
+
+    ell_reset(s, edit_ell, orig_ell, cmp_ell);
+    EDOBJ[dp->d_minor_type].ft_set_edit_mode(s, ECMD_ELL_SCALE_A);
+    if (rt_edit_process(s) != BRLCAD_OK ||
+	!VNEAR_EQUAL(edit_ell->a, orig_ell->a, VUNITIZE_TOL))
+	bu_exit(1, "ERROR: empty ELL A length edit changed geometry\n");
+
+    ell_reset(s, edit_ell, orig_ell, cmp_ell);
+    EDOBJ[dp->d_minor_type].ft_set_edit_mode(s, ECMD_ELL_SCALE_A);
+    s->es_scale = 2.5;
+    if (rt_edit_process(s) != BRLCAD_OK ||
+	!NEAR_EQUAL(MAGNITUDE(edit_ell->a),
+	    2.5 * MAGNITUDE(orig_ell->a), VUNITIZE_TOL))
+	bu_exit(1, "ERROR: ELL knob scale incorrectly used local units\n");
+
+    ell_reset(s, edit_ell, orig_ell, cmp_ell);
+    EDOBJ[dp->d_minor_type].ft_set_edit_mode(s, ECMD_ELL_SCALE_A);
+    s->e_inpara = 1;
+    s->e_para[0] = NAN;
+    if (rt_edit_process(s) != BRLCAD_ERROR ||
+	!VNEAR_EQUAL(edit_ell->a, orig_ell->a, VUNITIZE_TOL))
+	bu_exit(1, "ERROR: ELL accepted a non-finite axis length\n");
+
+    ell_reset(s, edit_ell, orig_ell, cmp_ell);
+    VSETALL(edit_ell->b, 0.0);
+    EDOBJ[dp->d_minor_type].ft_set_edit_mode(s, ECMD_ELL_SCALE_ABC);
+    s->es_scale = 2.0;
+    if (rt_edit_process(s) != BRLCAD_ERROR ||
+	!VNEAR_EQUAL(edit_ell->a, orig_ell->a, VUNITIZE_TOL) ||
+	!VNEAR_EQUAL(edit_ell->c, orig_ell->c, VUNITIZE_TOL))
+	bu_exit(1, "ERROR: ELL ABC edit changed an invalid primitive\n");
 
     rt_edit_destroy(s);
 

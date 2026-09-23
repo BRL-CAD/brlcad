@@ -272,89 +272,28 @@ rt_edit_rpc_read_params(
     return BRLCAD_OK;
 }
 
-/* scale vector B */
-void
-ecmd_rpc_b(struct rt_edit *s)
-{
-    struct rt_rpc_internal *rpc =
-	(struct rt_rpc_internal *)s->es_int.idb_ptr;
-    RT_RPC_CK_MAGIC(rpc);
-
-    if (s->e_inpara) {
-	/* take s->e_mat[15] (path scaling) into account */
-	s->e_para[0] *= s->e_mat[15];
-	s->es_scale = s->e_para[0] / MAGNITUDE(rpc->rpc_B);
-    }
-    VSCALE(rpc->rpc_B, rpc->rpc_B, s->es_scale);
-}
-
-/* scale vector H */
-void
-ecmd_rpc_h(struct rt_edit *s)
-{
-    struct rt_rpc_internal *rpc =
-	(struct rt_rpc_internal *)s->es_int.idb_ptr;
-
-    RT_RPC_CK_MAGIC(rpc);
-    if (s->e_inpara) {
-	/* take s->e_mat[15] (path scaling) into account */
-	s->e_para[0] *= s->e_mat[15];
-	s->es_scale = s->e_para[0] / MAGNITUDE(rpc->rpc_H);
-    }
-    VSCALE(rpc->rpc_H, rpc->rpc_H, s->es_scale);
-}
-
-/* scale rectangular half-width of RPC */
-void
-ecmd_rpc_r(struct rt_edit *s)
-{
-    struct rt_rpc_internal *rpc =
-	(struct rt_rpc_internal *)s->es_int.idb_ptr;
-
-    RT_RPC_CK_MAGIC(rpc);
-    if (s->e_inpara) {
-	/* take s->e_mat[15] (path scaling) into account */
-	s->e_para[0] *= s->e_mat[15];
-	s->es_scale = s->e_para[0] / rpc->rpc_r;
-    }
-    rpc->rpc_r *= s->es_scale;
-}
-
 static int
 rt_edit_rpc_pscale(struct rt_edit *s)
 {
-    if (s->e_inpara > 1) {
-	bu_vls_printf(s->log_str, "ERROR: only one argument needed\n");
-	s->e_inpara = 0;
-	return BRLCAD_ERROR;
-    }
+    struct rt_rpc_internal *rpc = (struct rt_rpc_internal *)s->es_int.idb_ptr;
+    RT_RPC_CK_MAGIC(rpc);
 
-    if (s->e_inpara) {
-	if (s->e_para[0] <= 0.0) {
-	    bu_vls_printf(s->log_str, "ERROR: SCALE FACTOR <= 0\n");
-	    s->e_inpara = 0;
-	    return BRLCAD_ERROR;
-	}
-
-	/* must convert to base units */
-	s->e_para[0] *= s->local2base;
-	s->e_para[1] *= s->local2base;
-	s->e_para[2] *= s->local2base;
-    }
-
+    vect_t *axis = NULL;
+    fastf_t *radius = NULL;
     switch (s->edit_flag) {
 	case ECMD_RPC_B:
-	    ecmd_rpc_b(s);
+	    axis = &rpc->rpc_B;
 	    break;
 	case ECMD_RPC_H:
-	    ecmd_rpc_h(s);
+	    axis = &rpc->rpc_H;
 	    break;
 	case ECMD_RPC_R:
-	    ecmd_rpc_r(s);
+	    radius = &rpc->rpc_r;
 	    break;
-    };
-
-    return 0;
+	default:
+	    return BRLCAD_ERROR;
+    }
+    return edit_scale_length(s, axis, radius);
 }
 
 C_DECL int

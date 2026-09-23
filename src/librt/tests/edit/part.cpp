@@ -402,6 +402,47 @@ bu_log("RT_MATRIX_EDIT_TRANS_MODEL_XYZ SUCCESS: "
        "keypoint maps to (%g,%g,%g)\n", V3ARGS(kp_world));
     }
 
+    const fastf_t inch = 25.4;
+    s->local2base = inch;
+    s->base2local = 1.0 / inch;
+    const struct {
+	int mode;
+	fastf_t length;
+    } length_cases[] = {
+	{ECMD_PART_H, 0.5},
+	{ECMD_PART_VRAD, 0.2},
+	{ECMD_PART_HRAD, 0.1}
+    };
+    for (const auto &c : length_cases) {
+	part_reset(s, edit_part, orig_part, cmp_part);
+	EDOBJ[dp->d_minor_type].ft_set_edit_mode(s, c.mode);
+	s->e_inpara = 1;
+	s->e_para[0] = c.length;
+	if (rt_edit_process(s) != BRLCAD_OK ||
+	    !NEAR_EQUAL(s->e_para[0], c.length, VUNITIZE_TOL))
+	    bu_exit(1, "ERROR: PART length edit changed its local input\n");
+	s->e_inpara = 1;
+	if (rt_edit_process(s) != BRLCAD_OK)
+	    bu_exit(1, "ERROR: PART repeated length edit failed\n");
+	fastf_t actual = c.mode == ECMD_PART_H ? MAGNITUDE(edit_part->part_H) :
+	    c.mode == ECMD_PART_VRAD ? edit_part->part_vrad : edit_part->part_hrad;
+	if (!NEAR_EQUAL(actual, c.length * inch, VUNITIZE_TOL))
+	    bu_exit(1, "ERROR: PART length edit ignored local units\n");
+    }
+
+    part_reset(s, edit_part, orig_part, cmp_part);
+    EDOBJ[dp->d_minor_type].ft_set_edit_mode(s, ECMD_PART_HRAD);
+    if (rt_edit_process(s) != BRLCAD_OK ||
+	!NEAR_EQUAL(edit_part->part_hrad, orig_part->part_hrad, VUNITIZE_TOL))
+	bu_exit(1, "ERROR: empty PART end-radius edit changed geometry\n");
+
+    part_reset(s, edit_part, orig_part, cmp_part);
+    EDOBJ[dp->d_minor_type].ft_set_edit_mode(s, ECMD_PART_VRAD);
+    s->es_scale = 2.5;
+    if (rt_edit_process(s) != BRLCAD_OK ||
+	!NEAR_EQUAL(edit_part->part_vrad, 2.5 * orig_part->part_vrad, VUNITIZE_TOL))
+	bu_exit(1, "ERROR: PART knob scale incorrectly used local units\n");
+
     rt_edit_destroy(s);
     db_close(dbip);
     return 0;

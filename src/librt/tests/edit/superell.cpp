@@ -492,6 +492,58 @@ bu_log("RT_MATRIX_EDIT_TRANS_MODEL_XYZ SUCCESS: "
        "keypoint maps to (%g,%g,%g)\n", V3ARGS(kp_world));
     }
 
+    const fastf_t inch = 25.4;
+    s->local2base = inch;
+    s->base2local = 1.0 / inch;
+    const struct {
+	int mode;
+	fastf_t length;
+    } length_cases[] = {
+	{ECMD_SUPERELL_SCALE_A, 0.25},
+	{ECMD_SUPERELL_SCALE_B, 0.2},
+	{ECMD_SUPERELL_SCALE_C, 0.1},
+	{ECMD_SUPERELL_SCALE_ABC, 0.3}
+    };
+    for (const auto &c : length_cases) {
+	superell_reset(s, edit_superell, orig, cmp);
+	EDOBJ[dp->d_minor_type].ft_set_edit_mode(s, c.mode);
+	s->e_inpara = 1;
+	s->e_para[0] = c.length;
+	if (rt_edit_process(s) != BRLCAD_OK ||
+	    !NEAR_EQUAL(s->e_para[0], c.length, VUNITIZE_TOL))
+	    bu_exit(1, "ERROR: SUPERELL length edit changed its local input\n");
+	s->e_inpara = 1;
+	if (rt_edit_process(s) != BRLCAD_OK)
+	    bu_exit(1, "ERROR: SUPERELL repeated length edit failed\n");
+	fastf_t expected = c.length * inch;
+	if ((c.mode == ECMD_SUPERELL_SCALE_A ||
+	    c.mode == ECMD_SUPERELL_SCALE_ABC) &&
+	    !NEAR_EQUAL(MAGNITUDE(edit_superell->a), expected, VUNITIZE_TOL))
+	    bu_exit(1, "ERROR: SUPERELL A length ignored local units\n");
+	if ((c.mode == ECMD_SUPERELL_SCALE_B ||
+	    c.mode == ECMD_SUPERELL_SCALE_ABC) &&
+	    !NEAR_EQUAL(MAGNITUDE(edit_superell->b), expected, VUNITIZE_TOL))
+	    bu_exit(1, "ERROR: SUPERELL B length ignored local units\n");
+	if ((c.mode == ECMD_SUPERELL_SCALE_C ||
+	    c.mode == ECMD_SUPERELL_SCALE_ABC) &&
+	    !NEAR_EQUAL(MAGNITUDE(edit_superell->c), expected, VUNITIZE_TOL))
+	    bu_exit(1, "ERROR: SUPERELL C length ignored local units\n");
+    }
+
+    superell_reset(s, edit_superell, orig, cmp);
+    EDOBJ[dp->d_minor_type].ft_set_edit_mode(s, ECMD_SUPERELL_SCALE_A);
+    if (rt_edit_process(s) != BRLCAD_OK ||
+	!VNEAR_EQUAL(edit_superell->a, orig->a, VUNITIZE_TOL))
+	bu_exit(1, "ERROR: empty SUPERELL A edit changed geometry\n");
+
+    superell_reset(s, edit_superell, orig, cmp);
+    EDOBJ[dp->d_minor_type].ft_set_edit_mode(s, ECMD_SUPERELL_SCALE_B);
+    s->es_scale = 2.5;
+    if (rt_edit_process(s) != BRLCAD_OK ||
+	!NEAR_EQUAL(MAGNITUDE(edit_superell->b),
+	    2.5 * MAGNITUDE(orig->b), VUNITIZE_TOL))
+	bu_exit(1, "ERROR: SUPERELL knob scale incorrectly used local units\n");
+
     rt_edit_destroy(s);
     db_close(dbip);
     return 0;

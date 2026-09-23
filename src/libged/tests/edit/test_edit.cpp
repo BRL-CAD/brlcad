@@ -2053,6 +2053,31 @@ test_p3_tor_r1_alias(struct ged *gedp)
     }
 }
 
+static void
+test_p3_tor_invalid_radii(struct ged *gedp)
+{
+    const struct {
+	const char *operation;
+	const char *value;
+	const char *message;
+    } cases[] = {
+	{"r1", "1", "tor rejects a major radius below its minor radius"},
+	{"r2", "20", "tor rejects a minor radius above its major radius"}
+    };
+
+    for (const auto &c : cases) {
+	struct rt_tor_internal before, after;
+	int have_before = read_tor(gedp, "tor.s", &before);
+	const char *argv[] = {"edit", "tor.s", c.operation, c.value, NULL};
+	int ret = ged_exec(gedp, 4, argv);
+	int have_after = read_tor(gedp, "tor.s", &after);
+	CHECK(have_before == BRLCAD_OK && ret == BRLCAD_ERROR &&
+	      have_after == BRLCAD_OK &&
+	      NEAR_EQUAL(before.r_a, after.r_a, NEAR_ENOUGH) &&
+	      NEAR_EQUAL(before.r_h, after.r_h, NEAR_ENOUGH), c.message);
+    }
+}
+
 /* 3-3: ell set_a — change semi-axis A magnitude */
 static void
 test_p3_ell_set_a(struct ged *gedp)
@@ -4209,6 +4234,7 @@ main(int ac, char *av[])
         test_p3_tor_set_radius_1(gedp);
         test_p3_tor_set_radius_2(gedp);
         test_p3_tor_r1_alias(gedp);
+        test_p3_tor_invalid_radii(gedp);
         test_p3_ell_set_a(gedp);
         test_p3_ell_a_alias(gedp);
         test_p3_ell_set_abc(gedp);

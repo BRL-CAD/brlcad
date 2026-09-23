@@ -665,6 +665,89 @@ bu_log("RT_MATRIX_EDIT_TRANS_MODEL_XYZ SUCCESS: "
        "keypoint maps to (%g,%g,%g)\n", V3ARGS(kp_world));
     }
 
+    const fastf_t inch_to_mm = 25.4;
+    const struct {
+	int mode;
+	fastf_t inches;
+    } inch_scales[] = {
+	{ECMD_TGC_SCALE_H, 0.5}, {ECMD_TGC_SCALE_H_V, 0.5},
+	{ECMD_TGC_SCALE_H_CD, 0.5}, {ECMD_TGC_SCALE_H_V_AB, 0.5},
+	{ECMD_TGC_SCALE_A, 0.2}, {ECMD_TGC_SCALE_B, 0.2},
+	{ECMD_TGC_SCALE_C, 0.2}, {ECMD_TGC_SCALE_D, 0.2},
+	{ECMD_TGC_SCALE_AB, 0.2}, {ECMD_TGC_SCALE_CD, 0.1},
+	{ECMD_TGC_SCALE_ABCD, 0.2}
+    };
+    s->local2base = inch_to_mm;
+    for (size_t i = 0; i < sizeof(inch_scales)/sizeof(inch_scales[0]); i++) {
+	tgc_reset(s, edit_tgc, orig_tgc, cmp_tgc);
+	EDOBJ[dp->d_minor_type].ft_set_edit_mode(s, inch_scales[i].mode);
+	s->e_inpara = 1;
+	s->e_para[0] = inch_scales[i].inches;
+	if (rt_edit_process(s) != BRLCAD_OK)
+	    bu_exit(1, "ERROR: TGC inch scale mode %d failed\n", inch_scales[i].mode);
+	const fastf_t *axis = NULL;
+	switch (inch_scales[i].mode) {
+	    case ECMD_TGC_SCALE_H:
+	    case ECMD_TGC_SCALE_H_V:
+	    case ECMD_TGC_SCALE_H_CD:
+	    case ECMD_TGC_SCALE_H_V_AB: axis = edit_tgc->h; break;
+	    case ECMD_TGC_SCALE_A:
+	    case ECMD_TGC_SCALE_AB:
+	    case ECMD_TGC_SCALE_ABCD: axis = edit_tgc->a; break;
+	    case ECMD_TGC_SCALE_B: axis = edit_tgc->b; break;
+	    case ECMD_TGC_SCALE_C:
+	    case ECMD_TGC_SCALE_CD: axis = edit_tgc->c; break;
+	    case ECMD_TGC_SCALE_D: axis = edit_tgc->d; break;
+	}
+	if (!axis || !NEAR_EQUAL(MAGNITUDE(axis), inch_scales[i].inches * inch_to_mm, VUNITIZE_TOL) ||
+	    !NEAR_EQUAL(s->e_para[0], inch_scales[i].inches, VUNITIZE_TOL))
+	    bu_exit(1, "ERROR: TGC inch scale mode %d converted incorrectly\n", inch_scales[i].mode);
+	struct rt_tgc_internal saved = *edit_tgc;
+	s->e_inpara = 1;
+	if (rt_edit_process(s) != BRLCAD_OK || tgc_diff("TGC repeated inch scale", &saved, edit_tgc))
+	    bu_exit(1, "ERROR: TGC inch scale mode %d compounded\n", inch_scales[i].mode);
+    }
+
+    tgc_reset(s, edit_tgc, orig_tgc, cmp_tgc);
+    EDOBJ[dp->d_minor_type].ft_set_edit_mode(s, ECMD_TGC_SCALE_H);
+    if (rt_edit_process(s) != BRLCAD_OK || tgc_diff("TGC empty scale", orig_tgc, edit_tgc))
+	bu_exit(1, "ERROR: TGC empty scale changed geometry\n");
+
+    tgc_reset(s, edit_tgc, orig_tgc, cmp_tgc);
+    EDOBJ[dp->d_minor_type].ft_set_edit_mode(s, ECMD_TGC_SCALE_A);
+    s->es_scale = 2.5;
+    if (rt_edit_process(s) != BRLCAD_OK || !NEAR_EQUAL(MAGNITUDE(edit_tgc->a), 7.5, VUNITIZE_TOL))
+	bu_exit(1, "ERROR: TGC dimensionless scale used database units\n");
+
+    tgc_reset(s, edit_tgc, orig_tgc, cmp_tgc);
+    EDOBJ[dp->d_minor_type].ft_set_edit_mode(s, ECMD_TGC_SCALE_H_CD);
+    s->e_inpara = 1;
+    s->e_para[0] = 4.0;
+    if (rt_edit_process(s) != BRLCAD_ERROR || tgc_diff("TGC rejected scale", orig_tgc, edit_tgc))
+	bu_exit(1, "ERROR: TGC rejected scale changed geometry or succeeded\n");
+
+    const int move_modes[] = {ECMD_TGC_MV_H, ECMD_TGC_MV_HH};
+    for (size_t i = 0; i < sizeof(move_modes)/sizeof(move_modes[0]); i++) {
+	tgc_reset(s, edit_tgc, orig_tgc, cmp_tgc);
+	EDOBJ[dp->d_minor_type].ft_set_edit_mode(s, move_modes[i]);
+	s->mv_context = 0;
+	s->e_inpara = 3;
+	VSET(s->e_para, 5.0/inch_to_mm, 3.0/inch_to_mm, 26.0/inch_to_mm);
+	vect_t entered;
+	VMOVE(entered, s->e_para);
+	vect_t expected_h;
+	VSET(expected_h, 0, 0, 16);
+	if (rt_edit_process(s) != BRLCAD_OK ||
+	    !VNEAR_EQUAL(edit_tgc->h, expected_h, VUNITIZE_TOL) ||
+	    !VNEAR_EQUAL(s->e_para, entered, VUNITIZE_TOL))
+	    bu_exit(1, "ERROR: TGC inch move mode %d converted incorrectly\n", move_modes[i]);
+	struct rt_tgc_internal saved = *edit_tgc;
+	s->e_inpara = 3;
+	if (rt_edit_process(s) != BRLCAD_OK ||
+	    tgc_diff("TGC repeated inch move", &saved, edit_tgc))
+	    bu_exit(1, "ERROR: TGC inch move mode %d compounded\n", move_modes[i]);
+    }
+
     rt_edit_destroy(s);
     db_close(dbip);
     return 0;

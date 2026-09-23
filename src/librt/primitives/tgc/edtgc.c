@@ -559,11 +559,6 @@ ecmd_tgc_scale_h(struct rt_edit *s)
     struct rt_tgc_internal *tgc =
 	(struct rt_tgc_internal *)s->es_int.idb_ptr;
     RT_TGC_CK_MAGIC(tgc);
-    if (s->e_inpara) {
-	/* take s->e_mat[15] (path scaling) into account */
-	s->e_para[0] *= s->e_mat[15];
-	s->es_scale = s->e_para[0] / MAGNITUDE(tgc->h);
-    }
     VSCALE(tgc->h, tgc->h, s->es_scale);
 }
 
@@ -576,17 +571,12 @@ ecmd_tgc_scale_h_v(struct rt_edit *s)
     struct rt_tgc_internal *tgc =
 	(struct rt_tgc_internal *)s->es_int.idb_ptr;
     RT_TGC_CK_MAGIC(tgc);
-    if (s->e_inpara) {
-	/* take s->e_mat[15] (path scaling) into account */
-	s->e_para[0] *= s->e_mat[15];
-	s->es_scale = s->e_para[0] / MAGNITUDE(tgc->h);
-    }
     VADD2(old_top, tgc->v, tgc->h);
     VSCALE(tgc->h, tgc->h, s->es_scale);
     VSUB2(tgc->v, old_top, tgc->h);
 }
 
-void
+static int
 ecmd_tgc_scale_h_cd(struct rt_edit *s)
 {
     vect_t vec1, vec2;
@@ -595,12 +585,6 @@ ecmd_tgc_scale_h_cd(struct rt_edit *s)
 	(struct rt_tgc_internal *)s->es_int.idb_ptr;
 
     RT_TGC_CK_MAGIC(tgc);
-
-    if (s->e_inpara) {
-	/* take s->e_mat[15] (path scaling) into account */
-	s->e_para[0] *= s->e_mat[15];
-	s->es_scale = s->e_para[0] / MAGNITUDE(tgc->h);
-    }
 
     /* calculate new c */
     VSUB2(vec1, tgc->a, tgc->c);
@@ -614,16 +598,21 @@ ecmd_tgc_scale_h_cd(struct rt_edit *s)
 
     if (0 <= VDOT(tgc->c, c) &&
 	    0 <= VDOT(tgc->d, d) &&
+	    isfinite(MAGNITUDE(c)) &&
+	    isfinite(MAGNITUDE(d)) &&
 	    !ZERO(MAGNITUDE(c)) &&
 	    !ZERO(MAGNITUDE(d))) {
 	/* adjust c, d and h */
 	VMOVE(tgc->c, c);
 	VMOVE(tgc->d, d);
 	VSCALE(tgc->h, tgc->h, s->es_scale);
+	return BRLCAD_OK;
     }
+    bu_vls_printf(s->log_str, "TGC height scale would invalidate C or D\n");
+    return BRLCAD_ERROR;
 }
 
-void
+static int
 ecmd_tgc_scale_h_v_ab(struct rt_edit *s)
 {
     vect_t vec1, vec2;
@@ -633,12 +622,6 @@ ecmd_tgc_scale_h_v_ab(struct rt_edit *s)
 	(struct rt_tgc_internal *)s->es_int.idb_ptr;
 
     RT_TGC_CK_MAGIC(tgc);
-
-    if (s->e_inpara) {
-	/* take s->e_mat[15] (path scaling) into account */
-	s->e_para[0] *= s->e_mat[15];
-	s->es_scale = s->e_para[0] / MAGNITUDE(tgc->h);
-    }
 
     /* calculate new a */
     VSUB2(vec1, tgc->c, tgc->a);
@@ -652,6 +635,8 @@ ecmd_tgc_scale_h_v_ab(struct rt_edit *s)
 
     if (0 <= VDOT(tgc->a, a) &&
 	    0 <= VDOT(tgc->b, b) &&
+	    isfinite(MAGNITUDE(a)) &&
+	    isfinite(MAGNITUDE(b)) &&
 	    !ZERO(MAGNITUDE(a)) &&
 	    !ZERO(MAGNITUDE(b))) {
 	/* adjust a, b, v and h */
@@ -660,7 +645,10 @@ ecmd_tgc_scale_h_v_ab(struct rt_edit *s)
 	VADD2(old_top, tgc->v, tgc->h);
 	VSCALE(tgc->h, tgc->h, s->es_scale);
 	VSUB2(tgc->v, old_top, tgc->h);
+	return BRLCAD_OK;
     }
+    bu_vls_printf(s->log_str, "TGC height scale would invalidate A or B\n");
+    return BRLCAD_ERROR;
 }
 
 /* scale vector A */
@@ -671,11 +659,6 @@ ecmd_tgc_scale_a(struct rt_edit *s)
 	(struct rt_tgc_internal *)s->es_int.idb_ptr;
     RT_TGC_CK_MAGIC(tgc);
 
-    if (s->e_inpara) {
-	/* take s->e_mat[15] (path scaling) into account */
-	s->e_para[0] *= s->e_mat[15];
-	s->es_scale = s->e_para[0] / MAGNITUDE(tgc->a);
-    }
     VSCALE(tgc->a, tgc->a, s->es_scale);
 }
 
@@ -687,11 +670,6 @@ ecmd_tgc_scale_b(struct rt_edit *s)
 	(struct rt_tgc_internal *)s->es_int.idb_ptr;
     RT_TGC_CK_MAGIC(tgc);
 
-    if (s->e_inpara) {
-	/* take s->e_mat[15] (path scaling) into account */
-	s->e_para[0] *= s->e_mat[15];
-	s->es_scale = s->e_para[0] / MAGNITUDE(tgc->b);
-    }
     VSCALE(tgc->b, tgc->b, s->es_scale);
 }
 
@@ -703,11 +681,6 @@ ecmd_tgc_scale_c(struct rt_edit *s)
 	(struct rt_tgc_internal *)s->es_int.idb_ptr;
     RT_TGC_CK_MAGIC(tgc);
 
-    if (s->e_inpara) {
-	/* take s->e_mat[15] (path scaling) into account */
-	s->e_para[0] *= s->e_mat[15];
-	s->es_scale = s->e_para[0] / MAGNITUDE(tgc->c);
-    }
     VSCALE(tgc->c, tgc->c, s->es_scale);
 }
 
@@ -719,11 +692,6 @@ ecmd_tgc_scale_d(struct rt_edit *s)
 	(struct rt_tgc_internal *)s->es_int.idb_ptr;
     RT_TGC_CK_MAGIC(tgc);
 
-    if (s->e_inpara) {
-	/* take s->e_mat[15] (path scaling) into account */
-	s->e_para[0] *= s->e_mat[15];
-	s->es_scale = s->e_para[0] / MAGNITUDE(tgc->d);
-    }
     VSCALE(tgc->d, tgc->d, s->es_scale);
 }
 
@@ -735,11 +703,6 @@ ecmd_tgc_scale_ab(struct rt_edit *s)
 	(struct rt_tgc_internal *)s->es_int.idb_ptr;
     RT_TGC_CK_MAGIC(tgc);
 
-    if (s->e_inpara) {
-	/* take s->e_mat[15] (path scaling) into account */
-	s->e_para[0] *= s->e_mat[15];
-	s->es_scale = s->e_para[0] / MAGNITUDE(tgc->a);
-    }
     VSCALE(tgc->a, tgc->a, s->es_scale);
     ma = MAGNITUDE(tgc->a);
     mb = MAGNITUDE(tgc->b);
@@ -755,11 +718,6 @@ ecmd_tgc_scale_cd(struct rt_edit *s)
 	(struct rt_tgc_internal *)s->es_int.idb_ptr;
     RT_TGC_CK_MAGIC(tgc);
 
-    if (s->e_inpara) {
-	/* take s->e_mat[15] (path scaling) into account */
-	s->e_para[0] *= s->e_mat[15];
-	s->es_scale = s->e_para[0] / MAGNITUDE(tgc->c);
-    }
     VSCALE(tgc->c, tgc->c, s->es_scale);
     ma = MAGNITUDE(tgc->c);
     mb = MAGNITUDE(tgc->d);
@@ -775,11 +733,6 @@ ecmd_tgc_scale_abcd(struct rt_edit *s)
 	(struct rt_tgc_internal *)s->es_int.idb_ptr;
     RT_TGC_CK_MAGIC(tgc);
 
-    if (s->e_inpara) {
-	/* take s->e_mat[15] (path scaling) into account */
-	s->e_para[0] *= s->e_mat[15];
-	s->es_scale = s->e_para[0] / MAGNITUDE(tgc->a);
-    }
     VSCALE(tgc->a, tgc->a, s->es_scale);
     ma = MAGNITUDE(tgc->a);
     mb = MAGNITUDE(tgc->b);
@@ -799,6 +752,7 @@ ecmd_tgc_mv_h(struct rt_edit *s)
 {
     float la, lb, lc, ld;	/* TGC: length of vectors */
     vect_t work;
+    point_t model_point;
     struct rt_tgc_internal *tgc =
 	(struct rt_tgc_internal *)s->es_int.idb_ptr;
     bu_clbk_t f = NULL;
@@ -812,17 +766,14 @@ ecmd_tgc_mv_h(struct rt_edit *s)
 	    return BRLCAD_ERROR;
 	}
 
-	/* must convert to base units */
-	s->e_para[0] *= s->local2base;
-	s->e_para[1] *= s->local2base;
-	s->e_para[2] *= s->local2base;
+	VSCALE(model_point, s->e_para, s->local2base);
 
 	if (s->mv_context) {
 	    /* apply s->e_invmat to convert to real model coordinates */
-	    MAT4X3PNT(work, s->e_invmat, s->e_para);
+	    MAT4X3PNT(work, s->e_invmat, model_point);
 	    VSUB2(tgc->h, work, tgc->v);
 	} else {
-	    VSUB2(tgc->h, s->e_para, tgc->v);
+	    VSUB2(tgc->h, model_point, tgc->v);
 	}
     }
 
@@ -864,6 +815,7 @@ int
 ecmd_tgc_mv_hh(struct rt_edit *s)
 {
     vect_t work;
+    point_t model_point;
     struct rt_tgc_internal *tgc =
 	(struct rt_tgc_internal *)s->es_int.idb_ptr;
     bu_clbk_t f = NULL;
@@ -877,17 +829,14 @@ ecmd_tgc_mv_hh(struct rt_edit *s)
 	    return BRLCAD_ERROR;
 	}
 
-	/* must convert to base units */
-	s->e_para[0] *= s->local2base;
-	s->e_para[1] *= s->local2base;
-	s->e_para[2] *= s->local2base;
+	VSCALE(model_point, s->e_para, s->local2base);
 
 	if (s->mv_context) {
 	    /* apply s->e_invmat to convert to real model coordinates */
-	    MAT4X3PNT(work, s->e_invmat, s->e_para);
+	    MAT4X3PNT(work, s->e_invmat, model_point);
 	    VSUB2(tgc->h, work, tgc->v);
 	} else {
-	    VSUB2(tgc->h, s->e_para, tgc->v);
+	    VSUB2(tgc->h, model_point, tgc->v);
 	}
     }
 
@@ -1078,23 +1027,51 @@ ecmd_tgc_mv_h_mousevec(struct rt_edit *s, const vect_t mousevec)
 static int
 rt_edit_tgc_pscale(struct rt_edit *s)
 {
-    if (s->e_inpara) {
-	if (s->e_inpara > 1) {
-	    bu_vls_printf(s->log_str, "ERROR: only one argument needed\n");
-	    s->e_inpara = 0;
+    struct rt_tgc_internal *tgc = (struct rt_tgc_internal *)s->es_int.idb_ptr;
+    vect_t *axis = NULL;
+    fastf_t other_lengths[3];
+    size_t other_count = 0;
+
+    RT_TGC_CK_MAGIC(tgc);
+    if (!s->e_inpara && ZERO(s->es_scale))
+	return BRLCAD_OK;
+
+    switch (s->edit_flag) {
+	case ECMD_TGC_SCALE_H:
+	case ECMD_TGC_SCALE_H_V:
+	case ECMD_TGC_SCALE_H_CD:
+	case ECMD_TGC_SCALE_H_V_AB: axis = &tgc->h; break;
+	case ECMD_TGC_SCALE_A:
+	case ECMD_TGC_SCALE_AB:
+	case ECMD_TGC_SCALE_ABCD: axis = &tgc->a; break;
+	case ECMD_TGC_SCALE_B: axis = &tgc->b; break;
+	case ECMD_TGC_SCALE_C:
+	case ECMD_TGC_SCALE_CD: axis = &tgc->c; break;
+	case ECMD_TGC_SCALE_D: axis = &tgc->d; break;
+	default: return BRLCAD_ERROR;
+    }
+    fastf_t current = MAGNITUDE(*axis);
+    if (edit_prepare_length_scale(s, current) != BRLCAD_OK)
+	return BRLCAD_ERROR;
+    fastf_t target = current * s->es_scale;
+    if (!isfinite(target) || target <= 0.0) {
+	bu_vls_printf(s->log_str, "TGC scale produced an invalid length\n");
+	return BRLCAD_ERROR;
+    }
+    if (s->edit_flag == ECMD_TGC_SCALE_AB ||
+	s->edit_flag == ECMD_TGC_SCALE_ABCD)
+	other_lengths[other_count++] = MAGNITUDE(tgc->b);
+    if (s->edit_flag == ECMD_TGC_SCALE_CD ||
+	s->edit_flag == ECMD_TGC_SCALE_ABCD)
+	other_lengths[other_count++] = MAGNITUDE(tgc->d);
+    if (s->edit_flag == ECMD_TGC_SCALE_ABCD)
+	other_lengths[other_count++] = MAGNITUDE(tgc->c);
+    for (size_t i = 0; i < other_count; i++) {
+	if (!isfinite(other_lengths[i]) || other_lengths[i] <= 0.0 ||
+	    !isfinite(target / other_lengths[i])) {
+	    bu_vls_printf(s->log_str, "TGC scale requires valid axes\n");
 	    return BRLCAD_ERROR;
 	}
-
-	if (s->e_para[0] <= 0.0) {
-	    bu_vls_printf(s->log_str, "ERROR: SCALE FACTOR <= 0\n");
-	    s->e_inpara = 0;
-	    return BRLCAD_ERROR;
-	}
-
-	/* must convert to base units */
-	s->e_para[0] *= s->local2base;
-	s->e_para[1] *= s->local2base;
-	s->e_para[2] *= s->local2base;
     }
 
     switch (s->edit_flag) {
@@ -1105,11 +1082,9 @@ rt_edit_tgc_pscale(struct rt_edit *s)
 	    ecmd_tgc_scale_h_v(s);
 	    break;
 	case ECMD_TGC_SCALE_H_CD:
-	    ecmd_tgc_scale_h_cd(s);
-	    break;
+	    return ecmd_tgc_scale_h_cd(s);
 	case ECMD_TGC_SCALE_H_V_AB:
-	    ecmd_tgc_scale_h_v_ab(s);
-	    break;
+	    return ecmd_tgc_scale_h_v_ab(s);
 	case ECMD_TGC_SCALE_A:
 	    ecmd_tgc_scale_a(s);
 	    break;
