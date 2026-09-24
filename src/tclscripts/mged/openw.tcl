@@ -2138,9 +2138,6 @@ hoc_register_menu_data "Create" "$ptype..." "Make a $ptype" $ksl
 
     if { $::tcl_platform(platform) != "windows" && $::tcl_platform(os) != "Darwin" } {
 	bind .$id.t <Enter> "focus .$id.t; break"
-    } else {
-	# some platforms should not be forced window activation
-	focus .$id.t
     }
 
     hoc_register_data .$id.t "Command Window"\
@@ -2343,6 +2340,13 @@ hoc_register_menu_data "Create" "$ptype..." "Make a $ptype" $ksl
 
     if {$comb || $mged_gui($id,show_cmd)} {
 	wm deiconify .$id
+    }
+
+    if {$mged_gui($id,show_cmd) &&
+	($::tcl_platform(platform) == "windows" || $::tcl_platform(os) == "Darwin")} {
+	# These platforms use startup focus instead of the pointer-enter binding.
+	# Wait until the command toplevel is mapped before requesting focus.
+	focus .$id.t
     }
 }
 
