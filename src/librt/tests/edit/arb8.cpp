@@ -778,6 +778,72 @@ bu_log("RT_MATRIX_EDIT_TRANS_MODEL_XYZ SUCCESS: "
     if (!edit_test_mouse_knobs_match(s, face_view_target))
 	bu_exit(1, "ERROR: ARB8 mouse face knobs missed cursor\n");
 
+    /* A rejected drag must not become the starting geometry for the next. */
+    struct rt_arb_internal valid_face_arb = *arb;
+    plane_t valid_face_planes[ARB8_FACE_COUNT];
+    memcpy(valid_face_planes, a->es_peqn, sizeof(valid_face_planes));
+    s->local2base = 25.4;
+    s->base2local = 1.0 / s->local2base;
+    VSET(mousevec, 1.0, 0.0, 0.0); /* Collapse the moved face onto the opposite face. */
+    if (EDOBJ[dp->d_minor_type].ft_edit_xy(s, mousevec) != BRLCAD_ERROR ||
+	memcmp(arb->pt, valid_face_arb.pt, sizeof(arb->pt)) ||
+	memcmp(a->es_peqn, valid_face_planes, sizeof(valid_face_planes)))
+	bu_exit(1, "ERROR: rejected ARB8 mouse face move changed edit state\n");
+
+    const fastf_t face_drags[] = {0.3, 0.4, 0.25};
+    const size_t drag_cycles = 32;
+    const size_t drag_positions = sizeof(face_drags) / sizeof(face_drags[0]);
+    for (size_t drag = 0; drag < drag_cycles * drag_positions; drag++) {
+	fastf_t target_x = face_drags[drag % drag_positions];
+	VSET(mousevec, target_x, 0.0, 0.0);
+	if (EDOBJ[dp->d_minor_type].ft_edit_xy(s, mousevec) != BRLCAD_OK ||
+	    rt_edit_process(s) != BRLCAD_OK)
+	    bu_exit(1, "ERROR: ARB8 mouse face move failed after rejected drag\n");
+	for (size_t i = 0; i < sizeof(face_points) / sizeof(face_points[0]); i++) {
+	    if (!NEAR_EQUAL(arb->pt[face_points[i]][X], target_x, VUNITIZE_TOL))
+		bu_exit(1, "ERROR: repeated ARB8 mouse face move drifted\n");
+	}
+    }
+
+    struct rt_arb_internal before_rejected_calc = *arb;
+    plane_t rejected_planes[ARB8_FACE_COUNT];
+    memcpy(rejected_planes, a->es_peqn, sizeof(rejected_planes));
+    rejected_planes[a->edit_menu][W] = VDOT(rejected_planes[a->edit_menu], arb->pt[1]);
+    if (rt_arb_calc_points(arb, ARB8, (const plane_t *)rejected_planes, s->tol) >= 0 ||
+	memcmp(arb->pt, before_rejected_calc.pt, sizeof(arb->pt)))
+	bu_exit(1, "ERROR: rejected ARB point calculation changed geometry\n");
+
+    struct rt_arb_internal invalid_arb = *arb;
+    VMOVE(invalid_arb.pt[6], invalid_arb.pt[5]);
+    VMOVE(invalid_arb.pt[0], invalid_arb.pt[4]);
+    memcpy(rejected_planes, a->es_peqn, sizeof(rejected_planes));
+    plane_t unchanged_planes[ARB8_FACE_COUNT];
+    memcpy(unchanged_planes, rejected_planes, sizeof(unchanged_planes));
+    struct bu_vls rejected_plane_msg = BU_VLS_INIT_ZERO;
+    if (rt_arb_calc_planes(&rejected_plane_msg, &invalid_arb, ARB8,
+	    rejected_planes, s->tol) >= 0 ||
+	memcmp(rejected_planes, unchanged_planes, sizeof(rejected_planes)))
+	bu_exit(1, "ERROR: rejected ARB plane calculation changed planes\n");
+    bu_vls_free(&rejected_plane_msg);
+
+    struct rt_arb_internal before_rejected_edge = *arb;
+    memcpy(rejected_planes, a->es_peqn, sizeof(rejected_planes));
+    VSET(mousevec, 0.0, 1.0, 0.0); /* Move edge 12 onto the opposite edge. */
+    if (rt_arb_edit(s->log_str, arb, NULL, ARB8, 0,
+	    RT_ARB_EDIT_DEFAULT, mousevec, rejected_planes, s->tol) == 0 ||
+	memcmp(arb->pt, before_rejected_edge.pt, sizeof(arb->pt)) ||
+	memcmp(rejected_planes, a->es_peqn, sizeof(rejected_planes)))
+	bu_exit(1, "ERROR: rejected ARB edge edit changed geometry or planes\n");
+
+    memcpy(rejected_planes, a->es_peqn, sizeof(rejected_planes));
+    VSETALL(mousevec, 0.0);
+    if (rt_arb_edit(s->log_str, arb, NULL, ARB8, 0,
+	    RT_ARB_EDIT_EDGE_DIR, mousevec, rejected_planes, s->tol) == 0 ||
+	!ZERO(MAGNITUDE(mousevec)) ||
+	memcmp(arb->pt, before_rejected_edge.pt, sizeof(arb->pt)) ||
+	memcmp(rejected_planes, a->es_peqn, sizeof(rejected_planes)))
+	bu_exit(1, "ERROR: rejected ARB edge direction changed input or edit state\n");
+
     s->local2base = 1.0;
     s->base2local = 1.0;
 
@@ -843,6 +909,29 @@ bu_log("RT_MATRIX_EDIT_TRANS_MODEL_XYZ SUCCESS: "
 	!NEAR_EQUAL(s->e_para[2], 45.0, VUNITIZE_TOL) ||
 	ZERO(a->es_peqn[4][Y]))
 	bu_exit(1, "ERROR: ARB extended face rotation changed input or left plane unchanged\n");
+
+    arb8_reset(s, arb, a);
+    a->edit_menu = 0; /* Rotate the bottom plane onto a side plane. */
+    a->fixv = 0;
+    rt_edit_set_edflag(s, ECMD_ARB_ROTATE_FACE);
+    s->mv_context = 0;
+    s->e_inpara = 3;
+    VSET(s->e_para, 0.0, 90.0, 0.0);
+    MAT_IDN(s->acc_rot_sol);
+    MAT_IDN(s->model_changes);
+    MAT_IDN(s->incr_change);
+    if (rt_arb_calc_planes(s->log_str, arb, ARB8, a->es_peqn, s->tol))
+	bu_exit(1, "ERROR: ARB rejected-rotation setup failed\n");
+    struct rt_arb_internal before_rejected_rotation = *arb;
+    plane_t before_rotation_planes[ARB8_FACE_COUNT];
+    mat_t before_rotation_acc;
+    memcpy(before_rotation_planes, a->es_peqn, sizeof(before_rotation_planes));
+    MAT_COPY(before_rotation_acc, s->acc_rot_sol);
+    if (rt_edit_process(s) != BRLCAD_ERROR ||
+	memcmp(arb->pt, before_rejected_rotation.pt, sizeof(arb->pt)) ||
+	memcmp(a->es_peqn, before_rotation_planes, sizeof(before_rotation_planes)) ||
+	memcmp(s->acc_rot_sol, before_rotation_acc, sizeof(before_rotation_acc)))
+	bu_exit(1, "ERROR: rejected ARB face rotation changed edit state\n");
 
     /* The same face operation must survive the interactive rotation knob
      * adapter, which supplies an incremental matrix rather than parameters.
