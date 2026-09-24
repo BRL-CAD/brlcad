@@ -55,6 +55,9 @@
 
 __BEGIN_DECLS
 
+/** Wait until pending RT_DEBUG_RTCMP records have reached the output file. */
+RT_EXPORT extern int rt_rtcmp_capture_flush(void);
+
 /**
  * @brief
  * Shoot a ray

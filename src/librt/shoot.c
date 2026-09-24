@@ -545,6 +545,7 @@ rt_shootray(register struct application *ap)
     struct resource *resp;
     struct rt_i *rtip;
     const int debug_shoot = RT_G_DEBUG & RT_DEBUG_SHOOT;
+    void *rtcmp_state = NULL;
     fastf_t pending_hit = 0; /* dist of closest odd hit pending */
 
     RT_AP_CHECK(ap);
@@ -599,6 +600,8 @@ rt_shootray(register struct application *ap)
     BU_LIST_INIT(&waiting_segs.l);
     BU_LIST_INIT(&finished_segs.l);
     ap->a_finished_segs_hdp = &finished_segs;
+    if (RT_G_DEBUG & RT_DEBUG_RTCMP)
+	rtcmp_state = _rt_rtcmp_capture_begin();
 
     if (!BU_LIST_IS_INITIALIZED(&resp->re_parthead)) {
 	/* XXX This shouldn't happen any more */
@@ -728,6 +731,7 @@ rt_shootray(register struct application *ap)
 	    goto start_cell;
 	}
 	resp->re_nmiss_model++;
+	if (rtcmp_state) _rt_rtcmp_capture_finish(rtcmp_state, ap, &FinalPart);
 	if (ap->a_miss)
 	    ap->a_return = ap->a_miss(ap);
 	else
@@ -854,6 +858,7 @@ rt_shootray(register struct application *ap)
 			s2->seg_in.hit_dist += ss.dist_corr;
 			s2->seg_out.hit_dist += ss.dist_corr;
 			s2->seg_in.hit_rayp = s2->seg_out.hit_rayp = &ap->a_ray;
+			if (rtcmp_state) _rt_rtcmp_capture_segment(rtcmp_state, ap, s2);
 			BU_LIST_INSERT(&(waiting_segs.l), &(s2->l));
 		    }
 		}
@@ -927,6 +932,7 @@ weave:
 
     /* finished_segs chain now has all segments hit by this ray */
     if (BU_LIST_IS_EMPTY(&(finished_segs.l))) {
+	if (rtcmp_state) _rt_rtcmp_capture_finish(rtcmp_state, ap, &FinalPart);
 	if (ap->a_miss)
 	    ap->a_return = ap->a_miss(ap);
 	else
@@ -944,6 +950,7 @@ weave:
 		       regionbits, ap, solidbits);
 
     if (FinalPart.pt_forw == &FinalPart) {
+	if (rtcmp_state) _rt_rtcmp_capture_finish(rtcmp_state, ap, &FinalPart);
 	if (ap->a_miss)
 	    ap->a_return = ap->a_miss(ap);
 	else
@@ -959,7 +966,9 @@ hitit:
 
     if (debug_shoot) rt_pr_partitions(rtip, &FinalPart, "a_hit()");
 
-    if (RT_G_DEBUG & RT_DEBUG_RTCMP)
+    if (rtcmp_state)
+	_rt_rtcmp_capture_finish(rtcmp_state, ap, &FinalPart);
+    else if (RT_G_DEBUG & RT_DEBUG_RTCMP)
 	_rt_rtcmp_capture(ap, &FinalPart);
 
     /* Before recursing, release storage for unused Initial

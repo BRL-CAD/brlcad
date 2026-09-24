@@ -26,13 +26,9 @@
 #include "bu/app.h"
 #include "bu/env.h"
 #include "bu/log.h"
-#include "bu/snooze.h"
 #include "bu/str.h"
 #include "raytrace.h"
 #include "wdb.h"
-
-
-#define TEST_FLUSH_WAIT_SECONDS 3
 
 
 static int
@@ -59,7 +55,7 @@ shoot(struct application *ap, fastf_t y)
 
 
 int
-main(int UNUSED(argc), const char **argv)
+main(int argc, const char **argv)
 {
     char path[MAXPATHLEN];
     char line[BUFSIZ];
@@ -70,9 +66,12 @@ main(int UNUSED(argc), const char **argv)
     struct application ap;
     struct wmember members;
     point_t center = VINIT_ZERO;
+    point_t cut_center = {0.0, 3.0, 0.0};
+    int primitives = argc > 1;
     FILE *file = NULL;
     int failures = 0;
     int records = 0;
+    int primitive_only = 0;
 
     bu_setprogname(argv[0]);
     file = bu_temp_file(path, sizeof(path));
@@ -80,6 +79,7 @@ main(int UNUSED(argc), const char **argv)
     if (fputs("{}\n", file) == EOF || fclose(file) != 0) return 1;
     file = NULL;
     if (bu_setenv("LIBRT_RTCMP_FILE", path, 1) != 0) return 1;
+    if (primitives && bu_setenv("LIBRT_RTCMP_PRIMITIVES", "1", 1) != 0) return 1;
 
     dbip = db_create_inmem();
     if (!dbip) return 1;
@@ -89,8 +89,19 @@ main(int UNUSED(argc), const char **argv)
     if (!mk_addmember("sphere.s", &members.l, NULL, WMOP_UNION) ||
 	mk_lcomb(wdbp, "sphere.r", &members, 1, NULL, NULL, NULL, 0)) return 1;
 
+    if (primitives) {
+        struct wmember difference;
+        BU_LIST_INIT(&difference.l);
+        if (mk_sph(wdbp, "outer.s", cut_center, 1.0) ||
+            mk_sph(wdbp, "cut.s", cut_center, 1.0) ||
+            !mk_addmember("outer.s", &difference.l, NULL, WMOP_UNION) ||
+            !mk_addmember("cut.s", &difference.l, NULL, WMOP_SUBTRACT) ||
+            mk_lcomb(wdbp, "empty.r", &difference, 1, NULL, NULL, NULL, 0)) return 1;
+    }
+
     rtip = rt_i_create(dbip);
     if (!rtip || rt_gettree(rtip, "sphere.r")) return 1;
+    if (primitives && rt_gettree(rtip, "empty.r")) return 1;
     rt_prep(rtip);
     rt_init_resource(&resource, 0, rtip);
     RT_APPLICATION_INIT(&ap);
@@ -100,29 +111,38 @@ main(int UNUSED(argc), const char **argv)
     ap.a_miss = shot_miss;
 
     rt_debug = RT_DEBUG_RTCMP;
-    if (shoot(&ap, 0.0) != 1 || shoot(&ap, 2.0) != 0 ||
+    if (shoot(&ap, 0.0) != 1 || shoot(&ap, primitives ? 5.0 : 2.0) != 0 ||
 	shoot(&ap, 0.5) != 1) failures++;
+    if (primitives && shoot(&ap, 3.0) != 0) failures++;
+    if (rt_rtcmp_capture_flush() != 0) failures++;
     rt_debug = 0;
 
-    if (bu_snooze(BU_SEC2USEC(TEST_FLUSH_WAIT_SECONDS)) != 0) failures++;
     file = fopen(path, "rb");
     if (!file) {
 	failures++;
     } else {
 	if (!bu_fgets(line, sizeof(line), file) || bu_strcmp(line, "{}\n")) failures++;
 	while (bu_fgets(line, sizeof(line), file)) {
-	    if (!strstr(line, "\"partitions\":[{") ||
-		!strstr(line, "\"ray_dir\":{") ||
+	    int is_hit = strstr(line, "\"partitions\":[{") != NULL;
+	    int has_segments = strstr(line, "\"segments\":[{") != NULL;
+	    if (!strstr(line, "\"ray_dir\":{") ||
 		!strstr(line, "\"ray_pt\":{") ||
-		!strstr(line, "\"region\":\"/sphere.r\"")) {
+		(is_hit && !strstr(line, "\"region\":\"/sphere.r\"")) ||
+		(!primitives && (!is_hit || strstr(line, "\"segments\":["))) ||
+		(primitives && !strstr(line, "\"segments\":[")) ||
+		(primitives && !is_hit && has_segments &&
+		 (!strstr(line, "\"partitions\":[]") ||
+		  !strstr(line, "\"primitive\":\"outer.s\"") ||
+		  !strstr(line, "\"primitive\":\"cut.s\"")))) {
 		bu_log("unexpected capture record: %s", line);
 		failures++;
 	    }
+	    if (primitives && !is_hit && has_segments) ++primitive_only;
 	    records++;
 	}
 	fclose(file);
     }
-    if (records != 2) failures++;
+    if (records != (primitives ? 4 : 2) || (primitives && primitive_only != 1)) failures++;
 
     rt_i_destroy(rtip);
     db_close(dbip);

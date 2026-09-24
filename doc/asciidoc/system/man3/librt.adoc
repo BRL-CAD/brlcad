@@ -208,7 +208,9 @@ Separate processes must not write to the same file concurrently. Pending
 records are flushed within two seconds under normal operation and during normal
 process shutdown. A process terminated abnormally may lose pending records.
 rtcmp comparison files should use the same hit-only capture mode on both sides;
-its generation mode also includes misses.
+its generation mode also includes misses.  The output can be expanded to also
+include primitive segments if the environment variable LIBRT_RTCMP_PRIMITIVES
+is set to 1.
 
 The LIBRT_V4FLIP environment variable may be set to a true or false value to respectively force or disable endianness interpretation of v4 geometry database files. The default behavior is to automatically detect whether flipping the endian interpretation will help LIBRT read a binary-incompatible v4 geometry database file. Setting LIBRT_V4FLIP will override automatic detection.
 
