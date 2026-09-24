@@ -34,7 +34,7 @@
 
 
 int
-mk_constraint(struct rt_wdb *wdbp, const char *name, const char *UNUSED(expr))
+mk_constraint(struct rt_wdb *wdbp, const char *name, const char *expr)
 {
     struct rt_db_internal intern;
     struct rt_constraint_internal *constraint;
@@ -46,7 +46,8 @@ mk_constraint(struct rt_wdb *wdbp, const char *name, const char *UNUSED(expr))
     /* Create a fresh new object for export */
     BU_ALLOC(constraint, struct rt_constraint_internal);
     constraint->magic = RT_CONSTRAINT_MAGIC;
-    constraint->id = constraint->type = 0;
+    constraint->id = 0;
+    constraint->type = RT_CONSTRAINT_TYPE_EXPRESSION;
     BU_VLS_INIT(&constraint->expression);
 
     intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
@@ -54,9 +55,8 @@ mk_constraint(struct rt_wdb *wdbp, const char *name, const char *UNUSED(expr))
     intern.idb_ptr = (void *)constraint;
     intern.idb_meth = &OBJ[ID_CONSTRAINT];
 
-    /* Add data */
-    constraint->id=1432;
-    constraint->type=323;
+    if (expr)
+	bu_vls_strcat(&constraint->expression, expr);
 
     /* The internal representation will be freed */
     return wdb_put_internal(wdbp, name, &intern, mk_conv2mm);
