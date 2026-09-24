@@ -23,6 +23,7 @@
 #include <atomic>
 #include <cerrno>
 #include <chrono>
+#include <cmath>
 #include <condition_variable>
 #include <cstdio>
 #include <cstdlib>
@@ -33,11 +34,13 @@
 #include <limits>
 #include <locale>
 #include <mutex>
+#include <memory>
 #include <sstream>
 #include <string>
 #include <thread>
 #include <utility>
 
+#include "bu/str.h"
 #include "raytrace.h"
 #include "librt_private.h"
 
@@ -76,7 +79,7 @@ append_json_string(std::ostream &out, const char *value)
 }
 
 std::string
-format_shot(const struct application *ap, const struct partition *head)
+format_shot(const struct application *ap, const struct partition *head, const std::string *segments = nullptr)
 {
     std::ostringstream out;
     out.imbue(std::locale::classic());
@@ -109,12 +112,70 @@ format_shot(const struct application *ap, const struct partition *head)
         out << '}';
     }
 
-    out << "],\"ray_dir\":";
+    out << "]";
+    if (segments) out << ",\"segments\":[" << *segments << "]";
+    out << ",\"ray_dir\":";
     append_xyz(out, ap->a_ray.r_dir);
     out << ",\"ray_pt\":";
     append_xyz(out, ap->a_ray.r_pt);
     out << "}\n";
     return out.str();
+}
+
+struct CaptureState {
+    std::string segments;
+};
+
+void
+append_segment(CaptureState &state, const struct application *ap, const struct seg *segp)
+{
+    std::ostringstream out;
+    out.imbue(std::locale::classic());
+    out << std::setprecision(std::numeric_limits<fastf_t>::max_digits10);
+    struct hit in = segp->seg_in;
+    struct hit out_hit = segp->seg_out;
+    struct soltab *stp = segp->seg_stp;
+    const bool geometry_valid = stp && std::isfinite(in.hit_dist) &&
+        std::isfinite(out_hit.hit_dist) && in.hit_dist <= out_hit.hit_dist;
+    vect_t in_norm, out_norm;
+    if (geometry_valid) {
+        VJOIN1(in.hit_point, ap->a_ray.r_pt, in.hit_dist, ap->a_ray.r_dir);
+        VJOIN1(out_hit.hit_point, ap->a_ray.r_pt, out_hit.hit_dist, ap->a_ray.r_dir);
+        RT_HIT_NORMAL(in_norm, &in, stp, ap->a_ray, 0);
+        RT_HIT_NORMAL(out_norm, &out_hit, stp, ap->a_ray, 0);
+    }
+
+    if (!state.segments.empty()) out << ',';
+    out << "{\"primitive\":";
+    if (stp && stp->st_path.magic == DB_FULL_PATH_MAGIC) {
+        char *path = db_path_to_string(&stp->st_path);
+        append_json_string(out, path);
+        bu_free(path, "primitive path");
+    } else {
+        append_json_string(out, stp ? stp->st_name : "unnamed");
+    }
+    out << ",\"transform\":[";
+    const mat_t identity = MAT_INIT_IDN;
+    const fastf_t *mat = stp && stp->st_matp ? stp->st_matp : identity;
+    for (size_t i = 0; i < ELEMENTS_PER_MAT; ++i) {
+        if (i) out << ',';
+        out << '\"' << mat[i] << '\"';
+    }
+    out << "],\"in_dist\":\"" << in.hit_dist << "\",\"in_norm\":";
+    if (geometry_valid) append_xyz(out, in_norm);
+    else out << "null";
+    out << ",\"in_pt\":";
+    if (geometry_valid) append_xyz(out, in.hit_point);
+    else out << "null";
+    out << ",\"in_surfno\":" << in.hit_surfno;
+    out << ",\"out_dist\":\"" << out_hit.hit_dist << "\",\"out_norm\":";
+    if (geometry_valid) append_xyz(out, out_norm);
+    else out << "null";
+    out << ",\"out_pt\":";
+    if (geometry_valid) append_xyz(out, out_hit.hit_point);
+    else out << "null";
+    out << ",\"out_surfno\":" << out_hit.hit_surfno << '}';
+    state.segments += out.str();
 }
 
 class CaptureWriter {
@@ -133,6 +194,10 @@ public:
             return;
         }
 
+        const char *primitive_setting = std::getenv("LIBRT_RTCMP_PRIMITIVES");
+        const char *skip_setting = std::getenv("LIBRT_RTCMP_SKIP_MISSES");
+        primitive_mode = primitive_setting && bu_strcmp(primitive_setting, "1") == 0;
+        skip_misses = skip_setting && bu_strcmp(skip_setting, "1") == 0;
         enabled.store(true, std::memory_order_release);
         try {
             worker = std::thread(&CaptureWriter::write, this);
@@ -160,6 +225,20 @@ public:
     }
 
     bool active() const { return enabled.load(std::memory_order_acquire); }
+    bool primitives() const { return primitive_mode; }
+    bool omit_misses() const { return skip_misses; }
+
+    int flush()
+    {
+        std::unique_lock<std::mutex> guard(mutex);
+        const size_t target = submitted;
+        if (completed < target) {
+            flush_requested = true;
+            ready.notify_one();
+        }
+        drained.wait(guard, [&] { return completed >= target || !active(); });
+        return active() ? 0 : -1;
+    }
 
     void submit(std::string line)
     {
@@ -174,6 +253,7 @@ public:
         if (queued.empty()) deadline = std::chrono::steady_clock::now() + FLUSH_DELAY;
         queued_bytes += line.size();
         queued.push_back(std::move(line));
+        ++submitted;
         if (queued_bytes >= FLUSH_BYTES) ready.notify_one();
         else if (queued.size() == 1) ready.notify_one();
     }
@@ -184,6 +264,7 @@ public:
         bu_log("RT_DEBUG_RTCMP: %s; capture disabled\n", reason);
         ready.notify_all();
         space.notify_all();
+        drained.notify_all();
     }
 
 private:
@@ -195,13 +276,14 @@ private:
                 std::unique_lock<std::mutex> guard(mutex);
                 ready.wait(guard, [&] { return stopping || !active() || !queued.empty(); });
                 if (!stopping && queued_bytes < FLUSH_BYTES)
-                    ready.wait_until(guard, deadline, [&] { return stopping || !active() || queued_bytes >= FLUSH_BYTES; });
+                    ready.wait_until(guard, deadline, [&] { return stopping || !active() || flush_requested || queued_bytes >= FLUSH_BYTES; });
                 if (queued.empty()) {
                     if (stopping || !active()) return;
                     continue;
                 }
                 batch.swap(queued);
                 queued_bytes = 0;
+                flush_requested = false;
             }
             space.notify_all();
 
@@ -215,6 +297,11 @@ private:
                 disable("flushing output failed");
                 return;
             }
+            {
+                std::lock_guard<std::mutex> guard(mutex);
+                completed += batch.size();
+            }
+            drained.notify_all();
         }
     }
 
@@ -222,8 +309,14 @@ private:
     std::mutex mutex;
     std::condition_variable ready;
     std::condition_variable space;
+    std::condition_variable drained;
     std::deque<std::string> queued;
     size_t queued_bytes = 0;
+    size_t submitted = 0;
+    size_t completed = 0;
+    bool primitive_mode = false;
+    bool skip_misses = false;
+    bool flush_requested = false;
     std::chrono::steady_clock::time_point deadline;
     std::thread worker;
     FILE *file = nullptr;
@@ -238,6 +331,52 @@ writer()
 }
 
 } // namespace
+
+extern "C" void *
+_rt_rtcmp_capture_begin(void)
+{
+    const char *mode = std::getenv("LIBRT_RTCMP_PRIMITIVES");
+    if (!mode || bu_strcmp(mode, "1") != 0) return nullptr;
+    try {
+        CaptureWriter &capture = writer();
+        return capture.active() && capture.primitives() ? new CaptureState : nullptr;
+    } catch (const std::exception &e) {
+        writer().disable(e.what());
+        return nullptr;
+    }
+}
+
+extern "C" void
+_rt_rtcmp_capture_segment(void *state, const struct application *ap, const struct seg *segp)
+{
+    if (!state) return;
+    try {
+        append_segment(*static_cast<CaptureState *>(state), ap, segp);
+    } catch (const std::exception &e) {
+        writer().disable(e.what());
+    }
+}
+
+extern "C" void
+_rt_rtcmp_capture_finish(void *state, const struct application *ap, const struct partition *parts)
+{
+    if (!state) return;
+    std::unique_ptr<CaptureState> shot(static_cast<CaptureState *>(state));
+    try {
+        CaptureWriter &capture = writer();
+        if (!capture.active()) return;
+        if (capture.omit_misses() && shot->segments.empty() && parts->pt_forw == parts) return;
+        capture.submit(format_shot(ap, parts, &shot->segments));
+    } catch (const std::exception &e) {
+        writer().disable(e.what());
+    }
+}
+
+extern "C" int
+rt_rtcmp_capture_flush(void)
+{
+    return writer().flush();
+}
 
 extern "C" void
 _rt_rtcmp_capture(const struct application *ap, const struct partition *parts)
