@@ -3277,26 +3277,23 @@ int
 rt_arb_calc_points(struct rt_arb_internal *arb, int cgtype, const plane_t planes[6], const struct bn_tol *tol)
 {
     int i;
-    point_t pt[8];
+    struct rt_arb_internal candidate;
 
     RT_ARB_CK_MAGIC(arb);
+    candidate = *arb;
 
     /* find new points for entire solid */
     for (i = 0; i < 8; i++) {
-	if (rt_arb_3face_intersect(pt[i], planes, cgtype, i*3) < 0) {
+	if (rt_arb_3face_intersect(candidate.pt[i], planes, cgtype, i*3) < 0) {
 	    bu_log("rt_arb_calc_points: Intersection of planes fails %d\n", i);
 	    return -1;			/* FAIL */
 	}
     }
 
-    /* Move new points to arb tol->dist))*/
-    for (i = 0; i < 8; i++) {
-	VMOVE(arb->pt[i], pt[i]);
-    }
-
-    if (rt_arb_check_points(arb, cgtype, tol) < 0)
+    if (rt_arb_check_points(&candidate, cgtype, tol) < 0)
 	return -1;
 
+    memcpy(arb->pt, candidate.pt, sizeof(arb->pt));
     return 0;					/* success */
 }
 
@@ -3397,6 +3394,7 @@ rt_arb_calc_planes(struct bu_vls *error_msg_ret,
 		   const struct bn_tol *tol)
 {
     const int arb_faces[5][24] = rt_arb_faces;
+    plane_t candidate[6];
 
     /* ARB4 at location 0, ARB5 at 1, etc. */
     int type = cgtype - ARB4;
@@ -3405,6 +3403,7 @@ rt_arb_calc_planes(struct bu_vls *error_msg_ret,
 
     RT_ARB_CK_MAGIC(arb);
     BN_CK_TOL(tol);
+    memcpy(candidate, planes, sizeof(candidate));
 
     for (int i = 0; i < 6; i++) {
 	if (arb_faces[type][i*4] == -1)
@@ -3414,7 +3413,7 @@ rt_arb_calc_planes(struct bu_vls *error_msg_ret,
 	int p2 = arb_faces[type][i*4+1];
 	int p3 = arb_faces[type][i*4+2];
 
-	if (bg_make_plane_3pnts(planes[i],
+	if (bg_make_plane_3pnts(candidate[i],
 			     arb->pt[p1],
 			     arb->pt[p2],
 			     arb->pt[p3],
@@ -3425,6 +3424,7 @@ rt_arb_calc_planes(struct bu_vls *error_msg_ret,
 	}
     }
 
+    memcpy(planes, candidate, sizeof(candidate));
     return 0;
 }
 
