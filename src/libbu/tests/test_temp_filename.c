@@ -35,6 +35,57 @@
 
 #include "common.h"
 
+#include <string.h>
+
+#include "bio.h"
+#include "bu/app.h"
+#include "bu/file.h"
+
+
+static int
+temp_file_binary(void)
+{
+    /* LF and DOS EOF expose text-mode translation on Windows. */
+    const unsigned char expected[] = {0x00, 0x0a, 0x1a, 0x0d, 0xff};
+    unsigned char actual[sizeof(expected) + 1] = {0};
+    char path[MAXPATHLEN] = {0};
+    size_t count;
+    FILE *fp = bu_temp_file(path, sizeof(path));
+
+    if (!fp) {
+	bu_log("temp_filename failure: cannot create temporary file\n");
+	return 1;
+    }
+
+    count = fwrite(expected, 1, sizeof(expected), fp);
+    if (fclose(fp) != 0 || count != sizeof(expected)) {
+	bu_log("temp_filename failure: cannot write binary data\n");
+	bu_file_delete(path);
+	return 1;
+    }
+
+    fp = fopen(path, "rb");
+    if (!fp) {
+	bu_log("temp_filename failure: cannot reopen temporary file\n");
+	bu_file_delete(path);
+	return 1;
+    }
+
+    count = fread(actual, 1, sizeof(actual), fp);
+    if (fclose(fp) != 0 || count != sizeof(expected) || memcmp(actual, expected, sizeof(expected))) {
+	bu_log("temp_filename failure: binary data changed (%zu bytes read, expected %zu)\n", count, sizeof(expected));
+	bu_file_delete(path);
+	return 1;
+    }
+
+    if (!bu_file_delete(path)) {
+	bu_log("temp_filename failure: cannot delete temporary file\n");
+	return 1;
+    }
+
+    return 0;
+}
+
 
 static void
 temp_filename_thread(int cpu, void* ptr)
@@ -96,6 +147,9 @@ main(int argc, char *argv[])
 	    if (strlen(under_size) != 4)    /* buffer size -1 */
 		bu_exit(EXIT_FAILURE, "temp_filename failure: expected size [%d], got [%ld]]\n", 4, strlen(under_size));
 
+	} else if (!bu_strcmp(curr, "binary")) {
+	    if (temp_file_binary())
+		return EXIT_FAILURE;
 	} else if (!bu_strcmp(curr, "parallel")) {
 	    // test parallel / threaded -
 	    uint8_t threads = bu_avail_cpus();

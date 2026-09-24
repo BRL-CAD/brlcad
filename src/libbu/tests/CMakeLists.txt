@@ -200,6 +200,7 @@ brlcad_add_test(NAME bu_file_mime_png   COMMAND bu_test test_file_mime png 3 BU_
 #      bu_temp_filename testing    #
 ####################################
 brlcad_add_test(NAME bu_temp_filename  COMMAND bu_test test_temp_filename "single")
+brlcad_add_test(NAME bu_temp_binary    COMMAND bu_test test_temp_filename "binary")
 #BRLCAD_ADD_TEST(NAME bu_temp_filename  COMMAND bu_test test_temp_filename "parallel")
 
 #

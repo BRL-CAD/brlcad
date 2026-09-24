@@ -210,7 +210,7 @@ mkstemp(char *file_template)
 	for (i=(int)start; i>=(int)end; i--) {
 	    file_template[i] = replace[(int)(replacelen * ((double)rand() / (double)RAND_MAX))];
 	}
-	fd = open(file_template, O_CREAT | O_EXCL | O_TRUNC | O_RDWR, S_IRUSR | S_IWUSR);
+	fd = open(file_template, O_CREAT | O_EXCL | O_TRUNC | O_RDWR | O_BINARY, S_IRUSR | S_IWUSR);
     } while ((fd == -1) && (counter++ < 1000));
 
     return fd;
@@ -281,6 +281,15 @@ bu_temp_file(char *filepath, size_t len)
 
     if (UNLIKELY(fd == -1)) {
 	perror("mkstemp");
+	bu_log(_TF_FAIL);
+	return NULL;
+    }
+
+    /* Ensure the descriptor is binary before associating it with a stream. */
+    if (UNLIKELY(setmode(fd, O_BINARY) == -1)) {
+	perror("setmode");
+	close(fd);
+	bu_file_delete(tempfile);
 	bu_log(_TF_FAIL);
 	return NULL;
     }
