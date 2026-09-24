@@ -3089,6 +3089,11 @@ create_p6_fixture(const char *dbpath)
         return BRLCAD_ERROR;
     }
 
+    if (mk_id_units(wdbp, "GED BREP edit unit test", "in") != 0) {
+	wdb_close(wdbp);
+	return BRLCAD_ERROR;
+    }
+
     /* Build a BREP sphere at origin, radius 10. */
     ON_3dPoint centre(0.0, 0.0, 0.0);
     ON_Sphere sph(centre, 10.0);
@@ -3098,6 +3103,21 @@ create_p6_fixture(const char *dbpath)
     bi->magic = RT_BREP_INTERNAL_MAGIC;
     bi->brep  = ON_BrepSphere(sph);
 
+    if (!bi->brep)
+	bu_exit(1, "ERROR: unable to create GED BREP sphere fixture\n");
+    for (int i = 0; i < bi->brep->m_S.Count(); i++) {
+	ON_Surface *surface = bi->brep->m_S[i];
+	if (!surface)
+	    bu_exit(1, "ERROR: GED BREP fixture has a null surface\n");
+	if (dynamic_cast<ON_NurbsSurface *>(surface))
+	    continue;
+	ON_NurbsSurface *nurbs = new ON_NurbsSurface;
+	if (surface->GetNurbForm(*nurbs, 0.0) <= 0)
+	    bu_exit(1, "ERROR: cannot convert GED BREP fixture to NURBS\n");
+	bi->brep->m_S[i] = nurbs;
+	delete surface;
+    }
+
     if (wdb_export(wdbp, "brep_sph.s", (void *)bi, ID_BREP, 1.0) < 0) {
         bu_log("wdb_export brep_sph.s failed\n");
         db_close(wdbp->dbip);
@@ -3106,6 +3126,36 @@ create_p6_fixture(const char *dbpath)
 
     db_close(wdbp->dbip);
     return BRLCAD_OK;
+}
+
+static int
+read_brep_cv(struct ged *gedp, int face_index, int cv_i, int cv_j, point_t pos)
+{
+    struct directory *dp = db_lookup(gedp->dbip, "brep_sph.s", LOOKUP_QUIET);
+    if (dp == RT_DIR_NULL)
+	return BRLCAD_ERROR;
+
+    struct rt_db_internal intern;
+    RT_DB_INTERNAL_INIT(&intern);
+    if (rt_db_get_internal(&intern, dp, gedp->dbip, NULL) < 0)
+	return BRLCAD_ERROR;
+
+    int ret = BRLCAD_ERROR;
+    if (intern.idb_type == ID_BREP) {
+	struct rt_brep_internal *bi = (struct rt_brep_internal *)intern.idb_ptr;
+	if (bi->brep && face_index >= 0 && face_index < bi->brep->m_F.Count()) {
+	    ON_BrepFace *face = bi->brep->Face(face_index);
+	    const ON_NurbsSurface *ns = face ?
+		dynamic_cast<const ON_NurbsSurface *>(face->SurfaceOf()) : NULL;
+	    ON_3dPoint cv;
+	    if (ns && ns->GetCV(cv_i, cv_j, cv)) {
+		VSET(pos, cv.x, cv.y, cv.z);
+		ret = BRLCAD_OK;
+	    }
+	}
+    }
+    rt_db_free_internal(&intern);
+    return ret;
 }
 
 /* ------------------------------------------------------------------ *
@@ -3150,15 +3200,24 @@ test_p6_brep_list_ops_json(struct ged *gedp)
 static void
 test_p6_brep_select_and_move(struct ged *gedp)
 {
+    CHECK(NEAR_EQUAL(gedp->dbip->dbi_local2base, 25.4, NEAR_ENOUGH),
+	"brep_sph.s fixture uses inch database units");
+
+    point_t before = VINIT_ZERO;
+    int readable = read_brep_cv(gedp, 0, 0, 0, before);
+    CHECK(readable == BRLCAD_OK, "brep_sph.s move target CV is readable");
+    if (readable != BRLCAD_OK)
+	return;
+
     /* Select face 0, CV (0, 0) */
     {
         const char *av[] = {
-            "edit", "brep_sph.s", "select_surface_cv", "0", "0", "0", NULL
+            "edit", "-i", "brep_sph.s", "select_surface_cv", "0", "0", "0", NULL
         };
         bu_vls_trunc(gedp->ged_result_str, 0);
-        int ret = ged_exec(gedp, 6, av);
+        int ret = ged_exec(gedp, 7, av);
         CHECK(ret == BRLCAD_OK,
-              "brep_sph.s select_surface_cv 0 0 0 returns OK");
+              "brep_sph.s intermediate select_surface_cv 0 0 0 returns OK");
     }
     /* Move the selected CV by (1, 0, 0) */
     {
@@ -3170,6 +3229,13 @@ test_p6_brep_select_and_move(struct ged *gedp)
         CHECK(ret == BRLCAD_OK,
               "brep_sph.s move_surface_cv 1 0 0 returns OK");
     }
+    point_t after = VINIT_ZERO;
+    int persisted = read_brep_cv(gedp, 0, 0, 0, after);
+    CHECK(persisted == BRLCAD_OK &&
+	NEAR_EQUAL(after[X], before[X] + gedp->dbip->dbi_local2base, NEAR_ENOUGH) &&
+	NEAR_EQUAL(after[Y], before[Y], NEAR_ENOUGH) &&
+	NEAR_EQUAL(after[Z], before[Z], NEAR_ENOUGH),
+	"brep_sph.s CV move persists the requested delta");
 }
 
 /* ------------------------------------------------------------------ *
@@ -3181,12 +3247,12 @@ test_p6_brep_select_and_set(struct ged *gedp)
     /* Select face 0, CV (1, 0) */
     {
         const char *av[] = {
-            "edit", "brep_sph.s", "select_surface_cv", "0", "1", "0", NULL
+            "edit", "-i", "brep_sph.s", "select_surface_cv", "0", "1", "0", NULL
         };
         bu_vls_trunc(gedp->ged_result_str, 0);
-        int ret = ged_exec(gedp, 6, av);
+        int ret = ged_exec(gedp, 7, av);
         CHECK(ret == BRLCAD_OK,
-              "brep_sph.s select_surface_cv 0 1 0 returns OK");
+              "brep_sph.s intermediate select_surface_cv 0 1 0 returns OK");
     }
     /* Set the CV to (3, 4, 5) */
     {
@@ -3198,6 +3264,13 @@ test_p6_brep_select_and_set(struct ged *gedp)
         CHECK(ret == BRLCAD_OK,
               "brep_sph.s set_surface_cv_position 3 4 5 returns OK");
     }
+    point_t after = VINIT_ZERO;
+    int persisted = read_brep_cv(gedp, 0, 1, 0, after);
+    CHECK(persisted == BRLCAD_OK &&
+	NEAR_EQUAL(after[X], 3.0 * gedp->dbip->dbi_local2base, NEAR_ENOUGH) &&
+	NEAR_EQUAL(after[Y], 4.0 * gedp->dbip->dbi_local2base, NEAR_ENOUGH) &&
+	NEAR_EQUAL(after[Z], 5.0 * gedp->dbip->dbi_local2base, NEAR_ENOUGH),
+	"brep_sph.s CV set persists the requested position");
 }
 
 /* ------------------------------------------------------------------ *
@@ -3206,14 +3279,22 @@ test_p6_brep_select_and_set(struct ged *gedp)
 static void
 test_p6_brep_bad_face(struct ged *gedp)
 {
+    point_t before = VINIT_ZERO;
+    int readable = read_brep_cv(gedp, 0, 1, 0, before);
+    CHECK(readable == BRLCAD_OK, "brep_sph.s invalid-face target is readable");
     const char *av[] = {
         "edit", "brep_sph.s", "select_surface_cv", "9999", "0", "0", NULL
     };
     bu_vls_trunc(gedp->ged_result_str, 0);
-    /* Bad face should not crash and should emit an out-of-range diagnostic. */
     int ret = ged_exec(gedp, 6, av);
-    CHECK(ret == BRLCAD_OK || ret == BRLCAD_ERROR,
-          "brep_sph.s select_surface_cv 9999 0 0 returns without crash");
+    CHECK(ret == BRLCAD_ERROR, "brep_sph.s rejects an invalid face index");
+    CHECK(strstr(bu_vls_cstr(gedp->ged_result_str), "invalid face index") != NULL,
+          "brep_sph.s reports the invalid face index");
+    point_t after = VINIT_ZERO;
+    CHECK(readable == BRLCAD_OK &&
+	read_brep_cv(gedp, 0, 1, 0, after) == BRLCAD_OK &&
+	VNEAR_EQUAL(after, before, NEAR_ENOUGH),
+	"brep_sph.s invalid face leaves the persisted CV unchanged");
 }
 
 /* ------------------------------------------------------------------ *
@@ -3222,18 +3303,20 @@ test_p6_brep_bad_face(struct ged *gedp)
 static void
 test_p6_brep_move_no_selection(struct ged *gedp)
 {
-    /* First reset selection by making a fresh fixture GED session -
-     * just verify that a fresh object with no selection gives error. */
-    /* We open a fresh ged for isolation so the selection state is clean. */
-    /* (Re-use same db; the edit framework tracks state per ged_exec call.) */
+    point_t before = VINIT_ZERO;
+    int readable = read_brep_cv(gedp, 0, 1, 0, before);
+    CHECK(readable == BRLCAD_OK, "brep_sph.s no-selection target is readable");
     const char *av[] = {
         "edit", "brep_sph.s", "move_surface_cv", "1", "0", "0", NULL
     };
     bu_vls_trunc(gedp->ged_result_str, 0);
-    /* This may succeed or fail depending on prior selection state;
-     * just verify no crash. */
-    (void)ged_exec(gedp, 6, av);
-    CHECK(1, "brep_sph.s move_surface_cv without selection does not crash");
+    CHECK(ged_exec(gedp, 6, av) == BRLCAD_ERROR,
+          "brep_sph.s rejects a CV move without selection");
+    point_t after = VINIT_ZERO;
+    CHECK(readable == BRLCAD_OK &&
+	read_brep_cv(gedp, 0, 1, 0, after) == BRLCAD_OK &&
+	VNEAR_EQUAL(after, before, NEAR_ENOUGH),
+	"brep_sph.s rejected move leaves the persisted CV unchanged");
 }
 
 /* ------------------------------------------------------------------ *

@@ -190,7 +190,8 @@ test_brep_select_invalid_face(struct rt_edit *s)
     s->e_para[2] = 0.0;
 
     bu_vls_trunc(s->log_str, 0);
-    rt_edit_process(s);
+    if (rt_edit_process(s) != BRLCAD_ERROR)
+	bu_exit(1, "ERROR: invalid BREP face was reported as successful\n");
 
     if (b->face_index != -1)
 	bu_exit(1,
@@ -198,6 +199,31 @@ test_brep_select_invalid_face(struct rt_edit *s)
 		"face_index=%d\n", b->face_index);
 
     bu_log("ECMD_BREP_SRF_SELECT invalid face PASS (rejected as expected)\n");
+
+    s->e_inpara = 3;
+    VSET(s->e_para, 0.0, 9999.0, 0.0);
+    if (rt_edit_process(s) != BRLCAD_ERROR || b->face_index != -1)
+	bu_exit(1, "ERROR: invalid BREP CV was reported as successful\n");
+
+    s->e_inpara = 3;
+    VSET(s->e_para, NAN, 0.0, 0.0);
+    if (rt_edit_process(s) != BRLCAD_ERROR || b->face_index != -1)
+	bu_exit(1, "ERROR: non-finite BREP face was accepted\n");
+
+    s->e_inpara = 3;
+    VSET(s->e_para, 0.5, 0.0, 0.0);
+    if (rt_edit_process(s) != BRLCAD_ERROR || b->face_index != -1)
+	bu_exit(1, "ERROR: fractional BREP face was accepted\n");
+
+    s->e_inpara = 3;
+    VSET(s->e_para, 0.0, NAN, 0.0);
+    if (rt_edit_process(s) != BRLCAD_ERROR || b->face_index != -1)
+	bu_exit(1, "ERROR: non-finite BREP CV index was accepted\n");
+
+    s->e_inpara = 3;
+    VSET(s->e_para, 0.0, 0.5, 0.0);
+    if (rt_edit_process(s) != BRLCAD_ERROR || b->face_index != -1)
+	bu_exit(1, "ERROR: fractional BREP CV index was accepted\n");
 }
 
 /* 3. SELECT rejects when e_inpara != 3 */
@@ -211,7 +237,8 @@ test_brep_select_wrong_inpara(struct rt_edit *s)
     s->e_inpara = 1; /* wrong */
     s->e_para[0] = 0.0;
 
-    rt_edit_process(s);
+    if (rt_edit_process(s) != BRLCAD_ERROR)
+	bu_exit(1, "ERROR: incomplete BREP selection was reported as successful\n");
 
     if (b->face_index != -1)
 	bu_exit(1,
@@ -301,6 +328,39 @@ test_brep_cv_set(struct rt_edit *s)
     bu_log("ECMD_BREP_SRF_CV_SET PASS: CV placed at (5,5,5)\n");
 }
 
+static void
+test_brep_nonfinite_cv_input(struct rt_edit *s)
+{
+    const int modes[] = {ECMD_BREP_SRF_CV_MOVE, ECMD_BREP_SRF_CV_SET};
+    EDOBJ[ID_BREP].ft_set_edit_mode(s, ECMD_BREP_SRF_SELECT);
+    s->e_inpara = 3;
+    VSET(s->e_para, 0.0, 0.0, 1.0);
+    if (rt_edit_process(s) != BRLCAD_OK)
+	bu_exit(1, "ERROR: could not select BREP CV for invalid input test\n");
+
+    double x, y, z;
+    get_cv_pos(s, 0, 0, 1, &x, &y, &z);
+    for (size_t i = 0; i < sizeof(modes) / sizeof(modes[0]); i++) {
+	EDOBJ[ID_BREP].ft_set_edit_mode(s, modes[i]);
+	s->e_inpara = 3;
+	VSET(s->e_para, i ? INFINITY : NAN, 0.0, 0.0);
+	if (rt_edit_process(s) != BRLCAD_ERROR)
+	    bu_exit(1, "ERROR: BREP CV mode %d accepted a non-finite input\n",
+		    modes[i]);
+	double new_x, new_y, new_z;
+	get_cv_pos(s, 0, 0, 1, &new_x, &new_y, &new_z);
+	if (!NEAR_EQUAL(new_x, x, VUNITIZE_TOL) ||
+	    !NEAR_EQUAL(new_y, y, VUNITIZE_TOL) ||
+	    !NEAR_EQUAL(new_z, z, VUNITIZE_TOL))
+	    bu_exit(1, "ERROR: BREP CV mode %d changed geometry on failure\n",
+		    modes[i]);
+	s->e_inpara = 1;
+	if (rt_edit_process(s) != BRLCAD_ERROR)
+	    bu_exit(1, "ERROR: BREP CV mode %d accepted incomplete input\n",
+		    modes[i]);
+    }
+}
+
 /* 6. MOVE rejected when no CV is selected */
 static void
 test_brep_cv_move_no_selection(struct rt_edit *s)
@@ -314,10 +374,10 @@ test_brep_cv_move_no_selection(struct rt_edit *s)
     s->e_para[0] = s->e_para[1] = s->e_para[2] = 1.0;
 
     bu_vls_trunc(s->log_str, 0);
-    rt_edit_process(s);
+    if (rt_edit_process(s) != BRLCAD_ERROR)
+	bu_exit(1, "ERROR: BREP move without selection was reported as successful\n");
 
-    /* Verify the operation was a no-op (no crash, CV state unchanged).
-     * log_str is cleared by rt_edit_process so we cannot inspect it here. */
+    /* The rejected move must leave the selection unchanged. */
     if (b->face_index != -1 || b->srf_cv_i != -1 || b->srf_cv_j != -1)
 	bu_exit(1,
 		"ERROR: ECMD_BREP_SRF_CV_MOVE no-selection: state changed "
@@ -325,6 +385,12 @@ test_brep_cv_move_no_selection(struct rt_edit *s)
 		b->face_index, b->srf_cv_i, b->srf_cv_j);
 
     bu_log("ECMD_BREP_SRF_CV_MOVE no-selection PASS\n");
+
+    EDOBJ[ID_BREP].ft_set_edit_mode(s, ECMD_BREP_SRF_CV_SET);
+    s->e_inpara = 3;
+    if (rt_edit_process(s) != BRLCAD_ERROR ||
+	b->face_index != -1 || b->srf_cv_i != -1 || b->srf_cv_j != -1)
+	bu_exit(1, "ERROR: BREP set without selection was reported as successful\n");
 }
 
 /* 7. get_params returns the current selection */
@@ -366,6 +432,15 @@ test_brep_edit_desc(struct directory *dp)
 
     if (desc->ncmd != 3)
 	bu_exit(1, "ERROR: ncmd=%d, expected 3\n", desc->ncmd);
+
+    const struct rt_edit_cmd_desc *select = &desc->cmds[0];
+    if (select->cmd_id != ECMD_BREP_SRF_SELECT || select->nparam != 3)
+	bu_exit(1, "ERROR: BREP selection descriptor is incomplete\n");
+    for (int i = 0; i < select->nparam; i++) {
+	if (select->params[i].type != RT_EDIT_PARAM_INTEGER ||
+	    select->params[i].units != NULL)
+	    bu_exit(1, "ERROR: BREP selection index %d is not unitless integer\n", i);
+    }
 
     bu_log("rt_edit_brep_edit_desc PASS: prim_type='%s' ncmd=%d\n",
 	   desc->prim_type, desc->ncmd);
@@ -536,6 +611,7 @@ rt_edit_test_brep(void)
     test_brep_select_wrong_inpara(s);
     test_brep_cv_move(s);
     test_brep_cv_set(s);
+    test_brep_nonfinite_cv_input(s);
     test_brep_cv_move_no_selection(s);
     test_brep_get_params_select(s);
     test_brep_rational_cv_local_units(s);
