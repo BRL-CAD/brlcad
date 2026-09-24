@@ -433,6 +433,7 @@ set(
   ${OPENCL_LIBS}
   mmesh::mmesh
   REGEX::REGEX
+  Threads::Threads
   ${WINSOCK_LIB}
   ${RPCRT_LIB}
   ${STDCXX_LIBRARIES}
