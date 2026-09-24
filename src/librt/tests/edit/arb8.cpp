@@ -735,7 +735,8 @@ bu_log("RT_MATRIX_EDIT_TRANS_MODEL_XYZ SUCCESS: "
     s->e_para[0] = 45.0; s->e_para[1] = 0.0; s->e_para[2] = 0.0;
     s->mv_context = 0;
     VMOVE(s->e_keypoint, arb->pt[a->fixv]);
-    rt_edit_process(s);
+    if (rt_edit_process(s) != BRLCAD_OK)
+	bu_exit(1, "ERROR: ECMD_ARB_ROTATE_FACE reported failure\n");
     /* The plane normal must differ from the original */
     if (VEQUAL(a->es_peqn[a->edit_menu], orig_peqn))
 	bu_exit(1, "ERROR: ECMD_ARB_ROTATE_FACE: plane normal unchanged after 45-deg rotation\n");
@@ -755,7 +756,8 @@ bu_log("RT_MATRIX_EDIT_TRANS_MODEL_XYZ SUCCESS: "
     MAT_IDN(s->model_changes);
     s->mv_context = 0;
     VMOVE(s->e_keypoint, arb->pt[0]);
-    rt_edit_process(s);
+    if (rt_edit_process(s) != BRLCAD_OK)
+	bu_exit(1, "ERROR: extended face rotation reported failure\n");
     if (!NEAR_EQUAL(s->e_para[0], 4.0, VUNITIZE_TOL) ||
 	!NEAR_EQUAL(s->e_para[2], 45.0, VUNITIZE_TOL) ||
 	ZERO(a->es_peqn[4][Y]))

@@ -279,7 +279,7 @@ rt_edit_cline_edit_xy(
 	    break;
 	case ECMD_CLINE_MOVE_H:
 	    ecmd_cline_move_h_mousevec(s, mousevec);
-	    break;
+	    return BRLCAD_OK;
 	default:
 	    return edit_generic_xy(s, mousevec);
     }

@@ -1741,12 +1741,6 @@ ecmd_arb_rotate_face(struct rt_edit *s)
     }
     MAT_IDN(s->incr_change);
 
-    /* no need to calc_planes again */
-    f = NULL; d = NULL;
-    rt_edit_map_clbk_get(&f, &d, s->m, ECMD_REPLOT_EDITING_SOLID, BU_CLBK_DURING);
-    if (f)
-	(*f)(0, NULL, d, NULL);
-
     s->e_inpara = 0;
 
     return 0;
@@ -1881,10 +1875,8 @@ rt_edit_arb_edit(struct rt_edit *s)
 	    ret = ecmd_arb_rotate_face(s);
 	    if (ret)
 		return ret;
-	    /* ecmd_arb_rotate_face handles plane calc and replot directly;
-	     * return 1 to signal rt_edit_process to skip its post-dispatch
-	     * switch (avoiding a redundant arb_planecalc and replot). */
-	    return 1;
+	    /* The plane is current; bypass arb_planecalc below. */
+	    return BRLCAD_OK;
 	case PTARB:     /* move an ARB point */
 	case EARB:      /* edit an ARB edge */
 	    return edit_arb_element(s);

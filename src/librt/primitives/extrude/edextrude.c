@@ -558,7 +558,7 @@ rt_edit_extrude_edit_xy(
 	    break;
 	case ECMD_EXTR_MOV_H:
 	    ecmd_extr_mov_h_mousevec(s, mousevec);
-	    break;
+	    return BRLCAD_OK;
 	default:
 	    return edit_generic_xy(s, mousevec);
     }

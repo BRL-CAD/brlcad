@@ -601,6 +601,29 @@ bu_log("RT_MATRIX_EDIT_TRANS_MODEL_XYZ SUCCESS: "
 	extr_diff("extrusion repeated inch endpoint", &saved, edit_extr))
 	bu_exit(1, "ERROR: extrusion inch endpoint compounded\n");
 
+    /* Endpoint dragging is a base-unit point edit, not a translation. */
+    extr_reset(s, edit_extr, orig, cmp);
+    EDOBJ[dp->d_minor_type].ft_set_edit_mode(s, ECMD_EXTR_MOV_H);
+    MAT_IDN(v->gv_model2view);
+    MAT_IDN(v->gv_view2model);
+    MAT_IDN(s->e_invmat);
+    VADD2(s->curr_e_axes_pos, orig->V, orig->h);
+    vect_t knob_state;
+    VSET(knob_state, 7.0, 8.0, 9.0);
+    VMOVE(s->k.tra_m_abs, knob_state);
+    VMOVE(s->k.tra_v_abs, knob_state);
+    VSET(mousevec, 2.0, 3.0, 0.0);
+    if (EDOBJ[dp->d_minor_type].ft_edit_xy(s, mousevec) != BRLCAD_OK)
+	bu_exit(1, "ERROR: extrusion mouse endpoint move failed\n");
+    vect_t expected_h;
+    VSET(expected_h, mousevec[X], mousevec[Y], orig->h[Z]);
+    if (!VNEAR_EQUAL(edit_extr->h, expected_h, VUNITIZE_TOL) ||
+	!VNEAR_EQUAL(edit_extr->V, orig->V, VUNITIZE_TOL))
+	bu_exit(1, "ERROR: extrusion mouse endpoint moved incorrectly\n");
+    if (!VNEAR_EQUAL(s->k.tra_m_abs, knob_state, VUNITIZE_TOL) ||
+	!VNEAR_EQUAL(s->k.tra_v_abs, knob_state, VUNITIZE_TOL))
+	bu_exit(1, "ERROR: extrusion mouse endpoint move changed translation state\n");
+
     rt_edit_destroy(s);
     db_close(dbip);
     return 0;

@@ -2721,6 +2721,11 @@ create_p5_fixture(const char *dbpath)
         db_close(wdbp->dbip);
         return BRLCAD_ERROR;
     }
+    if (mk_arb8(wdbp, "arb8_rotate.s", arb_pts) != 0) {
+	bu_log("mk_arb8 rotation fixture failed\n");
+	db_close(wdbp->dbip);
+	return BRLCAD_ERROR;
+    }
 
     db_close(wdbp->dbip);
     return BRLCAD_OK;
@@ -2936,9 +2941,43 @@ read_arb8(struct ged *gedp, const char *name, struct rt_arb_internal *out)
         return BRLCAD_ERROR;
     }
     *out = *(struct rt_arb_internal *)intern.idb_ptr;
-    intern.idb_ptr = NULL;
     rt_db_free_internal(&intern);
     return BRLCAD_OK;
+}
+
+static void
+test_p5_arb8_rotate_face(struct ged *gedp)
+{
+    struct rt_arb_internal before, after;
+    if (read_arb8(gedp, "arb8_rotate.s", &before) != BRLCAD_OK) {
+	CHECK(0, "read ARB8 rotation fixture");
+	return;
+    }
+
+    const char *av[] = {
+	"edit", "arb8_rotate.s", "rotate_face", "4", "0", "45", "0", "0", NULL
+    };
+    bu_vls_trunc(gedp->ged_result_str, 0);
+    int ret = ged_exec(gedp, 8, av);
+    if (ret != BRLCAD_OK)
+	bu_log("ARB8 rotation: %s\n", bu_vls_cstr(gedp->ged_result_str));
+    CHECK(ret == BRLCAD_OK, "ARB8 face rotation returns success");
+    if (ret != BRLCAD_OK)
+	return;
+
+    if (read_arb8(gedp, "arb8_rotate.s", &after) != BRLCAD_OK) {
+	CHECK(0, "read ARB8 after face rotation");
+	return;
+    }
+
+    bool moved = false;
+    for (size_t i = 0; i < sizeof(before.pt) / sizeof(before.pt[0]); i++) {
+	if (DIST_PNT_PNT(before.pt[i], after.pt[i]) > VUNITIZE_TOL) {
+	    moved = true;
+	    break;
+	}
+    }
+    CHECK(moved, "ARB8 face rotation persists changed geometry");
 }
 
 static void
@@ -4319,6 +4358,7 @@ main(int ac, char *av[])
         test_p5_arb8_list_ops(gedp);
         test_p5_arb8_list_ops_json(gedp);
         test_p5_all_prim_ops_has_arb8(gedp);
+        test_p5_arb8_rotate_face(gedp);
         test_p5_arb8_move_face(gedp);
         test_p5_arb8_move_vertex(gedp);
         test_p5_arb8_type_option(gedp);
