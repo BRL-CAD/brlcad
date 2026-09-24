@@ -32,6 +32,9 @@ static const char WORKING_PROFILE_FILE_NAME[] = "Creo_to_BRL.g";
 static const char PROFILE_MATERIAL_DIRECTORY[] = "C:\\bundle\\text\\usascii";
 static const char BUNDLED_MATERIAL_FILE[] = "C:\\bundle\\text\\usascii\\ptc_materials.mtl";
 static const char LEGACY_MATERIAL_FILE[] = "./ptc_materials.mtl";
+static const char DEFAULT_PATH_MODEL_NAME[] = "Widget.PRT.12";
+static const char DEFAULT_OUTPUT_PATH[] = "widget.prt.g";
+static const char DEFAULT_LOG_PATH[] = "widget.prt_log.txt";
 
 
 struct profile_attribute {
@@ -616,6 +619,24 @@ test_ui_mapping(const std::string& directory)
 }
 
 
+static int
+test_default_output_paths()
+{
+    std::string output_path;
+    std::string log_path;
+
+    return expect(creo_brl_frontend_default_output_paths(
+                      DEFAULT_PATH_MODEL_NAME, &output_path, &log_path),
+                  "model-derived output defaults were not generated") &&
+           expect(output_path == DEFAULT_OUTPUT_PATH &&
+                      log_path == DEFAULT_LOG_PATH,
+                  "model-derived output defaults changed") &&
+           expect(!creo_brl_frontend_default_output_paths(
+                      NULL, &output_path, &log_path),
+                  "missing model name unexpectedly produced output defaults");
+}
+
+
 int
 main(int argc, char *argv[])
 {
@@ -639,6 +660,8 @@ main(int argc, char *argv[])
     if (!test_profile_reader(directory))
         return 1;
     if (!test_ui_mapping(directory))
+        return 1;
+    if (!test_default_output_paths())
         return 1;
     if (!test_defaults_and_invalid_profiles(directory))
         return 1;

@@ -20,6 +20,9 @@ set(CREO2BRL_FRONTEND_CAPTURE_SOURCES
   frontend/csg_capture.cpp
   frontend/snapshot_writer.cpp
   )
+set(CREO2BRL_FRONTEND_DIALOG_SOURCES
+  frontend/dialog_controller.cpp
+  )
 set(CREO2BRL_FRONTEND_OPTION_SOURCE_PATHS)
 foreach(frontend_option_source ${CREO2BRL_FRONTEND_OPTION_SOURCES})
   # note: we build this as absolute paths so we can reuse for tests/ targets
@@ -192,7 +195,7 @@ if(NOT DEFINED BRLCAD_BUILDTEST_EXTERNALS)
   #      c) /MTd --> MultiThreadedDebug                                  #
   #      d) /MDd --> MultiThreadedDebugDLL                               #
   #----------------------------------------------------------------------#
-  
+
 # Set the default runtime library
   set(CMAKE_MSVC_RUNTIME_LIBRARY_DEFAULT "MultiThreaded")
 
@@ -351,6 +354,7 @@ if(NOT DEFINED BRLCAD_BUILDTEST_EXTERNALS)
   add_library(creo-brl SHARED
     loader.c
     frontend.cpp
+    ${CREO2BRL_FRONTEND_DIALOG_SOURCES}
     ${CREO2BRL_FRONTEND_CAPTURE_SOURCES}
     ${CREO2BRL_FRONTEND_OPTION_SOURCE_PATHS})
   target_include_directories(creo-brl PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}")
@@ -410,7 +414,12 @@ if(NOT DEFINED BRLCAD_BUILDTEST_EXTERNALS)
   # possible issue in the Creo dev documentation.                        #
   #----------------------------------------------------------------------#
   if(CREO_EXEC_PLUGIN)
-    add_executable(creo-brl-exe ${CREO2BRL_LEGACY_SOURCES} frontend.cpp)
+    add_executable(creo-brl-exe
+      ${CREO2BRL_LEGACY_SOURCES}
+      frontend.cpp
+      ${CREO2BRL_FRONTEND_DIALOG_SOURCES}
+      frontend/profile_ui.cpp)
+    target_include_directories(creo-brl-exe PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}")
     target_link_libraries(creo-brl-exe REGEX::REGEX ${WIN_LIBS} ${CREO_PTK_EXE_LIBS} ${CREO_UCORE_LIB} ${CREO_UDATA_LIB} ${CREO_BRLCAD_LIBS})
     set_target_properties(creo-brl-exe PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CREO_BUNDLE_BIN_DIR}")
     set_property(TARGET creo-brl-exe APPEND PROPERTY COMPILE_DEFINITIONS TINYCTHREAD_DLL_IMPORTS CREO_EXEC_PLUGIN)
@@ -522,6 +531,7 @@ else(NOT DEFINED BRLCAD_BUILDTEST_EXTERNALS)
     ${CREO2BRL_SOURCES}
     ${CREO2BRL_CORE_SOURCES}
     ${CREO2BRL_FRONTEND_CAPTURE_SOURCES}
+    ${CREO2BRL_FRONTEND_DIALOG_SOURCES}
     ${CREO2BRL_FRONTEND_OPTION_SOURCES}
     loader.c
     frontend.cpp
@@ -533,6 +543,7 @@ else(NOT DEFINED BRLCAD_BUILDTEST_EXTERNALS)
     conversion/name_allocator.h
     conversion/scene_convert.h
     frontend/csg_capture.h
+    frontend/dialog_controller.h
     frontend/profile_path.h
     frontend/model_capture.h
     frontend/profile_ui.h

@@ -31,5 +31,9 @@ int creo_brl_frontend_apply_options_to_controls(
 int creo_brl_frontend_capture_snapshot_options(
     const struct creo_brl_frontend_control_api *controls,
     struct creo_brl_frontend_snapshot_options *options);
+int creo_brl_frontend_default_output_paths(
+    const char *model_name,
+    std::string *output_path,
+    std::string *log_path);
 
 #endif /* CREO_FRONTEND_PROFILE_UI_H */

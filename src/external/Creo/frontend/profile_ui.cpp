@@ -4,6 +4,8 @@
 
 #include "profile_ui.h"
 
+#include <algorithm>
+#include <cctype>
 #include <cmath>
 #include <cstdlib>
 #include <limits>
@@ -40,11 +42,37 @@ static const char RADIO_TRANSFORM_X_TO_Z[] = "x_to_z";
 static const char RADIO_TRANSFORM_Y_TO_Z[] = "y_to_z";
 static const char RADIO_CHORD_ABSOLUTE[] = "millimeter";
 static const char RADIO_CHORD_RELATIVE[] = "percent";
+static const char DEFAULT_OUTPUT_SUFFIX[] = ".g";
+static const char DEFAULT_LOG_SUFFIX[] = "_log.txt";
 
 static const double CREO_BRL_DEFAULT_MIN_EDGE_MM = 0.000254;
 static const double CREO_BRL_MAX_ANGLE_FACTOR = 1.5;
 static const int32_t CREO_BRL_DEFAULT_MAX_FACETS = 0;
 static const int32_t CREO_BRL_DEFAULT_MAX_STEPS = 1;
+
+
+int
+creo_brl_frontend_default_output_paths(const char *model_name,
+                                       std::string *output_path,
+                                       std::string *log_path)
+{
+    if (!model_name || !model_name[0] || !output_path || !log_path)
+        return 0;
+
+    std::string base_name(model_name);
+    std::transform(base_name.begin(), base_name.end(), base_name.begin(),
+                   [](unsigned char character) {
+                       return static_cast<char>(std::tolower(character));
+                   });
+
+    const std::string::size_type extension_position = base_name.find_last_of('.');
+    if (extension_position != std::string::npos)
+        base_name.erase(extension_position);
+
+    *output_path = base_name + DEFAULT_OUTPUT_SUFFIX;
+    *log_path = base_name + DEFAULT_LOG_SUFFIX;
+    return 1;
+}
 
 
 static int
