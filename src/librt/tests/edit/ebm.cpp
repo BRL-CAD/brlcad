@@ -330,9 +330,14 @@ bu_log("RT_MATRIX_EDIT_TRANS_MODEL_XYZ SUCCESS: "
 	EDOBJ[dp->d_minor_type].ft_set_edit_mode(s, ECMD_EBM_HEIGHT);
 	s->e_inpara = 1;
 	s->e_para[0] = 2.0;
-	rt_edit_process(s);
-	if (!NEAR_EQUAL(edit_ebm->tallness, 2.0 * local2base, VUNITIZE_TOL))
+	if (rt_edit_process(s) != BRLCAD_OK ||
+	    !NEAR_EQUAL(edit_ebm->tallness, 2.0 * local2base, VUNITIZE_TOL) ||
+	    !NEAR_EQUAL(s->e_para[0], 2.0, VUNITIZE_TOL))
 	    bu_exit(1, "ERROR: EBM height did not use local units\n");
+	s->e_inpara = 1;
+	if (rt_edit_process(s) != BRLCAD_OK ||
+	    !NEAR_EQUAL(edit_ebm->tallness, 2.0 * local2base, VUNITIZE_TOL))
+	    bu_exit(1, "ERROR: EBM repeated inch height compounded\n");
     }
 
     /* File selection and bitmap dimensions are independent of length units. */

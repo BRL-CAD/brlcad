@@ -739,6 +739,13 @@ bu_log("RT_MATRIX_EDIT_TRANS_MODEL_XYZ SUCCESS: "
 	VSET(expected, 1.0, 2.0, 3.0);
 	if (!VNEAR_EQUAL(actual, expected, VUNITIZE_TOL))
 	    bu_exit(1, "ERROR: BOT vertex getter did not use local units\n");
+	if (!VNEAR_EQUAL(s->e_para, expected, VUNITIZE_TOL))
+	    bu_exit(1, "ERROR: BOT vertex move changed numeric input\n");
+	VSET(expected, local2base, 2.0 * local2base, 3.0 * local2base);
+	s->e_inpara = 3;
+	if (rt_edit_process(s) != BRLCAD_OK ||
+	    !VNEAR_EQUAL(&bot->vertices[6], expected, VUNITIZE_TOL))
+	    bu_exit(1, "ERROR: BOT repeated vertex move compounded\n");
     }
 
     {
@@ -855,6 +862,14 @@ bu_log("RT_MATRIX_EDIT_TRANS_MODEL_XYZ SUCCESS: "
 	    !VNEAR_EQUAL(&bot->vertices[3], edge1, VUNITIZE_TOL) ||
 	    !VNEAR_EQUAL(&bot->vertices[6], unchanged, VUNITIZE_TOL))
 	    bu_exit(1, "ERROR: BOT edge move ignored inch units\n");
+	if (!NEAR_EQUAL(s->e_para[X], 1.0, VUNITIZE_TOL))
+	    bu_exit(1, "ERROR: BOT edge move changed numeric input\n");
+	s->e_inpara = 3;
+	if (rt_edit_process(s) != BRLCAD_OK ||
+	    !VNEAR_EQUAL(&bot->vertices[0], edge0, VUNITIZE_TOL) ||
+	    !VNEAR_EQUAL(&bot->vertices[3], edge1, VUNITIZE_TOL) ||
+	    !VNEAR_EQUAL(&bot->vertices[6], unchanged, VUNITIZE_TOL))
+	    bu_exit(1, "ERROR: BOT repeated edge move compounded\n");
 
 	bot_reset(s, bot, b);
 	b->bot_verts[0] = 0;
@@ -873,6 +888,15 @@ bu_log("RT_MATRIX_EDIT_TRANS_MODEL_XYZ SUCCESS: "
 	    !VNEAR_EQUAL(&bot->vertices[6], face2, VUNITIZE_TOL) ||
 	    !VNEAR_EQUAL(&bot->vertices[9], face3, VUNITIZE_TOL))
 	    bu_exit(1, "ERROR: BOT face move ignored inch units\n");
+	if (!NEAR_EQUAL(s->e_para[Y], 1.0, VUNITIZE_TOL))
+	    bu_exit(1, "ERROR: BOT face move changed numeric input\n");
+	s->e_inpara = 3;
+	if (rt_edit_process(s) != BRLCAD_OK ||
+	    !VNEAR_EQUAL(&bot->vertices[0], face0, VUNITIZE_TOL) ||
+	    !VNEAR_EQUAL(&bot->vertices[3], face1, VUNITIZE_TOL) ||
+	    !VNEAR_EQUAL(&bot->vertices[6], face2, VUNITIZE_TOL) ||
+	    !VNEAR_EQUAL(&bot->vertices[9], face3, VUNITIZE_TOL))
+	    bu_exit(1, "ERROR: BOT repeated face move compounded\n");
 
 	s->local2base = 1.0;
 	s->base2local = 1.0;

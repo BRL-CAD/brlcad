@@ -836,11 +836,7 @@ ecmd_metaball_pt_pick(struct rt_edit *s)
     if (s->e_mvalid) {
 	VMOVE(new_pt, s->e_mparam);
     } else if (s->e_inpara == 3) {
-	/* must convert to base units */
-	s->e_para[0] *= s->local2base;
-	s->e_para[1] *= s->local2base;
-	s->e_para[2] *= s->local2base;
-	VMOVE(new_pt, s->e_para);
+	VSCALE(new_pt, s->e_para, s->local2base);
     } else if (s->e_inpara) {
 	bu_vls_printf(s->log_str, "x y z coordinates required for control point selection\n");
 	rt_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_RESULTS, BU_CLBK_DURING);
@@ -896,11 +892,9 @@ ecmd_metaball_pt_mov(struct rt_edit *s)
 	bu_log("Must provide dx dy dz");
 	return;
     }
-    /* must convert to base units */
-    s->e_para[0] *= s->local2base;
-    s->e_para[1] *= s->local2base;
-    s->e_para[2] *= s->local2base;
-    VADD2(m->es_metaball_pnt->coord, m->es_metaball_pnt->coord, s->e_para);
+    vect_t delta;
+    VSCALE(delta, s->e_para, s->local2base);
+    VADD2(m->es_metaball_pnt->coord, m->es_metaball_pnt->coord, delta);
 }
 
 void
@@ -941,13 +935,11 @@ ecmd_metaball_pt_add(struct rt_edit *s)
 	return;
     }
 
-    /* must convert to base units */
-    s->e_para[0] *= s->local2base;
-    s->e_para[1] *= s->local2base;
-    s->e_para[2] *= s->local2base;
+    point_t model_point;
+    VSCALE(model_point, s->e_para, s->local2base);
 
     m->es_metaball_pnt = BU_LIST_FIRST(wdb_metaball_pnt, &metaball->metaball_ctrl_head);
-    VMOVE(n->coord, s->e_para);
+    VMOVE(n->coord, model_point);
     n->l.magic = WDB_METABALLPT_MAGIC;
     n->field_strength = 1.0;
     BU_LIST_APPEND(&m->es_metaball_pnt->l, &n->l);

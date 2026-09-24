@@ -810,6 +810,34 @@ ecmd_bot_face_fuse(struct rt_edit *s)
     return BRLCAD_OK;
 }
 
+/** Numeric points are local; mouse points are already in model units. */
+static int
+bot_edit_target_point(point_t target, struct rt_edit *s)
+{
+    if (s->e_mvalid) {
+	VMOVE(target, s->e_mparam);
+	return 1;
+    }
+    if (s->e_inpara == 3) {
+	point_t model_point;
+	VSCALE(model_point, s->e_para, s->local2base);
+	if (s->mv_context)
+	    MAT4X3PNT(target, s->e_invmat, model_point);
+	else
+	    VMOVE(target, model_point);
+	return 1;
+    }
+    if (s->e_inpara) {
+	bu_vls_printf(s->log_str, "x y z coordinates required for point movement\n");
+	bu_clbk_t f = NULL;
+	void *d = NULL;
+	rt_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_RESULTS, BU_CLBK_DURING);
+	if (f)
+	    (*f)(0, NULL, d, NULL);
+    }
+    return 0;
+}
+
 void
 ecmd_bot_movev(struct rt_edit *s)
 {
@@ -817,9 +845,6 @@ ecmd_bot_movev(struct rt_edit *s)
     struct rt_bot_internal *bot = (struct rt_bot_internal *)s->es_int.idb_ptr;
     int vert;
     point_t new_pt = VINIT_ZERO;
-    bu_clbk_t f = NULL;
-    void *d = NULL;
-
     RT_BOT_CK_MAGIC(bot);
 
     if (b->bot_verts[0] < 0) {
@@ -838,29 +863,8 @@ ecmd_bot_movev(struct rt_edit *s)
     }
 
     vert = b->bot_verts[0];
-    if (s->e_mvalid) {
-	VMOVE(new_pt, s->e_mparam);
-    } else if (s->e_inpara == 3) {
-	/* must convert to base units */
-	s->e_para[0] *= s->local2base;
-	s->e_para[1] *= s->local2base;
-	s->e_para[2] *= s->local2base;
-
-	if (s->mv_context) {
-	    /* apply s->e_invmat to convert to real model space */
-	    MAT4X3PNT(new_pt, s->e_invmat, s->e_para);
-	} else {
-	    VMOVE(new_pt, s->e_para);
-	}
-    } else if (s->e_inpara && s->e_inpara != 3) {
-	bu_vls_printf(s->log_str, "x y z coordinates required for point movement\n");
-	rt_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_RESULTS, BU_CLBK_DURING);
-	if (f)
-	    (*f)(0, NULL, d, NULL);
+    if (!bot_edit_target_point(new_pt, s))
 	return;
-    } else if (!s->e_mvalid && !s->e_inpara) {
-	return;
-    }
 
     VMOVE(&bot->vertices[vert*3], new_pt);
 }
@@ -875,7 +879,6 @@ ecmd_bot_movee(struct rt_edit *s)
     point_t new_pt = VINIT_ZERO;
     bu_clbk_t f = NULL;
     void *d = NULL;
-
     RT_BOT_CK_MAGIC(bot);
 
     if (b->bot_verts[0] < 0 || b->bot_verts[1] < 0) {
@@ -892,30 +895,8 @@ ecmd_bot_movee(struct rt_edit *s)
     }
     v1 = b->bot_verts[0];
     v2 = b->bot_verts[1];
-    if (s->e_mvalid) {
-	VMOVE(new_pt, s->e_mparam);
-    } else if (s->e_inpara == 3) {
-	/* must convert to base units */
-	s->e_para[0] *= s->local2base;
-	s->e_para[1] *= s->local2base;
-	s->e_para[2] *= s->local2base;
-
-	if (s->mv_context) {
-	    /* apply s->e_invmat to convert to real model space */
-	    MAT4X3PNT(new_pt, s->e_invmat, s->e_para);
-	} else {
-	    VMOVE(new_pt, s->e_para);
-	}
-    } else if (s->e_inpara && s->e_inpara != 3) {
-	bu_vls_printf(s->log_str, "x y z coordinates required for point movement\n");
-	rt_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_RESULTS, BU_CLBK_DURING);
-	if (f)
-	    (*f)(0, NULL, d, NULL);
+    if (!bot_edit_target_point(new_pt, s))
 	return;
-    } else if (!s->e_mvalid && !s->e_inpara) {
-	return;
-    }
-
 
     VSUB2(diff, new_pt, &bot->vertices[v1*3]);
     VMOVE(&bot->vertices[v1*3], new_pt);
@@ -932,7 +913,6 @@ ecmd_bot_movet(struct rt_edit *s)
     vect_t diff;
     bu_clbk_t f = NULL;
     void *d = NULL;
-
     RT_BOT_CK_MAGIC(bot);
 
     if (b->bot_verts[0] < 0 || b->bot_verts[1] < 0 || b->bot_verts[2] < 0) {
@@ -946,29 +926,8 @@ ecmd_bot_movet(struct rt_edit *s)
     v2 = b->bot_verts[1];
     v3 = b->bot_verts[2];
 
-    if (s->e_mvalid) {
-	VMOVE(new_pt, s->e_mparam);
-    } else if (s->e_inpara == 3) {
-	/* must convert to base units */
-	s->e_para[0] *= s->local2base;
-	s->e_para[1] *= s->local2base;
-	s->e_para[2] *= s->local2base;
-
-	if (s->mv_context) {
-	    /* apply s->e_invmat to convert to real model space */
-	    MAT4X3PNT(new_pt, s->e_invmat, s->e_para);
-	} else {
-	    VMOVE(new_pt, s->e_para);
-	}
-    } else if (s->e_inpara && s->e_inpara != 3) {
-	bu_vls_printf(s->log_str, "x y z coordinates required for point movement\n");
-	rt_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_RESULTS, BU_CLBK_DURING);
-	if (f)
-	    (*f)(0, NULL, d, NULL);
+    if (!bot_edit_target_point(new_pt, s))
 	return;
-    } else if (!s->e_mvalid && !s->e_inpara) {
-	return;
-    }
 
     VSUB2(diff, new_pt, &bot->vertices[v1*3]);
     VMOVE(&bot->vertices[v1*3], new_pt);

@@ -599,45 +599,30 @@ ecmd_bspline_set_knot(struct rt_edit *s)
     return 0;
 }
 
-// I think this is bspline only??
-void
+/** Keep keyboard coordinates local and mouse coordinates in model units. */
+static void
 ecmd_vtrans(struct rt_edit *s)
 {
     struct rt_bspline_edit *b = (struct rt_bspline_edit *)s->ipe_ptr;
+    point_t model_point;
 
-    /* must convert to base units */
-    s->e_para[0] *= s->local2base;
-    s->e_para[1] *= s->local2base;
-    s->e_para[2] *= s->local2base;
+    if (s->e_mvalid)
+	VMOVE(model_point, s->e_mparam);
+    else if (s->e_inpara)
+	VSCALE(model_point, s->e_para, s->local2base);
+    else
+	return;
 
-    /* translate a vertex */
-    if (s->e_mvalid) {
-	/* Mouse parameter:  new position in model space */
-	VMOVE(s->e_para, s->e_mparam);
-	s->e_inpara = 1;
-    }
-    if (s->e_inpara) {
-
-
-	/* Keyboard parameter:  new position in model space.
-	 * (Only NURBS/BSPLINE vertex translation is handled in this ft_edit path;
-	 * knot-vector editing uses separate command-based paths.) */
-	struct rt_nurb_internal *sip =
-	    (struct rt_nurb_internal *) s->es_int.idb_ptr;
-	struct face_g_snurb *surf;
-	fastf_t *fp;
-
-	RT_NURB_CK_MAGIC(sip);
-	surf = sip->srfs[b->spl_surfno];
-	NMG_CK_SNURB(surf);
-	fp = &RT_NURB_GET_CONTROL_POINT(surf, b->spl_ui, b->spl_vi);
-	if (s->mv_context) {
-	    /* apply s->e_invmat to convert to real model space */
-	    MAT4X3PNT(fp, s->e_invmat, s->e_para);
-	} else {
-	    VMOVE(fp, s->e_para);
-	}
-    }
+    struct rt_nurb_internal *sip =
+	(struct rt_nurb_internal *)s->es_int.idb_ptr;
+    RT_NURB_CK_MAGIC(sip);
+    struct face_g_snurb *surf = sip->srfs[b->spl_surfno];
+    NMG_CK_SNURB(surf);
+    fastf_t *fp = &RT_NURB_GET_CONTROL_POINT(surf, b->spl_ui, b->spl_vi);
+    if (s->mv_context)
+	MAT4X3PNT(fp, s->e_invmat, model_point);
+    else
+	VMOVE(fp, model_point);
 }
 
 
@@ -666,7 +651,6 @@ rt_edit_bspline_edit(struct rt_edit *s)
 	case ECMD_BSPLINE_SET_KNOT:
 	    return ecmd_bspline_set_knot(s);
 	case ECMD_VTRANS:
-	    // I think this is bspline only??
 	    ecmd_vtrans(s);
 	    break;
 	default:

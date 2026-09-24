@@ -459,6 +459,74 @@ bu_log("RT_MATRIX_EDIT_TRANS_MODEL_XYZ SUCCESS: "
        "keypoint maps to (%g,%g,%g)\n", V3ARGS(kp_world));
     }
 
+    const fastf_t inch_to_mm = 25.4;
+    const struct {
+	int mode;
+	fastf_t inches;
+    } inch_scales[] = {
+	{ECMD_CLINE_SCALE_H, 0.25},
+	{ECMD_CLINE_SCALE_R, 0.2},
+	{ECMD_CLINE_SCALE_T, 0.1}
+    };
+    s->local2base = inch_to_mm;
+    for (size_t i = 0; i < sizeof(inch_scales)/sizeof(inch_scales[0]); i++) {
+	cline_reset(s, edit_cline, orig, cmp);
+	EDOBJ[dp->d_minor_type].ft_set_edit_mode(s, inch_scales[i].mode);
+	s->e_inpara = 1;
+	s->e_para[0] = inch_scales[i].inches;
+	if (rt_edit_process(s) != BRLCAD_OK)
+	    bu_exit(1, "ERROR: CLINE inch scale mode %d failed\n", inch_scales[i].mode);
+	fastf_t length;
+	switch (inch_scales[i].mode) {
+	    case ECMD_CLINE_SCALE_H: length = MAGNITUDE(edit_cline->h); break;
+	    case ECMD_CLINE_SCALE_R: length = edit_cline->radius; break;
+	    default: length = edit_cline->thickness; break;
+	}
+	if (!NEAR_EQUAL(length, inch_scales[i].inches * inch_to_mm, VUNITIZE_TOL) ||
+	    !NEAR_EQUAL(s->e_para[0], inch_scales[i].inches, VUNITIZE_TOL))
+	    bu_exit(1, "ERROR: CLINE inch scale mode %d converted incorrectly\n",
+		    inch_scales[i].mode);
+	struct rt_cline_internal saved = *edit_cline;
+	s->e_inpara = 1;
+	if (rt_edit_process(s) != BRLCAD_OK ||
+	    cline_diff("CLINE repeated inch scale", &saved, edit_cline))
+	    bu_exit(1, "ERROR: CLINE inch scale mode %d compounded\n", inch_scales[i].mode);
+    }
+
+    cline_reset(s, edit_cline, orig, cmp);
+    EDOBJ[dp->d_minor_type].ft_set_edit_mode(s, ECMD_CLINE_MOVE_H);
+    s->mv_context = 0;
+    s->e_inpara = 3;
+    VSET(s->e_para, 0, 0, 0.5);
+    if (rt_edit_process(s) != BRLCAD_OK ||
+	!NEAR_EQUAL(MAGNITUDE(edit_cline->h), 0.5 * inch_to_mm, VUNITIZE_TOL) ||
+	!NEAR_EQUAL(s->e_para[Z], 0.5, VUNITIZE_TOL))
+	bu_exit(1, "ERROR: CLINE inch endpoint converted incorrectly\n");
+    struct rt_cline_internal saved = *edit_cline;
+    s->e_inpara = 3;
+    if (rt_edit_process(s) != BRLCAD_OK ||
+	cline_diff("CLINE repeated inch endpoint", &saved, edit_cline))
+	bu_exit(1, "ERROR: CLINE inch endpoint compounded\n");
+
+    cline_reset(s, edit_cline, orig, cmp);
+    EDOBJ[dp->d_minor_type].ft_set_edit_mode(s, RT_PARAMS_EDIT_TRANS);
+    s->mv_context = 0;
+    s->e_keyfixed = 0;
+    MAT_IDN(s->e_invmat);
+    MAT_IDN(s->model_changes);
+    VSET(s->e_keypoint, 0, 0, 0);
+    s->e_inpara = 1;
+    VSET(s->e_para, 0.5, 0, 0);
+    if (rt_edit_process(s) != BRLCAD_OK ||
+	!NEAR_EQUAL(edit_cline->v[X], 0.5 * inch_to_mm, VUNITIZE_TOL) ||
+	!NEAR_EQUAL(s->e_para[X], 0.5, VUNITIZE_TOL))
+	bu_exit(1, "ERROR: generic inch translation converted incorrectly\n");
+    saved = *edit_cline;
+    s->e_inpara = 1;
+    if (rt_edit_process(s) != BRLCAD_OK ||
+	cline_diff("generic repeated inch translation", &saved, edit_cline))
+	bu_exit(1, "ERROR: generic inch translation compounded\n");
+
     rt_edit_destroy(s);
     db_close(dbip);
     return 0;

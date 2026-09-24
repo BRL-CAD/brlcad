@@ -286,44 +286,21 @@ ecmd_ebm_fname(struct rt_edit *s)
     return BRLCAD_OK;
 }
 
-int
+static int
 ecmd_ebm_height(struct rt_edit *s)
 {
-    /* If neither keyboard input nor a scale factor is available yet, this is
-     * the initial call triggered by the menu-select (before the user types
-     * 'p <value>').  Return OK as a no-op to match vanilla MGED behaviour
-     * where the handler simply falls through with no action. */
-    if (!s->e_inpara && s->es_scale <= 0.0) {
+    /* Menu selection arrives before either a numeric value or a knob scale. */
+    if (!s->e_inpara && s->es_scale <= 0.0)
 	return BRLCAD_OK;
-    }
-    if (s->e_inpara > 1) {
-	bu_vls_printf(s->log_str, "ERROR: only one argument needed\n");
-	s->e_inpara = 0;
-	return BRLCAD_ERROR;
-    }
 
     struct rt_ebm_internal *ebm =
 	(struct rt_ebm_internal *)s->es_int.idb_ptr;
-
     RT_EBM_CK_MAGIC(ebm);
 
-    if (s->e_inpara) {
-	if (s->e_para[0] <= 0.0) {
-	    bu_vls_printf(s->log_str, "ERROR: SCALE FACTOR <= 0\n");
-	    s->e_inpara = 0;
-	    return BRLCAD_ERROR;
-	}
-
-	/* convert e_para[0] to base units */
-	s->e_para[0] *= s->local2base;
-
-	ebm->tallness = s->e_para[0];
-    } else if (s->es_scale > 0.0) {
-	ebm->tallness *= s->es_scale;
+    int ret = edit_scale_length(s, NULL, &ebm->tallness);
+    if (ret == BRLCAD_OK && !s->e_inpara)
 	s->es_scale = 0.0;
-    }
-
-    return BRLCAD_OK;
+    return ret;
 }
 
 C_DECL int

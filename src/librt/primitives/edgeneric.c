@@ -197,25 +197,20 @@ void
 edit_stra(struct rt_edit *s)
 {
     mat_t mat;
-    static vect_t work;
+    vect_t work;
+    point_t model_point;
     vect_t delta;
     struct rt_db_internal *ip = &s->es_int;
 
     if (s->e_inpara) {
-	/* Need vector from current vertex/keypoint
-	 * to desired new location.
-	 */
-
-	/* must convert to base units */
-	s->e_para[0] *= s->local2base;
-	s->e_para[1] *= s->local2base;
-	s->e_para[2] *= s->local2base;
+	/* Numeric coordinates are local; keypoint and matrices are base. */
+	VSCALE(model_point, s->e_para, s->local2base);
 
 	if (s->mv_context) {
 	    /* move solid so that s->e_keypoint is at position s->e_para */
 	    vect_t raw_para;
 
-	    MAT4X3PNT(raw_para, s->e_invmat, s->e_para);
+	    MAT4X3PNT(raw_para, s->e_invmat, model_point);
 	    MAT4X3PNT(work, s->e_invmat, s->e_keypoint);
 	    VSUB2(delta, work, raw_para);
 	    MAT_IDN(mat);
@@ -223,7 +218,7 @@ edit_stra(struct rt_edit *s)
 	} else {
 	    /* move solid to position s->e_para */
 	    MAT4X3PNT(work, s->e_invmat, s->e_keypoint);
-	    VSUB2(delta, work, s->e_para);
+	    VSUB2(delta, work, model_point);
 	    MAT_IDN(mat);
 	    MAT_DELTAS_VEC_NEG(mat, delta);
 	}

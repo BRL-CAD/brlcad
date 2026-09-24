@@ -364,6 +364,18 @@ rt_edit_ars_menu_str(struct bu_vls *mstr, const struct rt_db_internal *ip, const
     return BRLCAD_OK;
 }
 
+/** Convert only keyboard coordinates; mouse points are already base. */
+static void
+ars_numeric_target(point_t target, struct rt_edit *s)
+{
+    point_t model_point;
+    VSCALE(model_point, s->e_para, s->local2base);
+    if (s->mv_context)
+	MAT4X3PNT(target, s->e_invmat, model_point);
+    else
+	VMOVE(target, model_point);
+}
+
 void
 ecmd_ars_pick(struct rt_edit *s)
 {
@@ -380,20 +392,10 @@ ecmd_ars_pick(struct rt_edit *s)
 
     RT_ARS_CK_MAGIC(ars);
 
-    /* must convert to base units */
-    s->e_para[0] *= s->local2base;
-    s->e_para[1] *= s->local2base;
-    s->e_para[2] *= s->local2base;
-
     if (s->e_mvalid) {
 	VMOVE(pick_pt, s->e_mparam);
     } else if (s->e_inpara == 3) {
-	if (s->mv_context) {
-	    /* apply s->e_invmat to convert to real model space */
-	    MAT4X3PNT(pick_pt, s->e_invmat, s->e_para);
-	} else {
-	    VMOVE(pick_pt, s->e_para);
-	}
+	ars_numeric_target(pick_pt, s);
     } else if (s->e_inpara && s->e_inpara != 3) {
 	bu_vls_printf(s->log_str, "x y z coordinates required for 'pick point'\n");
 	rt_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_RESULTS, BU_CLBK_DURING);
@@ -902,11 +904,6 @@ ecmd_ars_move_col(struct rt_edit *s)
 
     RT_ARS_CK_MAGIC(ars);
 
-    /* must convert to base units */
-    s->e_para[0] *= s->local2base;
-    s->e_para[1] *= s->local2base;
-    s->e_para[2] *= s->local2base;
-
     if (a->es_ars_crv < 0 || a->es_ars_col < 0) {
 	bu_log("No ARS point selected\n");
 	return;
@@ -929,12 +926,7 @@ ecmd_ars_move_col(struct rt_edit *s)
 	dist = DIST_PNT_PLANE(s->e_mparam, view_pl);
 	VJOIN1(new_pt, s->e_mparam, -dist, view_pl);
     } else if (s->e_inpara == 3) {
-	if (s->mv_context) {
-	    /* apply s->e_invmat to convert to real model space */
-	    MAT4X3PNT(new_pt, s->e_invmat, s->e_para);
-	} else {
-	    VMOVE(new_pt, s->e_para);
-	}
+	ars_numeric_target(new_pt, s);
     } else if (s->e_inpara && s->e_inpara != 3) {
 	bu_vls_printf(s->log_str, "x y z coordinates required for point movement\n");
 	rt_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_RESULTS, BU_CLBK_DURING);
@@ -966,11 +958,6 @@ ecmd_ars_move_crv(struct rt_edit *s)
 
     RT_ARS_CK_MAGIC(ars);
 
-    /* must convert to base units */
-    s->e_para[0] *= s->local2base;
-    s->e_para[1] *= s->local2base;
-    s->e_para[2] *= s->local2base;
-
     if (a->es_ars_crv < 0 || a->es_ars_col < 0) {
 	bu_log("No ARS point selected\n");
 	return;
@@ -993,12 +980,7 @@ ecmd_ars_move_crv(struct rt_edit *s)
 	dist = DIST_PNT_PLANE(s->e_mparam, view_pl);
 	VJOIN1(new_pt, s->e_mparam, -dist, view_pl);
     } else if (s->e_inpara == 3) {
-	if (s->mv_context) {
-	    /* apply s->e_invmat to convert to real model space */
-	    MAT4X3PNT(new_pt, s->e_invmat, s->e_para);
-	} else {
-	    VMOVE(new_pt, s->e_para);
-	}
+	ars_numeric_target(new_pt, s);
     } else if (s->e_inpara && s->e_inpara != 3) {
 	bu_vls_printf(s->log_str, "x y z coordinates required for point movement\n");
 	rt_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_RESULTS, BU_CLBK_DURING);
@@ -1029,11 +1011,6 @@ ecmd_ars_move_pt(struct rt_edit *s)
 
     RT_ARS_CK_MAGIC(ars);
 
-    /* must convert to base units */
-    s->e_para[0] *= s->local2base;
-    s->e_para[1] *= s->local2base;
-    s->e_para[2] *= s->local2base;
-
     if (a->es_ars_crv < 0 || a->es_ars_col < 0) {
 	bu_log("No ARS point selected\n");
 	return;
@@ -1056,12 +1033,7 @@ ecmd_ars_move_pt(struct rt_edit *s)
 	dist = DIST_PNT_PLANE(s->e_mparam, view_pl);
 	VJOIN1(new_pt, s->e_mparam, -dist, view_pl);
     } else if (s->e_inpara == 3) {
-	if (s->mv_context) {
-	    /* apply s->e_invmat to convert to real model space */
-	    MAT4X3PNT(new_pt, s->e_invmat, s->e_para);
-	} else {
-	    VMOVE(new_pt, s->e_para);
-	}
+	ars_numeric_target(new_pt, s);
     } else if (s->e_inpara && s->e_inpara != 3) {
 	bu_vls_printf(s->log_str, "x y z coordinates required for point movement\n");
 	rt_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_RESULTS, BU_CLBK_DURING);

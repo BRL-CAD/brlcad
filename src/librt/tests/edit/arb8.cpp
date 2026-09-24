@@ -620,10 +620,19 @@ bu_log("RT_MATRIX_EDIT_TRANS_MODEL_XYZ SUCCESS: "
     arb8_reset(s, arb, a);
     a->edit_menu = 0;   /* face 0 = 1234 (bottom), in mv8_menu: arg=1 → edit_menu=0 */
     rt_edit_set_edflag(s, ECMD_ARB_MOVE_FACE);
-    s->e_inpara = 3;
-    VSET(s->e_para, 0, 0, 0.5);  /* point on the new face plane */
+    s->local2base = 25.4;
+    s->base2local = 1.0 / s->local2base;
+    s->e_inpara = 4;
+    s->e_para[0] = 0.0;  /* face index */
+    s->e_para[1] = 0.0;
+    s->e_para[2] = 0.0;
+    s->e_para[3] = 0.5 / s->local2base;
     s->mv_context = 0;            /* use s->e_para directly, no inv-mat */
     bu_vls_trunc(s->log_str, 0);
+    rt_edit_process(s);
+    if (!NEAR_EQUAL(s->e_para[3], 0.5 / s->local2base, VUNITIZE_TOL))
+	bu_exit(1, "ERROR: ARB face move changed local-unit input\n");
+    s->e_inpara = 4;
     rt_edit_process(s);
     {
 	fastf_t exp_z = 0.5;
@@ -664,10 +673,17 @@ bu_log("RT_MATRIX_EDIT_TRANS_MODEL_XYZ SUCCESS: "
     a->newedge   = 0;   /* compute edge direction from existing vertices */
     rt_edit_set_edflag(s, EARB);
     s->edit_mode = RT_PARAMS_EDIT_TRANS;
-    s->e_inpara  = 3;
-    VSET(s->e_para, 0, 0, 0.5);  /* move edge to pass through (0, 0, 0.5) */
+    s->e_inpara  = 4;
+    s->e_para[0] = 0.0;  /* edge index */
+    s->e_para[1] = 0.0;
+    s->e_para[2] = 0.0;
+    s->e_para[3] = 0.5 / s->local2base;
     s->mv_context = 0;
     bu_vls_trunc(s->log_str, 0);
+    rt_edit_process(s);
+    if (!NEAR_EQUAL(s->e_para[3], 0.5 / s->local2base, VUNITIZE_TOL))
+	bu_exit(1, "ERROR: ARB edge move changed local-unit input\n");
+    s->e_inpara = 4;
     rt_edit_process(s);
     {
 	point_t exp0 = {0, 0, 0.5}, exp1 = {1, 0, 0.5};
@@ -680,6 +696,9 @@ bu_log("RT_MATRIX_EDIT_TRANS_MODEL_XYZ SUCCESS: "
 	       "pt[0]=%g,%g,%g  pt[1]=%g,%g,%g\n",
 	       V3ARGS(arb->pt[0]), V3ARGS(arb->pt[1]));
     }
+
+    s->local2base = 1.0;
+    s->base2local = 1.0;
 
     /* ================================================================
      * ECMD_ARB_SETUP_ROTFACE + ECMD_ARB_ROTATE_FACE (non-interactive)
@@ -723,6 +742,24 @@ bu_log("RT_MATRIX_EDIT_TRANS_MODEL_XYZ SUCCESS: "
     bu_log("ECMD_ARB_ROTATE_FACE SUCCESS: normal=(%.3f,%.3f,%.3f) D=%.3f\n",
 	   a->es_peqn[a->edit_menu][0], a->es_peqn[a->edit_menu][1],
 	   a->es_peqn[a->edit_menu][2], a->es_peqn[a->edit_menu][W]);
+
+    arb8_reset(s, arb, a);
+    rt_edit_set_edflag(s, ECMD_ARB_ROTATE_FACE);
+    s->e_inpara = 5;
+    s->e_para[0] = 4.0;
+    s->e_para[1] = 0.0;
+    s->e_para[2] = 45.0;
+    s->e_para[3] = 0.0;
+    s->e_para[4] = 0.0;
+    MAT_IDN(s->acc_rot_sol);
+    MAT_IDN(s->model_changes);
+    s->mv_context = 0;
+    VMOVE(s->e_keypoint, arb->pt[0]);
+    rt_edit_process(s);
+    if (!NEAR_EQUAL(s->e_para[0], 4.0, VUNITIZE_TOL) ||
+	!NEAR_EQUAL(s->e_para[2], 45.0, VUNITIZE_TOL) ||
+	ZERO(a->es_peqn[4][Y]))
+	bu_exit(1, "ERROR: ARB extended face rotation changed input or left plane unchanged\n");
 
     /* The same face operation must survive the interactive rotation knob
      * adapter, which supplies an incremental matrix rather than parameters.

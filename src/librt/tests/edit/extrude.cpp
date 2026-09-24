@@ -552,6 +552,55 @@ bu_log("RT_MATRIX_EDIT_TRANS_MODEL_XYZ SUCCESS: "
 	!NEAR_EQUAL(edit_extr->skt->verts[0][X], 2.0, SMALL_FASTF))
 	bu_exit(1, "ERROR: non-sketch reference changed extrusion\n");
 
+    const fastf_t inch_to_mm = 25.4;
+    const struct {
+	int mode;
+	fastf_t inches;
+    } inch_scales[] = {
+	{ECMD_EXTR_SCALE_H, 0.5},
+	{ECMD_EXTR_SCALE_A, 0.2},
+	{ECMD_EXTR_SCALE_B, 0.1}
+    };
+    s->local2base = inch_to_mm;
+    for (size_t i = 0; i < sizeof(inch_scales)/sizeof(inch_scales[0]); i++) {
+	extr_reset(s, edit_extr, orig, cmp);
+	EDOBJ[dp->d_minor_type].ft_set_edit_mode(s, inch_scales[i].mode);
+	s->e_inpara = 1;
+	s->e_para[0] = inch_scales[i].inches;
+	if (rt_edit_process(s) != BRLCAD_OK)
+	    bu_exit(1, "ERROR: extrusion inch scale mode %d failed\n", inch_scales[i].mode);
+	const fastf_t *axis;
+	switch (inch_scales[i].mode) {
+	    case ECMD_EXTR_SCALE_H: axis = edit_extr->h; break;
+	    case ECMD_EXTR_SCALE_A: axis = edit_extr->u_vec; break;
+	    default: axis = edit_extr->v_vec; break;
+	}
+	if (!NEAR_EQUAL(MAGNITUDE(axis), inch_scales[i].inches * inch_to_mm, VUNITIZE_TOL) ||
+	    !NEAR_EQUAL(s->e_para[0], inch_scales[i].inches, VUNITIZE_TOL))
+	    bu_exit(1, "ERROR: extrusion inch scale mode %d converted incorrectly\n",
+		    inch_scales[i].mode);
+	struct rt_extrude_internal saved = *edit_extr;
+	s->e_inpara = 1;
+	if (rt_edit_process(s) != BRLCAD_OK ||
+	    extr_diff("extrusion repeated inch scale", &saved, edit_extr))
+	    bu_exit(1, "ERROR: extrusion inch scale mode %d compounded\n", inch_scales[i].mode);
+    }
+
+    extr_reset(s, edit_extr, orig, cmp);
+    EDOBJ[dp->d_minor_type].ft_set_edit_mode(s, ECMD_EXTR_MOV_H);
+    s->mv_context = 0;
+    s->e_inpara = 3;
+    VSET(s->e_para, 0, 0, 0.5);
+    if (rt_edit_process(s) != BRLCAD_OK ||
+	!NEAR_EQUAL(MAGNITUDE(edit_extr->h), 0.5 * inch_to_mm, VUNITIZE_TOL) ||
+	!NEAR_EQUAL(s->e_para[Z], 0.5, VUNITIZE_TOL))
+	bu_exit(1, "ERROR: extrusion inch endpoint converted incorrectly\n");
+    struct rt_extrude_internal saved = *edit_extr;
+    s->e_inpara = 3;
+    if (rt_edit_process(s) != BRLCAD_OK ||
+	extr_diff("extrusion repeated inch endpoint", &saved, edit_extr))
+	bu_exit(1, "ERROR: extrusion inch endpoint compounded\n");
+
     rt_edit_destroy(s);
     db_close(dbip);
     return 0;

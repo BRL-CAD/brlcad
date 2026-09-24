@@ -623,9 +623,13 @@ bu_log("RT_MATRIX_EDIT_TRANS_MODEL_XYZ SUCCESS: "
         EDOBJ[dp->d_minor_type].ft_set_edit_mode(s, ECMD_METABALL_PT_PICK);
         s->e_inpara = 3;
         VSET(s->e_para, 1.0, 0.0, 0.0);
-        rt_edit_process(s);
-        if (m->es_metaball_pnt != first)
+        if (rt_edit_process(s) != BRLCAD_OK ||
+            m->es_metaball_pnt != first ||
+            !NEAR_EQUAL(s->e_para[X], 1.0, VUNITIZE_TOL))
             bu_exit(1, "ERROR: Metaball point pick did not use local units\n");
+        s->e_inpara = 3;
+        if (rt_edit_process(s) != BRLCAD_OK || m->es_metaball_pnt != first)
+            bu_exit(1, "ERROR: repeated Metaball point pick changed selection\n");
 
         EDOBJ[dp->d_minor_type].ft_set_edit_mode(s, ECMD_METABALL_PT_NEXT);
         if (m->es_metaball_pnt != second)
@@ -640,6 +644,40 @@ bu_log("RT_MATRIX_EDIT_TRANS_MODEL_XYZ SUCCESS: "
         EDOBJ[dp->d_minor_type].ft_set_edit_mode(s, ECMD_METABALL_PT_PREV);
         if (m->es_metaball_pnt != first)
             bu_exit(1, "ERROR: Metaball previous passed the first point\n");
+    }
+
+    {
+        const fastf_t inch_to_mm = 25.4;
+        mb_reset(s, edit_mb);
+        s->local2base = inch_to_mm;
+        s->base2local = 1.0 / inch_to_mm;
+        m->es_metaball_pnt = mb_first_pt(s);
+        EDOBJ[dp->d_minor_type].ft_set_edit_mode(s, ECMD_METABALL_PT_MOV);
+        s->e_inpara = 3;
+        VSET(s->e_para, 1.0, 0.0, 0.0);
+        if (rt_edit_process(s) != BRLCAD_OK ||
+            !NEAR_EQUAL(m->es_metaball_pnt->coord[X], 1.0 + inch_to_mm, VUNITIZE_TOL) ||
+            !NEAR_EQUAL(s->e_para[X], 1.0, VUNITIZE_TOL))
+            bu_exit(1, "ERROR: Metaball inch point delta converted incorrectly\n");
+        s->e_inpara = 3;
+        if (rt_edit_process(s) != BRLCAD_OK ||
+            !NEAR_EQUAL(m->es_metaball_pnt->coord[X], 1.0 + 2.0 * inch_to_mm, VUNITIZE_TOL))
+            bu_exit(1, "ERROR: repeated Metaball inch delta compounded units\n");
+
+        mb_reset(s, edit_mb);
+        EDOBJ[dp->d_minor_type].ft_set_edit_mode(s, ECMD_METABALL_PT_ADD);
+        s->e_inpara = 3;
+        VSET(s->e_para, 2.0, 0.0, 0.0);
+        if (rt_edit_process(s) != BRLCAD_OK ||
+            mb_count(s) != 3 ||
+            !NEAR_EQUAL(m->es_metaball_pnt->coord[X], 2.0 * inch_to_mm, VUNITIZE_TOL) ||
+            !NEAR_EQUAL(s->e_para[X], 2.0, VUNITIZE_TOL))
+            bu_exit(1, "ERROR: Metaball inch point add converted incorrectly\n");
+        s->e_inpara = 3;
+        if (rt_edit_process(s) != BRLCAD_OK ||
+            mb_count(s) != 4 ||
+            !NEAR_EQUAL(m->es_metaball_pnt->coord[X], 2.0 * inch_to_mm, VUNITIZE_TOL))
+            bu_exit(1, "ERROR: repeated Metaball point add compounded units\n");
     }
 
     /* ================================================================

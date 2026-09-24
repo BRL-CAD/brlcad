@@ -249,6 +249,7 @@ int
 ecmd_extr_mov_h(struct rt_edit *s)
 {
     vect_t work;
+    point_t model_point;
     struct rt_extrude_internal *extr =
 	(struct rt_extrude_internal *)s->es_int.idb_ptr;
     bu_clbk_t f = NULL;
@@ -262,17 +263,14 @@ ecmd_extr_mov_h(struct rt_edit *s)
 	    return BRLCAD_ERROR;
 	}
 
-	/* must convert to base units */
-	s->e_para[0] *= s->local2base;
-	s->e_para[1] *= s->local2base;
-	s->e_para[2] *= s->local2base;
+	VSCALE(model_point, s->e_para, s->local2base);
 
 	if (s->mv_context) {
 	    /* apply s->e_invmat to convert to real model coordinates */
-	    MAT4X3PNT(work, s->e_invmat, s->e_para);
+	    MAT4X3PNT(work, s->e_invmat, model_point);
 	    VSUB2(extr->h, work, extr->V);
 	} else {
-	    VSUB2(extr->h, s->e_para, extr->V);
+	    VSUB2(extr->h, model_point, extr->V);
 	}
     }
 
@@ -289,45 +287,28 @@ ecmd_extr_mov_h(struct rt_edit *s)
     return 0;
 }
 
-int
-ecmd_extr_scale_h(struct rt_edit *s)
+static int
+extr_scale(struct rt_edit *s)
 {
-    if (!s->e_inpara && s->es_scale <= 0.0) {
-	bu_vls_printf(s->log_str, "ERROR: one argument needed\n");
-	s->e_inpara = 0;
-	return BRLCAD_ERROR;
-    }
-    if (s->e_inpara > 1) {
-	bu_vls_printf(s->log_str, "ERROR: only one argument needed\n");
-	s->e_inpara = 0;
-	return BRLCAD_ERROR;
-    }
-
     struct rt_extrude_internal *extr =
 	(struct rt_extrude_internal *)s->es_int.idb_ptr;
+    vect_t *axis = NULL;
 
     RT_EXTRUDE_CK_MAGIC(extr);
-
-    if (s->e_inpara) {
-	if (s->e_para[0] <= 0.0) {
-	    bu_vls_printf(s->log_str, "ERROR: SCALE FACTOR <= 0\n");
-	    s->e_inpara = 0;
-	    return BRLCAD_ERROR;
-	}
-
-	/* convert e_para[0] to base units */
-	s->e_para[0] *= s->local2base;
-
-	/* take s->e_mat[15] (path scaling) into account */
-	s->e_para[0] *= s->e_mat[15];
-	s->es_scale = s->e_para[0] / MAGNITUDE(extr->h);
-	VSCALE(extr->h, extr->h, s->es_scale);
-    } else if (s->es_scale > 0.0) {
-	VSCALE(extr->h, extr->h, s->es_scale);
-	s->es_scale = 0.0;
+    switch (s->edit_flag) {
+	case ECMD_EXTR_SCALE_H: axis = &extr->h; break;
+	case ECMD_EXTR_SCALE_A: axis = &extr->u_vec; break;
+	case ECMD_EXTR_SCALE_B: axis = &extr->v_vec; break;
+	default: return BRLCAD_ERROR;
     }
-
-    return 0;
+    if (!s->e_inpara && s->es_scale <= 0.0) {
+	bu_vls_printf(s->log_str, "ERROR: one argument needed\n");
+	return BRLCAD_ERROR;
+    }
+    int ret = edit_scale_length(s, axis, NULL);
+    if (ret == BRLCAD_OK && !s->e_inpara)
+	s->es_scale = 0.0;
+    return ret;
 }
 
 /* rotate height vector */
@@ -418,83 +399,6 @@ ecmd_extr_mov_h_mousevec(struct rt_edit *s, const vect_t mousevec)
     VSUB2(extr->h, tr_temp, extr->V);
 }
 
-/* scale the A (u_vec) reference vector */
-int
-ecmd_extr_scale_a(struct rt_edit *s)
-{
-    if (!s->e_inpara && s->es_scale <= 0.0) {
-	bu_vls_printf(s->log_str, "ERROR: one argument needed\n");
-	s->e_inpara = 0;
-	return BRLCAD_ERROR;
-    }
-    if (s->e_inpara > 1) {
-	bu_vls_printf(s->log_str, "ERROR: only one argument needed\n");
-	s->e_inpara = 0;
-	return BRLCAD_ERROR;
-    }
-
-    struct rt_extrude_internal *extr =
-	(struct rt_extrude_internal *)s->es_int.idb_ptr;
-
-    RT_EXTRUDE_CK_MAGIC(extr);
-
-    if (s->e_inpara) {
-	if (s->e_para[0] <= 0.0) {
-	    bu_vls_printf(s->log_str, "ERROR: SCALE FACTOR <= 0\n");
-	    s->e_inpara = 0;
-	    return BRLCAD_ERROR;
-	}
-
-	s->e_para[0] *= s->local2base;
-	s->e_para[0] *= s->e_mat[15];
-	s->es_scale = s->e_para[0] / MAGNITUDE(extr->u_vec);
-	VSCALE(extr->u_vec, extr->u_vec, s->es_scale);
-    } else if (s->es_scale > 0.0) {
-	VSCALE(extr->u_vec, extr->u_vec, s->es_scale);
-	s->es_scale = 0.0;
-    }
-
-    return 0;
-}
-
-/* scale the B (v_vec) reference vector */
-int
-ecmd_extr_scale_b(struct rt_edit *s)
-{
-    if (!s->e_inpara && s->es_scale <= 0.0) {
-	bu_vls_printf(s->log_str, "ERROR: one argument needed\n");
-	s->e_inpara = 0;
-	return BRLCAD_ERROR;
-    }
-    if (s->e_inpara > 1) {
-	bu_vls_printf(s->log_str, "ERROR: only one argument needed\n");
-	s->e_inpara = 0;
-	return BRLCAD_ERROR;
-    }
-
-    struct rt_extrude_internal *extr =
-	(struct rt_extrude_internal *)s->es_int.idb_ptr;
-
-    RT_EXTRUDE_CK_MAGIC(extr);
-
-    if (s->e_inpara) {
-	if (s->e_para[0] <= 0.0) {
-	    bu_vls_printf(s->log_str, "ERROR: SCALE FACTOR <= 0\n");
-	    s->e_inpara = 0;
-	    return BRLCAD_ERROR;
-	}
-
-	s->e_para[0] *= s->local2base;
-	s->e_para[0] *= s->e_mat[15];
-	s->es_scale = s->e_para[0] / MAGNITUDE(extr->v_vec);
-	VSCALE(extr->v_vec, extr->v_vec, s->es_scale);
-    } else if (s->es_scale > 0.0) {
-	VSCALE(extr->v_vec, extr->v_vec, s->es_scale);
-	s->es_scale = 0.0;
-    }
-
-    return 0;
-}
 
 /* rotate the A (u_vec) reference vector */
 int
@@ -614,13 +518,11 @@ rt_edit_extrude_edit(struct rt_edit *s)
 	case ECMD_EXTR_MOV_H:
 	    return ecmd_extr_mov_h(s);
 	case ECMD_EXTR_SCALE_H:
-	    return ecmd_extr_scale_h(s);
+	case ECMD_EXTR_SCALE_A:
+	case ECMD_EXTR_SCALE_B:
+	    return extr_scale(s);
 	case ECMD_EXTR_ROT_H:
 	    return ecmd_extr_rot_h(s);
-	case ECMD_EXTR_SCALE_A:
-	    return ecmd_extr_scale_a(s);
-	case ECMD_EXTR_SCALE_B:
-	    return ecmd_extr_scale_b(s);
 	case ECMD_EXTR_ROT_A:
 	    return ecmd_extr_rot_a(s);
 	case ECMD_EXTR_ROT_B:

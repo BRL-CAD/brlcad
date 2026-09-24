@@ -249,12 +249,18 @@ rt_edit_test_nmg(void)
      * ================================================================*/
     EDOBJ[dp->d_minor_type].ft_set_edit_mode(s, ECMD_NMG_VMOVE);
     s->e_inpara = 3;
-    s->e_para[0] = 2.0;
+    s->local2base = 25.4;
+    s->base2local = 1.0 / s->local2base;
+    s->e_para[0] = 2.0 / s->local2base;
     s->e_para[1] = 0.0;
     s->e_para[2] = 0.0;
     s->e_mvalid = 0;
 
     rt_edit_process(s);
+    if (!NEAR_EQUAL(s->e_para[0], 2.0 / s->local2base, VUNITIZE_TOL))
+	bu_exit(1, "ERROR: NMG vertex move changed local-unit input\n");
+    s->local2base = 1.0;
+    s->base2local = 1.0;
     {
 	vect_t exp = {2, 0, 0};
 	if (!VNEAR_EQUAL(ne->es_v->vg_p->coord, exp, VUNITIZE_TOL))
@@ -422,7 +428,11 @@ rt_edit_test_nmg(void)
 	EDOBJ[wdp->d_minor_type].ft_set_edit_mode(ws, ECMD_NMG_EMOVE);
 	ws->e_inpara = 3;
 	VSCALE(ws->e_para, move_target, 1.0 / local2base);
+	point_t move_input;
+	VMOVE(move_input, ws->e_para);
 	rt_edit_process(ws);
+	if (!VNEAR_EQUAL(ws->e_para, move_input, VUNITIZE_TOL))
+	    bu_exit(1, "ERROR: NMG edge move changed local-unit input\n");
 	if (!VNEAR_EQUAL(first_edge->vu_p->v_p->vg_p->coord,
 			 start_expected, VUNITIZE_TOL) ||
 		!VNEAR_EQUAL(first_edge->eumate_p->vu_p->v_p->vg_p->coord,
@@ -440,7 +450,11 @@ rt_edit_test_nmg(void)
 	EDOBJ[wdp->d_minor_type].ft_set_edit_mode(ws, ECMD_NMG_ESPLIT);
 	ws->e_inpara = 3;
 	VSCALE(ws->e_para, edge_midpoint, 1.0 / local2base);
+	point_t split_input;
+	VMOVE(split_input, ws->e_para);
 	rt_edit_process(ws);
+	if (!VNEAR_EQUAL(ws->e_para, split_input, VUNITIZE_TOL))
+	    bu_exit(1, "ERROR: NMG edge split changed local-unit input\n");
 	if (bu_list_len(&wire_loop->down_hd) != edge_count + 1 ||
 		!wne->es_eu ||
 		!VNEAR_EQUAL(wne->es_eu->vu_p->v_p->vg_p->coord,
@@ -482,7 +496,8 @@ rt_edit_test_nmg(void)
 	rt_edit_process(ws);
 
 	if (!NEAR_EQUAL(ws->local2base, local2base, VUNITIZE_TOL) ||
-	    !NEAR_EQUAL(ws->e_para[Z], 2.0 * local2base, VUNITIZE_TOL))
+	    !NEAR_EQUAL(ws->e_para[Z], 1.0, VUNITIZE_TOL) ||
+	    !NEAR_EQUAL(ws->e_para[3], 2.0, VUNITIZE_TOL))
 	    bu_exit(1, "ERROR: ECMD_NMG_LEXTRU_DIR lost database units or extrusion distance\n");
 
 	/* After extrusion the shell should have at least one faceuse */
@@ -498,7 +513,7 @@ rt_edit_test_nmg(void)
 	ws->e_inpara = 1;
 	ws->e_para[0] = 1.0;
 	rt_edit_process(ws);
-	if (!NEAR_EQUAL(ws->e_para[0], local2base, VUNITIZE_TOL) ||
+	if (!NEAR_EQUAL(ws->e_para[0], 1.0, VUNITIZE_TOL) ||
 		BU_LIST_IS_EMPTY(&wne->es_s->fu_hd))
 	    bu_exit(1, "ERROR: NMG scalar extrusion lost units or geometry\n");
 

@@ -56,7 +56,7 @@
  *
  *   move_face / move_edge / move_vertex:
  *     e_para[0] = integer index (face 0-5, edge 0-11, or vertex 0-7)
- *     e_para[1..3] = X Y Z  (point/vector in model coords)
+ *     e_para[1..3] = X Y Z  (point in database local units)
  *     → total e_inpara = 4
  *
  *   rotate_face:
@@ -1481,24 +1481,6 @@ ecmd_arb_specific_menu(struct rt_edit *s)
     }
 }
 
-/*
- * arb_unpack_index_param - descriptor-form helper
- *
- * When the descriptor passes an index + N further values, the caller
- * stores them as e_para[0]=index, e_para[1..N]=data.
- * Unpack: write the index into *idx_out, shift data[0..N-1] down to
- * e_para[0..N-1], and reduce e_inpara by 1.
- */
-static void
-arb_unpack_index_param(struct rt_edit *s, int *idx_out)
-{
-    int i;
-    *idx_out = (int)s->e_para[0];
-    for (i = 1; i < s->e_inpara; i++)
-	s->e_para[i - 1] = s->e_para[i];
-    s->e_inpara--;
-}
-
 static int
 edarb_canonicalize(struct rt_edit *s, struct rt_arb_internal *arb)
 {
@@ -1520,6 +1502,30 @@ edarb_canonicalize(struct rt_edit *s, struct rt_arb_internal *arb)
     return BRLCAD_OK;
 }
 
+static int
+arb_numeric_target(point_t target, struct rt_edit *s, int *edit_menu)
+{
+    const fastf_t *coords = s->e_para;
+    point_t model_point;
+
+    if (s->e_inpara == 4) {
+	*edit_menu = (int)coords[0];
+	coords++;
+    } else if (s->e_inpara != 3) {
+	bu_vls_printf(s->log_str, "ERROR: three arguments needed\n");
+	s->e_inpara = 0;
+	return BRLCAD_ERROR;
+    }
+
+    VSCALE(model_point, coords, s->local2base);
+    if (s->mv_context)
+	MAT4X3PNT(target, s->e_invmat, model_point);
+    else
+	VMOVE(target, model_point);
+
+    return BRLCAD_OK;
+}
+
 int
 ecmd_arb_move_face(struct rt_edit *s)
 {
@@ -1528,34 +1534,13 @@ ecmd_arb_move_face(struct rt_edit *s)
     /* move face through definite point */
     if (s->e_inpara) {
 
-	/*
-	 * Extended form: 4 parameters → e_para[0]=face_index, e_para[1..3]=point.
-	 * Unpack the face index and shift the coord triple down.
-	 */
-	if (s->e_inpara == 4)
-	    arb_unpack_index_param(s, &a->edit_menu);
-
-	if (s->e_inpara != 3) {
-	    bu_vls_printf(s->log_str, "ERROR: three arguments needed\n");
-	    s->e_inpara = 0;
-	    return BRLCAD_ERROR;
-	}
-
-	/* must convert to base units */
-	s->e_para[0] *= s->local2base;
-	s->e_para[1] *= s->local2base;
-	s->e_para[2] *= s->local2base;
-
 	vect_t work;
+	if (arb_numeric_target(work, s, &a->edit_menu) != BRLCAD_OK)
+	    return BRLCAD_ERROR;
+
 	struct rt_arb_internal *arb = (struct rt_arb_internal *)s->es_int.idb_ptr;
 	RT_ARB_CK_MAGIC(arb);
 
-	if (s->mv_context) {
-	    /* apply s->e_invmat to convert to real model space */
-	    MAT4X3PNT(work, s->e_invmat, s->e_para);
-	} else {
-	    VMOVE(work, s->e_para);
-	}
 	/* change D of planar equation */
 	a->es_peqn[a->edit_menu][W]=VDOT(&a->es_peqn[a->edit_menu][0], work);
 	/* find new vertices, put in record in vector notation */
@@ -1621,6 +1606,8 @@ int
 ecmd_arb_rotate_face(struct rt_edit *s)
 {
     struct rt_arb8_edit *a = (struct rt_arb8_edit *)s->ipe_ptr;
+    const fastf_t *angles = s->e_para;
+    int angle_count = s->e_inpara;
 
     /* rotate a GENARB8 defining plane through a fixed vertex */
     fastf_t *eqp;
@@ -1630,27 +1617,11 @@ ecmd_arb_rotate_face(struct rt_edit *s)
     struct rt_arb_internal *arb = (struct rt_arb_internal *)s->es_int.idb_ptr;
     RT_ARB_CK_MAGIC(arb);
 
-    /*
-     * Extended form (from descriptor): 5 parameters:
-     *   e_para[0] = face index  → a->edit_menu
-     *   e_para[1] = fixv index  → a->fixv
-     *   e_para[2..4] = Euler rotation angles X Y Z (degrees)
-     * Unpack and reduce to the standard 3-param case.
-     */
-    if (s->e_inpara == 5) {
-	/*
-	 * Extended form (from descriptor): 5 parameters:
-	 *   e_para[0] = face index  → a->edit_menu
-	 *   e_para[1] = fixv index  → a->fixv
-	 *   e_para[2..4] = Euler rotation angles X Y Z (degrees)
-	 * Unpack the face index first, then unpack the fixv index.
-	 */
-	arb_unpack_index_param(s, &a->edit_menu);  /* e_inpara now 4 */
-	{
-	    int fixv_tmp;
-	    arb_unpack_index_param(s, &fixv_tmp);   /* e_inpara now 3 */
-	    a->fixv = (short)fixv_tmp;
-	}
+    if (angle_count == 5) {
+	a->edit_menu = (int)angles[0];
+	a->fixv = (short)angles[1];
+	angles += 2;
+	angle_count = 3;
 	{
 	    struct bu_vls error_msg = BU_VLS_INIT_ZERO;
 	    int arb_type2 = rt_arb_edit_type(s->log_str, s, arb, 0, s->tol);
@@ -1668,9 +1639,9 @@ ecmd_arb_rotate_face(struct rt_edit *s)
     if (s->e_inpara) {
 
 	vect_t work;
-	static mat_t invsolr;
-	static vect_t tempvec;
-	static float rota, fb_a;
+	mat_t invsolr;
+	vect_t tempvec;
+	fastf_t rota, fb_a;
 
 	/*
 	 * Keyboard parameters in degrees.
@@ -1682,14 +1653,14 @@ ecmd_arb_rotate_face(struct rt_edit *s)
 	VMOVE(work, eqp);
 	MAT4X3VEC(eqp, invsolr, work);
 
-	if (s->e_inpara == 3) {
+	if (angle_count == 3) {
 	    /* 3 params:  absolute X, Y, Z rotations */
 	    /* Build completely new rotation change */
 	    MAT_IDN(s->model_changes);
 	    bn_mat_angles(s->model_changes,
-		    s->e_para[0],
-		    s->e_para[1],
-		    s->e_para[2]);
+		    angles[0],
+		    angles[1],
+		    angles[2]);
 	    MAT_COPY(s->acc_rot_sol, s->model_changes);
 
 	    /* Borrow s->incr_change matrix here */
@@ -1714,10 +1685,10 @@ ecmd_arb_rotate_face(struct rt_edit *s)
 		VMOVE(work, eqp);
 		MAT4X3VEC(eqp, s->model_changes, work);
 	    }
-	} else if (s->e_inpara == 2) {
+	} else if (angle_count == 2) {
 	    /* 2 parameters:  rot, fb were given */
-	    rota= s->e_para[0] * DEG2RAD;
-	    fb_a  = s->e_para[1] * DEG2RAD;
+	    rota= angles[0] * DEG2RAD;
+	    fb_a  = angles[1] * DEG2RAD;
 
 	    /* calculate normal vector (length = 1) from rot, struct fb */
 	    a->es_peqn[a->edit_menu][0] = cos(fb_a) * cos(rota);
@@ -1788,31 +1759,9 @@ edit_arb_element(struct rt_edit *s)
 
     if (s->e_inpara) {
 
-	/*
-	 * Extended form: 4 parameters → e_para[0]=index, e_para[1..3]=coords.
-	 * Unpack the element index and shift the coord triple down.
-	 */
-	if (s->e_inpara == 4)
-	    arb_unpack_index_param(s, &a->edit_menu);
-
-	if (s->e_inpara != 3) {
-	    bu_vls_printf(s->log_str, "ERROR: three arguments needed\n");
-	    s->e_inpara = 0;
-	    return BRLCAD_ERROR;
-	}
-
-	/* must convert to base units */
-	s->e_para[0] *= s->local2base;
-	s->e_para[1] *= s->local2base;
-	s->e_para[2] *= s->local2base;
-
 	vect_t work;
-	if (s->mv_context) {
-	    /* apply s->e_invmat to convert to real model space */
-	    MAT4X3PNT(work, s->e_invmat, s->e_para);
-	} else {
-	    VMOVE(work, s->e_para);
-	}
+	if (arb_numeric_target(work, s, &a->edit_menu) != BRLCAD_OK)
+	    return BRLCAD_ERROR;
 	editarb(s, work);
     }
 

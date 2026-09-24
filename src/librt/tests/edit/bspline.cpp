@@ -390,6 +390,42 @@ rt_edit_test_bspline(void)
 	bu_log("RT_MATRIX_EDIT_ROT SUCCESS\n");
     }
 
+    const fastf_t inch_to_mm = 25.4;
+    s->local2base = inch_to_mm;
+    s->base2local = 1.0 / inch_to_mm;
+    s->mv_context = 0;
+    MAT_IDN(s->e_invmat);
+    b->spl_surfno = 0;
+    b->spl_ui = 1;
+    b->spl_vi = 1;
+    EDOBJ[dp->d_minor_type].ft_set_edit_mode(s, ECMD_VTRANS);
+    s->e_inpara = 1;
+    VSET(s->e_para, 0.5, 0.25, 0.1);
+    struct rt_nurb_internal *sip =
+	(struct rt_nurb_internal *)s->es_int.idb_ptr;
+    struct face_g_snurb *surf = sip->srfs[0];
+    fastf_t *cp = &RT_NURB_GET_CONTROL_POINT(surf, 1, 1);
+    vect_t expected;
+    vect_t entered;
+    VMOVE(entered, s->e_para);
+    VSET(expected, 0.5 * inch_to_mm, 0.25 * inch_to_mm, 0.1 * inch_to_mm);
+    if (rt_edit_process(s) != BRLCAD_OK ||
+	!VNEAR_EQUAL(cp, expected, VUNITIZE_TOL) ||
+	!VNEAR_EQUAL(s->e_para, entered, VUNITIZE_TOL))
+	bu_exit(1, "ERROR: B-spline inch control-point move changed input or point\n");
+    s->e_inpara = 1;
+    if (rt_edit_process(s) != BRLCAD_OK || !VNEAR_EQUAL(cp, expected, VUNITIZE_TOL))
+	bu_exit(1, "ERROR: repeated B-spline inch control-point move compounded\n");
+
+    VSET(s->e_para, 9, 9, 9);
+    VSET(s->e_mparam, 5, 6, 7);
+    s->e_mvalid = 1;
+    VSET(expected, 5, 6, 7);
+    if (rt_edit_process(s) != BRLCAD_OK ||
+	!VNEAR_EQUAL(cp, expected, VUNITIZE_TOL) ||
+	!NEAR_EQUAL(s->e_para[X], 9, VUNITIZE_TOL))
+	bu_exit(1, "ERROR: B-spline mouse point changed numeric input\n");
+
     rt_edit_destroy(s);
     db_close(dbip);
     return 0;

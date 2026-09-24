@@ -577,6 +577,12 @@ bu_log("RT_MATRIX_EDIT_TRANS_MODEL_XYZ SUCCESS: "
 	    !VNEAR_EQUAL(ARS_PT(edit_ars, 0, 2), exp_c0p0, VUNITIZE_TOL) ||
 	    !VNEAR_EQUAL(ARS_PT(edit_ars, 1, 0), exp_c1p0, VUNITIZE_TOL))
 	    bu_exit(1, "ERROR: ECMD_ARS_MOVE_CRV inch conversion failed\n");
+	if (!NEAR_EQUAL(s->e_para[X], 2.0 / inch, VUNITIZE_TOL))
+	    bu_exit(1, "ERROR: ARS curve move changed numeric input\n");
+	s->e_inpara = 3;
+	if (rt_edit_process(s) != BRLCAD_OK ||
+	    !VNEAR_EQUAL(ARS_PT(edit_ars, 0, 0), exp_c0p0, VUNITIZE_TOL))
+	    bu_exit(1, "ERROR: repeated ARS curve move compounded\n");
 
 	ars_reset(s, edit_ars, ae);
 	ae->es_ars_crv = 0;
@@ -592,6 +598,12 @@ bu_log("RT_MATRIX_EDIT_TRANS_MODEL_XYZ SUCCESS: "
 	    !VNEAR_EQUAL(ARS_PT(edit_ars, 0, 2), exp_c0, VUNITIZE_TOL) ||
 	    !VNEAR_EQUAL(ARS_PT(edit_ars, 1, 2), exp_c1, VUNITIZE_TOL))
 	    bu_exit(1, "ERROR: ECMD_ARS_MOVE_COL inch conversion failed\n");
+	if (!NEAR_EQUAL(s->e_para[Z], 1.0, VUNITIZE_TOL))
+	    bu_exit(1, "ERROR: ARS column move changed numeric input\n");
+	s->e_inpara = 3;
+	if (rt_edit_process(s) != BRLCAD_OK ||
+	    !VNEAR_EQUAL(ARS_PT(edit_ars, 0, 0), exp_c0, VUNITIZE_TOL))
+	    bu_exit(1, "ERROR: repeated ARS column move compounded\n");
 
 	ars_reset(s, edit_ars, ae);
 	EDOBJ[dp->d_minor_type].ft_set_edit_mode(s, ECMD_ARS_PICK);
@@ -600,6 +612,12 @@ bu_log("RT_MATRIX_EDIT_TRANS_MODEL_XYZ SUCCESS: "
 	rt_edit_process(s);
 	if (ae->es_ars_crv != 1 || ae->es_ars_col != 1)
 	    bu_exit(1, "ERROR: ECMD_ARS_PICK inch conversion failed\n");
+	if (!NEAR_EQUAL(s->e_para[X], 1.0 / inch, VUNITIZE_TOL))
+	    bu_exit(1, "ERROR: ARS pick changed numeric input\n");
+	s->e_inpara = 3;
+	if (rt_edit_process(s) != BRLCAD_OK ||
+	    ae->es_ars_crv != 1 || ae->es_ars_col != 1)
+	    bu_exit(1, "ERROR: repeated ARS inch pick changed selection\n");
 
 	EDOBJ[dp->d_minor_type].ft_set_edit_mode(s, ECMD_ARS_NEXT_PT);
 	rt_edit_process(s);
@@ -620,6 +638,21 @@ bu_log("RT_MATRIX_EDIT_TRANS_MODEL_XYZ SUCCESS: "
 	rt_edit_process(s);
 	if (ae->es_ars_crv != 1 || ae->es_ars_col != 1)
 	    bu_exit(1, "ERROR: ECMD_ARS_PREV_CRV failed\n");
+
+	ars_reset(s, edit_ars, ae);
+	ae->es_ars_crv = 0;
+	ae->es_ars_col = 0;
+	EDOBJ[dp->d_minor_type].ft_set_edit_mode(s, ECMD_ARS_MOVE_PT);
+	s->e_inpara = 3;
+	VSET(s->e_para, 2.0 / inch, 0, 0);
+	if (rt_edit_process(s) != BRLCAD_OK ||
+	    !VNEAR_EQUAL(ARS_PT(edit_ars, 0, 0), exp_c0p0, VUNITIZE_TOL) ||
+	    !NEAR_EQUAL(s->e_para[X], 2.0 / inch, VUNITIZE_TOL))
+	    bu_exit(1, "ERROR: ARS inch point move changed input or point\n");
+	s->e_inpara = 3;
+	if (rt_edit_process(s) != BRLCAD_OK ||
+	    !VNEAR_EQUAL(ARS_PT(edit_ars, 0, 0), exp_c0p0, VUNITIZE_TOL))
+	    bu_exit(1, "ERROR: repeated ARS inch point move compounded\n");
 
 	s->local2base = 1.0;
 	s->base2local = 1.0;

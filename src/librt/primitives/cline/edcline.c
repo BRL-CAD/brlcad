@@ -142,128 +142,30 @@ rt_edit_cline_e_axes_pos(
     }
 }
 
-/*
- * Scale height vector
- */
-int
-ecmd_cline_scale_h(struct rt_edit *s)
+/* Scale a CLINE length without modifying the numeric input. */
+static int
+cline_scale(struct rt_edit *s)
 {
-    if (!s->e_inpara && s->es_scale <= 0.0) {
-	bu_vls_printf(s->log_str, "ERROR: one argument needed\n");
-	s->e_inpara = 0;
-	return BRLCAD_ERROR;
-    }
-    if (s->e_inpara > 1) {
-	bu_vls_printf(s->log_str, "ERROR: only one argument needed\n");
-	s->e_inpara = 0;
-	return BRLCAD_ERROR;
-    }
-
     struct rt_cline_internal *cli =
 	(struct rt_cline_internal *)s->es_int.idb_ptr;
+    vect_t *axis = NULL;
+    fastf_t *scalar = NULL;
 
     RT_CLINE_CK_MAGIC(cli);
-
-    if (s->e_inpara) {
-	if (s->e_para[0] <= 0.0) {
-	    bu_vls_printf(s->log_str, "ERROR: SCALE FACTOR <= 0\n");
-	    s->e_inpara = 0;
-	    return BRLCAD_ERROR;
-	}
-
-	/* convert e_para[0] to base units */
-	s->e_para[0] *= s->local2base;
-
-	s->e_para[0] *= s->e_mat[15];
-	s->es_scale = s->e_para[0] / MAGNITUDE(cli->h);
-	VSCALE(cli->h, cli->h, s->es_scale);
-    } else if (s->es_scale > 0.0) {
-	VSCALE(cli->h, cli->h, s->es_scale);
-	s->es_scale = 0.0;
+    switch (s->edit_flag) {
+	case ECMD_CLINE_SCALE_H: axis = &cli->h; break;
+	case ECMD_CLINE_SCALE_R: scalar = &cli->radius; break;
+	case ECMD_CLINE_SCALE_T: scalar = &cli->thickness; break;
+	default: return BRLCAD_ERROR;
     }
-
-    return 0;
-}
-
-/*
- * Scale radius
- */
-int
-ecmd_cline_scale_r(struct rt_edit *s)
-{
     if (!s->e_inpara && s->es_scale <= 0.0) {
 	bu_vls_printf(s->log_str, "ERROR: one argument needed\n");
-	s->e_inpara = 0;
 	return BRLCAD_ERROR;
     }
-    if (s->e_inpara > 1) {
-	bu_vls_printf(s->log_str, "ERROR: only one argument needed\n");
-	s->e_inpara = 0;
-	return BRLCAD_ERROR;
-    }
-
-    struct rt_cline_internal *cli =
-	(struct rt_cline_internal *)s->es_int.idb_ptr;
-
-    RT_CLINE_CK_MAGIC(cli);
-
-    if (s->e_inpara) {
-	/* convert e_para[0] to base units */
-	s->e_para[0] *= s->local2base;
-
-	if (s->e_para[0] <= 0.0) {
-	    bu_vls_printf(s->log_str, "ERROR: SCALE FACTOR <= 0\n");
-	    s->e_inpara = 0;
-	    return BRLCAD_ERROR;
-	}
-	cli->radius = s->e_para[0];
-    } else if (s->es_scale > 0.0) {
-	cli->radius *= s->es_scale;
+    int ret = edit_scale_length(s, axis, scalar);
+    if (ret == BRLCAD_OK && !s->e_inpara)
 	s->es_scale = 0.0;
-    }
-
-    return 0;
-}
-
-/*
- * Scale plate thickness
- */
-int
-ecmd_cline_scale_t(struct rt_edit *s)
-{
-    if (!s->e_inpara && s->es_scale <= 0.0) {
-	bu_vls_printf(s->log_str, "ERROR: one argument needed\n");
-	s->e_inpara = 0;
-	return BRLCAD_ERROR;
-    }
-    if (s->e_inpara > 1) {
-	bu_vls_printf(s->log_str, "ERROR: only one argument needed\n");
-	s->e_inpara = 0;
-	return BRLCAD_ERROR;
-    }
-
-    struct rt_cline_internal *cli =
-	(struct rt_cline_internal *)s->es_int.idb_ptr;
-
-    RT_CLINE_CK_MAGIC(cli);
-
-    if (s->e_inpara) {
-	if (s->e_para[0] <= 0.0) {
-	    bu_vls_printf(s->log_str, "ERROR: SCALE FACTOR <= 0\n");
-	    s->e_inpara = 0;
-	    return BRLCAD_ERROR;
-	}
-
-	/* convert e_para[0] to base units */
-	s->e_para[0] *= s->local2base;
-
-	cli->thickness = s->e_para[0];
-    } else if (s->es_scale > 0.0) {
-	cli->thickness *= s->es_scale;
-	s->es_scale = 0.0;
-    }
-
-    return 0;
+    return ret;
 }
 
 /*
@@ -273,6 +175,7 @@ int
 ecmd_cline_move_h(struct rt_edit *s)
 {
     vect_t work;
+    point_t model_point;
     struct rt_cline_internal *cli =
 	(struct rt_cline_internal *)s->es_int.idb_ptr;
     bu_clbk_t f = NULL;
@@ -287,16 +190,13 @@ ecmd_cline_move_h(struct rt_edit *s)
 	    return BRLCAD_ERROR;
 	}
 
-	/* convert e_para[0] to base units */
-	s->e_para[0] *= s->local2base;
-	s->e_para[1] *= s->local2base;
-	s->e_para[2] *= s->local2base;
+	VSCALE(model_point, s->e_para, s->local2base);
 
 	if (s->mv_context) {
-	    MAT4X3PNT(work, s->e_invmat, s->e_para);
+	    MAT4X3PNT(work, s->e_invmat, model_point);
 	    VSUB2(cli->h, work, cli->v);
 	} else
-	    VSUB2(cli->h, s->e_para, cli->v);
+	    VSUB2(cli->h, model_point, cli->v);
     }
     /* check for zero H vector */
     if (MAGNITUDE(cli->h) <= SQRT_SMALL_FASTF) {
@@ -347,11 +247,9 @@ rt_edit_cline_edit(struct rt_edit *s)
 	    edit_srot(s);
 	    break;
 	case ECMD_CLINE_SCALE_H:
-	    return ecmd_cline_scale_h(s);
 	case ECMD_CLINE_SCALE_R:
-	    return ecmd_cline_scale_r(s);
 	case ECMD_CLINE_SCALE_T:
-	    return ecmd_cline_scale_t(s);
+	    return cline_scale(s);
 	case ECMD_CLINE_MOVE_H:
 	    return ecmd_cline_move_h(s);
 	default:

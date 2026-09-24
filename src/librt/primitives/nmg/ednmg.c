@@ -666,17 +666,24 @@ rt_edit_nmg_labels(
 }
 
 
+static void
+nmg_edit_target_point(point_t target, const struct rt_edit *s, const point_t local)
+{
+    point_t base_point;
+
+    VSCALE(base_point, local, s->local2base);
+    if (s->mv_context)
+	MAT4X3PNT(target, s->e_invmat, base_point);
+    else
+	VMOVE(target, base_point);
+}
+
 void ecmd_nmg_emove(struct rt_edit *s)
 {
     struct rt_nmg_edit *n = (struct rt_nmg_edit *)s->ipe_ptr;
     point_t new_pt;
     bu_clbk_t f = NULL;
     void *d = NULL;
-
-    /* must convert to base units */
-    s->e_para[0] *= s->local2base;
-    s->e_para[1] *= s->local2base;
-    s->e_para[2] *= s->local2base;
 
     if (!n->es_eu) {
 	bu_vls_printf(s->log_str, "No edge selected!\n");
@@ -690,12 +697,7 @@ void ecmd_nmg_emove(struct rt_edit *s)
     if (s->e_mvalid) {
 	VMOVE(new_pt, s->e_mparam);
     } else if (s->e_inpara == 3) {
-	if (s->mv_context) {
-	    /* apply s->e_invmat to convert to real model space */
-	    MAT4X3PNT(new_pt, s->e_invmat, s->e_para);
-	} else {
-	    VMOVE(new_pt, s->e_para);
-	}
+	nmg_edit_target_point(new_pt, s, s->e_para);
     } else if (s->e_inpara && s->e_inpara != 3) {
 	bu_vls_printf(s->log_str, "x y z coordinates required for edge move\n");
 	rt_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_RESULTS, BU_CLBK_DURING);
@@ -841,11 +843,6 @@ void ecmd_nmg_esplit(struct rt_edit *s)
     bu_clbk_t f = NULL;
     void *d = NULL;
 
-    /* must convert to base units */
-    s->e_para[0] *= s->local2base;
-    s->e_para[1] *= s->local2base;
-    s->e_para[2] *= s->local2base;
-
     if (!n->es_eu) {
 	bu_vls_printf(s->log_str, "No edge selected!\n");
 	rt_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_RESULTS, BU_CLBK_DURING);
@@ -859,12 +856,7 @@ void ecmd_nmg_esplit(struct rt_edit *s)
     if (s->e_mvalid) {
 	VMOVE(new_pt, s->e_mparam);
     } else if (s->e_inpara == 3) {
-	if (s->mv_context) {
-	    /* apply s->e_invmat to convert to real model space */
-	    MAT4X3PNT(new_pt, s->e_invmat, s->e_para);
-	} else {
-	    VMOVE(new_pt, s->e_para);
-	}
+	nmg_edit_target_point(new_pt, s, s->e_para);
     } else if (s->e_inpara && s->e_inpara != 3) {
 	bu_vls_printf(s->log_str, "x y z coordinates required for edge split\n");
 	rt_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_RESULTS, BU_CLBK_DURING);
@@ -922,11 +914,11 @@ void ecmd_nmg_esplit(struct rt_edit *s)
     VSUB2(eg->e_dir, n->es_eu->eumate_p->vu_p->v_p->vg_p->coord, new_pt);
 }
 
-void ecmd_nmg_lextru(struct rt_edit *s)
+static void
+nmg_edit_extrude_to(struct rt_edit *s, const point_t to_pt)
 {
     struct rt_nmg_edit *n = (struct rt_nmg_edit *)s->ipe_ptr;
     fastf_t dist;
-    point_t to_pt;
     vect_t extrude_vec;
     struct loopuse *new_lu;
     struct faceuse *fu;
@@ -935,32 +927,6 @@ void ecmd_nmg_lextru(struct rt_edit *s)
     fastf_t area;
     bu_clbk_t f = NULL;
     void *d = NULL;
-
-    /* must convert to base units */
-    s->e_para[0] *= s->local2base;
-    s->e_para[1] *= s->local2base;
-    s->e_para[2] *= s->local2base;
-
-    if (s->e_mvalid) {
-	VMOVE(to_pt, s->e_mparam);
-    } else if (s->e_inpara == 3) {
-	if (s->mv_context) {
-	    /* apply s->e_invmat to convert to real model space */
-	    MAT4X3PNT(to_pt, s->e_invmat, s->e_para);
-	} else {
-	    VMOVE(to_pt, s->e_para);
-	}
-    } else if (s->e_inpara == 1) {
-	VJOIN1(to_pt, n->lu_keypoint, s->e_para[0], n->lu_pl);
-    } else if (s->e_inpara && s->e_inpara != 3) {
-	bu_vls_printf(s->log_str, "x y z coordinates required for loop extrusion\n");
-	rt_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_RESULTS, BU_CLBK_DURING);
-	if (f)
-	    (*f)(0, NULL, d, NULL);
-	return;
-    } else if (!s->e_mvalid && !s->e_inpara) {
-	return;
-    }
 
     VSUB2(extrude_vec, to_pt, n->lu_keypoint);
 
@@ -1024,13 +990,38 @@ void ecmd_nmg_lextru(struct rt_edit *s)
 	(*f)(0, NULL, d, &vs_flag);
 }
 
+void ecmd_nmg_lextru(struct rt_edit *s)
+{
+    struct rt_nmg_edit *n = (struct rt_nmg_edit *)s->ipe_ptr;
+    point_t to_pt;
+    bu_clbk_t f = NULL;
+    void *d = NULL;
+
+    if (s->e_mvalid) {
+	VMOVE(to_pt, s->e_mparam);
+    } else if (s->e_inpara == 3) {
+	nmg_edit_target_point(to_pt, s, s->e_para);
+    } else if (s->e_inpara == 1) {
+	VJOIN1(to_pt, n->lu_keypoint, s->e_para[0] * s->local2base, n->lu_pl);
+    } else if (s->e_inpara) {
+	bu_vls_printf(s->log_str, "x y z coordinates required for loop extrusion\n");
+	rt_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_RESULTS, BU_CLBK_DURING);
+	if (f)
+	    (*f)(0, NULL, d, NULL);
+	return;
+    } else {
+	return;
+    }
+
+    nmg_edit_extrude_to(s, to_pt);
+}
+
 /* Extrude current loop in an explicit direction + distance.
  * e_para[0..2] = direction vector (any non-zero magnitude)
  * e_para[3]    = extrusion distance (local units)
  * e_inpara must be 4.
  *
- * Converts to target_pt = lu_keypoint + normalise(dir)*dist, then calls
- * the standard ecmd_nmg_lextru() via the e_inpara=3 path. */
+ * Computes the base-unit target and shares the extrusion operation. */
 static void
 ecmd_nmg_lextru_dir(struct rt_edit *s)
 {
@@ -1053,16 +1044,17 @@ ecmd_nmg_lextru_dir(struct rt_edit *s)
     }
     VSCALE(dir, dir, 1.0 / mag);
 
-    /* The standard path converts its target point from local to base units. */
-    point_t local_keypoint, to_pt;
-    VSCALE(local_keypoint, n->lu_keypoint, s->base2local);
-    VJOIN1(to_pt, local_keypoint, s->e_para[3], dir);
+    point_t to_pt;
+    if (s->e_mvalid) {
+	VMOVE(to_pt, s->e_mparam);
+    } else {
+	point_t local_keypoint, local_target;
+	VSCALE(local_keypoint, n->lu_keypoint, s->base2local);
+	VJOIN1(local_target, local_keypoint, s->e_para[3], dir);
+	nmg_edit_target_point(to_pt, s, local_target);
+    }
 
-    /* Override e_para/e_inpara to use the x,y,z form */
-    VMOVE(s->e_para, to_pt);
-    s->e_inpara = 3;
-
-    ecmd_nmg_lextru(s);
+    nmg_edit_extrude_to(s, to_pt);
 }
 
 
@@ -1195,13 +1187,7 @@ ecmd_nmg_vmove(struct rt_edit *s)
     if (s->e_mvalid) {
 	VMOVE(new_pt, s->e_mparam);
     } else if (s->e_inpara == 3) {
-	s->e_para[0] *= s->local2base;
-	s->e_para[1] *= s->local2base;
-	s->e_para[2] *= s->local2base;
-	if (s->mv_context)
-	    MAT4X3PNT(new_pt, s->e_invmat, s->e_para);
-	else
-	    VMOVE(new_pt, s->e_para);
+	nmg_edit_target_point(new_pt, s, s->e_para);
     } else if (s->e_inpara && s->e_inpara != 3) {
 	bu_vls_printf(s->log_str, "X Y Z coordinates required for vertex move\n");
 	return BRLCAD_ERROR;
