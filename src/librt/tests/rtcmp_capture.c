@@ -27,6 +27,7 @@
 #include "bu/env.h"
 #include "bu/log.h"
 #include "bu/str.h"
+#include "bu/vls.h"
 #include "raytrace.h"
 #include "wdb.h"
 
@@ -58,7 +59,7 @@ int
 main(int argc, const char **argv)
 {
     char path[MAXPATHLEN];
-    char line[BUFSIZ];
+    struct bu_vls record = BU_VLS_INIT_ZERO;
     struct db_i *dbip = NULL;
     struct rt_wdb *wdbp;
     struct rt_i *rtip = NULL;
@@ -121,8 +122,10 @@ main(int argc, const char **argv)
     if (!file) {
 	failures++;
     } else {
-	if (!bu_fgets(line, sizeof(line), file) || bu_strcmp(line, "{}\n")) failures++;
-	while (bu_fgets(line, sizeof(line), file)) {
+	if (bu_vls_gets(&record, file) < 0 || bu_strcmp(bu_vls_addr(&record), "{}")) failures++;
+	bu_vls_trunc(&record, 0);
+	while (bu_vls_gets(&record, file) >= 0) {
+	    const char *line = bu_vls_addr(&record);
 	    int is_hit = strstr(line, "\"partitions\":[{") != NULL;
 	    int has_segments = strstr(line, "\"segments\":[{") != NULL;
 	    if (!strstr(line, "\"ray_dir\":{") ||
@@ -134,14 +137,16 @@ main(int argc, const char **argv)
 		 (!strstr(line, "\"partitions\":[]") ||
 		  !strstr(line, "\"primitive\":\"outer.s\"") ||
 		  !strstr(line, "\"primitive\":\"cut.s\"")))) {
-		bu_log("unexpected capture record: %s", line);
+		bu_log("unexpected capture record: %s\n", line);
 		failures++;
 	    }
 	    if (primitives && !is_hit && has_segments) ++primitive_only;
 	    records++;
+	    bu_vls_trunc(&record, 0);
 	}
 	fclose(file);
     }
+    bu_vls_free(&record);
     if (records != (primitives ? 4 : 2) || (primitives && primitive_only != 1)) failures++;
 
     rt_i_destroy(rtip);
