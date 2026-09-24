@@ -510,7 +510,9 @@ rt_knob_edit_sca(
 	int matrix_edit);
 
 /* Equivalent to sedit - run editing logic after input data is set in
- * rt_edit container.  Returns BRLCAD_ERROR if the primitive edit fails. */
+ * rt_edit container.  Transient input flags are consumed whether the edit
+ * succeeds or fails; parameter values remain available to the caller.
+ * Returns BRLCAD_ERROR if the primitive edit fails. */
 RT_EXPORT extern int
 rt_edit_process(struct rt_edit *s);
 
@@ -532,7 +534,7 @@ rt_edit_snap_point(point2d_t pt, const struct rt_edit *s);
  * restored later with rt_edit_revert().
  *
  * The snapshot is stored inside the rt_edit struct.  Calling this
- * function again overwrites any previous snapshot (single-level undo).
+ * function again replaces the previous snapshot only on success.
  *
  * @return BRLCAD_OK on success, BRLCAD_ERROR if the export failed.
  */
@@ -543,8 +545,8 @@ rt_edit_checkpoint(struct rt_edit *s);
  * Restore primitive parameters from the snapshot saved by
  * rt_edit_checkpoint().
  *
- * If no snapshot has been saved (or the last snapshot was already
- * consumed) this function logs a message and returns BRLCAD_ERROR.
+ * The snapshot remains available for repeated restores.  If none has
+ * been saved, this function logs a message and returns BRLCAD_ERROR.
  *
  * @return BRLCAD_OK on success, BRLCAD_ERROR otherwise.
  */

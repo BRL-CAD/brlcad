@@ -204,6 +204,16 @@ check_rec_units(const fastf_t local2base)
         EDOBJ[ID_REC].ft_edit_get_params(s, ECMD_REC_SCALE_R, NULL) >= 0)
         bu_exit(1, "REC getter accepted invalid arguments\n");
 
+    point_t saved_center;
+    VMOVE(saved_center, rec->v);
+    if (rt_edit_checkpoint(s) != BRLCAD_OK)
+	bu_exit(1, "REC checkpoint failed\n");
+    rec->v[X] += inch;
+    if (rt_edit_revert(s) != BRLCAD_OK || s->es_int.idb_type != ID_REC ||
+	!VNEAR_EQUAL(((struct rt_tgc_internal *)s->es_int.idb_ptr)->v,
+	    saved_center, VUNITIZE_TOL))
+	bu_exit(1, "REC revert lost its type or geometry\n");
+
     rt_edit_destroy(s);
     db_free_full_path(&fp);
     db_close(dbip);
