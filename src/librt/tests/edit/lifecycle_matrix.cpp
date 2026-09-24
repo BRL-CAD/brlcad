@@ -144,16 +144,66 @@ check_unit(fastf_t local2base, const char *unit)
 	    rt_edit_checkpoint(edit) != BRLCAD_OK)
 	    ++failures;
 
+	uint8_t *saved_checkpoint = edit->es_ckpt.ext_buf;
+	size_t saved_size = edit->es_ckpt.ext_nbytes;
+	/* Force export failure without altering the saved checkpoint. */
+	edit->es_int.idb_type = -1;
+	int checkpoint_result = rt_edit_checkpoint(edit);
+	edit->es_int.idb_type = ID_ELL;
+	if (checkpoint_result != BRLCAD_ERROR ||
+	    edit->es_ckpt.ext_buf != saved_checkpoint ||
+	    edit->es_ckpt.ext_nbytes != saved_size || !same_ell(edit, 4))
+	    ++failures;
+
+	/* This placeholder has no importer; failed revert must preserve ELL. */
+	edit->es_int.idb_type = ID_UNUSED1;
+	int revert_result = rt_edit_revert(edit);
+	edit->es_int.idb_type = ID_ELL;
+	if (revert_result != BRLCAD_ERROR || !same_ell(edit, 4) ||
+	    edit->es_ckpt.ext_buf != saved_checkpoint)
+	    ++failures;
+	bu_log("failed checkpoint/revert preserve state\t%s\t%s\n", unit,
+	    failures ? "fail" : "pass");
+
+	rt_edit_set_edflag(edit, RT_PARAMS_EDIT_SCALE);
+	edit->update_views = 0;
+	edit->e_inpara = 2;
+	edit->e_mvalid = 1;
+	edit->es_scale = 2.0;
+	edit->e_para[0] = 2.0;
+	edit->e_para[1] = 3.0;
+	if (rt_edit_process(edit) != BRLCAD_ERROR ||
+	    edit->e_inpara || edit->e_mvalid || !ZERO(edit->es_scale) ||
+	    edit->update_views || !EQUAL(edit->e_para[0], 2.0) ||
+	    !same_ell(edit, 4))
+	    ++failures;
+	rt_edit_set_edflag(edit, ECMD_ELL_SCALE_A);
+	if (rt_edit_process(edit) != BRLCAD_OK || !same_ell(edit, 4) ||
+	    edit->update_views != 1)
+	    ++failures;
+	if (rt_edit_process(edit) != BRLCAD_OK || edit->update_views != 1)
+	    ++failures;
+	bu_log("failed edit consumes input\t%s\t%s\n", unit,
+	    failures ? "fail" : "pass");
+
 	const fastf_t target_length = 2.0 * inch_to_mm;
 	rt_edit_set_edflag(edit, ECMD_ELL_SCALE_A);
 	edit->mv_context = 1;
 	edit->e_inpara = 1;
 	edit->e_para[0] = target_length / local2base;
-	if (rt_edit_process(edit) != BRLCAD_OK ||
-	    !same_ell(edit, target_length) ||
-	    !NEAR_EQUAL(edit->e_para[0], target_length / local2base,
-		VUNITIZE_TOL) ||
-	    rt_edit_revert(edit) != BRLCAD_OK || !same_ell(edit, 4))
+	int edit_result = rt_edit_process(edit);
+	bool scaled = same_ell(edit, target_length) &&
+	    NEAR_EQUAL(edit->e_para[0], target_length / local2base,
+		VUNITIZE_TOL);
+	edit->acc_sc_sol = 2.5;
+	VSET(edit->e_keypoint, -1, -1, -1);
+	point_t original_keypoint = {10, 5, 20};
+	if (edit_result != BRLCAD_OK || !scaled ||
+	    rt_edit_revert(edit) != BRLCAD_OK || !same_ell(edit, 4) ||
+	    !EQUAL(edit->acc_sc_sol, 1.0) ||
+	    !VNEAR_EQUAL(edit->e_keypoint, original_keypoint, VUNITIZE_TOL))
+	    ++failures;
+	if (rt_edit_revert(edit) != BRLCAD_OK || !same_ell(edit, 4))
 	    ++failures;
 	bu_log("checkpoint/edit/revert\t%s\t%s\n", unit,
 		failures ? "fail" : "pass");
@@ -194,6 +244,18 @@ int
 rt_edit_test_lifecycle_matrix(void)
 {
     int failures = check_map();
+    struct rt_edit *idle = rt_edit_create(NULL, NULL, NULL, NULL);
+    if (!idle)
+	return BRLCAD_ERROR;
+    idle->e_inpara = 1;
+    idle->e_mvalid = 1;
+    idle->es_scale = 2.0;
+    if (rt_edit_process(NULL) != BRLCAD_ERROR ||
+	rt_edit_process(idle) != BRLCAD_ERROR ||
+	idle->e_inpara || idle->e_mvalid || !ZERO(idle->es_scale) ||
+	idle->update_views)
+	++failures;
+    rt_edit_destroy(idle);
     failures += check_unit(1.0, "mm");
     failures += check_unit(inch_to_mm, "in");
     return failures ? BRLCAD_ERROR : BRLCAD_OK;

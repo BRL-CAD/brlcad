@@ -420,6 +420,16 @@ rt_edit_test_sph(void)
             bu_exit(1, "SPH radius command did not restore degenerate axes\n");
     }
 
+    point_t saved_center;
+    VMOVE(saved_center, ell->v);
+    if (rt_edit_checkpoint(s) != BRLCAD_OK)
+	bu_exit(1, "SPH checkpoint failed\n");
+    ell->v[X] += 1.0;
+    if (rt_edit_revert(s) != BRLCAD_OK || s->es_int.idb_type != ID_SPH ||
+	!VNEAR_EQUAL(((struct rt_ell_internal *)s->es_int.idb_ptr)->v,
+	    saved_center, VUNITIZE_TOL))
+	bu_exit(1, "SPH revert lost its type or geometry\n");
+
     rt_edit_destroy(s);
     db_close(dbip);
     return 0;

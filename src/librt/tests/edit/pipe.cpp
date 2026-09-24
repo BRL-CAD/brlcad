@@ -1305,6 +1305,17 @@ bu_log("RT_MATRIX_EDIT_TRANS_MODEL_XYZ SUCCESS: "
 	!NEAR_EQUAL(pipe_second(s)->pp_bendradius, 0.5 * inch, SMALL_FASTF))
 	bu_exit(1, "ERROR: inch whole-pipe bend could not be set from zero\n");
 
+    pipe_full_reset(s, pe);
+    if (rt_edit_checkpoint(s) != BRLCAD_OK)
+	bu_exit(1, "ERROR: pipe checkpoint failed\n");
+    pe->es_pipe_pnt = pipe_second(s);
+    pipe_first(s)->pp_coord[X] = inch;
+    VSET(s->e_keypoint, -1, -1, -1);
+    if (rt_edit_revert(s) != BRLCAD_OK || pe->es_pipe_pnt ||
+	!ZERO(pipe_first(s)->pp_coord[X]) ||
+	!VNEAR_ZERO(s->e_keypoint, VUNITIZE_TOL))
+	bu_exit(1, "ERROR: pipe revert retained stale geometry or selection\n");
+
     int matrix_failures = pipe_transform_matrix(dbip, &fp, &tol, v);
     matrix_failures += pipe_dimension_matrix(dbip, &fp, &tol);
     matrix_failures += pipe_point_matrix(dbip, &fp, &tol);

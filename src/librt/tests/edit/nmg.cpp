@@ -452,6 +452,19 @@ nmg_operation_matrix_unit(fastf_t local2base, const char *unit)
 	++failures;
     }
 
+    if (rt_edit_checkpoint(edit) != BRLCAD_OK) {
+	bu_log("nmg\tcheckpoint selected model\t%s\tfail\n", unit);
+	++failures;
+    } else {
+	selection->es_v->vg_p->coord[X] += 1.0;
+	if (rt_edit_revert(edit) != BRLCAD_OK || selection->es_eu ||
+	    selection->es_v || selection->es_fu ||
+	    !edit->es_int.idb_ptr) {
+	    bu_log("nmg\trevert clears selected topology\t%s\tfail\n", unit);
+	    ++failures;
+	}
+    }
+
     rt_edit_destroy(edit);
     db_free_full_path(&path);
     db_close(dbip);
@@ -779,6 +792,7 @@ rt_edit_test_nmg(void)
 	    bu_list_len(&wire_loop->down_hd) != edge_count ||
 	    !nmg_points_match(ws, wire_expected, NMG_WIRE_VERTEX_COUNT))
 	    bu_exit(1, "ERROR: NMG accepted a nonfinite edge split\n");
+	ws->e_inpara = 3;
 	VSCALE(ws->e_para, edge_midpoint, 1.0 / local2base);
 	point_t split_input;
 	VMOVE(split_input, ws->e_para);
@@ -842,6 +856,7 @@ rt_edit_test_nmg(void)
 	if (rt_edit_process(ws) == BRLCAD_OK ||
 	    !nmg_points_match(ws, wire_expected, NMG_WIRE_VERTEX_COUNT))
 	    bu_exit(1, "ERROR: NMG accepted a zero extrusion direction\n");
+	ws->e_inpara = 4;
 	ws->e_para[0] = 0.0;  /* dir X */
 	ws->e_para[1] = 0.0;  /* dir Y */
 	ws->e_para[2] = 1.0;  /* dir Z */
@@ -884,6 +899,7 @@ rt_edit_test_nmg(void)
 	    !nmg_points_match(ws, wire_and_prism_expected,
 		NMG_WIRE_AND_PRISM_VERTEX_COUNT))
 	    bu_exit(1, "ERROR: NMG invalid preview target changed the solid\n");
+	ws->e_inpara = 4;
 	ws->e_para[Z] = 1.0;
 	if (rt_edit_process(ws) != BRLCAD_OK)
 	    bu_exit(1, "ERROR: NMG repeated extrusion failed\n");
@@ -911,6 +927,7 @@ rt_edit_test_nmg(void)
 	    !nmg_points_match(ws, wire_and_prism_expected,
 		NMG_WIRE_AND_PRISM_VERTEX_COUNT))
 	    bu_exit(1, "ERROR: NMG accepted a nonfinite extrusion distance\n");
+	ws->e_inpara = 1;
 	ws->e_para[0] = 1.0 / local2base;
 	if (rt_edit_process(ws) != BRLCAD_OK)
 	    bu_exit(1, "ERROR: NMG scalar extrusion failed\n");
