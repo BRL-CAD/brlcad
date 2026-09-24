@@ -196,6 +196,16 @@ ____
 
 The LIBRT_DEBUG environment variable may be set to the hexadecimal bit vector as described by the DEBUG_* flags listed in the raytrace.h header. Similarly, many LIBRT applications provide a "-x #" command-line option which will take precedence over the environment variable.
 
+The RT_DEBUG_RTCMP flag (0x10000000) (set with LIBRT_DEBUG=10000000) appends
+one high-precision rtcmp JSON record per ray with final hit partitions to the
+file named by LIBRT_RTCMP_FILE. Misses produce no record. librt never clears
+the file; the caller must clear or rotate it before a new comparison as needed.
+Separate processes must not write to the same file concurrently. Pending
+records are flushed within two seconds under normal operation and during normal
+process shutdown. A process terminated abnormally may lose pending records.
+rtcmp comparison files should use the same hit-only capture mode on both sides;
+its generation mode also includes misses.
+
 The LIBRT_V4FLIP environment variable may be set to a true or false value to respectively force or disable endianness interpretation of v4 geometry database files. The default behavior is to automatically detect whether flipping the endian interpretation will help LIBRT read a binary-incompatible v4 geometry database file. Setting LIBRT_V4FLIP will override automatic detection.
 
 

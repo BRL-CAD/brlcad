@@ -54,6 +54,9 @@ brlcad_addexec(rt_tree_prune tree_prune.c "librt;libwdb;libbu;${M_LIBRARY}" TEST
 brlcad_add_test(NAME rt_tree_prune COMMAND rt_tree_prune)
 
 brlcad_addexec(rt_reprep_prune reprep_prune.c "librt;libwdb;libbu;${M_LIBRARY}" TEST)
+
+brlcad_addexec(rt_rtcmp_capture rtcmp_capture.c "librt;libwdb;libbu;${M_LIBRARY}" TEST)
+brlcad_add_test(NAME rt_rtcmp_capture COMMAND rt_rtcmp_capture)
 brlcad_add_test(NAME rt_reprep_prune COMMAND rt_reprep_prune)
 
 if(BRLCAD_ENABLE_BINARY_ATTRIBUTES)

@@ -305,6 +305,7 @@ set(
   regionfix.c
   roots.c
   rt_init.cpp
+  rtcmp_capture.cpp
   search.cpp
   search_old.cpp
   shoot.c

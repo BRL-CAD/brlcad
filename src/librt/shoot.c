@@ -939,6 +939,9 @@ hitit:
 
     if (debug_shoot) rt_pr_partitions(rtip, &FinalPart, "a_hit()");
 
+    if (RT_G_DEBUG & RT_DEBUG_RTCMP)
+	_rt_rtcmp_capture(ap, &FinalPart);
+
     /* Before recursing, release storage for unused Initial
      * partitions.  finished_segs can not be released yet, because
      * FinalPart partitions will point to hits in those segments.
