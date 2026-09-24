@@ -115,6 +115,35 @@ edit_param_read_scalar(fastf_t *out, char **cursor, const char *label,
 }
 
 int
+edit_param_read_fields(const char *input, const struct edit_param_field *fields,
+		size_t field_count)
+{
+    if (!input || !fields || !field_count)
+	return BRLCAD_ERROR;
+
+    char *buffer = bu_strdup(input);
+    char *cursor = buffer;
+    int result = BRLCAD_OK;
+    for (size_t i = 0; i < field_count; i++) {
+	const struct edit_param_field *field = &fields[i];
+	if (field->count == ELEMENTS_PER_VECT)
+	    result = edit_param_read_vector(field->value, &cursor,
+		    field->label, field->conversion);
+	else if (field->count == 1)
+	    result = edit_param_read_scalar(field->value, &cursor,
+		    field->label, field->conversion);
+	else
+	    result = BRLCAD_ERROR;
+	if (result != BRLCAD_OK)
+	    break;
+    }
+    if (result == BRLCAD_OK && edit_param_next_line(&cursor))
+	result = BRLCAD_ERROR;
+    bu_free(buffer, "primitive parameter text");
+    return result;
+}
+
+int
 edit_repair_parse_options(struct bu_vls *log_str, int argc,
 			  const char **argv, const struct bu_opt_desc *options)
 {
@@ -194,6 +223,7 @@ edit_sscale(struct rt_edit *s)
 {
     mat_t mat, mat1, scalemat;
     struct rt_db_internal *ip = &s->es_int;
+    fastf_t scale = s->es_scale;
 
     if (s->e_inpara > 1) {
 	bu_vls_printf(s->log_str, "ERROR: only one argument needed\n");
@@ -202,23 +232,37 @@ edit_sscale(struct rt_edit *s)
     }
 
     if (s->e_inpara) {
-	/* accumulate the scale factor */
-	s->es_scale = s->e_para[0] / s->acc_sc_sol;
-	s->acc_sc_sol = s->e_para[0];
+	if (!isfinite(s->e_para[0]) || s->e_para[0] <= 0.0 ||
+	    !isfinite(s->acc_sc_sol) || s->acc_sc_sol <= 0.0) {
+	    bu_vls_printf(s->log_str, "ERROR: scale must be finite and positive\n");
+	    return BRLCAD_ERROR;
+	}
+	scale = s->e_para[0] / s->acc_sc_sol;
     }
 
     /* No pending scale operation — nothing to apply. */
-    if (!s->e_inpara && s->es_scale < SMALL_FASTF)
+
+    if (!s->e_inpara && ZERO(scale))
 	return 0;
 
-    bn_mat_scale_about_pnt(scalemat, s->e_keypoint, s->es_scale);
+    if (!isfinite(scale) || scale <= 0.0 ||
+	!OBJ[ip->idb_type].ft_mat ||
+	bn_mat_scale_about_pnt(scalemat, s->e_keypoint, scale)) {
+	bu_vls_printf(s->log_str, "ERROR: cannot apply solid scale\n");
+	return BRLCAD_ERROR;
+    }
+
     bn_mat_mul(mat1, scalemat, s->e_mat);
     bn_mat_mul(mat, s->e_invmat, mat1);
-    if (OBJ[ip->idb_type].ft_mat)
-	(*OBJ[ip->idb_type].ft_mat)(ip, mat, ip);
+    if ((*OBJ[ip->idb_type].ft_mat)(ip, mat, ip)) {
+	bu_vls_printf(s->log_str, "ERROR: solid scale failed\n");
+	return BRLCAD_ERROR;
+    }
 
     /* reset solid scale factor */
     s->es_scale = 1.0;
+    if (s->e_inpara)
+	s->acc_sc_sol = s->e_para[0];
 
     return 0;
 }
@@ -309,6 +353,19 @@ edit_scale_equal_axes(struct rt_edit *s, vect_t a, vect_t b, vect_t c)
     VSCALE(a, a, s->es_scale);
     VSCALE(b, b, b_scale);
     VSCALE(c, c, c_scale);
+    return BRLCAD_OK;
+}
+
+int
+edit_validate_height(struct rt_edit *s, const vect_t height)
+{
+    fastf_t length = MAGNITUDE(height);
+    fastf_t min_length = s->tol ? fmax(s->tol->dist, SQRT_SMALL_FASTF) :
+	SQRT_SMALL_FASTF;
+    if (!isfinite(length) || length <= min_length) {
+	bu_vls_printf(s->log_str, "Zero or invalid H vector not allowed\n");
+	return BRLCAD_ERROR;
+    }
     return BRLCAD_OK;
 }
 
@@ -467,8 +524,7 @@ edit_generic(
     switch (s->edit_flag) {
 	case RT_PARAMS_EDIT_SCALE:
 	    /* scale the solid uniformly about its vertex point */
-	    edit_sscale(s);
-	    return BRLCAD_OK;
+	    return edit_sscale(s);
 	case RT_PARAMS_EDIT_TRANS:
 	    /* translate solid */
 	    edit_stra(s);

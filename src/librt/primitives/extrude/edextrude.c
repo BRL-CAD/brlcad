@@ -248,7 +248,7 @@ ecmd_extr_skt_name(struct rt_edit *s)
 int
 ecmd_extr_mov_h(struct rt_edit *s)
 {
-    vect_t work;
+    vect_t work, height;
     point_t model_point;
     struct rt_extrude_internal *extr =
 	(struct rt_extrude_internal *)s->es_int.idb_ptr;
@@ -256,6 +256,7 @@ ecmd_extr_mov_h(struct rt_edit *s)
     void *d = NULL;
 
     RT_EXTRUDE_CK_MAGIC(extr);
+    VMOVE(height, extr->h);
     if (s->e_inpara) {
 	if (s->e_inpara != 3) {
 	    bu_vls_printf(s->log_str, "ERROR: three arguments needed\n");
@@ -268,22 +269,20 @@ ecmd_extr_mov_h(struct rt_edit *s)
 	if (s->mv_context) {
 	    /* apply s->e_invmat to convert to real model coordinates */
 	    MAT4X3PNT(work, s->e_invmat, model_point);
-	    VSUB2(extr->h, work, extr->V);
+	    VSUB2(height, work, extr->V);
 	} else {
-	    VSUB2(extr->h, model_point, extr->V);
+	    VSUB2(height, model_point, extr->V);
 	}
     }
 
-    /* check for zero H vector */
-    if (MAGNITUDE(extr->h) <= SQRT_SMALL_FASTF) {
-	bu_vls_printf(s->log_str, "Zero H vector not allowed, resetting to +Z\n");
+    if (edit_validate_height(s, height) != BRLCAD_OK) {
 	rt_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_RESULTS, BU_CLBK_DURING);
 	if (f)
 	    (*f)(0, NULL, d, NULL);
-	VSET(extr->h, 0.0, 0.0, 1.0);
 	return BRLCAD_ERROR;
     }
 
+    VMOVE(extr->h, height);
     return 0;
 }
 
@@ -380,7 +379,7 @@ ecmd_extr_rot_h(struct rt_edit *s)
 }
 
 /* Use mouse to change location of point V+H */
-void
+static int
 ecmd_extr_mov_h_mousevec(struct rt_edit *s, const vect_t mousevec)
 {
     vect_t pos_view = VINIT_ZERO;	/* Unrotated view space pos */
@@ -396,8 +395,13 @@ ecmd_extr_mov_h_mousevec(struct rt_edit *s, const vect_t mousevec)
     /* Do NOT change pos_view[Z] ! */
     MAT4X3PNT(temp, s->vp->gv_view2model, pos_view);
     MAT4X3PNT(tr_temp, s->e_invmat, temp);
-    VSUB2(extr->h, tr_temp, extr->V);
+    vect_t height;
+    VSUB2(height, tr_temp, extr->V);
+    if (edit_validate_height(s, height) != BRLCAD_OK)
+	return BRLCAD_ERROR;
+    VMOVE(extr->h, height);
     edit_abs_tra(s, pos_view);
+    return BRLCAD_OK;
 }
 
 
@@ -558,8 +562,7 @@ rt_edit_extrude_edit_xy(
 	    edit_stra_xy(&pos_view, s, mousevec);
 	    break;
 	case ECMD_EXTR_MOV_H:
-	    ecmd_extr_mov_h_mousevec(s, mousevec);
-	    return BRLCAD_OK;
+	    return ecmd_extr_mov_h_mousevec(s, mousevec);
 	default:
 	    return edit_generic_xy(s, mousevec);
     }

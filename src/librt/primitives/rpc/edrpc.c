@@ -195,16 +195,6 @@ rt_edit_rpc_write_params(
 }
 
 
-#define read_params_line_incr \
-    lc = (ln) ? (ln + lcj) : NULL; \
-    if (!lc) { \
-	bu_free(wc, "wc"); \
-	return BRLCAD_ERROR; \
-    } \
-    ln = strchr(lc, tc); \
-    if (ln) *ln = '\0'; \
-    while (lc && strchr(lc, ':')) lc++
-
 C_DECL int
 rt_edit_rpc_read_params(
 	struct rt_db_internal *ip,
@@ -213,62 +203,18 @@ rt_edit_rpc_read_params(
 	fastf_t local2base
 	)
 {
-    double a = 0.0;
-    double b = 0.0;
-    double c = 0.0;
     struct rt_rpc_internal *rpc = (struct rt_rpc_internal *)ip->idb_ptr;
     RT_RPC_CK_MAGIC(rpc);
-
-    if (!fc)
+    struct rt_rpc_internal candidate = *rpc;
+    const struct edit_param_field fields[] = {
+	{"Vertex", candidate.rpc_V, ELEMENTS_PER_VECT, local2base},
+	{"Height", candidate.rpc_H, ELEMENTS_PER_VECT, local2base},
+	{"Breadth", candidate.rpc_B, ELEMENTS_PER_VECT, local2base},
+	{"Half-width", &candidate.rpc_r, 1, local2base}
+    };
+    if (edit_param_read_fields(fc, fields, sizeof(fields) / sizeof(fields[0])) != BRLCAD_OK)
 	return BRLCAD_ERROR;
-
-    // We're getting the file contents as a string, so we need to split it up
-    // to process lines. See https://stackoverflow.com/a/17983619
-
-    // Figure out if we need to deal with Windows line endings
-    const char *crpos = strchr(fc, '\r');
-    int crlf = (crpos && crpos[1] == '\n') ? 1 : 0;
-    char tc = (crlf) ? '\r' : '\n';
-    // If we're CRLF jump ahead another character.
-    int lcj = (crlf) ? 2 : 1;
-
-    char *ln = NULL;
-    char *wc = bu_strdup(fc);
-    char *lc = wc;
-
-    // Set up initial line (Vertex)
-    ln = strchr(lc, tc);
-    if (ln) *ln = '\0';
-
-    // Trim off prefixes, if user left them in
-    while (lc && strchr(lc, ':')) lc++;
-
-    sscanf(lc, "%lf %lf %lf", &a, &b, &c);
-    VSET(rpc->rpc_V, a, b, c);
-    VSCALE(rpc->rpc_V, rpc->rpc_V, local2base);
-
-    // Set up Height line
-    read_params_line_incr;
-
-    sscanf(lc, "%lf %lf %lf", &a, &b, &c);
-    VSET(rpc->rpc_H, a, b, c);
-    VSCALE(rpc->rpc_H, rpc->rpc_H, local2base);
-
-    // Set up Breadth line
-    read_params_line_incr;
-
-    sscanf(lc, "%lf %lf %lf", &a, &b, &c);
-    VSET(rpc->rpc_B, a, b, c);
-    VSCALE(rpc->rpc_B, rpc->rpc_B, local2base);
-
-    // Set up Half-width line
-    read_params_line_incr;
-
-    sscanf(lc, "%lf", &a);
-    rpc->rpc_r = a * local2base;
-
-    // Cleanup
-    bu_free(wc, "wc");
+    *rpc = candidate;
     return BRLCAD_OK;
 }
 

@@ -26,6 +26,7 @@
 
 #include "common.h"
 
+#include <string>
 #include <string.h>
 
 #include "bu/log.h"
@@ -263,6 +264,56 @@ same_arb_vertices(const struct rt_arb_internal *arb,
 }
 
 static int
+check_atomic_param_rejection(const struct param_case *test,
+	struct rt_db_internal *ip, const struct bn_tol *tol,
+	fastf_t local2base, const char *output)
+{
+    std::string truncated(output);
+    if (!truncated.empty() && truncated.back() == '\n')
+	truncated.pop_back();
+    size_t last_line = truncated.find_last_of('\n');
+    if (last_line == std::string::npos)
+	return 1;
+    truncated.erase(last_line + 1);
+
+    const std::string invalid[] = {
+	truncated,
+	truncated + "invalid\n",
+	std::string(output) + "unexpected: 1\n"
+    };
+    void *before = bu_malloc(test->parsed_size, "parameter reader snapshot");
+    memcpy(before, test->parsed, test->parsed_size);
+    int failures = 0;
+    for (const std::string &text : invalid) {
+	memcpy(test->parsed, before, test->parsed_size);
+	int result = EDOBJ[test->type].ft_read_params(ip, text.c_str(), tol,
+	    local2base);
+	if (result != BRLCAD_ERROR || !test->same(test->parsed, before))
+	    failures++;
+    }
+    memcpy(test->parsed, before, test->parsed_size);
+    bu_free(before, "parameter reader snapshot");
+    return failures;
+}
+
+static bool
+check_atomic_reader_type(int type)
+{
+    switch (type) {
+	case ID_EPA:
+	case ID_EHY:
+	case ID_ETO:
+	case ID_HYP:
+	case ID_RPC:
+	case ID_RHC:
+	case ID_TGC:
+	    return true;
+	default:
+	    return false;
+    }
+}
+
+static int
 run_case(const struct param_case *test, fastf_t local2base, const char *unit)
 {
     const struct rt_edit_functab *edit = &EDOBJ[test->type];
@@ -294,6 +345,25 @@ run_case(const struct param_case *test, fastf_t local2base, const char *unit)
     if (edit->ft_read_params(&ip, output, &tol, local2base) != BRLCAD_OK ||
 	!test->same(test->original, test->parsed)) {
 	bu_log("%s\tparams\t%s\twrong reconstructed geometry\n", test->name, unit);
+	failed = 1;
+    }
+    if (check_atomic_reader_type(test->type)) {
+	std::string crlf;
+	for (const char *p = output; *p; ++p) {
+	    if (*p == '\n')
+		crlf.push_back('\r');
+	    crlf.push_back(*p);
+	}
+	if (edit->ft_read_params(&ip, crlf.c_str(), &tol, local2base) != BRLCAD_OK ||
+	    !test->same(test->original, test->parsed)) {
+	    bu_log("%s\tparams\t%s\tCRLF reconstruction failed\n", test->name, unit);
+	    failed = 1;
+	}
+    }
+    if (check_atomic_reader_type(test->type) &&
+	check_atomic_param_rejection(test, &ip, &tol, local2base, output)) {
+	bu_log("%s\tparams\t%s\trejected edit changed geometry\n",
+	    test->name, unit);
 	failed = 1;
     }
     if (!failed)

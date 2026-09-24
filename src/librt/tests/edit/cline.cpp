@@ -258,6 +258,27 @@ rt_edit_test_cline(void)
     rt_edit_process(s);
     if (cline_diff("ECMD_CLINE_MOVE_H", cmp, edit_cline))
 	bu_exit(1, "ERROR: ECMD_CLINE_MOVE_H failed\n");
+
+    cline_reset(s, edit_cline, orig, cmp);
+    s->e_inpara = 3;
+    s->local2base = 25.4;
+    s->base2local = 1.0 / s->local2base;
+    VSCALE(s->e_para, orig->v, s->base2local);
+    if (rt_edit_process(s) != BRLCAD_ERROR ||
+	cline_diff("rejected zero-height move", cmp, edit_cline))
+	bu_exit(1, "ERROR: rejected CLINE height move changed geometry\n");
+    s->local2base = 1.0;
+    s->base2local = 1.0;
+
+    cline_reset(s, edit_cline, orig, cmp);
+    VMOVE(s->curr_e_axes_pos, orig->v);
+    point_t rejected_view_target;
+    MAT4X3PNT(rejected_view_target, v->gv_model2view, orig->v);
+    VMOVE(mousevec, rejected_view_target);
+    if (EDOBJ[dp->d_minor_type].ft_edit_xy(s, mousevec) != BRLCAD_ERROR ||
+	cline_diff("rejected mouse zero-height move", cmp, edit_cline))
+	bu_exit(1, "ERROR: rejected CLINE mouse height move changed geometry\n");
+    VADD2(s->curr_e_axes_pos, orig->v, orig->h);
     bu_log("ECMD_CLINE_MOVE_H SUCCESS: h=%g,%g,%g\n", V3ARGS(edit_cline->h));
 
     /* ================================================================

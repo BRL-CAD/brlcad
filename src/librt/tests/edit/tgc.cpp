@@ -386,6 +386,34 @@ rt_edit_test_tgc(void)
 	bu_exit(1, "ERROR: ECMD_TGC_MV_HH failed\n");
     bu_log("ECMD_TGC_MV_HH SUCCESS: h=%g,%g,%g\n", V3ARGS(edit_tgc->h));
 
+    const int height_moves[] = {ECMD_TGC_MV_H, ECMD_TGC_MV_HH};
+    for (size_t i = 0; i < sizeof(height_moves) / sizeof(height_moves[0]); i++) {
+	tgc_reset(s, edit_tgc, orig_tgc, cmp_tgc);
+	EDOBJ[dp->d_minor_type].ft_set_edit_mode(s, height_moves[i]);
+	s->local2base = 25.4;
+	s->base2local = 1.0 / s->local2base;
+	s->e_inpara = 3;
+	VSCALE(s->e_para, orig_tgc->v, s->base2local);
+	int result = rt_edit_process(s);
+	if (result != BRLCAD_ERROR ||
+	    tgc_diff("rejected zero-height move", cmp_tgc, edit_tgc))
+	    bu_exit(1, "ERROR: rejected TGC height move changed geometry (mode %d, result %d, h %g %g %g)\n",
+		height_moves[i], result, V3ARGS(edit_tgc->h));
+	s->local2base = 1.0;
+	s->base2local = 1.0;
+    }
+
+    tgc_reset(s, edit_tgc, orig_tgc, cmp_tgc);
+    EDOBJ[dp->d_minor_type].ft_set_edit_mode(s, ECMD_TGC_MV_H);
+    VMOVE(s->curr_e_axes_pos, orig_tgc->v);
+    point_t rejected_view_target;
+    MAT4X3PNT(rejected_view_target, v->gv_model2view, orig_tgc->v);
+    VMOVE(mousevec, rejected_view_target);
+    if (EDOBJ[dp->d_minor_type].ft_edit_xy(s, mousevec) != BRLCAD_ERROR ||
+	tgc_diff("rejected mouse zero-height move", cmp_tgc, edit_tgc))
+	bu_exit(1, "ERROR: rejected TGC mouse height move changed geometry\n");
+    VADD2(s->curr_e_axes_pos, orig_tgc->v, orig_tgc->h);
+
     /* ================================================================
      * ECMD_TGC_ROT_H  (rotate H vector by (5,5,5) degrees about keypoint=v)
      *   h_new = R * h where R = bn_mat_angles(5,5,5)

@@ -402,6 +402,20 @@ rt_edit_test_bot(void)
 	       V3ARGS(&bot->vertices[4*3]));
     }
 
+    bot_reset(s, bot, b);
+    /* An edge selection can become stale after a topology change. */
+    bot->faces[0] = 0; bot->faces[1] = 2; bot->faces[2] = 3;
+    bot->faces[3] = 1; bot->faces[4] = 2; bot->faces[5] = 3;
+    int faces_before[12];
+    memcpy(faces_before, bot->faces, sizeof(faces_before));
+    b->bot_verts[0] = 0;
+    b->bot_verts[1] = 1;
+    EDOBJ[dp->d_minor_type].ft_set_edit_mode(s, ECMD_BOT_ESPLIT);
+    if (rt_edit_process(s) != BRLCAD_ERROR ||
+	bot->num_vertices != 4 || bot->num_faces != 4 ||
+	memcmp(bot->faces, faces_before, sizeof(faces_before)))
+	bu_exit(1, "ERROR: stale BOT edge split changed topology\n");
+
     /* ================================================================
      * ECMD_BOT_FSPLIT: split face {0,2,3} of a fresh tetrahedron
      *
