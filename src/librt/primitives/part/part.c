@@ -191,6 +191,7 @@
 #include "raytrace.h"
 #include "nmg.h"
 #include "../../librt_private.h"
+#include "part_private.h"
 
 
 struct part_specific {
@@ -1791,7 +1792,6 @@ rt_part_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, c
 C_DECL int
 rt_part_import4(struct rt_db_internal *ip, const struct bu_external *ep, register const fastf_t *mat, const struct db_i *dbip)
 {
-    fastf_t maxrad, minrad;
     union record *rp;
     struct rt_part_internal *part;
 
@@ -1843,37 +1843,13 @@ rt_part_import4(struct rt_db_internal *ip, const struct bu_external *ep, registe
 	return -3;
     }
 
-    if (part->part_vrad > part->part_hrad) {
-	maxrad = part->part_vrad;
-	minrad = part->part_hrad;
-    } else {
-	maxrad = part->part_hrad;
-	minrad = part->part_vrad;
-    }
-    if (maxrad <= 0) {
-	bu_log("unable to import particle, negative radius\n");
+    if (part_update_type(part) != BRLCAD_OK) {
+	bu_log("unable to import particle, invalid geometry\n");
 	bu_free(ip->idb_ptr, "rt_part_internal");
 	ip->idb_ptr=NULL;
 	return -4;
     }
-
-    if (MAGSQ(part->part_H) * 1000000 < maxrad * maxrad) {
-	/* Height vector is insignificant, particle is a sphere */
-	part->part_vrad = part->part_hrad = maxrad;
-	VSETALL(part->part_H, 0);		/* sanity */
-	part->part_type = RT_PARTICLE_TYPE_SPHERE;
-	return 0;		/* OK */
-    }
-
-    if ((maxrad - minrad) / maxrad < 0.001) {
-	/* radii are nearly equal, particle is a cylinder (lozenge) */
-	part->part_vrad = part->part_hrad = maxrad;
-	part->part_type = RT_PARTICLE_TYPE_CYLINDER;
-	return 0;		/* OK */
-    }
-
-    part->part_type = RT_PARTICLE_TYPE_CONE;
-    return 0;		/* OK */
+    return 0;
 }
 
 
@@ -1928,53 +1904,27 @@ rt_part_mat(struct rt_db_internal *rop, const mat_t mat, const struct rt_db_inte
     struct rt_part_internal *part = (struct rt_part_internal *)rop->idb_ptr;
     RT_PART_CK_MAGIC(part);
 
-    vect_t part_V, part_H;
-    MAT4X3PNT(part_V, mat, tip->part_V);
-    MAT4X3VEC(part_H, mat, tip->part_H);
-    double vrad = tip->part_vrad / mat[15];
-    double hrad = tip->part_hrad / mat[15];
-    double maxrad = (vrad > hrad) ? vrad : hrad;
-    double minrad = (vrad < hrad) ? vrad : hrad;
+    struct rt_part_internal staged = *tip;
+    MAT4X3PNT(staged.part_V, mat, tip->part_V);
+    MAT4X3VEC(staged.part_H, mat, tip->part_H);
+    staged.part_vrad = tip->part_vrad / mat[15];
+    staged.part_hrad = tip->part_hrad / mat[15];
 
-    if (vrad < 0) {
+    if (staged.part_vrad < 0.0) {
 	bu_log("rt_part_mat: unable to apply matrix, produces negative v radius\n");
 	return BRLCAD_ERROR;
     }
-    if (hrad < 0) {
+    if (staged.part_hrad < 0.0) {
 	bu_log("rt_part_mat: unable to apply matrix, negative h radius\n");
 	return BRLCAD_ERROR;
     }
-    if (maxrad <= 0) {
-	bu_log("rt_part_mat: unable to apply matrix, negative radius\n");
+    if (part_update_type(&staged) != BRLCAD_OK) {
+	bu_log("rt_part_mat: unable to apply matrix, invalid geometry\n");
 	return BRLCAD_ERROR;
     }
 
-    // Passed validity checks, actually alter values
-    VMOVE(part->part_V, part_V);
-    VMOVE(part->part_H, part_H);
-    part->part_vrad = vrad;
-    part->part_hrad = hrad;
-
-
-    // Based on new parameter values, assign part type
-
-    if (MAGSQ(part->part_H) * 1000000 < maxrad * maxrad) {
-	/* Height vector is insignificant, particle is a sphere */
-	part->part_vrad = part->part_hrad = maxrad;
-	VSETALL(part->part_H, 0);		/* sanity */
-	part->part_type = RT_PARTICLE_TYPE_SPHERE;
-	return BRLCAD_OK;		/* OK */
-    }
-
-    if ((maxrad - minrad) / maxrad < 0.001) {
-	/* radii are nearly equal, particle is a cylinder (lozenge) */
-	part->part_vrad = part->part_hrad = maxrad;
-	part->part_type = RT_PARTICLE_TYPE_CYLINDER;
-	return BRLCAD_OK;		/* OK */
-    }
-
-    part->part_type = RT_PARTICLE_TYPE_CONE;
-    return BRLCAD_OK;		/* OK */
+    *part = staged;
+    return BRLCAD_OK;
 
 }
 

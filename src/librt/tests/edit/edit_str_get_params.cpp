@@ -253,12 +253,13 @@ test_get_params_ell(void)
     bu_free(ell, "ell");
 }
 
-/* Dimensionless plane normals must not change with database units. */
+/* Preserve unitless directions and local dimensions in parameter text. */
 static void
-test_write_params_units(void)
+test_param_text_units(void)
 {
     const fastf_t local2base = 25.4;
     const fastf_t base2local = 1.0 / local2base;
+    /* Parameter text is rounded to nine decimal places on write. */
     struct rt_db_internal ip;
     struct bu_vls params = BU_VLS_INIT_ZERO;
     RT_DB_INTERNAL_INIT(&ip);
@@ -306,6 +307,15 @@ test_write_params_units(void)
 	strstr(bu_vls_addr(&params), "Normal: 0.000000000 0.000000000 1.000000000\n") != NULL &&
 	strstr(bu_vls_addr(&params), "radius_1: 2.000000000\n") != NULL,
 	"TOR text: normal is unitless; dimensions are local");
+    struct rt_tor_internal tor_read = {};
+    tor_read.magic = RT_TOR_INTERNAL_MAGIC;
+    ip.idb_ptr = &tor_read;
+    CHECK(EDOBJ[ID_TOR].ft_read_params(&ip, bu_vls_addr(&params), NULL, local2base) == BRLCAD_OK &&
+	VNEAR_EQUAL(tor_read.v, tor.v, VUNITIZE_TOL) &&
+	VNEAR_EQUAL(tor_read.h, tor.h, VUNITIZE_TOL) &&
+	NEAR_EQUAL(tor_read.r_a, tor.r_a, VUNITIZE_TOL) &&
+	NEAR_EQUAL(tor_read.r_h, tor.r_h, VUNITIZE_TOL),
+	"TOR text: non-mm roundtrip preserves rendered geometry");
     bu_vls_trunc(&params, 0);
 
     struct rt_eto_internal eto = {};
@@ -321,6 +331,67 @@ test_write_params_units(void)
 	strstr(bu_vls_addr(&params), "Semi-major axis: 2.000000000 0.000000000 0.000000000\n") != NULL &&
 	strstr(bu_vls_addr(&params), "Radius of rotation: 3.000000000\n") != NULL,
 	"ETO text: normal is unitless; dimensions are local");
+    struct rt_eto_internal eto_read = {};
+    eto_read.eto_magic = RT_ETO_INTERNAL_MAGIC;
+    ip.idb_ptr = &eto_read;
+    CHECK(EDOBJ[ID_ETO].ft_read_params(&ip, bu_vls_addr(&params), NULL, local2base) == BRLCAD_OK &&
+	VNEAR_EQUAL(eto_read.eto_V, eto.eto_V, VUNITIZE_TOL) &&
+	VNEAR_EQUAL(eto_read.eto_N, eto.eto_N, VUNITIZE_TOL) &&
+	VNEAR_EQUAL(eto_read.eto_C, eto.eto_C, VUNITIZE_TOL) &&
+	NEAR_EQUAL(eto_read.eto_rd, eto.eto_rd, VUNITIZE_TOL) &&
+	NEAR_EQUAL(eto_read.eto_r, eto.eto_r, VUNITIZE_TOL),
+	"ETO text: non-mm roundtrip preserves rendered geometry");
+    bu_vls_trunc(&params, 0);
+
+    struct rt_rpc_internal rpc = {};
+    rpc.rpc_magic = RT_RPC_INTERNAL_MAGIC;
+    VSET(rpc.rpc_V, -local2base, 0.0, 2.0 * local2base);
+    VSET(rpc.rpc_H, 0.0, 0.0, 3.0 * local2base);
+    VSET(rpc.rpc_B, 0.0, 2.0 * local2base, 0.0);
+    rpc.rpc_r = local2base;
+    ip.idb_ptr = &rpc;
+    EDOBJ[ID_RPC].ft_write_params(&params, &ip, NULL, base2local);
+    CHECK(strstr(bu_vls_addr(&params), "Vertex: -1.000000000 0.000000000 2.000000000\n") != NULL &&
+	strstr(bu_vls_addr(&params), "Height: 0.000000000 0.000000000 3.000000000\n") != NULL &&
+	strstr(bu_vls_addr(&params), "Breadth: 0.000000000 2.000000000 0.000000000\n") != NULL &&
+	strstr(bu_vls_addr(&params), "Half-width: 1.000000000\n") != NULL,
+	"RPC text: dimensions use local units");
+    struct rt_rpc_internal rpc_read = {};
+    rpc_read.rpc_magic = RT_RPC_INTERNAL_MAGIC;
+    ip.idb_ptr = &rpc_read;
+    CHECK(EDOBJ[ID_RPC].ft_read_params(&ip, bu_vls_addr(&params), NULL, local2base) == BRLCAD_OK &&
+	VNEAR_EQUAL(rpc_read.rpc_V, rpc.rpc_V, VUNITIZE_TOL) &&
+	VNEAR_EQUAL(rpc_read.rpc_H, rpc.rpc_H, VUNITIZE_TOL) &&
+	VNEAR_EQUAL(rpc_read.rpc_B, rpc.rpc_B, VUNITIZE_TOL) &&
+	NEAR_EQUAL(rpc_read.rpc_r, rpc.rpc_r, VUNITIZE_TOL),
+	"RPC text: non-mm roundtrip preserves geometry");
+    bu_vls_trunc(&params, 0);
+
+    struct rt_rhc_internal rhc = {};
+    rhc.rhc_magic = RT_RHC_INTERNAL_MAGIC;
+    VSET(rhc.rhc_V, local2base, 2.0 * local2base, 3.0 * local2base);
+    VSET(rhc.rhc_H, 0.0, 0.0, 4.0 * local2base);
+    VSET(rhc.rhc_B, 0.0, 5.0 * local2base, 0.0);
+    rhc.rhc_r = 1.5 * local2base;
+    rhc.rhc_c = 0.75 * local2base;
+    ip.idb_ptr = &rhc;
+    EDOBJ[ID_RHC].ft_write_params(&params, &ip, NULL, base2local);
+    CHECK(strstr(bu_vls_addr(&params), "Vertex: 1.000000000 2.000000000 3.000000000\n") != NULL &&
+	strstr(bu_vls_addr(&params), "Height: 0.000000000 0.000000000 4.000000000\n") != NULL &&
+	strstr(bu_vls_addr(&params), "Breadth: 0.000000000 5.000000000 0.000000000\n") != NULL &&
+	strstr(bu_vls_addr(&params), "Half-width: 1.500000000\n") != NULL &&
+	strstr(bu_vls_addr(&params), "Dist_to_asymptotes: 0.750000000\n") != NULL,
+	"RHC text: dimensions use local units");
+    struct rt_rhc_internal rhc_read = {};
+    rhc_read.rhc_magic = RT_RHC_INTERNAL_MAGIC;
+    ip.idb_ptr = &rhc_read;
+    CHECK(EDOBJ[ID_RHC].ft_read_params(&ip, bu_vls_addr(&params), NULL, local2base) == BRLCAD_OK &&
+	VNEAR_EQUAL(rhc_read.rhc_V, rhc.rhc_V, VUNITIZE_TOL) &&
+	VNEAR_EQUAL(rhc_read.rhc_H, rhc.rhc_H, VUNITIZE_TOL) &&
+	VNEAR_EQUAL(rhc_read.rhc_B, rhc.rhc_B, VUNITIZE_TOL) &&
+	NEAR_EQUAL(rhc_read.rhc_r, rhc.rhc_r, VUNITIZE_TOL) &&
+	NEAR_EQUAL(rhc_read.rhc_c, rhc.rhc_c, VUNITIZE_TOL),
+	"RHC text: non-mm roundtrip preserves geometry");
 
     bu_vls_free(&params);
 }
@@ -343,7 +414,7 @@ rt_edit_test_edit_str_get_params(void)
     test_get_params_ell();
 
     bu_log("=== Test: non-mm primitive parameter text ===\n");
-    test_write_params_units();
+    test_param_text_units();
 
     if (fail_count) {
 	bu_log("edit_str_get_params: %d test(s) FAILED\n", fail_count);

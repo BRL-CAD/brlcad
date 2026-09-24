@@ -82,6 +82,8 @@ struct rt_bspline_edit {
     int knot_idx;   /* index within the selected direction's vector */
 };
 
+enum { BSPLINE_KNOT_DIRECTION_COUNT = 2 };
+
 C_DECL void *
 rt_edit_bspline_prim_edit_create(struct rt_edit *s)
 {
@@ -196,8 +198,21 @@ rt_edit_bspline_menu_item(const struct bn_tol *UNUSED(tol))
     return spline_menu;
 }
 
-static const struct rt_edit_param_desc bspline_idx_param[] = {
-    { "index", "Index", RT_EDIT_PARAM_INTEGER, 0,
+static const struct rt_edit_param_desc bspline_cp_index_params[] = {
+    { "surface", "Surface Index", RT_EDIT_PARAM_INTEGER, 0,
+      0.0, RT_EDIT_PARAM_NO_LIMIT, "count", 0, NULL, NULL, NULL },
+    { "u", "U Index", RT_EDIT_PARAM_INTEGER, 1,
+      0.0, RT_EDIT_PARAM_NO_LIMIT, "count", 0, NULL, NULL, NULL },
+    { "v", "V Index", RT_EDIT_PARAM_INTEGER, 2,
+      0.0, RT_EDIT_PARAM_NO_LIMIT, "count", 0, NULL, NULL, NULL }
+};
+
+static const struct rt_edit_param_desc bspline_knot_index_params[] = {
+    { "surface", "Surface Index", RT_EDIT_PARAM_INTEGER, 0,
+      0.0, RT_EDIT_PARAM_NO_LIMIT, "count", 0, NULL, NULL, NULL },
+    { "direction", "Direction (U=0, V=1)", RT_EDIT_PARAM_INTEGER, 1,
+      0.0, 1.0, "none", 0, NULL, NULL, NULL },
+    { "index", "Knot Index", RT_EDIT_PARAM_INTEGER, 2,
       0.0, RT_EDIT_PARAM_NO_LIMIT, "count", 0, NULL, NULL, NULL }
 };
 
@@ -212,10 +227,10 @@ static const struct rt_edit_param_desc bspline_knot_param[] = {
 };
 
 static const struct rt_edit_cmd_desc bspline_cmds[] = {
-    { ECMD_SPLINE_VPICK,      "Pick Vertex",      "selection", 1, bspline_idx_param,   1, 10, NULL },
-    { ECMD_BSPLINE_PICK_CP,   "Pick CP by Index", "selection", 1, bspline_idx_param,   1, 20, NULL },
+    { ECMD_SPLINE_VPICK,      "Pick Vertex",      "selection", 0, NULL,                  1, 10, NULL },
+    { ECMD_BSPLINE_PICK_CP,   "Pick CP by Index", "selection", 3, bspline_cp_index_params, 1, 20, NULL },
     { ECMD_VTRANS,            "Move Vertex",      "movement",  1, bspline_point_param, 1, 30, NULL },
-    { ECMD_BSPLINE_PICK_KNOT, "Pick Knot",        "selection", 1, bspline_idx_param,   1, 40, NULL },
+    { ECMD_BSPLINE_PICK_KNOT, "Pick Knot",        "selection", 3, bspline_knot_index_params, 1, 40, NULL },
     { ECMD_BSPLINE_SET_KNOT,  "Set Knot Value",   "topology",  1, bspline_knot_param,  1, 50, NULL }
 };
 
@@ -447,6 +462,22 @@ rt_edit_bspline_keypoint(
     return (const char *)buf;
 }
 
+/* Validate before casting: nonfinite and out-of-range floating values cannot
+ * be safely converted to an integer index. */
+static int
+bspline_index(struct rt_edit *s, fastf_t input, int limit,
+	      const char *name, int *index)
+{
+    if (!isfinite(input) || input < 0.0 || input >= limit ||
+	floor(input) < input) {
+	bu_vls_printf(s->log_str, "%s must be an integer in [0, %d)\n",
+	    name, limit);
+	return BRLCAD_ERROR;
+    }
+    *index = (int)input;
+    return BRLCAD_OK;
+}
+
 /* Pick a control point by explicit (surfno, u, v) indices.
  * e_para[0] = surface index, e_para[1] = u index, e_para[2] = v index.
  * e_inpara must be 3. */
@@ -459,21 +490,16 @@ ecmd_bspline_pick_cp(struct rt_edit *s)
 
     RT_NURB_CK_MAGIC(sip);
 
-    if (!s->e_inpara || s->e_inpara < 3) {
+    if (s->e_inpara != 3) {
 	bu_vls_printf(s->log_str,
 		"ERROR: three indices required (surfno u v)\n");
 	s->e_inpara = 0;
 	return BRLCAD_ERROR;
     }
 
-    int sno = (int)s->e_para[0];
-    int ui  = (int)s->e_para[1];
-    int vi  = (int)s->e_para[2];
-
-    if (sno < 0 || sno >= sip->nsrf) {
-	bu_vls_printf(s->log_str,
-		"ERROR: surface index %d out of range [0, %d)\n",
-		sno, sip->nsrf);
+    int sno;
+    if (bspline_index(s, s->e_para[0], sip->nsrf,
+	    "Surface index", &sno) != BRLCAD_OK) {
 	s->e_inpara = 0;
 	return BRLCAD_ERROR;
     }
@@ -481,11 +507,12 @@ ecmd_bspline_pick_cp(struct rt_edit *s)
     struct face_g_snurb *surf = sip->srfs[sno];
     NMG_CK_SNURB(surf);
 
-    if (ui < 0 || ui >= surf->s_size[1] ||
-	vi < 0 || vi >= surf->s_size[0]) {
-	bu_vls_printf(s->log_str,
-		"ERROR: CP index (%d,%d) out of range u=[0,%d) v=[0,%d)\n",
-		ui, vi, surf->s_size[1], surf->s_size[0]);
+    int ui;
+    int vi;
+    if (bspline_index(s, s->e_para[1], surf->s_size[1],
+	    "U index", &ui) != BRLCAD_OK ||
+	bspline_index(s, s->e_para[2], surf->s_size[0],
+	    "V index", &vi) != BRLCAD_OK) {
 	s->e_inpara = 0;
 	return BRLCAD_ERROR;
     }
@@ -510,21 +537,16 @@ ecmd_bspline_pick_knot(struct rt_edit *s)
 
     RT_NURB_CK_MAGIC(sip);
 
-    if (!s->e_inpara || s->e_inpara < 3) {
+    if (s->e_inpara != 3) {
 	bu_vls_printf(s->log_str,
 		"ERROR: three values required (surfno direction knot_index)\n");
 	s->e_inpara = 0;
 	return BRLCAD_ERROR;
     }
 
-    int sno  = (int)s->e_para[0];
-    int dir  = (int)s->e_para[1];
-    int kidx = (int)s->e_para[2];
-
-    if (sno < 0 || sno >= sip->nsrf) {
-	bu_vls_printf(s->log_str,
-		"ERROR: surface index %d out of range [0, %d)\n",
-		sno, sip->nsrf);
+    int sno;
+    if (bspline_index(s, s->e_para[0], sip->nsrf,
+	    "Surface index", &sno) != BRLCAD_OK) {
 	s->e_inpara = 0;
 	return BRLCAD_ERROR;
     }
@@ -532,18 +554,17 @@ ecmd_bspline_pick_knot(struct rt_edit *s)
     struct face_g_snurb *surf = sip->srfs[sno];
     NMG_CK_SNURB(surf);
 
-    if (dir != 0 && dir != 1) {
-	bu_vls_printf(s->log_str,
-		"ERROR: direction must be 0 (U) or 1 (V), got %d\n", dir);
+    int dir;
+    if (bspline_index(s, s->e_para[1], BSPLINE_KNOT_DIRECTION_COUNT,
+	    "Knot direction", &dir) != BRLCAD_OK) {
 	s->e_inpara = 0;
 	return BRLCAD_ERROR;
     }
 
     int ksize = (dir == 0) ? surf->u.k_size : surf->v.k_size;
-    if (kidx < 0 || kidx >= ksize) {
-	bu_vls_printf(s->log_str,
-		"ERROR: knot index %d out of range [0, %d) for direction %s\n",
-		kidx, ksize, (dir == 0) ? "U" : "V");
+    int kidx;
+    if (bspline_index(s, s->e_para[2], ksize,
+	    "Knot index", &kidx) != BRLCAD_OK) {
 	s->e_inpara = 0;
 	return BRLCAD_ERROR;
     }
@@ -567,7 +588,7 @@ ecmd_bspline_set_knot(struct rt_edit *s)
 
     RT_NURB_CK_MAGIC(sip);
 
-    if (!s->e_inpara || s->e_inpara < 1) {
+    if (s->e_inpara != 1) {
 	bu_vls_printf(s->log_str,
 		"ERROR: knot value required (e_inpara must be 1)\n");
 	s->e_inpara = 0;
@@ -594,35 +615,69 @@ ecmd_bspline_set_knot(struct rt_edit *s)
 	return BRLCAD_ERROR;
     }
 
+    if (!isfinite(s->e_para[0])) {
+	bu_vls_printf(s->log_str, "Knot value must be finite\n");
+	s->e_inpara = 0;
+	return BRLCAD_ERROR;
+    }
+
     kv->knots[b->knot_idx] = s->e_para[0];
     s->e_inpara = 0;
     return 0;
 }
 
 /** Keep keyboard coordinates local and mouse coordinates in model units. */
-static void
+static int
 ecmd_vtrans(struct rt_edit *s)
 {
     struct rt_bspline_edit *b = (struct rt_bspline_edit *)s->ipe_ptr;
     point_t model_point;
 
-    if (s->e_mvalid)
+    if (s->e_mvalid) {
 	VMOVE(model_point, s->e_mparam);
-    else if (s->e_inpara)
+    } else if (s->e_inpara == 0) {
+	return BRLCAD_OK;
+    } else if (s->e_inpara != 3 ||
+	!isfinite(s->e_para[X]) || !isfinite(s->e_para[Y]) ||
+	!isfinite(s->e_para[Z])) {
+	bu_vls_printf(s->log_str, "Three finite coordinates are required\n");
+	return BRLCAD_ERROR;
+    } else {
 	VSCALE(model_point, s->e_para, s->local2base);
-    else
-	return;
+    }
+    if (!isfinite(model_point[X]) || !isfinite(model_point[Y]) ||
+	!isfinite(model_point[Z])) {
+	bu_vls_printf(s->log_str, "Move point is out of range\n");
+	return BRLCAD_ERROR;
+    }
 
     struct rt_nurb_internal *sip =
 	(struct rt_nurb_internal *)s->es_int.idb_ptr;
     RT_NURB_CK_MAGIC(sip);
+    if (b->spl_surfno < 0 || b->spl_surfno >= sip->nsrf) {
+	bu_vls_printf(s->log_str, "No valid surface is selected\n");
+	return BRLCAD_ERROR;
+    }
     struct face_g_snurb *surf = sip->srfs[b->spl_surfno];
     NMG_CK_SNURB(surf);
+    if (b->spl_ui < 0 || b->spl_ui >= surf->s_size[1] ||
+	b->spl_vi < 0 || b->spl_vi >= surf->s_size[0]) {
+	bu_vls_printf(s->log_str, "No valid control point is selected\n");
+	return BRLCAD_ERROR;
+    }
     fastf_t *fp = &RT_NURB_GET_CONTROL_POINT(surf, b->spl_ui, b->spl_vi);
+    point_t stored_point;
     if (s->mv_context)
-	MAT4X3PNT(fp, s->e_invmat, model_point);
+	MAT4X3PNT(stored_point, s->e_invmat, model_point);
     else
-	VMOVE(fp, model_point);
+	VMOVE(stored_point, model_point);
+    if (!isfinite(stored_point[X]) || !isfinite(stored_point[Y]) ||
+	!isfinite(stored_point[Z])) {
+	bu_vls_printf(s->log_str, "Move point is out of range\n");
+	return BRLCAD_ERROR;
+    }
+    VMOVE(fp, stored_point);
+    return BRLCAD_OK;
 }
 
 
@@ -651,8 +706,7 @@ rt_edit_bspline_edit(struct rt_edit *s)
 	case ECMD_BSPLINE_SET_KNOT:
 	    return ecmd_bspline_set_knot(s);
 	case ECMD_VTRANS:
-	    ecmd_vtrans(s);
-	    break;
+	    return ecmd_vtrans(s);
 	default:
 	    return edit_generic(s);
     }
@@ -699,7 +753,7 @@ rt_edit_bspline_edit_xy(
 	    pos_view[X] = mousevec[X];
 	    pos_view[Y] = mousevec[Y];
 	    MAT4X3PNT(temp, s->vp->gv_view2model, pos_view);
-	    MAT4X3PNT(s->e_mparam, s->e_invmat, temp);
+	    VMOVE(s->e_mparam, temp);
 	    s->e_mvalid = 1;      /* s->e_mparam is valid */
 	    /* Leave the rest to code in ft_edit */
 	    break;

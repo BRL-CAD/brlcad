@@ -227,6 +227,7 @@ ged_pipe_delete_pnt_core(struct ged *gedp, int argc, const char *argv[])
 	bu_vls_printf(gedp->ged_result_str, "%s: cannot delete pipe segment %d", argv[0], seg_i);
 	return BRLCAD_ERROR;
     }
+    pipeip->pipe_count--;
 
     GED_DB_PUT_INTERN(gedp, dp, &intern, BRLCAD_ERROR);
 

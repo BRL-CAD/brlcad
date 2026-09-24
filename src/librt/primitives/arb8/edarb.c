@@ -47,7 +47,7 @@
 #define ECMD_ARB_ROTATE_FACE	4015
 #define ECMD_ARB_MOVE_EDGE	4036
 
-enum { ARB8_FACE_COUNT = 6, ARB8_VERTEX_COUNT = 8 };
+enum { ARB8_FACE_COUNT = 6, ARB8_VERTEX_COUNT = 8, ARB8_EDGE_COUNT = 12 };
 
 /* ------------------------------------------------------------------ */
 /* ft_edit_desc descriptor for the ARB8 primitive                     */
@@ -207,7 +207,7 @@ static const struct rt_edit_cmd_desc arb_cmds[] = {
 	arb_move_vertex_params, /* params     */
 	1,                    /* interactive  */
 	30                    /* display_order */,
-	"arb8,arb7,arb6,arb5,arb4" /* req_types */
+	"arb7,arb6,arb5,arb4" /* req_types */
     },
     {
 	ECMD_ARB_ROTATE_FACE, /* cmd_id       */
@@ -967,16 +967,6 @@ rt_edit_arb_write_params(
     }
 }
 
-#define read_params_line_incr \
-    lc = (ln) ? (ln + lcj) : NULL; \
-    if (!lc) { \
-	bu_free(wc, "wc"); \
-	return BRLCAD_ERROR; \
-    } \
-    ln = strchr(lc, tc); \
-    if (ln) *ln = '\0'; \
-    while (lc && strchr(lc, ':')) lc++
-
 C_DECL int
 rt_edit_arb_read_params(
 	struct rt_db_internal *ip,
@@ -985,72 +975,79 @@ rt_edit_arb_read_params(
 	fastf_t local2base
 	)
 {
-    double a = 0.0;
-    double b = 0.0;
-    double c = 0.0;
-    static int uvec[8];
-    static int svec[11];
-    static int cgtype = 8;
     struct rt_arb_internal *arb = (struct rt_arb_internal *)ip->idb_ptr;
     RT_ARB_CK_MAGIC(arb);
-    rt_arb_get_cgtype(&cgtype, arb, tol, uvec, svec);
 
-    if (!fc)
+    if (!fc || !isfinite(local2base) || local2base <= 0.0)
 	return BRLCAD_ERROR;
 
-    // We're getting the file contents as a string, so we need to split it up
-    // to process lines. See https://stackoverflow.com/a/17983619
+    int uvec[8];
+    int svec[11];
+    int cgtype = ARB8;
+    for (int i = 0; i < ARB8_VERTEX_COUNT; ++i)
+	uvec[i] = -1;
+    if (!rt_arb_get_cgtype(&cgtype, arb, tol, uvec, svec))
+	return BRLCAD_ERROR;
 
-    // Figure out if we need to deal with Windows line endings
-    const char *crpos = strchr(fc, '\r');
-    int crlf = (crpos && crpos[1] == '\n') ? 1 : 0;
-    char tc = (crlf) ? '\r' : '\n';
-    // If we're CRLF jump ahead another character.
-    int lcj = (crlf) ? 2 : 1;
-
-    char *ln = NULL;
-    char *wc = bu_strdup(fc);
-    char *lc = wc;
-
-    // Set up initial line (pt[0])
-    ln = strchr(lc, tc);
-    if (ln) *ln = '\0';
-
-    // Trim off prefixes, if user left them in
-    while (lc && strchr(lc, ':')) lc++;
-
-
-    for (int i=0; i<8; i++) {
-	/* only read vertices that we wrote */
+    struct rt_arb_internal staged = *arb;
+    char *buffer = bu_strdup(fc);
+    char *cursor = buffer;
+    int expected_index = 1;
+    for (int i = 0; i < ARB8_VERTEX_COUNT; ++i) {
 	if (useThisVertex(i, uvec, svec)) {
-	    if (i != 0) {
-		// Above sets up initial line - otherwise,
-		// we need to stage the next one.
-		read_params_line_incr;
+	    char *line = edit_param_next_line(&cursor);
+	    if (!line)
+		goto failure;
+	    const char *coords = line;
+	    int index = 0, prefix_length = 0;
+	    if (!bu_strncmp(line, "pt[", 3)) {
+		if (sscanf(line, "pt[%d]: %n", &index,
+			&prefix_length) != 1 || !prefix_length ||
+		    index != expected_index)
+		    goto failure;
+		coords += prefix_length;
 	    }
-	    sscanf(lc, "%lf %lf %lf", &a, &b, &c);
-	    VSET(arb->pt[i], a, b, c);
-	    VSCALE(arb->pt[i], arb->pt[i], local2base);
+	    double x, y, z;
+	    int end = 0;
+	    if (sscanf(coords, " %lf %lf %lf %n", &x, &y, &z, &end) != 3 ||
+		!end || coords[end] || !isfinite(x) || !isfinite(y) ||
+		!isfinite(z))
+		goto failure;
+	    VSET(staged.pt[i], x * local2base, y * local2base,
+		z * local2base);
+	    if (!isfinite(staged.pt[i][X]) || !isfinite(staged.pt[i][Y]) ||
+		!isfinite(staged.pt[i][Z]))
+		goto failure;
+	    ++expected_index;
 	}
     }
 
-    /* fill in the duplicate vertices (based on rt_arb_get_cgtype call) */
-    if (svec[0] != -1) {
+    if (edit_param_next_line(&cursor))
+	goto failure;
+
+    /* Duplicate vertices retain the original ARB variant. */
+    if (svec[0] > 0) {
 	for (int i=1; i<svec[0]; i++) {
 	    int start = 2;
-	    VMOVE(arb->pt[svec[start+i]], arb->pt[svec[start]]);
+	    VMOVE(staged.pt[svec[start+i]], staged.pt[svec[start]]);
 	}
     }
-    if (svec[1] != -1) {
+    if (svec[1] > 0) {
 	int start = 2 + svec[0];
 	for (int i=1; i<svec[1]; i++) {
-	    VMOVE(arb->pt[svec[start+i]], arb->pt[svec[start]]);
+	    VMOVE(staged.pt[svec[start+i]], staged.pt[svec[start]]);
 	}
     }
 
-    // Cleanup
-    bu_free(wc, "wc");
+    if (rt_arb_check_points(&staged, cgtype, tol))
+	goto failure;
+    memcpy(arb->pt, staged.pt, sizeof(staged.pt));
+    bu_free(buffer, "ARB parameter text");
     return BRLCAD_OK;
+
+failure:
+    bu_free(buffer, "ARB parameter text");
+    return BRLCAD_ERROR;
 }
 
 #define RT_ARB_EDIT_EDGE 0
@@ -1511,6 +1508,11 @@ arb_numeric_target(point_t target, struct rt_edit *s, int *edit_menu)
     point_t model_point;
 
     if (s->e_inpara == 4) {
+	if (!(coords[0] >= 0.0 && coords[0] < ARB8_EDGE_COUNT) ||
+	    !EQUAL(coords[0], (fastf_t)(int)coords[0])) {
+	    bu_vls_printf(s->log_str, "ARB edit index must be an integer\n");
+	    return BRLCAD_ERROR;
+	}
 	*edit_menu = (int)coords[0];
 	coords++;
     } else if (s->e_inpara != 3) {
@@ -1626,6 +1628,13 @@ ecmd_arb_rotate_face(struct rt_edit *s)
     RT_ARB_CK_MAGIC(arb);
 
     if (angle_count == 5) {
+	if (!(angles[0] >= 0.0 && angles[0] < ARB8_FACE_COUNT) ||
+	    !(angles[1] >= 0.0 && angles[1] < ARB8_VERTEX_COUNT) ||
+	    !EQUAL(angles[0], (fastf_t)(int)angles[0]) ||
+	    !EQUAL(angles[1], (fastf_t)(int)angles[1])) {
+	    bu_vls_printf(s->log_str, "ARB face and vertex indexes must be integers\n");
+	    return BRLCAD_ERROR;
+	}
 	a->edit_menu = (int)angles[0];
 	a->fixv = (short)angles[1];
 	angles += 2;
@@ -1760,6 +1769,34 @@ ecmd_arb_rotate_face(struct rt_edit *s)
     return 0;
 }
 
+struct arb_point_edit_index {
+    int arb_type;
+    int vertex;
+    int edit_menu;
+};
+
+static int
+arb_point_edit_menu(int arb_type, int index, int vertex_index)
+{
+    /* Parameter indices name vertices; the older menus name edit-table rows. */
+    static const struct arb_point_edit_index point_edits[] = {
+	{ARB4, 0, 0}, {ARB4, 1, 1}, {ARB4, 2, 2}, {ARB4, 4, 4},
+	{ARB4, 4, RT_ARB4_MOVE_POINT_4},
+	{ARB5, 4, RT_ARB5_MOVE_POINT_5},
+	{ARB6, 4, RT_ARB6_MOVE_POINT_5},
+	{ARB6, 6, RT_ARB6_MOVE_POINT_6},
+	{ARB7, 4, RT_ARB7_MOVE_POINT_5}
+    };
+
+    for (size_t i = 0; i < sizeof(point_edits) / sizeof(point_edits[0]); i++) {
+	const struct arb_point_edit_index *point = &point_edits[i];
+	if (point->arb_type == arb_type &&
+	    (vertex_index ? point->vertex : point->edit_menu) == index)
+	    return point->edit_menu;
+    }
+    return -1;
+}
+
 int
 edit_arb_element(struct rt_edit *s)
 {
@@ -1768,8 +1805,24 @@ edit_arb_element(struct rt_edit *s)
     if (s->e_inpara) {
 
 	vect_t work;
+	int parameter_vertex = (s->edit_flag == PTARB && s->e_inpara == 4);
 	if (arb_numeric_target(work, s, &a->edit_menu) != BRLCAD_OK)
 	    return BRLCAD_ERROR;
+	if (s->edit_flag == PTARB) {
+	    struct rt_arb_internal *arb = (struct rt_arb_internal *)s->es_int.idb_ptr;
+	    int arb_type = rt_arb_edit_type(s->log_str, s, arb, 0, s->tol);
+	    int vertex = a->edit_menu;
+
+	    if (arb_type == 0)
+		return BRLCAD_ERROR;
+	    a->edit_menu = arb_point_edit_menu(arb_type, a->edit_menu,
+		parameter_vertex);
+	    if (a->edit_menu < 0) {
+		bu_vls_printf(s->log_str, "ARB%d has no point edit for vertex %d\n",
+			arb_type, vertex);
+		return BRLCAD_ERROR;
+	    }
+	}
 	if (editarb(s, work) != BRLCAD_OK)
 	    return BRLCAD_ERROR;
     }
@@ -2573,9 +2626,8 @@ rt_edit_arb_repair(struct bu_vls *log_str, struct rt_db_internal *ip, const stru
     BU_OPT(d[2], "", "options-json", "", NULL, &options_json, "Return JSON of supported options");
     BU_OPT_NULL(d[3]);
 
-    if (argc > 0 && argv) {
-        bu_opt_parse(NULL, argc, argv, d);
-    }
+    if (edit_repair_parse_options(log_str, argc, argv, d) != BRLCAD_OK)
+        return -1;
 
     if (options_json) {
         if (log_str) {

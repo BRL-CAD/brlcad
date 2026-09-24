@@ -188,54 +188,42 @@ ecmd_ebm_fsize(struct rt_edit *s)
 {
     bu_clbk_t f = NULL;
     void *d = NULL;
+    if (!s->e_inpara)
+	return BRLCAD_OK;
     if (s->e_inpara != 2) {
 	bu_vls_printf(s->log_str, "ERROR: two arguments needed\n");
-	s->e_inpara = 0;
 	return BRLCAD_ERROR;
     }
 
-    if (s->e_para[0] <= 0.0) {
-	bu_vls_printf(s->log_str, "ERROR: X SIZE <= 0\n");
-	s->e_inpara = 0;
-	return BRLCAD_ERROR;
-    } else if (s->e_para[1] <= 0.0) {
-	bu_vls_printf(s->log_str, "ERROR: Y SIZE <= 0\n");
-	s->e_inpara = 0;
+    uint32_t dims[2];
+    if (edit_parse_sample_count(&dims[0], s->e_para[0]) != BRLCAD_OK ||
+	edit_parse_sample_count(&dims[1], s->e_para[1]) != BRLCAD_OK) {
+	bu_vls_printf(s->log_str, "ERROR: EBM dimensions must be positive integers\n");
 	return BRLCAD_ERROR;
     }
 
     struct rt_ebm_internal *ebm =
 	(struct rt_ebm_internal *)s->es_int.idb_ptr;
     struct stat stat_buf;
-    b_off_t need_size;
 
     RT_EBM_CK_MAGIC(ebm);
 
-    if (s->e_inpara == 2) {
-	if (stat(ebm->name, &stat_buf)) {
-	    bu_vls_printf(s->log_str, "Cannot get status of ebm data source %s", ebm->name);
-	    rt_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_RESULTS, BU_CLBK_DURING);
-	    if (f)
-		(*f)(0, NULL, d, NULL);
-	    return BRLCAD_ERROR;
-	}
-	need_size = s->e_para[0] * s->e_para[1] * sizeof(unsigned char);
-	if (stat_buf.st_size < need_size) {
-	    bu_vls_printf(s->log_str, "File (%s) is too small, set data source name first", ebm->name);
-	    rt_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_RESULTS, BU_CLBK_DURING);
-	    if (f)
-		(*f)(0, NULL, d, NULL);
-	    return BRLCAD_ERROR;
-	}
-	ebm->xdim = s->e_para[0];
-	ebm->ydim = s->e_para[1];
-    } else if (s->e_inpara > 0) {
-	bu_vls_printf(s->log_str, "width and length of data source are required\n");
+    if (stat(ebm->name, &stat_buf)) {
+	bu_vls_printf(s->log_str, "Cannot get status of ebm data source %s", ebm->name);
 	rt_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_RESULTS, BU_CLBK_DURING);
 	if (f)
 	    (*f)(0, NULL, d, NULL);
 	return BRLCAD_ERROR;
     }
+    if (!edit_file_has_samples(stat_buf.st_size, dims, 2, sizeof(unsigned char))) {
+	bu_vls_printf(s->log_str, "File (%s) is too small, set data source name first", ebm->name);
+	rt_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_RESULTS, BU_CLBK_DURING);
+	if (f)
+	    (*f)(0, NULL, d, NULL);
+	return BRLCAD_ERROR;
+    }
+    ebm->xdim = dims[0];
+    ebm->ydim = dims[1];
 
     return BRLCAD_OK;
 }
@@ -246,7 +234,6 @@ ecmd_ebm_fname(struct rt_edit *s)
     struct rt_ebm_internal *ebm = (struct rt_ebm_internal *)s->es_int.idb_ptr;
     const char *fname = NULL;
     struct stat stat_buf;
-    b_off_t need_size;
     bu_clbk_t f = NULL;
     void *d = NULL;
 
@@ -269,8 +256,9 @@ ecmd_ebm_fname(struct rt_edit *s)
 		(*f)(0, NULL, d, NULL);
 	    return BRLCAD_ERROR;
 	}
-	need_size = ebm->xdim * ebm->ydim * sizeof(unsigned char);
-	if (stat_buf.st_size < need_size) {
+	const uint32_t dims[] = {ebm->xdim, ebm->ydim};
+	if (!edit_file_has_samples(stat_buf.st_size, dims, 2,
+	    sizeof(unsigned char))) {
 	    // We were calling Tcl_SetResult here, which reset the result str, so zero out log_str
 	    bu_vls_trunc(s->log_str, 0);
 	    bu_vls_printf(s->log_str, "File (%s) is too small, adjust the file size parameters first", fname);

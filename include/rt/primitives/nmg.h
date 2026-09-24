@@ -41,6 +41,7 @@ struct rt_nmg_edit {
     struct loopuse *lu_copy;    /* copy of loop to be extruded */
     plane_t lu_pl;              /* plane equation for loop to be extruded */
     struct shell *es_s;         /* Shell where extrusion is to end up */
+    int es_s_from_extrusion;    /* Replace this edit's prior preview */
     point_t lu_keypoint;        /* keypoint of lu_copy for extrusion */
     struct vertex *es_v;        /* Currently selected NMG vertex (ECMD_NMG_VPICK) */
     struct faceuse *es_fu;      /* Currently selected NMG faceuse (ECMD_NMG_FPICK) */

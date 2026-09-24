@@ -56,16 +56,6 @@ rt_edit_datum_write_params(
     } while ((datum = datum->next));
 }
 
-#define read_params_line_incr \
-    lc = (ln) ? (ln + lcj) : NULL; \
-    if (!lc) { \
-	bu_free(wc, "wc"); \
-	return BRLCAD_ERROR; \
-    } \
-    ln = strchr(lc, tc); \
-    if (ln) *ln = '\0'; \
-    while (lc && strchr(lc, ':')) lc++
-
 C_DECL int
 rt_edit_datum_read_params(
 	struct rt_db_internal *ip,
@@ -81,6 +71,7 @@ rt_edit_datum_read_params(
     double e = 0.0;
     double f = 0.0;
     double g = 0.0;
+    int consumed = 0;
     struct rt_datum_internal *datum = (struct rt_datum_internal *)ip->idb_ptr;
     RT_DATUM_CK_MAGIC(datum);
 
@@ -106,33 +97,63 @@ rt_edit_datum_read_params(
     ln = strchr(lc, tc);
     if (ln) *ln = '\0';
 
-    // Trim off prefixes, if user left them in
-    while (lc && strchr(lc, ':')) lc++;
-
     do {
 	if (!first_line) {
-	    read_params_line_incr;
+	    lc = (ln) ? (ln + lcj) : NULL;
+	    if (!lc) {
+		bu_free(wc, "wc");
+		return BRLCAD_ERROR;
+	    }
+	    ln = strchr(lc, tc);
+	    if (ln) *ln = '\0';
 	} else {
 	    first_line = 0;
 	}
 
+	char *numbers = strchr(lc, ':');
+	if (!numbers) {
+	    bu_free(wc, "wc");
+	    return BRLCAD_ERROR;
+	}
+	numbers++;
+	consumed = 0;
 	if (bu_strncasecmp(lc, "point", strlen("point")) == 0) {
-	    sscanf(lc, "%lf %lf %lf", &a, &b, &c);
+	    bu_sscanf(numbers, " %lf %lf %lf %n", &a, &b, &c, &consumed);
+	    if (!consumed || numbers[consumed] != '\0') {
+		bu_free(wc, "wc");
+		return BRLCAD_ERROR;
+	    }
 	    VSET(datum->pnt, a, b, c);
 	    VSCALE(datum->pnt, datum->pnt, local2base);
+	    VSETALL(datum->dir, 0.0);
+	    datum->w = 0.0;
 	} else if (bu_strncasecmp(lc, "line", strlen("line")) == 0) {
-	    sscanf(lc, "%lf %lf %lf %lf %lf %lf", &a, &b, &c, &d, &e, &f);
+	    bu_sscanf(numbers, " %lf %lf %lf (pnt) %lf %lf %lf (dir) %n",
+		   &a, &b, &c, &d, &e, &f, &consumed);
+	    if (!consumed || numbers[consumed] != '\0') {
+		bu_free(wc, "wc");
+		return BRLCAD_ERROR;
+	    }
 	    VSET(datum->pnt, a, b, c);
 	    VSET(datum->dir, d, e, f);
 	    VSCALE(datum->pnt, datum->pnt, local2base);
 	    VSCALE(datum->dir, datum->dir, local2base);
+	    datum->w = 0.0;
 	} else if (bu_strncasecmp(lc, "plane", strlen("plane")) == 0) {
-	    sscanf(lc, "%lf %lf %lf %lf %lf %lf %lf", &a, &b, &c, &d, &e, &f, &g);
+	    bu_sscanf(numbers, " %lf %lf %lf (pnt) %lf %lf %lf (dir) %lf (scale) %n",
+		   &a, &b, &c, &d, &e, &f, &g, &consumed);
+	    if (!consumed || numbers[consumed] != '\0') {
+		bu_free(wc, "wc");
+		return BRLCAD_ERROR;
+	    }
 	    VSET(datum->pnt, a, b, c);
 	    VSET(datum->dir, d, e, f);
 	    VSCALE(datum->pnt, datum->pnt, local2base);
 	    VSCALE(datum->dir, datum->dir, local2base);
 	    datum->w = g;
+	} else {
+	    bu_free(wc, "wc");
+	    return BRLCAD_ERROR;
 	}
     } while ((datum = datum->next));
 

@@ -5371,6 +5371,7 @@ rt_pipe_add_pnt(struct rt_pipe_internal *pipeip, struct wdb_pipe_pnt *pp, const 
 	    newpp->pp_bendradius = 40.0;
 	    VMOVE(newpp->pp_coord, new_pt);
 	    BU_LIST_INSERT(&pipeip->pipe_segs_head, &newpp->l);
+	    pipeip->pipe_count++;
 	    return newpp;
 	}
     }
@@ -5398,6 +5399,7 @@ rt_pipe_add_pnt(struct rt_pipe_internal *pipeip, struct wdb_pipe_pnt *pp, const 
 	return pp;
     }
 
+    pipeip->pipe_count++;
     return newpp;
 }
 
@@ -5424,6 +5426,7 @@ rt_pipe_ins_pnt(struct rt_pipe_internal *pipeip, struct wdb_pipe_pnt *pp, const 
 	    newpp->pp_bendradius = 40.0;
 	    VMOVE(newpp->pp_coord, new_pt);
 	    BU_LIST_APPEND(&pipeip->pipe_segs_head, &newpp->l);
+	    pipeip->pipe_count++;
 	    return newpp;
 	}
     }
@@ -5451,6 +5454,7 @@ rt_pipe_ins_pnt(struct rt_pipe_internal *pipeip, struct wdb_pipe_pnt *pp, const 
 	return pp;
     }
 
+    pipeip->pipe_count++;
     return newpp;
 }
 

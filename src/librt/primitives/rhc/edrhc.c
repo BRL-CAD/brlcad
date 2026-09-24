@@ -386,9 +386,8 @@ rt_edit_rhc_repair(struct bu_vls *log_str, struct rt_db_internal *ip, const stru
     BU_OPT(d[1], "", "options-json", "", NULL, &options_json, "Return JSON of supported options");
     BU_OPT_NULL(d[2]);
 
-    if (argc > 0 && argv) {
-        bu_opt_parse(NULL, argc, argv, d);
-    }
+    if (edit_repair_parse_options(log_str, argc, argv, d) != BRLCAD_OK)
+        return -1;
 
     if (options_json) {
         if (log_str) {

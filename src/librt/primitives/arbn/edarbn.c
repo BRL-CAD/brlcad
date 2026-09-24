@@ -38,6 +38,7 @@
 
 #include "common.h"
 
+#include <limits.h>
 #include <math.h>
 #include <string.h>
 
@@ -82,7 +83,7 @@ _arbn_normalize_plane(plane_t eqn)
     return 0;
 }
 
-static void
+static int
 ecmd_arbn_plane_select(struct rt_edit *s)
 {
     struct rt_arbn_internal *aip =
@@ -97,19 +98,22 @@ ecmd_arbn_plane_select(struct rt_edit *s)
 		"ECMD_ARBN_PLANE_SELECT: plane_index required\n");
 	rt_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_RESULTS, BU_CLBK_DURING);
 	if (f) (*f)(0, NULL, d, NULL);
-	return;
+	return BRLCAD_ERROR;
     }
 
-    int idx = (int)s->e_para[0];
-    if (idx < 0 || (size_t)idx >= aip->neqn) {
+    fastf_t raw_index = s->e_para[0];
+    if (!isfinite(raw_index) || raw_index < 0.0 ||
+	raw_index >= (fastf_t)aip->neqn || raw_index > INT_MAX ||
+	!EQUAL(raw_index, (fastf_t)(int)raw_index)) {
 	bu_vls_printf(s->log_str,
-		"ECMD_ARBN_PLANE_SELECT: index %d out of range [0,%zu)\n",
-		idx, aip->neqn);
+		"ECMD_ARBN_PLANE_SELECT: invalid plane index %g\n",
+		raw_index);
 	rt_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_RESULTS, BU_CLBK_DURING);
 	if (f) (*f)(0, NULL, d, NULL);
-	return;
+	return BRLCAD_ERROR;
     }
 
+    int idx = (int)raw_index;
     e->plane_index = idx;
 
     bu_vls_printf(s->log_str,
@@ -119,9 +123,10 @@ ecmd_arbn_plane_select(struct rt_edit *s)
 	    aip->eqn[idx][3]);
     rt_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_RESULTS, BU_CLBK_DURING);
     if (f) (*f)(0, NULL, d, NULL);
+    return BRLCAD_OK;
 }
 
-static void
+static int
 ecmd_arbn_plane_set_dist(struct rt_edit *s)
 {
     struct rt_arbn_internal *aip =
@@ -136,20 +141,21 @@ ecmd_arbn_plane_set_dist(struct rt_edit *s)
 		"ECMD_ARBN_PLANE_SET_DIST: no plane selected\n");
 	rt_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_RESULTS, BU_CLBK_DURING);
 	if (f) (*f)(0, NULL, d, NULL);
-	return;
+	return BRLCAD_ERROR;
     }
     if (s->e_inpara != 1) {
 	bu_vls_printf(s->log_str,
 		"ECMD_ARBN_PLANE_SET_DIST: distance required\n");
 	rt_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_RESULTS, BU_CLBK_DURING);
 	if (f) (*f)(0, NULL, d, NULL);
-	return;
+	return BRLCAD_ERROR;
     }
 
     aip->eqn[e->plane_index][3] = s->e_para[0] * s->local2base;
+    return BRLCAD_OK;
 }
 
-static void
+static int
 ecmd_arbn_plane_set_norm(struct rt_edit *s)
 {
     struct rt_arbn_internal *aip =
@@ -164,30 +170,33 @@ ecmd_arbn_plane_set_norm(struct rt_edit *s)
 		"ECMD_ARBN_PLANE_SET_NORM: no plane selected\n");
 	rt_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_RESULTS, BU_CLBK_DURING);
 	if (f) (*f)(0, NULL, d, NULL);
-	return;
+	return BRLCAD_ERROR;
     }
     if (s->e_inpara != 3) {
 	bu_vls_printf(s->log_str,
 		"ECMD_ARBN_PLANE_SET_NORM: nx ny nz required\n");
 	rt_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_RESULTS, BU_CLBK_DURING);
 	if (f) (*f)(0, NULL, d, NULL);
-	return;
+	return BRLCAD_ERROR;
     }
 
     plane_t *eq = &aip->eqn[e->plane_index];
-    (*eq)[0] = s->e_para[0];
-    (*eq)[1] = s->e_para[1];
-    (*eq)[2] = s->e_para[2];
+    plane_t candidate;
+    HSET(candidate, s->e_para[0], s->e_para[1], s->e_para[2], 0);
 
-    if (_arbn_normalize_plane(*eq) < 0) {
+    if (_arbn_normalize_plane(candidate) < 0) {
 	bu_vls_printf(s->log_str,
 		"ECMD_ARBN_PLANE_SET_NORM: zero-length normal rejected\n");
 	rt_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_RESULTS, BU_CLBK_DURING);
 	if (f) (*f)(0, NULL, d, NULL);
+	return BRLCAD_ERROR;
     }
+    candidate[3] = (*eq)[3];
+    HMOVE(*eq, candidate);
+    return BRLCAD_OK;
 }
 
-static void
+static int
 ecmd_arbn_plane_rotate(struct rt_edit *s)
 {
     struct rt_arbn_internal *aip =
@@ -202,14 +211,14 @@ ecmd_arbn_plane_rotate(struct rt_edit *s)
 		"ECMD_ARBN_PLANE_ROTATE: no plane selected\n");
 	rt_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_RESULTS, BU_CLBK_DURING);
 	if (f) (*f)(0, NULL, d, NULL);
-	return;
+	return BRLCAD_ERROR;
     }
     if (s->e_inpara != 3) {
 	bu_vls_printf(s->log_str,
 		"ECMD_ARBN_PLANE_ROTATE: rx ry rz (degrees) required\n");
 	rt_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_RESULTS, BU_CLBK_DURING);
 	if (f) (*f)(0, NULL, d, NULL);
-	return;
+	return BRLCAD_ERROR;
     }
 
     mat_t rmat;
@@ -223,9 +232,10 @@ ecmd_arbn_plane_rotate(struct rt_edit *s)
     (*eq)[0] = new_norm[0];
     (*eq)[1] = new_norm[1];
     (*eq)[2] = new_norm[2];
+    return BRLCAD_OK;
 }
 
-static void
+static int
 ecmd_arbn_plane_add(struct rt_edit *s)
 {
     struct rt_arbn_internal *aip =
@@ -240,33 +250,30 @@ ecmd_arbn_plane_add(struct rt_edit *s)
 		"ECMD_ARBN_PLANE_ADD: nx ny nz d required\n");
 	rt_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_RESULTS, BU_CLBK_DURING);
 	if (f) (*f)(0, NULL, d, NULL);
-	return;
+	return BRLCAD_ERROR;
+    }
+
+    plane_t candidate;
+    HSET(candidate, s->e_para[0], s->e_para[1], s->e_para[2],
+	s->e_para[3] * s->local2base);
+    if (_arbn_normalize_plane(candidate) < 0) {
+	bu_vls_printf(s->log_str,
+		"ECMD_ARBN_PLANE_ADD: zero-length normal rejected\n");
+	rt_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_RESULTS, BU_CLBK_DURING);
+	if (f) (*f)(0, NULL, d, NULL);
+	return BRLCAD_ERROR;
     }
 
     size_t new_n = aip->neqn + 1;
     aip->eqn = (plane_t *)bu_realloc(aip->eqn,
 	    new_n * sizeof(plane_t), "arbn eqn[] grow");
-    aip->eqn[aip->neqn][0] = s->e_para[0];
-    aip->eqn[aip->neqn][1] = s->e_para[1];
-    aip->eqn[aip->neqn][2] = s->e_para[2];
-    aip->eqn[aip->neqn][3] = s->e_para[3] * s->local2base;
-
-    if (_arbn_normalize_plane(aip->eqn[aip->neqn]) < 0) {
-	/* roll back */
-	aip->eqn = (plane_t *)bu_realloc(aip->eqn,
-		aip->neqn * sizeof(plane_t), "arbn eqn[] rollback");
-	bu_vls_printf(s->log_str,
-		"ECMD_ARBN_PLANE_ADD: zero-length normal rejected\n");
-	rt_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_RESULTS, BU_CLBK_DURING);
-	if (f) (*f)(0, NULL, d, NULL);
-	return;
-    }
-
+    HMOVE(aip->eqn[aip->neqn], candidate);
     e->plane_index = (int)aip->neqn;   /* select newly added plane */
     aip->neqn = new_n;
+    return BRLCAD_OK;
 }
 
-static void
+static int
 ecmd_arbn_plane_del(struct rt_edit *s)
 {
     struct rt_arbn_internal *aip =
@@ -281,14 +288,14 @@ ecmd_arbn_plane_del(struct rt_edit *s)
 		"ECMD_ARBN_PLANE_DEL: no plane selected\n");
 	rt_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_RESULTS, BU_CLBK_DURING);
 	if (f) (*f)(0, NULL, d, NULL);
-	return;
+	return BRLCAD_ERROR;
     }
     if (aip->neqn <= 4) {
 	bu_vls_printf(s->log_str,
 		"ECMD_ARBN_PLANE_DEL: cannot reduce below 4 planes\n");
 	rt_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_RESULTS, BU_CLBK_DURING);
 	if (f) (*f)(0, NULL, d, NULL);
-	return;
+	return BRLCAD_ERROR;
     }
 
     int idx = e->plane_index;
@@ -299,6 +306,7 @@ ecmd_arbn_plane_del(struct rt_edit *s)
     aip->eqn = (plane_t *)bu_realloc(aip->eqn,
 	    aip->neqn * sizeof(plane_t), "arbn eqn[] shrink");
     e->plane_index = -1;
+    return BRLCAD_OK;
 }
 
 
@@ -364,23 +372,17 @@ rt_edit_arbn_edit(struct rt_edit *s)
 	    edit_srot(s);
 	    break;
 	case ECMD_ARBN_PLANE_SELECT:
-	    ecmd_arbn_plane_select(s);
-	    break;
+	    return ecmd_arbn_plane_select(s);
 	case ECMD_ARBN_PLANE_SET_DIST:
-	    ecmd_arbn_plane_set_dist(s);
-	    break;
+	    return ecmd_arbn_plane_set_dist(s);
 	case ECMD_ARBN_PLANE_SET_NORM:
-	    ecmd_arbn_plane_set_norm(s);
-	    break;
+	    return ecmd_arbn_plane_set_norm(s);
 	case ECMD_ARBN_PLANE_ROTATE:
-	    ecmd_arbn_plane_rotate(s);
-	    break;
+	    return ecmd_arbn_plane_rotate(s);
 	case ECMD_ARBN_PLANE_ADD:
-	    ecmd_arbn_plane_add(s);
-	    break;
+	    return ecmd_arbn_plane_add(s);
 	case ECMD_ARBN_PLANE_DEL:
-	    ecmd_arbn_plane_del(s);
-	    break;
+	    return ecmd_arbn_plane_del(s);
 	default:
 	    return edit_generic(s);
     }

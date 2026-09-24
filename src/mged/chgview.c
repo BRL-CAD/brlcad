@@ -261,11 +261,6 @@ mged_librt_knob_edit_apply(struct mged_state *s,
 	}
     }
 
-    /* For parameter edits (solid editing) finalize primitive parameter updates */
-    if (!matrix_edit) {
-	rt_edit_process(re);
-    }
-
     /* Update MGED's cached edit matrices and mark for redraw */
     new_edit_mats(s);
     s->update_views = 1;

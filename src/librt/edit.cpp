@@ -254,6 +254,7 @@ rt_edit_reset(struct rt_edit *s)
     MAT_IDN(s->e_invmat);
     MAT_IDN(s->e_mat);
     MAT_IDN(s->incr_change);
+    MAT_IDN(s->model2objview);
     MAT_IDN(s->model_changes);
     VSETALL(s->curr_e_axes_pos, 0.0);
     VSETALL(s->e_axes_pos, 0.0);
@@ -291,9 +292,12 @@ rt_edit_reset(struct rt_edit *s)
     s->mv_context = 0;
     s->snap.enabled = 0;
     s->snap.spacing = 1.0;
+    s->dbip = NULL;
+    s->tol = NULL;
     s->u_ptr = NULL;
     s->update_views = 0;
     s->vlfree = NULL;
+    s->vp = NULL;
 
     bu_vls_trunc(s->log_str, 0);
 }
@@ -1194,6 +1198,7 @@ rt_edit_process(struct rt_edit *s)
     // Inputs processed, reset
     s->e_inpara = 0;
     s->e_mvalid = 0;
+    s->es_scale = 0.0;
     return BRLCAD_OK;
 }
 

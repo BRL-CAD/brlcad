@@ -424,7 +424,8 @@ rt_edit_pipe_edit_desc(void)
 
 
 static int
-pipe_split_pnt(struct bu_list *pipe_hd, struct wdb_pipe_pnt *ps, point_t new_pt)
+pipe_split_pnt(struct rt_pipe_internal *pipeip, struct wdb_pipe_pnt *ps,
+	       point_t new_pt)
 {
     struct wdb_pipe_pnt *next;
     struct wdb_pipe_pnt *new_ps;
@@ -450,260 +451,15 @@ pipe_split_pnt(struct bu_list *pipe_hd, struct wdb_pipe_pnt *ps, point_t new_pt)
 
     /* Validate the modified pipe; remove the new point if it makes an
      * invalid configuration. */
-    if (rt_pipe_ck(pipe_hd)) {
+    if (rt_pipe_ck(&pipeip->pipe_segs_head)) {
 	BU_LIST_DEQUEUE(&new_ps->l);
 	bu_free(new_ps, "pipe_split_pnt: new_ps");
 	return BRLCAD_ERROR;
     }
+    pipeip->pipe_count++;
     return BRLCAD_OK;
 }
 
-
-void
-pipe_scale_od(struct rt_edit *s, struct rt_db_internal *db_int, fastf_t scale)
-{
-    struct wdb_pipe_pnt *ps;
-    struct rt_pipe_internal *pipeip=(struct rt_pipe_internal *)db_int->idb_ptr;
-
-    RT_PIPE_CK_MAGIC(pipeip);
-
-    /* check that this can be done */
-    for (BU_LIST_FOR(ps, wdb_pipe_pnt, &pipeip->pipe_segs_head)) {
-	fastf_t tmp_od;
-
-	if (scale < 0.0)
-	    tmp_od = (-scale);
-	else
-	    tmp_od = ps->pp_od*scale;
-	if (ps->pp_id > tmp_od) {
-	    bu_vls_printf(s->log_str, "Cannot make OD less than ID\n");
-	    return;
-	}
-	if (tmp_od > 2.0*ps->pp_bendradius) {
-	    bu_vls_printf(s->log_str, "Cannot make outer radius greater than bend radius\n");
-	    return;
-	}
-    }
-
-    for (BU_LIST_FOR(ps, wdb_pipe_pnt, &pipeip->pipe_segs_head))
-	ps->pp_od *= scale;
-}
-
-
-void
-pipe_scale_id(struct rt_edit *s, struct rt_db_internal *db_int, fastf_t scale)
-{
-    struct wdb_pipe_pnt *ps;
-    struct rt_pipe_internal *pipeip=(struct rt_pipe_internal *)db_int->idb_ptr;
-    fastf_t tmp_id;
-
-    RT_PIPE_CK_MAGIC(pipeip);
-
-    /* check that this can be done */
-    for (BU_LIST_FOR(ps, wdb_pipe_pnt, &pipeip->pipe_segs_head)) {
-	if (scale > 0.0)
-	    tmp_id = ps->pp_id*scale;
-	else
-	    tmp_id = (-scale);
-	if (ps->pp_od < tmp_id) {
-	    bu_vls_printf(s->log_str, "Cannot make ID greater than OD\n");
-	    return;
-	}
-	if (tmp_id > 2.0*ps->pp_bendradius) {
-	    bu_vls_printf(s->log_str, "Cannot make inner radius greater than bend radius\n");
-	    return;
-	}
-    }
-
-    for (BU_LIST_FOR(ps, wdb_pipe_pnt, &pipeip->pipe_segs_head)) {
-	if (scale > 0.0)
-	    ps->pp_id *= scale;
-	else
-	    ps->pp_id = (-scale);
-    }
-}
-
-
-void
-pipe_seg_scale_od(struct rt_edit *s, struct wdb_pipe_pnt *ps, fastf_t scale)
-{
-    fastf_t tmp_od;
-
-    BU_CKMAG(ps, WDB_PIPESEG_MAGIC, "pipe segment");
-
-    /* need to check that the new OD is not less than ID
-     * of any affected segment.
-     */
-    if (scale < 0.0)
-	tmp_od = (-scale);
-    else
-	tmp_od = scale*ps->pp_od;
-    if (ps->pp_id > tmp_od) {
-	bu_vls_printf(s->log_str, "Cannot make OD smaller than ID\n");
-	return;
-    }
-    if (tmp_od > 2.0*ps->pp_bendradius) {
-	bu_vls_printf(s->log_str, "Cannot make outer radius greater than bend radius\n");
-	return;
-    }
-
-    if (scale > 0.0)
-	ps->pp_od *= scale;
-    else
-	ps->pp_od = (-scale);
-}
-
-
-void
-pipe_seg_scale_id(struct rt_edit *s, struct wdb_pipe_pnt *ps, fastf_t scale)
-{
-    fastf_t tmp_id;
-
-    BU_CKMAG(ps, WDB_PIPESEG_MAGIC, "pipe segment");
-
-    /* need to check that the new ID is not greater than OD */
-    if (scale > 0.0)
-	tmp_id = scale*ps->pp_id;
-    else
-	tmp_id = (-scale);
-    if (ps->pp_od < tmp_id) {
-	bu_vls_printf(s->log_str, "Cannot make ID greater than OD\n");
-	return;
-    }
-    if (tmp_id > 2.0*ps->pp_bendradius) {
-	bu_vls_printf(s->log_str, "Cannot make inner radius greater than bend radius\n");
-	return;
-    }
-
-    if (scale > 0.0)
-	ps->pp_id *= scale;
-    else
-	ps->pp_id = (-scale);
-}
-
-
-void
-pipe_seg_scale_radius(struct rt_edit *s, struct wdb_pipe_pnt *ps, fastf_t scale)
-{
-    fastf_t old_radius;
-    struct wdb_pipe_pnt *head;
-
-    BU_CKMAG(ps, WDB_PIPESEG_MAGIC, "pipe point");
-
-    head = ps;
-    while (head->l.magic != BU_LIST_HEAD_MAGIC)
-	head = BU_LIST_NEXT(wdb_pipe_pnt, &head->l);
-
-    /* make sure we can make this change */
-    old_radius = ps->pp_bendradius;
-    if (scale > 0.0)
-	ps->pp_bendradius *= scale;
-    else
-	ps->pp_bendradius = (-scale);
-
-    if (ps->pp_bendradius < ps->pp_od * 0.5) {
-	bu_vls_printf(s->log_str, "Cannot make bend radius less than pipe outer radius\n");
-	ps->pp_bendradius = old_radius;
-	return;
-    }
-
-    if (rt_pipe_ck(&head->l)) {
-	/* won't work, go back to original radius */
-	ps->pp_bendradius = old_radius;
-	return;
-    }
-
-}
-
-
-void
-pipe_scale_radius(struct rt_edit *s, struct rt_db_internal *db_int, fastf_t scale)
-{
-    struct bu_list head;
-    struct wdb_pipe_pnt *old_ps, *new_ps;
-    struct rt_pipe_internal *pipeip=(struct rt_pipe_internal *)db_int->idb_ptr;
-
-    RT_CK_DB_INTERNAL(db_int);
-    RT_PIPE_CK_MAGIC(pipeip);
-
-    /* make a quick check for minimum bend radius */
-    for (BU_LIST_FOR(old_ps, wdb_pipe_pnt, &pipeip->pipe_segs_head)) {
-	if (scale < 0.0) {
-	    if ((-scale) < old_ps->pp_od * 0.5) {
-		bu_vls_printf(s->log_str, "Cannot make bend radius less than pipe outer radius\n");
-		return;
-	    }
-	} else {
-	    if (old_ps->pp_bendradius * scale < old_ps->pp_od * 0.5) {
-		bu_vls_printf(s->log_str, "Cannot make bend radius less than pipe outer radius\n");
-		return;
-	    }
-	}
-    }
-
-    /* make temporary copy of this pipe solid */
-    BU_LIST_INIT(&head);
-    for (BU_LIST_FOR(old_ps, wdb_pipe_pnt, &pipeip->pipe_segs_head)) {
-	BU_ALLOC(new_ps, struct wdb_pipe_pnt);
-	*new_ps = (*old_ps);
-	BU_LIST_APPEND(&head, &new_ps->l);
-    }
-
-    /* make the desired editing changes to the copy */
-    for (BU_LIST_FOR(new_ps, wdb_pipe_pnt, &head)) {
-	if (scale < 0.0)
-	    new_ps->pp_bendradius = (-scale);
-	else
-	    new_ps->pp_bendradius *= scale;
-    }
-
-    /* check if the copy is O.K. */
-    if (rt_pipe_ck(&head)) {
-	/* won't work, go back to original */
-	while (BU_LIST_NON_EMPTY(&head)) {
-	    new_ps = BU_LIST_FIRST(wdb_pipe_pnt, &head);
-	    BU_LIST_DEQUEUE(&new_ps->l);
-	    bu_free((void *)new_ps, "pipe_scale_radius: new_ps");
-	}
-	return;
-    }
-
-    /* free temporary pipe solid */
-    while (BU_LIST_NON_EMPTY(&head)) {
-	new_ps = BU_LIST_FIRST(wdb_pipe_pnt, &head);
-	BU_LIST_DEQUEUE(&new_ps->l);
-	bu_free((void *)new_ps, "pipe_scale_radius: new_ps");
-    }
-
-    /* make changes to the original */
-    for (BU_LIST_FOR(old_ps, wdb_pipe_pnt, &pipeip->pipe_segs_head)) {
-	if (scale < 0.0)
-	    old_ps->pp_bendradius = (-scale);
-	else
-	    old_ps->pp_bendradius *= scale;
-    }
-
-}
-
-
-
-
-void
-pipe_move_pnt(struct rt_edit *s, struct rt_pipe_internal *pipeip, struct wdb_pipe_pnt *ps, const point_t new_pt)
-{
-    point_t old_pt;
-
-    RT_PIPE_CK_MAGIC(pipeip);
-    BU_CKMAG(ps, WDB_PIPESEG_MAGIC, "pipe segment");
-
-    VMOVE(old_pt, ps->pp_coord);
-
-    VMOVE(ps->pp_coord, new_pt);
-    if (rt_pipe_ck(&pipeip->pipe_segs_head)) {
-	bu_vls_printf(s->log_str, "Cannot move point there\n");
-	VMOVE(ps->pp_coord, old_pt);
-    }
-}
 
 C_DECL const char *
 rt_edit_pipe_keypoint(
@@ -1002,7 +758,7 @@ ecmd_pipe_split(struct rt_edit *s)
 	return BRLCAD_ERROR;
     }
 
-    if (pipe_split_pnt(&pipeip->pipe_segs_head, p->es_pipe_pnt, new_pt) != BRLCAD_OK) {
+    if (pipe_split_pnt(pipeip, p->es_pipe_pnt, new_pt) != BRLCAD_OK) {
 	bu_vls_printf(s->log_str, "Cannot split this pipe segment\n");
 	return BRLCAD_ERROR;
     }
@@ -1086,7 +842,10 @@ ecmd_pipe_pt_ins(struct rt_edit *s)
 static int
 ecmd_pipe_pt_del(struct rt_edit *s)
 {
+    struct rt_pipe_internal *pipeip =
+	(struct rt_pipe_internal *)s->es_int.idb_ptr;
     struct rt_pipe_edit *p = (struct rt_pipe_edit *)s->ipe_ptr;
+    RT_PIPE_CK_MAGIC(pipeip);
     if (!p->es_pipe_pnt) {
 	bu_vls_printf(s->log_str, "No pipe segment selected\n");
 	return BRLCAD_ERROR;
@@ -1098,6 +857,7 @@ ecmd_pipe_pt_del(struct rt_edit *s)
 	bu_vls_printf(s->log_str, "Cannot delete this pipe point\n");
 	return BRLCAD_ERROR;
     }
+    pipeip->pipe_count--;
     return BRLCAD_OK;
 }
 

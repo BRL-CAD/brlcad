@@ -338,21 +338,6 @@ ecmd_vol_csize(struct rt_edit *s)
     return BRLCAD_OK;
 }
 
-static int
-vol_file_has_voxels(const struct stat *file, const uint32_t dims[ELEMENTS_PER_VECT])
-{
-    if (file->st_size < 0)
-	return 0;
-
-    uintmax_t available = (uintmax_t)file->st_size / sizeof(unsigned char);
-    for (int i = 0; i < ELEMENTS_PER_VECT; i++) {
-	if (!dims[i] || dims[i] > available)
-	    return 0;
-	available /= dims[i];
-    }
-    return 1;
-}
-
 /* File dimensions are voxel counts, not lengths in database units. */
 static int
 ecmd_vol_fsize(struct rt_edit *s)
@@ -369,13 +354,10 @@ ecmd_vol_fsize(struct rt_edit *s)
 
     uint32_t dims[ELEMENTS_PER_VECT];
     for (int i = 0; i < ELEMENTS_PER_VECT; i++) {
-	fastf_t value = s->e_para[i];
-	if (!isfinite(value) || value < 1.0 || value > UINT32_MAX ||
-	    value > floor(value)) {
+	if (edit_parse_sample_count(&dims[i], s->e_para[i]) != BRLCAD_OK) {
 	    bu_vls_printf(s->log_str, "File dimensions must be positive integers\n");
 	    return BRLCAD_ERROR;
 	}
-	dims[i] = (uint32_t)value;
     }
 
     struct stat stat_buf;
@@ -383,7 +365,8 @@ ecmd_vol_fsize(struct rt_edit *s)
 	bu_vls_printf(s->log_str, "Cannot get status of file %s\n", vol->name);
 	return BRLCAD_ERROR;
     }
-    if (!vol_file_has_voxels(&stat_buf, dims)) {
+    if (!edit_file_has_samples(stat_buf.st_size, dims, ELEMENTS_PER_VECT,
+	    sizeof(unsigned char))) {
 	bu_vls_printf(s->log_str, "File (%s) is too small for these dimensions\n",
 	    vol->name);
 	return BRLCAD_ERROR;
@@ -470,7 +453,8 @@ ecmd_vol_fname(struct rt_edit *s)
 	const uint32_t dims[ELEMENTS_PER_VECT] = {
 	    vol->xdim, vol->ydim, vol->zdim
 	};
-	if (!vol_file_has_voxels(&stat_buf, dims)) {
+	if (!edit_file_has_samples(stat_buf.st_size, dims, ELEMENTS_PER_VECT,
+	    sizeof(unsigned char))) {
 	    // We were calling Tcl_SetResult here, which reset the result str, so zero out log_str
 	    bu_vls_trunc(s->log_str, 0);
 	    bu_vls_printf(s->log_str, "File (%s) is too small, adjust the file size parameters first", fname);

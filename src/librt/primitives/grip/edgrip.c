@@ -68,16 +68,6 @@ rt_edit_grp_write_params(
     bu_vls_printf(p, "Magnitude: %.9f\n", grip->mag*base2local);
 }
 
-#define read_params_line_incr \
-    lc = (ln) ? (ln + lcj) : NULL; \
-    if (!lc) { \
-	bu_free(wc, "wc"); \
-	return BRLCAD_ERROR; \
-    } \
-    ln = strchr(lc, tc); \
-    if (ln) *ln = '\0'; \
-    while (lc && strchr(lc, ':')) lc++
-
 C_DECL int
 rt_edit_grp_read_params(
 	struct rt_db_internal *ip,
@@ -86,55 +76,28 @@ rt_edit_grp_read_params(
 	fastf_t local2base
 	)
 {
-    double a = 0.0;
-    double b = 0.0;
-    double c = 0.0;
     struct rt_grip_internal *grip = (struct rt_grip_internal *)ip->idb_ptr;
     RT_GRIP_CK_MAGIC(grip);
 
     if (!fc)
 	return BRLCAD_ERROR;
 
-    // We're getting the file contents as a string, so we need to split it up
-    // to process lines. See https://stackoverflow.com/a/17983619
+    struct rt_grip_internal staged = *grip;
+    char *buffer = bu_strdup(fc);
+    char *cursor = buffer;
+    int result = BRLCAD_ERROR;
+    if (edit_param_read_vector(staged.center, &cursor, "Center", local2base) != BRLCAD_OK ||
+	edit_param_read_vector(staged.normal, &cursor, "Normal", 1.0) != BRLCAD_OK ||
+	edit_param_read_scalar(&staged.mag, &cursor, "Magnitude", local2base) != BRLCAD_OK ||
+	edit_param_next_line(&cursor))
+	goto cleanup;
 
-    // Figure out if we need to deal with Windows line endings
-    const char *crpos = strchr(fc, '\r');
-    int crlf = (crpos && crpos[1] == '\n') ? 1 : 0;
-    char tc = (crlf) ? '\r' : '\n';
-    // If we're CRLF jump ahead another character.
-    int lcj = (crlf) ? 2 : 1;
+    *grip = staged;
+    result = BRLCAD_OK;
 
-    char *ln = NULL;
-    char *wc = bu_strdup(fc);
-    char *lc = wc;
-
-    // Set up initial line (Center)
-    ln = strchr(lc, tc);
-    if (ln) *ln = '\0';
-
-    // Trim off prefixes, if user left them in
-    while (lc && strchr(lc, ':')) lc++;
-
-    sscanf(lc, "%lf %lf %lf", &a, &b, &c);
-    VSET(grip->center, a, b, c);
-    VSCALE(grip->center, grip->center, local2base);
-
-    // Set up Normal line
-    read_params_line_incr;
-
-    sscanf(lc, "%lf %lf %lf", &a, &b, &c);
-    VSET(grip->normal, a, b, c);
-
-    // Set up Magnitude line
-    read_params_line_incr;
-
-    sscanf(lc, "%lf", &a);
-    grip->mag = a * local2base;
-
-    // Cleanup
-    bu_free(wc, "wc");
-    return BRLCAD_OK;
+cleanup:
+    bu_free(buffer, "GRIP parameter text");
+    return result;
 }
 
 /*

@@ -30,6 +30,7 @@
 #include "vmath.h"
 #include "nmg.h"
 #include "raytrace.h"
+#include "bu/mapped_file.h"
 #include "rt/geom.h"
 #include "wdb.h"
 
@@ -350,64 +351,44 @@ dsp_scale(struct rt_edit *s, struct rt_dsp_internal *dsp, int axis)
     return BRLCAD_OK;
 }
 
-int
-ecmd_dsp_scale_x(struct rt_edit *s)
+static int
+dsp_edit_scale(struct rt_edit *s, int axis)
 {
-    if (!s->e_inpara && s->es_scale <= 0.0) {
-	return BRLCAD_OK;
-    }
     if (s->e_inpara > 1) {
 	bu_vls_printf(s->log_str, "ERROR: only one argument needed\n");
-	s->e_inpara = 0;
 	return BRLCAD_ERROR;
     }
-    if (s->e_inpara && s->e_para[0] <= 0.0) {
-	bu_vls_printf(s->log_str, "ERROR: SCALE FACTOR <= 0\n");
-	s->e_inpara = 0;
+    fastf_t value = s->e_inpara ? s->e_para[0] : s->es_scale;
+    if (!isfinite(value)) {
+	bu_vls_printf(s->log_str, "ERROR: DSP scale must be finite\n");
+	return BRLCAD_ERROR;
+    }
+    if (!s->e_inpara && value <= 0.0)
+	return BRLCAD_OK;
+    if (s->e_inpara && value <= 0.0) {
+	bu_vls_printf(s->log_str, "ERROR: DSP size must be positive\n");
 	return BRLCAD_ERROR;
     }
 
-    return dsp_scale(s, (struct rt_dsp_internal *)s->es_int.idb_ptr, X);
+    return dsp_scale(s, (struct rt_dsp_internal *)s->es_int.idb_ptr, axis);
+}
+
+int
+ecmd_dsp_scale_x(struct rt_edit *s)
+{
+    return dsp_edit_scale(s, X);
 }
 
 int
 ecmd_dsp_scale_y(struct rt_edit *s)
 {
-    if (!s->e_inpara && s->es_scale <= 0.0) {
-	return BRLCAD_OK;
-    }
-    if (s->e_inpara > 1) {
-	bu_vls_printf(s->log_str, "ERROR: only one argument needed\n");
-	s->e_inpara = 0;
-	return BRLCAD_ERROR;
-    }
-    if (s->e_inpara && s->e_para[0] <= 0.0) {
-	bu_vls_printf(s->log_str, "ERROR: SCALE FACTOR <= 0\n");
-	s->e_inpara = 0;
-	return BRLCAD_ERROR;
-    }
-
-    return dsp_scale(s, (struct rt_dsp_internal *)s->es_int.idb_ptr, Y);
+    return dsp_edit_scale(s, Y);
 }
 
 int
 ecmd_dsp_scale_alt(struct rt_edit *s)
 {
-    if (!s->e_inpara && s->es_scale <= 0.0) {
-	return BRLCAD_OK;
-    }
-    if (s->e_inpara > 1) {
-	bu_vls_printf(s->log_str, "ERROR: only one argument needed\n");
-	s->e_inpara = 0;
-	return BRLCAD_ERROR;
-    }
-    if (s->e_inpara && s->e_para[0] <= 0.0) {
-	bu_vls_printf(s->log_str, "ERROR: SCALE FACTOR <= 0\n");
-	s->e_inpara = 0;
-	return BRLCAD_ERROR;
-    }
-
-    return dsp_scale(s, (struct rt_dsp_internal *)s->es_int.idb_ptr, Z);
+    return dsp_edit_scale(s, Z);
 }
 
 int
@@ -417,7 +398,6 @@ ecmd_dsp_fname(struct rt_edit *s)
 	(struct rt_dsp_internal *)s->es_int.idb_ptr;
     const char *fname = NULL;
     struct stat stat_buf;
-    b_off_t need_size;
     bu_clbk_t f = NULL;
     void *d = NULL;
 
@@ -441,8 +421,8 @@ ecmd_dsp_fname(struct rt_edit *s)
 	return BRLCAD_ERROR;
     }
 
-    need_size = dsp->dsp_xcnt * dsp->dsp_ycnt * 2;
-    if (stat_buf.st_size < need_size) {
+    const uint32_t dims[] = {dsp->dsp_xcnt, dsp->dsp_ycnt};
+    if (!edit_file_has_samples(stat_buf.st_size, dims, 2, sizeof(uint16_t))) {
 	bu_vls_printf(s->log_str, "File (%s) is too small, adjust the file size parameters first", fname);
 	f = NULL; d = NULL;
 	rt_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_RESULTS, BU_CLBK_DURING);
@@ -455,9 +435,7 @@ ecmd_dsp_fname(struct rt_edit *s)
     return BRLCAD_OK;
 }
 
-/* Toggle/set the smooth-normals flag.
- * e_para[0] = 0 → disable, non-zero → enable; e_inpara = 1.
- * With e_inpara == 0, the current value is toggled. */
+/* File dimensions are sample counts, not lengths in database units. */
 static int
 ecmd_dsp_fsize(struct rt_edit *s)
 {
@@ -465,27 +443,52 @@ ecmd_dsp_fsize(struct rt_edit *s)
 	(struct rt_dsp_internal *)s->es_int.idb_ptr;
     RT_DSP_CK_MAGIC(dsp);
 
-    /* Two integer parameters: xcnt and ycnt */
+    if (!s->e_inpara)
+	return BRLCAD_OK;
     if (s->e_inpara != 2) {
 	bu_vls_printf(s->log_str,
 		      "ERROR: two arguments needed (width height)\n");
-	s->e_inpara = 0;
-	return BRLCAD_ERROR;
-    }
-    if (s->e_para[0] < 1.0 || s->e_para[1] < 1.0) {
-	bu_vls_printf(s->log_str,
-		      "ERROR: width and height must be >= 1\n");
-	s->e_inpara = 0;
 	return BRLCAD_ERROR;
     }
 
-    dsp->dsp_xcnt = (uint32_t)s->e_para[0];
-    dsp->dsp_ycnt = (uint32_t)s->e_para[1];
+    uint32_t dims[2];
+    if (edit_parse_sample_count(&dims[0], s->e_para[0]) != BRLCAD_OK ||
+	edit_parse_sample_count(&dims[1], s->e_para[1]) != BRLCAD_OK) {
+	bu_vls_printf(s->log_str,
+		      "ERROR: width and height must be positive integers\n");
+	return BRLCAD_ERROR;
+    }
+
+    if (dsp->dsp_datasrc == RT_DSP_SRC_FILE ||
+	dsp->dsp_datasrc == RT_DSP_SRC_V4_FILE) {
+	const char *name = bu_vls_cstr(&dsp->dsp_name);
+	struct bu_mapped_file *file =
+	    s->dbip && s->dbip->dbi_filepath ?
+	    bu_open_mapped_file_with_path(s->dbip->dbi_filepath, name, "dsp") :
+	    bu_open_mapped_file(name, "dsp");
+	if (!file) {
+	    bu_vls_printf(s->log_str, "Cannot open DSP data file %s\n",
+		bu_vls_cstr(&dsp->dsp_name));
+	    return BRLCAD_ERROR;
+	}
+	int enough = file->buflen <= INTMAX_MAX &&
+	    edit_file_has_samples((intmax_t)file->buflen, dims, 2,
+		sizeof(uint16_t));
+	bu_close_mapped_file(file);
+	if (!enough) {
+	    bu_vls_printf(s->log_str, "DSP data file is too small for these dimensions\n");
+	    return BRLCAD_ERROR;
+	}
+    }
+
+    dsp->dsp_xcnt = dims[0];
+    dsp->dsp_ycnt = dims[1];
 
     s->e_inpara = 0;
     return BRLCAD_OK;
 }
 
+/* With no numeric value, toggle the current smooth-normals setting. */
 int
 ecmd_dsp_set_smooth(struct rt_edit *s)
 {
@@ -515,13 +518,19 @@ ecmd_dsp_set_datasrc(struct rt_edit *s)
 	(struct rt_dsp_internal *)s->es_int.idb_ptr;
     RT_DSP_CK_MAGIC(dsp);
 
-    if (!s->e_inpara || s->e_inpara < 1) {
+    if (s->e_inpara != 1) {
 	bu_vls_printf(s->log_str,
 		"ERROR: ECMD_DSP_SET_DATASRC: data source type required "
 		"(0 or 'f'=file, 1 or 'o'=object)\n");
 	return BRLCAD_ERROR;
     }
-    int src = (int)s->e_para[0];
+    fastf_t value = s->e_para[0];
+    if (!isfinite(value) || value < 0.0 || value > RT_DSP_SRC_OBJ ||
+	value > floor(value)) {
+	bu_vls_printf(s->log_str, "ERROR: invalid DSP data source\n");
+	return BRLCAD_ERROR;
+    }
+    int src = (int)value;
     char dsrc;
     if (src == 0 || src == RT_DSP_SRC_FILE)
 	dsrc = RT_DSP_SRC_FILE;

@@ -25,15 +25,134 @@
 #include "common.h"
 
 #include <math.h>
+#include <stdio.h>
 #include <string.h>
 
 #include "vmath.h"
+#include "bu/opt.h"
+#include "bu/str.h"
 #include "nmg.h"
 #include "raytrace.h"
 #include "rt/geom.h"
 #include "wdb.h"
 
 #include "./edit_private.h"
+
+char *
+edit_param_next_line(char **cursor)
+{
+    if (!cursor || !*cursor || !**cursor)
+	return NULL;
+
+    char *line = *cursor;
+    char *end = strchr(line, '\n');
+    if (end) {
+	*end = '\0';
+	*cursor = end + 1;
+    } else {
+	*cursor = NULL;
+    }
+    size_t length = strlen(line);
+    if (length && line[length - 1] == '\r')
+	line[length - 1] = '\0';
+    return line;
+}
+
+static const char *
+edit_param_values(const char *line, const char *label)
+{
+    size_t label_length = strlen(label);
+    if (!bu_strncmp(line, label, label_length) && line[label_length] == ':')
+	return line + label_length + 1;
+    return line;
+}
+
+int
+edit_param_read_vector(point_t out, char **cursor, const char *label,
+		       fastf_t local2base)
+{
+    if (!out || !cursor || !label || !isfinite(local2base) ||
+	local2base <= 0.0)
+	return BRLCAD_ERROR;
+
+    char *line = edit_param_next_line(cursor);
+    if (!line)
+	return BRLCAD_ERROR;
+    const char *coords = edit_param_values(line, label);
+
+    double x, y, z;
+    int end = 0;
+    if (sscanf(coords, " %lf %lf %lf %n", &x, &y, &z, &end) != 3 ||
+	!end || coords[end] || !isfinite(x) || !isfinite(y) ||
+	!isfinite(z))
+	return BRLCAD_ERROR;
+
+    VSET(out, x * local2base, y * local2base, z * local2base);
+    return isfinite(out[X]) && isfinite(out[Y]) && isfinite(out[Z]) ?
+	BRLCAD_OK : BRLCAD_ERROR;
+}
+
+int
+edit_param_read_scalar(fastf_t *out, char **cursor, const char *label,
+		       fastf_t local2base)
+{
+    if (!out || !cursor || !label || !isfinite(local2base) ||
+	local2base <= 0.0)
+	return BRLCAD_ERROR;
+
+    char *line = edit_param_next_line(cursor);
+    if (!line)
+	return BRLCAD_ERROR;
+    const char *value = edit_param_values(line, label);
+    double parsed;
+    int end = 0;
+    if (sscanf(value, " %lf %n", &parsed, &end) != 1 || !end ||
+	value[end] || !isfinite(parsed))
+	return BRLCAD_ERROR;
+
+    *out = parsed * local2base;
+    return isfinite(*out) ? BRLCAD_OK : BRLCAD_ERROR;
+}
+
+int
+edit_repair_parse_options(struct bu_vls *log_str, int argc,
+			  const char **argv, const struct bu_opt_desc *options)
+{
+    if (argc < 0 || (argc > 0 &&
+	(!argv || bu_opt_parse(NULL, argc, argv, options) != 0))) {
+	if (log_str)
+	    bu_vls_printf(log_str,
+		"{\"status\":\"error\",\"message\":\"Invalid repair options\"}");
+	return BRLCAD_ERROR;
+    }
+    return BRLCAD_OK;
+}
+
+int
+edit_parse_sample_count(uint32_t *count, fastf_t value)
+{
+    if (!count || !isfinite(value) || value < 1.0 ||
+	value > UINT32_MAX || value > floor(value))
+	return BRLCAD_ERROR;
+    *count = (uint32_t)value;
+    return BRLCAD_OK;
+}
+
+int
+edit_file_has_samples(intmax_t file_size, const uint32_t *dims,
+		size_t count, size_t bytes_per_sample)
+{
+    if (file_size < 0 || !dims || !bytes_per_sample)
+	return 0;
+
+    uintmax_t available = (uintmax_t)file_size / bytes_per_sample;
+    for (size_t i = 0; i < count; i++) {
+	if (!dims[i] || dims[i] > available)
+	    return 0;
+	available /= dims[i];
+    }
+    return 1;
+}
 
 void
 edit_abs_tra(struct rt_edit *s, vect_t view_pos)

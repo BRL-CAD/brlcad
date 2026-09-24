@@ -2,9 +2,11 @@ set(
   edit_cases
   annot
   arb8
+  arb_operation_matrix
   arbn
   ars
   bot
+  bot_operation_matrix
   brep
   bspline
   cline
@@ -23,10 +25,16 @@ set(
   half
   hrt
   hyp
+  knob_operation_matrix
+  lifecycle_matrix
   metaball
+  metaball_operation_matrix
   nmg
+  operation_matrix
+  param_matrix
   part
   pipe
+  raster_operation_matrix
   rec
   revolve
   rhc

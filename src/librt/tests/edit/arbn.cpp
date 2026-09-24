@@ -54,10 +54,31 @@
 #define ECMD_ARBN_PLANE_ADD       14014
 #define ECMD_ARBN_PLANE_DEL       14015
 
+enum { ARBN_CUBE_PLANE_COUNT = 6 };
+
 /* Mirror the private state struct */
 struct rt_arbn_edit_local {
     int plane_index;
 };
+
+static bool
+same_planes(const struct rt_arbn_internal *actual, const plane_t *expected,
+	    size_t count)
+{
+    if (actual->neqn != count)
+	return false;
+    for (size_t i = 0; i < count; ++i) {
+	for (int axis = 0; axis < 4; ++axis) {
+	    if (!NEAR_EQUAL(actual->eqn[i][axis], expected[i][axis],
+		    VUNITIZE_TOL)) {
+		bu_log("arbn plane %zu coefficient %d: expected %g, got %g\n",
+		    i, axis, expected[i][axis], actual->eqn[i][axis]);
+		return false;
+	    }
+	}
+    }
+    return true;
+}
 
 
 static struct directory *
@@ -90,16 +111,279 @@ make_arbn(struct rt_wdb *wdbp)
     return dp;
 }
 
-/* reset_sel is available for future test additions */
-static void __attribute__((unused))
-reset_sel(struct rt_edit *s)
+static int
+arbn_unit_matrix(struct db_i *dbip, struct db_full_path *path,
+		 struct bn_tol *tol)
 {
-    struct rt_arbn_edit_local *e = (struct rt_arbn_edit_local *)s->ipe_ptr;
-    e->plane_index = -1;
-    s->e_inpara = 0;
-    VSETALL(s->e_para, 0.0);
+    const fastf_t inch_to_mm = 25.4;
+    const fastf_t scales[] = {1.0, inch_to_mm};
+    int failures = 0;
+
+    for (fastf_t scale : scales) {
+	dbip->dbi_local2base = scale;
+	dbip->dbi_base2local = 1.0 / scale;
+	const char *unit = EQUAL(scale, 1.0) ? "mm" : "in";
+	struct rt_edit *edit = rt_edit_create(path, dbip, tol, NULL);
+	if (!edit) {
+	    bu_log("arbn\tset distance\t%s\tfail: edit creation\n", unit);
+	    ++failures;
+	    continue;
+	}
+	struct rt_arbn_internal *arbn =
+	    (struct rt_arbn_internal *)edit->es_int.idb_ptr;
+	if (arbn->neqn != ARBN_CUBE_PLANE_COUNT) {
+	    bu_log("arbn\tset distance\t%s\tfail: fixture has %zu planes\n",
+		unit, arbn->neqn);
+	    ++failures;
+	    rt_edit_destroy(edit);
+	    continue;
+	}
+	plane_t expected[ARBN_CUBE_PLANE_COUNT + 1];
+	for (size_t i = 0; i < arbn->neqn; ++i)
+	    HMOVE(expected[i], arbn->eqn[i]);
+	rt_edit_set_edflag(edit, ECMD_ARBN_PLANE_SELECT);
+	edit->e_inpara = 1;
+	edit->e_para[0] = 0.5;
+	bool rejected = rt_edit_process(edit) == BRLCAD_ERROR &&
+	    ((struct rt_arbn_edit_local *)edit->ipe_ptr)->plane_index == -1 &&
+	    same_planes(arbn, expected, ARBN_CUBE_PLANE_COUNT);
+	bu_log("arbn\treject fractional index\t%s\t%s\n", unit,
+	    rejected ? "pass" : "fail");
+	if (!rejected)
+	    ++failures;
+	edit->e_inpara = 1;
+	edit->e_para[0] = 0;
+	bool selected = rt_edit_process(edit) == BRLCAD_OK &&
+	    ((struct rt_arbn_edit_local *)edit->ipe_ptr)->plane_index == 0;
+	rt_edit_set_edflag(edit, ECMD_ARBN_PLANE_SET_DIST);
+	edit->e_inpara = 0;
+	rejected = rt_edit_process(edit) == BRLCAD_ERROR &&
+	    same_planes(arbn, expected, ARBN_CUBE_PLANE_COUNT);
+	bu_log("arbn\treject missing distance\t%s\t%s\n", unit,
+	    rejected ? "pass" : "fail");
+	if (!rejected)
+	    ++failures;
+	edit->e_inpara = 1;
+	edit->e_para[0] = inch_to_mm / scale;
+	expected[0][3] = inch_to_mm;
+	bool passed = selected && rt_edit_process(edit) == BRLCAD_OK &&
+	    same_planes(arbn, expected, ARBN_CUBE_PLANE_COUNT) &&
+	    NEAR_EQUAL(edit->e_para[0], inch_to_mm / scale, VUNITIZE_TOL);
+	fastf_t values[4] = {0};
+	passed = EDOBJ[ID_ARBN].ft_edit_get_params(edit,
+	    ECMD_ARBN_PLANE_SET_DIST, values) == 1 &&
+	    NEAR_EQUAL(values[0], inch_to_mm / scale, VUNITIZE_TOL) &&
+	    passed;
+	bu_log("arbn\tset distance\t%s\t%s\n", unit,
+	    passed ? "pass" : "fail");
+	if (!passed) {
+	    bu_log("distance=%g, input=%g, readback=%g, selection=%d, log=%s\n",
+		arbn->eqn[0][3], edit->e_para[0], values[0],
+		((struct rt_arbn_edit_local *)edit->ipe_ptr)->plane_index,
+		bu_vls_cstr(edit->log_str));
+	    ++failures;
+	}
+	rt_edit_set_edflag(edit, ECMD_ARBN_PLANE_SET_NORM);
+	edit->e_inpara = 3;
+	VSET(edit->e_para, 2, 0, 0);
+	passed = rt_edit_process(edit) == BRLCAD_OK &&
+	    same_planes(arbn, expected, ARBN_CUBE_PLANE_COUNT) &&
+	    NEAR_EQUAL(edit->e_para[0], 2, VUNITIZE_TOL);
+	bu_log("arbn\tset normal\t%s\t%s\n", unit,
+	    passed ? "pass" : "fail");
+	if (!passed)
+	    ++failures;
+
+	edit->e_inpara = 3;
+	VSETALL(edit->e_para, 0);
+	passed = rt_edit_process(edit) == BRLCAD_ERROR &&
+	    same_planes(arbn, expected, ARBN_CUBE_PLANE_COUNT);
+	bu_log("arbn\treject zero normal\t%s\t%s\n", unit,
+	    passed ? "pass" : "fail");
+	if (!passed)
+	    ++failures;
+
+	rt_edit_set_edflag(edit, ECMD_ARBN_PLANE_ROTATE);
+	edit->e_inpara = 3;
+	VSET(edit->e_para, 0, 0, 30);
+	expected[0][X] = sqrt(3.0) / 2;
+	expected[0][Y] = 0.5;
+	passed = rt_edit_process(edit) == BRLCAD_OK &&
+	    same_planes(arbn, expected, ARBN_CUBE_PLANE_COUNT) &&
+	    NEAR_EQUAL(edit->e_para[Z], 30, VUNITIZE_TOL);
+	bu_log("arbn\trotate normal\t%s\t%s\n", unit,
+	    passed ? "pass" : "fail");
+	if (!passed)
+	    ++failures;
+	edit->e_inpara = 2;
+	rejected = rt_edit_process(edit) == BRLCAD_ERROR &&
+	    same_planes(arbn, expected, ARBN_CUBE_PLANE_COUNT);
+	bu_log("arbn\treject short rotation\t%s\t%s\n", unit,
+	    rejected ? "pass" : "fail");
+	if (!rejected)
+	    ++failures;
+	rt_edit_destroy(edit);
+
+	edit = rt_edit_create(path, dbip, tol, NULL);
+	if (!edit) {
+	    bu_log("arbn\tadd/delete plane\t%s\tfail: edit creation\n", unit);
+	    ++failures;
+	    continue;
+	}
+	arbn = (struct rt_arbn_internal *)edit->es_int.idb_ptr;
+	const size_t original_count = arbn->neqn;
+	if (original_count != ARBN_CUBE_PLANE_COUNT) {
+	    bu_log("arbn\tadd/delete plane\t%s\tfail: fixture has %zu planes\n",
+		unit, original_count);
+	    ++failures;
+	    rt_edit_destroy(edit);
+	    continue;
+	}
+	for (size_t i = 0; i < original_count; ++i)
+	    HMOVE(expected[i], arbn->eqn[i]);
+	rt_edit_set_edflag(edit, ECMD_ARBN_PLANE_DEL);
+	edit->e_inpara = 0;
+	rejected = rt_edit_process(edit) == BRLCAD_ERROR &&
+	    same_planes(arbn, expected, original_count);
+	bu_log("arbn\treject delete without selection\t%s\t%s\n", unit,
+	    rejected ? "pass" : "fail");
+	if (!rejected)
+	    ++failures;
+	rt_edit_set_edflag(edit, ECMD_ARBN_PLANE_ADD);
+	edit->e_inpara = 4;
+	HSET(edit->e_para, 0, 0, 0, inch_to_mm / scale);
+	rejected = rt_edit_process(edit) == BRLCAD_ERROR &&
+	    same_planes(arbn, expected, original_count) &&
+	    ((struct rt_arbn_edit_local *)edit->ipe_ptr)->plane_index == -1;
+	bu_log("arbn\treject zero add normal\t%s\t%s\n", unit,
+	    rejected ? "pass" : "fail");
+	if (!rejected)
+	    ++failures;
+	edit->e_inpara = 4;
+	HSET(edit->e_para, 0, 0, 2, 2 * inch_to_mm / scale);
+	HSET(expected[original_count], 0, 0, 1, inch_to_mm);
+	passed = rt_edit_process(edit) == BRLCAD_OK &&
+	    same_planes(arbn, expected, original_count + 1);
+	if (passed) {
+	    const point_t expected_normal = {0, 0, 1};
+	    passed = VNEAR_EQUAL(arbn->eqn[original_count], expected_normal,
+		VUNITIZE_TOL) &&
+		NEAR_EQUAL(arbn->eqn[original_count][3], inch_to_mm,
+		    VUNITIZE_TOL) &&
+		NEAR_EQUAL(edit->e_para[3], 2 * inch_to_mm / scale,
+		    VUNITIZE_TOL) &&
+		((struct rt_arbn_edit_local *)edit->ipe_ptr)->plane_index ==
+		    (int)original_count;
+	}
+	bu_log("arbn\tadd plane\t%s\t%s\n", unit,
+	    passed ? "pass" : "fail");
+	if (!passed)
+	    ++failures;
+	if (arbn->neqn == original_count + 1) {
+	    rt_edit_set_edflag(edit, ECMD_ARBN_PLANE_DEL);
+	    edit->e_inpara = 0;
+	    bool deleted = rt_edit_process(edit) == BRLCAD_OK &&
+		same_planes(arbn, expected, original_count) &&
+		((struct rt_arbn_edit_local *)edit->ipe_ptr)->plane_index == -1;
+	    bu_log("arbn\tdelete plane\t%s\t%s\n", unit,
+		deleted ? "pass" : "fail");
+	    if (!deleted)
+		++failures;
+	}
+	rt_edit_destroy(edit);
+    }
+    return failures;
 }
 
+static int
+arbn_transform_matrix(struct db_i *dbip, struct db_full_path *path,
+		      struct bn_tol *tol, struct bview *view)
+{
+    const fastf_t inch_to_mm = 25.4;
+    const fastf_t scales[] = {1.0, inch_to_mm};
+    const struct {
+	int command;
+	const char *name;
+    } cases[] = {
+	{RT_PARAMS_EDIT_TRANS, "translate"},
+	{RT_PARAMS_EDIT_SCALE, "scale"},
+	{RT_PARAMS_EDIT_ROT, "rotate"}
+    };
+    int failures = 0;
+
+    view->gv_rotate_about = 'k';
+    for (fastf_t scale : scales) {
+	dbip->dbi_local2base = scale;
+	dbip->dbi_base2local = 1.0 / scale;
+	const char *unit = EQUAL(scale, 1.0) ? "mm" : "in";
+	for (const auto &test : cases) {
+	    struct rt_edit *edit = rt_edit_create(path, dbip, tol, view);
+	    if (!edit) {
+		bu_log("arbn\t%s\t%s\tfail: edit creation\n",
+		    test.name, unit);
+		++failures;
+		continue;
+	    }
+	    struct rt_arbn_internal *arbn =
+		(struct rt_arbn_internal *)edit->es_int.idb_ptr;
+	    if (arbn->neqn != ARBN_CUBE_PLANE_COUNT) {
+		bu_log("arbn\t%s\t%s\tfail: fixture has %zu planes\n",
+		    test.name, unit, arbn->neqn);
+		++failures;
+		rt_edit_destroy(edit);
+		continue;
+	    }
+	    plane_t expected[ARBN_CUBE_PLANE_COUNT];
+	    for (size_t i = 0; i < arbn->neqn; ++i)
+		HMOVE(expected[i], arbn->eqn[i]);
+	    point_t numeric_input = VINIT_ZERO;
+	    edit->mv_context = 1;
+	    VSETALL(edit->e_keypoint, 0);
+	    EDOBJ[ID_ARBN].ft_set_edit_mode(edit, test.command);
+	    switch (test.command) {
+		case RT_PARAMS_EDIT_TRANS: {
+		    const vect_t shift = {
+			inch_to_mm, inch_to_mm / 2, -inch_to_mm / 4
+		    };
+		    VSCALE(numeric_input, shift, 1.0 / scale);
+		    edit->e_inpara = 3;
+		    VMOVE(edit->e_para, numeric_input);
+		    for (size_t i = 0; i < arbn->neqn; ++i)
+			expected[i][W] += VDOT(expected[i], shift);
+		    break;
+		}
+		case RT_PARAMS_EDIT_SCALE:
+		    edit->e_inpara = 1;
+		    edit->e_para[0] = numeric_input[0] = 2.5;
+		    for (size_t i = 0; i < arbn->neqn; ++i)
+			expected[i][W] *= 2.5;
+		    break;
+		case RT_PARAMS_EDIT_ROT:
+		    edit->e_inpara = 3;
+		    VSET(numeric_input, 90, 0, 0);
+		    VMOVE(edit->e_para, numeric_input);
+		    for (size_t i = 0; i < arbn->neqn; ++i) {
+			const fastf_t y = expected[i][Y];
+			expected[i][Y] = -expected[i][Z];
+			expected[i][Z] = y;
+		    }
+		    break;
+	    }
+	    bool passed = rt_edit_process(edit) == BRLCAD_OK &&
+		same_planes(arbn, expected, ARBN_CUBE_PLANE_COUNT) &&
+		VNEAR_EQUAL(edit->e_para, numeric_input, VUNITIZE_TOL);
+	    bu_log("arbn\t%s\t%s\t%s\n", test.name, unit,
+		passed ? "pass" : "fail");
+	    if (!passed) {
+		bu_log("arbn transform result: %s\n",
+		    bu_vls_cstr(edit->log_str));
+		++failures;
+	    }
+	    rt_edit_destroy(edit);
+	}
+    }
+    return failures;
+}
 
 int
 rt_edit_test_arbn(void)
@@ -261,11 +545,13 @@ rt_edit_test_arbn(void)
 	bu_exit(1, "ERROR: get_params(SELECT): nv=%d vals[0]=%g\n", nv, vals[0]);
     bu_log("TEST 8 PASS: get_params(SELECT) returns plane_index=%g\n", vals[0]);
 
-    bu_log("All ARBN edit tests PASSED\n");
-
     rt_edit_destroy(s);
+    int failures = arbn_unit_matrix(dbip, &fp, &tol);
+    failures += arbn_transform_matrix(dbip, &fp, &tol, v);
     db_close(dbip);
-    return 0;
+    if (!failures)
+	bu_log("All ARBN edit tests PASSED\n");
+    return failures ? BRLCAD_ERROR : BRLCAD_OK;
 }
 
 // Local Variables:

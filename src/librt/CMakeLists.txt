@@ -342,6 +342,7 @@ set(
   primitives/edit_private.h
   primitives/fixpt.h
   primitives/metaball/metaball.h
+  primitives/part/part_private.h
   primitives/revolve/revolve.h
   primitives/rt_ecmd_scanner.cpp
   primitives/sph/benchmark.sh

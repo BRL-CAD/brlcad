@@ -37,6 +37,7 @@
 
 #include <math.h>
 #include <string.h>
+#include <vector>
 
 #include "vmath.h"
 #include "bu/log.h"
@@ -87,6 +88,774 @@ make_test_sketch(struct rt_wdb *wdbp)
     if (!dp)
 	bu_exit(1, "ERROR: failed to look up test_sketch\n");
     return dp;
+}
+
+struct sketch_expected {
+    std::vector<fastf_t> uv;
+    std::vector<int> lines;
+    int vertex;
+    int segment;
+};
+
+static const fastf_t sketch_inch_to_mm = 25.4;
+
+static struct sketch_expected
+sketch_initial_state(void)
+{
+    return {{0, 0, 10, 0, 10, 10, 0, 10}, {0, 1}, -1, -1};
+}
+
+static bool
+sketch_same_state(const struct rt_edit *edit, const struct sketch_expected *expected)
+{
+    const struct rt_sketch_internal *sketch =
+	(const struct rt_sketch_internal *)edit->es_int.idb_ptr;
+    const struct rt_sketch_edit *selection =
+	(const struct rt_sketch_edit *)edit->ipe_ptr;
+    const point_t origin = {0, 0, 0};
+    const vect_t u_axis = {1, 0, 0};
+    const vect_t v_axis = {0, 1, 0};
+    if (!selection || expected->uv.size() % 2 ||
+	expected->lines.size() % 2 ||
+	(sketch->vert_count && !sketch->verts) ||
+	(sketch->curve.count &&
+	 (!sketch->curve.segment || !sketch->curve.reverse)) ||
+	sketch->vert_count != expected->uv.size() / 2 ||
+	sketch->curve.count != expected->lines.size() / 2 ||
+	selection->curr_vert != expected->vertex ||
+	selection->curr_seg != expected->segment ||
+	!VNEAR_EQUAL(sketch->V, origin, VUNITIZE_TOL) ||
+	!VNEAR_EQUAL(sketch->u_vec, u_axis, VUNITIZE_TOL) ||
+	!VNEAR_EQUAL(sketch->v_vec, v_axis, VUNITIZE_TOL))
+	return false;
+    for (size_t i = 0; i < expected->uv.size(); ++i) {
+	if (!NEAR_EQUAL(sketch->verts[i / 2][i % 2], expected->uv[i],
+		VUNITIZE_TOL))
+	    return false;
+    }
+    for (size_t i = 0; i < sketch->curve.count; ++i) {
+	const struct line_seg *line =
+	    (const struct line_seg *)sketch->curve.segment[i];
+	if (!line || line->magic != CURVE_LSEG_MAGIC ||
+	    line->start != expected->lines[2 * i] ||
+	    line->end != expected->lines[2 * i + 1] ||
+	    sketch->curve.reverse[i])
+	    return false;
+    }
+    return true;
+}
+
+static bool
+sketch_initial_line_geometry(const struct rt_sketch_internal *sketch,
+			     size_t expected_segments,
+			     size_t expected_vertices)
+{
+    const struct sketch_expected initial = sketch_initial_state();
+    const point_t origin = {0, 0, 0};
+    const vect_t u_axis = {1, 0, 0};
+    const vect_t v_axis = {0, 1, 0};
+    if (!sketch->verts || !sketch->curve.segment ||
+	!sketch->curve.reverse ||
+	sketch->vert_count != expected_vertices ||
+	expected_vertices < initial.uv.size() / 2 ||
+	sketch->curve.count != expected_segments ||
+	!VNEAR_EQUAL(sketch->V, origin, VUNITIZE_TOL) ||
+	!VNEAR_EQUAL(sketch->u_vec, u_axis, VUNITIZE_TOL) ||
+	!VNEAR_EQUAL(sketch->v_vec, v_axis, VUNITIZE_TOL))
+	return false;
+    for (size_t i = 0; i < initial.uv.size(); ++i)
+	if (!NEAR_EQUAL(sketch->verts[i / 2][i % 2], initial.uv[i],
+		VUNITIZE_TOL))
+	    return false;
+    const struct line_seg *line =
+	(const struct line_seg *)sketch->curve.segment[0];
+    return line && line->magic == CURVE_LSEG_MAGIC &&
+	line->start == 0 && line->end == 1 &&
+	!sketch->curve.reverse[0];
+}
+
+static bool
+sketch_arc_state(const struct rt_edit *edit, fastf_t radius, int left)
+{
+    const struct rt_sketch_internal *sketch =
+	(const struct rt_sketch_internal *)edit->es_int.idb_ptr;
+    const struct rt_sketch_edit *selection =
+	(const struct rt_sketch_edit *)edit->ipe_ptr;
+    if (!selection || selection->curr_vert != -1 ||
+	selection->curr_seg != -1 || !sketch_initial_line_geometry(sketch, 2, 4))
+	return false;
+    const struct carc_seg *arc =
+	(const struct carc_seg *)sketch->curve.segment[1];
+    return arc && arc->magic == CURVE_CARC_MAGIC && arc->start == 1 &&
+	arc->end == 2 && NEAR_EQUAL(arc->radius, radius, VUNITIZE_TOL) &&
+	arc->center_is_left == left && arc->orientation == 0 &&
+	arc->center == -1 && !sketch->curve.reverse[1];
+}
+
+static bool
+sketch_nurb_state(const struct rt_edit *edit, const fastf_t *knots,
+		  const fastf_t *weights, int selected_segment)
+{
+    const struct rt_sketch_internal *sketch =
+	(const struct rt_sketch_internal *)edit->es_int.idb_ptr;
+    const struct rt_sketch_edit *selection =
+	(const struct rt_sketch_edit *)edit->ipe_ptr;
+    const int control_points[] = {0, 1, 2, 3};
+    const size_t control_point_count =
+	sizeof(control_points) / sizeof(control_points[0]);
+    if (!selection || selection->curr_vert != -1 ||
+	selection->curr_seg != selected_segment ||
+	!sketch_initial_line_geometry(sketch, 2, 4))
+	return false;
+    const struct nurb_seg *nurb =
+	(const struct nurb_seg *)sketch->curve.segment[1];
+    if (!nurb || nurb->magic != CURVE_NURB_MAGIC || nurb->order != 3 ||
+	nurb->c_size != (int)control_point_count ||
+	nurb->k.k_size != nurb->order + nurb->c_size ||
+	!nurb->ctl_points || !nurb->k.knots ||
+	sketch->curve.reverse[1] ||
+	(weights ? !nurb->weights || !RT_NURB_IS_PT_RATIONAL(nurb->pt_type)
+	    : nurb->weights || RT_NURB_IS_PT_RATIONAL(nurb->pt_type)))
+	return false;
+    for (size_t i = 0; i < control_point_count; ++i)
+	if (nurb->ctl_points[i] != control_points[i] ||
+	    (weights && !NEAR_EQUAL(nurb->weights[i], weights[i], VUNITIZE_TOL)))
+	    return false;
+    for (int i = 0; i < nurb->k.k_size; ++i)
+	if (!NEAR_EQUAL(nurb->k.knots[i], knots[i], VUNITIZE_TOL))
+	    return false;
+    return true;
+}
+
+static bool
+sketch_line_arc_state(const struct rt_edit *edit, fastf_t radius,
+		      int left, int orientation)
+{
+    const struct rt_sketch_internal *sketch =
+	(const struct rt_sketch_internal *)edit->es_int.idb_ptr;
+    const struct rt_sketch_edit *selection =
+	(const struct rt_sketch_edit *)edit->ipe_ptr;
+    if (!selection || selection->curr_vert != -1 ||
+	selection->curr_seg != -1 ||
+	!sketch_initial_line_geometry(sketch, 3, 4))
+	return false;
+    const struct line_seg *line =
+	(const struct line_seg *)sketch->curve.segment[1];
+    const struct carc_seg *arc =
+	(const struct carc_seg *)sketch->curve.segment[2];
+    return line && arc && line->magic == CURVE_LSEG_MAGIC &&
+	line->start == 2 && line->end == 3 &&
+	arc->magic == CURVE_CARC_MAGIC && arc->start == 1 &&
+	arc->end == 2 && NEAR_EQUAL(arc->radius, radius, VUNITIZE_TOL) &&
+	arc->center_is_left == left && arc->orientation == orientation &&
+	arc->center == -1 && !sketch->curve.reverse[1] &&
+	!sketch->curve.reverse[2];
+}
+
+static bool
+sketch_first_arc_geometry(const struct rt_sketch_internal *sketch,
+			  size_t segment_count)
+{
+    if (!sketch_initial_line_geometry(sketch, segment_count, 4))
+	return false;
+    const struct carc_seg *arc =
+	(const struct carc_seg *)sketch->curve.segment[1];
+    return arc && arc->magic == CURVE_CARC_MAGIC &&
+	arc->start == 2 && arc->end == 3 &&
+	NEAR_EQUAL(arc->radius, 8, VUNITIZE_TOL) &&
+	arc->center_is_left == 1 && arc->orientation == 0 &&
+	arc->center == -1 && !sketch->curve.reverse[1];
+}
+
+static bool
+sketch_two_arc_state(const struct rt_edit *edit, bool target_present,
+		     fastf_t radius, int left, int orientation)
+{
+    const struct rt_sketch_internal *sketch =
+	(const struct rt_sketch_internal *)edit->es_int.idb_ptr;
+    const struct rt_sketch_edit *selection =
+	(const struct rt_sketch_edit *)edit->ipe_ptr;
+    if (!selection || selection->curr_vert != -1 ||
+	selection->curr_seg != -1 ||
+	!sketch_first_arc_geometry(sketch, target_present ? 3 : 2))
+	return false;
+    if (!target_present)
+	return true;
+    const struct carc_seg *arc =
+	(const struct carc_seg *)sketch->curve.segment[2];
+    return arc && arc->magic == CURVE_CARC_MAGIC &&
+	arc->start == 1 && arc->end == 2 &&
+	NEAR_EQUAL(arc->radius, radius, VUNITIZE_TOL) &&
+	arc->center_is_left == left && arc->orientation == orientation &&
+	arc->center == -1 && !sketch->curve.reverse[2];
+}
+
+static bool
+sketch_split_arc_state(const struct rt_edit *edit)
+{
+    const struct rt_sketch_internal *sketch =
+	(const struct rt_sketch_internal *)edit->es_int.idb_ptr;
+    const struct rt_sketch_edit *selection =
+	(const struct rt_sketch_edit *)edit->ipe_ptr;
+    /* The radius-8 arc has a half-chord of 5 and center at 10-sqrt(39). */
+    const fastf_t split_u = 18.0 - sqrt(39.0);
+    if (!selection || selection->curr_vert != -1 ||
+	selection->curr_seg != -1 ||
+	!sketch_initial_line_geometry(sketch, 3, 5) ||
+	!NEAR_EQUAL(sketch->verts[4][0], split_u, VUNITIZE_TOL) ||
+	!NEAR_EQUAL(sketch->verts[4][1], 5.0, VUNITIZE_TOL))
+	return false;
+    const struct carc_seg *first =
+	(const struct carc_seg *)sketch->curve.segment[1];
+    const struct carc_seg *second =
+	(const struct carc_seg *)sketch->curve.segment[2];
+    return first && second && first->magic == CURVE_CARC_MAGIC &&
+	second->magic == CURVE_CARC_MAGIC &&
+	first->start == 1 && first->end == 4 &&
+	second->start == 4 && second->end == 2 &&
+	NEAR_EQUAL(first->radius, 8, VUNITIZE_TOL) &&
+	NEAR_EQUAL(second->radius, 8, VUNITIZE_TOL) &&
+	first->center_is_left == 1 && second->center_is_left == 1 &&
+	first->orientation == 0 && second->orientation == 0 &&
+	first->center == -1 && second->center == -1 &&
+	!sketch->curve.reverse[1] && !sketch->curve.reverse[2];
+}
+
+template <typename StateCheck>
+static int
+sketch_step(struct rt_edit *edit, const char *unit, const char *name,
+	    int command, const fastf_t *params, int count,
+	    StateCheck state_check, bool reject)
+{
+    if (count < 0 || count > RT_EDIT_MAXPARA || (count && !params))
+	return 1;
+    rt_edit_set_edflag(edit, command);
+    edit->e_inpara = count;
+    for (int i = 0; i < count; ++i)
+	edit->e_para[i] = params[i];
+    int result = rt_edit_process(edit);
+    bool ok = (reject ? result != BRLCAD_OK : result == BRLCAD_OK) &&
+	state_check(edit);
+    bu_log("sketch\t%s\t%s\t%s\n", name, unit, ok ? "pass" : "fail");
+    if (!ok)
+	bu_log("sketch %s returned %d: %s\n", name, result,
+		bu_vls_cstr(edit->log_str));
+    return ok ? 0 : 1;
+}
+
+static int
+sketch_matrix_step(struct rt_edit *edit, const char *unit, const char *name,
+		   int command, const fastf_t *params, int count,
+		   const struct sketch_expected *expected, bool reject = false)
+{
+    return sketch_step(edit, unit, name, command, params, count,
+	[expected](const struct rt_edit *e) {
+	    return sketch_same_state(e, expected);
+	}, reject);
+}
+
+static int
+sketch_arc_step(struct rt_edit *edit, const char *unit, const char *name,
+		int command, const fastf_t *params, int count,
+		fastf_t radius, int left, bool reject = false)
+{
+    return sketch_step(edit, unit, name, command, params, count,
+	[radius, left](const struct rt_edit *e) {
+	    return sketch_arc_state(e, radius, left);
+	}, reject);
+}
+
+static int
+sketch_nurb_step(struct rt_edit *edit, const char *unit, const char *name,
+		 int command, const fastf_t *params, int count,
+		 const fastf_t *knots, const fastf_t *weights,
+		 int selected_segment, bool reject = false)
+{
+    return sketch_step(edit, unit, name, command, params, count,
+	[knots, weights, selected_segment](const struct rt_edit *e) {
+	    return sketch_nurb_state(e, knots, weights, selected_segment);
+	}, reject);
+}
+
+static int
+sketch_line_arc_step(struct rt_edit *edit, const char *unit, const char *name,
+		     int command, const fastf_t *params, int count,
+		     fastf_t radius, int left, int orientation,
+		     bool reject = false)
+{
+    return sketch_step(edit, unit, name, command, params, count,
+	[radius, left, orientation](const struct rt_edit *e) {
+	    return sketch_line_arc_state(e, radius, left, orientation);
+	}, reject);
+}
+
+static int
+sketch_two_arc_step(struct rt_edit *edit, const char *unit, const char *name,
+		    int command, const fastf_t *params, int count,
+		    bool target_present, fastf_t radius, int left,
+		    int orientation, bool reject = false)
+{
+    return sketch_step(edit, unit, name, command, params, count,
+	[target_present, radius, left, orientation](const struct rt_edit *e) {
+	    return sketch_two_arc_state(e, target_present, radius,
+		left, orientation);
+	}, reject);
+}
+
+static int
+sketch_check_descriptors(void)
+{
+    const struct rt_edit_prim_desc *desc = EDOBJ[ID_SKETCH].ft_edit_desc();
+    const struct {
+	int command;
+	int count;
+	int types[2];
+    } expected[] = {
+	{ECMD_SKETCH_MOVE_VERTEX, 2,
+	    {RT_EDIT_PARAM_SCALAR, RT_EDIT_PARAM_SCALAR}},
+	{ECMD_SKETCH_MOVE_SEGMENT, 2,
+	    {RT_EDIT_PARAM_SCALAR, RT_EDIT_PARAM_SCALAR}},
+	{ECMD_SKETCH_APPEND_LINE, 2,
+	    {RT_EDIT_PARAM_INTEGER, RT_EDIT_PARAM_INTEGER}},
+	{ECMD_SKETCH_DELETE_VERTEX, 1, {RT_EDIT_PARAM_INTEGER, 0}},
+	{ECMD_SKETCH_DELETE_SEGMENT, 1, {RT_EDIT_PARAM_INTEGER, 0}},
+	{ECMD_SKETCH_SPLIT_SEGMENT, 2,
+	    {RT_EDIT_PARAM_INTEGER, RT_EDIT_PARAM_SCALAR}}
+    };
+    if (!desc)
+	return 1;
+    for (const auto &entry : expected) {
+	const struct rt_edit_cmd_desc *command = NULL;
+	for (int i = 0; i < desc->ncmd; ++i) {
+	    if (desc->cmds[i].cmd_id == entry.command) {
+		command = &desc->cmds[i];
+		break;
+	    }
+	}
+	if (!command || command->nparam != entry.count || !command->params) {
+	    bu_log("sketch descriptor %d has wrong arity\n", entry.command);
+	    return 1;
+	}
+	for (int i = 0; i < entry.count; ++i) {
+	    if (command->params[i].index != i ||
+		command->params[i].type != entry.types[i]) {
+		bu_log("sketch descriptor %d misstates parameter %d\n",
+		    entry.command, i);
+		return 1;
+	    }
+	}
+    }
+    bu_log("sketch\tdescriptors\tpass\n");
+    return 0;
+}
+
+static int
+sketch_check_unit(fastf_t local2base, const char *unit)
+{
+    struct db_i *dbip = db_open_inmem();
+    if (dbip == DBI_NULL)
+	return 1;
+    dbip->dbi_local2base = local2base;
+    dbip->dbi_base2local = 1.0 / local2base;
+    struct rt_wdb *wdbp = wdb_dbopen(dbip, RT_WDB_TYPE_DB_INMEM);
+    if (!wdbp) {
+	db_close(dbip);
+	return 1;
+    }
+    struct directory *dp = make_test_sketch(wdbp);
+    struct db_full_path path;
+    db_full_path_init(&path);
+    db_add_node_to_full_path(&path, dp);
+    struct bn_tol tol = BN_TOL_INIT_TOL;
+    int failures = 0;
+    struct sketch_expected expected = sketch_initial_state();
+    const fastf_t vertex[] = {2};
+    const fastf_t move[] = {sketch_inch_to_mm / local2base,
+	2 * sketch_inch_to_mm / local2base};
+    const fastf_t add[] = {0, sketch_inch_to_mm / local2base};
+    const fastf_t move_segment[] = {sketch_inch_to_mm / local2base, 0};
+    const fastf_t move_list[] = {0, sketch_inch_to_mm / local2base, 0, 2};
+    const fastf_t invalid_list[] = {0, sketch_inch_to_mm / local2base, 0, 99};
+    const fastf_t fractional_list[] = {0, sketch_inch_to_mm / local2base,
+	0, 0.5};
+    const fastf_t append[] = {0, 3};
+    const fastf_t used[] = {0};
+    const fastf_t split[] = {0, 0.25};
+    const fastf_t bad_split_t[] = {0, NAN};
+    const fastf_t bad_split_index[] = {0.5, 0.25};
+    const fastf_t bad_move[] = {NAN, 0};
+    const fastf_t bad_delta[] = {NAN, 0};
+    const fastf_t bad_add[] = {0, NAN};
+    const fastf_t first_segment[] = {0};
+    const fastf_t fractional_vertex[] = {0.5};
+    const fastf_t segment[] = {0};
+    const fastf_t fractional_line[] = {0.5, 3};
+    struct rt_edit *edit = rt_edit_create(&path, dbip, &tol, NULL);
+    if (!edit) {
+	failures = 1;
+	goto done;
+    }
+    expected.vertex = 2;
+    failures += sketch_matrix_step(edit, unit, "pick vertex", ECMD_SKETCH_PICK_VERTEX,
+	vertex, 1, &expected);
+    expected.uv[4] = sketch_inch_to_mm;
+    expected.uv[5] = 2 * sketch_inch_to_mm;
+    failures += sketch_matrix_step(edit, unit, "move vertex", ECMD_SKETCH_MOVE_VERTEX,
+	move, 2, &expected);
+    expected.uv.insert(expected.uv.end(), {0, sketch_inch_to_mm});
+    expected.vertex = 4;
+    failures += sketch_matrix_step(edit, unit, "add vertex", ECMD_SKETCH_ADD_VERTEX,
+	add, 2, &expected);
+    failures += sketch_matrix_step(edit, unit, "reject nonfinite vertex move",
+	ECMD_SKETCH_MOVE_VERTEX, bad_move, 2, &expected, true);
+    failures += sketch_matrix_step(edit, unit, "reject nonfinite vertex add",
+	ECMD_SKETCH_ADD_VERTEX, bad_add, 2, &expected, true);
+    expected.segment = 0;
+    failures += sketch_matrix_step(edit, unit, "pick segment",
+	ECMD_SKETCH_PICK_SEGMENT, first_segment, 1, &expected);
+    expected.uv[0] += sketch_inch_to_mm;
+    expected.uv[2] += sketch_inch_to_mm;
+    failures += sketch_matrix_step(edit, unit, "move segment",
+	ECMD_SKETCH_MOVE_SEGMENT, move_segment, 2, &expected);
+    failures += sketch_matrix_step(edit, unit, "reject nonfinite segment move",
+	ECMD_SKETCH_MOVE_SEGMENT, bad_delta, 2, &expected, true);
+    expected.uv[1] += sketch_inch_to_mm;
+    expected.uv[5] += sketch_inch_to_mm;
+    failures += sketch_matrix_step(edit, unit, "move vertex list",
+	ECMD_SKETCH_MOVE_VERTEX_LIST, move_list, 4, &expected);
+    failures += sketch_matrix_step(edit, unit, "reject invalid vertex list",
+	ECMD_SKETCH_MOVE_VERTEX_LIST, invalid_list, 4, &expected, true);
+    failures += sketch_matrix_step(edit, unit, "reject fractional vertex list",
+	ECMD_SKETCH_MOVE_VERTEX_LIST, fractional_list, 4, &expected, true);
+    rt_edit_destroy(edit);
+
+    edit = rt_edit_create(&path, dbip, &tol, NULL);
+    if (!edit) {
+	++failures;
+	goto done;
+    }
+    expected = sketch_initial_state();
+    expected.lines.insert(expected.lines.end(), {0, 3});
+    failures += sketch_matrix_step(edit, unit, "append line", ECMD_SKETCH_APPEND_LINE,
+	append, 2, &expected);
+    expected.vertex = 2;
+    failures += sketch_matrix_step(edit, unit, "pick unused vertex",
+	ECMD_SKETCH_PICK_VERTEX, vertex, 1, &expected);
+    expected.vertex = -1;
+    expected.uv.erase(expected.uv.begin() + 4, expected.uv.begin() + 6);
+    expected.lines[3] = 2;
+    failures += sketch_matrix_step(edit, unit, "delete unused vertex",
+	ECMD_SKETCH_DELETE_VERTEX, NULL, 0, &expected);
+    expected.vertex = 0;
+    failures += sketch_matrix_step(edit, unit, "pick used vertex",
+	ECMD_SKETCH_PICK_VERTEX, used, 1, &expected);
+    failures += sketch_matrix_step(edit, unit, "reject used vertex deletion",
+	ECMD_SKETCH_DELETE_VERTEX, NULL, 0, &expected, true);
+    rt_edit_destroy(edit);
+
+    edit = rt_edit_create(&path, dbip, &tol, NULL);
+    if (!edit) {
+	++failures;
+	goto done;
+    }
+    expected = sketch_initial_state();
+    expected.uv.erase(expected.uv.begin() + 4, expected.uv.begin() + 6);
+    failures += sketch_matrix_step(edit, unit, "delete vertex by index",
+	ECMD_SKETCH_DELETE_VERTEX, vertex, 1, &expected);
+    rt_edit_destroy(edit);
+
+    edit = rt_edit_create(&path, dbip, &tol, NULL);
+    if (!edit) {
+	++failures;
+	goto done;
+    }
+    expected = sketch_initial_state();
+    expected.lines.clear();
+    failures += sketch_matrix_step(edit, unit, "delete segment by index",
+	ECMD_SKETCH_DELETE_SEGMENT, segment, 1, &expected);
+    rt_edit_destroy(edit);
+
+    edit = rt_edit_create(&path, dbip, &tol, NULL);
+    if (!edit) {
+	++failures;
+	goto done;
+    }
+    expected = sketch_initial_state();
+    expected.uv.insert(expected.uv.end(), {2.5, 0});
+    expected.lines = {0, 4, 4, 1};
+    failures += sketch_matrix_step(edit, unit, "split line", ECMD_SKETCH_SPLIT_SEGMENT,
+	split, 2, &expected);
+    rt_edit_destroy(edit);
+
+    edit = rt_edit_create(&path, dbip, &tol, NULL);
+    if (!edit) {
+	++failures;
+	goto done;
+    }
+    expected = sketch_initial_state();
+    failures += sketch_matrix_step(edit, unit, "reject fractional vertex",
+	ECMD_SKETCH_PICK_VERTEX, fractional_vertex, 1, &expected, true);
+    rt_edit_destroy(edit);
+
+    edit = rt_edit_create(&path, dbip, &tol, NULL);
+    if (!edit) {
+	++failures;
+	goto done;
+    }
+    failures += sketch_matrix_step(edit, unit, "reject fractional line",
+	ECMD_SKETCH_APPEND_LINE, fractional_line, 2, &expected, true);
+    rt_edit_destroy(edit);
+
+    edit = rt_edit_create(&path, dbip, &tol, NULL);
+    if (!edit) {
+	++failures;
+	goto done;
+    }
+    expected = sketch_initial_state();
+    failures += sketch_matrix_step(edit, unit, "reject nonfinite split",
+	ECMD_SKETCH_SPLIT_SEGMENT, bad_split_t, 2, &expected, true);
+    rt_edit_destroy(edit);
+
+    edit = rt_edit_create(&path, dbip, &tol, NULL);
+    if (!edit) {
+	++failures;
+	goto done;
+    }
+    failures += sketch_matrix_step(edit, unit, "reject fractional segment",
+	ECMD_SKETCH_SPLIT_SEGMENT, bad_split_index, 2, &expected, true);
+    rt_edit_destroy(edit);
+
+    edit = rt_edit_create(&path, dbip, &tol, NULL);
+    if (!edit) {
+	++failures;
+	goto done;
+    }
+    {
+	/* Exceed the former fixed segment buffer and repeat one control point. */
+	const int control_point_count = 65;
+	struct rt_sketch_internal *sketch =
+	    (struct rt_sketch_internal *)edit->es_int.idb_ptr;
+	struct bezier_seg *bezier;
+	BU_ALLOC(bezier, struct bezier_seg);
+	bezier->magic = CURVE_BEZIER_MAGIC;
+	bezier->degree = control_point_count - 1;
+	bezier->ctl_points = (int *)bu_calloc(control_point_count, sizeof(int),
+	    "sketch repeated Bezier control points");
+	bu_free(sketch->curve.segment[0], "sketch line segment");
+	sketch->curve.segment[0] = bezier;
+	rt_edit_set_edflag(edit, ECMD_SKETCH_PICK_SEGMENT);
+	edit->e_inpara = 1;
+	edit->e_para[0] = 0;
+	int picked = rt_edit_process(edit);
+	rt_edit_set_edflag(edit, ECMD_SKETCH_MOVE_SEGMENT);
+	edit->e_inpara = 2;
+	edit->e_para[0] = sketch_inch_to_mm / local2base;
+	edit->e_para[1] = 0;
+	int moved = picked == BRLCAD_OK ? rt_edit_process(edit) : BRLCAD_ERROR;
+	rt_edit_set_edflag(edit, ECMD_SKETCH_SPLIT_SEGMENT);
+	edit->e_inpara = 2;
+	edit->e_para[0] = 0;
+	edit->e_para[1] = 0.5;
+	int split_result = moved == BRLCAD_OK ? rt_edit_process(edit) : BRLCAD_OK;
+	const struct sketch_expected initial = sketch_initial_state();
+	bool ok = picked == BRLCAD_OK && moved == BRLCAD_OK &&
+	    split_result != BRLCAD_OK &&
+	    sketch->vert_count == 4 && sketch->curve.count == 1 &&
+	    sketch->curve.segment[0] == bezier &&
+	    bezier->degree == control_point_count - 1 &&
+	    NEAR_EQUAL(sketch->verts[0][0], sketch_inch_to_mm, VUNITIZE_TOL) &&
+	    NEAR_EQUAL(sketch->verts[0][1], 0, VUNITIZE_TOL);
+	for (int i = 1; ok && i < 4; ++i) {
+	    ok = NEAR_EQUAL(sketch->verts[i][0], initial.uv[2 * i],
+		VUNITIZE_TOL) &&
+		NEAR_EQUAL(sketch->verts[i][1], initial.uv[2 * i + 1],
+		    VUNITIZE_TOL);
+	}
+	for (int i = 0; ok && i < control_point_count; ++i)
+	    ok = bezier->ctl_points[i] == 0;
+	bu_log("sketch\tmove repeated high-degree segment\t%s\t%s\n",
+	    unit, ok ? "pass" : "fail");
+	failures += ok ? 0 : 1;
+    }
+    rt_edit_destroy(edit);
+
+    edit = rt_edit_create(&path, dbip, &tol, NULL);
+    if (!edit) {
+	++failures;
+	goto done;
+    }
+    {
+	const fastf_t arc[] = {1, 2, sketch_inch_to_mm / local2base, 1, 0};
+	const fastf_t bad_index[] = {1.5, 2,
+	    sketch_inch_to_mm / local2base, 1, 0};
+	const fastf_t bad_arc_radius[] = {1, 2, NAN, 1, 0};
+	const fastf_t bad_bezier_index[] = {0, 1.5, 2};
+	const fastf_t bad_nurb_order[] = {NAN, 0, 1, 2};
+	const fastf_t bad_nurb_index[] = {3, 0, 1.5, 2};
+	const fastf_t new_radius[] = {1, 2 * sketch_inch_to_mm / local2base};
+	const fastf_t bad_new_radius[] = {1, NAN};
+	const fastf_t arc_index[] = {1};
+	expected = sketch_initial_state();
+	failures += sketch_matrix_step(edit, unit, "reject fractional arc vertex",
+	    ECMD_SKETCH_APPEND_ARC, bad_index, 5, &expected, true);
+	failures += sketch_matrix_step(edit, unit, "reject nonfinite arc radius",
+	    ECMD_SKETCH_APPEND_ARC, bad_arc_radius, 5, &expected, true);
+	failures += sketch_matrix_step(edit, unit, "reject fractional Bezier vertex",
+	    ECMD_SKETCH_APPEND_BEZIER, bad_bezier_index, 3, &expected, true);
+	failures += sketch_matrix_step(edit, unit, "reject nonfinite NURB order",
+	    ECMD_SKETCH_APPEND_NURB, bad_nurb_order, 4, &expected, true);
+	failures += sketch_matrix_step(edit, unit, "reject fractional NURB vertex",
+	    ECMD_SKETCH_APPEND_NURB, bad_nurb_index, 4, &expected, true);
+	failures += sketch_arc_step(edit, unit, "append arc",
+	    ECMD_SKETCH_APPEND_ARC, arc, 5, sketch_inch_to_mm, 1);
+	failures += sketch_arc_step(edit, unit, "set arc radius",
+	    ECMD_SKETCH_SET_ARC_RADIUS, new_radius, 2,
+	    2 * sketch_inch_to_mm, 1);
+	failures += sketch_arc_step(edit, unit, "reject nonfinite arc update",
+	    ECMD_SKETCH_SET_ARC_RADIUS, bad_new_radius, 2,
+	    2 * sketch_inch_to_mm, 1, true);
+	failures += sketch_arc_step(edit, unit, "toggle arc side",
+	    ECMD_SKETCH_TOGGLE_ARC_ORIENT, arc_index, 1,
+	    2 * sketch_inch_to_mm, 0);
+    }
+    rt_edit_destroy(edit);
+
+    edit = rt_edit_create(&path, dbip, &tol, NULL);
+    if (!edit) {
+	++failures;
+	goto done;
+    }
+    {
+	const fastf_t append_nurb[] = {3, 0, 1, 2, 3};
+	const fastf_t initial_knots[] = {0, 0, 0, 1, 2, 2, 2};
+	const fastf_t edited_knots[] = {0, 0, 0, 1, 3, 3, 3};
+	const fastf_t select_nurb[] = {1};
+	const fastf_t bad_kv[] = {7, 0, 0, 0, 1, NAN, 3, 3};
+	const fastf_t edited_kv[] = {7, 0, 0, 0, 1, 3, 3, 3};
+	const fastf_t bad_weights[] = {1, 4, 1, NAN, 1, 1};
+	const fastf_t edited_weights[] = {1, 4, 1, 2, 3, 4};
+	failures += sketch_nurb_step(edit, unit, "append NURB",
+	    ECMD_SKETCH_APPEND_NURB, append_nurb, 5,
+	    initial_knots, NULL, -1);
+	failures += sketch_nurb_step(edit, unit, "pick NURB",
+	    ECMD_SKETCH_PICK_SEGMENT, select_nurb, 1,
+	    initial_knots, NULL, 1);
+	failures += sketch_nurb_step(edit, unit, "reject nonfinite knots",
+	    ECMD_SKETCH_NURB_EDIT_KV, bad_kv, 8,
+	    initial_knots, NULL, 1, true);
+	failures += sketch_nurb_step(edit, unit, "edit NURB knots",
+	    ECMD_SKETCH_NURB_EDIT_KV, edited_kv, 8,
+	    edited_knots, NULL, 1);
+	failures += sketch_nurb_step(edit, unit, "reject nonfinite weight",
+	    ECMD_SKETCH_NURB_EDIT_WEIGHTS, bad_weights, 6,
+	    edited_knots, NULL, 1, true);
+	failures += sketch_nurb_step(edit, unit, "edit NURB weights",
+	    ECMD_SKETCH_NURB_EDIT_WEIGHTS, edited_weights, 6,
+	    edited_knots, edited_weights + 2, 1);
+    }
+    rt_edit_destroy(edit);
+
+    edit = rt_edit_create(&path, dbip, &tol, NULL);
+    if (!edit) {
+	++failures;
+	goto done;
+    }
+    {
+	const fastf_t append_line[] = {2, 3};
+	const fastf_t append_arc[] = {1, 2, 8.0 / local2base, 1, 0};
+	const fastf_t tangent[] = {2, 1, 0};
+	const fastf_t bad_angle[] = {2, 1, NAN};
+	const fastf_t same_segment[] = {2, 2, 0};
+	expected = sketch_initial_state();
+	expected.lines.insert(expected.lines.end(), {2, 3});
+	failures += sketch_matrix_step(edit, unit, "append tangent line",
+	    ECMD_SKETCH_APPEND_LINE, append_line, 2, &expected);
+	failures += sketch_line_arc_step(edit, unit, "append tangent arc",
+	    ECMD_SKETCH_APPEND_ARC, append_arc, 5, 8, 1, 0);
+	failures += sketch_line_arc_step(edit, unit, "set line-arc tangency",
+	    ECMD_SKETCH_SET_TANGENCY, tangent, 3, 5, 0, 1);
+	failures += sketch_line_arc_step(edit, unit, "reject nonfinite tangency",
+	    ECMD_SKETCH_SET_TANGENCY, bad_angle, 3, 5, 0, 1, true);
+	failures += sketch_line_arc_step(edit, unit, "reject self tangency",
+	    ECMD_SKETCH_SET_TANGENCY, same_segment, 3, 5, 0, 1, true);
+    }
+    rt_edit_destroy(edit);
+
+    edit = rt_edit_create(&path, dbip, &tol, NULL);
+    if (!edit) {
+	++failures;
+	goto done;
+    }
+    {
+	const fastf_t adjacent_arc[] = {2, 3, 8.0 / local2base, 1, 0};
+	const fastf_t target_arc[] = {1, 2, 8.0 / local2base, 1, 0};
+	const fastf_t tangent[] = {2, 1, 0};
+	/* The adjacent arc's tangent has X component sqrt(39)/8. */
+	const fastf_t tangent_radius = 40.0 / sqrt(39.0);
+	failures += sketch_two_arc_step(edit, unit, "append adjacent arc",
+	    ECMD_SKETCH_APPEND_ARC, adjacent_arc, 5, false, 0, 0, 0);
+	failures += sketch_two_arc_step(edit, unit, "append target arc",
+	    ECMD_SKETCH_APPEND_ARC, target_arc, 5, true, 8, 1, 0);
+	failures += sketch_two_arc_step(edit, unit, "set arc-arc tangency",
+	    ECMD_SKETCH_SET_TANGENCY, tangent, 3, true,
+	    tangent_radius, 1, 0);
+    }
+    rt_edit_destroy(edit);
+
+    edit = rt_edit_create(&path, dbip, &tol, NULL);
+    if (!edit) {
+	++failures;
+	goto done;
+    }
+    {
+	const fastf_t append_arc[] = {1, 2, 8.0 / local2base, 1, 0};
+	const fastf_t split_arc[] = {1, 0.5};
+	failures += sketch_arc_step(edit, unit, "append splittable arc",
+	    ECMD_SKETCH_APPEND_ARC, append_arc, 5, 8, 1);
+	failures += sketch_step(edit, unit, "split arc",
+	    ECMD_SKETCH_SPLIT_SEGMENT, split_arc, 2,
+	    [](const struct rt_edit *e) { return sketch_split_arc_state(e); },
+	    false);
+    }
+    rt_edit_destroy(edit);
+
+    {
+	const struct {
+	fastf_t radius;
+	const char *name;
+	} unsplittable[] = {
+	    {-8, "reject full-circle split"},
+	    {4, "reject undersized arc split"}
+	};
+	for (const auto &case_to_check : unsplittable) {
+	    edit = rt_edit_create(&path, dbip, &tol, NULL);
+	    if (!edit) {
+		++failures;
+		goto done;
+	    }
+	    const fastf_t append_arc[] = {1, 2,
+		case_to_check.radius / local2base, 1, 0};
+	    const fastf_t split_arc[] = {1, 0.5};
+	    failures += sketch_arc_step(edit, unit, "append unsplittable arc",
+		ECMD_SKETCH_APPEND_ARC, append_arc, 5, case_to_check.radius, 1);
+	    failures += sketch_arc_step(edit, unit, case_to_check.name,
+		ECMD_SKETCH_SPLIT_SEGMENT, split_arc, 2,
+		case_to_check.radius, 1, true);
+	    rt_edit_destroy(edit);
+	}
+    }
+
+done:
+    db_free_full_path(&path);
+    db_close(dbip);
+    return failures;
+}
+
+static int
+sketch_operation_matrix(void)
+{
+    return sketch_check_descriptors() + sketch_check_unit(1.0, "mm") +
+	sketch_check_unit(sketch_inch_to_mm, "in");
 }
 
 
@@ -1021,8 +1790,10 @@ rt_edit_test_sketch(void)
 	!NEAR_EQUAL(skt->verts[old_vert_count][1], 50.8, VUNITIZE_TOL))
 	bu_exit(1, "ERROR: sketch add vertex did not convert local units\n");
     rt_edit_destroy(s);
+    db_free_full_path(&fp);
+    bv_free(v);
     db_close(dbip);
-    return 0;
+    return sketch_operation_matrix() ? BRLCAD_ERROR : BRLCAD_OK;
 }
 
 // Local Variables:

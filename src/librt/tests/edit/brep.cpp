@@ -361,6 +361,49 @@ test_brep_nonfinite_cv_input(struct rt_edit *s)
     }
 }
 
+static void
+test_brep_stale_selection(struct rt_edit *s)
+{
+    struct rt_brep_internal *bip = (struct rt_brep_internal *)s->es_int.idb_ptr;
+    struct rt_brep_edit_local *selection = (struct rt_brep_edit_local *)s->ipe_ptr;
+    EDOBJ[ID_BREP].ft_set_edit_mode(s, ECMD_BREP_SRF_SELECT);
+    s->e_inpara = 3;
+    VSET(s->e_para, 0.0, 0.0, 0.0);
+    if (rt_edit_process(s) != BRLCAD_OK)
+	bu_exit(1, "ERROR: could not select BREP CV for stale-selection test\n");
+
+    double x, y, z;
+    get_cv_pos(s, 0, 0, 0, &x, &y, &z);
+    /* Model a topology change that invalidates the selected face. */
+    selection->face_index = bip->brep->m_F.Count();
+    fastf_t vals[3] = {0.0, 0.0, 0.0};
+    if (EDOBJ[ID_BREP].ft_edit_get_params(s, ECMD_BREP_SRF_CV_SET, vals) != 0)
+	bu_exit(1, "ERROR: stale BREP selection returned CV parameters\n");
+
+    const int modes[] = {ECMD_BREP_SRF_CV_MOVE, ECMD_BREP_SRF_CV_SET};
+    for (size_t i = 0; i < sizeof(modes) / sizeof(modes[0]); i++) {
+	EDOBJ[ID_BREP].ft_set_edit_mode(s, modes[i]);
+	s->e_inpara = 3;
+	VSET(s->e_para, 1.0, 2.0, 3.0);
+	if (rt_edit_process(s) != BRLCAD_ERROR)
+	    bu_exit(1, "ERROR: BREP mode %d accepted a stale selection\n",
+		    modes[i]);
+	double new_x, new_y, new_z;
+	get_cv_pos(s, 0, 0, 0, &new_x, &new_y, &new_z);
+	if (!NEAR_EQUAL(new_x, x, VUNITIZE_TOL) ||
+	    !NEAR_EQUAL(new_y, y, VUNITIZE_TOL) ||
+	    !NEAR_EQUAL(new_z, z, VUNITIZE_TOL))
+	    bu_exit(1, "ERROR: BREP mode %d changed geometry on failure\n",
+		    modes[i]);
+    }
+
+    vect_t mousevec = VINIT_ZERO;
+    if (EDOBJ[ID_BREP].ft_edit_xy(s, mousevec) != BRLCAD_ERROR ||
+	s->e_mvalid)
+	bu_exit(1, "ERROR: BREP mouse CV edit accepted a stale selection\n");
+    selection->face_index = -1;
+}
+
 /* 6. MOVE rejected when no CV is selected */
 static void
 test_brep_cv_move_no_selection(struct rt_edit *s)
@@ -612,6 +655,7 @@ rt_edit_test_brep(void)
     test_brep_cv_move(s);
     test_brep_cv_set(s);
     test_brep_nonfinite_cv_input(s);
+    test_brep_stale_selection(s);
     test_brep_cv_move_no_selection(s);
     test_brep_get_params_select(s);
     test_brep_rational_cv_local_units(s);

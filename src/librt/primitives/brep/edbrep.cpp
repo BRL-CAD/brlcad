@@ -130,6 +130,22 @@ brep_finite3(fastf_t x, fastf_t y, fastf_t z)
     return std::isfinite(x) && std::isfinite(y) && std::isfinite(z);
 }
 
+static ON_BrepFace *
+brep_selected_face(struct rt_edit *s)
+{
+    if (!s || !s->ipe_ptr || !s->es_int.idb_ptr)
+	return NULL;
+
+    struct rt_brep_edit *selection = (struct rt_brep_edit *)s->ipe_ptr;
+    struct rt_brep_internal *internal = (struct rt_brep_internal *)s->es_int.idb_ptr;
+    ON_Brep *brep = internal->brep;
+    if (!brep || selection->face_index < 0 ||
+	selection->face_index >= brep->m_F.Count())
+	return NULL;
+
+    return brep->Face(selection->face_index);
+}
+
 /*
  * Select a NURBS surface control vertex by face index and (i,j) indices.
  * e_para[0] = face_index (integer encoded as fastf_t)
@@ -224,9 +240,10 @@ ecmd_brep_srf_cv_move(struct rt_edit *s)
     RT_BREP_CK_MAGIC(bip);
     struct rt_brep_edit *b = (struct rt_brep_edit *)s->ipe_ptr;
 
-    if (b->face_index < 0) {
+    ON_BrepFace *face = brep_selected_face(s);
+    if (!face) {
 	bu_vls_printf(s->log_str,
-		"ECMD_BREP_SRF_CV_MOVE: no CV selected "
+		"ECMD_BREP_SRF_CV_MOVE: no valid CV selected "
 		"(use select_surface_cv first)\n");
 	return BRLCAD_ERROR;
     }
@@ -247,7 +264,7 @@ ecmd_brep_srf_cv_move(struct rt_edit *s)
     }
 
     ON_Brep *brep = bip->brep;
-    int surface_index = brep->m_F[b->face_index].m_si;
+    int surface_index = face->m_si;
     int ret = brep_translate_scv(brep, surface_index, b->srf_cv_i, b->srf_cv_j,
 	    dx, dy, dz);
     if (ret < 0) {
@@ -271,9 +288,10 @@ ecmd_brep_srf_cv_set(struct rt_edit *s)
     RT_BREP_CK_MAGIC(bip);
     struct rt_brep_edit *b = (struct rt_brep_edit *)s->ipe_ptr;
 
-    if (b->face_index < 0) {
+    ON_BrepFace *face = brep_selected_face(s);
+    if (!face) {
 	bu_vls_printf(s->log_str,
-		"ECMD_BREP_SRF_CV_SET: no CV selected "
+		"ECMD_BREP_SRF_CV_SET: no valid CV selected "
 		"(use select_surface_cv first)\n");
 	return BRLCAD_ERROR;
     }
@@ -284,10 +302,9 @@ ecmd_brep_srf_cv_set(struct rt_edit *s)
     }
 
     ON_Brep *brep = bip->brep;
-    int surface_index = brep->m_F[b->face_index].m_si;
+    int surface_index = face->m_si;
 
     /* Retrieve current position and compute the required delta. */
-    ON_BrepFace *face = brep->Face(b->face_index);
     const ON_Surface *surf = face->SurfaceOf();
     const ON_NurbsSurface *ns = dynamic_cast<const ON_NurbsSurface *>(surf);
     if (!ns) {
@@ -341,18 +358,16 @@ brep_mouse_target_selected_cv(struct rt_edit *s, const vect_t mousevec)
     struct rt_brep_internal *bip = (struct rt_brep_internal *)s->es_int.idb_ptr;
     struct rt_brep_edit *b = (struct rt_brep_edit *)s->ipe_ptr;
     RT_BREP_CK_MAGIC(bip);
-    ON_Brep *brep = bip->brep;
-    if (!s->vp || !brep || b->face_index < 0 ||
-	b->face_index >= brep->m_F.Count()) {
+    ON_BrepFace *face = brep_selected_face(s);
+    if (!s->vp || !face) {
 	bu_vls_printf(s->log_str, "BREP mouse CV edit requires a selected CV\n");
 	return BRLCAD_ERROR;
     }
 
-    ON_BrepFace *face = brep->Face(b->face_index);
     const ON_NurbsSurface *ns =
-	face ? dynamic_cast<const ON_NurbsSurface *>(face->SurfaceOf()) : NULL;
+	dynamic_cast<const ON_NurbsSurface *>(face->SurfaceOf());
     ON_3dPoint cv;
-    if (!face || !ns || !ns->GetCV(b->srf_cv_i, b->srf_cv_j, cv)) {
+    if (!ns || !ns->GetCV(b->srf_cv_i, b->srf_cv_j, cv)) {
 	bu_vls_printf(s->log_str, "BREP mouse CV edit cannot read selected CV\n");
 	return BRLCAD_ERROR;
     }
@@ -553,14 +568,10 @@ rt_edit_brep_edit_desc(void)
 extern "C" int
 rt_edit_brep_get_params(struct rt_edit *s, int cmd_id, fastf_t *vals)
 {
-    struct rt_brep_edit *b;
-    struct rt_brep_internal *bip;
-
-    if (!s || !vals)
+    if (!s || !vals || !s->ipe_ptr)
 	return 0;
 
-    b   = (struct rt_brep_edit *)s->ipe_ptr;
-    bip = (struct rt_brep_internal *)s->es_int.idb_ptr;
+    struct rt_brep_edit *b = (struct rt_brep_edit *)s->ipe_ptr;
 
     switch (cmd_id) {
 	case ECMD_BREP_SRF_SELECT:
@@ -571,28 +582,21 @@ rt_edit_brep_get_params(struct rt_edit *s, int cmd_id, fastf_t *vals)
 	    return 3;
 
 	case ECMD_BREP_SRF_CV_MOVE:
-	case ECMD_BREP_SRF_CV_SET:
+	case ECMD_BREP_SRF_CV_SET: {
 	    /* Return the current world-space position of the selected CV. */
-	    if (b->face_index < 0 || !bip || !bip->brep)
+	    ON_BrepFace *face = brep_selected_face(s);
+	    if (!face)
 		return 0;
-	    {
-		ON_Brep *brep = bip->brep;
-		if (b->face_index >= brep->m_F.Count())
-		    return 0;
-		ON_BrepFace *face = brep->Face(b->face_index);
-		const ON_Surface *surf = face->SurfaceOf();
-		const ON_NurbsSurface *ns =
-		    dynamic_cast<const ON_NurbsSurface *>(surf);
-		if (!ns)
-		    return 0;
-		ON_3dPoint cv;
-		if (!ns->GetCV(b->srf_cv_i, b->srf_cv_j, cv))
-		    return 0;
-		vals[0] = cv.x * s->base2local;
-		vals[1] = cv.y * s->base2local;
-		vals[2] = cv.z * s->base2local;
-		return 3;
-	    }
+	    const ON_NurbsSurface *ns =
+		dynamic_cast<const ON_NurbsSurface *>(face->SurfaceOf());
+	    ON_3dPoint cv;
+	    if (!ns || !ns->GetCV(b->srf_cv_i, b->srf_cv_j, cv))
+		return 0;
+	    vals[0] = cv.x * s->base2local;
+	    vals[1] = cv.y * s->base2local;
+	    vals[2] = cv.z * s->base2local;
+	    return 3;
+	}
 
 	default:
 	    return 0;

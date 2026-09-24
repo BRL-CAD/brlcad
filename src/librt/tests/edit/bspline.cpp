@@ -56,6 +56,8 @@ struct rt_bspline_edit {
     int knot_idx;
 };
 
+static int check_bspline_operation_matrix(void);
+
 
 /* Build a 3×3 bilinear (order=2) NURBS surface (order 2 = linear in each direction) */
 static struct directory *
@@ -213,7 +215,7 @@ rt_edit_test_bspline(void)
 	bu_exit(1, "ERROR: re-select centre CP failed\n");
 
     EDOBJ[dp->d_minor_type].ft_set_edit_mode(s, ECMD_VTRANS);
-    s->e_inpara = 1;          /* 1 = keyboard param valid */
+    s->e_inpara = 3;
     VSET(s->e_para, 5.0, 5.0, 9.0);  /* new position (local units) */
 
     rt_edit_process(s);
@@ -399,7 +401,7 @@ rt_edit_test_bspline(void)
     b->spl_ui = 1;
     b->spl_vi = 1;
     EDOBJ[dp->d_minor_type].ft_set_edit_mode(s, ECMD_VTRANS);
-    s->e_inpara = 1;
+    s->e_inpara = 3;
     VSET(s->e_para, 0.5, 0.25, 0.1);
     struct rt_nurb_internal *sip =
 	(struct rt_nurb_internal *)s->es_int.idb_ptr;
@@ -413,7 +415,7 @@ rt_edit_test_bspline(void)
 	!VNEAR_EQUAL(cp, expected, VUNITIZE_TOL) ||
 	!VNEAR_EQUAL(s->e_para, entered, VUNITIZE_TOL))
 	bu_exit(1, "ERROR: B-spline inch control-point move changed input or point\n");
-    s->e_inpara = 1;
+    s->e_inpara = 3;
     if (rt_edit_process(s) != BRLCAD_OK || !VNEAR_EQUAL(cp, expected, VUNITIZE_TOL))
 	bu_exit(1, "ERROR: repeated B-spline inch control-point move compounded\n");
 
@@ -427,8 +429,357 @@ rt_edit_test_bspline(void)
 	bu_exit(1, "ERROR: B-spline mouse point changed numeric input\n");
 
     rt_edit_destroy(s);
+    db_free_full_path(&fp);
+    bv_free(v);
     db_close(dbip);
-    return 0;
+    return check_bspline_operation_matrix();
+}
+
+enum {
+    BSPLINE_CP_COUNT = 9,
+    BSPLINE_KNOT_COUNT = 5
+};
+
+static const fastf_t BSPLINE_INITIAL_POINTS[BSPLINE_CP_COUNT * 3] = {
+     0,  0, 0,   5,  0, 0,  10,  0, 0,
+     0,  5, 0,   5,  5, 2,  10,  5, 0,
+     0, 10, 0,   5, 10, 0,  10, 10, 0
+};
+static const fastf_t BSPLINE_INITIAL_KNOTS[BSPLINE_KNOT_COUNT] = {
+    0, 0, 0.5, 1, 1
+};
+
+struct bspline_expected {
+    fastf_t points[BSPLINE_CP_COUNT * 3];
+    fastf_t u_knots[BSPLINE_KNOT_COUNT];
+    fastf_t v_knots[BSPLINE_KNOT_COUNT];
+    int surface;
+    int u;
+    int v;
+    int knot_dir;
+    int knot_idx;
+};
+
+static void
+bspline_initial_state(struct bspline_expected *expected)
+{
+    memcpy(expected->points, BSPLINE_INITIAL_POINTS, sizeof(expected->points));
+    memcpy(expected->u_knots, BSPLINE_INITIAL_KNOTS,
+	sizeof(expected->u_knots));
+    memcpy(expected->v_knots, BSPLINE_INITIAL_KNOTS,
+	sizeof(expected->v_knots));
+    expected->surface = 0;
+    expected->u = 1;
+    expected->v = 1;
+    expected->knot_dir = 0;
+    expected->knot_idx = 0;
+}
+
+static bool
+bspline_same_state(const struct rt_edit *edit,
+		   const struct bspline_expected *expected,
+		   const char *name)
+{
+    const struct rt_nurb_internal *nurb =
+	(const struct rt_nurb_internal *)edit->es_int.idb_ptr;
+    const struct rt_bspline_edit *selection =
+	(const struct rt_bspline_edit *)edit->ipe_ptr;
+    if (!nurb || nurb->nsrf != 1 || !selection)
+	return false;
+    const struct face_g_snurb *surface = nurb->srfs[0];
+    if (!surface || surface->s_size[0] != 3 || surface->s_size[1] != 3 ||
+	surface->u.k_size != BSPLINE_KNOT_COUNT ||
+	surface->v.k_size != BSPLINE_KNOT_COUNT)
+	return false;
+    for (int i = 0; i < BSPLINE_CP_COUNT * 3; ++i) {
+	if (!NEAR_EQUAL(surface->ctl_points[i], expected->points[i],
+		VUNITIZE_TOL)) {
+	    bu_log("%s control value %d: expected %.17g, got %.17g\n",
+		name, i, expected->points[i], surface->ctl_points[i]);
+	    return false;
+	}
+    }
+    for (int i = 0; i < BSPLINE_KNOT_COUNT; ++i) {
+	if (!NEAR_EQUAL(surface->u.knots[i], expected->u_knots[i],
+		VUNITIZE_TOL) ||
+	    !NEAR_EQUAL(surface->v.knots[i], expected->v_knots[i],
+		VUNITIZE_TOL)) {
+	    bu_log("%s knot %d differs from expected\n", name, i);
+	    return false;
+	}
+    }
+    if (selection->spl_surfno != expected->surface ||
+	selection->spl_ui != expected->u ||
+	selection->spl_vi != expected->v ||
+	selection->knot_dir != expected->knot_dir ||
+	selection->knot_idx != expected->knot_idx) {
+	bu_log("%s selection differs from expected\n", name);
+	return false;
+    }
+    const fastf_t *keypoint = &expected->points[
+	(expected->v * surface->s_size[1] + expected->u) * 3];
+    point_t model_keypoint;
+    MAT4X3PNT(model_keypoint, edit->e_mat, keypoint);
+    if (!VNEAR_EQUAL(edit->e_keypoint, model_keypoint, VUNITIZE_TOL)) {
+	bu_log("%s keypoint differs from selected control point\n", name);
+	return false;
+    }
+    return true;
+}
+
+static int
+bspline_run_case(struct db_full_path *path, struct db_i *dbip,
+		 struct bn_tol *tol, struct bview *view,
+		 const char *unit, const char *name, int command,
+		 const fastf_t *values, int count,
+		 int setup_command, const fastf_t *setup_values,
+		 int setup_count, bool xy,
+		 const struct bspline_expected *expected,
+		 bool expect_error = false, bool path_transform = false)
+{
+    struct rt_edit *edit = rt_edit_create(path, dbip, tol, view);
+    if (!edit)
+	return 1;
+    struct bspline_expected initial;
+    bspline_initial_state(&initial);
+    int failures = 0;
+    if (!bspline_same_state(edit, &initial, name)) {
+	++failures;
+	goto done;
+    }
+    if (path_transform) {
+	vect_t path_delta = {10, 0, 0};
+	vect_t inverse_delta = {-10, 0, 0};
+	MAT_DELTAS_VEC(edit->e_mat, path_delta);
+	MAT_DELTAS_VEC(edit->e_invmat, inverse_delta);
+	edit->mv_context = 1;
+	rt_get_solid_keypoint(edit, &edit->e_keypoint,
+	    &edit->e_keytag, edit->e_mat);
+    }
+    if (xy)
+	VMOVE(edit->curr_e_axes_pos, edit->e_keypoint);
+    if (setup_command) {
+	rt_edit_set_edflag(edit, setup_command);
+	edit->e_inpara = setup_count;
+	for (int i = 0; i < setup_count; ++i)
+	    edit->e_para[i] = setup_values[i];
+	if (rt_edit_process(edit) != BRLCAD_OK) {
+	    bu_log("BSpline %s %s setup failed: %s\n", unit, name,
+		bu_vls_cstr(edit->log_str));
+	    ++failures;
+	    goto done;
+	}
+    }
+    rt_edit_set_edflag(edit, command);
+    int result;
+    if (xy) {
+	result = EDOBJ[ID_BSPLINE].ft_edit_xy(edit, values);
+	if (result == BRLCAD_OK)
+	    result = rt_edit_process(edit);
+    } else {
+	edit->e_inpara = count;
+	for (int i = 0; i < count; ++i)
+	    edit->e_para[i] = values[i];
+	result = rt_edit_process(edit);
+    }
+
+    if ((result == BRLCAD_OK) == expect_error ||
+	!bspline_same_state(edit, expected, name)) {
+	bu_log("BSpline %s %s failed: %s\n", unit, name,
+	    bu_vls_cstr(edit->log_str));
+	++failures;
+    }
+    for (int i = 0; i < count; ++i) {
+	if (!(isnan(values[i]) ? isnan(edit->e_para[i]) :
+	    NEAR_EQUAL(edit->e_para[i], values[i], VUNITIZE_TOL))) {
+	    bu_log("BSpline %s %s changed numeric input %d\n", unit, name, i);
+	    ++failures;
+	}
+    }
+
+done:
+    rt_edit_destroy(edit);
+    return failures;
+}
+
+static int
+bspline_check_unit(fastf_t local2base, const char *unit)
+{
+    struct db_i *dbip = db_open_inmem();
+    if (dbip == DBI_NULL)
+	return 1;
+    dbip->dbi_local2base = local2base;
+    dbip->dbi_base2local = 1.0 / local2base;
+    struct rt_wdb *wdbp = wdb_dbopen(dbip, RT_WDB_TYPE_DB_INMEM);
+    if (!wdbp) {
+	db_close(dbip);
+	return 1;
+    }
+    struct directory *dp = make_test_bspline(wdbp);
+    struct db_full_path path;
+    db_full_path_init(&path);
+    db_add_node_to_full_path(&path, dp);
+    struct bn_tol tol = BN_TOL_INIT_TOL;
+    struct bview *view;
+    BU_GET(view, struct bview);
+    bv_init(view, NULL);
+    view->gv_size = 100.0;
+    view->gv_isize = 1.0 / view->gv_size;
+    view->gv_scale = 0.5 * view->gv_size;
+    bv_update(view);
+    MAT_IDN(view->gv_model2view);
+    MAT_IDN(view->gv_view2model);
+
+    struct bspline_expected expected;
+    int failures = 0;
+    const fastf_t pick_cp[] = {0, 2, 0};
+    bspline_initial_state(&expected);
+    expected.u = 2;
+    expected.v = 0;
+    failures += bspline_run_case(&path, dbip, &tol, view, unit,
+	"pick control point", ECMD_BSPLINE_PICK_CP, pick_cp, 3,
+	0, NULL, 0, false, &expected);
+
+    const fastf_t move_cp[] = {0.5, 0.25, 0.1};
+    bspline_initial_state(&expected);
+    for (int i = 0; i < 3; ++i)
+	expected.points[12 + i] = move_cp[i] * local2base;
+    failures += bspline_run_case(&path, dbip, &tol, view, unit,
+	"move control point", ECMD_VTRANS, move_cp, 3,
+	0, NULL, 0, false, &expected);
+
+    const fastf_t pick_u_knot[] = {0, 0, 2};
+    bspline_initial_state(&expected);
+    expected.knot_idx = 2;
+    failures += bspline_run_case(&path, dbip, &tol, view, unit,
+	"pick U knot", ECMD_BSPLINE_PICK_KNOT, pick_u_knot, 3,
+	0, NULL, 0, false, &expected);
+
+    const fastf_t pick_v_knot[] = {0, 1, 2};
+    bspline_initial_state(&expected);
+    expected.knot_dir = 1;
+    expected.knot_idx = 2;
+    failures += bspline_run_case(&path, dbip, &tol, view, unit,
+	"pick V knot", ECMD_BSPLINE_PICK_KNOT, pick_v_knot, 3,
+	0, NULL, 0, false, &expected);
+
+    const fastf_t set_u_knot[] = {0.75};
+    bspline_initial_state(&expected);
+    expected.knot_idx = 2;
+    expected.u_knots[2] = set_u_knot[0];
+    failures += bspline_run_case(&path, dbip, &tol, view, unit,
+	"set U knot", ECMD_BSPLINE_SET_KNOT, set_u_knot, 1,
+	ECMD_BSPLINE_PICK_KNOT, pick_u_knot, 3, false, &expected);
+
+    const fastf_t set_v_knot[] = {0.25};
+    bspline_initial_state(&expected);
+    expected.knot_dir = 1;
+    expected.knot_idx = 2;
+    expected.v_knots[2] = set_v_knot[0];
+    failures += bspline_run_case(&path, dbip, &tol, view, unit,
+	"set V knot", ECMD_BSPLINE_SET_KNOT, set_v_knot, 1,
+	ECMD_BSPLINE_PICK_KNOT, pick_v_knot, 3, false, &expected);
+
+    const fastf_t pick_xy[] = {10, 0, 0};
+    bspline_initial_state(&expected);
+    expected.u = 2;
+    expected.v = 0;
+    failures += bspline_run_case(&path, dbip, &tol, view, unit,
+	"pick vertex XY", ECMD_SPLINE_VPICK, pick_xy, 0,
+	0, NULL, 0, true, &expected);
+
+    const fastf_t move_xy[] = {8, 9, 0};
+    bspline_initial_state(&expected);
+    expected.points[12] = 8;
+    expected.points[13] = 9;
+    failures += bspline_run_case(&path, dbip, &tol, view, unit,
+	"move control point XY", ECMD_VTRANS, move_xy, 0,
+	0, NULL, 0, true, &expected);
+
+    const fastf_t move_xy_instance[] = {18, 9, 0};
+    failures += bspline_run_case(&path, dbip, &tol, view, unit,
+	"move control point XY in instance", ECMD_VTRANS,
+	move_xy_instance, 0, 0, NULL, 0, true, &expected,
+	false, true);
+
+    const fastf_t short_cp[] = {0, 1};
+    bspline_initial_state(&expected);
+    failures += bspline_run_case(&path, dbip, &tol, view, unit,
+	"short control-point selection", ECMD_BSPLINE_PICK_CP,
+	short_cp, 2, 0, NULL, 0, false, &expected, true);
+
+    const fastf_t fractional_cp[] = {0, 1.5, 1};
+    failures += bspline_run_case(&path, dbip, &tol, view, unit,
+	"fractional control-point index", ECMD_BSPLINE_PICK_CP,
+	fractional_cp, 3, 0, NULL, 0, false, &expected, true);
+
+    const fastf_t nan_cp[] = {0, NAN, 1};
+    failures += bspline_run_case(&path, dbip, &tol, view, unit,
+	"nonfinite control-point index", ECMD_BSPLINE_PICK_CP,
+	nan_cp, 3, 0, NULL, 0, false, &expected, true);
+
+    const fastf_t short_move[] = {0.5, 0.25};
+    failures += bspline_run_case(&path, dbip, &tol, view, unit,
+	"short control-point move", ECMD_VTRANS,
+	short_move, 2, 0, NULL, 0, false, &expected, true);
+
+    const fastf_t nan_move[] = {0.5, NAN, 0.1};
+    failures += bspline_run_case(&path, dbip, &tol, view, unit,
+	"nonfinite control-point move", ECMD_VTRANS,
+	nan_move, 3, 0, NULL, 0, false, &expected, true);
+
+    const fastf_t short_knot[] = {0, 1};
+    failures += bspline_run_case(&path, dbip, &tol, view, unit,
+	"short knot selection", ECMD_BSPLINE_PICK_KNOT,
+	short_knot, 2, 0, NULL, 0, false, &expected, true);
+
+    const fastf_t fractional_knot[] = {0, 0.5, 2};
+    failures += bspline_run_case(&path, dbip, &tol, view, unit,
+	"fractional knot direction", ECMD_BSPLINE_PICK_KNOT,
+	fractional_knot, 3, 0, NULL, 0, false, &expected, true);
+
+    const fastf_t nan_knot[] = {0, 1, NAN};
+    failures += bspline_run_case(&path, dbip, &tol, view, unit,
+	"nonfinite knot index", ECMD_BSPLINE_PICK_KNOT,
+	nan_knot, 3, 0, NULL, 0, false, &expected, true);
+
+    const fastf_t nan_knot_value[] = {NAN};
+    expected.knot_idx = 2;
+    failures += bspline_run_case(&path, dbip, &tol, view, unit,
+	"nonfinite knot value", ECMD_BSPLINE_SET_KNOT,
+	nan_knot_value, 1, ECMD_BSPLINE_PICK_KNOT,
+	pick_u_knot, 3, false, &expected, true);
+
+    bv_free(view);
+    db_free_full_path(&path);
+    db_close(dbip);
+    bu_log("BSpline operation matrix %s: %s\n", unit,
+	failures ? "fail" : "pass");
+    return failures;
+}
+
+static int
+check_bspline_operation_matrix(void)
+{
+    const struct rt_edit_prim_desc *desc = EDOBJ[ID_BSPLINE].ft_edit_desc();
+    if (!desc || desc->ncmd != 5)
+	return BRLCAD_ERROR;
+    const int commands[] = {
+	ECMD_SPLINE_VPICK, ECMD_BSPLINE_PICK_CP, ECMD_VTRANS,
+	ECMD_BSPLINE_PICK_KNOT, ECMD_BSPLINE_SET_KNOT
+    };
+    const int parameter_counts[] = {0, 3, 1, 3, 1};
+    int failures = 0;
+    for (int i = 0; i < desc->ncmd; ++i) {
+	if (desc->cmds[i].cmd_id != commands[i] ||
+	    desc->cmds[i].nparam != parameter_counts[i]) {
+	    bu_log("BSpline descriptor command %d is inconsistent\n", i);
+	    ++failures;
+	}
+    }
+    failures += bspline_check_unit(1.0, "mm");
+    failures += bspline_check_unit(25.4, "in");
+    return failures ? BRLCAD_ERROR : BRLCAD_OK;
 }
 
 // Local Variables:

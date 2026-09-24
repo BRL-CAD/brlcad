@@ -24,6 +24,7 @@
 #include "common.h"
 
 #include <math.h>
+#include <limits.h>
 #include <string.h>
 
 #include "bg/tri_ray.h"
@@ -543,6 +544,22 @@ ecmd_bot_fdel(struct rt_edit *s)
  * e_inpara >= 4
  */
 static int
+bot_vertex_index(struct rt_edit *s, int param, size_t vertex_count, int *vertex)
+{
+    fastf_t index = s->e_para[param];
+    if (!isfinite(index) || index < 0.0 ||
+	index >= (fastf_t)vertex_count || index > (fastf_t)INT_MAX ||
+	!ZERO(index - floor(index))) {
+	bu_vls_printf(s->log_str,
+		"ERROR: invalid vertex index %g (valid range [0, %zu))\n",
+		index, vertex_count);
+	return BRLCAD_ERROR;
+    }
+    *vertex = (int)index;
+    return BRLCAD_OK;
+}
+
+static int
 ecmd_bot_movev_list(struct rt_edit *s)
 {
     struct rt_bot_internal *bot =
@@ -560,17 +577,22 @@ ecmd_bot_movev_list(struct rt_edit *s)
     delta[0] = s->e_para[0] * s->local2base;
     delta[1] = s->e_para[1] * s->local2base;
     delta[2] = s->e_para[2] * s->local2base;
+    if (!isfinite(delta[0]) || !isfinite(delta[1]) || !isfinite(delta[2])) {
+	bu_vls_printf(s->log_str, "ERROR: BOT vertex delta must be finite\n");
+	s->e_inpara = 0;
+	return BRLCAD_ERROR;
+    }
 
     int n_verts = s->e_inpara - 3;
     for (int i = 0; i < n_verts; i++) {
-	int vi = (int)s->e_para[3 + i];
-	if (vi < 0 || (size_t)vi >= bot->num_vertices) {
-	    bu_vls_printf(s->log_str,
-		    "ERROR: vertex index %d out of range [0, %zu)\n",
-		    vi, bot->num_vertices);
+	int vi;
+	if (bot_vertex_index(s, 3 + i, bot->num_vertices, &vi) != BRLCAD_OK) {
 	    s->e_inpara = 0;
 	    return BRLCAD_ERROR;
 	}
+    }
+    for (int i = 0; i < n_verts; i++) {
+	int vi = (int)s->e_para[3 + i];
 	VADD2(&bot->vertices[vi * 3], &bot->vertices[vi * 3], delta);
     }
 
@@ -616,6 +638,9 @@ ecmd_bot_esplit(struct rt_edit *s)
 
     /* Find and replace every face containing the edge v0–v1 */
     size_t orig_nf = bot->num_faces;
+    size_t *new_face_parents = bot->face_mode && orig_nf ?
+	(size_t *)bu_malloc(orig_nf * sizeof(size_t), "split BOT face parents") :
+	NULL;
     for (size_t fi = 0; fi < orig_nf; fi++) {
 	int f0 = bot->faces[fi*3];
 	int f1 = bot->faces[fi*3+1];
@@ -623,17 +648,15 @@ ecmd_bot_esplit(struct rt_edit *s)
 
 	/* Check whether this face contains the directed or reverse edge */
 	int other = -1;
-	int ea = -1, eb = -1;   /* the two edge verts in this face */
 	if ((f0 == v0 && f1 == v1) || (f0 == v1 && f1 == v0)) {
-	    ea = f0; eb = f1; other = f2;
+	    other = f2;
 	} else if ((f1 == v0 && f2 == v1) || (f1 == v1 && f2 == v0)) {
-	    ea = f1; eb = f2; other = f0;
+	    other = f0;
 	} else if ((f2 == v0 && f0 == v1) || (f2 == v1 && f0 == v0)) {
-	    ea = f2; eb = f0; other = f1;
+	    other = f1;
 	}
 	if (other < 0)
 	    continue;   /* edge not in this face */
-	(void)ea; (void)eb;
 
 	/* Replace this face with face (v0, new_vi, other) */
 	bot->faces[fi*3]   = v0;
@@ -647,12 +670,29 @@ ecmd_bot_esplit(struct rt_edit *s)
 	bot->faces[(bot->num_faces-1)*3]   = new_vi;
 	bot->faces[(bot->num_faces-1)*3+1] = v1;
 	bot->faces[(bot->num_faces-1)*3+2] = other;
+	if (new_face_parents)
+	    new_face_parents[bot->num_faces - orig_nf - 1] = fi;
 
 	if (bot->thickness) {
 	    bot->thickness = (fastf_t *)bu_realloc(bot->thickness,
 		    bot->num_faces * sizeof(fastf_t), "bot thickness");
 	    bot->thickness[bot->num_faces-1] = bot->thickness[fi];
 	}
+    }
+
+    if (new_face_parents) {
+	struct bu_bitv *new_face_mode = bu_bitv_new(bot->num_faces);
+	for (size_t fi = 0; fi < orig_nf; fi++) {
+	    if (BU_BITTEST(bot->face_mode, fi))
+		BU_BITSET(new_face_mode, fi);
+	}
+	for (size_t fi = orig_nf; fi < bot->num_faces; fi++) {
+	    if (BU_BITTEST(bot->face_mode, new_face_parents[fi - orig_nf]))
+		BU_BITSET(new_face_mode, fi);
+	}
+	bu_bitv_free(bot->face_mode);
+	bot->face_mode = new_face_mode;
+	bu_free(new_face_parents, "split BOT face parents");
     }
 
     b->bot_verts[0] = -1;
@@ -1142,32 +1182,57 @@ rt_edit_bot_edit(struct rt_edit *s)
 	    ecmd_bot_movet(s);
 	    break;
 	case ECMD_BOT_PICKV:
-	    /* Descriptor path: select vertex by index from e_para[0] */
-	    if (s->e_inpara >= 1) {
-		b->bot_verts[0] = (int)s->e_para[0];
-		b->bot_verts[1] = -1;
-		b->bot_verts[2] = -1;
-		s->e_inpara = 0;
-	    }
-	    break;
 	case ECMD_BOT_PICKE:
-	    /* Descriptor path: select edge by vertex pair from e_para[0..1] */
-	    if (s->e_inpara >= 2) {
-		b->bot_verts[0] = (int)s->e_para[0];
-		b->bot_verts[1] = (int)s->e_para[1];
-		b->bot_verts[2] = -1;
+	case ECMD_BOT_PICKT: {
+	    int n = s->edit_flag == ECMD_BOT_PICKV ? 1 :
+		(s->edit_flag == ECMD_BOT_PICKE ? 2 : 3);
+	    if (s->e_inpara >= n) {
+		struct rt_bot_internal *bot =
+		    (struct rt_bot_internal *)s->es_int.idb_ptr;
+		int selected[3] = {-1, -1, -1};
+		for (int i = 0; i < n; ++i) {
+		    if (bot_vertex_index(s, i, bot->num_vertices,
+				 &selected[i]) != BRLCAD_OK) {
+			s->e_inpara = 0;
+			return BRLCAD_ERROR;
+		    }
+		}
+		if (n > 1) {
+		    int found = 0;
+		    int distinct = selected[0] != selected[1] &&
+			(n == 2 || (selected[0] != selected[2] &&
+				    selected[1] != selected[2]));
+		    for (size_t fi = 0; distinct && fi < bot->num_faces; ++fi) {
+			const int *face = &bot->faces[fi * 3];
+			if (n == 3) {
+			    found = face[0] == selected[0] &&
+				face[1] == selected[1] &&
+				face[2] == selected[2];
+			} else {
+			    int has_first = 0;
+			    int has_second = 0;
+			    for (int j = 0; j < 3; ++j) {
+				has_first |= face[j] == selected[0];
+				has_second |= face[j] == selected[1];
+			    }
+			    found = has_first && has_second;
+			}
+			if (found)
+			    break;
+		    }
+		    if (!found) {
+			bu_vls_printf(s->log_str, "ERROR: selected BOT %s not found\n",
+				n == 2 ? "edge" : "face");
+			s->e_inpara = 0;
+			return BRLCAD_ERROR;
+		    }
+		}
+		for (int i = 0; i < 3; ++i)
+		    b->bot_verts[i] = selected[i];
 		s->e_inpara = 0;
 	    }
 	    break;
-	case ECMD_BOT_PICKT:
-	    /* Descriptor path: select face by vertex triple from e_para[0..2] */
-	    if (s->e_inpara >= 3) {
-		b->bot_verts[0] = (int)s->e_para[0];
-		b->bot_verts[1] = (int)s->e_para[1];
-		b->bot_verts[2] = (int)s->e_para[2];
-		s->e_inpara = 0;
-	    }
-	    break;
+	}
 	default:
 	    return edit_generic(s);
     }
@@ -1479,9 +1544,8 @@ rt_edit_bot_repair(struct bu_vls *log_str, struct rt_db_internal *ip, const stru
     BU_OPT(d[3], "",   "options-json",        "",             NULL,                   &options_json,  "Return JSON of supported options");
     BU_OPT_NULL(d[4]);
 
-    if (argc > 0 && argv) {
-        bu_opt_parse(NULL, argc, argv, d);
-    }
+    if (edit_repair_parse_options(log_str, argc, argv, d) != BRLCAD_OK)
+        return -1;
 
     if (options_json) {
         if (log_str) {

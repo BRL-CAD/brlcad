@@ -29,6 +29,7 @@
 #include <cstdio>
 #include <cstring>
 #include <string>
+#include <vector>
 
 #include "bu.h"
 #include "vmath.h"
@@ -2726,6 +2727,14 @@ create_p5_fixture(const char *dbpath)
 	db_close(wdbp->dbip);
 	return BRLCAD_ERROR;
     }
+    fastf_t arb4_pts[4*3] = {
+	-5,-5,-5, 5,-5,-5, -5,5,-5, -5,-5,5
+    };
+    if (mk_arb4(wdbp, "arb4.s", arb4_pts) != 0) {
+	bu_log("mk_arb4 failed\n");
+	db_close(wdbp->dbip);
+	return BRLCAD_ERROR;
+    }
 
     db_close(wdbp->dbip);
     return BRLCAD_OK;
@@ -3006,18 +3015,42 @@ test_p5_arb8_move_face(struct ged *gedp)
 }
 
 /* ------------------------------------------------------------------ *
- * arb8: move_vertex (vertex 0 to a new position)                     *
+ * ARB4 supports point movement; ARB8 does not.                       *
  * ------------------------------------------------------------------ */
 static void
-test_p5_arb8_move_vertex(struct ged *gedp)
+test_p5_arb4_move_vertex(struct ged *gedp)
 {
     /* Move vertex 0 (originally at -5,-5,-5) to (-6,-5,-5) */
-    const char *av[] = { "edit", "arb8.s", "move_vertex",
+    const char *av[] = { "edit", "arb4.s", "move_vertex",
                          "0", "-6", "-5", "-5", NULL };
     bu_vls_trunc(gedp->ged_result_str, 0);
     int ret = ged_exec(gedp, 7, av);
+    if (ret != BRLCAD_OK)
+	bu_log("ARB4 move vertex: %s\n", bu_vls_cstr(gedp->ged_result_str));
     CHECK(ret == BRLCAD_OK,
-          "arb8.s move_vertex 0  -6 -5 -5 returns OK");
+          "arb4.s move_vertex 0  -6 -5 -5 returns OK");
+    if (ret == BRLCAD_OK) {
+	struct rt_arb_internal after;
+	point_t expected = {-6, -5, -5};
+	CHECK(read_arb8(gedp, "arb4.s", &after) == BRLCAD_OK &&
+	    VNEAR_EQUAL(after.pt[0], expected, VUNITIZE_TOL),
+	    "arb4.s move_vertex persists the new point");
+    }
+
+    struct rt_arb_internal before;
+    if (read_arb8(gedp, "arb8.s", &before) != BRLCAD_OK) {
+	CHECK(0, "read arb8.s before unsupported vertex move");
+	return;
+    }
+    const char *bad_av[] = { "edit", "arb8.s", "move_vertex",
+	"0", "-6", "-5", "-5", NULL };
+    bu_vls_trunc(gedp->ged_result_str, 0);
+    CHECK(ged_exec(gedp, 7, bad_av) == BRLCAD_ERROR,
+	"arb8.s rejects move_vertex");
+    struct rt_arb_internal unchanged;
+    CHECK(read_arb8(gedp, "arb8.s", &unchanged) == BRLCAD_OK &&
+	VNEAR_EQUAL(before.pt[0], unchanged.pt[0], VUNITIZE_TOL),
+	"rejected arb8 vertex move preserves geometry");
 }
 
 /* ------------------------------------------------------------------ *
@@ -3026,18 +3059,22 @@ test_p5_arb8_move_vertex(struct ged *gedp)
 static void
 test_p5_arb8_type_option(struct ged *gedp)
 {
-    const char *ok_av[] = { "edit", "-O", "type=arb8", "arb8.s", "move_vertex",
-                            "0", "-7", "-5", "-5", NULL };
+    const char *ok_av[] = { "edit", "-O", "type=arb8", "arb8.s", "move_face",
+                            "0", "0", "0", "-8", NULL };
     bu_vls_trunc(gedp->ged_result_str, 0);
-    CHECK(ged_exec(gedp, 9, ok_av) == BRLCAD_OK,
-          "arb8.s move_vertex with -O type=arb8 returns OK");
+    int ret = ged_exec(gedp, 9, ok_av);
+    if (ret != BRLCAD_OK)
+	bu_log("ARB8 move face with type: %s\n",
+	    bu_vls_cstr(gedp->ged_result_str));
+    CHECK(ret == BRLCAD_OK,
+          "arb8.s move_face with -O type=arb8 returns OK");
 
-    const char *bad_av[] = { "edit", "-O", "type=bogus", "arb8.s", "move_vertex",
-                             "0", "-8", "-5", "-5", NULL };
+    const char *bad_av[] = { "edit", "-O", "type=bogus", "arb8.s", "move_face",
+                             "0", "0", "0", "-9", NULL };
     bu_vls_trunc(gedp->ged_result_str, 0);
-    int ret = ged_exec(gedp, 9, bad_av);
+    ret = ged_exec(gedp, 9, bad_av);
     CHECK(ret == BRLCAD_ERROR,
-          "arb8.s move_vertex with invalid -O type=bogus fails");
+          "arb8.s move_face with invalid -O type=bogus fails");
 }
 
 /* ------------------------------------------------------------------ *
@@ -3493,6 +3530,7 @@ create_unit_fixture(const char *dbpath)
         mk_sph(wdbp, "knob.s", sph_v, inch) != 0 ||
 	create_unit_sketch(wdbp, "sketch.s", inch) != 0 ||
 	create_unit_sketch(wdbp, "sketch_other.s", inch) != 0 ||
+	create_unit_sketch(wdbp, "sketch_ops.s", inch) != 0 ||
 	mk_extrusion(wdbp, "extrude.s", "sketch.s", extr_v,
 		extr_h, extr_u, extr_w, 0) != 0 ||
 	create_unit_revolve(wdbp) != 0 ||
@@ -3616,6 +3654,116 @@ test_unit_sketch_descriptor_edits(struct ged *gedp)
     CHECK(read_unit_sketch(gedp, &skt) == BRLCAD_OK &&
 	  NEAR_EQUAL(skt.arc_radius, 0.5 * inch, NEAR_ENOUGH),
 	  "invalid sketch edit leaves the persisted arc unchanged");
+}
+
+struct sketch_segment_expected {
+    uint32_t magic;
+    int start;
+    int end;
+};
+
+struct sketch_ops_expected {
+    std::vector<fastf_t> uv;
+    std::vector<sketch_segment_expected> segments;
+};
+
+static bool
+sketch_ops_match(struct ged *gedp, const struct sketch_ops_expected &expected)
+{
+    struct directory *dp = db_lookup(gedp->dbip, "sketch_ops.s", LOOKUP_QUIET);
+    if (dp == RT_DIR_NULL)
+	return false;
+    struct rt_db_internal intern;
+    RT_DB_INTERNAL_INIT(&intern);
+    int type = rt_db_get_internal(&intern, dp, gedp->dbip, NULL);
+    if (type != ID_SKETCH) {
+	if (type > 0)
+	    rt_db_free_internal(&intern);
+	return false;
+    }
+    const struct rt_sketch_internal *sketch =
+	(const struct rt_sketch_internal *)intern.idb_ptr;
+    const fastf_t inch = 25.4;
+    bool ok = sketch->vert_count == expected.uv.size() / 2 &&
+	sketch->curve.count == expected.segments.size();
+    for (size_t i = 0; ok && i < expected.uv.size(); ++i)
+	ok = NEAR_EQUAL(sketch->verts[i / 2][i % 2], expected.uv[i],
+	    NEAR_ENOUGH);
+    for (size_t i = 0; ok && i < expected.segments.size(); ++i) {
+	const struct sketch_segment_expected &segment = expected.segments[i];
+	const void *data = sketch->curve.segment[i];
+	if (!data || *(const uint32_t *)data != segment.magic ||
+	    sketch->curve.reverse[i]) {
+	    ok = false;
+	    break;
+	}
+	if (segment.magic == CURVE_LSEG_MAGIC) {
+	    const struct line_seg *line = (const struct line_seg *)data;
+	    ok = line->start == segment.start && line->end == segment.end;
+	} else {
+	    const struct carc_seg *arc = (const struct carc_seg *)data;
+	    ok = arc->start == segment.start && arc->end == segment.end &&
+		NEAR_EQUAL(arc->radius, inch, NEAR_ENOUGH) &&
+		arc->center_is_left == 1 && arc->orientation == 0;
+	}
+    }
+    rt_db_free_internal(&intern);
+    return ok;
+}
+
+static void
+test_unit_sketch_topology_edits(struct ged *gedp)
+{
+    const fastf_t inch = 25.4;
+    struct sketch_ops_expected expected = {
+	{0, 0, inch, 0, inch, inch},
+	{{CURVE_LSEG_MAGIC, 0, 1}, {CURVE_CARC_MAGIC, 1, 2}}
+    };
+    CHECK(sketch_ops_match(gedp, expected),
+	"inch sketch topology fixture starts with the expected geometry");
+
+    const char *append[] = {
+	"edit", "sketch_ops.s", "append_line", "2", "0", NULL
+    };
+    expected.segments.push_back({CURVE_LSEG_MAGIC, 2, 0});
+    CHECK(ged_exec(gedp, 5, append) == BRLCAD_OK &&
+	sketch_ops_match(gedp, expected),
+	"inch sketch append_line persists the correct endpoints");
+
+    const char *split[] = {
+	"edit", "sketch_ops.s", "split_segment", "0", "0.5", NULL
+    };
+    expected.uv.insert(expected.uv.end(), {0.5 * inch, 0});
+    expected.segments[0].end = 3;
+    expected.segments.insert(expected.segments.begin() + 1,
+	{CURVE_LSEG_MAGIC, 3, 1});
+    CHECK(ged_exec(gedp, 5, split) == BRLCAD_OK &&
+	sketch_ops_match(gedp, expected),
+	"inch sketch split_segment persists the midpoint and both halves");
+
+    const char *remove_line[] = {
+	"edit", "sketch_ops.s", "delete_segment", "3", NULL
+    };
+    expected.segments.pop_back();
+    CHECK(ged_exec(gedp, 4, remove_line) == BRLCAD_OK &&
+	sketch_ops_match(gedp, expected),
+	"inch sketch delete_segment removes the requested line");
+
+    const char *add[] = {
+	"edit", "sketch_ops.s", "add_vertex", "2", "3", NULL
+    };
+    expected.uv.insert(expected.uv.end(), {2 * inch, 3 * inch});
+    CHECK(ged_exec(gedp, 5, add) == BRLCAD_OK &&
+	sketch_ops_match(gedp, expected),
+	"inch sketch add_vertex persists local UV coordinates");
+
+    const char *remove_vertex[] = {
+	"edit", "sketch_ops.s", "delete_vertex", "4", NULL
+    };
+    expected.uv.resize(expected.uv.size() - 2);
+    CHECK(ged_exec(gedp, 4, remove_vertex) == BRLCAD_OK &&
+	sketch_ops_match(gedp, expected),
+	"inch sketch delete_vertex removes the unused index");
 }
 
 static int
@@ -4074,6 +4222,7 @@ main(int ac, char *av[])
         bu_log("\n--- Database-unit handling ---\n");
         test_unit_sensitive_edits(gedp);
 	test_unit_sketch_descriptor_edits(gedp);
+	test_unit_sketch_topology_edits(gedp);
 	test_unit_extrude_reference(gedp);
 	test_unit_revolve_edits(gedp);
 	test_unit_pipe_edits(gedp);
@@ -4443,7 +4592,7 @@ main(int ac, char *av[])
         test_p5_all_prim_ops_has_arb8(gedp);
         test_p5_arb8_rotate_face(gedp);
         test_p5_arb8_move_face(gedp);
-        test_p5_arb8_move_vertex(gedp);
+        test_p5_arb4_move_vertex(gedp);
         test_p5_arb8_type_option(gedp);
         ged_close(gedp);
     }

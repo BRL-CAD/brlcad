@@ -299,10 +299,10 @@ static const struct rt_edit_param_desc metaball_method_params[] = {
     {
 	"method",             /* name         */
 	"Render Method",      /* label        */
-	RT_EDIT_PARAM_SCALAR, /* type         */
+	RT_EDIT_PARAM_INTEGER, /* type        */
 	0,                    /* index        */
 	0.0,                  /* range_min    */
-	2.0,                  /* range_max (0=Metaball,1=Isopotential,2=Blob) */
+	METABALL_BLOB,        /* range_max    */
 	"",                   /* units        */
 	0, NULL, NULL,        /* enum (unused) */
 	NULL                  /* prim_field   */
@@ -559,15 +559,15 @@ rt_edit_metaball_write_params(
     }
 }
 
-#define read_params_line_incr \
-    lc = (ln) ? (ln + lcj) : NULL; \
-    if (!lc) { \
-	bu_free(wc, "wc"); \
-	return BRLCAD_ERROR; \
-    } \
-    ln = strchr(lc, tc); \
-    if (ln) *ln = '\0'; \
-    while (lc && strchr(lc, ':')) lc++
+static void
+metaball_edit_clear_points(struct bu_list *head)
+{
+    while (BU_LIST_NON_EMPTY(head)) {
+	struct wdb_metaball_pnt *point = BU_LIST_FIRST(wdb_metaball_pnt, head);
+	BU_LIST_DQ(&point->l);
+	BU_PUT(point, struct wdb_metaball_pnt);
+    }
+}
 
 C_DECL int
 rt_edit_metaball_read_params(
@@ -581,75 +581,83 @@ rt_edit_metaball_read_params(
 	(struct rt_metaball_internal *)ip->idb_ptr;
     RT_METABALL_CK_MAGIC(ball);
 
-    if (!fc)
+    if (!fc || !isfinite(local2base) || local2base <= 0.0)
 	return BRLCAD_ERROR;
 
-    const char *crpos = strchr(fc, '\r');
-    int crlf = (crpos && crpos[1] == '\n') ? 1 : 0;
-    char tc = (crlf) ? '\r' : '\n';
-    int lcj = (crlf) ? 2 : 1;
+    char *buffer = bu_strdup(fc);
+    char *cursor = buffer;
+    char *line;
+    int method, end = 0, expected_index = 0;
+    double threshold;
+    struct rt_metaball_internal staged = {0};
+    BU_LIST_INIT(&staged.metaball_ctrl_head);
 
-    char *ln = NULL;
-    char *wc = bu_strdup(fc);
-    char *lc = wc;
+    line = edit_param_next_line(&cursor);
+    if (!line || sscanf(line, "method: %d %n", &method, &end) != 1 ||
+	!end || line[end] || method < METABALL_METABALL ||
+	method > METABALL_BLOB)
+	goto failure;
 
-    /* method line */
-    ln = strchr(lc, tc);
-    if (ln) *ln = '\0';
-    while (lc && strchr(lc, ':')) lc++;
-    {
-	int method = 0;
-	sscanf(lc, "%d", &method);
-	ball->method = method;
-    }
+    end = 0;
+    line = edit_param_next_line(&cursor);
+    if (!line || sscanf(line, "threshold: %lf %n", &threshold, &end) != 1 ||
+	!end || line[end] || !isfinite(threshold) || threshold <= 0.0)
+	goto failure;
 
-    /* threshold line */
-    read_params_line_incr;
-    {
-	double threshold = 0.0;
-	sscanf(lc, "%lf", &threshold);
-	ball->threshold = threshold;
-    }
+    while ((line = edit_param_next_line(&cursor)) != NULL) {
+	int index;
+	double x, y, z, strength = 1.0, blobbiness = 1.0;
+	point_t point;
+	end = 0;
+	if (sscanf(line, "point[%d]: %lf %lf %lf%n",
+		&index, &x, &y, &z, &end) != 4 ||
+	    !end || index != expected_index)
+	    goto failure;
 
-    /* clear existing points */
-    while (BU_LIST_NON_EMPTY(&ball->metaball_ctrl_head)) {
-	struct wdb_metaball_pnt *pt =
-	    BU_LIST_FIRST(wdb_metaball_pnt, &ball->metaball_ctrl_head);
-	BU_LIST_DQ(&pt->l);
-	BU_PUT(pt, struct wdb_metaball_pnt);
-    }
-
-    /* read point lines: "point[N]: x y z field_strength=fs blobbiness=bl" */
-    while (1) {
-	lc = (ln) ? (ln + lcj) : NULL;
-	if (!lc || *lc == '\0') break;
-	ln = strchr(lc, tc);
-	if (ln) *ln = '\0';
-
-	/* Only process lines that start with "point[" */
-	if (!bu_strncmp(lc, "point[", 6)) {
-	    /* skip to closing bracket, then past the colon separator */
-	    const char *after = strchr(lc, ']');
-	    if (!after) break;
-	    const char *coords = strchr(after, ':');
-	    if (!coords) break;
-	    coords++; /* step past ':' */
-	    double x = 0.0, y = 0.0, z = 0.0, fs = 1.0, bl = 1.0;
-	    int nread = sscanf(coords,
-			      " %lf %lf %lf field_strength=%lf blobbiness=%lf",
-			      &x, &y, &z, &fs, &bl);
-	    if (nread < 3) {
-		bu_log("rt_edit_metaball_read_params: malformed point line, skipping\n");
-		continue;
+	const char *rest = line + end;
+	rest += strspn(rest, " \t");
+	if (*rest) {
+	    int consumed = 0;
+	    if (sscanf(rest, "field_strength=%lf%n", &strength,
+		&consumed) != 1 || !consumed)
+		goto failure;
+	    rest += consumed;
+	    rest += strspn(rest, " \t");
+	    if (*rest) {
+		consumed = 0;
+		if (sscanf(rest, "blobbiness=%lf%n", &blobbiness,
+		    &consumed) != 1 || !consumed)
+		    goto failure;
+		rest += consumed;
+		rest += strspn(rest, " \t");
 	    }
-	    point_t loc;
-	    VSET(loc, x * local2base, y * local2base, z * local2base);
-	    rt_metaball_add_point(ball, (const point_t *)&loc, (fastf_t)(fs * local2base), (fastf_t)bl);
 	}
+	if (*rest ||
+	    !isfinite(x) || !isfinite(y) || !isfinite(z) ||
+	    !isfinite(strength) || !isfinite(blobbiness))
+	    goto failure;
+
+	VSET(point, x * local2base, y * local2base, z * local2base);
+	strength *= local2base;
+	if (!isfinite(point[X]) || !isfinite(point[Y]) ||
+	    !isfinite(point[Z]) || !isfinite(strength) ||
+	    rt_metaball_add_point(&staged, (const point_t *)&point,
+		(fastf_t)strength, (fastf_t)blobbiness))
+	    goto failure;
+	++expected_index;
     }
 
-    bu_free(wc, "wc");
+    metaball_edit_clear_points(&ball->metaball_ctrl_head);
+    BU_LIST_APPEND_LIST(&ball->metaball_ctrl_head, &staged.metaball_ctrl_head);
+    ball->method = method;
+    ball->threshold = threshold;
+    bu_free(buffer, "metaball parameter text");
     return BRLCAD_OK;
+
+failure:
+    metaball_edit_clear_points(&staged.metaball_ctrl_head);
+    bu_free(buffer, "metaball parameter text");
+    return BRLCAD_ERROR;
 }
 
 
@@ -722,9 +730,10 @@ rt_edit_metaball_keypoint(
 int
 ecmd_metaball_set_threshold(struct rt_edit *s)
 {
-    if (s->e_para[0] < 0.0) {
-	bu_vls_printf(s->log_str, "ERROR: SCALE FACTOR < 0\n");
-	s->e_inpara = 0;
+    if (!s->e_inpara)
+	return BRLCAD_OK;
+    if (!isfinite(s->e_para[0]) || s->e_para[0] <= 0.0) {
+	bu_vls_printf(s->log_str, "Threshold must be finite and positive\n");
 	return BRLCAD_ERROR;
     }
 
@@ -739,16 +748,21 @@ ecmd_metaball_set_threshold(struct rt_edit *s)
 int
 ecmd_metaball_set_method(struct rt_edit *s)
 {
-    if (s->e_para[0] < 0.0) {
-	bu_vls_printf(s->log_str, "ERROR: SCALE FACTOR < 0\n");
-	s->e_inpara = 0;
+    if (!s->e_inpara)
+	return BRLCAD_OK;
+    fastf_t method = s->e_para[0];
+    if (!isfinite(method) || method < METABALL_METABALL ||
+	method > METABALL_BLOB || !EQUAL(method, floor(method))) {
+	bu_vls_printf(s->log_str,
+	    "Render method must be an integer from %d to %d\n",
+	    METABALL_METABALL, METABALL_BLOB);
 	return BRLCAD_ERROR;
     }
 
     struct rt_metaball_internal *ball =
 	(struct rt_metaball_internal *)s->es_int.idb_ptr;
     RT_METABALL_CK_MAGIC(ball);
-    ball->method = s->e_para[0];
+    ball->method = (int)method;
 
     return 0;
 }
@@ -764,9 +778,9 @@ int
 ecmd_metaball_pt_set_goo(struct rt_edit *s)
 {
     struct rt_metaball_edit *m = (struct rt_metaball_edit *)s->ipe_ptr;
-    if (s->e_para[0] < 0.0) {
-	bu_vls_printf(s->log_str, "ERROR: SCALE FACTOR < 0\n");
-	s->e_inpara = 0;
+    if (!isfinite(s->e_para[0]) || s->e_para[0] < 0.0 ||
+	!isfinite(s->es_scale)) {
+	bu_vls_printf(s->log_str, "Invalid blobbiness scale\n");
 	return BRLCAD_ERROR;
     }
 
@@ -788,9 +802,8 @@ ecmd_metaball_pt_sweat(struct rt_edit *s)
 	bu_vls_printf(s->log_str, "no metaball point selected for setting blobbiness\n");
 	return BRLCAD_ERROR;
     }
-    if (s->e_para[0] < 0.0) {
-	bu_vls_printf(s->log_str, "ERROR: blobbiness value must be >= 0\n");
-	s->e_inpara = 0;
+    if (!isfinite(s->e_para[0]) || s->e_para[0] < 0.0) {
+	bu_vls_printf(s->log_str, "Blobbiness must be finite and nonnegative\n");
 	return BRLCAD_ERROR;
     }
     m->es_metaball_pnt->blobbiness = s->e_para[0];
@@ -801,9 +814,9 @@ int
 ecmd_metaball_pt_fldstr(struct rt_edit *s)
 {
     struct rt_metaball_edit *m = (struct rt_metaball_edit *)s->ipe_ptr;
-    if (s->e_para[0] <= 0.0) {
-	bu_vls_printf(s->log_str, "ERROR: SCALE FACTOR <= 0\n");
-	s->e_inpara = 0;
+    if (!isfinite(s->e_para[0]) || s->e_para[0] <= 0.0 ||
+	!isfinite(s->es_scale)) {
+	bu_vls_printf(s->log_str, "Invalid field-strength scale\n");
 	return BRLCAD_ERROR;
     }
 
@@ -817,7 +830,7 @@ ecmd_metaball_pt_fldstr(struct rt_edit *s)
     return 0;
 }
 
-void
+int
 ecmd_metaball_pt_pick(struct rt_edit *s)
 {
     struct rt_metaball_internal *metaball=
@@ -842,14 +855,17 @@ ecmd_metaball_pt_pick(struct rt_edit *s)
 	rt_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_RESULTS, BU_CLBK_DURING);
 	if (f)
 	    (*f)(0, NULL, d, NULL);
-	return;
+	return BRLCAD_ERROR;
     } else {
-	return;
+	return BRLCAD_OK;
     }
 
-    /* get a direction vector in model space corresponding to z-direction in view */
+    /* Without a view, numeric picking projects along model Z. */
     VSET(work, 0.0, 0.0, 1.0);
-    MAT4X3VEC(dir, s->vp->gv_view2model, work);
+    if (s->vp)
+	MAT4X3VEC(dir, s->vp->gv_view2model, work);
+    else
+	VMOVE(dir, work);
 
     for (BU_LIST_FOR(ps, wdb_metaball_pnt, &metaball->metaball_ctrl_head)) {
 	fastf_t dist;
@@ -868,44 +884,53 @@ ecmd_metaball_pt_pick(struct rt_edit *s)
 	rt_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_RESULTS, BU_CLBK_DURING);
 	if (f)
 	    (*f)(0, NULL, d, NULL);
+	return BRLCAD_ERROR;
     } else {
 	rt_metaball_pnt_print(m->es_metaball_pnt, s->base2local);
     }
+    return BRLCAD_OK;
 }
 
-void
+int
 ecmd_metaball_pt_mov(struct rt_edit *s)
 {
     struct rt_metaball_edit *m = (struct rt_metaball_edit *)s->ipe_ptr;
     if (!m->es_metaball_pnt) {
-	bu_log("Must select a point to move");
-	return;
+	bu_vls_printf(s->log_str, "Must select a point to move\n");
+	return BRLCAD_ERROR;
     }
     if (s->e_mvalid) {
 	VMOVE(m->es_metaball_pnt->coord, s->e_mparam);
 	s->e_mvalid = 0;
-	return;
+	return BRLCAD_OK;
     }
     if (!s->e_inpara)
-	return;
+	return BRLCAD_OK;
     if (s->e_inpara != 3) {
-	bu_log("Must provide dx dy dz");
-	return;
+	bu_vls_printf(s->log_str, "Must provide dx dy dz\n");
+	return BRLCAD_ERROR;
     }
     vect_t delta;
+    for (int i = 0; i < ELEMENTS_PER_VECT; ++i) {
+	if (!isfinite(s->e_para[i])) {
+	    bu_vls_printf(s->log_str, "Point delta must be finite\n");
+	    return BRLCAD_ERROR;
+	}
+    }
     VSCALE(delta, s->e_para, s->local2base);
     VADD2(m->es_metaball_pnt->coord, m->es_metaball_pnt->coord, delta);
+    return BRLCAD_OK;
 }
 
-void
+int
 ecmd_metaball_pt_del(struct rt_edit *s)
 {
     struct rt_metaball_edit *m = (struct rt_metaball_edit *)s->ipe_ptr;
     struct wdb_metaball_pnt *tmp = m->es_metaball_pnt, *p;
 
     if (m->es_metaball_pnt == NULL) {
-	bu_log("No point selected");
-	return;
+	bu_vls_printf(s->log_str, "No point selected\n");
+	return BRLCAD_ERROR;
     }
     p = BU_LIST_PREV(wdb_metaball_pnt, &m->es_metaball_pnt->l);
     if (p->l.magic == BU_LIST_HEAD_MAGIC) {
@@ -919,31 +944,38 @@ ecmd_metaball_pt_del(struct rt_edit *s)
     BU_PUT(tmp, struct wdb_metaball_pnt);
     if (!m->es_metaball_pnt)
 	bu_log("WARNING: Last point of this metaball has been deleted.");
+    return BRLCAD_OK;
 }
 
-void
+int
 ecmd_metaball_pt_add(struct rt_edit *s)
 {
     struct rt_metaball_edit *m = (struct rt_metaball_edit *)s->ipe_ptr;
     struct rt_metaball_internal *metaball= (struct rt_metaball_internal *)s->es_int.idb_ptr;
-    struct wdb_metaball_pnt *n;
-    BU_GET(n, struct wdb_metaball_pnt);
-
     if (s->e_inpara != 3) {
-	bu_log("Must provide x y z");
-	BU_PUT(n, struct wdb_metaball_pnt);
-	return;
+	bu_vls_printf(s->log_str, "Must provide x y z\n");
+	return BRLCAD_ERROR;
     }
 
     point_t model_point;
+    for (int i = 0; i < ELEMENTS_PER_VECT; ++i) {
+	if (!isfinite(s->e_para[i])) {
+	    bu_vls_printf(s->log_str, "Point coordinates must be finite\n");
+	    return BRLCAD_ERROR;
+	}
+    }
     VSCALE(model_point, s->e_para, s->local2base);
 
+    struct wdb_metaball_pnt *n;
+    BU_GET(n, struct wdb_metaball_pnt);
     m->es_metaball_pnt = BU_LIST_FIRST(wdb_metaball_pnt, &metaball->metaball_ctrl_head);
     VMOVE(n->coord, model_point);
     n->l.magic = WDB_METABALLPT_MAGIC;
     n->field_strength = 1.0;
+    n->blobbiness = 1.0;
     BU_LIST_APPEND(&m->es_metaball_pnt->l, &n->l);
     m->es_metaball_pnt = n;
+    return BRLCAD_OK;
 }
 
 static int
@@ -953,14 +985,6 @@ rt_edit_metaball_pscale(struct rt_edit *s)
 	bu_vls_printf(s->log_str, "ERROR: only one argument needed\n");
 	s->e_inpara = 0;
 	return BRLCAD_ERROR;
-    }
-
-    if (s->e_inpara) {
-	if (s->e_para[0] <= 0.0) {
-	    bu_vls_printf(s->log_str, "ERROR: SCALE FACTOR <= 0\n");
-	    s->e_inpara = 0;
-	    return BRLCAD_ERROR;
-	}
     }
 
     switch (s->edit_flag) {
@@ -999,17 +1023,13 @@ rt_edit_metaball_edit(struct rt_edit *s)
 	    edit_srot(s);
 	    break;
 	case ECMD_METABALL_PT_PICK:
-	    ecmd_metaball_pt_pick(s);
-	    break;
+	    return ecmd_metaball_pt_pick(s);
 	case ECMD_METABALL_PT_MOV:
-	    ecmd_metaball_pt_mov(s);
-	    break;
+	    return ecmd_metaball_pt_mov(s);
 	case ECMD_METABALL_PT_DEL:
-	    ecmd_metaball_pt_del(s);
-	    break;
+	    return ecmd_metaball_pt_del(s);
 	case ECMD_METABALL_PT_ADD:
-	    ecmd_metaball_pt_add(s);
-	    break;
+	    return ecmd_metaball_pt_add(s);
 	case ECMD_METABALL_SET_THRESHOLD:
 	case ECMD_METABALL_SET_METHOD:
 	case ECMD_METABALL_PT_SCALE_BLOBBINESS:
