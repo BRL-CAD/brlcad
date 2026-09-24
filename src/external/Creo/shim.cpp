@@ -17,8 +17,12 @@
 
 #include "common.h"
 #include "shim.h"
+#include "shared/core_api.h"
 
 /* Functions */
+extern "C" void creo_brl_show_status(const char *) {}
+extern "C" void creo_brl_core_load_profile_shim(void) {}
+extern "C" int creo_brl_core_convert_shim(const char *) {return CREO_BRL_CORE_CONVERT_SUCCESS;}
 extern "C" int ProArrayAlloc(int,int,int,void**) {return 0;}
 extern "C" int ProArrayFree(void**) {return 0;}
 extern "C" int ProArrayObjectAdd(ProArray*,int,int,void*) {return 0;}

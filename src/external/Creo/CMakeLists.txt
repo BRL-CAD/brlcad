@@ -23,6 +23,12 @@ set(CREO2BRL_FRONTEND_CAPTURE_SOURCES
 set(CREO2BRL_FRONTEND_DIALOG_SOURCES
   frontend/dialog_controller.cpp
   )
+set(CREO2BRL_FRONTEND_SOURCES
+  frontend.cpp
+  ${CREO2BRL_FRONTEND_DIALOG_SOURCES}
+  ${CREO2BRL_FRONTEND_CAPTURE_SOURCES}
+  ${CREO2BRL_FRONTEND_OPTION_SOURCES}
+  )
 set(CREO2BRL_FRONTEND_OPTION_SOURCE_PATHS)
 foreach(frontend_option_source ${CREO2BRL_FRONTEND_OPTION_SOURCES})
   # note: we build this as absolute paths so we can reuse for tests/ targets
@@ -353,10 +359,7 @@ if(NOT DEFINED BRLCAD_BUILDTEST_EXTERNALS)
 
   add_library(creo-brl SHARED
     loader.c
-    frontend.cpp
-    ${CREO2BRL_FRONTEND_DIALOG_SOURCES}
-    ${CREO2BRL_FRONTEND_CAPTURE_SOURCES}
-    ${CREO2BRL_FRONTEND_OPTION_SOURCE_PATHS})
+    ${CREO2BRL_FRONTEND_SOURCES})
   target_include_directories(creo-brl PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}")
   target_link_libraries(creo-brl ${WIN_LIBS} ${CREO_PTK_DLL_LIBS})
   set_target_properties(creo-brl PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CREO_BUNDLE_BIN_DIR}")
@@ -507,7 +510,11 @@ else(NOT DEFINED BRLCAD_BUILDTEST_EXTERNALS)
   #----------------------------------------------------------------------#
   CHECK_CXX_FLAG("Wno-maybe-uninitialized")
 
-  set(CREO2BRL_SOURCES ${CREO2BRL_LEGACY_SOURCES} shim.cpp)
+  set(CREO2BRL_SOURCES
+    ${CREO2BRL_LEGACY_SOURCES}
+    ${CREO2BRL_FRONTEND_SOURCES}
+    shim.cpp
+    )
   add_library(creo-brl ${CREO2BRL_SOURCES})
   set_property(TARGET creo-brl APPEND PROPERTY COMPILE_DEFINITIONS TEST_BUILD BRLCADBUILD HAVE_CONFIG_H)
   target_link_libraries(creo-brl librt libwdb libbrep libbg libnmg libbv libbn libbu REGEX::REGEX)
@@ -530,11 +537,7 @@ else(NOT DEFINED BRLCAD_BUILDTEST_EXTERNALS)
   set(creo_dist_files
     ${CREO2BRL_SOURCES}
     ${CREO2BRL_CORE_SOURCES}
-    ${CREO2BRL_FRONTEND_CAPTURE_SOURCES}
-    ${CREO2BRL_FRONTEND_DIALOG_SOURCES}
-    ${CREO2BRL_FRONTEND_OPTION_SOURCES}
     loader.c
-    frontend.cpp
     README.txt
     cmake_uninstall.cmake.in
     creo-brl.dat.in
