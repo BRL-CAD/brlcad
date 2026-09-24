@@ -460,16 +460,6 @@ rt_edit_tgc_write_params(
     bu_vls_printf(p, "D: %.9f %.9f %.9f\n", V3BASE2LOCAL(tgc->d));
 }
 
-#define read_params_line_incr \
-    lc = (ln) ? (ln + lcj) : NULL; \
-    if (!lc) { \
-	bu_free(wc, "wc"); \
-	return BRLCAD_ERROR; \
-    } \
-    ln = strchr(lc, tc); \
-    if (ln) *ln = '\0'; \
-    while (lc && strchr(lc, ':')) lc++
-
 C_DECL int
 rt_edit_tgc_read_params(
 	struct rt_db_internal *ip,
@@ -478,77 +468,20 @@ rt_edit_tgc_read_params(
 	fastf_t local2base
 	)
 {
-    double a = 0.0;
-    double b = 0.0;
-    double c = 0.0;
     struct rt_tgc_internal *tgc = (struct rt_tgc_internal *)ip->idb_ptr;
     RT_TGC_CK_MAGIC(tgc);
-
-    if (!fc)
+    struct rt_tgc_internal candidate = *tgc;
+    const struct edit_param_field fields[] = {
+	{"Vertex", candidate.v, ELEMENTS_PER_VECT, local2base},
+	{"Height", candidate.h, ELEMENTS_PER_VECT, local2base},
+	{"A", candidate.a, ELEMENTS_PER_VECT, local2base},
+	{"B", candidate.b, ELEMENTS_PER_VECT, local2base},
+	{"C", candidate.c, ELEMENTS_PER_VECT, local2base},
+	{"D", candidate.d, ELEMENTS_PER_VECT, local2base}
+    };
+    if (edit_param_read_fields(fc, fields, sizeof(fields) / sizeof(fields[0])) != BRLCAD_OK)
 	return BRLCAD_ERROR;
-
-    // We're getting the file contents as a string, so we need to split it up
-    // to process lines. See https://stackoverflow.com/a/17983619
-
-    // Figure out if we need to deal with Windows line endings
-    const char *crpos = strchr(fc, '\r');
-    int crlf = (crpos && crpos[1] == '\n') ? 1 : 0;
-    char tc = (crlf) ? '\r' : '\n';
-    // If we're CRLF jump ahead another character.
-    int lcj = (crlf) ? 2 : 1;
-
-    char *ln = NULL;
-    char *wc = bu_strdup(fc);
-    char *lc = wc;
-
-    // Set up initial line (Vertex)
-    ln = strchr(lc, tc);
-    if (ln) *ln = '\0';
-
-    // Trim off prefixes, if user left them in
-    while (lc && strchr(lc, ':')) lc++;
-
-    sscanf(lc, "%lf %lf %lf", &a, &b, &c);
-    VSET(tgc->v, a, b, c);
-    VSCALE(tgc->v, tgc->v, local2base);
-
-    // Set up Height line
-    read_params_line_incr;
-
-    sscanf(lc, "%lf %lf %lf", &a, &b, &c);
-    VSET(tgc->h, a, b, c);
-    VSCALE(tgc->h, tgc->h, local2base);
-
-    // Set up A line
-    read_params_line_incr;
-
-    sscanf(lc, "%lf %lf %lf", &a, &b, &c);
-    VSET(tgc->a, a, b, c);
-    VSCALE(tgc->a, tgc->a, local2base);
-
-    // Set up B line
-    read_params_line_incr;
-
-    sscanf(lc, "%lf %lf %lf", &a, &b, &c);
-    VSET(tgc->b, a, b, c);
-    VSCALE(tgc->b, tgc->b, local2base);
-
-    // Set up C line
-    read_params_line_incr;
-
-    sscanf(lc, "%lf %lf %lf", &a, &b, &c);
-    VSET(tgc->c, a, b, c);
-    VSCALE(tgc->c, tgc->c, local2base);
-
-    // Set up D line
-    read_params_line_incr;
-
-    sscanf(lc, "%lf %lf %lf", &a, &b, &c);
-    VSET(tgc->d, a, b, c);
-    VSCALE(tgc->d, tgc->d, local2base);
-
-    // Cleanup
-    bu_free(wc, "wc");
+    *tgc = candidate;
     return BRLCAD_OK;
 }
 
@@ -751,7 +684,7 @@ int
 ecmd_tgc_mv_h(struct rt_edit *s)
 {
     float la, lb, lc, ld;	/* TGC: length of vectors */
-    vect_t work;
+    vect_t work, height;
     point_t model_point;
     struct rt_tgc_internal *tgc =
 	(struct rt_tgc_internal *)s->es_int.idb_ptr;
@@ -759,6 +692,7 @@ ecmd_tgc_mv_h(struct rt_edit *s)
     void *d = NULL;
 
     RT_TGC_CK_MAGIC(tgc);
+    VMOVE(height, tgc->h);
     if (s->e_inpara) {
 	if (s->e_inpara != 3) {
 	    bu_vls_printf(s->log_str, "ERROR: three arguments needed\n");
@@ -771,21 +705,20 @@ ecmd_tgc_mv_h(struct rt_edit *s)
 	if (s->mv_context) {
 	    /* apply s->e_invmat to convert to real model coordinates */
 	    MAT4X3PNT(work, s->e_invmat, model_point);
-	    VSUB2(tgc->h, work, tgc->v);
+	    VSUB2(height, work, tgc->v);
 	} else {
-	    VSUB2(tgc->h, model_point, tgc->v);
+	    VSUB2(height, model_point, tgc->v);
 	}
     }
 
-    /* check for zero H vector */
-    if (MAGNITUDE(tgc->h) <= SQRT_SMALL_FASTF) {
-	bu_vls_printf(s->log_str, "Zero H vector not allowed, resetting to +Z\n");
+    if (edit_validate_height(s, height) != BRLCAD_OK) {
 	rt_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_RESULTS, BU_CLBK_DURING);
 	if (f)
 	    (*f)(0, NULL, d, NULL);
-	VSET(tgc->h, 0.0, 0.0, 1.0);
 	return BRLCAD_ERROR;
     }
+
+    VMOVE(tgc->h, height);
 
     /* have new height vector -- redefine rest of tgc */
     la = MAGNITUDE(tgc->a);
@@ -814,7 +747,7 @@ ecmd_tgc_mv_h(struct rt_edit *s)
 int
 ecmd_tgc_mv_hh(struct rt_edit *s)
 {
-    vect_t work;
+    vect_t work, height;
     point_t model_point;
     struct rt_tgc_internal *tgc =
 	(struct rt_tgc_internal *)s->es_int.idb_ptr;
@@ -822,6 +755,7 @@ ecmd_tgc_mv_hh(struct rt_edit *s)
     void *d = NULL;
 
     RT_TGC_CK_MAGIC(tgc);
+    VMOVE(height, tgc->h);
     if (s->e_inpara) {
 	if (s->e_inpara != 3) {
 	    bu_vls_printf(s->log_str, "ERROR: three arguments needed\n");
@@ -834,22 +768,20 @@ ecmd_tgc_mv_hh(struct rt_edit *s)
 	if (s->mv_context) {
 	    /* apply s->e_invmat to convert to real model coordinates */
 	    MAT4X3PNT(work, s->e_invmat, model_point);
-	    VSUB2(tgc->h, work, tgc->v);
+	    VSUB2(height, work, tgc->v);
 	} else {
-	    VSUB2(tgc->h, model_point, tgc->v);
+	    VSUB2(height, model_point, tgc->v);
 	}
     }
 
-    /* check for zero H vector */
-    if (MAGNITUDE(tgc->h) <= SQRT_SMALL_FASTF) {
-	bu_vls_printf(s->log_str, "Zero H vector not allowed, resetting to +Z\n");
+    if (edit_validate_height(s, height) != BRLCAD_OK) {
 	rt_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_RESULTS, BU_CLBK_DURING);
 	if (f)
 	    (*f)(0, NULL, d, NULL);
-	VSET(tgc->h, 0.0, 0.0, 1.0);
 	return BRLCAD_ERROR;
     }
 
+    VMOVE(tgc->h, height);
     return 0;
 }
 
@@ -1005,7 +937,7 @@ ecmd_tgc_rot_ab(struct rt_edit *s)
 }
 
 /* Use mouse to change location of point V+H */
-void
+static int
 ecmd_tgc_mv_h_mousevec(struct rt_edit *s, const vect_t mousevec)
 {
     struct rt_tgc_internal *tgc =
@@ -1021,8 +953,13 @@ ecmd_tgc_mv_h_mousevec(struct rt_edit *s, const vect_t mousevec)
     /* Do NOT change pos_view[Z] ! */
     MAT4X3PNT(temp, s->vp->gv_view2model, pos_view);
     MAT4X3PNT(tr_temp, s->e_invmat, temp);
-    VSUB2(tgc->h, tr_temp, tgc->v);
+    vect_t height;
+    VSUB2(height, tr_temp, tgc->v);
+    if (edit_validate_height(s, height) != BRLCAD_OK)
+	return BRLCAD_ERROR;
+    VMOVE(tgc->h, height);
     edit_abs_tra(s, pos_view);
+    return BRLCAD_OK;
 }
 
 static int
@@ -1188,8 +1125,7 @@ rt_edit_tgc_edit_xy(
 	    break;
 	case ECMD_TGC_MV_H:
 	case ECMD_TGC_MV_HH:
-	    ecmd_tgc_mv_h_mousevec(s, mousevec);
-	    return BRLCAD_OK;
+	    return ecmd_tgc_mv_h_mousevec(s, mousevec);
 	case ECMD_TGC_ROT_H:
 	case ECMD_TGC_ROT_AB:
 	    bu_vls_printf(s->log_str, "%s: XY edit undefined in solid edit mode %d\n", EDOBJ[ip->idb_type].ft_label, s->edit_flag);

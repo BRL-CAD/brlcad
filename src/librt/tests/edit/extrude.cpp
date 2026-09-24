@@ -232,6 +232,27 @@ rt_edit_test_extrude(void)
     rt_edit_process(s);
     if (extr_diff("ECMD_EXTR_MOV_H", cmp, edit_extr))
 	bu_exit(1, "ERROR: ECMD_EXTR_MOV_H failed\n");
+
+    extr_reset(s, edit_extr, orig, cmp);
+    s->e_inpara = 3;
+    s->local2base = 25.4;
+    s->base2local = 1.0 / s->local2base;
+    VSCALE(s->e_para, orig->V, s->base2local);
+    if (rt_edit_process(s) != BRLCAD_ERROR ||
+	extr_diff("rejected zero-height move", cmp, edit_extr))
+	bu_exit(1, "ERROR: rejected EXTRUDE height move changed geometry\n");
+    s->local2base = 1.0;
+    s->base2local = 1.0;
+
+    extr_reset(s, edit_extr, orig, cmp);
+    VMOVE(s->curr_e_axes_pos, orig->V);
+    point_t rejected_view_target;
+    MAT4X3PNT(rejected_view_target, v->gv_model2view, orig->V);
+    VMOVE(mousevec, rejected_view_target);
+    if (EDOBJ[dp->d_minor_type].ft_edit_xy(s, mousevec) != BRLCAD_ERROR ||
+	extr_diff("rejected mouse zero-height move", cmp, edit_extr))
+	bu_exit(1, "ERROR: rejected EXTRUDE mouse height move changed geometry\n");
+    VADD2(s->curr_e_axes_pos, orig->V, orig->h);
     bu_log("ECMD_EXTR_MOV_H SUCCESS: h=%g,%g,%g\n", V3ARGS(edit_extr->h));
 
     /* ================================================================

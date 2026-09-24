@@ -155,16 +155,6 @@ rt_edit_hyp_write_params(
     bu_vls_printf(p, "Ratio of Neck to Base: %.9f\n", hyp->hyp_bnr);
 }
 
-#define read_params_line_incr \
-    lc = (ln) ? (ln + lcj) : NULL; \
-    if (!lc) { \
-	bu_free(wc, "wc"); \
-	return BRLCAD_ERROR; \
-    } \
-    ln = strchr(lc, tc); \
-    if (ln) *ln = '\0'; \
-    while (lc && strchr(lc, ':')) lc++
-
 C_DECL int
 rt_edit_hyp_read_params(
 	struct rt_db_internal *ip,
@@ -173,68 +163,19 @@ rt_edit_hyp_read_params(
 	fastf_t local2base
 	)
 {
-    double a = 0.0;
-    double b = 0.0;
-    double c = 0.0;
     struct rt_hyp_internal *hyp = (struct rt_hyp_internal *)ip->idb_ptr;
     RT_HYP_CK_MAGIC(hyp);
-
-    if (!fc)
+    struct rt_hyp_internal candidate = *hyp;
+    const struct edit_param_field fields[] = {
+	{"Vertex", candidate.hyp_Vi, ELEMENTS_PER_VECT, local2base},
+	{"Height", candidate.hyp_Hi, ELEMENTS_PER_VECT, local2base},
+	{"Semi-major axis", candidate.hyp_A, ELEMENTS_PER_VECT, local2base},
+	{"Semi-minor length", &candidate.hyp_b, 1, local2base},
+	{"Ratio of Neck to Base", &candidate.hyp_bnr, 1, 1.0}
+    };
+    if (edit_param_read_fields(fc, fields, sizeof(fields) / sizeof(fields[0])) != BRLCAD_OK)
 	return BRLCAD_ERROR;
-
-    // We're getting the file contents as a string, so we need to split it up
-    // to process lines. See https://stackoverflow.com/a/17983619
-
-    // Figure out if we need to deal with Windows line endings
-    const char *crpos = strchr(fc, '\r');
-    int crlf = (crpos && crpos[1] == '\n') ? 1 : 0;
-    char tc = (crlf) ? '\r' : '\n';
-    // If we're CRLF jump ahead another character.
-    int lcj = (crlf) ? 2 : 1;
-
-    char *ln = NULL;
-    char *wc = bu_strdup(fc);
-    char *lc = wc;
-
-    // Set up initial line (Vertex)
-    ln = strchr(lc, tc);
-    if (ln) *ln = '\0';
-
-    // Trim off prefixes, if user left them in
-    while (lc && strchr(lc, ':')) lc++;
-
-    sscanf(lc, "%lf %lf %lf", &a, &b, &c);
-    VSET(hyp->hyp_Vi, a, b, c);
-    VSCALE(hyp->hyp_Vi, hyp->hyp_Vi, local2base);
-
-    // Set up Height line
-    read_params_line_incr;
-
-    sscanf(lc, "%lf %lf %lf", &a, &b, &c);
-    VSET(hyp->hyp_Hi, a, b, c);
-    VSCALE(hyp->hyp_Hi, hyp->hyp_Hi, local2base);
-
-    // Set up Semi-major axis line
-    read_params_line_incr;
-
-    sscanf(lc, "%lf %lf %lf", &a, &b, &c);
-    VSET(hyp->hyp_A, a, b, c);
-    VSCALE(hyp->hyp_A, hyp->hyp_A, local2base);
-
-    // Set up Semi-minor length line
-    read_params_line_incr;
-
-    sscanf(lc, "%lf", &a);
-    hyp->hyp_b = a * local2base;
-
-    // Set up Ratio of Neck to Base line
-    read_params_line_incr;
-
-    sscanf(lc, "%lf", &a);
-    hyp->hyp_bnr = a;
-
-    // Cleanup
-    bu_free(wc, "wc");
+    *hyp = candidate;
     return BRLCAD_OK;
 }
 

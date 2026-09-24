@@ -223,16 +223,6 @@ rt_edit_ehy_write_params(
     bu_vls_printf(p, "Dist to asymptotes: %.9f\n", ehy->ehy_c * base2local);
 }
 
-#define read_params_line_incr \
-    lc = (ln) ? (ln + lcj) : NULL; \
-    if (!lc) { \
-	bu_free(wc, "wc"); \
-	return BRLCAD_ERROR; \
-    } \
-    ln = strchr(lc, tc); \
-    if (ln) *ln = '\0'; \
-    while (lc && strchr(lc, ':')) lc++
-
 C_DECL int
 rt_edit_ehy_read_params(
 	struct rt_db_internal *ip,
@@ -241,74 +231,22 @@ rt_edit_ehy_read_params(
 	fastf_t local2base
 	)
 {
-    double a = 0.0;
-    double b = 0.0;
-    double c = 0.0;
     struct rt_ehy_internal *ehy = (struct rt_ehy_internal *)ip->idb_ptr;
     RT_EHY_CK_MAGIC(ehy);
-
-    if (!fc)
+    struct rt_ehy_internal candidate = *ehy;
+    const struct edit_param_field fields[] = {
+	{"Vertex", candidate.ehy_V, ELEMENTS_PER_VECT, local2base},
+	{"Height", candidate.ehy_H, ELEMENTS_PER_VECT, local2base},
+	{"Semi-major axis", candidate.ehy_Au, ELEMENTS_PER_VECT, 1.0},
+	{"Semi-major length", &candidate.ehy_r1, 1, local2base},
+	{"Semi-minor length", &candidate.ehy_r2, 1, local2base},
+	{"Dist to asymptotes", &candidate.ehy_c, 1, local2base}
+    };
+    if (edit_param_read_fields(fc, fields, sizeof(fields) / sizeof(fields[0])) != BRLCAD_OK ||
+	ZERO(MAGNITUDE(candidate.ehy_Au)))
 	return BRLCAD_ERROR;
-
-    // We're getting the file contents as a string, so we need to split it up
-    // to process lines. See https://stackoverflow.com/a/17983619
-
-    // Figure out if we need to deal with Windows line endings
-    const char *crpos = strchr(fc, '\r');
-    int crlf = (crpos && crpos[1] == '\n') ? 1 : 0;
-    char tc = (crlf) ? '\r' : '\n';
-    // If we're CRLF jump ahead another character.
-    int lcj = (crlf) ? 2 : 1;
-
-    char *ln = NULL;
-    char *wc = bu_strdup(fc);
-    char *lc = wc;
-
-    // Set up initial line
-    ln = strchr(lc, tc);
-    if (ln) *ln = '\0';
-
-    // Trim off prefixes, if user left them in
-    while (lc && strchr(lc, ':')) lc++;
-
-    sscanf(lc, "%lf %lf %lf", &a, &b, &c);
-    VSET(ehy->ehy_V, a, b, c);
-    VSCALE(ehy->ehy_V, ehy->ehy_V, local2base);
-
-    // Set up Height line
-    read_params_line_incr;
-
-    sscanf(lc, "%lf %lf %lf", &a, &b, &c);
-    VSET(ehy->ehy_H, a, b, c);
-    VSCALE(ehy->ehy_H, ehy->ehy_H, local2base);
-
-    // Set up Semi-major axis line
-    read_params_line_incr;
-
-    sscanf(lc, "%lf %lf %lf", &a, &b, &c);
-    VSET(ehy->ehy_Au, a, b, c);
-    VUNITIZE(ehy->ehy_Au);
-
-    // Set up Semi-major length line
-    read_params_line_incr;
-
-    sscanf(lc, "%lf", &a);
-    ehy->ehy_r1 = a * local2base;
-
-    // Set up Semi-minor length line
-    read_params_line_incr;
-
-    sscanf(lc, "%lf", &a);
-    ehy->ehy_r2 = a * local2base;
-
-    // Set up distance to asymptotes line
-    read_params_line_incr;
-
-    sscanf(lc, "%lf", &a);
-    ehy->ehy_c = a * local2base;
-
-    // Cleanup
-    bu_free(wc, "wc");
+    VUNITIZE(candidate.ehy_Au);
+    *ehy = candidate;
     return BRLCAD_OK;
 }
 

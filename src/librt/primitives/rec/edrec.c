@@ -234,7 +234,14 @@ rt_edit_rec_edit(struct rt_edit *s)
 	    tgc = (struct rt_tgc_internal *)s->es_int.idb_ptr;
 	    RT_TGC_CK_MAGIC(tgc);
 	    if (s->e_inpara == 3) {
-		VSCALE(tgc->v, s->e_para, s->local2base);
+		point_t new_v;
+		VSCALE(new_v, s->e_para, s->local2base);
+		if (!isfinite(new_v[X]) || !isfinite(new_v[Y]) ||
+		    !isfinite(new_v[Z])) {
+		    bu_vls_printf(s->log_str, "ERROR: base center must be finite\n");
+		    return BRLCAD_ERROR;
+		}
+		VMOVE(tgc->v, new_v);
 	    }
 	    return BRLCAD_OK;
 
@@ -244,11 +251,8 @@ rt_edit_rec_edit(struct rt_edit *s)
 	    if (s->e_inpara == 3) {
 		vect_t new_h;
 		VSCALE(new_h, s->e_para, s->local2base);
-		if (MAGNITUDE(new_h) < SMALL_FASTF) {
-		    bu_vls_printf(s->log_str,
-			"ERROR: H vector must have non-zero length\n");
+		if (edit_validate_height(s, new_h) != BRLCAD_OK)
 		    return BRLCAD_ERROR;
-		}
 
 		mag_a = MAGNITUDE(tgc->a);
 		mag_b = MAGNITUDE(tgc->b);
@@ -281,7 +285,7 @@ rt_edit_rec_edit(struct rt_edit *s)
 	    RT_TGC_CK_MAGIC(tgc);
 	    if (s->e_inpara == 1) {
 		r = s->e_para[0] * s->local2base;
-		if (r < SMALL_FASTF) {
+		if (!isfinite(r) || r <= 0.0) {
 		    bu_vls_printf(s->log_str,
 			"ERROR: radius must be positive\n");
 		    return BRLCAD_ERROR;
@@ -298,7 +302,7 @@ rt_edit_rec_edit(struct rt_edit *s)
 	    RT_TGC_CK_MAGIC(tgc);
 	    if (s->e_inpara == 1) {
 		r = s->e_para[0] * s->local2base;
-		if (r < SMALL_FASTF) {
+		if (!isfinite(r) || r <= 0.0) {
 		    bu_vls_printf(s->log_str,
 			"ERROR: radius must be positive\n");
 		    return BRLCAD_ERROR;
@@ -315,7 +319,7 @@ rt_edit_rec_edit(struct rt_edit *s)
 	    RT_TGC_CK_MAGIC(tgc);
 	    if (s->e_inpara == 1) {
 		r = s->e_para[0] * s->local2base;
-		if (r < SMALL_FASTF) {
+		if (!isfinite(r) || r <= 0.0) {
 		    bu_vls_printf(s->log_str,
 			"ERROR: radius must be positive\n");
 		    return BRLCAD_ERROR;

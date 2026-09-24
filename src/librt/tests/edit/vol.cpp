@@ -240,6 +240,22 @@ rt_edit_test_vol(void)
     bu_log("RT_PARAMS_EDIT_SCALE SUCCESS: mat[15]=%g (encodes scale=2)\n",
 	   edit_vol->mat[15]);
 
+    vol_reset(s, edit_vol);
+    s->e_inpara = 2;
+    s->e_para[0] = 2.0;
+    s->e_para[1] = 3.0;
+    if (rt_edit_process(s) != BRLCAD_ERROR ||
+	!NEAR_EQUAL(edit_vol->mat[15], 1.0, VUNITIZE_TOL))
+	bu_exit(1, "ERROR: rejected generic VOL scale changed geometry or succeeded\n");
+
+    vol_reset(s, edit_vol);
+    s->e_inpara = 1;
+    s->e_para[0] = 0.0;
+    if (rt_edit_process(s) != BRLCAD_ERROR ||
+	!NEAR_EQUAL(edit_vol->mat[15], 1.0, VUNITIZE_TOL) ||
+	!NEAR_EQUAL(s->acc_sc_sol, 1.0, VUNITIZE_TOL))
+	bu_exit(1, "ERROR: rejected zero VOL scale changed edit state\n");
+
     /* ================================================================
      * RT_PARAMS_EDIT_TRANS (translate; keypoint (0,0,0) → e_para=(5,5,5))
      *

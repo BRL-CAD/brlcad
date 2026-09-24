@@ -24,6 +24,9 @@
 
 #include "common.h"
 
+#include <math.h>
+#include <string.h>
+
 #include "vmath.h"
 #include "bu/log.h"
 #include "bu/malloc.h"
@@ -155,6 +158,32 @@ check_rec_units(const fastf_t local2base)
     if (!NEAR_EQUAL(MAGNITUDE(rec->a), 2.5 * inch, VUNITIZE_TOL) ||
         !NEAR_EQUAL(MAGNITUDE(rec->b), 2.5 * inch, VUNITIZE_TOL))
         bu_exit(1, "REC equal-radius edit did not use local units\n");
+
+    const struct rt_tgc_internal saved_rec = *rec;
+    EDOBJ[ID_REC].ft_set_edit_mode(s, ECMD_REC_SET_V);
+    s->e_inpara = 3;
+    VSET(s->e_para, NAN, 0.0, 0.0);
+    if (EDOBJ[ID_REC].ft_edit(s) != BRLCAD_ERROR ||
+	memcmp(rec, &saved_rec, sizeof(saved_rec)))
+	bu_exit(1, "REC accepted an invalid center or changed geometry\n");
+
+    EDOBJ[ID_REC].ft_set_edit_mode(s, ECMD_REC_SET_H);
+    VSET(s->e_para, 0.0, 0.0, tol.dist * 0.5 / local2base);
+    if (EDOBJ[ID_REC].ft_edit(s) != BRLCAD_ERROR ||
+	memcmp(rec, &saved_rec, sizeof(saved_rec)))
+	bu_exit(1, "REC accepted a near-zero height or changed geometry\n");
+
+    const int radius_commands[] = {
+	ECMD_REC_SCALE_R1, ECMD_REC_SCALE_R2, ECMD_REC_SCALE_R
+    };
+    for (size_t i = 0; i < sizeof(radius_commands) / sizeof(radius_commands[0]); i++) {
+	EDOBJ[ID_REC].ft_set_edit_mode(s, radius_commands[i]);
+	s->e_inpara = 1;
+	s->e_para[0] = NAN;
+	if (EDOBJ[ID_REC].ft_edit(s) != BRLCAD_ERROR ||
+	    memcmp(rec, &saved_rec, sizeof(saved_rec)))
+	    bu_exit(1, "REC accepted an invalid radius or changed geometry\n");
+    }
 
     s->e_inpara = 1;
     s->e_para[0] = 0.0;

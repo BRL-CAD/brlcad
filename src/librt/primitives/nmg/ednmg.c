@@ -677,6 +677,52 @@ nmg_edit_target_point(point_t target, const struct rt_edit *s, const point_t loc
 }
 
 static int
+nmg_edit_move_edge(struct rt_edit *s, const point_t new_pt)
+{
+    struct rt_nmg_edit *n = (struct rt_nmg_edit *)s->ipe_ptr;
+    struct model *original = (struct model *)s->es_int.idb_ptr;
+    struct model *candidate;
+    struct nmg_struct_counts counts;
+    uint32_t **candidate_structs;
+    struct edgeuse *candidate_eu;
+    int result;
+
+    if (nmg_find_model(&n->es_eu->l.magic) != original)
+	return 1;
+
+    /* A wire move cannot fail after it starts changing geometry. */
+    if (!nmg_find_fu_of_eu(n->es_eu))
+	return nmg_move_edge_thru_pnt(n->es_eu, new_pt, s->tol);
+
+    candidate = nmg_clone_model(original);
+    if (!candidate)
+	return 1;
+
+    candidate_structs = nmg_m_struct_count(&counts, candidate);
+    candidate_eu = (struct edgeuse *)candidate_structs[n->es_eu->index];
+    NMG_CK_EDGEUSE(candidate_eu);
+    result = nmg_move_edge_thru_pnt(candidate_eu, new_pt, s->tol);
+    if (result) {
+	bu_free(candidate_structs, "NMG candidate structures");
+	nmg_km(candidate);
+	return result;
+    }
+
+    /* Clone indices identify the corresponding selections in the new model. */
+    n->es_eu = candidate_eu;
+    if (n->es_v && nmg_find_model(&n->es_v->magic) == original)
+	n->es_v = (struct vertex *)candidate_structs[n->es_v->index];
+    if (n->es_fu && nmg_find_model(&n->es_fu->l.magic) == original)
+	n->es_fu = (struct faceuse *)candidate_structs[n->es_fu->index];
+    if (n->es_s && nmg_find_model(&n->es_s->l.magic) == original)
+	n->es_s = (struct shell *)candidate_structs[n->es_s->index];
+    bu_free(candidate_structs, "NMG candidate structures");
+    s->es_int.idb_ptr = (void *)candidate;
+    nmg_km(original);
+    return 0;
+}
+
+static int
 ecmd_nmg_emove(struct rt_edit *s)
 {
     struct rt_nmg_edit *n = (struct rt_nmg_edit *)s->ipe_ptr;
@@ -747,7 +793,7 @@ ecmd_nmg_emove(struct rt_edit *s)
 	}
     }
 
-    if (nmg_move_edge_thru_pnt(n->es_eu, new_pt, s->tol) < 0) {
+    if (nmg_edit_move_edge(s, new_pt)) {
 	bu_vls_printf(s->log_str, "Edge Move: Unable to hit (%g %g %g)\n",
 	    V3ARGS(new_pt));
 	return BRLCAD_ERROR;

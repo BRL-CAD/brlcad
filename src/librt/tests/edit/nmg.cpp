@@ -282,6 +282,29 @@ nmg_tet_state(const struct rt_edit *edit,
 	nmg_points_match(edit, expected, NMG_TET_VERTEX_COUNT);
 }
 
+static bool
+nmg_tet_face_planes(const struct model *model,
+		    fastf_t planes[NMG_TET_FACE_COUNT][ELEMENTS_PER_PLANE])
+{
+    size_t count = 0;
+    struct nmgregion *region;
+    for (BU_LIST_FOR(region, nmgregion, &model->r_hd)) {
+	struct shell *shell;
+	for (BU_LIST_FOR(shell, shell, &region->s_hd)) {
+	    struct faceuse *face;
+	    for (BU_LIST_FOR(face, faceuse, &shell->fu_hd)) {
+		if (face->orientation != OT_SAME)
+		    continue;
+		if (count == NMG_TET_FACE_COUNT || !face->f_p->g.plane_p)
+		    return false;
+		memcpy(planes[count++], face->f_p->g.plane_p->N,
+		    sizeof(plane_t));
+	    }
+	}
+    }
+    return count == NMG_TET_FACE_COUNT;
+}
+
 static int
 nmg_tet_step(struct rt_edit *edit, const char *unit, const char *name,
 	     int command, const fastf_t *params, int count,
@@ -354,6 +377,34 @@ nmg_operation_matrix_unit(fastf_t local2base, const char *unit)
 	ECMD_NMG_EKILL, NULL, 0, expected, -1, false, true);
     failures += nmg_tet_step(edit, unit, "reject extrusion without loop",
 	ECMD_NMG_LEXTRU_DIR, extrude_direction, 4, expected, -1, false, true);
+
+    /* A target at the opposite face vertex makes its new plane degenerate. */
+    struct rt_nmg_edit *selection = (struct rt_nmg_edit *)edit->ipe_ptr;
+    struct model *model = (struct model *)edit->es_int.idb_ptr;
+    struct nmgregion *region = BU_LIST_FIRST(nmgregion, &model->r_hd);
+    struct shell *shell = BU_LIST_FIRST(shell, &region->s_hd);
+    struct faceuse *face = BU_LIST_FIRST(faceuse, &shell->fu_hd);
+    if (face->orientation != OT_SAME)
+	face = face->fumate_p;
+    struct loopuse *loop = BU_LIST_FIRST(loopuse, &face->lu_hd);
+    selection->es_eu = BU_LIST_FIRST(edgeuse, &loop->down_hd);
+    struct edgeuse *next = BU_LIST_PNEXT_CIRC(edgeuse, &selection->es_eu->l);
+    point_t degenerate_target;
+    VSCALE(degenerate_target, next->eumate_p->vu_p->v_p->vg_p->coord,
+	1.0 / local2base);
+    fastf_t before_planes[NMG_TET_FACE_COUNT][ELEMENTS_PER_PLANE];
+    fastf_t after_planes[NMG_TET_FACE_COUNT][ELEMENTS_PER_PLANE];
+    bool have_planes = nmg_tet_face_planes(model, before_planes);
+    failures += nmg_tet_step(edit, unit, "reject degenerate edge move",
+	ECMD_NMG_EMOVE, degenerate_target, 3, expected, -1, false, true);
+    if (!have_planes || !nmg_tet_face_planes(
+	    (struct model *)edit->es_int.idb_ptr, after_planes) ||
+	    memcmp(before_planes, after_planes, sizeof(before_planes))) {
+	bu_log("nmg\treject degenerate edge move planes\t%s\tfail\n", unit);
+	++failures;
+    }
+    selection->es_eu = NULL;
+
     failures += nmg_tet_step(edit, unit, "reject fractional vertex index",
 	ECMD_NMG_VPICK, bad_pick, 1, expected, -1, false, true);
     failures += nmg_tet_step(edit, unit, "pick vertex",
@@ -374,6 +425,32 @@ nmg_operation_matrix_unit(fastf_t local2base, const char *unit)
     expected[3][X] += 25.4;
     failures += nmg_tet_step(edit, unit, "move face",
 	ECMD_NMG_FMOVE, face_delta, 3, expected, 1, true);
+
+    /* A successful face-edge move must remap all live NMG selections. */
+    model = (struct model *)edit->es_int.idb_ptr;
+    region = BU_LIST_FIRST(nmgregion, &model->r_hd);
+    shell = BU_LIST_FIRST(shell, &region->s_hd);
+    face = BU_LIST_FIRST(faceuse, &shell->fu_hd);
+    if (face->orientation != OT_SAME)
+	face = face->fumate_p;
+    loop = BU_LIST_FIRST(loopuse, &face->lu_hd);
+    selection->es_eu = BU_LIST_FIRST(edgeuse, &loop->down_hd);
+    point_t edge_target;
+    VMOVE(edge_target, selection->es_eu->vu_p->v_p->vg_p->coord);
+    edge_target[Y] += 0.1;
+    edge_target[Z] += 0.1;
+    rt_edit_set_edflag(edit, ECMD_NMG_EMOVE);
+    edit->e_inpara = 3;
+    VSCALE(edit->e_para, edge_target, 1.0 / local2base);
+    int edge_result = rt_edit_process(edit);
+    struct model *moved_model = (struct model *)edit->es_int.idb_ptr;
+    if (edge_result != BRLCAD_OK || moved_model == model ||
+	nmg_find_model(&selection->es_eu->l.magic) != moved_model ||
+	nmg_find_model(&selection->es_v->magic) != moved_model ||
+	nmg_find_model(&selection->es_fu->l.magic) != moved_model) {
+	bu_log("nmg\tmove face edge and remap selections\t%s\tfail\n", unit);
+	++failures;
+    }
 
     rt_edit_destroy(edit);
     db_free_full_path(&path);

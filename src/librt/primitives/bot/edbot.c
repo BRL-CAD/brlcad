@@ -609,6 +609,21 @@ ecmd_bot_movev_list(struct rt_edit *s)
  * No e_para needed.
  */
 static int
+bot_face_edge_other(const int *face, int v0, int v1)
+{
+    if ((face[0] == v0 && face[1] == v1) ||
+	(face[0] == v1 && face[1] == v0))
+	return face[2];
+    if ((face[1] == v0 && face[2] == v1) ||
+	(face[1] == v1 && face[2] == v0))
+	return face[0];
+    if ((face[2] == v0 && face[0] == v1) ||
+	(face[2] == v1 && face[0] == v0))
+	return face[1];
+    return -1;
+}
+
+static int
 ecmd_bot_esplit(struct rt_edit *s)
 {
     struct rt_bot_edit *b = (struct rt_bot_edit *)s->ipe_ptr;
@@ -618,10 +633,22 @@ ecmd_bot_esplit(struct rt_edit *s)
 
     int v0 = b->bot_verts[0];
     int v1 = b->bot_verts[1];
-    if (v0 < 0 || v1 < 0 || b->bot_verts[2] >= 0) {
+    if (v0 < 0 || v1 < 0 || v0 == v1 ||
+	(size_t)v0 >= bot->num_vertices || (size_t)v1 >= bot->num_vertices ||
+	b->bot_verts[2] >= 0) {
 	bu_vls_printf(s->log_str,
 		"ERROR: ECMD_BOT_ESPLIT requires a single edge selection "
 		"(ECMD_BOT_PICKE first)\n");
+	return BRLCAD_ERROR;
+    }
+
+    size_t incident_faces = 0;
+    for (size_t fi = 0; fi < bot->num_faces; fi++) {
+	if (bot_face_edge_other(&bot->faces[fi * 3], v0, v1) >= 0)
+	    incident_faces++;
+    }
+    if (!incident_faces) {
+	bu_vls_printf(s->log_str, "ERROR: selected BOT edge was not found\n");
 	return BRLCAD_ERROR;
     }
 
@@ -642,19 +669,7 @@ ecmd_bot_esplit(struct rt_edit *s)
 	(size_t *)bu_malloc(orig_nf * sizeof(size_t), "split BOT face parents") :
 	NULL;
     for (size_t fi = 0; fi < orig_nf; fi++) {
-	int f0 = bot->faces[fi*3];
-	int f1 = bot->faces[fi*3+1];
-	int f2 = bot->faces[fi*3+2];
-
-	/* Check whether this face contains the directed or reverse edge */
-	int other = -1;
-	if ((f0 == v0 && f1 == v1) || (f0 == v1 && f1 == v0)) {
-	    other = f2;
-	} else if ((f1 == v0 && f2 == v1) || (f1 == v1 && f2 == v0)) {
-	    other = f0;
-	} else if ((f2 == v0 && f0 == v1) || (f2 == v1 && f0 == v0)) {
-	    other = f1;
-	}
+	int other = bot_face_edge_other(&bot->faces[fi * 3], v0, v1);
 	if (other < 0)
 	    continue;   /* edge not in this face */
 

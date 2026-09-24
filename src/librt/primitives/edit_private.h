@@ -67,6 +67,10 @@ edit_scale_length(struct rt_edit *s, vect_t *axis, fastf_t *scalar);
 int
 edit_scale_equal_axes(struct rt_edit *s, vect_t a, vect_t b, vect_t c);
 
+/* Reject height endpoint edits that would collapse the primitive. */
+int
+edit_validate_height(struct rt_edit *s, const vect_t height);
+
 /* Validate dimension counts before converting numeric edit parameters. */
 int
 edit_parse_sample_count(uint32_t *count, fastf_t value);
@@ -94,6 +98,17 @@ edit_param_read_vector(point_t out, char **cursor, const char *label,
 int
 edit_param_read_scalar(fastf_t *out, char **cursor, const char *label,
 		       fastf_t local2base);
+
+struct edit_param_field {
+    const char *label;
+    fastf_t *value;
+    int count;
+    fastf_t conversion;
+};
+
+int
+edit_param_read_fields(const char *text, const struct edit_param_field *fields,
+		size_t field_count);
 
 /* translate solid */
 void

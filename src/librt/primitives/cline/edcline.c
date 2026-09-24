@@ -174,7 +174,7 @@ cline_scale(struct rt_edit *s)
 int
 ecmd_cline_move_h(struct rt_edit *s)
 {
-    vect_t work;
+    vect_t work, height;
     point_t model_point;
     struct rt_cline_internal *cli =
 	(struct rt_cline_internal *)s->es_int.idb_ptr;
@@ -182,6 +182,7 @@ ecmd_cline_move_h(struct rt_edit *s)
     void *d = NULL;
  
     RT_CLINE_CK_MAGIC(cli);
+    VMOVE(height, cli->h);
 
     if (s->e_inpara) {
 	if (s->e_inpara != 3) {
@@ -194,24 +195,22 @@ ecmd_cline_move_h(struct rt_edit *s)
 
 	if (s->mv_context) {
 	    MAT4X3PNT(work, s->e_invmat, model_point);
-	    VSUB2(cli->h, work, cli->v);
+	    VSUB2(height, work, cli->v);
 	} else
-	    VSUB2(cli->h, model_point, cli->v);
+	    VSUB2(height, model_point, cli->v);
     }
-    /* check for zero H vector */
-    if (MAGNITUDE(cli->h) <= SQRT_SMALL_FASTF) {
-	bu_vls_printf(s->log_str, "Zero H vector not allowed, resetting to +Z\n");
+    if (edit_validate_height(s, height) != BRLCAD_OK) {
 	rt_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_RESULTS, BU_CLBK_DURING);
 	if (f)
 	    (*f)(0, NULL, d, NULL);
-	VSET(cli->h, 0.0, 0.0, 1.0);
 	return BRLCAD_ERROR;
     }
 
+    VMOVE(cli->h, height);
     return 0;
 }
 
-void
+static int
 ecmd_cline_move_h_mousevec(struct rt_edit *s, const vect_t mousevec)
 {
     vect_t pos_view = VINIT_ZERO;	/* Unrotated view space pos */
@@ -228,8 +227,13 @@ ecmd_cline_move_h_mousevec(struct rt_edit *s, const vect_t mousevec)
     /* Do NOT change pos_view[Z] ! */
     MAT4X3PNT(temp, s->vp->gv_view2model, pos_view);
     MAT4X3PNT(tr_temp, s->e_invmat, temp);
-    VSUB2(cli->h, tr_temp, cli->v);
+    vect_t height;
+    VSUB2(height, tr_temp, cli->v);
+    if (edit_validate_height(s, height) != BRLCAD_OK)
+	return BRLCAD_ERROR;
+    VMOVE(cli->h, height);
     edit_abs_tra(s, pos_view);
+    return BRLCAD_OK;
 }
 
 C_DECL int
@@ -279,8 +283,7 @@ rt_edit_cline_edit_xy(
 	    edit_stra_xy(&pos_view, s, mousevec);
 	    break;
 	case ECMD_CLINE_MOVE_H:
-	    ecmd_cline_move_h_mousevec(s, mousevec);
-	    return BRLCAD_OK;
+	    return ecmd_cline_move_h_mousevec(s, mousevec);
 	default:
 	    return edit_generic_xy(s, mousevec);
     }
