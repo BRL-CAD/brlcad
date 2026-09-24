@@ -47,6 +47,8 @@
 #define ECMD_ARB_ROTATE_FACE	4015
 #define ECMD_ARB_MOVE_EDGE	4036
 
+enum { ARB8_FACE_COUNT = 6, ARB8_VERTEX_COUNT = 8 };
+
 /* ------------------------------------------------------------------ */
 /* ft_edit_desc descriptor for the ARB8 primitive                     */
 /* ------------------------------------------------------------------ */
@@ -72,7 +74,7 @@ static const struct rt_edit_param_desc arb_move_face_params[] = {
 	RT_EDIT_PARAM_INTEGER, /* type        */
 	0,                    /* index        */
 	0.0,                  /* range_min    */
-	5.0,                  /* range_max    */
+	ARB8_FACE_COUNT - 1,  /* range_max    */
 	NULL,                 /* units        */
 	0, NULL, NULL,        /* enum (unused) */
 	NULL                  /* prim_field   */
@@ -147,7 +149,7 @@ static const struct rt_edit_param_desc arb_rotate_face_params[] = {
 	RT_EDIT_PARAM_INTEGER, /* type        */
 	0,                    /* index        */
 	0.0,                  /* range_min    */
-	5.0,                  /* range_max    */
+	ARB8_FACE_COUNT - 1,  /* range_max    */
 	NULL,                 /* units        */
 	0, NULL, NULL,        /* enum (unused) */
 	NULL                  /* prim_field   */
@@ -158,7 +160,7 @@ static const struct rt_edit_param_desc arb_rotate_face_params[] = {
 	RT_EDIT_PARAM_INTEGER, /* type        */
 	1,                    /* index        */
 	0.0,                  /* range_min    */
-	7.0,                  /* range_max    */
+	ARB8_VERTEX_COUNT - 1, /* range_max  */
 	NULL,                 /* units        */
 	0, NULL, NULL,        /* enum (unused) */
 	NULL                  /* prim_field   */
@@ -1538,6 +1540,11 @@ ecmd_arb_move_face(struct rt_edit *s)
 	if (arb_numeric_target(work, s, &a->edit_menu) != BRLCAD_OK)
 	    return BRLCAD_ERROR;
 
+	if (a->edit_menu < 0 || a->edit_menu >= ARB8_FACE_COUNT) {
+	    bu_vls_printf(s->log_str, "Invalid ARB face index %d\n", a->edit_menu);
+	    return BRLCAD_ERROR;
+	}
+
 	struct rt_arb_internal *arb = (struct rt_arb_internal *)s->es_int.idb_ptr;
 	RT_ARB_CK_MAGIC(arb);
 
@@ -1549,11 +1556,12 @@ ecmd_arb_move_face(struct rt_edit *s)
 	if (arb_type == 0)
 	    return BRLCAD_ERROR;
 
-	(void)rt_arb_calc_points(arb, arb_type, (const plane_t *)a->es_peqn, s->tol);
-	
-	if (edarb_canonicalize(s, arb) != BRLCAD_OK) {
+	if (rt_arb_calc_points(arb, arb_type, (const plane_t *)a->es_peqn, s->tol)) {
+	    bu_vls_printf(s->log_str, "Cannot calculate ARB8 points\n");
 	    return BRLCAD_ERROR;
 	}
+	if (edarb_canonicalize(s, arb) != BRLCAD_OK)
+	    return BRLCAD_ERROR;
     }
 
     return 0;
@@ -1634,6 +1642,12 @@ ecmd_arb_rotate_face(struct rt_edit *s)
 	    }
 	    bu_vls_free(&error_msg);
 	}
+    }
+
+    if (a->edit_menu < 0 || a->edit_menu >= ARB8_FACE_COUNT ||
+	a->fixv < 0 || a->fixv >= ARB8_VERTEX_COUNT) {
+	bu_vls_printf(s->log_str, "Invalid ARB face or fixed vertex index\n");
+	return BRLCAD_ERROR;
     }
 
     if (s->e_inpara) {
@@ -1756,30 +1770,15 @@ edit_arb_element(struct rt_edit *s)
 	vect_t work;
 	if (arb_numeric_target(work, s, &a->edit_menu) != BRLCAD_OK)
 	    return BRLCAD_ERROR;
-	editarb(s, work);
+	if (editarb(s, work) != BRLCAD_OK)
+	    return BRLCAD_ERROR;
     }
 
     return 0;
 }
 
-void
-arb_mv_pnt_to(struct rt_edit *s, const vect_t mousevec)
-{
-    vect_t pos_view = VINIT_ZERO;	/* Unrotated view space pos */
-    vect_t temp = VINIT_ZERO;
-    vect_t pos_model = VINIT_ZERO;	/* Rotated screen space pos */
-    /* move an arb point to indicated point */
-    /* point is located at es_values[a->edit_menu*3] */
-    MAT4X3PNT(pos_view, s->vp->gv_model2view, s->curr_e_axes_pos);
-    pos_view[X] = mousevec[X];
-    pos_view[Y] = mousevec[Y];
-    MAT4X3PNT(temp, s->vp->gv_view2model, pos_view);
-    MAT4X3PNT(pos_model, s->e_invmat, temp);
-    editarb(s, pos_model);
-}
-
-void
-edarb_mousevec(struct rt_edit *s, const vect_t mousevec)
+static int
+arb_mouse_move_element(struct rt_edit *s, const vect_t mousevec)
 {
     vect_t pos_view = VINIT_ZERO;	/* Unrotated view space pos */
     vect_t temp = VINIT_ZERO;
@@ -1789,10 +1788,13 @@ edarb_mousevec(struct rt_edit *s, const vect_t mousevec)
     pos_view[Y] = mousevec[Y];
     MAT4X3PNT(temp, s->vp->gv_view2model, pos_view);
     MAT4X3PNT(pos_model, s->e_invmat, temp);
-    editarb(s, pos_model);
+    if (editarb(s, pos_model) != BRLCAD_OK)
+	return BRLCAD_ERROR;
+    edit_abs_tra(s, pos_view);
+    return BRLCAD_OK;
 }
 
-void
+static int
 edarb_move_face_mousevec(struct rt_edit *s, const vect_t mousevec)
 {
     struct rt_arb8_edit *a = (struct rt_arb8_edit *)s->ipe_ptr;
@@ -1804,26 +1806,27 @@ edarb_move_face_mousevec(struct rt_edit *s, const vect_t mousevec)
     pos_view[Y] = mousevec[Y];
     MAT4X3PNT(temp, s->vp->gv_view2model, pos_view);
     MAT4X3PNT(pos_model, s->e_invmat, temp);
+    if (a->edit_menu < 0 || a->edit_menu >= ARB8_FACE_COUNT) {
+	bu_vls_printf(s->log_str, "Invalid ARB face index %d\n", a->edit_menu);
+	return BRLCAD_ERROR;
+    }
     /* change D of planar equation */
     a->es_peqn[a->edit_menu][W]=VDOT(&a->es_peqn[a->edit_menu][0], pos_model);
-    /* calculate new vertices, put in record as vectors */
-    {
-	struct rt_arb_internal *arb=
-	    (struct rt_arb_internal *)s->es_int.idb_ptr;
+    struct rt_arb_internal *arb =
+	(struct rt_arb_internal *)s->es_int.idb_ptr;
+    RT_ARB_CK_MAGIC(arb);
 
-	RT_ARB_CK_MAGIC(arb);
-
-	int arb_type = rt_arb_edit_type(s->log_str, s, arb, 0, s->tol);
-	if (arb_type == 0)
-	    return;
-
-	(void)rt_arb_calc_points(arb, arb_type, (const plane_t *)a->es_peqn, s->tol);
-	
-	if (edarb_canonicalize(s, arb) != BRLCAD_OK) {
-	    /* We don't have a return value for this function, so just return */
-	    return;
-	}
+    int arb_type = rt_arb_edit_type(s->log_str, s, arb, 0, s->tol);
+    if (arb_type == 0)
+	return BRLCAD_ERROR;
+    if (rt_arb_calc_points(arb, arb_type, (const plane_t *)a->es_peqn, s->tol)) {
+	bu_vls_printf(s->log_str, "Cannot calculate ARB8 points\n");
+	return BRLCAD_ERROR;
     }
+    if (edarb_canonicalize(s, arb) != BRLCAD_OK)
+	return BRLCAD_ERROR;
+    edit_abs_tra(s, pos_view);
+    return BRLCAD_OK;
 }
 
 C_DECL int
@@ -1919,14 +1922,10 @@ rt_edit_arb_edit_xy(
 	    edit_stra_xy(&pos_view, s, mousevec);
 	    break;
 	case PTARB:
-	    arb_mv_pnt_to(s, mousevec);
-	    break;
 	case EARB:
-	    edarb_mousevec(s, mousevec);
-	    break;
+	    return arb_mouse_move_element(s, mousevec);
 	case ECMD_ARB_MOVE_FACE:
-	    edarb_move_face_mousevec(s, mousevec);
-	    break;
+	    return edarb_move_face_mousevec(s, mousevec);
 	default:
 	    return edit_generic_xy(s, mousevec);
     }

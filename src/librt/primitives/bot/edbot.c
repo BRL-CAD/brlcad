@@ -972,6 +972,7 @@ ecmd_bot_pickv(struct rt_edit *s, const vect_t mousevec)
     if (f)
 	(*f)(0, NULL, d, NULL);
 
+    edit_abs_tra(s, pos_view);
     return BRLCAD_OK;
 }
 
@@ -1012,6 +1013,7 @@ ecmd_bot_picke(struct rt_edit *s, const vect_t mousevec)
     if (f)
 	(*f)(0, NULL, d, NULL);
 
+    edit_abs_tra(s, pos_view);
     return BRLCAD_OK;
 }
 
@@ -1200,14 +1202,14 @@ rt_edit_bot_edit_xy(
 	case ECMD_BOT_PICKV:
 	    if (ecmd_bot_pickv(s, mousevec) != BRLCAD_OK)
 		return BRLCAD_ERROR;
-	    break;
+	    return BRLCAD_OK;
 	case ECMD_BOT_PICKE:
 	    if (ecmd_bot_picke(s, mousevec) != BRLCAD_OK)
 		return BRLCAD_ERROR;
-	    break;
+	    return BRLCAD_OK;
 	case ECMD_BOT_PICKT:
 	    ecmd_bot_pickt(s, mousevec);
-	    break;
+	    return BRLCAD_OK;
 	case ECMD_BOT_MOVEV:
 	case ECMD_BOT_MOVEE:
 	case ECMD_BOT_MOVET:

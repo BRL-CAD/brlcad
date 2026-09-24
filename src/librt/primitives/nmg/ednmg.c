@@ -1112,6 +1112,7 @@ void ecmd_nmg_epick(struct rt_edit *s, const vect_t mousevec)
 	    (*f)(0, NULL, d, NULL);
 	bu_vls_free(&tmp_vls);
     }
+    edit_abs_tra(s, pos_view);
 }
 
 /* ------------------------------------------------------------------
@@ -1369,7 +1370,7 @@ rt_edit_nmg_edit_xy(
 	    /* Edge pick is done directly in ecmd_nmg_epick (uses view-space
 	     * search), not via the generic e_mparam path. */
 	    ecmd_nmg_epick(s, mousevec);
-	    break;
+	    return BRLCAD_OK;
 	case ECMD_NMG_EMOVE:
 	case ECMD_NMG_ESPLIT:
 	case ECMD_NMG_VMOVE:

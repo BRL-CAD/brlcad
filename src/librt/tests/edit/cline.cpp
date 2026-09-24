@@ -49,6 +49,7 @@
 #include "bu/str.h"
 #include "raytrace.h"
 #include "rt/rt_ecmds.h"
+#include "test_utils.h"
 
 
 struct directory *
@@ -527,7 +528,7 @@ bu_log("RT_MATRIX_EDIT_TRANS_MODEL_XYZ SUCCESS: "
 	cline_diff("generic repeated inch translation", &saved, edit_cline))
 	bu_exit(1, "ERROR: generic inch translation compounded\n");
 
-    /* Endpoint dragging is a base-unit point edit, not a translation. */
+    /* Endpoint dragging uses base-unit cursor coordinates. */
     cline_reset(s, edit_cline, orig, cmp);
     EDOBJ[dp->d_minor_type].ft_set_edit_mode(s, ECMD_CLINE_MOVE_H);
     MAT_IDN(v->gv_model2view);
@@ -546,9 +547,10 @@ bu_log("RT_MATRIX_EDIT_TRANS_MODEL_XYZ SUCCESS: "
     if (!VNEAR_EQUAL(edit_cline->h, expected_h, VUNITIZE_TOL) ||
 	!VNEAR_EQUAL(edit_cline->v, orig->v, VUNITIZE_TOL))
 	bu_exit(1, "ERROR: CLINE mouse endpoint moved incorrectly\n");
-    if (!VNEAR_EQUAL(s->k.tra_m_abs, knob_state, VUNITIZE_TOL) ||
-	!VNEAR_EQUAL(s->k.tra_v_abs, knob_state, VUNITIZE_TOL))
-	bu_exit(1, "ERROR: CLINE mouse endpoint move changed translation state\n");
+    point_t view_target;
+    VSET(view_target, mousevec[X], mousevec[Y], s->curr_e_axes_pos[Z]);
+    if (!edit_test_mouse_knobs_match(s, view_target))
+	bu_exit(1, "ERROR: CLINE mouse endpoint knobs missed cursor\n");
 
     rt_edit_destroy(s);
     db_close(dbip);

@@ -27,6 +27,7 @@
 #include "bu/malloc.h"
 #include "vmath.h"
 #include "raytrace.h"
+#include "rt/edit.h"
 #include "wdb.h"
 
 static inline int
@@ -54,6 +55,26 @@ edit_test_filename_callback(int UNUSED(argc), const char **UNUSED(argv),
 {
     *(const char **)result = (const char *)data;
     return BRLCAD_OK;
+}
+
+static inline int
+edit_test_mouse_knobs_match(const struct rt_edit *s, const point_t view_target)
+{
+    if (!s || !s->vp || ZERO(s->vp->gv_scale))
+	return 0;
+
+    point_t model_target, axes_view;
+    vect_t expected_model, expected_view;
+    MAT4X3PNT(model_target, s->vp->gv_view2model, view_target);
+    VSUB2(expected_model, model_target, s->e_axes_pos);
+    VSCALE(expected_model, expected_model, 1.0 / s->vp->gv_scale);
+    MAT4X3PNT(axes_view, s->vp->gv_model2view, s->e_axes_pos);
+    VSUB2(expected_view, view_target, axes_view);
+
+    return VNEAR_EQUAL(s->k.tra_m_abs, expected_model, VUNITIZE_TOL) &&
+	VNEAR_EQUAL(s->k.tra_m_abs_last, expected_model, VUNITIZE_TOL) &&
+	VNEAR_EQUAL(s->k.tra_v_abs, expected_view, VUNITIZE_TOL) &&
+	VNEAR_EQUAL(s->k.tra_v_abs_last, expected_view, VUNITIZE_TOL);
 }
 
 #endif /* RT_EDIT_TEST_UTILS_H */

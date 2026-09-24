@@ -397,6 +397,7 @@ ecmd_extr_mov_h_mousevec(struct rt_edit *s, const vect_t mousevec)
     MAT4X3PNT(temp, s->vp->gv_view2model, pos_view);
     MAT4X3PNT(tr_temp, s->e_invmat, temp);
     VSUB2(extr->h, tr_temp, extr->V);
+    edit_abs_tra(s, pos_view);
 }
 
 

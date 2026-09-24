@@ -440,6 +440,79 @@ test_brep_rational_cv_local_units(struct rt_edit *s)
     bu_log("Rational BREP CV local-unit move/set/get PASS\n");
 }
 
+static void
+test_brep_mouse_cv_edit(struct rt_edit *s)
+{
+    const int mouse_modes[] = {ECMD_BREP_SRF_CV_MOVE, ECMD_BREP_SRF_CV_SET};
+    s->local2base = 25.4;
+    s->base2local = 1.0 / s->local2base;
+    MAT_IDN(s->vp->gv_model2view);
+    MAT_IDN(s->vp->gv_view2model);
+    MAT_IDN(s->e_invmat);
+    MAT_IDN(s->e_mat);
+    s->vp->gv_scale = 1.0;
+
+    EDOBJ[ID_BREP].ft_set_edit_mode(s, ECMD_BREP_SRF_SELECT);
+    s->e_inpara = 3;
+    VSET(s->e_para, 0.0, 1.0, 1.0);
+    if (rt_edit_process(s) != BRLCAD_OK)
+	bu_exit(1, "ERROR: BREP mouse edit could not select a CV\n");
+
+    for (size_t i = 0; i < sizeof(mouse_modes) / sizeof(mouse_modes[0]); i++) {
+	double x, y, z, nx, ny, nz;
+	get_cv_pos(s, 0, 1, 1, &x, &y, &z);
+	get_cv_pos(s, 0, 1, 2, &nx, &ny, &nz);
+	vect_t instance_delta = VINIT_ZERO;
+	MAT_IDN(s->e_mat);
+	MAT_IDN(s->e_invmat);
+	if (i == 1) {
+	    /* The second drag passes through a translated edit instance. */
+	    VSET(instance_delta, 10.0, 20.0, 30.0);
+	    MAT_DELTAS_VEC(s->e_mat, instance_delta);
+	    MAT_DELTAS_VEC_NEG(s->e_invmat, instance_delta);
+	}
+	VSET(s->curr_e_axes_pos, x + instance_delta[X],
+	    y + instance_delta[Y], z + instance_delta[Z]);
+
+	vect_t knob_state, mousevec;
+	VSET(knob_state, 7.0, 8.0, 9.0);
+	VMOVE(s->k.tra_m_abs, knob_state);
+	VMOVE(s->k.tra_v_abs, knob_state);
+	VSET(mousevec, x + instance_delta[X] + 1.25,
+	    y + instance_delta[Y] - 0.75, 0.0);
+	EDOBJ[ID_BREP].ft_set_edit_mode(s, mouse_modes[i]);
+	if (EDOBJ[ID_BREP].ft_edit_xy(s, mousevec) != BRLCAD_OK ||
+	    rt_edit_process(s) != BRLCAD_OK)
+	    bu_exit(1, "ERROR: BREP mouse CV mode %d failed\n", mouse_modes[i]);
+
+	double moved_x, moved_y, moved_z, other_x, other_y, other_z;
+	get_cv_pos(s, 0, 1, 1, &moved_x, &moved_y, &moved_z);
+	get_cv_pos(s, 0, 1, 2, &other_x, &other_y, &other_z);
+	if (!NEAR_EQUAL(moved_x, x + 1.25, VUNITIZE_TOL) ||
+	    !NEAR_EQUAL(moved_y, y - 0.75, VUNITIZE_TOL) ||
+	    !NEAR_EQUAL(moved_z, z, VUNITIZE_TOL))
+	    bu_exit(1, "ERROR: BREP mouse CV mode %d missed the target\n",
+		    mouse_modes[i]);
+	if (!NEAR_EQUAL(other_x, nx, VUNITIZE_TOL) ||
+	    !NEAR_EQUAL(other_y, ny, VUNITIZE_TOL) ||
+	    !NEAR_EQUAL(other_z, nz, VUNITIZE_TOL))
+	    bu_exit(1, "ERROR: BREP mouse CV mode %d moved another CV\n",
+		    mouse_modes[i]);
+	if (!VNEAR_EQUAL(s->k.tra_m_abs, knob_state, VUNITIZE_TOL) ||
+	    !VNEAR_EQUAL(s->k.tra_v_abs, knob_state, VUNITIZE_TOL))
+	    bu_exit(1, "ERROR: BREP mouse CV mode %d changed translation state\n",
+		    mouse_modes[i]);
+    }
+
+    struct rt_brep_edit_local *b = (struct rt_brep_edit_local *)s->ipe_ptr;
+    b->face_index = -1;
+    EDOBJ[ID_BREP].ft_set_edit_mode(s, ECMD_BREP_SRF_CV_SET);
+    vect_t mousevec = VINIT_ZERO;
+    if (EDOBJ[ID_BREP].ft_edit_xy(s, mousevec) != BRLCAD_ERROR ||
+	s->e_mvalid)
+	bu_exit(1, "ERROR: BREP mouse CV edit accepted no selection\n");
+}
+
 
 /* ------------------------------------------------------------------ *
  * main
@@ -466,6 +539,7 @@ rt_edit_test_brep(void)
     test_brep_cv_move_no_selection(s);
     test_brep_get_params_select(s);
     test_brep_rational_cv_local_units(s);
+    test_brep_mouse_cv_edit(s);
 
     rt_edit_destroy(s);
     db_close(dbip);

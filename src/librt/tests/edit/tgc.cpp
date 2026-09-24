@@ -39,6 +39,7 @@
 #include "bu/str.h"
 #include "raytrace.h"
 #include "rt/rt_ecmds.h"
+#include "test_utils.h"
 
 
 struct directory *
@@ -550,6 +551,12 @@ rt_edit_test_tgc(void)
     EDOBJ[dp->d_minor_type].ft_set_edit_mode(s, ECMD_TGC_MV_H);
     /* curr_e_axes_pos for MV_H is the H endpoint = v + h = (5,3,18) */
     VADD2(s->curr_e_axes_pos, orig_tgc->v, orig_tgc->h);
+    vect_t knob_state;
+    VSET(knob_state, 7.0, 8.0, 9.0);
+    VMOVE(s->k.tra_m_abs, knob_state);
+    VMOVE(s->k.tra_v_abs, knob_state);
+    s->local2base = 25.4;
+    s->base2local = 1.0 / s->local2base;
 
     {
 	int xpos = 500;
@@ -562,6 +569,14 @@ rt_edit_test_tgc(void)
     bu_vls_trunc(s->log_str, 0);
     if ((*EDOBJ[dp->d_minor_type].ft_edit_xy)(s, mousevec) == BRLCAD_ERROR)
 	bu_exit(1, "ERROR: ECMD_TGC_MV_H(xy) failed ft_edit_xy: %s\n", bu_vls_cstr(s->log_str));
+    point_t view_target;
+    MAT4X3PNT(view_target, v->gv_model2view, s->curr_e_axes_pos);
+    view_target[X] = mousevec[X];
+    view_target[Y] = mousevec[Y];
+    if (!edit_test_mouse_knobs_match(s, view_target))
+	bu_exit(1, "ERROR: TGC mouse endpoint knobs missed cursor\n");
+    s->local2base = 1.0;
+    s->base2local = 1.0;
 
     /* h_new is determined by view transform; confirmed by build + run.
      * After rt_edit_process, the MV_H function also recomputes a,b,c,d
@@ -747,6 +762,28 @@ bu_log("RT_MATRIX_EDIT_TRANS_MODEL_XYZ SUCCESS: "
 	    tgc_diff("TGC repeated inch move", &saved, edit_tgc))
 	    bu_exit(1, "ERROR: TGC inch move mode %d compounded\n", move_modes[i]);
     }
+
+    tgc_reset(s, edit_tgc, orig_tgc, cmp_tgc);
+    EDOBJ[dp->d_minor_type].ft_set_edit_mode(s, ECMD_TGC_MV_HH);
+    MAT_IDN(v->gv_model2view);
+    MAT_IDN(v->gv_view2model);
+    MAT_IDN(s->e_invmat);
+    VADD2(s->curr_e_axes_pos, orig_tgc->v, orig_tgc->h);
+    vect_t expected_h, hh_knob_state;
+    VSET(hh_knob_state, 7.0, 8.0, 9.0);
+    VMOVE(s->k.tra_m_abs, hh_knob_state);
+    VMOVE(s->k.tra_v_abs, hh_knob_state);
+    VSET(mousevec, orig_tgc->v[X] + 0.2, orig_tgc->v[Y] + 0.3, 0.0);
+    if (EDOBJ[dp->d_minor_type].ft_edit_xy(s, mousevec) != BRLCAD_OK)
+	bu_exit(1, "ERROR: TGC mouse MV_HH failed\n");
+    VSET(expected_h, 0.2, 0.3, orig_tgc->h[Z]);
+    if (!VNEAR_EQUAL(edit_tgc->h, expected_h, VUNITIZE_TOL) ||
+	!VNEAR_EQUAL(edit_tgc->v, orig_tgc->v, VUNITIZE_TOL))
+	bu_exit(1, "ERROR: TGC mouse MV_HH changed geometry incorrectly\n");
+    point_t hh_view_target;
+    VSET(hh_view_target, mousevec[X], mousevec[Y], s->curr_e_axes_pos[Z]);
+    if (!edit_test_mouse_knobs_match(s, hh_view_target))
+	bu_exit(1, "ERROR: TGC mouse MV_HH knobs missed cursor\n");
 
     rt_edit_destroy(s);
     db_close(dbip);

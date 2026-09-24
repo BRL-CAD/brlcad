@@ -278,7 +278,7 @@ ecmd_brep_srf_cv_set(struct rt_edit *s)
 	if (f) (*f)(0, NULL, d, NULL);
 	return;
     }
-    if (s->e_inpara != 3) {
+    if (!s->e_mvalid && s->e_inpara != 3) {
 	bu_vls_printf(s->log_str,
 		"ECMD_BREP_SRF_CV_SET: x y z required\n");
 	rt_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_RESULTS, BU_CLBK_DURING);
@@ -310,9 +310,9 @@ ecmd_brep_srf_cv_set(struct rt_edit *s)
 	return;
     }
 
-    fastf_t new_x = s->e_para[0] * s->local2base;
-    fastf_t new_y = s->e_para[1] * s->local2base;
-    fastf_t new_z = s->e_para[2] * s->local2base;
+    fastf_t new_x = s->e_mvalid ? s->e_mparam[X] : s->e_para[0] * s->local2base;
+    fastf_t new_y = s->e_mvalid ? s->e_mparam[Y] : s->e_para[1] * s->local2base;
+    fastf_t new_z = s->e_mvalid ? s->e_mparam[Z] : s->e_para[2] * s->local2base;
 
     fastf_t dx = new_x - cv.x;
     fastf_t dy = new_y - cv.y;
@@ -336,6 +336,42 @@ ecmd_brep_srf_cv_set(struct rt_edit *s)
 
 } /* close the extern "C" block opened above */
 
+static int
+brep_mouse_target_selected_cv(struct rt_edit *s, const vect_t mousevec)
+{
+    struct rt_brep_internal *bip = (struct rt_brep_internal *)s->es_int.idb_ptr;
+    struct rt_brep_edit *b = (struct rt_brep_edit *)s->ipe_ptr;
+    RT_BREP_CK_MAGIC(bip);
+    ON_Brep *brep = bip->brep;
+    if (!s->vp || !brep || b->face_index < 0 ||
+	b->face_index >= brep->m_F.Count()) {
+	bu_vls_printf(s->log_str, "BREP mouse CV edit requires a selected CV\n");
+	return BRLCAD_ERROR;
+    }
+
+    ON_BrepFace *face = brep->Face(b->face_index);
+    const ON_NurbsSurface *ns =
+	face ? dynamic_cast<const ON_NurbsSurface *>(face->SurfaceOf()) : NULL;
+    ON_3dPoint cv;
+    if (!face || !ns || !ns->GetCV(b->srf_cv_i, b->srf_cv_j, cv)) {
+	bu_vls_printf(s->log_str, "BREP mouse CV edit cannot read selected CV\n");
+	return BRLCAD_ERROR;
+    }
+
+    point_t cv_local, cv_model, pos_view, target_model, target_local;
+    VSET(cv_local, cv.x, cv.y, cv.z);
+    MAT4X3PNT(cv_model, s->e_mat, cv_local);
+    MAT4X3PNT(pos_view, s->vp->gv_model2view, cv_model);
+    pos_view[X] = mousevec[X];
+    pos_view[Y] = mousevec[Y];
+    MAT4X3PNT(target_model, s->vp->gv_view2model, pos_view);
+    MAT4X3PNT(target_local, s->e_invmat, target_model);
+
+    VMOVE(s->e_mparam, target_local);
+    s->e_mvalid = 1;
+    return BRLCAD_OK;
+}
+
 extern "C" int
 rt_edit_brep_edit(struct rt_edit *s)
 {
@@ -352,7 +388,11 @@ rt_edit_brep_edit(struct rt_edit *s)
 	    ecmd_brep_srf_select(s);
 	    break;
 	case ECMD_BREP_SRF_CV_MOVE:
-	    ecmd_brep_srf_cv_move(s);
+	    /* Mouse coordinates are absolute; typed MOVE parameters are deltas. */
+	    if (s->e_mvalid)
+		ecmd_brep_srf_cv_set(s);
+	    else
+		ecmd_brep_srf_cv_move(s);
 	    break;
 	case ECMD_BREP_SRF_CV_SET:
 	    ecmd_brep_srf_cv_set(s);
@@ -376,10 +416,11 @@ rt_edit_brep_edit_xy(struct rt_edit *s, const vect_t mousevec)
 	    edit_sscale_xy(s, mousevec);
 	    return 0;
 	case RT_PARAMS_EDIT_TRANS:
-	case ECMD_BREP_SRF_CV_MOVE:
-	case ECMD_BREP_SRF_CV_SET:
 	    edit_stra_xy(&pos_view, s, mousevec);
 	    break;
+	case ECMD_BREP_SRF_CV_MOVE:
+	case ECMD_BREP_SRF_CV_SET:
+	    return brep_mouse_target_selected_cv(s, mousevec);
 	default:
 	    return edit_generic_xy(s, mousevec);
     }

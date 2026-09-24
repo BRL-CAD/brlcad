@@ -45,6 +45,7 @@
 #include "rt/primitives/nmg.h"
 #include "rt/rt_ecmds.h"
 #include "wdb.h"
+#include "test_utils.h"
 
 /* ECMD constants from ednmg.c */
 #define ECMD_NMG_EPICK		11019
@@ -395,10 +396,21 @@ rt_edit_test_nmg(void)
 	VADD2SCALE(edge_midpoint, first_edge->vu_p->v_p->vg_p->coord,
 		first_edge->eumate_p->vu_p->v_p->vg_p->coord, 0.5);
 	MAT4X3PNT(pick_view, wv->gv_model2view, edge_midpoint);
+	vect_t knob_state;
+	VSET(knob_state, 7.0, 8.0, 9.0);
+	VMOVE(ws->k.tra_m_abs, knob_state);
+	VMOVE(ws->k.tra_v_abs, knob_state);
 	EDOBJ[wdp->d_minor_type].ft_set_edit_mode(ws, ECMD_NMG_EPICK);
-	EDOBJ[wdp->d_minor_type].ft_edit_xy(ws, pick_view);
+	if (EDOBJ[wdp->d_minor_type].ft_edit_xy(ws, pick_view) != BRLCAD_OK)
+	    bu_exit(1, "ERROR: NMG mouse edge pick failed\n");
 	if (!wne->es_eu)
 	    bu_exit(1, "ERROR: NMG edge pick did not select an edge\n");
+	point_t view_target;
+	MAT4X3PNT(view_target, wv->gv_model2view, ws->curr_e_axes_pos);
+	view_target[X] = pick_view[X];
+	view_target[Y] = pick_view[Y];
+	if (!edit_test_mouse_knobs_match(ws, view_target))
+	    bu_exit(1, "ERROR: NMG mouse edge pick knobs missed cursor\n");
 
 	struct edgeuse *picked_edge = wne->es_eu;
 	struct edgeuse *next_edge = BU_LIST_PNEXT_CIRC(edgeuse, picked_edge);

@@ -1022,6 +1022,7 @@ ecmd_tgc_mv_h_mousevec(struct rt_edit *s, const vect_t mousevec)
     MAT4X3PNT(temp, s->vp->gv_view2model, pos_view);
     MAT4X3PNT(tr_temp, s->e_invmat, temp);
     VSUB2(tgc->h, tr_temp, tgc->v);
+    edit_abs_tra(s, pos_view);
 }
 
 static int
@@ -1188,7 +1189,7 @@ rt_edit_tgc_edit_xy(
 	case ECMD_TGC_MV_H:
 	case ECMD_TGC_MV_HH:
 	    ecmd_tgc_mv_h_mousevec(s, mousevec);
-	    break;
+	    return BRLCAD_OK;
 	case ECMD_TGC_ROT_H:
 	case ECMD_TGC_ROT_AB:
 	    bu_vls_printf(s->log_str, "%s: XY edit undefined in solid edit mode %d\n", EDOBJ[ip->idb_type].ft_label, s->edit_flag);

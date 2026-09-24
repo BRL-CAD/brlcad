@@ -60,6 +60,7 @@
 #include "raytrace.h"
 #include "rt/rt_ecmds.h"
 #include "rt/primitives/bot.h"
+#include "test_utils.h"
 
 
 /* ECMD constants from edbot.c */
@@ -699,6 +700,10 @@ bu_log("RT_MATRIX_EDIT_TRANS_MODEL_XYZ SUCCESS: "
 
 	MAT_IDN(v->gv_view2model);
 	MAT_IDN(v->gv_model2view);
+	vect_t knob_state;
+	VSET(knob_state, 7.0, 8.0, 9.0);
+	VMOVE(s->k.tra_m_abs, knob_state);
+	VMOVE(s->k.tra_v_abs, knob_state);
 	if (rt_edit_map_clbk_set(s->m, ECMD_BOT_PICKT, BU_CLBK_DURING,
 			 capture_bot_pick, &capture) != BRLCAD_OK)
 	    bu_exit(1, "ERROR: Unable to register BOT pick callback\n");
@@ -714,9 +719,48 @@ bu_log("RT_MATRIX_EDIT_TRANS_MODEL_XYZ SUCCESS: "
 	    bu_exit(1, "ERROR: ECMD_BOT_PICKT(mouse): expected both triangles, got '%s'\n",
 		    bu_vls_cstr(&capture.candidates));
 	}
+	if (!VNEAR_EQUAL(s->k.tra_m_abs, knob_state, VUNITIZE_TOL) ||
+	    !VNEAR_EQUAL(s->k.tra_v_abs, knob_state, VUNITIZE_TOL))
+	    bu_exit(1, "ERROR: BOT mouse triangle pick changed translation state\n");
 	bu_log("ECMD_BOT_PICKT(mouse) SUCCESS: %s\n",
 	       bu_vls_cstr(&capture.candidates));
 	bu_vls_free(&capture.candidates);
+	rt_edit_map_clbk_set(s->m, ECMD_BOT_PICKT, BU_CLBK_DURING, NULL, NULL);
+    }
+
+    /* Vertex and edge picks track the cursor; triangle picking does not. */
+    {
+	bot_reset(s, bot, b);
+	s->local2base = 25.4;
+	s->base2local = 1.0 / s->local2base;
+	MAT_IDN(v->gv_model2view);
+	MAT_IDN(v->gv_view2model);
+	VSETALL(s->curr_e_axes_pos, 0.0);
+	vect_t knob_state;
+	VSET(knob_state, 7.0, 8.0, 9.0);
+	VMOVE(s->k.tra_m_abs, knob_state);
+	VMOVE(s->k.tra_v_abs, knob_state);
+
+	EDOBJ[dp->d_minor_type].ft_set_edit_mode(s, ECMD_BOT_PICKV);
+	VSET(mousevec, 1.0, 0.0, 0.0);
+	if (EDOBJ[dp->d_minor_type].ft_edit_xy(s, mousevec) != BRLCAD_OK ||
+	    b->bot_verts[0] != 1 || b->bot_verts[1] != -1)
+	    bu_exit(1, "ERROR: BOT mouse vertex pick failed\n");
+	point_t view_target;
+	VSET(view_target, mousevec[X], mousevec[Y], s->curr_e_axes_pos[Z]);
+	if (!edit_test_mouse_knobs_match(s, view_target))
+	    bu_exit(1, "ERROR: BOT mouse vertex pick knobs missed cursor\n");
+
+	EDOBJ[dp->d_minor_type].ft_set_edit_mode(s, ECMD_BOT_PICKE);
+	VSET(mousevec, 0.5, 0.0, 0.0);
+	if (EDOBJ[dp->d_minor_type].ft_edit_xy(s, mousevec) != BRLCAD_OK ||
+	    b->bot_verts[0] < 0 || b->bot_verts[0] >= 4 ||
+	    b->bot_verts[1] < 0 || b->bot_verts[1] >= 4 ||
+	    b->bot_verts[0] == b->bot_verts[1] || b->bot_verts[2] != -1)
+	    bu_exit(1, "ERROR: BOT mouse edge pick failed\n");
+	VSET(view_target, mousevec[X], mousevec[Y], s->curr_e_axes_pos[Z]);
+	if (!edit_test_mouse_knobs_match(s, view_target))
+	    bu_exit(1, "ERROR: BOT mouse edge pick knobs missed cursor\n");
     }
 
     {

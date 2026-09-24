@@ -601,7 +601,7 @@ bu_log("RT_MATRIX_EDIT_TRANS_MODEL_XYZ SUCCESS: "
 	extr_diff("extrusion repeated inch endpoint", &saved, edit_extr))
 	bu_exit(1, "ERROR: extrusion inch endpoint compounded\n");
 
-    /* Endpoint dragging is a base-unit point edit, not a translation. */
+    /* Endpoint dragging uses base-unit cursor coordinates. */
     extr_reset(s, edit_extr, orig, cmp);
     EDOBJ[dp->d_minor_type].ft_set_edit_mode(s, ECMD_EXTR_MOV_H);
     MAT_IDN(v->gv_model2view);
@@ -620,9 +620,10 @@ bu_log("RT_MATRIX_EDIT_TRANS_MODEL_XYZ SUCCESS: "
     if (!VNEAR_EQUAL(edit_extr->h, expected_h, VUNITIZE_TOL) ||
 	!VNEAR_EQUAL(edit_extr->V, orig->V, VUNITIZE_TOL))
 	bu_exit(1, "ERROR: extrusion mouse endpoint moved incorrectly\n");
-    if (!VNEAR_EQUAL(s->k.tra_m_abs, knob_state, VUNITIZE_TOL) ||
-	!VNEAR_EQUAL(s->k.tra_v_abs, knob_state, VUNITIZE_TOL))
-	bu_exit(1, "ERROR: extrusion mouse endpoint move changed translation state\n");
+    point_t view_target;
+    VSET(view_target, mousevec[X], mousevec[Y], s->curr_e_axes_pos[Z]);
+    if (!edit_test_mouse_knobs_match(s, view_target))
+	bu_exit(1, "ERROR: extrusion mouse endpoint knobs missed cursor\n");
 
     rt_edit_destroy(s);
     db_close(dbip);
