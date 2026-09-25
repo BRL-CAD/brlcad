@@ -213,18 +213,19 @@ cmakefiles(
   mged/mged_xmin_gui.sh
   mged/xmin_gui_bot.tcl
   mged/xmin_gui_controls.tcl
+  mged/xmin_gui_edit.tcl
+  mged/xmin_gui_edit_interaction.tcl
   mged/xmin_gui_editors.tcl
   mged/xmin_gui_help.tcl
   mged/xmin_gui_lod.tcl
   mged/xmin_gui_overlaps.tcl
+  mged/xmin_gui_pipe_oracle.tcl
   mged/xmin_gui_query_pattern.tcl
   mged/xmin_gui_render_outputs.tcl
   mged/xmin_gui_search_exec.tcl
   mged/xmin_gui_shotvis.tcl
   mged/xmin_gui_test.tcl
   mged/xmin_gui_workflows.tcl
-  mged/xmin_gui_edit.tcl
-  mged/xmin_gui_pipe_oracle.tcl
 )
 
 # Local Variables:
