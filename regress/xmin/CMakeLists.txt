@@ -93,6 +93,7 @@ if(BRLCAD_X11_PROVIDER_RESOLVED STREQUAL "XMIN" AND
       "PLOT3_ASC_BIN=$<TARGET_FILE:plot3-asc>"
     )
     mged_add_xmin_gui_fixture(help "mged;dm-tkswrast;m35.g")
+    mged_add_xmin_gui_fixture(edit-interaction "mged;dm-tkswrast;m35.g")
     mged_add_xmin_gui_fixture(bot "mged;dm-tkswrast;m35.g")
     mged_add_xmin_gui_fixture(editors "mged;dm-tkswrast;m35.g")
     mged_add_xmin_gui_fixture(query-pattern "mged;dm-tkswrast;m35.g")

@@ -168,10 +168,23 @@ doEvent(ClientData UNUSED(clientData), void *UNUSED(eventPtr)) {
 
 #ifdef HAVE_X11_TYPES
 static void
+eval_motion_command(struct mged_state *s, struct bu_vls *cmd,
+    int save_edflag, int *save_edit_mode)
+{
+    if (s->global_editing_state == ST_S_EDIT && save_edflag != -1) {
+	*save_edit_mode = MEDIT(s)->edit_mode;
+	if (MEDIT(s)->edit_flag != save_edflag)
+	    rt_edit_set_edflag(MEDIT(s), MEDIT(s)->edit_flag);
+    }
+    (void)Tcl_Eval(s->interp, bu_vls_addr(cmd));
+}
+
+static void
 motion_event_handler(struct mged_state *s, XMotionEvent *xmotion)
 {
     struct bu_vls cmd = BU_VLS_INIT_ZERO;
     int save_edflag = -1;
+    int save_edit_mode = RT_EDIT_DEFAULT;
     fastf_t f;
     fastf_t fx, fy;
     fastf_t td;
@@ -265,7 +278,7 @@ motion_event_handler(struct mged_state *s, XMotionEvent *xmotion)
 				      dy * 0.25, dx * 0.25);
 		}
 
-		(void)Tcl_Eval(s->interp, bu_vls_addr(&cmd));
+		eval_motion_command(s, &cmd, save_edflag, &save_edit_mode);
 		mged_variables->mv_coords = save_coords;
 
 		goto reset_edflag;
@@ -339,7 +352,7 @@ motion_event_handler(struct mged_state *s, XMotionEvent *xmotion)
 		    }
 		}
 
-		(void)Tcl_Eval(s->interp, bu_vls_addr(&cmd));
+		eval_motion_command(s, &cmd, save_edflag, &save_edit_mode);
 		mged_variables->mv_coords = save_coords;
 
 		goto reset_edflag;
@@ -658,13 +671,14 @@ motion_event_handler(struct mged_state *s, XMotionEvent *xmotion)
 	    break;
     }
 
-    (void)Tcl_Eval(s->interp, bu_vls_addr(&cmd));
+    eval_motion_command(s, &cmd, save_edflag, &save_edit_mode);
 
  reset_edflag:
     if (save_edflag != -1) {
-	if (s->global_editing_state == ST_S_EDIT)
+	if (s->global_editing_state == ST_S_EDIT) {
 	    MEDIT(s)->edit_flag = save_edflag;
-	else if (s->global_editing_state == ST_O_EDIT)
+	    MEDIT(s)->edit_mode = save_edit_mode;
+	} else if (s->global_editing_state == ST_O_EDIT)
 	    edobj = save_edflag;
     }
 
