@@ -1436,9 +1436,9 @@ mged_process_char(struct mged_state *s, char ch)
 int
 event_check(struct mged_state *s, int non_blocking)
 {
-    struct mged_dm *save_dm_list;
-    int save_edflag;
-    int save_edit_mode;
+    struct mged_dm *save_dm_list = NULL;
+    int save_edflag = 0;
+    int save_edit_mode = RT_EDIT_DEFAULT;
 
     if (mged_shutting_down(s))
 	return -1;
