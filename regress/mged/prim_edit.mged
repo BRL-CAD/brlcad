@@ -31,6 +31,7 @@ in tor_pe.s tor 0 0 0  0 0 1  20 2
 prim_edit_check      tor_pe.s "Set Radius 1" 30 r_a 30 -1
 prim_edit_check      tor_pe.s "Set Radius 2"  5 r_h  5 -1
 prim_edit_mouse_check tor_pe.s "Set Radius 1" r_a 30 -1
+prim_edit_mouse_check tor_pe.s "Set Radius 2" r_h 5 -1
 kill tor_pe.s
 
 puts "--- ELL (ellipsoid: A, B, C) ---"
@@ -39,6 +40,8 @@ prim_edit_check      ell_pe.s "Set A" 8 A 8 0
 prim_edit_check      ell_pe.s "Set B" 6 B 6 1
 prim_edit_check      ell_pe.s "Set C" 4 C 4 2
 prim_edit_mouse_check ell_pe.s "Set A" A 8 0
+prim_edit_mouse_check ell_pe.s "Set B" B 6 1
+prim_edit_mouse_check ell_pe.s "Set C" C 4 2
 kill ell_pe.s
 
 puts "--- RPC (right parabolic cylinder: H, r) ---"
@@ -46,6 +49,7 @@ in rpc_pe.s rpc 0 0 0  0 0 10  0 5 0  3
 prim_edit_check      rpc_pe.s "Set H" 20 H 20 2
 prim_edit_check      rpc_pe.s "Set r"  6 r  6 -1
 prim_edit_mouse_check rpc_pe.s "Set H" H 20 2
+prim_edit_mouse_check rpc_pe.s "Set r" r 6 -1
 kill rpc_pe.s
 
 puts "--- RHC (right hyperbolic cylinder: H, r, c) ---"
@@ -54,6 +58,8 @@ prim_edit_check      rhc_pe.s "Set H" 20 H 20 2
 prim_edit_check      rhc_pe.s "Set r"  6 r  6 -1
 prim_edit_check      rhc_pe.s "Set c"  3 c  3 -1
 prim_edit_mouse_check rhc_pe.s "Set r" r 6 -1
+prim_edit_mouse_check rhc_pe.s "Set H" H 20 2
+prim_edit_mouse_check rhc_pe.s "Set c" c 3 -1
 kill rhc_pe.s
 
 puts "--- EPA (elliptical paraboloid: H, r_1, r_2) ---"
@@ -62,6 +68,8 @@ prim_edit_check      epa_pe.s "Set H" 20 H   20 2
 prim_edit_check      epa_pe.s "Set A"  8 r_1  8 -1
 prim_edit_check      epa_pe.s "Set B"  4 r_2  4 -1
 prim_edit_mouse_check epa_pe.s "Set H" H 20 2
+prim_edit_mouse_check epa_pe.s "Set A" r_1 8 -1
+prim_edit_mouse_check epa_pe.s "Set B" r_2 4 -1
 kill epa_pe.s
 
 puts "--- EHY (elliptical hyperboloid: H, r_1, c) ---"
@@ -70,6 +78,8 @@ prim_edit_check      ehy_pe.s "Set H" 20 H   20 2
 prim_edit_check      ehy_pe.s "Set A"  8 r_1  8 -1
 prim_edit_check      ehy_pe.s "Set c"  3 c    3 -1
 prim_edit_mouse_check ehy_pe.s "Set A" r_1 8 -1
+prim_edit_mouse_check ehy_pe.s "Set H" H 20 2
+prim_edit_mouse_check ehy_pe.s "Set c" c 3 -1
 kill ehy_pe.s
 
 puts "--- PART (particle: H, r_v, r_h) ---"
@@ -78,6 +88,8 @@ prim_edit_check      part_pe.s "Set H" 20 H   20 2
 prim_edit_check      part_pe.s "Set v"  4 r_v  4 -1
 prim_edit_check      part_pe.s "Set h"  3 r_h  3 -1
 prim_edit_mouse_check part_pe.s "Set v" r_v 4 -1
+prim_edit_mouse_check part_pe.s "Set H" H 20 2
+prim_edit_mouse_check part_pe.s "Set h" r_h 3 -1
 kill part_pe.s
 
 puts "--- TGC (truncated general cone: H, A, B, C, D) ---"
@@ -91,6 +103,10 @@ prim_edit_check      tgc_pe.s "Set B"  3 B   3 1
 prim_edit_check      tgc_pe.s "Set C"  3 C   3 0
 prim_edit_check      tgc_pe.s "Set D"  4 D   4 1
 prim_edit_mouse_check tgc_pe.s "Set H"  H 8 2
+prim_edit_mouse_check tgc_pe.s "Set A"  A 4 0
+prim_edit_mouse_check tgc_pe.s "Set B"  B 3 1
+prim_edit_mouse_check tgc_pe.s "Set C"  C 3 0
+prim_edit_mouse_check tgc_pe.s "Set D"  D 4 1
 kill tgc_pe.s
 
 puts "--- ETO (elliptical torus: r, C, D) ---"
@@ -100,6 +116,7 @@ prim_edit_check      eto_pe.s "Set r"  8   r   8   -1
 prim_edit_check      eto_pe.s "Set D"  1.5 r_d 1.5 -1
 prim_edit_mouse_check eto_pe.s "Set r"  r   8   -1
 prim_edit_mouse_check eto_pe.s "Set C"  C   5   0
+prim_edit_mouse_check eto_pe.s "Set D"  r_d 1.5 -1
 kill eto_pe.s
 
 puts "--- HYP (one-sheet hyperboloid: H, A, B, c) ---"
@@ -111,6 +128,9 @@ prim_edit_check      hyp_pe.s "Set A"  2   A   10   1
 prim_edit_check      hyp_pe.s "Set B"  2   b    4   -1
 prim_edit_check      hyp_pe.s "Set c"  0.5 bnr  0.25 -1
 prim_edit_mouse_check hyp_pe.s "Set H"  H  20   2
+prim_edit_mouse_check hyp_pe.s "Set A"  A  10   1
+prim_edit_mouse_check hyp_pe.s "Set B"  b  4    -1
+prim_edit_mouse_check hyp_pe.s "Set c"  bnr 0.25 -1
 kill hyp_pe.s
 
 puts "--- SUPERELL (superellipsoid: A, B, C) ---"
@@ -119,6 +139,8 @@ prim_edit_check      superell_pe.s "Set A" 5 A 5 0
 prim_edit_check      superell_pe.s "Set B" 4 B 4 1
 prim_edit_check      superell_pe.s "Set C" 3 C 3 2
 prim_edit_mouse_check superell_pe.s "Set A" A 5 0
+prim_edit_mouse_check superell_pe.s "Set B" B 4 1
+prim_edit_mouse_check superell_pe.s "Set C" C 3 2
 kill superell_pe.s
 
 puts "--- CLINE (cylinder line: H, R, plate thickness) ---"
@@ -129,6 +151,7 @@ prim_edit_check      cline_pe.s "Set R"              4   R 4   -1
 prim_edit_check      cline_pe.s "Set plate thickness" 0.4 T 0.4 -1
 prim_edit_mouse_check cline_pe.s "Set H" H 8   2
 prim_edit_mouse_check cline_pe.s "Set R" R 4   -1
+prim_edit_mouse_check cline_pe.s "Set plate thickness" T 0.4 -1
 kill cline_pe.s
 
 puts "--- NMG (non-manifold geometry: Pick Edge, Move Edge, Next EU) ---"

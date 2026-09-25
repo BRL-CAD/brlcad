@@ -513,7 +513,8 @@ f_mouse(
 	    return TCL_OK;
 
 	case ST_S_EDIT:
-	    if ((SEDIT_TRAN || SEDIT_SCALE || SEDIT_PICK) && mged_variables->mv_transform == 'e')
+	    if ((SEDIT_TRAN || SEDIT_SCALE || SEDIT_PICK || SEDIT_ROTATE) &&
+		mged_variables->mv_transform == 'e')
 		sedit_mouse(s, mousevec);
 	    else
 		slewview(s, mousevec);
@@ -549,7 +550,8 @@ f_mouse(
 	/* case ST_S_VPICK:  sedit_vpick(MEDIT(s)); return TCL_OK; */
 
 	case ST_O_EDIT:
-	    if ((OEDIT_TRAN || OEDIT_SCALE) && mged_variables->mv_transform == 'e')
+	    if ((OEDIT_TRAN || OEDIT_SCALE || OEDIT_ROTATE) &&
+		mged_variables->mv_transform == 'e')
 		objedit_mouse(s, mousevec);
 	    else
 		slewview(s, mousevec);

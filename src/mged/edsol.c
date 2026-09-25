@@ -741,7 +741,9 @@ sedit_mouse(struct mged_state *s, const vect_t mousevec)
     if (ret == BRLCAD_ERROR)
 	return;
 
-    rt_edit_process(MEDIT(s));
+    /* XY rotation's knob path has already processed the edit. */
+    if (MEDIT(s)->edit_flag != RT_PARAMS_EDIT_ROT)
+	rt_edit_process(MEDIT(s));
 }
 
 /*
@@ -773,6 +775,8 @@ objedit_mouse(struct mged_state *s, const vect_t mousevec)
 		rt_edit_set_edflag(MEDIT(s), RT_MATRIX_EDIT_SCALE_Z);
 		break;
 	}
+    } else if (movedir & ROTARROW) {
+	rt_edit_set_edflag(MEDIT(s), RT_MATRIX_EDIT_ROT);
     } else if (movedir & (RARROW|UARROW)) {
 	int use_x = (movedir & RARROW) ? 1 : 0;
 	int use_y = (movedir & UARROW) ? 1 : 0;

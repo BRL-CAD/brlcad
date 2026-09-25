@@ -77,7 +77,7 @@ proc init_solid_edit_menus { stype menu } {
 		set mged_gui($id,transform) e; set_transform $id"
 	incr i
 	.$id.menubar.edit insert $i radiobutton -variable edit_type \
-	    -label "None Of Above" -underline 0 -command "set edit_solid_flag 0; \
+	    -label "None Of Above" -underline 0 -command "press sedit; \
 		set mged_gui($id,transform) e; set_transform $id"
 	incr i
 

@@ -22,12 +22,16 @@ if ![info exists mged_players] {
     set mged_players {}
 }
 
+proc mged_command_busy {options} {
+    expr {[dict exists $options -errorcode] &&
+	[dict get $options -errorcode] eq {BRLCAD MGED COMMAND_BUSY}}
+}
+
 proc mged_activate_dm {w} {
     global tcl_platform
 
     if {[catch {winset $w} message options]} {
-	if {[dict exists $options -errorcode] &&
-	    [dict get $options -errorcode] eq {BRLCAD MGED COMMAND_BUSY}} {
+	if {[mged_command_busy $options]} {
 	    return
 	}
 	return -options $options $message
@@ -37,6 +41,23 @@ proc mged_activate_dm {w} {
     if {$tcl_platform(platform) != "windows" &&
 	$tcl_platform(os) != "Darwin"} {
 	focus $w
+    }
+}
+
+proc mged_release_dm {w} {
+    if {![winfo exists $w]} {
+	return
+    }
+
+    if {[catch {winset $w; dm idle} message options]} {
+	if {[mged_command_busy $options]} {
+	    # A mouse pick may pump events while an edit command runs.  Defer
+	    # the release until its shared GED state is available again.
+	    set retry_interval_ms 25
+	    after $retry_interval_ms [list mged_release_dm $w]
+	    return
+	}
+	return -options $options $message
     }
 }
 
@@ -345,7 +366,7 @@ proc default_mouse_bindings { w } {
 	}
     }
 
-    bind $w <ButtonRelease> "winset $w; dm idle; break"
+    bind $w <ButtonRelease> "mged_release_dm $w; break"
     bind $w <Motion> "winset $w; if {\[dm type\] == \"tkswrast\"} {dm motion %x %y}; break"
     bind $w <KeyRelease-Control_L> "winset $w; dm idle; break"
     bind $w <KeyRelease-Control_R> "winset $w; dm idle; break"
