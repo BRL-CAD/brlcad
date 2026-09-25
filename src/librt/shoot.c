@@ -545,6 +545,7 @@ rt_shootray(register struct application *ap)
     struct resource *resp;
     struct rt_i *rtip;
     const int debug_shoot = RT_G_DEBUG & RT_DEBUG_SHOOT;
+    int rtcmp_capture = 0;
     void *rtcmp_state = NULL;
     fastf_t pending_hit = 0; /* dist of closest odd hit pending */
 
@@ -600,8 +601,11 @@ rt_shootray(register struct application *ap)
     BU_LIST_INIT(&waiting_segs.l);
     BU_LIST_INIT(&finished_segs.l);
     ap->a_finished_segs_hdp = &finished_segs;
-    if (RT_G_DEBUG & RT_DEBUG_RTCMP)
-	rtcmp_state = _rt_rtcmp_capture_begin();
+    if (RT_G_DEBUG & RT_DEBUG_RTCMP) {
+	rtcmp_capture = _rt_rtcmp_capture_ready();
+	if (rtcmp_capture)
+	    rtcmp_state = _rt_rtcmp_capture_begin();
+    }
 
     if (!BU_LIST_IS_INITIALIZED(&resp->re_parthead)) {
 	/* XXX This shouldn't happen any more */
@@ -968,7 +972,7 @@ hitit:
 
     if (rtcmp_state)
 	_rt_rtcmp_capture_finish(rtcmp_state, ap, &FinalPart);
-    else if (RT_G_DEBUG & RT_DEBUG_RTCMP)
+    else if (rtcmp_capture)
 	_rt_rtcmp_capture(ap, &FinalPart);
 
     /* Before recursing, release storage for unused Initial

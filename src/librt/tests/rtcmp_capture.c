@@ -111,10 +111,22 @@ main(int argc, const char **argv)
     ap.a_hit = shot_hit;
     ap.a_miss = shot_miss;
 
+    if (rt_rtcmp_capture_set_enabled(1) != -1) failures++;
     rt_debug = RT_DEBUG_RTCMP;
+    if (shoot(&ap, 0.0) != 1 ||
+	shoot(&ap, primitives ? 5.0 : 2.0) != 0) failures++;
+    if (rt_rtcmp_capture_set_enabled(1) != 0) failures++;
     if (shoot(&ap, 0.0) != 1 || shoot(&ap, primitives ? 5.0 : 2.0) != 0 ||
 	shoot(&ap, 0.5) != 1) failures++;
     if (primitives && shoot(&ap, 3.0) != 0) failures++;
+    rt_debug = 0;
+    if (shoot(&ap, 0.0) != 1) failures++;
+    if (rt_rtcmp_capture_set_enabled(0) != 0) failures++;
+    rt_debug = RT_DEBUG_RTCMP;
+    if (shoot(&ap, 0.0) != 1) failures++;
+    if (rt_rtcmp_capture_set_enabled(1) != 0 ||
+	shoot(&ap, 0.5) != 1) failures++;
+    if (rt_rtcmp_capture_set_enabled(0) != 0) failures++;
     if (rt_rtcmp_capture_flush() != 0) failures++;
     rt_debug = 0;
 
@@ -147,7 +159,8 @@ main(int argc, const char **argv)
 	fclose(file);
     }
     bu_vls_free(&record);
-    if (records != (primitives ? 4 : 2) || (primitives && primitive_only != 1)) failures++;
+    if (records != (primitives ? 5 : 3) ||
+	(primitives && primitive_only != 1)) failures++;
 
     rt_i_destroy(rtip);
     db_close(dbip);

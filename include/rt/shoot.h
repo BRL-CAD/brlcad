@@ -55,6 +55,15 @@
 
 __BEGIN_DECLS
 
+#define RT_RTCMP_CAPTURE_RUNTIME_TOGGLE 1
+
+/** Set RT_DEBUG_RTCMP recording: nonzero enables, zero disables.
+ * Enabling requires the debug flag and a usable output writer.
+ * Return 0 on success and -1 on failure. Disabling succeeds even
+ * before setup.
+ */
+RT_EXPORT extern int rt_rtcmp_capture_set_enabled(int enabled);
+
 /** Wait until pending RT_DEBUG_RTCMP records have reached the output file. */
 RT_EXPORT extern int rt_rtcmp_capture_flush(void);
 

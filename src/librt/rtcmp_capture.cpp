@@ -198,11 +198,11 @@ public:
         const char *skip_setting = std::getenv("LIBRT_RTCMP_SKIP_MISSES");
         primitive_mode = primitive_setting && bu_strcmp(primitive_setting, "1") == 0;
         skip_misses = skip_setting && bu_strcmp(skip_setting, "1") == 0;
-        enabled.store(true, std::memory_order_release);
+        healthy.store(true, std::memory_order_release);
         try {
             worker = std::thread(&CaptureWriter::write, this);
         } catch (const std::exception &e) {
-            enabled.store(false, std::memory_order_release);
+            healthy.store(false, std::memory_order_release);
             bu_log("RT_DEBUG_RTCMP: cannot start writer: %s\n", e.what());
             std::fclose(file);
             file = nullptr;
@@ -224,8 +224,24 @@ public:
             bu_log("RT_DEBUG_RTCMP: closing output failed\n");
     }
 
-    bool active() const { return enabled.load(std::memory_order_acquire); }
+    bool active() const
+    {
+        return healthy.load(std::memory_order_acquire);
+    }
+    bool capturing() const
+    {
+        return active() && recording.load(std::memory_order_acquire);
+    }
     bool primitives() const { return primitive_mode; }
+
+    int set_recording(bool requested)
+    {
+        std::lock_guard<std::mutex> guard(mutex);
+        if (requested && !active()) return -1;
+        recording.store(requested, std::memory_order_release);
+        if (!requested) space.notify_all();
+        return 0;
+    }
     bool omit_misses() const { return skip_misses; }
 
     int flush()
@@ -244,11 +260,11 @@ public:
     {
         std::unique_lock<std::mutex> guard(mutex);
         space.wait(guard, [&] {
-            return !active() || queued.empty() ||
+            return !capturing() || queued.empty() ||
                 (line.size() <= MAX_QUEUED_BYTES &&
                  queued_bytes <= MAX_QUEUED_BYTES - line.size());
         });
-        if (!active()) return;
+        if (!capturing()) return;
 
         if (queued.empty()) deadline = std::chrono::steady_clock::now() + FLUSH_DELAY;
         queued_bytes += line.size();
@@ -260,7 +276,8 @@ public:
 
     void disable(const char *reason)
     {
-        if (!enabled.exchange(false, std::memory_order_acq_rel)) return;
+        if (!healthy.exchange(false, std::memory_order_acq_rel)) return;
+        recording.store(false, std::memory_order_release);
         bu_log("RT_DEBUG_RTCMP: %s; capture disabled\n", reason);
         ready.notify_all();
         space.notify_all();
@@ -305,7 +322,8 @@ private:
         }
     }
 
-    std::atomic<bool> enabled{false};
+    std::atomic<bool> healthy{false};
+    std::atomic<bool> recording{false};
     std::mutex mutex;
     std::condition_variable ready;
     std::condition_variable space;
@@ -323,23 +341,71 @@ private:
     bool stopping = false;
 };
 
+std::atomic<CaptureWriter *> &
+initialized_writer()
+{
+    static std::atomic<CaptureWriter *> capture{nullptr};
+    return capture;
+}
+
+struct WriterHolder {
+    CaptureWriter capture;
+
+    WriterHolder()
+    {
+        initialized_writer().store(&capture, std::memory_order_release);
+    }
+
+    ~WriterHolder()
+    {
+        initialized_writer().store(nullptr, std::memory_order_release);
+    }
+};
+
 CaptureWriter &
 writer()
 {
-    static CaptureWriter instance;
-    return instance;
+    static WriterHolder holder;
+    return holder.capture;
 }
 
 } // namespace
 
+extern "C" int
+rt_rtcmp_capture_set_enabled(int enabled)
+{
+    if (!enabled) {
+        CaptureWriter *capture =
+            initialized_writer().load(std::memory_order_acquire);
+        return capture ? capture->set_recording(false) : 0;
+    }
+    if (!(RT_G_DEBUG & RT_DEBUG_RTCMP)) return -1;
+    try {
+        return writer().set_recording(true);
+    } catch (const std::exception &e) {
+        bu_log("RT_DEBUG_RTCMP: cannot enable capture: %s\n", e.what());
+        return -1;
+    }
+}
+
+extern "C" int
+_rt_rtcmp_capture_ready(void)
+{
+    try {
+        return writer().capturing();
+    } catch (const std::exception &e) {
+        bu_log("RT_DEBUG_RTCMP: cannot initialize capture: %s\n",
+               e.what());
+        return 0;
+    }
+}
+
 extern "C" void *
 _rt_rtcmp_capture_begin(void)
 {
-    const char *mode = std::getenv("LIBRT_RTCMP_PRIMITIVES");
-    if (!mode || bu_strcmp(mode, "1") != 0) return nullptr;
     try {
         CaptureWriter &capture = writer();
-        return capture.active() && capture.primitives() ? new CaptureState : nullptr;
+        return capture.primitives() ? new CaptureState : nullptr;
     } catch (const std::exception &e) {
         writer().disable(e.what());
         return nullptr;
@@ -364,7 +430,8 @@ _rt_rtcmp_capture_finish(void *state, const struct application *ap, const struct
     std::unique_ptr<CaptureState> shot(static_cast<CaptureState *>(state));
     try {
         CaptureWriter &capture = writer();
-        if (!capture.active()) return;
+        if (!(RT_G_DEBUG & RT_DEBUG_RTCMP) ||
+            !capture.capturing()) return;
         if (capture.omit_misses() && shot->segments.empty() && parts->pt_forw == parts) return;
         capture.submit(format_shot(ap, parts, &shot->segments));
     } catch (const std::exception &e) {
@@ -385,7 +452,8 @@ _rt_rtcmp_capture(const struct application *ap, const struct partition *parts)
 
     try {
         CaptureWriter &capture = writer();
-        if (capture.active()) capture.submit(format_shot(ap, parts));
+        if ((RT_G_DEBUG & RT_DEBUG_RTCMP) && capture.capturing())
+            capture.submit(format_shot(ap, parts));
     } catch (const std::exception &e) {
         writer().disable(e.what());
     }

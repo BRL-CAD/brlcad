@@ -84,7 +84,7 @@ __BEGIN_DECLS
 #define RT_DEBUG_HF		0x04000000	/**< @brief 27 Height Field solids */
 
 #define RT_DEBUG_MESHING	0x08000000	/**< @brief 28 Print meshing/triangulation details */
-#define RT_DEBUG_RTCMP		0x10000000	/**< @brief 29 Append rays to LIBRT_RTCMP_FILE; LIBRT_RTCMP_PRIMITIVES=1 includes primitive segments */
+#define RT_DEBUG_RTCMP		0x10000000      /**< @brief 29 Set up rtcmp capture; recording uses a runtime toggle.  If LIBRT_RTCMP_PRIMITIVES=1 includes primitive segments. */
 #define RT_DEBUG_UNUSED_4	0x20000000	/**< @brief 30 Unassigned */
 
 /* Options which will cause the library to write binary debugging output */
