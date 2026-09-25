@@ -57,6 +57,7 @@ foreach(edit_case IN LISTS edit_cases)
 endforeach()
 
 configure_file(cases.inc.in "${CMAKE_CURRENT_BINARY_DIR}/cases.inc" @ONLY)
+distclean("${CMAKE_CURRENT_BINARY_DIR}/cases.inc")
 
 brlcad_addexec(rt_edit_test "${edit_sources}" "librt;libnmg;libwdb;libbrep;${WINSOCK_LIB}" TEST)
 # The cases have translation-unit-local fixture helpers with shared names.
