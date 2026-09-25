@@ -962,7 +962,139 @@ foreach test [list \
     csg_matrix_mouse_check {*}$test
 }
 
+puts "--- Repeated graphical object transforms ---"
+proc csg_matrix_repeated_mouse_check {} {
+    global orig_gui transform csg_mouse_dm_pixels csg_mouse_view_size
+    global csg_drag_scale
+    set prim csg_matrix_repeat.s
+    set inner csg_matrix_repeat_inner.c
+    set outer csg_matrix_repeat_outer.c
+    set saved_orig_gui $orig_gui
+    set expected [csg_edit_identity_matrix]
+    set failed [catch {
+        in $prim sph 0 0 0 10
+        comb $inner u $prim
+        comb $outer u $inner
+        set orig_gui 0
+        for {set step 0} {$step < 16} {incr step} {
+            e $outer
+            center 0 0 0
+            size $csg_mouse_view_size
+            setview 0 0 0
+            dm size $csg_mouse_dm_pixels $csg_mouse_dm_pixels
+            _mged_press oill
+            _mged_ill -e -i 1 /$outer/$inner/$prim
+            _mged_matpick 2
+            if {[status state] ne "OBJ EDIT" || $transform ne "e"} {
+                error "step $step did not enter object editing"
+            }
+            set view_before [csg_edit_view_state]
+            if {$step % 2 == 0} {
+                press Rotate
+                dm con r z 100 100
+                set operation [csg_matrix_axis_rotation z 10]
+                set motion {dm motion 140 100}
+            } else {
+                press Scale
+                dm am s 100 100
+                set operation [csg_matrix_scale all $csg_drag_scale]
+                set motion {dm motion 164 100}
+            }
+            set motion_code [catch {uplevel #0 $motion} motion_result]
+            if {$motion_code != 0 && $motion_code != 2} {
+                error "step $step mouse motion failed: $motion_result"
+            }
+            dm idle
+            press accept
+            set expected [csg_matrix_multiply $operation $expected]
+            csg_edit_comb_leaf_matrix_at $inner $prim $expected
+            csg_edit_view_state_at $view_before
+            d $outer
+        }
+    } failure]
+    set orig_gui $saved_orig_gui
+    catch {press reject}
+    catch {Z}
+    foreach object [list $outer $inner $prim] {
+        catch {kill $object}
+    }
+    if {$failed} {
+        puts "  FAIL: repeated object mouse rotations/scales ($failure)"
+    } else {
+        puts "  PASS: repeated object mouse rotations/scales"
+    }
+}
+csg_matrix_repeated_mouse_check
+
 puts "--- All ARB point, edge, and face states ---"
+
+proc csg_edit_sed_point {attribute} {
+    set serialized [get_sed]
+    set index [lsearch -exact $serialized $attribute]
+    if {$index < 0 || $index + 1 >= [llength $serialized]} {
+        error "get_sed has no $attribute: $serialized"
+    }
+    return [lindex $serialized [expr {$index + 1}]]
+}
+
+proc csg_arb_repeated_mouse_check {} {
+    global orig_gui csg_bv_coord_half_range csg_mouse_dm_pixels
+    global csg_mouse_view_size
+    set source csg_lifecycle_arb5.s
+    set prim csg_arb_repeat.s
+    set saved_orig_gui $orig_gui
+    set expected {}
+    set failed [catch {
+        cp $source $prim
+        e $prim
+        center 0 0 0
+        size $csg_mouse_view_size
+        setview 0 0 0
+        dm size $csg_mouse_dm_pixels $csg_mouse_dm_pixels
+        set orig_gui 0
+        sed $prim
+        press {Move Edges}
+        press {Move Point 5}
+        set original_z [lindex [db get $source V5] 2]
+        for {set step 0} {$step < 64} {incr step} {
+            if {$step > 0 && $step % 8 == 0} {
+                press sedit
+                press {Move Edges}
+                press {Move Point 5}
+            }
+            set mouse_x [expr {150 + 2 * ($step % 5)}]
+            set mouse_y [expr {150 + 2 * (($step * 3) % 5)}]
+            M 1 $mouse_x $mouse_y
+            set expected [list \
+                [expr {$mouse_x / $csg_bv_coord_half_range * $csg_mouse_view_size / 2.0}] \
+                [expr {$mouse_y / $csg_bv_coord_half_range * $csg_mouse_view_size / 2.0}] \
+                $original_z]
+            set actual [csg_edit_sed_point V5]
+            if {[csg_edit_point_distance $actual $expected] > 0.000001} {
+                error "step $step expected V5 $expected, got $actual"
+            }
+        }
+        press accept
+        d $prim
+        if {[csg_edit_point_distance [db get $prim V5] $expected] > 0.000001} {
+            error "accepted V5 differs from the final mouse target"
+        }
+        foreach vertex {V1 V2 V3 V4} {
+            csg_edit_point_matches_source $source $vertex $prim
+        }
+        arb_standard_storage_check arb5 $prim
+    } failure]
+    set orig_gui $saved_orig_gui
+    catch {press reject}
+    catch {d $prim}
+    catch {kill $prim}
+    if {$failed} {
+        puts "  FAIL: repeated ARB5 mouse movement ($failure)"
+    } else {
+        puts "  PASS: repeated ARB5 mouse movement"
+    }
+}
+csg_arb_repeated_mouse_check
 
 # Every ARB menu entry is checked independently.  The variants do not share
 # menu indices, so sampling one edge or face would miss precisely the class of
@@ -1321,6 +1453,280 @@ csg_edit_sequence_check csg_lifecycle_dsp.s "Set ALT" {
 csg_edit_sequence_check csg_lifecycle_dsp.s "Toggle Smooth" {
     {press {Toggle Smooth}}
 } [list csg_edit_scalar_at sm 1]
+
+puts "--- Specialized mouse editing and menu inventory ---"
+proc csg_edit_prepare_mouse_view {} {
+    global csg_dispatch_view_size
+    center 0 0 0
+    size $csg_dispatch_view_size
+    setview 0 0 0
+}
+array set csg_mouse_covered {}
+proc csg_mouse_case {source menu_items label commands validator} {
+    global csg_mouse_covered
+    csg_edit_sequence_check $source $label $commands $validator
+    set type [lindex [db get $source] 0]
+    if {![info exists csg_mouse_covered($type)]} {
+        set csg_mouse_covered($type) {}
+    }
+    foreach item $menu_items {
+        if {[lsearch -exact $csg_mouse_covered($type) $item] < 0} {
+            lappend csg_mouse_covered($type) $item
+        }
+    }
+}
+proc csg_edit_menu_inventory_check {source ignored} {
+    global csg_mouse_covered
+    if {[catch {
+        Z
+        e $source
+        sed $source
+        set actual [mmenu_get 0]
+        set type [lindex [db get $source] 0]
+        set covered {}
+        if {[info exists csg_mouse_covered($type)]} {
+            set covered $csg_mouse_covered($type)
+        }
+        foreach item $actual {
+            set tested [expr {[lsearch -exact $covered $item] >= 0}]
+            set exempt [expr {[lsearch -exact $ignored $item] >= 0}]
+            if {$tested == $exempt} {
+                error "menu entry '$item' needs exactly one mouse-test or exclusion"
+            }
+        }
+        foreach item [concat $covered $ignored] {
+            if {[lsearch -exact $actual $item] < 0} {
+                error "recorded menu entry '$item' is absent from $actual"
+            }
+        }
+        press reject
+        d $source
+    } failure]} {
+        puts "  FAIL: menu inventory $source ($failure)"
+        catch {press reject}
+        catch {Z}
+    } else {
+        puts "  PASS: menu inventory $source"
+    }
+}
+
+csg_edit_prepare_mouse_view
+set csg_special_mouse_target [list \
+    [expr {512.0 / $csg_bv_coord_half_range * $csg_dispatch_view_size / 2.0}] \
+    [expr {512.0 / $csg_bv_coord_half_range * $csg_dispatch_view_size / 2.0}] 0]
+set csg_special_mouse_scale [expr {1.0 + 2047.0 / ($csg_bv_coord_half_range * 4.0)}]
+set csg_special_mouse_shrink [expr {
+    1.0 / (1.0 + 1024.0 / ($csg_bv_coord_half_range * 4.0))}]
+csg_mouse_case csg_lifecycle_pipe.s {{Move Point}} "mouse select and move point" {
+    {csg_edit_prepare_mouse_view}
+    {press {Select Point}}
+    {p 0 0 0}
+    {press {Move Point}}
+    {M 1 512 512}
+} [list csg_edit_point_at V0 $csg_special_mouse_target]
+in csg_mouse_pipe_topology.s pipe 4 \
+    0 0 0 1 2 3 \
+    0 0 30 1 2 3 \
+    30 40 80 1 2 3 \
+    80 80 100 1 2 3
+csg_mouse_case csg_mouse_pipe_topology.s {{Select Point} {Move Point}} "mouse select point" {
+    {csg_edit_prepare_mouse_view}
+    {press {Select Point}}
+    {M 1 0 0}
+    {press {Move Point}}
+    {M 1 512 512}
+} [list csg_edit_point_at V0 $csg_special_mouse_target]
+csg_mouse_case csg_mouse_pipe_topology.s {{Append Point}} "mouse append point" {
+    {csg_edit_prepare_mouse_view}
+    {press {Append Point}}
+    {M 1 512 512}
+} [list csg_edit_point_at V4 {5 5 0}]
+csg_mouse_case csg_mouse_pipe_topology.s {{Prepend Point}} "mouse prepend point" {
+    {csg_edit_prepare_mouse_view}
+    {press {Prepend Point}}
+    {M 1 512 512}
+} [list csg_edit_point_at V0 {5 5 0}]
+csg_mouse_case csg_mouse_pipe_topology.s {{Split Segment}} "mouse split segment" {
+    {csg_edit_prepare_mouse_view}
+    {press {Select Point}}
+    {p 0 0 0}
+    {press {Split Segment}}
+    {M 1 512 512}
+} [list csg_edit_point_at V1 {5 5 0}]
+foreach {item attribute initial} {
+    {Set Point OD} O0 5
+    {Set Point ID} I0 3
+    {Set Point Bend} R0 6
+} {
+    csg_mouse_case csg_lifecycle_pipe.s [list $item] "mouse $item" [list \
+        {csg_edit_prepare_mouse_view} \
+        {press {Select Point}} {p 0 0 0} [list press $item] \
+        {M 1 0 -1024}] \
+        [list csg_edit_scalar_at $attribute [expr {$initial * $csg_special_mouse_shrink}]]
+}
+foreach {item attributes initial} {
+    {Set Pipe OD} {O0 O1 O2 O3} {5 5 6 6}
+    {Set Pipe ID} {I0 I1 I2 I3} {3 3 2 0}
+    {Set Pipe Bend} {R0 R1 R2 R3} {6 7 10 8}
+} {
+    set expected {}
+    foreach value $initial {
+        lappend expected [expr {$value * $csg_special_mouse_shrink}]
+    }
+    csg_mouse_case csg_lifecycle_pipe.s [list $item] "mouse $item" [list \
+        {csg_edit_prepare_mouse_view} \
+        [list press $item] {M 1 0 -1024}] \
+        [list csg_edit_scalar_values_at $attributes $expected]
+}
+proc csg_edit_bot_vertices_moved {source moved delta prim} {
+    set vertices [db get $source V]
+    for {set index 0} {$index < [llength $vertices]} {incr index} {
+        set expected [lindex $vertices $index]
+        if {[lsearch -exact $moved $index] >= 0} {
+            set translated {}
+            foreach value $expected shift $delta {
+                lappend translated [expr {$value + $shift}]
+            }
+            set expected $translated
+        }
+        csg_edit_list_value_at V $index $expected $prim
+    }
+}
+csg_mouse_case csg_lifecycle_bot.s {{Move Vertex}} "mouse move vertex" {
+    {csg_edit_prepare_mouse_view}
+    {press {Pick Vertex}}
+    {p 0}
+    {press {Move Vertex}}
+    {M 1 512 512}
+} [list csg_edit_bot_vertices_moved csg_lifecycle_bot.s {0} \
+    $csg_special_mouse_target]
+csg_mouse_case csg_lifecycle_bot.s {{Pick Vertex} {Move Vertex}} "mouse pick and move vertex" {
+    {csg_edit_prepare_mouse_view}
+    {press {Pick Vertex}}
+    {M 1 0 0}
+    {press {Move Vertex}}
+    {M 1 512 512}
+} [list csg_edit_bot_vertices_moved csg_lifecycle_bot.s {0} \
+    $csg_special_mouse_target]
+csg_mouse_case csg_lifecycle_bot.s {{Move Edge}} "mouse move edge" {
+    {csg_edit_prepare_mouse_view}
+    {press {Pick Edge}}
+    {p 0 1}
+    {press {Move Edge}}
+    {M 1 1024 512}
+} [list csg_edit_bot_vertices_moved csg_lifecycle_bot.s {0 1} {10 5 0}]
+csg_mouse_case csg_lifecycle_bot.s {{Pick Edge} {Move Edge}} "mouse pick and move edge" {
+    {csg_edit_prepare_mouse_view}
+    {press {Pick Edge}}
+    {M 1 512 512}
+    {press {Move Edge}}
+    {M 1 1024 512}
+} [list csg_edit_bot_vertices_moved csg_lifecycle_bot.s {0 1} {10 5 0}]
+csg_mouse_case csg_lifecycle_bot.s {{Move Triangle}} "mouse move triangle" {
+    {csg_edit_prepare_mouse_view}
+    {press {Pick Triangle}}
+    {p 0 1 2}
+    {press {Move Triangle}}
+    {M 1 512 512}
+} [list csg_edit_bot_vertices_moved csg_lifecycle_bot.s {0 1 2} \
+    $csg_special_mouse_target]
+csg_mouse_case csg_lifecycle_ebm.s {{Extrude Depth}} "mouse extrusion depth" {
+    {csg_edit_prepare_mouse_view}
+    {press {Extrude Depth}}
+    {M 1 0 2047}
+} [list csg_edit_scalar_at H [expr {4.0 * $csg_special_mouse_scale}]]
+csg_mouse_case csg_lifecycle_vol.s {{Threshold (low)}} "mouse low threshold" {
+    {csg_edit_prepare_mouse_view}
+    {press {Threshold (low)}}
+    {p 10}
+    {M 1 0 2047}
+} [list csg_edit_scalar_at lo [expr {int(10.0 * $csg_special_mouse_scale)}]]
+csg_mouse_case csg_lifecycle_vol.s {{Voxel Size (X Y Z)}} "mouse voxel size" {
+    {csg_edit_prepare_mouse_view}
+    {press {Voxel Size (X Y Z)}}
+    {M 1 0 2047}
+} [list csg_edit_point_at size [list \
+    $csg_special_mouse_scale $csg_special_mouse_scale $csg_special_mouse_scale]]
+csg_mouse_case csg_lifecycle_vol.s {{Threshold (hi)}} "mouse high threshold" {
+    {csg_edit_prepare_mouse_view}
+    {press {Threshold (hi)}}
+    {M 1 0 -1024}
+} [list csg_edit_scalar_at hi [expr {int(255.0 * $csg_special_mouse_shrink)}]]
+csg_mouse_case csg_lifecycle_dsp.s {{Set X}} "mouse X scale" {
+    {csg_edit_prepare_mouse_view}
+    {press {Set X}}
+    {M 1 0 2047}
+} [list csg_edit_matrix_component_at stom 0 $csg_special_mouse_scale]
+foreach {item index} {{Set Y} 5 {Set ALT} 10} {
+    csg_mouse_case csg_lifecycle_dsp.s [list $item] "mouse $item" [list \
+        {csg_edit_prepare_mouse_view} \
+        [list press $item] {M 1 0 2047}] \
+        [list csg_edit_matrix_component_at stom $index $csg_special_mouse_scale]
+}
+foreach type {arbn brep} {
+    set source csg_lifecycle_${type}.s
+    csg_edit_sequence_check $source "generic mouse translation" {
+        {csg_edit_prepare_mouse_view}
+        {keypoint 0 0 0}
+        {press sxy}
+        {M 1 512 512}
+    } [list csg_edit_bbox_translated $source $csg_special_mouse_target]
+}
+
+# Every specialized menu entry must be accounted for.  Exclusions are menu
+# headings, non-positional actions/settings, or the BOT triangle picker (tested
+# under Xmin because it needs Tk).  A new entry without a mouse case or
+# explicit exclusion fails here.
+foreach {source ignored} {
+    csg_lifecycle_pipe.s {
+        {PIPE MENU} {Next Point} {Previous Point} {Delete Point}
+    }
+    csg_lifecycle_bot.s {
+        {BOT MENU} {Pick Triangle} {Move Vertex List}
+        {Split Edge} {Split Face} {Fuse Vertices} {Fuse Faces}
+        {Delete Triangle} {Select Mode} {Select Orientation}
+        {Set flags} {Set Face Thickness} {Set Face Mode}
+    }
+    csg_lifecycle_dsp.s {
+        {DSP MENU} Name {Toggle Smooth} {Set Data Source}
+    }
+    csg_lifecycle_ebm.s {
+        {EBM MENU} {File Name} {File Size (W N)}
+    }
+    csg_lifecycle_vol.s {
+        {VOL MENU} {File Name} {File Size (X Y Z)}
+    }
+    csg_lifecycle_arbn.s {}
+    csg_lifecycle_brep.s {}
+} {
+    csg_edit_menu_inventory_check $source $ignored
+}
+
+# A view-space request must remain view-space even when the editor's current
+# coordinate system is object-relative.  This is the fast path underlying the
+# corresponding real mouse drag in the Xmin GUI test.
+set csg_saved_coords [rset var coords]
+set csg_saved_transform [rset var transform]
+if {[catch {
+    Z
+    e csg_lifecycle_bot.s
+    sed csg_lifecycle_bot.s
+    center 0 0 0
+    rset var coords o
+    rset var transform v
+    knob -i -v aX 1
+    if {[csg_edit_point_distance [center] {-1 0 0}] > 0.000001} {
+        error "explicit view knob left center at [center]"
+    }
+} csg_view_override_error]} {
+    puts "  FAIL: view-space translation with object coordinates ($csg_view_override_error)"
+} else {
+    puts "  PASS: view-space translation with object coordinates"
+}
+catch {press reject}
+catch {Z}
+rset var coords $csg_saved_coords
+rset var transform $csg_saved_transform
 
 file delete -force $csg_data_file
 file delete -force $csg_dsp_file

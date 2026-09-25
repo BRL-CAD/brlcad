@@ -1608,7 +1608,12 @@ f_knob(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 	}
 
 	if (view_do_tran) {
+	    /* Honor the requested view frame even when the active bview is in
+	     * object coordinates. */
+	    char save_coord = view_state->vs_gvp->gv_coord;
+	    view_state->vs_gvp->gv_coord = vcoords;
 	    bv_knobs_tran(view_state->vs_gvp, view_tvec, model_mode_final);
+	    view_state->vs_gvp->gv_coord = save_coord;
 	}
 
 	if (view_do_rot) {

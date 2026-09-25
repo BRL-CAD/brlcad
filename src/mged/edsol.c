@@ -1547,7 +1547,7 @@ f_get_sedit(ClientData clientData, Tcl_Interp *interp, int argc, const char *arg
 	return TCL_ERROR;
     }
 
-    if (illump || !illump->s_u_data)
+    if (!illump || !illump->s_u_data)
 	return TCL_ERROR;
     struct ged_bv_data *bdata = (struct ged_bv_data *)illump->s_u_data;
 
