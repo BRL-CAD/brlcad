@@ -10,6 +10,17 @@ descriptive text that emphasizes or further describes significant
 changes made.  See document footer for additional details.
 
 ----------------------------------------------------------------------
+--- 2026-09-25  Release 7.42.4                                     ---
+----------------------------------------------------------------------
+
+Follow-on patch release to 7.42.2 correcting a case where multiple
+object raytracing could result in rays whose origins start inside
+BoT primitives not backing out of the solid correctly.
+
+* fixed ray origin pnt backout behavior in BoT primitives - Cliff Yapp
+
+
+----------------------------------------------------------------------
 --- 2026-03-13  Release 7.42.2                                     ---
 ----------------------------------------------------------------------
 
