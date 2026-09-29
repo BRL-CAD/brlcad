@@ -22,9 +22,9 @@
 #	Widget for raytracing MGED's current view.
 #
 
-check_externs "_mged_opendb _mged_rt _mged_art"
+check_externs "::brlcad::mged"
 
-set rt_control(has_embedded_fb) [_mged_has_embedded_fb]
+set rt_control(has_embedded_fb) [::brlcad::mged has_embedded_fb]
 
 proc init_Raytrace { id } {
     global mged_gui
@@ -348,14 +348,14 @@ that is used when clearing the framebuffer." } }
     hoc_register_data $top.advancedB "Advanced Settings"\
 	    { { summary "Pop up another GUI for advanced settings." } }
     button $top.raytraceB -relief raised -text "Raytrace" \
-	    -command "do_Raytrace $id _mged_rt" \
+	    -command [list do_Raytrace $id [list ::brlcad::mged rt]] \
 	    -padx 0.5m -pady 0.5m
     hoc_register_data $top.raytraceB "Raytrace"\
 	    { { summary "Begin raytracing the view of the source pane.
 The results of the raytrace will go to the place
 specified by the destination." } }
 	button $top.artB -relief raised -text "Art" \
-			-command "do_Raytrace $id _mged_art" \
+			-command [list do_Raytrace $id [list ::brlcad::mged art]] \
 			-padx 0.5m -pady 0.5m
 		hoc_register_data $top.artB "Art"\
 			{ { summary "Begin raytracing the view of the source pane.
@@ -432,7 +432,7 @@ destination to the background color." } }
 }
 
 proc rt_ok { id top } {
-    do_Raytrace $id _mged_rt
+    do_Raytrace $id [list ::brlcad::mged rt]
     rt_dismiss $id
 }
 
@@ -1337,7 +1337,7 @@ proc rt_half_bake { id raw } {
 proc rt_db_to_pix {} {
     global rt_control
 
-    regsub \.g$ [_mged_opendb] .pix default_file
+    regsub \.g$ [::brlcad::mged opendb] .pix default_file
     return $default_file
 }
 
@@ -1474,7 +1474,7 @@ proc rt_solid_list_callback { id } {
     }
 
     if {$rt_control($id,omode) == "all"} {
-	set rt_control($id,olist) [_mged_who]
+	set rt_control($id,olist) [::brlcad::mged who]
 	rt_olist_reset $id
 	return
     }

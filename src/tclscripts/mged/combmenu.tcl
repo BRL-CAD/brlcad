@@ -34,7 +34,7 @@ if ![info exists mged_gui(mged,screen)] {
 
 #	Ensure that all commands that this script uses without defining
 #	are provided by the calling application
-check_externs "_mged_solid_report _mged_press"
+check_externs "::brlcad::mged"
 
 proc build_comb_menu_all_displayed {} {
     global mged_players
@@ -54,7 +54,7 @@ proc build_comb_menu_all_displayed {} {
 	destroy $mged_gui($id,edit_menu)
     }
 
-    set paths [_mged_solid_report -1]
+    set paths [::brlcad::mged solid_report -1]
     if {![llength $paths]} {
 	cad_dialog $::tk::Priv(cad_dialog) $mged_gui($id,screen)\
 	    "No combinations are being displayed!"\
@@ -63,7 +63,7 @@ proc build_comb_menu_all_displayed {} {
 	return
     }
 
-    _mged_press reject
+    ::brlcad::mged press reject
     set combs [build_comb_list $paths]
     build_comb_menu $id $combs
 
@@ -93,7 +93,7 @@ proc ray_build_comb_menu { x y } {
     set ray [mouse_shoot_ray $x $y]
     set paths [ray_get_info $ray in path]
 
-    _mged_press reject
+    ::brlcad::mged press reject
     set combs [build_comb_list $paths]
     build_comb_menu $id $combs
 
@@ -148,14 +148,14 @@ proc build_comb_menu { id combs } {
     }
     bind_listbox $top "<ButtonRelease-1>"\
 	"%W selection clear 0 end;\
-	    _mged_press reject"
+	    ::brlcad::mged press reject"
 }
 
 proc build_comb_menu_all_regions {} {
     set win [winset]
     set id [get_player_id_dm $win]
 
-    set combs [_mged_ls -r]
+    set combs [::brlcad::mged ls -r]
     build_comb_menu2 $id $combs
 }
 
@@ -163,7 +163,7 @@ proc build_comb_menu_all {} {
     set win [winset]
     set id [get_player_id_dm $win]
 
-    set combs [_mged_ls -c]
+    set combs [::brlcad::mged ls -c]
     build_comb_menu2 $id $combs
 }
 
@@ -231,7 +231,7 @@ proc build_comb_list { paths } {
 }
 
 proc comb_get_solid_path { comb } {
-    set paths [_mged_solid_report -1]
+    set paths [::brlcad::mged solid_report -1]
 
     if {[llength $paths] == 0} {
 	return ""

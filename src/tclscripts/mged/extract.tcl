@@ -22,7 +22,7 @@
 #	Tool for extracting objects out of the current MGED database.
 #
 
-check_externs "_mged_opendb _mged_keep db_glob"
+check_externs "::brlcad::mged db_glob"
 
 proc init_extractTool { id } {
     global mged_gui
@@ -43,11 +43,11 @@ proc init_extractTool { id } {
     }
 
     if ![info exists ex_control($id,file)] {
-	regsub \.g$ [_mged_opendb] _keep.g default_file
+	regsub \.g$ [::brlcad::mged opendb] _keep.g default_file
 	set ex_control($id,file) $default_file
     }
 
-    set ex_control($id,objects) [_mged_who]
+    set ex_control($id,objects) [::brlcad::mged who]
 
     toplevel $top -screen $mged_gui($id,screen)
 
@@ -106,7 +106,7 @@ proc do_extract { id } {
     global ::tk::Priv
 
     cmd_win set $id
-    set ex_cmd "_mged_keep"
+    set ex_cmd [list ::brlcad::mged keep]
 
     if {$ex_control($id,file) != ""} {
 	if [file exists $ex_control($id,file)] {
@@ -128,11 +128,11 @@ proc do_extract { id } {
 	return
     }
 
-    append ex_cmd " $ex_control($id,file)"
+    lappend ex_cmd $ex_control($id,file)
 
     if {$ex_control($id,objects) != ""} {
-	set globbed_str [db_glob $ex_control($id,objects)]
-	append ex_cmd " $globbed_str"
+	set globbed_objects [db_glob $ex_control($id,objects)]
+	lappend ex_cmd {*}$globbed_objects
     } else {
 	cad_dialog $::tk::Priv(cad_dialog) $mged_gui($id,screen)\
 	    "No objects specified!"\
@@ -142,7 +142,7 @@ proc do_extract { id } {
 	return
     }
 
-    set result [catch {eval $ex_cmd}]
+    set result [catch {{*}$ex_cmd}]
     return $result
 }
 # Local Variables:

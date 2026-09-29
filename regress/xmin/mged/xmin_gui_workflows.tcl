@@ -188,7 +188,7 @@ proc ::mged::xmin::workflows::invoke_apply {button context} {
 }
 
 proc ::mged::xmin::workflows::reject_edit {} {
-    catch {_mged_reject}
+    catch {::brlcad::mged reject}
     settle
 }
 
@@ -309,14 +309,14 @@ proc ::mged::xmin::workflows::exercise_file_operations {id top database} {
 	    [list invoke $top {File {New...}}]]
     ::gui::test::require {
 	[file exists $new_database] &&
-	[file normalize [_mged_opendb]] eq [file normalize $new_database]
+	[file normalize [::brlcad::mged opendb]] eq [file normalize $new_database]
     } "New did not create and open the selected database"
 
     with_file_dialog_path ::tk_getOpenFile $database \
 	[list with_dialog_answer .mged_dialog {File loaded} "" "" \
 	    [list invoke $top {File {Open...}}]]
     ::gui::test::require {
-	[file normalize [_mged_opendb]] eq [file normalize $database] &&
+	[file normalize [::brlcad::mged opendb]] eq [file normalize $database] &&
 	[exists xmin_arb8.s]
     } "Open did not restore the selected database"
 
@@ -445,8 +445,8 @@ proc ::mged::xmin::workflows::exercise_collaboration {id} {
     } "second MGED player did not join the collaborative session"
 
     winset $mged_gui($id,active_dm)
-    _mged_center 11 22 33
-    _mged_size 123
+    ::brlcad::mged center 11 22 33
+    ::brlcad::mged size 123
     settle
     winset $mged_gui($peer,active_dm)
     require_near [center] {11 22 33} "collaborative view center"
@@ -482,7 +482,7 @@ proc ::mged::xmin::workflows::finish {status message} {
     if {$status != 0} {
 	puts stderr $message
     }
-    _mged_quit
+    ::brlcad::mged quit
 }
 
 proc ::mged::xmin::workflows::run {} {

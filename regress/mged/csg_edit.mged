@@ -794,17 +794,17 @@ proc csg_matrix_mouse_check {label menu_item activate_menu commands expected_mat
         # its hit regions so these events unambiguously target the graphics
         # area, as they do in the normal Tk configuration.
         set orig_gui 0
-        _mged_press oill
+        ::brlcad::mged press oill
         if {[status state] ne "OBJ PICK"} {
             error "Matrix Illum entered [status state], not OBJ PICK"
         }
         # This is the command sequence issued by the Tk matrix-selection
         # listbox after its ray pick identifies a displayed full path.
-        _mged_ill -e -i 1 /$outer/$inner/$prim
+        ::brlcad::mged ill -e -i 1 /$outer/$inner/$prim
         if {[status state] ne "OBJ PATH"} {
             error "Tk object-path selection entered [status state], not OBJ PATH"
         }
-        _mged_matpick 2
+        ::brlcad::mged matpick 2
         if {[status state] ne "OBJ EDIT"} {
             error "Tk matrix selection entered [status state], not OBJ EDIT"
         }
@@ -982,9 +982,9 @@ proc csg_matrix_repeated_mouse_check {} {
             size $csg_mouse_view_size
             setview 0 0 0
             dm size $csg_mouse_dm_pixels $csg_mouse_dm_pixels
-            _mged_press oill
-            _mged_ill -e -i 1 /$outer/$inner/$prim
-            _mged_matpick 2
+            ::brlcad::mged press oill
+            ::brlcad::mged ill -e -i 1 /$outer/$inner/$prim
+            ::brlcad::mged matpick 2
             if {[status state] ne "OBJ EDIT" || $transform ne "e"} {
                 error "step $step did not enter object editing"
             }

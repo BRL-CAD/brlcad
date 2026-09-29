@@ -22,7 +22,7 @@
 #	Widget for producing Unix Plot files of MGED's current view.
 #
 
-check_externs "_mged_opendb _mged_plot"
+check_externs "::brlcad::mged"
 
 proc init_plotTool { id } {
     global mged_gui
@@ -47,7 +47,7 @@ proc init_plotTool { id } {
     }
 
     if ![info exists pl_control($id,file)] {
-	regsub \.g$ [_mged_opendb] .plot3 default_file
+	regsub \.g$ [::brlcad::mged opendb] .plot3 default_file
 	set pl_control($id,file) $default_file
     }
 
@@ -159,18 +159,18 @@ proc do_plot { id } {
     global ::tk::Priv
 
     cmd_win set $id
-    set pl_cmd "_mged_plot"
+    set pl_cmd [list ::brlcad::mged plot]
 
     if {$pl_control($id,zclip)} {
-	append pl_cmd " -zclip"
+	lappend pl_cmd -zclip
     }
 
     if {$pl_control($id,2d)} {
-	append pl_cmd " -2d"
+	lappend pl_cmd -2d
     }
 
     if {$pl_control($id,float)} {
-	append pl_cmd " -float"
+	lappend pl_cmd -float
     }
 
     if {$pl_control($id,file_or_filter) == "file"} {
@@ -194,7 +194,7 @@ proc do_plot { id } {
 	    return
 	}
 
-	append pl_cmd " $pl_control($id,file)"
+	lappend pl_cmd $pl_control($id,file)
     } else {
 	if {$pl_control($id,filter) == ""} {
 	    cad_dialog $::tk::Priv(cad_dialog) $mged_gui($id,screen)\
@@ -205,10 +205,10 @@ proc do_plot { id } {
 	    return
 	}
 
-	append pl_cmd " |$pl_control($id,filter)"
+	lappend pl_cmd "|$pl_control($id,filter)"
     }
 
-    catch {eval $pl_cmd}
+    catch {{*}$pl_cmd}
 }
 
 proc pl_set_file_state { id } {

@@ -410,7 +410,7 @@ regions in the database. The user can select
 from among the regions listed here. Note - To select
 a region, double click with the left mouse button." } }
     $top.nameMB.m add command -label "Autoname"\
-	-command "set comb_control($id,name) \[_mged_make_name comb@\]"
+	-command "set comb_control($id,name) \[::brlcad::mged make_name comb@\]"
     hoc_register_menu_data "Combination Selection Method" "Autoname"\
 	"Automatically generate a combination name."\
 	{ { summary "This automatically generates a combination

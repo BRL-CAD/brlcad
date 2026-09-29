@@ -67,10 +67,10 @@ proc ::mged::xmin::query_pattern::exercise_query_ray {id top} {
     ::gui::test::require {
 	$mouse_behavior eq "q" &&
 	$use_air == 1 &&
-	[_mged_qray echo] == 1 &&
-	[_mged_qray effects] eq "b" &&
-	[_mged_qray basename] eq "xmin_qray" &&
-	[_mged_qray oddcolor] eq "12 34 56"
+	[::brlcad::mged qray echo] == 1 &&
+	[::brlcad::mged qray effects] eq "b" &&
+	[::brlcad::mged qray basename] eq "xmin_qray" &&
+	[::brlcad::mged qray oddcolor] eq "12 34 56"
     } "Query Ray Apply did not persist mouse, air, effect, name, or color settings"
 
     $dialog.advB invoke
@@ -82,7 +82,7 @@ proc ::mged::xmin::query_pattern::exercise_query_ray {id top} {
     set applied_format {XMIN RAY FORMAT}
     ::mged::gui::test::set_entry $advanced.rayE $applied_format
     $advanced.applyB invoke
-    ::gui::test::require {[_mged_qray fmt r] eq $applied_format} \
+    ::gui::test::require {[::brlcad::mged qray fmt r] eq $applied_format} \
 	"Query Ray advanced Apply did not persist the ray format"
 
     ::mged::gui::test::set_entry $advanced.rayE {discarded format}

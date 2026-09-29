@@ -28,7 +28,7 @@ proc mouse_shoot_ray { x y } {
     # get zclip setting
     set zclip [dm set zclip]
 
-    if {[catch {eval .inmem rt_gettrees ray -i -u [_mged_who]} msg]} {
+    if {[catch {.inmem rt_gettrees ray -i -u {*}[::brlcad::mged who]} msg]} {
 	error $msg
     }
 

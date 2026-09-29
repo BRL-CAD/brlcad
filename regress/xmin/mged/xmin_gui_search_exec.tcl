@@ -58,7 +58,7 @@ proc ::mged::xmin::search_exec::nested_search {} {
 
     event generate $display_widget <Enter>
     set nested_status [catch {
-	_mged_search / -type tgc -exec ls "{}" ";"
+	::brlcad::mged search / -type tgc -exec ls "{}" ";"
     } nested_message nested_options]
     if {[dict exists $nested_options -errorcode]} {
 	set nested_error_code [dict get $nested_options -errorcode]
@@ -84,7 +84,7 @@ proc ::mged::xmin::search_exec::exercise {} {
     variable nested_message
     variable nested_status
 
-    set paths [_mged_search / -type tgc]
+    set paths [::brlcad::mged search / -type tgc]
     ::gui::test::require {[llength $paths] >= $minimum_tgc_paths} \
 	"m35.g supplied too few TGC paths for the scaling regression"
 
@@ -95,7 +95,7 @@ proc ::mged::xmin::search_exec::exercise {} {
     after 25 ::mged::xmin::search_exec::nested_search
     set started [clock milliseconds]
     set draw_status [catch {
-	_mged_search / -type tgc -exec draw "{}" ";"
+	::brlcad::mged search / -type tgc -exec draw "{}" ";"
     } draw_message]
     set draw_elapsed [expr {[clock milliseconds] - $started}]
 
@@ -113,12 +113,12 @@ proc ::mged::xmin::search_exec::exercise {} {
 	$draw_elapsed $draw_time_limit_ms]
     ::gui::test::require {$draw_elapsed < $draw_time_limit_ms} \
 	$draw_limit_message
-    ::gui::test::require {[llength [_mged_who]] >= $minimum_tgc_paths} \
+    ::gui::test::require {[llength [::brlcad::mged who]] >= $minimum_tgc_paths} \
 	"search -exec draw did not populate the display list"
 
     set redraw_started [clock milliseconds]
     set redraw_status [catch {
-	_mged_search / -type tgc -exec draw "{}" ";"
+	::brlcad::mged search / -type tgc -exec draw "{}" ";"
     } redraw_message]
     set redraw_elapsed [expr {[clock milliseconds] - $redraw_started}]
     ::gui::test::require {$redraw_status == 0} \
@@ -129,11 +129,11 @@ proc ::mged::xmin::search_exec::exercise {} {
     ::gui::test::require {$redraw_elapsed < $draw_time_limit_ms} \
 	$redraw_limit_message
 
-    _mged_Z
+    ::brlcad::mged Z
     set interrupt_requested 0
     after 25 ::mged::xmin::search_exec::request_interrupt
     set interrupt_status [catch {
-	_mged_search / -type tgc -exec draw "{}" ";"
+	::brlcad::mged search / -type tgc -exec draw "{}" ";"
     } interrupt_message]
 
     ::gui::test::require {$interrupt_requested == 1} \
@@ -146,38 +146,38 @@ proc ::mged::xmin::search_exec::exercise {} {
     set path_components [split [string trimleft $followup_path /] /]
     set ancestor [lindex $path_components 0]
     set followup_status [catch {
-	_mged_search $followup_path -type tgc -exec ls "{}" ";"
+	::brlcad::mged search $followup_path -type tgc -exec ls "{}" ";"
     } followup_message]
     ::gui::test::require {$followup_status == 0} \
 	"search -exec failed after interruption: $followup_message"
 
-    _mged_Z
-    _mged_draw $ancestor
-    set ancestor_display [_mged_who]
-    _mged_draw $followup_path
-    ::gui::test::require {[_mged_who] eq $ancestor_display} \
+    ::brlcad::mged Z
+    ::brlcad::mged draw $ancestor
+    set ancestor_display [::brlcad::mged who]
+    ::brlcad::mged draw $followup_path
+    ::gui::test::require {[::brlcad::mged who] eq $ancestor_display} \
 	"drawing a child path duplicated its displayed ancestor"
 
-    _mged_Z
-    _mged_draw [lindex $paths 0]
-    _mged_draw [lindex $paths 1]
-    _mged_draw $ancestor
-    set consolidated_display [_mged_who]
+    ::brlcad::mged Z
+    ::brlcad::mged draw [lindex $paths 0]
+    ::brlcad::mged draw [lindex $paths 1]
+    ::brlcad::mged draw $ancestor
+    set consolidated_display [::brlcad::mged who]
     ::gui::test::require {
 	[llength $consolidated_display] == 1 &&
 	[lindex $consolidated_display 0] eq $ancestor
     } "drawing an ancestor did not replace its displayed descendants"
 
-    set component_paths [_mged_search /component -type tgc]
+    set component_paths [::brlcad::mged search /component -type tgc]
     ::gui::test::require {
 	[llength $component_paths] >= $minimum_tgc_paths
     } "component supplied too few TGC paths for the overlap regression"
 
-    _mged_Z
-    _mged_draw component
+    ::brlcad::mged Z
+    ::brlcad::mged draw component
     set covered_started [clock milliseconds]
     set covered_status [catch {
-	_mged_search /component -type tgc -exec draw "{}" ";"
+	::brlcad::mged search /component -type tgc -exec draw "{}" ";"
     } covered_message]
     set covered_elapsed [expr {[clock milliseconds] - $covered_started}]
     ::gui::test::require {$covered_status == 0} \
@@ -187,7 +187,7 @@ proc ::mged::xmin::search_exec::exercise {} {
 	$covered_elapsed $covered_draw_time_limit_ms]
     ::gui::test::require {$covered_elapsed < $covered_draw_time_limit_ms} \
 	$covered_limit_message
-    set covered_display [_mged_who]
+    set covered_display [::brlcad::mged who]
     ::gui::test::require {
 	[llength $covered_display] == 1 &&
 	[lindex $covered_display 0] eq "component"
@@ -215,7 +215,7 @@ proc ::mged::xmin::search_exec::finish {status message} {
     if {$status != 0} {
 	puts stderr $message
     }
-    _mged_quit
+    ::brlcad::mged quit
 }
 
 proc ::mged::xmin::search_exec::run {} {
@@ -239,7 +239,7 @@ proc ::mged::xmin::search_exec::run {} {
     }
 
     if {$ready} {
-	set idle_status [catch {_mged_who} idle_message]
+	set idle_status [catch {::brlcad::mged who} idle_message]
 	if {$idle_status &&
 	    $idle_message eq "another MGED command is already running"} {
 	    set ready 0

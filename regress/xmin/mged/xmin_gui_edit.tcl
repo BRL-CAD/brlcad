@@ -229,7 +229,7 @@ proc xmin_view_state {} {
 
 proc xmin_fail {message} {
     xmin_write result "FAIL: $message"
-    after idle _mged_quit
+    after idle [list ::brlcad::mged quit]
     return
 }
 
@@ -646,9 +646,9 @@ proc xmin_setup_matrix_edit {} {
     }
     dm size $width $height
 
-    _mged_press oill
-    _mged_ill -e -i 1 /matrix.c/matrix.s
-    _mged_matpick 1
+    ::brlcad::mged press oill
+    ::brlcad::mged ill -e -i 1 /matrix.c/matrix.s
+    ::brlcad::mged matpick 1
     if {[status state] ne "OBJ EDIT"} {
 	error "matrix selection entered [status state], not OBJ EDIT"
     }
@@ -892,7 +892,7 @@ proc xmin_monitor_raytrace {id} {
 proc xmin_wait_for_finish {} {
     global xmin_poll_ms xmin_test_dir
     if {[file exists [file join $xmin_test_dir finish]]} {
-	_mged_quit
+	::brlcad::mged quit
 	return
     }
     after $xmin_poll_ms xmin_wait_for_finish

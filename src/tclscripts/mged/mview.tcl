@@ -19,7 +19,7 @@
 #
 ###
 
-check_externs "_mged_attach"
+check_externs "::brlcad::mged"
 
 if ![info exists mged_default(bd)] {
     set mged_default(bd) 2
@@ -278,19 +278,19 @@ proc set_default_views { id } {
     global mged_gui
 
     winset $mged_gui($id,top).ul
-    _mged_press reset
+    ::brlcad::mged press reset
     catch {ae 0 90}
 
     winset $mged_gui($id,top).ur
-    _mged_press reset
+    ::brlcad::mged press reset
     catch {press 35,25}
 
     winset $mged_gui($id,top).ll
-    _mged_press reset
+    ::brlcad::mged press reset
     catch {press front}
 
     winset $mged_gui($id,top).lr
-    _mged_press reset
+    ::brlcad::mged press reset
     catch {press left}
 }
 

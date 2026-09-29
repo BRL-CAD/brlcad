@@ -26,7 +26,7 @@ proc raypick { } {
     #    Ensure that all commands used here but not defined herein
     #    are provided by the application
     #
-    set extern_commands "M _mged_M"
+    set extern_commands [list M ::brlcad::mged]
     foreach cmd $extern_commands {
 	catch {auto_load $cmd} val
 	if {[expr [string compare [info command $cmd] $cmd] != 0]} {
@@ -40,7 +40,7 @@ proc raypick { } {
     proc M { up x y } {
 	# Reset mouse event handler
 	proc M args {
-	    eval [concat _mged_M $args]
+	    ::brlcad::mged M {*}$args
 	}
 	catch { destroy .raypick }
 

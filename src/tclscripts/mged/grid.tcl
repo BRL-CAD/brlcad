@@ -152,7 +152,7 @@ proc do_grid_anchor { id } {
 
     # Initialize variables
     winset $mged_gui($id,active_dm)
-    set grid_control_anchor($id) [_mged_rset grid anchor]
+    set grid_control_anchor($id) [::brlcad::mged rset grid anchor]
 
     toplevel $top -screen $mged_gui($id,screen)
 
@@ -671,7 +671,7 @@ proc grid_autosize {} {
     # Gives between 20 and 200 ticks in user units
     set lower [expr log10(20)]
     set upper [expr $lower+1]
-    set s [expr log10([_mged_view size])]
+    set s [expr log10([::brlcad::mged view size])]
 
     if {$s < $lower} {
 	set val [expr pow(10, floor($s - $lower))]

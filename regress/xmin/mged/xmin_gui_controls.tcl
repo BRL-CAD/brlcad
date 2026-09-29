@@ -76,9 +76,9 @@ proc ::mged::xmin::view_state {} {
 }
 
 proc ::mged::xmin::set_view {azimuth elevation center_point view_size} {
-    _mged_ae $azimuth $elevation
-    _mged_center {*}$center_point
-    _mged_size $view_size
+    ::brlcad::mged ae $azimuth $elevation
+    ::brlcad::mged center {*}$center_point
+    ::brlcad::mged size $view_size
     settle
     return [view_state]
 }
@@ -299,7 +299,7 @@ proc ::mged::xmin::finish {status message} {
     if {$status != 0} {
 	puts stderr $message
     }
-    _mged_quit
+    ::brlcad::mged quit
 }
 
 proc ::mged::xmin::run {} {

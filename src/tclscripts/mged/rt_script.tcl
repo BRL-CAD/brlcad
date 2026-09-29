@@ -22,7 +22,7 @@
 #	Widget for producing RT script files of MGED's current view.
 #
 
-check_externs "_mged_opendb _mged_saveview"
+check_externs "::brlcad::mged"
 
 proc init_rtScriptTool { id } {
     global mged_gui
@@ -43,7 +43,7 @@ proc init_rtScriptTool { id } {
     }
 
     if ![info exists rts_control($id,file)] {
-	regsub \.g$ [_mged_opendb] .sh default_file
+	regsub \.g$ [::brlcad::mged opendb] .sh default_file
 	set rts_control($id,file) $default_file
     }
 
@@ -105,8 +105,6 @@ proc do_rtScript { id } {
     global ::tk::Priv
 
     cmd_win set $id
-    set rts_cmd "_mged_saveview"
-
     if {$rts_control($id,file) != ""} {
 	if [file exists $rts_control($id,file)] {
 	    set result [cad_dialog $::tk::Priv(cad_dialog) $mged_gui($id,screen)\
@@ -127,13 +125,10 @@ proc do_rtScript { id } {
 	return
     }
 
-    append rts_cmd " $rts_control($id,file)"
-
-    if {$rts_control($id,args) != ""} {
-	append rts_cmd " $rts_control($id,args)"
+    catch {
+	::brlcad::mged saveview $rts_control($id,file) \
+	    {*}$rts_control($id,args)
     }
-
-    catch {eval $rts_cmd}
 }
 # Local Variables:
 # mode: Tcl

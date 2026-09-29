@@ -71,7 +71,7 @@ proc ::mged::xmin::lod::create_adaptive_bot {name} {
 proc ::mged::xmin::lod::plot_segment_count {tag} {
     set plot_path [file join $::env(GUI_TEST_DIR) "$tag.plot3"]
     file delete -force $plot_path
-    _mged_plot $plot_path
+    ::brlcad::mged plot $plot_path
     ::gui::test::require {
 	[file exists $plot_path] && [file size $plot_path] > 0
     } "LOD $tag plot was not produced"

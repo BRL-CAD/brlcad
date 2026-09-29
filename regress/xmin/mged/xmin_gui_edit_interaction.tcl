@@ -305,9 +305,9 @@ proc ::mged::xmin::edit_interaction::setup_object {id} {
     center 0 0 0
     size 40
     setview 0 0 0
-    _mged_press oill
-    _mged_ill -e -i 1 /edit.c/edit.s
-    _mged_matpick 1
+    ::brlcad::mged press oill
+    ::brlcad::mged ill -e -i 1 /edit.c/edit.s
+    ::brlcad::mged matpick 1
     ::gui::test::require {[status state] eq "OBJ EDIT"} \
 	"could not enter object edit mode"
     rset var transform e
@@ -501,9 +501,9 @@ proc ::mged::xmin::edit_interaction::setup_object_menu {} {
     center 0 0 0
     size 40
     setview 35 25 0
-    _mged_press oill
-    _mged_ill -e -i 1 /edit.c/edit.s
-    _mged_matpick 1
+    ::brlcad::mged press oill
+    ::brlcad::mged ill -e -i 1 /edit.c/edit.s
+    ::brlcad::mged matpick 1
     ::gui::test::require {[status state] eq "OBJ EDIT"} \
 	"could not enter object edit mode for menu checks"
     rset var transform e
@@ -776,9 +776,9 @@ proc ::mged::xmin::edit_interaction::setup_oracle_object {} {
     center 0 0 0
     size $oracle_view_size
     setview 0 0 0
-    _mged_press oill
-    _mged_ill -e -i 1 /$oracle_comb/$oracle_solid
-    _mged_matpick 1
+    ::brlcad::mged press oill
+    ::brlcad::mged ill -e -i 1 /$oracle_comb/$oracle_solid
+    ::brlcad::mged matpick 1
     ::gui::test::require {[status state] eq "OBJ EDIT"} \
 	"could not enter object edit for unit oracle"
     rset var transform e
@@ -816,9 +816,9 @@ proc ::mged::xmin::edit_interaction::check_oracle_object_drag {} {
     press accept
     require_near [leaf_matrix $oracle_comb $oracle_solid] \
 	[translation_matrix $dx $dy] "accepted object edit" 0.01
-    _mged_press oill
-    _mged_ill -e -i 1 /$oracle_comb/$oracle_solid
-    _mged_matpick 1
+    ::brlcad::mged press oill
+    ::brlcad::mged ill -e -i 1 /$oracle_comb/$oracle_solid
+    ::brlcad::mged matpick 1
     capture_before_edit
     drag shift
     later ::mged::xmin::edit_interaction::check_oracle_object_reject

@@ -376,7 +376,7 @@ proc do_LoadScript { id } {
 		return
 	    }
 
-	    _mged_units $mged_display(units)
+	    ::brlcad::mged units $mged_display(units)
 	}
 
 	proc do_rt_script { id } {

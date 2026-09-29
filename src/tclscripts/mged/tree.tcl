@@ -29,7 +29,7 @@
 proc tree {args} {
     set argc [llength $args]
     if {$argc == 0} {
-	return [_mged_tree]
+	return [::brlcad::mged tree]
     }
 
     set indent 0
@@ -54,14 +54,14 @@ proc tree {args} {
 		    if {$fid != ""} {
 			close $fid
 		    }
-		    return [_mged_tree]
+		    return [::brlcad::mged tree]
 		}
 		set indent [lindex $args $i]
 		if {[string is integer $indent] == 0} {
 		    if {$fid != ""} {
 			close $fid
 		    }
-		    return [_mged_tree]
+		    return [::brlcad::mged tree]
 		}
 	    }
 	    -d
@@ -72,14 +72,14 @@ proc tree {args} {
 		    if {$fid != ""} {
 			close $fid
 		    }
-		    return [_mged_tree]
+		    return [::brlcad::mged tree]
 		}
 		set displayDepth [lindex $args $i]
 		if {[string is integer $displayDepth] == 0} {
 		    if {$fid != ""} {
 			close $fid
 		    }
-		    return [_mged_tree]
+		    return [::brlcad::mged tree]
 		}
 	    }
 	    -o
@@ -90,7 +90,7 @@ proc tree {args} {
 		    if {$fid != ""} {
 			close $fid
 		    }
-		    return [_mged_tree]
+		    return [::brlcad::mged tree]
 		}
 		set fid [open [lindex $args $i] a+]
 	    }
@@ -101,7 +101,7 @@ proc tree {args} {
 		    }
 
 		    # bad option
-		    return [_mged_tree]
+		    return [::brlcad::mged tree]
 		}
 		break
 	    }
@@ -114,7 +114,7 @@ proc tree {args} {
 	set args "-c $args"
     }
 
-    if {[catch {eval _mged_tree $args} result] == 0} {
+    if {[catch {::brlcad::mged tree {*}$args} result] == 0} {
 	if {$indent > 0} {
 	    set indent_string [string repeat " " $indent]
 	    regsub -all \t $result $indent_string result

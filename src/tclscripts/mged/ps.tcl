@@ -22,7 +22,7 @@
 #	Tool for producing PostScript files of MGED's current view.
 #
 
-check_externs "_mged_opendb _mged_postscript"
+check_externs "::brlcad::mged"
 
 proc init_psTool { id } {
     global mged_gui
@@ -43,7 +43,7 @@ proc init_psTool { id } {
     }
 
     if ![info exists ps_control($id,file)] {
-	regsub \.g$ [_mged_opendb] .ps default_file
+	regsub \.g$ [::brlcad::mged opendb] .ps default_file
 	set ps_control($id,file) $default_file
     }
 
@@ -222,7 +222,7 @@ proc do_ps { id } {
     global ::tk::Priv
 
     cmd_win set $id
-    set ps_cmd "_mged_postscript"
+    set ps_cmd [list ::brlcad::mged postscript]
 
     if {$ps_control($id,file) != ""} {
 	if {[file exists $ps_control($id,file)]} {
@@ -244,31 +244,31 @@ proc do_ps { id } {
     }
 
     if {$ps_control($id,title) != ""} {
-	append ps_cmd " -t \"$ps_control($id,title)\""
+	lappend ps_cmd -t $ps_control($id,title)
     }
 
     if {$ps_control($id,creator) != ""} {
-	append ps_cmd " -c \"$ps_control($id,creator)\""
+	lappend ps_cmd -c $ps_control($id,creator)
     }
 
     if {$ps_control($id,font) != ""} {
-	append ps_cmd " -f $ps_control($id,font)"
+	lappend ps_cmd -f $ps_control($id,font)
     }
 
     if {$ps_control($id,size) != ""} {
-	append ps_cmd " -s $ps_control($id,size)"
+	lappend ps_cmd -s $ps_control($id,size)
     }
 
     if {$ps_control($id,linewidth) != ""} {
-	append ps_cmd " -l $ps_control($id,linewidth)"
+	lappend ps_cmd -l $ps_control($id,linewidth)
     }
 
     if {$ps_control($id,zclip) != 0} {
-	append ps_cmd " -z"
+	lappend ps_cmd -z
     }
 
-    append ps_cmd " $ps_control($id,file)"
-    catch {eval $ps_cmd}
+    lappend ps_cmd $ps_control($id,file)
+    catch {{*}$ps_cmd}
 }
 # Local Variables:
 # mode: Tcl

@@ -23,7 +23,7 @@
 #	MGED's default Tcl/Tk interface.
 #
 
-check_externs "_mged_attach _mged_tie _mged_view_ring"
+check_externs "::brlcad::mged"
 
 set mged_Priv(arb8) {arb8 arb7 arb6 arb5 arb4 rpp}
 set mged_Priv(cones) {rcc rec rhc rpc tec tgc trc}
@@ -518,7 +518,8 @@ proc gui { args } {
 	-command ".$id.t delete 1.0 end; mged_print_prompt .$id.t {mged> }; .$id.t insert insert \" \"; beginning_of_line .$id.t; .$id.t edit reset;"
     hoc_register_menu_data "File" "Clear Command Window" "Delete all text from command window"\
 	{ { summary "Delete all text from command window" } see_also }
-    .$id.menubar.file add command -label "Exit" -underline 1 -command _mged_quit
+    .$id.menubar.file add command -label "Exit" -underline 1 \
+	-command [list ::brlcad::mged quit]
     hoc_register_menu_data "File" "Exit" "Exit MGED"\
 	{ { summary "Exit MGED." }
 	    { see_also "exit q quit" } }
@@ -2209,7 +2210,7 @@ hoc_register_menu_data "Create" "$ptype..." "Make a $ptype" $ksl
     }
 
     cmd_win open $id
-    _mged_tie $id $mged_gui($id,active_dm)
+    ::brlcad::mged tie $id $mged_gui($id,active_dm)
     reconfig_gui_default $id
 
     # Force display manager windows to update their respective color schemes
@@ -2242,7 +2243,7 @@ hoc_register_menu_data "Create" "$ptype..." "Make a $ptype" $ksl
     bind $mged_gui($id,top) <KeyPress> { break }
     bind $mged_gui($id,top) <Configure> "mged_handle_configure $id"
 
-    set dbname [_mged_opendb]
+    set dbname [::brlcad::mged opendb]
     set_wm_title $id $dbname
 
     # Finish widget layout before either toplevel is mapped so the window
@@ -2344,7 +2345,7 @@ proc reconfig_gui_default { id } {
     global mged_display
 
     cmd_win set $id
-    set dm_id [_mged_tie $id]
+    set dm_id [::brlcad::mged tie $id]
     if { [llength $dm_id] != 1 } {
 	return
     }
@@ -2543,7 +2544,7 @@ proc set_active_dm { id } {
     update_mged_vars $id
     #		 set view_ring($id) [view_ring get]
 
-    _mged_tie $id $mged_gui($id,active_dm)
+    ::brlcad::mged tie $id $mged_gui($id,active_dm)
     reconfig_gui_default $id
 
     if {!$mged_gui($id,multi_pane)} {
@@ -2564,7 +2565,7 @@ proc set_active_dm { id } {
     # update query ray control panel
     qray_reset $id
 
-    set dbname [_mged_opendb]
+    set dbname [::brlcad::mged opendb]
     set_wm_title $id $dbname
 }
 
@@ -2689,12 +2690,12 @@ proc view_ring_add {id} {
     }
 
     # get view parameters
-    set aet [_mged_ae]
-    set center [_mged_center]
-    set size [_mged_size]
+    set aet [::brlcad::mged ae]
+    set center [::brlcad::mged center]
+    set size [::brlcad::mged size]
 
     # save view commands
-    set vcmds "_mged_ae $aet; _mged_center $center; _mged_size $size"
+    set vcmds "::brlcad::mged ae $aet; ::brlcad::mged center $center; ::brlcad::mged size $size"
 
     # format view parameters for display in menu
     set aet [format "az=%.2f el=%.2f tw=%.2f" \
@@ -2976,7 +2977,7 @@ proc update_view_ring_labels { id } {
     global view_ring
 
     if {0} {
-	if {[_mged_opendb] == ""} {
+	if {[::brlcad::mged opendb] == ""} {
 	    error "No database has been opened!"
 	}
 
@@ -3067,12 +3068,12 @@ proc adc { args } {
     global mged_gui
     global transform
 
-    set result [eval _mged_adc $args]
+    set result [::brlcad::mged adc {*}$args]
 
     # toggling ADC on/off
     if { ![llength $args] } {
 	set dm_id [winset]
-	set tie_list [_mged_tie]
+	set tie_list [::brlcad::mged tie]
 	set id mged
 
 	# see if dm_id is tied to a command window
@@ -3084,7 +3085,7 @@ proc adc { args } {
 	}
 
 	if {[info exists mged_gui($id,adc_draw)]} {
-	    set mged_gui($id,adc_draw) [_mged_adc draw]
+	    set mged_gui($id,adc_draw) [::brlcad::mged adc draw]
 	}
 
 	default_mouse_bindings [winset]
