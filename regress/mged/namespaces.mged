@@ -1,0 +1,55 @@
+puts "*** Testing Tcl command namespaces ***"
+
+foreach namespace {::brlcad ::brlcad::ged ::brlcad::mged} {
+    if {![namespace exists $namespace]} {
+	error "FAIL missing namespace $namespace"
+    }
+}
+
+foreach command {::brlcad::ged ::brlcad::mged exists _mged_exists} {
+    if {![llength [info commands $command]]} {
+	error "FAIL missing command $command"
+    }
+}
+
+set object namespaces_sphere.s
+::brlcad::mged in $object sph 0 0 0 1
+
+foreach command {{::brlcad::mged exists} exists _mged_exists} {
+    if {![{*}$command $object]} {
+	error "FAIL $command did not find $object"
+    }
+}
+
+::brlcad::ged attr set $object namespace_test canonical
+if {[::brlcad::ged attr get $object namespace_test] ne "canonical"} {
+    error "FAIL raw GED namespace did not preserve command results"
+}
+
+set matches [::brlcad::ged glob namespaces_*]
+if {[lsearch -exact $matches $object] < 0} {
+    error "FAIL raw GED glob did not find $object: $matches"
+}
+if {[catch {::brlcad::ged list $object} message]} {
+    error "FAIL raw GED list was not reachable: $message"
+}
+
+if {[list alpha beta] ne {alpha beta}} {
+    error "FAIL Tcl list command was shadowed"
+}
+if {![catch {::brlcad::mged glob namespaces_*} message] ||
+    ![string match {unknown subcommand "glob":*} $message]} {
+    error "FAIL MGED and raw GED namespaces were not kept distinct: $message"
+}
+
+puts "PASS Tcl command namespaces"
+puts "*** Tcl command namespace testing completed ***"
+
+# Local Variables:
+# tab-width: 8
+# mode: Tcl
+# c-basic-offset: 4
+# tcl-indent-level: 4
+# indent-tabs-mode: t
+# End:
+# ex: shiftwidth=4 tabstop=8 cino=N-s

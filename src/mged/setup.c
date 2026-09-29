@@ -33,6 +33,7 @@
 /* common headers */
 #include "vmath.h"
 #include "bu/app.h"
+#include "bu/malloc.h"
 #include "bn.h"
 #include "bv/util.h"
 #include "tclcad.h"
@@ -173,7 +174,6 @@ static struct cmdtab mged_cmdtab[] = {
     {MGED_CMD_MAGIC, "edarb", cmd_ged_plain_wrapper, ged_exec_edarb, NULL},
     {MGED_CMD_MAGIC, "edcodes", f_edcodes, GED_FUNC_PTR_NULL, NULL},
     {MGED_CMD_MAGIC, "edit", cmd_ged_plain_wrapper, ged_exec_edit, NULL},
-    {MGED_CMD_MAGIC, "color", cmd_ged_plain_wrapper, ged_exec_color, NULL},
     {MGED_CMD_MAGIC, "edcolor", f_edcolor, GED_FUNC_PTR_NULL, NULL},
     {MGED_CMD_MAGIC, "edcomb", cmd_ged_plain_wrapper, ged_exec_edcomb, NULL},
     {MGED_CMD_MAGIC, "edgedir", f_edgedir, GED_FUNC_PTR_NULL, NULL},
@@ -529,13 +529,103 @@ mged_cmd_dispatch(ClientData clientData, Tcl_Interp *interp, int argc,
 
 
 /**
+ * Dispatch a raw libged command without applying MGED's command wrappers.
+ */
+static int
+ged_cmd_dispatch(ClientData clientData, Tcl_Interp *interp, int argc,
+		 const char *argv[])
+{
+    struct mged_state *s = (struct mged_state *)clientData;
+    int ret;
+
+    MGED_CK_STATE(s);
+
+    if (s->cmd_running) {
+	Tcl_SetErrorCode(interp, "BRLCAD", "MGED", "COMMAND_BUSY", NULL);
+	Tcl_SetObjResult(interp,
+		Tcl_NewStringObj("another MGED command is already running", -1));
+	return TCL_ERROR;
+    }
+    if (s->gedp == GED_NULL) {
+	Tcl_SetObjResult(interp,
+		Tcl_NewStringObj("the MGED libged instance is unavailable", -1));
+	return TCL_ERROR;
+    }
+
+    ret = mged_ged_exec_async(s, argc, argv);
+    mged_pr_output(interp);
+    if (ret & GED_MORE)
+	Tcl_AppendResult(interp, MORE_ARGS_STR, NULL);
+    Tcl_AppendResult(interp, bu_vls_addr(s->gedp->ged_result_str), NULL);
+
+    if ((ret & GED_HELP) || ret == BRLCAD_OK)
+	return TCL_OK;
+    return TCL_ERROR;
+}
+
+
+static int
+register_mged_cmd_namespace(struct mged_state *s)
+{
+    struct tclcad_cmdtab *commands;
+    struct cmdtab *ctp;
+    size_t command_count = 0;
+    size_t i = 0;
+    int ret;
+
+    for (ctp = mged_cmdtab; ctp->name != NULL; ctp++)
+	command_count++;
+    commands = (struct tclcad_cmdtab *)bu_calloc(command_count + 1,
+	    sizeof(struct tclcad_cmdtab), "MGED Tcl namespace commands");
+
+    for (ctp = mged_cmdtab; ctp->name != NULL; ctp++) {
+	commands[i].tcc_name = ctp->name;
+	commands[i].tcc_func = mged_cmd_dispatch;
+	commands[i].tcc_client_data = (ClientData)ctp;
+	i++;
+    }
+
+    ret = tclcad_register_cmd_namespace(s->interp, MGED_COMMAND_NAMESPACE,
+	    commands);
+    bu_free(commands, "MGED Tcl namespace commands");
+    return ret;
+}
+
+
+int
+mged_register_ged_cmd_namespace(Tcl_Interp *interp, Tcl_CmdProc *func,
+	ClientData client_data)
+{
+    const char * const *command_names = NULL;
+    struct tclcad_cmdtab *commands;
+    size_t command_count = ged_cmd_list(&command_names);
+    size_t i;
+    int ret;
+
+    commands = (struct tclcad_cmdtab *)bu_calloc(command_count + 1,
+	    sizeof(struct tclcad_cmdtab), "GED Tcl namespace commands");
+    for (i = 0; i < command_count; i++) {
+	commands[i].tcc_name = command_names[i];
+	commands[i].tcc_func = func;
+	commands[i].tcc_client_data = client_data;
+    }
+
+    ret = tclcad_register_cmd_namespace(interp, GED_COMMAND_NAMESPACE,
+	    commands);
+    bu_free(commands, "GED Tcl namespace commands");
+    return ret;
+}
+
+
+/**
  * Register all MGED commands.
  */
-static void
+static int
 cmd_setup(struct mged_state *s)
 {
     struct cmdtab *ctp;
     struct bu_vls temp = BU_VLS_INIT_ZERO;
+    int ret = TCL_ERROR;
 
     // TODO - should be using libged cmd list to populate everything in this
     // table that is a plain wrapper - that way all ged commands are always
@@ -562,18 +652,32 @@ cmd_setup(struct mged_state *s)
 	bu_vls_strcpy(&temp, "_mged_");
 	bu_vls_strcat(&temp, ctp->name);
 
-	(void)Tcl_CreateCommand(s->interp, ctp->name, mged_cmd_dispatch,
-				(ClientData)ctp, (Tcl_CmdDeleteProc *)NULL);
-	(void)Tcl_CreateCommand(s->interp, bu_vls_addr(&temp), mged_cmd_dispatch,
-				(ClientData)ctp, (Tcl_CmdDeleteProc *)NULL);
+	if (!Tcl_CreateCommand(s->interp, ctp->name, mged_cmd_dispatch,
+		(ClientData)ctp, (Tcl_CmdDeleteProc *)NULL) ||
+	    !Tcl_CreateCommand(s->interp, bu_vls_addr(&temp),
+		mged_cmd_dispatch, (ClientData)ctp,
+		(Tcl_CmdDeleteProc *)NULL)) {
+	    Tcl_SetObjResult(s->interp, Tcl_ObjPrintf(
+		    "failed to register MGED command \"%s\"", ctp->name));
+	    goto cleanup;
+	}
     }
 
+    if (register_mged_cmd_namespace(s) != TCL_OK ||
+	mged_register_ged_cmd_namespace(s->interp, ged_cmd_dispatch,
+	    (ClientData)s) != TCL_OK)
+	goto cleanup;
+
     /* Init mged's Tcl interface to libwdb */
-    Wdb_Init(s->interp);
+    if (Wdb_Init(s->interp) != TCL_OK)
+	goto cleanup;
 
     tkwin = NULL;
+    ret = TCL_OK;
 
+cleanup:
     bu_vls_free(&temp);
+    return ret;
 }
 
 
@@ -712,7 +816,11 @@ mged_setup(struct mged_state *s)
     s->gedp->ged_gvp = view_state->vs_gvp;
 
     /* register commands */
-    cmd_setup(s);
+    if (cmd_setup(s) != TCL_OK) {
+	bu_log("MGED command initialization error:\n%s\n",
+		Tcl_GetStringResult(s->interp));
+	Tcl_ResetResult(s->interp);
+    }
 
     history_setup();
     mged_global_variable_setup(s);

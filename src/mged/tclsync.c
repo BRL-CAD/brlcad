@@ -25,8 +25,8 @@
  * to a string, transferred to the search thread, and reconstructed there.
  *
  * Native commands, variable traces, channels, object internal reps, and
- * child interpreters are intentionally not copied.  Native MGED/GED commands
- * are supplied to the search interpreter by cmd.cpp's unknown-command bridge.
+ * child interpreters are intentionally not copied.  cmd.cpp installs the raw
+ * GED namespace dispatcher and the legacy unknown-command bridge explicitly.
  */
 
 #include "common.h"

@@ -93,6 +93,9 @@ __END_DECLS
 #define MGED_DB_NAME "db"
 #define MGED_INMEM_NAME ".inmem"
 
+#define MGED_COMMAND_NAMESPACE "::brlcad::mged"
+#define GED_COMMAND_NAMESPACE "::brlcad::ged"
+
 
 #define MGED_CMD_MAGIC 0x4D474544 /**< MGED */
 #define MGED_CK_CMD(_bp) BU_CKMAG(_bp, MGED_CMD_MAGIC , "cmdtab")
@@ -502,6 +505,10 @@ void mged_start_log_drain_timer(struct mged_state *s);
 void mged_stop_log_drain_timer(struct mged_state *s);
 void mged_output_cleanup(void);
 int mged_ged_exec_async(struct mged_state *s, int argc, const char *argv[]);
+__BEGIN_DECLS
+int mged_register_ged_cmd_namespace(Tcl_Interp *interp, Tcl_CmdProc *func,
+	ClientData client_data);
+__END_DECLS
 int mged_request_command_interrupt(struct mged_state *s);
 int mged_command_interrupted(struct mged_state *s);
 void mged_run_on_gui_thread(struct mged_state *s, mged_gui_callback_t callback,

@@ -57,6 +57,7 @@ search /all.g/component/power.train/r2 -maxdepth 0 -exec ::search_exec_test::nes
 search /all.g/component/power.train/r6 -maxdepth 0 -exec search_exec_proc_alias "{}" ";"
 search /all.g/component/power.train/r7 -maxdepth 0 -exec ::search_exec_test::nested::ged_alias ";"
 search /all.g/component/power.train/r8 -maxdepth 0 -exec search_exec_alias_query "{}" ";"
+search /all.g/component/power.train/r1 -maxdepth 0 -exec search_exec_ged_namespace "{}" ";"
 search /all.g/component/power.train/r5 -maxdepth 0 -exec search_exec_alias ";"
 
 # test a search -exec that creates a new comb must not descend into what it just created
