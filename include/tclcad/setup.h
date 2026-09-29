@@ -38,6 +38,33 @@
 
 __BEGIN_DECLS
 
+/**
+ * Description of a subcommand and its optional legacy command name.
+ * Arrays passed to tclcad_register_cmd_namespace() end with an entry
+ * whose tcc_name is NULL.
+ */
+struct tclcad_cmdtab {
+    const char *tcc_name;
+    const char *tcc_legacy_name;
+    Tcl_CmdProc *tcc_func;
+    ClientData tcc_client_data;
+};
+
+/**
+ * Ensure that an absolute namespace and all of its parents exist.
+ */
+TCLCAD_EXPORT extern int tclcad_create_namespace(Tcl_Interp *interp, const char *namespace_name);
+
+/**
+ * Register an absolute namespace name as a table-backed command.  A call of
+ * the form "namespace_name subcommand arguments" invokes the matching
+ * tcc_func with its legacy command name, or its subcommand name when there is
+ * no legacy spelling, in argv[0].  When tcc_legacy_name is non-NULL, that
+ * spelling is also registered as a compatibility command.
+ */
+TCLCAD_EXPORT extern int tclcad_register_cmd_namespace(Tcl_Interp *interp,
+	const char *namespace_name, const struct tclcad_cmdtab *cmds);
+
 TCLCAD_EXPORT extern int tclcad_tk_setup(Tcl_Interp *interp);
 TCLCAD_EXPORT extern void tclcad_auto_path(Tcl_Interp *interp);
 TCLCAD_EXPORT extern void tclcad_tcl_library(Tcl_Interp *interp);

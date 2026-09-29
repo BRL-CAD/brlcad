@@ -415,6 +415,24 @@ public library APIs should expose only C function calls and data
 except in very specific cases (should be discussed with the
 development team ahead of time to get consensus on the necessity.)
 
+BRL-CAD requires Tcl 8.6 or newer.  New first-party Tcl interfaces
+should be placed below the ::brlcad namespace, with a component name
+such as ::brlcad::ged or ::brlcad::mged.  The established
+::cadwidgets namespace remains the home of reusable widgets.  Large
+native interfaces should expose a component command with subcommands,
+for example "::brlcad::bu dir", instead of adding hundreds of commands
+to either the component namespace or the global namespace.  Existing
+global commands are compatibility interfaces and should be retained
+during additive migrations unless their removal is separately
+approved.
+
+Private procedures and variables should live in their owning
+component or application namespace.  Stored callbacks must use fully
+qualified command prefixes constructed with list, or namespace code
+when lexical namespace resolution is required.  Do not pre-create a
+namespace with the same fully qualified name as an Itcl class; Itcl
+creates and manages that namespace itself.
+
 There is a C++ interface to the core BRL-CAD libraries called MOOSE
 that is maintained in a separate repository.  It is developed with
 separation in order to avoid mixing C++ semantics into existing APIs
