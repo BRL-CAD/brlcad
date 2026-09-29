@@ -24,6 +24,8 @@
 #	for the C preprocessor equivalents and comments!  Much of this was
 #	automatically generated.
 
+namespace eval ::brlcad::vmath {
+
 # math constants from ../../include/vmath.h
 set M_E		2.71828182845904523536028747135
 set M_LOG2E	1.44269504088896340735992468100
@@ -41,8 +43,18 @@ set M_SQRT1_2	0.70710678118654752440084436210
 set DEG2RAD	0.0174532925199432957692369076848861271
 set RAD2DEG    57.2957795130823208767981548141051703
 
+    # Keep the historical constants as aliases to their canonical state.
+    foreach constant {
+	M_E M_LOG2E M_LOG10E M_LN2 M_LN10 M_PI M_PI_2 M_PI_4 M_1_PI M_2_PI
+	M_2_SQRTPI M_SQRT2 M_SQRT1_2 DEG2RAD RAD2DEG
+    } {
+	namespace upvar ::brlcad::vmath $constant ::$constant
+    }
+    unset constant
+}
+
 proc init_vmath {} {
-    # this routine does nothing except ensure that the above global variables get set
+    # Loading this command initializes the vmath constants and interfaces.
 }
 
 proc near_zero { val epsilon } {
@@ -812,6 +824,35 @@ proc mat_fmt {m} {
 		    [lindex $m 12] [lindex $m 13] [lindex $m 14] [lindex $m 15]]
     return $str
 }
+
+namespace eval ::brlcad::vmath {
+    set command_map {}
+    foreach command {
+	init_vmath near_zero dist_pt_plane dist_pt_pt mat_deltas_get
+	mat_zero mat_idn vreverse hreverse vadd2 vsub2 hadd2 hsub2
+	vadd3 vsub3 vadd4 vsub4 vadd hadd vsub hsub v2add2 v2sub2
+	v2add v2sub vscale hscale v2scale vadd2scale vsub2scale
+	vcomb2 vcomb3 vjoin1 vjoin2 vjoin3 vjoin4 hjoin1 v2join1
+	vblend2 vunitize magsq vmagsq magnitude vmagnitude vcross vdot
+	hdot v2dot vsub2dot velmul veldiv vinvdir mat3x3vec vec3x3mat
+	mat3x2vec vec2x3mat mat4x3pnt pnt3x4mat mat4x4pnt mat4x3vec
+	vec3x4mat vec2x4mat vequal vapproxequal vnear_zero vmin vmax
+	hdivide quat_from_vrot quat_from_rot quat_from_rot_deg
+	quat_from_vrot_deg qadd2 qsub2 qadd qsub qscale qdot qmagsq
+	qmagnitude qunitize qmul qconjugate qinverse qblend2 qtom
+	v3rpp_overlap v3rpp_overlap_tol v3pt_in_rpp v3pt_in_rpp_tol
+	v3rpp1_in_rpp2 mat_deltas mat_deltas_vec mag2sq vminmax vadd2n
+	vsub2n vadd3n vsub3n vadd4n vsub4n vzeron vaddn vsubn
+	vscalen vadd2scalen vsub2scalen vcomb2n vcomb3n vjoin1n
+	vjoin2n vjoin3n vblend2n mat_fmt
+    } {
+	dict set command_map $command ::$command
+    }
+    namespace ensemble create -map $command_map -prefixes 0
+    unset command command_map
+}
+
+package provide brlcad::vmath 1.0
 
 # Local Variables:
 # mode: Tcl

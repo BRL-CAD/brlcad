@@ -1,6 +1,10 @@
 puts "*** Testing Tcl command namespaces ***"
 
-foreach namespace {::brlcad ::brlcad::ged ::brlcad::mged} {
+if {[package require brlcad::vmath 1.0] ne "1.0"} {
+    error "FAIL could not load the canonical vmath package"
+}
+
+foreach namespace {::brlcad ::brlcad::ged ::brlcad::mged ::brlcad::vmath} {
     if {![namespace exists $namespace]} {
 	error "FAIL missing namespace $namespace"
     }
@@ -40,6 +44,31 @@ if {[list alpha beta] ne {alpha beta}} {
 if {![catch {::brlcad::mged glob namespaces_*} message] ||
     ![string match {unknown subcommand "glob":*} $message]} {
     error "FAIL MGED and raw GED namespaces were not kept distinct: $message"
+}
+
+foreach constant {M_PI DEG2RAD RAD2DEG} {
+    if {[set ::brlcad::vmath::$constant] ne [set ::$constant]} {
+	error "FAIL canonical and compatibility constants differ for $constant"
+    }
+}
+
+foreach test {
+    {vadd2 {{1 2 3} {4 5 6}}}
+    {vadd {{1 2 3} {4 5 6} {-1 -2 -3}}}
+    {mat4x3pnt {{1 0 0 0 0 1 0 0 0 0 1 0 0 0 0 1} {2 3 4}}}
+    {qmul {{0 0 0 1} {1 2 3 4}}}
+    {vaddn {{1 2 3 4} {4 3 2 1} 4}}
+} {
+    lassign $test command arguments
+    set canonical [::brlcad::vmath $command {*}$arguments]
+    set compatibility [::$command {*}$arguments]
+    if {$canonical ne $compatibility} {
+	error "FAIL vmath $command differs: $canonical != $compatibility"
+    }
+}
+if {![catch {::brlcad::vmath mat_i} message] ||
+    ![string match {unknown subcommand "mat_i":*} $message]} {
+    error "FAIL vmath accepted an abbreviated subcommand: $message"
 }
 
 puts "PASS Tcl command namespaces"
