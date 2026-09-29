@@ -156,6 +156,15 @@ proc require_at_least {package minimum} {
     return $version
 }
 
+proc assert_compatibility_command {canonical legacy} {
+    if {![llength [info commands $canonical]] && ![auto_load $canonical]} {
+	fail "$canonical is not autoloadable"
+    }
+    if {[llength [info commands $legacy]] != 1} {
+	fail "$legacy compatibility command is missing"
+    }
+}
+
 set background_errors {}
 proc bgerror {message} {
     lappend ::background_errors [list $message $::errorInfo]
@@ -271,6 +280,77 @@ foreach package {
     package require $package
 }
 
+foreach {canonical legacy} {
+    ::cadwidgets::run_conversion_config ::run_conversion_config
+    ::cadwidgets::pid_wait ::pid_wait
+    ::cadwidgets::SetWaitCursor ::SetWaitCursor
+    ::cadwidgets::SetNormalCursor ::SetNormalCursor
+    ::cadwidgets::_clone_invoke ::_clone_invoke
+    ::cadwidgets::_clone_progress_update ::_clone_progress_update
+    ::cadwidgets::exists_wrapper ::exists_wrapper
+    ::cadwidgets::regdef_wrapper ::regdef_wrapper
+    ::cadwidgets::pattern_rect ::pattern_rect
+    ::cadwidgets::pattern_sph ::pattern_sph
+    ::cadwidgets::pattern_cyl ::pattern_cyl
+    ::cadwidgets::pattern_control ::pattern_control
+} {
+    assert_compatibility_command $canonical $legacy
+}
+assert_equal "cursor wait counter" $::cadwidgets::cursorWaitCount 0
+assert_equal "obsolete cursor counter" \
+    [info exists ::cadwidgets::cursorWaitcount] 0
+
+frame .cursor_namespace_probe
+::cadwidgets::SetWaitCursor .cursor_namespace_probe
+::SetWaitCursor .cursor_namespace_probe
+assert_equal "nested cursor wait count" $::cadwidgets::cursorWaitCount 2
+::SetNormalCursor .cursor_namespace_probe
+::cadwidgets::SetNormalCursor .cursor_namespace_probe
+assert_equal "balanced cursor wait count" $::cadwidgets::cursorWaitCount 0
+assert_equal "restored cursor" [.cursor_namespace_probe cget -cursor] {}
+destroy .cursor_namespace_probe
+
+namespace eval ::pattern_namespace_probe {
+    variable feedback_calls {}
+
+    proc ged {marker subcommand args} {
+	return [list $marker $subcommand {*}$args]
+    }
+
+    proc feedback {subcommand args} {
+	variable feedback_calls
+	lappend feedback_calls [list $subcommand {*}$args]
+    }
+}
+set saved_pattern_ged $::cadwidgets::ged
+set saved_pattern_mged_flag $::cadwidgets::mgedFlag
+set ::cadwidgets::ged [list ::pattern_namespace_probe::ged probe]
+set ::cadwidgets::mgedFlag 0
+set expected_pattern_call [list probe clone rect --depth top \
+    --dir x {1 0 0} --dir y {0 1 0} --dir z {0 0 1} \
+    -n x=2 -d x=3 source.s]
+assert_equal "canonical pattern dispatch" \
+    [::cadwidgets::pattern_rect -nx 2 -dx 3 source.s] \
+    $expected_pattern_call
+assert_equal "legacy pattern dispatch" \
+    [::pattern_rect -nx 2 -dx 3 source.s] \
+    $expected_pattern_call
+assert_equal "canonical exists dispatch" \
+    [::cadwidgets::exists_wrapper source.s] \
+    [list probe exists source.s]
+assert_equal "legacy regdef dispatch" \
+    [::regdef_wrapper region 1000 0 1] \
+    [list probe regdef region 1000 0 1]
+::cadwidgets::_clone_progress_update \
+    ::pattern_namespace_probe::feedback 1 2
+::_clone_progress_update ::pattern_namespace_probe::feedback 2 2
+assert_equal "qualified clone progress callback" \
+    $::pattern_namespace_probe::feedback_calls \
+    [list reset [list configure -steps 2] step step]
+set ::cadwidgets::ged $saved_pattern_ged
+set ::cadwidgets::mgedFlag $saved_pattern_mged_flag
+namespace delete ::pattern_namespace_probe
+
 foreach class {::DataUtils ::sdialogs::Stddlgs ::swidgets::Togglearrow} {
     if {![llength [info commands $class]] && ![auto_load $class]} {
 	fail "$class is not autoloadable"
@@ -327,6 +407,7 @@ foreach lifecycle {
     {cadwidgets::ComboBox .lifecycle_combo_box}
     {cadwidgets::Help lifecycle_help}
     {cadwidgets::Legend .lifecycle_legend}
+    {cadwidgets::pattern_control .lifecycle_pattern_control}
     {Command .lifecycle_command}
     {GeometryChecker .geometry_checker}
     {GraphEditor .lifecycle_graph_editor}
@@ -344,6 +425,7 @@ foreach lifecycle {
     {swidgets::tkgetdir .lifecycle_directory_chooser}
     {::Wizard .lifecycle_archer_wizard}
     {::RtWizard::Wizard .lifecycle_rtwizard_wizard}
+    {::pattern_control .lifecycle_legacy_pattern_control}
 } {
     exercise_object_lifecycle {*}$lifecycle
 }

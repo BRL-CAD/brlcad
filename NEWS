@@ -50,6 +50,7 @@ dependencies also receive substantial updates.
 * improved pixscale & bwscale scaling and image piping - Sean Morrison
 * restored pixdiff behavior on .pix, added -b for .bw - Sean Morrison
 * improved facetize fallback methods and reliability - Cliff Yapp
+* added namespaced Tcl interfaces for MGED and core components - Cliff Yapp
 * updated mged and Archer for Tcl 8.6.18 and Itcl/Itk 4 - Cliff Yapp
 * fixed writes to fileless geometry databases - Cliff Yapp
 * fixed nastran-g handling of large property IDs - Rupesh, Cliff Yapp

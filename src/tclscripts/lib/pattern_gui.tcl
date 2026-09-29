@@ -28,7 +28,7 @@
 # These were pattern.tcl's only public consumers.
 # ---------------------------------------------------------------------------
 
-namespace eval cadwidgets {
+namespace eval ::cadwidgets {
     if {![info exists ged]} {
 	set ged db
     }
@@ -36,18 +36,13 @@ namespace eval cadwidgets {
     if {![info exists mgedFlag]} {
 	set mgedFlag 1
     }
-}
-
-if {![info exists local2base]} {
-    set local2base 1.0
-}
 
 # _clone_invoke: dispatch 'clone' to the right command based on context
 proc _clone_invoke { args } {
     if {$::cadwidgets::mgedFlag} {
-	return [eval clone $args]
+	return [::clone {*}$args]
     } else {
-	return [eval $::cadwidgets::ged clone $args]
+	return [{*}$::cadwidgets::ged clone {*}$args]
     }
 }
 
@@ -69,17 +64,17 @@ proc _clone_progress_update { widget current total } {
 
 proc exists_wrapper {args} {
     if {$::cadwidgets::mgedFlag} {
-	eval exists $args
+	return [::exists {*}$args]
     } else {
-	eval $::cadwidgets::ged exists $args
+	return [{*}$::cadwidgets::ged exists {*}$args]
     }
 }
 
 proc regdef_wrapper {args} {
     if {$::cadwidgets::mgedFlag} {
-	eval regdef $args
+	return [::regdef {*}$args]
     } else {
-	eval $::cadwidgets::ged regdef $args
+	return [{*}$::cadwidgets::ged regdef {*}$args]
     }
 }
 
@@ -178,7 +173,7 @@ proc pattern_rect { args } {
     }
     foreach obj $objs { lappend clone_cmd $obj }
 
-    set result [eval _clone_invoke $clone_cmd]
+    set result [_clone_invoke {*}$clone_cmd]
 
     if { $group_name ne "" } {
 	if { $::cadwidgets::mgedFlag } {
@@ -301,7 +296,7 @@ proc pattern_sph { args } {
     }
     foreach obj $objs { lappend clone_cmd $obj }
 
-    set result [eval _clone_invoke $clone_cmd]
+    set result [_clone_invoke {*}$clone_cmd]
 
     if { $group_name ne "" } {
 	if { $::cadwidgets::mgedFlag } {
@@ -422,7 +417,7 @@ proc pattern_cyl { args } {
     }
     foreach obj $objs { lappend clone_cmd $obj }
 
-    set result [eval _clone_invoke $clone_cmd]
+    set result [_clone_invoke {*}$clone_cmd]
 
     if { $group_name ne "" } {
 	if { $::cadwidgets::mgedFlag } {
@@ -437,12 +432,43 @@ proc pattern_cyl { args } {
     return $result
 }
 
+}
+
 # ---------------------------------------------------------------------------
 # End of migrated procs
 # ---------------------------------------------------------------------------
 
-class pattern_control {
-    inherit itk::Toplevel
+# Compatibility interfaces.  New callers should use the owning namespace.
+proc ::_clone_invoke {args} {
+    tailcall ::cadwidgets::_clone_invoke {*}$args
+}
+
+proc ::_clone_progress_update {args} {
+    tailcall ::cadwidgets::_clone_progress_update {*}$args
+}
+
+proc ::exists_wrapper {args} {
+    tailcall ::cadwidgets::exists_wrapper {*}$args
+}
+
+proc ::regdef_wrapper {args} {
+    tailcall ::cadwidgets::regdef_wrapper {*}$args
+}
+
+proc ::pattern_rect {args} {
+    tailcall ::cadwidgets::pattern_rect {*}$args
+}
+
+proc ::pattern_sph {args} {
+    tailcall ::cadwidgets::pattern_sph {*}$args
+}
+
+proc ::pattern_cyl {args} {
+    tailcall ::cadwidgets::pattern_cyl {*}$args
+}
+
+::itcl::class ::cadwidgets::pattern_control {
+    inherit ::itk::Toplevel
 
     itk_option define -ged ged Ged "db"
 
@@ -547,7 +573,11 @@ class pattern_control {
     }
 }
 
-body pattern_control::constructor {} {
+proc ::pattern_control {args} {
+    tailcall ::cadwidgets::pattern_control {*}$args
+}
+
+::itcl::body ::cadwidgets::pattern_control::constructor {} {
     $this configure -title "Pattern Control"
 
     set pad(x) 2
@@ -557,7 +587,7 @@ body pattern_control::constructor {} {
     #Tabnotebook
 
     itk_component add tn {
-	tabnotebook $itk_interior.tn -tabpos n -gap 3 -raiseselect true -bevelamount 3 -borderwidth 3  -width 890 -height 532 ;#-width 490 -height 1000
+	::iwidgets::tabnotebook $itk_interior.tn -tabpos n -gap 3 -raiseselect true -bevelamount 3 -borderwidth 3  -width 890 -height 532 ;#-width 490 -height 1000
     }
     $itk_component(tn) add -label "Rectangular"
     $itk_component(tn) add -label "Spherical"
@@ -1752,7 +1782,7 @@ body pattern_control::constructor {} {
     }
 
     itk_component add fb_progress {
-	feedback $itk_interior.fb_progress
+	::iwidgets::feedback $itk_interior.fb_progress
     }
 
     #bind $itk_component() <Enter> " set [list [scope helpvar]] {}"
@@ -1835,15 +1865,15 @@ body pattern_control::constructor {} {
 }
 
 
-body pattern_control::destructor {} {
+::itcl::body ::cadwidgets::pattern_control::destructor {} {
     unset combovar_r
 }
 
-::itcl::configbody pattern_control::ged {
+::itcl::configbody ::cadwidgets::pattern_control::ged {
     set ::cadwidgets::ged $itk_option(-ged)
 }
 
-body pattern_control::update_depth { box level } {
+::itcl::body ::cadwidgets::pattern_control::update_depth { box level } {
     switch -- $box {
 	"r" {
 	    set combovar_r $level
@@ -1857,14 +1887,14 @@ body pattern_control::update_depth { box level } {
     }
 }
 
-body pattern_control::apply_rect {} {
+::itcl::body ::cadwidgets::pattern_control::apply_rect {} {
     # The C clone implementation supplies current count and total to the
     # callback, so no Tcl-side total calculation is needed.
     $itk_component(fb_progress) reset
     set ::clone_progress_callback \
-	[list _clone_progress_update $itk_component(fb_progress)]
+	[list ::cadwidgets::_clone_progress_update $itk_component(fb_progress)]
 
-    set cmd [list pattern_rect -$combovar_r]
+    set cmd [list ::cadwidgets::pattern_rect -$combovar_r]
 
     lappend cmd -g [string trim $group_r]
 
@@ -1888,18 +1918,21 @@ body pattern_control::apply_rect {} {
 	lappend cmd $obj
     }
 
-    eval $cmd
-    unset -nocomplain ::clone_progress_callback
+    try {
+	{*}$cmd
+    } finally {
+	unset -nocomplain ::clone_progress_callback
+    }
 }
 
-body pattern_control::apply_sph {} {
+::itcl::body ::cadwidgets::pattern_control::apply_sph {} {
     # The C clone implementation supplies current count and total to the
     # callback, so no Tcl-side total calculation is needed.
     $itk_component(fb_progress) reset
     set ::clone_progress_callback \
-	[list _clone_progress_update $itk_component(fb_progress)]
+	[list ::cadwidgets::_clone_progress_update $itk_component(fb_progress)]
 
-    set cmd [list pattern_sph -$combovar_s]
+    set cmd [list ::cadwidgets::pattern_sph -$combovar_s]
     lappend cmd -g [string trim $group_s]
 
     if { [string length [string trim $source_string_s]] != 0 } {
@@ -1938,18 +1971,21 @@ body pattern_control::apply_sph {} {
 	lappend cmd $obj
     }
 
-    eval $cmd
-    unset -nocomplain ::clone_progress_callback
+    try {
+	{*}$cmd
+    } finally {
+	unset -nocomplain ::clone_progress_callback
+    }
 }
 
-body pattern_control::apply_cyl {} {
+::itcl::body ::cadwidgets::pattern_control::apply_cyl {} {
     # The C clone implementation supplies current count and total to the
     # callback, so no Tcl-side total calculation is needed.
     $itk_component(fb_progress) reset
     set ::clone_progress_callback \
-	[list _clone_progress_update $itk_component(fb_progress)]
+	[list ::cadwidgets::_clone_progress_update $itk_component(fb_progress)]
 
-    set cmd [list pattern_cyl -$combovar_c]
+    set cmd [list ::cadwidgets::pattern_cyl -$combovar_c]
     lappend cmd -g [string trim $group_c]
 
     if { [string length [string trim $source_string_c]] != 0 } {
@@ -1995,11 +2031,14 @@ body pattern_control::apply_cyl {} {
 	lappend cmd $obj
     }
 
-    eval $cmd
-    unset -nocomplain ::clone_progress_callback
+    try {
+	{*}$cmd
+    } finally {
+	unset -nocomplain ::clone_progress_callback
+    }
 }
 
-body pattern_control::frame_disable { frame_name } {
+::itcl::body ::cadwidgets::pattern_control::frame_disable { frame_name } {
     switch -- $frame_name {
 	"f_list_r" {
 	    foreach obj { l_xlist_r \
@@ -2123,7 +2162,7 @@ body pattern_control::frame_disable { frame_name } {
 }
 
 
-body pattern_control::frame_enable { frame_name } {
+::itcl::body ::cadwidgets::pattern_control::frame_enable { frame_name } {
     switch -- $frame_name {
 	"f_list_r" {
 	    foreach obj { l_xlist_r \
@@ -2247,7 +2286,7 @@ body pattern_control::frame_enable { frame_name } {
 
 }
 
-body pattern_control::switch_states { frame_on frame_off } {
+::itcl::body ::cadwidgets::pattern_control::switch_states { frame_on frame_off } {
     frame_enable $frame_on
     frame_disable $frame_off
 }
