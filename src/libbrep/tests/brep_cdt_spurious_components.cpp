@@ -10,12 +10,13 @@
  */
 
 #include "common.h"
+
 #include "bu/app.h"
 #include "brep/cdt.h"
 #include "cdt/test_api.h"
 
 int
-main(int, const char **argv)
+main(int UNUSED(argc), const char **argv)
 {
     bu_setprogname(argv[0]);
     return cdt_test_spurious_components();

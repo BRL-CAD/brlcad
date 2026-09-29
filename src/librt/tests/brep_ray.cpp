@@ -30,6 +30,7 @@
 #include "bu/app.h"
 #include "bu/datetime.h"
 #include "bu/malloc.h"
+#include "bu/str.h"
 #include "brep/surfacetree.h"
 #include "raytrace.h"
 #include "rt/geom.h"
@@ -11590,13 +11591,13 @@ check_ellipsoid_adaptive_affine(const struct bn_tol *tol)
 		if (!production_segments)
 		    brep_interval_ended[reverse] = true;
 		size_t expansion_certificate_floor = SIZE_MAX;
-		if (!std::strcmp(test.name, "high-condition") &&
+		if (!bu_strcmp(test.name, "high-condition") &&
 			ratio_index == 5)
 		    expansion_certificate_floor = 2;
-		if (!std::strcmp(test.name, "extreme-condition") &&
+		if (!bu_strcmp(test.name, "extreme-condition") &&
 			ratio_index == 4)
 		    expansion_certificate_floor = 2;
-		if (!std::strcmp(test.name, "extreme-condition") &&
+		if (!bu_strcmp(test.name, "extreme-condition") &&
 			ratio_index == 5)
 		    expansion_certificate_floor = 0;
 		const bool known_expansion_case =
@@ -14679,17 +14680,19 @@ check_cobb_tolerance_metadata(const struct bn_tol *tol, struct rt_i *rtip,
 		edge->correspondence_exhausted ||
 		!edge->discrepancy_bounded ||
 		edge->discrepancy_bound_exhausted ||
-		!declared_ok || edge->tolerance_inferred !=
+		!declared_ok || (edge->tolerance_inferred != 0) !=
 		cases[case_index].inferred ||
-		edge->discrepancy_sample_authorized !=
+		(edge->discrepancy_sample_authorized != 0) !=
 		cases[case_index].sample_authorized ||
 		edge->discrepancy_proof_class !=
 		cases[case_index].proof_class || !proof_bounds_ok ||
-		edge->discrepancy_authorized != cases[case_index].authorized ||
+		(edge->discrepancy_authorized != 0) !=
+		cases[case_index].authorized ||
 		fabs(edge->model_tolerance - tol->dist) > limit ||
 		fabs(edge->measured_discrepancy - measured_gap) > limit ||
 		fabs(edge->edge_tolerance - expected_tolerance) > limit ||
-		edge->within_edge_tolerance != cases[case_index].authorized ||
+		(edge->within_edge_tolerance != 0) !=
+		cases[case_index].authorized ||
 		(cases[case_index].authorized && !edge->candidate_spans) ||
 		(!cases[case_index].authorized && edge->candidate_spans)) {
 	    std::printf("FAIL: Cobb %s tolerance metadata declared=%.17g "
@@ -18085,7 +18088,7 @@ check_cobb_bowed_seam_corpus(const struct bn_tol *tol, bool emit_report,
 			    1.01 * measured_gap) > edge_distance_limit ||
 			    fabs(target_edge->measured_discrepancy - measured_gap) >
 			    edge_distance_limit ||
-			    target_edge->within_edge_tolerance !=
+			    (target_edge->within_edge_tolerance != 0) !=
 			    expected_edge_evidence ||
 			    (target_edge->within_edge_tolerance &&
 			    (!target_edge->candidate_spans ||
@@ -19170,7 +19173,7 @@ main(int argc, char **argv)
     const char *mode = NULL;
     const char depth_prefix[] = "--surface-tree-depth=";
     for (int arg_index = 1; arg_index < argc; ++arg_index) {
-	if (strncmp(argv[arg_index], depth_prefix,
+	if (bu_strncmp(argv[arg_index], depth_prefix,
 		sizeof(depth_prefix) - 1) == 0) {
 	    brep_test_surface_tree_depth_requested = true;
 	    const char *value = argv[arg_index] + sizeof(depth_prefix) - 1;

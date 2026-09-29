@@ -37,6 +37,7 @@
 #include <fstream>
 #include <iostream>
 #include <iomanip>
+#include <map>
 #include <regex>
 #include <set>
 #include <sstream>

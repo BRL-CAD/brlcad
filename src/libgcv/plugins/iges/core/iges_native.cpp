@@ -160,15 +160,16 @@ public:
 	    }
 	    struct nurb_seg *segment;
 	    BU_ALLOC(segment, struct nurb_seg);
+	    const int rational_flag = curve->IsRational() ? 1 : 0;
 	    sketch->curve.segment[sketch->curve.count++] = segment;
 	    segment->magic = CURVE_NURB_MAGIC;
 	    segment->order = curve->Order();
 	    segment->c_size = curve->CVCount();
-	    segment->pt_type = RT_NURB_MAKE_PT_TYPE(curve->IsRational() ? 3 : 2,
-		RT_NURB_PT_XY, curve->IsRational());
+	    segment->pt_type = RT_NURB_MAKE_PT_TYPE(rational_flag ? 3 : 2,
+		RT_NURB_PT_XY, rational_flag);
 	    segment->ctl_points = static_cast<int *>(bu_calloc(segment->c_size,
 		sizeof(int), "IGES sketch control points"));
-	    if (curve->IsRational())
+	    if (rational_flag)
 		segment->weights = static_cast<fastf_t *>(bu_calloc(segment->c_size,
 		    sizeof(fastf_t), "IGES sketch weights"));
 	    for (int cv = 0; cv < segment->c_size; ++cv) {

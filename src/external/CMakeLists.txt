@@ -8,6 +8,16 @@ add_subdirectory(Creo)
 add_subdirectory(Cubit)
 add_subdirectory(Unigraphics)
 
+if(WIN32 AND BUILD_SHARED_LIBS)
+  # Without exports MSVC omits the import libraries declared as Ninja outputs,
+  # leaving the build-test DLL targets perpetually out of date.
+  foreach(external_target creo-brl g-sat ug-g)
+    if(TARGET ${external_target})
+      set_property(TARGET ${external_target} PROPERTY WINDOWS_EXPORT_ALL_SYMBOLS ON)
+    endif()
+  endforeach()
+endif()
+
 cmakefiles(README)
 cmakefiles(CMakeLists.txt)
 

@@ -27,6 +27,11 @@
 #define SPHERE_INCLUDED
 
 #include "common.h"
+
+#include <map>
+#include <string>
+#include <vector>
+
 #include "wdb.h"
 
 

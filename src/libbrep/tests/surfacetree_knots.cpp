@@ -16,13 +16,15 @@
 #include <list>
 #include <vector>
 
+#include "bu/app.h"
 #include "brep.h"
 #include "brep/surfacetree.h"
 
 
 int
-main()
+main(int UNUSED(argc), const char **argv)
 {
+    bu_setprogname(argv[0]);
     ON_NurbsSurface surface(3, false, 3, 3, 8, 7);
     if (!surface.MakeClampedUniformKnotVector(0) ||
 	    !surface.MakeClampedUniformKnotVector(1)) {

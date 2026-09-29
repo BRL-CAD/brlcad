@@ -209,7 +209,7 @@ shells(const ON_Brep &brep)
 	    shell.consistent = shell.consistent && !flips[face];
 	    shell.box.Union(brep.m_F[face].BoundingBox());
 	    for (const auto &neighbor : adjacent[face]) {
-		const int required = flips[face] ^ neighbor.second;
+		const int required = (flips[face] != 0) != neighbor.second;
 		if (flips[neighbor.first] < 0) {
 		    flips[neighbor.first] = required;
 		    shell.faces.push_back(neighbor.first);
