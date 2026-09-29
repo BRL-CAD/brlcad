@@ -51,6 +51,7 @@
 #define FBO_CONSTRAIN(_v, _a, _b)		\
     ((_v > _a) ? (_v < _b ? _v : _b) : _a)
 
+#define FB_COMMAND_NAMESPACE "::brlcad::fb"
 #define TCLCAD_FB_ASSOC_KEY "libtclcad::fb"
 
 struct fb_obj {
@@ -913,18 +914,53 @@ fbo_open_tcl(void *UNUSED(clientData), Tcl_Interp *interp, int argc, const char 
 }
 
 
+/**
+ * Hook function wrapper to the fb_common_file_size Tcl command.
+ */
+static int
+fb_cmd_common_file_size(ClientData UNUSED(clientData), Tcl_Interp *interp,
+	int argc, const char **argv)
+{
+    size_t width, height;
+    int pixel_size = 3;
+
+    if (argc != 2 && argc != 3) {
+	bu_log("wrong #args: should be \"%s fileName [#bytes/pixel]\"",
+		argv[0]);
+	return TCL_ERROR;
+    }
+
+    if (argc == 3)
+	pixel_size = atoi(argv[2]);
+
+    if (fb_common_file_size(&width, &height, argv[1], pixel_size) > 0) {
+	struct bu_vls result = BU_VLS_INIT_ZERO;
+	bu_vls_printf(&result, "%lu %lu", (unsigned long)width,
+		(unsigned long)height);
+	Tcl_SetObjResult(interp, Tcl_NewStringObj(bu_vls_cstr(&result), -1));
+	bu_vls_free(&result);
+	return TCL_OK;
+    }
+
+    Tcl_SetObjResult(interp, Tcl_NewStringObj("0 0", -1));
+    return TCL_OK;
+}
+
+
 TCLCAD_EXPORT int
 Fbo_Init(Tcl_Interp *interp)
 {
-    int created = 0;
-    (void)fb_objects(interp, &created);
-    if (!created)
-	return TCL_OK;
+    static const struct tclcad_cmdtab commands[] = {
+	{"open", "fb_open", (Tcl_CmdProc *)fbo_open_tcl, NULL},
+	{"common_file_size", "fb_common_file_size",
+	    fb_cmd_common_file_size, NULL},
+	{NULL, NULL, NULL, NULL}
+    };
 
-    (void)Tcl_CreateCommand(interp, "fb_open", (Tcl_CmdProc *)fbo_open_tcl,
-			    (ClientData)NULL, (Tcl_CmdDeleteProc *)NULL);
+    (void)fb_objects(interp, NULL);
 
-    return BRLCAD_OK;
+    return tclcad_register_cmd_namespace(interp, FB_COMMAND_NAMESPACE,
+	commands);
 }
 
 

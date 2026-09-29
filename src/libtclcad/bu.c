@@ -32,7 +32,6 @@
 
 #include "vmath.h"
 #include "bu.h"
-#include "vmath.h"
 #include "tclcad.h"
 
 // tclcad.h pulls in OpenNURBS in C++ compilation mode, which defines None,
@@ -47,15 +46,10 @@
 #include "./tclcad_private.h"
 
 
-static int
-lwrapper_func(ClientData data, Tcl_Interp *interp, int argc, const char *argv[])
-{
-    struct bu_cmdtab *ctp = (struct bu_cmdtab *)data;
+#define BU_COMMAND_NAMESPACE "::brlcad::bu"
+#define TCLCAD_BU_ASSOC_KEY "libtclcad::bu"
 
-    return ctp->ct_func(interp, argc, argv);
-}
-
-
+static int bu_initialized;
 
 #define TINYBUFSIZ 32
 #define SMALLBUFSIZ 256
@@ -83,11 +77,11 @@ lwrapper_func(ClientData data, Tcl_Interp *interp, int argc, const char *argv[])
  * @return BRLCAD_OK if successful, otherwise, BRLCAD_ERROR.
  */
 static int
-tcl_bu_get_value_by_keyword(void *clientData,
+tcl_bu_get_value_by_keyword(ClientData UNUSED(clientData),
+			    Tcl_Interp *interp,
 			    int argc,
 			    const char **argv)
 {
-    Tcl_Interp *interp = (Tcl_Interp *)clientData;
     int i = 0;
     int listc = 0;
     const char *iwant = (const char *)NULL;
@@ -167,11 +161,11 @@ tcl_bu_get_value_by_keyword(void *clientData,
  * @return BRLCAD_OK if successful, otherwise, BRLCAD_ERROR.
  */
 static int
-tcl_bu_rgb_to_hsv(void *clientData,
+tcl_bu_rgb_to_hsv(ClientData UNUSED(clientData),
+		  Tcl_Interp *interp,
 		  int argc,
 		  const char **argv)
 {
-    Tcl_Interp *interp = (Tcl_Interp *)clientData;
     int rgb_int[3];
     unsigned char rgb[3];
     fastf_t hsv[3];
@@ -216,12 +210,11 @@ tcl_bu_rgb_to_hsv(void *clientData,
  * @return BRLCAD_OK if successful, otherwise, BRLCAD_ERROR.
  */
 static int
-tcl_bu_hsv_to_rgb(void *clientData,
+tcl_bu_hsv_to_rgb(ClientData UNUSED(clientData),
+		  Tcl_Interp *interp,
 		  int argc,
 		  const char **argv)
 {
-    Tcl_Interp *interp = (Tcl_Interp *)clientData;
-
     double vals[3];
     fastf_t hsv[3];
     unsigned char rgb[3];
@@ -336,11 +329,9 @@ _tclcad_bu_dir_print(const char *dirkey, int fail_quietly)
  * @return BRLCAD_OK if successful, otherwise, BRLCAD_ERROR.
  */
 static int
-tcl_bu_dir(void *clientData,
-		   int argc,
-		   const char **argv)
+tcl_bu_dir(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc,
+	   const char **argv)
 {
-    Tcl_Interp *interp = (Tcl_Interp *)clientData;
     if (argc != 2) {
 	bu_log("Usage: bu_dir [curr|init|bin|lib|libexec|include|data|doc|man|temp|home|cache|config|ext|libext]\n");
 	return BRLCAD_ERROR;
@@ -359,11 +350,9 @@ tcl_bu_dir(void *clientData,
  * @return BRLCAD_OK if successful, otherwise, BRLCAD_ERROR.
  */
 static int
-tcl_bu_file_null(void *clientData,
-		 int argc,
+tcl_bu_file_null(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc,
 		 const char **UNUSED(argv))
 {
-    Tcl_Interp *interp = (Tcl_Interp *)clientData;
     if (argc != 1) {
 	bu_log("Usage: bu_file_null\n");
 	return BRLCAD_ERROR;
@@ -382,11 +371,9 @@ tcl_bu_file_null(void *clientData,
  * @return BRLCAD_OK if successful, otherwise, BRLCAD_ERROR.
  */
 static int
-tcl_bu_units_conversion(void *clientData,
-			int argc,
-			const char **argv)
+tcl_bu_units_conversion(ClientData UNUSED(clientData), Tcl_Interp *interp,
+			int argc, const char **argv)
 {
-    Tcl_Interp *interp = (Tcl_Interp *)clientData;
     double conv_factor;
     struct bu_vls result = BU_VLS_INIT_ZERO;
 
@@ -408,36 +395,34 @@ tcl_bu_units_conversion(void *clientData,
 }
 
 
-static void
-register_cmds(Tcl_Interp *interp, struct bu_cmdtab *cmds)
-{
-    struct bu_cmdtab *ctp = NULL;
-
-    for (ctp = cmds; ctp->ct_name != (char *)NULL; ctp++) {
-	(void)Tcl_CreateCommand(interp, ctp->ct_name, lwrapper_func, (ClientData)ctp, (Tcl_CmdDeleteProc *)NULL);
-    }
-}
-
-
 TCLCAD_EXPORT int
 Bu_Init(Tcl_Interp *interp)
 {
-    static struct bu_cmdtab cmds[] = {
-	{"bu_units_conversion",		tcl_bu_units_conversion},
-	{"bu_dir",		        tcl_bu_dir},
-	{"bu_file_null",		tcl_bu_file_null},
-	{"bu_get_value_by_keyword",	tcl_bu_get_value_by_keyword},
-	{"bu_rgb_to_hsv",		tcl_bu_rgb_to_hsv},
-	{"bu_hsv_to_rgb",		tcl_bu_hsv_to_rgb},
-	{(const char *)NULL, BU_CMD_NULL}
+    static const struct tclcad_cmdtab commands[] = {
+	{"units_conversion", "bu_units_conversion", tcl_bu_units_conversion, NULL},
+	{"dir", "bu_dir", tcl_bu_dir, NULL},
+	{"file_null", "bu_file_null", tcl_bu_file_null, NULL},
+	{"get_value_by_keyword", "bu_get_value_by_keyword", tcl_bu_get_value_by_keyword, NULL},
+	{"rgb_to_hsv", "bu_rgb_to_hsv", tcl_bu_rgb_to_hsv, NULL},
+	{"hsv_to_rgb", "bu_hsv_to_rgb", tcl_bu_hsv_to_rgb, NULL},
+	{NULL, NULL, NULL, NULL}
     };
 
-    register_cmds(interp, cmds);
+    if (tclcad_register_cmd_namespace(interp, BU_COMMAND_NAMESPACE,
+	    commands) != TCL_OK)
+	return TCL_ERROR;
 
-    Tcl_SetVar(interp, "BU_DEBUG_FORMAT", BU_DEBUG_FORMAT, TCL_GLOBAL_ONLY);
-    Tcl_LinkVar(interp, "bu_debug", (char *)&bu_debug, TCL_LINK_INT);
+    if (!Tcl_GetAssocData(interp, TCLCAD_BU_ASSOC_KEY, NULL)) {
+	if (!Tcl_SetVar(interp, "BU_DEBUG_FORMAT", BU_DEBUG_FORMAT,
+		TCL_GLOBAL_ONLY) ||
+	    Tcl_LinkVar(interp, "bu_debug", (char *)&bu_debug,
+		TCL_LINK_INT) != TCL_OK)
+	    return TCL_ERROR;
+	Tcl_SetAssocData(interp, TCLCAD_BU_ASSOC_KEY, NULL,
+	    (ClientData)&bu_initialized);
+    }
 
-    return BRLCAD_OK;
+    return TCL_OK;
 }
 
 /*

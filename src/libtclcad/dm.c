@@ -65,6 +65,7 @@ struct dm_obj {
 };
 
 
+#define DM_COMMAND_NAMESPACE "::brlcad::dm"
 #define TCLCAD_DM_ASSOC_KEY "libtclcad::dm"
 
 static struct bu_list *
@@ -2779,24 +2780,32 @@ dmo_open_tcl(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, char *
 }
 
 
+static int dm_validXType_tcl(ClientData, Tcl_Interp *, int, const char **);
+static int dm_bestXType_tcl(ClientData, Tcl_Interp *, int, const char **);
+
+
 TCLCAD_EXPORT int
 Dmo_Init(Tcl_Interp *interp)
 {
-    int created = 0;
-    (void)dm_objects(interp, &created);
-    if (!created)
-	return TCL_OK;
+    static const struct tclcad_cmdtab commands[] = {
+	{"open", "dm_open", (Tcl_CmdProc *)dmo_open_tcl, NULL},
+	{"valid_type", "dm_validXType", dm_validXType_tcl, NULL},
+	{"best_type", "dm_bestXType", dm_bestXType_tcl, NULL},
+	{"list", "dm_list", dm_list_tcl, NULL},
+	{NULL, NULL, NULL, NULL}
+    };
 
-    (void)Tcl_CreateCommand(interp, "dm_open", (Tcl_CmdProc *)dmo_open_tcl, (ClientData)NULL, (Tcl_CmdDeleteProc *)NULL);
+    (void)dm_objects(interp, NULL);
 
-    return BRLCAD_OK;
+    return tclcad_register_cmd_namespace(interp, DM_COMMAND_NAMESPACE,
+	commands);
 }
 
 
 static int
-dm_validXType_tcl(void *clientData, int argc, const char **argv)
+dm_validXType_tcl(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc,
+	const char **argv)
 {
-    Tcl_Interp *interp = (Tcl_Interp *)clientData;
     struct bu_vls vls = BU_VLS_INIT_ZERO;
     Tcl_Obj *obj;
 
@@ -2822,9 +2831,9 @@ dm_validXType_tcl(void *clientData, int argc, const char **argv)
 
 
 static int
-dm_bestXType_tcl(void *clientData, int argc, const char **argv)
+dm_bestXType_tcl(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc,
+	const char **argv)
 {
-    Tcl_Interp *interp = (Tcl_Interp *)clientData;
     Tcl_Obj *obj;
     const char *best_dm;
     char buffer[256] = {0};
@@ -2851,83 +2860,22 @@ dm_bestXType_tcl(void *clientData, int argc, const char **argv)
     return BRLCAD_ERROR;
 }
 
-/**
- * Hook function wrapper to the fb_common_file_size Tcl command
- */
-int
-fb_cmd_common_file_size(ClientData clientData, int argc, const char **argv)
-{
-    Tcl_Interp *interp = (Tcl_Interp *)clientData;
-    size_t width, height;
-    int pixel_size = 3;
-
-    if (argc != 2 && argc != 3) {
-	bu_log("wrong #args: should be \" fileName [#bytes/pixel]\"");
-	return TCL_ERROR;
-    }
-
-    if (argc >= 3) {
-	pixel_size = atoi(argv[2]);
-    }
-
-    if (fb_common_file_size(&width, &height, argv[1], pixel_size) > 0) {
-	struct bu_vls vls = BU_VLS_INIT_ZERO;
-	bu_vls_printf(&vls, "%lu %lu", (unsigned long)width, (unsigned long)height);
-	Tcl_SetObjResult(interp,
-			 Tcl_NewStringObj(bu_vls_addr(&vls), bu_vls_strlen(&vls)));
-	bu_vls_free(&vls);
-	return TCL_OK;
-    }
-
-    /* Signal error */
-    char *zerr = bu_strdup("0 0");
-    Tcl_SetResult(interp, zerr, TCL_STATIC);
-    bu_free(zerr, "zerr");
-    return TCL_OK;
-}
-
-static int
-wrapper_func(ClientData data, Tcl_Interp *interp, int argc, const char *argv[])
-{
-    struct bu_cmdtab *ctp = (struct bu_cmdtab *)data;
-
-    return ctp->ct_func(interp, argc, argv);
-}
-
-static void
-register_cmds(Tcl_Interp *interp, struct bu_cmdtab *cmds)
-{
-    struct bu_cmdtab *ctp = NULL;
-
-    for (ctp = cmds; ctp->ct_name != (char *)NULL; ctp++) {
-	(void)Tcl_CreateCommand(interp, ctp->ct_name, wrapper_func, (ClientData)ctp, (Tcl_CmdDeleteProc *)NULL);
-    }
-}
-
-
 TCLCAD_EXPORT int
 Dm_Init(Tcl_Interp *interp)
 {
-    static struct bu_cmdtab cmdtab[] = {
-	{"dm_validXType", dm_validXType_tcl},
-	{"dm_bestXType", dm_bestXType_tcl},
-	{"fb_common_file_size",	 fb_cmd_common_file_size},
-	{(const char *)NULL, BU_CMD_NULL}
-    };
-
-    /* register commands */
-    register_cmds(interp, cmdtab);
-
     /* initialize display manager object code */
-    Dmo_Init(interp);
+    if (Dmo_Init(interp) != TCL_OK)
+	return TCL_ERROR;
 
     /* initialize framebuffer object code */
-    Fbo_Init(interp);
+    if (Fbo_Init(interp) != TCL_OK)
+	return TCL_ERROR;
 
-    Tcl_PkgProvide(interp,  "Dm", brlcad_version());
-    Tcl_PkgProvide(interp,  "Fb", brlcad_version());
+    if (Tcl_PkgProvide(interp, "Dm", brlcad_version()) != TCL_OK ||
+	Tcl_PkgProvide(interp, "Fb", brlcad_version()) != TCL_OK)
+	return TCL_ERROR;
 
-    return BRLCAD_OK;
+    return TCL_OK;
 }
 
 /**
