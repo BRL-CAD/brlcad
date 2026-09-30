@@ -852,7 +852,7 @@ orient_faces(ON_Brep &brep, healing_budget &budget, cdt_healing &result)
 	    for (const auto &next : neighbors[face]) {
 		if (!budget.spend())
 		    return false;
-		const int expected = flipped[face] ^ next.second;
+		const int expected = flipped[face] ^ static_cast<int>(next.second);
 		if (flipped[(size_t)next.first] >= 0) {
 		    if (flipped[(size_t)next.first] != expected)
 			return false;

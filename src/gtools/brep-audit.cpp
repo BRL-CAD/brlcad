@@ -44,7 +44,7 @@
 #endif
 
 #ifdef _WIN32
-#  include <windows.h>
+#  include "bio.h"
 #endif
 
 #ifndef _WIN32

@@ -35,7 +35,7 @@ brlcad_add_test(NAME brep_cdt_spurious_components COMMAND test_brep_cdt_spurious
 brlcad_addexec(test_brep_cdt_local_defects brep_cdt_local_defects.cpp "libbrep" TEST)
 brlcad_add_test(NAME brep_cdt_local_defects COMMAND test_brep_cdt_local_defects)
 
-brlcad_addexec(test_brep_cdt_healing "brep_cdt_healing.cpp;../cdt/heal.cpp" "libbrep" TEST)
+brlcad_addexec(test_brep_cdt_healing brep_cdt_healing.cpp "libbrep" TEST)
 brlcad_add_test(NAME brep_cdt_healing COMMAND test_brep_cdt_healing)
 
 # Explicit B-Rep edges wholly below min(BN_TOL_DIST, absmin) may be welded in

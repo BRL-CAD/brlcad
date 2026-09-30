@@ -34,7 +34,8 @@ struct cdt_healing {
 };
 
 /* Check references without requiring valid loop roles or orientations. */
-bool cdt_topology_references_safe(const ON_Brep *brep, std::string *reason,
+BREP_EXPORT bool cdt_topology_references_safe(const ON_Brep *brep,
+    std::string *reason,
     bool require_paired_edges = true);
 
 enum cdt_healing_scope {
@@ -44,7 +45,7 @@ enum cdt_healing_scope {
 
 /* All edits are confined to an owned copy; surviving face/edge identities
  * map back to the source. */
-bool cdt_heal_topology(const ON_Brep &source, double tolerance,
+BREP_EXPORT bool cdt_heal_topology(const ON_Brep &source, double tolerance,
     size_t max_points, size_t max_bytes, long max_time_ms,
     cdt_healing &result, bool cap_boundary = false,
     cdt_healing_scope scope = CDT_HEAL_COMPLETE_BREP);
