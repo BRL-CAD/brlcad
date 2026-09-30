@@ -6,8 +6,13 @@ foreach package {brlcad::help brlcad::vmath} {
     }
 }
 
+if {![auto_load ::brlcad::mged::shader::is_good_shader]} {
+    error "FAIL canonical shader module is not autoloadable"
+}
+
 foreach namespace {
-    ::brlcad ::brlcad::ged ::brlcad::help ::brlcad::mged ::brlcad::vmath
+    ::brlcad ::brlcad::ged ::brlcad::help ::brlcad::mged
+    ::brlcad::mged::shader ::brlcad::vmath
 } {
     if {![namespace exists $namespace]} {
 	error "FAIL missing namespace $namespace"
@@ -19,6 +24,53 @@ foreach command {::brlcad::ged ::brlcad::mged exists _mged_exists} {
 	error "FAIL missing command $command"
     }
 }
+
+foreach command {
+    ::brlcad::mged::shader::do_shader
+    ::brlcad::mged::shader::do_shader_apply
+    ::brlcad::mged::shader::set_shader_params
+    ::brlcad::mged::shader::is_good_shader
+    do_shader do_shader_apply set_shader_params is_good_shader
+} {
+    if {![llength [info commands $command]]} {
+	error "FAIL missing shader command $command"
+    }
+}
+set shader_exports [lsort [namespace eval ::brlcad::mged::shader {
+    namespace export
+}]]
+set expected_shader_exports [lsort {
+    do_shader do_shader_apply is_good_shader set_shader_params
+}]
+if {$shader_exports ne $expected_shader_exports} {
+    error "FAIL shader exports are: $shader_exports"
+}
+foreach command {color_trigger do_air set_air_defaults stack_add} {
+    if {[llength [info commands ::$command]]} {
+	error "FAIL private shader command is global: ::$command"
+    }
+}
+foreach variable {light_data shader_params} {
+    if {[info exists ::$variable]} {
+	error "FAIL shader state remains global: ::$variable"
+    }
+}
+
+set shader_id namespace_air
+set shader_result ""
+::brlcad::mged::shader::set_air_defaults $shader_id
+::brlcad::mged::shader::set_air_values \
+    {air {dpm 0.2 d 0.3 s 0.4}} $shader_id
+::brlcad::mged::shader::do_air_apply shader_result $shader_id
+if {$shader_result ne {air {dpm 0.2 d 0.3 s 0.4}}} {
+    error "FAIL namespaced shader state produced: $shader_result"
+}
+if {![::brlcad::mged::shader::is_good_shader air] || ![is_good_shader air]} {
+    error "FAIL canonical and compatibility shader checks differ"
+}
+array unset ::brlcad::mged::shader::shader_params $shader_id,*
+unset shader_id shader_result
+unset expected_shader_exports shader_exports
 
 set object namespaces_sphere.s
 ::brlcad::mged in $object sph 0 0 0 1

@@ -193,7 +193,6 @@ proc init_comb { id } {
     package require Iwidgets
     global mged_gui
     global comb_control
-    global shader_params
     global ::tk::Priv
 
     if {[opendb] == ""} {
@@ -304,12 +303,9 @@ proc init_comb { id } {
     # this frame sits in the "shader_label_entry_frame" above
     frame $top.shader_entry_and_menu_frame -relief sunken -bd 2
 
-    # arrange for global access
+    # Initialize the shader module for this editor.
     set comb_control($id,shader_frame) $top.shader_frame
-    set shader_params($id,window) $comb_control($id,shader_frame)
-
-    # initialize name of shader
-    set shader_params($id,shader_name) ""
+    ::brlcad::mged::shader::init $id $comb_control($id,shader_frame)
 
     # create the button that will choose whether the "Boolean" or
     # "Shader" frame is displayed
@@ -505,9 +501,11 @@ GUI will automatically be updated." } }
     hoc_register_data $top.shaderE "Shader" $hoc_data
 
     # whenever any key is released inside the shader entry widget.
-    # call "set_shader_params" to update the shader display
+    # update the shader display
     # (see "shaders.tcl" for this routine)
-    bind $top.shaderE <KeyRelease> "set_shader_params comb_control($id,shader) $id"
+    bind $top.shaderE <KeyRelease> \
+	[list ::brlcad::mged::shader::set_shader_params \
+	    comb_control($id,shader) $id]
 
     # create menubutton to select from all the shaders
     menubutton $top.shaderMB -relief raised -bd 2\
@@ -1095,8 +1093,9 @@ proc comb_reset { id } {
     }
 
     if { [llength $comb_control($id,shader)] > 0 } {
-	set comb_control($id,shader_gui) [do_shader comb_control($id,shader) $id \
-					      $comb_control($id,shader_frame)]
+	set comb_control($id,shader_gui) \
+	    [::brlcad::mged::shader::do_shader comb_control($id,shader) $id \
+		$comb_control($id,shader_frame)]
 	grid $comb_control($id,shader_frame) \
 	    -row 1 \
 	    -sticky "nsew" \
@@ -1152,8 +1151,9 @@ proc comb_shader_gui { id shader_type } {
 	set comb_control($id,shader) $shader_type
     }
 
-    set comb_control($id,shader_gui) [do_shader comb_control($id,shader) $id \
-					  $comb_control($id,shader_frame)]
+    set comb_control($id,shader_gui) \
+	[::brlcad::mged::shader::do_shader comb_control($id,shader) $id \
+	    $comb_control($id,shader_frame)]
     grid $comb_control($id,shader_frame) \
 	-row 1 \
 	-sticky "nsew" \
