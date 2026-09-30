@@ -380,7 +380,7 @@ if {[info exists ::use_gui]} {
 	    [expr {-[lindex $omat 10]}]]]
       }
 
-      set sweep_bounds [rtwizard_cut_bounds \
+      set sweep_bounds [::brlcad::rtwizard cut_bounds \
 	  $::RtWizard::wizard_state(dbFile) $cut_dir {*}$anim_objects]
       set sweep_min [lindex $sweep_bounds 0]
       set sweep_max [lindex $sweep_bounds 1]
@@ -427,7 +427,7 @@ if {[info exists ::use_gui]} {
 	    lappend animation_frames $frame_file
 	}
 
-	rtwizard_anim_write $::RtWizard::wizard_state(output_filename) \
+	::brlcad::rtwizard anim_write $::RtWizard::wizard_state(output_filename) \
 	    $::RtWizard::wizard_state(width) \
 	    $::RtWizard::wizard_state(scanlines) \
 	    $::RtWizard::wizard_state(animation_fps) {*}$animation_frames
