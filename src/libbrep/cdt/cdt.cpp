@@ -3735,16 +3735,24 @@ repair_surface_distance(const ON_Brep *brep,
 	double candidate_distance =
 	    std::numeric_limits<double>::infinity();
 	bool projected_point = tree->Valid() &&
-	    brlcad::get_closest_point(uv, face, point, tree);
+	    brlcad::get_closest_point(uv, face, point, tree) && uv.IsValid();
 	if (projected_point) {
 	    projected = face.SurfaceOf()->PointAt(uv.x, uv.y);
-	    candidate_distance = projected.DistanceTo(point);
+	    projected_point = projected.IsValid();
+	    if (projected_point)
+		candidate_distance = projected.DistanceTo(point);
 	}
 	const auto outside_face_trim = [&](const ON_2dPoint &test_uv) {
 	    const brlcad::BRNode *closest_trim = NULL;
 	    double trim_distance = -1.0;
-	    return !tree->Valid() || tree->getRootNode()->isTrimmed(test_uv,
+	    if (!tree->Valid())
+		return true;
+	    const bool trimmed = tree->getRootNode()->isTrimmed(test_uv,
 		&closest_trim, trim_distance, BREP_EDGE_MISS_TOLERANCE);
+	    /* An oriented trim may classify its boundary as outside.  A point
+	     * within the trim tolerance is nevertheless part of the face. */
+	    return trimmed && (!closest_trim || trim_distance < 0.0 ||
+		trim_distance > BREP_EDGE_MISS_TOLERANCE);
 	};
 	bool outside_trim = !projected_point || outside_face_trim(uv);
 	/* The face tree is optimized for a well-formed trimmed region.  A weak
@@ -3765,7 +3773,8 @@ repair_surface_distance(const ON_Brep *brep,
 	    const bool fallback_point = face_contexts[(size_t)face_index]->
 		SurfaceClosestPoint(face.SurfaceOf(), point, fallback_uv,
 		    fallback_projection, fallback_distance, 0,
-		    BREP_SAME_POINT_TOLERANCE, allowed);
+		    BREP_SAME_POINT_TOLERANCE, allowed) && fallback_uv.IsValid() &&
+		fallback_projection.IsValid();
 	    if (fallback_point && std::isfinite(fallback_distance) &&
 		    (!projected_point || fallback_distance < candidate_distance)) {
 		projected_point = true;

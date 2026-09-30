@@ -88,12 +88,21 @@ untrimmed_surface_tree_contract()
     if (!tree.Valid())
 	return false;
     ON_Interval u, v;
-    const ON_3dPoint point(0.25, -0.5, 0.75);
+    /* Keep the exact projection off the tree's dyadic sample grid so the
+     * Newton refinement must run in release builds. */
+    const ON_2dPoint expected_uv(0.31, -0.46);
+    const ON_3dPoint point(expected_uv.x, expected_uv.y, 0.75);
     const ON_2dPoint uv = tree.getClosestPointEstimate(point, u, v);
     const ON_3dPoint projection = surface->PointAt(uv.x, uv.y);
+    ON_2dPoint closest_uv = ON_2dPoint::UnsetPoint;
+    const bool closest_point_found = brlcad::get_closest_point(closest_uv,
+	face, point, &tree);
+    const double closest_point_tolerance = 1.0e-9;
     return u.Includes(uv.x) && v.Includes(uv.y) &&
 	std::isfinite(projection.x) && std::isfinite(projection.y) &&
-	std::isfinite(projection.z);
+	std::isfinite(projection.z) && closest_point_found &&
+	closest_uv.IsValid() &&
+	closest_uv.DistanceTo(expected_uv) <= closest_point_tolerance;
 }
 
 static bool

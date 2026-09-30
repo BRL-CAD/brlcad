@@ -2013,12 +2013,15 @@ brlcad::PullbackContext::SurfaceClosestPoint(
 	m_impl->statistics.multiseed_us += static_cast<uint64_t>(
 	    std::chrono::duration_cast<std::chrono::microseconds>(
 		std::chrono::steady_clock::now() - fallback_started).count());
-	if (fallback_result)
+	const bool valid_fallback = fallback_result && p2d.IsValid() &&
+	    p3d.IsValid() && std::isfinite(current_distance) &&
+	    current_distance < DBL_MAX;
+	if (valid_fallback)
 	    ++m_impl->statistics.multiseed_successes;
 	else
 	    ++m_impl->statistics.multiseed_failures;
 	PullbackWorkProgress();
-	return fallback_result;
+	return valid_fallback;
     }
     PullbackWorkProgress();
 
@@ -3025,12 +3028,24 @@ brlcad::PullbackContext::SurfaceClosestPoint(
     }
 cleanup:
 
+    const auto valid_result = [&]() {
+	return p2d.IsValid() && p3d.IsValid() &&
+	    std::isfinite(current_distance) && current_distance < DBL_MAX;
+    };
+    if (rc && !valid_result())
+	rc = false;
+
     m_impl->statistics.primary_search_us += static_cast<uint64_t>(
 	std::chrono::duration_cast<std::chrono::microseconds>(
 	    std::chrono::steady_clock::now() - primary_started).count());
     if (rc) ++m_impl->statistics.primary_search_successes;
 
     if (!rc && !PullbackWorkCancelled()) {
+	if (!valid_result()) {
+	    p2d = ON_2dPoint::UnsetPoint;
+	    p3d = ON_3dPoint::UnsetPoint;
+	    current_distance = DBL_MAX;
+	}
 	++m_impl->statistics.multiseed_fallbacks;
 	const std::chrono::steady_clock::time_point fallback_started =
 	    std::chrono::steady_clock::now();
@@ -3039,6 +3054,7 @@ cleanup:
 	    &m_impl->statistics, preparation->surface_closed,
 	    preparation->surface_domains, &preparation->u_spans,
 	    &preparation->v_spans, &preparation->boxes);
+	rc = rc && valid_result();
 	m_impl->statistics.multiseed_us += static_cast<uint64_t>(
 	    std::chrono::duration_cast<std::chrono::microseconds>(
 		std::chrono::steady_clock::now() - fallback_started).count());
@@ -3053,7 +3069,7 @@ cleanup:
 	static_cast<uint64_t>(closest_point_subdivision_nodes));
     PullbackWorkProgress(closest_point_subdivision_nodes ?
 	closest_point_subdivision_nodes : 1);
-    return rc;
+    return rc && valid_result();
 }
 
 

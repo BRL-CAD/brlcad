@@ -683,6 +683,18 @@ main(int, const char **argv)
 	valid.store(false);
     }
 
+    uv = ON_2dPoint::UnsetPoint;
+    lifted = ON_3dPoint::UnsetPoint;
+    distance = ON_DBL_QNAN;
+    const ON_3dPoint midpoint = surface.PointAt(0.0, 0.0);
+    if (!surface_GetClosestPoint3dFirstOrder(&surface, midpoint, uv, lifted,
+	    distance, 0, 1.0e-9, 1.0e-7) || !uv.IsValid() ||
+	    !lifted.IsValid() || uv.DistanceTo(ON_2dPoint(0.0, 0.0)) > 1.0e-7 ||
+	    lifted.DistanceTo(midpoint) > 1.0e-7 || distance > 1.0e-7) {
+	std::cerr << "midpoint closest-point adapter failed" << std::endl;
+	valid.store(false);
+    }
+
     /* A closed adaptive sample ring must not acquire opposing endpoint
      * tangents merely because the local cubic fitter treats it as open. */
     ON_2dPointArray closed_samples;

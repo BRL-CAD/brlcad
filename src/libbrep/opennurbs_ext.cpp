@@ -2379,7 +2379,8 @@ get_closest_point(ON_2dPoint& outpt,
     // 3. iterated MAX_FCP_ITERATIONS
 try_again:
     for (int i = 0; i < BREP_MAX_FCP_ITERATIONS; i++) {
-	assert(gcp_gradient(curr_grad, data, uv));
+	if (!gcp_gradient(curr_grad, data, uv))
+	    break;
 
 	ON_3dPoint p = data.surf->PointAt(uv[0], uv[1]);
 	double d = p.DistanceTo(point);
@@ -2423,7 +2424,7 @@ try_again:
 
     if (delete_tree)
 	delete a_tree;
-    return found;
+    return found && outpt.IsValid();
 }
 
 
