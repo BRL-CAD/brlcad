@@ -199,7 +199,7 @@ package provide GeometryBrowser 1.0
     #	set pane(1) [lindex $children 1]
 
     itk_component add cadtree {
-	Hierarchy $itk_interior.cadtree \
+	::iwidgets::Hierarchy $itk_interior.cadtree \
 	    -labeltext "...loading..." \
 	    -querycommand [::itcl::code $this getNodeChildren %n yes ] \
 	    -imagecommand [::itcl::code $this updateGeometryLists %n ] \

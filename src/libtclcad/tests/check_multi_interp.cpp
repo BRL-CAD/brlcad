@@ -199,6 +199,40 @@ check_itcl_commands_scoped(Tcl_Interp *interp)
 
 
 static bool
+check_gui_commands_scoped(Tcl_Interp *interp)
+{
+    static const char * const global_commands[] = {
+	"::Archetype", "::Hierarchy", "::Toplevel", "::Widget", "::dialog",
+	"::remove_destroy_hook", "::scrolledlistbox", "::tabnotebook",
+	"::usual", NULL
+    };
+    const char *script =
+	"foreach command {"
+	" ::itk::Archetype ::itk::Toplevel ::itk::Widget ::itk::usual"
+	" ::iwidgets::Hierarchy ::iwidgets::dialog"
+	" ::iwidgets::scrolledlistbox ::iwidgets::tabnotebook"
+	"} {"
+	" if {![llength [info commands $command]] && ![auto_load $command]} {"
+	"  error \"$command is not autoloadable\""
+	" }"
+	"}";
+
+    if (!eval_ok(interp, script))
+	return false;
+
+    for (const char * const *command = global_commands; *command; command++) {
+	if (has_command(interp, *command)) {
+	    std::fprintf(stderr, "Itk/Iwidgets command was imported globally: %s\n",
+		*command);
+	    return false;
+	}
+    }
+
+    return true;
+}
+
+
+static bool
 check_initialized(Tcl_Interp *interp, const char *value, bool init_gui)
 {
     if (!has_command(interp, "bu_dir") ||
@@ -225,6 +259,8 @@ check_initialized(Tcl_Interp *interp, const char *value, bool init_gui)
 	return false;
     }
 
+    if (init_gui && !check_gui_commands_scoped(interp))
+	return false;
     if (init_gui && !check_gui_packages(interp))
 	return false;
     if (!check_component_namespaces(interp))

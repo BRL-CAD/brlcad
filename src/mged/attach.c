@@ -455,12 +455,6 @@ gui_setup(struct mged_state *s, const char *dstr)
 
     /* Initialize [incr Tk] */
     if (Tcl_Eval(s->interp, "package require Itk") != TCL_OK) {
-      return TCL_ERROR;
-    }
-
-    /* Import [incr Tk] commands into the global namespace */
-    if (Tcl_Import(s->interp, Tcl_GetGlobalNamespace(s->interp),
-		   "::itk::*", /* allowOverwrite */ 1) != TCL_OK) {
 	return TCL_ERROR;
     }
 #endif
@@ -471,12 +465,6 @@ gui_setup(struct mged_state *s, const char *dstr)
 
     /* Initialize the Iwidgets package */
     if (Tcl_Eval(s->interp, "package require Iwidgets") != TCL_OK) {
-	return TCL_ERROR;
-    }
-
-    /* Import iwidgets into the global namespace */
-    if (Tcl_Import(s->interp, Tcl_GetGlobalNamespace(s->interp),
-		   "::iwidgets::*", /* allowOverwrite */ 1) != TCL_OK) {
 	return TCL_ERROR;
     }
 

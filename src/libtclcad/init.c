@@ -161,19 +161,8 @@ tclcad_init_gui(Tcl_Interp *interp, struct bu_vls *tlog)
 	return TCL_ERROR;
     }
 
-    if (Tcl_Import(interp, Tcl_GetGlobalNamespace(interp),
-		"::itk::*", /* allowOverwrite */ 1) != TCL_OK ||
-	Tcl_Import(interp, Tcl_GetGlobalNamespace(interp),
-		"::iwidgets::*", /* allowOverwrite */ 1) != TCL_OK) {
-	if (tlog)
-	    bu_vls_printf(tlog, "Tcl_Import ERROR:\n%s\n", Tcl_GetStringResult(interp));
-	return TCL_ERROR;
-    }
-
     if (Tcl_Eval(interp,
-	    "auto_mkindex_parser::slavehook { _%@namespace import -force ::tk::* }") != TCL_OK ||
-	Tcl_Eval(interp,
-	    "auto_mkindex_parser::slavehook { _%@namespace import -force ::itk::* }") != TCL_OK) {
+	    "auto_mkindex_parser::slavehook { _%@namespace import -force ::tk::* }") != TCL_OK) {
 	if (tlog)
 	    bu_vls_printf(tlog, "Tcl_Eval ERROR:\n%s\n", Tcl_GetStringResult(interp));
 	return TCL_ERROR;

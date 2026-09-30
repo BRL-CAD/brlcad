@@ -126,7 +126,7 @@ package provide GraphEditor 1.0
     $itk_interior.pw_pane hide right
 
     itk_component add cadtree {
-	Hierarchy $itk_interior.cadtree \
+	::iwidgets::Hierarchy $itk_interior.cadtree \
 	    -markforeground blue \
 	    -markbackground red   \
 	    -selectforeground black \

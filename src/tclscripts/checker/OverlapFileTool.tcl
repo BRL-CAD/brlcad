@@ -97,7 +97,7 @@ package provide OverlapFileTool 1.0
 	ttk::frame $itk_interior.objFrame -padding 10
     } {}
     itk_component add objectsTree {
-	Hierarchy $itk_component(objFrame).objectsTree \
+	::iwidgets::Hierarchy $itk_component(objFrame).objectsTree \
 	    -labeltext "Double click to select/deselect objects" \
 	    -querycommand [::itcl::code $this getNodeChildren %n ] \
 	    -dblclickcommand [::itcl::code $this selectNode %n ] \
@@ -107,7 +107,7 @@ package provide OverlapFileTool 1.0
 	    -alwaysquery 1
     } {}
     itk_component add objectsList {
-	scrolledlistbox $itk_component(objFrame).objectsList \
+	::iwidgets::scrolledlistbox $itk_component(objFrame).objectsList \
 	    -labelpos n \
 	    -dblclickcommand [::itcl::code $this unmarkNode ] \
 	    -visibleitems 40x18 \

@@ -231,7 +231,7 @@ proc find_arc_center { sx sy ex ey radius center_is_left } {
 	    frame $itk_interior.controls -relief groove -bd 3
 	}
 	itk_component add notebook {
-	    tabnotebook $itk_component(controls).notebook -tabpos w -gap 3 \
+	    ::iwidgets::tabnotebook $itk_component(controls).notebook -tabpos w -gap 3 \
 		-raiseselect true -bevelamount 3 -borderwidth 3 \
 		-foreground \#ff0000
 	}
