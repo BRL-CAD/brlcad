@@ -432,10 +432,10 @@ db5_export_object3(
 {
     struct db5_ondisk_header *odp;
     register unsigned char *cp;
-    long namelen = 0;
+    size_t namelen = 0;
     size_t need;
     int h_width, n_width, a_width, b_width;
-    long togo;
+    size_t togo;
 
     /*
      * First, compute an upper bound on the size buffer needed.
@@ -444,7 +444,7 @@ db5_export_object3(
     need = sizeof(struct db5_ondisk_header);
     need += 8;	/* for object_length */
     if (name) {
-	namelen = (long)strlen(name) + 1;	/* includes null */
+	namelen = strlen(name) + 1;	/* includes null */
 	if (namelen > 1) {
 	    n_width = db5_select_length_encoding(namelen);
 	    need += namelen + ENCODE_LEN(n_width);
