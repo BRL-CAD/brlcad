@@ -23,9 +23,50 @@
 #	Control Panel for MGED's grid.
 #
 
+namespace eval ::brlcad::mged::grid {
+
+namespace export \
+    do_grid_anchor do_grid_spacing grid_control_reset grid_control_update \
+    grid_spacing_autosize_apply init_grid_control set_grid_spacing
+
+variable grid_control
+variable grid_control_anchor
+variable grid_control_spacing
+variable spacing_presets {
+    {Micrometer 4 micrometer}
+    {Millimeter 2 millimeter}
+    {Centimeter 0 centimeter}
+    {Decimeter 0 decimeter}
+    {Meter 0 meter}
+    {Kilometer 0 kilometer}
+    {}
+    {{1/10 Inch} 0 {1/10 inch}}
+    {{1/4 Inch} 2 {1/4 inch}}
+    {{1/2 Inch} 2 {1/2 inch}}
+    {Inch 0 inch}
+    {Foot 0 foot}
+    {Yard 0 yard}
+    {Mile 3 mile}
+}
+
+proc populate_spacing_menu {menu id callback} {
+    variable spacing_presets
+
+    foreach preset $spacing_presets {
+	if {![llength $preset]} {
+	    $menu add separator
+	    continue
+	}
+
+	lassign $preset label underline unit
+	$menu add command -label $label -underline $underline \
+	    -command [list $callback $id $unit]
+    }
+}
+
 proc do_grid_spacing { id spacing_type } {
     global mged_gui
-    global grid_control_spacing
+    variable grid_control_spacing
     global localunit
     global ::tk::Priv
 
@@ -49,12 +90,16 @@ proc do_grid_spacing { id spacing_type } {
 
     if {$spacing_type == "h"} {
 	label $top.resL -text "Horiz." -anchor w
-	entry $top.resE -relief sunken -width 12 -textvar grid_control_spacing($id,tick)
-	entry $top.maj_resE -relief sunken -width 12 -textvar grid_control_spacing($id,ticksPerMajor)
+	entry $top.resE -relief sunken -width 12 \
+	    -textvariable ::brlcad::mged::grid::grid_control_spacing($id,tick)
+	entry $top.maj_resE -relief sunken -width 12 \
+	    -textvariable ::brlcad::mged::grid::grid_control_spacing($id,ticksPerMajor)
     } elseif {$spacing_type == "v"} {
 	label $top.resL -text "Vert." -anchor w
-	entry $top.resE -relief sunken -width 12 -textvar grid_control_spacing($id,tick)
-	entry $top.maj_resE -relief sunken -width 12 -textvar grid_control_spacing($id,ticksPerMajor)
+	entry $top.resE -relief sunken -width 12 \
+	    -textvariable ::brlcad::mged::grid::grid_control_spacing($id,tick)
+	entry $top.maj_resE -relief sunken -width 12 \
+	    -textvariable ::brlcad::mged::grid::grid_control_spacing($id,ticksPerMajor)
     } elseif {$spacing_type == "b"} {
 	label $top.resL -text "Horiz. & Vert." -anchor w
 	hoc_register_data $top.resL "Horiz. & Vert."\
@@ -65,7 +110,8 @@ for both horizontal and vertical directions." } }
 tick in both the horizontal and vertical directions." } }
 	label $top.tickSpacingL -text "Tick Spacing\n($localunit/tick)"
 	hoc_register_data $top.tickSpacingL "Tick Spacing" $hoc_data
-	entry $top.resE -relief sunken -width 12 -textvar grid_control_spacing($id,tick)
+	entry $top.resE -relief sunken -width 12 \
+	    -textvariable ::brlcad::mged::grid::grid_control_spacing($id,tick)
 	hoc_register_data $top.resE "Tick Spacing" $hoc_data
 
 	set hoc_data { { summary "Major spacing is measured in ticks
@@ -73,7 +119,8 @@ and determines how often lines of
 ticks are drawn." } }
 	label $top.majorSpacingL -text "Major Spacing\n(ticks/major)"
 	hoc_register_data $top.majorSpacingL "Major Spacing" $hoc_data
-	entry $top.maj_resE -relief sunken -width 12 -textvar grid_control_spacing($id,ticksPerMajor)
+	entry $top.maj_resE -relief sunken -width 12 \
+	    -textvariable ::brlcad::mged::grid::grid_control_spacing($id,ticksPerMajor)
 	hoc_register_data $top.maj_resE "Major Spacing" $hoc_data
     } else {
 	catch {destroy $top}
@@ -81,29 +128,32 @@ ticks are drawn." } }
     }
 
     button $top.okB -relief raised -text "OK"\
-	-command "grid_spacing_ok $id $spacing_type $top"
+	-command [list ::brlcad::mged::grid::grid_spacing_ok \
+	    $id $spacing_type $top]
     hoc_register_data $top.okB "OK"\
 	{ { summary "Apply the grid spacing settings
 to the grid, then close the grid
 spacing control panel." } }
     button $top.applyB -relief raised -text "Apply"\
-	-command "grid_spacing_apply $id $spacing_type"
+	-command [list ::brlcad::mged::grid::grid_spacing_apply \
+	    $id $spacing_type]
     hoc_register_data $top.applyB "Apply"\
 	{ { summary "Apply the grid spacing settings
 to the grid." } }
     button $top.resetB -relief raised -text "Reset"\
-	-command "grid_spacing_reset $id $spacing_type"
+	-command [list ::brlcad::mged::grid::grid_spacing_reset \
+	    $id $spacing_type]
     hoc_register_data $top.resetB "Reset"\
 	{ { summary "Reset the control panel from the grid." } }
     button $top.autosizeB -relief raised -text "Autosize"\
-	-command "grid_spacing_autosize $id"
+	-command [list ::brlcad::mged::grid::grid_spacing_autosize $id]
     hoc_register_data $top.autosizeB "Autosize"\
 	{ { summary "Set the grid spacing according to the view
 size. The number of ticks will be between 20
 and 200. The tick spacing will be a power of
 10 in local units." } }
     button $top.dismissB -relief raised -text "Dismiss"\
-	-command "catch { destroy $top }"
+	-command [list catch [list destroy $top]]
     hoc_register_data $top.dismissB "Dismiss"\
 	{ { summary "Dismiss/close the grid spacing control panel." } }
 
@@ -127,13 +177,32 @@ and 200. The tick spacing will be a power of
     grid_spacing_reset $id $spacing_type
 
     place_near_mouse $top
-    wm protocol $top WM_DELETE_WINDOW "catch { destroy $top }"
+    wm protocol $top WM_DELETE_WINDOW [list catch [list destroy $top]]
     wm title $top "Grid Spacing ($id)"
+}
+
+proc anchor_apply {id} {
+    variable grid_control_anchor
+
+    mged_apply $id [list rset grid anchor {*}$grid_control_anchor($id)]
+}
+
+proc anchor_ok {id top} {
+    anchor_apply $id
+    catch {destroy $top}
+}
+
+proc anchor_reset {id} {
+    global mged_gui
+    variable grid_control_anchor
+
+    winset $mged_gui($id,active_dm)
+    set grid_control_anchor($id) [rset grid anchor]
 }
 
 proc do_grid_anchor { id } {
     global mged_gui
-    global grid_control_anchor
+    variable grid_control_anchor
     global ::tk::Priv
 
     if {[opendb] == ""} {
@@ -172,28 +241,27 @@ are in the view as well as a high degree of
 accuracy when snapping." } }
     label $top.anchorL -text "Anchor Point" -anchor e
     hoc_register_data $top.anchorL "Anchor Point" $hoc_data
-    entry $top.anchorE -relief sunken -bd 2 -width 12 -textvar grid_control_anchor($id)
+    entry $top.anchorE -relief sunken -bd 2 -width 12 \
+	-textvariable ::brlcad::mged::grid::grid_control_anchor($id)
     hoc_register_data $top.anchorE "Anchor Point" $hoc_data
 
     button $top.okB -relief raised -text "OK"\
-	-command "mged_apply $id \"rset grid anchor \\\$grid_control_anchor($id)\";
-		      catch { destroy $top }"
+	-command [list ::brlcad::mged::grid::anchor_ok $id $top]
     hoc_register_data $top.okB "OK"\
 	{ { summary "Apply the grid anchor control panel
 settings to the grid, then close the
 control panel." } }
     button $top.applyB -relief raised -text "Apply"\
-	-command "mged_apply $id \"rset grid anchor \\\$grid_control_anchor($id)\""
+	-command [list ::brlcad::mged::grid::anchor_apply $id]
     hoc_register_data $top.applyB "Apply"\
 	{ { summary "Apply the grid anchor control panel
 settings to the grid." } }
     button $top.resetB -relief raised -text "Reset"\
-	-command "winset \$mged_gui($id,active_dm);\
-	    set grid_control_anchor($id) \[rset grid anchor\]"
+	-command [list ::brlcad::mged::grid::anchor_reset $id]
     hoc_register_data $top.resetB "Reset"\
 	{ { summary "Reset the control panel from the grid." } }
     button $top.dismissB -relief raised -text "Dismiss"\
-	-command "catch { destroy $top }"
+	-command [list catch [list destroy $top]]
     hoc_register_data $top.dismissB "Dismiss"\
 	{ { summary "Dismiss/close the grid anchor control panel." } }
 
@@ -213,14 +281,14 @@ settings to the grid." } }
     grid columnconfigure $top 0 -weight 1
 
     place_near_mouse $top
-    wm protocol $top WM_DELETE_WINDOW "catch { destroy $top }"
+    wm protocol $top WM_DELETE_WINDOW [list catch [list destroy $top]]
     wm title $top "Grid Anchor Point ($id)"
 }
 
 proc init_grid_control { id } {
     global mged_gui
     global mged_default
-    global grid_control
+    variable grid_control
     global localunit
     global ::tk::Priv
 
@@ -256,16 +324,16 @@ proc init_grid_control { id } {
 	-tearoff $mged_default(tearoff_menus)
     # The help on context for the applyTo menu was already defined in openw.tcl
     $top.menubar.applyTo add radiobutton -value 0\
-	-variable mged_gui($id,apply_to)\
+	-variable ::mged_gui($id,apply_to)\
 	-label "Active Pane" -underline 0
     $top.menubar.applyTo add radiobutton -value 1\
-	-variable mged_gui($id,apply_to)\
+	-variable ::mged_gui($id,apply_to)\
 	-label "Local Panes" -underline 0
     $top.menubar.applyTo add radiobutton -value 2\
-	-variable mged_gui($id,apply_to)\
+	-variable ::mged_gui($id,apply_to)\
 	-label "Listed Panes" -underline 1
     $top.menubar.applyTo add radiobutton -value 3\
-	-variable mged_gui($id,apply_to)\
+	-variable ::mged_gui($id,apply_to)\
 	-label "All Panes" -underline 4
 
     frame $top.gridF1
@@ -298,7 +366,8 @@ attributes help determine how the grid is
 drawn and how snapping is performed." } }
     label $top.hL -text "Horiz." -anchor w
     hoc_register_data $top.hL "Horizontal Spacing" $hoc_data
-    entry $top.hE -relief flat -width 12 -textvar grid_control($id,rh)
+    entry $top.hE -relief flat -width 12 \
+	-textvariable ::brlcad::mged::grid::grid_control($id,rh)
     hoc_register_data $top.hE "Horizontal Tick Spacing" $hoc_data
     menubutton $top.hMB -relief raised -bd 2\
 	-menu $top.hMB.spacing -indicatoron 1
@@ -306,34 +375,10 @@ drawn and how snapping is performed." } }
 	{ { summary "Pops up a menu of distances to choose
 from for horizontal tick spacing." } }
     menu $top.hMB.spacing -title "Grid Spacing" -tearoff 0
-    $top.hMB.spacing add command -label "Micrometer" -underline 4\
-	-command "set_grid_spacing_htick $id micrometer"
-    $top.hMB.spacing add command -label "Millimeter" -underline 2\
-	-command "set_grid_spacing_htick $id millimeter"
-    $top.hMB.spacing add command -label "Centimeter" -underline 0\
-	-command "set_grid_spacing_htick $id centimeter"
-    $top.hMB.spacing add command -label "Decimeter" -underline 0\
-	-command "set_grid_spacing_htick $id decimeter"
-    $top.hMB.spacing add command -label "Meter" -underline 0\
-	-command "set_grid_spacing_htick $id meter"
-    $top.hMB.spacing add command -label "Kilometer" -underline 0\
-	-command "set_grid_spacing_htick $id kilometer"
-    $top.hMB.spacing add separator
-    $top.hMB.spacing add command -label "1/10 Inch" -underline 0\
-	-command "set_grid_spacing_htick $id \"1/10 inch\""
-    $top.hMB.spacing add command -label "1/4 Inch" -underline 2\
-	-command "set_grid_spacing_htick $id \"1/4 inch\""
-    $top.hMB.spacing add command -label "1/2 Inch" -underline 2\
-	-command "set_grid_spacing_htick $id \"1/2 inch\""
-    $top.hMB.spacing add command -label "Inch" -underline 0\
-	-command "set_grid_spacing_htick $id inch"
-    $top.hMB.spacing add command -label "Foot" -underline 0\
-	-command "set_grid_spacing_htick $id foot"
-    $top.hMB.spacing add command -label "Yard" -underline 0\
-	-command "set_grid_spacing_htick $id yard"
-    $top.hMB.spacing add command -label "Mile" -underline 3\
-	-command "set_grid_spacing_htick $id mile"
-    entry $top.maj_hE -relief flat -width 12 -textvar grid_control($id,mrh)
+    populate_spacing_menu $top.hMB.spacing $id \
+	::brlcad::mged::grid::set_grid_spacing_htick
+    entry $top.maj_hE -relief flat -width 12 \
+	-textvariable ::brlcad::mged::grid::grid_control($id,mrh)
     hoc_register_data $top.maj_hE "Horizontal Major Spacing"\
 	{ { summary "Enter horizontal major spacing here." } }
 
@@ -343,7 +388,8 @@ attributes help determine how the grid
 is drawn and how snapping is performed." } }
     label $top.vL -text "Vert." -anchor w
     hoc_register_data $top.vL "Vertical Spacing" $hoc_data
-    entry $top.vE -relief flat -width 12 -textvar grid_control($id,rv)
+    entry $top.vE -relief flat -width 12 \
+	-textvariable ::brlcad::mged::grid::grid_control($id,rv)
     hoc_register_data $top.vE "Vertical Tick Spacing" $hoc_data
     menubutton $top.vMB -relief raised -bd 2\
 	-menu $top.vMB.spacing -indicatoron 1
@@ -351,40 +397,17 @@ is drawn and how snapping is performed." } }
 	{ { summary "Pops up a menu of distances to choose from for
 vertical tick spacing." } }
     menu $top.vMB.spacing -title "Grid Spacing" -tearoff 0
-    $top.vMB.spacing add command -label "Micrometer" -underline 4\
-	-command "set_grid_spacing_vtick $id micrometer"
-    $top.vMB.spacing add command -label "Millimeter" -underline 2\
-	-command "set_grid_spacing_vtick $id millimeter"
-    $top.vMB.spacing add command -label "Centimeter" -underline 0\
-	-command "set_grid_spacing_vtick $id centimeter"
-    $top.vMB.spacing add command -label "Decimeter" -underline 0\
-	-command "set_grid_spacing_vtick $id decimeter"
-    $top.vMB.spacing add command -label "Meter" -underline 0\
-	-command "set_grid_spacing_vtick $id meter"
-    $top.vMB.spacing add command -label "Kilometer" -underline 0\
-	-command "set_grid_spacing_vtick $id kilometer"
-    $top.vMB.spacing add separator
-    $top.vMB.spacing add command -label "1/10 Inch" -underline 0\
-	-command "set_grid_spacing_vtick $id \"1/10 inch\""
-    $top.vMB.spacing add command -label "1/4 Inch" -underline 2\
-	-command "set_grid_spacing_vtick $id \"1/4 inch\""
-    $top.vMB.spacing add command -label "1/2 Inch" -underline 2\
-	-command "set_grid_spacing_vtick $id \"1/2 inch\""
-    $top.vMB.spacing add command -label "Inch" -underline 0\
-	-command "set_grid_spacing_vtick $id inch"
-    $top.vMB.spacing add command -label "Foot" -underline 0\
-	-command "set_grid_spacing_vtick $id foot"
-    $top.vMB.spacing add command -label "Yard" -underline 0\
-	-command "set_grid_spacing_vtick $id yard"
-    $top.vMB.spacing add command -label "Mile" -underline 3\
-	-command "set_grid_spacing_vtick $id mile"
-    entry $top.maj_vE -relief flat -width 12 -textvar grid_control($id,mrv)
+    populate_spacing_menu $top.vMB.spacing $id \
+	::brlcad::mged::grid::set_grid_spacing_vtick
+    entry $top.maj_vE -relief flat -width 12 \
+	-textvariable ::brlcad::mged::grid::grid_control($id,mrv)
     hoc_register_data $top.maj_vE "Vertical Major Spacing"\
 	{ { summary "Enter vertical major spacing here." } }
 
     checkbutton $top.squareGridCB -relief flat -text "Square Grid"\
-	-offvalue 0 -onvalue 1 -variable grid_control($id,square)\
-	-command "set_grid_square $id"
+	-offvalue 0 -onvalue 1 \
+	-variable ::brlcad::mged::grid::grid_control($id,square)\
+	-command [list ::brlcad::mged::grid::set_grid_square $id]
     hoc_register_data $top.squareGridCB "Square Grid"\
 	{ { synopsis "Toggle square grid mode." }
 	    { description "In square grid mode the horizontal and
@@ -406,7 +429,8 @@ are in the view as well as a high degree of
 accuracy when snapping." } }
     label $top.anchorL -text "Anchor Point" -anchor e
     hoc_register_data $top.anchorL "Grid Anchor Point" $hoc_data
-    entry $top.anchorE -relief sunken -bd 2 -width 12 -textvar grid_control($id,anchor)
+    entry $top.anchorE -relief sunken -bd 2 -width 12 \
+	-textvariable ::brlcad::mged::grid::grid_control($id,anchor)
     hoc_register_data $top.anchorE "Grid Anchor Point" $hoc_data
 
     label $top.gridEffectsL -text "Grid Effects" -anchor w
@@ -416,7 +440,8 @@ it can be used for snapping. Note - the
 grid exists whether it is drawn or not." } }
 
     checkbutton $top.drawCB -relief flat -text "Draw"\
-	-offvalue 0 -onvalue 1 -variable grid_control($id,draw)
+	-offvalue 0 -onvalue 1 \
+	-variable ::brlcad::mged::grid::grid_control($id,draw)
     hoc_register_data $top.drawCB "Draw Grid"\
 	{ { synopsis "Toggle drawing the grid." }
 	    { description "The grid is a lattice of points over the pane
@@ -427,7 +452,8 @@ the user." }
 	    { see_also "rset" } }
 
     checkbutton $top.snapCB -relief flat -text "Snap"\
-	    -offvalue 0 -onvalue 1 -variable grid_control($id,snap)
+	    -offvalue 0 -onvalue 1 \
+	    -variable ::brlcad::mged::grid::grid_control($id,snap)
     hoc_register_data $top.snapCB "Snap To Grid"\
 	    { { synopsis "Toggle grid snapping." }
 	      { description "When snapping to grid, the internal routines
@@ -438,26 +464,26 @@ transforming the view or editing solids/matrices." }
 	    { see_also "rset" } }
 
     button $top.okB -relief raised -text "OK"\
-	    -command "grid_control_ok $id $top"
+	    -command [list ::brlcad::mged::grid::grid_control_ok $id $top]
     hoc_register_data $top.okB "OK"\
 	    { { summary "Apply grid control panel settings to
 the grid, then close the control panel." } }
     button $top.applyB -relief raised -text "Apply"\
-	    -command "grid_control_apply $id"
+	    -command [list ::brlcad::mged::grid::grid_control_apply $id]
     hoc_register_data $top.applyB "Apply"\
 	    { { summary "Apply grid control panel settings to the grid." } }
     button $top.resetB -relief raised -text "Reset"\
-	    -command "grid_control_reset $id"
+	    -command [list ::brlcad::mged::grid::grid_control_reset $id]
     hoc_register_data $top.resetB "Reset"\
 	    { { summary "Reset the control panel from the grid." } }
     button $top.autosizeB -relief raised -text "Autosize"\
-	    -command "grid_control_autosize $id"
+	    -command [list ::brlcad::mged::grid::grid_control_autosize $id]
     hoc_register_data $top.autosizeB "Autosize"\
 	    { { summary "Set the grid spacing according to the view
 size. The number of ticks will be between 20 and 200.
 The tick spacing will be a power of 10 in local units." } }
     button $top.dismissB -relief raised -text "Dismiss"\
-	    -command "catch { destroy $top }"
+	    -command [list catch [list destroy $top]]
     hoc_register_data $top.dismissB "Dismiss"\
 	    { { summary "Dismiss/close the grid control panel." } }
 
@@ -537,7 +563,7 @@ The tick spacing will be a power of 10 in local units." } }
     set_grid_square $id
 
     place_near_mouse $top
-    wm protocol $top WM_DELETE_WINDOW "catch { destroy $top }"
+    wm protocol $top WM_DELETE_WINDOW [list catch [list destroy $top]]
     wm title $top "Grid Control Panel ($id)"
 }
 
@@ -547,29 +573,23 @@ proc grid_control_ok { id top } {
 }
 
 proc grid_control_apply { id } {
-    global grid_control
+    variable grid_control
     global mged_gui
 
     if {$grid_control($id,square)} {
-	mged_apply $id "rset grid anchor $grid_control($id,anchor);\
-		rset grid rh $grid_control($id,rh);\
-		rset grid mrh $grid_control($id,mrh);\
-		rset grid rv $grid_control($id,rh);\
-		rset grid mrv $grid_control($id,mrh);\
-		rset grid snap $grid_control($id,snap);\
-		rset grid draw $grid_control($id,draw)"
-
 	set grid_control($id,rv) $grid_control($id,rh)
 	set grid_control($id,mrv) $grid_control($id,mrh)
-    } else {
-	mged_apply $id "rset grid anchor $grid_control($id,anchor);\
-		rset grid rh $grid_control($id,rh);\
-		rset grid mrh $grid_control($id,mrh);\
-		rset grid rv $grid_control($id,rv);\
-		rset grid mrv $grid_control($id,mrv);\
-		rset grid snap $grid_control($id,snap);\
-		rset grid draw $grid_control($id,draw)"
     }
+
+    set commands [list \
+	[list rset grid anchor {*}$grid_control($id,anchor)] \
+	[list rset grid rh $grid_control($id,rh)] \
+	[list rset grid mrh $grid_control($id,mrh)] \
+	[list rset grid rv $grid_control($id,rv)] \
+	[list rset grid mrv $grid_control($id,mrv)] \
+	[list rset grid snap $grid_control($id,snap)] \
+	[list rset grid draw $grid_control($id,draw)]]
+    mged_apply $id [join $commands {; }]
 
     # update the main GUI
     set mged_gui($id,grid_draw) $grid_control($id,draw)
@@ -578,7 +598,7 @@ proc grid_control_apply { id } {
 
 proc grid_control_reset { id } {
     global mged_gui
-    global grid_control
+    variable grid_control
 
     if ![winfo exists .$id.grid_control] {
 	return
@@ -589,9 +609,9 @@ proc grid_control_reset { id } {
     set grid_control($id,draw) [rset grid draw]
     set grid_control($id,snap) [rset grid snap]
     set grid_control($id,anchor) [rset grid anchor]
-    set grid_control($id,rh) [eval format "%.5f" [rset grid rh]]
+    set grid_control($id,rh) [format %.5f [rset grid rh]]
     set grid_control($id,mrh) [rset grid mrh]
-    set grid_control($id,rv) [eval format "%.5f" [rset grid rv]]
+    set grid_control($id,rv) [format %.5f [rset grid rv]]
     set grid_control($id,mrv) [rset grid mrv]
 
     if {$grid_control($id,rh) != $grid_control($id,rv) ||\
@@ -605,23 +625,27 @@ proc grid_control_reset { id } {
 }
 
 proc set_grid_square { id } {
-    global grid_control
+    variable grid_control
 
     set top .$id.grid_control
     if [winfo exists $top] {
 	if {$grid_control($id,square)} {
-	    $top.vE configure -textvar grid_control($id,rh)
-	    $top.maj_vE configure -textvar grid_control($id,mrh)
+	    $top.vE configure -textvariable \
+		::brlcad::mged::grid::grid_control($id,rh)
+	    $top.maj_vE configure -textvariable \
+		::brlcad::mged::grid::grid_control($id,mrh)
 	} else {
-	    $top.vE configure -textvar grid_control($id,rv)
-	    $top.maj_vE configure -textvar grid_control($id,mrv)
+	    $top.vE configure -textvariable \
+		::brlcad::mged::grid::grid_control($id,rv)
+	    $top.maj_vE configure -textvariable \
+		::brlcad::mged::grid::grid_control($id,mrv)
 	}
     }
 }
 
 proc grid_control_update { sf } {
     global mged_players
-    global grid_control
+    variable grid_control
     global localunit
 
     if ![info exists mged_players] {
@@ -659,7 +683,8 @@ proc grid_control_update { sf } {
     }
 }
 
-proc grid_autosize {} {
+proc grid_autosize {id} {
+    global mged_gui
     global ::tk::Priv
 
     if {[opendb] == ""} {
@@ -686,7 +711,7 @@ proc grid_autosize {} {
 
 proc grid_spacing_autosize { id } {
     global mged_gui
-    global grid_control_spacing
+    variable grid_control_spacing
     global ::tk::Priv
 
     if {[opendb] == ""} {
@@ -696,18 +721,29 @@ proc grid_spacing_autosize { id } {
     }
 
     winset $mged_gui($id,active_dm)
-    set val [grid_autosize]
+    set val [grid_autosize $id]
+    if {$val eq ""} {
+	return
+    }
 
     set grid_control_spacing($id,tick) $val
     set grid_control_spacing($id,ticksPerMajor) 10
 }
 
+proc grid_spacing_autosize_apply {id} {
+    grid_spacing_autosize $id
+    grid_spacing_apply $id b
+}
+
 proc grid_control_autosize { id } {
     global mged_gui
-    global grid_control
+    variable grid_control
 
     winset $mged_gui($id,active_dm)
-    set val [grid_autosize]
+    set val [grid_autosize $id]
+    if {$val eq ""} {
+	return
+    }
 
     set grid_control($id,rh) $val
     set grid_control($id,rv) $val
@@ -721,45 +757,54 @@ proc grid_spacing_ok { id spacing_type top } {
 }
 
 proc grid_spacing_apply { id spacing_type } {
-    global mged_gui
-    global grid_control_spacing
+    variable grid_control_spacing
 
     if {[opendb] == ""} {
 	return
     }
 
-    if {$spacing_type == "h"} {
-	mged_apply $id "rset grid rh $grid_control_spacing($id,tick);\
-		rset grid mrh $grid_control_spacing($id,ticksPerMajor)"
-    } elseif {$spacing_type == "v"} {
-	mged_apply $id "rset grid rv $grid_control_spacing($id,tick);\
-		rset grid mrv $grid_control_spacing($id,ticksPerMajor)"
-    } else {
-	mged_apply $id "rset grid rh $grid_control_spacing($id,tick);\
-		rset grid mrh $grid_control_spacing($id,ticksPerMajor);\
-		rset grid rv $grid_control_spacing($id,tick);\
-		rset grid mrv $grid_control_spacing($id,ticksPerMajor)"
+    switch -- $spacing_type {
+	h {
+	    set settings {{rh tick} {mrh ticksPerMajor}}
+	}
+	v {
+	    set settings {{rv tick} {mrv ticksPerMajor}}
+	}
+	default {
+	    set settings {
+		{rh tick} {mrh ticksPerMajor}
+		{rv tick} {mrv ticksPerMajor}
+	    }
+	}
     }
+
+    set commands {}
+    foreach setting $settings {
+	lassign $setting name state
+	lappend commands \
+	    [list rset grid $name $grid_control_spacing($id,$state)]
+    }
+    mged_apply $id [join $commands {; }]
 }
 
 proc grid_spacing_reset { id spacing_type } {
     global mged_gui
-    global grid_control_spacing
+    variable grid_control_spacing
 
     winset $mged_gui($id,active_dm)
 
-    if {$spacing_type == "v"} {
-	set grid_control_spacing($id,tick) [eval format "%.5f" [rset grid rv]]
-	set grid_control_spacing($id,ticksPerMajor) [eval format "%.5f" [rset grid mrv]]
+    if {$spacing_type eq "v"} {
+	set grid_control_spacing($id,tick) [format %.5f [rset grid rv]]
+	set grid_control_spacing($id,ticksPerMajor) [format %.5f [rset grid mrv]]
     } else {
-	set grid_control_spacing($id,tick) [eval format "%.5f" [rset grid rh]]
-	set grid_control_spacing($id,ticksPerMajor) [eval format "%.5f" [rset grid mrh]]
+	set grid_control_spacing($id,tick) [format %.5f [rset grid rh]]
+	set grid_control_spacing($id,ticksPerMajor) [format %.5f [rset grid mrh]]
     }
 }
 
 proc set_grid_spacing { id grid_unit apply } {
     global mged_gui
-    global grid_control
+    variable grid_control
     global ::tk::Priv
 
     if {[opendb] == ""} {
@@ -771,8 +816,12 @@ proc set_grid_spacing { id grid_unit apply } {
     set_grid_res res res_major $grid_unit
 
     if {$apply} {
-	mged_apply $id "rset grid rh $res; rset grid rv $res;\
-		rset grid mrh $res_major; rset grid mrv $res_major"
+	set commands [list \
+	    [list rset grid rh $res] \
+	    [list rset grid rv $res] \
+	    [list rset grid mrh $res_major] \
+	    [list rset grid mrv $res_major]]
+	mged_apply $id [join $commands {; }]
     } else {
 	set grid_control($id,rh) $res
 	set grid_control($id,rv) $res
@@ -783,7 +832,7 @@ proc set_grid_spacing { id grid_unit apply } {
 
 proc set_grid_spacing_htick { id grid_unit } {
     global mged_gui
-    global grid_control
+    variable grid_control
     global ::tk::Priv
 
     if {[opendb] == ""} {
@@ -805,7 +854,7 @@ proc set_grid_spacing_htick { id grid_unit } {
 
 proc set_grid_spacing_vtick { id grid_unit } {
     global mged_gui
-    global grid_control
+    variable grid_control
     global ::tk::Priv
 
     if {[opendb] == ""} {
@@ -885,6 +934,26 @@ proc set_grid_res { r rm grid_unit } {
 	}
     }
 
+}
+
+}
+
+# Retain the historical control-panel and C callback entry points while the
+# implementation and state live in their owning namespace.
+proc do_grid_spacing {id spacing_type} {
+    tailcall ::brlcad::mged::grid::do_grid_spacing $id $spacing_type
+}
+
+proc do_grid_anchor {id} {
+    tailcall ::brlcad::mged::grid::do_grid_anchor $id
+}
+
+proc init_grid_control {id} {
+    tailcall ::brlcad::mged::grid::init_grid_control $id
+}
+
+proc grid_control_update {sf} {
+    tailcall ::brlcad::mged::grid::grid_control_update $sf
 }
 
 # Local Variables:

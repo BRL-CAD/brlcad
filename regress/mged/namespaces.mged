@@ -8,6 +8,7 @@ foreach package {brlcad::help brlcad::vmath} {
 
 foreach command {
     ::brlcad::mged::font::font_init
+    ::brlcad::mged::grid::init_grid_control
     ::brlcad::mged::shader::is_good_shader
 } {
     if {![auto_load $command]} {
@@ -17,7 +18,8 @@ foreach command {
 
 foreach namespace {
     ::brlcad ::brlcad::ged ::brlcad::help ::brlcad::mged
-    ::brlcad::mged::font ::brlcad::mged::shader ::brlcad::vmath
+    ::brlcad::mged::font ::brlcad::mged::grid ::brlcad::mged::shader
+    ::brlcad::vmath
 } {
     if {![namespace exists $namespace]} {
 	error "FAIL missing namespace $namespace"
@@ -106,6 +108,47 @@ if {![::brlcad::mged::shader::is_good_shader air] || ![is_good_shader air]} {
 array unset ::brlcad::mged::shader::shader_params $shader_id,*
 unset shader_id shader_result
 unset expected_font_exports expected_shader_exports font_exports shader_exports
+
+foreach command {
+    ::brlcad::mged::grid::do_grid_anchor
+    ::brlcad::mged::grid::do_grid_spacing
+    ::brlcad::mged::grid::grid_control_reset
+    ::brlcad::mged::grid::grid_control_update
+    ::brlcad::mged::grid::grid_spacing_autosize_apply
+    ::brlcad::mged::grid::init_grid_control
+    ::brlcad::mged::grid::set_grid_spacing
+    do_grid_anchor do_grid_spacing grid_control_update init_grid_control
+} {
+    if {![llength [info commands $command]]} {
+	error "FAIL missing grid command $command"
+    }
+}
+set grid_exports [lsort [namespace eval ::brlcad::mged::grid {
+    namespace export
+}]]
+set expected_grid_exports [lsort {
+    do_grid_anchor do_grid_spacing grid_control_reset grid_control_update
+    grid_spacing_autosize_apply init_grid_control set_grid_spacing
+}]
+if {$grid_exports ne $expected_grid_exports} {
+    error "FAIL grid exports are: $grid_exports"
+}
+foreach command {
+    grid_autosize grid_control_apply grid_spacing_apply set_grid_res
+    set_grid_square
+} {
+    if {[llength [info commands ::$command]] || [auto_load ::$command]} {
+	error "FAIL private grid command is global: ::$command"
+    }
+}
+foreach variable {
+    grid_control grid_control_anchor grid_control_spacing
+} {
+    if {[info exists ::$variable]} {
+	error "FAIL grid state remains global: ::$variable"
+    }
+}
+unset expected_grid_exports grid_exports
 
 set object namespaces_sphere.s
 ::brlcad::mged in $object sph 0 0 0 1

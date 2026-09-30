@@ -127,7 +127,8 @@ proc ::mged::xmin::exercise_view_ring {id top} {
 }
 
 proc ::mged::xmin::exercise_grid {id top} {
-    global grid_control mged_gui
+    global mged_gui
+    upvar #0 ::brlcad::mged::grid::grid_control grid_control
 
     invoke $top {Tools {Grid Control Panel}}
     set panel $top.grid_control

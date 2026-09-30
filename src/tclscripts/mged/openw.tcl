@@ -1335,7 +1335,7 @@ hoc_register_menu_data "Create" "$ptype..." "Make a $ptype" $ksl
 
     menu .$id.menubar.settings.grid -title "Grid" -tearoff $mged_default(tearoff_menus)
     .$id.menubar.settings.grid add command -label "Anchor" -underline 0\
-	-command "do_grid_anchor $id"
+	-command [list ::brlcad::mged::grid::do_grid_anchor $id]
     hoc_register_menu_data "Grid" "Anchor" "Grid Anchor"\
 	{ { summary "Pops up the grid anchor entry dialog." }
 	    { see_also "rset" } }
@@ -1366,14 +1366,14 @@ hoc_register_menu_data "Create" "$ptype..." "Make a $ptype" $ksl
 
     menu .$id.menubar.settings.grid.spacing -title "Grid Spacing" -tearoff $mged_default(tearoff_menus)
     .$id.menubar.settings.grid.spacing add command -label "Autosize" -underline 0\
-	-command "grid_spacing_autosize $id; grid_spacing_apply $id b"
+	-command [list ::brlcad::mged::grid::grid_spacing_autosize_apply $id]
     hoc_register_menu_data "Grid Spacing" "Autosize" "Grid Spacing - Autosize"\
 	{ { summary "Set the grid spacing according to the current view size.
 	The number of ticks will be between 20 and 200 in user units.
 	The major spacing will be set to 10 ticks per major." }
 	    { see_also "rset" } }
     .$id.menubar.settings.grid.spacing add command -label "Arbitrary" -underline 1\
-	-command "do_grid_spacing $id b"
+	-command [list ::brlcad::mged::grid::do_grid_spacing $id b]
     hoc_register_menu_data "Grid Spacing" "Arbitrary" "Grid Spacing - Arbitrary"\
 	{ { summary "Pops up the grid spacing entry dialog. The user
 	can use this to set both the horizontal and
@@ -1381,80 +1381,80 @@ hoc_register_menu_data "Create" "$ptype..." "Make a $ptype" $ksl
 	    { see_also "rset" } }
     .$id.menubar.settings.grid.spacing add separator
     .$id.menubar.settings.grid.spacing add command -label "Micrometer" -underline 4\
-	-command "set_grid_spacing $id micrometer 1"
+	-command [list ::brlcad::mged::grid::set_grid_spacing $id micrometer 1]
     hoc_register_menu_data "Grid Spacing" "Micrometer" "Grid Spacing - Micrometer"\
 	{ { summary "Set the horizontal and vertical tick
 	spacing to 1 micrometer." }
 	    { see_also "rset" } }
     .$id.menubar.settings.grid.spacing add command -label "Millimeter" -underline 2\
-	-command "set_grid_spacing $id millimeter 1"
+	-command [list ::brlcad::mged::grid::set_grid_spacing $id millimeter 1]
     hoc_register_menu_data "Grid Spacing" "Millimeter" "Grid Spacing - Millimeter"\
 	{ { summary "Set the horizontal and vertical tick
 	spacing to 1 millimeter." }
 	    { see_also "rset" } }
     .$id.menubar.settings.grid.spacing add command -label "Centimeter" -underline 0\
-	-command "set_grid_spacing $id centimeter 1"
+	-command [list ::brlcad::mged::grid::set_grid_spacing $id centimeter 1]
     hoc_register_menu_data "Grid Spacing" "Centimeter" "Grid Spacing - Centimeter"\
 	{ { summary "Set the horizontal and vertical tick
 	spacing to 1 centimeter." }
 	    { see_also "rset" } }
     .$id.menubar.settings.grid.spacing add command -label "Decimeter" -underline 0\
-	-command "set_grid_spacing $id decimeter 1"
+	-command [list ::brlcad::mged::grid::set_grid_spacing $id decimeter 1]
     hoc_register_menu_data "Grid Spacing" "Decimeter" "Grid Spacing - Decimeter"\
 	{ { summary "Set the horizontal and vertical tick
 	spacing to 1 decimeter." }
 	    { see_also "rset" } }
     .$id.menubar.settings.grid.spacing add command -label "Meter" -underline 0\
-	-command "set_grid_spacing $id meter 1"
+	-command [list ::brlcad::mged::grid::set_grid_spacing $id meter 1]
     hoc_register_menu_data "Grid Spacing" "Meter" "Grid Spacing - Meter"\
 	{ { summary "Set the horizontal and vertical tick
 	spacing to 1 meter." }
 	    { see_also "rset" } }
     .$id.menubar.settings.grid.spacing add command -label "Kilometer" -underline 0\
-	-command "set_grid_spacing $id kilometer 1"
+	-command [list ::brlcad::mged::grid::set_grid_spacing $id kilometer 1]
     hoc_register_menu_data "Grid Spacing" "Kilometer" "Grid Spacing - Kilometer"\
 	{ { summary "Set the horizontal and vertical tick
 	spacing to 1 kilometer." }
 	    { see_also "rset" } }
     .$id.menubar.settings.grid.spacing add separator
     .$id.menubar.settings.grid.spacing add command -label "1/10 Inch" -underline 0\
-	-command "set_grid_spacing $id \"1/10 inch\" 1"
+	-command [list ::brlcad::mged::grid::set_grid_spacing $id {1/10 inch} 1]
     hoc_register_menu_data "Grid Spacing" "1/10 Inch" "Grid Spacing - 1/10 Inch"\
 	{ { summary "Set the horizontal and vertical tick
 	spacing to 1/10 inches." }
 	    { see_also "rset" } }
     .$id.menubar.settings.grid.spacing add command -label "1/4 Inch" -underline 2\
-	-command "set_grid_spacing $id \"1/4 inch\" 1"
+	-command [list ::brlcad::mged::grid::set_grid_spacing $id {1/4 inch} 1]
     hoc_register_menu_data "Grid Spacing" "1/4 Inch" "Grid Spacing - 1/4 Inch"\
 	{ { summary "Set the horizontal and vertical tick
 	spacing to 1/4 inches." }
 	    { see_also "rset" } }
     .$id.menubar.settings.grid.spacing add command -label "1/2 Inch" -underline 2\
-	-command "set_grid_spacing $id \"1/2 inch\" 1"
+	-command [list ::brlcad::mged::grid::set_grid_spacing $id {1/2 inch} 1]
     hoc_register_menu_data "Grid Spacing" "1/2 Inch" "Grid Spacing - 1/2 Inch"\
 	{ { summary "Set the horizontal and vertical tick
 	spacing to 1/2 inches." }
 	    { see_also "rset" } }
     .$id.menubar.settings.grid.spacing add command -label "Inch" -underline 0\
-	-command "set_grid_spacing $id inch 1"
+	-command [list ::brlcad::mged::grid::set_grid_spacing $id inch 1]
     hoc_register_menu_data "Grid Spacing" "Inch" "Grid Spacing - Inch"\
 	{ { summary "Set the horizontal and vertical tick
 	spacing to 1 inch." }
 	    { see_also "rset" } }
     .$id.menubar.settings.grid.spacing add command -label "Foot" -underline 0\
-	-command "set_grid_spacing $id foot 1"
+	-command [list ::brlcad::mged::grid::set_grid_spacing $id foot 1]
     hoc_register_menu_data "Grid Spacing" "Foot" "Grid Spacing - Foot"\
 	{ { summary "Set the horizontal and vertical tick
 	spacing to 1 foot." }
 	    { see_also "rset" } }
     .$id.menubar.settings.grid.spacing add command -label "Yard" -underline 0\
-	-command "set_grid_spacing $id yard 1"
+	-command [list ::brlcad::mged::grid::set_grid_spacing $id yard 1]
     hoc_register_menu_data "Grid Spacing" "Yard" "Grid Spacing - Yard"\
 	{ { summary "Set the horizontal and vertical tick
 	spacing to 1 yard." }
 	    { see_also "rset" } }
     .$id.menubar.settings.grid.spacing add command -label "Mile" -underline 3\
-	-command "set_grid_spacing $id mile 1"
+	-command [list ::brlcad::mged::grid::set_grid_spacing $id mile 1]
     hoc_register_menu_data "Grid Spacing" "Mile" "Grid Spacing - Mile"\
 	{ { summary "Set the horizontal and vertical tick
 	spacing to 1 mile." }
@@ -1465,37 +1465,37 @@ hoc_register_menu_data "Create" "$ptype..." "Make a $ptype" $ksl
     #
     menu .$id.menubar.settings.grid_spacing -title "Grid Spacing" -tearoff $mged_default(tearoff_menus)
     .$id.menubar.settings.grid_spacing add command -label "Autosize" -underline 0\
-	-command "grid_spacing_autosize $id; grid_spacing_apply $id b"
+	-command [list ::brlcad::mged::grid::grid_spacing_autosize_apply $id]
     .$id.menubar.settings.grid_spacing add command -label "Arbitrary" -underline 1\
-	-command "do_grid_spacing $id b"
+	-command [list ::brlcad::mged::grid::do_grid_spacing $id b]
     .$id.menubar.settings.grid_spacing add separator
     .$id.menubar.settings.grid_spacing add command -label "Micrometer" -underline 4\
-	-command "set_grid_spacing $id micrometer 1"
+	-command [list ::brlcad::mged::grid::set_grid_spacing $id micrometer 1]
     .$id.menubar.settings.grid_spacing add command -label "Millimeter" -underline 2\
-	-command "set_grid_spacing $id millimeter 1"
+	-command [list ::brlcad::mged::grid::set_grid_spacing $id millimeter 1]
     .$id.menubar.settings.grid_spacing add command -label "Centimeter" -underline 0\
-	-command "set_grid_spacing $id centimeter 1"
+	-command [list ::brlcad::mged::grid::set_grid_spacing $id centimeter 1]
     .$id.menubar.settings.grid_spacing add command -label "Decimeter" -underline 0\
-	-command "set_grid_spacing $id decimeter 1"
+	-command [list ::brlcad::mged::grid::set_grid_spacing $id decimeter 1]
     .$id.menubar.settings.grid_spacing add command -label "Meter" -underline 0\
-	-command "set_grid_spacing $id meter 1"
+	-command [list ::brlcad::mged::grid::set_grid_spacing $id meter 1]
     .$id.menubar.settings.grid_spacing add command -label "Kilometer" -underline 0\
-	-command "set_grid_spacing $id kilometer 1"
+	-command [list ::brlcad::mged::grid::set_grid_spacing $id kilometer 1]
     .$id.menubar.settings.grid_spacing add separator
     .$id.menubar.settings.grid_spacing add command -label "1/10 Inch" -underline 0\
-	-command "set_grid_spacing $id \"1/10 inch\" 1"
+	-command [list ::brlcad::mged::grid::set_grid_spacing $id {1/10 inch} 1]
     .$id.menubar.settings.grid_spacing add command -label "1/4 Inch" -underline 2\
-	-command "set_grid_spacing $id \"1/4 inch\" 1"
+	-command [list ::brlcad::mged::grid::set_grid_spacing $id {1/4 inch} 1]
     .$id.menubar.settings.grid_spacing add command -label "1/2 Inch" -underline 2\
-	-command "set_grid_spacing $id \"1/2 inch\" 1"
+	-command [list ::brlcad::mged::grid::set_grid_spacing $id {1/2 inch} 1]
     .$id.menubar.settings.grid_spacing add command -label "Inch" -underline 0\
-	-command "set_grid_spacing $id inch 1"
+	-command [list ::brlcad::mged::grid::set_grid_spacing $id inch 1]
     .$id.menubar.settings.grid_spacing add command -label "Foot" -underline 0\
-	-command "set_grid_spacing $id foot 1"
+	-command [list ::brlcad::mged::grid::set_grid_spacing $id foot 1]
     .$id.menubar.settings.grid_spacing add command -label "Yard" -underline 0\
-	-command "set_grid_spacing $id yard 1"
+	-command [list ::brlcad::mged::grid::set_grid_spacing $id yard 1]
     .$id.menubar.settings.grid_spacing add command -label "Mile" -underline 3\
-	-command "set_grid_spacing $id mile 1"
+	-command [list ::brlcad::mged::grid::set_grid_spacing $id mile 1]
 
     menu .$id.menubar.settings.coord -title "Constraint Coords" -tearoff $mged_default(tearoff_menus)
     .$id.menubar.settings.coord add radiobutton -value m -variable mged_gui($id,coords)\
@@ -1829,7 +1829,7 @@ hoc_register_menu_data "Create" "$ptype..." "Make a $ptype" $ksl
 	    { see_also "adc" } }
 
     .$id.menubar.tools add command -label "Grid Control Panel" -underline 0\
-	-command "init_grid_control $id"
+	-command [list ::brlcad::mged::grid::init_grid_control $id]
     hoc_register_menu_data "Tools" "Grid Control Panel" "Grid Control Panel"\
 	{ { summary "Tool for setting grid parameters." }
 	    { see_also "rset" } }
@@ -2560,7 +2560,7 @@ proc set_active_dm { id } {
     adc_load $id
 
     # update grid control panel
-    grid_control_reset $id
+    ::brlcad::mged::grid::grid_control_reset $id
 
     # update query ray control panel
     qray_reset $id
