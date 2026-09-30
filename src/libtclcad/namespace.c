@@ -32,9 +32,18 @@
 #include "tclcad.h"
 
 
+struct tclcad_namespace_entry {
+    const char *name;
+    const char *legacy_name;
+    Tcl_CmdProc *string_func;
+    Tcl_ObjCmdProc *object_func;
+    ClientData client_data;
+};
+
+
 struct tclcad_namespace_cmd {
     size_t command_count;
-    struct tclcad_cmdtab *commands;
+    struct tclcad_namespace_entry *commands;
 };
 
 
@@ -52,10 +61,10 @@ tclcad_namespace_cmd_delete(ClientData client_data)
     size_t i;
 
     for (i = 0; i < namespace_cmd->command_count; i++) {
-	bu_free((void *)namespace_cmd->commands[i].tcc_name,
+	bu_free((void *)namespace_cmd->commands[i].name,
 		"Tcl command namespace subcommand name");
-	if (namespace_cmd->commands[i].tcc_legacy_name) {
-	    bu_free((void *)namespace_cmd->commands[i].tcc_legacy_name,
+	if (namespace_cmd->commands[i].legacy_name) {
+	    bu_free((void *)namespace_cmd->commands[i].legacy_name,
 		    "legacy Tcl command name");
 	}
     }
@@ -97,6 +106,30 @@ tclcad_call_cmd(Tcl_Interp *interp, Tcl_CmdProc *func,
 
 
 static int
+tclcad_call_objcmd(Tcl_Interp *interp, Tcl_ObjCmdProc *func,
+	ClientData client_data, const char *command_name, int objc,
+	Tcl_Obj *const objv[], int first_arg)
+{
+    Tcl_Obj **call_objv;
+    int call_objc = objc - first_arg + 1;
+    int i;
+    int ret;
+
+    call_objv = (Tcl_Obj **)bu_calloc((size_t)call_objc, sizeof(Tcl_Obj *),
+	    "Tcl object command arguments");
+    call_objv[0] = Tcl_NewStringObj(command_name, -1);
+    Tcl_IncrRefCount(call_objv[0]);
+    for (i = first_arg; i < objc; i++)
+	call_objv[i - first_arg + 1] = objv[i];
+
+    ret = func(client_data, interp, call_objc, call_objv);
+    Tcl_DecrRefCount(call_objv[0]);
+    bu_free(call_objv, "Tcl object command arguments");
+    return ret;
+}
+
+
+static int
 tclcad_legacy_cmd_dispatch(ClientData client_data, Tcl_Interp *interp,
 	int objc, Tcl_Obj *const objv[])
 {
@@ -124,12 +157,16 @@ tclcad_namespace_cmd_dispatch(ClientData client_data, Tcl_Interp *interp,
 
     subcommand = Tcl_GetString(objv[1]);
     for (i = 0; i < namespace_cmd->command_count; i++) {
-	struct tclcad_cmdtab *cmd = &namespace_cmd->commands[i];
-	if (BU_STR_EQUAL(cmd->tcc_name, subcommand)) {
-	    const char *command_name = cmd->tcc_legacy_name ?
-		cmd->tcc_legacy_name : cmd->tcc_name;
-	    return tclcad_call_cmd(interp, cmd->tcc_func,
-		    cmd->tcc_client_data, command_name, objc, objv, 2);
+	struct tclcad_namespace_entry *cmd = &namespace_cmd->commands[i];
+	if (BU_STR_EQUAL(cmd->name, subcommand)) {
+	    const char *command_name = cmd->legacy_name ?
+		cmd->legacy_name : cmd->name;
+	    if (cmd->object_func) {
+		return tclcad_call_objcmd(interp, cmd->object_func,
+			cmd->client_data, command_name, objc, objv, 2);
+	    }
+	    return tclcad_call_cmd(interp, cmd->string_func,
+		    cmd->client_data, command_name, objc, objv, 2);
 	}
     }
 
@@ -140,7 +177,7 @@ tclcad_namespace_cmd_dispatch(ClientData client_data, Tcl_Interp *interp,
 	Tcl_IncrRefCount(subcommands);
 	for (i = 0; i < namespace_cmd->command_count; i++) {
 	    Tcl_ListObjAppendElement(interp, subcommands,
-		    Tcl_NewStringObj(namespace_cmd->commands[i].tcc_name, -1));
+		    Tcl_NewStringObj(namespace_cmd->commands[i].name, -1));
 	}
 	Tcl_AppendObjToObj(result, subcommands);
 	Tcl_DecrRefCount(subcommands);
@@ -215,35 +252,38 @@ tclcad_create_namespace(Tcl_Interp *interp, const char *namespace_name)
 
 
 static int
-tclcad_cmdtab_valid(Tcl_Interp *interp, const struct tclcad_cmdtab *cmds)
+tclcad_namespace_entries_valid(Tcl_Interp *interp,
+	const struct tclcad_namespace_entry *commands)
 {
-    const struct tclcad_cmdtab *cmd;
-    const struct tclcad_cmdtab *other;
+    const struct tclcad_namespace_entry *cmd;
+    const struct tclcad_namespace_entry *other;
 
-    if (!cmds) {
+    if (!commands) {
 	Tcl_SetObjResult(interp,
 		Tcl_NewStringObj("Tcl command table is NULL", -1));
 	return 0;
     }
 
-    for (cmd = cmds; cmd->tcc_name; cmd++) {
-	if (cmd->tcc_name[0] == '\0' || !cmd->tcc_func ||
-	    (cmd->tcc_legacy_name && cmd->tcc_legacy_name[0] == '\0')) {
+    for (cmd = commands; cmd->name; cmd++) {
+	if (cmd->name[0] == '\0' ||
+	    (!cmd->string_func && !cmd->object_func) ||
+	    (cmd->string_func && cmd->object_func) ||
+	    (cmd->legacy_name && cmd->legacy_name[0] == '\0')) {
 	    Tcl_SetObjResult(interp,
 		    Tcl_NewStringObj("invalid Tcl command table entry", -1));
 	    return 0;
 	}
-	for (other = cmd + 1; other->tcc_name; other++) {
-	    if (BU_STR_EQUAL(cmd->tcc_name, other->tcc_name)) {
+	for (other = cmd + 1; other->name; other++) {
+	    if (BU_STR_EQUAL(cmd->name, other->name)) {
 		Tcl_SetObjResult(interp, Tcl_ObjPrintf(
-			"duplicate Tcl subcommand \"%s\"", cmd->tcc_name));
+			"duplicate Tcl subcommand \"%s\"", cmd->name));
 		return 0;
 	    }
-	    if (cmd->tcc_legacy_name && other->tcc_legacy_name &&
-		BU_STR_EQUAL(cmd->tcc_legacy_name, other->tcc_legacy_name)) {
+	    if (cmd->legacy_name && other->legacy_name &&
+		BU_STR_EQUAL(cmd->legacy_name, other->legacy_name)) {
 		Tcl_SetObjResult(interp, Tcl_ObjPrintf(
 			"duplicate legacy Tcl command \"%s\"",
-			cmd->tcc_legacy_name));
+			cmd->legacy_name));
 		return 0;
 	    }
 	}
@@ -254,14 +294,20 @@ tclcad_cmdtab_valid(Tcl_Interp *interp, const struct tclcad_cmdtab *cmds)
 
 
 static int
-tclcad_create_legacy_cmd(Tcl_Interp *interp, const struct tclcad_cmdtab *cmd)
+tclcad_create_legacy_cmd(Tcl_Interp *interp,
+	const struct tclcad_namespace_entry *cmd)
 {
     struct tclcad_legacy_cmd *legacy_cmd;
 
+    if (cmd->object_func) {
+	return Tcl_CreateObjCommand(interp, cmd->legacy_name,
+		cmd->object_func, cmd->client_data, NULL) ? TCL_OK : TCL_ERROR;
+    }
+
     BU_GET(legacy_cmd, struct tclcad_legacy_cmd);
-    legacy_cmd->func = cmd->tcc_func;
-    legacy_cmd->client_data = cmd->tcc_client_data;
-    if (!Tcl_CreateObjCommand(interp, cmd->tcc_legacy_name,
+    legacy_cmd->func = cmd->string_func;
+    legacy_cmd->client_data = cmd->client_data;
+    if (!Tcl_CreateObjCommand(interp, cmd->legacy_name,
 	    tclcad_legacy_cmd_dispatch, (ClientData)legacy_cmd,
 	    tclcad_legacy_cmd_delete)) {
 	BU_PUT(legacy_cmd, struct tclcad_legacy_cmd);
@@ -272,46 +318,46 @@ tclcad_create_legacy_cmd(Tcl_Interp *interp, const struct tclcad_cmdtab *cmd)
 }
 
 
-int
-tclcad_register_cmd_namespace(Tcl_Interp *interp,
-	const char *namespace_name, const struct tclcad_cmdtab *cmds)
+static int
+tclcad_register_namespace(Tcl_Interp *interp, const char *namespace_name,
+	const struct tclcad_namespace_entry *commands)
 {
     struct tclcad_namespace_cmd *namespace_cmd;
-    const struct tclcad_cmdtab *cmd;
+    const struct tclcad_namespace_entry *cmd;
     size_t command_count = 0;
     size_t i;
 
     if (!interp)
 	return TCL_ERROR;
-    if (!tclcad_cmdtab_valid(interp, cmds) ||
+    if (!tclcad_namespace_entries_valid(interp, commands) ||
 	tclcad_create_namespace(interp, namespace_name) != TCL_OK)
 	return TCL_ERROR;
 
-    for (cmd = cmds; cmd->tcc_name; cmd++)
+    for (cmd = commands; cmd->name; cmd++)
 	command_count++;
     if (command_count == 0) {
-	Tcl_SetObjResult(interp,
-		Tcl_NewStringObj("Tcl command table is empty", -1));
+	Tcl_SetObjResult(interp, Tcl_NewStringObj(
+		"Tcl command table is empty", -1));
 	return TCL_ERROR;
     }
 
-    for (cmd = cmds; cmd->tcc_name; cmd++) {
-	if (cmd->tcc_legacy_name &&
+    for (cmd = commands; cmd->name; cmd++) {
+	if (cmd->legacy_name &&
 	    tclcad_create_legacy_cmd(interp, cmd) != TCL_OK)
 	    return TCL_ERROR;
     }
 
     BU_GET(namespace_cmd, struct tclcad_namespace_cmd);
     namespace_cmd->command_count = command_count;
-    namespace_cmd->commands = (struct tclcad_cmdtab *)bu_calloc(
-	    command_count, sizeof(struct tclcad_cmdtab),
+    namespace_cmd->commands = (struct tclcad_namespace_entry *)bu_calloc(
+	    command_count, sizeof(struct tclcad_namespace_entry),
 	    "Tcl command namespace table");
     for (i = 0; i < command_count; i++) {
-	namespace_cmd->commands[i] = cmds[i];
-	namespace_cmd->commands[i].tcc_name = bu_strdup(cmds[i].tcc_name);
-	if (cmds[i].tcc_legacy_name) {
-	    namespace_cmd->commands[i].tcc_legacy_name =
-		bu_strdup(cmds[i].tcc_legacy_name);
+	namespace_cmd->commands[i] = commands[i];
+	namespace_cmd->commands[i].name = bu_strdup(commands[i].name);
+	if (commands[i].legacy_name) {
+	    namespace_cmd->commands[i].legacy_name =
+		bu_strdup(commands[i].legacy_name);
 	}
     }
 
@@ -323,6 +369,67 @@ tclcad_register_cmd_namespace(Tcl_Interp *interp,
     }
 
     return TCL_OK;
+}
+
+
+int
+tclcad_register_cmd_namespace(Tcl_Interp *interp,
+	const char *namespace_name, const struct tclcad_cmdtab *cmds)
+{
+    struct tclcad_namespace_entry *commands;
+    const struct tclcad_cmdtab *cmd;
+    size_t command_count = 0;
+    size_t i;
+    int ret;
+
+    if (!cmds)
+	return tclcad_register_namespace(interp, namespace_name, NULL);
+    for (cmd = cmds; cmd->tcc_name; cmd++)
+	command_count++;
+
+    commands = (struct tclcad_namespace_entry *)bu_calloc(command_count + 1,
+	    sizeof(struct tclcad_namespace_entry), "Tcl command table adapter");
+    for (i = 0; i < command_count; i++) {
+	commands[i].name = cmds[i].tcc_name;
+	commands[i].legacy_name = cmds[i].tcc_legacy_name;
+	commands[i].string_func = cmds[i].tcc_func;
+	commands[i].client_data = cmds[i].tcc_client_data;
+    }
+
+    ret = tclcad_register_namespace(interp, namespace_name, commands);
+    bu_free(commands, "Tcl command table adapter");
+    return ret;
+}
+
+
+int
+tclcad_register_objcmd_namespace(Tcl_Interp *interp,
+	const char *namespace_name, const struct tclcad_objcmdtab *cmds)
+{
+    struct tclcad_namespace_entry *commands;
+    const struct tclcad_objcmdtab *cmd;
+    size_t command_count = 0;
+    size_t i;
+    int ret;
+
+    if (!cmds)
+	return tclcad_register_namespace(interp, namespace_name, NULL);
+    for (cmd = cmds; cmd->tcc_name; cmd++)
+	command_count++;
+
+    commands = (struct tclcad_namespace_entry *)bu_calloc(command_count + 1,
+	    sizeof(struct tclcad_namespace_entry),
+	    "Tcl object command table adapter");
+    for (i = 0; i < command_count; i++) {
+	commands[i].name = cmds[i].tcc_name;
+	commands[i].legacy_name = cmds[i].tcc_legacy_name;
+	commands[i].object_func = cmds[i].tcc_func;
+	commands[i].client_data = cmds[i].tcc_client_data;
+    }
+
+    ret = tclcad_register_namespace(interp, namespace_name, commands);
+    bu_free(commands, "Tcl object command table adapter");
+    return ret;
 }
 
 /*

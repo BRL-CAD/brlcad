@@ -49,6 +49,22 @@ report_arguments(ClientData client_data, Tcl_Interp *interp, int argc,
 }
 
 
+static int
+report_object_arguments(ClientData client_data, Tcl_Interp *interp, int objc,
+	Tcl_Obj *const objv[])
+{
+    const char *tag = static_cast<const char *>(client_data);
+    Tcl_Obj *result = Tcl_NewListObj(0, NULL);
+    int i;
+
+    Tcl_ListObjAppendElement(interp, result, Tcl_NewStringObj(tag, -1));
+    for (i = 0; i < objc; i++)
+	Tcl_ListObjAppendElement(interp, result, objv[i]);
+    Tcl_SetObjResult(interp, result);
+    return TCL_OK;
+}
+
+
 static bool
 eval_result_is(Tcl_Interp *interp, const char *script, const char *expected)
 {
@@ -67,9 +83,16 @@ main(int UNUSED(argc), const char **argv)
 {
     static char canonical_tag[] = "canonical";
     static char private_tag[] = "private";
+    static char object_tag[] = "object";
+    static char private_object_tag[] = "private_object";
     static const struct tclcad_cmdtab commands[] = {
 	{"echo", "legacy_echo", report_arguments, canonical_tag},
 	{"private", NULL, report_arguments, private_tag},
+	{NULL, NULL, NULL, NULL}
+    };
+    static const struct tclcad_objcmdtab object_commands[] = {
+	{"echo", "legacy_object_echo", report_object_arguments, object_tag},
+	{"private", NULL, report_object_arguments, private_object_tag},
 	{NULL, NULL, NULL, NULL}
     };
 
@@ -103,7 +126,22 @@ main(int UNUSED(argc), const char **argv)
 	    "unknown subcommand \"missing\": must be one of echo private") &&
 	eval_result_is(interp,
 	    "catch {::brlcad::test::commands} message; set message",
-	    "wrong # args: should be \"::brlcad::test::commands subcommand ?arg ...?\"");
+	    "wrong # args: should be \"::brlcad::test::commands subcommand ?arg ...?\"") &&
+	tclcad_register_objcmd_namespace(interp,
+	    "::brlcad::test::object_commands", object_commands) == TCL_OK &&
+	eval_result_is(interp,
+	    "::brlcad::test::object_commands echo one two",
+	    "object legacy_object_echo one two") &&
+	eval_result_is(interp, "legacy_object_echo three",
+	    "object legacy_object_echo three") &&
+	eval_result_is(interp,
+	    "::brlcad::test::object_commands private four",
+	    "private_object private four") &&
+	eval_result_is(interp,
+	    "expr {[llength [info commands ::private_object]] == 0}", "1") &&
+	eval_result_is(interp,
+	    "catch {::brlcad::test::object_commands missing} message; set message",
+	    "unknown subcommand \"missing\": must be one of echo private");
 
     if (!passed)
 	std::fprintf(stderr, "Native namespace check failed: %s\n",

@@ -51,6 +51,17 @@ struct tclcad_cmdtab {
 };
 
 /**
+ * Object-command counterpart to tclcad_cmdtab.  Arrays passed to
+ * tclcad_register_objcmd_namespace() use the same NULL terminator.
+ */
+struct tclcad_objcmdtab {
+    const char *tcc_name;
+    const char *tcc_legacy_name;
+    Tcl_ObjCmdProc *tcc_func;
+    ClientData tcc_client_data;
+};
+
+/**
  * Ensure that an absolute namespace and all of its parents exist.
  */
 TCLCAD_EXPORT extern int tclcad_create_namespace(Tcl_Interp *interp, const char *namespace_name);
@@ -64,6 +75,13 @@ TCLCAD_EXPORT extern int tclcad_create_namespace(Tcl_Interp *interp, const char 
  */
 TCLCAD_EXPORT extern int tclcad_register_cmd_namespace(Tcl_Interp *interp,
 	const char *namespace_name, const struct tclcad_cmdtab *cmds);
+
+/**
+ * Register Tcl object commands using the same component-command and
+ * legacy compatibility behavior as tclcad_register_cmd_namespace().
+ */
+TCLCAD_EXPORT extern int tclcad_register_objcmd_namespace(Tcl_Interp *interp,
+	const char *namespace_name, const struct tclcad_objcmdtab *cmds);
 
 TCLCAD_EXPORT extern int tclcad_tk_setup(Tcl_Interp *interp);
 TCLCAD_EXPORT extern void tclcad_auto_path(Tcl_Interp *interp);
