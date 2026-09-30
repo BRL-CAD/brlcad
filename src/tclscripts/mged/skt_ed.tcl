@@ -105,7 +105,7 @@ proc find_arc_center { sx sy ex ey radius center_is_left } {
 }
 
 
-class Sketch_editor {
+::itcl::class Sketch_editor {
     inherit itk::Toplevel
 
     private variable sketch_name
@@ -224,8 +224,8 @@ class Sketch_editor {
 	itk_component add canvas {
 	    canvas $itk_interior.canv -width 600 -height 600 \
 		-scrollregion {0 0 300 300} \
-		-xscrollcommand [code $itk_interior.xscr set] \
-		-yscrollcommand [code $itk_interior.yscr set]
+		-xscrollcommand [::itcl::code $itk_interior.xscr set] \
+		-yscrollcommand [::itcl::code $itk_interior.yscr set]
 	}
 	itk_component add controls {
 	    frame $itk_interior.controls -relief groove -bd 3
@@ -241,10 +241,10 @@ class Sketch_editor {
 
 	set create_frame [$itk_component(controls).notebook add -label "Create"]
 
-	button $create_frame.create_line -text "Create Line" -command [code $this create_line]
-	button $create_frame.create_circle -text "Create Circle" -command [code $this create_circle]
-	button $create_frame.create_arc -text "Create Arc" -command [code $this create_arc]
-	button $create_frame.create_bezier -text "Create Bezier" -command [code $this create_bezier]
+	button $create_frame.create_line -text "Create Line" -command [::itcl::code $this create_line]
+	button $create_frame.create_circle -text "Create Circle" -command [::itcl::code $this create_circle]
+	button $create_frame.create_arc -text "Create Arc" -command [::itcl::code $this create_arc]
+	button $create_frame.create_bezier -text "Create Bezier" -command [::itcl::code $this create_bezier]
 	grid $create_frame.create_line -row 0 -column 0 -sticky n
 	grid $create_frame.create_circle -row 1 -column 0 -sticky n
 	grid $create_frame.create_arc -row 3 -column 0 -sticky n
@@ -252,24 +252,24 @@ class Sketch_editor {
 
 	set debug_frame [$itk_component(controls).notebook add -label "Debug"]
 
-	button $debug_frame.describe -text "Describe All Segments" -command [code $this describe]
+	button $debug_frame.describe -text "Describe All Segments" -command [::itcl::code $this describe]
 	grid $debug_frame.describe -row 0 -column 0 -sticky n
 
 	set save_frame [$itk_component(controls).notebook add -label "Save"]
 
 	label $save_frame.lab -text "Save as:"
-	set save_entry [entry $save_frame.ent -textvariable [scope sketch_name] -width 19]
-	bind $save_frame.ent <Return> [code $this do_save]
-	button $save_frame.ok -text "Save" -command [code $this do_save]
+	set save_entry [entry $save_frame.ent -textvariable [::itcl::scope sketch_name] -width 19]
+	bind $save_frame.ent <Return> [::itcl::code $this do_save]
+	button $save_frame.ok -text "Save" -command [::itcl::code $this do_save]
 	grid $save_frame.lab -row 0 -column 0 -sticky e
 	grid $save_frame.ent -row 0 -column 1 -sticky w
 	grid $save_frame.ok -row 1 -column 0 -columnspan 2
 
-	button $itk_component(frame).redraw -text "Redraw" -command [code $this draw_segs]
-	button $itk_component(frame).zoomin -text "Zoom In" -command [code $this do_scale 2.0]
-	button $itk_component(frame).zoomout -text "Zoom Out" -command [code $this do_scale 0.5]
-	button $itk_component(frame).dismiss -text "Dismiss" -command [code $this dismiss]
-	button $itk_component(frame).reset -text "Reset Sketch" -command [code $this reset]
+	button $itk_component(frame).redraw -text "Redraw" -command [::itcl::code $this draw_segs]
+	button $itk_component(frame).zoomin -text "Zoom In" -command [::itcl::code $this do_scale 2.0]
+	button $itk_component(frame).zoomout -text "Zoom Out" -command [::itcl::code $this do_scale 0.5]
+	button $itk_component(frame).dismiss -text "Dismiss" -command [::itcl::code $this dismiss]
+	button $itk_component(frame).reset -text "Reset Sketch" -command [::itcl::code $this reset]
 	grid $itk_component(frame).redraw -row 0 -column 0 -sticky nw
 	grid $itk_component(frame).reset -row 0 -column 1 -sticky ne
 	grid $itk_component(frame).zoomin -row 1 -column 0 -sticky w
@@ -278,11 +278,11 @@ class Sketch_editor {
 
 	set edit_frame [$itk_component(controls).notebook add -label "Edit"]
 
-	radiobutton $edit_frame.pick_seg -text "Select Segments" -command [code $this start_seg_pick] -variable selection_mode -value "segs" -indicatoron false -state normal
-	radiobutton $edit_frame.pick_vert -text "Select Vertices" -command [code $this start_vert_pick] -variable selection_mode -value "verts" -indicatoron false -state normal
-	button $edit_frame.delete -text "Delete Selected" -command [code $this delete_selection]
-	button $edit_frame.move -text "Move Selected" -command [code $this setup_move]
-	button $edit_frame.cancel -text "Cancel" -command [code $this do_cancel 1]
+	radiobutton $edit_frame.pick_seg -text "Select Segments" -command [::itcl::code $this start_seg_pick] -variable selection_mode -value "segs" -indicatoron false -state normal
+	radiobutton $edit_frame.pick_vert -text "Select Vertices" -command [::itcl::code $this start_vert_pick] -variable selection_mode -value "verts" -indicatoron false -state normal
+	button $edit_frame.delete -text "Delete Selected" -command [::itcl::code $this delete_selection]
+	button $edit_frame.move -text "Move Selected" -command [::itcl::code $this setup_move]
+	button $edit_frame.cancel -text "Cancel" -command [::itcl::code $this do_cancel 1]
 
 	grid $edit_frame.pick_seg -row 0 -column 0 -sticky n
 	grid $edit_frame.pick_vert -row 1 -column 0 -sticky n
@@ -292,14 +292,14 @@ class Sketch_editor {
 
 	set arc_edit_frame [$itk_component(controls).notebook add -label "Edit Arc"]
 
-	button $arc_edit_frame.pick_arc -text "Select Arc" -command [code $this pick_arc]
-	button $arc_edit_frame.other_half -text "Use Arc Complement" -command [code $this reverse_curr_seg]
-	button $arc_edit_frame.radius -text "Set Radius" -command [code $this start_adjust_radius]
-	button $arc_edit_frame.cancel -text "Cancel" -command [code $this do_cancel 1]
+	button $arc_edit_frame.pick_arc -text "Select Arc" -command [::itcl::code $this pick_arc]
+	button $arc_edit_frame.other_half -text "Use Arc Complement" -command [::itcl::code $this reverse_curr_seg]
+	button $arc_edit_frame.radius -text "Set Radius" -command [::itcl::code $this start_adjust_radius]
+	button $arc_edit_frame.cancel -text "Cancel" -command [::itcl::code $this do_cancel 1]
 	set angle 0.0
-	entry $arc_edit_frame.angle -textvariable [scope angle]
+	entry $arc_edit_frame.angle -textvariable [::itcl::scope angle]
 	label $arc_edit_frame.angle_label -text "Tangency Angle:"
-	button $arc_edit_frame.set_tangency -text "Set Tangency" -command [code $this start_set_tangency]
+	button $arc_edit_frame.set_tangency -text "Set Tangency" -command [::itcl::code $this start_set_tangency]
 	label $arc_edit_frame.blank_row -text ""
 	grid $arc_edit_frame.pick_arc -row 0 -column 0 -sticky n -columnspan 2
 	grid $arc_edit_frame.other_half -row 1 -column 0 -sticky n -columnspan 2
@@ -320,11 +320,11 @@ class Sketch_editor {
 	    frame $itk_component(controls).fr_coords
 	}
 	label $itk_component(coords).x_lab -width 7 -text "X:" -anchor e
-	entry $itk_component(coords).x -width 10 -relief sunken -textvariable [scope x_coord]
+	entry $itk_component(coords).x -width 10 -relief sunken -textvariable [::itcl::scope x_coord]
 	label $itk_component(coords).y_lab -text "Y:" -anchor e
-	entry $itk_component(coords).y -width 10 -relief sunken -textvariable [scope y_coord]
+	entry $itk_component(coords).y -width 10 -relief sunken -textvariable [::itcl::scope y_coord]
 	label $itk_component(coords).rad_lab -text "Radius:"
-	entry $itk_component(coords).radius -width 10 -textvariable [scope radius]
+	entry $itk_component(coords).radius -width 10 -textvariable [::itcl::scope radius]
 	grid $itk_component(coords).x_lab -row 0 -column 0 -sticky e
 	grid $itk_component(coords).x -row 0 -column 1 -sticky w
 	grid $itk_component(coords).y_lab -row 0 -column 2 -sticky e
@@ -336,13 +336,13 @@ class Sketch_editor {
 	itk_component add status_line {
 	    label $itk_interior.stat -height 4 -text ""
 	}
-	bind $itk_component(canvas) <Configure> [code $this draw_segs]
-	bind $itk_component(canvas) <Motion> [code $this show_coords %x %y]
+	bind $itk_component(canvas) <Configure> [::itcl::code $this draw_segs]
+	bind $itk_component(canvas) <Motion> [::itcl::code $this show_coords %x %y]
 	itk_component add xscr {
-	    scrollbar $itk_interior.xscr -orient horizontal -command [code $itk_component(canvas) xview]
+	    scrollbar $itk_interior.xscr -orient horizontal -command [::itcl::code $itk_component(canvas) xview]
 	}
 	itk_component add yscr {
-	    scrollbar $itk_interior.yscr -orient vertical -command [code $itk_component(canvas) yview]
+	    scrollbar $itk_interior.yscr -orient vertical -command [::itcl::code $itk_component(canvas) yview]
 	}
 
 	grid $itk_component(controls) -row 0 -column 0 -rowspan 2 -sticky nsew -padx 3 -pady 3
@@ -380,7 +380,7 @@ class Sketch_editor {
     }
 
     method verify_unique_editor {} {
-	set editors [find objects -class Sketch_editor]
+	set editors [::itcl::find objects -class Sketch_editor]
 	foreach editor $editors {
 	    if { [string compare $this $editor] == 0 } {
 		continue
@@ -547,7 +547,7 @@ class Sketch_editor {
 	}
 	$itk_component(status_line) configure -text "After setting the desired angle, Use mouse button 1\n\
 			to select a neighboring segment for tangency"
-	bind $itk_component(canvas) <ButtonPress-1> [code $this do_set_tangency %x %y]
+	bind $itk_component(canvas) <ButtonPress-1> [::itcl::code $this do_set_tangency %x %y]
     }
 
     method start_adjust_radius {} {
@@ -566,10 +566,10 @@ class Sketch_editor {
 	set indices [$curr_seg get_verts]
 	set index1 [lindex $indices 0]
 	set index2 [lindex $indices 1]
-	bind $itk_component(canvas) <ButtonPress-1> [code $this set_arc_radius_start $curr_seg %x %y]
-	bind $itk_component(canvas) <B1-Motion> [code $this set_arc_radius_start $curr_seg %x %y]
-	bind $itk_component(canvas) <ButtonRelease-1> [code $this set_arc_radius_end $curr_seg 1 %x %y]
-	bind $itk_component(coords).radius <Return> [code $this set_arc_radius_end $curr_seg 0 0 0]
+	bind $itk_component(canvas) <ButtonPress-1> [::itcl::code $this set_arc_radius_start $curr_seg %x %y]
+	bind $itk_component(canvas) <B1-Motion> [::itcl::code $this set_arc_radius_start $curr_seg %x %y]
+	bind $itk_component(canvas) <ButtonRelease-1> [::itcl::code $this set_arc_radius_end $curr_seg 1 %x %y]
+	bind $itk_component(coords).radius <Return> [::itcl::code $this set_arc_radius_end $curr_seg 0 0 0]
 	$itk_component(status_line) configure -text "Use mouse button 1 to drag any point on the arc\n\
 			or enter desired radius in radius entry box"
     }
@@ -631,7 +631,7 @@ class Sketch_editor {
 	} else {
 	    $itk_component(status_line) configure -text "Click on the arc to edit using mouse button 1"
 	    unhighlight_selected
-	    bind $itk_component(canvas) <ButtonRelease-1> [code $this arc_pick_highlight %x %y]
+	    bind $itk_component(canvas) <ButtonRelease-1> [::itcl::code $this arc_pick_highlight %x %y]
 	}
     }
 
@@ -724,7 +724,7 @@ class Sketch_editor {
 		return
 	    }
 	}
-	delete object $this
+	::itcl::delete object $this
     }
 
     method reset {} {
@@ -947,7 +947,7 @@ class Sketch_editor {
 
     method start_seg_pick {} {
 	unhighlight_selected
-	bind $itk_component(canvas) <ButtonRelease-1> [code $this seg_pick_highlight %x %y]
+	bind $itk_component(canvas) <ButtonRelease-1> [::itcl::code $this seg_pick_highlight %x %y]
     }
 
     method vert_pick_highlight { x y } {
@@ -965,7 +965,7 @@ class Sketch_editor {
 
     method start_vert_pick {} {
 	unhighlight_selected
-	bind $itk_component(canvas) <ButtonRelease-1> [code $this vert_pick_highlight %x %y]
+	bind $itk_component(canvas) <ButtonRelease-1> [::itcl::code $this vert_pick_highlight %x %y]
     }
 
     method vert_is_used { index } {
@@ -1072,8 +1072,8 @@ class Sketch_editor {
     method start_move { sx sy } {
 	set move_start_x [$itk_component(canvas) canvasx $sx]
 	set move_start_y [$itk_component(canvas) canvasy $sy]
-	bind $itk_component(canvas) <B1-Motion> [code $this continue_move 0 %x %y]
-	bind $itk_component(canvas) <ButtonRelease-1> [code $this continue_move 1 %x %y]
+	bind $itk_component(canvas) <B1-Motion> [::itcl::code $this continue_move 0 %x %y]
+	bind $itk_component(canvas) <ButtonRelease-1> [::itcl::code $this continue_move 1 %x %y]
 	set needs_saving 1
     }
 
@@ -1089,9 +1089,9 @@ class Sketch_editor {
 		$item tag_verts moving
 	    }
 	}
-	bind $itk_component(canvas) <ButtonPress-1> [code $this start_move %x %y]
-	bind $itk_component(coords).x <Return> [code $this continue_move 2 0 0]
-	bind $itk_component(coords).y <Return> [code $this continue_move 2 0 0]
+	bind $itk_component(canvas) <ButtonPress-1> [::itcl::code $this start_move %x %y]
+	bind $itk_component(coords).x <Return> [::itcl::code $this continue_move 2 0 0]
+	bind $itk_component(coords).y <Return> [::itcl::code $this continue_move 2 0 0]
 	$itk_component(status_line) configure -text "Click and drag using mouse button 1\n\
 				Or enter new coordinates for the yellow vertex in the coordinate entry windows"
     }
@@ -1143,10 +1143,10 @@ class Sketch_editor {
 	$itk_component(status_line) configure -text "Click mouse button 1 to set Bezier start point\n\
 		    or click mouse button 3 to select an existing vertex as the start point\n\
 		    or enter start point coordinates in entry windows"
-	bind $itk_component(canvas) <ButtonRelease-1> [code $this start_bezier 1 %x %y]
-	bind $itk_component(canvas) <ButtonRelease-3> [code $this start_bezier_pick %x %y]
-	bind $itk_component(coords).x <Return> [code $this start_bezier 0 0 0]
-	bind $itk_component(coords).y <Return> [code $this start_bezier 0 0 0]
+	bind $itk_component(canvas) <ButtonRelease-1> [::itcl::code $this start_bezier 1 %x %y]
+	bind $itk_component(canvas) <ButtonRelease-3> [::itcl::code $this start_bezier_pick %x %y]
+	bind $itk_component(coords).x <Return> [::itcl::code $this start_bezier 0 0 0]
+	bind $itk_component(coords).y <Return> [::itcl::code $this start_bezier 0 0 0]
     }
 
     method start_bezier { coord_type x y } {
@@ -1179,11 +1179,11 @@ class Sketch_editor {
 		    or click mouse button 3 to select an existing vertex as the next point\n\
 		    or enter next point coordinates in entry windows\n\
 		    or click mouse button 2 to finish"
-	bind $itk_component(canvas) <ButtonRelease-1> [code $this next_bezier $new_seg 1 %x %y]
-	bind $itk_component(canvas) <ButtonRelease-3> [code $this next_bezier_pick $new_seg %x %y]
-	bind $itk_component(canvas) <ButtonRelease-2> [code $this end_bezier $new_seg]
-	bind $itk_component(coords).x <Return> [code $this next_bezier $new_seg 0 0 0]
-	bind $itk_component(coords).y <Return> [code $this next_bezier $new_seg 0 0 0]
+	bind $itk_component(canvas) <ButtonRelease-1> [::itcl::code $this next_bezier $new_seg 1 %x %y]
+	bind $itk_component(canvas) <ButtonRelease-3> [::itcl::code $this next_bezier_pick $new_seg %x %y]
+	bind $itk_component(canvas) <ButtonRelease-2> [::itcl::code $this end_bezier $new_seg]
+	bind $itk_component(coords).x <Return> [::itcl::code $this next_bezier $new_seg 0 0 0]
+	bind $itk_component(coords).y <Return> [::itcl::code $this next_bezier $new_seg 0 0 0]
     }
 
     method start_bezier_pick { x y } {
@@ -1255,10 +1255,10 @@ class Sketch_editor {
 	$itk_component(status_line) configure -text "Click mouse button 1 to set arc start point\n\
 			or click mouse button 3 to select an existing vertex as the start point\n\
 			or enter start point coordinates in entry windows"
-	bind $itk_component(canvas) <ButtonRelease-1> [code $this start_arc 1 %x %y]
-	bind $itk_component(canvas) <ButtonRelease-3> [code $this start_arc_pick %x %y]
-	bind $itk_component(coords).x <Return> [code $this start_arc 0 0 0]
-	bind $itk_component(coords).y <Return> [code $this start_arc 0 0 0]
+	bind $itk_component(canvas) <ButtonRelease-1> [::itcl::code $this start_arc 1 %x %y]
+	bind $itk_component(canvas) <ButtonRelease-3> [::itcl::code $this start_arc_pick %x %y]
+	bind $itk_component(coords).x <Return> [::itcl::code $this start_arc 0 0 0]
+	bind $itk_component(coords).y <Return> [::itcl::code $this start_arc 0 0 0]
     }
 
     method start_arc_pick { x y } {
@@ -1315,10 +1315,10 @@ class Sketch_editor {
 	$itk_component(status_line) configure -text "Use mouse button 1 to drag any point on the arc\n\
 			or enter desired radius in radius entry box"
 
-	bind $itk_component(canvas) <ButtonPress-1> [code $this set_arc_radius_start $new_seg %x %y]
-	bind $itk_component(canvas) <B1-Motion> [code $this set_arc_radius_start $new_seg %x %y]
-	bind $itk_component(canvas) <ButtonRelease-1> [code $this set_arc_radius_end $new_seg 1 %x %y]
-	bind $itk_component(coords).radius <Return> [code $this set_arc_radius_end $new_seg 0 0 0]
+	bind $itk_component(canvas) <ButtonPress-1> [::itcl::code $this set_arc_radius_start $new_seg %x %y]
+	bind $itk_component(canvas) <B1-Motion> [::itcl::code $this set_arc_radius_start $new_seg %x %y]
+	bind $itk_component(canvas) <ButtonRelease-1> [::itcl::code $this set_arc_radius_end $new_seg 1 %x %y]
+	bind $itk_component(coords).radius <Return> [::itcl::code $this set_arc_radius_end $new_seg 0 0 0]
     }
 
     method set_arc_radius_start { segment x y } {
@@ -1456,20 +1456,20 @@ class Sketch_editor {
 	$itk_component(status_line) configure -text "Click mouse button 1 to set arc end point\n\
 			or click mouse button 3 to select an existing vertex as the end point\n\
 			or enter end point coordinates in entry windows"
-	bind $itk_component(canvas) <ButtonRelease-1> [code $this end_arc 1 %x %y]
-	bind $itk_component(canvas) <ButtonRelease-3> [code $this end_arc_pick %x %y]
-	bind $itk_component(coords).x <Return> [code $this end_arc 0 0 0]
-	bind $itk_component(coords).y <Return> [code $this end_arc 0 0 0]
+	bind $itk_component(canvas) <ButtonRelease-1> [::itcl::code $this end_arc 1 %x %y]
+	bind $itk_component(canvas) <ButtonRelease-3> [::itcl::code $this end_arc_pick %x %y]
+	bind $itk_component(coords).x <Return> [::itcl::code $this end_arc 0 0 0]
+	bind $itk_component(coords).y <Return> [::itcl::code $this end_arc 0 0 0]
     }
 
     method create_circle {} {
 	$itk_component(status_line) configure -text "Click mouse button 1 to set circle center\n\
 			or click mouse button 3 to select an existing vertex as the center\n\
 			or enter center coordinates in entry windows"
-	bind $itk_component(canvas) <ButtonRelease-1> [code $this start_circle 1 %x %y]
-	bind $itk_component(canvas) <ButtonRelease-3> [code $this start_circle_pick %x %y]
-	bind $itk_component(coords).x <Return> [code $this start_circle 0 0 0]
-	bind $itk_component(coords).y <Return> [code $this start_circle 0 0 0]
+	bind $itk_component(canvas) <ButtonRelease-1> [::itcl::code $this start_circle 1 %x %y]
+	bind $itk_component(canvas) <ButtonRelease-3> [::itcl::code $this start_circle_pick %x %y]
+	bind $itk_component(coords).x <Return> [::itcl::code $this start_circle 0 0 0]
+	bind $itk_component(coords).y <Return> [::itcl::code $this start_circle 0 0 0]
     }
 
     method start_circle_pick { x y } {
@@ -1510,13 +1510,13 @@ class Sketch_editor {
 	$itk_component(status_line) configure -text "Click and hold mouse button 1 to adjust radius\n\
 			or click mouse button 3 to select an existing vertex to set the radius\n\
 			or enter the radius or coordinates of a point on the circle in the entry windows"
-	bind $itk_component(canvas) <ButtonPress-1> [code $this continue_circle $new_seg 0 1 %x %y]
-	bind $itk_component(canvas) <B1-Motion> [code $this continue_circle $new_seg 0 1 %x %y]
-	bind $itk_component(canvas) <ButtonRelease-1> [code $this continue_circle $new_seg 1 1 %x %y]
-	bind $itk_component(canvas) <ButtonRelease-3> [code $this continue_circle_pick $new_seg %x %y]
-	bind $itk_component(coords).x <Return> [code $this continue_circle $new_seg 1 0 0 0]
-	bind $itk_component(coords).y <Return> [code $this continue_circle $new_seg 1 0 0 0]
-	bind $itk_component(coords).radius <Return> [code $this continue_circle $new_seg 1 2 0 0]
+	bind $itk_component(canvas) <ButtonPress-1> [::itcl::code $this continue_circle $new_seg 0 1 %x %y]
+	bind $itk_component(canvas) <B1-Motion> [::itcl::code $this continue_circle $new_seg 0 1 %x %y]
+	bind $itk_component(canvas) <ButtonRelease-1> [::itcl::code $this continue_circle $new_seg 1 1 %x %y]
+	bind $itk_component(canvas) <ButtonRelease-3> [::itcl::code $this continue_circle_pick $new_seg %x %y]
+	bind $itk_component(coords).x <Return> [::itcl::code $this continue_circle $new_seg 1 0 0 0]
+	bind $itk_component(coords).y <Return> [::itcl::code $this continue_circle $new_seg 1 0 0 0]
+	bind $itk_component(coords).radius <Return> [::itcl::code $this continue_circle $new_seg 1 2 0 0]
     }
 
     method continue_circle_pick { seg x y } {
@@ -1578,10 +1578,10 @@ class Sketch_editor {
 	$itk_component(status_line) configure -text "Click mouse button 1 to set line start point\n\
 			or click mouse button 3 to select an existing vertex as start point\n\
 			or enter start coordinates in entry windows"
-	bind $itk_component(canvas) <ButtonRelease-1> [code $this start_line 1 %x %y]
-	bind $itk_component(canvas) <ButtonRelease-3> [code $this start_line_pick %x %y]
-	bind $itk_component(coords).x <Return> [code $this start_line 0 0 0]
-	bind $itk_component(coords).y <Return> [code $this start_line 0 0 0]
+	bind $itk_component(canvas) <ButtonRelease-1> [::itcl::code $this start_line 1 %x %y]
+	bind $itk_component(canvas) <ButtonRelease-3> [::itcl::code $this start_line_pick %x %y]
+	bind $itk_component(coords).x <Return> [::itcl::code $this start_line 0 0 0]
+	bind $itk_component(coords).y <Return> [::itcl::code $this start_line 0 0 0]
     }
 
     method start_line_pick { x y } {
@@ -1619,12 +1619,12 @@ class Sketch_editor {
 	$itk_component(status_line) configure -text "Click and hold mouse button 1 to adjust end point\n\
 			or click mouse button 3 to select an existing vertex to set the endpoint\n\
 			or enter end point coordinates in the entry windows"
-	bind $itk_component(canvas) <B1-Motion> [code $this continue_line $new_seg 0 1 %x %y]
-	bind $itk_component(canvas) <ButtonPress-1> [code $this continue_line $new_seg 2 1 %x %y]
-	bind $itk_component(canvas) <ButtonRelease-1> [code $this continue_line $new_seg 1 1 %x %y]
-	bind $itk_component(canvas) <ButtonRelease-3> [code $this continue_line_pick $new_seg %x %y]
-	bind $itk_component(coords).x <Return> [code $this continue_line $new_seg 2 0 0 0]
-	bind $itk_component(coords).y <Return> [code $this continue_line $new_seg 2 0 0 0]
+	bind $itk_component(canvas) <B1-Motion> [::itcl::code $this continue_line $new_seg 0 1 %x %y]
+	bind $itk_component(canvas) <ButtonPress-1> [::itcl::code $this continue_line $new_seg 2 1 %x %y]
+	bind $itk_component(canvas) <ButtonRelease-1> [::itcl::code $this continue_line $new_seg 1 1 %x %y]
+	bind $itk_component(canvas) <ButtonRelease-3> [::itcl::code $this continue_line_pick $new_seg %x %y]
+	bind $itk_component(coords).x <Return> [::itcl::code $this continue_line $new_seg 2 0 0 0]
+	bind $itk_component(coords).y <Return> [::itcl::code $this continue_line $new_seg 2 0 0 0]
     }
 
     method continue_line_pick { seg x y } {
@@ -1686,7 +1686,7 @@ class Sketch_editor {
 }
 
 
-class Sketch_carc {
+::itcl::class Sketch_carc {
     private variable canv
     private variable editor
     private variable start_index -1
@@ -1959,7 +1959,7 @@ proc calc_bezier {num_pts coords t} {
 }
 
 
-class Sketch_bezier {
+::itcl::class Sketch_bezier {
     private variable canv
     private variable editor
     private variable num_points
@@ -2067,7 +2067,7 @@ class Sketch_bezier {
     }
 }
 
-class Sketch_line {
+::itcl::class Sketch_line {
     private variable canv
     private variable editor
     private variable start_index -1

@@ -174,6 +174,14 @@ set tk_version [require_at_least Tk 8.6]
 set itcl_version [require_at_least Itcl 4.3.0]
 set itk_version [require_at_least Itk 4.2.3]
 set iwidgets_version [require_at_least Iwidgets 4.1.1]
+foreach command {
+    body class code configbody delete delete_helper ensemble filter find
+    forward local mixin scope
+} {
+    if {[llength [info commands ::$command]]} {
+	fail "Itcl command was imported globally: ::$command"
+    }
+}
 exercise_panedwindow_bindings
 interp alias {} Hierarchy {} ::iwidgets::Hierarchy
 interp alias {} scrolledlistbox {} ::iwidgets::scrolledlistbox

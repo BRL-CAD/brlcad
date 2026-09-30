@@ -2804,7 +2804,7 @@ Lock-Shift-Button-1
 
 
 # Fixme: This needs to inherit from a common base class
-class SketchCArc {
+::itcl::class SketchCArc {
     private variable canv
     private variable editor
     private variable start_index -1
@@ -3058,7 +3058,7 @@ class SketchCArc {
 
 
 # Fixme: This needs to inherit from a common base class
-class SketchBezier {
+::itcl::class SketchBezier {
     private variable canv
     private variable editor
     private variable num_points
@@ -3178,7 +3178,7 @@ class SketchBezier {
 
 
 # Fixme: This needs to inherit from a common base class
-class SketchLine {
+::itcl::class SketchLine {
     private variable canv
     private variable editor
     private variable start_index -1

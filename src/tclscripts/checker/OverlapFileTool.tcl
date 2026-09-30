@@ -30,7 +30,7 @@ package require Itk
 package require Iwidgets
 
 # go ahead and blow away the class if we are reloading
-catch {delete class OverlapFileTool} error
+catch {::itcl::delete class OverlapFileTool} error
 
 package provide OverlapFileTool 1.0
 
@@ -82,15 +82,15 @@ package provide OverlapFileTool 1.0
 	ttk::labelframe $itk_interior.ovFrame -padding 8 -text " Manually Enter The Object(s): "
     } {}
     itk_component add objectsEntry {
-	tk::entry $itk_component(ovFrame).objectsEntry -textvariable [scope _entryObjs]
+	tk::entry $itk_component(ovFrame).objectsEntry -textvariable [::itcl::scope _entryObjs]
     } {}
     itk_component add buttonAdd {
 	ttk::button $itk_component(ovFrame).buttonAdd \
-	-text "Add" -padding 5 -command [code $this manualObjs add ]
+	-text "Add" -padding 5 -command [::itcl::code $this manualObjs add ]
     } {}
     itk_component add buttonRemove {
 	ttk::button $itk_component(ovFrame).buttonRemove \
-	-text "Remove" -padding 5 -command [code $this manualObjs remove ]
+	-text "Remove" -padding 5 -command [::itcl::code $this manualObjs remove ]
     } {}
 
     itk_component add objFrame {
@@ -99,8 +99,8 @@ package provide OverlapFileTool 1.0
     itk_component add objectsTree {
 	Hierarchy $itk_component(objFrame).objectsTree \
 	    -labeltext "Double click to select/deselect objects" \
-	    -querycommand [ code $this getNodeChildren %n ] \
-	    -dblclickcommand [ code $this selectNode %n ] \
+	    -querycommand [::itcl::code $this getNodeChildren %n ] \
+	    -dblclickcommand [::itcl::code $this selectNode %n ] \
 	    -markforeground black \
 	    -markbackground yellow \
 	    -visibleitems 40x20 \
@@ -109,7 +109,7 @@ package provide OverlapFileTool 1.0
     itk_component add objectsList {
 	scrolledlistbox $itk_component(objFrame).objectsList \
 	    -labelpos n \
-	    -dblclickcommand [code $this unmarkNode ] \
+	    -dblclickcommand [::itcl::code $this unmarkNode ] \
 	    -visibleitems 40x18 \
 	    -selectbackground yellow \
 	    -selectforeground black \
@@ -121,11 +121,11 @@ package provide OverlapFileTool 1.0
     } {}
     itk_component add buttonGo {
 	ttk::button $itk_component(ovButtonFrame).buttonGo \
-	-text "Check For Overlaps" -padding 5 -command [code $this runTools ]
+	-text "Check For Overlaps" -padding 5 -command [::itcl::code $this runTools ]
     } {}
     itk_component add buttonClear {
 	ttk::button $itk_component(ovButtonFrame).buttonClear \
-	-text "Clear Selection" -padding 5 -command [code $this clearSelection ]
+	-text "Clear Selection" -padding 5 -command [::itcl::code $this clearSelection ]
     } {}
 
     itk_component add progressFrame {
@@ -133,10 +133,10 @@ package provide OverlapFileTool 1.0
     } {}
     itk_component add statusLabel {
 	ttk::label $itk_component(progressFrame).statusLabel \
-	-textvariable [scope _statusText] -justify center -wraplength 500
+	-textvariable [::itcl::scope _statusText] -justify center -wraplength 500
     } {}
     itk_component add progressBar {
-	ttk::progressbar $itk_component(progressFrame).progressBar -variable [scope _progressValue]
+	ttk::progressbar $itk_component(progressFrame).progressBar -variable [::itcl::scope _progressValue]
     } {}
 
     eval itk_initialize $args
@@ -178,7 +178,7 @@ package provide OverlapFileTool 1.0
 # main driver that calls the commands and
 # creates the overlaps file
 #
-body OverlapFileTool::runTools { } {
+::itcl::body OverlapFileTool::runTools { } {
     # get _objs from list
     set _objs {}
     foreach obj [$itk_component(objectsList) get 0 end] {
@@ -258,7 +258,7 @@ body OverlapFileTool::runTools { } {
 # getNodeChildren is the -querycommand
 #
 # returns the geometry at any node in the object tree.
-body OverlapFileTool::getNodeChildren { { node "" } } {
+::itcl::body OverlapFileTool::getNodeChildren { { node "" } } {
     # get a list of children for the current node.  the result in childList
     # should be a list of adorned children nodes.
     set childList ""
@@ -333,7 +333,7 @@ body OverlapFileTool::getNodeChildren { { node "" } } {
 #
 # to select/deselect the nodes in the object tree on double click
 #
-body OverlapFileTool::selectNode { node } {
+::itcl::body OverlapFileTool::selectNode { node } {
     set nodeName [ lindex $node 1 ]
     set markedobjs [ $itk_component(objectsTree) mark get ]
 
@@ -350,7 +350,7 @@ body OverlapFileTool::selectNode { node } {
 # function to run the search command on the manually entered objects
 # and add them to the objects list and mark them in the tree.
 #
-body OverlapFileTool::manualObjs { option } {
+::itcl::body OverlapFileTool::manualObjs { option } {
     set entrylist {}
     set badentry {}
     set searchcmd "search  / -type c -path"
@@ -389,7 +389,7 @@ body OverlapFileTool::manualObjs { option } {
 #
 # function to clear the selection made
 #
-body OverlapFileTool::clearSelection { } {
+::itcl::body OverlapFileTool::clearSelection { } {
     $itk_component(objectsTree) mark clear
     $this UpdateObjsList
 }
@@ -408,7 +408,7 @@ body OverlapFileTool::clearSelection { } {
 # Updates the object list for any marking/unmarking of the nodes
 # in the object tree.
 #
-body OverlapFileTool::UpdateObjsList { } {
+::itcl::body OverlapFileTool::UpdateObjsList { } {
     set markedobjs [ $itk_component(objectsTree) mark get ]
     $itk_component(objectsList) clear
     foreach obj [ lsort $markedobjs ] {
@@ -420,7 +420,7 @@ body OverlapFileTool::UpdateObjsList { } {
 #
 # Removes mark for any parent nodes recursively if a child node is marked
 #
-body OverlapFileTool::removeParentMark { node } {
+::itcl::body OverlapFileTool::removeParentMark { node } {
     set full ""
     regexp {(.*)/} $node full parent
     if { $full ne "" } {
@@ -435,7 +435,7 @@ body OverlapFileTool::removeParentMark { node } {
 #
 # Removes mark for any child nodes recursively if a parent node is marked
 #
-body OverlapFileTool::removeChildrenMark { node } {
+::itcl::body OverlapFileTool::removeChildrenMark { node } {
     set full ""
     regexp {(.*)/(.*)} $node full parent child
     if { $full ne "" } {
@@ -453,7 +453,7 @@ body OverlapFileTool::removeChildrenMark { node } {
 #
 # marks the node in the object tree
 #
-body OverlapFileTool::markNode { node } {
+::itcl::body OverlapFileTool::markNode { node } {
     # if we are selecting a parent node then disable the mark of children nodes.
     $this removeChildrenMark $node
     # we also have to disable the mark of parent nodes as well
@@ -467,7 +467,7 @@ body OverlapFileTool::markNode { node } {
 #
 # unmarks the nodes in the object tree
 #
-body OverlapFileTool::unmarkNode { { node "" } } {
+::itcl::body OverlapFileTool::unmarkNode { { node "" } } {
     # if called from the scrolledlistbox get the current selection
     if {$node == ""} {
 	set node [$itk_component(objectsList) getcurselection]
@@ -481,7 +481,7 @@ body OverlapFileTool::unmarkNode { { node "" } } {
 # averages the size values for common pairs and
 # inserts to overlaps list
 #
-body OverlapFileTool::addToList { new_list } {
+::itcl::body OverlapFileTool::addToList { new_list } {
     set avg 0
     foreach pair $new_list {
 	set size [lindex $pair 2]
@@ -497,7 +497,7 @@ body OverlapFileTool::addToList { new_list } {
 # removes any duplicate pairs by calling addToList
 # by aggregating a list of pairs with same names
 #
-body OverlapFileTool::rmDupPairs { } {
+::itcl::body OverlapFileTool::rmDupPairs { } {
     set _statusText "Removing duplicates from overlaps list"
     set new_list {}
 
@@ -531,7 +531,7 @@ body OverlapFileTool::rmDupPairs { } {
 #
 # sorts the pairs before removing duplicates
 #
-body OverlapFileTool::sortPairs { } {
+::itcl::body OverlapFileTool::sortPairs { } {
     set _progressValue 95
     set _statusText "Sorting overlaps list"
     set pairsList [lsort $pairsList]

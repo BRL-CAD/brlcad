@@ -31,7 +31,7 @@ package require Iwidgets
 
 package provide GraphEditor 1.0
 
-class GraphEditor {
+::itcl::class GraphEditor {
     inherit itk::Toplevel
 
     constructor {} {}
@@ -86,7 +86,7 @@ class GraphEditor {
 # begin constructor/destructor
 ###########
 
-body GraphEditor::constructor {} {
+::itcl::body GraphEditor::constructor {} {
     # used to determine the mged port number
     global port
     global mged_players
@@ -159,13 +159,13 @@ body GraphEditor::constructor {} {
 
     $_bgMenu add command \
 	-label [ $this toggleAutosizing same ] \
-	-command "[ code $this toggleAutosizing  ]"
+	-command "[::itcl::code $this toggleAutosizing  ]"
     # save the index of this menu entry so we may modify its label later
     set _autosizeBgMenuIndex [ $_bgMenu index end ]
 
     $_bgMenu add command \
 	-label [ $this toggleAutorender same ] \
-	-command "[ code $this toggleAutorender  ]"
+	-command "[::itcl::code $this toggleAutorender  ]"
     # save the index of this menu entry so we may modify its label later
     set _autorenderBgMenuIndex [ $_bgMenu index end ]
 
@@ -270,7 +270,7 @@ body GraphEditor::constructor {} {
 }
 
 
-body GraphEditor::destructor {} {
+::itcl::body GraphEditor::destructor {} {
     if { $_debug } {
 	puts "destructor"
     }
@@ -299,7 +299,7 @@ body GraphEditor::destructor {} {
 #
 # simply clears any displayed nodes from the graphics window
 #
-body GraphEditor::clearDisplay {} {
+::itcl::body GraphEditor::clearDisplay {} {
     if { $_debug } {
 	puts "clearDisplay"
     }
@@ -316,7 +316,7 @@ body GraphEditor::clearDisplay {} {
 #
 # auto-fits the currently displayed objects to the current view size
 #
-body GraphEditor::autosizeDisplay {} {
+::itcl::body GraphEditor::autosizeDisplay {} {
     if { $_debug } {
 	puts "autosizeDisplay"
     }
@@ -334,7 +334,7 @@ body GraphEditor::autosizeDisplay {} {
 # zooms the display in or out either in jumps via the keywords "in" and "out"
 # or via a specified amount.
 #
-body GraphEditor::zoomDisplay { { zoom "in"} } {
+::itcl::body GraphEditor::zoomDisplay { { zoom "in"} } {
     if { $_debug } {
 	puts "zoomDisplay $zoom"
     }
@@ -367,7 +367,7 @@ body GraphEditor::zoomDisplay { { zoom "in"} } {
 # generates a small preview image of what geometry is presently displayed to a
 # small temporary framebuffer
 #
-body GraphEditor::renderPreview { { rtoptions "-P4 -R -B" } } {
+::itcl::body GraphEditor::renderPreview { { rtoptions "-P4 -R -B" } } {
 
     # mged provides the port number it has available
     global port
@@ -521,7 +521,7 @@ body GraphEditor::renderPreview { { rtoptions "-P4 -R -B" } } {
 # XXX if the menu entries get more complex than what is already below (8 references),
 # it should really be reorganized.
 #
-body GraphEditor::toggleAutosizing { { state "" } } {
+::itcl::body GraphEditor::toggleAutosizing { { state "" } } {
     if { $_debug } {
 	puts "toggleAutosizing $state"
     }
@@ -568,7 +568,7 @@ body GraphEditor::toggleAutosizing { { state "" } } {
 # XXX if the menu entries get more complex than what is already below (8 references),
 # it should really be reorganized.
 #
-body GraphEditor::toggleAutorender { { state "" } } {
+::itcl::body GraphEditor::toggleAutorender { { state "" } } {
     if { $_debug } {
 	puts "toggleAutorender $state"
     }
@@ -620,7 +620,7 @@ body GraphEditor::toggleAutorender { { state "" } } {
 #
 # turns debugging on/off
 #
-body GraphEditor::toggleDebug { } {
+::itcl::body GraphEditor::toggleDebug { } {
     if { $_debug } {
 	set _debug 0
     } else {
@@ -642,7 +642,7 @@ body GraphEditor::toggleDebug { } {
 # takes an rgb triplet string as input and returns an html-style
 # color entity that tcl understands.
 #
-body GraphEditor::rgbToHex { { rgb "0 0 0" } } {
+::itcl::body GraphEditor::rgbToHex { { rgb "0 0 0" } } {
     if { $_debug } {
 	puts "rgbToHex $rgb"
     }
@@ -683,7 +683,7 @@ body GraphEditor::rgbToHex { { rgb "0 0 0" } } {
 #
 # simply checks if a render needs to occur automatically
 #
-body GraphEditor::checkAutoRender {} {
+::itcl::body GraphEditor::checkAutoRender {} {
     if { $_debug } {
 	puts "checkAutoRender"
     }

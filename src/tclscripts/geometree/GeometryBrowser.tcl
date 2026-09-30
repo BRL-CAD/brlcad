@@ -52,13 +52,13 @@ package require Itk
 package require Iwidgets
 
 # go ahead and blow away the class if we are reloading
-#if [ catch {delete class GeometryBrowser} error ] {
+#if [ catch {::itcl::delete class GeometryBrowser} error ] {
 #	puts $error
 #}
 
 package provide GeometryBrowser 1.0
 
-class GeometryBrowser {
+::itcl::class GeometryBrowser {
     inherit itk::Toplevel
 
     constructor {} {}
@@ -140,7 +140,7 @@ class GeometryBrowser {
 # begin constructor/destructor
 ###########
 
-body GeometryBrowser::constructor {} {
+::itcl::body GeometryBrowser::constructor {} {
     # used to determine the mged port number
     global port
     global mged_players
@@ -201,11 +201,11 @@ body GeometryBrowser::constructor {} {
     itk_component add cadtree {
 	Hierarchy $itk_interior.cadtree \
 	    -labeltext "...loading..." \
-	    -querycommand [ code $this getNodeChildren %n yes ] \
-	    -imagecommand [ code $this updateGeometryLists %n ] \
-	    -dblclickcommand [ code $this displayNode %n ] \
-	    -textmenuloadcommand [ code $this prepNodeMenu ] \
-	    -imagemenuloadcommand [ code $this prepNodeMenu ] \
+	    -querycommand [::itcl::code $this getNodeChildren %n yes ] \
+	    -imagecommand [::itcl::code $this updateGeometryLists %n ] \
+	    -dblclickcommand [::itcl::code $this displayNode %n ] \
+	    -textmenuloadcommand [::itcl::code $this prepNodeMenu ] \
+	    -imagemenuloadcommand [::itcl::code $this prepNodeMenu ] \
 	    -markforeground blue \
 	    -markbackground red   \
 	    -selectforeground black \
@@ -213,9 +213,9 @@ body GeometryBrowser::constructor {} {
 	    -visibleitems 20x40 \
 	    -alwaysquery 1
     }
-    #				-imagemenuloadcommand [ code $this prepNodeMenu ]
-    #				-selectcommand [ code $this toggleNode %n ]
-    #				-imagedblcommand [ code $this displayNode %n ]
+    #				-imagemenuloadcommand [::itcl::code $this prepNodeMenu ]
+    #				-selectcommand [::itcl::code $this toggleNode %n ]
+    #				-imagedblcommand [::itcl::code $this displayNode %n ]
 
     # save hooks to the cadtree pop-up menus for efficiency and convenience
     set _itemMenu [ $itk_interior.cadtree component itemMenu ]
@@ -226,13 +226,13 @@ body GeometryBrowser::constructor {} {
     # XXX for some reason, the current call is not returning a value properly
     $_itemMenu add command \
 	-label "Display" \
-	-command [ code $this displayNode [ $itk_interior.cadtree current ] "appended" ]
+	-command [::itcl::code $this displayNode [ $itk_interior.cadtree current ] "appended" ]
     # save the index of the menu entry so we may modify its label later
     set _displayItemMenuIndex [ $_itemMenu index end ]
 
     $_itemMenu add command \
 	-label "Clear & Display" \
-	-command [ code $this displayNode [ $itk_interior.cadtree current ] "alone" ]
+	-command [::itcl::code $this displayNode [ $itk_interior.cadtree current ] "alone" ]
 
     $_itemMenu add separator
 
@@ -247,55 +247,55 @@ body GeometryBrowser::constructor {} {
 
     $_itemMenu.colorMenu add command \
 	-label "Blue" -background [ $this rgbToHex "0 0 255" ] \
-	-command [ code $this setNodeColor [ $itk_interior.cadtree current ] "0 0 255" ]
+	-command [::itcl::code $this setNodeColor [ $itk_interior.cadtree current ] "0 0 255" ]
     $_itemMenu.colorMenu add command \
 	-label "Cyan" -background [ $this rgbToHex "0 255 255" ] \
-	-command [ code $this setNodeColor [ $itk_interior.cadtree current ] "0 255 255" ]
+	-command [::itcl::code $this setNodeColor [ $itk_interior.cadtree current ] "0 255 255" ]
     $_itemMenu.colorMenu add command \
 	-label "Dark Blue" -background [ $this rgbToHex "50 0 175" ] \
-	-command [ code $this setNodeColor [ $itk_interior.cadtree current ] "50 0 175" ]
+	-command [::itcl::code $this setNodeColor [ $itk_interior.cadtree current ] "50 0 175" ]
     $_itemMenu.colorMenu add command \
 	-label "Dark Red" -background [ $this rgbToHex "79 47 47" ] \
-	-command [ code $this setNodeColor [ $itk_interior.cadtree current ] "79 47 47" ]
+	-command [::itcl::code $this setNodeColor [ $itk_interior.cadtree current ] "79 47 47" ]
     $_itemMenu.colorMenu add command \
 	-label "Forest Green" -background [ $this rgbToHex "50 145 20" ] \
-	-command [ code $this setNodeColor [ $itk_interior.cadtree current ] "50 145 20" ]
+	-command [::itcl::code $this setNodeColor [ $itk_interior.cadtree current ] "50 145 20" ]
     $_itemMenu.colorMenu add command \
 	-label "Green" -background [ $this rgbToHex "0 255 0" ] \
-	-command [ code $this setNodeColor [ $itk_interior.cadtree current ] "0 255 0" ]
+	-command [::itcl::code $this setNodeColor [ $itk_interior.cadtree current ] "0 255 0" ]
     $_itemMenu.colorMenu add command \
 	-label "Grey" -background [ $this rgbToHex "80 80 80" ] \
-	-command [ code $this setNodeColor [ $itk_interior.cadtree current ] "80 80 80" ]
+	-command [::itcl::code $this setNodeColor [ $itk_interior.cadtree current ] "80 80 80" ]
     $_itemMenu.colorMenu add command \
 	-label "Light Brown" -background [ $this rgbToHex "159 159 95" ] \
-	-command [ code $this setNodeColor [ $itk_interior.cadtree current ] "159 159 95" ]
+	-command [::itcl::code $this setNodeColor [ $itk_interior.cadtree current ] "159 159 95" ]
     $_itemMenu.colorMenu add command \
 	-label "Lime Green" -background [ $this rgbToHex "50 204 50" ] \
-	-command [ code $this setNodeColor [ $itk_interior.cadtree current ] "50 204 50" ]
+	-command [::itcl::code $this setNodeColor [ $itk_interior.cadtree current ] "50 204 50" ]
     $_itemMenu.colorMenu add command \
 	-label "Magenta" -background [ $this rgbToHex "255 0 255" ] \
-	-command [ code $this setNodeColor [ $itk_interior.cadtree current ] "255 0 255" ]
+	-command [::itcl::code $this setNodeColor [ $itk_interior.cadtree current ] "255 0 255" ]
     $_itemMenu.colorMenu add command \
 	-label "Orange" -background [ $this rgbToHex "204 50 50" ] \
-	-command [ code $this setNodeColor [ $itk_interior.cadtree current ] "204 50 50" ]
+	-command [::itcl::code $this setNodeColor [ $itk_interior.cadtree current ] "204 50 50" ]
     $_itemMenu.colorMenu add command \
 	-label "Peach" -background [ $this rgbToHex "234 100 30" ] \
-	-command [ code $this setNodeColor [ $itk_interior.cadtree current ] "234 100 30" ]
+	-command [::itcl::code $this setNodeColor [ $itk_interior.cadtree current ] "234 100 30" ]
     $_itemMenu.colorMenu add command \
 	-label "Pink" -background [ $this rgbToHex "255 145 145" ] \
-	-command [ code $this setNodeColor [ $itk_interior.cadtree current ] "255 145 145" ]
+	-command [::itcl::code $this setNodeColor [ $itk_interior.cadtree current ] "255 145 145" ]
     $_itemMenu.colorMenu add command \
 	-label "Red" -background [ $this rgbToHex "255 0 0" ] \
-	-command [ code $this setNodeColor [ $itk_interior.cadtree current ] "255 0 0" ]
+	-command [::itcl::code $this setNodeColor [ $itk_interior.cadtree current ] "255 0 0" ]
     $_itemMenu.colorMenu add command \
 	-label "Redish" -background [ $this rgbToHex "255 50 50" ] \
-	-command [ code $this setNodeColor [ $itk_interior.cadtree current ] "255 50 50" ]
+	-command [::itcl::code $this setNodeColor [ $itk_interior.cadtree current ] "255 50 50" ]
     $_itemMenu.colorMenu add command \
 	-label "Tan" -background [ $this rgbToHex "200 150 100" ] \
-	-command [ code $this setNodeColor [ $itk_interior.cadtree current ] "200 150 100" ]
+	-command [::itcl::code $this setNodeColor [ $itk_interior.cadtree current ] "200 150 100" ]
     $_itemMenu.colorMenu add command \
 	-label "Yellow" -background [ $this rgbToHex "255 255 0" ] \
-	-command [ code $this setNodeColor [ $itk_interior.cadtree current ] "255 255 0" ]
+	-command [::itcl::code $this setNodeColor [ $itk_interior.cadtree current ] "255 255 0" ]
 
 
     $_itemMenu add cascade -label "Set Color" -menu $_itemMenu.colorMenu
@@ -303,38 +303,38 @@ body GeometryBrowser::constructor {} {
 
     $_itemMenu add command \
 	-label "Edit" -state disabled \
-	-command [ code $this editNode [ $itk_interior.cadtree current ] ]
+	-command [::itcl::code $this editNode [ $itk_interior.cadtree current ] ]
 
     #	$_itemMenu add separator
 
     #	$_itemMenu add command \
-	#			-label "Render Preview" -command "[ code $this renderPreview ]"
+	#			-label "Render Preview" -command "[::itcl::code $this renderPreview ]"
     #	$_itemMenu add command \
-	#			-label "Raytrace Panel" -command "[ code $this raytracePanel ]"
+	#			-label "Raytrace Panel" -command "[::itcl::code $this raytracePanel ]"
     #	$_itemMenu add command \
-	#			-label "Raytrace Wizard" -command "[ code $this raytraceWizard ]"
+	#			-label "Raytrace Wizard" -command "[::itcl::code $this raytraceWizard ]"
 
     #	$_itemMenu add separator
 
     #	$_itemMenu add command \
-	#			-label "Fit the View" -command "[ code $this autosizeDisplay ]"
+	#			-label "Fit the View" -command "[::itcl::code $this autosizeDisplay ]"
     #	$_itemMenu add command \
-	#			-label "Zoom In" -command "[ code $this zoomDisplay in ]"
+	#			-label "Zoom In" -command "[::itcl::code $this zoomDisplay in ]"
     #	$_itemMenu add command \
-	#			-label "Zoom Out" -command "[ code $this zoomDisplay out ]"
+	#			-label "Zoom Out" -command "[::itcl::code $this zoomDisplay out ]"
     #	$_itemMenu add command \
-	#			-label "Clear View" -command "[ code $this clearDisplay ]"
+	#			-label "Clear View" -command "[::itcl::code $this clearDisplay ]"
 
     #	$_itemMenu add separator
 
     #	$_itemMenu add command \
 	#			-label [ $this toggleAutosizing same ] \
-	#			-command "[ code $this toggleAutosizing  ]"
+	#			-command "[::itcl::code $this toggleAutosizing  ]"
     #	# save the index of this menu entry so we may modify its label later
     #	set _autosizeItemMenuIndex [ $_itemMenu index end ]
     #	$_itemMenu add command \
 	#			-label [ $this toggleAutorender same ] \
-	#			-command "[ code $this toggleAutorender  ]"
+	#			-command "[::itcl::code $this toggleAutorender  ]"
     #	# save the index of this menu entry so we may modify its label later
     #	set _autorenderItemMenuIndex [ $_itemMenu index end ]
 
@@ -350,52 +350,52 @@ body GeometryBrowser::constructor {} {
 
     $_bgMenu.bgColorMenu add command \
 	-label "Blue" -background [ $this rgbToHex "0 0 255" ] \
-	-command [ code $this setDisplayedToColor "0 0 255" ]
+	-command [::itcl::code $this setDisplayedToColor "0 0 255" ]
     $_bgMenu.bgColorMenu add command \
 	-label "Cyan" -background [ $this rgbToHex "0 255 255" ] \
-	-command [ code $this setDisplayedToColor "0 255 255" ]
+	-command [::itcl::code $this setDisplayedToColor "0 255 255" ]
     $_bgMenu.bgColorMenu add command \
 	-label "Dark Blue" -background [ $this rgbToHex "50 0 175" ] \
-	-command [ code $this setDisplayedToColor "50 0 175" ]
+	-command [::itcl::code $this setDisplayedToColor "50 0 175" ]
     $_bgMenu.bgColorMenu add command \
 	-label "Dark Red" -background [ $this rgbToHex "79 47 47" ] \
-	-command [ code $this setDisplayedToColor "79 47 47" ]
+	-command [::itcl::code $this setDisplayedToColor "79 47 47" ]
     $_bgMenu.bgColorMenu add command \
 	-label "Green" -background [ $this rgbToHex "50 145 20" ] \
-	-command [ code $this setDisplayedToColor "50 145 20" ]
+	-command [::itcl::code $this setDisplayedToColor "50 145 20" ]
     $_bgMenu.bgColorMenu add command \
 	-label "Grey" -background [ $this rgbToHex "80 80 80" ] \
-	-command [ code $this setDisplayedToColor "80 80 80" ]
+	-command [::itcl::code $this setDisplayedToColor "80 80 80" ]
     $_bgMenu.bgColorMenu add command \
 	-label "Light Brown" -background [ $this rgbToHex "159 159 95" ] \
-	-command [ code $this setDisplayedToColor "159 159 95" ]
+	-command [::itcl::code $this setDisplayedToColor "159 159 95" ]
     $_bgMenu.bgColorMenu add command \
 	-label "Lime Green" -background [ $this rgbToHex "50 204 50" ] \
-	-command [ code $this setDisplayedToColor "50 204 50" ]
+	-command [::itcl::code $this setDisplayedToColor "50 204 50" ]
     $_bgMenu.bgColorMenu add command \
 	-label "Magenta" -background [ $this rgbToHex "255 0 255" ] \
-	-command [ code $this setDisplayedToColor "255 0 255" ]
+	-command [::itcl::code $this setDisplayedToColor "255 0 255" ]
     $_bgMenu.bgColorMenu add command \
 	-label "Orange" -background [ $this rgbToHex "204 50 50" ] \
-	-command [ code $this setDisplayedToColor "204 50 50" ]
+	-command [::itcl::code $this setDisplayedToColor "204 50 50" ]
     $_bgMenu.bgColorMenu add command \
 	-label "Peach" -background [ $this rgbToHex "234 100 30" ] \
-	-command [ code $this setDisplayedToColor "234 100 30" ]
+	-command [::itcl::code $this setDisplayedToColor "234 100 30" ]
     $_bgMenu.bgColorMenu add command \
 	-label "Pink" -background [ $this rgbToHex "255 145 145" ] \
-	-command [ code $this setDisplayedToColor "255 145 145" ]
+	-command [::itcl::code $this setDisplayedToColor "255 145 145" ]
     $_bgMenu.bgColorMenu add command \
 	-label "Red" -background [ $this rgbToHex "255 0 0" ] \
-	-command [ code $this setDisplayedToColor "255 0 0" ]
+	-command [::itcl::code $this setDisplayedToColor "255 0 0" ]
     $_bgMenu.bgColorMenu add command \
 	-label "Redish" -background [ $this rgbToHex "255 50 50" ] \
-	-command [ code $this setDisplayedToColor "255 50 50" ]
+	-command [::itcl::code $this setDisplayedToColor "255 50 50" ]
     $_bgMenu.bgColorMenu add command \
 	-label "Tan" -background [ $this rgbToHex "200 150 100" ] \
-	-command [ code $this setDisplayedToColor "200 150 100" ]
+	-command [::itcl::code $this setDisplayedToColor "200 150 100" ]
     $_bgMenu.bgColorMenu add command \
 	-label "Yellow" -background [ $this rgbToHex "255 255 0" ] \
-	-command [ code $this setDisplayedToColor "255 255 0" ]
+	-command [::itcl::code $this setDisplayedToColor "255 255 0" ]
 
     $_bgMenu add cascade \
 	-label "Set Color All Displayed" -menu $_bgMenu.bgColorMenu
@@ -404,34 +404,34 @@ body GeometryBrowser::constructor {} {
 
     # Non node menu
     $_bgMenu add command \
-	-label "Render Preview" -command [ code $this renderPreview ]
+	-label "Render Preview" -command [::itcl::code $this renderPreview ]
     $_bgMenu add command \
-	-label "Raytrace Panel" -command [ code $this raytracePanel ]
+	-label "Raytrace Panel" -command [::itcl::code $this raytracePanel ]
     $_bgMenu add command \
-	-label "Raytrace Wizard" -command [ code $this raytraceWizard ] -state disabled
+	-label "Raytrace Wizard" -command [::itcl::code $this raytraceWizard ] -state disabled
 
     $_bgMenu add separator
 
     $_bgMenu add command \
-	-label "Fit the View" -command "[ code $this autosizeDisplay ]"
+	-label "Fit the View" -command "[::itcl::code $this autosizeDisplay ]"
     $_bgMenu add command \
-	-label "Zoom In" -command "[ code $this zoomDisplay in ]"
+	-label "Zoom In" -command "[::itcl::code $this zoomDisplay in ]"
     $_bgMenu add command \
-	-label "Zoom Out" -command "[ code $this zoomDisplay out ]"
+	-label "Zoom Out" -command "[::itcl::code $this zoomDisplay out ]"
     $_bgMenu add command \
-	-label "Clear View" -command "[ code $this clearDisplay ]"
+	-label "Clear View" -command "[::itcl::code $this clearDisplay ]"
 
     $_bgMenu add separator
 
     $_bgMenu add command \
 	-label [ $this toggleAutosizing same ] \
-	-command "[ code $this toggleAutosizing  ]"
+	-command "[::itcl::code $this toggleAutosizing  ]"
     # save the index of this menu entry so we may modify its label later
     set _autosizeBgMenuIndex [ $_bgMenu index end ]
 
     $_bgMenu add command \
 	-label [ $this toggleAutorender same ] \
-	-command "[ code $this toggleAutorender  ]"
+	-command "[::itcl::code $this toggleAutorender  ]"
     # save the index of this menu entry so we may modify its label later
     set _autorenderBgMenuIndex [ $_bgMenu index end ]
 
@@ -464,7 +464,7 @@ body GeometryBrowser::constructor {} {
 }
 
 
-body GeometryBrowser::destructor {} {
+::itcl::body GeometryBrowser::destructor {} {
     if { $_debug } {
 	puts "destructor"
     }
@@ -510,7 +510,7 @@ body GeometryBrowser::destructor {} {
 # the second parameter controls whether the displayed geometry lists will be
 # maintained or whether we are merely getting a list of children at a point
 #
-body GeometryBrowser::getNodeChildren { { node "" } { updateLists "no" }} {
+::itcl::body GeometryBrowser::getNodeChildren { { node "" } { updateLists "no" }} {
     if { $_debug } {
 	puts "getNodeChildren \"$node\" \"$updateLists\""
     }
@@ -639,7 +639,7 @@ body GeometryBrowser::getNodeChildren { { node "" } { updateLists "no" }} {
 # simply expands the hierarchy just as if the icon had been selected. later it
 # will be able to display the appropriate details to the info panel.
 #
-body GeometryBrowser::toggleNode { { node "" } } {
+::itcl::body GeometryBrowser::toggleNode { { node "" } } {
     if { $_debug } {
 	puts "toggleNode $node"
     }
@@ -656,7 +656,7 @@ body GeometryBrowser::toggleNode { { node "" } } {
 # and collapsing nodes.  getNodeChildren adds new nodes as they are expanded.
 # this routine removes them as they are collapsed.
 #
-body GeometryBrowser::updateGeometryLists { { node "" } } {
+::itcl::body GeometryBrowser::updateGeometryLists { { node "" } } {
     if { $_debug } {
 	puts "updateGeometryLists $node"
     }
@@ -730,7 +730,7 @@ body GeometryBrowser::updateGeometryLists { { node "" } } {
 # XXX for some reason "node" ends up getting passed the branch/leaf identifier
 # in the wrong place (non root nodes are in the wrong order)
 #
-body GeometryBrowser::displayNode { { node "" } { display "appended" } } {
+::itcl::body GeometryBrowser::displayNode { { node "" } { display "appended" } } {
     if { $_debug } {
 	puts "displayNode \"$node\" \"$display\""
     }
@@ -776,7 +776,7 @@ body GeometryBrowser::displayNode { { node "" } { display "appended" } } {
 # does the opposite of displayNode.  It removed a node from the display if it
 # is displayed.
 #
-body GeometryBrowser::undisplayNode { { node "" } } {
+::itcl::body GeometryBrowser::undisplayNode { { node "" } } {
     if { $_debug } {
 	puts "undisplayNode $node"
     }
@@ -805,7 +805,7 @@ body GeometryBrowser::undisplayNode { { node "" } } {
 # type.  node is the path to a piece of geometry like /all.g/compartment/reg.r
 # color is expected to be 3 rgb values like "255 0 0".
 #
-body GeometryBrowser::setNodeColor { { node "" } { color "" } } {
+::itcl::body GeometryBrowser::setNodeColor { { node "" } { color "" } } {
     if { $_debug } {
 	puts "setNodeColor \"$node\" \"$color\""
     }
@@ -858,7 +858,7 @@ body GeometryBrowser::setNodeColor { { node "" } { color "" } } {
 # the node type.  color is expected to be 3 rgb values like "255 0 0" or even in
 # "slashed" style ala 255/0/0.
 #
-body GeometryBrowser::setDisplayedToColor { { color "" } } {
+::itcl::body GeometryBrowser::setDisplayedToColor { { color "" } } {
     if { $_debug } {
 	puts "setDisplayedToColor $color"
     }
@@ -880,7 +880,7 @@ body GeometryBrowser::setDisplayedToColor { { color "" } } {
 #
 # simply clears any displayed nodes from the graphics window
 #
-body GeometryBrowser::clearDisplay {} {
+::itcl::body GeometryBrowser::clearDisplay {} {
     if { $_debug } {
 	puts "clearDisplay"
     }
@@ -897,7 +897,7 @@ body GeometryBrowser::clearDisplay {} {
 #
 # auto-fits the currently displayed objects to the current view size
 #
-body GeometryBrowser::autosizeDisplay {} {
+::itcl::body GeometryBrowser::autosizeDisplay {} {
     if { $_debug } {
 	puts "autosizeDisplay"
     }
@@ -915,7 +915,7 @@ body GeometryBrowser::autosizeDisplay {} {
 # zooms the display in or out either in jumps via the keywords "in" and "out"
 # or via a specified amount.
 #
-body GeometryBrowser::zoomDisplay { { zoom "in"} } {
+::itcl::body GeometryBrowser::zoomDisplay { { zoom "in"} } {
     if { $_debug } {
 	puts "zoomDisplay $zoom"
     }
@@ -948,7 +948,7 @@ body GeometryBrowser::zoomDisplay { { zoom "in"} } {
 # generates a small preview image of what geometry is presently displayed to a
 # small temporary framebuffer
 #
-body GeometryBrowser::renderPreview { { rtoptions "-P4 -R -B" } } {
+::itcl::body GeometryBrowser::renderPreview { { rtoptions "-P4 -R -B" } } {
 
     # mged provides the port number it has available
     global port
@@ -1100,7 +1100,7 @@ body GeometryBrowser::renderPreview { { rtoptions "-P4 -R -B" } } {
 #
 # simply opens up the raytrace control panel
 #
-body GeometryBrowser::raytracePanel {} {
+::itcl::body GeometryBrowser::raytracePanel {} {
 
     init_Raytrace $_mgedFramebufferId
 
@@ -1112,7 +1112,7 @@ body GeometryBrowser::raytracePanel {} {
 #
 # simply fires off rtwizard
 #
-body GeometryBrowser::raytraceWizard {} {
+::itcl::body GeometryBrowser::raytraceWizard {} {
     set rtwizard [file join [bu_dir bin] rtwizard]
     puts "exec $rtwizard &"
     return [ exec $rtwizard & ]
@@ -1125,7 +1125,7 @@ body GeometryBrowser::raytraceWizard {} {
 # XXX if the menu entries get more complex than what is already below (8 references),
 # it should really be reorganized.
 #
-body GeometryBrowser::toggleAutosizing { { state "" } } {
+::itcl::body GeometryBrowser::toggleAutosizing { { state "" } } {
     if { $_debug } {
 	puts "toggleAutosizing $state"
     }
@@ -1174,7 +1174,7 @@ body GeometryBrowser::toggleAutosizing { { state "" } } {
 # XXX if the menu entries get more complex than what is already below (8 references),
 # it should really be reorganized.
 #
-body GeometryBrowser::toggleAutorender { { state "" } } {
+::itcl::body GeometryBrowser::toggleAutorender { { state "" } } {
     if { $_debug } {
 	puts "toggleAutorender $state"
     }
@@ -1230,7 +1230,7 @@ body GeometryBrowser::toggleAutorender { { state "" } } {
 #
 # turns debugging on/off
 #
-body GeometryBrowser::toggleDebug { } {
+::itcl::body GeometryBrowser::toggleDebug { } {
     if { $_debug } {
 	set _debug 0
     } else {
@@ -1252,7 +1252,7 @@ body GeometryBrowser::toggleDebug { } {
 # does something with the right-click menu, before it actually gets displayed
 # based on what was selected.  e.g. it handles the dynamic menu items.
 #
-body GeometryBrowser::prepNodeMenu { } {
+::itcl::body GeometryBrowser::prepNodeMenu { } {
     if { $_debug } {
 	puts "prepNodeMenu"
     }
@@ -1287,14 +1287,14 @@ body GeometryBrowser::prepNodeMenu { } {
 
 	    # update the menu entry and modify the command to use undisplayNode
 	    $_itemMenu entryconfigure $_displayItemMenuIndex -label "Remove from Display"
-	    $_itemMenu entryconfigure $_displayItemMenuIndex -command [ code $this undisplayNode $node ]
+	    $_itemMenu entryconfigure $_displayItemMenuIndex -command [::itcl::code $this undisplayNode $node ]
 	    return
 	}
     }
 
     # did not find it, so make sure the menu is proper
     $_itemMenu entryconfigure $_displayItemMenuIndex -label "Display"
-    $_itemMenu entryconfigure $_displayItemMenuIndex -command [ code $this displayNode $node ]
+    $_itemMenu entryconfigure $_displayItemMenuIndex -command [::itcl::code $this displayNode $node ]
 
     return
 }
@@ -1306,7 +1306,7 @@ body GeometryBrowser::prepNodeMenu { } {
 # returns a "E" if the node cannot be stat'd via ls.
 # combination, or region.
 #
-body GeometryBrowser::getObjectType { node } {
+::itcl::body GeometryBrowser::getObjectType { node } {
     if { $_debug } {
 	puts "getObjectType $node"
     }
@@ -1342,7 +1342,7 @@ body GeometryBrowser::getObjectType { node } {
 # interrupt notifications to update our model/view, we manually poll (eck..)
 # periodically.
 #
-body GeometryBrowser::validateGeometry { } {
+::itcl::body GeometryBrowser::validateGeometry { } {
     if { $_debug } {
 	puts "validateGeometry"
     }
@@ -1411,10 +1411,10 @@ body GeometryBrowser::validateGeometry { } {
     # if the database is not open, poll a little slower
     if { $dbNotOpen == 1 } {
 	# set up the next hook for 6 seconds
-	set _updateHook [ after 6000 [ code $this validateGeometry ] ]
+	set _updateHook [ after 6000 [::itcl::code $this validateGeometry ] ]
     } else {
 	# set up the next hook for 3 seconds
-	set _updateHook [ after 3000 [ code $this validateGeometry ] ]
+	set _updateHook [ after 3000 [::itcl::code $this validateGeometry ] ]
     }
     return
 }
@@ -1433,7 +1433,7 @@ body GeometryBrowser::validateGeometry { } {
 # takes an rgb triplet string as input and returns an html-style
 # color entity that tcl understands.
 #
-body GeometryBrowser::rgbToHex { { rgb "0 0 0" } } {
+::itcl::body GeometryBrowser::rgbToHex { { rgb "0 0 0" } } {
     if { $_debug } {
 	puts "rgbToHex $rgb"
     }
@@ -1474,7 +1474,7 @@ body GeometryBrowser::rgbToHex { { rgb "0 0 0" } } {
 #
 # simply checks if a render needs to occur automatically
 #
-body GeometryBrowser::checkAutoRender {} {
+::itcl::body GeometryBrowser::checkAutoRender {} {
     if { $_debug } {
 	puts "checkAutoRender"
     }
@@ -1493,7 +1493,7 @@ body GeometryBrowser::checkAutoRender {} {
 # slashed format and are optionally preceded or followed by a "branch" or
 # "leaf" identifier. (XXX roots are preceded, children are followed.. ! )
 #
-body GeometryBrowser::extractNodeName { { node "" } } {
+::itcl::body GeometryBrowser::extractNodeName { { node "" } } {
     if { $_debug } {
 	puts "extractNodeName $node"
     }
