@@ -61,6 +61,8 @@ changes made.  See document footer for additional details.
 * fixed embedded Archer display and mode menus - Cliff Yapp
 * added Archer -h and --help command-line options - Cliff Yapp
 * fixed Archer Help opening the documentation menu - Sean Morrison
+* improved fallback methodologies for facetize pipeline - Cliff Yapp
+* improved facetize pipeline robustness - Cliff Yapp
 * added arrange nest command for packing database objects - Sean Morrison
 * new mkbuilding tool for parametric/OSM/CityJSON models - Sean Morrison
 * cross-platform BINUNIF and DSP byte-order handling - Sean Morrison
