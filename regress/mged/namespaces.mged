@@ -7,6 +7,7 @@ foreach package {brlcad::help brlcad::vmath} {
 }
 
 foreach command {
+    ::brlcad::mged::adc::init
     ::brlcad::mged::extract::init
     ::brlcad::mged::font::font_init
     ::brlcad::mged::grid::init_grid_control
@@ -22,8 +23,8 @@ foreach command {
 
 foreach namespace {
     ::brlcad ::brlcad::ged ::brlcad::help ::brlcad::mged
-    ::brlcad::mged::extract ::brlcad::mged::font ::brlcad::mged::grid
-    ::brlcad::mged::plot ::brlcad::mged::postscript
+    ::brlcad::mged::adc ::brlcad::mged::extract ::brlcad::mged::font
+    ::brlcad::mged::grid ::brlcad::mged::plot ::brlcad::mged::postscript
     ::brlcad::mged::rt_script ::brlcad::mged::shader ::brlcad::vmath
 } {
     if {![namespace exists $namespace]} {
@@ -154,6 +155,31 @@ foreach variable {
     }
 }
 unset expected_grid_exports grid_exports
+
+foreach command {
+    ::brlcad::mged::adc::init ::brlcad::mged::adc::load
+    ::brlcad::mged::adc::toggle_draw init_adc_control
+} {
+    if {![llength [info commands $command]]} {
+	error "FAIL missing ADC control command $command"
+    }
+}
+set adc_exports [namespace eval ::brlcad::mged::adc {namespace export}]
+if {$adc_exports ne {init}} {
+    error "FAIL ADC control exports are: $adc_exports"
+}
+if {[info exists ::mged_adc_control]} {
+    error "FAIL ADC control state remains global: ::mged_adc_control"
+}
+foreach command {
+    adc_CBHandler adc_adjust_coords adc_apply adc_apply_abs adc_apply_rel
+    adc_clear adc_interpval adc_load adc_ok convert_coords
+} {
+    if {[llength [info commands ::$command]] || [auto_load ::$command]} {
+	error "FAIL private ADC control command is global: ::$command"
+    }
+}
+unset adc_exports
 
 set output_modules {
     {extract init_extractTool ex_control {do_extract}}

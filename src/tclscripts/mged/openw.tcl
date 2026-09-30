@@ -1620,7 +1620,7 @@ hoc_register_menu_data "Create" "$ptype..." "Make a $ptype" $ksl
 	    { see_also "rset" } }
     .$id.menubar.modes add checkbutton -offvalue 0 -onvalue 1 -variable mged_gui($id,adc_draw)\
 	-label "Angle/Dist Cursor" -underline 0 \
-	-command "adc_CBHandler $id"
+	-command [list ::brlcad::mged::adc::toggle_draw $id]
     hoc_register_menu_data "Modes" "Angle/Dist Cursor" "Angle/Dist Cursor"\
 	{ { summary "Toggle drawing the angle distance cursor." }
 	    { see_also "adc" } }
@@ -1824,7 +1824,7 @@ hoc_register_menu_data "Create" "$ptype..." "Make a $ptype" $ksl
 
     menu .$id.menubar.tools -title "Tools" -tearoff $mged_default(tearoff_menus)
     .$id.menubar.tools add command -label "ADC Control Panel" -underline 0\
-	-command "init_adc_control $id"
+	-command [list ::brlcad::mged::adc::init $id]
     hoc_register_menu_data "Tools" "ADC Control Panel" "ADC Control Panel"\
 	{ { summary "Tool for controlling the angle distance cursor." }
 	    { see_also "adc" } }
@@ -2558,7 +2558,7 @@ proc set_active_dm { id } {
     #		 update_view_ring_entries $id d
 
     # update adc control panel
-    adc_load $id
+    ::brlcad::mged::adc::load $id
 
     # update grid control panel
     ::brlcad::mged::grid::grid_control_reset $id

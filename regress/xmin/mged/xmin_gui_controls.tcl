@@ -175,10 +175,10 @@ proc ::mged::xmin::exercise_grid {id top} {
 }
 
 proc ::mged::xmin::exercise_adc {id top} {
-    global mged_adc_control
     variable adc_distance_tolerance
 
     invoke $top {Tools {ADC Control Panel}}
+    upvar #0 ::brlcad::mged::adc::mged_adc_control mged_adc_control
     set panel $top.adc_control
     ::gui::test::require {[winfo exists $panel] && [winfo ismapped $panel]} \
 	"ADC Control Panel did not open"
@@ -188,8 +188,8 @@ proc ::mged::xmin::exercise_adc {id top} {
 
     set mged_adc_control($id,coords) model
     set mged_adc_control($id,interpval) abs
-    adc_adjust_coords $id
-    adc_interpval $id
+    ::brlcad::mged::adc::adjust_coords $id
+    ::brlcad::mged::adc::set_interpretation $id
     set mged_adc_control($id,pos) {1 2 3}
     set mged_adc_control($id,dst) 4.5
     set mged_adc_control($id,a1) 15
