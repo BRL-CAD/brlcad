@@ -140,7 +140,13 @@ add_subdirectory(ttcp)
 
 if(SH_EXEC)
   brlcad_add_test(NAME regress-usage COMMAND ${SH_EXEC} "${CMAKE_SOURCE_DIR}/regress/usage.sh" ${CMAKE_SOURCE_DIR})
-  brlcad_regression_test(regress-usage "rt" STAND_ALONE TEST_DEFINED)
+  set(regress_usage_timeout 300)
+  if(WIN32)
+    # Starting and inspecting the full executable set is substantially slower on Windows.
+    set(regress_usage_timeout 900)
+  endif()
+  brlcad_regression_test(regress-usage "rt" STAND_ALONE TEST_DEFINED TIMEOUT ${regress_usage_timeout})
+  unset(regress_usage_timeout)
 
   # TODO - test for Python before adding this one
   brlcad_add_test(NAME regress-flawfinder COMMAND ${SH_EXEC} "${CMAKE_SOURCE_DIR}/regress/flawfinder.sh" ${CMAKE_SOURCE_DIR})

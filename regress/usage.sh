@@ -178,7 +178,13 @@ DEPREC=0
 workers=0
 pids=""
 dir="`dirname $RT`"
-for cmd in $dir/* ; do
+suffix=
+case "$RT" in
+    *.exe) suffix=.exe ;;
+    *) test -f "$RT.exe" && suffix=.exe ;;
+esac
+for cmd in "$dir"/*"$suffix" ; do
+    test -f "$cmd" || continue
     test_usage "$cmd" &
 
     pids="$pids $!"
