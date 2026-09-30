@@ -7,8 +7,12 @@ foreach package {brlcad::help brlcad::vmath} {
 }
 
 foreach command {
+    ::brlcad::mged::extract::init
     ::brlcad::mged::font::font_init
     ::brlcad::mged::grid::init_grid_control
+    ::brlcad::mged::plot::init
+    ::brlcad::mged::postscript::init
+    ::brlcad::mged::rt_script::init
     ::brlcad::mged::shader::is_good_shader
 } {
     if {![auto_load $command]} {
@@ -18,8 +22,9 @@ foreach command {
 
 foreach namespace {
     ::brlcad ::brlcad::ged ::brlcad::help ::brlcad::mged
-    ::brlcad::mged::font ::brlcad::mged::grid ::brlcad::mged::shader
-    ::brlcad::vmath
+    ::brlcad::mged::extract ::brlcad::mged::font ::brlcad::mged::grid
+    ::brlcad::mged::plot ::brlcad::mged::postscript
+    ::brlcad::mged::rt_script ::brlcad::mged::shader ::brlcad::vmath
 } {
     if {![namespace exists $namespace]} {
 	error "FAIL missing namespace $namespace"
@@ -149,6 +154,41 @@ foreach variable {
     }
 }
 unset expected_grid_exports grid_exports
+
+set output_modules {
+    {extract init_extractTool ex_control {do_extract}}
+    {plot init_plotTool pl_control {
+	do_plot pl_set_file_state pl_set_filter_state
+    }}
+    {postscript init_psTool ps_control {do_ps}}
+    {rt_script init_rtScriptTool rts_control {do_rtScript}}
+}
+foreach module $output_modules {
+    lassign $module component legacy_command legacy_state legacy_helpers
+    set module_namespace ::brlcad::mged::$component
+    set canonical_command [format "%s::init" $module_namespace]
+
+    foreach command [list $canonical_command $legacy_command] {
+	if {![llength [info commands $command]]} {
+	    error "FAIL missing $component output command $command"
+	}
+    }
+
+    set exports [namespace eval $module_namespace {namespace export}]
+    if {$exports ne {init}} {
+	error "FAIL $component output exports are: $exports"
+    }
+    if {[info exists ::$legacy_state]} {
+	error "FAIL $component output state remains global: ::$legacy_state"
+    }
+    foreach command $legacy_helpers {
+	if {[llength [info commands ::$command]] || [auto_load ::$command]} {
+	    error "FAIL private $component output command is global: ::$command"
+	}
+    }
+}
+unset canonical_command component exports legacy_command legacy_helpers
+unset legacy_state module module_namespace output_modules
 
 set object namespaces_sphere.s
 ::brlcad::mged in $object sph 0 0 0 1

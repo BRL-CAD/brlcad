@@ -24,9 +24,15 @@
 
 check_externs "::brlcad::mged"
 
-proc init_plotTool { id } {
+namespace eval ::brlcad::mged::plot {
+
+namespace export init
+
+variable control
+
+proc init { id } {
     global mged_gui
-    global pl_control
+    variable control
     global ::tk::Priv
 
     if {[opendb] == ""} {
@@ -42,29 +48,29 @@ proc init_plotTool { id } {
 	return
     }
 
-    if ![info exists pl_control($id,file_or_filter)] {
-	set pl_control($id,file_or_filter) file
+    if ![info exists control($id,file_or_filter)] {
+	set control($id,file_or_filter) file
     }
 
-    if ![info exists pl_control($id,file)] {
+    if ![info exists control($id,file)] {
 	regsub \.g$ [::brlcad::mged opendb] .plot3 default_file
-	set pl_control($id,file) $default_file
+	set control($id,file) $default_file
     }
 
-    if ![info exists pl_control($id,filter)] {
-	set pl_control($id,filter) ""
+    if ![info exists control($id,filter)] {
+	set control($id,filter) ""
     }
 
-    if ![info exists pl_control($id,zclip)] {
-	set pl_control($id,zclip) 1
+    if ![info exists control($id,zclip)] {
+	set control($id,zclip) 1
     }
 
-    if ![info exists pl_control($id,2d)] {
-	set pl_control($id,2d) 0
+    if ![info exists control($id,2d)] {
+	set control($id,2d) 0
     }
 
-    if ![info exists pl_control($id,float)] {
-	set pl_control($id,float) 0
+    if ![info exists control($id,float)] {
+	set control($id,float) 0
     }
 
     toplevel $top -screen $mged_gui($id,screen)
@@ -73,7 +79,7 @@ proc init_plotTool { id } {
     frame $top.gridF2
     frame $top.gridF3
 
-    if {$pl_control($id,file_or_filter) == "file"} {
+    if {$control($id,file_or_filter) eq "file"} {
 	set file_state normal
 	set filter_state disabled
     } else {
@@ -81,56 +87,60 @@ proc init_plotTool { id } {
 	set file_state disabled
     }
 
-    entry $top.fileE -width 12 -textvar pl_control($id,file)\
+    entry $top.fileE -width 12 \
+	-textvariable ::brlcad::mged::plot::control($id,file)\
 	-state $file_state
     hoc_register_data $top.fileE "File Name"\
 	{{summary "Enter a filename specifying where
 to put the UNIX-plot of the displayed
 geometry."} {see_also pl}}
     radiobutton $top.fileRB -text "File Name" -anchor w\
-	    -value file -variable pl_control($id,file_or_filter)\
-	    -command "pl_set_file_state $id"
+	    -value file \
+	    -variable ::brlcad::mged::plot::control($id,file_or_filter)\
+	    -command [list ::brlcad::mged::plot::select_file $id]
     hoc_register_data $top.fileRB "File"\
 	    {{summary "Activate the filename entry."}}
 
-    entry $top.filterE -width 12 -textvar pl_control($id,filter)\
+    entry $top.filterE -width 12 \
+	-textvariable ::brlcad::mged::plot::control($id,filter)\
 	    -state $filter_state
     hoc_register_data $top.filterE "Filter"\
 	    {{summary "If a filter is specified, the
 output is sent there."} {see_also pl}}
     radiobutton $top.filterRB -text "Filter" -anchor w\
-	    -value filter -variable pl_control($id,file_or_filter)\
-	    -command "pl_set_filter_state $id"
+	    -value filter \
+	    -variable ::brlcad::mged::plot::control($id,file_or_filter)\
+	    -command [list ::brlcad::mged::plot::select_filter $id]
     hoc_register_data $top.filterRB "Filter"\
 	    {{summary "Activate the filter entry."}}
 
     checkbutton $top.zclipCB -relief raised -text "Z Clipping"\
-	    -variable pl_control($id,zclip)
+	    -variable ::brlcad::mged::plot::control($id,zclip)
     hoc_register_data $top.zclipCB "Z Clipping"\
 	    {{summary "If checked, the plot will be
 clipped to the viewing cube."} {see_also pl}}
     checkbutton $top.twoDCB -relief raised -text "2D"\
-	    -variable pl_control($id,2d)
+	    -variable ::brlcad::mged::plot::control($id,2d)
     hoc_register_data $top.twoDCB "2D"\
 	    {{summary "If checked, the plot will be
 two-dimensional instead of three-dimensional."} {see_also pl}}
     checkbutton $top.floatCB -relief raised -text "Float"\
-	    -variable pl_control($id,float)
+	    -variable ::brlcad::mged::plot::control($id,float)
     hoc_register_data $top.floatCB "Float"\
 	    {{summary "If checked, the plot file will use floating
 point numbers instead of integers."}}
 
     button $top.okB -relief raised -text "OK"\
-	    -command "do_plot $id; catch {destroy $top}"
+	    -command [list ::brlcad::mged::plot::ok $id $top]
     hoc_register_data $top.okB "Create"\
 	    {{summary "Create a plot file of the current view.
 The plot dialog is then dismissed."} {see_also pl}}
     button $top.createB -relief raised -text "Create"\
-	    -command "do_plot $id"
+	    -command [list ::brlcad::mged::plot::create $id]
     hoc_register_data $top.createB "Create"\
 	    {{summary "Create a plot file of the current view."} {see_also pl}}
     button $top.dismissB -relief raised -text "Dismiss"\
-	    -command "catch { destroy $top }"
+	    -command [list catch [list destroy $top]]
     hoc_register_data $top.dismissB "Dismiss"\
 	    {{summary "Dismiss the plot tool."}}
 
@@ -153,32 +163,37 @@ The plot dialog is then dismissed."} {see_also pl}}
     wm title $top "Unix Plot Tool ($id)"
 }
 
-proc do_plot { id } {
+proc ok {id top} {
+    create $id
+    catch {destroy $top}
+}
+
+proc create { id } {
     global mged_gui
-    global pl_control
+    variable control
     global ::tk::Priv
 
     cmd_win set $id
     set pl_cmd [list ::brlcad::mged plot]
 
-    if {$pl_control($id,zclip)} {
+    if {$control($id,zclip)} {
 	lappend pl_cmd -zclip
     }
 
-    if {$pl_control($id,2d)} {
+    if {$control($id,2d)} {
 	lappend pl_cmd -2d
     }
 
-    if {$pl_control($id,float)} {
+    if {$control($id,float)} {
 	lappend pl_cmd -float
     }
 
-    if {$pl_control($id,file_or_filter) == "file"} {
-	if {$pl_control($id,file) != ""} {
-	    if [file exists $pl_control($id,file)] {
+    if {$control($id,file_or_filter) eq "file"} {
+	if {$control($id,file) ne ""} {
+	    if [file exists $control($id,file)] {
 		set result [cad_dialog $::tk::Priv(cad_dialog) $mged_gui($id,screen)\
-				"Overwrite $pl_control($id,file)?"\
-				"Overwrite $pl_control($id,file)?"\
+				"Overwrite $control($id,file)?"\
+				"Overwrite $control($id,file)?"\
 				"" 0 OK Cancel]
 
 		if {$result} {
@@ -194,9 +209,9 @@ proc do_plot { id } {
 	    return
 	}
 
-	lappend pl_cmd $pl_control($id,file)
+	lappend pl_cmd $control($id,file)
     } else {
-	if {$pl_control($id,filter) == ""} {
+	if {$control($id,filter) eq ""} {
 	    cad_dialog $::tk::Priv(cad_dialog) $mged_gui($id,screen)\
 		"No filter specified!"\
 		"No filter specified!"\
@@ -205,13 +220,13 @@ proc do_plot { id } {
 	    return
 	}
 
-	lappend pl_cmd "|$pl_control($id,filter)"
+	lappend pl_cmd "|$control($id,filter)"
     }
 
     catch {{*}$pl_cmd}
 }
 
-proc pl_set_file_state { id } {
+proc select_file { id } {
     set top .$id.do_plot
 
     $top.fileE configure -state normal
@@ -220,7 +235,7 @@ proc pl_set_file_state { id } {
     focus $top.fileE
 }
 
-proc pl_set_filter_state { id } {
+proc select_filter { id } {
     set top .$id.do_plot
 
     $top.filterE configure -state normal
@@ -228,6 +243,13 @@ proc pl_set_filter_state { id } {
 
     focus $top.filterE
 }
+
+}
+
+proc init_plotTool {id} {
+    tailcall ::brlcad::mged::plot::init $id
+}
+
 # Local Variables:
 # mode: Tcl
 # tab-width: 8

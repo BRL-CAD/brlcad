@@ -533,22 +533,23 @@ proc gui { args } {
     menu .$id.menubar.file.export -title "Export" -tearoff $mged_default(tearoff_menus)
     .$id.menubar.file.export add command -label "Ascii Database" -underline 0 -command "init_g2asc $id"
     hoc_register_menu_data "Export" "Ascii Database" "g2asc Ascii Database" { { summary "Export the current database in ascii format using g2asc" } { see_also g2asc } }
-    .$id.menubar.file.export add command -label "Database Objects" -underline 0 -command "init_extractTool $id"
+    .$id.menubar.file.export add command -label "Database Objects" -underline 0 \
+	-command [list ::brlcad::mged::extract::init $id]
     hoc_register_menu_data "Export" "Extract Objects" "Extract Objects" { { summary "Tool for extracting objects out of the current database." } { see_also keep } }
 
     menu .$id.menubar.file.renderview -title "Render View" -tearoff $mged_default(tearoff_menus)
     .$id.menubar.file.renderview add command -label "RT Script..." -underline 0\
-	-command "init_rtScriptTool $id"
+	-command [list ::brlcad::mged::rt_script::init $id]
     hoc_register_menu_data "Render View" "RT Script..." "RT Script File"\
 	{ { summary "Save the current view as an RT script file." }
 	    { see_also saveview } }
     .$id.menubar.file.renderview add command -label "Plot..." -underline 1\
-	-command "init_plotTool $id"
+	-command [list ::brlcad::mged::plot::init $id]
     hoc_register_menu_data "Render View As" "Plot..." "Plot File"\
 	{ { summary "Render the current view to a Plot file." }
 	    { see_also pl } }
     .$id.menubar.file.renderview add command -label "PostScript..." -underline 0\
-	-command "init_psTool $id"
+	-command [list ::brlcad::mged::postscript::init $id]
     hoc_register_menu_data "Render View As" "PostScript..." "PostScript File"\
 	{ { summary "Render the current view to a PostScript file." }
 	    { see_also ps } }

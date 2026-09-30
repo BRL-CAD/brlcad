@@ -24,9 +24,15 @@
 
 check_externs "::brlcad::mged"
 
-proc init_rtScriptTool { id } {
+namespace eval ::brlcad::mged::rt_script {
+
+namespace export init
+
+variable control
+
+proc init { id } {
     global mged_gui
-    global rts_control
+    variable control
     global ::tk::Priv
 
     if {[opendb] == ""} {
@@ -42,13 +48,13 @@ proc init_rtScriptTool { id } {
 	return
     }
 
-    if ![info exists rts_control($id,file)] {
+    if ![info exists control($id,file)] {
 	regsub \.g$ [::brlcad::mged opendb] .sh default_file
-	set rts_control($id,file) $default_file
+	set control($id,file) $default_file
     }
 
-    if ![info exists rts_control($id,args)] {
-	set rts_control($id,args) ""
+    if ![info exists control($id,args)] {
+	set control($id,args) ""
     }
 
     toplevel $top -screen $mged_gui($id,screen)
@@ -60,27 +66,29 @@ proc init_rtScriptTool { id } {
 to put the RT script."} {see_also "saveview, rt"}}
     label $top.fileL -text "File Name" -anchor w
     hoc_register_data $top.fileL "File Name" $tmp_hoc_data
-    entry $top.fileE -width 12 -textvar rts_control($id,file)
+    entry $top.fileE -width 12 \
+	-textvariable ::brlcad::mged::rt_script::control($id,file)
     hoc_register_data $top.fileE "File Name" $tmp_hoc_data
 
     set tmp_hoc_data {{summary "Enter other rt options."}
 		      {see_also "saveview, rt"}}
     label $top.argsL -text "Other args" -anchor w
     hoc_register_data $top.argsL "Other args" $tmp_hoc_data
-    entry $top.argsE -width 12 -textvar rts_control($id,args)
+    entry $top.argsE -width 12 \
+	-textvariable ::brlcad::mged::rt_script::control($id,args)
     hoc_register_data $top.argsE "Other args" $tmp_hoc_data
 
     button $top.okB -relief raised -text "OK"\
-	    -command "do_rtScript $id; catch {destroy $top}"
+	    -command [list ::brlcad::mged::rt_script::ok $id $top]
     hoc_register_data $top.okB "Create"\
 	    {{summary "Create the RT script. The rt_script
 dialog is then dismissed."}}
     button $top.createB -relief raised -text "Create"\
-	    -command "do_rtScript $id"
+	    -command [list ::brlcad::mged::rt_script::create $id]
     hoc_register_data $top.createB "Create"\
 	    {{summary "Create the RT script."}}
     button $top.dismissB -relief raised -text "Dismiss"\
-	    -command "catch { destroy $top }"
+	    -command [list catch [list destroy $top]]
     hoc_register_data $top.dismissB "Dismiss"\
 	    {{summary "Dismiss the entry dialog without creating
 the RT script."}}
@@ -99,17 +107,22 @@ the RT script."}}
     wm title $top "RT Script Tool"
 }
 
-proc do_rtScript { id } {
+proc ok {id top} {
+    create $id
+    catch {destroy $top}
+}
+
+proc create { id } {
     global mged_gui
-    global rts_control
+    variable control
     global ::tk::Priv
 
     cmd_win set $id
-    if {$rts_control($id,file) != ""} {
-	if [file exists $rts_control($id,file)] {
+    if {$control($id,file) ne ""} {
+	if [file exists $control($id,file)] {
 	    set result [cad_dialog $::tk::Priv(cad_dialog) $mged_gui($id,screen)\
-			    "Append $rts_control($id,file)?"\
-			    "Append $rts_control($id,file)?"\
+			    "Append $control($id,file)?"\
+			    "Append $control($id,file)?"\
 			    "" 0 OK Cancel]
 
 	    if {$result} {
@@ -126,10 +139,17 @@ proc do_rtScript { id } {
     }
 
     catch {
-	::brlcad::mged saveview $rts_control($id,file) \
-	    {*}$rts_control($id,args)
+	::brlcad::mged saveview $control($id,file) \
+	    {*}$control($id,args)
     }
 }
+
+}
+
+proc init_rtScriptTool {id} {
+    tailcall ::brlcad::mged::rt_script::init $id
+}
+
 # Local Variables:
 # mode: Tcl
 # tab-width: 8

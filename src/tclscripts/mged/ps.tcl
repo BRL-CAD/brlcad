@@ -24,9 +24,53 @@
 
 check_externs "::brlcad::mged"
 
-proc init_psTool { id } {
+namespace eval ::brlcad::mged::postscript {
+
+namespace export init
+
+variable control
+variable font_families {
+    {courier Courier {
+	{Normal Courier}
+	{Oblique Courier-Oblique}
+	{Bold Courier-Bold}
+	{BoldOblique Courier-BoldOblique}
+    }}
+    {helvetica Helvetica {
+	{Normal Helvetica}
+	{Oblique Helvetica-Oblique}
+	{Bold Helvetica-Bold}
+	{BoldOblique Helvetica-BoldOblique}
+    }}
+    {times Times {
+	{Roman Times-Roman}
+	{Italic Times-Italic}
+	{Bold Times-Bold}
+	{BoldItalic Times-BoldItalic}
+    }}
+}
+
+proc populate_font_menu {menu id} {
+    variable font_families
+
+    foreach family $font_families {
+	lassign $family name label variants
+	set family_menu [format "%s.%sM" $menu $name]
+	$menu add cascade -label $label -menu $family_menu
+	menu $family_menu -tearoff 0
+
+	foreach variant $variants {
+	    lassign $variant variant_label font
+	    $family_menu add command -label $variant_label \
+		-command [list set \
+		    ::brlcad::mged::postscript::control($id,font) $font]
+	}
+    }
+}
+
+proc init { id } {
     global mged_gui
-    global ps_control
+    variable control
     global ::tk::Priv
 
     if {[opendb] == ""} {
@@ -42,33 +86,33 @@ proc init_psTool { id } {
 	return
     }
 
-    if ![info exists ps_control($id,file)] {
+    if ![info exists control($id,file)] {
 	regsub \.g$ [::brlcad::mged opendb] .ps default_file
-	set ps_control($id,file) $default_file
+	set control($id,file) $default_file
     }
 
-    if ![info exists ps_control($id,title)] {
-	set ps_control($id,title) "No Title"
+    if ![info exists control($id,title)] {
+	set control($id,title) "No Title"
     }
 
-    if ![info exists ps_control($id,creator)] {
-	set ps_control($id,creator) "$id"
+    if ![info exists control($id,creator)] {
+	set control($id,creator) "$id"
     }
 
-    if ![info exists ps_control($id,font)] {
-	set ps_control($id,font) "Courier"
+    if ![info exists control($id,font)] {
+	set control($id,font) "Courier"
     }
 
-    if ![info exists ps_control($id,size)] {
-	set ps_control($id,size) 4.5
+    if ![info exists control($id,size)] {
+	set control($id,size) 4.5
     }
 
-    if ![info exists ps_control($id,linewidth)] {
-	set ps_control($id,linewidth) 1
+    if ![info exists control($id,linewidth)] {
+	set control($id,linewidth) 1
     }
 
-    if ![info exists ps_control($id,zclip)] {
-	set ps_control($id,zclip) 1
+    if ![info exists control($id,zclip)] {
+	set control($id,zclip) 1
     }
 
     toplevel $top -screen $mged_gui($id,screen)
@@ -88,25 +132,29 @@ to put the generated postscript
 description of the current view."} {see_also "postscript"}}
     label $top.fileL -text "File Name" -anchor w
     hoc_register_data $top.fileL "File Name" $tmp_hoc_data
-    entry $top.fileE -relief flat -width 10 -textvar ps_control($id,file)
+    entry $top.fileE -relief flat -width 10 \
+	-textvariable ::brlcad::mged::postscript::control($id,file)
     hoc_register_data $top.fileE "File Name" $tmp_hoc_data
 
     set tmp_hoc_data {{summary "Enter a title for the postscript file."} {see_also "postscript"}}
     label $top.titleL -text "Title" -anchor w
     hoc_register_data $top.titleL "Title" $tmp_hoc_data
-    entry $top.titleE -relief flat -width 10 -textvar ps_control($id,title)
+    entry $top.titleE -relief flat -width 10 \
+	-textvariable ::brlcad::mged::postscript::control($id,title)
     hoc_register_data $top.titleE "Title" $tmp_hoc_data
 
     set tmp_hoc_data {{summary "Enter the creator of the postscript file."} {see_also "postscript"}}
     label $top.creatorL -text "Creator" -anchor w
     hoc_register_data $top.creatorL "Creator" $tmp_hoc_data
-    entry $top.creatorE -relief flat -width 10 -textvar ps_control($id,creator)
+    entry $top.creatorE -relief flat -width 10 \
+	-textvariable ::brlcad::mged::postscript::control($id,creator)
     hoc_register_data $top.creatorE "Creator" $tmp_hoc_data
 
     set tmp_hoc_data {{summary "Enter the desired text font."} {see_also "postscript"}}
     label $top.fontL -text "Font" -anchor w
     hoc_register_data $top.fontL "Font" $tmp_hoc_data
-    entry $top.fontE -relief flat -width 17 -textvar ps_control($id,font)
+    entry $top.fontE -relief flat -width 17 \
+	-textvariable ::brlcad::mged::postscript::control($id,font)
     hoc_register_data $top.fontE "Font" $tmp_hoc_data
     menubutton $top.fontMB -relief raised -bd 2\
 	    -menu $top.fontMB.fontM -indicatoron 1
@@ -114,73 +162,40 @@ description of the current view."} {see_also "postscript"}}
 	    {{summary "Pops up a menu of known
 postscript fonts."}}
     menu $top.fontMB.fontM -tearoff 0
-    $top.fontMB.fontM add cascade -label "Courier"\
-	    -menu $top.fontMB.fontM.courierM
-    $top.fontMB.fontM add cascade -label "Helvetica"\
-	    -menu $top.fontMB.fontM.helveticaM
-    $top.fontMB.fontM add cascade -label "Times"\
-	    -menu $top.fontMB.fontM.timesM
-
-    menu $top.fontMB.fontM.courierM -tearoff 0
-    $top.fontMB.fontM.courierM add command -label "Normal"\
-	    -command "set ps_control($id,font) Courier"
-    $top.fontMB.fontM.courierM add command -label "Oblique"\
-	    -command "set ps_control($id,font) Courier-Oblique"
-    $top.fontMB.fontM.courierM add command -label "Bold"\
-	    -command "set ps_control($id,font) Courier-Bold"
-    $top.fontMB.fontM.courierM add command -label "BoldOblique"\
-	    -command "set ps_control($id,font) Courier-BoldOblique"
-
-    menu $top.fontMB.fontM.helveticaM -tearoff 0
-    $top.fontMB.fontM.helveticaM add command -label "Normal"\
-	    -command "set ps_control($id,font) Helvetica"
-    $top.fontMB.fontM.helveticaM add command -label "Oblique"\
-	    -command "set ps_control($id,font) Helvetica-Oblique"
-    $top.fontMB.fontM.helveticaM add command -label "Bold"\
-	    -command "set ps_control($id,font) Helvetica-Bold"
-    $top.fontMB.fontM.helveticaM add command -label "BoldOblique"\
-	    -command "set ps_control($id,font) Helvetica-BoldOblique"
-
-    menu $top.fontMB.fontM.timesM -tearoff 0
-    $top.fontMB.fontM.timesM add command -label "Roman"\
-	    -command "set ps_control($id,font) Times-Roman"
-    $top.fontMB.fontM.timesM add command -label "Italic"\
-	    -command "set ps_control($id,font) Times-Italic"
-    $top.fontMB.fontM.timesM add command -label "Bold"\
-	    -command "set ps_control($id,font) Times-Bold"
-    $top.fontMB.fontM.timesM add command -label "BoldItalic"\
-	    -command "set ps_control($id,font) Times-BoldItalic"
+    populate_font_menu $top.fontMB.fontM $id
 
     set tmp_hoc_data {{summary "Enter the image size."} {see_also "postscript"}}
     label $top.sizeL -text "Size" -anchor w
     hoc_register_data $top.sizeL "Size" $tmp_hoc_data
-    entry $top.sizeE -relief flat -width 10 -textvar ps_control($id,size)
+    entry $top.sizeE -relief flat -width 10 \
+	-textvariable ::brlcad::mged::postscript::control($id,size)
     hoc_register_data $top.sizeE "Size" $tmp_hoc_data
 
     set tmp_hoc_data {{summary "Enter the line width used when
 drawing lines."} {see_also "postscript"}}
     label $top.linewidthL -text "Line Width" -anchor w
     hoc_register_data $top.linewidthL "Line Width" $tmp_hoc_data
-    entry $top.linewidthE -relief flat -width 10 -textvar ps_control($id,linewidth)
+    entry $top.linewidthE -relief flat -width 10 \
+	-textvariable ::brlcad::mged::postscript::control($id,linewidth)
     hoc_register_data $top.linewidthE "Line Width" $tmp_hoc_data
 
     checkbutton $top.zclipCB -relief raised -text "Z Clipping"\
-	    -variable ps_control($id,zclip)
+	    -variable ::brlcad::mged::postscript::control($id,zclip)
     hoc_register_data $top.zclipCB "Z Clipping"\
 	    {{summary "If checked, clip to the viewing cube."}
 	    {see_also "postscript"}}
 
     button $top.okB -relief raised -text "OK"\
-	    -command "do_ps $id; catch {destroy $top}"
+	    -command [list ::brlcad::mged::postscript::ok $id $top]
     hoc_register_data $top.okB "Create"\
 	    {{summary "Create the postscript file. The
 postscript dialog is then dismissed."} {see_also "postscript"}}
     button $top.createB -relief raised -text "Create"\
-	    -command "do_ps $id"
+	    -command [list ::brlcad::mged::postscript::create $id]
     hoc_register_data $top.createB "Create"\
 	    {{summary "Create the postscript file."} {see_also "postscript"}}
     button $top.dismissB -relief raised -text "Dismiss"\
-	    -command "catch { destroy $top }"
+	    -command [list catch [list destroy $top]]
     hoc_register_data $top.dismissB "Dismiss"\
 	    {{summary "Dismiss the postscript tool."} {see_also "postscript"}}
 
@@ -216,19 +231,24 @@ postscript dialog is then dismissed."} {see_also "postscript"}}
     wm title $top "PostScript Tool ($id)"
 }
 
-proc do_ps { id } {
+proc ok {id top} {
+    create $id
+    catch {destroy $top}
+}
+
+proc create { id } {
     global mged_gui
-    global ps_control
+    variable control
     global ::tk::Priv
 
     cmd_win set $id
     set ps_cmd [list ::brlcad::mged postscript]
 
-    if {$ps_control($id,file) != ""} {
-	if {[file exists $ps_control($id,file)]} {
+    if {$control($id,file) ne ""} {
+	if {[file exists $control($id,file)]} {
 	    set result [cad_dialog $::tk::Priv(cad_dialog) $mged_gui($id,screen)\
-			    "Overwrite $ps_control($id,file)?"\
-			    "Overwrite $ps_control($id,file)?"\
+			    "Overwrite $control($id,file)?"\
+			    "Overwrite $control($id,file)?"\
 			    "" 0 OK Cancel]
 
 	    if {$result} {
@@ -243,33 +263,40 @@ proc do_ps { id } {
 	return
     }
 
-    if {$ps_control($id,title) != ""} {
-	lappend ps_cmd -t $ps_control($id,title)
+    if {$control($id,title) ne ""} {
+	lappend ps_cmd -t $control($id,title)
     }
 
-    if {$ps_control($id,creator) != ""} {
-	lappend ps_cmd -c $ps_control($id,creator)
+    if {$control($id,creator) ne ""} {
+	lappend ps_cmd -c $control($id,creator)
     }
 
-    if {$ps_control($id,font) != ""} {
-	lappend ps_cmd -f $ps_control($id,font)
+    if {$control($id,font) ne ""} {
+	lappend ps_cmd -f $control($id,font)
     }
 
-    if {$ps_control($id,size) != ""} {
-	lappend ps_cmd -s $ps_control($id,size)
+    if {$control($id,size) ne ""} {
+	lappend ps_cmd -s $control($id,size)
     }
 
-    if {$ps_control($id,linewidth) != ""} {
-	lappend ps_cmd -l $ps_control($id,linewidth)
+    if {$control($id,linewidth) ne ""} {
+	lappend ps_cmd -l $control($id,linewidth)
     }
 
-    if {$ps_control($id,zclip) != 0} {
+    if {$control($id,zclip)} {
 	lappend ps_cmd -z
     }
 
-    lappend ps_cmd $ps_control($id,file)
+    lappend ps_cmd $control($id,file)
     catch {{*}$ps_cmd}
 }
+
+}
+
+proc init_psTool {id} {
+    tailcall ::brlcad::mged::postscript::init $id
+}
+
 # Local Variables:
 # mode: Tcl
 # tab-width: 8

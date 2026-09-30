@@ -60,7 +60,7 @@ proc ::mged::xmin::render::wait_for_file_size {path minimum_size timeout_ms} {
 }
 
 proc ::mged::xmin::render::exercise_rt_script {id top} {
-    global rts_control
+    upvar #0 ::brlcad::mged::rt_script::control rts_control
 
     set output [file join $::env(GUI_TEST_DIR) saved-view.sh]
     ::mged::gui::test::invoke $top {File {Render View} {RT Script...}}
@@ -94,7 +94,7 @@ proc ::mged::xmin::render::exercise_rt_script {id top} {
 }
 
 proc ::mged::xmin::render::exercise_plot {id top} {
-    global pl_control
+    upvar #0 ::brlcad::mged::plot::control pl_control
 
     set output [file join $::env(GUI_TEST_DIR) rendered.plot3]
     ::mged::gui::test::invoke $top {File {Render View} {Plot...}}
@@ -133,7 +133,7 @@ proc ::mged::xmin::render::exercise_plot {id top} {
 }
 
 proc ::mged::xmin::render::exercise_postscript {id top} {
-    global ps_control
+    upvar #0 ::brlcad::mged::postscript::control ps_control
 
     set output [file join $::env(GUI_TEST_DIR) rendered.ps]
     ::mged::gui::test::invoke $top {File {Render View} {PostScript...}}

@@ -22,11 +22,17 @@
 #	Tool for extracting objects out of the current MGED database.
 #
 
-check_externs "::brlcad::mged db_glob"
+check_externs "::brlcad::ged ::brlcad::mged"
 
-proc init_extractTool { id } {
+namespace eval ::brlcad::mged::extract {
+
+namespace export init
+
+variable control
+
+proc init { id } {
     global mged_gui
-    global ex_control
+    variable control
     global ::tk::Priv
 
     if {[opendb] == ""} {
@@ -42,12 +48,12 @@ proc init_extractTool { id } {
 	return
     }
 
-    if ![info exists ex_control($id,file)] {
+    if ![info exists control($id,file)] {
 	regsub \.g$ [::brlcad::mged opendb] _keep.g default_file
-	set ex_control($id,file) $default_file
+	set control($id,file) $default_file
     }
 
-    set ex_control($id,objects) [::brlcad::mged who]
+    set control($id,objects) [::brlcad::mged who]
 
     toplevel $top -screen $mged_gui($id,screen)
 
@@ -58,31 +64,33 @@ proc init_extractTool { id } {
 the extracted objects."} {see_also keep}}
     label $top.fileL -text "File Name" -anchor w
     hoc_register_data $top.fileL "File Name" $tmp_hoc_data
-    entry $top.fileE -width 24 -textvar ex_control($id,file)
+    entry $top.fileE -width 24 \
+	-textvariable ::brlcad::mged::extract::control($id,file)
     hoc_register_data $top.fileE "File Name" $tmp_hoc_data
 
     set tmp_hoc_data {{summary "Enter the objects to extract."}
 	    {see_also keep}}
     label $top.objectsL -text "Objects" -anchor w
     hoc_register_data $top.objectsL "Objects" $tmp_hoc_data
-    entry $top.objectsE -width 24 -textvar ex_control($id,objects)
+    entry $top.objectsE -width 24 \
+	-textvariable ::brlcad::mged::extract::control($id,objects)
     hoc_register_data $top.objectsE "Objects" $tmp_hoc_data
 
     button $top.okB -relief raised -text "OK"\
-	    -command "do_extract $id; catch {destroy $top}"
+	    -command [list ::brlcad::mged::extract::ok $id $top]
     hoc_register_data $top.okB "Extract" {{summary "
 Extract the listed objects from the current database
 and put them into the specified file. The extract dialog
 is then dismissed. Note - these objects are not removed
 from the current database."} {see_also keep}}
     button $top.extractB -relief raised -text "Extract"\
-	    -command "do_extract $id"
+	    -command [list ::brlcad::mged::extract::create $id]
     hoc_register_data $top.extractB "Extract" {{summary "
 Extract the listed objects from the current database
 and put them into the specified file. Note - these
 objects are not removed from the current database."} {see_also keep}}
     button $top.dismissB -relief raised -text "Dismiss"\
-	    -command "catch { destroy $top }"
+	    -command [list catch [list destroy $top]]
     hoc_register_data $top.dismissB "Dismiss" {{summary "Dismiss the entry dialog without
 extracting database objects."}}
 
@@ -100,19 +108,24 @@ extracting database objects."}}
     wm title $top "Extract Objects"
 }
 
-proc do_extract { id } {
+proc ok {id top} {
+    create $id
+    catch {destroy $top}
+}
+
+proc create { id } {
     global mged_gui
-    global ex_control
+    variable control
     global ::tk::Priv
 
     cmd_win set $id
     set ex_cmd [list ::brlcad::mged keep]
 
-    if {$ex_control($id,file) != ""} {
-	if [file exists $ex_control($id,file)] {
+    if {$control($id,file) ne ""} {
+	if [file exists $control($id,file)] {
 	    set result [cad_dialog $::tk::Priv(cad_dialog) $mged_gui($id,screen)\
-			    "Append to $ex_control($id,file)?"\
-			    "Append to $ex_control($id,file)?"\
+			    "Append to $control($id,file)?"\
+			    "Append to $control($id,file)?"\
 			    "" 0 OK Cancel]
 
 	    if {$result} {
@@ -128,10 +141,10 @@ proc do_extract { id } {
 	return
     }
 
-    lappend ex_cmd $ex_control($id,file)
+    lappend ex_cmd $control($id,file)
 
-    if {$ex_control($id,objects) != ""} {
-	set globbed_objects [db_glob $ex_control($id,objects)]
+    if {$control($id,objects) ne ""} {
+	set globbed_objects [::brlcad::ged glob $control($id,objects)]
 	lappend ex_cmd {*}$globbed_objects
     } else {
 	cad_dialog $::tk::Priv(cad_dialog) $mged_gui($id,screen)\
@@ -145,6 +158,13 @@ proc do_extract { id } {
     set result [catch {{*}$ex_cmd}]
     return $result
 }
+
+}
+
+proc init_extractTool {id} {
+    tailcall ::brlcad::mged::extract::init $id
+}
+
 # Local Variables:
 # mode: Tcl
 # tab-width: 8
