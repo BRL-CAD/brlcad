@@ -22,7 +22,7 @@ if(BUILD_TESTING AND TARGET rtwizard)
 
   # This target also acts like the check target in that it depends on the
   # necessary inputs for the CTest tests
-  add_dependencies(regress-rtwizard rtwizard pixcmp m35.g moss.g)
+  add_dependencies(regress-rtwizard rtwizard icv pixcmp pixstat m35.g moss.g)
 
   # All rtwizard tests used the same script
   set(TSCRIPT "${CMAKE_CURRENT_SOURCE_DIR}/regress-rtwiz.cmake.in")
