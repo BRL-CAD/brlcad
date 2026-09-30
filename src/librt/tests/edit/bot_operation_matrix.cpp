@@ -122,7 +122,8 @@ same_bot(const struct rt_edit *edit, const struct bot_expected *expected)
         for (size_t i = 0; i < bot->num_faces; ++i) {
             if (!NEAR_EQUAL(bot->thickness[i], expected->thickness[i],
                             VUNITIZE_TOL) ||
-                (bool)BU_BITTEST(bot->face_mode, i) != expected->face_mode[i]) {
+                BU_BITTEST(bot->face_mode, i) !=
+                    static_cast<bool>(expected->face_mode[i])) {
                 bu_log("BOT face property %zu changed unexpectedly\n", i);
                 return false;
             }
