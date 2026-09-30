@@ -1,10 +1,14 @@
 puts "*** Testing Tcl command namespaces ***"
 
-if {[package require brlcad::vmath 1.0] ne "1.0"} {
-    error "FAIL could not load the canonical vmath package"
+foreach package {brlcad::help brlcad::vmath} {
+    if {[package require $package 1.0] ne "1.0"} {
+	error "FAIL could not load canonical package $package"
+    }
 }
 
-foreach namespace {::brlcad ::brlcad::ged ::brlcad::mged ::brlcad::vmath} {
+foreach namespace {
+    ::brlcad ::brlcad::ged ::brlcad::help ::brlcad::mged ::brlcad::vmath
+} {
     if {![namespace exists $namespace]} {
 	error "FAIL missing namespace $namespace"
     }
@@ -69,6 +73,21 @@ foreach test {
 if {![catch {::brlcad::vmath mat_i} message] ||
     ![string match {unknown subcommand "mat_i":*} $message]} {
     error "FAIL vmath accepted an abbreviated subcommand: $message"
+}
+
+set search_query {Vector-Math search}
+set canonical [::brlcad::help::manpage_search_terms $search_query]
+set compatibility [manpage_search_terms $search_query]
+if {$canonical ne {vector math search} || $canonical ne $compatibility} {
+    error "FAIL help search term parsing differs: $canonical != $compatibility"
+}
+
+set namespace_help_data(example) [list argument description]
+set canonical [::brlcad::help::help_comm namespace_help_data example]
+set compatibility [help_comm namespace_help_data example]
+unset namespace_help_data
+if {$canonical ne $compatibility} {
+    error "FAIL help formatting differs: $canonical != $compatibility"
 }
 
 puts "PASS Tcl command namespaces"

@@ -79,22 +79,22 @@ proc helpdevel {args} {
     global mged_helpdevel_data
 
     if {[llength $args] > 0} {
-	return [help_comm mged_helpdevel_data $args]
+	return [::brlcad::help::help_comm mged_helpdevel_data $args]
     } else {
-	return [help_comm mged_helpdevel_data]
+	return [::brlcad::help::help_comm mged_helpdevel_data]
     }
 }
 
 proc ?devel {} {
     global mged_helpdevel_data
 
-    return [?_comm mged_helpdevel_data 20 4]
+    return [::brlcad::help::?_comm mged_helpdevel_data 20 4]
 }
 
 proc aproposdevel key {
     global mged_helpdevel_data
 
-    return [apropos_comm mged_helpdevel_data $key]
+    return [::brlcad::help::apropos_comm mged_helpdevel_data $key]
 }
 
 # Local Variables:

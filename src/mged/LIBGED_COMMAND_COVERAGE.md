@@ -205,7 +205,7 @@ ged_grid_core (src/libged/grid/grid.c:97) gets/sets the view grid parameters (ge
 
 ### `help`
 
-**Name conflict:** mged Tcl 'help'/'apropos'/'?' procs (help_comm in src/tclscripts/helpcomm.tcl, src/tclscripts/mged/help.tcl) providing the real per-command help browser
+**Name conflict:** mged Tcl 'help'/'apropos'/'?' procs (::brlcad::help::help_comm in src/tclscripts/helpcomm.tcl, src/tclscripts/mged/help.tcl) providing the real per-command help browser
 
 ged_help_core (src/libged/help/help.cpp:250) is an experimental/incomplete implementation: it recursively lists and tokenizes doc files (emitting 'Processing ...'/'Found N files' logs) and returns nothing useful to the user. mged already provides a fully functional 'help', 'apropos', and '?' via Tcl procs (help_comm/mged_help_data driven by helplib.tcl) that print per-command usage and descriptions. Registering ged_exec_help would collide with and override the working Tcl help system with an inferior/broken one.
 
