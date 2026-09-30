@@ -95,7 +95,12 @@ check_gui_packages(Tcl_Interp *interp)
 	"expr {"
 	" [llength [info commands ::Archer]] == 1 &&"
 	" [llength [info commands ::cadwidgets::Ged]] == 1 &&"
-	" [llength [info commands ::RtWizard::Wizard]] == 1"
+	" [llength [info commands ::RtWizard::Wizard]] == 1 &&"
+	" [lsort [namespace eval ::sdialogs {namespace export}]] eq"
+	"  [list Entrydialog Listdialog Stddlgs entrydialog listdialog] &&"
+	" [lsort [namespace eval ::swidgets {namespace export}]] eq"
+	"  [list Selectlists Togglearrow Tooltip Tree Treenode selectlists"
+	"   tkgetdir togglearrow tooltip tree treenode]"
 	"}";
 
     if (!eval_ok(interp, script) || !result_is(interp, "1")) {

@@ -303,6 +303,26 @@ foreach package {
     package require $package
 }
 
+set swidgets_exports [list \
+    Selectlists Togglearrow Tooltip Tree Treenode selectlists tkgetdir \
+    togglearrow tooltip tree treenode]
+set sdialogs_exports [list \
+    Entrydialog Listdialog Stddlgs entrydialog listdialog]
+assert_equal "Swidgets exports" \
+    [lsort [namespace eval ::swidgets {namespace export}]] \
+    $swidgets_exports
+assert_equal "Sdialogs exports" \
+    [lsort [namespace eval ::sdialogs {namespace export}]] \
+    $sdialogs_exports
+namespace eval ::widget_export_probe {
+    namespace import ::swidgets::*
+    namespace import ::sdialogs::*
+}
+assert_equal "widget package imports" \
+    [lsort [namespace eval ::widget_export_probe {namespace import}]] \
+    [lsort [concat $swidgets_exports $sdialogs_exports]]
+namespace delete ::widget_export_probe
+
 foreach {canonical legacy} {
     ::cadwidgets::run_conversion_config ::run_conversion_config
     ::cadwidgets::pid_wait ::pid_wait
