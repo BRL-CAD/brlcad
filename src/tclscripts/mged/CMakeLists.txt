@@ -79,8 +79,7 @@ set(
 )
 if(BRLCAD_ENABLE_TCL)
   brlcad_adddata(mged_TCLSCRIPTS tclscripts/mged)
-  # no packages in here (so far)
-  # pkgIndex_BUILD(tclscripts/mged)
+  pkgIndex_BUILD(tclscripts/mged)
   tclindex_build(tclscripts/mged)
 endif(BRLCAD_ENABLE_TCL)
 

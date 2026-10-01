@@ -684,6 +684,9 @@ proc toggle_draw { id } {
 proc init_adc_control {id} {
     tailcall ::brlcad::mged::adc::init $id
 }
+
+package provide brlcad::mged::adc 1.0
+
 # Local Variables:
 # mode: Tcl
 # tab-width: 8

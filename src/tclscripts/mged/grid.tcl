@@ -956,6 +956,8 @@ proc grid_control_update {sf} {
     tailcall ::brlcad::mged::grid::grid_control_update $sf
 }
 
+package provide brlcad::mged::grid 1.0
+
 # Local Variables:
 # mode: Tcl
 # tab-width: 8

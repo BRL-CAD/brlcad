@@ -297,6 +297,8 @@ proc init_psTool {id} {
     tailcall ::brlcad::mged::postscript::init $id
 }
 
+package provide brlcad::mged::postscript 1.0
+
 # Local Variables:
 # mode: Tcl
 # tab-width: 8

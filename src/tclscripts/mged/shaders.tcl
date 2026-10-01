@@ -3104,6 +3104,8 @@ proc is_good_shader {shader} {
     tailcall ::brlcad::mged::shader::is_good_shader $shader
 }
 
+package provide brlcad::mged::shader 1.0
+
 # Local Variables:
 # mode: Tcl
 # tab-width: 8

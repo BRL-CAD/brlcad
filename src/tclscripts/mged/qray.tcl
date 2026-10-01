@@ -658,6 +658,8 @@ proc init_qray_control {id} {
     tailcall ::brlcad::mged::qray::init $id
 }
 
+package provide brlcad::mged::qray 1.0
+
 # Local Variables:
 # mode: Tcl
 # tab-width: 8

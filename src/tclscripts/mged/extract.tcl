@@ -165,6 +165,8 @@ proc init_extractTool {id} {
     tailcall ::brlcad::mged::extract::init $id
 }
 
+package provide brlcad::mged::extract 1.0
+
 # Local Variables:
 # mode: Tcl
 # tab-width: 8

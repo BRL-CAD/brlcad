@@ -150,6 +150,8 @@ proc init_rtScriptTool {id} {
     tailcall ::brlcad::mged::rt_script::init $id
 }
 
+package provide brlcad::mged::rt_script 1.0
+
 # Local Variables:
 # mode: Tcl
 # tab-width: 8

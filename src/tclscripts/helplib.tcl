@@ -24,6 +24,18 @@
 #
 #==============================================================================
 
+package require brlcad::help 1.0
+
+namespace eval ::brlcad::help {
+
+namespace export library library_alias library_apropos library_summary
+
+variable helplib_data
+if {[array exists ::helplib_data]} {
+    array set helplib_data [array get ::helplib_data]
+    unset ::helplib_data
+}
+
 set helplib_data(dm_bg)			{{[r g b]} {Get/set background color}}
 set helplib_data(dm_bounds)		{{[xmin xmax ymin ymax zmin zmax]} {Set/get window bounds}}
 set helplib_data(dm_close)		{{} {close/destroy this display manager object}}
@@ -254,27 +266,27 @@ set helplib_data(quat_make_nearest)	{{quatA quatB}	{set quaternion quatA to the 
 set helplib_data(quat_exp)		{{quat}	{exponentiate a quaternion}}
 set helplib_data(quat_log)		{{quat}	{take the natural logarithm of a unit quaternion}}
 
-proc helplib {args} {
-    global helplib_data
+proc library {args} {
+    variable helplib_data
 
     if {[llength $args] > 0} {
-	return [::brlcad::help::help_comm helplib_data $args]
+	return [help_comm [namespace current]::helplib_data $args]
     } else {
-	return [::brlcad::help::help_comm helplib_data]
+	return [help_comm [namespace current]::helplib_data]
     }
 }
 
-proc ?lib {} {
-    global helplib_data
+proc library_summary {} {
+    variable helplib_data
 
-    return [::brlcad::help::?_comm helplib_data 25 4]
+    return [?_comm [namespace current]::helplib_data 25 4]
 }
 
 
-proc aproposlib {key} {
-    global helplib_data
+proc library_apropos {key} {
+    variable helplib_data
 
-    return [::brlcad::help::apropos_comm helplib_data $key]
+    return [apropos_comm [namespace current]::helplib_data $key]
 }
 
 ## - helplib_alias
@@ -286,14 +298,35 @@ proc aproposlib {key} {
 # widgets that use these methods can get the same
 # help using their respective names.
 #
-proc helplib_alias {libcmd alias} {
-    set info [helplib $libcmd]
+proc library_alias {libcmd alias} {
+    set info [library $libcmd]
 
     set pattern "Usage: $libcmd"
     regsub $pattern $info "Usage: $alias" info
 
     return $info
 }
+
+}
+
+# Retain the historical library help entry points.
+proc helplib {args} {
+    tailcall ::brlcad::help::library {*}$args
+}
+
+proc ?lib {} {
+    tailcall ::brlcad::help::library_summary
+}
+
+proc aproposlib {key} {
+    tailcall ::brlcad::help::library_apropos $key
+}
+
+proc helplib_alias {libcmd alias} {
+    tailcall ::brlcad::help::library_alias $libcmd $alias
+}
+
+package provide brlcad::help::library 1.0
 
 # Local Variables:
 # mode: Tcl

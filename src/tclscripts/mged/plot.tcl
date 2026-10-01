@@ -250,6 +250,8 @@ proc init_plotTool {id} {
     tailcall ::brlcad::mged::plot::init $id
 }
 
+package provide brlcad::mged::plot 1.0
+
 # Local Variables:
 # mode: Tcl
 # tab-width: 8

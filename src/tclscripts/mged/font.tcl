@@ -731,6 +731,8 @@ proc font_gui_init {id top fname title callback} {
 	$id $top $fname $title $callback
 }
 
+package provide brlcad::mged::font 1.0
+
 # Local Variables:
 # mode: Tcl
 # tab-width: 8

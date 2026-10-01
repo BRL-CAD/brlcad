@@ -1846,6 +1846,8 @@ proc init_Raytrace { id } {
     tailcall ::brlcad::mged::raytrace::init $id
 }
 
+package provide brlcad::mged::raytrace 1.0
+
 # Local Variables:
 # mode: Tcl
 # tab-width: 8

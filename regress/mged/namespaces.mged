@@ -1,6 +1,22 @@
 puts "*** Testing Tcl command namespaces ***"
 
-foreach package {brlcad::help brlcad::vmath} {
+foreach package {
+    brlcad::help
+    brlcad::help::library
+    brlcad::mged::adc
+    brlcad::mged::extract
+    brlcad::mged::font
+    brlcad::mged::grid
+    brlcad::mged::help
+    brlcad::mged::helpdevel
+    brlcad::mged::plot
+    brlcad::mged::postscript
+    brlcad::mged::qray
+    brlcad::mged::raytrace
+    brlcad::mged::rt_script
+    brlcad::mged::shader
+    brlcad::vmath
+} {
     if {[package require $package 1.0] ne "1.0"} {
 	error "FAIL could not load canonical package $package"
     }
@@ -26,7 +42,8 @@ foreach command {
 foreach namespace {
     ::brlcad ::brlcad::ged ::brlcad::help ::brlcad::mged
     ::brlcad::mged::adc ::brlcad::mged::extract ::brlcad::mged::font
-    ::brlcad::mged::grid ::brlcad::mged::plot ::brlcad::mged::postscript
+    ::brlcad::mged::grid ::brlcad::mged::help ::brlcad::mged::helpdevel
+    ::brlcad::mged::plot ::brlcad::mged::postscript
     ::brlcad::mged::qray ::brlcad::mged::raytrace
     ::brlcad::mged::rt_script
     ::brlcad::mged::shader ::brlcad::vmath
@@ -34,6 +51,35 @@ foreach namespace {
     if {![namespace exists $namespace]} {
 	error "FAIL missing namespace $namespace"
     }
+}
+
+foreach command {
+    ::brlcad::help::library
+    ::brlcad::help::library_alias
+    ::brlcad::help::library_apropos
+    ::brlcad::help::library_summary
+    ::brlcad::mged::help::apropos
+    ::brlcad::mged::help::show
+    ::brlcad::mged::help::summary
+    ::brlcad::mged::helpdevel::apropos
+    ::brlcad::mged::helpdevel::show
+    ::brlcad::mged::helpdevel::summary
+    ? ?devel ?lib apropos aproposdevel aproposlib help helpdevel helplib
+    helplib_alias
+} {
+    if {![llength [info commands $command]]} {
+	error "FAIL missing help command $command"
+    }
+}
+foreach variable {helplib_data mged_help_data mged_helpdevel_data} {
+    if {[info exists ::$variable]} {
+	error "FAIL help state remains global: ::$variable"
+    }
+}
+if {[::brlcad::mged::help::show draw] ne [help draw] ||
+    [::brlcad::mged::helpdevel::show winset] ne [helpdevel winset] ||
+    [::brlcad::help::library wdb_adjust] ne [helplib wdb_adjust]} {
+    error "FAIL canonical and compatibility help results differ"
 }
 
 foreach command {::brlcad::ged ::brlcad::mged exists _mged_exists} {

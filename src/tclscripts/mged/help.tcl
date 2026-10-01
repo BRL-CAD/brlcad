@@ -24,9 +24,24 @@
 #
 #==============================================================================
 
-# This command causes helplib.tcl to get read in.
-source [file join [bu_dir data] "tclscripts" "helplib.tcl"]
-helplib
+# Tcl's package indexer stubs package require while inspecting files, so the
+# dependency namespace and data check below must also tolerate that pass.
+package require brlcad::help::library 1.0
+namespace eval ::brlcad::help {}
+
+namespace eval ::brlcad::mged::help {
+
+namespace export apropos show summary
+
+variable mged_help_data
+namespace upvar ::brlcad::help helplib_data helplib_data
+if {[array exists ::mged_help_data]} {
+    array set mged_help_data [array get ::mged_help_data]
+    unset ::mged_help_data
+}
+
+# The array is absent only while pkg_mkIndex inspects this module.
+if {[array exists helplib_data]} {
 
 set mged_help_data(?)		{{}	{summary of available mged commands}}
 set mged_help_data(?lib)	{{}	{summary of available library commands}}
@@ -390,24 +405,29 @@ set mged_help_data(xpush)	$helplib_data(wdb_xpush)
 set mged_help_data(Z)		$helplib_data(dgo_zap)
 set mged_help_data(zoom)	$helplib_data(vo_zoom)
 
-proc help {args} {
-    global mged_help_data
+}
+
+proc show {args} {
+    variable mged_help_data
 
     if {[llength $args] > 0} {
-	return [::brlcad::help::help_comm mged_help_data $args]
+	return [::brlcad::help::help_comm \
+	    [namespace current]::mged_help_data $args]
     } else {
-	return [::brlcad::help::help_comm mged_help_data]
+	return [::brlcad::help::help_comm \
+	    [namespace current]::mged_help_data]
     }
 }
 
-proc ? {} {
-    global mged_help_data
+proc summary {} {
+    variable mged_help_data
 
-    return [::brlcad::help::?_comm mged_help_data 20 4]
+    return [::brlcad::help::?_comm \
+	[namespace current]::mged_help_data 20 4]
 }
 
 proc apropos {args} {
-    global mged_help_data
+    variable mged_help_data
 
     set mode short
     set query {}
@@ -439,8 +459,26 @@ proc apropos {args} {
 	return $results
     }
 
-    return [::brlcad::help::apropos_comm mged_help_data $key]
+    return [::brlcad::help::apropos_comm \
+	[namespace current]::mged_help_data $key]
 }
+
+}
+
+# Retain MGED's historical interactive help commands.
+proc help {args} {
+    tailcall ::brlcad::mged::help::show {*}$args
+}
+
+proc ? {} {
+    tailcall ::brlcad::mged::help::summary
+}
+
+proc apropos {args} {
+    tailcall ::brlcad::mged::help::apropos {*}$args
+}
+
+package provide brlcad::mged::help 1.0
 
 # Local Variables:
 # mode: Tcl

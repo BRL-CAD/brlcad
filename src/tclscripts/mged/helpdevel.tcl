@@ -24,6 +24,18 @@
 #
 #==============================================================================
 
+package require brlcad::help 1.0
+
+namespace eval ::brlcad::mged::helpdevel {
+
+namespace export apropos show summary
+
+variable mged_helpdevel_data
+if {[array exists ::mged_helpdevel_data]} {
+    array set mged_helpdevel_data [array get ::mged_helpdevel_data]
+    unset ::mged_helpdevel_data
+}
+
 set mged_helpdevel_data(aip)		{{[fb]}	{advance illumination pointer or path position forward or backward}}
 set mged_helpdevel_data(cmd_win)	{{cmd}	{routine for maintaining command windows}}
 set mged_helpdevel_data(collaborate)	{{join id | quit id | show}	{routine for maintaining the collaborative session}}
@@ -75,27 +87,48 @@ set mged_helpdevel_data(view2model_lu)	{{vx vy vz}	{given a point in view coordi
     convert it to model coordinates (local units).}}
 set mged_helpdevel_data(winset)		{{[pathname]}	{sets the current display manager to pathname}}
 
-proc helpdevel {args} {
-    global mged_helpdevel_data
+proc show {args} {
+    variable mged_helpdevel_data
 
     if {[llength $args] > 0} {
-	return [::brlcad::help::help_comm mged_helpdevel_data $args]
+	return [::brlcad::help::help_comm \
+	    [namespace current]::mged_helpdevel_data $args]
     } else {
-	return [::brlcad::help::help_comm mged_helpdevel_data]
+	return [::brlcad::help::help_comm \
+	    [namespace current]::mged_helpdevel_data]
     }
 }
 
+proc summary {} {
+    variable mged_helpdevel_data
+
+    return [::brlcad::help::?_comm \
+	[namespace current]::mged_helpdevel_data 20 4]
+}
+
+proc apropos {key} {
+    variable mged_helpdevel_data
+
+    return [::brlcad::help::apropos_comm \
+	[namespace current]::mged_helpdevel_data $key]
+}
+
+}
+
+# Retain MGED's historical developer-help commands.
+proc helpdevel {args} {
+    tailcall ::brlcad::mged::helpdevel::show {*}$args
+}
+
 proc ?devel {} {
-    global mged_helpdevel_data
-
-    return [::brlcad::help::?_comm mged_helpdevel_data 20 4]
+    tailcall ::brlcad::mged::helpdevel::summary
 }
 
-proc aproposdevel key {
-    global mged_helpdevel_data
-
-    return [::brlcad::help::apropos_comm mged_helpdevel_data $key]
+proc aproposdevel {key} {
+    tailcall ::brlcad::mged::helpdevel::apropos $key
 }
+
+package provide brlcad::mged::helpdevel 1.0
 
 # Local Variables:
 # mode: Tcl
