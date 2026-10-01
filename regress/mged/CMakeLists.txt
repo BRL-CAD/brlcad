@@ -2,6 +2,7 @@ set(
   MGED_TESTS
   3ptarb.mged
   accept.mged
+  accel.mged
   adc.mged
   ae.mged
   arb.mged
@@ -127,7 +128,9 @@ if(TARGET mged)
     set(TEST_KEEP_DB OFF)
     set(TEST_DEPS "mged;rtarea;rt;rtcheck")
     set(TEST_TIMEOUT 300)
-    if(TNAME STREQUAL "search_exec")
+    if(TNAME STREQUAL "accel")
+      set(TEST_EXPECT "PASS accelerator namespaced commands")
+    elseif(TNAME STREQUAL "search_exec")
       set(TEST_DB "${CMAKE_BINARY_DIR}/${DATA_DIR}/db/m35.g")
       set(TEST_EXPECT "PASS search -exec sourced Tcl state")
       list(APPEND TEST_DEPS "m35.g")

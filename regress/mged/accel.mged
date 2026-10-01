@@ -1,0 +1,39 @@
+puts "*** Testing accelerator commands ***"
+
+::brlcad::mged in namespace_accel.rcc rcc 0 0 0 0 0 4 4
+::brlcad::mged in namespace_accel.tor tor 0 0 0 0 0 1 5 1
+::brlcad::mged in namespace_accel.rpp rpp -5 5 -5 5 -5 5
+::brlcad::mged in namespace_accel_one.s sph -5 0 0 2
+::brlcad::mged in namespace_accel_two.s sph 5 0 0 1
+
+set hidden_commands {}
+foreach command {d db e in make_name r} {
+    set compatibility_command ::$command
+    set hidden_command ::__brlcad_mged_compatibility_$command
+    rename $compatibility_command $hidden_command
+    lappend hidden_commands $hidden_command $compatibility_command
+}
+try {
+    set results [list \
+	[rcc-cap namespace_accel.rcc namespace_accel_cap.s] \
+	[rcc-tgc namespace_accel.rcc namespace_accel_tgc.s 0 0 -5] \
+	[tor-rcc namespace_accel.tor namespace_accel_from_tor.s] \
+	[rcc-tor namespace_accel.rcc namespace_accel_from_rcc.s] \
+	[rcc-blend namespace_accel.rcc namespace_accel_blend.r 0.5] \
+	[rpp-cap namespace_accel.rpp namespace_accel_rpp_cap.s 1234 2] \
+	[rpp-arch namespace_accel.rpp namespace_accel_arch.s 1234] \
+	[sph-part namespace_accel_one.s namespace_accel_two.s namespace_accel_part.s]]
+} finally {
+    foreach {hidden_command compatibility_command} $hidden_commands {
+	rename $hidden_command $compatibility_command
+    }
+}
+
+foreach object $results {
+    if {![::brlcad::mged exists $object]} {
+	error "FAIL accelerator did not create $object"
+    }
+}
+
+puts "PASS accelerator namespaced commands"
+puts "*** Accelerator command testing completed ***"

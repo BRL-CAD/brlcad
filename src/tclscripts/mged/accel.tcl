@@ -42,7 +42,7 @@ proc rcc-cap {args} {
     set rccname [lindex $args 0]
     set newname [lindex $args 1]
     if {$argc == 2} {
-	foreach {ax ay az} [db get $rccname A] {}
+	foreach {ax ay az} [::brlcad::mged db get $rccname A] {}
 	set amag [expr sqrt($ax*$ax + $ay*$ay + $az*$az)]
 	set height $amag
 	set end b
@@ -51,7 +51,7 @@ proc rcc-cap {args} {
 	    set height [expr [::brlcad::bu units_conversion $mged_display(units)] *[lindex $args 2]]
 	    set end b
 	} else {
-	    foreach {ax ay az} [db get $rccname A] {}
+	    foreach {ax ay az} [::brlcad::mged db get $rccname A] {}
 	    set amag [expr sqrt($ax*$ax + $ay*$ay + $az*$az)]
 	    set height $amag
 	    set end [lindex $args 2]
@@ -65,10 +65,10 @@ proc rcc-cap {args} {
 	error "bad end '$end' : must be b or t"
     }
     #Set Variables
-    set hv [db get $rccname H]
+    set hv [::brlcad::mged db get $rccname H]
     set uhv [::brlcad::vmath vunitize $hv]
     set ellheight [::brlcad::vmath vscale $uhv $height]
-    set vertex [db get $rccname V]
+    set vertex [::brlcad::mged db get $rccname V]
     if {$end == "t"} {
 	set vertex [::brlcad::vmath vadd2 $vertex $hv]
 	set vec1 C
@@ -78,11 +78,11 @@ proc rcc-cap {args} {
 	set vec1 A
 	set vec2 B
     }
-    set Alist [db get $rccname $vec1]
-    set Blist [db get $rccname $vec2]
+    set Alist [::brlcad::mged db get $rccname $vec1]
+    set Blist [::brlcad::mged db get $rccname $vec2]
     #Create ELL
-    db put $newname ell V "$vertex" A "$Alist" B "$Blist" C "$ellheight"
-    e $newname
+    ::brlcad::mged db put $newname ell V "$vertex" A "$Alist" B "$Blist" C "$ellheight"
+    ::brlcad::mged e $newname
     return $newname
 }
 
@@ -119,14 +119,16 @@ proc rcc-tgc {args} {
     if {$end == "t"} {
 	set vec1 C
 	set vec2 D
-	set vertex [::brlcad::vmath vadd2 [db get $rccname V] [db get $rccname H]]
+	set vertex [::brlcad::vmath vadd2 \
+	    [::brlcad::mged db get $rccname V] \
+	    [::brlcad::mged db get $rccname H]]
     } else {
 	set vec1 A
 	set vec2 B
-	set vertex [db get $rccname V]
+	set vertex [::brlcad::mged db get $rccname V]
     }
-    set vector1 [db get $rccname $vec1]
-    set vector2 [db get $rccname $vec2]
+    set vector1 [::brlcad::mged db get $rccname $vec1]
+    set vector2 [::brlcad::mged db get $rccname $vec2]
     set scalar .000001
     #    set apex [list $ptx $pty $ptz]
     set apex ""
@@ -146,7 +148,8 @@ proc rcc-tgc {args} {
 	set $param $result
     }
     set scalar [expr $scalar/[::brlcad::bu units_conversion $mged_display(units)]]
-    eval in $newname tgc $vertex $height $vector1 $vector2 $scalar $scalar
+    ::brlcad::mged in $newname tgc \
+	{*}$vertex {*}$height {*}$vector1 {*}$vector2 $scalar $scalar
     return $newname
 }
 
@@ -167,10 +170,10 @@ proc tor-rcc {args} {
     set torname [lindex $args 0]
     set newname [lindex $args 1]
     #Get TOR coordinates
-    foreach {tvx tvy tvz} [db get $torname V] {}
-    foreach {thx thy thz} [db get $torname H] {}
-    set radius1 [db get $torname r_a]
-    set radius2 [db get $torname r_h]
+    foreach {tvx tvy tvz} [::brlcad::mged db get $torname V] {}
+    foreach {thx thy thz} [::brlcad::mged db get $torname H] {}
+    set radius1 [::brlcad::mged db get $torname r_a]
+    set radius2 [::brlcad::mged db get $torname r_h]
     #Set RCC coordinates
     foreach coord {rvx rvy rvz} vval {$tvx $tvy $tvz} hval {$thx $thy $thz} {
 	set $coord [expr $vval + $hval * $radius2]
@@ -184,7 +187,7 @@ proc tor-rcc {args} {
     foreach param {rvx rvy rvz rhx rhy rhz radius1} val "$rvx $rvy $rvz $rhx $rhy $rhz $radius1" {
 	set $param [expr $val/[::brlcad::bu units_conversion $mged_display(units)]]
     }
-    in $newname rcc $rvx $rvy $rvz $rhx $rhy $rhz $radius1
+    ::brlcad::mged in $newname rcc $rvx $rvy $rvz $rhx $rhy $rhz $radius1
     return $newname
 }
 
@@ -205,9 +208,9 @@ proc rcc-tor {args} {
     set rccname [lindex $args 0]
     set newname [lindex $args 1]
     #Get RCC coordinates
-    foreach {rvx rvy rvz} [db get $rccname V] {}
-    foreach {rax ray raz} [db get $rccname A] {}
-    foreach {rhx rhy rhz} [db get $rccname H] {}
+    foreach {rvx rvy rvz} [::brlcad::mged db get $rccname V] {}
+    foreach {rax ray raz} [::brlcad::mged db get $rccname A] {}
+    foreach {rhx rhy rhz} [::brlcad::mged db get $rccname H] {}
     #Set TOR coordinates
     set radius1 [expr sqrt($rax*$rax + $ray*$ray + $raz*$raz)]
     set radius2 [expr sqrt($rhx*$rhx + $rhy*$rhy + $rhz*$rhz)*.5]
@@ -224,7 +227,8 @@ proc rcc-tor {args} {
     foreach param {tvx tvy tvz rhx rhy rhz radius1 radius2} val "$tvx $tvy $tvz $rhx $rhy $rhz $radius1 $radius2" {
 	set $param [expr $val/[::brlcad::bu units_conversion $mged_display(units)]]
     }
-    in $newname tor $tvx $tvy $tvz $rhx $rhy $rhz $radius1 $radius2
+    ::brlcad::mged in $newname tor \
+	$tvx $tvy $tvz $rhx $rhy $rhz $radius1 $radius2
     return $newname
 }
 
@@ -257,9 +261,9 @@ proc rcc-blend {args} {
 	error "bad end '$end': must be b or t"
     }
     #Get RCC coordinates
-    foreach {rvx rvy rvz} [db get $rccname1 V] {}
-    foreach {rhx rhy rhz} [db get $rccname1 H] {}
-    foreach {rax ray raz} [db get $rccname1 A] {}
+    foreach {rvx rvy rvz} [::brlcad::mged db get $rccname1 V] {}
+    foreach {rhx rhy rhz} [::brlcad::mged db get $rccname1 H] {}
+    foreach {rax ray raz} [::brlcad::mged db get $rccname1 A] {}
     #Set Variables
     set amag [expr $thickness + (sqrt($rax*$rax + $ray*$ray + $raz*$raz))]
     set hmag [expr sqrt($rhx*$rhx + $rhy*$rhy + $rhz*$rhz)]
@@ -275,24 +279,27 @@ proc rcc-blend {args} {
 	}
     }
     #Create TOR
-    set torname [make_name $newname]
+    set torname [::brlcad::mged make_name $newname]
     set hscale [expr $thickness/$hmag]
     #In order to make TOR properly, have to convert parameters to display units
     foreach param {tvx tvy tvz rhx rhy rhz amag thickness} val "$tvx $tvy $tvz $rhx $rhy $rhz $amag $thickness" {
 	set $param [expr $val/[::brlcad::bu units_conversion $mged_display(units)]]
     }
-    in $torname tor $tvx $tvy $tvz $rhx $rhy $rhz $amag $thickness
+    ::brlcad::mged in $torname tor \
+	$tvx $tvy $tvz $rhx $rhy $rhz $amag $thickness
     #Create RCC2
-    set rccname2 [make_name $newname]
+    set rccname2 [::brlcad::mged make_name $newname]
     #In order to make TOR properly, have to convert parameters to display units
     foreach param {rvx rvy rvz } val "$rvx $rvy $rvz" {
 	set $param [expr $val/[::brlcad::bu units_conversion $mged_display(units)]]
     }
-    in $rccname2 rcc $rvx $rvy $rvz [expr $hscale*$rhx] [expr $hscale*$rhy] [expr $hscale*$rhz] $amag
+    ::brlcad::mged in $rccname2 rcc \
+	$rvx $rvy $rvz [expr $hscale*$rhx] [expr $hscale*$rhy] \
+	[expr $hscale*$rhz] $amag
     #Create Flange
-    r $newname u $rccname2 - $torname - $rccname1
-    d $torname $rccname2
-    e $newname
+    ::brlcad::mged r $newname u $rccname2 - $torname - $rccname1
+    ::brlcad::mged d $torname $rccname2
+    ::brlcad::mged e $newname
     return $newname
 }
 
@@ -335,7 +342,7 @@ proc rpp-cap {args} {
 	set $pt [string index $face $index]
     }
     foreach vert {V1 V2 V3 V4} pt {$a $b $c $d} {
-	set $vert [eval db get $rppname V$pt]
+	set $vert [::brlcad::mged db get $rppname V$pt]
     }
 
     #Determine Normal
@@ -379,7 +386,8 @@ proc rpp-cap {args} {
     }
     #Determine direction of hvector
     #Form vector from a point on the specified face and a point not on the face
-    set direct [::brlcad::vmath vunitize [::brlcad::vmath vsub $V1 [db get $rppname V$pt]]]
+    set direct [::brlcad::vmath vunitize \
+	[::brlcad::vmath vsub $V1 [::brlcad::mged db get $rppname V$pt]]]
     set dp [::brlcad::vmath vdot $normal $direct]
     if {$dp < 0} {
 	set hvector [::brlcad::vmath vreverse $hvector]
@@ -405,7 +413,8 @@ proc rpp-cap {args} {
 	set $coord [expr $val/[::brlcad::bu units_conversion $mged_display(units)]]
     }
 
-    eval in $newname arb6 $P1 $P2 $P3 $P4 $r1x $r1y $r1z $r2x $r2y $r2z
+    ::brlcad::mged in $newname arb6 \
+	{*}$P1 {*}$P2 {*}$P3 {*}$P4 $r1x $r1y $r1z $r2x $r2y $r2z
     return $newname
 }
 
@@ -433,7 +442,7 @@ proc rpp-arch {args} {
 	set $pt [string index $face $index]
     }
     foreach vert {V1 V2 V3 V4} pt {$a $b $c $d} {
-	set $vert [eval db get $rppname V$pt]
+	set $vert [::brlcad::mged db get $rppname V$pt]
     }
     #Set Variables
     set height  [::brlcad::vmath vsub2 $V2 $V1]
@@ -449,7 +458,7 @@ proc rpp-arch {args} {
 	}
 	set $param $result
     }
-    eval in $newname rcc $vertex $height $radius
+    ::brlcad::mged in $newname rcc {*}$vertex {*}$height $radius
     return $newname
 }
 
@@ -471,10 +480,10 @@ proc sph-part {args} {
     set sphname2 [lindex $args 1]
     set newname [lindex $args 2]
     #Get SPH coordinates
-    foreach {vx1 vy1 vz1} [db get $sphname1 V] {}
-    foreach {vx2 vy2 vz2} [db get $sphname2 V] {}
-    foreach {ax1 ay1 az1} [db get $sphname1 A] {}
-    foreach {ax2 ay2 az2} [db get $sphname2 A] {}
+    foreach {vx1 vy1 vz1} [::brlcad::mged db get $sphname1 V] {}
+    foreach {vx2 vy2 vz2} [::brlcad::mged db get $sphname2 V] {}
+    foreach {ax1 ay1 az1} [::brlcad::mged db get $sphname1 A] {}
+    foreach {ax2 ay2 az2} [::brlcad::mged db get $sphname2 A] {}
     #Set Variables
     set radius1 [expr sqrt($ax1*$ax1 + $ay1*$ay1 + $az1*$az1)]
     set radius2 [expr sqrt($ax2*$ax2 + $ay2*$ay2 + $az2*$az2)]
@@ -486,7 +495,8 @@ proc sph-part {args} {
 	set $param [expr $val/[::brlcad::bu units_conversion $mged_display(units)]]
     }
     #Create PART
-    in $newname part $vx1 $vy1 $vz1 $hx $hy $hz $radius1 $radius2
+    ::brlcad::mged in $newname part \
+	$vx1 $vy1 $vz1 $hx $hy $hz $radius1 $radius2
     return $newname
 }
 
