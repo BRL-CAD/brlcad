@@ -2762,11 +2762,16 @@ dmo_open_tcl(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, char *
     /* append to list of dm objects */
     BU_LIST_APPEND(objects, &dmop->l);
 
-    (void)Tcl_CreateCommand(interp,
-			    bu_vls_addr(&dmop->dmo_name),
-			    (Tcl_CmdProc *)dmo_cmd,
-			    (ClientData)dmop,
-			    dmo_deleteProc);
+    if (!Tcl_CreateCommand(interp,
+	    bu_vls_addr(&dmop->dmo_name),
+	    (Tcl_CmdProc *)dmo_cmd,
+	    (ClientData)dmop,
+	    dmo_deleteProc)) {
+	dmo_deleteProc((ClientData)dmop);
+	Tcl_SetObjResult(interp, Tcl_ObjPrintf(
+		"Unable to create Tcl command: %s", argv[name_index]));
+	return BRLCAD_ERROR;
+    }
 
     /* send Configure event */
     bu_vls_printf(&vls, "event generate %s <Configure>; update", bu_vls_addr(&dmop->dmo_name));

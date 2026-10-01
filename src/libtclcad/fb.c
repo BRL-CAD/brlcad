@@ -901,11 +901,16 @@ fbo_open_tcl(void *UNUSED(clientData), Tcl_Interp *interp, int argc, const char 
 
     BU_LIST_APPEND(objects, &fbop->l);
 
-    (void)Tcl_CreateCommand(interp,
-			    bu_vls_addr(&fbop->fbo_name),
-			    (Tcl_CmdProc *)fbo_cmd,
-			    (ClientData)fbop,
-			    fbo_deleteProc);
+    if (!Tcl_CreateCommand(interp,
+	    bu_vls_addr(&fbop->fbo_name),
+	    (Tcl_CmdProc *)fbo_cmd,
+	    (ClientData)fbop,
+	    fbo_deleteProc)) {
+	fbo_deleteProc((ClientData)fbop);
+	Tcl_SetObjResult(interp, Tcl_ObjPrintf(
+		"Unable to create Tcl command: %s", argv[1]));
+	return BRLCAD_ERROR;
+    }
 
     /* Return new function name as result */
     Tcl_ResetResult(interp);
