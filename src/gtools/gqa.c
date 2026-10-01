@@ -43,6 +43,7 @@ main(int argc, char *argv[])
     int i, j;
     int db_index;
     int c;
+    int ret;
     const char **av;
     struct ged *gedp;
 
@@ -103,14 +104,14 @@ main(int argc, char *argv[])
 	bu_exit(1, usage, argv[0]);
     }
 
-    (void)ged_exec_gqa(gedp, j, av);
+    ret = ged_exec_gqa(gedp, j, av);
     if (bu_vls_strlen(gedp->ged_result_str) > 0)
 	bu_log("%s", bu_vls_addr(gedp->ged_result_str));
     ged_close(gedp);
 
     bu_free((void *)av, "av");
 
-    return 0;
+    return ret;
 }
 
 
