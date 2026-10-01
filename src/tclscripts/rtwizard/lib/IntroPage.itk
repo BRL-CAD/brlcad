@@ -30,6 +30,7 @@ package require Iwidgets
 
 namespace eval RtWizard {
 
+    package provide RtWizard::IntroPage 1.0
     package provide IntroPage 1.0
 
     #

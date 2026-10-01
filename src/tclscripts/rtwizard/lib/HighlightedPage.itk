@@ -29,7 +29,8 @@ package require Iwidgets
 
 namespace eval RtWizard {
 
-    package require MGEDpage 1.0
+    package require RtWizard::MGEDpage 1.0
+    package provide RtWizard::HighlightedPage 1.0
     package provide HighlightedPage 1.0
 
     #

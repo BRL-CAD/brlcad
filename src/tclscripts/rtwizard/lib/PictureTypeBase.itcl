@@ -32,6 +32,7 @@ package require Iwidgets
 
 namespace eval RtWizard {
 
+    package provide RtWizard::PictureTypeBase 1.0
     package provide PictureTypeBase 1.0
 
     #

@@ -28,7 +28,8 @@ package require Iwidgets
 
 namespace eval RtWizard {
 
-    package require MGEDpage 1.0
+    package require RtWizard::MGEDpage 1.0
+    package provide RtWizard::LinePage 1.0
     package provide LinePage 1.0
 
     #

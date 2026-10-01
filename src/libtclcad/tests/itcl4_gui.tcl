@@ -279,6 +279,24 @@ foreach package {
     cadwidgets::GeometryIO
     cadwidgets::RtImage
     RtWizard::Wizard
+    RtWizard::DbPage
+    RtWizard::ExamplePage
+    RtWizard::FbPage
+    RtWizard::FeedbackDialog
+    RtWizard::FullColorPage
+    RtWizard::GhostPage
+    RtWizard::HelpPage
+    RtWizard::HighlightedPage
+    RtWizard::IntroPage
+    RtWizard::LinePage
+    RtWizard::MGEDpage
+    RtWizard::PictureTypeA
+    RtWizard::PictureTypeB
+    RtWizard::PictureTypeBase
+    RtWizard::PictureTypeC
+    RtWizard::PictureTypeD
+    RtWizard::PictureTypeE
+    RtWizard::PictureTypeF
     Sdialogs
     Swidgets
     DbPage

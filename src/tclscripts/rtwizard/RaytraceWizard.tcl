@@ -57,27 +57,27 @@ namespace eval RaytraceWizard {
     package require Iwidgets
 
     package require RtWizard::Wizard 1.0
-    package require DbPage
-    package require FbPage
-    package require HelpPage
-    package require ExamplePage
+    package require RtWizard::DbPage 1.0
+    package require RtWizard::FbPage 1.0
+    package require RtWizard::HelpPage 1.0
+    package require RtWizard::ExamplePage 1.0
 
-    package require FullColorPage
-    package require HighlightedPage
-    package require GhostPage
-    package require LinePage
+    package require RtWizard::FullColorPage 1.0
+    package require RtWizard::HighlightedPage 1.0
+    package require RtWizard::GhostPage 1.0
+    package require RtWizard::LinePage 1.0
 
-    package require FeedbackDialog
+    package require RtWizard::FeedbackDialog 1.0
 
     #
     # The supported picture types
     #
-    package require PictureTypeA
-    package require PictureTypeB
-    package require PictureTypeC
-    package require PictureTypeD
-    package require PictureTypeE
-    package require PictureTypeF
+    package require RtWizard::PictureTypeA 1.0
+    package require RtWizard::PictureTypeB 1.0
+    package require RtWizard::PictureTypeC 1.0
+    package require RtWizard::PictureTypeD 1.0
+    package require RtWizard::PictureTypeE 1.0
+    package require RtWizard::PictureTypeF 1.0
 
 #    set helpFont {-family helvetica -size 12 \
 		      -slant italic}

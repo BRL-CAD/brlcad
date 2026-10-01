@@ -28,6 +28,7 @@ package require Iwidgets
 
 namespace eval RtWizard {
 
+    package provide RtWizard::DbPage 1.0
     package provide DbPage 1.0
 
     #
