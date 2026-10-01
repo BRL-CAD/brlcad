@@ -119,4 +119,35 @@ if {![catch {get $invalid_inner}]} {
 }
 
 
+# ARBN uses one independent thickness per plane.  Exercise unequal offsets so
+# the test also verifies the plane ordering and inward normal convention.
+set arbn_outer inside_arbn_outer.s
+set arbn_inner inside_arbn_inner.s
+set arbn_thicknesses {1 2 3 4 1.5 0.5}
+in $arbn_outer arbn 6 \
+    1 0 0 10  -1 0 0 0 \
+    0 1 0 10   0 -1 0 0 \
+    0 0 1 10   0 0 -1 0
+if {[catch {inside $arbn_outer $arbn_inner {*}$arbn_thicknesses} result]} {
+    error "inside failed for ARBN: $result"
+}
+set arbn_definition [get $arbn_inner]
+set expected_offsets {9 -2 7 -4 8.5 -0.5}
+for {set plane 0} {$plane < 6} {incr plane} {
+    set equation [lindex $arbn_definition [expr {4 + 2 * $plane}]]
+    set actual_offset [lindex $equation 3]
+    if {abs($actual_offset - [lindex $expected_offsets $plane]) > $plane_tolerance} {
+	error "ARBN inside plane $plane has offset $actual_offset: $arbn_definition"
+    }
+}
+facetize -n inside_arbn_inner_nmg.s $arbn_inner
+
+set invalid_arbn_inner inside_arbn_invalid.s
+if {![catch {inside $arbn_outer $invalid_arbn_inner {*}[lrepeat 6 6]}]} {
+    error "ARBN inside accepted thicknesses that collapse the solid"
+}
+if {![catch {get $invalid_arbn_inner}]} {
+    error "ARBN inside wrote an invalid collapsed solid"
+}
+
 puts "*** 'arb' testing completed ***"
