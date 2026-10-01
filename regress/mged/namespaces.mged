@@ -13,6 +13,7 @@ foreach command {
     ::brlcad::mged::grid::init_grid_control
     ::brlcad::mged::plot::init
     ::brlcad::mged::postscript::init
+    ::brlcad::mged::qray::init
     ::brlcad::mged::rt_script::init
     ::brlcad::mged::shader::is_good_shader
 } {
@@ -25,7 +26,8 @@ foreach namespace {
     ::brlcad ::brlcad::ged ::brlcad::help ::brlcad::mged
     ::brlcad::mged::adc ::brlcad::mged::extract ::brlcad::mged::font
     ::brlcad::mged::grid ::brlcad::mged::plot ::brlcad::mged::postscript
-    ::brlcad::mged::rt_script ::brlcad::mged::shader ::brlcad::vmath
+    ::brlcad::mged::qray ::brlcad::mged::rt_script
+    ::brlcad::mged::shader ::brlcad::vmath
 } {
     if {![namespace exists $namespace]} {
 	error "FAIL missing namespace $namespace"
@@ -180,6 +182,30 @@ foreach command {
     }
 }
 unset adc_exports
+
+foreach command {
+    ::brlcad::mged::qray::init init_qray_control
+} {
+    if {![llength [info commands $command]]} {
+	error "FAIL missing query ray control command $command"
+    }
+}
+set qray_exports [namespace eval ::brlcad::mged::qray {namespace export}]
+if {$qray_exports ne {init}} {
+    error "FAIL query ray control exports are: $qray_exports"
+}
+if {[info exists ::qray_control]} {
+    error "FAIL query ray control state remains global: ::qray_control"
+}
+foreach command {
+    init_qray_adv qray_apply qray_apply_fmt qray_effects qray_nirt qray_ok
+    qray_ok_fmt qray_reset qray_reset_fmt
+} {
+    if {[llength [info commands ::$command]] || [auto_load ::$command]} {
+	error "FAIL private query ray control command is global: ::$command"
+    }
+}
+unset qray_exports
 
 set output_modules {
     {extract init_extractTool ex_control {do_extract}}

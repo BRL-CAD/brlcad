@@ -1172,7 +1172,7 @@ hoc_register_menu_data "Create" "$ptype..." "Make a $ptype" $ksl
     menu .$id.menubar.settings.qray -title "Query Ray Effects" -tearoff $mged_default(tearoff_menus)
     .$id.menubar.settings.qray add radiobutton -value t -variable mged_gui($id,qray_effects)\
 	-label "Text" -underline 0\
-	-command "mged_apply $id \"qray effects \$mged_gui($id,qray_effects)\""
+	-command [list ::brlcad::mged::qray::apply_effects $id]
     hoc_register_menu_data "Query Ray Effects" "Text" "Query Ray Effects - Text"\
 	{ { summary "Set qray effects mode to 'text'. In this mode,
 	only textual output is used to represent the results
@@ -1180,7 +1180,7 @@ hoc_register_menu_data "Create" "$ptype..." "Make a $ptype" $ksl
 	    { see_also "qray" } }
     .$id.menubar.settings.qray add radiobutton -value g -variable mged_gui($id,qray_effects)\
 	-label "Graphics" -underline 0\
-	-command "mged_apply $id \"qray effects \$mged_gui($id,qray_effects)\""
+	-command [list ::brlcad::mged::qray::apply_effects $id]
     hoc_register_menu_data "Query Ray Effects" "Graphics" "Query Ray Effects - Graphics"\
 	{ { summary "Set qray effects mode to 'graphics'. In this mode,
 	only graphical output is used to represent the results
@@ -1188,7 +1188,7 @@ hoc_register_menu_data "Create" "$ptype..." "Make a $ptype" $ksl
 	    { see_also "qray" } }
     .$id.menubar.settings.qray add radiobutton -value b -variable mged_gui($id,qray_effects)\
 	-label "Both" -underline 0\
-	-command "mged_apply $id \"qray effects \$mged_gui($id,qray_effects)\""
+	-command [list ::brlcad::mged::qray::apply_effects $id]
     hoc_register_menu_data "Query Ray Effects" "Both" "Query Ray Effects - Both"\
 	{ { summary "Set qray effects mode to 'both'. In this mode,
 	both textual and graphical output is used to
@@ -1836,7 +1836,7 @@ hoc_register_menu_data "Create" "$ptype..." "Make a $ptype" $ksl
 	    { see_also "rset" } }
 
     .$id.menubar.tools add command -label "Query Ray Control Panel" -underline 0\
-	-command "init_qray_control $id"
+	-command [list ::brlcad::mged::qray::init $id]
     hoc_register_menu_data "Tools" "Query Ray Control Panel" "Query Ray Control Panel"\
 	{ { summary "Tool for setting query ray parameters." }
 	    { see_also "qray" } }
@@ -2224,7 +2224,7 @@ hoc_register_menu_data "Create" "$ptype..." "Make a $ptype" $ksl
 
     trace variable mged_display($mged_gui($id,active_dm),fps) w "ia_changestate $id"
     update_mged_vars $id
-    set mged_gui($id,qray_effects) [qray effects]
+    set mged_gui($id,qray_effects) [::brlcad::mged qray effects]
 
     if {[mged_dm_supports $id zbuffer]} {
 	mged_apply_local $id "dm set zbuffer $mged_default(zbuffer)"
@@ -2564,7 +2564,7 @@ proc set_active_dm { id } {
     ::brlcad::mged::grid::grid_control_reset $id
 
     # update query ray control panel
-    qray_reset $id
+    ::brlcad::mged::qray::reset $id
 
     set dbname [::brlcad::mged opendb]
     set_wm_title $id $dbname

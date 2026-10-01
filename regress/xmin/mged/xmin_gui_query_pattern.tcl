@@ -42,15 +42,16 @@ proc ::mged::xmin::query_pattern::require_pattern {
 }
 
 proc ::mged::xmin::query_pattern::exercise_query_ray {id top} {
-    global mouse_behavior qray_control use_air
+    global mouse_behavior use_air
 
     set mouse_behavior d
     set use_air 0
-    qray echo 0
-    qray effects t
-    qray basename query_ray
+    ::brlcad::mged qray echo 0
+    ::brlcad::mged qray effects t
+    ::brlcad::mged qray basename query_ray
 
     ::mged::gui::test::invoke $top {Tools {Query Ray Control Panel}}
+    upvar #0 ::brlcad::mged::qray::qray_control qray_control
     set dialog .$id.qray_control
     ::mged::gui::test::require_mapped $dialog "Query Ray Control Panel"
 
@@ -60,7 +61,8 @@ proc ::mged::xmin::query_pattern::exercise_query_ray {id top} {
     $dialog.effectsMB.m invoke 2
     ::mged::gui::test::set_entry $dialog.bnameE xmin_qray
     set qray_control($id,oddcolor) {12 34 56}
-    color_entry_update $dialog oddColor qray_control($id,oddcolor) \
+    color_entry_update $dialog oddColor \
+	::brlcad::mged::qray::qray_control($id,oddcolor) \
 	$qray_control($id,oddcolor)
     $dialog.applyB invoke
 
