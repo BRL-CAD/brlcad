@@ -374,7 +374,7 @@ proc reset { id } {
 	return
     }
 
-    winset $mged_gui($id,active_dm)
+    ::brlcad::mged winset $mged_gui($id,active_dm)
 
     if {$mouse_behavior eq "q"} {
 	set qray_control($id,active) 1
@@ -630,7 +630,7 @@ proc format_apply { id } {
     variable format_fields
     variable qray_control
 
-    winset $mged_gui($id,active_dm)
+    ::brlcad::mged winset $mged_gui($id,active_dm)
     foreach format_field $format_fields {
 	lassign $format_field format_code setting
 	::brlcad::mged qray fmt $format_code $qray_control($id,$setting)
@@ -643,7 +643,7 @@ proc format_reset { id } {
     variable format_fields
     variable qray_control
 
-    winset $mged_gui($id,active_dm)
+    ::brlcad::mged winset $mged_gui($id,active_dm)
     foreach format_field $format_fields {
 	lassign $format_field format_code setting
 	set qray_control($id,$setting) \

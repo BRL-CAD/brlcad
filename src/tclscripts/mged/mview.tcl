@@ -37,57 +37,57 @@ proc openmv { id w wc dpy dtype } {
     frame $wc.llF -relief sunken -borderwidth $mged_default(bd)
     frame $wc.lrF -relief sunken -borderwidth $mged_default(bd)
 
-    attach -d $dpy -t 0 -n $w.ul $dtype
-    dm set zclip $mged_default(zclip)
+    ::brlcad::mged attach -d $dpy -t 0 -n $w.ul $dtype
+    ::brlcad::mged dm set zclip $mged_default(zclip)
     if { $dtype == "rtgl" } {
-	dm set zclip 1
-	dm set zbuffer 1
+	::brlcad::mged dm set zclip 1
+	::brlcad::mged dm set zbuffer 1
     }
     if { $dtype == "ogl" } {
-	dm set zbuffer $mged_default(zbuffer)
-	dm set lighting $mged_default(lighting)
+	::brlcad::mged dm set zbuffer $mged_default(zbuffer)
+	::brlcad::mged dm set lighting $mged_default(lighting)
     }
     set faceplate $mged_default(faceplate)
     set orig_gui $mged_default(orig_gui)
     set perspective_mode $mged_default(perspective_mode)
 
-    attach -d $dpy -t 0 -n $w.ur $dtype
-    dm set zclip $mged_default(zclip)
+    ::brlcad::mged attach -d $dpy -t 0 -n $w.ur $dtype
+    ::brlcad::mged dm set zclip $mged_default(zclip)
     if { $dtype == "rtgl" } {
-	dm set zclip 1
-	dm set zbuffer 1
+	::brlcad::mged dm set zclip 1
+	::brlcad::mged dm set zbuffer 1
     }
     if { $dtype == "ogl" } {
-	dm set zbuffer $mged_default(zbuffer)
-	dm set lighting $mged_default(lighting)
+	::brlcad::mged dm set zbuffer $mged_default(zbuffer)
+	::brlcad::mged dm set lighting $mged_default(lighting)
     }
     set faceplate $mged_default(faceplate)
     set orig_gui $mged_default(orig_gui)
     set perspective_mode $mged_default(perspective_mode)
 
-    attach -d $dpy -t 0 -n $w.ll $dtype
-    dm set zclip $mged_default(zclip)
+    ::brlcad::mged attach -d $dpy -t 0 -n $w.ll $dtype
+    ::brlcad::mged dm set zclip $mged_default(zclip)
     if { $dtype == "rtgl" } {
-	dm set zclip 1
-	dm set zbuffer 1
+	::brlcad::mged dm set zclip 1
+	::brlcad::mged dm set zbuffer 1
     }
     if { $dtype == "ogl" } {
-	dm set zbuffer $mged_default(zbuffer)
-	dm set lighting $mged_default(lighting)
+	::brlcad::mged dm set zbuffer $mged_default(zbuffer)
+	::brlcad::mged dm set lighting $mged_default(lighting)
     }
     set faceplate $mged_default(faceplate)
     set orig_gui $mged_default(orig_gui)
     set perspective_mode $mged_default(perspective_mode)
 
-    attach -d $dpy -t 0 -n $w.lr $dtype
-    dm set zclip $mged_default(zclip)
+    ::brlcad::mged attach -d $dpy -t 0 -n $w.lr $dtype
+    ::brlcad::mged dm set zclip $mged_default(zclip)
     if { $dtype == "rtgl" } {
-	dm set zclip 1
-	dm set zbuffer 1
+	::brlcad::mged dm set zclip 1
+	::brlcad::mged dm set zbuffer 1
     }
     if { $dtype == "ogl" } {
-	dm set zbuffer $mged_default(zbuffer)
-	dm set lighting $mged_default(lighting)
+	::brlcad::mged dm set zbuffer $mged_default(zbuffer)
+	::brlcad::mged dm set lighting $mged_default(lighting)
     }
     set faceplate $mged_default(faceplate)
     set orig_gui $mged_default(orig_gui)
@@ -242,10 +242,10 @@ proc unpackmv { id } {
 proc releasemv { id } {
     global mged_gui
 
-    catch  { release $mged_gui($id,top).ul }
-    catch  { release $mged_gui($id,top).ur }
-    catch  { release $mged_gui($id,top).ll }
-    catch  { release $mged_gui($id,top).lr }
+    catch {::brlcad::mged release $mged_gui($id,top).ul}
+    catch {::brlcad::mged release $mged_gui($id,top).ur}
+    catch {::brlcad::mged release $mged_gui($id,top).ll}
+    catch {::brlcad::mged release $mged_gui($id,top).lr}
 
     # If all the windows are gone, we're closing the application
     if { !$mged_gui($id,show_cmd) && !$mged_gui($id,show_dm)} {
@@ -277,21 +277,21 @@ proc setupmv { id } {
 proc set_default_views { id } {
     global mged_gui
 
-    winset $mged_gui($id,top).ul
+    ::brlcad::mged winset $mged_gui($id,top).ul
     ::brlcad::mged press reset
-    catch {ae 0 90}
+    catch {::brlcad::mged ae 0 90}
 
-    winset $mged_gui($id,top).ur
+    ::brlcad::mged winset $mged_gui($id,top).ur
     ::brlcad::mged press reset
-    catch {press 35,25}
+    catch {::brlcad::mged press 35,25}
 
-    winset $mged_gui($id,top).ll
+    ::brlcad::mged winset $mged_gui($id,top).ll
     ::brlcad::mged press reset
-    catch {press front}
+    catch {::brlcad::mged press front}
 
-    winset $mged_gui($id,top).lr
+    ::brlcad::mged winset $mged_gui($id,top).lr
     ::brlcad::mged press reset
-    catch {press left}
+    catch {::brlcad::mged press left}
 }
 
 proc setmv { id } {

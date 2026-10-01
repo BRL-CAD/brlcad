@@ -35,7 +35,7 @@ proc init { id } {
     variable control
     global ::tk::Priv
 
-    if {[opendb] == ""} {
+    if {[::brlcad::mged opendb] == ""} {
 	cad_dialog $::tk::Priv(cad_dialog) $mged_gui($id,screen) "No database." \
 	    "No database has been opened!" info 0 OK
 	return
@@ -118,7 +118,7 @@ proc create { id } {
     variable control
     global ::tk::Priv
 
-    cmd_win set $id
+    ::brlcad::mged cmd_win set $id
     set ex_cmd [list ::brlcad::mged keep]
 
     if {$control($id,file) ne ""} {

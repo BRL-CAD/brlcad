@@ -1,0 +1,193 @@
+puts "*** Testing Tcl control command dispatch ***"
+
+foreach package {
+    brlcad::mged::adc
+    brlcad::mged::extract
+    brlcad::mged::grid
+    brlcad::mged::plot
+    brlcad::mged::postscript
+    brlcad::mged::qray
+    brlcad::mged::raytrace
+} {
+    package require $package 1.0
+}
+foreach command {make_binunif mged_apply_active mged_apply_all} {
+    if {![auto_load $command]} {
+	error "FAIL control helper is not autoloadable: $command"
+    }
+}
+
+set object namespace_control.s
+::brlcad::mged in $object sph 0 0 0 1
+::brlcad::mged draw $object
+
+set test_id namespace_control
+set active_dm [::brlcad::mged winset]
+set command_id [::brlcad::mged cmd_win get]
+set dm_count [llength [::brlcad::mged get_dm_list]]
+set mged_gui($test_id,active_dm) $active_dm
+set mged_gui($test_id,apply_to) 0
+
+set original_grid {}
+foreach setting {rh rv mrh mrv} {
+    dict set original_grid $setting [::brlcad::mged rset grid $setting]
+}
+
+set output_base [file join [pwd] namespace_control_alias]
+set extract_path ${output_base}.g
+set plot_path ${output_base}.plot3
+set postscript_path ${output_base}.ps
+set binunif_path ${output_base}.bin
+file delete -force $extract_path $plot_path $postscript_path $binunif_path
+
+set binunif_channel [open $binunif_path wb]
+fconfigure $binunif_channel -translation binary
+puts -nonewline $binunif_channel [binary format f 1.0]
+close $binunif_channel
+
+proc ::namespace_control_widget.nameE {subcommand} {
+    return namespace_control.binunif
+}
+proc ::namespace_control_widget.typeCB {subcommand} {
+    return floats
+}
+proc ::namespace_control_widget.fileE {subcommand} {
+    return $::binunif_path
+}
+
+set hidden_commands {}
+foreach command {
+    bo cmd_win dm exists get_dm_list grid2model_lu keep model2grid_lu
+    opendb plot postscript qray rset view view2model_vec winset
+} {
+    set compatibility_command ::$command
+    set hidden_command ::__brlcad_mged_compatibility_$command
+    rename $compatibility_command $hidden_command
+    lappend hidden_commands $hidden_command $compatibility_command
+}
+
+try {
+    set apply_count 0
+    mged_apply_active $test_id {incr ::apply_count}
+    if {$apply_count != 1} {
+	error "FAIL mged_apply_active did not run its command"
+    }
+
+    set apply_count 0
+    mged_apply_all $active_dm {incr ::apply_count}
+    if {$apply_count != $dm_count} {
+	error "FAIL mged_apply_all visited $apply_count of $dm_count displays"
+    }
+
+    set autosize [::brlcad::mged::grid::grid_autosize $test_id]
+    if {$autosize <= 0} {
+	error "FAIL grid autosize returned $autosize"
+    }
+    set ::brlcad::mged::grid::grid_control_spacing($test_id,tick) 2
+    set ::brlcad::mged::grid::grid_control_spacing($test_id,ticksPerMajor) 5
+    ::brlcad::mged::grid::grid_spacing_apply $test_id b
+    if {[::brlcad::mged rset grid rh] != 2 ||
+	[::brlcad::mged rset grid rv] != 2 ||
+	[::brlcad::mged rset grid mrh] != 5 ||
+	[::brlcad::mged rset grid mrv] != 5} {
+	error "FAIL grid spacing was not applied"
+    }
+
+    set adc_state ::brlcad::mged::adc::mged_adc_control
+    set ${adc_state}($test_id,coords) grid
+    set ${adc_state}($test_id,last_coords) model
+    foreach field {pos anchor_pt_dst anchor_pt_a1 anchor_pt_a2} {
+	set ${adc_state}($test_id,$field) {0 0}
+    }
+    ::brlcad::mged adc reset
+    ::brlcad::mged::adc::apply_abs $test_id
+    ::brlcad::mged::adc::apply_rel $test_id
+    ::brlcad::mged::adc::convert_coords $test_id
+    set ${adc_state}($test_id,coords) model
+    ::brlcad::mged::adc::convert_coords $test_id
+    if {[llength [set ${adc_state}($test_id,pos)]] != 3} {
+	error "FAIL ADC coordinate conversion did not produce a model point"
+    }
+
+    ::brlcad::mged::qray::format_reset $test_id
+
+    set ::brlcad::mged::raytrace::rt_control($test_id,fixedSrc) 0
+    set mouse_behavior d
+    ::brlcad::mged::raytrace::set_source $test_id active
+    if {$::brlcad::mged::raytrace::rt_control($test_id,cooked_src) ne
+	$active_dm} {
+	error "FAIL raytrace source did not resolve to the active display"
+    }
+
+    set ::brlcad::mged::extract::control($command_id,file) $extract_path
+    set ::brlcad::mged::extract::control($command_id,objects) $object
+    if {[::brlcad::mged::extract::create $command_id]} {
+	error "FAIL extract command failed"
+    }
+    if {![file exists $extract_path]} {
+	error "FAIL extract command did not create its output"
+    }
+
+    set ::brlcad::mged::plot::control($command_id,zclip) 0
+    set ::brlcad::mged::plot::control($command_id,2d) 0
+    set ::brlcad::mged::plot::control($command_id,float) 0
+    set ::brlcad::mged::plot::control($command_id,file_or_filter) file
+    set ::brlcad::mged::plot::control($command_id,file) $plot_path
+    ::brlcad::mged::plot::create $command_id
+    if {![file exists $plot_path]} {
+	error "FAIL plot command did not create its output"
+    }
+
+    foreach {setting value} {
+	title Namespace creator BRL-CAD font Courier size 4 linewidth 1 zclip 0
+    } {
+	set ::brlcad::mged::postscript::control($command_id,$setting) $value
+    }
+    set ::brlcad::mged::postscript::control($command_id,file) $postscript_path
+    ::brlcad::mged::postscript::create $command_id
+    if {![file exists $postscript_path]} {
+	error "FAIL postscript command did not create its output"
+    }
+
+    make_binunif $test_id ::namespace_control_widget
+    if {![::brlcad::mged exists namespace_control.binunif]} {
+	error "FAIL binunif helper did not create its object"
+    }
+} finally {
+    foreach {hidden_command compatibility_command} $hidden_commands {
+	rename $hidden_command $compatibility_command
+    }
+    dict for {setting value} $original_grid {
+	::brlcad::mged rset grid $setting $value
+    }
+    foreach array_name {
+	::brlcad::mged::adc::mged_adc_control
+	::brlcad::mged::extract::control
+	::brlcad::mged::grid::grid_control_spacing
+	::brlcad::mged::plot::control
+	::brlcad::mged::postscript::control
+	::brlcad::mged::qray::qray_control
+	::brlcad::mged::raytrace::rt_control
+    } {
+	array unset $array_name $test_id,*
+	array unset $array_name $command_id,*
+    }
+    rename ::namespace_control_widget.nameE {}
+    rename ::namespace_control_widget.typeCB {}
+    rename ::namespace_control_widget.fileE {}
+    file delete -force $extract_path $plot_path $postscript_path $binunif_path
+    unset -nocomplain mged_gui($test_id,active_dm) \
+	mged_gui($test_id,apply_to) mouse_behavior
+}
+
+puts "PASS Tcl control command dispatch"
+puts "*** Tcl control command dispatch testing completed ***"
+
+# Local Variables:
+# tab-width: 8
+# mode: Tcl
+# c-basic-offset: 4
+# tcl-indent-level: 4
+# indent-tabs-mode: t
+# End:
+# ex: shiftwidth=4 tabstop=8 cino=N-s

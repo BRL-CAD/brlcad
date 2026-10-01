@@ -70,7 +70,7 @@ proc do_grid_spacing { id spacing_type } {
     global localunit
     global ::tk::Priv
 
-    if {[opendb] == ""} {
+    if {[::brlcad::mged opendb] == ""} {
 	cad_dialog $::tk::Priv(cad_dialog) $mged_gui($id,screen) "No database." \
 	    "No database has been opened!" info 0 OK
 	return
@@ -184,7 +184,8 @@ and 200. The tick spacing will be a power of
 proc anchor_apply {id} {
     variable grid_control_anchor
 
-    mged_apply $id [list rset grid anchor {*}$grid_control_anchor($id)]
+    mged_apply $id [list ::brlcad::mged rset grid anchor \
+	{*}$grid_control_anchor($id)]
 }
 
 proc anchor_ok {id top} {
@@ -196,8 +197,8 @@ proc anchor_reset {id} {
     global mged_gui
     variable grid_control_anchor
 
-    winset $mged_gui($id,active_dm)
-    set grid_control_anchor($id) [rset grid anchor]
+    ::brlcad::mged winset $mged_gui($id,active_dm)
+    set grid_control_anchor($id) [::brlcad::mged rset grid anchor]
 }
 
 proc do_grid_anchor { id } {
@@ -205,7 +206,7 @@ proc do_grid_anchor { id } {
     variable grid_control_anchor
     global ::tk::Priv
 
-    if {[opendb] == ""} {
+    if {[::brlcad::mged opendb] == ""} {
 	cad_dialog $::tk::Priv(cad_dialog) $mged_gui($id,screen) "No database." \
 	    "No database has been opened!" info 0 OK
 	return
@@ -220,7 +221,7 @@ proc do_grid_anchor { id } {
     }
 
     # Initialize variables
-    winset $mged_gui($id,active_dm)
+    ::brlcad::mged winset $mged_gui($id,active_dm)
     set grid_control_anchor($id) [::brlcad::mged rset grid anchor]
 
     toplevel $top -screen $mged_gui($id,screen)
@@ -292,7 +293,7 @@ proc init_grid_control { id } {
     global localunit
     global ::tk::Priv
 
-    if {[opendb] == ""} {
+    if {[::brlcad::mged opendb] == ""} {
 	cad_dialog $::tk::Priv(cad_dialog) $mged_gui($id,screen) "No database." \
 	    "No database has been opened!" info 0 OK
 	return
@@ -582,13 +583,13 @@ proc grid_control_apply { id } {
     }
 
     set commands [list \
-	[list rset grid anchor {*}$grid_control($id,anchor)] \
-	[list rset grid rh $grid_control($id,rh)] \
-	[list rset grid mrh $grid_control($id,mrh)] \
-	[list rset grid rv $grid_control($id,rv)] \
-	[list rset grid mrv $grid_control($id,mrv)] \
-	[list rset grid snap $grid_control($id,snap)] \
-	[list rset grid draw $grid_control($id,draw)]]
+	[list ::brlcad::mged rset grid anchor {*}$grid_control($id,anchor)] \
+	[list ::brlcad::mged rset grid rh $grid_control($id,rh)] \
+	[list ::brlcad::mged rset grid mrh $grid_control($id,mrh)] \
+	[list ::brlcad::mged rset grid rv $grid_control($id,rv)] \
+	[list ::brlcad::mged rset grid mrv $grid_control($id,mrv)] \
+	[list ::brlcad::mged rset grid snap $grid_control($id,snap)] \
+	[list ::brlcad::mged rset grid draw $grid_control($id,draw)]]
     mged_apply $id [join $commands {; }]
 
     # update the main GUI
@@ -604,15 +605,15 @@ proc grid_control_reset { id } {
 	return
     }
 
-    winset $mged_gui($id,active_dm)
+    ::brlcad::mged winset $mged_gui($id,active_dm)
 
-    set grid_control($id,draw) [rset grid draw]
-    set grid_control($id,snap) [rset grid snap]
-    set grid_control($id,anchor) [rset grid anchor]
-    set grid_control($id,rh) [format %.5f [rset grid rh]]
-    set grid_control($id,mrh) [rset grid mrh]
-    set grid_control($id,rv) [format %.5f [rset grid rv]]
-    set grid_control($id,mrv) [rset grid mrv]
+    set grid_control($id,draw) [::brlcad::mged rset grid draw]
+    set grid_control($id,snap) [::brlcad::mged rset grid snap]
+    set grid_control($id,anchor) [::brlcad::mged rset grid anchor]
+    set grid_control($id,rh) [format %.5f [::brlcad::mged rset grid rh]]
+    set grid_control($id,mrh) [::brlcad::mged rset grid mrh]
+    set grid_control($id,rv) [format %.5f [::brlcad::mged rset grid rv]]
+    set grid_control($id,mrv) [::brlcad::mged rset grid mrv]
 
     if {$grid_control($id,rh) != $grid_control($id,rv) ||\
 	    $grid_control($id,mrh) != $grid_control($id,mrv)} {
@@ -687,7 +688,7 @@ proc grid_autosize {id} {
     global mged_gui
     global ::tk::Priv
 
-    if {[opendb] == ""} {
+    if {[::brlcad::mged opendb] == ""} {
 	cad_dialog $::tk::Priv(cad_dialog) $mged_gui($id,screen) "No database." \
 	    "No database has been opened!" info 0 OK
 	return
@@ -714,13 +715,13 @@ proc grid_spacing_autosize { id } {
     variable grid_control_spacing
     global ::tk::Priv
 
-    if {[opendb] == ""} {
+    if {[::brlcad::mged opendb] == ""} {
 	cad_dialog $::tk::Priv(cad_dialog) $mged_gui($id,screen) "No database." \
 	    "No database has been opened!" info 0 OK
 	return
     }
 
-    winset $mged_gui($id,active_dm)
+    ::brlcad::mged winset $mged_gui($id,active_dm)
     set val [grid_autosize $id]
     if {$val eq ""} {
 	return
@@ -739,7 +740,7 @@ proc grid_control_autosize { id } {
     global mged_gui
     variable grid_control
 
-    winset $mged_gui($id,active_dm)
+    ::brlcad::mged winset $mged_gui($id,active_dm)
     set val [grid_autosize $id]
     if {$val eq ""} {
 	return
@@ -759,7 +760,7 @@ proc grid_spacing_ok { id spacing_type top } {
 proc grid_spacing_apply { id spacing_type } {
     variable grid_control_spacing
 
-    if {[opendb] == ""} {
+    if {[::brlcad::mged opendb] == ""} {
 	return
     }
 
@@ -782,7 +783,8 @@ proc grid_spacing_apply { id spacing_type } {
     foreach setting $settings {
 	lassign $setting name state
 	lappend commands \
-	    [list rset grid $name $grid_control_spacing($id,$state)]
+	    [list ::brlcad::mged rset grid $name \
+		$grid_control_spacing($id,$state)]
     }
     mged_apply $id [join $commands {; }]
 }
@@ -791,14 +793,18 @@ proc grid_spacing_reset { id spacing_type } {
     global mged_gui
     variable grid_control_spacing
 
-    winset $mged_gui($id,active_dm)
+    ::brlcad::mged winset $mged_gui($id,active_dm)
 
     if {$spacing_type eq "v"} {
-	set grid_control_spacing($id,tick) [format %.5f [rset grid rv]]
-	set grid_control_spacing($id,ticksPerMajor) [format %.5f [rset grid mrv]]
+	set grid_control_spacing($id,tick) \
+	    [format %.5f [::brlcad::mged rset grid rv]]
+	set grid_control_spacing($id,ticksPerMajor) \
+	    [format %.5f [::brlcad::mged rset grid mrv]]
     } else {
-	set grid_control_spacing($id,tick) [format %.5f [rset grid rh]]
-	set grid_control_spacing($id,ticksPerMajor) [format %.5f [rset grid mrh]]
+	set grid_control_spacing($id,tick) \
+	    [format %.5f [::brlcad::mged rset grid rh]]
+	set grid_control_spacing($id,ticksPerMajor) \
+	    [format %.5f [::brlcad::mged rset grid mrh]]
     }
 }
 
@@ -807,7 +813,7 @@ proc set_grid_spacing { id grid_unit apply } {
     variable grid_control
     global ::tk::Priv
 
-    if {[opendb] == ""} {
+    if {[::brlcad::mged opendb] == ""} {
 	cad_dialog $::tk::Priv(cad_dialog) $mged_gui($id,screen) "No database." \
 	    "No database has been opened!" info 0 OK
 	return
@@ -817,10 +823,10 @@ proc set_grid_spacing { id grid_unit apply } {
 
     if {$apply} {
 	set commands [list \
-	    [list rset grid rh $res] \
-	    [list rset grid rv $res] \
-	    [list rset grid mrh $res_major] \
-	    [list rset grid mrv $res_major]]
+	    [list ::brlcad::mged rset grid rh $res] \
+	    [list ::brlcad::mged rset grid rv $res] \
+	    [list ::brlcad::mged rset grid mrh $res_major] \
+	    [list ::brlcad::mged rset grid mrv $res_major]]
 	mged_apply $id [join $commands {; }]
     } else {
 	set grid_control($id,rh) $res
@@ -835,7 +841,7 @@ proc set_grid_spacing_htick { id grid_unit } {
     variable grid_control
     global ::tk::Priv
 
-    if {[opendb] == ""} {
+    if {[::brlcad::mged opendb] == ""} {
 	cad_dialog $::tk::Priv(cad_dialog) $mged_gui($id,screen) "No database." \
 	    "No database has been opened!" info 0 OK
 	return
@@ -857,7 +863,7 @@ proc set_grid_spacing_vtick { id grid_unit } {
     variable grid_control
     global ::tk::Priv
 
-    if {[opendb] == ""} {
+    if {[::brlcad::mged opendb] == ""} {
 	cad_dialog $::tk::Priv(cad_dialog) $mged_gui($id,screen) "No database." \
 	    "No database has been opened!" info 0 OK
 	return

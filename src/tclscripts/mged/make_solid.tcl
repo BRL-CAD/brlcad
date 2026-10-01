@@ -80,7 +80,7 @@ proc make_binunif { id w } {
 	return
     }
 
-    if { [exists $name ] } {
+    if {[::brlcad::mged exists $name]} {
 	cad_dialog $::tk::Priv(cad_dialog) $mged_gui($id,screen) "ERROR creating BINUNIF" "An object with that name already exists!!!!" "" 0 OK
 	return
     }
@@ -100,7 +100,9 @@ proc make_binunif { id w } {
 	return
     }
 
-    if { [catch {bo -i u $binunif_types($type) $name $fileName} ret] != 0 } {
+    if {[catch {
+	::brlcad::mged bo -i u $binunif_types($type) $name $fileName
+    } ret] != 0} {
 	cad_dialog $::tk::Priv(cad_dialog) $mged_gui($id,screen) "ERROR creating BINUNIF" $ret "" 0 OK
 	return
     }
@@ -119,7 +121,7 @@ proc binunif_create { id } {
     global binunif_types
     global ::tk::Priv
 
-    if {[opendb] == ""} {
+    if {[::brlcad::mged opendb] == ""} {
 	cad_dialog $::tk::Priv(cad_dialog) $mged_gui($id,screen) "No database." \
 		"No database has been opened!" info 0 OK
 	return
@@ -196,7 +198,7 @@ proc dsp_create { id } {
     global mged_gui
     global ::tk::Priv
 
-    if {[opendb] == ""} {
+    if {[::brlcad::mged opendb] == ""} {
 	cad_dialog $::tk::Priv(cad_dialog) $mged_gui($id,screen) "No database." \
 	    "No database has been opened!" info 0 OK
 	return
@@ -294,7 +296,7 @@ proc init_solid_create { id type } {
     global mged_gui
     global ::tk::Priv
 
-    if {[opendb] == ""} {
+    if {[::brlcad::mged opendb] == ""} {
 	cad_dialog $::tk::Priv(cad_dialog) $mged_gui($id,screen) "No database." \
 	    "No database has been opened!" info 0 OK
 	return

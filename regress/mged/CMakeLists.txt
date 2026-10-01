@@ -15,6 +15,7 @@ set(
   center.mged
   clone.mged
   comb.mged
+  control_aliases.mged
   copymat.mged
   cpi.mged
   cp.mged
@@ -139,6 +140,8 @@ if(TARGET mged)
     elseif(TNAME STREQUAL "bot_vertex_fuse_all")
       set(TEST_EXPECT "PASS bot_vertex_fuse_all namespaced commands")
       set(TEST_SOURCE "${CMAKE_CURRENT_BINARY_DIR}/regress_${testfile}")
+    elseif(TNAME STREQUAL "control_aliases")
+      set(TEST_EXPECT "PASS Tcl control command dispatch")
     elseif(TNAME STREQUAL "expand_comb")
       set(TEST_EXPECT "PASS expand_comb namespaced commands")
     elseif(TNAME STREQUAL "facetize_all_regions")

@@ -58,7 +58,7 @@ proc init { id } {
 	return
     }
 
-    winset $mged_gui($id,active_dm)
+    ::brlcad::mged winset $mged_gui($id,active_dm)
     initialize $id $mged_gui($id,active_dm)
 
     toplevel $top -screen $mged_gui($id,screen) -menu $top.menubar
@@ -522,7 +522,7 @@ proc run { id prog_name } {
 	return
     }
 
-    winset $rt_control($id,cooked_src)
+    ::brlcad::mged winset $rt_control($id,cooked_src)
     set rt_cmd $prog_name
 
     if {$rt_control($id,cooked_dest) ne ""} {
@@ -607,10 +607,10 @@ proc run { id prog_name } {
     }
 
     if {!$fb_all} {
-	set pos [rset rb pos]
+	set pos [::brlcad::mged rset rb pos]
 	set xmin [lindex $pos 0]
 	set ymin [lindex $pos 1]
-	set dim [rset rb dim]
+	set dim [::brlcad::mged rset rb dim]
 	set width [lindex $dim 0]
 	set height [lindex $dim 1]
 	regexp "^\[-\]?\[0-9\]+" $height height
@@ -691,8 +691,8 @@ proc set_framebuffer_size { id } {
 	return
     }
 
-    winset $rt_control($id,half_baked_dest)
-    set size [dm size]
+    ::brlcad::mged winset $rt_control($id,half_baked_dest)
+    set size [::brlcad::mged dm size]
     set rt_control($id,size) "[lindex $size 0]x[lindex $size 1]"
 }
 
@@ -945,7 +945,7 @@ proc update_destination { id } {
     set rt_control($id,fb) $fb
     set rt_control($id,fb_all) $fb_all
     set rt_control($id,fb_overlay) $fb_overlay
-    set size [dm size]
+    set size [::brlcad::mged dm size]
     set rt_control($id,size) "[lindex $size 0]x[lindex $size 1]"
 
     set tmplist [list summary "The active pane is $rt_control($id,cooked_src)."]
@@ -1198,7 +1198,9 @@ proc set_mouse_behavior { id } {
     variable rt_control
     global mouse_behavior
 
-    set bad [catch {winset $rt_control($id,cooked_src)} msg]
+    set bad [catch {
+	::brlcad::mged winset $rt_control($id,cooked_src)
+    } msg]
     if {$bad} {
 	return
     }
@@ -1277,7 +1279,9 @@ proc set_destination { id raw_dest } {
 	return
     }
 
-    set bad [catch {winset $rt_control($id,half_baked_dest)} msg]
+    set bad [catch {
+	::brlcad::mged winset $rt_control($id,half_baked_dest)
+    } msg]
     if {$bad} {
 	return
     }
@@ -1297,9 +1301,9 @@ proc set_destination { id raw_dest } {
     set rt_control($id,fb) 1
     set rt_control($id,fb_all) $fb_all
     set rt_control($id,fb_overlay) $fb_overlay
-    set size [dm size]
+    set size [::brlcad::mged dm size]
     set rt_control($id,size) "[lindex $size 0]x[lindex $size 1]"
-    set rt_control($id,color) [rset cs bg]
+    set rt_control($id,color) [::brlcad::mged rset cs bg]
     color_entry_update $rt_control($id,top) color \
 	::brlcad::mged::raytrace::rt_control($id,color) \
 	$rt_control($id,color)
@@ -1331,7 +1335,9 @@ proc set_source { id raw_src } {
     set rt_control($id,raw_src) $raw_src
     set rt_control($id,cooked_src) [resolve_pane $id $raw_src]
 
-    set bad [catch {winset $rt_control($id,cooked_src)} msg]
+    set bad [catch {
+	::brlcad::mged winset $rt_control($id,cooked_src)
+    } msg]
     if {$bad} {
 	return
     }
@@ -1356,7 +1362,7 @@ proc set_framebuffer { id } {
 	return
     }
 
-    winset $rt_control($id,half_baked_dest)
+    ::brlcad::mged winset $rt_control($id,half_baked_dest)
     set fb $rt_control($id,fb)
     if {$fb && !$listen} {
 	set listen 1
@@ -1377,7 +1383,7 @@ proc set_framebuffer_extent { id } {
 	return
     }
 
-    winset $rt_control($id,half_baked_dest)
+    ::brlcad::mged winset $rt_control($id,half_baked_dest)
     set fb_all $rt_control($id,fb_all)
 
     if {$rt_control($id,half_baked_dest) eq $mged_gui($id,active_dm)} {
@@ -1395,7 +1401,7 @@ proc set_framebuffer_layer { id } {
 	return
     }
 
-    winset $rt_control($id,half_baked_dest)
+    ::brlcad::mged winset $rt_control($id,half_baked_dest)
     set fb_overlay $rt_control($id,fb_overlay)
 
     if {$rt_control($id,half_baked_dest) eq $mged_gui($id,active_dm)} {

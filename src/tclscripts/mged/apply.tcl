@@ -43,7 +43,7 @@ proc mged_apply { id cmd } {
 proc mged_apply_active { id cmd } {
     global mged_gui
 
-    catch {winset $mged_gui($id,active_dm)} msg
+    catch {::brlcad::mged winset $mged_gui($id,active_dm)} msg
     catch {uplevel \#0 $cmd} msg
 
     return $msg
@@ -52,19 +52,19 @@ proc mged_apply_active { id cmd } {
 proc mged_apply_local { id cmd } {
     global mged_gui
 
-    winset $mged_gui($id,top).ul
+    ::brlcad::mged winset $mged_gui($id,top).ul
     catch { uplevel \#0 $cmd } msg
 
-    winset $mged_gui($id,top).ur
+    ::brlcad::mged winset $mged_gui($id,top).ur
     catch { uplevel \#0 $cmd } msg
 
-    winset $mged_gui($id,top).ll
+    ::brlcad::mged winset $mged_gui($id,top).ll
     catch { uplevel \#0 $cmd } msg
 
-    winset $mged_gui($id,top).lr
+    ::brlcad::mged winset $mged_gui($id,top).lr
     catch { uplevel \#0 $cmd } msg
 
-    winset $mged_gui($id,active_dm)
+    ::brlcad::mged winset $mged_gui($id,active_dm)
 
     return $msg
 }
@@ -74,23 +74,23 @@ proc mged_apply_using_list { id cmd } {
 
     set msg ""
     foreach dm $mged_gui($id,apply_list) {
-	winset $dm
+	::brlcad::mged winset $dm
 	catch { uplevel \#0 $cmd } msg
     }
 
-    winset $mged_gui($id,active_dm)
+    ::brlcad::mged winset $mged_gui($id,active_dm)
 
     return $msg
 }
 
 proc mged_apply_all { win cmd } {
     set msg ""
-    foreach dm [get_dm_list] {
-	winset $dm
+    foreach dm [::brlcad::mged get_dm_list] {
+	::brlcad::mged winset $dm
 	catch { uplevel \#0 $cmd } msg
     }
 
-    winset $win
+    ::brlcad::mged winset $win
 
     return $msg
 }
@@ -124,7 +124,11 @@ proc mged_shaded_mode_helper {val} {
 	set mged_gui($id,zclip) $val
 	set mged_gui($id,lighting) $val
 
-	mged_apply_local $id "dm set zbuffer $val; dm set zclip $val; dm set lighting $val"
+	set commands [list \
+	    [list ::brlcad::mged dm set zbuffer $val] \
+	    [list ::brlcad::mged dm set zclip $val] \
+	    [list ::brlcad::mged dm set lighting $val]]
+	mged_apply_local $id [join $commands {; }]
     }
 
     return ""

@@ -42,7 +42,7 @@ proc init { id } {
 	return
     }
 
-    winset $mged_gui($id,active_dm)
+    ::brlcad::mged winset $mged_gui($id,active_dm)
     set top .$id.adc_control
 
     if [winfo exists $top] {
@@ -361,11 +361,14 @@ proc apply_abs { id } {
 	grid {
 	    ::brlcad::mged adc hv {*}$mged_adc_control($id,pos)
 	    ::brlcad::mged adc anchorpoint_dst \
-		{*}[grid2model_lu {*}$mged_adc_control($id,anchor_pt_dst)]
+		{*}[::brlcad::mged grid2model_lu \
+		    {*}$mged_adc_control($id,anchor_pt_dst)]
 	    ::brlcad::mged adc anchorpoint_a1 \
-		{*}[grid2model_lu {*}$mged_adc_control($id,anchor_pt_a1)]
+		{*}[::brlcad::mged grid2model_lu \
+		    {*}$mged_adc_control($id,anchor_pt_a1)]
 	    ::brlcad::mged adc anchorpoint_a2 \
-		{*}[grid2model_lu {*}$mged_adc_control($id,anchor_pt_a2)]
+		{*}[::brlcad::mged grid2model_lu \
+		    {*}$mged_adc_control($id,anchor_pt_a2)]
 	}
     }
 }
@@ -385,13 +388,17 @@ proc apply_rel { id } {
 	}
 	grid {
 	    ::brlcad::mged adc -i xyz \
-		{*}[view2model_vec {*}$mged_adc_control($id,pos) 0.0]
+		{*}[::brlcad::mged view2model_vec \
+		    {*}$mged_adc_control($id,pos) 0.0]
 	    ::brlcad::mged adc -i anchorpoint_dst \
-		{*}[view2model_vec {*}$mged_adc_control($id,anchor_pt_dst) 0.0]
+		{*}[::brlcad::mged view2model_vec \
+		    {*}$mged_adc_control($id,anchor_pt_dst) 0.0]
 	    ::brlcad::mged adc -i anchorpoint_a1 \
-		{*}[view2model_vec {*}$mged_adc_control($id,anchor_pt_a1) 0.0]
+		{*}[::brlcad::mged view2model_vec \
+		    {*}$mged_adc_control($id,anchor_pt_a1) 0.0]
 	    ::brlcad::mged adc -i anchorpoint_a2 \
-		{*}[view2model_vec {*}$mged_adc_control($id,anchor_pt_a2) 0.0]
+		{*}[::brlcad::mged view2model_vec \
+		    {*}$mged_adc_control($id,anchor_pt_a2) 0.0]
 	}
     }
 }
@@ -412,7 +419,7 @@ proc load { id } {
 	return
     }
 
-    winset $mged_gui($id,active_dm)
+    ::brlcad::mged winset $mged_gui($id,active_dm)
 
     set mged_adc_control($id,draw) [::brlcad::mged adc draw]
     set mged_adc_control($id,dst) \
@@ -449,11 +456,14 @@ proc load { id } {
 	    set mged_adc_control($id,pos) \
 		[format_grid_point [::brlcad::mged adc hv]]
 	    set mged_adc_control($id,anchor_pt_dst) [format_grid_point \
-		[model2grid_lu {*}[::brlcad::mged adc anchorpoint_dst]]]
+		[::brlcad::mged model2grid_lu \
+		    {*}[::brlcad::mged adc anchorpoint_dst]]]
 	    set mged_adc_control($id,anchor_pt_a1) [format_grid_point \
-		[model2grid_lu {*}[::brlcad::mged adc anchorpoint_a1]]]
+		[::brlcad::mged model2grid_lu \
+		    {*}[::brlcad::mged adc anchorpoint_a1]]]
 	    set mged_adc_control($id,anchor_pt_a2) [format_grid_point \
-		[model2grid_lu {*}[::brlcad::mged adc anchorpoint_a2]]]
+		[::brlcad::mged model2grid_lu \
+		    {*}[::brlcad::mged adc anchorpoint_a2]]]
 	}
     }
 }
@@ -466,14 +476,15 @@ proc convert_coords { id } {
 	return
     }
 
-    winset $mged_gui($id,active_dm)
+    ::brlcad::mged winset $mged_gui($id,active_dm)
 
     switch $mged_adc_control($id,coords) {
 	model {
 	    if {$mged_adc_control($id,last_coords) eq "grid"} {
 		foreach field {pos anchor_pt_dst anchor_pt_a1 anchor_pt_a2} {
 		    set mged_adc_control($id,$field) [format_model_point \
-			[grid2model_lu {*}$mged_adc_control($id,$field)]]
+		    [::brlcad::mged grid2model_lu \
+			{*}$mged_adc_control($id,$field)]]
 		}
 	    }
 	}
@@ -481,7 +492,8 @@ proc convert_coords { id } {
 	    if {$mged_adc_control($id,last_coords) eq "model"} {
 		foreach field {pos anchor_pt_dst anchor_pt_a1 anchor_pt_a2} {
 		    set mged_adc_control($id,$field) [format_grid_point \
-			[model2grid_lu {*}$mged_adc_control($id,$field)]]
+		    [::brlcad::mged model2grid_lu \
+			{*}$mged_adc_control($id,$field)]]
 		}
 	    }
 	}
