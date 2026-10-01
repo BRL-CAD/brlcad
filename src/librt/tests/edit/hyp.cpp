@@ -178,6 +178,20 @@ rt_edit_test_hyp(void)
 
     vect_t mousevec;
 
+    {
+	struct rt_point_labels labels[5] = {RT_POINT_LABELS_INIT};
+	mat_t identity;
+	MAT_IDN(identity);
+	int label_count = OBJ[ID_HYP].ft_labels(labels, 5, identity,
+		&s->es_int, &tol);
+	point_t expected_c = {2.0, 0.0, 5.0};
+	if (label_count != 5 || !BU_STR_EQUAL(labels[4].str, "c") ||
+	    !VNEAR_EQUAL(labels[4].pt, expected_c, VUNITIZE_TOL))
+	    bu_exit(1, "ERROR: HYP neck ratio label is missing or misplaced\n");
+	bu_log("HYP neck ratio label SUCCESS: c=%g,%g,%g\n",
+	       V3ARGS(labels[4].pt));
+    }
+
     /* ================================================================
      * ECMD_HYP_H  (scale Hi; note: e_para[0] is es_scale, not |Hi|)
      * MGED: es_scale = e_para[0] (scale factor); Hi' = Hi * es_scale
