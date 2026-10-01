@@ -50,6 +50,18 @@ proc ::mged::xmin::help::exercise_command_manual {top} {
     ::gui::test::require {
 	[llength $selection] == 1 && [$toc get $selection] eq "rt"
     } "man rt did not select and load the rt manual page"
+
+    event generate $toc <<ListboxSelect>>
+    ::mged::gui::test::settle
+
+    man search
+    set html_view [$browser component browser].htmlview
+    set html_widget [$html_view html]
+    $html_view goto {#hierarchy_performance}
+    ::mged::gui::test::settle
+    ::gui::test::require {[lindex [$html_widget yview] 0] > 0.0} \
+	"manual browser did not follow an in-page hyperlink"
+
     ::gui::test::require {
 	[catch {man xmin_page_that_does_not_exist} message] &&
 	[string first "couldn't find manual page" $message] >= 0

@@ -63,6 +63,7 @@ if {[llength [info commands manpage_search_terms]] == 0} {
     }
     protected {
 	method getPages		{section}
+	method loadSelectedPage	{listbox}
 	method refreshPageList	{}
 	method accordianCallback {_item _state}
     }
@@ -124,6 +125,17 @@ if {[llength [info commands manpage_search_terms]] == 0} {
 	$htmlview configure -parsemode html
 	$htmlview parse $pageData
     }
+}
+
+##
+# Load the page selected in the table of contents.
+#
+::itcl::body ManBrowser::loadSelectedPage {listbox} {
+    set selection [$listbox curselection]
+    if {[llength $selection] != 1} {
+	return
+    }
+    loadPage [$listbox get $selection]
 }
 
 ##
@@ -356,10 +368,8 @@ if {[llength [info commands manpage_search_terms]] == 0} {
     }
 
     if {$itk_option(-useToC)} {
-	bind $itk_component(manpagelistbox) <<ListboxSelect>> {
-	    set mb [itcl_info objects -class ManBrowser]
-	    $mb loadPage [%W get [%W curselection]]
-	}
+	bind $itk_component(manpagelistbox) <<ListboxSelect>> \
+	    [::itcl::code $this loadSelectedPage %W]
     }
 
     # bind MouseWheel listener to the widget.document (this is the html
