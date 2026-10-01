@@ -71,7 +71,7 @@ proc dbfindtree {args} {
 	    set token [lindex $i 0]
 
 	    # find where it's used
-	    set search_result [db find $token]
+	    set search_result [::brlcad::mged db find $token]
 
 	    # if it is used, create path(s)
 	    if { [llength $search_result] } {

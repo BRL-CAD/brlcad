@@ -24,7 +24,7 @@
 
 proc get_regions { args } {
 
-    set extern_commands [list db]
+    set extern_commands [list ::brlcad::mged]
     foreach cmd $extern_commands {
 	catch {auto_load $cmd} val
 	if {[expr [string compare [info command $cmd] $cmd] != 0]} {
@@ -39,7 +39,7 @@ proc get_regions { args } {
     }
 
     set object [lindex $args 0]
-    set objectData [db get $object]
+    set objectData [::brlcad::mged db get $object]
 
     if { [lindex $objectData 0] != "comb" } {
 	# ignore primitive
@@ -54,17 +54,17 @@ proc get_regions { args } {
     set regions [list]
 
     # process children
-    set children [lt $object]
+    set children [::brlcad::mged lt $object]
     if { $children != "" } {
 	foreach node $children {
 	    set child [lindex $node 1]
 
-	    if { [lindex [get $child] 0] != "comb" } {
+	    if { [lindex [::brlcad::mged get $child] 0] != "comb" } {
 		# ignore primitive
 		continue
 	    }
 
-	    if { [lindex [get $child] 2] == "yes" } {
+	    if { [lindex [::brlcad::mged get $child] 2] == "yes" } {
 		# found a region, add to the list and stop recursion
 		lappend regions $child
 	    } else {

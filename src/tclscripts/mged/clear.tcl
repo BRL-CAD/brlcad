@@ -27,7 +27,7 @@
 #       clear
 #
 proc clear {} {
-  set clearid [cmd_win get]
+  set clearid [::brlcad::mged cmd_win get]
   if {$clearid == "" || $clearid == "mged"} {
     puts [exec clear]
   } else {

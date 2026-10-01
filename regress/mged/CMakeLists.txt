@@ -73,6 +73,7 @@ set(
   saveview.mged
   sca_edit.mged
   sca_view.mged
+  script_aliases.mged
   search_exec.mged
   sed.mged
   sed_reset.mged
@@ -148,6 +149,8 @@ if(TARGET mged)
       set(TEST_EXPECT "PASS near namespaced commands")
     elseif(TNAME STREQUAL "namespaces")
       set(TEST_EXPECT "PASS Tcl command namespaces")
+    elseif(TNAME STREQUAL "script_aliases")
+      set(TEST_EXPECT "PASS Tcl utility command dispatch")
     elseif(TNAME STREQUAL "arb")
       set(TEST_EXPECT "'arb' testing completed")
     elseif(TNAME MATCHES "^(extrude|facedef|mirface|permute)$")

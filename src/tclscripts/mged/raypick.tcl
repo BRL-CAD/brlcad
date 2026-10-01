@@ -26,7 +26,7 @@ proc raypick { } {
     #    Ensure that all commands used here but not defined herein
     #    are provided by the application
     #
-    set extern_commands [list M ::brlcad::mged]
+    set extern_commands [list ::brlcad::mged]
     foreach cmd $extern_commands {
 	catch {auto_load $cmd} val
 	if {[expr [string compare [info command $cmd] $cmd] != 0]} {
@@ -35,7 +35,7 @@ proc raypick { } {
 	}
     }
 
-    echo Shoot a ray by clicking the middle mouse button.
+    ::brlcad::mged echo Shoot a ray by clicking the middle mouse button.
     # Replace mouse event handler
     proc M { up x y } {
 	# Reset mouse event handler
@@ -44,18 +44,18 @@ proc raypick { } {
 	}
 	catch { destroy .raypick }
 
-	set solids [solids_on_ray $x $y]
+	set solids [::brlcad::mged solids_on_ray $x $y]
 	set len [llength $solids]
-	echo \"solids_on_ray $x $y\" sees $len solid(s)
+	::brlcad::mged echo \"solids_on_ray $x $y\" sees $len solid(s)
 	if { $len<=0 } then return
-	echo Primitive list: $solids
+	::brlcad::mged echo Primitive list: $solids
 
 	toplevel .raypick
 	wm title .raypick "Primitive edit"
 	set i 0
 	foreach solid $solids {
 	    button .raypick.s$i -text $solid \
-		-command "destroy .raypick; sed $solid"
+		-command "destroy .raypick; ::brlcad::mged sed $solid"
 	    pack .raypick.s$i -side top -fill x
 	    incr i
 	}

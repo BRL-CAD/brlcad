@@ -38,7 +38,7 @@ proc e_id {args} {
     #    are provided by the application
     #
 
-    set extern_commands "whichid e"
+    set extern_commands [list ::brlcad::mged ::brlcad::mged::help::show]
     foreach cmd $extern_commands {
 	catch {auto_load $cmd} val
 	if {[expr [string compare [info command $cmd] $cmd] != 0]} {
@@ -51,7 +51,7 @@ proc e_id {args} {
     #	Ensure that at least one argument was given
     #
     if {$args == ""} {
-	help e_id
+	::brlcad::mged::help::show e_id
 	return
     }
     #
@@ -87,8 +87,7 @@ proc e_id {args} {
     #
     #	Construct a list of the names of the appropriate regions
     #
-    set cmd "whichid $uniq_ident_list"
-    set raw_list [split [eval $cmd] \n]
+    set raw_list [split [::brlcad::mged whichid {*}$uniq_ident_list] \n]
     set result {}
     foreach element $raw_list {
 	set non_null [expr {$element != {}}]
@@ -104,7 +103,7 @@ proc e_id {args} {
 	puts "There are no objects with idents '$args'"
     } else {
 	puts "objects found: $result"
-	eval [concat [list e] $result]
+	::brlcad::mged e {*}$result
     }
 }
 

@@ -31,15 +31,15 @@ proc feed_me {args} {
 
     switch $len {
 	0 {
-	    set_more_default tollhouse
+	    ::brlcad::mged set_more_default tollhouse
 	    error "more arguments needed::feed me a cookie \[tollhouse\]:"
 	}
 	1 {
-	    set_more_default taffy
+	    ::brlcad::mged set_more_default taffy
 	    error "more arguments needed::feed me candy \[taffy\]:"
 	}
 	2 {
-	    set_more_default apple
+	    ::brlcad::mged set_more_default apple
 	    error "more arguments needed::feed me fruit \[apple\]:"
 	}
 	default -

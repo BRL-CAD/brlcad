@@ -32,20 +32,20 @@
 set glob_compat_mode 0
 
 proc rrmb {{_unclaimed unclaimed}} {
-    foreach bot [expand *.bot] {
+    foreach bot [::brlcad::mged expand *.bot] {
 	regexp {(.*)\.bot} $bot match rname
 
-	if {[catch {get $rname id} rid]} {
+	if {[catch {::brlcad::mged get $rname id} rid]} {
 	    set rid ""
 	}
 
 	if {$rid != ""} {
 	    # Replace tree with a bot leaf
-	    adjust $rname tree [list l $bot]
+	    ::brlcad::mged adjust $rname tree [list l $bot]
 	} else {
 	    catch {
-		r $rname u $bot
-		g $_unclaimed $rname
+		::brlcad::mged r $rname u $bot
+		::brlcad::mged g $_unclaimed $rname
 	    }
 	}
     }

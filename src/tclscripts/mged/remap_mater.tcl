@@ -91,7 +91,7 @@ proc string_is_digit_strict {s} {
 proc remap_mater {file_name {silent 0}} {
 
     # make sure the mged commands we need actually exist
-    set extern_commands [list db]
+    set extern_commands [list ::brlcad::mged]
     foreach cmd $extern_commands {
 	catch {auto_load $cmd} val
 	if {[expr [string compare [info command $cmd] $cmd] != 0]} {
@@ -135,8 +135,8 @@ proc remap_mater {file_name {silent 0}} {
     # Apply the mapping to every region in the database
     #
     set old_maters [array names new_mater]
-    foreach region [ls -r] {
-	set old_mater [db get $region GIFTmater]
+    foreach region [::brlcad::mged ls -r] {
+	set old_mater [::brlcad::mged db get $region GIFTmater]
 	if {[lsearch $old_maters $old_mater] == -1} {
 	    if {! $silent} {
 		set msg [format\
@@ -145,7 +145,7 @@ proc remap_mater {file_name {silent 0}} {
 		puts stderr $msg
 	    }
 	} else {
-	    db adjust $region GIFTmater $new_mater($old_mater)
+	    ::brlcad::mged db adjust $region GIFTmater $new_mater($old_mater)
 	}
     }
 }

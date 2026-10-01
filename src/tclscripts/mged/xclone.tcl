@@ -34,7 +34,7 @@
 #
 
 proc xclone {args} {
-    if {[catch {eval clone --xpush $args} result]} {
+    if {[catch {::brlcad::mged clone --xpush {*}$args} result]} {
 	return $result
     }
     return $result

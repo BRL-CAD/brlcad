@@ -27,7 +27,7 @@ proc init_g2asc { id } {
     global ::tk::Priv
     global tcl_platform
 
-    if {[opendb] == ""} {
+    if {[::brlcad::mged opendb] == ""} {
 	cad_dialog $::tk::Priv(cad_dialog) $mged_gui($id,screen) "No database." \
 	    "No database has been opened!" info 0 OK
 	return

@@ -26,7 +26,7 @@ proc mouse_shoot_ray { x y } {
     global perspective_mode
 
     # get zclip setting
-    set zclip [dm set zclip]
+    set zclip [::brlcad::mged dm set zclip]
 
     if {[catch {.inmem rt_gettrees ray -i -u {*}[::brlcad::mged who]} msg]} {
 	error $msg
@@ -36,24 +36,27 @@ proc mouse_shoot_ray { x y } {
     ray no_bool 1
     set xx [expr $x / 2048.0]
     set yy [expr $y / 2048.0]
-    set target [v2m_point $xx $yy 0]
+    set target [::brlcad::mged v2m_point $xx $yy 0]
     if {$perspective_mode} {
-	set start [v2m_point 0 0 1]
+	set start [::brlcad::mged v2m_point 0 0 1]
     } elseif {!$zclip} {
 	# calculate a view Z that's in front of all geometry
 
 	# get center and size of displayed geometry
-	set center_size [get_autoview]
+	set center_size [::brlcad::mged get_autoview]
 
 	# extract view Z from center of geometry, then back the rest of the way out of the geometry
-	set Z [expr [lindex [eval m2v_point [lindex $center_size 1]] 2] + [expr [lindex $center_size 3] / [size]]]
+	set Z [expr {
+	    [lindex [::brlcad::mged m2v_point {*}[lindex $center_size 1]] 2] +
+	    ([lindex $center_size 3] / [::brlcad::mged size])
+	}]
 	if {$Z < 1} {
 	    set Z 1
 	}
 
-	set start [v2m_point $xx $yy $Z]
+	set start [::brlcad::mged v2m_point $xx $yy $Z]
     } else {
-	set start [v2m_point $xx $yy 1]
+	set start [::brlcad::mged v2m_point $xx $yy 1]
     }
 
     return [ray shootray $start at $target]

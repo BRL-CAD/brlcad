@@ -28,9 +28,9 @@ proc bot_face_sel_apply { face } {
 	return -code error "BOT face does not have 3 vertices"
     }
 
-    _mged_p {*}$face
-    _mged_get_solid_keypoint
-    _mged_refresh
+    ::brlcad::mged p {*}$face
+    ::brlcad::mged get_solid_keypoint
+    ::brlcad::mged refresh
 }
 
 proc bot_face_select { face_list } {
@@ -38,7 +38,7 @@ proc bot_face_select { face_list } {
     global ::tk::Priv
 
 
-    set win [winset]
+    set win [::brlcad::mged winset]
     set id [get_player_id_dm $win]
     if {$id == "mged"} {
 	mouse_init_mged_gui
@@ -85,8 +85,8 @@ Double click to select a triangle for editing."}
 }
 
 proc bot_face_sel_abort { w } {
-    _mged_get_solid_keypoint
-    _mged_refresh
+    ::brlcad::mged get_solid_keypoint
+    ::brlcad::mged refresh
     catch {destroy $w}
 }
 

@@ -1,0 +1,110 @@
+puts "*** Testing Tcl utility command dispatch ***"
+
+foreach command {
+    bot_face_select bots check_cycle clear dbfindtree e_id feed_me get_regions
+    init_asc2g init_g2asc init_solclick lc2 mouse_shoot_ray prj_add raypick
+    reair reid relos remap_mater remat rrmb solclick xclone
+} {
+    if {![auto_load $command]} {
+	error "FAIL utility command is not autoloadable: $command"
+    }
+}
+
+::brlcad::mged in namespace_utility.s sph 0 0 0 1
+::brlcad::mged r namespace_utility.r u namespace_utility.s
+::brlcad::mged g namespace_utility.g namespace_utility.r
+::brlcad::mged put namespace_surface.s bot mode surface orient no flags {} \
+    V {{0 0 0} {10 0 0} {0 10 0}} F {{0 1 2}}
+::brlcad::mged g namespace_bots.g namespace_surface.s
+::brlcad::mged in namespace_replace.s sph 20 0 0 1
+::brlcad::mged r namespace_replace.r u namespace_replace.s
+::brlcad::mged put namespace_replace.r.bot bot mode surface orient no flags {} \
+    V {{20 0 0} {21 0 0} {20 1 0}} F {{0 1 2}}
+::brlcad::mged db adjust namespace_utility.r GIFTmater 7
+
+set map_channel [file tempfile map_path]
+puts $map_channel {7 9}
+close $map_channel
+set image_channel [file tempfile image_path]
+close $image_channel
+set shader_channel [file tempfile shader_path]
+close $shader_channel
+
+set hidden_commands {}
+foreach command {
+    adjust attr clone db e expand g get lt ls r set_more_default tops view
+    whichid
+} {
+    set compatibility_command ::$command
+    set hidden_command ::__brlcad_mged_compatibility_$command
+    rename $compatibility_command $hidden_command
+    lappend hidden_commands $hidden_command $compatibility_command
+}
+try {
+    if {[check_cycle {} namespace_utility.g]} {
+	error "FAIL check_cycle reported a cycle"
+    }
+
+    set paths [dbfindtree -l namespace_utility.s]
+    if {![llength $paths]} {
+	error "FAIL dbfindtree found no path to namespace_utility.s"
+    }
+
+    set regions [get_regions namespace_utility.g]
+    if {$regions ne {namespace_utility.r}} {
+	error "FAIL get_regions returned $regions"
+    }
+
+    reid namespace_utility.g 2301
+    reair namespace_utility.g 12
+    relos namespace_utility.g 34
+    remat namespace_utility.g 56
+    e_id 2301
+
+    set displayed [::brlcad::mged who]
+    if {[lsearch -exact $displayed namespace_utility.r] < 0} {
+	error "FAIL e_id did not display namespace_utility.r: $displayed"
+    }
+
+    if {[catch {xclone -i 1 namespace_utility.s} message]} {
+	error "FAIL xclone failed without the global clone command: $message"
+    }
+    if {![::brlcad::mged exists namespace_utility.s1]} {
+	error "FAIL xclone did not create namespace_utility.s1"
+    }
+
+    set surface_bots [bots surface namespace_bots.g]
+    if {$surface_bots ne {namespace_surface.s}} {
+	error "FAIL bots returned $surface_bots"
+    }
+
+    rrmb
+    set replacement_tree [::brlcad::mged get namespace_replace.r tree]
+    if {$replacement_tree ne {l namespace_replace.r.bot}} {
+	error "FAIL rrmb produced tree $replacement_tree"
+    }
+
+    if {![catch {feed_me} message] ||
+	[string match {*invalid command name*} $message]} {
+	error "FAIL feed_me depends on set_more_default: $message"
+    }
+
+    remap_mater $map_path 1
+    set material [::brlcad::mged db get namespace_utility.r GIFTmater]
+    if {$material != 9} {
+	error "FAIL remap_mater produced material $material"
+    }
+
+    prj_add $shader_path $image_path 16 16
+    if {[file size $shader_path] == 0} {
+	error "FAIL prj_add did not write its shader file"
+    }
+} finally {
+    foreach {hidden_command compatibility_command} $hidden_commands {
+	rename $hidden_command $compatibility_command
+    }
+    file delete $map_path $image_path $shader_path
+}
+
+puts "PASS Tcl utility command dispatch"
+puts "*** Tcl utility command dispatch testing completed ***"

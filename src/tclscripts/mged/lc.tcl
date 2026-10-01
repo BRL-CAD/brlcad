@@ -180,7 +180,7 @@ proc lc2 {args} {
 	return
     }
 
-    if { [search -name $group_name] == "" } {
+    if { [::brlcad::mged search -name $group_name] == "" } {
 	puts stdout "Error: Group '$group_name' does not exist."
 	return
     }
@@ -188,7 +188,7 @@ proc lc2 {args} {
     set objs {}
 
     set group_name "/$group_name"
-    set objs [search $group_name -type region]
+    set objs [::brlcad::mged search $group_name -type region]
 
     set lines {}
     set line ""
@@ -202,13 +202,13 @@ proc lc2 {args} {
 	    if { $obj_parent == "" } {
 		set obj_parent "--"
 	    }
-	    if { [catch {set Xregion_id [lindex [attr show $obj_name region_id] 3]} tmp_msg] } {
+	    if { [catch {set Xregion_id [lindex [::brlcad::mged attr show $obj_name region_id] 3]} tmp_msg] } {
 		set Xregion_id "--"
 	    }
-	    if { [catch {set Xmaterial_id [lindex [attr show $obj_name material_id] 3]} tmp_msg] } {
+	    if { [catch {set Xmaterial_id [lindex [::brlcad::mged attr show $obj_name material_id] 3]} tmp_msg] } {
 		set Xmaterial_id "--"
 	    }
-	    if { [catch {set Xlos [lindex [attr show $obj_name los] 3]} tmp_msg] } {
+	    if { [catch {set Xlos [lindex [::brlcad::mged attr show $obj_name los] 3]} tmp_msg] } {
 		set Xlos "--"
 	    }
 
@@ -304,7 +304,7 @@ proc lc2 {args} {
 
 	    set obj [lindex $line 3]
 	    set obj_parent [lindex $line 4]
-	    set obj_parent_desc [split [l $obj_parent]]
+	    set obj_parent_desc [split [::brlcad::mged l $obj_parent]]
 
 	    if { [lindex $obj_parent_desc 2] == "REGION" } {
 

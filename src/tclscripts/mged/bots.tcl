@@ -27,7 +27,7 @@
 
 proc bots { args } {
 
-    set extern_commands [list db tops]
+    set extern_commands [list ::brlcad::mged]
     foreach cmd $extern_commands {
 	catch {auto_load $cmd} val
 	if {[expr [string compare [info command $cmd] $cmd] != 0]} {
@@ -43,7 +43,7 @@ proc bots { args } {
 	puts "Usage: bots {surf|plate|volume|plate_nocos} \[object\]"
 	return
     } elseif { $argc == 1 } {
-	set t [tops -n]
+	set t [::brlcad::mged tops -n]
 	foreach object $t {
 	    lset results [concat $results [bots [lindex $args 0] "$object"]]
 	}
@@ -53,11 +53,11 @@ proc bots { args } {
 	set mode [lindex $args 0]
 	set name [lindex $args 1]
 
-	catch {db get $name} objData
+	catch {::brlcad::mged db get $name} objData
 	set type [lindex $objData 0]
 
 	if { $type == "comb" } {
-	    foreach node [lt $name] {
+	    foreach node [::brlcad::mged lt $name] {
 		set child [lindex $node 1]
 		lset results [concat $results [bots $mode "$child"]]
 	    }
@@ -65,7 +65,7 @@ proc bots { args } {
 	}
 
 	if { $type == "bot" } {
-	    catch {db get $name mode} botmode
+	    catch {::brlcad::mged db get $name mode} botmode
 	    if { $botmode == $mode } {
 		lappend results "$name"
 	    }

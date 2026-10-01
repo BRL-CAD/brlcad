@@ -34,7 +34,7 @@ proc solclick { } {
     #    are provided by the application
     #
 
-    set extern_commands [list M ::brlcad::mged]
+    set extern_commands [list ::brlcad::mged]
     foreach cmd $extern_commands {
 	catch {auto_load $cmd} val
 	if {[expr [string compare [info command $cmd] $cmd] != 0]} {
@@ -43,7 +43,7 @@ proc solclick { } {
 	}
     }
 
-    echo "\nShoot a ray by clicking the middle mouse button."
+    ::brlcad::mged echo "\nShoot a ray by clicking the middle mouse button."
     # Replace mouse event handler
     proc M { up x y } {
 	if {$up == 0} {
@@ -60,7 +60,7 @@ proc solclick { } {
 
 	catch { destroy $w }
 
-	set solids [solids_on_ray $x $y]
+	set solids [::brlcad::mged solids_on_ray $x $y]
 
 	#	toplevel $w -screen $mged_gui($id,screen)
 	toplevel $w
@@ -68,7 +68,7 @@ proc solclick { } {
 	set i 0
 	foreach solid $solids {
 	    button $w.s$i -text [lindex [split $solid /] end] \
-		-command "destroy $w; sed $solid"
+		-command "destroy $w; ::brlcad::mged sed $solid"
 	    pack $w.s$i -side top -fill x -expand yes
 	    incr i
 	}

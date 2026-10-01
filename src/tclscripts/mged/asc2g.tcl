@@ -27,7 +27,7 @@ proc init_asc2g { id } {
     global ::tk::Priv
     global tcl_platform
 
-    if {[opendb] == ""} {
+    if {[::brlcad::mged opendb] == ""} {
 	cad_dialog $::tk::Priv(cad_dialog) $mged_gui($id,screen) "No database." "No database has been opened!" info 0 OK
 	return
     }
@@ -70,7 +70,7 @@ current database." } {} } OK Cancel]
 	    catch {exec $asc2g $filename $db_name} msg
 
 	    # concat the binary
-	    dbconcat $db_name $prefix
+	    ::brlcad::mged dbconcat $db_name $prefix
 	}
 
 	file delete $db_name

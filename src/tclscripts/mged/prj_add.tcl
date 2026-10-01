@@ -107,11 +107,13 @@ proc prj_add {args} {
     puts $fd "behind=$behind"
 
 
-    puts $fd "viewsize=[expr [view size] * $local2base]"
-    regsub -all { } [::brlcad::vmath vscale [view eye] $local2base] "," eye_pt
+    puts $fd "viewsize=[expr {[::brlcad::mged view size] * $local2base}]"
+    regsub -all { } \
+	[::brlcad::vmath vscale [::brlcad::mged view eye] $local2base] \
+	"," eye_pt
     puts $fd "eye_pt=$eye_pt"
 
-    regsub -all { } [view quat] "," orientation
+    regsub -all { } [::brlcad::mged view quat] "," orientation
     puts $fd "orientation=$orientation"
 
     close $fd

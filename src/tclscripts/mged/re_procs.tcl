@@ -26,7 +26,7 @@
 namespace eval re_procs {
     proc chk_cmds {} {
         # make sure the mged commands we need actually exist
-        set extern_commands [list db get_regions attr]
+        set extern_commands [list ::brlcad::mged get_regions]
         foreach cmd $extern_commands {
 	    catch {auto_load $cmd} val
 	    if {[expr [string compare [info command $cmd] $cmd] != 0]} {
@@ -46,7 +46,7 @@ namespace eval re_procs {
         set name [lindex $args 0]
         set changeid [lindex $args 1]
 
-        if {[catch {set objData [db get $name]} err]} { 
+        if {[catch {set objData [::brlcad::mged db get $name]} err]} {
             puts -nonewline $err
             return -code 1
         }
@@ -57,7 +57,7 @@ namespace eval re_procs {
 
         set regions [get_regions $name]
         foreach region $regions {
-	    attr set $region $type $changeid
+	    ::brlcad::mged attr set $region $type $changeid
         }
     }
 }
@@ -91,7 +91,7 @@ proc reid { args } {
 	set regionid [lindex $args 1]
     }
 
-    set objData [db get $name]
+    set objData [::brlcad::mged db get $name]
     if { [lindex $objData 0] != "comb" } {
 	puts "Not a combination: $name"
 	return
@@ -99,7 +99,7 @@ proc reid { args } {
 
     set regions [get_regions $name]
     foreach region $regions {
-	attr set $region region_id $regionid
+	::brlcad::mged attr set $region region_id $regionid
 	incr regionid $incrval
     }
     set highest [expr $regionid - $incrval]
