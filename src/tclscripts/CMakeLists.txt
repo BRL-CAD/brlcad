@@ -146,7 +146,6 @@ set(
   helpcomm.tcl
   helplib.tcl
   hoc.tcl
-  html_library.tcl
   libtclcad.tcl
   man_browser.tcl
   menu_override.tcl
