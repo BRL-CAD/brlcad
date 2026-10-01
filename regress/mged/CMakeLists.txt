@@ -22,6 +22,7 @@ set(
   edgedir.mged
   erase.mged
   exists.mged
+  expand_comb.mged
   extrude.mged
   eye_pt.mged
   facedef.mged
@@ -131,6 +132,8 @@ if(TARGET mged)
     elseif(TNAME STREQUAL "bot_vertex_fuse_all")
       set(TEST_EXPECT "PASS bot_vertex_fuse_all namespaced commands")
       set(TEST_SOURCE "${CMAKE_CURRENT_BINARY_DIR}/regress_${testfile}")
+    elseif(TNAME STREQUAL "expand_comb")
+      set(TEST_EXPECT "PASS expand_comb namespaced commands")
     elseif(TNAME STREQUAL "namespaces")
       set(TEST_EXPECT "PASS Tcl command namespaces")
     elseif(TNAME STREQUAL "arb")

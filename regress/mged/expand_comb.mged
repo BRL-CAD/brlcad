@@ -1,0 +1,32 @@
+puts "*** Testing 'expand_comb' command ***"
+
+::brlcad::mged in namespace_expand_left.s sph -10 0 0 1
+::brlcad::mged in namespace_expand_right.s sph 10 0 0 1
+::brlcad::mged g namespace_expand_source.c \
+    namespace_expand_left.s namespace_expand_right.s
+
+set hidden_commands {}
+foreach command {db get put} {
+    set compatibility_command ::$command
+    set hidden_command ::__brlcad_mged_compatibility_$command
+    rename $compatibility_command $hidden_command
+    lappend hidden_commands $hidden_command $compatibility_command
+}
+try {
+    expand_comb namespace_expanded.c namespace_expand_source.c
+} finally {
+    foreach {hidden_command compatibility_command} $hidden_commands {
+	rename $hidden_command $compatibility_command
+    }
+}
+
+foreach object {
+    namespace_expanded.c namespace_expanded.cl namespace_expanded.cr
+} {
+    if {![::brlcad::mged exists $object]} {
+	error "FAIL expand_comb did not create $object"
+    }
+}
+
+puts "PASS expand_comb namespaced commands"
+puts "*** 'expand_comb' testing completed ***"

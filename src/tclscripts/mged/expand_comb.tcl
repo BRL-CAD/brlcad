@@ -33,7 +33,7 @@ proc expand_tree {prefix tree regflag} {
     if { $op == "l" } {
 	set leaf_obj [lindex $tree 1]
 
-	if {[catch {db get_type $leaf_obj} dbtype]} {
+	if {[catch {::brlcad::mged db get_type $leaf_obj} dbtype]} {
 	    puts "could not get type for $leaf_obj"
 	    return
 	}
@@ -41,18 +41,18 @@ proc expand_tree {prefix tree regflag} {
 	    set leaf_obj [lindex $tree 1]
 	    expand_comb ${prefix}_${leaf_obj} $leaf_obj
 
-	    set cmd [list put $prefix comb region $regflag tree]
+	    set cmd [list ::brlcad::mged put $prefix comb region $regflag tree]
 	    if {[llength $tree] == 2} {
 		lappend cmd [list l ${prefix}_${leaf_obj} ]
 	    } else {
 		lappend cmd [list l ${prefix}_${leaf_obj} [lindex $tree 2] ]
 	    }
 	    puts $cmd
-	    eval $cmd
+	    {*}$cmd
 	} else {
-	    set cmd [list put $prefix comb region 0 tree $tree]
+	    set cmd [list ::brlcad::mged put $prefix comb region 0 tree $tree]
 	    puts $cmd
-	    eval $cmd
+	    {*}$cmd
 	}
 
 	return
@@ -64,9 +64,9 @@ proc expand_tree {prefix tree regflag} {
     set right [lindex $tree 2]
     expand_tree ${prefix}r $right no
 
-    set cmd [list put $prefix comb region $regflag tree [list $op [list l ${prefix}l] [list l ${prefix}r]]]
+    set cmd [list ::brlcad::mged put $prefix comb region $regflag tree [list $op [list l ${prefix}l] [list l ${prefix}r]]]
 
-    eval $cmd
+    {*}$cmd
 }
 
 
@@ -92,7 +92,7 @@ proc expand_comb {args} {
     set prefix [lindex $args 0]
     set comb [lindex $args 1]
 
-    if {[catch {db get_type $comb} dbtype]} {
+    if {[catch {::brlcad::mged db get_type $comb} dbtype]} {
 	puts " can't get type for $comb"
 	return
     }
@@ -101,12 +101,12 @@ proc expand_comb {args} {
 	return
     }
 
-    if {[catch {get $comb tree} tree]} {
+    if {[catch {::brlcad::mged get $comb tree} tree]} {
 	puts "get tree $r failed"
 	return
     }
 
-    expand_tree $prefix $tree [get $comb region]
+    expand_tree $prefix $tree [::brlcad::mged get $comb region]
 
     return
 }
