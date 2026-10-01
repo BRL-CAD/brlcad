@@ -1451,7 +1451,7 @@ namespace delete ::ArcherCoreBootstrap
     } {}
 
     itk_component add cmd {
-	Command $itk_component(advancedTabs).cmd \
+	::cadwidgets::Command $itk_component(advancedTabs).cmd \
 	    -relief sunken -borderwidth 2 \
 	    -hscrollmode none -vscrollmode dynamic \
 	    -scrollmargin 2 -visibleitems 80x15 \

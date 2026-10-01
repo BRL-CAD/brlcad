@@ -28,6 +28,8 @@
 #       built-in scrollbars for scrolling the view.
 #
 
+package provide cadwidgets::TableView 1.0
+
 ::itk::usual TableView {
     keep -borderwidth -cursor -foreground -highlightcolor \
 	-highlightthickness -insertbackground -insertborderwidth \
@@ -38,8 +40,8 @@
 	-rlborderwidth
 }
 
-::itcl::class TableView {
-    inherit itk::Widget
+::itcl::class ::cadwidgets::TableView {
+    inherit ::itk::Widget
 
     constructor {_labels args} {}
     destructor {}
@@ -308,7 +310,7 @@
     itk_option define -rowfont rowfont Font [list $SystemWindowFont 8]
 }
 
-::itcl::configbody TableView::colfont {
+::itcl::configbody ::cadwidgets::TableView::colfont {
     if {$doingInit} {
 	return
     }
@@ -317,7 +319,7 @@
     after idle [::itcl::code catch [list $this handleConfigure]]
 }
 
-::itcl::configbody TableView::rowfont {
+::itcl::configbody ::cadwidgets::TableView::rowfont {
     if {$doingInit} {
 	return
     }
@@ -326,21 +328,21 @@
     after idle [::itcl::code catch [list $this handleConfigure]]
 }
 
-::itcl::configbody TableView::useTextEntry {
+::itcl::configbody ::cadwidgets::TableView::useTextEntry {
     # The useTextEntry variable gets set only during initialization
     if {$doingInit} {
 	set useTextEntry $itk_option(-useTextEntry)
     }
 }
 
-::itcl::configbody TableView::textEntryWidth {
+::itcl::configbody ::cadwidgets::TableView::textEntryWidth {
     # The textEntryWidth variable gets set only during initialization
     if {$doingInit} {
 	set textEntryWidth $itk_option(-textEntryWidth)
     }
 }
 
-::itcl::configbody TableView::textEntryHeight {
+::itcl::configbody ::cadwidgets::TableView::textEntryHeight {
     # The textEntryHeight variable gets set only during initialization
     if {$doingInit} {
 	set textEntryHeight $itk_option(-textEntryHeight)
@@ -352,7 +354,7 @@
     }
 }
 
-::itcl::body TableView::constructor {_labels args} {
+::itcl::body ::cadwidgets::TableView::constructor {_labels args} {
     # process options
     eval itk_initialize $args
 
@@ -366,7 +368,7 @@
     }
 
     set labels "{} $_labels"
-    set table [Table \#auto]
+    set table [::cadwidgets::Table \#auto]
 
     # pad row with empty values (note - table already has 1 row and 1 column)
     for {set j 1} {$j < $vcols} {incr j} {
@@ -409,17 +411,17 @@
     scroll 0
 }
 
-::itcl::body TableView::destructor {} {
+::itcl::body ::cadwidgets::TableView::destructor {} {
     ::itcl::delete object $table
 }
 
 ################################ Public Methods ################################
 
-::itcl::body TableView::getEntry {i j} {
+::itcl::body ::cadwidgets::TableView::getEntry {i j} {
     $table getEntry $i $j
 }
 
-::itcl::body TableView::setEntry {i j val {allowScroll 1}} {
+::itcl::body ::cadwidgets::TableView::setEntry {i j val {allowScroll 1}} {
     $table setEntry $i $j $val
 
     if {![string is digit $allowScroll]} {
@@ -432,15 +434,15 @@
     }
 }
 
-::itcl::body TableView::getRow {i} {
+::itcl::body ::cadwidgets::TableView::getRow {i} {
     $table getRow $i
 }
 
-::itcl::body TableView::getRows {i1 i2} {
+::itcl::body ::cadwidgets::TableView::getRows {i1 i2} {
     $table getRows $i1 $i2
 }
 
-::itcl::body TableView::setRow {i rdata} {
+::itcl::body ::cadwidgets::TableView::setRow {i rdata} {
     $table setRow $i $rdata
 
     # if row is viewable update entries
@@ -449,20 +451,20 @@
     }
 }
 
-::itcl::body TableView::getCol {j} {
+::itcl::body ::cadwidgets::TableView::getCol {j} {
     $table getCol $j
 }
 
-::itcl::body TableView::getCols {j1 j2} {
+::itcl::body ::cadwidgets::TableView::getCols {j1 j2} {
     $table getCols $j1 $j2
 }
 
-::itcl::body TableView::setCol {j cdata} {
+::itcl::body ::cadwidgets::TableView::setCol {j cdata} {
     $table setCol $j $cdata
     scroll 0
 }
 
-::itcl::body TableView::getTable {} {
+::itcl::body ::cadwidgets::TableView::getTable {} {
     $table cget -table
 }
 
@@ -474,7 +476,7 @@
 # table so that it contains at least as many rows as
 # are viewable.
 #
-::itcl::body TableView::setTable {t} {
+::itcl::body ::cadwidgets::TableView::setTable {t} {
     set tlen [llength $t]
 
     if {$tlen} {
@@ -506,17 +508,17 @@
     scroll 0
 }
 
-::itcl::body TableView::appendRow {rdata} {
+::itcl::body ::cadwidgets::TableView::appendRow {rdata} {
     $table appendRow $rdata
     updateDrows
     updateVscroll
 }
 
-::itcl::body TableView::appendDefaultRow {{def {}}} {
+::itcl::body ::cadwidgets::TableView::appendDefaultRow {{def {}}} {
     appendRow [getDefaultRow $def]
 }
 
-::itcl::body TableView::deleteRow {i} {
+::itcl::body ::cadwidgets::TableView::deleteRow {i} {
     $table deleteRow $i
 
     # if row is viewable update entries
@@ -528,7 +530,7 @@
     }
 }
 
-::itcl::body TableView::insertRow {i rdata} {
+::itcl::body ::cadwidgets::TableView::insertRow {i rdata} {
     $table insertRow $i $rdata
 
     # if row is viewable update entries
@@ -540,11 +542,11 @@
     }
 }
 
-::itcl::body TableView::insertDefaultRow {i {def {}}} {
+::itcl::body ::cadwidgets::TableView::insertDefaultRow {i {def {}}} {
     insertRow $i [getDefaultRow $def]
 }
 
-::itcl::body TableView::moveRow {srcIndex destIndex} {
+::itcl::body ::cadwidgets::TableView::moveRow {srcIndex destIndex} {
     $table moveRow $srcIndex $destIndex
 
     # if row is viewable update entries
@@ -556,7 +558,7 @@
     }
 }
 
-::itcl::body TableView::appendCol {label cdata} {
+::itcl::body ::cadwidgets::TableView::appendCol {label cdata} {
     incr vcols
 
     # update data
@@ -585,11 +587,11 @@
     scroll 0
 }
 
-::itcl::body TableView::appendDefaultCol {label {def {}}} {
+::itcl::body ::cadwidgets::TableView::appendDefaultCol {label {def {}}} {
     appendCol $label [getDefaultCol $def]
 }
 
-::itcl::body TableView::deleteCol {j} {
+::itcl::body ::cadwidgets::TableView::deleteCol {j} {
     shiftColTracesLeft $j
 
     # update data
@@ -654,7 +656,7 @@
     scroll 0
 }
 
-::itcl::body TableView::insertCol {j label cdata} {
+::itcl::body ::cadwidgets::TableView::insertCol {j label cdata} {
     # update data
     $table insertCol $j $cdata
 
@@ -737,30 +739,30 @@
     scroll 0
 }
 
-::itcl::body TableView::insertDefaultCol {j label {def {}}} {
+::itcl::body ::cadwidgets::TableView::insertDefaultCol {j label {def {}}} {
     insertCol $j $label [getDefaultCol $def]
 }
 
-::itcl::body TableView::initCol {j ival} {
+::itcl::body ::cadwidgets::TableView::initCol {j ival} {
     $table initCol $j $ival
 
     # update table's view
     scroll 0
 }
 
-::itcl::body TableView::initColRange {j i1 i2 ival} {
+::itcl::body ::cadwidgets::TableView::initColRange {j i1 i2 ival} {
     $table initColRange $j $i1 $i2 $ival
 
     # update table's view
     scroll 0
 }
 
-::itcl::body TableView::appendSep {text} {
-    set data [lreplace [getDefaultRow] 0 0 [eval list $::Table::SEP_MARK $text]]
+::itcl::body ::cadwidgets::TableView::appendSep {text} {
+    set data [lreplace [getDefaultRow] 0 0 [eval list $::cadwidgets::Table::SEP_MARK $text]]
 
     foreach datum $data {
 	if {$datum == {}} {
-	    lappend rdata $::Table::SEP_MARK
+	    lappend rdata $::cadwidgets::Table::SEP_MARK
 	} else {
 	    lappend rdata $datum
 	}
@@ -769,16 +771,16 @@
     appendRow $rdata
 }
 
-::itcl::body TableView::deleteSep {i} {
+::itcl::body ::cadwidgets::TableView::deleteSep {i} {
     deleteRow $i
 }
 
-::itcl::body TableView::insertSep {i text} {
-    set data [lreplace [getDefaultRow] 0 0 [eval list $::Table::SEP_MARK $text]]
+::itcl::body ::cadwidgets::TableView::insertSep {i text} {
+    set data [lreplace [getDefaultRow] 0 0 [eval list $::cadwidgets::Table::SEP_MARK $text]]
 
     foreach datum $data {
 	if {$datum == {}} {
-	    lappend rdata $::Table::SEP_MARK
+	    lappend rdata $::cadwidgets::Table::SEP_MARK
 	} else {
 	    lappend rdata $datum
 	}
@@ -787,19 +789,19 @@
     insertRow $i $rdata
 }
 
-::itcl::body TableView::getSepText {i} {
+::itcl::body ::cadwidgets::TableView::getSepText {i} {
     set srow [$table getRow $i]
     set item1 [lindex $srow 0]
-    if {[lindex $item1 0] == $::Table::SEP_MARK} {
+    if {[lindex $item1 0] == $::cadwidgets::Table::SEP_MARK} {
 	return [lrange $item1 1 end]
     }
 
     return ""
 }
 
-::itcl::body TableView::setSepText {i text} {
+::itcl::body ::cadwidgets::TableView::setSepText {i text} {
     set item1 [$table getEntry $i 1]
-    if {[lindex $item1 0] == $::Table::SEP_MARK} {
+    if {[lindex $item1 0] == $::cadwidgets::Table::SEP_MARK} {
 	if {2 <= [llength $item1]} {
 	    # replace existing text
 	    set item1 [eval lreplace \$item1 1 end $text]
@@ -816,19 +818,19 @@
     scroll 0
 }
 
-::itcl::body TableView::bindSep {args} {
+::itcl::body ::cadwidgets::TableView::bindSep {args} {
     for {set i 1} {$i <= $vrows} {incr i} {
 	eval bind $itk_component(sl$i) $args
     }
 }
 
-::itcl::body TableView::configSep {args} {
+::itcl::body ::cadwidgets::TableView::configSep {args} {
     for {set i 1} {$i <= $vrows} {incr i} {
 	eval $itk_component(sl$i) configure $args
     }
 }
 
-::itcl::body TableView::traceCol {j tcmd {ops {}} {cmd {}}} {
+::itcl::body ::cadwidgets::TableView::traceCol {j tcmd {ops {}} {cmd {}}} {
     if {![$table isValidCol $j]} {
 	error "TableView::traceCol: bad column value - $j, must be in the range 1-$vcols"
     }
@@ -856,7 +858,7 @@
     }
 }
 
-::itcl::body TableView::makeRowTraces {i} {
+::itcl::body ::cadwidgets::TableView::makeRowTraces {i} {
     set rowTraces {}
 
     foreach t $traces {
@@ -870,7 +872,7 @@
     return $rowTraces
 }
 
-::itcl::body TableView::deleteRowTraces {i} {
+::itcl::body ::cadwidgets::TableView::deleteRowTraces {i} {
     for {set j 1} {$j <= $vcols} {incr j} {
 	foreach vt [trace vinfo evar($i,$j)] {
 	    eval trace vdelete evar($i,$j) $vt
@@ -882,7 +884,7 @@
     }
 }
 
-::itcl::body TableView::shiftColTracesLeft {j} {
+::itcl::body ::cadwidgets::TableView::shiftColTracesLeft {j} {
     if {$j == $vcols} {
 	return
     }
@@ -916,7 +918,7 @@
     }
 }
 
-::itcl::body TableView::shiftColTracesRight {j} {
+::itcl::body ::cadwidgets::TableView::shiftColTracesRight {j} {
     if {$j == $vcols} {
 	return
     }
@@ -951,7 +953,7 @@
     }
 }
 
-::itcl::body TableView::bindCol {j args} {
+::itcl::body ::cadwidgets::TableView::bindCol {j args} {
     if {![$table isValidCol $j]} {
 	error "TableView::bindCol: bad column value - $j, must be in the range 1-$vcols"
     }
@@ -961,7 +963,7 @@
     }
 }
 
-::itcl::body TableView::configCol {j args} {
+::itcl::body ::cadwidgets::TableView::configCol {j args} {
     if {![$table isValidCol $j]} {
 	error "TableView::configCol: bad column value - $j, must be in the range 1-$vcols"
     }
@@ -974,7 +976,7 @@
     checkIfAllColumnsDisabled
 }
 
-::itcl::body TableView::bindRowLabel {i args} {
+::itcl::body ::cadwidgets::TableView::bindRowLabel {i args} {
     if {![string is digit $i] || $i < 1 || $vrows < $i} {
 	error "TableView::bindRowLabel: bad row number - $i, must be in the range 1-$vrows"
     }
@@ -982,13 +984,13 @@
     eval bind $itk_component(rl$i) $args
 }
 
-::itcl::body TableView::bindRowLabels {args} {
+::itcl::body ::cadwidgets::TableView::bindRowLabels {args} {
     for {set i 1} {$i <= $vrows} {incr i} {
 	eval bind $itk_component(rl$i) $args
     }
 }
 
-::itcl::body TableView::cgetRowLabel {i option} {
+::itcl::body ::cadwidgets::TableView::cgetRowLabel {i option} {
     if {![string is digit $i] || $i < 1 || $vrows < $i} {
 	error "TableView::cgetRowLabel: bad row number - $i, must be in the range 1-$vrows"
     }
@@ -996,7 +998,7 @@
     eval $itk_component(rl$i) cget $option
 }
 
-::itcl::body TableView::configRowLabel {i args} {
+::itcl::body ::cadwidgets::TableView::configRowLabel {i args} {
     if {![string is digit $i] || $i < 1 || $vrows < $i} {
 	error "TableView::configRowLabel: bad row number - $i, must be in the range 1-$vrows"
     }
@@ -1004,13 +1006,13 @@
     eval $itk_component(rl$i) configure $args
 }
 
-::itcl::body TableView::configRowLabels {args} {
+::itcl::body ::cadwidgets::TableView::configRowLabels {args} {
     for {set i 1} {$i <= $vrows} {incr i} {
 	eval $itk_component(rl$i) configure $args
     }
 }
 
-::itcl::body TableView::getRowLabelIndex {w} {
+::itcl::body ::cadwidgets::TableView::getRowLabelIndex {w} {
     if {![winfo exists $w]} {
 	return 0
     }
@@ -1022,15 +1024,15 @@
     return 0
 }
 
-::itcl::body TableView::getLastRowLabelIndex {} {
+::itcl::body ::cadwidgets::TableView::getLastRowLabelIndex {} {
     return $itk_option(-lastRowLabelIndex)
 }
 
-::itcl::body TableView::setLastRowLabelIndex {i} {
+::itcl::body ::cadwidgets::TableView::setLastRowLabelIndex {i} {
     set itk_option(-lastRowLabelIndex) $i
 }
 
-::itcl::body TableView::bindColLabel {j args} {
+::itcl::body ::cadwidgets::TableView::bindColLabel {j args} {
     if {![string is digit $j] || $j < 1 || $vcols < $j} {
 	error "TableView::bindColLabel: bad column number - $j, must be in the range 1-$vcols"
     }
@@ -1038,7 +1040,7 @@
     eval bind $itk_component(cl$j) $args
 }
 
-::itcl::body TableView::configColLabel {j args} {
+::itcl::body ::cadwidgets::TableView::configColLabel {j args} {
     if {![string is digit $j] || $j < 1 || $vcols < $j} {
 	error "TableView::configColLabel: bad column number - $j, must be in the range 1-$vcols"
     }
@@ -1046,12 +1048,12 @@
     eval $itk_component(cl$j) configure $args
 }
 
-::itcl::body TableView::configColLabel_win {w args} {
+::itcl::body ::cadwidgets::TableView::configColLabel_win {w args} {
     set j [getColIndex $w]
     eval configColLabel $j $args
 }
 
-::itcl::body TableView::getColLabel {j} {
+::itcl::body ::cadwidgets::TableView::getColLabel {j} {
     if {![$table isValidCol $j]} {
 	error "TableView::getColLabel: bad column - $j, must be in the range 1-$vcols"
     }
@@ -1059,7 +1061,7 @@
     return [lindex $labels $j]
 }
 
-::itcl::body TableView::setColLabel {j label} {
+::itcl::body ::cadwidgets::TableView::setColLabel {j label} {
     if {![$table isValidCol $j]} {
 	error "TableView::setColLabel: bad column - $j, must be in the range 1-$vcols"
     }
@@ -1069,7 +1071,7 @@
     set labels [lreplace $labels $j $j $label]
 }
 
-::itcl::body TableView::scroll {n} {
+::itcl::body ::cadwidgets::TableView::scroll {n} {
     if {![string is int $n]} {
 	error "TableView::scroll: bad scroll value - $n"
     }
@@ -1114,11 +1116,11 @@
     resetColState
 }
 
-::itcl::body TableView::xview {cmd args} {
+::itcl::body ::cadwidgets::TableView::xview {cmd args} {
     eval $itk_component(canvas) xview $cmd $args
 }
 
-::itcl::body TableView::yview {cmd args} {
+::itcl::body ::cadwidgets::TableView::yview {cmd args} {
     switch -- $cmd {
 	moveto {
 	    if {$args < 0} {
@@ -1150,26 +1152,26 @@
     }
 }
 
-::itcl::body TableView::getFirstVisibleRow {} {
+::itcl::body ::cadwidgets::TableView::getFirstVisibleRow {} {
     return $firstrow
 }
 
-::itcl::body TableView::getNumVisibleSep {} {
+::itcl::body ::cadwidgets::TableView::getNumVisibleSep {} {
 }
 
-::itcl::body TableView::getLastVisibleRow {} {
+::itcl::body ::cadwidgets::TableView::getLastVisibleRow {} {
     return [expr {$firstrow + $vrows - 1}]
 }
 
-::itcl::body TableView::getVisibleRows {} {
+::itcl::body ::cadwidgets::TableView::getVisibleRows {} {
     return "[getFirstVisibleRow] [getLastVisibleRow]"
 }
 
-::itcl::body TableView::getNumRows {} {
+::itcl::body ::cadwidgets::TableView::getNumRows {} {
     return [$table cget -rows]
 }
 
-::itcl::body TableView::getNumCols {} {
+::itcl::body ::cadwidgets::TableView::getNumCols {} {
     return [$table cget -cols]
 }
 
@@ -1177,7 +1179,7 @@
 #
 # Updates the table's row labels.
 #
-::itcl::body TableView::updateRowLabels {first} {
+::itcl::body ::cadwidgets::TableView::updateRowLabels {first} {
     if {![string is int $first]} {
 	error "TableView::updateRowLabels: bad value - $first"
     }
@@ -1203,7 +1205,7 @@
     }
 }
 
-::itcl::body TableView::getRowIndex {w} {
+::itcl::body ::cadwidgets::TableView::getRowIndex {w} {
     if {![winfo exists $w]} {
 	return 0
     }
@@ -1229,20 +1231,20 @@
     return 0
 }
 
-::itcl::body TableView::getDataRowIndex {w} {
+::itcl::body ::cadwidgets::TableView::getDataRowIndex {w} {
     if {[set ri [getRowIndex $w]] < 1} {
 	error "TableView::getDataRowIndex: $w is not a valid entry window"
     }
 
-    set di [$table countData $ri $::Table::SEP_MARK]
-    if {![$table isData $firstrow $::Table::SEP_MARK] && $di < $firstrow} {
+    set di [$table countData $ri $::cadwidgets::Table::SEP_MARK]
+    if {![$table isData $firstrow $::cadwidgets::Table::SEP_MARK] && $di < $firstrow} {
 	incr di
     }
 
     return $di
 }
 
-::itcl::body TableView::getColIndex {w} {
+::itcl::body ::cadwidgets::TableView::getColIndex {w} {
     # Strip away everything except the column number.
     #
     # First try entry
@@ -1264,20 +1266,20 @@
     return 0
 }
 
-::itcl::body TableView::getFirstEmptyRow {j} {
+::itcl::body ::cadwidgets::TableView::getFirstEmptyRow {j} {
     $table getFirstEmptyRow $j
 }
 
-::itcl::body TableView::getLastRow {} {
+::itcl::body ::cadwidgets::TableView::getLastRow {} {
     return [$table cget -rows]
 }
 
-::itcl::body TableView::getLastCol {} {
+::itcl::body ::cadwidgets::TableView::getLastCol {} {
     return [$table cget -cols]
 }
 
 
-::itcl::body TableView::getDefaultRow {{def {}}} {
+::itcl::body ::cadwidgets::TableView::getDefaultRow {{def {}}} {
     # generate empty row
     set rdata {}
     for {set j 0} {$j < $vcols} {incr j} {
@@ -1287,11 +1289,11 @@
     return $rdata
 }
 
-::itcl::body TableView::getDefaultSepRow {{def {}}} {
-    set data [lreplace [getDefaultRow $def] 0 0 "$::Table::SEP_MARK {}"]
+::itcl::body ::cadwidgets::TableView::getDefaultSepRow {{def {}}} {
+    set data [lreplace [getDefaultRow $def] 0 0 "$::cadwidgets::Table::SEP_MARK {}"]
     foreach datum $data {
 	if {$datum == {}} {
-	    lappend rdata $::Table::SEP_MARK
+	    lappend rdata $::cadwidgets::Table::SEP_MARK
 	} else {
 	    lappend rdata $datum
 	}
@@ -1300,7 +1302,7 @@
     return $rdata
 }
 
-::itcl::body TableView::getDefaultCol {{def {}}} {
+::itcl::body ::cadwidgets::TableView::getDefaultCol {{def {}}} {
     # generate empty column
     set cdata {}
     set nrows [$table cget -rows]
@@ -1311,7 +1313,7 @@
     return $cdata
 }
 
-::itcl::body TableView::growCol {j weight} {
+::itcl::body ::cadwidgets::TableView::growCol {j weight} {
     if {![$table isValidCol $j]} {
 	error "TableView::growCol: bad column - $j, must be in the range 1-$vcols"
     }
@@ -1326,7 +1328,7 @@
 #
 # Returns the value of highlightRow
 #
-::itcl::body TableView::getHighlightRow {} {
+::itcl::body ::cadwidgets::TableView::getHighlightRow {} {
     return $highlightRow
 }
 
@@ -1334,7 +1336,7 @@
 #
 # A nonzero digit indicates which data row to highlight.
 #
-::itcl::body TableView::highlightRow {i} {
+::itcl::body ::cadwidgets::TableView::highlightRow {i} {
     if {[$table isValidRow $i]} {
 	set highlightRow $i
     } else {
@@ -1354,7 +1356,7 @@
 #
 # Turn off row highlighting
 #
-::itcl::body TableView::unhighlightRow {} {
+::itcl::body ::cadwidgets::TableView::unhighlightRow {} {
     set highlightRow 0
     scroll 0
 }
@@ -1363,7 +1365,7 @@
 #
 # Sort the table using column j
 #
-::itcl::body TableView::sortByCol {j type order} {
+::itcl::body ::cadwidgets::TableView::sortByCol {j type order} {
     $table sortByCol $j $type $order
     scroll 0
 }
@@ -1372,7 +1374,7 @@
 #
 # Sort the table using the column that $w is in
 #
-::itcl::body TableView::sortByCol_win {w type order} {
+::itcl::body ::cadwidgets::TableView::sortByCol_win {w type order} {
     set j [getColIndex $w]
     sortByCol $j $type $order
 }
@@ -1381,7 +1383,7 @@
 #
 # Search for the string in the specified column
 #
-::itcl::body TableView::searchCol {j i str} {
+::itcl::body ::cadwidgets::TableView::searchCol {j i str} {
     return [$table searchCol $j $i $str]
 }
 
@@ -1390,7 +1392,7 @@
 # Scroll to the specified row then flash it n times
 # at the given interval.
 #
-::itcl::body TableView::flashRow {i n interval} {
+::itcl::body ::cadwidgets::TableView::flashRow {i n interval} {
     incr n -1
     if {$n < 0} {
 	return
@@ -1415,7 +1417,7 @@
     unhighlightRow
 }
 
-::itcl::body TableView::errorMessage {title msg} {
+::itcl::body ::cadwidgets::TableView::errorMessage {title msg} {
     incr ignoreLostFocus
 
     ::sdialogs::Stddlgs::errordlg $title $msg
@@ -1429,7 +1431,7 @@
 # found in table. The "roffset" parameter is used as the row offset
 # into table.
 #
-::itcl::body TableView::updateTable {{roffset 0}} {
+::itcl::body ::cadwidgets::TableView::updateTable {{roffset 0}} {
     if {![string is digit $roffset]} {
 	error "TableView::updateTable: bad row offset - $roffset"
     }
@@ -1449,14 +1451,14 @@
     set ti $firstrow
 
     # di is used to indicate the data row
-    set di [$table countData $firstrow $::Table::SEP_MARK]
+    set di [$table countData $firstrow $::cadwidgets::Table::SEP_MARK]
 
-    if {![$table isData $firstrow $::Table::SEP_MARK] && $di < $firstrow} {
+    if {![$table isData $firstrow $::cadwidgets::Table::SEP_MARK] && $di < $firstrow} {
 	incr di
     }
     foreach row $rows {
 	set item1 [lindex $row 0]
-	if {[lindex $item1 0] == $::Table::SEP_MARK} {
+	if {[lindex $item1 0] == $::cadwidgets::Table::SEP_MARK} {
 
 	    # Here we need to view a separator, but we have widgets
 	    # packed for viewing data.
@@ -1558,7 +1560,7 @@
 #
 # Updates four variables used for adjusting/setting the vertical scrollbar.
 #
-::itcl::body TableView::updateDrows {} {
+::itcl::body ::cadwidgets::TableView::updateDrows {} {
     set drows [$table cget -rows]
 
     if {$vrows < $drows} {
@@ -1577,7 +1579,7 @@
 #
 # Update/adjust the vertical scroll bar.
 #
-::itcl::body TableView::updateVscroll {} {
+::itcl::body ::cadwidgets::TableView::updateVscroll {} {
     # adjust vscroll
     set y1 [expr {($firstrow - 1) * $invdrows}]
     if {$y1 < 0} {
@@ -1589,19 +1591,19 @@
     after idle "catch {$itk_component(vscroll) set $y1 $y2}"
 }
 
-::itcl::body TableView::activateTraces {} {
+::itcl::body ::cadwidgets::TableView::activateTraces {} {
     foreach trace $traces {
 	eval trace variable $trace
     }
 }
 
-::itcl::body TableView::deactivateTraces {} {
+::itcl::body ::cadwidgets::TableView::deactivateTraces {} {
     foreach trace $traces {
 	eval trace vdelete $trace
     }
 }
 
-::itcl::body TableView::traceEntry {i j tcmd {ops {}} {cmd {}}} {
+::itcl::body ::cadwidgets::TableView::traceEntry {i j tcmd {ops {}} {cmd {}}} {
     if {![string is digit $i] || $i < 1 || $vrows < $i} {
 	error "TableView::traceEntry: bad row value - $i, must be in the range 1-$vrows"
     }
@@ -1629,7 +1631,7 @@
     }
 }
 
-::itcl::body TableView::handleConfigure {} {
+::itcl::body ::cadwidgets::TableView::handleConfigure {} {
     if {$doingConfigure} {
 	return
     }
@@ -1750,7 +1752,7 @@
     set doingConfigure 0
 }
 
-::itcl::body TableView::initColColors {} {
+::itcl::body ::cadwidgets::TableView::initColColors {} {
     # decide which row to use for configuring the rows of a column
     if {$highlightRow != 1} {
 	set trow e1
@@ -1765,14 +1767,14 @@
     }
 }
 
-::itcl::body TableView::hscroll {first last} {
+::itcl::body ::cadwidgets::TableView::hscroll {first last} {
     $itk_component(hscroll) set $first $last
 }
 
 # Borrowed from iwidgets::Scrolledframe and
 # modified to work herein.
 #
-::itcl::body TableView::configureCanvas {} {
+::itcl::body ::cadwidgets::TableView::configureCanvas {} {
     set sr [$itk_component(canvas) cget -scrollregion]
     set srw [lindex $sr 2]
     set srh [lindex $sr 3]
@@ -1783,12 +1785,12 @@
 # Borrowed from iwidgets::Scrolledframe and
 # modified to work herein.
 #
-::itcl::body TableView::configureTable {} {
+::itcl::body ::cadwidgets::TableView::configureTable {} {
     $itk_component(canvas) configure \
 	-scrollregion [$itk_component(canvas) bbox tableTag]
 }
 
-::itcl::body TableView::checkIfAllColumnsDisabled {} {
+::itcl::body ::cadwidgets::TableView::checkIfAllColumnsDisabled {} {
     set allColumnsDisabled 1
     for {set j 1} {$j <= $vcols} {incr j} {
 	if {[$itk_component(e1,$j) cget -state] != "disabled"} {
@@ -1800,7 +1802,7 @@
 
 ################################ Private Methods ################################
 
-::itcl::body TableView::packRow {i} {
+::itcl::body ::cadwidgets::TableView::packRow {i} {
     # pack row label
     grid $itk_component(rl$i) \
 	-row $i -column 0 -sticky nsew
@@ -1811,7 +1813,7 @@
     }
 }
 
-::itcl::body TableView::packAll {} {
+::itcl::body ::cadwidgets::TableView::packAll {} {
     for {set j 1} {$j <= $vcols} {incr j} {
 	grid $itk_component(cl$j) -row 0 -column $j -sticky nsew
     }
@@ -1823,19 +1825,19 @@
     packSepAll
 }
 
-::itcl::body TableView::packSepAll {} {
+::itcl::body ::cadwidgets::TableView::packSepAll {} {
     for {set i 1} {$i <= $vrows} {incr i} {
 	grid $itk_component(sl$i) -row $i -column 1 \
 	    -columnspan $vcols -sticky nsew
     }
 }
 
-::itcl::body TableView::deleteColLabel {j} {
+::itcl::body ::cadwidgets::TableView::deleteColLabel {j} {
     itk_component delete cl$j
     destroy $itk_component(table).cl$j
 }
 
-::itcl::body TableView::buildColLabel {j} {
+::itcl::body ::cadwidgets::TableView::buildColLabel {j} {
     itk_component add cl$j {
 	::label $itk_component(table).cl$j -text [lindex $labels $j]
     } {
@@ -1844,7 +1846,7 @@
     }
 }
 
-::itcl::body TableView::deleteEntry {i j} {
+::itcl::body ::cadwidgets::TableView::deleteEntry {i j} {
     # deactivate the text variable
     #    unset evar($i,$j)
 
@@ -1853,7 +1855,7 @@
     destroy $itk_component(table).e$i,$j
 }
 
-::itcl::body TableView::buildEntry {i j} {
+::itcl::body ::cadwidgets::TableView::buildEntry {i j} {
     if {$useTextEntry} {
 	itk_component add e$i,$j {
 	    # activate the text variable
@@ -1904,7 +1906,7 @@
     }
 }
 
-::itcl::body TableView::buildRow {i} {
+::itcl::body ::cadwidgets::TableView::buildRow {i} {
     #    if {$doingConfigure} {
     #	return
     #    }
@@ -1951,7 +1953,7 @@
     }
 }
 
-::itcl::body TableView::destroyRow {i} {
+::itcl::body ::cadwidgets::TableView::destroyRow {i} {
     # destroy row label
     grid forget $itk_component(rowLabels).rl$i
     itk_component delete rl$i
@@ -1971,7 +1973,7 @@
 # The idea to use a canvas for scrolling and the
 # code for implementation was borrowed from iwidgets::Scrollframe.
 #
-::itcl::body TableView::buildTable {} {
+::itcl::body ::cadwidgets::TableView::buildTable {} {
     itk_component add canvas {
 	::canvas $itk_interior.canvas \
 	    -height 1.0 -width 1.0 \
@@ -2057,7 +2059,7 @@
 # Note - this is a private method that knows that $var is this
 #        classes evar variable.
 #
-::itcl::body TableView::watchTable {var index op} {
+::itcl::body ::cadwidgets::TableView::watchTable {var index op} {
     #puts "watchTable: var - $var, index - $index"
     #    if {$watchingTables} {
     #	return
@@ -2075,7 +2077,7 @@
     #    set watchingTables 0
 }
 
-::itcl::body TableView::doTextEntryKeyPress {W K} {
+::itcl::body ::cadwidgets::TableView::doTextEntryKeyPress {W K} {
     if {[catch {getRowIndex $W} ri]} {
 	return
     }
@@ -2086,7 +2088,7 @@
     set evar($i,$j) $val
 }
 
-::itcl::body TableView::handleTextEntryKeyPress {W K} {
+::itcl::body ::cadwidgets::TableView::handleTextEntryKeyPress {W K} {
     switch -- $K {
 	"Return" {
 	    incr ignoreLostFocus
@@ -2109,7 +2111,7 @@
     }
 }
 
-::itcl::body TableView::handleTextEntryShiftKeyPress {W K} {
+::itcl::body ::cadwidgets::TableView::handleTextEntryShiftKeyPress {W K} {
     switch -- $K {
 	"Return" {
 	    incr ignoreLostFocus
@@ -2133,7 +2135,7 @@
 }
 
 
-::itcl::body TableView::handleTextEntryReturn {w} {
+::itcl::body ::cadwidgets::TableView::handleTextEntryReturn {w} {
     if {[catch {expr {[getDataRowIndex $w] + 1}} ri]} {
 	return
     }
@@ -2182,7 +2184,7 @@
     }
 }
 
-::itcl::body TableView::handleTextEntryShiftReturn {w} {
+::itcl::body ::cadwidgets::TableView::handleTextEntryShiftReturn {w} {
     if {[catch {expr {[getDataRowIndex $w] - 1}} ri]} {
 	return
     }
@@ -2228,7 +2230,7 @@
 #    prevent an infinite loop when skipping disabled entries
 #    in the case where all entries have been disabled.
 #
-::itcl::body TableView::handleTextEntryTab {w} {
+::itcl::body ::cadwidgets::TableView::handleTextEntryTab {w} {
     if {[catch {getDataRowIndex $w} ri]} {
 	return
     }
@@ -2336,7 +2338,7 @@
 #    prevent an infinite loop when skipping disabled entries
 #    in the case where all entries have been disabled.
 #
-::itcl::body TableView::handleTextEntryShiftTab {w} {
+::itcl::body ::cadwidgets::TableView::handleTextEntryShiftTab {w} {
     if {[catch {getDataRowIndex $w} ri]} {
 	return
     }
@@ -2408,7 +2410,7 @@
     }
 }
 
-::itcl::body TableView::handleLostFocus {w} {
+::itcl::body ::cadwidgets::TableView::handleLostFocus {w} {
     if {$ignoreLostFocus} {
 	incr ignoreLostFocus -1
 	return
@@ -2425,7 +2427,7 @@
     }
 }
 
-::itcl::body TableView::setTextRow {w val} {
+::itcl::body ::cadwidgets::TableView::setTextRow {w val} {
     set val $textRowLabelPad$val
     $w configure -state normal
     $w delete 1.0 end
@@ -2433,12 +2435,12 @@
     $w configure -state disabled
 }
 
-::itcl::body TableView::setTextEntry {w val} {
+::itcl::body ::cadwidgets::TableView::setTextEntry {w val} {
     $w delete 1.0 end
     $w insert end $val
 }
 
-::itcl::body TableView::getStack {} {
+::itcl::body ::cadwidgets::TableView::getStack {} {
     set stack {}
     set lvl [info level]
     incr lvl -1
@@ -2449,7 +2451,7 @@
     return $stack
 }
 
-::itcl::body TableView::enableColState {} {
+::itcl::body ::cadwidgets::TableView::enableColState {} {
     set savedColState {{}}
     for {set j 1} {$j <= $vcols} {incr j} {
 	lappend savedColState [$itk_component(e1,$j) cget -state]
@@ -2457,9 +2459,33 @@
     }
 }
 
-::itcl::body TableView::resetColState {} {
+::itcl::body ::cadwidgets::TableView::resetColState {} {
     for {set j 1} {$j <= $vcols} {incr j} {
 	configCol $j -state [lindex $savedColState $j]
+    }
+}
+
+# Retain the original class, including its inheritance behavior, for scripts
+# that have not yet adopted the qualified widget name.
+::itcl::class ::TableView {
+    inherit ::cadwidgets::TableView
+
+    constructor {_labels args} {
+	::cadwidgets::TableView::constructor $_labels {*}$args
+    } {}
+}
+
+# pkg_mkIndex stubs class declarations, so only link common variables during
+# a live Itcl load.
+if {[namespace exists ::cadwidgets::TableView]} {
+    namespace eval ::TableView {
+	namespace upvar ::cadwidgets::TableView SystemWindowFont SystemWindowFont
+	namespace upvar ::cadwidgets::TableView SystemWindowText SystemWindowText
+	namespace upvar ::cadwidgets::TableView SystemWindow SystemWindow
+	namespace upvar ::cadwidgets::TableView SystemHighlight SystemHighlight
+	namespace upvar ::cadwidgets::TableView SystemHighlightText SystemHighlightText
+	namespace upvar ::cadwidgets::TableView SystemButtonFace SystemButtonFace
+	namespace upvar ::cadwidgets::TableView SystemButtonText SystemButtonText
     }
 }
 

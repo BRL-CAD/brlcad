@@ -127,9 +127,9 @@ proc createSplashScreen {} {
     if {$useImage} {
 	set imgfile [file join [bu_dir data] tclscripts archer images aboutArcher.png]
 	set image [image create photo -file $imgfile]
-	set ::ArcherCore::splash [Splash .splash -image $image]
+	set ::ArcherCore::splash [::cadwidgets::Splash .splash -image $image]
     } else {
-	set ::ArcherCore::splash [Splash .splash -message "Loading Archer ... please wait ..."]
+	set ::ArcherCore::splash [::cadwidgets::Splash .splash -message "Loading Archer ... please wait ..."]
     }
 
     update idletasks

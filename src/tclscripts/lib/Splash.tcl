@@ -23,19 +23,21 @@
 #       The Splash class implements a splash screen.
 #
 
+package provide cadwidgets::Splash 1.0
+
 option add *Splash.background blue widgetDefault
 option add *Splash.foreground yellow widgetDefault
 option add *Splash.borderWidth 2 widgetDefault
 option add *Splash.relief raised widgetDefault
 option add *Splash.cursor watch widgetDefault
 
-::itcl::class Splash {
-    inherit iwidgets::Shell
+::itcl::class ::cadwidgets::Splash {
+    inherit ::iwidgets::Shell
 
     constructor {args} {}
 }
 
-::itcl::body Splash::constructor {args} {
+::itcl::body ::cadwidgets::Splash::constructor {args} {
     wm overrideredirect $itk_component(hull) 1
 
     # revive a few ignored options
@@ -56,6 +58,16 @@ option add *Splash.cursor watch widgetDefault
 
     pack $itk_component(message) -expand yes -fill both
     center
+}
+
+# Retain the original class, including its inheritance behavior, for scripts
+# that have not yet adopted the qualified widget name.
+::itcl::class ::Splash {
+    inherit ::cadwidgets::Splash
+
+    constructor {args} {
+	::cadwidgets::Splash::constructor {*}$args
+    } {}
 }
 
 # Local Variables:

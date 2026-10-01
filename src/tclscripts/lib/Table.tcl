@@ -25,7 +25,9 @@
 #       being a row in the table.
 #
 
-::itcl::class Table {
+package provide cadwidgets::Table 1.0
+
+::itcl::class ::cadwidgets::Table {
     constructor {args} {}
     destructor {}
 
@@ -77,7 +79,7 @@
     }
 }
 
-::itcl::configbody Table::table {
+::itcl::configbody ::cadwidgets::Table::table {
     if {![llength $table]} {
 	error "Table: table is zero length"
     }
@@ -95,20 +97,20 @@
     set cols $j
 }
 
-::itcl::configbody Table::rows {
+::itcl::configbody ::cadwidgets::Table::rows {
     error "Table: this option is read-only"
 }
 
-::itcl::configbody Table::cols {
+::itcl::configbody ::cadwidgets::Table::cols {
     error "Table: this option is read-only"
 }
 
-::itcl::body Table::constructor {args} {
+::itcl::body ::cadwidgets::Table::constructor {args} {
     # process options
     eval configure $args
 }
 
-::itcl::body Table::getEntry {i j} {
+::itcl::body ::cadwidgets::Table::getEntry {i j} {
     if {![isValidRow $i]} {
 	error "Table::getEntry: i must be in the range (1,$rows) inclusive"
     }
@@ -122,7 +124,7 @@
     lindex [lindex $table $i] $j
 }
 
-::itcl::body Table::setEntry {i j val} {
+::itcl::body ::cadwidgets::Table::setEntry {i j val} {
     if {![isValidRow $i]} {
 	error "Table::setEntry: i must be in the range (1,$rows) inclusive"
     }
@@ -137,7 +139,7 @@
     return
 }
 
-::itcl::body Table::getRow {i} {
+::itcl::body ::cadwidgets::Table::getRow {i} {
     if {![isValidRow $i]} {
 	error "Table::getRow: i must be in the range (1,$rows) inclusive"
     }
@@ -146,7 +148,7 @@
     lindex $table $i
 }
 
-::itcl::body Table::getRows {i1 i2} {
+::itcl::body ::cadwidgets::Table::getRows {i1 i2} {
     if {![isValidRow $i1]} {
 	error "Table::getRows: i1 must be in the range (1,$rows) inclusive"
     }
@@ -160,7 +162,7 @@
     lrange $table $i1 $i2
 }
 
-::itcl::body Table::setRow {i rdata} {
+::itcl::body ::cadwidgets::Table::setRow {i rdata} {
     if {![isValidRow $i]} {
 	error "Table::setRow: i must be in the range (1,$rows) inclusive"
     }
@@ -174,7 +176,7 @@
     return
 }
 
-::itcl::body Table::appendRow {rdata} {
+::itcl::body ::cadwidgets::Table::appendRow {rdata} {
     if {[llength $rdata] != $cols} {
 	error "Table::appendRow: number of values in row must be $cols"
     }
@@ -184,7 +186,7 @@
     return
 }
 
-::itcl::body Table::deleteRow {i} {
+::itcl::body ::cadwidgets::Table::deleteRow {i} {
     if {![isValidRow $i]} {
 	error "Table::deleteRow: i must be in the range (1, $rows) inclusive"
     }
@@ -199,7 +201,7 @@
     return
 }
 
-::itcl::body Table::insertRow {i rdata} {
+::itcl::body ::cadwidgets::Table::insertRow {i rdata} {
     if {![isValidRow $i]} {
 	error "Table::insertRow: i must be in the range (1, $rows) inclusive"
     }
@@ -223,7 +225,7 @@
     return
 }
 
-::itcl::body Table::moveRow {srcIndex destIndex} {
+::itcl::body ::cadwidgets::Table::moveRow {srcIndex destIndex} {
     if {![isValidRow $srcIndex] || ![isValidRow $destIndex]} {
 	error "Table::insertRow: srcIndex and destIndex must be in the range (1, $rows) inclusive"
     }
@@ -275,7 +277,7 @@
     set table $newtable
 }
 
-::itcl::body Table::getCol {j} {
+::itcl::body ::cadwidgets::Table::getCol {j} {
     if {![isValidCol $j]} {
 	error "Table::getCol: j must be in the range (1,$cols) inclusive"
     }
@@ -288,7 +290,7 @@
     return $vals
 }
 
-::itcl::body Table::getCols {j1 j2} {
+::itcl::body ::cadwidgets::Table::getCols {j1 j2} {
     if {![isValidCol $j1]} {
 	error "Table::getCols: j must be in the range (1,$cols) inclusive"
     }
@@ -320,7 +322,7 @@
     return $vals
 }
 
-::itcl::body Table::setCol {j cdata} {
+::itcl::body ::cadwidgets::Table::setCol {j cdata} {
     if {![isValidCol $j]} {
 	error "Table::setCol: j must be in the range (1,$cols) inclusive"
     }
@@ -345,7 +347,7 @@
     return
 }
 
-::itcl::body Table::appendCol {cdata} {
+::itcl::body ::cadwidgets::Table::appendCol {cdata} {
     if {[llength $cdata] != $rows} {
 	error "Table::appendCol: number of values in column must be $rows"
     }
@@ -359,7 +361,7 @@
     return
 }
 
-::itcl::body Table::deleteCol {j} {
+::itcl::body ::cadwidgets::Table::deleteCol {j} {
     if {![isValidCol $j]} {
 	error "Table::deleteCol: j must be in the range (1,$cols) inclusive"
     }
@@ -378,7 +380,7 @@
     return
 }
 
-::itcl::body Table::insertCol {j cdata} {
+::itcl::body ::cadwidgets::Table::insertCol {j cdata} {
     if {![isValidCol $j]} {
 	error "Table::insertCol: j must be in the range (1,$cols) inclusive"
     }
@@ -404,7 +406,7 @@
     return
 }
 
-::itcl::body Table::initCol {j ival} {
+::itcl::body ::cadwidgets::Table::initCol {j ival} {
     if {![isValidCol $j]} {
 	error "Table::initCol: j must be in the range (1,$cols) inclusive"
     }
@@ -418,7 +420,7 @@
     return
 }
 
-::itcl::body Table::initColRange {j i1 i2 ival} {
+::itcl::body ::cadwidgets::Table::initColRange {j i1 i2 ival} {
     if {![isValidCol $j]} {
 	error "Table::initColRange: j must be in the range (1,$cols) inclusive"
     }
@@ -447,7 +449,7 @@
     return
 }
 
-::itcl::body Table::isValidRow {i} {
+::itcl::body ::cadwidgets::Table::isValidRow {i} {
     if {![string is digit $i] || $i < 1 || $rows < $i} {
 	return 0
     }
@@ -455,7 +457,7 @@
     return 1
 }
 
-::itcl::body Table::isValidCol {j} {
+::itcl::body ::cadwidgets::Table::isValidCol {j} {
     if {![string is digit $j] || $j < 1 || $cols < $j} {
 	return 0
     }
@@ -463,7 +465,7 @@
     return 1
 }
 
-::itcl::body Table::getFirstEmptyRow {j} {
+::itcl::body ::cadwidgets::Table::getFirstEmptyRow {j} {
     if {![isValidCol $j]} {
 	error "Table::getFirstEmptyRow: j must be in the range (1,$cols) inclusive"
     }
@@ -484,7 +486,7 @@
     return 0
 }
 
-::itcl::body Table::isData {i mark} {
+::itcl::body ::cadwidgets::Table::isData {i mark} {
     if {![isValidRow $i]} {
 	error "Table::isData: i must be in the range (1,$rows) inclusive"
     }
@@ -497,7 +499,7 @@
     return 0
 }
 
-::itcl::body Table::countData {i mark} {
+::itcl::body ::cadwidgets::Table::countData {i mark} {
     if {![isValidRow $i]} {
 	error "Table::countData: i must be in the range (1,$rows) inclusive"
     }
@@ -519,7 +521,7 @@
     return $dcount
 }
 
-::itcl::body Table::printColRange {chan j1 j2} {
+::itcl::body ::cadwidgets::Table::printColRange {chan j1 j2} {
     if {![isValidCol $j1]} {
 	error "Table::printColRange: j1 must be in the range (1,$cols) inclusive"
     } else {
@@ -551,7 +553,7 @@
 #
 # Sort the table using column j
 #
-::itcl::body Table::sortByCol {j type order} {
+::itcl::body ::cadwidgets::Table::sortByCol {j type order} {
     if {![isValidCol $j]} {
 	error "Table::sortByCol: j must be in the range (1,$cols) inclusive"
     }
@@ -604,13 +606,13 @@
 #
 # Search for the string in the specified column
 #
-::itcl::body Table::searchCol {j i str} {
+::itcl::body ::cadwidgets::Table::searchCol {j i str} {
     set cdata [getCol $j]
     incr i -1
     return [expr {[lsearch -start $i -regexp $cdata $str]} + 1]
 }
 
-::itcl::body Table::deleteEmptyRows {} {
+::itcl::body ::cadwidgets::Table::deleteEmptyRows {} {
     set newTable {}
 
     foreach row $table {
@@ -631,6 +633,26 @@
     }
 
     set table $newTable
+}
+
+# Retain the original class, including its inheritance behavior, for scripts
+# that have not yet adopted the qualified widget name.
+::itcl::class ::Table {
+    inherit ::cadwidgets::Table
+
+    constructor {args} {
+	::cadwidgets::Table::constructor {*}$args
+    } {}
+}
+
+# SEP_MARK was directly readable from the legacy class namespace.  Keep that
+# spelling linked to the canonical common variable during the transition.
+# pkg_mkIndex stubs class declarations, so only create the link during a live
+# Itcl load.
+if {[namespace exists ::cadwidgets::Table]} {
+    namespace eval ::Table {
+	namespace upvar ::cadwidgets::Table SEP_MARK SEP_MARK
+    }
 }
 
 # Local Variables:

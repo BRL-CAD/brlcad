@@ -461,22 +461,71 @@ foreach class {::Wizard ::RtWizard::Wizard} {
     }
 }
 
+# Load each legacy name first so the tclIndex compatibility path is exercised,
+# then verify the namespaced package and both real Itcl classes.
+foreach {legacy canonical package} {
+    ::Command ::cadwidgets::Command cadwidgets::Command
+    ::Splash ::cadwidgets::Splash cadwidgets::Splash
+    ::Table ::cadwidgets::Table cadwidgets::Table
+    ::TableView ::cadwidgets::TableView cadwidgets::TableView
+} {
+    if {![llength [info commands $legacy]] && ![auto_load $legacy]} {
+	fail "$legacy compatibility class is not autoloadable"
+    }
+    require_at_least $package 1.0
+    foreach class [list $canonical $legacy] {
+	if {![::itcl::is class $class]} {
+	    fail "$class is not an Itcl class"
+	}
+    }
+}
+
+foreach {canonical_variable legacy_variable} {
+    ::cadwidgets::Command::CMD_MORE_ARGS ::Command::CMD_MORE_ARGS
+    ::cadwidgets::Command::CMD_MORE_ARGS_LEN ::Command::CMD_MORE_ARGS_LEN
+    ::cadwidgets::Table::SEP_MARK ::Table::SEP_MARK
+    ::cadwidgets::TableView::SystemWindowFont ::TableView::SystemWindowFont
+    ::cadwidgets::TableView::SystemWindowText ::TableView::SystemWindowText
+    ::cadwidgets::TableView::SystemWindow ::TableView::SystemWindow
+    ::cadwidgets::TableView::SystemHighlight ::TableView::SystemHighlight
+    ::cadwidgets::TableView::SystemHighlightText ::TableView::SystemHighlightText
+    ::cadwidgets::TableView::SystemButtonFace ::TableView::SystemButtonFace
+    ::cadwidgets::TableView::SystemButtonText ::TableView::SystemButtonText
+} {
+    if {![info exists $legacy_variable]} {
+	fail "$legacy_variable compatibility variable is missing"
+    }
+    assert_equal "$legacy_variable compatibility value" \
+	[set $legacy_variable] [set $canonical_variable]
+}
+foreach {canonical_variable legacy_variable} {
+    ::cadwidgets::Command::CMD_MORE_ARGS_LEN ::Command::CMD_MORE_ARGS_LEN
+    ::cadwidgets::Table::SEP_MARK ::Table::SEP_MARK
+    ::cadwidgets::TableView::SystemWindowFont ::TableView::SystemWindowFont
+} {
+    set saved_value [set $canonical_variable]
+    set $legacy_variable namespace-link-check
+    assert_equal "$legacy_variable compatibility link" \
+	[set $canonical_variable] namespace-link-check
+    set $canonical_variable $saved_value
+}
+
 foreach lifecycle {
     {cadwidgets::Accordion .lifecycle_accordion}
     {cadwidgets::CellPlot .lifecycle_cell_plot}
     {cadwidgets::ColorEntry .lifecycle_color_entry}
     {cadwidgets::ComboBox .lifecycle_combo_box}
+    {::cadwidgets::Command .lifecycle_canonical_command}
     {cadwidgets::Help lifecycle_help}
     {cadwidgets::Legend .lifecycle_legend}
     {cadwidgets::pattern_control .lifecycle_pattern_control}
-    {Command .lifecycle_command}
+    {::cadwidgets::Splash .lifecycle_canonical_splash -message Lifecycle}
+    {::cadwidgets::Table lifecycle_canonical_table}
+    {::cadwidgets::TableView .lifecycle_canonical_table_view {{Column A} {Column B}}}
     {GeometryChecker .geometry_checker}
     {GraphEditor .lifecycle_graph_editor}
     {OverlapFileTool .overlap_file_tool}
-    {Splash .lifecycle_splash -message Lifecycle}
     {TabWindow .lifecycle_tab_window}
-    {Table lifecycle_table}
-    {TableView .lifecycle_table_view {{Column A} {Column B}}}
     {sdialogs::Entrydialog .lifecycle_entry_dialog}
     {sdialogs::Listdialog .lifecycle_list_dialog}
     {swidgets::Selectlists .lifecycle_select_lists}
@@ -486,6 +535,10 @@ foreach lifecycle {
     {swidgets::tkgetdir .lifecycle_directory_chooser}
     {::Wizard .lifecycle_archer_wizard}
     {::RtWizard::Wizard .lifecycle_rtwizard_wizard}
+    {::Command .lifecycle_legacy_command}
+    {::Splash .lifecycle_legacy_splash -message Lifecycle}
+    {::Table lifecycle_legacy_table}
+    {::TableView .lifecycle_legacy_table_view {{Column A} {Column B}}}
     {::pattern_control .lifecycle_legacy_pattern_control}
 } {
     exercise_object_lifecycle {*}$lifecycle

@@ -20,10 +20,12 @@
 ###
 #
 # Description -
-#	The Command class implements a command window with command line
+#	The cadwidgets::Command class implements a command window with command line
 #       editing and command history.
 #
-::itcl::class Command {
+package provide cadwidgets::Command 1.0
+
+::itcl::class ::cadwidgets::Command {
     inherit ::iwidgets::Scrolledtext
 
     constructor {args} {}
@@ -132,11 +134,11 @@
     private variable more_args_end_index ""
 }
 
-::itcl::configbody Command::edit_style {
+::itcl::configbody ::cadwidgets::Command::edit_style {
     edit_style $itk_option(-edit_style)
 }
 
-::itcl::configbody Command::cmd_prefix {
+::itcl::configbody ::cadwidgets::Command::cmd_prefix {
     if {$itk_option(-cmd_prefix) == ""} {
 	set cmdlist ""
 	return
@@ -169,33 +171,33 @@
     }
 }
 
-::itcl::configbody Command::selection_color {
+::itcl::configbody ::cadwidgets::Command::selection_color {
     $itk_component(text) tag configure sel -foreground $itk_option(-selection_color)
 }
 
-::itcl::configbody Command::prompt_color {
+::itcl::configbody ::cadwidgets::Command::prompt_color {
     $itk_component(text) tag configure prompt -foreground $itk_option(-prompt_color)
 }
 
-::itcl::configbody Command::cmd_color {
+::itcl::configbody ::cadwidgets::Command::cmd_color {
     $itk_component(text) tag configure cmd -foreground $itk_option(-cmd_color)
 }
 
-::itcl::configbody Command::oldcmd_color {
+::itcl::configbody ::cadwidgets::Command::oldcmd_color {
     $itk_component(text) tag configure oldcmd -foreground $itk_option(-oldcmd_color)
 }
 
-::itcl::configbody Command::result_color {
+::itcl::configbody ::cadwidgets::Command::result_color {
     $itk_component(text) tag configure result -foreground $itk_option(-result_color)
 }
 
-::itcl::configbody Command::maxlines {
+::itcl::configbody ::cadwidgets::Command::maxlines {
     if {$itk_option(-maxlines) < 1} {
 	error "-maxlines must be greater than zero"
     }
 }
 
-::itcl::body Command::constructor {args} {
+::itcl::body ::cadwidgets::Command::constructor {args} {
     eval itk_initialize $args
 
     # thar be dragons here
@@ -228,7 +230,7 @@
 #    }
 }
 
-::itcl::body Command::destructor {} {
+::itcl::body ::cadwidgets::Command::destructor {} {
     interp delete $slaveInterp
 
     # destroy command history object
@@ -237,7 +239,7 @@
 
 
 ############################## Public Methods ##############################
-::itcl::body Command::clear {} {
+::itcl::body ::cadwidgets::Command::clear {} {
     set w $itk_component(text)
     $w delete 1.0 end
     $w insert insert " "
@@ -245,11 +247,11 @@
     $w edit reset
 }
 
-::itcl::body Command::history {} {
+::itcl::body ::cadwidgets::Command::history {} {
     eval $hist history
 }
 
-::itcl::body Command::edit_style {args} {
+::itcl::body ::cadwidgets::Command::edit_style {args} {
     if {$args == ""} {
 	return $itk_option(-edit_style)
     }
@@ -266,7 +268,7 @@
     }
 }
 
-::itcl::body Command::do_get_more_args {} {
+::itcl::body ::cadwidgets::Command::do_get_more_args {} {
     set w $itk_component(text)
     set more_args_end_index [$itk_component(text) index insert]
     $w mark set insert {end - 2c}
@@ -278,7 +280,7 @@
     set more_args_var [$w get $more_args_begin_index $more_args_end_index]
 }
 
-::itcl::body Command::get_more_args {} {
+::itcl::body ::cadwidgets::Command::get_more_args {} {
     set more_args_interrupted 0
     set more_args_var ""
     set more_args_begin_index [$itk_component(text) index insert]
@@ -297,7 +299,7 @@
     }
 }
 
-::itcl::body Command::putstring {str} {
+::itcl::body ::cadwidgets::Command::putstring {str} {
     set w $itk_component(text)
     set promptBegin [$w index {end - 1 l}]
     $w mark set curr insert
@@ -321,7 +323,7 @@
     }
 }
 
-::itcl::body Command::reinitialize {} {
+::itcl::body ::cadwidgets::Command::reinitialize {} {
     $itk_component(text) delete 1.0 end
     print_prompt
     $itk_component(text) insert insert " "
@@ -330,7 +332,7 @@
 
 ############################## Protected/Private Methods  ##############################
 
-::itcl::body Command::invoke {} {
+::itcl::body ::cadwidgets::Command::invoke {} {
     set w $itk_component(text)
 
     set cmd [string trimleft [$w get promptEnd insert]]
@@ -397,7 +399,7 @@
     $w see insert
 }
 
-::itcl::body Command::invokeMaster {hcmd} {
+::itcl::body ::cadwidgets::Command::invokeMaster {hcmd} {
     set cmd [lrange $hcmd 1 end]
 
     if {$cmd == ""} {
@@ -434,7 +436,7 @@
     $itk_component(text) see insert
 }
 
-::itcl::body Command::first_char_in_line {} {
+::itcl::body ::cadwidgets::Command::first_char_in_line {} {
     set w $itk_component(text)
     $w mark set insert promptEnd
     set c [$w get insert]
@@ -444,20 +446,20 @@
     cursor_highlight
 }
 
-::itcl::body Command::beginning_of_line {} {
+::itcl::body ::cadwidgets::Command::beginning_of_line {} {
     set w $itk_component(text)
     $w mark set insert promptEnd
     cursor_highlight
 }
 
-::itcl::body Command::end_of_line {} {
+::itcl::body ::cadwidgets::Command::end_of_line {} {
     set w $itk_component(text)
     $w mark set insert {end - 2c}
     cursor_highlight
     $w see insert
 }
 
-::itcl::body Command::backward_char {} {
+::itcl::body ::cadwidgets::Command::backward_char {} {
     set w $itk_component(text)
     if [$w compare insert > promptEnd] {
 	$w mark set insert {insert - 1c}
@@ -465,7 +467,7 @@
     }
 }
 
-::itcl::body Command::forward_char {} {
+::itcl::body ::cadwidgets::Command::forward_char {} {
     set w $itk_component(text)
     if [$w compare insert < {end - 2c}] {
 	$w mark set insert {insert + 1c}
@@ -473,7 +475,7 @@
     }
 }
 
-::itcl::body Command::backward_word {} {
+::itcl::body ::cadwidgets::Command::backward_word {} {
     set w $itk_component(text)
     set ti [$w search -backwards -regexp "\[ \t\]\[^ \t\]" {insert - 1c} promptEnd]
     if [string length $ti] {
@@ -485,7 +487,7 @@
     cursor_highlight
 }
 
-::itcl::body Command::forward_word {} {
+::itcl::body ::cadwidgets::Command::forward_word {} {
     set w $itk_component(text)
     set ti [$w search -forward -regexp "\[ \t\]\[^ \t\]" insert {end - 2c}]
     if [string length $ti] {
@@ -494,7 +496,7 @@
     }
 }
 
-::itcl::body Command::end_word {} {
+::itcl::body ::cadwidgets::Command::end_word {} {
     set w $itk_component(text)
     set ti [$w search -forward -regexp "\[^ \t\]\[ \t\]" {insert + 1c} {end - 2c}]
     if [string length $ti] {
@@ -506,7 +508,7 @@
     cursor_highlight
 }
 
-::itcl::body Command::backward_delete_char {} {
+::itcl::body ::cadwidgets::Command::backward_delete_char {} {
     set w $itk_component(text)
     #    catch {$w tag remove sel sel.first promptEnd}
     if [$w compare insert > promptEnd] {
@@ -516,7 +518,7 @@
     }
 }
 
-::itcl::body Command::delete_char {} {
+::itcl::body ::cadwidgets::Command::delete_char {} {
     set w $itk_component(text)
     #    catch {$w tag remove sel sel.first promptEnd}
     if {[$w compare insert >= promptEnd] && [$w compare insert < {end - 2c}]} {
@@ -525,7 +527,7 @@
     }
 }
 
-::itcl::body Command::backward_delete_word {} {
+::itcl::body ::cadwidgets::Command::backward_delete_word {} {
     set w $itk_component(text)
     set ti [$w search -backwards -regexp "\[ \t\]\[^ \t\]" {insert - 1c} promptEnd]
     if [string length $ti] {
@@ -536,7 +538,7 @@
     cursor_highlight
 }
 
-::itcl::body Command::delete_word {} {
+::itcl::body ::cadwidgets::Command::delete_word {} {
     set w $itk_component(text)
     set ti [$w search -forward -regexp "\[ \t\]\[^ \t\]" {insert + 1c} {end - 2c}]
     if [string length $ti] {
@@ -548,7 +550,7 @@
     cursor_highlight
 }
 
-::itcl::body Command::delete_end_word {} {
+::itcl::body ::cadwidgets::Command::delete_end_word {} {
     set w $itk_component(text)
     set ti [$w search -forward -regexp "\[^ \t\]\[ \t\]" {insert + 1c} {end - 2c}]
     if [string length $ti] {
@@ -560,25 +562,25 @@
     cursor_highlight
 }
 
-::itcl::body Command::delete_line {} {
+::itcl::body ::cadwidgets::Command::delete_line {} {
     set w $itk_component(text)
     $w delete promptEnd end-2c
     cursor_highlight
 }
 
-::itcl::body Command::delete_end_of_line {} {
+::itcl::body ::cadwidgets::Command::delete_end_of_line {} {
     set w $itk_component(text)
     $w delete insert end-2c
     cursor_highlight
 }
 
-::itcl::body Command::delete_beginning_of_line {} {
+::itcl::body ::cadwidgets::Command::delete_beginning_of_line {} {
     set w $itk_component(text)
     $w delete promptEnd insert
     cursor_highlight
 }
 
-::itcl::body Command::next {} {
+::itcl::body ::cadwidgets::Command::next {} {
     set w $itk_component(text)
     set result [catch {$hist next} msg]
 
@@ -602,7 +604,7 @@
     }
 }
 
-::itcl::body Command::prev {} {
+::itcl::body ::cadwidgets::Command::prev {} {
     set w $itk_component(text)
     set result [catch {$hist prev} msg]
 
@@ -623,7 +625,7 @@
     }
 }
 
-::itcl::body Command::transpose {} {
+::itcl::body ::cadwidgets::Command::transpose {} {
     set w $itk_component(text)
     if {[$w compare insert > promptEnd] && [$w compare {end - 2c} > {promptEnd + 1c}]} {
 	if [$w compare insert >= {end - 2c}] {
@@ -640,7 +642,7 @@
     cursor_highlight
 }
 
-::itcl::body Command::execute {} {
+::itcl::body ::cadwidgets::Command::execute {} {
     set w $itk_component(text)
     $w mark set insert {end - 2c}
     $w insert insert \n
@@ -653,7 +655,7 @@
     cursor_highlight
 }
 
-::itcl::body Command::interrupt {} {
+::itcl::body ::cadwidgets::Command::interrupt {} {
     set w $itk_component(text)
 
     $w insert insert \n
@@ -666,28 +668,28 @@
 #                        VI Specific Callbacks                                   #
 #                                                                                #
 ##################################################################################
-::itcl::body Command::vi_edit_mode {} {
+::itcl::body ::cadwidgets::Command::vi_edit_mode {} {
     set w $itk_component(text)
     bind $w <BackSpace> "[::itcl::code $this backward_char]; break"
     bind $w <space> "[::itcl::code $this forward_char]; break"
     bind $w <KeyPress> "[::itcl::code $this vi_process_edit %A %s]; break"
 }
 
-::itcl::body Command::vi_overwrite_mode {} {
+::itcl::body ::cadwidgets::Command::vi_overwrite_mode {} {
     set w $itk_component(text)
     bind $w <BackSpace> "[::itcl::code $this backward_delete_char]; break"
     bind $w <space> "[::itcl::code $this delete_char]; %W insert insert %A; break"
     bind $w <KeyPress> "[::itcl::code $this vi_process_overwrite %A %s]; break"
 }
 
-::itcl::body Command::vi_insert_mode {} {
+::itcl::body ::cadwidgets::Command::vi_insert_mode {} {
     set w $itk_component(text)
     bind $w <BackSpace> "[::itcl::code $this backward_delete_char]; break"
     bind $w <space> {}
     bind $w <KeyPress> {}
 }
 
-::itcl::body Command::vi_process_edit {c state} {
+::itcl::body ::cadwidgets::Command::vi_process_edit {c state} {
     set w $itk_component(text)
 
     # Throw away all non-visible characters
@@ -1021,7 +1023,7 @@
     }
 }
 
-::itcl::body Command::vi_process_overwrite {c state} {
+::itcl::body ::cadwidgets::Command::vi_process_overwrite {c state} {
     set w $itk_component(text)
     # Throw away all non-visible characters
     if {![string match \[!-~\] $c] || $state > 1} {
@@ -1034,7 +1036,7 @@
 # End - VI Specific Callbacks
 
 
-::itcl::body Command::text_op_begin {x y} {
+::itcl::body ::cadwidgets::Command::text_op_begin {x y} {
     set w $itk_component(text)
     global mged_gui
 
@@ -1042,7 +1044,7 @@
     $w scan mark $x $y
 }
 
-::itcl::body Command::text_paste {} {
+::itcl::body ::cadwidgets::Command::text_paste {} {
     set w $itk_component(text)
 
     if {!$moveView} {
@@ -1055,14 +1057,14 @@
     }
 }
 
-::itcl::body Command::text_scroll {x y} {
+::itcl::body ::cadwidgets::Command::text_scroll {x y} {
     set w $itk_component(text)
 
     set moveView 1
     $w scan dragto $x $y
 }
 
-::itcl::body Command::selection_begin {x y} {
+::itcl::body ::cadwidgets::Command::selection_begin {x y} {
     set w $itk_component(text)
     $w mark set anchor [::tk::TextClosestGap $w $x $y]
     $w tag remove sel 0.0 end
@@ -1072,7 +1074,7 @@
     }
 }
 
-::itcl::body Command::selection_add {x y} {
+::itcl::body ::cadwidgets::Command::selection_add {x y} {
     set w $itk_component(text)
     set cur [::tk::TextClosestGap $w $x $y]
 
@@ -1093,7 +1095,7 @@
     $w tag remove sel $last end
 }
 
-::itcl::body Command::select_word {x y} {
+::itcl::body ::cadwidgets::Command::select_word {x y} {
     set w $itk_component(text)
     set cur [::tk::TextClosestGap $w $x $y]
 
@@ -1114,7 +1116,7 @@
     $w tag remove sel $last end
 }
 
-::itcl::body Command::select_line {x y} {
+::itcl::body ::cadwidgets::Command::select_line {x y} {
     set w $itk_component(text)
     set cur [::tk::TextClosestGap $w $x $y]
 
@@ -1135,14 +1137,14 @@
     $w tag remove sel $last end
 }
 
-::itcl::body Command::selection_modify {x y} {
+::itcl::body ::cadwidgets::Command::selection_modify {x y} {
     set w $itk_component(text)
     ::tk::TextResetAnchor $w @$x,$y
     selection_add $x $y
 }
 
 # find the longest common initial string from a list of strings
-::itcl::body Command::get_longest_common_string {matches} {
+::itcl::body ::cadwidgets::Command::get_longest_common_string {matches} {
     set done 0
     set lastMatchIndex 0
     set lastMatchChar [string index [lindex $matches 0] $lastMatchIndex]
@@ -1169,7 +1171,7 @@
     return $name
 }
 
-::itcl::body Command::tab_completion {} {
+::itcl::body ::cadwidgets::Command::tab_completion {} {
     set w $itk_component(text)
 
     set line [$w get -- promptEnd {promptEnd lineend -1c}]
@@ -1196,7 +1198,7 @@
     $w see insert
 }
 
-::itcl::body Command::tab_expansion {line} {
+::itcl::body ::cadwidgets::Command::tab_expansion {line} {
     set matches {}
 
     set len [llength $line]
@@ -1362,29 +1364,29 @@
     return [list $newCommand $matches]
 }
 
-::itcl::body Command::print {str} {
+::itcl::body ::cadwidgets::Command::print {str} {
     set w $itk_component(text)
     $w insert insert $str
 }
 
-::itcl::body Command::print_more_args_prompt {args} {
+::itcl::body ::cadwidgets::Command::print_more_args_prompt {args} {
     eval $itk_component(text) insert insert $args
     $itk_component(text) see insert
 }
 
-::itcl::body Command::print_prompt {} {
+::itcl::body ::cadwidgets::Command::print_prompt {} {
     set w $itk_component(text)
     print_tag $itk_option(-prompt) prompt
     $w mark set promptEnd insert
     $w mark gravity promptEnd left
 }
 
-::itcl::body Command::print_prompt2 {} {
+::itcl::body ::cadwidgets::Command::print_prompt2 {} {
     set w $itk_component(text)
     $w insert insert $itk_option(-prompt2)
 }
 
-::itcl::body Command::print_tag {str tag} {
+::itcl::body ::cadwidgets::Command::print_tag {str tag} {
     set w $itk_component(text)
     set first [$w index insert]
     $w insert insert $str
@@ -1392,14 +1394,14 @@
     $w tag add $tag $first $last
 }
 
-::itcl::body Command::cursor_highlight {} {
+::itcl::body ::cadwidgets::Command::cursor_highlight {} {
     set w $itk_component(text)
     $w tag delete hlt
     $w tag add hlt insert
     $w tag configure hlt -background yellow
 }
 
-::itcl::body Command::doBindings {} {
+::itcl::body ::cadwidgets::Command::doBindings {} {
     set w $itk_component(text)
     bind $w <Enter> "focus $w; break"
 
@@ -1407,7 +1409,7 @@
     doButtonBindings
 }
 
-::itcl::body Command::doCopy {} {
+::itcl::body ::cadwidgets::Command::doCopy {} {
     set w $itk_component(text)
     catch {
 	clipboard clear -displayof $w;
@@ -1415,7 +1417,7 @@
     }
 }
 
-::itcl::body Command::doKeyBindings {} {
+::itcl::body ::cadwidgets::Command::doKeyBindings {} {
     global tcl_platform
 
     set w $itk_component(text)
@@ -1474,7 +1476,7 @@
     }
 }
 
-::itcl::body Command::doButtonBindings {} {
+::itcl::body ::cadwidgets::Command::doButtonBindings {} {
     set w $itk_component(text)
     bind $w <1> "[::itcl::code $this selection_begin %x %y]; break"
     bind $w <B1-Motion> "[::itcl::code $this selection_add %x %y]; break"
@@ -1511,7 +1513,7 @@
     bind $w <B2-Motion> "[::itcl::code $this text_scroll %x %y]; break"
 }
 
-::itcl::body Command::doControl_a {} {
+::itcl::body ::cadwidgets::Command::doControl_a {} {
     if {$itk_option(-edit_style) == "vi"} {
 	first_char_in_line
     } else {
@@ -1519,7 +1521,7 @@
     }
 }
 
-::itcl::body Command::doControl_c {} {
+::itcl::body ::cadwidgets::Command::doControl_c {} {
     interrupt
     if {$itk_option(-edit_style) == "vi"} {
 	vi_insert_mode
@@ -1529,35 +1531,35 @@
     set more_args_var ""
 }
 
-::itcl::body Command::doMeta_d {} {
+::itcl::body ::cadwidgets::Command::doMeta_d {} {
     if [%W compare insert < promptEnd] {
 	break
     }
     cursor_highlight
 }
 
-::itcl::body Command::doMeta_BackSpace {} {
+::itcl::body ::cadwidgets::Command::doMeta_BackSpace {} {
     if [%W compare insert <= promptEnd] {
 	break
     }
     cursor_highlight
 }
 
-::itcl::body Command::doReturn {} {
+::itcl::body ::cadwidgets::Command::doReturn {} {
     execute
     if {$itk_option(-edit_style) == "vi"} {
 	vi_insert_mode
     }
 }
 
-::itcl::body Command::doLeft {} {
+::itcl::body ::cadwidgets::Command::doLeft {} {
     backward_char
     if {$itk_option(-edit_style) == "vi"} {
 	vi_edit_mode
     }
 }
 
-::itcl::body Command::doRight {} {
+::itcl::body ::cadwidgets::Command::doRight {} {
     forward_char
     if {$itk_option(-edit_style) == "vi"} {
 	vi_edit_mode
@@ -1583,6 +1585,25 @@ proc tk_textPaste {w} {
 	    $w edit separator
 	    $w configure -autoseparators 1
 	}
+    }
+}
+
+# Retain the original class, including its inheritance behavior, for scripts
+# that have not yet adopted the qualified widget name.
+::itcl::class ::Command {
+    inherit ::cadwidgets::Command
+
+    constructor {args} {
+	::cadwidgets::Command::constructor {*}$args
+    } {}
+}
+
+# pkg_mkIndex stubs class declarations, so only link common variables during
+# a live Itcl load.
+if {[namespace exists ::cadwidgets::Command]} {
+    namespace eval ::Command {
+	namespace upvar ::cadwidgets::Command CMD_MORE_ARGS CMD_MORE_ARGS
+	namespace upvar ::cadwidgets::Command CMD_MORE_ARGS_LEN CMD_MORE_ARGS_LEN
     }
 }
 
