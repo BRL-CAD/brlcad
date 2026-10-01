@@ -2196,7 +2196,7 @@ package provide cadwidgets::Ged 1.0
 }
 
 ::itcl::body cadwidgets::Ged::mat_mul {args} {
-    uplevel \#0 mat_mul $args
+    tailcall $mGed mat_mul {*}$args
 }
 
 ::itcl::body cadwidgets::Ged::mat_inv {args} {
@@ -2221,7 +2221,7 @@ package provide cadwidgets::Ged 1.0
 }
 
 ::itcl::body cadwidgets::Ged::mat_ae {args} {
-    uplevel \#0 mat_ae $args
+    tailcall $mGed mat_ae {*}$args
 }
 
 ::itcl::body cadwidgets::Ged::mat_ae_vec {args} {
@@ -2269,7 +2269,7 @@ package provide cadwidgets::Ged 1.0
 }
 
 ::itcl::body cadwidgets::Ged::mat_scale_about_pnt {args} {
-    uplevel \#0 mat_scale_about_pnt $args
+    tailcall $mGed mat_scale_about_pnt {*}$args
 }
 
 ::itcl::body cadwidgets::Ged::mat_xform_about_pnt {args} {

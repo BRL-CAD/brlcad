@@ -45,7 +45,7 @@ proc apply_mat_to_regions { tree mat } {
 	    }
 	    if { [llength $tree] == 3 } {
 		set old_mat [lindex $tree 2]
-		set new_mat [mat_mul $mat $old_mat]
+		set new_mat [$::cadwidgets::ged mat_mul $mat $old_mat]
 	    } else {
 		set new_mat $mat
 	    }
@@ -103,7 +103,7 @@ proc apply_mat_comb { tree mat } {
 	    set leaf [lindex $tree 1]
 	    if { [llength $tree] == 3 } {
 		set old_mat [lindex $tree 2]
-		set new_mat [mat_mul $mat $old_mat]
+		set new_mat [$::cadwidgets::ged mat_mul $mat $old_mat]
 	    } else {
 		set new_mat $mat
 	    }

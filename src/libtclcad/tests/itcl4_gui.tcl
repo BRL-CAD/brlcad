@@ -650,6 +650,35 @@ assert_coordinates "Ged unit conversion round trip" \
 assert_coordinates "Ged point-centered matrix wrapper" \
     [.functional_ged mat_xform_about_pnt [::brlcad::bn mat_angles 0 0 0] {1 2 3}] \
     [::brlcad::vmath mat_idn]
+assert_coordinates "Ged matrix multiplication wrapper" \
+    [.functional_ged mat_mul [::brlcad::vmath mat_idn] \
+	[::brlcad::vmath mat_idn]] \
+    [::brlcad::vmath mat_idn]
+assert_coordinates "Ged azimuth-elevation matrix wrapper" \
+    [.functional_ged mat_ae 0 0] [::brlcad::vmath mat_idn]
+assert_coordinates "Ged point-centered scale matrix wrapper" \
+    [.functional_ged mat_scale_about_pnt {1 2 3} 1] \
+    [::brlcad::vmath mat_idn]
+if {![auto_load apply_mat_comb]} {
+    fail "apply-matrix helpers were not autoloadable"
+}
+set had_cadwidgets_ged [info exists ::cadwidgets::ged]
+if {$had_cadwidgets_ged} {
+    set saved_cadwidgets_ged $::cadwidgets::ged
+}
+set ::cadwidgets::ged .functional_ged
+set multiplied_tree [apply_mat_comb \
+    [list l all.g [::brlcad::vmath mat_idn]] \
+    [::brlcad::vmath mat_idn]]
+assert_coordinates "apply-matrix helper multiplication" \
+    [lindex $multiplied_tree 2] [::brlcad::vmath mat_idn]
+if {$had_cadwidgets_ged} {
+    set ::cadwidgets::ged $saved_cadwidgets_ged
+    unset saved_cadwidgets_ged
+} else {
+    unset ::cadwidgets::ged
+}
+unset had_cadwidgets_ged multiplied_tree
 .functional_ged draw all.g
 .functional_ged autoview
 update

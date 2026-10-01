@@ -351,6 +351,22 @@ if {[::brlcad::ged attr get $object namespace_test] ne "canonical"} {
     error "FAIL raw GED namespace did not preserve command results"
 }
 
+if {![auto_load vRotUp]} {
+    error "FAIL points helpers were not autoloadable"
+}
+set rotation_args {{0 0.7071067811865475 0.7071067811865475} {0 1 0}}
+set expected_rotation [vRotUp {*}$rotation_args]
+rename ::mat_mul ::__brlcad_mged_compatibility_mat_mul
+try {
+    set canonical_rotation [vRotUp {*}$rotation_args]
+    if {$canonical_rotation ne $expected_rotation} {
+	error "FAIL points helper depends on the global mat_mul command"
+    }
+} finally {
+    rename ::__brlcad_mged_compatibility_mat_mul ::mat_mul
+}
+unset canonical_rotation expected_rotation rotation_args
+
 set matches [::brlcad::ged glob namespaces_*]
 if {[lsearch -exact $matches $object] < 0} {
     error "FAIL raw GED glob did not find $object: $matches"

@@ -59,7 +59,7 @@ proc vRotUp {plane pt} {
 
     set m_r [::brlcad::bn quat_quat2mat $quat]
     set m_tx [::brlcad::vmath mat_deltas_vec [::brlcad::vmath mat_idn] [::brlcad::vmath vreverse $pt]]
-    set m [mat_mul $m_r $m_tx]
+    set m [::brlcad::mged mat_mul $m_r $m_tx]
 
     return $m
 }
