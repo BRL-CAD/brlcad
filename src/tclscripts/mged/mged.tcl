@@ -43,7 +43,6 @@ if { [info exists tk_strictMotif] == 0 } {
 #------------------------------------------------------------------------------
 #        vmath.tcl  :  The vector math library
 #         menu.tcl  :  The Tk menu replacement
-# html_library.tcl  :  Stephen Uhler's routines for processing HTML
 #==============================================================================
 
 # MGED html manual directory search order precedence should be:
@@ -519,148 +518,177 @@ proc echo args {
 #==============================================================================
 # HTML support
 #==============================================================================
-proc man_goto { w screen } {
-    global ia_url
-    global ::tk::Priv
+namespace eval ::mged::manual {
+    variable back_history
+    variable suppress_history
+}
 
-    cad_input_dialog $::tk::Priv(cad_dialog) $screen "Go To" "Enter filename to read:" \
-	filename $ia_url(current) \
-	0 {{ summary "Enter a filename or URL."}} OK
+proc ::mged::manual::file_uri {path} {
+    set uri_path [string map {\\ /} [file normalize $path]]
+    if {[string index $uri_path 0] ne "/"} {
+	set uri_path /$uri_path
+    }
+    set uri_path [::tkhtml::encode $uri_path]
+    return file://[string map {%2F /} $uri_path]
+}
 
-    if { [file exists $filename]!=0 } {
-	if { [string match /* $filename] } {
-	    set new_url $filename
-	} else {
-	    set new_url [pwd]/$filename
+proc ::mged::manual::local_path {location} {
+    set uri [::tkhtml::uri $location]
+    set scheme [$uri scheme]
+    set authority [$uri authority]
+    set path [::tkhtml::decode [$uri path]]
+    $uri destroy
+
+    if {![string equal -nocase $scheme file]} {
+	error "unsupported URI scheme '$scheme'"
+    }
+    if {$authority ne "" && ![string equal -nocase $authority localhost]} {
+	set path //$authority$path
+    }
+    if {$::tcl_platform(platform) eq "windows" &&
+	[regexp {^/[A-Za-z]:/} $path]} {
+	set path [string range $path 1 end]
+    }
+    return [file normalize $path]
+}
+
+proc ::mged::manual::request_error {handle error_message} {
+    global message
+
+    set message $error_message
+    $handle configure -mimetype text/plain
+    $handle finish $error_message
+}
+
+proc ::mged::manual::request {handle} {
+    global message
+
+    set location [$handle cget -uri]
+    if {[catch {set path [local_path $location]} path_error]} {
+	request_error $handle "Cannot read $location: $path_error"
+	return
+    }
+
+    set message "Reading file $path"
+    if {[catch {
+	set channel [open $path rb]
+	try {
+	    set data [read $channel]
+	} finally {
+	    close $channel
 	}
+    } read_error]} {
+	request_error $handle "Cannot read $path: $read_error"
+	return
+    }
+    $handle finish $data
+}
 
-	HMlink_callback $w.text $new_url
-    } else {
-	cad_dialog $::tk::Priv(cad_dialog) $screen "Error reading file" \
-	    "Cannot read file $filename." error 0 OK
+proc ::mged::manual::remember_location {viewer} {
+    variable back_history
+    variable suppress_history
+
+    if {[info exists suppress_history($viewer)] &&
+	$suppress_history($viewer)} {
+	return
+    }
+    if {[catch {$viewer location} location] ||
+	$location eq "home://blank/"} {
+	return
+    }
+    if {![info exists back_history($viewer)] ||
+	[lindex $back_history($viewer) end] ne $location} {
+	lappend back_history($viewer) $location
     }
 }
 
-proc ia_man { parent screen } {
-    global mged_html_dir ia_url message
+proc ::mged::manual::go_back {viewer} {
+    variable back_history
+    variable suppress_history
+
+    if {![info exists back_history($viewer)] ||
+	![llength $back_history($viewer)]} {
+	return
+    }
+
+    set location [lindex $back_history($viewer) end]
+    set back_history($viewer) [lrange $back_history($viewer) 0 end-1]
+    set suppress_history($viewer) 1
+    set status [catch {$viewer goto $location -nosave} result options]
+    set suppress_history($viewer) 0
+    if {$status} {
+	return -options $options $result
+    }
+}
+
+proc ::mged::manual::go_to {viewer screen} {
+    global ::tk::Priv
+
+    set initial_path [pwd]
+    if {![catch {local_path [$viewer location]} current_path]} {
+	set initial_path $current_path
+    }
+    cad_input_dialog $::tk::Priv(cad_dialog) $screen "Go To" \
+	"Enter filename to read:" filename $initial_path \
+	0 {{ summary "Enter the name of a local HTML file."}} OK
+
+    if {[file pathtype $filename] eq "relative"} {
+	set filename [file join [pwd] $filename]
+    }
+    set filename [file normalize $filename]
+    if {[file readable $filename] && ![file isdirectory $filename]} {
+	$viewer goto [file_uri $filename]
+	return
+    }
+
+    cad_dialog $::tk::Priv(cad_dialog) $screen "Error reading file" \
+	"Cannot read file $filename." error 0 OK
+}
+
+proc ::mged::manual::cleanup {viewer destroyed_widget} {
+    variable back_history
+    variable suppress_history
+
+    if {$destroyed_widget ne $viewer} {
+	return
+    }
+    unset -nocomplain back_history($viewer)
+    unset -nocomplain suppress_history($viewer)
+}
+
+proc ia_man {parent screen} {
+    global mged_html_dir message
+
+    package require hv3
 
     set w $parent.man
-    catch { destroy $w }
+    catch {destroy $w}
     toplevel $w -screen $screen
     wm title $w "MGED HTML browser"
 
     frame $w.f -relief sunken -bd 1
     pack $w.f -side top -fill x
 
-    button $w.f.close -text Close -command "destroy $w"
-    button $w.f.goto -text "Go To" -command "man_goto $w $screen"
-    button $w.f.back -text "Back" -command "ia_man_back $w.text"
+    set viewer [::hv3::hv3 $w.html \
+	-requestcmd ::mged::manual::request]
+    button $w.f.close -text Close -command [list destroy $w]
+    button $w.f.goto -text "Go To" \
+	-command [list ::mged::manual::go_to $viewer $screen]
+    button $w.f.back -text "Back" \
+	-command [list ::mged::manual::go_back $viewer]
 
     pack $w.f.close $w.f.goto $w.f.back -side left -fill x -expand yes
-
-    label $w.message -textvar message -anchor w
+    label $w.message -textvariable message -anchor w
     pack $w.message -side top -anchor w -fill x
+    pack $viewer -side top -fill both -expand yes
 
-    scrollbar $w.scrolly -command "$w.text yview"
-    scrollbar $w.scrollx -command "$w.text xview" -orient horizontal
-    text $w.text -relief ridge -yscroll "$w.scrolly set" \
-	-xscroll "$w.scrollx set"
-    pack $w.scrolly -side right -fill y
-    pack $w.text -side top -fill both -expand yes
-    pack $w.scrollx -side bottom -fill x
+    set ::mged::manual::back_history($viewer) {}
+    set ::mged::manual::suppress_history($viewer) 0
+    bind $viewer <<Goto>> +[list ::mged::manual::remember_location $viewer]
+    bind $viewer <Destroy> +[list ::mged::manual::cleanup $viewer %W]
 
-    set w $w.text
-
-    HMinit_win $w
-    set ia_url(current)   $mged_html_dir/
-    set ia_url(last)      ""
-    set ia_url(backtrack) ""
-    HMlink_callback $w contents.html
-}
-
-proc HMlink_callback { w href } {
-    global ia_url message
-
-    if {[string match /* $href]} {
-	set new_url $href
-    } else {
-	if { [file isdirectory $ia_url(current)] } {
-	    set new_url $ia_url(current)$href
-	} else {
-	    set new_url [file dirname $ia_url(current)]/$href
-	}
-    }
-
-    # Remove tags
-    regsub {"#[0-9a-zA-Z]*"} $new_url {} ia_url(current)
-    lappend ia_url(last) $ia_url(current)
-    set ia_url(backtrack) [lrange $ia_url(last) 0 \
-			       [expr [llength $ia_url(last)]-2]]
-
-    HMreset_win $w
-    HMparse_html [ia_get_html $ia_url(current)] "HMrender $w"
-    update
-}
-
-proc ia_man_back { w } {
-    global ia_url message
-
-    if {[llength $ia_url(backtrack)]<1} {
-	return
-    }
-
-    set new_url [lindex $ia_url(backtrack) end]
-    set ia_url(backtrack) [lrange $ia_url(backtrack) 0 \
-			       [expr [llength $ia_url(backtrack)]-2]]
-
-    HMreset_win $w
-    HMparse_html [ia_get_html $new_url] "HMrender $w"
-    update
-}
-
-proc HMset_image { handle src } {
-    global ia_url message
-
-    if {[string match http://* $src]} {
-	return
-    }
-
-    if {[string match /* $src]} {
-	set image $src
-    } else {
-	set image [file dirname $ia_url(current)]/$src
-    }
-
-    set message "Fetching image $image."
-    update
-    if {[string first " $image " " [image names] "] >= 0} {
-	HMgot_image $handle $image
-    } else {
-	catch {image create photo $image -file $image} image
-	HMgot_image $handle $image
-    }
-}
-
-proc ia_get_html {file} {
-    global message ia_url
-
-    set message "Reading file $file"
-    update
-
-    if {[string match *.gif $file]} {
-	return "<img src=\"[file tail $file]\">"
-    }
-
-    if {[catch {set fd [open $file]} msg]} {
-	return "
-	<title>Bad file $file</title>
-	<h1>Error reading $file</h1><p>
-	$msg<hr>
-	"
-    }
-    set result [read $fd]
-    close $fd
-    return $result
+    set contents [file join $mged_html_dir contents.html]
+    $viewer goto [::mged::manual::file_uri $contents]
 }
 
 #==============================================================================

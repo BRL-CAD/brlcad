@@ -163,10 +163,38 @@ proc ::mged::xmin::help::exercise_html_manual {top} {
     set mged_browser [file join $::env(GUI_TEST_DIR) missing-browser]
     ::mged::gui::test::invoke $top {Help Manual}
     set fallback $top.man
+    set viewer $fallback.html
     ::gui::test::require {
 	[winfo exists $fallback] && [winfo ismapped $fallback] &&
-	[string length [string trim [$fallback.text get 1.0 end]]] > 100
+	[winfo exists $viewer] && [$viewer title] eq "Table of Contents"
     } "Manual did not load MGED's internal HTML viewer"
+
+    set special_path [file join [pwd] {manual path} {contents#1.html}]
+    ::gui::test::require {
+	[::mged::manual::local_path \
+	    [::mged::manual::file_uri $special_path]] eq \
+	[file normalize $special_path]
+    } "internal Manual viewer did not preserve special path characters"
+
+    set html [$viewer html]
+    set contents [$html text text]
+    ::gui::test::require {
+	[string first "Preface" $contents] >= 0 &&
+	[string first "background-color" $contents] < 0
+    } "internal Manual viewer did not render its table of contents"
+
+    $viewer goto mged.html#csg
+    ::mged::gui::test::settle
+    set contents [$html text text]
+    ::gui::test::require {
+	[$viewer title] eq "Mged User's Manual" &&
+	[string first "Modeling With CSG" $contents] >= 0
+    } "internal Manual viewer did not follow its document links"
+
+    $fallback.f.back invoke
+    ::mged::gui::test::settle
+    ::gui::test::require {[$viewer title] eq "Table of Contents"} \
+	"internal Manual viewer Back button did not restore the prior page"
     destroy $fallback
 }
 
