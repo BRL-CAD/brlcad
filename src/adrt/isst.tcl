@@ -19,58 +19,65 @@
 #
 ###
 
-# open_dm uses this callback, but we don't load the tclscripts/libdm.tcl stuff any more
-proc _init_dm { func w } { }
-
-# create ::isst namespace
 namespace eval ::isst {
+    variable fullscreenmode 0
+    variable oglwin .w0
+    variable resolution_min 1
+    variable resolution_max 20
+    variable resolution $resolution_max
+    variable startx 0
+    variable starty 0
 }
 
-set oglwin .w0
+# open_dm expects this legacy callback, but ISST no longer loads libdm.tcl.
+proc ::isst::initDm {func w} {}
+proc ::_init_dm {func w} {
+    ::isst::initDm $func $w
+}
 
 proc ::isst::overwin {x y W} {
-    global selectedobjs
     set rootxmin [winfo rootx $W]
     set rootymin [winfo rooty $W]
-    set rootxmax [expr $rootxmin + [winfo width $W]]
-    set rootymax [expr $rootymin + [winfo height $W]]
-    set currpointerx [winfo pointerx $W]
-    set currpointery [winfo pointery $W]
-    if { $currpointerx <= $rootxmax && $currpointerx >= $rootxmin &&
-         $currpointery <= $rootymax && $currpointery >= $rootymin} {
-	 return 1
-       } else {
-         return 0
-       }
-    return 0
+    set rootxmax [expr {$rootxmin + [winfo width $W]}]
+    set rootymax [expr {$rootymin + [winfo height $W]}]
+    return [expr {$x <= $rootxmax && $x >= $rootxmin &&
+	$y <= $rootymax && $y >= $rootymin}]
+}
+
+proc ::isst::invokeOver {x y W command {outsideCommand {}}} {
+    if {[::isst::overwin $x $y $W]} {
+	{*}$command
+    } elseif {[llength $outsideCommand]} {
+	{*}$outsideCommand
+    }
 }
 
 proc ::isst::buildlist {listwidget toplevelwidget filename} {
-    global oglwin selectedobjs
-    set selectedobjs [list]
+    variable oglwin
+    set selectedobjs {}
     set selectednums [$listwidget curselection]
     foreach listitem $selectednums {
 	lappend selectedobjs [$listwidget get $listitem]
     }
-    puts $selectedobjs
     if {[llength $selectedobjs]} {
-        load_g $oglwin $filename $selectedobjs
+        ::brlcad::isst load_g $oglwin $filename $selectedobjs
     }
     destroy $toplevelwidget
 }
 
 proc ::isst::geomlist {filename} {
-    global oglwin selectedobjs
+    variable oglwin
     toplevel .geomlist
     wm title .geomlist "Select Geometry to be Viewed"
     frame .geomlist.listing
-    scrollbar .geomlist.listing.s -command ".geomlist.listing.l yview"
-    listbox .geomlist.listing.l -selectmode multiple -bd 2 -yscroll ".geomlist.listing.s set" -width 50 -height 50
+    scrollbar .geomlist.listing.s -command [list .geomlist.listing.l yview]
+    listbox .geomlist.listing.l -selectmode multiple -bd 2 \
+	-yscroll [list .geomlist.listing.s set] -width 50 -height 50
     grid .geomlist.listing.l  .geomlist.listing.s -sticky nsew -in .geomlist.listing
     grid columnconfigure .geomlist.listing 0 -weight 0
     grid rowconfigure .geomlist.listing 0 -weight 1
-    set objects [list ]
-    list_g $filename objects
+    set objects {}
+    ::brlcad::isst list_g $filename objects
     set objects [lsort $objects]
     foreach object $objects {
         .geomlist.listing.l insert end $object
@@ -79,36 +86,29 @@ proc ::isst::geomlist {filename} {
 
     frame .geomlist.gl
     pack .geomlist.gl -side bottom
-    button .geomlist.gl.b1 -text " OK " -command [list ::isst::buildlist .geomlist.listing.l .geomlist $filename]
+    button .geomlist.gl.b1 -text " OK " \
+	-command [list ::isst::buildlist .geomlist.listing.l .geomlist $filename]
     pack .geomlist.gl.b1 -side left -anchor w -padx 5
 }
 
 proc ::isst::loaddatabase {} {
-    global oglwin selectedobjs
-    set selectedobjs [list ]
     set filetypes {
         {{BRL-CAD .g Files}	{.g} 	}
         {{All Files}		*	}
     }
     set filename [tk_getOpenFile -filetypes $filetypes]
 
-    if {$filename != ""} {
+    if {$filename ne ""} {
        ::isst::geomlist $filename
     }
 }
 
-proc ::isst::cut {} {
-    global focus_x focus_y focus_z pos_x pos_y pos_z oglwin
-    set dir_x [expr $focus_x - $pos_x]
-    set dir_y [expr $focus_y - $pos_y]
-    set dir_z [expr $focus_z - $pos_z]
-    render_mode $oglwin cut "#($pos_x $pos_y $pos_z) #($dir_x $dir_y $dir_z)"
-    ::isst::MoveRight $oglwin
-}
-
 proc ::isst::setup {} {
-    global resolution oglwin fullscreenmode
-    set resolution 20
+    variable fullscreenmode
+    variable oglwin
+    variable resolution
+    variable resolution_max
+    set resolution $resolution_max
     set fullscreenmode 0
     wm title . "ISST - Interactive Geometry Viewing"
 
@@ -116,117 +116,151 @@ proc ::isst::setup {} {
     . configure -menu .mb
     .mb add cascade -label "File" -menu .mb.file -underline 0
     menu .mb.file -tearoff 0
-    .mb.file add command -label "Open Database" -underline 0 -command ::isst::loaddatabase
-    .mb.file add command -label "Exit" -underline 0 -command exit
+    .mb.file add command -label "Open Database" -underline 0 \
+	-command [list ::isst::loaddatabase]
+    .mb.file add command -label "Exit" -underline 0 -command [list exit]
 
     .mb add cascade -label "Mode" -menu .mb.mode -underline 0
     menu .mb.mode -tearoff 0
-    .mb.mode add command -label "Phong" -underline 0 -command {render_mode $oglwin phong}
-    .mb.mode add command -label "Normal" -underline 0 -command {render_mode $oglwin normal}
-    .mb.mode add command -label "Depth" -underline 0 -command {render_mode $oglwin depth}
-#    .mb.mode add command -label "Cut" -underline 0 -command { ::isst::cut }
+    .mb.mode add command -label "Phong" -underline 0 \
+	-command [list ::brlcad::isst render_mode $oglwin phong]
+    .mb.mode add command -label "Normal" -underline 0 \
+	-command [list ::brlcad::isst render_mode $oglwin normal]
+    .mb.mode add command -label "Depth" -underline 0 \
+	-command [list ::brlcad::isst render_mode $oglwin depth]
 
-    bind . <Key-1> {if {[::isst::overwin %X %Y $oglwin]} {render_mode $oglwin phong}}
-    bind . <Key-2> {if {[::isst::overwin %X %Y $oglwin]} {render_mode $oglwin normal} else {puts "Place mouse over geometry window."}}
-    bind . <Key-3> {if {[::isst::overwin %X %Y $oglwin]} {render_mode $oglwin depth}}
-#    bind . <Key-4> {if {[::isst::overwin %X %Y $oglwin]} {render_mode $oglwin component}}
-#    bind . <Key-5> {if {[::isst::overwin %X %Y $oglwin]} {::isst::cut}}
-    bind . <Key-0> {if {[::isst::overwin %X %Y $oglwin]} {reset $oglwin}}
+    bind . <Key-1> [list ::isst::invokeOver %X %Y $oglwin \
+	[list ::brlcad::isst render_mode $oglwin phong]]
+    bind . <Key-2> [list ::isst::invokeOver %X %Y $oglwin \
+	[list ::brlcad::isst render_mode $oglwin normal] \
+	[list puts "Place mouse over geometry window."]]
+    bind . <Key-3> [list ::isst::invokeOver %X %Y $oglwin \
+	[list ::brlcad::isst render_mode $oglwin depth]]
+    bind . <Key-0> [list ::isst::invokeOver %X %Y $oglwin \
+	[list ::brlcad::isst reset $oglwin]]
 
-    bind . <Key-w> {if {[::isst::overwin %X %Y $oglwin]} {::isst::MoveForward $oglwin}}
-    bind . <Key-s> {if {[::isst::overwin %X %Y $oglwin]} {::isst::MoveBackward $oglwin}}
-    bind . <Key-a> {if {[::isst::overwin %X %Y $oglwin]} {::isst::MoveLeft $oglwin}}
-    bind . <Key-d> {if {[::isst::overwin %X %Y $oglwin]} {::isst::MoveRight $oglwin}}
+    bind . <Key-w> [list ::isst::invokeOver %X %Y $oglwin \
+	[list ::isst::MoveForward $oglwin]]
+    bind . <Key-s> [list ::isst::invokeOver %X %Y $oglwin \
+	[list ::isst::MoveBackward $oglwin]]
+    bind . <Key-a> [list ::isst::invokeOver %X %Y $oglwin \
+	[list ::isst::MoveLeft $oglwin]]
+    bind . <Key-d> [list ::isst::invokeOver %X %Y $oglwin \
+	[list ::isst::MoveRight $oglwin]]
 
-    bind . <Key-F5> {if {$fullscreenmode} {wm attributes . -fullscreen 0; set fullscreenmode 0} else {wm attributes . -fullscreen 1; set fullscreenmode 1}}
+    bind . <Key-F5> [list ::isst::ToggleFullscreen]
 
-    bind . <Key-minus> {if {[::isst::overwin %X %Y $oglwin]} {::isst::Resolution $oglwin -1}}
-    bind . <Key-equal> {if {[::isst::overwin %X %Y $oglwin]} {::isst::Resolution $oglwin 1}}
-    bind . <Control-Key-minus> {if {[::isst::overwin %X %Y $oglwin]} {::isst::Resolution $oglwin [expr 1 - $resolution] }}
-    bind . <Control-Key-equal> {if {[::isst::overwin %X %Y $oglwin]} {::isst::Resolution $oglwin [expr 20 - $resolution] }}
+    bind . <Key-minus> [list ::isst::invokeOver %X %Y $oglwin \
+	[list ::isst::Resolution $oglwin -1]]
+    bind . <Key-equal> [list ::isst::invokeOver %X %Y $oglwin \
+	[list ::isst::Resolution $oglwin 1]]
+    bind . <Control-Key-minus> [list ::isst::invokeOver %X %Y $oglwin \
+	[list ::isst::Resolution $oglwin [expr {-$resolution_max}]]]
+    bind . <Control-Key-equal> [list ::isst::invokeOver %X %Y $oglwin \
+	[list ::isst::Resolution $oglwin $resolution_max]]
 
-    bind . <ButtonPress-1> {if {[::isst::overwin %X %Y $oglwin]} {::isst::RotStart %x %y $oglwin}}
-    bind . <ButtonPress-3> {if {[::isst::overwin %X %Y $oglwin]} {::isst::RotStart %x %y $oglwin}}
-    bind . <B1-Motion> {if {[::isst::overwin %X %Y $oglwin]} {::isst::RotMove %x %y $oglwin}}
-    bind . <B3-Motion> {if {[::isst::overwin %X %Y $oglwin]} {::isst::RotMove2 %x %y $oglwin}}
+    bind . <ButtonPress-1> [list ::isst::invokeOver %X %Y $oglwin \
+	[list ::isst::RotStart %x %y $oglwin]]
+    bind . <ButtonPress-3> [list ::isst::invokeOver %X %Y $oglwin \
+	[list ::isst::RotStart %x %y $oglwin]]
+    bind . <B1-Motion> [list ::isst::invokeOver %X %Y $oglwin \
+	[list ::isst::RotMove %x %y $oglwin]]
+    bind . <B3-Motion> [list ::isst::invokeOver %X %Y $oglwin \
+	[list ::isst::RotMove2 %x %y $oglwin]]
 
-    bind . <Key-Escape> { exit }
+    bind . <Key-Escape> [list exit]
 
-    isst_init
-    open_dm
-    bind $oglwin <Configure> { reshape %w %h }
+    ::brlcad::isst init
+    ::brlcad::isst open_dm
+    bind $oglwin <Configure> [list ::brlcad::isst reshape %w %h]
     pack $oglwin -expand true -fill both
 }
 
+proc ::isst::ToggleFullscreen {} {
+    variable fullscreenmode
+    set fullscreenmode [expr {!$fullscreenmode}]
+    wm attributes . -fullscreen $fullscreenmode
+}
+
 proc ::isst::RotStart {x y W} {
-    global startx starty
+    variable startx
+    variable starty
     set startx $x
     set starty $y
 }
 
 proc ::isst::MoveForward {W} {
-    walk $W 1
+    ::brlcad::isst walk $W 1
 }
 
 proc ::isst::MoveBackward {W} {
-    walk $W -1
+    ::brlcad::isst walk $W -1
 }
 
 proc ::isst::MoveLeft {W} {
-    strafe $W 1
+    ::brlcad::isst strafe $W 1
 }
 
 proc ::isst::MoveRight {W} {
-    strafe $W -1
+    ::brlcad::isst strafe $W -1
 }
 
 proc ::isst::Resolution {W n} {
-    global resolution
-    if { $resolution < 20 && $n > 0 } {
-      set_resolution [expr $resolution + $n]
-      set resolution [expr $resolution + $n]
+    variable resolution
+    variable resolution_min
+    variable resolution_max
+    set requested [expr {$resolution + $n}]
+    set requested [expr {max($resolution_min,
+	min($resolution_max, $requested))}]
+    if {$requested == $resolution} {
+	return
     }
-    if { $resolution > 1 && $n < 0 } {
-      set_resolution [expr $resolution + $n]
-      set resolution [expr $resolution + $n]
-    }
+    set resolution $requested
+    ::brlcad::isst set_resolution $resolution
 }
 
 proc ::isst::RotMove {x y W} {
-    global startx starty
-    set dx [expr ($x - $startx)*0.005]
-    set dy [expr ($y - $starty)*0.005]
-    aetolookat $W $dx $dy
+    variable startx
+    variable starty
+    set dx [expr {($x - $startx) * 0.005}]
+    set dy [expr {($y - $starty) * 0.005}]
+    ::brlcad::isst aetolookat $W $dx $dy
     set startx $x
     set starty $y
 }
 
 proc ::isst::RotMove2 {x y W} {
-    global startx starty
-    set dx [expr ($x - $startx)*0.005]
-    set dy [expr ($y - $starty)*0.005]
-    aerotate $W $dx $dy
+    variable startx
+    variable starty
+    set dx [expr {($x - $startx) * 0.005}]
+    set dy [expr {($y - $starty) * 0.005}]
+    ::brlcad::isst aerotate $W $dx $dy
     set startx $x
     set starty $y
 }
 
-global az el oglwin
-::isst::setup
-if {$argc == 1} {
-   ::isst::geomlist [lindex $argv 0]
-}
-if {$argc == 2} {
-   load_g $oglwin [lindex $argv 0] [lindex $argv 1]
-}
-# Do a couple operations to make sure
-# the view is properly initialized on OSX
-update
-walk $oglwin 1
-walk $oglwin -1
-update
-while 1 {
+proc ::isst::main {} {
+    global argc argv
+    variable oglwin
+
+    ::isst::setup
+    if {$argc == 1} {
+	::isst::geomlist [lindex $argv 0]
+    }
+    if {$argc == 2} {
+	::brlcad::isst load_g $oglwin [lindex $argv 0] \
+	    [list [lindex $argv 1]]
+    }
+
+    # Exercise the initialized view before entering the application loop.
     update
-    refresh_ogl $oglwin
+    ::brlcad::isst walk $oglwin 1
+    ::brlcad::isst walk $oglwin -1
+    update
+    while {1} {
+	update
+	::brlcad::isst refresh_ogl $oglwin
+    }
 }
 
 # Local Variables:

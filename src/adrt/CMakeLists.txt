@@ -64,7 +64,7 @@ target_include_directories(adrt BEFORE PRIVATE ${ADRT_LOCAL_INCLUDE_DIRS})
 
 # Tcl/Tk based ISST
 
-if(BRLCAD_ENABLE_OPENGL AND OPEGL_TARGETS AND BRLCAD_ENABLE_TK)
+if(BRLCAD_ENABLE_OPENGL AND OPENGL_TARGETS AND BRLCAD_ENABLE_TK)
 
   set(local_isst_dirs
     ${CMAKE_CURRENT_SOURCE_DIR}
@@ -87,6 +87,7 @@ if(BRLCAD_ENABLE_OPENGL AND OPEGL_TARGETS AND BRLCAD_ENABLE_TK)
   brlcad_addexec(isst isst.c "${isst_libs}" GUI)
   target_include_directories(isst BEFORE PRIVATE ${local_isst_dirs})
   add_target_deps(isst isst_tcl_cp TclIndexBld dm_plugins)
+  brlcad_add_test(NAME isst_test_namespace COMMAND isst --check-command-namespace)
 endif()
 
 cmakefiles(isst.tcl)

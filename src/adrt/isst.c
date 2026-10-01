@@ -35,6 +35,7 @@
 #include "bu/app.h"
 #include "bu/parallel.h"
 #include "bu/datetime.h"
+#include "bu/str.h"
 #include "dm.h"
 
 #include "rt/tie.h"
@@ -51,6 +52,12 @@
 #ifdef HAVE_STRING_H
 #include <string.h>
 #endif
+
+#define ISST_COMMAND_NAMESPACE "::brlcad::isst"
+#define ISST_PACKAGE_NAME "brlcad::isst"
+#define ISST_LEGACY_PACKAGE_NAME "isst"
+#define ISST_PACKAGE_VERSION "0.1"
+#define ISST_NAMESPACE_CHECK_OPTION "--check-command-namespace"
 
 static struct dm *dmp;
 
@@ -199,9 +206,10 @@ isst_load_g(ClientData UNUSED(clientData), Tcl_Interp *interp, int objc,
 static int
 list_geometry(ClientData UNUSED(clientData), Tcl_Interp *interp, int objc, Tcl_Obj *const *objv)
 {
-    static struct db_i *dbip;
+    struct db_i *dbip;
     struct directory *dp;
-    struct bu_vls tclstr = BU_VLS_INIT_ZERO;
+    Tcl_Obj *objects;
+    int object_count;
 
     if (objc < 3) {
 	Tcl_WrongNumArgs(interp, 1, objv, "file varname");
@@ -213,13 +221,31 @@ list_geometry(ClientData UNUSED(clientData), Tcl_Interp *interp, int objc, Tcl_O
 	return TCL_ERROR;
     }
     db_dirbuild(dbip);
+    objects = Tcl_ObjGetVar2(interp, objv[2], NULL, 0);
+    if (objects) {
+	objects = Tcl_DuplicateObj(objects);
+    } else {
+	Tcl_ResetResult(interp);
+	objects = Tcl_NewListObj(0, NULL);
+    }
+    Tcl_IncrRefCount(objects);
+    if (Tcl_ListObjLength(interp, objects, &object_count) != TCL_OK) {
+	db_close(dbip);
+	Tcl_DecrRefCount(objects);
+	return TCL_ERROR;
+    }
     FOR_ALL_DIRECTORY_START(dp, dbip)
 	if (dp->d_flags & RT_DIR_HIDDEN) continue;
-	bu_vls_sprintf(&tclstr, "set %s [concat $%s [list %s]]", Tcl_GetString(objv[2]), Tcl_GetString(objv[2]), dp->d_namep);
-	Tcl_Eval(interp, bu_vls_addr(&tclstr));
+	Tcl_ListObjAppendElement(interp, objects,
+		Tcl_NewStringObj(dp->d_namep, -1));
     FOR_ALL_DIRECTORY_END;
     db_close(dbip);
-    bu_vls_free(&tclstr);
+    if (!Tcl_ObjSetVar2(interp, objv[2], NULL, objects,
+	    TCL_LEAVE_ERR_MSG)) {
+	Tcl_DecrRefCount(objects);
+	return TCL_ERROR;
+    }
+    Tcl_DecrRefCount(objects);
     return TCL_OK;
 }
 
@@ -590,6 +616,27 @@ open_dm(ClientData UNUSED(cdata), Tcl_Interp *interp, int UNUSED(objc), Tcl_Obj 
 
 }
 
+
+static const struct tclcad_objcmdtab isst_commands[] = {
+    {"init", "isst_init", isst_init, NULL},
+    {"zap", "isst_zap", isst_zap, NULL},
+    {"refresh_ogl", "refresh_ogl", paint_window, NULL},
+    {"reshape", "reshape", reshape, NULL},
+    {"load_g", "load_g", isst_load_g, NULL},
+    {"list_g", "list_g", list_geometry, NULL},
+    {"aetolookat", "aetolookat", aetolookat, NULL},
+    {"aerotate", "aerotate", aerotate, NULL},
+    {"walk", "walk", move_walk, NULL},
+    {"strafe", "strafe", move_strafe, NULL},
+    {"float", "float", move_float, NULL},
+    {"reset", "reset", zero_view, NULL},
+    {"set_resolution", "set_resolution", set_resolution, NULL},
+    {"render_mode", "render_mode", render_mode, NULL},
+    {"open_dm", "open_dm", open_dm, NULL},
+    {NULL, NULL, NULL, NULL}
+};
+
+
 /* this function needs to be Isst_Init() for fbsd and mac, but may need to be
  * Issttcltk_Init on other platforms (I'm looking at you, windows). Needs more
  * investigation.
@@ -597,10 +644,6 @@ open_dm(ClientData UNUSED(cdata), Tcl_Interp *interp, int UNUSED(objc), Tcl_Obj 
 int
 Isst_Init(Tcl_Interp *interp)
 {
-    if (Tcl_PkgProvide(interp, "isst", "0.1") != TCL_OK) {
-	return TCL_ERROR;
-    }
-
     /*
      * Initialize Tcl
      */
@@ -608,25 +651,49 @@ Isst_Init(Tcl_Interp *interp)
 	return TCL_ERROR;
     }
 
-    /*
-     * Specify the C callback functions for widget creation, display,
-     * and reshape.
-     */
-    Tcl_CreateObjCommand(interp, "isst_init", isst_init, NULL, NULL);
-    Tcl_CreateObjCommand(interp, "isst_zap", isst_zap, NULL, NULL);
-    Tcl_CreateObjCommand(interp, "refresh_ogl", paint_window, NULL, NULL);
-    Tcl_CreateObjCommand(interp, "reshape", reshape, NULL, NULL);
-    Tcl_CreateObjCommand(interp, "load_g", isst_load_g, NULL, NULL);
-    Tcl_CreateObjCommand(interp, "list_g", list_geometry, NULL, NULL);
-    Tcl_CreateObjCommand(interp, "aetolookat", aetolookat, NULL, NULL);
-    Tcl_CreateObjCommand(interp, "aerotate", aerotate, NULL, NULL);
-    Tcl_CreateObjCommand(interp, "walk", move_walk, NULL, NULL);
-    Tcl_CreateObjCommand(interp, "strafe", move_strafe, NULL, NULL);
-    Tcl_CreateObjCommand(interp, "float", move_float, NULL, NULL);
-    Tcl_CreateObjCommand(interp, "reset", zero_view, NULL, NULL);
-    Tcl_CreateObjCommand(interp, "set_resolution", set_resolution, NULL, NULL);
-    Tcl_CreateObjCommand(interp, "render_mode", render_mode, NULL, NULL);
-    Tcl_CreateObjCommand(interp, "open_dm", open_dm, NULL, NULL);
+    if (tclcad_register_objcmd_namespace(interp, ISST_COMMAND_NAMESPACE,
+	    isst_commands) != TCL_OK)
+	return TCL_ERROR;
+
+    if (Tcl_PkgProvide(interp, ISST_LEGACY_PACKAGE_NAME,
+	    ISST_PACKAGE_VERSION) != TCL_OK ||
+	Tcl_PkgProvide(interp, ISST_PACKAGE_NAME,
+	    ISST_PACKAGE_VERSION) != TCL_OK)
+	return TCL_ERROR;
+
+    return TCL_OK;
+}
+
+
+static int
+isst_check_tcl_api(Tcl_Interp *interp)
+{
+    const struct tclcad_objcmdtab *command;
+    Tcl_CmdInfo command_info;
+
+    if (!Tcl_FindNamespace(interp, ISST_COMMAND_NAMESPACE, NULL,
+	    TCL_GLOBAL_ONLY) ||
+	!Tcl_GetCommandInfo(interp, ISST_COMMAND_NAMESPACE, &command_info)) {
+	Tcl_SetObjResult(interp, Tcl_ObjPrintf(
+		"missing ISST Tcl interface \"%s\"", ISST_COMMAND_NAMESPACE));
+	return TCL_ERROR;
+    }
+
+    for (command = isst_commands; command->tcc_name; command++) {
+	if (command->tcc_legacy_name &&
+	    !Tcl_GetCommandInfo(interp, command->tcc_legacy_name,
+		    &command_info)) {
+	    Tcl_SetObjResult(interp, Tcl_ObjPrintf(
+		    "missing legacy ISST Tcl command \"%s\"",
+		    command->tcc_legacy_name));
+	    return TCL_ERROR;
+	}
+    }
+
+    if (!Tcl_PkgRequire(interp, ISST_LEGACY_PACKAGE_NAME,
+	    ISST_PACKAGE_VERSION, 1) ||
+	!Tcl_PkgRequire(interp, ISST_PACKAGE_NAME, ISST_PACKAGE_VERSION, 1))
+	return TCL_ERROR;
 
     return TCL_OK;
 }
@@ -646,17 +713,21 @@ main(int argc, const char **argv)
 {
 #endif
     Tcl_DString temp;
-const char *fullname;
+    const char *fullname;
     int status;
     const char *isst_tcl = NULL;
     struct bu_vls tlog = BU_VLS_INIT_ZERO;
     Tcl_Interp *interp = Tcl_CreateInterp();
+    int check_namespace;
 
 #ifdef HAVE_WINDOWS_H
     /* Get our args from the c-runtime. Ignore lpszCmdLine. */
     argc = __argc;
     argv = __argv;
 #endif
+
+    check_namespace = argc == 2 &&
+	BU_STR_EQUAL(argv[1], ISST_NAMESPACE_CHECK_OPTION);
 
     /* initialize progname for run-time resource finding */
     bu_setprogname(argv[0]);
@@ -665,7 +736,7 @@ const char *fullname;
    Tk_InitConsoleChannels(interp);
 #endif
 
-    status = tclcad_init(interp, 1, &tlog);
+    status = tclcad_init(interp, check_namespace ? 0 : 1, &tlog);
     if (status == TCL_ERROR) {
 	bu_log("Isst tclcad init failure:\n%s\n", bu_vls_addr(&tlog));
 	bu_vls_free(&tlog);
@@ -688,6 +759,18 @@ const char *fullname;
     fullname = Tcl_TranslateFileName(interp, isst_tcl, &temp);
     status = Tcl_EvalFile(interp, fullname);
     Tcl_DStringFree(&temp);
+
+    if (status == TCL_OK) {
+	if (check_namespace)
+	    status = isst_check_tcl_api(interp);
+	else
+	    status = Tcl_EvalEx(interp, "::isst::main", -1,
+		    TCL_EVAL_GLOBAL);
+    }
+    if (check_namespace && status != TCL_OK)
+	bu_log("ISST Tcl namespace check failed: %s\n",
+		Tcl_GetStringResult(interp));
+
     Tcl_DeleteInterp(interp);
     return status;
 }
