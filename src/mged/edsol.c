@@ -735,6 +735,7 @@ sedit_mouse(struct mged_state *s, const vect_t mousevec)
 	if (bu_vls_strlen(MEDIT(s)->log_str)) {
 	    Tcl_AppendResult(s->interp, bu_vls_cstr(MEDIT(s)->log_str), (char *)NULL);
 	    bu_vls_trunc(MEDIT(s)->log_str, 0);
+	    mged_print_result(0, NULL, s, NULL);
 	}
     }
 
