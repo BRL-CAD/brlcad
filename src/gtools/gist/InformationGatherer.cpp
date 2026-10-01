@@ -23,10 +23,20 @@
 #include "InformationGatherer.h"
 #include "bu/log.h"
 
+// flush results, if we have any, then exit
+static void reportAndExit(const std::string &message, const std::string &result = "")
+{
+    if (!result.empty())
+	bu_log("%s%s", result.c_str(), result.back() == '\n' ? "" : "\n");
+
+    bu_exit(BRLCAD_ERROR, "%s", message.c_str());
+}
+
+
 std::string getCmdPath(std::string exeDir, const char* cmd) {
     char buf[MAXPATHLEN] = {0};
     if (!bu_dir(buf, MAXPATHLEN, exeDir.c_str(), cmd, BU_DIR_EXT, NULL))
-        bu_exit(BRLCAD_ERROR, "Couldn't find %s, aborting.\n", cmd);
+	reportAndExit("Couldn't find " + std::string(cmd) + ", aborting.\n");
 
     return std::string(buf);
 }
@@ -58,13 +68,13 @@ getSurfaceArea(Options* opt, std::map<std::string, std::string> UNUSED(map), std
     bu_process_create(&p, rtarea_av, BU_PROCESS_HIDE_WINDOW | BU_PROCESS_OUT_EQ_ERR);
 
     if (bu_process_pid(p) <= 0) {
-        bu_exit(BRLCAD_ERROR, "Problem with getSurfaceArea, aborting\n");
+	reportAndExit("Problem with getSurfaceArea, aborting\n");
     }
 
     char buffer[128];
-    std::string result = "";
+    std::string result;
     int read_cnt = 0;
-    while ((read_cnt = bu_process_read_n(p, BU_PROCESS_STDOUT, 128-1, buffer)) > 0) {
+    while ((read_cnt = bu_process_read_n(p, BU_PROCESS_STDOUT, sizeof(buffer) - 1, buffer)) > 0) {
         /* NOTE: read does not ensure null-termination, thus buffersize-1 */
         buffer[read_cnt] = '\0';
         result += buffer;
@@ -80,7 +90,7 @@ getSurfaceArea(Options* opt, std::map<std::string, std::string> UNUSED(map), std
         try {
             surfArea += stod(result);
         } catch (const std::invalid_argument& ia) {
-            bu_exit(BRLCAD_ERROR, "Invalid argument for getSurfaceArea. Got (%s), aborting.\n", ia.what());
+	    reportAndExit("Invalid argument for getSurfaceArea. Got (" + std::string(ia.what()) + "), aborting.\n", result);
         }
     }
 }
@@ -200,7 +210,7 @@ getVerificationData(struct ged* UNUSED(g), Options* opt, std::map<std::string, s
     struct bu_process* p;
     int read_cnt = 0;
     char buffer[1024] = {0};
-    std::string result = "";
+    std::string result;
     std::string ncpu(std::to_string(opt->getNCPU()));
     std::string dFile(opt->getDensityFile());
 
@@ -233,21 +243,23 @@ getVerificationData(struct ged* UNUSED(g), Options* opt, std::map<std::string, s
     bu_process_create(&p, const_cast<const char**>(gqa_av_vec.data()), BU_PROCESS_HIDE_WINDOW | BU_PROCESS_OUT_EQ_ERR);
 
     if (bu_process_pid(p) <= 0) {
-        bu_exit(BRLCAD_ERROR, "Problem in getVerificationData gqa process creation, aborting\n");
+	reportAndExit("Problem in getVerificationData gqa process creation, aborting\n");
     }
 
-    result = "";
-    while ((read_cnt = bu_process_read_n(p, BU_PROCESS_STDOUT, 1024-1, buffer)) > 0) {
+    while ((read_cnt = bu_process_read_n(p, BU_PROCESS_STDOUT, sizeof(buffer) - 1, buffer)) > 0) {
         buffer[read_cnt] = '\0';
         result += buffer;
     }
 
-    if (bu_process_wait_n(&p, 0) != 0) {
-        bu_exit(BRLCAD_ERROR, "Problem collecting gqa volume and mass, aborting\n");
+    const int gqa_status = bu_process_wait_n(&p, 0);
+
+    // sanity - we should have clean status code and not the "no density found" message
+    const bool no_density_data = result.find(no_density_msg) != std::string::npos;
+    if (gqa_status != 0 && (!no_density_data || !dFile.empty())) {
+	reportAndExit("Problem collecting gqa volume and mass, aborting\n", result);
     }
 
-    // make sure we did not get 'no density file' error message
-    if (result.find(no_density_msg) == std::string::npos) {
+    if (!no_density_data) {
         // NOTE: tmp_val is zeroed at each parseLabeledNumber call
         if (parseLabeledNumber(tmp_val, result, volume_label))
             volume += tmp_val;
@@ -263,17 +275,17 @@ getVerificationData(struct ged* UNUSED(g), Options* opt, std::map<std::string, s
     bu_process_create(&p, const_cast<const char**>(gqa_av_vec.data()), BU_PROCESS_HIDE_WINDOW | BU_PROCESS_OUT_EQ_ERR);
 
     if (bu_process_pid(p) <= 0) {
-        bu_exit(BRLCAD_ERROR, "Problem in getVerificationData gqa process creation, aborting\n");
+	reportAndExit("Problem in getVerificationData gqa process creation, aborting\n");
     }
 
-    result = "";
-    while ((read_cnt = bu_process_read_n(p, BU_PROCESS_STDOUT, 1024-1, buffer)) > 0) {
+    result.clear();
+    while ((read_cnt = bu_process_read_n(p, BU_PROCESS_STDOUT, sizeof(buffer) - 1, buffer)) > 0) {
         buffer[read_cnt] = '\0';
         result += buffer;
     }
 
     if (bu_process_wait_n(&p, 0) != 0) {
-        bu_exit(BRLCAD_ERROR, "Problem collecting gqa volume, aborting\n");
+	reportAndExit("Problem collecting gqa volume, aborting\n", result);
     }
 
     if (parseLabeledNumber(tmp_val, result, volume_label))
@@ -381,7 +393,7 @@ InformationGatherer::getMainComp()
         ged_exec_exists(g, 2, cmd);
         std::string res = bu_vls_addr(g->ged_result_str);
         if (res != "1") {
-            bu_exit(BRLCAD_ERROR, "Could not find component (%s), aborting.\n", topname);
+	    reportAndExit("Could not find component (" + topcomp + "), aborting.\n");
         }
 
         int entities = getNumEntities(opt->getTopComp());
