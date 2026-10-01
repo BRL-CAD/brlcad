@@ -72,12 +72,12 @@ proc rtimage_cut_animation {rtimage_dict} {
 	    return -code error "rtwizard: cutting direction must be a non-zero XYZ vector"
 	}
     } else {
-	set omat [quat_quat2mat $_orientation]
+	set omat [::brlcad::bn quat_quat2mat $_orientation]
 	set cut_dir [vunitize [list [expr {-[lindex $omat 8]}] \
 	    [expr {-[lindex $omat 9]}] [expr {-[lindex $omat 10]}]]]
     }
 
-    set sweep_bounds [rtwizard_cut_bounds $_dbfile $cut_dir {*}$anim_objects]
+    set sweep_bounds [::brlcad::rtwizard cut_bounds $_dbfile $cut_dir {*}$anim_objects]
     set sweep_min [lindex $sweep_bounds 0]
     set sweep_max [lindex $sweep_bounds 1]
     set sweep_span [expr {$sweep_max - $sweep_min}]
@@ -107,14 +107,14 @@ proc rtimage_cut_animation {rtimage_dict} {
 		[lindex $plane_pt 0] [lindex $plane_pt 1] [lindex $plane_pt 2] \
 		[lindex $cut_dir 0] [lindex $cut_dir 1] [lindex $cut_dir 2]]
 	    puts "Rendering frame [expr {$frame_no + 1}]/$frame_count"
-	    catch {exec [file join [bu_dir bin] fbclear] -F $_port \
+	    catch {exec [file join [::brlcad::bu dir bin] fbclear] -F $_port \
 		[lindex $_bgcolor 0] [lindex $_bgcolor 1] [lindex $_bgcolor 2]}
 	    rtimage $rtimage_dict
 	    set frame_file [file join $frame_dir [format ".rtwizard-%d-%06d.pix" [pid] $frame_no]]
-	    exec [file join [bu_dir bin] fb-pix] -w $_w -n $_n -F $_port $frame_file 2>@1
+	    exec [file join [::brlcad::bu dir bin] fb-pix] -w $_w -n $_n -F $_port $frame_file 2>@1
 	    lappend animation_frames $frame_file
 	}
-	rtwizard_anim_write $::RtWizard::wizard_state(output_filename) $_w $_n \
+	::brlcad::rtwizard anim_write $::RtWizard::wizard_state(output_filename) $_w $_n \
 	    $::RtWizard::wizard_state(animation_fps) {*}$animation_frames
     } finally {
 	foreach frame_file $animation_frames { catch {file delete -force $frame_file} }
@@ -176,7 +176,7 @@ proc rtimage {rtimage_dict} {
     set tmod [list [file join $dir $pid\_bwmod.bw] ]
     set tbwpix [list [file join $dir $pid\_bwpix.pix] ]
 
-    set binpath [bu_dir bin]
+    set binpath [::brlcad::bu dir bin]
 
     if {[llength $_color_objects]} {
 	set have_color_objects 1

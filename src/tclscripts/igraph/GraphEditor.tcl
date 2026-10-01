@@ -278,7 +278,7 @@ package provide GraphEditor 1.0
     # destroy the framebuffer, if we opened it
     if { $_weStartedFbserv } {
 	puts "cleaning up fbserv"
-	set fbfree [file join [bu_dir bin] fbfree]
+	set fbfree [file join [::brlcad::bu dir bin] fbfree]
 	if { [ catch { exec $fbfree -F $_fbservPort } error ] } {
 	    puts $error
 	    puts "Unable to properly clean up after our fbserv"
@@ -377,10 +377,10 @@ package provide GraphEditor 1.0
     set device /dev/X
     set rgb "255 255 255"
     set rtrun ""
-    set fbserv [file join [bu_dir bin] fbserv]
-    set fbfree [file join [bu_dir bin] fbfree]
-    set fbline [file join [bu_dir bin] fbline]
-    set fbclear [file join [bu_dir bin] fbclear]
+    set fbserv [file join [::brlcad::bu dir bin] fbserv]
+    set fbfree [file join [::brlcad::bu dir bin] fbfree]
+    set fbline [file join [::brlcad::bu dir bin] fbline]
+    set fbclear [file join [::brlcad::bu dir bin] fbclear]
 
     # see if we can try to use the mged graphics window instead of firing up our own framebuffer
     set useMgedWindow 0
@@ -444,8 +444,8 @@ package provide GraphEditor 1.0
 	    }
 
 	    # failed, so try to start one
-	    puts "exec $fbserv -S $size -p $_fbservPort -F $device > [bu_file_null] &"
-	    exec $fbserv -S $size -p $_fbservPort -F $device > [bu_file_null] &
+	    puts "exec $fbserv -S $size -p $_fbservPort -F $device > [::brlcad::bu file_null] &"
+	    exec $fbserv -S $size -p $_fbservPort -F $device > [::brlcad::bu file_null] &
 	    exec sleep 1
 
 	    # keep track of the fact that we started this fbserv, so we have to clean up
@@ -462,8 +462,8 @@ package provide GraphEditor 1.0
 		incr _fbservPort
 
 		# still failing, try to start one again
-		puts "exec $fbserv -S $size -p $_fbservPort -F $device > [bu_file_null] &"
-		exec $fbserv -S $size -p $_fbservPort -F $device > [bu_file_null] &
+		puts "exec $fbserv -S $size -p $_fbservPort -F $device > [::brlcad::bu file_null] &"
+		exec $fbserv -S $size -p $_fbservPort -F $device > [::brlcad::bu file_null] &
 		exec sleep 1
 
 		# try again
@@ -476,8 +476,8 @@ package provide GraphEditor 1.0
 		    incr _fbservPort
 
 		    # still failing, try to start one again
-		    puts "exec $fbserv -S $size -p $_fbservPort -F $device > [bu_file_null] &"
-		    exec $fbserv -S $size $_fbservPort $device > [bu_file_null] &
+		    puts "exec $fbserv -S $size -p $_fbservPort -F $device > [::brlcad::bu file_null] &"
+		    exec $fbserv -S $size $_fbservPort $device > [::brlcad::bu file_null] &
 		    exec sleep 1
 
 		    # last try

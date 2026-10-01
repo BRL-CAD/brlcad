@@ -210,9 +210,9 @@ package provide OverlapFileTool 1.0
     file delete -force -- $ol_dir
 
     # run overlaps check for all the specified objects
-    set gcheck_status [catch {exec [file join [bu_dir bin] gchecker] -f $db_path {*}$_objs} result]
+    set gcheck_status [catch {exec [file join [::brlcad::bu dir bin] gchecker] -f $db_path {*}$_objs} result]
     if { $gcheck_status != 0 && ![string equal $::errorCode NONE] } {
-	#set gcmd "[file join [bu_dir bin] gchecker] $db_path $_objs"
+	#set gcmd "[file join [::brlcad::bu dir bin] gchecker] $db_path $_objs"
 	tk_messageBox -type ok -title "Run Error" -message $result
 	$itk_component(buttonGo) configure -state normal
 	$itk_component(objectsEntry) configure -state normal

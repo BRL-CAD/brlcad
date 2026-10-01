@@ -145,43 +145,43 @@
 # Initialize the variables containing the object's specification.
 #
 ::itcl::body CombEditFrame::initGeometry {gdata} {
-    if {![catch {bu_get_value_by_keyword region $gdata} _region]} {
+    if {![catch {::brlcad::bu get_value_by_keyword region $gdata} _region]} {
 	set mRegion $_region
     } else {
 	set mRegion ""
     }
 
-    if {![catch {bu_get_value_by_keyword id $gdata} _id]} {
+    if {![catch {::brlcad::bu get_value_by_keyword id $gdata} _id]} {
 	set mId $_id
     } else {
 	set mId ""
     }
 
-    if {![catch {bu_get_value_by_keyword air $gdata} _air]} {
+    if {![catch {::brlcad::bu get_value_by_keyword air $gdata} _air]} {
 	set mAir $_air
     } else {
 	set mAir ""
     }
 
-    if {![catch {bu_get_value_by_keyword los $gdata} _los]} {
+    if {![catch {::brlcad::bu get_value_by_keyword los $gdata} _los]} {
 	set mLos $_los
     } else {
 	set mLos ""
     }
 
-    if {![catch {bu_get_value_by_keyword GIFTmater $gdata} _giftmater]} {
+    if {![catch {::brlcad::bu get_value_by_keyword GIFTmater $gdata} _giftmater]} {
 	set mGift $_giftmater
     } else {
 	set mGift ""
     }
 
-    if {![catch {bu_get_value_by_keyword rgb $gdata} _rgb]} {
+    if {![catch {::brlcad::bu get_value_by_keyword rgb $gdata} _rgb]} {
 	set mRgb $_rgb
     } else {
 	set mRgb ""
     }
 
-    if {![catch {bu_get_value_by_keyword shader $gdata} _shader]} {
+    if {![catch {::brlcad::bu get_value_by_keyword shader $gdata} _shader]} {
 	set mShader $_shader
     } else {
 	set mShader ""
@@ -189,19 +189,19 @@
 
     $itk_component(combShader) initShader $mShader
 
-    #    if {![catch {bu_get_value_by_keyword material $gdata} _material]} {
+    #    if {![catch {::brlcad::bu get_value_by_keyword material $gdata} _material]} {
     #	set mMaterial $_material
     #    } else {
     #	set mMaterial ""
     #    }
 
-    if {![catch {bu_get_value_by_keyword inherit $gdata} _inherit]} {
+    if {![catch {::brlcad::bu get_value_by_keyword inherit $gdata} _inherit]} {
 	set mInherit $_inherit
     } else {
 	set mInherit "no"
     }
 
-    if {![catch {bu_get_value_by_keyword tree $gdata} _tree]} {
+    if {![catch {::brlcad::bu get_value_by_keyword tree $gdata} _tree]} {
 	set mOriginalTree $_tree
 	set tree [string trim [ArcherCore::unpackTree $_tree]]
     } else {
@@ -1089,59 +1089,59 @@
     set gdata [$itk_option(-mged) get $itk_option(-geometryObject)]
     set gdata [lrange $gdata 1 end]
 
-    set _mRegion [bu_get_value_by_keyword region $gdata]
+    set _mRegion [::brlcad::bu get_value_by_keyword region $gdata]
 
-    if {![catch {bu_get_value_by_keyword id $gdata} _id]} {
+    if {![catch {::brlcad::bu get_value_by_keyword id $gdata} _id]} {
 	set _mId $_id
     } else {
 	set _mId ""
     }
 
-    if {![catch {bu_get_value_by_keyword air $gdata} _air]} {
+    if {![catch {::brlcad::bu get_value_by_keyword air $gdata} _air]} {
 	set _mAir $_air
     } else {
 	set _mAir ""
     }
 
-    if {![catch {bu_get_value_by_keyword los $gdata} _los]} {
+    if {![catch {::brlcad::bu get_value_by_keyword los $gdata} _los]} {
 	set _mLos $_los
     } else {
 	set _mLos ""
     }
 
-    if {![catch {bu_get_value_by_keyword GIFTmater $gdata} _giftmater]} {
+    if {![catch {::brlcad::bu get_value_by_keyword GIFTmater $gdata} _giftmater]} {
 	set _mGift $_giftmater
     } else {
 	set _mGift ""
     }
 
-    if {![catch {bu_get_value_by_keyword rgb $gdata} _rgb]} {
+    if {![catch {::brlcad::bu get_value_by_keyword rgb $gdata} _rgb]} {
 	set _mRgb $_rgb
     } else {
 	set _mRgb ""
     }
 
     set mShader [$itk_component(combShader) getShaderSpec]
-    if {![catch {bu_get_value_by_keyword shader $gdata} _shader]} {
+    if {![catch {::brlcad::bu get_value_by_keyword shader $gdata} _shader]} {
 	set _mShader $_shader
     } else {
 	set _mShader ""
     }
 
-    #    if {![catch {bu_get_value_by_keyword material $gdata} _material]} {
+    #    if {![catch {::brlcad::bu get_value_by_keyword material $gdata} _material]} {
     #	set _mMaterial $_material
     #    } else {
     #	set _mMaterial ""
     #    }
 
-    if {![catch {bu_get_value_by_keyword inherit $gdata} _inherit]} {
+    if {![catch {::brlcad::bu get_value_by_keyword inherit $gdata} _inherit]} {
 	set _mInherit $_inherit
     } else {
 	set _mInherit ""
     }
 
     set tree [string trim [$itk_component(combTreeT) get 1.0 end]]
-    if {![catch {bu_get_value_by_keyword tree $gdata} _tree]} {
+    if {![catch {::brlcad::bu get_value_by_keyword tree $gdata} _tree]} {
 	set _tree [string trim [ArcherCore::unpackTree $_tree]]
     } else {
 	set _tree ""

@@ -63,12 +63,12 @@ proc ray_get_info { ray key1 key2 } {
     set items {}
 
     foreach partition $ray {
-	set item [bu_get_value_by_keyword $key1 $partition]
+	set item [::brlcad::bu get_value_by_keyword $key1 $partition]
 
 	if {$key2 == ""} {
 	    lappend items $item
 	} else {
-	    lappend items [bu_get_value_by_keyword $key2 $item]
+	    lappend items [::brlcad::bu get_value_by_keyword $key2 $item]
 	}
     }
 

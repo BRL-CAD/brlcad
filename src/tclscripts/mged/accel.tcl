@@ -46,7 +46,7 @@ proc rcc-cap {args} {
 	set end b
     } elseif {$argc == 3} {
 	if { [regexp {^[0-9]+.*[0-9]*$} [lindex $args 2]]} {
-	    set height [expr [bu_units_conversion $mged_display(units)] *[lindex $args 2]]
+	    set height [expr [::brlcad::bu units_conversion $mged_display(units)] *[lindex $args 2]]
 	    set end b
 	} else {
 	    foreach {ax ay az} [db get $rccname A] {}
@@ -55,7 +55,7 @@ proc rcc-cap {args} {
 	    set end [lindex $args 2]
 	}
     } else {
-	set height [expr [bu_units_conversion $mged_display(units)] *[lindex $args 2]]
+	set height [expr [::brlcad::bu units_conversion $mged_display(units)] *[lindex $args 2]]
 	set end [lindex $args 3]
     }
     #Choices for $end are either "b" (base) or "t" (top)
@@ -129,7 +129,7 @@ proc rcc-tgc {args} {
     #    set apex [list $ptx $pty $ptz]
     set apex ""
     foreach pt {$ptx $pty $ptz} {
-	set result [expr $pt*[bu_units_conversion $mged_display(units)]]
+	set result [expr $pt*[::brlcad::bu units_conversion $mged_display(units)]]
 	lappend apex $result
     }
     set height [vsub2 $apex $vertex]
@@ -138,12 +138,12 @@ proc rcc-tgc {args} {
     foreach param {vertex height vector1 vector2} val "{$vertex} {$height} {$vector1} {$vector2}" {
 	set result ""
 	foreach coord $val {
-	    set temp [expr $coord/[bu_units_conversion $mged_display(units)]]
+	    set temp [expr $coord/[::brlcad::bu units_conversion $mged_display(units)]]
 	    lappend result $temp
 	}
 	set $param $result
     }
-    set scalar [expr $scalar/[bu_units_conversion $mged_display(units)]]
+    set scalar [expr $scalar/[::brlcad::bu units_conversion $mged_display(units)]]
     eval in $newname tgc $vertex $height $vector1 $vector2 $scalar $scalar
     return $newname
 }
@@ -180,7 +180,7 @@ proc tor-rcc {args} {
     #Create RCC
     #in order to create properly, have to use display units
     foreach param {rvx rvy rvz rhx rhy rhz radius1} val "$rvx $rvy $rvz $rhx $rhy $rhz $radius1" {
-	set $param [expr $val/[bu_units_conversion $mged_display(units)]]
+	set $param [expr $val/[::brlcad::bu units_conversion $mged_display(units)]]
     }
     in $newname rcc $rvx $rvy $rvz $rhx $rhy $rhz $radius1
     return $newname
@@ -220,7 +220,7 @@ proc rcc-tor {args} {
     #Create TOR
     #in order to create properly, have to use display units
     foreach param {tvx tvy tvz rhx rhy rhz radius1 radius2} val "$tvx $tvy $tvz $rhx $rhy $rhz $radius1 $radius2" {
-	set $param [expr $val/[bu_units_conversion $mged_display(units)]]
+	set $param [expr $val/[::brlcad::bu units_conversion $mged_display(units)]]
     }
     in $newname tor $tvx $tvy $tvz $rhx $rhy $rhz $radius1 $radius2
     return $newname
@@ -244,7 +244,7 @@ proc rcc-blend {args} {
     }
     set rccname1 [lindex $args 0]
     set newname [lindex $args 1]
-    set thickness [expr [bu_units_conversion $mged_display(units)] * [lindex $args 2]]
+    set thickness [expr [::brlcad::bu units_conversion $mged_display(units)] * [lindex $args 2]]
     if {$argc == 3} {
 	set end b
     } else {
@@ -277,14 +277,14 @@ proc rcc-blend {args} {
     set hscale [expr $thickness/$hmag]
     #In order to make TOR properly, have to convert parameters to display units
     foreach param {tvx tvy tvz rhx rhy rhz amag thickness} val "$tvx $tvy $tvz $rhx $rhy $rhz $amag $thickness" {
-	set $param [expr $val/[bu_units_conversion $mged_display(units)]]
+	set $param [expr $val/[::brlcad::bu units_conversion $mged_display(units)]]
     }
     in $torname tor $tvx $tvy $tvz $rhx $rhy $rhz $amag $thickness
     #Create RCC2
     set rccname2 [make_name $newname]
     #In order to make TOR properly, have to convert parameters to display units
     foreach param {rvx rvy rvz } val "$rvx $rvy $rvz" {
-	set $param [expr $val/[bu_units_conversion $mged_display(units)]]
+	set $param [expr $val/[::brlcad::bu units_conversion $mged_display(units)]]
     }
     in $rccname2 rcc $rvx $rvy $rvz [expr $hscale*$rhx] [expr $hscale*$rhy] [expr $hscale*$rhz] $amag
     #Create Flange
@@ -318,7 +318,7 @@ proc rpp-cap {args} {
     set rppname [lindex $args 0]
     set newname [lindex $args 1]
     set face [lindex $args 2]
-    set height [expr [lindex $args 3]*[bu_units_conversion $mged_display(units)]]
+    set height [expr [lindex $args 3]*[::brlcad::bu units_conversion $mged_display(units)]]
     if {$argc == 4} {
 	set orient 0
     } else {
@@ -394,13 +394,13 @@ proc rpp-cap {args} {
     foreach param {P1 P2 P3 P4} val "{$P1} {$P2} {$P3} {$P4}" {
 	set result ""
 	foreach coord $val {
-	    set temp [expr $coord/[bu_units_conversion $mged_display(units)]]
+	    set temp [expr $coord/[::brlcad::bu units_conversion $mged_display(units)]]
 	    lappend result $temp
 	}
 	set $param $result
     }
     foreach coord {r1x r1y r1z r2x r2y r2z } val "$r1x $r1y $r1z $r2x $r2y $r2z" {
-	set $coord [expr $val/[bu_units_conversion $mged_display(units)]]
+	set $coord [expr $val/[::brlcad::bu units_conversion $mged_display(units)]]
     }
 
     eval in $newname arb6 $P1 $P2 $P3 $P4 $r1x $r1y $r1z $r2x $r2y $r2z
@@ -442,7 +442,7 @@ proc rpp-arch {args} {
     foreach param {vertex height radius} val "{$vertex} {$height} {$radius}" {
 	set result ""
 	foreach coord $val {
-	    set temp [expr $coord/[bu_units_conversion $mged_display(units)]]
+	    set temp [expr $coord/[::brlcad::bu units_conversion $mged_display(units)]]
 	    lappend result $temp
 	}
 	set $param $result
@@ -481,7 +481,7 @@ proc sph-part {args} {
     set hz [expr $vz2-$vz1]
     #in order to create properly, convert to display units
     foreach param {vx1 vy1 vz1 hx hy hz radius1 radius2} val "$vx1 $vy1 $vz1 $hx $hy $hz $radius1 $radius2" {
-	set $param [expr $val/[bu_units_conversion $mged_display(units)]]
+	set $param [expr $val/[::brlcad::bu units_conversion $mged_display(units)]]
     }
     #Create PART
     in $newname part $vx1 $vy1 $vz1 $hx $hy $hz $radius1 $radius2

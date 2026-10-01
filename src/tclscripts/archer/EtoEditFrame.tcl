@@ -108,20 +108,20 @@
 # Initialize the variables containing the object's specification.
 #
 ::itcl::body EtoEditFrame::initGeometry {gdata} {
-    set _V [bu_get_value_by_keyword V $gdata]
+    set _V [::brlcad::bu get_value_by_keyword V $gdata]
     set mVx [lindex $_V 0]
     set mVy [lindex $_V 1]
     set mVz [lindex $_V 2]
-    set _N [bu_get_value_by_keyword N $gdata]
+    set _N [::brlcad::bu get_value_by_keyword N $gdata]
     set mNx [lindex $_N 0]
     set mNy [lindex $_N 1]
     set mNz [lindex $_N 2]
-    set _C [bu_get_value_by_keyword C $gdata]
+    set _C [::brlcad::bu get_value_by_keyword C $gdata]
     set mCx [lindex $_C 0]
     set mCy [lindex $_C 1]
     set mCz [lindex $_C 2]
-    set mR [bu_get_value_by_keyword r $gdata]
-    set mR_d [bu_get_value_by_keyword r_d $gdata]
+    set mR [::brlcad::bu get_value_by_keyword r $gdata]
+    set mR_d [::brlcad::bu get_value_by_keyword r_d $gdata]
 
     GeometryEditFrame::initGeometry $gdata
     set curr_name $itk_option(-geometryObject)
@@ -503,20 +503,20 @@
     set gdata [$itk_option(-mged) get $itk_option(-geometryObject)]
     set gdata [lrange $gdata 1 end]
 
-    set _V [bu_get_value_by_keyword V $gdata]
+    set _V [::brlcad::bu get_value_by_keyword V $gdata]
     set _Vx [lindex $_V 0]
     set _Vy [lindex $_V 1]
     set _Vz [lindex $_V 2]
-    set _N [bu_get_value_by_keyword N $gdata]
+    set _N [::brlcad::bu get_value_by_keyword N $gdata]
     set _Nx [lindex $_N 0]
     set _Ny [lindex $_N 1]
     set _Nz [lindex $_N 2]
-    set _C [bu_get_value_by_keyword C $gdata]
+    set _C [::brlcad::bu get_value_by_keyword C $gdata]
     set _Cx [lindex $_C 0]
     set _Cy [lindex $_C 1]
     set _Cz [lindex $_C 2]
-    set _R [bu_get_value_by_keyword r $gdata]
-    set _R_d [bu_get_value_by_keyword r_d $gdata]
+    set _R [::brlcad::bu get_value_by_keyword r $gdata]
+    set _R_d [::brlcad::bu get_value_by_keyword r_d $gdata]
 
     if {$mVx == ""  ||
 	$mVx == "-" ||

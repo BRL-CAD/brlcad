@@ -300,7 +300,7 @@ proc manpage_search_files {sections} {
 	set section_label [manpage_search_section_label $section_dir]
 	set found 0
 
-	foreach spec [list [list [file join [bu_dir doc] html] html] [list [bu_dir man] roff]] {
+	foreach spec [list [list [file join [::brlcad::bu dir doc] html] html] [list [::brlcad::bu dir man] roff]] {
 	    set root [lindex $spec 0]
 	    set format [lindex $spec 1]
 	    set dir [file join $root $section_dir]

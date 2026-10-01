@@ -444,7 +444,7 @@ foreach {option expected} {
 }
 unset ::message_box_arguments
 
-source [file join [bu_dir data] tclscripts archer SketchEditFrame.tcl]
+source [file join [::brlcad::bu dir data] tclscripts archer SketchEditFrame.tcl]
 if {$SketchEditFrame::rad2deg <= 0.0} {
     fail "Archer SketchEditFrame common variable is not publicly accessible"
 }
@@ -625,7 +625,7 @@ assert_equal "disabled Togglearrow callback" $::toggle_count 1
 ::itcl::delete object .functional_toggle_arrow
 unset ::toggle_count
 
-set source_database [file join [bu_dir data] db m35.g]
+set source_database [file join [::brlcad::bu dir data] db m35.g]
 set test_database [file join [pwd] itcl4-cadwidgets-[pid].g]
 set copied_database [file join [pwd] itcl4-cadwidgets-copy-[pid].g]
 file delete -force $test_database $copied_database
@@ -635,10 +635,19 @@ cadwidgets::Ged .functional_ged $test_database
 pack .functional_ged -fill both -expand yes
 update
 assert_equal "Ged database query" [.functional_ged exists all.g] 1
+assert_equal "Ged BU compatibility method" \
+    [.functional_ged bu_units_conversion mm] \
+    [::brlcad::bu units_conversion mm]
+assert_equal "Ged BN compatibility method" \
+    [.functional_ged bn_noise_perlin 1 2 3] \
+    [::brlcad::bn noise_perlin 1 2 3]
+assert_equal "Ged legacy geometry method" \
+    [.functional_ged bn_dist_pnt2_lseg2 {0 0} {1 0} {0.5 1}] \
+    [::brlcad::bn bg_dist_pnt2_lseg2 {0 0} {1 0} {0.5 1}]
 assert_coordinates "Ged unit conversion round trip" \
     [expr {[.functional_ged base2local] * [.functional_ged local2base]}] 1.0
 assert_coordinates "Ged point-centered matrix wrapper" \
-    [.functional_ged mat_xform_about_pnt [mat_angles 0 0 0] {1 2 3}] \
+    [.functional_ged mat_xform_about_pnt [::brlcad::bn mat_angles 0 0 0] {1 2 3}] \
     [mat_idn]
 .functional_ged draw all.g
 .functional_ged autoview

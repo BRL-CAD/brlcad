@@ -51,7 +51,7 @@ bind $w <q> [list ::brlman::quitKey %W]
 if {[info exists ::man_file]} {
     $w select $man_file
 } else {
-    set intro_file [file join [bu_dir doc] html mann Introduction.html]
+    set intro_file [file join [::brlcad::bu dir doc] html mann Introduction.html]
     $w loadPage $intro_file
 }
 

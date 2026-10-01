@@ -109,20 +109,20 @@
 # Initialize the variables containing the object's specification.
 #
 ::itcl::body HypEditFrame::initGeometry {gdata} {
-    set _V [bu_get_value_by_keyword V $gdata]
+    set _V [::brlcad::bu get_value_by_keyword V $gdata]
     set mVx [lindex $_V 0]
     set mVy [lindex $_V 1]
     set mVz [lindex $_V 2]
-    set _H [bu_get_value_by_keyword H $gdata]
+    set _H [::brlcad::bu get_value_by_keyword H $gdata]
     set mHx [lindex $_H 0]
     set mHy [lindex $_H 1]
     set mHz [lindex $_H 2]
-    set _A [bu_get_value_by_keyword A $gdata]
+    set _A [::brlcad::bu get_value_by_keyword A $gdata]
     set mAx [lindex $_A 0]
     set mAy [lindex $_A 1]
     set mAz [lindex $_A 2]
-    set mB [bu_get_value_by_keyword b $gdata]
-    set mC [bu_get_value_by_keyword bnr $gdata]
+    set mB [::brlcad::bu get_value_by_keyword b $gdata]
+    set mC [::brlcad::bu get_value_by_keyword bnr $gdata]
 
     GeometryEditFrame::initGeometry $gdata
     set curr_name $itk_option(-geometryObject)
@@ -511,20 +511,20 @@
     set gdata [$itk_option(-mged) get $itk_option(-geometryObject)]
     set gdata [lrange $gdata 1 end]
 
-    set _V [bu_get_value_by_keyword V $gdata]
+    set _V [::brlcad::bu get_value_by_keyword V $gdata]
     set _Vx [lindex $_V 0]
     set _Vy [lindex $_V 1]
     set _Vz [lindex $_V 2]
-    set _H [bu_get_value_by_keyword H $gdata]
+    set _H [::brlcad::bu get_value_by_keyword H $gdata]
     set _Hx [lindex $_H 0]
     set _Hy [lindex $_H 1]
     set _Hz [lindex $_H 2]
-    set _A [bu_get_value_by_keyword A $gdata]
+    set _A [::brlcad::bu get_value_by_keyword A $gdata]
     set _Ax [lindex $_A 0]
     set _Ay [lindex $_A 1]
     set _Az [lindex $_A 2]
-    set _B [bu_get_value_by_keyword b $gdata]
-    set _C [bu_get_value_by_keyword bnr $gdata]
+    set _B [::brlcad::bu get_value_by_keyword b $gdata]
+    set _C [::brlcad::bu get_value_by_keyword bnr $gdata]
 
     if {$mVx == ""  ||
 	$mVx == "-" ||

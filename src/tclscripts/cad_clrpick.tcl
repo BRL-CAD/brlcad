@@ -178,7 +178,7 @@ proc cadColorWidget_InitValues { w doColor } {
 	set data(green) [expr [lindex $rgb 1]/0x100]
 	set data(blue) [expr [lindex $rgb 2]/0x100]
 
-	set hsv [bu_rgb_to_hsv $data(red) $data(green) $data(blue)]
+	set hsv [::brlcad::bu rgb_to_hsv $data(red) $data(green) $data(blue)]
 	set data(hue) [lindex $hsv 0]
 	set data(saturation) [lindex $hsv 1]
 	set data(value) [lindex $hsv 2]
@@ -469,7 +469,7 @@ proc cadColorWidget_SetRGBValue { w rgb } {
     set data(green) [lindex $rgb 1]
     set data(blue) [lindex $rgb 2]
 
-    set hsv [bu_rgb_to_hsv $data(red) $data(green) $data(blue)]
+    set hsv [::brlcad::bu rgb_to_hsv $data(red) $data(green) $data(blue)]
     set data(hue) [lindex $hsv 0]
     set data(saturation) [lindex $hsv 1]
     set data(value) [lindex $hsv 2]
@@ -650,18 +650,18 @@ proc cadColorWidget_DrawHSVColorBars { w colorBar create l } {
 	if { $colorBar == "colorBar1" } {
 	    # hue
 	    set intensity [expr $i.5 * $data(hueIncr)]
-	    set rgb [bu_hsv_to_rgb  $intensity $data(saturation) $data(value)]
+	    set rgb [::brlcad::bu hsv_to_rgb  $intensity $data(saturation) $data(value)]
 	} elseif { $colorBar == "colorBar2" } {
 	    # saturation
 	    set intensity [expr $i.5 * $data(normalIncr)]
 	    if { $intensity == 0 } {
 		set intensity 0.0001
 	    }
-	    set rgb [bu_hsv_to_rgb  $data(hue) $intensity $data(value)]
+	    set rgb [::brlcad::bu hsv_to_rgb  $data(hue) $intensity $data(value)]
 	} else {
 	    # value
 	    set intensity [expr $i.5 * $data(normalIncr)]
-	    set rgb [bu_hsv_to_rgb  $data(hue) $data(saturation) $intensity]
+	    set rgb [::brlcad::bu hsv_to_rgb  $data(hue) $data(saturation) $intensity]
 	}
 
 	set color [format "#%02x%02x%02x" \
@@ -1099,7 +1099,7 @@ proc cadColorWidget_AdjustColors { w } {
 
     switch $data(colorModel) {
 	RGB {
-	    set hsv [bu_rgb_to_hsv $data(red) $data(green) $data(blue)]
+	    set hsv [::brlcad::bu rgb_to_hsv $data(red) $data(green) $data(blue)]
 	    set data(hue) [lindex $hsv 0]
 	    set data(saturation) [lindex $hsv 1]
 	    set data(value) [lindex $hsv 2]
@@ -1109,7 +1109,7 @@ proc cadColorWidget_AdjustColors { w } {
 	    }
 	}
 	HSV {
-	    set rgb [bu_hsv_to_rgb $data(hue) $data(saturation) $data(value)]
+	    set rgb [::brlcad::bu hsv_to_rgb $data(hue) $data(saturation) $data(value)]
 	    set data(red) [lindex $rgb 0]
 	    set data(green) [lindex $rgb 1]
 	    set data(blue) [lindex $rgb 2]

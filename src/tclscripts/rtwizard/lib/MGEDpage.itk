@@ -558,7 +558,7 @@ namespace eval RtWizard {
 	if {$isSelected == "true"} {
 	    set currentRmat [ $::mgedObj gedCmd rmat ]
 	}
-	return [ quat_mat2quat $currentRmat]
+	return [::brlcad::bn quat_mat2quat $currentRmat]
     }
 
     #--------------------#

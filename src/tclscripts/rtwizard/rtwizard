@@ -25,11 +25,11 @@
 #
 
 if {![info exists ::RtWizard::wizard_state(pid_filename)]} {
-    set ::RtWizard::wizard_state(pid_filename) [bu_file_null]
+    set ::RtWizard::wizard_state(pid_filename) [::brlcad::bu file_null]
 }
 
 if {![info exists ::RtWizard::wizard_state(log_file)]} {
-    set ::RtWizard::wizard_state(log_file) [bu_file_null]
+    set ::RtWizard::wizard_state(log_file) [::brlcad::bu file_null]
 }
 
 # Geometry Database
@@ -105,9 +105,9 @@ proc rtwiz_fb_target {} {
 # Build the fbserv launch command for the active transport mode.
 proc rtwiz_fbserv_cmd {} {
     if {[info exists ::RtWizard::wizard_state(fbserv_ipc_addr)]} {
-	return [list [file join [bu_dir bin] fbserv] -A -I $::RtWizard::wizard_state(fbserv_ipc_addr) -w $::RtWizard::wizard_state(width) -n $::RtWizard::wizard_state(scanlines) $::RtWizard::wizard_state(fbserv_device)]
+	return [list [file join [::brlcad::bu dir bin] fbserv] -A -I $::RtWizard::wizard_state(fbserv_ipc_addr) -w $::RtWizard::wizard_state(width) -n $::RtWizard::wizard_state(scanlines) $::RtWizard::wizard_state(fbserv_device)]
     }
-    return [list [file join [bu_dir bin] fbserv] -A -w $::RtWizard::wizard_state(width) -n $::RtWizard::wizard_state(scanlines) $::RtWizard::wizard_state(fbserv_port) $::RtWizard::wizard_state(fbserv_device)]
+    return [list [file join [::brlcad::bu dir bin] fbserv] -A -w $::RtWizard::wizard_state(width) -n $::RtWizard::wizard_state(scanlines) $::RtWizard::wizard_state(fbserv_port) $::RtWizard::wizard_state(fbserv_device)]
 }
 
 # Set verbosity if not already set
@@ -177,10 +177,10 @@ if {[info exists ::use_gui]} {
    # Check whether the framebuffer already exists.  If it does, and if
    # it was specified on the command line, go with it.
    if {$use_ipc} {
-      if {[catch {exec {*}[rtwiz_fbserv_cmd] < [bu_file_null] >> $::RtWizard::wizard_state(log_file) 2>@1 &} pid] == 0} {
+      if {[catch {exec {*}[rtwiz_fbserv_cmd] < [::brlcad::bu file_null] >> $::RtWizard::wizard_state(log_file) 2>@1 &} pid] == 0} {
 	set fbserv_pid $pid
 	set _fb_wait 0
-	while {[catch {exec [file join [bu_dir bin] fblabel] -F [rtwiz_fb_target] 1 1 " " 2>@1} _fb_err] && $_fb_wait < 30} {
+	while {[catch {exec [file join [::brlcad::bu dir bin] fblabel] -F [rtwiz_fb_target] 1 1 " " 2>@1} _fb_err] && $_fb_wait < 30} {
 	    after 100
 	    incr _fb_wait
 	}
@@ -192,8 +192,8 @@ if {[info exists ::use_gui]} {
 	if {$::RtWizard::wizard_state(verbose)} {puts "fbserv IPC launch failed: $pid"}
       }
    } else {
-      if { [catch {exec {*}$fbserv_token_prefix [file join [bu_dir bin] fblabel] -F [rtwiz_fb_target] 1 1 " " 2>@1} error ] && $error == 12} {
-	 catch {exec {*}[rtwiz_fbserv_cmd] < [bu_file_null] >> $::RtWizard::wizard_state(log_file) 2>@1 &} pid
+      if { [catch {exec {*}$fbserv_token_prefix [file join [::brlcad::bu dir bin] fblabel] -F [rtwiz_fb_target] 1 1 " " 2>@1} error ] && $error == 12} {
+	 catch {exec {*}[rtwiz_fbserv_cmd] < [::brlcad::bu file_null] >> $::RtWizard::wizard_state(log_file) 2>@1 &} pid
 	 if {[info exists pid]} {
 	   set fbserv_pid $pid
 	   # Wait for fbserv to become ready.  Poll fblabel: if it fails because fbserv
@@ -201,7 +201,7 @@ if {[info exists ::use_gui]} {
 	   # Stop early if the failure reason changes to something other than connection-
 	   # refused (e.g. a token mismatch means another instance already owns the port).
 	   set _fb_wait 0
-	   while { [catch {exec {*}$fbserv_token_prefix [file join [bu_dir bin] fblabel] -F [rtwiz_fb_target] 1 1 " " 2>@1} _fb_err] && $_fb_wait < 30 && [string match {*can't connect*} $_fb_err] } {
+	   while { [catch {exec {*}$fbserv_token_prefix [file join [::brlcad::bu dir bin] fblabel] -F [rtwiz_fb_target] 1 1 " " 2>@1} _fb_err] && $_fb_wait < 30 && [string match {*can't connect*} $_fb_err] } {
 	       after 300
 	       incr _fb_wait
 	   }
@@ -233,7 +233,7 @@ if {[info exists ::use_gui]} {
 		if {$::RtWizard::wizard_state(verbose)} {puts "fbserv port $::RtWizard::wizard_state(fbserv_port) is already in use."}
 		incr ::RtWizard::wizard_state(fbserv_port)
 	   }
-	   if {[catch {exec {*}[rtwiz_fbserv_cmd] < [bu_file_null] >> $::RtWizard::wizard_state(log_file) 2>@1 &} pid] == 0} {
+	   if {[catch {exec {*}[rtwiz_fbserv_cmd] < [::brlcad::bu file_null] >> $::RtWizard::wizard_state(log_file) 2>@1 &} pid] == 0} {
 	       set fbserv_pid $pid
 	   } else {
 	       if {$::RtWizard::wizard_state(verbose)} {puts "fbserv launch on port $::RtWizard::wizard_state(fbserv_port) failed: $pid"}
@@ -244,7 +244,7 @@ if {[info exists ::use_gui]} {
 	   # refused — e.g. a token mismatch means another instance already owns the port
 	   # and we should advance to the next candidate immediately.
 	   set _fb_wait 0
-	   while { [catch {exec [file join [bu_dir bin] fblabel] -F [rtwiz_fb_target] 1 1 " " 2>@1} _fb_err] && $_fb_wait < 30 && [string match {*can't connect*} $_fb_err] } {
+	   while { [catch {exec [file join [::brlcad::bu dir bin] fblabel] -F [rtwiz_fb_target] 1 1 " " 2>@1} _fb_err] && $_fb_wait < 30 && [string match {*can't connect*} $_fb_err] } {
 	       after 300
 	       incr _fb_wait
 	   }
@@ -252,7 +252,7 @@ if {[info exists ::use_gui]} {
 	   # Verify that we actually own this fbserv: fblabel must succeed with our
 	   # FBSERV_TOKEN.  If it fails, another rtwizard won the race for this port
 	   # and our token was rejected — advance to the next candidate port and retry.
-	   if { [catch {exec {*}$fbserv_token_prefix [file join [bu_dir bin] fblabel] -F [rtwiz_fb_target] 1 1 " " 2>@1}] == 0 } {
+	   if { [catch {exec {*}$fbserv_token_prefix [file join [::brlcad::bu dir bin] fblabel] -F [rtwiz_fb_target] 1 1 " " 2>@1}] == 0 } {
 	       set fbserv_owned 1
 	   } else {
 	       if {$::RtWizard::wizard_state(verbose)} {
@@ -280,7 +280,7 @@ if {[info exists ::use_gui]} {
    }
 
    # Open the database once.  It is used both for view setup and for animation bounds.
-   set db [go_open db db $::RtWizard::wizard_state(dbFile)]
+   set db [::brlcad::tclcad::ged open db db $::RtWizard::wizard_state(dbFile)]
 
    # Either we're using a specified view model, or we're deducing one based on user options
    if {[info exists ::RtWizard::wizard_state(viewsize)] && [info exists ::RtWizard::wizard_state(orientation)] && [info exists ::RtWizard::wizard_state(eye_pt)]} {
@@ -413,14 +413,14 @@ if {[info exists ::use_gui]} {
 	    dict set rtimage_dict _cut_plane $cut_plane
 
 	    puts "Rendering frame [expr {$frame_no + 1}]/$frame_count"
-	    catch {exec [file join [bu_dir bin] fbclear] -F [rtwiz_fb_target] \
+	    catch {exec [file join [::brlcad::bu dir bin] fbclear] -F [rtwiz_fb_target] \
 		[lindex $::RtWizard::wizard_state(bg_color) 0] \
 		[lindex $::RtWizard::wizard_state(bg_color) 1] \
 		[lindex $::RtWizard::wizard_state(bg_color) 2]}
 	    ::cadwidgets::rtimage $rtimage_dict
 
 	    set frame_file [file join $frame_dir [format ".rtwizard-%d-%06d.pix" [pid] $frame_no]]
-	    exec [file join [bu_dir bin] fb-pix] \
+	    exec [file join [::brlcad::bu dir bin] fb-pix] \
 		-w $::RtWizard::wizard_state(width) \
 		-n $::RtWizard::wizard_state(scanlines) \
 		-F [rtwiz_fb_target] $frame_file 2>@1
@@ -446,11 +446,11 @@ if {[info exists ::use_gui]} {
 	 set output_generated 1
       }
       if {!$output_generated && [file extension $::RtWizard::wizard_state(output_filename)] == ".png"} {
-	 exec [file join [bu_dir bin] fb-png] -w $::RtWizard::wizard_state(width) -n $::RtWizard::wizard_state(scanlines) -F [rtwiz_fb_target] $::RtWizard::wizard_state(output_filename) 2>@1
+	 exec [file join [::brlcad::bu dir bin] fb-png] -w $::RtWizard::wizard_state(width) -n $::RtWizard::wizard_state(scanlines) -F [rtwiz_fb_target] $::RtWizard::wizard_state(output_filename) 2>@1
 	 set output_generated 1
       }
       if {!$output_generated} {
-	 exec [file join [bu_dir bin] fb-pix] -w $::RtWizard::wizard_state(width) -n $::RtWizard::wizard_state(scanlines) -F [rtwiz_fb_target] $::RtWizard::wizard_state(output_filename) 2>@1
+	 exec [file join [::brlcad::bu dir bin] fb-pix] -w $::RtWizard::wizard_state(width) -n $::RtWizard::wizard_state(scanlines) -F [rtwiz_fb_target] $::RtWizard::wizard_state(output_filename) 2>@1
 	 set output_generated 1
       }
 
@@ -459,7 +459,7 @@ if {[info exists ::use_gui]} {
 
    if {$::RtWizard::wizard_state(fbserv_device) == "/dev/mem"} {
        if {[info exists fbserv_pid]} {
-	  catch {exec [file join [bu_dir bin] fbfree] -F [rtwiz_fb_target]}
+	  catch {exec [file join [::brlcad::bu dir bin] fbfree] -F [rtwiz_fb_target]}
 	  after 200
 	  if {$::tcl_platform(platform) == "windows"} {
 	      set kill_cmd [auto_execok taskkill]

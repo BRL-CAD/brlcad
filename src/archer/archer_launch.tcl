@@ -48,7 +48,7 @@ if {! [info exists argv0] } {
 # installed file will be loaded instead of the edited version.
 # Warn if it looks like this situation is occurring by checking
 # the root path against the argv0 path.
-set check_root_dir [file normalize [bu_dir bin]]
+set check_root_dir [file normalize [::brlcad::bu dir bin]]
 set check_bin_dir [file dirname [file normalize $argv0]]
 
 # Because there are conditions where we don't know our argv0 full path
@@ -57,7 +57,7 @@ set check_bin_dir [file dirname [file normalize $argv0]]
 if {[file exists [file normalize $argv0]]} {
     set dir_same [string compare $check_root_dir $check_bin_dir]
     if {!$dir_same == 0} {
-	puts "WARNING - bu_dir's bin value is set to [file dirname $check_root_dir], but binary being run is located in [file dirname $check_bin_dir].  This probably means you are running [file tail $argv0] from a non-install directory with BRL-CAD already present in [file dirname $check_root_dir] - be aware that .tcl files from [file dirname $check_root_dir] will be loaded INSTEAD OF local files. Tcl script changes made to source files for testing purposes will not be loaded, even though [file tail $argv0] will most likely 'work'.  To test local changes, either clear [file dirname $check_root_dir], specify a different install prefix (i.e. a directory *without* BRL-CAD installed) while building, or manually set the BRLCAD_ROOT environment variable."
+	puts "WARNING - BRL-CAD's configured bin directory is [file dirname $check_root_dir], but binary being run is located in [file dirname $check_bin_dir].  This probably means you are running [file tail $argv0] from a non-install directory with BRL-CAD already present in [file dirname $check_root_dir] - be aware that .tcl files from [file dirname $check_root_dir] will be loaded INSTEAD OF local files. Tcl script changes made to source files for testing purposes will not be loaded, even though [file tail $argv0] will most likely 'work'.  To test local changes, either clear [file dirname $check_root_dir], specify a different install prefix (i.e. a directory *without* BRL-CAD installed) while building, or manually set the BRLCAD_ROOT environment variable."
     }
 }
 
@@ -125,7 +125,7 @@ proc createSplashScreen {} {
     set useImage 1
 
     if {$useImage} {
-	set imgfile [file join [bu_dir data] tclscripts archer images aboutArcher.png]
+	set imgfile [file join [::brlcad::bu dir data] tclscripts archer images aboutArcher.png]
 	set image [image create photo -file $imgfile]
 	set ::ArcherCore::splash [::cadwidgets::Splash .splash -image $image]
     } else {
@@ -207,7 +207,7 @@ proc main {} {
 	wm title $::ArcherCore::application "Archer $brlcad_version"
 	if {$tcl_platform(os) == "Windows NT"} {
 	    wm iconbitmap $::ArcherCore::application -default \
-		[file join [bu_dir data] icons archer.ico]
+		[file join [::brlcad::bu dir data] icons archer.ico]
 	}
 	set size [wm maxsize $::ArcherCore::application]
 	set w [lindex $size 0]
@@ -226,7 +226,7 @@ proc main {} {
 	wm title . "Archer $brlcad_version"
 	if {$tcl_platform(os) == "Windows NT"} {
 	    wm iconbitmap . -default \
-		[file join [bu_dir data] html manuals archer archer.ico]
+		[file join [::brlcad::bu dir data] html manuals archer archer.ico]
 	}
 	set ::ArcherCore::application [Archer .\#auto]
 	set size [wm maxsize .]

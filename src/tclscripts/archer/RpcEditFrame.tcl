@@ -106,19 +106,19 @@
 # Initialize the variables containing the object's specification.
 #
 ::itcl::body RpcEditFrame::initGeometry {gdata} {
-    set _V [bu_get_value_by_keyword V $gdata]
+    set _V [::brlcad::bu get_value_by_keyword V $gdata]
     set mVx [lindex $_V 0]
     set mVy [lindex $_V 1]
     set mVz [lindex $_V 2]
-    set _H [bu_get_value_by_keyword H $gdata]
+    set _H [::brlcad::bu get_value_by_keyword H $gdata]
     set mHx [lindex $_H 0]
     set mHy [lindex $_H 1]
     set mHz [lindex $_H 2]
-    set _B [bu_get_value_by_keyword B $gdata]
+    set _B [::brlcad::bu get_value_by_keyword B $gdata]
     set mBx [lindex $_B 0]
     set mBy [lindex $_B 1]
     set mBz [lindex $_B 2]
-    set mR [bu_get_value_by_keyword r $gdata]
+    set mR [::brlcad::bu get_value_by_keyword r $gdata]
 
     GeometryEditFrame::initGeometry $gdata
 
@@ -460,19 +460,19 @@
     set gdata [$itk_option(-mged) get $itk_option(-geometryObject)]
     set gdata [lrange $gdata 1 end]
 
-    set _V [bu_get_value_by_keyword V $gdata]
+    set _V [::brlcad::bu get_value_by_keyword V $gdata]
     set _Vx [lindex $_V 0]
     set _Vy [lindex $_V 1]
     set _Vz [lindex $_V 2]
-    set _H [bu_get_value_by_keyword H $gdata]
+    set _H [::brlcad::bu get_value_by_keyword H $gdata]
     set _Hx [lindex $_H 0]
     set _Hy [lindex $_H 1]
     set _Hz [lindex $_H 2]
-    set _B [bu_get_value_by_keyword B $gdata]
+    set _B [::brlcad::bu get_value_by_keyword B $gdata]
     set _Bx [lindex $_B 0]
     set _By [lindex $_B 1]
     set _Bz [lindex $_B 2]
-    set _R [bu_get_value_by_keyword r $gdata]
+    set _R [::brlcad::bu get_value_by_keyword r $gdata]
 
     if {$mVx == ""  ||
 	$mVx == "-" ||

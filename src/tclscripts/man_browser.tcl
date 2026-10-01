@@ -37,7 +37,7 @@ package require Itcl
 package require tklitehtml 0.1.0
 
 if {[llength [info commands ::brlcad::help::manpage_search_terms]] == 0} {
-    set helpcomm_path [file join [bu_dir data] "tclscripts" "helpcomm.tcl"]
+    set helpcomm_path [file join [::brlcad::bu dir data] "tclscripts" "helpcomm.tcl"]
     if {[file exists $helpcomm_path]} {
 	source $helpcomm_path
     }
@@ -287,7 +287,7 @@ if {[llength [info commands ::brlcad::help::manpage_search_terms]] == 0} {
 
     # Path to HTML man page directories
     if {![info exists path] || ![file isdirectory $path]} {
-	set path [file join [bu_dir doc] html]
+	set path [file join [::brlcad::bu dir doc] html]
     }
 
     configure -title "BRL-CAD Manual Page Browser"

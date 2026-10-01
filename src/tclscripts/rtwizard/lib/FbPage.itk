@@ -549,12 +549,12 @@ namespace eval RtWizard {
 		    if {$::RtWizard::wizard_state(verbose)} {puts "fbserv port $port is already in use."}
 		    incr port
 		}
-		catch {exec [file join [bu_dir bin] fbserv] -A -w $width -n $height $port /dev/mem &} pid
+		catch {exec [file join [::brlcad::bu dir bin] fbserv] -A -w $width -n $height $port /dev/mem &} pid
 		# Give the fbserv time to fire up
 		after 1000
 		# Verify ownership: fbclear must succeed with our token.
 		# Failure here means another rtwizard owns this port — try the next one.
-		if { [catch {exec [file join [bu_dir bin] fbclear] -F $port 0 0 0}] == 0 } {
+		if { [catch {exec [file join [::brlcad::bu dir bin] fbclear] -F $port 0 0 0}] == 0 } {
 		    set fbserv_owned 1
 		} else {
 		    if {$::RtWizard::wizard_state(verbose)} {puts "fbserv port $port: collision detected, retrying on next port."}
@@ -567,7 +567,7 @@ namespace eval RtWizard {
 	    set ::RtWizard::wizard_state(pid) $pid
 	    return "$port $pid"
 	}
-	set binpath [bu_dir bin]
+	set binpath [::brlcad::bu dir bin]
 	#
 	# Create an on-screen buffer
 	#

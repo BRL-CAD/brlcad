@@ -2571,8 +2571,8 @@
 	C [list $r2 0 0] \
 	D [list 0 $r2 0]
 
-    set mat [mat_angles 0 [expr {90 - $gunElevation}] 0]
-    set mat [mat_xform_about_pnt $mat $v]
+    set mat [::brlcad::bn mat_angles 0 [expr {90 - $gunElevation}] 0]
+    set mat [::brlcad::bn mat_xform_about_pnt $mat $v]
     $archersMged put $wizardTop\_gun_tube.r comb \
 	region yes \
 	id $gunBarrelId \

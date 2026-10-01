@@ -1094,13 +1094,13 @@ namespace delete ::ArcherCoreBootstrap
     # X11 input to that initialization, not portable application state; in
     # particular, synthesizing :0 here can misdirect native Tk child windows.
 
-    set mImgDir [file join [bu_dir data] tclscripts archer images]
+    set mImgDir [file join [::brlcad::bu dir data] tclscripts archer images]
 
     if {[llength $args] == 1} {
 	set args [lindex $args 0]
     }
 
-    set dm_list [split [dm_list] ',']
+    set dm_list [split [::brlcad::dm list] ',']
     set mDisplayType [lindex $dm_list 0]
 
     # horizontal panes
@@ -3358,13 +3358,13 @@ namespace delete ::ArcherCoreBootstrap
 
     set partition [lindex $_partitions 0]
 
-    if {[catch {bu_get_value_by_keyword in $partition} in]} {
+    if {[catch {::brlcad::bu get_value_by_keyword in $partition} in]} {
 	putString "Partition does not contain an \"in\""
 	putString "$in"
 	return
     }
 
-    if {[catch {bu_get_value_by_keyword point $in} point]} {
+    if {[catch {::brlcad::bu get_value_by_keyword point $in} point]} {
 	putString "Partition does not contain an \"in\" point"
 	putString "$point"
 	return
@@ -3399,12 +3399,12 @@ namespace delete ::ArcherCoreBootstrap
     set raydir [vunitize [vsub2 $_start $_target]]
 
     foreach partition $_partitions {
-	if {[catch {bu_get_value_by_keyword "region" $partition} region] ||
-	    [catch {bu_get_value_by_keyword "in" $partition} in] ||
-	    [catch {bu_get_value_by_keyword "normal" $in} hit_normal] ||
-	    [catch {bu_get_value_by_keyword "point" $in} i_pt] ||
-	    [catch {bu_get_value_by_keyword "out" $partition} out] ||
-	    [catch {bu_get_value_by_keyword "point" $out} o_pt]} {
+	if {[catch {::brlcad::bu get_value_by_keyword "region" $partition} region] ||
+	    [catch {::brlcad::bu get_value_by_keyword "in" $partition} in] ||
+	    [catch {::brlcad::bu get_value_by_keyword "normal" $in} hit_normal] ||
+	    [catch {::brlcad::bu get_value_by_keyword "point" $in} i_pt] ||
+	    [catch {::brlcad::bu get_value_by_keyword "out" $partition} out] ||
+	    [catch {::brlcad::bu get_value_by_keyword "point" $out} o_pt]} {
 	    return ""
 	}
 
@@ -3429,8 +3429,8 @@ namespace delete ::ArcherCoreBootstrap
 	putString "Missed!"
 	set mStatusStr "Missed!"
     } else {
-	set in [bu_get_value_by_keyword "in" $partition]
-	set path [bu_get_value_by_keyword "path" $in]
+	set in [::brlcad::bu get_value_by_keyword "in" $partition]
+	set path [::brlcad::bu get_value_by_keyword "path" $in]
 	set path [regsub {^/} $path {}]
 	set pathlist [split $path /]
 	set last [lindex $pathlist end]
@@ -5983,7 +5983,7 @@ namespace delete ::ArcherCoreBootstrap
 	set size [winfo width $itk_component(ged)]
     }
 
-    set dm_list [split [dm_list] ',']
+    set dm_list [split [::brlcad::dm list] ',']
     set devtype "/dev/"
     append devtype [lindex $dm_list 0]
     $itk_component(ged) $app -s $size -F $devtype

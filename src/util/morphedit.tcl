@@ -37,7 +37,7 @@
 # the next line restarts using bwish \
     exec $BWISH "$0" "$@"
 
-set brlcad_path [bu_dir bin]
+set brlcad_path [::brlcad::bu dir bin]
 set PIXFB [file join $brlcad_path pix-fb]
 set PIXMORPH [file join $brlcad_path pixmorph]
 
@@ -102,9 +102,9 @@ if { $width<=0 && $height>0 } then {
 }
 
 if { $width<=0 && $height<=0 } then {
-    set result [fb_common_file_size $file0name]
+    set result [::brlcad::fb common_file_size $file0name]
     if { $result=="0 0" } then {
-	set result [fb_common_file_size $file1name]
+	set result [::brlcad::fb common_file_size $file1name]
 	if { $result=="0 0" } then {
 	    puts "Cannot determine dimensions of images.  Use -w or -n."
 	    exit

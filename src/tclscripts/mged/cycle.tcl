@@ -20,7 +20,7 @@
 ###
 # Routines to check for cyclic references
 
-check_externs "db bu_get_value_by_keyword"
+check_externs "db ::brlcad::bu"
 
 #
 #	This routine returns a list of all the objects directly referenced
@@ -65,7 +65,7 @@ proc check_cycle { ancestors comb } {
     set comb_all [concat type [db get $comb]]
 
     # if this is not really a combination, there cannot be a cycle
-    if { [bu_get_value_by_keyword type $comb_all] != "comb" } {
+    if { [::brlcad::bu get_value_by_keyword type $comb_all] != "comb" } {
 	return 0
     }
 
@@ -73,7 +73,7 @@ proc check_cycle { ancestors comb } {
     lappend ancestors $comb
 
     # recurse for each combination referred to by this combination
-    foreach desc [get_refs "" [bu_get_value_by_keyword tree $comb_all]] {
+    foreach desc [get_refs "" [::brlcad::bu get_value_by_keyword tree $comb_all]] {
 	# if this reference does not support the "db get" interface,
 	# then it is not a combination
 	if { [catch {db get $desc} tcl_desc] == 0 } {

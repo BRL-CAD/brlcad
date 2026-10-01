@@ -156,8 +156,8 @@ namespace eval RtWizard {
 	#
 	set perspective [$::mgedObj gedCmd perspective]
 
-	set pid_filename [bu_file_null]
-	set log_file [bu_file_null]
+	set pid_filename [::brlcad::bu file_null]
+	set log_file [::brlcad::bu file_null]
 
         # populate a dictionary to pass to rtimage
         set rtimage_dict [dict create \
@@ -185,14 +185,14 @@ namespace eval RtWizard {
 	   if {[string length $filename] > 0 } {
 	       set output_generated [expr {[info exists ::RtWizard::wizard_state(make_animation)] && $::RtWizard::wizard_state(make_animation)}]
 	       if {[file extension $filename] == ".png"} {
-		  if { [catch {exec [file join [bu_dir bin] fb-png] -w $w -n $h -F $fb $filename}] } {
+		  if { [catch {exec [file join [::brlcad::bu dir bin] fb-png] -w $w -n $h -F $fb $filename}] } {
 		      set output_generated 0
 		  } else {
 		      set output_generated 1
 		  }
 	       }
 	       if {!$output_generated} {
-		  if { [catch {exec [file join [bu_dir bin] fb-pix] -w $w -n $h -F $fb $filename}] } {
+		  if { [catch {exec [file join [::brlcad::bu dir bin] fb-pix] -w $w -n $h -F $fb $filename}] } {
 		      set output_generated 0
 		  } else {
 		      set output_generated 1

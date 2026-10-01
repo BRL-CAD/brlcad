@@ -52,9 +52,9 @@ if {![info exists mged_default(tran_factor)]} {
     set mged_default(tran_factor) 0.01
 }
 
-set mged_default(html_dir) [file normalize [file join [bu_dir data] html manuals mged]]
+set mged_default(html_dir) [file normalize [file join [::brlcad::bu dir data] html manuals mged]]
 if {![file exists $mged_default(html_dir)]} {
-    set mged_default(html_dir) [file normalize [file join [bu_dir doc] html manuals mged]]
+    set mged_default(html_dir) [file normalize [file join [::brlcad::bu dir doc] html manuals mged]]
 }
 
 if {[info exists env(MGED_HTML_DIR)]} {
@@ -113,7 +113,7 @@ if {![info exists mged_default(gdisplay)]} {
 }
 
 if {![info exists mged_default(dm_type)]} {
-    set mged_default(dm_type) [dm_bestXType $mged_default(gdisplay)]
+    set mged_default(dm_type) [::brlcad::dm best_type $mged_default(gdisplay)]
 }
 
 if {![info exists mged_default(comb)]} {
@@ -333,7 +333,7 @@ proc gui { args } {
 		set gscreen $screen
 
 		if {!$dtype_set} {
-		    set dtype [dm_bestXType $gscreen]
+		    set dtype [::brlcad::dm best_type $gscreen]
 		}
 	    }
 	} elseif {$arg == "-gd" || $arg == "-gdisplay"} {
@@ -351,7 +351,7 @@ proc gui { args } {
 	    }
 
 	    if {!$dtype_set} {
-		set dtype [dm_bestXType $gscreen]
+		set dtype [::brlcad::dm best_type $gscreen]
 	    }
 	} elseif {$arg == "-dt"} {
 	    incr i
@@ -417,8 +417,8 @@ proc gui { args } {
     set mged_gui($id,lastButtonPress) 0
     set mged_gui($id,lastItem) ""
 
-    if {![dm_validXType $gscreen $dtype]} {
-	set dtype [dm_bestXType $gscreen]
+    if {![::brlcad::dm valid_type $gscreen $dtype]} {
+	set dtype [::brlcad::dm best_type $gscreen]
     }
 
     if { [info exists tk_strictMotif] == 0 } {

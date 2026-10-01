@@ -33,7 +33,7 @@ namespace eval ArcherBootstrap {
     set extraMgedCommands ""
     set corePluginInit ""
 
-    set pluginsdir [file join [bu_dir data] plugins archer]
+    set pluginsdir [file join [::brlcad::bu dir data] plugins archer]
     foreach plugin_type {Core Commands} {
 	if {[file exists [file join $pluginsdir $plugin_type]]} {
 	    set savePwd [pwd]
@@ -683,7 +683,7 @@ package provide Archer 1.0
     set pwd [::pwd]
 
     # developer & user plugins
-    set pluginPath [file join [bu_dir data] plugins archer]
+    set pluginPath [file join [::brlcad::bu dir data] plugins archer]
     if { ![file exists $pluginPath] } {
 	# give up on loading any plugins
 	return
@@ -2419,7 +2419,7 @@ package provide Archer 1.0
     } {}
 
     # About Info
-    set imgfile [file join [bu_dir data] tclscripts archer images aboutArcher.png]
+    set imgfile [file join [::brlcad::bu dir data] tclscripts archer images aboutArcher.png]
     set aboutImg [image create photo -file $imgfile]
     itk_component add aboutInfo {
 	::ttk::label $itk_component(aboutDialogTabs).aboutInfo \
@@ -2437,7 +2437,7 @@ package provide Archer 1.0
 	    -textbackground $SystemButtonFace
     } {}
 
-    set brlcadLicenseFile [file join [bu_dir data] COPYING]
+    set brlcadLicenseFile [file join [::brlcad::bu dir data] COPYING]
     if {![catch {open $brlcadLicenseFile "r"} fd]} {
 	set brlcadLicenseInfo [read $fd]
 	close $fd
@@ -2456,7 +2456,7 @@ package provide Archer 1.0
 	    -textbackground $SystemButtonFace
     } {}
 
-    set ackFile [file join [bu_dir doc] archer_ack.txt]
+    set ackFile [file join [::brlcad::bu dir doc] archer_ack.txt]
     if {![catch {open $ackFile "r"} fd]} {
 	set ackInfo [read $fd]
 	close $fd
@@ -2468,7 +2468,7 @@ package provide Archer 1.0
 	::frame $itk_component(aboutDialogTabs).mikeInfo
     } {}
 
-    set imgfile [file join [bu_dir data] tclscripts mged mike-tux.png]
+    set imgfile [file join [::brlcad::bu dir data] tclscripts mged mike-tux.png]
     set mikeImg [image create photo -file $imgfile]
     itk_component add mikePic {
 	::label $itk_component(mikeF).pic \
@@ -2496,7 +2496,7 @@ package provide Archer 1.0
 	    -textbackground $SystemButtonFace
     } {}
 
-    set mikeInfoFile [file join [bu_dir data] tclscripts mged mike-dedication.txt]
+    set mikeInfoFile [file join [::brlcad::bu dir data] tclscripts mged mike-dedication.txt]
     if {![catch {open $mikeInfoFile "r"} fd]} {
 	set mikeInfo [read -nonewline $fd]
 	close $fd
@@ -2549,8 +2549,8 @@ package provide Archer 1.0
     set tlparent [$itk_component(archerHelp) childsite]
     itk_component add archerHelpViewer {
 	::tklitehtml::helpviewer $tlparent.viewer \
-	    -contents [file join [bu_dir doc] html main_menu.html] \
-	    -home [file join [bu_dir doc] html books \
+	    -contents [file join [::brlcad::bu dir doc] html main_menu.html] \
+	    -home [file join [::brlcad::bu dir doc] html books \
 		BRL-CAD_Tutorial_Series-VolumeI.html]
     } {}
     pack $itk_component(archerHelpViewer) -expand yes -fill both
@@ -4327,8 +4327,8 @@ package provide Archer 1.0
     }
 
     set partition [lindex $partitions 0]
-    if {[catch {bu_get_value_by_keyword in $partition} in] ||
-	[catch {bu_get_value_by_keyword normal $in} hit_normal]} {
+    if {[catch {::brlcad::bu get_value_by_keyword in $partition} in] ||
+	[catch {::brlcad::bu get_value_by_keyword normal $in} hit_normal]} {
 	return ""
     }
 

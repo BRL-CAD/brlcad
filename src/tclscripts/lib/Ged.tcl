@@ -981,7 +981,7 @@ package provide cadwidgets::Ged 1.0
     $itk_component(lpw) add llp
     $itk_component(lpw) add lrp
 
-    set dm_list [split [dm_list] ',']
+    set dm_list [split [::brlcad::dm list] ',']
     set dmType [lindex $dm_list 0]
 
     # create four views
@@ -1271,31 +1271,31 @@ package provide cadwidgets::Ged 1.0
 }
 
 ::itcl::body cadwidgets::Ged::bn_dist_pnt2_lseg2 {args} {
-    eval ::bn_dist_pnt2_lseg2 $args
+    uplevel \#0 [list ::brlcad::bn bg_dist_pnt2_lseg2 {*}$args]
 }
 
 ::itcl::body cadwidgets::Ged::bn_isect_line2_line2 {args} {
-    eval ::bn_isect_line2_line2 $args
+    uplevel \#0 [list ::brlcad::bn bg_isect_line2_line2 {*}$args]
 }
 
 ::itcl::body cadwidgets::Ged::bn_isect_line3_line3 {args} {
-    eval ::bn_isect_line3_line3 $args
+    uplevel \#0 [list ::brlcad::bn bg_isect_line3_line3 {*}$args]
 }
 
 ::itcl::body cadwidgets::Ged::bn_noise_fbm {args} {
-    uplevel \#0 bn_noise_fbm $args
+    uplevel \#0 [list ::brlcad::bn noise_fbm {*}$args]
 }
 
 ::itcl::body cadwidgets::Ged::bn_noise_perlin {args} {
-    eval ::bn_noise_perlin $args
+    uplevel \#0 [list ::brlcad::bn noise_perlin {*}$args]
 }
 
 ::itcl::body cadwidgets::Ged::bn_noise_slice {args} {
-    uplevel \#0 bn_noise_slice $args
+    uplevel \#0 [list ::brlcad::bn noise_slice {*}$args]
 }
 
 ::itcl::body cadwidgets::Ged::bn_noise_turb {args} {
-    uplevel \#0 bn_noise_turb $args
+    uplevel \#0 [list ::brlcad::bn noise_turb {*}$args]
 }
 
 ::itcl::body cadwidgets::Ged::bn_random {args} {
@@ -1304,7 +1304,7 @@ package provide cadwidgets::Ged 1.0
 	set mRandomSeed $seed
     }
 
-    uplevel \#0 bn_random [list [::itcl::scope mRandomSeed]]
+    uplevel \#0 [list ::brlcad::bn random [::itcl::scope mRandomSeed]]
 }
 
 ::itcl::body cadwidgets::Ged::bo {args} {
@@ -1387,19 +1387,19 @@ package provide cadwidgets::Ged 1.0
 }
 
 ::itcl::body cadwidgets::Ged::bu_units_conversion {args} {
-    uplevel \#0 bu_units_conversion $args
+    uplevel \#0 [list ::brlcad::bu units_conversion {*}$args]
 }
 
 ::itcl::body cadwidgets::Ged::bu_get_value_by_keyword {args} {
-    uplevel \#0 bu_get_value_by_keyword $args
+    uplevel \#0 [list ::brlcad::bu get_value_by_keyword {*}$args]
 }
 
 ::itcl::body cadwidgets::Ged::bu_rgb_to_hsv {args} {
-    uplevel \#0 bu_rgb_to_hsv $args
+    uplevel \#0 [list ::brlcad::bu rgb_to_hsv {*}$args]
 }
 
 ::itcl::body cadwidgets::Ged::bu_hsv_to_rgb {args} {
-    uplevel \#0 bu_hsv_to_rgb $args
+    uplevel \#0 [list ::brlcad::bu hsv_to_rgb {*}$args]
 }
 
 ::itcl::body cadwidgets::Ged::c {args} {
@@ -1657,11 +1657,11 @@ package provide cadwidgets::Ged 1.0
     set count 1
     set prev_o_pt ""
     foreach partition $_partitions {
-	if {[catch {bu_get_value_by_keyword "region" $partition} region] ||
-	    [catch {bu_get_value_by_keyword "in" $partition} in] ||
-	    [catch {bu_get_value_by_keyword "point" $in} i_pt] ||
-	    [catch {bu_get_value_by_keyword "out" $partition} out] ||
-	    [catch {bu_get_value_by_keyword "point" $out} o_pt]} {
+	if {[catch {::brlcad::bu get_value_by_keyword "region" $partition} region] ||
+	    [catch {::brlcad::bu get_value_by_keyword "in" $partition} in] ||
+	    [catch {::brlcad::bu get_value_by_keyword "point" $in} i_pt] ||
+	    [catch {::brlcad::bu get_value_by_keyword "out" $partition} out] ||
+	    [catch {::brlcad::bu get_value_by_keyword "point" $out} o_pt]} {
 	    return ""
 	}
 
@@ -1893,7 +1893,7 @@ package provide cadwidgets::Ged 1.0
     incr mLastPort
     set port $mLastPort
 
-    set binpath [bu_dir bin]
+    set binpath [::brlcad::bu dir bin]
 
     # This doesn't work (i.e. the "&" causes exec to always succeed, even when the command fails)
     while {[catch {exec [file join $binpath fbserv] -w $_w -n $_n $port $_fbtype &} pid]} {
@@ -1948,7 +1948,7 @@ package provide cadwidgets::Ged 1.0
 }
 
 ::itcl::body cadwidgets::Ged::hdivide {args} {
-    uplevel \#0 hdivide $args
+    uplevel \#0 [list ::brlcad::bn hdivide {*}$args]
 }
 
 ::itcl::body cadwidgets::Ged::hide {args} {
@@ -2136,7 +2136,7 @@ package provide cadwidgets::Ged 1.0
     make_image $fbs_port $w $n $viewsize $orientation $eye_pt $perspective \
 	$_bgcolor $_ecolor $_necolor $_occmode $_gamma $_color_objects $_ghost_objects $_edge_objects
 
-    set binpath [bu_dir bin]
+    set binpath [::brlcad::bu dir bin]
     catch {exec [file join $binpath fb-fb] $fbs_port $port &}
 
     if {$::tcl_platform(platform) == "windows"} {
@@ -2199,19 +2199,19 @@ package provide cadwidgets::Ged 1.0
 }
 
 ::itcl::body cadwidgets::Ged::mat_inv {args} {
-    uplevel \#0 mat_inv $args
+    uplevel \#0 [list ::brlcad::bn mat_inv {*}$args]
 }
 
 ::itcl::body cadwidgets::Ged::mat_trn {args} {
-    uplevel \#0 mat_trn $args
+    uplevel \#0 [list ::brlcad::bn mat_trn {*}$args]
 }
 
 ::itcl::body cadwidgets::Ged::matXvec {args} {
-    uplevel \#0 matXvec $args
+    uplevel \#0 [list ::brlcad::bn matXvec {*}$args]
 }
 
 ::itcl::body cadwidgets::Ged::mat4x3vec {args} {
-    uplevel \#0 mat4x3vec $args
+    uplevel \#0 [list ::brlcad::bn mat4x3vec {*}$args]
 }
 
 ::itcl::body cadwidgets::Ged::mat4x3pnt {args} {
@@ -2224,47 +2224,47 @@ package provide cadwidgets::Ged 1.0
 }
 
 ::itcl::body cadwidgets::Ged::mat_ae_vec {args} {
-    uplevel \#0 mat_ae_vec $args
+    uplevel \#0 [list ::brlcad::bn mat_ae_vec {*}$args]
 }
 
 ::itcl::body cadwidgets::Ged::mat_aet_vec {args} {
-    uplevel \#0 mat_aet_vec $args
+    uplevel \#0 [list ::brlcad::bn mat_aet_vec {*}$args]
 }
 
 ::itcl::body cadwidgets::Ged::mat_angles {args} {
-    uplevel \#0 mat_angles $args
+    uplevel \#0 [list ::brlcad::bn mat_angles {*}$args]
 }
 
 ::itcl::body cadwidgets::Ged::mat_eigen2x2 {args} {
-    uplevel \#0 mat_eigen2x2 $args
+    uplevel \#0 [list ::brlcad::bn mat_eigen2x2 {*}$args]
 }
 
 ::itcl::body cadwidgets::Ged::mat_fromto {args} {
-    uplevel \#0 mat_fromto $args
+    uplevel \#0 [list ::brlcad::bn mat_fromto {*}$args]
 }
 
 ::itcl::body cadwidgets::Ged::mat_xrot {args} {
-    uplevel \#0 mat_xrot $args
+    uplevel \#0 [list ::brlcad::bn mat_xrot {*}$args]
 }
 
 ::itcl::body cadwidgets::Ged::mat_yrot {args} {
-    uplevel \#0 mat_yrot $args
+    uplevel \#0 [list ::brlcad::bn mat_yrot {*}$args]
 }
 
 ::itcl::body cadwidgets::Ged::mat_zrot {args} {
-    uplevel \#0 mat_zrot $args
+    uplevel \#0 [list ::brlcad::bn mat_zrot {*}$args]
 }
 
 ::itcl::body cadwidgets::Ged::mat_lookat {args} {
-    uplevel \#0 mat_lookat $args
+    uplevel \#0 [list ::brlcad::bn mat_lookat {*}$args]
 }
 
 ::itcl::body cadwidgets::Ged::mat_vec_ortho {args} {
-    uplevel \#0 mat_vec_ortho $args
+    uplevel \#0 [list ::brlcad::bn mat_vec_ortho {*}$args]
 }
 
 ::itcl::body cadwidgets::Ged::mat_vec_perp {args} {
-    uplevel \#0 mat_vec_perp $args
+    uplevel \#0 [list ::brlcad::bn mat_vec_perp {*}$args]
 }
 
 ::itcl::body cadwidgets::Ged::mat_scale_about_pnt {args} {
@@ -2272,11 +2272,11 @@ package provide cadwidgets::Ged 1.0
 }
 
 ::itcl::body cadwidgets::Ged::mat_xform_about_pnt {args} {
-    uplevel \#0 mat_xform_about_pnt $args
+    uplevel \#0 [list ::brlcad::bn mat_xform_about_pnt {*}$args]
 }
 
 ::itcl::body cadwidgets::Ged::mat_arb_rot {args} {
-    uplevel \#0 mat_arb_rot $args
+    uplevel \#0 [list ::brlcad::bn mat_arb_rot {*}$args]
 }
 
 ::itcl::body cadwidgets::Ged::match {args} {
@@ -2685,9 +2685,9 @@ package provide cadwidgets::Ged 1.0
 
     set pt [lrange [pane_screen2view $_pane $_mx $_my] 0 1]
 
-    set distAB [bn_dist_pnt2_lseg2 $A $B $pt]
-    set distBC [bn_dist_pnt2_lseg2 $B $C $pt]
-    set distAC [bn_dist_pnt2_lseg2 $A $C $pt]
+    set distAB [::brlcad::bn bg_dist_pnt2_lseg2 $A $B $pt]
+    set distBC [::brlcad::bn bg_dist_pnt2_lseg2 $B $C $pt]
+    set distAC [::brlcad::bn bg_dist_pnt2_lseg2 $A $C $pt]
 
 
     if {$distAB < $distBC} {
@@ -3003,8 +3003,8 @@ package provide cadwidgets::Ged 1.0
 
     set partitions [shoot_ray obj_ray $start "at" $target 1 1 1 1 $_obj]
     set partition [lindex $partitions 0]
-    if {[catch {bu_get_value_by_keyword in $partition} in] ||
-	[catch {bu_get_value_by_keyword surfno $in} surfno]} {
+    if {[catch {::brlcad::bu get_value_by_keyword in $partition} in] ||
+	[catch {::brlcad::bu get_value_by_keyword surfno $in} surfno]} {
 	set surfno ""
     }
 
@@ -3466,43 +3466,43 @@ package provide cadwidgets::Ged 1.0
 }
 
 ::itcl::body cadwidgets::Ged::quat_mat2quat {args} {
-    uplevel \#0 quat_mat2quat $args
+    uplevel \#0 [list ::brlcad::bn quat_mat2quat {*}$args]
 }
 
 ::itcl::body cadwidgets::Ged::quat_quat2mat {args} {
-    uplevel \#0 quat_quat2mat $args
+    uplevel \#0 [list ::brlcad::bn quat_quat2mat {*}$args]
 }
 
 ::itcl::body cadwidgets::Ged::quat_distance {args} {
-    uplevel \#0 quat_distance $args
+    uplevel \#0 [list ::brlcad::bn quat_distance {*}$args]
 }
 
 ::itcl::body cadwidgets::Ged::quat_double {args} {
-    uplevel \#0 quat_double $args
+    uplevel \#0 [list ::brlcad::bn quat_double {*}$args]
 }
 
 ::itcl::body cadwidgets::Ged::quat_bisect {args} {
-    uplevel \#0 quat_bisect $args
+    uplevel \#0 [list ::brlcad::bn quat_bisect {*}$args]
 }
 
 ::itcl::body cadwidgets::Ged::quat_slerp {args} {
-    uplevel \#0 quat_slerp $args
+    uplevel \#0 [list ::brlcad::bn quat_slerp {*}$args]
 }
 
 ::itcl::body cadwidgets::Ged::quat_sberp {args} {
-    uplevel \#0 quat_sberp $args
+    uplevel \#0 [list ::brlcad::bn quat_sberp {*}$args]
 }
 
 ::itcl::body cadwidgets::Ged::quat_make_nearest {args} {
-    uplevel \#0 quat_make_nearest $args
+    uplevel \#0 [list ::brlcad::bn quat_make_nearest {*}$args]
 }
 
 ::itcl::body cadwidgets::Ged::quat_exp {args} {
-    uplevel \#0 quat_exp $args
+    uplevel \#0 [list ::brlcad::bn quat_exp {*}$args]
 }
 
 ::itcl::body cadwidgets::Ged::quat_log {args} {
-    uplevel \#0 quat_log $args
+    uplevel \#0 [list ::brlcad::bn quat_log {*}$args]
 }
 
 ::itcl::body cadwidgets::Ged::qvrot {args} {
@@ -3916,7 +3916,7 @@ package provide cadwidgets::Ged 1.0
 }
 
 ::itcl::body cadwidgets::Ged::vblend {args} {
-    uplevel \#0 vblend $args
+    uplevel \#0 [list ::brlcad::bn vblend {*}$args]
 }
 
 ::itcl::body cadwidgets::Ged::vdraw {args} {
@@ -3974,7 +3974,7 @@ package provide cadwidgets::Ged 1.0
 }
 
 ::itcl::body cadwidgets::Ged::vjoin1 {args} {
-    uplevel \#0 vjoin1 $args
+    uplevel \#0 [list ::brlcad::bn vjoin1 {*}$args]
 }
 
 ::itcl::body cadwidgets::Ged::vmake {args} {
@@ -5209,14 +5209,14 @@ package provide cadwidgets::Ged 1.0
 
 	    set partition [lindex $partitions 0]
 
-	    if {[catch {bu_get_value_by_keyword in $partition} in]} {
+	    if {[catch {::brlcad::bu get_value_by_keyword in $partition} in]} {
 		set mMeasuringStick3DCurrent 0
 		#		putString "Partition does not contain an \"in\""
 		#		putString "$in"
 		return $mLastMouseRayTarget
 	    }
 
-	    if {[catch {bu_get_value_by_keyword point $in} point]} {
+	    if {[catch {::brlcad::bu get_value_by_keyword point $in} point]} {
 		set mMeasuringStick3DCurrent 0
 		#		putString "Partition does not contain an \"in\" point"
 		#		putString "$point"
@@ -5298,7 +5298,7 @@ package provide cadwidgets::Ged 1.0
 	if {$partition == {}} {
 	    tk_messageBox -message "Nothing hit"
 	} else {
-	    set region [bu_get_value_by_keyword "region" $partition]
+	    set region [::brlcad::bu get_value_by_keyword "region" $partition]
 	    tk_messageBox -message [$mGed l $region]
 	}
     } else {

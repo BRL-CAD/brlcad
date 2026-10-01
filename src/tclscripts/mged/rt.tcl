@@ -674,7 +674,7 @@ proc clear_framebuffer { id } {
 	set blue 0
     }
 
-    set fbclear [file join [bu_dir bin] fbclear]
+    set fbclear [file join [::brlcad::bu dir bin] fbclear]
     set result [catch { exec $fbclear -F $rt_control($id,cooked_dest)\
 			    $red $green $blue & } rt_error]
 
@@ -1530,7 +1530,7 @@ proc initialize_destination { id win } {
 	    # Assume the user knows what he/she is doing
 	    force_destination $id $env(FB_FILE)
 	} else {
-	    set dm_list [split [dm_list] ',']
+	    set dm_list [split [::brlcad::dm list] ',']
 	    set devtype "/dev/"
 	    append devtype [lindex $dm_list 0]
 	    force_destination $id $devtype

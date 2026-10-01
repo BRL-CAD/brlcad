@@ -24,7 +24,7 @@
 #        configuration utility.
 #
 
-set filename [file join [bu_dir data] plugins archer Utility lodUtilityP LODUtilityP.tcl]
+set filename [file join [::brlcad::bu dir data] plugins archer Utility lodUtilityP LODUtilityP.tcl]
 if { ![file exists $filename] } {
     puts "Could not load the LODUtilityP plugin, skipping $filename"
     return

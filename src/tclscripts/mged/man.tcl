@@ -81,7 +81,7 @@ proc man {args} {
 	    if {$::tcl_platform(platform) == "windows"} {
 		set exe_ext ".exe"
 	    }
-	    set cmd [file join [bu_dir bin] brlman$exe_ext]
+	    set cmd [file join [::brlcad::bu dir bin] brlman$exe_ext]
 	    exec $cmd {*}$args
 	}
     }

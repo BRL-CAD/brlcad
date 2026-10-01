@@ -83,24 +83,24 @@
 # Initialize the variables containing the object's specification.
 #
 ::itcl::body SuperellEditFrame::initGeometry {gdata} {
-    set _V [bu_get_value_by_keyword V $gdata]
+    set _V [::brlcad::bu get_value_by_keyword V $gdata]
     set mVx [lindex $_V 0]
     set mVy [lindex $_V 1]
     set mVz [lindex $_V 2]
-    set _A [bu_get_value_by_keyword A $gdata]
+    set _A [::brlcad::bu get_value_by_keyword A $gdata]
     set mAx [lindex $_A 0]
     set mAy [lindex $_A 1]
     set mAz [lindex $_A 2]
-    set _B [bu_get_value_by_keyword B $gdata]
+    set _B [::brlcad::bu get_value_by_keyword B $gdata]
     set mBx [lindex $_B 0]
     set mBy [lindex $_B 1]
     set mBz [lindex $_B 2]
-    set _C [bu_get_value_by_keyword C $gdata]
+    set _C [::brlcad::bu get_value_by_keyword C $gdata]
     set mCx [lindex $_C 0]
     set mCy [lindex $_C 1]
     set mCz [lindex $_C 2]
-    set mN [bu_get_value_by_keyword n $gdata]
-    set mE [bu_get_value_by_keyword e $gdata]
+    set mN [::brlcad::bu get_value_by_keyword n $gdata]
+    set mE [::brlcad::bu get_value_by_keyword e $gdata]
 
     GeometryEditFrame::initGeometry $gdata
     set curr_name $itk_option(-geometryObject)

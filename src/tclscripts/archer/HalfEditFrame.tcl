@@ -225,11 +225,11 @@
 # Initialize the variables containing the object's specification.
 #
 ::itcl::body HalfEditFrame::initGeometry {gdata} {
-    set _N [bu_get_value_by_keyword N $gdata]
+    set _N [::brlcad::bu get_value_by_keyword N $gdata]
     set mNx [lindex $_N 0]
     set mNy [lindex $_N 1]
     set mNz [lindex $_N 2]
-    set mD [bu_get_value_by_keyword d $gdata]
+    set mD [::brlcad::bu get_value_by_keyword d $gdata]
 
     GeometryEditFrame::initGeometry $gdata
     set curr_name $itk_option(-geometryObject)
@@ -292,11 +292,11 @@
     set gdata [$itk_option(-mged) get $itk_option(-geometryObject)]
     set gdata [lrange $gdata 1 end]
 
-    set _N [bu_get_value_by_keyword N $gdata]
+    set _N [::brlcad::bu get_value_by_keyword N $gdata]
     set _Nx [lindex $_N 0]
     set _Ny [lindex $_N 1]
     set _Nz [lindex $_N 2]
-    set _D [bu_get_value_by_keyword d $gdata]
+    set _D [::brlcad::bu get_value_by_keyword d $gdata]
 
     if {$mNx == ""  ||
 	$mNx == "-" ||

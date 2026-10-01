@@ -55,7 +55,7 @@ proc vRotUp {plane pt} {
 
     # generate the matrix from the quaternion
 
-    set m_r [quat_quat2mat $quat]
+    set m_r [::brlcad::bn quat_quat2mat $quat]
     set m_tx [mat_deltas_vec [mat_idn] [vreverse $pt]]
     set m [mat_mul $m_r $m_tx]
 
@@ -80,8 +80,8 @@ proc circleFrom3Pts {a b c} {
     set BC [vsub $c $b]
 
     # find midpoints
-    set ABmid [vjoin1 $a 0.5 $AB]
-    set BCmid [vjoin1 $b 0.5 $BC]
+    set ABmid [::brlcad::bn vjoin1 $a 0.5 $AB]
+    set BCmid [::brlcad::bn vjoin1 $b 0.5 $BC]
 
     set up [vcross $AB $BC]
     if {[magsq $up] < 1e-5} {
@@ -92,7 +92,7 @@ proc circleFrom3Pts {a b c} {
     set ABperp [vcross $AB $up]
     set BCperp [vcross $BC $up]
 
-    if {[catch {bn_isect_line3_line3 $ABmid $ABperp $BCmid $BCperp} center]} {
+    if {[catch {::brlcad::bn bg_isect_line3_line3 $ABmid $ABperp $BCmid $BCperp} center]} {
 	# failed
 	return {}
     }
@@ -310,7 +310,7 @@ proc pipe {pts} {
 	set quat [quat_from_vrot $angle $bend_plane]
 
 	# rotate the vector
-	set m [quat_quat2mat $quat]
+	set m [::brlcad::bn quat_quat2mat $quat]
 	set newvec [mat4x3pnt $m $center_vec]
 
 	# find the new point
@@ -325,7 +325,7 @@ proc pipe {pts} {
 	set quat [quat_from_vrot $angle $bend_plane]
 
 	# rotate the vector
-	set m [quat_quat2mat $quat]
+	set m [::brlcad::bn quat_quat2mat $quat]
 	set center_vec [mat4x3pnt $m $center_vec]
 
 	# find the new point
@@ -360,7 +360,7 @@ proc pipe {pts} {
 	set c_tangent [vcross $bend_plane $c_vec]
 
 	# find intersection of tangent lines to get real point for pipe
-	if {[catch {bn_isect_line3_line3 $a $a_tangent $c $c_tangent} pt]} {
+	if {[catch {::brlcad::bn bg_isect_line3_line3 $a $a_tangent $c $c_tangent} pt]} {
 	    #oops
 	    puts "ooops"
 	} else {
@@ -391,7 +391,7 @@ proc pipe {pts} {
     eval "$cmd"
 
     close $fd
-    set asc2plot3 [file join [bu_dir bin] asc-plot3]
+    set asc2plot3 [file join [::brlcad::bu dir bin] asc-plot3]
     exec "$asc2plot3 < pipe$pipe_number.plasc > pipe$pipe_number.plot3"
 
     incr pipe_number
@@ -526,7 +526,7 @@ proc plate {pts} {
 
     set m [vRotUp $plane $V]
 
-    set m_inv [mat_inv $m]
+    set m_inv [::brlcad::bn mat_inv $m]
     # mat_print  "inverse matrix" $m_inv
 
     set twoDpts {}
@@ -547,8 +547,8 @@ proc plate {pts} {
 
     set cmd "put $sketch_name sketch V"
     lappend cmd [lindex $pts 0]
-    set U_vector [mat4x3vec $m_inv [list 1.0 0.0 0.0 ]]
-    set V_vector [mat4x3vec $m_inv [list 0.0 1.0 0.0 ]]
+    set U_vector [::brlcad::bn mat4x3vec $m_inv [list 1.0 0.0 0.0 ]]
+    set V_vector [::brlcad::bn mat4x3vec $m_inv [list 0.0 1.0 0.0 ]]
     lappend cmd "A" $U_vector
     lappend cmd "B" $V_vector
     lappend cmd "VL" $twoDpts
@@ -697,7 +697,7 @@ if { 1 == 0 } {
 	set c "Q"
     }
     close $fd
-    set asc2plot3 [file join [bu_dir bin] asc-plot3]
+    set asc2plot3 [file join [::brlcad::bu dir bin] asc-plot3]
     exec "$asc2plot3 < pipe.asc > pipe.plot3"
     overlay pipe.plot3
     file delete pipe.asc

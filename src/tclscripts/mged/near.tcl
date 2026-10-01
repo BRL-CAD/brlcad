@@ -31,8 +31,7 @@ namespace eval ::near_ns {
 proc ::near_ns::require_commands {} {
     set extern_commands [list \
 	bb \
-	bu_get_value_by_keyword \
-	bu_units_conversion \
+	::brlcad::bu \
 	rt_gettrees \
 	search \
 	units]
@@ -71,7 +70,7 @@ proc ::near_ns::distance_to_base {value} {
     set trimmed [string trim $value]
 
     if {[regexp {^([-+]?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][-+]?\d+)?)\s*([A-Za-z].*)$} $trimmed -> mag unit]} {
-	return [expr {double($mag) * [bu_units_conversion [string trim $unit]]}]
+	return [expr {double($mag) * [::brlcad::bu units_conversion [string trim $unit]]}]
     }
 
     if {![string is double -strict $trimmed]} {
@@ -315,13 +314,13 @@ proc ::near_ns::ray_intervals {partitions target candidate} {
 	    continue
 	}
 
-	if {[catch {set region [bu_get_value_by_keyword region $partition]}] ||
-	    [catch {set in_hit [bu_get_value_by_keyword in $partition]}] ||
-	    [catch {set out_hit [bu_get_value_by_keyword out $partition]}] ||
-	    [catch {set in_dist [bu_get_value_by_keyword dist $in_hit]}] ||
-	    [catch {set out_dist [bu_get_value_by_keyword dist $out_hit]}] ||
-	    [catch {set in_point [bu_get_value_by_keyword point $in_hit]}] ||
-	    [catch {set out_point [bu_get_value_by_keyword point $out_hit]}]} {
+	if {[catch {set region [::brlcad::bu get_value_by_keyword region $partition]}] ||
+	    [catch {set in_hit [::brlcad::bu get_value_by_keyword in $partition]}] ||
+	    [catch {set out_hit [::brlcad::bu get_value_by_keyword out $partition]}] ||
+	    [catch {set in_dist [::brlcad::bu get_value_by_keyword dist $in_hit]}] ||
+	    [catch {set out_dist [::brlcad::bu get_value_by_keyword dist $out_hit]}] ||
+	    [catch {set in_point [::brlcad::bu get_value_by_keyword point $in_hit]}] ||
+	    [catch {set out_point [::brlcad::bu get_value_by_keyword point $out_hit]}]} {
 	    continue
 	}
 
