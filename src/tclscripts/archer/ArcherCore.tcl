@@ -2053,7 +2053,7 @@ namespace delete ::ArcherCoreBootstrap
 
     # RT Control Panel
     itk_component add rtcntrl {
-	RtControl $itk_interior.rtcp -mged $itk_component(ged)
+	::cadwidgets::RtControl $itk_interior.rtcp -mged $itk_component(ged)
     } {
 	usual
     }

@@ -23,10 +23,12 @@
 #        widget's model axes attributes.
 #
 
+package provide cadwidgets::ModelAxesControl 1.0
+
 ::itk::usual ModelAxesControl {
 }
 
-::itcl::class ModelAxesControl {
+::itcl::class ::cadwidgets::ModelAxesControl {
     inherit ::itk::Toplevel
 
     itk_option define -mged mged Mged ""
@@ -81,7 +83,7 @@
     public method updateControlPanel {units}
 }
 
-::itcl::body ModelAxesControl::constructor {args} {
+::itcl::body ::cadwidgets::ModelAxesControl::constructor {args} {
     buildTabs $itk_interior
     buildAxesTab
     buildTicksTab
@@ -111,7 +113,7 @@
     eval itk_initialize $args
 }
 
-::itcl::configbody ModelAxesControl::mged {
+::itcl::configbody ::cadwidgets::ModelAxesControl::mged {
     if {$itk_option(-mged) == ""} {
 	return
     }
@@ -124,7 +126,7 @@
     updateControlPanel [$itk_option(-mged) units]
 }
 
-::itcl::body ModelAxesControl::buildTabs {parent} {
+::itcl::body ::cadwidgets::ModelAxesControl::buildTabs {parent} {
     itk_component add tabs {
 	::iwidgets::tabnotebook $itk_interior.tabs -tabpos n -equaltabs false
     } {
@@ -136,7 +138,7 @@
     $itk_component(tabs) select Axes
 }
 
-::itcl::body ModelAxesControl::buildAxesTab {} {
+::itcl::body ::cadwidgets::ModelAxesControl::buildAxesTab {} {
     set parent [$itk_component(tabs) childsite Axes]
 
     buildSize $parent
@@ -174,7 +176,7 @@
     grid columnconfigure $parent 1 -weight 1
 }
 
-::itcl::body ModelAxesControl::buildTicksTab {} {
+::itcl::body ::cadwidgets::ModelAxesControl::buildTicksTab {} {
     set parent [$itk_component(tabs) childsite Ticks]
 
     buildTickInterval $parent
@@ -206,7 +208,7 @@
     grid columnconfigure $parent 1 -weight 1
 }
 
-::itcl::body ModelAxesControl::buildSize {parent} {
+::itcl::body ::cadwidgets::ModelAxesControl::buildSize {parent} {
     itk_component add sizeL {
 	::label $parent.sizeL -text "Size:" -anchor e
     } {
@@ -239,7 +241,7 @@
 	-command [::itcl::code $this setSizeCB "View (8x)"]
 }
 
-::itcl::body ModelAxesControl::buildPosition {parent} {
+::itcl::body ::cadwidgets::ModelAxesControl::buildPosition {parent} {
     itk_component add positionL {
 	::label $parent.positionL -text "Position:" -anchor e
     } {
@@ -259,7 +261,7 @@
 	-validatecommand [::itcl::code $this validatePosition %P]
 }
 
-::itcl::body ModelAxesControl::buildLineWidth {parent} {
+::itcl::body ::cadwidgets::ModelAxesControl::buildLineWidth {parent} {
     itk_component add lineWidthL {
 	::label $parent.lineWidthL -text "Line Width:" -anchor e
     } {
@@ -286,7 +288,7 @@
 #
 # This method already suffers from feature creep (i.e. toption).
 #
-::itcl::body ModelAxesControl::buildColor {parent nameL nameCB text var option toption} {
+::itcl::body ::cadwidgets::ModelAxesControl::buildColor {parent nameL nameCB text var option toption} {
     itk_component add $nameL {
 	::label $parent.$nameL -text $text -anchor e
     } {
@@ -323,7 +325,7 @@
     }
 }
 
-::itcl::body ModelAxesControl::buildTickInterval {parent} {
+::itcl::body ::cadwidgets::ModelAxesControl::buildTickInterval {parent} {
     itk_component add tickIntervalL {
 	::label $parent.tickIntervalL -text "Tick Interval:" -anchor e
     } {
@@ -343,7 +345,7 @@
 	-validatecommand [::itcl::code $this validateTickInterval %P]
 }
 
-::itcl::body ModelAxesControl::buildTicksPerMajor {parent} {
+::itcl::body ::cadwidgets::ModelAxesControl::buildTicksPerMajor {parent} {
     itk_component add ticksPerMajorL {
 	::label $parent.ticksPerMajorL -text "Ticks Per Major:" -anchor e
     } {
@@ -376,7 +378,7 @@
 	-command [::itcl::code $this setTicksPerMajorCB "12"]
 }
 
-::itcl::body ModelAxesControl::buildTickThreshold {parent} {
+::itcl::body ::cadwidgets::ModelAxesControl::buildTickThreshold {parent} {
     itk_component add tickThresholdL {
 	::label $parent.tickThresholdL -text "Tick Threshold:" -anchor e
     } {
@@ -403,7 +405,7 @@
 	-command [::itcl::code $this setTickThresholdCB "64"]
 }
 
-::itcl::body ModelAxesControl::buildTickLength {parent} {
+::itcl::body ::cadwidgets::ModelAxesControl::buildTickLength {parent} {
     itk_component add tickLenL {
 	::label $parent.tickLenL -text "Tick Length:" -anchor e
     } {
@@ -428,7 +430,7 @@
 	-command [::itcl::code $this setTickLengthCB "16"]
 }
 
-::itcl::body ModelAxesControl::buildMajorTickLength {parent} {
+::itcl::body ::cadwidgets::ModelAxesControl::buildMajorTickLength {parent} {
     itk_component add majorTickLenL {
 	::label $parent.majorTickLenL -text "Major Tick Length:" -anchor e
     } {
@@ -453,7 +455,7 @@
 	-command [::itcl::code $this setMajorTickLengthCB "16"]
 }
 
-::itcl::body ModelAxesControl::buildButtons {parent} {
+::itcl::body ::cadwidgets::ModelAxesControl::buildButtons {parent} {
     itk_component add dismissB {
 	::button $parent.dismissB -relief raised -text "Dismiss" \
 	    -command [::itcl::code $this hide]
@@ -462,7 +464,7 @@
     }
 }
 
-::itcl::body ModelAxesControl::handleTickEnable {} {
+::itcl::body ::cadwidgets::ModelAxesControl::handleTickEnable {} {
     if {$itk_option(-mged) == ""} {
 	return
     }
@@ -477,7 +479,7 @@
 #    $itk_option(-mged) setModelAxesTickEnable $tickEnable
 }
 
-::itcl::body ModelAxesControl::setSizeCB {size} {
+::itcl::body ::cadwidgets::ModelAxesControl::setSizeCB {size} {
     set axesSize $size
 
     if {$itk_option(-mged) == ""} {
@@ -512,7 +514,7 @@
     }
 }
 
-::itcl::body ModelAxesControl::validatePosition {pos} {
+::itcl::body ::cadwidgets::ModelAxesControl::validatePosition {pos} {
     if {$itk_option(-mged) == ""} {
 	return true
     }
@@ -596,7 +598,7 @@
     return false
 }
 
-::itcl::body ModelAxesControl::setLineWidthCB {lw} {
+::itcl::body ::cadwidgets::ModelAxesControl::setLineWidthCB {lw} {
     set axesLineWidth $lw
 
     if {$itk_option(-mged) == ""} {
@@ -606,7 +608,7 @@
     $itk_option(-mged) configure -modelAxesLineWidth $lw
 }
 
-::itcl::body ModelAxesControl::setColorCB {var option toption color} {
+::itcl::body ::cadwidgets::ModelAxesControl::setColorCB {var option toption color} {
     set $var $color
 
     if {$itk_option(-mged) == ""} {
@@ -649,7 +651,7 @@
     }
 }
 
-::itcl::body ModelAxesControl::validateTickInterval {ti} {
+::itcl::body ::cadwidgets::ModelAxesControl::validateTickInterval {ti} {
     if {$itk_option(-mged) == ""} {
 	return true
     }
@@ -683,7 +685,7 @@
     }
 }
 
-::itcl::body ModelAxesControl::setTicksPerMajorCB {tpm} {
+::itcl::body ::cadwidgets::ModelAxesControl::setTicksPerMajorCB {tpm} {
     set ticksPerMajor $tpm
 
     if {$itk_option(-mged) == ""} {
@@ -694,7 +696,7 @@
 #    $itk_option(-mged) setModelAxesTicksPerMajor $ticksPerMajor
 }
 
-::itcl::body ModelAxesControl::setTickThresholdCB {threshold} {
+::itcl::body ::cadwidgets::ModelAxesControl::setTickThresholdCB {threshold} {
     set tickThreshold $threshold
 
     if {$itk_option(-mged) == ""} {
@@ -704,7 +706,7 @@
     $itk_option(-mged) configure -modelAxesTickThreshold $tickThreshold
 }
 
-::itcl::body ModelAxesControl::setTickLengthCB {length} {
+::itcl::body ::cadwidgets::ModelAxesControl::setTickLengthCB {length} {
     set tickLength $length
 
     if {$itk_option(-mged) == ""} {
@@ -714,7 +716,7 @@
     $itk_option(-mged) configure -modelAxesTickLength $tickLength
 }
 
-::itcl::body ModelAxesControl::setMajorTickLengthCB {length} {
+::itcl::body ::cadwidgets::ModelAxesControl::setMajorTickLengthCB {length} {
     set majorTickLength $length
 
     if {$itk_option(-mged) == ""} {
@@ -724,7 +726,7 @@
     $itk_option(-mged) configure -modelAxesTickMajorLength $majorTickLength
 }
 
-::itcl::body ModelAxesControl::updateControlPanel {units} {
+::itcl::body ::cadwidgets::ModelAxesControl::updateControlPanel {units} {
     if {$itk_option(-mged) == ""} {
 	return
     }
@@ -779,13 +781,23 @@
     $itk_component(tickIntervalL) configure -text "Tick Interval ($units):"
 }
 
-::itcl::body ModelAxesControl::hide {} {
+::itcl::body ::cadwidgets::ModelAxesControl::hide {} {
     wm withdraw [namespace tail $this]
 }
 
-::itcl::body ModelAxesControl::show {} {
+::itcl::body ::cadwidgets::ModelAxesControl::show {} {
     wm deiconify [namespace tail $this]
     raise [namespace tail $this]
+}
+
+# Retain the original class, including its inheritance behavior, for scripts
+# that have not yet adopted the qualified widget name.
+::itcl::class ::ModelAxesControl {
+    inherit ::cadwidgets::ModelAxesControl
+
+    constructor {args} {
+	::cadwidgets::ModelAxesControl::constructor {*}$args
+    } {}
 }
 
 # Local Variables:

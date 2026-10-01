@@ -24,10 +24,12 @@
 #	cadwidgets::Ged widget.
 #
 
+package provide cadwidgets::RtControl 1.0
+
 ::itk::usual RtControl {
 }
 
-::itcl::class RtControl {
+::itcl::class ::cadwidgets::RtControl {
     inherit ::itk::Toplevel
 
     itk_option define -olist olist Olist {}
@@ -159,7 +161,7 @@
     }
 }
 
-::itcl::body RtControl::constructor {args} {
+::itcl::body ::cadwidgets::RtControl::constructor {args} {
     # revive a few ignored options
     #itk_option add hull.screen
 
@@ -368,25 +370,25 @@
 
 ############################### Configuration Options ###############################
 
-::itcl::configbody RtControl::color {\
+::itcl::configbody ::cadwidgets::RtControl::color {\
     set rtColor $itk_option(-color)
     set bg [eval ::cadwidgets::Ged::rgb_to_tk $rtColor]
     $itk_component(bgcolorpatchL) configure -background $bg
 }
 
-::itcl::configbody RtControl::nproc {
+::itcl::configbody ::cadwidgets::RtControl::nproc {
     if {![regexp "^\[0-9\]+$" $itk_option(-nproc)]} {
 	error "Bad value - $itk_option(-nproc)"
     }
 }
 
-::itcl::configbody RtControl::hsample {
+::itcl::configbody ::cadwidgets::RtControl::hsample {
     if {![regexp "^\[0-9\]+$" $itk_option(-hsample)]} {
 	error "Bad value - $itk_option(-hsample)"
     }
 }
 
-::itcl::configbody RtControl::mged {
+::itcl::configbody ::cadwidgets::RtControl::mged {
     if {$itk_option(-mged) == ""} {
 	return
     }
@@ -394,7 +396,7 @@
     updateControlPanel
 }
 
-::itcl::configbody RtControl::fb_enabled {
+::itcl::configbody ::cadwidgets::RtControl::fb_enabled {
     if {![string is digit $itk_option(-fb_enabled)]} {
 	error "Bad value - $itk_option(-fb_enabled)"
     }
@@ -406,7 +408,7 @@
 ################################# Public Methods ################################
 
 
-::itcl::body RtControl::activate {} {
+::itcl::body ::cadwidgets::RtControl::activate {} {
     raise $itk_component(hull)
 
     # center on screen
@@ -419,7 +421,7 @@
     set_size
 }
 
-::itcl::body RtControl::activate_adv {} {
+::itcl::body ::cadwidgets::RtControl::activate_adv {} {
     set saveVisibilityBinding [bind $itk_component(hull) <Visibility>]
     set saveFocusOutBinding [bind $itk_component(hull) <FocusOut>]
     bind $itk_component(hull) <Visibility> {}
@@ -435,13 +437,13 @@
     wm deiconify $itk_component(adv)
 }
 
-::itcl::body RtControl::deactivate {} {
+::itcl::body ::cadwidgets::RtControl::deactivate {} {
     set win_geom [wm geometry $itk_component(hull)]
     wm withdraw $itk_component(hull)
     deactivate_adv
 }
 
-::itcl::body RtControl::deactivate_adv {} {
+::itcl::body ::cadwidgets::RtControl::deactivate_adv {} {
     set win_geom_adv [wm geometry $itk_component(adv)]
     wm withdraw $itk_component(adv)
 
@@ -450,7 +452,7 @@
     raise $itk_component(hull)
 }
 
-::itcl::body RtControl::center {w gs {cw ""}} {
+::itcl::body ::cadwidgets::RtControl::center {w gs {cw ""}} {
     upvar $gs geom
 
     update idletasks
@@ -467,7 +469,7 @@
     set geom +$x+$y
 }
 
-::itcl::body RtControl::abort {} {
+::itcl::body ::cadwidgets::RtControl::abort {} {
     if {!$isaGed} {
 	error "Raytrace Control Panel($this) is not associated with a Ged widget"
     }
@@ -475,7 +477,7 @@
     $itk_option(-mged) rtabort
 }
 
-::itcl::body RtControl::clear {} {
+::itcl::body ::cadwidgets::RtControl::clear {} {
     if {!$isaGed} {
 	error "Raytrace Control Panel($this) is not associated with a Ged widget"
     }
@@ -483,7 +485,7 @@
     $itk_option(-mged) fbclear $rtColor
 }
 
-::itcl::body RtControl::raytrace {} {
+::itcl::body ::cadwidgets::RtControl::raytrace {} {
     if {!$isaGed} {
 	error "Raytrace Control Panel($this) is not associated with a Ged widget"
     }
@@ -588,7 +590,7 @@
     }
 }
 
-::itcl::body RtControl::raytracePlus {} {
+::itcl::body ::cadwidgets::RtControl::raytracePlus {} {
     if {!$itk_option(-fb_enabled)} {
 	toggleFB
     }
@@ -596,7 +598,7 @@
     raytrace
 }
 
-::itcl::body RtControl::setActivePane {{_pane ""}} {
+::itcl::body ::cadwidgets::RtControl::setActivePane {{_pane ""}} {
     if {!$isaGed} {
 	error "Raytrace Control Panel($this) is not associated with a Ged widget"
     }
@@ -649,7 +651,7 @@
     }
 }
 
-::itcl::body RtControl::setFbMode {args} {
+::itcl::body ::cadwidgets::RtControl::setFbMode {args} {
     if {$args == ""} {
 	return $fb_mode
     }
@@ -674,7 +676,7 @@
     }
 }
 
-::itcl::body RtControl::toggleFbMode {} {
+::itcl::body ::cadwidgets::RtControl::toggleFbMode {} {
     switch -- $fb_mode {
 	1 -
 	2 {
@@ -692,7 +694,7 @@
     set_fb_mode_str
 }
 
-::itcl::body RtControl::toggleFB {} {
+::itcl::body ::cadwidgets::RtControl::toggleFB {} {
     if {$itk_option(-fb_enabled)} {
 	set itk_option(-fb_enabled) 0
     } else {
@@ -703,7 +705,7 @@
     enableFB
 }
 
-::itcl::body RtControl::updateControlPanel {} {
+::itcl::body ::cadwidgets::RtControl::updateControlPanel {} {
     if {[catch {$itk_option(-mged) isa cadwidgets::Ged} isaGed] ||
 	!$isaGed} {
 	error "Raytrace Control Panel($this) is not associated with a Ged widget, itk_option(-mged) - $itk_option(-mged)"
@@ -718,7 +720,7 @@
 
 ############################### Protected Methods ###############################
 
-::itcl::body RtControl::build_adv {} {
+::itcl::body ::cadwidgets::RtControl::build_adv {} {
     itk_component add adv {
 	::toplevel $itk_interior.adv
     }
@@ -863,7 +865,7 @@
     wm title $itk_component(adv) "Advanced Settings"
 }
 
-::itcl::body RtControl::build_photon_map {_parent} {
+::itcl::body ::cadwidgets::RtControl::build_photon_map {_parent} {
     build_pm_scale $_parent pm_global "Global Photons" \
 	pm_nonLinearEvent 10 24 pmGlobalPhotonsEntry pmGlobalPhotonsScale horizontal
     build_pm_scale $_parent pm_caustic "Caustic Percent" \
@@ -911,7 +913,7 @@
     grid x $itk_component(pm_visualirradCB) - -sticky nsew
 }
 
-::itcl::body RtControl::build_pm_scale {_parent _name _text _cmd _from _to _vname1 _vname2 _orient} {
+::itcl::body ::cadwidgets::RtControl::build_pm_scale {_parent _name _text _cmd _from _to _vname1 _vname2 _orient} {
     itk_component add $_name\L {
 	::ttk::label $_parent.$_name\L \
 	    -text $_text
@@ -934,28 +936,28 @@
     grid $itk_component($_name\L) $itk_component($_name\E) $itk_component($_name\SC) -sticky nsew
 }
 
-::itcl::body RtControl::pm_nonLinearEvent {_entry _sval} {
+::itcl::body ::cadwidgets::RtControl::pm_nonLinearEvent {_entry _sval} {
     $_entry delete 0 end
     $_entry insert 0 [expr {int(pow(2,$_sval))}]
 }
 
-::itcl::body RtControl::pm_linearEvent {_entry _sval} {
+::itcl::body ::cadwidgets::RtControl::pm_linearEvent {_entry _sval} {
     $_entry delete 0 end
     $_entry insert 0 [expr {double(round($_sval * 100.0)) / 100.0}]
 #    $_entry insert 0 $_sval
 }
 
-::itcl::body RtControl::pm_linearEventRound {_entry _sval} {
+::itcl::body ::cadwidgets::RtControl::pm_linearEventRound {_entry _sval} {
     $_entry delete 0 end
     $_entry insert 0 [expr {round($_sval)}]
 }
 
-::itcl::body RtControl::pm_raysEvent {_entry _sval} {
+::itcl::body ::cadwidgets::RtControl::pm_raysEvent {_entry _sval} {
     $_entry delete 0 end
     $_entry insert 0 [expr {int(pow($_sval,2))}]
 }
 
-::itcl::body RtControl::colorChooser {_color} {
+::itcl::body ::cadwidgets::RtControl::colorChooser {_color} {
     set ic [format "#%02x%02x%02x" [lindex $_color 0] [lindex $_color 1] [lindex $_color 2]]
     set c [tk_chooseColor -initialcolor $ic -title "Color Choose"]
 
@@ -969,7 +971,7 @@
     return [format "%i %i %i" 0x$r 0x$g 0x$b]
 }
 
-::itcl::body RtControl::set_color {} {
+::itcl::body ::cadwidgets::RtControl::set_color {} {
     if {!$isaGed} {
 	error "Raytrace Control Panel($this) is not associated with a Ged widget"
     }
@@ -1013,7 +1015,7 @@
     $itk_component(bgcolorpatchL) configure -background $bg
 }
 
-::itcl::body RtControl::set_fb_mode {} {
+::itcl::body ::cadwidgets::RtControl::set_fb_mode {} {
     if {!$isaGed} {
 	error "Raytrace Control Panel($this) is not associated with a Ged widget"
     }
@@ -1036,7 +1038,7 @@
     fb_mode
 }
 
-::itcl::body RtControl::set_fb_mode_str {} {
+::itcl::body ::cadwidgets::RtControl::set_fb_mode_str {} {
     if {!$isaGed} {
 	error "Raytrace Control Panel($this) is not associated with a Ged widget"
     }
@@ -1057,7 +1059,7 @@
     }
 }
 
-::itcl::body RtControl::set_size {} {
+::itcl::body ::cadwidgets::RtControl::set_size {} {
     if {!$isaGed} {
 	error "Raytrace Control Panel($this) is not associated with a Ged widget"
     }
@@ -1065,7 +1067,7 @@
     set rtSize [getSize]
 }
 
-::itcl::body RtControl::set_jitter {} {
+::itcl::body ::cadwidgets::RtControl::set_jitter {} {
     switch -- $rtJitterSpec {
 	None {
 	    set rtJitter 0
@@ -1085,7 +1087,7 @@
     }
 }
 
-::itcl::body RtControl::set_lmodel {} {
+::itcl::body ::cadwidgets::RtControl::set_lmodel {} {
     switch -- $rtLightModelSpec {
 	Full {
 	    set rtLightModel 0
@@ -1130,7 +1132,7 @@
 # Return a port number if possible. Otherwise, return
 # whatever the user specified (i.e. it's already cooked)
 #
-::itcl::body RtControl::cook_dest {dest} {
+::itcl::body ::cadwidgets::RtControl::cook_dest {dest} {
     switch -- $dest {
 	ul -
 	ur -
@@ -1156,7 +1158,7 @@
     }
 }
 
-::itcl::body RtControl::fb_mode {} {
+::itcl::body ::cadwidgets::RtControl::fb_mode {} {
     if {$itk_option(-fb_enabled)} {
 	$itk_option(-mged) pane_set_fb_mode $rtActivePane $fb_mode
     } else {
@@ -1170,7 +1172,7 @@
     }
 }
 
-::itcl::body RtControl::ok {} {
+::itcl::body ::cadwidgets::RtControl::ok {} {
     if {!$isaGed} {
 	error "Raytrace Control Panel($this) is not associated with a Ged widget"
     }
@@ -1185,7 +1187,7 @@
 # the user (i.e. hostname:port, or filename). No error
 # checking is performed on user specified strings.
 #
-::itcl::body RtControl::get_cooked_dest {} {
+::itcl::body ::cadwidgets::RtControl::get_cooked_dest {} {
     if {$rtActivePane == ""} {
 	# use the active pane
 	set rtActivePane [$itk_option(-mged) pane]
@@ -1214,7 +1216,7 @@
     return $cooked_dest
 }
 
-::itcl::body RtControl::menuStatusCB {w} {
+::itcl::body ::cadwidgets::RtControl::menuStatusCB {w} {
     if {[catch {$w entrycget active -label} op]} {
 	# probably a tearoff entry
 	set op ""
@@ -1304,19 +1306,19 @@
     }
 }
 
-::itcl::body RtControl::leaveCB {} {
+::itcl::body ::cadwidgets::RtControl::leaveCB {} {
     set msg ""
 }
 
-::itcl::body RtControl::enterAdvCB {} {
+::itcl::body ::cadwidgets::RtControl::enterAdvCB {} {
     set msg "Activate the advanced settings dialog"
 }
 
-::itcl::body RtControl::enterEnablefbCB {} {
+::itcl::body ::cadwidgets::RtControl::enterEnablefbCB {} {
     set msg "Toggle framebuffer on/off"
 }
 
-::itcl::body RtControl::enterOkCB {} {
+::itcl::body ::cadwidgets::RtControl::enterOkCB {} {
     if {!$isaGed} {
 	set msg "Not associated with a Ged widget"
     } else {
@@ -1324,7 +1326,7 @@
     }
 }
 
-::itcl::body RtControl::enterRaytraceCB {} {
+::itcl::body ::cadwidgets::RtControl::enterRaytraceCB {} {
     if {!$isaGed} {
 	set msg "Not associated with a Ged widget"
     } else {
@@ -1332,7 +1334,7 @@
     }
 }
 
-::itcl::body RtControl::enterAbortCB {} {
+::itcl::body ::cadwidgets::RtControl::enterAbortCB {} {
     if {!$isaGed} {
 	set msg "Not associated with a Ged widget"
     } else {
@@ -1340,7 +1342,7 @@
     }
 }
 
-::itcl::body RtControl::enterClearCB {} {
+::itcl::body ::cadwidgets::RtControl::enterClearCB {} {
     if {!$isaGed} {
 	set msg "Not associated with a Ged widget"
     } else {
@@ -1348,23 +1350,23 @@
     }
 }
 
-::itcl::body RtControl::enterDismissCB {} {
+::itcl::body ::cadwidgets::RtControl::enterDismissCB {} {
     set msg "Dismiss the raytrace control panel"
 }
 
-::itcl::body RtControl::enterDestCB {} {
+::itcl::body ::cadwidgets::RtControl::enterDestCB {} {
     set msg "Specify a destination (i.e. framebuffer or file)"
 }
 
-::itcl::body RtControl::enterSizeCB {} {
+::itcl::body ::cadwidgets::RtControl::enterSizeCB {} {
     set msg "Specify an image size"
 }
 
-::itcl::body RtControl::enterColorCB {} {
+::itcl::body ::cadwidgets::RtControl::enterColorCB {} {
     set msg "Specify an RGB color"
 }
 
-::itcl::body RtControl::getPaneStr {} {
+::itcl::body ::cadwidgets::RtControl::getPaneStr {} {
     switch -- $rtActivePane {
 	ul {
 	    return "upper left"
@@ -1385,7 +1387,7 @@
 #
 #
 #
-::itcl::body RtControl::getSize {} {
+::itcl::body ::cadwidgets::RtControl::getSize {} {
     if {!$isaGed} {
 	error "Not associated with a Ged widget"
     }
@@ -1394,7 +1396,7 @@
     return "[lindex $size 0]x[lindex $size 1]"
 }
 
-::itcl::body RtControl::enableFB {} {
+::itcl::body ::cadwidgets::RtControl::enableFB {} {
     fb_mode
 
     if {$itk_option(-fb_enabled_callback) != ""} {
@@ -1402,7 +1404,7 @@
     }
 }
 
-::itcl::body RtControl::menuStatusAdvCB {w} {
+::itcl::body ::cadwidgets::RtControl::menuStatusAdvCB {w} {
     if {[catch {$w entrycget active -label} op]} {
 	# probably a tearoff entry
 	set op ""
@@ -1445,27 +1447,27 @@
     }
 }
 
-::itcl::body RtControl::leaveAdvCB {} {
+::itcl::body ::cadwidgets::RtControl::leaveAdvCB {} {
     set msg_adv ""
 }
 
-::itcl::body RtControl::enterDismissAdvCB {} {
+::itcl::body ::cadwidgets::RtControl::enterDismissAdvCB {} {
     set msg_adv "Dismiss the advanced settings dialog"
 }
 
-::itcl::body RtControl::enterNProcCB {} {
+::itcl::body ::cadwidgets::RtControl::enterNProcCB {} {
     set msg_adv "Requested number of processors"
 }
 
-::itcl::body RtControl::enterHSampleCB {} {
+::itcl::body ::cadwidgets::RtControl::enterHSampleCB {} {
     set msg_adv "Extra rays to fire per pixel"
 }
 
-::itcl::body RtControl::enterOtherCB {} {
+::itcl::body ::cadwidgets::RtControl::enterOtherCB {} {
     set msg_adv "Other rt options"
 }
 
-::itcl::body RtControl::update_control_panel {} {
+::itcl::body ::cadwidgets::RtControl::update_control_panel {} {
     ::update
     set_size
 
@@ -1481,6 +1483,24 @@
     }
 
     set_fb_mode_str
+}
+
+# Retain the original class, including its inheritance behavior, for scripts
+# that have not yet adopted the qualified widget name.
+::itcl::class ::RtControl {
+    inherit ::cadwidgets::RtControl
+
+    constructor {args} {
+	::cadwidgets::RtControl::constructor {*}$args
+    } {}
+}
+
+# pkg_mkIndex stubs class declarations, so only link common variables during
+# a live Itcl load.
+if {[namespace exists ::cadwidgets::RtControl]} {
+    namespace eval ::RtControl {
+	namespace upvar ::cadwidgets::RtControl FB_MODES FB_MODES
+    }
 }
 
 

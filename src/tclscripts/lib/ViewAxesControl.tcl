@@ -23,10 +23,12 @@
 #        widget's view axes attributes.
 #
 
+package provide cadwidgets::ViewAxesControl 1.0
+
 ::itk::usual ViewAxesControl {
 }
 
-::itcl::class ViewAxesControl {
+::itcl::class ::cadwidgets::ViewAxesControl {
     inherit ::itk::Toplevel
 
     itk_option define -mged mged Mged ""
@@ -59,7 +61,7 @@
     public method show {}
 }
 
-::itcl::body ViewAxesControl::constructor {args} {
+::itcl::body ::cadwidgets::ViewAxesControl::constructor {args} {
     buildSize
     buildPosition
     buildLineWidth
@@ -82,7 +84,7 @@
     eval itk_initialize $args
 }
 
-::itcl::configbody ViewAxesControl::mged {
+::itcl::configbody ::cadwidgets::ViewAxesControl::mged {
     if {$itk_option(-mged) == ""} {
 	return
     }
@@ -95,7 +97,7 @@
     updateControlPanel
 }
 
-::itcl::body ViewAxesControl::packIt {} {
+::itcl::body ::cadwidgets::ViewAxesControl::packIt {} {
     grid $itk_component(sizeL) $itk_component(sizeCB) -sticky nsew \
 	-padx 2 -pady 1
     grid $itk_component(positionL) $itk_component(positionCB) -sticky nsew \
@@ -115,7 +117,7 @@
 
 }
 
-::itcl::body ViewAxesControl::buildSize {} {
+::itcl::body ::cadwidgets::ViewAxesControl::buildSize {} {
     itk_component add sizeL {
 	::label $itk_interior.sizeL -text "Size:" -anchor e
     } {
@@ -140,7 +142,7 @@
 	-command [::itcl::code $this setSizeCB "X-Large"]
 }
 
-::itcl::body ViewAxesControl::buildPosition {} {
+::itcl::body ::cadwidgets::ViewAxesControl::buildPosition {} {
     itk_component add positionL {
 	::label $itk_interior.positionL -text "Position:" -anchor e
     } {
@@ -167,7 +169,7 @@
 	-command [::itcl::code $this setPositionCB "Lower Right"]
 }
 
-::itcl::body ViewAxesControl::buildLineWidth {} {
+::itcl::body ::cadwidgets::ViewAxesControl::buildLineWidth {} {
     itk_component add lineWidthL {
 	::label $itk_interior.lineWidthL -text "Line Width:" -anchor e
     } {
@@ -190,7 +192,7 @@
 	-command [::itcl::code $this setLineWidthCB "3"]
 }
 
-::itcl::body ViewAxesControl::buildAxesColor {} {
+::itcl::body ::cadwidgets::ViewAxesControl::buildAxesColor {} {
     itk_component add axesColorL {
 	::label $itk_interior.axesColorL -text "Axes Color:" -anchor e
     } {
@@ -224,7 +226,7 @@
 	-command [::itcl::code $this setAxesColorCB "Triple"]
 }
 
-::itcl::body ViewAxesControl::buildAxesLabelColor {} {
+::itcl::body ::cadwidgets::ViewAxesControl::buildAxesLabelColor {} {
     itk_component add axesLabelColorL {
 	::label $itk_interior.axesLabelColorL -text "Axes Label Color:" -anchor e
     } {
@@ -256,7 +258,7 @@
 	-command [::itcl::code $this setAxesLabelColorCB "Yellow"]
 }
 
-::itcl::body ViewAxesControl::buildButtons {} {
+::itcl::body ::cadwidgets::ViewAxesControl::buildButtons {} {
     itk_component add dismissB {
 	::button $itk_interior.dismissB -relief raised -text "Dismiss" \
 	    -command [::itcl::code $this hide]
@@ -265,7 +267,7 @@
     }
 }
 
-::itcl::body ViewAxesControl::setSizeCB {size} {
+::itcl::body ::cadwidgets::ViewAxesControl::setSizeCB {size} {
     set axesSize $size
 
     if {$itk_option(-mged) == ""} {
@@ -290,7 +292,7 @@
     setPositionCB $axesPosition
 }
 
-::itcl::body ViewAxesControl::setPositionCB {pos} {
+::itcl::body ::cadwidgets::ViewAxesControl::setPositionCB {pos} {
     set axesPosition $pos
 
     if {$itk_option(-mged) == ""} {
@@ -338,7 +340,7 @@
     }
 }
 
-::itcl::body ViewAxesControl::setLineWidthCB {lw} {
+::itcl::body ::cadwidgets::ViewAxesControl::setLineWidthCB {lw} {
     set axesLineWidth $lw
 
     if {$itk_option(-mged) == ""} {
@@ -348,7 +350,7 @@
     $itk_option(-mged) configure -viewAxesLineWidth $lw
 }
 
-::itcl::body ViewAxesControl::setAxesColorCB {color} {
+::itcl::body ::cadwidgets::ViewAxesControl::setAxesColorCB {color} {
     set axesColor $color
 
     if {$itk_option(-mged) == ""} {
@@ -390,7 +392,7 @@
     }
 }
 
-::itcl::body ViewAxesControl::setAxesLabelColorCB {color} {
+::itcl::body ::cadwidgets::ViewAxesControl::setAxesLabelColorCB {color} {
     set axesLabelColor $color
 
     if {$itk_option(-mged) == ""} {
@@ -426,7 +428,7 @@
     }
 }
 
-::itcl::body ViewAxesControl::updateControlPanel {} {
+::itcl::body ::cadwidgets::ViewAxesControl::updateControlPanel {} {
     if {$itk_option(-mged) == ""} {
 	return
     }
@@ -456,13 +458,23 @@
     }
 }
 
-::itcl::body ViewAxesControl::hide {} {
+::itcl::body ::cadwidgets::ViewAxesControl::hide {} {
     wm withdraw [namespace tail $this]
 }
 
-::itcl::body ViewAxesControl::show {} {
+::itcl::body ::cadwidgets::ViewAxesControl::show {} {
     wm deiconify [namespace tail $this]
     raise [namespace tail $this]
+}
+
+# Retain the original class, including its inheritance behavior, for scripts
+# that have not yet adopted the qualified widget name.
+::itcl::class ::ViewAxesControl {
+    inherit ::cadwidgets::ViewAxesControl
+
+    constructor {args} {
+	::cadwidgets::ViewAxesControl::constructor {*}$args
+    } {}
 }
 
 # Local Variables:

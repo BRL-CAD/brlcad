@@ -468,6 +468,9 @@ foreach {legacy canonical package} {
     ::Splash ::cadwidgets::Splash cadwidgets::Splash
     ::Table ::cadwidgets::Table cadwidgets::Table
     ::TableView ::cadwidgets::TableView cadwidgets::TableView
+    ::ModelAxesControl ::cadwidgets::ModelAxesControl cadwidgets::ModelAxesControl
+    ::ViewAxesControl ::cadwidgets::ViewAxesControl cadwidgets::ViewAxesControl
+    ::RtControl ::cadwidgets::RtControl cadwidgets::RtControl
 } {
     if {![llength [info commands $legacy]] && ![auto_load $legacy]} {
 	fail "$legacy compatibility class is not autoloadable"
@@ -491,6 +494,7 @@ foreach {canonical_variable legacy_variable} {
     ::cadwidgets::TableView::SystemHighlightText ::TableView::SystemHighlightText
     ::cadwidgets::TableView::SystemButtonFace ::TableView::SystemButtonFace
     ::cadwidgets::TableView::SystemButtonText ::TableView::SystemButtonText
+    ::cadwidgets::RtControl::FB_MODES ::RtControl::FB_MODES
 } {
     if {![info exists $legacy_variable]} {
 	fail "$legacy_variable compatibility variable is missing"
@@ -502,6 +506,7 @@ foreach {canonical_variable legacy_variable} {
     ::cadwidgets::Command::CMD_MORE_ARGS_LEN ::Command::CMD_MORE_ARGS_LEN
     ::cadwidgets::Table::SEP_MARK ::Table::SEP_MARK
     ::cadwidgets::TableView::SystemWindowFont ::TableView::SystemWindowFont
+    ::cadwidgets::RtControl::FB_MODES ::RtControl::FB_MODES
 } {
     set saved_value [set $canonical_variable]
     set $legacy_variable namespace-link-check
@@ -658,9 +663,12 @@ assert_point_lists "selected data line display" \
     [.functional_ged sdata_lines points] $selected_points
 
 foreach lifecycle {
-    {ModelAxesControl .functional_model_axes -mged .functional_ged}
-    {ViewAxesControl .functional_view_axes -mged .functional_ged}
-    {RtControl .functional_rt_control -mged .functional_ged}
+    {::cadwidgets::ModelAxesControl .functional_model_axes -mged .functional_ged}
+    {::cadwidgets::ViewAxesControl .functional_view_axes -mged .functional_ged}
+    {::cadwidgets::RtControl .functional_rt_control -mged .functional_ged}
+    {::ModelAxesControl .functional_legacy_model_axes -mged .functional_ged}
+    {::ViewAxesControl .functional_legacy_view_axes -mged .functional_ged}
+    {::RtControl .functional_legacy_rt_control -mged .functional_ged}
 } {
     exercise_object_lifecycle {*}$lifecycle
 }
