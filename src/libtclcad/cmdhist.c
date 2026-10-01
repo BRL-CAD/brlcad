@@ -382,11 +382,14 @@ cho_open_tcl(ClientData clientData, Tcl_Interp *interp, int argc, const char **a
 	if ((chop = cho_open(clientData, interp, argv[1])) == TCLCAD_CMDHIST_OBJ_NULL)
 	    return TCL_ERROR;
 
-	(void)Tcl_CreateCommand(interp,
-				bu_vls_addr(&chop->cho_name),
-				(Tcl_CmdProc *)cho_cmd,
-				(ClientData)chop,
-				cho_deleteProc);
+	if (!Tcl_CreateCommand(interp, bu_vls_addr(&chop->cho_name),
+		(Tcl_CmdProc *)cho_cmd, (ClientData)chop,
+		cho_deleteProc)) {
+	    cho_deleteProc((ClientData)chop);
+	    Tcl_AppendResult(interp, "Unable to create Tcl command: ", argv[1],
+		    (char *)NULL);
+	    return TCL_ERROR;
+	}
 
 	/* Return new function name as result */
 	Tcl_ResetResult(interp);
@@ -404,15 +407,17 @@ cho_open_tcl(ClientData clientData, Tcl_Interp *interp, int argc, const char **a
 int
 Cho_Init(Tcl_Interp *interp)
 {
+    static const struct tclcad_cmdtab commands[] = {
+	{"open", "ch_open", (Tcl_CmdProc *)cho_open_tcl, NULL},
+	{NULL, NULL, NULL, NULL}
+    };
     int created = 0;
     (void)cmdhist_objects(interp, &created);
     if (!created)
 	return TCL_OK;
 
-    (void)Tcl_CreateCommand(interp, "ch_open", (Tcl_CmdProc *)cho_open_tcl,
-			    (ClientData)NULL, (Tcl_CmdDeleteProc *)NULL);
-
-    return TCL_OK;
+    return tclcad_register_cmd_namespace(interp,
+	    TCLCAD_HISTORY_COMMAND_NAMESPACE, commands);
 }
 
 

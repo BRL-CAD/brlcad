@@ -208,10 +208,10 @@ package provide cadwidgets::Command 1.0
     doBindings
 
     # create command history object
-    if {[info command ch_open] != ""} {
+    if {[info command ::brlcad::tclcad::history] != ""} {
 	set do_history 1
 	set hist [string map {:: "" . _} $this]
-	set hist [ch_open [subst $hist]_hist]
+	set hist [::brlcad::tclcad::history open [subst $hist]_hist]
     }
 
     # initialize text widget

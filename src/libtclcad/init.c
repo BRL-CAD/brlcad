@@ -299,9 +299,21 @@ tclcad_init(Tcl_Interp *interp, int init_gui, struct bu_vls *tlog)
     }
 
     /* initialize command history objects */
-    Cho_Init(interp);
+    if (Cho_Init(interp) == TCL_ERROR) {
+	if (tlog)
+	    bu_vls_printf(tlog, "Cho_Init ERROR:\n%s\n", Tcl_GetStringResult(interp));
+	return TCL_ERROR;
+    }
 
-    Tcl_PkgProvide(interp, "Tclcad", brlcad_version());
+    if (Tcl_PkgProvide(interp, TCLCAD_LEGACY_PACKAGE_NAME,
+	    brlcad_version()) != TCL_OK ||
+	Tcl_PkgProvide(interp, TCLCAD_PACKAGE_NAME,
+	    brlcad_version()) != TCL_OK) {
+	if (tlog)
+	    bu_vls_printf(tlog, "Tclcad package ERROR:\n%s\n",
+		    Tcl_GetStringResult(interp));
+	return TCL_ERROR;
+    }
 
 #ifdef HAVE_TK
     /* btclsh can load Tk after core initialization, so register the embedded

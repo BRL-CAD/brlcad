@@ -146,7 +146,7 @@ static bool
 check_component_namespaces(Tcl_Interp *interp)
 {
     const char *script =
-	"foreach component {bu bn dm fb} {"
+	"foreach component {bu bn dm fb tclcad tclcad::ged tclcad::history} {"
 	" if {![namespace exists ::brlcad::$component]} {"
 	"  error \"missing ::brlcad::$component namespace\""
 	" }"
@@ -161,11 +161,39 @@ check_component_namespaces(Tcl_Interp *interp)
 	" [::brlcad::dm list] eq [dm_list] &&"
 	" [::brlcad::fb common_file_size __missing__] eq"
 	"  [fb_common_file_size __missing__] &&"
+	" [::brlcad::tclcad::ged open] eq [go_open] &&"
+	" [::brlcad::tclcad::history open] eq [ch_open] &&"
 	" [list namespace commands] eq {namespace commands}"
 	"}";
 
     if (!eval_ok(interp, script) || !result_is(interp, "1")) {
 	std::fprintf(stderr, "component namespace check failed: %s\n",
+	    Tcl_GetStringResult(interp));
+	return false;
+    }
+
+    return true;
+}
+
+
+static bool
+check_component_packages(Tcl_Interp *interp)
+{
+    const char *script =
+	"foreach {legacy canonical} {"
+	" Dm brlcad::dm Fb brlcad::fb Rt brlcad::rt"
+	" Tclcad brlcad::tclcad"
+	"} {"
+	" set legacy_version [package present $legacy];"
+	" set canonical_version [package present $canonical];"
+	" if {$legacy_version ne $canonical_version} {"
+	"  error \"$legacy and $canonical package versions differ\""
+	" }"
+	"};"
+	"expr {1}";
+
+    if (!eval_ok(interp, script) || !result_is(interp, "1")) {
+	std::fprintf(stderr, "component package check failed: %s\n",
 	    Tcl_GetStringResult(interp));
 	return false;
     }
@@ -248,7 +276,9 @@ check_initialized(Tcl_Interp *interp, const char *value, bool init_gui)
 	!has_command(interp, "::brlcad::bu") ||
 	!has_command(interp, "::brlcad::bn") ||
 	!has_command(interp, "::brlcad::dm") ||
-	!has_command(interp, "::brlcad::fb")) {
+	!has_command(interp, "::brlcad::fb") ||
+	!has_command(interp, "::brlcad::tclcad::ged") ||
+	!has_command(interp, "::brlcad::tclcad::history")) {
 	std::fprintf(stderr, "libtclcad did not register all expected commands\n");
 	return false;
     }
@@ -269,6 +299,8 @@ check_initialized(Tcl_Interp *interp, const char *value, bool init_gui)
     if (init_gui && !check_gui_packages(interp))
 	return false;
     if (!check_component_namespaces(interp))
+	return false;
+    if (!check_component_packages(interp))
 	return false;
     if (!check_itcl_commands_scoped(interp))
 	return false;
@@ -304,7 +336,13 @@ check_initialized(Tcl_Interp *interp, const char *value, bool init_gui)
 	return false;
     }
 
-    if (!eval_ok(interp, "ch_open shared_history; llength [ch_open]"))
+    const char *history_script =
+	"::brlcad::tclcad::history open shared_history;"
+	"::brlcad::tclcad::history open"
+	" ::brlcad::tclcad::history::qualified_history;"
+	"expr {[llength [ch_open]] == 2 &&"
+	" [llength [::brlcad::tclcad::history open]] == 2}";
+    if (!eval_ok(interp, history_script))
 	return false;
     if (!result_is(interp, "1")) {
 	std::fprintf(stderr, "command history registry crossed interpreter boundaries\n");
@@ -328,11 +366,22 @@ open_shared_database(Tcl_Interp *first, Tcl_Interp *second)
 
     if (!Tcl_SetVar(first, "multi_interp_database", database, TCL_GLOBAL_ONLY) ||
 	!Tcl_SetVar(second, "multi_interp_database", database, TCL_GLOBAL_ONLY) ||
-	!eval_ok(first, "go_open shared_ged db $multi_interp_database") ||
+	!eval_ok(first,
+	    "::brlcad::tclcad::ged open shared_ged db $multi_interp_database") ||
 	!eval_ok(second, "go_open shared_ged db $multi_interp_database") ||
-	!eval_ok(first, "llength [go_open]") ||
+	!eval_ok(first,
+	    "::brlcad::tclcad::ged open"
+	    " ::brlcad::tclcad::ged::qualified_ged db $multi_interp_database") ||
+	!eval_ok(second,
+	    "::brlcad::tclcad::ged open"
+	    " ::brlcad::tclcad::ged::qualified_ged db $multi_interp_database") ||
+	!eval_ok(first,
+	    "expr {[llength [go_open]] == 2 &&"
+	    " [llength [::brlcad::tclcad::ged open]] == 2}") ||
 	!result_is(first, "1") ||
-	!eval_ok(second, "llength [go_open]") ||
+	!eval_ok(second,
+	    "expr {[llength [go_open]] == 2 &&"
+	    " [llength [::brlcad::tclcad::ged open]] == 2}") ||
 	!result_is(second, "1")) {
 	std::fprintf(stderr, "GED object registry crossed interpreter boundaries\n");
 	return false;
@@ -473,8 +522,11 @@ main(int argc, const char **argv)
 	!result_is(second, "second") ||
 	!eval_ok(second, "multi_interp_object get") ||
 	!eval_ok(second, "llength [ch_open]") ||
-	!result_is(second, "1") ||
+	!result_is(second, "2") ||
 	!eval_ok(second, "llength [shared_ged tops]") ||
+	result_is(second, "0") ||
+	!eval_ok(second,
+	    "llength [::brlcad::tclcad::ged::qualified_ged tops]") ||
 	result_is(second, "0") ||
 	!eval_ok(second, "shared_fb getwidth") ||
 	!result_is(second, "16") ||

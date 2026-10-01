@@ -962,6 +962,10 @@ struct to_cmdtab to_cmds[] = {
 TCLCAD_EXPORT int
 Ged_Init(Tcl_Interp *interp)
 {
+    static const struct tclcad_cmdtab commands[] = {
+	{"open", "go_open", to_open_tcl, NULL},
+	{NULL, NULL, NULL, NULL}
+    };
     int created = 0;
     (void)ged_objects(interp, &created);
     if (!created)
@@ -972,11 +976,12 @@ Ged_Init(Tcl_Interp *interp)
 	tclcad_eval_noresult(interp, "set brlcad_version", 1, &version_str);
     }
 
-    (void)Tcl_CreateCommand(interp, (const char *)"go_open", to_open_tcl,
-	    (ClientData)NULL, (Tcl_CmdDeleteProc *)NULL);
+    if (tclcad_register_cmd_namespace(interp,
+	    TCLCAD_GED_COMMAND_NAMESPACE, commands) != TCL_OK)
+	return TCL_ERROR;
 
-    (void)Tcl_CreateCommand(interp, (const char *)"dm_list", dm_list_tcl,
-	    (ClientData)NULL, (Tcl_CmdDeleteProc *)NULL);
+    if (!Tcl_CreateCommand(interp, "dm_list", dm_list_tcl, NULL, NULL))
+	return TCL_ERROR;
 
     return TCL_OK;
 }
@@ -1166,10 +1171,14 @@ to_create_cmd(Tcl_Interp *interp,
 	return TCL_ERROR;
     }
 
-    /* Instantiate the newprocname, with clientData of top */
-    /* Beware, returns a "token", not TCL_OK. */
-    (void)Tcl_CreateCommand(interp, oname, (Tcl_CmdProc *)to_cmd,
-	    (ClientData)top, to_deleteProc);
+    /* Instantiate the newprocname, with clientData of top. */
+    if (!Tcl_CreateCommand(interp, oname, (Tcl_CmdProc *)to_cmd,
+	    (ClientData)top, to_deleteProc)) {
+	to_deleteProc((ClientData)top);
+	Tcl_AppendResult(interp, "Unable to create Tcl command: ", oname,
+		(char *)NULL);
+	return TCL_ERROR;
+    }
 
     /* Return new function name as result */
     Tcl_AppendResult(interp, oname, (char *)NULL);

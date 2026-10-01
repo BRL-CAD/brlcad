@@ -41,6 +41,12 @@ __BEGIN_DECLS
 #define TCLCAD_ITCL_MIN_VERSION "4.3.0"
 #define TCLCAD_ITK_MIN_VERSION "4.2.3"
 
+#define TCLCAD_COMMAND_NAMESPACE "::brlcad::tclcad"
+#define TCLCAD_GED_COMMAND_NAMESPACE TCLCAD_COMMAND_NAMESPACE "::ged"
+#define TCLCAD_HISTORY_COMMAND_NAMESPACE TCLCAD_COMMAND_NAMESPACE "::history"
+#define TCLCAD_PACKAGE_NAME "brlcad::tclcad"
+#define TCLCAD_LEGACY_PACKAGE_NAME "Tclcad"
+
 typedef int (*to_wrapper_func_ptr)(struct ged *, int, const char *[], ged_func_ptr, const char *, int);
 #define TO_WRAPPER_FUNC_PTR_NULL (to_wrapper_func_ptr)0
 

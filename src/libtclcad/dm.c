@@ -66,6 +66,10 @@ struct dm_obj {
 
 
 #define DM_COMMAND_NAMESPACE "::brlcad::dm"
+#define DM_PACKAGE_NAME "brlcad::dm"
+#define DM_LEGACY_PACKAGE_NAME "Dm"
+#define FB_PACKAGE_NAME "brlcad::fb"
+#define FB_LEGACY_PACKAGE_NAME "Fb"
 #define TCLCAD_DM_ASSOC_KEY "libtclcad::dm"
 
 static struct bu_list *
@@ -2871,8 +2875,12 @@ Dm_Init(Tcl_Interp *interp)
     if (Fbo_Init(interp) != TCL_OK)
 	return TCL_ERROR;
 
-    if (Tcl_PkgProvide(interp, "Dm", brlcad_version()) != TCL_OK ||
-	Tcl_PkgProvide(interp, "Fb", brlcad_version()) != TCL_OK)
+    if (Tcl_PkgProvide(interp, DM_LEGACY_PACKAGE_NAME,
+	    brlcad_version()) != TCL_OK ||
+	Tcl_PkgProvide(interp, DM_PACKAGE_NAME, brlcad_version()) != TCL_OK ||
+	Tcl_PkgProvide(interp, FB_LEGACY_PACKAGE_NAME,
+	    brlcad_version()) != TCL_OK ||
+	Tcl_PkgProvide(interp, FB_PACKAGE_NAME, brlcad_version()) != TCL_OK)
 	return TCL_ERROR;
 
     return TCL_OK;

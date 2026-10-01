@@ -5414,8 +5414,8 @@ namespace delete ::ArcherCoreBootstrap
     set mCopyObj ""
     set mCombWarningList ""
 
-    if {[llength [info commands ::go_open]] &&
-	[lsearch -exact [::go_open] $mTarget] != -1} {
+    if {[llength [info commands ::brlcad::tclcad::ged]] &&
+	[lsearch -exact [::brlcad::tclcad::ged open] $mTarget] != -1} {
 	set mDbShared 1
 	set mDbReadOnly 1
     } elseif {[file exists $mTarget]} {

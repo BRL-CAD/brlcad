@@ -940,15 +940,15 @@ package provide cadwidgets::Ged 1.0
 ::itcl::body cadwidgets::Ged::constructor {_gedOrFile args} {
     global tcl_platform
 
-    if {[llength [info commands ::go_open]] &&
-	[lsearch -exact [::go_open] $_gedOrFile] != -1} {
+    if {[llength [info commands ::brlcad::tclcad::ged]] &&
+	[lsearch -exact [::brlcad::tclcad::ged open] $_gedOrFile] != -1} {
 	set mGedFile ""
 	set mGed $_gedOrFile
 	set mSharedGed 1
     } else {
 	set mGedFile $_gedOrFile
 	set mGed [subst $this]_ged
-	go_open $mGed db $mGedFile
+	::brlcad::tclcad::ged open $mGed db $mGedFile
     }
     iwidgets::Panedwindow::add upper
     iwidgets::Panedwindow::add lower

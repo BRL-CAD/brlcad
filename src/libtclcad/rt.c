@@ -44,6 +44,8 @@
 
 
 #define RT_FUNC_TCL_CAST(_func) ((int (*)(ClientData clientData, Tcl_Interp *interp, int argc, const char *const *argv))_func)
+#define RT_PACKAGE_NAME "brlcad::rt"
+#define RT_LEGACY_PACKAGE_NAME "Rt"
 
 static int tclcad_rt_shootray(ClientData clientData, Tcl_Interp *interp, int argc, const char *const *argv);
 static int tclcad_rt_onehit(ClientData clientData, Tcl_Interp *interp, int argc, const char *const *argv);
@@ -701,7 +703,10 @@ tclcad_rt_import_from_path(Tcl_Interp *interp, struct rt_db_internal *ip, const 
 int
 Rt_Init(Tcl_Interp *interp)
 {
-    Tcl_PkgProvide(interp,  "Rt", brlcad_version());
+    if (Tcl_PkgProvide(interp, RT_LEGACY_PACKAGE_NAME,
+	    brlcad_version()) != TCL_OK ||
+	Tcl_PkgProvide(interp, RT_PACKAGE_NAME, brlcad_version()) != TCL_OK)
+	return TCL_ERROR;
 
     return TCL_OK;
 }
