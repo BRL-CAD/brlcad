@@ -30,11 +30,8 @@ namespace eval ::near_ns {
 
 proc ::near_ns::require_commands {} {
     set extern_commands [list \
-	bb \
 	::brlcad::bu \
-	rt_gettrees \
-	search \
-	units]
+	::brlcad::mged]
 
     foreach cmd $extern_commands {
 	catch {auto_load $cmd}
@@ -83,7 +80,7 @@ proc ::near_ns::distance_to_base {value} {
 proc ::near_ns::region_paths {root} {
     set root [normalize_path $root]
 
-    if {[catch {set paths [search $root -type region]} msg]} {
+    if {[catch {set paths [::brlcad::mged search $root -type region]} msg]} {
 	error "search failed for '$root': $msg"
     }
 
@@ -91,7 +88,7 @@ proc ::near_ns::region_paths {root} {
 }
 
 proc ::near_ns::bbox {path} {
-    set cmd [list bb -q -e $path]
+    set cmd [list ::brlcad::mged bb -q -e $path]
 
     if {[catch {set raw [uplevel #0 $cmd]}]} {
 	return ""
@@ -296,7 +293,7 @@ proc ::near_ns::make_ray {objects} {
     incr ray_serial
     set ray_name ".nearray$ray_serial"
 
-    rt_gettrees $ray_name -i -u {*}$objects
+    ::brlcad::mged rt_gettrees $ray_name -i -u {*}$objects
 
     $ray_name prep 1
     $ray_name no_bool 0
@@ -639,7 +636,7 @@ proc ::near_ns::format_results {target_label distance spacing results stats} {
     global base2local
 
     set b2l $base2local
-    set units_name [units -s]
+    set units_name [::brlcad::mged units -s]
     array set st $stats
     set lines {}
     set spacing_values {}

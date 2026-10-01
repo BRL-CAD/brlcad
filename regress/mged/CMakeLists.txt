@@ -43,6 +43,7 @@ set(
   mrot.mged
   mvall.mged
   mv.mged
+  near.mged
   namespaces.mged
   oed.mged
   orientation.mged
@@ -134,6 +135,8 @@ if(TARGET mged)
       set(TEST_SOURCE "${CMAKE_CURRENT_BINARY_DIR}/regress_${testfile}")
     elseif(TNAME STREQUAL "expand_comb")
       set(TEST_EXPECT "PASS expand_comb namespaced commands")
+    elseif(TNAME STREQUAL "near")
+      set(TEST_EXPECT "PASS near namespaced commands")
     elseif(TNAME STREQUAL "namespaces")
       set(TEST_EXPECT "PASS Tcl command namespaces")
     elseif(TNAME STREQUAL "arb")
