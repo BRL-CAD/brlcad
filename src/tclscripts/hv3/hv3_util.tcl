@@ -160,6 +160,13 @@ namespace eval hv3 {
       return $O(myWidget)
     }
 
+    # Namespace resolution can find an application-level search command
+    # before invoking the unknown handler, so forward this method explicitly.
+    proc search {me args} {
+      upvar #0 $me O
+      eval $O(myWidget) search $args
+    }
+
     proc unknown {method me args} {
       # puts "UNKNOWN: $me $method $args"
       upvar #0 $me O
