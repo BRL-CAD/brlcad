@@ -29,7 +29,7 @@ proc bot_vertex_fuse_all {} {
     global tmp_name
 
     set bot_list {}
-    set bot_list [search -type bot]
+    set bot_list [::brlcad::mged search -type bot]
     set cnt [llength $bot_list]
 
     foreach bot $bot_list {
@@ -37,28 +37,28 @@ proc bot_vertex_fuse_all {} {
 	set found_tmp 0
 	while { !$found_tmp } {
 	    uplevel #0 set tmp_name [expr rand()]
-	    if { [search -name $tmp_name] == "" } {
+	    if { [::brlcad::mged search -name $tmp_name] == "" } {
 		set found_tmp 1
 	    }
 	}
-	set bot_desc [l -t $bot]
+	set bot_desc [::brlcad::mged l -t $bot]
 	set bot_vert_cnt [lindex $bot_desc 5]
 
 	incr cnt -1
 
 	puts stdout "$cnt remaining bots; processing $bot_vert_cnt vertices in bot \"$bot\" ..."
 
-	after 1 {set fused_msg [bot_vertex_fuse $tmp_name $bot_global]}
+	after 1 {set fused_msg [::brlcad::mged bot_vertex_fuse $tmp_name $bot_global]}
 
 	vwait fused_msg
 
 	set fused_num [lindex $fused_msg 1]
 
 	if { $fused_num == 0 } {
-	    kill $tmp_name
+	    ::brlcad::mged kill $tmp_name
 	} else {
-	    kill $bot
-	    mv $tmp_name $bot
+	    ::brlcad::mged kill $bot
+	    ::brlcad::mged mv $tmp_name $bot
 	}
 
 	puts stdout "$fused_num vertex fused.\n"
