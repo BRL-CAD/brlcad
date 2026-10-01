@@ -23,6 +23,7 @@ set(
   gqa.mass_mix.am.out
   gqa.mass_mix.aw.out
   gqa.mass_mix.u0.out
+  gqa.missing_density.out
   gqa.mged
   gqa.overlaps.plot3
   gqa.sphere_adaptive.out

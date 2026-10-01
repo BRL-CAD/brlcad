@@ -67,6 +67,11 @@ run_capture ( ) {
     return $ret
 }
 
+expect_failure ( ) {
+    "$@"
+    test $? -ne 0
+}
+
 extract_last_number ( ) {
     label="$1"
     file="$2"
@@ -97,6 +102,19 @@ assert_close ( ) {
 	log "PASS: $desc (expected=$expected actual=$actual tol=$tolerance)"
     else
 	log "FAIL: $desc (expected=$expected actual=$actual tol=$tolerance)"
+	STATUS="`expr $STATUS + 1`"
+    fi
+}
+
+assert_contains ( ) {
+    expected="$1"
+    file="$2"
+    desc="$3"
+
+    if grep -F -q "$expected" "$file" ; then
+	log "PASS: $desc"
+    else
+	log "FAIL: $desc"
 	STATUS="`expr $STATUS + 1`"
     fi
 }
@@ -177,6 +195,10 @@ adjust mass_air.r GIFTmater 2
 g mass_air_only.g mass_air.r
 g mass_air_mix.g mass_solid.r mass_air.r
 
+in missing_density.s rpp 2 3 0 1 0 1
+r missing_density.r u missing_density.s
+adjust missing_density.r GIFTmater 123
+
 in sphere.s sph 0 0 0 1
 r sphere.r u sphere.s
 adjust sphere.r GIFTmater 5
@@ -243,6 +265,7 @@ run_capture gqa.mass_mix.aw.out $GQABIN -u m,m^3,kg -g 250mm-50mm -Aw gqa.g mass
 run_capture gqa.mass_mix.am.out $GQABIN -u m,m^3,kg -g 250mm-50mm -Am gqa.g mass_air_mix.g
 run_capture gqa.mass_mix.u0.out $GQABIN -u m,m^3,kg -g 250mm-50mm -U 0 -Aw gqa.g mass_air_mix.g
 run_capture gqa.sphere_adaptive.out $GQABIN -u m,m^3,kg -q -Av -g 0.05m gqa.g sphere.r
+run_capture gqa.missing_density.out expect_failure $GQABIN -u m,m^3,kg -g 250mm-50mm -f density_table.txt -Aw gqa.g missing_density.r
 
 MASS_AIR_AW="`extract_last_number 'Average total weight:' gqa.mass_air.aw.out`"
 MASS_AIR_AM="`extract_last_number 'Average total weight:' gqa.mass_air.am.out`"
@@ -257,6 +280,7 @@ assert_close 1001 "$MASS_MIX_AW" 0.001 "mixed solid+air modeled weight with -Aw"
 assert_close "$MASS_MIX_AW" "$MASS_MIX_AM" 0.001 "-Aw and -Am agree on mixed modeled air"
 assert_close 1000 "$MASS_MIX_U0" 0.001 "-U 0 excludes modeled air from weight"
 assert_close 4.18879 "$SPHERE_VOLUME" 0.01 "adaptive sphere volume refines beyond symmetric first pass"
+assert_contains "Density 123 on region /missing_density.r is not defined in the density table." gqa.missing_density.out "undefined density produces an error"
 
 
 if [ $STATUS = 0 ] ; then
