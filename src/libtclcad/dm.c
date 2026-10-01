@@ -199,7 +199,7 @@ dmo_listen_tcl(void *clientData, int argc, const char **argv)
 	return BRLCAD_OK;
     }
 
-    bu_vls_printf(&vls, "helplib_alias dm_listen %s", argv[1]);
+    bu_vls_printf(&vls, "::brlcad::help::library_alias dm_listen %s", argv[1]);
     Tcl_Eval(dmop->interp, bu_vls_addr(&vls));
     bu_vls_free(&vls);
 
@@ -389,7 +389,7 @@ dmo_drawViewAxes_tcl(void *clientData, int argc, const char **argv)
 
     if (argc != 11) {
 	/* return help message */
-	bu_vls_printf(&vls, "helplib_alias dm_drawViewAxes %s", argv[1]);
+	bu_vls_printf(&vls, "::brlcad::help::library_alias dm_drawViewAxes %s", argv[1]);
 	Tcl_Eval(dmop->interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
 	return BRLCAD_ERROR;
@@ -440,7 +440,7 @@ dmo_drawCenterDot_cmd(struct dm_obj *dmop,
     if (argc != 2) {
 	struct bu_vls vls = BU_VLS_INIT_ZERO;
 
-	bu_vls_printf(&vls, "helplib_alias dm_drawCenterDot %s", argv[1]);
+	bu_vls_printf(&vls, "::brlcad::help::library_alias dm_drawCenterDot %s", argv[1]);
 	Tcl_Eval(dmop->interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
 	return BRLCAD_ERROR;
@@ -605,7 +605,7 @@ dmo_drawDataAxes_tcl(void *clientData, int argc, const char **argv)
 
     if (argc != 9) {
 	/* return help message */
-	bu_vls_printf(&vls, "helplib_alias dm_drawDataAxes %s", argv[1]);
+	bu_vls_printf(&vls, "::brlcad::help::library_alias dm_drawDataAxes %s", argv[1]);
 	Tcl_Eval(dmop->interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
 	return BRLCAD_ERROR;
@@ -831,7 +831,7 @@ dmo_drawModelAxes_tcl(void *clientData, int argc, const char **argv)
 
     if (argc != 20) {
 	/* return help message */
-	bu_vls_printf(&vls, "helplib_alias dm_drawModelAxes %s", argv[1]);
+	bu_vls_printf(&vls, "::brlcad::help::library_alias dm_drawModelAxes %s", argv[1]);
 	Tcl_Eval(dmop->interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
 	return BRLCAD_ERROR;
@@ -971,7 +971,7 @@ dmo_loadmat_tcl(void *clientData, int argc, const char **argv)
     if (argc != 4) {
 	struct bu_vls vls = BU_VLS_INIT_ZERO;
 
-	bu_vls_printf(&vls, "helplib_alias dm_loadmat %s", argv[1]);
+	bu_vls_printf(&vls, "::brlcad::help::library_alias dm_loadmat %s", argv[1]);
 	Tcl_Eval(dmop->interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
 	return BRLCAD_ERROR;
@@ -1020,7 +1020,7 @@ dmo_drawString_tcl(void *clientData, int argc, const char **argv)
     if (argc != 7) {
 	struct bu_vls vls = BU_VLS_INIT_ZERO;
 
-	bu_vls_printf(&vls, "helplib_alias dm_drawString %s", argv[1]);
+	bu_vls_printf(&vls, "::brlcad::help::library_alias dm_drawString %s", argv[1]);
 	Tcl_Eval(dmop->interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
 	return BRLCAD_ERROR;
@@ -1048,7 +1048,7 @@ dmo_drawPoint_tcl(void *clientData, int argc, const char **argv)
     if (argc != 4) {
 	struct bu_vls vls = BU_VLS_INIT_ZERO;
 
-	bu_vls_printf(&vls, "helplib_alias dm_drawPoint %s", argv[1]);
+	bu_vls_printf(&vls, "::brlcad::help::library_alias dm_drawPoint %s", argv[1]);
 	Tcl_Eval(dmop->interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
 	return BRLCAD_ERROR;
@@ -1081,7 +1081,7 @@ dmo_drawLine_tcl(void *clientData, int argc, const char **argv)
     if (argc != 6) {
 	struct bu_vls vls = BU_VLS_INIT_ZERO;
 
-	bu_vls_printf(&vls, "helplib_alias dm_drawLine %s", argv[1]);
+	bu_vls_printf(&vls, "::brlcad::help::library_alias dm_drawLine %s", argv[1]);
 	Tcl_Eval(dmop->interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
 	return BRLCAD_ERROR;
@@ -1115,7 +1115,7 @@ dmo_drawVList_tcl(void *clientData, int argc, const char **argv)
     if (argc != 3) {
 	struct bu_vls vls = BU_VLS_INIT_ZERO;
 
-	bu_vls_printf(&vls, "helplib_alias dm_drawVList %s", argv[1]);
+	bu_vls_printf(&vls, "::brlcad::help::library_alias dm_drawVList %s", argv[1]);
 	Tcl_Eval(dmop->interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
 	return BRLCAD_ERROR;
@@ -1173,7 +1173,7 @@ dmo_drawScale_cmd(struct dm_obj *dmop,
     struct bu_vls vls = BU_VLS_INIT_ZERO;
 
     if (argc != 4) {
-	bu_vls_printf(&vls, "helplib_alias dm_drawScale %s", argv[0]);
+	bu_vls_printf(&vls, "::brlcad::help::library_alias dm_drawScale %s", argv[0]);
 	Tcl_Eval(dmop->interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
 	return BRLCAD_ERROR;
@@ -1318,7 +1318,7 @@ dmo_drawSList_tcl(void *clientData, int argc, const char **argv)
     if (argc != 3) {
 	struct bu_vls vls = BU_VLS_INIT_ZERO;
 
-	bu_vls_printf(&vls, "helplib_alias dm_drawSList %s", argv[1]);
+	bu_vls_printf(&vls, "::brlcad::help::library_alias dm_drawSList %s", argv[1]);
 	Tcl_Eval(dmop->interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
 	return BRLCAD_ERROR;
@@ -1397,7 +1397,7 @@ dmo_fg_tcl(void *clientData, int argc, const char **argv)
     }
 
     /* wrong number of arguments */
-    bu_vls_printf(&vls, "helplib_alias dm_fg %s", argv[1]);
+    bu_vls_printf(&vls, "::brlcad::help::library_alias dm_fg %s", argv[1]);
     Tcl_Eval(dmop->interp, bu_vls_addr(&vls));
     bu_vls_free(&vls);
     return BRLCAD_ERROR;
@@ -1462,7 +1462,7 @@ dmo_bg_tcl(void *clientData, int argc, const char **argv)
     }
 
     /* wrong number of arguments */
-    bu_vls_printf(&vls, "helplib_alias dm_bg %s", argv[1]);
+    bu_vls_printf(&vls, "::brlcad::help::library_alias dm_bg %s", argv[1]);
     Tcl_Eval(dmop->interp, bu_vls_addr(&vls));
     bu_vls_free(&vls);
     return BRLCAD_ERROR;
@@ -1522,7 +1522,7 @@ dmo_lineWidth_tcl(void *clientData, int argc, const char **argv)
     }
 
     /* wrong number of arguments */
-    bu_vls_printf(&vls, "helplib_alias dm_linewidth %s", argv[1]);
+    bu_vls_printf(&vls, "::brlcad::help::library_alias dm_linewidth %s", argv[1]);
     Tcl_Eval(dmop->interp, bu_vls_addr(&vls));
     bu_vls_free(&vls);
     return BRLCAD_ERROR;
@@ -1582,7 +1582,7 @@ dmo_lineStyle_tcl(void *clientData, int argc, const char **argv)
     }
 
     /* wrong number of arguments */
-    bu_vls_printf(&vls, "helplib_alias dm_linestyle %s", argv[1]);
+    bu_vls_printf(&vls, "::brlcad::help::library_alias dm_linestyle %s", argv[1]);
     Tcl_Eval(dmop->interp, bu_vls_addr(&vls));
     bu_vls_free(&vls);
     return BRLCAD_ERROR;
@@ -1616,7 +1616,7 @@ dmo_configure_tcl(void *clientData, int argc, const char **argv)
     if (argc != 2) {
 	struct bu_vls vls = BU_VLS_INIT_ZERO;
 
-	bu_vls_printf(&vls, "helplib_alias dm_configure %s", argv[1]);
+	bu_vls_printf(&vls, "::brlcad::help::library_alias dm_configure %s", argv[1]);
 	Tcl_Eval(dmop->interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
 	return BRLCAD_ERROR;
@@ -1681,7 +1681,7 @@ dmo_zclip_tcl(void *clientData, int argc, const char **argv)
 	return BRLCAD_OK;
     }
 
-    bu_vls_printf(&vls, "helplib_alias dm_zclip %s", argv[1]);
+    bu_vls_printf(&vls, "::brlcad::help::library_alias dm_zclip %s", argv[1]);
     Tcl_Eval(dmop->interp, bu_vls_addr(&vls));
     bu_vls_free(&vls);
     return BRLCAD_ERROR;
@@ -1732,7 +1732,7 @@ dmo_zbuffer_tcl(void *clientData, int argc, const char **argv)
 	return BRLCAD_OK;
     }
 
-    bu_vls_printf(&vls, "helplib_alias dm_zbuffer %s", argv[1]);
+    bu_vls_printf(&vls, "::brlcad::help::library_alias dm_zbuffer %s", argv[1]);
     Tcl_Eval(dmop->interp, bu_vls_addr(&vls));
     bu_vls_free(&vls);
     return BRLCAD_ERROR;
@@ -1784,7 +1784,7 @@ dmo_light_tcl(void *clientData, int argc, const char **argv)
 	return BRLCAD_OK;
     }
 
-    bu_vls_printf(&vls, "helplib_alias dm_light %s", argv[1]);
+    bu_vls_printf(&vls, "::brlcad::help::library_alias dm_light %s", argv[1]);
     Tcl_Eval(dmop->interp, bu_vls_addr(&vls));
     bu_vls_free(&vls);
     return BRLCAD_ERROR;
@@ -1837,7 +1837,7 @@ dmo_transparency_tcl(void *clientData, int argc, const char **argv)
 	return BRLCAD_OK;
     }
 
-    bu_vls_printf(&vls, "helplib_alias dm_transparency %s", argv[1]);
+    bu_vls_printf(&vls, "::brlcad::help::library_alias dm_transparency %s", argv[1]);
     Tcl_Eval(dmop->interp, bu_vls_addr(&vls));
     bu_vls_free(&vls);
     return BRLCAD_ERROR;
@@ -1889,7 +1889,7 @@ dmo_depthMask_tcl(void *clientData, int argc, const char **argv)
 	return BRLCAD_OK;
     }
 
-    bu_vls_printf(&vls, "helplib_alias dm_depthMask %s", argv[1]);
+    bu_vls_printf(&vls, "::brlcad::help::library_alias dm_depthMask %s", argv[1]);
     Tcl_Eval(dmop->interp, bu_vls_addr(&vls));
     bu_vls_free(&vls);
     return BRLCAD_ERROR;
@@ -1966,7 +1966,7 @@ dmo_bounds_tcl(void *clientData, int argc, const char **argv)
 	return BRLCAD_OK;
     }
 
-    bu_vls_printf(&vls, "helplib_alias dm_bounds %s", argv[1]);
+    bu_vls_printf(&vls, "::brlcad::help::library_alias dm_bounds %s", argv[1]);
     Tcl_Eval(dmop->interp, bu_vls_addr(&vls));
     bu_vls_free(&vls);
 
@@ -2020,7 +2020,7 @@ dmo_perspective_tcl(void *clientData, int argc, const char **argv)
 	return BRLCAD_OK;
     }
 
-    bu_vls_printf(&vls, "helplib_alias dm_perspective %s", argv[1]);
+    bu_vls_printf(&vls, "::brlcad::help::library_alias dm_perspective %s", argv[1]);
     Tcl_Eval(dmop->interp, bu_vls_addr(&vls));
     bu_vls_free(&vls);
     return BRLCAD_ERROR;
@@ -2038,7 +2038,7 @@ dmo_png_cmd(struct dm_obj *dmop,
     if (argc != 2) {
 	struct bu_vls vls = BU_VLS_INIT_ZERO;
 
-	bu_vls_printf(&vls, "helplib_alias dm_png %s", argv[0]);
+	bu_vls_printf(&vls, "::brlcad::help::library_alias dm_png %s", argv[0]);
 	Tcl_Eval(dmop->interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
 	return BRLCAD_ERROR;
@@ -2130,7 +2130,7 @@ dmo_clearBufferAfter_tcl(void *clientData, int argc, const char **argv)
 	return BRLCAD_OK;
     }
 
-    bu_vls_printf(&vls, "helplib_alias dm_clearBufferAfter %s", argv[1]);
+    bu_vls_printf(&vls, "::brlcad::help::library_alias dm_clearBufferAfter %s", argv[1]);
     Tcl_Eval(dmop->interp, bu_vls_addr(&vls));
     bu_vls_free(&vls);
     return BRLCAD_ERROR;
@@ -2181,7 +2181,7 @@ dmo_debug_tcl(void *clientData, int argc, const char **argv)
 	return dm_set_debug(dmop->dmo_dmp, level);
     }
 
-    bu_vls_printf(&vls, "helplib_alias dm_debug %s", argv[1]);
+    bu_vls_printf(&vls, "::brlcad::help::library_alias dm_debug %s", argv[1]);
     Tcl_Eval(dmop->interp, bu_vls_addr(&vls));
     bu_vls_free(&vls);
     return BRLCAD_ERROR;
@@ -2222,7 +2222,7 @@ dmo_logfile_tcl(void *clientData, int argc, const char **argv)
 	return dm_logfile(dmop->dmo_dmp, argv[3]);
     }
 
-    bu_vls_printf(&vls, "helplib_alias dm_debug %s", argv[1]);
+    bu_vls_printf(&vls, "::brlcad::help::library_alias dm_debug %s", argv[1]);
     Tcl_Eval(dmop->interp, bu_vls_addr(&vls));
     bu_vls_free(&vls);
     return BRLCAD_ERROR;
@@ -2335,7 +2335,7 @@ dmo_size_tcl(void *clientData, int argc, const char **argv)
 	}
     }
 
-    bu_vls_printf(&vls, "helplib_alias dm_size %s", argv[1]);
+    bu_vls_printf(&vls, "::brlcad::help::library_alias dm_size %s", argv[1]);
     Tcl_Eval(dmop->interp, bu_vls_addr(&vls));
     bu_vls_free(&vls);
     return BRLCAD_ERROR;
@@ -2360,7 +2360,7 @@ dmo_get_aspect_tcl(void *clientData, int argc, const char **argv)
 	return BRLCAD_ERROR;
 
     if (argc != 2) {
-	bu_vls_printf(&vls, "helplib_alias dm_getaspect %s", argv[1]);
+	bu_vls_printf(&vls, "::brlcad::help::library_alias dm_getaspect %s", argv[1]);
 	Tcl_Eval(dmop->interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
 	return BRLCAD_ERROR;
@@ -2398,7 +2398,7 @@ dmo_observer_tcl(void *clientData, int argc, const char **argv)
 	struct bu_vls vls = BU_VLS_INIT_ZERO;
 
 	/* return help message */
-	bu_vls_printf(&vls, "helplib_alias dm_observer %s", argv[1]);
+	bu_vls_printf(&vls, "::brlcad::help::library_alias dm_observer %s", argv[1]);
 	Tcl_Eval(dmop->interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
 	return BRLCAD_ERROR;
@@ -2439,7 +2439,7 @@ dmo_getDrawLabelsHook_cmd(struct dm_obj *dmop, int argc, const char **argv)
     if (argc != 1) {
 	struct bu_vls vls = BU_VLS_INIT_ZERO;
 
-	bu_vls_printf(&vls, "helplib_alias dm_getDrawLabelsHook %s", argv[0]);
+	bu_vls_printf(&vls, "::brlcad::help::library_alias dm_getDrawLabelsHook %s", argv[0]);
 	Tcl_Eval(dmop->interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
 	return BRLCAD_ERROR;
@@ -2478,7 +2478,7 @@ dmo_setDrawLabelsHook_cmd(struct dm_obj *dmop, int argc, const char **argv)
     if (argc != 3) {
 	struct bu_vls vls = BU_VLS_INIT_ZERO;
 
-	bu_vls_printf(&vls, "helplib_alias dm_setDrawLabelsHook %s", argv[0]);
+	bu_vls_printf(&vls, "::brlcad::help::library_alias dm_setDrawLabelsHook %s", argv[0]);
 	Tcl_Eval(dmop->interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
 	return BRLCAD_ERROR;
@@ -2654,7 +2654,7 @@ dmo_open_tcl(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, char *
     }
 
     if (argc < 3) {
-	bu_vls_printf(&vls, "helplib_alias dm_open %s", argv[1]);
+	bu_vls_printf(&vls, "::brlcad::help::library_alias dm_open %s", argv[1]);
 	Tcl_Eval(interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
 	return BRLCAD_ERROR;
@@ -2819,7 +2819,7 @@ dm_validXType_tcl(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc,
     Tcl_Obj *obj;
 
     if (argc != 3) {
-	bu_vls_printf(&vls, "helplib dm_validXType");
+	bu_vls_printf(&vls, "::brlcad::help::library dm_validXType");
 	Tcl_Eval(interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
 	return BRLCAD_ERROR;
@@ -2850,7 +2850,7 @@ dm_bestXType_tcl(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc,
     if (argc != 2) {
 	struct bu_vls vls = BU_VLS_INIT_ZERO;
 
-	bu_vls_printf(&vls, "helplib dm_bestXType");
+	bu_vls_printf(&vls, "::brlcad::help::library dm_bestXType");
 	Tcl_Eval(interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
 	return BRLCAD_ERROR;

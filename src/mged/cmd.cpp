@@ -2721,7 +2721,7 @@ cmd_rt_gettrees(ClientData clientData, Tcl_Interp *UNUSED(interpreter), int argc
         struct bu_vls vls;
 
         bu_vls_init(&vls);
-        bu_vls_printf(&vls, "helplib_alias wdb_rt_gettrees %s", argv[0]);
+        bu_vls_printf(&vls, "::brlcad::help::library_alias wdb_rt_gettrees %s", argv[0]);
         Tcl_Eval((Tcl_Interp *)s->wdbp->wdb_interp, bu_vls_addr(&vls));
         bu_vls_free(&vls);
         return TCL_ERROR;

@@ -397,7 +397,7 @@ cho_open_tcl(ClientData clientData, Tcl_Interp *interp, int argc, const char **a
 	return TCL_OK;
     }
 
-    bu_vls_printf(&vls, "helplib ch_open");
+    bu_vls_printf(&vls, "::brlcad::help::library ch_open");
     Tcl_Eval(interp, bu_vls_addr(&vls));
     bu_vls_free(&vls);
     return TCL_ERROR;

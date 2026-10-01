@@ -82,6 +82,30 @@ if {[::brlcad::mged::help::show draw] ne [help draw] ||
     error "FAIL canonical and compatibility help results differ"
 }
 
+rename ::helplib ::__brlcad_help_compatibility_library
+rename ::helplib_alias ::__brlcad_help_compatibility_library_alias
+try {
+    foreach command {
+	{::brlcad::dm valid_type}
+	{::brlcad::dm open namespace_help_dm}
+	{::brlcad::fb open namespace_help_fb}
+	{::brlcad::tclcad::history open too many arguments}
+	{.inmem units mm cm}
+	{.inmem rt_gettrees}
+    } {
+	if {![catch $command message]} {
+	    error "FAIL expected usage error from $command"
+	}
+	if {[string match {*invalid command name*} $message]} {
+	    error "FAIL $command depends on a global help wrapper: $message"
+	}
+    }
+} finally {
+    rename ::__brlcad_help_compatibility_library ::helplib
+    rename ::__brlcad_help_compatibility_library_alias ::helplib_alias
+}
+unset command
+
 foreach command {::brlcad::ged ::brlcad::mged exists _mged_exists} {
     if {![llength [info commands $command]]} {
 	error "FAIL missing command $command"

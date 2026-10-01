@@ -134,7 +134,7 @@ wdb_stub_cmd(struct rt_wdb *wdbp,
     if (argc != 1) {
 	struct bu_vls vls;
 	bu_vls_init(&vls);
-	bu_vls_printf(&vls, "helplib_alias wdb_%s %s", argv[0], argv[0]);
+	bu_vls_printf(&vls, "::brlcad::help::library_alias wdb_%s %s", argv[0], argv[0]);
 	Tcl_Eval((Tcl_Interp *)wdbp->wdb_interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
 	return TCL_ERROR;
@@ -200,7 +200,7 @@ wdb_find_cmd(struct rt_wdb *wdbp,
 
     if (argc < 2) {
 	bu_vls_init(&vls);
-	bu_vls_printf(&vls, "helplib_alias wdb_find %s", argv[0]);
+	bu_vls_printf(&vls, "::brlcad::help::library_alias wdb_find %s", argv[0]);
 	Tcl_Eval((Tcl_Interp *)wdbp->wdb_interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
 	return TCL_ERROR;
@@ -300,7 +300,7 @@ wdb_make_bb_cmd(struct rt_wdb *wdbp,
 	struct bu_vls vls;
 
 	bu_vls_init(&vls);
-	bu_vls_printf(&vls, "helplib_alias wdb_make_bb %s", argv[0]);
+	bu_vls_printf(&vls, "::brlcad::help::library_alias wdb_make_bb %s", argv[0]);
 	Tcl_Eval((Tcl_Interp *)wdbp->wdb_interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
 	return TCL_ERROR;
@@ -420,7 +420,7 @@ wdb_move_arb_edge_cmd(struct rt_wdb *wdbp,
 	struct bu_vls vls;
 
 	bu_vls_init(&vls);
-	bu_vls_printf(&vls, "helplib_alias wdb_move_arb_edge %s", argv[0]);
+	bu_vls_printf(&vls, "::brlcad::help::library_alias wdb_move_arb_edge %s", argv[0]);
 	Tcl_Eval((Tcl_Interp *)wdbp->wdb_interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
 
@@ -597,7 +597,7 @@ wdb_move_arb_face_cmd(struct rt_wdb *wdbp,
 	struct bu_vls vls;
 
 	bu_vls_init(&vls);
-	bu_vls_printf(&vls, "helplib_alias wdb_move_arb_face %s", argv[0]);
+	bu_vls_printf(&vls, "::brlcad::help::library_alias wdb_move_arb_face %s", argv[0]);
 	Tcl_Eval((Tcl_Interp *)wdbp->wdb_interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
 
@@ -744,7 +744,7 @@ wdb_nmg_collapse_cmd(struct rt_wdb *wdbp,
 	struct bu_vls vls;
 
 	bu_vls_init(&vls);
-	bu_vls_printf(&vls, "helplib_alias wdb_nmg_collapse %s", argv[0]);
+	bu_vls_printf(&vls, "::brlcad::help::library_alias wdb_nmg_collapse %s", argv[0]);
 	Tcl_Eval((Tcl_Interp *)wdbp->wdb_interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
 	return TCL_ERROR;
@@ -922,7 +922,7 @@ wdb_reopen_cmd(struct rt_wdb *wdbp,
     }
 
     bu_vls_init(&vls);
-    bu_vls_printf(&vls, "helplib_alias wdb_reopen %s", argv[0]);
+    bu_vls_printf(&vls, "::brlcad::help::library_alias wdb_reopen %s", argv[0]);
     Tcl_Eval((Tcl_Interp *)wdbp->wdb_interp, bu_vls_addr(&vls));
     bu_vls_free(&vls);
     return TCL_ERROR;
@@ -972,7 +972,7 @@ wdb_rmap_cmd(struct rt_wdb *wdbp,
 
     if (argc != 1) {
 	bu_vls_init(&vls);
-	bu_vls_printf(&vls, "helplib_alias wdb_rmap %s", argv[0]);
+	bu_vls_printf(&vls, "::brlcad::help::library_alias wdb_rmap %s", argv[0]);
 	Tcl_Eval((Tcl_Interp *)wdbp->wdb_interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
 	return TCL_ERROR;
@@ -1108,7 +1108,7 @@ wdb_rotate_arb_face_cmd(struct rt_wdb *wdbp,
 	struct bu_vls vls;
 
 	bu_vls_init(&vls);
-	bu_vls_printf(&vls, "helplib_alias wdb_move_arb_face %s", argv[0]);
+	bu_vls_printf(&vls, "::brlcad::help::library_alias wdb_move_arb_face %s", argv[0]);
 	Tcl_Eval((Tcl_Interp *)wdbp->wdb_interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
 
@@ -1324,7 +1324,7 @@ wdb_rt_gettrees_cmd(struct rt_wdb *wdbp,
 	struct bu_vls vls;
 
 	bu_vls_init(&vls);
-	bu_vls_printf(&vls, "helplib_alias wdb_rt_gettrees %s", argv[0]);
+	bu_vls_printf(&vls, "::brlcad::help::library_alias wdb_rt_gettrees %s", argv[0]);
 	Tcl_Eval((Tcl_Interp *)wdbp->wdb_interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
 	return TCL_ERROR;
@@ -1438,7 +1438,7 @@ wdb_tol_cmd(struct rt_wdb *wdbp,
 
     if (argc < 1 || ((argc-1)%2 != 0)) {
 	bu_vls_init(&vls);
-	bu_vls_printf(&vls, "helplib_alias wdb_tol %s", argv[0]);
+	bu_vls_printf(&vls, "::brlcad::help::library_alias wdb_tol %s", argv[0]);
 	Tcl_Eval((Tcl_Interp *)wdbp->wdb_interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
 	return TCL_ERROR;
@@ -1706,7 +1706,7 @@ wdb_units_cmd(struct rt_wdb *wdbp,
 
     bu_vls_init(&vls);
     if (argc < 1 || 2 < argc) {
-	bu_vls_printf(&vls, "helplib_alias wdb_units %s", argv[0]);
+	bu_vls_printf(&vls, "::brlcad::help::library_alias wdb_units %s", argv[0]);
 	Tcl_Eval((Tcl_Interp *)wdbp->wdb_interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
 	return TCL_ERROR;
@@ -1789,7 +1789,7 @@ wdb_version_cmd(struct rt_wdb *wdbp,
     bu_vls_init(&vls);
 
     if (argc != 1) {
-	bu_vls_printf(&vls, "helplib_alias wdb_version %s", argv[0]);
+	bu_vls_printf(&vls, "::brlcad::help::library_alias wdb_version %s", argv[0]);
 	Tcl_Eval((Tcl_Interp *)wdbp->wdb_interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
 	return TCL_ERROR;

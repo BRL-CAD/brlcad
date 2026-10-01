@@ -848,7 +848,7 @@ fbo_open_tcl(void *UNUSED(clientData), Tcl_Interp *interp, int argc, const char 
     }
 
     if (argc < 3) {
-	bu_vls_printf(&vls, "helplib fb_open");
+	bu_vls_printf(&vls, "::brlcad::help::library fb_open");
 	Tcl_Eval(interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
 	return BRLCAD_ERROR;
