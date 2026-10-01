@@ -1732,7 +1732,7 @@ rt_hyp_volume(fastf_t *volume, const struct rt_db_internal *ip)
 C_DECL int
 rt_hyp_labels(struct rt_point_labels *pl, int pl_max, const mat_t xform, const struct rt_db_internal *ip, const struct bn_tol *UNUSED(tol))
 {
-    int lcnt = 4;
+    int lcnt = 5;
     if (!pl || pl_max < lcnt || !ip)
 	return 0;
 
@@ -1766,6 +1766,13 @@ rt_hyp_labels(struct rt_point_labels *pl, int pl_max, const mat_t xform, const s
     VADD2(work, hyp->hyp_Vi, vB);
     MAT4X3PNT(pos_view, xform, work);
     POINT_LABEL(pos_view, 'B');
+
+    /* hyp_bnr is the neck-to-base ratio.  Show it at the neck's
+     * semi-major-axis point, halfway along H. */
+    VJOIN2(work, hyp->hyp_Vi, 0.5, hyp->hyp_Hi,
+	    hyp->hyp_bnr, hyp->hyp_A);
+    MAT4X3PNT(pos_view, xform, work);
+    POINT_LABEL(pos_view, 'c');
 
     return lcnt;
 }
