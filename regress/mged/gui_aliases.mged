@@ -70,6 +70,9 @@ foreach command {
 }
 
 try {
+    set database [::__brlcad_mged_compatibility_opendb]
+    ::__brlcad_mged_compatibility_opendb $database
+
     set support [mged_dm_supports $test_id depthcue]
     if {$support ni {0 1}} {
 	error "FAIL display-manager capability check returned $support"

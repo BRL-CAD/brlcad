@@ -278,7 +278,8 @@ cs_update(const struct bu_structparse *sdp,
 
     for (sp = &color_scheme_vparse[CS_OFFSET]; sp->sp_name != NULL; sp += 3) {
 	bu_vls_trunc(&vls, 0);
-	bu_vls_printf(&vls, "rset cs %s [rset cs %s]", sp->sp_name, (sp+offset)->sp_name);
+	bu_vls_printf(&vls, MGED_COMMAND_NAMESPACE " rset cs %s [" MGED_COMMAND_NAMESPACE " rset cs %s]",
+		sp->sp_name, (sp+offset)->sp_name);
 	Tcl_Eval(s->interp, bu_vls_addr(&vls));
     }
 
@@ -300,7 +301,7 @@ cs_set_bg(const struct bu_structparse *UNUSED(sdp),
     struct mged_dm *save_curr_m_dmp = s->mged_curr_dm;
     struct bu_vls vls = BU_VLS_INIT_ZERO;
 
-    bu_vls_printf(&vls, "dm bg %d %d %d",
+    bu_vls_printf(&vls, MGED_COMMAND_NAMESPACE " dm bg %d %d %d",
 		  color_scheme->cs_bg[0],
 		  color_scheme->cs_bg[1],
 		  color_scheme->cs_bg[2]);

@@ -1376,7 +1376,7 @@ cmd_ged_in(ClientData clientData, Tcl_Interp *interpreter, int argc, const char 
 
     if (do_solid_edit) {
 	struct bu_vls sed_cmd = BU_VLS_INIT_ZERO;
-	bu_vls_sprintf(&sed_cmd, "sed %s", argv[1]);
+	bu_vls_sprintf(&sed_cmd, MGED_COMMAND_NAMESPACE " sed %s", argv[1]);
 
 	/* Also kick off solid edit mode */
 	Tcl_Eval(interpreter, bu_vls_cstr(&sed_cmd));
@@ -2561,7 +2561,7 @@ f_postscript(ClientData clientData, Tcl_Interp *interpreter, int argc, const cha
     refresh(s);
 
     view_state = vsp;  /* restore state info pointer */
-    status = Tcl_Eval(interpreter, "release");
+    status = Tcl_Eval(interpreter, MGED_COMMAND_NAMESPACE " release");
     set_curr_dm(s, dml);
     s->gedp->ged_gvp = view_state->vs_gvp;
 

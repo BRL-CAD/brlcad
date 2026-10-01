@@ -317,9 +317,9 @@ snap_keypoint_to_grid(struct mged_state *s)
     VSCALE(model_pt, model_pt, s->dbip->dbi_base2local);
 
     if (s->global_editing_state == ST_S_EDIT)
-	bu_vls_printf(&cmd, "p %lf %lf %lf", model_pt[X], model_pt[Y], model_pt[Z]);
+	bu_vls_printf(&cmd, MGED_COMMAND_NAMESPACE " p %lf %lf %lf", model_pt[X], model_pt[Y], model_pt[Z]);
     else
-	bu_vls_printf(&cmd, "translate %lf %lf %lf", model_pt[X], model_pt[Y], model_pt[Z]);
+	bu_vls_printf(&cmd, MGED_COMMAND_NAMESPACE " translate %lf %lf %lf", model_pt[X], model_pt[Y], model_pt[Z]);
     (void)Tcl_Eval(s->interp, bu_vls_addr(&cmd));
     bu_vls_free(&cmd);
 

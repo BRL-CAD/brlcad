@@ -256,7 +256,7 @@ rt_rect_area(struct mged_state *s)
 	ymin += height;
     }
 
-    bu_vls_printf(&vls, "rt -w %d -n %d -V %lf -F %d -j %d,%d,%d,%d -C%d/%d/%d",
+    bu_vls_printf(&vls, MGED_COMMAND_NAMESPACE " rt -w %d -n %d -V %lf -F %d -j %d,%d,%d,%d -C%d/%d/%d",
 		  dm_get_width(DMP), dm_get_height(DMP), dm_get_aspect(DMP),
 		  mged_variables->mv_port, xmin, ymin, xmax, ymax,
 		  color_scheme->cs_bg[0], color_scheme->cs_bg[1], color_scheme->cs_bg[2]);

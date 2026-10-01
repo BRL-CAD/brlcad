@@ -1375,7 +1375,7 @@ knob_apply_adc(struct mged_state *UNUSED(s),
 	       int incr)
 {
     struct bu_vls tcl_cmd = BU_VLS_INIT_ZERO;
-    bu_vls_printf(&tcl_cmd, "adc ");
+    bu_vls_printf(&tcl_cmd, MGED_COMMAND_NAMESPACE " adc ");
     if (incr) bu_vls_printf(&tcl_cmd, "-i ");
 
     if (BU_STR_EQUAL(token, "xadc")) {
@@ -1406,7 +1406,7 @@ knob_apply_misc(struct mged_state *s,
 	}
 	view_state->k = view_state->vs_gvp->k;
 	update_all_rate_flags(s);
-	Tcl_Eval(interp, "adc reset");
+	Tcl_Eval(interp, MGED_COMMAND_NAMESPACE " adc reset");
 	(void)mged_svbase(s);
 	return 1;
     }

@@ -150,10 +150,10 @@ common_dm(struct mged_state *s, int argc, const char *argv[])
 	    MAT4X3PNT(model_pt, view_state->vs_gvp->gv_view2model, view_pt);
 	    VSCALE(model_pt, model_pt, s->dbip->dbi_base2local);
 	    if (dm_get_zclip(DMP))
-		bu_vls_printf(&vls, "nirt -c --xyz %lf %lf %lf",
+		bu_vls_printf(&vls, MGED_COMMAND_NAMESPACE " nirt -c --xyz %lf %lf %lf",
 			      model_pt[X], model_pt[Y], model_pt[Z]);
 	    else
-		bu_vls_printf(&vls, "nirt --xyz %lf %lf %lf",
+		bu_vls_printf(&vls, MGED_COMMAND_NAMESPACE " nirt --xyz %lf %lf %lf",
 			      model_pt[X], model_pt[Y], model_pt[Z]);
 	} else if ((mged_variables->mv_mouse_behavior == 'p' ||
 		    mged_variables->mv_mouse_behavior == 'r' ||
@@ -194,7 +194,7 @@ common_dm(struct mged_state *s, int argc, const char *argv[])
 	    VSET(view_pt, fx, fy, 1.0);
 	    MAT4X3PNT(model_pt, view_state->vs_gvp->gv_view2model, view_pt);
 	    VSCALE(model_pt, model_pt, s->dbip->dbi_base2local);
-	    bu_vls_printf(&vls, "adc xyz %lf %lf %lf\n", model_pt[X], model_pt[Y], model_pt[Z]);
+	    bu_vls_printf(&vls, MGED_COMMAND_NAMESPACE " adc xyz %lf %lf %lf\n", model_pt[X], model_pt[Y], model_pt[Z]);
 	} else if (grid_state->snap && !stolen &&
 		   SEDIT_TRAN && mged_variables->mv_transform == 'e') {
 	    point_t view_pt;
@@ -206,7 +206,7 @@ common_dm(struct mged_state *s, int argc, const char *argv[])
 	    view_pt[Y] = fy;
 	    MAT4X3PNT(model_pt, view_state->vs_gvp->gv_view2model, view_pt);
 	    VSCALE(model_pt, model_pt, s->dbip->dbi_base2local);
-	    bu_vls_printf(&vls, "p %lf %lf %lf", model_pt[X], model_pt[Y], model_pt[Z]);
+	    bu_vls_printf(&vls, MGED_COMMAND_NAMESPACE " p %lf %lf %lf", model_pt[X], model_pt[Y], model_pt[Z]);
 	} else if (grid_state->snap && !stolen &&
 		   OEDIT_TRAN && mged_variables->mv_transform == 'e') {
 	    point_t view_pt;
@@ -218,7 +218,7 @@ common_dm(struct mged_state *s, int argc, const char *argv[])
 	    view_pt[Y] = fy;
 	    MAT4X3PNT(model_pt, view_state->vs_gvp->gv_view2model, view_pt);
 	    VSCALE(model_pt, model_pt, s->dbip->dbi_base2local);
-	    bu_vls_printf(&vls, "translate %lf %lf %lf", model_pt[X], model_pt[Y], model_pt[Z]);
+	    bu_vls_printf(&vls, MGED_COMMAND_NAMESPACE " translate %lf %lf %lf", model_pt[X], model_pt[Y], model_pt[Z]);
 	} else if (grid_state->snap && !stolen &&
 		   s->global_editing_state != ST_S_PICK && s->global_editing_state != ST_O_PICK &&
 		   s->global_editing_state != ST_O_PATH && !SEDIT_PICK && !EDIT_SCALE) {
@@ -233,9 +233,9 @@ common_dm(struct mged_state *s, int argc, const char *argv[])
 	    view_pt[Y] = fy;
 	    MAT4X3PNT(model_pt, view_state->vs_gvp->gv_view2model, view_pt);
 	    VSCALE(model_pt, model_pt, s->dbip->dbi_base2local);
-	    bu_vls_printf(&vls, "center %lf %lf %lf", model_pt[X], model_pt[Y], model_pt[Z]);
+	    bu_vls_printf(&vls, MGED_COMMAND_NAMESPACE " center %lf %lf %lf", model_pt[X], model_pt[Y], model_pt[Z]);
 	} else
-	    bu_vls_printf(&vls, "M 1 %d %d\n", x, y);
+	    bu_vls_printf(&vls, MGED_COMMAND_NAMESPACE " M 1 %d %d\n", x, y);
 
 	status = Tcl_Eval(s->interp, bu_vls_addr(&vls));
 	mged_variables->mv_orig_gui = old_orig_gui;
@@ -338,7 +338,7 @@ common_dm(struct mged_state *s, int argc, const char *argv[])
 		fx = dm_Xx2Normal(DMP, dm_omx) * BV_MAX - adc_state->adc_dv_x;
 		fy = dm_Xy2Normal(DMP, dm_omy, 1) * BV_MAX - adc_state->adc_dv_y;
 
-		bu_vls_printf(&vls, "adc a1 %lf\n", RAD2DEG*atan2(fy, fx));
+		bu_vls_printf(&vls, MGED_COMMAND_NAMESPACE " adc a1 %lf\n", RAD2DEG*atan2(fy, fx));
 		Tcl_Eval(s->interp, bu_vls_addr(&vls));
 		bu_vls_free(&vls);
 
@@ -348,7 +348,7 @@ common_dm(struct mged_state *s, int argc, const char *argv[])
 		fx = dm_Xx2Normal(DMP, dm_omx) * BV_MAX - adc_state->adc_dv_x;
 		fy = dm_Xy2Normal(DMP, dm_omy, 1) * BV_MAX - adc_state->adc_dv_y;
 
-		bu_vls_printf(&vls, "adc a2 %lf\n", RAD2DEG*atan2(fy, fx));
+		bu_vls_printf(&vls, MGED_COMMAND_NAMESPACE " adc a2 %lf\n", RAD2DEG*atan2(fy, fx));
 		Tcl_Eval(s->interp, bu_vls_addr(&vls));
 		bu_vls_free(&vls);
 
@@ -367,7 +367,7 @@ common_dm(struct mged_state *s, int argc, const char *argv[])
 		    MAT4X3PNT(model_pt, view_state->vs_gvp->gv_view2model, view_pt);
 		    VSCALE(model_pt, model_pt, s->dbip->dbi_base2local);
 
-		    bu_vls_printf(&vls, "adc xyz %lf %lf %lf\n", model_pt[X], model_pt[Y], model_pt[Z]);
+		    bu_vls_printf(&vls, MGED_COMMAND_NAMESPACE " adc xyz %lf %lf %lf\n", model_pt[X], model_pt[Y], model_pt[Z]);
 		    Tcl_Eval(s->interp, bu_vls_addr(&vls));
 
 		    bu_vls_free(&vls);
@@ -383,7 +383,7 @@ common_dm(struct mged_state *s, int argc, const char *argv[])
 
 		td = sqrt(fx * fx + fy * fy);
 
-		bu_vls_printf(&vls, "adc dst %lf\n", td);
+		bu_vls_printf(&vls, MGED_COMMAND_NAMESPACE " adc dst %lf\n", td);
 		Tcl_Eval(s->interp, bu_vls_addr(&vls));
 		bu_vls_free(&vls);
 

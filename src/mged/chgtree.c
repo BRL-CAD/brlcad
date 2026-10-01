@@ -127,7 +127,7 @@ f_copy_inv(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv
 
     if (s->global_editing_state == ST_VIEW) {
 	struct bu_vls sed_cmd = BU_VLS_INIT_ZERO;
-	bu_vls_sprintf(&sed_cmd, "sed %s", argv[2]);
+	bu_vls_sprintf(&sed_cmd, MGED_COMMAND_NAMESPACE " sed %s", argv[2]);
 
 	/* solid edit this new cylinder */
 	Tcl_Eval(interp, bu_vls_cstr(&sed_cmd));
@@ -337,7 +337,7 @@ cmd_oed(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
     /* Select the matrix */
     struct bu_vls tcl_cmd = BU_VLS_INIT_ZERO;
     size_t matpick_pos = one_path ? lhs.fp_len - 1 : lhs.fp_len;
-    bu_vls_printf(&tcl_cmd, "matpick %lu", (long unsigned)matpick_pos);
+    bu_vls_printf(&tcl_cmd, MGED_COMMAND_NAMESPACE " matpick %lu", (long unsigned)matpick_pos);
     if (Tcl_Eval(interp, bu_vls_cstr(&tcl_cmd)) != TCL_OK) {
 	db_free_full_path(&lhs);
 	db_free_full_path(&rhs);

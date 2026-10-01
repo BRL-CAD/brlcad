@@ -125,7 +125,7 @@ sl_halt_scroll(struct rt_edit *UNUSED(es), int UNUSED(a), int UNUSED(b), int UNU
     struct mged_state *s = (struct mged_state *)data;
     struct bu_vls vls = BU_VLS_INIT_ZERO;
 
-    bu_vls_printf(&vls, "knob zero");
+    bu_vls_strcpy(&vls, MGED_COMMAND_NAMESPACE " knob zero");
     (void)Tcl_Eval(s->interp, bu_vls_addr(&vls));
     bu_vls_free(&vls);
 }
@@ -172,7 +172,7 @@ sl_tol(struct scroll_item *mptr, double val)
 	val = 0.0;
     }
 
-    bu_vls_printf(&vls, "knob %s %f", mptr->scroll_cmd, val);
+    bu_vls_printf(&vls, MGED_COMMAND_NAMESPACE " knob %s %f", mptr->scroll_cmd, val);
     Tcl_Eval(s->interp, bu_vls_addr(&vls));
     bu_vls_free(&vls);
 }
@@ -195,7 +195,7 @@ sl_atol(struct scroll_item *mptr, double val)
 	val = 0.0;
     }
 
-    bu_vls_printf(&vls, "knob %s %f", mptr->scroll_cmd, val*view_state->vs_gvp->gv_scale*s->dbip->dbi_base2local);
+    bu_vls_printf(&vls, MGED_COMMAND_NAMESPACE " knob %s %f", mptr->scroll_cmd, val*view_state->vs_gvp->gv_scale*s->dbip->dbi_base2local);
     Tcl_Eval(s->interp, bu_vls_addr(&vls));
     bu_vls_free(&vls);
 }
@@ -215,7 +215,7 @@ sl_rrtol(struct scroll_item *mptr, double val)
 	val = 0.0;
     }
 
-    bu_vls_printf(&vls, "knob %s %f", mptr->scroll_cmd, val * RATE_ROT_FACTOR);
+    bu_vls_printf(&vls, MGED_COMMAND_NAMESPACE " knob %s %f", mptr->scroll_cmd, val * RATE_ROT_FACTOR);
     Tcl_Eval(s->interp, bu_vls_addr(&vls));
     bu_vls_free(&vls);
 }
@@ -235,7 +235,7 @@ sl_artol(struct scroll_item *mptr, double val)
 	val = 0.0;
     }
 
-    bu_vls_printf(&vls, "knob %s %f", mptr->scroll_cmd, val*ABS_ROT_FACTOR);
+    bu_vls_printf(&vls, MGED_COMMAND_NAMESPACE " knob %s %f", mptr->scroll_cmd, val*ABS_ROT_FACTOR);
     Tcl_Eval(s->interp, bu_vls_addr(&vls));
     bu_vls_free(&vls);
 }
@@ -255,7 +255,7 @@ sl_adctol(struct scroll_item *mptr, double val)
 	val = 0.0;
     }
 
-    bu_vls_printf(&vls, "knob %s %f", mptr->scroll_cmd, 45.0 - val*45.0);
+    bu_vls_printf(&vls, MGED_COMMAND_NAMESPACE " knob %s %f", mptr->scroll_cmd, 45.0 - val*45.0);
     Tcl_Eval(s->interp, bu_vls_addr(&vls));
     bu_vls_free(&vls);
 }
@@ -275,7 +275,7 @@ sl_itol(struct scroll_item *mptr, double val)
 	val = 0.0;
     }
 
-    bu_vls_printf(&vls, "knob %s %f", mptr->scroll_cmd, val*BV_MAX);
+    bu_vls_printf(&vls, MGED_COMMAND_NAMESPACE " knob %s %f", mptr->scroll_cmd, val*BV_MAX);
     Tcl_Eval(s->interp, bu_vls_addr(&vls));
     bu_vls_free(&vls);
 }

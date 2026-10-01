@@ -413,7 +413,7 @@ static void
 attach_display_manager(Tcl_Interp *interpreter, const char *manager, const char *display)
 {
     struct bu_vls tcl_cmd = BU_VLS_INIT_ZERO;
-    bu_vls_printf(&tcl_cmd, "attach ");
+    bu_vls_printf(&tcl_cmd, MGED_COMMAND_NAMESPACE " attach ");
     if (display && strlen(display) > 0)
 	bu_vls_printf(&tcl_cmd, "-d %s ", display);
     if (!manager)
@@ -1493,7 +1493,7 @@ event_check(struct mged_state *s, int non_blocking)
 	}
 
 	non_blocking++;
-	bu_vls_printf(&vls, "knob -o %c -i -e ax %f ay %f az %f\n",
+	bu_vls_printf(&vls, MGED_COMMAND_NAMESPACE " knob -o %c -i -e ax %f ay %f az %f\n",
 		      MEDIT(s)->k.origin_m,
 		      MEDIT(s)->k.rot_m[X],
 		      MEDIT(s)->k.rot_m[Y],
@@ -1529,7 +1529,7 @@ event_check(struct mged_state *s, int non_blocking)
 	}
 
 	non_blocking++;
-	bu_vls_printf(&vls, "knob -o %c -i -e ax %f ay %f az %f\n",
+	bu_vls_printf(&vls, MGED_COMMAND_NAMESPACE " knob -o %c -i -e ax %f ay %f az %f\n",
 		      MEDIT(s)->k.origin_o,
 		      MEDIT(s)->k.rot_o[X],
 		      MEDIT(s)->k.rot_o[Y],
@@ -1565,7 +1565,7 @@ event_check(struct mged_state *s, int non_blocking)
 	}
 
 	non_blocking++;
-	bu_vls_printf(&vls, "knob -o %c -i -e ax %f ay %f az %f\n",
+	bu_vls_printf(&vls, MGED_COMMAND_NAMESPACE " knob -o %c -i -e ax %f ay %f az %f\n",
 		      MEDIT(s)->k.origin_v,
 		      MEDIT(s)->k.rot_v[X],
 		      MEDIT(s)->k.rot_v[Y],
@@ -1601,7 +1601,7 @@ event_check(struct mged_state *s, int non_blocking)
 	}
 
 	non_blocking++;
-	bu_vls_printf(&vls, "knob -i -e aX %f aY %f aZ %f\n",
+	bu_vls_printf(&vls, MGED_COMMAND_NAMESPACE " knob -i -e aX %f aY %f aZ %f\n",
 		      MEDIT(s)->k.tra_m[X] * 0.05 * view_state->vs_gvp->gv_scale * s->dbip->dbi_base2local,
 		      MEDIT(s)->k.tra_m[Y] * 0.05 * view_state->vs_gvp->gv_scale * s->dbip->dbi_base2local,
 		      MEDIT(s)->k.tra_m[Z] * 0.05 * view_state->vs_gvp->gv_scale * s->dbip->dbi_base2local);
@@ -1636,7 +1636,7 @@ event_check(struct mged_state *s, int non_blocking)
 	}
 
 	non_blocking++;
-	bu_vls_printf(&vls, "knob -i -e aX %f aY %f aZ %f\n",
+	bu_vls_printf(&vls, MGED_COMMAND_NAMESPACE " knob -i -e aX %f aY %f aZ %f\n",
 		      MEDIT(s)->k.tra_v[X] * 0.05 * view_state->vs_gvp->gv_scale * s->dbip->dbi_base2local,
 		      MEDIT(s)->k.tra_v[Y] * 0.05 * view_state->vs_gvp->gv_scale * s->dbip->dbi_base2local,
 		      MEDIT(s)->k.tra_v[Z] * 0.05 * view_state->vs_gvp->gv_scale * s->dbip->dbi_base2local);
@@ -1667,7 +1667,7 @@ event_check(struct mged_state *s, int non_blocking)
 	}
 
 	non_blocking++;
-	bu_vls_printf(&vls, "knob -i -e aS %f\n", MEDIT(s)->k.sca * 0.01);
+	bu_vls_printf(&vls, MGED_COMMAND_NAMESPACE " knob -i -e aS %f\n", MEDIT(s)->k.sca * 0.01);
 
 	Tcl_Eval(s->interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
@@ -1690,7 +1690,7 @@ event_check(struct mged_state *s, int non_blocking)
 	    struct bu_vls vls = BU_VLS_INIT_ZERO;
 
 	    non_blocking++;
-	    bu_vls_printf(&vls, "knob -o %c -i -m ax %f ay %f az %f\n",
+	    bu_vls_printf(&vls, MGED_COMMAND_NAMESPACE " knob -o %c -i -m ax %f ay %f az %f\n",
 			  view_state->k.origin_m,
 			  view_state->k.rot_m[X],
 			  view_state->k.rot_m[Y],
@@ -1703,7 +1703,7 @@ event_check(struct mged_state *s, int non_blocking)
 	    struct bu_vls vls = BU_VLS_INIT_ZERO;
 
 	    non_blocking++;
-	    bu_vls_printf(&vls, "knob -i -m aX %f aY %f aZ %f\n",
+	    bu_vls_printf(&vls, MGED_COMMAND_NAMESPACE " knob -i -m aX %f aY %f aZ %f\n",
 			  view_state->k.tra_m[X] * 0.05 * view_state->vs_gvp->gv_scale * s->dbip->dbi_base2local,
 			  view_state->k.tra_m[Y] * 0.05 * view_state->vs_gvp->gv_scale * s->dbip->dbi_base2local,
 			  view_state->k.tra_m[Z] * 0.05 * view_state->vs_gvp->gv_scale * s->dbip->dbi_base2local);
@@ -1715,7 +1715,7 @@ event_check(struct mged_state *s, int non_blocking)
 	    struct bu_vls vls = BU_VLS_INIT_ZERO;
 
 	    non_blocking++;
-	    bu_vls_printf(&vls, "knob -o %c -i -v ax %f ay %f az %f\n",
+	    bu_vls_printf(&vls, MGED_COMMAND_NAMESPACE " knob -o %c -i -v ax %f ay %f az %f\n",
 			  view_state->k.origin_v,
 			  view_state->k.rot_v[X],
 			  view_state->k.rot_v[Y],
@@ -1728,7 +1728,7 @@ event_check(struct mged_state *s, int non_blocking)
 	    struct bu_vls vls = BU_VLS_INIT_ZERO;
 
 	    non_blocking++;
-	    bu_vls_printf(&vls, "knob -i -v aX %f aY %f aZ %f",
+	    bu_vls_printf(&vls, MGED_COMMAND_NAMESPACE " knob -i -v aX %f aY %f aZ %f",
 			  view_state->k.tra_v[X] * 0.05 * view_state->vs_gvp->gv_scale * s->dbip->dbi_base2local,
 			  view_state->k.tra_v[Y] * 0.05 * view_state->vs_gvp->gv_scale * s->dbip->dbi_base2local,
 			  view_state->k.tra_v[Z] * 0.05 * view_state->vs_gvp->gv_scale * s->dbip->dbi_base2local);
@@ -1740,7 +1740,7 @@ event_check(struct mged_state *s, int non_blocking)
 	    struct bu_vls vls = BU_VLS_INIT_ZERO;
 
 	    non_blocking++;
-	    bu_vls_printf(&vls, "zoom %f",
+	    bu_vls_printf(&vls, MGED_COMMAND_NAMESPACE " zoom %f",
 			  1.0 / (1.0 - (view_state->k.sca / 10.0)));
 	    Tcl_Eval(s->interp, bu_vls_addr(&vls));
 	    bu_vls_free(&vls);
@@ -2475,37 +2475,37 @@ apply_cli_overrides(struct mged_state *s, struct mged_cli_overrides *cl)
 
     /* --- grid (rset g …) ------------------------------------------------- */
     if (cl->grid_draw != MGED_CLI_UNSET_INT) {
-	bu_vls_printf(&cmd, "rset g draw %d", cl->grid_draw);
+	bu_vls_printf(&cmd, MGED_COMMAND_NAMESPACE " rset g draw %d", cl->grid_draw);
 	if (Tcl_Eval(s->interp, bu_vls_cstr(&cmd)) != TCL_OK)
 	    bu_log("mged: --grid-draw: %s\n", Tcl_GetStringResult(s->interp));
 	bu_vls_trunc(&cmd, 0);
     }
     if (cl->grid_snap != MGED_CLI_UNSET_INT) {
-	bu_vls_printf(&cmd, "rset g snap %d", cl->grid_snap);
+	bu_vls_printf(&cmd, MGED_COMMAND_NAMESPACE " rset g snap %d", cl->grid_snap);
 	if (Tcl_Eval(s->interp, bu_vls_cstr(&cmd)) != TCL_OK)
 	    bu_log("mged: --grid-snap: %s\n", Tcl_GetStringResult(s->interp));
 	bu_vls_trunc(&cmd, 0);
     }
     if (cli_dbl_is_set(cl->grid_rh)) {
-	bu_vls_printf(&cmd, "rset g rh %g", cl->grid_rh);
+	bu_vls_printf(&cmd, MGED_COMMAND_NAMESPACE " rset g rh %g", cl->grid_rh);
 	if (Tcl_Eval(s->interp, bu_vls_cstr(&cmd)) != TCL_OK)
 	    bu_log("mged: --grid-rh: %s\n", Tcl_GetStringResult(s->interp));
 	bu_vls_trunc(&cmd, 0);
     }
     if (cli_dbl_is_set(cl->grid_rv)) {
-	bu_vls_printf(&cmd, "rset g rv %g", cl->grid_rv);
+	bu_vls_printf(&cmd, MGED_COMMAND_NAMESPACE " rset g rv %g", cl->grid_rv);
 	if (Tcl_Eval(s->interp, bu_vls_cstr(&cmd)) != TCL_OK)
 	    bu_log("mged: --grid-rv: %s\n", Tcl_GetStringResult(s->interp));
 	bu_vls_trunc(&cmd, 0);
     }
     if (cl->grid_mrh != MGED_CLI_UNSET_INT) {
-	bu_vls_printf(&cmd, "rset g mrh %d", cl->grid_mrh);
+	bu_vls_printf(&cmd, MGED_COMMAND_NAMESPACE " rset g mrh %d", cl->grid_mrh);
 	if (Tcl_Eval(s->interp, bu_vls_cstr(&cmd)) != TCL_OK)
 	    bu_log("mged: --grid-mrh: %s\n", Tcl_GetStringResult(s->interp));
 	bu_vls_trunc(&cmd, 0);
     }
     if (cl->grid_mrv != MGED_CLI_UNSET_INT) {
-	bu_vls_printf(&cmd, "rset g mrv %d", cl->grid_mrv);
+	bu_vls_printf(&cmd, MGED_COMMAND_NAMESPACE " rset g mrv %d", cl->grid_mrv);
 	if (Tcl_Eval(s->interp, bu_vls_cstr(&cmd)) != TCL_OK)
 	    bu_log("mged: --grid-mrv: %s\n", Tcl_GetStringResult(s->interp));
 	bu_vls_trunc(&cmd, 0);
@@ -2515,7 +2515,7 @@ apply_cli_overrides(struct mged_state *s, struct mged_cli_overrides *cl)
     if (cl->bg_color.set) {
 	int r = 0, g = 0, b = 0;
 	bu_color_to_rgb_ints(&cl->bg_color.color, &r, &g, &b);
-	bu_vls_printf(&cmd, "rset cs bg %d %d %d", r, g, b);
+	bu_vls_printf(&cmd, MGED_COMMAND_NAMESPACE " rset cs bg %d %d %d", r, g, b);
 	if (Tcl_Eval(s->interp, bu_vls_cstr(&cmd)) != TCL_OK)
 	    bu_log("mged: --bg: %s\n", Tcl_GetStringResult(s->interp));
 	bu_vls_trunc(&cmd, 0);
@@ -2523,7 +2523,7 @@ apply_cli_overrides(struct mged_state *s, struct mged_cli_overrides *cl)
     if (cl->geo_def_color.set) {
 	int r = 0, g = 0, b = 0;
 	bu_color_to_rgb_ints(&cl->geo_def_color.color, &r, &g, &b);
-	bu_vls_printf(&cmd, "rset cs geo_def %d %d %d", r, g, b);
+	bu_vls_printf(&cmd, MGED_COMMAND_NAMESPACE " rset cs geo_def %d %d %d", r, g, b);
 	if (Tcl_Eval(s->interp, bu_vls_cstr(&cmd)) != TCL_OK)
 	    bu_log("mged: --geo-color: %s\n", Tcl_GetStringResult(s->interp));
 	bu_vls_trunc(&cmd, 0);
@@ -2547,7 +2547,7 @@ apply_cli_overrides(struct mged_state *s, struct mged_cli_overrides *cl)
     /* --- --rset ARGS escape hatch ---------------------------------------- */
     for (size_t ri = 0; ri < BU_PTBL_LEN(&cl->rset_pairs); ri++) {
 	const char *args = (const char *)BU_PTBL_GET(&cl->rset_pairs, ri);
-	bu_vls_printf(&cmd, "rset %s", args);
+	bu_vls_printf(&cmd, MGED_COMMAND_NAMESPACE " rset %s", args);
 	if (Tcl_Eval(s->interp, bu_vls_cstr(&cmd)) != TCL_OK)
 	    bu_log("mged: --rset \"%s\": %s\n", args, Tcl_GetStringResult(s->interp));
 	bu_vls_trunc(&cmd, 0);
@@ -3327,7 +3327,7 @@ main(int argc, char *argv[])
 	    Tcl_DoOneEvent(TCL_ALL_EVENTS|TCL_DONT_WAIT);
 	}
 
-	Tcl_Eval(s->interp, "q");
+	Tcl_Eval(s->interp, MGED_COMMAND_NAMESPACE " q");
 	if (mged_shutting_down(s))
 	    mged_finish(s, s->shutdown_exitcode);
 	/* NOTREACHED */
