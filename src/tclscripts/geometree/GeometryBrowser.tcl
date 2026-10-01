@@ -998,7 +998,8 @@ package provide GeometryBrowser 1.0
 	set _fbservPort [ set port ]
 
 	# get the image dimensions of the mged graphics window
-	set windowSize [ rt_set_fb_size $_mgedFramebufferId ]
+	set windowSize [::brlcad::mged::raytrace::set_framebuffer_size \
+	    $_mgedFramebufferId]
 	set windowWidth [ lindex [ split $windowSize x ] 0 ]
 	set windowHeight [ lindex [ split $windowSize x ] 1 ]
 
@@ -1102,7 +1103,7 @@ package provide GeometryBrowser 1.0
 #
 ::itcl::body GeometryBrowser::raytracePanel {} {
 
-    init_Raytrace $_mgedFramebufferId
+    ::brlcad::mged::raytrace::init $_mgedFramebufferId
 
     return
 }

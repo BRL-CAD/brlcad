@@ -37,7 +37,7 @@ proc opendb_callback { dbname } {
 
     foreach id $mged_players {
 	set_wm_title $id $dbname
-	rt_opendb_callback $id
+	::brlcad::mged::raytrace::open_database_callback $id
     }
 }
 
@@ -165,7 +165,7 @@ proc solid_list_callback {} {
     }
 
     foreach id $mged_players {
-	rt_solid_list_callback $id
+	::brlcad::mged::raytrace::solid_list_callback $id
     }
 }
 

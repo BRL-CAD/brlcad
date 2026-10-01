@@ -60,10 +60,9 @@ proc ::mged::xmin::render::wait_for_file_size {path minimum_size timeout_ms} {
 }
 
 proc ::mged::xmin::render::exercise_rt_script {id top} {
-    upvar #0 ::brlcad::mged::rt_script::control rts_control
-
     set output [file join $::env(GUI_TEST_DIR) saved-view.sh]
     ::mged::gui::test::invoke $top {File {Render View} {RT Script...}}
+    upvar #0 ::brlcad::mged::rt_script::control rts_control
     set dialog .$id.do_rtScript
     ::gui::test::require {
 	[winfo exists $dialog] && [winfo ismapped $dialog] &&
@@ -94,10 +93,9 @@ proc ::mged::xmin::render::exercise_rt_script {id top} {
 }
 
 proc ::mged::xmin::render::exercise_plot {id top} {
-    upvar #0 ::brlcad::mged::plot::control pl_control
-
     set output [file join $::env(GUI_TEST_DIR) rendered.plot3]
     ::mged::gui::test::invoke $top {File {Render View} {Plot...}}
+    upvar #0 ::brlcad::mged::plot::control pl_control
     set dialog .$id.do_plot
     ::gui::test::require {
 	[winfo exists $dialog] && [winfo ismapped $dialog]
@@ -133,10 +131,9 @@ proc ::mged::xmin::render::exercise_plot {id top} {
 }
 
 proc ::mged::xmin::render::exercise_postscript {id top} {
-    upvar #0 ::brlcad::mged::postscript::control ps_control
-
     set output [file join $::env(GUI_TEST_DIR) rendered.ps]
     ::mged::gui::test::invoke $top {File {Render View} {PostScript...}}
+    upvar #0 ::brlcad::mged::postscript::control ps_control
     set dialog .$id.do_ps
     ::gui::test::require {
 	[winfo exists $dialog] && [winfo ismapped $dialog]
@@ -169,19 +166,46 @@ proc ::mged::xmin::render::exercise_postscript {id top} {
 }
 
 proc ::mged::xmin::render::exercise_raytrace {id top} {
-    global rt_control
     variable raytrace_image_size
     variable raytrace_timeout_ms
 
     set output [file join $::env(GUI_TEST_DIR) rendered.pix]
     ::mged::gui::test::invoke $top {File Raytrace}
+    upvar #0 ::brlcad::mged::raytrace::rt_control rt_control
     set dialog .$id.rt
     ::gui::test::require {
 	[winfo exists $dialog] && [winfo ismapped $dialog]
     } "File > Raytrace did not open the Raytrace Control Panel"
 
+    $dialog.advancedB invoke
+    ::mged::gui::test::settle
+    set advanced .$id.rtAS
+    ::gui::test::require {
+	[winfo exists $advanced] && [winfo ismapped $advanced]
+    } "Raytrace Advanced Settings did not open"
+    $advanced.jitterMB.jitterM invoke 1
+    ::gui::test::require {
+	$rt_control($id,jitter) == 1 &&
+	$rt_control($id,jitterTitle) eq "Cell"
+    } "Raytrace jitter menu did not update namespaced state"
+    $advanced.lmodelMB.lmodelM invoke 6
+    ::mged::gui::test::settle
+    ::gui::test::require {
+	$rt_control($id,lmodel) == 7 &&
+	[winfo ismapped $advanced.gridF4]
+    } "Raytrace Photon Mapping controls did not activate"
+    $advanced.gridF4.pmGlobalPhotonsScale set 10
+    update idletasks
+    ::gui::test::require {
+	[$advanced.gridF4.pmGlobalPhotonsEntry get] == 1024
+    } "Raytrace photon scale callback did not update its entry"
+    $advanced.lmodelMB.lmodelM invoke 0
+    $advanced.dismissB invoke
+    ::gui::test::require {![winfo exists $advanced]} \
+	"Raytrace Advanced Settings did not dismiss"
+
     file delete -force $output
-    rt_force_cook_dest $id {}
+    ::brlcad::mged::raytrace::force_destination $id {}
     set rt_control($id,size) $raytrace_image_size
     set rt_control($id,nproc) 1
     set rt_control($id,hsample) 0

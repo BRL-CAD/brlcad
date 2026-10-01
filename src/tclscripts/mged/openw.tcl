@@ -501,7 +501,8 @@ proc gui { args } {
     hoc_register_menu_data "File" "Load Script..." "Load Script"\
 	{ { summary "Browse directories for a Tcl script file to load." } { see_also "loadview, source" } }
     .$id.menubar.file add separator
-    .$id.menubar.file add command -label "Raytrace" -underline 0 -command "init_Raytrace $id"
+    .$id.menubar.file add command -label "Raytrace" -underline 0 \
+	-command [list ::brlcad::mged::raytrace::init $id]
     hoc_register_menu_data "File" "Raytrace" "Raytrace View"\
 	{ { summary "Tool for raytracing the current view." }
 	    { see_also rt } }
@@ -1247,20 +1248,23 @@ hoc_register_menu_data "Create" "$ptype..." "Make a $ptype" $ksl
     menu .$id.menubar.settings.fb -title "Framebuffer" -tearoff $mged_default(tearoff_menus)
     .$id.menubar.settings.fb add radiobutton -value 1 -variable mged_gui($id,fb_all)\
 	-label "All" -underline 0\
-	-command "mged_apply $id \"set fb_all \$mged_gui($id,fb_all)\"; rt_update_dest $id"
+	-command [list ::brlcad::mged::raytrace::apply_framebuffer_setting \
+	    $id fb_all]
     hoc_register_menu_data "Framebuffer" "All" "Framebuffer - All"\
 	{ { summary "Use the entire pane for the framebuffer." }
 	    { see_also "rset, vars" } }
     .$id.menubar.settings.fb add radiobutton -value 0 -variable mged_gui($id,fb_all)\
 	-label "Rectangle Area" -underline 0\
-	-command "mged_apply $id \"set fb_all \$mged_gui($id,fb_all)\"; rt_update_dest $id"
+	-command [list ::brlcad::mged::raytrace::apply_framebuffer_setting \
+	    $id fb_all]
     hoc_register_menu_data "Framebuffer" "Rectangle Area" "Framebuffer - Rectangle Area"\
 	{ { summary "Use the rectangle area for the framebuffer." }
 	    { see_also "rset, vars" } }
     .$id.menubar.settings.fb add separator
     .$id.menubar.settings.fb add radiobutton -value 2 -variable mged_gui($id,fb_overlay)\
 	-label "Overlay" -underline 0\
-	-command "mged_apply $id \"set fb_overlay \$mged_gui($id,fb_overlay)\"; rt_update_dest $id"
+	-command [list ::brlcad::mged::raytrace::apply_framebuffer_setting \
+	    $id fb_overlay]
     hoc_register_menu_data "Framebuffer" "Overlay" "Framebuffer - Overlay"\
 	{ { summary "Put the framebuffer in overlay mode. In this mode,
 	the framebuffer data is placed above everything.
@@ -1268,7 +1272,8 @@ hoc_register_menu_data "Create" "$ptype..." "Make a $ptype" $ksl
 	    { see_also "rset, vars" } }
     .$id.menubar.settings.fb add radiobutton -value 1 -variable mged_gui($id,fb_overlay)\
 	-label "Interlay" -underline 0\
-	-command "mged_apply $id \"set fb_overlay \$mged_gui($id,fb_overlay)\"; rt_update_dest $id"
+	-command [list ::brlcad::mged::raytrace::apply_framebuffer_setting \
+	    $id fb_overlay]
     hoc_register_menu_data "Framebuffer" "Interlay" "Framebuffer - Interlay"\
 	{ { summary "Put the framebuffer in interlay mode. In this mode,
 	the framebuffer data is placed above the geometry
@@ -1276,7 +1281,8 @@ hoc_register_menu_data "Create" "$ptype..." "Make a $ptype" $ksl
 	    { see_also "rset, vars" } }
     .$id.menubar.settings.fb add radiobutton -value 0 -variable mged_gui($id,fb_overlay)\
 	-label "Underlay" -underline 0\
-	-command "mged_apply $id \"set fb_overlay \$mged_gui($id,fb_overlay)\"; rt_update_dest $id"
+	-command [list ::brlcad::mged::raytrace::apply_framebuffer_setting \
+	    $id fb_overlay]
     hoc_register_menu_data "Framebuffer" "Underlay" "Framebuffer - Underlay"\
 	{ { summary "Put the framebuffer in underlay mode. In this mode,
 	the framebuffer data is placed under everything.
@@ -1842,7 +1848,7 @@ hoc_register_menu_data "Create" "$ptype..." "Make a $ptype" $ksl
 	    { see_also "qray" } }
 
     .$id.menubar.tools add command -label "Raytrace Control Panel" -underline 0\
-	-command "init_Raytrace $id"
+	-command [list ::brlcad::mged::raytrace::init $id]
     hoc_register_menu_data "Tools" "Raytrace Control Panel" "Raytrace Control Panel"\
 	{ { summary "Tool for raytracing." }
 	    { see_also rt } }
@@ -3118,7 +3124,7 @@ proc set_fb { id } {
     set mged_gui($id,listen) $listen
 
     # update raytrace control panel
-    rt_update_dest $id
+    ::brlcad::mged::raytrace::update_destination $id
 }
 
 proc set_mouse_behavior { id } {
@@ -3145,7 +3151,7 @@ proc set_mouse_behavior { id } {
     }
 
     # update raytrace control panel
-    rt_update_src $id
+    ::brlcad::mged::raytrace::update_source $id
 }
 
 proc get_font_height { w } {
@@ -3168,7 +3174,7 @@ proc get_cmd_win_height { id } {
 
 proc mged_handle_configure { id } {
     if {[winfo exists .$id.rt]} {
-	rt_handle_configure $id
+	::brlcad::mged::raytrace::handle_configure $id
     }
 }
 

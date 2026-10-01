@@ -321,17 +321,13 @@ proc mouse_matrix_edit_select { x y } {
 }
 
 proc mouse_rt_obj_select { x y } {
-    global mged_gui
-    global rt_control
-    global port
-
-    if {[opendb] == ""} {
+    if {[::brlcad::mged opendb] eq ""} {
 	return
     }
 
     set win [winset]
     set id [get_player_id_dm $win]
-    if {$id == "mged"} {
+    if {$id eq "mged"} {
 	mouse_init_mged_gui
     }
 
@@ -358,19 +354,7 @@ proc mouse_rt_obj_select { x y } {
 	set component $component/[lindex $components $i]
     }
 
-    rt_init_vars $id $win
-
-    switch $rt_control($id,omode) {
-	all
-	-
-	one {
-	    rt_olist_set $id $component
-	    do_Raytrace $id [list ::brlcad::mged rt]
-	}
-	several {
-	    rt_olist_add $id $component
-	}
-    }
+    ::brlcad::mged::raytrace::select_object $id $win $component
 
     return
 }

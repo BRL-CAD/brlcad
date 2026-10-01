@@ -14,6 +14,7 @@ foreach command {
     ::brlcad::mged::plot::init
     ::brlcad::mged::postscript::init
     ::brlcad::mged::qray::init
+    ::brlcad::mged::raytrace::init
     ::brlcad::mged::rt_script::init
     ::brlcad::mged::shader::is_good_shader
 } {
@@ -26,7 +27,8 @@ foreach namespace {
     ::brlcad ::brlcad::ged ::brlcad::help ::brlcad::mged
     ::brlcad::mged::adc ::brlcad::mged::extract ::brlcad::mged::font
     ::brlcad::mged::grid ::brlcad::mged::plot ::brlcad::mged::postscript
-    ::brlcad::mged::qray ::brlcad::mged::rt_script
+    ::brlcad::mged::qray ::brlcad::mged::raytrace
+    ::brlcad::mged::rt_script
     ::brlcad::mged::shader ::brlcad::vmath
 } {
     if {![namespace exists $namespace]} {
@@ -206,6 +208,39 @@ foreach command {
     }
 }
 unset qray_exports
+
+foreach command {
+    ::brlcad::mged::raytrace::init init_Raytrace
+} {
+    if {![llength [info commands $command]]} {
+	error "FAIL missing raytrace control command $command"
+    }
+}
+set raytrace_exports [namespace eval ::brlcad::mged::raytrace {
+    namespace export
+}]
+if {$raytrace_exports ne {init}} {
+    error "FAIL raytrace control exports are: $raytrace_exports"
+}
+if {[info exists ::rt_control]} {
+    error "FAIL raytrace control state remains global: ::rt_control"
+}
+foreach command {
+    PMLinearEvent PMMenu PMNonLinearEvent PMRaysEvent do_Advanced_Settings
+    do_Raytrace do_fbclear rt_check_dest rt_cook_dest rt_cook_src
+    rt_db_to_pix rt_dismiss rt_force_cook_dest rt_force_cook_src
+    rt_handle_configure rt_init_vars rt_ok rt_olist_add rt_olist_apply
+    rt_olist_clear rt_olist_dismiss rt_olist_edit rt_olist_edit_configure
+    rt_olist_edit_disable rt_olist_edit_enable rt_olist_reset rt_olist_set
+    rt_opendb_callback rt_set_fb rt_set_fb_all rt_set_fb_overlay
+    rt_set_fb_size rt_set_mouse_behavior rt_solid_list_callback
+    rt_update_dest rt_update_src
+} {
+    if {[llength [info commands ::$command]] || [auto_load ::$command]} {
+	error "FAIL private raytrace command is global: ::$command"
+    }
+}
+unset raytrace_exports
 
 set output_modules {
     {extract init_extractTool ex_control {do_extract}}

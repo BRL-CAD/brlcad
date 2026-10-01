@@ -753,7 +753,8 @@ proc xmin_wait_for_raytrace_panel {id} {
     xmin_publish_target raytrace_active $panel.fbtoggle
     xmin_publish_target raytrace_dismiss $panel.dismissB
     set ::xmin_raytrace_invocations 0
-    trace add execution ::do_Raytrace leave ::xmin_record_raytrace_invocation
+    trace add execution ::brlcad::mged::raytrace::run leave \
+	::xmin_record_raytrace_invocation
     xmin_write raytrace_ready 1
     after $xmin_poll_ms [list xmin_monitor_entry raytrace_size $panel.sizeE]
     after $xmin_poll_ms [list xmin_monitor_entry raytrace_destination $panel.destE]
@@ -762,7 +763,8 @@ proc xmin_wait_for_raytrace_panel {id} {
 }
 
 proc xmin_prepare_raytrace_reference {id} {
-    global env rt_control xmin_test_dir
+    global env xmin_test_dir
+    upvar #0 ::brlcad::mged::raytrace::rt_control rt_control
 
     set panel .$id.rt
     set reference_script [file join $xmin_test_dir raytrace-reference.sh]

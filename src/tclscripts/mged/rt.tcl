@@ -24,16 +24,20 @@
 
 check_externs "::brlcad::mged"
 
+namespace eval ::brlcad::mged::raytrace {
+
+namespace export init
+
+variable rt_control
 set rt_control(has_embedded_fb) [::brlcad::mged has_embedded_fb]
 
-proc init_Raytrace { id } {
+proc init { id } {
     global mged_gui
-    global fb
-    global rt_control
+    variable rt_control
     global env
     global ::tk::Priv
 
-    if {[opendb] == ""} {
+    if {[::brlcad::mged opendb] eq ""} {
 	cad_dialog $::tk::Priv(cad_dialog) $mged_gui($id,screen) "No database." \
 	    "No database has been opened!" info 0 OK
 	return
@@ -55,7 +59,7 @@ proc init_Raytrace { id } {
     }
 
     winset $mged_gui($id,active_dm)
-    rt_init_vars $id $mged_gui($id,active_dm)
+    initialize $id $mged_gui($id,active_dm)
 
     toplevel $top -screen $mged_gui($id,screen) -menu $top.menubar
 
@@ -77,49 +81,54 @@ proc init_Raytrace { id } {
     }
     menu $top.menubar.fb -title "Framebuffer" -tearoff 0
     $top.menubar.fb add checkbutton -offvalue 0 -onvalue 1\
-	-variable rt_control($id,fb)\
+	-variable ::brlcad::mged::raytrace::rt_control($id,fb)\
 	-label "Active" -underline 0 \
-	-command "rt_set_fb $id" \
+	-command [list ::brlcad::mged::raytrace::set_framebuffer $id] \
 	-state $dest_state
     hoc_register_menu_data "Framebuffer" "Active" "Destination Framebuffer Active"\
 	{ { summary "This activates/deactivates the destination framebuffer.
 Note - this pertains only to MGED's framebuffers." } }
     $top.menubar.fb add separator
-    $top.menubar.fb add radiobutton -value 1 -variable rt_control($id,fb_all)\
+    $top.menubar.fb add radiobutton -value 1 \
+	-variable ::brlcad::mged::raytrace::rt_control($id,fb_all)\
 	-label "All" -underline 0\
-	-command "rt_set_fb_all $id" \
+	-command [list ::brlcad::mged::raytrace::set_framebuffer_extent $id] \
 	-state $dest_state
     hoc_register_menu_data "Framebuffer" "All" "Destination Framebuffer - All"\
 	{ { summary "Use the entire pane as a framebuffer.
 Note - this pertains only to MGED's framebuffers." } }
-    $top.menubar.fb add radiobutton -value 0 -variable rt_control($id,fb_all)\
+    $top.menubar.fb add radiobutton -value 0 \
+	-variable ::brlcad::mged::raytrace::rt_control($id,fb_all)\
 	-label "Rectangle Area" -underline 0\
-	-command "rt_set_fb_all $id" \
+	-command [list ::brlcad::mged::raytrace::set_framebuffer_extent $id] \
 	-state $dest_state
     hoc_register_menu_data "Framebuffer" "Rectangle Area" "Destination Framebuffer - Rectangle Area"\
 	{ { summary "Use only the rectangular area, as defined by the
 sweep rectangle, for the framebuffer. Note - this
 pertains only to MGED's framebuffers." } }
     $top.menubar.fb add separator
-    $top.menubar.fb add radiobutton -value 2 -variable rt_control($id,fb_overlay)\
+    $top.menubar.fb add radiobutton -value 2 \
+	-variable ::brlcad::mged::raytrace::rt_control($id,fb_overlay)\
 	-label "Overlay" -underline 0\
-	-command "rt_set_fb_overlay $id" \
+	-command [list ::brlcad::mged::raytrace::set_framebuffer_layer $id] \
 	-state $dest_state
     hoc_register_menu_data "Framebuffer" "Overlay" "Destination Framebuffer - Overlay"\
 	{ { summary "Draw the framebuffer above everything (i.e. above the
 geometry and faceplate). Note - this pertains only to
 MGED's framebuffers." } }
-    $top.menubar.fb add radiobutton -value 1 -variable rt_control($id,fb_overlay)\
+    $top.menubar.fb add radiobutton -value 1 \
+	-variable ::brlcad::mged::raytrace::rt_control($id,fb_overlay)\
 	-label "Interlay" -underline 0\
-	-command "rt_set_fb_overlay $id" \
+	-command [list ::brlcad::mged::raytrace::set_framebuffer_layer $id] \
 	-state $dest_state
     hoc_register_menu_data "Framebuffer" "Interlay" "Destination Framebuffer - Interlay"\
 	{ { summary "Draw the framebuffer above the geometry and below
 the faceplate. Note - this pertains only to MGED's
 framebuffers." } }
-    $top.menubar.fb add radiobutton -value 0 -variable rt_control($id,fb_overlay)\
+    $top.menubar.fb add radiobutton -value 0 \
+	-variable ::brlcad::mged::raytrace::rt_control($id,fb_overlay)\
 	-label "Underlay" -underline 0\
-	-command "rt_set_fb_overlay $id" \
+	-command [list ::brlcad::mged::raytrace::set_framebuffer_layer $id] \
 	-state $dest_state
     hoc_register_menu_data "Framebuffer" "Underlay" "Destination Framebuffer - Underlay"\
 	{ { summary "Draw the framebuffer below everything (i.e. below the
@@ -127,35 +136,39 @@ geometry and faceplate). Note - this pertains only to
 MGED's framebuffers." } }
 
     menu $top.menubar.obj -title "Objects" -tearoff 0
-    $top.menubar.obj add radiobutton -value one -variable rt_control($id,omode)\
+    $top.menubar.obj add radiobutton -value one \
+	-variable ::brlcad::mged::raytrace::rt_control($id,omode)\
 	-label "One" -underline 0\
-	-command "rt_set_mouse_behavior $id"
+	-command [list ::brlcad::mged::raytrace::set_mouse_behavior $id]
     hoc_register_menu_data "Objects" "one" "Objects - one"\
 	{ { summary "Raytrace only the selected object. Note - this will
 change the mouse behavior of the source window to
 \"o\" (i.e. raytrace object)." } }
-    $top.menubar.obj add radiobutton -value several -variable rt_control($id,omode)\
+
+    $top.menubar.obj add radiobutton -value several \
+	    -variable ::brlcad::mged::raytrace::rt_control($id,omode)\
 	    -label "Several" -underline 0\
-	    -command "rt_set_mouse_behavior $id"
+	    -command [list ::brlcad::mged::raytrace::set_mouse_behavior $id]
     hoc_register_menu_data "Objects" "several" "Objects - several"\
 	    { { summary "Add the selected object to the list of objects to be
 raytraced. Note - this will change the mouse behavior
 of the source window to \"o\" (i.e. pick raytrace objects)." } }
-    $top.menubar.obj add radiobutton -value all -variable rt_control($id,omode)\
+    $top.menubar.obj add radiobutton -value all \
+	    -variable ::brlcad::mged::raytrace::rt_control($id,omode)\
 	    -label "All" -underline 0\
-	    -command "rt_set_mouse_behavior $id"
+	    -command [list ::brlcad::mged::raytrace::set_mouse_behavior $id]
     hoc_register_menu_data "Objects" "all" "Objects - all"\
 	    { { summary "Raytrace all displayed objects. Note - this will
 change the mouse behavior of the source window to
 \"d\" (i.e. the default mouse behavior)." } }
     $top.menubar.obj add separator
     $top.menubar.obj add command -label "Edit List"\
-	    -command "rt_olist_edit $id"
+	    -command [list ::brlcad::mged::raytrace::edit_object_list $id]
     hoc_register_menu_data "Objects" "edit list" "Edit List"\
 	    { { summary "Pop up a tool to edit the list
 of objects to be raytraced." } }
     $top.menubar.obj add command -label "Clear List"\
-	    -command "rt_olist_clear $id"
+	    -command [list ::brlcad::mged::raytrace::clear_object_list $id]
     hoc_register_menu_data "Objects" "clear list" "Clear List"\
 	    { { summary "Clear the object list and the contents
 of the object list editor if it exists." } }
@@ -171,40 +184,47 @@ example, ul, \"upper left\" and \"Upper Left\" all specify the
 upper left pane." } }
     label $top.srcL -text "Source" -anchor e -padx 0 -pady 0
     hoc_register_data $top.srcL "Source" $hoc_data
-    entry $top.srcE -relief flat -width 12 -textvar rt_control($id,raw_src)
+    entry $top.srcE -relief flat -width 12 \
+	-textvariable ::brlcad::mged::raytrace::rt_control($id,raw_src)
     hoc_register_data $top.srcE "Source" $hoc_data
-    bind $top.srcE <KeyRelease> "rt_force_cook_src $id \$rt_control($id,raw_src)"
+    bind $top.srcE <KeyRelease> \
+	[list ::brlcad::mged::raytrace::force_entered_source $id]
     menubutton $top.srcMB -relief raised -bd 2\
 	    -menu $top.srcMB.menu -indicatoron 1
     hoc_register_data $top.srcMB "Source"\
 	    { { summary "Pop up a menu of likely sources." } }
     menu $top.srcMB.menu -title "Source" -tearoff 0
     $top.srcMB.menu add command -label "Active Pane"\
-	    -command "rt_force_cook_src $id \$mged_gui($id,active_dm)"
+	    -command [list ::brlcad::mged::raytrace::force_gui_pane \
+		$id source active]
     hoc_register_menu_data "Source" "Active Pane" "Source - Active Pane"\
 	    { { summary "Set the source to the active pane. The
 active pane is the pane currently tied
 to the GUI." } }
     $top.srcMB.menu add separator
     $top.srcMB.menu add command -label "Upper Left"\
-	    -command "rt_force_cook_src $id $mged_gui($id,top).ul"
+	    -command [list ::brlcad::mged::raytrace::force_gui_pane \
+		$id source ul]
     hoc_register_menu_data "Source" "Upper Left" "Source - Upper Left"\
 	    { { summary "Set the source to the \"Upper Left\" pane." } }
     $top.srcMB.menu add command -label "Upper Right"\
-	    -command "rt_force_cook_src $id $mged_gui($id,top).ur"
+	    -command [list ::brlcad::mged::raytrace::force_gui_pane \
+		$id source ur]
     hoc_register_menu_data "Source" "Upper Right" "Source - Upper Right"\
 	    { { summary "Set the source to the \"Upper Right\" pane." } }
     $top.srcMB.menu add command -label "Lower Left"\
-	    -command "rt_force_cook_src $id $mged_gui($id,top).ll"
+	    -command [list ::brlcad::mged::raytrace::force_gui_pane \
+		$id source ll]
     hoc_register_menu_data "Source" "Lower Left" "Source - Lower Left"\
 	    { { summary "Set the source to the \"Lower Left\" pane." } }
     $top.srcMB.menu add command -label "Lower Right"\
-	    -command "rt_force_cook_src $id $mged_gui($id,top).lr"
+	    -command [list ::brlcad::mged::raytrace::force_gui_pane \
+		$id source lr]
     hoc_register_menu_data "Source" "Lower Right" "Source - Lower Right"\
 	    { { summary "Set the source to the \"Lower Right\" pane." } }
     $top.srcMB.menu add separator
     $top.srcMB.menu add checkbutton -offvalue 0 -onvalue 1\
-	    -variable rt_control($id,fixedSrc)\
+	    -variable ::brlcad::mged::raytrace::rt_control($id,fixedSrc)\
 	    -label "Fixed"
     hoc_register_menu_data "Source" "Fixed" "Source - Fixed"\
 	    { { summary "By default, when the mouse_behavior is in the mode
@@ -225,16 +245,19 @@ enter fbhost:0 to send the output to the framebuffer running on
 the machine fbhost and listening on port 0." } }
     label $top.destL -text "Destination" -anchor e -padx 0 -pady 0
     hoc_register_data $top.destL "Destination" $hoc_data
-    entry $top.destE -relief flat -width 12 -textvar rt_control($id,raw_dest)
+    entry $top.destE -relief flat -width 12 \
+	-textvariable ::brlcad::mged::raytrace::rt_control($id,raw_dest)
     hoc_register_data $top.destE "Destination" $hoc_data
-    bind $top.destE <KeyRelease> "rt_force_cook_dest $id \$rt_control($id,raw_dest)"
+    bind $top.destE <KeyRelease> \
+	[list ::brlcad::mged::raytrace::force_entered_destination $id]
     menubutton $top.destMB -relief raised -bd 2\
 	    -menu $top.destMB.menu -indicatoron 1
     hoc_register_data $top.destMB "Destination"\
 	    { { summary "Pop up a menu of likely destinations." } }
     menu $top.destMB.menu -title "Destination" -tearoff 0
     $top.destMB.menu add command -label "Active Pane"\
-	    -command "rt_force_cook_dest $id \$mged_gui($id,active_dm)" \
+	    -command [list ::brlcad::mged::raytrace::force_gui_pane \
+		$id destination active] \
 	    -state $dest_state
     hoc_register_menu_data "Destination" "Active Pane" "Destination - Active Pane"\
 	    { { summary "Set the destination to the active pane.
@@ -242,43 +265,49 @@ The active pane is the pane currently
 tied to the GUI." } }
     $top.destMB.menu add separator
     $top.destMB.menu add command -label "Upper Left"\
-	    -command "rt_force_cook_dest $id $mged_gui($id,top).ul" \
+	    -command [list ::brlcad::mged::raytrace::force_gui_pane \
+		$id destination ul] \
 	    -state $dest_state
     hoc_register_menu_data "Destination" "Upper Left" "Destination - Upper Left"\
 	    { { summary "Set the destination to \"Upper Left\" pane." } }
     $top.destMB.menu add command -label "Upper Right"\
-	    -command "rt_force_cook_dest $id $mged_gui($id,top).ur" \
+	    -command [list ::brlcad::mged::raytrace::force_gui_pane \
+		$id destination ur] \
 	    -state $dest_state
     hoc_register_menu_data "Destination" "Upper Right" "Destination - Upper Right"\
 	    { { summary "Set the destination to \"Upper Right\" pane." } }
     $top.destMB.menu add command -label "Lower Left"\
-	    -command "rt_force_cook_dest $id $mged_gui($id,top).ll" \
+	    -command [list ::brlcad::mged::raytrace::force_gui_pane \
+		$id destination ll] \
 	    -state $dest_state
     hoc_register_menu_data "Destination" "Lower Left" "Destination - Lower Left"\
 	    { { summary "Set the destination to \"Lower Left\" pane." } }
     $top.destMB.menu add command -label "Lower Right"\
-	    -command "rt_force_cook_dest $id $mged_gui($id,top).lr" \
+	    -command [list ::brlcad::mged::raytrace::force_gui_pane \
+		$id destination lr] \
 	    -state $dest_state
     hoc_register_menu_data "Destination" "Lower Right" "Destination - Lower Right"\
 	    { { summary "Set the destination to \"Lower Right\" pane." } }
     $top.destMB.menu add separator
-    set dbname [rt_db_to_pix]
-    if {$dbname == ""} {
+    set dbname [default_output_file]
+    if {$dbname eq ""} {
 	set dbname foo.pix
     }
     $top.destMB.menu add command -label $dbname\
-	    -command "rt_force_cook_dest $id $dbname"
+	    -command [list ::brlcad::mged::raytrace::force_destination \
+		$id $dbname]
     hoc_register_menu_data "Destination" "$dbname" "Destination - $dbname"\
 	    { { summary "Set the destination to the specified file." } }
-    if {[info exists env(FB_FILE)] && $env(FB_FILE) != ""} {
+    if {[info exists env(FB_FILE)] && $env(FB_FILE) ne ""} {
 	$top.destMB.menu add command -label "$env(FB_FILE)"\
-		-command "rt_force_cook_dest $id $env(FB_FILE)"
+		-command [list ::brlcad::mged::raytrace::force_destination \
+		    $id $env(FB_FILE)]
 	hoc_register_menu_data "Destination" "$env(FB_FILE)" "Destination - $env(FB_FILE)"\
 		{ { summary "Set the destination to the specified framebuffer." } }
     }
     $top.destMB.menu add separator
     $top.destMB.menu add checkbutton -offvalue 0 -onvalue 1\
-	    -variable rt_control($id,fixedDest)\
+	    -variable ::brlcad::mged::raytrace::rt_control($id,fixedDest)\
 	    -label "Fixed"
     hoc_register_menu_data "Destination" "Fixed" "Destination - Fixed"\
 	    { { summary "By default, when the mouse_behavior is in the mode
@@ -291,7 +320,8 @@ objects, check the fixed button." } }
     hoc_register_data $top.sizeL "Size"\
 	    { { summary "Indicates the size of the image.
 This defaults to the size of the active pane." } }
-    entry $top.sizeE -relief flat -width 12 -textvar rt_control($id,size)
+    entry $top.sizeE -relief flat -width 12 \
+	-textvariable ::brlcad::mged::raytrace::rt_control($id,size)
     hoc_register_data $top.sizeE "Size"\
 	    { { summary "Enter the desired image size." } }
     menubutton $top.sizeMB -relief raised -bd 2\
@@ -300,32 +330,32 @@ This defaults to the size of the active pane." } }
 	    { { summary "Pop up a menu of popular image sizes." } }
     menu $top.sizeMB.sizeM -title "Size" -tearoff 0
     $top.sizeMB.sizeM add command -label "Size of Pane"\
-	    -command "rt_set_fb_size $id"
+	    -command [list ::brlcad::mged::raytrace::set_framebuffer_size $id]
     hoc_register_menu_data "Size" "Size of Pane" "Size of Pane"\
 	    { { summary "Set the image size to be the
 same size as the active pane." } }
     $top.sizeMB.sizeM add command -label 128\
-	    -command "set rt_control($id,size) 128"
+	    -command [list ::brlcad::mged::raytrace::set_image_size $id 128]
     hoc_register_menu_data "Size" 128 "Size - 128x128"\
 	    { { summary "Set the image size to 128x128." } }
     $top.sizeMB.sizeM add command -label 256\
-	    -command "set rt_control($id,size) 256"
+	    -command [list ::brlcad::mged::raytrace::set_image_size $id 256]
     hoc_register_menu_data "Size" 256 "Size - 256x256"\
 	    { { summary "Set the image size to 256x256." } }
     $top.sizeMB.sizeM add command -label 512\
-	    -command "set rt_control($id,size) 512"
+	    -command [list ::brlcad::mged::raytrace::set_image_size $id 512]
     hoc_register_menu_data "Size" 512 "Size - 512x512"\
 	    { { summary "Set the image size to 512x512." } }
     $top.sizeMB.sizeM add command -label 640x480\
-	    -command "set rt_control($id,size) 640x480"
+	    -command [list ::brlcad::mged::raytrace::set_image_size $id 640x480]
     hoc_register_menu_data "Size" 640x480 "Size - 640x480"\
 	    { { summary "Set the image size to 640x480." } }
     $top.sizeMB.sizeM add command -label 720x486\
-	    -command "set rt_control($id,size) 720x486"
+	    -command [list ::brlcad::mged::raytrace::set_image_size $id 720x486]
     hoc_register_menu_data "Size" 720x486 "Size - 720x486"\
 	    { { summary "Set the image size to 720x486." } }
     $top.sizeMB.sizeM add command -label 1024\
-	    -command "set rt_control($id,size) 1024"
+	    -command [list ::brlcad::mged::raytrace::set_image_size $id 1024]
     hoc_register_menu_data "Size" 1024 "Size - 1024x1024"\
 	    { { summary "Set the image size to 1024x1024." } }
 
@@ -337,42 +367,45 @@ that is used when clearing the framebuffer." } }
 
     # $top.colorF is the name of the container created by color_entry_build
     # that contains the entry and menubutton for specifying a color
-    color_entry_build $top color rt_control($id,color)\
-	    "color_entry_chooser $id $top color \"Background Color\"\
-    rt_control $id,color"\
-	    12 $rt_control($id,color) rt
+    color_entry_build $top color \
+	::brlcad::mged::raytrace::rt_control($id,color) \
+	[list color_entry_chooser $id $top color "Background Color" \
+	    ::brlcad::mged::raytrace::rt_control $id,color] \
+	12 $rt_control($id,color) rt
 
     button $top.advancedB -relief raised -text "Advanced Settings..."\
-	    -command "do_Advanced_Settings $id" \
+	    -command [list ::brlcad::mged::raytrace::init_advanced $id] \
 	    -padx 0.5m -pady 0.5m
     hoc_register_data $top.advancedB "Advanced Settings"\
 	    { { summary "Pop up another GUI for advanced settings." } }
     button $top.raytraceB -relief raised -text "Raytrace" \
-	    -command [list do_Raytrace $id [list ::brlcad::mged rt]] \
+	    -command [list ::brlcad::mged::raytrace::run \
+		$id [list ::brlcad::mged rt]] \
 	    -padx 0.5m -pady 0.5m
     hoc_register_data $top.raytraceB "Raytrace"\
 	    { { summary "Begin raytracing the view of the source pane.
 The results of the raytrace will go to the place
 specified by the destination." } }
-	button $top.artB -relief raised -text "Art" \
-			-command [list do_Raytrace $id [list ::brlcad::mged art]] \
-			-padx 0.5m -pady 0.5m
-		hoc_register_data $top.artB "Art"\
-			{ { summary "Begin raytracing the view of the source pane.
-	The results of the raytrace will be written to output\art.png." } }
+    button $top.artB -relief raised -text "Art" \
+	-command [list ::brlcad::mged::raytrace::run \
+	    $id [list ::brlcad::mged art]] \
+	-padx 0.5m -pady 0.5m
+    hoc_register_data $top.artB "Art"\
+	{ { summary "Begin raytracing the view of the source pane.
+The results of the raytrace will be written to output\art.png." } }
     button $top.clearB -relief raised -text "fbclear" \
-	    -command "do_fbclear $id" \
+	    -command [list ::brlcad::mged::raytrace::clear_framebuffer $id] \
 	    -padx 0.5m -pady 0.5m
     hoc_register_data $top.clearB "Clear the Framebuffer"\
 	    { { summary "Clear the framebuffer specified by the
 destination to the background color." } }
     button $top.abortB -relief raised -text "Abort" \
-	    -command "rtabort" \
+	    -command [list rtabort] \
 	    -padx 0.5m -pady 0.5m
     hoc_register_data $top.abortB "Abort Raytrace"\
 	    { { summary "Abort all raytraces initiated by MGED." } }
     button $top.dismissB -relief raised -text "Dismiss" \
-	    -command "rt_dismiss $id" \
+	    -command [list ::brlcad::mged::raytrace::dismiss $id] \
 	    -padx 0.5m -pady 0.5m
     hoc_register_data $top.dismissB "Dismiss"\
 	    { { summary "Dismiss/close the raytrace control panel." } }
@@ -380,8 +413,8 @@ destination to the background color." } }
     set tmp_font [$top.sizeL cget -font]
     checkbutton $top.fbtoggle \
 		-text "Enable Framebuffer" \
-		-variable rt_control($id,fb) \
-		-command "rt_set_fb $id" \
+		-variable ::brlcad::mged::raytrace::rt_control($id,fb) \
+		-command [list ::brlcad::mged::raytrace::set_framebuffer $id] \
 		-font $tmp_font \
 		-padx 0.5m -pady 0.5m
     hoc_register_data $top.fbtoggle "Enable Framebuffer"\
@@ -424,26 +457,64 @@ destination to the background color." } }
     grid columnconfigure $top 0 -weight 1
     grid rowconfigure $top 0 -weight 1
 
-    color_entry_update $top color rt_control($id,color) $rt_control($id,color)
-    rt_solid_list_callback $id
-    rt_olist_edit_configure $id
+    color_entry_update $top color \
+	::brlcad::mged::raytrace::rt_control($id,color) \
+	$rt_control($id,color)
+    solid_list_callback $id
+    configure_object_list $id
     place_near_mouse $top
     wm title $top "Raytrace Control Panel ($id)"
 }
 
-proc rt_ok { id top } {
-    do_Raytrace $id [list ::brlcad::mged rt]
-    rt_dismiss $id
+proc force_entered_source { id } {
+    variable rt_control
+
+    force_source $id $rt_control($id,raw_src)
 }
 
-proc do_Raytrace { id prog_name} {
+proc force_entered_destination { id } {
+    variable rt_control
+
+    force_destination $id $rt_control($id,raw_dest)
+}
+
+proc force_gui_pane { id target location } {
     global mged_gui
-    global port
+
+    if {$location eq "active"} {
+	set pane $mged_gui($id,active_dm)
+    } elseif {$location in {ul ur ll lr}} {
+	set pane $mged_gui($id,top).$location
+    } else {
+	return -code error "unknown MGED pane location: $location"
+    }
+
+    switch -- $target {
+	source {
+	    force_source $id $pane
+	}
+	destination {
+	    force_destination $id $pane
+	}
+	default {
+	    return -code error "unknown raytrace pane target: $target"
+	}
+    }
+}
+
+proc set_image_size { id size } {
+    variable rt_control
+
+    set rt_control($id,size) $size
+}
+
+proc run { id prog_name } {
+    global mged_gui
     global fb_all
-    global rt_control
+    variable rt_control
     global ::tk::Priv
 
-    if {$rt_control($id,cooked_src) == ""} {
+    if {$rt_control($id,cooked_src) eq ""} {
 	return
     }
 
@@ -454,23 +525,25 @@ proc do_Raytrace { id prog_name} {
     winset $rt_control($id,cooked_src)
     set rt_cmd $prog_name
 
-    if {$rt_control($id,cooked_dest) != ""} {
-	append rt_cmd " -F$rt_control($id,cooked_dest)"
+    if {$rt_control($id,cooked_dest) ne ""} {
+	lappend rt_cmd -F$rt_control($id,cooked_dest)
     }
 
-    if {$rt_control($id,size) != ""} {
-	set result [regexp "^(\[ \]*\[0-9\]+)((\[ \]*\[xX\]?\[ \]*)|(\[ \]+))(\[0-9\]*\[ \]*)$"\
-			$rt_control($id,size) smatch width junkA junkB junkC height]
+    if {$rt_control($id,size) ne ""} {
+	set result [regexp \
+	    {^([ ]*[0-9]+)(?:[ ]*[xX]?[ ]*|[ ]+)([0-9]*[ ]*)$} \
+	    $rt_control($id,size) -> width height]
 	if {$result} {
-	    if {$height != ""} {
-		append rt_cmd " -w $width -n $height"
+	    set width [string trim $width]
+	    set height [string trim $height]
+	    if {$height ne ""} {
+		lappend rt_cmd -w $width -n $height
 		set width "$width.0"
 		set height "$height.0"
 		set aspect [expr {$width / $height}]
-		append rt_cmd " -V $aspect"
+		lappend rt_cmd -V $aspect
 	    } else {
-		set aspect 1
-		append rt_cmd " -s $width"
+		lappend rt_cmd -s $width
 	    }
 	} else {
 	    cad_dialog $::tk::Priv(cad_dialog) $mged_gui($id,screen)\
@@ -479,41 +552,58 @@ proc do_Raytrace { id prog_name} {
 		"" 0 OK
 	    return
 	}
-    } else {
-	set aspect 1
     }
 
-    if {[winfo exists $rt_control($id,top).colorMB] && $rt_control($id,color) != ""} {
+    if {[winfo exists $rt_control($id,top).colorMB] &&
+	$rt_control($id,color) ne ""} {
 	set rgb [getRGB $rt_control($id,top).colorMB $rt_control($id,color)]
-	append rt_cmd " -C[lindex $rgb 0]/[lindex $rgb 1]/[lindex $rgb 2]"
+	lappend rt_cmd -C[join $rgb /]
     }
 
-    if {$rt_control($id,nproc) != ""} {
-	append rt_cmd " -P$rt_control($id,nproc)"
+    if {$rt_control($id,nproc) ne ""} {
+	lappend rt_cmd -P$rt_control($id,nproc)
     }
 
-    if {$rt_control($id,hsample) != ""} {
-	append rt_cmd " -H$rt_control($id,hsample)"
+    if {$rt_control($id,hsample) ne ""} {
+	lappend rt_cmd -H$rt_control($id,hsample)
     }
 
-    if {$rt_control($id,jitter) != ""} {
-	append rt_cmd " -J$rt_control($id,jitter)"
+    if {$rt_control($id,jitter) ne ""} {
+	lappend rt_cmd -J$rt_control($id,jitter)
     }
 
-    if {$rt_control($id,lmodel) != ""} {
-	append rt_cmd " -l$rt_control($id,lmodel)"
+    if {$rt_control($id,lmodel) ne ""} {
+	lappend rt_cmd -l$rt_control($id,lmodel)
 	if {$rt_control($id,lmodel) == 7} {
-	    append rt_cmd ",$rt_control($id,pmGlobalPhotonsEntry),$rt_control($id,pmCausticsPercentScale),$rt_control($id,pmIrradianceRaysScale),$rt_control($id,pmAngularTolerance),$rt_control($id,pmRandomSeedEntry),$rt_control($id,pmImportanceMapping),$rt_control($id,pmIrradianceHypersamplingCache),$rt_control($id,pmVisualizeIrradiance),$rt_control($id,pmScaleIndirectEntry),$rt_control($id,pmCacheFileEntry) -A0"
+	    set photon_options [join [list \
+		$rt_control($id,pmGlobalPhotonsEntry) \
+		$rt_control($id,pmCausticsPercentScale) \
+		$rt_control($id,pmIrradianceRaysScale) \
+		$rt_control($id,pmAngularTolerance) \
+		$rt_control($id,pmRandomSeedEntry) \
+		$rt_control($id,pmImportanceMapping) \
+		$rt_control($id,pmIrradianceHypersamplingCache) \
+		$rt_control($id,pmVisualizeIrradiance) \
+		$rt_control($id,pmScaleIndirectEntry) \
+		$rt_control($id,pmCacheFileEntry)] ,]
+	    set rt_cmd [lreplace $rt_cmd end end \
+		-l$rt_control($id,lmodel),$photon_options]
+	    lappend rt_cmd -A0
 	}
     }
-    #puts $rt_cmd
 
-    if {$rt_control($id,other) != ""} {
-	append rt_cmd " $rt_control($id,other)"
+    if {$rt_control($id,other) ne ""} {
+	if {[catch {lappend rt_cmd {*}$rt_control($id,other)}]} {
+	    cad_dialog $::tk::Priv(cad_dialog) $mged_gui($id,screen) \
+		"Improper raytrace options!" \
+		"Improper raytrace options: $rt_control($id,other)" \
+		"" 0 OK
+	    return
+	}
     }
 
-    if {$rt_control($id,opencl) != ""} {
-	append rt_cmd " -z$rt_control($id,opencl)"
+    if {$rt_control($id,opencl) ne ""} {
+	lappend rt_cmd -z$rt_control($id,opencl)
     }
 
     if {!$fb_all} {
@@ -540,7 +630,7 @@ proc do_Raytrace { id prog_name} {
 		set ymin [expr $ymax + $height]
 	    }
 
-	    append rt_cmd " -j $xmin,$ymin,$xmax,$ymax"
+	    lappend rt_cmd -j $xmin,$ymin,$xmax,$ymax
 	}
     }
 
@@ -549,27 +639,26 @@ proc do_Raytrace { id prog_name} {
 	-
 	several {
 	    # update rt_control($id,olist) with what's in the text widget
-	    rt_olist_apply $id
+	    apply_object_list $id
 
-	    catch {eval $rt_cmd -- $rt_control($id,olist)}
+	    catch {{*}$rt_cmd -- {*}$rt_control($id,olist)}
 	}
 	all {
-	    catch {eval $rt_cmd}
+	    catch {{*}$rt_cmd}
 	}
     }
 }
 
-proc do_fbclear { id } {
+proc clear_framebuffer { id } {
     global mged_gui
-    global rt_control
+    variable rt_control
     global ::tk::Priv
-    global tcl_platform
 
-    if {$rt_control($id,cooked_dest) == ""} {
+    if {$rt_control($id,cooked_dest) eq ""} {
 	return
     }
 
-    if {$rt_control($id,color) != ""} {
+    if {$rt_control($id,color) ne ""} {
 	set result [regexp "^(\[0-9\]+)\[ \]+(\[0-9\]+)\[ \]+(\[0-9\]+)$" \
 			$rt_control($id,color) cmatch red green blue]
 	if {!$result} {
@@ -595,9 +684,8 @@ proc do_fbclear { id } {
     }
 }
 
-proc rt_set_fb_size { id } {
-    global mged_gui
-    global rt_control
+proc set_framebuffer_size { id } {
+    variable rt_control
 
     if ![winfo exists $rt_control($id,half_baked_dest)] {
 	return
@@ -608,8 +696,8 @@ proc rt_set_fb_size { id } {
     set rt_control($id,size) "[lindex $size 0]x[lindex $size 1]"
 }
 
-proc rt_dismiss { id } {
-    global rt_control
+proc dismiss { id } {
+    variable rt_control
 
     if [winfo exists $rt_control($id,topAS)] {
 	catch { destroy $rt_control($id,topAS) }
@@ -628,9 +716,9 @@ proc rt_dismiss { id } {
     set rt_control($id,omode) one
 }
 
-proc do_Advanced_Settings { id } {
+proc init_advanced { id } {
     global mged_gui
-    global rt_control
+    variable rt_control
 
     set top $rt_control($id,topAS)
     if [winfo exists $top] {
@@ -647,7 +735,8 @@ proc do_Advanced_Settings { id } {
 to use for raytracing." } }
     label $top.nprocL -text "# of Processors" -anchor e
     hoc_register_data $top.nprocL "# of Processors" $hoc_data
-    entry $top.nprocE -relief sunken -bd 2 -width 2 -textvar rt_control($id,nproc)
+    entry $top.nprocE -relief sunken -bd 2 -width 2 \
+	-textvariable ::brlcad::mged::raytrace::rt_control($id,nproc)
     hoc_register_data $top.nprocE "# of Processors" $hoc_data
 
     set hoc_data { { summary "Hypersampling is the number of extra rays
@@ -655,36 +744,38 @@ to fire for each pixel. The results are then
 averaged to determine the pixel value." } }
     label $top.hsampleL -text "Hypersample" -anchor e
     hoc_register_data $top.hsampleL "Hypersample" $hoc_data
-    entry $top.hsampleE -relief sunken -bd 2 -width 2 -textvar rt_control($id,hsample)
+    entry $top.hsampleE -relief sunken -bd 2 -width 2 \
+	-textvariable ::brlcad::mged::raytrace::rt_control($id,hsample)
     hoc_register_data $top.hsampleE "Hypersample" $hoc_data
 
     label $top.jitterL -text "Jitter" -anchor e
     hoc_register_data $top.jitterL "Jitter"\
 	{ { summary "Jitter is used to randomly vary the point
 from which a ray is fired." } }
-    menubutton $top.jitterMB -relief sunken -bd 2 -textvar rt_control($id,jitterTitle)\
+    menubutton $top.jitterMB -relief sunken -bd 2 \
+	-textvariable ::brlcad::mged::raytrace::rt_control($id,jitterTitle)\
 	-menu $top.jitterMB.jitterM -indicatoron 1
     hoc_register_data $top.jitterMB "Jitter"\
 	{ { summary "Pop up a menu of jitter values." } }
     menu $top.jitterMB.jitterM -title "Jitter" -tearoff 0
     $top.jitterMB.jitterM add command -label "None"\
-	-command "set rt_control($id,jitter) 0; set rt_control($id,jitterTitle) None"
+	-command [list ::brlcad::mged::raytrace::set_jitter $id 0 None]
     hoc_register_menu_data "Jitter" "None" "Jitter - None"\
 	{ { summary "Turns off jittering. The rays will be
 fired from the center of each cell." } }
     $top.jitterMB.jitterM add command -label "Cell"\
-	-command "set rt_control($id,jitter) 1; set rt_control($id,jitterTitle) Cell"
+	-command [list ::brlcad::mged::raytrace::set_jitter $id 1 Cell]
     hoc_register_menu_data "Jitter" "Cell" "Jitter - Cell"\
 	{ { summary "Randomly jitter each cell by +/- one
 half of the pixel size." } }
     $top.jitterMB.jitterM add command -label "Frame"\
-	-command "set rt_control($id,jitter) 2; set rt_control($id,jitterTitle) Frame"
+	-command [list ::brlcad::mged::raytrace::set_jitter $id 2 Frame]
     hoc_register_menu_data "Jitter" "Frame" "Jitter - Frame"\
 	{ { summary "Randomly jitter the frame by +/- one
 half of the pixel size. This variance will
 be applied uniformly to each cell." } }
     $top.jitterMB.jitterM add command -label "Both"\
-	-command "set rt_control($id,jitter) 3; set rt_control($id,jitterTitle) Both"
+	-command [list ::brlcad::mged::raytrace::set_jitter $id 3 Both]
     hoc_register_menu_data "Jitter" "Both" "Jitter - Both"\
 	{ { summary "Randomly jitter the frame as well
 as each cell." } }
@@ -694,15 +785,15 @@ as each cell." } }
 	{ { summary "The light model determines how the
 ray tracer will handle light." } }
     menubutton $top.lmodelMB -relief sunken -bd 2\
-	-width 24 -textvar rt_control($id,lmodelTitle)\
+	-width 24 \
+	-textvariable ::brlcad::mged::raytrace::rt_control($id,lmodelTitle)\
 	-menu $top.lmodelMB.lmodelM -indicatoron 1
     hoc_register_data $top.lmodelMB "Light Model"\
 	{ { summary "Pop up a menu of light models." } }
     menu $top.lmodelMB.lmodelM -title "Light Model" -tearoff 0
     $top.lmodelMB.lmodelM add command -label "Full"\
-	-command "set rt_control($id,lmodel) 0;\
-	    set rt_control($id,lmodelTitle) \"Full\";\
-	    PMMenu $id $top 0"
+	-command [list ::brlcad::mged::raytrace::set_light_model \
+	    $id $top 0 "Full" 0]
     hoc_register_menu_data "Light Model" "Full"\
 	"Lighting Model - Full"\
 	{ { summary "This is the default. The full lighting model has the
@@ -716,50 +807,44 @@ represent additional light sources (up to 16
 				    are presently permitted), and shadow computations
 will be initiated automatically." } }
     $top.lmodelMB.lmodelM add command -label "Diffuse"\
-	    -command "set rt_control($id,lmodel) 1;\
-    set rt_control($id,lmodelTitle) \"Diffuse\";\
-    PMMenu $id $top 0"
+	-command [list ::brlcad::mged::raytrace::set_light_model \
+	    $id $top 1 "Diffuse" 0]
     hoc_register_menu_data "Light Model" "Diffuse"\
 	    "Lighting Model - Diffuse"\
 	    { { summary "This is a diffuse lighting model only and\
     is intended for debugging." } }
     $top.lmodelMB.lmodelM add command -label "Surface Normals"\
-	    -command "set rt_control($id,lmodel) 2;\
-    set rt_control($id,lmodelTitle) \"Surface Normals\";\
-    PMMenu $id $top 0"
+	-command [list ::brlcad::mged::raytrace::set_light_model \
+	    $id $top 2 "Surface Normals" 0]
     hoc_register_menu_data "Light Model" "Surface Normals"\
 	    "Lighting Model - Surface Normals"\
 	    { { summary "This lighting model displays the surface normals
 as colors which makes it useful for examining
 curvature and surface orientation." } }
     $top.lmodelMB.lmodelM add command -label "Diffuse - 3 light"\
-	    -command "set rt_control($id,lmodel) 3;\
-    set rt_control($id,lmodelTitle) \"Diffuse - 3 light\";\
-    PMMenu $id $top 0"
+	-command [list ::brlcad::mged::raytrace::set_light_model \
+	    $id $top 3 "Diffuse - 3 light" 0]
     hoc_register_menu_data "Light Model" "Diffuse - 3 light"\
 	    "Lighting Model - Diffuse 3 Light"\
 	    { { summary "This is a three-light diffuse-lighting model\
     and is intended for debugging." } }
     $top.lmodelMB.lmodelM add command -label "Curvature - inverse radius"\
-	    -command "set rt_control($id,lmodel) 4;\
-    set rt_control($id,lmodelTitle) \"Curvature - inverse radius\";\
-    PMMenu $id $top 0"
+	-command [list ::brlcad::mged::raytrace::set_light_model \
+	    $id $top 4 "Curvature - inverse radius" 0]
     hoc_register_menu_data "Light Model" "Curvature - inverse radius"\
 	    "Lighting Model - Curvature, Inverse Radius"\
 	    { { summary "This is a curvature debugging display,
 showing the inverse radius of curvature." } }
     $top.lmodelMB.lmodelM add command -label "Curvature - direction vector"\
-	    -command "set rt_control($id,lmodel) 5;\
-    set rt_control($id,lmodelTitle) \"Curvature - direction vector\";\
-    PMMenu $id $top 0"
+	-command [list ::brlcad::mged::raytrace::set_light_model \
+	    $id $top 5 "Curvature - direction vector" 0]
     hoc_register_menu_data "Light Model" "Curvature - direction vector"\
 	    "Lighting Model - Curvature, Direction Vector"\
 	    { { summary "This is a curvature debugging display,
 showing the principal direction vector." } }
     $top.lmodelMB.lmodelM add command -label "Photon Mapping"\
-	    -command "set rt_control($id,lmodel) 7;\
-    set rt_control($id,lmodelTitle) \"Photon Mapping\";\
-    PMMenu $id $top 1"
+	-command [list ::brlcad::mged::raytrace::set_light_model \
+	    $id $top 7 "Photon Mapping" 1]
     hoc_register_menu_data "Light Model" "Photon Mapping"\
 	    "Lighting Model - Photon Mapping"\
 	    { { summary "This is a replacement for the Full Phong lighting model." } }
@@ -767,18 +852,19 @@ showing the principal direction vector." } }
     set hoc_data { { summary "A place to specify other rt options." } }
     label $top.otherL -text "Other Options" -anchor e
     hoc_register_data $top.otherL "Other" $hoc_data
-    entry $top.otherE -relief sunken -bd 2 -width 2 -textvar rt_control($id,other)
+    entry $top.otherE -relief sunken -bd 2 -width 2 \
+	-textvariable ::brlcad::mged::raytrace::rt_control($id,other)
     hoc_register_data $top.otherE "Other" $hoc_data
 
     button $top.dismissB -relief raised -text "Dismiss" \
-	    -command "catch { destroy $top }"
+	    -command [list catch [list destroy $top]]
     hoc_register_data $top.dismissB "Dismiss"\
 	    { { summary "Dismiss/close the advanced raytrace panel." } }
     # use the same font as the size label on the checkbutton
     set tmp_font [$top.hsampleL cget -font]
     checkbutton $top.opencltoggle \
 		-text "Enable OpenCL" \
-		-variable rt_control($id,opencl) \
+		-variable ::brlcad::mged::raytrace::rt_control($id,opencl) \
 		-font $tmp_font \
 		-padx 0.5m -pady 0.5m
     hoc_register_data $top.opencltoggle "Enable OpenCL"\
@@ -809,19 +895,34 @@ showing the principal direction vector." } }
     place_near_mouse $top
     wm title $top "Advanced Settings ($id)"
 
-    PMMenu $id $top 2
-    if {$rt_control($id,lmodelTitle) == "Photon Mapping"} {
-      PMMenu $id $top 1
+    configure_photon_mapping $id $top 2
+    if {$rt_control($id,lmodelTitle) eq "Photon Mapping"} {
+	configure_photon_mapping $id $top 1
     }
 }
 
-## - rt_update_dest
+proc set_jitter { id value title } {
+    variable rt_control
+
+    set rt_control($id,jitter) $value
+    set rt_control($id,jitterTitle) $title
+}
+
+proc set_light_model { id top value title photon_controls } {
+    variable rt_control
+
+    set rt_control($id,lmodel) $value
+    set rt_control($id,lmodelTitle) $title
+    configure_photon_mapping $id $top $photon_controls
+}
+
+## - update_destination
 #
 # Called by main GUI to update the Raytrace Control Panel
 #
-proc rt_update_dest { id } {
+proc update_destination { id } {
     global mged_gui
-    global rt_control
+    variable rt_control
     global port
     global fb
     global fb_all
@@ -836,7 +937,7 @@ proc rt_update_dest { id } {
 	return
     }
 
-    if {$rt_control($id,half_baked_dest) != $mged_gui($id,active_dm)} {
+    if {$rt_control($id,half_baked_dest) ne $mged_gui($id,active_dm)} {
 	return
     }
 
@@ -852,13 +953,24 @@ proc rt_update_dest { id } {
 	[list $tmplist]
 }
 
-## - rt_update_src
+proc apply_framebuffer_setting { id setting } {
+    global mged_gui
+
+    if {$setting ni {fb_all fb_overlay}} {
+	return -code error "unknown framebuffer setting: $setting"
+    }
+
+    mged_apply $id [list set $setting $mged_gui($id,$setting)]
+    update_destination $id
+}
+
+## - update_source
 #
 # Called by main GUI to update the Raytrace Control Panel
 #
-proc rt_update_src { id } {
+proc update_source { id } {
     global mged_gui
-    global rt_control
+    variable rt_control
     global mouse_behavior
 
     if ![info exists rt_control($id,top)] {
@@ -869,12 +981,12 @@ proc rt_update_src { id } {
 	return
     }
 
-    if {$rt_control($id,cooked_src) != $mged_gui($id,active_dm)} {
+    if {$rt_control($id,cooked_src) ne $mged_gui($id,active_dm)} {
 	return
     }
 
-    if {$mouse_behavior == "o"} {
-	if {$rt_control($id,omode) == "all"} {
+    if {$mouse_behavior eq "o"} {
+	if {$rt_control($id,omode) eq "all"} {
 	    set rt_control($id,omode) one
 	}
     } else {
@@ -882,9 +994,8 @@ proc rt_update_src { id } {
     }
 }
 
-proc rt_olist_edit { id } {
-    global mged_gui
-    global rt_control
+proc edit_object_list { id } {
+    variable rt_control
 
     set top $rt_control($id,topOLE)
 
@@ -897,7 +1008,7 @@ proc rt_olist_edit { id } {
 
     frame $top.olistF
     text $top.olistT -relief sunken -bd 2 -width 40 -height 10\
-	-yscrollcommand "$top.olistS set" -setgrid true
+	-yscrollcommand [list $top.olistS set] -setgrid true
     hoc_register_data $top.olistT "Object List"\
 	{ { summary "This shows the objects that will be raytraced when the
 raytrace button is pressed. The contents herein may
@@ -905,19 +1016,19 @@ be edited directly by the user when in \"several\"
 mode (look in the \"Objects\" menu). If there are no
 objects herein, then all objects being displayed will
 be raytraced." } }
-    scrollbar $top.olistS -relief flat -command "$top.olistT yview"
+    scrollbar $top.olistS -relief flat -command [list $top.olistT yview]
     grid $top.olistT $top.olistS -sticky nsew -in $top.olistF
     grid columnconfigure $top.olistF 0 -weight 1
     grid rowconfigure $top.olistF 0 -weight 1
 
     frame $top.buttonF
     button $top.clearB -relief raised -text "Clear"\
-	    -command "rt_olist_clear $id"
+	    -command [list ::brlcad::mged::raytrace::clear_object_list $id]
     hoc_register_data $top.clearB "Clear Object List."\
 	    { { summary "Clear the object list and the contents
 of the object list editor." } }
     button $top.dismissB -relief raised -text "Dismiss"\
-	    -command "rt_olist_dismiss $id"
+	    -command [list ::brlcad::mged::raytrace::dismiss_object_list $id]
     hoc_register_data $top.dismissB "Dismiss"\
 	    { { summary "Dismiss the object list editor. Note - this does
 not destroy the object list." } }
@@ -932,29 +1043,29 @@ not destroy the object list." } }
     grid columnconfigure $top 0 -weight 1
     grid rowconfigure $top 0 -weight 1
 
-    rt_olist_reset $id
-    rt_olist_edit_configure $id
+    reset_object_list $id
+    configure_object_list $id
     place_near_mouse $top
     wm title $top "Object List Editor ($id)"
 }
 
-proc rt_olist_edit_configure { id } {
-    global rt_control
+proc configure_object_list { id } {
+    variable rt_control
 
     switch $rt_control($id,omode) {
 	several {
-	    rt_olist_edit_enable $id
+	    enable_object_list $id
 	}
 	one
 	-
 	all {
-	    rt_olist_edit_disable $id
+	    disable_object_list $id
 	}
     }
 }
 
-proc rt_olist_edit_disable { id } {
-    global rt_control
+proc disable_object_list { id } {
+    variable rt_control
 
     $rt_control($id,top).menubar.obj entryconfigure 5 -state disabled
 
@@ -965,8 +1076,8 @@ proc rt_olist_edit_disable { id } {
     $rt_control($id,topOLE).olistT configure -state disabled
 }
 
-proc rt_olist_edit_enable { id } {
-    global rt_control
+proc enable_object_list { id } {
+    variable rt_control
 
     $rt_control($id,top).menubar.obj entryconfigure 5 -state normal
 
@@ -977,12 +1088,12 @@ proc rt_olist_edit_enable { id } {
     $rt_control($id,topOLE).olistT configure -state normal
 }
 
-## - rt_olist_apply
+## - apply_object_list
 #
 # update rt_control($id,olist) with what's in the text widget
 #
-proc rt_olist_apply { id } {
-    global rt_control
+proc apply_object_list { id } {
+    variable rt_control
 
     if ![winfo exists $rt_control($id,topOLE)] {
 	return
@@ -994,29 +1105,29 @@ proc rt_olist_apply { id } {
     }
 }
 
-proc rt_olist_dismiss { id } {
-    global rt_control
+proc dismiss_object_list { id } {
+    variable rt_control
 
-    rt_olist_apply $id
+    apply_object_list $id
     destroy $rt_control($id,topOLE)
 }
 
-## - rt_olist_reset
+## - reset_object_list
 #
 # Reset the text widget with elements from rt_control($id,olist).
 #
-proc rt_olist_reset { id } {
-    global rt_control
+proc reset_object_list { id } {
+    variable rt_control
 
-    rt_olist_set $id $rt_control($id,olist)
+    set_object_list $id $rt_control($id,olist)
 }
 
-## - rt_olist_set
+## - set_object_list
 #
 # Set the text widget and rt_control($id,olist) with elements from olist.
 #
-proc rt_olist_set { id olist } {
-    global rt_control
+proc set_object_list { id olist } {
+    variable rt_control
 
     set rt_control($id,olist) $olist
 
@@ -1044,10 +1155,10 @@ proc rt_olist_set { id olist } {
     $rt_control($id,topOLE).olistT configure -state $save_state
 }
 
-proc rt_olist_add { id obj } {
-    global rt_control
+proc add_object { id obj } {
+    variable rt_control
 
-    if {[lsearch $rt_control($id,olist) $obj] != -1} {
+    if {[lsearch -exact $rt_control($id,olist) $obj] != -1} {
 	# already in list
 	return
     }
@@ -1072,8 +1183,8 @@ proc rt_olist_add { id obj } {
     $rt_control($id,topOLE).olistT configure -state $save_state
 }
 
-proc rt_olist_clear { id } {
-    global rt_control
+proc clear_object_list { id } {
+    variable rt_control
 
     set rt_control($id,olist) {}
 
@@ -1082,9 +1193,9 @@ proc rt_olist_clear { id } {
     }
 }
 
-proc rt_set_mouse_behavior { id } {
+proc set_mouse_behavior { id } {
     global mged_gui
-    global rt_control
+    variable rt_control
     global mouse_behavior
 
     set bad [catch {winset $rt_control($id,cooked_src)} msg]
@@ -1100,32 +1211,32 @@ proc rt_set_mouse_behavior { id } {
 	    set mouse_behavior o
 
 	    # update the GUI specified by $id
-	    if {$rt_control($id,cooked_src) == $mged_gui($id,active_dm)} {
+    if {$rt_control($id,cooked_src) eq $mged_gui($id,active_dm)} {
 		set mged_gui($id,mouse_behavior) o
 	    }
 
 	    # apply to all windows in the GUI specified by $id
 	    #mged_apply_local $id "set mouse_behavior o"
 
-	    rt_olist_apply $id
+	    apply_object_list $id
 	}
 	all {
 	    # apply to source window
 	    set mouse_behavior d
 
 	    # update the GUI specified by $id
-	    if {$rt_control($id,cooked_src) == $mged_gui($id,active_dm)} {
+    if {$rt_control($id,cooked_src) eq $mged_gui($id,active_dm)} {
 		set mged_gui($id,mouse_behavior) d
 	    }
 
 	    # apply to all windows in the GUI specified by $id
 	    #mged_apply_local $id "set mouse_behavior d"
 
-	    rt_solid_list_callback $id
+	    solid_list_callback $id
 	}
     }
 
-    rt_olist_edit_configure $id
+    configure_object_list $id
 }
 
 #
@@ -1133,16 +1244,16 @@ proc rt_set_mouse_behavior { id } {
 #		ul, upper left, ur, upper right,
 #		ll, lower left, lr, lower right
 # cooked ->	port spec
-proc rt_cook_dest { id raw_dest } {
+proc set_destination { id raw_dest } {
     global mged_gui
-    global rt_control
+    variable rt_control
     global listen
     global port
     global fb
     global fb_all
     global fb_overlay
 
-    if {$raw_dest == ""} {
+    if {$raw_dest eq ""} {
 	set rt_control($id,cooked_dest) ""
 	return
     }
@@ -1152,7 +1263,7 @@ proc rt_cook_dest { id raw_dest } {
     }
 
     set rt_control($id,raw_dest) $raw_dest
-    set rt_control($id,half_baked_dest) [rt_half_bake $id $raw_dest]
+    set rt_control($id,half_baked_dest) [resolve_pane $id $raw_dest]
 
     if ![winfo exists $rt_control($id,half_baked_dest)] {
 	set rt_control($id,cooked_dest) $raw_dest
@@ -1189,9 +1300,11 @@ proc rt_cook_dest { id raw_dest } {
     set size [dm size]
     set rt_control($id,size) "[lindex $size 0]x[lindex $size 1]"
     set rt_control($id,color) [rset cs bg]
-    color_entry_update $rt_control($id,top) color rt_control($id,color) $rt_control($id,color)
+    color_entry_update $rt_control($id,top) color \
+	::brlcad::mged::raytrace::rt_control($id,color) \
+	$rt_control($id,color)
 
-    if {$rt_control($id,half_baked_dest) == $mged_gui($id,active_dm)} {
+    if {$rt_control($id,half_baked_dest) eq $mged_gui($id,active_dm)} {
 	set mged_gui($id,fb) $fb
 	set mged_gui($id,listen) $listen
     }
@@ -1203,11 +1316,11 @@ proc rt_cook_dest { id raw_dest } {
 #		ll, lower left, lr, lower right
 # cooked ->	pathname
 #
-proc rt_cook_src { id raw_src } {
-    global rt_control
+proc set_source { id raw_src } {
+    variable rt_control
     global mouse_behavior
 
-    if {$raw_src == ""} {
+    if {$raw_src eq ""} {
 	return
     }
 
@@ -1216,16 +1329,16 @@ proc rt_cook_src { id raw_src } {
     }
 
     set rt_control($id,raw_src) $raw_src
-    set rt_control($id,cooked_src) [rt_half_bake $id $raw_src]
+    set rt_control($id,cooked_src) [resolve_pane $id $raw_src]
 
     set bad [catch {winset $rt_control($id,cooked_src)} msg]
     if {$bad} {
 	return
     }
 
-    if {$mouse_behavior == "o"} {
+    if {$mouse_behavior eq "o"} {
 	if {![info exists rt_control($id,omode)] ||\
-		$rt_control($id,omode) == "all"} {
+		$rt_control($id,omode) eq "all"} {
 	    set rt_control($id,omode) one
 	}
     } else {
@@ -1233,9 +1346,9 @@ proc rt_cook_src { id raw_src } {
     }
 }
 
-proc rt_set_fb { id } {
+proc set_framebuffer { id } {
     global mged_gui
-    global rt_control
+    variable rt_control
     global fb
     global listen
 
@@ -1249,14 +1362,14 @@ proc rt_set_fb { id } {
 	set listen 1
     }
 
-    if {$rt_control($id,half_baked_dest) == $mged_gui($id,active_dm)} {
+    if {$rt_control($id,half_baked_dest) eq $mged_gui($id,active_dm)} {
 	set mged_gui($id,fb) $rt_control($id,fb)
 	set mged_gui($id,listen) $listen
     }
 }
 
-proc rt_set_fb_all { id } {
-    global rt_control
+proc set_framebuffer_extent { id } {
+    variable rt_control
     global mged_gui
     global fb_all
 
@@ -1267,15 +1380,15 @@ proc rt_set_fb_all { id } {
     winset $rt_control($id,half_baked_dest)
     set fb_all $rt_control($id,fb_all)
 
-    if {$rt_control($id,half_baked_dest) == $mged_gui($id,active_dm)} {
+    if {$rt_control($id,half_baked_dest) eq $mged_gui($id,active_dm)} {
 	set mged_gui($id,fb_all) $rt_control($id,fb_all)
     }
 
 }
 
-proc rt_set_fb_overlay { id } {
+proc set_framebuffer_layer { id } {
     global mged_gui
-    global rt_control
+    variable rt_control
     global fb_overlay
 
     if ![winfo exists $rt_control($id,half_baked_dest)] {
@@ -1285,17 +1398,17 @@ proc rt_set_fb_overlay { id } {
     winset $rt_control($id,half_baked_dest)
     set fb_overlay $rt_control($id,fb_overlay)
 
-    if {$rt_control($id,half_baked_dest) == $mged_gui($id,active_dm)} {
+    if {$rt_control($id,half_baked_dest) eq $mged_gui($id,active_dm)} {
 	set mged_gui($id,fb_overlay) $rt_control($id,fb_overlay)
     }
 }
 
-## - rt_half_bake
+## - resolve_pane
 #
 # If possible, returns a valid display manager window.
 # Otherwise, returns $raw.
 #
-proc rt_half_bake { id raw } {
+proc resolve_pane { id raw } {
     global mged_gui
 
     switch $raw {
@@ -1334,21 +1447,18 @@ proc rt_half_bake { id raw } {
     }
 }
 
-proc rt_db_to_pix {} {
-    global rt_control
-
+proc default_output_file {} {
     regsub \.g$ [::brlcad::mged opendb] .pix default_file
     return $default_file
 }
 
-## - rt_init_vars
+## - initialize
 #
 # Called to initialize rt_control
-# Called by: init_Raytrace, mouse_rt_obj_select
+# Called by: init, select_object
 #
-proc rt_init_vars { id win } {
-    global mged_gui
-    global rt_control
+proc initialize { id win } {
+    variable rt_control
 
     if ![winfo exists $win] {
 	return
@@ -1384,86 +1494,98 @@ proc rt_init_vars { id win } {
 	set rt_control($id,pmCacheFileEntry) ""
 
 
-	# set widget padding
-	set rt_control($id,padx) 4
-	set rt_control($id,pady) 2
-
 	set rt_control($id,fixedSrc) 0
 	set rt_control($id,fixedDest) 0
     }
 
     # initialize every time
-    rt_cook_src $id $win
-    rt_cook_dest $id $win
-    rt_check_dest $id $win
+    set_source $id $win
+    set_destination $id $win
+    initialize_destination $id $win
 }
 
-proc rt_check_dest {id win} {
-    global rt_control
-    global env
+proc select_object { id win object } {
+    variable rt_control
 
-    if {[winfo exists $win] &&
-	!$rt_control(has_embedded_fb)} {
-	if {[info exists env(FB_FILE)] && $env(FB_FILE) != ""} {
-	    # Assume the user knows what he/she is doing
-	    rt_force_cook_dest $id $env(FB_FILE)
-	} else {
-	    set dm_list [split [dm_list] ',']
-	    set devtype "/dev/"
-	    append devtype [lindex $dm_list 0]
-	    rt_force_cook_dest $id $devtype
+    initialize $id $win
+    switch $rt_control($id,omode) {
+	all -
+	one {
+	    set_object_list $id $object
+	    run $id [list ::brlcad::mged rt]
+	}
+	several {
+	    add_object $id $object
 	}
     }
 }
 
-proc rt_force_cook_src { id win } {
-    global rt_control
+proc initialize_destination { id win } {
+    variable rt_control
+    global env
 
-    # save fixed source
-    set save_fsrc $rt_control($id,fixedSrc)
-
-    set rt_control($id,fixedSrc) 0
-    rt_cook_src $id $win
-
-    # restore fixed source
-    set rt_control($id,fixedSrc) $save_fsrc
+    if {[winfo exists $win] &&
+	!$rt_control(has_embedded_fb)} {
+	if {[info exists env(FB_FILE)] && $env(FB_FILE) ne ""} {
+	    # Assume the user knows what he/she is doing
+	    force_destination $id $env(FB_FILE)
+	} else {
+	    set dm_list [split [dm_list] ',']
+	    set devtype "/dev/"
+	    append devtype [lindex $dm_list 0]
+	    force_destination $id $devtype
+	}
+    }
 }
 
-proc rt_force_cook_dest { id win } {
-    global rt_control
+proc force_source { id win } {
+    variable rt_control
 
-    # save fixed destination
-    set save_fdest $rt_control($id,fixedDest)
+    set fixed_source $rt_control($id,fixedSrc)
+    set rt_control($id,fixedSrc) 0
+    try {
+	set_source $id $win
+    } finally {
+	set rt_control($id,fixedSrc) $fixed_source
+    }
+}
 
+proc force_destination { id win } {
+    variable rt_control
+
+    set fixed_destination $rt_control($id,fixedDest)
     set rt_control($id,fixedDest) 0
-    rt_cook_dest $id $win
-
-    # restore fixed destination
-    set rt_control($id,fixedDest) $save_fdest
+    try {
+	set_destination $id $win
+    } finally {
+	set rt_control($id,fixedDest) $fixed_destination
+    }
 }
 
 #################### CALLBACKS ####################
 
-proc rt_opendb_callback { id } {
-    global rt_control
+proc open_database_callback { id } {
+    variable rt_control
 
     if ![info exists rt_control($id,top)] {
 	return
     }
 
     if [winfo exists $rt_control($id,top)] {
-	set dbname [rt_db_to_pix]
-	if {$dbname != ""} {
+	set dbname [default_output_file]
+	if {$dbname ne ""} {
 	    $rt_control($id,top).destMB.menu entryconfigure 7\
-		-label $dbname -command "rt_cook_dest $id $dbname"
+		-label $dbname \
+		-command [list ::brlcad::mged::raytrace::set_destination \
+		    $id $dbname]
 	}
     }
 
-    rt_olist_clear $id
+    clear_object_list $id
 }
 
-proc rt_solid_list_callback { id } {
-    global rt_control
+proc solid_list_callback { id } {
+    variable rt_control
 
     if ![info exists rt_control($id,top)] {
 	return
@@ -1473,17 +1595,18 @@ proc rt_solid_list_callback { id } {
 	return
     }
 
-    if {$rt_control($id,omode) == "all"} {
+    if {$rt_control($id,omode) eq "all"} {
 	set rt_control($id,olist) [::brlcad::mged who]
-	rt_olist_reset $id
+	reset_object_list $id
 	return
     }
 }
 
 
-proc rt_handle_configure { id } {
-    after cancel rt_set_fb_size $id
-    after idle rt_set_fb_size $id
+proc handle_configure { id } {
+    set callback [list ::brlcad::mged::raytrace::set_framebuffer_size $id]
+    after cancel $callback
+    after idle $callback
 }
 
 
@@ -1493,33 +1616,29 @@ proc rt_handle_configure { id } {
 
 
 ## Update for each individual Entry/Scale pair
-proc PMNonLinearEvent {EntryWidget ScaleValue} {
-    ## Purge old characters
-    $EntryWidget delete 0 [string length [$EntryWidget get]]
-    ## Insert new characters
-    $EntryWidget insert 0 [expr int(pow(2,$ScaleValue))]
+proc set_exponential_entry { entry_widget scale_value } {
+    set_entry_value $entry_widget [expr {int(pow(2, $scale_value))}]
 }
 
 
 ## Update for each individual Entry/Scale pair
-proc PMLinearEvent {EntryWidget ScaleValue} {
-    ## Purge old characters
-    $EntryWidget delete 0 [string length [$EntryWidget get]]
-    ## Insert new characters
-    $EntryWidget insert 0 $ScaleValue
+proc set_linear_entry { entry_widget scale_value } {
+    set_entry_value $entry_widget $scale_value
 }
 
 
 ## Update for each individual Entry/Scale pair
-proc PMRaysEvent {EntryWidget ScaleValue} {
-    ## Purge old characters
-    $EntryWidget delete 0 [string length [$EntryWidget get]]
-    ## Insert new characters
-    $EntryWidget insert 0 [expr int(pow($ScaleValue,2))]
+proc set_squared_entry { entry_widget scale_value } {
+    set_entry_value $entry_widget [expr {int(pow($scale_value, 2))}]
+}
+
+proc set_entry_value { entry_widget value } {
+    $entry_widget delete 0 end
+    $entry_widget insert 0 $value
 }
 
 
-proc PMMenu {id top enable} {
+proc configure_photon_mapping { id top enable } {
     if {$enable == 2} {
 	## Setup
 	frame $top.gridF4 -relief groove -bd 2
@@ -1538,11 +1657,16 @@ proc PMMenu {id top enable} {
 	grid $top.gridF4.pmGlobalPhotonsLabel -row 1 -column 0 -sticky e
 	hoc_register_data $top.gridF4.pmGlobalPhotonsLabel "Global Photons" $hoc_data
 
-	entry $top.gridF4.pmGlobalPhotonsEntry -width 8 -textvar rt_control($id,pmGlobalPhotonsEntry)
+	entry $top.gridF4.pmGlobalPhotonsEntry -width 8 \
+	    -textvariable ::brlcad::mged::raytrace::rt_control($id,pmGlobalPhotonsEntry)
 	grid $top.gridF4.pmGlobalPhotonsEntry -row 1 -column 1 -sticky news
 	hoc_register_data $top.gridF4.pmGlobalPhotonsEntry "Global Photons" $hoc_data
 
-	scale $top.gridF4.pmGlobalPhotonsScale -orient horizontal -showvalue 0 -from 10 -to 24 -command "PMNonLinearEvent $top.gridF4.pmGlobalPhotonsEntry" -variable rt_control($id,pmGlobalPhotonsScale)
+	scale $top.gridF4.pmGlobalPhotonsScale -orient horizontal \
+	    -showvalue 0 -from 10 -to 24 \
+	    -command [list ::brlcad::mged::raytrace::set_exponential_entry \
+		$top.gridF4.pmGlobalPhotonsEntry] \
+	    -variable ::brlcad::mged::raytrace::rt_control($id,pmGlobalPhotonsScale)
 	grid $top.gridF4.pmGlobalPhotonsScale -row 1 -column 2 -sticky news
 	hoc_register_data $top.gridF4.pmGlobalPhotonsScale "Global Photons" $hoc_data
 
@@ -1554,11 +1678,16 @@ proc PMMenu {id top enable} {
 	grid $top.gridF4.pmCausticsPercentLabel -row 2 -column 0 -sticky e
 	hoc_register_data $top.gridF4.pmCausticsPercentLabel "Caustics Percent" $hoc_data
 
-	entry $top.gridF4.pmCausticsPercentEntry -width 8 -textvar rt_control($id,pmCausticsPercentEntry)
+	entry $top.gridF4.pmCausticsPercentEntry -width 8 \
+	    -textvariable ::brlcad::mged::raytrace::rt_control($id,pmCausticsPercentEntry)
 	grid $top.gridF4.pmCausticsPercentEntry -row 2 -column 1 -sticky news
 	hoc_register_data $top.gridF4.pmCausticsPercentEntry "Caustics Percent" $hoc_data
 
-	scale $top.gridF4.pmCausticsPercentScale -orient horizontal -showvalue 0 -from 0 -to 100 -command "PMLinearEvent $top.gridF4.pmCausticsPercentEntry" -variable rt_control($id,pmCausticsPercentScale)
+	scale $top.gridF4.pmCausticsPercentScale -orient horizontal \
+	    -showvalue 0 -from 0 -to 100 \
+	    -command [list ::brlcad::mged::raytrace::set_linear_entry \
+		$top.gridF4.pmCausticsPercentEntry] \
+	    -variable ::brlcad::mged::raytrace::rt_control($id,pmCausticsPercentScale)
 	grid $top.gridF4.pmCausticsPercentScale -row 2 -column 2 -sticky news
 	hoc_register_data $top.gridF4.pmCausticsPercentScale "Caustics Percent" $hoc_data
 
@@ -1570,11 +1699,16 @@ proc PMMenu {id top enable} {
 	grid $top.gridF4.pmIrradianceRaysLabel -row 3 -column 0 -sticky e
 	hoc_register_data $top.gridF4.pmIrradianceRaysLabel "Irradiance Rays" $hoc_data
 
-	entry $top.gridF4.pmIrradianceRaysEntry -width 8 -textvar rt_control($id,pmIrradianceRaysEntry)
+	entry $top.gridF4.pmIrradianceRaysEntry -width 8 \
+	    -textvariable ::brlcad::mged::raytrace::rt_control($id,pmIrradianceRaysEntry)
 	grid $top.gridF4.pmIrradianceRaysEntry -row 3 -column 1 -sticky news
 	hoc_register_data $top.gridF4.pmIrradianceRaysEntry "Irradiance Rays" $hoc_data
 
-	scale $top.gridF4.pmIrradianceRaysScale -orient horizontal -showvalue 0 -from 4 -to 32 -command "PMRaysEvent $top.gridF4.pmIrradianceRaysEntry" -variable rt_control($id,pmIrradianceRaysScale)
+	scale $top.gridF4.pmIrradianceRaysScale -orient horizontal \
+	    -showvalue 0 -from 4 -to 32 \
+	    -command [list ::brlcad::mged::raytrace::set_squared_entry \
+		$top.gridF4.pmIrradianceRaysEntry] \
+	    -variable ::brlcad::mged::raytrace::rt_control($id,pmIrradianceRaysScale)
 	grid $top.gridF4.pmIrradianceRaysScale -row 3 -column 2 -sticky news
 	hoc_register_data $top.gridF4.pmIrradianceRaysScale "Irradiance Rays" $hoc_data
 
@@ -1586,11 +1720,16 @@ proc PMMenu {id top enable} {
 	grid $top.gridF4.pmAngularToleranceLabel -row 4 -column 0 -sticky e
 	hoc_register_data $top.gridF4.pmAngularToleranceLabel "Angular Tolerance" $hoc_data
 
-	entry $top.gridF4.pmAngularToleranceEntry -width 8 -textvar rt_control($id,pmAngularTolerance)
+	entry $top.gridF4.pmAngularToleranceEntry -width 8 \
+	    -textvariable ::brlcad::mged::raytrace::rt_control($id,pmAngularTolerance)
 	grid $top.gridF4.pmAngularToleranceEntry -row 4 -column 1 -sticky news
 	hoc_register_data $top.gridF4.pmAngularToleranceEntry "Angular Tolerance" $hoc_data
 
-	scale $top.gridF4.pmAngularToleranceScale -orient horizontal -showvalue 0 -from 0 -to 180 -command "PMLinearEvent $top.gridF4.pmAngularToleranceEntry" -variable rt_control($id,pmAngularTolerance)
+	scale $top.gridF4.pmAngularToleranceScale -orient horizontal \
+	    -showvalue 0 -from 0 -to 180 \
+	    -command [list ::brlcad::mged::raytrace::set_linear_entry \
+		$top.gridF4.pmAngularToleranceEntry] \
+	    -variable ::brlcad::mged::raytrace::rt_control($id,pmAngularTolerance)
 	grid $top.gridF4.pmAngularToleranceScale -row 4 -column 2 -sticky news
 	hoc_register_data $top.gridF4.pmAngularToleranceScale "Angular Tolerance" $hoc_data
 
@@ -1602,11 +1741,16 @@ proc PMMenu {id top enable} {
 	grid $top.gridF4.pmRandomSeedLabel -row 5 -column 0 -sticky e
 	hoc_register_data $top.gridF4.pmRandomSeedLabel "Random Seed" $hoc_data
 
-	entry $top.gridF4.pmRandomSeedEntry -width 8 -textvar rt_control($id,pmRandomSeedEntry)
+	entry $top.gridF4.pmRandomSeedEntry -width 8 \
+	    -textvariable ::brlcad::mged::raytrace::rt_control($id,pmRandomSeedEntry)
 	grid $top.gridF4.pmRandomSeedEntry -row 5 -column 1 -sticky news
 	hoc_register_data $top.gridF4.pmRandomSeedEntry "Random Seed" $hoc_data
 
-	scale $top.gridF4.pmRandomSeedScale -orient horizontal -showvalue 0 -from 0 -to 9 -command "PMLinearEvent $top.gridF4.pmRandomSeedEntry" -variable rt_control($id,pmRandomSeedScale)
+	scale $top.gridF4.pmRandomSeedScale -orient horizontal \
+	    -showvalue 0 -from 0 -to 9 \
+	    -command [list ::brlcad::mged::raytrace::set_linear_entry \
+		$top.gridF4.pmRandomSeedEntry] \
+	    -variable ::brlcad::mged::raytrace::rt_control($id,pmRandomSeedScale)
 	grid $top.gridF4.pmRandomSeedScale -row 5 -column 2 -sticky news
 	hoc_register_data $top.gridF4.pmRandomSeedScale "Random Seed" $hoc_data
 
@@ -1618,11 +1762,16 @@ proc PMMenu {id top enable} {
 	grid $top.gridF4.pmScaleIndirectLabel -row 6 -column 0 -sticky e
 	hoc_register_data $top.gridF4.pmScaleIndirectLabel "Scale Indirect" $hoc_data
 
-	entry $top.gridF4.pmScaleIndirectEntry -width 8 -textvar rt_control($id,pmScaleIndirectEntry)
+	entry $top.gridF4.pmScaleIndirectEntry -width 8 \
+	    -textvariable ::brlcad::mged::raytrace::rt_control($id,pmScaleIndirectEntry)
 	grid $top.gridF4.pmScaleIndirectEntry -row 6 -column 1 -sticky news
 	hoc_register_data $top.gridF4.pmScaleIndirectEntry "Scale Indirect" $hoc_data
 
-	scale $top.gridF4.pmScaleIndirectScale -orient horizontal -showvalue 0 -from 0.1 -to 10.0 -resolution 0.01 -command "PMLinearEvent $top.gridF4.pmScaleIndirectEntry" -variable rt_control($id,pmScaleIndirectScale)
+	scale $top.gridF4.pmScaleIndirectScale -orient horizontal \
+	    -showvalue 0 -from 0.1 -to 10.0 -resolution 0.01 \
+	    -command [list ::brlcad::mged::raytrace::set_linear_entry \
+		$top.gridF4.pmScaleIndirectEntry] \
+	    -variable ::brlcad::mged::raytrace::rt_control($id,pmScaleIndirectScale)
 	grid $top.gridF4.pmScaleIndirectScale -row 6 -column 2 -sticky news
 	hoc_register_data $top.gridF4.pmScaleIndirectScale "Scale Indirect" $hoc_data
 
@@ -1634,7 +1783,8 @@ proc PMMenu {id top enable} {
 	grid $top.gridF4.pmCacheFileLabel -row 7 -column 0 -sticky e
 	hoc_register_data $top.gridF4.pmCacheFileLabel "Load/Save Photon Map Data" $hoc_data
 
-	entry $top.gridF4.pmCacheFileEntry -width 8 -textvar rt_control($id,pmCacheFileEntry)
+	entry $top.gridF4.pmCacheFileEntry -width 8 \
+	    -textvariable ::brlcad::mged::raytrace::rt_control($id,pmCacheFileEntry)
 	grid $top.gridF4.pmCacheFileEntry -row 7 -column 1 -columnspan 2 -sticky news
 	hoc_register_data $top.gridF4.pmCacheFileEntry "Load/Save Photon Map Data" $hoc_data
 
@@ -1642,7 +1792,9 @@ proc PMMenu {id top enable} {
 	## Generate Importons
 	set hoc_data { { summary "Use this setting to distribute the photons in a view dependent fashion.  This is useful when\nscenes are dominated by complex geometry in which only small portions are being viewed.\nImportance Mapping is view dependent and therefore should not be used in conjunction\nwith the file saving option unless the view remains static." } }
 
-	checkbutton $top.gridF4.pmImportanceMapping -text "Use Importance Mapping" -variable rt_control($id,pmImportanceMapping)
+	checkbutton $top.gridF4.pmImportanceMapping \
+	    -text "Use Importance Mapping" \
+	    -variable ::brlcad::mged::raytrace::rt_control($id,pmImportanceMapping)
 	grid $top.gridF4.pmImportanceMapping -row 8 -column 1 -columnspan 2 -sticky w
 	hoc_register_data $top.gridF4.pmImportanceMapping "Importance Mapping" $hoc_data
 	#    $top.gridF4.pmImportanceMapping select
@@ -1650,7 +1802,9 @@ proc PMMenu {id top enable} {
 	## Irradiance Hypersampling Cache
 	set hoc_data { { summary "With this option enabled only one irradiance and caustic lookup will be performed per pixel." } }
 
-	checkbutton $top.gridF4.pmIrradianceHypersamplingCache -text "Use Irradiance Hypersampling Cache" -variable rt_control($id,pmIrradianceHypersamplingCache)
+	checkbutton $top.gridF4.pmIrradianceHypersamplingCache \
+	    -text "Use Irradiance Hypersampling Cache" \
+	    -variable ::brlcad::mged::raytrace::rt_control($id,pmIrradianceHypersamplingCache)
 	grid $top.gridF4.pmIrradianceHypersamplingCache -row 9 -column 1 -columnspan 2 -sticky w
 	hoc_register_data $top.gridF4.pmIrradianceHypersamplingCache "Irradiance Hypersampling Cache" $hoc_data
 	#    $top.gridF4.pmIrradianceHypersamplingCache select
@@ -1658,7 +1812,9 @@ proc PMMenu {id top enable} {
 	## Irradiance Visualization
 	set hoc_data { { summary "With this option enabled only the indirect illumination and caustics will be rendered." } }
 
-	checkbutton $top.gridF4.pmVisualizeIrradiance -text "Visualize Irradiance Cache" -variable rt_control($id,pmVisualizeIrradiance)
+	checkbutton $top.gridF4.pmVisualizeIrradiance \
+	    -text "Visualize Irradiance Cache" \
+	    -variable ::brlcad::mged::raytrace::rt_control($id,pmVisualizeIrradiance)
 	grid $top.gridF4.pmVisualizeIrradiance -row 10 -column 1 -columnspan 2 -sticky w
 	hoc_register_data $top.gridF4.pmVisualizeIrradiance "Visualize Irradiance" $hoc_data
 	#    $top.gridF4.pmVisualizeIrradiance select
@@ -1674,14 +1830,20 @@ proc PMMenu {id top enable} {
 	#    grid $top.gridF4.pmDirectIllumination -row 7 -column 2 -sticky w
 
     } elseif {$enable == 1} {
-	if {[grid size $top.gridF1] != "2 6"} {
+	if {[grid size $top.gridF1] ne "2 6"} {
 	    grid $top.gridF4 -sticky news -columnspan 2 -in $top.gridF1 -ipadx 8 -ipady 8
 	}
     } else {
-	if {[grid size $top.gridF1] == "2 6"} {
+	if {[grid size $top.gridF1] eq "2 6"} {
 	    grid remove $top.gridF4
 	}
     }
+}
+
+}
+
+proc init_Raytrace { id } {
+    tailcall ::brlcad::mged::raytrace::init $id
 }
 
 # Local Variables:
