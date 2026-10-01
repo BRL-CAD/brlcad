@@ -51,7 +51,6 @@ set RAD2DEG    57.2957795130823208767981548141051703
 	namespace upvar ::brlcad::vmath $constant ::$constant
     }
     unset constant
-}
 
 proc init_vmath {} {
     # Loading this command initializes the vmath constants and interfaces.
@@ -500,12 +499,12 @@ proc quat_from_rot {r x y z} {
 }
 
 proc quat_from_rot_deg {r x y z} {
-    global DEG2RAD
+    variable DEG2RAD
     return [quat_from_vrot [expr $r * $DEG2RAD ] [list $x $y $z]]
 }
 
 proc quat_from_vrot_deg {r v} {
-    global DEG2RAD
+    variable DEG2RAD
     return [quat_from_vrot [expr $r *$DEG2RAD ] $v]
 }
 
@@ -825,7 +824,6 @@ proc mat_fmt {m} {
     return $str
 }
 
-namespace eval ::brlcad::vmath {
     set command_map {}
     foreach command {
 	init_vmath near_zero dist_pt_plane dist_pt_pt mat_deltas_get
@@ -846,11 +844,128 @@ namespace eval ::brlcad::vmath {
 	vscalen vadd2scalen vsub2scalen vcomb2n vcomb3n vjoin1n
 	vjoin2n vjoin3n vblend2n mat_fmt
     } {
-	dict set command_map $command ::$command
+	dict set command_map $command ::brlcad::vmath::$command
     }
     namespace ensemble create -map $command_map -prefixes 0
     unset command command_map
 }
+
+# Keep the historical global commands as compatibility interfaces.  These
+# declarations are intentionally literal so auto_mkindex can find them.
+proc init_vmath {} { tailcall ::brlcad::vmath init_vmath }
+proc near_zero { val epsilon } { tailcall ::brlcad::vmath near_zero $val $epsilon }
+proc dist_pt_plane { pt plane } { tailcall ::brlcad::vmath dist_pt_plane $pt $plane }
+proc dist_pt_pt { a b } { tailcall ::brlcad::vmath dist_pt_pt $a $b }
+proc mat_deltas_get { m } { tailcall ::brlcad::vmath mat_deltas_get $m }
+proc mat_zero { } { tailcall ::brlcad::vmath mat_zero }
+proc mat_idn { } { tailcall ::brlcad::vmath mat_idn }
+proc vreverse { v } { tailcall ::brlcad::vmath vreverse $v }
+proc hreverse { h } { tailcall ::brlcad::vmath hreverse $h }
+proc vadd2 { u v } { tailcall ::brlcad::vmath vadd2 $u $v }
+proc vsub2 { u v } { tailcall ::brlcad::vmath vsub2 $u $v }
+proc hadd2 { g h } { tailcall ::brlcad::vmath hadd2 $g $h }
+proc hsub2 { g h } { tailcall ::brlcad::vmath hsub2 $g $h }
+proc vadd3 { u v w } { tailcall ::brlcad::vmath vadd3 $u $v $w }
+proc vsub3 { u v w } { tailcall ::brlcad::vmath vsub3 $u $v $w }
+proc vadd4 { u v w x } { tailcall ::brlcad::vmath vadd4 $u $v $w $x }
+proc vsub4 { u v w x } { tailcall ::brlcad::vmath vsub4 $u $v $w $x }
+proc vadd args { tailcall ::brlcad::vmath vadd {*}$args }
+proc hadd args { tailcall ::brlcad::vmath hadd {*}$args }
+proc vsub args { tailcall ::brlcad::vmath vsub {*}$args }
+proc hsub args { tailcall ::brlcad::vmath hsub {*}$args }
+proc v2add2 { x y } { tailcall ::brlcad::vmath v2add2 $x $y }
+proc v2sub2 { x y } { tailcall ::brlcad::vmath v2sub2 $x $y }
+proc v2add args { tailcall ::brlcad::vmath v2add {*}$args }
+proc v2sub args { tailcall ::brlcad::vmath v2sub {*}$args }
+proc vscale { v c } { tailcall ::brlcad::vmath vscale $v $c }
+proc hscale { h c } { tailcall ::brlcad::vmath hscale $h $c }
+proc v2scale { x c } { tailcall ::brlcad::vmath v2scale $x $c }
+proc vadd2scale { a b s } { tailcall ::brlcad::vmath vadd2scale $a $b $s }
+proc vsub2scale { a b s } { tailcall ::brlcad::vmath vsub2scale $a $b $s }
+proc vcomb2 { a b  c d } { tailcall ::brlcad::vmath vcomb2 $a $b $c $d }
+proc vcomb3 { a b  c d  e f } { tailcall ::brlcad::vmath vcomb3 $a $b $c $d $e $f }
+proc vjoin1 { b  c d } { tailcall ::brlcad::vmath vjoin1 $b $c $d }
+proc vjoin2 { b  c d  e f } { tailcall ::brlcad::vmath vjoin2 $b $c $d $e $f }
+proc vjoin3 { b  c d  e f  g h } { tailcall ::brlcad::vmath vjoin3 $b $c $d $e $f $g $h }
+proc vjoin4 { b  c d  e f  g h  i j } { tailcall ::brlcad::vmath vjoin4 $b $c $d $e $f $g $h $i $j }
+proc hjoin1 { b  c d } { tailcall ::brlcad::vmath hjoin1 $b $c $d }
+proc v2join1 { b  c d } { tailcall ::brlcad::vmath v2join1 $b $c $d }
+proc vblend2 { b c  d e } { tailcall ::brlcad::vmath vblend2 $b $c $d $e }
+proc vunitize { v } { tailcall ::brlcad::vmath vunitize $v }
+proc magsq { v } { tailcall ::brlcad::vmath magsq $v }
+proc vmagsq { v } { tailcall ::brlcad::vmath vmagsq $v }
+proc magnitude { v } { tailcall ::brlcad::vmath magnitude $v }
+proc vmagnitude { v } { tailcall ::brlcad::vmath vmagnitude $v }
+proc vcross { u v } { tailcall ::brlcad::vmath vcross $u $v }
+proc vdot { u v } { tailcall ::brlcad::vmath vdot $u $v }
+proc hdot { g h } { tailcall ::brlcad::vmath hdot $g $h }
+proc v2dot { x y } { tailcall ::brlcad::vmath v2dot $x $y }
+proc vsub2dot { p2 p1 v } { tailcall ::brlcad::vmath vsub2dot $p2 $p1 $v }
+proc velmul { u v } { tailcall ::brlcad::vmath velmul $u $v }
+proc veldiv { u v } { tailcall ::brlcad::vmath veldiv $u $v }
+proc vinvdir { v } { tailcall ::brlcad::vmath vinvdir $v }
+proc mat3x3vec { m v } { tailcall ::brlcad::vmath mat3x3vec $m $v }
+proc vec3x3mat { v m } { tailcall ::brlcad::vmath vec3x3mat $v $m }
+proc mat3x2vec { m v } { tailcall ::brlcad::vmath mat3x2vec $m $v }
+proc vec2x3mat { v m } { tailcall ::brlcad::vmath vec2x3mat $v $m }
+proc mat4x3pnt { m p } { tailcall ::brlcad::vmath mat4x3pnt $m $p }
+proc pnt3x4mat { p m } { tailcall ::brlcad::vmath pnt3x4mat $p $m }
+proc mat4x4pnt { m h } { tailcall ::brlcad::vmath mat4x4pnt $m $h }
+proc mat4x3vec { m v } { tailcall ::brlcad::vmath mat4x3vec $m $v }
+proc vec3x4mat { v m } { tailcall ::brlcad::vmath vec3x4mat $v $m }
+proc vec2x4mat { v m } { tailcall ::brlcad::vmath vec2x4mat $v $m }
+proc vequal { u v } { tailcall ::brlcad::vmath vequal $u $v }
+proc vapproxequal { u v tol } { tailcall ::brlcad::vmath vapproxequal $u $v $tol }
+proc vnear_zero { v tol } { tailcall ::brlcad::vmath vnear_zero $v $tol }
+proc vmin { u v } { tailcall ::brlcad::vmath vmin $u $v }
+proc vmax { u v } { tailcall ::brlcad::vmath vmax $u $v }
+proc hdivide { h } { tailcall ::brlcad::vmath hdivide $h }
+proc quat_from_vrot {r v} { tailcall ::brlcad::vmath quat_from_vrot $r $v }
+proc quat_from_rot {r x y z} { tailcall ::brlcad::vmath quat_from_rot $r $x $y $z }
+proc quat_from_rot_deg {r x y z} { tailcall ::brlcad::vmath quat_from_rot_deg $r $x $y $z }
+proc quat_from_vrot_deg {r v} { tailcall ::brlcad::vmath quat_from_vrot_deg $r $v }
+proc qadd2 { q r } { tailcall ::brlcad::vmath qadd2 $q $r }
+proc qsub2 { q r } { tailcall ::brlcad::vmath qsub2 $q $r }
+proc qadd args { tailcall ::brlcad::vmath qadd {*}$args }
+proc qsub args { tailcall ::brlcad::vmath qsub {*}$args }
+proc qscale { q c } { tailcall ::brlcad::vmath qscale $q $c }
+proc qdot { q r } { tailcall ::brlcad::vmath qdot $q $r }
+proc qmagsq { q } { tailcall ::brlcad::vmath qmagsq $q }
+proc qmagnitude { q } { tailcall ::brlcad::vmath qmagnitude $q }
+proc qunitize { q } { tailcall ::brlcad::vmath qunitize $q }
+proc qmul { q r } { tailcall ::brlcad::vmath qmul $q $r }
+proc qconjugate { q } { tailcall ::brlcad::vmath qconjugate $q }
+proc qinverse { q } { tailcall ::brlcad::vmath qinverse $q }
+proc qblend2 { b c  d e } { tailcall ::brlcad::vmath qblend2 $b $c $d $e }
+proc qtom {q} { tailcall ::brlcad::vmath qtom $q }
+proc v3rpp_overlap { l1 h1 l2 h2 } { tailcall ::brlcad::vmath v3rpp_overlap $l1 $h1 $l2 $h2 }
+proc v3rpp_overlap_tol { l1 h1 l2 h2 toldist } { tailcall ::brlcad::vmath v3rpp_overlap_tol $l1 $h1 $l2 $h2 $toldist }
+proc v3pt_in_rpp { pt lo hi } { tailcall ::brlcad::vmath v3pt_in_rpp $pt $lo $hi }
+proc v3pt_in_rpp_tol { pt lo hi toldist } { tailcall ::brlcad::vmath v3pt_in_rpp_tol $pt $lo $hi $toldist }
+proc v3rpp1_in_rpp2 { lo1 hi1 lo2 hi2 } { tailcall ::brlcad::vmath v3rpp1_in_rpp2 $lo1 $hi1 $lo2 $hi2 }
+proc mat_deltas { m x y z } { tailcall ::brlcad::vmath mat_deltas $m $x $y $z }
+proc mat_deltas_vec { m v } { tailcall ::brlcad::vmath mat_deltas_vec $m $v }
+proc mag2sq { v } { tailcall ::brlcad::vmath mag2sq $v }
+proc vminmax { min max pt } { tailcall ::brlcad::vmath vminmax $min $max $pt }
+proc vadd2n { u v n } { tailcall ::brlcad::vmath vadd2n $u $v $n }
+proc vsub2n { u v n } { tailcall ::brlcad::vmath vsub2n $u $v $n }
+proc vadd3n { u v w n } { tailcall ::brlcad::vmath vadd3n $u $v $w $n }
+proc vsub3n { u v w n } { tailcall ::brlcad::vmath vsub3n $u $v $w $n }
+proc vadd4n { u v w x n } { tailcall ::brlcad::vmath vadd4n $u $v $w $x $n }
+proc vsub4n { u v w x n } { tailcall ::brlcad::vmath vsub4n $u $v $w $x $n }
+proc vzeron { n } { tailcall ::brlcad::vmath vzeron $n }
+proc vaddn args { tailcall ::brlcad::vmath vaddn {*}$args }
+proc vsubn args { tailcall ::brlcad::vmath vsubn {*}$args }
+proc vscalen { v c n } { tailcall ::brlcad::vmath vscalen $v $c $n }
+proc vadd2scalen { a b s n } { tailcall ::brlcad::vmath vadd2scalen $a $b $s $n }
+proc vsub2scalen { a b s n } { tailcall ::brlcad::vmath vsub2scalen $a $b $s $n }
+proc vcomb2n { a b  c d  n } { tailcall ::brlcad::vmath vcomb2n $a $b $c $d $n }
+proc vcomb3n { a b  c d  e f n } { tailcall ::brlcad::vmath vcomb3n $a $b $c $d $e $f $n }
+proc vjoin1n { b  c d  n } { tailcall ::brlcad::vmath vjoin1n $b $c $d $n }
+proc vjoin2n { b  c d  e f  n } { tailcall ::brlcad::vmath vjoin2n $b $c $d $e $f $n }
+proc vjoin3n { b  c d  e f  g h  n } { tailcall ::brlcad::vmath vjoin3n $b $c $d $e $f $g $h $n }
+proc vblend2n { b c  d e  n } { tailcall ::brlcad::vmath vblend2n $b $c $d $e $n }
+proc mat_fmt {m} { tailcall ::brlcad::vmath mat_fmt $m }
 
 package provide brlcad::vmath 1.0
 

@@ -373,20 +373,74 @@ foreach constant {M_PI DEG2RAD RAD2DEG} {
     }
 }
 
-foreach test {
-    {vadd2 {{1 2 3} {4 5 6}}}
-    {vadd {{1 2 3} {4 5 6} {-1 -2 -3}}}
-    {mat4x3pnt {{1 0 0 0 0 1 0 0 0 0 1 0 0 0 0 1} {2 3 4}}}
-    {qmul {{0 0 0 1} {1 2 3 4}}}
-    {vaddn {{1 2 3 4} {4 3 2 1} 4}}
-} {
-    lassign $test command arguments
+set vmath_tests {
+    {vadd2 {{1 2 3} {4 5 6}} {5 7 9}}
+    {vadd {{1 2 3} {4 5 6} {-1 -2 -3}} {4 5 6}}
+    {mat4x3pnt {{1 0 0 0 0 1 0 0 0 0 1 0 0 0 0 1} {2 3 4}} {2.0 3.0 4.0}}
+    {qmul {{0 0 0 1} {1 2 3 4}} {1 2 3 4}}
+    {vaddn {{1 2 3 4} {4 3 2 1} 4} {5 5 5 5}}
+}
+foreach test $vmath_tests {
+    lassign $test command arguments expected
     set canonical [::brlcad::vmath $command {*}$arguments]
+    if {$canonical ne $expected} {
+	error "FAIL vmath $command returned $canonical, expected $expected"
+    }
     set compatibility [::$command {*}$arguments]
     if {$canonical ne $compatibility} {
 	error "FAIL vmath $command differs: $canonical != $compatibility"
     }
 }
+
+set hidden_vmath_commands {}
+foreach command [dict keys [namespace ensemble configure ::brlcad::vmath -map]] {
+    set compatibility_command ::$command
+    set hidden_command ::__brlcad_vmath_compatibility_$command
+    if {![llength [info commands $compatibility_command]]} {
+	error "FAIL missing vmath compatibility command $compatibility_command"
+    }
+    if {[llength [info commands $hidden_command]]} {
+	error "FAIL vmath test command already exists: $hidden_command"
+    }
+    rename $compatibility_command $hidden_command
+    lappend hidden_vmath_commands $hidden_command $compatibility_command
+}
+try {
+    foreach test $vmath_tests {
+        lassign $test command arguments expected
+        set canonical [::brlcad::vmath $command {*}$arguments]
+        if {$canonical ne $expected} {
+	    error "FAIL vmath $command depends on its global compatibility command"
+	}
+    }
+} finally {
+    foreach {hidden_command compatibility_command} $hidden_vmath_commands {
+	rename $hidden_command $compatibility_command
+    }
+}
+
+set child [interp create]
+try {
+    $child eval [list set auto_path $::auto_path]
+    if {[llength [$child eval {info commands ::vadd2}]]} {
+	error "FAIL fresh interpreter already has the vadd2 compatibility command"
+    }
+    set legacy_result [$child eval {vadd2 {1 2 3} {4 5 6}}]
+    if {$legacy_result ne {5 7 9}} {
+	error "FAIL legacy vmath command did not autoload: $legacy_result"
+    }
+    if {[$child eval {package require brlcad::vmath 1.0}] ne "1.0"} {
+	error "FAIL fresh interpreter could not load canonical vmath package"
+    }
+    set canonical_result [$child eval {::brlcad::vmath vadd2 {1 2 3} {4 5 6}}]
+    if {$canonical_result ne $legacy_result} {
+	error "FAIL fresh interpreter vmath interfaces differ"
+    }
+} finally {
+    interp delete $child
+}
+unset child canonical_result hidden_vmath_commands legacy_result vmath_tests
+
 if {![catch {::brlcad::vmath mat_i} message] ||
     ![string match {unknown subcommand "mat_i":*} $message]} {
     error "FAIL vmath accepted an abbreviated subcommand: $message"
