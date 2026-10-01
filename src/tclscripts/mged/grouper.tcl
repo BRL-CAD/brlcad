@@ -57,14 +57,15 @@ namespace eval Grouper {
 
 
     proc getTreeMembers {_comb} {
-	if {![exists $_comb]} {
+	if {![::brlcad::mged exists $_comb]} {
 	    return ""
 	}
 
 	set i 0
 
 	set tlist {}
-	foreach item [regsub -all {/|/R} [lrange [split [tree -d 1 $_comb] "\n"] 1 end-1] ""] {
+	foreach item [regsub -all {/|/R} \
+		[lrange [split [::brlcad::mged tree -d 1 $_comb] "\n"] 1 end-1] ""] {
 	    lappend tlist [lindex $item 1]
 	    incr i
 	}
@@ -77,23 +78,23 @@ namespace eval Grouper {
 	set ItemList [getTreeMembers $GroupName]
 	set ItemList [lsort -unique $ItemList]
 
-	make_name -s 0
-	set tmp_grp [make_name tmp_group]
+	::brlcad::mged make_name -s 0
+	set tmp_grp [::brlcad::mged make_name tmp_group]
 
-	eval g $tmp_grp $ItemList
-	kill $GroupName
-	mv $tmp_grp $GroupName
+	::brlcad::mged g $tmp_grp {*}$ItemList
+	::brlcad::mged kill $GroupName
+	::brlcad::mged mv $tmp_grp $GroupName
     }
 
     proc getObjInRectangle {} {
 	variable parent_only
 	set objs2 {}
-	set size [dm size]
+	set size [::brlcad::mged dm size]
 	set sizeX [lindex $size 0].0
 	set sizeY [lindex $size 1].0
 	set adjX [expr {($sizeX / 2.0) - 1.0}]
 	set adjY [expr {($sizeY / 2.0) - 1.0}]
-	set dim [rset r dim]
+	set dim [::brlcad::mged rset r dim]
 	set dimX [lindex $dim 0].0
 	set dimY [lindex $dim 1].0
 
@@ -101,7 +102,7 @@ namespace eval Grouper {
 	    return "invalid_selection"
 	}
 
-	set pos [rset r pos]
+	set pos [::brlcad::mged rset r pos]
 	set posX [lindex $pos 0].0
 	set posY [lindex $pos 1].0
 	set posX [expr ($posX - $adjX) / $adjX]
@@ -113,7 +114,7 @@ namespace eval Grouper {
 	    # Rectangle was created left-to-right. Select only
 	    # objects completely in the rectangle.
 #	    set objs [select $posX $posY $dimX $dimY]
-	    if {[catch {select -- $posX $posY $dimX $dimY} objs]} {
+	    if {[catch {::brlcad::mged select -- $posX $posY $dimX $dimY} objs]} {
 		puts $objs
 		return "no_result"
 	    }
@@ -121,7 +122,7 @@ namespace eval Grouper {
 	    # Rectangle was created right-to-left. Select everything
 	    # completely and partly in the rectangle.
 #	    set objs [select -p $posX $posY $dimX $dimY]
-	    if {[catch {select -p -- $posX $posY $dimX $dimY} objs]} {
+	    if {[catch {::brlcad::mged select -p -- $posX $posY $dimX $dimY} objs]} {
 		puts $objs
 		return "no_result"
 	    }
@@ -161,23 +162,23 @@ namespace eval Grouper {
 	variable ae_orig
 
 	set GroupNameGlobal $GroupName
-	set center_orig [center]
-	set size_orig [size]
-	set ae_orig [ae]
+	set center_orig [::brlcad::mged center]
+	set size_orig [::brlcad::mged size]
+	set ae_orig [::brlcad::mged ae]
 
-	if {[exists $::Grouper::GroupNameGlobal]} {
-	    erase $::Grouper::GroupNameGlobal
+	if {[::brlcad::mged exists $::Grouper::GroupNameGlobal]} {
+	    ::brlcad::mged erase $::Grouper::GroupNameGlobal
 	}
 	set ::Grouper::objs [::Grouper::getObjInRectangle]
 
 	if { $objs == "invalid_selection" } {
 	    puts stdout "Invalid selection (zero area selection box)."
 	    # highlight in yellow current group
-	    if {[exists $GroupName]} {
-		e -C255/255/0 $GroupName
-		center $center_orig
-		size $size_orig
-		ae $ae_orig
+	    if {[::brlcad::mged exists $GroupName]} {
+		::brlcad::mged e -C255/255/0 $GroupName
+		::brlcad::mged center $center_orig
+		::brlcad::mged size $size_orig
+		::brlcad::mged ae $ae_orig
 	    }
 	    return
 	}
@@ -185,11 +186,11 @@ namespace eval Grouper {
 	if { $objs == "no_result" } {
 	    puts stdout "Nothing selected."
 	    # highlight in yellow current group
-	    if {[exists $GroupName]} {
-		e -C255/255/0 $GroupName
-		center $center_orig
-		size $size_orig
-		ae $ae_orig
+	    if {[::brlcad::mged exists $GroupName]} {
+		::brlcad::mged e -C255/255/0 $GroupName
+		::brlcad::mged center $center_orig
+		::brlcad::mged size $size_orig
+		::brlcad::mged ae $ae_orig
 	    }
 	    return
 	}
@@ -197,7 +198,7 @@ namespace eval Grouper {
 	set objs [lsort -unique $objs]
 	set tot_obj_in_rect [llength $objs]
 
-	if {![exists $GroupName]} {
+	if {![::brlcad::mged exists $GroupName]} {
 	    set grp_obj_list_before ""
 	    set grp_obj_list_len_before 0
 	} else {
@@ -208,20 +209,20 @@ namespace eval Grouper {
 	if { $Boolean == "+" } {
 	    foreach obj $objs {
 		#puts "Adding $obj to $GroupName ..."
-		catch {g $GroupName $obj}
+		catch {::brlcad::mged g $GroupName $obj}
 	    }
 	} else {
 	    foreach obj $objs {
 		#puts "Removing $obj from $GroupName ..."
-		catch {rm $GroupName $obj}
+		catch {::brlcad::mged rm $GroupName $obj}
 	    }
 	}
 
-	if {[exists $GroupName] && $Boolean == "+"} {
+	if {[::brlcad::mged exists $GroupName] && $Boolean == "+"} {
 	    remdup $GroupName
 	}
 
-	if {![exists $GroupName]} {
+	if {![::brlcad::mged exists $GroupName]} {
 	    set grp_obj_list_after ""
 	    set grp_obj_list_len_after 0
 	} else {
@@ -269,11 +270,11 @@ namespace eval Grouper {
 	}
 
 	# highlight in yellow current group
-	if {[exists $GroupName]} {
-	    e -C255/255/0 $GroupName
-	    center $center_orig
-	    size $size_orig
-	    ae $ae_orig
+	if {[::brlcad::mged exists $GroupName]} {
+	    ::brlcad::mged e -C255/255/0 $GroupName
+	    ::brlcad::mged center $center_orig
+	    ::brlcad::mged size $size_orig
+	    ::brlcad::mged ae $ae_orig
 	}
 
 	puts stdout "Selection complete."
@@ -343,31 +344,31 @@ proc grouper { args } {
 	}
     }
 
-    set ::Grouper::draw_orig [rset r draw]
-    set ::Grouper::pos_orig [rset r pos]
-    set ::Grouper::dim_orig [rset r dim]
-    set ::Grouper::fb_orig [rset var fb]
-    set ::Grouper::fb_all_orig [rset var fb_all]
-    set ::Grouper::listen_orig [rset var listen]
-    set ::Grouper::center_orig [center]
-    set ::Grouper::size_orig [size]
-    set ::Grouper::ae_orig [ae]
+    set ::Grouper::draw_orig [::brlcad::mged rset r draw]
+    set ::Grouper::pos_orig [::brlcad::mged rset r pos]
+    set ::Grouper::dim_orig [::brlcad::mged rset r dim]
+    set ::Grouper::fb_orig [::brlcad::mged rset var fb]
+    set ::Grouper::fb_all_orig [::brlcad::mged rset var fb_all]
+    set ::Grouper::listen_orig [::brlcad::mged rset var listen]
+    set ::Grouper::center_orig [::brlcad::mged center]
+    set ::Grouper::size_orig [::brlcad::mged size]
+    set ::Grouper::ae_orig [::brlcad::mged ae]
 
     set mged_gui($id,mouse_behavior) p
     set_mouse_behavior $id
 
-    rset vars fb 0
-    rset r draw 1
+    ::brlcad::mged rset vars fb 0
+    ::brlcad::mged rset r draw 1
 
-    bind $mged_gui($id,active_dm) <ButtonRelease-2> " winset $mged_gui($id,active_dm); dm idle; ::Grouper::do_grouper $GroupName $Boolean $ListLimit"
-    bind $mged_gui($id,active_dm) <Control-ButtonRelease-2> " winset $mged_gui($id,active_dm); dm idle; done_grouper"
+    bind $mged_gui($id,active_dm) <ButtonRelease-2> " ::brlcad::mged winset $mged_gui($id,active_dm); ::brlcad::mged dm idle; ::Grouper::do_grouper $GroupName $Boolean $ListLimit"
+    bind $mged_gui($id,active_dm) <Control-ButtonRelease-2> " ::brlcad::mged winset $mged_gui($id,active_dm); ::brlcad::mged dm idle; done_grouper"
 
     # highlight in yellow current group
-    if {[exists $GroupName]} {
-	e -C255/255/0 $GroupName
-	center $::Grouper::center_orig
-	size $::Grouper::size_orig
-	ae $::Grouper::ae_orig
+    if {[::brlcad::mged exists $GroupName]} {
+	::brlcad::mged e -C255/255/0 $GroupName
+	::brlcad::mged center $::Grouper::center_orig
+	::brlcad::mged size $::Grouper::size_orig
+	::brlcad::mged ae $::Grouper::ae_orig
     }
 }
 
@@ -396,18 +397,18 @@ proc done_grouper {} {
     bind $mged_gui($id,active_dm) <ButtonRelease-2> ""
 
     # remove yellow highlights from the display
-    if {[exists $::Grouper::GroupNameGlobal]} {
-	erase $::Grouper::GroupNameGlobal
+    if {[::brlcad::mged exists $::Grouper::GroupNameGlobal]} {
+	::brlcad::mged erase $::Grouper::GroupNameGlobal
     }
     set ::Grouper::GrouperRunning 0
 
     # return display to state before grouper changed it
-    rset r draw $::Grouper::draw_orig
-    rset r pos $::Grouper::pos_orig
-    rset r dim $::Grouper::dim_orig
-    rset var fb $::Grouper::fb_orig
-    rset var fb_all $::Grouper::fb_all_orig
-    rset var listen $::Grouper::listen_orig
+    ::brlcad::mged rset r draw $::Grouper::draw_orig
+    ::brlcad::mged rset r pos $::Grouper::pos_orig
+    ::brlcad::mged rset r dim $::Grouper::dim_orig
+    ::brlcad::mged rset var fb $::Grouper::fb_orig
+    ::brlcad::mged rset var fb_all $::Grouper::fb_all_orig
+    ::brlcad::mged rset var listen $::Grouper::listen_orig
 
     puts stdout "Grouper done."
 }

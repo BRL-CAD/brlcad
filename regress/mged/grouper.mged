@@ -1,0 +1,35 @@
+puts "*** Testing 'grouper' command helpers ***"
+
+if {![auto_load grouper]} {
+    error "FAIL grouper was not autoloadable"
+}
+
+::brlcad::mged in namespace_group_one.s sph -5 0 0 1
+::brlcad::mged in namespace_group_two.s sph 5 0 0 1
+::brlcad::mged g namespace_group.g \
+    namespace_group_one.s namespace_group_two.s
+
+set hidden_commands {}
+foreach command {exists g kill make_name mv tree} {
+    set compatibility_command ::$command
+    set hidden_command ::__brlcad_mged_compatibility_$command
+    rename $compatibility_command $hidden_command
+    lappend hidden_commands $hidden_command $compatibility_command
+}
+try {
+    set members [lsort [::Grouper::getTreeMembers namespace_group.g]]
+    ::Grouper::remdup namespace_group.g
+    set rebuilt_members [lsort [::Grouper::getTreeMembers namespace_group.g]]
+} finally {
+    foreach {hidden_command compatibility_command} $hidden_commands {
+	rename $hidden_command $compatibility_command
+    }
+}
+
+set expected_members {namespace_group_one.s namespace_group_two.s}
+if {$members ne $expected_members || $rebuilt_members ne $expected_members} {
+    error "FAIL grouper members changed: $members -> $rebuilt_members"
+}
+
+puts "PASS grouper namespaced commands"
+puts "*** 'grouper' command helper testing completed ***"

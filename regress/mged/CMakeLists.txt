@@ -29,6 +29,7 @@ set(
   facetize_all_regions.mged
   facedef.mged
   g.mged
+  grouper.mged
   hide.mged
   i.mged
   in.mged
@@ -141,6 +142,8 @@ if(TARGET mged)
       set(TEST_EXPECT "PASS expand_comb namespaced commands")
     elseif(TNAME STREQUAL "facetize_all_regions")
       set(TEST_EXPECT "PASS facetize_all_regions namespaced commands")
+    elseif(TNAME STREQUAL "grouper")
+      set(TEST_EXPECT "PASS grouper namespaced commands")
     elseif(TNAME STREQUAL "near")
       set(TEST_EXPECT "PASS near namespaced commands")
     elseif(TNAME STREQUAL "namespaces")
