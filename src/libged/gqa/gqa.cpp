@@ -1926,6 +1926,19 @@ densities_prep(struct ged *gedp, struct rt_i *rtip)
 		}
 	    FOR_ALL_DIRECTORY_END;
 	}
+
+	// validation loop - all regions with a material ID should be in the density table
+	struct region *regp = REGION_NULL;
+	for (BU_LIST_FOR(regp, region, &(rtip->HeadRegion))) {
+	    const long int material_id = regp->reg_gmater;
+	    if (analyze_densities_density(_gd_densities, material_id) >= 0.0)
+		continue;
+
+	    bu_vls_printf(gedp->ged_result_str,
+			  "Error: Density %ld on region %s is not defined in the density table.\n", material_id, regp->reg_name);
+	    analyze_densities_clear(_gd_densities);
+	    return BRLCAD_ERROR;
+	}
     }
 
     return BRLCAD_OK;
