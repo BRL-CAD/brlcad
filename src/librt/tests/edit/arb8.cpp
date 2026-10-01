@@ -343,6 +343,79 @@ test_arb_geometry_helpers(struct rt_edit *s, struct rt_arb_internal *arb,
 }
 
 
+static void
+nonplanar_arb8_reset(struct rt_edit *s, struct rt_arb_internal *arb,
+	struct rt_arb8_edit *a, const struct bn_tol *tol)
+{
+    arb8_reset(s, arb, a);
+    arb->pt[6][Z] = 1.25;
+    int issues = 0;
+    (void)rt_arb_validate(NULL, arb, tol, &issues);
+    if (!(issues & RT_ARB_VALIDATE_NONCOPLANAR))
+	bu_exit(1, "ERROR: nonplanar ARB8 test fixture is planar\n");
+    MAT_IDN(s->e_mat);
+    MAT_IDN(s->e_invmat);
+    MAT_IDN(s->model_changes);
+    s->mv_context = 0;
+}
+
+
+static void
+test_nonplanar_whole_solid_edits(struct rt_edit *s,
+	struct rt_arb_internal *arb, struct rt_arb8_edit *a,
+	const struct bn_tol *tol)
+{
+    nonplanar_arb8_reset(s, arb, a, tol);
+    rt_edit_set_edflag(s, RT_PARAMS_EDIT_SCALE);
+    s->es_scale = 2.0;
+    VSETALL(s->e_keypoint, 0.0);
+    if (rt_edit_process(s) != BRLCAD_OK) {
+	bu_exit(1, "ERROR: nonplanar ARB8 whole-solid scale was rejected\n");
+    }
+    point_t scaled = {2.0, 2.0, 2.5};
+    if (!VNEAR_EQUAL(arb->pt[6], scaled, VUNITIZE_TOL))
+	bu_exit(1, "ERROR: nonplanar ARB8 whole-solid scale failed\n");
+
+    nonplanar_arb8_reset(s, arb, a, tol);
+    rt_edit_set_edflag(s, RT_PARAMS_EDIT_TRANS);
+    s->e_inpara = 3;
+    VSET(s->e_para, 2.0, 3.0, 4.0);
+    VSETALL(s->e_keypoint, 0.0);
+    if (rt_edit_process(s) != BRLCAD_OK) {
+	bu_exit(1, "ERROR: nonplanar ARB8 whole-solid translation was rejected\n");
+    }
+    point_t translated = {3.0, 4.0, 5.25};
+    if (!VNEAR_EQUAL(arb->pt[6], translated, VUNITIZE_TOL))
+	bu_exit(1, "ERROR: nonplanar ARB8 whole-solid translation failed\n");
+
+    nonplanar_arb8_reset(s, arb, a, tol);
+    rt_edit_set_edflag(s, RT_PARAMS_EDIT_ROT);
+    s->e_inpara = 3;
+    VSET(s->e_para, 0.0, 0.0, 90.0);
+    VSETALL(s->e_keypoint, 0.0);
+    if (rt_edit_process(s) != BRLCAD_OK) {
+	bu_exit(1, "ERROR: nonplanar ARB8 whole-solid rotation was rejected\n");
+    }
+    point_t rotated = {-1.0, 1.0, 1.25};
+    if (!VNEAR_EQUAL(arb->pt[6], rotated, VUNITIZE_TOL))
+	bu_exit(1, "ERROR: nonplanar ARB8 whole-solid rotation failed\n");
+
+    nonplanar_arb8_reset(s, arb, a, tol);
+    struct rt_arb_internal before_face_move = *arb;
+    a->edit_menu = 0;
+    rt_edit_set_edflag(s, ECMD_ARB_MOVE_FACE);
+    s->e_inpara = 3;
+    VSET(s->e_para, 0.0, 0.0, 0.25);
+    bu_vls_trunc(s->log_str, 0);
+    if (rt_edit_process(s) != BRLCAD_ERROR ||
+	memcmp(arb->pt, before_face_move.pt, sizeof(arb->pt)) ||
+	!strstr(bu_vls_cstr(s->log_str), "valid face planes"))
+	bu_exit(1, "ERROR: nonplanar ARB8 face edit was not rejected cleanly\n");
+
+    bu_log("Nonplanar ARB8 whole-solid edits SUCCESS\n");
+}
+
+
 int
 rt_edit_test_arb8(void)
 {
@@ -953,6 +1026,7 @@ bu_log("RT_MATRIX_EDIT_TRANS_MODEL_XYZ SUCCESS: "
     bu_log("ECMD_ARB_ROTATE_FACE knob edit SUCCESS\n");
 
     test_arb_geometry_helpers(s, arb, a, &tol);
+    test_nonplanar_whole_solid_edits(s, arb, a, &tol);
 
     /* The public editing entry point must reject invalid type and menu indexes
      * before using them to address the type-specific editing tables. */

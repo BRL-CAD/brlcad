@@ -1914,8 +1914,19 @@ rt_edit_arb_edit(struct rt_edit *s)
     int arb_type = rt_arb_edit_type(s->log_str, s, arb, 0, s->tol);
     if (arb_type == 0)
 	return BRLCAD_ERROR;
-    if (rt_arb_calc_planes(&error_msg, arb, arb_type, a->es_peqn, s->tol)) {
-	bu_vls_printf(s->log_str, "\nCannot calculate plane equations for ARB8\n");
+
+    int validation_issues = 0;
+    (void)rt_arb_validate(NULL, arb, s->tol, &validation_issues);
+    int planes_valid = !(validation_issues & RT_ARB_VALIDATE_NONCOPLANAR) &&
+	!rt_arb_calc_planes(&error_msg, arb, arb_type, a->es_peqn, s->tol);
+    int planes_required = s->edit_flag == ECMD_ARB_MOVE_FACE ||
+	s->edit_flag == ECMD_ARB_SETUP_ROTFACE ||
+	s->edit_flag == ECMD_ARB_ROTATE_FACE ||
+	s->edit_flag == PTARB || s->edit_flag == EARB;
+    if (!planes_valid && planes_required) {
+	bu_vls_printf(s->log_str,
+		"Cannot edit ARB faces or edges without valid face planes: %s",
+		bu_vls_cstr(&error_msg));
 	bu_vls_free(&error_msg);
 	return BRLCAD_ERROR;
     }
@@ -1937,11 +1948,11 @@ rt_edit_arb_edit(struct rt_edit *s)
 	    break;
 	case ECMD_ARB_MAIN_MENU:
 	    ecmd_arb_main_menu(s);
-	    break;
+	    return BRLCAD_OK;
 	case ECMD_ARB_SPECIFIC_MENU:
 	    if (ecmd_arb_specific_menu(s) != BRLCAD_OK)
 		return -1;
-	    break;
+	    return BRLCAD_OK;
 	case ECMD_ARB_MOVE_FACE:
 	    return ecmd_arb_move_face(s);
 	case ECMD_ARB_SETUP_ROTFACE:
@@ -1980,6 +1991,11 @@ arb_planecalc:
 
     if (ret != BRLCAD_OK)
 	goto arb_failed;
+    /* Rigid and uniform whole-solid transforms preserve an invalid ARB's
+     * shape.  They must remain usable even when face-specific editing cannot
+     * construct a complete set of planes. */
+    if (!planes_valid)
+	return ret;
     if (edarb_canonicalize(s, arb) != BRLCAD_OK) {
 	goto arb_failed;
     }
