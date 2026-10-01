@@ -1269,7 +1269,7 @@
 }
 
 ::itcl::body TankWizard::buildTank {} {
-    SetWaitCursor $archer
+    ::cadwidgets::SetWaitCursor $archer
 
     initRegionIds
     $archer pluginUpdateStatusBar "Building Tank..."
@@ -1364,7 +1364,7 @@
     $archer pluginUpdateSaveMode 1
 
     $archersMged units $savedUnits
-    SetNormalCursor $archer
+    ::cadwidgets::SetNormalCursor $archer
 
     $archer pluginUpdateProgressBar 0.0
     $archer pluginUpdateStatusBar ""

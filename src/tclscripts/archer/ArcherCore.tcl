@@ -1382,7 +1382,7 @@ namespace delete ::ArcherCoreBootstrap
 # e_flag_expands_globbing h_flag_unused s_flag_save_needed t_flag_tree_redraw_needed
 ::itcl::body ArcherCore::gedWrapper {cmd eflag hflag sflag tflag args} {
     if {!$mFreezeGUI} {
-	SetWaitCursor $this
+	::cadwidgets::SetWaitCursor $this
     }
 
     if {$eflag} {
@@ -1396,7 +1396,7 @@ namespace delete ::ArcherCoreBootstrap
 
     if {[catch {eval gedCmd $cmd $options $expandedArgs} ret]} {
 	if {!$mFreezeGUI} {
-	    SetNormalCursor $this
+	    ::cadwidgets::SetNormalCursor $this
 	}
 	error $ret
     }
@@ -1422,7 +1422,7 @@ namespace delete ::ArcherCoreBootstrap
 	}
 	checkIfSelectedObjExists
 
-	SetNormalCursor $this
+	::cadwidgets::SetNormalCursor $this
     }
 
     return $ret
@@ -2902,7 +2902,7 @@ namespace delete ::ArcherCoreBootstrap
 
     set mNeedSave 1
     updateSaveMode
-    SetWaitCursor $this
+    ::cadwidgets::SetWaitCursor $this
     gedCmd kill $comp
 
 #    set select [$itk_component(tree) selection get]
@@ -2931,7 +2931,7 @@ namespace delete ::ArcherCoreBootstrap
 #    set parent [$itk_component(tree) query -parent $element]
 #    $itk_component(tree) remove $element $parent
 #    rebuildTree
-    SetNormalCursor $this
+    ::cadwidgets::SetNormalCursor $this
 }
 
 
@@ -2980,7 +2980,7 @@ namespace delete ::ArcherCoreBootstrap
 	return
     }
 
-    SetWaitCursor $this
+    ::cadwidgets::SetWaitCursor $this
 
     set mNeedSave 1
     updateSaveMode
@@ -3002,7 +3002,7 @@ namespace delete ::ArcherCoreBootstrap
     }
 
     destroy $_top
-    SetNormalCursor $this
+    ::cadwidgets::SetNormalCursor $this
 }
 
 
@@ -3452,7 +3452,7 @@ namespace delete ::ArcherCoreBootstrap
 		redrawObj $path
 	    } \
 	    $COMP_PICK_BOT_SPLIT_MODE { \
-		SetWaitCursor $this
+		::cadwidgets::SetWaitCursor $this
 		set how [gedCmd how $path]
 		if {![catch {bot_split2 $last} bnames] && $bnames != ""} {
 		    set dirname [file dirname $path]
@@ -3471,7 +3471,7 @@ namespace delete ::ArcherCoreBootstrap
 		    syncTree
 		    setSave
 		}
-		SetNormalCursor $this
+		::cadwidgets::SetNormalCursor $this
 	    } \
 	    $COMP_PICK_BOT_SYNC_MODE { \
 		catch {bot_sync $path}
@@ -3882,7 +3882,7 @@ namespace delete ::ArcherCoreBootstrap
 
 ::itcl::body ArcherCore::render {_node _state _trans _updateTree {_wflag 1} {_node_id ""}} {
     if {$_wflag} {
-	SetWaitCursor $this
+	::cadwidgets::SetWaitCursor $this
     }
 
     set tnode [file tail $_node]
@@ -4018,7 +4018,7 @@ namespace delete ::ArcherCoreBootstrap
     }
 
     if {$_wflag} {
-	SetNormalCursor $this
+	::cadwidgets::SetNormalCursor $this
     }
 
     if {$_node_id != ""} {
@@ -4177,7 +4177,7 @@ namespace delete ::ArcherCoreBootstrap
 }
 
 ::itcl::body ArcherCore::doLighting {} {
-    SetWaitCursor $this
+    ::cadwidgets::SetWaitCursor $this
 
     # Leave this off for now.
     gedCmd zclip_all 0
@@ -4192,7 +4192,7 @@ namespace delete ::ArcherCoreBootstrap
 
     gedCmd refresh_all
 
-    SetNormalCursor $this
+    ::cadwidgets::SetNormalCursor $this
 }
 
 ::itcl::body ArcherCore::doViewReset {} {
@@ -4889,7 +4889,7 @@ namespace delete ::ArcherCoreBootstrap
 	return
     }
 
-    SetWaitCursor $this
+    ::cadwidgets::SetWaitCursor $this
 
     set cnode [$itk_component(newtree) focus]
     set ctext [$itk_component(newtree) item $cnode -text]
@@ -4974,7 +4974,7 @@ namespace delete ::ArcherCoreBootstrap
     }
 
     updateTreeDrawLists
-    SetNormalCursor $this
+    ::cadwidgets::SetNormalCursor $this
 }
 
 ::itcl::body ArcherCore::handleTreePopup {_type _x _y _X _Y} {
@@ -5188,7 +5188,7 @@ namespace delete ::ArcherCoreBootstrap
 	return
     }
 
-    SetWaitCursor $this
+    ::cadwidgets::SetWaitCursor $this
 
     if {$_rflag} {
 	rebuildTree
@@ -5206,7 +5206,7 @@ namespace delete ::ArcherCoreBootstrap
 	}
     }
 
-    SetNormalCursor $this
+    ::cadwidgets::SetNormalCursor $this
 }
 
 ##
@@ -5460,7 +5460,7 @@ namespace delete ::ArcherCoreBootstrap
 ::itcl::body ArcherCore::Load {target} {
     global tcl_platform
 
-    SetWaitCursor $this
+    ::cadwidgets::SetWaitCursor $this
     if {$mNeedSave} {
 	askToSave
     }
@@ -5520,7 +5520,7 @@ namespace delete ::ArcherCoreBootstrap
     set mSavedViewEyePt ""
     set mSavedSize ""
 
-    SetNormalCursor $this
+    ::cadwidgets::SetNormalCursor $this
 }
 
 ::itcl::body ArcherCore::GetUserCmds {} {
@@ -5572,7 +5572,7 @@ namespace delete ::ArcherCoreBootstrap
     set mFreezeGUI $_freeze
     if {$mFreezeGUI} {
 	$itk_component(ged) refresh_off
-	SetWaitCursor $this
+	::cadwidgets::SetWaitCursor $this
     } else {
 	if {$mNeedsTreeRebuild} {
 	    set mNeedsTreeRebuild 0
@@ -5587,7 +5587,7 @@ namespace delete ::ArcherCoreBootstrap
 
 	$itk_component(ged) refresh_on
 	$itk_component(ged) refresh_all
-	SetNormalCursor $this
+	::cadwidgets::SetNormalCursor $this
     }
 }
 
@@ -6400,7 +6400,7 @@ namespace delete ::ArcherCoreBootstrap
     }
 
     if {$wflag && !$mFreezeGUI} {
-	SetWaitCursor $this
+	::cadwidgets::SetWaitCursor $this
     }
 
     set optionsAndArgs [eval dbExpand $args]
@@ -6424,7 +6424,7 @@ namespace delete ::ArcherCoreBootstrap
 	    updateTreeDrawLists
 
 	    if {$wflag} {
-		SetNormalCursor $this
+		::cadwidgets::SetNormalCursor $this
 	    }
 	}
 
@@ -6439,7 +6439,7 @@ namespace delete ::ArcherCoreBootstrap
 	updateTreeDrawLists
 
 	if {$wflag} {
-	    SetNormalCursor $this
+	    ::cadwidgets::SetNormalCursor $this
 	}
     }
 
@@ -6506,7 +6506,7 @@ namespace delete ::ArcherCoreBootstrap
 	return
     }
 
-    SetWaitCursor $this
+    ::cadwidgets::SetWaitCursor $this
 
     set optionsAndArgs [eval dbExpand $args]
     set options [lindex $optionsAndArgs 0]
@@ -6531,7 +6531,7 @@ namespace delete ::ArcherCoreBootstrap
 	}
 
 	updateTreeDrawLists
-	SetNormalCursor $this
+	::cadwidgets::SetNormalCursor $this
 
 	return $ret
     }
@@ -6544,7 +6544,7 @@ namespace delete ::ArcherCoreBootstrap
     }
 
     updateTreeDrawLists
-    SetNormalCursor $this
+    ::cadwidgets::SetNormalCursor $this
 }
 
 ::itcl::body ArcherCore::ev {args} {

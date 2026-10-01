@@ -439,7 +439,7 @@
 }
 
 ::itcl::body HumanWizard::buildHuman {} {
-    SetWaitCursor $archer
+    ::cadwidgets::SetWaitCursor $archer
     setstance
     $archer pluginUpdateStatusBar "Building human..."
     $archer pluginUpdateSaveMode 1
@@ -491,7 +491,7 @@ puts "$archersGed human -A -s$stance $wizardTop"
     $archer pluginUpdateStatusBar "Nearly finished..."
     $archer pluginUpdateProgressBar 1.0
 
-    SetNormalCursor $archer
+    ::cadwidgets::SetNormalCursor $archer
 
     $archer pluginUpdateProgressBar 0.0
     $archer pluginUpdateStatusBar ""

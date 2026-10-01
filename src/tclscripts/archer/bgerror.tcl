@@ -468,7 +468,7 @@ proc bgerror {error} {
 	    # Make sure the wait cursor is unlocked
 	    if [info exists App::gui] {
 		$App::gui SetStatusString
-		SetNormalCursor $App::gui
+		::cadwidgets::SetNormalCursor $App::gui
 	    }
 	}
 	SAVE {

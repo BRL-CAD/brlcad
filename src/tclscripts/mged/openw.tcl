@@ -1863,7 +1863,7 @@ hoc_register_menu_data "Create" "$ptype..." "Make a $ptype" $ksl
 	{ { summary "A tool for performing various editing operations on BoTs." } }
 
     .$id.menubar.tools add command -label "Build Pattern Tool" -underline 0\
-	-command "pattern_control .\#auto"
+	-command "::cadwidgets::pattern_control .\#auto"
     hoc_register_menu_data "Tools" "Build Pattern Tool" "Build Pattern Tool"\
 	{ { summary "A tool for building a repetitive pattern from an existing object." } }
 

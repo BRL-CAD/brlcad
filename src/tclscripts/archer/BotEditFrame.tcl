@@ -1009,7 +1009,7 @@
 	return
     }
 
-    SetWaitCursor $::ArcherCore::application
+    ::cadwidgets::SetWaitCursor $::ArcherCore::application
     unset mVertDetail
     unset mEdgeDetail
     unset mFaceDetail
@@ -1080,7 +1080,7 @@
 	incr index
     }
 
-    SetNormalCursor $::ArcherCore::application
+    ::cadwidgets::SetNormalCursor $::ArcherCore::application
 }
 
 

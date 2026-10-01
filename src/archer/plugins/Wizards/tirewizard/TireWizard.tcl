@@ -412,7 +412,7 @@
 }
 
 ::itcl::body TireWizard::buildTire {} {
-    SetWaitCursor $archer
+    ::cadwidgets::SetWaitCursor $archer
 
     setTreadPattern
     setTreadType
@@ -461,7 +461,7 @@
     after 50
     $archer pluginUpdateProgressBar 1.0
 
-    SetNormalCursor $archer
+    ::cadwidgets::SetNormalCursor $archer
 
     $archer pluginUpdateProgressBar 0.0
     $archer pluginUpdateStatusBar ""

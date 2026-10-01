@@ -5447,18 +5447,18 @@ package provide cadwidgets::Ged 1.0
 
 
 ::itcl::body cadwidgets::Ged::shoot_ray {_rayname _start _op _target _prep _no_bool _onehit _bot_dflag _objects} {
-    SetWaitCursor $this
+    ::cadwidgets::SetWaitCursor $this
 
     init_shoot_ray $_rayname $_prep $_no_bool $_onehit $_bot_dflag $_objects
     set result [$_rayname shootray $_start $_op $_target]
 
-    SetNormalCursor $this
+    ::cadwidgets::SetNormalCursor $this
     return $result
 }
 
 
 ::itcl::body cadwidgets::Ged::shoot_ray_who {_start _op _target _prep _no_bool _onehit _bot_dflag} {
-    SetWaitCursor $this
+    ::cadwidgets::SetWaitCursor $this
 
     set result ""
     catch {
@@ -5472,7 +5472,7 @@ package provide cadwidgets::Ged 1.0
 	set result [$mRay shootray $_start $_op $_target]
     }
 
-    SetNormalCursor $this
+    ::cadwidgets::SetNormalCursor $this
     return $result
 }
 

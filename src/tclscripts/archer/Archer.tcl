@@ -916,7 +916,7 @@ package provide Archer 1.0
 	error "importFg4Sections: wlist is missing the WizardTop key and its corresponding value"
     }
 
-    SetWaitCursor $this
+    ::cadwidgets::SetWaitCursor $this
     set savedUnits [$itk_component(ged) units -s]
     $itk_component(ged) units in
     $itk_component(ged) configure -autoViewEnable 0
@@ -1043,7 +1043,7 @@ package provide Archer 1.0
 	$itk_component(ged) attachObservers
 	$itk_component(ged) refreshAll
 	$itk_component(ged) configure -autoViewEnable 1
-	SetNormalCursor $this
+	::cadwidgets::SetNormalCursor $this
     }
 }
 
@@ -1060,7 +1060,7 @@ package provide Archer 1.0
 ::itcl::body Archer::launchPatternTool {} {
     set ::cadwidgets::mgedFlag 0
     set ::cadwidgets::ged $this
-    pattern_control .\#auto
+    ::cadwidgets::pattern_control .\#auto
 }
 
 ::itcl::body Archer::raytracePlus {{_batch_list {}}} {
@@ -1238,7 +1238,7 @@ package provide Archer 1.0
 }
 
 ::itcl::body Archer::bot_flip_check {args} {
-    SetWaitCursor $this
+    ::cadwidgets::SetWaitCursor $this
 
     set skip_count 0
     set no_flip_count 0
@@ -1455,7 +1455,7 @@ package provide Archer 1.0
 	append ret_string "$flip_count items flipped\n"
     }
 
-    SetNormalCursor $this
+    ::cadwidgets::SetNormalCursor $this
     pluginUpdateProgressBar 0
 
     if {$flip_count} {
@@ -1484,7 +1484,7 @@ package provide Archer 1.0
 
 
 ::itcl::body Archer::bot_split_all {} {
-    SetWaitCursor $this
+    ::cadwidgets::SetWaitCursor $this
 
     set ret_string "The following bots have been split:\n"
     set blist [split [search . -type bot] "\n "]
@@ -1517,7 +1517,7 @@ package provide Archer 1.0
     }
 
     pluginUpdateProgressBar 0
-    SetNormalCursor $this
+    ::cadwidgets::SetNormalCursor $this
 
     if {$split_count} {
 	gedCmd make_name -s 0
@@ -1542,7 +1542,7 @@ package provide Archer 1.0
 
 
 ::itcl::body Archer::bot_sync_all {} {
-    SetWaitCursor $this
+    ::cadwidgets::SetWaitCursor $this
 
     set blist [split [search . -type bot] "\n "]
     set nitems [llength $blist]
@@ -1569,7 +1569,7 @@ package provide Archer 1.0
     }
 
     pluginUpdateProgressBar 0
-    SetNormalCursor $this
+    ::cadwidgets::SetNormalCursor $this
 
     setSave
     if {!$mBotFixAllFlag} {
@@ -1733,7 +1733,7 @@ package provide Archer 1.0
 	}
     }
 
-    SetWaitCursor $this
+    ::cadwidgets::SetWaitCursor $this
     $itk_component(ged) refresh_off
 
     catch {
@@ -1799,7 +1799,7 @@ package provide Archer 1.0
 
     $itk_component(ged) refresh_on
     $itk_component(ged) refresh_all
-    SetNormalCursor $this
+    ::cadwidgets::SetNormalCursor $this
 }
 
 
