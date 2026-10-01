@@ -235,6 +235,7 @@ rt_edit_bot_labels(
 	VADD3(mid_pt, p1, p2, p3);
 
 	VSCALE(mid_pt, mid_pt, one_third);
+	POINT_LABEL_STR(mid_pt, "face");
 
 	*num_lines = 3;
 	VMOVE(lines[0], mid_pt);
@@ -1114,8 +1115,7 @@ ecmd_bot_pickt(struct rt_edit *s, const vect_t mousevec)
 	b->bot_verts[1] = -1;
 	b->bot_verts[2] = -1;
 	bu_vls_free(&vls);
-    }
-    if (hits == 1) {
+    } else if (hits == 1) {
 	sscanf(bu_vls_cstr(&vls), " { { %d %d %d", &b->bot_verts[0], &b->bot_verts[1], &b->bot_verts[2]);
 	bu_vls_free(&vls);
     } else {

@@ -643,6 +643,32 @@ bu_log("RT_MATRIX_EDIT_TRANS_MODEL_XYZ SUCCESS: "
 	       be->bot_verts[0], be->bot_verts[1], be->bot_verts[2]);
     }
 
+    /* The selected face is labeled at its centroid and marked with one line
+     * from the centroid to each vertex. */
+    {
+	struct rt_point_labels labels[3] = {RT_POINT_LABELS_INIT};
+	point_t lines[2 * 4];
+	mat_t identity;
+	int num_lines = 0;
+	MAT_IDN(identity);
+	EDOBJ[ID_BOT].ft_labels(&num_lines, lines, labels, 3, identity, s, &tol);
+
+	point_t centroid = {1.0 / 3.0, 1.0 / 3.0, 1.0 / 3.0};
+	point_t vertices[3] = {{1.0, 0.0, 0.0},
+			       {0.0, 1.0, 0.0},
+			       {0.0, 0.0, 1.0}};
+	if (num_lines != 3 || !BU_STR_EQUAL(labels[0].str, "face") ||
+	    !VNEAR_EQUAL(labels[0].pt, centroid, VUNITIZE_TOL) ||
+	    !BU_STR_EQUAL(labels[1].str, "pt"))
+	    bu_exit(1, "ERROR: selected BOT face label is missing or misplaced\n");
+	for (int i = 0; i < num_lines; ++i) {
+	    if (!VNEAR_EQUAL(lines[i * 2], centroid, VUNITIZE_TOL) ||
+		!VNEAR_EQUAL(lines[i * 2 + 1], vertices[i], VUNITIZE_TOL))
+		bu_exit(1, "ERROR: selected BOT face marker line %d is misplaced\n", i);
+	}
+	bu_log("ECMD_BOT_PICKT label SUCCESS: face centroid is marked\n");
+    }
+
     /* ================================================================
      * ECMD_BOT_MODE (descriptor path): set mode to RT_BOT_SOLID (2)
      * ================================================================*/

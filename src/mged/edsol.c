@@ -424,11 +424,12 @@ ecmd_bot_pickt_multihit_clbk(int UNUSED(ac), const char **UNUSED(av), void *d, v
     struct rt_bot_edit *b = (struct rt_bot_edit *)se->ipe_ptr;
     struct bu_vls *vls = (struct bu_vls *)se->u_ptr;
 
-    // Evil Tcl variable linkage.  Will need to figure out how to do this
-    // "on the fly" with temporary s_edit structure internal variables...
-    Tcl_LinkVar(s->interp, "bot_v1", (char *)&b->bot_verts[0], TCL_LINK_INT);
-    Tcl_LinkVar(s->interp, "bot_v2", (char *)&b->bot_verts[1], TCL_LINK_INT);
-    Tcl_LinkVar(s->interp, "bot_v3", (char *)&b->bot_verts[2], TCL_LINK_INT);
+    /* The chooser is nonmodal, so it cannot safely retain links to this edit
+     * state.  Clear the old selection while the user chooses a new face; the
+     * Tcl callback applies the chosen indices through the normal edit path. */
+    b->bot_verts[0] = -1;
+    b->bot_verts[1] = -1;
+    b->bot_verts[2] = -1;
 
     int ret_tcl = Tcl_VarEval(s->interp, "bot_face_select ", bu_vls_cstr(vls), (char *)NULL);
     int ret = BRLCAD_OK;
@@ -439,9 +440,6 @@ ecmd_bot_pickt_multihit_clbk(int UNUSED(ac), const char **UNUSED(av), void *d, v
 	b->bot_verts[2] = -1;
 	ret = BRLCAD_ERROR;
     }
-    Tcl_UnlinkVar(s->interp, "bot_v1");
-    Tcl_UnlinkVar(s->interp, "bot_v2");
-    Tcl_UnlinkVar(s->interp, "bot_v3");
     return ret;
 }
 
