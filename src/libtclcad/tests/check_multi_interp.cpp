@@ -387,6 +387,18 @@ open_shared_database(Tcl_Interp *first, Tcl_Interp *second)
 	return false;
     }
 
+    const char *raytrace_script =
+	"set ray_name ::brlcad::tclcad::ged::qualified_ray;"
+	"set object [lindex [shared_ged tops] 0];"
+	"shared_ged rt_gettrees $ray_name $object;"
+	"set registered [expr {[llength [info commands $ray_name]] == 1}];"
+	"rename $ray_name {};"
+	"set registered";
+    if (!eval_ok(first, raytrace_script) || !result_is(first, "1")) {
+	std::fprintf(stderr, "qualified raytrace object creation failed\n");
+	return false;
+    }
+
     return true;
 }
 

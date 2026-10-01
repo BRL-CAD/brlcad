@@ -2684,14 +2684,18 @@ static void
 wdb_deleteProc_rt(void *clientData)
 {
     struct application *ap = (struct application *)clientData;
+    struct resource *resp;
     struct rt_i *rtip;
 
     RT_AP_CHECK(ap);
+    resp = ap->a_resource;
     rtip = ap->a_rt_i;
     RT_CK_RTI(rtip);
 
     rt_i_destroy(rtip);
     ap->a_rt_i = (struct rt_i *)NULL;
+    BU_PUT(resp, struct resource);
+    ap->a_resource = (struct resource *)NULL;
 
     bu_free((void *)ap, "struct application");
 }
@@ -2748,6 +2752,7 @@ cmd_rt_gettrees(ClientData clientData, Tcl_Interp *UNUSED(interpreter), int argc
     if (argc-2 < 1) {
         Tcl_AppendResult((Tcl_Interp *)s->wdbp->wdb_interp,
                          "rt_gettrees(): no geometry has been specified ", (char *)NULL);
+	rt_i_destroy(rtip);
         return TCL_ERROR;
     }
 
@@ -2783,10 +2788,14 @@ cmd_rt_gettrees(ClientData clientData, Tcl_Interp *UNUSED(interpreter), int argc
 
     rt_ck(rtip);
 
-    /* Instantiate the proc, with clientData of wdb */
-    /* Beware, returns a "token", not TCL_OK. */
-    (void)Tcl_CreateCommand((Tcl_Interp *)s->wdbp->wdb_interp, newprocname, tclcad_rt,
-                            (ClientData)ap, wdb_deleteProc_rt);
+    /* Instantiate the proc, with clientData of wdb. */
+    if (!Tcl_CreateCommand((Tcl_Interp *)s->wdbp->wdb_interp, newprocname,
+	    tclcad_rt, (ClientData)ap, wdb_deleteProc_rt)) {
+	wdb_deleteProc_rt((ClientData)ap);
+	Tcl_SetObjResult((Tcl_Interp *)s->wdbp->wdb_interp,
+		Tcl_ObjPrintf("Unable to create Tcl command: %s", newprocname));
+	return TCL_ERROR;
+    }
 
     /* Return new function name as result */
     Tcl_AppendResult((Tcl_Interp *)s->wdbp->wdb_interp, newprocname, (char *)NULL);

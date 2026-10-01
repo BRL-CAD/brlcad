@@ -5286,10 +5286,14 @@ to_rt_gettrees(struct ged *gedp,
 	return BRLCAD_ERROR;
     }
 
-    /* Instantiate the proc, with clientData of wdb */
-    /* Beware, returns a "token", not TCL_OK. */
-    (void)Tcl_CreateCommand(current_top->to_interp, newprocname, tclcad_rt,
-	    (ClientData)ap, to_deleteProc_rt);
+    /* Instantiate the proc, with clientData of wdb. */
+    if (!Tcl_CreateCommand(current_top->to_interp, newprocname, tclcad_rt,
+	    (ClientData)ap, to_deleteProc_rt)) {
+	to_deleteProc_rt((ClientData)ap);
+	bu_vls_printf(gedp->ged_result_str,
+		"Unable to create Tcl command: %s", newprocname);
+	return BRLCAD_ERROR;
+    }
 
     /* Return new function name as result */
     bu_vls_printf(gedp->ged_result_str, "%s", newprocname);

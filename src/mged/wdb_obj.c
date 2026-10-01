@@ -1355,6 +1355,7 @@ wdb_rt_gettrees_cmd(struct rt_wdb *wdbp,
     if (argc-2 < 1) {
 	Tcl_AppendResult((Tcl_Interp *)wdbp->wdb_interp,
 			 "rt_gettrees(): no geometry has been specified ", (char *)NULL);
+	rt_i_destroy(rtip);
 	return TCL_ERROR;
     }
 
@@ -1391,10 +1392,14 @@ wdb_rt_gettrees_cmd(struct rt_wdb *wdbp,
 
     rt_ck(rtip);
 
-    /* Instantiate the proc, with clientData of wdb */
-    /* Beware, returns a "token", not TCL_OK. */
-    (void)Tcl_CreateCommand((Tcl_Interp *)wdbp->wdb_interp, newprocname, tclcad_rt,
-			    (ClientData)ap, wdb_deleteProc_rt);
+    /* Instantiate the proc, with clientData of wdb. */
+    if (!Tcl_CreateCommand((Tcl_Interp *)wdbp->wdb_interp, newprocname,
+	    tclcad_rt, (ClientData)ap, wdb_deleteProc_rt)) {
+	wdb_deleteProc_rt((ClientData)ap);
+	Tcl_SetObjResult((Tcl_Interp *)wdbp->wdb_interp,
+		Tcl_ObjPrintf("Unable to create Tcl command: %s", newprocname));
+	return TCL_ERROR;
+    }
 
     /* Return new function name as result */
     Tcl_AppendResult((Tcl_Interp *)wdbp->wdb_interp, newprocname, (char *)NULL);
@@ -2015,10 +2020,14 @@ wdb_create_cmd(struct rt_wdb *wdbp,	/* pointer to object */
 	return TCL_ERROR;
     }
 
-    /* Instantiate the newprocname, with clientData of wdbp */
-    /* Beware, returns a "token", not TCL_OK. */
-    (void)Tcl_CreateCommand((Tcl_Interp *)wdbp->wdb_interp, oname, (Tcl_CmdProc *)wdb_cmd,
-			    (ClientData)wdbp, wdb_deleteProc);
+    /* Instantiate the newprocname, with clientData of wdbp. */
+    if (!Tcl_CreateCommand((Tcl_Interp *)wdbp->wdb_interp, oname,
+	    (Tcl_CmdProc *)wdb_cmd, (ClientData)wdbp, wdb_deleteProc)) {
+	Tcl_SetObjResult((Tcl_Interp *)wdbp->wdb_interp,
+		Tcl_ObjPrintf("Unable to create Tcl command: %s", oname));
+	wdb_deleteProc((ClientData)wdbp);
+	return TCL_ERROR;
+    }
 
     /* Return new function name as result */
     Tcl_AppendResult((Tcl_Interp *)wdbp->wdb_interp, oname, (char *)NULL);
@@ -2161,8 +2170,11 @@ Usage: wdb_open\n\
 int
 Wdb_Init(Tcl_Interp *interp)
 {
-    (void)Tcl_CreateCommand(interp, (const char *)"wdb_open", wdb_open_tcl,
-			    (ClientData)NULL, (Tcl_CmdDeleteProc *)NULL);
+    if (!Tcl_CreateCommand(interp, "wdb_open", wdb_open_tcl, NULL, NULL)) {
+	Tcl_SetObjResult(interp, Tcl_NewStringObj(
+		"Unable to create Tcl command: wdb_open", -1));
+	return TCL_ERROR;
+    }
 
     return TCL_OK;
 }

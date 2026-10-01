@@ -326,6 +326,20 @@ unset legacy_state module module_namespace output_modules
 set object namespaces_sphere.s
 ::brlcad::mged in $object sph 0 0 0 1
 
+set ray_commands {
+    ::brlcad::mged::namespace_ray
+    ::brlcad::mged::namespace_wdb_ray
+}
+::brlcad::mged rt_gettrees [lindex $ray_commands 0] $object
+.inmem rt_gettrees [lindex $ray_commands 1] $object
+foreach command $ray_commands {
+    if {![llength [info commands $command]]} {
+	error "FAIL qualified raytrace command was not created: $command"
+    }
+    rename $command {}
+}
+unset ray_commands
+
 foreach command {{::brlcad::mged exists} exists _mged_exists} {
     if {![{*}$command $object]} {
 	error "FAIL $command did not find $object"
