@@ -23,6 +23,8 @@
 #
 ##############################################################
 
+package require brlcad::vmath 1.0
+
 ::itcl::class TgcEditFrame {
     inherit GeometryEditFrame
 
@@ -248,7 +250,7 @@
 	hr {
 	    set h [$itk_option(-mged) get $itk_option(-geometryObject) H]
 	    set v [$itk_option(-mged) get $itk_option(-geometryObject) V]
-	    set model_h [::vadd2 $h $v]
+	    set model_h [::brlcad::vmath vadd2 $h $v]
 	    set view_h [$itk_option(-mged) pane_m2v_point $_dm $model_h]
 	    set vz [lindex $view_h 2]
 	    set new_view_h [list $_vx $_vy $vz]

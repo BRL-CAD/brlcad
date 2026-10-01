@@ -24,6 +24,7 @@
 #
 
 LoadArcherCoreLibs
+package require brlcad::vmath 1.0
 package provide ArcherCore 1.0
 
 namespace eval ArcherCoreBootstrap {
@@ -3370,7 +3371,7 @@ namespace delete ::ArcherCoreBootstrap
 	return
     }
 
-    set point [vscale $point [$itk_component(ged) base2local]]
+    set point [::brlcad::vmath vscale $point [$itk_component(ged) base2local]]
     $itk_component(ged) pane_center $_pane $point
 }
 
@@ -3383,8 +3384,8 @@ namespace delete ::ArcherCoreBootstrap
 
     set b2l [$itk_component(ged) base2local]
     set rad2deg [expr {180.0 / acos(-1.0)}]
-    set raydir [vunitize [vsub2 $_target $_start]]
-    set scaled_start [vscale $_start $b2l]
+    set raydir [::brlcad::vmath vunitize [::brlcad::vmath vsub2 $_target $_start]]
+    set scaled_start [::brlcad::vmath vscale $_start $b2l]
 
     set rds "([format {%.4f %.4f %.4f} [lindex $raydir 0] [lindex $raydir 1] [lindex $raydir 2]])"
     set ae [eval $itk_component(ged) dir2ae $raydir]
@@ -3396,7 +3397,7 @@ namespace delete ::ArcherCoreBootstrap
     putString "Region Name\t\t\tEntry (x y z)\t\t\t\tLOS\tObliq_in"
 
     # use the reverse ray direction for the cos calculation below
-    set raydir [vunitize [vsub2 $_start $_target]]
+    set raydir [::brlcad::vmath vunitize [::brlcad::vmath vsub2 $_start $_target]]
 
     foreach partition $_partitions {
 	if {[catch {::brlcad::bu get_value_by_keyword "region" $partition} region] ||
@@ -3408,12 +3409,12 @@ namespace delete ::ArcherCoreBootstrap
 	    return ""
 	}
 
-	set hit_normal [vunitize $hit_normal]
-	set cosa [vdot $raydir $hit_normal]
+	set hit_normal [::brlcad::vmath vunitize $hit_normal]
+	set cosa [::brlcad::vmath vdot $raydir $hit_normal]
 
 	set angle [format "%.3f" [expr {acos($cosa) * $rad2deg}]]
-	set los [format "%.2f" [expr {[vmagnitude [vsub2 $o_pt $i_pt]] * $b2l}]]
-	set i_pt [vscale $i_pt $b2l]
+	set los [format "%.2f" [expr {[::brlcad::vmath vmagnitude [::brlcad::vmath vsub2 $o_pt $i_pt]] * $b2l}]]
+	set i_pt [::brlcad::vmath vscale $i_pt $b2l]
 	set i_pt [format "(%.3f %.3f %.3f)" [lindex $i_pt 0] [lindex $i_pt 1] [lindex $i_pt 2]]
 
 	putString "$region\t\t\t$i_pt\t\t\t\t$los\t$angle"

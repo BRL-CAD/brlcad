@@ -23,6 +23,7 @@
 #	This creates rtwizard types of images.
 #
 
+package require brlcad::vmath 1.0
 package provide cadwidgets::RtImage 1.0
 
 namespace eval ::cadwidgets {
@@ -68,12 +69,12 @@ proc rtimage_cut_animation {rtimage_dict} {
 
     if {[info exists ::RtWizard::wizard_state(cut_direction)] &&
 	[string trim $::RtWizard::wizard_state(cut_direction)] ne ""} {
-	if {[catch {set cut_dir [vunitize $::RtWizard::wizard_state(cut_direction)]}]} {
+	if {[catch {set cut_dir [::brlcad::vmath vunitize $::RtWizard::wizard_state(cut_direction)]}]} {
 	    return -code error "rtwizard: cutting direction must be a non-zero XYZ vector"
 	}
     } else {
 	set omat [::brlcad::bn quat_quat2mat $_orientation]
-	set cut_dir [vunitize [list [expr {-[lindex $omat 8]}] \
+	set cut_dir [::brlcad::vmath vunitize [list [expr {-[lindex $omat 8]}] \
 	    [expr {-[lindex $omat 9]}] [expr {-[lindex $omat 10]}]]]
     }
 
@@ -102,7 +103,7 @@ proc rtimage_cut_animation {rtimage_dict} {
 	for {set frame_no 0} {$frame_no < $frame_count} {incr frame_no} {
 	    set fraction [expr {double($frame_no) / double($frame_count - 1)}]
 	    set plane_dist [expr {$sweep_first + $fraction * ($sweep_last - $sweep_first)}]
-	    set plane_pt [vscale $cut_dir $plane_dist]
+	    set plane_pt [::brlcad::vmath vscale $cut_dir $plane_dist]
 	    dict set rtimage_dict _cut_plane [format "%.15g,%.15g,%.15g,%.15g,%.15g,%.15g" \
 		[lindex $plane_pt 0] [lindex $plane_pt 1] [lindex $plane_pt 2] \
 		[lindex $cut_dir 0] [lindex $cut_dir 1] [lindex $cut_dir 2]]

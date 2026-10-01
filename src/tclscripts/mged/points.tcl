@@ -19,6 +19,8 @@
 #
 ###
 
+package require brlcad::vmath 1.0
+
 set sketch_number 0
 set pipe_number 0
 set arb_number 0
@@ -35,28 +37,28 @@ set point_number 0
 proc vRotUp {plane pt} {
     set up {0 0 1}
 
-    set dot [expr abs( [vdot $plane $pt] ) ]
+    set dot [expr abs( [::brlcad::vmath vdot $plane $pt] ) ]
     if {$dot < 1e-8} {
-	return [mat_idn]
+	return [::brlcad::vmath mat_idn]
     }
 
 
-    set qaxis [vunitize [vcross [lrange $plane 0 2] $up]]
+    set qaxis [::brlcad::vmath vunitize [::brlcad::vmath vcross [lrange $plane 0 2] $up]]
 
     # find the angle of rotation, halfangle, and cosine/sine
-    set cosangle [vdot $plane $up]
+    set cosangle [::brlcad::vmath vdot $plane $up]
     set angle [expr acos($cosangle)]
     set halfangle [expr $angle * 0.5]
     set cosangle [expr cos($halfangle)]
     set sinangle [expr sin($halfangle)]
 
     # construct the quaternion for the rotation
-    set quat [concat [vscale $qaxis $sinangle] $cosangle]
+    set quat [concat [::brlcad::vmath vscale $qaxis $sinangle] $cosangle]
 
     # generate the matrix from the quaternion
 
     set m_r [::brlcad::bn quat_quat2mat $quat]
-    set m_tx [mat_deltas_vec [mat_idn] [vreverse $pt]]
+    set m_tx [::brlcad::vmath mat_deltas_vec [::brlcad::vmath mat_idn] [::brlcad::vmath vreverse $pt]]
     set m [mat_mul $m_r $m_tx]
 
     return $m
@@ -76,21 +78,21 @@ proc circleFrom3Pts {a b c} {
     puts "circleFrom3Pts\n\ta $a\n\tb $b\n\tc $c"
 
     # form vectors
-    set AB [vsub $b $a]
-    set BC [vsub $c $b]
+    set AB [::brlcad::vmath vsub $b $a]
+    set BC [::brlcad::vmath vsub $c $b]
 
     # find midpoints
     set ABmid [::brlcad::bn vjoin1 $a 0.5 $AB]
     set BCmid [::brlcad::bn vjoin1 $b 0.5 $BC]
 
-    set up [vcross $AB $BC]
-    if {[magsq $up] < 1e-5} {
+    set up [::brlcad::vmath vcross $AB $BC]
+    if {[::brlcad::vmath magsq $up] < 1e-5} {
 	return {}
     }
 
-    set up [vunitize $up]
-    set ABperp [vcross $AB $up]
-    set BCperp [vcross $BC $up]
+    set up [::brlcad::vmath vunitize $up]
+    set ABperp [::brlcad::vmath vcross $AB $up]
+    set BCperp [::brlcad::vmath vcross $BC $up]
 
     if {[catch {::brlcad::bn bg_isect_line3_line3 $ABmid $ABperp $BCmid $BCperp} center]} {
 	# failed
@@ -98,9 +100,9 @@ proc circleFrom3Pts {a b c} {
     }
     # success, find radius, plane
 
-    set radius [magnitude [vsub $center $a]]
+    set radius [::brlcad::vmath magnitude [::brlcad::vmath vsub $center $a]]
     set plane $up
-    lappend plane [vdot $up $a]
+    lappend plane [::brlcad::vmath vdot $up $a]
 
     return [list $center $radius $plane]
 }
@@ -190,9 +192,9 @@ proc cylinder {pts} {
     set plane [lindex $stuff 2]
 
     # Find height vector of cylinder
-    set dist [vdot $plane [lindex $pts end]]
+    set dist [::brlcad::vmath vdot $plane [lindex $pts end]]
     set dist [expr $dist - [lindex $plane end]]
-    set Hvec [vscale $plane $dist]
+    set Hvec [::brlcad::vmath vscale $plane $dist]
 
     puts "in $name rcc $center $Hvec $radius"
 }
@@ -236,14 +238,14 @@ proc pipe {pts} {
     set depth_pt [lindex $pts $idx] ; incr idx -1
     set last_pt [lindex $pts $idx] ;  incr idx -1
 
-    set vec [vsub $depth_pt $last_pt]
-    set dia [magnitude $vec]
+    set vec [::brlcad::vmath vsub $depth_pt $last_pt]
+    set dia [::brlcad::vmath magnitude $vec]
     set radius [expr $dia * 0.5]
-    set center_vec [vscale $vec 0.5]
+    set center_vec [::brlcad::vmath vscale $vec 0.5]
     puts "center_vec: $center_vec"
 
     set radius [expr $dia * 0.5]
-    set end_center [vadd $last_pt $center_vec]
+    set end_center [::brlcad::vmath vadd $last_pt $center_vec]
 
 
     # now we walk the list of points (backwards) given and compute the
@@ -295,41 +297,41 @@ proc pipe {pts} {
 	# by forming vectors from the bend center and taking the
 	# dot product to get the cosine of the angle
 	# then take the arcosine to get the real angle (in radians)
-	set ca [vunitize [vsub $a $bend_center]]
-	set cb [vunitize [vsub $b $bend_center]]
-	set cc [vunitize [vsub $c $bend_center]]
-	set c [vadd $c $center_vec]
+	set ca [::brlcad::vmath vunitize [::brlcad::vmath vsub $a $bend_center]]
+	set cb [::brlcad::vmath vunitize [::brlcad::vmath vsub $b $bend_center]]
+	set cc [::brlcad::vmath vunitize [::brlcad::vmath vsub $c $bend_center]]
+	set c [::brlcad::vmath vadd $c $center_vec]
 
 	puts "ca $ca\ncb $cb\ncc $cc"
 
 	# find angle of rotation
-	set cosangle [vdot $cc $cb]
+	set cosangle [::brlcad::vmath vdot $cc $cb]
 	set angle [expr acos($cosangle)]
 
 	# form quaternion for rotation
-	set quat [quat_from_vrot $angle $bend_plane]
+	set quat [::brlcad::vmath quat_from_vrot $angle $bend_plane]
 
 	# rotate the vector
 	set m [::brlcad::bn quat_quat2mat $quat]
-	set newvec [mat4x3pnt $m $center_vec]
+	set newvec [::brlcad::vmath mat4x3pnt $m $center_vec]
 
 	# find the new point
-	set b [vadd $b $newvec]
+	set b [::brlcad::vmath vadd $b $newvec]
 
 
 	# find angle of rotation
-	set cosangle [vdot $cc $ca]
+	set cosangle [::brlcad::vmath vdot $cc $ca]
 	set angle [expr acos($cosangle)]
 
 	# form quaternion for rotation
-	set quat [quat_from_vrot $angle $bend_plane]
+	set quat [::brlcad::vmath quat_from_vrot $angle $bend_plane]
 
 	# rotate the vector
 	set m [::brlcad::bn quat_quat2mat $quat]
-	set center_vec [mat4x3pnt $m $center_vec]
+	set center_vec [::brlcad::vmath mat4x3pnt $m $center_vec]
 
 	# find the new point
-	set a [vadd $a $center_vec]
+	set a [::brlcad::vmath vadd $a $center_vec]
 
 
 	set l [circleFrom3Pts $a $b $c]
@@ -352,12 +354,12 @@ proc pipe {pts} {
 
 
 	# form vector from bend center to a and c points
-	set a_vec [vsub $a $bend_center]
-	set c_vec [vsub $c $bend_center]
+	set a_vec [::brlcad::vmath vsub $a $bend_center]
+	set c_vec [::brlcad::vmath vsub $c $bend_center]
 
 	# form tangent/perpendicular lines at points a and c
-	set a_tangent [vcross $bend_plane $a_vec]
-	set c_tangent [vcross $bend_plane $c_vec]
+	set a_tangent [::brlcad::vmath vcross $bend_plane $a_vec]
+	set c_tangent [::brlcad::vmath vcross $bend_plane $c_vec]
 
 	# find intersection of tangent lines to get real point for pipe
 	if {[catch {::brlcad::bn bg_isect_line3_line3 $a $a_tangent $c $c_tangent} pt]} {
@@ -375,7 +377,7 @@ proc pipe {pts} {
 
     # add in the last point for completeness
 
-    lappend verts [list [vadd [lindex $pts 0] $center_vec] $dia]
+    lappend verts [list [::brlcad::vmath vadd [lindex $pts 0] $center_vec] $dia]
 
     set cmd "put pipe$pipe_number pipe"
 
@@ -468,15 +470,15 @@ proc plate {pts} {
 	set V [lindex $pts $i]
 
 	set A [lindex $pts [expr $i + 1]]
-	set VA [vsub $A $V]
+	set VA [::brlcad::vmath vsub $A $V]
 
 	set B [lindex $pts [expr $i + 2]]
-	set VB  [vsub $B $V]
+	set VB  [::brlcad::vmath vsub $B $V]
 
-	set cross [vcross $VA $VB]
-	if {[magsq $cross] > $min_len} {
+	set cross [::brlcad::vmath vcross $VA $VB]
+	if {[::brlcad::vmath magsq $cross] > $min_len} {
 
-	    lappend normals [vunitize $cross]
+	    lappend normals [::brlcad::vmath vunitize $cross]
 	}
     }
 
@@ -488,22 +490,22 @@ proc plate {pts} {
     # compute the averaged normal
     set N {0 0 0}
     foreach i $normals {
-	set N [vadd $N $i]
+	set N [::brlcad::vmath vadd $N $i]
     }
     set mul [expr 1.0 / [llength $normals]]
-    set plane [vscale $N $mul]
+    set plane [::brlcad::vmath vscale $N $mul]
 
     # find the average distance to the plane
     set avg_dist 0
 
     for {set i 0} {$i < [expr [llength $pts] - 1]} {incr i} {
-	set avg_dist [expr $avg_dist + [vdot [lindex $pts $i] $plane]]
+	set avg_dist [expr $avg_dist + [::brlcad::vmath vdot [lindex $pts $i] $plane]]
     }
 
     # compute the distance of the plane from the origin
     set avg_dist [expr $avg_dist / [expr [llength $pts] - 1]]
     if {$avg_dist < 0} {
-	set plane [vreverse $plane]
+	set plane [::brlcad::vmath vreverse $plane]
 	set avg_dist [expr abs($avg_dist)]
     }
     lappend plane $avg_dist
@@ -514,10 +516,10 @@ proc plate {pts} {
     set newpts {}
     for {set i 0} {$i < $limit} {incr i} {
 	set pt [lindex $pts $i]
-	set dist [expr [vdot $pt $plane] - [lindex $plane 3]]
+	set dist [expr [::brlcad::vmath vdot $pt $plane] - [lindex $plane 3]]
 	if {$dist != 0.0} {
 	    # project point onto plane
-	    set pt [vadd [vscale $plane $dist] $pt]
+	    set pt [::brlcad::vmath vadd [::brlcad::vmath vscale $plane $dist] $pt]
 	}
 	lappend newpts $pt
     }
@@ -531,8 +533,8 @@ proc plate {pts} {
 
     set twoDpts {}
     foreach p $newpts {
-	# puts "$p    [mat4x3pnt $m $p]"
-	lappend twoDpts [lrange [mat4x3pnt $m $p] 0 1]
+	# puts "$p    [::brlcad::vmath mat4x3pnt $m $p]"
+	lappend twoDpts [lrange [::brlcad::vmath mat4x3pnt $m $p] 0 1]
     }
 
 
@@ -568,15 +570,15 @@ proc plate {pts} {
 
     # get depth of plate
     set pt [lindex $pts $limit]
-    set dist [expr [vdot $pt $plane] - [lindex $plane 3]]
+    set dist [expr [::brlcad::vmath vdot $pt $plane] - [lindex $plane 3]]
     # puts "depth $dist"
-    set delta [vscale $plane $dist]
+    set delta [::brlcad::vmath vscale $plane $dist]
 
     # create the extrude primitive
     set cmd "put extrude$sketch_number extrude V"
     lappend cmd [lindex $pts 0]
     # height vector
-    lappend cmd "H" [vscale [vreverse [lrange $plane 0 2]] $dist]
+    lappend cmd "H" [::brlcad::vmath vscale [::brlcad::vmath vreverse [lrange $plane 0 2]] $dist]
 
     # U vector
     lappend cmd "A" $U_vector

@@ -23,6 +23,8 @@
 #
 ##############################################################
 
+package require brlcad::vmath 1.0
+
 ::itcl::class Arb7EditFrame {
     inherit Arb8EditFrame
 
@@ -761,57 +763,57 @@
 	$moveEdge12 {
 	    set ptA [$itk_option(-mged) get $_obj V1]
 	    set ptB [$itk_option(-mged) get $_obj V2]
-	    set pt [::vscale [vadd2 $ptA $ptB] 0.5]
+	    set pt [::brlcad::vmath vscale [::brlcad::vmath vadd2 $ptA $ptB] 0.5]
 	} \
 	$moveEdge23 {
 	    set ptA [$itk_option(-mged) get $_obj V2]
 	    set ptB [$itk_option(-mged) get $_obj V3]
-	    set pt [::vscale [vadd2 $ptA $ptB] 0.5]
+	    set pt [::brlcad::vmath vscale [::brlcad::vmath vadd2 $ptA $ptB] 0.5]
 	} \
 	$moveEdge34 {
 	    set ptA [$itk_option(-mged) get $_obj V3]
 	    set ptB [$itk_option(-mged) get $_obj V4]
-	    set pt [::vscale [vadd2 $ptA $ptB] 0.5]
+	    set pt [::brlcad::vmath vscale [::brlcad::vmath vadd2 $ptA $ptB] 0.5]
 	} \
 	$moveEdge14 {
 	    set ptA [$itk_option(-mged) get $_obj V1]
 	    set ptB [$itk_option(-mged) get $_obj V4]
-	    set pt [::vscale [vadd2 $ptA $ptB] 0.5]
+	    set pt [::brlcad::vmath vscale [::brlcad::vmath vadd2 $ptA $ptB] 0.5]
 	} \
 	$moveEdge15 {
 	    set ptA [$itk_option(-mged) get $_obj V1]
 	    set ptB [$itk_option(-mged) get $_obj V5]
-	    set pt [::vscale [vadd2 $ptA $ptB] 0.5]
+	    set pt [::brlcad::vmath vscale [::brlcad::vmath vadd2 $ptA $ptB] 0.5]
 	} \
 	$moveEdge26 {
 	    set ptA [$itk_option(-mged) get $_obj V2]
 	    set ptB [$itk_option(-mged) get $_obj V6]
-	    set pt [::vscale [vadd2 $ptA $ptB] 0.5]
+	    set pt [::brlcad::vmath vscale [::brlcad::vmath vadd2 $ptA $ptB] 0.5]
 	} \
 	$moveEdge56 {
 	    set ptA [$itk_option(-mged) get $_obj V5]
 	    set ptB [$itk_option(-mged) get $_obj V6]
-	    set pt [::vscale [vadd2 $ptA $ptB] 0.5]
+	    set pt [::brlcad::vmath vscale [::brlcad::vmath vadd2 $ptA $ptB] 0.5]
 	} \
 	$moveEdge67 {
 	    set ptA [$itk_option(-mged) get $_obj V6]
 	    set ptB [$itk_option(-mged) get $_obj V7]
-	    set pt [::vscale [vadd2 $ptA $ptB] 0.5]
+	    set pt [::brlcad::vmath vscale [::brlcad::vmath vadd2 $ptA $ptB] 0.5]
 	} \
 	$moveEdge37 {
 	    set ptA [$itk_option(-mged) get $_obj V3]
 	    set ptB [$itk_option(-mged) get $_obj V7]
-	    set pt [::vscale [vadd2 $ptA $ptB] 0.5]
+	    set pt [::brlcad::vmath vscale [::brlcad::vmath vadd2 $ptA $ptB] 0.5]
 	} \
 	$moveEdge57 {
 	    set ptA [$itk_option(-mged) get $_obj V5]
 	    set ptB [$itk_option(-mged) get $_obj V7]
-	    set pt [::vscale [vadd2 $ptA $ptB] 0.5]
+	    set pt [::brlcad::vmath vscale [::brlcad::vmath vadd2 $ptA $ptB] 0.5]
 	} \
 	$moveEdge45 {
 	    set ptA [$itk_option(-mged) get $_obj V4]
 	    set ptB [$itk_option(-mged) get $_obj V5]
-	    set pt [::vscale [vadd2 $ptA $ptB] 0.5]
+	    set pt [::brlcad::vmath vscale [::brlcad::vmath vadd2 $ptA $ptB] 0.5]
 	} \
 	$movePoint5 {
 	    set pt [$itk_option(-mged) get $_obj V5]

@@ -24,6 +24,9 @@
 #
 # Usage: prj_add shaderfile image_filename image_width image_height
 #
+
+package require brlcad::vmath 1.0
+
 proc prj_add {args} {
     global local2base
 
@@ -105,7 +108,7 @@ proc prj_add {args} {
 
 
     puts $fd "viewsize=[expr [view size] * $local2base]"
-    regsub -all { } [vscale [view eye] $local2base] "," eye_pt
+    regsub -all { } [::brlcad::vmath vscale [view eye] $local2base] "," eye_pt
     puts $fd "eye_pt=$eye_pt"
 
     regsub -all { } [view quat] "," orientation

@@ -24,8 +24,7 @@
 #
 package require Itcl
 package require Itk
-
-init_vmath
+package require brlcad::vmath 1.0
 
 set last_time 0
 
@@ -103,9 +102,9 @@ proc unique_name {base suf} {
 }
 
 proc make_std_arrow {basename start_pt end_pt} {
-    set height [vsub2 $end_pt $start_pt]
-    set dir [vunitize $height]
-    set len [magnitude $height]
+    set height [::brlcad::vmath vsub2 $end_pt $start_pt]
+    set dir [::brlcad::vmath vunitize $height]
+    set len [::brlcad::vmath magnitude $height]
     return [ShotVis::make_arrow $basename $start_pt $dir $len]
 }
 
@@ -186,7 +185,7 @@ proc save_nirt {args} {
 	    }
 	}
 	set dir [ShotVis::direction_vector {*}[lrange [view aet] 0 1]]
-	set new_exit [vcomb2 1 $ray_exit $max_dim $dir]
+	set new_exit [::brlcad::vmath vcomb2 1 $ray_exit $max_dim $dir]
 	set ray_exit $new_exit
     }
 
@@ -214,15 +213,10 @@ catch {::itcl::delete class ShotVis} error
 
     itk_option define -basename basename Basename ""
 
-    # import vmath constants
-    global M_PI_2
-    common M_PI_2 $M_PI_2
-
-    global RAD2DEG
-    common RAD2DEG $RAD2DEG
-
-    global DEG2RAD
-    common DEG2RAD $DEG2RAD
+    # Keep class-local constants for the Itcl method expressions.
+    common M_PI_2 $::brlcad::vmath::M_PI_2
+    common RAD2DEG $::brlcad::vmath::RAD2DEG
+    common DEG2RAD $::brlcad::vmath::DEG2RAD
 
     common epsilon 1.0e-20
 
@@ -728,7 +722,7 @@ catch {::itcl::delete class ShotVis} error
     set vz [expr sin($el)]
 
     set vect [list $vx $vy $vz]
-    set v [vscale [vunitize $vect] -1]
+    set v [::brlcad::vmath vscale [::brlcad::vmath vunitize $vect] -1]
 
     for {set i 0} {$i < 3} {incr i} {
 	if {[near_zero [lindex $v $i]]} {
@@ -812,7 +806,7 @@ catch {::itcl::delete class ShotVis} error
 
     set rcc_center [rcc_center $rcc_name]
     view center {*}$rcc_center
-    view aet {*}[vec2ae [vscale [rcc_direction $rcc_name] -1]] 0
+    view aet {*}[vec2ae [::brlcad::vmath vscale [rcc_direction $rcc_name] -1]] 0
 
     # erase threat
     erase {*}[our_members $root_comb]
@@ -940,7 +934,7 @@ catch {::itcl::delete class ShotVis} error
     if {[isFloat $val]} {
 	lset threat_dir $coord_idx $val
 
-	if {![near_zero [magnitude $threat_dir]]} {
+	if {![near_zero [::brlcad::vmath magnitude $threat_dir]]} {
 	    update_ae
 	    update_shot
 	}
@@ -1014,7 +1008,7 @@ catch {::itcl::delete class ShotVis} error
     set dir_z_str $z
 
     set threat_dir [list $x $y $z]
-    set threat_dir [vunitize $threat_dir]
+    set threat_dir [::brlcad::vmath vunitize $threat_dir]
 }
 
 ::itcl::body ShotVis::set_ae {az el} {
@@ -1030,15 +1024,15 @@ catch {::itcl::delete class ShotVis} error
 }
 
 ::itcl::body ShotVis::make_arrow {basename start_pt dir len} {
-    set height [vscale $dir $len]
-    set end_pt [vadd2 $start_pt $height]
+    set height [::brlcad::vmath vscale $dir $len]
+    set end_pt [::brlcad::vmath vadd2 $start_pt $height]
     set thickness 5
 
     set cyl [rand_name "${basename}_" .cyl]
     in $cyl rcc {*}$start_pt {*}$height [expr $thickness / 2.0]
 
     set width [expr $thickness * 2]
-    set height [vscale $dir [expr $width * 2.88]]
+    set height [::brlcad::vmath vscale $dir [expr $width * 2.88]]
 
     set cone [rand_name "${basename}_" .cone]
     in $cone trc {*}$end_pt {*}$height [expr $thickness * 2] .01
@@ -1066,7 +1060,7 @@ catch {::itcl::delete class ShotVis} error
 }
 
 ::itcl::body ShotVis::rcc_len {rcc_name} {
-    return [magnitude [list {*}[get $rcc_name H]]]
+    return [::brlcad::vmath magnitude [list {*}[get $rcc_name H]]]
 }
 
 ::itcl::body ShotVis::rcc_center {rcc_name} {
@@ -1074,7 +1068,7 @@ catch {::itcl::delete class ShotVis} error
 }
 
 ::itcl::body ShotVis::rcc_direction {rcc_name} {
-    return [vunitize [list {*}[get $rcc_name H]]]
+    return [::brlcad::vmath vunitize [list {*}[get $rcc_name H]]]
 }
 
 ::itcl::body ShotVis::load_vis {} {
@@ -1156,16 +1150,14 @@ catch {::itcl::delete class ShotVis} error
 
 namespace eval shotvis {
     proc vec_angle {v1 v2} {
-	global RAD2DEG
-
-	set cosine [expr {[vdot $v1 $v2] /
-	    ([magnitude $v1] * [magnitude $v2])}]
-	return [expr {acos(max(-1.0, min(1.0, $cosine))) * $RAD2DEG}]
+	set cosine [expr {[::brlcad::vmath vdot $v1 $v2] /
+	    ([::brlcad::vmath magnitude $v1] * [::brlcad::vmath magnitude $v2])}]
+	return [expr {acos(max(-1.0, min(1.0, $cosine))) * $::brlcad::vmath::RAD2DEG}]
     }
 
     proc mat_mul {a b} {
 	# bn_mat_mul
-	set o [mat_idn]
+	set o [::brlcad::vmath mat_idn]
 
 	lset o 0 [expr [lindex $a 0] * [lindex $b 0] + [lindex $a 1] * [lindex $b 4] + [lindex $a 2] * [lindex $b 8] + [lindex $a 3] * [lindex $b 12]]
 	lset o 1 [expr [lindex $a 0] * [lindex $b 1] + [lindex $a 1] * [lindex $b 5] + [lindex $a 2] * [lindex $b 9] + [lindex $a 3] * [lindex $b 13]]
@@ -1192,17 +1184,15 @@ namespace eval shotvis {
 
     # make a transformation matrix that rotates deg around the axis defined by the given pt and dir
     proc mat_arb_rot {axis_pt axis_dir deg} {
-	global DEG2RAD
-
-	set rad [expr $deg * $DEG2RAD]
+	set rad [expr $deg * $::brlcad::vmath::DEG2RAD]
 
 	# bn_mat_arb_rot
 	if {$rad == 0.0} {
-	    return [mat_idn]
+	    return [::brlcad::vmath mat_idn]
 	}
 
-	set tran1 [mat_idn]
-	set tran2 [mat_idn]
+	set tran1 [::brlcad::vmath mat_idn]
+	set tran2 [::brlcad::vmath mat_idn]
 
 	# translation to pt
 	lset tran1 3 [expr -1 * [lindex $axis_pt 0]]
@@ -1225,7 +1215,7 @@ namespace eval shotvis {
 	set n1_n3 [expr [lindex $axis_dir 0] * [lindex $axis_dir 2]]
 	set n2_n3 [expr [lindex $axis_dir 1] * [lindex $axis_dir 2]]
 
-	set rot [mat_idn]
+	set rot [::brlcad::vmath mat_idn]
 	lset rot 0 [expr $n1_sq + (1.0 - $n1_sq) * $cos_ang]
 	lset rot 1 [expr $n1_n2 * $one_m_cosang - [lindex $axis_dir 2] * $sin_ang]
 	lset rot 2 [expr $n1_n3 * $one_m_cosang + [lindex $axis_dir 1] * $sin_ang]
@@ -1246,12 +1236,12 @@ namespace eval shotvis {
 
     proc rot_vect_about_axis {v axis_pt axis_dir deg} {
 	set m [mat_arb_rot $axis_pt $axis_dir $deg]
-	return [mat4x3pnt $m $v]
+	return [::brlcad::vmath mat4x3pnt $m $v]
     }
 
     proc max_ke_from_threat {threat_dir deg} {
 	set up {0 0 1}
-	set axis_dir [vunitize [vcross $up $threat_dir]]
+	set axis_dir [::brlcad::vmath vunitize [::brlcad::vmath vcross $up $threat_dir]]
 
 	return [rot_vect_about_axis $threat_dir {0 0 0} $axis_dir $deg]
     }

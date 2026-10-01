@@ -270,6 +270,7 @@ proc graph {args} {
 foreach package {
     Archer
     ArcherCore
+    brlcad::vmath
     GeometryChecker
     OverlapFileTool
     GeometryBrowser
@@ -648,7 +649,7 @@ assert_coordinates "Ged unit conversion round trip" \
     [expr {[.functional_ged base2local] * [.functional_ged local2base]}] 1.0
 assert_coordinates "Ged point-centered matrix wrapper" \
     [.functional_ged mat_xform_about_pnt [::brlcad::bn mat_angles 0 0 0] {1 2 3}] \
-    [mat_idn]
+    [::brlcad::vmath mat_idn]
 .functional_ged draw all.g
 .functional_ged autoview
 update

@@ -22,6 +22,8 @@
 #      Various accelerators for BRL-CAD.
 #
 
+package require brlcad::vmath 1.0
+
 #
 #                               R C C - C A P
 #
@@ -64,15 +66,15 @@ proc rcc-cap {args} {
     }
     #Set Variables
     set hv [db get $rccname H]
-    set uhv [vunitize $hv]
-    set ellheight [vscale $uhv $height]
+    set uhv [::brlcad::vmath vunitize $hv]
+    set ellheight [::brlcad::vmath vscale $uhv $height]
     set vertex [db get $rccname V]
     if {$end == "t"} {
-	set vertex [vadd2 $vertex $hv]
+	set vertex [::brlcad::vmath vadd2 $vertex $hv]
 	set vec1 C
 	set vec2 D
     } else {
-	set ellheight [vreverse $ellheight]
+	set ellheight [::brlcad::vmath vreverse $ellheight]
 	set vec1 A
 	set vec2 B
     }
@@ -117,7 +119,7 @@ proc rcc-tgc {args} {
     if {$end == "t"} {
 	set vec1 C
 	set vec2 D
-	set vertex [vadd2 [db get $rccname V] [db get $rccname H]]
+	set vertex [::brlcad::vmath vadd2 [db get $rccname V] [db get $rccname H]]
     } else {
 	set vec1 A
 	set vec2 B
@@ -132,7 +134,7 @@ proc rcc-tgc {args} {
 	set result [expr $pt*[::brlcad::bu units_conversion $mged_display(units)]]
 	lappend apex $result
     }
-    set height [vsub2 $apex $vertex]
+    set height [::brlcad::vmath vsub2 $apex $vertex]
     #Create TGC
     #in order to create properly, convert to display units
     foreach param {vertex height vector1 vector2} val "{$vertex} {$height} {$vector1} {$vector2}" {
@@ -337,21 +339,21 @@ proc rpp-cap {args} {
     }
 
     #Determine Normal
-    set u1 [vunitize [vsub $V4 $V3]]
-    set u2 [vunitize [vsub $V2 $V3]]
-    set normal [vunitize [vcross $u1 $u2]]
-    set hvector [vscale $normal $height]
+    set u1 [::brlcad::vmath vunitize [::brlcad::vmath vsub $V4 $V3]]
+    set u2 [::brlcad::vmath vunitize [::brlcad::vmath vsub $V2 $V3]]
+    set normal [::brlcad::vmath vunitize [::brlcad::vmath vcross $u1 $u2]]
+    set hvector [::brlcad::vmath vscale $normal $height]
     #Determine Midpoint
     if {$orient == 0} {
-	set rise1 [vadd2 $V1 $V2]
-	set rise2 [vadd2 $V3 $V4]
+	set rise1 [::brlcad::vmath vadd2 $V1 $V2]
+	set rise2 [::brlcad::vmath vadd2 $V3 $V4]
 	set P1 $V1
 	set P2 $V2
 	set P3 $V3
 	set P4 $V4
     } else {
-	set rise2 [vadd2 $V1 $V4]
-	set rise1 [vadd2 $V2 $V3]
+	set rise2 [::brlcad::vmath vadd2 $V1 $V4]
+	set rise1 [::brlcad::vmath vadd2 $V2 $V3]
 	set P1 $V2
 	set P2 $V3
 	set P3 $V4
@@ -377,10 +379,10 @@ proc rpp-cap {args} {
     }
     #Determine direction of hvector
     #Form vector from a point on the specified face and a point not on the face
-    set direct [vunitize [vsub $V1 [db get $rppname V$pt]]]
-    set dp [vdot $normal $direct]
+    set direct [::brlcad::vmath vunitize [::brlcad::vmath vsub $V1 [db get $rppname V$pt]]]
+    set dp [::brlcad::vmath vdot $normal $direct]
     if {$dp < 0} {
-	set hvector [vreverse $hvector]
+	set hvector [::brlcad::vmath vreverse $hvector]
     }
     #Set ARB6 coordinates
     foreach coord {r1x r1y r1z} value {$r1x $r1y $r1z} index {0 1 2} {
@@ -434,9 +436,9 @@ proc rpp-arch {args} {
 	set $vert [eval db get $rppname V$pt]
     }
     #Set Variables
-    set height  [vsub2 $V2 $V1]
-    set vertex [vscale [vadd2 $V4 $V1] .5]
-    set radius [vmagnitude [vsub2 $vertex $V4]]
+    set height  [::brlcad::vmath vsub2 $V2 $V1]
+    set vertex [::brlcad::vmath vscale [::brlcad::vmath vadd2 $V4 $V1] .5]
+    set radius [::brlcad::vmath vmagnitude [::brlcad::vmath vsub2 $vertex $V4]]
     #Create RCC
     #in order to create properly, have to use display units
     foreach param {vertex height radius} val "{$vertex} {$height} {$radius}" {

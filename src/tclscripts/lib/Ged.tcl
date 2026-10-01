@@ -27,6 +27,7 @@ option add *Pane*margin 0 widgetDefault
 option add *Ged.width 400 widgetDefault
 option add *Ged.height 400 widgetDefault
 
+package require brlcad::vmath 1.0
 package provide cadwidgets::Ged 1.0
 
 ::itcl::class cadwidgets::Ged {
@@ -1666,7 +1667,7 @@ package provide cadwidgets::Ged 1.0
 	}
 
 	if {$prev_o_pt == ""} {
-	    if {![vnear_zero [vsub2 $_start $i_pt] 0.000001]} {
+	    if {![::brlcad::vmath vnear_zero [::brlcad::vmath vsub2 $_start $i_pt] 0.000001]} {
 		# The first section drawn is void
 		$mGed vdraw open $GED_RAY_VOID
 		$mGed vdraw params color $void_color
@@ -1680,7 +1681,7 @@ package provide cadwidgets::Ged 1.0
 	    $mGed vdraw open $GED_RAY_ODD
 	    $mGed vdraw params color $odd_color
 	} else {
-	    if {![vnear_zero [vsub2 $prev_o_pt $i_pt] 0.000001]} {
+	    if {![::brlcad::vmath vnear_zero [::brlcad::vmath vsub2 $prev_o_pt $i_pt] 0.000001]} {
 		# Here we have a void
 		$mGed vdraw open $GED_RAY_VOID
 		$mGed vdraw params color $void_color
@@ -2738,9 +2739,9 @@ package provide cadwidgets::Ged 1.0
     set viewB [lreplace $viewB 2 2 $viewZ]
     set viewC [lreplace $viewC 2 2 $viewZ]
 
-    set deltaA [dist_pt_pt $view $viewA]
-    set deltaB [dist_pt_pt $view $viewB]
-    set deltaC [dist_pt_pt $view $viewC]
+    set deltaA [::brlcad::vmath dist_pt_pt $view $viewA]
+    set deltaB [::brlcad::vmath dist_pt_pt $view $viewB]
+    set deltaC [::brlcad::vmath dist_pt_pt $view $viewC]
 
     if {$deltaA < $deltaB} {
 	if {$deltaA < $deltaC} {
@@ -4221,7 +4222,7 @@ package provide cadwidgets::Ged 1.0
     set mEnd3DPoint [pane_mouse_3dpoint $_pane $_x $_y]
     set pt $mEnd3DPoint
 
-    if {[vnear_zero [vsub2 $mEnd3DPoint $mMiddle3DPoint] 0.0001]} {
+    if {[::brlcad::vmath vnear_zero [::brlcad::vmath vsub2 $mEnd3DPoint $mMiddle3DPoint] 0.0001]} {
 	return
     }
 
@@ -4585,8 +4586,8 @@ package provide cadwidgets::Ged 1.0
 
     refresh_off
 
-    set diff [vsub2 $mMiddle3DPoint $mBegin3DPoint]
-    set delta [expr {[magnitude $diff] * [$mGed base2local $itk_component($_pane)]}]
+    set diff [::brlcad::vmath vsub2 $mMiddle3DPoint $mBegin3DPoint]
+    set delta [expr {[::brlcad::vmath magnitude $diff] * [$mGed base2local $itk_component($_pane)]}]
 
     if {[expr {abs($delta) > 0.0001}]} {
 	set mMeasureLineActive 1
@@ -4626,19 +4627,19 @@ package provide cadwidgets::Ged 1.0
     $mGed idle_mode $itk_component($_pane)
 
     # Calculate length of leg 2
-    set diff [vsub2 $mEnd3DPoint $mMiddle3DPoint]
-    set delta [expr {[magnitude $diff] * [$mGed base2local $itk_component($_pane)]}]
+    set diff [::brlcad::vmath vsub2 $mEnd3DPoint $mMiddle3DPoint]
+    set delta [expr {[::brlcad::vmath magnitude $diff] * [$mGed base2local $itk_component($_pane)]}]
 
     set ret [catch {
-	set A [vunitize [vsub2 $mBegin3DPoint $mMiddle3DPoint]]
-	set B [vunitize [vsub2 $mEnd3DPoint $mMiddle3DPoint]]
+	set A [::brlcad::vmath vunitize [::brlcad::vmath vsub2 $mBegin3DPoint $mMiddle3DPoint]]
+	set B [::brlcad::vmath vunitize [::brlcad::vmath vsub2 $mEnd3DPoint $mMiddle3DPoint]]
     }]
 
     if {$ret} {
 	return
     }
 
-    set cos [vdot $A $B]
+    set cos [::brlcad::vmath vdot $A $B]
     set angle [format "%.2f" [expr {acos($cos) * $GED_RAD2DEG}]]
 
     if {[llength $mViewMeasureCallbacks] == 0} {

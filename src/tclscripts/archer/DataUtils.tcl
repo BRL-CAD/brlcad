@@ -24,6 +24,8 @@
 #       data_arrow, data_axes, data_labels and data_lines.
 #
 
+package require brlcad::vmath 1.0
+
 ::itcl::class DataUtils {
     constructor {args} {}
     destructor {}
@@ -562,7 +564,7 @@
     if {[catch {
 	set ptA [lrange $dataA $_pindex $pindex_end]
 	set ptB [lrange $dataB $_pindex $pindex_end]
-	set dist [vmagnitude [vsub2 $ptB $ptA]]
+	set dist [::brlcad::vmath vmagnitude [::brlcad::vmath vsub2 $ptB $ptA]]
 	set dist [expr {$dist * [$_ged base2local]}]
 	} msg]} {
 	return

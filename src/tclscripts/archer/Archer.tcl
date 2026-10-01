@@ -27,6 +27,8 @@
 # Set the Tcl encoding to UTF-8
 encoding system utf-8
 
+package require brlcad::vmath 1.0
+
 namespace eval ArcherBootstrap {
     set methodDecls ""
     set methodImpls ""
@@ -1285,10 +1287,10 @@ package provide Archer 1.0
 	set rpp [$itk_component(ged) bb -q -e $item]
 	set min [lindex $rpp 1]
 	set max [lindex $rpp 3]
-	set target [expr {[vscale [vadd2 $min $max] 0.5]}]
+	set target [expr {[::brlcad::vmath vscale [::brlcad::vmath vadd2 $min $max] 0.5]}]
 
-	set diag [vsub2 $max $min]
-	set start [vsub2 $target $diag]
+	set diag [::brlcad::vmath vsub2 $max $min]
+	set start [::brlcad::vmath vsub2 $target $diag]
 
 	# Turn off orientation
 	set save_orient [$itk_component(ged) get $item orient]
@@ -1343,13 +1345,13 @@ package provide Archer 1.0
 	    }
 
 	    set oneThird [expr {1 / 3.0}]
-	    set target [vscale [vadd3 $v0 $v1 $v2] $oneThird]
+	    set target [::brlcad::vmath vscale [::brlcad::vmath vadd3 $v0 $v1 $v2] $oneThird]
 
-	    set v1m0 [vsub2 $v1 $v0]
-	    set v2m0 [vsub2 $v2 $v0]
-	    set n [vunitize [vcross $v1m0 $v2m0]]
-	    set diag_len [vmagnitude $diag]
-	    set start [vsub2 $target [vscale $n $diag_len]]
+	    set v1m0 [::brlcad::vmath vsub2 $v1 $v0]
+	    set v2m0 [::brlcad::vmath vsub2 $v2 $v0]
+	    set n [::brlcad::vmath vunitize [::brlcad::vmath vcross $v1m0 $v2m0]]
+	    set diag_len [::brlcad::vmath vmagnitude $diag]
+	    set start [::brlcad::vmath vsub2 $target [::brlcad::vmath vscale $n $diag_len]]
 
 	    set cosa [getRayBotNormalCos $start $target $item]
 	    if {$cosa == ""} {
@@ -1641,7 +1643,7 @@ package provide Archer 1.0
 		    return "Usage: p cx cy cz"
 		}
 
-		set mpt [::vscale $args [$itk_component(ged) local2base]]
+		set mpt [::brlcad::vmath vscale $args [$itk_component(ged) local2base]]
 		set vpt [$itk_component(ged) m2v_point $mpt]
 		set spt [$itk_component(ged) view2screen $vpt]
 		set pane [$itk_component(ged) cget -pane]
@@ -4332,13 +4334,13 @@ package provide Archer 1.0
 	return ""
     }
 
-    set diff [vsub2 $_target $_start]
-    set raydir [vunitize $diff]
+    set diff [::brlcad::vmath vsub2 $_target $_start]
+    set raydir [::brlcad::vmath vunitize $diff]
 
-    set hit_normal [vunitize $hit_normal]
-    set cosa [vdot $raydir $hit_normal]
+    set hit_normal [::brlcad::vmath vunitize $hit_normal]
+    set cosa [::brlcad::vmath vdot $raydir $hit_normal]
 
-    if {[vnear_zero $cosa 0.00001]} {
+    if {[::brlcad::vmath vnear_zero $cosa 0.00001]} {
 	return ""
     }
 
@@ -6683,7 +6685,7 @@ package provide Archer 1.0
 
 ::itcl::body Archer::handleObjCenter {_dm _obj _mx _my {_dosnap 1} {_viewz ""}} {
     set ocenter [gedCmd ocenter $_obj]
-    set ocenter_base [vscale $ocenter [gedCmd local2base]]
+    set ocenter_base [::brlcad::vmath vscale $ocenter [gedCmd local2base]]
     set ovcenter [eval gedCmd pane_m2v_point $_dm $ocenter_base]
 
     # This is the updated view center (i.e. we keep the original view Z)
@@ -6704,12 +6706,12 @@ package provide Archer 1.0
 	set vcenter [list $vx $vy [lindex $ovcenter 2]]
     }
 
-    set new_ocenter [vscale [eval gedCmd pane_v2m_point $_dm $vcenter] [gedCmd base2local]]
+    set new_ocenter [::brlcad::vmath vscale [eval gedCmd pane_v2m_point $_dm $vcenter] [gedCmd base2local]]
 
     set ret [catch {
 	# The value of _obj is expected to be the same as mSelectedObjPath
 	if {$mObjMatrixMode == $MATRIX_ABOVE_MODE && $mSelectedObjPath != $mSelectedObj} {
-	    set diff [vsub2 $new_ocenter $ocenter]
+	    set diff [::brlcad::vmath vsub2 $new_ocenter $ocenter]
 	    eval editMotionDeltaCallback otranslate $diff
 	} else {
 	    if {$GeometryEditFrame::mEditCommand != "" && $mSelectedObjType != "brep"} {

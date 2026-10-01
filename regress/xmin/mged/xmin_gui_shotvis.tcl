@@ -21,6 +21,7 @@
 # Exercise ShotVis construction, interactive editing, persistence, and reload.
 
 source $::env(MGED_GUI_TEST_LIBRARY)
+package require brlcad::vmath 1.0
 
 namespace eval ::mged::xmin::shotvis {
     variable basename xmin_shot
@@ -115,7 +116,7 @@ proc ::mged::xmin::shotvis::exercise_editor {} {
     require_near $start_x 25.0 "ShotVis edited start X"
     require_near $start_y 0.0 "ShotVis edited start Y"
     require_near $start_z 0.0 "ShotVis edited start Z"
-    require_near [magnitude [get $cylinder H]] 250.0 \
+    require_near [::brlcad::vmath magnitude [get $cylinder H]] 250.0 \
 	"ShotVis edited draw length"
 
     set notebook $main.notebook
@@ -141,7 +142,7 @@ proc ::mged::xmin::shotvis::exercise_reload {} {
     set cylinder [threat_cylinder]
     lassign [get $cylinder V] start_x start_y start_z
     require_near $start_x 25.0 "reloaded ShotVis start X"
-    require_near [magnitude [get $cylinder H]] 250.0 \
+    require_near [::brlcad::vmath magnitude [get $cylinder H]] 250.0 \
 	"reloaded ShotVis draw length"
     .shotvis update_shot
     ::mged::gui::test::settle
