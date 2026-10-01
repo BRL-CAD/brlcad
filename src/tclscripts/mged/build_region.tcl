@@ -66,7 +66,7 @@ proc build_region { args } {
     set end [lindex $args $index]
 
     # get regdef values
-    set defs [regdef]
+    set defs [::brlcad::mged regdef]
     set id [lindex $defs 1]
     set air [lindex $defs 3]
     set los [lindex $defs 5]
@@ -74,7 +74,7 @@ proc build_region { args } {
 
     # get list of solids matching tag form
     set taglen [expr [string length $tag] + 2]
-    set alist [expand ${tag}.s*]
+    set alist [::brlcad::mged expand ${tag}.s*]
     if { $alist == "${tag}.s*" } {
 	error "No solids found with tag ($tag)"
     }
@@ -151,16 +151,16 @@ proc build_region { args } {
     # if we are in append mode, union the current tree with an existing region
     if { $append } {
 	set regname ${tag}.r$regnum
-	if { [catch {get $regname tree} oldtree] == 0 } {
+	if { [catch {::brlcad::mged get $regname tree} oldtree] == 0 } {
 	    set tree [list u $oldtree $tree]
-	    if { [catch {adjust $regname tree $tree} ret ] } {
+	    if { [catch {::brlcad::mged adjust $regname tree $tree} ret ] } {
 		error "failed to update existing region ($regname)"
 	    } else {
 		puts "Appended to region $regname"
 	    }
 	} else {
 	    # specified region does not exist, so create it
-	    if { [catch {put $regname comb region yes air $air id $id los $los GIFTmater $mater tree $tree} ret] } {
+	    if { [catch {::brlcad::mged put $regname comb region yes air $air id $id los $los GIFTmater $mater tree $tree} ret] } {
 		error "failed to create region!!!\n$ret"
 	    } else {
 		puts "Created region $regname"
@@ -168,7 +168,7 @@ proc build_region { args } {
 	    # increment regdef ident number
 	    if { $id > 0 } {
 		incr id
-		regdef $id
+		::brlcad::mged regdef $id
 	    }
 	}
     } else {
@@ -178,13 +178,13 @@ proc build_region { args } {
 	while { $reg_exists } {
 	    incr regnum
 	    set regname ${tag}.r$regnum
-	    if { ! [ exists $regname ] } {
+	    if { ! [::brlcad::mged exists $regname] } {
 		set reg_exists 0
 	    }
 	}
 
 	# create the new region
-	if { [catch {put $regname comb region yes air $air id $id los $los GIFTmater $mater tree $tree} ret] } {
+	if { [catch {::brlcad::mged put $regname comb region yes air $air id $id los $los GIFTmater $mater tree $tree} ret] } {
 	    error "failed to create region!!!\n$ret"
 	} else {
 	    puts "Created region $regname"
@@ -193,7 +193,7 @@ proc build_region { args } {
 	# increment regdef ident number
 	if { $id > 0 } {
 	    incr id
-	    regdef $id
+	    ::brlcad::mged regdef $id
 	}
     }
 }
