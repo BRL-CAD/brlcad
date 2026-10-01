@@ -1,0 +1,38 @@
+puts "*** Testing 'facetize_all_regions' command ***"
+
+::brlcad::mged in namespace_facetize.s sph 0 0 0 1
+::brlcad::mged r namespace_facetize.r u namespace_facetize.s
+
+set failure_channel [file tempfile failure_path]
+set hidden_commands {}
+foreach command {db exists facetize ls} {
+    set compatibility_command ::$command
+    set hidden_command ::__brlcad_mged_compatibility_$command
+    rename $compatibility_command $hidden_command
+    lappend hidden_commands $hidden_command $compatibility_command
+}
+try {
+    set result [attempt_facetize namespace_facetize.r {} $failure_channel]
+    close $failure_channel
+    set failure_channel ""
+    if {$result != 0} {
+	error "FAIL attempt_facetize returned $result"
+    }
+
+    facetize_all_regions $failure_path
+} finally {
+    if {$failure_channel ne ""} {
+	close $failure_channel
+    }
+    foreach {hidden_command compatibility_command} $hidden_commands {
+	rename $hidden_command $compatibility_command
+    }
+    file delete $failure_path
+}
+
+if {![::brlcad::mged exists namespace_facetize.r.bot]} {
+    error "FAIL attempt_facetize did not create namespace_facetize.r.bot"
+}
+
+puts "PASS facetize_all_regions namespaced commands"
+puts "*** 'facetize_all_regions' testing completed ***"

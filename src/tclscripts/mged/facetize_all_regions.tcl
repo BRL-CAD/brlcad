@@ -29,7 +29,7 @@ proc attempt_facetize {reg reg_fail fail} {
 
     # check to see if the bot already exists
     # or previously failed to facetize
-    if { [ exists $reg.bot ] } {
+    if { [::brlcad::mged exists $reg.bot] } {
 	# already exists
 	puts " ---- $reg.bot already exists"
 	return 3
@@ -51,7 +51,7 @@ proc attempt_facetize {reg reg_fail fail} {
     puts -nonewline $fail $buf
     flush $fail
 
-    if {[catch {facetize $reg.bot $reg} res]} {
+    if {[catch {::brlcad::mged facetize $reg.bot $reg} res]} {
 	# facetize failed
 	puts "---- $reg failed to facetize"
 	return 1
@@ -80,47 +80,55 @@ proc facetize_all_regions {filename} {
     global glob_compat_mode
 
     set glob_compat_mode 0
-    set reg_list [ls -r]
+    set fail ""
+    try {
+	set reg_list [::brlcad::mged ls -r]
 
-    puts "\nStarting to facetize regions\n\n"
+	puts "\nStarting to facetize regions\n\n"
 
-    # open list of files that previously failed to convert
-    # get list
-    if {[file exists $filename]} {
-	set fail [open $filename r]
-	set reg_fail [eval list [read $fail]]
-	close $fail
-    } else {
-	set reg_fail ""
-    }
-
-    set fail [open $filename a]
-
-    foreach reg $reg_list {
-	puts "------ <$reg> ------"
-	switch -exact [attempt_facetize $reg $reg_fail $fail] {
-	    0 {
-		#succeeded
-		puts "$reg ok"
-	    }
-	    1 {
-		# failed
-
-		puts "expanding $reg"
-		expand_comb ${reg}_ $reg 0
-		puts "sub-facetizing $reg"
-		#		facetize_failed_comb ${reg}_ $reg_fail $fail
-	    }
-	    2 { # previous failure
-		puts "$reg failed before"
-	    }
-	    3 { # previously succeeded
-		puts "$reg previously succeeded"
-	    }
-	    default { puts "what?" }
+	# open list of files that previously failed to convert
+	# get list
+	if {[file exists $filename]} {
+	    set fail [open $filename r]
+	    set reg_fail [eval list [read $fail]]
+	    close $fail
+	    set fail ""
+	} else {
+	    set reg_fail ""
 	}
+
+	set fail [open $filename a]
+
+	foreach reg $reg_list {
+	    puts "------ <$reg> ------"
+	    switch -exact [attempt_facetize $reg $reg_fail $fail] {
+		0 {
+		    #succeeded
+		    puts "$reg ok"
+		}
+		1 {
+		    # failed
+
+		    puts "expanding $reg"
+		    expand_comb ${reg}_ $reg 0
+		    puts "sub-facetizing $reg"
+		    #		facetize_failed_comb ${reg}_ $reg_fail $fail
+		}
+		2 { # previous failure
+		    puts "$reg failed before"
+		}
+		3 { # previously succeeded
+		    puts "$reg previously succeeded"
+		}
+		default { puts "what?" }
+	    }
+	}
+    } finally {
+	if {$fail ne ""} {
+	    close $fail
+	}
+	set glob_compat_mode 1
     }
-    set glob_compat_mode 1
     return
 }
 
@@ -132,7 +140,7 @@ proc facetize_all_regions {filename} {
 proc facetize_failed_comb {reg reg_fail fail} {
 
     puts "\n----- facetizing_failed_comb $reg -----"
-    if { [catch {db get $reg tree} tree] } {
+    if { [catch {::brlcad::mged db get $reg tree} tree] } {
 	puts "Could not get tree from $reg"
 	return
     }

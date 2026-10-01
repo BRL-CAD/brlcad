@@ -25,6 +25,7 @@ set(
   expand_comb.mged
   extrude.mged
   eye_pt.mged
+  facetize_all_regions.mged
   facedef.mged
   g.mged
   hide.mged
@@ -135,6 +136,8 @@ if(TARGET mged)
       set(TEST_SOURCE "${CMAKE_CURRENT_BINARY_DIR}/regress_${testfile}")
     elseif(TNAME STREQUAL "expand_comb")
       set(TEST_EXPECT "PASS expand_comb namespaced commands")
+    elseif(TNAME STREQUAL "facetize_all_regions")
+      set(TEST_EXPECT "PASS facetize_all_regions namespaced commands")
     elseif(TNAME STREQUAL "near")
       set(TEST_EXPECT "PASS near namespaced commands")
     elseif(TNAME STREQUAL "namespaces")
