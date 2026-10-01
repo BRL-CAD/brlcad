@@ -38,7 +38,7 @@ proc mmenu_set { id i } {
 	return
     }
 
-    set result [catch {mmenu_get $i} menu]
+    set result [catch {::brlcad::mged mmenu_get $i} menu]
     if {$result != 0} {
 	return
     }
@@ -65,7 +65,7 @@ proc mmenu_init { id } {
     global mged_gui
     global mged_display
 
-    cmd_win set $id
+    ::brlcad::mged cmd_win set $id
     set w .mmenu$id
     catch { destroy $w }
     toplevel $w -screen $mged_gui($id,screen)
@@ -101,8 +101,8 @@ proc mmenu_init { id } {
 }
 
 proc mged_press { id w } {
-    cmd_win set $id
-    press [$w get [$w curselection]]
+    ::brlcad::mged cmd_win set $id
+    ::brlcad::mged press [$w get [$w curselection]]
 }
 
 proc reconfig_mmenu { id } {

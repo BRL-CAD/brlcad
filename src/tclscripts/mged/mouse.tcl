@@ -26,7 +26,7 @@ proc mouse_get_spath { x y } {
     global mged_gui
     global ::tk::Priv
 
-    set win [winset]
+    set win [::brlcad::mged winset]
     set id [get_player_id_dm $win]
     if {$id == "mged"} {
 	mouse_init_mged_gui
@@ -95,7 +95,7 @@ proc mouse_get_spath { x y } {
     wm protocol $top WM_DELETE_WINDOW "mouse_spath_destroy $id $top"
 
     while {$mged_gui($id,mgs_path) == ""} {
-	mged_update 0
+	::brlcad::mged mged_update 0
     }
 
     return $mged_gui($id,mgs_path)
@@ -111,7 +111,7 @@ proc mouse_spath_destroy { id top } {
 proc mouse_get_spath_and_pos { x y } {
     global mged_gui
 
-    set win [winset]
+    set win [::brlcad::mged winset]
     set id [get_player_id_dm $win]
     if {$id == "mged"} {
 	mouse_init_mged_gui
@@ -161,7 +161,7 @@ proc mouse_get_spath_and_pos { x y } {
     wm protocol $top WM_DELETE_WINDOW "mouse_spath_and_pos_destroy $id $top"
 
     while {$mged_gui($id,mgs_pos) == -1} {
-	mged_update 0
+	::brlcad::mged mged_update 0
     }
 
     return "$mged_gui($id,mgs_path) $mged_gui($id,mgs_pos)"
@@ -179,7 +179,7 @@ proc mouse_get_comb { x y } {
     global mged_gui
     global ::tk::Priv
 
-    set win [winset]
+    set win [::brlcad::mged winset]
     set id [get_player_id_dm $win]
     if {$id == "mged"} {
 	mouse_init_mged_gui
@@ -223,7 +223,7 @@ proc mouse_get_comb { x y } {
     if [info exists mged_gui($id,screen)] {
 	set screen $mged_gui($id,screen)
     } else {
-	set win [winset]
+	set win [::brlcad::mged winset]
 	set screen [winfo screen $win]
     }
 
@@ -255,7 +255,7 @@ proc mouse_get_comb { x y } {
     wm protocol $top WM_DELETE_WINDOW "mouse_comb_destroy $id $top"
 
     while {$mged_gui($id,mgc_comb) == ""} {
-	mged_update 0
+	::brlcad::mged mged_update 0
     }
 
     return $mged_gui($id,mgc_comb)
@@ -276,7 +276,7 @@ proc mouse_solid_edit_select { x y } {
 	return
     }
 
-    if {[opendb] == ""} {
+    if {[::brlcad::mged opendb] == ""} {
 	return
     }
 
@@ -287,7 +287,7 @@ proc mouse_solid_edit_select { x y } {
 
     ::brlcad::mged sed -i 1 $spath
 
-    mged_apply_all [winset] "set mouse_behavior d"
+    mged_apply_all [::brlcad::mged winset] {set mouse_behavior d}
     foreach id $mged_players {
 	set mged_gui($id,mouse_behavior) d
     }
@@ -301,7 +301,7 @@ proc mouse_matrix_edit_select { x y } {
 	return
     }
 
-    if {[opendb] == ""} {
+    if {[::brlcad::mged opendb] == ""} {
 	return
     }
 
@@ -314,7 +314,7 @@ proc mouse_matrix_edit_select { x y } {
     ::brlcad::mged ill -e -i 1 [lindex $spath_and_pos 0]
     ::brlcad::mged matpick [lindex $spath_and_pos 1]
 
-    mged_apply_all [winset] "set mouse_behavior d"
+    mged_apply_all [::brlcad::mged winset] {set mouse_behavior d}
     foreach id $mged_players {
 	set mged_gui($id,mouse_behavior) d
     }
@@ -325,7 +325,7 @@ proc mouse_rt_obj_select { x y } {
 	return
     }
 
-    set win [winset]
+    set win [::brlcad::mged winset]
     set id [get_player_id_dm $win]
     if {$id eq "mged"} {
 	mouse_init_mged_gui
@@ -368,11 +368,11 @@ proc mouse_comb_edit_select { x y } {
 	return
     }
 
-    if {[opendb] == ""} {
+    if {[::brlcad::mged opendb] == ""} {
 	return
     }
 
-    set win [winset]
+    set win [::brlcad::mged winset]
     set id [get_player_id_dm $win]
     if {$id == "mged"} {
 	mouse_init_mged_gui
@@ -387,7 +387,7 @@ proc mouse_comb_edit_select { x y } {
     set comb_control($id,name) $comb
     comb_reset $id
 
-    mged_apply_all [winset] "set mouse_behavior d"
+    mged_apply_all [::brlcad::mged winset] {set mouse_behavior d}
     foreach id $mged_players {
 	set mged_gui($id,mouse_behavior) d
     }

@@ -199,7 +199,7 @@ proc do_New { id } {
 	set mged_gui(databaseDir) [file dirname $filename]
 
 	file delete $filename
-	if [catch {opendb $filename y} msg] {
+	if [catch {::brlcad::mged opendb $filename y} msg] {
 	    cad_dialog $::tk::Priv(cad_dialog) $mged_gui($id,screen) \
 	    "Error" $msg info 0 OK
 	} else {
@@ -221,12 +221,12 @@ proc do_Open { id } {
 	# save the directory
 	set mged_gui(databaseDir) [file dirname $filename]
 
-	set ret [catch {opendb $filename} msg]
+	set ret [catch {::brlcad::mged opendb $filename} msg]
 	if {$ret} {
 	    cad_dialog $::tk::Priv(cad_dialog) $mged_gui($id,screen) "Error" \
 		$msg info 0 OK
 	} else {
-	    set dbtitle [title]
+	    set dbtitle [::brlcad::mged title]
 	    cad_dialog $::tk::Priv(cad_dialog) $mged_gui($id,screen) "File loaded" \
 		$dbtitle info 0 OK
 	}
@@ -276,7 +276,7 @@ proc do_Concat { id } {
     global mged_gui
     global ::tk::Priv
 
-    if {[opendb] == ""} {
+    if {[::brlcad::mged opendb] == ""} {
 	cad_dialog $::tk::Priv(cad_dialog) $mged_gui($id,screen) "No database." \
 	    "No database has been opened!" info 0 OK
 	return
@@ -303,7 +303,7 @@ the database being inserted."} { see_also dbconcat } } OK Cancel]
 	}
 
 	if {$ret == 0} {
-	    dbconcat $filename $prefix
+	    ::brlcad::mged dbconcat $filename $prefix
 	}
     }
 }
@@ -339,7 +339,7 @@ proc do_LoadScript { id } {
 	    # handle "saveview" raytrace script
 
 	    # attempt to loadview
-	    set ret [catch { loadview $ia_filename } output ]
+	    set ret [catch {::brlcad::mged loadview $ia_filename} output]
 
 	} elseif [ regexp {^#!/.*\n} $scriptsource ] {
 	    # handle other shell scripts by simply loading them
@@ -369,7 +369,7 @@ proc do_LoadScript { id } {
 	    global mged_display
 	    global ::tk::Priv
 
-	    if {[opendb] == ""} {
+	    if {[::brlcad::mged opendb] == ""} {
 		set mged_display(units) ""
 		cad_dialog $::tk::Priv(cad_dialog) $mged_gui($id,screen) "No database." \
 		    "No database has been opened!" info 0 OK
@@ -385,7 +385,7 @@ proc do_LoadScript { id } {
 
 	    set ia_filename [fs_dialog .$id.rtscript .$id "./*"]
 	    if {[string length $ia_filename] > 0} {
-		saveview $ia_filename
+		::brlcad::mged saveview $ia_filename
 	    } else {
 		cad_dialog $::tk::Priv(cad_dialog) $mged_gui($id,screen) "Error" \
 		    "No such file exists." warning 0 OK
@@ -439,7 +439,7 @@ proc ia_invoke { w } {
 
     if [info complete $cmd] {
 	if {!$mged_gui($w,insert_char_flag)} {
-	    cmd_win set $id
+	    ::brlcad::mged cmd_win set $id
 	}
 
 	# NOTE: Ideally, control of globbing behavior should
@@ -455,7 +455,7 @@ proc ia_invoke { w } {
 	if {$glob_compat_mode == 0} {
 	    set result [catch { uplevel \#0 $cmd } ia_msg]
 	} else {
-	    catch { db_glob $cmd } globbed_cmd
+	    catch {::brlcad::mged db_glob $cmd} globbed_cmd
 	    if {$globbed_cmd == ""} {
 		set result [catch { uplevel \#0 $cmd } ia_msg]
 	    } else {
@@ -465,8 +465,8 @@ proc ia_invoke { w } {
 
 	if { ![winfo exists $w] } {
 	    distribute_text $w $hcmd $ia_msg
-	    stuff_str "\nmged:$id> $hcmd\n$ia_msg"
-	    hist add $hcmd
+	    ::brlcad::mged stuff_str "\nmged:$id> $hcmd\n$ia_msg"
+	    ::brlcad::mged hist add $hcmd
 	    return
 	}
 
@@ -481,7 +481,8 @@ proc ia_invoke { w } {
 		mged_print_prompt $w $ia_prompt
 		set mged_gui($id,cmd_prefix) $hcmd
 		$w see insert
-		set mged_gui($id,more_default) [get_more_default]
+		set mged_gui($id,more_default) \
+		    [::brlcad::mged get_more_default]
 		return
 	    }
 	    .$id.t tag add oldcmd promptEnd insert
@@ -498,10 +499,10 @@ proc ia_invoke { w } {
 	    }
 
 	    distribute_text $w $hcmd $ia_msg
-	    stuff_str "\nmged:$id> $hcmd\n$ia_msg"
+	    ::brlcad::mged stuff_str "\nmged:$id> $hcmd\n$ia_msg"
 	}
 
-	hist add $hcmd
+	::brlcad::mged hist add $hcmd
 	set mged_gui($id,cmd_prefix) ""
 	mged_print_prompt $w "mged> "
     }

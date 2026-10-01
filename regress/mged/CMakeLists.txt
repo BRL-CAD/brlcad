@@ -31,6 +31,7 @@ set(
   facedef.mged
   g.mged
   grouper.mged
+  gui_aliases.mged
   hide.mged
   i.mged
   in.mged
@@ -148,6 +149,8 @@ if(TARGET mged)
       set(TEST_EXPECT "PASS facetize_all_regions namespaced commands")
     elseif(TNAME STREQUAL "grouper")
       set(TEST_EXPECT "PASS grouper namespaced commands")
+    elseif(TNAME STREQUAL "gui_aliases")
+      set(TEST_EXPECT "PASS Tcl GUI command dispatch")
     elseif(TNAME STREQUAL "near")
       set(TEST_EXPECT "PASS near namespaced commands")
     elseif(TNAME STREQUAL "namespaces")

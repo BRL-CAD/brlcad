@@ -226,8 +226,8 @@ proc next_command { w } {
     global mged_gui
 
     set id [get_player_id_t $w]
-    cmd_win set $id
-    set result [catch {hist next} msg]
+    ::brlcad::mged cmd_win set $id
+    set result [catch {::brlcad::mged hist next} msg]
 
     if {$result==0} {
 	$w delete promptEnd {end - 2c}
@@ -253,8 +253,8 @@ proc prev_command { w } {
     global mged_gui
 
     set id [get_player_id_t $w]
-    cmd_win set $id
-    set result [catch {hist prev} msg]
+    ::brlcad::mged cmd_win set $id
+    set result [catch {::brlcad::mged hist prev} msg]
 
     if {$result==0} {
 	if {$mged_gui($w,freshline)} {
@@ -608,7 +608,7 @@ proc vi_finish_hsrch { w dir } {
     global mged_gui
 
     set id [get_player_id_t $w]
-    cmd_win set $id
+    ::brlcad::mged cmd_win set $id
 
     set next next
     set prev prev
@@ -619,9 +619,13 @@ proc vi_finish_hsrch { w dir } {
     }
 
     if {$vi_state($w,hsrch_type)=="/"} {
-	set result [catch {hist $prev $vi_state($w,hsrch_buf)} msg]
+	set result [catch {
+	    ::brlcad::mged hist $prev $vi_state($w,hsrch_buf)
+	} msg]
     } else {
-	set result [catch {hist $next $vi_state($w,hsrch_buf)} msg]
+	set result [catch {
+	    ::brlcad::mged hist $next $vi_state($w,hsrch_buf)
+	} msg]
     }
 
     $w delete promptEnd {end - 2c}
@@ -635,7 +639,7 @@ proc vi_finish_hsrch { w dir } {
 	    append msg "x"
 	    set result 0
 	} else {
-	    set result [catch {hist cur} msg]
+	    set result [catch {::brlcad::mged hist cur} msg]
 	}
     } else {
 	set mged_gui($w,freshline) 0
@@ -1758,7 +1762,7 @@ proc tab_expansion { line } {
 
 	# The libged db dispatcher exists even when no database is open, so test
 	# an operation that requires a database rather than command existence.
-	if {[catch {db version}]} {
+	if {[catch {::brlcad::mged db version}]} {
 	    # no open database means object expansion is unavailable
 	    return [list $line {}]
 	}
@@ -1787,7 +1791,7 @@ proc tab_expansion { line } {
 	    }
 	    for { set index 0 } { $index < $pathLength } { incr index } {
 		set element [lindex $path $index]
-		if { ! [ exists $element ] } {
+		if {![::brlcad::mged exists $element]} {
 		    # the current path element is invalid, just return
 		    return [list $line {}]
 		}
@@ -1816,7 +1820,7 @@ proc tab_expansion { line } {
 
 	    # get the members of the last object on the command line
 	    # the "lt" command returns a list of elements like "{ op name }"
-	    if [catch {lt $grp} members] {
+	    if [catch {::brlcad::mged lt $grp} members] {
 		set members {}
 	    }
 
@@ -1866,7 +1870,7 @@ proc tab_expansion { line } {
 		# no "/" in the object, just expand it with a "*"
 		set grp $word
 	    }
-	    set matches [expand ${grp}*]
+	    set matches [::brlcad::mged expand ${grp}*]
 	    set len [llength $matches]
 	    if { $len == 1 } {
 		if [string equal "${grp}*" $matches] {

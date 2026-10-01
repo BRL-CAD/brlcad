@@ -1,0 +1,156 @@
+puts "*** Testing Tcl GUI command dispatch ***"
+
+foreach command {
+    color_scheme_reset mged_dm_supports mged_draw_grid mged_press
+    mouse_comb_edit_select mouse_matrix_edit_select mouse_rt_obj_select
+    mouse_solid_edit_select next_command set_mged_v_axes_pos tab_expansion
+} {
+    if {![auto_load $command]} {
+	error "FAIL GUI helper is not autoloadable: $command"
+    }
+}
+
+set object namespace_gui.s
+set group namespace_gui.g
+::brlcad::mged in $object sph 0 0 0 1
+::brlcad::mged g $group $object
+
+set test_id namespace_gui
+set active_dm [::brlcad::mged winset]
+set command_id [::brlcad::mged cmd_win get]
+set original_grid_draw [::brlcad::mged rset grid draw]
+set mged_gui($test_id,active_dm) $active_dm
+set mged_gui($test_id,apply_to) 0
+set mged_gui($test_id,grid_draw) $original_grid_draw
+set mged_gui($test_id,probe_value) namespaced
+set forwarding_key($active_dm) 0
+
+proc ::namespace_gui_widget {subcommand args} {
+    switch -- $subcommand {
+	curselection {return 0}
+	get {return reset}
+    }
+    return {}
+}
+
+proc ::namespace_gui_text {args} {
+    return {}
+}
+
+proc ::namespace_gui_empty_selection {args} {
+    return {}
+}
+
+set mged_color_scheme(primary_map) {{bg Background}}
+set mged_color_scheme(secondary_map) {}
+proc ::namespace_gui_color.bg_aMB {args} {}
+proc ::namespace_gui_color.bg_iaMB {args} {}
+
+foreach command {mouse_get_spath mouse_get_spath_and_pos mouse_get_comb} {
+    rename ::$command ::__brlcad_mged_gui_test_$command
+    interp alias {} ::$command {} ::namespace_gui_empty_selection
+}
+
+set invoked_aliases {}
+proc ::namespace_gui_alias_trap {command args} {
+    lappend ::invoked_aliases $command
+    error "legacy alias invoked: $command"
+}
+
+set hidden_commands {}
+foreach command {
+    adc cmd_win db dm exists expand hist lt mged_update mmenu_get opendb
+    press rset winset
+} {
+    set compatibility_command ::$command
+    set hidden_command ::__brlcad_mged_compatibility_$command
+    rename $compatibility_command $hidden_command
+    interp alias {} $compatibility_command {} ::namespace_gui_alias_trap $command
+    lappend hidden_commands $hidden_command $compatibility_command
+}
+
+try {
+    set support [mged_dm_supports $test_id depthcue]
+    if {$support ni {0 1}} {
+	error "FAIL display-manager capability check returned $support"
+    }
+
+    ::brlcad::mged::gui::apply_setting $test_id probe_value \
+	[list set ::namespace_gui_result]
+    if {$::namespace_gui_result ne "namespaced"} {
+	error "FAIL GUI setting helper produced $::namespace_gui_result"
+    }
+
+    set_mged_v_axes_pos $test_id
+    if {$mged_gui($test_id,view_pos) ni {0 1 2 3 4}} {
+	error "FAIL view-axes position is $mged_gui($test_id,view_pos)"
+    }
+    mged_draw_grid $test_id
+    mged_press $command_id ::namespace_gui_widget
+
+    color_scheme_reset $test_id .namespace_gui_color
+    foreach setting {bg_a bg_ia} {
+	if {[llength $mged_color_scheme($test_id,$setting)] != 3} {
+	    error "FAIL color reset produced an invalid $setting value"
+	}
+    }
+
+    set mged_players [list $test_id]
+    mouse_solid_edit_select 0 0
+    mouse_matrix_edit_select 0 0
+    mouse_rt_obj_select 0 0
+    mouse_comb_edit_select 0 0
+
+    set mged_players {mged}
+    set mged_gui(.mged.t,freshline) 1
+    interp alias {} ::.mged.t {} ::namespace_gui_text
+    next_command .mged.t
+    rename ::.mged.t {}
+
+    ::__brlcad_mged_compatibility_adc draw
+
+    lassign [tab_expansion {draw namespace_gui.}] expanded matches
+    if {[lsearch -exact $matches $object] < 0 ||
+	[lsearch -exact $matches $group] < 0} {
+	error "FAIL tab expansion returned '$expanded' with matches '$matches'"
+    }
+
+    if {[llength $invoked_aliases]} {
+	error "FAIL GUI helpers invoked legacy aliases: $invoked_aliases"
+    }
+} finally {
+    catch {rename ::.mged.t {}}
+    foreach {hidden_command compatibility_command} $hidden_commands {
+	rename $compatibility_command {}
+	rename $hidden_command $compatibility_command
+    }
+    foreach command {mouse_get_spath mouse_get_spath_and_pos mouse_get_comb} {
+	rename ::$command {}
+	rename ::__brlcad_mged_gui_test_$command ::$command
+    }
+    ::brlcad::mged rset grid draw $original_grid_draw
+    catch {::brlcad::mged kill $group $object}
+    foreach command {
+	namespace_gui_alias_trap namespace_gui_color.bg_aMB
+	namespace_gui_color.bg_iaMB namespace_gui_empty_selection
+	namespace_gui_text namespace_gui_widget
+    } {
+	rename ::$command {}
+    }
+    unset -nocomplain ::namespace_gui_result \
+	mged_gui($test_id,active_dm) mged_gui($test_id,apply_to) \
+	mged_gui($test_id,grid_draw) mged_gui($test_id,probe_value) \
+	mged_gui($test_id,view_pos)
+}
+
+puts "PASS Tcl GUI command dispatch"
+puts "*** Tcl GUI command dispatch testing completed ***"
+
+# Local Variables:
+# tab-width: 8
+# mode: Tcl
+# c-basic-offset: 4
+# tcl-indent-level: 4
+# indent-tabs-mode: t
+# End:
+# ex: shiftwidth=4 tabstop=8 cino=N-s

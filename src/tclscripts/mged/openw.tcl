@@ -175,16 +175,29 @@ if {![info exists mged_default(lighting)]} {
     set mged_default(lighting) 1
 }
 
+namespace eval ::brlcad::mged::gui {}
+
 proc mged_dm_supports {id setting} {
     global mged_gui
 
-    if {[catch {winset $mged_gui($id,active_dm)}]} {
+    if {[catch {::brlcad::mged winset $mged_gui($id,active_dm)}]} {
 	return 0
     }
-    if {[catch {dm set $setting} value]} {
+    if {[catch {::brlcad::mged dm set $setting} value]} {
 	return 0
     }
     return [expr {$value eq "0" || $value eq "1"}]
+}
+
+proc ::brlcad::mged::gui::apply_setting {id variable command} {
+    global mged_gui
+
+    lappend command $mged_gui($id,$variable)
+    ::mged_apply $id $command
+}
+
+proc ::brlcad::mged::gui::set_forward_keys {enabled} {
+    ::set_forward_keys [::brlcad::mged winset] $enabled
 }
 
 if {![info exists mged_default(perspective_mode)]} {
@@ -249,7 +262,7 @@ proc gui { args } {
     global mged_cmds
 
     # list of commands for use in tab expansion
-    set mged_cmds [?]
+    set mged_cmds [::brlcad::mged::help::summary]
 
     # configure the stdout channel for this platform
     # this is supposedly done automatically by Tcl, but not
@@ -264,7 +277,7 @@ proc gui { args } {
     }
 
     # set defaults
-    set save_id [cmd_win get]
+    set save_id [::brlcad::mged cmd_win get]
     set comb $mged_default(comb)
     set join_c 0
     set dtype $mged_default(dm_type)
@@ -422,7 +435,7 @@ proc gui { args } {
     }
 
     if { [info exists tk_strictMotif] == 0 } {
-	loadtk $screen
+	::brlcad::mged loadtk $screen
     }
 
     #==============================================================================
@@ -731,11 +744,15 @@ against MGED database objects."\
 
     menu .$id.menubar.edit -title "Edit" -tearoff $mged_default(tearoff_menus)
     .$id.menubar.edit add command -label "Primitive Selection..." -underline 0 \
-	-command "winset \$mged_gui($id,active_dm); build_edit_menu_all s1"
+	-command [join [list \
+	    [list ::brlcad::mged winset $mged_gui($id,active_dm)] \
+	    [list ::build_edit_menu_all s1]] {; }]
     hoc_register_menu_data "Edit" "Primitive Selection..." "Primitive Selection"\
 	{ { summary "A tool for selecting a primitive to edit." } }
     .$id.menubar.edit add command -label "Matrix Selection..." -underline 0 \
-	-command "winset \$mged_gui($id,active_dm); build_edit_menu_all o"
+	-command [join [list \
+	    [list ::brlcad::mged winset $mged_gui($id,active_dm)] \
+	    [list ::build_edit_menu_all o]] {; }]
     hoc_register_menu_data "Edit" "Matrix Selection..." "Matrix Selection"\
 	{ { summary "A tool for selecting a matrix to edit." } }
     .$id.menubar.edit add separator
@@ -853,67 +870,68 @@ hoc_register_menu_data "Create" "$ptype..." "Make a $ptype" $ksl
 
     menu .$id.menubar.view -title "View" -tearoff $mged_default(tearoff_menus)
     .$id.menubar.view add command -label "Top (t)" -underline 5\
-	-command "mged_apply $id \"press top\""
+	-command [list ::mged_apply $id [list ::brlcad::mged press top]]
     hoc_register_menu_data "View" "Top" "Top View"\
 	{ { summary "View of the top (i.e. azimuth = 270, elevation = 90)." }
 	    { accelerator "t" }
 	    { see_also "press, ae, view" } }
     .$id.menubar.view add command -label "Bottom (b)" -underline 8\
-	-command "mged_apply $id \"press bottom\""
+	-command [list ::mged_apply $id [list ::brlcad::mged press bottom]]
     hoc_register_menu_data "View" "Bottom" "Bottom View"\
 	{ { summary "View of the bottom (i.e. azimuth = 270 , elevation = -90)." }
 	    { accelerator "b" }
 	    { see_also "press, ae, view" } }
     .$id.menubar.view add command -label "Right (r)" -underline 7\
-	-command "mged_apply $id \"press right\""
+	-command [list ::mged_apply $id [list ::brlcad::mged press right]]
     hoc_register_menu_data "View" "Right" "Right View"\
 	{ { summary "View of the right side (i.e. azimuth = 270, elevation = 0)." }
 	    { accelerator "r" }
 	    { see_also "press, ae, view" } }
     .$id.menubar.view add command -label "Left (l)" -underline 6\
-	-command "mged_apply $id \"press left\""
+	-command [list ::mged_apply $id [list ::brlcad::mged press left]]
     hoc_register_menu_data "View" "Left" "Left View"\
 	{ { summary "View of the left side (i.e. azimuth = 90, elevation = 0)." }
 	    { accelerator "l" }
 	    { see_also "press, ae, view" } }
     .$id.menubar.view add command -label "Front (f)" -underline 7\
-	-command "mged_apply $id \"press front\""
+	-command [list ::mged_apply $id [list ::brlcad::mged press front]]
     hoc_register_menu_data "View" "Front" "Front View"\
 	{ { summary "View of the front (i.e. azimuth = 0, elevation = 0)." }
 	    { accelerator "f" }
 	    { see_also "press, ae, view" } }
     .$id.menubar.view add command -label "Rear (R)" -underline 6\
-	-command "mged_apply $id \"press rear\""
+	-command [list ::mged_apply $id [list ::brlcad::mged press rear]]
     hoc_register_menu_data "View" "Rear" "Rear View"\
 	{ { summary "View of the rear (i.e. azimuth = 180, elevation = 0)." }
 	    { accelerator "R" }
 	    { see_also "press, ae, view" } }
     .$id.menubar.view add command -label "az35,el25" -underline 2\
-	-command "mged_apply $id \"press 35,25\""
+	-command [list ::mged_apply $id [list ::brlcad::mged press 35,25]]
     hoc_register_menu_data "View" "az35,el25" "View - 35,25"\
 	{ { summary "View with an azimuth of 35 and an elevation of 25." }
 	    { accelerator "3" }
 	    { see_also "press, ae, view" } }
     .$id.menubar.view add command -label "az45,el45" -underline 2\
-	-command "mged_apply $id \"press 45,45\""
+	-command [list ::mged_apply $id [list ::brlcad::mged press 45,45]]
     hoc_register_menu_data "View" "az45,el45" "View - 45,45"\
 	{ { summary "View with an azimuth of 45 and an elevation of 45." }
 	    { accelerator "4" }
 	    { see_also "press, ae, view" } }
     .$id.menubar.view add separator
     .$id.menubar.view add command -label "Zoom In" -underline 5\
-	-command "mged_apply $id \"zoom 2\""
+	-command [list ::mged_apply $id [list ::brlcad::mged zoom 2]]
     hoc_register_menu_data "View" "Zoom In" "Zoom In"\
 	{ { summary "Zoom in by a factor of 2." }
 	    { see_also "sca, zoom" } }
     .$id.menubar.view add command -label "Zoom Out" -underline 5\
-	-command "mged_apply $id \"zoom 0.5\""
+	-command [list ::mged_apply $id [list ::brlcad::mged zoom 0.5]]
     hoc_register_menu_data "View" "Zoom Out" "Zoom Out"\
 	{ { summary "Zoom out by a factor of 2." }
 	    { see_also "sca, zoom" } }
     .$id.menubar.view add separator
     .$id.menubar.view add command -label "Default"\
-	-underline 0 -command "mged_apply $id \"press reset\""
+	-underline 0 \
+	-command [list ::mged_apply $id [list ::brlcad::mged press reset]]
     hoc_register_menu_data "View" "Default" "Default View"\
 	{ { summary "Same as top (i.e. azimuth = 270, elevation = 90)." }
 	    { see_also "press, ae, view" } }
@@ -927,7 +945,7 @@ hoc_register_menu_data "Create" "$ptype..." "Make a $ptype" $ksl
 \tlower right\taz = 90, el = 0" }
 	    { see_also "press, ae, view" } }
     .$id.menubar.view add command -label "Zero" -underline 0\
-	-command "mged_apply $id \"knob zero\""
+	-command [list ::mged_apply $id [list ::brlcad::mged knob zero]]
     hoc_register_menu_data "View" "Zero" "Zero Knobs"\
 	{ { summary "Stop all rate transformations." }
 	    { accelerator "0" }
@@ -1311,31 +1329,36 @@ hoc_register_menu_data "Create" "$ptype..." "Make a $ptype" $ksl
     menu .$id.menubar.settings.vap -title "View Axes Position" -tearoff $mged_default(tearoff_menus)
     .$id.menubar.settings.vap add radiobutton -value 0 -variable mged_gui($id,view_pos)\
 	-label "Center" -underline 0\
-	-command "mged_apply $id \"rset ax view_pos 0 0\""
+	-command [list ::mged_apply $id \
+	    [list ::brlcad::mged rset ax view_pos 0 0]]
     hoc_register_menu_data "View Axes Position" "Center" "View Axes Position - Center"\
 	{ { summary "Place the view axes in the center of the active pane." }
 	    { see_also "rset" } }
     .$id.menubar.settings.vap add radiobutton -value 1 -variable mged_gui($id,view_pos)\
 	-label "Lower Left" -underline 2\
-	-command "mged_apply $id \"rset ax view_pos -1750 -1750\""
+	-command [list ::mged_apply $id \
+	    [list ::brlcad::mged rset ax view_pos -1750 -1750]]
     hoc_register_menu_data "View Axes Position" "Lower Left" "View Axes Position - Lower Left"\
 	{ { summary "Place the view axes in the lower left corner of the active pane." }
 	    { see_also "rset" } }
     .$id.menubar.settings.vap add radiobutton -value 2 -variable mged_gui($id,view_pos)\
 	-label "Upper Left" -underline 6\
-	-command "mged_apply $id \"rset ax view_pos -1750 1750\""
+	-command [list ::mged_apply $id \
+	    [list ::brlcad::mged rset ax view_pos -1750 1750]]
     hoc_register_menu_data "View Axes Position" "Upper Left" "View Axes Position - Upper Left"\
 	{ { summary "Place the view axes in the upper left corner of the active pane." }
 	    { see_also "rset" } }
     .$id.menubar.settings.vap add radiobutton -value 3 -variable mged_gui($id,view_pos)\
 	-label "Upper Right" -underline 6\
-	-command "mged_apply $id \"rset ax view_pos 1750 1750\""
+	-command [list ::mged_apply $id \
+	    [list ::brlcad::mged rset ax view_pos 1750 1750]]
     hoc_register_menu_data "View Axes Position" "Upper Right" "View Axes Position - Upper Right"\
 	{ { summary "Place the view axes in the upper right corner of the active pane." }
 	    { see_also "rset" } }
     .$id.menubar.settings.vap add radiobutton -value 4 -variable mged_gui($id,view_pos)\
 	-label "Lower Right" -underline 3\
-	-command "mged_apply $id \"rset ax view_pos 1750 -1750\""
+	-command [list ::mged_apply $id \
+	    [list ::brlcad::mged rset ax view_pos 1750 -1750]]
     hoc_register_menu_data "View Axes Position" "Lower Right" "View Axes Position - Lower Right"\
 	{ { summary "Place the view axes in the lower right corner of the active pane." }
 	    { see_also "rset" } }
@@ -1361,7 +1384,8 @@ hoc_register_menu_data "Create" "$ptype..." "Make a $ptype" $ksl
 	    { see_also "rset" } }
     .$id.menubar.settings.grid add checkbutton -offvalue 0 -onvalue 1 -variable mged_gui($id,draw_snap)\
 	-label "Snap To Grid" -underline 0\
-	-command "mged_apply $id \"rset grid snap \$mged_gui($id,draw_snap)\""
+	-command [list ::brlcad::mged::gui::apply_setting $id draw_snap \
+	    [list ::brlcad::mged rset grid snap]]
     hoc_register_menu_data "Grid" "Snap To Grid" "Snap To Grid"\
 	{ { summary "Toggle grid snapping. When snapping to grid,
 	the internal routines that use the mouse pointer
@@ -1507,19 +1531,20 @@ hoc_register_menu_data "Create" "$ptype..." "Make a $ptype" $ksl
     menu .$id.menubar.settings.coord -title "Constraint Coords" -tearoff $mged_default(tearoff_menus)
     .$id.menubar.settings.coord add radiobutton -value m -variable mged_gui($id,coords)\
 	-label "Model" -underline 0\
-	-command "mged_apply $id \"set coords \$mged_gui($id,coords)\""
+	-command [list ::brlcad::mged::gui::apply_setting $id coords [list ::set coords]]
     hoc_register_menu_data "Constraint Coords" "Model" "Constraint Coords - Model"\
 	{ { summary "Constrained transformations will use model coordinates." }
 	    { see_also "rset, vars" } }
     .$id.menubar.settings.coord add radiobutton -value v -variable mged_gui($id,coords)\
 	-label "View" -underline 0\
-	-command "mged_apply $id \"set coords \$mged_gui($id,coords)\""
+	-command [list ::brlcad::mged::gui::apply_setting $id coords [list ::set coords]]
     hoc_register_menu_data "Constraint Coords" "View" "Constraint Coords - View"\
 	{ { summary "Constrained transformations will use view coordinates." }
 	    { see_also "rset, vars" } }
     .$id.menubar.settings.coord add radiobutton -value o -variable mged_gui($id,coords)\
 	-label "Object" -underline 0\
-	-command "mged_apply $id \"set coords \$mged_gui($id,coords)\"" -state disabled
+	-command [list ::brlcad::mged::gui::apply_setting $id coords [list ::set coords]] \
+	-state disabled
     hoc_register_menu_data "Constraint Coords" "Object" "Constraint Coords - Object"\
 	{ { summary "Constrained transformations will use object coordinates." }
 	    { see_also "rset, vars" } }
@@ -1527,25 +1552,29 @@ hoc_register_menu_data "Create" "$ptype..." "Make a $ptype" $ksl
     menu .$id.menubar.settings.origin -title "Rotate About" -tearoff $mged_default(tearoff_menus)
     .$id.menubar.settings.origin add radiobutton -value v -variable mged_gui($id,rotate_about)\
 	-label "View Center" -underline 0\
-	-command "mged_apply $id \"set rotate_about \$mged_gui($id,rotate_about)\""
+	-command [list ::brlcad::mged::gui::apply_setting $id rotate_about \
+	    [list ::set rotate_about]]
     hoc_register_menu_data "Rotate About" "View Center" "Rotate About - View Center"\
 	{ { summary "Set the center of rotation to be about the view center." }
 	    { see_also "rset, vars" } }
     .$id.menubar.settings.origin add radiobutton -value e -variable mged_gui($id,rotate_about)\
 	-label "Eye" -underline 0\
-	-command "mged_apply $id \"set rotate_about \$mged_gui($id,rotate_about)\""
+	-command [list ::brlcad::mged::gui::apply_setting $id rotate_about \
+	    [list ::set rotate_about]]
     hoc_register_menu_data "Rotate About" "Eye" "Rotate About - Eye"\
 	{ { summary "Set the center of rotation to be about the eye." }
 	    { see_also "rset, vars" } }
     .$id.menubar.settings.origin add radiobutton -value m -variable mged_gui($id,rotate_about)\
 	-label "Model Origin" -underline 0\
-	-command "mged_apply $id \"set rotate_about \$mged_gui($id,rotate_about)\""
+	-command [list ::brlcad::mged::gui::apply_setting $id rotate_about \
+	    [list ::set rotate_about]]
     hoc_register_menu_data "Rotate About" "Model Origin" "Rotate About - Model Origin"\
 	{ { summary "Set the center of rotation to be about the model origin." }
 	    { see_also "rset, vars" } }
     .$id.menubar.settings.origin add radiobutton -value k -variable mged_gui($id,rotate_about)\
 	-label "Key Point" -underline 0\
-	-command "mged_apply $id \"set rotate_about \$mged_gui($id,rotate_about)\"" -state disabled
+	-command [list ::brlcad::mged::gui::apply_setting $id rotate_about \
+	    [list ::set rotate_about]] -state disabled
     hoc_register_menu_data "Rotate About" "Key Point" "Rotate About - Key Point"\
 	{ { summary "Set the center of rotation to be about the key point." }
 	    { see_also "rset, vars" } }
@@ -1589,7 +1618,8 @@ hoc_register_menu_data "Create" "$ptype..." "Make a $ptype" $ksl
 	    { see_also "rset" } }
     .$id.menubar.modes add checkbutton -offvalue 0 -onvalue 1 -variable mged_gui($id,draw_snap)\
 	-label "Snap To Grid" -underline 0\
-	-command "mged_apply $id \"rset grid snap \$mged_gui($id,draw_snap)\""
+	-command [list ::brlcad::mged::gui::apply_setting $id draw_snap \
+	    [list ::brlcad::mged rset grid snap]]
     hoc_register_menu_data "Modes" "Snap To Grid" "Snap To Grid"\
 	{ { summary "Toggle grid snapping. When snapping to grid,
 	the internal routines that use the mouse pointer
@@ -1620,7 +1650,8 @@ hoc_register_menu_data "Create" "$ptype..." "Make a $ptype" $ksl
     .$id.menubar.modes add separator
     .$id.menubar.modes add checkbutton -offvalue 0 -onvalue 1 -variable mged_gui($id,rubber_band)\
 	-label "Persistent Sweep Rectangle" -underline 0\
-	-command "mged_apply $id \"rset rb draw \$mged_gui($id,rubber_band)\""
+	-command [list ::brlcad::mged::gui::apply_setting $id rubber_band \
+	    [list ::brlcad::mged rset rb draw]]
     hoc_register_menu_data "Modes" "Persistent sweep rectangle" "Persistent Rubber Band"\
 	{ { summary "Toggle drawing the rectangle while idle." }
 	    { see_also "rset" } }
@@ -1632,7 +1663,8 @@ hoc_register_menu_data "Create" "$ptype..." "Make a $ptype" $ksl
 	    { see_also "adc" } }
     .$id.menubar.modes add checkbutton -offvalue 0 -onvalue 1 -variable mged_gui($id,faceplate)\
 	-label "Faceplate" -underline 7\
-	-command "mged_apply $id \"set faceplate \$mged_gui($id,faceplate)\""
+	-command [list ::brlcad::mged::gui::apply_setting $id faceplate \
+	    [list ::set faceplate]]
     hoc_register_menu_data "Modes" "Faceplate" "Faceplate"\
 	{ { summary "Toggle drawing the MGED faceplate." }
 	    { see_also "rset, vars" } }
@@ -1686,7 +1718,8 @@ hoc_register_menu_data "Create" "$ptype..." "Make a $ptype" $ksl
 	also collaborating." } }
     .$id.menubar.modes add checkbutton -offvalue 0 -onvalue 1 -variable mged_gui($id,rateknobs)\
 	-label "Rateknobs" -underline 0\
-	-command "mged_apply $id \"set rateknobs \$mged_gui($id,rateknobs)\""
+	-command [list ::brlcad::mged::gui::apply_setting $id rateknobs \
+	    [list ::set rateknobs]]
     hoc_register_menu_data "Modes" "Rateknobs" "Rate Knobs"\
 	{ { summary "Toggle rate knob mode. When in rate knob mode,
 	transformation with the mouse becomes rate based.
@@ -1696,7 +1729,7 @@ hoc_register_menu_data "Create" "$ptype..." "Make a $ptype" $ksl
 	    { see_also "knob" } }
     .$id.menubar.modes add checkbutton -offvalue 0 -onvalue 1 -variable mged_gui($id,dlist)\
 	-label "Display Lists" -underline 8\
-	-command "mged_apply $id \"set dlist \$mged_gui($id,dlist)\""
+	-command [list ::brlcad::mged::gui::apply_setting $id dlist [list ::set dlist]]
     hoc_register_menu_data "Modes" "Display Lists" "Display Lists"\
 	{ { summary "Toggle the use of display lists. This currently affects
 	only Ogl display managers. When using display lists the
@@ -1714,7 +1747,8 @@ hoc_register_menu_data "Create" "$ptype..." "Make a $ptype" $ksl
     menu .$id.menubar.modes.axes -title "Axes" -tearoff $mged_default(tearoff_menus)
     .$id.menubar.modes.axes add checkbutton -offvalue 0 -onvalue 1\
 	-variable mged_gui($id,view_draw) -label "View" -underline 0\
-	-command "mged_apply $id \"rset ax view_draw \$mged_gui($id,view_draw)\""
+	-command [list ::brlcad::mged::gui::apply_setting $id view_draw \
+	    [list ::brlcad::mged rset ax view_draw]]
     hoc_register_menu_data "Axes" "View" "View Axes"\
 	{ { summary "Toggle display of the view axes. The view axes
 	are used to give the user visual cues indicating
@@ -1726,7 +1760,8 @@ hoc_register_menu_data "Create" "$ptype..." "Make a $ptype" $ksl
 	    { see_also "rset" } }
     .$id.menubar.modes.axes add checkbutton -offvalue 0 -onvalue 1\
 	-variable mged_gui($id,model_draw) -label "Model" -underline 0\
-	-command "mged_apply $id \"rset ax model_draw \$mged_gui($id,model_draw)\""
+	-command [list ::brlcad::mged::gui::apply_setting $id model_draw \
+	    [list ::brlcad::mged rset ax model_draw]]
     hoc_register_menu_data "Axes" "Model" "Model Axes"\
 	{ { summary "Toggle display of the model axes. The model axes
 	are used to give the user visual cues indicating
@@ -1739,7 +1774,8 @@ hoc_register_menu_data "Create" "$ptype..." "Make a $ptype" $ksl
 	    { see_also "rset" } }
     .$id.menubar.modes.axes add checkbutton -offvalue 0 -onvalue 1\
 	-variable mged_gui($id,model_tick_enable) -label "Model Axes Ticks" -underline 6\
-	-command "mged_apply $id \"rset ax model_tick_enable \$mged_gui($id,model_tick_enable)\""
+	-command [list ::brlcad::mged::gui::apply_setting $id model_tick_enable \
+	    [list ::brlcad::mged rset ax model_tick_enable]]
     hoc_register_menu_data "Axes" "Model Axes Ticks" "Model Axes Ticks"\
 	{ { summary "Toggle display of a ticked scale along the model
 	axes. The tick spacing is controlled by
@@ -1750,7 +1786,8 @@ hoc_register_menu_data "Create" "$ptype..." "Make a $ptype" $ksl
 	    { see_also "rset" } }
     .$id.menubar.modes.axes add checkbutton -offvalue 0 -onvalue 1\
 	-variable mged_gui($id,edit_draw) -label "Edit" -underline 0\
-	-command "mged_apply $id \"rset ax edit_draw \$mged_gui($id,edit_draw)\""
+	-command [list ::brlcad::mged::gui::apply_setting $id edit_draw \
+	    [list ::brlcad::mged rset ax edit_draw]]
     hoc_register_menu_data "Axes" "Edit" "Edit Axes"\
 	{ { summary "Toggle display of the edit axes. The edit axes
 	are used to give the user visual cues indicating
@@ -1762,7 +1799,8 @@ hoc_register_menu_data "Create" "$ptype..." "Make a $ptype" $ksl
     menu .$id.menubar.misc -title "Misc" -tearoff $mged_default(tearoff_menus)
     .$id.menubar.misc add checkbutton -offvalue 0 -onvalue 1\
 	-variable mged_gui($id,zclip) -label "Z Clipping" -underline 0\
-	-command "mged_apply $id \"dm set zclip \$mged_gui($id,zclip)\""
+	-command [list ::brlcad::mged::gui::apply_setting $id zclip \
+	    [list ::brlcad::mged dm set zclip]]
     hoc_register_menu_data "Misc" "Z Clipping" "Z Clipping"\
 	{ { summary "Toggle zclipping. When zclipping is active, the Z value
 	of each point is checked against the min and max Z values
@@ -1773,26 +1811,29 @@ hoc_register_menu_data "Create" "$ptype..." "Make a $ptype" $ksl
 	    { see_also "dm" } }
     .$id.menubar.misc add checkbutton -offvalue 0 -onvalue 1\
 	-variable mged_gui($id,perspective_mode) -label "Perspective" -underline 0\
-	-command "mged_apply $id \"set perspective_mode \$mged_gui($id,perspective_mode)\""
+	-command [list ::brlcad::mged::gui::apply_setting $id perspective_mode \
+	    [list ::set perspective_mode]]
     hoc_register_menu_data "Misc" "Perspective" "Perspective"\
 	{ { summary "Toggle perspective_mode."}
 	    { see_also "rset, vars" } }
     .$id.menubar.misc add checkbutton -offvalue 0 -onvalue 1\
 	-variable mged_gui($id,faceplate) -label "Faceplate" -underline 0\
-	-command "mged_apply $id \"set faceplate \$mged_gui($id,faceplate)\""
+	-command [list ::brlcad::mged::gui::apply_setting $id faceplate \
+	    [list ::set faceplate]]
     hoc_register_menu_data "Misc" "Faceplate" "Faceplate"\
 	{ { summary "Toggle drawing the MGED faceplate." }
 	    { see_also "rset, vars" } }
     .$id.menubar.misc add checkbutton -offvalue 0 -onvalue 1\
 	-variable mged_gui($id,orig_gui) -label "Faceplate GUI" -underline 10\
-	-command "mged_apply $id \"set orig_gui \$mged_gui($id,orig_gui)\""
+	-command [list ::brlcad::mged::gui::apply_setting $id orig_gui [list ::set orig_gui]]
     hoc_register_menu_data "Misc" "Faceplate GUI" "Faceplate GUI"\
 	{ { summary "Toggle drawing the MGED faceplate GUI. The faceplate GUI
 	consists of the faceplate menu and sliders." }
 	    { see_also "rset, vars" } }
     .$id.menubar.misc add checkbutton -offvalue 0 -onvalue 1\
 	-variable mged_gui($id,forward_keys) -label "Keystroke Forwarding" -underline 0\
-	-command "mged_apply $id \"set_forward_keys \\\[winset\\\] \$mged_gui($id,forward_keys)\""
+	-command [list ::brlcad::mged::gui::apply_setting $id forward_keys \
+	    [list ::brlcad::mged::gui::set_forward_keys]]
     hoc_register_menu_data "Misc" "Keystroke Forwarding" "Keystroke Forwarding"\
 	{ { summary "Toggle keystroke forwarding. When forwarding keystrokes, each
 	key event within the drawing window is forwarded to the command
@@ -1805,20 +1846,23 @@ hoc_register_menu_data "Create" "$ptype..." "Make a $ptype" $ksl
 	[mged_dm_supports $id lighting]} {
 	.$id.menubar.misc add checkbutton -offvalue 0 -onvalue 1\
 	    -variable mged_gui($id,depthcue) -label "Depth Cueing" -underline 0\
-	    -command "mged_apply $id \"dm set depthcue \$mged_gui($id,depthcue)\""
+	    -command [list ::brlcad::mged::gui::apply_setting $id depthcue \
+		[list ::brlcad::mged dm set depthcue]]
 	hoc_register_menu_data "Misc" "Depth Cueing" "Depth Cueing"\
 	    { { summary "Toggle depth cueing. When depth cueing is active,
 		lines that are farther away appear more faint." }
 		{ see_also "dm" } }
 	.$id.menubar.misc add checkbutton -offvalue 0 -onvalue 1\
 	    -variable mged_gui($id,zbuffer) -label "Z Buffer" -underline 2\
-	    -command "mged_apply $id \"dm set zbuffer \$mged_gui($id,zbuffer)\""
+	    -command [list ::brlcad::mged::gui::apply_setting $id zbuffer \
+		[list ::brlcad::mged dm set zbuffer]]
 	hoc_register_menu_data "Misc" "Z Buffer" "Z Buffer"\
 	    { { summary "Toggle Z buffer." }
 		{ see_also "dm" } }
 	.$id.menubar.misc add checkbutton -offvalue 0 -onvalue 1\
 	    -variable mged_gui($id,lighting) -label "Lighting" -underline 0\
-	    -command "mged_apply $id \"dm set lighting \$mged_gui($id,lighting)\""
+	    -command [list ::brlcad::mged::gui::apply_setting $id lighting \
+		[list ::brlcad::mged dm set lighting]]
 	hoc_register_menu_data "Misc" "Lighting" "Lighting"\
 	    { { summary "Toggle lighting." }
 		{ see_also "dm" } }
@@ -2216,13 +2260,13 @@ hoc_register_menu_data "Create" "$ptype..." "Make a $ptype" $ksl
 	cad_MenuFirstEntry ""
     }
 
-    cmd_win open $id
+    ::brlcad::mged cmd_win open $id
     ::brlcad::mged tie $id $mged_gui($id,active_dm)
     reconfig_gui_default $id
 
     # Force display manager windows to update their respective color schemes
-    mged_apply_local $id "rset cs mode 0"
-    rset cs mode 1
+    mged_apply_local $id [list ::brlcad::mged rset cs mode 0]
+    ::brlcad::mged rset cs mode 1
 
     if { $join_c } {
 	collaborate join $id
@@ -2233,16 +2277,17 @@ hoc_register_menu_data "Create" "$ptype..." "Make a $ptype" $ksl
     set mged_gui($id,qray_effects) [::brlcad::mged qray effects]
 
     if {[mged_dm_supports $id zbuffer]} {
-	mged_apply_local $id "dm set zbuffer $mged_default(zbuffer)"
+	mged_apply_local $id \
+	    [list ::brlcad::mged dm set zbuffer $mged_default(zbuffer)]
     }
 
     # reset current_cmd_list so that its cur_hist gets updated
-    cmd_win set $save_id
+    ::brlcad::mged cmd_win set $save_id
 
     # cause all 4 windows to share menu state
-    share m $mged_gui($id,top).ul $mged_gui($id,top).ur
-    share m $mged_gui($id,top).ul $mged_gui($id,top).ll
-    share m $mged_gui($id,top).ul $mged_gui($id,top).lr
+    ::brlcad::mged share m $mged_gui($id,top).ul $mged_gui($id,top).ur
+    ::brlcad::mged share m $mged_gui($id,top).ul $mged_gui($id,top).ll
+    ::brlcad::mged share m $mged_gui($id,top).ul $mged_gui($id,top).lr
 
     do_rebind_keys $id
 
@@ -2340,7 +2385,7 @@ proc gui_destroy args {
         set mged_gui($id,show_edit_info) 0
 
         releasemv $id
-        catch { cmd_win close $id }
+        catch {::brlcad::mged cmd_win close $id}
         catch { destroy .mmenu$id }
         catch { destroy .sliders$id }
         catch { destroy $mged_gui($id,top) }
@@ -2351,7 +2396,7 @@ proc gui_destroy args {
 proc reconfig_gui_default { id } {
     global mged_display
 
-    cmd_win set $id
+    ::brlcad::mged cmd_win set $id
     set dm_id [::brlcad::mged tie $id]
     if { [llength $dm_id] != 1 } {
 	return
@@ -2395,33 +2440,34 @@ proc update_mged_vars { id } {
     global perspective_mode
     global orig_gui
 
-    winset $mged_gui($id,active_dm)
+    ::brlcad::mged winset $mged_gui($id,active_dm)
     set mged_gui($id,rateknobs) $rateknobs
-    if {![catch {adc draw} result]} {
+    if {![catch {::brlcad::mged adc draw} result]} {
 	set mged_gui($id,adc_draw) $result
     }
-    set mged_gui($id,model_draw) [rset ax model_draw]
-    set mged_gui($id,model_tick_enable) [rset ax model_tick_enable]
-    set mged_gui($id,view_draw) [rset ax view_draw]
-    set mged_gui($id,edit_draw) [rset ax edit_draw]
+    set mged_gui($id,model_draw) [::brlcad::mged rset ax model_draw]
+    set mged_gui($id,model_tick_enable) \
+	[::brlcad::mged rset ax model_tick_enable]
+    set mged_gui($id,view_draw) [::brlcad::mged rset ax view_draw]
+    set mged_gui($id,edit_draw) [::brlcad::mged rset ax edit_draw]
     set mged($id,use_air) $use_air
     set mged_gui($id,dlist) $dlist
-    set mged_gui($id,rubber_band) [rset rb draw]
+    set mged_gui($id,rubber_band) [::brlcad::mged rset rb draw]
     set mged_gui($id,mouse_behavior) $mouse_behavior
     set mged_gui($id,coords) $coords
     set mged_gui($id,rotate_about) $rotate_about
     set mged_gui($id,transform) $transform
-    set mged_gui($id,grid_draw) [rset grid draw]
-    set mged_gui($id,draw_snap) [rset grid snap]
+    set mged_gui($id,grid_draw) [::brlcad::mged rset grid draw]
+    set mged_gui($id,draw_snap) [::brlcad::mged rset grid snap]
     set mged_gui($id,faceplate) $faceplate
-    set mged_gui($id,zclip) [dm set zclip]
+    set mged_gui($id,zclip) [::brlcad::mged dm set zclip]
     set mged_gui($id,perspective_mode) $perspective_mode
     set mged_gui($id,orig_gui) $orig_gui
     set mged_gui($id,forward_keys) $forwarding_key($mged_gui($id,active_dm))
 
     foreach setting {depthcue zbuffer lighting} {
 	if {[mged_dm_supports $id $setting]} {
-	    set mged_gui($id,$setting) [dm set $setting]
+	    set mged_gui($id,$setting) [::brlcad::mged dm set $setting]
 	}
     }
 
@@ -2436,7 +2482,7 @@ proc update_mged_vars { id } {
 proc set_mged_v_axes_pos { id } {
     global mged_gui
 
-    set view_pos [rset ax view_pos]
+    set view_pos [::brlcad::mged rset ax view_pos]
     set hpos [lindex $view_pos 0]
     set vpos [lindex $view_pos 1]
 
@@ -2537,14 +2583,14 @@ proc set_active_dm { id } {
     trace vdelete mged_display($mged_gui($id,active_dm),fps) w "ia_changestate $id"
 
     # make inactive
-    winset $mged_gui($id,active_dm)
-    rset cs mode 0
+    ::brlcad::mged winset $mged_gui($id,active_dm)
+    ::brlcad::mged rset cs mode 0
 
     set mged_gui($id,active_dm) $new_dm
 
     # make active
-    winset $mged_gui($id,active_dm)
-    rset cs mode 1
+    ::brlcad::mged winset $mged_gui($id,active_dm)
+    ::brlcad::mged rset cs mode 1
 
     trace variable mged_display($mged_gui($id,active_dm),fps) w "ia_changestate $id"
 
@@ -2681,7 +2727,7 @@ proc view_ring_add {id} {
     global view_ring
     global mged_collaborators
 
-    winset $mged_gui($id,active_dm)
+    ::brlcad::mged winset $mged_gui($id,active_dm)
 
     # already have 10 views in the view ring, ignore add
     if {$mged_default(max_views) <= [llength $mged_gui($id,views)]} {
@@ -2777,14 +2823,14 @@ proc view_ring_set_view {id vid vi} {
 	    if {"$mged_gui($cid,top).ur" == "$mged_gui($cid,active_dm)"} {
 		set view_ring($cid,prev) $view_ring($cid)
 		set view_ring($cid) $vid
-		winset $mged_gui($cid,active_dm)
+		::brlcad::mged winset $mged_gui($cid,active_dm)
 		eval [lindex $mged_gui($cid,views) $vi]
 	    }
 	}
     } else {
 	set view_ring($id,prev) $view_ring($id)
 	set view_ring($id) $vid
-	winset $mged_gui($id,active_dm)
+	::brlcad::mged winset $mged_gui($id,active_dm)
 	eval [lindex $mged_gui($id,views) $vi]
     }
 }
@@ -3033,42 +3079,42 @@ proc set_transform { id } {
     global mged_gui
     global transform
 
-    winset $mged_gui($id,top).ul
+    ::brlcad::mged winset $mged_gui($id,top).ul
     set transform $mged_gui($id,transform)
     default_mouse_bindings $mged_gui($id,top).ul
 
-    winset $mged_gui($id,top).ur
+    ::brlcad::mged winset $mged_gui($id,top).ur
     set transform $mged_gui($id,transform)
     default_mouse_bindings $mged_gui($id,top).ur
 
-    winset $mged_gui($id,top).ll
+    ::brlcad::mged winset $mged_gui($id,top).ll
     set transform $mged_gui($id,transform)
     default_mouse_bindings $mged_gui($id,top).ll
 
-    winset $mged_gui($id,top).lr
+    ::brlcad::mged winset $mged_gui($id,top).lr
     set transform $mged_gui($id,transform)
     default_mouse_bindings $mged_gui($id,top).lr
 
-    winset $mged_gui($id,active_dm)
+    ::brlcad::mged winset $mged_gui($id,active_dm)
 }
 
 proc do_rebind_keys { id } {
     global mged_gui
 
-    bind $mged_gui($id,top).ul <Control-n> "winset $mged_gui($id,top).ul; view_ring_next $id; break"
-    bind $mged_gui($id,top).ur <Control-n> "winset $mged_gui($id,top).ur; view_ring_next $id; break"
-    bind $mged_gui($id,top).ll <Control-n> "winset $mged_gui($id,top).ll; view_ring_next $id; break"
-    bind $mged_gui($id,top).lr <Control-n> "winset $mged_gui($id,top).lr; view_ring_next $id; break"
-
-    bind $mged_gui($id,top).ul <Control-p> "winset $mged_gui($id,top).ul; view_ring_prev $id; break"
-    bind $mged_gui($id,top).ur <Control-p> "winset $mged_gui($id,top).ur; view_ring_prev $id; break"
-    bind $mged_gui($id,top).ll <Control-p> "winset $mged_gui($id,top).ll; view_ring_prev $id; break"
-    bind $mged_gui($id,top).lr <Control-p> "winset $mged_gui($id,top).lr; view_ring_prev $id; break"
-
-    bind $mged_gui($id,top).ul <Control-t> "winset $mged_gui($id,top).ul; view_ring_toggle $id; break"
-    bind $mged_gui($id,top).ur <Control-t> "winset $mged_gui($id,top).ur; view_ring_toggle $id; break"
-    bind $mged_gui($id,top).ll <Control-t> "winset $mged_gui($id,top).ll; view_ring_toggle $id; break"
-    bind $mged_gui($id,top).lr <Control-t> "winset $mged_gui($id,top).lr; view_ring_toggle $id; break"
+    foreach {sequence command} {
+	<Control-n> ::view_ring_next
+	<Control-p> ::view_ring_prev
+	<Control-t> ::view_ring_toggle
+    } {
+	foreach pane {ul ur ll lr} {
+	    set dm $mged_gui($id,top).$pane
+	    set commands [list \
+		[list ::brlcad::mged winset $dm] \
+		[list $command $id] \
+		[list break]]
+	    bind $dm $sequence [join $commands {; }]
+	}
+    }
 }
 
 proc adc { args } {
@@ -3079,7 +3125,7 @@ proc adc { args } {
 
     # toggling ADC on/off
     if { ![llength $args] } {
-	set dm_id [winset]
+	set dm_id [::brlcad::mged winset]
 	set tie_list [::brlcad::mged tie]
 	set id mged
 
@@ -3095,7 +3141,7 @@ proc adc { args } {
 	    set mged_gui($id,adc_draw) [::brlcad::mged adc draw]
 	}
 
-	default_mouse_bindings [winset]
+	default_mouse_bindings [::brlcad::mged winset]
     }
 
     return $result
@@ -3130,7 +3176,10 @@ proc set_fb { id } {
 proc set_mouse_behavior { id } {
     global mged_gui
 
-    mged_apply $id "set mouse_behavior $mged_gui($id,mouse_behavior); refresh"
+    set commands [list \
+	[list set mouse_behavior $mged_gui($id,mouse_behavior)] \
+	[list ::brlcad::mged refresh]]
+    mged_apply $id [join $commands {; }]
 
     switch $mged_gui($id,mouse_behavior) {
 	"o" {
@@ -3181,13 +3230,14 @@ proc mged_handle_configure { id } {
 proc mged_draw_grid {id} {
     global mged_gui
 
-    catch { winset $mged_gui($id,active_dm) } msg
-    mged_apply $id "rset grid draw $mged_gui($id,grid_draw)"
+    catch {::brlcad::mged winset $mged_gui($id,active_dm)} msg
+    mged_apply $id \
+	[list ::brlcad::mged rset grid draw $mged_gui($id,grid_draw)]
 
     # Reconcile the Tcl grid_draw with the internal grid_draw.
     # Note - the internal grid_draw cannot be set to 1 if a database
     #				 is not currently open (i.e. dbip == DBI_NULL).
-    set mged_gui($id,grid_draw) [rset grid draw]
+    set mged_gui($id,grid_draw) [::brlcad::mged rset grid draw]
 }
 
 proc call_dbupgrade {id} {

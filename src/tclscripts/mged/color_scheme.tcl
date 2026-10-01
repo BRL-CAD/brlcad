@@ -188,7 +188,7 @@ proc color_scheme_build { id primary_title primary_map secondary_title secondary
 	set mged_color_scheme($id,smflag) 0
     }
 
-    winset $mged_gui($id,active_dm)
+    ::brlcad::mged winset $mged_gui($id,active_dm)
 
     toplevel $top -screen $mged_gui($id,screen)
     set entry_width 12
@@ -322,12 +322,12 @@ proc color_scheme_build_entries { id top container map row entry_width } {
 	set ce_a [color_entry_build $top $key_a $colorvar_a\
 		"color_entry_chooser $id $top $key_a \"Active $name Color\" \
 		mged_color_scheme $id,$key_a"\
-		$entry_width [rset cs $key_a] not_rt]
+		$entry_width [::brlcad::mged rset cs $key_a] not_rt]
 
 	set ce_ia [color_entry_build $top $key_ia $colorvar_ia\
 		"color_entry_chooser $id $top $key_ia \"Inactive $name Color\" \
 		mged_color_scheme $id,$key_ia"\
-		$entry_width [rset cs $key_ia] not_rt]
+		$entry_width [::brlcad::mged rset cs $key_ia] not_rt]
 
 	grid $top.$key\L -row $ce_row -column 0 -sticky "e" -in $container -padx 2 -pady 2
 	grid $ce_a -row $ce_row -column 1 -sticky "nsew" -in $container -padx 2 -pady 2
@@ -389,7 +389,10 @@ proc color_scheme_apply { id } {
 	set color_a [getRGB $mged_color_scheme(top).$key_a\MB $mged_color_scheme($id,$key_a)]
 	set color_ia [getRGB $mged_color_scheme(top).$key_ia\MB $mged_color_scheme($id,$key_ia)]
 
-	mged_apply_local $id "rset cs $key_a $color_a; rset cs $key_ia $color_ia"
+	set commands [list \
+	    [list ::brlcad::mged rset cs $key_a {*}$color_a] \
+	    [list ::brlcad::mged rset cs $key_ia {*}$color_ia]]
+	mged_apply_local $id [join $commands {; }]
     }
 
     foreach key_name_pair $mged_color_scheme(secondary_map) {
@@ -404,25 +407,30 @@ proc color_scheme_apply { id } {
 	set color_a [getRGB $mged_color_scheme(top).$key_a\MB $mged_color_scheme($id,$key_a)]
 	set color_ia [getRGB $mged_color_scheme(top).$key_ia\MB $mged_color_scheme($id,$key_ia)]
 
-	mged_apply_local $id "rset cs $key_a $color_a; rset cs $key_ia $color_ia"
+	set commands [list \
+	    [list ::brlcad::mged rset cs $key_a {*}$color_a] \
+	    [list ::brlcad::mged rset cs $key_ia {*}$color_ia]]
+	mged_apply_local $id [join $commands {; }]
     }
 
     # force display manager windows to update their respective color schemes
-    mged_apply_local $id "rset cs mode \[rset cs mode\]"
+    mged_apply_local $id {
+	::brlcad::mged rset cs mode [::brlcad::mged rset cs mode]
+    }
 }
 
 proc color_scheme_reset { id top } {
     global mged_gui
     global mged_color_scheme
 
-    winset $mged_gui($id,active_dm)
+    ::brlcad::mged winset $mged_gui($id,active_dm)
 
     foreach key_name_pair $mged_color_scheme(primary_map) {
 	set key [lindex $key_name_pair 0]
 	set key_a $key\_a
 	set key_ia $key\_ia
-	set color_a [rset cs $key_a]
-	set color_ia [rset cs $key_ia]
+	set color_a [::brlcad::mged rset cs $key_a]
+	set color_ia [::brlcad::mged rset cs $key_ia]
 
 	set mged_color_scheme($id,$key_a) $color_a
 	set mged_color_scheme($id,$key_ia) $color_ia
@@ -434,8 +442,8 @@ proc color_scheme_reset { id top } {
 	set key [lindex $key_name_pair 0]
 	set key_a $key\_a
 	set key_ia $key\_ia
-	set color_a [rset cs $key_a]
-	set color_ia [rset cs $key_ia]
+	set color_a [::brlcad::mged rset cs $key_a]
+	set color_ia [::brlcad::mged rset cs $key_ia]
 
 	set mged_color_scheme($id,$key_a) $color_a
 	set mged_color_scheme($id,$key_ia) $color_ia
