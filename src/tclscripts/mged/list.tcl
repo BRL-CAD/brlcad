@@ -74,7 +74,6 @@ proc lbdcHack {w x y t id type path} {
     global mged_gui
     global mged_default
     global comb_control
-    global bot_v1 bot_v2 bot_v3
 
     # set item from listbox selection @$x,$y
     switch $type {
@@ -119,11 +118,7 @@ proc lbdcHack {w x y t id type path} {
 		matrix_illum $path $item
 	    }
 	    bf {
-		set bot_v1 [lindex $item 0];
-		set bot_v2 [lindex $item 1];
-		set bot_v3 [lindex $item 2];
-		get_solid_keypoint;
-		refresh;
+		bot_face_sel_apply $item
 	    }
 	}
     } else {
@@ -158,11 +153,7 @@ proc lbdcHack {w x y t id type path} {
 		set mged_gui($id,mgs_pos) $item
 	    }
 	    bf {
-		set bot_v1 [lindex $item 0];
-		set bot_v2 [lindex $item 1];
-		set bot_v3 [lindex $item 2];
-		get_solid_keypoint;
-		refresh;
+		bot_face_sel_apply $item
 	    }
 	}
 
