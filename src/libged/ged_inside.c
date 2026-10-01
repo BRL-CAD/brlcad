@@ -138,30 +138,37 @@ static const char *p_nmgin[] = {
 
 
 #define ARB_FACE_COUNT 6
-#define ARB_MAX_PLANE_INTERSECTIONS 20
 
 
 /* Verify that every plane bounds a non-degenerate convex volume.  Translating
- * the planes of an existing convex ARB cannot make their intersection
+ * the planes of an existing convex polyhedron cannot make their intersection
  * unbounded, but excessive or unequal thicknesses can eliminate a face or
  * collapse the volume. */
 static int
-arb_in_planes_valid(plane_t planes[ARB_FACE_COUNT], const struct bn_tol *tol)
+in_planes_valid(const plane_t *planes, size_t plane_count,
+	const struct bn_tol *tol)
 {
-    point_t vertices[ARB_MAX_PLANE_INTERSECTIONS];
-    int plane_used[ARB_FACE_COUNT] = {0};
-    size_t vertex_count = 0;
+    point_t basis[3];
+    plane_t basis_plane;
+    size_t basis_count = 0;
+    int have_volume = 0;
 
-    for (size_t i = 0; i < ARB_FACE_COUNT - 2; i++) {
-	for (size_t j = i + 1; j < ARB_FACE_COUNT - 1; j++) {
-	    for (size_t k = j + 1; k < ARB_FACE_COUNT; k++) {
+    if (!planes || plane_count < 4)
+	return 0;
+
+    int *plane_used = (int *)bu_calloc(plane_count, sizeof(int),
+	    "inside plane use flags");
+
+    for (size_t i = 0; i < plane_count - 2; i++) {
+	for (size_t j = i + 1; j < plane_count - 1; j++) {
+	    for (size_t k = j + 1; k < plane_count; k++) {
 		point_t candidate;
 		int outside = 0;
 
 		if (bg_make_pnt_3planes(candidate, planes[i], planes[j], planes[k]) < 0)
 		    continue;
 
-		for (size_t face = 0; face < ARB_FACE_COUNT; face++) {
+		for (size_t face = 0; face < plane_count; face++) {
 		    if (DIST_PNT_PLANE(candidate, planes[face]) > tol->dist) {
 			outside = 1;
 			break;
@@ -173,35 +180,39 @@ arb_in_planes_valid(plane_t planes[ARB_FACE_COUNT], const struct bn_tol *tol)
 		plane_used[i] = 1;
 		plane_used[j] = 1;
 		plane_used[k] = 1;
-		VMOVE(vertices[vertex_count], candidate);
-		vertex_count++;
-	    }
-	}
-    }
 
-    for (size_t face = 0; face < ARB_FACE_COUNT; face++)
-	if (!plane_used[face])
-	    return 0;
-
-    /* At least four non-coplanar vertices are required for a volume. */
-    for (size_t i = 0; i + 2 < vertex_count; i++) {
-	for (size_t j = i + 1; j + 1 < vertex_count; j++) {
-	    for (size_t k = j + 1; k < vertex_count; k++) {
-		plane_t vertex_plane;
-
-		if (bg_make_plane_3pnts(vertex_plane, vertices[i], vertices[j], vertices[k], tol) < 0)
+		if (have_volume)
 		    continue;
-		for (size_t l = 0; l < vertex_count; l++) {
-		    if (l == i || l == j || l == k)
-			continue;
-		    if (!NEAR_ZERO(DIST_PNT_PLANE(vertices[l], vertex_plane), tol->dist))
-			return 1;
+		if (!basis_count) {
+		    VMOVE(basis[0], candidate);
+		    basis_count = 1;
+		} else if (basis_count == 1 &&
+			DIST_PNT_PNT_SQ(basis[0], candidate) > tol->dist_sq) {
+		    VMOVE(basis[1], candidate);
+		    basis_count = 2;
+		} else if (basis_count == 2 &&
+			bg_make_plane_3pnts(basis_plane, basis[0], basis[1],
+			    candidate, tol) == 0) {
+		    VMOVE(basis[2], candidate);
+		    basis_count = 3;
+		} else if (basis_count == 3 &&
+			!NEAR_ZERO(DIST_PNT_PLANE(candidate, basis_plane),
+			    tol->dist)) {
+		    have_volume = 1;
 		}
 	    }
 	}
     }
 
-    return 0;
+    int all_planes_used = 1;
+    for (size_t face = 0; face < plane_count; face++) {
+	if (!plane_used[face]) {
+	    all_planes_used = 0;
+	    break;
+	}
+    }
+    bu_free(plane_used, "inside plane use flags");
+    return all_planes_used && have_volume;
 }
 
 
@@ -227,7 +238,7 @@ arb7in(struct ged *gedp,
 	planes[i][W] -= thick[i];
     }
 
-    if (!arb_in_planes_valid(planes, tol)) {
+    if (!in_planes_valid((const plane_t *)planes, ARB_FACE_COUNT, tol)) {
 	bu_vls_printf(gedp->ged_result_str,
 		      "Cannot find a valid inside arb7: thicknesses eliminate a face or collapse the volume\n");
 	return BRLCAD_ERROR;
@@ -246,6 +257,43 @@ arb7in(struct ged *gedp,
     ip->idb_meth = &OBJ[ID_ARBN];
     ip->idb_ptr = (void *)arbn;
 
+    return BRLCAD_OK;
+}
+
+
+/* Offset each outward-facing ARBN plane toward the interior. */
+static int
+arbnin(struct ged *gedp, struct rt_db_internal *ip, const fastf_t *thick,
+	const struct bn_tol *tol)
+{
+    struct rt_arbn_internal *arbn =
+	(struct rt_arbn_internal *)ip->idb_ptr;
+    RT_ARBN_CK_MAGIC(arbn);
+
+    plane_t *planes = (plane_t *)bu_calloc(arbn->neqn, sizeof(plane_t),
+	    "inside ARBN planes");
+    for (size_t i = 0; i < arbn->neqn; i++) {
+	fastf_t normal_length = MAGNITUDE(arbn->eqn[i]);
+	if (!isfinite(normal_length) || normal_length <= SQRT_SMALL_FASTF) {
+	    bu_vls_printf(gedp->ged_result_str,
+		    "Cannot find a valid inside ARBN: plane %zu has an invalid normal\n",
+		    i);
+	    bu_free(planes, "inside ARBN planes");
+	    return BRLCAD_ERROR;
+	}
+	HSCALE(planes[i], arbn->eqn[i], 1.0 / normal_length);
+	planes[i][W] -= thick[i];
+    }
+
+    if (!in_planes_valid((const plane_t *)planes, arbn->neqn, tol)) {
+	bu_vls_printf(gedp->ged_result_str,
+		"Cannot find a valid inside ARBN: thicknesses eliminate a face or collapse the volume\n");
+	bu_free(planes, "inside ARBN planes");
+	return BRLCAD_ERROR;
+    }
+
+    bu_free(arbn->eqn, "arbn planes");
+    arbn->eqn = planes;
     return BRLCAD_OK;
 }
 
@@ -925,10 +973,20 @@ ged_inside_internal(struct ged *gedp, struct rt_db_internal *ip, int argc, const
     if (ip->idb_type == ID_ARB8) {
 	/* find the comgeom arb type, & reorganize */
 	int uvec[8], svec[11];
+	int issues = 0;
 	struct bu_vls error_msg = BU_VLS_INIT_ZERO;
 
 	if (rt_arb_get_cgtype(&cgtype, (struct rt_arb_internal *)ip->idb_ptr, &wdbp->wdb_tol, uvec, svec) == 0) {
 	    bu_vls_printf(gedp->ged_result_str, "%s: BAD ARB\n", o_name);
+	    return BRLCAD_ERROR;
+	}
+	(void)rt_arb_validate(NULL,
+		(const struct rt_arb_internal *)ip->idb_ptr,
+		&wdbp->wdb_tol, &issues);
+	if (issues & RT_ARB_VALIDATE_CONCAVE) {
+	    bu_vls_printf(gedp->ged_result_str,
+		    "%s: inside requires a convex ARB; concave ARB8 solids are unsupported\n",
+		    o_name);
 	    return BRLCAD_ERROR;
 	}
 
@@ -1004,6 +1062,30 @@ ged_inside_internal(struct ged *gedp, struct rt_db_internal *ip, int argc, const
 	    }
 
 	    if (arbin(gedp, ip, thick, nface, cgtype, planes, &wdbp->wdb_tol))
+		return BRLCAD_ERROR;
+	    break;
+	}
+
+	case ID_ARBN: {
+	    struct rt_arbn_internal *arbn =
+		(struct rt_arbn_internal *)ip->idb_ptr;
+	    RT_ARBN_CK_MAGIC(arbn);
+
+	    size_t supplied = argc > arg ? (size_t)(argc - arg) : 0;
+	    if (supplied < arbn->neqn) {
+		bu_vls_printf(gedp->ged_result_str,
+			"Enter thickness for plane P%zu: ", supplied);
+		return GED_MORE;
+	    }
+
+	    fastf_t *arbn_thick = (fastf_t *)bu_calloc(arbn->neqn,
+		    sizeof(fastf_t), "inside ARBN thicknesses");
+	    for (i = 0; i < arbn->neqn; i++)
+		arbn_thick[i] = atof(argv[arg++]) * gedp->dbip->dbi_local2base;
+
+	    int inside_result = arbnin(gedp, ip, arbn_thick, &wdbp->wdb_tol);
+	    bu_free(arbn_thick, "inside ARBN thicknesses");
+	    if (inside_result != BRLCAD_OK)
 		return BRLCAD_ERROR;
 	    break;
 	}
