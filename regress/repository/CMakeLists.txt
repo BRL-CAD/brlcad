@@ -19,10 +19,25 @@ if(TARGET repocheck)
 endif(TARGET repocheck)
 distclean(${LOG_FILE})
 
+if(TARGET btclsh AND TARGET TclIndexBld)
+  brlcad_regression_test(
+    regress-tcl-namespace-policy
+    "btclsh;TclIndexBld"
+    EXEC btclsh
+  )
+  if(TARGET regress-repository)
+    add_dependencies(regress-repository regress-tcl-namespace-policy)
+  endif()
+  distclean(${CMAKE_CURRENT_BINARY_DIR}/regress-tcl-namespace-policy.log)
+endif()
+
 cmakefiles(
   CMakeLists.txt
   repocheck.cpp
   regress-repository.cmake.in
+  regress-tcl-namespace-policy.cmake.in
+  tcl_namespace_manifest.txt
+  tcl_namespace_policy.tcl
 )
 
 # Local Variables:

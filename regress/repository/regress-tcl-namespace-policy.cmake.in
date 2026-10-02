@@ -1,0 +1,20 @@
+set(BTCLSH "${EXEC}")
+set(POLICY_SCRIPT "@CMAKE_CURRENT_SOURCE_DIR@/tcl_namespace_policy.tcl")
+set(POLICY_MANIFEST "@CMAKE_CURRENT_SOURCE_DIR@/tcl_namespace_manifest.txt")
+set(TCL_DATA_ROOT "@CMAKE_BINARY_DIR@/@DATA_DIR@/tclscripts")
+set(LOGFILE "@CMAKE_CURRENT_BINARY_DIR@/regress-tcl-namespace-policy.log")
+
+execute_process(
+  COMMAND "${BTCLSH}" "${POLICY_SCRIPT}" "${POLICY_MANIFEST}" "${TCL_DATA_ROOT}"
+  RESULT_VARIABLE policy_result
+  OUTPUT_VARIABLE policy_output
+  ERROR_VARIABLE policy_error
+)
+file(WRITE "${LOGFILE}" "${policy_output}${policy_error}")
+if(policy_result)
+  message(
+    FATAL_ERROR
+    "[Tcl namespace policy] Failure: ${policy_result} - see ${LOGFILE}\n${policy_output}${policy_error}"
+  )
+endif()
+
