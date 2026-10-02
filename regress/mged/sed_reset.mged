@@ -1,0 +1,64 @@
+puts "*** Testing 'sed_reset' command ***"
+
+proc sed_reset_check {primitive edit_commands} {
+    e $primitive
+    sed $primitive
+    if {[status state] ne "SOL EDIT"} {
+	error "$primitive entered [status state], not SOL EDIT"
+    }
+
+    set original [get_sed]
+    foreach command $edit_commands {
+	uplevel #0 $command
+    }
+    if {[get_sed] eq $original} {
+	error "$primitive edit did not change the working geometry"
+    }
+
+    sed_reset
+    if {[status state] ne "SOL EDIT"} {
+	error "$primitive reset entered [status state], not SOL EDIT"
+    }
+    if {[get_sed] ne $original} {
+	error "$primitive reset did not restore the original geometry"
+    }
+
+    press reject
+    if {[status state] ne "VIEWING"} {
+	error "$primitive reject entered [status state], not VIEWING"
+    }
+    d $primitive
+}
+
+if {[catch {
+    in sed_reset_arb8.s arb8 \
+	0 0 0  10 0 0  10 10 0  0 10 0 \
+	0 0 10  10 0 10  10 10 10  0 10 10
+    sed_reset_check sed_reset_arb8.s {
+	{press {Move Faces}}
+	{press {Move Face 1234}}
+	{p 0 0 -1}
+    }
+} failure]} {
+    puts "FAIL: ARB8 face move reset ($failure)"
+    catch {press reject}
+    catch {Z}
+} else {
+    puts "PASS: ARB8 face move reset"
+}
+
+if {[catch {
+    make sed_reset_cline.s cline
+    sed_reset_check sed_reset_cline.s {
+	{press {Move End H}}
+	{p 3 4 12}
+    }
+} failure]} {
+    puts "FAIL: CLINE edit reset ($failure)"
+    catch {press reject}
+    catch {Z}
+} else {
+    puts "PASS: CLINE edit reset"
+}
+
+puts "PASS: 'sed_reset' testing completed"
