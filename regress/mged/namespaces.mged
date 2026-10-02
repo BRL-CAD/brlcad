@@ -9,6 +9,7 @@ foreach package {
     brlcad::mged::grid
     brlcad::mged::help
     brlcad::mged::helpdevel
+    brlcad::mged::mgedrc
     brlcad::mged::plot
     brlcad::mged::postscript
     brlcad::mged::qray
@@ -27,6 +28,7 @@ foreach command {
     ::brlcad::mged::extract::init
     ::brlcad::mged::font::font_init
     ::brlcad::mged::grid::init_grid_control
+    ::brlcad::mged::mgedrc::update
     ::brlcad::mged::plot::init
     ::brlcad::mged::postscript::init
     ::brlcad::mged::qray::init
@@ -43,6 +45,7 @@ foreach namespace {
     ::brlcad ::brlcad::ged ::brlcad::help ::brlcad::mged
     ::brlcad::mged::adc ::brlcad::mged::extract ::brlcad::mged::font
     ::brlcad::mged::grid ::brlcad::mged::help ::brlcad::mged::helpdevel
+    ::brlcad::mged::mgedrc
     ::brlcad::mged::plot ::brlcad::mged::postscript
     ::brlcad::mged::qray ::brlcad::mged::raytrace
     ::brlcad::mged::rt_script
@@ -105,6 +108,38 @@ try {
     rename ::__brlcad_help_compatibility_library_alias ::helplib_alias
 }
 unset command
+
+foreach command {
+    ::brlcad::mged::mgedrc::dump ::brlcad::mged::mgedrc::update
+    dump_mged_state update_mgedrc
+} {
+    if {![llength [info commands $command]]} {
+	error "FAIL missing mgedrc command $command"
+    }
+}
+set mgedrc_exports [namespace eval ::brlcad::mged::mgedrc {
+    namespace export
+}]
+if {$mgedrc_exports ne {update}} {
+    error "FAIL mgedrc exports are: $mgedrc_exports"
+}
+if {[info exists ::MGEDRC_HEADER]} {
+    error "FAIL mgedrc header state remains global"
+}
+set expected_rset [rset g draw]
+set expected_qray [qray basename]
+rename ::rset ::__brlcad_mged_compatibility_rset
+rename ::qray ::__brlcad_mged_compatibility_qray
+try {
+    if {[::brlcad::mged::mgedrc::rset g draw] ne $expected_rset ||
+	[::brlcad::mged::mgedrc::qray basename] ne $expected_qray} {
+	error "FAIL mgedrc state queries differ without compatibility aliases"
+    }
+} finally {
+    rename ::__brlcad_mged_compatibility_rset ::rset
+    rename ::__brlcad_mged_compatibility_qray ::qray
+}
+unset command expected_qray expected_rset mgedrc_exports
 
 rename ::help ::__brlcad_mged_compatibility_help
 rename ::helpdevel ::__brlcad_mged_compatibility_helpdevel

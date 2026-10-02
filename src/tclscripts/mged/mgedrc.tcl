@@ -23,11 +23,24 @@
 #	Procedure for dumping state to the user's .mgedrc file.
 #
 
-set MGEDRC_HEADER "############### MGEDRC_HEADER ###############"
+namespace eval ::brlcad::mged::mgedrc {
+    namespace export update
+    variable header "############### MGEDRC_HEADER ###############"
+}
 
-proc update_mgedrc {} {
+# Keep generated .mgedrc commands familiar while querying live state through
+# the canonical MGED dispatcher.
+proc ::brlcad::mged::mgedrc::rset {args} {
+    tailcall ::brlcad::mged rset {*}$args
+}
+
+proc ::brlcad::mged::mgedrc::qray {args} {
+    tailcall ::brlcad::mged qray {*}$args
+}
+
+proc ::brlcad::mged::mgedrc::update {} {
     global env
-    global MGEDRC_HEADER
+    variable header
 
     if [info exists env(HOME)] {
 	set dir $env(HOME)
@@ -67,7 +80,7 @@ proc update_mgedrc {} {
 	close $tfd
 
 	# search for the MGEDRC_HEADER
-	set index [string first $MGEDRC_HEADER $data]
+	set index [string first $header $data]
 
 	if {$index == -1} {
 	    # keep everything
@@ -78,7 +91,7 @@ proc update_mgedrc {} {
 	    puts -nonewline $fd [string range $data 0 $index]
 	}
 
-	if [catch {dump_mged_state $fd} msg] {
+	if [catch {::brlcad::mged::mgedrc::dump $fd} msg] {
 	    close $fd
 	    file copy -force $tmpmgedrc $mgedrc
 	    file delete -force $tmpmgedrc
@@ -93,7 +106,7 @@ proc update_mgedrc {} {
 	    error $msg
 	}
 
-	if [catch {dump_mged_state $fd} msg] {
+	if [catch {::brlcad::mged::mgedrc::dump $fd} msg] {
 	    close $fd
 	    error $msg
 	}
@@ -102,13 +115,13 @@ proc update_mgedrc {} {
     }
 }
 
-proc dump_mged_state {fd} {
-    global MGEDRC_HEADER
+proc ::brlcad::mged::mgedrc::dump {fd} {
     global glob_compat_mode
     global mged_default
     global solid_data
     global mged_players
     global mged_gui
+    variable header
 
     if ![info exists mged_players] {
 	set id 0
@@ -117,7 +130,7 @@ proc dump_mged_state {fd} {
     }
 
 
-    puts $fd $MGEDRC_HEADER
+    puts $fd $header
     puts $fd "# You can modify the values below. However, if you want"
     puts $fd "# to add new lines, add them above the MGEDRC_HEADER."
     puts $fd "# Note - it's not a good idea to set the same variables"
@@ -624,6 +637,17 @@ proc dump_mged_state {fd} {
     puts $fd "set solid_data(attr,ebm) [list $solid_data(attr,ebm)]"
     puts $fd "set solid_data(attr,vol) [list $solid_data(attr,vol)]"
 }
+
+# Retain the historical commands used by the MGED GUI and user scripts.
+proc update_mgedrc {} {
+    tailcall ::brlcad::mged::mgedrc::update
+}
+
+proc dump_mged_state {fd} {
+    tailcall ::brlcad::mged::mgedrc::dump $fd
+}
+
+package provide brlcad::mged::mgedrc 1.0
 
 # Local Variables:
 # mode: Tcl
