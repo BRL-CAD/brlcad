@@ -516,6 +516,64 @@ foreach {canonical_variable legacy_variable} {
     set $canonical_variable $saved_value
 }
 
+namespace eval ::command_prefix_probe {
+    variable calls {}
+}
+proc ::command_prefix_probe::dispatch {marker subcommand args} {
+    variable calls
+    lappend calls [list $marker $subcommand {*}$args]
+
+    switch -- $subcommand {
+	info {
+	    return {::command_prefix_probe::getUserCmds}
+	}
+	getUserCmds {
+	    return {expand get_type lt}
+	}
+	get_type {
+	    return comb
+	}
+	lt {
+	    return {{u child.s}}
+	}
+	expand {
+	    return {}
+	}
+    }
+    error "unexpected command-prefix subcommand: $subcommand"
+}
+
+set saved_lt [info commands ::lt]
+if {$saved_lt ne ""} {
+    rename ::lt ::command_prefix_probe::saved_lt
+}
+set ::command_prefix_probe::legacy_calls 0
+proc ::lt {args} {
+    incr ::command_prefix_probe::legacy_calls
+    error "legacy lt alias invoked"
+}
+::cadwidgets::Command .command_prefix_probe
+.command_prefix_probe configure \
+    -cmd_prefix [list ::command_prefix_probe::dispatch marker]
+pack .command_prefix_probe
+update
+set command_text [.command_prefix_probe component text]
+$command_text insert insert {draw parent/chi}
+focus -force $command_text
+event generate $command_text <Tab>
+update
+set expanded_command [$command_text get -- promptEnd {promptEnd lineend -1c}]
+assert_equal "Command path completion" $expanded_command {draw parent/child.s}
+assert_equal "Command path completion legacy calls" \
+    $::command_prefix_probe::legacy_calls 0
+::itcl::delete object .command_prefix_probe
+rename ::lt {}
+if {$saved_lt ne ""} {
+    rename ::command_prefix_probe::saved_lt ::lt
+}
+namespace delete ::command_prefix_probe
+unset command_text expanded_command saved_lt
+
 foreach lifecycle {
     {cadwidgets::Accordion .lifecycle_accordion}
     {cadwidgets::CellPlot .lifecycle_cell_plot}

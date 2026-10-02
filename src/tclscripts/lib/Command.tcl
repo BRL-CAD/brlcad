@@ -1266,7 +1266,7 @@ package provide cadwidgets::Command 1.0
 
 	    # get the members of the last object on the command line
 	    # the "lt" command returns a list of elements like "{ op name }"
-	    if [catch {lt $grp} members] {
+	    if {[catch [list {*}$itk_option(-cmd_prefix) lt $grp] members]} {
 		set members {}
 	    }
 
