@@ -26,8 +26,6 @@ THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
   strclear and plief in bext, so that repo should be capable of doing
   the work for us as a post build step whenever bext changes.
 
-* fix ARB5 move point 5 to actually move the point.
-
 * need extensive testing of MGED CSG editing with the shift to librt
   based editing logic.
 
@@ -250,10 +248,6 @@ lookup check to ensure none are missing.
 * create boolweave+boolfinal unit tests to validate weaving behavior
   and performance.
 
-* tree command shouldn't infinite loop when encountering a cyclic path
-  - need to print a warning and stop walking.  Requires full path
-  awareness in tree command walk.
-
   Consider implementing a corollary to FTS instead of dirent for
   simplified tree traversal with cyclic awareness.
 
@@ -434,8 +428,6 @@ lookup check to ensure none are missing.
   Something like:
 
   LIBRT_DEBUG_HF (env variable) -> debug.rt_hf (env cmd) -> rt_debug hex val (library)
-
-* overlay command needs to accept multiple file arguments
 
 * Bounding Boxes
 
