@@ -270,10 +270,9 @@ proc ::mged::xmin::workflows::write_text_file {path contents} {
 }
 
 proc ::mged::xmin::workflows::exercise_file_operations {id top database} {
-    upvar #0 ::brlcad::mged::extract::control ex_control
-
     set extracted_database [file join $::env(GUI_TEST_DIR) extracted.g]
     invoke $top {File Export {Database Objects}}
+    upvar #0 ::brlcad::mged::extract::control ex_control
     set extract_panel .$id.do_extract
     ::gui::test::require {
 	[winfo exists $extract_panel] && [winfo ismapped $extract_panel]
@@ -398,7 +397,9 @@ proc ::mged::xmin::workflows::exercise_geometry_browser {id top} {
     ::gui::test::write progress "browser: display"
     $browser displayNode /xmin_arb8.s alone
     settle
-    ::gui::test::require {[lsearch -exact [who] xmin_arb8.s] >= 0} \
+    ::gui::test::require {
+	[lsearch -exact [::brlcad::mged who] xmin_arb8.s] >= 0
+    } \
 	"Geometry Browser did not display the selected primitive"
     ::gui::test::write progress "browser: autosize"
     $browser autosizeDisplay
@@ -408,7 +409,7 @@ proc ::mged::xmin::workflows::exercise_geometry_browser {id top} {
     ::gui::test::write progress "browser: clear"
     $browser clearDisplay
     settle
-    ::gui::test::require {[who] eq ""} \
+    ::gui::test::require {[::brlcad::mged who] eq ""} \
 	"Geometry Browser did not clear the display"
 
     ::gui::test::write progress "browser: close"
@@ -519,7 +520,23 @@ proc ::mged::xmin::workflows::run {} {
     exercise_dsp_creation $id $top
     exercise_binunif_creation $id $top
     exercise_file_operations $id $top $database
-    exercise_geometry_browser $id $top
+    set hidden_commands {}
+    foreach command {
+	B Z attr autoview comb_color draw erase ls lt opendb rt title tops who
+	zoom zoomin zoomout
+    } {
+	set compatibility_command ::$command
+	set hidden_command ::__brlcad_mged_workflows_compatibility_$command
+	rename $compatibility_command $hidden_command
+	lappend hidden_commands $hidden_command $compatibility_command
+    }
+    try {
+	exercise_geometry_browser $id $top
+    } finally {
+	foreach {hidden_command compatibility_command} $hidden_commands {
+	    rename $hidden_command $compatibility_command
+	}
+    }
     exercise_collaboration $id
     finish 0 "PASS: MGED creation, file, browser, and collaboration workflows"
 }

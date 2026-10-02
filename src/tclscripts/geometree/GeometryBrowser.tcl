@@ -525,19 +525,19 @@ package provide GeometryBrowser 1.0
 	# its behavior is not consistent.  Plus... the titles could potentially
 	# be huge and we'd still need to trim, so just trim short anyways.
 	set titleLabel ""
-	if [ catch { title } tit ] {
+	if [ catch { ::brlcad::mged title } tit ] {
 	    set titleLabel "No database open"
 	} else {
 	    set titleLabel "$tit"
 	}
 	if { [ string length $titleLabel ] >= 32 } {
-	    set titleLabel "[ format "%32.32s" [ title ] ]..."
+	    set titleLabel "[ format "%32.32s" [ ::brlcad::mged title ] ]..."
 	}
 	$itk_interior.cadtree configure -labeltext $titleLabel
 
 	# process top geometry
 
-	set topsCommand "tops -n"
+	set topsCommand [list ::brlcad::mged tops -n]
 
 	if [ catch $topsCommand roots ] {
 	    # puts $roots
@@ -562,7 +562,7 @@ package provide GeometryBrowser 1.0
 	set parentName [ lindex [ split $node / ] end ]
 
 	set childrenPairs ""
-	if [ catch { lt $parentName } childrenPairs ] {
+	if [ catch { ::brlcad::mged lt $parentName } childrenPairs ] {
 	    set childrenPairs ""
 	}
 
@@ -581,7 +581,7 @@ package provide GeometryBrowser 1.0
 	# we do not call getObjectType for performance reasons (big directories
 	# can choke.  Sides, we do not need to know the type, just whether the
 	# node is a branch or not.
-	if { [ catch { ls $childName } lsName ] } {
+	if { [ catch { ::brlcad::mged ls $childName } lsName ] } {
 	    puts "$lsName"
 	    if { [ string compare $updateLists "yes" ] == 0 } {
 		if { [ lsearch -exact $_badGeometry $childName ] == -1 } {
@@ -661,7 +661,7 @@ package provide GeometryBrowser 1.0
 	puts "updateGeometryLists $node"
     }
 
-    set topsCommand "tops -n"
+    set topsCommand [list ::brlcad::mged tops -n]
 
     if [ catch $topsCommand objs ] {
 	puts $objs
@@ -695,7 +695,7 @@ package provide GeometryBrowser 1.0
     foreach object $objects {
 
 	# catch an ls failure (should not happen)
-	if { [ catch { ls $object } lsName ] } {
+	if { [ catch { ::brlcad::mged ls $object } lsName ] } {
 	    puts "$lsName"
 	    if { [ lsearch -exact $_badGeometry $object ] == -1 } {
 		lappend _badGeometry $object
@@ -756,13 +756,13 @@ package provide GeometryBrowser 1.0
     # output so the user can see the effective text-command being used
     if { [ string compare $display "alone" ] == 0 } {
 	puts "B $nodeName"
-	set retval [ B $nodeName ]
+	set retval [ ::brlcad::mged B $nodeName ]
 	$this checkAutoRender
 	return $retval
     }
 
     puts "draw $nodeName"
-    if { [ catch { draw $nodeName } retval ] } {
+    if { [ catch { ::brlcad::mged draw $nodeName } retval ] } {
 	puts $retval
 	return
     }
@@ -794,7 +794,7 @@ package provide GeometryBrowser 1.0
     }
 
     puts "erase $nodeName"
-    set retval [ erase $nodeName ]
+    set retval [ ::brlcad::mged erase $nodeName ]
     $this checkAutoRender
     return $retval
 }
@@ -821,8 +821,8 @@ package provide GeometryBrowser 1.0
     # if no color was given, we unset the color
     if { [ string compare $color "" ] == 0 } {
 	puts "attr rm $nodeName rgb"
-	set retval [ attr rm $nodeName rgb ]
-	eval draw [who]
+	set retval [ ::brlcad::mged attr rm $nodeName rgb ]
+	::brlcad::mged draw {*}[::brlcad::mged who]
 	$this checkAutoRender
 	return $retval
     }
@@ -831,8 +831,8 @@ package provide GeometryBrowser 1.0
     if { [ llength $color ] == 3 } {
 	scan $color {%d %d %d} r g b
 	puts "comb_color $nodeName $r $g $b"
-	set retval [ comb_color $nodeName $r $g $b ]
-	eval draw [who]
+	set retval [ ::brlcad::mged comb_color $nodeName $r $g $b ]
+	::brlcad::mged draw {*}[::brlcad::mged who]
 	$this checkAutoRender
 	return $retval
     }
@@ -840,8 +840,8 @@ package provide GeometryBrowser 1.0
     # check if we have a "slashed" color value
     if { [ llength [ split $rgb "/" ] ] == 3 } {
 	puts "attr set $nodeName $rgb"
-	set retval [ attr set $nodeName $rgb ]
-	eval draw [who]
+	set retval [ ::brlcad::mged attr set $nodeName $rgb ]
+	::brlcad::mged draw {*}[::brlcad::mged who]
 	$this checkAutoRender
 	return $retval
     }
@@ -863,7 +863,7 @@ package provide GeometryBrowser 1.0
 	puts "setDisplayedToColor $color"
     }
 
-    if { [ catch { who } displayed ] } {
+    if { [ catch { ::brlcad::mged who } displayed ] } {
 	puts "$displayed"
 	return
     }
@@ -887,7 +887,7 @@ package provide GeometryBrowser 1.0
 
     # verbosely describe what we are doing
     puts "Z"
-    set retval [ Z ]
+    set retval [ ::brlcad::mged Z ]
     $this checkAutoRender
     return $retval
 }
@@ -904,7 +904,7 @@ package provide GeometryBrowser 1.0
 
     # verbosely describe what we are doing
     puts "autoview"
-    set retval [ autoview ]
+    set retval [ ::brlcad::mged autoview ]
     $this checkAutoRender
     return $retval
 }
@@ -926,10 +926,10 @@ package provide GeometryBrowser 1.0
 
     if { [ string compare $zoom "in" ] == 0 } {
 	puts "zoomin"
-	return [ zoomin ]
+	return [ ::brlcad::mged zoomin ]
     } elseif { [ string compare $zoom "out" ] == 0 } {
 	puts "zoomout"
-	set retval [ zoomout ]
+	set retval [ ::brlcad::mged zoomout ]
 	$this checkAutoRender
 	return $retval
     }
@@ -937,7 +937,7 @@ package provide GeometryBrowser 1.0
 
     # XXX we do not check if the value is a valid number, we should
     puts "zoom $zoom"
-    set retval [ zoom $zoom ]
+    set retval [ ::brlcad::mged zoom $zoom ]
     $this checkAutoRender
     return $retval
 }
@@ -1007,10 +1007,12 @@ package provide GeometryBrowser 1.0
 	# "matches" the proportion size of the window.
 	if { $windowWidth > $windowHeight } {
 	    set scaledHeight [ expr round(double($size) / double($windowWidth) * double($windowHeight)) ]
-	    set rtrun "rt [ split $rtoptions ] -F $_fbservPort -w$size -n$scaledHeight -C$r/$g/$b"
+	    set rtrun [list rt {*}$rtoptions -F $_fbservPort -w$size \
+		-n$scaledHeight -C$r/$g/$b]
 	} else {
 	    set scaledWidth [ expr round(double($size) / double($windowHeight) * double($windowWidth)) ]
-	    set rtrun "rt [ split $rtoptions ] -F $_fbservPort -w$scaledWidth -n$size -C$r/$g/$b"
+	    set rtrun [list rt {*}$rtoptions -F $_fbservPort -w$scaledWidth \
+		-n$size -C$r/$g/$b]
 	}
 
     } else {
@@ -1088,12 +1090,12 @@ package provide GeometryBrowser 1.0
 
 	# if we got here, then we were able to attach to a running framebuffer..
 	scan $rgb {%d %d %d} r g b
-	set rtrun "rt [ split $rtoptions ] -F $_fbservPort -s$size -C$r/$g/$b"
+	set rtrun [list rt {*}$rtoptions -F $_fbservPort -s$size -C$r/$g/$b]
     }
     # end check for using mged graphics window or using fbserv
 
     puts "$rtrun"
-    return [ eval $rtrun ]
+    return [::brlcad::mged {*}$rtrun]
 }
 
 
@@ -1276,7 +1278,7 @@ package provide GeometryBrowser 1.0
     }
 
     # get a list of what is displayed
-    if { [ catch { who } displayed ] } {
+    if { [ catch { ::brlcad::mged who } displayed ] } {
 	puts "$displayed"
 	return
     }
@@ -1315,7 +1317,7 @@ package provide GeometryBrowser 1.0
     # get just the name, drop the path, if it is there
     set nodeName [ lindex [ split [ lindex $node 0 ] / ] end ]
 
-    if { [ catch { ls $nodeName } lsName ] } {
+    if { [ catch { ::brlcad::mged ls $nodeName } lsName ] } {
 	error $lsName
     }
     if { $lsName == "" } {
@@ -1352,7 +1354,7 @@ package provide GeometryBrowser 1.0
     set dbNotOpen 0
 
     # see if the database is open
-    if [ catch { opendb } notopen ] {
+    if [ catch { ::brlcad::mged opendb } notopen ] {
 	set dbNotOpen 1
     }
     if { [ string compare $notopen "" ] == 0 } {
@@ -1371,7 +1373,7 @@ package provide GeometryBrowser 1.0
 	    foreach geom $_goodGeometry {
 		# only need one redraw command
 		if { $redraw == 0 } {
-		    if { [ catch { ls $geom } shouldFind ] } {
+		    if { [ catch { ::brlcad::mged ls $geom } shouldFind ] } {
 			incr redraw
 		    }
 		    if { $shouldFind == "" } {
