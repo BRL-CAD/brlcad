@@ -53,7 +53,8 @@ _tree_print_node(struct ged *gedp,
 		int displayDepth,
 		int currdisplayDepth,
 		int verbosity,
-		int mprefix)
+		int mprefix,
+		struct db_full_path *path)
 {
     size_t i;
     const char *mlabel = "[M]";
@@ -64,6 +65,7 @@ _tree_print_node(struct ged *gedp,
     unsigned cflag = (flags & _GED_TREE_CFLAG);
     struct bu_vls tmp_str = BU_VLS_INIT_ZERO;
     struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
+    int cyclic = db_full_path_search(path, dp);
 
     /* cflag = don't show shapes, so return if this is not a combination */
     if (cflag && !(dp->d_flags & RT_DIR_COMB)) {
@@ -107,7 +109,13 @@ _tree_print_node(struct ged *gedp,
     if (dp->d_flags & RT_DIR_REGION)
 	bu_vls_printf(gedp->ged_result_str, "R");
 
+    if (cyclic)
+	bu_vls_printf(gedp->ged_result_str, " [cyclic]");
+
     bu_vls_printf(gedp->ged_result_str, "\n");
+
+    if (cyclic)
+	return;
 
     /* output attributes if any and if desired */
     if (aflag) {
@@ -184,6 +192,7 @@ _tree_print_node(struct ged *gedp,
 	    actual_count = 0;
 	    rt_tree_array = NULL;
 	}
+	db_add_node_to_full_path(path, dp);
 
 	for (i = 0; i < actual_count; i++) {
 	    char op;
@@ -221,11 +230,12 @@ _tree_print_node(struct ged *gedp,
 		}
 
 		if (currdisplayDepth < displayDepth) {
-		    _tree_print_node(gedp, nextdp, pathpos+1, indentSize, op, flags, displayDepth, currdisplayDepth+1, verbosity, domprefix);
+		    _tree_print_node(gedp, nextdp, pathpos+1, indentSize, op, flags, displayDepth, currdisplayDepth+1, verbosity, domprefix, path);
 		}
 	    }
 	    db_free_tree(rt_tree_array[i].tl_tree);
 	}
+	DB_FULL_PATH_POP(path);
 	if (rt_tree_array) bu_free((char *)rt_tree_array, "printnode: rt_tree_array");
     }
     rt_db_free_internal(&intern);
@@ -320,6 +330,7 @@ ged_tree_core(struct ged *gedp, int argc, const char *argv[])
     }
 
     for (j = 1; j < argc; j++) {
+	struct db_full_path path = DB_FULL_PATH_INIT_ZERO;
 	const char *next = argv[j];
 	if (buffer) {
 	    next = whoargv[j-1];
@@ -329,7 +340,8 @@ ged_tree_core(struct ged *gedp, int argc, const char *argv[])
 	    bu_vls_printf(gedp->ged_result_str, "\n");
 	if ((dp = db_lookup(gedp->dbip, next, LOOKUP_NOISY)) == RT_DIR_NULL)
 	    continue;
-	_tree_print_node(gedp, dp, 0, indentSize, 0, flags, displayDepth, 0, verbosity, 0);
+	_tree_print_node(gedp, dp, 0, indentSize, 0, flags, displayDepth, 0, verbosity, 0, &path);
+	db_free_full_path(&path);
     }
 
     if (buffer) {
