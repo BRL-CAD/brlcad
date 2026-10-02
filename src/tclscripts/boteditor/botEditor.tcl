@@ -35,9 +35,10 @@ package require Itk
     constructor {bot args} {}
 
     public {
-	common _ ""
+	common commandPrefix ::brlcad::mged
 
 	proc defineCommands {prefix}
+	proc ged {command args}
 	proc localizeDialog {d}
 	proc focusOnEnter {d}
 
@@ -48,6 +49,10 @@ package require Itk
 	method accept {}
 	method reject {}
 	method cancel {}
+	method close {}
+	method applyChanges {}
+	method discardChanges {}
+	method revertChanges {}
     }
 
     private {
@@ -67,7 +72,7 @@ package require Itk
 #
 ::itcl::body BotEditor::constructor {bot args} {
 
-    eval itk_initialize $args
+    itk_initialize {*}$args
 
     # setup commands
     defineCommands $itk_option(-prefix)
@@ -76,16 +81,16 @@ package require Itk
     while {[regsub {.*/} $bot {} bot]} {}
 
     # show name of bot being edited
-    $this configure -title "[eval $this cget -title] - $bot"
+    $this configure -title "[$this cget -title] - $bot"
     set ::${itk_interior}statusLine "editing \"$bot\""
 
     # make working copy
     set original $bot
     set copy $original.edit
-    cp $original $copy
+    ::BotEditor::ged cp $original $copy
 
     # handle window close
-    wm protocol $itk_interior WM_DELETE_WINDOW "kill $copy; ::itcl::delete object $this"
+    wm protocol $itk_interior WM_DELETE_WINDOW [list $this close]
 
     # create layout frames
     itk_component add histFrame {
@@ -94,9 +99,9 @@ package require Itk
     } {}
     itk_component add eframe {
 	EditPane $itk_interior.editPane $copy \
-	    -beforecommand "$this giveFeedback" \
-	    -aftercommand "$this onChange" \
-	    -output "$this updateStatus"
+	    -beforecommand [list $this giveFeedback] \
+	    -aftercommand [list $this onChange] \
+	    -output [list $this updateStatus]
     } {}
     itk_component add closeframe {
 	ttk::frame $itk_interior.closeFrame \
@@ -110,19 +115,19 @@ package require Itk
     itk_component add cancel {
 	ttk::button $itk_component(histFrame).cancel \
 	    -text {Start Over} \
-	    -command "$this cancel"
+	    -command [list $this cancel]
     } {}
 
     # add widgets to close frame
     itk_component add accept {
 	ttk::button $itk_component(closeframe).accept \
 	    -text Accept \
-	    -command "$this accept"
+	    -command [list $this accept]
     } {}
     itk_component add reject {
 	ttk::button $itk_component(closeframe).reject \
 	    -text Reject \
-	    -command "$this reject"
+	    -command [list $this reject]
     } {}
 
     # add widgets to status frame
@@ -179,7 +184,7 @@ package require Itk
     if {$show} {
 
 	# append '*' to title to indicate unapplied change
-	set title [eval $this cget -title]
+	set title [$this cget -title]
 
 	if {[regexp ^.*\\*$ $title] == 0} {
 	    $this configure -title $title*
@@ -187,7 +192,7 @@ package require Itk
     } else {
 
 	# remove '*' from title to indicate application
-	set match ""; set title [eval $this cget -title]
+	set match ""; set title [$this cget -title]
 	regexp ^(.*)\\*$ $title match title
 	$this configure -title $title
     }
@@ -209,7 +214,7 @@ package require Itk
 	update
 
 	set lastTime [clock milliseconds]
-	after 50 "$this animate"
+	after 50 [list $this animate]
     }
 }
 
@@ -236,8 +241,8 @@ package require Itk
     # update properties
     $itk_component(eframe) update $copy
 
-    Z
-    draw $copy
+    ::BotEditor::ged Z
+    ::BotEditor::ged draw $copy
 
     set cmdDone 1
     lower $itk_component(progress)
@@ -251,80 +256,79 @@ package require Itk
     update
 }
 
-# defineCommands
-#
-# In Archer these commands are methods of an Archer instance (prefix).
-# We'll create wrappers for these commands so that we can call them
-# without an Archer object.
+# Select the command prefix used to access GED commands.  MGED exposes its
+# commands through ::brlcad::mged, while Archer supplies an object command.
 #
 ::itcl::body BotEditor::defineCommands {prefix} {
 
-    if {$prefix == ""} return
+    if {$prefix eq ""} {
+	set commandPrefix ::brlcad::mged
+    } else {
+	set commandPrefix $prefix
+    }
+}
 
-    set _ $prefix
-
-    proc ::adjust {args} {eval $BotEditor::_ adjust $args}
-    proc ::bb {args} {eval $BotEditor::_ bb $args}
-    proc ::bot {args} {eval $BotEditor::_ bot $args}
-    proc ::bot_condense {args} {eval $BotEditor::_ bot_condense $args}
-    proc ::bot_decimate {args} {eval $BotEditor::_ bot_decimate $args}
-    proc ::bot_face_fuse {args} {eval $BotEditor::_ bot_face_fuse $args}
-    proc ::bot_face_sort {args} {eval $BotEditor::_ bot_face_sort $args}
-    proc ::bot_vertex_fuse {args} {eval $BotEditor::_ bot_vertex_fuse $args}
-    proc ::cp {args} {eval $BotEditor::_ cp $args}
-    proc ::draw {args} {eval $BotEditor::_ draw $args}
-    proc ::kill {args} {eval $BotEditor::_ kill $args}
-    proc ::mv {args} {eval $BotEditor::_ mv $args}
-    proc ::Z {} {eval $BotEditor::_ Z}
+# Invoke a GED command without relying on MGED's global compatibility aliases.
+::itcl::body BotEditor::ged {command args} {
+    return [{*}$commandPrefix $command {*}$args]
 }
 
 # apply changes to original and exit
 ::itcl::body BotEditor::accept {} {
-
-    set cmd "kill $original; \
-	mv $copy $original; \
-	bind all <ButtonPress> {}; \
-	::itcl::delete object $this"
-
     # get confirmation
     itk_component add confirm {
 	ConfirmationDialog $itk_interior.confirmDialog \
 	    -title {Apply Changes and Exit?} \
 	    -text "This operation will overwrite $original in the current database.\n\n\
 		Are you sure you want to save your changes and exit?" \
-	    -yescommand $cmd
+	    -yescommand [list $this applyChanges]
     } {}
 }
 
 # discard all changes and exit
 ::itcl::body BotEditor::reject {} {
-
-    set cmd "kill $copy; \
-	bind all <ButtonPress> {}; \
-	::itcl::delete object $this"
-
     # get confirmation
     itk_component add confirm {
 	ConfirmationDialog $itk_interior.confirmDialog \
 	    -title {Exit Without Applying Changes?} \
 	    -text {Are you sure you want to discard all changes and exit?} \
-	    -yescommand $cmd
+	    -yescommand [list $this discardChanges]
     } {}
 }
 
 # discard all changes
 ::itcl::body BotEditor::cancel {} {
-
-    # overwrite copy with original
-    set cmd "kill $copy; cp $original $copy; $this onChange"
-
     # get confirmation
     itk_component add confirm {
 	ConfirmationDialog $itk_interior.confirmDialog \
 	    -title {Revert Edits?} \
 	    -text {Are you sure you want to discard all changes to the working mesh?} \
-	    -yescommand $cmd
+	    -yescommand [list $this revertChanges]
     } {}
+}
+
+::itcl::body BotEditor::close {} {
+    ::BotEditor::ged kill $copy
+    ::itcl::delete object $this
+}
+
+::itcl::body BotEditor::applyChanges {} {
+    ::BotEditor::ged kill $original
+    ::BotEditor::ged mv $copy $original
+    bind all <ButtonPress> {}
+    ::itcl::delete object $this
+}
+
+::itcl::body BotEditor::discardChanges {} {
+    ::BotEditor::ged kill $copy
+    bind all <ButtonPress> {}
+    ::itcl::delete object $this
+}
+
+::itcl::body BotEditor::revertChanges {} {
+    ::BotEditor::ged kill $copy
+    ::BotEditor::ged cp $original $copy
+    $this onChange
 }
 
 # center dialog with respect to its parent
@@ -356,7 +360,7 @@ package require Itk
 # automatically focus window when mouse enters it
 ::itcl::body BotEditor::focusOnEnter {d} {
 
-    bind $d <Enter> "focus $d"
+    bind $d <Enter> [list focus $d]
 }
 
 # Confirmation Dialog helper class
@@ -364,8 +368,13 @@ package require Itk
 ::itcl::class ConfirmationDialog {
     inherit itk::Toplevel
 
+    public {
+	method confirm {}
+	method deny {}
+    }
+
     constructor {args} {
-	eval itk_initialize $args
+	itk_initialize {*}$args
 
 	# make container frame
 	itk_component add main {
@@ -392,12 +401,12 @@ package require Itk
 	itk_component add yes {
 	    ttk::button $itk_component(act).confirm \
 		-text Yes \
-		-command "grab release $itk_interior; $itk_option(-yescommand); catch {::itcl::delete object $this}"
+		-command [list $this confirm]
 	} {}
 	itk_component add no {
 	    ttk::button $itk_component(act).deny \
 		-text No \
-		-command "grab release $itk_interior; ::itcl::delete object $this"
+		-command [list $this deny]
 	} {}
 
 	# display frames
@@ -426,13 +435,29 @@ package require Itk
     itk_option define -yescommand yesCommand Command "" {}
 }
 
+::itcl::body ConfirmationDialog::confirm {} {
+    grab release $itk_interior
+    try {
+	if {$itk_option(-yescommand) ne ""} {
+	    {*}$itk_option(-yescommand)
+	}
+    } finally {
+	catch {::itcl::delete object $this}
+    }
+}
+
+::itcl::body ConfirmationDialog::deny {} {
+    grab release $itk_interior
+    ::itcl::delete object $this
+}
+
 # Edit Pane helper class to wrap edit widgets
 #
 ::itcl::class EditPane {
     inherit itk::Widget
 
     constructor {bot args} {
-	eval itk_initialize $args
+	itk_initialize {*}$args
 
 	# make container frame
 	itk_component add main {

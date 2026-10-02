@@ -44,7 +44,7 @@ package require Itk
 
 ::itcl::body BotPropertyBox::constructor {bot args} {
 
-    eval itk_initialize $args
+    itk_initialize {*}$args
 
     # make container frame
     itk_component add main {
@@ -82,10 +82,10 @@ package require Itk
 # update information for bot
 ::itcl::body BotPropertyBox::update {bot} {
     $itk_component(gpane) component modfaces configure \
-	-text [bot get faces $bot]
+	-text [::BotEditor::ged bot get faces $bot]
 
     $itk_component(gpane) component modverts configure \
-	-text [bot get vertices $bot]
+	-text [::BotEditor::ged bot get vertices $bot]
 
     $itk_component(tpane) update
 }
@@ -107,7 +107,7 @@ package require Itk
 }
 
 ::itcl::body PropertiesPane::constructor {b args} {
-    eval itk_initialize $args
+    itk_initialize {*}$args
 
     set bot $b
 
@@ -135,7 +135,7 @@ package require Itk
 	    -state readonly
     } {}
 
-    bind $itk_component(modeCombo) <<ComboboxSelected>> "$this updateMode"
+    bind $itk_component(modeCombo) <<ComboboxSelected>> [list $this updateMode]
 
     # add orientation combo box and label
     itk_component add orientLabel {
@@ -147,7 +147,8 @@ package require Itk
 	    -state readonly
     } {}
 
-    bind $itk_component(orientCombo) <<ComboboxSelected>> "$this updateOrientation"
+    bind $itk_component(orientCombo) <<ComboboxSelected>> \
+	[list $this updateOrientation]
     $this update
 
     # display container frame
@@ -168,14 +169,15 @@ package require Itk
 
 ::itcl::body PropertiesPane::update {} {
     set bot_modes {surface solid plate plate_nocos}
-    set mode_index [lsearch -exact $bot_modes [bot get type $bot]]
+    set mode_index [lsearch -exact $bot_modes \
+	[::BotEditor::ged bot get type $bot]]
     if {$mode_index < 0} {
 	error "unsupported BoT mode for $bot"
     }
 
     set bot_orientations {none ccw cw}
     set orientation_index [lsearch -exact $bot_orientations \
-	[bot get orientation $bot]]
+	[::BotEditor::ged bot get orientation $bot]]
     if {$orientation_index < 0} {
 	error "unsupported BoT orientation for $bot"
     }
@@ -185,18 +187,20 @@ package require Itk
 }
 
 ::itcl::body PropertiesPane::updateMode {} {
-    adjust $bot mode [expr [$itk_component(modeCombo) current] + 1]
+    ::BotEditor::ged adjust $bot mode \
+	[expr {[$itk_component(modeCombo) current] + 1}]
 }
 
 ::itcl::body PropertiesPane::updateOrientation {} {
-    adjust $bot orient [expr [$itk_component(orientCombo) current] + 1]
+    ::BotEditor::ged adjust $bot orient \
+	[expr {[$itk_component(orientCombo) current] + 1}]
 }
 
 ::itcl::class GeometryPane {
     inherit itk::Widget
 
     constructor {bot args} {
-	eval itk_initialize $args
+	itk_initialize {*}$args
 
 	# make container frame
 	itk_component add main {
@@ -241,21 +245,21 @@ package require Itk
 	# add widgets for original geometry
 	itk_component add orgfaces {
 	    ttk::label $itk_component(cframe).originalFaces \
-		-text [bot get faces $bot]
+		-text [::BotEditor::ged bot get faces $bot]
 	} {}
 	itk_component add orgverts {
 	    ttk::label $itk_component(cframe).originalVertices \
-		-text [bot get vertices $bot]
+		-text [::BotEditor::ged bot get vertices $bot]
 	} {}
 
 	# add widgets for modified geometry
 	itk_component add modfaces {
 	    ttk::label $itk_component(cframe).faces \
-		-text [bot get faces $bot]
+		-text [::BotEditor::ged bot get faces $bot]
 	} {}
 	itk_component add modverts {
 	    ttk::label $itk_component(cframe).vertices \
-		-text [bot get vertices $bot]
+		-text [::BotEditor::ged bot get vertices $bot]
 	} {}
 
 	# display container frame

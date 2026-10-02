@@ -43,8 +43,10 @@ package require Itk
 	proc intInRange {min max n}
 	proc isPositiveFloat {n}
 	proc keepFocus {widget}
+	proc holdFocus {widget}
 
 	method runBotCmd {cmd args}
+	method runCallback {callback args}
 	method print {msg}
 
 	method simplify
@@ -81,7 +83,7 @@ package require Itk
 # initialize
 ::itcl::body BotTools::constructor {b args} {
 
-    eval itk_initialize $args
+    itk_initialize {*}$args
 
     set bot $b
 
@@ -117,19 +119,19 @@ package require Itk
 
 # convenience method for uniformly running bot_* commands
 ::itcl::body BotTools::runBotCmd {cmd args} {
-    mv $bot $bot.old
-    eval $cmd $args $bot $bot.old
-    kill $bot.old
+    ::BotEditor::ged mv $bot $bot.old
+    ::BotEditor::ged $cmd {*}$args $bot $bot.old
+    ::BotEditor::ged kill $bot.old
+}
+
+::itcl::body BotTools::runCallback {callback args} {
+    if {$callback ne ""} {
+	{*}$callback {*}$args
+    }
 }
 
 ::itcl::body BotTools::print {msg} {
-    set out $itk_option(-output)
-
-    if {$out == ""} {
-	return
-    }
-
-    catch {eval $out {$msg}}
+    catch {runCallback $itk_option(-output) $msg}
 }
 
 # convenience method for creating a new tab pane
@@ -153,7 +155,7 @@ package require Itk
     itk_component add decimate {
 	ttk::button $pane.decimateButton \
 	    -text {Reduce Face Count} \
-	    -command "$this decimate"
+	    -command [list $this decimate]
     } {}
 
     loadDecimateSuggestions
@@ -163,14 +165,14 @@ package require Itk
 	ttk::checkbutton $pane.normalCheckbox \
 	    -text {Max Normal Error} \
 	    -variable ${itk_interior}NormalCheck \
-	    -command "$this updateDecimateState"
+	    -command [list $this updateDecimateState]
     } {}
     itk_component add normalEntry {
 	ttk::entry $pane.normalEntry \
 	    -width 3 \
 	    -textvariable ${itk_interior}NormalEntry \
 	    -validate all \
-	    -validatecommand "$this validateNormalEntry %P"
+	    -validatecommand [list $this validateNormalEntry %P]
     } {}
 
     set ::${itk_interior}ChordCheck 0
@@ -178,14 +180,14 @@ package require Itk
 	ttk::checkbutton $pane.chordCheckbox \
 	    -text {Max Chord Error} \
 	    -variable ${itk_interior}ChordCheck \
-	    -command "$this updateDecimateState"
+	    -command [list $this updateDecimateState]
     } {}
     itk_component add chordEntry {
 	ttk::entry $pane.chordEntry \
 	    -width 10 \
 	    -textvariable ${itk_interior}ChordEntry \
 	    -validate all \
-	    -validatecommand "$this validateChordEntry %P"
+	    -validatecommand [list $this validateChordEntry %P]
     } {}
 
     set ::${itk_interior}EdgeCheck 1
@@ -193,14 +195,14 @@ package require Itk
 	ttk::checkbutton $pane.edgeCheckbox \
 	    -text {Min Edge Length} \
 	    -variable ${itk_interior}EdgeCheck \
-	    -command "$this updateDecimateState"
+	    -command [list $this updateDecimateState]
     } {}
     itk_component add edgeEntry {
 	ttk::entry $pane.edgeEntry \
 	    -width 10 \
 	    -textvariable ${itk_interior}EdgeEntry \
 	    -validate all \
-	    -validatecommand "$this validateEdgeEntry %P"
+	    -validatecommand [list $this validateEdgeEntry %P]
     } {}
 
     # draw decimate components
@@ -232,9 +234,12 @@ package require Itk
     keepFocus $itk_component(edgeEntry)
 
     # update decimate button's state on entry change
-    bind $itk_component(normalEntry) <KeyRelease> "+$this updateDecimateState"
-    bind $itk_component(chordEntry) <KeyRelease> "+$this updateDecimateState"
-    bind $itk_component(edgeEntry) <KeyRelease> "+$this updateDecimateState"
+    bind $itk_component(normalEntry) <KeyRelease> \
+	+[list $this updateDecimateState]
+    bind $itk_component(chordEntry) <KeyRelease> \
+	+[list $this updateDecimateState]
+    bind $itk_component(edgeEntry) <KeyRelease> \
+	+[list $this updateDecimateState]
 
     return $pane
 }
@@ -252,24 +257,24 @@ package require Itk
 	ttk::checkbutton $pane.condense \
 	    -text {Remove Unused Vertices} \
 	    -variable ${itk_interior}CondenseCheck \
-	    -command "$this validateSimplifyChecks"
+	    -command [list $this validateSimplifyChecks]
     } {}
     itk_component add verticesCheck {
 	ttk::checkbutton $pane.fuse_vertices \
 	    -text {Remove Duplicate Vertices} \
 	    -variable ${itk_interior}VerticesCheck \
-	    -command "$this validateSimplifyChecks"
+	    -command [list $this validateSimplifyChecks]
     } {}
     itk_component add facesCheck {
 	ttk::checkbutton $pane.fuse_faces \
 	    -text {Remove Duplicate Faces} \
 	    -variable ${itk_interior}FacesCheck \
-	    -command "$this validateSimplifyChecks"
+	    -command [list $this validateSimplifyChecks]
     } {}
     itk_component add simplify {
 	ttk::button $pane.auto_simplify \
 	    -text {Remove Selected} \
-	    -command "$this simplify"
+	    -command [list $this simplify]
     } {}
 
     # draw simplify components
@@ -300,7 +305,7 @@ package require Itk
 	ttk::button $pane.sortFaces \
 	    -text {Group Adjacent Faces}
     } {}
-    $itk_component(sort) configure -command "$this sortFaces"
+    $itk_component(sort) configure -command [list $this sortFaces]
     itk_component add gframe {
 	ttk::frame $pane.groupFrame \
 	    -padding 3
@@ -310,7 +315,7 @@ package require Itk
 	    -width 3 \
 	    -textvariable ${itk_interior}GroupsEntry \
 	    -validate all \
-	    -validatecommand "$this validateGroupsEntry %P"
+	    -validatecommand [list $this validateGroupsEntry %P]
     } {}
     itk_component add groupsLbl {
 	ttk::label $itk_component(gframe).groupsLabel \
@@ -348,9 +353,9 @@ package require Itk
 
 	# run command
 	print "bot_condense"
-	eval $itk_option(-beforecommand)
+	runCallback $itk_option(-beforecommand)
 	$this runBotCmd bot_condense
-	eval $itk_option(-aftercommand)
+	runCallback $itk_option(-aftercommand)
 
 	# unset option - shouldn't need to do this more than once
 	set $condense 0
@@ -359,9 +364,9 @@ package require Itk
 
 	# run command
 	print "bot_vertex_fuse"
-	eval $itk_option(-beforecommand)
+	runCallback $itk_option(-beforecommand)
 	$this runBotCmd bot_vertex_fuse
-	eval $itk_option(-aftercommand)
+	runCallback $itk_option(-aftercommand)
 
 	# unset option - shouldn't need to do this more than once
 	set $vertices 0
@@ -370,9 +375,9 @@ package require Itk
 
 	# run command
 	print "bot_face_fuse"
-	eval $itk_option(-beforecommand)
+	runCallback $itk_option(-beforecommand)
 	$this runBotCmd bot_face_fuse
-	eval $itk_option(-aftercommand)
+	runCallback $itk_option(-aftercommand)
 
 	# unset option - shouldn't need to do this more than once
 	set $faces 0
@@ -394,9 +399,9 @@ package require Itk
     set size [set ::${itk_interior}GroupsEntry]
 
     print "bot_face_sort $size"
-    eval $itk_option(-beforecommand)
-    bot_face_sort $size $bot
-    eval $itk_option(-aftercommand)
+    runCallback $itk_option(-beforecommand)
+    ::BotEditor::ged bot_face_sort $size $bot
+    runCallback $itk_option(-aftercommand)
     print "done"
 }
 
@@ -444,10 +449,12 @@ package require Itk
 #
 ::itcl::body BotTools::keepFocus {widget} {
 
-    bind $widget <FocusIn> "
-	bind $widget <FocusOut> \"focus $widget\"
-	bind all <ButtonPress> \"bind $widget <FocusOut> {}\"
-    "
+    bind $widget <FocusIn> [list ::BotTools::holdFocus $widget]
+}
+
+::itcl::body BotTools::holdFocus {widget} {
+    bind $widget <FocusOut> [list focus $widget]
+    bind all <ButtonPress> [list bind $widget <FocusOut> {}]
 }
 
 # test if n is an integer, not prefixed with 0s,
@@ -537,7 +544,7 @@ package require Itk
     set ::${itk_interior}ChordEntry ""
 
     if {$lastEdge == ""} {
-	set min [bot get minEdge $bot]
+	set min [::BotEditor::ged bot get minEdge $bot]
 	set lastEdge $min
 #	set max [bot get maxEdge $bot]
 
@@ -593,24 +600,24 @@ package require Itk
 }
 
 ::itcl::body BotTools::decimate {} {
-    set args ""
+    set options {}
     set normal [set ::${itk_interior}NormalCheck]
     set chord [set ::${itk_interior}ChordCheck]
     set edge [set ::${itk_interior}EdgeCheck]
 
     if {$normal} {
 	set normalVal [set ::${itk_interior}NormalEntry]
-	set args "$args -n $normalVal"
+	lappend options -n $normalVal
     }
 
     if {$chord} {
 	set chordVal [set ::${itk_interior}ChordEntry]
-	set args "$args -c $chordVal"
+	lappend options -c $chordVal
     }
 
     if {$edge} {
 	set edgeVal [set ::${itk_interior}EdgeEntry]
-	set args "$args -e $edgeVal"
+	lappend options -e $edgeVal
 	set lastEdge $edgeVal
     }
 
@@ -618,10 +625,10 @@ package require Itk
     $itk_component(decimate) configure -state disabled
 
     # run command
-    print "bot_decimate $args"
-    eval $itk_option(-beforecommand)
-    runBotCmd "bot_decimate $args"
-    eval $itk_option(-aftercommand)
+    print "bot_decimate [join $options { }]"
+    runCallback $itk_option(-beforecommand)
+    runBotCmd bot_decimate {*}$options
+    runCallback $itk_option(-aftercommand)
     print "done"
 
     # re-enable

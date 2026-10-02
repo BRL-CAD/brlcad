@@ -49,13 +49,13 @@ proc ::mged::xmin::bot::confirm_action {editor button_text} {
 
 proc ::mged::xmin::bot::require_counts {bot vertices faces description} {
     ::gui::test::require {
-	[llength [get $bot V]] == $vertices &&
-	[llength [get $bot F]] == $faces
+	[llength [::brlcad::mged get $bot V]] == $vertices &&
+	[llength [::brlcad::mged get $bot F]] == $faces
     } "$description does not have $vertices vertices and $faces faces"
 }
 
 proc ::mged::xmin::bot::exercise_editor {id top} {
-    put xmin_bot.s bot mode surface orient no flags {} V {
+    ::brlcad::mged put xmin_bot.s bot mode surface orient no flags {} V {
 	{0 0 0} {100 0 0} {0 100 0} {0 0 0} {999 999 999}
     } F {{0 1 2} {3 1 2}}
 
@@ -78,8 +78,8 @@ proc ::mged::xmin::bot::exercise_editor {id top} {
     $orientation current 1
     event generate $orientation <<ComboboxSelected>>
     ::gui::test::require {
-	[bot get type xmin_bot.s.edit] eq "solid" &&
-	[bot get orientation xmin_bot.s.edit] eq "ccw"
+	[::brlcad::mged bot get type xmin_bot.s.edit] eq "solid" &&
+	[::brlcad::mged bot get orientation xmin_bot.s.edit] eq "ccw"
     } "BoT Editor did not apply mode and orientation changes"
 
     [::mged::gui::test::find_widget_by_text $editor {Remove Selected}] invoke
@@ -89,8 +89,8 @@ proc ::mged::xmin::bot::exercise_editor {id top} {
     confirm_action $editor {Start Over}
     require_counts xmin_bot.s.edit 5 2 "reverted working BoT"
     ::gui::test::require {
-	[bot get type xmin_bot.s.edit] eq "surface" &&
-	[bot get orientation xmin_bot.s.edit] eq "none" &&
+	[::brlcad::mged bot get type xmin_bot.s.edit] eq "surface" &&
+	[::brlcad::mged bot get orientation xmin_bot.s.edit] eq "none" &&
 	[$mode current] == 0 && [$orientation current] == 0
     } "Start Over did not refresh the BoT properties"
 
@@ -109,9 +109,9 @@ proc ::mged::xmin::bot::exercise_editor {id top} {
     confirm_action $editor Accept
 
     ::gui::test::require {
-	![winfo exists $editor] && ![exists xmin_bot.s.edit] &&
-	[bot get type xmin_bot.s] eq "solid" &&
-	[bot get orientation xmin_bot.s] eq "ccw"
+	![winfo exists $editor] && ![::brlcad::mged exists xmin_bot.s.edit] &&
+	[::brlcad::mged bot get type xmin_bot.s] eq "solid" &&
+	[::brlcad::mged bot get orientation xmin_bot.s] eq "ccw"
     } "BoT Editor Accept did not persist properties or close cleanly"
     require_counts xmin_bot.s 3 1 "accepted BoT"
 }
@@ -120,10 +120,26 @@ proc ::mged::xmin::bot::run {id top} {
     set database [file join $::env(GUI_TEST_DIR) bot.g]
     cd $::env(GUI_TEST_DIR)
     file delete -force $database
-    opendb $database y
-    title {Xmin MGED BoT editor regression}
+    ::brlcad::mged opendb $database y
+    ::brlcad::mged title {Xmin MGED BoT editor regression}
 
-    exercise_editor $id $top
+    set hidden_commands {}
+    foreach command {
+	adjust bot bot_condense bot_decimate bot_face_fuse bot_face_sort
+	bot_vertex_fuse cp draw kill mv Z
+    } {
+	set compatibility_command ::$command
+	set hidden_command ::__brlcad_mged_bot_compatibility_$command
+	rename $compatibility_command $hidden_command
+	lappend hidden_commands $hidden_command $compatibility_command
+    }
+    try {
+	exercise_editor $id $top
+    } finally {
+	foreach {hidden_command compatibility_command} $hidden_commands {
+	    rename $hidden_command $compatibility_command
+	}
+    }
 }
 
 ::mged::gui::test::start ::mged::xmin::bot::run \

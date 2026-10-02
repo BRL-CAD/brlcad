@@ -531,23 +531,61 @@ proc ::archer::xmin::exercise_bot_utility {application} {
     } "BoT utility did not list its available mesh"
     $object configure -selectedbot $bot
 
-    set existing [::itcl::find object -class BotEditor]
-    $object editBot $bot
-    update
-    set editors {}
-    foreach editor [::itcl::find object -class BotEditor] {
-	if {[lsearch -exact $existing $editor] < 0} {
-	    lappend editors $editor
+    set compatibility_commands {
+	adjust bot bot_condense bot_decimate bot_face_fuse bot_face_sort
+	bot_vertex_fuse cp draw kill mv Z
+    }
+    set hidden_commands {}
+    foreach command $compatibility_commands {
+	set compatibility_command ::$command
+	if {[llength [info commands $compatibility_command]]} {
+	    set hidden_command ::__brlcad_archer_bot_compatibility_$command
+	    rename $compatibility_command $hidden_command
+	    lappend hidden_commands $hidden_command $compatibility_command
 	}
     }
-    ::gui::test::require {
-	[llength $editors] == 1 && [$ged exists "$bot.edit"]
-    } "BoT utility did not launch an Archer-backed editor with a working copy"
-    set editor [lindex $editors 0]
-    $ged kill "$bot.edit"
-    ::itcl::delete object $editor
-    ::itcl::delete object $object
-    destroy $utility_toplevel
+
+    set editor ""
+    try {
+	set existing [::itcl::find object -class BotEditor]
+	$object editBot $bot
+	update
+	set editors {}
+	foreach candidate [::itcl::find object -class BotEditor] {
+	    if {[lsearch -exact $existing $candidate] < 0} {
+		lappend editors $candidate
+	    }
+	}
+	::gui::test::require {
+	    [llength $editors] == 1 && [$ged exists "$bot.edit"]
+	} "BoT utility did not launch an Archer-backed editor with a working copy"
+	set editor [lindex $editors 0]
+
+	set leaked_commands {}
+	foreach command $compatibility_commands {
+	    if {[llength [info commands ::$command]]} {
+		lappend leaked_commands $command
+	    }
+	}
+	::gui::test::require {$leaked_commands eq ""} \
+	    "BoT utility created global GED commands: $leaked_commands"
+    } finally {
+	catch {$ged kill "$bot.edit"}
+	if {$editor ne "" && [llength [info commands $editor]]} {
+	    ::itcl::delete object $editor
+	}
+	::itcl::delete object $object
+	destroy $utility_toplevel
+	foreach command $compatibility_commands {
+	    set compatibility_command ::$command
+	    if {[llength [info commands $compatibility_command]]} {
+		rename $compatibility_command {}
+	    }
+	}
+	foreach {hidden_command compatibility_command} $hidden_commands {
+	    rename $hidden_command $compatibility_command
+	}
+    }
 }
 
 proc ::archer::xmin::exercise_plugin_actions {application} {
