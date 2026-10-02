@@ -113,7 +113,13 @@ if(TARGET mged)
 
     set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/${testfile}")
     file(READ "${CMAKE_CURRENT_SOURCE_DIR}/${testfile}" TEST_CONTENTS)
-    if(TNAME STREQUAL "search_exec")
+    if(TNAME STREQUAL "search_exec" OR TNAME STREQUAL "namespaces")
+      set(TCL_NAMESPACE_POLICY_SCRIPT
+        "${CMAKE_SOURCE_DIR}/regress/repository/tcl_namespace_policy.tcl"
+      )
+      set(TCL_NAMESPACE_MANIFEST
+        "${CMAKE_SOURCE_DIR}/regress/repository/tcl_namespace_manifest.txt"
+      )
       string(CONFIGURE "${TEST_CONTENTS}" TEST_CONTENTS @ONLY)
     endif()
     file(
@@ -155,6 +161,7 @@ if(TARGET mged)
       set(TEST_EXPECT "PASS near namespaced commands")
     elseif(TNAME STREQUAL "namespaces")
       set(TEST_EXPECT "PASS Tcl command namespaces")
+      set(TEST_SOURCE "${CMAKE_CURRENT_BINARY_DIR}/regress_${testfile}")
     elseif(TNAME STREQUAL "script_aliases")
       set(TEST_EXPECT "PASS Tcl utility command dispatch")
     elseif(TNAME STREQUAL "arb")

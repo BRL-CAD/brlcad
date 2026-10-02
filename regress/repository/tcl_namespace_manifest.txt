@@ -743,3 +743,868 @@ script src/tclscripts/vmath.tcl ::vsub4n legacy {}
 script src/tclscripts/vmath.tcl ::vsubn legacy {}
 script src/tclscripts/vmath.tcl ::vunitize legacy {}
 script src/tclscripts/vmath.tcl ::vzeron legacy {}
+native bn ::bg_dist_pnt2_lseg2 compatibility {::brlcad::bn bg_dist_pnt2_lseg2}
+native bn ::bg_isect_line2_line2 compatibility {::brlcad::bn bg_isect_line2_line2}
+native bn ::bg_isect_line3_line3 compatibility {::brlcad::bn bg_isect_line3_line3}
+native bn ::bn_noise_fbm compatibility {::brlcad::bn noise_fbm}
+native bn ::bn_noise_perlin compatibility {::brlcad::bn noise_perlin}
+native bn ::bn_noise_slice compatibility {::brlcad::bn noise_slice}
+native bn ::bn_noise_turb compatibility {::brlcad::bn noise_turb}
+native bn ::bn_random compatibility {::brlcad::bn random}
+native bn ::hdivide compatibility {::brlcad::bn hdivide}
+native bn ::mat4x3vec compatibility {::brlcad::bn mat4x3vec}
+native bn ::matXvec compatibility {::brlcad::bn matXvec}
+native bn ::mat_ae_vec compatibility {::brlcad::bn mat_ae_vec}
+native bn ::mat_aet_vec compatibility {::brlcad::bn mat_aet_vec}
+native bn ::mat_angles compatibility {::brlcad::bn mat_angles}
+native bn ::mat_arb_rot compatibility {::brlcad::bn mat_arb_rot}
+native bn ::mat_eigen2x2 compatibility {::brlcad::bn mat_eigen2x2}
+native bn ::mat_fromto compatibility {::brlcad::bn mat_fromto}
+native bn ::mat_inv compatibility {::brlcad::bn mat_inv}
+native bn ::mat_lookat compatibility {::brlcad::bn mat_lookat}
+native bn ::mat_trn compatibility {::brlcad::bn mat_trn}
+native bn ::mat_vec_ortho compatibility {::brlcad::bn mat_vec_ortho}
+native bn ::mat_vec_perp compatibility {::brlcad::bn mat_vec_perp}
+native bn ::mat_xform_about_pnt compatibility {::brlcad::bn mat_xform_about_pnt}
+native bn ::mat_xrot compatibility {::brlcad::bn mat_xrot}
+native bn ::mat_yrot compatibility {::brlcad::bn mat_yrot}
+native bn ::mat_zrot compatibility {::brlcad::bn mat_zrot}
+native bn ::quat_bisect compatibility {::brlcad::bn quat_bisect}
+native bn ::quat_distance compatibility {::brlcad::bn quat_distance}
+native bn ::quat_double compatibility {::brlcad::bn quat_double}
+native bn ::quat_exp compatibility {::brlcad::bn quat_exp}
+native bn ::quat_log compatibility {::brlcad::bn quat_log}
+native bn ::quat_make_nearest compatibility {::brlcad::bn quat_make_nearest}
+native bn ::quat_mat2quat compatibility {::brlcad::bn quat_mat2quat}
+native bn ::quat_quat2mat compatibility {::brlcad::bn quat_quat2mat}
+native bn ::quat_sberp compatibility {::brlcad::bn quat_sberp}
+native bn ::quat_slerp compatibility {::brlcad::bn quat_slerp}
+native bn ::vblend compatibility {::brlcad::bn vblend}
+native bn ::vjoin1 compatibility {::brlcad::bn vjoin1}
+native bu ::bu_dir compatibility {::brlcad::bu dir}
+native bu ::bu_file_null compatibility {::brlcad::bu file_null}
+native bu ::bu_get_value_by_keyword compatibility {::brlcad::bu get_value_by_keyword}
+native bu ::bu_hsv_to_rgb compatibility {::brlcad::bu hsv_to_rgb}
+native bu ::bu_rgb_to_hsv compatibility {::brlcad::bu rgb_to_hsv}
+native bu ::bu_units_conversion compatibility {::brlcad::bu units_conversion}
+native dm ::dm_bestXType compatibility {::brlcad::dm best_type}
+native dm ::dm_list compatibility {::brlcad::dm list}
+native dm ::dm_open compatibility {::brlcad::dm open}
+native dm ::dm_validXType compatibility {::brlcad::dm valid_type}
+native dm ::fb_common_file_size compatibility {::brlcad::fb common_file_size}
+native dm ::fb_open compatibility {::brlcad::fb open}
+native ged ::go_open compatibility {::brlcad::tclcad::ged open}
+native history ::ch_open compatibility {::brlcad::tclcad::history open}
+native mged ::% compatibility {::brlcad::mged %}
+native mged ::_mged_% legacy {}
+native mged ::_mged_35,25 legacy {}
+native mged ::_mged_3ptarb legacy {}
+native mged ::_mged_45,45 legacy {}
+native mged ::_mged_accept legacy {}
+native mged ::_mged_adc legacy {}
+native mged ::_mged_adjust legacy {}
+native mged ::_mged_ae legacy {}
+native mged ::_mged_ae2dir legacy {}
+native mged ::_mged_aet legacy {}
+native mged ::_mged_aip legacy {}
+native mged ::_mged_analyze legacy {}
+native mged ::_mged_annotate legacy {}
+native mged ::_mged_arb legacy {}
+native mged ::_mged_arced legacy {}
+native mged ::_mged_area legacy {}
+native mged ::_mged_arot legacy {}
+native mged ::_mged_arrange legacy {}
+native mged ::_mged_art legacy {}
+native mged ::_mged_attach legacy {}
+native mged ::_mged_attr legacy {}
+native mged ::_mged_autoview legacy {}
+native mged ::_mged_B legacy {}
+native mged ::_mged_bb legacy {}
+native mged ::_mged_bev legacy {}
+native mged ::_mged_bo legacy {}
+native mged ::_mged_bomb legacy {}
+native mged ::_mged_bot legacy {}
+native mged ::_mged_bot_condense legacy {}
+native mged ::_mged_bot_decimate legacy {}
+native mged ::_mged_bot_dump legacy {}
+native mged ::_mged_bot_exterior legacy {}
+native mged ::_mged_bot_face_fuse legacy {}
+native mged ::_mged_bot_face_sort legacy {}
+native mged ::_mged_bot_flip legacy {}
+native mged ::_mged_bot_fuse legacy {}
+native mged ::_mged_bot_merge legacy {}
+native mged ::_mged_bot_smooth legacy {}
+native mged ::_mged_bot_split legacy {}
+native mged ::_mged_bot_sync legacy {}
+native mged ::_mged_bot_vertex_fuse legacy {}
+native mged ::_mged_bottom legacy {}
+native mged ::_mged_brep legacy {}
+native mged ::_mged_c legacy {}
+native mged ::_mged_cat legacy {}
+native mged ::_mged_cc legacy {}
+native mged ::_mged_center legacy {}
+native mged ::_mged_check legacy {}
+native mged ::_mged_clone legacy {}
+native mged ::_mged_closedb legacy {}
+native mged ::_mged_cmd_win legacy {}
+native mged ::_mged_coil legacy {}
+native mged ::_mged_color legacy {}
+native mged ::_mged_comb legacy {}
+native mged ::_mged_comb_color legacy {}
+native mged ::_mged_comb_std legacy {}
+native mged ::_mged_combmem legacy {}
+native mged ::_mged_constraint legacy {}
+native mged ::_mged_copy legacy {}
+native mged ::_mged_copyeval legacy {}
+native mged ::_mged_copymat legacy {}
+native mged ::_mged_cp legacy {}
+native mged ::_mged_cpi legacy {}
+native mged ::_mged_d legacy {}
+native mged ::_mged_data_lines legacy {}
+native mged ::_mged_db legacy {}
+native mged ::_mged_db_glob legacy {}
+native mged ::_mged_dbconcat legacy {}
+native mged ::_mged_dbfind legacy {}
+native mged ::_mged_dbip legacy {}
+native mged ::_mged_dbot_dump legacy {}
+native mged ::_mged_dbversion legacy {}
+native mged ::_mged_debug legacy {}
+native mged ::_mged_debugbu legacy {}
+native mged ::_mged_debugdir legacy {}
+native mged ::_mged_debuglib legacy {}
+native mged ::_mged_debugnmg legacy {}
+native mged ::_mged_decompose legacy {}
+native mged ::_mged_delay legacy {}
+native mged ::_mged_dir2ae legacy {}
+native mged ::_mged_dm legacy {}
+native mged ::_mged_dplot legacy {}
+native mged ::_mged_draw legacy {}
+native mged ::_mged_dsp legacy {}
+native mged ::_mged_dump legacy {}
+native mged ::_mged_dup legacy {}
+native mged ::_mged_E legacy {}
+native mged ::_mged_e legacy {}
+native mged ::_mged_eac legacy {}
+native mged ::_mged_echo legacy {}
+native mged ::_mged_edarb legacy {}
+native mged ::_mged_edcodes legacy {}
+native mged ::_mged_edcolor legacy {}
+native mged ::_mged_edcomb legacy {}
+native mged ::_mged_edgedir legacy {}
+native mged ::_mged_edit legacy {}
+native mged ::_mged_edmater legacy {}
+native mged ::_mged_env legacy {}
+native mged ::_mged_eqn legacy {}
+native mged ::_mged_erase legacy {}
+native mged ::_mged_ert legacy {}
+native mged ::_mged_ev legacy {}
+native mged ::_mged_exists legacy {}
+native mged ::_mged_exit legacy {}
+native mged ::_mged_expand legacy {}
+native mged ::_mged_extrude legacy {}
+native mged ::_mged_eye legacy {}
+native mged ::_mged_eye_pos legacy {}
+native mged ::_mged_eye_pt legacy {}
+native mged ::_mged_facedef legacy {}
+native mged ::_mged_facetize legacy {}
+native mged ::_mged_fb2pix legacy {}
+native mged ::_mged_fbclear legacy {}
+native mged ::_mged_find_arb_edge legacy {}
+native mged ::_mged_find_bot_edge legacy {}
+native mged ::_mged_find_bot_pnt legacy {}
+native mged ::_mged_find_pipe_pnt legacy {}
+native mged ::_mged_form legacy {}
+native mged ::_mged_fracture legacy {}
+native mged ::_mged_front legacy {}
+native mged ::_mged_g legacy {}
+native mged ::_mged_garbage_collect legacy {}
+native mged ::_mged_gdiff legacy {}
+native mged ::_mged_get legacy {}
+native mged ::_mged_get_autoview legacy {}
+native mged ::_mged_get_comb legacy {}
+native mged ::_mged_get_dbip legacy {}
+native mged ::_mged_get_dm_list legacy {}
+native mged ::_mged_get_more_default legacy {}
+native mged ::_mged_get_sed legacy {}
+native mged ::_mged_get_sed_menus legacy {}
+native mged ::_mged_get_solid_keypoint legacy {}
+native mged ::_mged_get_type legacy {}
+native mged ::_mged_gqa legacy {}
+native mged ::_mged_graph legacy {}
+native mged ::_mged_grid2model_lu legacy {}
+native mged ::_mged_grid2view_lu legacy {}
+native mged ::_mged_group legacy {}
+native mged ::_mged_has_embedded_fb legacy {}
+native mged ::_mged_heal legacy {}
+native mged ::_mged_hide legacy {}
+native mged ::_mged_hist legacy {}
+native mged ::_mged_history legacy {}
+native mged ::_mged_how legacy {}
+native mged ::_mged_human legacy {}
+native mged ::_mged_i legacy {}
+native mged ::_mged_idents legacy {}
+native mged ::_mged_ill legacy {}
+native mged ::_mged_importFg4Section legacy {}
+native mged ::_mged_in legacy {}
+native mged ::_mged_inside legacy {}
+native mged ::_mged_instance legacy {}
+native mged ::_mged_interrupt legacy {}
+native mged ::_mged_isize legacy {}
+native mged ::_mged_item legacy {}
+native mged ::_mged_joint legacy {}
+native mged ::_mged_joint2 legacy {}
+native mged ::_mged_journal legacy {}
+native mged ::_mged_keep legacy {}
+native mged ::_mged_keypoint legacy {}
+native mged ::_mged_kill legacy {}
+native mged ::_mged_killall legacy {}
+native mged ::_mged_killrefs legacy {}
+native mged ::_mged_killtree legacy {}
+native mged ::_mged_knob legacy {}
+native mged ::_mged_l legacy {}
+native mged ::_mged_labelface legacy {}
+native mged ::_mged_labelvert legacy {}
+native mged ::_mged_lc legacy {}
+native mged ::_mged_left legacy {}
+native mged ::_mged_lint legacy {}
+native mged ::_mged_listeval legacy {}
+native mged ::_mged_loadtk legacy {}
+native mged ::_mged_loadview legacy {}
+native mged ::_mged_lod legacy {}
+native mged ::_mged_log legacy {}
+native mged ::_mged_lookat legacy {}
+native mged ::_mged_ls legacy {}
+native mged ::_mged_lt legacy {}
+native mged ::_mged_M legacy {}
+native mged ::_mged_m2v_point legacy {}
+native mged ::_mged_make legacy {}
+native mged ::_mged_make_name legacy {}
+native mged ::_mged_make_pnts legacy {}
+native mged ::_mged_mat_ae legacy {}
+native mged ::_mged_mat_mul legacy {}
+native mged ::_mged_mat_scale_about_pnt legacy {}
+native mged ::_mged_mat4x3pnt legacy {}
+native mged ::_mged_match legacy {}
+native mged ::_mged_mater legacy {}
+native mged ::_mged_material legacy {}
+native mged ::_mged_matpick legacy {}
+native mged ::_mged_metaball_delete_pnt legacy {}
+native mged ::_mged_metaball_move_pnt legacy {}
+native mged ::_mged_mged_update legacy {}
+native mged ::_mged_mged_wait legacy {}
+native mged ::_mged_mirface legacy {}
+native mged ::_mged_mirror legacy {}
+native mged ::_mged_mmenu_get legacy {}
+native mged ::_mged_mmenu_set legacy {}
+native mged ::_mged_model2grid_lu legacy {}
+native mged ::_mged_model2view legacy {}
+native mged ::_mged_model2view_lu legacy {}
+native mged ::_mged_move legacy {}
+native mged ::_mged_move_all legacy {}
+native mged ::_mged_move_arb_edge legacy {}
+native mged ::_mged_move_arb_face legacy {}
+native mged ::_mged_mrot legacy {}
+native mged ::_mged_mv legacy {}
+native mged ::_mged_mvall legacy {}
+native mged ::_mged_nirt legacy {}
+native mged ::_mged_nmg legacy {}
+native mged ::_mged_nmg_cmface legacy {}
+native mged ::_mged_nmg_collapse legacy {}
+native mged ::_mged_nmg_fix_normals legacy {}
+native mged ::_mged_nmg_kill_f legacy {}
+native mged ::_mged_nmg_kill_v legacy {}
+native mged ::_mged_nmg_make_v legacy {}
+native mged ::_mged_nmg_mm legacy {}
+native mged ::_mged_nmg_move_v legacy {}
+native mged ::_mged_nmg_simplify legacy {}
+native mged ::_mged_npush legacy {}
+native mged ::_mged_o_rotate legacy {}
+native mged ::_mged_o_scale legacy {}
+native mged ::_mged_ocenter legacy {}
+native mged ::_mged_oed legacy {}
+native mged ::_mged_oed_apply legacy {}
+native mged ::_mged_oed_reset legacy {}
+native mged ::_mged_oill legacy {}
+native mged ::_mged_opendb legacy {}
+native mged ::_mged_orient legacy {}
+native mged ::_mged_orientation legacy {}
+native mged ::_mged_orot legacy {}
+native mged ::_mged_orotate legacy {}
+native mged ::_mged_oscale legacy {}
+native mged ::_mged_otranslate legacy {}
+native mged ::_mged_output_hook legacy {}
+native mged ::_mged_overlay legacy {}
+native mged ::_mged_ox legacy {}
+native mged ::_mged_oxscale legacy {}
+native mged ::_mged_oxy legacy {}
+native mged ::_mged_oy legacy {}
+native mged ::_mged_oyscale legacy {}
+native mged ::_mged_ozscale legacy {}
+native mged ::_mged_p legacy {}
+native mged ::_mged_pathlist legacy {}
+native mged ::_mged_paths legacy {}
+native mged ::_mged_pathsum legacy {}
+native mged ::_mged_permute legacy {}
+native mged ::_mged_perspective legacy {}
+native mged ::_mged_pipe_append_pnt legacy {}
+native mged ::_mged_pipe_delete_pnt legacy {}
+native mged ::_mged_pipe_move_pnt legacy {}
+native mged ::_mged_pipe_prepend_pnt legacy {}
+native mged ::_mged_pix2fb legacy {}
+native mged ::_mged_plot legacy {}
+native mged ::_mged_pmat legacy {}
+native mged ::_mged_pmodel2view legacy {}
+native mged ::_mged_png legacy {}
+native mged ::_mged_png2fb legacy {}
+native mged ::_mged_pnts legacy {}
+native mged ::_mged_postscript legacy {}
+native mged ::_mged_prcolor legacy {}
+native mged ::_mged_prefix legacy {}
+native mged ::_mged_press legacy {}
+native mged ::_mged_preview legacy {}
+native mged ::_mged_print legacy {}
+native mged ::_mged_process legacy {}
+native mged ::_mged_protate legacy {}
+native mged ::_mged_ps legacy {}
+native mged ::_mged_pscale legacy {}
+native mged ::_mged_pset legacy {}
+native mged ::_mged_ptranslate legacy {}
+native mged ::_mged_pull legacy {}
+native mged ::_mged_push legacy {}
+native mged ::_mged_put legacy {}
+native mged ::_mged_put_comb legacy {}
+native mged ::_mged_put_sed legacy {}
+native mged ::_mged_putmat legacy {}
+native mged ::_mged_q legacy {}
+native mged ::_mged_qorot legacy {}
+native mged ::_mged_qray legacy {}
+native mged ::_mged_quat legacy {}
+native mged ::_mged_query_ray legacy {}
+native mged ::_mged_quit legacy {}
+native mged ::_mged_qvrot legacy {}
+native mged ::_mged_r legacy {}
+native mged ::_mged_rate legacy {}
+native mged ::_mged_rcodes legacy {}
+native mged ::_mged_rear legacy {}
+native mged ::_mged_rect legacy {}
+native mged ::_mged_red legacy {}
+native mged ::_mged_redraw legacy {}
+native mged ::_mged_refresh legacy {}
+native mged ::_mged_regdebug legacy {}
+native mged ::_mged_regdef legacy {}
+native mged ::_mged_region legacy {}
+native mged ::_mged_regions legacy {}
+native mged ::_mged_reject legacy {}
+native mged ::_mged_release legacy {}
+native mged ::_mged_repair legacy {}
+native mged ::_mged_reset legacy {}
+native mged ::_mged_restore legacy {}
+native mged ::_mged_rfarb legacy {}
+native mged ::_mged_right legacy {}
+native mged ::_mged_rm legacy {}
+native mged ::_mged_rmap legacy {}
+native mged ::_mged_rmat legacy {}
+native mged ::_mged_rmater legacy {}
+native mged ::_mged_rmats legacy {}
+native mged ::_mged_rot legacy {}
+native mged ::_mged_rot_about legacy {}
+native mged ::_mged_rot_point legacy {}
+native mged ::_mged_rotate_arb_face legacy {}
+native mged ::_mged_rotobj legacy {}
+native mged ::_mged_rrt legacy {}
+native mged ::_mged_rselect legacy {}
+native mged ::_mged_rset legacy {}
+native mged ::_mged_rt legacy {}
+native mged ::_mged_rt_gettrees legacy {}
+native mged ::_mged_rtabort legacy {}
+native mged ::_mged_rtarea legacy {}
+native mged ::_mged_rtcheck legacy {}
+native mged ::_mged_rtedge legacy {}
+native mged ::_mged_rtweight legacy {}
+native mged ::_mged_rtwizard legacy {}
+native mged ::_mged_save legacy {}
+native mged ::_mged_savekey legacy {}
+native mged ::_mged_saveview legacy {}
+native mged ::_mged_sca legacy {}
+native mged ::_mged_screengrab legacy {}
+native mged ::_mged_sdata_lines legacy {}
+native mged ::_mged_search legacy {}
+native mged ::_mged_sed legacy {}
+native mged ::_mged_sed_apply legacy {}
+native mged ::_mged_sed_reset legacy {}
+native mged ::_mged_sedit legacy {}
+native mged ::_mged_select legacy {}
+native mged ::_mged_set_more_default legacy {}
+native mged ::_mged_setview legacy {}
+native mged ::_mged_shaded_mode legacy {}
+native mged ::_mged_shader legacy {}
+native mged ::_mged_share legacy {}
+native mged ::_mged_shells legacy {}
+native mged ::_mged_showmats legacy {}
+native mged ::_mged_sill legacy {}
+native mged ::_mged_simulate legacy {}
+native mged ::_mged_size legacy {}
+native mged ::_mged_solid_report legacy {}
+native mged ::_mged_solids legacy {}
+native mged ::_mged_solids_on_ray legacy {}
+native mged ::_mged_sphgroup legacy {}
+native mged ::_mged_srot legacy {}
+native mged ::_mged_sscale legacy {}
+native mged ::_mged_stat legacy {}
+native mged ::_mged_status legacy {}
+native mged ::_mged_stuff_str legacy {}
+native mged ::_mged_summary legacy {}
+native mged ::_mged_sv legacy {}
+native mged ::_mged_svb legacy {}
+native mged ::_mged_sxy legacy {}
+native mged ::_mged_sync legacy {}
+native mged ::_mged_t legacy {}
+native mged ::_mged_ted legacy {}
+native mged ::_mged_tie legacy {}
+native mged ::_mged_tire legacy {}
+native mged ::_mged_title legacy {}
+native mged ::_mged_tol legacy {}
+native mged ::_mged_top legacy {}
+native mged ::_mged_tops legacy {}
+native mged ::_mged_tra legacy {}
+native mged ::_mged_track legacy {}
+native mged ::_mged_tracker legacy {}
+native mged ::_mged_translate legacy {}
+native mged ::_mged_tree legacy {}
+native mged ::_mged_unhide legacy {}
+native mged ::_mged_units legacy {}
+native mged ::_mged_v2m_point legacy {}
+native mged ::_mged_vars legacy {}
+native mged ::_mged_vdraw legacy {}
+native mged ::_mged_view legacy {}
+native mged ::_mged_view_ring legacy {}
+native mged ::_mged_view2grid_lu legacy {}
+native mged ::_mged_view2model legacy {}
+native mged ::_mged_view2model_lu legacy {}
+native mged ::_mged_view2model_vec legacy {}
+native mged ::_mged_viewdir legacy {}
+native mged ::_mged_viewsize legacy {}
+native mged ::_mged_vnirt legacy {}
+native mged ::_mged_voxelize legacy {}
+native mged ::_mged_vquery_ray legacy {}
+native mged ::_mged_vrot legacy {}
+native mged ::_mged_wcodes legacy {}
+native mged ::_mged_whatid legacy {}
+native mged ::_mged_which_shader legacy {}
+native mged ::_mged_whichair legacy {}
+native mged ::_mged_whichid legacy {}
+native mged ::_mged_who legacy {}
+native mged ::_mged_winset legacy {}
+native mged ::_mged_wmater legacy {}
+native mged ::_mged_x legacy {}
+native mged ::_mged_xpush legacy {}
+native mged ::_mged_ypr legacy {}
+native mged ::_mged_Z legacy {}
+native mged ::_mged_zoom legacy {}
+native mged ::_mged_zoomin legacy {}
+native mged ::_mged_zoomout legacy {}
+native mged ::35,25 compatibility {::brlcad::mged 35,25}
+native mged ::3ptarb compatibility {::brlcad::mged 3ptarb}
+native mged ::45,45 compatibility {::brlcad::mged 45,45}
+native mged ::accept compatibility {::brlcad::mged accept}
+native mged ::adc compatibility {::brlcad::mged adc}
+native mged ::adjust compatibility {::brlcad::mged adjust}
+native mged ::ae compatibility {::brlcad::mged ae}
+native mged ::ae2dir compatibility {::brlcad::mged ae2dir}
+native mged ::aet compatibility {::brlcad::mged aet}
+native mged ::aip compatibility {::brlcad::mged aip}
+native mged ::analyze compatibility {::brlcad::mged analyze}
+native mged ::annotate compatibility {::brlcad::mged annotate}
+native mged ::arb compatibility {::brlcad::mged arb}
+native mged ::arced compatibility {::brlcad::mged arced}
+native mged ::area compatibility {::brlcad::mged area}
+native mged ::arot compatibility {::brlcad::mged arot}
+native mged ::arrange compatibility {::brlcad::mged arrange}
+native mged ::art compatibility {::brlcad::mged art}
+native mged ::attach compatibility {::brlcad::mged attach}
+native mged ::attr compatibility {::brlcad::mged attr}
+native mged ::autoview compatibility {::brlcad::mged autoview}
+native mged ::B compatibility {::brlcad::mged B}
+native mged ::E compatibility {::brlcad::mged E}
+native mged ::bb compatibility {::brlcad::mged bb}
+native mged ::bev compatibility {::brlcad::mged bev}
+native mged ::bo compatibility {::brlcad::mged bo}
+native mged ::bomb compatibility {::brlcad::mged bomb}
+native mged ::bot compatibility {::brlcad::mged bot}
+native mged ::bot_condense compatibility {::brlcad::mged bot_condense}
+native mged ::bot_decimate compatibility {::brlcad::mged bot_decimate}
+native mged ::bot_dump compatibility {::brlcad::mged bot_dump}
+native mged ::bot_exterior compatibility {::brlcad::mged bot_exterior}
+native mged ::bot_face_fuse compatibility {::brlcad::mged bot_face_fuse}
+native mged ::bot_face_sort compatibility {::brlcad::mged bot_face_sort}
+native mged ::bot_flip compatibility {::brlcad::mged bot_flip}
+native mged ::bot_fuse compatibility {::brlcad::mged bot_fuse}
+native mged ::bot_merge compatibility {::brlcad::mged bot_merge}
+native mged ::bot_smooth compatibility {::brlcad::mged bot_smooth}
+native mged ::bot_split compatibility {::brlcad::mged bot_split}
+native mged ::bot_sync compatibility {::brlcad::mged bot_sync}
+native mged ::bot_vertex_fuse compatibility {::brlcad::mged bot_vertex_fuse}
+native mged ::bottom compatibility {::brlcad::mged bottom}
+native mged ::brep compatibility {::brlcad::mged brep}
+native mged ::c compatibility {::brlcad::mged c}
+native mged ::cat compatibility {::brlcad::mged cat}
+native mged ::cc compatibility {::brlcad::mged cc}
+native mged ::center compatibility {::brlcad::mged center}
+native mged ::check compatibility {::brlcad::mged check}
+native mged ::clone compatibility {::brlcad::mged clone}
+native mged ::closedb compatibility {::brlcad::mged closedb}
+native mged ::cmd_win compatibility {::brlcad::mged cmd_win}
+native mged ::coil compatibility {::brlcad::mged coil}
+native mged ::color compatibility {::brlcad::mged color}
+native mged ::comb compatibility {::brlcad::mged comb}
+native mged ::comb_color compatibility {::brlcad::mged comb_color}
+native mged ::comb_std compatibility {::brlcad::mged comb_std}
+native mged ::combmem compatibility {::brlcad::mged combmem}
+native mged ::constraint compatibility {::brlcad::mged constraint}
+native mged ::copy compatibility {::brlcad::mged copy}
+native mged ::copyeval compatibility {::brlcad::mged copyeval}
+native mged ::copymat compatibility {::brlcad::mged copymat}
+native mged ::cp compatibility {::brlcad::mged cp}
+native mged ::cpi compatibility {::brlcad::mged cpi}
+native mged ::d compatibility {::brlcad::mged d}
+native mged ::data_lines compatibility {::brlcad::mged data_lines}
+native mged ::db compatibility {::brlcad::mged db}
+native mged ::db_glob compatibility {::brlcad::mged db_glob}
+native mged ::dbconcat compatibility {::brlcad::mged dbconcat}
+native mged ::dbfind compatibility {::brlcad::mged dbfind}
+native mged ::dbip compatibility {::brlcad::mged dbip}
+native mged ::dbot_dump compatibility {::brlcad::mged dbot_dump}
+native mged ::dbversion compatibility {::brlcad::mged dbversion}
+native mged ::debug compatibility {::brlcad::mged debug}
+native mged ::debugbu compatibility {::brlcad::mged debugbu}
+native mged ::debugdir compatibility {::brlcad::mged debugdir}
+native mged ::debuglib compatibility {::brlcad::mged debuglib}
+native mged ::debugnmg compatibility {::brlcad::mged debugnmg}
+native mged ::decompose compatibility {::brlcad::mged decompose}
+native mged ::delay compatibility {::brlcad::mged delay}
+native mged ::dir2ae compatibility {::brlcad::mged dir2ae}
+native mged ::dm compatibility {::brlcad::mged dm}
+native mged ::dplot compatibility {::brlcad::mged dplot}
+native mged ::draw compatibility {::brlcad::mged draw}
+native mged ::dsp compatibility {::brlcad::mged dsp}
+native mged ::dump compatibility {::brlcad::mged dump}
+native mged ::dup compatibility {::brlcad::mged dup}
+native mged ::e compatibility {::brlcad::mged e}
+native mged ::eac compatibility {::brlcad::mged eac}
+native mged ::echo compatibility {::brlcad::mged echo}
+native mged ::edarb compatibility {::brlcad::mged edarb}
+native mged ::edcodes compatibility {::brlcad::mged edcodes}
+native mged ::edcolor compatibility {::brlcad::mged edcolor}
+native mged ::edcomb compatibility {::brlcad::mged edcomb}
+native mged ::edgedir compatibility {::brlcad::mged edgedir}
+native mged ::edit compatibility {::brlcad::mged edit}
+native mged ::edmater compatibility {::brlcad::mged edmater}
+native mged ::env compatibility {::brlcad::mged env}
+native mged ::eqn compatibility {::brlcad::mged eqn}
+native mged ::erase compatibility {::brlcad::mged erase}
+native mged ::ert compatibility {::brlcad::mged ert}
+native mged ::ev compatibility {::brlcad::mged ev}
+native mged ::exists compatibility {::brlcad::mged exists}
+native mged ::expand compatibility {::brlcad::mged expand}
+native mged ::extrude compatibility {::brlcad::mged extrude}
+native mged ::eye compatibility {::brlcad::mged eye}
+native mged ::eye_pos compatibility {::brlcad::mged eye_pos}
+native mged ::eye_pt compatibility {::brlcad::mged eye_pt}
+native mged ::facedef compatibility {::brlcad::mged facedef}
+native mged ::facetize compatibility {::brlcad::mged facetize}
+native mged ::fb2pix compatibility {::brlcad::mged fb2pix}
+native mged ::fbclear compatibility {::brlcad::mged fbclear}
+native mged ::find_arb_edge compatibility {::brlcad::mged find_arb_edge}
+native mged ::find_bot_edge compatibility {::brlcad::mged find_bot_edge}
+native mged ::find_bot_pnt compatibility {::brlcad::mged find_bot_pnt}
+native mged ::find_pipe_pnt compatibility {::brlcad::mged find_pipe_pnt}
+native mged ::form compatibility {::brlcad::mged form}
+native mged ::fracture compatibility {::brlcad::mged fracture}
+native mged ::front compatibility {::brlcad::mged front}
+native mged ::g compatibility {::brlcad::mged g}
+native mged ::garbage_collect compatibility {::brlcad::mged garbage_collect}
+native mged ::gdiff compatibility {::brlcad::mged gdiff}
+native mged ::get compatibility {::brlcad::mged get}
+native mged ::get_autoview compatibility {::brlcad::mged get_autoview}
+native mged ::get_comb compatibility {::brlcad::mged get_comb}
+native mged ::get_dbip compatibility {::brlcad::mged get_dbip}
+native mged ::get_dm_list compatibility {::brlcad::mged get_dm_list}
+native mged ::get_more_default compatibility {::brlcad::mged get_more_default}
+native mged ::get_sed compatibility {::brlcad::mged get_sed}
+native mged ::get_sed_menus compatibility {::brlcad::mged get_sed_menus}
+native mged ::get_solid_keypoint compatibility {::brlcad::mged get_solid_keypoint}
+native mged ::get_type compatibility {::brlcad::mged get_type}
+native mged ::gqa compatibility {::brlcad::mged gqa}
+native mged ::graph compatibility {::brlcad::mged graph}
+native mged ::grid2model_lu compatibility {::brlcad::mged grid2model_lu}
+native mged ::grid2view_lu compatibility {::brlcad::mged grid2view_lu}
+native mged ::group compatibility {::brlcad::mged group}
+native mged ::has_embedded_fb compatibility {::brlcad::mged has_embedded_fb}
+native mged ::heal compatibility {::brlcad::mged heal}
+native mged ::hide compatibility {::brlcad::mged hide}
+native mged ::hist compatibility {::brlcad::mged hist}
+native mged ::history compatibility {::brlcad::mged history}
+native mged ::how compatibility {::brlcad::mged how}
+native mged ::human compatibility {::brlcad::mged human}
+native mged ::i compatibility {::brlcad::mged i}
+native mged ::idents compatibility {::brlcad::mged idents}
+native mged ::ill compatibility {::brlcad::mged ill}
+native mged ::importFg4Section compatibility {::brlcad::mged importFg4Section}
+native mged ::in compatibility {::brlcad::mged in}
+native mged ::inside compatibility {::brlcad::mged inside}
+native mged ::instance compatibility {::brlcad::mged instance}
+native mged ::interrupt compatibility {::brlcad::mged interrupt}
+native mged ::isize compatibility {::brlcad::mged isize}
+native mged ::item compatibility {::brlcad::mged item}
+native mged ::joint compatibility {::brlcad::mged joint}
+native mged ::joint2 compatibility {::brlcad::mged joint2}
+native mged ::journal compatibility {::brlcad::mged journal}
+native mged ::keep compatibility {::brlcad::mged keep}
+native mged ::keypoint compatibility {::brlcad::mged keypoint}
+native mged ::kill compatibility {::brlcad::mged kill}
+native mged ::killall compatibility {::brlcad::mged killall}
+native mged ::killrefs compatibility {::brlcad::mged killrefs}
+native mged ::killtree compatibility {::brlcad::mged killtree}
+native mged ::knob compatibility {::brlcad::mged knob}
+native mged ::l compatibility {::brlcad::mged l}
+native mged ::labelface compatibility {::brlcad::mged labelface}
+native mged ::labelvert compatibility {::brlcad::mged labelvert}
+native mged ::lc compatibility {::brlcad::mged lc}
+native mged ::left compatibility {::brlcad::mged left}
+native mged ::lint compatibility {::brlcad::mged lint}
+native mged ::listeval compatibility {::brlcad::mged listeval}
+native mged ::loadtk compatibility {::brlcad::mged loadtk}
+native mged ::loadview compatibility {::brlcad::mged loadview}
+native mged ::lod compatibility {::brlcad::mged lod}
+native mged ::log compatibility {::brlcad::mged log}
+native mged ::lookat compatibility {::brlcad::mged lookat}
+native mged ::ls compatibility {::brlcad::mged ls}
+native mged ::lt compatibility {::brlcad::mged lt}
+native mged ::M compatibility {::brlcad::mged M}
+native mged ::m2v_point compatibility {::brlcad::mged m2v_point}
+native mged ::make compatibility {::brlcad::mged make}
+native mged ::make_name compatibility {::brlcad::mged make_name}
+native mged ::make_pnts compatibility {::brlcad::mged make_pnts}
+native mged ::mat_ae compatibility {::brlcad::mged mat_ae}
+native mged ::mat_mul compatibility {::brlcad::mged mat_mul}
+native mged ::mat_scale_about_pnt compatibility {::brlcad::mged mat_scale_about_pnt}
+native mged ::mat4x3pnt compatibility {::brlcad::mged mat4x3pnt}
+native mged ::match compatibility {::brlcad::mged match}
+native mged ::mater compatibility {::brlcad::mged mater}
+native mged ::material compatibility {::brlcad::mged material}
+native mged ::matpick compatibility {::brlcad::mged matpick}
+native mged ::metaball_delete_pnt compatibility {::brlcad::mged metaball_delete_pnt}
+native mged ::metaball_move_pnt compatibility {::brlcad::mged metaball_move_pnt}
+native mged ::mged_update compatibility {::brlcad::mged mged_update}
+native mged ::mged_wait compatibility {::brlcad::mged mged_wait}
+native mged ::mirface compatibility {::brlcad::mged mirface}
+native mged ::mirror compatibility {::brlcad::mged mirror}
+native mged ::mmenu_get compatibility {::brlcad::mged mmenu_get}
+native mged ::model2grid_lu compatibility {::brlcad::mged model2grid_lu}
+native mged ::model2view compatibility {::brlcad::mged model2view}
+native mged ::model2view_lu compatibility {::brlcad::mged model2view_lu}
+native mged ::move compatibility {::brlcad::mged move}
+native mged ::move_all compatibility {::brlcad::mged move_all}
+native mged ::move_arb_edge compatibility {::brlcad::mged move_arb_edge}
+native mged ::move_arb_face compatibility {::brlcad::mged move_arb_face}
+native mged ::mrot compatibility {::brlcad::mged mrot}
+native mged ::mv compatibility {::brlcad::mged mv}
+native mged ::mvall compatibility {::brlcad::mged mvall}
+native mged ::nirt compatibility {::brlcad::mged nirt}
+native mged ::nmg compatibility {::brlcad::mged nmg}
+native mged ::nmg_cmface compatibility {::brlcad::mged nmg_cmface}
+native mged ::nmg_collapse compatibility {::brlcad::mged nmg_collapse}
+native mged ::nmg_fix_normals compatibility {::brlcad::mged nmg_fix_normals}
+native mged ::nmg_kill_f compatibility {::brlcad::mged nmg_kill_f}
+native mged ::nmg_kill_v compatibility {::brlcad::mged nmg_kill_v}
+native mged ::nmg_make_v compatibility {::brlcad::mged nmg_make_v}
+native mged ::nmg_mm compatibility {::brlcad::mged nmg_mm}
+native mged ::nmg_move_v compatibility {::brlcad::mged nmg_move_v}
+native mged ::nmg_simplify compatibility {::brlcad::mged nmg_simplify}
+native mged ::npush compatibility {::brlcad::mged npush}
+native mged ::o_rotate compatibility {::brlcad::mged o_rotate}
+native mged ::o_scale compatibility {::brlcad::mged o_scale}
+native mged ::ocenter compatibility {::brlcad::mged ocenter}
+native mged ::oed compatibility {::brlcad::mged oed}
+native mged ::oed_apply compatibility {::brlcad::mged oed_apply}
+native mged ::oed_reset compatibility {::brlcad::mged oed_reset}
+native mged ::oill compatibility {::brlcad::mged oill}
+native mged ::opendb compatibility {::brlcad::mged opendb}
+native mged ::orient compatibility {::brlcad::mged orient}
+native mged ::orientation compatibility {::brlcad::mged orientation}
+native mged ::orot compatibility {::brlcad::mged orot}
+native mged ::orotate compatibility {::brlcad::mged orotate}
+native mged ::oscale compatibility {::brlcad::mged oscale}
+native mged ::otranslate compatibility {::brlcad::mged otranslate}
+native mged ::output_hook compatibility {::brlcad::mged output_hook}
+native mged ::overlay compatibility {::brlcad::mged overlay}
+native mged ::ox compatibility {::brlcad::mged ox}
+native mged ::oxscale compatibility {::brlcad::mged oxscale}
+native mged ::oxy compatibility {::brlcad::mged oxy}
+native mged ::oy compatibility {::brlcad::mged oy}
+native mged ::oyscale compatibility {::brlcad::mged oyscale}
+native mged ::ozscale compatibility {::brlcad::mged ozscale}
+native mged ::p compatibility {::brlcad::mged p}
+native mged ::pathlist compatibility {::brlcad::mged pathlist}
+native mged ::paths compatibility {::brlcad::mged paths}
+native mged ::pathsum compatibility {::brlcad::mged pathsum}
+native mged ::permute compatibility {::brlcad::mged permute}
+native mged ::perspective compatibility {::brlcad::mged perspective}
+native mged ::pipe_append_pnt compatibility {::brlcad::mged pipe_append_pnt}
+native mged ::pipe_delete_pnt compatibility {::brlcad::mged pipe_delete_pnt}
+native mged ::pipe_move_pnt compatibility {::brlcad::mged pipe_move_pnt}
+native mged ::pipe_prepend_pnt compatibility {::brlcad::mged pipe_prepend_pnt}
+native mged ::pix2fb compatibility {::brlcad::mged pix2fb}
+native mged ::plot compatibility {::brlcad::mged plot}
+native mged ::pmat compatibility {::brlcad::mged pmat}
+native mged ::pmodel2view compatibility {::brlcad::mged pmodel2view}
+native mged ::png compatibility {::brlcad::mged png}
+native mged ::png2fb compatibility {::brlcad::mged png2fb}
+native mged ::pnts compatibility {::brlcad::mged pnts}
+native mged ::postscript compatibility {::brlcad::mged postscript}
+native mged ::prcolor compatibility {::brlcad::mged prcolor}
+native mged ::prefix compatibility {::brlcad::mged prefix}
+native mged ::press compatibility {::brlcad::mged press}
+native mged ::preview compatibility {::brlcad::mged preview}
+native mged ::print compatibility {::brlcad::mged print}
+native mged ::process compatibility {::brlcad::mged process}
+native mged ::protate compatibility {::brlcad::mged protate}
+native mged ::ps compatibility {::brlcad::mged ps}
+native mged ::pscale compatibility {::brlcad::mged pscale}
+native mged ::pset compatibility {::brlcad::mged pset}
+native mged ::ptranslate compatibility {::brlcad::mged ptranslate}
+native mged ::pull compatibility {::brlcad::mged pull}
+native mged ::push compatibility {::brlcad::mged push}
+native mged ::put compatibility {::brlcad::mged put}
+native mged ::put_comb compatibility {::brlcad::mged put_comb}
+native mged ::put_sed compatibility {::brlcad::mged put_sed}
+native mged ::putmat compatibility {::brlcad::mged putmat}
+native mged ::q compatibility {::brlcad::mged q}
+native mged ::qorot compatibility {::brlcad::mged qorot}
+native mged ::qray compatibility {::brlcad::mged qray}
+native mged ::quat compatibility {::brlcad::mged quat}
+native mged ::query_ray compatibility {::brlcad::mged query_ray}
+native mged ::quit compatibility {::brlcad::mged quit}
+native mged ::qvrot compatibility {::brlcad::mged qvrot}
+native mged ::r compatibility {::brlcad::mged r}
+native mged ::rate compatibility {::brlcad::mged rate}
+native mged ::rcodes compatibility {::brlcad::mged rcodes}
+native mged ::rear compatibility {::brlcad::mged rear}
+native mged ::rect compatibility {::brlcad::mged rect}
+native mged ::red compatibility {::brlcad::mged red}
+native mged ::redraw compatibility {::brlcad::mged redraw}
+native mged ::refresh compatibility {::brlcad::mged refresh}
+native mged ::regdebug compatibility {::brlcad::mged regdebug}
+native mged ::regdef compatibility {::brlcad::mged regdef}
+native mged ::region compatibility {::brlcad::mged region}
+native mged ::regions compatibility {::brlcad::mged regions}
+native mged ::reject compatibility {::brlcad::mged reject}
+native mged ::release compatibility {::brlcad::mged release}
+native mged ::repair compatibility {::brlcad::mged repair}
+native mged ::reset compatibility {::brlcad::mged reset}
+native mged ::restore compatibility {::brlcad::mged restore}
+native mged ::rfarb compatibility {::brlcad::mged rfarb}
+native mged ::right compatibility {::brlcad::mged right}
+native mged ::rm compatibility {::brlcad::mged rm}
+native mged ::rmap compatibility {::brlcad::mged rmap}
+native mged ::rmat compatibility {::brlcad::mged rmat}
+native mged ::rmater compatibility {::brlcad::mged rmater}
+native mged ::rmats compatibility {::brlcad::mged rmats}
+native mged ::rot compatibility {::brlcad::mged rot}
+native mged ::rot_about compatibility {::brlcad::mged rot_about}
+native mged ::rot_point compatibility {::brlcad::mged rot_point}
+native mged ::rotate_arb_face compatibility {::brlcad::mged rotate_arb_face}
+native mged ::rotobj compatibility {::brlcad::mged rotobj}
+native mged ::rrt compatibility {::brlcad::mged rrt}
+native mged ::rselect compatibility {::brlcad::mged rselect}
+native mged ::rset compatibility {::brlcad::mged rset}
+native mged ::rt compatibility {::brlcad::mged rt}
+native mged ::rt_gettrees compatibility {::brlcad::mged rt_gettrees}
+native mged ::rtabort compatibility {::brlcad::mged rtabort}
+native mged ::rtarea compatibility {::brlcad::mged rtarea}
+native mged ::rtcheck compatibility {::brlcad::mged rtcheck}
+native mged ::rtedge compatibility {::brlcad::mged rtedge}
+native mged ::rtweight compatibility {::brlcad::mged rtweight}
+native mged ::rtwizard compatibility {::brlcad::mged rtwizard}
+native mged ::save compatibility {::brlcad::mged save}
+native mged ::savekey compatibility {::brlcad::mged savekey}
+native mged ::saveview compatibility {::brlcad::mged saveview}
+native mged ::sca compatibility {::brlcad::mged sca}
+native mged ::screengrab compatibility {::brlcad::mged screengrab}
+native mged ::sdata_lines compatibility {::brlcad::mged sdata_lines}
+native mged ::search compatibility {::brlcad::mged search}
+native mged ::sed compatibility {::brlcad::mged sed}
+native mged ::sed_apply compatibility {::brlcad::mged sed_apply}
+native mged ::sed_reset compatibility {::brlcad::mged sed_reset}
+native mged ::sedit compatibility {::brlcad::mged sedit}
+native mged ::select compatibility {::brlcad::mged select}
+native mged ::set_more_default compatibility {::brlcad::mged set_more_default}
+native mged ::setview compatibility {::brlcad::mged setview}
+native mged ::shaded_mode compatibility {::brlcad::mged shaded_mode}
+native mged ::shader compatibility {::brlcad::mged shader}
+native mged ::share compatibility {::brlcad::mged share}
+native mged ::shells compatibility {::brlcad::mged shells}
+native mged ::showmats compatibility {::brlcad::mged showmats}
+native mged ::sill compatibility {::brlcad::mged sill}
+native mged ::simulate compatibility {::brlcad::mged simulate}
+native mged ::size compatibility {::brlcad::mged size}
+native mged ::solid_report compatibility {::brlcad::mged solid_report}
+native mged ::solids compatibility {::brlcad::mged solids}
+native mged ::solids_on_ray compatibility {::brlcad::mged solids_on_ray}
+native mged ::sphgroup compatibility {::brlcad::mged sphgroup}
+native mged ::srot compatibility {::brlcad::mged srot}
+native mged ::sscale compatibility {::brlcad::mged sscale}
+native mged ::stat compatibility {::brlcad::mged stat}
+native mged ::status compatibility {::brlcad::mged status}
+native mged ::stuff_str compatibility {::brlcad::mged stuff_str}
+native mged ::summary compatibility {::brlcad::mged summary}
+native mged ::sv compatibility {::brlcad::mged sv}
+native mged ::svb compatibility {::brlcad::mged svb}
+native mged ::sxy compatibility {::brlcad::mged sxy}
+native mged ::sync compatibility {::brlcad::mged sync}
+native mged ::t compatibility {::brlcad::mged t}
+native mged ::ted compatibility {::brlcad::mged ted}
+native mged ::tie compatibility {::brlcad::mged tie}
+native mged ::tire compatibility {::brlcad::mged tire}
+native mged ::title compatibility {::brlcad::mged title}
+native mged ::tol compatibility {::brlcad::mged tol}
+native mged ::top compatibility {::brlcad::mged top}
+native mged ::tops compatibility {::brlcad::mged tops}
+native mged ::tra compatibility {::brlcad::mged tra}
+native mged ::track compatibility {::brlcad::mged track}
+native mged ::tracker compatibility {::brlcad::mged tracker}
+native mged ::translate compatibility {::brlcad::mged translate}
+native mged ::tree compatibility {::brlcad::mged tree}
+native mged ::unhide compatibility {::brlcad::mged unhide}
+native mged ::units compatibility {::brlcad::mged units}
+native mged ::v2m_point compatibility {::brlcad::mged v2m_point}
+native mged ::vars compatibility {::brlcad::mged vars}
+native mged ::vdraw compatibility {::brlcad::mged vdraw}
+native mged ::view compatibility {::brlcad::mged view}
+native mged ::view_ring compatibility {::brlcad::mged view_ring}
+native mged ::view2grid_lu compatibility {::brlcad::mged view2grid_lu}
+native mged ::view2model compatibility {::brlcad::mged view2model}
+native mged ::view2model_lu compatibility {::brlcad::mged view2model_lu}
+native mged ::view2model_vec compatibility {::brlcad::mged view2model_vec}
+native mged ::viewdir compatibility {::brlcad::mged viewdir}
+native mged ::viewsize compatibility {::brlcad::mged viewsize}
+native mged ::vnirt compatibility {::brlcad::mged vnirt}
+native mged ::voxelize compatibility {::brlcad::mged voxelize}
+native mged ::vquery_ray compatibility {::brlcad::mged vquery_ray}
+native mged ::vrot compatibility {::brlcad::mged vrot}
+native mged ::wcodes compatibility {::brlcad::mged wcodes}
+native mged ::wdb_open legacy {}
+native mged ::whatid compatibility {::brlcad::mged whatid}
+native mged ::which_shader compatibility {::brlcad::mged which_shader}
+native mged ::whichair compatibility {::brlcad::mged whichair}
+native mged ::whichid compatibility {::brlcad::mged whichid}
+native mged ::who compatibility {::brlcad::mged who}
+native mged ::winset compatibility {::brlcad::mged winset}
+native mged ::wmater compatibility {::brlcad::mged wmater}
+native mged ::x compatibility {::brlcad::mged x}
+native mged ::xpush compatibility {::brlcad::mged xpush}
+native mged ::ypr compatibility {::brlcad::mged ypr}
+native mged ::Z compatibility {::brlcad::mged Z}
+native mged ::zoom compatibility {::brlcad::mged zoom}
+native mged ::zoomin compatibility {::brlcad::mged zoomin}
+native mged ::zoomout compatibility {::brlcad::mged zoomout}

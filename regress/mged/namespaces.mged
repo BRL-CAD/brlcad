@@ -1,5 +1,21 @@
 puts "*** Testing Tcl command namespaces ***"
 
+source {@TCL_NAMESPACE_POLICY_SCRIPT@}
+set native_commands [::brlcad::namespace_policy::root_native_commands]
+if {[info exists ::env(BRLCAD_DUMP_MGED_NATIVE)]} {
+    foreach command $native_commands {
+	puts [list native mged $command legacy {}]
+    }
+}
+if {[catch {
+    ::brlcad::namespace_policy::check_native_set \
+	{@TCL_NAMESPACE_MANIFEST@} {bu bn rt dm ged history mged} \
+	$native_commands
+} message]} {
+    error "FAIL native command inventory:\n$message"
+}
+unset native_commands
+
 foreach package {
     brlcad::help
     brlcad::help::library
@@ -556,7 +572,7 @@ try {
 }
 unset canonical_rotation expected_rotation rotation_args
 
-set matches [::brlcad::ged glob namespaces_*]
+set matches [lrange [::brlcad::ged glob [list noop namespaces_*]] 1 end]
 if {[lsearch -exact $matches $object] < 0} {
     error "FAIL raw GED glob did not find $object: $matches"
 }

@@ -24,7 +24,11 @@
 
 #include "common.h"
 
+#include <algorithm>
 #include <cstdio>
+#include <map>
+#include <set>
+#include <string>
 
 #include "bu/app.h"
 #include "bu/str.h"
@@ -78,8 +82,135 @@ eval_result_is(Tcl_Interp *interp, const char *script, const char *expected)
 }
 
 
+static bool
+root_commands(Tcl_Interp *interp, std::set<std::string> &commands)
+{
+    Tcl_Obj **command_objects = NULL;
+    int command_count = 0;
+
+    commands.clear();
+    if (Tcl_Eval(interp, "info commands ::*") != TCL_OK ||
+	Tcl_ListObjGetElements(interp, Tcl_GetObjResult(interp),
+	    &command_count, &command_objects) != TCL_OK) {
+	std::fprintf(stderr, "Unable to inspect Tcl commands: %s\n",
+		Tcl_GetStringResult(interp));
+	return false;
+    }
+
+    for (int i = 0; i < command_count; i++)
+	commands.insert(Tcl_GetString(command_objects[i]));
+    Tcl_ResetResult(interp);
+    return true;
+}
+
+
+static bool
+collect_native_inventory(Tcl_Interp *interp,
+	std::map<std::string, std::set<std::string>> &inventory)
+{
+    struct initializer {
+	const char *component;
+	int (*function)(Tcl_Interp *);
+    };
+    static const initializer initializers[] = {
+	{"bu", Bu_Init},
+	{"bn", Bn_Init},
+	{"rt", Rt_Init},
+	{"dm", Dm_Init},
+	{"ged", Ged_Init},
+	{"history", Cho_Init}
+    };
+    std::set<std::string> before;
+
+    if (Tcl_Init(interp) != TCL_OK) {
+	std::fprintf(stderr, "Tcl initialization failed: %s\n",
+		Tcl_GetStringResult(interp));
+	return false;
+    }
+    if (!root_commands(interp, before))
+	return false;
+
+    for (const initializer &entry : initializers) {
+	std::set<std::string> after;
+	if (entry.function(interp) != TCL_OK) {
+	    std::fprintf(stderr, "%s initialization failed: %s\n",
+		    entry.component, Tcl_GetStringResult(interp));
+	    return false;
+	}
+	if (!root_commands(interp, after))
+	    return false;
+	std::set_difference(after.begin(), after.end(), before.begin(),
+		before.end(), std::inserter(inventory[entry.component],
+		    inventory[entry.component].end()));
+	before.swap(after);
+    }
+
+    return true;
+}
+
+
+static void
+print_native_inventory(
+    const std::map<std::string, std::set<std::string>> &inventory)
+{
+    for (const auto &component : inventory) {
+	for (const std::string &command : component.second) {
+	    std::printf("native %s %s legacy {}\n",
+		    component.first.c_str(), command.c_str());
+	}
+    }
+}
+
+
+static bool
+validate_native_inventory(Tcl_Interp *interp, const char *policy_script,
+	const char *manifest,
+	const std::map<std::string, std::set<std::string>> &inventory)
+{
+    Tcl_Obj *arguments[3] = {NULL, NULL, NULL};
+    Tcl_Obj *inventory_object = Tcl_NewDictObj();
+    int result;
+
+    if (Tcl_EvalFile(interp, policy_script) != TCL_OK) {
+	std::fprintf(stderr, "Unable to load namespace policy: %s\n",
+		Tcl_GetStringResult(interp));
+	return false;
+    }
+
+    Tcl_IncrRefCount(inventory_object);
+    for (const auto &component : inventory) {
+	Tcl_Obj *commands = Tcl_NewListObj(0, NULL);
+	for (const std::string &command : component.second) {
+	    Tcl_ListObjAppendElement(interp, commands,
+		    Tcl_NewStringObj(command.c_str(), -1));
+	}
+	Tcl_DictObjPut(interp, inventory_object,
+		Tcl_NewStringObj(component.first.c_str(), -1), commands);
+    }
+
+    arguments[0] = Tcl_NewStringObj(
+	    "::brlcad::namespace_policy::check_native", -1);
+    arguments[1] = Tcl_NewStringObj(manifest, -1);
+    arguments[2] = inventory_object;
+    Tcl_IncrRefCount(arguments[0]);
+    Tcl_IncrRefCount(arguments[1]);
+    result = Tcl_EvalObjv(interp, 3, arguments, TCL_EVAL_GLOBAL);
+    Tcl_DecrRefCount(arguments[1]);
+    Tcl_DecrRefCount(arguments[0]);
+    Tcl_DecrRefCount(inventory_object);
+
+    if (result != TCL_OK) {
+	std::fprintf(stderr, "Native Tcl namespace policy failed:\n%s\n",
+		Tcl_GetStringResult(interp));
+	return false;
+    }
+
+    return true;
+}
+
+
 int
-main(int UNUSED(argc), const char **argv)
+main(int argc, const char **argv)
 {
     static char canonical_tag[] = "canonical";
     static char private_tag[] = "private";
@@ -95,6 +226,14 @@ main(int UNUSED(argc), const char **argv)
 	{"private", NULL, report_object_arguments, private_object_tag},
 	{NULL, NULL, NULL, NULL}
     };
+
+    bool dump_native = argc == 2 && BU_STR_EQUAL(argv[1], "--dump-native");
+    if (!dump_native && argc != 3) {
+	std::fprintf(stderr,
+		"Usage: %s policy-script manifest\n"
+		"       %s --dump-native\n", argv[0], argv[0]);
+	return 2;
+    }
 
     bu_setprogname(argv[0]);
     Tcl_FindExecutable(argv[0]);
@@ -155,6 +294,24 @@ main(int UNUSED(argc), const char **argv)
 	    Tcl_GetStringResult(interp));
 	passed = false;
     }
+
+    Tcl_DeleteInterp(interp);
+    if (!passed)
+	return 1;
+
+    interp = Tcl_CreateInterp();
+    if (!interp) {
+	std::fprintf(stderr, "Unable to create a Tcl interpreter\n");
+	return 1;
+    }
+
+    std::map<std::string, std::set<std::string>> native_inventory;
+    passed = collect_native_inventory(interp, native_inventory);
+    if (passed && dump_native)
+	print_native_inventory(native_inventory);
+    if (passed && !dump_native)
+	passed = validate_native_inventory(interp, argv[1], argv[2],
+		native_inventory);
 
     Tcl_DeleteInterp(interp);
     if (!passed)

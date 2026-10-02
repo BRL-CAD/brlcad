@@ -172,6 +172,12 @@ proc ::brlcad::namespace_policy::read_manifest {path} {
 		if {$kind ni {compatibility legacy public}} {
 		    error "$path:$line_number: invalid native command kind \"$kind\""
 		}
+		if {$kind eq "compatibility" && [llength $target] == 0} {
+		    error "$path:$line_number: native compatibility command has no canonical target"
+		}
+		if {$kind ne "compatibility" && [llength $target] != 0} {
+		    error "$path:$line_number: only compatibility commands may have targets"
+		}
 		set key [list $component $command]
 		if {[dict exists $policy natives $key]} {
 		    error "$path:$line_number: duplicate native command $command for $component"
@@ -239,6 +245,106 @@ proc ::brlcad::namespace_policy::validate_compatibility_targets {scripts} {
 	}
     }
     return $errors
+}
+
+proc ::brlcad::namespace_policy::check_native {manifest inventory} {
+    set policy [read_manifest $manifest]
+    set expected [dict get $policy natives]
+    set components [dict keys $inventory]
+    set actual {}
+    set errors {}
+
+    dict for {component commands} $inventory {
+	foreach command $commands {
+	    set command [normalize_command $command]
+	    dict set actual [list $component $command] 1
+	}
+    }
+
+    foreach key [lsort [dict keys $actual]] {
+	if {![dict exists $expected $key]} {
+	    lassign $key component command
+	    lappend errors "$component: unapproved global native Tcl command $command"
+	}
+    }
+    foreach key [lsort [dict keys $expected]] {
+	lassign $key component command
+	if {$component ni $components} {
+	    continue
+	}
+	if {![dict exists $actual $key]} {
+	    lappend errors "$component: policy entry has no native command $command"
+	}
+	set metadata [dict get $expected $key]
+	if {[dict get $metadata kind] eq "compatibility"} {
+	    set target [dict get $metadata target]
+	    if {[is_global_command [lindex $target 0]]} {
+		lappend errors "$component: compatibility command $command has global target $target"
+	    }
+	}
+    }
+
+    if {[llength $errors]} {
+	return -code error [join $errors \n]
+    }
+    return [dict size $actual]
+}
+
+proc ::brlcad::namespace_policy::root_native_commands {} {
+    set baseline [interp create]
+    try {
+	set core_commands [$baseline eval {info commands ::*}]
+    } finally {
+	interp delete $baseline
+    }
+
+    set script_commands [info procs ::*]
+    set result {}
+    foreach command [info commands ::*] {
+	set command [normalize_command $command]
+	if {$command in $core_commands || $command in $script_commands ||
+	    [string match ::.* $command]} {
+	    continue
+	}
+	lappend result $command
+    }
+    return [lsort -unique $result]
+}
+
+proc ::brlcad::namespace_policy::check_native_set {
+    manifest components commands
+} {
+    set policy [read_manifest $manifest]
+    set expected {}
+    set errors {}
+
+    dict for {key metadata} [dict get $policy natives] {
+	lassign $key component command
+	if {$component in $components} {
+	    dict set expected $command [list $component $metadata]
+	}
+    }
+
+    set actual {}
+    foreach command $commands {
+	dict set actual [normalize_command $command] 1
+    }
+    foreach command [lsort [dict keys $actual]] {
+	if {![dict exists $expected $command]} {
+	    lappend errors "unapproved global native Tcl command $command"
+	}
+    }
+    foreach command [lsort [dict keys $expected]] {
+	if {![dict exists $actual $command]} {
+	    lassign [dict get $expected $command] component metadata
+	    lappend errors "$component: policy entry has no native command $command"
+	}
+    }
+
+    if {[llength $errors]} {
+	return -code error [join $errors \n]
+    }
+    return [dict size $actual]
 }
 
 proc ::brlcad::namespace_policy::check {manifest data_directory} {
@@ -314,18 +420,23 @@ proc ::brlcad::namespace_policy::write_baseline {manifest data_directory} {
     puts "Wrote [dict size $actual] script command entries to $manifest"
 }
 
-if {$argc == 2} {
-    lassign $argv manifest data_directory
-    exit [::brlcad::namespace_policy::check $manifest $data_directory]
-}
-if {$argc == 3 && [lindex $argv 0] eq "--write-baseline"} {
-    lassign [lrange $argv 1 end] manifest data_directory
-    ::brlcad::namespace_policy::write_baseline $manifest $data_directory
-    exit 0
-}
+if {[info exists argv0]} {
+    if {[file normalize [info script]] eq [file normalize $argv0]} {
+	if {$argc == 2} {
+	    lassign $argv manifest data_directory
+	    exit [::brlcad::namespace_policy::check $manifest $data_directory]
+	}
+	if {$argc == 3 && [lindex $argv 0] eq "--write-baseline"} {
+	    lassign [lrange $argv 1 end] manifest data_directory
+	    ::brlcad::namespace_policy::write_baseline $manifest $data_directory
+	    exit 0
+	}
 
-puts stderr "Usage: [file tail [info script]] ?--write-baseline? manifest data-root"
-exit 2
+	puts stderr \
+	    "Usage: [file tail [info script]] ?--write-baseline? manifest data-root"
+	exit 2
+    }
+}
 
 # Local Variables:
 # mode: Tcl

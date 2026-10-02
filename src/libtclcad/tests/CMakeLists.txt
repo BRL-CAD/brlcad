@@ -11,7 +11,13 @@ if(BRLCAD_ENABLE_TCL)
     add_dependencies(tclcad_check_multi_interp m35.g)
   endif()
   brlcad_add_test(NAME tclcad_test_itcl_version COMMAND tclcad_check_itcl)
-  brlcad_add_test(NAME tclcad_test_namespace COMMAND tclcad_check_namespace)
+  brlcad_add_test(
+    NAME tclcad_test_namespace
+    COMMAND
+      tclcad_check_namespace
+      "${CMAKE_SOURCE_DIR}/regress/repository/tcl_namespace_policy.tcl"
+      "${CMAKE_SOURCE_DIR}/regress/repository/tcl_namespace_manifest.txt"
+  )
   brlcad_add_test(NAME tclcad_test_multi_interp COMMAND tclcad_check_multi_interp)
 
   if(TKLITEHTML_SOURCES)
