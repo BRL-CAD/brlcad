@@ -60,16 +60,16 @@ proc random_color {} {
 proc randomize_color {obj} {
     set obj [file tail $obj]
     set rcolor [random_color]
-    attr set $obj color $rcolor
-    attr set $obj rgb $rcolor
+    ::brlcad::mged attr set $obj color $rcolor
+    ::brlcad::mged attr set $obj rgb $rcolor
 }
 
 proc randomize_region_colors {} {
-    search | -type r -exec randomize_color "{}" ";"
+    ::brlcad::mged search | -type r -exec randomize_color "{}" ";"
 }
 
 proc name_exists {name} {
-    return [expr ![catch {get $name}]]
+    return [expr ![catch {::brlcad::mged get $name}]]
 }
 
 proc rand_char {} {
@@ -136,7 +136,7 @@ proc save_nirt {args} {
     set last_region_hit {}
 
     # run nirt
-    set nirt_output [nirt -b]
+    set nirt_output [::brlcad::mged nirt -b]
 
     # echo nirt output
     puts $nirt_output
@@ -174,7 +174,7 @@ proc save_nirt {args} {
 
     # estimate actual exit point as last entry point + the max
     # dimension of the corresponding object's bbox
-    if {![catch {bb -q -d $last_region_hit} bb_res]} {
+    if {![catch {::brlcad::mged bb -q -d $last_region_hit} bb_res]} {
 	set dim 0
 	set max_dim 0
 	foreach line [split $bb_res "\n"] {
@@ -184,7 +184,7 @@ proc save_nirt {args} {
 		}
 	    }
 	}
-	set dir [ShotVis::direction_vector {*}[lrange [view aet] 0 1]]
+	set dir [ShotVis::direction_vector {*}[lrange [::brlcad::mged view aet] 0 1]]
 	set new_exit [::brlcad::vmath vcomb2 1 $ray_exit $max_dim $dir]
 	set ray_exit $new_exit
     }
@@ -195,14 +195,14 @@ proc save_nirt {args} {
 
     # create result comb
     set shotline [make_std_arrow $basename $ray_enter $ray_exit]
-    g $basename $shotline {*}$hit_regions
+    ::brlcad::mged g $basename $shotline {*}$hit_regions
 
     # set attributes
-    attr set $basename "view_center" [view center]
-    attr set $basename "view_aet" [view aet]
-    attr set $basename "ray_origin" $ray_origin
-    attr set $basename "ray_dir" $ray_dir
-    attr set $basename "ray_az_el" "$az $el"
+    ::brlcad::mged attr set $basename "view_center" [::brlcad::mged view center]
+    ::brlcad::mged attr set $basename "view_aet" [::brlcad::mged view aet]
+    ::brlcad::mged attr set $basename "ray_origin" $ray_origin
+    ::brlcad::mged attr set $basename "ray_dir" $ray_dir
+    ::brlcad::mged attr set $basename "ray_az_el" "$az $el"
 }
 
 # replace existing class
@@ -556,9 +556,9 @@ catch {::itcl::delete class ShotVis} error
 ::itcl::body ShotVis::destructor {} {
     if {$root_comb != $basename} {
 	kill_old_shot $garbage_comb
-	mv $root_comb $basename
+	::brlcad::mged mv $root_comb $basename
     } else {
-	kill $garbage_comb
+	::brlcad::mged kill $garbage_comb
     }
 }
 
@@ -617,12 +617,12 @@ catch {::itcl::delete class ShotVis} error
 
     set default_text_color [ttk::style lookup [ttk::style theme use] -foreground]
 
-    if {[llength [who]] == 0} {
-	view aet 35 25 0
+    if {[llength [::brlcad::mged who]] == 0} {
+	::brlcad::mged view aet 35 25 0
     }
 
     set garbage_comb [rand_name "${basename}_garbage" ""]
-    put $garbage_comb comb region no tree {}
+    ::brlcad::mged put $garbage_comb comb region no tree {}
     #hide $garbage_comb
 
     if {[name_exists $basename]} {
@@ -638,7 +638,7 @@ catch {::itcl::delete class ShotVis} error
 	update_shot
     }
 
-    autoview
+    ::brlcad::mged autoview
 
     bind $itk_component(notebook) <<NotebookTabChanged>> [::itcl::code $this redraw]
 }
@@ -646,7 +646,7 @@ catch {::itcl::delete class ShotVis} error
 ::itcl::body ShotVis::our_members {comb} {
     # Find all comb members except references to nirted objects, i.e.
     # members we "own".
-    return [search $comb -not \( -below -attr view_center -and -not -path \*.shotline\* \)]
+    return [::brlcad::mged search $comb -not \( -below -attr view_center -and -not -path \*.shotline\* \)]
 }
 
 # Delete members of an outdated shot combination. Faster than
@@ -663,7 +663,7 @@ catch {::itcl::delete class ShotVis} error
 	    lappend unreferenced $obj
 	}
     }
-    kill {*}$unreferenced
+    ::brlcad::mged kill {*}$unreferenced
 }
 
 ::itcl::body ShotVis::near_zero {val} {
@@ -764,16 +764,16 @@ catch {::itcl::delete class ShotVis} error
     $itk_component(accept_edit) state !disabled
     $itk_component(reject_edit) state !disabled
 
-    set cyl_path [lindex [search /$threat_comb -name \*.cyl] 0]
-    oed /$threat_comb "/[join [lrange [split $cyl_path "/"] 2 end] "/"]"
+    set cyl_path [lindex [::brlcad::mged search /$threat_comb -name \*.cyl] 0]
+    ::brlcad::mged oed /$threat_comb "/[join [lrange [split $cyl_path "/"] 2 end] "/"]"
 }
 
 ::itcl::body ShotVis::accept_matedit {} {
     $itk_component(accept_edit) state disabled
     $itk_component(reject_edit) state disabled
 
-    accept
-    xpush $threat_comb
+    ::brlcad::mged accept
+    ::brlcad::mged xpush $threat_comb
 
     if {$nirt_comb != ""} {
 
@@ -790,7 +790,7 @@ catch {::itcl::delete class ShotVis} error
     $itk_component(accept_edit) state disabled
     $itk_component(reject_edit) state disabled
 
-    reject
+    ::brlcad::mged reject
 
     foreach component $matedit_disabled_widgets {
 	$itk_component($component) state !disabled
@@ -798,75 +798,75 @@ catch {::itcl::delete class ShotVis} error
 }
 
 ::itcl::body ShotVis::nirt_threat {} {
-    set old_center [view center]
-    set old_aet [view aet]
+    set old_center [::brlcad::mged view center]
+    set old_aet [::brlcad::mged view aet]
 
     # look down threat
-    set rcc_name [lindex [search $threat_comb -name \*.cyl] 0]
+    set rcc_name [lindex [::brlcad::mged search $threat_comb -name \*.cyl] 0]
 
     set rcc_center [rcc_center $rcc_name]
-    view center {*}$rcc_center
-    view aet {*}[vec2ae [::brlcad::vmath vscale [rcc_direction $rcc_name] -1]] 0
+    ::brlcad::mged view center {*}$rcc_center
+    ::brlcad::mged view aet {*}[vec2ae [::brlcad::vmath vscale [rcc_direction $rcc_name] -1]] 0
 
     # erase threat
-    erase {*}[our_members $root_comb]
+    ::brlcad::mged erase {*}[our_members $root_comb]
     update
 
     # do nirt
-    set old_nirt_name [lindex [search $root_comb -not -path \*$threat_comb\* -attr view_center] 0]
+    set old_nirt_name [lindex [::brlcad::mged search $root_comb -not -path \*$threat_comb\* -attr view_center] 0]
 
     set nirt_name [rand_name "${basename}_nirt_" ""]
     save_nirt "$nirt_name"
 
     # update nirt comb
     if {$old_nirt_name != ""} {
-	rm $root_comb $old_nirt_name
+	::brlcad::mged rm $root_comb $old_nirt_name
 	trash $old_nirt_name
     }
-    comb $root_comb u $nirt_name
+    ::brlcad::mged comb $root_comb u $nirt_name
     set nirt_comb $nirt_name
 
     # restore view
-    view center {*}$old_center
-    view aet {*}$old_aet
+    ::brlcad::mged view center {*}$old_center
+    ::brlcad::mged view aet {*}$old_aet
 
     redraw
 }
 
 ::itcl::body ShotVis::nirt_view {} {
     # erase threat
-    erase {*}[our_members $root_comb]
+    ::brlcad::mged erase {*}[our_members $root_comb]
     update
 
     # do nirt
-    set old_nirt_name [lindex [search $root_comb -not -path \*$threat_comb\* -attr view_center] 0]
+    set old_nirt_name [lindex [::brlcad::mged search $root_comb -not -path \*$threat_comb\* -attr view_center] 0]
 
     set nirt_name [rand_name "${basename}_nirt_" ""]
     save_nirt "$nirt_name"
 
     # update nirt comb
     if {$old_nirt_name != ""} {
-	rm $root_comb $old_nirt_name
+	::brlcad::mged rm $root_comb $old_nirt_name
 	trash $old_nirt_name
     }
-    comb $root_comb u $nirt_name
+    ::brlcad::mged comb $root_comb u $nirt_name
     set nirt_comb $nirt_name
 
     # replace invalidated threat shotline with nirt's shotline
     set threat_cyl [rand_name "${threat_comb}_" ".cyl"]
     set threat_cone [rand_name "${threat_comb}_" ".cone"]
-    set nirt_cyl [lindex [search $nirt_comb -name \*.cyl] 0]
-    set nirt_cone [lindex [search $nirt_comb -name \*.cone] 0]
-    cp $nirt_cyl $threat_cyl
-    cp $nirt_cone $threat_cone
+    set nirt_cyl [lindex [::brlcad::mged search $nirt_comb -name \*.cyl] 0]
+    set nirt_cone [lindex [::brlcad::mged search $nirt_comb -name \*.cone] 0]
+    ::brlcad::mged cp $nirt_cyl $threat_cyl
+    ::brlcad::mged cp $nirt_cone $threat_cone
 
-    set threat_shotline [lindex [search $threat_comb -name \*.shotline\*] 0]
-    rm $threat_comb $threat_shotline
+    set threat_shotline [lindex [::brlcad::mged search $threat_comb -name \*.shotline\*] 0]
+    ::brlcad::mged rm $threat_comb $threat_shotline
     trash $threat_shotline
 
     set shotline_comb [rand_name "${basename}_threat" ".shotline"]
-    put $shotline_comb comb region no tree [list u [list l $threat_cyl] [list l $threat_cone]]
-    comb $threat_comb u $shotline_comb
+    ::brlcad::mged put $shotline_comb comb region no tree [list u [list l $threat_cyl] [list l $threat_cone]]
+    ::brlcad::mged comb $threat_comb u $shotline_comb
 
     new_shotline
 
@@ -973,7 +973,7 @@ catch {::itcl::delete class ShotVis} error
 	# erase members in old tree
 	set drawn [our_who]
 	if {[llength $drawn] > 0} {
-	    erase {*}$drawn
+	    ::brlcad::mged erase {*}$drawn
 	}
 
 	trash $old_shotline
@@ -983,12 +983,12 @@ catch {::itcl::delete class ShotVis} error
 	set new_shotline_comb $basename
     }
 
-    put $new_shotline_comb comb region no tree [list u [list l $threat_comb] [list l $nirt_comb]]
+    ::brlcad::mged put $new_shotline_comb comb region no tree [list u [list l $threat_comb] [list l $nirt_comb]]
     set root_comb $new_shotline_comb
 
-    attr set $threat_comb shotvis_threat 1
+    ::brlcad::mged attr set $threat_comb shotvis_threat 1
     if {$max_ke_angle > 0.0} {
-	attr set $max_ke_comb shotvis_max_ke 1
+	::brlcad::mged attr set $max_ke_comb shotvis_max_ke 1
     }
 
     $this configure -title "Edit Shotline Visualization - $root_comb"
@@ -1029,52 +1029,52 @@ catch {::itcl::delete class ShotVis} error
     set thickness 5
 
     set cyl [rand_name "${basename}_" .cyl]
-    in $cyl rcc {*}$start_pt {*}$height [expr $thickness / 2.0]
+    ::brlcad::mged in $cyl rcc {*}$start_pt {*}$height [expr $thickness / 2.0]
 
     set width [expr $thickness * 2]
     set height [::brlcad::vmath vscale $dir [expr $width * 2.88]]
 
     set cone [rand_name "${basename}_" .cone]
-    in $cone trc {*}$end_pt {*}$height [expr $thickness * 2] .01
+    ::brlcad::mged in $cone trc {*}$end_pt {*}$height [expr $thickness * 2] .01
 
-    erase $cyl $cone
+    ::brlcad::mged erase $cyl $cone
 
     # group
     set group [rand_name "${basename}_" .shotline]
-    put $group comb region no tree [list u [list l $cyl] [list l $cone]]
-    attr set $group color {255/0/0}
-    attr set $group rgb {255/0/0}
+    ::brlcad::mged put $group comb region no tree [list u [list l $cyl] [list l $cone]]
+    ::brlcad::mged attr set $group color {255/0/0}
+    ::brlcad::mged attr set $group rgb {255/0/0}
 
     return $group
 }
 
 ::itcl::body ShotVis::trash {obj} {
-    comb $garbage_comb u $obj
+    ::brlcad::mged comb $garbage_comb u $obj
 }
 
 ::itcl::body ShotVis::replace_obj {old new} {
     if {[name_exists $old]} {
-	killtree -f {*}$old
+	::brlcad::mged killtree -f {*}$old
     }
-    mvall $new $old
+    ::brlcad::mged mvall $new $old
 }
 
 ::itcl::body ShotVis::rcc_len {rcc_name} {
-    return [::brlcad::vmath magnitude [list {*}[get $rcc_name H]]]
+    return [::brlcad::vmath magnitude [list {*}[::brlcad::mged get $rcc_name H]]]
 }
 
 ::itcl::body ShotVis::rcc_center {rcc_name} {
-    return [list {*}[get $rcc_name V]]
+    return [list {*}[::brlcad::mged get $rcc_name V]]
 }
 
 ::itcl::body ShotVis::rcc_direction {rcc_name} {
-    return [::brlcad::vmath vunitize [list {*}[get $rcc_name H]]]
+    return [::brlcad::vmath vunitize [list {*}[::brlcad::mged get $rcc_name H]]]
 }
 
 ::itcl::body ShotVis::load_vis {} {
-    set threat_comb [lindex [search $root_comb -attr shotvis_threat] 0]
-    set threat_cyl [lindex [search $threat_comb -name \*.cyl] 0]
-    set threat_cone [lindex [search $threat_comb -name \*.cone] 0]
+    set threat_comb [lindex [::brlcad::mged search $root_comb -attr shotvis_threat] 0]
+    set threat_cyl [lindex [::brlcad::mged search $threat_comb -name \*.cyl] 0]
+    set threat_cone [lindex [::brlcad::mged search $threat_comb -name \*.cone] 0]
 
     set threat_draw_len [rcc_len $threat_cyl]
     set threat_len_str $threat_draw_len
@@ -1084,7 +1084,7 @@ catch {::itcl::delete class ShotVis} error
     set_dir {*}[rcc_direction $threat_cyl]
     update_ae
 
-    set nirt_comb [lindex [search $root_comb -not -path \*$threat_comb\* -attr view_center] 0]
+    set nirt_comb [lindex [::brlcad::mged search $root_comb -not -path \*$threat_comb\* -attr view_center] 0]
 
     redraw
 }
@@ -1093,7 +1093,7 @@ catch {::itcl::delete class ShotVis} error
     # Identify drawn objects we own, based on basename.
     # Much faster than "search $old_shotline".
     set drawn [list]
-    foreach obj [who] {
+    foreach obj [::brlcad::mged who] {
 	if {[regexp $basename $obj]} {
 	    lappend drawn $obj
 	}
@@ -1104,7 +1104,7 @@ catch {::itcl::delete class ShotVis} error
 ::itcl::body ShotVis::redraw {} {
     set drawn [our_who]
     if {[llength $drawn] > 0} {
-	erase {*}$drawn
+	::brlcad::mged erase {*}$drawn
     }
 
     set draw_objs {}
@@ -1122,21 +1122,21 @@ catch {::itcl::delete class ShotVis} error
     	    # nirt
 	    if {$nirt_comb != ""} {
 		lappend draw_objs $nirt_comb
-		Z
+		::brlcad::mged Z
 	    } else {
 		lappend draw_objs $threat_comb
 	    }
 	}
     }
 
-    e -R -S -L200 {*}$draw_objs
+    ::brlcad::mged e -R -S -L200 {*}$draw_objs
 }
 
 ::itcl::body ShotVis::update_shot {} {
     set threat_arrow [make_arrow "${basename}_threat" $threat_start $threat_dir $threat_draw_len]
     set threat_comb [rand_name "${basename}_threat_" ""]
-    put $threat_comb comb region no tree [list l $threat_arrow]
-    attr set $threat_comb shotvis_threat 1
+    ::brlcad::mged put $threat_comb comb region no tree [list l $threat_arrow]
+    ::brlcad::mged attr set $threat_comb shotvis_threat 1
 
     if {$max_ke_angle > 0.0} {
 	# make max ke arrow, derived from threat and angle
@@ -1247,7 +1247,7 @@ namespace eval shotvis {
     }
 
     proc arrow_rcc {arrow_comb} {
-	return [search $arrow_comb -depth 1 -type tgc -name \*.cyl]
+	return [::brlcad::mged search $arrow_comb -depth 1 -type tgc -name \*.cyl]
     }
 
 }

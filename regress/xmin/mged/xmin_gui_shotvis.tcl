@@ -43,14 +43,14 @@ proc ::mged::xmin::shotvis::root_combination {} {
     ::gui::test::require {[string first $prefix $title] == 0} \
 	"ShotVis window title does not identify its active root"
     set root [string range $title [string length $prefix] end]
-    ::gui::test::require {[exists $root]} \
+    ::gui::test::require {[::brlcad::mged exists $root]} \
 	"ShotVis active root '$root' does not exist"
     return $root
 }
 
 proc ::mged::xmin::shotvis::threat_combination {} {
     set root [root_combination]
-    set threats [search $root -attr shotvis_threat]
+    set threats [::brlcad::mged search $root -attr shotvis_threat]
     ::gui::test::require {[llength $threats] == 1} \
 	"ShotVis root does not contain exactly one threat combination"
     return [lindex $threats 0]
@@ -58,7 +58,7 @@ proc ::mged::xmin::shotvis::threat_combination {} {
 
 proc ::mged::xmin::shotvis::threat_cylinder {} {
     set threat [threat_combination]
-    set cylinders [search $threat -type tgc -name \*.cyl]
+    set cylinders [::brlcad::mged search $threat -type tgc -name \*.cyl]
     ::gui::test::require {[llength $cylinders] == 1} \
 	"ShotVis threat does not contain exactly one cylinder"
     return [lindex $cylinders 0]
@@ -94,12 +94,12 @@ proc ::mged::xmin::shotvis::exercise_editor {} {
     ::mged::gui::test::require_mapped .shotvis ShotVis
     ::gui::test::require {
 	[wm title .shotvis] eq "Edit Shotline Visualization - $basename" &&
-	[exists $basename]
+	[::brlcad::mged exists $basename]
     } "ShotVis did not create its window and root combination"
 
     set threat [threat_combination]
     ::gui::test::require {
-	[attr get $threat shotvis_threat] == 1
+	[::brlcad::mged attr get $threat shotvis_threat] == 1
     } "ShotVis threat combination lacks its identifying attribute"
 
     set main .shotvis.shotvis_frame
@@ -112,11 +112,11 @@ proc ::mged::xmin::shotvis::exercise_editor {} {
     set_validated_entry $direction.draw_length_frame.entry 250
 
     set cylinder [threat_cylinder]
-    lassign [get $cylinder V] start_x start_y start_z
+    lassign [::brlcad::mged get $cylinder V] start_x start_y start_z
     require_near $start_x 25.0 "ShotVis edited start X"
     require_near $start_y 0.0 "ShotVis edited start Y"
     require_near $start_z 0.0 "ShotVis edited start Z"
-    require_near [::brlcad::vmath magnitude [get $cylinder H]] 250.0 \
+    require_near [::brlcad::vmath magnitude [::brlcad::mged get $cylinder H]] 250.0 \
 	"ShotVis edited draw length"
 
     set notebook $main.notebook
@@ -125,12 +125,12 @@ proc ::mged::xmin::shotvis::exercise_editor {} {
     $notebook select $notebook.threat
     ::mged::gui::test::settle
     ::gui::test::require {
-	[lsearch -exact [who] [threat_combination]] >= 0
+	[lsearch -exact [::brlcad::mged who] [threat_combination]] >= 0
     } "ShotVis did not redraw its threat after changing tabs"
 
     ::itcl::delete object .shotvis
     ::gui::test::require {
-	![winfo exists .shotvis] && [exists $basename]
+	![winfo exists .shotvis] && [::brlcad::mged exists $basename]
     } "ShotVis did not preserve its edited root when closed"
 }
 
@@ -140,14 +140,14 @@ proc ::mged::xmin::shotvis::exercise_reload {} {
     shotvis $basename
     ::mged::gui::test::require_mapped .shotvis {reloaded ShotVis}
     set cylinder [threat_cylinder]
-    lassign [get $cylinder V] start_x start_y start_z
+    lassign [::brlcad::mged get $cylinder V] start_x start_y start_z
     require_near $start_x 25.0 "reloaded ShotVis start X"
-    require_near [::brlcad::vmath magnitude [get $cylinder H]] 250.0 \
+    require_near [::brlcad::vmath magnitude [::brlcad::mged get $cylinder H]] 250.0 \
 	"reloaded ShotVis draw length"
     .shotvis update_shot
     ::mged::gui::test::settle
     ::itcl::delete object .shotvis
-    ::gui::test::require {[exists $basename]} \
+    ::gui::test::require {[::brlcad::mged exists $basename]} \
 	"reloaded ShotVis did not preserve its updated root"
 }
 
@@ -156,12 +156,28 @@ proc ::mged::xmin::shotvis::run {id top} {
     set database [file join $::env(GUI_TEST_DIR) shotvis.g]
     cd $::env(GUI_TEST_DIR)
     file delete -force $database
-    opendb $database y
-    title {Xmin MGED ShotVis regression}
+    ::brlcad::mged opendb $database y
+    ::brlcad::mged title {Xmin MGED ShotVis regression}
 
-    exercise_editor
-    exercise_reload
-    exercise_math
+    set hidden_commands {}
+    foreach command {
+	Z accept attr autoview bb comb cp e erase exists g get in kill
+	killtree mv mvall nirt oed put reject rm search view who xpush
+    } {
+	set compatibility_command ::$command
+	set hidden_command ::__brlcad_mged_shotvis_compatibility_$command
+	rename $compatibility_command $hidden_command
+	lappend hidden_commands $hidden_command $compatibility_command
+    }
+    try {
+	exercise_editor
+	exercise_reload
+	exercise_math
+    } finally {
+	foreach {hidden_command compatibility_command} $hidden_commands {
+	    rename $hidden_command $compatibility_command
+	}
+    }
 }
 
 ::mged::gui::test::start ::mged::xmin::shotvis::run \
