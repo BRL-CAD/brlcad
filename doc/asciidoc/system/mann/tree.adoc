@@ -19,6 +19,10 @@ tree {objects(s)} [-a] [-c] [-d#] [-i#] [-ooutfile]
 
 Lists the contents of the specified _objects_ in a tree-like format that displays the hierarchical structure of the objects, and all objects referenced by them, down to the primitive shape level.
 
+If a combination refers to itself directly or indirectly, traversal stops at
+the repeated object and marks it with `[cyclic]`. Other branches continue to
+be listed normally.
+
 
 *-a*::
 The _-a_ option adds a list of all attributes for each object. Attributes are shown with a leading "@ " and are followed by their values.
