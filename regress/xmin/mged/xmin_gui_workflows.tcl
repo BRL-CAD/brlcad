@@ -422,6 +422,43 @@ proc ::mged::xmin::workflows::exercise_geometry_browser {id top} {
     ::gui::test::require {![winfo exists $browser]} "Geometry Browser did not close"
 }
 
+proc ::mged::xmin::workflows::exercise_graph_editor {} {
+    package require GraphEditor
+
+    set hidden_commands {}
+    foreach command {Z autoview graph rt zoom zoomin zoomout} {
+	set compatibility_command ::$command
+	set hidden_command ::__brlcad_mged_workflows_compatibility_$command
+	rename $compatibility_command $hidden_command
+	lappend hidden_commands $hidden_command $compatibility_command
+    }
+
+    set editor .xmin_graph_editor
+    try {
+	set status [catch {GraphEditor $editor} message]
+	if {$status} {
+	    ::gui::test::require {
+		[string first {absence of Adaptagrams library} $message] >= 0
+	    } "Graph Editor failed to initialize: $message"
+	    return
+	}
+
+	::gui::test::require {[winfo exists $editor] && [winfo ismapped $editor]} \
+	    "Graph Editor did not open"
+	$editor autosizeDisplay
+	$editor zoomDisplay in
+	$editor zoomDisplay out
+	$editor clearDisplay
+    } finally {
+	if {[llength [info commands $editor]]} {
+	    ::itcl::delete object $editor
+	}
+	foreach {hidden_command compatibility_command} $hidden_commands {
+	    rename $hidden_command $compatibility_command
+	}
+    }
+}
+
 proc ::mged::xmin::workflows::exercise_collaboration {id} {
     global mged_collaborators mged_gui mged_players
 
@@ -537,6 +574,7 @@ proc ::mged::xmin::workflows::run {} {
 	    rename $hidden_command $compatibility_command
 	}
     }
+    exercise_graph_editor
     exercise_collaboration $id
     finish 0 "PASS: MGED creation, file, browser, and collaboration workflows"
 }

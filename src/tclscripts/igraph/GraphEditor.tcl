@@ -176,30 +176,24 @@ package provide GraphEditor 1.0
     bind $_bgMenu <ButtonRelease> {::tk::MenuInvoke %W 1}
 
     # get objects' names, types and positions within the graph
-    set graphViewCommand "graph --igraph show"
+    if {![llength [info commands ::brlcad::mged]]} {
+	set calling_proc [lindex [split [info level [expr {[info level] - 1}]]] 0]
+	error "Error: $calling_proc : ERROR This command is not available yet in Archer"
+    }
+    set graphViewCommand [list ::brlcad::mged graph --igraph show]
 
-    if { [ catch $graphViewCommand positions error] } {
+    if { [ catch $graphViewCommand positions options] } {
 	# check if there is an error saying that Adaptagrams isn't available
-	if { [ string first "graph : ERROR This command is disabled due to the absence of Adaptagrams library" $::errorInfo ] != -1 } {
+	if { [ string first "graph : ERROR This command is disabled due to the absence of Adaptagrams library" $positions ] != -1 } {
 	    # get the name of the calling procedure
 	    set calling_proc [lindex [split [info level [expr [info level] - 1]]] 0]
 
 	    # Return an error message to the calling procedure
 	    error "Error: $calling_proc : ERROR This command is disabled due to the absence of Adaptagrams library"
-	} elseif { [ string first "invalid command name \"graph\"" $::errorInfo ] != -1 } {
-	    # get the name of the calling procedure
-	    set calling_proc [lindex [split [info level [expr [info level] - 1]]] 0]
-
-	    #check if the name of the command has the "::" characters before it; if yes, erase them
-	    if { [ string first "::" $calling_proc ] != -1 } {
-		#string replace $calling_proc 0 1 "" calling_proc
-		set calling_proc [string trimleft $calling_proc :]
-	    }
-
-	    # Return an error message to the calling procedure
-	    error "Error: $calling_proc : ERROR This command is not available yet in Archer"
-	} elseif { [ string first "A database is not open!" $::errorInfo ] != -1 } {
+	} elseif { [ string first "A database is not open!" $positions ] != -1 } {
 	    error "Error: A database is not open!"
+	} else {
+	    return -options $options $positions
 	}
     }
 
@@ -306,7 +300,7 @@ package provide GraphEditor 1.0
 
     # verbosely describe what we are doing
     puts "Z"
-    set retval [ Z ]
+    set retval [ ::brlcad::mged Z ]
     $this checkAutoRender
     return $retval
 }
@@ -323,7 +317,7 @@ package provide GraphEditor 1.0
 
     # verbosely describe what we are doing
     puts "autoview"
-    set retval [ autoview ]
+    set retval [ ::brlcad::mged autoview ]
     $this checkAutoRender
     return $retval
 }
@@ -345,10 +339,10 @@ package provide GraphEditor 1.0
 
     if { [ string compare $zoom "in" ] == 0 } {
 	puts "zoomin"
-	return [ zoomin ]
+	return [ ::brlcad::mged zoomin ]
     } elseif { [ string compare $zoom "out" ] == 0 } {
 	puts "zoomout"
-	set retval [ zoomout ]
+	set retval [ ::brlcad::mged zoomout ]
 	$this checkAutoRender
 	return $retval
     }
@@ -356,7 +350,7 @@ package provide GraphEditor 1.0
 
     # XXX we do not check if the value is a valid number, we should
     puts "zoom $zoom"
-    set retval [ zoom $zoom ]
+    set retval [ ::brlcad::mged zoom $zoom ]
     $this checkAutoRender
     return $retval
 }
@@ -426,10 +420,12 @@ package provide GraphEditor 1.0
 	# "matches" the proportion size of the window.
 	if { $windowWidth > $windowHeight } {
 	    set scaledHeight [ expr round(double($size) / double($windowWidth) * double($windowHeight)) ]
-	    set rtrun "rt [ split $rtoptions ] -F $_fbservPort -w$size -n$scaledHeight -C$r/$g/$b"
+	    set rtrun [list rt {*}$rtoptions -F $_fbservPort -w$size \
+		-n$scaledHeight -C$r/$g/$b]
 	} else {
 	    set scaledWidth [ expr round(double($size) / double($windowHeight) * double($windowWidth)) ]
-	    set rtrun "rt [ split $rtoptions ] -F $_fbservPort -w$scaledWidth -n$size -C$r/$g/$b"
+	    set rtrun [list rt {*}$rtoptions -F $_fbservPort -w$scaledWidth \
+		-n$size -C$r/$g/$b]
 	}
 
     } else {
@@ -507,12 +503,12 @@ package provide GraphEditor 1.0
 
 	# if we got here, then we were able to attach to a running framebuffer..
 	scan $rgb {%d %d %d} r g b
-	set rtrun "rt [ split $rtoptions ] -F $_fbservPort -s$size -C$r/$g/$b"
+	set rtrun [list rt {*}$rtoptions -F $_fbservPort -s$size -C$r/$g/$b]
     }
     # end check for using mged graphics window or using fbserv
 
     puts "$rtrun"
-    return [ eval $rtrun ]
+    return [::brlcad::mged {*}$rtrun]
 }
 
 
