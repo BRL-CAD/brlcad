@@ -33,8 +33,9 @@ proc ::mged::xmin::query_pattern::set_components {dialog values} {
 proc ::mged::xmin::query_pattern::require_pattern {
     group first_clone second_clone description
 } {
-    ::gui::test::require {[exists $group]} "$description group was not created"
-    set definition [get $group]
+    ::gui::test::require {[::brlcad::mged exists $group]} \
+	"$description group was not created"
+    set definition [::brlcad::mged get $group]
     ::gui::test::require {
 	[string first $first_clone $definition] >= 0 &&
 	[string first $second_clone $definition] >= 0
@@ -105,9 +106,9 @@ proc ::mged::xmin::query_pattern::exercise_query_ray {id top} {
 }
 
 proc ::mged::xmin::query_pattern::exercise_patterns {top} {
-    make rect_source.s sph
-    make sph_source.s sph
-    make cyl_source.s sph
+    ::brlcad::mged make rect_source.s sph
+    ::brlcad::mged make sph_source.s sph
+    ::brlcad::mged make cyl_source.s sph
 
     ::mged::gui::test::invoke $top {Tools {Build Pattern Tool}}
     set dialog [::mged::gui::test::find_toplevel_by_title "Pattern Control"]
@@ -177,16 +178,29 @@ proc ::mged::xmin::query_pattern::run {id top} {
     set database [file join $::env(GUI_TEST_DIR) query-pattern.g]
     cd $::env(GUI_TEST_DIR)
     file delete -force $database
-    opendb $database y
-    title {Xmin MGED specialized-tool regression}
-    make qray.s sph
-    r qray.r u qray.s
-    attr set qray.r region yes
-    draw qray.r
-    autoview
+    ::brlcad::mged opendb $database y
+    ::brlcad::mged title {Xmin MGED specialized-tool regression}
+    ::brlcad::mged make qray.s sph
+    ::brlcad::mged r qray.r u qray.s
+    ::brlcad::mged attr set qray.r region yes
+    ::brlcad::mged draw qray.r
+    ::brlcad::mged autoview
 
     exercise_query_ray $id $top
-    exercise_patterns $top
+    set hidden_commands {}
+    foreach command {autoview clone draw exists regdef} {
+	set compatibility_command ::$command
+	set hidden_command ::__brlcad_mged_query_pattern_compatibility_$command
+	rename $compatibility_command $hidden_command
+	lappend hidden_commands $hidden_command $compatibility_command
+    }
+    try {
+	exercise_patterns $top
+    } finally {
+	foreach {hidden_command compatibility_command} $hidden_commands {
+	    rename $hidden_command $compatibility_command
+	}
+    }
 }
 
 ::mged::gui::test::start ::mged::xmin::query_pattern::run \

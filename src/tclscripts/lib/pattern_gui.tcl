@@ -40,7 +40,7 @@ namespace eval ::cadwidgets {
 # _clone_invoke: dispatch 'clone' to the right command based on context
 proc _clone_invoke { args } {
     if {$::cadwidgets::mgedFlag} {
-	return [::clone {*}$args]
+	return [::brlcad::mged clone {*}$args]
     } else {
 	return [{*}$::cadwidgets::ged clone {*}$args]
     }
@@ -64,7 +64,7 @@ proc _clone_progress_update { widget current total } {
 
 proc exists_wrapper {args} {
     if {$::cadwidgets::mgedFlag} {
-	return [::exists {*}$args]
+	return [::brlcad::mged exists {*}$args]
     } else {
 	return [{*}$::cadwidgets::ged exists {*}$args]
     }
@@ -72,7 +72,7 @@ proc exists_wrapper {args} {
 
 proc regdef_wrapper {args} {
     if {$::cadwidgets::mgedFlag} {
-	return [::regdef {*}$args]
+	return [::brlcad::mged regdef {*}$args]
     } else {
 	return [{*}$::cadwidgets::ged regdef {*}$args]
     }
@@ -177,8 +177,8 @@ proc pattern_rect { args } {
 
     if { $group_name ne "" } {
 	if { $::cadwidgets::mgedFlag } {
-	    draw $group_name
-	    autoview
+	    ::brlcad::mged draw $group_name
+	    ::brlcad::mged autoview
 	} else {
 	    $::cadwidgets::ged draw $group_name
 	    $::cadwidgets::ged autoview
@@ -300,8 +300,8 @@ proc pattern_sph { args } {
 
     if { $group_name ne "" } {
 	if { $::cadwidgets::mgedFlag } {
-	    draw $group_name
-	    autoview
+	    ::brlcad::mged draw $group_name
+	    ::brlcad::mged autoview
 	} else {
 	    $::cadwidgets::ged draw $group_name
 	    $::cadwidgets::ged autoview
@@ -421,8 +421,8 @@ proc pattern_cyl { args } {
 
     if { $group_name ne "" } {
 	if { $::cadwidgets::mgedFlag } {
-	    draw $group_name
-	    autoview
+	    ::brlcad::mged draw $group_name
+	    ::brlcad::mged autoview
 	} else {
 	    $::cadwidgets::ged draw $group_name
 	    $::cadwidgets::ged autoview
