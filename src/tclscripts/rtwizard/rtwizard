@@ -374,7 +374,7 @@ if {[info exists ::use_gui]} {
       } else {
 	# orientation is the model-to-view rotation.  Its third row points
 	# from the model toward the eye, so negate it to march into the view.
-	set omat [quat_quat2mat $orientation]
+	set omat [::brlcad::bn quat_quat2mat $orientation]
 	set cut_dir [::brlcad::vmath vunitize [list \
 	    [expr {-[lindex $omat 8]}] \
 	    [expr {-[lindex $omat 9]}] \
