@@ -1,7 +1,11 @@
 set(BTCLSH "${EXEC}")
+set(TCL_SOURCE_LINT "${VEXEC}")
 set(POLICY_SCRIPT "@CMAKE_CURRENT_SOURCE_DIR@/tcl_namespace_policy.tcl")
 set(POLICY_MANIFEST "@CMAKE_CURRENT_SOURCE_DIR@/tcl_namespace_manifest.txt")
+set(LINT_FIXTURE "@CMAKE_CURRENT_SOURCE_DIR@/tcl_source_lint_fixture.tcl")
 set(TCL_DATA_ROOT "@CMAKE_BINARY_DIR@/@DATA_DIR@/tclscripts")
+set(CMAKE_FILES "@CMAKE_BINARY_DIR@/cmakefiles.cmake")
+set(SOURCE_ROOT "@BRLCAD_SOURCE_DIR@")
 set(LOGFILE "@CMAKE_CURRENT_BINARY_DIR@/regress-tcl-namespace-policy.log")
 
 execute_process(
@@ -10,11 +14,37 @@ execute_process(
   OUTPUT_VARIABLE policy_output
   ERROR_VARIABLE policy_error
 )
-file(WRITE "${LOGFILE}" "${policy_output}${policy_error}")
+execute_process(
+  COMMAND "${TCL_SOURCE_LINT}" --self-test "${LINT_FIXTURE}"
+  RESULT_VARIABLE lint_test_result
+  OUTPUT_VARIABLE lint_test_output
+  ERROR_VARIABLE lint_test_error
+)
+execute_process(
+  COMMAND "${TCL_SOURCE_LINT}" "${POLICY_MANIFEST}" "${CMAKE_FILES}" "${SOURCE_ROOT}"
+  RESULT_VARIABLE lint_result
+  OUTPUT_VARIABLE lint_output
+  ERROR_VARIABLE lint_error
+)
+file(
+  WRITE "${LOGFILE}"
+  "${policy_output}${policy_error}${lint_test_output}${lint_test_error}${lint_output}${lint_error}"
+)
 if(policy_result)
   message(
     FATAL_ERROR
     "[Tcl namespace policy] Failure: ${policy_result} - see ${LOGFILE}\n${policy_output}${policy_error}"
   )
 endif()
-
+if(lint_test_result)
+  message(
+    FATAL_ERROR
+    "[Tcl source lint self-test] Failure: ${lint_test_result} - see ${LOGFILE}\n${lint_test_output}${lint_test_error}"
+  )
+endif()
+if(lint_result)
+  message(
+    FATAL_ERROR
+    "[Tcl source lint] Failure: ${lint_result} - see ${LOGFILE}\n${lint_output}${lint_error}"
+  )
+endif()

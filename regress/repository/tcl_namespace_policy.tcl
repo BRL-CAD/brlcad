@@ -122,7 +122,7 @@ proc ::brlcad::namespace_policy::read_manifest {path} {
 	close $channel
     }
 
-    set policy [dict create exclusions {} scripts {} natives {}]
+    set policy [dict create exclusions {} lint_shadows {} scripts {} natives {}]
     set line_number 0
     foreach line [split $contents \n] {
 	incr line_number
@@ -140,6 +140,22 @@ proc ::brlcad::namespace_policy::read_manifest {path} {
 		    error "$path:$line_number: exclude expects a path"
 		}
 		dict lappend policy exclusions [string map {\\ /} [lindex $line 1]]
+	    }
+	    lint-shadow {
+		if {[llength $line] != 3} {
+		    error "$path:$line_number: lint-shadow expects a source and command"
+		}
+		lassign $line unused source command
+		set source [string map {\\ /} $source]
+		set command [normalize_command $command]
+		if {![is_global_command $command]} {
+		    error "$path:$line_number: lint-shadow command must be global"
+		}
+		set key [list $source $command]
+		if {[dict exists $policy lint_shadows $key]} {
+		    error "$path:$line_number: duplicate lint-shadow for $command in $source"
+		}
+		dict set policy lint_shadows $key 1
 	    }
 	    script {
 		if {[llength $line] != 5} {
@@ -187,6 +203,24 @@ proc ::brlcad::namespace_policy::read_manifest {path} {
 	    default {
 		error "$path:$line_number: unknown record type \"$record\""
 	    }
+	}
+    }
+
+    set lintable_commands {}
+    foreach section {scripts natives} {
+	dict for {key metadata} [dict get $policy $section] {
+	    set command [lindex $key end]
+	    set kind [dict get $metadata kind]
+	    if {$kind eq "compatibility" ||
+		($kind eq "legacy" && [string match ::_mged_* $command])} {
+		dict set lintable_commands $command 1
+	    }
+	}
+    }
+    foreach key [dict keys [dict get $policy lint_shadows]] {
+	lassign $key source command
+	if {![dict exists $lintable_commands $command]} {
+	    error "$path: lint-shadow for non-compatibility command $command in $source"
 	}
     }
     return $policy
@@ -389,6 +423,7 @@ proc ::brlcad::namespace_policy::write_baseline {manifest data_directory} {
 	puts $channel "#"
 	puts $channel "# Records are Tcl lists with one of these forms:"
 	puts $channel "#   exclude path-prefix"
+	puts $channel "#   lint-shadow source command"
 	puts $channel "#   script source command compatibility|legacy|public canonical-prefix"
 	puts $channel "#   native component command compatibility|legacy|public canonical-prefix"
 	puts $channel "#"
@@ -397,6 +432,11 @@ proc ::brlcad::namespace_policy::write_baseline {manifest data_directory} {
 	puts $channel ""
 	foreach excluded [lsort [dict get $policy exclusions]] {
 	    puts $channel [list exclude $excluded]
+	}
+	puts $channel ""
+	foreach key [lsort [dict keys [dict get $policy lint_shadows]]] {
+	    lassign $key source command
+	    puts $channel [list lint-shadow $source $command]
 	}
 	puts $channel ""
 	foreach key [lsort [dict keys $actual]] {

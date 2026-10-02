@@ -2,6 +2,7 @@
 #
 # Records are Tcl lists with one of these forms:
 #   exclude path-prefix
+#   lint-shadow source command
 #   script source command compatibility|legacy|public canonical-prefix
 #   native component command compatibility|legacy|public canonical-prefix
 #
@@ -12,6 +13,12 @@ exclude src/tclscripts/html_library.tcl
 exclude src/tclscripts/hv3
 exclude src/tclscripts/tcllib
 exclude src/tclscripts/tkcon.tcl
+
+# plot3-dm evaluates this file in its private interpreter, where these names
+# are application commands rather than MGED compatibility commands.
+lint-shadow src/tclscripts/plot3-dm/bindings.tcl ::ae
+lint-shadow src/tclscripts/plot3-dm/bindings.tcl ::dm
+lint-shadow src/tclscripts/plot3-dm/bindings.tcl ::zoom
 
 script src/tclscripts/alias.tcl ::alias legacy {}
 script src/tclscripts/alias.tcl ::unalias legacy {}
