@@ -458,6 +458,44 @@ if {$::glob_compat_mode != $old_glob_compat_mode} {
 regions_to_bots
 unset hidden_region_commands old_glob_compat_mode region
 
+foreach command {::brlcad::metastrength::run metastrength} {
+    if {![auto_load $command]} {
+	error "FAIL metaball-strength command is not autoloadable: $command"
+    }
+}
+foreach command {print_strengths print_usage} {
+    if {[llength [info commands ::$command]] || [auto_load ::$command]} {
+	error "FAIL private metaball-strength command is global: ::$command"
+    }
+}
+
+set metaball namespaces_metaball.s
+set metaball_group namespaces_metaball.c
+::brlcad::mged put $metaball metaball method 1 thresh 1 \
+    PL {{0 0 0 2 1} {10 0 0 3 1}}
+::brlcad::mged g $metaball_group $metaball
+set hidden_metaball_commands {}
+foreach command {clone exists get kill lt mv put search} {
+    set compatibility_command ::$command
+    set hidden_command ::__brlcad_mged_metaball_compatibility_$command
+    rename $compatibility_command $hidden_command
+    lappend hidden_metaball_commands $hidden_command $compatibility_command
+}
+try {
+    ::brlcad::metastrength::run ::brlcad::mged $metaball_group -scale 2
+    set points [lindex [::brlcad::mged get $metaball] end]
+    if {[lindex [lindex $points 0] 3] != 4 ||
+	[lindex [lindex $points 1] 3] != 6} {
+	error "FAIL metaball-strength scaling produced: $points"
+    }
+    metastrength $metaball_group
+} finally {
+    foreach {hidden_command compatibility_command} $hidden_metaball_commands {
+	rename $hidden_command $compatibility_command
+    }
+}
+unset hidden_metaball_commands metaball metaball_group points
+
 ::brlcad::ged attr set $object namespace_test canonical
 if {[::brlcad::ged attr get $object namespace_test] ne "canonical"} {
     error "FAIL raw GED namespace did not preserve command results"

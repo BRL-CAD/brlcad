@@ -23,16 +23,35 @@
 #
 # This script searches for all metaballs in a given combination
 # hierarchy.  It prints field strengths for all points on all
-# metaballs encountred.  It can also optionally set or scale the
+# metaballs encountered.  It can also optionally set or scale the
 # metaball field strengths in that combination or on a cloned copy.
 #
 ###
 
-proc print_strengths {obj} {
+namespace eval ::brlcad::metastrength {}
+
+proc ::brlcad::metastrength::invoke {command_prefix command args} {
+    return [{*}$command_prefix $command {*}$args]
+}
+
+proc ::brlcad::metastrength::default_command_prefix {} {
+    if {[info exists ::ArcherCore::application]} {
+	set application $::ArcherCore::application
+	if {$application ne "" && [llength [info commands $application]]} {
+	    return [list $application]
+	}
+    }
+    if {[llength [info commands ::brlcad::mged]]} {
+	return ::brlcad::mged
+    }
+    error "metastrength requires an MGED or Archer command context"
+}
+
+proc ::brlcad::metastrength::print_strengths {command_prefix obj} {
 
     puts "Searching $obj for metaballs"
 
-    set matches [search /$obj -type metaball]
+    set matches [invoke $command_prefix search /$obj -type metaball]
     set count [llength $matches]
 
     puts "Metaballs found: $count"
@@ -40,10 +59,10 @@ proc print_strengths {obj} {
 	return
     }
 
-    foreach {mb} $matches {
+    foreach mb $matches {
 	puts "  $mb:"
 	set count 1
-	foreach {mp} [lindex [get $mb] end] {
+	foreach mp [lindex [invoke $command_prefix get $mb] end] {
 	    puts "    pt#$count field strength: [lindex $mp 3]"
 	    incr count
 	}
@@ -51,19 +70,19 @@ proc print_strengths {obj} {
 }
 
 
-proc print_usage {} {
+proc ::brlcad::metastrength::print_usage {} {
     puts "Usage: metastrength comb \[-help\] \[-clone\] \[-scale factor | -set strength\]\n"
 }
 
 
-proc metastrength { comb args } {
+proc ::brlcad::metastrength::run {command_prefix comb args} {
     set argc [llength $args]
     set do_clone 0
     set do_scale 0
     set do_set 0
     set mfs 1.0
 
-    if {$comb == "" || $argc > 3} {
+    if {$comb eq "" || $argc > 3} {
 	print_usage
 	return
     }
@@ -115,21 +134,23 @@ proc metastrength { comb args } {
 	}
     }
 
-    if {![exists "$comb"]} {
+    if {![invoke $command_prefix exists $comb]} {
 	error "Unable to find a combination named \[$comb\]"
     }
 
-    print_strengths $comb
+    print_strengths $command_prefix $comb
     if {$argc == 0} {
 	return
     }
     
     if {$do_clone} {
 	puts -nonewline "Cloning $comb ... "
-	set cloneout [clone $comb]
-	set obj [lindex [string range $cloneout [string last "\n" $cloneout end-1]+1 end] 0]
+	set cloneout [invoke $command_prefix clone $comb]
+	set last_line [string range $cloneout \
+	    [expr {[string last "\n" $cloneout end-1] + 1}] end]
+	set obj [lindex $last_line 0]
 	puts "to $obj, done."
-	if {![exists $obj]} {
+	if {![invoke $command_prefix exists $obj]} {
 	    error "Unable to successfully clone \[$comb\]"
 	}
     } else {
@@ -142,29 +163,35 @@ proc metastrength { comb args } {
 	puts "SETTING $obj metaball field strengths to $mfs"
     }
 
-    set newmatches [search $obj -type metaball]
-    foreach {nmb} $newmatches {
+    set newmatches [invoke $command_prefix search $obj -type metaball]
+    foreach nmb $newmatches {
 	set newpts {}
-	set newmeta [get $nmb]
-	foreach {point} [lindex $newmeta end] {
+	set newmeta [invoke $command_prefix get $nmb]
+	foreach point [lindex $newmeta end] {
 
 	    if {$do_scale} {
-		lset point end-1 [expr $mfs * [lindex $point end-1]]
+		lset point end-1 [expr {$mfs * [lindex $point end-1]}]
 	    } elseif {$do_set} {
 		lset point end-1 $mfs
 	    }
 
 	    lappend newpts $point
 	}
-	mv $nmb ${nmb}.backup
-	eval "put $nmb [lrange $newmeta 0 end-1] { $newpts }"
-	if ![catch {lt $nmb}] {
-	    catch [kill -f ${nmb}.backup]
+	invoke $command_prefix mv $nmb ${nmb}.backup
+	invoke $command_prefix put $nmb {*}[lrange $newmeta 0 end-1] $newpts
+	if {![catch {invoke $command_prefix lt $nmb}]} {
+	    catch {invoke $command_prefix kill -f ${nmb}.backup}
 	}
     }
     puts "Done.\n"
 
-    print_strengths $obj
+    print_strengths $command_prefix $obj
+}
+
+# Keep the historical command-line entry point in both MGED and Archer.
+proc ::metastrength {comb args} {
+    tailcall ::brlcad::metastrength::run \
+	[::brlcad::metastrength::default_command_prefix] $comb {*}$args
 }
 
 
