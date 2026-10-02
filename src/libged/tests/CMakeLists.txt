@@ -14,6 +14,30 @@ if(TARGET ged_test_rm)
 endif(TARGET ged_test_rm)
 distclean(${CMAKE_CURRENT_BINARY_DIR}/ged_test_rm.g)
 
+brlcad_addexec(ged_test_tree test_tree.c "libged;libwdb;librt;libbu" TEST)
+if(TARGET ged_test_tree)
+  add_dependencies(ged_test_tree ged_plugins)
+endif(TARGET ged_test_tree)
+brlcad_add_test(NAME ged_test_tree COMMAND ged_test_tree)
+if(TARGET ged_test_tree)
+  set_property(TEST ged_test_tree APPEND PROPERTY ENVIRONMENT BRLCAD_ROOT=${CMAKE_BINARY_DIR})
+endif(TARGET ged_test_tree)
+distclean(${CMAKE_CURRENT_BINARY_DIR}/ged_test_tree.g)
+
+brlcad_addexec(ged_test_overlay test_overlay.c "libged;libdm;libwdb;librt;libbu" TEST)
+if(TARGET ged_test_overlay)
+  add_dependencies(ged_test_overlay ged_plugins)
+endif(TARGET ged_test_overlay)
+brlcad_add_test(NAME ged_test_overlay COMMAND ged_test_overlay)
+if(TARGET ged_test_overlay)
+  set_property(TEST ged_test_overlay APPEND PROPERTY ENVIRONMENT BRLCAD_ROOT=${CMAKE_BINARY_DIR})
+endif(TARGET ged_test_overlay)
+distclean(
+  ${CMAKE_CURRENT_BINARY_DIR}/ged_test_overlay.g
+  ${CMAKE_CURRENT_BINARY_DIR}/ged_test_overlay_first.plot3
+  ${CMAKE_CURRENT_BINARY_DIR}/ged_test_overlay_second.plot3
+)
+
 brlcad_addexec(ged_test_bo test_bo.c "libged;libwdb;librt;libbu" TEST)
 if(TARGET ged_test_bo)
   add_dependencies(ged_test_bo ged_plugins)
