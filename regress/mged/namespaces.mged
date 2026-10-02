@@ -458,6 +458,45 @@ if {$::glob_compat_mode != $old_glob_compat_mode} {
 regions_to_bots
 unset hidden_region_commands old_glob_compat_mode region
 
+set region namespaces_region_2468.r
+::brlcad::mged r $region u $object
+set old_glob_compat_mode $::glob_compat_mode
+set hidden_region_commands {}
+foreach command {attr mv search} {
+    set compatibility_command ::$command
+    set hidden_command ::__brlcad_mged_rename_region_compatibility_$command
+    rename $compatibility_command $hidden_command
+    lappend hidden_region_commands $hidden_command $compatibility_command
+}
+try {
+    source [file join [::brlcad::bu dir data] tclscripts misc \
+	    rename_regions_to_ids.tcl]
+    if {[::brlcad::mged exists $region] ||
+	![::brlcad::mged exists 2468.r] ||
+	[::brlcad::mged attr get 2468.r region_id] != 2468} {
+	error "FAIL rename-regions-to-IDs did not rename $region"
+    }
+} finally {
+    foreach {hidden_command compatibility_command} $hidden_region_commands {
+	rename $hidden_command $compatibility_command
+    }
+}
+if {$::glob_compat_mode != $old_glob_compat_mode} {
+    error "FAIL rename-regions-to-IDs did not restore glob compatibility mode"
+}
+foreach command {
+    ::brlcad::mged::rename_regions_to_ids::extract_number
+    ::brlcad::mged::rename_regions_to_ids::run
+} {
+    if {![llength [info commands $command]]} {
+	error "FAIL missing rename-regions-to-IDs command $command"
+    }
+}
+if {[llength [info commands ::extractNumber]]} {
+    error "FAIL private rename-regions-to-IDs helper is global"
+}
+unset hidden_region_commands old_glob_compat_mode region
+
 foreach command {::brlcad::metastrength::run metastrength} {
     if {![auto_load $command]} {
 	error "FAIL metaball-strength command is not autoloadable: $command"
