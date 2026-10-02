@@ -57,6 +57,66 @@ overlay_image_mime(struct bu_vls *msg, size_t argc, const char **argv, void *set
     return 1;
 }
 
+static int
+overlay_plot_file(struct ged *gedp, struct bv_vlblock *vbp, const char *path,
+                  double size)
+{
+    FILE *fp = fopen(path, "rb");
+
+    if (!fp) {
+	bu_vls_printf(gedp->ged_result_str,
+		      "overlay: failed to open plot file - %s\n", path);
+	return BRLCAD_ERROR;
+    }
+
+    int ret = rt_uplot_to_vlist(vbp, fp, size,
+                                gedp->i->ged_gdp->gd_uplotOutputMode);
+    fclose(fp);
+
+    return (ret < 0) ? BRLCAD_ERROR : BRLCAD_OK;
+}
+
+static int
+overlay_plot_argument(struct ged *gedp, struct bv_vlblock *vbp,
+                      const char *argument, double size)
+{
+    if (bu_file_exists(argument, NULL))
+	return overlay_plot_file(gedp, vbp, argument, size);
+
+    char **files = NULL;
+    size_t count = bu_file_list(".", argument, &files);
+    if (!count) {
+	bu_vls_printf(gedp->ged_result_str,
+		      "overlay: plot file or pattern not found - %s\n", argument);
+	return BRLCAD_ERROR;
+    }
+
+    int ret = BRLCAD_OK;
+    for (size_t i = 0; i < count; i++) {
+	if (overlay_plot_file(gedp, vbp, files[i], size) != BRLCAD_OK) {
+	    ret = BRLCAD_ERROR;
+	    break;
+	}
+    }
+    bu_argv_free(count, files);
+
+    return ret;
+}
+
+static int
+overlay_plot_argument_exists(const char *argument)
+{
+    if (bu_file_exists(argument, NULL))
+	return 1;
+
+    char **files = NULL;
+    size_t count = bu_file_list(".", argument, &files);
+    if (count)
+	bu_argv_free(count, files);
+
+    return (count > 0);
+}
+
 int
 ged_overlay_core(struct ged *gedp, int argc, const char *argv[])
 {
@@ -79,7 +139,7 @@ ged_overlay_core(struct ged *gedp, int argc, const char *argv[])
     struct bu_vls vname = BU_VLS_INIT_ZERO;
     struct bu_list *vlfree = &rt_vlfree;
 
-    static char usage[] = "Usage: overlay [options] file\n";
+    static char usage[] = "Usage: overlay [options] file [file ...]\n";
 
     struct bu_opt_desc d[15];
     BU_OPT(d[0],  "h", "help",           "",     NULL,            &print_help,       "Print help and exit");
@@ -161,23 +221,25 @@ ged_overlay_core(struct ged *gedp, int argc, const char *argv[])
 	bu_vls_free(&vname);
 	return GED_HELP;
     }
-    /* check arg cnt */
-    if (argc > 2) {
+    if (write_fb && argc != 1) {
 	_ged_cmd_help(gedp, usage, d);
 	bu_vls_free(&vname);
-	return GED_HELP;
+	return BRLCAD_ERROR;
     }
 
-    /* Second arg, if present, is view obj name */
-    if (argc == 2) {
+    /* Preserve the historical two-argument plot form when the second
+     * argument cannot identify a file. New scripts should use -N. */
+    if (!write_fb && argc == 2 && !bu_vls_strlen(&vname) &&
+        !overlay_plot_argument_exists(argv[1])) {
 	bu_vls_sprintf(&vname, "%s", argv[1]);
-    } else {
-	if (!bu_vls_strlen(&vname))
-	    bu_vls_sprintf(&vname, "_PLOT_OVERLAY_");
+	argc--;
     }
+
+    if (!bu_vls_strlen(&vname))
+	bu_vls_sprintf(&vname, "_PLOT_OVERLAY_");
 
     if (!write_fb) {
-	struct bv_vlblock*vbp;
+struct bv_vlblock *vbp;
 
 	struct bu_vls nroot = BU_VLS_INIT_ZERO;
 	if (!BU_STR_EQUAL(bu_vls_cstr(&vname), "_PLOT_OVERLAY_")) {
@@ -188,45 +250,9 @@ ged_overlay_core(struct ged *gedp, int argc, const char *argv[])
 	    bu_vls_prepend(&nroot, "overlay::");
 	}
 
-	FILE *fp = fopen(argv[0], "rb");
-
-	/* If we don't have an exact filename match, see if we got a pattern -
-	 * it is practical to plot many plot files simultaneously, so that may
-	 * be what was specified. */
-	if (fp == NULL) {
-	    char **files = NULL;
-	    size_t count = bu_file_list(".", argv[0], &files);
-	    if (count <= 0) {
-		bu_vls_printf(gedp->ged_result_str, "ged_overlay_core: failed to open file - %s\n", argv[1]);
-		bu_vls_free(&nroot);
-		bu_vls_free(&vname);
-		return BRLCAD_ERROR;
-	    }
-	    vbp = bv_vlblock_init(vlfree, 32);
-	    for (size_t i = 0; i < count; i++) {
-		if ((fp = fopen(files[i], "rb")) == NULL) {
-		    bu_vls_printf(gedp->ged_result_str, "ged_overlay_core: failed to open file - %s\n", files[i]);
-		    bu_argv_free(count, files);
-		    bu_vls_free(&nroot);
-		    bu_vls_free(&vname);
-		    return BRLCAD_ERROR;
-		}
-		ret = rt_uplot_to_vlist(vbp, fp, size, gedp->i->ged_gdp->gd_uplotOutputMode);
-		fclose(fp);
-		if (ret < 0) {
-		    bv_vlblock_free(vbp);
-		    bu_argv_free(count, files);
-		    bu_vls_free(&nroot);
-		    bu_vls_free(&vname);
-		    return BRLCAD_ERROR;
-		}
-	    }
-	    bu_argv_free(count, files);
-	} else {
-	    vbp = bv_vlblock_init(vlfree, 32);
-	    ret = rt_uplot_to_vlist(vbp, fp, size, gedp->i->ged_gdp->gd_uplotOutputMode);
-	    fclose(fp);
-	    if (ret < 0) {
+	vbp = bv_vlblock_init(vlfree, 32);
+	for (int i = 0; i < argc; i++) {
+	    if (overlay_plot_argument(gedp, vbp, argv[i], size) != BRLCAD_OK) {
 		bv_vlblock_free(vbp);
 		bu_vls_free(&nroot);
 		bu_vls_free(&vname);

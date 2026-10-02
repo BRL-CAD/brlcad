@@ -10,7 +10,7 @@ overlay - Plots the specified UNIX __plot_file__ in the MGED display.
 
 [source]
 ----
-overlay [options] file
+overlay [options] file [file ...]
 overlay -F [-i] [-c] [-z] [-X #] [-Y #] [-w #] [-n #] [-S #] [--format fmt] {img_file}
 ----
 
@@ -18,11 +18,14 @@ overlay -F [-i] [-c] [-z] [-X #] [-Y #] [-w #] [-n #] [-S #] [--format fmt] {img
 [[description]]
 == DESCRIPTION
 
-Plots the specified UNIX __plot_file__ in the current application display or the specified _image file_ in the current application embedded framebuffer. When displaying plot files, multiple files may be specified using a pattern match (e.g., *overlay* _*.plot3_).
+Plots the specified UNIX __plot_file__ in the current application display or the specified _image file_ in the current application embedded framebuffer. Multiple plot files may be listed explicitly or specified using pattern matches (for example, *overlay* _first.plot3 second.plot3_ or *overlay* _*.plot3_).
 
 When displaying plot files, phony object names are created for each part of the plot file(s) with a unique color. The names are created by adding a color to the specified __viewobj_name__, or to _PLOT_OVERLAY_ if no name is provided. The color suffix is built by converting the RGB color to a six-digit hex number. Each color corresponds to 2 hex digits, so that white becomes "ffffff," red becomes "ff0000," green is "00ff00," etc.
 
-Image files will be display in the currently active framebuffer. Currently multiple images cannot be specified by a single *overlay* command (but as the images would overrwrite each other this feature would not be terribly useful in any case.) However, mulitiple images can be written in succession to the same framebuffer using the *-X* and *-Y* offset specification options to offset their positions for simultaneous display. Alternately, if the user wishes to reset the framebuffer before drawing the new image the *-c* option may be specified.
+Image files are displayed in the currently active framebuffer. Only one image
+may be specified per *overlay* command. Multiple images can be written in
+succession using the *-X* and *-Y* options to position them for simultaneous
+display. To reset the framebuffer before drawing an image, specify *-c*.
 
 The *-w*, *-n*, and *-S* options are used to specify image size for formats such as PIX that do not encode the image size in their own data. Similarly, *--format* may be used to explicitly specify an image format if the filename does not make the format clear.
 
@@ -82,9 +85,18 @@ Explicitly specify the framebuffer image format.
 .Plot a UNIX plot file in the MGED display.
 [example]
 ====
-mged>**overlay file.plot3 tmp**
+mged>**overlay -N tmp file.plot3**
 
 Plots the UNIX plot file _file.plot3_ in the MGED display, using _tmp_ as the base for the phony object names.
+
+====
+
+.Plot multiple UNIX plot files in one operation.
+[example]
+====
+mged>**overlay axes.plot3 labels.plot3**
+
+Combines both plot files in the current display.
 
 ====
 
