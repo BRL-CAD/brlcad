@@ -104,7 +104,7 @@ catch {::itcl::delete class OverlapMenu} error
     $this handleHintText ""
 
     #check for overlap file
-    set db_path [eval opendb]
+    set db_path [::brlcad::mged opendb]
     set dir [file dirname $db_path]
     set name [file tail $db_path]
     set ol_path [file join $dir "${name}.ck" "ck.${name}.overlaps"]
@@ -139,10 +139,10 @@ catch {::itcl::delete class OverlapMenu} error
     set checker [GeometryChecker $checkerWindow.ck]
 
     $checker setMode $firstFlag
-    $checker registerWhoCallback [::itcl::code who]
-    $checker registerDrawCallbacks [::itcl::code drawLeft] [::itcl::code drawRight]
-    $checker registerEraseCallback [::itcl::code erase]
-    $checker registerOverlapCallback [::itcl::code subtractRightFromLeft]
+    $checker registerWhoCallback [list ::brlcad::mged who]
+    $checker registerDrawCallbacks [list ::drawLeft] [list ::drawRight]
+    $checker registerEraseCallback [list ::brlcad::mged erase]
+    $checker registerOverlapCallback [list ::subtractRightFromLeft]
 
     if {[catch {$checker loadOverlaps $ovfile} result]} {
 	wm withdraw $checkerWindow
@@ -256,8 +256,8 @@ proc validateOvFile { filename } {
 	set left [lindex $line 0]
 	set right [lindex $line 1]
 
-	catch { set path_left [ paths $left ] }
-	catch { set path_right [ paths $right ] }
+	catch { set path_left [::brlcad::mged paths $left] }
+	catch { set path_right [::brlcad::mged paths $right] }
 	if { $path_left eq "" || $path_right eq ""  } {
 	    tk_messageBox -icon error -type ok -title "Bad Overlaps File" -message "Unrecognized region pair:\n$left $right\n\nLoad correct overlaps file!"
 	    close $ovfile
@@ -300,7 +300,7 @@ proc overlaps_tool { args } {
 	destroy $parent.overlapmenu
     }
 
-    catch {set db_path [opendb]}
+    catch {set db_path [::brlcad::mged opendb]}
     if {$db_path eq ""} {
 	return -code 1 "no database seems to be open"
     }

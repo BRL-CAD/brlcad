@@ -390,7 +390,7 @@ package provide GeometryChecker 1.0
 
 ::itcl::body GeometryChecker::loadOverlaps {{filename ""}} {
 
-    if {[catch {opendb} db_path]} {
+    if {[catch {::brlcad::mged opendb} db_path]} {
 	return -code error "no database seems to be open"
     }
 
@@ -444,14 +444,14 @@ package provide GeometryChecker 1.0
 	if {[info exists bb_vol($left)]} {
 	    set vol_left $bb_vol($left)
 	} else {
-	    set vol_left [::tcl::mathfunc::double [lindex [bb -q -v $left] 3]]
+	    set vol_left [::tcl::mathfunc::double [lindex [::brlcad::mged bb -q -v $left] 3]]
 	    set bb_vol($left) $vol_left
 	}
 
 	if {[info exists bb_vol($right)]} {
 	    set vol_right $bb_vol($right)
 	} else {
-	    set vol_right [::tcl::mathfunc::double [lindex [bb -q -v $right] 3]]
+	    set vol_right [::tcl::mathfunc::double [lindex [::brlcad::mged bb -q -v $right] 3]]
 	    set bb_vol($right) $vol_right
 	}
 
@@ -914,7 +914,7 @@ package provide GeometryChecker 1.0
 }
 
 ::itcl::body GeometryChecker::firstUnionedSolid {tree} {
-    return [string trim [file tail [lindex [search $tree -type shape -bool u] 0]]]
+    return [string trim [file tail [lindex [::brlcad::mged search $tree -type shape -bool u] 0]]]
 }
 
 # display
@@ -1031,7 +1031,7 @@ package provide GeometryChecker 1.0
 
         # count objects drawn by user
 	set userObjs 0
-	foreach obj [who] {
+	foreach obj [::brlcad::mged who] {
 	    if {[lsearch -exact $drawing $obj] == -1} {
 		incr userObjs
 	    }
@@ -1039,7 +1039,7 @@ package provide GeometryChecker 1.0
 
         # if we erased everything previously drawn, resize view
 	if {$userObjs == 0 && [llength $_drew] == $erased} {
-	    autoview
+	    ::brlcad::mged autoview
 	}
 
 	set _drew $drawing
@@ -1114,13 +1114,13 @@ proc treeReplaceLeafWithSub {tree leaf sub} {
 }
 
 proc subtractRightFromLeft {left right {subtractFirst false}} {
-    if [ catch { opendb } dbname ] {
+    if [ catch {::brlcad::mged opendb} dbname ] {
 	return -code error "no database seems to be open"
     }
-    if {![ exists $left ]} {
+    if {![::brlcad::mged exists $left]} {
 	return -code error "unable to find $left"
     }
-    if {![ exists $right ]} {
+    if {![::brlcad::mged exists $right]} {
 	return -code error "unable to find $right"
     }
     if { $left eq $right } {
@@ -1136,10 +1136,10 @@ proc subtractRightFromLeft {left right {subtractFirst false}} {
 
     if {$subtractFirst} {
 	# assume the first unioned solid in right is the part that overlaps
-	set solids [search $right -type shape -bool u]
+	set solids [::brlcad::mged search $right -type shape -bool u]
     } else {
 	# simplify right to solid, or report error
-	set solids [search $right -type shape]
+	set solids [::brlcad::mged search $right -type shape]
 	set nsolids [llength $solids]
 	if {$nsolids > 1} {
 	    puts ""
@@ -1152,7 +1152,7 @@ proc subtractRightFromLeft {left right {subtractFirst false}} {
     set rightsub [string trim [file tail [lindex $solids 0]]]
 
     # if left already contains right, report error
-    if {[llength [search $left -name $rightsub]] > 0} {
+    if {[llength [::brlcad::mged search $left -name $rightsub]] > 0} {
 	puts ""
 	puts "ERROR: attempting to subtract $rightsub from $left again"
 	puts "       An attempted manual resolution may already exist."
@@ -1161,21 +1161,21 @@ proc subtractRightFromLeft {left right {subtractFirst false}} {
 
     if {$subtractFirst} {
 	# assume the first unioned shape in left is the part that overlaps
-	set solid [lindex [search $left -bool u -type shape] 0]
+	set solid [lindex [::brlcad::mged search $left -bool u -type shape] 0]
 	set solidparent [file tail [file dirname $solid]]
-	set tree [get $solidparent tree]
+	set tree [::brlcad::mged get $solidparent tree]
 	set leaf [file tail $solid]
 	set newtree [treeReplaceLeafWithSub $tree $leaf $rightsub]
-	adjust $solidparent tree $newtree
+	::brlcad::mged adjust $solidparent tree $newtree
     } else {
 	# search /left -bool u -type shape to find positives
 	# adjust each shape's parent to subtract right from all u members
-	foreach { solid } [search $left -bool u -type shape] {
+	foreach { solid } [::brlcad::mged search $left -bool u -type shape] {
 	    set solidparent [file tail [file dirname $solid]]
-	    set tree [get $solidparent tree]
+	    set tree [::brlcad::mged get $solidparent tree]
 	    set leaf [file tail $solid]
 	    set newtree [treeReplaceLeafWithSub $tree $leaf $rightsub]
-	    adjust $solidparent tree $newtree
+	    ::brlcad::mged adjust $solidparent tree $newtree
 	}
     }
     return
@@ -1183,21 +1183,21 @@ proc subtractRightFromLeft {left right {subtractFirst false}} {
 
 
 proc drawLeft {path} {
-    if [ catch { opendb } dbname ] {
+    if [ catch {::brlcad::mged opendb} dbname ] {
 	return -code 1 "no database seems to be open"
     }
 
-    if [catch {draw -C255/0/0 $path} path_error] {
+    if [catch {::brlcad::mged draw -C255/0/0 $path} path_error] {
 	puts "ERROR: $path_error"
     }
 }
 
 proc drawRight {path} {
-    if [ catch { opendb } dbname ] {
+    if [ catch {::brlcad::mged opendb} dbname ] {
 	return -code error "no database seems to be open"
     }
 
-    if [catch {draw -C0/0/255 $path} path_error] {
+    if [catch {::brlcad::mged draw -C0/0/255 $path} path_error] {
 	puts "ERROR: $path_error"
     }
 }

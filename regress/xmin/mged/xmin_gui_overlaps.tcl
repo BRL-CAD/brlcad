@@ -31,17 +31,17 @@ proc ::mged::xmin::overlaps::make_overlap_group {name offset} {
     set right_region "${name}_right.r"
     set group "${name}.g"
 
-    in $left sph $offset 0 0 10
-    in $right sph [expr {$offset + 5}] 0 0 10
-    r $left_region u $left
-    r $right_region u $right
-    g $group $left_region $right_region
+    ::brlcad::mged in $left sph $offset 0 0 10
+    ::brlcad::mged in $right sph [expr {$offset + 5}] 0 0 10
+    ::brlcad::mged r $left_region u $left
+    ::brlcad::mged r $right_region u $right
+    ::brlcad::mged g $group $left_region $right_region
 }
 
 proc ::mged::xmin::overlaps::exercise_overlap_tool {top database} {
     make_overlap_group first 0
     make_overlap_group second 100
-    Z
+    ::brlcad::mged Z
 
     ::mged::gui::test::invoke $top {Tools {Overlaps Tool}}
     set menu .overlapmenu.overlapmenu
@@ -82,7 +82,7 @@ proc ::mged::xmin::overlaps::exercise_overlap_tool {top database} {
     $tree selection set $first_row
     event generate $tree <<TreeviewSelect>>
     ::mged::gui::test::settle
-    ::gui::test::require {[llength [who]] >= 2} \
+    ::gui::test::require {[llength [::brlcad::mged who]] >= 2} \
 	"selecting an overlap did not draw its objects"
 
     $tree.checkMenu invoke 2
@@ -119,10 +119,26 @@ proc ::mged::xmin::overlaps::run {id top} {
     set database [file join $::env(GUI_TEST_DIR) overlaps.g]
     cd $::env(GUI_TEST_DIR)
     file delete -force $database "${database}.ck"
-    opendb $database y
-    title {Xmin MGED overlap regression}
+    ::brlcad::mged opendb $database y
+    ::brlcad::mged title {Xmin MGED overlap regression}
 
-    exercise_overlap_tool $top $database
+    set hidden_commands {}
+    foreach command {
+	Z adjust autoview bb draw erase exists g get in ls lt opendb paths
+	r search title tops who
+    } {
+	set compatibility_command ::$command
+	set hidden_command ::__brlcad_mged_overlaps_compatibility_$command
+	rename $compatibility_command $hidden_command
+	lappend hidden_commands $hidden_command $compatibility_command
+    }
+    try {
+	exercise_overlap_tool $top $database
+    } finally {
+	foreach {hidden_command compatibility_command} $hidden_commands {
+	    rename $hidden_command $compatibility_command
+	}
+    }
 }
 
 ::mged::gui::test::start ::mged::xmin::overlaps::run \

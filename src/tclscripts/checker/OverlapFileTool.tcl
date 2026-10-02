@@ -158,7 +158,7 @@ package provide OverlapFileTool 1.0
     pack $itk_component(statusLabel)
     pack $itk_component(progressBar) -side left -expand true -fill x -anchor nw -pady 8 -padx 8
 
-    set visibleObjs [who]
+    set visibleObjs [::brlcad::mged who]
     foreach vobj $visibleObjs {
 	if { [string index $vobj 0] ne "/" } {
 	    $this markNode "/$vobj"
@@ -202,7 +202,7 @@ package provide OverlapFileTool 1.0
     $this configure -cursor watch
 
     # delete any previous overlaps files in the db directory
-    set db_path [eval opendb]
+    set db_path [::brlcad::mged opendb]
     set curr_path [eval pwd]
     set name [file tail $db_path]
     set ol_dir [file join $curr_path "${name}.ck"]
@@ -264,7 +264,7 @@ package provide OverlapFileTool 1.0
     set childList ""
     if {$node == ""} {
 	# process top geometry
-	set topsCommand "tops -n"
+	set topsCommand [list ::brlcad::mged tops -n]
 
 	if [ catch $topsCommand roots ] {
 	    puts $roots
@@ -284,7 +284,7 @@ package provide OverlapFileTool 1.0
     } else {
 	# process some combination or region or primitive
 
-	set lsNodeName [ls [ lindex [ split $node / ] end ]]
+	set lsNodeName [::brlcad::mged ls [ lindex [ split $node / ] end ]]
 	# if region don't expand
 	if { [ string compare "R" [ string index $lsNodeName end-1 ] ] == 0 } {
 	    if { [ string compare "/" [ string index $lsNodeName end-2 ] ] == 0 } {
@@ -294,7 +294,7 @@ package provide OverlapFileTool 1.0
 	set parentName [ lindex [ split $node / ] end ]
 
 	set childrenPairs ""
-	if [ catch { lt $parentName } childrenPairs ] {
+	if [ catch {::brlcad::mged lt $parentName} childrenPairs ] {
 	    set childrenPairs ""
 	}
 
@@ -313,7 +313,7 @@ package provide OverlapFileTool 1.0
 	# we do not call getObjectType for performance reasons (big directories
 	# can choke.  Sides, we do not need to know the type, just whether the
 	# node is a branch or not.
-	if { [ catch { ls $childName } lsName ] } {
+	if { [ catch {::brlcad::mged ls $childName} lsName ] } {
 	    puts "$lsName"
 	    continue
 	}
@@ -353,7 +353,7 @@ package provide OverlapFileTool 1.0
 ::itcl::body OverlapFileTool::manualObjs { option } {
     set entrylist {}
     set badentry {}
-    set searchcmd "search  / -type c -path"
+    set searchcmd [list ::brlcad::mged search / -type c -path]
     foreach object $_entryObjs {
 	if { [string index $object 0] ne "/" } {
 	    lappend entrylist "/$object"
@@ -362,7 +362,7 @@ package provide OverlapFileTool 1.0
 	}
     }
     foreach object $entrylist {
-	set objlist [eval $searchcmd $object]
+	set objlist [{*}$searchcmd $object]
 	if { $objlist == "" } {
 	    lappend badentry $object
 	}
