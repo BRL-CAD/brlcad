@@ -340,6 +340,26 @@ f_attach(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *a
 }
 
 
+#ifdef HAVE_TK
+static int
+mged_restore_display_env(Tcl_Interp *interp, Tcl_Obj *saved_display)
+{
+    int status;
+
+    if (saved_display != NULL) {
+	status = (Tcl_SetVar2Ex(interp, "env", "DISPLAY", saved_display,
+		TCL_GLOBAL_ONLY | TCL_LEAVE_ERR_MSG) != NULL) ? TCL_OK : TCL_ERROR;
+	Tcl_DecrRefCount(saved_display);
+	return status;
+    }
+
+    status = Tcl_UnsetVar2(interp, "env", "DISPLAY",
+	    TCL_GLOBAL_ONLY | TCL_LEAVE_ERR_MSG);
+    return status;
+}
+#endif
+
+
 int
 gui_setup(struct mged_state *s, const char *dstr)
 {
@@ -348,6 +368,7 @@ gui_setup(struct mged_state *s, const char *dstr)
 
 #ifdef HAVE_TK
     Tk_GenericProc *handler = doEvent;
+    Tcl_Obj *saved_display = NULL;
 #endif
     /* initialize only once */
     if (tkwin != NULL)
@@ -355,22 +376,81 @@ gui_setup(struct mged_state *s, const char *dstr)
 
     Tcl_ResetResult(s->interp);
 
-    /* set DISPLAY to dstr */
-    if (dstr != (char *)NULL) {
-	Tcl_SetVar(s->interp, "env(DISPLAY)", dstr, TCL_GLOBAL_ONLY);
+#ifdef HAVE_TK
+    /* Tk has no display-name argument in its C initialization API.  For an
+     * explicit MGED -d/loadtk argument, env(DISPLAY) is therefore the only
+     * portable way to select an X11 display before Tk_Init.  Do not do this
+     * for ambient process state: X11 Tk already reads DISPLAY itself, and
+     * native Win32/Aqua Tk deliberately ignores that X11-only variable. */
+    if (dstr != NULL) {
+	saved_display = Tcl_GetVar2Ex(s->interp, "env", "DISPLAY",
+		TCL_GLOBAL_ONLY);
+	if (saved_display != NULL)
+	    Tcl_IncrRefCount(saved_display);
+	if (Tcl_SetVar2(s->interp, "env", "DISPLAY", dstr,
+		TCL_GLOBAL_ONLY | TCL_LEAVE_ERR_MSG) == NULL) {
+	    if (saved_display != NULL)
+		Tcl_DecrRefCount(saved_display);
+	    return TCL_ERROR;
+	}
     }
 
-#ifdef HAVE_TK
     /* This runs the tk.tcl script */
     if (Tk_Init(s->interp) == TCL_ERROR) {
 	const char *result = Tcl_GetStringResult(s->interp);
 	/* hack to avoid a stupid Tk error */
 	if (bu_strncmp(result, "this isn't a Tk applicationcouldn't", 35) == 0) {
-	    result = (result + 27);
-	    Tcl_ResetResult(s->interp);
-	    Tcl_AppendResult(s->interp, result, (char *)NULL);
+	    Tcl_SetObjResult(s->interp, Tcl_NewStringObj(result + 27, -1));
+	}
+	if (dstr != NULL) {
+	    Tcl_SavedResult init_result;
+
+	    /* Environment restoration is cleanup on this path; retain Tk's
+	     * diagnostic even if an unusual Tcl environment trace rejects it. */
+	    Tcl_SaveResult(s->interp, &init_result);
+	    (void)mged_restore_display_env(s->interp, saved_display);
+	    Tcl_RestoreResult(s->interp, &init_result);
 	}
 	return TCL_ERROR;
+    }
+
+    if (dstr != NULL) {
+	int is_x11;
+
+	if (Tcl_Eval(s->interp, "tk windowingsystem") != TCL_OK) {
+	    Tcl_SavedResult windowing_result;
+
+	    Tcl_SaveResult(s->interp, &windowing_result);
+	    (void)mged_restore_display_env(s->interp, saved_display);
+	    Tcl_RestoreResult(s->interp, &windowing_result);
+	    return TCL_ERROR;
+	}
+	is_x11 = BU_STR_EQUAL(Tcl_GetStringResult(s->interp), "x11");
+	Tcl_ResetResult(s->interp);
+
+	if (is_x11) {
+	    /* X11 may use the explicit display for subsequently created
+	     * toplevels and display managers, so keep it in the environment. */
+	    if (saved_display != NULL)
+		Tcl_DecrRefCount(saved_display);
+	} else {
+	    Tk_Window display_probe;
+
+	    /* Win32 and Aqua cannot be redirected by DISPLAY.  Restore the
+	     * caller's environment, then let Tk validate whether the explicit
+	     * name denotes the already initialized native screen.  This accepts
+	     * native aliases such as :0/:0.0 but reports unsupported alternate
+	     * displays instead of silently opening a different screen. */
+	    if (mged_restore_display_env(s->interp, saved_display) != TCL_OK)
+		return TCL_ERROR;
+
+	    display_probe = Tk_CreateWindowFromPath(s->interp,
+		    Tk_MainWindow(s->interp), ".__mged_display_probe", dstr);
+	    if (display_probe == NULL)
+		return TCL_ERROR;
+	    Tk_DestroyWindow(display_probe);
+	    Tcl_ResetResult(s->interp);
+	}
     }
 
     /* Initialize [incr Tk] */
@@ -383,6 +463,10 @@ gui_setup(struct mged_state *s, const char *dstr)
 		   "::itk::*", /* allowOverwrite */ 1) != TCL_OK) {
 	return TCL_ERROR;
     }
+#endif
+
+#ifndef HAVE_TK
+    (void)dstr;
 #endif
 
     /* Initialize the Iwidgets package */

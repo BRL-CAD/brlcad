@@ -246,15 +246,9 @@ swrast_open(void *ctx, void *UNUSED(interp), int argc, const char **argv)
     if (bu_vls_strlen(&dmp->i->dm_pathName) == 0)
 	bu_vls_printf(&dmp->i->dm_pathName, ".dm_swrast%d", count);
     ++count;
-    if (bu_vls_strlen(&dmp->i->dm_dName) == 0) {
-	char *dp;
-
-	dp = getenv("DISPLAY");
-	if (dp)
-	    bu_vls_strcpy(&dmp->i->dm_dName, dp);
-	else
-	    bu_vls_strcpy(&dmp->i->dm_dName, ":0.0");
-    }
+    /* OSMesa is offscreen and has no display to discover.  Leave dm_dName
+     * empty unless the caller supplied -d; a window-system wrapper can then
+     * select its own initialized display without inheriting X11 state. */
 
     /* initialize dm specific variables */
     pubvars->devmotionnotify = 0;

@@ -1040,13 +1040,11 @@ wgl_open(void *UNUSED(ctx), void *vinterp, int argc, const char *argv[])
     ++count;
 
     if (bu_vls_strlen(&dmp->i->dm_dName) == 0) {
-	char *dp;
-
-	dp = getenv("DISPLAY");
-	if (dp)
-	    bu_vls_strcpy(&dmp->i->dm_dName, dp);
-	else
-	    bu_vls_strcpy(&dmp->i->dm_dName, ":0.0");
+	/* DISPLAY names an X server and is not meaningful to WGL.  Unix-like
+	 * shells on Windows may nevertheless export it, so use the screen of
+	 * the Tk window that supplies the native HWND. */
+	bu_vls_printf(&dmp->i->dm_dName, "%s.%d", Tk_DisplayName(tkwin),
+		Tk_ScreenNumber(tkwin));
     }
 
     /* initialize dm specific variables */

@@ -108,13 +108,12 @@ if {![info exists mged_default(config)]} {
     set mged_default(config) b
 }
 
-if {[info exists env(DISPLAY)]} {
-    set mged_default(display) $env(DISPLAY)
-} else {
-    if {![info exists mged_default(display)]} {
-	set mged_default(display) :0
-    }
-    set env(DISPLAY) $mged_default(display)
+# DISPLAY is an X11 connection setting, not a portable Tk screen name.  Tk is
+# initialized before this script runs, so its canonical screen is authoritative
+# on X11, Win32, and Aqua alike.  Preserve a value supplied explicitly through
+# .mgedrc or the gui command for multi-display X11 use.
+if {![info exists mged_default(display)]} {
+    set mged_default(display) [winfo screen .]
 }
 
 if {![info exists mged_default(gdisplay)]} {

@@ -1090,9 +1090,9 @@ namespace delete ::ArcherCoreBootstrap
 	wm withdraw [namespace tail $this]
     }
 
-    if {![info exists env(DISPLAY)]} {
-	set env(DISPLAY) ":0"
-    }
+    # Tk has already selected its X11, Win32, or Aqua display.  DISPLAY is an
+    # X11 input to that initialization, not portable application state; in
+    # particular, synthesizing :0 here can misdirect native Tk child windows.
 
     set mImgDir [file join [bu_dir data] tclscripts archer images]
 

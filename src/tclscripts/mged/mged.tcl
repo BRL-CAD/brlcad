@@ -27,10 +27,6 @@ if ![info exists mged_players] {
     set mged_players {}
 }
 
-if ![info exists env(DISPLAY)] {
-    set env(DISPLAY) ":0"
-}
-
 #==============================================================================
 # Ensure that tk.tcl has been loaded already via mged command 'loadtk'.
 #==============================================================================

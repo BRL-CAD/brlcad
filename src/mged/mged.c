@@ -2446,6 +2446,29 @@ apply_cli_overrides(struct mged_state *s, struct mged_cli_overrides *cl)
     if (cli_dbl_is_set(cl->eye_sep_dist))        CLI_SETVAR_DBL("eye_sep_dist",   cl->eye_sep_dist);
 
     /* --- Tcl mged_default array entries ---------------------------------- */
+    if (cl->dpy_string) {
+	const char *display = cl->dpy_string;
+#ifdef HAVE_TK
+	struct bu_vls tk_screen = BU_VLS_INIT_ZERO;
+	Tk_Window main_window = Tk_MainWindow(s->interp);
+
+	/* Apply -d after .mgedrc just like the other command-line overrides.
+	 * Once Tk is initialized, store its canonical screen name rather than
+	 * the spelling used to select it (for example, :0 and :0.0 may denote
+	 * the same native screen).  Classic/headless mode retains the original
+	 * value for a later display-manager attach. */
+	if (main_window != NULL) {
+	    bu_vls_printf(&tk_screen, "%s.%d", Tk_DisplayName(main_window),
+		    Tk_ScreenNumber(main_window));
+	    display = bu_vls_cstr(&tk_screen);
+	}
+#endif
+	Tcl_SetVar2(s->interp, "mged_default", "display", display,
+		TCL_GLOBAL_ONLY);
+#ifdef HAVE_TK
+	bu_vls_free(&tk_screen);
+#endif
+    }
     if (cl->dm_type)
 	Tcl_SetVar2(s->interp, "mged_default", "dm_type", cl->dm_type,  TCL_GLOBAL_ONLY);
     if (cl->geom)
@@ -2694,7 +2717,7 @@ main(int argc, char *argv[])
     struct bu_opt_desc opt_defs[54];
     /* ---- Existing short options, now with long aliases ---- */
     BU_OPT(opt_defs[0],  "a", "attach",           "type",    bu_opt_str,      &cl.attach,           "display manager attach target");
-    BU_OPT(opt_defs[1],  "d", "display",           "string",  bu_opt_str,      &cl.dpy_string,       "X display string");
+    BU_OPT(opt_defs[1],  "d", "display",           "screen",  bu_opt_str,      &cl.dpy_string,       "Tk display and screen name");
     BU_OPT(opt_defs[2],  "r", "read-only",         "",        NULL,            &cl.read_only,        "open database read-only");
     BU_OPT(opt_defs[3],  "p", "pipe",              "",        NULL,            &cl.pipe_mode,        "pipe mode (emit CMD_DONE sentinels)");
     BU_OPT(opt_defs[4],  "c", "classic",           "",        NULL,            &cl.classic_mode,     "classic text-only mode");
@@ -3044,9 +3067,6 @@ main(int argc, char *argv[])
     (void)Tcl_Eval(s->interp, bu_vls_addr(&s->input_str));
     bu_vls_trunc(&s->input_str, 0);
 
-    if (!s->dpy_string)
-	s->dpy_string = getenv("DISPLAY");
-
     /* show ourselves */
     if (s->interactive) {
 	if (s->classic_mged) {
@@ -3068,23 +3088,17 @@ main(int argc, char *argv[])
 	    /* start up the gui */
 
 	    int status;
-	    struct bu_vls vls = BU_VLS_INIT_ZERO;
 	    struct bu_vls error = BU_VLS_INIT_ZERO;
 
 	    (void)Tcl_Eval(s->interp, "set mged_console_mode gui");
 
-	    bu_vls_strcpy(&vls, "loadtk");
-	    if (s->dpy_string)
-		bu_vls_printf(&vls, " %s", s->dpy_string);
-
-	    status = Tcl_Eval(s->interp, bu_vls_addr(&vls));
+	    /* An unset -d is deliberately passed as NULL.  Tk already knows how
+	     * to select its platform display: X11 consults DISPLAY, while the
+	     * Win32 and Aqua backends select their native display.  Treating an
+	     * inherited DISPLAY value as an explicit request breaks native Tk
+	     * when Unix-like shells export an X11 placeholder. */
+	    status = gui_setup(s, s->dpy_string);
 	    bu_vls_strcpy(&error, Tcl_GetStringResult(s->interp));
-	    bu_vls_free(&vls);
-
-	    if (status != TCL_OK && !s->dpy_string) {
-		/* failed to load tk, try localhost X11 if DISPLAY was not set */
-		status = Tcl_Eval(s->interp, "loadtk :0");
-	    }
 
 	    if (status != TCL_OK) {
 		if (!run_in_foreground && use_pipe) {

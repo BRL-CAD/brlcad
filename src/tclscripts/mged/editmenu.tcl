@@ -24,11 +24,7 @@
 #
 
 if ![info exists mged_default(display)] {
-    if [info exists env(DISPLAY)] {
-	set mged_default(display) $env(DISPLAY)
-    } else {
-	set mged_default(display) :0
-    }
+    set mged_default(display) [winfo screen .]
 }
 
 if ![info exists mged_gui(mged,screen)] {

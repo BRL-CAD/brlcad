@@ -464,6 +464,16 @@ tkswrast_open(void *ctx, void *vinterp, int argc, const char **argv)
     tv->orig_configureWin = dmp->i->dm_configureWin;
     tv->orig_close = dmp->i->dm_close;
 
+    /* The wrapped offscreen backend deliberately has no default display.
+     * For this Tk presentation layer, use the display Tk actually opened.
+     * This remains correct for X11, Win32, and Aqua even when the process
+     * inherited an unrelated DISPLAY value.  An explicit -d remains intact
+     * and is validated below by Tk_CreateWindowFromPath. */
+    if (bu_vls_strlen(&dmp->i->dm_dName) == 0) {
+	bu_vls_printf(&dmp->i->dm_dName, "%s.%d", Tk_DisplayName(tkwin),
+		Tk_ScreenNumber(tkwin));
+    }
+
     char *cp = strrchr(bu_vls_addr(&dmp->i->dm_pathName), '.');
     if (dmp->i->dm_top) {
 	tv->xtkwin = Tk_CreateWindowFromPath(interp, tkwin,

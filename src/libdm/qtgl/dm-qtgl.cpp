@@ -254,15 +254,9 @@ qtgl_open(void *ctx, void *UNUSED(interp), int argc, const char **argv)
     if (bu_vls_strlen(&dmp->i->dm_pathName) == 0)
 	bu_vls_printf(&dmp->i->dm_pathName, ".dm_qtgl%d", count);
     ++count;
-    if (bu_vls_strlen(&dmp->i->dm_dName) == 0) {
-	char *dp;
-
-	dp = getenv("DISPLAY");
-	if (dp)
-	    bu_vls_strcpy(&dmp->i->dm_dName, dp);
-	else
-	    bu_vls_strcpy(&dmp->i->dm_dName, ":0.0");
-    }
+    /* The supplied QOpenGLWidget determines the Qt display.  Keep dm_dName
+     * empty unless the caller supplied -d; DISPLAY is an X11 setting and
+     * cannot identify a Qt context on every supported platform. */
 
     /* initialize dm specific variables */
     pubvars->devmotionnotify = 0;
