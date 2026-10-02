@@ -471,11 +471,13 @@ if(BRLCAD_VERBOSE)
   set(CMAKE_VERBOSE_MAKEFILE ON)
 endif(BRLCAD_VERBOSE)
 
-# Build with profile-guided optimization support.  this requires a two-pass
-# compile, once with BRLCAD_PGO=ON on a location that did not exist beforehand
-# (specified via the PGO_PATH environment variable), and again to use profiling
-# metrics captured on "typical" operations and data.  By default, path is
-# BUILDDIR/profiling
+# Build with profile-guided optimization support.  This requires a two-pass
+# compile, once with BRLCAD_PGO=ON and a profile location that did not exist
+# beforehand (specified via the PGO_PATH environment variable), and again in a
+# fresh build directory to use metrics captured on "typical" operations and
+# data.  By default, the path is BUILDDIR/profiling.  For MSVC, set
+# VCPROFILE_PATH to PGO_PATH while running the instrumented programs so their
+# per-binary .pgc files are available beside the corresponding .pgd files.
 
 option(BRLCAD_PGO "Enable profile-guided optimization (set PGO_PATH environment variable)")
 mark_as_advanced(BRLCAD_PGO)

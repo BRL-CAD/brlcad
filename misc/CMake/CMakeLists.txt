@@ -108,6 +108,7 @@ set(
   probe_validation/README.md
   probe_validation/CMakeLists.txt
   probe_validation/probe_validation.cpp
+  scripts/pgo_benchmark.cmake
   scripts/printtime.cmake
   scripts/tcl_mkindex.cmake
   scripts/timestamp.cmake

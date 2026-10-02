@@ -1337,6 +1337,90 @@ if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
   brlcad_deferred_define("BRLCAD_HAS_BIG_STACK 1")
 endif()
 
+# Profile-Guided Optimization uses a shared profile location for both compiler
+# families.  A path that does not exist selects the instrumentation pass; an
+# existing path selects the profile-use pass in a fresh build tree.
+if("$ENV{PGO_PATH}" STREQUAL "")
+  set(BRLCAD_PGO_PATH "${CMAKE_BINARY_DIR}/profiling")
+else()
+  file(TO_CMAKE_PATH "$ENV{PGO_PATH}" BRLCAD_PGO_PATH)
+endif()
+
+# MSVC creates one profile database per linked image.  The target-dependent
+# generator expression gives every executable and DLL a distinct database,
+# while /GL also covers code contributed through object and static libraries.
+if(MSVC AND BRLCAD_PGO)
+  if(DEFINED BRLCAD_MSVC_PGO_PHASE)
+    if(NOT "${BRLCAD_MSVC_PGO_PATH}" STREQUAL "${BRLCAD_PGO_PATH}")
+      message(
+        FATAL_ERROR
+        "PGO_PATH changed from '${BRLCAD_MSVC_PGO_PATH}' to '${BRLCAD_PGO_PATH}'. "
+        "Use a fresh build directory when changing PGO phases or profile locations."
+      )
+    endif()
+  elseif(EXISTS "${BRLCAD_PGO_PATH}")
+    set(BRLCAD_MSVC_PGO_PHASE USE)
+  else()
+    set(BRLCAD_MSVC_PGO_PHASE GENERATE)
+  endif()
+
+  if(NOT BRLCAD_MSVC_PGO_PHASE MATCHES "^(GENERATE|USE)$")
+    message(FATAL_ERROR "Invalid internal MSVC PGO phase '${BRLCAD_MSVC_PGO_PHASE}'")
+  endif()
+  set(BRLCAD_MSVC_PGO_PHASE "${BRLCAD_MSVC_PGO_PHASE}" CACHE INTERNAL "MSVC PGO build phase" FORCE)
+  set(BRLCAD_MSVC_PGO_PATH "${BRLCAD_PGO_PATH}" CACHE INTERNAL "MSVC PGO profile path" FORCE)
+
+  if(BRLCAD_MSVC_PGO_PHASE STREQUAL "GENERATE")
+    # link.exe requires the PGD parent directory to exist before it links the
+    # instrumented image.  Cache the phase above so an in-place CMake rerun
+    # does not mistake this newly created directory for completed profiles.
+    file(MAKE_DIRECTORY "${BRLCAD_PGO_PATH}")
+    set(_brlcad_msvc_pgo_link_mode GENPROFILE)
+    message(
+      STATUS
+      "MSVC PGO generation enabled; set VCPROFILE_PATH=${BRLCAD_PGO_PATH} while running training workloads"
+    )
+    distclean("${BRLCAD_PGO_PATH}")
+  else()
+    message(STATUS "MSVC PGO profile use enabled from ${BRLCAD_PGO_PATH}")
+  endif()
+
+  add_compile_options("$<$<COMPILE_LANGUAGE:C,CXX>:/GL>")
+  add_link_options(/LTCG)
+  if(_brlcad_msvc_pgo_link_mode)
+    add_link_options(
+      "/${_brlcad_msvc_pgo_link_mode}:PGD=${BRLCAD_PGO_PATH}/$<TARGET_PROPERTY:NAME>.pgd"
+    )
+  endif()
+  unset(_brlcad_msvc_pgo_link_mode)
+endif()
+
+# Apply profile-use only to images exercised during training.  link.exe emits
+# C4961 for an untrained PGD, and strict builds promote that warning to an
+# error during LTCG.  The generation pass names PGC files after the target's
+# PGD, so this check also works when OUTPUT_NAME changes the binary name.
+function(_BRLCAD_MSVC_PGO_APPLY_PROFILES directory)
+  get_property(_brlcad_pgo_targets DIRECTORY "${directory}" PROPERTY BUILDSYSTEM_TARGETS)
+  foreach(_brlcad_pgo_target IN LISTS _brlcad_pgo_targets)
+    get_target_property(_brlcad_pgo_target_type ${_brlcad_pgo_target} TYPE)
+    if(_brlcad_pgo_target_type MATCHES "^(EXECUTABLE|SHARED_LIBRARY|MODULE_LIBRARY)$")
+      set(_brlcad_pgo_database "${BRLCAD_PGO_PATH}/${_brlcad_pgo_target}.pgd")
+      file(GLOB _brlcad_pgo_counts LIST_DIRECTORIES FALSE "${BRLCAD_PGO_PATH}/${_brlcad_pgo_target}![0-9]*.pgc")
+      if(EXISTS "${_brlcad_pgo_database}" AND _brlcad_pgo_counts)
+        target_link_options(${_brlcad_pgo_target} PRIVATE "/USEPROFILE:PGD=${_brlcad_pgo_database}")
+        set_property(GLOBAL APPEND PROPERTY BRLCAD_MSVC_PGO_TRAINED_TARGETS ${_brlcad_pgo_target})
+      endif()
+      unset(_brlcad_pgo_counts)
+      unset(_brlcad_pgo_database)
+    endif()
+  endforeach()
+
+  get_property(_brlcad_pgo_subdirectories DIRECTORY "${directory}" PROPERTY SUBDIRECTORIES)
+  foreach(_brlcad_pgo_subdirectory IN LISTS _brlcad_pgo_subdirectories)
+    _brlcad_msvc_pgo_apply_profiles("${_brlcad_pgo_subdirectory}")
+  endforeach()
+endfunction()
+
 # The following tests are almost entirely for gcc/llvm style flags, so
 # we don't unnecessarily slow down the Windows build.
 if(NOT MSVC)
@@ -1399,11 +1483,6 @@ if(NOT MSVC)
   # variable set to a temp folder
 
   set(pgo_flags_found "")
-  if("$ENV{PGO_PATH}" STREQUAL "")
-    set(BRLCAD_PGO_PATH "${CMAKE_BINARY_DIR}/profiling")
-  else(NOT "$ENV{PGO_PATH}" STREQUAL "")
-    set(BRLCAD_PGO_PATH "$ENV{PGO_PATH}")
-  endif("$ENV{PGO_PATH}" STREQUAL "")
 
   if(BRLCAD_PGO AND NOT EXISTS "${BRLCAD_PGO_PATH}")
     if("${CMAKE_C_FLAGS}" MATCHES ".*fprofile-use.*")
@@ -1449,7 +1528,8 @@ if(NOT MSVC)
     # gcc-style USE
     if("${pgo_flags_found}" STREQUAL "")
       cmake_push_check_state()
-      set(flags "fprofile-use=\"${BRLCAD_PGO_PATH}\" -Wno-error=coverage-mismatch -fprofile-correction")
+      set(flags "fprofile-use=\"${BRLCAD_PGO_PATH}\" -Wno-error=coverage-mismatch")
+      string(APPEND flags " -Wno-error=missing-profile -fprofile-correction")
       set(CMAKE_REQUIRED_FLAGS "-${flags}")
       check_c_flag("${flags}" GROUPS OPTIMIZE_C_FLAGS VARS pgo_flags_found)
       check_cxx_flag("${flags}" GROUPS OPTIMIZE_CXX_FLAGS)
@@ -2971,6 +3051,24 @@ verbose_add_subdirectory("" doc)
 # add misc last
 # NOTE: misc/tools is added separately (earlier)
 verbose_add_subdirectory("" misc)
+
+if(MSVC AND BRLCAD_PGO AND BRLCAD_MSVC_PGO_PHASE STREQUAL "USE")
+  set_property(GLOBAL PROPERTY BRLCAD_MSVC_PGO_TRAINED_TARGETS)
+  _brlcad_msvc_pgo_apply_profiles("${CMAKE_SOURCE_DIR}")
+  get_property(_brlcad_msvc_pgo_targets GLOBAL PROPERTY BRLCAD_MSVC_PGO_TRAINED_TARGETS)
+  list(LENGTH _brlcad_msvc_pgo_targets _brlcad_msvc_pgo_target_count)
+  if(_brlcad_msvc_pgo_target_count EQUAL 0)
+    message(
+      FATAL_ERROR
+      "No MSVC PGO counter files were found in ${BRLCAD_PGO_PATH}. "
+      "Set VCPROFILE_PATH to that directory while running the training workloads "
+      "before configuring the profile-use build."
+    )
+  endif()
+  message(STATUS "MSVC PGO will use training data for ${_brlcad_msvc_pgo_target_count} linked targets")
+  unset(_brlcad_msvc_pgo_target_count)
+  unset(_brlcad_msvc_pgo_targets)
+endif()
 
 #------------------------------------------------------------------------------
 # CMake package configuration files for modern find_package(BRLCAD CONFIG)

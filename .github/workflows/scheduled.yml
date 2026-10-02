@@ -290,6 +290,322 @@ jobs:
           html2text scan-reports-all/*/index.html
         working-directory: ${{ github.workspace }}/brlcad/build_clangstatic
 
+  linux_pgo:
+    name: GCC Profile-Guided Optimization
+    needs: [linux_bext]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 180
+    strategy:
+      fail-fast: true
+    env:
+      DEBIAN_FRONTEND: noninteractive
+      CMAKE_BUILD_PARALLEL_LEVEL: "2"
+      PGO_PATH: ${{ github.workspace }}/pgo-profile
+      PGO_BENCHMARK_TARGETS: >-
+        rt pixcmp benchmark_cp BENCHMARK_PIX_cp PIX_LOG_cp
+        bldg391.g m35.g moss.g sphflake.g star.g world.g
+      PGO_TRAINING_TARGETS: >-
+        havoc.g Generic_Twin.g NIST_MBE_PMI_2.g
+      PGO_TRAINING_SIZE: "512"
+      PGO_TRAINING_AZIMUTH: "35"
+      PGO_TRAINING_ELEVATION: "25"
+      PGO_BENCHMARK_TIMEFRAME: "8"
+      PGO_BENCHMARK_MAXTIME: "60"
+      PGO_BENCHMARK_AVERAGE: "3"
+      PGO_BENCHMARK_DEVIATION: "3"
+      PGO_MIN_SPEEDUP: "1.0"
+    if: ${{ !cancelled() && github.ref == 'refs/heads/main' }}
+    steps:
+      - name: Setup - CMake
+        uses: lukka/get-cmake@latest
+
+      - name: Install apt dependencies
+        run: |
+          sudo apt-get update
+          # Install X/OpenGL dev pkgs
+          sudo apt-get install xserver-xorg-dev libx11-dev libxi-dev libxext-dev libglu1-mesa-dev libfontconfig-dev
+          # Install tools
+          sudo apt-get install astyle re2c xsltproc libxml2-utils
+          # Install dependency dev pkgs
+          sudo apt-get install zlib1g-dev libpng-dev libjpeg-dev libtiff-dev libeigen3-dev libgdal-dev libassimp-dev libopencv-dev tcl-dev tk-dev
+          # Install XCB/OpenGL dev pkgs for a fallback bext build
+          sudo apt-get install libfontconfig1-dev libfreetype6-dev libx11-dev libx11-xcb-dev libxext-dev libxfixes-dev libxi-dev libxrender-dev libxcb1-dev libxcb-cursor-dev libxcb-glx0-dev libxcb-keysyms1-dev libxcb-image0-dev libxcb-shm0-dev libxcb-icccm4-dev libxcb-sync-dev libxcb-xfixes0-dev libxcb-shape0-dev libxcb-randr0-dev libxcb-render-util0-dev libxcb-util-dev libxcb-xinerama0-dev libxcb-xkb-dev libxcb-xinput-dev libxcb-xrm-dev libxkbcommon-dev libxkbcommon-x11-dev
+          sudo apt-get install libgl-dev libinput-dev
+
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          path: brlcad
+
+      - name: Prepare bext dependencies
+        uses: ./brlcad/.github/actions/prepare-bext
+        with:
+          platform-channel: ubuntu-24.04-${{ runner.arch }}-release
+          source-dir: ${{ github.workspace }}/brlcad
+          output-dir: ${{ runner.temp }}/bext_output
+          build-type: Release
+          artifact-token: ${{ secrets.BEXT_ARTIFACT_TOKEN }}
+
+      - name: Directory setup
+        run: |
+          set -euo pipefail
+          cmake -E make_directory $HOME/.cache/BRL-CAD
+          if [[ -e "$PGO_PATH" ]]; then
+            echo "::error::PGO profile path unexpectedly exists before the generation build"
+            exit 1
+          fi
+
+      - name: Configure baseline build
+        run: |
+          cmake -S brlcad -B build_pgo_baseline -G Ninja \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_EXPORT_COMPILE_COMMANDS=ON \
+            -DBUILD_TESTING=ON \
+            -DBRLCAD_EXT_DIR=${{ runner.temp }}/bext_output \
+            -DBRLCAD_ENABLE_QT=OFF \
+            -DBRLCAD_ENABLE_STEP=ON \
+            -DBRLCAD_ENABLE_STRICT=ON
+
+      - name: Build baseline
+        run: cmake --build build_pgo_baseline --target $PGO_BENCHMARK_TARGETS
+
+      - name: Configure profile-generation build
+        run: |
+          cmake -S brlcad -B build_pgo -G Ninja \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_EXPORT_COMPILE_COMMANDS=ON \
+            -DBUILD_TESTING=ON \
+            -DBRLCAD_EXT_DIR=${{ runner.temp }}/bext_output \
+            -DBRLCAD_ENABLE_QT=OFF \
+            -DBRLCAD_ENABLE_STEP=ON \
+            -DBRLCAD_ENABLE_STRICT=ON \
+            -DBRLCAD_PGO=ON
+          grep -q -- '-fprofile-generate=' build_pgo/compile_commands.json
+
+      - name: Build profile-generation binaries
+        run: cmake --build build_pgo --target $PGO_BENCHMARK_TARGETS $PGO_TRAINING_TARGETS
+
+      - name: Generate profile data
+        run: |
+          cmake \
+            -DPGO_MODE=TRAIN \
+            -DPGO_BUILD_DIR="$GITHUB_WORKSPACE/build_pgo" \
+            -DPGO_RESULTS_DIR="$GITHUB_WORKSPACE/pgo-training" \
+            -DPGO_PROFILE_DIR="$PGO_PATH" \
+            -DPGO_TIMEFRAME="$PGO_BENCHMARK_TIMEFRAME" \
+            -DPGO_MAXTIME="$PGO_BENCHMARK_MAXTIME" \
+            -DPGO_AVERAGE="$PGO_BENCHMARK_AVERAGE" \
+            -DPGO_DEVIATION="$PGO_BENCHMARK_DEVIATION" \
+            -DPGO_TRAINING_SIZE="$PGO_TRAINING_SIZE" \
+            -DPGO_TRAINING_AZIMUTH="$PGO_TRAINING_AZIMUTH" \
+            -DPGO_TRAINING_ELEVATION="$PGO_TRAINING_ELEVATION" \
+            -P brlcad/misc/CMake/scripts/pgo_benchmark.cmake
+
+      - name: Configure profile-use build
+        run: |
+          # GCC incorporates the build path into profile filenames, so both
+          # compilation passes must use the same build directory.
+          cmake -E rm -rf build_pgo
+          cmake -S brlcad -B build_pgo -G Ninja \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_EXPORT_COMPILE_COMMANDS=ON \
+            -DBUILD_TESTING=ON \
+            -DBRLCAD_EXT_DIR=${{ runner.temp }}/bext_output \
+            -DBRLCAD_ENABLE_QT=OFF \
+            -DBRLCAD_ENABLE_STEP=ON \
+            -DBRLCAD_ENABLE_STRICT=ON \
+            -DBRLCAD_PGO=ON
+          grep -q -- '-fprofile-use=' build_pgo/compile_commands.json
+
+      - name: Build profile-guided binaries
+        run: cmake --build build_pgo --target $PGO_BENCHMARK_TARGETS
+
+      - name: Benchmark and compare profile-guided build
+        run: |
+          cmake \
+            -DPGO_MODE=COMPARE \
+            -DPGO_BASELINE_BUILD_DIR="$GITHUB_WORKSPACE/build_pgo_baseline" \
+            -DPGO_OPTIMIZED_BUILD_DIR="$GITHUB_WORKSPACE/build_pgo" \
+            -DPGO_RESULTS_DIR="$GITHUB_WORKSPACE/pgo-results" \
+            -DPGO_TIMEFRAME="$PGO_BENCHMARK_TIMEFRAME" \
+            -DPGO_MAXTIME="$PGO_BENCHMARK_MAXTIME" \
+            -DPGO_AVERAGE="$PGO_BENCHMARK_AVERAGE" \
+            -DPGO_DEVIATION="$PGO_BENCHMARK_DEVIATION" \
+            -DPGO_MIN_SPEEDUP="$PGO_MIN_SPEEDUP" \
+            -P brlcad/misc/CMake/scripts/pgo_benchmark.cmake
+
+  windows_pgo:
+    name: MSVC Profile-Guided Optimization
+    needs: [windows_bext]
+    runs-on: windows-2025
+    timeout-minutes: 180
+    strategy:
+      fail-fast: true
+    env:
+      CMAKE_BUILD_PARALLEL_LEVEL: "2"
+      PGO_BENCHMARK_TARGETS: >-
+        rt pixcmp benchmark_cp BENCHMARK_PIX_cp PIX_LOG_cp
+        bldg391.g m35.g moss.g sphflake.g star.g world.g
+      PGO_TRAINING_TARGETS: >-
+        havoc.g Generic_Twin.g NIST_MBE_PMI_2.g
+      PGO_TRAINING_SIZE: "512"
+      PGO_TRAINING_AZIMUTH: "35"
+      PGO_TRAINING_ELEVATION: "25"
+      PGO_BENCHMARK_TIMEFRAME: "8"
+      PGO_BENCHMARK_MAXTIME: "60"
+      PGO_BENCHMARK_AVERAGE: "3"
+      PGO_BENCHMARK_DEVIATION: "3"
+      PGO_MIN_SPEEDUP: "1.0"
+    if: ${{ !cancelled() && github.ref == 'refs/heads/main' }}
+    steps:
+      - name: Setup - CMake
+        uses: lukka/get-cmake@latest
+
+      - name: Add msbuild to PATH
+        uses: microsoft/setup-msbuild@v3
+
+      - name: Add cl.exe to PATH
+        uses: ilammy/msvc-dev-cmd@v1
+
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          path: brlcad
+
+      - name: Prepare bext dependencies
+        uses: ./brlcad/.github/actions/prepare-bext
+        with:
+          platform-channel: windows-2025-${{ runner.arch }}-release
+          source-dir: ${{ github.workspace }}/brlcad
+          output-dir: ${{ runner.temp }}/bext_output
+          build-type: Release
+          artifact-token: ${{ secrets.BEXT_ARTIFACT_TOKEN }}
+
+      - name: Set up PGO paths
+        shell: pwsh
+        run: |
+          # Short build roots keep STEP-generated paths below Windows MAX_PATH.
+          $paths = @{
+            PGO_PATH = Join-Path $env:RUNNER_TEMP 'pgo-d'
+            PGO_BASELINE_BUILD_DIR = Join-Path $env:RUNNER_TEMP 'pgo-b'
+            PGO_GENERATE_BUILD_DIR = Join-Path $env:RUNNER_TEMP 'pgo-g'
+            PGO_OPTIMIZED_BUILD_DIR = Join-Path $env:RUNNER_TEMP 'pgo-u'
+            PGO_TRAINING_RESULTS_DIR = Join-Path $env:RUNNER_TEMP 'pgo-t'
+            PGO_RESULTS_DIR = Join-Path $env:RUNNER_TEMP 'pgo-r'
+          }
+          if (Test-Path -LiteralPath $paths.PGO_PATH) {
+            throw "PGO profile path unexpectedly exists before the generation build: $($paths.PGO_PATH)"
+          }
+          foreach ($path in $paths.GetEnumerator()) {
+            Add-Content -Path $env:GITHUB_ENV -Value "$($path.Key)=$($path.Value)"
+          }
+
+      - name: Configure baseline build
+        shell: pwsh
+        run: |
+          cmake -S brlcad -B "$env:PGO_BASELINE_BUILD_DIR" -G Ninja `
+            -DCMAKE_C_COMPILER=cl.exe `
+            -DCMAKE_CXX_COMPILER=cl.exe `
+            -DCMAKE_BUILD_TYPE=Release `
+            -DBUILD_TESTING=ON `
+            "-DBRLCAD_EXT_DIR=${{ runner.temp }}/bext_output" `
+            -DBRLCAD_ENABLE_QT=OFF `
+            -DBRLCAD_ENABLE_STEP=ON `
+            -DBRLCAD_ENABLE_STRICT=ON
+
+      - name: Build baseline
+        shell: pwsh
+        run: |
+          $targets = $env:PGO_BENCHMARK_TARGETS -split '\s+'
+          $arguments = @('--build', $env:PGO_BASELINE_BUILD_DIR, '--target') + $targets
+          cmake @arguments
+
+      - name: Configure profile-generation build
+        shell: pwsh
+        run: |
+          cmake -S brlcad -B "$env:PGO_GENERATE_BUILD_DIR" -G Ninja `
+            -DCMAKE_C_COMPILER=cl.exe `
+            -DCMAKE_CXX_COMPILER=cl.exe `
+            -DCMAKE_BUILD_TYPE=Release `
+            -DBUILD_TESTING=ON `
+            "-DBRLCAD_EXT_DIR=${{ runner.temp }}/bext_output" `
+            -DBRLCAD_ENABLE_QT=OFF `
+            -DBRLCAD_ENABLE_STEP=ON `
+            -DBRLCAD_ENABLE_STRICT=ON `
+            -DBRLCAD_PGO=ON
+          if ($LASTEXITCODE -ne 0) {
+            exit $LASTEXITCODE
+          }
+          if (-not (Select-String -Path "$env:PGO_GENERATE_BUILD_DIR/build.ninja" -SimpleMatch '/GENPROFILE:PGD=' -Quiet)) {
+            throw 'The profile-generation build does not contain /GENPROFILE.'
+          }
+
+      - name: Build profile-generation binaries
+        shell: pwsh
+        run: |
+          $targets = ($env:PGO_BENCHMARK_TARGETS + ' ' + $env:PGO_TRAINING_TARGETS) -split '\s+'
+          $arguments = @('--build', $env:PGO_GENERATE_BUILD_DIR, '--target') + $targets
+          cmake @arguments
+
+      - name: Generate profile data
+        shell: pwsh
+        run: |
+          cmake `
+            -DPGO_MODE=TRAIN `
+            "-DPGO_BUILD_DIR=$env:PGO_GENERATE_BUILD_DIR" `
+            "-DPGO_RESULTS_DIR=$env:PGO_TRAINING_RESULTS_DIR" `
+            "-DPGO_PROFILE_DIR=$env:PGO_PATH" `
+            "-DPGO_TIMEFRAME=$env:PGO_BENCHMARK_TIMEFRAME" `
+            "-DPGO_MAXTIME=$env:PGO_BENCHMARK_MAXTIME" `
+            "-DPGO_AVERAGE=$env:PGO_BENCHMARK_AVERAGE" `
+            "-DPGO_DEVIATION=$env:PGO_BENCHMARK_DEVIATION" `
+            "-DPGO_TRAINING_SIZE=$env:PGO_TRAINING_SIZE" `
+            "-DPGO_TRAINING_AZIMUTH=$env:PGO_TRAINING_AZIMUTH" `
+            "-DPGO_TRAINING_ELEVATION=$env:PGO_TRAINING_ELEVATION" `
+            -P brlcad/misc/CMake/scripts/pgo_benchmark.cmake
+
+      - name: Configure profile-use build
+        shell: pwsh
+        run: |
+          cmake -S brlcad -B "$env:PGO_OPTIMIZED_BUILD_DIR" -G Ninja `
+            -DCMAKE_C_COMPILER=cl.exe `
+            -DCMAKE_CXX_COMPILER=cl.exe `
+            -DCMAKE_BUILD_TYPE=Release `
+            -DBUILD_TESTING=ON `
+            "-DBRLCAD_EXT_DIR=${{ runner.temp }}/bext_output" `
+            -DBRLCAD_ENABLE_QT=OFF `
+            -DBRLCAD_ENABLE_STEP=ON `
+            -DBRLCAD_ENABLE_STRICT=ON `
+            -DBRLCAD_PGO=ON
+          if ($LASTEXITCODE -ne 0) {
+            exit $LASTEXITCODE
+          }
+          if (-not (Select-String -Path "$env:PGO_OPTIMIZED_BUILD_DIR/build.ninja" -SimpleMatch '/USEPROFILE:PGD=' -Quiet)) {
+            throw 'The profile-use build does not contain /USEPROFILE.'
+          }
+
+      - name: Build profile-guided binaries
+        shell: pwsh
+        run: |
+          $targets = $env:PGO_BENCHMARK_TARGETS -split '\s+'
+          $arguments = @('--build', $env:PGO_OPTIMIZED_BUILD_DIR, '--target') + $targets
+          cmake @arguments
+
+      - name: Benchmark and compare profile-guided build
+        shell: pwsh
+        run: |
+          cmake `
+            -DPGO_MODE=COMPARE `
+            "-DPGO_BASELINE_BUILD_DIR=$env:PGO_BASELINE_BUILD_DIR" `
+            "-DPGO_OPTIMIZED_BUILD_DIR=$env:PGO_OPTIMIZED_BUILD_DIR" `
+            "-DPGO_RESULTS_DIR=$env:PGO_RESULTS_DIR" `
+            "-DPGO_TIMEFRAME=$env:PGO_BENCHMARK_TIMEFRAME" `
+            "-DPGO_MAXTIME=$env:PGO_BENCHMARK_MAXTIME" `
+            "-DPGO_AVERAGE=$env:PGO_BENCHMARK_AVERAGE" `
+            "-DPGO_DEVIATION=$env:PGO_BENCHMARK_DEVIATION" `
+            "-DPGO_MIN_SPEEDUP=$env:PGO_MIN_SPEEDUP" `
+            -P brlcad/misc/CMake/scripts/pgo_benchmark.cmake
+
 
   # See https://app.codecov.io/gh/BRL-CAD/brlcad for analysis results
   linux_cov:
