@@ -3206,7 +3206,6 @@ main(int argc, char *argv[])
 	} else {
 	    /* start up the GUI */
 
-	    struct bu_vls vls = BU_VLS_INIT_ZERO;
 	    int status;
 
 #ifdef HAVE_SETPGID
@@ -3215,17 +3214,20 @@ main(int argc, char *argv[])
 #endif
 
 	    if (old_mged_gui) {
+		const char *gui_args[4];
+		int gui_argc = 0;
+
 		if (attach && strlen(attach) > 0) {
 		    Tcl_SetVar2(s->interp, "mged_default", "dm_type", attach, TCL_GLOBAL_ONLY);
+		    gui_args[gui_argc++] = "-dt";
+		    gui_args[gui_argc++] = attach;
 		    if (BU_STR_EQUAL(attach, "tkswrast")) {
-			bu_vls_printf(&vls, "gui -dt %s -config g", attach);
-		    } else {
-			bu_vls_printf(&vls, "gui -dt %s", attach);
+			gui_args[gui_argc++] = "-config";
+			gui_args[gui_argc++] = "g";
 		    }
-		} else {
-		    bu_vls_strcpy(&vls, "gui");
 		}
-		status = Tcl_Eval(s->interp, bu_vls_addr(&vls));
+		status = mged_tcl_eval(s->interp, MGED_GUI_COMMAND,
+		    gui_argc, gui_args);
 	    } else {
 		Tcl_DString temp;
 		const char *archer_trans;
@@ -3236,8 +3238,6 @@ main(int argc, char *argv[])
 		status = Tcl_EvalFile(s->interp, archer_trans);
 		Tcl_DStringFree(&temp);
 	    }
-	    bu_vls_free(&vls);
-
 #ifdef HAVE_PIPE
 	    /* if we are going to run in the background, let the
 	     * parent process know that we are done initializing so

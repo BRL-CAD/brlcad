@@ -11,6 +11,7 @@ foreach command {
     ::brlcad::mged::callbacks::open_database
     ::brlcad::mged::callbacks::output
     ::brlcad::mged::callbacks::solid_list
+    ::brlcad::mged::gui::start
     collaborate color_scheme_reset comb_apply default_key_bindings
     default_mouse_bindings gui
     esol_apply
@@ -76,7 +77,7 @@ proc ::namespace_gui_alias_trap {command args} {
 
 set legacy_commands {
     ? M adc aip attr cmd_win db dm exists expand form get_comb help helpdevel
-    hist kill knob lt mged_update mmenu_get nirt opendb press put_comb regdef
+    gui hist kill knob lt mged_update mmenu_get nirt opendb press put_comb regdef
     rset sed_apply sed_reset status stuff_str svb winset zoom
     active_edit_callback begin_edit_callback end_edit_callback mged_activate_dm
     mged_bind_dm mged_command_busy mged_release_dm opendb_callback
@@ -120,7 +121,7 @@ try {
 	[string match {*legacy alias invoked*} $message]} {
 	error "FAIL collaborate help depends on the helpdevel alias: $message"
     }
-    if {[catch {gui -h} message] ||
+    if {[catch {::brlcad::mged::gui::start -h} message] ||
 	[string match {*legacy alias invoked*} $message]} {
 	error "FAIL GUI help depends on the help alias: $message"
     }

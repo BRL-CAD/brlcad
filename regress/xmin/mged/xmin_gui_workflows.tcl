@@ -469,7 +469,8 @@ proc ::mged::xmin::workflows::exercise_collaboration {id} {
 
     set peer xmin_peer
     ::gui::test::write progress "collaboration: create peer"
-    set result [gui -config b -dt tkswrast -id $peer -join]
+    set result [::brlcad::mged::gui::start \
+	-config b -dt tkswrast -id $peer -join]
     if {$result ne ""} {
 	fail "could not create collaborating MGED player: $result"
     }

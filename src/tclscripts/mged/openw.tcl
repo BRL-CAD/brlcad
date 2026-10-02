@@ -245,7 +245,7 @@ proc mged_open_manual {parent screen} {
     ia_man $parent $screen
 }
 
-proc gui { args } {
+proc ::brlcad::mged::gui::start {args} {
     global tmp_hoc
     global mged_gui
     global mged_default
@@ -2336,6 +2336,11 @@ hoc_register_menu_data "Create" "$ptype..." "Make a $ptype" $ksl
 	# Wait until the command toplevel is mapped before requesting focus.
 	focus .$id.t
     }
+}
+
+# Compatibility entry point for scripts and interactive use.
+proc ::gui {args} {
+    tailcall ::brlcad::mged::gui::start {*}$args
 }
 
 proc cmd_win_hide args {
