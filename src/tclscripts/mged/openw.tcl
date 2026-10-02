@@ -2513,7 +2513,7 @@ proc toggle_button_menu { id } {
 	return
     }
 
-    mmenu_init $id
+    ::brlcad::mged::menu::initialize $id
 }
 
 proc toggle_edit_info { id } {

@@ -12,6 +12,10 @@ foreach command {
     ::brlcad::mged::callbacks::output
     ::brlcad::mged::callbacks::solid_list
     ::brlcad::mged::gui::start
+    ::brlcad::mged::menu::initialize
+    ::brlcad::mged::menu::install
+    ::brlcad::mged::menu::press
+    ::brlcad::mged::menu::reconfigure
     collaborate color_scheme_reset comb_apply default_key_bindings
     default_mouse_bindings gui
     esol_apply
@@ -77,11 +81,12 @@ proc ::namespace_gui_alias_trap {command args} {
 
 set legacy_commands {
     ? M adc aip attr cmd_win db dm exists expand form get_comb help helpdevel
-    gui hist kill knob lt mged_update mmenu_get nirt opendb press put_comb regdef
+    gui hist kill knob lt mged_update mmenu_get mmenu_set nirt opendb press
+    put_comb regdef
     rset sed_apply sed_reset status stuff_str svb winset zoom
     active_edit_callback begin_edit_callback end_edit_callback mged_activate_dm
     mged_bind_dm mged_command_busy mged_release_dm opendb_callback
-    output_callback solid_list_callback
+    output_callback solid_list_callback mmenu_init mged_press reconfig_mmenu
 }
 set hidden_commands {}
 foreach command $legacy_commands {
@@ -112,7 +117,8 @@ try {
 	error "FAIL view-axes position is $mged_gui($test_id,view_pos)"
     }
     mged_draw_grid $test_id
-    mged_press $command_id ::namespace_gui_widget
+    ::brlcad::mged::menu::press $command_id ::namespace_gui_widget
+    ::brlcad::mged mmenu_set $test_id 0
 
     ::brlcad::mged::bindings::activate_dm $active_dm
     scale_shift_grip_hints .namespace_gui_missing X

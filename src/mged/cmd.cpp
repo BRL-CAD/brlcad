@@ -1844,17 +1844,6 @@ cmd_output_hook(ClientData clientData, Tcl_Interp *interpreter, int argc, const 
 
 
 int
-cmd_nop(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
-{
-    (void)clientData;
-    (void)interp;
-    (void)argc;
-    (void)argv;
-    return TCL_OK;
-}
-
-
-int
 cmd_cmd_win(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *argv[])
 {
     struct bu_vls vls = BU_VLS_INIT_ZERO;

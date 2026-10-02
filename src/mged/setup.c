@@ -280,7 +280,7 @@ static struct cmdtab mged_cmdtab[] = {
     {MGED_CMD_MAGIC, "mirface", f_mirface, GED_FUNC_PTR_NULL, NULL},
     {MGED_CMD_MAGIC, "mirror", cmd_ged_plain_wrapper, ged_exec_mirror, NULL},
     {MGED_CMD_MAGIC, "mmenu_get", cmd_mmenu_get, GED_FUNC_PTR_NULL, NULL},
-    {MGED_CMD_MAGIC, "mmenu_set", cmd_nop, GED_FUNC_PTR_NULL, NULL},
+    {MGED_CMD_MAGIC, "mmenu_set", cmd_mmenu_set, GED_FUNC_PTR_NULL, NULL},
     {MGED_CMD_MAGIC, "model2grid_lu", cmd_ged_plain_wrapper, ged_exec_model2grid_lu, NULL},
     {MGED_CMD_MAGIC, "model2view", cmd_ged_plain_wrapper, ged_exec_model2view, NULL},
     {MGED_CMD_MAGIC, "model2view_lu", cmd_ged_plain_wrapper, ged_exec_model2view_lu, NULL},

@@ -214,6 +214,18 @@ cmd_mmenu_get(ClientData clientData, Tcl_Interp *interp, int argc, const char *a
 }
 
 
+int
+cmd_mmenu_set(ClientData clientData, Tcl_Interp *interp, int argc,
+	      const char *argv[])
+{
+    struct cmdtab *ctp = (struct cmdtab *)clientData;
+    MGED_CK_CMD(ctp);
+
+    return mged_tcl_eval(interp, MGED_MENU_INSTALL_COMMAND, argc - 1,
+	argv + 1);
+}
+
+
 /*
  * Clear global data
  */
@@ -241,34 +253,11 @@ mged_mmenu_set(int UNUSED(ac), const char **UNUSED(av), void *d, void *ms)
 {
     struct mged_state *s = (struct mged_state *)d;
     struct rt_edit_menu_item *value = (struct rt_edit_menu_item *)ms;
-    int index = MENU_L1;
 
     // All uses of mmenu_set in primitives did this, so just do it here instead.
     menu_state->ms_flag = 0;
 
-    Tcl_DString ds_menu;
-    struct bu_vls menu_string = BU_VLS_INIT_ZERO;
-
-    menu_state->ms_menus[index] = value;  /* Change the menu internally */
-
-    Tcl_DStringInit(&ds_menu);
-
-    bu_vls_printf(&menu_string, "mmenu_set %s %d ", bu_vls_addr(&curr_cmd_list->cl_name), index);
-
-    (void)Tcl_Eval(s->interp, bu_vls_addr(&menu_string));
-
-    Tcl_DStringFree(&ds_menu);
-    bu_vls_free(&menu_string);
-
-    for (size_t di = 0; di < BU_PTBL_LEN(&active_dm_set); di++) {
-	struct mged_dm *dlp = (struct mged_dm *)BU_PTBL_GET(&active_dm_set, di);
-	if (menu_state == dlp->dm_menu_state &&
-	    dlp->dm_mged_variables->mv_faceplate &&
-	    dlp->dm_mged_variables->mv_orig_gui) {
-	    dlp->dm_dirty = 1;
-	    dm_set_dirty(dlp->dm_dmp, 1);
-	}
-    }
+    mmenu_set(s, MENU_L1, value);
 
     return TCL_OK;
 }
@@ -277,19 +266,16 @@ mged_mmenu_set(int UNUSED(ac), const char **UNUSED(av), void *d, void *ms)
 void
 mmenu_set(struct mged_state *s, int index, struct rt_edit_menu_item *value)
 {
-    Tcl_DString ds_menu;
-    struct bu_vls menu_string = BU_VLS_INIT_ZERO;
+    struct bu_vls index_string = BU_VLS_INIT_ZERO;
+    const char *args[2];
 
     menu_state->ms_menus[index] = value;  /* Change the menu internally */
 
-    Tcl_DStringInit(&ds_menu);
-
-    bu_vls_printf(&menu_string, "mmenu_set %s %d ", bu_vls_addr(&curr_cmd_list->cl_name), index);
-
-    (void)Tcl_Eval(s->interp, bu_vls_addr(&menu_string));
-
-    Tcl_DStringFree(&ds_menu);
-    bu_vls_free(&menu_string);
+    bu_vls_printf(&index_string, "%d", index);
+    args[0] = bu_vls_cstr(&curr_cmd_list->cl_name);
+    args[1] = bu_vls_cstr(&index_string);
+    (void)mged_tcl_eval(s->interp, MGED_MENU_INSTALL_COMMAND, 2, args);
+    bu_vls_free(&index_string);
 
     for (size_t di = 0; di < BU_PTBL_LEN(&active_dm_set); di++) {
 	struct mged_dm *dlp = (struct mged_dm *)BU_PTBL_GET(&active_dm_set, di);
