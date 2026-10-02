@@ -187,7 +187,7 @@ proc dbupgrade {args} {
 	    "-help" {
 		puts "$dbupgrade_priv(message)"
 		unset dbupgrade_priv(dbname)
-		return [help dbupgrade]
+		return [::brlcad::mged::help::show dbupgrade]
 	    }
 	}
 

@@ -27,7 +27,7 @@ proc collaborate { cmd {id ""} } {
 
     if {$cmd == "join"} {
 	if {$id == ""} {
-	    return [helpdevel collaborate]
+	    return [::brlcad::mged::helpdevel::show collaborate]
 	}
 
 	collab_join $id
@@ -36,7 +36,7 @@ proc collaborate { cmd {id ""} } {
 
     if {$cmd == "quit"} {
 	if {$id == ""} {
-	    return [helpdevel collaborate]
+	    return [::brlcad::mged::helpdevel::show collaborate]
 	}
 
 	collab_quit $id

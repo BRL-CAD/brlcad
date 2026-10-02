@@ -1751,7 +1751,7 @@ proc tab_expansion { line } {
     global mged_cmds
 
     if { [info exists mged_cmds] == 0 } {
-	set mged_cmds [?]
+	set mged_cmds [::brlcad::mged::help::summary]
     }
     set matches {}
 

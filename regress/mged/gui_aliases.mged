@@ -1,7 +1,8 @@
 puts "*** Testing Tcl GUI command dispatch ***"
 
 foreach command {
-    color_scheme_reset comb_apply default_key_bindings default_mouse_bindings
+    collaborate color_scheme_reset comb_apply default_key_bindings
+    default_mouse_bindings gui
     esol_apply
     mged_activate_dm mged_dm_supports mged_draw_grid mged_press
     mouse_comb_edit_select mouse_matrix_edit_select mouse_rt_obj_select
@@ -64,9 +65,9 @@ proc ::namespace_gui_alias_trap {command args} {
 }
 
 set legacy_commands {
-    M adc aip attr cmd_win db dm exists expand form get_comb hist kill knob
-    lt mged_update mmenu_get nirt opendb press put_comb regdef rset
-    sed_apply sed_reset status stuff_str svb winset zoom
+    ? M adc aip attr cmd_win db dm exists expand form get_comb help helpdevel
+    hist kill knob lt mged_update mmenu_get nirt opendb press put_comb regdef
+    rset sed_apply sed_reset status stuff_str svb winset zoom
 }
 set hidden_commands {}
 foreach command $legacy_commands {
@@ -101,6 +102,15 @@ try {
 
     mged_activate_dm $active_dm
     scale_shift_grip_hints .namespace_gui_missing X
+
+    if {[catch {collaborate join} message] ||
+	[string match {*legacy alias invoked*} $message]} {
+	error "FAIL collaborate help depends on the helpdevel alias: $message"
+    }
+    if {[catch {gui -h} message] ||
+	[string match {*legacy alias invoked*} $message]} {
+	error "FAIL GUI help depends on the help alias: $message"
+    }
 
     set saved_bind [info commands ::bind]
     if {$saved_bind ne ""} {
@@ -191,7 +201,20 @@ try {
 
     ::__brlcad_mged_compatibility_adc draw
 
-    lassign [tab_expansion {draw namespace_gui.}] expanded matches
+    set had_mged_cmds [info exists mged_cmds]
+    if {$had_mged_cmds} {
+	set saved_mged_cmds $mged_cmds
+    }
+    unset -nocomplain mged_cmds
+    try {
+	lassign [tab_expansion {draw namespace_gui.}] expanded matches
+    } finally {
+	if {$had_mged_cmds} {
+	    set mged_cmds $saved_mged_cmds
+	} else {
+	    unset -nocomplain mged_cmds
+	}
+    }
     if {[lsearch -exact $matches $object] < 0 ||
 	[lsearch -exact $matches $group] < 0} {
 	error "FAIL tab expansion returned '$expanded' with matches '$matches'"
@@ -235,6 +258,7 @@ try {
 	rename ::$command {}
     }
     unset -nocomplain ::namespace_gui_result \
+	had_mged_cmds saved_mged_cmds \
 	comb_control($comb_test_id,name) comb_control($comb_test_id,color) \
 	comb_control($comb_test_id,shader) comb_control($comb_test_id,inherit) \
 	comb_control($comb_test_id,isRegion) comb_control($comb_test_id,id) \

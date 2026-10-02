@@ -314,7 +314,7 @@ proc gui { args } {
 	    incr i
 
 	    if {$i >= $argc} {
-		return [help gui]
+		return [::brlcad::mged::help::show gui]
 	    }
 
 	    set arg [lindex $args $i]
@@ -330,14 +330,14 @@ proc gui { args } {
 		set scw 0
 		set sgw 1
 	    } else {
-		return [help gui]
+		return [::brlcad::mged::help::show gui]
 	    }
 	} elseif {$arg == "-d" || $arg == "-display"} {
 	    # display string for everything
 	    incr i
 
 	    if {$i >= $argc} {
-		return [help gui]
+		return [::brlcad::mged::help::show gui]
 	    }
 
 	    set screen [lindex $args $i]
@@ -354,7 +354,7 @@ proc gui { args } {
 	    incr i
 
 	    if {$i >= $argc} {
-		return [help gui]
+		return [::brlcad::mged::help::show gui]
 	    }
 
 	    set gscreen [lindex $args $i]
@@ -370,7 +370,7 @@ proc gui { args } {
 	    incr i
 
 	    if {$i >= $argc} {
-		return [help gui]
+		return [::brlcad::mged::help::show gui]
 	    }
 
 	    set dtype [lindex $args $i]
@@ -379,20 +379,20 @@ proc gui { args } {
 	    incr i
 
 	    if {$i >= $argc} {
-		return [help gui]
+		return [::brlcad::mged::help::show gui]
 	    }
 
 	    set id [lindex $args $i]
 	} elseif {$arg == "-j" || $arg == "-join"} {
 	    set join_c 1
 	} elseif {$arg == "-h" || $arg == "-help"} {
-	    return [help gui]
+	    return [::brlcad::mged::help::show gui]
 	} elseif {$arg == "-s" || $arg == "-sep"} {
 	    set comb 0
 	} elseif {$arg == "-c" || $arg == "-comb"} {
 	    set comb 1
 	} else {
-	    return [help gui]
+	    return [::brlcad::mged::help::show gui]
 	}
     }
 
@@ -2364,7 +2364,7 @@ proc gui_destroy args {
     global mged_collaborators
 
     if { [llength $args] != 1 } {
-        return [help gui_destroy]
+        return [::brlcad::mged::help::show gui_destroy]
     }
 
     set id [lindex $args 0]

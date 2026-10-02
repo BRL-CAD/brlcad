@@ -100,7 +100,7 @@ proc handle_select { w y } {
 proc mged_help { w1 screen } {
     global ::tk::Priv
 
-    catch { help [$w1 get [$w1 curselection]]} msg
+    catch {::brlcad::mged::help::show [$w1 get [$w1 curselection]]} msg
     cad_dialog $::tk::Priv(cad_dialog) $screen Usage $msg info 0 OK
 }
 
@@ -118,7 +118,7 @@ given keyword."} { see_also apropos }} OK Cancel] == 1 } {
 	return
     }
 
-    ia_help $parent $screen [apropos $keyword]
+    ia_help $parent $screen [::brlcad::mged::help::apropos $keyword]
 }
 
 proc ia_man_search { parent screen } {
