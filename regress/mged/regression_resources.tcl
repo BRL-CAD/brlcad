@@ -25,6 +25,140 @@
 # be safely sourced multiple times without re-executing the file
 # contents
 
+namespace eval ::brlcad::mged::regression {
+    variable command_sets {}
+    variable next_command_set 0
+}
+
+proc ::brlcad::mged::regression::_normalize_command {command} {
+    if {![string match ::* $command]} {
+	return ::$command
+    }
+    return $command
+}
+
+proc ::brlcad::mged::regression::hide_compatibility_commands {commands} {
+    variable command_sets
+    variable next_command_set
+
+    set requested {}
+    foreach command $commands {
+	set command [_normalize_command $command]
+	if {[dict exists $requested $command]} {
+	    error "duplicate compatibility command: $command"
+	}
+	if {[namespace which -command $command] eq ""} {
+	    error "missing compatibility command: $command"
+	}
+	dict set requested $command 1
+    }
+
+    set token [format command_set_%d [incr next_command_set]]
+    set storage_namespace ::brlcad::mged::regression::saved::$token
+    namespace eval $storage_namespace {}
+    set saved_commands {}
+    set index 0
+    try {
+	dict for {command unused} $requested {
+	    set saved [format "%s::command_%d" $storage_namespace [incr index]]
+	    rename $command $saved
+	    dict set saved_commands $command $saved
+	}
+    } on error {message options} {
+	dict for {command saved} $saved_commands {
+	    rename $saved $command
+	}
+	namespace delete $storage_namespace
+	return -options $options $message
+    }
+
+    dict set command_sets $token [dict create \
+	commands $saved_commands invocations {} storage $storage_namespace]
+    return $token
+}
+
+proc ::brlcad::mged::regression::_record_compatibility_invocation {
+    token command args
+} {
+    variable command_sets
+
+    if {![dict exists $command_sets $token]} {
+	error "unknown compatibility command set: $token"
+    }
+    dict lappend command_sets $token invocations $command
+    return -code error -errorcode {BRLCAD TEST COMPATIBILITY_COMMAND} \
+	"legacy compatibility command invoked: $command"
+}
+
+proc ::brlcad::mged::regression::trap_compatibility_commands {commands} {
+    variable command_sets
+
+    set token [hide_compatibility_commands $commands]
+    set saved_commands [dict get $command_sets $token commands]
+    try {
+	dict for {command saved} $saved_commands {
+	    interp alias {} $command {} \
+		::brlcad::mged::regression::_record_compatibility_invocation \
+		$token $command
+	}
+    } on error {message options} {
+	restore_compatibility_commands $token
+	return -options $options $message
+    }
+    return $token
+}
+
+proc ::brlcad::mged::regression::hidden_compatibility_command {
+    token command
+} {
+    variable command_sets
+
+    set command [_normalize_command $command]
+    if {![dict exists $command_sets $token commands $command]} {
+	error "$command is not in compatibility command set $token"
+    }
+    return [dict get $command_sets $token commands $command]
+}
+
+proc ::brlcad::mged::regression::compatibility_command_invocations {token} {
+    variable command_sets
+
+    if {![dict exists $command_sets $token]} {
+	error "unknown compatibility command set: $token"
+    }
+    return [dict get $command_sets $token invocations]
+}
+
+proc ::brlcad::mged::regression::restore_compatibility_commands {token} {
+    variable command_sets
+
+    if {![dict exists $command_sets $token]} {
+	error "unknown compatibility command set: $token"
+    }
+    set state [dict get $command_sets $token]
+    set errors {}
+    dict for {command saved} [dict get $state commands] {
+	if {[namespace which -command $command] ne "" &&
+	    [catch {rename $command {}} message]} {
+	    lappend errors "could not remove test command $command: $message"
+	}
+	if {[namespace which -command $saved] eq ""} {
+	    lappend errors "saved compatibility command is missing: $command"
+	} elseif {[catch {rename $saved $command} message]} {
+	    lappend errors "could not restore compatibility command $command: $message"
+	}
+    }
+    set storage_namespace [dict get $state storage]
+    if {[namespace exists $storage_namespace]} {
+	namespace delete $storage_namespace
+    }
+    dict unset command_sets $token
+
+    if {[llength $errors]} {
+	return -code error [join $errors \n]
+    }
+}
+
 if {![info exists make_primitives_list]} {
 
   # A complete list of the primitives to be tested in regression

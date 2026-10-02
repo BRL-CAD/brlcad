@@ -4,13 +4,9 @@ puts "*** Testing 'facetize_all_regions' command ***"
 ::brlcad::mged r namespace_facetize.r u namespace_facetize.s
 
 set failure_channel [file tempfile failure_path]
-set hidden_commands {}
-foreach command {db exists facetize ls} {
-    set compatibility_command ::$command
-    set hidden_command ::__brlcad_mged_compatibility_$command
-    rename $compatibility_command $hidden_command
-    lappend hidden_commands $hidden_command $compatibility_command
-}
+set command_set [::brlcad::mged::regression::hide_compatibility_commands {
+    db exists facetize ls
+}]
 try {
     set result [attempt_facetize namespace_facetize.r {} $failure_channel]
     close $failure_channel
@@ -24,11 +20,10 @@ try {
     if {$failure_channel ne ""} {
 	close $failure_channel
     }
-    foreach {hidden_command compatibility_command} $hidden_commands {
-	rename $hidden_command $compatibility_command
-    }
+    ::brlcad::mged::regression::restore_compatibility_commands $command_set
     file delete $failure_path
 }
+unset command_set
 
 if {![::brlcad::mged exists namespace_facetize.r.bot]} {
     error "FAIL attempt_facetize did not create namespace_facetize.r.bot"

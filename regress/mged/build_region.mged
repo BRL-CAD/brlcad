@@ -2,20 +2,15 @@ puts "*** Testing 'build_region' command ***"
 
 batch_insert build_region epa .s 0 15 1
 
-set hidden_commands {}
-foreach command {adjust exists expand get put regdef} {
-    set compatibility_command ::$command
-    set hidden_command ::__brlcad_mged_compatibility_$command
-    rename $compatibility_command $hidden_command
-    lappend hidden_commands $hidden_command $compatibility_command
-}
+set command_set [::brlcad::mged::regression::hide_compatibility_commands {
+    adjust exists expand get put regdef
+}]
 try {
     build_region build_region_epa 0 15
     build_region -a 42 build_region_epa 5 8
 } finally {
-    foreach {hidden_command compatibility_command} $hidden_commands {
-	rename $hidden_command $compatibility_command
-    }
+    ::brlcad::mged::regression::restore_compatibility_commands $command_set
 }
+unset command_set
 
 puts "*** 'build_region' testing completed ***"

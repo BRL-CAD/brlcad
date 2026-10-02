@@ -7,20 +7,15 @@ set object namespace_fuse.s
     {0 1 2} {3 1 2}
 }
 
-set hidden_commands {}
-foreach command {bot_vertex_fuse kill l mv search} {
-    set compatibility_command ::$command
-    set hidden_command ::__brlcad_mged_compatibility_$command
-    rename $compatibility_command $hidden_command
-    lappend hidden_commands $hidden_command $compatibility_command
-}
+set command_set [::brlcad::mged::regression::hide_compatibility_commands {
+    bot_vertex_fuse kill l mv search
+}]
 try {
     bot_vertex_fuse_all
 } finally {
-    foreach {hidden_command compatibility_command} $hidden_commands {
-	rename $hidden_command $compatibility_command
-    }
+    ::brlcad::mged::regression::restore_compatibility_commands $command_set
 }
+unset command_set
 
 if {![::brlcad::mged exists $object]} {
     error "FAIL bot_vertex_fuse_all removed $object"

@@ -9,22 +9,17 @@ if {![auto_load grouper]} {
 ::brlcad::mged g namespace_group.g \
     namespace_group_one.s namespace_group_two.s
 
-set hidden_commands {}
-foreach command {exists g kill make_name mv tree} {
-    set compatibility_command ::$command
-    set hidden_command ::__brlcad_mged_compatibility_$command
-    rename $compatibility_command $hidden_command
-    lappend hidden_commands $hidden_command $compatibility_command
-}
+set command_set [::brlcad::mged::regression::hide_compatibility_commands {
+    exists g kill make_name mv tree
+}]
 try {
     set members [lsort [::Grouper::getTreeMembers namespace_group.g]]
     ::Grouper::remdup namespace_group.g
     set rebuilt_members [lsort [::Grouper::getTreeMembers namespace_group.g]]
 } finally {
-    foreach {hidden_command compatibility_command} $hidden_commands {
-	rename $hidden_command $compatibility_command
-    }
+    ::brlcad::mged::regression::restore_compatibility_commands $command_set
 }
+unset command_set
 
 set expected_members {namespace_group_one.s namespace_group_two.s}
 if {$members ne $expected_members || $rebuilt_members ne $expected_members} {

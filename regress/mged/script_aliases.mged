@@ -30,16 +30,10 @@ close $image_channel
 set shader_channel [file tempfile shader_path]
 close $shader_channel
 
-set hidden_commands {}
-foreach command {
+set command_set [::brlcad::mged::regression::hide_compatibility_commands {
     adjust attr clone db e expand g get lt ls r set_more_default tops view
     whichid
-} {
-    set compatibility_command ::$command
-    set hidden_command ::__brlcad_mged_compatibility_$command
-    rename $compatibility_command $hidden_command
-    lappend hidden_commands $hidden_command $compatibility_command
-}
+}]
 try {
     if {[check_cycle {} namespace_utility.g]} {
 	error "FAIL check_cycle reported a cycle"
@@ -100,11 +94,10 @@ try {
 	error "FAIL prj_add did not write its shader file"
     }
 } finally {
-    foreach {hidden_command compatibility_command} $hidden_commands {
-	rename $hidden_command $compatibility_command
-    }
+    ::brlcad::mged::regression::restore_compatibility_commands $command_set
     file delete $map_path $image_path $shader_path
 }
+unset command_set
 
 puts "PASS Tcl utility command dispatch"
 puts "*** Tcl utility command dispatch testing completed ***"

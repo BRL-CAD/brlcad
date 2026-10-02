@@ -6,13 +6,9 @@ puts "*** Testing accelerator commands ***"
 ::brlcad::mged in namespace_accel_one.s sph -5 0 0 2
 ::brlcad::mged in namespace_accel_two.s sph 5 0 0 1
 
-set hidden_commands {}
-foreach command {d db e in make_name r} {
-    set compatibility_command ::$command
-    set hidden_command ::__brlcad_mged_compatibility_$command
-    rename $compatibility_command $hidden_command
-    lappend hidden_commands $hidden_command $compatibility_command
-}
+set command_set [::brlcad::mged::regression::hide_compatibility_commands {
+    d db e in make_name r
+}]
 try {
     set results [list \
 	[rcc-cap namespace_accel.rcc namespace_accel_cap.s] \
@@ -24,10 +20,9 @@ try {
 	[rpp-arch namespace_accel.rpp namespace_accel_arch.s 1234] \
 	[sph-part namespace_accel_one.s namespace_accel_two.s namespace_accel_part.s]]
 } finally {
-    foreach {hidden_command compatibility_command} $hidden_commands {
-	rename $hidden_command $compatibility_command
-    }
+    ::brlcad::mged::regression::restore_compatibility_commands $command_set
 }
+unset command_set
 
 foreach object $results {
     if {![::brlcad::mged exists $object]} {

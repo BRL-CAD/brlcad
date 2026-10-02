@@ -101,8 +101,9 @@ if {[::brlcad::mged::help::show draw] ne [help draw] ||
     error "FAIL canonical and compatibility help results differ"
 }
 
-rename ::helplib ::__brlcad_help_compatibility_library
-rename ::helplib_alias ::__brlcad_help_compatibility_library_alias
+set command_set [::brlcad::mged::regression::hide_compatibility_commands {
+    helplib helplib_alias
+}]
 try {
     foreach command {
 	{::brlcad::dm valid_type}
@@ -120,9 +121,9 @@ try {
 	}
     }
 } finally {
-    rename ::__brlcad_help_compatibility_library ::helplib
-    rename ::__brlcad_help_compatibility_library_alias ::helplib_alias
+    ::brlcad::mged::regression::restore_compatibility_commands $command_set
 }
+unset command_set
 unset command
 
 foreach command {
@@ -144,21 +145,23 @@ if {[info exists ::MGEDRC_HEADER]} {
 }
 set expected_rset [rset g draw]
 set expected_qray [qray basename]
-rename ::rset ::__brlcad_mged_compatibility_rset
-rename ::qray ::__brlcad_mged_compatibility_qray
+set command_set [::brlcad::mged::regression::hide_compatibility_commands {
+    qray rset
+}]
 try {
     if {[::brlcad::mged::mgedrc::rset g draw] ne $expected_rset ||
 	[::brlcad::mged::mgedrc::qray basename] ne $expected_qray} {
 	error "FAIL mgedrc state queries differ without compatibility aliases"
     }
 } finally {
-    rename ::__brlcad_mged_compatibility_rset ::rset
-    rename ::__brlcad_mged_compatibility_qray ::qray
+    ::brlcad::mged::regression::restore_compatibility_commands $command_set
 }
+unset command_set
 unset command expected_qray expected_rset mgedrc_exports
 
-rename ::help ::__brlcad_mged_compatibility_help
-rename ::helpdevel ::__brlcad_mged_compatibility_helpdevel
+set command_set [::brlcad::mged::regression::hide_compatibility_commands {
+    help helpdevel
+}]
 try {
     foreach command {
 	{::brlcad::mged zoom}
@@ -172,9 +175,9 @@ try {
 	}
     }
 } finally {
-    rename ::__brlcad_mged_compatibility_help ::help
-    rename ::__brlcad_mged_compatibility_helpdevel ::helpdevel
+    ::brlcad::mged::regression::restore_compatibility_commands $command_set
 }
+unset command_set
 unset command
 
 foreach command {::brlcad::ged ::brlcad::mged exists _mged_exists} {
@@ -450,13 +453,9 @@ foreach command {::brlcad::mged::regions_to_bots regions_to_bots} {
 set region namespaces_region.r
 ::brlcad::mged r $region u $object
 set old_glob_compat_mode $::glob_compat_mode
-set hidden_region_commands {}
-foreach command {exists facetize g kill search} {
-    set compatibility_command ::$command
-    set hidden_command ::__brlcad_mged_region_compatibility_$command
-    rename $compatibility_command $hidden_command
-    lappend hidden_region_commands $hidden_command $compatibility_command
-}
+set command_set [::brlcad::mged::regression::hide_compatibility_commands {
+    exists facetize g kill search
+}]
 try {
     ::brlcad::mged::regions_to_bots
     if {![::brlcad::mged exists $region] ||
@@ -464,26 +463,20 @@ try {
 	error "FAIL regions-to-BoTs did not produce $region and ${region}.bot"
     }
 } finally {
-    foreach {hidden_command compatibility_command} $hidden_region_commands {
-	rename $hidden_command $compatibility_command
-    }
+    ::brlcad::mged::regression::restore_compatibility_commands $command_set
 }
 if {$::glob_compat_mode != $old_glob_compat_mode} {
     error "FAIL regions-to-BoTs did not restore glob compatibility mode"
 }
 regions_to_bots
-unset hidden_region_commands old_glob_compat_mode region
+unset command_set old_glob_compat_mode region
 
 set region namespaces_region_2468.r
 ::brlcad::mged r $region u $object
 set old_glob_compat_mode $::glob_compat_mode
-set hidden_region_commands {}
-foreach command {attr mv search} {
-    set compatibility_command ::$command
-    set hidden_command ::__brlcad_mged_rename_region_compatibility_$command
-    rename $compatibility_command $hidden_command
-    lappend hidden_region_commands $hidden_command $compatibility_command
-}
+set command_set [::brlcad::mged::regression::hide_compatibility_commands {
+    attr mv search
+}]
 try {
     source [file join [::brlcad::bu dir data] tclscripts misc \
 	    rename_regions_to_ids.tcl]
@@ -493,9 +486,7 @@ try {
 	error "FAIL rename-regions-to-IDs did not rename $region"
     }
 } finally {
-    foreach {hidden_command compatibility_command} $hidden_region_commands {
-	rename $hidden_command $compatibility_command
-    }
+    ::brlcad::mged::regression::restore_compatibility_commands $command_set
 }
 if {$::glob_compat_mode != $old_glob_compat_mode} {
     error "FAIL rename-regions-to-IDs did not restore glob compatibility mode"
@@ -511,7 +502,7 @@ foreach command {
 if {[llength [info commands ::extractNumber]]} {
     error "FAIL private rename-regions-to-IDs helper is global"
 }
-unset hidden_region_commands old_glob_compat_mode region
+unset command_set old_glob_compat_mode region
 
 foreach command {::brlcad::metastrength::run metastrength} {
     if {![auto_load $command]} {
@@ -529,13 +520,9 @@ set metaball_group namespaces_metaball.c
 ::brlcad::mged put $metaball metaball method 1 thresh 1 \
     PL {{0 0 0 2 1} {10 0 0 3 1}}
 ::brlcad::mged g $metaball_group $metaball
-set hidden_metaball_commands {}
-foreach command {clone exists get kill lt mv put search} {
-    set compatibility_command ::$command
-    set hidden_command ::__brlcad_mged_metaball_compatibility_$command
-    rename $compatibility_command $hidden_command
-    lappend hidden_metaball_commands $hidden_command $compatibility_command
-}
+set command_set [::brlcad::mged::regression::hide_compatibility_commands {
+    clone exists get kill lt mv put search
+}]
 try {
     ::brlcad::metastrength::run ::brlcad::mged $metaball_group -scale 2
     set points [lindex [::brlcad::mged get $metaball] end]
@@ -545,11 +532,9 @@ try {
     }
     metastrength $metaball_group
 } finally {
-    foreach {hidden_command compatibility_command} $hidden_metaball_commands {
-	rename $hidden_command $compatibility_command
-    }
+    ::brlcad::mged::regression::restore_compatibility_commands $command_set
 }
-unset hidden_metaball_commands metaball metaball_group points
+unset command_set metaball metaball_group points
 
 ::brlcad::ged attr set $object namespace_test canonical
 if {[::brlcad::ged attr get $object namespace_test] ne "canonical"} {
@@ -561,16 +546,17 @@ if {![auto_load vRotUp]} {
 }
 set rotation_args {{0 0.7071067811865475 0.7071067811865475} {0 1 0}}
 set expected_rotation [vRotUp {*}$rotation_args]
-rename ::mat_mul ::__brlcad_mged_compatibility_mat_mul
+set command_set \
+    [::brlcad::mged::regression::hide_compatibility_commands mat_mul]
 try {
     set canonical_rotation [vRotUp {*}$rotation_args]
     if {$canonical_rotation ne $expected_rotation} {
 	error "FAIL points helper depends on the global mat_mul command"
     }
 } finally {
-    rename ::__brlcad_mged_compatibility_mat_mul ::mat_mul
+    ::brlcad::mged::regression::restore_compatibility_commands $command_set
 }
-unset canonical_rotation expected_rotation rotation_args
+unset canonical_rotation command_set expected_rotation rotation_args
 
 set matches [lrange [::brlcad::ged glob [list noop namespaces_*]] 1 end]
 if {[lsearch -exact $matches $object] < 0} {
@@ -613,19 +599,8 @@ foreach test $vmath_tests {
     }
 }
 
-set hidden_vmath_commands {}
-foreach command [dict keys [namespace ensemble configure ::brlcad::vmath -map]] {
-    set compatibility_command ::$command
-    set hidden_command ::__brlcad_vmath_compatibility_$command
-    if {![llength [info commands $compatibility_command]]} {
-	error "FAIL missing vmath compatibility command $compatibility_command"
-    }
-    if {[llength [info commands $hidden_command]]} {
-	error "FAIL vmath test command already exists: $hidden_command"
-    }
-    rename $compatibility_command $hidden_command
-    lappend hidden_vmath_commands $hidden_command $compatibility_command
-}
+set command_set [::brlcad::mged::regression::hide_compatibility_commands \
+    [dict keys [namespace ensemble configure ::brlcad::vmath -map]]]
 try {
     foreach test $vmath_tests {
         lassign $test command arguments expected
@@ -635,9 +610,7 @@ try {
 	}
     }
 } finally {
-    foreach {hidden_command compatibility_command} $hidden_vmath_commands {
-	rename $hidden_command $compatibility_command
-    }
+    ::brlcad::mged::regression::restore_compatibility_commands $command_set
 }
 
 set child [interp create]
@@ -660,7 +633,7 @@ try {
 } finally {
     interp delete $child
 }
-unset child canonical_result hidden_vmath_commands legacy_result vmath_tests
+unset child canonical_result command_set legacy_result vmath_tests
 
 if {![catch {::brlcad::vmath mat_i} message] ||
     ![string match {unknown subcommand "mat_i":*} $message]} {

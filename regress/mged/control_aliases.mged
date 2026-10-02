@@ -55,16 +55,10 @@ proc ::namespace_control_widget.fileE {subcommand} {
     return $::binunif_path
 }
 
-set hidden_commands {}
-foreach command {
+set command_set [::brlcad::mged::regression::hide_compatibility_commands {
     bo cmd_win dm exists get_dm_list grid2model_lu keep model2grid_lu
     opendb plot postscript qray rset view view2model_vec winset
-} {
-    set compatibility_command ::$command
-    set hidden_command ::__brlcad_mged_compatibility_$command
-    rename $compatibility_command $hidden_command
-    lappend hidden_commands $hidden_command $compatibility_command
-}
+}]
 
 try {
     set apply_count 0
@@ -154,9 +148,7 @@ try {
 	error "FAIL binunif helper did not create its object"
     }
 } finally {
-    foreach {hidden_command compatibility_command} $hidden_commands {
-	rename $hidden_command $compatibility_command
-    }
+    ::brlcad::mged::regression::restore_compatibility_commands $command_set
     dict for {setting value} $original_grid {
 	::brlcad::mged rset grid $setting $value
     }
@@ -179,6 +171,7 @@ try {
     unset -nocomplain mged_gui($test_id,active_dm) \
 	mged_gui($test_id,apply_to) mouse_behavior
 }
+unset command_set
 
 puts "PASS Tcl control command dispatch"
 puts "*** Tcl control command dispatch testing completed ***"

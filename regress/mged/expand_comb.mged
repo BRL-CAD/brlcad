@@ -5,20 +5,15 @@ puts "*** Testing 'expand_comb' command ***"
 ::brlcad::mged g namespace_expand_source.c \
     namespace_expand_left.s namespace_expand_right.s
 
-set hidden_commands {}
-foreach command {db get put} {
-    set compatibility_command ::$command
-    set hidden_command ::__brlcad_mged_compatibility_$command
-    rename $compatibility_command $hidden_command
-    lappend hidden_commands $hidden_command $compatibility_command
-}
+set command_set [::brlcad::mged::regression::hide_compatibility_commands {
+    db get put
+}]
 try {
     expand_comb namespace_expanded.c namespace_expand_source.c
 } finally {
-    foreach {hidden_command compatibility_command} $hidden_commands {
-	rename $hidden_command $compatibility_command
-    }
+    ::brlcad::mged::regression::restore_compatibility_commands $command_set
 }
+unset command_set
 
 foreach object {
     namespace_expanded.c namespace_expanded.cl namespace_expanded.cr

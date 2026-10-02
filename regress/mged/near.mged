@@ -3,23 +3,18 @@ puts "*** Testing 'near' command ***"
 ::brlcad::mged in namespace_near.s sph 0 0 0 1
 ::brlcad::mged r namespace_near.r u namespace_near.s
 
-set hidden_commands {}
-foreach command {bb rt_gettrees search units} {
-    set compatibility_command ::$command
-    set hidden_command ::__brlcad_mged_compatibility_$command
-    rename $compatibility_command $hidden_command
-    lappend hidden_commands $hidden_command $compatibility_command
-}
+set command_set [::brlcad::mged::regression::hide_compatibility_commands {
+    bb rt_gettrees search units
+}]
 try {
     set results [near -quiet 1 -ray_spacing 1 -max_samples 3 0 0 0 1]
     set report [::near_ns::format_results \
 	{point {0, 0, 0}} 1 1 $results \
 	{screened_candidates 1 bbox_candidate_pairs 1 spacing_values 1}]
 } finally {
-    foreach {hidden_command compatibility_command} $hidden_commands {
-	rename $hidden_command $compatibility_command
-    }
+    ::brlcad::mged::regression::restore_compatibility_commands $command_set
 }
+unset command_set
 
 if {![llength $results] || [dict get [lindex $results 0] relation] ne "overlap"} {
     error "FAIL near did not find the containing region: $results"

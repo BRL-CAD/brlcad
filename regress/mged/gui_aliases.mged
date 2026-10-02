@@ -1,5 +1,32 @@
 puts "*** Testing Tcl GUI command dispatch ***"
 
+proc ::namespace_compatibility_probe {} {
+    return original
+}
+set probe_set [::brlcad::mged::regression::trap_compatibility_commands \
+    namespace_compatibility_probe]
+set saved_probe [::brlcad::mged::regression::hidden_compatibility_command \
+    $probe_set namespace_compatibility_probe]
+try {
+    if {![catch {namespace_compatibility_probe} message options]} {
+	error "FAIL compatibility command trap accepted a call"
+    }
+    if {[dict get $options -errorcode] ne \
+	{BRLCAD TEST COMPATIBILITY_COMMAND} ||
+	[::brlcad::mged::regression::compatibility_command_invocations \
+	    $probe_set] ne {::namespace_compatibility_probe} ||
+	[$saved_probe] ne "original"} {
+	error "FAIL compatibility command trap did not preserve and record a call"
+    }
+} finally {
+    ::brlcad::mged::regression::restore_compatibility_commands $probe_set
+}
+if {[namespace_compatibility_probe] ne "original"} {
+    error "FAIL compatibility command trap did not restore its command"
+}
+rename ::namespace_compatibility_probe {}
+unset message options probe_set saved_probe
+
 foreach command {
     ::brlcad::mged::bindings::activate_dm
     ::brlcad::mged::bindings::bind_dm
@@ -73,12 +100,6 @@ foreach command {mouse_get_spath mouse_get_spath_and_pos mouse_get_comb} {
     interp alias {} ::$command {} ::namespace_gui_empty_selection
 }
 
-set invoked_aliases {}
-proc ::namespace_gui_alias_trap {command args} {
-    lappend ::invoked_aliases $command
-    error "legacy alias invoked: $command"
-}
-
 set legacy_commands {
     ? M adc aip attr cmd_win db dm exists expand form get_comb help helpdevel
     gui hist kill knob lt mged_update mmenu_get mmenu_set nirt opendb press
@@ -88,18 +109,16 @@ set legacy_commands {
     mged_bind_dm mged_command_busy mged_release_dm opendb_callback
     output_callback solid_list_callback mmenu_init mged_press reconfig_mmenu
 }
-set hidden_commands {}
-foreach command $legacy_commands {
-    set compatibility_command ::$command
-    set hidden_command ::__brlcad_mged_compatibility_$command
-    rename $compatibility_command $hidden_command
-    interp alias {} $compatibility_command {} ::namespace_gui_alias_trap $command
-    lappend hidden_commands $hidden_command $compatibility_command
-}
+set command_set \
+    [::brlcad::mged::regression::trap_compatibility_commands $legacy_commands]
+set saved_opendb [::brlcad::mged::regression::hidden_compatibility_command \
+    $command_set opendb]
+set saved_adc [::brlcad::mged::regression::hidden_compatibility_command \
+    $command_set adc]
 
 try {
-    set database [::__brlcad_mged_compatibility_opendb]
-    ::__brlcad_mged_compatibility_opendb $database
+    set database [$saved_opendb]
+    $saved_opendb $database
 
     set support [mged_dm_supports $test_id depthcue]
     if {$support ni {0 1}} {
@@ -237,7 +256,7 @@ try {
     next_command .mged.t
     rename ::.mged.t {}
 
-    ::__brlcad_mged_compatibility_adc draw
+    $saved_adc draw
 
     set had_mged_cmds [info exists mged_cmds]
     if {$had_mged_cmds} {
@@ -258,8 +277,10 @@ try {
 	error "FAIL tab expansion returned '$expanded' with matches '$matches'"
     }
 
-    if {[llength $invoked_aliases]} {
-	error "FAIL GUI helpers invoked legacy aliases: $invoked_aliases"
+    set invoked [::brlcad::mged::regression::compatibility_command_invocations \
+	$command_set]
+    if {[llength $invoked]} {
+	error "FAIL GUI helpers invoked legacy aliases: $invoked"
     }
 } finally {
     if {[info exists test_bind_active] && $test_bind_active} {
@@ -278,10 +299,7 @@ try {
     }
     catch {rename ::.mged.t {}}
     catch {rename ::.namespace_gui_comb.comb.combT {}}
-    foreach {hidden_command compatibility_command} $hidden_commands {
-	rename $compatibility_command {}
-	rename $hidden_command $compatibility_command
-    }
+    ::brlcad::mged::regression::restore_compatibility_commands $command_set
     foreach command {mouse_get_spath mouse_get_spath_and_pos mouse_get_comb} {
 	rename ::$command {}
 	rename ::__brlcad_mged_gui_test_$command ::$command
@@ -289,8 +307,8 @@ try {
     ::brlcad::mged rset grid draw $original_grid_draw
     catch {::brlcad::mged kill $group $edited_comb $object}
     foreach command {
-	namespace_gui_alias_trap namespace_gui_color.bg_aMB
-	namespace_gui_color.bg_iaMB namespace_gui_empty_selection
+	namespace_gui_color.bg_aMB namespace_gui_color.bg_iaMB
+	namespace_gui_empty_selection
 	namespace_gui_text namespace_gui_widget
     } {
 	rename ::$command {}
@@ -310,6 +328,7 @@ try {
 	mged_gui($test_id,grid_draw) mged_gui($test_id,probe_value) \
 	mged_gui($test_id,view_pos)
 }
+unset command_set invoked legacy_commands saved_adc saved_opendb
 
 puts "PASS Tcl GUI command dispatch"
 puts "*** Tcl GUI command dispatch testing completed ***"
