@@ -1710,57 +1710,25 @@ f_sedit_reset(ClientData clientData, Tcl_Interp *interp, int argc, const char *U
 	return TCL_ERROR;
     }
 
-    /* free old copy */
-    rt_db_free_internal(&MEDIT(s)->es_int);
-
-    /* reset internal variables */
-    if (EDOBJ[MEDIT(s)->es_int.idb_type].ft_prim_edit_reset)
-	(*EDOBJ[MEDIT(s)->es_int.idb_type].ft_prim_edit_reset)(MEDIT(s));
-
-    /* read in a fresh copy */
-    if (!illump || !illump->s_u_data)
+    if (!illump->s_u_data)
 	return TCL_ERROR;
+
     struct ged_bv_data *bdata = (struct ged_bv_data *)illump->s_u_data;
-    if (rt_db_get_internal(&MEDIT(s)->es_int, LAST_SOLID(bdata),
-			   s->dbip, NULL) < 0) {
-	if (bdata->s_fullpath.fp_len > 0) {
-	    Tcl_AppendResult(interp, "sedit_reset(",
-		    LAST_SOLID(bdata)->d_namep,
-		    "):  solid import failure\n", (char *)NULL);
-	} else {
-	    Tcl_AppendResult(interp, "sedit_reset(NULL):  solid import failure\n", (char *)NULL);
-
-	}
-	return TCL_ERROR;				/* FAIL */
+    if (!bdata->s_fullpath.fp_len) {
+	Tcl_AppendResult(interp, "sedit_reset(NULL): solid import failure\n", (char *)NULL);
+	return TCL_ERROR;
     }
-    RT_CK_DB_INTERNAL(&MEDIT(s)->es_int);
+
+    struct directory *dp = LAST_SOLID(bdata);
+    if (reinit_edit_state(s, bdata) != BRLCAD_OK) {
+	Tcl_AppendResult(interp, "sedit_reset(",
+		dp->d_namep,
+		"): solid import failure\n", (char *)NULL);
+	return TCL_ERROR;
+    }
+
+    init_sedit_vars(s);
     replot_editing_solid(0, NULL, s, NULL);
-
-    /* Establish initial keypoint */
-    MEDIT(s)->e_keytag = "";
-    rt_get_solid_keypoint(MEDIT(s), &MEDIT(s)->e_keypoint, &MEDIT(s)->e_keytag, MEDIT(s)->e_mat);
-
-    /* Reset relevant variables */
-    MAT_IDN(MEDIT(s)->acc_rot_sol);
-    VSETALL(MEDIT(s)->k.rot_m_abs, 0.0);
-    VSETALL(MEDIT(s)->k.rot_o_abs, 0.0);
-    VSETALL(MEDIT(s)->k.rot_v_abs, 0.0);
-    VSETALL(MEDIT(s)->k.rot_m_abs_last, 0.0);
-    VSETALL(MEDIT(s)->k.rot_o_abs_last, 0.0);
-    VSETALL(MEDIT(s)->k.rot_v_abs_last, 0.0);
-    VSETALL(MEDIT(s)->k.tra_m_abs, 0.0);
-    VSETALL(MEDIT(s)->k.tra_v_abs, 0.0);
-    VSETALL(MEDIT(s)->k.tra_m_abs_last, 0.0);
-    VSETALL(MEDIT(s)->k.tra_v_abs_last, 0.0);
-    MEDIT(s)->k.sca_abs = 0.0;
-    MEDIT(s)->acc_sc_sol = 1.0;
-    VSETALL(MEDIT(s)->k.rot_m, 0.0);
-    VSETALL(MEDIT(s)->k.rot_o, 0.0);
-    VSETALL(MEDIT(s)->k.rot_v, 0.0);
-    VSETALL(MEDIT(s)->k.tra_m, 0.0);
-    VSETALL(MEDIT(s)->k.tra_v, 0.0);
-
-    set_e_axes_pos(s, 1);
     s->update_views = 1;
     dm_set_dirty(DMP, 1);
 

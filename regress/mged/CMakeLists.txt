@@ -68,6 +68,7 @@ set(
   sca_view.mged
   search_exec.mged
   sed.mged
+  sed_reset.mged
   set_perspective.mged
   setview.mged
   size.mged
@@ -145,6 +146,10 @@ if(TARGET mged)
     elseif(TNAME STREQUAL "prim_edit")
       set(TEST_EXPECT "Primitive parameter editing testing completed")
       set(TEST_REJECT "FAIL:")
+    elseif(TNAME STREQUAL "sed_reset")
+      set(TEST_EXPECT "PASS: 'sed_reset' testing completed")
+      set(TEST_REJECT "FAIL:")
+      set(TEST_SOURCE "${CMAKE_CURRENT_BINARY_DIR}/regress_${testfile}")
     elseif(TNAME STREQUAL "overlap_plotting")
       set(TEST_DB "${CMAKE_SOURCE_DIR}/src/libged/tests/ged_tests.g")
       set(TEST_EXPECT "PASS overlap plotting")
