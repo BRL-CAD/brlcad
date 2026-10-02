@@ -95,6 +95,8 @@ __END_DECLS
 
 #define MGED_COMMAND_NAMESPACE "::brlcad::mged"
 #define GED_COMMAND_NAMESPACE "::brlcad::ged"
+#define MGED_HELP_COMMAND MGED_COMMAND_NAMESPACE "::help::show"
+#define MGED_HELPDEVEL_COMMAND MGED_COMMAND_NAMESPACE "::helpdevel::show"
 
 
 #define MGED_CMD_MAGIC 0x4D474544 /**< MGED */

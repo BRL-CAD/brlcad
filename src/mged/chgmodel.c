@@ -200,7 +200,7 @@ f_rot_obj(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[
     if (argc < 4 || 5 < argc) {
 	struct bu_vls vls = BU_VLS_INIT_ZERO;
 
-	bu_vls_printf(&vls, "help %s", argv[0]);
+	bu_vls_printf(&vls, MGED_HELP_COMMAND " %s", argv[0]);
 	Tcl_Eval(interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
 	return TCL_ERROR;
@@ -244,7 +244,7 @@ f_sc_obj(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[]
     if (argc < 2 || 2 < argc) {
 	struct bu_vls vls = BU_VLS_INIT_ZERO;
 
-	bu_vls_printf(&vls, "help oscale");
+	bu_vls_printf(&vls, MGED_HELP_COMMAND " oscale");
 	Tcl_Eval(interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
 	return TCL_ERROR;
@@ -321,7 +321,7 @@ f_tr_obj(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[]
     if (argc < 4 || 4 < argc) {
 	struct bu_vls vls = BU_VLS_INIT_ZERO;
 
-	bu_vls_printf(&vls, "help translate");
+	bu_vls_printf(&vls, MGED_HELP_COMMAND " translate");
 	Tcl_Eval(interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
 	return TCL_ERROR;
@@ -392,7 +392,7 @@ f_qorot(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
     if (argc < 8 || 8 < argc) {
 	struct bu_vls vls = BU_VLS_INIT_ZERO;
 
-	bu_vls_printf(&vls, "help qorot");
+	bu_vls_printf(&vls, MGED_HELP_COMMAND " qorot");
 	Tcl_Eval(interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
 	return TCL_ERROR;

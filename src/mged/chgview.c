@@ -645,7 +645,7 @@ cmd_autoview(ClientData clientData, Tcl_Interp *interp, int argc, const char *ar
 	struct bu_vls vls = BU_VLS_INIT_ZERO;
 
 	bu_log("Unexpected parameter [%s]\n", argv[2]);
-	bu_vls_printf(&vls, "help autoview");
+	bu_vls_printf(&vls, MGED_HELP_COMMAND " autoview");
 	Tcl_Eval(interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
 
@@ -737,7 +737,7 @@ f_regdebug(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv
     if (argc < 1 || 2 < argc) {
 	struct bu_vls vls = BU_VLS_INIT_ZERO;
 
-	bu_vls_printf(&vls, "help regdebug");
+	bu_vls_printf(&vls, MGED_HELP_COMMAND " regdebug");
 	Tcl_Eval(interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
 
@@ -816,7 +816,7 @@ f_status(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[]
     CHECK_DBI_NULL;
 
     if (argc < 1 || 2 < argc) {
-	bu_vls_printf(&vls, "help status");
+	bu_vls_printf(&vls, MGED_HELP_COMMAND " status");
 	Tcl_Eval(interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
 	return TCL_ERROR;
@@ -901,7 +901,7 @@ f_status(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[]
 	return TCL_OK;
     }
 
-    bu_vls_printf(&vls, "help status");
+    bu_vls_printf(&vls, MGED_HELP_COMMAND " status");
     Tcl_Eval(interp, bu_vls_addr(&vls));
     bu_vls_free(&vls);
 
@@ -922,7 +922,7 @@ f_refresh(ClientData clientData, Tcl_Interp *interp, int argc, const char *UNUSE
     if (argc < 1 || 1 < argc) {
 	struct bu_vls vls = BU_VLS_INIT_ZERO;
 
-	bu_vls_printf(&vls, "help refresh");
+	bu_vls_printf(&vls, MGED_HELP_COMMAND " refresh");
 	Tcl_Eval(interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
 
@@ -969,7 +969,7 @@ f_ill(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
     CHECK_DBI_NULL;
 
     if (argc < 2 || 6 < argc) {
-	bu_vls_printf(&vls, "help ill");
+	bu_vls_printf(&vls, MGED_HELP_COMMAND " ill");
 	Tcl_Eval(interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
 	return TCL_ERROR;
@@ -1001,7 +1001,7 @@ f_ill(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 		}
 		break;
 	    default: {
-		bu_vls_printf(&vls, "help ill");
+		bu_vls_printf(&vls, MGED_HELP_COMMAND " ill");
 		Tcl_Eval(interp, bu_vls_addr(&vls));
 		bu_vls_free(&vls);
 
@@ -1020,7 +1020,7 @@ f_ill(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
     nargv += (bu_optind - 1);
 
     if (argc != 2) {
-	bu_vls_printf(&vls, "help ill");
+	bu_vls_printf(&vls, MGED_HELP_COMMAND " ill");
 	Tcl_Eval(interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
 
@@ -1204,7 +1204,7 @@ f_sed(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
     if (argc < 2 || 5 < argc) {
 	struct bu_vls vls = BU_VLS_INIT_ZERO;
 
-	bu_vls_printf(&vls, "help sed");
+	bu_vls_printf(&vls, MGED_HELP_COMMAND " sed");
 	Tcl_Eval(interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
 
@@ -1443,7 +1443,7 @@ f_knob(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 
     if (argc < 1) {
 	struct bu_vls vls = BU_VLS_INIT_ZERO;
-	bu_vls_printf(&vls, "help knob");
+	bu_vls_printf(&vls, MGED_HELP_COMMAND " knob");
 	Tcl_Eval(interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
 	return TCL_ERROR;
@@ -1749,7 +1749,7 @@ cmd_zoom(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[]
     if (argc != 2) {
 	struct bu_vls vls = BU_VLS_INIT_ZERO;
 
-	bu_vls_printf(&vls, "help zoom");
+	bu_vls_printf(&vls, MGED_HELP_COMMAND " zoom");
 	Tcl_Eval(interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
 
@@ -1958,7 +1958,7 @@ f_svbase(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[]
 	    bu_log("Unexpected parameter [%s]\n", argv[1]);
 	}
 
-	bu_vls_printf(&vls, "helpdevel svb");
+	bu_vls_printf(&vls, MGED_HELPDEVEL_COMMAND " svb");
 	Tcl_Eval(interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
 
@@ -2156,7 +2156,7 @@ f_view_ring(ClientData clientData, Tcl_Interp *interp, int argc, const char *arg
     struct bu_vls vls = BU_VLS_INIT_ZERO;
 
     if (argc < 2 || 3 < argc) {
-	bu_vls_printf(&vls, "helpdevel view_ring");
+	bu_vls_printf(&vls, MGED_HELPDEVEL_COMMAND " view_ring");
 	Tcl_Eval(interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
 	return TCL_ERROR;
@@ -2164,7 +2164,7 @@ f_view_ring(ClientData clientData, Tcl_Interp *interp, int argc, const char *arg
 
     if (BU_STR_EQUAL(argv[1], "add")) {
 	if (argc != 2) {
-	    bu_vls_printf(&vls, "help view_ring");
+	    bu_vls_printf(&vls, MGED_HELP_COMMAND " view_ring");
 	    Tcl_Eval(interp, bu_vls_addr(&vls));
 	    bu_vls_free(&vls);
 	    return TCL_ERROR;
@@ -2196,7 +2196,7 @@ f_view_ring(ClientData clientData, Tcl_Interp *interp, int argc, const char *arg
 
     if (BU_STR_EQUAL(argv[1], "next")) {
 	if (argc != 2) {
-	    bu_vls_printf(&vls, "help view_ring");
+	    bu_vls_printf(&vls, MGED_HELP_COMMAND " view_ring");
 	    Tcl_Eval(interp, bu_vls_addr(&vls));
 	    bu_vls_free(&vls);
 	    return TCL_ERROR;
@@ -2236,7 +2236,7 @@ f_view_ring(ClientData clientData, Tcl_Interp *interp, int argc, const char *arg
 
     if (BU_STR_EQUAL(argv[1], "prev")) {
 	if (argc != 2) {
-	    bu_vls_printf(&vls, "help view_ring");
+	    bu_vls_printf(&vls, MGED_HELP_COMMAND " view_ring");
 	    Tcl_Eval(interp, bu_vls_addr(&vls));
 	    bu_vls_free(&vls);
 	    return TCL_ERROR;
@@ -2278,7 +2278,7 @@ f_view_ring(ClientData clientData, Tcl_Interp *interp, int argc, const char *arg
 	struct view_ring *save_last_view;
 
 	if (argc != 2) {
-	    bu_vls_printf(&vls, "help view_ring");
+	    bu_vls_printf(&vls, MGED_HELP_COMMAND " view_ring");
 	    Tcl_Eval(interp, bu_vls_addr(&vls));
 	    bu_vls_free(&vls);
 	    return TCL_ERROR;
@@ -2308,7 +2308,7 @@ f_view_ring(ClientData clientData, Tcl_Interp *interp, int argc, const char *arg
 
     if (BU_STR_EQUAL(argv[1], "delete")) {
 	if (argc != 3) {
-	    bu_vls_printf(&vls, "help view_ring");
+	    bu_vls_printf(&vls, MGED_HELP_COMMAND " view_ring");
 	    Tcl_Eval(interp, bu_vls_addr(&vls));
 	    bu_vls_free(&vls);
 	    return TCL_ERROR;
@@ -2361,7 +2361,7 @@ f_view_ring(ClientData clientData, Tcl_Interp *interp, int argc, const char *arg
 
     if (BU_STR_EQUAL(argv[1], "goto")) {
 	if (argc != 3) {
-	    bu_vls_printf(&vls, "help view_ring");
+	    bu_vls_printf(&vls, MGED_HELP_COMMAND " view_ring");
 	    Tcl_Eval(interp, bu_vls_addr(&vls));
 	    bu_vls_free(&vls);
 	    return TCL_ERROR;
@@ -2418,7 +2418,7 @@ f_view_ring(ClientData clientData, Tcl_Interp *interp, int argc, const char *arg
 	}
 
 	if (!BU_STR_EQUAL("-a", argv[2])) {
-	    bu_vls_printf(&vls, "help view_ring");
+	    bu_vls_printf(&vls, MGED_HELP_COMMAND " view_ring");
 	    Tcl_Eval(interp, bu_vls_addr(&vls));
 	    bu_vls_free(&vls);
 	    return TCL_ERROR;

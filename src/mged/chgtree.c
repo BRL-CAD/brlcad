@@ -69,7 +69,7 @@ f_copy_inv(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv
     if (argc < 3 || 3 < argc) {
 	struct bu_vls vls = BU_VLS_INIT_ZERO;
 
-	bu_vls_printf(&vls, "help cpi");
+	bu_vls_printf(&vls, MGED_HELP_COMMAND " cpi");
 	Tcl_Eval(interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
 	return TCL_ERROR;
@@ -239,7 +239,7 @@ cmd_oed(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
     if (argc < 2 || 3 < argc) {
 	struct bu_vls vls = BU_VLS_INIT_ZERO;
 
-	bu_vls_printf(&vls, "help oed");
+	bu_vls_printf(&vls, MGED_HELP_COMMAND " oed");
 	Tcl_Eval(interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
 	return TCL_ERROR;

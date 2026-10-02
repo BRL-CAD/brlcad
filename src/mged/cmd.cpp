@@ -1761,7 +1761,7 @@ cmd_tk(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *arg
     if (argc < 1 || 2 < argc) {
 	struct bu_vls vls = BU_VLS_INIT_ZERO;
 
-	bu_vls_printf(&vls, "help loadtk");
+	bu_vls_printf(&vls, MGED_HELP_COMMAND " loadtk");
 	Tcl_Eval(interpreter, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
 	return TCL_ERROR;
@@ -1793,7 +1793,7 @@ cmd_output_hook(ClientData clientData, Tcl_Interp *interpreter, int argc, const 
     if (argc < 1 || 2 < argc) {
 	struct bu_vls vls = BU_VLS_INIT_ZERO;
 
-	bu_vls_printf(&vls, "helpdevel output_hook");
+	bu_vls_printf(&vls, MGED_HELPDEVEL_COMMAND " output_hook");
 	Tcl_Eval(interpreter, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
 	return TCL_ERROR;
@@ -1863,7 +1863,7 @@ cmd_cmd_win(ClientData clientData, Tcl_Interp *interpreter, int argc, const char
     struct mged_state *s = ctp->s;
 
     if (argc < 2) {
-	bu_vls_printf(&vls, "helpdevel cmd_win");
+	bu_vls_printf(&vls, MGED_HELPDEVEL_COMMAND " cmd_win");
 	Tcl_Eval(interpreter, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
 	return TCL_ERROR;
@@ -1874,7 +1874,7 @@ cmd_cmd_win(ClientData clientData, Tcl_Interp *interpreter, int argc, const char
 	int name_not_used = 1;
 
 	if (argc != 3) {
-	    bu_vls_printf(&vls, "helpdevel cmd_win");
+	    bu_vls_printf(&vls, MGED_HELPDEVEL_COMMAND " cmd_win");
 	    Tcl_Eval(interpreter, bu_vls_addr(&vls));
 	    bu_vls_free(&vls);
 	    return TCL_ERROR;
@@ -1905,7 +1905,7 @@ cmd_cmd_win(ClientData clientData, Tcl_Interp *interpreter, int argc, const char
 	struct cmd_list *clp;
 
 	if (argc != 3) {
-	    bu_vls_printf(&vls, "helpdevel cmd_win");
+	    bu_vls_printf(&vls, MGED_HELPDEVEL_COMMAND " cmd_win");
 	    Tcl_Eval(interpreter, bu_vls_addr(&vls));
 	    bu_vls_free(&vls);
 	    return TCL_ERROR;
@@ -1944,7 +1944,7 @@ cmd_cmd_win(ClientData clientData, Tcl_Interp *interpreter, int argc, const char
 
     if (BU_STR_EQUAL(argv[1], "get")) {
 	if (argc != 2) {
-	    bu_vls_printf(&vls, "helpdevel cmd_win");
+	    bu_vls_printf(&vls, MGED_HELPDEVEL_COMMAND " cmd_win");
 	    Tcl_Eval(interpreter, bu_vls_addr(&vls));
 	    bu_vls_free(&vls);
 
@@ -1959,7 +1959,7 @@ cmd_cmd_win(ClientData clientData, Tcl_Interp *interpreter, int argc, const char
 
     if (BU_STR_EQUAL(argv[1], "set")) {
 	if (argc != 3) {
-	    bu_vls_printf(&vls, "helpdevel cmd_win");
+	    bu_vls_printf(&vls, MGED_HELPDEVEL_COMMAND " cmd_win");
 	    Tcl_Eval(interpreter, bu_vls_addr(&vls));
 	    bu_vls_free(&vls);
 	    return TCL_ERROR;
@@ -1984,7 +1984,7 @@ cmd_cmd_win(ClientData clientData, Tcl_Interp *interpreter, int argc, const char
 	return TCL_OK;
     }
 
-    bu_vls_printf(&vls, "helpdevel cmd_win");
+    bu_vls_printf(&vls, MGED_HELPDEVEL_COMMAND " cmd_win");
     Tcl_Eval(interpreter, bu_vls_addr(&vls));
     bu_vls_free(&vls);
 
@@ -2000,7 +2000,7 @@ cmd_get_more_default(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int
 
 	bu_log("Unrecognized option [%s]\n", argv[1]);
 
-	bu_vls_printf(&vls, "helpdevel get_more_default");
+	bu_vls_printf(&vls, MGED_HELPDEVEL_COMMAND " get_more_default");
 	Tcl_Eval(interpreter, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
 	return TCL_ERROR;
@@ -2017,7 +2017,7 @@ cmd_set_more_default(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int
     if (argc != 2) {
 	struct bu_vls vls = BU_VLS_INIT_ZERO;
 
-	bu_vls_printf(&vls, "helpdevel set_more_default");
+	bu_vls_printf(&vls, MGED_HELPDEVEL_COMMAND " set_more_default");
 	Tcl_Eval(interpreter, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
 	return TCL_ERROR;
@@ -2307,7 +2307,7 @@ f_comm(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *arg
     if (argc != 1 || !s->classic_mged || curr_cmd_list != &head_cmd_list) {
 	struct bu_vls vls = BU_VLS_INIT_ZERO;
 
-	bu_vls_printf(&vls, "help %s", argv[0]);
+	bu_vls_printf(&vls, MGED_HELP_COMMAND " %s", argv[0]);
 	Tcl_Eval(interpreter, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
 	return TCL_ERROR;
@@ -2350,7 +2350,7 @@ f_quit(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *arg
     if (argc < 1 || 1 < argc) {
 	struct bu_vls vls = BU_VLS_INIT_ZERO;
 
-	bu_vls_printf(&vls, "help %s", argv[0]);
+	bu_vls_printf(&vls, MGED_HELP_COMMAND " %s", argv[0]);
 	Tcl_Eval(interpreter, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
 	return TCL_ERROR;
@@ -2392,7 +2392,7 @@ f_tie(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, const ch
     struct bu_vls vls = BU_VLS_INIT_ZERO;
 
     if (argc < 1 || 3 < argc) {
-	bu_vls_printf(&vls, "helpdevel tie");
+	bu_vls_printf(&vls, MGED_HELPDEVEL_COMMAND " tie");
 	Tcl_Eval(interpreter, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
 	return TCL_ERROR;
@@ -2436,7 +2436,7 @@ f_tie(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, const ch
     }
 
     if (argc < 2) {
-	bu_vls_printf(&vls, "help tie");
+	bu_vls_printf(&vls, MGED_HELP_COMMAND " tie");
 	Tcl_Eval(interpreter, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
 	return TCL_ERROR;
@@ -2528,7 +2528,7 @@ f_postscript(ClientData clientData, Tcl_Interp *interpreter, int argc, const cha
     if (argc < 2) {
 	struct bu_vls vls = BU_VLS_INIT_ZERO;
 
-	bu_vls_printf(&vls, "help postscript");
+	bu_vls_printf(&vls, MGED_HELP_COMMAND " postscript");
 	Tcl_Eval(interpreter, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
 	return TCL_ERROR;
@@ -2579,7 +2579,7 @@ f_winset(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *a
     if (argc < 1 || 2 < argc) {
 	struct bu_vls vls = BU_VLS_INIT_ZERO;
 
-	bu_vls_printf(&vls, "helpdevel winset");
+	bu_vls_printf(&vls, MGED_HELPDEVEL_COMMAND " winset");
 	Tcl_Eval(interpreter, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
 	return TCL_ERROR;
@@ -3162,7 +3162,7 @@ cmd_stuff_str(ClientData clientData, Tcl_Interp *interpreter, int argc, const ch
     if (argc != 2) {
 	struct bu_vls vls = BU_VLS_INIT_ZERO;
 
-	bu_vls_printf(&vls, "helpdevel stuff_str");
+	bu_vls_printf(&vls, MGED_HELPDEVEL_COMMAND " stuff_str");
 	Tcl_Eval(interpreter, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
 	return TCL_ERROR;

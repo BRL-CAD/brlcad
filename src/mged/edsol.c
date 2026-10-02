@@ -1149,7 +1149,7 @@ f_eqn(ClientData clientData, Tcl_Interp *UNUSED(interp), int argc, const char *a
     if (argc < 4 || 4 < argc) {
 	struct bu_vls vls = BU_VLS_INIT_ZERO;
 
-	bu_vls_printf(&vls, "help eqn");
+	bu_vls_printf(&vls, MGED_HELP_COMMAND " eqn");
 	Tcl_Eval(s->interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
 	return TCL_ERROR;
@@ -1409,7 +1409,7 @@ f_param(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
     if (argc < 2 || 4 < argc) {
 	struct bu_vls vls = BU_VLS_INIT_ZERO;
 
-	bu_vls_printf(&vls, "help p");
+	bu_vls_printf(&vls, MGED_HELP_COMMAND " p");
 	Tcl_Eval(interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
 	return TCL_ERROR;
@@ -1481,7 +1481,7 @@ f_keypoint(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv
     if (argc < 1 || 4 < argc) {
 	struct bu_vls vls = BU_VLS_INIT_ZERO;
 
-	bu_vls_printf(&vls, "help keypoint");
+	bu_vls_printf(&vls, MGED_HELP_COMMAND " keypoint");
 	Tcl_Eval(interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
 	return TCL_ERROR;
@@ -1583,7 +1583,7 @@ f_get_sedit(ClientData clientData, Tcl_Interp *interp, int argc, const char *arg
     if (argc < 1 || 2 < argc) {
 	struct bu_vls vls = BU_VLS_INIT_ZERO;
 
-	bu_vls_printf(&vls, "helpdevel get_sed");
+	bu_vls_printf(&vls, MGED_HELPDEVEL_COMMAND " get_sed");
 	Tcl_Eval(interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
 	return TCL_ERROR;
@@ -1678,7 +1678,7 @@ f_put_sedit(ClientData clientData, Tcl_Interp *interp, int argc, const char *arg
     if (argc < 6) {
 	struct bu_vls vls = BU_VLS_INIT_ZERO;
 
-	bu_vls_printf(&vls, "helpdevel put_sed");
+	bu_vls_printf(&vls, MGED_HELPDEVEL_COMMAND " put_sed");
 	Tcl_Eval(interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
 	return TCL_ERROR;
@@ -1752,7 +1752,7 @@ f_sedit_reset(ClientData clientData, Tcl_Interp *interp, int argc, const char *U
 	return TCL_ERROR;
 
     if (argc != 1) {
-	bu_vls_printf(&vls, "helpdevel sed_reset");
+	bu_vls_printf(&vls, MGED_HELPDEVEL_COMMAND " sed_reset");
 	Tcl_Eval(interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
 	return TCL_ERROR;
@@ -1829,7 +1829,7 @@ f_oedit_reset(ClientData clientData, Tcl_Interp *interp, int argc, const char *U
 	return TCL_ERROR;
 
     if (argc != 1) {
-	bu_vls_printf(&vls, "helpdevel oed_reset");
+	bu_vls_printf(&vls, MGED_HELPDEVEL_COMMAND " oed_reset");
 	Tcl_Eval(interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
 	return TCL_ERROR;
@@ -1915,7 +1915,7 @@ f_extrude(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[
     if (argc < 3 || 3 < argc) {
 	struct bu_vls vls = BU_VLS_INIT_ZERO;
 
-	bu_vls_printf(&vls, "help extrude");
+	bu_vls_printf(&vls, MGED_HELP_COMMAND " extrude");
 	Tcl_Eval(interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
 
@@ -2011,7 +2011,7 @@ f_mirface(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[
     if (argc < 3 || 3 < argc) {
 	struct bu_vls vls = BU_VLS_INIT_ZERO;
 
-	bu_vls_printf(&vls, "help mirface");
+	bu_vls_printf(&vls, MGED_HELP_COMMAND " mirface");
 	Tcl_Eval(interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
 
@@ -2071,7 +2071,7 @@ f_edgedir(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[
     if (argc < 3 || 4 < argc) {
 	struct bu_vls vls = BU_VLS_INIT_ZERO;
 
-	bu_vls_printf(&vls, "help edgedir");
+	bu_vls_printf(&vls, MGED_HELP_COMMAND " edgedir");
 	Tcl_Eval(interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
 
@@ -2116,7 +2116,7 @@ f_permute(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[
     CHECK_READ_ONLY;
 
     if (argc < 2 || 2 < argc) {
-	bu_vls_printf(&vls, "help permute");
+	bu_vls_printf(&vls, MGED_HELP_COMMAND " permute");
 	Tcl_Eval(interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
 

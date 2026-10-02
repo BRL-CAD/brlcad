@@ -113,7 +113,7 @@ f_journal(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const cha
     struct bu_vls vls = BU_VLS_INIT_ZERO;
 
     if (argc < 1 || 3 < argc) {
-	bu_vls_printf(&vls, "help journal");
+	bu_vls_printf(&vls, MGED_HELP_COMMAND " journal");
 	Tcl_Eval(interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
 
@@ -137,7 +137,7 @@ f_journal(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const cha
     }
 
     if (argc < 2) {
-	bu_vls_printf(&vls, "help journal");
+	bu_vls_printf(&vls, MGED_HELP_COMMAND " journal");
 	Tcl_Eval(interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
 
@@ -171,7 +171,7 @@ f_history(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const cha
     if (argc < 1 || 4 < argc) {
 	struct bu_vls vls = BU_VLS_INIT_ZERO;
 
-	bu_vls_printf(&vls, "help history");
+	bu_vls_printf(&vls, MGED_HELP_COMMAND " history");
 	Tcl_Eval(interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
 
@@ -295,7 +295,7 @@ cmd_hist(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char
     struct bu_vls vls = BU_VLS_INIT_ZERO;
 
     if (argc < 2) {
-	bu_vls_printf(&vls, "helpdevel hist");
+	bu_vls_printf(&vls, MGED_HELPDEVEL_COMMAND " hist");
 	Tcl_Eval(interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
 	return TCL_ERROR;
@@ -303,7 +303,7 @@ cmd_hist(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char
 
     if (BU_STR_EQUAL(argv[1], "add")) {
 	if (argc != 3) {
-	    bu_vls_printf(&vls, "helpdevel hist");
+	    bu_vls_printf(&vls, MGED_HELPDEVEL_COMMAND " hist");
 	    Tcl_Eval(interp, bu_vls_addr(&vls));
 	    bu_vls_free(&vls);
 	    return TCL_ERROR;
@@ -332,7 +332,7 @@ cmd_hist(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char
 	    if (vp == NULL)
 		return TCL_ERROR;
 	} else {
-	    bu_vls_printf(&vls, "helpdevel hist");
+	    bu_vls_printf(&vls, MGED_HELPDEVEL_COMMAND " hist");
 	    Tcl_Eval(interp, bu_vls_addr(&vls));
 	    bu_vls_free(&vls);
 	    return TCL_ERROR;
@@ -353,7 +353,7 @@ cmd_hist(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char
 	    if (vp == NULL)
 		return TCL_ERROR;
 	} else {
-	    bu_vls_printf(&vls, "helpdevel hist");
+	    bu_vls_printf(&vls, MGED_HELPDEVEL_COMMAND " hist");
 	    Tcl_Eval(interp, bu_vls_addr(&vls));
 	    bu_vls_free(&vls);
 	    return TCL_ERROR;
@@ -367,7 +367,7 @@ cmd_hist(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char
 
     if (BU_STR_EQUAL(argv[1], "cur")) {
 	if (argc != 2) {
-	    bu_vls_printf(&vls, "helpdevel hist");
+	    bu_vls_printf(&vls, MGED_HELPDEVEL_COMMAND " hist");
 	    Tcl_Eval(interp, bu_vls_addr(&vls));
 	    bu_vls_free(&vls);
 	    return TCL_ERROR;
@@ -382,7 +382,7 @@ cmd_hist(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char
 	return TCL_OK;
     }
 
-    bu_vls_printf(&vls, "helpdevel hist");
+    bu_vls_printf(&vls, MGED_HELPDEVEL_COMMAND " hist");
     Tcl_Eval(interp, bu_vls_addr(&vls));
     bu_vls_free(&vls);
     return TCL_ERROR;

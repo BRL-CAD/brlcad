@@ -454,7 +454,7 @@ f_adc (
     CHECK_DBI_NULL;
 
     if (6 < argc) {
-	bu_vls_printf(&vls, "help adc");
+	bu_vls_printf(&vls, MGED_HELP_COMMAND " adc");
 	Tcl_Eval(interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
 

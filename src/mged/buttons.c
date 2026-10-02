@@ -186,7 +186,7 @@ f_press(ClientData clientData,
     struct bu_vls vls = BU_VLS_INIT_ZERO;
 
     if (argc < 2) {
-	bu_vls_printf(&vls, "help press");
+	bu_vls_printf(&vls, MGED_HELP_COMMAND " press");
 	Tcl_Eval(interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
 	return TCL_ERROR;

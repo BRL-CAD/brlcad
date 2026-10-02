@@ -107,7 +107,7 @@ f_edcodes(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *
     CHECK_DBI_NULL;
 
     if (argc < 2) {
-	Tcl_Eval(interpreter, "help edcodes");
+	Tcl_Eval(interpreter, MGED_HELP_COMMAND " edcodes");
 	return TCL_ERROR;
     }
 
@@ -135,7 +135,7 @@ f_edmater(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *
     CHECK_DBI_NULL;
 
     if (argc < 2) {
-	Tcl_Eval(interpreter, "help edmater");
+	Tcl_Eval(interpreter, MGED_HELP_COMMAND " edmater");
 	return TCL_ERROR;
     }
 
@@ -163,7 +163,7 @@ f_red(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *argv
     CHECK_DBI_NULL;
 
     if (argc != 2) {
-	Tcl_Eval(interpreter, "help red");
+	Tcl_Eval(interpreter, MGED_HELP_COMMAND " red");
 	return TCL_ERROR;
     }
 

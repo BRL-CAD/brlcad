@@ -463,7 +463,7 @@ f_grid_set (ClientData clientData, Tcl_Interp *interpreter, int argc, const char
     struct bu_vls vls = BU_VLS_INIT_ZERO;
 
     if (argc < 1 || 5 < argc) {
-	bu_vls_printf(&vls, "help grid_set");
+	bu_vls_printf(&vls, MGED_HELP_COMMAND " grid_set");
 	Tcl_Eval(interpreter, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
 

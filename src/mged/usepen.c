@@ -104,7 +104,7 @@ f_aip(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
     if (argc < 1 || 2 < argc) {
 	struct bu_vls vls = BU_VLS_INIT_ZERO;
 
-	bu_vls_printf(&vls, "helpdevel aip");
+	bu_vls_printf(&vls, MGED_HELPDEVEL_COMMAND " aip");
 	Tcl_Eval(interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
 	return TCL_ERROR;
@@ -244,7 +244,7 @@ f_matpick(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[
     CHECK_DBI_NULL;
 
     if (argc < 2 || 3 < argc) {
-	bu_vls_printf(&vls, "help matpick");
+	bu_vls_printf(&vls, MGED_HELP_COMMAND " matpick");
 	Tcl_Eval(interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
 	return TCL_ERROR;
@@ -257,7 +257,7 @@ f_matpick(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[
     }
 
     if (argc != 2) {
-	bu_vls_printf(&vls, "help matpick");
+	bu_vls_printf(&vls, MGED_HELP_COMMAND " matpick");
 	Tcl_Eval(interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
 	return TCL_ERROR;
@@ -387,7 +387,7 @@ f_mouse(
     if (argc < 4 || 4 < argc) {
 	struct bu_vls vls = BU_VLS_INIT_ZERO;
 
-	bu_vls_printf(&vls, "help M");
+	bu_vls_printf(&vls, MGED_HELP_COMMAND " M");
 	Tcl_Eval(interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
 

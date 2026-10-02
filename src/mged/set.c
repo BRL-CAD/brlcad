@@ -328,7 +328,7 @@ f_set(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
     struct bu_vls vls = BU_VLS_INIT_ZERO;
 
     if (argc < 1 || 2 < argc) {
-	bu_vls_printf(&vls, "help vars");
+	bu_vls_printf(&vls, MGED_HELP_COMMAND " vars");
 	Tcl_Eval(interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
 

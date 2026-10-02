@@ -81,7 +81,7 @@ f_area(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
     if (argc < 1 || 2 < argc) {
 	struct bu_vls vls = BU_VLS_INIT_ZERO;
 
-	bu_vls_printf(&vls, "help area");
+	bu_vls_printf(&vls, MGED_HELP_COMMAND " area");
 	Tcl_Eval(interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
 	return TCL_ERROR;
@@ -115,7 +115,7 @@ f_area(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 	    if (!sp->s_old.s_Eflag && sp->s_soldash != 0) {
 		struct bu_vls vls = BU_VLS_INIT_ZERO;
 
-		bu_vls_printf(&vls, "help area");
+		bu_vls_printf(&vls, MGED_HELP_COMMAND " area");
 		Tcl_Eval(interp, bu_vls_addr(&vls));
 		bu_vls_free(&vls);
 		return TCL_ERROR;

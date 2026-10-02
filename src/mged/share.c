@@ -107,7 +107,7 @@ f_share(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *ar
     struct bu_vls vls = BU_VLS_INIT_ZERO;
 
     if (argc != 4) {
-	bu_vls_printf(&vls, "helpdevel share");
+	bu_vls_printf(&vls, MGED_HELPDEVEL_COMMAND " share");
 	Tcl_Eval(interpreter, bu_vls_addr(&vls));
 
 	bu_vls_free(&vls);

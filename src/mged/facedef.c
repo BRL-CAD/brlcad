@@ -110,7 +110,7 @@ f_facedef(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[
     if (argc < 2) {
 	struct bu_vls vls = BU_VLS_INIT_ZERO;
 
-	bu_vls_printf(&vls, "help facedef");
+	bu_vls_printf(&vls, MGED_HELP_COMMAND " facedef");
 	Tcl_Eval(interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
 	return TCL_ERROR;

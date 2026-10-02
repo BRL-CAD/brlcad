@@ -266,7 +266,7 @@ f_release(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *
     struct bu_vls vls = BU_VLS_INIT_ZERO;
 
     if (argc < 1 || 2 < argc) {
-	bu_vls_printf(&vls, "help release");
+	bu_vls_printf(&vls, MGED_HELP_COMMAND " release");
 	Tcl_Eval(interpreter, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
 
@@ -317,7 +317,7 @@ f_attach(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *a
     if (argc < 2) {
 	struct bu_vls vls = BU_VLS_INIT_ZERO;
 
-	bu_vls_printf(&vls, "help attach");
+	bu_vls_printf(&vls, MGED_HELP_COMMAND " attach");
 	Tcl_Eval(interpreter, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
 	print_valid_dm(interpreter);
@@ -695,7 +695,7 @@ f_dm(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *argv[
     struct bu_vls vls = BU_VLS_INIT_ZERO;
 
     if (argc < 2) {
-	bu_vls_printf(&vls, "help dm");
+	bu_vls_printf(&vls, MGED_HELP_COMMAND " dm");
 	Tcl_Eval(interpreter, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
 	return TCL_ERROR;
@@ -703,7 +703,7 @@ f_dm(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *argv[
 
     if (BU_STR_EQUAL(argv[1], "valid")) {
 	if (argc < 3) {
-	    bu_vls_printf(&vls, "help dm");
+	    bu_vls_printf(&vls, MGED_HELP_COMMAND " dm");
 	    Tcl_Eval(interpreter, bu_vls_addr(&vls));
 	    bu_vls_free(&vls);
 	    return TCL_ERROR;
@@ -831,7 +831,7 @@ f_get_dm_list(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, 
     if (argc != 1 || !argv) {
 	struct bu_vls vls = BU_VLS_INIT_ZERO;
 
-	bu_vls_printf(&vls, "helpdevel get_dm_list");
+	bu_vls_printf(&vls, MGED_HELPDEVEL_COMMAND " get_dm_list");
 	Tcl_Eval(interpreter, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
 

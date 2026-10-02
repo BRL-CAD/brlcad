@@ -106,6 +106,26 @@ try {
 }
 unset command
 
+rename ::help ::__brlcad_mged_compatibility_help
+rename ::helpdevel ::__brlcad_mged_compatibility_helpdevel
+try {
+    foreach command {
+	{::brlcad::mged zoom}
+	{::brlcad::mged winset too many arguments}
+    } {
+	if {![catch $command message]} {
+	    error "FAIL expected usage error from $command"
+	}
+	if {[string match {*invalid command name*} $message]} {
+	    error "FAIL $command depends on a global help wrapper: $message"
+	}
+    }
+} finally {
+    rename ::__brlcad_mged_compatibility_help ::help
+    rename ::__brlcad_mged_compatibility_helpdevel ::helpdevel
+}
+unset command
+
 foreach command {::brlcad::ged ::brlcad::mged exists _mged_exists} {
     if {![llength [info commands $command]]} {
 	error "FAIL missing command $command"

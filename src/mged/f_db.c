@@ -457,7 +457,7 @@ f_opendb(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *a
     ged_clbk_set(s->gedp, "closedb", BU_CLBK_POST, closedb_clbk[1], closedb_clbk_data[1]);
 
     if (ctx.ged_ret == GED_HELP) {
-	Tcl_Eval(interpreter, "help opendb");
+	Tcl_Eval(interpreter, MGED_HELP_COMMAND " opendb");
     }
 
     bu_free((void *)av, "f_opendb: av");
@@ -488,7 +488,7 @@ f_closedb(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *
 
     if (argc != 1) {
 	Tcl_AppendResult(interpreter, "Unexpected argument [%s]\n", (const char *)argv[1], NULL);
-	Tcl_Eval(interpreter, "help closedb");
+	Tcl_Eval(interpreter, MGED_HELP_COMMAND " closedb");
 	return TCL_ERROR;
     }
 
