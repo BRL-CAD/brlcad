@@ -18,23 +18,34 @@
 # information.
 #
 
-proc regions_to_bots {} {
+namespace eval ::brlcad::mged {}
+
+proc ::brlcad::mged::regions_to_bots {} {
     set old_globcompat $::glob_compat_mode
-    set glob_compat_mode 0
-    set regions [search -type region]
-    foreach region $regions {
-	puts "facetizing $region"
-	if { [catch {facetize $region.bot $region} ] } {
-	  puts "facetizing $region failed... skipping"
-        }
-	set have_bot [exists $region.bot]
-	if { $have_bot } {
-	    puts "facetized $region to $region.bot"
-	    kill $region
-	    g $region $region.bot
-        }
+    set ::glob_compat_mode 0
+    try {
+	set regions [::brlcad::mged search -type region]
+	foreach region $regions {
+	    set bot ${region}.bot
+	    puts "facetizing $region"
+	    if {[catch {::brlcad::mged facetize $bot $region} message]} {
+		puts "facetizing $region failed: $message"
+		continue
+	    }
+	    if {[::brlcad::mged exists $bot]} {
+		puts "facetized $region to $bot"
+		::brlcad::mged kill $region
+		::brlcad::mged g $region $bot
+	    }
+	}
+    } finally {
+	set ::glob_compat_mode $old_globcompat
     }
-    set ::glob_compat_mode $old_globcompat
+}
+
+# Keep the historical command-line entry point.
+proc ::regions_to_bots {} {
+    tailcall ::brlcad::mged::regions_to_bots
 }
 
 # Local Variables:

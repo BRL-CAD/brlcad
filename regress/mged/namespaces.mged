@@ -425,6 +425,39 @@ foreach command {{::brlcad::mged exists} exists _mged_exists} {
     }
 }
 
+foreach command {::brlcad::mged::regions_to_bots regions_to_bots} {
+    if {![auto_load $command]} {
+	error "FAIL regions-to-BoTs command is not autoloadable: $command"
+    }
+}
+
+set region namespaces_region.r
+::brlcad::mged r $region u $object
+set old_glob_compat_mode $::glob_compat_mode
+set hidden_region_commands {}
+foreach command {exists facetize g kill search} {
+    set compatibility_command ::$command
+    set hidden_command ::__brlcad_mged_region_compatibility_$command
+    rename $compatibility_command $hidden_command
+    lappend hidden_region_commands $hidden_command $compatibility_command
+}
+try {
+    ::brlcad::mged::regions_to_bots
+    if {![::brlcad::mged exists $region] ||
+	![::brlcad::mged exists ${region}.bot]} {
+	error "FAIL regions-to-BoTs did not produce $region and ${region}.bot"
+    }
+} finally {
+    foreach {hidden_command compatibility_command} $hidden_region_commands {
+	rename $hidden_command $compatibility_command
+    }
+}
+if {$::glob_compat_mode != $old_glob_compat_mode} {
+    error "FAIL regions-to-BoTs did not restore glob compatibility mode"
+}
+regions_to_bots
+unset hidden_region_commands old_glob_compat_mode region
+
 ::brlcad::ged attr set $object namespace_test canonical
 if {[::brlcad::ged attr get $object namespace_test] ne "canonical"} {
     error "FAIL raw GED namespace did not preserve command results"
