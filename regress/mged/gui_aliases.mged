@@ -118,7 +118,25 @@ try {
     }
     mged_draw_grid $test_id
     ::brlcad::mged::menu::press $command_id ::namespace_gui_widget
-    ::brlcad::mged mmenu_set $test_id 0
+
+    set canonical_menu_install ::brlcad::mged::menu::install
+    set saved_menu_install ::brlcad::mged::menu::__test_install
+    rename $canonical_menu_install $saved_menu_install
+    proc $canonical_menu_install {args} {
+	set ::namespace_menu_install_args $args
+	return installed
+    }
+    try {
+	set menu_result [::brlcad::mged mmenu_set $test_id 0]
+	if {$menu_result ne "installed" ||
+	    $::namespace_menu_install_args ne [list $test_id 0]} {
+	    error "FAIL native menu dispatcher did not invoke the canonical implementation"
+	}
+    } finally {
+	rename $canonical_menu_install {}
+	rename $saved_menu_install $canonical_menu_install
+	unset -nocomplain ::namespace_menu_install_args
+    }
 
     ::brlcad::mged::bindings::activate_dm $active_dm
     scale_shift_grip_hints .namespace_gui_missing X
