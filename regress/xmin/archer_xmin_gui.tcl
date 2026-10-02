@@ -612,7 +612,7 @@ proc ::archer::xmin::exercise_combination_edit {application} {
     set requested_tree {u {l xmin-tree-a.s} {- {l {xmin tree b.s}} {l xmin-tree-c.s}}}
     $ged put xmin-tree.c comb region no tree $requested_tree
     set combination [lrange [$ged get xmin-tree.c] 1 end]
-    set original_tree [bu_get_value_by_keyword tree $combination]
+    set original_tree [::brlcad::bu get_value_by_keyword tree $combination]
     set flattened_tree [ArcherCore::unpackTree $original_tree]
     ::gui::test::require {
 	[ArcherCore::packTree $flattened_tree] ne $original_tree
@@ -632,8 +632,8 @@ proc ::archer::xmin::exercise_combination_edit {application} {
     $editor updateGeometry
 
     set updated [lrange [$ged get xmin-tree.c] 1 end]
-    set updated_tree [bu_get_value_by_keyword tree $updated]
-    set updated_rgb [bu_get_value_by_keyword rgb $updated]
+    set updated_tree [::brlcad::bu get_value_by_keyword tree $updated]
+    set updated_rgb [::brlcad::bu get_value_by_keyword rgb $updated]
     ::gui::test::require {$updated_tree eq $original_tree} \
 	"editing a combination attribute changed its Boolean tree"
     ::gui::test::require {$updated_rgb eq "17 34 51"} \
