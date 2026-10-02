@@ -57,7 +57,6 @@ ged_cc_core(struct ged *gedp, int argc, const char *argv[])
     }
 
     GED_CHECK_EXISTS(gedp, argv[1], LOOKUP_QUIET, BRLCAD_ERROR);
-    GED_CHECK_EXISTS(gedp, argv[2], LOOKUP_QUIET, BRLCAD_ERROR);
 
     RT_DB_INTERNAL_INIT(&internal);
     internal.idb_major_type = DB5_MAJORTYPE_BRLCAD;
@@ -67,8 +66,8 @@ ged_cc_core(struct ged *gedp, int argc, const char *argv[])
     BU_ALLOC(internal.idb_ptr, struct rt_constraint_internal);
     con_ip = (struct rt_constraint_internal *)internal.idb_ptr;
     con_ip->magic = RT_CONSTRAINT_MAGIC;
-    con_ip->id = 324;
-    con_ip->type = 4;
+    con_ip->id = 0;
+    con_ip->type = RT_CONSTRAINT_TYPE_EXPRESSION;
     bu_vls_init(&(con_ip->expression));
     bu_vls_strcat(&(con_ip->expression), argv[2]);
 

@@ -129,6 +129,34 @@ if {![info exists mged_default(comb)]} {
     set mged_default(comb) 0
 }
 
+if {![info exists mged_default(window_layout)]} {
+    if {$mged_default(comb)} {
+	set mged_default(window_layout) combined
+    } else {
+	set mged_default(window_layout) separate
+    }
+}
+
+if {![info exists mged_default(window_docked)]} {
+    if {$mged_default(window_layout) eq "combined"} {
+	set mged_default(window_docked) {command graphics}
+    } else {
+	set mged_default(window_docked) {}
+    }
+}
+
+if {![info exists mged_default(browser_open)]} {
+    set mged_default(browser_open) 0
+}
+
+if {![info exists mged_default(layout_geom)]} {
+    set mged_default(layout_geom) $mged_default(ggeom)
+}
+
+if {![info exists mged_default(browser_geom)]} {
+    set mged_default(browser_geom) ""
+}
+
 if {![info exists mged_default(edit_style)]} {
     set mged_default(edit_style) emacs
 }
@@ -194,6 +222,477 @@ proc mged_dm_supports {id setting} {
 	return 0
     }
     return [expr {$value eq "0" || $value eq "1"}]
+}
+
+proc mged_cmd_text {id} {
+    global mged_gui
+
+    return $mged_gui($id,cmd_text)
+}
+
+proc mged_clear_command_window {id} {
+    set text [mged_cmd_text $id]
+
+    $text delete 1.0 end
+    mged_print_prompt $text "mged> "
+    $text insert insert " "
+    beginning_of_line $text
+    $text edit reset
+}
+
+proc mged_layout_pane_widget {id pane} {
+    global mged_gui
+
+    switch -- $pane {
+	command {
+	    return $mged_gui($id,cmd_frame)
+	}
+	graphics {
+	    return $mged_gui($id,dmc)
+	}
+	browser {
+	    return $mged_gui($id,browser_frame)
+	}
+	default {
+	    error "Unknown MGED layout pane: $pane"
+	}
+    }
+}
+
+proc mged_layout_pane_visible {id pane} {
+    global mged_gui
+
+    switch -- $pane {
+	command {
+	    return $mged_gui($id,show_cmd)
+	}
+	graphics {
+	    return $mged_gui($id,show_dm)
+	}
+	browser {
+	    return $mged_gui($id,show_browser)
+	}
+	default {
+	    error "Unknown MGED layout pane: $pane"
+	}
+    }
+}
+
+proc mged_layout_set_pane_visible {id pane visible} {
+    global mged_gui
+
+    switch -- $pane {
+	command {
+	    set mged_gui($id,show_cmd) $visible
+	}
+	graphics {
+	    set mged_gui($id,show_dm) $visible
+	}
+	browser {
+	    set mged_gui($id,show_browser) $visible
+	}
+	default {
+	    error "Unknown MGED layout pane: $pane"
+	}
+    }
+}
+
+proc mged_layout_pane_docked {id pane} {
+    global mged_gui
+
+    return $mged_gui($id,dock_$pane)
+}
+
+proc mged_layout_set_pane_docked {id pane docked} {
+    global mged_gui
+
+    set mged_gui($id,dock_$pane) $docked
+}
+
+proc mged_layout_pane_managed {id pane} {
+    global mged_gui
+
+    return $mged_gui($id,managed_$pane)
+}
+
+proc mged_layout_set_pane_managed {id pane managed} {
+    global mged_gui
+
+    set mged_gui($id,managed_$pane) $managed
+}
+
+proc mged_layout_docked_panes {id} {
+    set docked {}
+
+    foreach pane {command graphics browser} {
+	if {[mged_layout_pane_docked $id $pane]} {
+	    lappend docked $pane
+	}
+    }
+
+    return $docked
+}
+
+proc mged_layout_update_state {id} {
+    global mged_gui
+
+    set visible_panes {command graphics}
+    if {$mged_gui($id,show_browser)} {
+	lappend visible_panes browser
+    }
+
+    set docked_count 0
+    foreach pane $visible_panes {
+	if {[mged_layout_pane_docked $id $pane]} {
+	    incr docked_count
+	}
+    }
+
+    if {$docked_count == [llength $visible_panes]} {
+	set mged_gui($id,layout) combined
+    } elseif {$docked_count == 0} {
+	set mged_gui($id,layout) separate
+    } else {
+	set mged_gui($id,layout) custom
+    }
+
+    set mged_gui($id,comb) [expr {
+	$mged_gui($id,dock_command) && $mged_gui($id,dock_graphics)
+    }]
+}
+
+proc mged_layout_manage_pane {id pane} {
+    set widget [mged_layout_pane_widget $id $pane]
+
+    if {![mged_layout_pane_managed $id $pane]} {
+	wm manage $widget
+	mged_layout_set_pane_managed $id $pane 1
+    }
+}
+
+proc mged_layout_forget_pane {id pane} {
+    set widget [mged_layout_pane_widget $id $pane]
+
+    if {[mged_layout_pane_managed $id $pane]} {
+	wm forget $widget
+	mged_layout_set_pane_managed $id $pane 0
+    }
+}
+
+proc mged_layout_install_pane_menu {id pane} {
+    set widget [mged_layout_pane_widget $id $pane]
+    set menubar $widget.menubar
+
+    if {![winfo exists $menubar]} {
+	.$id.menubar clone $menubar menubar
+    }
+
+    if {$pane == "browser"} {
+	$widget component hull configure -menu $menubar
+    } else {
+	$widget configure -menu $menubar
+    }
+}
+
+proc mged_layout_set_pane_protocol {id pane} {
+    set widget [mged_layout_pane_widget $id $pane]
+
+    switch -- $pane {
+	command {
+	    wm protocol $widget WM_DELETE_WINDOW "cmd_win_hide $id"
+	}
+	graphics {
+	    wm protocol $widget WM_DELETE_WINDOW "dm_win_hide $id"
+	}
+	browser {
+	    wm protocol $widget WM_DELETE_WINDOW "mged_geometry_browser_hide $id"
+	}
+    }
+}
+
+proc mged_layout_pane_geometry_key {pane} {
+    switch -- $pane {
+	command {
+	    return cmd_geometry
+	}
+	graphics {
+	    return graphics_geometry
+	}
+	browser {
+	    return browser_geometry
+	}
+	default {
+	    error "Unknown MGED layout pane: $pane"
+	}
+    }
+}
+
+proc mged_layout_restore_pane_geometry {id pane} {
+    global mged_gui
+
+    set geometry_key [mged_layout_pane_geometry_key $pane]
+    set geometry $mged_gui($id,$geometry_key)
+    if {$geometry != ""} {
+	wm geometry [mged_layout_pane_widget $id $pane] $geometry
+    }
+}
+
+proc mged_layout_capture_pane_geometry {id pane} {
+    global mged_gui
+
+    if {![mged_layout_pane_managed $id $pane]} {
+	return
+    }
+
+    set geometry_key [mged_layout_pane_geometry_key $pane]
+    set mged_gui($id,$geometry_key) [wm geometry [mged_layout_pane_widget $id $pane]]
+}
+
+proc mged_layout_capture_geometries {id} {
+    global mged_gui
+
+    foreach pane {command graphics browser} {
+	if {$pane != "browser" || [winfo exists $mged_gui($id,browser_frame)]} {
+	    mged_layout_capture_pane_geometry $id $pane
+	}
+    }
+
+    set mged_gui($id,layout_geometry) [wm geometry .$id]
+}
+
+proc mged_layout_apply {id {map_windows 1}} {
+    global mged_gui
+
+    set host_has_pane 0
+    foreach pane {command graphics browser} {
+	set widget [mged_layout_pane_widget $id $pane]
+	if {$pane == "browser" && ![winfo exists $widget]} {
+	    continue
+	}
+
+	set visible [mged_layout_pane_visible $id $pane]
+	if {[mged_layout_pane_docked $id $pane]} {
+	    mged_layout_forget_pane $id $pane
+	    if {$visible} {
+		switch -- $pane {
+		    command {
+			grid $widget -in .$id -sticky nsew -row 1 -column 0
+		    }
+		    graphics {
+			grid $widget -in .$id -sticky nsew -row 0 -column 0
+		    }
+		    browser {
+			grid $widget -in .$id -sticky nsew -row 0 -column 1 -rowspan 2
+		    }
+		}
+		set host_has_pane 1
+	    } else {
+		grid forget $widget
+	    }
+	} else {
+	    grid forget $widget
+	    mged_layout_manage_pane $id $pane
+	    mged_layout_install_pane_menu $id $pane
+	    mged_layout_set_pane_protocol $id $pane
+	    if {$visible && $map_windows} {
+		mged_layout_restore_pane_geometry $id $pane
+		wm deiconify $widget
+	    } else {
+		wm withdraw $widget
+	    }
+	}
+    }
+
+    grid columnconfigure .$id 0 -weight 1
+    grid columnconfigure .$id 1 -weight 0
+    grid rowconfigure .$id 0 -weight 1
+    grid rowconfigure .$id 1 -weight 0
+
+    if {$host_has_pane && $map_windows} {
+	wm deiconify .$id
+    } else {
+	wm withdraw .$id
+    }
+
+    mged_layout_update_state $id
+    mview_build_menubar $id
+    if {[info procs set_wm_title] != ""} {
+	set_wm_title $id [_mged_opendb]
+    }
+}
+
+proc mged_layout_initialize_geometry {id} {
+    global mged_gui
+
+    set host .$id
+    set height [expr {[winfo screenheight $host] - 70}]
+    set width $height
+
+    if {[mged_layout_pane_managed $id graphics]} {
+	wm geometry [mged_layout_pane_widget $id graphics] $width\x$height
+	mged_layout_restore_pane_geometry $id graphics
+    }
+
+    if {[mged_layout_pane_managed $id command]} {
+	mged_layout_restore_pane_geometry $id command
+    }
+
+    if {[mged_layout_pane_managed $id browser]} {
+	mged_layout_restore_pane_geometry $id browser
+    }
+
+    if {$mged_gui($id,layout_geometry) != ""} {
+	wm geometry $host $width\x$height
+	wm geometry $host $mged_gui($id,layout_geometry)
+    }
+}
+
+proc mged_layout_set_mode {id mode} {
+    global mged_gui
+
+    switch -- $mode {
+	combined {
+	    foreach pane {command graphics} {
+		mged_layout_set_pane_docked $id $pane 1
+	    }
+	    if {$mged_gui($id,show_browser)} {
+		mged_layout_set_pane_docked $id browser 1
+	    }
+	}
+	separate {
+	    foreach pane {command graphics browser} {
+		mged_layout_set_pane_docked $id $pane 0
+	    }
+	}
+	default {
+	    error "Unknown MGED window layout: $mode"
+	}
+    }
+
+    mged_layout_apply $id
+}
+
+proc mged_layout_tear_off {id pane} {
+    global mged_gui
+
+    if {$pane == "browser" && !$mged_gui($id,show_browser)} {
+	mged_geometry_browser_open $id
+	return
+    }
+
+    mged_layout_set_pane_docked $id $pane 0
+    mged_layout_apply $id
+}
+
+proc mged_layout_dock {id pane} {
+    global mged_gui
+
+    if {$pane == "browser" && !$mged_gui($id,show_browser)} {
+	mged_geometry_browser_open $id
+	return
+    }
+
+    mged_layout_capture_pane_geometry $id $pane
+    mged_layout_set_pane_docked $id $pane 1
+    mged_layout_apply $id
+}
+
+proc mged_layout_show_pane {id pane} {
+    if {$pane == "browser"} {
+	mged_geometry_browser_open $id
+	return
+    }
+
+    mged_layout_set_pane_visible $id $pane 1
+    mged_layout_apply $id
+
+    if {[mged_layout_pane_docked $id $pane]} {
+	raise .$id
+    } else {
+	raise [mged_layout_pane_widget $id $pane]
+    }
+
+    if {$pane == "command"} {
+	focus [mged_cmd_text $id]
+    } else {
+	setmv $id
+    }
+}
+
+proc mged_layout_hide_pane {id pane} {
+    global mged_gui
+
+    mged_layout_capture_pane_geometry $id $pane
+    mged_layout_set_pane_visible $id $pane 0
+    mged_layout_apply $id
+
+    if {($pane == "command" || $pane == "graphics") &&
+	!$mged_gui($id,show_cmd) && !$mged_gui($id,show_dm)} {
+	gui_destroy $id
+    }
+}
+
+proc mged_layout_hide_host {id} {
+    wm withdraw .$id
+}
+
+proc mged_geometry_browser_create {id} {
+    global mged_gui
+
+    set browser $mged_gui($id,browser_frame)
+    if {[winfo exists $browser]} {
+	return 1
+    }
+
+    if {[catch {package require GeometryBrowser} result]} {
+	puts $result
+	return 0
+    }
+
+    if {[catch {GeometryBrowser $browser -mgedid $id -toplevel 0} result]} {
+	catch {itcl::delete object $browser}
+	catch {destroy $browser}
+	puts $result
+	return 0
+    }
+
+    return 1
+}
+
+proc mged_geometry_browser_open {id} {
+    global mged_gui
+
+    if {![mged_geometry_browser_create $id]} {
+	return
+    }
+
+    set mged_gui($id,show_browser) 1
+    if {$mged_gui($id,layout) == "combined"} {
+	mged_layout_set_pane_docked $id browser 1
+    } elseif {$mged_gui($id,layout) == "separate"} {
+	mged_layout_set_pane_docked $id browser 0
+    }
+
+    mged_layout_apply $id
+    if {[mged_layout_pane_docked $id browser]} {
+	raise .$id
+    } else {
+	raise $mged_gui($id,browser_frame)
+    }
+}
+
+proc mged_geometry_browser_hide {id} {
+    global mged_gui
+
+    set browser $mged_gui($id,browser_frame)
+    if {[winfo exists $browser]} {
+	mged_layout_capture_pane_geometry $id browser
+	destroy $browser
+    }
+
+    set mged_gui($id,managed_browser) 0
+    set mged_gui($id,show_browser) 0
+    mged_layout_apply $id
 }
 
 if {![info exists mged_default(perspective_mode)]} {
@@ -323,6 +822,7 @@ proc gui { args } {
     # set defaults
     set save_id [cmd_win get]
     set comb $mged_default(comb)
+    set layout_explicit 0
     set join_c 0
     set dtype $mged_default(dm_type)
     set id ""
@@ -433,8 +933,10 @@ proc gui { args } {
 	    return [help gui]
 	} elseif {$arg == "-s" || $arg == "-sep"} {
 	    set comb 0
+	    set layout_explicit 1
 	} elseif {$arg == "-c" || $arg == "-comb"} {
 	    set comb 1
+	    set layout_explicit 1
 	} else {
 	    return [help gui]
 	}
@@ -461,9 +963,19 @@ proc gui { args } {
 	set sgw 1
     }
 
-    set mged_gui($id,comb) $comb
+    if {$layout_explicit} {
+	if {$comb} {
+	    set docked_panes {command graphics}
+	} else {
+	    set docked_panes {}
+	}
+    } else {
+	set docked_panes $mged_default(window_docked)
+    }
+
     set mged_gui($id,show_cmd) $scw
     set mged_gui($id,show_dm) $sgw
+    set mged_gui($id,show_browser) $mged_default(browser_open)
     set mged_gui($id,show_status) $mged_default(status_bar)
     set mged_gui($id,apply_to) 0
     set mged_gui($id,edit_info_pos) "+0+0"
@@ -473,6 +985,18 @@ proc gui { args } {
     set mged_gui($id,dtype) $dtype
     set mged_gui($id,lastButtonPress) 0
     set mged_gui($id,lastItem) ""
+    set mged_gui($id,dock_command) [expr {[lsearch -exact $docked_panes command] != -1}]
+    set mged_gui($id,dock_graphics) [expr {[lsearch -exact $docked_panes graphics] != -1}]
+    set mged_gui($id,dock_browser) [expr {[lsearch -exact $docked_panes browser] != -1}]
+    set mged_gui($id,managed_command) 0
+    set mged_gui($id,managed_graphics) 0
+    set mged_gui($id,managed_browser) 0
+    set mged_gui($id,cmd_geometry) $mged_default(geom)
+    set mged_gui($id,graphics_geometry) $mged_default(ggeom)
+    set mged_gui($id,browser_geometry) $mged_default(browser_geom)
+    set mged_gui($id,layout_geometry) $mged_default(layout_geom)
+    set mged_gui($id,browser_frame) .$id.browser
+    mged_layout_update_state $id
 
     if {![dm_validXType $gscreen $dtype]} {
 	set dtype [dm_bestXType $gscreen]
@@ -496,29 +1020,19 @@ proc gui { args } {
     set mged_gui($id,screen) $screen
 
     #==============================================================================
-    # Create display manager window and menu
+    # Create reusable command and display manager panes.  Tk can promote the
+    # frames to independent managed windows without reparenting their contents.
     #==============================================================================
-    if {$comb} {
-	set mged_gui($id,top) .$id
-	set mged_gui($id,dmc) .$id.dmf
+    set mged_gui($id,cmd_frame) .$id.command
+    frame $mged_gui($id,cmd_frame)
 
-	frame $mged_gui($id,dmc) -relief sunken -borderwidth 2
+    set mged_gui($id,top) .$id.graphics
+    set mged_gui($id,dmc) $mged_gui($id,top)
+    frame $mged_gui($id,dmc) -relief sunken -borderwidth 2
 
-	if {[catch { openmv $id $mged_gui($id,top) $mged_gui($id,dmc) $screen $dtype } result]} {
-	    gui_destroy $id
-	    return $result
-	}
-    } else {
-	set mged_gui($id,top) .top$id
-	set mged_gui($id,dmc) $mged_gui($id,top)
-
-	toplevel $mged_gui($id,dmc) -screen $gscreen -relief sunken -borderwidth 2
-	wm withdraw $mged_gui($id,dmc)
-
-	if {[catch { openmv $id $mged_gui($id,top) $mged_gui($id,dmc) $gscreen $dtype } result]} {
-	    gui_destroy $id
-	    return $result
-	}
+    if {[catch { openmv $id $mged_gui($id,top) $mged_gui($id,dmc) $screen $dtype } result]} {
+	gui_destroy $id
+	return $result
     }
 
     set mged_gui($id,active_dm) $mged_gui($id,top).$mged_default(pane)
@@ -535,9 +1049,40 @@ proc gui { args } {
     .$id.menubar add cascade -label "ViewRing" -underline 4 -menu .$id.menubar.viewring
     .$id.menubar add cascade -label "Settings" -underline 0 -menu .$id.menubar.settings
     .$id.menubar add cascade -label "Modes" -underline 0 -menu .$id.menubar.modes
+    .$id.menubar add cascade -label "Windows" -underline 0 -menu .$id.menubar.windows
     .$id.menubar add cascade -label "Misc" -underline 1 -menu .$id.menubar.misc
     .$id.menubar add cascade -label "Tools" -underline 0 -menu .$id.menubar.tools
     .$id.menubar add cascade -label "Help" -underline 0 -menu .$id.menubar.help
+
+    menu .$id.menubar.windows -title "Windows" -tearoff $mged_default(tearoff_menus)
+    .$id.menubar.windows add radiobutton -label "Combine All Windows" \
+	-variable mged_gui($id,layout) -value combined \
+	-command "mged_layout_set_mode $id combined"
+    .$id.menubar.windows add radiobutton -label "Separate All Windows" \
+	-variable mged_gui($id,layout) -value separate \
+	-command "mged_layout_set_mode $id separate"
+    .$id.menubar.windows add separator
+    .$id.menubar.windows add command -label "Tear Off Command Window" \
+	-command "mged_layout_tear_off $id command"
+    .$id.menubar.windows add command -label "Dock Command Window" \
+	-command "mged_layout_dock $id command"
+    .$id.menubar.windows add command -label "Tear Off Graphics Window" \
+	-command "mged_layout_tear_off $id graphics"
+    .$id.menubar.windows add command -label "Dock Graphics Window" \
+	-command "mged_layout_dock $id graphics"
+    .$id.menubar.windows add command -label "Tear Off Geometry Browser" \
+	-command "mged_layout_tear_off $id browser"
+    .$id.menubar.windows add command -label "Dock Geometry Browser" \
+	-command "mged_layout_dock $id browser"
+    .$id.menubar.windows add separator
+    .$id.menubar.windows add command -label "Show Command Window" \
+	-command "mged_layout_show_pane $id command"
+    .$id.menubar.windows add command -label "Show Graphics Window" \
+	-command "mged_layout_show_pane $id graphics"
+    .$id.menubar.windows add command -label "Show Geometry Browser" \
+	-command "mged_geometry_browser_open $id"
+    .$id.menubar.windows add command -label "Hide Geometry Browser" \
+	-command "mged_geometry_browser_hide $id"
 
     menu .$id.menubar.file -title "File" -tearoff $mged_default(tearoff_menus)
     .$id.menubar.file add command -label "New..." -underline 0 -command "do_New $id"
@@ -572,7 +1117,7 @@ proc gui { args } {
 	{ { summary "Create the .mgedrc startup file with default variable settings, or update to current settings." }
 	    { see_also } }
     .$id.menubar.file add command -label "Clear Command Window" -underline 14 \
-	-command ".$id.t delete 1.0 end; mged_print_prompt .$id.t {mged> }; .$id.t insert insert \" \"; beginning_of_line .$id.t; .$id.t edit reset;"
+	-command "mged_clear_command_window $id"
     hoc_register_menu_data "File" "Clear Command Window" "Delete all text from command window"\
 	{ { summary "Delete all text from command window" } see_also }
     .$id.menubar.file add command -label "Exit" -underline 1 -command _mged_quit
@@ -803,7 +1348,8 @@ against MGED database objects."\
 	{ { summary "A tool for editing/creating combinations." } }
     .$id.menubar.edit add command -label "Attribute Editor" -underline 0 \
 	-command "Attr_editor::start_editor $id"
-    .$id.menubar.edit add command -label "Browse Geometry" -underline 0 -command "geometree"
+    .$id.menubar.edit add command -label "Browse Geometry" -underline 0 \
+	-command "mged_geometry_browser_open $id"
 
     menu .$id.menubar.create -title "Create" -tearoff $mged_default(tearoff_menus)
 
@@ -1924,7 +2470,7 @@ hoc_register_menu_data "Create" "$ptype..." "Make a $ptype" $ksl
 	{ { summary "Tool for creating, displaying, and selecting colors." } }
 
     .$id.menubar.tools add command -label "Geometry Browser" -underline 0\
-	-command "geometree"
+	-command "mged_geometry_browser_open $id"
     hoc_register_menu_data "Tools" "Geometry Browser" "Geometry Browser"\
 	{ { summary "Tool for browsing the geometry in a database." } }
 
@@ -2086,32 +2632,38 @@ hoc_register_menu_data "Create" "$ptype..." "Make a $ptype" $ksl
     #==============================================================================
     # PHASE 3: Bottom-row display
     #==============================================================================
-    frame .$id.status
-    frame .$id.status.dpy
-    frame .$id.status.illum
+    set cmd_frame $mged_gui($id,cmd_frame)
+    set mged_gui($id,cmd_status) $cmd_frame.status
+    set mged_gui($id,cmd_text_frame) $cmd_frame.tf
+    set mged_gui($id,cmd_text) $cmd_frame.t
+    set mged_gui($id,cmd_scrollbar) $cmd_frame.s
 
-    label .$id.status.cent -textvar mged_display($mged_gui($id,active_dm),center) -anchor w
-    hoc_register_data .$id.status.cent "View Center"\
+    frame $mged_gui($id,cmd_status)
+    frame $mged_gui($id,cmd_status).dpy
+    frame $mged_gui($id,cmd_status).illum
+
+    label $mged_gui($id,cmd_status).cent -textvar mged_display($mged_gui($id,active_dm),center) -anchor w
+    hoc_register_data $mged_gui($id,cmd_status).cent "View Center"\
 	{ { summary "These numbers indicate the view center in\nmodel coordinates (local units)." }
 	    { see_also "center, view" } }
-    label .$id.status.size -textvar mged_display($mged_gui($id,active_dm),size) -anchor w
-    hoc_register_data .$id.status.size "View Size"\
+    label $mged_gui($id,cmd_status).size -textvar mged_display($mged_gui($id,active_dm),size) -anchor w
+    hoc_register_data $mged_gui($id,cmd_status).size "View Size"\
 	{ { summary "This number indicates the view size (local units)." }
 	    { see_also size} }
-    label .$id.status.units -textvar mged_display(units) -anchor w -padx 4
-    hoc_register_data .$id.status.units "Units"\
+    label $mged_gui($id,cmd_status).units -textvar mged_display(units) -anchor w -padx 4
+    hoc_register_data $mged_gui($id,cmd_status).units "Units"\
 	{ { summary "This indicates the local units.		 " }
 	    { see_also units} }
-    label .$id.status.aet -textvar mged_display($mged_gui($id,active_dm),aet) -anchor w
-    hoc_register_data .$id.status.aet "View Orientation"\
+    label $mged_gui($id,cmd_status).aet -textvar mged_display($mged_gui($id,active_dm),aet) -anchor w
+    hoc_register_data $mged_gui($id,cmd_status).aet "View Orientation"\
 	{ { summary "These numbers indicate the view orientation using azimuth,\nelevation and twist." }
 	    { see_also "ae, view" } }
-    label .$id.status.ang -textvar mged_display($mged_gui($id,active_dm),ang) -anchor w -padx 4
-    hoc_register_data .$id.status.ang "Rateknobs"\
+    label $mged_gui($id,cmd_status).ang -textvar mged_display($mged_gui($id,active_dm),ang) -anchor w -padx 4
+    hoc_register_data $mged_gui($id,cmd_status).ang "Rateknobs"\
 	{ { summary "These numbers give some indication of\nrate of rotation about the x,y,z axes." }
 	    { see_also knob} }
-    label .$id.status.illum.label -textvar mged_gui($id,illum_label)
-    hoc_register_data .$id.status.illum.label "Status Area"\
+    label $mged_gui($id,cmd_status).illum.label -textvar mged_gui($id,illum_label)
+    hoc_register_data $mged_gui($id,cmd_status).illum.label "Status Area"\
 	{ { summary "This area is for displaying either the frames per second,
 	the illuminated path, the keypoint during an edit
 	or the ADC attributes." } }
@@ -2119,28 +2671,31 @@ hoc_register_menu_data "Create" "$ptype..." "Make a $ptype" $ksl
     #==============================================================================
     # PHASE 4: Text widget for interaction
     #==============================================================================
-    frame .$id.tf
-    if {$comb} {
-	text .$id.t -height $mged_gui($id,num_lines) \
+    frame $mged_gui($id,cmd_text_frame)
+    if {[mged_layout_pane_docked $id command]} {
+	text $mged_gui($id,cmd_text) -height $mged_gui($id,num_lines) \
 	    -relief sunken \
 	    -bd 2 \
-	    -yscrollcommand ".$id.s set" \
+	    -yscrollcommand "$mged_gui($id,cmd_scrollbar) set" \
 	    -undo 1 \
 	    -autoseparators 0
     } else {
-	text .$id.t -relief sunken \
+	text $mged_gui($id,cmd_text) -relief sunken \
 	    -bd 2 \
-	    -yscrollcommand ".$id.s set" \
+	    -yscrollcommand "$mged_gui($id,cmd_scrollbar) set" \
 	    -undo 1 \
 	    -autoseparators 0
     }
-    scrollbar .$id.s -relief flat -command ".$id.t yview"
+    scrollbar $mged_gui($id,cmd_scrollbar) -relief flat -command "$mged_gui($id,cmd_text) yview"
 
     if { $::tcl_platform(platform) != "windows" && $::tcl_platform(os) != "Darwin" } {
-	bind .$id.t <Enter> "focus .$id.t; break"
+	bind $mged_gui($id,cmd_text) <Enter> "focus $mged_gui($id,cmd_text); break"
+    } else {
+	# some platforms should not be forced window activation
+	focus $mged_gui($id,cmd_text)
     }
 
-    hoc_register_data .$id.t "Command Window"\
+    hoc_register_data $mged_gui($id,cmd_text) "Command Window"\
 	{ { summary "This is MGED's default command window. Its main
 	function is to allow the user to enter commands.
 	The command window supports command line editing
@@ -2178,45 +2733,46 @@ hoc_register_menu_data "Create" "$ptype..." "Make a $ptype" $ksl
 	The user can also scroll the window using the scrollbar." } }
 
     set mged_gui($id,edit_style) $mged_default(edit_style)
-    set mged_gui(.$id.t,insert_char_flag) 0
+    set cmd_text $mged_gui($id,cmd_text)
+    set mged_gui($cmd_text,insert_char_flag) 0
     set_text_key_bindings $id
-    set_text_button_bindings .$id.t
+    set_text_button_bindings $cmd_text
 
     set mged_gui($id,cmd_prefix) ""
     set mged_gui($id,more_default) ""
-    mged_print_prompt .$id.t "mged> "
-    .$id.t insert insert " "
-    beginning_of_line .$id.t
-    .$id.t  edit reset
-    set mged_gui(.$id.t,moveView) 0
-    set mged_gui(.$id.t,freshline) 1
-    set mged_gui(.$id.t,scratchline) ""
-    set vi_state(.$id.t,overwrite_flag) 0
-    set vi_state(.$id.t,yank_flag) 0
-    set vi_state(.$id.t,delete_flag) 0
-    set vi_state(.$id.t,change_flag) 0
-    set vi_state(.$id.t,search_flag) ""
-    set vi_state(.$id.t,hsrch_flag) 0
-    set vi_state(.$id.t,count_flag) 0
-    set vi_state(.$id.t,warn_flag) 0
-    set vi_state(.$id.t,dot_flag) 0
-    set vi_state(.$id.t,cmd_count) 1
-    set vi_state(.$id.t,pos_count) 1
-    set vi_state(.$id.t,tmp_count) 1
-    set vi_state(.$id.t,cmd_list) [list]
-    set vi_state(.$id.t,dot_list) [list]
-    set vi_state(.$id.t,cut_buf) ""
-    set vi_state(.$id.t,reset_buf) ""
-    set vi_state(.$id.t,insert_buf) ""
-    set vi_state(.$id.t,hsrch_buf) ""
-    set vi_state(.$id.t,hsrch_type) ""
-    set vi_state(.$id.t,search_char) ""
-    set vi_state(.$id.t,search_type) ""
+    mged_print_prompt $cmd_text "mged> "
+    $cmd_text insert insert " "
+    beginning_of_line $cmd_text
+    $cmd_text edit reset
+    set mged_gui($cmd_text,moveView) 0
+    set mged_gui($cmd_text,freshline) 1
+    set mged_gui($cmd_text,scratchline) ""
+    set vi_state($cmd_text,overwrite_flag) 0
+    set vi_state($cmd_text,yank_flag) 0
+    set vi_state($cmd_text,delete_flag) 0
+    set vi_state($cmd_text,change_flag) 0
+    set vi_state($cmd_text,search_flag) ""
+    set vi_state($cmd_text,hsrch_flag) 0
+    set vi_state($cmd_text,count_flag) 0
+    set vi_state($cmd_text,warn_flag) 0
+    set vi_state($cmd_text,dot_flag) 0
+    set vi_state($cmd_text,cmd_count) 1
+    set vi_state($cmd_text,pos_count) 1
+    set vi_state($cmd_text,tmp_count) 1
+    set vi_state($cmd_text,cmd_list) [list]
+    set vi_state($cmd_text,dot_list) [list]
+    set vi_state($cmd_text,cut_buf) ""
+    set vi_state($cmd_text,reset_buf) ""
+    set vi_state($cmd_text,insert_buf) ""
+    set vi_state($cmd_text,hsrch_buf) ""
+    set vi_state($cmd_text,hsrch_type) ""
+    set vi_state($cmd_text,search_char) ""
+    set vi_state($cmd_text,search_type) ""
 
-    .$id.t tag configure sel -background #fefe8e
-    .$id.t tag configure result -foreground blue3
-    .$id.t tag configure oldcmd -foreground red3
-    .$id.t tag configure prompt -foreground red1
+    $cmd_text tag configure sel -background #fefe8e
+    $cmd_text tag configure result -foreground blue3
+    $cmd_text tag configure oldcmd -foreground red3
+    $cmd_text tag configure prompt -foreground red1
 
     #==============================================================================
     # Pack windows
@@ -2224,49 +2780,38 @@ hoc_register_menu_data "Create" "$ptype..." "Make a $ptype" $ksl
     setupmv $id
     setmv $id
 
-    if { $comb } {
-	if { $mged_gui($id,show_dm) } {
-	    grid $mged_gui($id,dmc) -sticky nsew -row 0 -column 0
-	}
-    }
+    set cmd_status $mged_gui($id,cmd_status)
+    set cmd_text_frame $mged_gui($id,cmd_text_frame)
+    set cmd_scrollbar $mged_gui($id,cmd_scrollbar)
 
-    grid .$id.t .$id.s -in .$id.tf -sticky "nsew"
-    grid columnconfigure .$id.tf 0 -weight 1
-    grid rowconfigure .$id.tf 0 -weight 1
+    grid $cmd_text $cmd_scrollbar -in $cmd_text_frame -sticky "nsew"
+    grid columnconfigure $cmd_text_frame 0 -weight 1
+    grid rowconfigure $cmd_text_frame 0 -weight 1
+    grid $cmd_text_frame -in $cmd_frame -sticky nsew -row 0 -column 0
 
-    if { !$comb || ($comb && $mged_gui($id,show_cmd)) } {
-	grid .$id.tf -sticky "nsew" -row 1 -column 0
-    }
-
-    grid .$id.status.cent .$id.status.size .$id.status.units .$id.status.aet\
-	.$id.status.ang x -in .$id.status.dpy -sticky "ew"
-    grid columnconfigure .$id.status.dpy 5 -weight 1
-    grid .$id.status.dpy -sticky "ew"
-    grid .$id.status.illum.label x -sticky "ew"
-    grid columnconfigure .$id.status.illum 1 -weight 1
-    grid .$id.status.illum -sticky "w"
-    grid columnconfigure .$id.status 0 -weight 1
+    grid $cmd_status.cent $cmd_status.size $cmd_status.units $cmd_status.aet\
+	$cmd_status.ang x -in $cmd_status.dpy -sticky "ew"
+    grid columnconfigure $cmd_status.dpy 5 -weight 1
+    grid $cmd_status.dpy -sticky "ew"
+    grid $cmd_status.illum.label x -sticky "ew"
+    grid columnconfigure $cmd_status.illum 1 -weight 1
+    grid $cmd_status.illum -sticky "w"
+    grid columnconfigure $cmd_status 0 -weight 1
 
     if { $mged_gui($id,show_status) } {
-	grid .$id.status -sticky "ew" -row 2 -column 0
+	grid $cmd_status -in $cmd_frame -sticky ew -row 1 -column 0
     }
 
-    grid columnconfigure .$id 0 -weight 1
-    if { $comb } {
-	# let only the display manager window grow
-	grid rowconfigure .$id 0 -weight 1
-    } else {
-	# let only the text window (i.e. enter commands here) grow
-	grid rowconfigure .$id 1 -weight 1
+    grid columnconfigure $cmd_frame 0 -weight 1
+    grid rowconfigure $cmd_frame 0 -weight 1
+
+    if {$mged_gui($id,show_browser) && ![mged_geometry_browser_create $id]} {
+	set mged_gui($id,show_browser) 0
     }
+    mged_layout_apply $id 0
 
     #==============================================================================
-    # PHASE 5: Creation of other auxiliary windows
-    #==============================================================================
-    mview_build_menubar $id
-
-    #==============================================================================
-    # PHASE 6: Further setup
+    # PHASE 5: Further setup
     #==============================================================================
     if {[info procs cad_MenuFirstEntry] == ""} {
 	# trigger the Tcl source file to be loaded
@@ -2310,64 +2855,23 @@ hoc_register_menu_data "Create" "$ptype..." "Make a $ptype" $ksl
     set dbname [_mged_opendb]
     set_wm_title $id $dbname
 
-    # Finish widget layout before either toplevel is mapped so the window
-    # manager doesn't get a chance to place them before startup geometry is set.
+    # Finish pane layout before mapping any managed window so the window manager
+    # does not get a chance to place it before startup geometry is restored.
     update idletasks
 
-    # set the size here in case the user didn't specify it in mged_default(ggeom)
-    set height [expr [winfo screenheight $mged_gui($id,top)] - 70]
-    set width $height
-    wm geometry $mged_gui($id,top) $width\x$height
-
-    # set geometry (i.e. size and position) according to mged_default(ggeom)
-    wm geometry $mged_gui($id,top) $mged_default(ggeom)
-
-    wm protocol $mged_gui($id,top) WM_DELETE_WINDOW "dm_win_hide $id"
-    wm protocol .$id WM_DELETE_WINDOW "cmd_win_hide $id"
-
-    if { $comb } {
-	if { !$mged_gui($id,show_dm) } {
-	    set_dm_win $id
-	}
-    } else {
-	wm geometry .$id $mged_default(geom)
-	update idletasks
-    }
-
-    if {!$comb && $mged_gui($id,show_dm)} {
-	wm deiconify $mged_gui($id,top)
-    }
-
-    if {$comb || $mged_gui($id,show_cmd)} {
-	wm deiconify .$id
-    }
-
-    if {$mged_gui($id,show_cmd) &&
-	($::tcl_platform(platform) == "windows" || $::tcl_platform(os) == "Darwin")} {
-	# These platforms use startup focus instead of the pointer-enter binding.
-	# Wait until the command toplevel is mapped before requesting focus.
-	focus .$id.t
-    }
+    mged_layout_initialize_geometry $id
+    wm protocol .$id WM_DELETE_WINDOW "mged_layout_hide_host $id"
+    mged_layout_apply $id
 }
 
 proc cmd_win_hide args {
-    global mged_gui
-
     set id [lindex $args 0]
-    set mged_gui($id,show_cmd) 0
-    wm state .$id withdrawn
-
-    gui_destroy $id
+    mged_layout_hide_pane $id command
 }
 
 proc dm_win_hide args {
-    global mged_gui
-
     set id [lindex $args 0]
-    set mged_gui($id,show_dm) 0
-    wm state $mged_gui($id,dmc) withdrawn
-
-    gui_destroy $id
+    mged_layout_hide_pane $id graphics
 }
 
 proc gui_destroy args {
@@ -2407,6 +2911,7 @@ proc gui_destroy args {
 
 proc reconfig_gui_default { id } {
     global mged_display
+    global mged_gui
 
     cmd_win set $id
     set dm_id [_mged_tie $id]
@@ -2414,12 +2919,12 @@ proc reconfig_gui_default { id } {
 	return
     }
 
-    .$id.status.cent configure -textvar mged_display($dm_id,center)
-    .$id.status.size configure -textvar mged_display($dm_id,size)
-    .$id.status.units configure -textvar mged_display(units)
+    $mged_gui($id,cmd_status).cent configure -textvar mged_display($dm_id,center)
+    $mged_gui($id,cmd_status).size configure -textvar mged_display($dm_id,size)
+    $mged_gui($id,cmd_status).units configure -textvar mged_display(units)
 
-    .$id.status.aet configure -textvar mged_display($dm_id,aet)
-    .$id.status.ang configure -textvar mged_display($dm_id,ang)
+    $mged_gui($id,cmd_status).aet configure -textvar mged_display($dm_id,aet)
+    $mged_gui($id,cmd_status).ang configure -textvar mged_display($dm_id,ang)
 
     #		 update_view_ring_entries $id s
     #		 update_view_ring_entries $id d
@@ -2639,96 +3144,63 @@ proc set_wm_title { id dbname } {
 
     set ver [lindex $version 2]
 
-    if {$mged_gui($id,top) == $mged_gui($id,dmc)} {
-	if {$mged_gui($id,dm_loc) == "ul"} {
-	    wm title $mged_gui($id,top) "MGED $ver Graphics Window ($id) - $dbname - Upper Left"
-	    wm title .$id "MGED $ver Command Window ($id) - $dbname - Upper Left"
-	} elseif {$mged_gui($id,dm_loc) == "ur"} {
-	    wm title $mged_gui($id,top) "MGED $ver Graphics Window ($id) - $dbname - Upper Right"
-	    wm title .$id "MGED $ver Command Window ($id) - $dbname - Upper Right"
-	} elseif {$mged_gui($id,dm_loc) == "ll"} {
-	    wm title $mged_gui($id,top) "MGED $ver Graphics Window ($id) - $dbname - Lower Left"
-	    wm title .$id "MGED $ver Command Window ($id) - $dbname - Lower Left"
-	} elseif {$mged_gui($id,dm_loc) == "lr"} {
-	    wm title $mged_gui($id,top) "MGED $ver Graphics Window ($id) - $dbname - Lower Right"
-	    wm title .$id "MGED $ver Command Window ($id) - $dbname - Lower Right"
+    switch -- $mged_gui($id,dm_loc) {
+	ul {
+	    set location "Upper Left"
 	}
-    } else {
-	if {$mged_gui($id,dm_loc) == "ul"} {
-	    wm title $mged_gui($id,top) "MGED $ver Command Window ($id) - $dbname - Upper Left"
-	} elseif {$mged_gui($id,dm_loc) == "ur"} {
-	    wm title $mged_gui($id,top) "MGED $ver Command Window ($id) - $dbname - Upper Right"
-	} elseif {$mged_gui($id,dm_loc) == "ll"} {
-	    wm title $mged_gui($id,top) "MGED $ver Command Window ($id) - $dbname - Lower Left"
-	} elseif {$mged_gui($id,dm_loc) == "lr"} {
-	    wm title $mged_gui($id,top) "MGED $ver Command Window ($id) - $dbname - Lower Right"
+	ur {
+	    set location "Upper Right"
 	}
+	ll {
+	    set location "Lower Left"
+	}
+	lr {
+	    set location "Lower Right"
+	}
+	default {
+	    set location ""
+	}
+    }
+
+    wm title .$id "MGED $ver ($id) - $dbname - $location"
+    if {[mged_layout_pane_managed $id command]} {
+	wm title $mged_gui($id,cmd_frame) "MGED $ver Command Window ($id) - $dbname - $location"
+    }
+    if {[mged_layout_pane_managed $id graphics]} {
+	wm title $mged_gui($id,dmc) "MGED $ver Graphics Window ($id) - $dbname - $location"
+    }
+    if {[mged_layout_pane_managed $id browser] && [winfo exists $mged_gui($id,browser_frame)]} {
+	wm title $mged_gui($id,browser_frame) "MGED $ver Geometry Browser ($id) - $dbname"
     }
 }
 
 proc set_cmd_win { id } {
     global mged_gui
 
-    if { $mged_gui($id,show_cmd) } {
-	if { $mged_gui($id,show_dm) } {
-	    .$id.t configure -height $mged_gui($id,num_lines)
-	    grid .$id.tf -sticky nsew -row 1 -column 0
-	} else {
-	    grid .$id.tf -sticky nsew -row 0 -column 0
-	}
-    } else {
-	grid forget .$id.tf
+    if {!$mged_gui($id,show_cmd) && !$mged_gui($id,show_dm)} {
+	set mged_gui($id,show_dm) 1
+    }
 
-	if { !$mged_gui($id,show_dm) } {
-	    set mged_gui($id,show_dm) 1
-	    grid $mged_gui($id,dmc) -sticky nsew -row 0 -column 0
-	    update
-	    setmv $id
-	}
+    mged_layout_apply $id
+    if {$mged_gui($id,show_dm)} {
+	setmv $id
     }
 }
 
 proc open_cmd_win {id} {
-    global mged_gui
-
-    set mged_gui($id,show_cmd) 1
-    wm deiconify .$id
-    raise .$id
+    mged_layout_show_pane $id command
 }
 
 proc set_dm_win { id } {
     global mged_gui
 
-    if { $mged_gui($id,show_dm) } {
-	if { $mged_gui($id,show_cmd) } {
-	    grid forget .$id.tf
-	    .$id.t configure -height $mged_gui($id,num_lines)
-	    update
-	}
-
-	grid $mged_gui($id,dmc) -sticky nsew -row 0 -column 0
-
-	if { $mged_gui($id,show_cmd) } {
-	    grid .$id.tf -sticky nsew -row 1 -column 0
-	    update
-	    .$id.t see end
-	}
-
-	setmv $id
-    } else {
-	grid forget $mged_gui($id,dmc)
-
+    if {!$mged_gui($id,show_dm) && !$mged_gui($id,show_cmd)} {
 	set mged_gui($id,show_cmd) 1
-	set_cmd_win $id
-	set fh [get_font_height .$id.t]
-	set h [winfo height $mged_gui($id,top)]
+    }
 
-	if { $mged_gui($id,show_status) } {
-	    set h [expr $h - [winfo height .$id.status]]
-	}
-
-	set nlines [expr $h / $fh]
-	.$id.t configure -height $nlines
+    mged_layout_apply $id
+    if {$mged_gui($id,show_dm)} {
+	setmv $id
     }
 }
 
@@ -3080,9 +3552,9 @@ proc toggle_status_bar { id } {
     global mged_gui
 
     if {$mged_gui($id,show_status)} {
-	grid .$id.status -sticky ew -row 2 -column 0
+	grid $mged_gui($id,cmd_status) -in $mged_gui($id,cmd_frame) -sticky ew -row 1 -column 0
     } else {
-	grid forget .$id.status
+	grid forget $mged_gui($id,cmd_status)
     }
 }
 
@@ -3224,7 +3696,7 @@ proc get_font_height { w } {
 proc get_cmd_win_height { id } {
     global mged_gui
 
-    set fh [get_font_height .$id.t]
+    set fh [get_font_height $mged_gui($id,cmd_text)]
 
     return [expr $fh * $mged_gui($id,num_lines)]
 }
@@ -3251,8 +3723,8 @@ proc call_dbupgrade {id} {
     catch {dbupgrade} msg
 
     if {$msg != ""} {
-	# Calling with .$id instead of .$id.t to fool it into
-	# adding the msg text
+	# Pass the session window instead of its command widget so the message
+	# is distributed to every command window.
 	distribute_text .$id dbupgrade $msg
     }
 }

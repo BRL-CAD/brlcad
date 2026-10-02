@@ -100,7 +100,10 @@ if(BRLCAD_ENABLE_QT)
     set(USE_OBJECT_LIBS OFF)
   endif()
   set(QTCAD_SRCS ${qtcad_srcs})
-  set(QTCAD_PUBLIC_LIBS ${libqtcad_deps})
+  # qtcad's public BRL-CAD headers reach brep/defines.h, which includes
+  # opennurbs.h.  Keep that external usage requirement explicit so the
+  # separately compiled aggregate-library objects receive it as well.
+  set(QTCAD_PUBLIC_LIBS ${libqtcad_deps} OPENNURBS::OPENNURBS)
 
   if(Qt6Widgets_FOUND)
     qt6_wrap_cpp(qtcad_moc_srcs ${qtcad_moc_hdrs})

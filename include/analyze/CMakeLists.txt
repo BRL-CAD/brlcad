@@ -1,5 +1,6 @@
 set(
   analyze_headers
+  assembly.h
   contour.h
   debug.h
   defines.h

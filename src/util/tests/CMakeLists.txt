@@ -47,6 +47,13 @@ brlcad_add_test(
     -P "${CMAKE_CURRENT_SOURCE_DIR}/test_bwscale_endpoints.cmake"
 )
 
+brlcad_add_test(
+  NAME util_wavelet_lowpass
+  COMMAND
+    "${CMAKE_COMMAND}" "-DWAVELET=$<TARGET_FILE:wavelet>" "-DTEST_DIR=${CMAKE_CURRENT_BINARY_DIR}"
+    -P "${CMAKE_CURRENT_SOURCE_DIR}/test_wavelet_lowpass.cmake"
+)
+
 cmakefiles(
   CMakeLists.txt
   test_bwcrop_single_axis.cmake
@@ -56,6 +63,7 @@ cmakefiles(
   test_pixdiff_bytes.cmake
   test_pixdiff_pix.cmake
   test_pixembed_edge_replication.cmake
+  test_wavelet_lowpass.cmake
 )
 
 # Local Variables:

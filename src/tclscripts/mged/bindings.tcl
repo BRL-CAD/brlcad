@@ -311,13 +311,15 @@ proc forward_key_bindings { w } {
 
     bind $w <Escape> {}
 
-    # The focus commands in the binding below are necessary to insure
-    # that .$id.t gets the event.
+    set cmd_text [mged_cmd_text $id]
+
+    # The focus commands in the binding below ensure the command widget
+    # receives the forwarded event.
     bind $w <KeyPress> "\
-	    focus .$id.t;\
-	    set mged_gui(.$id.t,insert_char_flag) 1;\
-	    event generate .$id.t <KeyPress> -state %s -keysym %K;\
-	    set mged_gui(.$id.t,insert_char_flag) 0;\
+	    focus $cmd_text;\
+	    set mged_gui($cmd_text,insert_char_flag) 1;\
+	    event generate $cmd_text <KeyPress> -state %s -keysym %K;\
+	    set mged_gui($cmd_text,insert_char_flag) 0;\
 	    focus %W;\
 	    break"
 }

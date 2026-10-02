@@ -31,10 +31,7 @@ proc clear {} {
   if {$clearid == "" || $clearid == "mged"} {
     puts [exec clear]
   } else {
-    .$clearid.t delete 1.0 end
-    .$clearid.t insert insert " "
-    beginning_of_line .$clearid.t
-    .$clearid.t  edit reset
+    mged_clear_command_window $clearid
   }
 }
 

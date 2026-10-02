@@ -255,6 +255,7 @@ main(int ac, char *av[]) {
 	"pathlist",
 	"paths",
 	"perspective",
+	"pipe",
 	"pipe_append_pnt",
 	"pipe_delete_pnt",
 	"pipe_move_pnt",

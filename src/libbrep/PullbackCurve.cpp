@@ -44,7 +44,7 @@
 #include <sstream>
 
 #if defined(HAVE_WINDOWS_H)
-#  include <windows.h>
+#  include "bio.h"
 #else
 #  include <time.h>
 #endif

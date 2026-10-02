@@ -1,11 +1,5 @@
 brlcad_find_package(LMDB REQUIRED)
 
-if(BRLCAD_ENABLE_BINARY_ATTRIBUTES)
-  # If this becomes a default we'll need to bundle libbson to ensure it is
-  # available - while it is not on by default, require a system version
-  find_package(BSON REQUIRED)
-endif(BRLCAD_ENABLE_BINARY_ATTRIBUTES)
-
 # Use configure_file to make copies of the mime input files,
 # so CMake will get notified for the need for a re-configure
 # if they are edited.
@@ -146,7 +140,6 @@ set(
   ${DL_LIBRARY}
   ${WINSOCK_LIB}
   ${PSAPI_LIB}
-  ${BSON_LIBRARIES}
   LMDB::LMDB
   ${UUID_LIBRARIES}
   ${EXECINFO_LIBRARY}
@@ -157,7 +150,7 @@ set(
 set(BU_INCLUDE_DIRS ${BRLCAD_BINARY_DIR}/include ${BRLCAD_SOURCE_DIR}/include)
 
 # locally used but not needed by users of the library
-set(BU_LOCAL_INCLUDE_DIRS ${BSON_INCLUDE_DIR} ${LMDB_INCLUDE_DIR} ${UUID_INCLUDE_DIR})
+set(BU_LOCAL_INCLUDE_DIRS ${LMDB_INCLUDE_DIR} ${UUID_INCLUDE_DIR})
 
 brlcad_addlib(libbu "${LIBBU_SOURCES}" "${BU_INCLUDE_DIRS}" "${BU_LOCAL_INCLUDE_DIRS}"
   PRIVATE_LIBS ${BU_PRIVATE_LIBS}

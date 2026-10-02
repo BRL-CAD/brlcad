@@ -251,6 +251,7 @@ set(
   pathsum.adoc
   permute.adoc
   perspective.adoc
+  pipe.adoc
   pipe_append_pnt.adoc
   pipe_delete_pnt.adoc
   pipe_move_pnt.adoc

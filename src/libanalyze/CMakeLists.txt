@@ -27,6 +27,7 @@ distclean(${DEBUG_CMD_HDRS})
 set(
   LIBANALYZE_SOURCES
   api.c
+  assembly.cpp
   centroid.c
   check_options.c
   contour.cpp

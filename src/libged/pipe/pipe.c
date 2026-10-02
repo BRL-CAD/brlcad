@@ -33,11 +33,14 @@
 #include <math.h>
 #include <string.h>
 
+#include "bu/str.h"
 #include "vmath.h"
 #include "nmg.h"
 #include "rt/geom.h"
 #include "ged.h"
 #include "wdb.h"
+
+#include "route.h"
 
 #include "../ged_private.h"
 
@@ -443,9 +446,29 @@ ged_pipe_prepend_pnt_core(struct ged *gedp, int argc, const char *argv[])
 }
 
 
+int
+ged_pipe_core(struct ged *gedp, int argc, const char *argv[])
+{
+    static const char *usage = "route [options] name {x y z} {x y z} [guide-point ...]";
+
+    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
+    bu_vls_trunc(gedp->ged_result_str, 0);
+    if (argc == 1) {
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	return GED_HELP;
+    }
+    if (BU_STR_EQUAL(argv[1], "route"))
+	return ged_pipe_route_core(gedp, argc - 1, argv + 1);
+
+    bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+    return BRLCAD_ERROR;
+}
+
+
 #include "../include/plugin.h"
 
 #define GED_PIPE_COMMANDS(X, XID) \
+    X(pipe, ged_pipe_core, GED_CMD_DEFAULT) \
     X(find_pipe_pnt, ged_find_pipe_pnt_nearest_pnt_core, GED_CMD_DEFAULT) \
     X(pipe_move_pnt, ged_pipe_move_pnt_core, GED_CMD_DEFAULT) \
     X(pipe_append_pnt, ged_pipe_append_pnt_core, GED_CMD_DEFAULT) \

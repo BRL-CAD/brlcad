@@ -551,6 +551,7 @@ static struct to_cmdtab ged_cmds[] = {
     {"aet",	"[[-i] az el [tw]]", 6, to_view_func_plus, ged_exec_aet},
     {"analyze",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_exec_analyze},
     {"annotate", (char *)0, TO_UNLIMITED, to_pass_through_func, ged_exec_annotate},
+    {"pipe",		(char *)0, TO_UNLIMITED, to_pass_through_func, ged_exec_pipe},
     {"pipe_append_pnt",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_exec_pipe_append_pnt},
     {"arb",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_exec_arb},
     {"arced",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_exec_arced},

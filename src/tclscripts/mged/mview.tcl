@@ -117,9 +117,16 @@ proc mview_build_menubar { id } {
     global mged_gui
 
     set w $mged_gui($id,top)
+    if {[info exists mged_gui($id,managed_graphics)]} {
+	set graphics_managed $mged_gui($id,managed_graphics)
+    } else {
+	set graphics_managed [expr {$mged_gui($id,top) == $mged_gui($id,dmc)}]
+    }
 
-    if {$mged_gui($id,top) == $mged_gui($id,dmc)} {
-	.$id.menubar clone $w.menubar menubar
+    if {$graphics_managed} {
+	if {![winfo exists $w.menubar]} {
+	    .$id.menubar clone $w.menubar menubar
+	}
 	$w configure -menu $w.menubar
 
 	menu_accelerator_bindings_for_clone $id $w $w.ul ul

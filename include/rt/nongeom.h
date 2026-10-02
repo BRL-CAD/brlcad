@@ -163,6 +163,13 @@ struct rt_constraint_internal {
     struct bu_vls expression;
 };
 
+enum rt_constraint_record_type {
+    RT_CONSTRAINT_TYPE_EXPRESSION = 0,
+    RT_CONSTRAINT_TYPE_ASSEMBLY = 1
+};
+
+#define RT_CONSTRAINT_ASSEMBLY_SCHEMA_VERSION 1
+
 #define RT_CHECK_CONSTRAINT(_p) BU_CKMAG(_p, RT_CONSTRAINT_MAGIC, "rt_constraint_internal")
 #define RT_CK_CONSTRAINT(_p) RT_CHECK_CONSTRAINT(_p)
 

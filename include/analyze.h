@@ -33,6 +33,7 @@
 #include "analyze/defines.h"
 #include "analyze/contour.h"
 #include "analyze/debug.h"
+#include "analyze/assembly.h"
 #include "analyze/diff.h"
 #include "analyze/density.h"
 #include "analyze/grid.h"

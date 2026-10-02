@@ -59,6 +59,7 @@ brlcad_addexec(lattice lattice.c "${PROC_DB_WDB_LIBS}" NO_STRICT NO_INSTALL)
 brlcad_addexec(loftwing loftwing.c "${PROC_DB_WDB_LIBS}" NO_STRICT NO_INSTALL)
 brlcad_addexec(specimen specimen.c "${PROC_DB_WDB_LIBS}" NO_STRICT NO_INSTALL)
 brlcad_addexec(terragen terragen.c "${PROC_DB_WDB_LIBS}" NO_STRICT NO_INSTALL)
+brlcad_addexec(tensegrity tensegrity.c "${PROC_DB_WDB_LIBS}" NO_STRICT NO_INSTALL)
 brlcad_addexec(voxelize voxelize.c "${PROC_DB_WDB_LIBS}" NO_STRICT NO_INSTALL)
 brlcad_addexec(cchannel cchannel.c "libwdb;${M_LIBRARY}" NO_INSTALL)
 brlcad_addexec(clutter "clutter.c;common.c" "libwdb;${M_LIBRARY}" NO_INSTALL)
@@ -84,6 +85,18 @@ brlcad_addexec(vegetation vegetation.c "libwdb;${M_LIBRARY}" NO_INSTALL)
 target_include_directories(vegetation BEFORE PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 brlcad_addexec(wavy wavy.c "${PROC_DB_WDB_NMG_LIBS}" NO_INSTALL)
 
+brlcad_add_test(
+  NAME proc-db_tensegrity_selftest
+  COMMAND tensegrity --self-test
+)
+brlcad_add_test(
+  NAME proc-db_tensegrity_database
+  COMMAND
+    "${CMAKE_COMMAND}" "-DTENSEGRITY=$<TARGET_FILE:tensegrity>"
+    "-DTEST_DIR=${CMAKE_CURRENT_BINARY_DIR}"
+    -P "${CMAKE_CURRENT_SOURCE_DIR}/tensegrity_test.cmake"
+)
+
 set(proc-db_ignore_files
   3NN4.pdb
   CMakeLists.txt
@@ -95,6 +108,7 @@ set(proc-db_ignore_files
   spiral.pl
   surfaceintersect.h
   tea.h
+  tensegrity_test.cmake
   twistedcube.h
   vegetation.h
   water.pdb

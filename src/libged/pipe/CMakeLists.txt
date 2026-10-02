@@ -2,11 +2,16 @@ set(PLUGIN_LIBS libged libbu)
 
 ged_plugin_library(ged-pipe
   pipe.c
+  route.c
+  route_cmd.c
   LIBS ${PLUGIN_LIBS}
 )
 
 cmakefiles(
   CMakeLists.txt
+  route.c
+  route_cmd.c
+  route.h
 )
 
 # Local Variables:

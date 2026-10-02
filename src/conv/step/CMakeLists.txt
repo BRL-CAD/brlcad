@@ -342,6 +342,7 @@ function(GENERATE_SCHEMA_INPUTS SCHEMA_FILE TARGET_SUFFIX)
       endif()
       set_target_properties(
         ${_bindings_target} PROPERTIES
+        BRLCAD_STEP_SCHEMA_OUT_DIR "${_schema_out_dir}"
         POSITION_INDEPENDENT_CODE TRUE
         FOLDER "BRL-CAD Static Libraries/STEP"
       )
@@ -359,6 +360,13 @@ function(GENERATE_SCHEMA_INPUTS SCHEMA_FILE TARGET_SUFFIX)
         message(FATAL_ERROR
           "STEP schema ${_schema_key} was already configured from ${_canonical_file}; "
           "${TARGET_SUFFIX} requested non-canonical input ${SCHEMA_FILE}"
+        )
+      endif()
+      get_target_property(_canonical_out_dir ${_bindings_target} BRLCAD_STEP_SCHEMA_OUT_DIR)
+      if(NOT "${_schema_out_dir}" STREQUAL "${_canonical_out_dir}")
+        message(FATAL_ERROR
+          "STEP schema ${_schema_key} was already configured in ${_canonical_out_dir}; "
+          "${TARGET_SUFFIX} requested non-canonical output ${_schema_out_dir}"
         )
       endif()
     endif()
@@ -507,7 +515,7 @@ add_subdirectory(ap214)
 add_subdirectory(ap242)
 
 if(BRLCAD_ENABLE_STEP)
-  function(STEP_ADD_SCHEMA_PLUGIN schema property_key schema_define schema_directory import_cli export_cli)
+  function(STEP_ADD_SCHEMA_PLUGIN schema property_key schema_define import_cli export_cli)
     get_property(_has_import GLOBAL PROPERTY "STEP_${property_key}_IMPORT_SOURCES" SET)
     get_property(_has_export GLOBAL PROPERTY "STEP_${property_key}_EXPORT_SOURCES" SET)
     if(NOT _has_import OR NOT _has_export)
@@ -529,6 +537,11 @@ if(BRLCAD_ENABLE_STEP)
     list(APPEND _plugin_sources $<TARGET_OBJECTS:step_export_common_objects>)
 
     set(_target "step-schema-${schema}")
+    set(_bindings_target "step_schema_${schema}_bindings")
+    get_target_property(_schema_out_dir ${_bindings_target} BRLCAD_STEP_SCHEMA_OUT_DIR)
+    if(NOT _schema_out_dir)
+      message(FATAL_ERROR "No generated output directory recorded for STEP schema ${schema}")
+    endif()
     add_library(${_target} MODULE ${_plugin_sources})
     target_include_directories(
       ${_target} BEFORE PRIVATE
@@ -538,7 +551,7 @@ if(BRLCAD_ENABLE_STEP)
       ${CMAKE_CURRENT_SOURCE_DIR}/ap203e2
       ${CMAKE_CURRENT_SOURCE_DIR}/ap214
       ${CMAKE_CURRENT_SOURCE_DIR}/ap242
-      ${STEP_SCHEMA_BINARY_DIR}/${schema_directory}
+      ${_schema_out_dir}
       ${STEPCODE_INCLUDE_DIRS}
       ${CMAKE_SOURCE_DIR}/src/libbrep
     )
@@ -579,7 +592,7 @@ if(BRLCAD_ENABLE_STEP)
       libbrep
       libbn
       libbu
-      step_schema_${schema}_bindings
+      ${_bindings_target}
       ${STEPCODE_UTILS_LIBRARY}
       ${STEPCODE_EDITOR_LIBRARY}
       ${STEPCODE_DAI_LIBRARY}
@@ -589,7 +602,7 @@ if(BRLCAD_ENABLE_STEP)
     if(STEPCODE_LAZY_FOUND)
       target_link_libraries(${_target} PRIVATE ${STEPCODE_LAZY_LIBRARY})
     endif()
-    add_dependencies(${_target} step_schema_${schema}_bindings)
+    add_dependencies(${_target} ${_bindings_target})
     set_target_properties(
       ${_target} PROPERTIES
       POSITION_INDEPENDENT_CODE TRUE
@@ -602,36 +615,31 @@ if(BRLCAD_ENABLE_STEP)
   endfunction()
 
   step_add_schema_plugin(
-    ap203 AP203 AP203 CONFIG_CONTROL_DESIGN
+    ap203 AP203 AP203
     step_ap203_import_cli step_ap203_export_cli
   )
   step_add_schema_plugin(
     ap203e2 AP203E2 AP203e2
-    AP203_CONFIGURATION_CONTROLLED_3D_DESIGN_OF_MECHANICAL_PARTS_AND_ASSEMBLIES_MIM_LF
     step_ap203e2_import_cli step_ap203e2_export_cli
   )
   step_add_schema_plugin(
-    ap214 AP214 AP214e3 AUTOMOTIVE_DESIGN
+    ap214 AP214 AP214e3
     step_ap214_import_cli step_ap214_export_cli
   )
   step_add_schema_plugin(
     ap242e1 AP242E1 AP242
-    AP242_MANAGED_MODEL_BASED_3D_ENGINEERING_MIM_LF_E1
     step_ap242_import_cli step_ap242_export_cli
   )
   step_add_schema_plugin(
     ap242e2 AP242E2 AP242
-    AP242_MANAGED_MODEL_BASED_3D_ENGINEERING_MIM_LF_E2
     step_ap242_import_cli step_ap242_export_cli
   )
   step_add_schema_plugin(
     ap242e3 AP242E3 AP242
-    AP242_MANAGED_MODEL_BASED_3D_ENGINEERING_MIM_LF_E3
     step_ap242_import_cli step_ap242_export_cli
   )
   step_add_schema_plugin(
     ap242e4 AP242E4 AP242
-    AP242_MANAGED_MODEL_BASED_3D_ENGINEERING_MIM_LF_E4
     step_ap242_import_cli step_ap242_export_cli
   )
 

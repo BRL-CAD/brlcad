@@ -313,7 +313,7 @@ if(BRLCAD_GENERATE_GALLERY AND TARGET rt AND TARGET mged)
   # Demo generator programs to build before regenerating (those that exist).
   set(
     GALLERY_DEMO_TARGETS
-    terragen voxelize lattice loftwing gears helicoil specimen seashell sphflake donuts
+    terragen voxelize lattice tensegrity loftwing gears helicoil specimen seashell sphflake donuts
     menger pyramid torii masonry brickwall mkbuilding cchannel ringworld
     vegetation clutter metaball molecule pdb-g pipe pipetest tube lens
     brep_simple brep_cube brep_cobb brep_surface brep_trimmed brep_invalid

@@ -33,6 +33,7 @@
  * -D level debug
  * -s squaresize of original image/dataset (power of 2)
  * -R n Restart with average image size n
+ * -p n Reconstruct a low-pass result from an average image size n
  * -n number of scanlines
  * -w width of dataset
  * -S level/limit of transform ...
@@ -68,9 +69,10 @@
 
 #define DECOMPOSE 1
 #define RECONSTRUCT -1
+#define LOW_PASS 2
 
 /* declarations to support use of bu_getopt() system call */
-const char *options = "W:S:s:w:n:t:#:D:12drR:h?";
+const char *options = "W:S:s:w:n:t:#:D:p:12drR:h?";
 
 const char *progname = "(noname)";
 int img_space=1;
@@ -82,7 +84,10 @@ int value_type = CHAR;
 size_t value_size = sizeof(char);
 size_t avg_size = 0;
 size_t limit = 0;
+static size_t lowpass_size = 0;
 int decomp_recon;
+static int avg_size_specified;
+static int limit_specified;
 
 static int
 parse_size_arg(const char *arg, size_t *out_value, const char *label, int allow_zero)
@@ -98,9 +103,20 @@ usage(const char *s)
 
     bu_exit(1,
 	    "Usage:\n\
-	%s {-d | -r} [-2] [-t datatype] [-# channels]\n\
-	[-w width] [-n scanlines] [-s number_of_samples]\n\
+	%s {-d | -r | -p average_size} [-2] [-t datatype] [-# channels]\n\
+	[-w width] [-n scanlines] [-s number_of_samples] [-W output_size]\n\
+	[-S output_size] [-R average_size] [-D level]\n\
 	< datastream > wavelets\n", progname);
+}
+
+
+static void
+set_operation(int operation)
+{
+    if (decomp_recon != 0 && decomp_recon != operation)
+	usage("Specify only one of -d, -r, or -p.\n");
+
+    decomp_recon = operation;
 }
 
 
@@ -124,9 +140,9 @@ parse_args(int ac, char **av)
 	switch (c) {
 	    case '1': img_space=1; break;
 	    case '2': img_space=2; break;
-	    case 'd': decomp_recon = DECOMPOSE;
+	    case 'd': set_operation(DECOMPOSE);
 		break;
-	    case 'r': decomp_recon = RECONSTRUCT;
+	    case 'r': set_operation(RECONSTRUCT);
 		break;
 	    case 'D':
 		if (!bu_opt_scan_int(bu_optarg, &debug, "debug level"))
@@ -135,6 +151,12 @@ parse_args(int ac, char **av)
 	    case 'R':
 		if (!parse_size_arg(bu_optarg, &avg_size, "average size", 0))
 		    usage("");
+		avg_size_specified = 1;
+		break;
+	    case 'p':
+		if (!parse_size_arg(bu_optarg, &lowpass_size, "low-pass average size", 0))
+		    usage("");
+		set_operation(LOW_PASS);
 		break;
 	    case '#':
 		if (!parse_size_arg(bu_optarg, &channels, "channel count", 0))
@@ -160,6 +182,9 @@ parse_args(int ac, char **av)
 		    case 's': value_type = SHORT;
 			value_size = sizeof(short);
 			break;
+		    default:
+			usage("Data type must be c, s, i, l, f, or d.\n");
+			break;
 		}
 		break;
 	    case 'n':
@@ -178,10 +203,12 @@ parse_args(int ac, char **av)
 	    case 'W':
 		if (!parse_size_arg(bu_optarg, &limit, "output limit", 1))
 		    usage("");
+		limit_specified = 1;
 		break;
 	    case 'S':
 		if (!parse_size_arg(bu_optarg, &limit, "transform limit", 1))
 		    usage("");
+		limit_specified = 1;
 		break;
 	    case 'h':
 		usage("");
@@ -193,6 +220,114 @@ parse_args(int ac, char **av)
 	}
 
     return bu_optind;
+}
+
+
+static void
+wlt_transform_1d(void *tbuf, void *buf, int operation, size_t average_size, size_t transform_limit)
+{
+    if (operation != DECOMPOSE && operation != RECONSTRUCT)
+	bu_exit(1, "Unsupported one-dimensional wavelet operation.\n");
+
+    switch (value_type) {
+	case DOUBLE:
+	    if (operation == DECOMPOSE)
+		bn_wlt_haar_1d_double_decompose((double *)tbuf, (double *)buf, width, channels, transform_limit);
+	    else
+		bn_wlt_haar_1d_double_reconstruct((double *)tbuf, (double *)buf, width, channels, average_size, transform_limit);
+	    break;
+	case FLOAT:
+	    if (operation == DECOMPOSE)
+		bn_wlt_haar_1d_float_decompose((float *)tbuf, (float *)buf, width, channels, transform_limit);
+	    else
+		bn_wlt_haar_1d_float_reconstruct((float *)tbuf, (float *)buf, width, channels, average_size, transform_limit);
+	    break;
+	case CHAR:
+	    if (operation == DECOMPOSE)
+		bn_wlt_haar_1d_char_decompose((char *)tbuf, (char *)buf, width, channels, transform_limit);
+	    else
+		bn_wlt_haar_1d_char_reconstruct((char *)tbuf, (char *)buf, width, channels, average_size, transform_limit);
+	    break;
+	case SHORT:
+	    if (operation == DECOMPOSE)
+		bn_wlt_haar_1d_short_decompose((short int *)tbuf, (short int *)buf, width, channels, transform_limit);
+	    else
+		bn_wlt_haar_1d_short_reconstruct((short int *)tbuf, (short int *)buf, width, channels, average_size, transform_limit);
+	    break;
+	case INT:
+	    if (operation == DECOMPOSE)
+		bn_wlt_haar_1d_int_decompose((int *)tbuf, (int *)buf, width, channels, transform_limit);
+	    else
+		bn_wlt_haar_1d_int_reconstruct((int *)tbuf, (int *)buf, width, channels, average_size, transform_limit);
+	    break;
+	case LONG:
+	    if (operation == DECOMPOSE)
+		bn_wlt_haar_1d_long_decompose((long int *)tbuf, (long int *)buf, width, channels, transform_limit);
+	    else
+		bn_wlt_haar_1d_long_reconstruct((long int *)tbuf, (long int *)buf, width, channels, average_size, transform_limit);
+	    break;
+	default:
+	    bu_exit(1, "Unsupported data type.\n");
+    }
+}
+
+
+static void
+wlt_transform_2d(void *tbuf, void *buf, int operation, size_t average_size, size_t transform_limit)
+{
+    if (operation != DECOMPOSE && operation != RECONSTRUCT)
+	bu_exit(1, "Unsupported two-dimensional wavelet operation.\n");
+
+    switch (value_type) {
+	case DOUBLE:
+	    if (operation == DECOMPOSE)
+		bn_wlt_haar_2d_double_decompose((double *)tbuf, (double *)buf, width, channels, transform_limit);
+	    else
+		bn_wlt_haar_2d_double_reconstruct((double *)tbuf, (double *)buf, width, channels, average_size, transform_limit);
+	    break;
+	case FLOAT:
+	    if (operation == DECOMPOSE)
+		bn_wlt_haar_2d_float_decompose((float *)tbuf, (float *)buf, width, channels, transform_limit);
+	    else
+		bn_wlt_haar_2d_float_reconstruct((float *)tbuf, (float *)buf, width, channels, average_size, transform_limit);
+	    break;
+	case CHAR:
+	    if (operation == DECOMPOSE)
+		bn_wlt_haar_2d_char_decompose((char *)tbuf, (char *)buf, width, channels, transform_limit);
+	    else
+		bn_wlt_haar_2d_char_reconstruct((char *)tbuf, (char *)buf, width, channels, average_size, transform_limit);
+	    break;
+	case SHORT:
+	    if (operation == DECOMPOSE)
+		bn_wlt_haar_2d_short_decompose((short int *)tbuf, (short int *)buf, width, channels, transform_limit);
+	    else
+		bn_wlt_haar_2d_short_reconstruct((short int *)tbuf, (short int *)buf, width, channels, average_size, transform_limit);
+	    break;
+	case INT:
+	    if (operation == DECOMPOSE)
+		bn_wlt_haar_2d_int_decompose((int *)tbuf, (int *)buf, width, channels, transform_limit);
+	    else
+		bn_wlt_haar_2d_int_reconstruct((int *)tbuf, (int *)buf, width, channels, average_size, transform_limit);
+	    break;
+	case LONG:
+	    if (operation == DECOMPOSE)
+		bn_wlt_haar_2d_long_decompose((long int *)tbuf, (long int *)buf, width, channels, transform_limit);
+	    else
+		bn_wlt_haar_2d_long_reconstruct((long int *)tbuf, (long int *)buf, width, channels, average_size, transform_limit);
+	    break;
+	default:
+	    bu_exit(1, "Unsupported data type.\n");
+    }
+}
+
+
+static void
+wlt_validate_square_image(void)
+{
+    if (width != height) {
+	fprintf(stderr, "Two dimensional wavelet operations require a square image\n");
+	bu_exit(1, "%zu x %zu image specified\n", width, height);
+    }
 }
 
 
@@ -223,26 +358,7 @@ wlt_decompose_1d(void)
 	    bu_exit(1, "read failed line %zu got %zu not %zu\n", i, n, width);
 	}
 
-	switch (value_type) {
-	    case DOUBLE:
-		bn_wlt_haar_1d_double_decompose((double *)tbuf, (double *)buf, width, channels, limit);
-		break;
-	    case FLOAT:
-		bn_wlt_haar_1d_float_decompose((float *)tbuf, (float *)buf, width, channels, limit);
-		break;
-	    case CHAR:
-		bn_wlt_haar_1d_char_decompose((char *)tbuf, (char *)buf, width, channels, limit);
-		break;
-	    case SHORT:
-		bn_wlt_haar_1d_short_decompose((short int *)tbuf, (short int *)buf, width, channels, limit);
-		break;
-	    case INT:
-		bn_wlt_haar_1d_int_decompose((int *)tbuf, (int *)buf, width, channels, limit);
-		break;
-	    case LONG:
-		bn_wlt_haar_1d_long_decompose((long int *)tbuf, (long int *)buf, width, channels, limit);
-		break;
-	}
+	wlt_transform_1d(tbuf, buf, DECOMPOSE, avg_size, limit);
 
 	ret = fwrite(buf, sample_size, width, stdout);
 	if (ret == 0) {
@@ -272,35 +388,13 @@ wlt_decompose_2d(void)
 	fprintf(stderr, "2D decompose:\n\tdatatype_size:%lu channels:%lu width:%lu height:%lu limit:%lu\n", (long unsigned)value_size, (long unsigned)channels, (long unsigned)width, (long unsigned)height, (long unsigned)limit);
 
 
-    if (width != height) {
-	fprintf(stderr, "Two dimensional decomposition requires square image\n");
-	bu_exit(1, "%zu x %zu image specified\n", width, height);
-    }
+    wlt_validate_square_image();
 
     if (fread(buf, scanline_size, height, stdin) != height) {
 	bu_exit(1, "read error getting %zu x %zu bytes\n", scanline_size, height);
     }
 
-    switch (value_type) {
-	case DOUBLE:
-	    bn_wlt_haar_2d_double_decompose((double *)tbuf, (double *)buf, width, channels, limit);
-	    break;
-	case FLOAT:
-	    bn_wlt_haar_2d_float_decompose((float *)tbuf, (float *)buf, width, channels, limit);
-	    break;
-	case CHAR:
-	    bn_wlt_haar_2d_char_decompose((char *)tbuf, (char *)buf, width, channels, limit);
-	    break;
-	case SHORT:
-	    bn_wlt_haar_2d_short_decompose((short int *)tbuf, (short int *)buf, width, channels, limit);
-	    break;
-	case INT:
-	    bn_wlt_haar_2d_int_decompose((int *)tbuf, (int *)buf, width, channels, limit);
-	    break;
-	case LONG:
-	    bn_wlt_haar_2d_long_decompose((long int *)tbuf, (long int *)buf, width, channels, limit);
-	    break;
-    }
+    wlt_transform_2d(tbuf, buf, DECOMPOSE, avg_size, limit);
     ret = fwrite(buf, scanline_size, width, stdout);
     if (ret == 0) {
 	perror("fwrite");
@@ -336,26 +430,7 @@ wlt_reconstruct_1d(void)
 	    bu_exit(-1, "read failed line %zu got %zu not %zu\n", i, n, width);
 	}
 
-	switch (value_type) {
-	    case DOUBLE:
-		bn_wlt_haar_1d_double_reconstruct((double *)tbuf, (double *)buf, width, channels, avg_size, limit);
-		break;
-	    case FLOAT:
-		bn_wlt_haar_1d_float_reconstruct((float *)tbuf, (float *)buf, width, channels, avg_size, limit);
-		break;
-	    case CHAR:
-		bn_wlt_haar_1d_char_reconstruct((char *)tbuf, (char *)buf, width, channels, avg_size, limit);
-		break;
-	    case SHORT:
-		bn_wlt_haar_1d_short_reconstruct((short int *)tbuf, (short int *)buf, width, channels, avg_size, limit);
-		break;
-	    case INT:
-		bn_wlt_haar_1d_int_reconstruct((int *)tbuf, (int *)buf, width, channels, avg_size, limit);
-		break;
-	    case LONG:
-		bn_wlt_haar_1d_long_reconstruct((long int *)tbuf, (long int *)buf, width, channels, avg_size, limit);
-		break;
-	}
+	wlt_transform_1d(tbuf, buf, RECONSTRUCT, avg_size, limit);
 
 	ret = fwrite(buf, sample_size, width, stdout);
 	if (ret == 0) {
@@ -384,39 +459,148 @@ wlt_reconstruct_2d(void)
     if (debug)
 	fprintf(stderr, "2D reconstruct:\n\tdatatype_size:%lu channels:%lu width:%lu height:%lu limit:%lu\n", (long unsigned)value_size, (long unsigned)channels, (long unsigned)width, (long unsigned)height, (long unsigned)limit);
 
-    if (width != height) {
-	fprintf(stderr, "Two dimensional decomposition requires square image\n");
-	bu_exit(1, "%zu x %zu image specified\n", width, height);
-    }
+    wlt_validate_square_image();
 
     if (fread(buf, scanline_size, height, stdin) != height) {
 	bu_exit(1, "read error getting %zu x %zu bytes\n", scanline_size, height);
     }
 
-    switch (value_type) {
-	case DOUBLE:
-	    bn_wlt_haar_2d_double_reconstruct((double *)tbuf, (double *)buf, width, channels, avg_size, limit);
-	    break;
-	case FLOAT:
-	    bn_wlt_haar_2d_float_reconstruct((float *)tbuf, (float *)buf, width, channels, avg_size, limit);
-	    break;
-	case CHAR:
-	    bn_wlt_haar_2d_char_reconstruct((char *)tbuf, (char *)buf, width, channels, avg_size, limit);
-	    break;
-	case SHORT:
-	    bn_wlt_haar_2d_short_reconstruct((short int *)tbuf, (short int *)buf, width, channels, avg_size, limit);
-	    break;
-	case INT:
-	    bn_wlt_haar_2d_int_reconstruct((int *)tbuf, (int *)buf, width, channels, avg_size, limit);
-	    break;
-	case LONG:
-	    bn_wlt_haar_2d_long_reconstruct((long int *)tbuf, (long int *)buf, width, channels, avg_size, limit);
-	    break;
-    }
+    wlt_transform_2d(tbuf, buf, RECONSTRUCT, avg_size, limit);
     ret = fwrite(buf, scanline_size, width, stdout);
     if (ret == 0) {
 	perror("fwrite");
     }
+}
+
+
+static void
+wlt_zero_values(void *buf, size_t first_value, size_t value_count)
+{
+    unsigned char *bytes = (unsigned char *)buf;
+
+    memset(bytes + first_value * value_size, 0, value_count * value_size);
+}
+
+
+static void
+wlt_discard_1d_details(void *buf, size_t retained_size)
+{
+    size_t retained_values = retained_size * channels;
+    size_t total_values = width * channels;
+
+    wlt_zero_values(buf, retained_values, total_values - retained_values);
+}
+
+
+static void
+wlt_discard_2d_details(void *buf, size_t retained_size)
+{
+    size_t scanline_values = width * channels;
+    size_t retained_values = retained_size * channels;
+    size_t row;
+
+    for (row = 0; row < retained_size; row++) {
+	wlt_zero_values(buf, row * scanline_values + retained_values,
+			scanline_values - retained_values);
+    }
+
+    wlt_zero_values(buf, retained_size * scanline_values,
+		    (width - retained_size) * scanline_values);
+}
+
+
+static int
+is_power_of_two(size_t value)
+{
+    return value != 0 && (value & (value - 1)) == 0;
+}
+
+
+static void
+validate_lowpass(void)
+{
+    if (avg_size_specified || limit_specified)
+	usage("-p cannot be combined with -R, -S, or -W.\n");
+
+    if (!is_power_of_two(width) || !is_power_of_two(lowpass_size))
+	usage("-p requires power-of-two width and average size values.\n");
+
+    if (lowpass_size >= width)
+	usage("-p average size must be smaller than the input width.\n");
+}
+
+
+static void
+wlt_lowpass_1d(void)
+{
+    size_t ret;
+    void *buf;
+    void *tbuf;
+    size_t i, n;
+    size_t sample_size;
+    size_t scanline_size;
+
+    sample_size = value_size * channels;
+    scanline_size = sample_size * width;
+
+    buf = bu_malloc(scanline_size, "wavelet low-pass buffer");
+    tbuf = bu_malloc(scanline_size >> 1, "wavelet low-pass temporary buffer");
+
+    if (debug)
+	fprintf(stderr, "1D low-pass reconstruction:\n\tdatatype_size:%lu channels:%lu width:%lu height:%lu average_size:%lu\n", (long unsigned)value_size, (long unsigned)channels, (long unsigned)width, (long unsigned)height, (long unsigned)lowpass_size);
+
+    for (i = 0; i < height; i++) {
+	n = fread(buf, sample_size, width, stdin);
+	if (n != width)
+	    bu_exit(1, "read failed line %zu got %zu not %zu\n", i, n, width);
+
+	wlt_transform_1d(tbuf, buf, DECOMPOSE, lowpass_size, lowpass_size);
+	wlt_discard_1d_details(buf, lowpass_size);
+	wlt_transform_1d(tbuf, buf, RECONSTRUCT, lowpass_size, width);
+
+	ret = fwrite(buf, sample_size, width, stdout);
+	if (ret != width)
+	    bu_exit(1, "write failed line %zu got %zu not %zu\n", i, ret, width);
+    }
+
+    bu_free(tbuf, "wavelet low-pass temporary buffer");
+    bu_free(buf, "wavelet low-pass buffer");
+}
+
+
+static void
+wlt_lowpass_2d(void)
+{
+    size_t ret;
+    void *buf;
+    void *tbuf;
+    size_t sample_size;
+    size_t scanline_size;
+
+    sample_size = value_size * channels;
+    scanline_size = sample_size * width;
+
+    wlt_validate_square_image();
+
+    buf = bu_malloc(scanline_size * height, "wavelet low-pass buffer");
+    tbuf = bu_malloc(scanline_size, "wavelet low-pass temporary buffer");
+
+    if (debug)
+	fprintf(stderr, "2D low-pass reconstruction:\n\tdatatype_size:%lu channels:%lu width:%lu height:%lu average_size:%lu\n", (long unsigned)value_size, (long unsigned)channels, (long unsigned)width, (long unsigned)height, (long unsigned)lowpass_size);
+
+    if (fread(buf, scanline_size, height, stdin) != height)
+	bu_exit(1, "read error getting %zu x %zu bytes\n", scanline_size, height);
+
+    wlt_transform_2d(tbuf, buf, DECOMPOSE, lowpass_size, lowpass_size);
+    wlt_discard_2d_details(buf, lowpass_size);
+    wlt_transform_2d(tbuf, buf, RECONSTRUCT, lowpass_size, width);
+
+    ret = fwrite(buf, scanline_size, height, stdout);
+    if (ret != height)
+	bu_exit(1, "write failed got %zu not %zu scanlines\n", ret, height);
+
+    bu_free(tbuf, "wavelet low-pass temporary buffer");
+    bu_free(buf, "wavelet low-pass buffer");
 }
 
 
@@ -458,8 +642,14 @@ main(int ac, char **av)
 	if (img_space == 1) wlt_reconstruct_1d();
 	else wlt_reconstruct_2d();
 	return 0;
+    } else if (decomp_recon == LOW_PASS) {
+	validate_lowpass();
+
+	if (img_space == 1) wlt_lowpass_1d();
+	else wlt_lowpass_2d();
+	return 0;
     }
-    usage("must specify either decompose (-d) or reconstruct (-r)\n");
+    usage("must specify decompose (-d), reconstruct (-r), or low-pass reconstruction (-p)\n");
     return -1;
 }
 
@@ -475,6 +665,7 @@ main(int ac, char **av)
 #undef DOUBLE
 #undef DECOMPOSE
 #undef RECONSTRUCT
+#undef LOW_PASS
 
 /*
  * Local Variables:

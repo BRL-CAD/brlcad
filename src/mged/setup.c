@@ -331,6 +331,7 @@ static struct cmdtab mged_cmdtab[] = {
     {MGED_CMD_MAGIC, "pathsum", cmd_ged_plain_wrapper, ged_exec_pathsum, NULL},
     {MGED_CMD_MAGIC, "permute", f_permute, GED_FUNC_PTR_NULL, NULL},
     {MGED_CMD_MAGIC, "perspective", cmd_ged_view_wrapper, ged_exec_perspective, NULL},
+    {MGED_CMD_MAGIC, "pipe", cmd_ged_plain_wrapper, ged_exec_pipe, NULL},
     {MGED_CMD_MAGIC, "pipe_append_pnt", cmd_ged_plain_wrapper, ged_exec_pipe_append_pnt, NULL},
     {MGED_CMD_MAGIC, "pipe_delete_pnt", cmd_ged_plain_wrapper, ged_exec_pipe_delete_pnt, NULL},
     {MGED_CMD_MAGIC, "pipe_move_pnt", cmd_ged_plain_wrapper, ged_exec_pipe_move_pnt, NULL},

@@ -9,9 +9,11 @@ brlcad_addexec(analyze_nhit nhit.cpp "libanalyze;librt;libbu" TEST_USESDATA)
 #      analyze_densities testing    #
 #####################################
 brlcad_addexec(analyze_densities density.cpp "libanalyze;libbu" TEST)
+brlcad_addexec(analyze_assembly assembly.cpp "libanalyze;libbn;libbu" TEST)
 
 brlcad_add_test(NAME analyze_densities_null        COMMAND analyze_densities)
 brlcad_add_test(NAME analyze_densities_std        COMMAND analyze_densities std)
+brlcad_add_test(NAME analyze_assembly             COMMAND analyze_assembly)
 
 cmakefiles(
   CMakeLists.txt

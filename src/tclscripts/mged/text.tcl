@@ -50,7 +50,7 @@ proc distribute_text { w cmd str } {
 
     set src_id [get_player_id_t $w]
     foreach id $mged_players {
-	set _w .$id.t
+	set _w [mged_cmd_text $id]
 	if [winfo exists $_w] {
 	    if {$w != $_w} {
 		set _promptBegin [$_w index {end - 1 l}]
@@ -1924,7 +1924,7 @@ proc set_text_key_bindings { id } {
     global mged_gui
     global tcl_platform
 
-    set w .$id.t
+    set w [mged_cmd_text $id]
     switch $mged_gui($id,edit_style) {
 	vi {
 	    vi_insert_mode $w

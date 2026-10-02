@@ -59,10 +59,13 @@ package require Iwidgets
 package provide GeometryBrowser 1.0
 
 class GeometryBrowser {
-    inherit itk::Toplevel
+    inherit itk::Widget
 
-    constructor {} {}
+    constructor {args} {}
     destructor {}
+
+    itk_option define -mgedid mgedId MgedId ""
+    itk_option define -toplevel topLevel TopLevel 1
 
     public {
 	method getNodeChildren { { node "" } { updateLists "no" } } {}
@@ -140,10 +143,18 @@ class GeometryBrowser {
 # begin constructor/destructor
 ###########
 
-body GeometryBrowser::constructor {} {
+body GeometryBrowser::constructor {args} {
     # used to determine the mged port number
     global port
     global mged_players
+
+    eval itk_initialize $args
+
+    # Preserve the standalone interface while allowing MGED to embed the
+    # browser and promote it to a managed window only when requested.
+    if {$itk_option(-toplevel)} {
+	wm manage $itk_component(hull)
+    }
 
     # set to 1/0 to turn call path debug messages on/off
     set _debug 0
@@ -165,7 +176,9 @@ body GeometryBrowser::constructor {} {
     set _weStartedFbserv 0
 
     # determine the framebuffer window id
-    if { [ catch { set mged_players } _mgedFramebufferId ] } {
+    if {$itk_option(-mgedid) != ""} {
+	set _mgedFramebufferId $itk_option(-mgedid)
+    } elseif { [ catch { set mged_players } _mgedFramebufferId ] } {
 	puts $_mgedFramebufferId
 	puts "assuming default mged framebuffer id: id_0"
 	set _mgedFramebufferId "id_0"
@@ -173,17 +186,18 @@ body GeometryBrowser::constructor {} {
     # just in case there are more than one returned
     set _mgedFramebufferId [ lindex $_mgedFramebufferId 0 ]
 
-    # set the window title
-    $this configure -title "Geometry Browser"
+    if {$itk_option(-toplevel)} {
+	wm title $itk_component(hull) "Geometry Browser"
 
-    set menubar [menu $itk_interior.menubar -tearoff 0]
-    menu $itk_interior.menubar.close -tearoff 0 -title "Close"
-    $menubar add cascade -label "File" -underline 0 \
-	-menu $itk_interior.menubar.close
-    $itk_interior.menubar.close add command -label "Close" -underline 0 \
-	-command [list itcl::delete object $this]
-    $this component hull configure -menu $menubar
-    wm protocol $itk_interior WM_DELETE_WINDOW [list itcl::delete object $this]
+	set menubar [menu $itk_interior.menubar -tearoff 0]
+	menu $itk_interior.menubar.close -tearoff 0 -title "Close"
+	$menubar add cascade -label "File" -underline 0 \
+	    -menu $itk_interior.menubar.close
+	$itk_interior.menubar.close add command -label "Close" -underline 0 \
+	    -command [list itcl::delete object $this]
+	$this component hull configure -menu $menubar
+	wm protocol $itk_interior WM_DELETE_WINDOW [list itcl::delete object $this]
+    }
 
     # set up the adjustable sliding pane with a left and right side
     itk_component add pw_pane {
@@ -199,7 +213,7 @@ body GeometryBrowser::constructor {} {
     #	set pane(1) [lindex $children 1]
 
     itk_component add cadtree {
-	Hierarchy $itk_interior.cadtree \
+	::iwidgets::Hierarchy $itk_interior.cadtree \
 	    -labeltext "...loading..." \
 	    -querycommand [ code $this getNodeChildren %n yes ] \
 	    -imagecommand [ code $this updateGeometryLists %n ] \

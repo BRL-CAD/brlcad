@@ -1,0 +1,178 @@
+= PIPE(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+
+pipe - Create path-driven rigid pipe, hose, and flattened wire-harness routes.
+
+== SYNOPSIS
+
+[source]
+----
+pipe route [options] name {x y z} {x y z} [guide-point ...]
+pipe route [options] --guide source_pipe name
+----
+
+== DESCRIPTION
+
+The *pipe route* subcommand creates a PIPE-based run from a sequence of
+three-dimensional guide points.  Guide points are expressed in the current
+database's local units.  The generated PIPE uses the requested bend radius at
+every non-collinear guide point, thereby creating standard circular elbows
+without requiring a separate elbow primitive.
+
+For simple work, specify an output name and two points.  Additional points
+shape the guide curve.  The `--guide` option obtains those points from an
+existing PIPE primitive; its dimensions are not copied, so the new route still
+uses the options supplied to *pipe route*.
+
+Declared `--avoid` objects are treated as keep-outs.  Their conservative
+axis-aligned bounds are enlarged by the run envelope, clearance, and bend
+radius.  If a direct guide segment intersects a keep-out, *pipe route* searches
+a bounded three-dimensional grid for a collision-free detour.  This is
+deliberately conservative: a found route clears the declared object bounds,
+not just their tessellated surfaces.
+
+The command verifies that adjacent elbows fit on their straight segments, that
+the generated control polygon does not self-overlap, and that a planned run
+does not cross a declared keep-out.  Its result reports centerline length, the
+minimum bend radius, elbow count, and accumulated bend allowance.  Values in
+the report use the database's local units.
+
+== OPTIONS
+
+*--profile* _rigid_|_hose_|_harness_::
+  Selects a rigid pipe run, flexible hose run, or flattened wire harness.  The
+  rigid and hose profiles both create PIPE geometry and enforce `--bend` as a
+  minimum centerline radius.  The harness profile creates one solid PIPE per
+  wire and packages them into a combination.
+
+*--diameter* _d_::
+  Outer diameter of the pipe, hose, or each harness wire.  The default is 10
+  local units.
+
+*--inner-diameter* _d_::
+  Inner diameter for a hollow pipe or hose.  The default is zero, making a
+  solid run.  This option cannot be combined with `--wall`.
+
+*--wall* _t_::
+  Wall thickness for a hollow pipe or hose.  The inner diameter is calculated
+  as the outer diameter minus twice this value.
+
+*--bend* _r_::
+  Minimum centerline bend radius.  The default is 1.5 times `--diameter`.
+  It must be at least half the outer diameter.
+
+*--clearance* _c_::
+  Additional clearance outside the run envelope when avoiding objects.  The
+  default is zero.
+
+*--grid* _s_::
+  Grid spacing used by the automatic detour planner.  The default is four
+  bend radii.  A grid smaller than two bend radii is rejected because it cannot
+  reliably contain a standard right-angle elbow.
+
+*--avoid* _object_::
+  Adds a database object or combination to the keep-out set.  Repeat this
+  option for multiple objects.
+
+*--guide* _source_pipe_::
+  Uses the control points of an existing PIPE primitive as the guide curve.
+  Do not also supply positional guide points.
+
+*--tee* _{x y z}_ _{x y z}_::
+  Adds a branch.  The first point is inserted into the primary guide path and
+  becomes the tee attachment; the second point is the branch endpoint.  The
+  output is a combination containing `<name>.main.s` and one `<name>.teeNN.s`
+  PIPE for each branch.  Tee branches are not available for flattened
+  harnesses.
+
+*--wires* _n_::
+  Number of wires in a harness.  This option is valid only with `--profile
+  harness`.
+
+*--spacing* _s_::
+  Center-to-center spacing between neighboring harness wires.  The default is
+  1.25 wire diameters and values below one wire diameter are rejected to avoid
+  overlap.  The wire row follows the path using a stable transported frame,
+  which keeps the bundle flattened through three-dimensional bends.
+
+*--max-nodes* _n_::
+  Upper bound for the automatic planner's grid cells.  The default is 250000.
+  Lower this limit to constrain planning time or raise it when routing a large
+  model with a fine grid.
+
+*--fallback* _error_|_direct_|_subtract_::
+  Selects behavior when no collision-free route is found.  `error` is the
+  default and creates nothing.  `direct` creates the requested guide run after
+  normal bend and self-overlap validation, but does not claim keep-out
+  clearance.  `subtract` is available for one rigid pipe or hose run: it
+  creates a solid clearance cutter and non-destructive replacement combinations
+  named `<name>.cutNN.c`, each formed as `keep-out - cutter`.  Original
+  keep-out objects are never edited; replace them in the assembly explicitly
+  when the clearance is desired.
+
+*--help*, *-h*::
+  Prints command usage.
+
+== EXAMPLES
+
+.Create a simple rigid fuel line.
+[example]
+====
+mged> **pipe route --diameter 12 --wall 1 --bend 24 fuel_line.s {0 0 0} {300 0 0} {300 180 0}**
+
+Creates `fuel_line.s` with one standard elbow.  The result reports the
+centerline length and bend allowance in the database's local units.
+====
+
+.Route a hose around a declared keep-out.
+[example]
+====
+mged> **pipe route --profile hose --diameter 20 --bend 40 --clearance 10 --grid 160 --avoid pump.r hose.s {0 0 100} {800 0 100}**
+
+Searches for a path that clears the enlarged bounding box of `pump.r` and
+creates `hose.s` only if the resulting elbows and self-clearance are valid.
+====
+
+.Create a tee branch.
+[example]
+====
+mged> **pipe route --diameter 16 --bend 32 coolant.g {0 0 0} {500 0 0} --tee {250 0 0} {250 240 0}**
+
+Creates the group `coolant.g` from `coolant.g.main.s` and `coolant.g.tee01.s`.
+====
+
+.Package a flat four-wire harness.
+[example]
+====
+mged> **pipe route --profile harness --diameter 5 --wires 4 --spacing 7 --bend 25 harness.g {0 0 0} {200 0 0} {200 120 80}**
+
+Creates `harness.g` containing four solid, parallel PIPE primitives that remain
+flattened through the three-dimensional bend.
+====
+
+.Create a non-destructive clearance replacement when a direct service path is required.
+[example]
+====
+mged> **pipe route --diameter 10 --bend 20 --avoid bulkhead.r --fallback subtract service.s {0 0 0} {600 0 0}**
+
+Creates `service.s`, a `service.s.clearance.s` cutter when necessary, and one
+or more `service.s.cutNN.c` replacements.  Use the replacement combination in
+place of the corresponding keep-out object to apply the cut.
+====
+
+== SEE ALSO
+
+*pipe_append_pnt*(nged), *pipe_move_pnt*(nged), *pipe_prepend_pnt*(nged),
+*pipes*(5)
+
+== AUTHOR
+
+BRL-CAD Team
+
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

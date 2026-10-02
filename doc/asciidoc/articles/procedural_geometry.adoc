@@ -30,6 +30,8 @@ building the `procedural-gallery-snapshot` target.
 |*voxelize*: Demonstrates BRL-CAD's "vol" (3-D volume) and "ebm" (extruded bitmap) primitives by sampling a procedural 3-D scalar field (a triply-periodic gyroid by default) over a regular grid. It writes sidecar .vol/.ebm data files and builds an orange voxel isosurface (with a cutaway box) plus a blue extruded height-field companion.
 |image:images/gallery_lattice.png[lattice,512]
 |*lattice*: A full geodesic-sphere space-frame built by instancing one unit strut prototype across every de-duplicated geodesic edge, with joint spheres.
+|image:images/gallery_tensegrity.png[tensegrity,512]
+|*tensegrity*: A configurable Snelson-inspired tensegrity tower. Alternating, twisted triangular cable rings are linked by color-coded compression struts and opposite-handed tension cables, with separate database regions for each load role.
 |image:images/gallery_loftwing.png[loftwing,512]
 |*loftwing*: A lofted NACA 4-digit airfoil wing (ARS) with taper, twist, sweep, and dihedral and a full root section.
 |image:images/gallery_loftwing_prop.png[loftwing_prop,512]

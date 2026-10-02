@@ -172,8 +172,8 @@ rt_constraint_make(const struct rt_functab *ftp, struct rt_db_internal *intern, 
     intern->idb_ptr = (void *)ip;
 
     ip->magic = RT_CONSTRAINT_MAGIC;
-    ip->id = 1;
-    ip->type = 0;
+    ip->id = 0;
+    ip->type = RT_CONSTRAINT_TYPE_EXPRESSION;
     BU_VLS_INIT(&ip->expression);
     return BRLCAD_OK;
 }

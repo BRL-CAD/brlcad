@@ -1366,7 +1366,7 @@ endfunction()
         get_filename_component(EF_DIR ${ef} DIRECTORY)
         get_filename_component(EF_NAME ${ef} NAME)
         file(COPY ${BRLCAD_EXT_INSTALL_DIR}/${ef} DESTINATION ${CMAKE_BINARY_DIR}/${EF_DIR})
-        execute_process(COMMAND ${CMAKE_COMMAND} -E touch_nocreate "${CMAKE_BINARY_DIR}/${ef}")
+        file(TOUCH_NOCREATE "${CMAKE_BINARY_DIR}/${ef}")
       endforeach(ef ${TP_CHANGED})
       message("Staging changed 3rd party files from ${BRLCAD_EXT_DIR}/install... done (${_brlcad_ext_changed_count} files).")
     endif(TP_CHANGED)
@@ -2481,10 +2481,31 @@ macro(find_package_bullet)
   # Bullet is staged from bext's install tree into the build directory,
   # so prefer that location rather than noinstall.
   set(Bullet_ROOT "${CMAKE_BINARY_DIR}")
-  if(F_REQUIRED)
-    find_package(Bullet REQUIRED)
-  else()
+  find_package(Bullet)
+
+  # CMake's FindBullet module locates the MSVC *_Debug libraries, but still
+  # requires all release-library variables before setting Bullet_FOUND.  A
+  # Debug-only bext tree intentionally has no release variants, so satisfy the
+  # module with the already discovered Debug paths and let its normal library
+  # list construction select those paths for the Debug configuration.
+  if(
+    MSVC
+    AND "${CMAKE_BUILD_TYPE}" STREQUAL "Debug"
+    AND NOT Bullet_FOUND
+    AND BULLET_DYNAMICS_LIBRARY_DEBUG
+    AND BULLET_COLLISION_LIBRARY_DEBUG
+    AND BULLET_MATH_LIBRARY_DEBUG
+    AND BULLET_SOFTBODY_LIBRARY_DEBUG
+  )
+    set(BULLET_DYNAMICS_LIBRARY "${BULLET_DYNAMICS_LIBRARY_DEBUG}" CACHE FILEPATH "Bullet dynamics library" FORCE)
+    set(BULLET_COLLISION_LIBRARY "${BULLET_COLLISION_LIBRARY_DEBUG}" CACHE FILEPATH "Bullet collision library" FORCE)
+    set(BULLET_MATH_LIBRARY "${BULLET_MATH_LIBRARY_DEBUG}" CACHE FILEPATH "Bullet math library" FORCE)
+    set(BULLET_SOFTBODY_LIBRARY "${BULLET_SOFTBODY_LIBRARY_DEBUG}" CACHE FILEPATH "Bullet soft body library" FORCE)
     find_package(Bullet)
+  endif()
+
+  if(F_REQUIRED AND NOT Bullet_FOUND)
+    find_package(Bullet REQUIRED)
   endif()
 
   if(BULLET_LIBRARIES OR Bullet_FOUND)

@@ -116,6 +116,7 @@ proc dump_mged_state {fd} {
 	set id [lindex $mged_players 0]
     }
 
+    mged_layout_capture_geometries $id
 
     puts $fd $MGEDRC_HEADER
     puts $fd "# You can modify the values below. However, if you want"
@@ -188,6 +189,11 @@ proc dump_mged_state {fd} {
     puts $fd "# Combines geometry and command windows"
     puts $fd "set mged_default(comb) $mged_gui($id,comb)"
     puts $fd ""
+    puts $fd "# Window layout and docked panes"
+    puts $fd "set mged_default(window_layout) $mged_gui($id,layout)"
+    puts $fd "set mged_default(window_docked) [list [mged_layout_docked_panes $id]]"
+    puts $fd "set mged_default(browser_open) $mged_gui($id,show_browser)"
+    puts $fd ""
     puts $fd "# Activate/deactivate display lists. Note - display lists"
     puts $fd "# increase the interactivity with the geometry, especially if"
     puts $fd "# displaying remotely. However, if the geometry is huge"
@@ -202,14 +208,14 @@ proc dump_mged_state {fd} {
     puts $fd "set mged_default(edit_style) $mged_gui($id,edit_style)"
     puts $fd ""
     puts $fd "# Position/size of command window"
-    puts $fd "set mged_default(geom) [winfo geometry .$id]"
+    puts $fd "set mged_default(geom) [list $mged_gui($id,cmd_geometry)]"
     puts $fd ""
-    puts $fd "# Position/size of geometry window or both if combined"
-    if { $mged_gui($id,comb) } {
-	puts $fd "set mged_default(geom) [winfo geometry .$id]"
-    } else {
-	puts $fd "set mged_default(ggeom) [winfo geometry $mged_gui($id,dmc)]"
-    }
+    puts $fd "# Position/size of geometry window"
+    puts $fd "set mged_default(ggeom) [list $mged_gui($id,graphics_geometry)]"
+    puts $fd ""
+    puts $fd "# Position/size of combined layout and geometry browser"
+    puts $fd "set mged_default(layout_geom) [list $mged_gui($id,layout_geometry)]"
+    puts $fd "set mged_default(browser_geom) [list $mged_gui($id,browser_geometry)]"
     puts $fd ""
     puts $fd "# Activate/deactivate zclipping, F2"
     puts $fd "set mged_default(zclip) $mged_gui($id,zclip)"

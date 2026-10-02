@@ -178,7 +178,7 @@ proc get_player_id_t { w } {
     }
 
     foreach id $mged_players {
-	set _w .$id.t
+	set _w [mged_cmd_text $id]
 	if { $w == $_w } {
 	    return $id
 	}
@@ -488,10 +488,10 @@ proc ia_invoke { w } {
 		set mged_gui($id,more_default) [get_more_default]
 		return
 	    }
-	    .$id.t tag add oldcmd promptEnd insert
+	    $w tag add oldcmd promptEnd insert
 	    mged_print_tag $w "Error: $ia_msg\n" result
 	} else {
-	    .$id.t tag add oldcmd promptEnd insert
+	    $w tag add oldcmd promptEnd insert
 
 	    if {$ia_msg != ""} {
 		if {[string index $ia_msg end] == "\n"} {

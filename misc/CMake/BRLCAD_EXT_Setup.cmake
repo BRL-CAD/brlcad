@@ -164,9 +164,37 @@ function(brlcad_bext_init BEXT_SHA1)
   #
   # NOTE: This test must come AFTER inclusion of BRLCAD_Build_Types
   if(CMAKE_BUILD_TYPE AND EXISTS "${BRLCAD_EXT_NOINSTALL_DIR}")
+    set(_brlcad_ext_build_type_checked FALSE)
+    if(EXISTS "${BRLCAD_EXT_DIR}/CMakeCache.txt")
+      file(
+        STRINGS "${BRLCAD_EXT_DIR}/CMakeCache.txt" _brlcad_ext_build_type_entry
+        REGEX "^CMAKE_BUILD_TYPE:[^=]*="
+        LIMIT_COUNT 1
+      )
+      if(_brlcad_ext_build_type_entry)
+        string(REGEX REPLACE "^[^=]*=" "" _brlcad_ext_build_type "${_brlcad_ext_build_type_entry}")
+        set(_brlcad_ext_build_type_checked TRUE)
+        if("${CMAKE_BUILD_TYPE}" STREQUAL "Release" AND "${_brlcad_ext_build_type}" STREQUAL "Debug")
+          message(
+            FATAL_ERROR
+            "Release build specified, but supplied bext binaries in ${BRLCAD_EXT_DIR} are compiled as Debug binaries."
+          )
+        endif()
+        if("${CMAKE_BUILD_TYPE}" STREQUAL "Debug" AND NOT "${_brlcad_ext_build_type}" STREQUAL "Debug")
+          message(
+            FATAL_ERROR
+            "Debug build specified, but supplied bext binaries in ${BRLCAD_EXT_DIR} are compiled as ${_brlcad_ext_build_type} binaries."
+          )
+        endif()
+      endif()
+    endif()
+
+    # Packaged bext trees may not include their CMake cache.  In that case,
+    # retain the historical runtime-library check using an always-present
+    # helper executable as a best-effort fallback.
     find_program(DUMPBIN_EXEC dumpbin)
     set(TEST_BINFILE ${BRLCAD_EXT_NOINSTALL_DIR}/bin/strclear.exe)
-    if(DUMPBIN_EXEC AND EXISTS ${TEST_BINFILE})
+    if(NOT _brlcad_ext_build_type_checked AND DUMPBIN_EXEC AND EXISTS ${TEST_BINFILE})
       # dumpbin doesn't like CMake style paths
       file(TO_NATIVE_PATH "${TEST_BINFILE}" TBFN)
       # https://stackoverflow.com/a/28304716/2037687
@@ -187,7 +215,7 @@ function(brlcad_bext_init BEXT_SHA1)
 	  )
 	endif(NOT "${DB_OUT}" MATCHES ".*MSVCP[0-9]*d.dll.*" AND NOT "${DB_OUT}" MATCHES ".*MSVCP[0-9]*D.dll.*")
       endif("${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
-    endif(DUMPBIN_EXEC AND EXISTS ${TEST_BINFILE})
+    endif(NOT _brlcad_ext_build_type_checked AND DUMPBIN_EXEC AND EXISTS ${TEST_BINFILE})
   endif(CMAKE_BUILD_TYPE AND EXISTS "${BRLCAD_EXT_NOINSTALL_DIR}")
 
   # Persist key variables

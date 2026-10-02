@@ -4,13 +4,13 @@
 :manmanual: BRL-CAD
 
 == NAME
-wavelet - perform a Haar wavelet decomposition or reconstruction
+wavelet - perform a Haar wavelet transform or low-pass reconstruction
 
 == SYNOPSIS
 
 [source]
 ----
-wavelet {-d | -r} [-1 | -2] [-t _datatype_] [-# _channels_] [-w _width_] [-n _scanlines_] [-s _squaresize_] [-W _out_size_] [-S _out_size_] [-R _avg_size_] [-D _level_] < datastream > wavelets
+wavelet {-d | -r | -p _avg_size_} [-1 | -2] [-t _datatype_] [-# _channels_] [-w _width_] [-n _scanlines_] [-s _squaresize_] [-W _out_size_] [-S _out_size_] [-R _avg_size_] [-D _level_] < datastream > wavelets
 ----
 
 
@@ -23,6 +23,12 @@ standard output.  It can either *decompose* a signal into successively
 coarser "average" terms plus "detail" coefficients, or *reconstruct* the
 original signal from such a decomposition.  Decomposition and
 reconstruction are inverse operations.
+
+With *-p*, *wavelet* uses the transform as a low-pass filter.  It decomposes
+the input to the requested average-image size, discards every detail
+coefficient, and reconstructs a full-size low-frequency approximation.  This
+produces a directly usable preview or pyramid level without saving a transform
+file and editing its coefficients externally.
 
 The transform operates on interleaved, fixed-width samples, so it works
 directly on image formats such as *pix*(5) and *bw*(5) by treating each
@@ -42,6 +48,14 @@ reconstruction, convert the data to the next larger data type (via the
 
 *-r*::
   Perform a reconstruction.
+
+*-p* _avg_size_::
+  Perform a low-pass reconstruction.  The command retains only the Haar
+  average region of the requested size, discards all detail coefficients, and
+  reconstructs the result at the original dimensions.  The average size must
+  be a power of two smaller than the input width.  For a two-dimensional
+  transform, it is the width and height of the retained average image.  This
+  option cannot be combined with *-R*, *-S*, or *-W*.
 
 *-1*::
   Perform a one-dimensional (per-scanline horizontal) transform.  This is
@@ -115,6 +129,17 @@ Performs a 2D decomposition of a 1024x1024 color image, stopping once the
 average has been reduced to 64x64.  The output image holds a 64x64 version
 of the original in the lower-left corner with detail terms filling the
 remainder, ready to be inverted with *wavelet -r -2 -s 1024 -R 64*.
+====
+
+.Create a full-size Haar low-pass approximation
+====
+[source,bash]
+----
+wavelet -p 64 -2 -# 3 -s 1024 < img.pix > img-lowpass.pix
+----
+Retains the 64x64 average image from a two-dimensional Haar decomposition,
+discards every detail coefficient, and reconstructs a 1024x1024 low-frequency
+version of the color image.
 ====
 
 [[see_also]]

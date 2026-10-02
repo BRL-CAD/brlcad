@@ -141,6 +141,7 @@ add_subdirectory(bot)
 add_subdirectory(create)
 add_subdirectory(draw)
 add_subdirectory(edit)
+add_subdirectory(pipe)
 
 # Note: it is particularly important that the lint tests in particular are kept
 # in a separate file, since its bad input examples stand an excellent chance of

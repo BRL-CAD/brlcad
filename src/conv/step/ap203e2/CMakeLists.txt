@@ -1,8 +1,11 @@
 set(STEP_SCHEMA_FILE ${CMAKE_CURRENT_SOURCE_DIR}/ap203e2.exp)
 
 if(BRLCAD_ENABLE_STEP)
-  generate_schema_inputs(${STEP_SCHEMA_FILE} ap203e2g ap203e2)
-  generate_schema_inputs(${STEP_SCHEMA_FILE} gap203e2 ap203e2)
+  # Keep exp2cxx's atomic temporary manifest path below the legacy Windows
+  # MAX_PATH limit.  The generated filenames already contain the full schema
+  # name, so repeating it in the output directory can exceed that limit.
+  generate_schema_inputs(${STEP_SCHEMA_FILE} ap203e2g ap203e2 AP203E2_MIM_LF)
+  generate_schema_inputs(${STEP_SCHEMA_FILE} gap203e2 ap203e2 AP203E2_MIM_LF)
 endif(BRLCAD_ENABLE_STEP)
 
 set(

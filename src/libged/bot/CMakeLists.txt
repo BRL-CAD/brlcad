@@ -6,7 +6,7 @@ set(BOT_LIBS libged libbg libbu manifold::manifold tinygltf::tinygltf ${WINSOCK_
 
 
 if(BRLCAD_ENABLE_OPENVDB)
-  set(BOT_LIBS ${BOT_LIBS} ${OpenVDB_LIBRARIES} ${IlmBase_LIBRARIES} ${Tbb_LIBRARIES})
+  list(APPEND BOT_LIBS OpenVDB::openvdb)
   set(BOT_LOCAL_INCLUDE_DIRS ${BOT_LOCAL_INCLUDE_DIRS} ${OpenVDB_INCLUDE_DIRS} ${Tbb_INCLUDE_DIRS} ${IlmBase_INCLUDE_DIRS})
   set(BOT_OPENVDB_DEFS HAVE_OPENVDB_BOT_EXTERIOR BRLCAD_OPENVDB)
 endif(BRLCAD_ENABLE_OPENVDB)
@@ -53,12 +53,19 @@ if(BRLCAD_ENABLE_OPENVDB)
   # -Werror=alloc-size-larger-than false positive.  Because ged-bot is
   # PLUGIN_ONLY these flags are scoped to the plugin .so and do not
   # pollute the main libged target.
+  set(BOT_OPENVDB_SRCS bot_flood_exterior.cpp bot_openvdb.cpp)
+  if(MSVC)
+    # OpenVDB templates exceed the standard COFF section limit in Debug builds.
+    set(BOT_OPENVDB_COMPILE_OPTIONS /w)
+    set(BOT_COMPILE_OPTIONS /bigobj)
+  else()
+    set(BOT_OPENVDB_COMPILE_OPTIONS -w -fno-lto)
+  endif()
   set_source_files_properties(
-    bot_flood_exterior.cpp
-    bot_openvdb.cpp
-    PROPERTIES COMPILE_FLAGS "-w -fno-lto"
+    ${BOT_OPENVDB_SRCS}
+    PROPERTIES COMPILE_OPTIONS "${BOT_OPENVDB_COMPILE_OPTIONS}"
   )
-  list(APPEND BOT_SRCS bot_openvdb.cpp bot_flood_exterior.cpp)
+  list(APPEND BOT_SRCS ${BOT_OPENVDB_SRCS})
 endif(BRLCAD_ENABLE_OPENVDB)
 
 set(
@@ -82,6 +89,7 @@ ged_plugin_library(ged-bot
   SYSTEM_INCLUDES ${BOT_LOCAL_INCLUDE_DIRS}
   LIBS ${BOT_LIBS}
   DEFINITIONS "EIGEN_DONT_VECTORIZE" ${BOT_OPENVDB_DEFS}
+  COMPILE_OPTIONS ${BOT_COMPILE_OPTIONS}
 )
 
 cmakefiles(
