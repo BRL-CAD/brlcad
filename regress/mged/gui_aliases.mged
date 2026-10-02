@@ -1,9 +1,11 @@
 puts "*** Testing Tcl GUI command dispatch ***"
 
 foreach command {
-    color_scheme_reset mged_dm_supports mged_draw_grid mged_press
+    color_scheme_reset default_key_bindings default_mouse_bindings
+    mged_activate_dm mged_dm_supports mged_draw_grid mged_press
     mouse_comb_edit_select mouse_matrix_edit_select mouse_rt_obj_select
-    mouse_solid_edit_select next_command set_mged_v_axes_pos tab_expansion
+    mouse_solid_edit_select next_command scale_shift_grip_hints
+    set_mged_v_axes_pos tab_expansion
 } {
     if {![auto_load $command]} {
 	error "FAIL GUI helper is not autoloadable: $command"
@@ -57,11 +59,13 @@ proc ::namespace_gui_alias_trap {command args} {
     error "legacy alias invoked: $command"
 }
 
+set legacy_commands {
+    M adc aip cmd_win db dm exists expand hist knob lt mged_update
+    mmenu_get nirt opendb press rset sed_apply sed_reset status stuff_str
+    svb winset zoom
+}
 set hidden_commands {}
-foreach command {
-    adc cmd_win db dm exists expand hist lt mged_update mmenu_get opendb
-    press rset winset
-} {
+foreach command $legacy_commands {
     set compatibility_command ::$command
     set hidden_command ::__brlcad_mged_compatibility_$command
     rename $compatibility_command $hidden_command
@@ -90,6 +94,40 @@ try {
     }
     mged_draw_grid $test_id
     mged_press $command_id ::namespace_gui_widget
+
+    mged_activate_dm $active_dm
+    scale_shift_grip_hints .namespace_gui_missing X
+
+    set saved_bind [info commands ::bind]
+    if {$saved_bind ne ""} {
+	rename ::bind ::__brlcad_mged_gui_test_bind
+    }
+    set test_bind_active 1
+    set captured_bindings {}
+    proc ::bind {window event args} {
+	if {[llength $args]} {
+	    lappend ::captured_bindings [lindex $args end]
+	}
+    }
+    set transform_existed [info exists transform]
+    if {$transform_existed} {
+	set saved_transform $transform
+    }
+    set transform v
+    default_key_bindings $active_dm
+    default_mouse_bindings $active_dm
+    foreach script $captured_bindings {
+	set callback [lindex $script 0]
+	if {$callback in $legacy_commands} {
+	    error "FAIL binding invokes legacy alias: $script"
+	}
+    }
+    rename ::bind {}
+    if {$saved_bind ne ""} {
+	rename ::__brlcad_mged_gui_test_bind ::bind
+    }
+    set test_bind_active 0
+    set saved_bind {}
 
     color_scheme_reset $test_id .namespace_gui_color
     foreach setting {bg_a bg_ia} {
@@ -122,6 +160,20 @@ try {
 	error "FAIL GUI helpers invoked legacy aliases: $invoked_aliases"
     }
 } finally {
+    if {[info exists test_bind_active] && $test_bind_active} {
+	catch {rename ::bind {}}
+	if {[info exists saved_bind] && $saved_bind ne "" &&
+	    [llength [info commands ::__brlcad_mged_gui_test_bind]]} {
+	    rename ::__brlcad_mged_gui_test_bind ::bind
+	}
+    }
+    if {[info exists transform_existed]} {
+	if {$transform_existed} {
+	    set transform $saved_transform
+	} else {
+	    unset -nocomplain transform
+	}
+    }
     catch {rename ::.mged.t {}}
     foreach {hidden_command compatibility_command} $hidden_commands {
 	rename $compatibility_command {}
