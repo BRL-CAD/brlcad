@@ -237,7 +237,7 @@ proc solc_accept { w } {
 
     $w.accept configure -state disabled
     $w.b.create configure -state normal
-    press accept
+    ::brlcad::mged press accept
 }
 
 proc solc_quit { w } {
@@ -266,11 +266,11 @@ proc solc_create { w } {
     set solc(default_oper) $solc($w,oper)
 
     set solc(default_$solc($w,type)) [eval list [set solc($w,do)]]
-    press top
-    eval db put $name $solc($w,type) [set solc($w,do)]
-    e $name
-    sed $name
-    press sxy
+    ::brlcad::mged press top
+    eval ::brlcad::mged db put $name $solc($w,type) [set solc($w,do)]
+    ::brlcad::mged e $name
+    ::brlcad::mged sed $name
+    ::brlcad::mged press sxy
 
     $w.accept configure -state normal
     $w.b.create configure -state disabled
@@ -291,14 +291,14 @@ proc solc_defaults { w wfr } {
 
     catch { eval destroy [winfo children $wfr] }
 
-    if { [catch { db form $solc($w,type) }]!=0 } then {
+    if { [catch {::brlcad::mged db form $solc($w,type)}]!=0 } then {
 	return
     }
 
     label $wfr.header -text "Default values"
     pack $wfr.header -side top -fill x -expand yes -anchor c
 
-    set form [db form $solc($w,type)]
+    set form [::brlcad::mged db form $solc($w,type)]
     set len [llength $form]
 
     set defs [solc_defs $solc($w,type)]

@@ -163,7 +163,7 @@ proc find_arc_center { sx sy ex ey radius center_is_left } {
 	    # check if we already have an editor working on this sketch
 	    verify_unique_editor
 
-	    if { [catch {db get $sketch_name} sketch_info] } {
+	    if { [catch {::brlcad::mged db get $sketch_name} sketch_info] } {
 		tk_messageBox -icon error -title "Cannot Get Sketch" -type ok \
 		    -message $sketch_info
 		destroy $itk_component(hull)
@@ -182,7 +182,7 @@ proc find_arc_center { sx sy ex ey radius center_is_left } {
 	    verify_unique_editor
 
 	    set sketch_path [lindex $args 1]
-	    if { [catch {db get $sketch_name} sketch_info] } {
+	    if { [catch {::brlcad::mged db get $sketch_name} sketch_info] } {
 		tk_messageBox -icon error -title "Cannot Get Sketch" -type ok \
 		    -message $sketch_info
 		destroy $itk_component(hull)
@@ -201,13 +201,13 @@ proc find_arc_center { sx sy ex ey radius center_is_left } {
 	    destroy $itk_component(hull)
 	    return
 	}
-	if { [catch units units] } {
+	if { [catch {::brlcad::mged units} units] } {
 	    set units ""
 	}
 	if { [string index $units end] == "\n" } {
 	    set units [string range $units 0 "end-1"]
 	}
-	if { [catch {status base2local} tolocal] } {
+	if { [catch {::brlcad::mged status base2local} tolocal] } {
 	    set tolocal 1.0
 	    set tobase 1.0
 	} else {
@@ -728,7 +728,7 @@ proc find_arc_center { sx sy ex ey radius center_is_left } {
     }
 
     method reset {} {
-	if { [catch {db get $sketch_name} sketch_info] } {
+	if { [catch {::brlcad::mged db get $sketch_name} sketch_info] } {
 	    tk_messageBox -icon error -title "Cannot Get Sketch" -type ok \
 		-message $sketch_info
 	    destroy $itk_component(hull)
@@ -757,7 +757,7 @@ proc find_arc_center { sx sy ex ey radius center_is_left } {
     # this method checks if an object name already exists in the database
     # if so, return 1, otherwise return 0
     method check_name { obj_name } {
-	catch "db match $obj_name" ret
+	catch [list ::brlcad::mged db match $obj_name] ret
 	set ret [string trimright $ret "\n"]
 	if { $ret != $obj_name } {
 	    return 0
@@ -780,7 +780,7 @@ proc find_arc_center { sx sy ex ey radius center_is_left } {
 	set out "$out }"
 
 	if { $update } {
-	    set tmp [db get $name]
+	    set tmp [::brlcad::mged db get $name]
 	    set type [lindex $tmp 0]
 	    if { $type != "sketch" || $name != $sketch_name } {
 		set answer [tk_messageBox -type yesno -icon question -title "Overwrite Existing Object???" \
@@ -788,16 +788,16 @@ proc find_arc_center { sx sy ex ey radius center_is_left } {
 		if { $answer == "no" } {
 		    return
 		}
-		catch "db kill $name"
-		set command "put $name sketch"
+		catch [list ::brlcad::mged db kill $name]
+		set command [list put $name sketch]
 	    } else {
-		set command "adjust $name"
+		set command [list adjust $name]
 	    }
 	} else {
-	    set command "put $name sketch"
+	    set command [list put $name sketch]
 	}
 
-	if { [catch "db $command $out" ret] } {
+	if { [catch [list ::brlcad::mged db {*}$command {*}$out] ret] } {
 	    tk_messageBox -type ok -title "ERROR Saving Sketch!!!!" -message "$ret"
 	} else {
 	    set sketch_name $name
@@ -809,7 +809,7 @@ proc find_arc_center { sx sy ex ey radius center_is_left } {
     method do_save {} {
 	set obj_name [$save_entry get]
 	write_sketch_to_db $obj_name [check_name $obj_name]
-	draw $sketch_path
+	::brlcad::mged draw $sketch_path
     }
 
     method do_scale { scale_factor } {

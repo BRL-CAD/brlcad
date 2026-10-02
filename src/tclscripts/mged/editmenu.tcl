@@ -45,10 +45,10 @@ proc build_edit_menu_all { type } {
 	return
     }
 
-    set win [winset]
+    set win [::brlcad::mged winset]
     set id [get_player_id_dm $win]
 
-    if {[opendb] == ""} {
+    if {[::brlcad::mged opendb] == ""} {
 	cad_dialog $::tk::Priv(cad_dialog) $mged_gui($id,screen) "No database." \
 	    "No database has been opened!" info 0 OK
 	return
@@ -71,7 +71,7 @@ proc build_edit_menu_all { type } {
     ::brlcad::mged press reject
     build_solid_menu $type $id $paths
 
-    mged_apply_all [winset] "set mouse_behavior d"
+    mged_apply_all [::brlcad::mged winset] "set mouse_behavior d"
     foreach id $mged_players {
 	set mged_gui($id,mouse_behavior) d
     }
@@ -87,7 +87,7 @@ proc ray_build_edit_menu { type x y } {
 	return
     }
 
-    set win [winset]
+    set win [::brlcad::mged winset]
     set id [get_player_id_dm $win]
 
     if {[info exists mged_gui($id,edit_menu)] && \
@@ -131,7 +131,7 @@ proc ray_build_edit_menu { type x y } {
 	}
     }
 
-    mged_apply_all [winset] "set mouse_behavior d"
+    mged_apply_all [::brlcad::mged winset] "set mouse_behavior d"
     foreach id $mged_players {
 	set mged_gui($id,mouse_behavior) d
     }
@@ -153,7 +153,7 @@ proc build_solid_menu { type id paths } {
     if [info exists mged_gui($id,screen)] {
 	set screen $mged_gui($id,screen)
     } else {
-	set win [winset]
+	set win [::brlcad::mged winset]
 	set screen [winfo screen $win]
     }
 
@@ -190,7 +190,7 @@ proc build_matrix_menu { id path } {
     if [info exists mged_gui($id,screen)] {
 	set screen $mged_gui($id,screen)
     } else {
-	set win [winset]
+	set win [::brlcad::mged winset]
 	set screen [winfo screen $win]
     }
 

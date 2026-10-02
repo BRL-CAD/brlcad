@@ -400,7 +400,7 @@ The results of the raytrace will be written to output\art.png." } }
 	    { { summary "Clear the framebuffer specified by the
 destination to the background color." } }
     button $top.abortB -relief raised -text "Abort" \
-	    -command [list rtabort] \
+	    -command [list ::brlcad::mged rtabort] \
 	    -padx 0.5m -pady 0.5m
     hoc_register_data $top.abortB "Abort Raytrace"\
 	    { { summary "Abort all raytraces initiated by MGED." } }

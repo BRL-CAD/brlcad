@@ -118,12 +118,12 @@ proc dbupgrade {args} {
     global dbupgrade_priv
     global tcl_platform
 
-    set ws [winset]
+    set ws [::brlcad::mged winset]
     set id [get_player_id_dm $ws]
 
     # first time through only
     if {![info exists dbupgrade_priv(dbname)]} {
-	if {[opendb] == ""} {
+	if {[::brlcad::mged opendb] == ""} {
 	    if {[info exists .cad_dialog]} {
 		cad_dialog $::tk::Priv(cad_dialog) $mged_gui($id,screen) "No database." \
 		    "No database has been opened!" info 0 OK
@@ -133,11 +133,11 @@ proc dbupgrade {args} {
 	    }
 	}
 
-	if {[db version] > 4} {
-	    error "[opendb] is already current!"
+	if {[::brlcad::mged db version] > 4} {
+	    error "[::brlcad::mged opendb] is already current!"
 	}
 
-	set dbupgrade_priv(dbname) [opendb]
+	set dbupgrade_priv(dbname) [::brlcad::mged opendb]
 
 	# find unused file name for tmp database
 	for {set i 1} {$i} {incr i} {
@@ -166,7 +166,7 @@ proc dbupgrade {args} {
 		return
 	    }
 	} else {
-	    set_more_default help
+	    ::brlcad::mged set_more_default help
 	    error "more arguments needed::upgrade, cancel, or help? \[default: help\] "
 	}
     } else {
@@ -210,7 +210,7 @@ proc dbupgrade {args} {
 		    # restore original database
 		    puts "dbupgrade cancelled.  Reopening database \[$dbname\]"
 
-		    opendb "$dbname" y
+		    ::brlcad::mged opendb $dbname y
 
 		    # remove tmp file
 		    file delete "$tmp_dbname"
@@ -223,7 +223,7 @@ proc dbupgrade {args} {
     }
 
     # open this tmp database file in order to close the current database
-    opendb "$tmp_dbname" y
+    ::brlcad::mged opendb $tmp_dbname y
 
     set suffix ".R4.g"
 
@@ -235,7 +235,7 @@ proc dbupgrade {args} {
 	# make sure $dname$suffix is not a directory
 	if {[file type "$dbname$suffix"] == "directory"} {
 	    # restore original database
-	    opendb "$dbname" y
+	    ::brlcad::mged opendb $dbname y
 
 	    unset dbupgrade_priv(dbname)
 	    error "dbupgrade: $dbname$suffix already exists and is a directory!"
@@ -252,14 +252,14 @@ proc dbupgrade {args} {
 
 		if {$result == 1} {
 		    # restore original database
-		    opendb "$dbname" y
+		    ::brlcad::mged opendb $dbname y
 
 		    unset dbupgrade_priv(dbname)
 		    return
 		}
 
 	    } else {
-		set_more_default n
+		::brlcad::mged set_more_default n
 		error "more arguments needed::overwrite $dbname$suffix \[y|n\]? \[default: n\] "
 	    }
 	}
@@ -306,7 +306,7 @@ proc dbupgrade {args} {
     }
 
     # reopen original or new db
-    opendb "$dbname" y
+    ::brlcad::mged opendb $dbname y
 
     # remove tmp file
     catch {file delete "$tmp_dbname"}

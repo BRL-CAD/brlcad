@@ -37,7 +37,7 @@ set mged_Priv(other_prims) {ars dsp eto extrude half metaball part pipe sketch t
 set mged_Priv(weak_prims) {bot nmg}
 
 if {![info exists tk_version]} {
-    loadtk
+    ::brlcad::mged loadtk
 }
 
 if {![info exists mged_default(max_views)]} {
@@ -234,7 +234,7 @@ bind Scale <ButtonPress-3><ButtonRelease-3> "hoc_callback %W %X %Y"
 
 if {[namespace exists ::tk]} {
     # This causes cad_dialog to use mged_wait instead of tkwait
-    set ::tk::Priv(wait_cmd) mged_wait
+    set ::tk::Priv(wait_cmd) [list ::brlcad::mged mged_wait]
 
     # Used throughout the GUI as the dialog window name.
     # This helps prevent window clutter.
@@ -3002,7 +3002,7 @@ proc update_view_ring_entries { id m } {
     global view_ring
 
     if {0} {
-	set views [view_ring get -a]
+	set views [::brlcad::mged view_ring get -a]
 	set llen [llength $views]
 
 	if {$m == "s"} {
@@ -3034,34 +3034,34 @@ proc update_view_ring_labels { id } {
 	    error "No database has been opened!"
 	}
 
-	winset $mged_gui($id,active_dm)
-	set view_ring($id) [view_ring get]
-	set views [view_ring get -a]
+	::brlcad::mged winset $mged_gui($id,active_dm)
+	set view_ring($id) [::brlcad::mged view_ring get]
+	set views [::brlcad::mged view_ring get -a]
 	set llen [llength $views]
 
 	# we need to also save the previous view so that
 	# toggle will continue to work
-	view_ring toggle
-	set prev [view_ring get]
+	::brlcad::mged view_ring toggle
+	set prev [::brlcad::mged view_ring get]
 
 	set ws .$id.menubar.viewring.select
 	set wd .$id.menubar.viewring.delete
 	for {set i 0} {$i < $llen} {incr i} {
-	    view_ring goto [lindex $views $i]
-	    set aet [view aet]
+	    ::brlcad::mged view_ring goto [lindex $views $i]
+	    set aet [::brlcad::mged view aet]
 	    set aet [format "az=%.2f el=%.2f tw=%.2f"\
 			 [lindex $aet 0] [lindex $aet 1] [lindex $aet 2]]
-	    set center [view center]
+	    set center [::brlcad::mged view center]
 	    set center [format "cent=(%.3f %.3f %.3f)"\
 			    [lindex $center 0] [lindex $center 1] [lindex $center 2]]
-	    set size [format "size=%.3f" [view size]]
+	    set size [format "size=%.3f" [::brlcad::mged view size]]
 	    $ws entryconfigure $i -label "$center $size $aet"
 	    $wd entryconfigure $i -label "$center $size $aet"
 	}
 
 	# restore both previous and current views
-	view_ring goto $prev
-	view_ring goto $view_ring($id)
+	::brlcad::mged view_ring goto $prev
+	::brlcad::mged view_ring goto $view_ring($id)
     }
 }
 

@@ -54,8 +54,8 @@ proc editobj { id oname } {
     global local2base
     global eoformat_string
 
-    set vals [db get $oname]
-    set form [db form [lindex $vals 0]]
+    set vals [::brlcad::mged db get $oname]
+    set form [::brlcad::mged db form [lindex $vals 0]]
     set len [llength $form]
 
     if { [winfo exists .eo$oname] } {
@@ -73,7 +73,7 @@ proc editobj { id oname } {
     pack .eo$oname.t.l -side left -fill y -expand yes
     pack .eo$oname.t.r -side left -fill x -expand yes
 
-    set eofin$oname "db adjust $oname"
+    set eofin$oname "::brlcad::mged db adjust $oname"
 
     for { set i 0 } { $i<$len } { incr i } {
 	set attr [lindex $form $i]
@@ -136,8 +136,8 @@ proc eoapply { oname } {
 
     eval [set eofin$oname]
 
-    set vals [db get $oname]
-    set form [db form [lindex $vals 0]]
+    set vals [::brlcad::mged db get $oname]
+    set form [::brlcad::mged db form [lindex $vals 0]]
     set len [llength $form]
 
     for { set i 0 } { $i<$len } { incr i } {

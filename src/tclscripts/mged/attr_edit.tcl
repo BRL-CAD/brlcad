@@ -491,7 +491,7 @@ package require Iwidgets
 
 	# remove ALL attributes from this object
 	# first get an up-to-date list of attributes for the object
-	if [catch {attr get $obj_name} ret] {
+	if [catch {::brlcad::mged attr get $obj_name} ret] {
 	    tk_messageBox -icon error -type ok -title "Error getting current attributes" -message $ret
 	    return 1
 	}
@@ -503,7 +503,7 @@ package require Iwidgets
 	}
 
 	# and remove them
-	if [catch {eval attr rm $obj_name $attr_names} ret ] {
+	if [catch {::brlcad::mged attr rm $obj_name {*}$attr_names} ret ] {
 	    tk_messageBox -icon error -type ok -title "Error removing old attributes" -message $ret
 	    return 1
 	}
@@ -515,7 +515,7 @@ package require Iwidgets
 	}
 
 	# and set them
-	if [catch {eval attr set $obj_name $attr_val_list} ret] {
+	if [catch {::brlcad::mged attr set $obj_name {*}$attr_val_list} ret] {
 	    tk_messageBox -icon error -type ok -title "Error saving attributes" -message $ret
 	    return 1
 	}
@@ -542,7 +542,7 @@ package require Iwidgets
 	if { $cur_index < 0 } return
 
 	set attr_name [lindex $cur_attrs $cur_index]
-	if { [catch {attr get $obj_name $attr_name} attr_val] } {
+	if { [catch {::brlcad::mged attr get $obj_name $attr_name} attr_val] } {
 	    tk_messageBox -icon error -type ok -title "Error: unrecognized attribute" -message $attr_val
 	    return
 	}
@@ -568,7 +568,7 @@ package require Iwidgets
 	    set ret {}
 	    set cur_attr_name ""
 	} else {
-	    if { [catch "attr get $obj_name" ret] != 0 } {
+	    if { [catch [list ::brlcad::mged attr get $obj_name] ret] != 0 } {
 		tk_messageBox -icon error -type ok -title "Error" -message $ret
 		set obj_name ""
 		set old_obj_name ""

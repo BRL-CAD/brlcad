@@ -31,7 +31,7 @@ if ![info exists mged_players] {
 # Ensure that tk.tcl has been loaded already via mged command 'loadtk'.
 #==============================================================================
 if { [info exists tk_strictMotif] == 0 } {
-    loadtk
+    ::brlcad::mged loadtk
 }
 
 #==============================================================================

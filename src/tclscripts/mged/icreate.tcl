@@ -104,7 +104,7 @@ proc icreate { id args } {
     set ic($w,oper) $ic(default_operation)
     set ic($w,type) $ic(default_type)
     set ic($w,comb) ""
-    if { [catch { set ic($w,ref) [lindex [pathlist $ic($w,type)] 0] }] != 0 } {
+    if { [catch { set ic($w,ref) [lindex [::brlcad::mged pathlist $ic($w,type)] 0] }] != 0 } {
 	set ic($w,ref) ""
     }
 
@@ -156,7 +156,7 @@ proc ic_newvar { w } {
 proc ic_accept { w } {
     $w.accept configure -state disabled
     $w.b.create configure -state normal
-    press accept
+    ::brlcad::mged press accept
 }
 
 # ic_quit
@@ -192,13 +192,13 @@ proc ic_create { w } {
     set ic(default_type) $ic($w,type)
     set ic(default_oper) $ic($w,oper)
 
-    g $name $ic($w,type)
+    ::brlcad::mged g $name $ic($w,type)
     if { $ic($w,comb)!="" } then {
-	i $ic($w,comb) $name
+	::brlcad::mged i $ic($w,comb) $name
     }
-    e $ic($w,comb)/$name
-    oed $ic($w,comb) $name$ic($w,ref)
-    press oxy
+    ::brlcad::mged e $ic($w,comb)/$name
+    ::brlcad::mged oed $ic($w,comb) $name$ic($w,ref)
+    ::brlcad::mged press oxy
 
     $w.accept configure -state normal
     $w.b.create configure -state disabled
@@ -222,7 +222,7 @@ proc ic_reflist { w id } {
 
     listbox $w.ref.lbox
 
-    foreach solid [pathlist $ic($w,type)] {
+    foreach solid [::brlcad::mged pathlist $ic($w,type)] {
 	$w.ref.lbox insert end $solid
     }
 

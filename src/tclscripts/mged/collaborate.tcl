@@ -91,7 +91,7 @@ proc collab_join { id } {
 	    return "collab_join: me thinks the session is corrupted"
 	}
 
-	catch { share view $ow $nw }
+	catch {::brlcad::mged share view $ow $nw}
 	reconfig_gui_default $id
 	view_ring_copy $cid $id
     }
@@ -116,7 +116,7 @@ proc collab_quit { id } {
 	return "collab_quit: unrecognized pathname - $mged_gui($id,active_dm)"
     }
 
-    catch {share -u view $w}
+    catch {::brlcad::mged share -u view $w}
     set mged_gui($id,collaborate) 0
     set mged_collaborators [lreplace $mged_collaborators $i $i]
 }

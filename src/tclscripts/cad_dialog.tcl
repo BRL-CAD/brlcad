@@ -106,7 +106,7 @@ proc cad_dialog { w screen title text bitmap default args } {
 
     place_near_mouse $w
 
-    $::tk::Priv(wait_cmd) variable button$w
+    {*}$::tk::Priv(wait_cmd) variable button$w
     catch { destroy $w }
     return [set button$w]
 }
@@ -175,7 +175,7 @@ actions as indicated by the button label."}}
 
     place_near_mouse $w
 
-    $::tk::Priv(wait_cmd) variable button$w
+    {*}$::tk::Priv(wait_cmd) variable button$w
     set entrylocal [set entry$w]
     catch { destroy $w }
     return [set button$w]
@@ -242,7 +242,7 @@ proc cad_radio { my_widget_name screen radio_result title text_message default c
     grid $w.dismiss -row [ expr $counter + 1] -column 1
     update
 
-    $::tk::Priv(wait_cmd) variable done
+    {*}$::tk::Priv(wait_cmd) variable done
     catch " destroy $w "
 }
 
@@ -303,7 +303,7 @@ proc cad_list_buts { my_widget_name screen list_of_results cur_settings title te
     grid $w.dismiss -row [ expr $counter + 1] -column 1
     update
 
-    $::tk::Priv(wait_cmd) variable list_buts_done
+    {*}$::tk::Priv(wait_cmd) variable list_buts_done
 
     set num_choices [llength $choice_labels]
     if { $list_buts_done == 2 } {

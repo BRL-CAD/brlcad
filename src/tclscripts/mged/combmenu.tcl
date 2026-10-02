@@ -46,7 +46,7 @@ proc build_comb_menu_all_displayed {} {
 	return
     }
 
-    set win [winset]
+    set win [::brlcad::mged winset]
     set id [get_player_id_dm $win]
 
     if {[info exists mged_gui($id,edit_menu)] && \
@@ -67,7 +67,7 @@ proc build_comb_menu_all_displayed {} {
     set combs [build_comb_list $paths]
     build_comb_menu $id $combs
 
-    mged_apply_all [winset] "set mouse_behavior d"
+    mged_apply_all [::brlcad::mged winset] "set mouse_behavior d"
     foreach id $mged_players {
 	set mged_gui($id,mouse_behavior) d
     }
@@ -82,7 +82,7 @@ proc ray_build_comb_menu { x y } {
 	return
     }
 
-    set win [winset]
+    set win [::brlcad::mged winset]
     set id [get_player_id_dm $win]
 
     if {[info exists mged_gui($id,edit_menu)] && \
@@ -97,7 +97,7 @@ proc ray_build_comb_menu { x y } {
     set combs [build_comb_list $paths]
     build_comb_menu $id $combs
 
-    mged_apply_all [winset] "set mouse_behavior d"
+    mged_apply_all [::brlcad::mged winset] "set mouse_behavior d"
     foreach id $mged_players {
 	set mged_gui($id,mouse_behavior) d
     }
@@ -120,7 +120,7 @@ proc build_comb_menu { id combs } {
     if [info exists mged_gui($id,screen)] {
 	set screen $mged_gui($id,screen)
     } else {
-	set win [winset]
+	set win [::brlcad::mged winset]
 	set screen [winfo screen $win]
     }
 
@@ -152,7 +152,7 @@ proc build_comb_menu { id combs } {
 }
 
 proc build_comb_menu_all_regions {} {
-    set win [winset]
+    set win [::brlcad::mged winset]
     set id [get_player_id_dm $win]
 
     set combs [::brlcad::mged ls -r]
@@ -160,7 +160,7 @@ proc build_comb_menu_all_regions {} {
 }
 
 proc build_comb_menu_all {} {
-    set win [winset]
+    set win [::brlcad::mged winset]
     set id [get_player_id_dm $win]
 
     set combs [::brlcad::mged ls -c]
@@ -184,7 +184,7 @@ proc build_comb_menu2 { id combs } {
     if [info exists mged_gui($id,screen)] {
 	set screen $mged_gui($id,screen)
     } else {
-	set win [winset]
+	set win [::brlcad::mged winset]
 	set screen [winfo screen $win]
     }
 

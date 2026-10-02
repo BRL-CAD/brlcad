@@ -364,7 +364,7 @@ a combination name." } }
 
     # add menu items
     $top.nameMB.m add command -label "Select From All Displayed"\
-	-command "winset \$mged_gui($id,active_dm); build_comb_menu_all_displayed"
+	-command "::brlcad::mged winset \$mged_gui($id,active_dm); build_comb_menu_all_displayed"
     hoc_register_menu_data "Combination Selection Method" "Select From All Displayed"\
 	"Select Combination From All Displayed"\
 	{ { summary "This pops up a listbox containing the combinations
@@ -375,7 +375,7 @@ highlights the combination in question until the button is
 released. To select a combination, double click with the left
 mouse button." } }
     $top.nameMB.m add command -label "Select Along Ray"\
-	-command "winset \$mged_gui($id,active_dm); set mouse_behavior c"
+	-command "::brlcad::mged winset \$mged_gui($id,active_dm); set mouse_behavior c"
     hoc_register_menu_data "Combination Selection Method" "Select Along Ray"\
 	"Select Combination Along Ray"\
 	{ { summary "This method allows the user to use the

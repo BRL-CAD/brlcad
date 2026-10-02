@@ -58,26 +58,26 @@ proc init_solid_edit_menus { stype menu } {
 
 	set cmds "set mged_gui($id,transform) e; \
 		  set_transform $id
-		  press \"Edit Menu\"; "
+		  ::brlcad::mged press \"Edit Menu\"; "
 	set i [build_solid_edit_menus .$id.menubar.edit $id 0 $cmds $menu]
 
 	.$id.menubar.edit insert $i separator
 
 	incr i
 	.$id.menubar.edit insert $i radiobutton -variable edit_type \
-	    -label "Rotate" -underline 0 -command "press srot; \
+	    -label "Rotate" -underline 0 -command "::brlcad::mged press srot; \
 		set mged_gui($id,transform) e; set_transform $id"
 	incr i
 	.$id.menubar.edit insert $i radiobutton -variable edit_type \
-	    -label "Translate" -underline 0 -command "press sxy; \
+	    -label "Translate" -underline 0 -command "::brlcad::mged press sxy; \
 		set mged_gui($id,transform) e; set_transform $id"
 	incr i
 	.$id.menubar.edit insert $i radiobutton -variable edit_type \
-	    -label "Scale" -underline 0 -command "press sscale; \
+	    -label "Scale" -underline 0 -command "::brlcad::mged press sscale; \
 		set mged_gui($id,transform) e; set_transform $id"
 	incr i
 	.$id.menubar.edit insert $i radiobutton -variable edit_type \
-	    -label "None Of Above" -underline 0 -command "press sedit; \
+	    -label "None Of Above" -underline 0 -command "::brlcad::mged press sedit; \
 		set mged_gui($id,transform) e; set_transform $id"
 	incr i
 
@@ -85,16 +85,16 @@ proc init_solid_edit_menus { stype menu } {
 
 	incr i
 	.$id.menubar.edit insert $i command -label "Reject" -underline 2 \
-	    -command "press reject"
+	    -command [list ::brlcad::mged press reject]
 	incr i
 	.$id.menubar.edit insert $i command -label "Accept" -underline 0 \
-	    -command "press accept"
+	    -command [list ::brlcad::mged press accept]
 	incr i
 	.$id.menubar.edit insert $i command -label "Apply" -underline 1 \
-	    -command "sed_apply"
+	    -command [list ::brlcad::mged sed_apply]
 	incr i
 	.$id.menubar.edit insert $i command -label "Reset" -underline 1 \
-	    -command "sed_reset"
+	    -command [list ::brlcad::mged sed_reset]
 	incr i
 	.$id.menubar.edit insert $i separator
     }
@@ -118,7 +118,7 @@ proc build_solid_edit_menus { w id pos cmds menu } {
 		$w insert $pos radiobutton \
 		    -label $item \
 		    -variable edit_type \
-		    -command "$cmds; press \"$item\""
+		    -command "$cmds; ::brlcad::mged press \"$item\""
 	    } else {
 		set title [lindex [lindex $submenu 0] 0]
 		$w insert $pos cascade \
@@ -128,7 +128,7 @@ proc build_solid_edit_menus { w id pos cmds menu } {
 		    -tearoff $mged_default(tearoff_menus)
 
 		build_solid_edit_menus $w.menu$pos $id 0 \
-		    "$cmds; press \"$item\"" $submenu
+		    "$cmds; ::brlcad::mged press \"$item\"" $submenu
 	    }
 
 	    incr pos
@@ -170,39 +170,39 @@ proc init_object_edit_menus {} {
 	.$id.menubar.edit entryconfigure 0 -state disabled
 	.$id.menubar.edit entryconfigure 1 -state disabled
 
-	set reset_cmd "oed_reset"
+	set reset_cmd [list ::brlcad::mged oed_reset]
 
 	set i 0
 	.$id.menubar.edit insert $i radiobutton -variable edit_type \
-	    -label "Scale" -command "press \"Scale\"; \
+	    -label "Scale" -command "::brlcad::mged press \"Scale\"; \
 		set mged_gui($id,transform) e; set_transform $id"
 	incr i
 	.$id.menubar.edit insert $i radiobutton -variable edit_type \
-	    -label "X move" -command "press \"X Move\"; \
+	    -label "X move" -command "::brlcad::mged press \"X Move\"; \
 		set mged_gui($id,transform) e; set_transform $id"
 	incr i
 	.$id.menubar.edit insert $i radiobutton -variable edit_type \
-	    -label "Y move" -command "press \"Y Move\"; \
+	    -label "Y move" -command "::brlcad::mged press \"Y Move\"; \
 		set mged_gui($id,transform) e; set_transform $id"
 	incr i
 	.$id.menubar.edit insert $i radiobutton -variable edit_type \
-	    -label "XY move" -command "press \"XY Move\"; \
+	    -label "XY move" -command "::brlcad::mged press \"XY Move\"; \
 		set mged_gui($id,transform) e; set_transform $id"
 	incr i
 	.$id.menubar.edit insert $i radiobutton -variable edit_type \
-	    -label "Rotate" -command "press \"Rotate\"; \
+	    -label "Rotate" -command "::brlcad::mged press \"Rotate\"; \
 		set mged_gui($id,transform) e; set_transform $id"
 	incr i
 	.$id.menubar.edit insert $i radiobutton -variable edit_type \
-	    -label "Scale X" -command "press \"Scale X\"; \
+	    -label "Scale X" -command "::brlcad::mged press \"Scale X\"; \
 		set mged_gui($id,transform) e; set_transform $id"
 	incr i
 	.$id.menubar.edit insert $i radiobutton -variable edit_type \
-	    -label "Scale Y" -command "press \"Scale Y\"; \
+	    -label "Scale Y" -command "::brlcad::mged press \"Scale Y\"; \
 		set mged_gui($id,transform) e; set_transform $id"
 	incr i
 	.$id.menubar.edit insert $i radiobutton -variable edit_type \
-	    -label "Scale Z" -command "press \"Scale Z\"; \
+	    -label "Scale Z" -command "::brlcad::mged press \"Scale Z\"; \
 		set mged_gui($id,transform) e; set_transform $id"
 	incr i
 	.$id.menubar.edit insert $i radiobutton -variable edit_type \
@@ -213,13 +213,13 @@ proc init_object_edit_menus {} {
 	incr i
 
 	.$id.menubar.edit insert $i command -label "Reject" -underline 2 \
-	    -command "press reject"
+	    -command [list ::brlcad::mged press reject]
 	incr i
 	.$id.menubar.edit insert $i command -label "Accept" -underline 0 \
-	    -command "press accept"
+	    -command [list ::brlcad::mged press accept]
 	incr i
 	.$id.menubar.edit insert $i command -label "Apply" -underline 1 \
-	    -command "oed_apply"
+	    -command [list ::brlcad::mged oed_apply]
 	incr i
 	.$id.menubar.edit insert $i command -label "Reset" -underline 1 \
 	    -command $reset_cmd

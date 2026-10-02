@@ -118,7 +118,7 @@ proc cyls  {pts} {
     global cyl_number
 
     # get an index for this primitive so we have a unique name
-    while {[catch {db get cyls$cyl_number} v] == 0} {
+    while {[catch {::brlcad::mged db get cyls$cyl_number} v] == 0} {
 	incr cyl_number
     }
 
@@ -134,7 +134,7 @@ proc sph {pts} {
     global sph_number
 
     # get an index for this primitive so we have a unique name
-    while {[catch {db get sph$sph_number} v] == 0} {
+    while {[catch {::brlcad::mged db get sph$sph_number} v] == 0} {
 	incr sph_number
     }
 
@@ -150,13 +150,15 @@ proc points {pts} {
     global point_number
 
     # get an index for this primitive so we have a unique name
-    while {[catch {db get sph$point_number} v] == 0} {
+    while {[catch {::brlcad::mged db get sph$point_number} v] == 0} {
 	incr point_number
     }
 
     set last [llength $pts]
     for {set i 0} {$i < $last} {incr i} {
-	eval "put point$point_number sph V { [lindex $pts $i] } A {0.5 0.0 0.0} B {0.0 0.5 0.0} C {0.0 0.0 0.5}"
+	::brlcad::mged put point$point_number sph \
+	    V [lindex $pts $i] A {0.5 0.0 0.0} \
+	    B {0.0 0.5 0.0} C {0.0 0.0 0.5}
 	incr point_number
     }
 
@@ -173,7 +175,7 @@ proc cylinder {pts} {
     global cyl_number
 
     # get an index for this primitive so we have a unique name
-    while {[catch {db get cylinder$cyl_number} v] == 0} {
+    while {[catch {::brlcad::mged db get cylinder$cyl_number} v] == 0} {
 	incr cyl_number
     }
 
@@ -218,7 +220,7 @@ proc pipe {pts} {
     global tcl_platform
 
     # get an index for this pipe number so we have a unique name
-    while {[catch {db get pipe$pipe_number} v] == 0} {
+    while {[catch {::brlcad::mged db get pipe$pipe_number} v] == 0} {
 	incr pipe_number
     }
 
@@ -379,7 +381,7 @@ proc pipe {pts} {
 
     lappend verts [list [::brlcad::vmath vadd [lindex $pts 0] $center_vec] $dia]
 
-    set cmd "put pipe$pipe_number pipe"
+    set cmd [list ::brlcad::mged put pipe$pipe_number pipe]
 
     set v [llength $verts]
     for {set i [expr $v - 1]} { $i >= 0 } {incr i -1} {
@@ -387,10 +389,10 @@ proc pipe {pts} {
 
 	set n [expr $v - $i - 1]
 
-	append cmd " V$n {[lindex $val 0]} O$n $dia I$n 0 R$n [lindex $val 1]"
+	lappend cmd V$n [lindex $val 0] O$n $dia I$n 0 R$n [lindex $val 1]
     }
 
-    eval "$cmd"
+    {*}$cmd
 
     close $fd
     set asc2plot3 [file join [::brlcad::bu dir bin] asc-plot3]
@@ -427,11 +429,11 @@ proc arb {pts} {
     }
 
     # get an index for this primitive so we have a unique name
-    while {[catch {db get arb$arb_number} v] == 0} {
+    while {[catch {::brlcad::mged db get arb$arb_number} v] == 0} {
 	incr arb_number
     }
 
-    set cmd "put arb$arb_number arb8"
+    set cmd [list ::brlcad::mged put arb$arb_number arb8]
     for {set i 0} {$i < 4} {incr i} {
 	lappend cmd "V[expr $i + 1]" [lindex $pts $i]
     }
@@ -440,7 +442,7 @@ proc arb {pts} {
 	lappend cmd "V[expr 8 - ($i - 4) ]" [lindex $pts $i]
     }
 
-    eval $cmd
+    {*}$cmd
     incr arb_number
 
     return
@@ -539,7 +541,7 @@ proc plate {pts} {
 
 
     # get an index for this primitive so we have a unique name
-    while {[catch {db get sketch$sketch_number} v] == 0} {
+    while {[catch {::brlcad::mged db get sketch$sketch_number} v] == 0} {
 	incr sketch_number
     }
 
@@ -547,7 +549,7 @@ proc plate {pts} {
 
     # create the command for building the sketch primitive
 
-    set cmd "put $sketch_name sketch V"
+    set cmd [list ::brlcad::mged put $sketch_name sketch V]
     lappend cmd [lindex $pts 0]
     set U_vector [::brlcad::bn mat4x3vec $m_inv [list 1.0 0.0 0.0 ]]
     set V_vector [::brlcad::bn mat4x3vec $m_inv [list 0.0 1.0 0.0 ]]
@@ -565,7 +567,7 @@ proc plate {pts} {
 
     lappend cmd "SL" $linecmd
 
-    eval $cmd
+    {*}$cmd
 
 
     # get depth of plate
@@ -575,7 +577,7 @@ proc plate {pts} {
     set delta [::brlcad::vmath vscale $plane $dist]
 
     # create the extrude primitive
-    set cmd "put extrude$sketch_number extrude V"
+    set cmd [list ::brlcad::mged put extrude$sketch_number extrude V]
     lappend cmd [lindex $pts 0]
     # height vector
     lappend cmd "H" [::brlcad::vmath vscale [::brlcad::vmath vreverse [lrange $plane 0 2]] $dist]
@@ -592,7 +594,7 @@ proc plate {pts} {
     # keypoint index
     lappend cmd "K" 0
 
-    eval $cmd
+    {*}$cmd
 
     incr sketch_number
 }
@@ -701,7 +703,7 @@ if { 1 == 0 } {
     close $fd
     set asc2plot3 [file join [::brlcad::bu dir bin] asc-plot3]
     exec "$asc2plot3 < pipe.asc > pipe.plot3"
-    overlay pipe.plot3
+    ::brlcad::mged overlay pipe.plot3
     file delete pipe.asc
 
     pipe $pipe_pts

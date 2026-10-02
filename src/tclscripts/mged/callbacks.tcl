@@ -71,7 +71,7 @@ proc begin_edit_callback {path} {
     set in_begin_edit_callback 1
 
     if {$mged_display(state) == "SOL EDIT"} {
-	catch {get_sed} esolint_info
+	catch {::brlcad::mged get_sed} esolint_info
 	set esolint_type [lindex $esolint_info 1]
 
 	if {$esolint_type == "sketch"} {
@@ -79,7 +79,7 @@ proc begin_edit_callback {path} {
 	    Sketch_editor .#auto [lindex $esolint_info 0] $path
 
 	    # jump out of solid edit state
-	    press reject
+	    ::brlcad::mged press reject
 	    return
 	}
 
@@ -90,7 +90,7 @@ proc begin_edit_callback {path} {
 	}
 
 	# load solid edit menus
-	set edit_menus [get_sed_menus]
+	set edit_menus [::brlcad::mged get_sed_menus]
 	init_solid_edit_menus $esolint_type $edit_menus
     } elseif {$mged_display(state) == "OBJ EDIT"} {
 	# load object edit menus
