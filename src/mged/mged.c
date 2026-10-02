@@ -3391,7 +3391,7 @@ main(int argc, char *argv[])
 	    perror("dup");
 #endif
 
-	bu_vls_printf(&vls, "output_hook output_callback");
+	bu_vls_printf(&vls, MGED_COMMAND_NAMESPACE " output_hook output_callback");
 	Tcl_Eval(s->interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
 
