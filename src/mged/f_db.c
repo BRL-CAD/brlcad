@@ -232,9 +232,11 @@ mged_post_opendb_clbk(int UNUSED(ac), const char **UNUSED(argv), void *vgedp, vo
 	}
 
 	/* Perhaps do something special with the GUI */
-	bu_vls_trunc(&cmd, 0);
-	bu_vls_printf(&cmd, "opendb_callback {%s}", s->dbip->dbi_filename);
-	(void)Tcl_Eval(mctx->interpreter, bu_vls_addr(&cmd));
+	{
+	    const char *args[] = {s->dbip->dbi_filename};
+	    (void)mged_tcl_eval(mctx->interpreter,
+		MGED_OPEN_DATABASE_CALLBACK, 1, args);
+	}
 
 	bu_vls_strcpy(&cmd, "local2base");
 	Tcl_UnlinkVar(mctx->interpreter, bu_vls_addr(&cmd));

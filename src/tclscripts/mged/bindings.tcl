@@ -98,7 +98,7 @@ proc ::brlcad::mged::bindings::reset {w} {
 }
 
 proc ::brlcad::mged::bindings::release {w} {
-    ::mged_release_dm $w
+    ::brlcad::mged::bindings::release_dm $w
     return -code break
 }
 
@@ -143,16 +143,16 @@ proc ::brlcad::mged::bindings::run_factor {w token variable sign} {
     return -code break
 }
 
-proc mged_command_busy {options} {
+proc ::brlcad::mged::bindings::command_busy {options} {
     expr {[dict exists $options -errorcode] &&
 	[dict get $options -errorcode] eq {BRLCAD MGED COMMAND_BUSY}}
 }
 
-proc mged_activate_dm {w} {
+proc ::brlcad::mged::bindings::activate_dm {w} {
     global tcl_platform
 
     if {[catch {::brlcad::mged winset $w} message options]} {
-	if {[mged_command_busy $options]} {
+	if {[::brlcad::mged::bindings::command_busy $options]} {
 	    return
 	}
 	return -options $options $message
@@ -165,7 +165,7 @@ proc mged_activate_dm {w} {
     }
 }
 
-proc mged_release_dm {w} {
+proc ::brlcad::mged::bindings::release_dm {w} {
     if {![winfo exists $w]} {
 	return
     }
@@ -174,25 +174,26 @@ proc mged_release_dm {w} {
 	::brlcad::mged winset $w
 	::brlcad::mged dm idle
     } message options]} {
-	if {[mged_command_busy $options]} {
+	if {[::brlcad::mged::bindings::command_busy $options]} {
 	    # A mouse pick may pump events while an edit command runs.  Defer
 	    # the release until its shared GED state is available again.
 	    set retry_interval_ms 25
-	    after $retry_interval_ms [list ::mged_release_dm $w]
+	    after $retry_interval_ms \
+		[list ::brlcad::mged::bindings::release_dm $w]
 	    return
 	}
 	return -options $options $message
     }
 }
 
-proc mged_bind_dm { w } {
+proc ::brlcad::mged::bindings::bind_dm {w} {
     global hot_key
     global forwarding_key
 
     # KeySym for <F9> --> 0xffc6 --> 65478
     set hot_key 65478
 
-    bind $w <Enter> [list ::mged_activate_dm $w]
+    bind $w <Enter> [list ::brlcad::mged::bindings::activate_dm $w]
 
     #default mouse bindings
     default_mouse_bindings $w
@@ -200,6 +201,20 @@ proc mged_bind_dm { w } {
     #default key bindings
     set forwarding_key($w) 0
     default_key_bindings $w
+}
+
+# Compatibility entry points for scripts and interactive use.
+proc ::mged_command_busy {args} {
+    tailcall ::brlcad::mged::bindings::command_busy {*}$args
+}
+proc ::mged_activate_dm {args} {
+    tailcall ::brlcad::mged::bindings::activate_dm {*}$args
+}
+proc ::mged_release_dm {args} {
+    tailcall ::brlcad::mged::bindings::release_dm {*}$args
+}
+proc ::mged_bind_dm {args} {
+    tailcall ::brlcad::mged::bindings::bind_dm {*}$args
 }
 
 proc print_return_val str {

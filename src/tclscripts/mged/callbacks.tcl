@@ -24,11 +24,18 @@
 #
 #
 
-## - opendb_callback
+namespace eval ::brlcad::mged::callbacks {
+    variable in_begin_edit
+    if {![info exists in_begin_edit]} {
+	set in_begin_edit 0
+    }
+}
+
+## - ::brlcad::mged::callbacks::open_database
 #
 # This is called upon opening a database.
 #
-proc opendb_callback { dbname } {
+proc ::brlcad::mged::callbacks::open_database {dbname} {
     global mged_players
 
     if ![info exists mged_players] {
@@ -41,19 +48,15 @@ proc opendb_callback { dbname } {
     }
 }
 
-if ![info exists in_begin_edit_callback] {
-    set in_begin_edit_callback 0
-}
-
-## - begin_edit_callback
+## - ::brlcad::mged::callbacks::begin_edit
 #
 # This is called at the start of an edit.
 #
-proc begin_edit_callback {path} {
+proc ::brlcad::mged::callbacks::begin_edit {path} {
+    variable in_begin_edit
     global mged_gui
     global mged_display
     global mged_players
-    global in_begin_edit_callback
 
     if ![info exists mged_players] {
 	return
@@ -68,14 +71,14 @@ proc begin_edit_callback {path} {
 	set path [string range $path 1 end]
     }
 
-    set in_begin_edit_callback 1
+    set in_begin_edit 1
 
     if {$mged_display(state) == "SOL EDIT"} {
 	catch {::brlcad::mged get_sed} esolint_info
 	set esolint_type [lindex $esolint_info 1]
 
 	if {$esolint_type == "sketch"} {
-	    set in_begin_edit_callback 0
+	    set in_begin_edit 0
 	    Sketch_editor .#auto [lindex $esolint_info 0] $path
 
 	    # jump out of solid edit state
@@ -101,24 +104,24 @@ proc begin_edit_callback {path} {
 	}
     }
 
-    set in_begin_edit_callback 0
+    set in_begin_edit 0
     return
 }
 
-## - active_edit_callback
+## - ::brlcad::mged::callbacks::active_edit
 #
 # This is called during an active edit after MGED perceives a change
 # to the solid/object being edited.
 #
-proc active_edit_callback {} {
+proc ::brlcad::mged::callbacks::active_edit {} {
+    variable in_begin_edit
     global mged_display
-    global in_begin_edit_callback
 
     if ![info exists mged_display] {
 	return
     }
 
-    if {$in_begin_edit_callback} {
+    if {$in_begin_edit} {
 	return
     }
 
@@ -127,11 +130,11 @@ proc active_edit_callback {} {
     }
 }
 
-## - end_edit_callback
+## - ::brlcad::mged::callbacks::end_edit
 #
 # This is called at the end of an edit.
 #
-proc end_edit_callback {} {
+proc ::brlcad::mged::callbacks::end_edit {} {
     global mged_players
 
     if ![info exists mged_players] {
@@ -144,20 +147,20 @@ proc end_edit_callback {} {
     }
 }
 
-## - output_callback
+## - ::brlcad::mged::callbacks::output
 #
 # This is called when things need to be printed to the command window(s)
 #
-proc output_callback { str } {
+proc ::brlcad::mged::callbacks::output {str} {
     distribute_text {} {} $str
     update idletasks
 }
 
-## - solid_list_callback
+## - ::brlcad::mged::callbacks::solid_list
 #
 # This is called whenever MGED's internal solid list changes.
 #
-proc solid_list_callback {} {
+proc ::brlcad::mged::callbacks::solid_list {} {
     global mged_players
 
     if ![info exists mged_players] {
@@ -167,6 +170,26 @@ proc solid_list_callback {} {
     foreach id $mged_players {
 	::brlcad::mged::raytrace::solid_list_callback $id
     }
+}
+
+# Compatibility entry points for scripts and interactive use.
+proc ::opendb_callback {args} {
+    tailcall ::brlcad::mged::callbacks::open_database {*}$args
+}
+proc ::begin_edit_callback {args} {
+    tailcall ::brlcad::mged::callbacks::begin_edit {*}$args
+}
+proc ::active_edit_callback {args} {
+    tailcall ::brlcad::mged::callbacks::active_edit {*}$args
+}
+proc ::end_edit_callback {args} {
+    tailcall ::brlcad::mged::callbacks::end_edit {*}$args
+}
+proc ::output_callback {args} {
+    tailcall ::brlcad::mged::callbacks::output {*}$args
+}
+proc ::solid_list_callback {args} {
+    tailcall ::brlcad::mged::callbacks::solid_list {*}$args
 }
 
 # Local Variables:

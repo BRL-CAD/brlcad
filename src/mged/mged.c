@@ -1965,7 +1965,6 @@ std_out_or_err(ClientData clientData, int UNUSED(mask))
     Tcl_Channel chan = (Tcl_Channel)clientData;
     int count;
     char line[RT_MAXLINE+1] = {0};
-    Tcl_DString tclcommand;
     Tcl_Obj *save_result;
 
     count = Tcl_Read(chan, line, RT_MAXLINE);
@@ -1975,18 +1974,48 @@ std_out_or_err(ClientData clientData, int UNUSED(mask))
 
     line[count] = '\0';
 
-    /* Treat bytes read from the pipe as one Tcl argument.  Constructing this
-     * as "output_callback {%s}" breaks on unmatched braces in program output. */
-    Tcl_DStringInit(&tclcommand);
-    (void)Tcl_DStringAppendElement(&tclcommand, "output_callback");
-    (void)Tcl_DStringAppendElement(&tclcommand, line);
-
     save_result = Tcl_GetObjResult(s->interp);
     Tcl_IncrRefCount(save_result);
-    (void)Tcl_Eval(s->interp, Tcl_DStringValue(&tclcommand));
+    {
+	const char *args[] = {line};
+	(void)mged_tcl_eval(s->interp, MGED_OUTPUT_CALLBACK, 1, args);
+    }
     Tcl_SetObjResult(s->interp, save_result);
     Tcl_DecrRefCount(save_result);
-    Tcl_DStringFree(&tclcommand);
+}
+
+
+int
+mged_tcl_eval(Tcl_Interp *interp, const char *command, int argc,
+	      const char * const argv[])
+{
+    Tcl_Obj **objv;
+    int i;
+    int ret;
+
+    if (!interp)
+	return TCL_ERROR;
+    if (!command || argc < 0 || (argc > 0 && !argv)) {
+	Tcl_SetObjResult(interp,
+		Tcl_NewStringObj("invalid MGED Tcl command invocation", -1));
+	return TCL_ERROR;
+    }
+
+    objv = (Tcl_Obj **)bu_calloc((size_t)argc + 1, sizeof(Tcl_Obj *),
+	"MGED Tcl command arguments");
+    objv[0] = Tcl_NewStringObj(command, -1);
+    Tcl_IncrRefCount(objv[0]);
+    for (i = 0; i < argc; i++) {
+	objv[i + 1] = Tcl_NewStringObj(argv[i], -1);
+	Tcl_IncrRefCount(objv[i + 1]);
+    }
+
+    ret = Tcl_EvalObjv(interp, argc + 1, objv, TCL_EVAL_GLOBAL);
+    for (i = 0; i <= argc; i++)
+	Tcl_DecrRefCount(objv[i]);
+    bu_free(objv, "MGED Tcl command arguments");
+
+    return ret;
 }
 
 
@@ -3134,7 +3163,11 @@ main(int argc, char *argv[])
 		mged_finish(s, 1);
 	    }
 	} else {
-	    (void)Tcl_Eval(s->interp, "opendb_callback nul");
+	    {
+		const char *args[] = {"nul"};
+		(void)mged_tcl_eval(s->interp,
+		    MGED_OPEN_DATABASE_CALLBACK, 1, args);
+	    }
 	}
     }
 
@@ -3391,7 +3424,8 @@ main(int argc, char *argv[])
 	    perror("dup");
 #endif
 
-	bu_vls_printf(&vls, MGED_COMMAND_NAMESPACE " output_hook output_callback");
+	bu_vls_printf(&vls, MGED_COMMAND_NAMESPACE " output_hook "
+	    MGED_OUTPUT_CALLBACK);
 	Tcl_Eval(s->interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
 

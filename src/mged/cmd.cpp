@@ -510,7 +510,7 @@ mged_pr_output(Tcl_Interp *interp)
     /* Grab and clear the accumulated text under the lock. */
     bu_semaphore_acquire(MGED_SEM_LOG);
     if (!bu_vls_strlen(&tcl_output_cmd))
-	bu_vls_sprintf(&tcl_output_cmd, "output_callback");
+	bu_vls_sprintf(&tcl_output_cmd, "%s", MGED_OUTPUT_CALLBACK);
     bu_vls_vlscat(&output_cmd, &tcl_output_cmd);
     if (bu_vls_strlen(&tcl_log_str)) {
 	bu_vls_vlscat(&tmp, &tcl_log_str);
@@ -2226,7 +2226,7 @@ mged_view_update(int UNUSED(ac), const char **UNUSED(av), void *d, void *UNUSED(
     struct mged_state *s = (struct mged_state *)d;
 
     dm_set_dirty(s->mged_curr_dm->dm_dmp, 1);
-    (void)Tcl_Eval(s->interp, "active_edit_callback");
+    (void)mged_tcl_eval(s->interp, MGED_ACTIVE_EDIT_CALLBACK, 0, NULL);
 
     return TCL_OK;
 }

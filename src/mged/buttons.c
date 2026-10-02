@@ -793,13 +793,7 @@ be_accept(ClientData clientData, Tcl_Interp *UNUSED(interp), int UNUSED(argc), c
 	    m_dmp->dm_mged_variables->mv_transform = 'v';
     }
 
-    {
-	struct bu_vls vls = BU_VLS_INIT_ZERO;
-
-	bu_vls_strcpy(&vls, "end_edit_callback");
-	(void)Tcl_Eval(s->interp, bu_vls_addr(&vls));
-	bu_vls_free(&vls);
-    }
+    (void)mged_tcl_eval(s->interp, MGED_END_EDIT_CALLBACK, 0, NULL);
     return TCL_OK;
 }
 
@@ -862,13 +856,7 @@ be_reject(ClientData clientData, Tcl_Interp *UNUSED(interp), int UNUSED(argc), c
 	    m_dmp->dm_mged_variables->mv_transform = 'v';
     }
 
-    {
-	struct bu_vls vls = BU_VLS_INIT_ZERO;
-
-	bu_vls_strcpy(&vls, "end_edit_callback");
-	(void)Tcl_Eval(s->interp, bu_vls_addr(&vls));
-	bu_vls_free(&vls);
-    }
+    (void)mged_tcl_eval(s->interp, MGED_END_EDIT_CALLBACK, 0, NULL);
     return TCL_OK;
 }
 

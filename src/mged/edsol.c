@@ -596,9 +596,11 @@ init_sedit(struct mged_state *s)
     {
 	struct bu_vls vls = BU_VLS_INIT_ZERO;
 
-	bu_vls_strcpy(&vls, "begin_edit_callback ");
 	db_path_to_vls(&vls, &bdata->s_fullpath);
-	(void)Tcl_Eval(s->interp, bu_vls_addr(&vls));
+	{
+	    const char *args[] = {bu_vls_cstr(&vls)};
+	    (void)mged_tcl_eval(s->interp, MGED_BEGIN_EDIT_CALLBACK, 1, args);
+	}
 	bu_vls_free(&vls);
     }
 }
@@ -995,17 +997,16 @@ set_oedit_bbox_keypoint(struct mged_state *s)
 int
 init_oedit(struct mged_state *s)
 {
-    struct bu_vls vls = BU_VLS_INIT_ZERO;
-
     if (init_oedit_guts(s) != BRLCAD_OK)
 	return BRLCAD_ERROR;
 
     s->s_edit->es_edclass = EDIT_CLASS_NULL;
 
     /* begin edit callback */
-    bu_vls_strcpy(&vls, "begin_edit_callback {}");
-    (void)Tcl_Eval(s->interp, bu_vls_addr(&vls));
-    bu_vls_free(&vls);
+    {
+	const char *args[] = {""};
+	(void)mged_tcl_eval(s->interp, MGED_BEGIN_EDIT_CALLBACK, 1, args);
+    }
     return BRLCAD_OK;
 }
 
@@ -1781,8 +1782,7 @@ f_sedit_reset(ClientData clientData, Tcl_Interp *interp, int argc, const char *U
     dm_set_dirty(DMP, 1);
 
     /* active edit callback */
-    bu_vls_printf(&vls, "active_edit_callback");
-    (void)Tcl_Eval(interp, bu_vls_addr(&vls));
+    (void)mged_tcl_eval(interp, MGED_ACTIVE_EDIT_CALLBACK, 0, NULL);
     bu_vls_free(&vls);
 
     return TCL_OK;
@@ -1796,8 +1796,6 @@ f_sedit_apply(ClientData clientData, Tcl_Interp *interp, int UNUSED(argc), const
     MGED_CK_CMD(ctp);
     struct mged_state *s = ctp->s;
 
-    struct bu_vls vls = BU_VLS_INIT_ZERO;
-
     CHECK_DBI_NULL;
 
     if (not_state(s, ST_S_EDIT, "Solid edit apply")) {
@@ -1808,9 +1806,7 @@ f_sedit_apply(ClientData clientData, Tcl_Interp *interp, int UNUSED(argc), const
     (void)sedit_apply(s, 0);
 
     /* active edit callback */
-    bu_vls_printf(&vls, "active_edit_callback");
-    (void)Tcl_Eval(interp, bu_vls_addr(&vls));
-    bu_vls_free(&vls);
+    (void)mged_tcl_eval(interp, MGED_ACTIVE_EDIT_CALLBACK, 0, NULL);
 
     return TCL_OK;
 }
@@ -1849,8 +1845,7 @@ f_oedit_reset(ClientData clientData, Tcl_Interp *interp, int argc, const char *U
     dm_set_dirty(DMP, 1);
 
     /* active edit callback */
-    bu_vls_printf(&vls, "active_edit_callback");
-    (void)Tcl_Eval(interp, bu_vls_addr(&vls));
+    (void)mged_tcl_eval(interp, MGED_ACTIVE_EDIT_CALLBACK, 0, NULL);
     bu_vls_free(&vls);
 
     return TCL_OK;
@@ -1864,7 +1859,6 @@ f_oedit_apply(ClientData clientData, Tcl_Interp *interp, int UNUSED(argc), const
     MGED_CK_CMD(ctp);
     struct mged_state *s = ctp->s;
 
-    struct bu_vls vls = BU_VLS_INIT_ZERO;
     const char *strp = NULL;
 
     CHECK_DBI_NULL;
@@ -1891,9 +1885,7 @@ f_oedit_apply(ClientData clientData, Tcl_Interp *interp, int UNUSED(argc), const
     dm_set_dirty(DMP, 1);
 
     /* active edit callback */
-    bu_vls_printf(&vls, "active_edit_callback");
-    (void)Tcl_Eval(interp, bu_vls_addr(&vls));
-    bu_vls_free(&vls);
+    (void)mged_tcl_eval(interp, MGED_ACTIVE_EDIT_CALLBACK, 0, NULL);
 
     return TCL_OK;
 }

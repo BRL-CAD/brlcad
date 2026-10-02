@@ -705,16 +705,13 @@ cmd_autoview(ClientData clientData, Tcl_Interp *interp, int argc, const char *ar
 void
 solid_list_callback(struct mged_state *s)
 {
-    struct bu_vls vls = BU_VLS_INIT_ZERO;
     Tcl_Obj *save_obj;
 
     /* save result */
     save_obj = Tcl_GetObjResult(s->interp);
     Tcl_IncrRefCount(save_obj);
 
-    bu_vls_strcpy(&vls, "solid_list_callback");
-    (void)Tcl_Eval(s->interp, bu_vls_addr(&vls));
-    bu_vls_free(&vls);
+    (void)mged_tcl_eval(s->interp, MGED_SOLID_LIST_CALLBACK, 0, NULL);
 
     /* restore result */
     Tcl_SetObjResult(s->interp, save_obj);

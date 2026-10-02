@@ -98,8 +98,6 @@ mged_dm_init(
 	int argc,
 	const char *argv[])
 {
-    struct bu_vls vls = BU_VLS_INIT_ZERO;
-
     dm_var_init(s, o_dm);
 
     /* register application provided routines */
@@ -129,11 +127,9 @@ mged_dm_init(
 
     struct bu_vls *pathname = dm_get_pathname(DMP);
     if (pathname && bu_vls_strlen(pathname)) {
-	bu_vls_printf(&vls, "mged_bind_dm %s", bu_vls_cstr(pathname));
-	Tcl_Eval(s->interp, bu_vls_cstr(&vls));
+	const char *args[] = {bu_vls_cstr(pathname)};
+	(void)mged_tcl_eval(s->interp, MGED_BIND_DM_COMMAND, 1, args);
     }
-    bu_vls_free(&vls);
-
     return TCL_OK;
 }
 

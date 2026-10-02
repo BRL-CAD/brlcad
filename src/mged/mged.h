@@ -97,6 +97,14 @@ __END_DECLS
 #define GED_COMMAND_NAMESPACE "::brlcad::ged"
 #define MGED_HELP_COMMAND MGED_COMMAND_NAMESPACE "::help::show"
 #define MGED_HELPDEVEL_COMMAND MGED_COMMAND_NAMESPACE "::helpdevel::show"
+#define MGED_CALLBACK_NAMESPACE MGED_COMMAND_NAMESPACE "::callbacks"
+#define MGED_OPEN_DATABASE_CALLBACK MGED_CALLBACK_NAMESPACE "::open_database"
+#define MGED_BEGIN_EDIT_CALLBACK MGED_CALLBACK_NAMESPACE "::begin_edit"
+#define MGED_ACTIVE_EDIT_CALLBACK MGED_CALLBACK_NAMESPACE "::active_edit"
+#define MGED_END_EDIT_CALLBACK MGED_CALLBACK_NAMESPACE "::end_edit"
+#define MGED_OUTPUT_CALLBACK MGED_CALLBACK_NAMESPACE "::output"
+#define MGED_SOLID_LIST_CALLBACK MGED_CALLBACK_NAMESPACE "::solid_list"
+#define MGED_BIND_DM_COMMAND MGED_COMMAND_NAMESPACE "::bindings::bind_dm"
 
 
 #define MGED_CMD_MAGIC 0x4D474544 /**< MGED */
@@ -510,6 +518,8 @@ int mged_ged_exec_async(struct mged_state *s, int argc, const char *argv[]);
 __BEGIN_DECLS
 int mged_register_ged_cmd_namespace(Tcl_Interp *interp, Tcl_CmdProc *func,
 	ClientData client_data);
+int mged_tcl_eval(Tcl_Interp *interp, const char *command, int argc,
+	const char * const argv[]);
 __END_DECLS
 int mged_request_command_interrupt(struct mged_state *s);
 int mged_command_interrupted(struct mged_state *s);
