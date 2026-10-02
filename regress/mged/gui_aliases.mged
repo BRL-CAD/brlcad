@@ -1,7 +1,8 @@
 puts "*** Testing Tcl GUI command dispatch ***"
 
 foreach command {
-    color_scheme_reset default_key_bindings default_mouse_bindings
+    color_scheme_reset comb_apply default_key_bindings default_mouse_bindings
+    esol_apply
     mged_activate_dm mged_dm_supports mged_draw_grid mged_press
     mouse_comb_edit_select mouse_matrix_edit_select mouse_rt_obj_select
     mouse_solid_edit_select next_command scale_shift_grip_hints
@@ -14,6 +15,9 @@ foreach command {
 
 set object namespace_gui.s
 set group namespace_gui.g
+set edited_comb namespace_gui_edit.c
+set comb_test_id namespace_gui_comb
+set esol_test_id namespace_gui_solid
 ::brlcad::mged in $object sph 0 0 0 1
 ::brlcad::mged g $group $object
 
@@ -60,9 +64,9 @@ proc ::namespace_gui_alias_trap {command args} {
 }
 
 set legacy_commands {
-    M adc aip cmd_win db dm exists expand hist knob lt mged_update
-    mmenu_get nirt opendb press rset sed_apply sed_reset status stuff_str
-    svb winset zoom
+    M adc aip attr cmd_win db dm exists expand form get_comb hist kill knob
+    lt mged_update mmenu_get nirt opendb press put_comb regdef rset
+    sed_apply sed_reset status stuff_str svb winset zoom
 }
 set hidden_commands {}
 foreach command $legacy_commands {
@@ -129,6 +133,43 @@ try {
     set test_bind_active 0
     set saved_bind {}
 
+    set comb_test_expression "u $object"
+    proc ::.namespace_gui_comb.comb.combT {subcommand args} {
+	if {$subcommand eq "get"} {
+	    return $::comb_test_expression
+	}
+	return {}
+    }
+    set comb_control($comb_test_id,name) $edited_comb
+    set comb_control($comb_test_id,color) {}
+    set comb_control($comb_test_id,shader) {}
+    set comb_control($comb_test_id,inherit) No
+    set comb_control($comb_test_id,isRegion) No
+    set comb_control($comb_test_id,id) 0
+    set comb_control($comb_test_id,air) 0
+    set comb_control($comb_test_id,material) 0
+    set comb_control($comb_test_id,los) 0
+    set comb_control($comb_test_id,attrs) {namespace_test enabled}
+    set comb_control($comb_test_id,dirty_name) 0
+    if {[comb_apply $comb_test_id] != 0 ||
+	![::brlcad::mged exists $edited_comb]} {
+	error "FAIL combination editor did not create $edited_comb"
+    }
+    if {[::brlcad::mged attr get $edited_comb namespace_test] ne "enabled"} {
+	error "FAIL combination editor did not preserve attributes"
+    }
+
+    set esol_control($esol_test_id,name) $object
+    set esol_control($esol_test_id,type) ell
+    set esol_control($esol_test_id,edit) 2
+    set esol_control($esol_test_id,draw) 0
+    set esol_control($esol_test_id,cmd) [list ::brlcad::mged db put \
+	$object ell V {0 0 0} A {2 0 0} B {0 1 0} C {0 0 1}]
+    esol_apply $esol_test_id .namespace_gui_unused .namespace_gui_form
+    if {[lindex [::brlcad::mged db get $object] 0] ne "ell"} {
+	error "FAIL primitive editor did not replace $object"
+    }
+
     color_scheme_reset $test_id .namespace_gui_color
     foreach setting {bg_a bg_ia} {
 	if {[llength $mged_color_scheme($test_id,$setting)] != 3} {
@@ -175,6 +216,7 @@ try {
 	}
     }
     catch {rename ::.mged.t {}}
+    catch {rename ::.namespace_gui_comb.comb.combT {}}
     foreach {hidden_command compatibility_command} $hidden_commands {
 	rename $compatibility_command {}
 	rename $hidden_command $compatibility_command
@@ -184,7 +226,7 @@ try {
 	rename ::__brlcad_mged_gui_test_$command ::$command
     }
     ::brlcad::mged rset grid draw $original_grid_draw
-    catch {::brlcad::mged kill $group $object}
+    catch {::brlcad::mged kill $group $edited_comb $object}
     foreach command {
 	namespace_gui_alias_trap namespace_gui_color.bg_aMB
 	namespace_gui_color.bg_iaMB namespace_gui_empty_selection
@@ -193,6 +235,15 @@ try {
 	rename ::$command {}
     }
     unset -nocomplain ::namespace_gui_result \
+	comb_control($comb_test_id,name) comb_control($comb_test_id,color) \
+	comb_control($comb_test_id,shader) comb_control($comb_test_id,inherit) \
+	comb_control($comb_test_id,isRegion) comb_control($comb_test_id,id) \
+	comb_control($comb_test_id,air) comb_control($comb_test_id,material) \
+	comb_control($comb_test_id,los) comb_control($comb_test_id,attrs) \
+	comb_control($comb_test_id,dirty_name) \
+	esol_control($esol_test_id,name) esol_control($esol_test_id,type) \
+	esol_control($esol_test_id,edit) esol_control($esol_test_id,draw) \
+	esol_control($esol_test_id,cmd) \
 	mged_gui($test_id,active_dm) mged_gui($test_id,apply_to) \
 	mged_gui($test_id,grid_draw) mged_gui($test_id,probe_value) \
 	mged_gui($test_id,view_pos)

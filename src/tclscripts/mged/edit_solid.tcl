@@ -36,7 +36,7 @@ proc init_edit_solid { id args } {
     global esol_control
     global ::tk::Priv
 
-    if {[opendb] == ""} {
+    if {[::brlcad::mged opendb] == ""} {
 	cad_dialog $::tk::Priv(cad_dialog) $mged_gui($id,screen) "No database." \
 	    "No database has been opened!" info 0 OK
 	return
@@ -236,18 +236,22 @@ proc esol_build_default_form { id w } {
     global solid_data
     global esol_control
 
-    if [catch {set vals [db get $esol_control($id,name)]} msg] {
+    if [catch {
+	set vals [::brlcad::mged db get $esol_control($id,name)]
+    } msg] {
 	# This primitive doesn't exist yet, so use the last primitive type
 	#   to get attributes and their values.
 	set vals $solid_data(attr,$esol_control($id,type))
 
 	# create mode
 	set esol_control($id,edit) 0
-	set esol_control($id,cmd) "db put $esol_control($id,name) $esol_control($id,type)"
+	set esol_control($id,cmd) [list ::brlcad::mged db put \
+	    $esol_control($id,name) $esol_control($id,type)]
     } else {
 	set esol_control($id,edit) 1
 	set esol_control($id,type) [lindex $vals 0]
-	set esol_control($id,cmd) "db adjust $esol_control($id,name)"
+	set esol_control($id,cmd) [list ::brlcad::mged db adjust \
+	    $esol_control($id,name)]
 
 	# skip primitive type
 	set vals [lrange $vals 1 end]
@@ -273,8 +277,7 @@ proc esol_build_form { id w type vals do_gui do_cmd do_entries } {
 	frame $sform
     }
 
-#    set form [db form $type]
-    set form [form $type]
+    set form [::brlcad::mged form $type]
     set len [llength $form]
 
     for { set i 0; set row 0 } { $i < $len } { incr i; incr row } {
@@ -414,38 +417,44 @@ proc esol_ok { id w sform } {
 proc esol_apply { id w sform } {
     global esol_control
 
-    set solid_exists [expr ![catch {db get $esol_control($id,name)} vals]]
-    if {$esol_control($id,name) != [lindex $esol_control($id,cmd) 2] ||\
-	    ($esol_control($id,edit) && !$solid_exists)} {
+    set solid_exists [expr {![catch {
+	::brlcad::mged db get $esol_control($id,name)
+    } vals]}]
+    if {$esol_control($id,name) ne [lindex $esol_control($id,cmd) 3] ||
+	$esol_control($id,edit) == 2 ||
+	($esol_control($id,edit) && !$solid_exists)} {
 	# Here we assume (yikes!!!) that the user is aware
 	# of what he/she is doing and oblige by making
 	# a last minute change to the command list.
 
 	switch $esol_control($id,edit) {
 	    0 {
-		set last 3
+		set last 4
 	    }
 	    1 {
-		set last 2
+		set last 3
 	    }
 	    2 {
-		set last 5
+		set last 4
 	    }
 	}
 
 	if $solid_exists {
 	    if {$esol_control($id,type) == [lindex $vals 0]} {
 		set tmp_db_cmd [lreplace $esol_control($id,cmd)\
-				    0 $last db adjust $esol_control($id,name)]
+				    0 $last ::brlcad::mged db adjust \
+				    $esol_control($id,name)]
 	    } else {
-		set tmp_db_cmd "kill $esol_control($id,name);\
-			[lreplace $esol_control($id,cmd)\
-			0 $last db put $esol_control($id,name) $esol_control($id,type)]"
+		::brlcad::mged kill $esol_control($id,name)
+		set tmp_db_cmd [lreplace $esol_control($id,cmd) \
+		    0 $last ::brlcad::mged db put \
+		    $esol_control($id,name) $esol_control($id,type)]
 	    }
 	} else {
 	    # This primitive doesn't exist.
 	    set tmp_db_cmd [lreplace $esol_control($id,cmd)\
-				0 $last db put $esol_control($id,name) $esol_control($id,type)]
+				0 $last ::brlcad::mged db put \
+				$esol_control($id,name) $esol_control($id,type)]
 	}
 
 	# fix the broken command list
@@ -458,7 +467,8 @@ proc esol_apply { id w sform } {
     esol_rename_applyB $id $w
 
     # rebuild esol_control($id,db_cmd)
-    set esol_control($id,cmd) "db adjust $esol_control($id,name)"
+    set esol_control($id,cmd) [list ::brlcad::mged db adjust \
+	$esol_control($id,name)]
     esol_build_form $id $sform $esol_control($id,type) {} 0 1 0
 
     if $esol_control($id,draw) {
@@ -537,12 +547,15 @@ proc esol_process_type { id w newType } {
 	return
     }
 
-    if [catch {db get $esol_control($id,name)} vals] {
+    if [catch {
+	::brlcad::mged db get $esol_control($id,name)
+    } vals] {
 	# This primitive doesn't exist.
 
 	# create mode
 	set esol_control($id,edit) 0
-	set esol_control($id,cmd) "db put $esol_control($id,name) $newType"
+	set esol_control($id,cmd) [list ::brlcad::mged db put \
+	    $esol_control($id,name) $newType]
 	set vals $solid_data(attr,$newType)
     } else {
 	# This primitive exists
@@ -553,13 +566,15 @@ proc esol_process_type { id w newType } {
 	    set vals [lrange $vals 1 end]
 
 	    set esol_control($id,edit) 1
-	    set esol_control($id,cmd) "db adjust $esol_control($id,name)"
+	    set esol_control($id,cmd) [list ::brlcad::mged db adjust \
+		$esol_control($id,name)]
 	} else {
 	    # changing primitive type, so use default values
 	    set vals $solid_data(attr,$newType)
 
 	    set esol_control($id,edit) 2
-	    set esol_control($id,cmd) "kill $esol_control($id,name); db put $esol_control($id,name) $newType"
+	    set esol_control($id,cmd) [list ::brlcad::mged db put \
+		$esol_control($id,name) $newType]
 	}
     }
 
@@ -580,12 +595,15 @@ proc esol_reset { id w reset_entry_values } {
     global solid_data
     global esol_control
 
-    if [catch {db get $esol_control($id,name)} vals] {
+    if [catch {
+	::brlcad::mged db get $esol_control($id,name)
+    } vals] {
 	# This primitive doesn't exist.
 
 	# create mode
 	set esol_control($id,edit) 0
-	set esol_control($id,cmd) "db put $esol_control($id,name) $esol_control($id,type)"
+	set esol_control($id,cmd) [list ::brlcad::mged db put \
+	    $esol_control($id,name) $esol_control($id,type)]
 
 	if $reset_entry_values {
 	    set vals $solid_data(attr,$esol_control($id,type))
@@ -601,7 +619,8 @@ proc esol_reset { id w reset_entry_values } {
 
 	# edit mode
 	set esol_control($id,edit) 1
-	set esol_control($id,cmd) "db adjust $esol_control($id,name)"
+	set esol_control($id,cmd) [list ::brlcad::mged db adjust \
+	    $esol_control($id,name)]
 
 	set type [lindex $vals 0]
 	set vals [lrange $vals 1 end]

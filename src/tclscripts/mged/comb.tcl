@@ -161,7 +161,7 @@
 # We use the Labeledframe from Iwidgets
 package require Iwidgets
 
-check_externs "get_comb put_comb"
+check_externs "::brlcad::mged"
 
 # this routine displays "which_frame" ("Bool" or "Shade") and forgets the other
 proc toggle_bool_shade_frame { id which_frame } {
@@ -195,7 +195,7 @@ proc init_comb { id } {
     global comb_control
     global ::tk::Priv
 
-    if {[opendb] == ""} {
+    if {[::brlcad::mged opendb] == ""} {
 	cad_dialog $::tk::Priv(cad_dialog) $mged_gui($id,screen) "No database." \
 	    "No database has been opened!" info 0 OK
 	return
@@ -205,7 +205,7 @@ proc init_comb { id } {
     set top .$id.comb
 
     # get default values for ident, air, los, and material
-    set defaults [regdef]
+    set defaults [::brlcad::mged regdef]
     set default_ident [lindex $defaults 1]
     set default_air [lindex $defaults 3]
     set default_los [lindex $defaults 5]
@@ -910,7 +910,8 @@ proc comb_apply { id } {
 
     # if someone has edited the combination name, take care about
     # overwriting an existing object
-    if {$comb_control($id,dirty_name) && [exists $comb_control($id,name)]} {
+    if {$comb_control($id,dirty_name) &&
+	[::brlcad::mged exists $comb_control($id,name)]} {
 	set ret [cad_dialog $::tk::Priv(cad_dialog) $mged_gui($id,screen)\
 		     "Warning!"\
 		     "Warning: about to overwrite $comb_control($id,name)"\
@@ -965,10 +966,13 @@ proc comb_apply { id } {
     }
     
     # actually apply the edits to the combination on disk
-    set ret [catch {put_comb $comb_control($id,name) $color $comb_control($id,shader) \
-			$comb_control($id,inherit) $comb_control($id,comb) $comb_control($id,isRegion) \
-			$comb_control($id,id) $comb_control($id,air) $comb_control($id,material) $comb_control($id,los) \
-		    } comb_error]
+    set ret [catch {
+	::brlcad::mged put_comb $comb_control($id,name) $color \
+	    $comb_control($id,shader) $comb_control($id,inherit) \
+	    $comb_control($id,comb) $comb_control($id,isRegion) \
+	    $comb_control($id,id) $comb_control($id,air) \
+	    $comb_control($id,material) $comb_control($id,los)
+    } comb_error]
 
     if {$ret} {
 	cad_dialog $::tk::Priv(cad_dialog) $mged_gui($id,screen) \
@@ -978,7 +982,10 @@ proc comb_apply { id } {
     }
 
     # set any attributes we had saved
-    catch {eval attr set $comb_control($id,name) $comb_control($id,attrs) }
+    catch {
+	::brlcad::mged attr set $comb_control($id,name) \
+	    {*}$comb_control($id,attrs)
+    }
 
     return $ret
 }
@@ -1001,7 +1008,9 @@ proc comb_reset { id } {
 
     # get the combination data from disk
     set save_isRegion $comb_control($id,isRegion)
-    set result [catch {get_comb $comb_control($id,name)} comb_defs]
+    set result [catch {
+	::brlcad::mged get_comb $comb_control($id,name)
+    } comb_defs]
     if {$result == 1} {
 	cad_dialog $::tk::Priv(cad_dialog) $mged_gui($id,screen)\
 	    "comb_reset: Error"\
@@ -1011,7 +1020,9 @@ proc comb_reset { id } {
     }
 
     # get the attributes
-    set result [catch {attr get $comb_control($id,name)} comb_attrs]
+    set result [catch {
+	::brlcad::mged attr get $comb_control($id,name)
+    } comb_attrs]
     if { $result == 1 } {
 	cad_dialog $::tk::Priv(cad_dialog) $mged_gui($id,screen)\
 	    "comb_reset: Error"\
@@ -1064,7 +1075,7 @@ proc comb_reset { id } {
     if {$comb_control($id,isRegion) == "Yes"} {
 	if {$result == 2} {
 	    # get default values for ident, air, los, and material
-	    set defaults [regdef]
+	    set defaults [::brlcad::mged regdef]
 	    set comb_control($id,id) [lindex $defaults 1]
 	    set comb_control($id,air) [lindex $defaults 3]
 	    set comb_control($id,material) [lindex $defaults 7]
