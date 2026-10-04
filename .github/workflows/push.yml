@@ -384,7 +384,7 @@ jobs:
   osx:
     name: macOS Clang
     needs: [linux]
-    runs-on: macos-14
+    runs-on: macos-15
     strategy:
       fail-fast: true
     steps:
@@ -403,7 +403,7 @@ jobs:
       - name: Prepare bext dependencies
         uses: ./brlcad/.github/actions/prepare-bext
         with:
-          platform-channel: macos-14-${{ runner.arch }}-release
+          platform-channel: macos-15-${{ runner.arch }}-release
           source-dir: ${{ github.workspace }}/brlcad
           output-dir: ${{ runner.temp }}/bext_output
           build-type: Release

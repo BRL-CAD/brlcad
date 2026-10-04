@@ -177,7 +177,7 @@ jobs:
   osx_bext:
     name: macOS - BRL-CAD bext build
     needs: [linux_bext]
-    runs-on: macos-14
+    runs-on: macos-15
     strategy:
       fail-fast: true
     if: ${{ !cancelled() }}
