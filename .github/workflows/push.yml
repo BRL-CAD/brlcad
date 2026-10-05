@@ -444,3 +444,45 @@ jobs:
           export PATH=$GITHUB_WORKSPACE:$PATH
           make package
         working-directory: ${{ github.workspace }}/build_osx
+
+  # BRL-CAD's STABLE branch is intended to represent the most recent
+  # SHA1 that has successfully passed our primary tests on our CI
+  # platforms.  This job is intended to execute that update if the
+  # prior tasks succeed.  It's "needs" section should contain every
+  # test that is not already the dependency of another tests.
+# sync-stable-branch:
+#   name: Sync STABLE branch
+#   runs-on: ubuntu-latest
+#   needs: [archives, componentbext, windows_std_tools, osx]
+#   # This job should only run on a successful push to the main branch
+#   if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+#   steps:
+#     # 1. Generate a short-lived token using the GitHub App
+#     - name: Generate GitHub App Token
+#       id: generate_token
+#       uses: tibdex/github-app-token@v2
+#       with:
+#         app_id: ${{ secrets.STABLESYNC_APP_ID }}
+#         private_key: ${{ secrets.STABLESYNC_APP_PRIVATE_KEY }}
+
+#     # 2. Checkout the repository using the App Token
+#     - name: Checkout Code
+#       uses: actions/checkout@v4
+#       with:
+#         token: ${{ steps.generate_token.outputs.token }}
+#         fetch-depth: 0 # Fetches all history to safely move branches
+
+#     # 3. Securely update and push the STABLE branch pointer
+#     - name: Update STABLE Branch Pointer
+#       run: |
+#         # Configure Git to identify as the GitHub Actions bot
+#         git config --global user.name "github-actions[bot]"
+#         git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+#         echo "Updating STABLE branch to point to the latest successfully CI tested main SHA: ${{ github.sha }}"
+
+#         # Force the local STABLE branch to point directly to the current main SHA
+#         git branch -f STABLE ${{ github.sha }}
+
+#         # Push the updated stable branch reference securely back to origin
+#         git push origin STABLE --force
