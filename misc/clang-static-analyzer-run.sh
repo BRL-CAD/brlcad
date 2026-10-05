@@ -7,14 +7,25 @@
 set -e
 set -o pipefail
 
-# Note: we set these variables to tell the ccc-analyzer script which compilers
-# to use, but it is not always enough - when some of the sub-builds are
-# triggered, they do not seem to inherit these settings and revert to the
-# default compiler.  The only way so far to avoid this issue reliably seems to
-# be to edit the ccc-analyzer script to use the compiler we want as the default
-# compiler.
-export CCC_CC=clang
-export CCC_CXX=clang++
+# CLANG_VERSION should be set by User or CI environments to avoid hard-coding
+# a particular version into the script
+if [ -z "$CLANG_VERSION" ]; then
+    echo "Error: CLANG_VERSION environment variable is not set." >&2
+    exit 1
+fi
+
+# Derive tool paths from the version
+SCAN_BUILD_DIR="/usr/share/clang/scan-build-${CLANG_VERSION}"
+SCAN_BUILD_BIN="${SCAN_BUILD_DIR}/bin"
+SCAN_BUILD_LIBEXEC="${SCAN_BUILD_DIR}/libexec"
+CLANG_ANALYZER_BIN="/usr/bin/clang-${CLANG_VERSION}"
+
+# Add scan-build to the PATH
+export PATH="${SCAN_BUILD_BIN}:${SCAN_BUILD_LIBEXEC}:${PATH}"
+
+# Set compilers for the analyzer scripts
+export CCC_CC="clang-${CLANG_VERSION}"
+export CCC_CXX="clang++-${CLANG_VERSION}"
 
 # This appears to be a workable way to enable the new Z3 static analyzer
 # support, but at least as of 2017-12 it greatly slows the testing (by orders
@@ -45,19 +56,24 @@ fi
 
 # Encapsulate the logic to do a scan build
 function runtest {
-	echo "$1"
-	scan-build --use-analyzer=/usr/bin/$CCC_CC -o ./scan-reports-$1 make -j12 $1
-	if [ "$(ls -A ./scan-reports-$1)" ]; then
-		report_cnt=$(ls -l ./scan-reports-$1/*/report* | wc -l)
-		failure=$(($failure + $report_cnt))
-	else
-		rm -rf ./scan-reports-$1
-	fi
+    echo "$1"
+    scan-build --use-analyzer="${CLANG_ANALYZER_BIN}" -o "./scan-reports-$1" make -j12 "$1"
+    if [ -d "./scan-reports-$1" ] && [ -n "$(ls -A "./scan-reports-$1")" ]; then
+        report_cnt=$(find "./scan-reports-$1" -name 'report-*.html' | wc -l)
+        failure=$((failure + report_cnt))
+    else
+        rm -rf "./scan-reports-$1"
+    fi
 }
 
-# configure using the correct compiler and values.  We don't
-# need this report, so clear it after configure is done
-scan-build --use-analyzer=/usr/bin/$CCC_CC -o ./scan-reports-config cmake .. -DBRLCAD_EXTRADOCS=OFF -DBRLCAD_ENABLE_QT=ON -DBRLCAD_LTO_MODE=OFF -DBRLCAD_EXT_DIR="$bext_dir" -DCMAKE_C_COMPILER=ccc-analyzer -DCMAKE_CXX_COMPILER=c++-analyzer
+# Configure using the correct compiler and values.
+scan-build --use-analyzer="${CLANG_ANALYZER_BIN}" -o ./scan-reports-config cmake .. \
+    -DBRLCAD_EXTRADOCS=OFF \
+    -DBRLCAD_ENABLE_QT=ON \
+    -DBRLCAD_LTO_MODE=OFF \
+    -DBRLCAD_EXT_DIR="$bext_dir" \
+    -DCMAKE_C_COMPILER=ccc-analyzer \
+    -DCMAKE_CXX_COMPILER=c++-analyzer
 
 # clear out any old reports
 rm -rfv ./scan-reports-*

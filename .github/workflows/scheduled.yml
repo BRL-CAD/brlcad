@@ -15,15 +15,17 @@ on:
     - cron: '0 3 * * 0' # Sundays at 03:00 UTC
   workflow_dispatch:
 
+env:
+  DEBIAN_FRONTEND: noninteractive
+  CLANG_VERSION: 18
+
 jobs:
 
   linux_bext:
     name: Linux - BRL-CAD bext build
-    runs-on: ubuntu-latest
+    runs-on: &ubuntu_runner ubuntu-24.04
     strategy:
       fail-fast: true
-    env:
-      DEBIAN_FRONTEND: noninteractive
     steps:
       - name: Setup - CMake
         uses: lukka/get-cmake@latest
@@ -224,11 +226,9 @@ jobs:
   linux_static:
     name: Clang Static Analyser
     needs: [linux_bext]
-    runs-on: ubuntu-24.04
+    runs-on: *ubuntu_runner
     strategy:
       fail-fast: true
-    env:
-      DEBIAN_FRONTEND: noninteractive
     if: ${{ !cancelled() && (github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch') }}
     steps:
       - name: Setup - CMake
@@ -238,19 +238,19 @@ jobs:
       - name: Clang Static Analyzer Setup
         run: |
           sudo apt-get update
-          sudo apt-get install clang-18 clang-tools-18
+          sudo apt-get install -y clang-${{ env.CLANG_VERSION }} clang-tools-${{ env.CLANG_VERSION }}
           # Install X/OpenGL dev pkgs
-          sudo apt-get install xserver-xorg-dev libx11-dev libxi-dev libxext-dev libglu1-mesa-dev libfontconfig-dev
+          sudo apt-get install -y xserver-xorg-dev libx11-dev libxi-dev libxext-dev libglu1-mesa-dev libfontconfig-dev
           # Install tools
-          sudo apt-get install astyle re2c xsltproc libxml2-utils
+          sudo apt-get install -y astyle re2c xsltproc libxml2-utils
           # Install dependency dev pkgs
-          sudo apt-get install zlib1g-dev libpng-dev libjpeg-dev libtiff-dev libeigen3-dev libgdal-dev libassimp-dev libopencv-dev tcl-dev tk-dev
+          sudo apt-get install -y zlib1g-dev libpng-dev libjpeg-dev libtiff-dev libeigen3-dev libgdal-dev libassimp-dev libopencv-dev tcl-dev tk-dev
           # Install XCB/OpenGL dev pkgs for Qt - see:
           # https://wiki.qt.io/Building_Qt_6_from_Git
           # https://doc.qt.io/qt-6/linux-requirements.html
-          sudo apt-get install libfontconfig1-dev libfreetype6-dev libx11-dev libx11-xcb-dev libxext-dev libxfixes-dev libxi-dev libxrender-dev libxcb1-dev libxcb-cursor-dev libxcb-glx0-dev libxcb-keysyms1-dev libxcb-image0-dev libxcb-shm0-dev libxcb-icccm4-dev libxcb-sync-dev libxcb-xfixes0-dev libxcb-shape0-dev libxcb-randr0-dev libxcb-render-util0-dev libxcb-util-dev libxcb-xinerama0-dev libxcb-xkb-dev libxcb-xinput-dev libxcb-xrm-dev libxkbcommon-dev libxkbcommon-x11-dev
-          sudo apt-get install libgl-dev
-          sudo apt-get install libinput-dev          # Cleanup
+          sudo apt-get install -y libfontconfig1-dev libfreetype6-dev libx11-dev libx11-xcb-dev libxext-dev libxfixes-dev libxi-dev libxrender-dev libxcb1-dev libxcb-cursor-dev libxcb-glx0-dev libxcb-keysyms1-dev libxcb-image0-dev libxcb-shm0-dev libxcb-icccm4-dev libxcb-sync-dev libxcb-xfixes0-dev libxcb-shape0-dev libxcb-randr0-dev libxcb-render-util0-dev libxcb-util-dev libxcb-xinerama0-dev libxcb-xkb-dev libxcb-xinput-dev libxcb-xrm-dev libxkbcommon-dev libxkbcommon-x11-dev
+          sudo apt-get install -y libgl-dev
+          sudo apt-get install -y libinput-dev
 
       - name: Checkout
         uses: actions/checkout@v6
@@ -277,7 +277,7 @@ jobs:
         env:
           BRLCAD_EXT_DIR: ${{ runner.temp }}/bext_output
         run: |
-          export PATH=$GITHUB_WORKSPACE:/usr/share/clang/scan-build-18/bin:/usr/share/clang/scan-build-18/libexec:$PATH
+          # The script will now receive the version number and find the tools itself
           cp $GITHUB_WORKSPACE/brlcad/misc/clang-static-analyzer-run.sh .
           ./clang-static-analyzer-run.sh
         working-directory: ${{ github.workspace }}/brlcad/build_clangstatic
@@ -294,11 +294,9 @@ jobs:
   linux_cov:
     name: LCOV Coverage testing
     needs: [linux_bext]
-    runs-on: ubuntu-24.04
+    runs-on: *ubuntu_runner
     strategy:
       fail-fast: true
-    env:
-      DEBIAN_FRONTEND: noninteractive
     if: ${{ !cancelled() && (github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch') }}
     steps:
       - name: Setup - CMake
