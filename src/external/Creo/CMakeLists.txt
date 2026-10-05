@@ -46,7 +46,7 @@ set(CREO2BRL_LEGACY_SOURCES
 
 set(CREO2BRL_CORE_SOURCES
   core.cpp
-  conversion.cpp
+  conversion/request_convert.cpp
   conversion/mesh_convert.cpp
   conversion/name_allocator.cpp
   conversion/profile_reader.cpp

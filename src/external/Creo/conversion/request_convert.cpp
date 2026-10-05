@@ -1,5 +1,5 @@
 /**
- *                C O N V E R S I O N . C P P
+ *       R E Q U E S T _ C O N V E R T . C P P
  * BRL-CAD
  *
  * Copyright (c) 2026 United States Government as represented by
@@ -10,7 +10,7 @@
  * version 2.1 as published by the Free Software Foundation.
  */
 /**
- * @file conversion.cpp
+ * @file conversion/request_convert.cpp
  *
  * Toolkit-free conversion request validation for the runtime core.
  */
