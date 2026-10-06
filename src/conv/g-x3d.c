@@ -506,16 +506,33 @@ main(int argc, char **argv)
 }
 
 
-void
-process_non_light(struct model *m, struct bu_list *vlfree) {
-    /* static due to bu exception handling */
-    static struct shell *s;
-    static struct shell *next_s;
-    static struct faceuse *fu;
-    static struct faceuse *next_fu;
-    static struct loopuse *lu;
-    static struct nmgregion *reg;
-    static int shell_is_dead;
+static int
+triangulate_face(struct faceuse *fu, struct bu_list *vlfree)
+{
+    int status;
+
+    /* Keep longjmp out of the traversal frame so its iterators remain valid. */
+    if (BU_SETJUMP) {
+	BU_UNSETJUMP;
+	bu_log("A face has failed triangulation!\n");
+	return -1;
+    }
+
+    status = nmg_triangulate_fu(fu, vlfree, &tol);
+    BU_UNSETJUMP;
+    return status;
+}
+
+
+static void
+process_non_light(struct model *m, struct bu_list *vlfree)
+{
+    struct shell *s;
+    struct shell *next_s;
+    struct faceuse *fu;
+    struct faceuse *next_fu;
+    struct loopuse *lu;
+    struct nmgregion *reg;
 
     /* triangulate any faceuses with holes */
     for (BU_LIST_FOR(reg, nmgregion, &m->r_hd)) {
@@ -526,7 +543,7 @@ process_non_light(struct model *m, struct bu_list *vlfree) {
 	    next_s = BU_LIST_PNEXT(shell, &s->l);
 	    fu = BU_LIST_FIRST(faceuse, &s->fu_hd);
 	    while (BU_LIST_NOT_HEAD(&fu->l, &s->fu_hd)) {
-		shell_is_dead=0;
+		int shell_is_dead = 0;
 
 		NMG_CK_FACEUSE(fu);
 
@@ -547,28 +564,14 @@ process_non_light(struct model *m, struct bu_list *vlfree) {
 		for (BU_LIST_FOR(lu, loopuse, &fu->lu_hd)) {
 		    NMG_CK_LOOPUSE(lu);
 		    if (lu->orientation == OT_OPPOSITE) {
-			/* this is a hole, so
-			 * triangulate the faceuse
-			 */
-			if (!BU_SETJUMP) {
-			    /* try */
-			    if (nmg_triangulate_fu(fu, vlfree, &tol)) {
-				if (nmg_kfu(fu)) {
-				    (void) nmg_ks(s);
-				    shell_is_dead = 1;
-
-				}
-			    }
-			} else {
-			    /* catch */
-			    bu_log("A face has failed triangulation!\n");
+			if (triangulate_face(fu, vlfree)) {
 			    if (next_fu == fu->fumate_p)
 				next_fu = BU_LIST_PNEXT(faceuse, &next_fu->l);
 			    if (nmg_kfu(fu)) {
 				(void) nmg_ks(s);
 				shell_is_dead = 1;
 			    }
-			} BU_UNSETJUMP;
+			}
 			break;
 		    }
 
@@ -922,48 +925,32 @@ do_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union
 }
 
 
-static union tree *
-process_boolean(union tree *curtree, struct db_tree_state *tsp, const struct db_full_path *pathp, struct bu_list *vlfree)
+static int
+process_boolean(union tree *curtree, struct db_tree_state *tsp, struct bu_list *vlfree, union tree **result)
 {
-    static union tree *ret_tree = TREE_NULL;
+    /* The caller owns the result and cleanup; neither crosses a longjmp. */
+    *result = TREE_NULL;
+    if (BU_SETJUMP) {
+	BU_UNSETJUMP;
+	return -1;
+    }
 
-    /* Begin bomb protection */
-    if (!BU_SETJUMP) {
-	/* try */
+    *result = nmg_booltree_evaluate(curtree, vlfree, tsp->ts_tol);
+    BU_UNSETJUMP;
+    return 0;
+}
 
-	ret_tree = nmg_booltree_evaluate(curtree, vlfree, tsp->ts_tol);
 
-    } else {
-	/* catch */
-	char *name = db_path_to_string(pathp);
-
-	/* Error, bail out */
-	bu_log("conversion of %s FAILED!\n", name);
-
-	/* Sometimes the NMG library adds debugging bits when
-	 * it detects an internal error, before before bombing out.
-	 */
-	nmg_debug = NMG_debug;	/* restore mode */
-
-	/* Release any intersector 2d tables */
-	nmg_isect2d_final_cleanup();
-
-	/* Release the tree memory & input regions */
-	db_free_tree(curtree);		/* Does an nmg_kr() */
-
-	/* Get rid of (m)any other intermediate structures */
-	if ((*tsp->ts_m)->magic == NMG_MODEL_MAGIC) {
-	    nmg_km(*tsp->ts_m);
-	} else {
-	    bu_log("WARNING: tsp->ts_m pointer corrupted, ignoring it.\n");
-	}
-
-	bu_free(name, "db_path_to_string");
-	/* Now, make a new, clean model structure for next pass. */
-	*tsp->ts_m = nmg_mm();
-    } BU_UNSETJUMP;		/* Relinquish the protection */
-
-    return ret_tree;
+static union tree *
+release_region_tree(union tree *curtree)
+{
+    /* db_walk_tree treats TREE_NULL as an error.  Return an empty tree after
+     * releasing the region so a handled failure does not abort the walk. */
+    db_free_tree(curtree);
+    BU_ALLOC(curtree, union tree);
+    RT_TREE_INIT(curtree);
+    curtree->tr_op = OP_NOP;
+    return curtree;
 }
 
 
@@ -995,14 +982,27 @@ nmg_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, unio
 
     regions_tried++;
 
-    ret_tree = process_boolean(curtree, tsp, pathp, vlfree);
+    if (process_boolean(curtree, tsp, vlfree, &ret_tree)) {
+	bu_log("conversion of %s FAILED!\n", name);
+	bu_free(name, "db_path_to_string");
+
+	/* NMG can enable debugging while reporting an internal error. */
+	nmg_debug = NMG_debug;
+	nmg_isect2d_final_cleanup();
+	curtree = release_region_tree(curtree);
+	if ((*tsp->ts_m)->magic == NMG_MODEL_MAGIC)
+	    nmg_km(*tsp->ts_m);
+	else
+	    bu_log("WARNING: tsp->ts_m pointer corrupted, ignoring it.\n");
+	*tsp->ts_m = nmg_mm();
+	return curtree;
+    }
 
     if (ret_tree)
 	r = ret_tree->tr_d.td_r;
     else
 	r = (struct nmgregion *)NULL;
 
-    bu_free(name, "db_path_to_string");
     regions_converted++;
     if (r != (struct nmgregion *)NULL)
     {
@@ -1047,20 +1047,10 @@ nmg_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, unio
     }
     else
 	bu_log("WARNING: Nothing left after Boolean evaluation of %s\n",
-	       db_path_to_string(pathp));
+	       name);
 
-    /*
-     * Dispose of original tree, so that all associated dynamic
-     * memory is released now, not at the end of all regions.
-     * A return of TREE_NULL from this routine signals an error,
-     * so we need to cons up an OP_NOP node to return.
-     */
-    db_free_tree(curtree);		/* Does an nmg_kr() */
-
-    BU_ALLOC(curtree, union tree);
-    RT_TREE_INIT(curtree);
-    curtree->tr_op = OP_NOP;
-    return curtree;
+    bu_free(name, "db_path_to_string");
+    return release_region_tree(curtree);
 }
 
 
