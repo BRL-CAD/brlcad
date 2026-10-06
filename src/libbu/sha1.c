@@ -50,16 +50,16 @@
 
 /* Hash a single 512-bit block. This is the core of the algorithm. */
 
-void SHA1Transform(uint32_t state[5], const unsigned char buffer[64])
+void SHA1Transform(uint32_t state[5], const unsigned char buffer[SHA1_BLOCK_SIZE])
 {
     uint32_t a, b, c, d, e;
     typedef union {
-	unsigned char c[64];
+	unsigned char c[SHA1_BLOCK_SIZE];
 	uint32_t l[16];
     } CHAR64LONG16;
 #ifdef SHA1HANDSOFF
     CHAR64LONG16 block[1];  /* use array to appear as a pointer */
-    memcpy(block, buffer, 64);
+    memcpy(block, buffer, sizeof(block));
 #else
     /* The following had better never be used because it causes the
      * pointer-to-const buffer to be cast into a pointer to non-const.
@@ -154,22 +154,26 @@ void SHA1Update(SHA1_CTX* context, const unsigned char* data, uint32_t len)
 
 void SHA1Final(unsigned char digest[20], SHA1_CTX* context)
 {
-    unsigned i;
+    static const unsigned char padding[SHA1_BLOCK_SIZE] = {0x80};
     unsigned char finalcount[8];
-    unsigned char c;
+    const uint32_t block_size = (uint32_t)sizeof(context->buffer);
+    const uint32_t length_offset = block_size - (uint32_t)sizeof(finalcount);
+    uint32_t buffer_used;
+    uint32_t padding_length;
+    unsigned i;
 
     for (i = 0; i < 8; i++) {
 	finalcount[i] = (unsigned char)((context->count[(i >= 4 ? 0 : 1)]
 					 >> ((3-(i & 3)) * 8) ) & 255);  /* Endian independent */
     }
 
-    c = 0200;
-    SHA1Update(context, &c, 1);
-    while ((context->count[0] & 504) != 448) {
-	c = 0000;
-	SHA1Update(context, &c, 1);
-    }
-    SHA1Update(context, finalcount, 8);  /* Should cause a SHA1Transform() */
+    buffer_used = (context->count[0] >> 3) & (block_size - 1);
+    if (buffer_used < length_offset)
+	padding_length = length_offset - buffer_used;
+    else
+	padding_length = block_size + length_offset - buffer_used;
+    SHA1Update(context, padding, padding_length);
+    SHA1Update(context, finalcount, (uint32_t)sizeof(finalcount));
     for (i = 0; i < 20; i++) {
 	digest[i] = (unsigned char)
 	    ((context->state[i>>2] >> ((3-(i & 3)) * 8) ) & 255);
