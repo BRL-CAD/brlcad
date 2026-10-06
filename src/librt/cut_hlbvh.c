@@ -111,7 +111,7 @@ hlbvh_init_pool(size_t n_primatives) {
 }
 
 /* utility functions */
-static inline uint32_t left_shift3(uint32_t x)
+static uint32_t left_shift3(uint32_t x)
 {
     BU_ASSERT(x <= (1 << 10));
     if (x == (1 << 10)) --x;
@@ -299,7 +299,7 @@ maximum_extent(const fastf_t b[6])
 	return 2;
 }
 
-static inline int
+static int
 pred(const struct bvh_build_node *node, fastf_t *centroid_bounds,
 	uint8_t dim, long min_cost_split_bucket)
 {

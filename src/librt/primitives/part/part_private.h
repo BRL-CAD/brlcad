@@ -33,7 +33,7 @@
 #define PART_SPHERE_HEIGHT_RATIO 0.001
 #define PART_CYLINDER_RADIUS_RATIO 0.001
 
-static inline int
+static int
 part_update_type(struct rt_part_internal *part)
 {
     if (!part || !isfinite(part->part_vrad) ||

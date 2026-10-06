@@ -517,7 +517,7 @@ rt_metaball_vshot(struct soltab *stp[], struct xray *rp[], struct seg *segp, int
 }
 
 
-inline void
+static void
 rt_metaball_norm_internal(vect_t *n, point_t *p, struct rt_metaball_internal *mb)
 {
     struct wdb_metaball_pnt *mbpt;

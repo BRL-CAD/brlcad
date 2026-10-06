@@ -730,7 +730,7 @@ bot_makesegs_specific(hit_da *hits,
 /* r_min can describe a spatial partition cell that begins inside this
  * solid.  Start BVH traversal just before the ray enters the BoT's own
  * root box so entrance triangles behind the ray origin remain visible. */
-static inline void
+static void
 bot_backed_origin(point_t b_pt, const struct xray *rp, const struct bvh_flat_node *root,
                   const vect_t inv_dir, const struct soltab *stp)
 {
