@@ -337,7 +337,7 @@ main(int ac, char *av[])
     unsigned char ground_rgb[3];
     unsigned char light_rgb[3];
 
-    double pitch_r[MAX_GEARS];
+    double pitch_r[MAX_GEARS] = {0.0};
     double center_x[MAX_GEARS];
     double total_span;
     double max_outer;
