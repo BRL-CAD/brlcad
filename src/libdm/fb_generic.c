@@ -114,8 +114,8 @@ struct fb *
 fb_open_existing(const char *file, int width, int height, struct fb_platform_specific *fb_p)
 {
     struct fb *ifp;
-    ifp = (struct fb *)calloc(sizeof(struct fb), 1);
-    ifp->i = (struct fb_impl *) calloc(sizeof(struct fb_impl), 1);
+    ifp = (struct fb *)calloc(1, sizeof(struct fb));
+    ifp->i = (struct fb_impl *) calloc(1, sizeof(struct fb_impl));
     fb_set_interface(ifp, file);
     fb_set_magic(ifp, FB_MAGIC);
     fb_setup_existing(ifp, width, height, fb_p);

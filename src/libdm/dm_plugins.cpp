@@ -422,12 +422,12 @@ fb_open(const char *file, int width, int height)
     if (width < 0 || height < 0)
         return FB_NULL;
 
-    ifp = (struct fb *)calloc(sizeof(struct fb), 1);
+    ifp = (struct fb *)calloc(1, sizeof(struct fb));
     if (ifp == FB_NULL) {
         Malloc_Bomb(sizeof(struct fb));
         return FB_NULL;
     }
-    ifp->i = (struct fb_impl *)calloc(sizeof(struct fb_impl), 1);
+    ifp->i = (struct fb_impl *)calloc(1, sizeof(struct fb_impl));
     if (file == NULL || *file == '\0') {
         /* No name given, check environment variable first.     */
 	file = (const char *)getenv("FB_FILE");
