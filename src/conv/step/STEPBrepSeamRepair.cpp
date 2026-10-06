@@ -5545,8 +5545,8 @@ repair_ambiguous_singular_periodic_loop_branches(ON_Brep *brep,
 	    std::vector<int> affected_positions;
 	    affected_positions.reserve(arc_positions.size() + 2);
 	    affected_positions.push_back(first_position);
-	    affected_positions.insert(affected_positions.end(),
-		arc_positions.begin(), arc_positions.end());
+	    for (const int position : arc_positions)
+		affected_positions.push_back(position);
 	    affected_positions.push_back(second_position);
 
 	    for (int shift_sign = -1; shift_sign <= 1 && !repaired;
