@@ -56,7 +56,7 @@ main(int ac, char *av[])
     double sum = 0.0;
     double sum2 = 0.0;
     double min = DBL_MAX;
-    double max = DBL_MIN;
+    double max = -DBL_MAX;
     double mean, var;
     FILE *fp;
 
