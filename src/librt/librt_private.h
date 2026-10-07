@@ -126,6 +126,10 @@ struct rt_i_internal {
     size_t              rti_cutlen;             /**< @brief  goal for # solids per boxnode */
     size_t              rti_cutdepth;           /**< @brief  goal for depth of NUBSPT cut tree */
 
+    /* Per-instance BREP prep experiment.  Production initializes this to the
+     * legacy default; tests may lower it before any solids are prepared. */
+    int                 rti_brep_surface_tree_depth;
+
     /* Per-type solid tables (filled during prep) */
     struct soltab **    rti_sol_by_type[ID_MAX_SOLID+1];
     size_t              rti_nsol_by_type[ID_MAX_SOLID+1];
@@ -465,6 +469,7 @@ RT_EXPORT extern int rt_bot_shot_specific(
 /* Allocation-free BREP surface-tree traversal capacity. */
 #define RT_BREP_MAX_LEAVES 128
 #define RT_BREP_MAX_HITS 128
+#define RT_BREP_DEFAULT_SURFACE_TREE_DEPTH 8
 
 /* Fixed-capacity BREP shot observations for in-librt correctness tests.
  * Solver status indices match the private brep_solver_status_t order in
@@ -475,6 +480,7 @@ RT_EXPORT extern int rt_bot_shot_specific(
 #define RT_BREP_TRACE_MAX_SURFACE_BOXES 64
 #define RT_BREP_TRACE_MAX_FOLD_ROOTS 64
 #define RT_BREP_TRACE_MAX_LOCAL_ROOTS 64
+#define RT_BREP_TRACE_MAX_SINGULAR_SPANS 64
 #define RT_BREP_TRACE_MAX_LOCAL_CLUSTERS 64
 #define RT_BREP_TRACE_MAX_PHYSICAL_EVENTS 64
 #define RT_BREP_TRACE_MAX_LOCAL_SEGMENTS 8
@@ -498,6 +504,8 @@ RT_EXPORT extern int rt_bot_shot_specific(
 #define RT_BREP_TRACE_BOX_RESOLVED_REGULAR 1
 #define RT_BREP_TRACE_BOX_RESOLVED_BOUNDARY 2
 #define RT_BREP_TRACE_BOX_RESOLVED_CONTACT 3
+#define RT_BREP_TRACE_BOX_RESOLVED_REGULAR_PAIR 4
+#define RT_BREP_TRACE_BOX_RESOLVED_REGULAR_STREAM 5
 #define RT_BREP_TRACE_EVENT_REGULAR_INTERIOR 1
 #define RT_BREP_TRACE_EVENT_BOUNDARY_FOLD 2
 #define RT_BREP_TRACE_EVENT_SEAM_EXISTING 3
@@ -506,11 +514,13 @@ RT_EXPORT extern int rt_bot_shot_specific(
 #define RT_BREP_TRACE_EVENT_MANIFOLD_EDGE 6
 #define RT_BREP_TRACE_EVENT_SEAM_CONTACT_EXISTING 7
 #define RT_BREP_TRACE_EVENT_SEAM_CONTACT_CONTINUATION 8
+#define RT_BREP_TRACE_EVENT_SINGULAR_POLE 9
 #define RT_BREP_TRACE_EVENT_SOURCE_LOCAL_ROOT 1
 #define RT_BREP_TRACE_EVENT_SOURCE_FOLD_ROOT 2
 #define RT_BREP_TRACE_EVENT_SOURCE_SEAM_CONTINUATION 3
 #define RT_BREP_TRACE_EVENT_SOURCE_VERTEX_FAN 4
 #define RT_BREP_TRACE_EVENT_SOURCE_MANIFOLD_EDGE 5
+#define RT_BREP_TRACE_EVENT_SOURCE_SINGULAR_POLE 6
 /* Seam-gap and fold-gap values classify separate trace fields. */
 #define RT_BREP_SEAM_GAP_UNAVAILABLE 0
 #define RT_BREP_SEAM_GAP_INSIDE 1
@@ -642,11 +652,27 @@ struct rt_brep_trace_local_root {
     int direction;
 };
 
+struct rt_brep_trace_singular_span {
+    fastf_t dist;
+    fastf_t t_min;
+    fastf_t t_max;
+    fastf_t uv[2];
+    fastf_t normal[3];
+    fastf_t line_distance;
+    fastf_t boundary_residual;
+    int face_index;
+    int span_index;
+    int side;
+    int determinant_sign;
+    int direction;
+};
+
 struct rt_brep_trace_physical_event {
     fastf_t dist;
     fastf_t t_min;
     fastf_t t_max;
     fastf_t uv[2];
+    fastf_t normal[3];
     size_t source_box;
     size_t source_box_count;
     size_t source_root;
@@ -864,8 +890,47 @@ struct rt_brep_shot_trace {
     size_t local_trim_failures;
     struct rt_brep_trace_local_root
 	local_roots[RT_BREP_TRACE_MAX_LOCAL_ROOTS];
+    size_t surface_singular_attempts;
+    size_t surface_singular_line_candidates;
+    size_t surface_singular_collapsed_sides;
+    size_t surface_singular_deflated_exclusions;
+    size_t surface_singular_determinant_signed;
+    size_t surface_singular_resolved_spans;
+    size_t surface_singular_span_failures;
+    size_t stored_surface_singular_spans;
+    size_t surface_singular_span_overflow;
+    size_t surface_singular_expansion_high_water;
+    fastf_t surface_singular_max_line_distance;
+    fastf_t surface_singular_max_boundary_residual;
+    struct rt_brep_trace_singular_span
+	surface_singular_spans[RT_BREP_TRACE_MAX_SINGULAR_SPANS];
     size_t physical_event_attempts;
     size_t physical_event_regular;
+    size_t physical_event_regular_component_attempts;
+    size_t physical_event_regular_component_certified;
+    size_t physical_event_regular_component_boxes;
+    size_t physical_event_regular_component_roots;
+    int physical_event_regular_component_failure_stage;
+    size_t physical_event_regular_pair_attempts;
+    size_t physical_event_regular_pair_certified;
+    size_t physical_event_regular_pair_boxes;
+    size_t physical_event_regular_pair_roots;
+    size_t physical_event_regular_pair_complement_visited;
+    size_t physical_event_regular_pair_complement_high_water;
+    int physical_event_regular_pair_failure_stage;
+    size_t physical_event_regular_stream_attempts;
+    size_t physical_event_regular_stream_certified;
+    size_t physical_event_regular_stream_components;
+    size_t physical_event_regular_stream_boxes;
+    size_t physical_event_regular_stream_roots;
+    int physical_event_regular_stream_failure_stage;
+    size_t physical_event_singular_attempts;
+    size_t physical_event_singular_candidates;
+    size_t physical_event_singular_certified;
+    size_t physical_event_singular_failures;
+    size_t physical_event_singular_owned_spans;
+    size_t physical_event_singular_normal_checks;
+    size_t physical_event_singular_normal_mismatches;
     size_t physical_event_boundary;
     size_t physical_event_seam;
     size_t physical_event_seam_attempts;
@@ -920,6 +985,16 @@ struct rt_brep_shot_trace {
     size_t physical_event_edge_candidates;
     size_t physical_event_edge_certified;
     size_t physical_event_edge_failures;
+    int physical_event_edge_candidate_failure_stage;
+    size_t physical_event_edge_lift_witnesses;
+    size_t physical_event_edge_tolerance_transitions;
+    size_t physical_event_edge_joint_attempts;
+    size_t physical_event_edge_joint_components;
+    size_t physical_event_edge_joint_boxes;
+    size_t physical_event_edge_joint_roots;
+    size_t physical_event_edge_joint_complement_visited;
+    size_t physical_event_edge_joint_complement_high_water;
+    int physical_event_edge_joint_failure_stage;
     size_t physical_event_edge_owned_boxes;
     size_t physical_event_edge_owned_roots;
     size_t physical_event_clean_outside;
@@ -1121,6 +1196,18 @@ struct rt_brep_local_root_test_result {
     fastf_t image_maximum[2];
 };
 
+struct rt_brep_prep_stats {
+    /* Adaptive depth after mandatory closed-seam and knot decomposition. */
+    int surface_tree_depth_limit;
+    /* Physical depth including both structural and adaptive levels. */
+    int surface_tree_maximum_depth;
+    size_t surface_tree_nodes;
+    size_t surface_tree_leaves;
+    size_t curve_trees;
+    size_t curve_tree_leaves;
+    size_t surface_tree_build_microseconds;
+};
+
 #define RT_BREP_SOURCE_UNION_TEST_ROOT 1
 #define RT_BREP_SOURCE_UNION_TEST_CANDIDATE 2
 
@@ -1249,6 +1336,10 @@ RT_EXPORT extern int _rt_brep_surface_local_root_test(
     const fastf_t ray_direction[3], int face_index, int span_index,
     const fastf_t uv[2], fastf_t maximum_radius,
     struct rt_brep_local_root_test_result *result);
+RT_EXPORT extern int _rt_brep_set_surface_tree_depth(
+    struct rt_i *rtip, int depth_limit);
+RT_EXPORT extern int _rt_brep_prep_stats(
+    const struct soltab *stp, struct rt_brep_prep_stats *result);
 RT_EXPORT extern int _rt_brep_local_root_tube_test(
     fastf_t image_displacement, fastf_t edge_distance,
     fastf_t trim_distance, fastf_t tolerance, fastf_t roundoff,

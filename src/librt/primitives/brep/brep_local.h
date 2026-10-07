@@ -92,6 +92,7 @@ struct brep_surface_span {
     ON_Interval surface_domain[2];
     int face_index = -1;
     int span_index = -1;
+    unsigned int singular_side_mask = 0;
 };
 
 
@@ -100,6 +101,7 @@ struct brep_face_record {
     size_t span_count = 0;
     int face_index = -1;
     int nurb_form_status = 0;
+    bool status2_revolution_singular_map = false;
     bool supported = false;
 };
 
@@ -142,6 +144,12 @@ struct brep_specific {
     std::vector<brep_face_record> face_records;
     std::vector<brep_surface_span> surface_spans;
     std::vector<brep_vertex_record> vertex_records;
+    int surface_tree_depth_limit = 0;
+    int surface_tree_maximum_depth = 0;
+    size_t surface_tree_nodes = 0;
+    size_t surface_tree_leaves = 0;
+    size_t curve_tree_leaves = 0;
+    size_t surface_tree_build_microseconds = 0;
     int is_solid = 0;
     int plate_mode = 0;
     int plate_mode_nocos = 0;
