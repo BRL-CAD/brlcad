@@ -506,6 +506,8 @@ RT_EXPORT extern int rt_bot_shot_specific(
 #define RT_BREP_TRACE_BOX_RESOLVED_CONTACT 3
 #define RT_BREP_TRACE_BOX_RESOLVED_REGULAR_PAIR 4
 #define RT_BREP_TRACE_BOX_RESOLVED_REGULAR_STREAM 5
+#define RT_BREP_TRACE_BOX_RESOLVED_PERIODIC_SELF_SEAM 6
+#define RT_BREP_TRACE_BOX_RESOLVED_REPARAMETERIZED_REGULAR 7
 #define RT_BREP_TRACE_EVENT_REGULAR_INTERIOR 1
 #define RT_BREP_TRACE_EVENT_BOUNDARY_FOLD 2
 #define RT_BREP_TRACE_EVENT_SEAM_EXISTING 3
@@ -516,6 +518,8 @@ RT_EXPORT extern int rt_bot_shot_specific(
 #define RT_BREP_TRACE_EVENT_SEAM_CONTACT_CONTINUATION 8
 #define RT_BREP_TRACE_EVENT_SINGULAR_POLE 9
 #define RT_BREP_TRACE_EVENT_REGULAR_NEAR_TRIM 10
+#define RT_BREP_TRACE_EVENT_PERIODIC_SELF_SEAM 11
+#define RT_BREP_TRACE_EVENT_REPARAMETERIZED_REGULAR 12
 #define RT_BREP_TRACE_EVENT_SOURCE_LOCAL_ROOT 1
 #define RT_BREP_TRACE_EVENT_SOURCE_FOLD_ROOT 2
 #define RT_BREP_TRACE_EVENT_SOURCE_SEAM_CONTINUATION 3
@@ -765,6 +769,9 @@ struct rt_brep_shot_trace {
     size_t surface_coefficient_expansion_available;
     size_t surface_coefficient_expansion_failures;
     size_t surface_coefficient_expansion_avoided;
+    size_t surface_expansion_restriction_attempts;
+    size_t surface_expansion_restriction_available;
+    size_t surface_expansion_endpoint_restrictions;
     size_t surface_subdivision_boxes;
     size_t surface_rotated_hull_attempts;
     size_t surface_rotated_hull_exclusions;
@@ -798,6 +805,7 @@ struct rt_brep_shot_trace {
     size_t surface_regular_orientation_signed;
     size_t surface_regular_orientation_uncertain;
     size_t surface_regular_orientation_failures;
+    size_t surface_fold_certificates_deferred;
     size_t surface_fold_attempts;
     size_t surface_fold_candidates;
     size_t surface_fold_krawczyk_attempts;
@@ -834,6 +842,7 @@ struct rt_brep_shot_trace {
     size_t surface_fold_corridor_graph_interval_excluded;
     size_t surface_fold_corridor_graph_interval_contractions;
     size_t surface_fold_corridor_graph_exact_fallbacks;
+    size_t surface_fold_corridor_graph_parent_restrictions;
     size_t surface_fold_interval_contract_attempts;
     size_t surface_fold_interval_contractions;
     size_t surface_fold_interval_exclusions;
@@ -946,6 +955,19 @@ struct rt_brep_shot_trace {
     size_t physical_event_regular_stream_boxes;
     size_t physical_event_regular_stream_roots;
     int physical_event_regular_stream_failure_stage;
+    size_t physical_event_periodic_self_seam_attempts;
+    size_t physical_event_periodic_self_seam_certified;
+    size_t physical_event_periodic_self_seam_failures;
+    size_t physical_event_periodic_self_seam_boxes;
+    size_t physical_event_periodic_self_seam_roots;
+    size_t physical_event_periodic_self_seam_fold_roots;
+    int physical_event_periodic_self_seam_failure_stage;
+    size_t physical_event_reparameterized_regular_attempts;
+    size_t physical_event_reparameterized_regular_certified;
+    size_t physical_event_reparameterized_regular_failures;
+    size_t physical_event_reparameterized_regular_boxes;
+    size_t physical_event_reparameterized_regular_roots;
+    int physical_event_reparameterized_regular_failure_stage;
     size_t physical_event_singular_attempts;
     size_t physical_event_singular_candidates;
     size_t physical_event_singular_certified;
@@ -992,6 +1014,8 @@ struct rt_brep_shot_trace {
     size_t physical_event_seam_source_union_certified;
     size_t physical_event_seam_source_union_boxes;
     size_t physical_event_seam_source_union_root_boxes;
+    size_t physical_event_seam_tight_source_attempts;
+    size_t physical_event_seam_tight_source_certified;
     size_t prepared_vertex_records;
     size_t supported_vertex_records;
     size_t physical_event_vertex;
