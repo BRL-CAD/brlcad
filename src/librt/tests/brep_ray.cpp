@@ -390,6 +390,48 @@ shoot_solid(struct soltab *stp, struct rt_i *rtip, struct resource *resp,
 }
 
 
+static ray_result
+shoot_brep_legacy(struct soltab *stp, struct rt_i *rtip,
+    struct resource *resp, const point_t origin, const vect_t direction)
+{
+    ray_result result;
+    struct application ap;
+    struct seg seghead;
+
+    RT_APPLICATION_INIT(&ap);
+    ap.a_rt_i = rtip;
+    ap.a_resource = resp;
+    ap.a_onehit = 0;
+    VMOVE(ap.a_ray.r_pt, origin);
+    VMOVE(ap.a_ray.r_dir, direction);
+    VUNITIZE(ap.a_ray.r_dir);
+    ap.a_ray.magic = RT_RAY_MAGIC;
+    BU_LIST_INIT(&seghead.l);
+
+    result.shot_hits = _rt_brep_shot_legacy(stp, &ap.a_ray, &ap, &seghead);
+    struct seg *segp;
+    for (BU_LIST_FOR(segp, seg, &seghead.l)) {
+	result.segments++;
+	if (result.segments != 1)
+	    continue;
+	result.in_dist = segp->seg_in.hit_dist;
+	result.out_dist = segp->seg_out.hit_dist;
+	struct hit in = segp->seg_in;
+	struct hit out = segp->seg_out;
+	rt_obj_norm(&in, stp, &ap.a_ray);
+	rt_obj_norm(&out, stp, &ap.a_ray);
+	VMOVE(result.in_normal, in.hit_normal);
+	VMOVE(result.out_normal, out.hit_normal);
+    }
+
+    while (BU_LIST_WHILE(segp, seg, &seghead.l)) {
+	BU_LIST_DEQUEUE(&segp->l);
+	RT_FREE_SEG(segp, resp);
+    }
+    return result;
+}
+
+
 static int
 shoot_brep_trace(struct soltab *stp, struct rt_i *rtip,
     struct resource *resp, const sampled_ray &ray,
@@ -420,6 +462,20 @@ static bool
 brep_trace_fixed_workspaces_match(const struct rt_brep_shot_trace &trace)
 {
     return !trace.fixed_leaf_overflow &&
+	trace.prepared_production_attempts == 1 &&
+	trace.prepared_production_eligible ==
+	    trace.prepared_production_selected &&
+	trace.prepared_production_eligible <= 1 &&
+	trace.prepared_production_fallback >=
+	    RT_BREP_PREPARED_FALLBACK_NONE &&
+	trace.prepared_production_fallback < RT_BREP_PREPARED_FALLBACK_COUNT &&
+	((trace.prepared_production_selected &&
+	  trace.prepared_production_fallback ==
+	    RT_BREP_PREPARED_FALLBACK_NONE &&
+	  trace.prepared_production_hits % 2 == 0) ||
+	 (!trace.prepared_production_selected &&
+	  trace.prepared_production_fallback !=
+	    RT_BREP_PREPARED_FALLBACK_NONE)) &&
 	!trace.fixed_leaf_fallback &&
 	trace.fixed_leaf_count == trace.fixed_leaf_stored &&
 	trace.fixed_leaf_count == trace.intersected_leaves &&
@@ -441,7 +497,29 @@ brep_trace_fixed_workspaces_match(const struct rt_brep_shot_trace &trace)
 	trace.trim_status_mismatches == 0 &&
 	trace.trim_closest_mismatches == 0 &&
 	trace.trim_distance_mismatches == 0 &&
-	trace.trim_equivalence_mismatches == 0;
+	trace.trim_equivalence_mismatches == 0 &&
+	trace.face_trim_queries == trace.trim_queries &&
+	trace.face_trim_status_mismatches == 0 &&
+	trace.face_trim_hit_class_mismatches == 0 &&
+	trace.face_trim_adjacency_mismatches == 0 &&
+	trace.face_trim_equivalence_mismatches == 0 &&
+	trace.local_trim_failures == 0 &&
+	trace.local_trim_queries + trace.local_trim_failures ==
+	    trace.stored_local_roots &&
+	trace.local_event_failures == 0 &&
+	trace.local_event_overflow == 0 &&
+	trace.local_candidate_failures == 0 &&
+	trace.local_candidate_overflow == 0 &&
+	trace.local_event_segment_overflow == 0 &&
+	trace.local_event_final_segments ==
+	    trace.local_event_stored_segments &&
+	trace.legacy_unique_roots == trace.legacy_unique_roots_matched +
+	    trace.legacy_unique_roots_unmatched &&
+	trace.local_unique_roots == trace.local_unique_roots_matched +
+	    trace.local_unique_roots_unmatched &&
+	trace.matched_root_events == trace.legacy_unique_roots_matched &&
+	trace.matched_root_events == trace.local_unique_roots_matched &&
+	trace.root_event_mismatches <= trace.matched_root_events;
 }
 
 
@@ -545,6 +623,309 @@ brep_trace_box_covers_both(const struct rt_brep_shot_trace &trace,
 	    return true;
     }
     return false;
+}
+
+
+static void
+brep_trace_root_coverage_diagnostic(const char *label,
+    const struct rt_brep_shot_trace &trace)
+{
+    if (!trace.legacy_unique_roots_unmatched &&
+	    !trace.local_unique_roots_unmatched &&
+	    !trace.root_event_mismatches)
+	return;
+    std::printf("Root coverage diagnostic %s: legacy=%zu/%zu/%zu "
+	"local=%zu/%zu/%zu clusters=%zu segments=%zu\n", label,
+	trace.legacy_unique_roots, trace.legacy_unique_roots_matched,
+	trace.legacy_unique_roots_unmatched, trace.local_unique_roots,
+	trace.local_unique_roots_matched, trace.local_unique_roots_unmatched,
+	trace.stored_local_clusters, trace.final_segments);
+    for (size_t root_index = 0; root_index < trace.stored_roots;
+	    ++root_index) {
+	const struct rt_brep_trace_root &root = trace.roots[root_index];
+	std::printf("  legacy %zu face=%d t=%.17g uv=%.17g/%.17g "
+	    "normal=%.17g class=%d trim=%d distance=%.17g adj=%d "
+	    "direction=%d\n", root_index,
+	    root.face_index, root.dist, root.uv[0], root.uv[1],
+	    root.normal_dot, root.hit_class, root.trim_status,
+	    root.trim_distance, root.adjacent_face_index, root.direction);
+    }
+    for (size_t root_index = 0;
+	    root_index < trace.stored_local_roots; ++root_index) {
+	const struct rt_brep_trace_local_root &root =
+	    trace.local_roots[root_index];
+	std::printf("  local %zu face=%d span=%d t=%.17g "
+	    "uv=%.17g/%.17g residual=%.17g normal=%.17g class=%d "
+	    "trim=%d distance=%.17g adj=%d direction=%d\n",
+	    root_index, root.face_index, root.span_index, root.dist,
+	    root.uv[0], root.uv[1], root.residual, root.normal_dot,
+	    root.hit_class, root.trim_status, root.trim_distance,
+	    root.adjacent_face_index, root.direction);
+    }
+}
+
+
+struct brep_root_event_summary {
+    size_t matched = 0;
+    size_t mismatched = 0;
+    size_t trim_status_mismatches = 0;
+    size_t hit_class_mismatches = 0;
+    size_t direction_mismatches = 0;
+    size_t adjacency_mismatches = 0;
+    size_t local_trim_queries = 0;
+    size_t local_trim_candidates = 0;
+    size_t face_trim_queries = 0;
+    size_t face_trim_candidates = 0;
+    size_t face_trim_mismatches = 0;
+    size_t local_event_groups = 0;
+    size_t local_event_contacts = 0;
+    size_t local_event_clean_misses = 0;
+    size_t local_candidate_hits = 0;
+    size_t local_candidate_failures = 0;
+    size_t local_candidate_overflow = 0;
+    size_t local_candidate_stage_mismatches = 0;
+    size_t local_candidate_semantic_stage_mismatches = 0;
+    size_t local_candidate_semantic_stage[RT_BREP_TRACE_CLEANUP_STAGES] = {};
+    size_t local_candidate_hit_mismatches = 0;
+    size_t local_event_hits = 0;
+    size_t local_event_failures = 0;
+    size_t local_event_overflow = 0;
+    size_t local_event_stage_mismatches = 0;
+    size_t local_event_hit_mismatches = 0;
+    size_t local_event_count_mismatches = 0;
+    size_t local_event_t_mismatches = 0;
+    size_t local_event_face_mismatches = 0;
+    size_t local_event_trim_mismatches = 0;
+    size_t local_event_edge_mismatches = 0;
+    size_t local_event_class_mismatches = 0;
+    size_t local_event_direction_mismatches = 0;
+    size_t local_event_adjacency_mismatches = 0;
+    size_t local_event_repaired = 0;
+    size_t local_event_final_segments = 0;
+    size_t local_event_final_mismatches = 0;
+    size_t surface_isolated_boxes = 0;
+    size_t surface_corrector_attempts = 0;
+    size_t surface_corrector_converged = 0;
+    size_t surface_krawczyk_boxes = 0;
+    size_t surface_krawczyk_min_depth = 0;
+    size_t surface_krawczyk_max_depth = 0;
+    size_t surface_subdivision_boxes = 0;
+    size_t surface_subdivision_max_boxes = 0;
+    size_t surface_clip_attempts = 0;
+    size_t surface_clip_contractions = 0;
+    size_t surface_clip_inconclusive = 0;
+    size_t surface_clip_restriction_failures = 0;
+    size_t prepared_production_attempts = 0;
+    size_t prepared_production_eligible = 0;
+    size_t prepared_production_selected = 0;
+    size_t prepared_production_fallback[RT_BREP_PREPARED_FALLBACK_COUNT] = {};
+    double surface_clip_max_fraction_removed = 0.0;
+    double maximum_t_error = 0.0;
+    double maximum_uv_error = 0.0;
+    double maximum_trim_error = 0.0;
+    double maximum_normal_dot_error = 0.0;
+    double maximum_face_trim_error = 0.0;
+    double minimum_surface_isolated_t_width = 0.0;
+    double maximum_surface_isolated_t_width = 0.0;
+};
+
+
+static void
+brep_accumulate_root_events(brep_root_event_summary &summary,
+    const struct rt_brep_shot_trace &trace)
+{
+    summary.matched += trace.matched_root_events;
+    summary.mismatched += trace.root_event_mismatches;
+    summary.trim_status_mismatches += trace.root_trim_status_mismatches;
+    summary.hit_class_mismatches += trace.root_hit_class_mismatches;
+    summary.direction_mismatches += trace.root_direction_mismatches;
+    summary.adjacency_mismatches += trace.root_adjacency_mismatches;
+    summary.local_trim_queries += trace.local_trim_queries;
+    summary.local_trim_candidates += trace.local_trim_candidates;
+    summary.face_trim_queries += trace.face_trim_queries;
+    summary.face_trim_candidates += trace.face_trim_candidates;
+    summary.face_trim_mismatches +=
+	trace.face_trim_equivalence_mismatches;
+    summary.local_event_groups += trace.local_event_groups;
+    summary.local_event_contacts += trace.local_event_contacts;
+    summary.local_event_clean_misses += trace.local_event_clean_misses;
+    summary.local_candidate_hits += trace.local_candidate_hits;
+    summary.local_candidate_failures += trace.local_candidate_failures;
+    summary.local_candidate_overflow += trace.local_candidate_overflow;
+    summary.local_candidate_stage_mismatches +=
+	trace.local_candidate_stage_mismatches;
+    summary.local_candidate_semantic_stage_mismatches +=
+	trace.local_candidate_semantic_stage_mismatches;
+    for (size_t stage_index = 0;
+	    stage_index < RT_BREP_TRACE_CLEANUP_STAGES; ++stage_index)
+	summary.local_candidate_semantic_stage[stage_index] +=
+	    trace.local_candidate_semantic_stage[stage_index];
+    summary.local_candidate_hit_mismatches +=
+	trace.local_candidate_hit_mismatches;
+    summary.local_event_hits += trace.local_event_hits;
+    summary.local_event_failures += trace.local_event_failures;
+    summary.local_event_overflow += trace.local_event_overflow;
+    summary.local_event_stage_mismatches +=
+	trace.local_event_stage_mismatches;
+    summary.local_event_hit_mismatches += trace.local_event_hit_mismatches;
+    summary.local_event_count_mismatches +=
+	trace.local_event_count_mismatches;
+    summary.local_event_t_mismatches += trace.local_event_t_mismatches;
+    summary.local_event_face_mismatches += trace.local_event_face_mismatches;
+    summary.local_event_trim_mismatches += trace.local_event_trim_mismatches;
+    summary.local_event_edge_mismatches += trace.local_event_edge_mismatches;
+    summary.local_event_class_mismatches += trace.local_event_class_mismatches;
+    summary.local_event_direction_mismatches +=
+	trace.local_event_direction_mismatches;
+    summary.local_event_adjacency_mismatches +=
+	trace.local_event_adjacency_mismatches;
+    summary.local_event_repaired += trace.local_event_repaired;
+    summary.local_event_final_segments += trace.local_event_final_segments;
+    summary.local_event_final_mismatches +=
+	trace.local_event_final_mismatches;
+    summary.surface_corrector_attempts += trace.surface_corrector_attempts;
+    summary.surface_corrector_converged += trace.surface_corrector_converged;
+    if (trace.surface_krawczyk_boxes) {
+	if (!summary.surface_krawczyk_boxes)
+	    summary.surface_krawczyk_min_depth =
+		trace.surface_krawczyk_min_depth;
+	else
+	    summary.surface_krawczyk_min_depth = std::min(
+		summary.surface_krawczyk_min_depth,
+		trace.surface_krawczyk_min_depth);
+	summary.surface_krawczyk_boxes += trace.surface_krawczyk_boxes;
+	summary.surface_krawczyk_max_depth = std::max(
+	    summary.surface_krawczyk_max_depth,
+	    trace.surface_krawczyk_max_depth);
+    }
+    summary.surface_subdivision_boxes += trace.surface_subdivision_boxes;
+    summary.surface_subdivision_max_boxes = std::max(
+	summary.surface_subdivision_max_boxes,
+	trace.surface_subdivision_boxes);
+    summary.surface_clip_attempts += trace.surface_clip_attempts;
+    summary.surface_clip_contractions += trace.surface_clip_contractions;
+    summary.surface_clip_inconclusive += trace.surface_clip_inconclusive;
+    summary.surface_clip_restriction_failures +=
+	trace.surface_clip_restriction_failures;
+    summary.prepared_production_attempts +=
+	trace.prepared_production_attempts;
+    summary.prepared_production_eligible +=
+	trace.prepared_production_eligible;
+    summary.prepared_production_selected +=
+	trace.prepared_production_selected;
+    if (trace.prepared_production_fallback >=
+	    RT_BREP_PREPARED_FALLBACK_NONE &&
+	    trace.prepared_production_fallback <
+	    RT_BREP_PREPARED_FALLBACK_COUNT)
+	summary.prepared_production_fallback
+	    [trace.prepared_production_fallback]++;
+    summary.surface_clip_max_fraction_removed = std::max(
+	summary.surface_clip_max_fraction_removed,
+	(double)trace.surface_clip_max_fraction_removed);
+    summary.maximum_t_error = std::max(summary.maximum_t_error,
+	(double)trace.root_match_max_t_error);
+    summary.maximum_uv_error = std::max(summary.maximum_uv_error,
+	(double)trace.root_match_max_uv_error);
+    summary.maximum_trim_error = std::max(summary.maximum_trim_error,
+	(double)trace.root_match_max_trim_error);
+    summary.maximum_normal_dot_error = std::max(
+	summary.maximum_normal_dot_error,
+	(double)trace.root_match_max_normal_dot_error);
+    summary.maximum_face_trim_error = std::max(
+	summary.maximum_face_trim_error,
+	(double)trace.face_trim_max_near_distance_error);
+    if (trace.surface_isolated_boxes) {
+	if (!summary.surface_isolated_boxes)
+	    summary.minimum_surface_isolated_t_width =
+		trace.surface_isolated_min_t_width;
+	else
+	    summary.minimum_surface_isolated_t_width = std::min(
+		summary.minimum_surface_isolated_t_width,
+		(double)trace.surface_isolated_min_t_width);
+	summary.maximum_surface_isolated_t_width = std::max(
+	    summary.maximum_surface_isolated_t_width,
+	    (double)trace.surface_isolated_max_t_width);
+	summary.surface_isolated_boxes += trace.surface_isolated_boxes;
+    }
+}
+
+
+static void
+brep_print_prepared_event_summary(const char *label,
+	const brep_root_event_summary &summary)
+{
+    std::printf("%s prepared candidate cleanup: hits=%zu failures=%zu "
+	"overflow=%zu count-stage-differences=%zu "
+	"semantic-stage-differences=%zu[%zu/%zu/%zu/%zu/%zu] "
+	"cleaned-hit-differences=%zu\n", label,
+	summary.local_candidate_hits, summary.local_candidate_failures,
+	summary.local_candidate_overflow,
+	summary.local_candidate_stage_mismatches,
+	summary.local_candidate_semantic_stage_mismatches,
+	summary.local_candidate_semantic_stage[0],
+	summary.local_candidate_semantic_stage[1],
+	summary.local_candidate_semantic_stage[2],
+	summary.local_candidate_semantic_stage[3],
+	summary.local_candidate_semantic_stage[4],
+	summary.local_candidate_hit_mismatches);
+    std::printf("%s prepared physical cleanup: groups=%zu contacts=%zu "
+	"clean-misses=%zu hits=%zu failures=%zu overflow=%zu "
+	"count-stage-differences=%zu cleaned-hit-differences="
+	"%zu[%zu/%zu/%zu/%zu/%zu/%zu/%zu/%zu] repairs=%zu "
+	"segments=%zu partition-changes=%zu\n", label,
+	summary.local_event_groups, summary.local_event_contacts,
+	summary.local_event_clean_misses, summary.local_event_hits,
+	summary.local_event_failures, summary.local_event_overflow,
+	summary.local_event_stage_mismatches,
+	summary.local_event_hit_mismatches,
+	summary.local_event_count_mismatches,
+	summary.local_event_t_mismatches,
+	summary.local_event_face_mismatches,
+	summary.local_event_trim_mismatches,
+	summary.local_event_edge_mismatches,
+	summary.local_event_class_mismatches,
+	summary.local_event_direction_mismatches,
+	summary.local_event_adjacency_mismatches,
+	summary.local_event_repaired,
+	summary.local_event_final_segments,
+	summary.local_event_final_mismatches);
+    std::printf("%s prepared adaptive isolation: leaf-width=%.6g/%.6g "
+	"corrector=%zu/%zu krawczyk=%zu depth=%zu/%zu "
+	"subdivision=%zu/%zu clip=%zu/%zu/%zu+%zu/%.3g\n", label,
+	summary.minimum_surface_isolated_t_width,
+	summary.maximum_surface_isolated_t_width,
+	summary.surface_corrector_converged,
+	summary.surface_corrector_attempts,
+	summary.surface_krawczyk_boxes,
+	summary.surface_krawczyk_min_depth,
+	summary.surface_krawczyk_max_depth,
+	summary.surface_subdivision_boxes,
+	summary.surface_subdivision_max_boxes,
+	summary.surface_clip_contractions,
+	summary.surface_clip_attempts,
+	summary.surface_clip_inconclusive,
+	summary.surface_clip_restriction_failures,
+	summary.surface_clip_max_fraction_removed);
+    std::printf("%s prepared production: selected=%zu/%zu/%zu "
+	"fallback=none:%zu non-solid:%zu plate:%zu unsupported:%zu "
+	"surface-work:%zu boxes:%zu uncertified:%zu local-work:%zu "
+	"coverage:%zu event:%zu hit-build:%zu hit-work:%zu partition:%zu\n",
+	label, summary.prepared_production_selected,
+	summary.prepared_production_eligible,
+	summary.prepared_production_attempts,
+	summary.prepared_production_fallback[0],
+	summary.prepared_production_fallback[1],
+	summary.prepared_production_fallback[2],
+	summary.prepared_production_fallback[3],
+	summary.prepared_production_fallback[4],
+	summary.prepared_production_fallback[5],
+	summary.prepared_production_fallback[6],
+	summary.prepared_production_fallback[7],
+	summary.prepared_production_fallback[8],
+	summary.prepared_production_fallback[9],
+	summary.prepared_production_fallback[10],
+	summary.prepared_production_fallback[11],
+	summary.prepared_production_fallback[12]);
 }
 
 
@@ -697,6 +1078,12 @@ check_grazing_ratchet(struct soltab *implicit_stp, struct soltab *brep_stp,
     size_t subtolerance_local_invalid = 0;
     double maximum_local_endpoint_error = 0.0;
     size_t outside_local_candidates = 0;
+    size_t outside_local_invalid = 0;
+    size_t legacy_roots_without_local = 0;
+    size_t invalid_legacy_roots_without_local = 0;
+    size_t outside_legacy_only_contacts = 0;
+    size_t local_roots_without_legacy = 0;
+    brep_root_event_summary root_events;
     double largest_outside_local_candidate = 0.0;
     vect_t direction = {1.0, 0.0, 0.0};
     const std::vector<double> clearances = grazing_clearances(radius,
@@ -740,6 +1127,16 @@ check_grazing_ratchet(struct soltab *implicit_stp, struct soltab *brep_stp,
 	    trace.local_root_failures);
 	maximum_local_duplicates = std::max(maximum_local_duplicates,
 	    trace.local_root_duplicates);
+	legacy_roots_without_local += trace.legacy_unique_roots_unmatched;
+	invalid_legacy_roots_without_local +=
+	    trace.legacy_unique_roots_unmatched;
+	local_roots_without_legacy += trace.local_unique_roots_unmatched;
+	brep_accumulate_root_events(root_events, trace);
+	if (trace.legacy_unique_roots_unmatched) {
+	    std::printf("Inside root coverage h/T=%.17g\n",
+		h / rtip->rti_tol.dist);
+	    brep_trace_root_coverage_diagnostic("inside", trace);
+	}
 	const double expected_in = 2.0 * radius - analytic_chord * 0.5;
 	const double expected_out = 2.0 * radius + analytic_chord * 0.5;
 	const bool roots_covered = brep_trace_covers_t(trace, expected_in,
@@ -815,6 +1212,9 @@ check_grazing_ratchet(struct soltab *implicit_stp, struct soltab *brep_stp,
 		trace.candidate_surface_spans + trace.excluded_surface_spans !=
 		trace.prepared_surface_spans || trace.surface_workspace_exhausted ||
 		trace.surface_box_overflow ||
+		trace.surface_clip_restriction_failures ||
+		trace.surface_clip_max_fraction_removed >
+		0.5 + 64.0 * DBL_EPSILON ||
 		trace.local_root_overflow ||
 		trace.local_cluster_overflow ||
 		trace.local_root_candidates != trace.stored_local_roots ||
@@ -823,16 +1223,24 @@ check_grazing_ratchet(struct soltab *implicit_stp, struct soltab *brep_stp,
 		trace.local_root_failures + trace.local_root_duplicates ||
 		trace.surface_isolated_boxes != trace.stored_surface_boxes ||
 		trace.final_segments != (size_t)brep_result.segments ||
+		(analytic_chord >= rtip->rti_tol.dist &&
+		 (trace.prepared_production_selected ||
+		  trace.prepared_production_fallback !=
+		    RT_BREP_PREPARED_FALLBACK_UNCERTIFIED)) ||
 		(analytic_chord >= rtip->rti_tol.dist && !roots_covered) ||
 		(analytic_chord >= 10.0 * rtip->rti_tol.dist &&
 		!roots_separated)) {
 	    std::printf("FAIL: grazing isolation h/R=%.17g spans=%zu/%zu "
-		"boxes=%zu/%zu workspace=%zu+%zu covered=%d separated=%d\n",
+		"boxes=%zu/%zu workspace=%zu+%zu clip=%zu/%zu/%zu/%.3g "
+		"covered=%d separated=%d\n",
 		h / radius, trace.candidate_surface_spans,
 		trace.prepared_surface_spans, trace.surface_subdivision_boxes,
 		trace.surface_isolated_boxes,
 		trace.surface_workspace_high_water,
-		trace.surface_workspace_exhausted, roots_covered,
+		trace.surface_workspace_exhausted,
+		trace.surface_clip_contractions, trace.surface_clip_attempts,
+		trace.surface_clip_restriction_failures,
+		trace.surface_clip_max_fraction_removed, roots_covered,
 		roots_separated);
 	    failures++;
 	}
@@ -924,6 +1332,14 @@ check_grazing_ratchet(struct soltab *implicit_stp, struct soltab *brep_stp,
     struct rt_brep_shot_trace tangent_trace;
     (void)shoot_brep_trace(brep_stp, rtip, resp, tangent_trace_ray,
 	tangent_trace);
+    legacy_roots_without_local +=
+	tangent_trace.legacy_unique_roots_unmatched;
+    invalid_legacy_roots_without_local +=
+	tangent_trace.legacy_unique_roots_unmatched;
+    local_roots_without_legacy +=
+	tangent_trace.local_unique_roots_unmatched;
+    brep_accumulate_root_events(root_events, tangent_trace);
+    brep_trace_root_coverage_diagnostic("exact tangent", tangent_trace);
     maximum_fixed_leaves = std::max(maximum_fixed_leaves,
 	tangent_trace.fixed_leaf_count);
     maximum_fixed_hits = std::max(maximum_fixed_hits,
@@ -937,6 +1353,12 @@ check_grazing_ratchet(struct soltab *implicit_stp, struct soltab *brep_stp,
 	    !brep_trace_covers_t(tangent_trace, 2.0 * radius, 1.0e-7) ||
 	    tangent_trace.surface_workspace_exhausted ||
 	    tangent_trace.surface_box_overflow ||
+	    tangent_trace.surface_clip_restriction_failures ||
+	    tangent_trace.surface_clip_max_fraction_removed >
+	    0.5 + 64.0 * DBL_EPSILON ||
+	    tangent_trace.prepared_production_selected ||
+	    tangent_trace.prepared_production_fallback !=
+	    RT_BREP_PREPARED_FALLBACK_UNCERTIFIED ||
 	    tangent_trace.local_root_overflow ||
 	    tangent_trace.local_cluster_overflow ||
 	    tangent_trace.stored_local_clusters != 1 ||
@@ -981,12 +1403,44 @@ check_grazing_ratchet(struct soltab *implicit_stp, struct soltab *brep_stp,
 	VMOVE(trace_ray.direction, direction);
 	struct rt_brep_shot_trace trace;
 	(void)shoot_brep_trace(brep_stp, rtip, resp, trace_ray, trace);
+	legacy_roots_without_local += trace.legacy_unique_roots_unmatched;
+	local_roots_without_legacy += trace.local_unique_roots_unmatched;
+	if (trace.legacy_unique_roots_unmatched) {
+	    bool valid_legacy_contact =
+		-h <= 1.0e-6 * rtip->rti_tol.dist &&
+		trace.legacy_unique_roots == 1 &&
+		trace.legacy_unique_roots_unmatched == 1 &&
+		trace.local_unique_roots == 0 && trace.final_segments == 0;
+	    for (size_t root_index = 0; root_index < trace.stored_roots;
+		    ++root_index) {
+		const struct rt_brep_trace_root &root = trace.roots[root_index];
+		if (fabs(root.dist - 2.0 * radius) >
+			0.1 * rtip->rti_tol.dist ||
+			fabs(root.normal_dot) > BREP_GRAZING_DOT_TOL)
+		    valid_legacy_contact = false;
+	    }
+	    if (valid_legacy_contact) {
+		outside_legacy_only_contacts +=
+		    trace.legacy_unique_roots_unmatched;
+	    } else {
+		invalid_legacy_roots_without_local +=
+		    trace.legacy_unique_roots_unmatched;
+		std::printf("Outside invalid legacy-only root h/T=%.17g\n",
+		    h / rtip->rti_tol.dist);
+		brep_trace_root_coverage_diagnostic("outside legacy-only",
+		    trace);
+	    }
+	}
+	brep_accumulate_root_events(root_events, trace);
 	maximum_fixed_leaves = std::max(maximum_fixed_leaves,
 	    trace.fixed_leaf_count);
 	maximum_fixed_hits = std::max(maximum_fixed_hits,
 	    trace.fixed_hit_count);
 	if (!brep_trace_fixed_workspaces_match(trace) ||
 		trace.surface_workspace_exhausted || trace.surface_box_overflow ||
+		trace.surface_clip_restriction_failures ||
+		trace.surface_clip_max_fraction_removed >
+		0.5 + 64.0 * DBL_EPSILON ||
 		trace.local_root_overflow ||
 		trace.local_cluster_overflow ||
 		trace.local_root_clusters != trace.stored_local_clusters ||
@@ -1005,6 +1459,22 @@ check_grazing_ratchet(struct soltab *implicit_stp, struct soltab *brep_stp,
 	    outside_local_candidates += trace.local_root_candidates;
 	    largest_outside_local_candidate = std::max(
 		largest_outside_local_candidate, -h);
+	    bool valid_contact = trace.local_unique_roots == 1 &&
+		trace.stored_local_clusters == 1 &&
+		trace.local_clusters[0].classification ==
+		RT_BREP_TRACE_LOCAL_CONTACT && trace.final_segments == 0;
+	    for (size_t local_index = 0;
+		    local_index < trace.stored_local_roots; ++local_index) {
+		if (fabs(trace.local_roots[local_index].dist -
+			2.0 * radius) > 0.1 * rtip->rti_tol.dist)
+		    valid_contact = false;
+	    }
+	    if (!valid_contact) {
+		outside_local_invalid++;
+		std::printf("Outside root coverage h/T=%.17g\n",
+		    h / rtip->rti_tol.dist);
+		brep_trace_root_coverage_diagnostic("outside", trace);
+	    }
 	}
 	if (implicit_result.segments != 0 || brep_result.segments != 0) {
 	    std::printf("FAIL: outside grazing h/R=%.17g did not miss: "
@@ -1014,9 +1484,10 @@ check_grazing_ratchet(struct soltab *implicit_stp, struct soltab *brep_stp,
 	}
     }
     std::printf("Sphere grazing miss-side isolation: ambiguous=%zu "
-	"largest-h/T=%.9g local-candidates=%zu largest-local-h/T=%.9g\n",
+	"largest-h/T=%.9g local-candidates=%zu local-invalid=%zu "
+	"largest-local-h/T=%.9g\n",
 	outside_ambiguous, largest_outside_ambiguous / rtip->rti_tol.dist,
-	outside_local_candidates,
+	outside_local_candidates, outside_local_invalid,
 	largest_outside_local_candidate / rtip->rti_tol.dist);
     if (largest_outside_ambiguous > 1.0e-6 * rtip->rti_tol.dist) {
 	std::printf("FAIL: miss-side isolation ambiguity spread to h/T=%.17g\n",
@@ -1029,9 +1500,162 @@ check_grazing_ratchet(struct soltab *implicit_stp, struct soltab *brep_stp,
 	    largest_outside_local_candidate / rtip->rti_tol.dist);
 	failures++;
     }
+    if (outside_local_invalid) {
+	std::printf("FAIL: %zu miss-side local roots were not contact-only\n",
+	    outside_local_invalid);
+	failures++;
+    }
+
+    brep_root_event_summary interior_events;
+    const ON_3dVector interior_directions[] = {
+	ON_3dVector(0.371, 0.529, 0.763),
+	ON_3dVector(-0.613, 0.247, 0.751),
+	ON_3dVector(0.193, -0.881, 0.432)
+    };
+    for (size_t direction_index = 0; direction_index <
+	    sizeof(interior_directions) / sizeof(interior_directions[0]);
+	    ++direction_index) {
+	ON_3dVector ray_direction = interior_directions[direction_index];
+	ON_3dVector first = ON_CrossProduct(ray_direction,
+	    ON_3dVector(0.0, 0.0, 1.0));
+	if (!ray_direction.Unitize() || !first.Unitize()) {
+	    failures++;
+	    continue;
+	}
+	ON_3dVector second = ON_CrossProduct(ray_direction, first);
+	if (!second.Unitize()) {
+	    failures++;
+	    continue;
+	}
+	const ON_3dPoint closest = 0.31 * radius * first +
+	    0.17 * radius * second;
+	for (int reverse = 0; reverse <= 1; ++reverse) {
+	    const ON_3dVector direction_vector = reverse ?
+		-ray_direction : ray_direction;
+	    const ON_3dPoint ray_origin = closest +
+		(reverse ? 2.0 : -2.0) * radius * ray_direction;
+	    sampled_ray ray;
+	    VSET(ray.origin, ray_origin.x, ray_origin.y, ray_origin.z);
+	    VSET(ray.direction, direction_vector.x, direction_vector.y,
+		direction_vector.z);
+	    const ray_result implicit_result = shoot_solid(implicit_stp, rtip,
+		resp, ray.origin, ray.direction);
+	    const ray_result production_result = shoot_solid(brep_stp, rtip,
+		resp, ray.origin, ray.direction);
+	    const ray_result legacy_result = shoot_brep_legacy(brep_stp, rtip,
+		resp, ray.origin, ray.direction);
+	    struct rt_brep_shot_trace trace;
+	    (void)shoot_brep_trace(brep_stp, rtip, resp, ray, trace);
+	    brep_accumulate_root_events(interior_events, trace);
+	    const bool prepared_matches = implicit_result.segments == 1 &&
+		trace.local_event_final_segments == 1 &&
+		trace.local_event_stored_segments == 1 &&
+		fabs(trace.local_event_segment_in[0] -
+		implicit_result.in_dist) <= rtip->rti_tol.dist &&
+		fabs(trace.local_event_segment_out[0] -
+		implicit_result.out_dist) <= rtip->rti_tol.dist;
+	    if (!brep_trace_fixed_workspaces_match(trace) ||
+		production_result.segments != 1 ||
+		legacy_result.segments != 1 || !prepared_matches ||
+		fabs(production_result.in_dist - implicit_result.in_dist) >
+		rtip->rti_tol.dist ||
+		fabs(production_result.out_dist - implicit_result.out_dist) >
+		rtip->rti_tol.dist ||
+		fabs(legacy_result.in_dist - implicit_result.in_dist) >
+		rtip->rti_tol.dist ||
+		fabs(legacy_result.out_dist - implicit_result.out_dist) >
+		rtip->rti_tol.dist ||
+		trace.legacy_unique_roots_unmatched ||
+		trace.local_unique_roots_unmatched ||
+		trace.root_event_mismatches ||
+		trace.local_event_final_mismatches ||
+		trace.prepared_production_selected != 1 ||
+		trace.prepared_production_fallback !=
+		RT_BREP_PREPARED_FALLBACK_NONE ||
+		trace.surface_krawczyk_boxes != 2 ||
+		!trace.surface_clip_contractions ||
+		trace.surface_clip_restriction_failures ||
+		trace.surface_clip_max_fraction_removed >
+		0.5 + 64.0 * DBL_EPSILON ||
+		trace.surface_subdivision_max_depth >= 24 ||
+		trace.surface_subdivision_boxes > 80) {
+		std::printf("FAIL: oblique interior sphere ray %zu/%d "
+		    "implicit/production/legacy/prepared=%d/%d/%d/%zu "
+		    "roots=%zu/%zu "
+		    "events=%zu partitions=%zu krawczyk=%zu depth=%zu "
+		    "boxes=%zu\n", direction_index, reverse,
+		    implicit_result.segments, production_result.segments,
+		    legacy_result.segments,
+		    trace.local_event_final_segments,
+		    trace.legacy_unique_roots_unmatched,
+		    trace.local_unique_roots_unmatched,
+		    trace.root_event_mismatches,
+		    trace.local_event_final_mismatches,
+		    trace.surface_krawczyk_boxes,
+		    trace.surface_subdivision_max_depth,
+		    trace.surface_subdivision_boxes);
+		failures++;
+	    }
+	}
+    }
+    brep_print_prepared_event_summary("Sphere interior", interior_events);
     std::printf("Sphere fixed workspaces: leaves=%zu/%d raw-hits=%zu/%d\n",
 	maximum_fixed_leaves, RT_BREP_MAX_LEAVES, maximum_fixed_hits,
 	RT_BREP_MAX_HITS);
+    std::printf("Sphere prepared-span root coverage: "
+	"legacy-unmatched=%zu/%zu/%zu direct-only=%zu "
+	"events=%zu mismatched=%zu/%zu/%zu/%zu/%zu "
+	"max-errors=%.3g/%.3g/%.3g/%.3g trims=%zu/%zu "
+	"face-trims=%zu/%zu/%zu/%.3g\n", legacy_roots_without_local,
+	outside_legacy_only_contacts, invalid_legacy_roots_without_local,
+	local_roots_without_legacy, root_events.matched,
+	root_events.mismatched, root_events.trim_status_mismatches,
+	root_events.hit_class_mismatches, root_events.direction_mismatches,
+	root_events.adjacency_mismatches, root_events.maximum_t_error,
+	root_events.maximum_uv_error, root_events.maximum_trim_error,
+	root_events.maximum_normal_dot_error, root_events.local_trim_queries,
+	root_events.local_trim_candidates, root_events.face_trim_queries,
+	root_events.face_trim_candidates, root_events.face_trim_mismatches,
+	root_events.maximum_face_trim_error);
+    brep_print_prepared_event_summary("Sphere", root_events);
+    if (invalid_legacy_roots_without_local) {
+	std::printf("FAIL: prepared spans missed %zu valid legacy sphere roots\n",
+	    invalid_legacy_roots_without_local);
+	failures++;
+    }
+    if (root_events.mismatched) {
+	std::printf("FAIL: %zu matched sphere roots changed event class\n",
+	    root_events.mismatched);
+	failures++;
+    }
+    if (!root_events.surface_clip_contractions ||
+	    root_events.surface_clip_restriction_failures ||
+	    root_events.surface_clip_max_fraction_removed >
+	    0.5 + 64.0 * DBL_EPSILON) {
+	std::printf("FAIL: grazing clipping contractions=%zu attempts=%zu "
+	    "inconclusive=%zu restriction-failures=%zu max-removed=%.3g\n",
+	    root_events.surface_clip_contractions,
+	    root_events.surface_clip_attempts,
+	    root_events.surface_clip_inconclusive,
+	    root_events.surface_clip_restriction_failures,
+	    root_events.surface_clip_max_fraction_removed);
+	failures++;
+    }
+    if (root_events.surface_krawczyk_boxes) {
+	std::printf("FAIL: %zu grazing sphere boxes terminated adaptively\n",
+	    root_events.surface_krawczyk_boxes);
+	failures++;
+    }
+    if (root_events.local_event_failures ||
+	    root_events.local_event_overflow ||
+	    root_events.local_event_final_mismatches) {
+	std::printf("FAIL: prepared sphere event partitions failures=%zu "
+	    "overflow=%zu mismatches=%zu\n",
+	    root_events.local_event_failures,
+	    root_events.local_event_overflow,
+	    root_events.local_event_final_mismatches);
+	failures++;
+    }
 
     /* The implicit sphere rejects an outward ray beginning on its surface.
      * BREP currently returns the entirely nonpositive segment [-2R, 0].
@@ -2239,6 +2863,33 @@ partition_results_match(const partition_result &first,
 }
 
 
+static bool
+prepared_event_partitions_match(const struct rt_brep_shot_trace &trace,
+	const partition_result &oracle, double endpoint_tolerance,
+	double &maximum_endpoint_error)
+{
+    maximum_endpoint_error = 0.0;
+    if (oracle.overflow || trace.local_event_segment_overflow ||
+	    trace.local_event_final_segments != oracle.partitions ||
+	    trace.local_event_stored_segments != oracle.partitions) {
+	maximum_endpoint_error = INFINITY;
+	return false;
+    }
+    for (size_t segment_index = 0; segment_index < oracle.partitions;
+	    ++segment_index) {
+	const double in_error = fabs(
+	    trace.local_event_segment_in[segment_index] -
+	    oracle.intervals[segment_index].in_dist);
+	const double out_error = fabs(
+	    trace.local_event_segment_out[segment_index] -
+	    oracle.intervals[segment_index].out_dist);
+	maximum_endpoint_error = std::max(maximum_endpoint_error,
+	    std::max(in_error, out_error));
+    }
+    return maximum_endpoint_error <= endpoint_tolerance;
+}
+
+
 static sampled_ray
 cobb_seam_grazing_ray(const cobb_seam_frame &frame,
     const ON_3dPoint &origin, double radius, double clearance, bool reverse)
@@ -2330,6 +2981,38 @@ cobb_similarity_transform(double scale, const ON_3dVector &translation)
 }
 
 
+static ON_Xform
+cobb_axis_angle_similarity_transform(double scale,
+    const ON_3dVector &translation, ON_3dVector axis, double angle)
+{
+    ON_Xform xform(ON_Xform::IdentityTransformation);
+    if (!axis.Unitize())
+	return xform;
+    const double c = cos(angle);
+    const double s = sin(angle);
+    const double v = 1.0 - c;
+    const double rotation[3][3] = {
+	{axis.x * axis.x * v + c,
+	 axis.x * axis.y * v - axis.z * s,
+	 axis.x * axis.z * v + axis.y * s},
+	{axis.y * axis.x * v + axis.z * s,
+	 axis.y * axis.y * v + c,
+	 axis.y * axis.z * v - axis.x * s},
+	{axis.z * axis.x * v - axis.y * s,
+	 axis.z * axis.y * v + axis.x * s,
+	 axis.z * axis.z * v + c}
+    };
+    for (int row = 0; row < 3; ++row) {
+	for (int column = 0; column < 3; ++column)
+	    xform[row][column] = scale * rotation[row][column];
+    }
+    xform[0][3] = translation.x;
+    xform[1][3] = translation.y;
+    xform[2][3] = translation.z;
+    return xform;
+}
+
+
 static ON_3dPoint
 cobb_transform_point(const ON_Xform &xform, const ON_3dPoint &point)
 {
@@ -2353,6 +3036,1321 @@ cobb_transform_vector(const ON_Xform &xform, const ON_3dVector &vector)
 	xform[1][2] * vector.z,
 	xform[2][0] * vector.x + xform[2][1] * vector.y +
 	xform[2][2] * vector.z);
+}
+
+
+struct exact_dyadic {
+    int64_t mantissa;
+    int exponent;
+};
+
+
+static bool
+exact_dyadic_normalize(exact_dyadic &value)
+{
+    while (value.mantissa && !(value.mantissa % 2)) {
+	value.mantissa /= 2;
+	value.exponent++;
+    }
+    return true;
+}
+
+
+static bool
+exact_dyadic_scale_mantissa(int64_t mantissa, int shift, int64_t &result)
+{
+    if (shift < 0 || shift >= 63)
+	return false;
+    const int64_t factor = INT64_C(1) << shift;
+    if ((mantissa > 0 && mantissa > INT64_MAX / factor) ||
+	    (mantissa < 0 && mantissa < INT64_MIN / factor))
+	return false;
+    result = mantissa * factor;
+    return true;
+}
+
+
+static bool
+exact_dyadic_add(const exact_dyadic &first, const exact_dyadic &second,
+    exact_dyadic &result)
+{
+    const int exponent = std::min(first.exponent, second.exponent);
+    const int first_shift = first.exponent - exponent;
+    const int second_shift = second.exponent - exponent;
+    int64_t first_mantissa;
+    int64_t second_mantissa;
+    if (!exact_dyadic_scale_mantissa(first.mantissa, first_shift,
+	    first_mantissa) ||
+	    !exact_dyadic_scale_mantissa(second.mantissa, second_shift,
+		second_mantissa))
+	return false;
+    if ((second_mantissa > 0 &&
+	    first_mantissa > INT64_MAX - second_mantissa) ||
+	    (second_mantissa < 0 &&
+	    first_mantissa < INT64_MIN - second_mantissa))
+	return false;
+    result.mantissa = first_mantissa + second_mantissa;
+    result.exponent = exponent;
+    return exact_dyadic_normalize(result);
+}
+
+
+static bool
+exact_dyadic_multiply(const exact_dyadic &first,
+    const exact_dyadic &second, exact_dyadic &result)
+{
+    const int64_t a = first.mantissa;
+    const int64_t b = second.mantissa;
+    if ((a > 0 && b > 0 && a > INT64_MAX / b) ||
+	    (a > 0 && b < 0 && b < INT64_MIN / a) ||
+	    (a < 0 && b > 0 && a < INT64_MIN / b) ||
+	    (a < 0 && b < 0 && a < INT64_MAX / b))
+	return false;
+    result.mantissa = a * b;
+    result.exponent = first.exponent + second.exponent;
+    return exact_dyadic_normalize(result);
+}
+
+
+static bool
+exact_dyadic_subtract(const exact_dyadic &first,
+    const exact_dyadic &second, exact_dyadic &result)
+{
+    if (second.mantissa == INT64_MIN)
+	return false;
+    const exact_dyadic negative = {-second.mantissa, second.exponent};
+    return exact_dyadic_add(first, negative, result);
+}
+
+
+static bool
+exact_dyadic_divide(const exact_dyadic &numerator,
+    const exact_dyadic &denominator, exact_dyadic &result)
+{
+    exact_dyadic normalized_numerator = numerator;
+    exact_dyadic normalized_denominator = denominator;
+    exact_dyadic_normalize(normalized_numerator);
+    exact_dyadic_normalize(normalized_denominator);
+    if (!normalized_denominator.mantissa ||
+	    normalized_numerator.mantissa %
+	    normalized_denominator.mantissa)
+	return false;
+    result.mantissa = normalized_numerator.mantissa /
+	normalized_denominator.mantissa;
+    result.exponent = normalized_numerator.exponent -
+	normalized_denominator.exponent;
+    return exact_dyadic_normalize(result);
+}
+
+
+static bool
+exact_dyadic_half_sum(const exact_dyadic &first,
+    const exact_dyadic &second, exact_dyadic &result)
+{
+    if (!exact_dyadic_add(first, second, result))
+	return false;
+    result.exponent--;
+    return exact_dyadic_normalize(result);
+}
+
+
+static bool
+exact_dyadic_midpoint(const exact_dyadic *input, int order,
+    exact_dyadic &result)
+{
+    if (!input || order < 1 || order > 16)
+	return false;
+    exact_dyadic work[16];
+    for (int i = 0; i < order; ++i)
+	work[i] = input[i];
+    for (int level = 1; level < order; ++level) {
+	for (int i = 0; i < order - level; ++i) {
+	    if (!exact_dyadic_half_sum(work[i], work[i + 1], work[i]))
+		return false;
+	}
+    }
+    result = work[0];
+    return true;
+}
+
+
+static bool
+exact_dyadic_bezier_split(const exact_dyadic *input, int order,
+    const exact_dyadic &parameter, exact_dyadic *left,
+    exact_dyadic *right)
+{
+    if (!input || !left || !right || order < 2 || order > 16)
+	return false;
+    exact_dyadic complement;
+    if (!exact_dyadic_subtract({1, 0}, parameter, complement))
+	return false;
+    exact_dyadic work[16];
+    for (int i = 0; i < order; ++i)
+	work[i] = input[i];
+    left[0] = work[0];
+    right[order - 1] = work[order - 1];
+    for (int level = 1; level < order; ++level) {
+	for (int i = 0; i < order - level; ++i) {
+	    exact_dyadic first;
+	    exact_dyadic second;
+	    if (!exact_dyadic_multiply(complement, work[i], first) ||
+		    !exact_dyadic_multiply(parameter, work[i + 1], second) ||
+		    !exact_dyadic_add(first, second, work[i]))
+		return false;
+	}
+	left[level] = work[0];
+	right[order - level - 1] = work[order - level - 1];
+    }
+    return true;
+}
+
+
+static bool
+exact_dyadic_bezier_split_half(const exact_dyadic *input, int order,
+    exact_dyadic *left, exact_dyadic *right)
+{
+    return exact_dyadic_bezier_split(input, order, {1, -1}, left, right);
+}
+
+
+static bool
+exact_dyadic_bezier_restrict_quarters(const exact_dyadic *input, int order,
+    int minimum_quarters, int maximum_quarters, exact_dyadic *output)
+{
+    if (!input || !output || minimum_quarters < 0 ||
+	    maximum_quarters > 4 || minimum_quarters >= maximum_quarters)
+	return false;
+    exact_dyadic first[16];
+    exact_dyadic second[16];
+    const exact_dyadic *current = input;
+    if (maximum_quarters == 2) {
+	if (!exact_dyadic_bezier_split_half(input, order, first, second))
+	    return false;
+	current = first;
+    } else if (maximum_quarters != 4) {
+	return false;
+    }
+    if (minimum_quarters) {
+	const bool half_of_current =
+	    (maximum_quarters == 2 && minimum_quarters == 1) ||
+	    (maximum_quarters == 4 && minimum_quarters == 2);
+	if (!half_of_current ||
+		!exact_dyadic_bezier_split_half(current, order, first, second))
+	    return false;
+	current = second;
+    }
+    for (int i = 0; i < order; ++i)
+	output[i] = current[i];
+    return true;
+}
+
+
+static bool
+exact_dyadic_surface_restrict_quarters(const exact_dyadic *input,
+    int u_order, int v_order, const int minimum_quarters[2],
+    const int maximum_quarters[2], exact_dyadic *output)
+{
+    exact_dyadic u_restricted[256];
+    exact_dyadic source[16];
+    exact_dyadic result[16];
+    for (int j = 0; j < v_order; ++j) {
+	for (int i = 0; i < u_order; ++i)
+	    source[i] = input[(size_t)i * v_order + j];
+	if (!exact_dyadic_bezier_restrict_quarters(source, u_order,
+		minimum_quarters[0], maximum_quarters[0], result))
+	    return false;
+	for (int i = 0; i < u_order; ++i)
+	    u_restricted[(size_t)i * v_order + j] = result[i];
+    }
+    for (int i = 0; i < u_order; ++i) {
+	for (int j = 0; j < v_order; ++j)
+	    source[j] = u_restricted[(size_t)i * v_order + j];
+	if (!exact_dyadic_bezier_restrict_quarters(source, v_order,
+		minimum_quarters[1], maximum_quarters[1], result))
+	    return false;
+	for (int j = 0; j < v_order; ++j)
+	    output[(size_t)i * v_order + j] = result[j];
+    }
+    return true;
+}
+
+
+static bool
+exact_dyadic_equal(exact_dyadic first, exact_dyadic second)
+{
+    exact_dyadic_normalize(first);
+    exact_dyadic_normalize(second);
+    return first.mantissa == second.mantissa &&
+	first.exponent == second.exponent;
+}
+
+
+static bool
+exact_dyadic_bezier_reparameterize(const exact_dyadic *input, int order,
+    const exact_dyadic &minimum, const exact_dyadic &maximum,
+    exact_dyadic *output)
+{
+    if (!input || !output || order < 2 || order > 16)
+	return false;
+    if (exact_dyadic_equal(minimum, {0, 0}) &&
+	    exact_dyadic_equal(maximum, {1, 0})) {
+	for (int i = 0; i < order; ++i)
+	    output[i] = input[i];
+	return true;
+    }
+
+    exact_dyadic first[16];
+    exact_dyadic second[16];
+    exact_dyadic unused[16];
+    exact_dyadic from_minimum;
+    if (!exact_dyadic_subtract({1, 0}, minimum, from_minimum))
+	return false;
+    if (from_minimum.mantissa) {
+	if (!exact_dyadic_bezier_split(input, order, minimum, unused,
+		second))
+	    return false;
+	exact_dyadic numerator;
+	exact_dyadic local_maximum;
+	if (!exact_dyadic_subtract(maximum, minimum, numerator) ||
+		!exact_dyadic_divide(numerator, from_minimum,
+		    local_maximum) ||
+		!exact_dyadic_bezier_split(second, order, local_maximum,
+		    first, unused))
+	    return false;
+	for (int i = 0; i < order; ++i)
+	    output[i] = first[i];
+	return true;
+    }
+
+    if (!maximum.mantissa ||
+	    !exact_dyadic_bezier_split(input, order, maximum, first, unused))
+	return false;
+    exact_dyadic local_minimum;
+    if (!exact_dyadic_divide(minimum, maximum, local_minimum) ||
+	    !exact_dyadic_bezier_split(first, order, local_minimum, unused,
+		second))
+	return false;
+    for (int i = 0; i < order; ++i)
+	output[i] = second[i];
+    return true;
+}
+
+
+static bool
+exact_dyadic_surface_reparameterize(const exact_dyadic *input, int u_order,
+    int v_order, const exact_dyadic minimum[2],
+    const exact_dyadic maximum[2], exact_dyadic *output)
+{
+    exact_dyadic u_reparameterized[256];
+    exact_dyadic source[16];
+    exact_dyadic result[16];
+    for (int j = 0; j < v_order; ++j) {
+	for (int i = 0; i < u_order; ++i)
+	    source[i] = input[(size_t)i * v_order + j];
+	if (!exact_dyadic_bezier_reparameterize(source, u_order, minimum[0],
+		maximum[0], result))
+	    return false;
+	for (int i = 0; i < u_order; ++i)
+	    u_reparameterized[(size_t)i * v_order + j] = result[i];
+    }
+    for (int i = 0; i < u_order; ++i) {
+	for (int j = 0; j < v_order; ++j)
+	    source[j] = u_reparameterized[(size_t)i * v_order + j];
+	if (!exact_dyadic_bezier_reparameterize(source, v_order, minimum[1],
+		maximum[1], result))
+	    return false;
+	for (int j = 0; j < v_order; ++j)
+	    output[(size_t)i * v_order + j] = result[j];
+    }
+    return true;
+}
+
+
+static bool
+exact_dyadic_bezier_reparameterization_row_sums(int order,
+    const exact_dyadic &minimum, const exact_dyadic &maximum,
+    exact_dyadic *row_sums)
+{
+    if (!row_sums || order < 2 || order > 16)
+	return false;
+    for (int row = 0; row < order; ++row)
+	row_sums[row] = {0, 0};
+    for (int basis = 0; basis < order; ++basis) {
+	exact_dyadic input[16] = {};
+	exact_dyadic output[16];
+	input[basis] = {1, 0};
+	if (!exact_dyadic_bezier_reparameterize(input, order, minimum,
+		maximum, output))
+	    return false;
+	for (int row = 0; row < order; ++row) {
+	    if (output[row].mantissa == INT64_MIN)
+		return false;
+	    exact_dyadic magnitude = {llabs(output[row].mantissa),
+		output[row].exponent};
+	    if (!exact_dyadic_add(row_sums[row], magnitude, row_sums[row]))
+		return false;
+	}
+    }
+    return true;
+}
+
+
+static bool
+exact_dyadic_surface_midpoint(const exact_dyadic *input, int u_order,
+    int v_order, exact_dyadic &result)
+{
+    exact_dyadic source[16];
+    exact_dyadic v_control[16];
+    for (int j = 0; j < v_order; ++j) {
+	for (int i = 0; i < u_order; ++i)
+	    source[i] = input[(size_t)i * v_order + j];
+	if (!exact_dyadic_midpoint(source, u_order, v_control[j]))
+	    return false;
+    }
+    return exact_dyadic_midpoint(v_control, v_order, result);
+}
+
+
+static long double
+exact_dyadic_value(const exact_dyadic &value)
+{
+    return std::ldexp((long double)value.mantissa, value.exponent);
+}
+
+
+static int
+check_brep_interval_enclosures()
+{
+    const int scale_exponents[] = {-400, -40, 0, 40, 400};
+    const int product_exponents[] = {-200, 0, 200};
+    const int coordinate_exponents[] = {-300, 0, 300};
+    const int direction_exponents[] = {-100, 0, 100};
+    const int plane_exponents[] = {-50, 0, 50};
+    const int64_t product_intervals[][4] = {
+	{-3, 5, -7, 2}, {1, 4, 2, 8}, {-9, -2, -5, -1},
+	{-8, -1, 2, 7}, {0, 3, -4, 0}
+    };
+    const int division_intervals[][4] = {
+	{-7, 5, 0, 2}, {1, 9, 1, 3}, {-9, -1, 0, 3}, {0, 7, 1, 2}
+    };
+    const int restriction_quarters[][4] = {
+	{0, 0, 2, 2}, {1, 2, 2, 4}, {2, 1, 4, 2}
+    };
+    struct exact_reparameterization_case {
+	exact_dyadic u_minimum;
+	exact_dyadic u_maximum;
+	exact_dyadic v_minimum;
+	exact_dyadic v_maximum;
+    } reparameterization_cases[] = {
+	{{-1, 0}, {1, 0}, {0, 0}, {2, 0}},
+	{{0, 0}, {2, 0}, {1, 0}, {2, 0}},
+	{{-1, -1}, {1, 0}, {-1, 0}, {1, 0}},
+	{{-1, -10}, {1, 0}, {0, 0}, {1025, -10}},
+	{{2, 0}, {3, 0}, {0, 0}, {1, 0}}
+    };
+    double values[2][256] = {};
+    exact_dyadic exact[2][256] = {};
+    const fastf_t root[2] = {0.5, 0.5};
+    size_t cases = 0;
+    size_t function_checks = 0;
+    size_t derivative_checks = 0;
+    size_t product_checks = 0;
+    size_t division_checks = 0;
+    size_t coefficient_checks = 0;
+    size_t restriction_checks = 0;
+    size_t reparameterization_checks = 0;
+    size_t clip_checks = 0;
+    size_t clip_contractions = 0;
+    long double maximum_function_width_ratio = 0.0L;
+    long double maximum_restriction_width_ratio = 0.0L;
+    long double maximum_reparameterization_width_ratio = 0.0L;
+    int failures = 0;
+
+    for (size_t coordinate_scale = 0; coordinate_scale <
+	    sizeof(coordinate_exponents) / sizeof(coordinate_exponents[0]);
+	    ++coordinate_scale) {
+	for (size_t direction_scale = 0; direction_scale <
+		sizeof(direction_exponents) / sizeof(direction_exponents[0]);
+		++direction_scale) {
+	    for (size_t plane_scale = 0; plane_scale <
+		    sizeof(plane_exponents) / sizeof(plane_exponents[0]);
+		    ++plane_scale) {
+		for (int weight = 1; weight <= 2; ++weight) {
+		    const int64_t cv_mantissa[3] = {5, -7, 4};
+		    const int64_t origin_mantissa[3] = {2, -3, 1};
+		    const int64_t direction_mantissa[3] = {1, 1, 0};
+		    const int64_t plane_mantissa[2][3] = {
+			{1, -2, 3}, {-3, 1, 2}
+		    };
+		    fastf_t cv[4];
+		    fastf_t origin[3];
+		    fastf_t direction[3];
+		    fastf_t planes[2][3];
+		    for (int component = 0; component < 3; ++component) {
+			cv[component] = std::ldexp((double)cv_mantissa[component],
+			    coordinate_exponents[coordinate_scale]);
+			origin[component] = std::ldexp(
+			    (double)origin_mantissa[component],
+			    coordinate_exponents[coordinate_scale]);
+			direction[component] = std::ldexp(
+			    (double)direction_mantissa[component],
+			    direction_exponents[direction_scale]);
+			for (int equation = 0; equation < 2; ++equation) {
+			    planes[equation][component] = std::ldexp(
+				(double)plane_mantissa[equation][component],
+				plane_exponents[plane_scale]);
+			}
+		    }
+		    cv[3] = weight;
+		    struct rt_brep_coefficient_test_result observed = {};
+		    if (!_rt_brep_coefficient_test(cv, origin, direction, planes,
+			    &observed)) {
+			std::printf("FAIL: coefficient interval unavailable "
+			    "scale=%d/%d/%d weight=%d\n",
+			    coordinate_exponents[coordinate_scale],
+			    direction_exponents[direction_scale],
+			    plane_exponents[plane_scale], weight);
+			failures++;
+			continue;
+		    }
+		    int64_t numerator_mantissa[3];
+		    for (int component = 0; component < 3; ++component)
+			numerator_mantissa[component] = cv_mantissa[component] -
+			    weight * origin_mantissa[component];
+		    for (int equation = 0; equation < 2; ++equation) {
+			int64_t dot_mantissa = 0;
+			for (int component = 0; component < 3; ++component)
+			    dot_mantissa += numerator_mantissa[component] *
+				plane_mantissa[equation][component];
+			const long double exact_value = std::ldexp(
+			    (long double)dot_mantissa,
+			    coordinate_exponents[coordinate_scale] +
+			    plane_exponents[plane_scale]);
+			coefficient_checks++;
+			if ((long double)observed.function_minimum[equation] >
+				exact_value ||
+				(long double)observed.function_maximum[equation] <
+				exact_value) {
+			    std::printf("FAIL: coefficient function enclosure "
+				"scale=%d/%d/%d weight=%d equation=%d\n",
+				coordinate_exponents[coordinate_scale],
+				direction_exponents[direction_scale],
+				plane_exponents[plane_scale], weight, equation);
+			    failures++;
+			}
+		    }
+		    const int64_t ray_dot_mantissa =
+			numerator_mantissa[0] + numerator_mantissa[1];
+		    const long double exact_ray = std::ldexp(
+			(long double)ray_dot_mantissa,
+			coordinate_exponents[coordinate_scale] -
+			direction_exponents[direction_scale] - 1);
+		    coefficient_checks++;
+		    if ((long double)observed.ray_minimum > exact_ray ||
+			    (long double)observed.ray_maximum < exact_ray) {
+			std::printf("FAIL: coefficient ray enclosure "
+			    "scale=%d/%d/%d weight=%d\n",
+			    coordinate_exponents[coordinate_scale],
+			    direction_exponents[direction_scale],
+			    plane_exponents[plane_scale], weight);
+			failures++;
+		    }
+		}
+	    }
+	}
+    }
+
+    for (size_t interval_index = 0; interval_index <
+	    sizeof(product_intervals) / sizeof(product_intervals[0]);
+	    ++interval_index) {
+	for (size_t first_scale = 0; first_scale <
+		sizeof(product_exponents) / sizeof(product_exponents[0]);
+		++first_scale) {
+	    for (size_t second_scale = 0; second_scale <
+		    sizeof(product_exponents) / sizeof(product_exponents[0]);
+		    ++second_scale) {
+		fastf_t first[2] = {
+		    std::ldexp((double)product_intervals[interval_index][0],
+			product_exponents[first_scale]),
+		    std::ldexp((double)product_intervals[interval_index][1],
+			product_exponents[first_scale])
+		};
+		fastf_t second[2] = {
+		    std::ldexp((double)product_intervals[interval_index][2],
+			product_exponents[second_scale]),
+		    std::ldexp((double)product_intervals[interval_index][3],
+			product_exponents[second_scale])
+		};
+		fastf_t observed[2] = {};
+		const int product_exponent = product_exponents[first_scale] +
+		    product_exponents[second_scale];
+		int64_t exact_products[4] = {
+		    product_intervals[interval_index][0] *
+			product_intervals[interval_index][2],
+		    product_intervals[interval_index][0] *
+			product_intervals[interval_index][3],
+		    product_intervals[interval_index][1] *
+			product_intervals[interval_index][2],
+		    product_intervals[interval_index][1] *
+			product_intervals[interval_index][3]
+		};
+		const int64_t exact_minimum = *std::min_element(exact_products,
+		    exact_products + 4);
+		const int64_t exact_maximum = *std::max_element(exact_products,
+		    exact_products + 4);
+		const long double expected_minimum = std::ldexp(
+		    (long double)exact_minimum, product_exponent);
+		const long double expected_maximum = std::ldexp(
+		    (long double)exact_maximum, product_exponent);
+		product_checks++;
+		if (!_rt_brep_interval_product_test(first, second, observed) ||
+			(long double)observed[0] > expected_minimum ||
+			(long double)observed[1] < expected_maximum) {
+		    std::printf("FAIL: interval product enclosure case=%zu "
+			"scale=%d/%d\n", interval_index,
+			product_exponents[first_scale],
+			product_exponents[second_scale]);
+		    failures++;
+		}
+	    }
+	}
+    }
+
+    for (size_t interval_index = 0; interval_index <
+	    sizeof(division_intervals) / sizeof(division_intervals[0]);
+	    ++interval_index) {
+	for (size_t numerator_scale = 0; numerator_scale <
+		sizeof(product_exponents) / sizeof(product_exponents[0]);
+		++numerator_scale) {
+	    for (size_t denominator_scale = 0; denominator_scale <
+		    sizeof(product_exponents) / sizeof(product_exponents[0]);
+		    ++denominator_scale) {
+		fastf_t numerator[2] = {
+		    std::ldexp((double)division_intervals[interval_index][0],
+			product_exponents[numerator_scale]),
+		    std::ldexp((double)division_intervals[interval_index][1],
+			product_exponents[numerator_scale])
+		};
+		fastf_t denominator[2] = {
+		    std::ldexp(1.0, product_exponents[denominator_scale] +
+			division_intervals[interval_index][2]),
+		    std::ldexp(1.0, product_exponents[denominator_scale] +
+			division_intervals[interval_index][3])
+		};
+		long double exact_quotients[4];
+		size_t quotient = 0;
+		for (int numerator_endpoint = 0; numerator_endpoint < 2;
+			numerator_endpoint++) {
+		    for (int denominator_endpoint = 0; denominator_endpoint < 2;
+			    denominator_endpoint++) {
+			exact_quotients[quotient++] = std::ldexp(
+			    (long double)division_intervals[interval_index]
+				[numerator_endpoint],
+			    product_exponents[numerator_scale] -
+			    product_exponents[denominator_scale] -
+			    division_intervals[interval_index]
+				[2 + denominator_endpoint]);
+		    }
+		}
+		const long double exact_minimum = *std::min_element(
+		    exact_quotients, exact_quotients + 4);
+		const long double exact_maximum = *std::max_element(
+		    exact_quotients, exact_quotients + 4);
+		fastf_t observed[2] = {};
+		division_checks++;
+		if (!_rt_brep_interval_divide_test(numerator, denominator,
+			observed) || (long double)observed[0] > exact_minimum ||
+			(long double)observed[1] < exact_maximum) {
+		    std::printf("FAIL: interval quotient enclosure case=%zu "
+			"scale=%d/%d\n", interval_index,
+			product_exponents[numerator_scale],
+			product_exponents[denominator_scale]);
+		    failures++;
+		}
+	    }
+	}
+    }
+
+    for (int u_order = 2; u_order <= 16; ++u_order) {
+	for (int v_order = 2; v_order <= 16; ++v_order) {
+	    const size_t count = (size_t)u_order * v_order;
+	    for (size_t scale_index = 0; scale_index <
+		    sizeof(scale_exponents) / sizeof(scale_exponents[0]);
+		    ++scale_index) {
+		const int scale_exponent = scale_exponents[scale_index];
+		for (int equation = 0; equation < 2; ++equation) {
+		    for (int i = 0; i < u_order; ++i) {
+			for (int j = 0; j < v_order; ++j) {
+			    const size_t index = (size_t)i * v_order + j;
+			    int64_t mantissa = (i * 5 + j * 3 + equation * 2 +
+				u_order + 2 * v_order) % 7 - 3;
+			    if (!mantissa)
+				mantissa = ((i + j + equation) & 1) ? 1 : -1;
+			    exact[equation][index] = {mantissa,
+				scale_exponent};
+			    values[equation][index] = std::ldexp(
+				(double)mantissa, scale_exponent);
+			}
+		    }
+		    for (size_t i = count; i < 256; ++i) {
+			exact[equation][i] = {0, 0};
+			values[equation][i] = 0.0;
+		    }
+		}
+		const fastf_t coefficient_error[2] = {
+		    std::ldexp(1.0, scale_exponent - 32),
+		    std::ldexp(1.0, scale_exponent - 32)
+		};
+		struct rt_brep_interval_test_result observed = {};
+		cases++;
+		if (!_rt_brep_interval_test(values[0], values[1], u_order,
+			v_order, coefficient_error, root, &observed)) {
+		    std::printf("FAIL: interval audit unavailable order=%d/%d "
+			"scale=%d\n", u_order, v_order, scale_exponent);
+		    failures++;
+		    continue;
+		}
+
+		for (int equation = 0; equation < 2; ++equation) {
+		    exact_dyadic midpoint = {};
+		    if (!exact_dyadic_surface_midpoint(exact[equation], u_order,
+			    v_order, midpoint)) {
+			failures++;
+			continue;
+		    }
+		    const long double nominal = exact_dyadic_value(midpoint);
+		    const long double error = coefficient_error[equation];
+		    const long double lower =
+			observed.function_minimum[equation];
+		    const long double upper =
+			observed.function_maximum[equation];
+		    const long double width_ratio =
+			(upper - lower) / (2.0L * error);
+		    maximum_function_width_ratio = std::max(
+			maximum_function_width_ratio, width_ratio);
+		    function_checks++;
+		    if (!std::isfinite((double)lower) ||
+			    !std::isfinite((double)upper) ||
+			    lower > nominal - error || upper < nominal + error ||
+			    !(width_ratio <= 1.05L)) {
+			std::printf("FAIL: interval function enclosure order=%d/%d "
+			    "scale=%d equation=%d width/error=%.9Lg\n",
+			    u_order, v_order, scale_exponent, equation,
+			    width_ratio);
+			failures++;
+		    }
+
+		    for (int direction = 0; direction < 2; ++direction) {
+			const int degree = direction == 0 ? u_order - 1 :
+			    v_order - 1;
+			const int first_count = direction == 0 ? u_order - 1 :
+			    u_order;
+			const int second_count = direction == 0 ? v_order :
+			    v_order - 1;
+			const long double derivative_error =
+			    2.0L * degree * error;
+			for (int i = 0; i < first_count; ++i) {
+			    for (int j = 0; j < second_count; ++j) {
+				const size_t previous =
+				    (size_t)i * v_order + j;
+				const size_t next = direction == 0 ?
+				    (size_t)(i + 1) * v_order + j :
+				    (size_t)i * v_order + j + 1;
+				const int64_t derivative_mantissa = degree *
+				    (exact[equation][next].mantissa -
+				     exact[equation][previous].mantissa);
+				const long double derivative = std::ldexp(
+				    (long double)derivative_mantissa,
+				    scale_exponent);
+				derivative_checks++;
+				if ((long double)observed.jacobian_minimum
+					[equation][direction] >
+					derivative - derivative_error ||
+					(long double)observed.jacobian_maximum
+					[equation][direction] <
+					derivative + derivative_error) {
+				    std::printf("FAIL: interval derivative "
+					"enclosure order=%d/%d scale=%d "
+					"equation=%d direction=%d\n",
+					u_order, v_order, scale_exponent,
+					equation, direction);
+				    failures++;
+				}
+			    }
+			}
+		    }
+
+			    for (size_t restriction = 0; restriction <
+			    sizeof(restriction_quarters) /
+			    sizeof(restriction_quarters[0]); ++restriction) {
+			const int minimum_quarters[2] = {
+			    restriction_quarters[restriction][0],
+			    restriction_quarters[restriction][1]
+			};
+			const int maximum_quarters[2] = {
+			    restriction_quarters[restriction][2],
+			    restriction_quarters[restriction][3]
+			};
+			const fastf_t minimum[2] = {
+			    0.25 * minimum_quarters[0],
+			    0.25 * minimum_quarters[1]
+			};
+			const fastf_t maximum[2] = {
+			    0.25 * maximum_quarters[0],
+			    0.25 * maximum_quarters[1]
+			};
+			exact_dyadic expected[256];
+			fastf_t restricted[256] = {};
+			fastf_t restricted_error = 0.0;
+			if (!exact_dyadic_surface_restrict_quarters(exact[equation],
+				u_order, v_order, minimum_quarters,
+				maximum_quarters, expected) ||
+				!_rt_brep_restrict_test(values[equation], u_order,
+				v_order, coefficient_error[equation], minimum,
+				maximum, restricted, &restricted_error)) {
+			    std::printf("FAIL: interval restriction unavailable "
+				"order=%d/%d scale=%d case=%zu\n", u_order,
+				v_order, scale_exponent, restriction);
+			    failures++;
+			    continue;
+			}
+			const long double exact_error = coefficient_error[equation];
+			const long double restriction_width_ratio = restricted_error /
+			    exact_error;
+			maximum_restriction_width_ratio = std::max(
+			    maximum_restriction_width_ratio,
+			    restriction_width_ratio);
+			for (size_t i = 0; i < count; ++i) {
+			    const long double restricted_nominal =
+				exact_dyadic_value(expected[i]);
+			    const long double restricted_lower = std::nextafter(
+				restricted[i] - restricted_error, -INFINITY);
+			    const long double restricted_upper = std::nextafter(
+				restricted[i] + restricted_error, INFINITY);
+			    restriction_checks++;
+			    if (!std::isfinite((double)restricted_lower) ||
+				    !std::isfinite((double)restricted_upper) ||
+				    restricted_lower >
+					restricted_nominal - exact_error ||
+				    restricted_upper <
+					restricted_nominal + exact_error ||
+				    !(restriction_width_ratio <= 1.05L)) {
+				std::printf("FAIL: interval restriction enclosure "
+				    "order=%d/%d scale=%d case=%zu "
+				    "coefficient=%zu width/error=%.9Lg\n",
+				    u_order, v_order, scale_exponent,
+				    restriction, i, restriction_width_ratio);
+				failures++;
+				    }
+				}
+			    }
+
+			    for (size_t reparameterization = 0; reparameterization <
+				    sizeof(reparameterization_cases) /
+				    sizeof(reparameterization_cases[0]);
+				    ++reparameterization) {
+				if (reparameterization == 3 && u_order + v_order > 8)
+				    continue;
+				const exact_reparameterization_case &test =
+				    reparameterization_cases[reparameterization];
+				const exact_dyadic exact_minimum[2] = {
+				    test.u_minimum, test.v_minimum
+				};
+				const exact_dyadic exact_maximum[2] = {
+				    test.u_maximum, test.v_maximum
+				};
+				const fastf_t minimum[2] = {
+				    (fastf_t)exact_dyadic_value(exact_minimum[0]),
+				    (fastf_t)exact_dyadic_value(exact_minimum[1])
+				};
+				const fastf_t maximum[2] = {
+				    (fastf_t)exact_dyadic_value(exact_maximum[0]),
+				    (fastf_t)exact_dyadic_value(exact_maximum[1])
+				};
+				exact_dyadic expected[256];
+				exact_dyadic u_row_sums[16];
+				exact_dyadic v_row_sums[16];
+				fastf_t reparameterized[256] = {};
+				fastf_t reparameterized_error = 0.0;
+				if (!exact_dyadic_surface_reparameterize(exact[equation],
+					u_order, v_order, exact_minimum,
+					exact_maximum, expected) ||
+					!exact_dyadic_bezier_reparameterization_row_sums(
+					u_order, exact_minimum[0], exact_maximum[0],
+					u_row_sums) ||
+					!exact_dyadic_bezier_reparameterization_row_sums(
+					v_order, exact_minimum[1], exact_maximum[1],
+					v_row_sums) ||
+					!_rt_brep_reparameterize_test(values[equation],
+					u_order, v_order, coefficient_error[equation],
+					minimum, maximum, reparameterized,
+					&reparameterized_error)) {
+				    std::printf("FAIL: interval reparameterization "
+					"unavailable order=%d/%d scale=%d "
+					"equation=%d case=%zu\n", u_order, v_order,
+					scale_exponent, equation, reparameterization);
+				    failures++;
+				    continue;
+				}
+
+				long double exact_errors[256];
+				long double maximum_exact_error = 0.0L;
+				const exact_dyadic input_error = {
+				    1, scale_exponent - 32
+				};
+				bool exact_error_available = true;
+				for (int i = 0; i < u_order; ++i) {
+				    for (int j = 0; j < v_order; ++j) {
+					const size_t index =
+					    (size_t)i * v_order + j;
+					exact_dyadic directional_error;
+					exact_dyadic tensor_error;
+					if (!exact_dyadic_multiply(input_error,
+						u_row_sums[i], directional_error) ||
+						!exact_dyadic_multiply(
+						directional_error, v_row_sums[j],
+						tensor_error)) {
+					    exact_error_available = false;
+					    break;
+					}
+					exact_errors[index] =
+					    exact_dyadic_value(tensor_error);
+					maximum_exact_error = std::max(
+					    maximum_exact_error, exact_errors[index]);
+				    }
+				    if (!exact_error_available)
+					break;
+				}
+				if (!exact_error_available ||
+					!(maximum_exact_error > 0.0L)) {
+				    std::printf("FAIL: exact reparameterization error "
+					"unavailable order=%d/%d scale=%d "
+					"equation=%d case=%zu\n", u_order, v_order,
+					scale_exponent, equation, reparameterization);
+				    failures++;
+				    continue;
+				}
+				const long double reparameterization_width_ratio =
+				    reparameterized_error / maximum_exact_error;
+				maximum_reparameterization_width_ratio = std::max(
+				    maximum_reparameterization_width_ratio,
+				    reparameterization_width_ratio);
+				for (size_t i = 0; i < count; ++i) {
+				    const long double reparameterized_nominal =
+					exact_dyadic_value(expected[i]);
+				    const long double reparameterized_lower = std::nextafter(
+					reparameterized[i] - reparameterized_error,
+					-INFINITY);
+				    const long double reparameterized_upper = std::nextafter(
+					reparameterized[i] + reparameterized_error,
+					INFINITY);
+				    reparameterization_checks++;
+				    if (!std::isfinite((double)reparameterized_lower) ||
+					    !std::isfinite(
+					    (double)reparameterized_upper) ||
+					    reparameterized_lower >
+					    reparameterized_nominal - exact_errors[i] ||
+					    reparameterized_upper <
+					    reparameterized_nominal + exact_errors[i] ||
+					    !(reparameterization_width_ratio <= 1.05L)) {
+					std::printf("FAIL: interval reparameterization "
+					    "enclosure order=%d/%d scale=%d "
+					    "equation=%d case=%zu coefficient=%zu "
+					    "width/error=%.9Lg\n", u_order,
+					    v_order, scale_exponent, equation,
+					    reparameterization, i,
+					    reparameterization_width_ratio);
+					failures++;
+				    }
+				}
+			    }
+		}
+	    }
+	}
+    }
+
+    const double clip_roots[][2] = {
+	{0.125, 0.875}, {0.5, 0.5}, {0.9375, 0.0625}
+    };
+    const int clip_scale_exponents[] = {-200, 0, 200};
+    for (int u_order = 2; u_order <= 16; ++u_order) {
+	for (int v_order = 2; v_order <= 16; ++v_order) {
+	    for (size_t root_index = 0; root_index <
+		    sizeof(clip_roots) / sizeof(clip_roots[0]); ++root_index) {
+		for (size_t scale_index = 0; scale_index <
+			sizeof(clip_scale_exponents) /
+			sizeof(clip_scale_exponents[0]); ++scale_index) {
+		    const double scale = std::ldexp(1.0,
+			clip_scale_exponents[scale_index]);
+		    const fastf_t error[2] = {
+			fabs(scale) * 1.0e-10, fabs(scale) * 1.0e-10
+		    };
+		    for (int i = 0; i < u_order; ++i) {
+			const double u = (double)i / (u_order - 1);
+			for (int j = 0; j < v_order; ++j) {
+			    const double v = (double)j / (v_order - 1);
+			    const size_t index = (size_t)i * v_order + j;
+			    const int first_pattern =
+				(int)((3 * i + 5 * j + root_index) % 5) - 2;
+			    const int second_pattern =
+				(int)((7 * i + 2 * j + root_index) % 5) - 2;
+			    values[0][index] = scale *
+				((u - clip_roots[root_index][0]) +
+				0.125 * (v - clip_roots[root_index][1])) +
+				0.25 * error[0] * first_pattern;
+			    values[1][index] = scale *
+				((v - clip_roots[root_index][1]) -
+				0.2 * (u - clip_roots[root_index][0])) +
+				0.25 * error[1] * second_pattern;
+			}
+		    }
+		    fastf_t range[4] = {};
+		    clip_checks++;
+		    if (!_rt_brep_clip_test(values[0], values[1], u_order,
+			    v_order, error, range) ||
+			    range[0] > clip_roots[root_index][0] ||
+			    range[1] < clip_roots[root_index][0] ||
+			    range[2] > clip_roots[root_index][1] ||
+			    range[3] < clip_roots[root_index][1]) {
+			std::printf("FAIL: Bernstein clipping enclosure "
+			    "order=%d/%d scale=%d root=%.17g/%.17g "
+			    "range=%.17g/%.17g %.17g/%.17g\n", u_order,
+			    v_order, clip_scale_exponents[scale_index],
+			    clip_roots[root_index][0], clip_roots[root_index][1],
+			    range[0], range[1], range[2], range[3]);
+			failures++;
+		    } else if (range[1] - range[0] < 1.0 ||
+			    range[3] - range[2] < 1.0) {
+			clip_contractions++;
+		    }
+		}
+	    }
+	}
+    }
+    if (clip_contractions != clip_checks) {
+	std::printf("FAIL: Bernstein clipping did not contract %zu/%zu "
+	    "affine systems\n", clip_checks - clip_contractions, clip_checks);
+	failures++;
+    }
+
+    if (!failures) {
+	std::printf("BREP interval enclosure audit: PASS cases=%zu "
+	    "function=%zu derivative=%zu product=%zu quotient=%zu "
+	    "coefficient=%zu restriction=%zu reparameterization=%zu "
+	    "clip=%zu/%zu "
+	    "max-width/error=%.9Lg/%.9Lg/%.9Lg\n",
+	    cases, function_checks, derivative_checks, product_checks,
+	    division_checks, coefficient_checks, restriction_checks,
+	    reparameterization_checks, clip_contractions, clip_checks,
+	    maximum_function_width_ratio,
+	    maximum_restriction_width_ratio,
+	    maximum_reparameterization_width_ratio);
+    }
+    return failures;
+}
+
+
+static int
+check_sphere_adaptive_similarity(const struct bn_tol *tol)
+{
+    const double radius = 10.0;
+    const ON_3dPoint base_center(0.0, 0.0, 0.0);
+    struct similarity_case {
+	const char *name;
+	double scale;
+	ON_3dVector translation;
+	ON_3dVector axis;
+	double angle;
+    } cases[] = {
+	{"identity", 1.0, ON_3dVector(0.0, 0.0, 0.0),
+	    ON_3dVector(1.0, 0.0, 0.0), 0.0},
+	{"translated", 1.0, ON_3dVector(-31.25, 47.5, 103.75),
+	    ON_3dVector(1.0, 0.0, 0.0), 0.0},
+	{"oblique", 1.0, ON_3dVector(-19.0, 23.0, 41.0),
+	    ON_3dVector(1.0, -2.0, 0.5), 0.731},
+	{"small", 0.01, ON_3dVector(1.25, -2.5, 5.0),
+	    ON_3dVector(-0.3, 1.0, 0.7), -1.113},
+	{"large", 1.0e4, ON_3dVector(1.0e6, -2.0e6, 3.0e6),
+	    ON_3dVector(2.0, 0.25, -1.0), 2.017}
+    };
+    const ON_3dVector directions[] = {
+	ON_3dVector(0.371, 0.529, 0.763),
+	ON_3dVector(-0.613, 0.247, 0.751),
+	ON_3dVector(0.193, -0.881, 0.432)
+    };
+    const double half_chord = radius * sqrt(1.0 - 0.31 * 0.31 -
+	0.17 * 0.17);
+    const double expected_in = 2.0 * radius - half_chord;
+    const double expected_out = 2.0 * radius + half_chord;
+    int failures = 0;
+    size_t total_rays = 0;
+    size_t total_krawczyk = 0;
+    size_t total_boxes = 0;
+    size_t minimum_boxes = SIZE_MAX;
+    size_t maximum_boxes = 0;
+    size_t minimum_depth = SIZE_MAX;
+    size_t maximum_depth = 0;
+    size_t total_clip_attempts = 0;
+    size_t total_clip_contractions = 0;
+    size_t total_clip_inconclusive = 0;
+    size_t total_clip_restriction_failures = 0;
+    double maximum_clip_fraction_removed = 0.0;
+    double maximum_implicit_error = 0.0;
+    double maximum_production_error = 0.0;
+    double maximum_legacy_error = 0.0;
+    double maximum_prepared_error = 0.0;
+
+    for (size_t case_index = 0;
+	    case_index < sizeof(cases) / sizeof(cases[0]); ++case_index) {
+	const similarity_case &test = cases[case_index];
+	const ON_Xform xform = cobb_axis_angle_similarity_transform(
+	    test.scale, test.translation, test.axis, test.angle);
+	const ON_3dPoint center = cobb_transform_point(xform, base_center);
+	const ON_3dVector a = cobb_transform_vector(xform,
+	    ON_3dVector(radius, 0.0, 0.0));
+	const ON_3dVector b = cobb_transform_vector(xform,
+	    ON_3dVector(0.0, radius, 0.0));
+	const ON_3dVector c = cobb_transform_vector(xform,
+	    ON_3dVector(0.0, 0.0, radius));
+	struct rt_ell_internal ell = {};
+	ell.magic = RT_ELL_INTERNAL_MAGIC;
+	VSET(ell.v, center.x, center.y, center.z);
+	VSET(ell.a, a.x, a.y, a.z);
+	VSET(ell.b, b.x, b.y, b.z);
+	VSET(ell.c, c.x, c.y, c.z);
+	struct rt_db_internal ell_intern;
+	RT_DB_INTERNAL_INIT(&ell_intern);
+	ell_intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
+	ell_intern.idb_type = ID_ELL;
+	ell_intern.idb_meth = &OBJ[ID_ELL];
+	ell_intern.idb_ptr = &ell;
+
+	struct bn_tol case_tol = *tol;
+	case_tol.dist = tol->dist * test.scale;
+	case_tol.dist_sq = case_tol.dist * case_tol.dist;
+	struct rt_i *rtip = rt_dirbuild_inmem(NULL, 0, NULL, 0);
+	if (!rtip) {
+	    std::printf("FAIL: adaptive sphere %s rt_i construction\n",
+		test.name);
+	    failures++;
+	    continue;
+	}
+	rtip->rti_tol = case_tol;
+	struct resource resource = {};
+	rt_init_resource(&resource, 0, rtip);
+	struct soltab *implicit_stp = prep_solid(rtip, &ell_intern, ID_ELL);
+	ON_Brep *brep = ON_Brep::New();
+	OBJ[ID_ELL].ft_brep(&brep, &ell_intern, &case_tol);
+	struct rt_brep_internal brep_internal = {};
+	brep_internal.magic = RT_BREP_INTERNAL_MAGIC;
+	brep_internal.brep = brep;
+	struct rt_db_internal brep_intern;
+	RT_DB_INTERNAL_INIT(&brep_intern);
+	brep_intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
+	brep_intern.idb_type = ID_BREP;
+	brep_intern.idb_meth = &OBJ[ID_BREP];
+	brep_intern.idb_ptr = &brep_internal;
+	struct soltab *brep_stp = brep ? prep_solid(rtip, &brep_intern,
+	    ID_BREP) : NULL;
+	if (!implicit_stp || !brep_stp) {
+	    std::printf("FAIL: adaptive sphere %s prep implicit/BREP=%d/%d\n",
+		test.name, implicit_stp != NULL, brep_stp != NULL);
+	    failures++;
+	} else {
+	    const double coordinate_scale = std::max(radius * test.scale,
+		std::max(fabs(test.translation.x),
+		std::max(fabs(test.translation.y),
+		fabs(test.translation.z))));
+	    const double normalized_limit = std::max(0.1 * tol->dist,
+		8192.0 * DBL_EPSILON * coordinate_scale / test.scale);
+	    for (size_t direction_index = 0; direction_index <
+		    sizeof(directions) / sizeof(directions[0]);
+		    ++direction_index) {
+		ON_3dVector direction = directions[direction_index];
+		ON_3dVector first = ON_CrossProduct(direction,
+		    ON_3dVector(0.0, 0.0, 1.0));
+		if (!direction.Unitize() || !first.Unitize()) {
+		    failures++;
+		    continue;
+		}
+		ON_3dVector second = ON_CrossProduct(direction, first);
+		if (!second.Unitize()) {
+		    failures++;
+		    continue;
+		}
+		const ON_3dPoint closest = 0.31 * radius * first +
+		    0.17 * radius * second;
+		for (int reverse = 0; reverse <= 1; ++reverse) {
+		    const ON_3dVector base_direction = reverse ?
+			-direction : direction;
+		    const ON_3dPoint base_origin = closest +
+			(reverse ? 2.0 : -2.0) * radius * direction;
+		    const ON_3dPoint transformed_origin =
+			cobb_transform_point(xform, base_origin);
+		    ON_3dVector transformed_direction =
+			cobb_transform_vector(xform, base_direction);
+		    if (!transformed_direction.Unitize()) {
+			failures++;
+			continue;
+		    }
+		    sampled_ray ray;
+		    VSET(ray.origin, transformed_origin.x,
+			transformed_origin.y, transformed_origin.z);
+		    VSET(ray.direction, transformed_direction.x,
+			transformed_direction.y, transformed_direction.z);
+		    const ray_result implicit_result = shoot_solid(implicit_stp,
+			rtip, &resource, ray.origin, ray.direction);
+		    const ray_result production_result = shoot_solid(brep_stp,
+			rtip, &resource, ray.origin, ray.direction);
+		    const ray_result legacy_result = shoot_brep_legacy(brep_stp,
+			rtip, &resource, ray.origin, ray.direction);
+		    struct rt_brep_shot_trace trace;
+		    (void)shoot_brep_trace(brep_stp, rtip, &resource, ray,
+			trace);
+		    total_rays++;
+		    total_krawczyk += trace.surface_krawczyk_boxes;
+		    total_boxes += trace.surface_subdivision_boxes;
+		    total_clip_attempts += trace.surface_clip_attempts;
+		    total_clip_contractions +=
+			trace.surface_clip_contractions;
+		    total_clip_inconclusive += trace.surface_clip_inconclusive;
+		    total_clip_restriction_failures +=
+			trace.surface_clip_restriction_failures;
+		    maximum_clip_fraction_removed = std::max(
+			maximum_clip_fraction_removed,
+			(double)trace.surface_clip_max_fraction_removed);
+		    minimum_boxes = std::min(minimum_boxes,
+			trace.surface_subdivision_boxes);
+		    maximum_boxes = std::max(maximum_boxes,
+			trace.surface_subdivision_boxes);
+		    if (trace.surface_krawczyk_boxes) {
+			minimum_depth = std::min(minimum_depth,
+			    trace.surface_krawczyk_min_depth);
+			maximum_depth = std::max(maximum_depth,
+			    trace.surface_krawczyk_max_depth);
+		    }
+		    const double implicit_error = std::max(
+			fabs(implicit_result.in_dist / test.scale - expected_in),
+			fabs(implicit_result.out_dist / test.scale - expected_out));
+		    const double production_error = std::max(
+			fabs(production_result.in_dist / test.scale - expected_in),
+			fabs(production_result.out_dist / test.scale - expected_out));
+		    const double legacy_error = std::max(
+			fabs(legacy_result.in_dist / test.scale - expected_in),
+			fabs(legacy_result.out_dist / test.scale - expected_out));
+		    const double prepared_error =
+			trace.local_event_stored_segments == 1 ? std::max(
+			fabs(trace.local_event_segment_in[0] / test.scale -
+			    expected_in),
+			fabs(trace.local_event_segment_out[0] / test.scale -
+			    expected_out)) : INFINITY;
+		    maximum_implicit_error = std::max(maximum_implicit_error,
+			implicit_error);
+		    maximum_production_error = std::max(maximum_production_error,
+			production_error);
+		    maximum_legacy_error = std::max(maximum_legacy_error,
+			legacy_error);
+		    maximum_prepared_error = std::max(maximum_prepared_error,
+			prepared_error);
+		    const bool bad = implicit_result.segments != 1 ||
+			production_result.segments != 1 ||
+			legacy_result.segments != 1 ||
+			trace.local_event_final_segments != 1 ||
+			trace.local_event_stored_segments != 1 ||
+			implicit_error > normalized_limit ||
+			production_error > normalized_limit ||
+			legacy_error > normalized_limit ||
+			prepared_error > normalized_limit ||
+			!brep_trace_fixed_workspaces_match(trace) ||
+			trace.legacy_unique_roots != 2 ||
+			trace.local_unique_roots != 2 ||
+			trace.legacy_unique_roots_unmatched ||
+			trace.local_unique_roots_unmatched ||
+			trace.matched_root_events != 2 ||
+			trace.root_event_mismatches ||
+			trace.local_event_groups != 2 ||
+			trace.local_event_contacts ||
+			trace.local_event_clean_misses ||
+			trace.local_event_hits != 2 ||
+			trace.local_event_failures ||
+			trace.local_event_overflow ||
+			trace.local_event_final_mismatches ||
+			trace.prepared_production_selected != 1 ||
+			trace.prepared_production_fallback !=
+			RT_BREP_PREPARED_FALLBACK_NONE ||
+			trace.surface_krawczyk_boxes != 2 ||
+			!trace.surface_clip_attempts ||
+			!trace.surface_clip_contractions ||
+			trace.surface_clip_restriction_failures ||
+			trace.surface_clip_max_fraction_removed >
+			0.5 + 64.0 * DBL_EPSILON ||
+			trace.surface_subdivision_max_depth >= 24 ||
+			trace.surface_workspace_exhausted ||
+			trace.surface_box_overflow;
+		    if (bad) {
+			std::printf("FAIL: adaptive sphere similarity %s %zu/%d "
+			    "segments=%d/%d/%d/%zu roots=%zu/%zu events=%zu/%zu "
+			    "krawczyk=%zu depth=%zu boxes=%zu clip=%zu/%zu/%zu "
+			    "errors=%.3g/%.3g/%.3g/%.3g limit=%.3g\n",
+			    test.name, direction_index, reverse,
+			    implicit_result.segments,
+			    production_result.segments, legacy_result.segments,
+			    trace.local_event_final_segments,
+			    trace.legacy_unique_roots,
+			    trace.local_unique_roots,
+			    trace.matched_root_events,
+			    trace.root_event_mismatches,
+			    trace.surface_krawczyk_boxes,
+			    trace.surface_subdivision_max_depth,
+			    trace.surface_subdivision_boxes,
+			    trace.surface_clip_contractions,
+			    trace.surface_clip_attempts,
+			    trace.surface_clip_restriction_failures,
+			    implicit_error, production_error, legacy_error,
+			    prepared_error,
+			    normalized_limit);
+			failures++;
+		    }
+		}
+	    }
+	}
+
+	free_solid(brep_stp);
+	free_solid(implicit_stp);
+	rt_clean_resource_basic(rtip, &resource);
+	BU_PTBL_SET(&rtip->rti_resources, 0, NULL);
+	rt_i_destroy(rtip);
+    }
+
+    /* The immediately preceding no-clipping similarity gate visited 1,602
+     * boxes for these same 30 rays.  Keep this broad threshold as a direct
+     * work-reduction ratchet for the strictly qualified production path. */
+    if (total_rays == 30 && (total_boxes >= 1602 ||
+	    !total_clip_contractions || total_clip_restriction_failures ||
+	    maximum_clip_fraction_removed > 0.5 + 64.0 * DBL_EPSILON)) {
+	std::printf("FAIL: adaptive sphere clipping work "
+	    "boxes=%zu/1602 clip=%zu/%zu/%zu+%zu/%.3g\n", total_boxes,
+	    total_clip_contractions, total_clip_attempts,
+	    total_clip_inconclusive, total_clip_restriction_failures,
+	    maximum_clip_fraction_removed);
+	failures++;
+    }
+
+    if (!failures) {
+	std::printf("Sphere adaptive similarity invariance: PASS "
+	    "rays=%zu krawczyk=%zu depth=%zu/%zu boxes=%zu/%zu/%zu "
+	    "clip=%zu/%zu/%zu+%zu/%.3g "
+	    "max-errors=%.3g/%.3g/%.3g/%.3g\n",
+	    total_rays,
+	    total_krawczyk, minimum_depth, maximum_depth, minimum_boxes,
+	    total_boxes, maximum_boxes, total_clip_contractions,
+	    total_clip_attempts, total_clip_inconclusive,
+	    total_clip_restriction_failures, maximum_clip_fraction_removed,
+	    maximum_implicit_error,
+	    maximum_production_error, maximum_legacy_error,
+	    maximum_prepared_error);
+    }
+    return failures;
 }
 
 
@@ -2484,31 +4482,45 @@ check_cobb_classifier_invariance(const struct bn_tol *tol)
 	return 1;
     }
 
+    enum rotation_kind {
+	NO_ROTATION,
+	CYCLIC_ROTATION,
+	AXIS_ANGLE_ROTATION
+    };
     struct transform_case {
 	const char *name;
 	double scale;
 	ON_3dVector translation;
-	bool rotate;
+	rotation_kind rotation;
+	ON_3dVector axis;
+	double angle;
 	bool reparameterize;
     } cases[] = {
-	{"identity", 1.0, ON_3dVector(0.0, 0.0, 0.0), false, false},
+	{"identity", 1.0, ON_3dVector(0.0, 0.0, 0.0), NO_ROTATION,
+	    ON_3dVector(0.0, 0.0, 0.0), 0.0, false},
 	{"trim-reparameterized", 1.0, ON_3dVector(0.0, 0.0, 0.0),
-	    false, true},
-	{"rotated-translated", 1.0, ON_3dVector(13.0, -17.0, 29.0),
-	    true, false},
+	    NO_ROTATION, ON_3dVector(0.0, 0.0, 0.0), 0.0, true},
+	{"translated", 1.0, ON_3dVector(-31.25, 47.5, 103.75),
+	    NO_ROTATION, ON_3dVector(0.0, 0.0, 0.0), 0.0, false},
+	{"cyclic-rotated-translated", 1.0,
+	    ON_3dVector(13.0, -17.0, 29.0), CYCLIC_ROTATION,
+	    ON_3dVector(0.0, 0.0, 0.0), 0.0, false},
+	{"oblique-rotated-translated", 1.0,
+	    ON_3dVector(-19.0, 23.0, 41.0), AXIS_ANGLE_ROTATION,
+	    ON_3dVector(1.0, -2.0, 0.5), 0.731, false},
 	{"small-similarity", 0.01, ON_3dVector(1.25, -2.5, 5.0),
-	    true, false},
+	    AXIS_ANGLE_ROTATION, ON_3dVector(-0.3, 1.0, 0.7), -1.113,
+	    false},
 	{"large-similarity", 1.0e4,
-	    ON_3dVector(1.0e6, -2.0e6, 3.0e6), true, false}
+	    ON_3dVector(1.0e6, -2.0e6, 3.0e6), AXIS_ANGLE_ROTATION,
+	    ON_3dVector(2.0, 0.25, -1.0), 2.017, false}
     };
     double reference_existing[2] = {0.0, 0.0};
     double reference_continuation[2] = {0.0, 0.0};
-    size_t reference_surface_candidates[3][2] = {};
-    size_t reference_subdivision_boxes[3][2] = {};
-    size_t reference_isolated_boxes[3][2] = {};
     size_t reference_local_root_count[3][2] = {};
     size_t reference_local_cluster_count[3][2] = {};
-    size_t reference_local_root_failures[3][2] = {};
+    int reference_local_cluster_class[3][2]
+	[RT_BREP_TRACE_MAX_LOCAL_CLUSTERS] = {};
     double reference_local_root_distances[3][2]
 	[RT_BREP_TRACE_MAX_LOCAL_ROOTS] = {};
     int failures = 0;
@@ -2523,9 +4535,12 @@ check_cobb_classifier_invariance(const struct bn_tol *tol)
     for (size_t case_index = 0;
 	    case_index < sizeof(cases) / sizeof(cases[0]); ++case_index) {
 	const transform_case &test = cases[case_index];
-	ON_Xform xform = test.rotate ?
-	    cobb_similarity_transform(test.scale, test.translation) :
-	    ON_Xform(ON_Xform::IdentityTransformation);
+	ON_Xform xform(ON_Xform::IdentityTransformation);
+	if (test.rotation == CYCLIC_ROTATION)
+	    xform = cobb_similarity_transform(test.scale, test.translation);
+	else if (test.rotation == AXIS_ANGLE_ROTATION)
+	    xform = cobb_axis_angle_similarity_transform(test.scale,
+		test.translation, test.axis, test.angle);
 	ON_Brep *variant = new ON_Brep(*base);
 	if (!variant->Transform(xform)) {
 	    std::printf("FAIL: Cobb %s BREP transform\n", test.name);
@@ -2668,18 +4683,15 @@ check_cobb_classifier_invariance(const struct bn_tol *tol)
 		    const size_t local_cluster_count =
 			trace.stored_local_clusters;
 		    if (case_index == 0) {
-			reference_surface_candidates[state_index][reverse] =
-			    trace.candidate_surface_spans;
-			reference_subdivision_boxes[state_index][reverse] =
-			    trace.surface_subdivision_boxes;
-			reference_isolated_boxes[state_index][reverse] =
-			    trace.surface_isolated_boxes;
 			reference_local_root_count[state_index][reverse] =
 			    local_root_distances.size();
 			reference_local_cluster_count[state_index][reverse] =
 			    local_cluster_count;
-			reference_local_root_failures[state_index][reverse] =
-			    trace.local_root_failures;
+			for (size_t cluster_index = 0;
+				cluster_index < local_cluster_count; ++cluster_index)
+			    reference_local_cluster_class[state_index][reverse]
+				[cluster_index] =
+				trace.local_clusters[cluster_index].classification;
 			for (size_t root_index = 0;
 				root_index < local_root_distances.size(); ++root_index)
 			    reference_local_root_distances[state_index][reverse]
@@ -2711,6 +4723,20 @@ check_cobb_classifier_invariance(const struct bn_tol *tol)
 				local_roots_differ = true;
 			}
 		    }
+		    if (local_cluster_count !=
+			    reference_local_cluster_count[state_index][reverse]) {
+			local_roots_differ = true;
+		    } else {
+			for (size_t cluster_index = 0;
+				cluster_index < local_cluster_count; ++cluster_index) {
+			    if (trace.local_clusters[cluster_index].classification !=
+				    reference_local_cluster_class[state_index][reverse]
+				    [cluster_index]) {
+				local_roots_differ = true;
+				break;
+			    }
+			}
+		    }
 		    bool bad = !brep_trace_fixed_workspaces_match(trace) ||
 			!edge || !edge->candidate_spans ||
 			!edge->within_edge_tolerance || !edge->sector_valid ||
@@ -2739,15 +4765,14 @@ check_cobb_classifier_invariance(const struct bn_tol *tol)
 			trace.prepared_surface_spans != 6 ||
 			trace.candidate_surface_spans +
 			trace.excluded_surface_spans != 6 ||
-			trace.candidate_surface_spans !=
-			reference_surface_candidates[state_index][reverse] ||
-			trace.surface_subdivision_boxes !=
-			reference_subdivision_boxes[state_index][reverse] ||
-			trace.surface_isolated_boxes !=
-			reference_isolated_boxes[state_index][reverse] ||
 			trace.surface_workspace_exhausted != 0 ||
+			trace.surface_box_overflow != 0 ||
+			trace.root_overflow != 0 ||
 			trace.local_root_overflow != 0 ||
 			trace.local_cluster_overflow != 0 ||
+			trace.local_trim_failures != 0 ||
+			trace.legacy_unique_roots_unmatched != 0 ||
+			trace.root_event_mismatches != 0 ||
 			trace.local_root_candidates !=
 			trace.stored_local_roots ||
 			trace.local_root_clusters !=
@@ -2758,8 +4783,6 @@ check_cobb_classifier_invariance(const struct bn_tol *tol)
 			trace.local_root_candidates +
 			trace.local_root_failures +
 			trace.local_root_duplicates ||
-			trace.local_root_failures !=
-			reference_local_root_failures[state_index][reverse] ||
 			local_root_invalid || local_roots_differ ||
 			edge->closest_state != expected_state ||
 			fabs(edge->distance / test.scale - fabs(clearance)) >
@@ -2825,15 +4848,19 @@ check_cobb_classifier_invariance(const struct bn_tol *tol)
 			    production_result.segments != 0;
 		    }
 		    if (bad) {
+			brep_trace_root_coverage_diagnostic(test.name, trace);
 			std::printf("FAIL: Cobb %s classifier state=%d "
 			    "reverse=%d observed=%d distance=%.17g "
 			    "edge-t=%.17g closure=%zu/%zu direction=%d/%d "
 			    "existing-t=%.17g local=%zu/%zu clusters=%zu/%zu "
-			    "failures=%zu/%zu invalid=%d differ=%d "
+			    "failures=%zu invalid=%d differ=%d "
 			    "leaves=%zu/%zu stored=%zu overflow=%zu fallback=%zu "
 			    "mismatch=%zu hits=%zu/%zu overflow=%zu fallback=%zu "
 			    "mismatch=%zu "
-			    "trim=%zu/%zu/%zu mismatch=%zu\n",
+			    "trim=%zu/%zu/%zu mismatch=%zu local-trim=%zu/%zu/%zu "
+			    "coverage=%zu/%zu/%zu/%zu events=%zu/%zu "
+			    "surface=%zu/%zu/%zu overflow=%zu "
+			    "certificate=%zu/%zu/%zu/%zu+%zu\n",
 			    test.name,
 			    expected_state,
 			    reverse, edge ? edge->closest_state : -99,
@@ -2847,7 +4874,6 @@ check_cobb_classifier_invariance(const struct bn_tol *tol)
 			    local_cluster_count,
 			    reference_local_cluster_count[state_index][reverse],
 			    trace.local_root_failures,
-			    reference_local_root_failures[state_index][reverse],
 			    local_root_invalid, local_roots_differ,
 			    trace.intersected_leaves, trace.fixed_leaf_count,
 			    trace.fixed_leaf_stored, trace.fixed_leaf_overflow,
@@ -2858,7 +4884,22 @@ check_cobb_classifier_invariance(const struct bn_tol *tol)
 			    trace.fixed_hit_mismatches, trace.trim_queries,
 			    trace.trim_noalloc_candidates,
 			    trace.trim_allocating_candidates,
-			    trace.trim_equivalence_mismatches);
+			    trace.trim_equivalence_mismatches,
+			    trace.local_trim_queries, trace.local_trim_candidates,
+			    trace.local_trim_failures, trace.legacy_unique_roots,
+			    trace.legacy_unique_roots_unmatched,
+			    trace.local_unique_roots,
+			    trace.local_unique_roots_unmatched,
+			    trace.matched_root_events, trace.root_event_mismatches,
+			    trace.candidate_surface_spans,
+			    trace.surface_subdivision_boxes,
+			    trace.surface_isolated_boxes,
+			    trace.surface_box_overflow,
+			    trace.continuation_certificate_boxes,
+			    trace.continuation_certificate_isolated,
+			    trace.continuation_certificate_root_boxes,
+			    trace.continuation_certificate_existing_overlap,
+			    trace.continuation_certificate_exhausted);
 			failures++;
 		    }
 		}
@@ -3724,6 +5765,11 @@ check_cobb_bowed_seam_corpus(const struct bn_tol *tol, bool emit_report,
     size_t leaks_with_double_local_cluster = 0;
     size_t leaks_with_triple_local_cluster = 0;
     size_t local_roots_without_legacy_root = 0;
+    size_t legacy_roots_without_local_root = 0;
+    size_t prepared_partition_improvements = 0;
+    size_t prepared_partition_regressions = 0;
+    size_t prepared_partition_ambiguous = 0;
+    brep_root_event_summary root_events;
     size_t sector_inside = 0;
     size_t sector_contact = 0;
     size_t sector_outside = 0;
@@ -3746,6 +5792,7 @@ check_cobb_bowed_seam_corpus(const struct bn_tol *tol, bool emit_report,
     double maximum_lift_error = 0.0;
     double maximum_continuation_error = 0.0;
     double maximum_certificate_width = 0.0;
+    double maximum_prepared_oracle_error = 0.0;
 
     if (emit_report) {
 	std::printf("cobb_family,direction,g_over_T,h_over_T,"
@@ -3918,6 +5965,9 @@ check_cobb_bowed_seam_corpus(const struct bn_tol *tol, bool emit_report,
 		    maximum_local_root_duplicates = std::max(
 			maximum_local_root_duplicates,
 			trace.local_root_duplicates);
+		    legacy_roots_without_local_root +=
+			trace.legacy_unique_roots_unmatched;
+		    brep_accumulate_root_events(root_events, trace);
 		    maximum_certificate_boxes = std::max(
 			maximum_certificate_boxes,
 			trace.continuation_certificate_boxes);
@@ -4140,6 +6190,49 @@ check_cobb_bowed_seam_corpus(const struct bn_tol *tol, bool emit_report,
 		    double endpoint_error = 0.0;
 		    const bool same = partition_results_match(implicit_result,
 			variant_result, tol->dist, endpoint_error);
+		    double prepared_endpoint_error = 0.0;
+		    const bool prepared_same = prepared_event_partitions_match(
+			trace, implicit_result, tol->dist,
+			prepared_endpoint_error);
+		    if (trace.local_event_final_mismatches) {
+			if (std::isfinite(prepared_endpoint_error))
+			    maximum_prepared_oracle_error = std::max(
+				maximum_prepared_oracle_error,
+				prepared_endpoint_error);
+			const char *classification = "ambiguous";
+			if (prepared_same && !same) {
+			    prepared_partition_improvements++;
+			    classification = "improvement";
+			} else if (!prepared_same && same) {
+			    prepared_partition_regressions++;
+			    classification = "regression";
+			} else {
+			    prepared_partition_ambiguous++;
+			}
+			std::printf("Prepared partition %s sign=%d g/T=%.17g "
+			    "h/T=%.17g reverse=%d legacy=%zu local=%zu "
+			    "implicit=%zu errors=%.17g/%.17g "
+			    "intervals=%.17g/%.17g %.17g/%.17g "
+			    "%.17g/%.17g\n", classification, sign,
+			    gap_ratios[ratio_index],
+			    clearance_ratios[clearance_index], reverse,
+			    variant_result.partitions,
+			    trace.local_event_final_segments,
+			    implicit_result.partitions, endpoint_error,
+			    prepared_endpoint_error,
+			    variant_result.partitions ?
+			    variant_result.intervals[0].in_dist : 0.0,
+			    variant_result.partitions ?
+			    variant_result.intervals[0].out_dist : 0.0,
+			    trace.local_event_stored_segments ?
+			    trace.local_event_segment_in[0] : 0.0,
+			    trace.local_event_stored_segments ?
+			    trace.local_event_segment_out[0] : 0.0,
+			    implicit_result.partitions ?
+			    implicit_result.intervals[0].in_dist : 0.0,
+			    implicit_result.partitions ?
+			    implicit_result.intervals[0].out_dist : 0.0);
+		    }
 		    const double implicit_chord = partition_chord(implicit_result);
 		    const double variant_chord = partition_chord(variant_result);
 		    const bool within_uncertainty = fabs(clearance) <=
@@ -4639,12 +6732,68 @@ check_cobb_bowed_seam_corpus(const struct bn_tol *tol, bool emit_report,
 	maximum_calibration_error);
     std::printf("Cobb surface isolation: max-boxes=%zu max-isolated=%zu "
 	"max-depth=%zu workspace-high-water=%zu local-attempts=%zu "
-	"local-failures=%zu local-duplicates=%zu unmatched-local=%zu\n",
+	"local-failures=%zu local-duplicates=%zu unmatched-legacy=%zu "
+	"unmatched-local=%zu events=%zu mismatched=%zu/%zu/%zu/%zu/%zu "
+	"max-errors=%.3g/%.3g/%.3g/%.3g trims=%zu/%zu "
+	"face-trims=%zu/%zu/%zu/%.3g\n",
 	maximum_subdivision_boxes, maximum_isolated_boxes,
 	maximum_subdivision_depth, maximum_workspace_high_water,
 	maximum_local_root_attempts, maximum_local_root_failures,
 	maximum_local_root_duplicates,
-	local_roots_without_legacy_root);
+	legacy_roots_without_local_root,
+	local_roots_without_legacy_root, root_events.matched,
+	root_events.mismatched, root_events.trim_status_mismatches,
+	root_events.hit_class_mismatches, root_events.direction_mismatches,
+	root_events.adjacency_mismatches, root_events.maximum_t_error,
+	root_events.maximum_uv_error, root_events.maximum_trim_error,
+	root_events.maximum_normal_dot_error, root_events.local_trim_queries,
+	root_events.local_trim_candidates, root_events.face_trim_queries,
+	root_events.face_trim_candidates, root_events.face_trim_mismatches,
+	root_events.maximum_face_trim_error);
+    brep_print_prepared_event_summary("Cobb", root_events);
+    std::printf("Cobb prepared partition changes: improvements=%zu "
+	"regressions=%zu ambiguous=%zu max-changed-oracle-error=%.3g\n",
+	prepared_partition_improvements, prepared_partition_regressions,
+	prepared_partition_ambiguous, maximum_prepared_oracle_error);
+    if (prepared_partition_regressions || prepared_partition_ambiguous) {
+	std::printf("FAIL: prepared Cobb partitions have %zu regressions and "
+	    "%zu ambiguous changes\n", prepared_partition_regressions,
+	    prepared_partition_ambiguous);
+	failures++;
+    }
+    if (root_events.surface_krawczyk_boxes) {
+	std::printf("FAIL: %zu bowed Cobb boxes terminated adaptively\n",
+	    root_events.surface_krawczyk_boxes);
+	failures++;
+    }
+    if (root_events.local_event_failures ||
+	    root_events.local_event_overflow ||
+	    root_events.local_candidate_semantic_stage[0] != 0 ||
+	    root_events.local_event_final_mismatches !=
+	    prepared_partition_improvements + prepared_partition_regressions +
+	    prepared_partition_ambiguous) {
+	std::printf("FAIL: prepared Cobb event accounting failures=%zu "
+	    "overflow=%zu near-miss-stage=%zu changes=%zu/%zu\n",
+	    root_events.local_event_failures,
+	    root_events.local_event_overflow,
+	    root_events.local_candidate_semantic_stage[0],
+	    root_events.local_event_final_mismatches,
+	    prepared_partition_improvements + prepared_partition_regressions +
+	    prepared_partition_ambiguous);
+	failures++;
+    }
+    if (legacy_roots_without_local_root ||
+	    local_roots_without_legacy_root) {
+	std::printf("FAIL: Cobb prepared-span root coverage legacy=%zu "
+	    "local=%zu\n", legacy_roots_without_local_root,
+	    local_roots_without_legacy_root);
+	failures++;
+    }
+    if (root_events.mismatched) {
+	std::printf("FAIL: %zu matched Cobb roots changed event class\n",
+	    root_events.mismatched);
+	failures++;
+    }
     std::printf("Cobb continuation certificate: max-boxes=%zu "
 	"workspace-high-water=%zu max-t-width=%.9g\n",
 	maximum_certificate_boxes, maximum_certificate_workspace,
@@ -4799,6 +6948,7 @@ main(int argc, char **argv)
     };
 
     int failures = 0;
+    failures += check_brep_interval_enclosures();
     for (size_t repeat = 0; repeat < 16; ++repeat) {
 	for (size_t i = 0; i < sizeof(rays) / sizeof(rays[0]); ++i)
 	    failures += check_ray(rays[i].label, implicit_stp, brep_stp,
@@ -4835,6 +6985,7 @@ main(int argc, char **argv)
     failures += check_brep_edge_sector_concave(&rtip->rti_tol, rtip, &resp);
     failures += check_brep_edge_sector_seam(&rtip->rti_tol, rtip, &resp);
     failures += check_brep_vertex_fan_fallback(&rtip->rti_tol, rtip, &resp);
+    failures += check_sphere_adaptive_similarity(&rtip->rti_tol);
     failures += check_cobb_classifier_invariance(&rtip->rti_tol);
     failures += check_cobb_ambiguous_correspondence(&rtip->rti_tol, rtip,
 	&resp);

@@ -569,6 +569,34 @@ For boxes that cannot be excluded:
   1. Apply Bezier clipping when coefficient geometry yields a safe domain
      contraction.
 
+     The implemented shadow contraction reduces each bivariate coefficient
+     net to conservative one-dimensional envelopes.  For a selected
+     direction and each ray-plane equation, the lower control value is the
+     minimum interval lower bound over the other parameter and the upper
+     control value is the maximum interval upper bound.  A root can occur
+     only where the lower Bernstein curve can be nonpositive and the upper
+     curve can be nonnegative.  Bound those parameter sets with the convex
+     hulls of the control polygons.  The fixed implementation considers all
+     vertices already in the requested halfspace and every pairwise control-
+     polygon zero crossing; considering non-hull chords can only enlarge the
+     result.  All crossing arithmetic is outward interval arithmetic.
+
+     Intersect the lower/upper ranges for both equations and both parameter
+     directions.  An inconclusive or empty clipping calculation currently
+     falls through to ordinary subdivision; it is not an exclusion proof.
+     Re-restrict both complete coefficient nets to a proposed clipped box and
+     reject the clip if bounded restriction fails or its hull result is
+     inconsistent.  Thus the first clipping deployment is contraction-only.
+
+     Do not let a successful clip hide extra effective subdivision.  Retain
+     at least half of each parameter width per clipping operation, ignore
+     contractions below 1/16 of a width, and charge one or two subdivision
+     levels according to the retained parameter-box area.  Cap the charged
+     depth at the existing depth-24 limit.  If neither parameter midpoint is
+     representably interior, retain the current box as a terminal candidate
+     instead of generating duplicate children.  These rules are correctness
+     and solver-resolution guards, not performance tuning constants.
+
   2. Otherwise split along the parameter direction with the larger predicted
      model-space extent or poorer bound.
 
@@ -577,11 +605,171 @@ For boxes that cannot be excluded:
   4. Traverse near boxes first according to ray t range, but retain all boxes
      whose bounds may contain roots.
 
-  5. Stop subdividing when the box is isolated in both ray t and model space,
-     or when the safeguarded corrector has converged.
+  5. Stop subdividing early only when the safeguarded corrector supplies a
+     root that is independently certified as the unique root in the box.
+     Small parameter/model-space bounds and numerical convergence alone are
+     not stopping proofs.
 
 This supplies a root-isolation mechanism that does not rely on one Newton
 basin.  It is especially important for two close grazing roots.
+
+For a regular candidate, use an interval Krawczyk test as the uniqueness and
+existence certificate.  On a local parameter box X and a converged point x in
+X, form
+
+  K(X) = x - C F(x) + (I - C J(X)) (X - x),
+
+where C is a nonsingular real preconditioner (normally the inverse of the
+midpoint of the interval Jacobian), F is the pair of homogeneous ray-plane
+Bezier numerators, and J(X) encloses their Jacobian everywhere in X.  If the
+computed interval K(X) is strictly contained in the interior of X, the box
+contains exactly one root and may terminate without reaching a fixed depth.
+If the test fails, says nothing, encounters a singular midpoint, touches the
+box boundary, or exhausts arithmetic/workspace bounds, continue subdivision;
+never infer exclusion from failed certification.
+
+The interval implementation must be auditable.  Derivative ranges come from
+the convex hulls of derivative Bernstein coefficients.  Function,
+restriction, derivative, and interval-operation roundoff must all be enlarged
+outward; positive rational weights remain a prerequisite.  Record corrector
+attempts, convergences, successful certificates, depths, and the fixed-depth
+work avoided.  Exact tangencies and roots on subdivision/patch boundaries are
+expected not to certify with a strict-interior test and must retain the deep
+or neighboring-box path.  This is desirable: the certificate accelerates
+ordinary transverse roots while leaving close grazing roots under conservative
+subdivision.
+
+Treat the first implementation as shadow evidence until its outward-rounding
+and coefficient-error assumptions have received an independent numerical
+audit.  `nextafter` expansion plus deliberately conservative local error
+budgets are useful defenses, but production promotion requires showing that
+every generated coefficient and every function/Jacobian interval encloses the
+corresponding exact polynomial quantity.  Until then, a successful shadow
+test may reduce comparison work but may not alter production hit publication.
+
+The current continuation certificate deliberately does not use clipping.
+That certificate must show that its bounded outside-span region isolates only
+the proposed missing seam root.  Early experiments with conservative
+clipping retained extra terminal ambiguity boxes and therefore weakened that
+single-component proof even though the intended root remained covered.
+Revisit continuation clipping only with a separate component/exclusion gate.
+
+Audit the layers separately.  For already bounded Bernstein coefficients,
+evaluate F(x) with interval de Casteljau operations and form derivative
+coefficient intervals before taking their convex hulls; do not evaluate in
+scalar double and attach an a posteriori cancellation estimate.  Exercise
+addition, scaling, and interval multiplication with outward `nextafter`
+rounding.  An independent exact-dyadic test oracle should cover every tensor
+order pair through the supported maximum, positive coefficient uncertainty,
+mixed signs/cancellation, and wide binary exponent ranges.  This proves the
+function/Jacobian layer only.  Separately prove initial homogeneous ray-plane
+coefficient construction, arbitrary sub-box restriction, rational weight and
+ray-t bounds, and any reparameterization amplification before treating the
+complete Krawczyk input as rigorous.
+
+For initial construction, regard every stored control-point component,
+weight, ray-origin component, ray-direction component, and ray-plane component
+as an exact binary64 input.  Form each homogeneous Cartesian numerator
+`cv.xyz - ray_origin * cv.w`, both ray-plane dot products, the ray-direction
+squared norm, and the ray-parameter numerator with outward interval operations
+at each multiply, add, and divide.  A scalar coefficient may remain as the
+working center, but its declared error must cover the complete independently
+formed interval rather than a magnitude-based estimate.
+
+For a sub-box, retain the scalar de Casteljau net as a working center and run a
+parallel interval de Casteljau restriction starting from every coefficient's
+full `[center-error, center+error]` interval.  Enclose the local `minimum /
+maximum` parameter used by a two-split restriction.  Reduce the resulting net
+to one common error only after every output coefficient interval has been
+formed.  Do the same independently for the homogeneous ray-parameter
+numerator and positive weight net; reject a ray-t bound if any restricted
+weight interval reaches zero, otherwise bound each rational coefficient with
+outward interval division and take their hull.  This replaces depth-scaled
+and absolute-epsilon error heuristics with operation-level enclosures.
+
+Extend the exact-dyadic oracle with multi-split tensor restrictions at several
+sub-box locations, every supported order pair, mixed signs, declared input
+uncertainty, and wide binary scales.  Also gate positive-denominator interval
+quotients and the initial homogeneous coefficient equations directly.  Keep
+outside-span reparameterization as a distinct audit: extrapolating basis
+transforms are not convex restrictions and require their own amplification
+proof.
+
+For that proof, construct outward interval matrices for the one-dimensional
+Bernstein reparameterizations in u and v, then apply their tensor product
+directly to each uncertain source coefficient.  Do not propagate coefficient
+intervals through two sequential split nets: intermediate controls share the
+same source coefficients, so ordinary interval arithmetic loses those
+dependencies and can compound a needlessly large bound with degree.  A direct
+tensor matrix sum retains independent source-coefficient uncertainty while
+still enclosing transformation-matrix roundoff.  Derive one common result
+error only after every output coefficient interval is available, and require
+every resulting rational weight interval to remain strictly positive.
+
+The independent oracle should form the same mathematical reparameterization
+over exact dyadics, but obtain uncertainty amplification from exact absolute
+row sums of the u and v operators.  Cover extension on either side, intervals
+wholly above one (which give a negative intermediate denominator), the
+alternate minimum-equals-one split branch, large extrapolation through every
+supported tensor order, representative small seam-like extensions, mixed
+signs, and wide binary scales.  Gate enclosure independently from efficiency;
+also retain a bound on interval width relative to exact operator uncertainty
+so a formally safe but dependency-exploded implementation cannot silently
+make continuation certificates useless.
+
+Qualify adaptive termination under similarities independently of physical
+classifier invariance.  Apply the same translation, arbitrary rotation, and
+0.01x/10,000x uniform scales to an exact implicit sphere, its converted BREP,
+and every test ray; scale all model-space tolerances as lengths.  Normalize ray
+parameters by the uniform scale and compare implicit, legacy-BREP, and
+prepared-BREP intervals to the analytic chord.  Require the same two regular
+event classes and one material interval in both ray directions, and require
+both roots to receive strict-interior certificates before depth 24.  Do not
+require subdivision counts to match: ray-plane basis selection, coefficient
+conditioning, and conservative bounds may change work without changing the
+physical answer.  Nonuniform scaling is not a similarity and needs a separate
+affine/ellipsoid qualification rather than reuse of this invariant.
+
+The first production publication boundary is deliberately stricter than root
+convergence.  A prepared result may replace the SurfaceTree result only when:
+
+  * the object is a solid and is not in plate mode;
+
+  * every face has supported positive-weight Bezier spans and every span was
+    either coefficient-excluded or completely processed;
+
+  * no subdivision, clipping/restriction, isolated-box, local-root, trim,
+    cluster, or hit workspace reported failure or overflow;
+
+  * every retained isolated box has a strict-interior Krawczyk certificate
+    and contains a corresponding corrected local root from the same face and
+    span;
+
+  * every physical event group has an unambiguous entering or leaving
+    direction (clean trimmed misses may be discarded, but tangencies,
+    contacts, and otherwise unresolved groups may not be published); and
+
+  * the reconstructed fixed-workspace hits survive the established cleanup
+    stages as a finite, even, alternating ENTER/LEAVE partition whose segments
+    are at least the model distance tolerance long.
+
+Any failed condition runs the existing dense SurfaceTree solver unchanged.
+Keep the reasons individually observable: non-solid, plate, unsupported
+surface, surface workspace/restriction, isolated-box storage, uncertified
+root, local workspace/trim, root coverage, event class, hit construction, hit
+workspace, and invalid final partition.  Trace mode should still execute the
+legacy solver after a prepared result qualifies, compare physical events and
+partitions, and then return the prepared production answer.  A private test
+entry point should force the legacy path so that promoted production results
+can be compared against an implementation-independent baseline rather than
+against themselves.
+
+This publication checkpoint does not by itself justify reducing SurfaceTree
+density.  It may increase shot time while both structures coexist, especially
+for grazing rays that do the prepared work and then conservatively fall back.
+Measure ordinary selection rate, fallback distribution, and end-to-end shot
+time before changing the prep tree.  Retain the dense tree until the fallback
+population has another correctness-preserving route.
 
 5.3 Safeguarded corrector
 
@@ -1618,6 +1806,17 @@ Algorithm and geometry references:
   * T. Nishita, T. W. Sederberg, and M. Kakimoto, "Ray Tracing Trimmed
     Rational Surface Patches," SIGGRAPH 1990.  Relevant to subdivision,
     rational patches, and trims.
+
+  * R. E. Moore, "A Test for Existence of Solutions to Nonlinear Systems,"
+    SIAM Journal on Numerical Analysis 14(4), 1977,
+    https://doi.org/10.1137/0714040.  This develops computationally verifiable
+    existence tests based on Krawczyk's interval Newton construction.
+
+  * P. Breiding, K. Rose, and S. Timme, "Certifying zeros of polynomial
+    systems using interval arithmetic," 2020,
+    https://arxiv.org/abs/2011.05000.  This is a modern polynomial-system use
+    of the Krawczyk method and reinforces that every function/Jacobian bound
+    and interval arithmetic operation must be rigorous for certification.
 
   * S. Guthe, A. Balazs, and R. Klein, "GPU-based Trimming and Tessellation of
     NURBS and T-Spline Surfaces," and related Bauhaus work on ray casting

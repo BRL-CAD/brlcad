@@ -475,11 +475,27 @@ RT_EXPORT extern int rt_bot_shot_specific(
 #define RT_BREP_TRACE_MAX_SURFACE_BOXES 64
 #define RT_BREP_TRACE_MAX_LOCAL_ROOTS 64
 #define RT_BREP_TRACE_MAX_LOCAL_CLUSTERS 64
+#define RT_BREP_TRACE_MAX_LOCAL_SEGMENTS 8
+#define RT_BREP_TRACE_CLEANUP_STAGES 5
 #define RT_BREP_TRACE_SOLVER_STATUS_COUNT 11
 #define RT_BREP_TRACE_ENTERING 0
 #define RT_BREP_TRACE_LEAVING 1
 #define RT_BREP_TRACE_LOCAL_CONTACT 2
 #define RT_BREP_TRACE_LOCAL_UNRESOLVED 3
+#define RT_BREP_PREPARED_FALLBACK_NONE 0
+#define RT_BREP_PREPARED_FALLBACK_NON_SOLID 1
+#define RT_BREP_PREPARED_FALLBACK_PLATE 2
+#define RT_BREP_PREPARED_FALLBACK_UNSUPPORTED 3
+#define RT_BREP_PREPARED_FALLBACK_SURFACE_WORKSPACE 4
+#define RT_BREP_PREPARED_FALLBACK_SURFACE_BOXES 5
+#define RT_BREP_PREPARED_FALLBACK_UNCERTIFIED 6
+#define RT_BREP_PREPARED_FALLBACK_LOCAL_WORKSPACE 7
+#define RT_BREP_PREPARED_FALLBACK_ROOT_COVERAGE 8
+#define RT_BREP_PREPARED_FALLBACK_EVENT_CLASS 9
+#define RT_BREP_PREPARED_FALLBACK_HIT_BUILD 10
+#define RT_BREP_PREPARED_FALLBACK_HIT_WORKSPACE 11
+#define RT_BREP_PREPARED_FALLBACK_PARTITION 12
+#define RT_BREP_PREPARED_FALLBACK_COUNT 13
 
 struct rt_brep_trace_root {
     fastf_t dist;
@@ -538,9 +554,14 @@ struct rt_brep_trace_local_root {
     fastf_t uv[2];
     fastf_t residual;
     fastf_t normal_dot;
+    fastf_t trim_distance;
     size_t iterations;
     int face_index;
     int span_index;
+    int adjacent_face_index;
+    int trim_status;
+    int hit_class;
+    int direction;
 };
 
 struct rt_brep_trace_local_cluster {
@@ -582,6 +603,13 @@ struct rt_brep_shot_trace {
     size_t trim_closest_mismatches;
     size_t trim_distance_mismatches;
     size_t trim_equivalence_mismatches;
+    size_t face_trim_queries;
+    size_t face_trim_candidates;
+    size_t face_trim_status_mismatches;
+    size_t face_trim_hit_class_mismatches;
+    size_t face_trim_adjacency_mismatches;
+    size_t face_trim_equivalence_mismatches;
+    fastf_t face_trim_max_near_distance_error;
     size_t solver_calls;
     size_t solver_status[RT_BREP_TRACE_SOLVER_STATUS_COUNT];
     size_t candidate_roots;
@@ -602,7 +630,21 @@ struct rt_brep_shot_trace {
     size_t candidate_surface_spans;
     size_t excluded_surface_spans;
     size_t surface_subdivision_boxes;
+    size_t surface_clip_attempts;
+    size_t surface_clip_contractions;
+    size_t surface_clip_u_contractions;
+    size_t surface_clip_v_contractions;
+    size_t surface_clip_inconclusive;
+    size_t surface_clip_restriction_failures;
+    fastf_t surface_clip_max_fraction_removed;
     size_t surface_isolated_boxes;
+    fastf_t surface_isolated_min_t_width;
+    fastf_t surface_isolated_max_t_width;
+    size_t surface_corrector_attempts;
+    size_t surface_corrector_converged;
+    size_t surface_krawczyk_boxes;
+    size_t surface_krawczyk_min_depth;
+    size_t surface_krawczyk_max_depth;
     size_t surface_subdivision_max_depth;
     size_t surface_workspace_high_water;
     size_t surface_workspace_exhausted;
@@ -616,8 +658,75 @@ struct rt_brep_shot_trace {
     size_t local_root_overflow;
     size_t local_root_failures;
     size_t local_root_duplicates;
+    size_t local_trim_queries;
+    size_t local_trim_candidates;
+    size_t local_trim_failures;
     struct rt_brep_trace_local_root
 	local_roots[RT_BREP_TRACE_MAX_LOCAL_ROOTS];
+    size_t legacy_unique_roots;
+    size_t legacy_unique_roots_matched;
+    size_t legacy_unique_roots_unmatched;
+    size_t local_unique_roots;
+    size_t local_unique_roots_matched;
+    size_t local_unique_roots_unmatched;
+    size_t matched_root_events;
+    size_t root_event_mismatches;
+    size_t root_trim_status_mismatches;
+    size_t root_hit_class_mismatches;
+    size_t root_direction_mismatches;
+    size_t root_adjacency_mismatches;
+    fastf_t root_match_max_t_error;
+    fastf_t root_match_max_uv_error;
+    fastf_t root_match_max_trim_error;
+    fastf_t root_match_max_normal_dot_error;
+    size_t local_event_groups;
+    size_t local_event_contacts;
+    size_t local_event_clean_misses;
+    size_t local_candidate_hits;
+    size_t local_candidate_failures;
+    size_t local_candidate_overflow;
+    size_t local_candidate_after_near_miss;
+    size_t local_candidate_after_near_hit;
+    size_t local_candidate_after_grazing;
+    size_t local_candidate_after_duplicates;
+    size_t local_candidate_after_direction_cleanup;
+    size_t local_candidate_stage_mismatches;
+    size_t local_candidate_semantic_stage_mismatches;
+    /* Near miss, near hit, grazing, duplicate, and direction cleanup. */
+    size_t local_candidate_semantic_stage[RT_BREP_TRACE_CLEANUP_STAGES];
+    size_t local_candidate_hit_mismatches;
+    size_t local_event_hits;
+    size_t local_event_failures;
+    size_t local_event_overflow;
+    size_t local_event_after_near_miss;
+    size_t local_event_after_near_hit;
+    size_t local_event_after_grazing;
+    size_t local_event_after_duplicates;
+    size_t local_event_after_direction_cleanup;
+    size_t local_event_stage_mismatches;
+    size_t local_event_hit_mismatches;
+    size_t local_event_count_mismatches;
+    size_t local_event_t_mismatches;
+    size_t local_event_face_mismatches;
+    size_t local_event_trim_mismatches;
+    size_t local_event_edge_mismatches;
+    size_t local_event_class_mismatches;
+    size_t local_event_direction_mismatches;
+    size_t local_event_adjacency_mismatches;
+    size_t local_event_repaired;
+    size_t local_event_final_hits;
+    size_t local_event_final_segments;
+    size_t local_event_final_mismatches;
+    fastf_t local_event_max_t_error;
+    size_t local_event_stored_segments;
+    size_t local_event_segment_overflow;
+    fastf_t local_event_segment_in[RT_BREP_TRACE_MAX_LOCAL_SEGMENTS];
+    fastf_t local_event_segment_out[RT_BREP_TRACE_MAX_LOCAL_SEGMENTS];
+    size_t prepared_production_attempts;
+    size_t prepared_production_eligible;
+    size_t prepared_production_selected;
+    int prepared_production_fallback;
+    size_t prepared_production_hits;
     fastf_t local_cluster_tolerance;
     size_t local_root_clusters;
     size_t stored_local_clusters;
@@ -660,9 +769,52 @@ struct rt_brep_shot_trace {
     fastf_t closure_shadow_out_dist;
 };
 
+struct rt_brep_interval_test_result {
+    fastf_t function_minimum[2];
+    fastf_t function_maximum[2];
+    fastf_t jacobian_minimum[2][2];
+    fastf_t jacobian_maximum[2][2];
+};
+
+struct rt_brep_coefficient_test_result {
+    fastf_t function_minimum[2];
+    fastf_t function_maximum[2];
+    fastf_t ray_minimum;
+    fastf_t ray_maximum;
+};
+
+RT_EXPORT extern int _rt_brep_interval_test(
+    const fastf_t *first_coefficients, const fastf_t *second_coefficients,
+    int u_order, int v_order, const fastf_t coefficient_error[2],
+    const fastf_t root[2], struct rt_brep_interval_test_result *result);
+RT_EXPORT extern int _rt_brep_interval_product_test(
+    const fastf_t first[2], const fastf_t second[2], fastf_t result[2]);
+RT_EXPORT extern int _rt_brep_interval_divide_test(
+    const fastf_t numerator[2], const fastf_t denominator[2],
+    fastf_t result[2]);
+RT_EXPORT extern int _rt_brep_coefficient_test(
+    const fastf_t cv[4], const fastf_t origin[3], const fastf_t direction[3],
+    const fastf_t planes[2][3],
+    struct rt_brep_coefficient_test_result *result);
+RT_EXPORT extern int _rt_brep_restrict_test(
+    const fastf_t *input, int u_order, int v_order, fastf_t input_error,
+    const fastf_t minimum[2], const fastf_t maximum[2], fastf_t *output,
+    fastf_t *output_error);
+RT_EXPORT extern int _rt_brep_reparameterize_test(
+    const fastf_t *input, int u_order, int v_order, fastf_t input_error,
+    const fastf_t minimum[2], const fastf_t maximum[2], fastf_t *output,
+    fastf_t *output_error);
+RT_EXPORT extern int _rt_brep_clip_test(
+    const fastf_t *first_coefficients, const fastf_t *second_coefficients,
+    int u_order, int v_order, const fastf_t coefficient_error[2],
+    fastf_t parameter_range[4]);
+
 RT_EXPORT extern int _rt_brep_shot_trace(
     struct soltab *stp, struct xray *rp, struct application *ap,
     struct seg *seghead, struct rt_brep_shot_trace *trace);
+RT_EXPORT extern int _rt_brep_shot_legacy(
+    struct soltab *stp, struct xray *rp, struct application *ap,
+    struct seg *seghead);
 
 
 __END_DECLS
