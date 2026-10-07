@@ -638,15 +638,15 @@ surface_tree_node_counts(const brlcad::BBNode *node, int depth,
 	return;
     nodes++;
     maximum_depth = std::max(maximum_depth, depth);
-    const std::vector<brlcad::BBNode *> &children = node->get_children();
-    if (children.empty()) {
+    const std::size_t child_count = node->childCount();
+    if (!child_count) {
 	leaves++;
 	return;
     }
-    for (std::vector<brlcad::BBNode *>::const_iterator child =
-	    children.begin(); child != children.end(); ++child)
-	surface_tree_node_counts(*child, depth + 1, nodes, leaves,
-	    maximum_depth);
+    for (std::size_t child_index = 0; child_index < child_count;
+	    ++child_index)
+	surface_tree_node_counts(node->child(child_index), depth + 1,
+	    nodes, leaves, maximum_depth);
 }
 
 static size_t
@@ -1548,11 +1548,8 @@ surface_tree_profile_result(struct db_i *dbip, struct directory *dp,
 	if (tree.Valid()) {
 	    surface_tree_node_counts(tree.getRootNode(), 0, profile.nodes,
 		profile.leaves, profile.maximum_depth);
-	    if (tree.m_ctree) {
-		std::list<const brlcad::BRNode *> curve_leaves;
-		tree.m_ctree->getLeaves(curve_leaves);
-		profile.curve_leaves = curve_leaves.size();
-	    }
+	    if (tree.m_ctree)
+		profile.curve_leaves = tree.m_ctree->preparedLeafCount();
 	} else {
 	    result.ret = BRLCAD_ERROR;
 	    result.failure_reason = "surface_tree";
@@ -3881,7 +3878,8 @@ print_interval(const ON_Interval &interval)
 
 static void
 print_prep_result(const char *db_path, const char *object,
-	const prep_result &result)
+	const prep_result &result, size_t repeat_index = 0,
+	size_t repeat_count = 1)
 {
     std::cout << "{\"format\":\"brlcad-brep-ray-prep-audit-v1\""
 	<< ",\"database\":" << json_quote(db_path)
@@ -3890,6 +3888,8 @@ print_prep_result(const char *db_path, const char *object,
 	    "ok" : "fail")
 	<< ",\"return_code\":" << result.ret
 	<< ",\"failure_reason\":" << json_quote(result.failure_reason)
+	<< ",\"repeat_index\":" << repeat_index
+	<< ",\"repeat_count\":" << repeat_count
 	<< ",\"seconds\":";
     print_num(result.seconds);
     std::cout << ",\"peak_rss_bytes\":" << result.peak_rss_bytes
@@ -5008,13 +5008,14 @@ main(int argc, const char **argv)
     long image_size = 1024;
     const char *batch_object_file = NULL;
     const char *mode_name = "both";
-    struct bu_opt_desc d[58];
+    struct bu_opt_desc d[59];
     long surface_tree_depth = BREP_MAX_FT_DEPTH;
     long candidate_depth = 3;
     long reference_depth = RT_BREP_DEFAULT_SURFACE_TREE_DEPTH;
     long ray_count = 64;
     long feature_ray_count = 0;
     long ray_pair = -1;
+    long prep_repeat = 1;
     int legacy_only = 0;
     const char *trim_query_arg = NULL;
     BU_OPT(d[0], "h", "help", "", NULL, &print_help, "Print help and exit");
@@ -5137,7 +5138,9 @@ main(int argc, const char **argv)
     BU_OPT(d[56], "", "feature-ray-count", "#", &bu_opt_long,
 	&feature_ray_count,
 	"Deterministic face-normal, edge-normal, and edge-grazing chord pairs");
-    BU_OPT_NULL(d[57]);
+    BU_OPT(d[57], "", "prep-repeat", "#", &bu_opt_long, &prep_repeat,
+	"Prepare and fully unload the same BREP repeatedly");
+    BU_OPT_NULL(d[58]);
     int ac = bu_opt_parse(NULL, argc, argv, d);
     trim_query_spec parsed_trim_query;
     const bool trim_query_only = trim_query_arg != NULL;
@@ -5166,7 +5169,9 @@ main(int argc, const char **argv)
 	    reference_depth < 0 || reference_depth > BREP_MAX_FT_DEPTH ||
 	    ray_count < 0 || ray_count > 1000000 ||
 	    feature_ray_count < 0 || feature_ray_count > 1000000 ||
+	    prep_repeat < 1 || prep_repeat > 1000 ||
 	    ray_pair < -1 || ray_pair > 1000002 ||
+	    (!prep_only && prep_repeat != 1) ||
 	    (!ray_depth_compare_only &&
 	     (candidate_depth != 3 ||
 	      reference_depth != RT_BREP_DEFAULT_SURFACE_TREE_DEPTH ||
@@ -5341,10 +5346,16 @@ main(int argc, const char **argv)
 	return 2;
     }
     if (prep_only) {
-	prep_result prep = raytrace_prep_result(dbip, dp);
-	print_prep_result(argv[0], argv[1], prep);
+	int ret = 0;
+	for (long repeat = 0; repeat < prep_repeat; ++repeat) {
+	    prep_result prep = raytrace_prep_result(dbip, dp);
+	    print_prep_result(argv[0], argv[1], prep, (size_t)repeat,
+		(size_t)prep_repeat);
+	    if (prep.ret != BRLCAD_OK)
+		ret = 1;
+	}
 	db_close(dbip);
-	return prep.ret == BRLCAD_OK ? 0 : 1;
+	return ret;
     }
 
     if (surface_trees_only) {

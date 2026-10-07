@@ -29,6 +29,13 @@
 
 #include "common.h"
 
+#ifdef __cplusplus
+extern "C++" {
+#  include <cstdint>
+#  include <list>
+}
+#endif
+
 #include "brep/defines.h"
 #include "brep/curvetree.h"
 #include "brep/ray.h"
@@ -42,6 +49,7 @@ extern "C++" {
 namespace brlcad {
     class BBNode;
     class SurfaceTree;
+    class BBNodeArena;
 }
 }
 #endif
@@ -66,7 +74,7 @@ namespace brlcad {
     /**
      * Bounding Box Hierarchy Node
      */
-    class BREP_EXPORT BBNode : public PooledObject<BBNode> {
+    class BREP_EXPORT BBNode {
     public:
 	explicit BBNode(const ON_BoundingBox &node, const CurveTree *ct = NULL);
 	BBNode(const CurveTree *ct,
@@ -78,6 +86,8 @@ namespace brlcad {
 	~BBNode();
 
 	BBNode(Deserializer &deserieralizer, const CurveTree &ctree);
+	static BBNode *deserializeTree(Deserializer &deserializer,
+		const CurveTree &ctree);
 	void serialize(Serializer &serializer) const;
 
 	const ON_BrepFace &get_face() const;
@@ -144,7 +154,8 @@ namespace brlcad {
 	bool prepTrims(double within_distance_tol =
 		BREP_EDGE_MISS_TOLERANCE);
 
-	const std::vector<BBNode *> &get_children() const;
+	std::size_t childCount() const;
+	BBNode *child(std::size_t index) const;
 
 	/** Bounding Box */
 	ON_BoundingBox m_node;
@@ -156,6 +167,8 @@ namespace brlcad {
 	/** Trimming Flags */
 	bool m_checkTrim;
 	bool m_trimmed;
+	/* Arena construction nodes are destroyed shallowly by their arena. */
+	bool m_arena_node;
 
 	/** Point used for closeness testing - usually based on evaluation
 	 * of the curve/surface at the center of the parametric domain
@@ -171,14 +184,18 @@ namespace brlcad {
 
     private:
 	friend class SurfaceTree;
+	friend class BBNodeArena;
 
 	BBNode(const BBNode &source);
 	BBNode &operator=(const BBNode &source);
 	ON_2dPoint getClosestPointEstimate(const ON_3dPoint &pt,
 		ON_Interval &u, ON_Interval &v,
 		const ON_Surface *surface) const;
+	BBNode(Deserializer &deserializer, const CurveTree &ctree,
+		BBNodeArena *arena);
+	void adopt(BBNode &source);
+	void setArenaOwner(BBNodeArena *owner);
 
-	void removeChild(BBNode *child);
 	bool intersectedBy(const ON_Ray &ray, double *tnear = NULL, double *tfar = NULL) const;
 
 	/** Report if a given uv point is within the uv boundaries defined
@@ -188,35 +205,39 @@ namespace brlcad {
 
 	const BBNode *closer(const ON_3dPoint &pt, const BBNode *left, const BBNode *right) const;
 
-	struct Stl : public PooledObject<Stl> {
-	Stl() : m_children() {}
-
-	    std::vector<BBNode *> m_children;
-	} * const m_stl;
+	BBNode **m_children;
+	uint32_t m_child_count;
+	uint32_t m_child_capacity;
     };
 
-    inline void
-    BBNode::addChild(BBNode *child)
-    {
-	if (LIKELY(child != NULL)) {
-	    m_stl->m_children.push_back(child);
-	}
-    }
+    /**
+     * Per-SurfaceTree construction storage.  The first node uses ordinary
+     * transferable storage and subsequent nodes are bulk allocated.  The
+     * final logical root is adopted into that first node, whose lifetime owns
+     * the arena.
+     */
+    class BBNodeArena {
+    public:
+	BBNodeArena();
+	~BBNodeArena();
 
-    inline void
-    BBNode::removeChild(BBNode *child)
-    {
-	std::vector<BBNode *>::iterator i;
-	for (i = m_stl->m_children.begin(); i != m_stl->m_children.end();) {
-	    if (*i == child) {
-		delete *i;
-		i = m_stl->m_children.erase(i);
-	    } else {
-		++i;
-	    }
-	}
-    }
+	BBNode *make(const ON_BoundingBox &node,
+		const CurveTree *ct = NULL);
+	BBNode *make(const CurveTree *ct, const ON_BoundingBox &node,
+		const ON_Interval &u, const ON_Interval &v,
+		bool checkTrim, bool trimmed);
+	BBNode *finish(BBNode *root);
 
+    private:
+	friend class BBNode;
+	struct Block;
+	void *allocate();
+	BBNode *make(Deserializer &deserializer, const CurveTree &ctree);
+
+	Block *m_blocks;
+	BBNode *m_anchor;
+	bool m_started;
+    };
 
     inline const ON_BrepFace &
     BBNode::get_face() const
@@ -224,16 +245,22 @@ namespace brlcad {
 	return *m_ctree->m_face;
     }
 
-    inline const std::vector<BBNode *> &
-    BBNode::get_children() const
+    inline std::size_t
+    BBNode::childCount() const
     {
-	return m_stl->m_children;
+	return m_child_count;
+    }
+
+    inline BBNode *
+    BBNode::child(std::size_t index) const
+    {
+	return index < m_child_count ? m_children[index] : NULL;
     }
 
     inline bool
     BBNode::isLeaf() const
     {
-	return m_stl->m_children.empty();
+	return m_child_count == 0;
     }
 
     inline void

@@ -21,6 +21,7 @@
 #include "common.h"
 
 #include <algorithm>
+#include <new>
 
 #include "bu/log.h"
 #include "brep/bbnode.h"
@@ -29,16 +30,36 @@
 namespace brlcad {
 
 
+namespace {
+
+struct BBNodeChildStorage {
+    BBNodeArena *arena;
+};
+
+
+static BBNodeChildStorage *
+bbnode_child_storage(BBNode **children)
+{
+    return children ? reinterpret_cast<BBNodeChildStorage *>(children) - 1 :
+	NULL;
+}
+
+}
+
+
 BBNode::BBNode(const ON_BoundingBox &node, const CurveTree *ct) :
     m_node(node),
     m_u(),
     m_v(),
     m_checkTrim(true),
     m_trimmed(false),
+    m_arena_node(false),
     m_estimate(),
     m_normal(),
     m_ctree(ct),
-    m_stl(new Stl)
+    m_children(NULL),
+    m_child_count(0),
+    m_child_capacity(0)
 {
     for (int i = 0; i < 3; i++) {
 	double d = m_node.m_max[i] - m_node.m_min[i];
@@ -62,10 +83,13 @@ BBNode::BBNode(
     m_v(v),
     m_checkTrim(checkTrim),
     m_trimmed(trimmed),
+    m_arena_node(false),
     m_estimate(),
     m_normal(),
     m_ctree(ct),
-    m_stl(new Stl)
+    m_children(NULL),
+    m_child_count(0),
+    m_child_capacity(0)
 {
     for (int i = 0; i < 3; i++) {
 	double d = m_node.m_max[i] - m_node.m_min[i];
@@ -79,25 +103,43 @@ BBNode::BBNode(
 
 BBNode::~BBNode()
 {
-    /* delete the children */
-    for (size_t i = 0; i < m_stl->m_children.size(); i++) {
-	delete m_stl->m_children[i];
-    }
+    BBNodeChildStorage *storage = bbnode_child_storage(m_children);
+    BBNodeArena *arena = storage ? storage->arena : NULL;
 
-    delete m_stl;
+    /* Ordinary trees own ordinary children recursively.  Arena nodes are
+     * destroyed in bulk, but retain normal ownership of any ordinary node a
+     * caller may have attached after construction. */
+    for (std::size_t i = 0; i < m_child_count; ++i) {
+	if ((!m_arena_node && !arena) || !m_children[i]->m_arena_node)
+	    delete m_children[i];
+    }
+    if (arena)
+	delete arena;
+    if (storage)
+	bu_free(storage, "BBNode child pointers");
 }
 
 
 BBNode::BBNode(Deserializer &deserializer, const CurveTree &ctree) :
+    BBNode(deserializer, ctree, NULL)
+{
+}
+
+
+BBNode::BBNode(Deserializer &deserializer, const CurveTree &ctree,
+	BBNodeArena *arena) :
     m_node(),
     m_u(),
     m_v(),
     m_checkTrim(false),
     m_trimmed(false),
+    m_arena_node(false),
     m_estimate(),
     m_normal(),
     m_ctree(&ctree),
-    m_stl(new Stl)
+    m_children(NULL),
+    m_child_count(0),
+    m_child_capacity(0)
 {
     deserializer.read(m_node);
     deserializer.read(m_u);
@@ -112,15 +154,68 @@ BBNode::BBNode(Deserializer &deserializer, const CurveTree &ctree) :
     m_checkTrim = bool_flags & (1 << 0);
     m_trimmed = bool_flags & (1 << 1);
 
-    m_stl->m_children.resize(num_children);
-    for (std::vector<BBNode *>::iterator it = m_stl->m_children.begin(); it != m_stl->m_children.end(); ++it)
-	*it = new BBNode(deserializer, ctree);
+    for (std::size_t i = 0; i < num_children; ++i)
+	addChild(arena ? arena->make(deserializer, ctree) :
+	    new BBNode(deserializer, ctree));
 
     /* Older cache records stored per-leaf trim indices here.  Consume them
      * for backward compatibility; current classification uses the owning
      * CurveTree's immutable per-loop index. */
     for (std::size_t i = 0; i < num_leaves_keys; ++i)
 	(void)deserializer.read_uint32();
+}
+
+
+void
+BBNode::adopt(BBNode &source)
+{
+    if (m_ctree != source.m_ctree || m_child_count)
+	bu_bomb("BBNode arena root adoption is inconsistent");
+    BBNodeChildStorage *storage = bbnode_child_storage(m_children);
+    if (storage) {
+	if (storage->arena)
+	    bu_bomb("BBNode arena root already has an owner");
+	bu_free(storage, "BBNode child pointers");
+    }
+
+    m_node = source.m_node;
+    m_u = source.m_u;
+    m_v = source.m_v;
+    m_checkTrim = source.m_checkTrim;
+    m_trimmed = source.m_trimmed;
+    m_estimate = source.m_estimate;
+    m_normal = source.m_normal;
+    m_children = source.m_children;
+    m_child_count = source.m_child_count;
+    m_child_capacity = source.m_child_capacity;
+    source.m_children = NULL;
+    source.m_child_count = 0;
+    source.m_child_capacity = 0;
+}
+
+
+void
+BBNode::setArenaOwner(BBNodeArena *owner)
+{
+    BBNodeChildStorage *storage = bbnode_child_storage(m_children);
+    if (!storage) {
+	storage = static_cast<BBNodeChildStorage *>(bu_malloc(
+	    sizeof(BBNodeChildStorage), "BBNode child pointers"));
+	m_children = reinterpret_cast<BBNode **>(storage + 1);
+    }
+    storage->arena = owner;
+}
+
+
+BBNode *
+BBNode::deserializeTree(Deserializer &deserializer, const CurveTree &ctree)
+{
+    BBNodeArena *arena = new BBNodeArena();
+    BBNode *root = arena->make(deserializer, ctree);
+    BBNode *result = arena->finish(root);
+    if (!result)
+	delete arena;
+    return result;
 }
 
 
@@ -137,10 +232,182 @@ BBNode::serialize(Serializer &serializer) const
 
     serializer.write_uint8(bool_flags);
     serializer.write_uint32(0);
-    serializer.write_uint32(m_stl->m_children.size());
+    serializer.write_uint32(m_child_count);
 
-    for (std::vector<BBNode *>::const_iterator it = m_stl->m_children.begin(); it != m_stl->m_children.end(); ++it)
-	(*it)->serialize(serializer);
+    for (std::size_t i = 0; i < m_child_count; ++i)
+	m_children[i]->serialize(serializer);
+}
+
+
+void
+BBNode::addChild(BBNode *node)
+{
+    if (!node)
+	return;
+    if (m_child_count == UINT32_MAX)
+	bu_bomb("BBNode child count exceeds compact storage");
+    if (m_child_count == m_child_capacity) {
+	uint32_t new_capacity = m_child_capacity ? m_child_capacity * 2 : 1;
+	if (new_capacity < m_child_capacity || new_capacity < m_child_count + 1)
+	    new_capacity = m_child_count + 1;
+	BBNodeChildStorage *storage = bbnode_child_storage(m_children);
+	storage = static_cast<BBNodeChildStorage *>(bu_realloc(storage,
+	    sizeof(BBNodeChildStorage) +
+	    (std::size_t)new_capacity * sizeof(BBNode *),
+	    "BBNode child pointers"));
+	if (!m_children)
+	    storage->arena = NULL;
+	m_children = reinterpret_cast<BBNode **>(storage + 1);
+	m_child_capacity = new_capacity;
+    }
+    m_children[m_child_count++] = node;
+}
+
+
+struct alignas(BBNode) BBNodeArena::Block {
+    Block *next;
+    std::size_t used;
+    std::size_t capacity;
+};
+
+
+BBNodeArena::BBNodeArena() :
+    m_blocks(NULL),
+    m_anchor(NULL),
+    m_started(false)
+{
+}
+
+
+BBNodeArena::~BBNodeArena()
+{
+    /* The first node uses ordinary storage so it can be transferred through
+     * SurfaceTree::releaseRootNode.  On construction failure it remains an
+     * arena node and is destroyed shallowly while its children are live. */
+    if (m_anchor) {
+	BBNode *anchor = m_anchor;
+	m_anchor = NULL;
+	delete anchor;
+    }
+
+    /* Parents are always allocated before their children.  Restore block
+     * allocation order and destroy each block in forward order so a node's
+     * child pointers remain live while its destructor inspects ownership. */
+    Block *ordered = NULL;
+    while (m_blocks) {
+	Block *block = m_blocks;
+	m_blocks = block->next;
+	block->next = ordered;
+	ordered = block;
+    }
+    while (ordered) {
+	Block *block = ordered;
+	ordered = block->next;
+	unsigned char *nodes = reinterpret_cast<unsigned char *>(block + 1);
+	for (std::size_t i = 0; i < block->used; ++i) {
+	    BBNode *node = reinterpret_cast<BBNode *>(nodes +
+		i * sizeof(BBNode));
+	    node->~BBNode();
+	}
+	bu_free(block, "BBNode arena block");
+    }
+}
+
+
+void *
+BBNodeArena::allocate()
+{
+    static_assert(sizeof(Block) % alignof(BBNode) == 0,
+	"BBNode arena block header must preserve node alignment");
+    if (!m_blocks || m_blocks->used == m_blocks->capacity) {
+	/* Four-way SurfaceTree levels contain 1, 4, 16, 64, ... nodes.
+	 * Growing through 256 and then retaining that block size packs complete
+	 * levels exactly while bounding a trimmed face's final-block waste. */
+	const std::size_t maximum_capacity = 256;
+	std::size_t capacity = m_blocks ? m_blocks->capacity : 4;
+	if (capacity < maximum_capacity) {
+	    const std::size_t grown = capacity * 4;
+	    capacity = std::min(grown, maximum_capacity);
+	}
+	Block *block = static_cast<Block *>(bu_malloc(sizeof(Block) +
+	    capacity * sizeof(BBNode), "BBNode arena block"));
+	block->next = m_blocks;
+	block->used = 0;
+	block->capacity = capacity;
+	m_blocks = block;
+    }
+    unsigned char *nodes = reinterpret_cast<unsigned char *>(m_blocks + 1);
+    void *storage = nodes + m_blocks->used * sizeof(BBNode);
+    m_blocks->used++;
+    return storage;
+}
+
+
+BBNode *
+BBNodeArena::make(const ON_BoundingBox &node, const CurveTree *ct)
+{
+    BBNode *result = NULL;
+    if (!m_started) {
+	m_started = true;
+	result = new BBNode(node, ct);
+	m_anchor = result;
+    } else {
+	result = ::new (allocate()) BBNode(node, ct);
+    }
+    result->m_arena_node = true;
+    return result;
+}
+
+
+BBNode *
+BBNodeArena::make(const CurveTree *ct, const ON_BoundingBox &node,
+	const ON_Interval &u, const ON_Interval &v, bool checkTrim,
+	bool trimmed)
+{
+    BBNode *result = NULL;
+    if (!m_started) {
+	m_started = true;
+	result = new BBNode(ct, node, u, v, checkTrim, trimmed);
+	m_anchor = result;
+    } else {
+	result = ::new (allocate()) BBNode(ct, node, u, v, checkTrim,
+	    trimmed);
+    }
+    result->m_arena_node = true;
+    return result;
+}
+
+
+BBNode *
+BBNodeArena::make(Deserializer &deserializer, const CurveTree &ctree)
+{
+    BBNode *result = NULL;
+    if (!m_started) {
+	m_started = true;
+	result = new BBNode(deserializer, ctree, this);
+	m_anchor = result;
+    } else {
+	result = ::new (allocate()) BBNode(deserializer, ctree, this);
+    }
+    result->m_arena_node = true;
+    return result;
+}
+
+
+BBNode *
+BBNodeArena::finish(BBNode *root)
+{
+    if (!root)
+	return NULL;
+    if (!m_anchor)
+	bu_bomb("BBNode arena has no transferable root");
+    if (root != m_anchor)
+	m_anchor->adopt(*root);
+    root = m_anchor;
+    m_anchor = NULL;
+    root->m_arena_node = false;
+    root->setArenaOwner(this);
+    return root;
 }
 
 
@@ -195,9 +462,8 @@ BBNode::intersectsHierarchy(const ON_Ray &ray, std::list<const BBNode *> &result
     if (intersects && isLeaf()) {
 	results_opt.push_back(this);
     } else if (intersects) {
-	for (size_t i = 0; i < m_stl->m_children.size(); i++) {
-	    m_stl->m_children[i]->intersectsHierarchy(ray, results_opt);
-	}
+	for (std::size_t i = 0; i < m_child_count; ++i)
+	    m_children[i]->intersectsHierarchy(ray, results_opt);
     }
     return intersects;
 }
@@ -217,10 +483,9 @@ BBNode::intersectsHierarchy(const ON_Ray &ray, const BBNode **results,
 	}
 	count++;
     } else if (intersects) {
-	for (size_t i = 0; i < m_stl->m_children.size(); i++) {
-	    m_stl->m_children[i]->intersectsHierarchy(ray, results, capacity,
+	for (std::size_t i = 0; i < m_child_count; ++i)
+	    m_children[i]->intersectsHierarchy(ray, results, capacity,
 		count, overflow);
-	}
     }
     return intersects;
 }
@@ -241,9 +506,8 @@ int
 BBNode::depth() const
 {
     int d = 0;
-    for (size_t i = 0; i < m_stl->m_children.size(); i++) {
-	d = 1 + std::max(d, m_stl->m_children[i]->depth());
-    }
+    for (std::size_t i = 0; i < m_child_count; ++i)
+	d = 1 + std::max(d, m_children[i]->depth());
     return d;
 }
 
@@ -251,10 +515,9 @@ BBNode::depth() const
 void
 BBNode::getLeaves(std::list<const BBNode *> &out_leaves) const
 {
-    if (!m_stl->m_children.empty()) {
-	for (size_t i = 0; i < m_stl->m_children.size(); i++) {
-	    m_stl->m_children[i]->getLeaves(out_leaves);
-	}
+    if (m_child_count) {
+	for (std::size_t i = 0; i < m_child_count; ++i)
+	    m_children[i]->getLeaves(out_leaves);
     } else {
 	out_leaves.push_back(this);
     }
@@ -336,10 +599,10 @@ BBNode::getClosestPointEstimate(const ON_3dPoint &pt, ON_Interval &u,
 	TRACE("Closest: " << mindist << "; " << PT2(uvs[mini]));
 	return ON_2dPoint(uvs[mini][0], uvs[mini][1]);
     } else {
-	if (!m_stl->m_children.empty()) {
-	    const BBNode *closestNode = m_stl->m_children[0];
-	    for (size_t i = 1; i < m_stl->m_children.size(); i++) {
-		closestNode = closer(pt, closestNode, m_stl->m_children[i]);
+	if (m_child_count) {
+	    const BBNode *closestNode = m_children[0];
+	    for (std::size_t i = 1; i < m_child_count; ++i) {
+		closestNode = closer(pt, closestNode, m_children[i]);
 		TRACE("\t" << PT(closestNode->m_estimate));
 	    }
 	    return closestNode->getClosestPointEstimate(pt, u, v, surface);
@@ -366,9 +629,8 @@ BBNode::getLeavesBoundingPoint(const ON_3dPoint &pt, std::list<const BBNode *> &
 	return 0;
     } else {
 	int sum = 0;
-	for (size_t i = 0; i < m_stl->m_children.size(); i++) {
-	    sum += m_stl->m_children[i]->getLeavesBoundingPoint(pt, out);
-	}
+	for (std::size_t i = 0; i < m_child_count; ++i)
+	    sum += m_children[i]->getLeavesBoundingPoint(pt, out);
 	return sum;
     }
 }
@@ -485,17 +747,22 @@ CurveTree::isTrimmed(const ON_2dPoint &uv, const BRNode **closest,
 	*candidate_count = 0;
 
     const ON_Surface *surface = m_face ? m_face->SurfaceOf() : NULL;
+    const double period[2] = {
+	surface ? surface->Domain(0).Length() : 0.0,
+	surface ? surface->Domain(1).Length() : 0.0
+    };
     ON_2dPoint query(uv);
     if (surface) {
 	for (int direction = 0; direction < 2; ++direction) {
 	    if (!surface->IsClosed(direction))
 		continue;
 	    const ON_Interval domain = surface->Domain(direction);
-	    const double period = domain.Length();
-	    if (!(period > 0.0))
+	    const double direction_period = domain.Length();
+	    if (!(direction_period > 0.0))
 		continue;
 	    query[direction] -= floor(
-		(query[direction] - domain.Min()) / period) * period;
+		(query[direction] - domain.Min()) / direction_period) *
+		direction_period;
 	    if (query[direction] >= domain.Max())
 		query[direction] = domain.Min();
 	}
@@ -513,31 +780,32 @@ CurveTree::isTrimmed(const ON_2dPoint &uv, const BRNode **closest,
 
     for (std::vector<Stl::Loop>::const_iterator loop =
 	    m_stl->m_loops.begin(); loop != m_stl->m_loops.end(); ++loop) {
-	if (!loop->have_bbox || loop->sortedX.empty())
+	if (!loop->have_bbox || loop->sorted.empty())
 	    continue;
 	ON_2dPoint loop_query(query);
 	if (surface && surface->IsClosed(ray_axis)) {
-	    const double period = surface->Domain(ray_axis).Length();
-	    if (period > 0.0) {
+	    const double ray_period = surface->Domain(ray_axis).Length();
+	    if (ray_period > 0.0) {
 		const double center = 0.5 *
 		    (loop->minimum[ray_axis] + loop->maximum[ray_axis]);
 		loop_query[ray_axis] += nearbyint(
-		    (center - loop_query[ray_axis]) / period) * period;
+		    (center - loop_query[ray_axis]) / ray_period) * ray_period;
 	    }
 	}
 	TrimClassificationState loop_state(NULL);
-	const std::vector<Stl::Loop::Leaf> &sorted = horizontal_ray ?
-	    loop->sortedY : loop->sortedX;
 	for (std::vector<Stl::Loop::Leaf>::const_iterator leaf =
-		sorted.begin(); leaf != sorted.end(); ++leaf) {
-	    const BRNode *br = leaf->node;
-	    const ON_2dPoint local_query(loop_query.x - leaf->offset.x,
-		loop_query.y - leaf->offset.y);
+		loop->sorted.begin(); leaf != loop->sorted.end(); ++leaf) {
+	    const BRNode *br = &m_stl->m_leaves[leaf->node_index];
+	    const ON_2dVector offset(
+		(double)leaf->image[0] * period[0],
+		(double)leaf->image[1] * period[1]);
+	    const ON_2dPoint local_query(loop_query.x - offset.x,
+		loop_query.y - offset.y);
 	    point_t bmin, bmax;
 	    br->GetBBox(bmin, bmax);
 	    const double envelope = std::max(BREP_UV_DIST_FUZZ,
 		std::max(0.0, within_distance_tol));
-	    if (bmin[fixed_coordinate] + leaf->offset[fixed_coordinate] >
+	    if (bmin[fixed_coordinate] + offset[fixed_coordinate] >
 		    loop_query[fixed_coordinate] + envelope)
 		break;
 	    if (!trim_candidate_on_coordinate(br, local_query,
@@ -586,6 +854,10 @@ CurveTree::classifyCell(const ON_Interval &u, const ON_Interval &v,
     const double envelope = std::max(BREP_UV_DIST_FUZZ,
 	std::max(0.0, within_distance_tol));
     const ON_Surface *surface = m_face ? m_face->SurfaceOf() : NULL;
+    const double period[2] = {
+	surface ? surface->Domain(0).Length() : 0.0,
+	surface ? surface->Domain(1).Length() : 0.0
+    };
     const bool horizontal_ray = surface && surface->IsClosed(1);
     const int ray_axis = horizontal_ray ? 0 : 1;
     const int fixed_coordinate = horizontal_ray ? 1 : 0;
@@ -594,17 +866,18 @@ CurveTree::classifyCell(const ON_Interval &u, const ON_Interval &v,
 	    m_stl->m_loops.begin(); loop != m_stl->m_loops.end(); ++loop) {
 	if (!loop->have_bbox)
 	    continue;
-	const std::vector<Stl::Loop::Leaf> &sorted = horizontal_ray ?
-	    loop->sortedY : loop->sortedX;
 	for (std::vector<Stl::Loop::Leaf>::const_iterator leaf =
-		sorted.begin(); leaf != sorted.end(); ++leaf) {
-	    const BRNode *br = leaf->node;
+		loop->sorted.begin(); leaf != loop->sorted.end(); ++leaf) {
+	    const BRNode *br = &m_stl->m_leaves[leaf->node_index];
+	    const ON_2dVector offset(
+		(double)leaf->image[0] * period[0],
+		(double)leaf->image[1] * period[1]);
 	    point_t bmin, bmax;
 	    br->GetBBox(bmin, bmax);
-	    bmin[X] += leaf->offset.x;
-	    bmax[X] += leaf->offset.x;
-	    bmin[Y] += leaf->offset.y;
-	    bmax[Y] += leaf->offset.y;
+	    bmin[X] += offset.x;
+	    bmax[X] += offset.x;
+	    bmin[Y] += offset.y;
+	    bmax[Y] += offset.y;
 	    if (bmax[fixed_coordinate] + envelope <
 		    cell[fixed_coordinate].Min())
 		continue;
@@ -618,20 +891,21 @@ CurveTree::classifyCell(const ON_Interval &u, const ON_Interval &v,
 	     * even when its curve is far along the ray axis.  Exact joins do not:
 	     * their two incident crossings retain parity. */
 	    if (leaf->extend_minimum[fixed_coordinate]) {
-		const ON_3dPoint &start = br->startPoint();
-		const ON_3dPoint &end = br->endPoint();
+		const ON_3dPoint start = br->startPoint();
+		const ON_3dPoint end = br->endPoint();
 		const double endpoint = std::min(start[fixed_coordinate],
-		    end[fixed_coordinate]) + leaf->offset[fixed_coordinate];
+		    end[fixed_coordinate]) + offset[fixed_coordinate];
 		if (endpoint >= cell[fixed_coordinate].Min() - envelope &&
 			endpoint <= cell[fixed_coordinate].Max() + envelope)
 		    return false;
 	    }
 
-	    const ON_BoundingBox &bbox = br->m_node;
-	    const double bbox_min_u = bbox.m_min.x + leaf->offset.x;
-	    const double bbox_max_u = bbox.m_max.x + leaf->offset.x;
-	    const double bbox_min_v = bbox.m_min.y + leaf->offset.y;
-	    const double bbox_max_v = bbox.m_max.y + leaf->offset.y;
+	    const ON_2dPoint bbox_min = br->bboxMinimum();
+	    const ON_2dPoint bbox_max = br->bboxMaximum();
+	    const double bbox_min_u = bbox_min.x + offset.x;
+	    const double bbox_max_u = bbox_max.x + offset.x;
+	    const double bbox_min_v = bbox_min.y + offset.y;
+	    const double bbox_max_v = bbox_max.y + offset.y;
 	    double du = 0.0;
 	    double dv = 0.0;
 	    if (bbox_max_u < u.Min())
@@ -689,17 +963,20 @@ BBNode::isTrimmedAllocating(const ON_2dPoint &uv, const BRNode **closest,
 
 void BBNode::BuildBBox()
 {
-    if (!m_stl->m_children.empty()) {
-	for (std::vector<BBNode *>::const_iterator childnode = m_stl->m_children.begin(); childnode != m_stl->m_children.end(); childnode++) {
-	    if (!(*childnode)->isLeaf()) {
-		(*childnode)->BuildBBox();
+    if (m_child_count) {
+	for (std::size_t child_index = 0; child_index < m_child_count;
+		++child_index) {
+	    BBNode *child_node = m_children[child_index];
+	    if (!child_node->isLeaf()) {
+		child_node->BuildBBox();
 	    }
-	    if (childnode == m_stl->m_children.begin()) {
-		m_node = ON_BoundingBox((*childnode)->m_node.m_min, (*childnode)->m_node.m_max);
+	    if (child_index == 0) {
+		m_node = ON_BoundingBox(child_node->m_node.m_min,
+		    child_node->m_node.m_max);
 	    } else {
 		for (int j = 0; j < 3; j++) {
-		    V_MIN(m_node.m_min[j], (*childnode)->m_node.m_min[j]);
-		    V_MAX(m_node.m_max[j], (*childnode)->m_node.m_max[j]);
+		    V_MIN(m_node.m_min[j], child_node->m_node.m_min[j]);
+		    V_MAX(m_node.m_max[j], child_node->m_node.m_max[j]);
 		}
 	    }
 	}

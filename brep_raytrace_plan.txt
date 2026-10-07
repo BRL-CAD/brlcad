@@ -7,6 +7,363 @@ Repository studied: .
 STEP test corpus: ${STEP_CORPUS_DIR}
 
 
+IMPLEMENTATION CHECKPOINT: COMPACT RETAINED CURVE TREES (2026-08-09)
+------------------------------------------------------------------
+
+The first prep-memory implementation checkpoint addresses the highest-value
+CurveTree waste without changing trim subdivision or classification policy.
+This is important: the current trim leaf population is still conservative and
+may itself need algorithmic improvement, but crack handling, half-open endpoint
+ownership, periodic images, and exact native-curve crossing solves already have
+qualified behavior.  Memory representation can be improved independently of
+the later decision about how many leaves are actually necessary.
+
+The historical allocation path compounded three costs.  Every `BRNode`, every
+`BBNode`, each node's separately allocated STL holder, and each `CurveTree`
+inherited `PooledObject<T>`.  `PooledObject` calls `bu_heap_get` and
+`bu_heap_put`.  The current `bu_heap` implementation has 256 size classes,
+allocates 64-KiB bump pages per `bu_parallel_id()`, and does nothing when a
+small allocation is returned.  Consequently deleted CurveTrees were logically
+destroyed but their node storage could not be reused or reclaimed.  A serial
+per-face profiler therefore accumulated process-lifetime pages even though it
+owned only one live face tree at a time.
+
+Finishing `bu_heap_put` with a simple free list is not safe or sufficient.
+Allocation is routed by the caller's parallel id, deletion can occur on a
+different thread, and the returned pointer has no owner/page metadata.  A
+correct generic implementation must define cross-thread returns, page
+liveness, and compaction or page-reclamation semantics.  Even a correct free
+list would leave the much larger active-representation problem unchanged.
+`src/libbu/heap.c` now records that design TODO explicitly.  BREP no longer
+depends on solving it for retained CurveTree storage.
+
+The former CurveTree was a recursive binary construction hierarchy.  A
+232-byte `BRNode` and a separately allocated 24-byte STL holder were retained
+for every internal node and every leaf.  After construction it also built a
+global pointer index and, per loop, two complete image indices sorted in X and
+Y.  Production `CurveTree::isTrimmed` and `classifyCell` did not traverse the
+binary hierarchy.  They consumed only the per-loop prepared leaves.  The
+hierarchy survived for old closest-estimate helpers, plotting access, and cache
+serialization; repository-wide call analysis found no production consumer
+that needed internal curve nodes.
+
+Curve construction now follows exactly the same control flow through span and
+horizontal/vertical-tangent splits and exactly the same `isLinear` stopping
+test.  At a terminal interval it appends one compact `BRNode` value to a
+CurveTree-owned `std::vector`; recursive calls no longer allocate or retain a
+parent.  All leaf pointers are formed only after subdivision is complete, so
+vector relocation cannot invalidate a prepared index.  The retained leaf has
+only data used by classification and exact curve solving:
+
+  * its source trim pointer and trim/adjacent-face indices;
+  * the native curve parameter interval;
+  * UV endpoint coordinates and sampled UV bounding rectangle; and
+  * monotonic-direction, horizontal, vertical, and inner-loop flags.
+
+Three-dimensional OpenNURBS points and boxes were unnecessary for two-
+dimensional pcurves.  Storing the four UV box coordinates and four UV endpoint
+coordinates directly reduces `sizeof(BRNode)` from 232 bytes, plus the old
+24-byte allocation, to 104 bytes with no secondary allocation.  Its exact
+`getCurveEstimateOfU/V`, crossing, and curve-distance methods still evaluate
+the original `ON_Curve`; this is a storage compaction, not a polygonal
+replacement.
+
+A surface chooses its parity-ray orientation once: closed-V surfaces classify
+with a horizontal +U ray, and all others classify with a vertical +V ray.
+Keeping both per-loop X and Y sorted indices was therefore redundant.  Each
+loop now retains only the ordering for its fixed coordinate.  An indexed image
+stores a 32-bit leaf index, two integer periodic image numbers, and two endpoint
+extension bits in 16 bytes.  Query code reconstructs the UV offset from the
+surface periods.  The 32-bit limit is checked explicitly and matches the
+existing prep-cache leaf-count format.  The obsolete global pointer index is
+also gone; compatibility plotting/list APIs iterate the owned leaf vector.
+
+Prep cache version 2 serializes the compact leaves and their recorded maximum
+construction depth rather than the recursive hierarchy.  Old version-1
+records are rejected normally.  A new leaf record needs 89 serialized bytes
+instead of serializing every heavyweight internal and leaf node, so disk cache
+size and cache-load allocation count should improve substantially as well as
+resident memory.  Serial and parallel librt cache round-trip tests pass.
+
+The primary before/after oracle is Recurta AP203 `10057.g/id2_item.s`.  It has
+301 faces and 482,684 curve leaves at both surface depths.  The same process
+retains a depth-three tree with 6,603 surface leaves and a depth-eight tree with
+315,415 surface leaves.  The earlier 15-pair feature audit peaked near
+585.0 MiB.  With compact CurveTrees it peaks at 372,117,504 bytes (354.9 MiB),
+a reduction of about 230 MiB or 39 percent.  All 30 directed rays pass;
+there are no depth, reversal, disposition, or face-owner differences, and the
+maximum shallow/deep endpoint delta remains
+`2.9734749773524527e-8`.  A six-ray axis-only repetition has maximum delta
+`5.5138116294983774e-12` and peaks at 374,116,352 bytes.
+
+The serial depth-three per-face profile demonstrates both the win and the
+remaining floor.  Peak RSS falls from 205,426,688 to 164,495,360 bytes even
+though all 482,684 leaf constructions are counted.  Since only one CurveTree
+is live in that mode, the remaining peak is largely the 28-MiB imported BREP,
+OpenNURBS topology, process libraries, and unreclaimed SurfaceTree/`BBNode`
+pool pages.  Repeated wall measurements varied from 1.56 to 11.90 seconds as
+the build and system caches warmed; these numbers are not stable performance
+benchmarks.  Whole-object concurrent prep is the relevant production timing
+and must receive an isolated phase benchmark later.
+
+The second scale check is `10088.g/id2_item.s`, a 5,771-face solid with 108,433
+curve leaves and 52,213 depth-eight surface leaves.  Its 15-pair, two-depth
+feature audit passes with the previous maximum delta
+`6.6577683810464805e-8`; peak RSS is 283,979,776 bytes (270.8 MiB), compared
+with the earlier approximately 310.0-MiB checkpoint.  The smaller percentage
+is expected: this model has many more OpenNURBS topology objects but less than
+one quarter of 10057's curve leaves.  It confirms that CurveTree compaction
+does not merely tune the one curve-heavy model and also shows why whole-model
+topology attribution remains necessary.
+
+Qualification for this checkpoint includes the trim-classifier, cleanup,
+endpoint, contact-trim, and distorted-defect suites; serial and parallel BREP
+prep-cache reloads; the complete 10057 and 10088 feature/depth comparisons;
+and the 416-ray seam suite.  All pass.  Leaf counts and exact curve intervals
+are unchanged.
+
+This does not complete prep-memory work.  The next high-value structure is the
+SurfaceTree.  A depth-eight 10057 prep retains 618,445 `BBNode`s.  The first
+subsequent step, recorded below, removes each node's separate child-vector
+holder, but `BBNode` itself still uses the process-lifetime pool.  Surface
+nodes require hierarchical traversal, so their final compact design is not
+identical to the flat CurveTree solution.  Candidate directions are a
+per-prep/per-face arena with explicit transfer into `brep_specific`, a compact
+index-based node array, or a build hierarchy that is packed into immutable
+runtime nodes before temporary storage is released.  The design must preserve
+structural seam and knot splits, cache and fresh-prep identity, parallel
+ownership, and allocation-free shooting.  Smaller wins—shared immutable span
+metadata, topology/reference compaction, cache streaming, and vector capacity
+accounting—remain worthwhile because multi-gigabyte top-level STEP objects
+will combine all of these costs.
+
+
+IMPLEMENTATION CHECKPOINT: COMPACT SURFACE CHILD STORAGE (2026-08-10)
+--------------------------------------------------------------------
+
+The first SurfaceTree representation step removes an allocation layer without
+changing any surface bounds, UV domains, seed estimates, normals, trim flags,
+tree topology, or traversal order.  A `BBNode` formerly held a pointer to a
+separately allocated 24-byte pooled STL holder, which in turn held a
+`std::vector<BBNode *>`.  Leaves paid for the empty holder even though they had
+no children.  Internal nodes and the object-level root paid for the holder and
+the vector's separate pointer buffer.  Since the holder inherited
+`PooledObject`, its storage was not reclaimed by the current `bu_heap_put`.
+
+`BBNode` now stores a child-buffer pointer and checked 32-bit count/capacity
+directly.  The buffer retains vector-style geometric growth, supports both the
+two/four-way surface splits and a top-level root with thousands of face roots,
+and is released with the node.  Cache serialization remains byte-compatible:
+it still records the same child count followed by the same preorder node
+records.  Cache reconstruction uses the same `addChild` path.  Repository
+consumers now traverse through bounded `childCount()` and `child()` accessors.
+
+The old `BBNode` itself was 152 bytes and required the separate 24-byte holder,
+or 176 bytes before any child-pointer buffer or allocator metadata.  The new
+node is 160 bytes including its child pointer, count, and capacity.  Every leaf
+therefore saves 16 retained bytes before allocator overhead, and every
+internal node also removes one allocation.  This is intentionally an
+incremental, low-risk win; the node object remains `PooledObject<BBNode>` and
+still needs a per-prep arena, indexed array, or build-then-pack replacement to
+make complete-tree lifetime reclamation possible.
+
+The exact Recurta `10057.g/id2_item.s` two-depth audit retains the same 618,445
+deep-tree nodes, 315,415 deep leaves, 12,107 shallow-tree nodes, 6,603 shallow
+leaves, and 482,684 curve leaves.  All 30 axis/feature rays pass with no depth,
+reversal, disposition, partition, or face-owner difference; maximum endpoint
+delta remains `2.9734749773524527e-8`.  Peak RSS falls from 372,117,504 to
+363,761,664 bytes, a reduction of 8,355,840 bytes (7.97 MiB, 2.25 percent) from
+this child-storage change alone.
+
+The 5,771-face `10088.g/id2_item.s` scale check separates the changed legacy
+hierarchy from the experimental prepared solver.  Depth-eight prep succeeds
+in 17.24 seconds at a 236,576,768-byte process peak.  The full 30-ray
+legacy-only depth comparison passes with 96,787/12,387 deep/shallow nodes,
+52,213/9,373 leaves, zero invalid rays, zero partition or reversal differences,
+and the unchanged `6.6577683810464805e-8` maximum endpoint delta.  It peaks at
+281,817,088 bytes.  Serial/parallel cache reloads and focused trim, cleanup,
+and endpoint tests also pass.  The 416-ray seam shard passes in 229.89 seconds,
+and ASan/UBSan cache destruction plus focused cleanup pass without a diagnostic.
+
+The seam wall time is not 416 ordinary production shots through one prepared
+solid.  Its bowed-Cobb matrix builds 16 distorted variants and performs two
+BREP preps per variant.  At each of 416 matrix positions it shoots an implicit
+oracle once, the BREP twice for determinism, and a fully instrumented BREP
+trace once: 1,664 calls, including 1,248 BREP shots.  The trace call executes
+both prepared certification and legacy solving, evaluates all 12 manifold
+edges, and records adaptive gap, correspondence, trim, local-root, closure,
+and continuation evidence.  The `--seam-only` shard also runs thirteen other
+seam, vertex, contact, non-isoparametric, and defect checks.  Its primary Cobb
+objects have only six faces/spans, so this wall time is not the 10088 all-face
+index problem.  It is correctness-proof workload plus repeated prep.  It must
+not substitute for a throughput benchmark that excludes prep and trace,
+reuses one prepared object, and reports ordinary production rays per second.
+
+This run exposed a separate performance issue that must not be misattributed
+to SurfaceTree storage.  The complete prepared-and-legacy 10088 audit was
+stopped after more than ten minutes, and even selected axis pair zero exceeded
+a two-minute bound.  The same pair in legacy-only mode completed correctly;
+the complete 30-ray legacy-only run was also bounded and correct.  Inspection
+shows that the prepared path calls `brep_trace_surface_spans`, which scans
+every prepared span of all 5,771 faces and interval-isolates each ray-plane
+coefficient-hull candidate before whole-ray certification can reject or
+publish the result.  It does not use the BBNode hierarchy.  A face/span BVH or
+equivalent conservative object-level index is therefore a concrete later
+performance requirement, not merely a speculative optimization.  Until that
+index exists, use prep-only/SurfaceTree-only measurements for representation
+work and legacy-only rays for direct hierarchy qualification; reserve full
+prepared trace mode for targeted certificate tests and bounded samples.  Add
+an imported-object counterpart to the registered already-prepared, non-trace
+Cobb throughput fixture so production shot cost remains visible independently
+of these proof matrices.
+
+
+IMPLEMENTATION CHECKPOINT: RECLAIMABLE SURFACE-TREE ARENAS (2026-08-10)
+----------------------------------------------------------------------
+
+The retained SurfaceTree nodes no longer depend on the generic `bu_heap`
+pool.  Each face now builds its `BBNode` hierarchy in a private
+`BBNodeArena`, transfers one ordinary root node through the existing
+`SurfaceTree::releaseRootNode` interface, and attaches the arena's lifetime
+to that root.  Deleting the root therefore destroys every node and frees every
+arena block.  The top-level BREP BVH root remains an ordinary node and owns
+the transferred face roots recursively, so existing `brep_specific`
+ownership and public raw-root transfer semantics do not change.
+
+The first node allocated for a face is an ordinary transferable anchor.
+Subsequent nodes use placement construction in blocks sized 4, 16, 64, and
+256 nodes, after which 256 remains the maximum block size.  Those capacities
+pack the first complete levels of the four-way SurfaceTree while bounding
+tail waste on small or aggressively trimmed faces.  Some surfaces first
+construct a knot-partition parent and later replace it with an adaptive root.
+In that case the final logical root is adopted into the original anchor;
+there is still exactly one ordinary root per face and no special case in
+`releaseRootNode`.  Structural closed-seam and internal-knot splits, node
+order, bounds, UV domains, estimates, normals, and trim preparation are
+unchanged.
+
+Arena nodes are destroyed shallowly because their children are owned by the
+same arena.  The transferable root owns the arena through a hidden prefix on
+its child-pointer allocation; the serialized node representation and cache
+format are unchanged.  Cache deserialization now reconstructs each face tree
+through the same arena path.  Ordinary standalone deserialization remains
+available and recursively owned for API compatibility.  A node attached by a
+caller after arena construction retains ordinary ownership and is deleted
+normally.
+
+Failure cleanup is deliberately part of the design.  A bounding-box,
+evaluation, split, or recursive-child failure can abandon a partially built
+face without walking and deleting individual nodes.  The arena destroys the
+anchor and every constructed block node and then releases the blocks.  The
+local-root test includes an intentional `FAILURE_NORMAL_EVALUATION` case and
+passes under ASan/UBSan.  Sanitizer testing also found and corrected an
+important destruction-order error in the first implementation: blocks were
+linked newest-first, and freeing them in that order let a parent destructor
+inspect an already freed child.  Teardown now restores allocation order and
+destroys parents before children while all referenced child storage is live.
+
+`sizeof(BBNode)` remains 160 bytes with 8-byte alignment.  The arena flag uses
+existing padding.  The exact Recurta `10057.g/id2_item.s` two-depth audit
+retains the same 618,445/12,107 deep/shallow node populations, the same
+315,415/6,603 leaves, and 482,684 CurveTree leaves.  All 30 rays pass with no
+depth, reversal, disposition, partition, or face-owner difference and the
+unchanged `2.9734749773524527e-8` maximum endpoint delta.  The measured
+process peak is 359,940,096 bytes versus 363,761,664 at the direct-child
+checkpoint, a 3,821,568-byte (3.64-MiB, about 1.05-percent) reduction.  This
+is a useful ownership repair and small retained-memory win, not a claim that
+all allocator high-water behavior is solved.
+
+The 5,771-face `10088.g/id2_item.s` depth-eight prep succeeds in 15.47 seconds
+at 236,707,840 bytes, essentially neutral relative to the preceding
+236,576,768-byte run.  Its isolated 30-ray legacy depth comparison remains
+correct with unchanged node/leaf populations and maximum endpoint delta, but
+peaks at 294,780,928 bytes.  That comparison constructs and frees the deep
+model before constructing the shallow model and records process high water,
+so allocator-retained pages from the first phase and feature-sampling storage
+can be counted again during the second.  Do not interpret this one process
+peak as live arena ownership or as a reliable arena regression; prep-only,
+logical population, repeated unload, and sanitizer evidence must be considered
+together.
+
+`brep-audit --prep-only --prep-repeat=N` now exercises complete preparation
+and destruction repeatedly and emits one JSON record per cycle.  Six normal-
+allocator 10057 cycles peak at 283,414,528, 388,243,456, 409,079,808,
+418,910,208, 424,792,064, and 428,048,384 bytes.  The increments shrink from
+about 100 MiB to 3 MiB rather than adding another live tree population each
+time.  With `MALLOC_ARENA_MAX=1`, four cycles peak at 264,671,232,
+296,349,696, 303,284,224, and 303,538,176 bytes, but prep time approximately
+doubles.  Together with sanitizer-clean teardown, this indicates that the
+remaining repeated-process RSS is primarily glibc per-thread arena retention
+and fragmentation rather than unreleased `BBNodeArena` ownership.  It is
+still operationally relevant for long-lived and very large applications.
+`MALLOC_ARENA_MAX=1` is a diagnostic, not a proposed production default.
+
+The next memory representation step should evaluate a reclaimable larger
+region or exact compact/indexed runtime layout, and should distinguish live
+bytes from allocator-retained pages.  A global block free list would recreate
+the process-lifetime maximum-retention behavior this change removes.  A
+build-then-pack design must also account for transiently holding both build
+and packed nodes.  Continue with per-face NURBS/topology attribution,
+immutable span/reference compaction, and cache streaming before selecting a
+more invasive design.
+
+The 229.89-second seam result also received a bounded CPU profile.  It is not
+the high-face-count span-index problem: the Cobb solid has six faces and six
+surface spans, and SurfaceTree build, bounding boxes, and BVH traversal account
+for less than one percent of the sampled time.  `brep_expansion_add` accounts
+for 45.76 percent and `brep_expansion_scale` for 25.09 percent; exact Bezier
+restriction/blossoming and fold-determinant certification dominate most of
+the remainder.  These expansions use fixed 128-component workspaces and do
+not allocate during shooting.  Near seam and grazing configurations make the
+ordinary floating-point and interval predicates inconclusive, after which
+the prepared solver repeatedly restricts exact expansions while isolating and
+certifying contacts.  Both ordinary production shots and diagnostic trace
+shots reach this path.  The trace multiplier explains why the proof matrix is
+especially slow, but the production path itself remains too expensive.
+
+The registered `rt_brep_ray_throughput` fixture now prepares one inward-bowed
+Cobb sphere once and measures separate regular, 100T, 2T, 1.1T, and exact-
+tangent families.  Use it while introducing a tiered conservative dispatch:
+cheap control-hull/double bounds first, outward interval bounds next, and
+fixed-expansion restriction only for the ambiguous residue.  Preserve exact
+expansion as the authority for genuinely unresolved tangent, fold, seam, and
+crack cases and keep the existing fixed-work/no-malloc contract.  Record stage
+counters and selected/fallback populations so a speedup cannot silently become
+a missed-root or crack regression.
+
+
+IMPLEMENTATION CHECKPOINT: ROOT-CENTERED SEAM CONTINUATION (2026-08-10)
+-----------------------------------------------------------------------
+
+The prepared-once fixture exposed a correctness and work-amplification defect
+in the original outside-span continuation proof.  The 2T and 1.1T grazing
+chords missed because the only continuation terminal box had a ray-t hull wide
+enough to overlap the existing endpoint.  A 100T chord visited 82,013 boxes,
+retained 40,960 ambiguous depth-24 terminals, overflowed trace storage by
+40,896, and spent seconds before rejecting the repair.  Increasing depth or
+storage would worsen the defect.
+
+The replacement includes both known endpoint parameters in one bounded
+reparameterized extension.  It establishes disjoint strict Krawczyk boxes for
+the existing root and Newton continuation, uses their outward-rounded images
+for disjoint ray-t enclosures, and proves every cell in the boxes' gridded
+complement root-free with coordinate/vector Bernstein hull exclusion.  The
+proof is depth first in fixed storage and rejects every arithmetic, ambiguity,
+third-root, depth, or work-budget failure.  It therefore proves exactly the
+known pair without allocation or global depth growth.
+
+The 100T, 2T, and 1.1T fixture cases need 2, 5, and 7 Krawczyk attempts and 13
+immediately excluded complement cells.  They return one interval in both
+directions; the exact tangent returns none and never invokes continuation.
+The complete bowed matrix retains all 16 authorized repairs, has no crack leak
+or reversal inconsistency, and observes at most 15 continuation boxes.  A
+representative optimized run records approximately 1.5 ms for a regular ray
+and 3.4--4.4 ms for the repaired grazing rays.  These numbers are diagnostic,
+not acceptance thresholds.  Focused release gates pass 11/11 and ASan/UBSan
+gates pass 4/4.  The broader seam shard still contains unfinished prepared
+contact/oblique selection failures and remains a separate active gate.
+
+
 IMPLEMENTATION CHECKPOINT: COPLANAR EVENT AUTHORITY (2026-08-09)
 ----------------------------------------------------------------
 
@@ -2234,12 +2591,27 @@ every generated coefficient and every function/Jacobian interval encloses the
 corresponding exact polynomial quantity.  Until then, a successful shadow
 test may reduce comparison work but may not alter production hit publication.
 
-The current continuation certificate deliberately does not use clipping.
-That certificate must show that its bounded outside-span region isolates only
-the proposed missing seam root.  Early experiments with conservative
-clipping retained extra terminal ambiguity boxes and therefore weakened that
-single-component proof even though the intended root remained covered.
-Revisit continuation clipping only with a separate component/exclusion gate.
+The continuation certificate deliberately does not use heuristic clipping.
+Its bounded reparameterized neighborhood includes the existing endpoint and
+the proposed missing seam root.  It first constructs disjoint boxes centered
+on the two corrected parameters.  Outward interval restriction followed by
+strict Krawczyk inclusion proves exactly one root in each box.  The Krawczyk
+images provide smaller outward ray-parameter enclosures, which must contain
+their respective representatives and remain disjoint.  The two full certified
+boxes are then removed from a grid induced by their U/V boundaries; every
+remaining cell is recursively proved root-free by outward Bernstein hull and
+vector-hull exclusion.  Thus the local extension contains exactly the known
+endpoint pair and no third root.  Failure to certify either root, separate
+their ray intervals, exclude the complete complement, or remain within the
+fixed work budget rejects the repair.
+
+This root-centered decomposition replaces an earlier fixed-depth isolation of
+the entire extension.  The old method disabled adaptive correction and
+Krawczyk termination, so a shallow grazing chord could retain 40,960 ambiguous
+terminal boxes, overflow the 64-box trace ledger, and spend seconds before
+failing.  Increasing the global depth or storage limit is not an acceptable
+remedy.  Revisit continuation clipping only if it is independently proved to
+preserve the two root components and complete complement exclusion.
 
 Audit the layers separately.  For already bounded Bernstein coefficients,
 evaluate F(x) with interval de Casteljau operations and form derivative
@@ -3260,14 +3632,19 @@ fixed-capacity evaluation of the prepared manifold edges.  Qualification is:
      the opposite ENTER/LEAVE direction and the correct ordering about the
      edge observation.
 
-  5. Certify the continuation over a bounded outside-span reparameterization.
-     Exactly one continuation candidate and one certified candidate are
-     allowed.  Every isolated certificate box must contain the corrected root;
-     no certificate box may overlap the existing endpoint; the root must lie
-     inside the outward ray-t hull; and its oriented normal must be finite and
-     non-tangent.  Store the exact face, Bezier span, UV, adjacent face,
-     direction, representative t, and certificate interval produced by this
-     proof.
+  5. Certify the endpoint pair over a bounded outside-span
+     reparameterization.  Exactly one continuation candidate and one certified
+     candidate are allowed.  Place the existing and corrected continuation
+     parameters in disjoint interior boxes and require strict outward-interval
+     Krawczyk inclusion for both.  Their contracted ray-t images must contain
+     their respective representatives and be disjoint.  Partition the rest of
+     the extension at the two boxes' U/V boundaries and prove every complement
+     cell root-free with bounded Bernstein hull exclusion.  This establishes
+     exactly the known pair in the local extension; any third root, ambiguous
+     cell, arithmetic failure, or work exhaustion rejects the repair.  The
+     continuation's oriented normal must also be finite and non-tangent.  Store
+     the exact face, Bezier span, UV, adjacent face, direction, representative
+     t, and contracted certificate interval produced by this proof.
 
   6. Prove global source ownership before changing a disposition.  Every
      retained box that contains the selected existing root is a boundary
