@@ -13,11 +13,34 @@ CURRENT PHASE
 
 Phase 1 ownership repair and the first deterministic Newton hardening pass are
 implemented.  Directed implicit-sphere/converted-BREP pole rays now pass.  An
-in-memory C++ ray corpus and signed grazing report are in place; the report has
-exposed a repeatable false-interval plateau at tangency that must be fixed
-before the near-tangent cases can become hard correctness gates.  Surface-tree
-density and seam behavior have not yet changed.  Phase 0 baselines documented
-in brep_raytrace_plan.txt remain authoritative.
+in-memory C++ ray corpus and signed grazing report are in place.  The initial
+report exposed a repeatable false-interval plateau at tangency; conditioned
+root acceptance now removes that plateau and all sampled outside false hits,
+and those cases are permanent gates.  A shared-line Crofton harness now
+compares final implicit and BREP partitions on identical samples for sphere,
+oblate ellipsoid, ARB8 box, RCC, truncated cone, and torus fixtures.  Surface-
+tree density and seam behavior have not yet changed.  Five topology-identical
+CSG regions now compare implicit leaves against individually converted BREP
+leaves under the same Boolean trees.  A reusable exact Cobb sphere definition
+now supplies both the legacy unsewn patch set and a closed 8-vertex/12-edge
+solid; the pristine sewn form matches the implicit sphere on its first 8,000
+shared lines.  An endpoint-preserving bowed support-seam sweep now calibrates
+actual 3D discrepancy and records grazing behavior across 416 directed rays.
+It has reproduced a below-tolerance crack leak without yet changing seam
+policy.  Fixed-capacity raw-shot tracing now distinguishes missing physical
+roots from trim rejection and legacy hit cleanup without changing production
+behavior.  Direct shared-edge observations also prove that every current
+below-envelope leak has eligible 3D evidence on the intended mated edge.
+Compact positive-weight rational Bezier spans and conservative control-hull
+boxes for eligible edges are now prepared in both normal and cached prep.
+An observation-only cross-section classifier validates incident trim lifts and
+distinguishes material-side, contact, and exterior edge proximity.  A further
+shadow-only event classifier now identifies uniquely repairable unmatched
+solid hits from that evidence and is invariant under tested similarities.
+Exact-parameter positive-weight surface spans and conservative ray-plane
+coefficient exclusion are prepared, and a bounded adjacent-support
+continuation solve recovers the missing bowed-seam endpoints in shadow mode.
+Phase 0 baselines documented in brep_raytrace_plan.txt remain authoritative.
 
 
 REPOSITORY STATE AT START
@@ -63,9 +86,11 @@ ESTABLISHED FINDINGS
    model-space roles.  This will be addressed only after Phase 1 behavior is
    isolated and tested.
 
-5. The existing Cobb generator is a valid but non-solid six-face patch set
-   with 24 independent edges.  A sewn 8-vertex/12-edge variant is required for
-   solid crack testing.
+5. The historical Cobb generator is a valid but non-solid six-face patch set
+   with 24 independent edges.  libbrep now provides both that representation
+   and a valid, closed, oriented variant with 8 shared vertices, 12 shared
+   edges, and 24 trims.  The support surfaces are an exact sphere to sampled
+   roundoff.  Controlled seam/trim perturbations are still required.
 
 6. Primary correctness validation will pair original implicit/CSG raytracing
    with converted BREP raytracing on identical lines, including Crofton
@@ -82,15 +107,13 @@ ESTABLISHED FINDINGS
    assumptions, stops on a UV-only tolerance, has no trim support, and the old
    wrapper fabricated a 0.01-unit exit for odd hit counts.  Do not port it.
 
-8. The first R=10 mm grazing sweep found a deterministic but incorrect current
-   limit.  As h -> 0+ the converted BREP chord stops converging and approaches
-   about 0.001812758 mm.  At exact tangency the implicit sphere is a raw miss
-   while BREP reports that false interval.  BREP also reports false intervals
-   for very small negative h, out to between approximately -7.45e-8 mm and
-   -1.49e-7 mm in this setup.  This scale is consistent with the loose 1e-7
-   line-residual termination being converted into two apparent roots near an
-   ill-conditioned tangent.  Preserve this report as a baseline; do not merely
-   tune one fixed tolerance until a broader corpus is present.
+8. The first R=10 mm grazing sweep found a deterministic but incorrect
+   baseline.  As h -> 0+ the converted BREP chord stopped converging and
+   approached about 0.001812758 mm.  At exact tangency it reported that false
+   interval, and it reported false intervals for small negative h out to
+   between approximately -7.45e-8 mm and -1.49e-7 mm.  The conditioned root
+   test described in Finding 11 has repaired this baseline.  Keep the history
+   as evidence for why the permanent exact-tangent and negative-h gates exist.
 
 9. Solver work follows a corpus-first ratchet rule learned from the STEP work:
    reproduce difficult cases in C/C++ with analytic or paired implicit
@@ -98,6 +121,187 @@ ESTABLISHED FINDINGS
    without freezing their bad answer, and promote each repaired defect to a
    hard gate.  Avoid isolated changes tested only against their motivating
    model.
+
+10. A ray starting exactly on the +X sphere seam and pointing outward is a
+    raw miss in rt_sph_shot, which explicitly rejects an outside/on-surface
+    origin pointing away.  Current BREP shot instead returns the wholly
+    nonpositive interval [-2R, 0].  The in-memory corpus permits that known
+    result to disappear, but requires determinism and forbids any forward
+    material.  Once BREP applies the normal half-ray/partition policy, promote
+    this case to exact implicit parity.
+
+11. A fixed perpendicular line residual is not a sufficient root criterion at
+    tangency.  For a unit surface normal N and ray direction D, residual divided
+    by |N dot D|/|D| is the first-order error along the ray.  Root acceptance
+    now requires that estimate to satisfy the numerical root tolerance, with a
+    1e-13 residual floor for exact/double contact.  Residuals are evaluated
+    from S-ray_origin instead of a global plane offset, avoiding cancellation
+    on million-unit translated fixtures.  This retained the singular north
+    pole, small/large scale, and translated cases while repairing the grazing
+    limit.  This is solver conditioning, not the final contact or seam policy.
+
+12. The correct first CSG stress test preserves the Boolean hierarchy and
+    replaces only exactly convertible implicit leaves with BREP leaves.  It
+    does not collapse the tree through ON_Boolean.  Disjoint and overlapping
+    sphere unions, a sphere-intersection lens, a concentric subtraction
+    cavity, and box-minus-cylinder all agree on every directed and shared line
+    in this form.
+
+13. A diagnostic experiment that did collapse the same binary trees to single
+    evaluated BREPs separated Boolean-conversion defects from ray-solver
+    defects.  Disjoint sphere union and concentric cavity happened to match,
+    but overlapping union, intersection lens, and box-minus-cylinder were
+    geometrically wrong before raytracing.  At 8,000 lines, overlapping union
+    produced BREP area/volume about 313.2/527.7 versus implicit 497.6/937.5;
+    the lens produced about 265.4/469.5 versus 121.9/105.5; and the drilled
+    box produced zero BREP chord volume with invalid partitions.  Treat this
+    as a later ON_Boolean/conversion qualification problem, not evidence
+    against the leaf BREP intersection solver.
+
+14. Two later-stage duality tiers are now specified in the plan: replacing
+    exactly convertible leaves throughout larger existing CSG databases while
+    preserving their trees, and using the experimental `brep csg`/
+    brep_to_csg shape recognizer to reconstruct full or partial implicit trees
+    from controlled and NIST BREP examples.  Fully implicit reconstructions
+    are independent oracles; mixed reconstructions must disclose residual
+    BREP leaves and make a weaker claim.
+
+15. The openNURBS expert NewFace documentation says its vertex indices are
+    ordered (SW, SE, NW, NE), but NewOuterLoop in the implementation consumes
+    them in boundary order (SW, SE, NE, NW) and relates edge i to vertices i
+    and (i+1)%4.  Reusing two adjacent Cobb edges exposed the inconsistency.
+    Cobb construction follows the implementation order and the topology tests
+    make this dependency observable.
+
+16. The first controlled bowed-seam sweep proves that current tolerance logic
+    does not reliably preserve the intended solid.  Moving only the three
+    interior boundary CVs of one Cobb face inward, while preserving endpoints,
+    shared topology, and declaring the measured edge tolerance, can remove one
+    near-grazing root.  At g/T=1 the defect persists through h/T=0.9, where the
+    analytic two-root separation is about 379T (a 0.1897 mm chord for the
+    current T=0.0005 mm).  Normal partition assembly may then discard the
+    entire interval.  The 416-ray matrix currently records 15 below-envelope
+    zero-partition leaks and one forward/reverse inconsistency.  Leakage does
+    not currently spread to h greater than the measured gap; that is now a
+    one-way ratchet, while any repaired cases are allowed to disappear.
+
+17. Near tangency, a surface displacement g can amplify into an along-ray
+    endpoint change much larger than g, approximately through the same
+    1/|N dot D| conditioning governing the solver.  Therefore seam validation
+    cannot gate endpoint error directly by g.  It must distinguish geometric
+    support uncertainty, root conditioning, interval existence/winding, and
+    final minimum-segment policy.
+
+18. The arbitrary-direction nominal h=0 seam lines expose a zero-chord
+    implicit contact partition to the normal callback, with tangent normals
+    that intentionally fail material entry/exit orientation.  Raw axis-aligned
+    exact tangency remains a miss.  Machine reports preserve this distinction;
+    contact events must be canonicalized explicitly rather than being treated
+    as ordinary material partitions.
+
+19. Raw-shot instrumentation localizes 14 of the 15 below-envelope crack
+    leaks before legacy trim and event cleanup: fewer than two distinct
+    geometric roots were found.  For inward g/T=1, h/T=0.9, two subdivision
+    leaves converge to the same clean adjacent-face root at t about 19.9051;
+    duplicate cleanup correctly reduces them to one event, while the bowed
+    target support has no mathematical intersection.  Reversing the line
+    produces the same physical root at t about 20.0949.  The missing solid
+    crossing therefore requires a topology-local seam closure event inside
+    the authorized 3D edge envelope.  It cannot be repaired by loosening the
+    Newton residual, accepting a trim miss, or retaining duplicate seeds.
+    The remaining leak has at least two distinct candidates and is lost in
+    cleanup; no leak in this matrix is caused by trim classification.
+
+20. A direct line-to-shared-edge observation supplies the missing model-space
+    evidence independently of the UV trim tree.  Across all 416 bowed-seam
+    rays, the target-edge distance follows |h| with maximum error about
+    3.59e-15 mm, is unchanged by ray reversal, and qualifies exactly inside
+    the edge's declared tolerance.  All 15 below-envelope leaks have this
+    target-edge evidence; target-edge observations outside the declared
+    envelope do not qualify.  The current implementation is deliberately
+    trace-only and uses a fixed sampling/refinement budget.  It must not
+    change production results until prepared edge spans provide conservative
+    exclusion and the local manifold-sector transition is implemented.
+
+21. Eligible two-trim edges can be prepared without enlarging the serialized
+    cache format.  Exact-parameter NURBS forms are decomposed into nonempty
+    rational Bezier spans; positive weights make the Euclidean control-point
+    hull a conservative curve bound.  A line within the declared edge
+    tolerance must intersect the span box expanded by that tolerance.  Cobb
+    produces 12 supported edges and 12 spans, and every one of the 15 current
+    leaks selects its target span conservatively.  Curves whose NURBS form
+    changes parameterization, nonpositive or invalid weights, incomplete
+    spans, and malformed topology are explicitly unsupported and remain on
+    the legacy fallback path.  The bounded closest-point estimate remains
+    diagnostic rather than a proof; only box exclusion is presently claimed
+    conservative.
+
+22. Edge proximity alone is insufficient: the closest ray point must also be
+    on the intended material side of an authorized manifold sector.  The
+    shadow classifier maps the edge fraction to both trims with m_bRev3d,
+    evaluates both surface lifts and oriented normals, projects loop-interior
+    conormals into the edge cross-section, and selects the interior angular
+    sector from the material side of both faces.  It rejects the sector unless
+    both lifts are within the declared edge tolerance.  A sharp convex ARB8
+    edge, a 270-degree concave edge on a capped L extrusion, and a periodic
+    same-face sphere seam now permanently check inside/contact/outside offsets
+    in both ray directions.  Across 200 tolerance-qualified target
+    observations in the bowed Cobb matrix, it classifies 116 inside, 32
+    contact, and 52 outside; all 15 current crack leaks have valid inside-
+    sector evidence.  Maximum target lift-discrepancy error is about
+    2.51e-15 mm.  This remains trace-only.  General STEP use still needs
+    stronger trim/edge parameter-correspondence qualification and vertex-fan
+    fixtures.
+
+23. An unresolved solid hit can be considered for topology-local closure only
+    when exactly one eligible inside-sector edge is incident to its existing
+    face and lies on the correct side of that event along the ray.  The new
+    shadow classifier records the edge, its projected t, the existing root t,
+    and whether the missing event is entering or leaving.  It identifies all
+    15 current below-envelope Cobb leaks with exactly one candidate: forward
+    rays have a missing leave after the existing enter, and reversed rays have
+    a missing enter before the existing leave.  It does not activate on the
+    target edge's contact or exterior states.  Identity, rotated/translated,
+    0.01x, and 10,000x copies preserve all sector and closure classifications
+    when both geometric and modeling tolerances are scaled as lengths.  The
+    small-scale nonlinear root moves about 6e-7 mm in baseline-normalized
+    coordinates, well below T=0.0005 mm; classifier invariance and solver
+    accuracy therefore have separate gates.  This remains trace-only and does
+    not emit a synthetic hit.  The edge projection is not an accurate missing
+    endpoint near tangency, so production activation requires a bounded local
+    continuation solve rather than using that projection as the root.
+
+24. Exact-parameter positive-weight NURBS surface spans can be prepared by the
+    same policy used for edge spans.  Each face record owns its rational
+    Bezier patches, original UV domains, and Euclidean control-hull box.
+    Reparameterized GetNurbForm results, invalid/nonpositive weights, malformed
+    knot spans, and incomplete conversions mark the complete face unsupported
+    rather than admitting unsafe partial data.  The two homogeneous ray-plane
+    numerator coefficient hulls now conservatively reject spans in trace mode.
+    Their floating-point margin includes the pre-cancellation |CV|+|O*W|
+    arithmetic scale, not just the final coefficient magnitude; this is
+    essential for translated geometry.  All six Cobb faces produce one span,
+    and the representative grazing line retains two of six spans.  Candidate
+    counts are invariant across the tested similarities.  Surface spans are
+    rebuilt from the cached BREP, so cache format version zero is unchanged.
+
+25. For the controlled bowed seam, the existing adjacent-face root supplies a
+    deterministic seed for a shadow continuation: map the authorized edge to
+    that face's trim, reflect the root across the local trim tangent, and solve
+    the prepared Bezier support in a bounded extension outside its ordinary
+    [0,1]^2 span.  A fixed 24-iteration Newton/line-search budget uses the same
+    conditioned ray residual and does no ray-time allocation.  All 15 current
+    below-envelope leaks yield exactly one continuation with the required
+    orientation and ordering.  Maximum error against the implicit sphere's
+    missing endpoint is about 2.71e-8 mm.  The g/T=1, h/T=0.9 representative
+    converges in three iterations from the reflected seed and agrees with the
+    implicit endpoint to about 1e-12 mm in both ray directions.  Identity,
+    rigid, 0.01x, and 10,000x cases preserve the candidate and continuation
+    classifications.  This is deliberately not production-ready: reflection
+    in parameter space is only a seed, the extension has not yet been covered
+    by conservative coefficient subdivision, and vertex/multiple-root cases
+    need explicit fallback and uniqueness proofs.  No synthetic hit is
+    emitted.
 
 
 IMPLEMENTATION CHECKLIST
@@ -122,7 +326,10 @@ IMPLEMENTATION CHECKLIST
     [x] Reuse singularity-aware normal evaluation where appropriate.
     [ ] Add pole, boundary, reverse-ray, and repeated-run tests.
         [x] Exact north/south poles, reverse directions, and repeatability.
-        [ ] Patch boundaries, seams, inside starts, and non-unit directions.
+        [x] Periodic seam, surface-boundary inward, and inside starts.
+        [x] Small/large scale and large translations for directed sphere rays.
+        [ ] Clarify/test the public unit-direction contract before adding
+            non-unit raw ft_shot cases.
 
 [x] Legacy native ray-code audit
     [x] Trace the original Utah alternatives and 1991 native BSPLINE solver.
@@ -134,23 +341,66 @@ IMPLEMENTATION CHECKLIST
 
 [ ] Paired correctness harness
     [ ] Compare implicit/CSG and converted BREP ordered partitions.
-        [x] Seed in-memory C++ corpus with paired sphere raw segments.
-        [ ] Exercise normal rt_shootray partitions and CSG combinations.
-    [ ] Reuse identical deterministic Crofton lines and bounding sphere.
-    [ ] Report per-line crossing and chord differences.
+        [x] Seed in-memory C++ corpus with paired sphere raw segments and
+            normal rt_shootray partitions.
+        [x] Exercise normal rt_shootray partitions for six analytic fixtures.
+        [x] Exercise five binary CSG combinations with BREP-substituted leaves.
+        [x] Exercise pristine sewn Cobb against its implicit sphere oracle.
+        [ ] Exercise nested/larger database hierarchies and reverse
+            BREP-to-CSG reconstruction as later qualification tiers.
+    [x] Reuse identical deterministic Crofton lines and bounding sphere for
+        the analytic primitive fixtures; CSG reuse remains.
+    [x] Report per-line crossing and chord differences for analytic fixtures.
     [x] Implement initial signed logarithmic sphere grazing report and a
-        non-regression envelope; raw solver instrumentation is still pending.
+        non-regression envelope.
+    [x] Add fixed-capacity raw root, solver outcome, trim class, and cleanup-
+        stage tracing for the bowed Cobb matrix.
+    [x] Add aggregate implicit/BREP/analytic sphere Crofton ground truth.
 
 [ ] Tolerance/seam work
     [ ] Separate numerical, UV, model-space seam, t-cluster, and minimum
         segment tolerances.
     [ ] Prepare topology/adjacency and seam discrepancy records.
+        [x] Prepare two-trim edge/incident-face records and exact-parameter,
+            positive-weight rational Bezier edge spans during normal and
+            cached prep.
+        [ ] Measure face/edge lift discrepancy and resolve unset, zero,
+            under-declared, and over-declared tolerance policies.
     [ ] Preserve near-trim candidate evidence through local event resolution.
+    [x] Observe fixed-work 3D ray/shared-edge distance and declared edge-
+        tolerance qualification independently of the UV trim tree.
+    [x] Classify shadow-mode edge material sectors and validate smooth and
+        sharp-convex inside/contact/outside behavior under ray reversal.
+    [x] Gate sharp convex, re-entrant concave, and periodic same-surface edge
+        sectors for inside/contact/outside states under ray reversal.
+    [x] Classify uniquely compatible unmatched solid events in shadow mode,
+        including ordered missing directions and non-activation on target
+        contact/exterior states.
+    [x] Gate edge-sector and closure classifications under rotation,
+        translation, and 0.01x/10,000x uniform scaling with scaled model
+        tolerances.
+    [x] Recover the missing controlled bowed-seam endpoint with a bounded,
+        allocation-free adjacent-support continuation in shadow mode and gate
+        it against the implicit oracle and similarities.
+    [ ] Qualify general trim/edge parameter correspondence and add vertex-fan
+        sector fixtures.
     [ ] Add sewn and perturbed Cobb fixtures and threshold matrices.
+        [x] Add reusable legacy-unsewn and solid-sewn Cobb constructors.
+        [x] Gate topology, face/seam/vertex rays, scale, and 8,000 shared
+            implicit-oracle lines for the pristine sewn form.
+        [x] Add a calibrated, endpoint-preserving bowed support-seam family
+            with signed inward/outward displacement and g/T sweep.
+        [x] Add seam-crossing tangent-limit rays, reversal checks, CSV output,
+            and a ratchet around the measured current crack envelope.
+        [ ] Add controlled gap, overlap, trim, and tangent perturbation sweeps.
 
 [ ] Local adaptive solve
-    [ ] Prepare rational Bezier spans.
+    [x] Prepare exact-parameter positive-weight rational Bezier surface spans
+        with complete-face unsupported fallback.
     [ ] Implement conservative coefficient exclusion and local subdivision.
+        [x] Implement initial two-plane homogeneous coefficient exclusion with
+            translation-aware numerical margins in shadow mode.
+        [ ] Add de Casteljau subdivision/clipping and interval isolation.
     [ ] Use fixed-capacity allocation-free shot workspace with explicit
         fallback on unsupported weights/order/capacity.
     [ ] Reduce default tree density only after shadow equivalence passes.
@@ -222,11 +472,24 @@ In-memory correctness corpus:
     ordered segment endpoints and validate converted-BREP normals over 16
     identical repetitions.
 
-  * A logarithmic positive-h sweep enforces deterministic, non-restarting,
-    non-growing BREP interval behavior and analytic endpoint agreement for
-    chords at least 10*rti_tol.dist.  A clearly outside negative-h case is a
-    permanent miss gate.  Known near-limit defects remain visible in the
-    report rather than being encoded as expected answers.
+  * Seam-boundary inward rays and rays beginning inside are hard paired gates.
+    The outward surface-start discrepancy is retained as a known-defect
+    ratchet.  Additional fixtures repeat pole, seam, and inside checks on a
+    translated 0.01 mm sphere and on a radius-10,000 mm sphere translated to
+    million-unit coordinates.
+
+  * A logarithmic and target-chord positive-h sweep enforces deterministic,
+    non-restarting, non-growing BREP interval behavior.  Chords at least the
+    model distance tolerance must resolve with analytic endpoint agreement;
+    smaller chords may collapse to a contact-sized segment or miss but may not
+    reintroduce material larger than the minimum size.  Exact tangency and all
+    representable mirrored negative-h samples must be misses in both paths.
+
+  * A 20,000-line Cauchy-Crofton check estimates area and volume independently
+    on the implicit sphere and its converted BREP.  Both must be within 3% of
+    analytic 4*pi*R^2 and 4*pi*R^3/3, and the two representations must agree
+    within 1%.  This is the first aggregate ground-truth gate; exact shared
+    bounding sphere and per-line differences remain to be implemented.
 
   cmake --build .build --target rt_brep_ray -j8
     PASS
@@ -235,9 +498,239 @@ In-memory correctness corpus:
     PASS: 1/1
 
   .build/src/librt/tests/rt_brep_ray --grazing-report
-    REPORT: deterministic false BREP interval plateau ~0.001812758 mm at
-    h=0, with a narrow false-positive band on the h<0 side as described in
-    Established Finding 8.
+    REPORT: BREP follows the analytic square-root chord trend through a chord
+    of one model distance tolerance, reports a contact-sized segment at 0.9
+    tolerance, and is a miss by 0.61 tolerance.  Exact tangency and every
+    sampled negative clearance are misses.  The raw solver/contact status is
+    not yet instrumented, so CONTACT here is the test's segment-length class.
+
+Conditioned root convergence:
+
+  * The two ray-plane residuals are evaluated relative to the ray origin.  A
+    root must satisfy both the 1e-7 perpendicular ceiling and the corresponding
+    first-order ray-distance estimate based on |N dot D|/|D|.  A 1e-13 floor
+    prevents an exact double root from requiring literal floating-point zero.
+
+  * Simply reducing the fixed residual threshold to 1e-9 or 1e-12 repaired the
+    R=10 tangent but lost the million-unit translated north-pole root.  A fixed
+    1e-8 happened to pass the current corpus but retained a smaller tangent
+    false interval.  Those rejected experiments demonstrate why the
+    conditioning term and translated fixture are both necessary.
+
+  cmake --build .build --target \
+    librt rt_primitive_brep rt_brep_ray rt_cache -j8
+    PASS
+
+  ctest --test-dir .build -j4 \
+    -R '^(rt_brep_ray|rt_primitive_brep|rt_cache_.*|regress-nurbs_(NIST03_MISS_01|SPH_SOLID_HIT_LEN_01|BOX_PLATE_HIT_LEN_01))$' \
+    --output-on-failure
+    PASS: 12/12
+
+Shared-line Crofton and final partitions:
+
+  * The test now serializes the implicit sphere and its converted BREP into
+    separate in-memory databases, prepares normal rt_i instances, and shoots
+    each line through rt_shootray.  Fixed-capacity records retain every final
+    partition endpoint and post-Boolean entry/exit normal.
+
+  * One fixed-seed 32,000-line set is generated from an explicitly shared
+    bounding sphere using the production Crofton point-pairing algorithm.
+    Nested checkpoints at 2,000, 8,000, and 32,000 rays report independent
+    area/volume estimates and sample standard errors.  A four-standard-error
+    confidence band guards both implicit and BREP convergence to the analytic
+    sphere values.
+
+  * All 32,000 final partition lists agree, with no tangent-band exceptions.
+    Maximum paired endpoint error is approximately 9.69e-8 mm.  Signed and
+    absolute total chord differences are approximately 6.74e-5 mm and
+    8.15e-5 mm respectively over the full set; both aggregate representations
+    remain far inside the paired 0.1 percent gate.
+
+  * The harness is generalized to any ft_brep-capable implicit internal with
+    explicit shared bounds.  Five additional fixtures each retain 8,000 shared
+    lines: a translated oblate ellipsoid, translated ARB8 box, RCC, truncated
+    cone, and torus.  Their analytic surface areas and volumes are confidence
+    gates, not merely paired comparisons.
+
+  * Exact directed final-partition gates cover ellipsoid pole and periodic
+    seam, ARB8 forward/reverse faces and opposite vertices, cylinder/cone axes
+    and periodic seams, and torus forward/reverse two-interval rays, central
+    hole miss, and tube-vertical hit.  Entry/exit normals must be finite, unit,
+    and correctly oriented after Boolean processing.
+
+  * Across 72,000 shared lines for all six fixtures there are zero differing
+    partition lists and zero tangent-band exceptions.  Every maximum BREP/
+    implicit endpoint delta is below 1e-7 mm; the planar ARB8 maximum is about
+    5.68e-14 mm.
+
+BREP-leaf CSG hierarchy corpus:
+
+  * Each implicit region is duplicated without changing its Boolean tree.
+    Only the two leaf objects are replaced with their exact ft_brep exports in
+    the comparison database.  Normal rt_shootray Boolean weaving therefore
+    sees identical operators, transforms, region semantics, and tolerances.
+
+  * The current hard fixtures are disjoint sphere union, overlapping sphere
+    union, equal-sphere intersection lens, concentric sphere subtraction, and
+    box minus a through cylinder.  They cover disjoint/merged intervals,
+    intersection, internal cavity orientation, planar and curved leaves, and
+    subtraction-generated final partitions without depending on ON_Boolean.
+
+  * All 40,000 shared CSG lines have identical final partition lists and no
+    tangent-band exceptions.  Directed forward/reverse multi-component,
+    merged-union, lens, cavity, cross-hole, through-hole miss, and solid-wall
+    rays also match analytic endpoints.  Maximum paired endpoint error remains
+    below 1e-7 mm.
+
+Cobb sphere baseline:
+
+  * include/brep/cobb.h and src/libbrep/cobb.cpp now own the reusable Cobb
+    support definition.  The proc-db generator calls the library helper rather
+    than retaining its original second copy of the 25 homogeneous control
+    points.  brep_invalid.cpp still has a duplicate to remove when that invalid
+    fixture is migrated.
+
+  * ON_Brep_CobbSphereUnsewn retains the 6-face/24-vertex/24-edge plate-mode
+    representation.  ON_Brep_CobbSphereSewn creates a valid, solid, oriented
+    6-face/8-vertex/12-edge manifold, with two trims on every edge.  Corner
+    identity uses a scale-aware numerical roundoff bound, not modeling or ray
+    tolerance.
+
+  * A 33 by 33 grid on each support surface measures maximum radial error of
+    approximately 8.88e-15 mm at radius 10 mm for both forms.  Small translated
+    (R=0.01) and million-coordinate translated (R=10,000) sewn topology and
+    radial error are also hard gates.
+
+  * Directed rays hit face centers, an edge seam, and a three-face vertex.
+    All 8,000 shared Crofton lines have identical implicit/Cobb partition lists
+    and no tangent-band exceptions.  Maximum endpoint difference is about
+    9.69e-8 mm.  The shared corpus now contains 120,000 lines.
+
+  * The bowed-seam fixture preserves both edge endpoints, modifies homogeneous
+    CVs without changing their weights, measures the resulting discrepancy
+    from both trim lifts at 257 samples, and iterates the requested control-net
+    displacement until measured g is within 0.1 percent of its target.  The
+    observed maximum calibration error is approximately 3.5e-15 mm.
+
+  * The signed matrix covers g/T = 0.1, 0.25, 0.5, 0.9, 1, 1.1, 2, and 10;
+    h/T = 100, 10, 2, 1.1, 1, 0.9, 0.5, 0.1, 0, -0.1, -1, -10, and -100;
+    and both directions for every line.  It checks repeatability and emits a
+    CSV table with root separation, partition counts, chord lengths, endpoint
+    error, validity, and uncertainty classification under --cobb-report.
+
+  * The current 416-ray baseline has 284 oracle differences (including the
+    expected tangency-amplified endpoint changes of a deliberately distorted
+    surface), 15 below-envelope whole-interval leaks, one reversal
+    inconsistency, and 32 zero-chord h=0 contact records.  No below-envelope
+    leak occurs at h greater than 1.01g; regression beyond that bound fails.
+
+  * Private in-librt shot tracing records intersected tree leaves, structured
+    solver outcomes, every converged candidate root, trim classification,
+    normal orientation, and hit counts after each legacy cleanup stage.  It
+    has a fixed 64-root capacity, reports overflow, and is enabled only by the
+    correctness test entry point; normal production shots retain the same
+    path with a null trace pointer.
+
+  * Trace accounting proves that 14/15 below-envelope leaks have fewer than
+    two unique candidate t values, zero are lost during trim classification,
+    and one reaches cleanup with at least two unique candidates.  In the
+    representative inward g/T=1, h/T=0.9 case, both candidates are clean hits
+    from face 1 at the same root to about 7e-14 mm.  They are independent tree
+    seeds, not the two intended crossings.  The CSV report includes each
+    candidate, solver-status histograms, unique-root count, and every cleanup
+    stage so future seam work can ratchet the actual failure mechanism.
+
+  * Normal and cached prep now derive compact records for each two-trim edge.
+    Exact-parameter NURBS forms are split at every nonempty knot span and
+    stored as positive-weight rational Beziers with Euclidean control-hull
+    bounds.  The records are rebuilt from the cached BREP, so serialized BVH
+    cache version zero remains valid and unchanged.
+
+  * The trace path uses a conservative infinite-line test against each span
+    box expanded by the declared edge tolerance.  It separately records a
+    fixed 17-point/32-step bounded closest-point estimate, edge index, both
+    incident faces, edge and ray parameters, exact distance, tolerance, and
+    candidate-span count without allocating per ray.  The estimate is an
+    observation; the box test is the conservative exclusion result.
+
+  * Every one of the 15 below-envelope leaks identifies the intended target
+    edge inside its declared tolerance.  Across the complete signed and
+    reversed matrix, target-edge distance differs from analytic |h| by at
+    most about 3.59e-15 mm and no target observation beyond the edge envelope
+    is marked eligible.  Each eligible target also has a conservatively
+    selected prepared span.  The Cobb fixture has 12 eligible edges and 12
+    prepared spans.
+
+  * For tolerance-qualified edges, the trace maps the closest edge fraction
+    to both incident trims, applies trim reversal, evaluates both surface
+    lifts, and constructs the local material sector from loop-interior
+    conormals and oriented face normals.  It records lift distances, face/ray
+    normal dots, ray/edge alignment, sector validity, and whether the closest
+    ray point is inside, on, or outside that sector.
+
+  * Three independent sector fixtures now cover a converted ARB8's sharp
+    90-degree convex edge, a capped L-shaped extrusion's 270-degree re-entrant
+    edge, and a converted sphere's two-trim periodic same-face seam.  Offsets
+    at +/-T/2 and exact contact all classify correctly in both ray directions.
+    On the bowed Cobb sweep, all 15 leaks are authorized, span-selected, valid
+    inside-sector observations; qualified target states total 116 inside, 32
+    contact, and 52 outside.  Maximum error in the measured target lift
+    discrepancy is about 2.51e-15 mm.
+
+  * A shadow-only closure pass runs after legacy direction cleanup and only
+    considers solid, non-plate BREPs with one unmatched final hit.  A candidate
+    must be a tolerance-qualified valid inside sector, share the hit's face,
+    and have the t ordering required for the opposite event direction.  The
+    bowed matrix hard-gates one and only one target-edge candidate for every
+    current below-envelope leak; all 15 are found without changing production
+    segment lists.
+
+  * A dedicated similarity corpus transforms the representative inward
+    g/T=1, h/T=0.9 bowed case and its contact/exterior companions.  Identity,
+    rigid rotation/translation, translated 0.01x scale, and translated 10,000x
+    scale preserve the target edge, candidate span, inside/contact/outside
+    state, unique closure count, missing enter/leave direction, and event
+    ordering in both ray directions.  BREP edge/vertex and ray model
+    tolerances are explicitly scaled as model-space lengths.
+
+  * Prepared face records now decompose exact-parameter NURBS surfaces at all
+    nonempty knot rectangles into positive-weight rational Bezier patches.
+    Each patch retains its original UV domain and a conservative control-hull
+    bound.  Trace-mode homogeneous ray-plane coefficient hulls reject spans
+    whose first or second numerator cannot contain zero.  The roundoff bound
+    accounts for large-coordinate subtraction.  Cobb has six supported faces
+    and six spans; the representative near-tangent line retains two spans and
+    this count is unchanged by all similarity fixtures.
+
+  * After a unique authorized closure is found, the trace path can reflect the
+    existing adjacent-face UV root across the associated trim tangent and run
+    a fixed-budget, line-searched solve on a bounded extension of that
+    prepared Bezier support.  Every current leak produces one correctly
+    oriented opposite event.  The maximum endpoint error against the implicit
+    sphere over all 15 is approximately 2.71e-8 mm.  Continuation attempts,
+    candidate count, face/UV/t, residual, normal dot, and iteration count are
+    available in --cobb-report.  Production segments remain unchanged.
+
+  cmake --build .build --target \
+    librt rt_primitive_brep rt_brep_ray rt_cache rt_crofton -j8
+    PASS
+
+  ctest --test-dir .build -j4 \
+    -R '^(rt_brep_ray|rt_crofton|rt_primitive_brep|rt_cache_.*|regress-nurbs_(NIST03_MISS_01|SPH_SOLID_HIT_LEN_01|BOX_PLATE_HIT_LEN_01))$' \
+    --output-on-failure
+    PASS: 13/13; rt_brep_ray completes in approximately 8 seconds with
+    trace-only edge qualification enabled across all 416 bowed-seam rays
+
+  cmake --build .build --target rt_brep_ray -j8
+    PASS
+
+  .build/src/librt/tests/rt_brep_ray
+    PASS: shared partition/Crofton sphere and all directed cases
+
+  ctest --test-dir .build \
+    -R '^(rt_brep_ray|rt_crofton|rt_primitive_brep)$' \
+    --output-on-failure
+    PASS: 3/3
 
 Legacy cleanup:
 
@@ -256,16 +749,22 @@ Legacy cleanup:
 NEXT ACTIONS
 ------------
 
-1. Expand brep_ray.cpp into a table-driven in-memory corpus covering patch
-   boundaries, inside starts, non-unit directions, scale/translation, seam
-   directions, and known singular parameterizations before modifying tangent
-   convergence.
-2. Instrument raw solver outcomes/residuals/iterations so the grazing report
-   distinguishes candidate generation from final hit-list cleanup.
-3. Replace the loose tangent termination with scale-aware convergence and a
-   safeguarded correction/contact classification; promote exact tangent and
-   negative-h cases to hard gates once corrected.
-4. Add normal rt_shootray partition comparisons, then feed the same paired
-   implicit/BREP lines into deterministic Cauchy-Crofton checks.
-5. Run the full focused/cache/NURBS regression set and commit the verified
-   ownership, solver, corpus, and legacy-cleanup work in logical local commits.
+1. Add vertex-fan fixtures and qualify edge/trim parameter correspondence
+   without assuming normalized parameter speed.  Keep model-space, UV,
+   numerical-root, t-cluster, and minimum-segment tolerances distinct.
+2. Add explicit shadow event/winding/contact classes, then activate topology-
+   local crack closure only for fully supported manifold events.
+   Restore a crossing inside its authorized envelope, preserve ray-reversal
+   symmetry, fall back on unsupported cases, and promote each repaired bowed-
+   seam row from the known-defect count to exact solid-interval parity.
+3. Add a safeguarded local correction/contact classification beyond the first
+   conditioned Newton improvement.  Do not lower tree density until candidate
+   exclusion and fallback behavior are observable and proven equivalent.
+4. Extend the BREP-leaf hierarchy corpus to nested multi-interval regions,
+   transformations, noncoincident production-style trees, and tolerance-
+   scaled thin walls.  Keep evaluated ON_Boolean solids and reverse NIST
+   BREP-to-CSG recognition as later, separately classified qualification tiers.
+5. Add endpoint-moving gap/overlap, trim-only, edge-only, vertex, G1, and
+   combined-error Cobb families, then remove the remaining duplicated Cobb
+   control net from brep_invalid.cpp while independently gating its invalid
+   topology behavior.

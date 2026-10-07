@@ -9,8 +9,12 @@ set(
   Subcurve.cpp
   Subsurface.cpp
   boolean.cpp
+<<<<<<< HEAD
   cdt/assembly.cpp
   cdt/chart.cpp
+=======
+  cobb.cpp
+>>>>>>> 80aa8b1b5b (Build topology-driven seam and grazing fixtures)
   cdt/cdt.cpp
   cdt/fast.cpp
   cdt/fast_face.cpp
