@@ -29,8 +29,11 @@
 #include "common.h"
 
 #include <string>
+#include <algorithm>
+#include <atomic>
 #include <unordered_map>
 #include <unordered_set>
+#include <vector>
 
 #include <stdlib.h>
 #include <stddef.h>
@@ -44,6 +47,7 @@
 #include "bn.h"
 #include "raytrace.h"
 #include "bv/plot3.h"
+#include "brep/defines.h"
 
 #include "optical.h"
 #include "optical/plastic.h"
@@ -53,6 +57,74 @@
 extern void rt_ck(struct rt_i *rtip);
 
 static void rt_solid_bitfinder(union tree *treep, struct region *regp, struct resource *resp);
+
+
+struct rt_brep_pack_scene_context {
+    struct soltab **solids = NULL;
+    const std::vector<size_t> *assigned = NULL;
+    size_t count = 0;
+    std::atomic<size_t> next = {0};
+    std::atomic<size_t> used = {0};
+    std::atomic<size_t> populated = {0};
+};
+
+
+/* A view-independent estimate of how often an orthographic ray can encounter
+ * a solid.  For a uniformly distributed direction, projected box area is
+ * proportional to dx*dy + dy*dz + dz*dx.  Using this as the scene-cache
+ * weight favors packs on exposed, repeatedly shot solids without binding prep
+ * state to one camera direction. */
+static long double
+rt_brep_pack_scene_weight(const struct soltab *stp)
+{
+    if (!stp)
+	return 0.0L;
+    const long double dx = std::max(0.0L,
+	(long double)stp->st_max[X] - (long double)stp->st_min[X]);
+    const long double dy = std::max(0.0L,
+	(long double)stp->st_max[Y] - (long double)stp->st_min[Y]);
+    const long double dz = std::max(0.0L,
+	(long double)stp->st_max[Z] - (long double)stp->st_min[Z]);
+    const long double weight = dx * dy + dy * dz + dz * dx;
+    return std::isfinite(weight) && weight > 0.0L ? weight : 1.0L;
+}
+
+
+static void
+rt_brep_pack_scene_worker(int UNUSED(cpu), void *data)
+{
+    rt_brep_pack_scene_context *context =
+	static_cast<rt_brep_pack_scene_context *>(data);
+    if (!context || !context->solids || !context->assigned)
+	return;
+    while (true) {
+	const size_t index = context->next.fetch_add(1,
+	    std::memory_order_relaxed);
+	if (index >= context->count)
+	    return;
+	const size_t object_used = _rt_brep_routing_pack_cache_prepare(
+	    context->solids[index], (*context->assigned)[index]);
+	context->used.fetch_add(object_used, std::memory_order_relaxed);
+	if (object_used)
+	    context->populated.fetch_add(1, std::memory_order_relaxed);
+    }
+}
+
+
+static int
+rt_brep_surface_tree_depth_default(void)
+{
+    const char *setting = getenv("LIBRT_BREP_SURFACE_TREE_DEPTH");
+    if (!setting || !setting[0])
+	return RT_BREP_DEFAULT_SURFACE_TREE_DEPTH;
+
+    char *end = NULL;
+    const long requested = strtol(setting, &end, 10);
+    if (!end || end == setting || end[0] || requested < 0 ||
+	    requested > BREP_MAX_FT_DEPTH)
+	return RT_BREP_DEFAULT_SURFACE_TREE_DEPTH;
+    return (int)requested;
+}
 
 
 int RT_SEM_WORKER = BU_SEM_ID_RT_WORKER;
@@ -75,7 +147,10 @@ rt_i_internal_create(void)
     struct rt_i_internal *ip;
     BU_GET(ip, struct rt_i_internal);
     memset(ip, 0, sizeof(struct rt_i_internal));
-    ip->rti_brep_surface_tree_depth = RT_BREP_DEFAULT_SURFACE_TREE_DEPTH;
+    /* Keep the library default stable while allowing whole-application
+     * shallow-tree qualification.  The selected value is copied into the
+     * prepared-cache identity before any primitive is loaded. */
+    ip->rti_brep_surface_tree_depth = rt_brep_surface_tree_depth_default();
 
     for (int i=0; i < RT_DBNHASH; i++) {
 	BU_LIST_INIT(&(ip->rti_solidheads[i]));
@@ -403,6 +478,150 @@ rt_prep_parallel(struct rt_i *rtip, int ncpu)
 	id = stp->st_id;
 	rtip->i->rti_sol_by_type[id][rtip->i->rti_nsol_by_type[id]++] = stp;
     } RT_VISIT_ALL_SOLTABS_END;
+
+    /* Cell/span packs accelerate the selective BREP router, but applying a
+     * byte allowance independently during primitive prep made retained memory
+     * and construction work grow with object count.  At this point the whole
+     * scene is known.  Divide one scene-wide allowance deterministically among
+     * its B-Reps, capped by each object's eligible pack bytes, and build only
+     * those immutable accelerators.  The packless fixed-workspace route remains
+     * authoritative whenever a share is zero or exhausted. */
+    const size_t brep_count = rtip->i->rti_nsol_by_type[ID_BREP];
+    if (brep_count) {
+	const size_t scene_budget = _rt_brep_routing_pack_cache_budget();
+	std::vector<size_t> required(brep_count, 0);
+	std::vector<size_t> assigned(brep_count, 0);
+	std::vector<long double> weight(brep_count, 0.0L);
+	std::vector<size_t> active;
+	active.reserve(brep_count);
+	for (size_t index = 0; index < brep_count; ++index) {
+	    required[index] = _rt_brep_routing_pack_cache_required(
+		rtip->i->rti_sol_by_type[ID_BREP][index]);
+	    if (required[index]) {
+		weight[index] = rt_brep_pack_scene_weight(
+		    rtip->i->rti_sol_by_type[ID_BREP][index]);
+		active.push_back(index);
+	    }
+	}
+	size_t remaining = scene_budget;
+	/* Weighted water filling preserves the hard scene bound and fully funds
+	 * inexpensive objects, but gives the remaining bytes in proportion to
+	 * direction-independent projected exposure instead of assigning every
+	 * large object the same mostly ineffective prefix. */
+	while (remaining && !active.empty()) {
+	    long double total_weight = 0.0L;
+	    for (size_t index : active)
+		total_weight += weight[index];
+	    if (!(total_weight > 0.0L) || !std::isfinite(total_weight)) {
+		for (size_t index : active)
+		    weight[index] = 1.0L;
+		total_weight = (long double)active.size();
+	    }
+
+	    std::vector<size_t> still_active;
+	    still_active.reserve(active.size());
+	    bool capped = false;
+	    const size_t round_budget = remaining;
+	    for (size_t index : active) {
+		const long double exact_share =
+		    (weight[index] / total_weight) *
+		    (long double)round_budget;
+		const size_t share = exact_share >= (long double)SIZE_MAX ?
+		    SIZE_MAX : (size_t)exact_share;
+		/* The exact shares sum to round_budget, but explicitly guard the
+		 * subtraction against platforms where long double has only double
+		 * precision at size_t-scale budgets. */
+		if (required[index] <= share && required[index] <= remaining) {
+		    assigned[index] = required[index];
+		    remaining -= required[index];
+		    capped = true;
+		} else {
+		    still_active.push_back(index);
+		}
+	    }
+	    active.swap(still_active);
+	    if (capped)
+		continue;
+
+	    struct weighted_remainder {
+		size_t index;
+		long double fraction;
+	    };
+	    std::vector<weighted_remainder> remainders;
+	    remainders.reserve(active.size());
+	    size_t distributed = 0;
+	    for (size_t index : active) {
+		const long double exact_share =
+		    (weight[index] / total_weight) *
+		    (long double)round_budget;
+		size_t share = std::min(required[index],
+		    exact_share >= (long double)SIZE_MAX ? SIZE_MAX :
+		    (size_t)exact_share);
+		if (share > remaining - distributed)
+		    share = remaining - distributed;
+		assigned[index] = share;
+		distributed += share;
+		remainders.push_back({index, exact_share - (long double)share});
+	    }
+	    size_t extra = remaining - distributed;
+	    std::stable_sort(remainders.begin(), remainders.end(),
+		[](const weighted_remainder &first,
+		    const weighted_remainder &second) {
+		    return first.fraction > second.fraction;
+		});
+	    for (size_t offset = 0; extra && offset < remainders.size();
+		    ++offset) {
+		const size_t index = remainders[offset].index;
+		if (assigned[index] < required[index]) {
+		    ++assigned[index];
+		    --extra;
+		}
+	    }
+	    remaining = extra;
+	    break;
+	}
+	if (getenv("LIBRT_BREP_PREP_PROFILE")) {
+	    for (size_t index = 0; index < brep_count; ++index) {
+		const struct soltab *brep_stp =
+		    rtip->i->rti_sol_by_type[ID_BREP][index];
+		bu_log("BREP routing pack scene object: index=%llu name=%s "
+		    "required=%llu assigned=%llu weight=%.17Lg "
+		    "minimum=(%.17g,%.17g,%.17g) "
+		    "maximum=(%.17g,%.17g,%.17g)\n",
+		    (unsigned long long)index,
+		    brep_stp && brep_stp->st_name ? brep_stp->st_name :
+			"(unnamed)",
+		    (unsigned long long)required[index],
+		    (unsigned long long)assigned[index],
+		    weight[index],
+		    brep_stp ? brep_stp->st_min[X] : 0.0,
+		    brep_stp ? brep_stp->st_min[Y] : 0.0,
+		    brep_stp ? brep_stp->st_min[Z] : 0.0,
+		    brep_stp ? brep_stp->st_max[X] : 0.0,
+		    brep_stp ? brep_stp->st_max[Y] : 0.0,
+		    brep_stp ? brep_stp->st_max[Z] : 0.0);
+	    }
+	}
+
+	rt_brep_pack_scene_context pack_context;
+	pack_context.solids = rtip->i->rti_sol_by_type[ID_BREP];
+	pack_context.assigned = &assigned;
+	pack_context.count = brep_count;
+	if (brep_count > 1 && ncpu > 1)
+	    bu_parallel(rt_brep_pack_scene_worker, ncpu, &pack_context);
+	else
+	    rt_brep_pack_scene_worker(0, &pack_context);
+	const size_t used = pack_context.used.load(std::memory_order_relaxed);
+	const size_t populated =
+	    pack_context.populated.load(std::memory_order_relaxed);
+	if (getenv("LIBRT_BREP_PREP_PROFILE"))
+	    bu_log("BREP routing pack scene cache: budget=%llu used=%llu "
+		"objects=%llu populated=%llu\n",
+		(unsigned long long)scene_budget,
+		(unsigned long long)used,
+		(unsigned long long)brep_count,
+		(unsigned long long)populated);
+    }
     if (RT_G_DEBUG & (RT_DEBUG_DB|RT_DEBUG_SOLIDS)) {
 	bu_log("rt_prep_parallel(%s, %d) printing number of primitives by type\n",
 	       rtip->rti_dbip->dbi_filename,
