@@ -214,8 +214,16 @@ brlcad_add_test(
 )
 brlcad_add_test(NAME rt_brep_ray_seam COMMAND rt_brep_ray --seam-only)
 brlcad_add_test(
+  NAME rt_brep_ray_seam_authority
+  COMMAND rt_brep_ray --seam-authority-only
+)
+brlcad_add_test(
   NAME rt_brep_ray_throughput
   COMMAND rt_brep_ray --throughput-only
+)
+brlcad_add_test(
+  NAME rt_brep_ray_restriction
+  COMMAND rt_brep_ray --restriction-only
 )
 brlcad_add_test(NAME rt_brep_ray_endpoint COMMAND rt_brep_ray --endpoint-only)
 brlcad_add_test(

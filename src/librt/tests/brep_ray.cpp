@@ -23,6 +23,7 @@
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
+#include <ctime>
 #include <random>
 #include <vector>
 
@@ -652,12 +653,18 @@ report_grazing_trace(const char *label, double chord_ratio, int reverse,
 	trace.solver_calls, trace.stored_roots);
     std::printf("  prepared isolation boxes/krawczyk/fold="
 	"%zu/%zu/%zu fold roots/complete=%zu/%zu "
+	"coefficient-expansion=%zu/%zu/%zu/%zu "
 	"events complete/unresolved/state=%zu/%zu/%zu "
 	"terminal expansion=%zu/%zu/%zu/%zu/%zu refine/budget=%zu/%zu "
 	"high-water=%zu\n",
 	trace.surface_isolated_boxes, trace.surface_krawczyk_boxes,
 	trace.surface_fold_attempts, trace.stored_surface_fold_roots,
-	trace.surface_fold_complete, trace.physical_event_complete,
+	trace.surface_fold_complete,
+	trace.surface_coefficient_expansion_requests,
+	trace.surface_coefficient_expansion_available,
+	trace.surface_coefficient_expansion_failures,
+	trace.surface_coefficient_expansion_avoided,
+	trace.physical_event_complete,
 	trace.physical_event_unresolved, trace.physical_event_state_failures,
 	trace.surface_terminal_expansion_attempts,
 	trace.surface_terminal_expansion_available,
@@ -668,7 +675,9 @@ report_grazing_trace(const char *label, double chord_ratio, int reverse,
 	trace.surface_terminal_expansion_budget_exhausted,
 	trace.surface_terminal_expansion_high_water);
     std::printf("  fold proof expansion/corridor/unique/graph/boundary/strip="
-	"%zu/%zu/%zu/%zu/%zu/%zu failures=%zu/%zu/%zu/%zu\n",
+	"%zu/%zu/%zu/%zu/%zu/%zu failures=%zu/%zu/%zu/%zu "
+	"interval-contract=%zu/%zu/%zu exact-fallback=%zu "
+	"graph-interval=%zu/%zu/%zu/%zu/%zu\n",
 	trace.surface_fold_expansion_certified,
 	trace.surface_fold_corridor_available,
 	trace.surface_fold_corridor_unique,
@@ -681,7 +690,16 @@ report_grazing_trace(const char *label, double chord_ratio, int reverse,
 	trace.surface_fold_strip_restriction_failures +
 	    trace.surface_fold_strip_arithmetic_failures +
 	    trace.surface_fold_strip_depth_exhausted +
-	    trace.surface_fold_strip_workspace_exhausted);
+	    trace.surface_fold_strip_workspace_exhausted,
+	trace.surface_fold_interval_contract_attempts,
+	trace.surface_fold_interval_contractions,
+	trace.surface_fold_interval_exclusions,
+	trace.surface_fold_exact_contract_fallbacks,
+	trace.surface_fold_corridor_graph_interval_attempts,
+	trace.surface_fold_corridor_graph_interval_signed,
+	trace.surface_fold_corridor_graph_interval_excluded,
+	trace.surface_fold_corridor_graph_interval_contractions,
+	trace.surface_fold_corridor_graph_exact_fallbacks);
     std::printf("  fold mixed pairs=%zu localization=%zu/%zu/%zu "
 	"unmatched=%zu direction=%zu/%zu trim=%zu/%zu\n",
 	trace.surface_fold_mixed_pairs,
@@ -6077,12 +6095,13 @@ struct cobb_throughput_family {
     sampled_ray ray[2];
     double chord_ratio = 0.0;
     int expected_segments = 0;
+    bool require_continuation = false;
 };
 
 
 static int
 check_cobb_production_throughput(const struct bn_tol *tol,
-    struct rt_i *rtip, struct resource *resource)
+    struct rt_i *rtip, struct resource *resource, int selected_family = -1)
 {
     if (!tol || !rtip || !resource || !(tol->dist > 0.0))
 	return 1;
@@ -6117,7 +6136,7 @@ check_cobb_production_throughput(const struct bn_tol *tol,
 	return 1;
     }
 
-    cobb_throughput_family family[5];
+    cobb_throughput_family family[6];
     family[0].name = "regular";
     family[0].chord_ratio = 2.0 * radius / tol->dist;
     family[0].expected_segments = 1;
@@ -6147,16 +6166,30 @@ check_cobb_production_throughput(const struct bn_tol *tol,
 	family[i + 1].name = name[i];
 	family[i + 1].chord_ratio = chord_ratio[i];
 	family[i + 1].expected_segments = chord_ratio[i] > 1.0 ? 1 : 0;
+	family[i + 1].require_continuation = chord_ratio[i] > 1.0;
 	for (int reverse = 0; reverse <= 1; ++reverse)
 	    family[i + 1].ray[reverse] = cobb_seam_grazing_ray(frame,
 		origin, radius, clearance, reverse != 0);
     }
+    const size_t contact_index = 5;
+    const double contact_clearance = tol->dist;
+    family[contact_index].name = "seam-contact-1T";
+    family[contact_index].chord_ratio =
+	2.0 * sqrt(2.0 * radius * contact_clearance -
+	    contact_clearance * contact_clearance) / tol->dist;
+    family[contact_index].expected_segments = 1;
+    for (int reverse = 0; reverse <= 1; ++reverse)
+	family[contact_index].ray[reverse] = cobb_seam_grazing_ray(frame,
+	    origin, radius, contact_clearance, reverse != 0);
 
     int failures = 0;
     const int64_t minimum_microseconds = 250000;
     const size_t maximum_shots = 4096;
     for (size_t family_index = 0; family_index < sizeof(family) /
 	    sizeof(family[0]); ++family_index) {
+	if (selected_family >= 0 &&
+		(size_t)selected_family != family_index)
+	    continue;
 	const cobb_throughput_family &test = family[family_index];
 	for (int reverse = 0; reverse <= 1; ++reverse) {
 	    const ray_result result = shoot_solid(stp, rtip, resource,
@@ -6171,8 +6204,7 @@ check_cobb_production_throughput(const struct bn_tol *tol,
 
 	struct rt_brep_shot_trace trace;
 	(void)shoot_brep_trace(stp, rtip, resource, test.ray[0], trace);
-	const bool expect_continuation = family_index > 0 &&
-	    test.expected_segments == 1;
+	const bool expect_continuation = test.require_continuation;
 	const bool certificate_valid = !expect_continuation ||
 	    (trace.continuation_candidates == 1 &&
 	     trace.continuation_certified_candidates == 1 &&
@@ -6189,6 +6221,32 @@ check_cobb_production_throughput(const struct bn_tol *tol,
 	const bool tangent_valid = test.expected_segments != 0 ||
 	    (trace.continuation_certified_candidates == 0 &&
 	     trace.closure_shadow_segments == 0);
+	const bool contraction_accounted =
+	    trace.surface_fold_interval_contract_attempts ==
+	    trace.surface_fold_interval_contractions +
+	    trace.surface_fold_interval_exclusions +
+	    trace.surface_fold_exact_contract_fallbacks;
+	const bool contact_contracts = family_index != contact_index ||
+	    (trace.surface_fold_interval_contract_attempts > 0 &&
+	     trace.surface_fold_interval_contractions > 0);
+	const bool coefficient_expansions_accounted =
+	    trace.surface_coefficient_expansion_requests ==
+	    trace.surface_coefficient_expansion_available +
+	    trace.surface_coefficient_expansion_failures;
+	const bool coefficient_expansions_deferred =
+	    trace.surface_coefficient_expansion_avoided > 0;
+	const bool graph_intervals_accounted =
+	    trace.surface_fold_corridor_graph_interval_attempts ==
+	    trace.surface_fold_corridor_graph_interval_signed +
+	    trace.surface_fold_corridor_graph_interval_excluded +
+	    trace.surface_fold_corridor_graph_exact_fallbacks;
+	const bool contact_graph_intervals = family_index != contact_index ||
+	    trace.surface_fold_corridor_graph_interval_attempts > 0;
+	const bool strip_builds_accounted =
+	    trace.surface_fold_strip_build_attempts >=
+	    trace.surface_fold_strip_build_available;
+	const bool contact_strip_deferred = family_index != contact_index ||
+	    trace.surface_fold_strip_build_avoided > 0;
 	if (trace.final_segments != (size_t)test.expected_segments) {
 	    std::printf("FAIL: Cobb production-throughput trace %s "
 		"segments=%zu/%d fallback=%d\n", test.name,
@@ -6252,10 +6310,40 @@ check_cobb_production_throughput(const struct bn_tol *tol,
 		trace.closure_shadow_segments);
 	    failures++;
 	}
+	if (!contraction_accounted || !contact_contracts ||
+		!coefficient_expansions_accounted ||
+		!coefficient_expansions_deferred ||
+		!graph_intervals_accounted || !contact_graph_intervals ||
+		!strip_builds_accounted || !contact_strip_deferred) {
+	    std::printf("FAIL: Cobb production-throughput fold contraction %s "
+		"attempt/contract/exclude/fallback=%zu/%zu/%zu/%zu "
+		"coefficient-expansion=%zu/%zu/%zu/%zu "
+		"graph-interval=%zu/%zu/%zu/%zu/%zu "
+		"strip-build=%zu/%zu/%zu\n",
+		test.name, trace.surface_fold_interval_contract_attempts,
+		trace.surface_fold_interval_contractions,
+		trace.surface_fold_interval_exclusions,
+		trace.surface_fold_exact_contract_fallbacks,
+		trace.surface_coefficient_expansion_requests,
+		trace.surface_coefficient_expansion_available,
+		trace.surface_coefficient_expansion_failures,
+		trace.surface_coefficient_expansion_avoided,
+		trace.surface_fold_corridor_graph_interval_attempts,
+		trace.surface_fold_corridor_graph_interval_signed,
+		trace.surface_fold_corridor_graph_interval_excluded,
+		trace.surface_fold_corridor_graph_interval_contractions,
+		trace.surface_fold_corridor_graph_exact_fallbacks,
+		trace.surface_fold_strip_build_attempts,
+		trace.surface_fold_strip_build_available,
+		trace.surface_fold_strip_build_avoided);
+	    failures++;
+	}
 
 	size_t shots = 0;
 	size_t segment_sink = 0;
+	const size_t fixed_shots = selected_family >= 0 ? 32 : 0;
 	const int64_t start = bu_gettime();
+	const std::clock_t cpu_start = std::clock();
 	int64_t elapsed = 0;
 	do {
 	    for (int reverse = 0; reverse <= 1; ++reverse) {
@@ -6265,24 +6353,47 @@ check_cobb_production_throughput(const struct bn_tol *tol,
 		shots++;
 	    }
 	    elapsed = bu_gettime() - start;
-	} while (elapsed < minimum_microseconds && shots < maximum_shots);
+	} while ((fixed_shots ? shots < fixed_shots :
+		elapsed < minimum_microseconds) && shots < maximum_shots);
+	const std::clock_t cpu_end = std::clock();
+	const bool cpu_time_available =
+	    cpu_start != (std::clock_t)-1 && cpu_end != (std::clock_t)-1 &&
+	    cpu_end >= cpu_start;
 	const double seconds = elapsed / 1000000.0;
+	const double cpu_seconds = cpu_time_available ?
+	    (double)(cpu_end - cpu_start) / CLOCKS_PER_SEC : INFINITY;
 	const double rays_per_second = seconds > 0.0 ? shots / seconds : 0.0;
 	const double microseconds_per_ray = shots ?
 	    (double)elapsed / shots : INFINITY;
+	const double cpu_microseconds_per_ray =
+	    shots && std::isfinite(cpu_seconds) ?
+	    1000000.0 * cpu_seconds / shots : INFINITY;
 	std::printf("Cobb production throughput: family=%s chord/T=%.9g "
-	    "shots=%zu seconds=%.6f rays/s=%.3f us/ray=%.3f "
+	    "shots=%zu seconds=%.6f cpu-seconds=%.6f rays/s=%.3f "
+	    "us/ray=%.3f cpu-us/ray=%.3f "
 	    "segment-sink=%zu prepared=%zu fallback=%d "
-	    "spans=%zu/%zu boxes=%zu isolated/krawczyk=%zu/%zu "
+	    "spans=%zu/%zu coefficient-expansion=%zu/%zu/%zu/%zu "
+	    "boxes=%zu isolated/krawczyk=%zu/%zu "
 	    "terminal-expansion="
 	    "%zu/%zu/%zu fold-expansion=%zu/%zu/%zu high-water=%zu/%zu "
+	    "fold-contract=%zu/%zu/%zu/%zu "
+	    "graph-interval=%zu/%zu/%zu/%zu/%zu "
+	    "corridor=%zu/%zu/%zu graph=%zu/%zu/%zu "
+	    "boundary=%zu/%zu/%zu strip-build=%zu/%zu/%zu "
+	    "strip=%zu/%zu/%zu "
+	    "localize=%zu/%zu/%zu "
 	    "certificate-Krawczyk=%zu/%zu/%zu "
 	    "certificate-complement=%zu/%zu/%zu\n",
-	    test.name, test.chord_ratio, shots, seconds, rays_per_second,
-	    microseconds_per_ray, segment_sink,
+	    test.name, test.chord_ratio, shots, seconds, cpu_seconds,
+	    rays_per_second, microseconds_per_ray, cpu_microseconds_per_ray,
+	    segment_sink,
 	    trace.prepared_production_selected,
 	    trace.prepared_production_fallback,
 	    trace.candidate_surface_spans, trace.prepared_surface_spans,
+	    trace.surface_coefficient_expansion_requests,
+	    trace.surface_coefficient_expansion_available,
+	    trace.surface_coefficient_expansion_failures,
+	    trace.surface_coefficient_expansion_avoided,
 	    trace.surface_subdivision_boxes, trace.surface_isolated_boxes,
 	    trace.surface_krawczyk_boxes,
 	    trace.surface_terminal_expansion_attempts,
@@ -6293,6 +6404,33 @@ check_cobb_production_throughput(const struct bn_tol *tol,
 	    trace.surface_fold_expansion_certified,
 	    trace.surface_terminal_expansion_high_water,
 	    trace.surface_fold_expansion_high_water,
+	    trace.surface_fold_interval_contract_attempts,
+	    trace.surface_fold_interval_contractions,
+	    trace.surface_fold_interval_exclusions,
+	    trace.surface_fold_exact_contract_fallbacks,
+	    trace.surface_fold_corridor_graph_interval_attempts,
+	    trace.surface_fold_corridor_graph_interval_signed,
+	    trace.surface_fold_corridor_graph_interval_excluded,
+	    trace.surface_fold_corridor_graph_interval_contractions,
+	    trace.surface_fold_corridor_graph_exact_fallbacks,
+	    trace.surface_fold_corridor_attempts,
+	    trace.surface_fold_corridor_unique,
+	    trace.surface_fold_complete,
+	    trace.surface_fold_corridor_graph_attempts,
+	    trace.surface_fold_corridor_graph_certified,
+	    trace.surface_fold_corridor_graph_failures,
+	    trace.surface_fold_boundary_existence_attempts,
+	    trace.surface_fold_boundary_existence_certified,
+	    trace.surface_fold_boundary_existence_failures,
+	    trace.surface_fold_strip_build_attempts,
+	    trace.surface_fold_strip_build_available,
+	    trace.surface_fold_strip_build_avoided,
+	    trace.surface_fold_strip_boxes,
+	    trace.surface_fold_strip_contractions,
+	    trace.surface_fold_strip_excluded,
+	    trace.surface_fold_localization_attempts,
+	    trace.surface_fold_localization_certified,
+	    trace.surface_fold_localization_failures,
 	    trace.continuation_certificate_krawczyk_attempts,
 	    trace.continuation_certificate_krawczyk_available,
 	    trace.continuation_certificate_krawczyk_certified,
@@ -7639,6 +7777,7 @@ check_brep_interval_enclosures()
     size_t expansion_restriction_checks = 0;
     size_t expansion_restriction_contractions = 0;
     size_t expansion_restriction_high_water = 0;
+    size_t expansion_identity_checks = 0;
     size_t expansion_normalization_fallbacks = 0;
     size_t reparameterization_checks = 0;
     size_t clip_checks = 0;
@@ -7846,6 +7985,104 @@ check_brep_interval_enclosures()
 			expansion_observed[0] <
 			(long double)observed[1] - observed[0])
 		    expansion_product_contractions++;
+	    }
+	}
+    }
+
+    {
+	const int identity_orders[] = {2, 4, 8, 16};
+	const int identity_restrictions[][4] = {
+	    {0, 1, 4, 2},
+	    {1, 0, 2, 4},
+	    {0, 0, 4, 2},
+	    {0, 2, 4, 4},
+	    {0, 0, 2, 4},
+	    {2, 0, 4, 4},
+	    {0, 0, 4, 4}
+	};
+	for (size_t order_index = 0; order_index < sizeof(identity_orders) /
+		sizeof(identity_orders[0]); ++order_index) {
+	    const int order = identity_orders[order_index];
+	    const size_t count = (size_t)order * order;
+	    fastf_t input[256] = {};
+	    fastf_t input_error[256] = {};
+	    exact_dyadic lower_input[256];
+	    exact_dyadic upper_input[256];
+	    for (size_t i = 0; i < count; ++i) {
+		const exact_dyadic nominal = {
+		    (int64_t)((7 * i + order) % 19) - 9, -8
+		};
+		const exact_dyadic error = {
+		    (int64_t)(i % 3 + 1), -24
+		};
+		input[i] = (fastf_t)exact_dyadic_value(nominal);
+		input_error[i] = (fastf_t)exact_dyadic_value(error);
+		if (!exact_dyadic_subtract(nominal, error, lower_input[i]) ||
+			!exact_dyadic_add(nominal, error, upper_input[i])) {
+		    std::printf("FAIL: expansion identity source order=%d "
+			"coefficient=%zu\n", order, i);
+		    failures++;
+		}
+	    }
+	    for (size_t restriction = 0; restriction <
+		    sizeof(identity_restrictions) /
+		    sizeof(identity_restrictions[0]); ++restriction) {
+		const int minimum_quarters[2] = {
+		    identity_restrictions[restriction][0],
+		    identity_restrictions[restriction][1]
+		};
+		const int maximum_quarters[2] = {
+		    identity_restrictions[restriction][2],
+		    identity_restrictions[restriction][3]
+		};
+		const fastf_t minimum[2] = {
+		    0.25 * minimum_quarters[0],
+		    0.25 * minimum_quarters[1]
+		};
+		const fastf_t maximum[2] = {
+		    0.25 * maximum_quarters[0],
+		    0.25 * maximum_quarters[1]
+		};
+		exact_dyadic expected_minimum[256];
+		exact_dyadic expected_maximum[256];
+		fastf_t observed_minimum[256] = {};
+		fastf_t observed_maximum[256] = {};
+		size_t high_water = 0;
+		if (!exact_dyadic_surface_restrict_quarters(lower_input,
+			order, order, minimum_quarters, maximum_quarters,
+			expected_minimum) ||
+			!exact_dyadic_surface_restrict_quarters(upper_input,
+			    order, order, minimum_quarters, maximum_quarters,
+			    expected_maximum) ||
+			!_rt_brep_expansion_restrict_test(input, input_error,
+			    order, order, minimum, maximum, observed_minimum,
+			    observed_maximum, &high_water)) {
+		    std::printf("FAIL: expansion identity restriction "
+			"order=%d case=%zu\n", order, restriction);
+		    failures++;
+		    continue;
+		}
+		expansion_restriction_high_water = std::max(
+		    expansion_restriction_high_water, high_water);
+		for (size_t i = 0; i < count; ++i) {
+		    const long double exact_minimum =
+			exact_dyadic_value(expected_minimum[i]);
+		    const long double exact_maximum =
+			exact_dyadic_value(expected_maximum[i]);
+		    expansion_identity_checks++;
+		    if ((long double)observed_minimum[i] > exact_minimum ||
+			    (long double)observed_maximum[i] < exact_maximum ||
+			    high_water >= RT_BREP_EXPANSION_CAPACITY) {
+			std::printf("FAIL: expansion identity enclosure "
+			    "order=%d case=%zu coefficient=%zu "
+			    "bounds=%.17Lg/%.17Lg:%.17Lg/%.17Lg high=%zu\n",
+			    order, restriction, i,
+			    (long double)observed_minimum[i], exact_minimum,
+			    (long double)observed_maximum[i], exact_maximum,
+			    high_water);
+			failures++;
+		    }
+		}
 	    }
 	}
     }
@@ -8935,7 +9172,7 @@ check_brep_interval_enclosures()
 	    "product=%zu+%zu/%zu/%zu+%zu quotient=%zu "
 	    "linear-hull=%zu determinant=%zu/%zu+%zu restrict=%zu "
 	    "coefficient=%zu+%zu/%zu/%zu "
-	    "restriction=%zu+%zu+%zu/%zu/%zu "
+	    "restriction=%zu+%zu+%zu/%zu/%zu identity=%zu "
 	    "normalization-fallback=%zu "
 	    "reparameterization=%zu "
 	    "clip=%zu/%zu "
@@ -8955,12 +9192,116 @@ check_brep_interval_enclosures()
 	    expansion_restriction_checks,
 	    expansion_restriction_contractions,
 	    expansion_restriction_high_water,
+	    expansion_identity_checks,
 	    expansion_normalization_fallbacks,
 	    reparameterization_checks, clip_contractions, clip_checks,
 	    maximum_function_width_ratio,
 	    maximum_restriction_width_ratio,
 	    maximum_reparameterization_width_ratio);
     }
+    return failures;
+}
+
+
+/* Keep the exact endpoint-restriction kernel independently runnable.  The
+ * complete interval audit repeats these cases as part of its larger matrix;
+ * this shard exists so performance and sanitizer work need not run unrelated
+ * determinant, product, clipping, and local-root corpora. */
+static int
+check_brep_expansion_endpoint_restrictions()
+{
+    const int orders[] = {2, 4, 8, 16};
+    const int restrictions[][4] = {
+	{0, 0, 4, 2},
+	{0, 2, 4, 4},
+	{0, 0, 2, 4},
+	{2, 0, 4, 4}
+    };
+    size_t checks = 0;
+    size_t maximum_high_water = 0;
+    int failures = 0;
+    for (size_t order_index = 0;
+	    order_index < sizeof(orders) / sizeof(orders[0]); ++order_index) {
+	const int order = orders[order_index];
+	const size_t count = (size_t)order * order;
+	fastf_t input[256] = {};
+	fastf_t input_error[256] = {};
+	exact_dyadic lower_input[256];
+	exact_dyadic upper_input[256];
+	for (size_t i = 0; i < count; ++i) {
+	    const exact_dyadic nominal = {
+		(int64_t)((7 * i + order) % 19) - 9, -8
+	    };
+	    const exact_dyadic error = {
+		(int64_t)(i % 3 + 1), -24
+	    };
+	    input[i] = (fastf_t)exact_dyadic_value(nominal);
+	    input_error[i] = (fastf_t)exact_dyadic_value(error);
+	    if (!exact_dyadic_subtract(nominal, error, lower_input[i]) ||
+		    !exact_dyadic_add(nominal, error, upper_input[i])) {
+		std::printf("FAIL: endpoint restriction source order=%d "
+		    "coefficient=%zu\n", order, i);
+		failures++;
+	    }
+	}
+	for (size_t restriction = 0; restriction <
+		sizeof(restrictions) / sizeof(restrictions[0]); ++restriction) {
+	    const int minimum_quarters[2] = {
+		restrictions[restriction][0], restrictions[restriction][1]
+	    };
+	    const int maximum_quarters[2] = {
+		restrictions[restriction][2], restrictions[restriction][3]
+	    };
+	    const fastf_t minimum[2] = {
+		0.25 * minimum_quarters[0], 0.25 * minimum_quarters[1]
+	    };
+	    const fastf_t maximum[2] = {
+		0.25 * maximum_quarters[0], 0.25 * maximum_quarters[1]
+	    };
+	    exact_dyadic expected_minimum[256];
+	    exact_dyadic expected_maximum[256];
+	    fastf_t observed_minimum[256] = {};
+	    fastf_t observed_maximum[256] = {};
+	    size_t high_water = 0;
+	    if (!exact_dyadic_surface_restrict_quarters(lower_input,
+		    order, order, minimum_quarters, maximum_quarters,
+		    expected_minimum) ||
+		    !exact_dyadic_surface_restrict_quarters(upper_input,
+			order, order, minimum_quarters, maximum_quarters,
+			expected_maximum) ||
+		    !_rt_brep_expansion_restrict_test(input, input_error,
+			order, order, minimum, maximum, observed_minimum,
+			observed_maximum, &high_water)) {
+		std::printf("FAIL: endpoint restriction unavailable order=%d "
+		    "case=%zu\n", order, restriction);
+		failures++;
+		continue;
+	    }
+	    maximum_high_water = std::max(maximum_high_water, high_water);
+	    for (size_t i = 0; i < count; ++i) {
+		const long double exact_minimum =
+		    exact_dyadic_value(expected_minimum[i]);
+		const long double exact_maximum =
+		    exact_dyadic_value(expected_maximum[i]);
+		checks++;
+		if ((long double)observed_minimum[i] > exact_minimum ||
+			(long double)observed_maximum[i] < exact_maximum ||
+			high_water >= RT_BREP_EXPANSION_CAPACITY) {
+		    std::printf("FAIL: endpoint restriction enclosure "
+			"order=%d case=%zu coefficient=%zu "
+			"bounds=%.17Lg/%.17Lg:%.17Lg/%.17Lg high=%zu\n",
+			order, restriction, i,
+			(long double)observed_minimum[i], exact_minimum,
+			(long double)observed_maximum[i], exact_maximum,
+			high_water);
+		    failures++;
+		}
+	    }
+	}
+    }
+    if (!failures)
+	std::printf("BREP endpoint expansion restriction: PASS checks=%zu "
+	    "high-water=%zu\n", checks, maximum_high_water);
     return failures;
 }
 
@@ -10385,18 +10726,28 @@ check_brep_fold_solver()
 	if (test_determinant) {
 	    graph_corridor_cases++;
 	    graph_proof_boxes += observed.graph_boxes;
-	    graph_proof_contractions += observed.graph_contractions;
+	    graph_proof_contractions += observed.graph_contractions +
+		observed.graph_interval_contractions;
 	    const int expected_sign = swap ? -side : side;
+	    const bool graph_intervals_accounted =
+		observed.graph_interval_attempts ==
+		observed.graph_interval_signed +
+		observed.graph_interval_excluded +
+		observed.graph_exact_fallbacks;
 	    if (observed.whole_determinant_signed ||
 		    !observed.graph_determinant_signed ||
 		    observed.determinant_sign != expected_sign ||
-		    !observed.graph_boxes || !observed.graph_contractions ||
+		    !observed.graph_boxes || !graph_intervals_accounted ||
+		    !observed.graph_interval_attempts ||
+		    !observed.graph_interval_signed ||
+		    !observed.graph_interval_contractions ||
 		    !observed.boundary_existence_available ||
 		    !observed.boundary_existence_certified ||
 		    !observed.boundary_existence_contractions) {
 		std::printf("FAIL: fold implicit determinant %s epsilon=%.17g "
 		    "side=%d swap=%d scale=%d whole/graph/sign=%d/%d/%d "
 		    "expected=%d boxes/contractions=%zu/%zu "
+		    "interval=%zu/%zu/%zu/%zu/%zu "
 		    "boundary=%d/%d/%zu "
 		    "failure=r%zu/d%zu/s%zu/z%zu/w%zu\n", label,
 		    epsilon, side, swap, scale_exponent,
@@ -10404,6 +10755,11 @@ check_brep_fold_solver()
 		    observed.graph_determinant_signed,
 		    observed.determinant_sign, expected_sign,
 		    observed.graph_boxes, observed.graph_contractions,
+		    observed.graph_interval_attempts,
+		    observed.graph_interval_signed,
+		    observed.graph_interval_excluded,
+		    observed.graph_interval_contractions,
+		    observed.graph_exact_fallbacks,
 		    observed.boundary_existence_available,
 		    observed.boundary_existence_certified,
 		    observed.boundary_existence_contractions,
@@ -11163,6 +11519,9 @@ check_ellipsoid_adaptive_affine(const struct bn_tol *tol)
 			trace.surface_fold_boundary_existence_certified != 2 ||
 			!trace.surface_fold_boundary_existence_contractions ||
 			trace.surface_fold_boundary_existence_failures ||
+			trace.surface_fold_strip_build_attempts != 2 ||
+			trace.surface_fold_strip_build_available != 2 ||
+			trace.surface_fold_strip_build_avoided ||
 			trace.surface_fold_strip_excluded != 2 ||
 			!trace.surface_fold_strip_boxes ||
 			!trace.surface_fold_strip_contractions ||
@@ -11181,8 +11540,9 @@ check_ellipsoid_adaptive_affine(const struct bn_tol *tol)
 			    "ratio=%.3g reverse=%d corridor="
 			    "%zu/%zu/%zu/%zu/%zu/%zu graph="
 			    "%zu/%zu/%zu/%zu/%zu/%zu/%zu existence="
-			    "%zu/%zu/%zu/%zu/%zu strip="
-			    "%zu/%zu/%zu complete=%zu/%zu failures/high=%zu/%zu\n",
+			    "%zu/%zu/%zu/%zu/%zu strip-build="
+			    "%zu/%zu/%zu strip=%zu/%zu/%zu "
+			    "complete=%zu/%zu failures/high=%zu/%zu\n",
 			    test.name, grazing_clearance_ratios[ratio_index],
 			    reverse, trace.surface_fold_corridor_attempts,
 			    trace.surface_fold_corridor_available,
@@ -11202,6 +11562,9 @@ check_ellipsoid_adaptive_affine(const struct bn_tol *tol)
 			    trace.surface_fold_boundary_existence_certified,
 			    trace.surface_fold_boundary_existence_contractions,
 			    trace.surface_fold_boundary_existence_failures,
+			    trace.surface_fold_strip_build_attempts,
+			    trace.surface_fold_strip_build_available,
+			    trace.surface_fold_strip_build_avoided,
 			    trace.surface_fold_strip_excluded,
 			    trace.surface_fold_strip_boxes,
 			    trace.surface_fold_strip_contractions,
@@ -13057,6 +13420,9 @@ check_cobb_oblique_contact_trend(const struct bn_tol *tol, bool emit_report)
 	    const bool selected = trace.prepared_production_selected == 1 &&
 		trace.prepared_production_fallback ==
 		    RT_BREP_PREPARED_FALLBACK_NONE;
+	    const bool population_accounted =
+		trace.physical_event_seam_population_screens >=
+		trace.physical_event_seam_population_rejected;
 	    const bool source_union_evidence =
 		(!trace.physical_event_seam_source_union_certified &&
 		 !trace.physical_event_seam_source_union_root_boxes &&
@@ -13090,7 +13456,8 @@ check_cobb_oblique_contact_trend(const struct bn_tol *tol, bool emit_report)
 		!trace.physical_event_seam_source_union_certified &&
 		!trace.physical_event_seam_source_union_root_boxes &&
 		!trace.physical_event_seam_source_union_boxes;
-	    bool bad = !brep_trace_fixed_workspaces_match(trace) || !edge ||
+	    bool bad = !brep_trace_fixed_workspaces_match(trace) ||
+		!population_accounted || !edge ||
 		!edge->frame_interval_supported || !edge->frame_interval_cells ||
 		trace.root_overflow || trace.edge_overflow ||
 		trace.surface_workspace_exhausted || trace.surface_box_overflow ||
@@ -13104,6 +13471,10 @@ check_cobb_oblique_contact_trend(const struct bn_tol *tol, bool emit_report)
 		oracle.intervals[0].out_dist = 2.0 * radius + half_chord;
 		bad = bad || !certified_evidence || trace_hits != 2 ||
 		    trace.final_segments != 1 || production_result.segments != 1 ||
+		    (cases[case_index].component >= 1.0e-4 &&
+		     cases[case_index].component <= 0.25 &&
+		     (trace.physical_event_seam_population_screens != 2 ||
+		      trace.physical_event_seam_population_rejected != 1)) ||
 		    (cases[case_index].source_union &&
 		     (trace.physical_event_seam_source_union_certified != 1 ||
 		      trace.physical_event_seam_source_union_root_boxes != 1 ||
@@ -13151,7 +13522,10 @@ check_cobb_oblique_contact_trend(const struct bn_tol *tol, bool emit_report)
 		std::printf("oblique component=%.17g reverse=%d edge-dot=%.17g "
 		"distance=%.17g frame=%d/%zu roots/boxes=%zu/%zu seam=%zu "
 		"contact=%zu/%zu/%zu oblique=%zu/%zu/%zu union=%zu/%zu/%zu "
-		"selected/final=%zu/%zu failures=%zu/%zu/%zu/%zu/%zu\n",
+		"selected/final=%zu/%zu "
+		"seam-stage=%zu/%zu/%zu/%zu population=%zu/%zu "
+		"root-proof=%zu/%zu/%zu/%zu/%zu "
+		"failures=%zu/%zu/%zu/%zu/%zu\n",
 		cases[case_index].component, reverse,
 		edge ? edge->ray_edge_dot : INFINITY,
 		edge ? edge->distance : INFINITY,
@@ -13168,6 +13542,17 @@ check_cobb_oblique_contact_trend(const struct bn_tol *tol, bool emit_report)
 		trace.physical_event_seam_source_union_root_boxes,
 		trace.physical_event_seam_source_union_boxes,
 		trace.prepared_production_selected, trace.final_segments,
+		trace.physical_event_seam_root_candidates,
+		trace.physical_event_seam_closure_candidates,
+		trace.physical_event_seam_continuation_candidates,
+		trace.physical_event_seam_declared_contact_pairs,
+		trace.physical_event_seam_population_screens,
+		trace.physical_event_seam_population_rejected,
+		trace.physical_event_seam_local_root_attempts,
+		trace.physical_event_seam_local_root_available,
+		trace.physical_event_seam_local_root_certified,
+		trace.physical_event_seam_local_root_extensions,
+		trace.physical_event_seam_local_root_tube_failures,
 		trace.physical_event_seam_failures,
 		trace.physical_event_seam_ownership_failures,
 		trace.physical_event_seam_witness_failures,
@@ -18661,6 +19046,8 @@ main(int argc, char **argv)
 	BU_STR_EQUAL(mode, "--cobb-oblique-report");
     const bool affine_only = mode && BU_STR_EQUAL(mode, "--affine-only");
     const bool interval_only = mode && BU_STR_EQUAL(mode, "--interval-only");
+    const bool restriction_only = mode &&
+	BU_STR_EQUAL(mode, "--restriction-only");
     const bool local_root_only = mode &&
 	BU_STR_EQUAL(mode, "--local-root-only");
     const bool cleanup_only = mode && BU_STR_EQUAL(mode, "--cleanup-only");
@@ -18682,6 +19069,8 @@ main(int argc, char **argv)
     const bool regular_stream_only = mode &&
 	BU_STR_EQUAL(mode, "--regular-stream-only");
     const bool seam_only = mode && BU_STR_EQUAL(mode, "--seam-only");
+    const bool seam_authority_only = mode &&
+	BU_STR_EQUAL(mode, "--seam-authority-only");
     const bool endpoint_only = mode && BU_STR_EQUAL(mode, "--endpoint-only");
     const bool nonisoparametric_only = mode &&
 	BU_STR_EQUAL(mode, "--nonisoparametric-only");
@@ -18690,21 +19079,25 @@ main(int argc, char **argv)
     const bool defect_only = mode && BU_STR_EQUAL(mode, "--defect-only");
     const bool throughput_only = mode &&
 	BU_STR_EQUAL(mode, "--throughput-only");
+    const bool throughput_contact_only = mode &&
+	BU_STR_EQUAL(mode, "--throughput-contact-only");
     if (mode && !report_grazing && !report_cobb &&
 	    !report_cobb_oblique && !affine_only &&
-	    !interval_only && !local_root_only && !cleanup_only &&
+	    !interval_only && !restriction_only && !local_root_only &&
+	    !cleanup_only &&
 	    !grazing_root_only &&
 	    !trim_interval_only && !trim_classifier_only &&
 	    !source_union_only &&
 	    !fold_only && !core_only && !pole_only &&
 	    !directed_only &&
 	    !crofton_only && !crofton_hard_only && !regular_stream_only &&
-	    !seam_only && !endpoint_only &&
+	    !seam_only && !seam_authority_only && !endpoint_only &&
 	    !nonisoparametric_only && !contact_trim_only && !defect_only &&
-	    !throughput_only)
+	    !throughput_only && !throughput_contact_only)
 	bu_exit(1, "Usage: %s [--grazing-report|--cobb-report|"
 	    "--cobb-oblique-report|"
-	    "--affine-only|--interval-only|--local-root-only|--cleanup-only|"
+	    "--affine-only|--interval-only|--restriction-only|"
+	    "--local-root-only|--cleanup-only|"
 	    "--grazing-root-only|"
 	    "--trim-interval-only|"
 	    "--trim-classifier-only|"
@@ -18712,9 +19105,9 @@ main(int argc, char **argv)
 	    "--core-only|--pole-only|"
 	    "--directed-only|--crofton-only|--crofton-hard-only|"
 	    "--regular-stream-only|"
-	    "--seam-only|--endpoint-only|"
+	    "--seam-only|--seam-authority-only|--endpoint-only|"
 	    "--nonisoparametric-only|--contact-trim-only|--defect-only|"
-	    "--throughput-only] "
+	    "--throughput-only|--throughput-contact-only] "
 	    "[--surface-tree-depth=0..%d]\n",
 	    argv[0], BREP_MAX_FT_DEPTH);
     if (interval_only) {
@@ -18726,6 +19119,8 @@ main(int argc, char **argv)
 	    check_brep_trim_interval_solver();
 	return interval_failures ? 1 : 0;
     }
+    if (restriction_only)
+	return check_brep_expansion_endpoint_restrictions() ? 1 : 0;
     if (local_root_only)
 	return (check_brep_local_root_solver() +
 	    check_brep_weighted_local_root_solver()) ? 1 : 0;
@@ -18777,13 +19172,23 @@ main(int argc, char **argv)
     struct resource resp = {};
     rt_init_resource(&resp, 0, rtip);
 
-    if (throughput_only) {
+    if (throughput_only || throughput_contact_only) {
 	const int throughput_failures = check_cobb_production_throughput(
-	    &rtip->rti_tol, rtip, &resp);
+	    &rtip->rti_tol, rtip, &resp, throughput_contact_only ? 5 : -1);
 	rt_clean_resource_basic(rtip, &resp);
 	BU_PTBL_SET(&rtip->rti_resources, 0, NULL);
 	rt_i_destroy(rtip);
 	return throughput_failures ? 1 : 0;
+    }
+
+    if (seam_authority_only) {
+	const int authority_failures =
+	    check_cobb_classifier_invariance(&rtip->rti_tol) +
+	    check_cobb_oblique_contact_trend(&rtip->rti_tol, false);
+	rt_clean_resource_basic(rtip, &resp);
+	BU_PTBL_SET(&rtip->rti_resources, 0, NULL);
+	rt_i_destroy(rtip);
+	return authority_failures ? 1 : 0;
     }
 
     if (nonisoparametric_only) {
