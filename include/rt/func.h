@@ -189,7 +189,15 @@ RT_EXPORT extern int rt_obj_params(struct pc_pc_set *ps, const struct rt_db_inte
 RT_EXPORT extern int rt_obj_mirror(struct rt_db_internal *ip, const plane_t *plane);
 
 /**
- * if `stp` is prepped, serialize; otherwise, deserialize from `external`
+ * If `external` is NULL, query the primitive's current prep-cache variant in
+ * `version` without modifying `stp`.  The variant must include both the
+ * serialized representation version and every prep option which changes the
+ * resulting acceleration data.
+ *
+ * Otherwise, if `stp` is prepped, serialize; if it is not prepped,
+ * deserialize from `external`.  A deserializer may consume and clear the
+ * external buffer after reading it.  Callers must treat its contents as
+ * unspecified after this call and may safely pass it to bu_free_external().
  */
 RT_EXPORT extern int rt_obj_prep_serialize(struct soltab *stp, const struct rt_db_internal *ip, struct bu_external *external, size_t *version);
 

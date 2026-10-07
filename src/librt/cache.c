@@ -27,6 +27,7 @@
 
 /* interface header */
 #include "./cache.h"
+#include "./librt_private.h"
 
 /* system headers */
 #include <errno.h>
@@ -40,9 +41,11 @@
 #include "bu/app.h"
 #include "bu/file.h"
 #include "bu/cv.h"
+#include "bu/hash.h"
 #include "bu/parallel.h"
 #include "bu/path.h"
 #include "bu/process.h"
+#include "bu/snooze.h"
 #include "bu/datetime.h"
 #include "bu/str.h"
 #include "bu/uuid.h"
@@ -53,18 +56,18 @@
 /* Defined in cache_lz4.c */
 extern int brl_LZ4_compress_default(const char* source, char* dest, int sourceSize, int maxDestSize);
 extern int brl_LZ4_compressBound(int inputSize);
-extern int brl_LZ4_decompress_fast (const char* source, char* dest, int originalSize);
+extern int brl_LZ4_decompress_safe(const char* source, char* dest, int compressedSize, int dstCapacity);
 
-#define CACHE_FORMAT 3
+#define CACHE_FORMAT 4
 
 static const char * const cache_mime_type = "brlcad/cache";
+static const char * const cache_payload_hash_attribute = "rt_cache::payload_hash128";
 
 
 #define CACHE_LOG(...) if (cache && cache->log) cache->log(__VA_ARGS__);
 #define CACHE_DEBUG(...) if (cache && cache->debug) cache->debug(__VA_ARGS__);
 
 struct rt_cache_entry {
-    struct bu_mapped_file *mfp;
     struct bu_external *ext;
 };
 
@@ -72,12 +75,10 @@ struct rt_cache_entry {
 struct rt_cache {
     char dir[MAXPATHLEN];
     int read_only;
-    int semaphore;
     int (*log)(const char *format, ...);
     int (*debug)(const char *format, ...);
-    struct bu_hash_tbl *entry_hash;
 };
-#define CACHE_INIT {{0}, 0, 0, bu_log, NULL, NULL}
+#define CACHE_INIT {{0}, 0, bu_log, NULL}
 
 
 static void
@@ -203,38 +204,66 @@ cache_format(const struct rt_cache *cache)
 
 
 static int
-cache_generate_name(char name[STATIC_ARRAY(37)], const struct soltab *stp)
+cache_generate_name(char name[STATIC_ARRAY(37)], struct soltab *stp,
+	const struct rt_db_internal *internal, size_t *prep_version)
 {
-    struct bu_external raw_external;
+    struct bu_external raw_external = BU_EXTERNAL_INIT_ZERO;
     struct db5_raw_internal raw_internal;
+    uint8_t matrix_namespace_uuid[16];
     uint8_t namespace_uuid[16];
     uint8_t uuid[16];
     /* arbitrary namespace for a v5 uuid */
     const uint8_t base_namespace_uuid[16] = {0x4a, 0x3e, 0x13, 0x3f, 0x1a, 0xfc, 0x4d, 0x6c, 0x9a, 0xdd, 0x82, 0x9b, 0x7b, 0xb6, 0xc6, 0xc1};
     uint8_t mat_buffer[SIZEOF_NETWORK_DOUBLE * ELEMENTS_PER_MAT];
     const fastf_t *matp = stp->st_matp ? stp->st_matp : bn_mat_identity;
+    uint64_t network_prep_version;
 
     RT_CK_SOLTAB(stp);
+    RT_CK_DB_INTERNAL(internal);
+    if (!prep_version)
+	return 0;
+
+    *prep_version = (size_t)-1;
+    if (rt_obj_prep_serialize(stp, internal, NULL, prep_version) ||
+	    *prep_version == (size_t)-1)
+	return 0;
 
     bu_cv_htond((unsigned char *)mat_buffer, (unsigned char *)matp, ELEMENTS_PER_MAT);
 
-    if (bu_uuid_create(namespace_uuid, sizeof(mat_buffer), mat_buffer, base_namespace_uuid) != 5)
+    if (bu_uuid_create(matrix_namespace_uuid, sizeof(mat_buffer), mat_buffer,
+	    base_namespace_uuid) != 5)
 	return 0; /*bu_bomb("bu_uuid_create() failed");*/
 
-    if (db_get_external(&raw_external, stp->st_dp, stp->st_rtip->rti_dbip))
+    /* A prep-cache object is identified by geometry, transform, serialized
+     * representation, and all primitive-specific prep options.  Encoding the
+     * queried variant in the UUID namespace lets incompatible variants coexist
+     * instead of repeatedly rejecting and then failing to replace one shared
+     * filename. */
+    network_prep_version = htonll((uint64_t)*prep_version);
+    if (bu_uuid_create(namespace_uuid, sizeof(network_prep_version),
+	    (const uint8_t *)&network_prep_version, matrix_namespace_uuid) != 5)
+	return 0; /*bu_bomb("bu_uuid_create() failed");*/
+
+    if (db_get_external(&raw_external, stp->st_dp, stp->st_rtip->rti_dbip)) {
+	bu_free_external(&raw_external);
 	return 0; /*bu_bomb("db_get_external() failed");*/
+    }
 
     if (db5_get_raw_internal_ptr(&raw_internal, raw_external.ext_buf) == NULL)
-	return 0; /*bu_bomb("rt_db_external5_to_internal5() failed");*/
+	goto failure; /*bu_bomb("rt_db_external5_to_internal5() failed");*/
 
     if (bu_uuid_create(uuid, raw_internal.body.ext_nbytes, raw_internal.body.ext_buf, namespace_uuid) != 5)
-	return 0; /*bu_bomb("bu_uuid_create() failed");*/
+	goto failure; /*bu_bomb("bu_uuid_create() failed");*/
 
     if (bu_uuid_encode(uuid, (uint8_t *)name))
-	return 0; /*bu_bomb("bu_uuid_encode() failed");*/
+	goto failure; /*bu_bomb("bu_uuid_encode() failed");*/
 
     bu_free_external(&raw_external);
     return 1;
+
+failure:
+    bu_free_external(&raw_external);
+    return 0;
 }
 
 
@@ -332,11 +361,185 @@ cache_init(struct rt_cache *cache)
 	cache->read_only = 1;
     }
 
-    /* initialize database instance pointer storage */
-    cache->entry_hash = bu_hash_create(1024);
+    return 1;
+}
 
-    cache->semaphore = bu_semaphore_register("SEM_CACHE");
 
+static int
+cache_decode_length(size_t *value, const uint8_t **cursor,
+	const uint8_t *limit, unsigned int width_code)
+{
+    uint64_t decoded = 0;
+    size_t width;
+
+    if (!value || !cursor || !*cursor || !limit || *cursor > limit ||
+	    width_code > DB5HDR_WIDTHCODE_64BIT)
+	return 0;
+
+    width = (size_t)1 << width_code;
+    if ((size_t)(limit - *cursor) < width)
+	return 0;
+
+    for (size_t i = 0; i < width; ++i)
+	decoded = (decoded << 8) | (*cursor)[i];
+    if (sizeof(size_t) < sizeof(decoded) && decoded > (uint64_t)SIZE_MAX)
+	return 0;
+
+    *cursor += width;
+    *value = (size_t)decoded;
+    return 1;
+}
+
+
+/* Validate every length before handing a cache object to the historical DB5
+ * pointer parser, whose interface does not include the available buffer size. */
+static int
+cache_db5_external_valid(const struct bu_external *external)
+{
+    const uint8_t *cursor;
+    const uint8_t *limit;
+    const uint8_t * const buffer = external ? external->ext_buf : NULL;
+    const size_t bytes = external ? external->ext_nbytes : 0;
+    const size_t header_bytes = sizeof(struct db5_ondisk_header);
+    const uint8_t hflags = buffer && bytes > 1 ? buffer[1] : 0;
+    const uint8_t aflags = buffer && bytes > 2 ? buffer[2] : 0;
+    const uint8_t bflags = buffer && bytes > 3 ? buffer[3] : 0;
+    size_t object_chunks = 0;
+    size_t field_bytes = 0;
+
+    if (!buffer || bytes < header_bytes + 2 || (bytes & 7) ||
+	    buffer[0] != DB5HDR_MAGIC1 || buffer[bytes - 1] != DB5HDR_MAGIC2)
+	return 0;
+    if ((hflags & DB5HDR_HFLAGS_DLI_MASK) !=
+	    DB5HDR_HFLAGS_DLI_APPLICATION_DATA_OBJECT ||
+	    !(hflags & DB5HDR_HFLAGS_NAME_PRESENT) ||
+	    !(aflags & DB5HDR_AFLAGS_PRESENT) ||
+	    !(bflags & DB5HDR_BFLAGS_PRESENT) ||
+	    (aflags & DB5HDR_AFLAGS_ZZZ_MASK) != DB5_ZZZ_UNCOMPRESSED ||
+	    (bflags & DB5HDR_BFLAGS_ZZZ_MASK) != DB5_ZZZ_UNCOMPRESSED ||
+	    buffer[4] != DB5_MAJORTYPE_BINARY_MIME || buffer[5] != 0)
+	return 0;
+
+    cursor = buffer + header_bytes;
+    limit = buffer + bytes - 1;
+    if (!cache_decode_length(&object_chunks, &cursor, limit,
+	    (hflags & DB5HDR_HFLAGS_OBJECT_WIDTH_MASK) >>
+		DB5HDR_HFLAGS_OBJECT_WIDTH_SHIFT) ||
+	    object_chunks != bytes / 8)
+	return 0;
+
+    if (!cache_decode_length(&field_bytes, &cursor, limit,
+	    (hflags & DB5HDR_HFLAGS_NAME_WIDTH_MASK) >>
+		DB5HDR_HFLAGS_NAME_WIDTH_SHIFT) ||
+	    field_bytes > (size_t)(limit - cursor) || !field_bytes ||
+	    cursor[field_bytes - 1] != '\0')
+	return 0;
+    cursor += field_bytes;
+
+    if (!cache_decode_length(&field_bytes, &cursor, limit,
+	    (aflags & DB5HDR_AFLAGS_WIDTH_MASK) >>
+		DB5HDR_AFLAGS_WIDTH_SHIFT) ||
+	    field_bytes > (size_t)(limit - cursor) || field_bytes < 4)
+	return 0;
+    cursor += field_bytes;
+
+    if (!cache_decode_length(&field_bytes, &cursor, limit,
+	    (bflags & DB5HDR_BFLAGS_WIDTH_MASK) >>
+		DB5HDR_BFLAGS_WIDTH_SHIFT) ||
+	    field_bytes > (size_t)(limit - cursor) ||
+	    field_bytes <= SIZEOF_NETWORK_LONG)
+	return 0;
+    cursor += field_bytes;
+
+    if ((size_t)(limit - cursor) > 7)
+	return 0;
+    while (cursor < limit) {
+	if (*cursor++)
+	    return 0;
+    }
+    return 1;
+}
+
+
+static int
+cache_attributes_valid(const struct bu_external *attributes)
+{
+    const uint8_t *cursor;
+    const uint8_t *limit;
+
+    if (!attributes || !attributes->ext_buf || attributes->ext_nbytes < 4)
+	return 0;
+    cursor = attributes->ext_buf;
+    limit = cursor + attributes->ext_nbytes;
+    while (cursor < limit && *cursor) {
+	const uint8_t *terminator = (const uint8_t *)memchr(cursor, '\0',
+	    (size_t)(limit - cursor));
+	if (!terminator)
+	    return 0;
+	cursor = terminator + 1;
+	if (cursor >= limit)
+	    return 0;
+	terminator = (const uint8_t *)memchr(cursor, '\0',
+	    (size_t)(limit - cursor));
+	if (!terminator)
+	    return 0;
+	cursor = terminator + 1;
+    }
+
+    return cursor < limit && !*cursor && cursor + 1 == limit;
+}
+
+
+static void
+cache_payload_hash(char encoded[STATIC_ARRAY(33)],
+	const struct bu_external *external)
+{
+    const bu_h128_t hash = bu_data_hash128(external->ext_buf,
+	external->ext_nbytes);
+    snprintf(encoded, 33, "%016llx%016llx",
+	(unsigned long long)hash.w[0], (unsigned long long)hash.w[1]);
+}
+
+
+int
+_rt_cache_compress_external(struct bu_external *external)
+{
+    int ret;
+    uint32_t network_size;
+    uint8_t *buffer;
+    int maximum_compressed_size;
+
+    BU_CK_EXTERNAL(external);
+
+    if (!external->ext_buf || !external->ext_nbytes ||
+	    external->ext_nbytes >= INT_MAX)
+	return 0;
+    maximum_compressed_size =
+	brl_LZ4_compressBound((int)external->ext_nbytes);
+    if (maximum_compressed_size <= 0)
+	return 0;
+
+    /* buffer is uncompsize + maxcompsize + compressed_data */
+    buffer = (uint8_t *)bu_malloc((size_t)maximum_compressed_size +
+	SIZEOF_NETWORK_LONG, "buffer");
+
+    network_size = htonl((uint32_t)external->ext_nbytes);
+    memcpy(buffer, &network_size, sizeof(network_size));
+
+    ret = brl_LZ4_compress_default((const char *)external->ext_buf,
+	(char *)(buffer + SIZEOF_NETWORK_LONG), (int)external->ext_nbytes,
+	maximum_compressed_size);
+    if (ret <= 0) {
+	bu_free(buffer, "buffer");
+	return 0;
+    }
+
+    bu_free(external->ext_buf, "ext_buf");
+    /* LZ4 returns the bytes it actually wrote.  The former maximum-bound
+     * assignment retained and wrote the unused tail of this buffer, largely
+     * defeating cache compression. */
+    external->ext_nbytes = (size_t)ret + SIZEOF_NETWORK_LONG;
+    external->ext_buf = buffer;
     return 1;
 }
 
@@ -344,53 +547,22 @@ cache_init(struct rt_cache *cache)
 static int
 compress_external(const struct rt_cache *cache, struct bu_external *external)
 {
-    int ret;
-    int compressed = 0;
-    uint32_t network_size;
-    uint8_t *buffer;
-    int compressed_size;
-
-    BU_CK_EXTERNAL(external);
-
-    if (external->ext_nbytes >= INT_MAX) {
-	CACHE_DEBUG("++++++ [%lu.%lu] Compression input is too large (%zu bytes)\n", bu_pid(), bu_parallel_id(), external->ext_nbytes);
-	return 0;
+    const size_t source_bytes = external ? external->ext_nbytes : 0;
+    if (!_rt_cache_compress_external(external)) {
+	CACHE_DEBUG("++++++ [%lu.%lu] Compression failed (%zu bytes @ %p)\n",
+	    bu_pid(), bu_parallel_id(), source_bytes,
+	    external ? (void *)external->ext_buf : NULL);
+        return 0;
     }
-
-    compressed_size = brl_LZ4_compressBound((int)external->ext_nbytes);
-    if (compressed_size <= 0) {
-	CACHE_DEBUG("++++++ [%lu.%lu] Compression input is unsupported (%zu bytes)\n", bu_pid(), bu_parallel_id(), external->ext_nbytes);
-	return 0;
-    }
-
-    /* buffer is uncompsize + maxcompsize + compressed_data */
-    buffer = (uint8_t *)bu_malloc((size_t)compressed_size + SIZEOF_NETWORK_LONG, "buffer");
-
-    network_size = htonl((uint32_t)external->ext_nbytes);
-    memcpy(buffer, &network_size, sizeof(network_size));
-
-    ret = brl_LZ4_compress_default((const char *)external->ext_buf, (char *)(buffer + SIZEOF_NETWORK_LONG), external->ext_nbytes, compressed_size);
-    if (ret != 0)
-	compressed = 1;
-
-    if (!compressed) {
-	CACHE_DEBUG("++++++ [%lu.%lu] Compression failed (ret %d, %zu bytes @ %p to %d bytes max)\n", bu_pid(), bu_parallel_id(), ret, external->ext_nbytes, (void *) external->ext_buf, compressed_size);
-	bu_free(buffer, "buffer");
-	return 0;
-    }
-
-    bu_free(external->ext_buf, "ext_buf");
-    external->ext_nbytes = compressed_size + SIZEOF_NETWORK_LONG;
-    external->ext_buf = buffer;
     return 1;
 }
 
 
-static void
+static int
 uncompress_external(const struct rt_cache *cache, const struct bu_external *external, struct bu_external *dest)
 {
     int ret;
-    int uncompressed = 0;
+    size_t compressed_bytes;
     uint32_t network_size;
     uint8_t *buffer;
 
@@ -398,88 +570,112 @@ uncompress_external(const struct rt_cache *cache, const struct bu_external *exte
 
     BU_EXTERNAL_INIT(dest);
 
+    if (!external->ext_buf || external->ext_nbytes <= SIZEOF_NETWORK_LONG)
+	return 0;
+
+    compressed_bytes = external->ext_nbytes - SIZEOF_NETWORK_LONG;
+    if (compressed_bytes >= INT_MAX)
+	return 0;
+
     memcpy(&network_size, external->ext_buf, sizeof(network_size));
     dest->ext_nbytes = ntohl(network_size);
+    if (!dest->ext_nbytes || dest->ext_nbytes >= INT_MAX) {
+	dest->ext_nbytes = 0;
+	return 0;
+    }
     buffer = (uint8_t *)bu_malloc(dest->ext_nbytes, "buffer");
 
     BU_ASSERT(dest->ext_nbytes < INT_MAX);
-    ret = brl_LZ4_decompress_fast((const char *)(external->ext_buf + SIZEOF_NETWORK_LONG), (char *)buffer, (int)dest->ext_nbytes);
-    if (ret > 0)
-	uncompressed = 1;
-
-    if (!uncompressed) {
+    ret = brl_LZ4_decompress_safe(
+	(const char *)(external->ext_buf + SIZEOF_NETWORK_LONG),
+	(char *)buffer, (int)compressed_bytes, (int)dest->ext_nbytes);
+    if (ret != (int)dest->ext_nbytes) {
 	CACHE_DEBUG("++++++ [%lu.%lu] decompression failed (ret %d, %zu bytes @ %p to %zu bytes max)\n", bu_pid(), bu_parallel_id(), ret, external->ext_nbytes, (void *) external->ext_buf, dest->ext_nbytes);
-	return;
+	bu_free(buffer, "buffer");
+	dest->ext_nbytes = 0;
+	return 0;
     }
 
     dest->ext_buf = buffer;
+    return 1;
 }
 
 
 static struct rt_cache_entry *
 cache_read_entry(const struct rt_cache *cache, const char *name)
 {
-    long int fbytes = 0;
-    struct rt_cache_entry *e = NULL;
     char path[MAXPATHLEN] = {0};
 
     if (!cache || !name)
 	return NULL;
 
-    bu_semaphore_acquire(cache->semaphore);
-
-    e = (struct rt_cache_entry *)bu_hash_get(cache->entry_hash, (const uint8_t *)name, strlen(name));
-    if (e) {
-	bu_semaphore_release(cache->semaphore);
-	return e;
-    }
-
     cache_get_objfile(cache, name, path, MAXPATHLEN);
-    if (!bu_file_exists(path, NULL)) {
-	bu_semaphore_release(cache->semaphore);
+    if (!bu_file_exists(path, NULL))
 	return NULL;
-    }
 
-    fbytes = bu_file_size(path);
-    if (fbytes <= 0) {
-	return NULL;
-    }
-    BU_GET(e, struct rt_cache_entry);
-    BU_GET(e->ext, struct bu_external);
-    BU_EXTERNAL_INIT(e->ext);
-    e->ext->ext_nbytes = (size_t)fbytes;
-    e->mfp = bu_open_mapped_file(path, NULL);
-    if (!e->mfp || !e->mfp->buf || e->mfp->buflen != e->ext->ext_nbytes) {
-	if (e->mfp) {
-	    bu_close_mapped_file(e->mfp);
+    /* Size and read through the same handle.  Querying the pathname first
+     * races a concurrent atomic replacement: the size can describe the old
+     * entry while fopen observes the new one.  Windows may also deny an open
+     * for a short interval while MoveFileEx replaces an existing entry, so
+     * retry only after the final pathname was already observed.  A normal
+     * cold-cache miss above pays no delay. */
+#ifdef HAVE_WINDOWS_H
+    const int maximum_attempts = 4;
+#else
+    const int maximum_attempts = 1;
+#endif
+    for (int attempt = 0; attempt < maximum_attempts; ++attempt) {
+	FILE *ficache = fopen(path, "rb");
+	long int fbytes = 0;
+	if (ficache && !fseek(ficache, 0, SEEK_END)) {
+	    fbytes = ftell(ficache);
+	    if (fbytes > 0 && !fseek(ficache, 0, SEEK_SET)) {
+		struct rt_cache_entry *e = NULL;
+		BU_GET(e, struct rt_cache_entry);
+		BU_GET(e->ext, struct bu_external);
+		BU_EXTERNAL_INIT(e->ext);
+		e->ext->ext_nbytes = (size_t)fbytes;
+		e->ext->ext_buf = (uint8_t *)bu_malloc(
+		    e->ext->ext_nbytes, "prep cache entry");
+		if (fread(e->ext->ext_buf, 1, e->ext->ext_nbytes,
+			ficache) == e->ext->ext_nbytes) {
+		    fclose(ficache);
+		    return e;
+		}
+		bu_free_external(e->ext);
+		BU_PUT(e->ext, struct bu_external);
+		BU_PUT(e, struct rt_cache_entry);
+	    }
 	}
-	BU_PUT(e->ext, struct bu_external);
-	BU_PUT(e, struct rt_cache);
-	bu_semaphore_release(cache->semaphore);
-	return NULL;
+	if (ficache)
+	    fclose(ficache);
+#ifdef HAVE_WINDOWS_H
+	if (attempt + 1 < maximum_attempts)
+	    (void)bu_snooze((int64_t)1000 << attempt);
+#endif
     }
-    e->ext->ext_buf = (uint8_t *)(e->mfp->buf);
-    bu_hash_set(cache->entry_hash, (const uint8_t *)name, strlen(name), e);
+    return NULL;
+}
 
-    bu_semaphore_release(cache->semaphore);
 
-    return e;
+static void
+cache_free_entry(struct rt_cache_entry *entry)
+{
+    if (!entry)
+	return;
+    bu_free_external(entry->ext);
+    BU_PUT(entry->ext, struct bu_external);
+    BU_PUT(entry, struct rt_cache_entry);
 }
 
 
 static int
 cache_create_dir(const struct rt_cache *cache, const char *name)
 {
-    struct rt_cache_entry *e = NULL;
     char path[MAXPATHLEN] = {0};
 
     if (!cache || !name)
 	return 0;
-
-    e = (struct rt_cache_entry *)bu_hash_get(cache->entry_hash, (const uint8_t *)name, strlen(name));
-    if (e) {
-	return 1;
-    }
 
     cache_get_objfile(cache, name, path, MAXPATHLEN);
 
@@ -498,7 +694,9 @@ cache_create_dir(const struct rt_cache *cache, const char *name)
 
 
 static int
-cache_try_load(const struct rt_cache *cache, const char *name, const struct rt_db_internal *internal, struct soltab *stp)
+cache_try_load(const struct rt_cache *cache, const char *name,
+	const struct rt_db_internal *internal, struct soltab *stp,
+	size_t expected_version)
 {
     size_t version = (size_t)-1;
     struct db5_raw_internal raw_internal;
@@ -515,35 +713,87 @@ cache_try_load(const struct rt_cache *cache, const char *name, const struct rt_d
 	return 0; /* no storage */
     }
 
+    if (!cache_db5_external_valid(e->ext)) {
+	cache_free_entry(e);
+	return 0;
+    }
     if (db5_get_raw_internal_ptr(&raw_internal, e->ext->ext_buf) == NULL) {
+	cache_free_entry(e);
+	return 0;
+    }
+    if (raw_internal.name.ext_nbytes != strlen(name) + 1 ||
+	    memcmp(raw_internal.name.ext_buf, name,
+		strlen(name) + 1)) {
+	cache_free_entry(e);
 	return 0;
     }
 
     {
 	struct bu_attribute_value_set attributes;
+	char payload_hash[33] = {0};
+	const char *payload_hash_str;
 	const char *version_str;
 	const char *endptr;
+	unsigned long long parsed_version;
 
-	if (db5_import_attributes(&attributes, &raw_internal.attributes) < 0)
+	if (!cache_attributes_valid(&raw_internal.attributes)) {
+	    cache_free_entry(e);
 	    return 0;
+	}
+	if (db5_import_attributes(&attributes, &raw_internal.attributes) < 0) {
+	    cache_free_entry(e);
+	    return 0;
+	}
 
-	if (bu_strcmp(cache_mime_type, bu_avs_get(&attributes, "mime_type")))
+	if (!bu_avs_get(&attributes, "mime_type") ||
+		bu_strcmp(cache_mime_type,
+		    bu_avs_get(&attributes, "mime_type"))) {
+	    bu_avs_free(&attributes);
+	    cache_free_entry(e);
 	    return 0;
+	}
 
 	version_str = bu_avs_get(&attributes, "rt_cache::version");
-	if (!version_str)
+	if (!version_str) {
+	    bu_avs_free(&attributes);
+	    cache_free_entry(e);
 	    return 0; /* unversioned?? */
+	}
 
 	errno = 0;
-	version = strtol(version_str, (char **)&endptr, 10);
+	parsed_version = strtoull(version_str, (char **)&endptr, 10);
 
-	if ((version == 0 && errno) || endptr == version_str || *endptr)
+	if (errno || endptr == version_str || *endptr ||
+		parsed_version > (unsigned long long)SIZE_MAX) {
+	    bu_avs_free(&attributes);
+	    cache_free_entry(e);
 	    return 0; /* invalid version */
+	}
+	version = (size_t)parsed_version;
+	if (version != expected_version) {
+	    bu_avs_free(&attributes);
+	    cache_free_entry(e);
+	    return 0;
+	}
+
+	payload_hash_str = bu_avs_get(&attributes,
+	    cache_payload_hash_attribute);
+	cache_payload_hash(payload_hash, &raw_internal.body);
+	if (!payload_hash_str || strlen(payload_hash_str) != 32 ||
+		bu_strcmp(payload_hash_str, payload_hash)) {
+	    bu_avs_free(&attributes);
+	    cache_free_entry(e);
+	    return 0;
+	}
 
 	bu_avs_free(&attributes);
     }
 
-    uncompress_external(cache, &raw_internal.body, &data_external);
+    if (!uncompress_external(cache, &raw_internal.body, &data_external)) {
+	cache_free_entry(e);
+	return 0;
+    }
+    cache_free_entry(e);
 
     if (rt_obj_prep_serialize(stp, internal, &data_external, &version)) {
 	/* failed to deserialize */
@@ -557,7 +807,9 @@ cache_try_load(const struct rt_cache *cache, const char *name, const struct rt_d
 
 
 static int
-cache_try_store(struct rt_cache *cache, const char *name, const struct rt_db_internal *internal, struct soltab *stp)
+cache_try_store(struct rt_cache *cache, const char *name,
+	const struct rt_db_internal *internal, struct soltab *stp,
+	size_t expected_version)
 {
     FILE *focache = NULL;
     struct bu_external attributes_external = BU_EXTERNAL_INIT_ZERO;
@@ -576,7 +828,13 @@ cache_try_store(struct rt_cache *cache, const char *name, const struct rt_db_int
 
     if (rt_obj_prep_serialize(stp, internal, &data_external, &version) || version == (size_t)-1) {
 	CACHE_DEBUG("++++++ [%lu.%lu] Failed to serialize %s\n", bu_pid(), bu_parallel_id(), name);
+	bu_free_external(&data_external);
 	return 0; /* can't serialize */
+    }
+    if (version != expected_version) {
+	CACHE_DEBUG("++++++ [%lu.%lu] Prep variant changed while serializing %s\n", bu_pid(), bu_parallel_id(), name);
+	bu_free_external(&data_external);
+	return 0;
     }
 
     if (!compress_external(cache, &data_external)) {
@@ -586,11 +844,14 @@ cache_try_store(struct rt_cache *cache, const char *name, const struct rt_db_int
 
     {
 	struct bu_attribute_value_set attributes = BU_AVS_INIT_ZERO;
+	char payload_hash[33] = {0};
 	struct bu_vls version_vls = BU_VLS_INIT_ZERO;
 
+	cache_payload_hash(payload_hash, &data_external);
 	bu_vls_sprintf(&version_vls, "%zu", version);
 	bu_avs_add(&attributes, "mime_type", cache_mime_type);
 	bu_avs_add(&attributes, "rt_cache::version", bu_vls_addr(&version_vls));
+	bu_avs_add(&attributes, cache_payload_hash_attribute, payload_hash);
 	if (stp->st_dp && stp->st_dp->d_namep) {
 	    bu_avs_add(&attributes, "rt_cache::source_obj", stp->st_dp->d_namep);
 	}
@@ -639,6 +900,10 @@ cache_try_store(struct rt_cache *cache, const char *name, const struct rt_db_int
     focache = fopen(tmppath, "wb");
     if (!focache) {
 	CACHE_DEBUG("++++++ [%lu.%lu] Failed to put cache temp %s\n", bu_pid(), bu_parallel_id(), tmpname);
+	bu_file_delete(tmppath);
+	bu_free_external(&db_external);
+	bu_free_external(&attributes_external);
+	bu_free_external(&data_external);
 	return 0; /* can't stash */
     }
 
@@ -662,48 +927,10 @@ cache_try_store(struct rt_cache *cache, const char *name, const struct rt_db_int
     /* get the real / final cache object file name */
     cache_get_objfile(cache, name, path, MAXPATHLEN);
 
-    /* anyone beat us to creating the cache? */
-    if (bu_file_exists(path, NULL)) {
-	/* If a file already exists, stash the size of the file we just
-	 * finished (i.e. the one we have confidence is correctly sized) to use
-	 * as a sanity check. */
-	int tmp_file_size = bu_file_size(tmppath);
-	int final_file_size = bu_file_size(path);
-	int checkpnt_size = 0;
-	int check_cnt = 0;
-
-	CACHE_DEBUG("++++++ [%lu.%lu] Someone else finished %s first\n", bu_pid(), bu_parallel_id(), name);
-
-	while (tmp_file_size != final_file_size && final_file_size > checkpnt_size && check_cnt < 3) {
-	    checkpnt_size = final_file_size;
-	    sleep(1);
-	    final_file_size = bu_file_size(path);
-	    check_cnt++;
-	}
-
-	if (tmp_file_size != final_file_size) {
-	    CACHE_DEBUG("++++++ [%lu.%lu] BUT the file size of %s (%d) doesn't match that of %s (%d)!!!  Giving up.\n", bu_pid(), bu_parallel_id(), path, final_file_size, tmpname, tmp_file_size);
-	    if (!cache->debug) {
-		bu_file_delete(tmppath);
-	    } else {
-		CACHE_DEBUG("++++++ [%lu.%lu] Note: temporary file %s has been left intact for debugging examination.\n", bu_pid(), bu_parallel_id(), path, tmpname);
-	    }
-	    return 0;
-	}
-
-	CACHE_DEBUG("++++++ [%lu.%lu] No longer need %s\n", bu_pid(), bu_parallel_id(), tmpname);
-	bu_file_delete(tmppath);
-
-	if (cache_read_entry(cache, name) != NULL) {
-	    CACHE_DEBUG("++++++ [%lu.%lu] Successfully read %s\n", bu_pid(), bu_parallel_id(), name);
-	    return 1;
-	} else {
-	    CACHE_DEBUG("++++++ [%lu.%lu] BUT we can't read %s !!!  Giving up.\n", bu_pid(), bu_parallel_id(), name);
-	    return 0;
-	}
-    }
-
-    /* atomically flip it into place */
+    /* Atomically publish this complete entry.  Replacing an existing object is
+     * intentional: a same-name entry may have just failed validation, and
+     * concurrent writers for one content-derived name produce equivalent
+     * entries. */
 #ifdef HAVE_WINDOWS_H
     /* invert zero-is-failure return */
     ret = !MoveFileEx(tmppath, path, MOVEFILE_WRITE_THROUGH | MOVEFILE_REPLACE_EXISTING);
@@ -715,7 +942,9 @@ cache_try_store(struct rt_cache *cache, const char *name, const struct rt_db_int
 	return 0; /* someone probably beat us to it */
     }
 
-    if (cache_read_entry(cache, name) != NULL) {
+    struct rt_cache_entry *entry = cache_read_entry(cache, name);
+    if (entry != NULL) {
+	cache_free_entry(entry);
 	return 1;
     }
     return 0;
@@ -727,21 +956,22 @@ rt_cache_prep(struct rt_cache *cache, struct soltab *stp, struct rt_db_internal 
 {
     int ret = 0; /* success */
     char name[37] = {0};
+    size_t prep_version = (size_t)-1;
 
     RT_CK_SOLTAB(stp);
     RT_CK_DB_INTERNAL(internal);
 
-    if (!cache || !cache_generate_name(name, stp))
+    if (!cache || !cache_generate_name(name, stp, internal, &prep_version))
 	return rt_obj_prep(stp, internal, stp->st_rtip);
 
-    if (cache_try_load(cache, name, internal, stp))
+    if (cache_try_load(cache, name, internal, stp, prep_version))
 	return ret; /* found in cache */
 
     /* not in cache yet */
 
     ret = rt_obj_prep(stp, internal, stp->st_rtip);
     if (ret == 0 && !cache->read_only)
-	cache_try_store(cache, name, internal, stp);
+	cache_try_store(cache, name, internal, stp, prep_version);
 
     return ret;
 }
@@ -750,22 +980,10 @@ rt_cache_prep(struct rt_cache *cache, struct soltab *stp, struct rt_db_internal 
 void
 rt_cache_close(struct rt_cache *cache)
 {
-    struct bu_hash_entry *entry;
-
     if (!cache)
 	return;
 
     CACHE_DEBUG("++ [%lu.%lu] Closing cache at %s\n", bu_pid(), bu_parallel_id(), cache->dir);
-
-    entry = bu_hash_next(cache->entry_hash, NULL);
-    while (entry) {
-	struct rt_cache_entry *e = (struct rt_cache_entry *)bu_hash_value(entry, NULL);
-	bu_close_mapped_file(e->mfp);
-	BU_PUT(e->ext, struct bu_external);
-	BU_PUT(e, struct rt_cache);
-	entry = bu_hash_next(cache->entry_hash, entry);
-    }
-    bu_hash_destroy(cache->entry_hash);
 
     cache->debug = NULL;
     cache->log = NULL;
@@ -773,7 +991,6 @@ rt_cache_close(struct rt_cache *cache)
     memset(cache->dir, 0, MAXPATHLEN);
 
     BU_PUT(cache, struct rt_cache);
-    bu_free_mapped_files(0);
 }
 
 
@@ -828,13 +1045,14 @@ rt_cache_open(void)
 	    cache_init(cache);
 	    format = cache_format(cache);
 	}
-    } else if (format < 3) {
+    } else if (format < CACHE_FORMAT) {
 	struct bu_vls path = BU_VLS_INIT_ZERO;
 	char **matches = NULL;
 	size_t count;
 	size_t i;
 
-	/* V1 cache may have corruption, V2 used a different object storage container - clear the decks */
+	/* Older formats either used a different object container or lack current
+	 * integrity metadata.  They cannot be mixed with this reader. */
 
 	bu_vls_printf(&path, "%s%c%s", dir, BU_DIR_SEPARATOR, "objects");
 
@@ -890,7 +1108,9 @@ rt_cache_open(void)
 	(void)bu_file_delete(bu_vls_addr(&path));
 	bu_vls_free(&path);
 
-	/* reinit */
+	/* Recreate both the directory structure and the format marker. */
+	if (!cache_init(cache))
+	    return NULL;
 	format = cache_format(cache);
     } else if (format > CACHE_FORMAT) {
 	CACHE_LOG("NOTE: Cache at %s was created with a newer version of %s\n", dir, PACKAGE_NAME);

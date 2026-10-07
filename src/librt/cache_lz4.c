@@ -770,3 +770,13 @@ int brl_LZ4_decompress_fast(const char* source, char* dest, int originalSize)
 {
     return brl_LZ4_decompress_generic(source, dest, 0, originalSize, endOnOutputSize, full, 0, withPrefix64k, (BYTE*)(dest - 64 KB), NULL, 64 KB);
 }
+
+
+int brl_LZ4_decompress_safe(const char* source, char* dest, int compressedSize, int dstCapacity)
+{
+    if (compressedSize <= 0 || dstCapacity <= 0)
+	return -1;
+
+    return brl_LZ4_decompress_generic(source, dest, compressedSize,
+	dstCapacity, endOnInputSize, full, 0, noDict, (BYTE *)dest, NULL, 0);
+}

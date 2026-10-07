@@ -266,7 +266,12 @@ struct rt_functab {
 				const struct rt_selection_operation *);
 #define RTFUNCTAB_FUNC_PROCESS_SELECTION_CAST(_func) ((int (*)(struct rt_db_internal *, struct db_i *, const struct rt_selection *, const struct rt_selection_operation *))((void (*)(void))_func))
 
-    /** cache and uncache prep data for faster future lookup */
+    /**
+     * Cache and uncache prep data for faster future lookup.  A NULL external
+     * queries the current format/configuration variant in version; this value
+     * participates in the generic cache identity.  Deserialization may
+     * consume and clear the supplied external buffer.
+     */
     int (*ft_prep_serialize)(struct soltab *stp, const struct rt_db_internal *ip, struct bu_external *external, size_t *version);
 #define RTFUNCTAB_FUNC_PREP_SERIALIZE_CAST(_func) ((int (*)(struct soltab *, const struct rt_db_internal *, struct bu_external *, size_t *))((void (*)(void))_func))
 

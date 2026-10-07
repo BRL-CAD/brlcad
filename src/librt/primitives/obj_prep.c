@@ -58,7 +58,7 @@ rt_obj_prep_serialize(struct soltab *stp, const struct rt_db_internal *ip, struc
 {
     const struct rt_functab *ft;
 
-    if (!stp)
+    if (!stp || !version)
 	return -1;
 
     RT_CK_SOLTAB(stp);
