@@ -53,6 +53,7 @@ BBNode::BBNode(const ON_BoundingBox &node, const CurveTree *ct) :
     m_v(),
     m_checkTrim(true),
     m_trimmed(false),
+    m_leaf_ordinal(UINT32_MAX),
     m_arena_node(false),
     m_estimate(),
     m_normal(),
@@ -83,6 +84,7 @@ BBNode::BBNode(
     m_v(v),
     m_checkTrim(checkTrim),
     m_trimmed(trimmed),
+    m_leaf_ordinal(UINT32_MAX),
     m_arena_node(false),
     m_estimate(),
     m_normal(),
@@ -133,6 +135,7 @@ BBNode::BBNode(Deserializer &deserializer, const CurveTree &ctree,
     m_v(),
     m_checkTrim(false),
     m_trimmed(false),
+    m_leaf_ordinal(UINT32_MAX),
     m_arena_node(false),
     m_estimate(),
     m_normal(),
@@ -183,6 +186,7 @@ BBNode::adopt(BBNode &source)
     m_v = source.m_v;
     m_checkTrim = source.m_checkTrim;
     m_trimmed = source.m_trimmed;
+    m_leaf_ordinal = source.m_leaf_ordinal;
     m_estimate = source.m_estimate;
     m_normal = source.m_normal;
     m_children = source.m_children;
@@ -314,6 +318,27 @@ BBNodeArena::~BBNodeArena()
 }
 
 
+std::size_t
+BBNodeArena::retainedBytes() const
+{
+    std::size_t result = sizeof(*this);
+    for (const Block *block = m_blocks; block; block = block->next)
+	result += sizeof(Block) + block->capacity * sizeof(BBNode);
+    return result;
+}
+
+
+std::size_t
+BBNodeArena::retainedUnusedBytes(std::size_t live_nodes) const
+{
+    std::size_t capacity = 0;
+    for (const Block *block = m_blocks; block; block = block->next)
+	capacity += block->capacity;
+    return capacity >= live_nodes ?
+	(capacity - live_nodes) * sizeof(BBNode) : 0;
+}
+
+
 void *
 BBNodeArena::allocate()
 {
@@ -408,6 +433,70 @@ BBNodeArena::finish(BBNode *root)
     root->m_arena_node = false;
     root->setArenaOwner(this);
     return root;
+}
+
+
+std::size_t
+BBNode::childStorageBytes() const
+{
+    std::size_t result = 0;
+    if (m_children)
+	result += sizeof(BBNodeChildStorage) +
+	    (std::size_t)m_child_capacity * sizeof(BBNode *);
+    for (std::size_t i = 0; i < m_child_count; ++i)
+	result += m_children[i]->childStorageBytes();
+    return result;
+}
+
+
+std::size_t
+BBNode::childStorageUnusedBytes() const
+{
+    std::size_t result = (std::size_t)(m_child_capacity - m_child_count) *
+	sizeof(BBNode *);
+    for (std::size_t i = 0; i < m_child_count; ++i)
+	result += m_children[i]->childStorageUnusedBytes();
+    return result;
+}
+
+
+std::size_t
+BBNode::arenaNodeCount() const
+{
+    std::size_t result = m_arena_node ? 1 : 0;
+    for (std::size_t i = 0; i < m_child_count; ++i)
+	result += m_children[i]->arenaNodeCount();
+    return result;
+}
+
+
+std::size_t
+BBNode::retainedBytes() const
+{
+    const BBNodeChildStorage *storage = bbnode_child_storage(m_children);
+    const BBNodeArena *arena = storage ? storage->arena : NULL;
+    if (arena)
+	return sizeof(*this) + arena->retainedBytes() + childStorageBytes();
+
+    std::size_t result = sizeof(*this);
+    if (m_children)
+	result += sizeof(BBNodeChildStorage) +
+	    (std::size_t)m_child_capacity * sizeof(BBNode *);
+    for (std::size_t i = 0; i < m_child_count; ++i)
+	result += m_children[i]->retainedBytes();
+    return result;
+}
+
+
+std::size_t
+BBNode::retainedUnusedBytes() const
+{
+    const BBNodeChildStorage *storage = bbnode_child_storage(m_children);
+    const BBNodeArena *arena = storage ? storage->arena : NULL;
+    std::size_t result = childStorageUnusedBytes();
+    if (arena)
+	result += arena->retainedUnusedBytes(arenaNodeCount());
+    return result;
 }
 
 

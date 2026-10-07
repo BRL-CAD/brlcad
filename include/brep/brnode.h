@@ -132,6 +132,7 @@ namespace brlcad {
     private:
 	const ON_Curve *m_trim;
 	int m_trim_index;
+	bool m_linear;
 	ON_Interval m_t;
 	double m_bbox_min[2];
 	double m_bbox_max[2];

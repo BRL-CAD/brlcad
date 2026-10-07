@@ -55,6 +55,7 @@ BRNode::BRNode(
     m_innerTrim(innerTrim),
     m_trim(curve),
     m_trim_index(trim_index),
+    m_linear(curve && curve->IsLinear(0.0)),
     m_t(t),
     m_bbox_min{node.m_min.x, node.m_min.y},
     m_bbox_max{node.m_max.x, node.m_max.y},
@@ -108,6 +109,7 @@ BRNode::BRNode(Deserializer &deserializer, const ON_Brep &brep) :
     m_innerTrim(false),
     m_trim(NULL),
     m_trim_index(-1),
+    m_linear(false),
     m_t(),
     m_bbox_min{0.0, 0.0},
     m_bbox_max{0.0, 0.0},
@@ -137,6 +139,7 @@ BRNode::BRNode(Deserializer &deserializer, const ON_Brep &brep) :
 	else
 	    bu_bomb("invalid trim index");
     }
+    m_linear = m_trim && m_trim->IsLinear(0.0);
 }
 
 
@@ -183,6 +186,19 @@ BRNode::curveDistance(const ON_2dPoint &uv) const
 {
     if (!m_trim)
 	return INFINITY;
+    if (m_linear) {
+	const double dx = m_end[X] - m_start[X];
+	const double dy = m_end[Y] - m_start[Y];
+	const double squared_length = dx * dx + dy * dy;
+	double fraction = 0.0;
+	if (squared_length > 0.0 && std::isfinite(squared_length))
+	    fraction = ((uv.x - m_start[X]) * dx +
+		(uv.y - m_start[Y]) * dy) / squared_length;
+	fraction = std::max(0.0, std::min(1.0, fraction));
+	const double closest_x = std::fma(fraction, dx, m_start[X]);
+	const double closest_y = std::fma(fraction, dy, m_start[Y]);
+	return hypot(closest_x - uv.x, closest_y - uv.y);
+    }
     const size_t sample_count = 8;
     size_t best_sample = 0;
     double best_squared = INFINITY;
@@ -275,7 +291,10 @@ BRNode::crossesAbove(const ON_2dPoint &uv, double &distance,
 	else
 	    return false;
     }
-    const double curve_v = getCurveEstimateOfV(query_u, 1.0e-7);
+    const double curve_v = m_linear ?
+	std::fma((query_u - m_start[X]) / (m_end[X] - m_start[X]),
+	    m_end[Y] - m_start[Y], m_start[Y]) :
+	getCurveEstimateOfV(query_u, 1.0e-7);
     distance = curve_v - uv.y;
     return distance >= 0.0;
 }
@@ -317,7 +336,10 @@ BRNode::crossesRight(const ON_2dPoint &uv, double &distance,
 	else
 	    return false;
     }
-    const double curve_u = getCurveEstimateOfU(query_v, 1.0e-7);
+    const double curve_u = m_linear ?
+	std::fma((query_v - m_start[Y]) / (m_end[Y] - m_start[Y]),
+	    m_end[X] - m_start[X], m_start[X]) :
+	getCurveEstimateOfU(query_v, 1.0e-7);
     distance = curve_u - uv.x;
     return distance >= 0.0;
 }

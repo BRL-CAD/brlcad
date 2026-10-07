@@ -1068,6 +1068,35 @@ CurveTree::preparedMaximumDepth() const
 }
 
 
+std::size_t
+CurveTree::preparedBytes() const
+{
+    std::size_t result = sizeof(*this) + sizeof(*m_stl) +
+	m_stl->m_leaves.capacity() * sizeof(BRNode) +
+	m_stl->m_loops.capacity() * sizeof(Stl::Loop);
+    for (std::vector<Stl::Loop>::const_iterator loop =
+	    m_stl->m_loops.begin(); loop != m_stl->m_loops.end(); ++loop)
+	result += loop->sorted.capacity() * sizeof(Stl::Loop::Leaf);
+    return result;
+}
+
+
+std::size_t
+CurveTree::preparedUnusedBytes() const
+{
+    std::size_t result =
+	(m_stl->m_leaves.capacity() - m_stl->m_leaves.size()) *
+	    sizeof(BRNode) +
+	(m_stl->m_loops.capacity() - m_stl->m_loops.size()) *
+	    sizeof(Stl::Loop);
+    for (std::vector<Stl::Loop>::const_iterator loop =
+	    m_stl->m_loops.begin(); loop != m_stl->m_loops.end(); ++loop)
+	result += (loop->sorted.capacity() - loop->sorted.size()) *
+	    sizeof(Stl::Loop::Leaf);
+    return result;
+}
+
+
 void
 CurveTree::getLeavesAbove(std::list<const BRNode*>& out_leaves,
 	const ON_Interval& u, const ON_Interval& v, fastf_t tol) const

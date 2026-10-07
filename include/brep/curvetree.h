@@ -103,6 +103,10 @@ namespace brlcad {
 	std::size_t preparedLeafCount() const;
 	std::size_t preparedLeafImageCount() const;
 	int preparedMaximumDepth() const;
+	/** Bytes owned by the immutable prepared trim index.  Allocator
+	 * bookkeeping and the referenced ON_Brep are not included. */
+	std::size_t preparedBytes() const;
+	std::size_t preparedUnusedBytes() const;
 
 	/** Classify a face parameter against all prepared trim leaves without
 	 * allocating a filtered list. */

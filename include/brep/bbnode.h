@@ -156,6 +156,12 @@ namespace brlcad {
 
 	std::size_t childCount() const;
 	BBNode *child(std::size_t index) const;
+	/** Bytes owned by this prepared hierarchy, including arena capacity and
+	 * child-pointer storage.  Allocator bookkeeping is intentionally excluded. */
+	std::size_t retainedBytes() const;
+	/** Retained arena and child-pointer capacity not occupied by live nodes or
+	 * child links. */
+	std::size_t retainedUnusedBytes() const;
 
 	/** Bounding Box */
 	ON_BoundingBox m_node;
@@ -167,6 +173,10 @@ namespace brlcad {
 	/** Trimming Flags */
 	bool m_checkTrim;
 	bool m_trimmed;
+	/* Per-face leaf ordinal assigned after an owning acceleration
+	 * structure is complete.  It is runtime metadata, not part of the
+	 * generic serialized BBNode representation. */
+	uint32_t m_leaf_ordinal;
 	/* Arena construction nodes are destroyed shallowly by their arena. */
 	bool m_arena_node;
 
@@ -195,6 +205,9 @@ namespace brlcad {
 		BBNodeArena *arena);
 	void adopt(BBNode &source);
 	void setArenaOwner(BBNodeArena *owner);
+	std::size_t childStorageBytes() const;
+	std::size_t childStorageUnusedBytes() const;
+	std::size_t arenaNodeCount() const;
 
 	bool intersectedBy(const ON_Ray &ray, double *tnear = NULL, double *tfar = NULL) const;
 
@@ -227,6 +240,8 @@ namespace brlcad {
 		const ON_Interval &u, const ON_Interval &v,
 		bool checkTrim, bool trimmed);
 	BBNode *finish(BBNode *root);
+	std::size_t retainedBytes() const;
+	std::size_t retainedUnusedBytes(std::size_t live_nodes) const;
 
     private:
 	friend class BBNode;
