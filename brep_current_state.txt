@@ -19,14 +19,15 @@ root acceptance now removes that plateau and all sampled outside false hits,
 and those cases are permanent gates.  A shared-line Crofton harness now
 compares final implicit and BREP partitions on identical samples for sphere,
 oblate ellipsoid, ARB8 box, RCC, truncated cone, and torus fixtures.  Surface-
-tree density and seam behavior have not yet changed.  Five topology-identical
-CSG regions now compare implicit leaves against individually converted BREP
+tree density has not yet changed; the qualified seam behavior is described
+below.  Five topology-identical CSG regions now compare implicit leaves
+against individually converted BREP
 leaves under the same Boolean trees.  A reusable exact Cobb sphere definition
 now supplies both the legacy unsewn patch set and a closed 8-vertex/12-edge
 solid; the pristine sewn form matches the implicit sphere on its first 8,000
 shared lines.  An endpoint-preserving bowed support-seam sweep now calibrates
 actual 3D discrepancy and records grazing behavior across 416 directed rays.
-It retains 15 reproducible legacy one-event crack cases and now repairs all 15
+It retains 14 reproducible legacy one-event crack cases and now repairs all 14
 in production without closing any g > T, contact, or exterior case.  Fixed-
 capacity raw-shot tracing now distinguishes missing physical
 roots from trim rejection and legacy hit cleanup without changing production
@@ -42,16 +43,49 @@ discrepancy, and continuation paths now resolve the corresponding incident
 trim parameter geometrically instead of assuming equal normalized parameter
 speed; an exact-locus Möbius trim-reparameterization fixture gates this
 representation invariance.
-Supported, visibly discrepant two-trim edges now also receive a prep-time
-shadow certificate for their geometric edge/lifted-trim Hausdorff gap.  It is
-knot-aware, adaptive, similarity-gated, and bounded by a solid-wide work
-budget.  Exact-looking, unsupported, and budget-exhausted records remain
-explicitly uncertified, and production seam authorization is unchanged.
-A prep-time open-edge correspondence screen now also withholds seam evidence
-when either lifted trim reverses direction or maps non-monotonically along its
-edge.  A bowed forward/backward/forward trim and convex exact/near vertex-fan
-rays permanently gate the explicit non-repair paths; general vertex-fan
-transition resolution is still unsupported.
+Every supported two-trim edge with certified global correspondence now
+receives a prep-time decision certificate for its geometric edge/lifted-trim
+Hausdorff gap.  It is knot-aware, adaptive, similarity-gated, and bounded by a
+solid-wide work budget.  Strict upper-inside bounds authorize production seam
+evidence; strict lower-outside bounds reject it; equality-straddling,
+unsupported, and budget-exhausted records remain explicit fallback.  The old
+sampled authorization is telemetry only, including for exact-looking seams.
+A dedicated paired seam theorem now consumes that authorized edge evidence in
+the immutable physical-event ledger.  It publishes one bounded existing-root
+event and one independently isolated outside-span continuation event only
+when every retained surface box and local root is owned either by the existing
+endpoint or by a tangent witness on the same edge corridor.  The edge itself
+may be the sole witness only when every retained box/root belongs to the
+existing endpoint.  The global {0,1} state machine and outward minimum-segment
+classifier must then prove one ENTER/LEAVE material interval.  Sixteen
+controlled Cobb rays now use this direct production stream: fourteen reproduce
+the prior specialized crack repair and two replace a legacy endpoint error
+with the implicit-sphere answer.  Extra non-tangent roots, overlap, contact,
+unsupported topology, and any incomplete ownership retain whole-ray fallback.
+A prep-time global correspondence theorem now withholds seam evidence unless
+the rational 3D edge and both lifted trims are provably injective and
+consistently oriented along one shared projection.  Exact rational control
+signs cover isoparametric boundaries and sphere-pole endpoint stationarity;
+other regular trims use outward derivative bounds and bounded subdivision.
+The old sample screen is telemetry only.  A sample-invisible degree-15 trim
+reversal permanently gates explicit fallback.  Closed manifold planar vertex
+fans are now prepared as oriented cyclic links and exact vertex crossings are
+classified by spherical winding.  Convex and reentrant fans publish immutable
+events, including multiple vertex events and mixed regular events on one ray;
+exact face-tangent, near-but-not-on-vertex, curved, disconnected, ambiguous,
+unsupported, and capacity-limited fans retain whole-ray fallback.
+Exact interior crossings of certified two-trim manifold edges now have their
+own atomic event theorem.  A coordinate-roundoff ray/edge witness is required
+before the authorized seam envelope may associate incident surface evidence.
+The oriented cross-section publishes convex or reentrant ENTER/LEAVE events
+and consumes unchanged-state CONTACT clusters without a transition.  Multiple
+disjoint edge events, mixed edge/ordinary streams, duplicate Bezier-span
+observations, and periodic same-surface seams are supported with complete
+root/box ownership in both ray directions and across the qualified similarity
+matrix.  A source box must enclose the exact topological ray parameter; model
+tolerance cannot manufacture the witness.  Tolerance-near rays, arbitrary
+gap/overlap clusters, sector-boundary tangency, non-manifold edges, and edge
+endpoint neighborhoods remain explicit fallback or future theorems.
 Exact-parameter positive-weight surface spans and conservative ray-plane
 coefficient exclusion are prepared, and a bounded adjacent-support
 continuation solve recovers the missing bowed-seam endpoints.
@@ -740,8 +774,10 @@ ESTABLISHED FINDINGS
     The current normal focused gate completes in about 10 seconds.  These are
     engineering observations on this host, not performance acceptance limits.
 
-36. Edge-sector and crack-repair evidence now require a prep-time regular
-    correspondence screen in addition to sampled discrepancy authorization.
+36. At this checkpoint edge-sector and crack-repair evidence first required a
+    prep-time regular correspondence screen in addition to sampled discrepancy
+    authorization.  Finding 64 supersedes the screen's authority with a
+    conservative global proof while retaining its result as telemetry.
     Each incident trim is converted to NURBS, visited four times in every
     positive knot span (at most 256 samples), lifted through its face, and
     projected geometrically back to the 3D edge.  The fixed projection uses a
@@ -753,15 +789,13 @@ ESTABLISHED FINDINGS
     failed NURBS/evaluation/projection, more than 256 samples, a reversal, or
     a stationary/opposed tangent leave correspondence_supported false.
 
-    correspondence_supported is traced per edge and is now necessary for an
-    expanded candidate edge span, within-edge evidence, material-sector
-    classification, the adaptive discrepancy shadow pass, and production
-    crack repair.  It does not suppress ordinary surface intersection or the
-    legacy solid result.  This is a bounded rejection screen, not a proof of
-    global injectivity: a sufficiently localized higher-order reversal could
-    still occur between samples.  Exact proof or a conservative derivative
-    subdivision remains required before calling all accepted trims uniquely
-    correlated.
+    At that checkpoint the sampled result populated correspondence_supported
+    and gated expanded edge spans, material sectors, the discrepancy pass, and
+    crack repair without suppressing ordinary surface intersection or the
+    legacy result.  It was explicitly only a bounded rejection screen: a
+    localized higher-order reversal could occur between samples.  Finding 64
+    implements the required exact/interval derivative proof and moves the old
+    result to correspondence_screened.
 
     The ambiguity fixture starts with the known g=T bowed Cobb seam whose
     h=0.9T ray otherwise activates the certified production repair.  One trim
@@ -2267,6 +2301,535 @@ ESTABLISHED FINDINGS
     has a separate certified-event/atomic-assembly phase before tree-density
     reduction and cache redesign.
 
+63. The first completion-ledger/physical-event pipeline is implemented and
+    has production authority for exactly the previously selected clean
+    ordinary and cross-span fold cases.
+
+    Every stored terminal surface box now has an explicit unresolved,
+    resolved-regular, or resolved-boundary disposition.  For a
+    Krawczyk-certified regular box, the outward per-coefficient ray-plane
+    intervals construct the full Bernstein Jacobian determinant and require
+    one strict sign over the box.  Face reversal converts that sign to a
+    certified ENTER/LEAVE direction.  This reuses the exact-audited
+    derivative/product/determinant arithmetic rather than trusting the
+    nominal evaluated normal; disagreement is an observable unresolved
+    event.
+
+    A separate 64-entry fixed event array preserves the source box and local
+    or fold root, representative t/UV, outward t interval, face/span,
+    certificate type, determinant sign, trim/adjacency provenance, and event
+    direction.  Clean regular boxes and the existing strict two-parent fold
+    theorem populate this array without editing the source roots.  Clean
+    outside-trim roots account for their mathematical box but produce no
+    physical event.  Near-trim roots remain unresolved.
+
+    The event finalizer sorts by outward t bounds, requires an alternating
+    {0,1} material state from negative infinity, and classifies each
+    ENTER/LEAVE gap against an outward `rti_tol.dist / |D|` interval.  A
+    resolved gap is material, a strict subminimum gap is contact evidence,
+    and a straddling gap is unresolved.  Direct publication is still limited
+    to resolved material events or a completely certified empty ray;
+    subminimum contacts await a dedicated direct-publication gate.
+
+    `brep_build_prepared_partition` now requires one complete event ledger and
+    emits its clean certified events directly into the fixed hit workspace.
+    The legacy near-miss, near-hit, angle-grazing, duplicate, and assumed-sign
+    cleanup passes no longer have authority over a selected prepared ray.
+    Any incomplete ledger, near trim, contact ambiguity, provenance mismatch,
+    state error, or capacity limit selects the complete legacy ray before
+    segment output.  This narrows authority; it does not add a new root or
+    seam repair.
+
+    Permanent provenance ratchets cover six oblique sphere rays, all 30
+    similarity rays, all 36 ordinary affine rays (72 certified roots), every
+    selected affine grazing hit/miss, and all six hard fold pairs in both
+    directions and through condition 1,000.  The sphere interior aggregate is
+    `orientation=12/12`, `complete=6`, and `segments=6`; the signed sphere and
+    bowed Cobb matrices require every selected prepared ray to have a complete
+    event ledger (59/59 and 102/102 respectively).  The fold ratchet requires
+    two resolved-boundary source boxes and two provenance-preserving events
+    for every promoted pair.
+
+    The optimized six-process CTest gate passes 6/6 in 143.38 seconds.  The
+    directed, affine, seam, and shared-line Crofton/CSG tests preserve all
+    prior partitions; all paired implicit/BREP fixtures retain zero differing
+    lines.  The five affected ASan/UBSan shards (directed, Crofton, seam,
+    fold, and affine) pass concurrently with halt-on-error in 300.17 seconds
+    and no sanitizer diagnostic.  Dense SurfaceTrees, seam authorization,
+    plate mode, and every fallback population are unchanged.
+
+64. Production edge/seam eligibility no longer trusts the bounded
+    correspondence sampler.  A prep-time global sufficient theorem now proves
+    that the 3D edge and both lifted trims are injective and consistently
+    oriented along one shared projection axis.  The old four-sample
+    projection/tangent result is retained separately as diagnostic telemetry.
+
+    Every positive-weight rational edge Bezier span is checked with exact
+    binary64 expansions.  Its projected rational control polygon must be
+    nondecreasing, contain a strict increase, and join the next span at an
+    exactly identical projected endpoint and parameter knot.  A monotone
+    rational control polygon makes the complete projected curve monotone, so
+    this is a global statement rather than a collection of point samples.
+
+    Boundary-isoparametric trims have a second exact path.  Expansions prove
+    every trim control lies on the declared constant UV boundary, prove the
+    varying trim coordinate monotone, and prove all corresponding rational
+    surface-boundary control polygons monotone with the edge orientation.
+    Nonnegative control differences with at least one strict difference allow
+    zero endpoint derivatives; this is what certifies the converted sphere's
+    same-face meridian seam through both poles without weakening an interval
+    sign test.
+
+    Other regular trims use outward interval arithmetic.  Each dyadic trim
+    cell bounds its rational UV derivative, a padded UV hull, restricted
+    rational surface partial derivatives, and the composed lifted derivative
+    along the same projection.  Only a strict oriented lower bound certifies a
+    cell.  Depth 24, a solid-wide 4,096-cell budget, arithmetic failure, or an
+    unresolved/reversed derivative leaves the whole edge unsupported.  Cell
+    count, maximum depth, exhaustion, the old screen, and the new certificate
+    are separately visible in edge trace records and Cobb CSV output.
+
+    The ordinary convex/concave/same-surface sector fixtures, nonlinear trim
+    reparameterizations, all similarities, and the bowed seam continuation
+    matrix retain their prior classifications.  The controlled target uses at
+    most five exact correspondence cells at depth zero.  The ambiguity fixture
+    is now substantially stronger: one degree-15 trim remains on the same UV
+    segment and has forward values and derivatives at all four old sample
+    locations, but reverses between t=0.4 and t=0.6.  The old screen accepts
+    it; the global proof reaches its explicit depth-24 fallback, publishes no
+    edge span/sector/closure, and leaves the legacy ray unchanged in both
+    directions.  The complete optimized six-process gate passes 6/6 in
+    144.49 seconds.  The five affected ASan/UBSan shards pass concurrently
+    with halt-on-error in 282.39 seconds and no diagnostic; the independently
+    gated exhaustive interval arithmetic remains unchanged.  The seven
+    serial/parallel cache ownership cases plus rt_primitive_brep and the
+    focused NIST miss, sphere-solid, and box-plate regressions pass 11/11,
+    covering normal and deserialized derived-record reconstruction.  The same
+    11-test matrix passes under ASan/UBSan in 12.88 seconds without a
+    diagnostic.  Rebuilt ThreadSanitizer cache qualification passes all seven
+    serial, parallel, identical, different, and hierarchy cases in 15.14
+    seconds with no race or lock diagnostic.
+
+    This completes correspondence identity/orientation, not geometric gap
+    authorization.  The adaptive Hausdorff gap interval remains shadow-only,
+    and production crack permission still uses sampled discrepancy.  The next
+    seam task is decision-directed upper/lower refinement, exact-looking gap
+    handling, conservative inferred/declaration policy, and an explicit
+    inconclusive result at the tolerance boundary before replacing sampled
+    authorization or emitting a seam event from the new physical ledger.
+
+65. Production edge/seam gap authorization no longer trusts the fixed
+    discrepancy sample.  `discrepancy_sample_authorized` retains the former
+    33-point decision as trace/CSV telemetry, while
+    `discrepancy_authorized` is initialized false and can be set only by the
+    conservative prep-time gap proof.  Expanded edge boxes, sector
+    classification, closure, and continuation therefore cannot acquire
+    authority from the sample alone.
+
+    The proof now visits every supported two-trim record whose global
+    correspondence theorem passed, including seams whose fixed sample looks
+    exact and seams whose sample lies beyond the model tolerance.  Each edge
+    Bezier span is paired with complete, direction-consistent intervals on
+    both incident trims.  Existing positive-weight rational control-hull and
+    chord-deviation bounds enclose the maximum 3D edge-to-lift distance over
+    every cell.  Accepted cell bounds combine by maxima over the complete
+    edge and both incident faces.
+
+    Refinement is directed by the effective edge envelope E.  A cell with a
+    strict upper bound below E is complete for authorization.  A strict lower
+    bound above E proves rejection; after that result, remaining cells are
+    bounded without further subdivision.  A cell still straddling or touching
+    E is subdivided until it decides, reaches depth 24, or has interval width
+    at most max(roundoff, 0.01 E).  A valid parent bound whose refinement
+    cannot proceed remains ambiguous rather than becoming permission.
+    Unsupported initial arithmetic or topology is unavailable.  The existing
+    solid-wide 4,096-cell budget remains fixed; exhaustion is unavailable and
+    never publishes a partial proof.
+
+    `RT_BREP_SEAM_GAP_INSIDE`, `OUTSIDE`, `AMBIGUOUS`, and `UNAVAILABLE` are
+    reported independently from the old sample bit.  Both incident trims must
+    be strictly inside before the record is authorized.  Either incident trim
+    can prove outside; any unresolved boundary without an outside proof is
+    ambiguous.  Equality is deliberately not inside.  In particular, the
+    prior unset-tolerance policy may still record an envelope inferred from
+    the sample, but a g=E proof straddles that envelope and does not
+    self-authorize an arbitrary crack.
+
+    The controlled g=2T metadata matrix now proves all four outcomes.  A
+    1.01g declaration and a 2g declaration are strictly inside and authorize.
+    Explicit zero and 0.5g declarations retain the model T floor, obtain a
+    strict outside proof, and do not authorize.  An unset declaration infers
+    E=g but is explicitly ambiguous and does not authorize.  In every case
+    the conservative interval contains the independently sampled diagnostic.
+    The sample-invisible degree-15 correspondence reversal stays unavailable,
+    even though the old sample says it would authorize.
+
+    The bowed Cobb target retains production crack repair for all declared
+    1.01g cases in its 416-ray matrix.  Identity, nonlinear opposite Mobius
+    trim reparameterization, translation, cyclic and oblique rotation, 0.01x
+    similarity, and 10,000x similarity all prove the same target seam inside;
+    the maximum controlled decision cost is 1,130 cells at depth 11.  The
+    three-seam budget fixture certifies two targets, marks the third exhausted,
+    and visits 1,220 target cells within the unchanged 4,096-cell solid cap.
+    The complete optimized seam shard passes with zero below-envelope leaks,
+    14 production repairs, no reversal inconsistency, and no manufactured
+    correspondence or capacity result.
+
+    The complete optimized six-process correctness gate passes 6/6 in 160.94
+    seconds.  The five affected ASan/UBSan shards pass concurrently with
+    halt-on-error in 313.89 seconds and no diagnostic.  The seven cache tests,
+    rt_primitive_brep, and the focused NIST miss, sphere-solid, and box-plate
+    regressions pass 11/11 normally and 11/11 under ASan/UBSan.  Rebuilt
+    ThreadSanitizer cache qualification passes all seven serial, parallel,
+    identical, different, and hierarchy cases in 19.99 seconds with no race
+    or lock diagnostic.  This covers both normal prep and cached
+    derived-record reconstruction under the new production authorization.
+
+66. Certified manifold-edge crack continuation is now represented and
+    published as an immutable two-event physical stream.  The former
+    production repair still exists as the dense SurfaceTree fallback, but the
+    prepared selector no longer has to manufacture a second `brep_hit` after
+    cleanup for the controlled seam cases.  New certificate classes distinguish
+    `SEAM_EXISTING` from `SEAM_CONTINUATION`; a separate source class identifies
+    the outside-span continuation.  Each event records the edge index, source
+    root, representative source box, number of boxes owned by that endpoint,
+    face/span, UV, ray-parameter interval, trim/hit class, adjacency, and
+    direction.  Regular and fold records explicitly carry one source box and
+    no edge identity, so equal ordinal values in unrelated classification
+    domains cannot silently alias the new theorem.
+
+    The production gate is deliberately narrower than general edge event
+    resolution.  It first requires complete supported surface-span traversal,
+    fixed workspace success, complete local-root storage, and no previously
+    published event.  A fixed scratch trace evaluates all prepared manifold
+    edges.  Every nontrimmed, non-tangent CLEAN_HIT or NEAR_HIT local root is
+    tried independently.  Exactly one root must identify exactly one closure
+    edge through the existing sector classifier.  That edge must have global
+    correspondence, a strict `RT_BREP_SEAM_GAP_INSIDE` bound, no proof or
+    correspondence exhaustion, an inside material sector, and current-ray
+    distance inside its authorized envelope.  Sampled discrepancy has no
+    authority at this stage.
+
+    The opposite endpoint is solved only on the incident prepared Bezier-span
+    extension.  It must have the opposite direction, lie on the required side
+    of the edge observation, and pass the bounded continuation certificate.
+    Exactly one continuation candidate and one certified candidate are
+    required.  Every isolated certificate box must contain that root, none may
+    overlap the existing endpoint, the root must lie inside its outward t
+    interval, and its oriented normal must be non-tangent.  Face, span, and
+    adjacent-face provenance are copied from this proof rather than inferred
+    later from a fabricated hit.
+
+    Whole-ray ownership is checked before any box disposition changes.  Boxes
+    containing the selected existing root become `RESOLVED_BOUNDARY`; their
+    union supplies its outward t interval.  Any other local root must be
+    tangent, incident to the same certified edge, and within model tolerance
+    of the edge ray parameter.  Every remaining box must contain at least one
+    such witness and becomes `RESOLVED_CONTACT`.  The special edge-only case is
+    accepted only when there is no other local root and every retained box
+    contains the existing endpoint.  Thus absence of a tangent surface root is
+    not treated as missing ownership: the independently evaluated topological
+    edge is the witness, while all surface work still belongs to the endpoint.
+    Any extra non-tangent/off-corridor root, multiply classified box, unowned
+    box/root, overflow, or ambiguous continuation leaves all source evidence
+    intact and invokes the complete legacy ray.
+
+    Only after that proof succeeds are the two event records appended.  The
+    existing event retains its clean/near classification.  The continuation is
+    explicitly a trimmed `CRACK_HIT` whose `closeToEdge` state is reconstructed
+    consistently.  The normal event finalizer sorts the outward intervals,
+    starts outside at negative infinity, requires one ENTER followed by one
+    LEAVE, and applies the same outward `tol->dist / |D|` minimum-segment
+    classifier used by folds.  Publication requires one resolved material
+    segment, no subminimum or ambiguous contact, a final outside state, finite
+    strictly ordered representative distances, successful hit reconstruction,
+    and a complete two-event ledger.  Otherwise the prepared selector returns
+    a structured whole-ray fallback before allocating or emitting a segment.
+
+    The 416-ray bowed Cobb matrix now certifies sixteen paired streams and
+    promotes 118 total prepared rays instead of 102.  Fourteen edge-only pairs
+    reproduce all fourteen prior production crack repairs.  Two additional
+    pairs own four tangent witness boxes/four tangent roots and replace the
+    former legacy endpoint error; both directions agree with the implicit
+    sphere to at most 2.71e-8.  Six otherwise plausible candidates contain an
+    extra non-tangent or off-corridor root and remain fallback.  The other 298
+    uncertified rays also retain fallback.  There are zero below-envelope
+    leaks, regressions, ambiguous promotions, reversal inconsistencies,
+    subminimum contacts, or state failures.  Per-ray tests independently
+    reconstruct source/witness ownership from the immutable records and check
+    edge identity, certificate/source classes, box dispositions, endpoint
+    intervals, ENTER/LEAVE order, and analytic endpoint error.
+
+    The optimized six-process correctness gate passes 6/6 in 153.44 seconds.
+    The five affected ASan/UBSan shards pass concurrently in 282.55 seconds
+    with halt-on-error and no diagnostic.  The seven cache tests,
+    `rt_primitive_brep`, and focused NIST miss, sphere-solid, and box-plate
+    regressions pass 11/11 normally and 11/11 under ASan/UBSan.  Rebuilt
+    ThreadSanitizer cache qualification passes all seven cases in 15.49
+    seconds without a race or lock diagnostic.  No SurfaceTree density or
+    cache format changed.  After adding the final per-ray assertion that an
+    ownership failure cannot publish an event or select production, the
+    focused optimized seam shard passes in 24.89 seconds and its rebuilt
+    ASan/UBSan counterpart passes in 68.94 seconds without a diagnostic.
+
+    This checkpoint did not yet solve general edge clustering or cyclic
+    vertex fans.  Direct contact-only publication, overlapping
+    representations, a crack embedded in a ray with unrelated ordinary
+    segments, and many-to-many edge clusters remain explicit fallback
+    targets.  Finding 67 adds the first cyclic planar vertex-fan theorem.  The
+    continuation certificate localizes all possible roots and gates a
+    converged corrector; a future stricter interval-existence theorem can
+    strengthen that endpoint without changing the event or fallback contract.
+
+67. Exact crossings of supported closed manifold planar vertex fans now
+    publish immutable physical events.  Prep constructs one record per BREP
+    vertex without changing SurfaceTree density or cache serialization.  Every
+    incident edge must be unique, two-trim, globally correspondence-certified,
+    within its conservative edge/lift gap envelope, and free of proof or
+    workspace exhaustion.  Valence must fit the fixed local-root workspace.
+    Every incident face must occur on exactly two incident edges, and the
+    directed face arcs must form one connected cycle.  Boundary,
+    non-manifold, disconnected, repeated, inconsistently oriented, or
+    capacity-limited fans are marked unsupported rather than partially used.
+
+    Each incident edge contributes its outgoing tangent at the vertex.  Trim
+    direction, trim reversal, face reversal, and the two edge endpoints decide
+    the directed arc through each face.  The arc stores its full clockwise
+    sweep, not merely its endpoint vectors.  This distinction is necessary at
+    reentrant corners: a 270-degree material face sector and its 90-degree
+    complement have the same endpoint rays, and an endpoint-only `atan2`
+    would silently convexify the vertex.  Outgoing tangents must lie in their
+    incident face planes and every corner must be nondegenerate.
+
+    The initial theorem is intentionally planar.  Incident faces must pass an
+    OpenNURBS plane test with a coordinate-scaled binary64 roundoff envelope,
+    `4096 * DBL_EPSILON * coordinate_scale`, rather than model tolerance.  The
+    first implementation used an exact-zero plane tolerance and the
+    similarity matrix exposed false unsupported results after arbitrary
+    rotation.  The roundoff envelope repairs representation noise without
+    authorizing genuinely curved faces or turning modeling tolerance into a
+    topology classifier.
+
+    At shot time, the ray line must contain the topological vertex within a
+    similarly strict coordinate-roundoff envelope.  Only after that exact
+    geometric witness exists may solver observations be grouped within one
+    tenth of the model distance tolerance.  A ray merely near a vertex is not
+    promoted by this theorem.  The prepared cyclic link is projected onto the
+    unit sphere about the ray direction.  Each stored face sweep is divided
+    into pieces no larger than pi/4, rotated with Rodrigues' formula, and
+    accumulated with long-double projected `atan2` terms.  The oriented
+    winding satisfies
+
+        W(D) / (2 pi) = I(+D) - I(-D).
+
+    A winding of +1 is ENTER and -1 is LEAVE.  This handles convex and
+    reentrant solid angles without depending on which incident surface Newton
+    happens to return.  A direction transverse to every incident face and a
+    winding close to exactly plus or minus `2 pi` are required.  Exact
+    face-tangent rays, zero winding, and numerically ambiguous winding retain
+    fallback; they are not assigned material by parity.
+
+    Whole-ray ownership is again proved before mutation.  At least one
+    non-tangent local surface root and terminal box must establish numerical
+    hit provenance for each physical vertex.  Every observed nearby root must
+    belong to an incident face, be unique on that face, agree with the winding
+    direction, and be non-CRACK.  Every such root owns all matching terminal
+    boxes, and every incident terminal box covering the exact vertex parameter
+    must be owned.  A box without a matching root is fallback.  The cyclic
+    topology may witness an incident face whose redundant surface solve is
+    absent only when that face also produced no terminal box; all evidence
+    that does exist must still be accounted for.  Multiple disjoint vertex
+    clusters and remaining ordinary roots are accepted only when their box and
+    root ownership sets are disjoint and the ordinary theorem is complete.
+
+    After the complete proof, owned boxes become `RESOLVED_BOUNDARY` and one
+    `VERTEX_FAN` event is appended at the exact topological vertex parameter.
+    Its source kind and certificate are `VERTEX_FAN`, its hit class is
+    `CRACK_HIT`, its vertex identity is valid, and its edge identity is
+    invalid.  Existing regular,
+    fold, and seam events explicitly carry an invalid vertex identity.  The
+    event records one or more source boxes and a canonical source root; stream
+    telemetry separately counts attempts, candidates, winding checks,
+    ambiguity, certificates, events, owned boxes, and owned roots.  No disposition or
+    event changes until all vertex clusters, remaining ordinary events, the
+    global {0,1} state machine, outward minimum-segment proof, and fixed hit
+    reconstruction succeed.  Runtime traversal and classification use only
+    fixed-capacity shot workspaces; the variable-sized cyclic records are
+    immutable prep data.
+
+    The convex gate converts an ARB8 and shoots four exact mixed
+    vertex-plus-regular rays in both directions.  All eight prepared vertices
+    are supported; each ray owns three roots and three boxes, emits one vertex
+    and one regular event, and reconstructs the legacy one-segment answer.
+    An exact face-tangent line in both directions and rays displaced only 0.25
+    model tolerance from the vertex remain explicit fallback.  The concave gate
+    converts an exact L-shaped implicit EXTRUDE to BREP.  A single line crosses
+    its reentrant top vertex and a convex bottom vertex, producing two
+    disjoint vertex events, six roots, at least six boxes, and the same two
+    endpoints as the implicit primitive to 1.78e-15 in both directions.
+
+    Translation, arbitrary rotation plus translation, 0.01x uniform scale,
+    and 10,000x uniform scale plus large translation repeat the L-shaped test
+    in both directions with scaled model tolerances.  All twelve vertex
+    records remain supported and two certified events produce one complete
+    segment in every case.  Direct redundant surface-root counts vary under
+    transformation, which is why the theorem relies on the certified cyclic
+    topology while still requiring complete ownership of every actual root
+    and terminal box.  Tests independently reconstruct incident-face, root,
+    box, direction, source-count, reversal, and final-partition ownership from
+    the immutable trace rather than trusting production counters.
+
+    The optimized six-shard BREP correctness corpus passes 6/6, with the
+    interval shard remaining the 138.83-second critical path.  The focused
+    cache/conversion/NIST regression matrix passes 11/11.  ASan/UBSan exposed
+    a latent EXTRUDE alignment defect in the new implicit oracle: four loops
+    cast every sketch segment to `carc_seg` before reading its common magic,
+    although line segments may be only four-byte aligned.  They now read the
+    common 32-bit magic and cast only confirmed circular arcs.  The rebuilt
+    seam shard passes normally in 29.31 seconds and under ASan/UBSan with
+    halt-on-error in 97.59 seconds while run beside the cache gates; together
+    with the four already clean
+    affected shards, the sanitizer ray gate is 5/5.  The focused cache,
+    primitive-conversion, and NIST regression matrix passes 11/11 normally and
+    11/11 under ASan/UBSan in 19.66 seconds.  Rebuilt ThreadSanitizer cache
+    qualification passes all seven serial and parallel cases in 26.13 seconds
+    without a race or lock diagnostic.
+    Curved differential vertex links, tolerance-near intended vertex closure,
+    and non-manifold fans remain explicit future theorems rather than
+    relaxations of this planar gate.  Finding 68 adds the separate exact
+    interior manifold-edge theorem; non-exact tolerance-near edge/vertex
+    neighborhoods remain outside both the planar vertex and exact edge gates.
+
+68. Exact interior crossings of supported two-trim manifold edges now publish
+    immutable physical events without relying on which incident surface root
+    Newton retained.  The existing prep-time edge record remains the authority:
+    its rational edge/lift correspondence must be globally injective and
+    consistently oriented, its conservative gap calculation must finish
+    without budget exhaustion, and its proof class must be strictly
+    `SEAM_GAP_INSIDE`.  Sampled discrepancy remains telemetry only.
+
+    The shot theorem first proves that the mathematical ray line contains the
+    evaluated topological edge point within a coordinate-scaled binary64
+    envelope,
+
+        max(ON_ZERO_TOLERANCE,
+            4096 * DBL_EPSILON * coordinate_scale).
+
+    This exact witness is independent of model tolerance.  Points inside the
+    edge envelope of either endpoint are excluded so the cyclic vertex theorem
+    or whole-ray fallback retains authority.  Only after the exact witness is
+    established does the declared/certified edge envelope associate redundant
+    roots on the incident trimmed surfaces.
+
+    The oriented edge cross-section now records two classifications separate
+    from its older closest-offset diagnostic.  Projecting the ray across the
+    edge produces `line_before_state` from the negative cross-ray direction
+    and `line_after_state` from the positive direction.  The complete oriented
+    material sector, including a reflex sector at a reentrant edge, decides
+    OUTSIDE-to-INSIDE ENTER, INSIDE-to-OUTSIDE LEAVE, or unchanged CONTACT.
+    A direction on a sector boundary or tangent to either incident face does
+    not acquire a guessed direction.
+
+    Exact witness tolerance and root association tolerance are intentionally
+    distinct.  The wider authorized edge/lift envelope admits corrected roots
+    whose representative t values differ slightly among trimmed
+    representations or solver runs.  Every source terminal box must still
+    contain the exact topological parameter within coordinate roundoff.  Thus
+    a nearby independent root whose box does not contain the witness is left
+    for the ordinary theorem rather than merged by geometric proximity.  Both
+    unresolved boundary boxes and already Krawczyk-certified regular boxes may
+    become edge sources, but a regular box is topologically reclassified only
+    after the complete edge proof succeeds.
+
+    Every associated root must belong to an incident face, match a lifted trim
+    frame inside the authorized spatial envelope, be finite and non-tangent,
+    and agree with the sector transition when one exists.  Multiple roots and
+    boxes from adjacent surface spans are one physical event only when their
+    boxes independently enclose the same exact parameter and their directions
+    agree.  This includes a periodic same-surface edge whose two trims belong
+    to one face.  Duplicate ownership, an unowned incident box at the witness,
+    a conflicting root, unsupported topology, or any capacity/failure state
+    aborts the theorem before mutation.
+
+    All disjoint exact edge clusters are collected in one fixed-capacity
+    transaction.  A transition appends one `MANIFOLD_EDGE` event at the exact
+    topological parameter, with `MANIFOLD_EDGE` source kind, valid edge
+    identity, invalid vertex identity, `CRACK_HIT` class, direction, canonical
+    root, representative box, complete source-box count, and the union of
+    source intervals.  A CONTACT appends no transition but owns its roots and
+    changes its boxes to `RESOLVED_CONTACT`.  Transition boxes become
+    `RESOLVED_BOUNDARY`.  Remaining ordinary roots, including strictly
+    identical same-face duplicate observations, must independently own only
+    regular Krawczyk boxes.  Clean outside groups are consumed without an
+    event.  No trace disposition or event changes until every root and box is
+    owned, the {0,1} state stream and outward minimum-size proof complete, and
+    fixed-workspace hit reconstruction succeeds.
+
+    The edge theorem runs even when all terminal boxes initially have
+    Krawczyk certificates.  This matters when an exact near-trim root was
+    numerically certified as a surface root but ordinary trim finalization
+    cannot establish the physical topology.  Vertex-source matching was made
+    consistent with this rule as well: an exact planar vertex cluster may own
+    an already regular box, and one remaining ordinary root may own several
+    disjoint matching regular boxes.  Neither change broadens the vertex line
+    witness or winding theorem.
+
+    The permanent exact L-shaped implicit EXTRUDE fixture supplies three edge
+    line families, each shot in both directions.  The first line produces a
+    convex outer ENTER and reentrant LEAVE.  The second produces two outer
+    transitions plus one reentrant CONTACT, which owns its evidence but leaves
+    one continuous material segment.  The third mixes one regular bottom-face
+    event with one reentrant edge event.  All production endpoints match the
+    analytic L profile to at most 3.55e-15.  Transverse cases also match the
+    implicit EXTRUDE.  On the exact reentrant-contact line, the implicit
+    primitive reports three hits and drops the final endpoint; this is a
+    separate measure-zero EXTRUDE defect, so the analytic profile is the
+    authoritative oracle for that one contact case.
+
+    A separate line through the reentrant edge lies exactly on an incident
+    face-sector boundary.  It observes two exact ambiguous edge encounters,
+    publishes no edge event, and cannot select a prepared partition.  The
+    current surface isolator reaches its conservative box-capacity fallback
+    before the edge theorem; the ratchet also permits the theorem's explicit
+    unresolved rejection if earlier isolation later improves.  In either
+    path, no other even-looking event stream may hide the ambiguity.
+
+    Translation, arbitrary rotation plus translation, 0.01x scale, and
+    10,000x scale plus large translation repeat all three families in both
+    directions with scaled model tolerances.  The classifier, event stream,
+    contact result, complete source ownership, and analytic partition are
+    invariant.  A converted rational sphere adds a periodic same-surface seam
+    case.  An oblique line crosses the seam exactly, with four independently
+    converged seam roots/four enclosing boxes, then exits at an ordinary point;
+    both directions publish one edge event and one regular event and match the
+    analytic sphere endpoints to at most 7.23e-9.
+
+    The complete optimized six-shard corpus passes 6/6 in 167.30 seconds, with
+    the exhaustive interval shard the 166.93-second critical path.  The five
+    affected ASan/UBSan shards pass concurrently with halt-on-error in 628.08
+    seconds and no diagnostic.  The focused cache, primitive-conversion, and
+    NIST regression matrix passes 11/11 normally in 4.72 seconds and 11/11
+    under ASan/UBSan in 14.55 seconds.  Rebuilt ThreadSanitizer cache
+    qualification passes all seven serial and parallel cases in 18.28 seconds
+    without a race or lock diagnostic.  No SurfaceTree density, cache format,
+    or serialized prep representation changed.  After the final independent
+    assertion that the unchanged-state edge-sector classification itself is
+    similarity-invariant even when a redundant contact solve is absent, the
+    rebuilt seam shard passes in 24.93 seconds optimized and 178.92 seconds
+    under ASan/UBSan without a diagnostic.  After adding the final
+    sector-boundary fallback ratchet and fail-closed exact-edge accounting,
+    the rebuilt seam shard passes in 45.84 seconds optimized and 92.77 seconds
+    under ASan/UBSan; the complete optimized main corpus also passes in 49.88
+    seconds.
+
+    This checkpoint resolves exact interior manifold-edge transitions,
+    unchanged-state contacts, multiple clusters, mixed ordinary streams, and
+    periodic same-surface representation duplication.  It does not yet
+    authorize non-exact tolerance-near lines, arbitrary endpoint-moving
+    gaps/overlaps, sector-boundary tangency, edge/vertex neighborhood overlap,
+    or non-manifold topology.  Those remain separate proof and corpus targets;
+    the narrow paired seam-continuation theorem remains unchanged.
+
 
 IMPLEMENTATION CHECKLIST
 ------------------------
@@ -2331,13 +2894,13 @@ IMPLEMENTATION CHECKLIST
         [x] Prepare two-trim edge/incident-face records and exact-parameter,
             positive-weight rational Bezier edge spans during normal and
             cached prep.
-        [ ] Measure face/edge lift discrepancy and resolve unset, zero,
+        [x] Measure face/edge lift discrepancy and resolve unset, zero,
             under-declared, and over-declared tolerance policies.
             [x] Record initial sampled discrepancy, model/declaration source,
                 inferred envelope, and explicit authorization state.
             [x] Gate correct, unset, zero, half, and double declarations on a
                 controlled g=2T Cobb seam.
-            [ ] Replace fixed sampling with conservative knot-aware adaptive
+            [x] Replace fixed sampling with conservative knot-aware adaptive
                 discrepancy bounds before production use.
                 [x] Add a shadow Hausdorff interval for supported, visibly
                     discrepant regular two-trim edges within the model
@@ -2345,9 +2908,9 @@ IMPLEMENTATION CHECKLIST
                 [x] Gate nonlinear trim reparameterization, similarity,
                     dense bowed-gap containment, and solid-wide budget
                     exhaustion.
-                [ ] Prove exact-looking loci, qualify unsupported/exhausted
-                    fallback, tighten the g=T decision, and only then replace
-                    sampled production authorization.
+                [x] Bound exact-looking loci, preserve unsupported/exhausted
+                    fallback, make g=T explicitly ambiguous, and replace
+                    sampled production authorization with strict proof.
     [ ] Preserve near-trim candidate evidence through local event resolution.
         [x] Add fixed-capacity same-face preliminary local-root clusters and
             entering/leaving/contact observability in shadow mode.
@@ -2377,15 +2940,32 @@ IMPLEMENTATION CHECKLIST
     [x] Recover the missing controlled bowed-seam endpoint with a bounded,
         allocation-free adjacent-support continuation and gate
         it against the implicit oracle and similarities.
+    [x] Publish the controlled existing/continuation pair through immutable
+        physical events only after complete edge, box, root, interval, and
+        solid-state qualification; retain whole-ray fallback otherwise.
     [x] Remove the equal-normalized-speed assumption for regular two-trim edge
         correspondence and gate opposite nonlinear trim reparameterizations.
-    [x] Add initial vertex-fan and ambiguous-correspondence fallback gates.
-        [x] Gate exact and near convex three-edge fan rays without invoking
-            the unsupported vertex transition resolver.
+    [x] Add vertex-fan and ambiguous-correspondence gates.
+        [x] Gate exact and near convex three-edge fan rays before invoking
+            the vertex transition resolver.
         [x] Screen a bowed forward/backward/forward trim and retain its
             one-event crack without unsafe repair in both directions.
-        [ ] Replace the bounded regularity screen with a conservative global
-            injectivity/orientation proof and implement cyclic vertex fans.
+        [x] Replace the bounded regularity screen with a conservative global
+            injectivity/orientation proof, retaining explicit unsupported and
+            depth/workspace fallback.
+        [x] Implement cyclic planar vertex fans.
+            [x] Prepare one closed directed manifold link with full convex or
+                reflex face sweeps and explicit unsupported fallback.
+            [x] Classify exact transverse crossings by spherical winding and
+                publish multiple disjoint vertex clusters atomically.
+            [x] Gate convex ARB8 and concave implicit-EXTRUDE oracles in both
+                directions, including mixed vertex/regular event streams.
+            [x] Preserve exact face-tangent and near-but-not-on-vertex
+                fallback; do not use model tolerance to invent a vertex hit.
+            [x] Gate translation, rotation, and 0.01x/10,000x similarity
+                invariance with independently reconstructed source ownership.
+            [ ] Extend the theorem to certified curved differential links and
+                separately define tolerance-near intended vertex closure.
     [ ] Add sewn and perturbed Cobb fixtures and threshold matrices.
         [x] Add reusable legacy-unsewn and solid-sewn Cobb constructors.
         [x] Gate topology, face/seam/vertex rays, scale, and 8,000 shared
@@ -2558,15 +3138,33 @@ IMPLEMENTATION CHECKLIST
         [x] Require prepared/excluded span equality, one stored terminal box
             per isolated box, and a compatible local or fold root for every
             terminal box in the currently supported selectors.
-        [ ] Store immutable per-box dispositions and certified root records
+        [x] Store immutable per-box dispositions and certified root records
             independently from physical event records.
-        [ ] Derive ordinary interior ENTER/LEAVE from bounded oriented
+        [x] Derive ordinary interior ENTER/LEAVE from bounded oriented
             determinant evidence rather than nominal-normal cleanup.
-        [ ] Resolve supported interior, fold, edge, crack, and later vertex
+        [ ] Resolve supported interior, fold, edge, crack, and vertex
             clusters into ENTER/LEAVE/CONTACT events without deleting source
             evidence.
+            [x] Resolve clean ordinary interior and strict cross-span fold
+                roots into provenance-preserving ENTER/LEAVE events.
+            [x] Integrate the narrowly certified one-root/one-continuation
+                manifold seam pair with complete box/root ownership.
+            [x] Integrate closed manifold planar cyclic vertex fans with exact
+                line witnesses, complete source ownership, and mixed ordinary
+                event streams.
+            [x] Integrate exact interior two-trim manifold-edge clusters,
+                unchanged-state contacts, multiple edge events, periodic
+                same-surface duplicates, and mixed ordinary/edge streams.
+            [ ] Integrate non-exact tolerance-near edge clusters, arbitrary
+                gaps/overlaps, sector-boundary tangency, and edge/vertex
+                neighborhood interactions.
         [ ] Assemble a complete {0,1} solid-state stream and apply the outward
             minimum-segment classifier before atomic publication.
+            [x] Assemble and publish resolved clean regular/fold material
+                streams, narrowly certified seam pairs, and completely
+                certified empty rays without legacy cleanup authority.
+            [ ] Qualify direct subminimum-contact and general near-trim event
+                publication.
     [ ] Reduce default tree density only after publication equivalence passes.
     [ ] Version and verify prep cache changes.
 
@@ -3316,27 +3914,73 @@ Legacy cleanup:
   cmake --build .build --target librt -j8
     PASS
 
+Exact certified manifold-edge checkpoint:
+
+  cmake --build .build --target rt_brep_ray -j6
+  ctest --test-dir .build --parallel 6 \
+    -R '^rt_brep_ray($|_)' --output-on-failure
+    PASS: 6/6 in 167.30 seconds.  The seam shard includes convex and
+    reentrant transitions, direct contact, mixed regular/edge streams,
+    periodic same-surface duplication, reversal, and the complete similarity
+    matrix.  After strengthening the transformed contact-classifier assertion,
+    the rebuilt seam shard passes independently in 24.93 seconds.
+    After the final exact sector-boundary fallback ratchet, it passes again in
+    45.84 seconds and the complete main process passes in 49.88 seconds.
+
+  cmake --build .build-asan --target rt_brep_ray rt_cache -j6
+  env ASAN_OPTIONS=detect_leaks=0:halt_on_error=1 \
+    UBSAN_OPTIONS=halt_on_error=1 \
+    ctest --test-dir .build-asan --parallel 5 \
+    -R '^rt_brep_ray($|_(crofton|seam|fold|affine)$)' \
+    --output-on-failure
+    PASS: 5/5 in 628.08 seconds with no sanitizer diagnostic.
+    The rebuilt seam shard with the final classifier assertion passes
+    independently in 178.92 seconds with no diagnostic.  With the subsequent
+    fail-closed exact-edge rule and sector-boundary ratchet it passes again in
+    92.77 seconds without a diagnostic.
+
+  ctest --test-dir .build --parallel 6 \
+    -R '^(rt_primitive_brep|rt_cache_.*|regress-nurbs_(NIST03_MISS_01|SPH_SOLID_HIT_LEN_01|BOX_PLATE_HIT_LEN_01))$' \
+    --output-on-failure
+    PASS: 11/11 in 4.72 seconds.
+
+  env ASAN_OPTIONS=detect_leaks=0:halt_on_error=1 \
+    UBSAN_OPTIONS=halt_on_error=1 \
+    ctest --test-dir .build-asan --parallel 6 \
+    -R '^(rt_primitive_brep|rt_cache_.*|regress-nurbs_(NIST03_MISS_01|SPH_SOLID_HIT_LEN_01|BOX_PLATE_HIT_LEN_01))$' \
+    --output-on-failure
+    PASS: 11/11 in 14.55 seconds with no sanitizer diagnostic.
+
+  cmake --build .build-tsan --target librt rt_cache -j6
+  env TSAN_OPTIONS=halt_on_error=1:second_deadlock_stack=1 \
+    ctest --test-dir .build-tsan --parallel 4 \
+    -R '^rt_cache_.*$' --output-on-failure
+    PASS: 7/7 in 20.44 seconds with no ThreadSanitizer diagnostic after the
+    final fail-closed exact-edge accounting and sector-boundary ratchet.
+
 
 NEXT ACTIONS
 ------------
 
-1. Implement the first explicit completion-ledger/event increment without
-   broadening production authority.  Preserve immutable terminal-box and root
-   records, add separate fixed-capacity physical event records, and prove
-   ordinary clean-interior ENTER/LEAVE orientation with the same outward
-   determinant arithmetic used by the fold path.  Shadow the resulting event
-   stream against current prepared publication and the implicit/CSG oracles;
-   keep whole-ray atomic fallback on any coverage, orientation, event, state,
-   or capacity uncertainty.
-2. Replace the bounded correspondence screen with a conservative global
-   injectivity/orientation proof.  Extend the shadow seam-gap certificate with
-   an efficient exact-locus proof and explicit unsupported/capacity fallback,
-   then tighten the g=T decision before it can replace sampled production
-   authorization.  Keep model-space, UV, numerical-root, t-cluster, and
-   minimum-segment tolerances distinct.
-3. Implement and gate cyclic convex/concave vertex-fan transitions before any
-   multi-edge crack repair.  Preserve the current explicit fallback for
-   unsupported, non-manifold, ambiguous, and capacity-limited fans.
+1. Extend the exact interior manifold-edge theorem only through a separately
+   certified tolerance-near resolver.  Independently qualify a ray that does
+   not contain the topological edge but should close an authorized intended
+   crack, endpoint-moving gaps/overlaps, sector-boundary tangency, and
+   edge/vertex neighborhood interactions.  Keep both the exact edge theorem
+   and the one-existing/one-continuation theorem unchanged as narrow
+   production subsets.  Preserve whole-ray fallback for every incompatible or
+   unowned root/box, and never let the model envelope manufacture the exact
+   witness used by Finding 68.
+2. Extend vertex classification only through a separately certified curved
+   differential-link theorem.  Bound surface-normal and tangent variation over
+   a local neighborhood before replacing the planar cyclic link.  Define exact
+   face-tangent contact and tolerance-near intended vertex closure as separate
+   policies; do not broaden the exact line witness or let model tolerance
+   authorize topology by itself.
+3. Revisit inferred tolerance policy without allowing a sampled or computed
+   gap to authorize itself.  Keep model-space, UV, numerical-root, t-cluster,
+   and minimum-segment tolerances distinct, and add explicit overlap/contact
+   threshold cases around the new strict/ambiguous decision boundary.
 4. Profile the strict ordinary- and fold-root production selectors on
    stratified analytic and STEP cases.  Separate prepared-attempt cost,
    selected ordinary rays, selected clean-interior fold pairs, uncertified

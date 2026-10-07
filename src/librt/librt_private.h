@@ -476,6 +476,7 @@ RT_EXPORT extern int rt_bot_shot_specific(
 #define RT_BREP_TRACE_MAX_FOLD_ROOTS 64
 #define RT_BREP_TRACE_MAX_LOCAL_ROOTS 64
 #define RT_BREP_TRACE_MAX_LOCAL_CLUSTERS 64
+#define RT_BREP_TRACE_MAX_PHYSICAL_EVENTS 64
 #define RT_BREP_TRACE_MAX_LOCAL_SEGMENTS 8
 #define RT_BREP_EXPANSION_CAPACITY 128
 #define RT_BREP_TRACE_CLEANUP_STAGES 5
@@ -493,6 +494,26 @@ RT_EXPORT extern int rt_bot_shot_specific(
 #define RT_BREP_TRACE_LEAVING 1
 #define RT_BREP_TRACE_LOCAL_CONTACT 2
 #define RT_BREP_TRACE_LOCAL_UNRESOLVED 3
+#define RT_BREP_TRACE_BOX_UNRESOLVED 0
+#define RT_BREP_TRACE_BOX_RESOLVED_REGULAR 1
+#define RT_BREP_TRACE_BOX_RESOLVED_BOUNDARY 2
+#define RT_BREP_TRACE_BOX_RESOLVED_CONTACT 3
+#define RT_BREP_TRACE_EVENT_REGULAR_INTERIOR 1
+#define RT_BREP_TRACE_EVENT_BOUNDARY_FOLD 2
+#define RT_BREP_TRACE_EVENT_SEAM_EXISTING 3
+#define RT_BREP_TRACE_EVENT_SEAM_CONTINUATION 4
+#define RT_BREP_TRACE_EVENT_VERTEX_FAN 5
+#define RT_BREP_TRACE_EVENT_MANIFOLD_EDGE 6
+#define RT_BREP_TRACE_EVENT_SOURCE_LOCAL_ROOT 1
+#define RT_BREP_TRACE_EVENT_SOURCE_FOLD_ROOT 2
+#define RT_BREP_TRACE_EVENT_SOURCE_SEAM_CONTINUATION 3
+#define RT_BREP_TRACE_EVENT_SOURCE_VERTEX_FAN 4
+#define RT_BREP_TRACE_EVENT_SOURCE_MANIFOLD_EDGE 5
+/* Seam-gap and fold-gap values classify separate trace fields. */
+#define RT_BREP_SEAM_GAP_UNAVAILABLE 0
+#define RT_BREP_SEAM_GAP_INSIDE 1
+#define RT_BREP_SEAM_GAP_OUTSIDE 2
+#define RT_BREP_SEAM_GAP_AMBIGUOUS 3
 #define RT_BREP_FOLD_GAP_RESOLVED 1
 #define RT_BREP_FOLD_GAP_SUBMINIMUM 2
 #define RT_BREP_FOLD_GAP_AMBIGUOUS 3
@@ -545,10 +566,20 @@ struct rt_brep_trace_edge {
     int within_edge_tolerance;
     int sector_valid;
     int closest_state;
+    int line_state_valid;
+    int line_before_state;
+    int line_after_state;
+    int line_transition_direction;
     int discrepancy_measured;
+    int correspondence_screened;
     int correspondence_supported;
+    size_t correspondence_cells;
+    size_t correspondence_depth;
+    int correspondence_exhausted;
     int discrepancy_bounded;
     int discrepancy_bound_exhausted;
+    int discrepancy_sample_authorized;
+    int discrepancy_proof_class;
     int discrepancy_authorized;
     int tolerance_inferred;
 };
@@ -561,6 +592,8 @@ struct rt_brep_trace_surface_box {
     int face_index;
     int span_index;
     int depth;
+    int disposition;
+    int determinant_sign;
 };
 
 struct rt_brep_trace_fold_root {
@@ -601,6 +634,27 @@ struct rt_brep_trace_local_root {
     int adjacent_face_index;
     int trim_status;
     int hit_class;
+    int direction;
+};
+
+struct rt_brep_trace_physical_event {
+    fastf_t dist;
+    fastf_t t_min;
+    fastf_t t_max;
+    fastf_t uv[2];
+    size_t source_box;
+    size_t source_box_count;
+    size_t source_root;
+    int source_kind;
+    int edge_index;
+    int vertex_index;
+    int face_index;
+    int span_index;
+    int certificate;
+    int determinant_sign;
+    int hit_class;
+    int trim_status;
+    int adjacent_face_index;
     int direction;
 };
 
@@ -690,6 +744,10 @@ struct rt_brep_shot_trace {
     size_t surface_krawczyk_boxes;
     size_t surface_krawczyk_min_depth;
     size_t surface_krawczyk_max_depth;
+    size_t surface_regular_orientation_attempts;
+    size_t surface_regular_orientation_signed;
+    size_t surface_regular_orientation_uncertain;
+    size_t surface_regular_orientation_failures;
     size_t surface_fold_attempts;
     size_t surface_fold_candidates;
     size_t surface_fold_krawczyk_attempts;
@@ -791,6 +849,56 @@ struct rt_brep_shot_trace {
     size_t local_trim_failures;
     struct rt_brep_trace_local_root
 	local_roots[RT_BREP_TRACE_MAX_LOCAL_ROOTS];
+    size_t physical_event_attempts;
+    size_t physical_event_regular;
+    size_t physical_event_boundary;
+    size_t physical_event_seam;
+    size_t physical_event_seam_attempts;
+    size_t physical_event_seam_root_candidates;
+    size_t physical_event_seam_closure_candidates;
+    size_t physical_event_seam_continuation_candidates;
+    size_t physical_event_seam_certified;
+    size_t physical_event_seam_failures;
+    size_t physical_event_seam_ownership_failures;
+    size_t physical_event_seam_witness_failures;
+    size_t physical_event_seam_edge_only_candidates;
+    size_t physical_event_seam_box_failures;
+    size_t physical_event_seam_root_coverage_failures;
+    size_t physical_event_seam_witness_boxes;
+    size_t physical_event_seam_witness_roots;
+    size_t prepared_vertex_records;
+    size_t supported_vertex_records;
+    size_t physical_event_vertex;
+    size_t physical_event_vertex_attempts;
+    size_t physical_event_vertex_candidates;
+    size_t physical_event_vertex_certified;
+    size_t physical_event_vertex_failures;
+    size_t physical_event_vertex_winding_checks;
+    size_t physical_event_vertex_winding_ambiguous;
+    size_t physical_event_vertex_owned_boxes;
+    size_t physical_event_vertex_owned_roots;
+    size_t physical_event_edge;
+    size_t physical_event_edge_contacts;
+    size_t physical_event_edge_attempts;
+    size_t physical_event_edge_candidates;
+    size_t physical_event_edge_certified;
+    size_t physical_event_edge_failures;
+    size_t physical_event_edge_owned_boxes;
+    size_t physical_event_edge_owned_roots;
+    size_t physical_event_clean_outside;
+    size_t physical_event_near_trim;
+    size_t physical_event_unresolved;
+    size_t physical_event_direction_checks;
+    size_t physical_event_direction_mismatches;
+    size_t physical_event_overflow;
+    size_t physical_event_complete;
+    size_t physical_event_state_failures;
+    size_t physical_event_material_segments;
+    size_t physical_event_subminimum_contacts;
+    size_t physical_event_tolerance_ambiguous;
+    size_t stored_physical_events;
+    struct rt_brep_trace_physical_event
+	physical_events[RT_BREP_TRACE_MAX_PHYSICAL_EVENTS];
     size_t legacy_unique_roots;
     size_t legacy_unique_roots_matched;
     size_t legacy_unique_roots_unmatched;
@@ -883,6 +991,8 @@ struct rt_brep_shot_trace {
     fastf_t continuation_residual;
     fastf_t continuation_normal_dot;
     int continuation_face_index;
+    int continuation_span_index;
+    int continuation_adjacent_face_index;
     size_t continuation_certificate_boxes;
     size_t continuation_certificate_isolated;
     size_t continuation_certificate_root_boxes;
