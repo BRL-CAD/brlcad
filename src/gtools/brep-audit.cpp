@@ -49,10 +49,13 @@
 #endif
 
 #ifdef _WIN32
+#  ifndef NOMINMAX
+#    define NOMINMAX
+#  endif
+#  include <windows.h>
+#  include <psapi.h>
 #  include "bio.h"
-#endif
-
-#ifndef _WIN32
+#else
 #  include <sys/resource.h>
 #endif
 
@@ -62,6 +65,7 @@
 #include "bu/opt.h"
 #include "bu/datetime.h"
 #include "bg/trimesh.h"
+#include "bn/poly.h"
 #include "bv/vlist.h"
 #include "brep/cdt.h"
 #include "brep/surfacetree.h"
@@ -377,13 +381,78 @@ struct prep_face_failure {
 struct prep_result {
     int ret = BRLCAD_ERROR;
     int face_count = 0;
+    int requested_depth = -1;
     const char *failure_reason = "database_internal_load";
     double seconds = 0.0;
+    double cache_serialize_seconds = 0.0;
+    double cache_compress_seconds = 0.0;
     size_t peak_rss_bytes = 0;
+    size_t resident_before_bytes = 0;
+    size_t resident_prepared_bytes = 0;
+    size_t resident_after_free_bytes = 0;
+    size_t cache_payload_bytes = 0;
+    size_t cache_payload_compressed_bytes = 0;
+    size_t cache_variant = (size_t)-1;
+    struct rt_brep_prep_stats stats = {};
+    bool stats_valid = false;
+    bool cache_lookup_requested = false;
+    bool cache_hit = false;
+    bool cache_payload_valid = false;
+    bool cache_payload_compressed = false;
     bool have_bbox = false;
     point_t bmin = VINIT_ZERO;
     point_t bmax = VINIT_ZERO;
     std::vector<prep_face_failure> failures;
+};
+
+enum parameter_mapping_orientation {
+    PARAMETER_MAPPING_DECREASING = -1,
+    PARAMETER_MAPPING_UNKNOWN = 0,
+    PARAMETER_MAPPING_INCREASING = 1,
+    PARAMETER_MAPPING_CONSTANT = 2,
+    PARAMETER_MAPPING_MIXED = 3
+};
+
+struct parameter_mapping_direction_profile {
+    size_t attempts = 0;
+    size_t successes = 0;
+    size_t domain_contained = 0;
+    size_t round_trip_successes = 0;
+    size_t round_trip_within_tolerance = 0;
+    double maximum_round_trip_error[2] = {0.0, 0.0};
+    double maximum_normalized_round_trip_error[2] = {0.0, 0.0};
+    bool behavior_complete = false;
+    bool separable = false;
+    int output_input_axis[2] = {-1, -1};
+    double maximum_cross_axis_error[2] = {0.0, 0.0};
+    bool monotone[2] = {false, false};
+    bool strictly_monotone[2] = {false, false};
+    parameter_mapping_orientation orientation[2] = {
+	PARAMETER_MAPPING_UNKNOWN, PARAMETER_MAPPING_UNKNOWN
+    };
+};
+
+struct surface_parameter_mapping_profile {
+    bool sampled = false;
+    size_t grid_size = 0;
+    parameter_mapping_direction_profile forward;
+    parameter_mapping_direction_profile inverse;
+};
+
+struct parameter_mapping_sample {
+    bool valid = false;
+    double input[2] = {0.0, 0.0};
+    double output[2] = {0.0, 0.0};
+};
+
+struct polycurve_segment_profile {
+    std::string type = "none";
+    ON_Interval polycurve_domain;
+    ON_Interval curve_domain;
+    bool proxy = false;
+    std::string proxy_target_type = "none";
+    bool proxy_reversed = false;
+    ON_Interval proxy_domain;
 };
 
 struct surface_tree_profile {
@@ -409,6 +478,26 @@ struct surface_tree_profile {
     int nurb_form_order[2] = {0, 0};
     int nurb_form_cv_count[2] = {0, 0};
     int nurb_form_span_count[2] = {0, 0};
+    ON_Interval nurb_form_domain[2];
+    bool face_reversed = false;
+    bool face_proxy_transposed = false;
+    bool surface_proxy = false;
+    const char *surface_proxy_target_type = "none";
+    bool surface_proxy_transposed = false;
+    bool closed[2] = {false, false};
+    bool periodic[2] = {false, false};
+    bool singular_sides[4] = {false, false, false, false};
+    bool revolution = false;
+    bool revolution_transposed = false;
+    const char *profile_type = "none";
+    ON_Interval profile_domain;
+    bool profile_proxy = false;
+    const char *profile_proxy_target_type = "none";
+    bool profile_proxy_reversed = false;
+    ON_Interval profile_proxy_domain;
+    bool profile_polycurve = false;
+    std::vector<polycurve_segment_profile> profile_polycurve_segments;
+    surface_parameter_mapping_profile parameter_mapping;
 };
 
 struct surface_tree_result {
@@ -462,13 +551,30 @@ struct ray_audit_interval {
     double out_normal_dot = 0.0;
     int in_face = -1;
     int out_face = -1;
+    point_t in_point = VINIT_ZERO;
+    point_t out_point = VINIT_ZERO;
+    vect_t in_normal = VINIT_ZERO;
+    vect_t out_normal = VINIT_ZERO;
+    fastf_t in_uv[2] = {0.0, 0.0};
+    fastf_t out_uv[2] = {0.0, 0.0};
 };
 
 struct ray_audit_shot {
     int hit_count = 0;
     bool valid = true;
     bool prepared_selected = false;
+    bool seeded_verifier_complete = false;
     int fallback = RT_BREP_PREPARED_FALLBACK_UNSUPPORTED;
+    int seeded_route_lane = -1;
+    int seeded_verifier_failure_stage = RT_BREP_SEEDED_VERIFY_INPUT;
+    unsigned int seeded_route_capability_flags = 0;
+    unsigned int seeded_route_risk_flags = 0;
+    size_t route_decision_attempts = 0;
+    struct rt_brep_route_decision route_decision = {};
+    bool route_test_available = false;
+    struct rt_brep_route_test_result route_test = {};
+    size_t missing_root_counterfactual_attempts = 0;
+    struct rt_brep_route_decision missing_root_counterfactual = {};
     size_t intersected_leaves = 0;
     size_t solver_calls = 0;
     size_t stored_roots = 0;
@@ -486,11 +592,28 @@ struct ray_audit_shot {
     size_t fixed_after_duplicates = 0;
     size_t fixed_after_direction_cleanup = 0;
     size_t fixed_cleanup_mismatches = 0;
+    size_t fixed_leaf_fallback = 0;
+    size_t fixed_hit_fallback = 0;
+    size_t legacy_cleanup_actions[RT_BREP_LEGACY_CLEANUP_COUNT] = {};
+    size_t legacy_cleanup_action_mismatches = 0;
     size_t trim_equivalence_mismatches = 0;
     size_t face_trim_status_mismatches = 0;
     size_t face_trim_hit_class_mismatches = 0;
     size_t face_trim_adjacency_mismatches = 0;
     size_t face_trim_equivalence_mismatches = 0;
+    size_t prepared_production_hits = 0;
+    bool prepared_require_surface_box_free = false;
+    size_t prepared_selective_class_rejections = 0;
+    size_t prepared_selective_candidate_surface_spans = 0;
+    size_t prepared_selective_subdivision_boxes = 0;
+    size_t prepared_selective_surface_boxes = 0;
+    size_t physical_event_complete = 0;
+    size_t physical_event_unresolved = 0;
+    size_t physical_event_state_failures = 0;
+    size_t physical_event_material_segments = 0;
+    size_t physical_event_subminimum_contacts = 0;
+    size_t physical_event_tolerance_ambiguous = 0;
+    size_t stored_physical_events = 0;
     std::vector<struct rt_brep_trace_root> roots;
     std::vector<ray_audit_interval> intervals;
 };
@@ -500,7 +623,9 @@ enum ray_audit_sample_kind {
     RAY_AUDIT_RANDOM_CHORD,
     RAY_AUDIT_FACE_NORMAL_CHORD,
     RAY_AUDIT_EDGE_NORMAL_CHORD,
-    RAY_AUDIT_EDGE_GRAZE_CHORD
+    RAY_AUDIT_EDGE_GRAZE_CHORD,
+    RAY_AUDIT_EXACT_CHORD,
+    RAY_AUDIT_SAMPLE_KIND_COUNT
 };
 
 struct ray_audit_sample {
@@ -512,6 +637,24 @@ struct ray_audit_sample {
     ray_audit_sample_kind kind = RAY_AUDIT_RANDOM_CHORD;
     int face_index = -1;
     int edge_index = -1;
+};
+
+struct ray_audit_exact_ray {
+    point_t origin = VINIT_ZERO;
+    vect_t direction = VINIT_ZERO;
+};
+
+struct mesh_ray_hit {
+    double distance = 0.0;
+    double barycentric[2] = {0.0, 0.0};
+    double normal_dot = 0.0;
+    int triangle = -1;
+};
+
+struct torus_ray_root {
+    double distance = 0.0;
+    double imaginary = 0.0;
+    double residual = 0.0;
 };
 
 struct ray_audit_feature_target {
@@ -529,6 +672,34 @@ struct ray_audit_prep {
     double wall_seconds = 0.0;
 };
 
+struct ray_audit_route_certificate_telemetry {
+    size_t associations = 0;
+    size_t state[RT_BREP_ROUTE_CERT_STATE_COUNT] = {};
+    size_t regular_root_count = 0;
+    size_t observed_roots = 0;
+    size_t deficit_cells = 0;
+    size_t deficit_roots = 0;
+    size_t cached_bbox_exclusions = 0;
+    size_t hull_exclusions = 0;
+    size_t subdivision_attempts = 0;
+    size_t subdivision_boxes = 0;
+    size_t subdivision_hull_exclusions = 0;
+    size_t subdivision_exclusions = 0;
+    size_t degree_attempts = 0;
+    size_t degree_complete = 0;
+    size_t failure_reason[RT_BREP_ROUTE_CERT_FAILURE_COUNT] = {};
+    size_t degree_failure_detail[RT_BREP_ROOT_DEGREE_DETAIL_COUNT] = {};
+    size_t boundary_pieces = 0;
+    size_t boundary_splits = 0;
+    size_t boundary_edges = 0;
+    size_t expansion_high_water = 0;
+    size_t nanoseconds = 0;
+    size_t complete_rays = 0;
+    size_t root_free_rays = 0;
+    size_t root_positive_rays = 0;
+    size_t incomplete_rays = 0;
+};
+
 struct ray_audit_telemetry {
     size_t rays = 0;
     size_t hit_rays = 0;
@@ -539,6 +710,11 @@ struct ray_audit_telemetry {
     size_t prepared_eligible = 0;
     size_t prepared_selected = 0;
     size_t fallback[RT_BREP_PREPARED_FALLBACK_COUNT] = {};
+    size_t legacy_capacity_fallback[
+	RT_BREP_LEGACY_CAPACITY_FALLBACK_COUNT] = {};
+    size_t legacy_cleanup_action_rays[RT_BREP_LEGACY_CLEANUP_COUNT] = {};
+    size_t legacy_cleanup_action_events[RT_BREP_LEGACY_CLEANUP_COUNT] = {};
+    size_t legacy_cleanup_action_mismatch_rays = 0;
     size_t solver_calls = 0;
     size_t manifold_edges = 0;
     size_t prepared_edge_spans = 0;
@@ -583,6 +759,138 @@ struct ray_audit_telemetry {
     size_t regular_stream_certified = 0;
     size_t edge_certified = 0;
     size_t vertex_certified = 0;
+    size_t seeded_verify_attempts = 0;
+    size_t seeded_verify_complete = 0;
+    size_t seeded_verify_complete_selected = 0;
+    size_t seeded_verify_failed_selected = 0;
+    size_t seeded_verify_complete_mismatch = 0;
+    size_t seeded_verify_legacy_groups = 0;
+    size_t seeded_verify_candidate_faces = 0;
+    size_t seeded_verify_candidate_spans = 0;
+    size_t seeded_verify_hull_excluded_spans = 0;
+    size_t seeded_verify_mapped_roots = 0;
+    size_t seeded_verify_local_attempts = 0;
+    size_t seeded_verify_local_certified = 0;
+    size_t seeded_verify_degree_attempts = 0;
+    size_t seeded_verify_degree_complete = 0;
+    size_t seeded_verify_degree_determinant_failures = 0;
+    size_t seeded_verify_degree_boundary_failures = 0;
+    size_t seeded_verify_degree_orientation_failures = 0;
+    size_t seeded_verify_degree_count_mismatches = 0;
+    size_t seeded_verify_degree_sign_mismatches = 0;
+    size_t seeded_verify_degree_count_low = 0;
+    size_t seeded_verify_degree_count_high = 0;
+    size_t seeded_verify_degree_mismatch_local_exact = 0;
+    size_t seeded_verify_degree_mismatch_local_inexact = 0;
+    size_t seeded_verify_degree_extra_local_roots = 0;
+    size_t seeded_verify_degree_extra_local_trimmed = 0;
+    size_t seeded_verify_degree_extra_local_untrimmed = 0;
+    size_t seeded_verify_degree_surplus_empty = 0;
+    size_t seeded_verify_degree_surplus_seeded = 0;
+    size_t seeded_verify_degree_surplus_corrector_attempts = 0;
+    size_t seeded_verify_degree_surplus_corrector_converged = 0;
+    size_t seeded_verify_degree_surplus_local_attempts = 0;
+    size_t seeded_verify_degree_surplus_local_certified = 0;
+    size_t seeded_verify_degree_surplus_trimmed_certified = 0;
+    size_t seeded_verify_degree_surplus_untrimmed = 0;
+    size_t seeded_verify_degree_surplus_nanoseconds = 0;
+    size_t seeded_verify_degree_root_count = 0;
+    size_t seeded_verify_degree_seed_count = 0;
+    size_t seeded_verify_degree_boundary_pieces = 0;
+    size_t seeded_verify_degree_boundary_splits = 0;
+    size_t seeded_verify_degree_boundary_edges = 0;
+    size_t seeded_verify_degree_expansion_high_water = 0;
+    size_t seeded_verify_degree_nanoseconds = 0;
+    size_t seeded_verify_degree_complement_agreements = 0;
+    size_t seeded_verify_degree_complement_disagreements = 0;
+    size_t seeded_verify_degree_failure_detail[
+	RT_BREP_ROOT_DEGREE_DETAIL_COUNT] = {};
+    size_t seeded_verify_complement_visited = 0;
+    size_t seeded_verify_complement_high_water = 0;
+    size_t seeded_verify_partition_events = 0;
+    size_t seeded_verify_nanoseconds = 0;
+    size_t seeded_verify_stage_nanoseconds[RT_BREP_SEEDED_VERIFY_STAGE_COUNT] = {};
+    size_t seeded_verify_failure_stage[RT_BREP_SEEDED_VERIFY_STAGE_COUNT] = {};
+    size_t seeded_verify_selected_failure_stage[
+	RT_BREP_SEEDED_VERIFY_STAGE_COUNT] = {};
+    size_t seeded_route_rays[RT_BREP_ROUTE_LANE_COUNT] = {};
+    size_t seeded_route_verifier_complete[RT_BREP_ROUTE_LANE_COUNT] = {};
+    size_t seeded_route_prepared_selected[RT_BREP_ROUTE_LANE_COUNT] = {};
+    size_t seeded_route_root_mismatch[RT_BREP_ROUTE_LANE_COUNT] = {};
+    size_t seeded_route_capability_rays[RT_BREP_ROUTE_CAP_COUNT] = {};
+    size_t seeded_route_risk_rays[RT_BREP_ROUTE_RISK_COUNT] = {};
+    size_t seeded_route_qualification_rays[RT_BREP_ROUTE_QUAL_COUNT] = {};
+    unsigned int seeded_route_capability_mask = 0;
+    unsigned int seeded_route_risk_mask = 0;
+    size_t route_decision_nanoseconds = 0;
+    size_t route_candidate_cells = 0;
+    size_t route_hazard_roots = 0;
+    size_t route_contact_roots = 0;
+    size_t route_legacy_transaction_incomplete = 0;
+    size_t route_selective_refinement_attempted = 0;
+    size_t route_selective_refinement_complete = 0;
+    size_t route_selective_refinement_max_level = 0;
+    size_t route_selective_refinement_hits = 0;
+    size_t route_selective_refinement_reversal_mismatches = 0;
+    size_t route_selective_refinement_nanoseconds = 0;
+    size_t route_cell_lookup_failures = 0;
+    size_t route_cell_lookup_failure_reasons[
+	RT_BREP_ROUTE_LOOKUP_REASON_COUNT] = {};
+    size_t route_roots_unmapped_after_leaf_overflow = 0;
+    size_t route_empty_correction_cells = 0;
+    size_t route_missing_root_candidate_spans = 0;
+    size_t route_missing_root_retained_spans = 0;
+    size_t route_missing_root_restricted_spans = 0;
+    size_t route_missing_root_inconclusive_spans = 0;
+    size_t route_missing_root_workspace_overflow = 0;
+    size_t route_missing_root_signal_rays = 0;
+    size_t route_missing_root_prepared_candidate_faces = 0;
+    size_t route_missing_root_prepared_candidate_spans = 0;
+    size_t route_missing_root_prepared_retained_spans = 0;
+    size_t route_missing_root_prepared_only_spans = 0;
+    size_t route_missing_root_prepared_only_retained_spans = 0;
+    size_t route_missing_root_prepared_inconclusive_spans = 0;
+    size_t route_missing_root_prepared_candidate_failures = 0;
+    size_t route_missing_root_prepared_signal_rays = 0;
+    ray_audit_route_certificate_telemetry route_missing_root_certificate;
+    size_t route_missing_root_prepared_independent_hit_rays = 0;
+    size_t route_missing_root_prepared_independent_empty_rays = 0;
+    size_t route_missing_root_prepared_unresolved_rays = 0;
+    size_t route_missing_root_independent_hit_rays = 0;
+    size_t route_missing_root_independent_empty_rays = 0;
+    size_t route_missing_root_unresolved_rays = 0;
+    size_t route_missing_root_counterfactual_attempts = 0;
+    size_t route_missing_root_counterfactual_signal_rays = 0;
+    size_t route_missing_root_counterfactual_unsignaled_rays = 0;
+    size_t route_missing_root_counterfactual_true_root_controls = 0;
+    size_t route_missing_root_counterfactual_true_root_signals = 0;
+    size_t route_missing_root_counterfactual_true_root_missed = 0;
+    size_t route_missing_root_counterfactual_empty_controls = 0;
+    size_t route_missing_root_counterfactual_empty_signals = 0;
+    size_t route_missing_root_counterfactual_empty_rejected = 0;
+    size_t route_missing_root_counterfactual_unresolved_controls = 0;
+    size_t route_missing_root_counterfactual_candidate_spans = 0;
+    size_t route_missing_root_counterfactual_retained_spans = 0;
+    size_t route_missing_root_counterfactual_restricted_spans = 0;
+    size_t route_missing_root_counterfactual_inconclusive_spans = 0;
+    size_t route_missing_root_counterfactual_workspace_overflow = 0;
+    size_t route_missing_root_counterfactual_nanoseconds = 0;
+    size_t route_missing_root_counterfactual_prepared_candidate_faces = 0;
+    size_t route_missing_root_counterfactual_prepared_candidate_spans = 0;
+    size_t route_missing_root_counterfactual_prepared_retained_spans = 0;
+    size_t route_missing_root_counterfactual_prepared_only_spans = 0;
+    size_t route_missing_root_counterfactual_prepared_only_retained_spans = 0;
+    size_t route_missing_root_counterfactual_prepared_inconclusive_spans = 0;
+    size_t route_missing_root_counterfactual_prepared_candidate_failures = 0;
+    size_t route_missing_root_counterfactual_prepared_signal_rays = 0;
+    size_t route_missing_root_counterfactual_prepared_unsignaled_rays = 0;
+    size_t route_missing_root_counterfactual_true_root_prepared_signals = 0;
+    size_t route_missing_root_counterfactual_true_root_prepared_missed = 0;
+    size_t route_missing_root_counterfactual_true_root_prepared_recovered = 0;
+    size_t route_missing_root_counterfactual_empty_prepared_signals = 0;
+    size_t route_missing_root_counterfactual_empty_prepared_rejected = 0;
+    ray_audit_route_certificate_telemetry
+	route_missing_root_counterfactual_certificate;
     size_t fixed_equivalence_mismatch_rays = 0;
     size_t local_legacy_mismatch_rays = 0;
 };
@@ -606,6 +914,44 @@ struct ray_audit_comparison {
     std::vector<size_t> face_difference_ray_indices;
     std::vector<size_t> candidate_reversal_indices;
     std::vector<size_t> reference_reversal_indices;
+};
+
+struct ray_audit_publication {
+    size_t rays = 0;
+    size_t invalid_rays = 0;
+    size_t optional_attempts = 0;
+    size_t optional_complete = 0;
+    size_t eligible_publications = 0;
+    size_t prepared_matches = 0;
+    size_t legacy_fallback_matches = 0;
+    size_t published_correction_rays = 0;
+    size_t mismatches = 0;
+    std::vector<size_t> mismatch_ray_indices;
+};
+
+struct ray_audit_missing_root_injection {
+    size_t rays = 0;
+    size_t fault_injected = 0;
+    size_t suppressed_hit_rays = 0;
+    size_t suppressed_raw_hits = 0;
+    size_t suppressed_route_roots = 0;
+    size_t direct_empty_results = 0;
+    size_t fault_exposed_rays = 0;
+    size_t triggered_faults = 0;
+    size_t triggered = 0;
+    size_t optional_attempts = 0;
+    size_t general_prepared_attempts = 0;
+    size_t optional_complete = 0;
+    size_t optional_incomplete = 0;
+    size_t published = 0;
+    size_t complete_oracle_agreements = 0;
+    size_t recoverable_faults = 0;
+    size_t recovered_faults = 0;
+    size_t published_prepared_matches = 0;
+    size_t published_injected_fallback_matches = 0;
+    size_t decision_mismatches = 0;
+    size_t transaction_mismatches = 0;
+    std::vector<size_t> mismatch_ray_indices;
 };
 
 struct audit_prepared_brep {
@@ -679,6 +1025,13 @@ peak_rss_bytes()
 {
     const ssize_t peak = bu_mem(BU_MEM_PROCESS_PEAK_RESIDENT, NULL);
     return peak < 0 ? 0 : (size_t)peak;
+}
+
+static size_t
+resident_rss_bytes()
+{
+    size_t result = 0;
+    return bu_mem(BU_MEM_PROCESS_RESIDENT, &result) < 0 ? 0 : result;
 }
 
 static bool
@@ -855,10 +1208,11 @@ open_db(const char *path)
 }
 
 static int
-load_brep(struct db_i *dbip, struct directory *dp, struct rt_db_internal *intern)
+load_brep(struct db_i *dbip, struct directory *dp, struct rt_db_internal *intern,
+    const mat_t transform = NULL)
 {
     RT_DB_INTERNAL_INIT(intern);
-    if (rt_db_get_internal(intern, dp, dbip, NULL) < 0)
+    if (rt_db_get_internal(intern, dp, dbip, transform) < 0)
 	return BRLCAD_ERROR;
     if (intern->idb_minor_type != DB5_MINORTYPE_BRLCAD_BREP) {
 	rt_db_free_internal(intern);
@@ -890,6 +1244,50 @@ parse_trim_query(const char *arg, trim_query_spec &query)
 	return false;
     query.face_index = (int)face_index;
     query.uv = ON_2dPoint(u, v);
+    return true;
+}
+
+static bool
+parse_exact_ray(const char *arg, ray_audit_exact_ray &ray)
+{
+    if (!arg || !arg[0])
+	return false;
+    double value[6] = {};
+    const char *start = arg;
+    for (size_t i = 0; i < 6; ++i) {
+	char *end = NULL;
+	errno = 0;
+	value[i] = strtod(start, &end);
+	if (errno || end == start || !std::isfinite(value[i]) ||
+		(i < 5 ? *end != ',' : *end != '\0'))
+	    return false;
+	start = end + 1;
+    }
+    VSET(ray.origin, value[0], value[1], value[2]);
+    VSET(ray.direction, value[3], value[4], value[5]);
+    const double magnitude = MAGNITUDE(ray.direction);
+    if (!(magnitude > SMALL_FASTF) || !std::isfinite(magnitude))
+	return false;
+    VSCALE(ray.direction, ray.direction, 1.0 / magnitude);
+    return true;
+}
+
+static bool
+parse_transform(const char *arg, mat_t transform)
+{
+    if (!arg || !arg[0])
+	return false;
+    const char *start = arg;
+    for (size_t i = 0; i < ELEMENTS_PER_MAT; ++i) {
+	char *end = NULL;
+	errno = 0;
+	const double value = strtod(start, &end);
+	if (errno || end == start || !std::isfinite(value) ||
+		(i + 1 < ELEMENTS_PER_MAT ? *end != ',' : *end != '\0'))
+	    return false;
+	transform[i] = value;
+	start = end + 1;
+    }
     return true;
 }
 
@@ -1444,9 +1842,11 @@ diagnose_surface_tree_failures(struct db_i *dbip, struct directory *dp,
 }
 
 static prep_result
-raytrace_prep_result(struct db_i *dbip, struct directory *dp)
+raytrace_prep_result(struct db_i *dbip, struct directory *dp, int depth)
 {
     prep_result result;
+    result.requested_depth = depth;
+    result.resident_before_bytes = resident_rss_bytes();
     struct rt_db_internal intern;
     if (load_brep(dbip, dp, &intern) != BRLCAD_OK)
 	return result;
@@ -1468,18 +1868,47 @@ raytrace_prep_result(struct db_i *dbip, struct directory *dp)
     stp->l.magic = RT_SOLTAB_MAGIC;
     stp->l2.magic = RT_SOLTAB2_MAGIC;
     stp->st_rtip = rtip;
+    stp->st_dp = dp;
     stp->st_id = ID_BREP;
     stp->st_meth = &OBJ[ID_BREP];
 
+    if (rtip && !_rt_brep_set_surface_tree_depth(rtip, depth)) {
+	rt_i_destroy(rtip);
+	bu_free(stp, "brep audit prep soltab");
+	rt_db_free_internal(&intern);
+	result.failure_reason = "invalid_depth";
+	return result;
+    }
     int64_t start = bu_gettime();
     result.ret = rtip ? OBJ[ID_BREP].ft_prep(stp, &intern, rtip) :
 	BRLCAD_ERROR;
     result.seconds = (bu_gettime() - start) / 1000000.0;
+    result.resident_prepared_bytes = resident_rss_bytes();
     result.peak_rss_bytes = peak_rss_bytes();
     if (result.ret == BRLCAD_OK) {
 	VMOVE(result.bmin, stp->st_min);
 	VMOVE(result.bmax, stp->st_max);
 	result.have_bbox = true;
+	result.stats_valid = _rt_brep_prep_stats(stp, &result.stats) != 0;
+	struct bu_external payload = BU_EXTERNAL_INIT_ZERO;
+	start = bu_gettime();
+	if (!rt_obj_prep_serialize(stp, &intern, &payload,
+		&result.cache_variant)) {
+	    result.cache_payload_valid = true;
+	    result.cache_payload_bytes = payload.ext_nbytes;
+	}
+	result.cache_serialize_seconds =
+	    (bu_gettime() - start) / 1000000.0;
+	if (result.cache_payload_valid) {
+	    start = bu_gettime();
+	    if (_rt_cache_compress_external(&payload)) {
+		result.cache_payload_compressed = true;
+		result.cache_payload_compressed_bytes = payload.ext_nbytes;
+	    }
+	    result.cache_compress_seconds =
+		(bu_gettime() - start) / 1000000.0;
+	}
+	bu_free_external(&payload);
     }
     if (stp->st_specific && stp->st_meth && stp->st_meth->ft_free)
 	stp->st_meth->ft_free(stp);
@@ -1487,6 +1916,7 @@ raytrace_prep_result(struct db_i *dbip, struct directory *dp)
     if (rtip)
 	rt_i_destroy(rtip);
     rt_db_free_internal(&intern);
+    result.resident_after_free_bytes = resident_rss_bytes();
 
     if (result.ret != BRLCAD_OK)
 	diagnose_surface_tree_failures(dbip, dp, &result);
@@ -1499,6 +1929,339 @@ raytrace_prep_result(struct db_i *dbip, struct directory *dp)
 	    result.failure_reason = "unknown_prep";
     }
     return result;
+}
+
+static const char *
+on_object_class_name(const ON_Object *object)
+{
+    if (!object)
+	return "none";
+    const ON_ClassId *class_id = object->ClassId();
+    return class_id ? class_id->ClassName() : "unknown";
+}
+
+static double
+parameter_domain_scale(const ON_Interval &domain)
+{
+    double scale = 1.0;
+    if (std::isfinite(domain.Min()))
+	scale = std::max(scale, std::fabs(domain.Min()));
+    if (std::isfinite(domain.Max()))
+	scale = std::max(scale, std::fabs(domain.Max()));
+    if (std::isfinite(domain.Length()))
+	scale = std::max(scale, std::fabs(domain.Length()));
+    return scale;
+}
+
+static double
+parameter_domain_tolerance(const ON_Interval &domain)
+{
+    return 4096.0 * std::numeric_limits<double>::epsilon() *
+	parameter_domain_scale(domain);
+}
+
+static double
+normalized_parameter_error(double error, const ON_Interval &domain)
+{
+    const double length = std::fabs(domain.Length());
+    const double divisor = std::isfinite(length) && length > 0.0 ?
+	length : parameter_domain_scale(domain);
+    return error / divisor;
+}
+
+static bool
+finite_parameter_pair(const double parameter[2])
+{
+    return std::isfinite(parameter[0]) && std::isfinite(parameter[1]);
+}
+
+static bool
+parameter_pair_in_domain(const double parameter[2],
+    const ON_Interval domain[2])
+{
+    for (int direction = 0; direction < 2; ++direction) {
+	const double minimum = domain[direction].Min();
+	const double maximum = domain[direction].Max();
+	if (!std::isfinite(parameter[direction]) ||
+		!std::isfinite(minimum) || !std::isfinite(maximum) ||
+		parameter[direction] < minimum ||
+		parameter[direction] > maximum)
+	    return false;
+    }
+    return true;
+}
+
+static void
+record_round_trip_error(parameter_mapping_direction_profile &profile,
+    const double expected[2], const double actual[2],
+    const ON_Interval domain[2])
+{
+    bool within_tolerance = true;
+    for (int direction = 0; direction < 2; ++direction) {
+	const double error = std::fabs(actual[direction] - expected[direction]);
+	profile.maximum_round_trip_error[direction] = std::max(
+	    profile.maximum_round_trip_error[direction], error);
+	profile.maximum_normalized_round_trip_error[direction] = std::max(
+	    profile.maximum_normalized_round_trip_error[direction],
+	    normalized_parameter_error(error, domain[direction]));
+	if (error > parameter_domain_tolerance(domain[direction]))
+	    within_tolerance = false;
+    }
+    if (within_tolerance)
+	profile.round_trip_within_tolerance++;
+}
+
+static void
+analyze_parameter_mapping_behavior(
+    const std::vector<parameter_mapping_sample> &samples, size_t grid_size,
+    const ON_Interval output_domain[2],
+    parameter_mapping_direction_profile &profile)
+{
+    profile.behavior_complete = grid_size >= 2 &&
+	samples.size() == grid_size * grid_size &&
+	profile.successes == profile.attempts;
+    if (!profile.behavior_complete)
+	return;
+
+    double diagonal_cross_error[2] = {0.0, 0.0};
+    double transposed_cross_error[2] = {0.0, 0.0};
+    const auto sample = [&samples, grid_size](size_t first, size_t second) ->
+	const parameter_mapping_sample & {
+	return samples[first * grid_size + second];
+    };
+    for (size_t first = 0; first < grid_size; ++first) {
+	for (size_t second = 0; second < grid_size; ++second) {
+	    diagonal_cross_error[0] = std::max(diagonal_cross_error[0],
+		std::fabs(sample(first, second).output[0] -
+		    sample(first, 0).output[0]));
+	    diagonal_cross_error[1] = std::max(diagonal_cross_error[1],
+		std::fabs(sample(first, second).output[1] -
+		    sample(0, second).output[1]));
+	    transposed_cross_error[0] = std::max(transposed_cross_error[0],
+		std::fabs(sample(first, second).output[0] -
+		    sample(0, second).output[0]));
+	    transposed_cross_error[1] = std::max(transposed_cross_error[1],
+		std::fabs(sample(first, second).output[1] -
+		    sample(first, 0).output[1]));
+	}
+    }
+
+    const bool diagonal =
+	diagonal_cross_error[0] <= parameter_domain_tolerance(output_domain[0]) &&
+	diagonal_cross_error[1] <= parameter_domain_tolerance(output_domain[1]);
+    const bool transposed =
+	transposed_cross_error[0] <= parameter_domain_tolerance(output_domain[0]) &&
+	transposed_cross_error[1] <= parameter_domain_tolerance(output_domain[1]);
+    profile.separable = diagonal || transposed;
+    if (diagonal) {
+	profile.output_input_axis[0] = 0;
+	profile.output_input_axis[1] = 1;
+	profile.maximum_cross_axis_error[0] = diagonal_cross_error[0];
+	profile.maximum_cross_axis_error[1] = diagonal_cross_error[1];
+    } else if (transposed) {
+	profile.output_input_axis[0] = 1;
+	profile.output_input_axis[1] = 0;
+	profile.maximum_cross_axis_error[0] = transposed_cross_error[0];
+	profile.maximum_cross_axis_error[1] = transposed_cross_error[1];
+    } else {
+	profile.maximum_cross_axis_error[0] = std::min(diagonal_cross_error[0],
+	    transposed_cross_error[0]);
+	profile.maximum_cross_axis_error[1] = std::min(diagonal_cross_error[1],
+	    transposed_cross_error[1]);
+	return;
+    }
+
+    for (int output = 0; output < 2; ++output) {
+	const int input = profile.output_input_axis[output];
+	const double tolerance = parameter_domain_tolerance(output_domain[output]);
+	bool increasing = false;
+	bool decreasing = false;
+	bool constant = false;
+	for (size_t fixed = 0; fixed < grid_size; ++fixed) {
+	    for (size_t step = 1; step < grid_size; ++step) {
+		const parameter_mapping_sample &previous = input == 0 ?
+		    sample(step - 1, fixed) : sample(fixed, step - 1);
+		const parameter_mapping_sample &current = input == 0 ?
+		    sample(step, fixed) : sample(fixed, step);
+		const double delta = current.output[output] -
+		    previous.output[output];
+		if (delta > tolerance)
+		    increasing = true;
+		else if (delta < -tolerance)
+		    decreasing = true;
+		else
+		    constant = true;
+	    }
+	}
+	if (increasing && decreasing) {
+	    profile.orientation[output] = PARAMETER_MAPPING_MIXED;
+	    continue;
+	}
+	profile.monotone[output] = true;
+	profile.strictly_monotone[output] = !constant &&
+	    (increasing || decreasing);
+	if (increasing)
+	    profile.orientation[output] = PARAMETER_MAPPING_INCREASING;
+	else if (decreasing)
+	    profile.orientation[output] = PARAMETER_MAPPING_DECREASING;
+	else
+	    profile.orientation[output] = PARAMETER_MAPPING_CONSTANT;
+    }
+}
+
+static void
+profile_surface_parameter_mapping(const ON_Surface *surface,
+    const ON_NurbsSurface &nurb_form,
+    surface_parameter_mapping_profile &mapping)
+{
+    if (!surface)
+	return;
+    const size_t grid_size = 9;
+    const ON_Interval surface_domain[2] = {
+	surface->Domain(0), surface->Domain(1)
+    };
+    const ON_Interval nurb_domain[2] = {
+	nurb_form.Domain(0), nurb_form.Domain(1)
+    };
+    mapping.sampled = true;
+    mapping.grid_size = grid_size;
+    std::vector<parameter_mapping_sample> forward_samples(
+	grid_size * grid_size);
+    std::vector<parameter_mapping_sample> inverse_samples(
+	grid_size * grid_size);
+
+    for (size_t first = 0; first < grid_size; ++first) {
+	for (size_t second = 0; second < grid_size; ++second) {
+	    const size_t index = first * grid_size + second;
+	    parameter_mapping_sample &sample = forward_samples[index];
+	    sample.input[0] = surface_domain[0].ParameterAt(
+		(double)first / (double)(grid_size - 1));
+	    sample.input[1] = surface_domain[1].ParameterAt(
+		(double)second / (double)(grid_size - 1));
+	    mapping.forward.attempts++;
+	    sample.valid = surface->GetNurbFormParameterFromSurfaceParameter(
+		sample.input[0], sample.input[1], &sample.output[0],
+		&sample.output[1]) && finite_parameter_pair(sample.output);
+	    if (sample.valid) {
+		mapping.forward.successes++;
+		if (parameter_pair_in_domain(sample.output, nurb_domain))
+		    mapping.forward.domain_contained++;
+		double round_trip[2] = {0.0, 0.0};
+		if (surface->GetSurfaceParameterFromNurbFormParameter(
+			sample.output[0], sample.output[1], &round_trip[0],
+			&round_trip[1]) && finite_parameter_pair(round_trip)) {
+		    mapping.forward.round_trip_successes++;
+		    record_round_trip_error(mapping.forward, sample.input,
+			round_trip, surface_domain);
+		}
+	    }
+
+	    parameter_mapping_sample &inverse = inverse_samples[index];
+	    inverse.input[0] = nurb_domain[0].ParameterAt(
+		(double)first / (double)(grid_size - 1));
+	    inverse.input[1] = nurb_domain[1].ParameterAt(
+		(double)second / (double)(grid_size - 1));
+	    mapping.inverse.attempts++;
+	    inverse.valid = surface->GetSurfaceParameterFromNurbFormParameter(
+		inverse.input[0], inverse.input[1], &inverse.output[0],
+		&inverse.output[1]) && finite_parameter_pair(inverse.output);
+	    if (inverse.valid) {
+		mapping.inverse.successes++;
+		if (parameter_pair_in_domain(inverse.output, surface_domain))
+		    mapping.inverse.domain_contained++;
+		double inverse_round_trip[2] = {0.0, 0.0};
+		if (surface->GetNurbFormParameterFromSurfaceParameter(
+			inverse.output[0], inverse.output[1],
+			&inverse_round_trip[0], &inverse_round_trip[1]) &&
+			finite_parameter_pair(inverse_round_trip)) {
+		    mapping.inverse.round_trip_successes++;
+		    record_round_trip_error(mapping.inverse, inverse.input,
+			inverse_round_trip, nurb_domain);
+		}
+	    }
+	}
+    }
+    analyze_parameter_mapping_behavior(forward_samples, grid_size,
+	nurb_domain, mapping.forward);
+    analyze_parameter_mapping_behavior(inverse_samples, grid_size,
+	surface_domain, mapping.inverse);
+}
+
+static void
+profile_surface_representation(const ON_BrepFace &face,
+    const ON_Surface *surface, surface_tree_profile &profile)
+{
+    profile.face_reversed = face.m_bRev;
+    profile.face_proxy_transposed = face.ProxySurfaceIsTransposed();
+    if (!surface)
+	return;
+    for (int direction = 0; direction < 2; ++direction) {
+	profile.closed[direction] = surface->IsClosed(direction);
+	profile.periodic[direction] = surface->IsPeriodic(direction);
+    }
+    for (int side = 0; side < 4; ++side)
+	profile.singular_sides[side] = surface->IsSingular(side);
+
+    const ON_Surface *resolved_surface = surface;
+    const ON_SurfaceProxy *surface_proxy = ON_SurfaceProxy::Cast(surface);
+    if (surface_proxy) {
+	profile.surface_proxy = true;
+	profile.surface_proxy_transposed =
+	    surface_proxy->ProxySurfaceIsTransposed();
+	const ON_Surface *target = surface_proxy->ProxySurface();
+	profile.surface_proxy_target_type = on_object_class_name(target);
+	if (target)
+	    resolved_surface = target;
+    }
+
+    const ON_RevSurface *revolution = ON_RevSurface::Cast(resolved_surface);
+    if (!revolution)
+	return;
+    profile.revolution = true;
+    profile.revolution_transposed = revolution->m_bTransposed;
+    const ON_Curve *curve = revolution->m_curve;
+    profile.profile_type = on_object_class_name(curve);
+    if (!curve)
+	return;
+    profile.profile_domain = curve->Domain();
+
+    const ON_Curve *resolved_curve = curve;
+    const ON_CurveProxy *curve_proxy = ON_CurveProxy::Cast(curve);
+    if (curve_proxy) {
+	profile.profile_proxy = true;
+	profile.profile_proxy_reversed = curve_proxy->ProxyCurveIsReversed();
+	profile.profile_proxy_domain = curve_proxy->ProxyCurveDomain();
+	const ON_Curve *target = curve_proxy->ProxyCurve();
+	profile.profile_proxy_target_type = on_object_class_name(target);
+	if (target)
+	    resolved_curve = target;
+    }
+
+    const ON_PolyCurve *polycurve = ON_PolyCurve::Cast(resolved_curve);
+    if (!polycurve)
+	return;
+    profile.profile_polycurve = true;
+    profile.profile_polycurve_segments.reserve((size_t)std::max(0,
+	polycurve->Count()));
+    for (int segment_index = 0; segment_index < polycurve->Count();
+	    ++segment_index) {
+	polycurve_segment_profile segment;
+	const ON_Curve *segment_curve = polycurve->SegmentCurve(segment_index);
+	segment.type = on_object_class_name(segment_curve);
+	segment.polycurve_domain = polycurve->SegmentDomain(segment_index);
+	if (segment_curve)
+	    segment.curve_domain = segment_curve->Domain();
+	const ON_CurveProxy *segment_proxy =
+	    ON_CurveProxy::Cast(segment_curve);
+	if (segment_proxy) {
+	    segment.proxy = true;
+	    segment.proxy_reversed = segment_proxy->ProxyCurveIsReversed();
+	    segment.proxy_domain = segment_proxy->ProxyCurveDomain();
+	    segment.proxy_target_type = on_object_class_name(
+		segment_proxy->ProxyCurve());
+	}
+	profile.profile_polycurve_segments.push_back(segment);
+    }
 }
 
 static surface_tree_result
@@ -1536,6 +2299,7 @@ surface_tree_profile_result(struct db_i *dbip, struct directory *dp,
 	for (int loop_index = 0; loop_index < profile.loop_count;
 		++loop_index)
 	    profile.trim_count += face.Loop(loop_index)->TrimCount();
+	profile_surface_representation(face, surface, profile);
 	if (surface) {
 	    const ON_ClassId *class_id = surface->ClassId();
 	    profile.surface_type = class_id ? class_id->ClassName() :
@@ -1564,7 +2328,12 @@ surface_tree_profile_result(struct db_i *dbip, struct directory *dp,
 			nurb_form.CVCount(direction);
 		    profile.nurb_form_span_count[direction] =
 			nurb_form.SpanCount(direction);
+		    profile.nurb_form_domain[direction] =
+			nurb_form.Domain(direction);
 		}
+		if (profile.nurb_form_status == 2)
+		    profile_surface_parameter_mapping(surface, nurb_form,
+			profile.parameter_mapping);
 	    }
 	}
 	int64_t start = bu_gettime();
@@ -1617,6 +2386,124 @@ ray_audit_fallback_name(int fallback)
     return "invalid";
 }
 
+static const char *
+ray_audit_legacy_capacity_fallback_name(int reason)
+{
+    static const char *names[RT_BREP_LEGACY_CAPACITY_FALLBACK_COUNT] = {
+	"leaf_workspace", "hit_workspace"
+    };
+    return reason >= 0 && reason < RT_BREP_LEGACY_CAPACITY_FALLBACK_COUNT ?
+	names[reason] : "invalid";
+}
+
+
+static const char *
+ray_audit_legacy_cleanup_action_name(int action)
+{
+    static const char *names[RT_BREP_LEGACY_CLEANUP_COUNT] = {
+	"coincident_grazing", "near_miss_shadow", "near_miss_crack_merge",
+	"near_miss_crack_cancel", "near_miss_nonadjacent_drop",
+	"clean_overlap", "near_hit_shadow", "near_hit_crack_merge",
+	"trimmed_invalid", "parameter_oob", "isolated_grazing",
+	"duplicate_cancel", "duplicate_collapse", "solid_coincident",
+	"solid_unmatched_enter", "solid_unmatched_leave",
+	"solid_interior_winding", "open_same_direction",
+	"open_odd_endpoint"
+    };
+    return action >= 0 && action < RT_BREP_LEGACY_CLEANUP_COUNT ?
+	names[action] : "invalid";
+}
+
+
+static const char *
+ray_audit_route_name(int lane)
+{
+    switch (lane) {
+	case RT_BREP_ROUTE_LEGACY_DIRECT: return "none";
+	case RT_BREP_ROUTE_SEEDED_ORDINARY_VERIFY:
+	    return "seeded_ordinary";
+	case RT_BREP_ROUTE_EXISTING_COMPLEX_PREPARED:
+	    return "complex_prepared";
+    }
+    return "unavailable";
+}
+
+enum ray_audit_route_stratum {
+    RAY_AUDIT_ROUTE_EMPTY = 0,
+    RAY_AUDIT_ROUTE_CLEAN_ORDINARY,
+    RAY_AUDIT_ROUTE_MIXED_HAZARD,
+    RAY_AUDIT_ROUTE_ALL_HAZARD,
+    RAY_AUDIT_ROUTE_UNSUPPORTED,
+    RAY_AUDIT_ROUTE_UNCLASSIFIED,
+    RAY_AUDIT_ROUTE_STRATUM_COUNT
+};
+
+enum ray_audit_correction_shape {
+    RAY_AUDIT_CORRECTION_PREPARED_MISS_LEGACY_HIT = 0,
+    RAY_AUDIT_CORRECTION_PREPARED_HIT_LEGACY_MISS,
+    RAY_AUDIT_CORRECTION_BOTH_NONEMPTY_CHANGED,
+    RAY_AUDIT_CORRECTION_OTHER,
+    RAY_AUDIT_CORRECTION_SHAPE_COUNT
+};
+
+static ray_audit_route_stratum
+ray_audit_route_stratum_for(const ray_audit_shot &shot)
+{
+    const unsigned int qualification = shot.route_decision.qualification_flags;
+    if (qualification & RT_BREP_ROUTE_QUAL_UNSUPPORTED)
+	return RAY_AUDIT_ROUTE_UNSUPPORTED;
+    if (qualification & RT_BREP_ROUTE_QUAL_EMPTY)
+	return RAY_AUDIT_ROUTE_EMPTY;
+    if (qualification & RT_BREP_ROUTE_QUAL_MIXED_HAZARD)
+	return RAY_AUDIT_ROUTE_MIXED_HAZARD;
+    if (qualification & RT_BREP_ROUTE_QUAL_CLEAN_ORDINARY)
+	return RAY_AUDIT_ROUTE_CLEAN_ORDINARY;
+    /* Observation strata describe the legacy roots, independently of the
+     * optional work chosen by the router.  In particular, an all-hazard ray
+     * remains all-hazard when a narrower contact selector correctly leaves it
+     * on the retained legacy transaction. */
+    if (qualification & RT_BREP_ROUTE_QUAL_CORRECTION_RISK)
+	return RAY_AUDIT_ROUTE_ALL_HAZARD;
+    return RAY_AUDIT_ROUTE_UNCLASSIFIED;
+}
+
+static const char *
+ray_audit_route_stratum_name(ray_audit_route_stratum stratum)
+{
+    static const char *names[RAY_AUDIT_ROUTE_STRATUM_COUNT] = {
+	"empty", "clean_ordinary", "mixed_hazard", "all_hazard",
+	"unsupported", "unclassified"
+    };
+    return stratum >= 0 && stratum < RAY_AUDIT_ROUTE_STRATUM_COUNT ?
+	names[stratum] : "invalid";
+}
+
+static ray_audit_correction_shape
+ray_audit_correction_shape_for(const ray_audit_shot &prepared,
+	const ray_audit_shot &legacy)
+{
+    const bool prepared_empty = prepared.intervals.empty();
+    const bool legacy_empty = legacy.intervals.empty();
+    if (prepared_empty && !legacy_empty)
+	return RAY_AUDIT_CORRECTION_PREPARED_MISS_LEGACY_HIT;
+    if (!prepared_empty && legacy_empty)
+	return RAY_AUDIT_CORRECTION_PREPARED_HIT_LEGACY_MISS;
+    if (!prepared_empty && !legacy_empty)
+	return RAY_AUDIT_CORRECTION_BOTH_NONEMPTY_CHANGED;
+    return RAY_AUDIT_CORRECTION_OTHER;
+}
+
+static const char *
+ray_audit_correction_shape_name(ray_audit_correction_shape shape)
+{
+    static const char *names[RAY_AUDIT_CORRECTION_SHAPE_COUNT] = {
+	"prepared_miss_legacy_hit", "prepared_hit_legacy_miss",
+	"both_nonempty_changed", "other"
+    };
+    return shape >= 0 && shape < RAY_AUDIT_CORRECTION_SHAPE_COUNT ?
+	names[shape] : "invalid";
+}
+
 static void
 ray_audit_free_prepared(audit_prepared_brep &prepared)
 {
@@ -1641,11 +2528,11 @@ ray_audit_free_prepared(audit_prepared_brep &prepared)
 static bool
 ray_audit_prepare(struct db_i *dbip, struct directory *dp, int depth,
     const struct bn_tol *tol, audit_prepared_brep &prepared,
-    ray_audit_prep &result)
+    ray_audit_prep &result, const mat_t transform = NULL)
 {
     result.requested_depth = depth;
     struct rt_db_internal intern;
-    if (!tol || load_brep(dbip, dp, &intern) != BRLCAD_OK)
+    if (!tol || load_brep(dbip, dp, &intern, transform) != BRLCAD_OK)
 	return false;
     prepared.rtip = rt_dirbuild_inmem(NULL, 0, NULL, 0);
     if (!prepared.rtip ||
@@ -1769,6 +2656,46 @@ ray_audit_samples(const point_t bmin, const point_t bmax,
     return samples;
 }
 
+static std::vector<ray_audit_sample>
+ray_audit_exact_samples(const ray_audit_exact_ray &ray, const point_t bmin,
+    const point_t bmax, double minimum_length)
+{
+    vect_t diagonal;
+    VSUB2(diagonal, bmax, bmin);
+    const double margin = std::max(MAGNITUDE(diagonal), minimum_length);
+    double maximum_projection = -std::numeric_limits<double>::infinity();
+    for (int corner = 0; corner < 8; ++corner) {
+	point_t point;
+	VSET(point, corner & 1 ? bmax[X] : bmin[X],
+	    corner & 2 ? bmax[Y] : bmin[Y],
+	    corner & 4 ? bmax[Z] : bmin[Z]);
+	vect_t offset;
+	VSUB2(offset, point, ray.origin);
+	maximum_projection = std::max(maximum_projection,
+	    (double)VDOT(offset, ray.direction));
+    }
+    const double chord_length = std::max(margin,
+	maximum_projection + margin);
+    std::vector<ray_audit_sample> samples;
+    if (!(chord_length > SMALL_FASTF) || !std::isfinite(chord_length))
+	return samples;
+    samples.reserve(2);
+    ray_audit_sample forward;
+    VMOVE(forward.origin, ray.origin);
+    VMOVE(forward.direction, ray.direction);
+    forward.chord_length = chord_length;
+    forward.kind = RAY_AUDIT_EXACT_CHORD;
+    samples.push_back(forward);
+    ray_audit_sample reverse;
+    VJOIN1(reverse.origin, ray.origin, chord_length, ray.direction);
+    VREVERSE(reverse.direction, ray.direction);
+    reverse.chord_length = chord_length;
+    reverse.reverse = true;
+    reverse.kind = RAY_AUDIT_EXACT_CHORD;
+    samples.push_back(reverse);
+    return samples;
+}
+
 static const char *
 ray_audit_sample_kind_name(ray_audit_sample_kind kind)
 {
@@ -1783,6 +2710,10 @@ ray_audit_sample_kind_name(ray_audit_sample_kind kind)
 	    return "edge_normal";
 	case RAY_AUDIT_EDGE_GRAZE_CHORD:
 	    return "edge_graze";
+	case RAY_AUDIT_EXACT_CHORD:
+	    return "exact";
+	case RAY_AUDIT_SAMPLE_KIND_COUNT:
+	    break;
     }
     return "unknown";
 }
@@ -1993,6 +2924,20 @@ ray_audit_shoot(audit_prepared_brep &prepared,
 	_rt_brep_shot_legacy_trace(prepared.stp, &ray, &ap, &seghead, trace) :
 	_rt_brep_shot_trace(prepared.stp, &ray, &ap, &seghead, trace);
     result.prepared_selected = trace->prepared_production_selected == 1;
+    result.seeded_verifier_complete = trace->seeded_verify_complete == 1;
+    result.seeded_route_lane = trace->route_decision_attempts ?
+	trace->seeded_route_lane : -1;
+    result.seeded_verifier_failure_stage =
+	trace->seeded_verify_failure_stage;
+    result.seeded_route_capability_flags =
+	trace->seeded_route_capability_flags;
+    result.seeded_route_risk_flags = trace->seeded_route_risk_flags;
+    result.route_decision_attempts = trace->route_decision_attempts;
+    result.route_decision = trace->route_decision;
+    result.missing_root_counterfactual_attempts =
+	trace->missing_root_counterfactual_attempts;
+    result.missing_root_counterfactual =
+	trace->missing_root_counterfactual;
     result.fallback = trace->prepared_production_fallback;
     result.intersected_leaves = trace->intersected_leaves;
     result.solver_calls = trace->solver_calls;
@@ -2012,6 +2957,13 @@ ray_audit_shoot(audit_prepared_brep &prepared,
     result.fixed_after_direction_cleanup =
 	trace->fixed_after_direction_cleanup;
     result.fixed_cleanup_mismatches = trace->fixed_cleanup_mismatches;
+    result.fixed_leaf_fallback = trace->fixed_leaf_fallback;
+    result.fixed_hit_fallback = trace->fixed_hit_fallback;
+    for (int action = 0; action < RT_BREP_LEGACY_CLEANUP_COUNT; ++action)
+	result.legacy_cleanup_actions[action] =
+	    trace->legacy_cleanup_actions[action];
+    result.legacy_cleanup_action_mismatches =
+	trace->legacy_cleanup_action_mismatches;
     result.trim_equivalence_mismatches = trace->trim_equivalence_mismatches;
     result.face_trim_status_mismatches =
 	trace->face_trim_status_mismatches;
@@ -2021,6 +2973,28 @@ ray_audit_shoot(audit_prepared_brep &prepared,
 	trace->face_trim_adjacency_mismatches;
     result.face_trim_equivalence_mismatches =
 	trace->face_trim_equivalence_mismatches;
+    result.prepared_production_hits = trace->prepared_production_hits;
+    result.prepared_require_surface_box_free =
+	trace->prepared_require_surface_box_free != 0;
+    result.prepared_selective_class_rejections =
+	trace->prepared_selective_class_rejections;
+    result.prepared_selective_candidate_surface_spans =
+	trace->prepared_selective_candidate_surface_spans;
+    result.prepared_selective_subdivision_boxes =
+	trace->prepared_selective_subdivision_boxes;
+    result.prepared_selective_surface_boxes =
+	trace->prepared_selective_surface_boxes;
+    result.physical_event_complete = trace->physical_event_complete;
+    result.physical_event_unresolved = trace->physical_event_unresolved;
+    result.physical_event_state_failures =
+	trace->physical_event_state_failures;
+    result.physical_event_material_segments =
+	trace->physical_event_material_segments;
+    result.physical_event_subminimum_contacts =
+	trace->physical_event_subminimum_contacts;
+    result.physical_event_tolerance_ambiguous =
+	trace->physical_event_tolerance_ambiguous;
+    result.stored_physical_events = trace->stored_physical_events;
     result.roots.assign(trace->roots,
 	trace->roots + std::min(trace->stored_roots,
 	    (size_t)RT_BREP_TRACE_MAX_ROOTS));
@@ -2036,6 +3010,16 @@ ray_audit_shoot(audit_prepared_brep &prepared,
 	    sample.direction);
 	interval.in_face = segp->seg_in.hit_surfno;
 	interval.out_face = segp->seg_out.hit_surfno;
+	VMOVE(interval.in_point, segp->seg_in.hit_point);
+	VMOVE(interval.out_point, segp->seg_out.hit_point);
+	VMOVE(interval.in_normal, segp->seg_in.hit_normal);
+	VMOVE(interval.out_normal, segp->seg_out.hit_normal);
+	interval.in_uv[0] = segp->seg_in.hit_vpriv[0];
+	interval.in_uv[1] = segp->seg_in.hit_vpriv[1];
+	interval.out_uv[0] = segp->seg_out.hit_vpriv[0];
+	interval.out_uv[1] = segp->seg_out.hit_vpriv[1];
+	if (segp->seg_stp != prepared.stp)
+	    result.valid = false;
 	result.intervals.push_back(interval);
     }
     while (BU_LIST_WHILE(segp, seg, &seghead.l)) {
@@ -2073,6 +3057,353 @@ ray_audit_shoot(audit_prepared_brep &prepared,
     return result;
 }
 
+/* Exercise the same cache-aware object-prep path used by normal raytracing.
+ * Unlike raytrace_prep_result(), the measured interval includes tree loading
+ * and the final rt_prep() pass, but excludes opening the database.  A BREP
+ * cache load is observable without exposing cache internals: deserialization
+ * reconstructs all derived routing data but records zero SurfaceTree build
+ * time. */
+static prep_result
+raytrace_cached_prep_result(struct db_i *dbip, struct directory *dp,
+	const char *db_path, const char *object, int depth)
+{
+    prep_result result;
+    result.requested_depth = depth;
+    result.cache_lookup_requested = true;
+
+    struct rt_db_internal intern;
+    if (load_brep(dbip, dp, &intern) != BRLCAD_OK)
+	return result;
+    result.failure_reason = "none";
+    struct rt_brep_internal *bi =
+	(struct rt_brep_internal *)intern.idb_ptr;
+    RT_BREP_CK_MAGIC(bi);
+    const ON_BoundingBox bbox = bi->brep->BoundingBox();
+    if (bbox.IsValid()) {
+	VMOVE(result.bmin, bbox.m_min);
+	VMOVE(result.bmax, bbox.m_max);
+	result.have_bbox = true;
+    }
+    result.face_count = bi->brep->m_F.Count();
+    rt_db_free_internal(&intern);
+
+    struct rt_i *rtip = rt_dirbuild(db_path, NULL, 0);
+    if (!rtip) {
+	result.failure_reason = "database_raytrace_load";
+	return result;
+    }
+    if (!_rt_brep_set_surface_tree_depth(rtip, depth)) {
+	rt_i_destroy(rtip);
+	result.failure_reason = "invalid_depth";
+	return result;
+    }
+
+    result.resident_before_bytes = resident_rss_bytes();
+    const int64_t start = bu_gettime();
+    const int tree_result = rt_gettree(rtip, object);
+    if (tree_result >= 0)
+	rt_prep(rtip);
+    result.seconds = (bu_gettime() - start) / 1000000.0;
+    result.resident_prepared_bytes = resident_rss_bytes();
+    result.peak_rss_bytes = peak_rss_bytes();
+
+    struct soltab *stp = tree_result >= 0 ? rt_find_solid(rtip, object) : NULL;
+    result.ret = stp ? BRLCAD_OK : BRLCAD_ERROR;
+    if (stp) {
+	VMOVE(result.bmin, stp->st_min);
+	VMOVE(result.bmax, stp->st_max);
+	result.have_bbox = true;
+	result.stats_valid = _rt_brep_prep_stats(stp, &result.stats) != 0;
+	result.cache_hit = result.stats_valid &&
+	    result.stats.surface_tree_build_microseconds == 0;
+    }
+
+    rt_clean(rtip);
+    rt_i_destroy(rtip);
+    result.resident_after_free_bytes = resident_rss_bytes();
+    if (result.ret != BRLCAD_OK) {
+	result.failure_reason = "cache_prep";
+	diagnose_surface_tree_failures(dbip, dp, &result);
+    }
+    return result;
+}
+
+
+/* Exercise the production selective transaction without trace-mode side
+ * effects.  This is deliberately separate from ray_audit_shoot: trace mode
+ * constructs both prepared and legacy records, while the direct transaction
+ * must prove that it publishes exactly one complete result. */
+static ray_audit_shot
+ray_audit_shoot_routed(audit_prepared_brep &prepared,
+    const ray_audit_sample &sample, const struct bn_tol *tol,
+    bool publish_optional, bool inject_legacy_root_fault = false)
+{
+    ray_audit_shot result;
+    struct application ap;
+    struct seg seghead;
+    struct xray ray;
+    RT_APPLICATION_INIT(&ap);
+    ap.a_rt_i = prepared.rtip;
+    ap.a_resource = &prepared.resource;
+    ap.a_onehit = 0;
+    VMOVE(ray.r_pt, sample.origin);
+    VMOVE(ray.r_dir, sample.direction);
+    ray.magic = RT_RAY_MAGIC;
+    BU_LIST_INIT(&seghead.l);
+    if (inject_legacy_root_fault) {
+	result.route_test_available = true;
+	result.hit_count = _rt_brep_shot_route_missing_root_test(prepared.stp,
+	    &ray, &ap, &seghead, publish_optional ? 1 : 0,
+	    &result.route_test);
+	result.route_decision = result.route_test.decision;
+	result.route_decision_attempts = 1;
+	result.seeded_route_lane = result.route_test.decision.optional_work;
+	result.prepared_selected = result.route_test.optional_complete != 0;
+	result.prepared_require_surface_box_free =
+	    result.route_test.require_empty_partition == 1;
+	result.fallback = result.route_test.prepared_fallback;
+    } else {
+	result.hit_count = _rt_brep_shot_route(prepared.stp, &ray, &ap,
+	    &seghead, publish_optional ? 1 : 0);
+    }
+
+    struct seg *segp;
+    for (BU_LIST_FOR(segp, seg, &seghead.l)) {
+	ray_audit_interval interval;
+	interval.in_dist = segp->seg_in.hit_dist;
+	interval.out_dist = segp->seg_out.hit_dist;
+	interval.in_normal_dot = VDOT(segp->seg_in.hit_normal,
+	    sample.direction);
+	interval.out_normal_dot = VDOT(segp->seg_out.hit_normal,
+	    sample.direction);
+	interval.in_face = segp->seg_in.hit_surfno;
+	interval.out_face = segp->seg_out.hit_surfno;
+	VMOVE(interval.in_point, segp->seg_in.hit_point);
+	VMOVE(interval.out_point, segp->seg_out.hit_point);
+	VMOVE(interval.in_normal, segp->seg_in.hit_normal);
+	VMOVE(interval.out_normal, segp->seg_out.hit_normal);
+	interval.in_uv[0] = segp->seg_in.hit_vpriv[0];
+	interval.in_uv[1] = segp->seg_in.hit_vpriv[1];
+	interval.out_uv[0] = segp->seg_out.hit_vpriv[0];
+	interval.out_uv[1] = segp->seg_out.hit_vpriv[1];
+	if (segp->seg_stp != prepared.stp)
+	    result.valid = false;
+	result.intervals.push_back(interval);
+    }
+    while (BU_LIST_WHILE(segp, seg, &seghead.l)) {
+	BU_LIST_DEQUEUE(&segp->l);
+	struct resource *resource = &prepared.resource;
+	RT_FREE_SEG(segp, resource);
+    }
+
+    std::sort(result.intervals.begin(), result.intervals.end(),
+	[](const ray_audit_interval &first, const ray_audit_interval &second) {
+	    if (first.in_dist < second.in_dist)
+		return true;
+	    if (second.in_dist < first.in_dist)
+		return false;
+	    return first.out_dist < second.out_dist;
+	});
+    const double distance_tolerance = ray_audit_distance_tolerance(sample,
+	&result, NULL, tol);
+    if (result.hit_count < 0 ||
+	    (size_t)result.hit_count != 2 * result.intervals.size())
+	result.valid = false;
+    for (size_t i = 0; i < result.intervals.size(); ++i) {
+	const ray_audit_interval &interval = result.intervals[i];
+	if (!std::isfinite(interval.in_dist) ||
+		!std::isfinite(interval.out_dist) ||
+		!std::isfinite(interval.in_normal_dot) ||
+		!std::isfinite(interval.out_normal_dot) ||
+		interval.in_normal_dot > 1.0e-8 ||
+		interval.out_normal_dot < -1.0e-8 ||
+		interval.in_dist > interval.out_dist + distance_tolerance ||
+		(i && interval.in_dist <
+		    result.intervals[i - 1].out_dist - distance_tolerance))
+	    result.valid = false;
+    }
+    return result;
+}
+
+/* A completed prepared physical-event stream is independent of the legacy
+ * cleanup that published the comparison interval.  If every raw legacy root
+ * is either grazing or on a trim boundary, that reduced stream proves the
+ * disagreement belongs to the boundary/contact stratum rather than the clean
+ * ordinary stratum. */
+static bool
+ray_audit_certified_boundary_contact_miss(const ray_audit_shot &prepared,
+    const ray_audit_shot &legacy, const struct bn_tol *tol)
+{
+    if (!tol || !prepared.valid || !legacy.valid ||
+	!prepared.prepared_selected || prepared.hit_count ||
+	prepared.physical_event_complete != 1 ||
+	prepared.physical_event_unresolved ||
+	prepared.physical_event_state_failures ||
+	prepared.physical_event_material_segments ||
+	prepared.physical_event_subminimum_contacts ||
+	prepared.physical_event_tolerance_ambiguous ||
+	prepared.stored_physical_events || legacy.hit_count <= 0 ||
+	legacy.intervals.empty() || prepared.roots.empty())
+	return false;
+
+    bool have_trim_boundary = false;
+    for (size_t root_index = 0; root_index < prepared.roots.size();
+	    ++root_index) {
+	const struct rt_brep_trace_root &root = prepared.roots[root_index];
+	const bool grazing = std::isfinite(root.normal_dot) &&
+	    fabs(root.normal_dot) <= tol->perp;
+	const bool trim_boundary = std::isfinite(root.trim_distance) &&
+	    root.trim_distance >= 0.0 && root.trim_distance <= tol->dist;
+	if (!grazing && !trim_boundary)
+	    return false;
+	have_trim_boundary = have_trim_boundary || trim_boundary;
+    }
+    return have_trim_boundary;
+}
+
+
+/* A completed selective replay is a separate publication certificate from
+ * the boundary/contact oracle above.  It rebuilds the complete ray
+ * transaction from a finer fixed grid and accepts it only after an
+ * independently repeated reverse-direction solve agrees. */
+static bool
+ray_audit_certified_selective_replay(const ray_audit_shot &prepared)
+{
+
+    if (!prepared.valid ||
+	!prepared.prepared_selected ||
+	!prepared.route_decision.legacy_transaction_incomplete ||
+	!prepared.route_decision.missing_root_certificate_triggered ||
+	!prepared.route_decision.selective_refinement_attempted ||
+	!prepared.route_decision.selective_refinement_complete ||
+	!prepared.route_decision.selective_refinement_level ||
+	!prepared.route_decision.selective_refinement_hits ||
+	prepared.route_decision.selective_refinement_reversal_mismatches)
+	return false;
+    return true;
+}
+
+static void
+ray_audit_accumulate_route_certificate(
+    ray_audit_route_certificate_telemetry &total,
+    const struct rt_brep_route_decision &decision)
+{
+    const size_t associations =
+	decision.missing_root_certificate_associations;
+    total.associations += associations;
+    for (int state = 0; state < RT_BREP_ROUTE_CERT_STATE_COUNT; ++state)
+	total.state[state] += decision.missing_root_certificate_state[state];
+    total.regular_root_count +=
+	decision.missing_root_certificate_regular_root_count;
+    total.observed_roots +=
+	decision.missing_root_certificate_observed_roots;
+    total.deficit_cells +=
+	decision.missing_root_certificate_deficit_cells;
+    total.deficit_roots +=
+	decision.missing_root_certificate_deficit_roots;
+    total.cached_bbox_exclusions +=
+	decision.missing_root_certificate_cached_bbox_exclusions;
+    total.hull_exclusions +=
+	decision.missing_root_certificate_hull_exclusions;
+    total.subdivision_attempts +=
+	decision.missing_root_certificate_subdivision_attempts;
+    total.subdivision_boxes +=
+	decision.missing_root_certificate_subdivision_boxes;
+    total.subdivision_hull_exclusions +=
+	decision.missing_root_certificate_subdivision_hull_exclusions;
+    total.subdivision_exclusions +=
+	decision.missing_root_certificate_subdivision_exclusions;
+    total.degree_attempts += decision.missing_root_certificate_degree_attempts;
+    total.degree_complete += decision.missing_root_certificate_degree_complete;
+    for (int reason = 0; reason < RT_BREP_ROUTE_CERT_FAILURE_COUNT; ++reason)
+	total.failure_reason[reason] +=
+	    decision.missing_root_certificate_failure_reason[reason];
+    for (int detail = 0; detail < RT_BREP_ROOT_DEGREE_DETAIL_COUNT; ++detail)
+	total.degree_failure_detail[detail] +=
+	    decision.missing_root_certificate_degree_failure_detail[detail];
+    total.boundary_pieces +=
+	decision.missing_root_certificate_boundary_pieces;
+    total.boundary_splits +=
+	decision.missing_root_certificate_boundary_splits;
+    total.boundary_edges += decision.missing_root_certificate_boundary_edges;
+    total.expansion_high_water = std::max(total.expansion_high_water,
+	decision.missing_root_certificate_expansion_high_water);
+    total.nanoseconds += decision.missing_root_certificate_nanoseconds;
+
+    if (!associations)
+	return;
+    const size_t incomplete =
+	decision.missing_root_certificate_state[RT_BREP_ROUTE_CERT_INCOMPLETE];
+    const size_t root_free =
+	decision.missing_root_certificate_state[RT_BREP_ROUTE_CERT_ROOT_FREE];
+    const size_t root_positive =
+	decision.missing_root_certificate_state[RT_BREP_ROUTE_CERT_ROOT_POSITIVE];
+    if (incomplete)
+	total.incomplete_rays++;
+    else if (root_free + root_positive == associations)
+	total.complete_rays++;
+    if (root_positive)
+	total.root_positive_rays++;
+    else if (!incomplete && root_free == associations)
+	total.root_free_rays++;
+}
+
+static bool
+ray_audit_route_certificate_accounting_valid(
+    const ray_audit_route_certificate_telemetry &certificate)
+{
+    size_t state_total = 0;
+    for (int state = 0; state < RT_BREP_ROUTE_CERT_STATE_COUNT; ++state)
+	state_total += certificate.state[state];
+    size_t failure_total = 0;
+    for (int reason = 0; reason < RT_BREP_ROUTE_CERT_FAILURE_COUNT; ++reason)
+	failure_total += certificate.failure_reason[reason];
+    size_t detail_total = 0;
+    for (int detail = 0; detail < RT_BREP_ROOT_DEGREE_DETAIL_COUNT; ++detail)
+	detail_total += certificate.degree_failure_detail[detail];
+
+    const size_t incomplete =
+	certificate.state[RT_BREP_ROUTE_CERT_INCOMPLETE];
+    const size_t root_free =
+	certificate.state[RT_BREP_ROUTE_CERT_ROOT_FREE];
+    const size_t root_positive =
+	certificate.state[RT_BREP_ROUTE_CERT_ROOT_POSITIVE];
+    if (state_total != certificate.associations || failure_total != incomplete ||
+	    certificate.degree_complete > certificate.degree_attempts ||
+	    detail_total != certificate.degree_attempts - certificate.degree_complete ||
+	    certificate.cached_bbox_exclusions > root_free ||
+	    certificate.hull_exclusions >
+		root_free - certificate.cached_bbox_exclusions ||
+	    certificate.subdivision_exclusions >
+		root_free - certificate.cached_bbox_exclusions -
+		    certificate.hull_exclusions ||
+	    certificate.subdivision_hull_exclusions <
+		certificate.subdivision_exclusions ||
+	    certificate.subdivision_exclusions >
+		certificate.subdivision_attempts ||
+	    certificate.subdivision_attempts !=
+		certificate.subdivision_exclusions +
+		    certificate.degree_attempts ||
+	    root_free - certificate.cached_bbox_exclusions -
+		certificate.hull_exclusions - certificate.subdivision_exclusions +
+		root_positive !=
+		certificate.degree_complete ||
+	    certificate.regular_root_count < root_positive ||
+	    certificate.deficit_roots > certificate.regular_root_count)
+	return false;
+
+    /* Each ray population is a lower-cardinality projection of association
+     * state.  A root-positive ray may also be incomplete because another
+     * association on that ray failed, so it is intentionally not required to
+     * be a subset of complete_rays. */
+    return certificate.complete_rays + certificate.incomplete_rays <=
+	    certificate.associations &&
+	certificate.root_free_rays <= certificate.complete_rays &&
+	certificate.root_free_rays <= root_free &&
+	certificate.root_positive_rays <= root_positive &&
+	certificate.incomplete_rays <= incomplete;
+}
+
 static void
 ray_audit_accumulate(ray_audit_telemetry &total,
     const ray_audit_shot &shot, const struct rt_brep_shot_trace &trace)
@@ -2094,6 +3425,20 @@ ray_audit_accumulate(ray_audit_telemetry &total,
 	    trace.prepared_production_fallback <
 		RT_BREP_PREPARED_FALLBACK_COUNT)
 	total.fallback[trace.prepared_production_fallback]++;
+    total.legacy_capacity_fallback[
+	RT_BREP_LEGACY_CAPACITY_FALLBACK_LEAF_WORKSPACE] +=
+	trace.fixed_leaf_fallback ? 1 : 0;
+    total.legacy_capacity_fallback[
+	RT_BREP_LEGACY_CAPACITY_FALLBACK_HIT_WORKSPACE] +=
+	trace.fixed_hit_fallback ? 1 : 0;
+    for (int action = 0; action < RT_BREP_LEGACY_CLEANUP_COUNT; ++action) {
+	total.legacy_cleanup_action_events[action] +=
+	    trace.legacy_cleanup_actions[action];
+	if (trace.legacy_cleanup_actions[action])
+	    total.legacy_cleanup_action_rays[action]++;
+    }
+    if (trace.legacy_cleanup_action_mismatches)
+	total.legacy_cleanup_action_mismatch_rays++;
     total.solver_calls += trace.solver_calls;
     total.manifold_edges += trace.manifold_edges;
     total.prepared_edge_spans += trace.prepared_edge_spans;
@@ -2160,8 +3505,284 @@ ray_audit_accumulate(ray_audit_telemetry &total,
 	trace.physical_event_regular_stream_certified;
     total.edge_certified += trace.physical_event_edge_certified;
     total.vertex_certified += trace.physical_event_vertex_certified;
+    total.seeded_verify_attempts += trace.seeded_verify_attempts;
+    total.seeded_verify_complete += trace.seeded_verify_complete;
+    total.seeded_verify_complete_selected +=
+	trace.seeded_verify_complete && trace.prepared_production_selected ? 1 : 0;
+    total.seeded_verify_failed_selected +=
+	trace.seeded_verify_attempts && !trace.seeded_verify_complete &&
+	trace.prepared_production_selected ? 1 : 0;
+    total.seeded_verify_complete_mismatch +=
+	trace.seeded_verify_complete && trace.root_event_mismatches ? 1 : 0;
+    total.seeded_verify_legacy_groups += trace.seeded_verify_legacy_groups;
+    total.seeded_verify_candidate_faces +=
+	trace.seeded_verify_candidate_faces;
+    total.seeded_verify_candidate_spans +=
+	trace.seeded_verify_candidate_spans;
+    total.seeded_verify_hull_excluded_spans +=
+	trace.seeded_verify_hull_excluded_spans;
+    total.seeded_verify_mapped_roots += trace.seeded_verify_mapped_roots;
+    total.seeded_verify_local_attempts += trace.seeded_verify_local_attempts;
+    total.seeded_verify_local_certified += trace.seeded_verify_local_certified;
+    total.seeded_verify_degree_attempts += trace.seeded_verify_degree_attempts;
+    total.seeded_verify_degree_complete += trace.seeded_verify_degree_complete;
+    total.seeded_verify_degree_determinant_failures +=
+	trace.seeded_verify_degree_determinant_failures;
+    total.seeded_verify_degree_boundary_failures +=
+	trace.seeded_verify_degree_boundary_failures;
+    total.seeded_verify_degree_orientation_failures +=
+	trace.seeded_verify_degree_orientation_failures;
+    total.seeded_verify_degree_count_mismatches +=
+	trace.seeded_verify_degree_count_mismatches;
+    total.seeded_verify_degree_sign_mismatches +=
+	trace.seeded_verify_degree_sign_mismatches;
+    total.seeded_verify_degree_count_low +=
+	trace.seeded_verify_degree_count_low;
+    total.seeded_verify_degree_count_high +=
+	trace.seeded_verify_degree_count_high;
+    total.seeded_verify_degree_mismatch_local_exact +=
+	trace.seeded_verify_degree_mismatch_local_exact;
+    total.seeded_verify_degree_mismatch_local_inexact +=
+	trace.seeded_verify_degree_mismatch_local_inexact;
+    total.seeded_verify_degree_extra_local_roots +=
+	trace.seeded_verify_degree_extra_local_roots;
+    total.seeded_verify_degree_extra_local_trimmed +=
+	trace.seeded_verify_degree_extra_local_trimmed;
+    total.seeded_verify_degree_extra_local_untrimmed +=
+	trace.seeded_verify_degree_extra_local_untrimmed;
+    total.seeded_verify_degree_surplus_empty +=
+	trace.seeded_verify_degree_surplus_empty;
+    total.seeded_verify_degree_surplus_seeded +=
+	trace.seeded_verify_degree_surplus_seeded;
+    total.seeded_verify_degree_surplus_corrector_attempts +=
+	trace.seeded_verify_degree_surplus_corrector_attempts;
+    total.seeded_verify_degree_surplus_corrector_converged +=
+	trace.seeded_verify_degree_surplus_corrector_converged;
+    total.seeded_verify_degree_surplus_local_attempts +=
+	trace.seeded_verify_degree_surplus_local_attempts;
+    total.seeded_verify_degree_surplus_local_certified +=
+	trace.seeded_verify_degree_surplus_local_certified;
+    total.seeded_verify_degree_surplus_trimmed_certified +=
+	trace.seeded_verify_degree_surplus_trimmed_certified;
+    total.seeded_verify_degree_surplus_untrimmed +=
+	trace.seeded_verify_degree_surplus_untrimmed;
+    total.seeded_verify_degree_surplus_nanoseconds +=
+	trace.seeded_verify_degree_surplus_nanoseconds;
+    total.seeded_verify_degree_root_count +=
+	trace.seeded_verify_degree_root_count;
+    total.seeded_verify_degree_seed_count +=
+	trace.seeded_verify_degree_seed_count;
+    total.seeded_verify_degree_boundary_pieces +=
+	trace.seeded_verify_degree_boundary_pieces;
+    total.seeded_verify_degree_boundary_splits +=
+	trace.seeded_verify_degree_boundary_splits;
+    total.seeded_verify_degree_boundary_edges +=
+	trace.seeded_verify_degree_boundary_edges;
+    total.seeded_verify_degree_expansion_high_water = std::max(
+	total.seeded_verify_degree_expansion_high_water,
+	trace.seeded_verify_degree_expansion_high_water);
+    total.seeded_verify_degree_nanoseconds +=
+	trace.seeded_verify_degree_nanoseconds;
+    total.seeded_verify_degree_complement_agreements +=
+	trace.seeded_verify_degree_complement_agreements;
+    total.seeded_verify_degree_complement_disagreements +=
+	trace.seeded_verify_degree_complement_disagreements;
+    for (int detail = 0; detail < RT_BREP_ROOT_DEGREE_DETAIL_COUNT; ++detail)
+	total.seeded_verify_degree_failure_detail[detail] +=
+	    trace.seeded_verify_degree_failure_detail[detail];
+    total.seeded_verify_complement_visited +=
+	trace.seeded_verify_complement_visited;
+    total.seeded_verify_complement_high_water = std::max(
+	total.seeded_verify_complement_high_water,
+	trace.seeded_verify_complement_high_water);
+    total.seeded_verify_partition_events +=
+	trace.seeded_verify_partition_events;
+    total.seeded_verify_nanoseconds += trace.seeded_verify_nanoseconds;
+    for (int stage = 0; stage < RT_BREP_SEEDED_VERIFY_STAGE_COUNT; ++stage)
+	total.seeded_verify_stage_nanoseconds[stage] +=
+	    trace.seeded_verify_stage_nanoseconds[stage];
+    if (trace.seeded_verify_attempts && trace.seeded_verify_failure_stage >= 0 &&
+	trace.seeded_verify_failure_stage < RT_BREP_SEEDED_VERIFY_STAGE_COUNT) {
+	total.seeded_verify_failure_stage[trace.seeded_verify_failure_stage]++;
+	if (trace.prepared_production_selected)
+	    total.seeded_verify_selected_failure_stage[
+		trace.seeded_verify_failure_stage]++;
+    }
+    if (trace.route_decision_attempts && trace.seeded_route_lane >= 0 &&
+	trace.seeded_route_lane < RT_BREP_ROUTE_LANE_COUNT) {
+	const int lane = trace.seeded_route_lane;
+	total.seeded_route_rays[lane]++;
+	total.seeded_route_verifier_complete[lane] +=
+	    trace.seeded_verify_complete ? 1 : 0;
+	total.seeded_route_prepared_selected[lane] +=
+	    trace.prepared_production_selected ? 1 : 0;
+	total.seeded_route_root_mismatch[lane] +=
+	    trace.root_event_mismatches ? 1 : 0;
+	total.seeded_route_capability_mask |=
+	    trace.seeded_route_capability_flags;
+	total.seeded_route_risk_mask |= trace.seeded_route_risk_flags;
+	for (int bit = 0; bit < RT_BREP_ROUTE_CAP_COUNT; ++bit)
+	    if (trace.seeded_route_capability_flags & (1u << bit))
+		total.seeded_route_capability_rays[bit]++;
+	for (int bit = 0; bit < RT_BREP_ROUTE_RISK_COUNT; ++bit)
+	    if (trace.seeded_route_risk_flags & (1u << bit))
+		total.seeded_route_risk_rays[bit]++;
+	for (int bit = 0; bit < RT_BREP_ROUTE_QUAL_COUNT; ++bit)
+	    if (trace.route_decision.qualification_flags & (1u << bit))
+		total.seeded_route_qualification_rays[bit]++;
+	total.route_decision_nanoseconds +=
+	    trace.route_decision.decision_nanoseconds;
+	total.route_candidate_cells += trace.route_decision.candidate_cells;
+	total.route_hazard_roots += trace.route_decision.hazard_roots;
+	total.route_contact_roots += trace.route_decision.contact_roots;
+	total.route_legacy_transaction_incomplete +=
+	    trace.route_decision.legacy_transaction_incomplete;
+	total.route_selective_refinement_attempted +=
+	    trace.route_decision.selective_refinement_attempted;
+	total.route_selective_refinement_complete +=
+	    trace.route_decision.selective_refinement_complete;
+	total.route_selective_refinement_max_level = std::max(
+	    total.route_selective_refinement_max_level,
+	    trace.route_decision.selective_refinement_level);
+	total.route_selective_refinement_hits +=
+	    trace.route_decision.selective_refinement_hits;
+	total.route_selective_refinement_reversal_mismatches +=
+	    trace.route_decision.selective_refinement_reversal_mismatches;
+	total.route_selective_refinement_nanoseconds +=
+	    trace.route_decision.selective_refinement_nanoseconds;
+	total.route_cell_lookup_failures +=
+	    trace.route_decision.cell_lookup_failures;
+	for (size_t reason = 0; reason < RT_BREP_ROUTE_LOOKUP_REASON_COUNT;
+		reason++)
+	    total.route_cell_lookup_failure_reasons[reason] +=
+		trace.route_decision.cell_lookup_failure_reasons[reason];
+	total.route_roots_unmapped_after_leaf_overflow +=
+	    trace.route_decision.roots_unmapped_after_leaf_overflow;
+	total.route_empty_correction_cells +=
+	    trace.route_decision.empty_correction_cells;
+	total.route_missing_root_candidate_spans +=
+	    trace.route_decision.missing_root_candidate_spans;
+	total.route_missing_root_retained_spans +=
+	    trace.route_decision.missing_root_retained_spans;
+	total.route_missing_root_restricted_spans +=
+	    trace.route_decision.missing_root_restricted_spans;
+	total.route_missing_root_inconclusive_spans +=
+	    trace.route_decision.missing_root_inconclusive_spans;
+	total.route_missing_root_workspace_overflow +=
+	    trace.route_decision.missing_root_workspace_overflow;
+	total.route_missing_root_signal_rays +=
+	    trace.route_decision.missing_root_retained_spans ? 1 : 0;
+	total.route_missing_root_prepared_candidate_faces +=
+	    trace.route_decision.missing_root_prepared_candidate_faces;
+	total.route_missing_root_prepared_candidate_spans +=
+	    trace.route_decision.missing_root_prepared_candidate_spans;
+	total.route_missing_root_prepared_retained_spans +=
+	    trace.route_decision.missing_root_prepared_retained_spans;
+	total.route_missing_root_prepared_only_spans +=
+	    trace.route_decision.missing_root_prepared_only_spans;
+	total.route_missing_root_prepared_only_retained_spans +=
+	    trace.route_decision.missing_root_prepared_only_retained_spans;
+	total.route_missing_root_prepared_inconclusive_spans +=
+	    trace.route_decision.missing_root_prepared_inconclusive_spans;
+	total.route_missing_root_prepared_candidate_failures +=
+	    trace.route_decision.missing_root_prepared_candidate_failures;
+	total.route_missing_root_prepared_signal_rays +=
+	    trace.route_decision.missing_root_prepared_retained_spans ? 1 : 0;
+	ray_audit_accumulate_route_certificate(
+	    total.route_missing_root_certificate, trace.route_decision);
+	if (trace.route_decision.missing_root_retained_spans) {
+	    if (!trace.prepared_production_selected)
+		total.route_missing_root_unresolved_rays++;
+	    else if (trace.prepared_production_hits)
+		total.route_missing_root_independent_hit_rays++;
+	    else
+		    total.route_missing_root_independent_empty_rays++;
+	}
+	if (trace.route_decision.missing_root_prepared_retained_spans) {
+	    if (!trace.prepared_production_selected)
+		total.route_missing_root_prepared_unresolved_rays++;
+	    else if (trace.prepared_production_hits)
+		total.route_missing_root_prepared_independent_hit_rays++;
+	    else
+		total.route_missing_root_prepared_independent_empty_rays++;
+	}
+	total.route_missing_root_counterfactual_attempts +=
+	    trace.missing_root_counterfactual_attempts;
+	if (trace.missing_root_counterfactual_attempts) {
+	    const struct rt_brep_route_decision &counterfactual =
+		trace.missing_root_counterfactual;
+	    total.route_missing_root_counterfactual_signal_rays +=
+		counterfactual.missing_root_retained_spans ? 1 : 0;
+	    total.route_missing_root_counterfactual_unsignaled_rays +=
+		counterfactual.missing_root_retained_spans ? 0 : 1;
+	    const bool signaled =
+		counterfactual.missing_root_retained_spans != 0;
+	    const bool prepared_signaled =
+		counterfactual.missing_root_prepared_retained_spans != 0;
+	    total.route_missing_root_counterfactual_prepared_signal_rays +=
+		prepared_signaled ? 1 : 0;
+	    total.route_missing_root_counterfactual_prepared_unsignaled_rays +=
+		prepared_signaled ? 0 : 1;
+	    if (!trace.prepared_production_selected) {
+		total.route_missing_root_counterfactual_unresolved_controls++;
+	    } else if (trace.prepared_production_hits) {
+		total.route_missing_root_counterfactual_true_root_controls++;
+		if (signaled)
+		    total.route_missing_root_counterfactual_true_root_signals++;
+		else
+		    total.route_missing_root_counterfactual_true_root_missed++;
+		if (prepared_signaled) {
+		    total.route_missing_root_counterfactual_true_root_prepared_signals++;
+		    if (!signaled)
+			total.route_missing_root_counterfactual_true_root_prepared_recovered++;
+		} else {
+		    total.route_missing_root_counterfactual_true_root_prepared_missed++;
+		}
+	    } else {
+		total.route_missing_root_counterfactual_empty_controls++;
+		if (signaled)
+		    total.route_missing_root_counterfactual_empty_signals++;
+		else
+		    total.route_missing_root_counterfactual_empty_rejected++;
+		if (prepared_signaled)
+		    total.route_missing_root_counterfactual_empty_prepared_signals++;
+		else
+		    total.route_missing_root_counterfactual_empty_prepared_rejected++;
+	    }
+	    total.route_missing_root_counterfactual_candidate_spans +=
+		counterfactual.missing_root_candidate_spans;
+	    total.route_missing_root_counterfactual_retained_spans +=
+		counterfactual.missing_root_retained_spans;
+	    total.route_missing_root_counterfactual_restricted_spans +=
+		counterfactual.missing_root_restricted_spans;
+	    total.route_missing_root_counterfactual_inconclusive_spans +=
+		counterfactual.missing_root_inconclusive_spans;
+	    total.route_missing_root_counterfactual_workspace_overflow +=
+		counterfactual.missing_root_workspace_overflow;
+	    total.route_missing_root_counterfactual_prepared_candidate_faces +=
+		counterfactual.missing_root_prepared_candidate_faces;
+	    total.route_missing_root_counterfactual_prepared_candidate_spans +=
+		counterfactual.missing_root_prepared_candidate_spans;
+	    total.route_missing_root_counterfactual_prepared_retained_spans +=
+		counterfactual.missing_root_prepared_retained_spans;
+	    total.route_missing_root_counterfactual_prepared_only_spans +=
+		counterfactual.missing_root_prepared_only_spans;
+	    total.route_missing_root_counterfactual_prepared_only_retained_spans +=
+		counterfactual.missing_root_prepared_only_retained_spans;
+	    total.route_missing_root_counterfactual_prepared_inconclusive_spans +=
+		counterfactual.missing_root_prepared_inconclusive_spans;
+	    total.route_missing_root_counterfactual_prepared_candidate_failures +=
+		counterfactual.missing_root_prepared_candidate_failures;
+	    ray_audit_accumulate_route_certificate(
+		total.route_missing_root_counterfactual_certificate,
+		counterfactual);
+	    total.route_missing_root_counterfactual_nanoseconds +=
+		counterfactual.decision_nanoseconds;
+	}
+    }
     if (trace.fixed_leaf_mismatches || trace.fixed_hit_mismatches ||
 	    trace.fixed_cleanup_mismatches ||
+	    trace.legacy_cleanup_action_mismatches ||
 	    trace.trim_equivalence_mismatches ||
 	    trace.face_trim_equivalence_mismatches)
 	total.fixed_equivalence_mismatch_rays++;
@@ -2174,11 +3795,12 @@ ray_audit_accumulate(ray_audit_telemetry &total,
 static ray_audit_depth_run
 ray_audit_run_depth(struct db_i *dbip, struct directory *dp, int depth,
     const struct bn_tol *tol, const std::vector<ray_audit_sample> &samples,
-    bool legacy_only)
+    bool legacy_only, const mat_t transform = NULL)
 {
     ray_audit_depth_run run;
     audit_prepared_brep prepared;
-    if (!ray_audit_prepare(dbip, dp, depth, tol, prepared, run.prep))
+    if (!ray_audit_prepare(dbip, dp, depth, tol, prepared, run.prep,
+	    transform))
 	return run;
     run.shots.reserve(samples.size());
     struct rt_brep_shot_trace *trace =
@@ -2191,6 +3813,26 @@ ray_audit_run_depth(struct db_i *dbip, struct directory *dp, int depth,
 	run.shots.push_back(shot);
     }
     bu_free(trace, "brep ray audit trace");
+    ray_audit_free_prepared(prepared);
+    return run;
+}
+
+
+static ray_audit_depth_run
+ray_audit_run_routed(struct db_i *dbip, struct directory *dp, int depth,
+    const struct bn_tol *tol, const std::vector<ray_audit_sample> &samples,
+    bool publish_optional, bool inject_legacy_root_fault = false,
+    const mat_t transform = NULL)
+{
+    ray_audit_depth_run run;
+    audit_prepared_brep prepared;
+    if (!ray_audit_prepare(dbip, dp, depth, tol, prepared, run.prep,
+	    transform))
+	return run;
+    run.shots.reserve(samples.size());
+    for (size_t i = 0; i < samples.size(); ++i)
+	run.shots.push_back(ray_audit_shoot_routed(prepared, samples[i], tol,
+	    publish_optional, inject_legacy_root_fault));
     ray_audit_free_prepared(prepared);
     return run;
 }
@@ -2219,6 +3861,272 @@ ray_audit_shots_equivalent(const ray_audit_sample &sample,
 	    face_differences++;
     }
     return equivalent;
+}
+
+
+static bool
+ray_audit_publication_equivalent(const ray_audit_sample &sample,
+    const ray_audit_shot &published, const ray_audit_shot &expected,
+    const struct bn_tol *tol)
+{
+    double maximum_delta = 0.0;
+    size_t face_differences = 0;
+    if (!ray_audit_shots_equivalent(sample, published, expected, tol,
+	    maximum_delta, face_differences) || face_differences)
+	return false;
+    const double distance_tolerance = ray_audit_distance_tolerance(sample,
+	&published, &expected, tol);
+    const double normal_tolerance = std::max(tol ? (double)tol->perp : 0.0,
+	65536.0 * DBL_EPSILON);
+    for (size_t i = 0; i < published.intervals.size(); ++i) {
+	const ray_audit_interval &actual = published.intervals[i];
+	const ray_audit_interval &wanted = expected.intervals[i];
+	if (fabs(actual.in_normal_dot - wanted.in_normal_dot) >
+		normal_tolerance ||
+		fabs(actual.out_normal_dot - wanted.out_normal_dot) >
+		normal_tolerance)
+	    return false;
+	for (int coordinate = 0; coordinate < 3; ++coordinate) {
+	    if (!std::isfinite(actual.in_point[coordinate]) ||
+		    !std::isfinite(wanted.in_point[coordinate]) ||
+		    !std::isfinite(actual.out_point[coordinate]) ||
+		    !std::isfinite(wanted.out_point[coordinate]) ||
+		    !std::isfinite(actual.in_normal[coordinate]) ||
+		    !std::isfinite(wanted.in_normal[coordinate]) ||
+		    !std::isfinite(actual.out_normal[coordinate]) ||
+		    !std::isfinite(wanted.out_normal[coordinate]) ||
+		    fabs(actual.in_point[coordinate] -
+		    wanted.in_point[coordinate]) > distance_tolerance ||
+		    fabs(actual.out_point[coordinate] -
+		    wanted.out_point[coordinate]) > distance_tolerance ||
+		    fabs(actual.in_normal[coordinate] -
+		    wanted.in_normal[coordinate]) > normal_tolerance ||
+		    fabs(actual.out_normal[coordinate] -
+		    wanted.out_normal[coordinate]) > normal_tolerance)
+		return false;
+	}
+	for (int coordinate = 0; coordinate < 2; ++coordinate) {
+	    if (!std::isfinite(actual.in_uv[coordinate]) ||
+		    !std::isfinite(wanted.in_uv[coordinate]) ||
+		    !std::isfinite(actual.out_uv[coordinate]) ||
+		    !std::isfinite(wanted.out_uv[coordinate]))
+		return false;
+	    const double in_scale = std::max(1.0, std::max(
+		fabs(actual.in_uv[coordinate]),
+		fabs(wanted.in_uv[coordinate])));
+	    const double out_scale = std::max(1.0, std::max(
+		fabs(actual.out_uv[coordinate]),
+		fabs(wanted.out_uv[coordinate])));
+	    if (fabs(actual.in_uv[coordinate] - wanted.in_uv[coordinate]) >
+		    65536.0 * DBL_EPSILON * in_scale ||
+		    fabs(actual.out_uv[coordinate] - wanted.out_uv[coordinate]) >
+		    65536.0 * DBL_EPSILON * out_scale)
+		return false;
+	}
+    }
+    return true;
+}
+
+
+static void
+ray_audit_store_example(std::vector<size_t> &examples, size_t index);
+
+
+static ray_audit_publication
+ray_audit_check_publication(const std::vector<ray_audit_sample> &samples,
+    const ray_audit_depth_run &prepared, const ray_audit_depth_run &legacy,
+    const ray_audit_depth_run &published, const struct bn_tol *tol)
+{
+    ray_audit_publication result;
+    const size_t count = std::min(samples.size(), std::min(prepared.shots.size(),
+	std::min(legacy.shots.size(), published.shots.size())));
+    result.rays = count;
+    for (size_t i = 0; i < count; ++i) {
+	const ray_audit_shot &prepared_shot = prepared.shots[i];
+	const ray_audit_shot &legacy_shot = legacy.shots[i];
+	const ray_audit_shot &published_shot = published.shots[i];
+	if (!published_shot.valid)
+	    result.invalid_rays++;
+	const bool attempted = prepared_shot.route_decision.optional_work ==
+	    RT_BREP_ROUTE_WORK_COMPLEX_PREPARED;
+	const bool complete = attempted && prepared_shot.prepared_selected;
+	const bool eligible = complete &&
+	    !(prepared_shot.route_decision.qualification_flags &
+		RT_BREP_ROUTE_QUAL_UNSUPPORTED) &&
+	    (prepared_shot.route_decision.qualification_flags &
+		RT_BREP_ROUTE_QUAL_CORRECTION_RISK);
+	result.optional_attempts += attempted ? 1 : 0;
+	result.optional_complete += complete ? 1 : 0;
+	result.eligible_publications += eligible ? 1 : 0;
+	const ray_audit_shot &expected = eligible ? prepared_shot : legacy_shot;
+	if (!ray_audit_publication_equivalent(samples[i], published_shot,
+		expected, tol)) {
+	    result.mismatches++;
+	    ray_audit_store_example(result.mismatch_ray_indices, i);
+	    continue;
+	}
+	if (eligible) {
+	    result.prepared_matches++;
+	    double ignored_delta = 0.0;
+	    size_t ignored_faces = 0;
+	    if (!ray_audit_shots_equivalent(samples[i], prepared_shot,
+		    legacy_shot, tol, ignored_delta, ignored_faces))
+		result.published_correction_rays++;
+	} else {
+	    result.legacy_fallback_matches++;
+	}
+    }
+    if (count != samples.size() || count != prepared.shots.size() ||
+	    count != legacy.shots.size() || count != published.shots.size())
+	result.mismatches++;
+    return result;
+}
+
+
+static ray_audit_missing_root_injection
+ray_audit_check_missing_root_injection(
+    const std::vector<ray_audit_sample> &samples,
+    const ray_audit_depth_run &prepared, const ray_audit_depth_run &legacy,
+    const ray_audit_depth_run &direct,
+    const ray_audit_depth_run &published, const struct bn_tol *tol)
+{
+    ray_audit_missing_root_injection result;
+    const size_t count = std::min(samples.size(), std::min(
+	prepared.shots.size(), std::min(legacy.shots.size(),
+	    std::min(direct.shots.size(), published.shots.size()))));
+    result.rays = count;
+    for (size_t i = 0; i < count; ++i) {
+	const ray_audit_shot &prepared_shot = prepared.shots[i];
+	const ray_audit_shot &legacy_shot = legacy.shots[i];
+	const ray_audit_shot &direct_shot = direct.shots[i];
+	const ray_audit_shot &published_shot = published.shots[i];
+	bool decision_valid = direct_shot.route_test_available &&
+	    published_shot.route_test_available;
+	const struct rt_brep_route_test_result &direct_test =
+	    direct_shot.route_test;
+	const struct rt_brep_route_test_result &published_test =
+	    published_shot.route_test;
+	const bool fault_injected =
+	    direct_test.legacy_root_fault_injected &&
+	    published_test.legacy_root_fault_injected;
+	const bool matching_fault = fault_injected &&
+	    direct_test.suppressed_legacy_raw_hits ==
+		published_test.suppressed_legacy_raw_hits &&
+	    direct_test.suppressed_legacy_route_roots ==
+		published_test.suppressed_legacy_route_roots &&
+	    direct_test.suppressed_legacy_hit_overflow ==
+		published_test.suppressed_legacy_hit_overflow &&
+	    direct_test.suppressed_legacy_root_overflow ==
+		published_test.suppressed_legacy_root_overflow &&
+	    !direct_test.suppressed_legacy_hit_overflow &&
+	    !direct_test.suppressed_legacy_root_overflow;
+	if (fault_injected)
+	    result.fault_injected++;
+	if (direct_test.suppressed_legacy_raw_hits) {
+	    result.suppressed_hit_rays++;
+	    result.suppressed_raw_hits +=
+		direct_test.suppressed_legacy_raw_hits;
+	}
+	result.suppressed_route_roots +=
+	    direct_test.suppressed_legacy_route_roots;
+	const bool direct_empty = direct_shot.valid && !direct_shot.hit_count &&
+	    direct_shot.intervals.empty();
+	if (direct_empty)
+	    result.direct_empty_results++;
+	const bool fault_exposed = !ray_audit_publication_equivalent(samples[i],
+	    direct_shot, legacy_shot, tol);
+	if (fault_exposed)
+	    result.fault_exposed_rays++;
+	const bool triggered =
+	    direct_test.decision.missing_root_certificate_triggered != 0;
+	decision_valid = decision_valid && matching_fault && direct_empty &&
+	    triggered ==
+		(published_test.decision.
+		 missing_root_certificate_triggered != 0) &&
+	    direct_test.decision.missing_root_certificate_associations ==
+		published_test.decision.missing_root_certificate_associations &&
+	    direct_test.decision.optional_work ==
+		published_test.decision.optional_work;
+
+	/* The ordinary trace computes the same root-suppressed decision as
+	 * evidence.  When it exists, use it as an independent check that the
+	 * production-path injection selected the same certificate result. */
+	if (prepared_shot.missing_root_counterfactual_attempts) {
+	    const struct rt_brep_route_decision &expected =
+		prepared_shot.missing_root_counterfactual;
+	    decision_valid = decision_valid &&
+		direct_test.decision.missing_root_certificate_triggered ==
+		    expected.missing_root_certificate_triggered &&
+		direct_test.decision.missing_root_certificate_associations ==
+		    expected.missing_root_certificate_associations &&
+		direct_test.decision.optional_work == expected.optional_work;
+	}
+
+	if (triggered) {
+	    result.triggered++;
+	    if (fault_exposed)
+		result.triggered_faults++;
+	    result.optional_attempts += direct_test.optional_attempted ? 1 : 0;
+	    result.general_prepared_attempts +=
+		direct_test.general_prepared_attempted ? 1 : 0;
+	    result.optional_complete += direct_test.optional_complete ? 1 : 0;
+	    result.optional_incomplete += direct_test.optional_complete ? 0 : 1;
+	    result.published += published_test.optional_published ? 1 : 0;
+	    decision_valid = decision_valid &&
+		direct_test.decision.optional_work ==
+		    RT_BREP_ROUTE_WORK_COMPLEX_PREPARED &&
+		direct_test.optional_attempted &&
+		direct_test.require_empty_partition == 0 &&
+		!direct_test.optional_published &&
+		published_test.optional_attempted &&
+		published_test.require_empty_partition == 0 &&
+		direct_test.optional_complete ==
+		    published_test.optional_complete &&
+		published_test.optional_published ==
+		    published_test.optional_complete;
+	} else {
+	    decision_valid = decision_valid &&
+		!direct_test.optional_attempted &&
+		!published_test.optional_attempted &&
+		!direct_test.optional_published &&
+		!published_test.optional_published;
+	}
+
+	if (!decision_valid)
+	    result.decision_mismatches++;
+	bool transaction_valid = direct_shot.valid && published_shot.valid;
+	const bool complete_oracle_agreement =
+	    published_test.optional_complete &&
+	    ray_audit_publication_equivalent(samples[i], prepared_shot,
+		legacy_shot, tol);
+	if (complete_oracle_agreement)
+	    result.complete_oracle_agreements++;
+	if (fault_exposed && complete_oracle_agreement)
+	    result.recoverable_faults++;
+	const ray_audit_shot &expected_publication =
+	    published_test.optional_complete ? prepared_shot : direct_shot;
+	if (ray_audit_publication_equivalent(samples[i], published_shot,
+		expected_publication, tol)) {
+	    if (published_test.optional_complete) {
+		result.published_prepared_matches++;
+		if (fault_exposed && complete_oracle_agreement)
+		    result.recovered_faults++;
+	    } else {
+		result.published_injected_fallback_matches++;
+	    }
+	} else {
+	    transaction_valid = false;
+	}
+	if (!transaction_valid || !decision_valid) {
+	    result.transaction_mismatches += transaction_valid ? 0 : 1;
+	    ray_audit_store_example(result.mismatch_ray_indices, i);
+	}
+    }
+    if (count != samples.size() || count != prepared.shots.size() ||
+	    count != legacy.shots.size() || count != direct.shots.size() ||
+	    count != published.shots.size())
+	result.transaction_mismatches++;
+    return result;
 }
 
 static bool
@@ -2312,10 +4220,147 @@ print_ray_audit_prep(const ray_audit_prep &prep)
 	<< ",\"surface_tree_leaves\":" << prep.stats.surface_tree_leaves
 	<< ",\"curve_trees\":" << prep.stats.curve_trees
 	<< ",\"curve_tree_leaves\":" << prep.stats.curve_tree_leaves
+	<< ",\"bezier_spans\":" << prep.stats.bezier_spans
+	<< ",\"packed_surface_controls\":"
+	<< prep.stats.packed_surface_controls
+	<< ",\"packed_surface_control_values\":"
+	<< prep.stats.packed_surface_control_values
+	<< ",\"routing_metadata\":{\"capability_mask\":"
+	<< prep.stats.routing_capability_flags
+	<< ",\"risk_mask\":" << prep.stats.routing_risk_flags
+	<< ",\"seeded_faces\":" << prep.stats.routing_seeded_faces
+	<< ",\"seeded_spans\":" << prep.stats.routing_seeded_spans
+	<< ",\"unqualified_faces\":"
+	<< prep.stats.routing_unqualified_faces
+	<< ",\"unsupported_faces\":"
+	<< prep.stats.routing_unsupported_faces
+	<< ",\"reparameterized_faces\":"
+	<< prep.stats.routing_reparameterized_faces
+	<< ",\"singular_spans\":" << prep.stats.routing_singular_spans
+	<< ",\"periodic_faces\":" << prep.stats.routing_periodic_faces
+	<< ",\"inner_trim_faces\":"
+	<< prep.stats.routing_inner_trim_faces
+	<< ",\"boundary_faces\":" << prep.stats.routing_boundary_faces
+	<< ",\"nonmanifold_faces\":"
+	<< prep.stats.routing_nonmanifold_faces
+	<< ",\"seam_faces\":" << prep.stats.routing_seam_faces << "}"
+	<< ",\"routing_cells\":{\"total\":"
+	<< prep.stats.routing_feature_cells
+	<< ",\"seeded\":" << prep.stats.routing_seeded_cells
+	<< ",\"unsupported\":" << prep.stats.routing_unsupported_cells
+	<< ",\"trim_boundary\":"
+	<< prep.stats.routing_trim_boundary_cells
+	<< ",\"domain_boundary\":"
+	<< prep.stats.routing_domain_boundary_cells
+	<< ",\"correction\":"
+	<< prep.stats.routing_correction_cells
+	<< ",\"span_bindings\":"
+	<< prep.stats.routing_feature_cell_span_bindings
+	<< ",\"certificate_packs\":"
+	<< prep.stats.routing_cell_span_packs
+	<< ",\"complete_certificate_packs\":"
+	<< prep.stats.routing_complete_cell_span_packs
+	<< ",\"certificate_control_intervals\":"
+	<< prep.stats.routing_cell_span_control_intervals
+	<< ",\"certificate_subpatch_boxes\":"
+	<< prep.stats.routing_cell_span_subpatch_boxes
+	<< ",\"certificate_pack_budget_bytes\":"
+	<< prep.stats.routing_cell_span_pack_budget_bytes
+	<< ",\"certificate_pack_used_bytes\":"
+	<< prep.stats.routing_cell_span_pack_used_bytes
+	<< ",\"direction_cache_bytes\":"
+	<< prep.stats.routing_direction_cache_bytes
+	<< ",\"direction_cache_capacity\":"
+	<< prep.stats.routing_direction_cache_capacity
+	<< ",\"direction_cache_ready_entries\":"
+	<< prep.stats.routing_direction_cache_ready_entries
+	<< ",\"correction_bvh_nodes\":"
+	<< prep.stats.routing_correction_bvh_nodes << "}"
 	<< ",\"reported_build_seconds\":"
 	<< prep.stats.surface_tree_build_microseconds / 1000000.0
 	<< ",\"wall_seconds\":" << prep.wall_seconds << "}";
 }
+
+static void
+print_ray_audit_route_certificate(
+    const ray_audit_route_certificate_telemetry &certificate)
+{
+    static const char *failure_names[RT_BREP_ROUTE_CERT_FAILURE_COUNT] = {
+	"none", "input", "ray_frame", "status2_mapping", "singular",
+	"overlap", "coefficients", "reparameterization", "determinant",
+	"boundary", "orientation", "resource"
+    };
+    static const char *degree_detail_names[RT_BREP_ROOT_DEGREE_DETAIL_COUNT] = {
+	"none", "input", "boundary_piece", "boundary_subdivision",
+	"cross_arithmetic", "cross_zero", "orientation"
+    };
+    std::cout << "{\"associations\":" << certificate.associations
+	<< ",\"incomplete\":"
+	<< certificate.state[RT_BREP_ROUTE_CERT_INCOMPLETE]
+	<< ",\"root_free\":"
+	<< certificate.state[RT_BREP_ROUTE_CERT_ROOT_FREE]
+	<< ",\"root_positive\":"
+	<< certificate.state[RT_BREP_ROUTE_CERT_ROOT_POSITIVE]
+	<< ",\"association_regular_root_count\":"
+	<< certificate.regular_root_count
+	<< ",\"observed_roots\":" << certificate.observed_roots
+	<< ",\"deficit_cells\":" << certificate.deficit_cells
+	<< ",\"deficit_roots\":" << certificate.deficit_roots
+	<< ",\"globally_unique\":false,\"publication_authority\":false"
+	<< ",\"accounting_valid\":"
+	<< (ray_audit_route_certificate_accounting_valid(certificate) ?
+	    "true" : "false")
+	<< ",\"cached_bbox_exclusions\":"
+	<< certificate.cached_bbox_exclusions
+	<< ",\"hull_exclusions\":" << certificate.hull_exclusions
+	<< ",\"subdivision_attempts\":" << certificate.subdivision_attempts
+	<< ",\"subdivision_boxes\":" << certificate.subdivision_boxes
+	<< ",\"subdivision_hull_exclusions\":"
+	<< certificate.subdivision_hull_exclusions
+	<< ",\"subdivision_exclusions\":"
+	<< certificate.subdivision_exclusions
+	<< ",\"degree_attempts\":" << certificate.degree_attempts
+	<< ",\"degree_complete\":" << certificate.degree_complete
+	<< ",\"failure_reasons\":[";
+    for (int reason = 0; reason < RT_BREP_ROUTE_CERT_FAILURE_COUNT; ++reason) {
+	if (reason)
+	    std::cout << ",";
+	std::cout << "{\"name\":" << json_quote(failure_names[reason])
+	    << ",\"associations\":" << certificate.failure_reason[reason]
+	    << "}";
+    }
+    std::cout << "],\"degree_failure_details\":[";
+    for (int detail = 0; detail < RT_BREP_ROOT_DEGREE_DETAIL_COUNT; ++detail) {
+	if (detail)
+	    std::cout << ",";
+	std::cout << "{\"name\":" << json_quote(degree_detail_names[detail])
+	    << ",\"associations\":"
+	    << certificate.degree_failure_detail[detail] << "}";
+    }
+    std::cout << "],\"boundary_pieces\":" << certificate.boundary_pieces
+	<< ",\"boundary_splits\":" << certificate.boundary_splits
+	<< ",\"boundary_edges\":" << certificate.boundary_edges
+	<< ",\"expansion_high_water\":"
+	<< certificate.expansion_high_water
+	<< ",\"complete_rays\":" << certificate.complete_rays
+	<< ",\"root_free_rays\":" << certificate.root_free_rays
+	<< ",\"root_positive_rays\":" << certificate.root_positive_rays
+	<< ",\"incomplete_rays\":" << certificate.incomplete_rays
+	<< ",\"elapsed_ns\":" << certificate.nanoseconds
+	<< ",\"elapsed_ms\":" << certificate.nanoseconds / 1000000.0
+	<< "}";
+}
+
+
+static ray_audit_route_certificate_telemetry
+ray_audit_route_certificate_for_decision(
+    const struct rt_brep_route_decision &decision)
+{
+    ray_audit_route_certificate_telemetry certificate;
+    ray_audit_accumulate_route_certificate(certificate, decision);
+    return certificate;
+}
+
 
 static void
 print_ray_audit_telemetry(const ray_audit_telemetry &total)
@@ -2336,7 +4381,26 @@ print_ray_audit_telemetry(const ray_audit_telemetry &total)
 	std::cout << json_quote(ray_audit_fallback_name(fallback)) << ":"
 	    << total.fallback[fallback];
     }
-    std::cout << "},\"solver_calls\":" << total.solver_calls
+    std::cout << "},\"legacy_capacity_fallbacks\":{";
+    for (int reason = 0; reason < RT_BREP_LEGACY_CAPACITY_FALLBACK_COUNT;
+	    ++reason) {
+	if (reason)
+	    std::cout << ",";
+	std::cout << json_quote(ray_audit_legacy_capacity_fallback_name(reason))
+	    << ":" << total.legacy_capacity_fallback[reason];
+    }
+    std::cout << "},\"legacy_cleanup\":{";
+    for (int action = 0; action < RT_BREP_LEGACY_CLEANUP_COUNT; ++action) {
+	if (action)
+	    std::cout << ",";
+	std::cout << json_quote(ray_audit_legacy_cleanup_action_name(action))
+	    << ":{\"rays\":" << total.legacy_cleanup_action_rays[action]
+	    << ",\"events\":" << total.legacy_cleanup_action_events[action]
+	    << "}";
+    }
+    std::cout << "},\"legacy_cleanup_action_mismatch_rays\":"
+	<< total.legacy_cleanup_action_mismatch_rays
+	<< ",\"solver_calls\":" << total.solver_calls
 	<< ",\"edges\":{\"manifold\":" << total.manifold_edges
 	<< ",\"prepared_spans\":" << total.prepared_edge_spans
 	<< ",\"candidate_spans\":" << total.candidate_edge_spans
@@ -2397,6 +4461,319 @@ print_ray_audit_telemetry(const ray_audit_telemetry &total)
 	<< total.regular_stream_certified << ",\"edge\":"
 	<< total.edge_certified << ",\"vertex\":"
 	<< total.vertex_certified
+	<< "},\"seeded_verifier\":{\"attempts\":"
+	<< total.seeded_verify_attempts << ",\"complete\":"
+	<< total.seeded_verify_complete << ",\"complete_selected\":"
+	<< total.seeded_verify_complete_selected << ",\"failed_selected\":"
+	<< total.seeded_verify_failed_selected << ",\"complete_mismatch\":"
+	<< total.seeded_verify_complete_mismatch << ",\"legacy_groups\":"
+	<< total.seeded_verify_legacy_groups << ",\"candidate_faces\":"
+	<< total.seeded_verify_candidate_faces << ",\"candidate_spans\":"
+	<< total.seeded_verify_candidate_spans
+	<< ",\"hull_excluded_spans\":"
+	<< total.seeded_verify_hull_excluded_spans << ",\"mapped_roots\":"
+	<< total.seeded_verify_mapped_roots << ",\"local_attempts\":"
+	<< total.seeded_verify_local_attempts << ",\"local_certified\":"
+	<< total.seeded_verify_local_certified
+	<< ",\"degree\":{\"attempts\":"
+	<< total.seeded_verify_degree_attempts << ",\"complete\":"
+	<< total.seeded_verify_degree_complete
+	<< ",\"determinant_failures\":"
+	<< total.seeded_verify_degree_determinant_failures
+	<< ",\"boundary_failures\":"
+	<< total.seeded_verify_degree_boundary_failures
+	<< ",\"orientation_failures\":"
+	<< total.seeded_verify_degree_orientation_failures
+	<< ",\"count_mismatches\":"
+	<< total.seeded_verify_degree_count_mismatches
+	<< ",\"sign_mismatches\":"
+	<< total.seeded_verify_degree_sign_mismatches << ",\"count_low\":"
+	<< total.seeded_verify_degree_count_low << ",\"count_high\":"
+	<< total.seeded_verify_degree_count_high
+	<< ",\"mismatch_local_exact\":"
+	<< total.seeded_verify_degree_mismatch_local_exact
+	<< ",\"mismatch_local_inexact\":"
+	<< total.seeded_verify_degree_mismatch_local_inexact
+	<< ",\"extra_local_roots\":"
+	<< total.seeded_verify_degree_extra_local_roots
+	<< ",\"extra_local_trimmed\":"
+	<< total.seeded_verify_degree_extra_local_trimmed
+	<< ",\"extra_local_untrimmed\":"
+	<< total.seeded_verify_degree_extra_local_untrimmed
+	<< ",\"surplus_empty\":"
+	<< total.seeded_verify_degree_surplus_empty << ",\"surplus_seeded\":"
+	<< total.seeded_verify_degree_surplus_seeded
+	<< ",\"surplus_corrector_attempts\":"
+	<< total.seeded_verify_degree_surplus_corrector_attempts
+	<< ",\"surplus_corrector_converged\":"
+	<< total.seeded_verify_degree_surplus_corrector_converged
+	<< ",\"surplus_local_attempts\":"
+	<< total.seeded_verify_degree_surplus_local_attempts
+	<< ",\"surplus_local_certified\":"
+	<< total.seeded_verify_degree_surplus_local_certified
+	<< ",\"surplus_trimmed_certified\":"
+	<< total.seeded_verify_degree_surplus_trimmed_certified
+	<< ",\"surplus_untrimmed\":"
+	<< total.seeded_verify_degree_surplus_untrimmed
+	<< ",\"surplus_elapsed_ms\":"
+	<< total.seeded_verify_degree_surplus_nanoseconds / 1000000.0
+	<< ",\"root_count\":"
+	<< total.seeded_verify_degree_root_count << ",\"seed_count\":"
+	<< total.seeded_verify_degree_seed_count << ",\"boundary_pieces\":"
+	<< total.seeded_verify_degree_boundary_pieces << ",\"boundary_splits\":"
+	<< total.seeded_verify_degree_boundary_splits << ",\"boundary_edges\":"
+	<< total.seeded_verify_degree_boundary_edges
+	<< ",\"expansion_high_water\":"
+	<< total.seeded_verify_degree_expansion_high_water << ",\"elapsed_ms\":"
+	<< total.seeded_verify_degree_nanoseconds / 1000000.0
+	<< ",\"complement_agreements\":"
+	<< total.seeded_verify_degree_complement_agreements
+	<< ",\"complement_disagreements\":"
+	<< total.seeded_verify_degree_complement_disagreements
+	<< ",\"failure_details\":[";
+    for (int detail = 0; detail < RT_BREP_ROOT_DEGREE_DETAIL_COUNT; ++detail) {
+	if (detail)
+	    std::cout << ",";
+	std::cout << total.seeded_verify_degree_failure_detail[detail];
+    }
+    std::cout << "]}"
+	<< ",\"complement_visited\":"
+	<< total.seeded_verify_complement_visited
+	<< ",\"complement_high_water\":"
+	<< total.seeded_verify_complement_high_water
+	<< ",\"partition_events\":"
+	<< total.seeded_verify_partition_events << ",\"elapsed_ms\":"
+	<< total.seeded_verify_nanoseconds / 1000000.0
+	<< ",\"stage_ms\":[";
+    for (int stage = 0; stage < RT_BREP_SEEDED_VERIFY_STAGE_COUNT; ++stage) {
+	if (stage)
+	    std::cout << ",";
+	std::cout << total.seeded_verify_stage_nanoseconds[stage] / 1000000.0;
+    }
+    std::cout << "]"
+	<< ",\"failure_stages\":[";
+    for (int stage = 0; stage < RT_BREP_SEEDED_VERIFY_STAGE_COUNT; ++stage) {
+	if (stage)
+	    std::cout << ",";
+	std::cout << total.seeded_verify_failure_stage[stage];
+    }
+    std::cout << "]"
+	<< ",\"selected_failure_stages\":[";
+    for (int stage = 0; stage < RT_BREP_SEEDED_VERIFY_STAGE_COUNT; ++stage) {
+	if (stage)
+	    std::cout << ",";
+	std::cout << total.seeded_verify_selected_failure_stage[stage];
+    }
+    std::cout << "]"
+	<< "},\"routing_shadow\":{\"lanes\":[";
+    static const char *lane_name[RT_BREP_ROUTE_LANE_COUNT] = {
+	"none", "seeded_ordinary", "complex_prepared"
+    };
+    for (int lane = 0; lane < RT_BREP_ROUTE_LANE_COUNT; ++lane) {
+	if (lane)
+	    std::cout << ",";
+	std::cout << "{\"name\":" << json_quote(lane_name[lane])
+	    << ",\"rays\":" << total.seeded_route_rays[lane]
+	    << ",\"verifier_complete\":"
+	    << total.seeded_route_verifier_complete[lane]
+	    << ",\"prepared_selected\":"
+	    << total.seeded_route_prepared_selected[lane]
+	    << ",\"root_mismatch\":"
+	    << total.seeded_route_root_mismatch[lane] << "}";
+    }
+    static const char *capability_name[RT_BREP_ROUTE_CAP_COUNT] = {
+	"packed_controls", "degree_theorem", "seeded_ordinary"
+    };
+    static const char *risk_name[RT_BREP_ROUTE_RISK_COUNT] = {
+	"unqualified", "unsupported", "reparameterized", "singular",
+	"periodic", "inner_trim", "topology_boundary", "nonmanifold", "seam",
+	"boundary_contact_correction", "directional_grazing"
+    };
+    std::cout << "],\"capability_mask\":"
+	<< total.seeded_route_capability_mask
+	<< ",\"risk_mask\":" << total.seeded_route_risk_mask
+	<< ",\"capabilities\":[";
+    for (int bit = 0; bit < RT_BREP_ROUTE_CAP_COUNT; ++bit) {
+	if (bit)
+	    std::cout << ",";
+	std::cout << "{\"name\":" << json_quote(capability_name[bit])
+	    << ",\"rays\":" << total.seeded_route_capability_rays[bit]
+	    << "}";
+    }
+    std::cout << "],\"risks\":[";
+    for (int bit = 0; bit < RT_BREP_ROUTE_RISK_COUNT; ++bit) {
+	if (bit)
+	    std::cout << ",";
+	std::cout << "{\"name\":" << json_quote(risk_name[bit])
+	    << ",\"rays\":" << total.seeded_route_risk_rays[bit] << "}";
+    }
+    static const char *qualification_name[RT_BREP_ROUTE_QUAL_COUNT] = {
+	"unqualified", "empty", "clean_ordinary", "correction_risk",
+	"unsupported", "mixed_hazard"
+    };
+    static const char *lookup_reason_name[
+	RT_BREP_ROUTE_LOOKUP_REASON_COUNT] = {
+	"metadata_unavailable", "null_leaf", "nonleaf", "face_index",
+	"leaf_ordinal", "record_range", "cell_identity", "unmatched_root"
+    };
+    std::cout << "],\"decision\":{\"base\":\"legacy\","
+	"\"publication_authority\":\"legacy\",\"candidate_cells\":"
+	<< total.route_candidate_cells << ",\"hazard_roots\":"
+	<< total.route_hazard_roots << ",\"contact_roots\":"
+	<< total.route_contact_roots
+	<< ",\"legacy_transaction_incomplete\":"
+	<< total.route_legacy_transaction_incomplete
+	<< ",\"selective_refinement\":{\"attempted\":"
+	<< total.route_selective_refinement_attempted
+	<< ",\"complete\":" << total.route_selective_refinement_complete
+	<< ",\"max_level\":" << total.route_selective_refinement_max_level
+	<< ",\"hits\":" << total.route_selective_refinement_hits
+	<< ",\"reversal_mismatches\":"
+	<< total.route_selective_refinement_reversal_mismatches
+	<< ",\"elapsed_ns\":"
+	<< total.route_selective_refinement_nanoseconds << "}"
+	<< ",\"cell_lookup_failures\":"
+	<< total.route_cell_lookup_failures
+	<< ",\"cell_lookup_failure_reasons\":[";
+    for (size_t reason = 0; reason < RT_BREP_ROUTE_LOOKUP_REASON_COUNT;
+	    ++reason) {
+	if (reason)
+	    std::cout << ",";
+	std::cout << "{\"name\":" << json_quote(lookup_reason_name[reason])
+	    << ",\"failures\":"
+	    << total.route_cell_lookup_failure_reasons[reason] << "}";
+    }
+    std::cout << "],\"roots_unmapped_after_leaf_overflow\":"
+	<< total.route_roots_unmapped_after_leaf_overflow
+	<< ",\"missing_root_probe\":{\"empty_correction_cells\":"
+	<< total.route_empty_correction_cells
+	<< ",\"candidate_spans\":"
+	<< total.route_missing_root_candidate_spans
+	<< ",\"retained_spans\":"
+	<< total.route_missing_root_retained_spans
+	<< ",\"restricted_spans\":"
+	<< total.route_missing_root_restricted_spans
+	<< ",\"inconclusive_spans\":"
+	<< total.route_missing_root_inconclusive_spans
+	<< ",\"workspace_overflow\":"
+	<< total.route_missing_root_workspace_overflow
+	<< ",\"signal_rays\":"
+	<< total.route_missing_root_signal_rays
+	<< ",\"independent_hit_rays\":"
+	<< total.route_missing_root_independent_hit_rays
+	<< ",\"independent_empty_rays\":"
+	<< total.route_missing_root_independent_empty_rays
+	<< ",\"unresolved_rays\":"
+	<< total.route_missing_root_unresolved_rays
+	<< ",\"prepared_candidates\":{\"faces\":"
+	<< total.route_missing_root_prepared_candidate_faces
+	<< ",\"spans\":"
+	<< total.route_missing_root_prepared_candidate_spans
+	<< ",\"retained_spans\":"
+	<< total.route_missing_root_prepared_retained_spans
+	<< ",\"prepared_only_spans\":"
+	<< total.route_missing_root_prepared_only_spans
+	<< ",\"prepared_only_retained_spans\":"
+	<< total.route_missing_root_prepared_only_retained_spans
+	<< ",\"inconclusive_spans\":"
+	<< total.route_missing_root_prepared_inconclusive_spans
+	<< ",\"candidate_failures\":"
+	<< total.route_missing_root_prepared_candidate_failures
+	<< ",\"signal_rays\":"
+	<< total.route_missing_root_prepared_signal_rays
+	<< ",\"independent_hit_rays\":"
+	<< total.route_missing_root_prepared_independent_hit_rays
+	<< ",\"independent_empty_rays\":"
+	<< total.route_missing_root_prepared_independent_empty_rays
+	<< ",\"unresolved_rays\":"
+	<< total.route_missing_root_prepared_unresolved_rays << "}"
+	<< ",\"counterfactual\":{\"attempts\":"
+	<< total.route_missing_root_counterfactual_attempts
+	<< ",\"signal_rays\":"
+	<< total.route_missing_root_counterfactual_signal_rays
+	<< ",\"unsignaled_rays\":"
+	<< total.route_missing_root_counterfactual_unsignaled_rays
+	<< ",\"true_root_controls\":"
+	<< total.route_missing_root_counterfactual_true_root_controls
+	<< ",\"true_root_signals\":"
+	<< total.route_missing_root_counterfactual_true_root_signals
+	<< ",\"true_root_missed\":"
+	<< total.route_missing_root_counterfactual_true_root_missed
+	<< ",\"true_root_prepared_signals\":"
+	<< total.route_missing_root_counterfactual_true_root_prepared_signals
+	<< ",\"true_root_prepared_missed\":"
+	<< total.route_missing_root_counterfactual_true_root_prepared_missed
+	<< ",\"true_root_prepared_recovered\":"
+	<< total.route_missing_root_counterfactual_true_root_prepared_recovered
+	<< ",\"empty_controls\":"
+	<< total.route_missing_root_counterfactual_empty_controls
+	<< ",\"empty_signals\":"
+	<< total.route_missing_root_counterfactual_empty_signals
+	<< ",\"empty_rejected\":"
+	<< total.route_missing_root_counterfactual_empty_rejected
+	<< ",\"empty_prepared_signals\":"
+	<< total.route_missing_root_counterfactual_empty_prepared_signals
+	<< ",\"empty_prepared_rejected\":"
+	<< total.route_missing_root_counterfactual_empty_prepared_rejected
+	<< ",\"unresolved_controls\":"
+	<< total.route_missing_root_counterfactual_unresolved_controls
+	<< ",\"candidate_spans\":"
+	<< total.route_missing_root_counterfactual_candidate_spans
+	<< ",\"retained_spans\":"
+	<< total.route_missing_root_counterfactual_retained_spans
+	<< ",\"restricted_spans\":"
+	<< total.route_missing_root_counterfactual_restricted_spans
+	<< ",\"inconclusive_spans\":"
+	<< total.route_missing_root_counterfactual_inconclusive_spans
+	<< ",\"workspace_overflow\":"
+	<< total.route_missing_root_counterfactual_workspace_overflow
+	<< ",\"prepared_candidates\":{\"faces\":"
+	<< total.route_missing_root_counterfactual_prepared_candidate_faces
+	<< ",\"spans\":"
+	<< total.route_missing_root_counterfactual_prepared_candidate_spans
+	<< ",\"retained_spans\":"
+	<< total.route_missing_root_counterfactual_prepared_retained_spans
+	<< ",\"prepared_only_spans\":"
+	<< total.route_missing_root_counterfactual_prepared_only_spans
+	<< ",\"prepared_only_retained_spans\":"
+	<< total.route_missing_root_counterfactual_prepared_only_retained_spans
+	<< ",\"inconclusive_spans\":"
+	<< total.route_missing_root_counterfactual_prepared_inconclusive_spans
+	<< ",\"candidate_failures\":"
+	<< total.route_missing_root_counterfactual_prepared_candidate_failures
+	<< ",\"signal_rays\":"
+	<< total.route_missing_root_counterfactual_prepared_signal_rays
+	<< ",\"unsignaled_rays\":"
+	<< total.route_missing_root_counterfactual_prepared_unsignaled_rays
+	<< "},\"certificate\":";
+    print_ray_audit_route_certificate(
+	total.route_missing_root_counterfactual_certificate);
+    std::cout << ",\"elapsed_ms\":"
+	<< total.route_missing_root_counterfactual_nanoseconds / 1000000.0
+	<< "},\"certificate\":";
+    print_ray_audit_route_certificate(total.route_missing_root_certificate);
+    std::cout << "}"
+	<< ",\"elapsed_ms\":"
+	<< total.route_decision_nanoseconds / 1000000.0
+	<< ",\"qualifications\":[";
+    for (int bit = 0; bit < RT_BREP_ROUTE_QUAL_COUNT; ++bit) {
+	if (bit)
+	    std::cout << ",";
+	std::cout << "{\"name\":" << json_quote(qualification_name[bit])
+	    << ",\"rays\":"
+	    << total.seeded_route_qualification_rays[bit] << "}";
+    }
+    std::cout << "]},\"actual_verify_attempts\":"
+	<< total.seeded_verify_attempts
+	<< ",\"predicted_verify_attempts\":"
+	<< total.seeded_route_rays[RT_BREP_ROUTE_SEEDED_ORDINARY_VERIFY]
+	<< ",\"predicted_verify_complete\":"
+	<< total.seeded_route_verifier_complete[
+	    RT_BREP_ROUTE_SEEDED_ORDINARY_VERIFY]
+	<< ",\"predicted_verify_failed\":"
+	<< total.seeded_route_rays[RT_BREP_ROUTE_SEEDED_ORDINARY_VERIFY] -
+	    total.seeded_route_verifier_complete[
+		RT_BREP_ROUTE_SEEDED_ORDINARY_VERIFY]
 	<< "},\"fixed_equivalence_mismatch_rays\":"
 	<< total.fixed_equivalence_mismatch_rays
 	<< ",\"local_legacy_mismatch_rays\":"
@@ -2423,8 +4800,172 @@ print_ray_audit_shot(const ray_audit_shot &shot,
 	<< ",\"hit_count\":" << shot.hit_count
 	<< ",\"prepared_selected\":"
 	<< (shot.prepared_selected ? "true" : "false")
+	<< ",\"routing_shadow\":{\"lane\":"
+	<< json_quote(ray_audit_route_name(shot.seeded_route_lane))
+	<< ",\"observation_stratum\":" << json_quote(
+	    ray_audit_route_stratum_name(ray_audit_route_stratum_for(shot)))
+	<< ",\"verifier_complete\":"
+	<< (shot.seeded_verifier_complete ? "true" : "false")
+	<< ",\"failure_stage\":" << shot.seeded_verifier_failure_stage
+	<< ",\"capability_mask\":" << shot.seeded_route_capability_flags
+	<< ",\"risk_mask\":" << shot.seeded_route_risk_flags
+	<< ",\"decision\":{\"base\":\"legacy\",\"optional_work\":"
+	<< json_quote(ray_audit_route_name(
+	    shot.route_decision.optional_work))
+	<< ",\"publication_authority\":\"legacy\","
+	   "\"qualification_mask\":"
+	<< shot.route_decision.qualification_flags
+	<< ",\"candidate_cells\":" << shot.route_decision.candidate_cells
+	<< ",\"hazard_roots\":" << shot.route_decision.hazard_roots
+	<< ",\"contact_roots\":" << shot.route_decision.contact_roots
+	<< ",\"legacy_transaction_incomplete\":"
+	<< shot.route_decision.legacy_transaction_incomplete
+	<< ",\"selective_refinement\":{\"attempted\":"
+	<< shot.route_decision.selective_refinement_attempted
+	<< ",\"complete\":"
+	<< shot.route_decision.selective_refinement_complete
+	<< ",\"level\":" << shot.route_decision.selective_refinement_level
+	<< ",\"hits\":" << shot.route_decision.selective_refinement_hits
+	<< ",\"reversal_mismatches\":"
+	<< shot.route_decision.selective_refinement_reversal_mismatches
+	<< ",\"elapsed_ns\":"
+	<< shot.route_decision.selective_refinement_nanoseconds << "}"
+	<< ",\"cell_lookup_failures\":"
+	<< shot.route_decision.cell_lookup_failures
+	<< ",\"cell_lookup_failure_reasons\":[";
+    static const char *lookup_reason_name[
+	RT_BREP_ROUTE_LOOKUP_REASON_COUNT] = {
+	"metadata_unavailable", "null_leaf", "nonleaf", "face_index",
+	"leaf_ordinal", "record_range", "cell_identity", "unmatched_root"
+    };
+    for (size_t reason = 0; reason < RT_BREP_ROUTE_LOOKUP_REASON_COUNT;
+	    ++reason) {
+	if (reason)
+	    std::cout << ",";
+	std::cout << "{\"name\":" << json_quote(lookup_reason_name[reason])
+	    << ",\"failures\":"
+	    << shot.route_decision.cell_lookup_failure_reasons[reason] << "}";
+    }
+    std::cout << "],\"roots_unmapped_after_leaf_overflow\":"
+	<< shot.route_decision.roots_unmapped_after_leaf_overflow
+	<< ",\"directional_grazing\":{\"attempts\":"
+	<< shot.route_decision.directional_probe_attempts
+	<< ",\"refined_boxes\":"
+	<< shot.route_decision.directional_refined_boxes
+	<< ",\"continuations\":"
+	<< shot.route_decision.directional_continuation_attempts
+	<< ",\"continuation_boxes\":"
+	<< shot.route_decision.directional_continuation_boxes
+	<< ",\"continuation_resolved_spans\":"
+	<< shot.route_decision.directional_continuation_resolved_spans
+	<< ",\"ambiguous_spans\":"
+	<< shot.route_decision.directional_ambiguous_spans
+	<< ",\"workspace_overflow\":"
+	<< shot.route_decision.directional_workspace_overflow
+	<< ",\"triggered\":"
+	<< shot.route_decision.directional_grazing_triggered << "}"
+	<< ",\"missing_root_probe\":{\"empty_correction_cells\":"
+	<< shot.route_decision.empty_correction_cells
+	<< ",\"candidate_spans\":"
+	<< shot.route_decision.missing_root_candidate_spans
+	<< ",\"retained_spans\":"
+	<< shot.route_decision.missing_root_retained_spans
+	<< ",\"restricted_spans\":"
+	<< shot.route_decision.missing_root_restricted_spans
+	<< ",\"inconclusive_spans\":"
+	<< shot.route_decision.missing_root_inconclusive_spans
+	<< ",\"workspace_overflow\":"
+	<< shot.route_decision.missing_root_workspace_overflow
+	<< ",\"independent_result\":" << json_quote(
+	    !shot.route_decision.missing_root_retained_spans ? "not_signaled" :
+	    !shot.prepared_selected ? "unresolved" :
+	    shot.prepared_production_hits ? "hit" : "empty")
+	<< ",\"prepared_candidates\":{\"faces\":"
+	<< shot.route_decision.missing_root_prepared_candidate_faces
+	<< ",\"spans\":"
+	<< shot.route_decision.missing_root_prepared_candidate_spans
+	<< ",\"retained_spans\":"
+	<< shot.route_decision.missing_root_prepared_retained_spans
+	<< ",\"prepared_only_spans\":"
+	<< shot.route_decision.missing_root_prepared_only_spans
+	<< ",\"prepared_only_retained_spans\":"
+	<< shot.route_decision.missing_root_prepared_only_retained_spans
+	<< ",\"inconclusive_spans\":"
+	<< shot.route_decision.missing_root_prepared_inconclusive_spans
+	<< ",\"candidate_failures\":"
+	<< shot.route_decision.missing_root_prepared_candidate_failures
+	<< ",\"independent_result\":" << json_quote(
+	    !shot.route_decision.missing_root_prepared_retained_spans ?
+		"not_signaled" : !shot.prepared_selected ? "unresolved" :
+		shot.prepared_production_hits ? "hit" : "empty") << "}"
+	<< ",\"counterfactual\":{\"attempted\":"
+	<< (shot.missing_root_counterfactual_attempts ? "true" : "false")
+	<< ",\"candidate_spans\":"
+	<< shot.missing_root_counterfactual.missing_root_candidate_spans
+	<< ",\"retained_spans\":"
+	<< shot.missing_root_counterfactual.missing_root_retained_spans
+	<< ",\"restricted_spans\":"
+	<< shot.missing_root_counterfactual.missing_root_restricted_spans
+	<< ",\"inconclusive_spans\":"
+	<< shot.missing_root_counterfactual.missing_root_inconclusive_spans
+	<< ",\"workspace_overflow\":"
+	<< shot.missing_root_counterfactual.missing_root_workspace_overflow
+	<< ",\"prepared_candidates\":{\"faces\":"
+	<< shot.missing_root_counterfactual.missing_root_prepared_candidate_faces
+	<< ",\"spans\":"
+	<< shot.missing_root_counterfactual.missing_root_prepared_candidate_spans
+	<< ",\"retained_spans\":"
+	<< shot.missing_root_counterfactual.missing_root_prepared_retained_spans
+	<< ",\"prepared_only_spans\":"
+	<< shot.missing_root_counterfactual.missing_root_prepared_only_spans
+	<< ",\"prepared_only_retained_spans\":"
+	<< shot.missing_root_counterfactual.
+	    missing_root_prepared_only_retained_spans
+	<< ",\"inconclusive_spans\":"
+	<< shot.missing_root_counterfactual.
+	    missing_root_prepared_inconclusive_spans
+	<< ",\"candidate_failures\":"
+	<< shot.missing_root_counterfactual.
+	    missing_root_prepared_candidate_failures << "}"
+	<< ",\"independent_result\":" << json_quote(
+	    !shot.missing_root_counterfactual_attempts ? "not_attempted" :
+	    !shot.prepared_selected ? "unresolved" :
+	    shot.prepared_production_hits ? "hit" : "empty")
+	<< ",\"certificate\":";
+    print_ray_audit_route_certificate(ray_audit_route_certificate_for_decision(
+	shot.missing_root_counterfactual));
+    std::cout << "},\"certificate\":";
+    print_ray_audit_route_certificate(ray_audit_route_certificate_for_decision(
+	shot.route_decision));
+    std::cout << "}"
+	<< ",\"elapsed_ns\":"
+	<< shot.route_decision.decision_nanoseconds
+	<< "}"
+	<< "}"
 	<< ",\"fallback\":" << json_quote(
 	    ray_audit_fallback_name(shot.fallback))
+	<< ",\"prepared_certificate\":{\"hits\":"
+	<< shot.prepared_production_hits
+	<< ",\"physical_complete\":" << shot.physical_event_complete
+	<< ",\"physical_unresolved\":" << shot.physical_event_unresolved
+	<< ",\"state_failures\":" << shot.physical_event_state_failures
+	<< ",\"material_segments\":"
+	<< shot.physical_event_material_segments
+	<< ",\"subminimum_contacts\":"
+	<< shot.physical_event_subminimum_contacts
+	<< ",\"tolerance_ambiguous\":"
+	<< shot.physical_event_tolerance_ambiguous
+	<< ",\"events\":" << shot.stored_physical_events
+	<< ",\"surface_box_free_required\":"
+	<< (shot.prepared_require_surface_box_free ? "true" : "false")
+	<< ",\"selective_class_rejections\":"
+	<< shot.prepared_selective_class_rejections
+	<< ",\"selective_candidate_surface_spans\":"
+	<< shot.prepared_selective_candidate_surface_spans
+	<< ",\"selective_subdivision_boxes\":"
+	<< shot.prepared_selective_subdivision_boxes
+	<< ",\"selective_surface_boxes\":"
+	<< shot.prepared_selective_surface_boxes << "}"
 	<< ",\"intersected_leaves\":" << shot.intersected_leaves
 	<< ",\"solver_calls\":" << shot.solver_calls
 	<< ",\"cleanup\":{\"raw\":" << shot.raw_hits
@@ -2440,7 +4981,18 @@ print_ray_audit_shot(const ray_audit_shot &shot,
 	<< ",\"after_grazing\":" << shot.fixed_after_grazing
 	<< ",\"after_duplicates\":" << shot.fixed_after_duplicates
 	<< ",\"after_direction\":" << shot.fixed_after_direction_cleanup
-	<< ",\"mismatches\":" << shot.fixed_cleanup_mismatches << "}"
+	<< ",\"mismatches\":" << shot.fixed_cleanup_mismatches
+	<< ",\"capacity_fallbacks\":{\"leaf_workspace\":"
+	<< shot.fixed_leaf_fallback << ",\"hit_workspace\":"
+	<< shot.fixed_hit_fallback << "},\"actions\":{";
+    for (int action = 0; action < RT_BREP_LEGACY_CLEANUP_COUNT; ++action) {
+	if (action)
+	    std::cout << ",";
+	std::cout << json_quote(ray_audit_legacy_cleanup_action_name(action))
+	    << ":" << shot.legacy_cleanup_actions[action];
+    }
+    std::cout << "},\"action_mismatches\":"
+	<< shot.legacy_cleanup_action_mismatches << "}"
 	<< ",\"trim_equivalence\":{\"leaf_allocating\":"
 	<< shot.trim_equivalence_mismatches
 	<< ",\"face_status\":" << shot.face_trim_status_mismatches
@@ -2484,7 +5036,19 @@ print_ray_audit_shot(const ray_audit_shot &shot,
 	    << ",\"in_face\":" << interval.in_face
 	    << ",\"out_face\":" << interval.out_face
 	    << ",\"in_normal_dot\":" << interval.in_normal_dot
-	    << ",\"out_normal_dot\":" << interval.out_normal_dot << "}";
+	    << ",\"out_normal_dot\":" << interval.out_normal_dot
+	    << ",\"in_point\":[" << interval.in_point[X] << ","
+	    << interval.in_point[Y] << "," << interval.in_point[Z] << "]"
+	    << ",\"out_point\":[" << interval.out_point[X] << ","
+	    << interval.out_point[Y] << "," << interval.out_point[Z] << "]"
+	    << ",\"in_normal\":[" << interval.in_normal[X] << ","
+	    << interval.in_normal[Y] << "," << interval.in_normal[Z] << "]"
+	    << ",\"out_normal\":[" << interval.out_normal[X] << ","
+	    << interval.out_normal[Y] << "," << interval.out_normal[Z] << "]"
+	    << ",\"in_uv\":[" << interval.in_uv[0] << ","
+	    << interval.in_uv[1] << "]"
+	    << ",\"out_uv\":[" << interval.out_uv[0] << ","
+	    << interval.out_uv[1] << "]}";
     }
     std::cout << "]}";
 }
@@ -2618,7 +5182,9 @@ static int
 ray_depth_compare(struct db_i *dbip, const char *db_path,
     struct directory *dp, int candidate_depth, int reference_depth,
     size_t random_chords, size_t feature_chords, long selected_pair,
-    bool legacy_only)
+    bool legacy_only, bool routing_truth, bool routing_publication,
+    bool routing_missing_root_injection,
+    const ray_audit_exact_ray *exact_ray, const mat_t transform)
 {
     struct rt_db_internal intern;
     bool solid = false;
@@ -2630,10 +5196,12 @@ ray_depth_compare(struct db_i *dbip, const char *db_path,
     std::vector<int> face_components;
     struct bn_tol tol = BN_TOL_INIT_TOL;
     std::vector<ray_audit_sample> samples;
+    if (exact_ray)
+	selected_pair = 0;
     const size_t generated_random_chords = selected_pair >= 3 &&
 	!feature_chords ? std::max(random_chords,
 	    (size_t)selected_pair - 2) : random_chords;
-    if (load_brep(dbip, dp, &intern) == BRLCAD_OK) {
+    if (load_brep(dbip, dp, &intern, transform) == BRLCAD_OK) {
 	struct rt_brep_internal *bi =
 	    (struct rt_brep_internal *)intern.idb_ptr;
 	RT_BREP_CK_MAGIC(bi);
@@ -2647,9 +5215,11 @@ ray_depth_compare(struct db_i *dbip, const char *db_path,
 	    VMOVE(bmax, bbox.m_max);
 	    have_bbox = true;
 	}
-	if (have_bbox && solid) {
-	    samples = ray_audit_samples(bmin, bmax,
-		generated_random_chords,
+	if (have_bbox && exact_ray) {
+	    samples = ray_audit_exact_samples(*exact_ray, bmin, bmax,
+		std::max(100.0 * tol.dist, 1.0e-6));
+	} else if (have_bbox && solid) {
+	    samples = ray_audit_samples(bmin, bmax, generated_random_chords,
 		std::max(100.0 * tol.dist, 1.0e-6));
 	    (void)ray_audit_add_feature_samples(samples, *bi->brep, bmin,
 		bmax, feature_chords,
@@ -2662,33 +5232,200 @@ ray_depth_compare(struct db_i *dbip, const char *db_path,
 	    [selected_pair](const ray_audit_sample &sample) {
 		return sample.pair_index != (size_t)selected_pair;
 	    }), samples.end());
-    size_t sample_kind_pairs[5] = {};
+    size_t sample_kind_pairs[RAY_AUDIT_SAMPLE_KIND_COUNT] = {};
     for (size_t i = 0; i < samples.size(); ++i)
 	if (!samples[i].reverse && samples[i].kind >= RAY_AUDIT_AXIS_CHORD &&
-		samples[i].kind <= RAY_AUDIT_EDGE_GRAZE_CHORD)
+		samples[i].kind < RAY_AUDIT_SAMPLE_KIND_COUNT)
 	    sample_kind_pairs[samples[i].kind]++;
     ray_audit_depth_run reference;
     ray_audit_depth_run candidate;
+    ray_audit_depth_run routing_legacy;
+    ray_audit_depth_run routing_published;
+    ray_audit_depth_run routing_injected_direct;
+    ray_audit_depth_run routing_injected_published;
     if (!samples.empty()) {
-	/* Direct primitive prep is deliberate: the persistent prep-cache key
-	 * does not currently encode an explicitly requested adaptive depth. */
+	/* Direct primitive prep keeps the two requested depth variants
+	 * independently constructed for this comparison; persistent cache
+	 * coexistence is covered by the dedicated BRP6 regression. */
 	reference = ray_audit_run_depth(dbip, dp, reference_depth, &tol,
-	    samples, legacy_only);
+	    samples, legacy_only, transform);
 	if (reference.prep.ret == BRLCAD_OK)
 	    candidate = ray_audit_run_depth(dbip, dp, candidate_depth, &tol,
-		samples, legacy_only);
+		samples, legacy_only, transform);
+	if (routing_truth && reference.prep.ret == BRLCAD_OK)
+	    /* Exercise the actual direct-routing/no-publication lane for the
+	     * retained baseline.  A traced legacy shot also runs audit-only
+	     * selective replay when route decisions are enabled, so it is not a
+	     * valid legacy oracle for naturally incomplete transactions. */
+	    routing_legacy = ray_audit_run_routed(dbip, dp, reference_depth,
+		&tol, samples, false, false, transform);
+	if (routing_publication && routing_legacy.prep.ret == BRLCAD_OK)
+	    routing_published = ray_audit_run_routed(dbip, dp, reference_depth,
+		&tol, samples, true, false, transform);
+	if (routing_missing_root_injection &&
+		routing_legacy.prep.ret == BRLCAD_OK) {
+	    routing_injected_direct = ray_audit_run_routed(dbip, dp,
+		reference_depth, &tol, samples, false, true, transform);
+	    routing_injected_published = ray_audit_run_routed(dbip, dp,
+		reference_depth, &tol, samples, true, true, transform);
+	}
     }
     const ray_audit_comparison comparison =
 	(candidate.prep.ret == BRLCAD_OK && reference.prep.ret == BRLCAD_OK) ?
 	ray_audit_compare(samples, candidate, reference, &tol) :
 	ray_audit_comparison();
+    const ray_audit_comparison routing_comparison =
+	(routing_truth && routing_legacy.prep.ret == BRLCAD_OK &&
+	 reference.prep.ret == BRLCAD_OK) ?
+	ray_audit_compare(samples, reference, routing_legacy, &tol) :
+	ray_audit_comparison();
+    ray_audit_comparison routing_authoritative_comparison;
+    std::vector<size_t> routing_difference_pairs;
+    std::vector<size_t> routing_authoritative_pairs;
+    std::vector<size_t> routing_boundary_contact_oracle_pairs;
+    std::vector<size_t> routing_selective_replay_oracle_pairs;
+    size_t routing_lane_differences[RT_BREP_ROUTE_LANE_COUNT] = {};
+    size_t routing_observation_strata[RAY_AUDIT_ROUTE_STRATUM_COUNT] = {};
+    size_t routing_correction_strata[RAY_AUDIT_ROUTE_STRATUM_COUNT] = {};
+    size_t routing_correction_shapes[RAY_AUDIT_CORRECTION_SHAPE_COUNT] = {};
+    size_t routing_complete_differences = 0;
+    size_t routing_boundary_contact_oracle_rays = 0;
+    size_t routing_selective_replay_oracle_rays = 0;
+    for (size_t ray_index = 0; ray_index < reference.shots.size();
+	    ++ray_index)
+	routing_observation_strata[ray_audit_route_stratum_for(
+	    reference.shots[ray_index])]++;
+    const size_t routing_ray_count = std::min(samples.size(),
+	std::min(reference.shots.size(), routing_legacy.shots.size()));
+    for (size_t ray_index = 0; ray_index < routing_ray_count; ++ray_index) {
+	double ignored_maximum_delta = 0.0;
+	size_t ignored_face_differences = 0;
+	if (ray_audit_shots_equivalent(samples[ray_index],
+		reference.shots[ray_index], routing_legacy.shots[ray_index],
+		&tol, ignored_maximum_delta, ignored_face_differences))
+	    continue;
+	routing_difference_pairs.push_back(samples[ray_index].pair_index);
+	const ray_audit_shot &shot = reference.shots[ray_index];
+	if (!shot.prepared_selected)
+	    continue;
+	if (shot.seeded_route_lane >= 0 &&
+		shot.seeded_route_lane < RT_BREP_ROUTE_LANE_COUNT)
+	    routing_lane_differences[shot.seeded_route_lane]++;
+	if (shot.seeded_verifier_complete)
+	    routing_complete_differences++;
+	routing_correction_strata[ray_audit_route_stratum_for(shot)]++;
+	routing_correction_shapes[ray_audit_correction_shape_for(shot,
+	    routing_legacy.shots[ray_index])]++;
+	routing_authoritative_comparison.differing_rays++;
+	ray_audit_store_example(
+	    routing_authoritative_comparison.differing_ray_indices, ray_index);
+	routing_authoritative_pairs.push_back(samples[ray_index].pair_index);
+	if (ray_audit_certified_boundary_contact_miss(shot,
+		    routing_legacy.shots[ray_index], &tol)) {
+	    routing_boundary_contact_oracle_rays++;
+	    routing_boundary_contact_oracle_pairs.push_back(
+		samples[ray_index].pair_index);
+	} else if (ray_audit_certified_selective_replay(shot)) {
+	    routing_selective_replay_oracle_rays++;
+	    routing_selective_replay_oracle_pairs.push_back(
+		samples[ray_index].pair_index);
+	}
+    }
+    std::sort(routing_difference_pairs.begin(),
+	routing_difference_pairs.end());
+    routing_difference_pairs.erase(std::unique(routing_difference_pairs.begin(),
+	routing_difference_pairs.end()), routing_difference_pairs.end());
+    std::sort(routing_authoritative_pairs.begin(),
+	routing_authoritative_pairs.end());
+    routing_authoritative_pairs.erase(std::unique(
+	routing_authoritative_pairs.begin(), routing_authoritative_pairs.end()),
+	routing_authoritative_pairs.end());
+    std::sort(routing_boundary_contact_oracle_pairs.begin(),
+	routing_boundary_contact_oracle_pairs.end());
+    routing_boundary_contact_oracle_pairs.erase(std::unique(
+	routing_boundary_contact_oracle_pairs.begin(),
+	    routing_boundary_contact_oracle_pairs.end()),
+	routing_boundary_contact_oracle_pairs.end());
+    std::sort(routing_selective_replay_oracle_pairs.begin(),
+	routing_selective_replay_oracle_pairs.end());
+    routing_selective_replay_oracle_pairs.erase(std::unique(
+	routing_selective_replay_oracle_pairs.begin(),
+	    routing_selective_replay_oracle_pairs.end()),
+	routing_selective_replay_oracle_pairs.end());
+    std::vector<size_t> routing_oracle_pairs =
+	routing_boundary_contact_oracle_pairs;
+    routing_oracle_pairs.insert(routing_oracle_pairs.end(),
+	routing_selective_replay_oracle_pairs.begin(),
+	routing_selective_replay_oracle_pairs.end());
+    std::sort(routing_oracle_pairs.begin(), routing_oracle_pairs.end());
+    routing_oracle_pairs.erase(std::unique(routing_oracle_pairs.begin(),
+	routing_oracle_pairs.end()), routing_oracle_pairs.end());
+    const size_t routing_oracle_rays =
+	routing_boundary_contact_oracle_rays +
+	routing_selective_replay_oracle_rays;
+    const ray_audit_publication publication =
+	routing_publication && routing_published.prep.ret == BRLCAD_OK ?
+	ray_audit_check_publication(samples, reference, routing_legacy,
+	    routing_published, &tol) : ray_audit_publication();
+    const bool publication_valid = !routing_publication ||
+	(routing_published.prep.ret == BRLCAD_OK && !publication.invalid_rays &&
+	 !publication.mismatches &&
+	 publication.published_correction_rays ==
+	    routing_authoritative_comparison.differing_rays &&
+	 routing_oracle_rays ==
+	    routing_authoritative_comparison.differing_rays);
+    const ray_audit_missing_root_injection missing_root_injection =
+	routing_missing_root_injection &&
+	    routing_injected_direct.prep.ret == BRLCAD_OK &&
+	    routing_injected_published.prep.ret == BRLCAD_OK ?
+	    ray_audit_check_missing_root_injection(samples, reference,
+		routing_legacy, routing_injected_direct,
+		routing_injected_published, &tol) :
+	    ray_audit_missing_root_injection();
+    const bool missing_root_injection_valid =
+	!routing_missing_root_injection ||
+	(routing_injected_direct.prep.ret == BRLCAD_OK &&
+	 routing_injected_published.prep.ret == BRLCAD_OK &&
+	 missing_root_injection.rays == samples.size() &&
+	 missing_root_injection.fault_injected == samples.size() &&
+	 missing_root_injection.suppressed_hit_rays > 0 &&
+	 missing_root_injection.suppressed_raw_hits > 0 &&
+	 missing_root_injection.suppressed_route_roots > 0 &&
+	 missing_root_injection.direct_empty_results == samples.size() &&
+	 missing_root_injection.fault_exposed_rays > 0 &&
+	 missing_root_injection.triggered > 0 &&
+	 missing_root_injection.triggered_faults > 0 &&
+	 missing_root_injection.optional_attempts ==
+	    missing_root_injection.triggered &&
+	 missing_root_injection.general_prepared_attempts ==
+	    missing_root_injection.triggered &&
+	 missing_root_injection.optional_complete > 0 &&
+	 missing_root_injection.published ==
+	    missing_root_injection.optional_complete &&
+	 missing_root_injection.complete_oracle_agreements > 0 &&
+	 missing_root_injection.recoverable_faults > 0 &&
+	 missing_root_injection.recovered_faults ==
+	    missing_root_injection.recoverable_faults &&
+	 missing_root_injection.published_prepared_matches ==
+	    missing_root_injection.optional_complete &&
+	 missing_root_injection.published_injected_fallback_matches ==
+	    samples.size() - missing_root_injection.optional_complete &&
+	 !missing_root_injection.decision_mismatches &&
+	 !missing_root_injection.transaction_mismatches);
+    const bool routing_valid = !routing_truth ||
+	(routing_legacy.prep.ret == BRLCAD_OK &&
+	 !routing_comparison.candidate_invalid_rays &&
+	 !routing_comparison.reference_invalid_rays &&
+	 !routing_comparison.candidate_reversal_mismatches &&
+	 !routing_comparison.reference_reversal_mismatches && publication_valid &&
+	 missing_root_injection_valid);
     const bool pass = solid && have_bbox && face_count > 0 &&
 	!samples.empty() && candidate.prep.ret == BRLCAD_OK &&
 	reference.prep.ret == BRLCAD_OK && !comparison.differing_rays &&
 	!comparison.candidate_invalid_rays &&
 	!comparison.reference_invalid_rays &&
 	!comparison.candidate_reversal_mismatches &&
-	!comparison.reference_reversal_mismatches;
+	!comparison.reference_reversal_mismatches && routing_valid;
     const char *status = pass ? "pass" : !face_count ? "empty_brep" :
 	!solid ? "non_solid" : !have_bbox ? "invalid_bbox" :
 	"comparison_failed";
@@ -2697,6 +5434,19 @@ ray_depth_compare(struct db_i *dbip, const char *db_path,
 	<< "{\"format\":\"brlcad-brep-ray-depth-comparison-v1\""
 	<< ",\"database\":" << json_quote(db_path)
 	<< ",\"object\":" << json_quote(dp->d_namep)
+	<< ",\"transform\":";
+    if (transform) {
+	std::cout << "[";
+	for (size_t i = 0; i < ELEMENTS_PER_MAT; ++i) {
+	    if (i)
+		std::cout << ",";
+	    std::cout << transform[i];
+	}
+	std::cout << "]";
+    } else {
+	std::cout << "null";
+    }
+    std::cout
 	<< ",\"status\":" << json_quote(status)
 	<< ",\"solid\":" << (solid ? "true" : "false")
 	<< ",\"faces\":" << face_count
@@ -2709,8 +5459,10 @@ ray_depth_compare(struct db_i *dbip, const char *db_path,
 	    "legacy_only" : "prepared_and_legacy")
 	<< ",\"sampling\":{\"seed\":\"0x9e3779b97f4a7c15\""
 	<< ",\"selected_pair_index\":" << selected_pair
-	<< ",\"requested_random_chord_pairs\":" << random_chords
-	<< ",\"requested_feature_chord_pairs\":" << feature_chords
+	<< ",\"requested_random_chord_pairs\":"
+	<< (exact_ray ? 0 : random_chords)
+	<< ",\"requested_feature_chord_pairs\":"
+	<< (exact_ray ? 0 : feature_chords)
 	<< ",\"axis_chord_pairs\":"
 	<< sample_kind_pairs[RAY_AUDIT_AXIS_CHORD]
 	<< ",\"random_chord_pairs\":"
@@ -2721,6 +5473,8 @@ ray_depth_compare(struct db_i *dbip, const char *db_path,
 	<< sample_kind_pairs[RAY_AUDIT_EDGE_NORMAL_CHORD]
 	<< ",\"edge_graze_chord_pairs\":"
 	<< sample_kind_pairs[RAY_AUDIT_EDGE_GRAZE_CHORD]
+	<< ",\"exact_ray_pairs\":"
+	<< sample_kind_pairs[RAY_AUDIT_EXACT_CHORD]
 	<< ",\"feature_chord_pairs\":"
 	<< (sample_kind_pairs[RAY_AUDIT_FACE_NORMAL_CHORD] +
 	    sample_kind_pairs[RAY_AUDIT_EDGE_NORMAL_CHORD] +
@@ -2769,6 +5523,191 @@ ray_depth_compare(struct db_i *dbip, const char *db_path,
 	    (size_t)selected_pair);
     print_ray_audit_failure_records(samples, candidate, reference,
 	selected_record, face_components);
+    if (routing_truth) {
+	std::cout << ",\"routing_truth\":{\"valid\":"
+	    << (routing_valid ? "true" : "false")
+	    << ",\"record_labels\":{\"candidate\":\"prepared\","
+	       "\"reference\":\"legacy\"}"
+	    << ",\"legacy\":{\"prep\":";
+	print_ray_audit_prep(routing_legacy.prep);
+	std::cout << ",\"trace\":";
+	print_ray_audit_telemetry(routing_legacy.telemetry);
+	std::cout << "}"
+	    << ",\"differing_rays\":" << routing_comparison.differing_rays
+	    << ",\"differing_pairs\":" << routing_difference_pairs.size()
+	    << ",\"prepared_invalid_rays\":"
+	    << routing_comparison.candidate_invalid_rays
+	    << ",\"legacy_invalid_rays\":"
+	    << routing_comparison.reference_invalid_rays
+	    << ",\"prepared_reversal_mismatches\":"
+	    << routing_comparison.candidate_reversal_mismatches
+	    << ",\"legacy_reversal_mismatches\":"
+	    << routing_comparison.reference_reversal_mismatches
+	    << ",\"prepared_reversal_pair_indices\":";
+	print_ray_audit_indices(routing_comparison.candidate_reversal_indices);
+	std::cout << ",\"legacy_reversal_pair_indices\":";
+	print_ray_audit_indices(routing_comparison.reference_reversal_indices);
+	std::cout
+	    << ",\"authoritative_correction_rays\":"
+	    << routing_authoritative_comparison.differing_rays
+	    << ",\"authoritative_correction_pairs\":"
+	    << routing_authoritative_pairs.size()
+	    << ",\"trace_only_differing_rays\":"
+	    << routing_comparison.differing_rays -
+		routing_authoritative_comparison.differing_rays
+	    << ",\"verifier_complete_correction_rays\":"
+	    << routing_complete_differences
+	    << ",\"oracle\":{\"class\":"
+	    << json_quote(routing_selective_replay_oracle_rays ?
+		(routing_boundary_contact_oracle_rays ?
+		 "certified_mixed" : "certified_selective_replay") :
+		"certified_boundary_contact_miss")
+	    << ",\"completed_rays\":"
+	    << routing_oracle_rays
+	    << ",\"completed_pairs\":"
+	    << routing_oracle_pairs.size()
+	    << ",\"unresolved_correction_rays\":"
+	    << routing_authoritative_comparison.differing_rays -
+		routing_oracle_rays << "}"
+	    << ",\"boundary_contact_oracle_rays\":"
+	    << routing_boundary_contact_oracle_rays
+	    << ",\"selective_replay_oracle_rays\":"
+	    << routing_selective_replay_oracle_rays
+	    << ",\"difference_pair_indices\":";
+	print_ray_audit_indices(routing_difference_pairs);
+	std::cout << ",\"correction_pair_indices\":";
+	print_ray_audit_indices(routing_authoritative_pairs);
+	std::cout << ",\"oracle_pair_indices\":";
+	print_ray_audit_indices(routing_oracle_pairs);
+	std::cout << ",\"correction_shapes\":[";
+	for (int shape = 0; shape < RAY_AUDIT_CORRECTION_SHAPE_COUNT;
+		++shape) {
+	    if (shape)
+		std::cout << ",";
+	    std::cout << "{\"name\":" << json_quote(
+		ray_audit_correction_shape_name(
+		    (ray_audit_correction_shape)shape))
+		<< ",\"rays\":" << routing_correction_shapes[shape] << "}";
+	}
+	std::cout << "],\"observation_strata\":[";
+	for (int stratum = 0; stratum < RAY_AUDIT_ROUTE_STRATUM_COUNT;
+		++stratum) {
+	    if (stratum)
+		std::cout << ",";
+	    std::cout << "{\"name\":" << json_quote(
+		ray_audit_route_stratum_name(
+		    (ray_audit_route_stratum)stratum))
+		<< ",\"rays\":" << routing_observation_strata[stratum] << "}";
+	}
+	std::cout << "],\"correction_strata\":[";
+	for (int stratum = 0; stratum < RAY_AUDIT_ROUTE_STRATUM_COUNT;
+		++stratum) {
+	    if (stratum)
+		std::cout << ",";
+	    std::cout << "{\"name\":" << json_quote(
+		ray_audit_route_stratum_name(
+		    (ray_audit_route_stratum)stratum))
+		<< ",\"rays\":" << routing_correction_strata[stratum] << "}";
+	}
+	std::cout << "]"
+	    << ",\"missed_correction_rays\":"
+	    << routing_lane_differences[RT_BREP_ROUTE_LEGACY_DIRECT]
+	    << ",\"lanes\":[";
+	for (int lane = 0; lane < RT_BREP_ROUTE_LANE_COUNT; ++lane) {
+	    if (lane)
+		std::cout << ",";
+	    std::cout << "{\"name\":"
+		<< json_quote(ray_audit_route_name(lane))
+		<< ",\"correction_rays\":"
+		<< routing_lane_differences[lane] << "}";
+	}
+	std::cout << "]";
+	if (routing_publication) {
+	    std::cout << ",\"publication\":{\"valid\":"
+		<< (publication_valid ? "true" : "false")
+		<< ",\"rays\":" << publication.rays
+		<< ",\"invalid_rays\":" << publication.invalid_rays
+		<< ",\"optional_attempts\":" << publication.optional_attempts
+		<< ",\"optional_complete\":" << publication.optional_complete
+		<< ",\"eligible_publications\":"
+		<< publication.eligible_publications
+		<< ",\"prepared_matches\":" << publication.prepared_matches
+		<< ",\"legacy_fallback_matches\":"
+		<< publication.legacy_fallback_matches
+		<< ",\"published_correction_rays\":"
+		<< publication.published_correction_rays
+		<< ",\"mismatches\":" << publication.mismatches
+		<< ",\"mismatch_ray_indices\":";
+	    print_ray_audit_indices(publication.mismatch_ray_indices);
+	    std::cout << "}";
+	}
+	if (routing_missing_root_injection) {
+	    std::cout << ",\"missing_root_injection\":{\"valid\":"
+		<< (missing_root_injection_valid ? "true" : "false")
+		<< ",\"rays\":" << missing_root_injection.rays
+		<< ",\"fault_injected\":"
+		<< missing_root_injection.fault_injected
+		<< ",\"suppressed_hit_rays\":"
+		<< missing_root_injection.suppressed_hit_rays
+		<< ",\"suppressed_raw_hits\":"
+		<< missing_root_injection.suppressed_raw_hits
+		<< ",\"suppressed_route_roots\":"
+		<< missing_root_injection.suppressed_route_roots
+		<< ",\"direct_empty_results\":"
+		<< missing_root_injection.direct_empty_results
+		<< ",\"fault_exposed_rays\":"
+		<< missing_root_injection.fault_exposed_rays
+		<< ",\"triggered_faults\":"
+		<< missing_root_injection.triggered_faults
+		<< ",\"triggered\":" << missing_root_injection.triggered
+		<< ",\"optional_attempts\":"
+		<< missing_root_injection.optional_attempts
+		<< ",\"general_prepared_attempts\":"
+		<< missing_root_injection.general_prepared_attempts
+		<< ",\"optional_complete\":"
+		<< missing_root_injection.optional_complete
+		<< ",\"optional_incomplete\":"
+		<< missing_root_injection.optional_incomplete
+		<< ",\"published\":" << missing_root_injection.published
+		<< ",\"complete_oracle_agreements\":"
+		<< missing_root_injection.complete_oracle_agreements
+		<< ",\"recoverable_faults\":"
+		<< missing_root_injection.recoverable_faults
+		<< ",\"recovered_faults\":"
+		<< missing_root_injection.recovered_faults
+		<< ",\"published_prepared_matches\":"
+		<< missing_root_injection.published_prepared_matches
+		<< ",\"published_injected_fallback_matches\":"
+		<< missing_root_injection.published_injected_fallback_matches
+		<< ",\"decision_mismatches\":"
+		<< missing_root_injection.decision_mismatches
+		<< ",\"transaction_mismatches\":"
+		<< missing_root_injection.transaction_mismatches
+		<< ",\"mismatch_ray_indices\":";
+	    print_ray_audit_indices(
+		missing_root_injection.mismatch_ray_indices);
+	    std::cout << "}";
+	}
+	std::cout << ",\"difference_records\":";
+	print_ray_audit_failure_records(samples, reference, routing_legacy,
+	    routing_comparison, face_components);
+	std::cout << ",\"correction_records\":";
+	print_ray_audit_failure_records(samples, reference, routing_legacy,
+	    routing_authoritative_comparison, face_components);
+	std::cout << ",\"selected_pair_records\":";
+	ray_audit_comparison selected_routing_record;
+	if (selected_pair >= 0)
+	    selected_routing_record.candidate_reversal_indices.push_back(
+		(size_t)selected_pair);
+	print_ray_audit_failure_records(samples, reference, routing_legacy,
+	    selected_routing_record, face_components);
+	if (routing_publication) {
+	    std::cout << ",\"published_selected_pair_records\":";
+	    print_ray_audit_failure_records(samples, routing_published,
+		routing_legacy, selected_routing_record, face_components);
+	}
+	std::cout << "}";
+    }
     std::cout << ",\"process_peak_rss_bytes\":" << peak_rss_bytes()
 	<< "}\n";
     return pass ? 0 : 1;
@@ -3528,6 +6467,282 @@ quality_result(struct db_i *dbip, struct directory *dp,
     return result;
 }
 
+static void print_num(double value);
+static void print_vec(const fastf_t *v);
+
+static bool
+mesh_ray_triangle(const ray_audit_exact_ray &ray, const point_t first,
+	const point_t second, const point_t third, mesh_ray_hit &hit)
+{
+    vect_t edge1, edge2, pvec, tvec, qvec, normal;
+    VSUB2(edge1, second, first);
+    VSUB2(edge2, third, first);
+    VCROSS(pvec, ray.direction, edge2);
+    const double determinant = VDOT(edge1, pvec);
+    const double determinant_scale = std::max(1.0,
+	MAGNITUDE(edge1) * MAGNITUDE(edge2));
+    if (!std::isfinite(determinant) ||
+	fabs(determinant) <= 128.0 * DBL_EPSILON * determinant_scale)
+	return false;
+
+    const double inverse = 1.0 / determinant;
+    VSUB2(tvec, ray.origin, first);
+    const double first_coordinate = VDOT(tvec, pvec) * inverse;
+    const double barycentric_tolerance = 1024.0 * DBL_EPSILON;
+    if (!std::isfinite(first_coordinate) ||
+	first_coordinate < -barycentric_tolerance ||
+	first_coordinate > 1.0 + barycentric_tolerance)
+	return false;
+    VCROSS(qvec, tvec, edge1);
+    const double second_coordinate = VDOT(ray.direction, qvec) * inverse;
+    if (!std::isfinite(second_coordinate) ||
+	second_coordinate < -barycentric_tolerance ||
+	first_coordinate + second_coordinate > 1.0 + barycentric_tolerance)
+	return false;
+    const double distance = VDOT(edge2, qvec) * inverse;
+    if (!std::isfinite(distance) || distance < 0.0)
+	return false;
+
+    VCROSS(normal, edge1, edge2);
+    const double normal_length = MAGNITUDE(normal);
+    if (!(normal_length > SMALL_FASTF) || !std::isfinite(normal_length))
+	return false;
+    VSCALE(normal, normal, 1.0 / normal_length);
+    hit.distance = distance;
+    hit.barycentric[0] = first_coordinate;
+    hit.barycentric[1] = second_coordinate;
+    hit.normal_dot = VDOT(normal, ray.direction);
+    return true;
+}
+
+static double
+torus_implicit_value(const ON_Torus &torus, const ON_3dPoint &point)
+{
+    const ON_3dVector offset = point - torus.Center();
+    ON_3dVector axis = torus.Axis();
+    if (!axis.Unitize())
+	return std::numeric_limits<double>::quiet_NaN();
+    const double axial = offset * axis;
+    const double squared = offset * offset;
+    const double radial_squared = std::max(0.0,
+	squared - axial * axial);
+    const double major_squared = torus.MajorRadius() * torus.MajorRadius();
+    const double minor_squared = torus.MinorRadius() * torus.MinorRadius();
+    const double sum = squared + major_squared - minor_squared;
+    return sum * sum - 4.0 * major_squared * radial_squared;
+}
+
+static bool
+torus_ray_intersections(const ON_Torus &torus,
+	const ray_audit_exact_ray &ray, std::vector<torus_ray_root> &roots)
+{
+    ON_3dVector axis = torus.Axis();
+    if (!torus.IsValid() || !axis.Unitize())
+	return false;
+    vect_t offset, centered;
+    VSUB2(offset, ray.origin, torus.Center());
+    const double projection = VDOT(offset, ray.direction);
+    VJOIN1(centered, offset, -projection, ray.direction);
+
+    const double direction_axis = VDOT(ray.direction, axis);
+    const double centered_axis = VDOT(centered, axis);
+    const double major_squared = torus.MajorRadius() * torus.MajorRadius();
+    const double minor_squared = torus.MinorRadius() * torus.MinorRadius();
+    const double q2 = VDOT(ray.direction, ray.direction);
+    const double q1 = 2.0 * VDOT(centered, ray.direction);
+    const double q0 = VDOT(centered, centered) + major_squared -
+	minor_squared;
+    const double radial2 = q2 - direction_axis * direction_axis;
+    const double radial1 = q1 - 2.0 * centered_axis * direction_axis;
+    const double radial0 = VDOT(centered, centered) -
+	centered_axis * centered_axis;
+
+    bn_poly_t equation = BN_POLY_INIT_ZERO;
+    equation.dgr = 4;
+    equation.cf[0] = q2 * q2;
+    equation.cf[1] = 2.0 * q2 * q1;
+    equation.cf[2] = q1 * q1 + 2.0 * q2 * q0 -
+	4.0 * major_squared * radial2;
+    equation.cf[3] = 2.0 * q1 * q0 -
+	4.0 * major_squared * radial1;
+    equation.cf[4] = q0 * q0 - 4.0 * major_squared * radial0;
+
+    bn_complex_t values[4] = {};
+    if (!bn_poly_quartic_roots(values, &equation))
+	return false;
+    for (size_t i = 0; i < 4; ++i) {
+	torus_ray_root root;
+	root.distance = values[i].re - projection;
+	root.imaginary = values[i].im;
+	const ON_3dPoint point(ray.origin[X] +
+	    root.distance * ray.direction[X], ray.origin[Y] +
+	    root.distance * ray.direction[Y], ray.origin[Z] +
+	    root.distance * ray.direction[Z]);
+	root.residual = torus_implicit_value(torus, point);
+	roots.push_back(root);
+    }
+    std::sort(roots.begin(), roots.end(),
+	[](const torus_ray_root &first, const torus_ray_root &second) {
+	    return first.distance < second.distance;
+	});
+    return true;
+}
+
+/* A deliberately independent accuracy oracle for difficult grazing rays.
+ * The fast display tessellator samples one requested trimmed face without
+ * using the raytrace SurfaceTree, prepared solver, or selective replay.  A
+ * sequence of decreasing tessellation tolerances can therefore demonstrate
+ * convergence of triangle/ray crossings around an exact B-Rep result. */
+static int
+mesh_ray_query(struct db_i *dbip, const char *db_path, struct directory *dp,
+	int face_index, const ray_audit_exact_ray &ray,
+	const struct bg_tess_tol *ttol, const struct bn_tol *tol,
+	const mat_t transform = NULL)
+{
+    struct rt_db_internal intern;
+    if (!ttol || !tol ||
+	load_brep(dbip, dp, &intern, transform) != BRLCAD_OK)
+	return 2;
+    struct rt_brep_internal *bi =
+	(struct rt_brep_internal *)intern.idb_ptr;
+    RT_BREP_CK_MAGIC(bi);
+    if (face_index < 0 || face_index >= bi->brep->m_F.Count()) {
+	std::cerr << "Face index is out of range: " << face_index << "\n";
+	rt_db_free_internal(&intern);
+	return 2;
+    }
+
+    int *faces = NULL;
+    int triangle_count = 0;
+    vect_t *normals = NULL;
+    point_t *points = NULL;
+    int point_count = 0;
+    const int64_t start = bu_gettime();
+    const int tessellation_result = brep_cdt_fast(&faces, &triangle_count,
+	&normals, &points, &point_count, bi->brep, face_index, ttol, tol);
+    const double seconds = (bu_gettime() - start) / 1000000.0;
+
+    std::vector<mesh_ray_hit> raw_hits;
+    const ON_Surface *surface = bi->brep->m_F[face_index].SurfaceOf();
+    ON_Torus torus;
+    const bool torus_available = surface &&
+	surface->IsTorus(&torus, ON_ZERO_TOLERANCE);
+    std::vector<torus_ray_root> torus_roots;
+    const bool torus_roots_valid = torus_available &&
+	torus_ray_intersections(torus, ray, torus_roots);
+    bool valid_mesh = tessellation_result == BRLCAD_OK &&
+	triangle_count > 0 && point_count > 0 && faces && points;
+    for (int triangle = 0; valid_mesh && triangle < triangle_count;
+	    ++triangle) {
+	const int first = faces[triangle * 3];
+	const int second = faces[triangle * 3 + 1];
+	const int third = faces[triangle * 3 + 2];
+	if (first < 0 || second < 0 || third < 0 ||
+		first >= point_count || second >= point_count ||
+		third >= point_count) {
+	    valid_mesh = false;
+	    break;
+	}
+	mesh_ray_hit hit;
+	hit.triangle = triangle;
+	if (mesh_ray_triangle(ray, points[first], points[second],
+		points[third], hit))
+	    raw_hits.push_back(hit);
+    }
+    std::sort(raw_hits.begin(), raw_hits.end(),
+	[](const mesh_ray_hit &first, const mesh_ray_hit &second) {
+	    return first.distance < second.distance;
+	});
+    std::vector<mesh_ray_hit> unique_hits;
+    for (size_t i = 0; i < raw_hits.size(); ++i) {
+	const double duplicate_tolerance = std::max(1.0e-9,
+	    512.0 * DBL_EPSILON * std::max(1.0,
+		fabs(raw_hits[i].distance)));
+	if (!unique_hits.empty() &&
+		fabs(raw_hits[i].distance - unique_hits.back().distance) <=
+		duplicate_tolerance)
+	    continue;
+	unique_hits.push_back(raw_hits[i]);
+    }
+
+    std::cout << "{\"format\":\"brlcad-brep-mesh-ray-query-v1\""
+	<< ",\"database\":" << json_quote(db_path)
+	<< ",\"object\":" << json_quote(dp->d_namep)
+	<< ",\"face\":" << face_index
+	<< ",\"status\":" << json_quote(valid_mesh ? "ok" : "fail")
+	<< ",\"tessellation\":{\"absolute\":";
+    print_num(ttol->abs);
+    std::cout << ",\"relative\":";
+    print_num(ttol->rel);
+    std::cout << ",\"normal\":";
+    print_num(ttol->norm);
+    std::cout << ",\"return_code\":" << tessellation_result
+	<< ",\"seconds\":";
+    print_num(seconds);
+    std::cout << ",\"triangles\":" << std::max(0, triangle_count)
+	<< ",\"vertices\":" << std::max(0, point_count) << "}"
+	<< ",\"ray\":{\"origin\":";
+    print_vec(ray.origin);
+    std::cout << ",\"direction\":";
+    print_vec(ray.direction);
+    std::cout << "},\"analytic_torus\":{\"available\":"
+	<< (torus_available ? "true" : "false");
+    if (torus_available) {
+	const ON_3dPoint center = torus.Center();
+	const ON_3dVector axis = torus.Axis();
+	point_t center_values;
+	vect_t axis_values;
+	VSET(center_values, center.x, center.y, center.z);
+	VSET(axis_values, axis.x, axis.y, axis.z);
+	std::cout << ",\"center\":";
+	print_vec(center_values);
+	std::cout << ",\"axis\":";
+	print_vec(axis_values);
+	std::cout << ",\"major_radius\":";
+	print_num(torus.MajorRadius());
+	std::cout << ",\"minor_radius\":";
+	print_num(torus.MinorRadius());
+    }
+    std::cout << ",\"root_solver_valid\":"
+	<< (torus_roots_valid ? "true" : "false") << ",\"roots\":[";
+    for (size_t i = 0; i < torus_roots.size(); ++i) {
+	if (i)
+	    std::cout << ",";
+	std::cout << "{\"distance\":";
+	print_num(torus_roots[i].distance);
+	std::cout << ",\"imaginary\":";
+	print_num(torus_roots[i].imaginary);
+	std::cout << ",\"residual\":";
+	print_num(torus_roots[i].residual);
+	std::cout << "}";
+    }
+    std::cout << "]},\"raw_intersections\":" << raw_hits.size()
+	<< ",\"unique_intersections\":[";
+    for (size_t i = 0; i < unique_hits.size(); ++i) {
+	if (i)
+	    std::cout << ",";
+	const mesh_ray_hit &hit = unique_hits[i];
+	std::cout << "{\"distance\":";
+	print_num(hit.distance);
+	std::cout << ",\"triangle\":" << hit.triangle
+	    << ",\"barycentric\":[";
+	print_num(hit.barycentric[0]);
+	std::cout << ",";
+	print_num(hit.barycentric[1]);
+	std::cout << "],\"normal_dot\":";
+	print_num(hit.normal_dot);
+	std::cout << "}";
+    }
+    std::cout << "],\"process_peak_rss_bytes\":" << peak_rss_bytes()
+	<< "}\n";
+
+    bu_free(faces, "brep audit mesh ray faces");
+    bu_free(normals, "brep audit mesh ray normals");
+    bu_free(points, "brep audit mesh ray points");
+    rt_db_free_internal(&intern);
+    return valid_mesh ? 0 : 1;
+}
+
 static void
 dims(vect_t d, const point_t bmin, const point_t bmax)
 {
@@ -3983,6 +7198,189 @@ print_interval(const ON_Interval &interval)
     std::cout << "]";
 }
 
+static const char *
+parameter_mapping_orientation_name(parameter_mapping_orientation orientation)
+{
+    switch (orientation) {
+	case PARAMETER_MAPPING_DECREASING:
+	    return "decreasing";
+	case PARAMETER_MAPPING_INCREASING:
+	    return "increasing";
+	case PARAMETER_MAPPING_CONSTANT:
+	    return "constant";
+	case PARAMETER_MAPPING_MIXED:
+	    return "mixed";
+	default:
+	    return "unknown";
+    }
+}
+
+static void
+print_parameter_mapping_direction(
+    const parameter_mapping_direction_profile &direction)
+{
+    std::cout << "{\"attempts\":" << direction.attempts
+	<< ",\"successes\":" << direction.successes
+	<< ",\"domain_contained\":" << direction.domain_contained
+	<< ",\"round_trip_successes\":"
+	<< direction.round_trip_successes
+	<< ",\"round_trip_within_tolerance\":"
+	<< direction.round_trip_within_tolerance
+	<< ",\"maximum_round_trip_error\":[";
+    print_num(direction.maximum_round_trip_error[0]);
+    std::cout << ",";
+    print_num(direction.maximum_round_trip_error[1]);
+    std::cout << "],\"maximum_normalized_round_trip_error\":[";
+    print_num(direction.maximum_normalized_round_trip_error[0]);
+    std::cout << ",";
+    print_num(direction.maximum_normalized_round_trip_error[1]);
+    std::cout << "]"
+	<< ",\"behavior_complete\":"
+	<< (direction.behavior_complete ? "true" : "false")
+	<< ",\"separable\":" << (direction.separable ? "true" : "false")
+	<< ",\"output_input_axis\":[" << direction.output_input_axis[0]
+	<< "," << direction.output_input_axis[1] << "]"
+	<< ",\"maximum_cross_axis_error\":[";
+    print_num(direction.maximum_cross_axis_error[0]);
+    std::cout << ",";
+    print_num(direction.maximum_cross_axis_error[1]);
+    std::cout << "]"
+	<< ",\"monotone\":["
+	<< (direction.monotone[0] ? "true" : "false") << ","
+	<< (direction.monotone[1] ? "true" : "false") << "]"
+	<< ",\"strictly_monotone\":["
+	<< (direction.strictly_monotone[0] ? "true" : "false") << ","
+	<< (direction.strictly_monotone[1] ? "true" : "false") << "]"
+	<< ",\"orientation\":["
+	<< json_quote(parameter_mapping_orientation_name(direction.orientation[0]))
+	<< ","
+	<< json_quote(parameter_mapping_orientation_name(direction.orientation[1]))
+	<< "]}";
+}
+
+static void
+print_surface_representation(const surface_tree_profile &profile)
+{
+    std::cout << "{\"surface_type\":" << json_quote(profile.surface_type)
+	<< ",\"face_reversed\":"
+	<< (profile.face_reversed ? "true" : "false")
+	<< ",\"face_proxy_transposed\":"
+	<< (profile.face_proxy_transposed ? "true" : "false")
+	<< ",\"surface_proxy\":{\"present\":"
+	<< (profile.surface_proxy ? "true" : "false")
+	<< ",\"target_type\":"
+	<< json_quote(profile.surface_proxy_target_type)
+	<< ",\"transposed\":"
+	<< (profile.surface_proxy_transposed ? "true" : "false") << "}"
+	<< ",\"closed\":[" << (profile.closed[0] ? "true" : "false")
+	<< "," << (profile.closed[1] ? "true" : "false") << "]"
+	<< ",\"periodic\":["
+	<< (profile.periodic[0] ? "true" : "false") << ","
+	<< (profile.periodic[1] ? "true" : "false") << "]"
+	<< ",\"singular_sides\":[";
+    for (int side = 0; side < 4; ++side) {
+	if (side)
+	    std::cout << ",";
+	std::cout << (profile.singular_sides[side] ? "true" : "false");
+    }
+    std::cout << "]"
+	<< ",\"revolution\":{\"present\":"
+	<< (profile.revolution ? "true" : "false")
+	<< ",\"transposed\":"
+	<< (profile.revolution_transposed ? "true" : "false")
+	<< ",\"profile\":{\"type\":" << json_quote(profile.profile_type)
+	<< ",\"domain\":";
+    if (profile.revolution && !BU_STR_EQUAL(profile.profile_type, "none"))
+	print_interval(profile.profile_domain);
+    else
+	std::cout << "null";
+    std::cout << ",\"proxy\":{\"present\":"
+	<< (profile.profile_proxy ? "true" : "false")
+	<< ",\"target_type\":"
+	<< json_quote(profile.profile_proxy_target_type)
+	<< ",\"reversed\":"
+	<< (profile.profile_proxy_reversed ? "true" : "false")
+	<< ",\"target_domain\":";
+    if (profile.profile_proxy)
+	print_interval(profile.profile_proxy_domain);
+    else
+	std::cout << "null";
+    std::cout << "},\"polycurve\":{\"present\":"
+	<< (profile.profile_polycurve ? "true" : "false")
+	<< ",\"segment_count\":"
+	<< profile.profile_polycurve_segments.size()
+	<< ",\"segments\":[";
+    for (size_t segment_index = 0;
+	    segment_index < profile.profile_polycurve_segments.size();
+	    ++segment_index) {
+	if (segment_index)
+	    std::cout << ",";
+	const polycurve_segment_profile &segment =
+	    profile.profile_polycurve_segments[segment_index];
+	std::cout << "{\"index\":" << segment_index
+	    << ",\"type\":" << json_quote(segment.type.c_str())
+	    << ",\"polycurve_domain\":";
+	print_interval(segment.polycurve_domain);
+	std::cout << ",\"curve_domain\":";
+	print_interval(segment.curve_domain);
+	std::cout << ",\"proxy\":{\"present\":"
+	    << (segment.proxy ? "true" : "false")
+	    << ",\"target_type\":"
+	    << json_quote(segment.proxy_target_type.c_str())
+	    << ",\"reversed\":"
+	    << (segment.proxy_reversed ? "true" : "false")
+	    << ",\"target_domain\":";
+	if (segment.proxy)
+	    print_interval(segment.proxy_domain);
+	else
+	    std::cout << "null";
+	std::cout << "}}";
+    }
+    std::cout << "]}}}}";
+}
+
+static void
+print_surface_parameter_mapping(const surface_tree_profile &profile)
+{
+    const surface_parameter_mapping_profile &mapping =
+	profile.parameter_mapping;
+    std::cout << "{\"sampled\":" << (mapping.sampled ? "true" : "false")
+	<< ",\"evidence_only\":true"
+	<< ",\"grid_size\":" << mapping.grid_size
+	<< ",\"surface_domain\":[";
+    print_interval(profile.domain[0]);
+    std::cout << ",";
+    print_interval(profile.domain[1]);
+    std::cout << "],\"nurb_form_domain\":";
+    if (profile.nurb_form_available) {
+	std::cout << "[";
+	print_interval(profile.nurb_form_domain[0]);
+	std::cout << ",";
+	print_interval(profile.nurb_form_domain[1]);
+	std::cout << "]";
+    } else {
+	std::cout << "null";
+    }
+    std::cout << ",\"forward\":";
+    print_parameter_mapping_direction(mapping.forward);
+    std::cout << ",\"inverse\":";
+    print_parameter_mapping_direction(mapping.inverse);
+    std::cout << "}";
+}
+
+static void
+print_status2_inventory_entry(const surface_tree_profile &profile)
+{
+    std::cout << "{\"face_index\":" << profile.failure.face_index
+	<< ",\"surface_index\":" << profile.surface_index
+	<< ",\"nurb_form_status\":" << profile.nurb_form_status
+	<< ",\"representation\":";
+    print_surface_representation(profile);
+    std::cout << ",\"parameter_mapping\":";
+    print_surface_parameter_mapping(profile);
+    std::cout << "}";
+}
+
 static void
 print_prep_result(const char *db_path, const char *object,
 	const prep_result &result, size_t repeat_index = 0,
@@ -3997,9 +7395,135 @@ print_prep_result(const char *db_path, const char *object,
 	<< ",\"failure_reason\":" << json_quote(result.failure_reason)
 	<< ",\"repeat_index\":" << repeat_index
 	<< ",\"repeat_count\":" << repeat_count
+	<< ",\"cache_lookup_requested\":"
+	<< (result.cache_lookup_requested ? "true" : "false")
+	<< ",\"cache_hit\":" << (result.cache_hit ? "true" : "false")
 	<< ",\"seconds\":";
     print_num(result.seconds);
     std::cout << ",\"peak_rss_bytes\":" << result.peak_rss_bytes
+	<< ",\"resident_before_bytes\":" << result.resident_before_bytes
+	<< ",\"resident_prepared_bytes\":"
+	<< result.resident_prepared_bytes
+	<< ",\"resident_after_free_bytes\":"
+	<< result.resident_after_free_bytes
+	<< ",\"requested_adaptive_depth\":" << result.requested_depth
+	<< ",\"recorded_adaptive_depth\":"
+	<< (result.stats_valid ? result.stats.surface_tree_depth_limit : -1)
+	<< ",\"surface_tree_build_microseconds\":"
+	<< (result.stats_valid ?
+	    result.stats.surface_tree_build_microseconds : 0)
+	<< ",\"surface_tree_nodes\":"
+	<< (result.stats_valid ? result.stats.surface_tree_nodes : 0)
+	<< ",\"surface_tree_leaves\":"
+	<< (result.stats_valid ? result.stats.surface_tree_leaves : 0)
+	<< ",\"routing_feature_cells\":"
+	<< (result.stats_valid ? result.stats.routing_feature_cells : 0)
+	<< ",\"routing_unsupported_cells\":"
+	<< (result.stats_valid ? result.stats.routing_unsupported_cells : 0)
+	<< ",\"routing_cell_span_packs\":"
+	<< (result.stats_valid ? result.stats.routing_cell_span_packs : 0)
+	<< ",\"routing_cell_span_control_intervals\":"
+	<< (result.stats_valid ?
+	    result.stats.routing_cell_span_control_intervals : 0)
+	<< ",\"routing_cell_span_subpatch_boxes\":"
+	<< (result.stats_valid ?
+	    result.stats.routing_cell_span_subpatch_boxes : 0)
+	<< ",\"routing_cell_span_pack_budget_bytes\":"
+	<< (result.stats_valid ?
+	    result.stats.routing_cell_span_pack_budget_bytes : 0)
+	<< ",\"routing_cell_span_pack_used_bytes\":"
+	<< (result.stats_valid ?
+	    result.stats.routing_cell_span_pack_used_bytes : 0)
+	<< ",\"routing_direction_cache_bytes\":"
+	<< (result.stats_valid ?
+	    result.stats.routing_direction_cache_bytes : 0)
+	<< ",\"routing_direction_cache_capacity\":"
+	<< (result.stats_valid ?
+	    result.stats.routing_direction_cache_capacity : 0)
+	<< ",\"routing_direction_cache_ready_entries\":"
+	<< (result.stats_valid ?
+	    result.stats.routing_direction_cache_ready_entries : 0)
+	<< ",\"cache_payload_serialized\":"
+	<< (result.cache_payload_valid ? "true" : "false")
+	<< ",\"cache_variant\":";
+    if (result.cache_payload_valid)
+	std::cout << result.cache_variant;
+    else
+	std::cout << "null";
+    std::cout << ",\"cache_payload_bytes\":" << result.cache_payload_bytes
+	<< ",\"cache_serialize_seconds\":";
+    print_num(result.cache_serialize_seconds);
+    std::cout << ",\"cache_payload_compressed\":"
+	<< (result.cache_payload_compressed ? "true" : "false")
+	<< ",\"cache_payload_compressed_bytes\":"
+	<< result.cache_payload_compressed_bytes
+	<< ",\"cache_compress_seconds\":";
+    print_num(result.cache_compress_seconds);
+    std::cout << ",\"retained_bytes\":"
+	<< (result.stats_valid ? result.stats.retained_bytes : 0)
+	<< ",\"retained_used_bytes\":"
+	<< (result.stats_valid ? result.stats.retained_used_bytes : 0)
+	<< ",\"retained_unused_capacity_bytes\":"
+	<< (result.stats_valid ?
+	    result.stats.retained_unused_capacity_bytes : 0)
+	<< ",\"retained_core_bytes\":"
+	<< (result.stats_valid ? result.stats.retained_core_bytes : 0)
+	<< ",\"retained_brep_bytes\":"
+	<< (result.stats_valid ? result.stats.retained_brep_bytes : 0)
+	<< ",\"retained_surface_tree_bytes\":"
+	<< (result.stats_valid ? result.stats.retained_surface_tree_bytes : 0)
+	<< ",\"retained_curve_tree_bytes\":"
+	<< (result.stats_valid ? result.stats.retained_curve_tree_bytes : 0)
+	<< ",\"retained_edge_bytes\":"
+	<< (result.stats_valid ? result.stats.retained_edge_bytes : 0)
+	<< ",\"retained_surface_bytes\":"
+	<< (result.stats_valid ? result.stats.retained_surface_bytes : 0)
+	<< ",\"retained_hierarchy_bytes\":"
+	<< (result.stats_valid ? result.stats.retained_hierarchy_bytes : 0)
+	<< ",\"retained_routing_bytes\":"
+	<< (result.stats_valid ? result.stats.retained_routing_bytes : 0)
+	<< ",\"retained_vertex_bytes\":"
+	<< (result.stats_valid ? result.stats.retained_vertex_bytes : 0)
+	<< ",\"retained_surface_tree_unused_capacity_bytes\":"
+	<< (result.stats_valid ?
+	    result.stats.retained_surface_tree_unused_capacity_bytes : 0)
+	<< ",\"retained_curve_tree_unused_capacity_bytes\":"
+	<< (result.stats_valid ?
+	    result.stats.retained_curve_tree_unused_capacity_bytes : 0)
+	<< ",\"retained_edge_unused_capacity_bytes\":"
+	<< (result.stats_valid ?
+	    result.stats.retained_edge_unused_capacity_bytes : 0)
+	<< ",\"retained_surface_unused_capacity_bytes\":"
+	<< (result.stats_valid ?
+	    result.stats.retained_surface_unused_capacity_bytes : 0)
+	<< ",\"retained_hierarchy_unused_capacity_bytes\":"
+	<< (result.stats_valid ?
+	    result.stats.retained_hierarchy_unused_capacity_bytes : 0)
+	<< ",\"retained_routing_unused_capacity_bytes\":"
+	<< (result.stats_valid ?
+	    result.stats.retained_routing_unused_capacity_bytes : 0)
+	<< ",\"retained_vertex_unused_capacity_bytes\":"
+	<< (result.stats_valid ?
+	    result.stats.retained_vertex_unused_capacity_bytes : 0)
+	<< ",\"retained_routing_feature_cell_unused_capacity_bytes\":"
+	<< (result.stats_valid ? result.stats.
+	    retained_routing_feature_cell_unused_capacity_bytes : 0)
+	<< ",\"retained_routing_binding_unused_capacity_bytes\":"
+	<< (result.stats_valid ? result.stats.
+	    retained_routing_binding_unused_capacity_bytes : 0)
+	<< ",\"retained_routing_pack_unused_capacity_bytes\":"
+	<< (result.stats_valid ? result.stats.
+	    retained_routing_pack_unused_capacity_bytes : 0)
+	<< ",\"retained_routing_control_unused_capacity_bytes\":"
+	<< (result.stats_valid ? result.stats.
+	    retained_routing_control_unused_capacity_bytes : 0)
+	<< ",\"retained_routing_subpatch_unused_capacity_bytes\":"
+	<< (result.stats_valid ? result.stats.
+	    retained_routing_subpatch_unused_capacity_bytes : 0)
+	<< ",\"retained_routing_bvh_unused_capacity_bytes\":"
+	<< (result.stats_valid ? result.stats.
+	    retained_routing_bvh_unused_capacity_bytes : 0);
+    std::cout
 	<< ",\"face_count\":" << result.face_count
 	<< ",\"bbox_valid\":" << (result.have_bbox ? "true" : "false")
 	<< ",\"bbox_min\":";
@@ -4224,6 +7748,18 @@ print_surface_tree_summary(const char *object,
 	print_interval(failure.v);
 	std::cout << "}";
     }
+    std::cout << "],\"status2_inventory\":[";
+    bool first_status2 = true;
+    for (size_t face_index = 0; face_index < result.faces.size();
+	    ++face_index) {
+	const surface_tree_profile &profile = result.faces[face_index];
+	if (profile.nurb_form_status != 2)
+	    continue;
+	if (!first_status2)
+	    std::cout << ",";
+	first_status2 = false;
+	print_status2_inventory_entry(profile);
+    }
     std::cout << "]";
     std::cout << ",\"totals\":";
     print_surface_tree_totals(totals);
@@ -4349,11 +7885,25 @@ print_surface_tree_result(const char *db_path, const char *object,
 	    << ",\"nurb_form_span_count\":[" <<
 		profile.nurb_form_span_count[0] << "," <<
 		profile.nurb_form_span_count[1] << "]"
+	    << ",\"nurb_form_domain\":";
+	if (profile.nurb_form_available) {
+	    std::cout << "[";
+	    print_interval(profile.nurb_form_domain[0]);
+	    std::cout << ",";
+	    print_interval(profile.nurb_form_domain[1]);
+	    std::cout << "]";
+	} else {
+	    std::cout << "null";
+	}
+	std::cout
 	    << ",\"domain\":[";
 	print_interval(profile.domain[0]);
 	std::cout << ",";
 	print_interval(profile.domain[1]);
-	std::cout << "]";
+	std::cout << "],\"representation\":";
+	print_surface_representation(profile);
+	std::cout << ",\"parameter_mapping\":";
+	print_surface_parameter_mapping(profile);
 	if (profile.failure.reason != brlcad::SurfaceTree::FAILURE_NONE) {
 	    std::cout << ",\"failure_reason\":" << json_quote(
 		surface_tree_failure_name(profile.failure.reason))
@@ -5070,6 +8620,7 @@ main(int argc, const char **argv)
     int list_only = 0;
     int batch = 0;
     int prep_only = 0;
+    int cached_prep_only = 0;
     int surface_trees_only = 0;
     int surface_trees_all = 0;
     int ray_depth_compare_only = 0;
@@ -5115,7 +8666,7 @@ main(int argc, const char **argv)
     long image_size = 1024;
     const char *batch_object_file = NULL;
     const char *mode_name = "both";
-    struct bu_opt_desc d[59];
+    struct bu_opt_desc d[67];
     long surface_tree_depth = BREP_MAX_FT_DEPTH;
     long candidate_depth = 3;
     long reference_depth = RT_BREP_DEFAULT_SURFACE_TREE_DEPTH;
@@ -5123,8 +8674,15 @@ main(int argc, const char **argv)
     long feature_ray_count = 0;
     long ray_pair = -1;
     long prep_repeat = 1;
+    long mesh_ray_face = -1;
     int legacy_only = 0;
+    int seeded_verify = 0;
+    int routing_truth = 0;
+    int routing_publication = 0;
+    int routing_missing_root_injection = 0;
     const char *trim_query_arg = NULL;
+    const char *exact_ray_arg = NULL;
+    const char *transform_arg = NULL;
     BU_OPT(d[0], "h", "help", "", NULL, &print_help, "Print help and exit");
     BU_OPT(d[1], "l", "list", "", NULL, &list_only, "List BRep primitive names");
     BU_OPT(d[2], "", "ratio-min", "#", &bu_opt_fastf_t, &ratio_min, "Minimum acceptable generated/reference dimension ratio");
@@ -5247,22 +8805,54 @@ main(int argc, const char **argv)
 	"Deterministic face-normal, edge-normal, and edge-grazing chord pairs");
     BU_OPT(d[57], "", "prep-repeat", "#", &bu_opt_long, &prep_repeat,
 	"Prepare and fully unload the same BREP repeatedly");
-    BU_OPT_NULL(d[58]);
+    BU_OPT(d[58], "", "seeded-verify", "", NULL, &seeded_verify,
+	"Run the audit-only legacy-seeded independent partition verifier");
+    BU_OPT(d[59], "", "routing-truth", "", NULL, &routing_truth,
+	"Compare prepared and legacy partitions on identical rays");
+    BU_OPT(d[60], "", "routing-publication", "", NULL,
+	&routing_publication, "Emit publication-oriented routing evidence");
+    BU_OPT(d[61], "", "routing-missing-root-injection", "", NULL,
+	&routing_missing_root_injection,
+	"Inject an audit-only missing-root routing failure");
+    BU_OPT(d[62], "", "cached-prep-only", "", NULL, &cached_prep_only,
+	"Audit cache-aware raytrace preparation only");
+    BU_OPT(d[63], "", "ray", "ox,oy,oz,dx,dy,dz", &bu_opt_str,
+	&exact_ray_arg, "Shoot one exact ray and a bounded reverse partner");
+    BU_OPT(d[64], "", "transform", "m00,...,m33", &bu_opt_str,
+	&transform_arg,
+	"Apply a 4x4 solid-to-model transform before an exact-ray comparison");
+    BU_OPT(d[65], "", "mesh-ray-face", "#", &bu_opt_long,
+	&mesh_ray_face,
+	"Intersect an exact ray with an independent fast tessellation of one face");
+    BU_OPT_NULL(d[66]);
     int ac = bu_opt_parse(NULL, argc, argv, d);
     trim_query_spec parsed_trim_query;
     const bool trim_query_only = trim_query_arg != NULL;
     const bool trim_query_valid = !trim_query_only ||
 	parse_trim_query(trim_query_arg, parsed_trim_query);
+    ray_audit_exact_ray parsed_exact_ray;
+    const bool exact_ray_valid = exact_ray_arg == NULL ||
+	parse_exact_ray(exact_ray_arg, parsed_exact_ray);
+    mat_t parsed_transform = MAT_INIT_IDN;
+    const bool transform_valid = transform_arg == NULL ||
+	parse_transform(transform_arg, parsed_transform);
+    const bool mesh_ray_only = mesh_ray_face >= 0;
     const char *usage =
 	"Usage: brep-audit [options] "
-	"[--list|--batch|--prep-only|--surface-trees-only|"
+	"[--list|--batch|--prep-only|--cached-prep-only|--surface-trees-only|"
 	"--surface-trees-all|--ray-depth-compare|"
-	"--trim-query face,u,v] file.g [brep]\n";
+	"--trim-query face,u,v|--mesh-ray-face #] "
+	"[--routing-truth] [--routing-publication] "
+	"[--routing-missing-root-injection] "
+	"[--ray ox,oy,oz,dx,dy,dz] [--transform m00,...,m33] "
+	"file.g [brep]\n";
     const int exclusive_modes = (list_only ? 1 : 0) + (batch ? 1 : 0) +
-	(prep_only ? 1 : 0) + (surface_trees_only ? 1 : 0) +
+	(prep_only ? 1 : 0) + (cached_prep_only ? 1 : 0) +
+	(surface_trees_only ? 1 : 0) +
 	(surface_trees_all ? 1 : 0) + (ray_depth_compare_only ? 1 : 0) +
-	(trim_query_only ? 1 : 0);
+	(trim_query_only ? 1 : 0) + (mesh_ray_only ? 1 : 0);
     if (print_help || exclusive_modes > 1 || !trim_query_valid ||
+	    !exact_ray_valid || !transform_valid ||
 	    ((list_only || batch || surface_trees_all) && ac != 1) ||
 	    (!list_only && !batch && !surface_trees_all && ac != 2) ||
 	    ratio_min <= 0.0 || ratio_max < ratio_min || tess_abs < 0.0 ||
@@ -5270,20 +8860,30 @@ main(int argc, const char **argv)
 	    quality_face_time_ms < 0 ||
 	    surface_tree_depth < 0 ||
 	    surface_tree_depth > BREP_MAX_FT_DEPTH ||
-	    (!surface_trees_only && !surface_trees_all &&
+	    (!prep_only && !cached_prep_only && !surface_trees_only &&
+	     !surface_trees_all &&
 	     surface_tree_depth != BREP_MAX_FT_DEPTH) ||
 	    candidate_depth < 0 || candidate_depth > BREP_MAX_FT_DEPTH ||
 	    reference_depth < 0 || reference_depth > BREP_MAX_FT_DEPTH ||
 	    ray_count < 0 || ray_count > 1000000 ||
 	    feature_ray_count < 0 || feature_ray_count > 1000000 ||
 	    prep_repeat < 1 || prep_repeat > 1000 ||
+	    mesh_ray_face < -1 || mesh_ray_face > INT_MAX ||
 	    ray_pair < -1 || ray_pair > 1000002 ||
-	    (!prep_only && prep_repeat != 1) ||
-	    (!ray_depth_compare_only &&
+	    (exact_ray_arg && ray_pair != -1) ||
+	    (mesh_ray_only && !exact_ray_arg) ||
+	    (transform_arg && !ray_depth_compare_only && !mesh_ray_only) ||
+	    (!prep_only && !cached_prep_only && prep_repeat != 1) ||
+	    (routing_truth && (!ray_depth_compare_only || legacy_only)) ||
+	    (routing_publication && !routing_truth) ||
+	    (routing_missing_root_injection && !routing_truth) ||
+	    (!ray_depth_compare_only && !mesh_ray_only &&
 	     (candidate_depth != 3 ||
 	      reference_depth != RT_BREP_DEFAULT_SURFACE_TREE_DEPTH ||
 	      ray_count != 64 || feature_ray_count != 0 ||
-	      ray_pair != -1 || legacy_only)) ||
+	      ray_pair != -1 || exact_ray_arg || legacy_only ||
+	      seeded_verify || routing_truth || routing_publication ||
+	      routing_missing_root_injection)) ||
 	    jobs < 0 || max_time_ms < 0 || max_result_mib < 0 ||
 	    max_working_mib < 0 ||
 	    max_points < 0 || max_triangles < 0 ||
@@ -5455,7 +9055,22 @@ main(int argc, const char **argv)
     if (prep_only) {
 	int ret = 0;
 	for (long repeat = 0; repeat < prep_repeat; ++repeat) {
-	    prep_result prep = raytrace_prep_result(dbip, dp);
+	    prep_result prep = raytrace_prep_result(dbip, dp,
+		(int)surface_tree_depth);
+	    print_prep_result(argv[0], argv[1], prep, (size_t)repeat,
+		(size_t)prep_repeat);
+	    if (prep.ret != BRLCAD_OK)
+		ret = 1;
+	}
+	db_close(dbip);
+	return ret;
+    }
+
+    if (cached_prep_only) {
+	int ret = 0;
+	for (long repeat = 0; repeat < prep_repeat; ++repeat) {
+	    prep_result prep = raytrace_cached_prep_result(dbip, dp, argv[0],
+		argv[1], (int)surface_tree_depth);
 	    print_prep_result(argv[0], argv[1], prep, (size_t)repeat,
 		(size_t)prep_repeat);
 	    if (prep.ret != BRLCAD_OK)
@@ -5473,10 +9088,39 @@ main(int argc, const char **argv)
 	return trees.ret == BRLCAD_OK ? 0 : 1;
     }
 
+    if (mesh_ray_only) {
+	struct bn_tol mesh_tol = BN_TOL_INIT_TOL;
+	struct bg_tess_tol mesh_tess_tol = BG_TESS_TOL_INIT_TOL;
+	mesh_tess_tol.abs = tess_abs;
+	mesh_tess_tol.rel = tess_rel;
+	mesh_tess_tol.norm = tess_norm;
+	const int ret = mesh_ray_query(dbip, argv[0], dp,
+	    (int)mesh_ray_face, parsed_exact_ray, &mesh_tess_tol, &mesh_tol,
+	    transform_arg ? parsed_transform : NULL);
+	db_close(dbip);
+	return ret;
+    }
+
     if (ray_depth_compare_only) {
+	if (seeded_verify &&
+		bu_setenv("LIBRT_BREP_SEEDED_VERIFY", "1", 1) != 0) {
+	    std::cerr << "Unable to enable the seeded verifier\n";
+	    db_close(dbip);
+	    return 2;
+	}
+	if (routing_truth &&
+		bu_setenv("LIBRT_BREP_ROUTE_DECISION", "1", 1) != 0) {
+	    std::cerr << "Unable to enable the routing decision\n";
+	    db_close(dbip);
+	    return 2;
+	}
 	const int ret = ray_depth_compare(dbip, argv[0], dp,
 	    (int)candidate_depth, (int)reference_depth, (size_t)ray_count,
-	    (size_t)feature_ray_count, ray_pair, legacy_only != 0);
+	    (size_t)feature_ray_count, ray_pair, legacy_only != 0,
+	    routing_truth != 0, routing_publication != 0,
+	    routing_missing_root_injection != 0,
+	    exact_ray_arg ? &parsed_exact_ray : NULL,
+	    transform_arg ? parsed_transform : NULL);
 	db_close(dbip);
 	return ret;
     }
