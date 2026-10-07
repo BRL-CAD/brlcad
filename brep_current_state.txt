@@ -1,7 +1,7 @@
 BREP RAYTRACE IMPLEMENTATION CURRENT STATE
 ==========================================
 
-Last updated: 2026-08-08
+Last updated: 2026-08-09
 Repository: .
 Implementation specification: brep_raytrace_plan.txt
 Active objective: Implement the complete specification, preserving this file
@@ -10,6 +10,317 @@ as the authoritative continuation log until all acceptance gates pass.
 
 CURRENT PHASE
 -------------
+
+2026-08-09 ACTIVE ISOLATED TRIM/EDGE DEFECT CHECKPOINT
+
+The nested CSG-leaf increment is committed locally as e60c0fbcc7, "Test
+nested transformed BREP-leaf CSG".  It was not pushed.  The current increment
+adds the first independently isolated trim-only and edge-only Cobb
+representations and registers them as the parallel rt_brep_ray_defect CTest
+shard.
+
+The trim-only generator leaves all six rational sphere surfaces and the shared
+3-D edge fixed, bows only one incident 2-D trim toward its face interior, and
+records the independently measured U/V displacement in the corresponding
+anisotropic ON_BrepTrim tolerance fields.  Because the pristine Cobb face uses
+its natural surface boundary, the opposite bow would leave the valid surface
+domain; this first valid-model matrix therefore covers the inward trim sign.
+The edge-only generator leaves both surface lifts and both trims fixed, copies
+the shared rational edge curve, and bows only its interior control points
+radially inward or outward while preserving its endpoints and weights.  Both
+generators calibrate the maximum 3-D edge/lift discrepancy by dense sampling,
+preserve roundoff-level surface radial error, and set the target edge's
+declared tolerance to the unchanged model T only after calibration.
+
+The ray geometry was corrected during development.  A line centered under the
+seam by h has roots O(sqrt(R*h)) away from the seam and primarily tests generic
+grazing isolation.  It does not isolate a sub-T seam defect.  The permanent
+fixture instead fixes one analytic sphere endpoint exactly at the target seam
+midpoint.  If the desired chord is L, it chooses a unit conormal/radial
+direction D satisfying N dot D = -L/(2R), so the other endpoint is P+L*D.
+The expected directed interval is exactly [2R,2R+L].  It uses L/T = 100, 10,
+2, and 1.1 plus exact contact L=0, both conormal signs, and ray reversal.
+
+The complete valid-model matrix has g/T = 0.25 and 0.9: 40 trim-only rays and
+80 edge-only rays, 120 total including 24 exact contacts.  Every final BREP
+answer matches the analytic sphere and the implicit ELL oracle; maximum BREP
+endpoint error is 7.08e-8.  The discrepancy calibration error is at most
+9.32e-6 relative.  All strict prep-time correspondence, endpoint, and gap
+bounds pass.  The baseline deliberately records zero prepared selections and
+120 explicit UNCERTIFIED whole-ray fallbacks, so a later theorem can ratchet
+that count upward without hiding a final-answer regression.
+
+The failure population is localized.  Trim-only rays invoke the exact
+manifold-edge resolver 40 times but form no publishable candidate because the
+surface terminal boxes at the seam endpoint are still unresolved.  Edge-only
+rays cannot use an exact edge witness after the 3-D edge locus moves; they make
+80 seam attempts with 192 eligible local-root observations, all conservatively
+falling back.  A representative 100T chord has three local observations at
+the seam endpoint (one trim miss and one tolerance-near incident-face hit) and
+the second material endpoint, with six terminal boxes.  Boxes duplicate about
+the surface subdivision boundary v=0.5 and have neither Krawczyk orientation
+nor a complete fold certificate.  This identifies the next authority needed:
+a bounded component/root theorem which can own all duplicate terminal boxes,
+certify orientation and trim/edge containment, and publish the seam endpoint
+transactionally.  Merely loosening hit cleanup or proximity tests is not an
+acceptable fix.
+
+Verified so far in this increment:
+
+  cmake --build .build --target rt_brep_ray -j8
+  .build/src/librt/tests/rt_brep_ray --defect-only
+  .build/src/librt/tests/rt_brep_ray --nonisoparametric-only
+  .build/src/librt/tests/rt_brep_ray --contact-trim-only
+  .build/src/librt/tests/rt_brep_ray --seam-only
+  env ASAN_OPTIONS=detect_leaks=0:halt_on_error=1 \
+    UBSAN_OPTIONS=halt_on_error=1:print_stacktrace=1 \
+    .build-asan/src/librt/tests/rt_brep_ray --defect-only
+
+All pass with no sanitizer diagnostic.  The full optimized --seam-only shard
+also passes, including the preceding 416-ray bowed, non-isoparametric,
+contact-trim, endpoint/vertex, and tolerance-policy matrices followed by this
+new defect corpus.  Leak scanning remains disabled for the documented host
+ptrace-wrapper reason.  No SurfaceTree density, cache format, or production
+ray logic has changed in this increment.
+
+
+2026-08-09 ACTIVE NESTED CSG-LEAF CHECKPOINT
+
+The status-2 similarity increment is committed locally as 8fea341aa0,
+"Qualify status-2 grazing under similarities".  It was not pushed.  The
+current increment extends the topology-identical implicit-leaf versus
+BREP-leaf CSG oracle in src/librt/tests/brep_ray.cpp.
+
+The new in-memory fixture preserves one nested Boolean tree in both models:
+
+  oracle.r = (outer.s translated -8 union outer.s translated +8)
+             subtract (inner.s translated -8)
+
+outer.s is one reused radius-5 sphere definition and inner.s is a radius-2
+sphere.  One model exports the original ELL leaves; the other replaces those
+same definitions with their exact ft_brep conversions before applying the
+identical member matrices and Boolean operators.  It therefore tests a reused
+transformed BREP leaf, a non-region nested union combination, subtraction,
+an internal cavity, two disconnected material components, and three ordered
+partitions on one ray without conflating those checks with evaluated
+region-to-one-BREP conversion.
+
+The independent analytic oracles are:
+
+  area   = 2(4*pi*5^2) + 4*pi*2^2 = 216*pi
+  volume = 2(4*pi*5^3/3) - 4*pi*2^3/3 = (968/3)*pi
+  bounds = [-13,-5,-5] through [13,5,5]
+
+Four directed rays require the exact forward three-interval partition, its
+reverse, the left shell's two intervals, and the right solid's one interval.
+The shared fixed-seed Cauchy-Crofton run then shoots 8,000 identical lines
+through the implicit and BREP-leaf hierarchies.  It passes with zero differing
+lines, zero tangent-band exceptions, maximum paired endpoint error 3.84e-8,
+signed total chord difference 5.80e-6, and absolute total chord difference
+6.88e-6.  At 8,000 lines both representations estimate area 697.640914
+(standard error 15.1) and volume 1059.37503 (standard error 23.5), within the
+predeclared confidence bands around 216*pi and (968/3)*pi.  Equality of the
+paired estimates is not accepted in place of the analytic gate; both are
+checked independently.
+
+Verified in this increment:
+
+  cmake --build .build --target rt_brep_ray -j8
+  .build/src/librt/tests/rt_brep_ray --crofton-only
+
+Both pass.  The cache-object warnings printed during the run are the known
+pre-existing cache diagnostic and do not fail the suite.  The fixture's
+in-memory database ownership was inspected and git diff --check passes.  The
+next hierarchy tier is the reverse BREP-to-CSG recognizer qualification;
+additional thin-wall and near-coincident hierarchy cases remain tolerance
+policy work and must not be folded into this nondegenerate baseline.
+
+
+2026-08-09 ACTIVE STATUS-2 SIMILARITY CHECKPOINT
+
+The preceding grazing increment is committed locally as 14d4c7c65a,
+"Resolve status-2 BREP grazing roots locally".  The similarity increment
+described below was subsequently committed as 8fea341aa0, "Qualify status-2
+grazing under similarities".  Neither commit was pushed.
+
+The new matrix transforms the difficult status-2 torus tube section by an
+arbitrary rotation plus translation at scales 1, 0.01, and 10,000.  It scales
+the model tolerance with the geometry and shoots the 2T and 1.1T chords in
+both directions.  All 12 rays now require one analytic BREP interval, status-2
+mapping, selected prepared production events, exact expansion availability,
+rigorous exclusion, bounded refinement, and no arithmetic or workspace
+exhaustion.  The matrix passes with all 12 selected.  Maximum normalized BREP
+endpoint error is 1.34e-5 model units; maximum refinement/high-water is 17/15,
+well below the fixed 64-refinement and expansion capacities.
+
+The test exposed two distinct transform effects.  First, the implicit TOR
+quartic returns two segments rather than the one analytic normal-section
+interval on all four large-scale cases.  These are recorded as four implicit
+artifacts; the analytic circle remains the boundary oracle.  Second, the
+large 1.1T status-2 BREP reaches one regular box plus one complete fold box.
+Its conservative box intervals prove a strict gap greater than T, but optional
+nested fold-localization attempts report some failed levels.  The mixed
+fold/regular eligibility check previously treated any failed optional level as
+a failed theorem and fell back.  It now consumes the actual stored fold
+interval (either the best certified contraction or the complete parent box)
+and lets the existing strict outward gap proof decide.  This is conservative
+and restores similarity invariance; localization failures remain telemetry.
+
+Verified after this change:
+
+  cmake --build .build --target rt_brep_ray -j8
+  .build/src/librt/tests/rt_brep_ray --grazing-root-only
+  .build/src/librt/tests/rt_brep_ray --fold-only
+  .build/src/librt/tests/rt_brep_ray --directed-only
+  .build/src/librt/tests/rt_brep_ray --affine-only
+
+All pass.  The directed partition includes the new status-2 transform matrix
+and the existing status-1 sphere similarity matrix.  Before the next commit,
+run git diff --check and review the focused diff for cleanup and ownership.
+
+
+2026-08-09 ACTIVE GRAZING CHECKPOINT
+
+The current uncommitted checkpoint adds a rational torus normal-section
+ratchet and the first production use of bounded, on-demand exact refinement.
+The authoritative modified files are src/librt/librt_private.h,
+src/librt/primitives/brep/brep.cpp, src/librt/primitives/brep/brep_local.h,
+and src/librt/tests/brep_ray.cpp.  Inspect git status and diff before resuming;
+do not discard this work.
+
+The full torus conversion is an ON_RevSurface.  Its GetNurbForm return value is
+2, meaning the converted NURBS has the same locus but a nonidentity parameter
+map.  The prepared-span builder now accepts status 2 and records the status per
+face.  Solver boxes and certificates remain in NURBS parameter space.  Final
+root points are mapped with GetSurfaceParameterFromNurbFormParameter, checked
+by the inverse map and by model-space point agreement, then classified against
+the original face's normal and trims.  Published hit UV is in original-surface
+space.  Status-2 seam, edge, and vertex publication still fails closed because
+there is not yet an interval enclosure for that parameter map; only clean
+interior regular or complete fold events may publish.
+
+The torus ratchet uses two analytic circular normal sections away from seams:
+the tube circle and a major-direction circle.  It shoots both ray directions
+at chord lengths 100T, 10T, 2T, 1.1T, 1T, 0.9T, 0.5T, 0.1T, and 0.01T, where T
+is the model minimum distance.  The analytic circle is authoritative at the
+boundary.  All 100T, 10T, 2T, and 1.1T cases now publish the correct full-solid
+BREP interval in both directions.  Exactly 1T is deliberately classified
+ambiguous by the certified event stream and falls back: legacy returns a
+tolerance-sized segment for the sphere and torus major section but no segment
+for the torus tube section.  Below T no prepared material interval publishes.
+Exact tangency has contact roots but no prepared material interval, and all
+analytic outside cases have no BREP material interval.
+
+The improvement is local and allocation-free; SurfaceTree density is
+unchanged.  Ordinary isolation still has its depth-24 budget.  At this
+checkpoint the extra tier is enabled only for status-2 faces, whose production
+gate already permits clean interior regular/fold events and rejects seam,
+edge, and vertex publication.  A terminal status-2 box which remains
+unresolved uses the exact per-coefficient expansion intervals already prepared
+for the ray/surface equations.  It applies direct
+and conditioned/rotated Bernstein hull exclusion and a tight expansion
+Krawczyk attempt.  If the exact rotated hull retains the box, a fixed local
+refinement may split it for at most eight additional per-box levels and 64
+total per-ray refinements.  A certified regular box reached through this path
+is refined further when its ray-parameter interval exceeds 0.01T, so two roots
+only 1.1T apart can still prove a strictly resolved outward gap.  All work uses
+the existing 64-entry stack and fixed coefficient arrays; there is no malloc
+in the ray path.  At the 2T torus tube case the exact rotated hull eliminates
+the spurious middle/far box that the worst-common-error representation could
+not separate.  At 1.1T further local splits isolate two signed Krawczyk boxes
+whose outward t gap exceeds T.
+
+An experimental theorem which joined the opposite root box with a connected
+rootless box was removed.  Component ownership succeeded, but both ordinary
+and expansion-valued Krawczyk correctly refused the union because it included
+the singular fold neighborhood.  It certified no controlled positive case
+and would only have added production cost.  The narrower two-box mixed
+fold/regular theorem remains: it resolves the previously observed 10T case
+when one complete fold parent and one regular parent own the two roots.
+
+The dense legacy SurfaceTree path on the original tube-direction torus case
+visits 24 leaves and returns only one of the two physical roots in either ray
+direction, hence no solid segment.  This confirms that the problem is missing
+root isolation, not later hit cleanup.  The new prepared path now supplies the
+analytic interval above T without changing the tree.
+
+The implicit TOR quartic is not a trustworthy boundary oracle: this fixture
+currently observes one false tolerance-sized segment on each exact tangent
+and 16 false outside segments across the 18 directed outside samples for each
+normal-section family.  These are recorded telemetry.  Positive-clearance
+implicit endpoints still match the analytic section.  The analytic circle,
+not the implicit quartic near zero clearance, gates BREP correctness.
+
+Verified at this checkpoint:
+
+  cmake --build .build --target rt_brep_ray -j8
+  .build/src/librt/tests/rt_brep_ray --grazing-root-only
+  .build/src/librt/tests/rt_brep_ray --interval-only
+  .build/src/librt/tests/rt_brep_ray --fold-only
+  .build/src/librt/tests/rt_brep_ray --local-root-only
+  .build/src/librt/tests/rt_brep_ray --seam-only
+  .build/src/librt/tests/rt_brep_ray --nonisoparametric-only
+  .build/src/librt/tests/rt_brep_ray --contact-trim-only
+  .build/src/librt/tests/rt_brep_ray --directed-only
+  .build/src/librt/tests/rt_brep_ray --affine-only
+  .build/src/librt/tests/rt_brep_ray --endpoint-only
+  .build/src/librt/tests/rt_brep_ray --crofton-only
+  cmake --build .build --target brep-audit -j8
+
+All of those commands pass.  They are the independently runnable partitions
+of the current corpus and include the pole, transformed-similarity, affine,
+seam/crack, endpoint, CSG-leaf, and shared-line Crofton gates.  A first
+unpartitioned run was stopped after diagnosing the now-fixed status-1 box-
+ownership regression; it must not be cited as a completed full run.  The
+independent partitions were rerun after the status-2 gate was installed.
+
+The torus test now traces every above-tolerance full BREP result rather than
+accepting a legacy success.  Both normal-section families require all eight
+100T/10T/2T/1.1T directed cases to select the prepared production stream with
+one complete physical material interval.  The four tube-section 2T/1.1T cases
+also require exact expansion availability, exclusion, and refinement with no
+arithmetic failure or budget exhaustion.  Fold roots now receive the same
+status-2 3D locus-agreement test already required of regular roots.  A regular
+Krawczyk box is locally refined even when it certifies before the ordinary
+depth limit if its ray interval remains wider than 0.01T; the eight-level and
+64-refinement limits still bound all work.
+
+Before committing, rerun the independent partitions after the final code
+audit, retain the GetNurbForm corpus telemetry below, and decide whether a
+dedicated transformed-similarity matrix for the status-2 torus belongs in this
+increment or the next one.  Existing sphere and ellipsoid tests already cover
+translation, rotation, 0.01x/10,000x uniform scale, and nonuniform affine
+conditioning, but they use status-1 surface forms.
+
+A first attempt enabled exact terminal refinement on every supported face.
+The full run correctly exposed that as too broad: it repartitioned status-1
+Cobb seam and vertex source boxes, invalidating their existing atomic ownership
+theorems even though legacy final answers remained correct.  The run was
+stopped after the repeated failure pattern was established.  The implementation
+now enables the new tier only for status-2 faces.  This is aligned with the
+current point-map publication theorem (clean interior regular/fold only), and
+preserves every established status-1 seam/edge/vertex transaction.  After this
+gate was added, --seam-only, --nonisoparametric-only, and --contact-trim-only
+all pass again; the 416-ray Cobb matrix reports zero regressions.  Do not expand
+the tier to status-1 boundary topology without dedicated box-repartition
+invariance tests and an updated ownership theorem.
+
+The GetNurbForm telemetry is now implemented in src/gtools/brep-audit.cpp and
+the brep-audit target builds.  A real STEP-corpus sample gives a strong reason
+to retain status-2 support:
+
+  brep-audit --surface-trees-only \
+    ${STEP_CORPUS_DIR}/non_grabcad/0353/0353-10-12.g \
+    Product_step46_item.s
+
+This 175-face object reports 33 exact/status-1 forms, 142 reparameterized/
+status-2 forms, no unavailable/other forms, 98,758 SurfaceTree leaves, and a
+4,096-leaf maximum face.  Thus the prior status==1 prepared-span gate excluded
+81.1 percent of the faces in this representative revolved STEP model even
+though all have convertible NURBS loci.  The per-face JSON now records
+nurb_form_status and the object summary records unavailable, exact,
+reparameterized, and other counts.
+
 
 Phase 1 ownership repair and the first deterministic Newton hardening pass are
 implemented.  Directed implicit-sphere/converted-BREP pole rays now pass.  An
@@ -3645,12 +3956,12 @@ ESTABLISHED FINDINGS
     ratio after `10,000x` scale and a large translation.  All three certify a
     support-boundary-crossing root with positive weight and finite complete
     image.  Maximum image displacement is `2.27e-9`; root and model expansion
-    high-water are both 2.  A diagnostic `2^400` ratio was intentionally not
-    retained: the parameter derivative is numerically singular under the
-    current OpenNURBS normal threshold, and SurfaceTree preparation calls
-    `bu_bomb` when its initial midpoint normal cannot be evaluated.  That is a
-    separate prep fail-closed robustness issue, not a local-certificate
-    failure and not a reason to relax the theorem.
+    high-water are both 2.  A `2^400` ratio is now retained as a required prep
+    rejection: its parameter derivative is numerically singular under the
+    current OpenNURBS normal threshold.  Finding 79 makes that rejection
+    fail-closed instead of aborting the process.  It remains a prep robustness
+    case, not a local-certificate failure and not a reason to relax the
+    theorem.
 
     The real Cobb test independently replays the actual prepared coefficient
     intervals for all sixteen transformations and reversals.  All sixteen
@@ -3701,6 +4012,42 @@ ESTABLISHED FINDINGS
     The focused `rt_brep_ray_grazing_root` CTest shard makes this distinction a
     permanent, independently parallelizable ratchet.
 
+79. Numerically unavailable SurfaceTree faces now fail complete BREP prep
+    instead of aborting the process or permitting a partial acceleration tree.
+
+    `initialBBox` previously called `bu_bomb` when `surface_EvNormal` could not
+    produce the estimate point and normal.  The positive-weight rational
+    bilinear diagnostic with weights `2^-200` and `2^200` reached this path:
+    its geometry and homogeneous controls are finite, but the parameter
+    derivative is below the OpenNURBS normal threshold at the midpoint.  A
+    single difficult input could therefore terminate conversion, rendering,
+    or a test process before librt could report prep failure.
+
+    `initialBBox` now evaluates the midpoint of its actual local `u,v` box and
+    returns no node when the normal is unavailable.  Surface subdivision
+    treats every missing expected child as failure of the complete subtree,
+    deletes every sibling built for that subdivision, and propagates failure
+    to the root.  After parallel face construction joins, `brep_build_bvh`
+    validates every SurfaceTree before releasing any root or CurveTree.  One
+    invalid face deletes all temporary builders and makes `rt_brep_prep`
+    return failure.  No face can disappear from an otherwise successful solid
+    BVH.
+
+    An invalid SurfaceTree is now an ordinary observable builder state:
+    depth, closest-estimate, leaf, and surface-point queries are null-safe, and
+    the libged and librt plotting helpers skip it.  Existing callers that use
+    `Valid()` continue unchanged.  Successful prep retains the prior ownership
+    order: every CurveTree is transferred only after all faces validate, the
+    temporary builders are destroyed, and the top-level BVH owns all released
+    roots.
+
+    The weighted focused corpus now has four surfaces.  Equal weights and the
+    two `2^20` weight-range/reversal/similarity cases still prep and certify;
+    the `2^400` case must return prep failure without invoking the local-root
+    hook.  This is deliberately whole-solid fail-closed behavior.  A future
+    algorithm may support more extreme parameterizations, but it may not
+    recover by raytracing an incomplete face set.
+
 
 IMPLEMENTATION CHECKLIST
 ------------------------
@@ -3712,6 +4059,8 @@ IMPLEMENTATION CHECKLIST
     [x] Destroy temporary SurfaceTrees after transfer.
     [x] Remove unused m_face_user.p storage.
     [x] Own deserialized CurveTrees and verify teardown order.
+    [x] Reject a complete prep before ownership transfer when any SurfaceTree
+        is invalid; never publish a partial face hierarchy.
     [x] Exercise ownership through existing normal/cached prep regression
         tests, ASan/UBSan, and the unsuppressed ThreadSanitizer cache matrix.
         LeakSanitizer remains blocked by the host ptrace wrapper.
@@ -3886,8 +4235,13 @@ IMPLEMENTATION CHECKLIST
             repaired pair under reversal and qualified similarities.
         [x] Add seam-crossing tangent-limit rays, reversal checks, CSV output,
             and a ratchet around the measured current crack envelope.
-        [ ] Add trim-only, edge-only, combined-error, vertex-neighborhood, G1,
-            tangent, and arbitrary endpoint-overlap graph sweeps and theorems.
+        [x] Add the first valid-model isolated trim-only and edge-only
+            representations, exact seam-endpoint 100T through 1.1T chord
+            sweeps, contact/reversal/conormal-side gates, anisotropic trim
+            metadata, and an explicit zero-selection fallback baseline.
+        [ ] Add their bounded component/root ownership theorem, then add
+            combined-error, vertex-neighborhood, G1, tangent, and arbitrary
+            endpoint-overlap graph sweeps and theorems.
 
 [ ] Local adaptive solve
     [x] Prepare exact-parameter positive-weight rational Bezier surface spans
@@ -5287,6 +5641,131 @@ Near-grazing local-certificate bridge (Finding 78):
   diagnostic.  Leak scanning remains disabled because of the host ptrace
   wrapper.
 
+SurfaceTree prep fail-closed checkpoint (Finding 79):
+
+  .build/src/librt/tests/rt_brep_ray --local-root-only
+  PASS: thirteen arithmetic systems remain 10 certified/3 rejected.  The
+  weighted surface corpus is now four cases: three complete root/model-image
+  certificates and one required `2^400` weight-ratio prep rejection.  The
+  process returns normally with `prep-rejected=1`; no local-root hook is called
+  for the unavailable surface.
+
+  cmake --build .build --target rt_brep_ray libged -j8
+  PASS: libbrep, librt, the ray test, and both null-safe plotting callers build
+  cleanly with the release warning-as-error configuration.
+
+  ctest --test-dir .build --parallel 13 \
+    -R '^rt_brep_ray($|_)' --output-on-failure
+  PASS: 13/13 in 174.44 seconds.  Local root took 0.51, grazing root 2.72,
+  contact trim 34.86, directed 48.64, Crofton 59.42, interval 145.00, and seam
+  174.39 seconds.
+
+  ctest --test-dir .build --parallel 13 \
+    -R '^(rt_brep_ray_local_root|rt_primitive_brep|rt_cache_.*|regress-nurbs_(NIST03_MISS_01|SPH_SOLID_HIT_LEN_01|BOX_PLATE_HIT_LEN_01))$' \
+    --output-on-failure
+  PASS: 12/12 in 8.11 seconds, including serial/parallel prep-cache matrices,
+  primitive conversion topology, and three established NURBS regressions.
+
+  env ASAN_OPTIONS=detect_leaks=0:halt_on_error=1 \
+    UBSAN_OPTIONS=halt_on_error=1:print_stacktrace=1 \
+      ctest --test-dir .build-asan --parallel 13 \
+        -R '^rt_brep_ray($|_)' --output-on-failure
+  PASS: 13/13 in 892.65 seconds; local root took 4.87, grazing root 19.12,
+  contact trim 224.93, directed 337.52, Crofton 363.07, interval 635.94, and
+  seam 892.51 seconds.  No sanitizer diagnostic appeared.  Leak scanning
+  remains disabled because of the host ptrace wrapper.
+
+
+STEP ray-prep observability and dense-tree census (Finding 80):
+
+  `SurfaceTree` now retains the first deterministic construction failure as
+  one of null surface, bounding box, midpoint normal evaluation, or unexpected
+  subdivision, plus the failing recursion depth and UV domain.  Successful
+  construction is unchanged.  The synthetic positive-weight `2^400` rational
+  patch is now gated specifically as a normal-evaluation failure; its bbox is
+  available, but OpenNURBS cannot supply the required midpoint normal.
+
+  `brep-audit --prep-only file.g primitive` invokes actual BREP primitive prep
+  and emits `brlcad-brep-ray-prep-audit-v1` JSON with time, peak RSS, face
+  count, bbox, overall failure category, and per-face SurfaceTree failure
+  cells.  `empty_brep` is separate from `surface_tree`.  The existing drawing
+  audit did not call ray prep and could not observe this state.
+
+  `brep-audit --surface-trees-only file.g primitive` serially profiles each
+  face tree and emits `brlcad-brep-surface-tree-audit-v1` JSON with total and
+  per-face time/leaves, source surface class and topology, domain, native
+  NURBS dimensions, converted NURBS dimensions, and failure cell.  Building
+  one face at a time bounds diagnostic retained memory and localizes a dense
+  tree; it is not a production parallel-prep benchmark.
+
+  Seven NIST databases all completed uncapped actual prep: 10 to 597 faces,
+  about 0.88 to 7.39 seconds, and about 35 to 257 MiB peak RSS.  Thirty small
+  non-GrabCAD primitives and thirty objects stratified across database sizes
+  through 58 MiB also prepared without a SurfaceTree failure.
+
+  An uncapped, two-process scan of the first BREP in all 135 recurta AP203
+  databases completed in 239.57 seconds: 130 prepared, four exceeded a
+  15-second classification cap, no process crashed, and the only normal
+  failure was `10058.g`'s zero-face BREP.  The 130 successes cover 4,923
+  faces.  The largest sub-cap model had 992 faces in 9.30 seconds; the slowest
+  sub-cap model had 17 faces in 11.39 seconds.
+
+  Uncapped replay classified all four time outliers as valid prep:
+
+    * `10007.g`: 15 faces, 50.97 seconds, 77.8 MiB;
+    * `10057.g`: 301 faces, 15.33 seconds, 859.7 MiB;
+    * `10062.g`: 3,623 faces, 17.72 seconds, 270.9 MiB; and
+    * `10088.g`: 5,771 faces, 17.38 seconds, 236.8 MiB.
+
+  The low-face cases expose the tree algorithm rather than database scale.
+  Serial `10007.g` profiling took 46.88 seconds.  Face 7 took 24.95 seconds
+  for 12,722 leaves; faces 1, 3, and 5 took 6.56, 7.28, and 7.46 seconds.
+  They are trimmed `ON_RevSurface` patches with rational order-3-by-3,
+  9-by-9 NURBS forms.  Serial `10057.g` profiling took 85.99 seconds and
+  412.2 MiB for 113,008 leaves.  Repeated revolved faces with rational
+  order-3-by-2, 9-by-2 forms each cost about 2.4 to 2.6 seconds and 1,215
+  leaves.  Production retained/overlapped parallel construction explains its
+  larger 859.7 MiB peak.  The one-face revolved surface in `10145.g` creates
+  8,192 leaves.
+
+  A 1-GiB RLIMIT_AS pass with four external processes was deliberately
+  discarded as a geometry census.  Each prep also requested twelve internal
+  workers; the virtual-memory cap caused pthread creation failure,
+  `std::bad_alloc`, and secondary termination even for models that later
+  prepared normally uncapped.  This is useful bounded-resource hardening
+  evidence, but it is not a solver or SurfaceTree-unavailability result.
+
+  Direct verification on the final source:
+
+    .build/src/librt/tests/rt_brep_ray --local-root-only
+
+  PASS: thirteen arithmetic cases remain 10 certified/3 rejected, and the
+  four weighted prepared-surface cases remain 3 certified/1 prep-rejected.
+  The rejected surface is additionally checked for the exact non-none
+  `FAILURE_NORMAL_EVALUATION` diagnostic.
+
+    ctest --test-dir .build --parallel 13 \
+      -R '^rt_brep_ray($|_)' --output-on-failure
+
+  PASS: 13/13 in 192.67 seconds.  Local root took 2.57, grazing root
+  5.98, contact trim 39.32, the complete process 53.54, Crofton 62.93,
+  interval 165.31, and seam 192.24 seconds.
+
+    ctest --test-dir .build --parallel 13 \
+      -R '^(rt_brep_ray_local_root|rt_primitive_brep|rt_cache_.*|regress-nurbs_(NIST03_MISS_01|SPH_SOLID_HIT_LEN_01|BOX_PLATE_HIT_LEN_01))$' \
+      --output-on-failure
+
+  PASS: 12/12 in 9.25 seconds, including serial/parallel cache matrices,
+  primitive BREP topology, and the three established NURBS regressions.
+
+    env ASAN_OPTIONS=detect_leaks=0:halt_on_error=1 \
+      UBSAN_OPTIONS=halt_on_error=1:print_stacktrace=1 \
+      .build-asan/src/librt/tests/rt_brep_ray --local-root-only
+
+  PASS with the same arithmetic and prepared-surface counts and no sanitizer
+  diagnostic.  Leak scanning remains disabled because the host ptrace wrapper
+  prevents LeakSanitizer qualification.
+
 
 NEXT ACTIONS
 ------------
@@ -5297,9 +5776,14 @@ NEXT ACTIONS
    determinant-`2^-40`, `2^20` rational-weight-range, similarity, and reversal
    cases.  The generic converted-sphere bridge now adds real near-tangent
    rational coefficients through `0.1T`, exact-double-root rejection, and
-   mirrored misses.  Next capture unavailable systems from the STEP corpus
-   and prove complete parent coverage/candidate accounting before considering
-   the theorem for ordinary seams, vertices, or general grazing dispatch.
+   mirrored misses.  The first uncapped STEP subset found no numerical
+   SurfaceTree failure, so do not fabricate one from resource-cap termination.
+   Promote the revolved order-3-by-3 and order-3-by-2 outliers through their
+   analytic torus/cone/cylinder equivalents, add their convex and concave
+   grazing trends, and keep the audit ready to capture the first genuine
+   unavailable face.  Prove complete parent coverage/candidate accounting
+   before considering the theorem for ordinary seams, vertices, or general
+   grazing dispatch.
    Profile the fixed-expansion Taylor cost separately from
    continuation and material-sector work.  Keep arbitrary root counts, exact
    tangency, vertex neighborhoods, inferred tolerance authority, and every
@@ -5341,14 +5825,16 @@ NEXT ACTIONS
    from 24.07 to about 69 seconds.  Do not lower density until every fallback
    population remains correct without relying on a tree that is no longer
    dense enough.
-5. Extend the BREP-leaf hierarchy corpus to nested multi-interval regions,
-   transformations, noncoincident production-style trees, and tolerance-
-   scaled thin walls.  Keep evaluated ON_Boolean solids and reverse NIST
+5. Build from the committed nested multi-interval, transformed, reused BREP-
+   leaf hierarchy into tolerance-scaled thin walls and larger noncoincident
+   production-style trees.  Keep evaluated ON_Boolean solids and reverse NIST
    BREP-to-CSG recognition as later, separately classified qualification tiers.
-6. Build on the endpoint-moving topological closure proof with trim-only,
-   edge-only, vertex-neighborhood, G1, tangent, combined-error, and arbitrary
-   endpoint-overlap graph Cobb families, and remove the remaining duplicated
-   Cobb control net from brep_invalid.cpp while
+6. Use the new isolated trim-only and edge-only zero-selection baseline to
+   prove complete duplicate-terminal-box/root ownership, interval orientation,
+   and trim/edge-tube containment before publication.  Then extend the Cobb
+   corpus to vertex-neighborhood, G1, tangent, combined-error, and arbitrary
+   endpoint-overlap graphs, and remove the remaining duplicated Cobb control
+   net from brep_invalid.cpp while
    independently gating its invalid topology behavior.
 7. Use the registered directed, Crofton, seam, interval, fold, and affine
    CTest processes with `ctest -j`; retain the no-argument full executable for

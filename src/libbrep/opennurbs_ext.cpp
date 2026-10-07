@@ -1290,11 +1290,18 @@ SurfaceTree::SurfaceTree(const ON_BrepFace* face, bool removeTrimmed,
     m_face(face),
     m_root(NULL),
     m_f_queue(new std::queue<ON_Plane *>),
-    m_split_cache(new SurfaceSplitCache)
+    m_split_cache(new SurfaceSplitCache),
+    m_failure(FAILURE_NONE),
+    m_failure_u(ON_UNSET_VALUE, ON_UNSET_VALUE),
+    m_failure_v(ON_UNSET_VALUE, ON_UNSET_VALUE),
+    m_failure_depth(-1)
 {
     // build the surface bounding volume hierarchy
     const ON_Surface* surf = face->SurfaceOf();
     if (!surf) {
+	recordFailure(FAILURE_NULL_SURFACE,
+	    ON_Interval(ON_UNSET_VALUE, ON_UNSET_VALUE),
+	    ON_Interval(ON_UNSET_VALUE, ON_UNSET_VALUE), 0);
 	TRACE("ERROR: NULL surface encountered in SurfaceTree()");
 	return;
     }
@@ -1359,6 +1366,9 @@ SurfaceTree::SurfaceTree(const ON_BrepFace* face, bool removeTrimmed,
 
     m_root = subdivideSurface(surf, u, v, frames, 0, depthLimit, 1, within_distance_tol);
 
+    if (!m_root && m_failure == FAILURE_NONE)
+	recordFailure(FAILURE_SUBDIVISION, u, v, 0);
+
     if (m_root) {
 	m_root->BuildBBox();
     }
@@ -1409,7 +1419,7 @@ SurfaceTree::releaseCurveTree()
 int
 SurfaceTree::depth() const
 {
-    return m_root->depth();
+    return m_root ? m_root->depth() : 0;
 }
 
 
@@ -1418,6 +1428,8 @@ SurfaceTree::getClosestPointEstimate(const ON_3dPoint& pt) const
 {
     // Untrimmed surface trees intentionally have no CurveTree, so their
     // BBNodes cannot recover the surface through trimming topology.
+    if (!m_root || !m_face || !m_face->SurfaceOf())
+	return ON_2dPoint::UnsetPoint;
     ON_Interval u, v;
     return m_root->getClosestPointEstimate(pt, u, v, m_face->SurfaceOf());
 }
@@ -1426,6 +1438,8 @@ SurfaceTree::getClosestPointEstimate(const ON_3dPoint& pt) const
 ON_2dPoint
 SurfaceTree::getClosestPointEstimate(const ON_3dPoint& pt, ON_Interval& u, ON_Interval& v) const
 {
+    if (!m_root || !m_face || !m_face->SurfaceOf())
+	return ON_2dPoint::UnsetPoint;
     return m_root->getClosestPointEstimate(pt, u, v, m_face->SurfaceOf());
 }
 
@@ -1433,7 +1447,8 @@ SurfaceTree::getClosestPointEstimate(const ON_3dPoint& pt, ON_Interval& u, ON_In
 void
 SurfaceTree::getLeaves(std::list<const BBNode*>& out_leaves) const
 {
-    m_root->getLeaves(out_leaves);
+    if (m_root)
+	m_root->getLeaves(out_leaves);
 }
 
 
@@ -1535,6 +1550,8 @@ brep_getSurfacePoint(const ON_3dPoint& pt, ON_2dPoint& uv,
 int
 SurfaceTree::getSurfacePoint(const ON_3dPoint& pt, ON_2dPoint& uv, const ON_3dPoint& from, double tolerance) const
 {
+    if (!m_root)
+	return -1;
     std::list<const BBNode*> nodes;
     (void)m_root->getLeavesBoundingPoint(from, nodes);
 
@@ -1599,11 +1616,13 @@ SurfaceTree::surfaceBBox(const ON_Surface *localsurf,
 			 const ON_Plane frames[9],
 			 const ON_Interval& u,
 			 const ON_Interval& v,
+			 int depth,
 			 double within_distance_tol) const
 {
     point_t min, max, buffer;
     ON_BoundingBox bbox = ON_BoundingBox::EmptyBoundingBox;
     if (!surface_GetBoundingBox(localsurf, u, v, bbox, false)) {
+	recordFailure(FAILURE_BOUNDING_BOX, u, v, depth);
 	return NULL;
     }
 
@@ -1651,24 +1670,41 @@ SurfaceTree::surfaceBBox(const ON_Surface *localsurf,
 }
 
 
-static BBNode*
-initialBBox(const CurveTree* ctree, const ON_Surface* surf, const ON_Interval& u, const ON_Interval& v)
+BBNode*
+SurfaceTree::initialBBox(const CurveTree* ctree, const ON_Surface* surf,
+	const ON_Interval& u, const ON_Interval& v, int depth) const
 {
     ON_BoundingBox bb = ON_BoundingBox::EmptyBoundingBox;
     if (!surface_GetBoundingBox(surf, u, v, bb, false)) {
+	recordFailure(FAILURE_BOUNDING_BOX, u, v, depth);
 	return NULL;
     }
     BBNode* node = new BBNode(ctree, bb, u, v, false, false);
     ON_3dPoint estimate;
     ON_3dVector normal;
-    if (!surface_EvNormal(surf, surf->Domain(0).Mid(), surf->Domain(1).Mid(), estimate, normal)) {
-	bu_bomb("Could not evaluate estimate point on surface");
+    if (!surface_EvNormal(surf, u.Mid(), v.Mid(), estimate, normal)) {
+	recordFailure(FAILURE_NORMAL_EVALUATION, u, v, depth);
+	delete node;
+	return NULL;
     }
     node->m_estimate = estimate;
     node->m_normal = normal;
     node->m_u = u;
     node->m_v = v;
     return node;
+}
+
+
+void
+SurfaceTree::recordFailure(FailureReason reason, const ON_Interval& u,
+	const ON_Interval& v, int depth) const
+{
+    if (m_failure != FAILURE_NONE)
+	return;
+    m_failure = reason;
+    m_failure_u = u;
+    m_failure_v = v;
+    m_failure_depth = depth;
 }
 
 
@@ -1742,7 +1778,7 @@ SurfaceTree::subdivideSurface(const ON_Surface *localsurf,
 			      double within_distance_tol
     ) const
 {
-    BBNode* quads[4];
+    BBNode* quads[4] = {};
     BBNode* parent = NULL;
     double usplit = 0.0;
     double vsplit = 0.0;
@@ -1763,7 +1799,8 @@ SurfaceTree::subdivideSurface(const ON_Surface *localsurf,
     vsplit = v.Mid();
 
     if (divDepth >= depthLimit) {
-	return surfaceBBox(localsurf, true, frames, u, v, within_distance_tol);
+	return surfaceBBox(localsurf, true, frames, u, v, divDepth,
+	    within_distance_tol);
     }
 
     // The non-knot case where all criteria are satisfied is the
@@ -1773,7 +1810,8 @@ SurfaceTree::subdivideSurface(const ON_Surface *localsurf,
 	height = v.Length();
 	if (((width/height < ratio) && (width/height > 1.0/ratio) && isFlat(frames) && isStraight(frames))
 	    || (divDepth >= depthLimit)) { //BREP_MAX_FT_DEPTH
-	    return surfaceBBox(localsurf, true, frames, u, v, within_distance_tol);
+	    return surfaceBBox(localsurf, true, frames, u, v, divDepth,
+		within_distance_tol);
 	}
     }
 
@@ -1792,14 +1830,17 @@ SurfaceTree::subdivideSurface(const ON_Surface *localsurf,
 		do_v_split = 1;
 	    }
 	}
-	parent = initialBBox(m_ctree, localsurf, u, v);
+	parent = initialBBox(m_ctree, localsurf, u, v, divDepth);
     }
     // Flatness
     if (!prev_knot) {
 	bool isUFlat = isFlatU(frames);
 	bool isVFlat = isFlatV(frames);
 
-	parent = (divDepth == 0) ? initialBBox(m_ctree, localsurf, u, v) : surfaceBBox(localsurf, false, frames, u, v, within_distance_tol);
+	parent = (divDepth == 0) ?
+	    initialBBox(m_ctree, localsurf, u, v, divDepth) :
+	    surfaceBBox(localsurf, false, frames, u, v, divDepth,
+		within_distance_tol);
 
 	if ((!isVFlat || (width/height > ratio)) && (!isUFlat || (height/width > ratio))) {
 	    do_both_splits = 1;
@@ -1811,6 +1852,9 @@ SurfaceTree::subdivideSurface(const ON_Surface *localsurf,
 	    do_v_split = 1;
 	}
     }
+
+    if (!parent)
+	return NULL;
 
     ///////////////////////////////////
 
@@ -1926,6 +1970,14 @@ SurfaceTree::subdivideSurface(const ON_Surface *localsurf,
 	quads[3] = subdivideSurface(q3surf, firstu, secondv, newframes, divDepth+1, depthLimit, prev_knot, within_distance_tol);
 	for (int i = 0; i < 9; i++) newframes[i] = ON_Plane();
 	m_f_queue->push(newframes);
+	for (int i = 0; i < 4; ++i) {
+	    if (quads[i])
+		continue;
+	    for (int child = 0; child < 4; ++child)
+		delete quads[child];
+	    delete parent;
+	    return NULL;
+	}
 
 	parent->m_trimmed = true;
 	parent->m_checkTrim = false;
@@ -2083,6 +2135,12 @@ SurfaceTree::subdivideSurface(const ON_Surface *localsurf,
 
 	for (int i = 0; i < 9; i++) newframes[i] = ON_Plane();
 	m_f_queue->push(newframes);
+	if (!quads[0] || !quads[1]) {
+	    delete quads[0];
+	    delete quads[1];
+	    delete parent;
+	    return NULL;
+	}
 
 	parent->m_trimmed = true;
 	parent->m_checkTrim = false;
@@ -2220,6 +2278,12 @@ SurfaceTree::subdivideSurface(const ON_Surface *localsurf,
 
 	for (int i = 0; i < 9; i++) newframes[i] = ON_Plane();
 	m_f_queue->push(newframes);
+	if (!quads[0] || !quads[1]) {
+	    delete quads[0];
+	    delete quads[1];
+	    delete parent;
+	    return NULL;
+	}
 
 	parent->m_trimmed = true;
 	parent->m_checkTrim = false;
@@ -2261,6 +2325,8 @@ SurfaceTree::subdivideSurface(const ON_Surface *localsurf,
     }
 
     // Should never get here
+
+    recordFailure(FAILURE_SUBDIVISION, u, v, divDepth);
     return NULL;
 }
 

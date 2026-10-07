@@ -116,6 +116,17 @@ particular, BBNode::Stl contains a std::vector of children and a std::list of
 trim nodes above the leaf.  Dense subdivision magnifies the cost of all of
 these structures, not just bounding boxes.
 
+Tree construction also needs an explicit failure contract.  A rational
+surface can have finite, positive control weights yet be numerically singular
+under the OpenNURBS normal threshold at a required local midpoint.  A failed
+midpoint normal or bounding node must return an invalid SurfaceTree, not call
+`bu_bomb` and not silently omit that child.  Propagate any child failure to
+the root, validate every per-face tree after the parallel builders join, and
+transfer no root or CurveTree unless the complete face set is valid.  If one
+face is unavailable, fail preparation for the entire BREP; tracing an
+incomplete solid is not a conservative fallback.  Public SurfaceTree queries
+and plotting helpers must tolerate the resulting invalid builder state.
+
 2.2 Prepared-object ownership problems
 
 brep_build_bvh constructs one SurfaceTree per face in parallel.  It adds each
@@ -177,6 +188,62 @@ A cache-disabled baseline was recorded on the STEP corpus model FRAME.g:
 Although the render was requested with -P1, BREP face prep itself runs in
 parallel.  This is a sufficiently severe baseline to justify changing the
 algorithm, and it must be retained as a reproducible performance gate.
+
+The STEP-derived corpus now has a ray-prep audit independent of drawing:
+
+  brep-audit --prep-only file.g primitive
+
+It invokes the actual BREP primitive prep and emits deterministic JSON with
+the return status, aggregate time, peak RSS, face count, prepared bbox, and
+the first unavailable cell for every failed SurfaceTree.  SurfaceTree records
+one of null-surface, bounding-box, midpoint-normal-evaluation, or unexpected
+subdivision failure, together with face, recursion depth, and UV domain.  An
+empty BREP is a separate conversion artifact and must not be described as a
+surface-solver failure.
+
+A second diagnostic separates persistent prepared-object cost from temporary
+parallel build overlap:
+
+  brep-audit --surface-trees-only file.g primitive
+
+It builds and destroys one face tree at a time and records per-face time and
+leaf count, source surface class, topology counts, domain, and both native and
+converted NURBS dimensions.  The serial profile is diagnostic; it does not
+model the production builder's face parallelism or retained total memory.
+
+An uncapped scan of the 135 recurta AP203 databases prepared the first BREP
+primitive in 130 databases, comprising 4,923 faces.  Four valid models took
+longer than a 15-second classification cap, no process crashed, and the only
+normal prep failure was `10058.g`, whose five BREP primitives all contain zero
+faces.  The four outliers were:
+
+  * `10007.g`: 15 faces, about 51 seconds, 78 MiB peak RSS;
+  * `10057.g`: 301 faces, about 15 seconds, 860 MiB peak RSS;
+  * `10062.g`: 3,623 faces, about 18 seconds, 271 MiB peak RSS; and
+  * `10088.g`: 5,771 faces, about 17 seconds, 237 MiB peak RSS.
+
+The small-face outliers are the most useful algorithmic evidence.  A serial
+profile of `10007.g` took about 47 seconds.  Face 7 alone took about 25 seconds
+and produced 12,722 leaves; faces 1, 3, and 5 added roughly 21 seconds.  They
+are trimmed ON_RevSurface patches whose NURBS forms are rational order 3 by 3
+with 9 by 9 control points.  A serial profile of `10057.g` built 113,008
+leaves over 301 faces in about 86 seconds and 412 MiB peak RSS.  Repeated
+ON_RevSurface faces with rational order 3 by 2, 9 by 2 NURBS forms each took
+about 2.4 to 2.6 seconds for 1,215 leaves.  Production parallel construction
+retains all completed trees and overlaps builder temporaries, explaining its
+higher 860 MiB peak.  Even the one-face `10145.g` revolved surface produces
+8,192 leaves.  These measurements show that dense-tree cost occurs on
+ordinary revolved analytic geometry, not only exotic imported freeform
+patches.
+
+A separate 1-GiB RLIMIT_AS stress pass is not a valid geometry census.  The
+process already has substantial virtual mappings, and four external audit
+processes each caused BREP prep to request twelve internal workers.  The cap
+therefore produced pthread creation failures, `std::bad_alloc`, and secondary
+termination.  Preserve those results only as evidence that bounded-memory
+prep needs an explicit allocation/failure policy.  Corpus qualification must
+use process isolation and time caps without interpreting resource-limit
+termination as a numerical SurfaceTree result.
 
 2.4 Current ray/surface solve
 
@@ -2753,11 +2820,13 @@ with equal weights, the same face with a `2^20` control-weight ratio and
 reversed ray, and that weighted face after `10,000x` scale plus large
 translation must all certify a boundary-crossing root, a positive weight
 interval, and a finite complete model-image bound.  This is a conditioning
-test, not authority for numerically singular parameterizations: a trial
-`2^400` weight ratio makes the current OpenNURBS midpoint-normal evaluation
+test, not authority for numerically singular parameterizations.  A permanent
+`2^400` weight-ratio control makes OpenNURBS midpoint-normal evaluation
 unavailable during SurfaceTree construction, before the local certificate is
-called.  Track that prep failure separately and do not weaken surface
-regularity or root-proof obligations to admit it.
+called.  The complete BREP prep must reject that surface without a process
+abort, partial BVH, leaked ownership, or attempted ray solve.  Keep this prep
+failure separate and do not weaken surface regularity or root-proof
+obligations to admit it.
 
 The real Cobb replay extracts the actual prepared projected coefficient
 intervals for all sixteen similarity/reversal cases.  Every real miss
@@ -3101,6 +3170,41 @@ Move a surface boundary and its trim in different directions with separately
 declared tolerances.  This represents realistic imported geometry and tests
 that UV and model-space errors are accumulated conservatively rather than
 compared as one scalar.
+
+Implementation checkpoint (2026-08-09): the first isolated E and F fixtures
+are now implemented in src/librt/tests/brep_ray.cpp and registered as
+rt_brep_ray_defect.  The trim-only case bows one incident 2-D trim while both
+surfaces and the shared 3-D edge remain exact.  It measures U and V changes
+separately and records the resulting anisotropic trim metadata.  The edge-only
+case bows only the interior rational 3-D edge controls, preserving its
+endpoints, both trims, and both surface lifts.  Dense independent samples
+calibrate each requested 3-D discrepancy; neither generator uses a requested
+control displacement as the oracle.
+
+For these defects, a tangent-centered line is the wrong isolation tool: its
+two roots lie O(sqrt(R*h)) away from the seam.  The permanent ray constructor
+instead pins one analytic sphere endpoint to the seam midpoint and chooses the
+ray direction from the desired endpoint separation L.  It tests L/T = 100,
+10, 2, 1.1, and exact contact, toward both incident faces and in both ray
+directions.  With g/T = 0.25 and 0.9, the initial matrix contains 40 valid
+trim-only and 80 valid edge-only rays.  All 120 final results match the
+implicit ELL and analytic endpoints within 7.08e-8, while all 120 prepared
+attempts conservatively select whole-ray fallback.  This is the intentional
+pre-theorem baseline.
+
+The trace localizes rather than conceals the missing authority.  At a seam
+endpoint, one incident face may contribute a trim miss while its mate
+contributes a tolerance-near hit at the same physical event.  The adaptive
+surface isolator also retains duplicate unresolved terminal boxes on either
+side of an internal subdivision boundary.  Trim-only cases reach the exact
+manifold-edge resolver but cannot own those boxes; edge-only cases no longer
+possess an exact geometric edge witness and reach declared-tolerance seam
+resolution.  The production extension must prove a complete connected
+terminal-box component has exactly the intended root, certify one orientation
+over its enclosure, bind the actual root to the authorized trim/edge tube, and
+publish the full event stream atomically.  Do not resolve this baseline by
+merging nearby hits or by accepting a point sample as proof of box/root
+completeness.
 
 7.5 Perturbation sweep
 
@@ -3468,6 +3572,28 @@ Build the original and substituted databases in memory, shoot the identical
 directed and Crofton lines through both, and retain ordered final partitions.
 Classify unsupported leaves explicitly and begin with fully replaceable trees;
 mixed trees can follow once the all-BREP-leaf case is understood.
+
+Implementation checkpoint (2026-08-09): the first topology-identical nested
+fixture is now in src/librt/tests/brep_ray.cpp.  It defines one radius-5 ELL
+leaf, reuses it under translations to -8 and +8 on X in a nested union
+combination, and subtracts a translated radius-2 ELL from the left component.
+The comparison database replaces only the two leaf definitions with their
+exact ft_brep results; it preserves the combination nesting, reuse, member
+matrices, region subtraction, tolerance, and ray set.  This exercises a
+hollow left component plus a solid right component, including three ordered
+material intervals along the X axis.  Four analytic directed rays check the
+forward and reverse three-interval answers and transverse shell/solid answers.
+
+Its exact independent measures are 216*pi surface area and (968/3)*pi volume.
+On the fixed 8,000-line shared Crofton sample the implicit and BREP-leaf trees
+have zero differing lines and zero tangent-band exceptions; maximum paired
+endpoint error is 3.84e-8.  Both independent estimators pass the confidence
+bands around the analytic measures.  This satisfies the first nondegenerate
+nested/reused/transformed BREP-leaf hierarchy gate.  It does not yet qualify
+near-coincident members, thin walls near rti_tol.dist, partially replaceable
+mixed trees, arbitrary region attributes/overlap policies, or the reverse
+BREP-to-CSG recognizer.  Those remain separate tiers so a failure can still be
+localized to leaf solving, Boolean assembly, tolerance policy, or recognition.
 
 The second comparison runs in the opposite direction.  BRL-CAD's experimental
 BREP shape recognizer, exposed by the libged `brep csg` command, calls
@@ -4002,3 +4128,185 @@ This produces an independently reviewable correctness and memory-management
 improvement.  The Cobb seam framework and tolerance resolver should be the
 next change set, followed by local Bezier isolation.  Only then should the
 default surface-tree depth be reduced.
+
+
+15. STATUS-2 SURFACES AND LOCAL GRAZING REFINEMENT CHECKPOINT
+------------------------------------------------------------
+
+The rational torus work identified two production requirements which were not
+visible in the initial sphere-only stages.
+
+OpenNURBS NURBS-form status
+
+  ON_Surface::GetNurbForm does not return a Boolean.  Status 1 means the NURBS
+  form has the original parameterization; status 2 means it has the same
+  geometric locus with a parameter map.  ON_RevSurface commonly returns 2.
+  Rejecting every value except 1 omits ordinary analytic surfaces produced by
+  STEP conversion, not merely exotic representations.
+
+  Prepared face records therefore retain the exact status.  Coefficient
+  construction, subdivision boxes, Krawczyk proofs, determinant proofs, and
+  root ownership remain in the returned NURBS parameter space.  Before using
+  a root with the original BREP topology, map it with
+  GetSurfaceParameterFromNurbFormParameter and require:
+
+    * a finite mapped parameter;
+    * a successful inverse
+      GetNurbFormParameterFromSurfaceParameter round trip;
+    * round-trip agreement at a scale-aware floating-point bound; and
+    * agreement between the original-surface point and certified NURBS point
+      at the numeric model-distance bound.
+
+  Evaluate the original surface normal and trim classifier only after that
+  point check.  Publish original-surface UV, never the private NURBS-form UV.
+  Apply the same 3D locus-agreement check to regular corrector roots and
+  singular-fold representatives; a successful parameter round trip alone is
+  not evidence that the two evaluated points agree at raytracing precision.
+  This is a point-map theorem, not an interval-map theorem.  Status-2 seam,
+  edge, vertex, or near-trim events must continue to fail closed until an
+  enclosure of the parameter map proves their complete source-box and trim
+  corridor relationships.
+
+  `brep-audit --surface-trees-only` now reports each integer status and object
+  totals.  Product_step46_item.s in non_grabcad/0353/0353-10-12.g has 175
+  faces: 33 status-1 and 142 status-2.  Its dense trees have 98,758 leaves and
+  individual 4,096-leaf faces.  This concrete sample makes status-2 support
+  central to the STEP corpus: the old equality-to-1 check omitted 81.1 percent
+  of those faces from the prepared solver.
+
+Bounded exact local refinement
+
+  At a tube-direction torus chord only 2T long, depth-24 isolation retained
+  three boxes.  Two allocation-free local correctors found the analytic
+  endpoints, and expansion Krawczyk proved two local root neighborhoods, but
+  the ordinary isolation net represented every coefficient with the worst
+  error of its equation.  This error floor kept a rootless box and a box
+  spanning the nearby fold neighborhood.  The dense legacy SurfaceTree path
+  visited 24 leaves yet returned only one physical root in either ray
+  direction.
+
+  Reuse the exact per-coefficient expansion intervals already built for the
+  equation coefficients.  The first production gate enables this tier only
+  for status-2 faces and only permits its clean interior regular/fold results
+  to publish.  This preserves the already-qualified status-1 seam, edge, and
+  vertex source-box transactions until dedicated repartition-invariance tests
+  exist for them.  When ordinary isolation reaches its depth budget:
+
+    1. Restrict every interval Bernstein coefficient to the terminal box with
+       exact dyadic blossoms and outward expansion bounds.
+
+    2. Apply both individual equation hull exclusion and an invertible
+       conditioned two-equation transform.  Form every transformed coefficient
+       with error-free expansions before testing its Bernstein hull.  A
+       transformed hull strictly separated from zero excludes the box without
+       assuming that either original equation is separately signed.
+
+    3. Try the tight expansion-valued Krawczyk inclusion and require a strict
+       determinant sign before treating a root as a regular crossing.
+
+    4. If the exact rotated hull retains an unresolved box, split only that
+       box.  Use the existing fixed 64-entry stack, at most eight extra levels
+       per box, and at most 64 exact refinements over the ray.  Exhaustion is
+       explicit fallback; it is never permission to publish.
+
+    5. If a regular proof appears but its outward ray-parameter interval is
+       still wider than 0.01*T/|D|, continue the same bounded local refinement.
+       This makes event separation, rather than mere point convergence, the
+       termination objective.  Reprove both children; do not assume a parent
+       root belongs to one child based on the floating candidate alone.
+
+  Exact coefficient-hull recovery for an unresolved box runs only after the
+  old ordinary depth budget.  The event-separation rule in step 5 may begin
+  earlier when ordinary Krawczyk proves uniqueness before that depth but leaves
+  a ray interval wider than 0.01T.  Both cases use the same fixed refinement
+  count and stack and allocate no memory.  They do not change the prepared
+  SurfaceTree or its serialization.  The 2T torus case uses the rotated hull
+  to remove the false retained box.  At 1.1T, further local splits isolate two
+  signed regular boxes tightly enough that the outward event gap is strictly
+  greater than T.  Both ray directions now publish the analytic interval at
+  100T, 10T, 2T, and 1.1T.
+
+Status-2 similarity qualification
+
+  Pointwise NURBS-form mapping and close-root separation must be invariant
+  under the same similarities already required of status-1 sphere and seam
+  logic.  A focused torus matrix therefore applies arbitrary rotation and
+  translation at scales 1, 0.01, and 10,000, scaling T with the geometry.  It
+  shoots the exact-tier tube-section cases at 2T and 1.1T in both directions.
+  Every one of the 12 rays must:
+
+    * observe exactly one status-2 face;
+    * select a complete two-event prepared material interval;
+    * match the analytic circular section within T;
+    * exercise exact expansion availability, exclusion, and refinement; and
+    * avoid arithmetic failure, fixed-workspace exhaustion, or fallback.
+
+  This matrix passes.  It also clarifies the fold-localization contract.  The
+  localization routine tries many nested optional contractions and records a
+  failure for each level that cannot improve the box.  A failed optional level
+  does not invalidate a complete fold proof.  Mixed fold/regular publication
+  consumes the actual stored fold interval: the best certified contraction if
+  one exists, otherwise the complete parent interval.  Its strict outward-gap
+  classifier then proves or rejects separation from the regular box.  Do not
+  use a zero localization-failure counter as a substitute for that interval
+  proof.
+
+  The large transformed implicit TOR returns two quartic segments on all four
+  positive analytic section rays in this matrix.  Record those as oracle
+  artifacts and continue to use the analytic circle for the grazing boundary;
+  transform invariance must not train the BREP solver to reproduce them.
+
+Minimum-size boundary behavior
+
+  Use three categories, not a binary hit/miss expectation:
+
+    * gap.minimum > T.maximum: RESOLVED material interval;
+    * gap.maximum < T.minimum: SUBMINIMUM contact/nonmaterial; and
+    * overlapping/equal bounds: AMBIGUOUS whole-ray fallback.
+
+  Equality at exactly 1T must not be called resolved.  The status-2 torus
+  stream marks it ambiguous.  The unchanged status-1 sphere path reaches its
+  prior UNCERTIFIED fallback before the new tier.  Legacy fallback sometimes
+  returns a tolerance-sized segment and sometimes a miss, so the ratchet
+  records that result without claiming a resolved certificate.  Below T the
+  prepared stream may find two surface roots, but it must not publish a
+  material interval.
+
+  Exact tangency likewise may produce one or more contact candidates but must
+  not receive a simple-root material certificate.  Analytic outside lines
+  must not publish BREP material even if a candidate corrector lands within a
+  sub-tolerance numerical neighborhood.
+
+Oracle qualification
+
+  The implicit TOR quartic currently emits a small segment on both exact
+  tangent directions and on 16 of 18 directed analytic outside samples for
+  each tested normal section.  Therefore use the analytic circle at the
+  grazing boundary.  Keep the implicit TOR as a positive-clearance endpoint
+  comparison and record its tangent/outside artifacts as a separate solver
+  defect.  Do not train BREP acceptance to reproduce that defect.
+
+Rejected proof path
+
+  Joining the opposite root box to a connected rootless source component did
+  prove complete component ownership, but ordinary and expansion Krawczyk both
+  rejected the union because it contained the singular fold neighborhood.
+  That is the correct mathematical result.  The experimental publication path
+  had no positive controlled case and was removed rather than retained as OBE
+  production work.  Candidate roots still never substitute for complete box
+  coverage.
+
+Current deterministic gate
+
+  `rt_brep_ray --grazing-root-only` covers sphere plus both torus normal
+  sections, both directions, nine signed chord scales, exact tangency, and
+  mirrored outside clearances.  For each torus section, all eight directed
+  100T/10T/2T/1.1T cases must select the prepared production stream and publish
+  one complete material interval.  The four tube-section 2T/1.1T cases must
+  also record exact expansion availability, a rigorous exclusion, and bounded
+  local refinement with no arithmetic failure or budget exhaustion.  This
+  prevents a later legacy solver success from concealing loss of the new
+  production theorem.  The interval, fold, and local-root partitions
+  independently exercise the expansion arithmetic and proof primitives.  Keep
+  these gates green before changing the base depth, exact-refinement budgets,
+  trim policy, or SurfaceTree fallback.
