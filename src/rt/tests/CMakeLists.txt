@@ -162,9 +162,49 @@ brlcad_add_test(
     -P "${CMAKE_CURRENT_SOURCE_DIR}/test_rt_command_view.cmake"
 )
 
+brlcad_add_test(
+  NAME rt_brep_route_direct
+  COMMAND
+    "${CMAKE_COMMAND}"
+    "-DRT=$<TARGET_FILE:rt>"
+    "-DDB=${CMAKE_SOURCE_DIR}/src/libbrep/tests/nurbs_csg.g"
+    "-DTEST_DIR=${CMAKE_CURRENT_BINARY_DIR}"
+    -P "${CMAKE_CURRENT_SOURCE_DIR}/test_brep_route_direct.cmake"
+)
+distclean("${CMAKE_CURRENT_BINARY_DIR}/brep-route-direct.pix")
+distclean("${CMAKE_CURRENT_BINARY_DIR}/brep-route-legacy.pix")
+
+brlcad_add_test(
+  NAME rt_brep_profile_histogram
+  COMMAND
+    "${CMAKE_COMMAND}"
+    "-DRT=$<TARGET_FILE:rt>"
+    "-DDB=${CMAKE_SOURCE_DIR}/src/libbrep/tests/nurbs_csg.g"
+    "-DTEST_DIR=${CMAKE_CURRENT_BINARY_DIR}"
+    -P "${CMAKE_CURRENT_SOURCE_DIR}/test_brep_profile_histogram.cmake"
+)
+distclean("${CMAKE_CURRENT_BINARY_DIR}/brep-profile-histogram.pix")
+
+brlcad_add_test(
+  NAME rt_brep_scene_pack_cache
+  COMMAND
+    "${CMAKE_COMMAND}"
+    "-DRT=$<TARGET_FILE:rt>"
+    "-DDB=${CMAKE_SOURCE_DIR}/src/libbrep/tests/nurbs_csg.g"
+    "-DTEST_DIR=${CMAKE_CURRENT_BINARY_DIR}"
+    -P "${CMAKE_CURRENT_SOURCE_DIR}/test_brep_scene_pack_cache.cmake"
+)
+distclean(
+  "${CMAKE_CURRENT_BINARY_DIR}/brep-scene-pack-cache.pix"
+  "${CMAKE_CURRENT_BINARY_DIR}/brep-scene-pack-cache-tiny.pix"
+)
+
 # Housekeeping
 cmakefiles(
   CMakeLists.txt
+  test_brep_profile_histogram.cmake
+  test_brep_route_direct.cmake
+  test_brep_scene_pack_cache.cmake
   test_rt_command_view.cmake
   test_rt_disk_framebuffer_size.cmake
   test_rt_unbuffered_background.cmake
