@@ -201,7 +201,32 @@ brlcad_addexec(rt_brep_ray brep_ray.cpp "librt;libbrep;libwdb;libbu;${M_LIBRARY}
 brlcad_add_test(NAME rt_brep_ray COMMAND rt_brep_ray --directed-only)
 brlcad_add_test(NAME rt_brep_ray_crofton COMMAND rt_brep_ray --crofton-only)
 brlcad_add_test(NAME rt_brep_ray_seam COMMAND rt_brep_ray --seam-only)
+brlcad_add_test(NAME rt_brep_ray_endpoint COMMAND rt_brep_ray --endpoint-only)
+brlcad_add_test(
+  NAME rt_brep_ray_nonisoparametric
+  COMMAND rt_brep_ray --nonisoparametric-only
+)
+brlcad_add_test(
+  NAME rt_brep_ray_contact_trim
+  COMMAND rt_brep_ray --contact-trim-only
+)
 brlcad_add_test(NAME rt_brep_ray_interval COMMAND rt_brep_ray --interval-only)
+brlcad_add_test(
+  NAME rt_brep_ray_local_root
+  COMMAND rt_brep_ray --local-root-only
+)
+brlcad_add_test(
+  NAME rt_brep_ray_grazing_root
+  COMMAND rt_brep_ray --grazing-root-only
+)
+brlcad_add_test(
+  NAME rt_brep_ray_trim_interval
+  COMMAND rt_brep_ray --trim-interval-only
+)
+brlcad_add_test(
+  NAME rt_brep_ray_source_union
+  COMMAND rt_brep_ray --source-union-only
+)
 brlcad_add_test(NAME rt_brep_ray_fold COMMAND rt_brep_ray --fold-only)
 brlcad_add_test(NAME rt_brep_ray_affine COMMAND rt_brep_ray --affine-only)
 

@@ -1886,6 +1886,897 @@ vertex fans remain separate theorems rather than relaxations of this one.  The
 initial vertex theorem is Section 6.4.2; curved and tolerance-near fans remain
 future extensions of that theorem.
 
+6.4.1.1 Tolerance-near incident-face contact-lobe subtype
+
+The first tolerance-near extension is a separate subtype of the paired seam-
+continuation theorem, not a relaxation of its tangent-witness rule and not a
+t-distance merge.  The endpoint-preserving bowed Cobb matrix contains six
+inward-displacement rays for which the old narrow theorem found one valid
+outer endpoint and its certified continuation, but also retained two clean,
+non-tangent roots on the other incident face.  They occur at g/T = h/T = 0.5,
+0.9, and 1.0 in both directions.  In increasing ray parameter those two roots
+are ENTER then LEAVE, lie inside the intended outer sphere chord, and surround
+the projection of the mated topological edge.  They describe a small incident-
+surface lobe inside the topological material sector; they are neither tangent
+witnesses nor additional solid boundaries.  Treating them as either case
+without a distinct proof would be incorrect.
+
+Keep all input and continuation obligations in Section 6.4.1.  After the
+ordinary tangent-witness ownership branch rejects an extra non-tangent root,
+the contact-lobe subtype may proceed only as follows:
+
+  1. Require a non-exact edge observation.  The measured ray/edge distance
+     must be strictly greater than the coordinate-scaled line-roundoff
+     envelope used by the exact manifold-edge theorem.  The existing strict
+     global edge/lift correspondence and `SEAM_GAP_INSIDE` discrepancy proof
+     must already authorize the model corridor.  Both lifted-trim distances
+     and the conservatively bounded discrepancy must remain inside that
+     independently declared/certified envelope.  Thus model tolerance cannot
+     turn an exact edge crossing into this case or authorize itself from the
+     observed lobe.
+
+  2. Initially restrict the ray to the edge-normal cross-section,
+     `abs(dot(D_unit, edge_tangent)) <= 1e-10`.  This is a deliberately narrow
+     production subset.  A future oblique theorem must bound edge-frame
+     variation over the complete projected interval rather than increasing
+     this angular threshold.
+
+  3. Require exactly two roots other than the selected outer endpoint.  Both
+     must belong to the other incident face and the same prepared surface
+     span, classify CLEAN_HIT or NEAR_HIT on the retained side of the trim,
+     have finite non-tangent normals, and sort as ENTER followed by LEAVE.
+     Their representatives must be strictly inside the selected existing/
+     continuation endpoint representatives.  Do not demand that binary64
+     corrected representatives themselves bracket the edge projection: at
+     0.01x scale a representative can move approximately 1.6e-12 past it.
+     The outward terminal boxes, not nominal points, carry that proof.
+
+  4. Map the certified edge parameter to the contact face's trim using the
+     globally certified geometric edge/trim correspondence.  Do not assume
+     equal normalized parameter speed.  Every contact terminal box must own
+     at least one of the two roots, have the same face/span, remain an
+     unresolved determinant box, contain the mapped trim UV in both
+     coordinates, and contain the projected edge ray parameter in its outward
+     t interval.  This box rule is representation-invariant under the existing
+     rational Möbius trim reparameterization gate.
+
+  5. Give every retained box exactly one role: selected outer-endpoint source,
+     old tangent witness, or contact-lobe source.  Give every retained local
+     root an owning box.  A box with two roles, no role, the wrong face/span,
+     a nonzero determinant certificate, missing UV/t containment, or an
+     unowned root aborts the entire subtype before mutation.  The contact box
+     t hull must be nonempty and lie strictly between the two outer physical
+     endpoint representatives.
+
+  6. Prove the complete contact-box t hull remains in the oriented material
+     sector at the certified edge parameter.  Project both hull endpoints
+     perpendicular to the edge tangent and reject a segment whose closest
+     projected point reaches the coordinate-roundoff neighborhood of the
+     edge.  Each nonzero projected segment sweeps a monotone angular interval
+     shorter than pi.  Compute its signed minor turn with `atan2`, unwrap the
+     second endpoint relative to the first, and require the full minimum/
+     maximum angular interval to remain strictly between the two oriented
+     sector boundaries.  Checking endpoints alone is insufficient for a
+     reflex sector because a chord with two inside endpoints can cross the
+     complementary convex cone.
+
+  7. The two contact roots emit no transition.  After the complete proof,
+     mark their boxes `RESOLVED_CONTACT`; mark the selected outer source boxes
+     `RESOLVED_BOUNDARY`; and publish the same two outer physical endpoints as
+     Section 6.4.1 using the distinct paired certificate classes
+     `SEAM_CONTACT_EXISTING` and `SEAM_CONTACT_CONTINUATION`.  Record one
+     contact pair, the actual number of contact boxes, and exactly two contact
+     roots.  The global state/minimum-size machine must still prove one outer
+     ENTER/LEAVE interval.  Check event capacity before changing any box
+     disposition, so overflow is atomic for both the old and new subtypes.
+
+  8. Production eligibility must require a matched pair of contact-specific
+     certificates and contact counters of 1/>0/2, four direction checks, no
+     tangent-witness or edge-only counters, and `physical_event_near_trim`
+     equal to the contact-box count.  The original seam pair must conversely
+     have zero contact counters and retain its original tangent-witness or
+     edge-only accounting.  A mixed or partially published pair is invalid.
+
+The independent Cobb validator reconstructs source/root/box ownership from
+the immutable ledger, independently evaluates the fixture's exact trim
+reparameterization, requires the contact box hull to remain strictly within
+the analytic implicit-sphere chord, and checks the final outer endpoints.
+The six original cases publish six pairs, twelve contact roots, and twelve
+contact boxes.  A second gate repeats one contact case in both directions
+under identity, nonlinear trim reparameterization, translation, two arbitrary
+rotations plus translation, 0.01x scale, and 10,000x scale with large
+translation.  All fourteen cases preserve the analytic normalized chord;
+terminal subdivision legitimately produces one or two contact boxes without
+changing the physical result.
+
+This contact-lobe subtype does not itself authorize endpoint-moving defects,
+arbitrary numbers of overlap roots, roots on several faces or spans, an
+oblique edge interval, sector-boundary tangency, a vertex neighborhood, or
+non-manifold topology.  Endpoint-moving edge-corridor authorization is the
+separate prerequisite in Section 6.4.1.2; it can enable the original narrow
+seam theorem without weakening this two-root contact theorem.
+
+6.4.1.2 Topological endpoint closure and representation-independent dispatch
+
+A tolerance-displaced lifted trim endpoint need not have its nearest point on
+the 3-D edge at the edge-domain endpoint.  Consequently, a geometric closest-
+point map cannot be required to reproduce the trim's exact domain boundary.
+That former requirement caused the endpoint-moving Cobb family to report
+`SEAM_GAP_UNAVAILABLE` before visiting a bounding cell even though the global
+strict-monotonicity correspondence proof succeeded.  Resolve the boundary
+pair from BREP topology and reserve closest-point mapping for interior
+subdivision:
+
+  1. For edge endpoint e and each of its two trims, select trim endpoint
+     `m_bRev3d ? 1-e : e`.  Its `m_vi` must exactly equal `edge.m_vi[e]`.
+     Boundary association is therefore topological; distance tolerance may
+     validate its geometry but may not manufacture or change its vertex.
+
+  2. Evaluate the 3-D edge endpoint and the surface lift of that exact trim
+     endpoint.  Both must lie within that specific topological vertex's point
+     by `max(model distance tolerance, valid vertex.m_tolerance)` plus only a
+     coordinate-scaled binary64 roundoff allowance.  Do this independently at
+     both ends and on both incident trims.  A large edge tolerance or the
+     opposite endpoint's vertex tolerance cannot authorize a failed endpoint.
+
+  3. Seed the complete edge/lift discrepancy partition with the two certified
+     trim-domain endpoints.  Consecutive edge Bezier spans inherit the previous
+     trim endpoint exactly; only an interior span boundary is mapped by the
+     geometric solver, constrained to the remaining directed trim interval.
+     Adaptive child midpoints remain constrained to their parent trim
+     interval.  Thus cells cover both complete loci with no endpoint gap while
+     preserving nonlinear trim-reparameterization invariance.
+
+  4. The existing positive-weight rational control-hull bounds still decide
+     each cell.  Endpoint closure does not relax the gap envelope: the complete
+     maximum Hausdorff upper bound must remain strictly inside the authorized
+     edge corridor.  Outside, equality-straddling, unavailable, and exhausted
+     results remain fallback.  Record a distinct
+     `discrepancy_endpoints_certified` bit and require it explicitly anywhere
+     a closure or seam event consumes the discrepancy proof.
+
+  5. Surface-root isolation method is not a solid-boundary completeness
+     theorem.  In particular, an interval Krawczyk box can certify the one
+     surviving non-tangent surface root of a cracked solid stream.  Before
+     dispatch, count clean/near, retained, non-tangent ENTER and LEAVE roots.
+     If those directions are imbalanced, allow the existing seam-continuation
+     theorem to run even when every box happened to be Krawczyk-qualified.
+     The theorem's full edge, continuation, box/root ownership, event, and
+     global-state obligations are unchanged; balanced ordinary streams still
+     take the regular path without a speculative seam attempt.
+
+The endpoint-moving Cobb family moves the entire rational boundary row while
+preserving weights, independently measures the target/adjacent edge and
+endpoint-vertex lift discrepancies, and sets every affected declared
+tolerance.  Its 60 primary rays cover g/T = 0.25, 0.9, and 1.1, inward and
+outward signs, h/T = 2.0, 0.9, 0.25, 0, and -0.25, and reversal.  Every target
+now has an independently reconstructed topological endpoint contract and a
+complete strict INSIDE gap proof, using at most 1,598 cells without exhaustion.
+The original seam theorem certifies the inward g/T=0.9, h/T=0.25 pair in both
+directions; its physical event enclosures contain the implicit-sphere
+endpoints and its representatives agree within 2.5e-4 T.  Those two repairs
+remove both former below-envelope no-partition leaks.  The new baseline is 16
+legacy one-hit rays, two certified pairs, ten total prepared selections, 46
+implicit/variant differences all inside the declared uncertainty band, zero
+outside-band differences, and zero below-envelope leaks.
+
+An additional eight-case gate repeats that certified state in both directions
+under translation, arbitrary rotation plus translation, 0.01x scale, and
+10,000x scale with large translation.  It reconstructs the endpoint contract,
+requires the complete strict gap proof, and validates both immutable event
+enclosures and representatives against similarity-scaled implicit-sphere
+intervals.  Two in-memory under-declared endpoint metadata controls must be
+rejected by the independent endpoint oracle; intentionally invalid BREP
+metadata is not sent through full prep.  The registered
+`rt_brep_ray_endpoint` process keeps these checks parallel with the main seam
+matrix.
+
+This closes the parameter-boundary assumption and a representation-sensitive
+dispatch decision.  It does not classify a ray whose relevant edge parameter
+lies in a vertex neighborhood, prove a curved vertex fan, authorize arbitrary
+endpoint overlap root graphs, or bound an oblique contact interval whose edge
+frame varies along the ray.  Those remain separate fail-closed theorems.
+
+6.4.1.3 Bounded oblique contact intervals
+
+The first oblique extension keeps Finding 69's root topology and publication
+transaction unchanged but replaces its single frozen edge frame with a
+complete interval proof.  It is not an angular-threshold relaxation.  A
+nonzero tangent component means that one fixed mapped edge UV and one fixed
+sector no longer own the entire unresolved contact lobe.  In particular, a
+ray projection can share a t value with an edge point that is physically far
+along the seam.  Projection overlap is therefore not a valid box-ownership
+theorem.
+
+Prepare the additional proof data as follows:
+
+  1. Preserve every terminal edge/trim pair produced by the strict seam-gap
+     partition.  A retained record contains the exact edge-domain interval,
+     its constrained trim-domain interval, the prepared rational Bezier edge
+     span, and the trim index.  Install these records only after both incident
+     trims complete a strict `SEAM_GAP_INSIDE` proof.  Outside, ambiguous,
+     unavailable, or budget-exhausted edges retain no production frame
+     partition.
+
+  2. Initially support frame intervals only when both trim correspondences
+     were certified by the exact isoparametric theorem.  The more general
+     injective/oriented correspondence proof remains valid for gap bounding,
+     but endpoint UV hulls alone do not yet bound a curved non-isoparametric
+     trim.  Such edges keep the old whole-ray fallback.  This was the staged
+     Finding 71 boundary; Section 6.4.1.6 lifts it only with complete retained
+     rational trim loci and derivatives.
+
+  3. Sort each side's terminal cells by edge parameter and retain their exact
+     oriented correspondence.  Cached prep rebuilds these process-local
+     records from the BREP and existing cached acceleration data; the cache
+     serialization format does not change.
+
+At shot time, consider only the already qualified two-root incident-face
+contact subtype.  Preserve the perpendicular branch byte-for-byte in policy:
+it still requires the frozen mapped UV/t ownership and the fixed-frame angular
+segment proof.  For a finite nonparallel ray with
+`1e-10 < abs(dot(D_unit,T_unit)) < 1-1e-10`, require all of the following:
+
+  1. Intersect the two sorted prepared edge partitions and remap every local
+     edge subdivision endpoint to each trim within its parent interval.  Use a
+     fixed 32-cell stack, maximum local depth 20, and at most 8,192 visited
+     cells over the complete contact transaction.  Mapping, interval
+     evaluation, sorting, and coverage use fixed storage; any mapping failure,
+     unsupported span, nonfinite result, or capacity limit aborts without
+     publishing events.
+
+  2. Link each unresolved zero-determinant contact box to a nonempty trim
+     interval on that box's own incident face.  Once the exact contact face
+     and surface span have been selected from the two qualified roots, also
+     admit adjacent rootless unresolved zero-determinant boxes on that same
+     face and span to the proof attempt.  These are contact-corridor candidates,
+     not accepted hits.  The complete interval UV hull, not just a nominal
+     root or ray projection, must be contained in each box's outward UV
+     rectangle.  A disjoint cell is skipped; a partially contained cell is
+     subdivided.  Every contact box, including every rootless candidate, needs
+     a link, and the linked box t intervals must cover the complete contact t
+     hull with no gap.  Thus a broad or shifted solver box cannot be silently
+     assigned to a distant point on the seam.  Never admit a rootless box on
+     the source outer face or on another span: the contact material-sector
+     theorem says nothing about an omitted physical surface root there.
+
+  3. Bound the rational edge point and tangent over the edge interval by
+     outward Bernstein restriction.  Bound both incident surface partials
+     over containing UV neighborhoods and form interval outward normals and
+     interior conormals.  Compute the rational quotient-rule numerator
+     `X'W-XW'` coefficient by coefficient using Bernstein products before
+     taking a convex hull.  Taking independent hull products loses the shared
+     control-net cancellation and becomes unbounded after rescaling a small
+     parameter interval.  A small containing parameter-width floor prevents
+     roundoff amplification; because it only widens the evaluated
+     neighborhood, it cannot exclude a real frame.
+
+  4. Reject every interval that approaches either edge vertex within the
+     authorized edge tolerance plus coordinate-scaled roundoff.  This is an
+     edge-interior theorem, not a vertex-neighborhood policy.  Prove that the
+     interval tangent has nonzero length and that its dot with the ray has one
+     strict, consistent sign on every box-owning interval.  Exact or interval
+     parallelism remains fallback.
+
+  5. Use homogeneous determinant signs rather than normalized vectors or
+     angles.  Let A be the topology-oriented edge tangent, C0 and C1 the two
+     interior conormals, N0 and N1 their outward normals, and V(t) the ray
+     point minus the interval edge point.  Require strict signs for
+     `(T x C0).N0` and `(A x C1).N1`.  The sector orientation is
+     `A.(C0 x C1)`; the boundary predicates are `A.(C0 x V)` and
+     `A.(V x C1)`.  Project the conormal dot test into the edge-normal plane
+     with the sign-equivalent expression
+     `|T|^2(C0.C1) - (C0.T)(C1.T)`.
+
+  6. For each fixed edge parameter, both boundary predicates are affine in
+     ray t.  Strict interval signs at both box-t endpoints therefore prove the
+     same sign on the complete segment.  A convex sector requires both
+     boundary predicates positive throughout.  A reflex sector requires at
+     least one predicate to remain positive throughout; this stronger
+     condition prevents the segment from crossing the complementary convex
+     cone.  When sector turn straddles zero but the projected conormal dot is
+     strictly negative, treat the frame as a smooth pi sector and require both
+     predicates.  Any zero-containing determinant remains fallback.
+
+  7. Prefer the local subdivision child containing the already prepared
+     closest-edge witness.  This changes search order only.  The same interval
+     obligations apply, and failure to find a certificate within the fixed
+     bounds remains fallback.  A blind low-parameter-first traversal can
+     exhaust the work budget inside a wide UV box before reaching the valid
+     local frame.
+
+Only after every contact box is linked and every interval predicate succeeds
+may the unchanged contact transaction resolve boxes and publish the two outer
+events.  Record one oblique pair, the number of certified frame cells, and the
+number of box links.  Prepared production eligibility requires exactly one
+oblique pair, at least one frame cell, and a box-link count equal to the
+contact-box count.  Perpendicular contact requires all oblique counters to be
+zero, as do ordinary seam pairs.  The later global surface-root coverage gate
+normally rejects every rootless terminal box.  Its only exception is a box
+already atomically marked resolved-contact by this completed oblique
+transaction, with the one-pair ledger and complete box-link equality.  This
+ordering is essential: proximity, face identity, or determinant zero alone
+must not waive root coverage.
+
+The Cobb ratchet uses rays whose direction is the normalized sum of the seam
+conormal and a signed tangent component while preserving the analytic sphere
+clearance and chord.  Required production cases use components 1e-4, 1e-3,
+0.01, 0.05, 0.25, 0.5, and 1 in both directions.  The 1e-3 and 0.05 cases
+exercise the rootless contact-corridor path.  A separate similarity gate
+repeats the 1e-3 case under identity, nonlinear trim reparameterization,
+translation, cyclic and arbitrary-axis rotations, 0.01x scale, and 10,000x
+scale.  All outer event boxes must contain the similarity-scaled implicit-
+sphere chord.  Components 1e-6, 10, and 1e6 in both directions are explicit
+fail-closed threshold controls.  Component 0.1 remains observational in both
+directions: its extra rootless terminal boxes occur on the source outer
+boundary, beyond the contact-sector theorem, so both rays must remain whole-
+ray fallback until a separate surface-root completeness proof is available.
+
+This theorem does not authorize arbitrary root counts, roots on multiple
+contact faces or spans, non-isoparametric frame intervals, trim-only or
+edge-only defects, a sector-boundary tangent, a vertex neighborhood, a
+non-manifold edge, or an exact tangent ray.  It changes neither SurfaceTree
+density nor cache format and adds no dynamic shot-time allocation.  Those
+limits are deliberate qualification boundaries for the later local-isolation
+pipeline, not claims that the remaining cases are geometrically invalid.
+
+6.4.1.4 Connected source-root union certificate
+
+An isolator terminal box is coverage evidence, not necessarily a distinct
+root.  In the bowed Cobb component-0.1 rays, the outer source surface produced
+one ordinary Krawczyk root box plus an adjacent depth-limit box without a
+nominal root.  The two boxes overlap in their outward ray-t intervals and
+touch along a UV boundary.  Treating the second box as an independent unknown
+forces fallback, while accepting it merely because it is adjacent could hide
+a second physical surface root.  Resolve this only with a fresh root-count
+proof over the complete connected component:
+
+  1. Attempt this extension only inside the already qualified finite,
+     nonparallel oblique contact-lobe transaction.  The source root must be on
+     a different face/span from the contact pair.  Every terminal box that
+     contains the source root must already be a regular Krawczyk box with one
+     nonzero, consistent determinant sign.  Thus the extension starts from an
+     independently established surface root and does not replace ordinary
+     root isolation.
+
+  2. A possible additional member must be on exactly the source face and
+     Bezier span, have unresolved disposition and zero determinant sign, and
+     contain no local or fold root.  Grow a component from the root-owning
+     boxes with fixed boolean arrays.  Two boxes connect only when their closed
+     UV rectangles intersect in both coordinates and their outward ray-t
+     intervals overlap, allowing only 256-epsilon coordinate roundoff.  Iterate
+     to a fixed point.  Disconnected boxes, other roots, faces, or spans remain
+     unowned and therefore force whole-ray fallback.
+
+  3. Form the complete rectangular UV hull of the connected component.  Map it
+     into the prepared Bezier span's normalized parameter domain and widen its
+     two boundaries outward by one binary64 step.  Rebuild the two ray-plane
+     Bernstein systems directly from the prepared positive-weight Bezier span,
+     restrict both systems to that hull with the audited outward bounded
+     restriction arithmetic, and map the existing source-root representative
+     into the restricted unit square.  All coefficient and interval storage is
+     fixed-size stack data; this proof performs no shot-time allocation.
+
+  4. Require strict interval Krawczyk inclusion over the entire rectangular
+     hull.  The inclusion theorem supplies existence and uniqueness of one
+     ray/surface root in that hull.  Since a root already exists in the
+     root-owning sub-box, it is the same unique root; every connected rootless
+     terminal box is therefore redundant isolation coverage and cannot hide a
+     second solid transition.  A failed restriction, singular midpoint frame,
+     nonfinite value, or non-strict Krawczyk image leaves the boxes unresolved.
+
+  5. Only after the contact-sector proof and all other seam obligations pass
+     may the transaction mark the complete source component
+     `RESOLVED_BOUNDARY`.  The existing event keeps a root-owning box as its
+     representative, records the complete component box count, and takes the
+     union of all component t intervals as its outward event interval.  Record
+     one source-union certificate, the number of root-owning boxes, and the
+     total number of component boxes.  Eligibility requires one certificate,
+     `0 < root_boxes < total_boxes`, and `total_boxes` equal to the immutable
+     event's source-box count.  All three fields must otherwise be zero.
+
+  6. The global root-coverage gate retains its blanket rejection of rootless
+     boxes.  Its only new exception is a zero-determinant box already marked
+     resolved-boundary by an eligible seam transaction carrying the complete
+     source-union ledger.  Consequently adjacency, t overlap, a numerical
+     root, or even a successful contact proof alone cannot waive surface-root
+     completeness.
+
+The permanent component-0.1 Cobb trend requires this exact `1/1/2` source
+ledger in both ray directions and checks the resulting event boxes and
+representatives against the analytic sphere chord.  The similarity matrix now
+shoots both component 1e-3 (rootless contact corridor) and component 0.1
+(source-root union) forward and backward under identity, nonlinear trim
+reparameterization, translation, cyclic and arbitrary-axis rotation, 0.01x
+scale, and 10,000x scale.  All 28 classifications and analytic chords must be
+invariant.  Because valid transformed isolation topology sometimes produces
+only one source box, component 0.1 accepts either an all-zero source-union
+ledger or a complete ledger; the identity trend independently forces the
+union path.  The current matrix uses the union proof in eight cases.
+For each identity direction, three copied-trace controls must also be rejected:
+one moves the rootless box away from the UV-connected component, one claims
+that every union box owns the root, and one makes the rootless box the event
+representative.  These controls ratchet graph connectivity, strict ledger
+inequality, and representative provenance independently of the successful
+analytic comparison.
+
+This certificate does not merge boxes across spans, accept a component with
+another reported root, prove a fold or tangent root, absorb disconnected
+coverage, or authorize an arbitrary regular event stream.  It is deliberately
+nested inside the narrow seam-contact theorem until broader physical-event
+classification has equally strong topology and material-state obligations.
+
+6.4.1.5 Synthetic source-union theorem corpus
+
+Do not rely on the Cobb case alone to validate the source-union argument.  A
+small solver-level corpus exercises the theorem with exact Bernstein systems
+and artificial terminal boxes, independent of trims, model construction, and
+the current adaptive subdivision topology.  Production and the private test
+hook share `brep_source_union_component`: it validates finite ordered UV/t
+boxes on one face/span, seeds the graph only with boxes already known to own
+the selected root, grows through the same closed UV plus outward-t overlap
+predicate, and returns the component's complete rectangular UV hull.  The
+production caller derives root and candidate roles from immutable trace
+provenance.  The test hook assigns roles explicitly, but uses the same graph,
+outward bounded Bernstein restriction, and strict production Krawczyk test.
+
+The permanent synthetic systems are:
+
+  * A connected cubic unique-root system
+    `F=(u-1/2)+(u-1/2)^3/4`, `G=v-1/2`.  Its two-box component must be complete
+    and the full widened hull must certify.  This proves the path is not tied
+    to the Cobb span's degree or coefficients.
+
+  * Copies of that system with either a UV gap or a ray-t gap between the
+    root box and candidate.  Each graph must contain only the root box, must
+    report the eligible component incomplete, and must not attempt Krawczyk.
+
+  * The two-root system `F=(u-3/8)(u-5/8)`, `G=v-1/2`, with the selected root
+    in one box and the second root in a connected candidate box.  The graph is
+    complete, but strict Krawczyk inclusion over its hull must fail.  This is
+    the direct guard against treating connectivity as a root-count proof.
+
+  * The singular system `F=(u-1/2)^2`, `G=v-1/2`, with two rootless boxes
+    flanking the root box so the complete hull is symmetric.  Its midpoint
+    Jacobian is singular and certification must fail.
+
+  * An invalid provenance control supplies a nominal root outside the box
+    marked as root-owning.  The test interface must reject the input before
+    any theorem is attempted.
+
+Give this corpus its own `rt_brep_ray_source_union` CTest shard for fast,
+specific diagnosis and also run it within the complete interval suite.  A
+disconnected eligible candidate now causes the production helper to stop
+before restriction rather than proceeding until the later global ownership
+gate; both routes fail the whole ray closed, so this is a stricter early exit,
+not a new production classification.  The shared graph retains fixed-capacity
+stack arrays and introduces no shot-time allocation.
+
+6.4.1.6 Rational non-isoparametric trim frames
+
+The exact isoparametric restriction in Finding 71 was a representation
+boundary, not a material-sector requirement.  The global correspondence proof
+already establishes that each trim follows the shared edge once, with a strict
+consistent orientation.  To use that fact for a curved trim, prep must also
+retain the complete trim locus and differential data that endpoint UV values
+cannot supply.
+
+Extend the prepared seam transaction as follows:
+
+  1. Preserve the positive-weight rational Bezier spans produced by
+     `brep_prepare_trim_spans` for both incident trims.  Each installed
+     `brep_edge_trim_cell` records the beginning and count of its immutable
+     side-local span set.  Build cells and spans in temporary vectors and
+     append neither unless both endpoint contracts, both global
+     correspondences, and the complete two-sided strict discrepancy proof
+     succeed.  An unavailable conversion, nonpositive weight, outside or
+     ambiguous discrepancy, correspondence failure, or exhausted budget
+     therefore installs no partial frame authority.
+
+  2. Keep the exact isoparametric path as the tight fast path.  Its fixed
+     coordinate and endpoint hull remain unchanged.  For a generic trim,
+     intersect the mapped cell domain with every retained span, normalize the
+     overlap into that span, and restrict its homogeneous numerator and weight
+     controls with outward interval De Casteljau arithmetic.  Divide
+     coefficient intervals by positive weights for a complete UV convex hull.
+     Form `X'W-XW'` coefficient by coefficient and divide by `W^2` for both UV
+     derivative components.  Derivatives are with respect to each restricted
+     span's increasing local coordinate; the omitted conversion to the
+     original trim parameter is a positive scalar and cannot change any
+     homogeneous sign predicate.
+
+  3. Union all overlapping span hulls and require their exact closed parameter
+     union to cover the complete mapped trim cell.  The retained span
+     boundaries originate in one knot vector; do not turn a parameter-space
+     roundoff allowance into geometric authority.  Reject missing span
+     indices, zero coverage, invalid orders, nonfinite bounds, a parameter
+     outside `[0,1]`, or incomplete coverage.  Do not reconstruct an
+     OpenNURBS curve and do not allocate at shot time.
+
+  4. Require the complete UV hull to fit exactly one prepared positive-weight
+     rational surface span.  A cell crossing a surface-span boundary is not
+     guessed: the existing fixed local edge subdivision may isolate it, and
+     failure at the depth/work bounds remains whole-ray fallback.  Bound `Su`
+     and `Sv` on the containing UV neighborhood.  For trim derivative
+     `(du,dv)`, construct the loop tangent by the interval chain rule
+
+         L = Su * du + Sv * dv.
+
+     Continue to form outward normals, interior conormals, oriented edge
+     tangent, full ray-t boundary signs, sector turn, projected conormal dot,
+     monotone sweep, complete box links, and atomic event publication exactly
+     as in Finding 71.  A generic trim changes only how its complete UV locus
+     and loop tangent are enclosed; it does not weaken any topology,
+     discrepancy, root, box, sector, or transaction obligation.
+
+  5. Where a generic trim is on the selected contact face, use its complete
+     rational UV hull for solver-box ownership.  Endpoint hulls are forbidden.
+     A disjoint hull is skipped, a partially contained hull is subdivided, and
+     a broad or shifted box fails closed at the existing bounds.  This theorem
+     does not yet replace earlier closure/root association with a model-space
+     tolerance tube.  A trim perturbation that changes which contact roots are
+     admitted needs a separate locally convergent ownership theorem rather
+     than an inferred hit.
+
+The real-geometry ratchet begins with a valid radius-10 sewn Cobb sphere.  Bow
+one surface boundary inward by exactly model tolerance, then replace the trim
+on the opposite incident face with an endpoint-preserving quadratic Bezier
+whose middle control moves toward the face interior.  Calibrate its maximum
+3D lift change to `0.05*T`, remeasure the complete two-lift discrepancy, and
+declare an edge tolerance with strict margin.  The curve must be genuinely
+non-isoparametric, preserve both topological endpoints, and leave the BREP
+valid.  This deliberately separates tolerance roles: the two lifted trims are
+`1.00125*T` apart at maximum, while their independently bounded distances to
+the shared modeling edge are `T` and `0.05*T`; the declared edge tolerance is
+`1.01` times the measured two-lift gap.  Shoot seam-tangent components `0.001`
+and `0.1` in both directions.
+Both must select production, carry the oblique ledger, and match the analytic
+sphere chord; identity component `0.1` must also carry the connected
+source-root union ledger.
+
+Repeat those four rays after an arbitrary-axis rotation plus translation,
+`0.01x` scale plus translation, and `10,000x` scale plus large translation,
+with all model, edge, and vertex tolerances scaled.  Physical classification
+and analytic endpoints must be invariant.  As in Finding 72, adaptive solver
+box topology need not be invariant: transformed component-0.1 cases may use
+either the ordinary one-root proof or a valid connected source-union proof.
+Keep the existing noninjective degree-15 trim control as a required global
+correspondence fallback.  Register the focused positive matrix as
+`rt_brep_ray_nonisoparametric` so it can run in parallel with the much larger
+seam and interval shards.
+
+This extension adds process-local prep memory proportional to retained trim
+Bezier spans on strictly authorized seam edges.  It changes neither the
+SurfaceTree density nor cache serialization, and it performs no shot-time
+allocation.  Unsupported rational data, incomplete span or surface coverage,
+changed contact-root topology, arbitrary root counts/faces/spans, exact
+tangency, sector-boundary tangency, vertex neighborhoods, and non-manifold
+topology remain fail-closed.
+
+6.4.1.7 Solver-level rational trim interval qualification
+
+The real Cobb matrix proves that one curved-trim configuration reaches the
+complete material-sector transaction, but it does not independently isolate
+the rational interval machinery from OpenNURBS topology, adaptive surface-root
+boxes, or the surrounding closure proof.  Treat the interval restriction as a
+solver component with its own permanent synthetic corpus before expanding its
+production authority.
+
+Expose a private test hook that constructs prepared `brep_trim_span` records
+from fixed Euclidean rational controls and then calls
+`brep_interval_trim_cell_geometry` itself.  The hook may allocate while
+constructing its test-local prepared object; the production helper and every
+shot-time caller remain allocation free.  Keep interface validity separate
+from theorem availability: null, nonfinite, malformed-domain, and unsupported
+order inputs reject the call, while missing cell provenance, incomplete
+coverage, OpenNURBS refusal, and nonpositive rational weights are valid test
+requests whose result is explicitly unavailable.
+
+The complete corpus is:
+
+  * A positive-weight rational quadratic with weights `[1,2,1]`, restricted
+    to a monotone subinterval.  Independently evaluate the rational curve and
+    quotient-rule derivative at dense deterministic samples.  Every UV value
+    and derivative must lie in the production interval.  Because restriction
+    reparameterizes the selected subinterval to `[0,1]`, compare the original
+    normalized derivative after multiplying it by the positive restricted
+    width.  Both derivative components must have the expected strict sign.
+
+  * Two joined linear rational spans with a cell crossing their shared
+    parameter.  The output must contain both locus pieces, maintain the strict
+    common-direction derivative, and enclose both signs of the turning
+    component.  The same spans supplied in reverse storage order must produce
+    a complete enclosure.  A cell ending exactly at the shared span boundary
+    must also succeed; the zero-length intersection with the following span
+    is not evidence of missing coverage.
+
+  * A reversed-control linear span whose first derivative component is
+    strictly negative and second is strictly positive.  This guards the
+    material-frame orientation convention rather than just the UV hull.
+
+  * Missing and zero-count span provenance, a true gap between two spans, and
+    nonpositive rational weights.  Each must return unavailable without
+    manufacturing a partial locus.
+
+  * An overlap-masked gap: two duplicate spans cover the same first interval
+    and a third covers the final interval.  The sum of intersection lengths is
+    at least the cell length even though the middle is absent.  This is a
+    required rejection and specifically forbids using accumulated length as
+    an interval-union proof.
+
+  * A symmetric rational quadratic spanning its turning point.  Its
+    derivative enclosure must contain zero, so downstream frame logic cannot
+    infer a strict direction merely because endpoint values differ.
+
+  * Nonfinite control and cell-domain controls rejected at the test interface.
+
+Production coverage is an actual closed interval-union theorem.  Starting at
+the cell minimum, repeatedly select the farthest upper endpoint reachable from
+the current covered prefix.  Retained span boundaries come from the same knot
+vector, so adjacency must be exact; any representable gap fails closed rather
+than becoming geometric authority.  Complete coverage reaches the cell
+maximum; failure to advance is a gap.  This bounded quadratic scan makes no
+span-order assumption, uses no dynamic storage, and prevents overlapping spans
+from concealing missing parameter values.  Continue to union the UV and
+derivative hulls of every positive-length intersection; coverage alone never
+repairs invalid rational data.
+
+Register the focused corpus as `rt_brep_ray_trim_interval`, also call it from
+the exhaustive interval shard and the unsharded compatibility process, and
+run it independently under ASan/UBSan.  This qualifies only complete rational
+trim locus and derivative enclosures.  It does not authorize tolerance-near
+contact-root association, fabricate surface roots, loosen contact-face box
+ownership, or broaden the material-sector topology in Section 6.4.1.6.
+
+6.4.1.8 Explicit contact-face closure and one-miss ownership
+
+Moving the non-isoparametric trim from the face opposite the contact roots to
+the contact-root face exposes a distinction that the earlier theorem did not
+need to make.  The ray/surface solver can still isolate the same three exact
+surface roots and the same three terminal boxes, but the face trim classifier
+can change one member of the inner two-root lobe from `CLEAN_HIT` to
+`CLEAN_MISS`.  Rejecting that mathematical surface root solely because the
+lifted trim moved a small authorized amount reopens the intended solid at the
+seam.  Conversely, accepting arbitrary misses or using a measured crack to
+enlarge its own tolerance would manufacture solid topology.
+
+Separate the tolerance roles before changing root ownership.  Let `T` be the
+model tolerance and `D` the valid nonnegative tolerance explicitly stored on
+the shared BREP edge.  Ordinary closure, including the legacy repair path and
+the final diagnostic classifier, must continue to use the hard limit `T`.
+This preserves the existing rule that a modeled discrepancy above the minimum
+valid size is not silently repaired just because edge metadata is larger.
+
+Only a provisional candidate local to the prepared contact-event transaction
+may use
+
+    C = max(T, D)
+
+and then only when `D` is valid, explicit, and strictly expands `T`.  Before
+spending work on the continuation solve, the immutable root ledger must
+already contain exactly the intended other-face one-hit/one-miss transverse
+ENTER/LEAVE pattern.  The provisional classifier writes only a private
+candidate trace.  It cannot alter the legacy result, increment a published
+candidate ledger, resolve a box, or emit an event unless the complete theorem
+below succeeds.
+
+The provisional path must not use the effective prep tolerance wholesale.
+That effective value can also contain vertex metadata or an inferred measured
+discrepancy.  In particular, an unset edge tolerance currently lets prep
+retain candidate evidence by expanding to the observed gap; that inferred
+value must never authorize closure or a trim miss.  Invalid model tolerance is
+unavailable, invalid/unset edge tolerance contributes nothing, and every
+comparison keeps only a coordinate-scaled binary64 roundoff allowance.  The
+strict global edge/trim correspondence and discrepancy-bound transactions
+remain separate prerequisites; `C` does not repair an outside, ambiguous,
+incomplete, or exhausted prep proof.
+
+Do not collapse the two classifiers.  An implementation that substituted `C`
+for `T` in general closure activated 34 additional bowed-seam transactions at
+complete discrepancies `g/T=1.1`, `2`, and `10`, producing 31 exhaustive seam
+test failures and changing the established pair/selection/event totals from
+`22/124/44` to `56/158/112`.  The intended contact-face case is not evidence
+that every edge declaration grants solid-repair authority.  The permanent
+ratchet therefore requires the old bowed totals and zero ordinary closure
+candidates above `T`, alongside the new private one-miss certifications.
+
+The first production extension is deliberately limited to one classifier
+miss in the already narrow incident-face contact-lobe theorem:
+
+  1. Preserve all Section 6.4.1 input obligations.  There must be exactly one
+     selected clean source root and exactly two other incident-face surface
+     roots.  The two contact roots must lie on one other face and one prepared
+     surface span, be strictly transverse, form an ordered ENTER/LEAVE pair,
+     and lie strictly inside the source/continuation material interval.  No
+     t-distance merge, nearest-root selection, or arbitrary count is allowed.
+     When ordinary `T`-bounded closure did not qualify, require exactly one
+     trim hit and one trim miss both in the pre-continuation screen and again
+     in the authoritative post-continuation theorem.
+
+  2. Each contact member must be either a mathematical trim hit
+     (`CLEAN_HIT`/`NEAR_HIT` with non-miss trim state) or a mathematical trim
+     miss (`CLEAN_MISS`/`NEAR_MISS` with miss trim state).  Require at least
+     one hit and permit at most one miss.  The root already exists because the
+     ray/surface solve returned it; this rule never creates, moves, reflects,
+     or changes the ray distance of a surface root.
+
+  3. Map the observed shared-edge parameter to the contact trim through the
+     globally certified edge/trim correspondence.  Evaluate the shared 3D
+     edge point `E`, the contact surface at the corresponding trim UV `L`, and
+     the same contact surface at the miss-root UV `R`.  The miss is eligible
+     only when both
+
+         |R-E| <= C + roundoff
+         |R-L| <= C + roundoff.
+
+     These are two distinct model-space checks.  Proximity to the edge alone
+     cannot excuse an unrelated trim miss, and proximity to the trim alone
+     cannot pull an interior root into the seam corridor.  A nonfinite point,
+     invalid face, missing surface, or second miss fails the whole ray closed.
+
+  4. Treat the point test only as the cheap association screen.  Before it can
+     authorize a declared-tolerance repair, prove a unique root in a local
+     normalized box whose radius is less than one quarter of the other root's
+     separation.  Bound the complete positive-weight rational surface image
+     of that box, including any analytic continuation beyond the span, and
+     require that whole image inside both the `E` and `L` tubes.  The detailed
+     fixed-expansion contraction and rational image theorem below is
+     mandatory; nominal-point proximity alone is not authority.
+
+  5. The local root/tube proof grants no boundary event by itself.  Every source
+     box, every contact-root box, and every rootless determinant-corridor box
+     must still have exactly one role.  The complete connected source-union
+     proof, rational trim-cell ownership, full contact t-hull coverage,
+     outward material-sector frame signs, monotone edge sweep, event order,
+     and minimum-segment checks remain unchanged.  Publish the two outer
+     source/continuation events and the miss ledger atomically only after the
+     complete transaction succeeds.  The inner contact lobe remains hidden
+     evidence and is never emitted as a solid boundary.
+
+  6. Record the number of admitted classifier misses independently from the
+     two contact roots.  A noncontact certificate requires zero contact and
+     miss ledgers.  A contact certificate requires exactly two contact roots
+     and at most one miss.  Existing opposite-face, isoparametric, oblique,
+     bowed-seam, and contact-trend tests require zero misses, so the extension
+     cannot silently take over their successful classifications.
+
+The real-geometry ratchet uses the same radius-10 sewn Cobb sphere and bowed
+support seam as Finding 74, but bows the endpoint-preserving quadratic trim on
+the contact-root face.  Set its measured maximum trim-lift change to `0.1*T`.
+The resulting complete two-lift discrepancy is `1.00498*T`; explicitly
+declare `1.01` times that measured gap on the target edge.  Shoot tangent
+components `0.001` and `0.1` in both directions for identity, arbitrary-axis
+rotation plus translation, `0.01x` similarity, and `10,000x` similarity plus
+large translation.  All sixteen rays must match the analytic sphere chord,
+select production, carry the complete oblique/source ledgers, and report
+exactly one admitted trim miss.  They must also report zero ordinary/legacy
+closure candidates and exactly one prepared closure/continuation candidate,
+proving that the explicit envelope remains confined to the transaction.
+Identity component `0.1` still requires its connected source-union proof.
+
+Add six threshold controls from forward/reverse component `0.001`.  An edge
+declaration equal only to `T`, a declaration exactly equal to the sampled
+measured gap without strict proof margin, and an unset/inferred declaration
+must all remain on legacy fallback with no published contact, miss, oblique,
+source-union, provisional-closure, or provisional-continuation ledger.  Legacy
+may return the small mathematical lobe cut by the perturbed trim in these
+intentionally unauthorized cases; do not compare those fallback endpoints to
+the sphere oracle as if the solid-intent policy had been authorized.
+
+The observed classifier transition is itself a permanent diagnostic fact.
+At trim lift `0.05*T`, the exact edge-coincident contact root remains a trim
+hit.  At `0.1*T`, root isolation, box count, correspondence, closure, and
+outer continuation are unchanged, but that root becomes a trim miss.  An
+outward signed version of this particular outer-loop construction is not a
+valid BREP because it moves the loop outside the surface domain; use a
+different valid fixture before drawing conclusions about negative amplitude.
+
+The complete terminal surface boxes are intentionally much wider than `C`:
+in the identity component-0.001 case, their surface hull was about `0.00335`
+from the edge while `C` was about `0.0005075`.  Requiring an existing terminal
+box to fit in the tube is therefore too strong.  The relevant miss root is at
+the normalized support boundary `u=1`, while the neighboring hit is only
+about `1.7e-4` away in normalized infinity norm and both occupy the same
+terminal box.  This also explains why an ordinary strict-interior Krawczyk
+test was the wrong theorem: the root that must be qualified lies on, and its
+roundoff enclosure may cross, the prepared span boundary.
+
+Use a local fixed-expansion contraction around the already solved miss
+instead.  For each of the two homogeneous ray-plane equations, derive the
+complete finite bivariate Taylor polynomial at the nominal normalized root.
+Obtain every partial derivative by exact finite differences of the Bernstein
+coefficients, evaluate it with outward fixed-expansion arithmetic, and apply
+factorial scaling as successive outward divisions by exactly representable
+small integers.  Invert the midpoint Jacobian only as a
+binary64 preconditioner `A`; all subsequent function, derivative, and image
+bounds remain outward intervals.  For the symmetric infinity-norm box
+`X=[-r,r]^2`, bound the fixed-point map
+
+    N(d) = -A F(0) + (I - A J(0)) d - A F_higher(d)
+
+and the complete derivative `I-AJ(X)`.  Start with
+
+    r = max(next_up(4 |A F(0)|_inf), 1024 eps max(1, |uv|_inf))
+
+and double at most 48 times.  Accept only strict inclusion
+`N(X) subset interior(X)` with a `512 eps r` margin and infinity-norm
+contraction below one.  Cap the permitted radius at one quarter of the
+normalized separation to the other contact root.  A singular midpoint,
+nonfinite expansion, capacity exhaustion, inability to reach inclusion, or a
+radius reaching that cap is unavailable and leaves the whole ray on fallback.
+This proves existence and uniqueness for the analytic Bezier extension; it
+does not by itself authorize a point outside the prepared support domain.
+
+Authorize that extension with a separate complete model-space image theorem.
+Let `P` be the nominal rational surface point, and write each homogeneous
+coordinate difference as `X_i(u,v)-P_i W(u,v)`.  Apply the same exact Taylor
+box evaluator to all three difference polynomials and to `W` over the
+certified root box, including the portion beyond `[0,1]^2`.  Require a
+strictly positive lower weight bound.  Divide each difference enclosure by
+the weight enclosure and combine their outward squares to obtain a Euclidean
+surface-image displacement bound `B`.  The analytic extension is eligible
+only when
+
+    |P-E| + B <= C + coordinate_roundoff
+    |P-L| + B <= C + coordinate_roundoff,
+
+where `E` and `L` are the same certified shared-edge and lifted-trim points
+used by the earlier association test.  Thus every possible root in the
+unique contraction box remains inside both declared model-space tubes.  No
+parameter-domain extrapolation receives authority merely from proximity, and
+positive weight, uniqueness, edge proximity, and trim proximity are
+independent fail-closed obligations.
+
+Run this proof only for the explicit-declaration one-hit/one-miss transaction.
+It performs no allocation during ray tracing and records attempts,
+availability, uniqueness, support-boundary extension, image bounds, and tube
+failure separately.  Publication additionally requires exactly one attempt,
+one available unique root, no tube failure, and every unchanged box,
+material-sector, order, and minimum-segment obligation described above.
+Ordinary model-tolerance contacts and all zero-miss paths retain their prior
+logic and must report no local-certificate ledger.
+
+The permanent C/C++ arithmetic corpus begins with three affine boundary roots
+and three nearby quadratic root pairs at equation scales `2^-100`, `1`, and
+`2^100`, plus multi-root, singular, uncertain-coefficient, invalid-input, and
+explicit tube-containment rejection controls.  Its next conditioning layer
+contains a degree-elevated bi-affine order-9-by-9 system, a coupled
+degree-15-by-7 system whose root lies just beyond the support boundary, and
+two nearly singular affine systems whose Jacobian determinants are `2^-20`
+and `2^-40`.  These make thirteen classified systems: ten unique-root
+certificates and three deliberate fail-closed results.  All positive cases
+must certify in one radius attempt without capacity exhaustion.
+
+Exercise the rational model-image half of the theorem through actual prepared
+surfaces as well as extracted coefficient arrays.  A rational bilinear face
+with equal weights, the same face with a `2^20` control-weight ratio and
+reversed ray, and that weighted face after `10,000x` scale plus large
+translation must all certify a boundary-crossing root, a positive weight
+interval, and a finite complete model-image bound.  This is a conditioning
+test, not authority for numerically singular parameterizations: a trial
+`2^400` weight ratio makes the current OpenNURBS midpoint-normal evaluation
+unavailable during SurfaceTree construction, before the local certificate is
+called.  Track that prep failure separately and do not weaken surface
+regularity or root-proof obligations to admit it.
+
+The real Cobb replay extracts the actual prepared projected coefficient
+intervals for all sixteen similarity/reversal cases.  Every real miss
+certifies in one radius attempt, crosses the analytic span boundary, excludes
+the neighboring root, retains positive rational weight, and bounds the full
+image inside both tubes.  Keep all of these difficult systems as a ratchet
+before generalizing the local theorem to other seam, vertex, or grazing
+policies.  Register the arithmetic and weighted-surface corpus as
+`rt_brep_ray_local_root`, include it in the exhaustive interval and unsharded
+compatibility processes, and keep the real production replay in
+`rt_brep_ray_contact_trim` so CTest can schedule both independently.
+
+The generic sphere grazing bridge in Section 7.7 is the first real close-root
+extension of this corpus.  It reuses actual roots and prepared rational
+coefficients rather than manufacturing a pair of affine equations.  Keep it
+separate from the declared-contact production replay: successful local
+certificates establish only isolated simple roots, while a general grazing
+transaction still needs complete parent coverage and event/material proofs.
+
 6.4.2 Cyclic planar vertex-fan theorem
 
 A BREP vertex can be one physical boundary crossing even though three or more
@@ -2338,6 +3229,31 @@ The expected trend from the hit side is:
 
   * at exact tangency the candidate is a CONTACT_TANGENT with zero winding
     change, followed by a stable miss on the negative-h side.
+
+Keep a focused certificate bridge independent of the full signed sweep.  At a
+generic sphere point away from seams and surface-span boundaries, use radial
+direction `(2,3,6)/7` and tangent direction `(3,-2,0)/sqrt(13)`.  Construct
+chords whose separations are `100`, `10`, `2`, `1.1`, `1`, `0.9`, `0.5`,
+`0.1`, and `0.01` times `rti_tol.dist`, in both ray directions.  Match the two
+raw local roots to the analytic endpoints and replay their actual prepared
+face, span, and UV values through the fixed-expansion local-root certificate.
+Require both roots to occupy one analytic span, remain strictly inside it,
+retain positive rational weight, and certify again with a radius cap strictly
+below one quarter of their normalized UV separation.  Root separation and
+`|N dot D|` must follow the analytic monotone trend, and certification must not
+restart after becoming unavailable.  Exact tangency must refuse a unique-root
+certificate, and the mirrored miss cases must produce neither local roots nor
+solid intervals.
+
+This bridge tests a theorem about already located simple roots.  It is not a
+coverage proof for the parent surface region, does not prove absence of other
+roots, and does not authorize a general grazing partition.  In particular,
+the exact double root remains outside the unique-contraction theorem.  Keep
+candidate completeness, physical-event pairing, and minimum-segment policy as
+separate obligations before using these certificates in the production
+grazing dispatcher.  Register the bridge as `rt_brep_ray_grazing_root` so its
+small difficult-system matrix runs in parallel with the full directed,
+interval, and seam sweeps.
 
 Do not impose a fixed grazing-normal cutoff as the expected transition.  The
 meaningful transition is governed by root isolation, analytic geometry, and

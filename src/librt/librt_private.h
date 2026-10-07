@@ -504,6 +504,8 @@ RT_EXPORT extern int rt_bot_shot_specific(
 #define RT_BREP_TRACE_EVENT_SEAM_CONTINUATION 4
 #define RT_BREP_TRACE_EVENT_VERTEX_FAN 5
 #define RT_BREP_TRACE_EVENT_MANIFOLD_EDGE 6
+#define RT_BREP_TRACE_EVENT_SEAM_CONTACT_EXISTING 7
+#define RT_BREP_TRACE_EVENT_SEAM_CONTACT_CONTINUATION 8
 #define RT_BREP_TRACE_EVENT_SOURCE_LOCAL_ROOT 1
 #define RT_BREP_TRACE_EVENT_SOURCE_FOLD_ROOT 2
 #define RT_BREP_TRACE_EVENT_SOURCE_SEAM_CONTINUATION 3
@@ -563,6 +565,7 @@ struct rt_brep_trace_edge {
     size_t candidate_spans;
     size_t discrepancy_bound_cells;
     size_t discrepancy_bound_depth;
+    size_t frame_interval_cells;
     int within_edge_tolerance;
     int sector_valid;
     int closest_state;
@@ -578,6 +581,8 @@ struct rt_brep_trace_edge {
     int correspondence_exhausted;
     int discrepancy_bounded;
     int discrepancy_bound_exhausted;
+    int discrepancy_endpoints_certified;
+    int frame_interval_supported;
     int discrepancy_sample_authorized;
     int discrepancy_proof_class;
     int discrepancy_authorized;
@@ -866,6 +871,28 @@ struct rt_brep_shot_trace {
     size_t physical_event_seam_root_coverage_failures;
     size_t physical_event_seam_witness_boxes;
     size_t physical_event_seam_witness_roots;
+    size_t physical_event_seam_contact_pairs;
+    size_t physical_event_seam_contact_boxes;
+    size_t physical_event_seam_contact_roots;
+    size_t physical_event_seam_contact_miss_roots;
+    size_t physical_event_seam_declared_contact_pairs;
+    size_t physical_event_seam_local_root_attempts;
+    size_t physical_event_seam_local_root_available;
+    size_t physical_event_seam_local_root_certified;
+    size_t physical_event_seam_local_root_extensions;
+    size_t physical_event_seam_local_root_tube_failures;
+    fastf_t physical_event_seam_local_root_radius;
+    fastf_t physical_event_seam_local_root_model_image;
+    fastf_t physical_event_seam_local_root_edge_upper;
+    fastf_t physical_event_seam_local_root_trim_upper;
+    fastf_t physical_event_seam_local_root_tube_tolerance;
+    fastf_t physical_event_seam_local_root_tube_roundoff;
+    size_t physical_event_seam_oblique_pairs;
+    size_t physical_event_seam_oblique_cells;
+    size_t physical_event_seam_oblique_box_links;
+    size_t physical_event_seam_source_union_certified;
+    size_t physical_event_seam_source_union_boxes;
+    size_t physical_event_seam_source_union_root_boxes;
     size_t prepared_vertex_records;
     size_t supported_vertex_records;
     size_t physical_event_vertex;
@@ -1063,6 +1090,67 @@ struct rt_brep_krawczyk_test_result {
     fastf_t image_maximum[2];
 };
 
+struct rt_brep_local_root_test_result {
+    int available;
+    int certified;
+    int model_image_available;
+    size_t attempts;
+    size_t expansion_high_water;
+    size_t model_expansion_high_water;
+    fastf_t normalized_root[2];
+    fastf_t span_minimum[2];
+    fastf_t span_maximum[2];
+    fastf_t determinant_ratio;
+    fastf_t radius;
+    fastf_t correction_bound;
+    fastf_t contraction_bound;
+    fastf_t model_image_displacement;
+    fastf_t weight_minimum;
+    fastf_t weight_maximum;
+    fastf_t image_minimum[2];
+    fastf_t image_maximum[2];
+};
+
+#define RT_BREP_SOURCE_UNION_TEST_ROOT 1
+#define RT_BREP_SOURCE_UNION_TEST_CANDIDATE 2
+
+struct rt_brep_source_union_test_box {
+    fastf_t uv_minimum[2];
+    fastf_t uv_maximum[2];
+    fastf_t t_minimum;
+    fastf_t t_maximum;
+    int role;
+};
+
+struct rt_brep_source_union_test_result {
+    int component_complete;
+    int krawczyk_attempted;
+    int certified;
+    size_t eligible_boxes;
+    size_t root_boxes;
+    size_t component_boxes;
+    fastf_t uv_minimum[2];
+    fastf_t uv_maximum[2];
+};
+
+#define RT_BREP_TRIM_INTERVAL_TEST_MAX_SPANS 4
+#define RT_BREP_TRIM_INTERVAL_TEST_MAX_ORDER 16
+
+struct rt_brep_trim_interval_test_span {
+    int order;
+    fastf_t domain_minimum;
+    fastf_t domain_maximum;
+    fastf_t control[RT_BREP_TRIM_INTERVAL_TEST_MAX_ORDER][3];
+};
+
+struct rt_brep_trim_interval_test_result {
+    int available;
+    fastf_t uv_minimum[2];
+    fastf_t uv_maximum[2];
+    fastf_t derivative_minimum[2];
+    fastf_t derivative_maximum[2];
+};
+
 struct rt_brep_corridor_test_result {
     int available;
     int regular_derivative_signed;
@@ -1141,6 +1229,31 @@ RT_EXPORT extern int _rt_brep_expansion_krawczyk_test(
     int u_order, int v_order, const fastf_t root[2],
     struct rt_brep_krawczyk_test_result *result,
     size_t *expansion_high_water);
+RT_EXPORT extern int _rt_brep_local_root_test(
+    const fastf_t *first_minimum, const fastf_t *first_maximum,
+    const fastf_t *second_minimum, const fastf_t *second_maximum,
+    int u_order, int v_order, const fastf_t root[2], fastf_t maximum_radius,
+    struct rt_brep_local_root_test_result *result);
+RT_EXPORT extern int _rt_brep_surface_local_root_test(
+    const struct soltab *stp, const fastf_t ray_origin[3],
+    const fastf_t ray_direction[3], int face_index, int span_index,
+    const fastf_t uv[2], fastf_t maximum_radius,
+    struct rt_brep_local_root_test_result *result);
+RT_EXPORT extern int _rt_brep_local_root_tube_test(
+    fastf_t image_displacement, fastf_t edge_distance,
+    fastf_t trim_distance, fastf_t tolerance, fastf_t roundoff,
+    fastf_t upper_bound[2]);
+RT_EXPORT extern int _rt_brep_source_union_test(
+    const fastf_t *first_coefficients,
+    const fastf_t *second_coefficients, int u_order, int v_order,
+    const fastf_t coefficient_error[2],
+    const struct rt_brep_source_union_test_box *boxes, size_t box_count,
+    const fastf_t root[2], struct rt_brep_source_union_test_result *result);
+RT_EXPORT extern int _rt_brep_trim_interval_test(
+    const struct rt_brep_trim_interval_test_span *spans, size_t span_count,
+    size_t cell_span_begin, size_t cell_span_count,
+    const fastf_t cell_domain[2],
+    struct rt_brep_trim_interval_test_result *result);
 RT_EXPORT extern int _rt_brep_corridor_test(
     const fastf_t *first_coefficients, const fastf_t *first_error,
     const fastf_t *second_coefficients, const fastf_t *second_error,

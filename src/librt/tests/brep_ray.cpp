@@ -809,12 +809,51 @@ brep_trace_fold_event_stream_valid(const struct rt_brep_shot_trace &trace)
 
 
 static bool
+brep_trace_surface_boxes_connected_independently(
+    const struct rt_brep_trace_surface_box &first,
+    const struct rt_brep_trace_surface_box &second)
+{
+    if (first.face_index != second.face_index ||
+	first.span_index != second.span_index)
+	return false;
+    for (int direction = 0; direction < 2; ++direction) {
+	const double scale = std::max(1.0,
+	    std::max(fabs(first.uv_min[direction]),
+	    std::max(fabs(first.uv_max[direction]),
+	    std::max(fabs(second.uv_min[direction]),
+		fabs(second.uv_max[direction])))));
+	const double tolerance = 256.0 * DBL_EPSILON * scale;
+	if (first.uv_max[direction] <
+		second.uv_min[direction] - tolerance ||
+	    second.uv_max[direction] <
+		first.uv_min[direction] - tolerance)
+	    return false;
+    }
+    const double t_scale = std::max(1.0,
+	std::max(fabs(first.t_min), std::max(fabs(first.t_max),
+	std::max(fabs(second.t_min), fabs(second.t_max)))));
+    const double t_tolerance = 256.0 * DBL_EPSILON * t_scale;
+    return first.t_max >= second.t_min - t_tolerance &&
+	second.t_max >= first.t_min - t_tolerance;
+}
+
+
+static bool
 brep_trace_seam_event_stream_valid(
     const struct rt_brep_shot_trace &trace,
     const struct rt_brep_trace_edge *edge,
-    const partition_result &oracle, double model_tolerance)
+    const ON_Brep *brep, const partition_result &oracle,
+    double model_tolerance, bool cobb_reparameterized = false,
+    double endpoint_tolerance_scale = 2.0e-4)
 {
-    if (!edge || oracle.partitions != 1 || oracle.overflow ||
+    if (!edge || !brep || edge->edge_index < 0 ||
+	    edge->edge_index >= brep->m_E.Count() ||
+	    !edge->correspondence_supported || edge->correspondence_exhausted ||
+	    !edge->discrepancy_endpoints_certified ||
+	    !edge->discrepancy_bounded || edge->discrepancy_bound_exhausted ||
+	    !edge->discrepancy_authorized ||
+	    edge->discrepancy_proof_class != RT_BREP_SEAM_GAP_INSIDE ||
+	    oracle.partitions != 1 || oracle.overflow ||
 	    trace.physical_event_seam_attempts != 1 ||
 	    trace.physical_event_seam != 2 ||
 	    trace.physical_event_seam_certified != 1 ||
@@ -828,12 +867,12 @@ brep_trace_seam_event_stream_valid(
 	    trace.physical_event_subminimum_contacts ||
 	    trace.physical_event_tolerance_ambiguous ||
 	    trace.physical_event_attempts != trace.stored_surface_boxes ||
-	    trace.physical_event_direction_checks != 2 ||
 	    trace.stored_physical_events != 2)
 	return false;
 
     const struct rt_brep_trace_physical_event *existing = NULL;
     const struct rt_brep_trace_physical_event *continuation = NULL;
+    bool contact_pair = false;
     for (size_t event_index = 0; event_index < 2; ++event_index) {
 	const struct rt_brep_trace_physical_event &event =
 	    trace.physical_events[event_index];
@@ -846,10 +885,69 @@ brep_trace_seam_event_stream_valid(
 	else if (event.certificate ==
 		RT_BREP_TRACE_EVENT_SEAM_CONTINUATION)
 	    continuation = &event;
-	else
+	else if (event.certificate ==
+		RT_BREP_TRACE_EVENT_SEAM_CONTACT_EXISTING) {
+	    existing = &event;
+	    contact_pair = true;
+	} else if (event.certificate ==
+		RT_BREP_TRACE_EVENT_SEAM_CONTACT_CONTINUATION) {
+	    continuation = &event;
+	    contact_pair = true;
+	} else {
 	    return false;
+	}
     }
-    if (!existing || !continuation ||
+    const bool matching_certificates = existing && continuation &&
+	((!contact_pair &&
+	  existing->certificate == RT_BREP_TRACE_EVENT_SEAM_EXISTING &&
+	  continuation->certificate ==
+	    RT_BREP_TRACE_EVENT_SEAM_CONTINUATION) ||
+	 (contact_pair && existing->certificate ==
+	    RT_BREP_TRACE_EVENT_SEAM_CONTACT_EXISTING &&
+	  continuation->certificate ==
+	    RT_BREP_TRACE_EVENT_SEAM_CONTACT_CONTINUATION));
+    const bool oblique_contact = contact_pair &&
+	trace.physical_event_seam_oblique_pairs == 1;
+    const bool oblique_evidence_valid = contact_pair ?
+	((oblique_contact && trace.physical_event_seam_oblique_cells > 0 &&
+	  trace.physical_event_seam_oblique_box_links ==
+	    trace.physical_event_seam_contact_boxes &&
+	  edge->frame_interval_supported && edge->frame_interval_cells > 0) ||
+	 (!trace.physical_event_seam_oblique_pairs &&
+	  !trace.physical_event_seam_oblique_cells &&
+	  !trace.physical_event_seam_oblique_box_links)) :
+	(!trace.physical_event_seam_oblique_pairs &&
+	 !trace.physical_event_seam_oblique_cells &&
+	 !trace.physical_event_seam_oblique_box_links);
+    const bool source_union =
+	trace.physical_event_seam_source_union_certified == 1;
+    const bool source_union_evidence_valid =
+	(!trace.physical_event_seam_source_union_certified &&
+	 !trace.physical_event_seam_source_union_boxes &&
+	 !trace.physical_event_seam_source_union_root_boxes) ||
+	(source_union && existing &&
+	 trace.physical_event_seam_source_union_boxes ==
+	    existing->source_box_count &&
+	 trace.physical_event_seam_source_union_root_boxes > 0 &&
+	 trace.physical_event_seam_source_union_root_boxes <
+	    trace.physical_event_seam_source_union_boxes);
+    const double endpoint_tolerance = std::max(
+	endpoint_tolerance_scale * model_tolerance,
+	4096.0 * DBL_EPSILON * std::max(1.0,
+	    fabs(trace.physical_events[1].dist)));
+    if (!matching_certificates || !oblique_evidence_valid ||
+	    !source_union_evidence_valid ||
+	    trace.physical_event_direction_checks !=
+		(contact_pair ? 4 : 2) ||
+	    (contact_pair ?
+	    (trace.physical_event_seam_contact_pairs != 1 ||
+	     !trace.physical_event_seam_contact_boxes ||
+	     trace.physical_event_seam_contact_roots != 2 ||
+	     trace.physical_event_seam_contact_miss_roots > 1) :
+	    (trace.physical_event_seam_contact_pairs ||
+	     trace.physical_event_seam_contact_boxes ||
+	     trace.physical_event_seam_contact_roots ||
+	     trace.physical_event_seam_contact_miss_roots)) ||
 	    existing->source_kind != RT_BREP_TRACE_EVENT_SOURCE_LOCAL_ROOT ||
 	    existing->source_root >= trace.stored_local_roots ||
 	    existing->source_box >= trace.stored_surface_boxes ||
@@ -863,10 +961,18 @@ brep_trace_seam_event_stream_valid(
 	    continuation->hit_class != 4 || continuation->trim_status != 1 ||
 	    continuation->span_index < 0 ||
 	    trace.physical_events[0].t_max >= trace.physical_events[1].t_min ||
+	    oracle.intervals[0].in_dist <
+		trace.physical_events[0].t_min - endpoint_tolerance ||
+	    oracle.intervals[0].in_dist >
+		trace.physical_events[0].t_max + endpoint_tolerance ||
+	    oracle.intervals[0].out_dist <
+		trace.physical_events[1].t_min - endpoint_tolerance ||
+	    oracle.intervals[0].out_dist >
+		trace.physical_events[1].t_max + endpoint_tolerance ||
 	    fabs(trace.physical_events[0].dist -
-		oracle.intervals[0].in_dist) > 1.0e-7 ||
+		oracle.intervals[0].in_dist) > endpoint_tolerance ||
 	    fabs(trace.physical_events[1].dist -
-		oracle.intervals[0].out_dist) > 1.0e-7)
+		oracle.intervals[0].out_dist) > endpoint_tolerance)
 	return false;
 
     const struct rt_brep_trace_local_root &source_root =
@@ -889,15 +995,146 @@ brep_trace_seam_event_stream_valid(
     const double uv_tolerance = 128.0 * DBL_EPSILON;
     size_t source_boxes = 0;
     size_t witness_boxes = 0;
+    size_t contact_boxes = 0;
     double source_t_min = DBL_MAX;
     double source_t_max = -DBL_MAX;
+    double contact_t_min = DBL_MAX;
+    double contact_t_max = -DBL_MAX;
     bool root_owned[RT_BREP_TRACE_MAX_LOCAL_ROOTS] = {};
+    bool source_root_box[RT_BREP_TRACE_MAX_SURFACE_BOXES] = {};
+    bool source_component_box[RT_BREP_TRACE_MAX_SURFACE_BOXES] = {};
+    size_t source_root_boxes = 0;
     root_owned[existing->source_root] = true;
+    size_t contact_roots[2] = {(size_t)-1, (size_t)-1};
+    size_t contact_root_count = 0;
+    bool contact_miss_root[RT_BREP_TRACE_MAX_LOCAL_ROOTS] = {};
+    size_t contact_miss_roots = 0;
+    int contact_face = -1;
+    int contact_span = -1;
+    ON_2dPoint contact_edge_uv(0.0, 0.0);
+    if (contact_pair) {
+	for (size_t root_index = 0;
+		root_index < trace.stored_local_roots; ++root_index) {
+	    if (root_index == existing->source_root)
+		continue;
+	    if (contact_root_count >= 2)
+		return false;
+	    const struct rt_brep_trace_local_root &root =
+		trace.local_roots[root_index];
+	    const bool incident = root.face_index == edge->face_index[0] ||
+		root.face_index == edge->face_index[1];
+	    const bool trim_hit = root.trim_status != 1 &&
+		(root.hit_class == 0 || root.hit_class == 2);
+	    const bool trim_miss = root.trim_status == 1 &&
+		(root.hit_class == 1 || root.hit_class == 3);
+	    if (!incident || root.face_index == source_root.face_index ||
+		    (!trim_hit && !trim_miss) ||
+		    !std::isfinite(root.normal_dot) ||
+		    fabs(root.normal_dot) <= BREP_GRAZING_DOT_TOL)
+		return false;
+	    contact_miss_root[root_index] = trim_miss;
+	    contact_miss_roots += trim_miss ? 1 : 0;
+	    contact_roots[contact_root_count++] = root_index;
+	}
+	if (contact_root_count != 2 || contact_miss_roots > 1 ||
+		contact_miss_roots !=
+		    trace.physical_event_seam_contact_miss_roots)
+	    return false;
+	if (trace.local_roots[contact_roots[1]].dist <
+		trace.local_roots[contact_roots[0]].dist)
+	    std::swap(contact_roots[0], contact_roots[1]);
+	const struct rt_brep_trace_local_root &lower =
+	    trace.local_roots[contact_roots[0]];
+	const struct rt_brep_trace_local_root &upper =
+	    trace.local_roots[contact_roots[1]];
+	if (lower.face_index != upper.face_index ||
+		lower.span_index != upper.span_index ||
+		lower.direction != RT_BREP_TRACE_ENTERING ||
+		upper.direction != RT_BREP_TRACE_LEAVING ||
+		!(lower.dist < upper.dist) ||
+		lower.dist <= trace.physical_events[0].dist ||
+		upper.dist >= trace.physical_events[1].dist ||
+		edge->closest_state != 1)
+	    return false;
+	contact_face = lower.face_index;
+	contact_span = lower.span_index;
+	if (contact_face < 0 || contact_face >= brep->m_F.Count())
+	    return false;
+	const ON_BrepEdge &model_edge = brep->m_E[edge->edge_index];
+	if (!model_edge.Domain().IsIncreasing())
+	    return false;
+	double edge_fraction = model_edge.Domain().NormalizedParameterAt(
+	    edge->edge_parameter);
+	const ON_BrepTrim *contact_trim = NULL;
+	int contact_side = -1;
+	for (int side = 0; side < model_edge.m_ti.Count(); ++side) {
+	    const int trim_index = model_edge.m_ti[side];
+	    if (trim_index >= 0 && trim_index < brep->m_T.Count() &&
+		    brep->m_T[trim_index].FaceIndexOf() == contact_face) {
+		contact_trim = &brep->m_T[trim_index];
+		contact_side = side;
+		break;
+	    }
+	}
+	if (!contact_trim || !contact_trim->Domain().IsIncreasing() ||
+		contact_side < 0 || !std::isfinite(edge_fraction))
+	    return false;
+	double trim_fraction = contact_trim->m_bRev3d ?
+	    1.0 - edge_fraction : edge_fraction;
+	if (cobb_reparameterized) {
+	    const double constant = contact_side ? 20.0 : 0.05;
+	    trim_fraction = constant * trim_fraction /
+		((constant - 1.0) * trim_fraction + 1.0);
+	}
+	const ON_3dPoint uv = contact_trim->PointAt(
+	    contact_trim->Domain().ParameterAt(trim_fraction));
+	if (!uv.IsValid())
+	    return false;
+	contact_edge_uv = ON_2dPoint(uv.x, uv.y);
+	const ON_Surface *surface =
+	    brep->m_F[contact_face].SurfaceOf();
+	const ON_3dPoint edge_point = model_edge.PointAt(edge->edge_parameter);
+	const ON_3dPoint trim_lift = surface ?
+	    surface->PointAt(contact_edge_uv.x, contact_edge_uv.y) :
+	    ON_3dPoint::UnsetPoint;
+	if (!ON_IsValid(edge->model_tolerance) || edge->model_tolerance < 0.0)
+	    return false;
+	double closure_tolerance = edge->model_tolerance;
+	if (ON_IsValid(edge->declared_tolerance) &&
+		edge->declared_tolerance >= 0.0)
+	    closure_tolerance = std::max(closure_tolerance,
+		(double)edge->declared_tolerance);
+	if (!surface || !edge_point.IsValid() || !trim_lift.IsValid() ||
+		!std::isfinite(closure_tolerance) || closure_tolerance < 0.0)
+	    return false;
+	for (size_t root_offset = 0; root_offset < 2; ++root_offset) {
+	    const size_t root_index = contact_roots[root_offset];
+	    if (!contact_miss_root[root_index])
+		continue;
+	    const struct rt_brep_trace_local_root &root =
+		trace.local_roots[root_index];
+	    const ON_3dPoint root_point = surface->PointAt(root.uv[0],
+		root.uv[1]);
+	    if (!root_point.IsValid())
+		return false;
+	    const double coordinate_scale = std::max(1.0,
+		std::max(fabs(root_point.x), std::max(fabs(root_point.y),
+		    fabs(root_point.z))));
+	    const double tube_roundoff = std::max(ON_ZERO_TOLERANCE,
+		4096.0 * DBL_EPSILON * coordinate_scale);
+	    if (root_point.DistanceTo(edge_point) >
+			closure_tolerance + tube_roundoff ||
+		    root_point.DistanceTo(trim_lift) >
+			closure_tolerance + tube_roundoff)
+		return false;
+	}
+    }
     for (size_t box_index = 0;
 	    box_index < trace.stored_surface_boxes; ++box_index) {
 	const struct rt_brep_trace_surface_box &box =
 	    trace.surface_boxes[box_index];
-	const bool source = box.face_index == source_root.face_index &&
+	const bool source_root_match =
+	    box.face_index == source_root.face_index &&
 	    box.span_index == source_root.span_index &&
 	    source_root.dist >= box.t_min - source_t_tolerance &&
 	    source_root.dist <= box.t_max + source_t_tolerance &&
@@ -905,17 +1142,30 @@ brep_trace_seam_event_stream_valid(
 	    source_root.uv[0] <= box.uv_max[0] + uv_tolerance &&
 	    source_root.uv[1] >= box.uv_min[1] - uv_tolerance &&
 	    source_root.uv[1] <= box.uv_max[1] + uv_tolerance;
+	const bool source_component_match = source_union &&
+	    !source_root_match && box.face_index == source_root.face_index &&
+	    box.span_index == source_root.span_index &&
+	    box.disposition == RT_BREP_TRACE_BOX_RESOLVED_BOUNDARY &&
+	    !box.determinant_sign;
+	const bool source = source_root_match || source_component_match;
 	if (source) {
 	    if (box.disposition != RT_BREP_TRACE_BOX_RESOLVED_BOUNDARY)
 		return false;
+	    if (source_union && source_root_match && !box.determinant_sign)
+		return false;
+	    source_root_box[box_index] = source_root_match;
+	    source_component_box[box_index] = source_component_match;
+	    source_root_boxes += source_root_match ? 1 : 0;
 	    source_boxes++;
 	    source_t_min = std::min(source_t_min, (double)box.t_min);
 	    source_t_max = std::max(source_t_max, (double)box.t_max);
 	    continue;
 	}
 	if (box.disposition != RT_BREP_TRACE_BOX_RESOLVED_CONTACT ||
-		edge->ray_dist < box.t_min - witness_tolerance ||
-		edge->ray_dist > box.t_max + witness_tolerance)
+		box.determinant_sign ||
+		(!oblique_contact &&
+		 (edge->ray_dist < box.t_min - witness_tolerance ||
+		  edge->ray_dist > box.t_max + witness_tolerance)))
 	    return false;
 	bool box_has_witness = false;
 	for (size_t root_index = 0;
@@ -934,31 +1184,161 @@ brep_trace_seam_event_stream_valid(
 		root.uv[0] <= box.uv_max[0] + uv_tolerance &&
 		root.uv[1] >= box.uv_min[1] - uv_tolerance &&
 		root.uv[1] <= box.uv_max[1] + uv_tolerance;
-	    if (!incident || fabs(root.normal_dot) > BREP_GRAZING_DOT_TOL ||
-		    fabs(root.dist - edge->ray_dist) > witness_tolerance ||
-		    !in_box)
+	    const bool contact_root = contact_pair &&
+		(root_index == contact_roots[0] ||
+		 root_index == contact_roots[1]);
+	    const bool qualifying_root = contact_pair ?
+		(contact_root && root.face_index == contact_face &&
+		 root.span_index == contact_span &&
+		 ((root.trim_status != 1 &&
+		   (root.hit_class == 0 || root.hit_class == 2)) ||
+		  contact_miss_root[root_index]) &&
+		 fabs(root.normal_dot) > BREP_GRAZING_DOT_TOL) :
+		(fabs(root.normal_dot) <= BREP_GRAZING_DOT_TOL &&
+		 fabs(root.dist - edge->ray_dist) <= witness_tolerance);
+	    if (!incident || !qualifying_root || !in_box)
 		continue;
 	    box_has_witness = true;
 	    root_owned[root_index] = true;
 	}
-	if (!box_has_witness)
+	const bool certified_corridor_box = oblique_contact && contact_pair &&
+	    box.face_index == contact_face && box.span_index == contact_span;
+	if (!box_has_witness && !certified_corridor_box)
 	    return false;
-	witness_boxes++;
+	if (contact_pair) {
+	    if (!oblique_contact &&
+		    (contact_edge_uv.x < box.uv_min[0] - uv_tolerance ||
+		    contact_edge_uv.x > box.uv_max[0] + uv_tolerance ||
+		    contact_edge_uv.y < box.uv_min[1] - uv_tolerance ||
+		    contact_edge_uv.y > box.uv_max[1] + uv_tolerance))
+		return false;
+	    contact_boxes++;
+	    contact_t_min = std::min(contact_t_min, (double)box.t_min);
+	    contact_t_max = std::max(contact_t_max, (double)box.t_max);
+	} else {
+	    witness_boxes++;
+	}
     }
     for (size_t root_index = 0;
 	    root_index < trace.stored_local_roots; ++root_index) {
 	if (!root_owned[root_index])
 	    return false;
     }
+    if (source_union) {
+	bool connected[RT_BREP_TRACE_MAX_SURFACE_BOXES] = {};
+	for (size_t box_index = 0;
+		box_index < trace.stored_surface_boxes; ++box_index)
+	    connected[box_index] = source_root_box[box_index];
+	bool changed = true;
+	while (changed) {
+	    changed = false;
+	    for (size_t candidate_index = 0;
+		    candidate_index < trace.stored_surface_boxes;
+		    ++candidate_index) {
+		if (!source_component_box[candidate_index] ||
+			connected[candidate_index])
+		    continue;
+		for (size_t component_index = 0;
+			component_index < trace.stored_surface_boxes;
+			++component_index) {
+		    if (!connected[component_index] ||
+			    !brep_trace_surface_boxes_connected_independently(
+				trace.surface_boxes[candidate_index],
+				trace.surface_boxes[component_index]))
+			continue;
+		    connected[candidate_index] = true;
+		    changed = true;
+		    break;
+		}
+	    }
+	}
+	for (size_t box_index = 0;
+		box_index < trace.stored_surface_boxes; ++box_index)
+	    if (source_component_box[box_index] && !connected[box_index])
+		return false;
+    }
     return source_boxes == existing->source_box_count &&
+	source_root_box[existing->source_box] &&
+	source_root_boxes ==
+	    (source_union ?
+	     trace.physical_event_seam_source_union_root_boxes : source_boxes) &&
 	trace.physical_event_seam_witness_boxes == witness_boxes &&
-	trace.physical_event_near_trim == witness_boxes &&
+	trace.physical_event_seam_contact_boxes == contact_boxes &&
+	trace.physical_event_near_trim == witness_boxes + contact_boxes &&
 	!std::memcmp(&source_t_min, &existing->t_min, sizeof(source_t_min)) &&
 	!std::memcmp(&source_t_max, &existing->t_max, sizeof(source_t_max)) &&
-	((!witness_boxes &&
+	(contact_pair ?
+	 (contact_boxes > 0 &&
+	  contact_t_min > trace.physical_events[0].dist &&
+	  contact_t_max < trace.physical_events[1].dist &&
+	  trace.physical_event_seam_contact_roots == contact_root_count &&
+	  !trace.physical_event_seam_edge_only_candidates) :
+	 ((!witness_boxes &&
 	  trace.physical_event_seam_edge_only_candidates == 1) ||
 	 (witness_boxes &&
-	  trace.physical_event_seam_edge_only_candidates == 0));
+	  trace.physical_event_seam_edge_only_candidates == 0)));
+}
+
+
+static bool
+brep_trace_source_union_negative_controls(
+    const struct rt_brep_shot_trace &trace,
+    const struct rt_brep_trace_edge *edge, const ON_Brep *brep,
+    const partition_result &oracle, double model_tolerance)
+{
+    if (!edge || !brep ||
+	trace.physical_event_seam_source_union_certified != 1)
+	return false;
+    size_t existing_event = (size_t)-1;
+    for (size_t event_index = 0;
+	    event_index < trace.stored_physical_events; ++event_index) {
+	if (trace.physical_events[event_index].certificate ==
+		RT_BREP_TRACE_EVENT_SEAM_CONTACT_EXISTING) {
+	    existing_event = event_index;
+	    break;
+	}
+    }
+    if (existing_event == (size_t)-1 ||
+	trace.physical_events[existing_event].source_root >=
+	    trace.stored_local_roots)
+	return false;
+    const struct rt_brep_trace_local_root &root =
+	trace.local_roots[trace.physical_events[existing_event].source_root];
+    size_t rootless_box = (size_t)-1;
+    for (size_t box_index = 0;
+	    box_index < trace.stored_surface_boxes; ++box_index) {
+	const struct rt_brep_trace_surface_box &box =
+	    trace.surface_boxes[box_index];
+	if (box.face_index == root.face_index &&
+		box.span_index == root.span_index &&
+		box.disposition == RT_BREP_TRACE_BOX_RESOLVED_BOUNDARY &&
+		!box.determinant_sign) {
+	    rootless_box = box_index;
+	    break;
+	}
+    }
+    if (rootless_box == (size_t)-1)
+	return false;
+
+    struct rt_brep_shot_trace disconnected = trace;
+    disconnected.surface_boxes[rootless_box].uv_min[0] += 0.25;
+    disconnected.surface_boxes[rootless_box].uv_max[0] += 0.25;
+    if (brep_trace_seam_event_stream_valid(disconnected, edge, brep, oracle,
+	    model_tolerance))
+	return false;
+
+    struct rt_brep_shot_trace bad_ledger = trace;
+    bad_ledger.physical_event_seam_source_union_root_boxes =
+	bad_ledger.physical_event_seam_source_union_boxes;
+    if (brep_trace_seam_event_stream_valid(bad_ledger, edge, brep, oracle,
+	    model_tolerance))
+	return false;
+
+    struct rt_brep_shot_trace bad_representative = trace;
+    bad_representative.physical_events[existing_event].source_box =
+	rootless_box;
+    return !brep_trace_seam_event_stream_valid(bad_representative, edge,
+	brep, oracle, model_tolerance);
 }
 
 
@@ -1066,6 +1446,13 @@ struct brep_root_event_summary {
     size_t physical_event_seam_root_coverage_failures = 0;
     size_t physical_event_seam_witness_boxes = 0;
     size_t physical_event_seam_witness_roots = 0;
+    size_t physical_event_seam_contact_pairs = 0;
+    size_t physical_event_seam_contact_boxes = 0;
+    size_t physical_event_seam_contact_roots = 0;
+    size_t physical_event_seam_contact_miss_roots = 0;
+    size_t physical_event_seam_oblique_pairs = 0;
+    size_t physical_event_seam_oblique_cells = 0;
+    size_t physical_event_seam_oblique_box_links = 0;
     size_t physical_event_clean_outside = 0;
     size_t physical_event_near_trim = 0;
     size_t physical_event_unresolved = 0;
@@ -1203,6 +1590,20 @@ brep_accumulate_root_events(brep_root_event_summary &summary,
 	trace.physical_event_seam_witness_boxes;
     summary.physical_event_seam_witness_roots +=
 	trace.physical_event_seam_witness_roots;
+    summary.physical_event_seam_contact_pairs +=
+	trace.physical_event_seam_contact_pairs;
+    summary.physical_event_seam_contact_boxes +=
+	trace.physical_event_seam_contact_boxes;
+    summary.physical_event_seam_contact_roots +=
+	trace.physical_event_seam_contact_roots;
+    summary.physical_event_seam_contact_miss_roots +=
+	trace.physical_event_seam_contact_miss_roots;
+    summary.physical_event_seam_oblique_pairs +=
+	trace.physical_event_seam_oblique_pairs;
+    summary.physical_event_seam_oblique_cells +=
+	trace.physical_event_seam_oblique_cells;
+    summary.physical_event_seam_oblique_box_links +=
+	trace.physical_event_seam_oblique_box_links;
     summary.physical_event_clean_outside +=
 	trace.physical_event_clean_outside;
     summary.physical_event_near_trim += trace.physical_event_near_trim;
@@ -1335,7 +1736,9 @@ brep_print_prepared_event_summary(const char *label,
 	"seam=attempt/root/closure/continuation/certified/failure/ownership:"
 	"%zu/%zu/%zu/%zu/%zu/%zu/%zu "
 	"ownership=witness/edge-only/box/root:%zu/%zu/%zu/%zu "
-	"witness-box/root:%zu/%zu\n", label,
+	"witness-box/root:%zu/%zu contact-pair/box/root/miss:%zu/%zu/%zu/%zu "
+	"oblique-pair/cell/link:%zu/%zu/%zu\n",
+	label,
 	summary.surface_regular_orientation_signed,
 	summary.surface_regular_orientation_attempts,
 	summary.surface_regular_orientation_uncertain,
@@ -1362,7 +1765,14 @@ brep_print_prepared_event_summary(const char *label,
 	summary.physical_event_seam_box_failures,
 	summary.physical_event_seam_root_coverage_failures,
 	summary.physical_event_seam_witness_boxes,
-	summary.physical_event_seam_witness_roots);
+	summary.physical_event_seam_witness_roots,
+	summary.physical_event_seam_contact_pairs,
+	summary.physical_event_seam_contact_boxes,
+	summary.physical_event_seam_contact_roots,
+	summary.physical_event_seam_contact_miss_roots,
+	summary.physical_event_seam_oblique_pairs,
+	summary.physical_event_seam_oblique_cells,
+	summary.physical_event_seam_oblique_box_links);
     std::printf("%s prepared production: selected=%zu/%zu/%zu "
 	"fallback=none:%zu non-solid:%zu plate:%zu unsupported:%zu "
 	"surface-work:%zu boxes:%zu uncertified:%zu local-work:%zu "
@@ -1508,6 +1918,298 @@ grazing_report(struct soltab *implicit_stp, struct soltab *brep_stp,
 		endpoint_error);
 	}
     }
+}
+
+
+static int
+check_grazing_local_root_certificate_trend(struct soltab *brep_stp,
+    struct rt_i *rtip, struct resource *resp, double radius)
+{
+    /* This ratchets the local theorem for already found simple roots.  It
+     * deliberately does not claim complete root search or grazing-event
+     * publication authority. */
+    const double chord_ratios[] = {100.0, 10.0, 2.0, 1.1, 1.0, 0.9,
+	0.5, 0.1, 0.01};
+    ON_3dVector radial(2.0, 3.0, 6.0);
+    ON_3dVector tangent(3.0, -2.0, 0.0);
+    if (!brep_stp || !rtip || !resp || !(radius > 0.0) ||
+	    !radial.Unitize() || !tangent.Unitize())
+	return 1;
+
+    int failures = 0;
+    size_t resolved_pairs = 0;
+    size_t subtolerance_pairs = 0;
+    size_t subtolerance_unavailable = 0;
+    size_t tangent_rejections = 0;
+    size_t miss_side_cases = 0;
+    size_t maximum_attempts = 0;
+    size_t maximum_high_water = 0;
+    double minimum_separation = INFINITY;
+    double maximum_radius_ratio = 0.0;
+    double maximum_contraction = 0.0;
+    double maximum_image = 0.0;
+    double maximum_normal_error = 0.0;
+    for (int reverse = 0; reverse <= 1; ++reverse) {
+	double previous_separation = INFINITY;
+	bool unavailable = false;
+	for (size_t ratio_index = 0;
+		ratio_index < sizeof(chord_ratios) /
+		sizeof(chord_ratios[0]); ++ratio_index) {
+	    const double chord_ratio = chord_ratios[ratio_index];
+	    const double half_chord = 0.5 * chord_ratio *
+		rtip->rti_tol.dist;
+	    const double closest_distance = sqrt(std::max(0.0,
+		radius * radius - half_chord * half_chord));
+	    const double clearance = (half_chord * half_chord) /
+		(radius + closest_distance);
+	    const ON_3dPoint closest(radial.x * (radius - clearance),
+		radial.y * (radius - clearance),
+		radial.z * (radius - clearance));
+	    const ON_3dVector direction = reverse ? -tangent : tangent;
+	    const ON_3dPoint origin = closest - 2.0 * radius * direction;
+	    sampled_ray ray;
+	    VSET(ray.origin, origin.x, origin.y, origin.z);
+	    VSET(ray.direction, direction.x, direction.y, direction.z);
+	    struct rt_brep_shot_trace trace;
+	    (void)shoot_brep_trace(brep_stp, rtip, resp, ray, trace);
+
+	    const double expected[2] = {2.0 * radius - half_chord,
+		2.0 * radius + half_chord};
+	    size_t root_index[2] = {SIZE_MAX, SIZE_MAX};
+	    double root_error[2] = {INFINITY, INFINITY};
+	    for (size_t local_index = 0;
+		    local_index < trace.stored_local_roots; ++local_index) {
+		for (int endpoint = 0; endpoint < 2; ++endpoint) {
+		    const double error = fabs(
+			trace.local_roots[local_index].dist - expected[endpoint]);
+		    if (error < root_error[endpoint]) {
+			root_error[endpoint] = error;
+			root_index[endpoint] = local_index;
+		    }
+		}
+	    }
+	    const bool pair_found = root_index[0] != SIZE_MAX &&
+		root_index[1] != SIZE_MAX && root_index[0] != root_index[1] &&
+		root_error[0] <= 1.0e-7 && root_error[1] <= 1.0e-7;
+	    const bool resolved = chord_ratio >= 1.0;
+	    if (!pair_found) {
+		if (resolved) {
+		    std::printf("FAIL: grazing local certificate pair "
+			"ratio/reverse=%.17g/%d roots=%zu errors=%.17g/%.17g\n",
+			chord_ratio, reverse, trace.stored_local_roots,
+			root_error[0], root_error[1]);
+		    failures++;
+		} else {
+		    unavailable = true;
+		    subtolerance_unavailable++;
+		}
+		continue;
+	    }
+
+	    const struct rt_brep_trace_local_root &first =
+		trace.local_roots[root_index[0]];
+	    const struct rt_brep_trace_local_root &second =
+		trace.local_roots[root_index[1]];
+	    const double expected_normal_dot = half_chord / radius;
+	    const double normal_error = std::max(
+		fabs(fabs(first.normal_dot) - expected_normal_dot),
+		fabs(fabs(second.normal_dot) - expected_normal_dot));
+	    maximum_normal_error = std::max(maximum_normal_error, normal_error);
+	    if (!(first.normal_dot * second.normal_dot < 0.0) ||
+		    normal_error > 1.0e-7) {
+		std::printf("FAIL: grazing local normal trend "
+		    "ratio/reverse=%.17g/%d dots=%.17g/%.17g expected=%.17g\n",
+		    chord_ratio, reverse, first.normal_dot, second.normal_dot,
+		    expected_normal_dot);
+		failures++;
+	    }
+	    struct rt_brep_local_root_test_result result[2] = {};
+	    const struct rt_brep_trace_local_root *roots[2] = {&first, &second};
+	    /* Get the common span normalization, then repeat with the production
+	     * neighbor-exclusion cap. */
+	    bool certified = first.face_index == second.face_index &&
+		first.span_index == second.span_index;
+	    for (int endpoint = 0; endpoint < 2 && certified; ++endpoint) {
+		certified = _rt_brep_surface_local_root_test(brep_stp,
+		    ray.origin, ray.direction, roots[endpoint]->face_index,
+		    roots[endpoint]->span_index, roots[endpoint]->uv, 1.0,
+		    &result[endpoint]) && result[endpoint].available &&
+		    result[endpoint].certified &&
+		    result[endpoint].model_image_available &&
+		    result[endpoint].weight_minimum > 0.0;
+	    }
+	    double separation = INFINITY;
+	    if (certified) {
+		separation = 0.0;
+		for (int direction_index = 0; direction_index < 2;
+			direction_index++)
+		    separation = std::max(separation, fabs(
+			result[1].normalized_root[direction_index] -
+			result[0].normalized_root[direction_index]));
+		certified = separation > 0.0 && std::isfinite(separation);
+	    }
+	    const double radius_cap = certified ?
+		std::nextafter(0.25 * separation, 0.0) : 0.0;
+	    for (int endpoint = 0; endpoint < 2 && certified; ++endpoint) {
+		struct rt_brep_local_root_test_result capped = {};
+		certified = radius_cap > 0.0 &&
+		    _rt_brep_surface_local_root_test(brep_stp, ray.origin,
+			ray.direction, roots[endpoint]->face_index,
+			roots[endpoint]->span_index, roots[endpoint]->uv,
+			radius_cap, &capped) && capped.available &&
+		    capped.certified && capped.model_image_available &&
+		    capped.weight_minimum > 0.0 &&
+		    capped.radius < 0.25 * separation;
+		for (int direction_index = 0;
+			direction_index < 2 && certified; ++direction_index)
+		    certified = capped.normalized_root[direction_index] -
+			capped.radius >= 0.0 &&
+			capped.normalized_root[direction_index] +
+			capped.radius <= 1.0;
+		if (certified)
+		    result[endpoint] = capped;
+	    }
+	    if (!certified) {
+		if (resolved || unavailable) {
+		    std::printf("FAIL: grazing local certificate trend "
+			"ratio/reverse=%.17g/%d face/span=%d/%d,%d/%d "
+			"separation=%.17g cap=%.17g\n", chord_ratio, reverse,
+			first.face_index, first.span_index, second.face_index,
+			second.span_index, separation, radius_cap);
+		    failures++;
+		}
+		unavailable = true;
+		subtolerance_unavailable += resolved ? 0 : 1;
+		continue;
+	    }
+	    if (unavailable) {
+		std::printf("FAIL: grazing local certificate restarted "
+		    "ratio/reverse=%.17g/%d\n", chord_ratio, reverse);
+		failures++;
+	    }
+	    if (separation > previous_separation +
+		    512.0 * DBL_EPSILON * std::max(1.0, previous_separation)) {
+		std::printf("FAIL: grazing normalized root separation grew "
+		    "ratio/reverse=%.17g/%d %.17g > %.17g\n", chord_ratio,
+		    reverse, separation, previous_separation);
+		failures++;
+	    }
+	    previous_separation = separation;
+	    if (resolved)
+		resolved_pairs++;
+	    else
+		subtolerance_pairs++;
+	    minimum_separation = std::min(minimum_separation, separation);
+	    for (int endpoint = 0; endpoint < 2; ++endpoint) {
+		maximum_attempts = std::max(maximum_attempts,
+		    result[endpoint].attempts);
+		maximum_high_water = std::max(maximum_high_water,
+		    result[endpoint].expansion_high_water);
+		maximum_radius_ratio = std::max(maximum_radius_ratio,
+		    (double)result[endpoint].radius / separation);
+		maximum_contraction = std::max(maximum_contraction,
+		    (double)result[endpoint].contraction_bound);
+		maximum_image = std::max(maximum_image,
+		    (double)result[endpoint].model_image_displacement);
+	    }
+	}
+
+	/* A double root must not pass the simple-root theorem. */
+	const ON_3dPoint tangent_point(radial.x * radius,
+	    radial.y * radius, radial.z * radius);
+	const ON_3dVector direction = reverse ? -tangent : tangent;
+	const ON_3dPoint origin = tangent_point - 2.0 * radius * direction;
+	sampled_ray ray;
+	VSET(ray.origin, origin.x, origin.y, origin.z);
+	VSET(ray.direction, direction.x, direction.y, direction.z);
+	struct rt_brep_shot_trace trace;
+	(void)shoot_brep_trace(brep_stp, rtip, resp, ray, trace);
+	bool tangent_certified = false;
+	for (size_t root_index = 0; root_index < trace.stored_local_roots;
+		++root_index) {
+	    struct rt_brep_local_root_test_result result = {};
+	    const struct rt_brep_trace_local_root &root =
+		trace.local_roots[root_index];
+	    if (_rt_brep_surface_local_root_test(brep_stp, ray.origin,
+		    ray.direction, root.face_index, root.span_index, root.uv,
+		    1.0e-3, &result) && result.available && result.certified)
+		tangent_certified = true;
+	}
+	if (tangent_certified) {
+	    std::printf("FAIL: exact tangent received a unique-root "
+		"certificate reverse=%d\n", reverse);
+	    failures++;
+	} else if (!trace.stored_local_roots || trace.final_segments) {
+	    std::printf("FAIL: exact tangent root/final state=%zu/%zu "
+		"reverse=%d\n", trace.stored_local_roots,
+		trace.final_segments, reverse);
+	    failures++;
+	} else {
+	    tangent_rejections++;
+	}
+
+	/* Matching negative clearances must remain root-free. */
+	for (size_t ratio_index = 0;
+		ratio_index < sizeof(chord_ratios) /
+		sizeof(chord_ratios[0]); ++ratio_index) {
+	    const double half_chord = 0.5 * chord_ratios[ratio_index] *
+		rtip->rti_tol.dist;
+	    const double closest_distance = sqrt(std::max(0.0,
+		radius * radius - half_chord * half_chord));
+	    const double clearance = (half_chord * half_chord) /
+		(radius + closest_distance);
+	    const ON_3dPoint outside(radial.x * (radius + clearance),
+		radial.y * (radius + clearance),
+		radial.z * (radius + clearance));
+	    const ON_3dPoint outside_origin =
+		outside - 2.0 * radius * direction;
+	    sampled_ray outside_ray;
+	    VSET(outside_ray.origin, outside_origin.x, outside_origin.y,
+		outside_origin.z);
+	    VSET(outside_ray.direction, direction.x, direction.y, direction.z);
+	    struct rt_brep_shot_trace outside_trace;
+	    (void)shoot_brep_trace(brep_stp, rtip, resp, outside_ray,
+		outside_trace);
+	    if (outside_trace.stored_local_roots ||
+		    outside_trace.final_segments) {
+		std::printf("FAIL: grazing local miss side ratio/reverse="
+		    "%.17g/%d roots/final=%zu/%zu\n", chord_ratios[ratio_index],
+		    reverse, outside_trace.stored_local_roots,
+		    outside_trace.final_segments);
+		failures++;
+	    } else {
+		miss_side_cases++;
+	    }
+	}
+    }
+
+    if (resolved_pairs != 10) {
+	std::printf("FAIL: grazing local resolved certificates=%zu/10\n",
+	    resolved_pairs);
+	failures++;
+    }
+    if (subtolerance_pairs < 6 || subtolerance_unavailable > 2) {
+	std::printf("FAIL: grazing local sub-tolerance capability="
+	    "%zu/6 unavailable=%zu/2\n", subtolerance_pairs,
+	    subtolerance_unavailable);
+	failures++;
+    }
+    if (tangent_rejections != 2 || miss_side_cases != 18) {
+	std::printf("FAIL: grazing local tangent/miss coverage=%zu/2 %zu/18\n",
+	    tangent_rejections, miss_side_cases);
+	failures++;
+    }
+    if (!failures)
+	std::printf("Sphere grazing local certificates: PASS resolved=%zu "
+	    "sub-T=%zu unavailable=%zu tangent/miss=%zu/%zu "
+	    "min-separation=%.3g "
+	    "max-radius/separation=%.3g attempts=%zu contraction=%.3g "
+	    "image=%.3g normal-error=%.3g high-water=%zu\n", resolved_pairs,
+	    subtolerance_pairs, subtolerance_unavailable, tangent_rejections,
+	    miss_side_cases, minimum_separation, maximum_radius_ratio,
+	    maximum_attempts, maximum_contraction, maximum_image,
+	    maximum_normal_error, maximum_high_water);
+    return failures;
 }
 
 
@@ -3031,8 +3733,9 @@ cobb_seam_geometry(const ON_Brep *brep, const ON_3dPoint &origin,
 
 
 static bool
-cobb_perturb_boundary_interior(ON_Brep *brep, int face_index,
-    int side_index, const ON_3dPoint &origin, double displacement)
+cobb_perturb_boundary_row(ON_Brep *brep, int face_index,
+    int side_index, const ON_3dPoint &origin, double displacement,
+    bool move_endpoints)
 {
     if (!brep || face_index < 0 || face_index >= brep->m_F.Count())
 	return false;
@@ -3046,7 +3749,9 @@ cobb_perturb_boundary_interior(ON_Brep *brep, int face_index,
 	 surface->CVCount(1) - 1);
     const int varying_count = (side_index % 2) ? surface->CVCount(1) :
 	surface->CVCount(0);
-    for (int varying = 1; varying < varying_count - 1; ++varying) {
+    const int first = move_endpoints ? 0 : 1;
+    const int last = move_endpoints ? varying_count : varying_count - 1;
+    for (int varying = first; varying < last; ++varying) {
 	const int i = (side_index % 2) ? fixed_index : varying;
 	const int j = (side_index % 2) ? varying : fixed_index;
 	ON_4dPoint cv;
@@ -3065,6 +3770,15 @@ cobb_perturb_boundary_interior(ON_Brep *brep, int face_index,
     surface->DestroyRuntimeCache(true);
     brep->DestroyRuntimeCache(true);
     return true;
+}
+
+
+static bool
+cobb_perturb_boundary_interior(ON_Brep *brep, int face_index,
+    int side_index, const ON_3dPoint &origin, double displacement)
+{
+    return cobb_perturb_boundary_row(brep, face_index, side_index, origin,
+	displacement, false);
 }
 
 
@@ -3111,6 +3825,64 @@ cobb_seam_discrepancy(const ON_Brep *brep, int edge_index)
 }
 
 
+static bool
+cobb_edge_endpoint_contract(const ON_Brep *brep, int edge_index,
+    double model_tolerance, double &maximum_edge_vertex_gap,
+    double &maximum_lift_vertex_gap)
+{
+    maximum_edge_vertex_gap = 0.0;
+    maximum_lift_vertex_gap = 0.0;
+    if (!brep || edge_index < 0 || edge_index >= brep->m_E.Count() ||
+	    !ON_IsValid(model_tolerance) || model_tolerance < 0.0)
+	return false;
+    const ON_BrepEdge &edge = brep->m_E[edge_index];
+    if (edge.m_ti.Count() != 2 || !edge.Domain().IsIncreasing())
+	return false;
+    for (int endpoint = 0; endpoint < 2; ++endpoint) {
+	const int vertex_index = edge.m_vi[endpoint];
+	if (vertex_index < 0 || vertex_index >= brep->m_V.Count())
+	    return false;
+	const ON_BrepVertex &vertex = brep->m_V[vertex_index];
+	const double vertex_tolerance =
+	    ON_IsValid(vertex.m_tolerance) && vertex.m_tolerance >= 0.0 ?
+	    std::max(model_tolerance, vertex.m_tolerance) : model_tolerance;
+	const ON_3dPoint edge_point = edge.PointAt(endpoint ?
+	    edge.Domain().Max() : edge.Domain().Min());
+	if (!vertex.point.IsValid() || !edge_point.IsValid())
+	    return false;
+	const double edge_vertex_gap = vertex.point.DistanceTo(edge_point);
+	maximum_edge_vertex_gap = std::max(maximum_edge_vertex_gap,
+	    edge_vertex_gap);
+	for (int side = 0; side < 2; ++side) {
+	    const int trim_index = edge.m_ti[side];
+	    if (trim_index < 0 || trim_index >= brep->m_T.Count())
+		return false;
+	    const ON_BrepTrim &trim = brep->m_T[trim_index];
+	    const int trim_endpoint = trim.m_bRev3d ? 1 - endpoint : endpoint;
+	    ON_3dPoint lift;
+	    if (trim.m_vi[trim_endpoint] != vertex_index ||
+		    !cobb_trim_lift(trim, endpoint, lift))
+		return false;
+	    const double lift_vertex_gap = vertex.point.DistanceTo(lift);
+	    maximum_lift_vertex_gap = std::max(maximum_lift_vertex_gap,
+		lift_vertex_gap);
+	    const double coordinate_scale = std::max(1.0,
+		std::max(fabs(vertex.point.x), std::max(fabs(vertex.point.y),
+		std::max(fabs(vertex.point.z), std::max(fabs(edge_point.x),
+		std::max(fabs(edge_point.y), std::max(fabs(edge_point.z),
+		std::max(fabs(lift.x), std::max(fabs(lift.y),
+		    fabs(lift.z))))))))));
+	    const double roundoff = std::max(ON_ZERO_TOLERANCE,
+		512.0 * DBL_EPSILON * coordinate_scale);
+	    if (edge_vertex_gap > vertex_tolerance + roundoff ||
+		    lift_vertex_gap > vertex_tolerance + roundoff)
+		return false;
+	}
+    }
+    return true;
+}
+
+
 static ON_Brep *
 cobb_bowed_seam_variant(const ON_Brep *pristine, const ON_3dPoint &origin,
     double signed_target_gap, cobb_seam_frame &frame, double &measured_gap,
@@ -3143,6 +3915,97 @@ cobb_bowed_seam_variant(const ON_Brep *pristine, const ON_3dPoint &origin,
     }
 
     variant->m_E[frame.edge_index].m_tolerance = measured_gap * 1.01;
+    return variant;
+}
+
+
+static ON_Brep *
+cobb_endpoint_moving_seam_variant(const ON_Brep *pristine,
+    const ON_3dPoint &origin, double signed_target_gap,
+    cobb_seam_frame &frame, double &measured_gap,
+    double &applied_displacement)
+{
+    measured_gap = INFINITY;
+    applied_displacement = signed_target_gap;
+    if (!pristine || !(fabs(signed_target_gap) > 0.0) ||
+	    !cobb_seam_geometry(pristine, origin, frame))
+	return NULL;
+
+    ON_Brep *variant = NULL;
+    for (int iteration = 0; iteration < 4; ++iteration) {
+	delete variant;
+	variant = new ON_Brep(*pristine);
+	if (!cobb_perturb_boundary_row(variant, frame.face_index,
+		frame.side_index, origin, applied_displacement, true)) {
+	    delete variant;
+	    return NULL;
+	}
+	measured_gap = cobb_seam_discrepancy(variant, frame.edge_index);
+	if (!(measured_gap > 0.0) || !std::isfinite(measured_gap)) {
+	    delete variant;
+	    return NULL;
+	}
+	const double ratio = fabs(signed_target_gap) / measured_gap;
+	if (fabs(ratio - 1.0) <= 1.0e-4)
+	    break;
+	applied_displacement *= ratio;
+    }
+
+    /* Moving the endpoints also creates discrepancy on the two neighboring
+     * edges.  Declare each affected face-edge envelope from its independently
+     * measured lift gap so validity and prep authorization cannot depend on
+     * the target edge alone. */
+    const ON_BrepFace &face = variant->m_F[frame.face_index];
+    if (face.m_li.Count() != 1) {
+	delete variant;
+	return NULL;
+    }
+    const ON_BrepLoop &loop = variant->m_L[face.m_li[0]];
+    const ON_Surface *face_surface = face.SurfaceOf();
+    if (!face_surface) {
+	delete variant;
+	return NULL;
+    }
+    for (int trim_slot = 0; trim_slot < loop.m_ti.Count(); ++trim_slot) {
+	const int trim_index = loop.m_ti[trim_slot];
+	if (trim_index < 0 || trim_index >= variant->m_T.Count()) {
+	    delete variant;
+	    return NULL;
+	}
+	const int edge_index = variant->m_T[trim_index].m_ei;
+	const double discrepancy = cobb_seam_discrepancy(variant, edge_index);
+	if (edge_index < 0 || edge_index >= variant->m_E.Count() ||
+		!std::isfinite(discrepancy)) {
+	    delete variant;
+	    return NULL;
+	}
+	variant->m_E[edge_index].m_tolerance = discrepancy > 0.0 ?
+	    1.01 * discrepancy : 0.0;
+	const ON_BrepTrim &trim = variant->m_T[trim_index];
+	if (!trim.Domain().IsIncreasing()) {
+	    delete variant;
+	    return NULL;
+	}
+	for (int endpoint = 0; endpoint < 2; ++endpoint) {
+	    const int vertex_index = trim.m_vi[endpoint];
+	    const double parameter = endpoint ?
+		trim.Domain().Max() : trim.Domain().Min();
+	    const ON_3dPoint uv = trim.PointAt(parameter);
+	    const ON_3dPoint lift = face_surface->PointAt(uv.x, uv.y);
+	    if (vertex_index < 0 || vertex_index >= variant->m_V.Count() ||
+		    !uv.IsValid() || !lift.IsValid()) {
+		delete variant;
+		return NULL;
+	    }
+	    ON_BrepVertex &vertex = variant->m_V[vertex_index];
+	    const double vertex_gap = vertex.point.DistanceTo(lift);
+	    const double old_tolerance =
+		ON_IsValid(vertex.m_tolerance) && vertex.m_tolerance >= 0.0 ?
+		vertex.m_tolerance : 0.0;
+	    vertex.m_tolerance = std::max(old_tolerance,
+		vertex_gap > 0.0 ? 1.01 * vertex_gap : 0.0);
+	}
+    }
     return variant;
 }
 
@@ -3366,6 +4229,26 @@ cobb_seam_grazing_ray(const cobb_seam_frame &frame,
 	start_sign * 2.0 * radius * frame.target_conormal;
     const ON_3dVector direction = reverse ? -frame.target_conormal :
 	frame.target_conormal;
+    sampled_ray ray;
+    VSET(ray.origin, ray_origin.x, ray_origin.y, ray_origin.z);
+    VSET(ray.direction, direction.x, direction.y, direction.z);
+    return ray;
+}
+
+
+static sampled_ray
+cobb_seam_oblique_ray(const cobb_seam_frame &frame,
+    const ON_3dPoint &origin, double radius, double clearance,
+    double tangent_component, bool reverse)
+{
+    const double closest_radius = radius - clearance;
+    const ON_3dPoint closest = origin + closest_radius * frame.normal;
+    ON_3dVector direction = frame.target_conormal +
+	tangent_component * frame.tangent;
+    direction.Unitize();
+    if (reverse)
+	direction.Reverse();
+    const ON_3dPoint ray_origin = closest - 2.0 * radius * direction;
     sampled_ray ray;
     VSET(ray.origin, ray_origin.x, ray_origin.y, ray_origin.z);
     VSET(ray.direction, direction.x, direction.y, direction.z);
@@ -5717,6 +6600,418 @@ check_brep_interval_enclosures()
 
 
 static int
+check_brep_local_root_solver()
+{
+    int failures = 0;
+    size_t cases = 0;
+    size_t certified = 0;
+    size_t rejected = 0;
+    size_t maximum_attempts = 0;
+    size_t maximum_high_water = 0;
+    double maximum_radius = 0.0;
+
+    const auto run = [&](const char *name, const fastf_t *first_minimum,
+	    const fastf_t *first_maximum, const fastf_t *second_minimum,
+	    const fastf_t *second_maximum, int u_order, int v_order,
+	    const fastf_t root[2], double radius_limit,
+	    bool expected_available, bool expected_certified) {
+	struct rt_brep_local_root_test_result result = {};
+	cases++;
+	const bool called = _rt_brep_local_root_test(first_minimum,
+	    first_maximum, second_minimum, second_maximum, u_order, v_order,
+	    root, radius_limit, &result);
+	const bool bad = !called || result.available !=
+	    (expected_available ? 1 : 0) || result.certified !=
+	    (expected_certified ? 1 : 0) ||
+	    (result.certified &&
+	     (!(result.radius > 0.0) || result.radius > radius_limit ||
+	      !(result.contraction_bound < 1.0) ||
+	      !(result.image_minimum[0] > -result.radius) ||
+	      !(result.image_maximum[0] < result.radius) ||
+	      !(result.image_minimum[1] > -result.radius) ||
+	      !(result.image_maximum[1] < result.radius)));
+	if (bad) {
+	    std::printf("FAIL: local root %s call/available/certified="
+		"%d/%d/%d expected=1/%d/%d attempts=%zu radius=%.17g "
+		"correction/contraction=%.17g/%.17g image=[%.17g %.17g]x"
+		"[%.17g %.17g]\n", name, called ? 1 : 0,
+		result.available, result.certified,
+		expected_available ? 1 : 0, expected_certified ? 1 : 0,
+		result.attempts, result.radius, result.correction_bound,
+		result.contraction_bound, result.image_minimum[0],
+		result.image_maximum[0], result.image_minimum[1],
+		result.image_maximum[1]);
+	    failures++;
+	} else if (result.certified) {
+	    certified++;
+	} else {
+	    rejected++;
+	}
+	maximum_attempts = std::max(maximum_attempts, result.attempts);
+	maximum_high_water = std::max(maximum_high_water,
+	    result.expansion_high_water);
+	maximum_radius = std::max(maximum_radius, (double)result.radius);
+    };
+
+    const int scale_exponents[] = {-100, 0, 100};
+    const double boundary_shift = std::ldexp(1.0, -42);
+    const fastf_t boundary_root[2] = {1.0, 0.5};
+    for (size_t scale_index = 0;
+	    scale_index < sizeof(scale_exponents) /
+	    sizeof(scale_exponents[0]); ++scale_index) {
+	const double scale = std::ldexp(1.0, scale_exponents[scale_index]);
+	fastf_t minimum[2][4] = {};
+	fastf_t maximum[2][4] = {};
+	for (int i = 0; i < 2; ++i) {
+	    for (int j = 0; j < 2; ++j) {
+		const size_t index = (size_t)i * 2 + j;
+		const double f = i - (1.0 + boundary_shift);
+		const double g = j - 0.5;
+		minimum[0][index] = maximum[0][index] =
+		    scale * (f + 0.25 * g);
+		minimum[1][index] = maximum[1][index] =
+		    scale * (-0.5 * f + g);
+	    }
+	}
+	char name[64];
+	std::snprintf(name, sizeof(name), "affine-boundary-%d",
+	    scale_exponents[scale_index]);
+	run(name, minimum[0], maximum[0], minimum[1], maximum[1], 2, 2,
+	    boundary_root, 1.0e-6, true, true);
+    }
+
+    {
+	const int u_order = 9;
+	const int v_order = 9;
+	fastf_t minimum[2][81] = {};
+	fastf_t maximum[2][81] = {};
+	for (int i = 0; i < u_order; ++i) {
+	    for (int j = 0; j < v_order; ++j) {
+		const size_t index = (size_t)i * v_order + j;
+		const double f = (double)i / (u_order - 1) -
+		    (1.0 + boundary_shift);
+		const double g = (double)j / (v_order - 1) - 0.5;
+		minimum[0][index] = maximum[0][index] = f + 0.25 * g;
+		minimum[1][index] = maximum[1][index] = -0.5 * f + g;
+	    }
+	}
+	run("high-order-affine", minimum[0], maximum[0],
+	    minimum[1], maximum[1], u_order, v_order, boundary_root,
+	    1.0e-6, true, true);
+    }
+
+    {
+	const int u_order = 16;
+	const int v_order = 8;
+	fastf_t minimum[2][128] = {};
+	fastf_t maximum[2][128] = {};
+	const double root_power = pow(1.0 + boundary_shift, 15.0);
+	for (int i = 0; i < u_order; ++i) {
+	    for (int j = 0; j < v_order; ++j) {
+		const size_t index = (size_t)i * v_order + j;
+		const double u = (double)i / (u_order - 1);
+		const double v = (double)j / (v_order - 1);
+		minimum[0][index] = maximum[0][index] =
+		    (i == u_order - 1 ? 1.0 : 0.0) - root_power +
+		    0.125 * (v - 0.5);
+		minimum[1][index] = maximum[1][index] =
+		    -0.25 * (u - (1.0 + boundary_shift)) + v - 0.5;
+	    }
+	}
+	run("degree-fifteen-boundary", minimum[0], maximum[0], minimum[1],
+	    maximum[1], u_order, v_order, boundary_root, 1.0e-6, true,
+	    true);
+    }
+
+    const int determinant_exponents[] = {-20, -40};
+    for (size_t exponent_index = 0;
+	    exponent_index < sizeof(determinant_exponents) /
+	    sizeof(determinant_exponents[0]); ++exponent_index) {
+	const double delta = std::ldexp(1.0,
+	    determinant_exponents[exponent_index]);
+	fastf_t minimum[2][4] = {};
+	fastf_t maximum[2][4] = {};
+	for (int i = 0; i < 2; ++i) {
+	    for (int j = 0; j < 2; ++j) {
+		const size_t index = (size_t)i * 2 + j;
+		const double u = i - (1.0 + boundary_shift);
+		const double v = j - 0.5;
+		minimum[0][index] = maximum[0][index] = u + v;
+		minimum[1][index] = maximum[1][index] =
+		    u + (1.0 + delta) * v;
+	    }
+	}
+	char name[64];
+	std::snprintf(name, sizeof(name), "near-singular-affine-%d",
+	    determinant_exponents[exponent_index]);
+	run(name, minimum[0], maximum[0], minimum[1], maximum[1], 2, 2,
+	    boundary_root, 1.0e-6, true, true);
+    }
+
+    const double near_root = 1.0 + std::ldexp(1.0, -42);
+    const double other_root = 1.0 - std::ldexp(1.0, -12);
+    const double quadratic[3] = {
+	other_root * near_root,
+	other_root * near_root - 0.5 * (other_root + near_root),
+	(1.0 - other_root) * (1.0 - near_root)
+    };
+    for (size_t scale_index = 0;
+	    scale_index < sizeof(scale_exponents) /
+	    sizeof(scale_exponents[0]); ++scale_index) {
+	const double scale = std::ldexp(1.0, scale_exponents[scale_index]);
+	fastf_t minimum[2][6] = {};
+	fastf_t maximum[2][6] = {};
+	for (int i = 0; i < 3; ++i) {
+	    for (int j = 0; j < 2; ++j) {
+		const size_t index = (size_t)i * 2 + j;
+		minimum[0][index] = maximum[0][index] =
+		    scale * quadratic[i];
+		minimum[1][index] = maximum[1][index] =
+		    scale * (j - 0.5);
+	    }
+	}
+	char name[64];
+	std::snprintf(name, sizeof(name), "nearby-boundary-pair-%d",
+	    scale_exponents[scale_index]);
+	run(name, minimum[0], maximum[0], minimum[1], maximum[1], 3, 2,
+	    boundary_root, 0.25 * (1.0 - other_root), true, true);
+    }
+
+    {
+	const double first_root = 1.0 - std::ldexp(1.0, -10);
+	const double second_root = 1.0 + std::ldexp(1.0, -11);
+	const double coefficients[3] = {
+	    first_root * second_root,
+	    first_root * second_root - 0.5 * (first_root + second_root),
+	    (1.0 - first_root) * (1.0 - second_root)
+	};
+	fastf_t minimum[2][6] = {};
+	fastf_t maximum[2][6] = {};
+	for (int i = 0; i < 3; ++i) {
+	    for (int j = 0; j < 2; ++j) {
+		const size_t index = (size_t)i * 2 + j;
+		minimum[0][index] = maximum[0][index] = coefficients[i];
+		minimum[1][index] = maximum[1][index] = j - 0.5;
+	    }
+	}
+	run("two-roots-in-box", minimum[0], maximum[0], minimum[1],
+	    maximum[1], 3, 2, boundary_root,
+	    2.0 * (second_root - first_root), true, false);
+    }
+
+    {
+	fastf_t minimum[2][6] = {};
+	fastf_t maximum[2][6] = {};
+	const double square[3] = {1.0, 0.0, 0.0};
+	for (int i = 0; i < 3; ++i) {
+	    for (int j = 0; j < 2; ++j) {
+		const size_t index = (size_t)i * 2 + j;
+		minimum[0][index] = maximum[0][index] = square[i];
+		minimum[1][index] = maximum[1][index] = j - 0.5;
+	    }
+	}
+	run("singular-boundary", minimum[0], maximum[0], minimum[1],
+	    maximum[1], 3, 2, boundary_root, 1.0e-4, false, false);
+    }
+
+    {
+	fastf_t minimum[2][4] = {};
+	fastf_t maximum[2][4] = {};
+	for (int i = 0; i < 2; ++i) {
+	    for (int j = 0; j < 2; ++j) {
+		const size_t index = (size_t)i * 2 + j;
+		minimum[0][index] = i - 1.25;
+		maximum[0][index] = i - 0.75;
+		minimum[1][index] = j - 0.75;
+		maximum[1][index] = j - 0.25;
+	    }
+	}
+	run("uncertain-affine", minimum[0], maximum[0], minimum[1],
+	    maximum[1], 2, 2, boundary_root, 1.0e-3, true, false);
+    }
+
+    fastf_t valid_minimum[4] = {-1.0, -1.0, 0.0, 0.0};
+    fastf_t valid_maximum[4] = {-1.0, -1.0, 0.0, 0.0};
+    fastf_t reversed_minimum[4] = {1.0, -1.0, 0.0, 0.0};
+    struct rt_brep_local_root_test_result invalid = {};
+    if (_rt_brep_local_root_test(reversed_minimum, valid_maximum,
+	    valid_minimum, valid_maximum, 2, 2, boundary_root, 1.0e-3,
+	    &invalid) ||
+	    _rt_brep_local_root_test(valid_minimum, valid_maximum,
+		valid_minimum, valid_maximum, 2, 2, boundary_root, -1.0,
+		&invalid)) {
+	std::printf("FAIL: local root invalid-input rejection\n");
+	failures++;
+    }
+
+    fastf_t tube_upper[2] = {0.0, 0.0};
+    if (!_rt_brep_local_root_tube_test(0.25, 0.5, 0.25, 0.751, 0.0,
+	    tube_upper) || !(tube_upper[0] > 0.75) ||
+	    !(tube_upper[1] > 0.5) ||
+	    _rt_brep_local_root_tube_test(0.25, 0.5, 0.25, 0.74, 0.0,
+		tube_upper) ||
+	    _rt_brep_local_root_tube_test(-0.25, 0.5, 0.25, 0.751, 0.0,
+		tube_upper)) {
+	std::printf("FAIL: local root tube containment controls\n");
+	failures++;
+    }
+
+    if (!failures)
+	std::printf("BREP local root solver: PASS cases=%zu certified=%zu "
+	    "rejected=%zu max-attempts=%zu radius=%.3g high-water=%zu\n",
+	    cases, certified, rejected, maximum_attempts, maximum_radius,
+	    maximum_high_water);
+    return failures;
+}
+
+
+static ON_Brep *
+weighted_bilinear_patch(double low_weight, double high_weight, double scale,
+    const ON_3dVector &translation)
+{
+    if (!(low_weight > 0.0) || !(high_weight > 0.0) ||
+	    !std::isfinite(low_weight) || !std::isfinite(high_weight) ||
+	    !(scale > 0.0) || !std::isfinite(scale) ||
+	    !translation.IsValid())
+	return NULL;
+    ON_BezierSurface bezier(3, true, 2, 2);
+    for (int i = 0; i < 2; ++i) {
+	for (int j = 0; j < 2; ++j) {
+	    const double weight = i ? high_weight : low_weight;
+	    const ON_3dPoint point(translation.x + scale * i,
+		translation.y + scale * j, translation.z);
+	    if (!bezier.SetCV(i, j, ON_4dPoint(weight * point.x,
+		    weight * point.y, weight * point.z, weight)))
+		return NULL;
+	}
+    }
+    ON_NurbsSurface nurbs;
+    if (!bezier.GetNurbForm(nurbs))
+	return NULL;
+    ON_Brep *brep = ON_Brep::New();
+    ON_BrepFace *face = brep ? brep->NewFace(nurbs) : NULL;
+    if (!face) {
+	delete brep;
+	return NULL;
+    }
+    face->m_bRev = false;
+    brep->Standardize();
+    brep->Compact();
+    return brep;
+}
+
+
+static int
+check_brep_weighted_local_root_solver()
+{
+    struct weighted_case {
+	const char *name;
+	double low_weight;
+	double high_weight;
+	double scale;
+	ON_3dVector translation;
+	bool reverse;
+    } cases[] = {
+	{"balanced", 1.0, 1.0, 1.0, ON_3dVector(0.0, 0.0, 0.0), false},
+	{"extreme-weight", std::ldexp(1.0, -10),
+	    std::ldexp(1.0, 10), 1.0,
+	    ON_3dVector(0.0, 0.0, 0.0), true},
+	{"extreme-weight-similarity", std::ldexp(1.0, -10),
+	    std::ldexp(1.0, 10), 1.0e4,
+	    ON_3dVector(1.0e6, -2.0e6, 3.0e6), false}
+    };
+    int failures = 0;
+    size_t certified = 0;
+    double maximum_image = 0.0;
+    size_t maximum_root_high_water = 0;
+    size_t maximum_model_high_water = 0;
+    for (size_t case_index = 0;
+	    case_index < sizeof(cases) / sizeof(cases[0]); ++case_index) {
+	const weighted_case &test = cases[case_index];
+	ON_Brep *brep = weighted_bilinear_patch(test.low_weight,
+	    test.high_weight, test.scale, test.translation);
+	struct rt_i *rtip = rt_dirbuild_inmem(NULL, 0, NULL, 0);
+	if (!brep || !rtip) {
+	    std::printf("FAIL: weighted local root %s construction\n",
+		test.name);
+	    delete brep;
+	    if (rtip)
+		rt_i_destroy(rtip);
+	    failures++;
+	    continue;
+	}
+	rtip->rti_tol.magic = BN_TOL_MAGIC;
+	rtip->rti_tol.dist = 0.0005 * test.scale;
+	rtip->rti_tol.dist_sq = rtip->rti_tol.dist * rtip->rti_tol.dist;
+	rtip->rti_tol.perp = 1.0e-6;
+	rtip->rti_tol.para = 1.0 - rtip->rti_tol.perp;
+	struct resource resource = {};
+	rt_init_resource(&resource, 0, rtip);
+	struct rt_brep_internal brep_internal = {};
+	brep_internal.magic = RT_BREP_INTERNAL_MAGIC;
+	brep_internal.brep = brep;
+	ON_3dPoint point = ON_3dPoint::UnsetPoint;
+	if (brep->m_F.Count() == 1 && brep->m_F[0].SurfaceOf())
+	    point = brep->m_F[0].SurfaceOf()->PointAt(1.0, 0.5);
+	fastf_t ray_origin[3] = {point.x, point.y,
+	    point.z + (test.reverse ? -test.scale : test.scale)};
+	fastf_t ray_direction[3] = {0.0, 0.0,
+	    test.reverse ? 1.0 : -1.0};
+	struct rt_db_internal intern;
+	RT_DB_INTERNAL_INIT(&intern);
+	intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
+	intern.idb_type = ID_BREP;
+	intern.idb_meth = &OBJ[ID_BREP];
+	intern.idb_ptr = &brep_internal;
+	struct soltab *stp = prep_solid(rtip, &intern, ID_BREP);
+	struct rt_brep_local_root_test_result result = {};
+	bool called = false;
+	if (stp && point.IsValid()) {
+	    fastf_t uv[2] = {1.0, 0.5};
+	    called = _rt_brep_surface_local_root_test(stp,
+		ray_origin, ray_direction, 0, 0, uv, 1.0e-6, &result);
+	}
+	const bool extension = result.normalized_root[0] + result.radius > 1.0;
+	const bool bad = !stp || !called || !result.available ||
+	    !result.certified || !result.model_image_available ||
+	    !extension || !(result.radius > 0.0) ||
+	    !(result.weight_minimum > 0.0) ||
+	    !(result.weight_maximum >= result.weight_minimum) ||
+	    !std::isfinite(result.model_image_displacement);
+	if (bad) {
+	    std::printf("FAIL: weighted local root %s "
+		"prep/call/root/image/extension=%d/%d/%d/%d/%d "
+		"radius=%.17g weight=%.17g/%.17g displacement=%.17g\n",
+		test.name, stp != NULL, called ? 1 : 0, result.certified,
+		result.model_image_available, extension ? 1 : 0,
+		result.radius, result.weight_minimum, result.weight_maximum,
+		result.model_image_displacement);
+	    failures++;
+	} else {
+	    certified++;
+	    maximum_image = std::max(maximum_image,
+		(double)result.model_image_displacement);
+	    maximum_root_high_water = std::max(maximum_root_high_water,
+		result.expansion_high_water);
+	    maximum_model_high_water = std::max(maximum_model_high_water,
+		result.model_expansion_high_water);
+	}
+	if (stp)
+	    free_solid(stp);
+	rt_clean_resource_basic(rtip, &resource);
+	BU_PTBL_SET(&rtip->rti_resources, 0, NULL);
+	rt_i_destroy(rtip);
+    }
+    if (!failures)
+	std::printf("BREP weighted local root: PASS cases=%zu certified=%zu "
+	    "root/model-high-water=%zu/%zu max-image=%.3g\n",
+	    sizeof(cases) / sizeof(cases[0]), certified,
+	    maximum_root_high_water, maximum_model_high_water, maximum_image);
+    return failures;
+}
+
+
+static int
 check_brep_fold_interval_classifier()
 {
     struct interval_case {
@@ -5813,6 +7108,409 @@ check_brep_fold_interval_classifier()
     if (!failures)
 	std::printf("BREP fold interval classifier: PASS cases=%zu "
 	    "classes=resolved/subminimum/ambiguous/contact\n", checks);
+    return failures;
+}
+
+
+static int
+check_brep_trim_interval_solver()
+{
+    int failures = 0;
+    size_t cases = 0;
+    size_t enclosures = 0;
+    size_t rejected = 0;
+
+    const auto set_cv = [](struct rt_brep_trim_interval_test_span &span,
+	    int index, double x, double y, double weight) {
+	span.control[index][0] = x;
+	span.control[index][1] = y;
+	span.control[index][2] = weight;
+    };
+    const auto set_line = [&](struct rt_brep_trim_interval_test_span &span,
+	    double domain_minimum, double domain_maximum, double x0,
+	    double y0, double x1, double y1) {
+	span = {};
+	span.order = 2;
+	span.domain_minimum = domain_minimum;
+	span.domain_maximum = domain_maximum;
+	set_cv(span, 0, x0, y0, 1.0);
+	set_cv(span, 1, x1, y1, 1.0);
+    };
+    const auto run = [&](const char *name,
+	    const struct rt_brep_trim_interval_test_span *spans,
+	    size_t span_count, size_t span_begin, size_t cell_span_count,
+	    const fastf_t domain[2], bool expected_call,
+	    bool expected_available,
+	    struct rt_brep_trim_interval_test_result &result) {
+	result = {};
+	cases++;
+	const bool called = _rt_brep_trim_interval_test(spans, span_count,
+	    span_begin, cell_span_count, domain, &result);
+	if (called != expected_call ||
+		(called && result.available !=
+		    (expected_available ? 1 : 0))) {
+	    std::printf("FAIL: trim interval %s call/available=%d/%d "
+		"expected=%d/%d\n", name, called ? 1 : 0,
+		result.available, expected_call ? 1 : 0,
+		expected_available ? 1 : 0);
+	    failures++;
+	    return false;
+	}
+	if (called && result.available)
+	    enclosures++;
+	else if (called)
+	    rejected++;
+	return true;
+    };
+    const auto enclosed = [](double value, double minimum,
+	    double maximum) {
+	const double scale = std::max(1.0, fabs(value));
+	const double allowance = 128.0 * DBL_EPSILON * scale;
+	return value >= minimum - allowance && value <= maximum + allowance;
+    };
+    const auto evaluate = [](const struct rt_brep_trim_interval_test_span &s,
+	    double parameter, double value[2], double derivative[2]) {
+	double homogeneous[RT_BREP_TRIM_INTERVAL_TEST_MAX_ORDER][3] = {};
+	double difference[RT_BREP_TRIM_INTERVAL_TEST_MAX_ORDER][3] = {};
+	const double normalized = (parameter - s.domain_minimum) /
+	    (s.domain_maximum - s.domain_minimum);
+	for (int i = 0; i < s.order; ++i) {
+	    const double weight = s.control[i][2];
+	    homogeneous[i][0] = s.control[i][0] * weight;
+	    homogeneous[i][1] = s.control[i][1] * weight;
+	    homogeneous[i][2] = weight;
+	}
+	for (int i = 0; i < s.order - 1; ++i) {
+	    for (int component = 0; component < 3; ++component) {
+		difference[i][component] = (s.order - 1) *
+		    (homogeneous[i + 1][component] -
+		    homogeneous[i][component]);
+	    }
+	}
+	for (int level = s.order - 1; level > 0; --level) {
+	    for (int i = 0; i < level; ++i) {
+		for (int component = 0; component < 3; ++component) {
+		    homogeneous[i][component] =
+			(1.0 - normalized) * homogeneous[i][component] +
+			normalized * homogeneous[i + 1][component];
+		}
+	    }
+	}
+	for (int level = s.order - 2; level > 0; --level) {
+	    for (int i = 0; i < level; ++i) {
+		for (int component = 0; component < 3; ++component) {
+		    difference[i][component] =
+			(1.0 - normalized) * difference[i][component] +
+			normalized * difference[i + 1][component];
+		}
+	    }
+	}
+	if (!(homogeneous[0][2] > 0.0))
+	    return false;
+	const double weight_squared = homogeneous[0][2] *
+	    homogeneous[0][2];
+	for (int direction = 0; direction < 2; ++direction) {
+	    value[direction] = homogeneous[0][direction] /
+		homogeneous[0][2];
+	    derivative[direction] =
+		(difference[0][direction] * homogeneous[0][2] -
+		 homogeneous[0][direction] * difference[0][2]) /
+		weight_squared;
+	}
+	return true;
+    };
+
+    struct rt_brep_trim_interval_test_span rational[1] = {};
+    rational[0].order = 3;
+    rational[0].domain_minimum = 0.0;
+    rational[0].domain_maximum = 1.0;
+    set_cv(rational[0], 0, 0.0, 0.0, 1.0);
+    set_cv(rational[0], 1, 0.5, 1.0, 2.0);
+    set_cv(rational[0], 2, 1.0, 0.0, 1.0);
+    const fastf_t restricted_domain[2] = {0.1, 0.3};
+    struct rt_brep_trim_interval_test_result rational_result = {};
+    if (run("positive-rational", rational, 1, 0, 1,
+	    restricted_domain, true, true, rational_result)) {
+	if (!(rational_result.derivative_minimum[0] > 0.0) ||
+		!(rational_result.derivative_minimum[1] > 0.0)) {
+	    std::printf("FAIL: trim interval positive rational signs\n");
+	    failures++;
+	}
+	for (size_t sample = 0; sample <= 64; ++sample) {
+	    const double parameter = restricted_domain[0] +
+		(restricted_domain[1] - restricted_domain[0]) * sample / 64.0;
+	    double value[2];
+	    double derivative[2];
+	    if (!evaluate(rational[0], parameter, value, derivative)) {
+		std::printf("FAIL: trim interval rational evaluation\n");
+		failures++;
+		break;
+	    }
+	    const double local_scale =
+		(restricted_domain[1] - restricted_domain[0]) /
+		(rational[0].domain_maximum - rational[0].domain_minimum);
+	    for (int direction = 0; direction < 2; ++direction) {
+		if (!enclosed(value[direction],
+			rational_result.uv_minimum[direction],
+			rational_result.uv_maximum[direction]) ||
+			!enclosed(local_scale * derivative[direction],
+			rational_result.derivative_minimum[direction],
+			rational_result.derivative_maximum[direction])) {
+		    std::printf("FAIL: trim interval rational sample=%zu "
+			"direction=%d value=%.17g in=[%.17g %.17g] "
+			"derivative=%.17g in=[%.17g %.17g]\n", sample,
+			direction, value[direction],
+			rational_result.uv_minimum[direction],
+			rational_result.uv_maximum[direction],
+			local_scale * derivative[direction],
+			rational_result.derivative_minimum[direction],
+			rational_result.derivative_maximum[direction]);
+		    failures++;
+		    sample = 65;
+		    break;
+		}
+	    }
+	}
+    }
+
+    struct rt_brep_trim_interval_test_span joined[2] = {};
+    set_line(joined[0], 0.0, 0.5, 0.0, 0.0, 0.5, 0.5);
+    set_line(joined[1], 0.5, 1.0, 0.5, 0.5, 1.0, 0.0);
+    const fastf_t joined_domain[2] = {0.25, 0.75};
+    struct rt_brep_trim_interval_test_result joined_result = {};
+    if (run("complete-multispan", joined, 2, 0, 2, joined_domain,
+	    true, true, joined_result) &&
+	    (!enclosed(0.25, joined_result.uv_minimum[0],
+		joined_result.uv_maximum[0]) ||
+	    !enclosed(0.75, joined_result.uv_minimum[0],
+		joined_result.uv_maximum[0]) ||
+	    !enclosed(0.25, joined_result.uv_minimum[1],
+		joined_result.uv_maximum[1]) ||
+	    !enclosed(0.5, joined_result.uv_minimum[1],
+		joined_result.uv_maximum[1]) ||
+	    !(joined_result.derivative_minimum[0] > 0.0) ||
+	    !(joined_result.derivative_minimum[1] < 0.0) ||
+	    !(joined_result.derivative_maximum[1] > 0.0))) {
+	std::printf("FAIL: trim interval multispan hull/signs\n");
+	failures++;
+    }
+    struct rt_brep_trim_interval_test_span unordered[2] = {
+	joined[1], joined[0]
+    };
+    struct rt_brep_trim_interval_test_result result = {};
+    run("unordered-complete-multispan", unordered, 2, 0, 2,
+	joined_domain, true, true, result);
+
+    struct rt_brep_trim_interval_test_span reversed[1] = {};
+    set_line(reversed[0], 0.0, 1.0, 1.0, 0.0, 0.0, 1.0);
+    const fastf_t full_domain[2] = {0.0, 1.0};
+    struct rt_brep_trim_interval_test_result reversed_result = {};
+    if (run("reversed-direction", reversed, 1, 0, 1, full_domain,
+	    true, true, reversed_result) &&
+	    (!(reversed_result.derivative_maximum[0] < 0.0) ||
+	    !(reversed_result.derivative_minimum[1] > 0.0))) {
+	std::printf("FAIL: trim interval reversed derivative signs\n");
+	failures++;
+    }
+
+    const fastf_t boundary_domain[2] = {0.25, 0.5};
+    run("exact-span-boundary", joined, 2, 0, 2, boundary_domain,
+	true, true, result);
+    run("missing-provenance", joined, 2, 2, 1, joined_domain,
+	true, false, result);
+    run("zero-span-provenance", joined, 2, 0, 0, joined_domain,
+	true, false, result);
+
+    struct rt_brep_trim_interval_test_span incomplete[2] = {};
+    set_line(incomplete[0], 0.0, 0.4, 0.0, 0.0, 0.4, 0.4);
+    set_line(incomplete[1], 0.6, 1.0, 0.6, 0.4, 1.0, 0.0);
+    const fastf_t incomplete_domain[2] = {0.3, 0.7};
+    run("incomplete-coverage", incomplete, 2, 0, 2,
+	incomplete_domain, true, false, result);
+
+    struct rt_brep_trim_interval_test_span overlap[3] = {};
+    set_line(overlap[0], 0.0, 0.35, 0.0, 0.0, 0.35, 0.0);
+    set_line(overlap[1], 0.0, 0.35, 0.0, 0.1, 0.35, 0.1);
+    set_line(overlap[2], 0.65, 1.0, 0.65, 0.0, 1.0, 0.0);
+    run("overlap-does-not-mask-gap", overlap, 3, 0, 3, full_domain,
+	true, false, result);
+
+    struct rt_brep_trim_interval_test_span bad_weight[1] = {rational[0]};
+    bad_weight[0].control[1][2] = 0.0;
+    run("zero-weight", bad_weight, 1, 0, 1, full_domain,
+	true, false, result);
+    bad_weight[0] = rational[0];
+    bad_weight[0].control[1][2] = -1.0;
+    run("negative-weight", bad_weight, 1, 0, 1, full_domain,
+	true, false, result);
+
+    struct rt_brep_trim_interval_test_result turning_result = {};
+    if (run("turning-derivative", rational, 1, 0, 1, full_domain,
+	    true, true, turning_result) &&
+	    (turning_result.derivative_minimum[1] > 0.0 ||
+	    turning_result.derivative_maximum[1] < 0.0)) {
+	std::printf("FAIL: trim interval turning derivative excludes zero\n");
+	failures++;
+    }
+
+    struct rt_brep_trim_interval_test_span nonfinite[1] = {rational[0]};
+    nonfinite[0].control[0][0] = INFINITY;
+    run("nonfinite-control", nonfinite, 1, 0, 1, full_domain,
+	false, false, result);
+    fastf_t nonfinite_domain[2] = {NAN, 1.0};
+    run("nonfinite-domain", rational, 1, 0, 1, nonfinite_domain,
+	false, false, result);
+
+    if (!failures)
+	std::printf("BREP rational trim interval corpus: PASS cases=%zu "
+	    "enclosures=%zu rejected=%zu\n", cases, enclosures, rejected);
+    return failures;
+}
+
+
+static int
+check_brep_source_union_solver()
+{
+    const fastf_t coefficient_error[2] = {0.0, 0.0};
+    int failures = 0;
+    size_t systems = 0;
+    size_t certified = 0;
+    size_t rejected = 0;
+
+    const auto set_box = [](struct rt_brep_source_union_test_box &box,
+	    double u_minimum, double u_maximum, double v_minimum,
+	    double v_maximum, double t_minimum, double t_maximum, int role) {
+	box.uv_minimum[0] = u_minimum;
+	box.uv_maximum[0] = u_maximum;
+	box.uv_minimum[1] = v_minimum;
+	box.uv_maximum[1] = v_maximum;
+	box.t_minimum = t_minimum;
+	box.t_maximum = t_maximum;
+	box.role = role;
+    };
+    const auto run_case = [&](const char *name,
+	    const fastf_t *first_coefficients,
+	    const fastf_t *second_coefficients, int order,
+	    const struct rt_brep_source_union_test_box *boxes,
+	    size_t box_count, const fastf_t root[2], size_t expected_eligible,
+	    size_t expected_component, bool expected_complete,
+	    bool expected_attempted, bool expected_certified) {
+	struct rt_brep_source_union_test_result result = {};
+	systems++;
+	if (!_rt_brep_source_union_test(first_coefficients,
+		second_coefficients, order, order, coefficient_error, boxes,
+		box_count, root, &result) ||
+		result.eligible_boxes != expected_eligible ||
+		result.root_boxes != 1 ||
+		result.component_boxes != expected_component ||
+		result.component_complete != (expected_complete ? 1 : 0) ||
+		result.krawczyk_attempted != (expected_attempted ? 1 : 0) ||
+		result.certified != (expected_certified ? 1 : 0)) {
+	    std::printf("FAIL: source-union solver %s "
+		"eligible/root/component=%zu/%zu/%zu expected=%zu/1/%zu "
+		"complete/attempted/certified=%d/%d/%d expected=%d/%d/%d\n",
+		name, result.eligible_boxes, result.root_boxes,
+		result.component_boxes, expected_eligible, expected_component,
+		result.component_complete, result.krawczyk_attempted,
+		result.certified, expected_complete ? 1 : 0,
+		expected_attempted ? 1 : 0, expected_certified ? 1 : 0);
+	    failures++;
+	    return;
+	}
+	if (result.certified)
+	    certified++;
+	else
+	    rejected++;
+    };
+
+    fastf_t higher_order[2][16] = {};
+    const double higher_u[4] = {
+	-17.0 / 32.0, -13.0 / 96.0, 13.0 / 96.0, 17.0 / 32.0
+    };
+    const double linear_v[4] = {-0.5, -1.0 / 6.0, 1.0 / 6.0, 0.5};
+    for (int i = 0; i < 4; ++i) {
+	for (int j = 0; j < 4; ++j) {
+	    const size_t index = (size_t)i * 4 + j;
+	    higher_order[0][index] = higher_u[i];
+	    higher_order[1][index] = linear_v[j];
+	}
+    }
+    const fastf_t centered_root[2] = {0.5, 0.5};
+    struct rt_brep_source_union_test_box connected[2] = {};
+    set_box(connected[0], 0.46875, 0.53125, 0.46875, 0.53125,
+	1.0, 1.125, RT_BREP_SOURCE_UNION_TEST_ROOT);
+    set_box(connected[1], 0.53125, 0.5625, 0.46875, 0.53125,
+	1.0625, 1.1875, RT_BREP_SOURCE_UNION_TEST_CANDIDATE);
+    run_case("higher-order-unique", higher_order[0], higher_order[1], 4,
+	connected, 2, centered_root, 2, 2, true, true, true);
+
+    struct rt_brep_source_union_test_box uv_disconnected[2] = {
+	connected[0], connected[1]
+    };
+    uv_disconnected[1].uv_minimum[0] = 0.625;
+    uv_disconnected[1].uv_maximum[0] = 0.6875;
+    run_case("uv-disconnected", higher_order[0], higher_order[1], 4,
+	uv_disconnected, 2, centered_root, 2, 1, false, false, false);
+
+    struct rt_brep_source_union_test_box t_disconnected[2] = {
+	connected[0], connected[1]
+    };
+    t_disconnected[1].t_minimum = 1.25;
+    t_disconnected[1].t_maximum = 1.375;
+    run_case("t-disconnected", higher_order[0], higher_order[1], 4,
+	t_disconnected, 2, centered_root, 2, 1, false, false, false);
+
+    fastf_t multiple_root[2][9] = {};
+    const double multiple_u[3] = {15.0 / 64.0, -17.0 / 64.0,
+	15.0 / 64.0};
+    const double linear_quadratic_v[3] = {-0.5, 0.0, 0.5};
+    for (int i = 0; i < 3; ++i) {
+	for (int j = 0; j < 3; ++j) {
+	    const size_t index = (size_t)i * 3 + j;
+	    multiple_root[0][index] = multiple_u[i];
+	    multiple_root[1][index] = linear_quadratic_v[j];
+	}
+    }
+    const fastf_t first_multiple_root[2] = {0.375, 0.5};
+    struct rt_brep_source_union_test_box multiple_boxes[2] = {};
+    set_box(multiple_boxes[0], 0.3125, 0.4375, 0.4375, 0.5625,
+	1.0, 1.125, RT_BREP_SOURCE_UNION_TEST_ROOT);
+    set_box(multiple_boxes[1], 0.4375, 0.6875, 0.4375, 0.5625,
+	1.0625, 1.1875, RT_BREP_SOURCE_UNION_TEST_CANDIDATE);
+    run_case("multiple-root-hull", multiple_root[0], multiple_root[1], 3,
+	multiple_boxes, 2, first_multiple_root, 2, 2, true, true, false);
+
+    fastf_t singular[2][9] = {};
+    const double singular_u[3] = {0.25, -0.25, 0.25};
+    for (int i = 0; i < 3; ++i) {
+	for (int j = 0; j < 3; ++j) {
+	    const size_t index = (size_t)i * 3 + j;
+	    singular[0][index] = singular_u[i];
+	    singular[1][index] = linear_quadratic_v[j];
+	}
+    }
+    struct rt_brep_source_union_test_box singular_boxes[3] = {};
+    set_box(singular_boxes[0], 0.46875, 0.53125, 0.46875, 0.53125,
+	1.0, 1.125, RT_BREP_SOURCE_UNION_TEST_ROOT);
+    set_box(singular_boxes[1], 0.4375, 0.46875, 0.46875, 0.53125,
+	1.0625, 1.1875, RT_BREP_SOURCE_UNION_TEST_CANDIDATE);
+    set_box(singular_boxes[2], 0.53125, 0.5625, 0.46875, 0.53125,
+	1.0625, 1.1875, RT_BREP_SOURCE_UNION_TEST_CANDIDATE);
+    run_case("singular-root", singular[0], singular[1], 3,
+	singular_boxes, 3, centered_root, 3, 3, true, true, false);
+
+    const fastf_t invalid_root[2] = {0.75, 0.5};
+    struct rt_brep_source_union_test_result invalid_result = {};
+    if (_rt_brep_source_union_test(higher_order[0], higher_order[1], 4, 4,
+	    coefficient_error, connected, 2, invalid_root, &invalid_result)) {
+	std::printf("FAIL: source-union solver invalid root-box provenance\n");
+	failures++;
+    }
+
+    if (!failures)
+	std::printf("BREP source-union solver corpus: PASS systems=%zu "
+	    "certified/rejected=%zu/%zu invalid=1\n", systems, certified,
+	    rejected);
     return failures;
 }
 
@@ -7841,6 +9539,141 @@ cobb_reparameterize_edge_trims(ON_Brep *brep, int edge_index,
 
 
 static bool
+cobb_curve_edge_trim(ON_Brep *brep, int edge_index, int face_index,
+    double target_lift_shift, double &maximum_lift_shift)
+{
+    maximum_lift_shift = INFINITY;
+    if (!brep || edge_index < 0 || edge_index >= brep->m_E.Count() ||
+	face_index < 0 || face_index >= brep->m_F.Count() ||
+	!(target_lift_shift > 0.0) || !std::isfinite(target_lift_shift))
+	return false;
+    const ON_BrepEdge &edge = brep->m_E[edge_index];
+    if (edge.m_ti.Count() != 2)
+	return false;
+    int trim_index = -1;
+    for (int side = 0; side < edge.m_ti.Count(); ++side) {
+	const int candidate = edge.m_ti[side];
+	if (candidate >= 0 && candidate < brep->m_T.Count() &&
+		brep->m_T[candidate].FaceIndexOf() == face_index) {
+	    trim_index = candidate;
+	    break;
+	}
+    }
+    if (trim_index < 0)
+	return false;
+    ON_BrepTrim &trim = brep->m_T[trim_index];
+    const ON_Curve *trim_curve = trim.TrimCurveOf();
+    const ON_Surface *surface = trim.Face() ? trim.Face()->SurfaceOf() : NULL;
+    if (!trim_curve || !surface || !trim_curve->Domain().IsIncreasing())
+	return false;
+    const ON_Curve *original_curve = trim_curve->DuplicateCurve();
+    if (!original_curve)
+	return false;
+    const ON_Interval domain = original_curve->Domain();
+    const ON_3dPoint start = original_curve->PointAt(domain.Min());
+    const ON_3dPoint end = original_curve->PointAt(domain.Max());
+    const ON_2dPoint midpoint(0.5 * (start.x + end.x),
+	0.5 * (start.y + end.y));
+    ON_2dVector inward(-(end.y - start.y), end.x - start.x);
+    const ON_2dPoint face_center(surface->Domain(0).Mid(),
+	surface->Domain(1).Mid());
+    if (!start.IsValid() || !end.IsValid() || !inward.Unitize()) {
+	delete original_curve;
+	return false;
+    }
+    if (inward * (face_center - midpoint) < 0.0)
+	inward.Reverse();
+
+    ON_3dPoint surface_point;
+    ON_3dVector surface_u;
+    ON_3dVector surface_v;
+    if (!surface->Ev1Der(midpoint.x, midpoint.y, surface_point,
+	    surface_u, surface_v)) {
+	delete original_curve;
+	return false;
+    }
+    const ON_3dVector lift_derivative =
+	inward.x * surface_u + inward.y * surface_v;
+    const double lift_rate = lift_derivative.Length();
+    if (!(lift_rate > DBL_MIN) || !std::isfinite(lift_rate)) {
+	delete original_curve;
+	return false;
+    }
+    /* A quadratic Bezier reaches half its middle-control displacement at
+     * t=1/2.  Use the surface directional derivative only to size a subtle
+     * perturbation; the independently sampled 3D lift below is the fixture's
+     * measured fact. */
+    const double control_displacement =
+	2.0 * target_lift_shift / lift_rate;
+    const ON_3dPoint control(midpoint.x + control_displacement * inward.x,
+	midpoint.y + control_displacement * inward.y, 0.0);
+    ON_NurbsCurve *curved = ON_NurbsCurve::New(2, false, 3, 3);
+    const bool controls_set = curved && curved->SetCV(0, start) &&
+	curved->SetCV(1, control) && curved->SetCV(2, end);
+    if (!controls_set || !curved->MakeClampedUniformKnotVector() ||
+	    !curved->SetDomain(domain.Min(), domain.Max())) {
+	delete original_curve;
+	delete curved;
+	return false;
+    }
+
+    maximum_lift_shift = 0.0;
+    double maximum_chord_error = 0.0;
+    for (int sample = 0; sample <= 128; ++sample) {
+	const double fraction = (double)sample / 128.0;
+	const double parameter = domain.ParameterAt(fraction);
+	const ON_3dPoint old_uv = original_curve->PointAt(parameter);
+	const ON_3dPoint new_uv = curved->PointAt(parameter);
+	const ON_2dPoint chord((1.0 - fraction) * start.x + fraction * end.x,
+	    (1.0 - fraction) * start.y + fraction * end.y);
+	const ON_3dPoint old_lift = surface->PointAt(old_uv.x, old_uv.y);
+	const ON_3dPoint new_lift = surface->PointAt(new_uv.x, new_uv.y);
+	if (!old_uv.IsValid() || !new_uv.IsValid() || !old_lift.IsValid() ||
+		!new_lift.IsValid()) {
+	    delete original_curve;
+	    delete curved;
+	    return false;
+	}
+	maximum_chord_error = std::max(maximum_chord_error,
+	    old_uv.DistanceTo(ON_3dPoint(chord.x, chord.y, 0.0)));
+	maximum_lift_shift = std::max(maximum_lift_shift,
+	    old_lift.DistanceTo(new_lift));
+    }
+    const double uv_scale = std::max(1.0,
+	std::max(fabs(start.x), std::max(fabs(start.y),
+	std::max(fabs(end.x), fabs(end.y)))));
+    const double uv_roundoff = 4096.0 * DBL_EPSILON * uv_scale;
+    if (maximum_chord_error > uv_roundoff ||
+	    !(maximum_lift_shift > 0.01 * target_lift_shift) ||
+	    maximum_lift_shift > 2.0 * target_lift_shift) {
+	delete original_curve;
+	delete curved;
+	return false;
+    }
+
+    const int curve_index = brep->AddTrimCurve(curved);
+    if (curve_index < 0 || !brep->SetTrimCurve(trim, curve_index)) {
+	delete original_curve;
+	if (curve_index < 0)
+	    delete curved;
+	return false;
+    }
+    brep->SetTrimIsoFlags(trim);
+    brep->DestroyRuntimeCache(true);
+    const ON_3dPoint installed_start = trim.PointAt(domain.Min());
+    const ON_3dPoint installed_end = trim.PointAt(domain.Max());
+    delete original_curve;
+    return installed_start.IsValid() && installed_end.IsValid() &&
+	installed_start.DistanceTo(start) <= uv_roundoff &&
+	installed_end.DistanceTo(end) <= uv_roundoff &&
+	trim.m_iso != ON_Surface::W_iso &&
+	trim.m_iso != ON_Surface::E_iso &&
+	trim.m_iso != ON_Surface::S_iso &&
+	trim.m_iso != ON_Surface::N_iso && brep->IsValid();
+}
+
+
+static bool
 cobb_make_ambiguous_edge_trim(ON_Brep *brep, int edge_index)
 {
     if (!brep || edge_index < 0 || edge_index >= brep->m_E.Count())
@@ -7961,13 +9794,13 @@ check_cobb_classifier_invariance(const struct bn_tol *tol)
 	    ON_3dVector(1.0e6, -2.0e6, 3.0e6), AXIS_ANGLE_ROTATION,
 	    ON_3dVector(2.0, 0.25, -1.0), 2.017, false}
     };
-    double reference_existing[2] = {0.0, 0.0};
-    double reference_continuation[2] = {0.0, 0.0};
-    size_t reference_local_root_count[3][2] = {};
-    size_t reference_local_cluster_count[3][2] = {};
-    int reference_local_cluster_class[3][2]
+    double reference_existing[4][2] = {};
+    double reference_continuation[4][2] = {};
+    size_t reference_local_root_count[4][2] = {};
+    size_t reference_local_cluster_count[4][2] = {};
+    int reference_local_cluster_class[4][2]
 	[RT_BREP_TRACE_MAX_LOCAL_CLUSTERS] = {};
-    double reference_local_root_distances[3][2]
+    double reference_local_root_distances[4][2]
 	[RT_BREP_TRACE_MAX_LOCAL_ROOTS] = {};
     int failures = 0;
     size_t maximum_fixed_leaves = 0;
@@ -7976,6 +9809,11 @@ check_cobb_classifier_invariance(const struct bn_tol *tol)
     size_t maximum_correspondence_depth = 0;
     size_t maximum_discrepancy_cells = 0;
     size_t maximum_discrepancy_depth = 0;
+    size_t contact_similarity_cases = 0;
+    size_t oblique_similarity_cases = 0;
+    size_t source_union_similarity_cases = 0;
+    size_t minimum_contact_boxes = RT_BREP_TRACE_MAX_SURFACE_BOXES;
+    size_t maximum_contact_boxes = 0;
     double maximum_discrepancy_width_ratio = 0.0;
     double maximum_parameter_locus_error = 0.0;
     double minimum_parameter_midpoint_shift = DBL_MAX;
@@ -8050,7 +9888,7 @@ check_cobb_classifier_invariance(const struct bn_tol *tol)
 	    std::printf("FAIL: Cobb %s BREP prep\n", test.name);
 	    failures++;
 	} else {
-	    const double clearance_ratios[] = {0.9, 0.0, -0.9};
+	    const double clearance_ratios[] = {0.9, 1.0, 0.0, -0.9};
 	    for (size_t state_index = 0; state_index <
 		    sizeof(clearance_ratios) / sizeof(clearance_ratios[0]);
 		    ++state_index) {
@@ -8058,6 +9896,7 @@ check_cobb_classifier_invariance(const struct bn_tol *tol)
 		    tol->dist;
 		const int expected_state = clearance > 0.0 ? 1 :
 		    (clearance < 0.0 ? -1 : 0);
+		const bool expected_contact_pair = state_index == 1;
 		for (int reverse = 0; reverse <= 1; ++reverse) {
 		    const sampled_ray base_ray = cobb_seam_grazing_ray(frame,
 			origin, radius, clearance, reverse != 0);
@@ -8110,7 +9949,8 @@ check_cobb_classifier_invariance(const struct bn_tol *tol)
 			    edge->discrepancy_lower_bound) /
 			    (tol->dist * test.scale));
 		    }
-		    const size_t expected_closures = expected_state == 1 ? 1 : 0;
+		    const size_t expected_closures =
+			expected_state == 1 && !expected_contact_pair ? 1 : 0;
 		    const int expected_direction = reverse ?
 			RT_BREP_TRACE_ENTERING : RT_BREP_TRACE_LEAVING;
 		    const double coordinate_scale = std::max(radius * test.scale,
@@ -8252,12 +10092,37 @@ check_cobb_classifier_invariance(const struct bn_tol *tol)
 			normalized_limit ||
 			fabs(edge->ray_dist / test.scale - 2.0 * radius) >
 			normalized_limit ||
-			trace.closure_candidates != expected_closures;
-		    if (expected_closures) {
+			(!expected_contact_pair &&
+			 trace.closure_candidates != expected_closures);
+		    if (expected_contact_pair) {
+			contact_similarity_cases++;
+			minimum_contact_boxes = std::min(minimum_contact_boxes,
+			    trace.physical_event_seam_contact_boxes);
+			maximum_contact_boxes = std::max(maximum_contact_boxes,
+			    trace.physical_event_seam_contact_boxes);
+			const double transformed_radius = radius * test.scale;
+			const double transformed_clearance =
+			    tol->dist * test.scale;
+			const double half_chord = sqrt(2.0 * transformed_radius *
+			    transformed_clearance - transformed_clearance *
+			    transformed_clearance);
+			partition_result contact_oracle;
+			contact_oracle.partitions = 1;
+			contact_oracle.intervals[0].in_dist =
+			    2.0 * transformed_radius - half_chord;
+			contact_oracle.intervals[0].out_dist =
+			    2.0 * transformed_radius + half_chord;
+			bad = bad || trace_hits != 2 ||
+			    trace.final_segments != 1 ||
+			    production_result.segments != 1 ||
+			    !brep_trace_seam_event_stream_valid(trace, edge,
+				variant, contact_oracle, case_tol.dist,
+				test.reparameterize);
+		    } else if (expected_closures) {
 			if (case_index == 0) {
-			    reference_existing[reverse] =
+			    reference_existing[state_index][reverse] =
 				trace.closure_existing_dist;
-			    reference_continuation[reverse] =
+			    reference_continuation[state_index][reverse] =
 				trace.continuation_dist;
 			}
 			bad = bad || trace.closure_edge_index != frame.edge_index ||
@@ -8265,7 +10130,8 @@ check_cobb_classifier_invariance(const struct bn_tol *tol)
 			    fabs(trace.closure_edge_dist / test.scale -
 			    2.0 * radius) > normalized_limit ||
 			    fabs(trace.closure_existing_dist / test.scale -
-			    reference_existing[reverse]) > normalized_root_limit ||
+			    reference_existing[state_index][reverse]) >
+				normalized_root_limit ||
 			    (reverse ?
 			    trace.closure_edge_dist >= trace.closure_existing_dist :
 			    trace.closure_edge_dist <= trace.closure_existing_dist);
@@ -8285,7 +10151,7 @@ check_cobb_classifier_invariance(const struct bn_tol *tol)
 			    normalized_root_limit * test.scale ||
 			    trace.continuation_face_index < 0 ||
 			    fabs(trace.continuation_dist / test.scale -
-			    reference_continuation[reverse]) >
+			    reference_continuation[state_index][reverse]) >
 			    normalized_root_limit ||
 			    (reverse ? trace.continuation_dist >=
 			    trace.closure_edge_dist : trace.continuation_dist <=
@@ -8301,6 +10167,10 @@ check_cobb_classifier_invariance(const struct bn_tol *tol)
 			    normalized_root_limit * test.scale ||
 			    trace.closure_shadow_in_dist >=
 			    trace.closure_shadow_out_dist;
+			bad = bad || trace.physical_event_seam_contact_pairs ||
+			    trace.physical_event_seam_contact_boxes ||
+			    trace.physical_event_seam_contact_roots ||
+			    trace.physical_event_seam_contact_miss_roots;
 		    } else {
 			bad = bad || trace.continuation_attempts != 0 ||
 			    trace.continuation_candidates != 0 ||
@@ -8308,7 +10178,11 @@ check_cobb_classifier_invariance(const struct bn_tol *tol)
 			    trace.continuation_certificate_boxes != 0 ||
 			    trace.closure_shadow_segments != 0 || trace_hits != 0 ||
 			    trace.final_segments != 0 ||
-			    production_result.segments != 0;
+			    production_result.segments != 0 ||
+			    trace.physical_event_seam_contact_pairs ||
+			    trace.physical_event_seam_contact_boxes ||
+			    trace.physical_event_seam_contact_roots ||
+			    trace.physical_event_seam_contact_miss_roots;
 		    }
 		    if (bad) {
 			brep_trace_root_coverage_diagnostic(test.name, trace);
@@ -8323,7 +10197,10 @@ check_cobb_classifier_invariance(const struct bn_tol *tol)
 			    "trim=%zu/%zu/%zu mismatch=%zu local-trim=%zu/%zu/%zu "
 			    "coverage=%zu/%zu/%zu/%zu events=%zu/%zu "
 			    "surface=%zu/%zu/%zu overflow=%zu "
-			    "certificate=%zu/%zu/%zu/%zu+%zu\n",
+			    "certificate=%zu/%zu/%zu/%zu+%zu "
+			    "contact=%zu/%zu/%zu certified/selected=%zu/%zu "
+			    "seam-failure/ownership/witness/box/root="
+			    "%zu/%zu/%zu/%zu/%zu\n",
 			    test.name,
 			    expected_state,
 			    reverse, edge ? edge->closest_state : -99,
@@ -8362,10 +10239,120 @@ check_cobb_classifier_invariance(const struct bn_tol *tol)
 			    trace.continuation_certificate_isolated,
 			    trace.continuation_certificate_root_boxes,
 			    trace.continuation_certificate_existing_overlap,
-			    trace.continuation_certificate_exhausted);
+			    trace.continuation_certificate_exhausted,
+			    trace.physical_event_seam_contact_pairs,
+			    trace.physical_event_seam_contact_boxes,
+			    trace.physical_event_seam_contact_roots,
+			    trace.physical_event_seam_certified,
+			    trace.prepared_production_selected,
+			    trace.physical_event_seam_failures,
+			    trace.physical_event_seam_ownership_failures,
+			    trace.physical_event_seam_witness_failures,
+			    trace.physical_event_seam_box_failures,
+			    trace.physical_event_seam_root_coverage_failures);
 			failures++;
 		    }
 		}
+	    }
+
+	    const double tangent_components[] = {0.001, 0.1};
+	    for (size_t component_index = 0; component_index <
+		    sizeof(tangent_components) / sizeof(tangent_components[0]);
+		    ++component_index) {
+	    const double tangent_component =
+		tangent_components[component_index];
+	    const bool expect_source_union = component_index == 1;
+	    for (int reverse = 0; reverse <= 1; ++reverse) {
+		const sampled_ray base_ray = cobb_seam_oblique_ray(frame,
+		    origin, radius, tol->dist, tangent_component, reverse != 0);
+		const ON_3dPoint transformed_origin = cobb_transform_point(xform,
+		    ON_3dPoint(base_ray.origin));
+		ON_3dVector transformed_direction = cobb_transform_vector(xform,
+		    ON_3dVector(base_ray.direction));
+		if (!transformed_direction.Unitize()) {
+		    std::printf("FAIL: Cobb %s oblique direction\n", test.name);
+		    failures++;
+		    continue;
+		}
+		sampled_ray ray;
+		VSET(ray.origin, transformed_origin.x, transformed_origin.y,
+		    transformed_origin.z);
+		VSET(ray.direction, transformed_direction.x,
+		    transformed_direction.y, transformed_direction.z);
+		const ray_result production_result = shoot_solid(stp, rtip,
+		    &resource, ray.origin, ray.direction);
+		struct rt_brep_shot_trace trace;
+		const int trace_hits = shoot_brep_trace(stp, rtip, &resource,
+		    ray, trace);
+		const struct rt_brep_trace_edge *edge = brep_trace_edge(trace,
+		    frame.edge_index);
+		const double transformed_radius = radius * test.scale;
+		const double transformed_clearance = tol->dist * test.scale;
+		const double half_chord = sqrt(2.0 * transformed_radius *
+		    transformed_clearance - transformed_clearance *
+		    transformed_clearance);
+		partition_result oracle;
+		oracle.partitions = 1;
+		oracle.intervals[0].in_dist = 2.0 * transformed_radius -
+		    half_chord;
+		oracle.intervals[0].out_dist = 2.0 * transformed_radius +
+		    half_chord;
+		const double expected_edge_dot = tangent_component /
+		    sqrt(1.0 + tangent_component * tangent_component);
+		const double dot_error = edge ?
+		    fabs(fabs(edge->ray_edge_dot) - expected_edge_dot) : INFINITY;
+		const bool no_source_union =
+		    !trace.physical_event_seam_source_union_certified &&
+		    !trace.physical_event_seam_source_union_root_boxes &&
+		    !trace.physical_event_seam_source_union_boxes;
+		const bool valid_source_union =
+		    trace.physical_event_seam_source_union_certified == 1 &&
+		    trace.physical_event_seam_source_union_root_boxes > 0 &&
+		    trace.physical_event_seam_source_union_root_boxes <
+			trace.physical_event_seam_source_union_boxes;
+		const bool source_union_evidence = expect_source_union ?
+		    (no_source_union || valid_source_union) : no_source_union;
+		const bool bad = !brep_trace_fixed_workspaces_match(trace) ||
+		    !edge || !edge->frame_interval_supported ||
+		    !edge->frame_interval_cells ||
+		    !edge->within_edge_tolerance || !edge->sector_valid ||
+		    dot_error > 1.0e-10 || trace_hits != 2 ||
+		    trace.final_segments != 1 || production_result.segments != 1 ||
+		    trace.physical_event_seam_oblique_pairs != 1 ||
+		    !trace.physical_event_seam_oblique_cells ||
+		    trace.physical_event_seam_oblique_box_links !=
+			trace.physical_event_seam_contact_boxes ||
+		    !source_union_evidence ||
+		    trace.prepared_production_selected != 1 ||
+		    trace.prepared_production_fallback !=
+			RT_BREP_PREPARED_FALLBACK_NONE ||
+		    !brep_trace_seam_event_stream_valid(trace, edge, variant,
+			oracle, case_tol.dist, test.reparameterize);
+		if (bad) {
+		    std::printf("FAIL: Cobb %s oblique component=%.17g "
+			"reverse=%d edge=%d "
+			"frame=%d/%zu dot-error=%.3g hits/segments=%d/%zu/%d "
+			"oblique=%zu/%zu/%zu contact-boxes=%zu selected=%zu "
+			"union=%zu/%zu/%zu fallback=%d\n", test.name,
+			tangent_component, reverse, edge != NULL,
+			edge ? edge->frame_interval_supported : 0,
+			edge ? edge->frame_interval_cells : 0, dot_error,
+			trace_hits, trace.final_segments, production_result.segments,
+			trace.physical_event_seam_oblique_pairs,
+			trace.physical_event_seam_oblique_cells,
+			trace.physical_event_seam_oblique_box_links,
+			trace.physical_event_seam_contact_boxes,
+			trace.prepared_production_selected,
+			trace.physical_event_seam_source_union_certified,
+			trace.physical_event_seam_source_union_root_boxes,
+			trace.physical_event_seam_source_union_boxes,
+			trace.prepared_production_fallback);
+		    failures++;
+		} else {
+		    oblique_similarity_cases++;
+		    source_union_similarity_cases += valid_source_union ? 1 : 0;
+		}
+	    }
 	    }
 	    free_solid(stp);
 	}
@@ -8380,15 +10367,784 @@ check_cobb_classifier_invariance(const struct bn_tol *tol)
 	    "max-leaves=%zu/%d max-raw-hits=%zu/%d "
 	    "parameter-locus-error=%.3g midpoint-shift=%.3g "
 	    "correspondence-cells=%zu depth=%zu "
-	    "seam-bound-cells=%zu depth=%zu width/T=%.3g\n",
+	    "seam-bound-cells=%zu depth=%zu width/T=%.3g "
+	    "contact-cases=%zu oblique-cases=%zu source-union-cases=%zu "
+	    "boxes=%zu/%zu\n",
 	    maximum_fixed_leaves, RT_BREP_MAX_LEAVES,
 	    maximum_fixed_hits, RT_BREP_MAX_HITS,
 	    maximum_parameter_locus_error,
 	    minimum_parameter_midpoint_shift, maximum_correspondence_cells,
 	    maximum_correspondence_depth, maximum_discrepancy_cells,
-	    maximum_discrepancy_depth, maximum_discrepancy_width_ratio);
+	    maximum_discrepancy_depth, maximum_discrepancy_width_ratio,
+	    contact_similarity_cases, oblique_similarity_cases,
+	    source_union_similarity_cases,
+	    minimum_contact_boxes,
+	    maximum_contact_boxes);
     }
     return failures;
+}
+
+
+static int
+check_cobb_oblique_contact_trend(const struct bn_tol *tol, bool emit_report)
+{
+    const double radius = 10.0;
+    const ON_3dPoint origin(0.0, 0.0, 0.0);
+    ON_Brep *pristine = ON_Brep_CobbSphereSewn(radius, origin);
+    cobb_seam_frame frame;
+    double measured_gap = 0.0;
+    double displacement = 0.0;
+    ON_Brep *variant = cobb_bowed_seam_variant(pristine, origin,
+	-tol->dist, frame, measured_gap, displacement);
+    delete pristine;
+    if (!variant)
+	return 1;
+
+    struct rt_i *rtip = rt_dirbuild_inmem(NULL, 0, NULL, 0);
+    if (!rtip) {
+	delete variant;
+	return 1;
+    }
+    rtip->rti_tol = *tol;
+    struct resource resource = {};
+    rt_init_resource(&resource, 0, rtip);
+    struct rt_brep_internal variant_internal = {};
+    variant_internal.magic = RT_BREP_INTERNAL_MAGIC;
+    variant_internal.brep = variant;
+    struct rt_db_internal variant_intern;
+    RT_DB_INTERNAL_INIT(&variant_intern);
+    variant_intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
+    variant_intern.idb_type = ID_BREP;
+    variant_intern.idb_meth = &OBJ[ID_BREP];
+    variant_intern.idb_ptr = &variant_internal;
+    struct soltab *stp = prep_solid(rtip, &variant_intern, ID_BREP);
+    if (!stp) {
+	rt_clean_resource_basic(rtip, &resource);
+	BU_PTBL_SET(&rtip->rti_resources, 0, NULL);
+	rt_i_destroy(rtip);
+	return 1;
+    }
+
+    enum oblique_expectation {
+	EXPECT_FALLBACK,
+	EXPECT_OBSERVE,
+	EXPECT_CERTIFIED
+    };
+    struct oblique_case {
+	double component;
+	oblique_expectation expectation;
+	bool source_union;
+    } cases[] = {
+	{1.0e-6, EXPECT_FALLBACK, false},
+	{1.0e-4, EXPECT_CERTIFIED, false},
+	{1.0e-3, EXPECT_CERTIFIED, false},
+	{0.01, EXPECT_CERTIFIED, false},
+	{0.05, EXPECT_CERTIFIED, false},
+	{0.1, EXPECT_CERTIFIED, true},
+	{0.25, EXPECT_CERTIFIED, false},
+	{0.5, EXPECT_CERTIFIED, false},
+	{1.0, EXPECT_CERTIFIED, false},
+	{10.0, EXPECT_FALLBACK, false},
+	{1.0e6, EXPECT_FALLBACK, false}
+    };
+    int failures = 0;
+    size_t certified = 0;
+    size_t fail_closed = 0;
+    size_t observed_certified = 0;
+    size_t observed_fallback = 0;
+    for (size_t case_index = 0; case_index <
+	    sizeof(cases) / sizeof(cases[0]); ++case_index) {
+	for (int reverse = 0; reverse <= 1; ++reverse) {
+	    const sampled_ray ray = cobb_seam_oblique_ray(frame, origin,
+		radius, tol->dist, cases[case_index].component, reverse != 0);
+	    const ray_result production_result = shoot_solid(stp, rtip,
+		&resource, ray.origin, ray.direction);
+	    struct rt_brep_shot_trace trace;
+	    const int trace_hits = shoot_brep_trace(stp, rtip, &resource, ray,
+		trace);
+	    const struct rt_brep_trace_edge *edge = brep_trace_edge(trace,
+		frame.edge_index);
+	    const bool selected = trace.prepared_production_selected == 1 &&
+		trace.prepared_production_fallback ==
+		    RT_BREP_PREPARED_FALLBACK_NONE;
+	    const bool source_union_evidence =
+		(!trace.physical_event_seam_source_union_certified &&
+		 !trace.physical_event_seam_source_union_root_boxes &&
+		 !trace.physical_event_seam_source_union_boxes) ||
+		(trace.physical_event_seam_source_union_certified == 1 &&
+		 trace.physical_event_seam_source_union_root_boxes > 0 &&
+		 trace.physical_event_seam_source_union_root_boxes <
+		    trace.physical_event_seam_source_union_boxes);
+	    const bool certified_evidence = selected && source_union_evidence &&
+		edge &&
+		edge->frame_interval_supported && edge->frame_interval_cells > 0 &&
+		trace.physical_event_seam_certified == 1 &&
+		trace.physical_event_seam_contact_pairs == 1 &&
+		trace.physical_event_seam_contact_boxes > 0 &&
+		trace.physical_event_seam_contact_roots == 2 &&
+		!trace.physical_event_seam_contact_miss_roots &&
+		trace.physical_event_seam_oblique_pairs == 1 &&
+		trace.physical_event_seam_oblique_cells > 0 &&
+		trace.physical_event_seam_oblique_box_links ==
+		    trace.physical_event_seam_contact_boxes;
+	    const bool fallback_evidence = !selected &&
+		trace.prepared_production_fallback !=
+		    RT_BREP_PREPARED_FALLBACK_NONE &&
+		!trace.physical_event_seam_oblique_pairs &&
+		!trace.physical_event_seam_oblique_cells &&
+		!trace.physical_event_seam_oblique_box_links &&
+		!trace.physical_event_seam_contact_pairs &&
+		!trace.physical_event_seam_contact_boxes &&
+		!trace.physical_event_seam_contact_roots &&
+		!trace.physical_event_seam_contact_miss_roots &&
+		!trace.physical_event_seam_source_union_certified &&
+		!trace.physical_event_seam_source_union_root_boxes &&
+		!trace.physical_event_seam_source_union_boxes;
+	    bool bad = !brep_trace_fixed_workspaces_match(trace) || !edge ||
+		!edge->frame_interval_supported || !edge->frame_interval_cells ||
+		trace.root_overflow || trace.edge_overflow ||
+		trace.surface_workspace_exhausted || trace.surface_box_overflow ||
+		trace.local_root_overflow || trace.local_cluster_overflow;
+	    if (cases[case_index].expectation == EXPECT_CERTIFIED) {
+		const double half_chord = sqrt(2.0 * radius * tol->dist -
+		    tol->dist * tol->dist);
+		partition_result oracle;
+		oracle.partitions = 1;
+		oracle.intervals[0].in_dist = 2.0 * radius - half_chord;
+		oracle.intervals[0].out_dist = 2.0 * radius + half_chord;
+		bad = bad || !certified_evidence || trace_hits != 2 ||
+		    trace.final_segments != 1 || production_result.segments != 1 ||
+		    (cases[case_index].source_union &&
+		     (trace.physical_event_seam_source_union_certified != 1 ||
+		      trace.physical_event_seam_source_union_root_boxes != 1 ||
+		      trace.physical_event_seam_source_union_boxes != 2)) ||
+		    !brep_trace_seam_event_stream_valid(trace, edge, variant,
+			oracle, tol->dist);
+		if (cases[case_index].source_union)
+		    bad = bad || !brep_trace_source_union_negative_controls(
+			trace, edge, variant, oracle, tol->dist);
+		if (!bad)
+		    certified++;
+	    } else if (cases[case_index].expectation == EXPECT_FALLBACK) {
+		bad = bad || !fallback_evidence ||
+		    trace.physical_event_seam_failures != 1;
+		if (!bad)
+		    fail_closed++;
+	    } else {
+		bad = bad || (!certified_evidence && !fallback_evidence);
+		if (!bad && certified_evidence)
+		    observed_certified++;
+		else if (!bad)
+		    observed_fallback++;
+	    }
+	    if (bad) {
+		std::printf("FAIL: Cobb oblique trend component=%.17g reverse=%d "
+		    "expect=%d edge=%d frame=%d/%zu selected=%zu fallback=%d "
+		    "seam/contact/oblique=%zu/%zu/%zu cells/links=%zu/%zu "
+		    "hits/segments=%d/%zu/%d failures=%zu\n",
+		    cases[case_index].component, reverse,
+		    (int)cases[case_index].expectation, edge != NULL,
+		    edge ? edge->frame_interval_supported : 0,
+		    edge ? edge->frame_interval_cells : 0,
+		    trace.prepared_production_selected,
+		    trace.prepared_production_fallback,
+		    trace.physical_event_seam_certified,
+		    trace.physical_event_seam_contact_pairs,
+		    trace.physical_event_seam_oblique_pairs,
+		    trace.physical_event_seam_oblique_cells,
+		    trace.physical_event_seam_oblique_box_links,
+		    trace_hits, trace.final_segments, production_result.segments,
+		    trace.physical_event_seam_failures);
+		failures++;
+	    }
+	    if (emit_report) {
+		std::printf("oblique component=%.17g reverse=%d edge-dot=%.17g "
+		"distance=%.17g frame=%d/%zu roots/boxes=%zu/%zu seam=%zu "
+		"contact=%zu/%zu/%zu oblique=%zu/%zu/%zu union=%zu/%zu/%zu "
+		"selected/final=%zu/%zu failures=%zu/%zu/%zu/%zu/%zu\n",
+		cases[case_index].component, reverse,
+		edge ? edge->ray_edge_dot : INFINITY,
+		edge ? edge->distance : INFINITY,
+		edge ? edge->frame_interval_supported : -1,
+		edge ? edge->frame_interval_cells : 0, trace.stored_local_roots,
+		trace.stored_surface_boxes, trace.physical_event_seam_certified,
+		trace.physical_event_seam_contact_pairs,
+		trace.physical_event_seam_contact_boxes,
+		trace.physical_event_seam_contact_roots,
+		trace.physical_event_seam_oblique_pairs,
+		trace.physical_event_seam_oblique_cells,
+		trace.physical_event_seam_oblique_box_links,
+		trace.physical_event_seam_source_union_certified,
+		trace.physical_event_seam_source_union_root_boxes,
+		trace.physical_event_seam_source_union_boxes,
+		trace.prepared_production_selected, trace.final_segments,
+		trace.physical_event_seam_failures,
+		trace.physical_event_seam_ownership_failures,
+		trace.physical_event_seam_witness_failures,
+		trace.physical_event_seam_box_failures,
+		trace.physical_event_seam_root_coverage_failures);
+	    }
+	    if (!emit_report)
+		continue;
+	    for (size_t root_index = 0; root_index < trace.stored_local_roots;
+		    ++root_index) {
+		const struct rt_brep_trace_local_root &root =
+		    trace.local_roots[root_index];
+		std::printf("  root[%zu] face/span=%d/%d t=%.17g uv=%.17g/%.17g "
+		    "dir/class/trim=%d/%d/%d ndot=%.17g\n", root_index,
+		    root.face_index, root.span_index, root.dist, root.uv[0],
+		    root.uv[1], root.direction, root.hit_class,
+		    root.trim_status, root.normal_dot);
+	    }
+	    for (size_t box_index = 0; box_index < trace.stored_surface_boxes;
+		    ++box_index) {
+		const struct rt_brep_trace_surface_box &box =
+		    trace.surface_boxes[box_index];
+		std::printf("  box[%zu] face/span=%d/%d uv=[%.17g %.17g]x"
+		    "[%.17g %.17g] t=[%.17g %.17g] depth=%d disp/det=%d/%d\n",
+		    box_index, box.face_index, box.span_index, box.uv_min[0],
+		    box.uv_max[0], box.uv_min[1], box.uv_max[1], box.t_min,
+		    box.t_max, box.depth, box.disposition, box.determinant_sign);
+	    }
+	}
+    }
+
+    free_solid(stp);
+    rt_clean_resource_basic(rtip, &resource);
+    BU_PTBL_SET(&rtip->rti_resources, 0, NULL);
+    rt_i_destroy(rtip);
+    if (!failures)
+	std::printf("Cobb oblique contact trend: PASS certified=%zu "
+	    "fail-closed=%zu observed=%zu/%zu\n", certified, fail_closed,
+	    observed_certified, observed_fallback);
+    return failures;
+}
+
+
+static int
+brep_trace_contact_local_root_certificate(const struct soltab *stp,
+    const sampled_ray &ray, const struct rt_brep_shot_trace &trace,
+    struct rt_brep_local_root_test_result &result, double &root_separation,
+    bool &analytic_extension, size_t &miss_count, size_t &hit_count)
+{
+    const struct rt_brep_trace_local_root *miss = NULL;
+    miss_count = 0;
+    for (size_t root_index = 0; root_index < trace.stored_local_roots;
+	    ++root_index) {
+	const struct rt_brep_trace_local_root &root =
+	    trace.local_roots[root_index];
+	if (root.trim_status == 1 &&
+		(root.hit_class == 1 || root.hit_class == 3)) {
+	    if (!miss)
+		miss = &root;
+	    miss_count++;
+	}
+    }
+    if (miss_count != 1 || !miss)
+	return 0;
+
+    const struct rt_brep_trace_local_root *hit = NULL;
+    hit_count = 0;
+    for (size_t root_index = 0; root_index < trace.stored_local_roots;
+	    ++root_index) {
+	const struct rt_brep_trace_local_root &root =
+	    trace.local_roots[root_index];
+	if (root.face_index == miss->face_index &&
+		root.span_index == miss->span_index && root.trim_status != 1 &&
+		(root.hit_class == 0 || root.hit_class == 2)) {
+	    if (!hit)
+		hit = &root;
+	    hit_count++;
+	}
+    }
+    if (hit_count != 1 || !hit ||
+	    !_rt_brep_surface_local_root_test(stp, ray.origin, ray.direction,
+		miss->face_index, miss->span_index, miss->uv, 1.0, &result) ||
+	    !result.available || !result.certified ||
+	    !result.model_image_available || !(result.weight_minimum > 0.0) ||
+	    !std::isfinite(result.model_image_displacement))
+	return 0;
+
+    fastf_t normalized_hit[2];
+    root_separation = 0.0;
+    analytic_extension = false;
+    for (int direction = 0; direction < 2; ++direction) {
+	const double span_length = result.span_maximum[direction] -
+	    result.span_minimum[direction];
+	if (!(span_length > 0.0) || !std::isfinite(span_length))
+	    return 0;
+	normalized_hit[direction] = (hit->uv[direction] -
+	    result.span_minimum[direction]) / span_length;
+	if (!std::isfinite(normalized_hit[direction]))
+	    return 0;
+	root_separation = std::max(root_separation,
+	    fabs(normalized_hit[direction] -
+		result.normalized_root[direction]));
+	analytic_extension = analytic_extension ||
+	    result.normalized_root[direction] - result.radius < 0.0 ||
+	    result.normalized_root[direction] + result.radius > 1.0;
+    }
+    return root_separation > 0.0 &&
+	result.radius < 0.25 * root_separation;
+}
+
+
+static int
+check_cobb_nonisoparametric_oblique_side(const struct bn_tol *tol,
+    bool contact_face_trim)
+{
+    const double radius = 10.0;
+    const ON_3dPoint origin(0.0, 0.0, 0.0);
+    ON_Brep *pristine = ON_Brep_CobbSphereSewn(radius, origin);
+    cobb_seam_frame frame;
+    double measured_gap = 0.0;
+    double displacement = 0.0;
+    ON_Brep *variant = cobb_bowed_seam_variant(pristine, origin,
+	-tol->dist, frame, measured_gap, displacement);
+    delete pristine;
+    double maximum_lift_shift = INFINITY;
+    const double target_lift_shift =
+	(contact_face_trim ? 0.1 : 0.05) * tol->dist;
+    int curved_face = -1;
+    if (variant) {
+	const ON_BrepEdge &edge = variant->m_E[frame.edge_index];
+	for (int side = 0; side < edge.m_ti.Count(); ++side) {
+	    const int trim_index = edge.m_ti[side];
+	    if (trim_index >= 0 && trim_index < variant->m_T.Count() &&
+		    (variant->m_T[trim_index].FaceIndexOf() ==
+		    frame.face_index) == contact_face_trim) {
+		curved_face = variant->m_T[trim_index].FaceIndexOf();
+		break;
+	    }
+	}
+    }
+    if (!variant || !cobb_curve_edge_trim(variant, frame.edge_index,
+	    curved_face, target_lift_shift, maximum_lift_shift)) {
+	std::printf("FAIL: Cobb non-isoparametric %s trim construction\n",
+	    contact_face_trim ? "contact-face" : "opposite-face");
+	delete variant;
+	return 1;
+    }
+    measured_gap = cobb_seam_discrepancy(variant, frame.edge_index);
+    if (!std::isfinite(measured_gap) || !(measured_gap > 0.0)) {
+	std::printf("FAIL: Cobb non-isoparametric seam measurement\n");
+	delete variant;
+	return 1;
+    }
+    variant->m_E[frame.edge_index].m_tolerance = std::max(
+	1.01 * measured_gap, 1.01 * tol->dist);
+
+    struct transform_case {
+	const char *name;
+	double scale;
+	ON_3dVector translation;
+	ON_3dVector axis;
+	double angle;
+    } cases[] = {
+	{"identity", 1.0, ON_3dVector(0.0, 0.0, 0.0),
+	    ON_3dVector(1.0, 0.0, 0.0), 0.0},
+	{"oblique", 1.0, ON_3dVector(-19.0, 23.0, 41.0),
+	    ON_3dVector(1.0, -2.0, 0.5), 0.731},
+	{"small", 0.01, ON_3dVector(1.25, -2.5, 5.0),
+	    ON_3dVector(-0.3, 1.0, 0.7), -1.113},
+	{"large", 1.0e4, ON_3dVector(1.0e6, -2.0e6, 3.0e6),
+	    ON_3dVector(2.0, 0.25, -1.0), 2.017}
+    };
+    const double tangent_components[] = {0.001, 0.1};
+    int failures = 0;
+    size_t certified = 0;
+    size_t source_unions = 0;
+    size_t miss_roots = 0;
+    size_t threshold_fallbacks = 0;
+    size_t local_root_certificates = 0;
+    size_t local_root_extensions = 0;
+    size_t local_root_maximum_attempts = 0;
+    size_t local_root_maximum_high_water = 0;
+    double local_root_maximum_radius = 0.0;
+    double local_root_maximum_correction = 0.0;
+    double local_root_maximum_contraction = 0.0;
+    double local_root_maximum_image = 0.0;
+    for (size_t case_index = 0;
+	    case_index < sizeof(cases) / sizeof(cases[0]); ++case_index) {
+	const transform_case &test = cases[case_index];
+	const ON_Xform xform = cobb_axis_angle_similarity_transform(test.scale,
+	    test.translation, test.axis, test.angle);
+	ON_Brep *transformed = new ON_Brep(*variant);
+	if (!transformed->Transform(xform)) {
+	    std::printf("FAIL: Cobb non-isoparametric %s transform\n",
+		test.name);
+	    delete transformed;
+	    failures++;
+	    continue;
+	}
+	for (int vertex_index = 0; vertex_index < transformed->m_V.Count();
+		++vertex_index)
+	    transformed->m_V[vertex_index].m_tolerance =
+		variant->m_V[vertex_index].m_tolerance * test.scale;
+	for (int edge_index = 0; edge_index < transformed->m_E.Count();
+		++edge_index)
+	    transformed->m_E[edge_index].m_tolerance =
+		variant->m_E[edge_index].m_tolerance * test.scale;
+	struct bn_tol case_tol = *tol;
+	case_tol.dist = tol->dist * test.scale;
+	case_tol.dist_sq = case_tol.dist * case_tol.dist;
+	struct rt_i *rtip = rt_dirbuild_inmem(NULL, 0, NULL, 0);
+	if (!rtip) {
+	    delete transformed;
+	    failures++;
+	    continue;
+	}
+	rtip->rti_tol = case_tol;
+	struct resource resource = {};
+	rt_init_resource(&resource, 0, rtip);
+	struct rt_brep_internal transformed_internal = {};
+	transformed_internal.magic = RT_BREP_INTERNAL_MAGIC;
+	transformed_internal.brep = transformed;
+	struct rt_db_internal transformed_intern;
+	RT_DB_INTERNAL_INIT(&transformed_intern);
+	transformed_intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
+	transformed_intern.idb_type = ID_BREP;
+	transformed_intern.idb_meth = &OBJ[ID_BREP];
+	transformed_intern.idb_ptr = &transformed_internal;
+	struct soltab *stp = prep_solid(rtip, &transformed_intern, ID_BREP);
+	if (!stp) {
+	    std::printf("FAIL: Cobb non-isoparametric %s prep\n",
+		test.name);
+	    failures++;
+	} else {
+	    for (size_t component_index = 0; component_index <
+		    sizeof(tangent_components) /
+		    sizeof(tangent_components[0]); ++component_index) {
+		const double component = tangent_components[component_index];
+		const bool expect_source_union = component_index == 1;
+		for (int reverse = 0; reverse <= 1; ++reverse) {
+		    const sampled_ray base_ray = cobb_seam_oblique_ray(frame,
+			origin, radius, tol->dist, component, reverse != 0);
+		    const ON_3dPoint transformed_origin = cobb_transform_point(
+			xform, ON_3dPoint(base_ray.origin));
+		    ON_3dVector transformed_direction = cobb_transform_vector(
+			xform, ON_3dVector(base_ray.direction));
+		    if (!transformed_direction.Unitize()) {
+			failures++;
+			continue;
+		    }
+		    sampled_ray ray;
+		    VSET(ray.origin, transformed_origin.x, transformed_origin.y,
+			transformed_origin.z);
+		    VSET(ray.direction, transformed_direction.x,
+			transformed_direction.y, transformed_direction.z);
+		    const ray_result production_result = shoot_solid(stp, rtip,
+			&resource, ray.origin, ray.direction);
+		    struct rt_brep_shot_trace trace;
+		    const int trace_hits = shoot_brep_trace(stp, rtip, &resource,
+			ray, trace);
+		    const struct rt_brep_trace_edge *edge = brep_trace_edge(trace,
+			frame.edge_index);
+		    struct rt_brep_local_root_test_result local_root = {};
+		    double local_root_separation = 0.0;
+		    bool local_root_extension = false;
+		    size_t local_root_misses = 0;
+		    size_t local_root_hits = 0;
+		    const bool local_root_evidence = !contact_face_trim ||
+			brep_trace_contact_local_root_certificate(stp, ray, trace,
+			    local_root, local_root_separation,
+			    local_root_extension, local_root_misses,
+			    local_root_hits);
+		    local_root_maximum_attempts = std::max(
+			local_root_maximum_attempts, local_root.attempts);
+		    local_root_maximum_high_water = std::max(
+			local_root_maximum_high_water,
+			local_root.expansion_high_water);
+		    local_root_maximum_radius = std::max(
+			local_root_maximum_radius, (double)local_root.radius);
+		    local_root_maximum_correction = std::max(
+			local_root_maximum_correction,
+			(double)local_root.correction_bound);
+		    local_root_maximum_contraction = std::max(
+			local_root_maximum_contraction,
+			(double)local_root.contraction_bound);
+		    local_root_maximum_image = std::max(
+			local_root_maximum_image,
+			(double)local_root.model_image_displacement);
+		    const double transformed_radius = radius * test.scale;
+		    const double half_chord = sqrt(2.0 * transformed_radius *
+			case_tol.dist - case_tol.dist * case_tol.dist);
+		    partition_result oracle;
+		    oracle.partitions = 1;
+		    oracle.intervals[0].in_dist = 2.0 * transformed_radius -
+			half_chord;
+		    oracle.intervals[0].out_dist = 2.0 * transformed_radius +
+			half_chord;
+		    const bool no_source_union =
+			!trace.physical_event_seam_source_union_certified &&
+			!trace.physical_event_seam_source_union_root_boxes &&
+			!trace.physical_event_seam_source_union_boxes;
+		    const bool valid_source_union =
+			trace.physical_event_seam_source_union_certified == 1 &&
+			trace.physical_event_seam_source_union_root_boxes > 0 &&
+			trace.physical_event_seam_source_union_root_boxes <
+			    trace.physical_event_seam_source_union_boxes;
+		    const bool source_union_evidence = expect_source_union ?
+			(case_index ? (no_source_union || valid_source_union) :
+			 valid_source_union) : no_source_union;
+		    const bool contact_closure_split = !contact_face_trim ||
+			(!trace.closure_candidates &&
+			 !trace.continuation_attempts && edge &&
+			 !edge->tolerance_inferred &&
+			 edge->declared_tolerance > edge->model_tolerance &&
+			 edge->measured_discrepancy > edge->model_tolerance &&
+			 trace.physical_event_seam_closure_candidates == 1 &&
+			 trace.physical_event_seam_continuation_candidates == 1);
+		    const bool local_root_transaction = !contact_face_trim ||
+			(trace.physical_event_seam_declared_contact_pairs == 1 &&
+			 trace.physical_event_seam_local_root_attempts == 1 &&
+			 trace.physical_event_seam_local_root_available == 1 &&
+			 trace.physical_event_seam_local_root_certified == 1 &&
+			 trace.physical_event_seam_local_root_extensions == 1 &&
+			 !trace.physical_event_seam_local_root_tube_failures &&
+			 trace.physical_event_seam_local_root_edge_upper <=
+			    trace.physical_event_seam_local_root_tube_tolerance +
+			    trace.physical_event_seam_local_root_tube_roundoff &&
+			 trace.physical_event_seam_local_root_trim_upper <=
+			    trace.physical_event_seam_local_root_tube_tolerance +
+			    trace.physical_event_seam_local_root_tube_roundoff);
+		    const bool bad = !brep_trace_fixed_workspaces_match(trace) ||
+			!edge || !edge->correspondence_supported ||
+			edge->correspondence_exhausted ||
+			!edge->discrepancy_authorized ||
+			edge->discrepancy_proof_class !=
+			    RT_BREP_SEAM_GAP_INSIDE ||
+			!edge->frame_interval_supported ||
+			!edge->frame_interval_cells ||
+			!edge->within_edge_tolerance || !edge->sector_valid ||
+			trace_hits != 2 || trace.final_segments != 1 ||
+			production_result.segments != 1 ||
+			trace.physical_event_seam_oblique_pairs != 1 ||
+			!trace.physical_event_seam_oblique_cells ||
+			trace.physical_event_seam_oblique_box_links !=
+			    trace.physical_event_seam_contact_boxes ||
+			trace.physical_event_seam_contact_miss_roots !=
+			    (contact_face_trim ? 1 : 0) ||
+			!local_root_evidence ||
+			!local_root_transaction ||
+			!contact_closure_split ||
+			!source_union_evidence ||
+			trace.prepared_production_selected != 1 ||
+			trace.prepared_production_fallback !=
+			    RT_BREP_PREPARED_FALLBACK_NONE ||
+			!brep_trace_seam_event_stream_valid(trace, edge,
+			    transformed, oracle, case_tol.dist);
+		    if (bad) {
+			std::printf("FAIL: Cobb non-isoparametric %s "
+			    "component=%.17g reverse=%d "
+			    "edge/correspondence/frame=%d/%d/%d "
+			    "hits/segments=%d/%zu/%d oblique=%zu/%zu/%zu "
+			    "closure=%zu/%zu/%zu "
+			    "union=%zu/%zu/%zu selected/fallback=%zu/%d "
+			    "root-proof=%d/%d/%zu/%zu/%.3g/%.3g "
+			    "transaction=%zu/%zu/%zu/%zu/%zu/%zu "
+			    "failures=%zu/%zu/%zu/%zu/%zu\n", test.name,
+			    component, reverse, edge != NULL,
+			    edge ? edge->correspondence_supported : 0,
+			    edge ? edge->frame_interval_supported : 0,
+			    trace_hits, trace.final_segments,
+			    production_result.segments,
+			    trace.physical_event_seam_oblique_pairs,
+			    trace.physical_event_seam_oblique_cells,
+			    trace.physical_event_seam_oblique_box_links,
+			    trace.closure_candidates,
+			    trace.physical_event_seam_closure_candidates,
+			    trace.physical_event_seam_continuation_candidates,
+			    trace.physical_event_seam_source_union_certified,
+			    trace.physical_event_seam_source_union_root_boxes,
+			    trace.physical_event_seam_source_union_boxes,
+			    trace.prepared_production_selected,
+			    trace.prepared_production_fallback,
+			    local_root.available, local_root.certified,
+			    local_root_misses, local_root_hits,
+			    local_root.radius, local_root_separation,
+			    trace.physical_event_seam_declared_contact_pairs,
+			    trace.physical_event_seam_local_root_attempts,
+			    trace.physical_event_seam_local_root_available,
+			    trace.physical_event_seam_local_root_certified,
+			    trace.physical_event_seam_local_root_extensions,
+			    trace.physical_event_seam_local_root_tube_failures,
+			    trace.physical_event_seam_failures,
+			    trace.physical_event_seam_ownership_failures,
+			    trace.physical_event_seam_witness_failures,
+			    trace.physical_event_seam_box_failures,
+			    trace.physical_event_seam_root_coverage_failures);
+			failures++;
+		    } else {
+			certified++;
+			source_unions += valid_source_union ? 1 : 0;
+			miss_roots +=
+			    trace.physical_event_seam_contact_miss_roots;
+			if (contact_face_trim) {
+			    local_root_certificates++;
+			    local_root_extensions +=
+				local_root_extension ? 1 : 0;
+			}
+		    }
+		}
+	    }
+	    free_solid(stp);
+	}
+	rt_clean_resource_basic(rtip, &resource);
+	BU_PTBL_SET(&rtip->rti_resources, 0, NULL);
+	rt_i_destroy(rtip);
+    }
+
+    if (contact_face_trim) {
+	struct tolerance_case {
+	    const char *name;
+	    double declared;
+	    bool inferred;
+	} tolerance_cases[] = {
+	    {"model-only", tol->dist, false},
+	    {"exact-gap", measured_gap, false},
+	    {"unset", ON_UNSET_VALUE, true}
+	};
+	for (size_t tolerance_index = 0;
+		tolerance_index < sizeof(tolerance_cases) /
+		    sizeof(tolerance_cases[0]); ++tolerance_index) {
+	    const tolerance_case &policy = tolerance_cases[tolerance_index];
+	    ON_Brep *control = new ON_Brep(*variant);
+	    control->m_E[frame.edge_index].m_tolerance = policy.declared;
+	    struct rt_i *rtip = rt_dirbuild_inmem(NULL, 0, NULL, 0);
+	    if (!rtip) {
+		delete control;
+		failures++;
+		continue;
+	    }
+	    rtip->rti_tol = *tol;
+	    struct resource resource = {};
+	    rt_init_resource(&resource, 0, rtip);
+	    struct rt_brep_internal control_internal = {};
+	    control_internal.magic = RT_BREP_INTERNAL_MAGIC;
+	    control_internal.brep = control;
+	    struct rt_db_internal control_intern;
+	    RT_DB_INTERNAL_INIT(&control_intern);
+	    control_intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
+	    control_intern.idb_type = ID_BREP;
+	    control_intern.idb_meth = &OBJ[ID_BREP];
+	    control_intern.idb_ptr = &control_internal;
+	    struct soltab *stp = prep_solid(rtip, &control_intern, ID_BREP);
+	    if (!stp) {
+		std::printf("FAIL: Cobb contact-trim %s prep\n", policy.name);
+		failures++;
+	    } else {
+		for (int reverse = 0; reverse <= 1; ++reverse) {
+		    const sampled_ray ray = cobb_seam_oblique_ray(frame, origin,
+			radius, tol->dist, 0.001, reverse != 0);
+		    const ray_result production_result = shoot_solid(stp, rtip,
+			&resource, ray.origin, ray.direction);
+		    struct rt_brep_shot_trace trace;
+		    const int trace_hits = shoot_brep_trace(stp, rtip, &resource,
+			ray, trace);
+		    const struct rt_brep_trace_edge *edge = brep_trace_edge(trace,
+			frame.edge_index);
+		    const double half_chord = sqrt(2.0 * radius * tol->dist -
+			tol->dist * tol->dist);
+		    const double expected_in = 2.0 * radius - half_chord;
+		    const double expected_out = 2.0 * radius + half_chord;
+		    const double endpoint_error =
+			production_result.segments == 1 ?
+			std::max(fabs(production_result.in_dist - expected_in),
+			    fabs(production_result.out_dist - expected_out)) :
+			INFINITY;
+		    const bool bad = !brep_trace_fixed_workspaces_match(trace) ||
+			!edge || edge->tolerance_inferred !=
+			    (policy.inferred ? 1 : 0) ||
+			trace_hits != 2 || trace.final_segments != 1 ||
+			production_result.segments != 1 ||
+			trace.prepared_production_selected ||
+			trace.prepared_production_fallback ==
+			    RT_BREP_PREPARED_FALLBACK_NONE ||
+			trace.closure_candidates || trace.continuation_attempts ||
+			trace.physical_event_seam_closure_candidates ||
+			trace.physical_event_seam_continuation_candidates ||
+			trace.physical_event_seam_certified ||
+			trace.physical_event_seam_contact_pairs ||
+			trace.physical_event_seam_contact_boxes ||
+			trace.physical_event_seam_contact_roots ||
+			trace.physical_event_seam_contact_miss_roots ||
+			trace.physical_event_seam_declared_contact_pairs ||
+			trace.physical_event_seam_local_root_attempts ||
+			trace.physical_event_seam_local_root_available ||
+			trace.physical_event_seam_local_root_certified ||
+			trace.physical_event_seam_local_root_extensions ||
+			trace.physical_event_seam_local_root_tube_failures ||
+			trace.physical_event_seam_oblique_pairs ||
+			trace.physical_event_seam_source_union_certified ||
+			trace.physical_event_seam_source_union_root_boxes ||
+			trace.physical_event_seam_source_union_boxes;
+		    if (bad) {
+			std::printf("FAIL: Cobb contact-trim threshold %s "
+			    "reverse=%d edge/inferred=%d/%d declared=%.17g "
+			    "hits/segments=%d/%zu/%d error=%.17g "
+			    "selected/fallback=%zu/%d seam/oblique=%zu/%zu\n",
+			    policy.name, reverse, edge != NULL,
+			    edge ? edge->tolerance_inferred : -1,
+			    edge ? edge->declared_tolerance : INFINITY, trace_hits,
+			    trace.final_segments, production_result.segments,
+			    endpoint_error, trace.prepared_production_selected,
+			    trace.prepared_production_fallback,
+			    trace.physical_event_seam_certified,
+			    trace.physical_event_seam_oblique_pairs);
+			failures++;
+		    } else {
+			threshold_fallbacks++;
+		    }
+		}
+		free_solid(stp);
+	    }
+	    rt_clean_resource_basic(rtip, &resource);
+	    BU_PTBL_SET(&rtip->rti_resources, 0, NULL);
+	    rt_i_destroy(rtip);
+	}
+    }
+
+    if (contact_face_trim &&
+	    (local_root_certificates != 16 || local_root_extensions != 16)) {
+	std::printf("FAIL: Cobb contact-trim local root certificates="
+	    "%zu/16 extensions=%zu/16\n", local_root_certificates,
+	    local_root_extensions);
+	failures++;
+    }
+
+    delete variant;
+    if (!failures)
+	std::printf("Cobb non-isoparametric %s oblique seam: PASS "
+	    "cases=%zu certified=%zu source-unions=%zu "
+	    "miss-roots=%zu threshold-fallbacks=%zu "
+	    "local-root=%zu/%zu attempts/high-water=%zu/%zu "
+	    "radius/correction/contraction/image=%.3g/%.3g/%.3g/%.3g "
+	    "lift/T=%.6g gap/T=%.6g\n",
+	    contact_face_trim ? "contact-face" : "opposite-face",
+	    sizeof(cases) / sizeof(cases[0]),
+	    certified, source_unions, miss_roots, threshold_fallbacks,
+	    local_root_certificates, local_root_extensions,
+	    local_root_maximum_attempts, local_root_maximum_high_water,
+	    local_root_maximum_radius, local_root_maximum_correction,
+	    local_root_maximum_contraction, local_root_maximum_image,
+	    maximum_lift_shift / tol->dist,
+	    measured_gap / tol->dist);
+    return failures;
+}
+
+
+static int
+check_cobb_nonisoparametric_oblique(const struct bn_tol *tol)
+{
+    return check_cobb_nonisoparametric_oblique_side(tol, false);
+}
+
+
+static int
+check_cobb_contact_trim_oblique(const struct bn_tol *tol)
+{
+    return check_cobb_nonisoparametric_oblique_side(tol, true);
 }
 
 
@@ -8444,7 +11200,9 @@ check_cobb_ambiguous_correspondence(const struct bn_tol *tol,
 		!edge->correspondence_screened ||
 		edge->correspondence_supported || !edge->correspondence_cells ||
 		!edge->correspondence_exhausted ||
-		edge->correspondence_depth != 24 || edge->candidate_spans ||
+		edge->correspondence_depth != 24 ||
+		edge->frame_interval_supported || edge->frame_interval_cells ||
+		edge->candidate_spans ||
 		edge->within_edge_tolerance || edge->sector_valid ||
 		edge->discrepancy_bounded ||
 		edge->discrepancy_bound_exhausted ||
@@ -8454,7 +11212,7 @@ check_cobb_ambiguous_correspondence(const struct bn_tol *tol,
 	    std::printf("FAIL: Cobb ambiguous correspondence reverse=%d "
 		"edge=%d measured=%d sample=%d authorized=%d proof=%d "
 		"correspondence=%d/%d "
-		"cells=%zu depth=%zu proof-exhausted=%d "
+		"cells=%zu depth=%zu proof-exhausted=%d frame=%d/%zu "
 		"spans=%zu within=%d sector=%d bound=%d exhausted=%d "
 		"closure=%zu continuation=%zu segment=%zu cleanup=%zu\n",
 		reverse,
@@ -8467,6 +11225,8 @@ check_cobb_ambiguous_correspondence(const struct bn_tol *tol,
 		edge ? edge->correspondence_cells : 0,
 		edge ? edge->correspondence_depth : 0,
 		edge ? edge->correspondence_exhausted : -1,
+		edge ? edge->frame_interval_supported : -1,
+		edge ? edge->frame_interval_cells : 0,
 		edge ? edge->candidate_spans : 0,
 		edge ? edge->within_edge_tolerance : -1,
 		edge ? edge->sector_valid : -1,
@@ -10419,6 +13179,604 @@ check_brep_concave_vertex_fan(const struct bn_tol *tol, struct rt_i *rtip,
 
 
 static int
+check_cobb_endpoint_moving_seam_corpus(const struct bn_tol *tol,
+    struct rt_i *trace_rtip, struct resource *trace_resource)
+{
+    int failures = 0;
+    const double radius = 10.0;
+    const ON_3dPoint origin(0.0, 0.0, 0.0);
+    ON_Brep *pristine = ON_Brep_CobbSphereSewn(radius, origin);
+    if (!pristine) {
+	std::printf("FAIL: endpoint-moving Cobb pristine construction\n");
+	return 1;
+    }
+
+    struct rt_ell_internal sphere;
+    struct rt_db_internal sphere_intern;
+    point_t center = VINIT_ZERO;
+    init_sphere_internal(sphere, sphere_intern, center, radius);
+    prepared_model implicit_model;
+    if (!prep_partition_model(implicit_model, &sphere_intern,
+	    "cobb_endpoint_oracle.s", tol)) {
+	std::printf("FAIL: endpoint-moving Cobb implicit preparation\n");
+	delete pristine;
+	return 1;
+    }
+
+    const double gap_ratios[] = {0.25, 0.9, 1.1};
+    const double clearance_ratios[] = {2.0, 0.9, 0.25, 0.0, -0.25};
+    size_t rays = 0;
+    size_t endpoint_certificates = 0;
+    size_t inside_gap_proofs = 0;
+    size_t legacy_one_hit = 0;
+    size_t certified_pairs = 0;
+    size_t selected = 0;
+    size_t oracle_differences = 0;
+    size_t uncertainty_differences = 0;
+    size_t outside_uncertainty_differences = 0;
+    size_t below_envelope_leaks = 0;
+    size_t above_envelope_pairs = 0;
+    size_t exhausted_gap_proofs = 0;
+    size_t maximum_gap_cells = 0;
+    double maximum_calibration_error = 0.0;
+    double maximum_outside_error = 0.0;
+    double maximum_edge_vertex_gap = 0.0;
+    double maximum_lift_vertex_gap = 0.0;
+    size_t endpoint_tolerance_rejections = 0;
+    size_t endpoint_similarity_cases = 0;
+    size_t minimum_similarity_cells = (size_t)-1;
+    size_t maximum_similarity_cells = 0;
+
+    for (size_t ratio_index = 0;
+	    ratio_index < sizeof(gap_ratios) / sizeof(gap_ratios[0]);
+	    ++ratio_index) {
+	for (int sign = -1; sign <= 1; sign += 2) {
+	    cobb_seam_frame frame;
+	    int minimum_edge_index = pristine->m_E.Count();
+	    for (int side = 0; side < 4; ++side) {
+		int edge_index = -1;
+		if (cobb_target_edge(pristine, frame.face_index, side,
+			edge_index) && edge_index < minimum_edge_index) {
+		    minimum_edge_index = edge_index;
+		    frame.side_index = side;
+		}
+	    }
+	    double measured_gap = 0.0;
+	    double applied_displacement = 0.0;
+	    const double target_gap = gap_ratios[ratio_index] * tol->dist;
+	    ON_Brep *variant = cobb_endpoint_moving_seam_variant(pristine,
+		origin, sign * target_gap, frame, measured_gap,
+		applied_displacement);
+	    const double calibration_error = variant ?
+		fabs(measured_gap - target_gap) : INFINITY;
+	    double edge_vertex_gap = INFINITY;
+	    double lift_vertex_gap = INFINITY;
+	    const bool endpoint_contract = variant &&
+		cobb_edge_endpoint_contract(variant, frame.edge_index,
+		    tol->dist, edge_vertex_gap, lift_vertex_gap);
+	    maximum_calibration_error = std::max(maximum_calibration_error,
+		calibration_error);
+	    if (endpoint_contract) {
+		maximum_edge_vertex_gap = std::max(maximum_edge_vertex_gap,
+		    edge_vertex_gap);
+		maximum_lift_vertex_gap = std::max(maximum_lift_vertex_gap,
+		    lift_vertex_gap);
+	    }
+	    if (!variant || !endpoint_contract || !variant->IsValid() ||
+		    !variant->IsSolid() ||
+		    calibration_error > 1.0e-3 * target_gap) {
+		std::printf("FAIL: endpoint-moving Cobb construction sign=%d "
+		    "g/T=%.3g measured=%.17g target=%.17g move=%.17g "
+		    "endpoint=%d edge/trim-gap=%.17g/%.17g\n",
+		    sign, gap_ratios[ratio_index], measured_gap, target_gap,
+		    applied_displacement, endpoint_contract, edge_vertex_gap,
+		    lift_vertex_gap);
+		delete variant;
+		failures++;
+		continue;
+	    }
+
+	    struct rt_brep_internal variant_internal = {};
+	    variant_internal.magic = RT_BREP_INTERNAL_MAGIC;
+	    variant_internal.brep = variant;
+	    struct rt_db_internal variant_intern;
+	    RT_DB_INTERNAL_INIT(&variant_intern);
+	    variant_intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
+	    variant_intern.idb_type = ID_BREP;
+	    variant_intern.idb_meth = &OBJ[ID_BREP];
+	    variant_intern.idb_ptr = &variant_internal;
+	    prepared_model variant_model;
+	    if (!prep_partition_model(variant_model, &variant_intern,
+		    "cobb_endpoint_moving.s", tol)) {
+		std::printf("FAIL: endpoint-moving Cobb prep sign=%d g/T=%.3g\n",
+		    sign, gap_ratios[ratio_index]);
+		delete variant;
+		failures++;
+		continue;
+	    }
+
+	    ON_Brep *trace_geometry = new ON_Brep(*variant);
+	    struct rt_brep_internal trace_internal = {};
+	    trace_internal.magic = RT_BREP_INTERNAL_MAGIC;
+	    trace_internal.brep = trace_geometry;
+	    struct rt_db_internal trace_intern;
+	    RT_DB_INTERNAL_INIT(&trace_intern);
+	    trace_intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
+	    trace_intern.idb_type = ID_BREP;
+	    trace_intern.idb_meth = &OBJ[ID_BREP];
+	    trace_intern.idb_ptr = &trace_internal;
+	    struct soltab *trace_stp = prep_solid(trace_rtip, &trace_intern,
+		ID_BREP);
+	    if (!trace_stp) {
+		std::printf("FAIL: endpoint-moving Cobb trace prep sign=%d "
+		    "g/T=%.3g\n", sign, gap_ratios[ratio_index]);
+		delete trace_internal.brep;
+		free_prepared_model(variant_model);
+		delete variant;
+		failures++;
+		continue;
+	    }
+
+	    partition_result forward_implicit;
+	    partition_result forward_variant;
+	    for (size_t clearance_index = 0; clearance_index <
+		    sizeof(clearance_ratios) / sizeof(clearance_ratios[0]);
+		    ++clearance_index) {
+		const double clearance = clearance_ratios[clearance_index] *
+		    tol->dist;
+		for (int reverse = 0; reverse <= 1; ++reverse) {
+		    const sampled_ray ray = cobb_seam_grazing_ray(frame, origin,
+			radius, clearance, reverse != 0);
+		    const partition_result implicit_result = shoot_partitions(
+			implicit_model, ray);
+		    const partition_result variant_result = shoot_partitions(
+			variant_model, ray);
+		    struct rt_brep_shot_trace trace;
+		    (void)shoot_brep_trace(trace_stp, trace_rtip,
+			trace_resource, ray, trace);
+		    const struct rt_brep_trace_edge *target_edge =
+			brep_trace_edge(trace, frame.edge_index);
+		    if (target_edge) {
+			maximum_gap_cells = std::max(maximum_gap_cells,
+			    target_edge->discrepancy_bound_cells);
+			if (target_edge->discrepancy_bound_exhausted)
+			    exhausted_gap_proofs++;
+		    }
+		    if (target_edge &&
+			target_edge->discrepancy_endpoints_certified)
+			endpoint_certificates++;
+		    if (target_edge && target_edge->discrepancy_bounded &&
+			    !target_edge->discrepancy_bound_exhausted &&
+			    target_edge->discrepancy_authorized &&
+			    target_edge->discrepancy_proof_class ==
+			    RT_BREP_SEAM_GAP_INSIDE)
+			inside_gap_proofs++;
+		    if (!target_edge || !target_edge->correspondence_supported ||
+			    !target_edge->discrepancy_endpoints_certified ||
+			    !target_edge->discrepancy_bounded ||
+			    target_edge->discrepancy_bound_exhausted ||
+			    !target_edge->discrepancy_authorized ||
+			    target_edge->discrepancy_proof_class !=
+			    RT_BREP_SEAM_GAP_INSIDE ||
+			    !target_edge->discrepancy_bound_cells) {
+			std::printf("FAIL: endpoint-moving Cobb proof "
+			    "sign=%d g/T=%.3g h/T=%.3g reverse=%d "
+			    "edge=%d correspondence/endpoints=%d/%d "
+			    "proof=%d bounded/authorized=%d/%d cells=%zu\n",
+			    sign,
+			    gap_ratios[ratio_index],
+			    clearance_ratios[clearance_index], reverse,
+			    target_edge != NULL, target_edge ?
+			    target_edge->correspondence_supported : -1,
+			    target_edge ?
+			    target_edge->discrepancy_endpoints_certified : -1,
+			    target_edge ?
+			    target_edge->discrepancy_proof_class : -1,
+			    target_edge ?
+			    target_edge->discrepancy_bounded : -1,
+			    target_edge ?
+			    target_edge->discrepancy_authorized : -1,
+			    target_edge ?
+			    target_edge->discrepancy_bound_cells : 0);
+			failures++;
+		    }
+		    if (trace.final_hits == 1)
+			legacy_one_hit++;
+		    if (trace.physical_event_seam_certified) {
+			certified_pairs++;
+			if (!brep_trace_seam_event_stream_valid(trace,
+				target_edge, variant, implicit_result, tol->dist,
+				false, 2.5e-4)) {
+			    std::printf("FAIL: endpoint-moving Cobb certified "
+				"stream sign=%d g/T=%.3g h/T=%.3g reverse=%d\n",
+				sign, gap_ratios[ratio_index],
+				clearance_ratios[clearance_index], reverse);
+			    std::printf("  oracle=[%.17g %.17g] events=%zu "
+				"roots/boxes=%zu/%zu contact=%zu/%zu/%zu\n",
+				implicit_result.intervals[0].in_dist,
+				implicit_result.intervals[0].out_dist,
+				trace.stored_physical_events,
+				trace.stored_local_roots,
+				trace.stored_surface_boxes,
+				trace.physical_event_seam_contact_pairs,
+				trace.physical_event_seam_contact_boxes,
+				trace.physical_event_seam_contact_roots);
+			    for (size_t event_index = 0;
+				event_index < trace.stored_physical_events;
+				++event_index) {
+				const struct rt_brep_trace_physical_event &event =
+				    trace.physical_events[event_index];
+				std::printf("  event[%zu] t=[%.17g %.17g %.17g] "
+				    "cert/dir/face/span=%d/%d/%d/%d\n",
+				    event_index, event.t_min, event.dist,
+				    event.t_max, event.certificate,
+				    event.direction, event.face_index,
+				    event.span_index);
+			    }
+			    failures++;
+			}
+		    }
+		    if (trace.prepared_production_selected)
+			selected++;
+		    if (gap_ratios[ratio_index] > 1.0 &&
+			trace.physical_event_seam_certified)
+			above_envelope_pairs++;
+
+		    double endpoint_error = 0.0;
+		    const bool same = partition_results_match(implicit_result,
+			variant_result, tol->dist, endpoint_error);
+		    if (std::isfinite(endpoint_error))
+			maximum_outside_error = std::max(maximum_outside_error,
+			    endpoint_error);
+		    const bool within_uncertainty = fabs(clearance) <=
+			2.0 * (tol->dist + measured_gap);
+		    if (!same) {
+			oracle_differences++;
+			if (within_uncertainty)
+			    uncertainty_differences++;
+			else
+			    outside_uncertainty_differences++;
+		    }
+		    if (gap_ratios[ratio_index] < 1.0 && clearance > 0.0 &&
+			    implicit_result.partitions &&
+			    !variant_result.partitions)
+			below_envelope_leaks++;
+		    if (clearance <= 0.0 &&
+			    (trace.closure_candidates ||
+			     trace.physical_event_seam_certified)) {
+			std::printf("FAIL: endpoint-moving Cobb contact/exterior "
+			    "closure sign=%d g/T=%.3g h/T=%.3g reverse=%d "
+			    "closure=%zu certified=%zu\n", sign,
+			    gap_ratios[ratio_index],
+			    clearance_ratios[clearance_index], reverse,
+			    trace.closure_candidates,
+			    trace.physical_event_seam_certified);
+			failures++;
+		    }
+		    if ((clearance_index != 3 &&
+			(!partition_result_valid(implicit_result, ray.direction) ||
+			 !partition_result_valid(variant_result, ray.direction))) ||
+			    trace.final_segments != variant_result.partitions) {
+			std::printf("FAIL: endpoint-moving Cobb invalid stream "
+			    "sign=%d g/T=%.3g h/T=%.3g reverse=%d "
+			    "segments=%zu/%zu\n", sign,
+			    gap_ratios[ratio_index],
+			    clearance_ratios[clearance_index], reverse,
+			    trace.final_segments, variant_result.partitions);
+			failures++;
+		    }
+		    if (!reverse) {
+			forward_implicit = implicit_result;
+			forward_variant = variant_result;
+		    } else if (forward_implicit.partitions !=
+			    implicit_result.partitions ||
+			    forward_variant.partitions !=
+			    variant_result.partitions ||
+			    fabs(partition_chord(forward_implicit) -
+			    partition_chord(implicit_result)) > tol->dist ||
+			    fabs(partition_chord(forward_variant) -
+			    partition_chord(variant_result)) > tol->dist) {
+			std::printf("FAIL: endpoint-moving Cobb reversal "
+			    "sign=%d g/T=%.3g h/T=%.3g\n", sign,
+			    gap_ratios[ratio_index],
+			    clearance_ratios[clearance_index]);
+			failures++;
+		    }
+		    rays++;
+		}
+	    }
+
+	    free_solid(trace_stp);
+	    free_prepared_model(variant_model);
+	    delete variant;
+	}
+    }
+
+
+    /* The endpoint/topology certificate and the resulting physical pair are
+     * similarity invariants.  Exercise the one newly certified endpoint-
+     * moving state independently of the endpoint-preserving classifier
+     * matrix, including ray reversal and extreme scale/translation. */
+    {
+	cobb_seam_frame frame;
+	int minimum_edge_index = pristine->m_E.Count();
+	for (int side = 0; side < 4; ++side) {
+	    int edge_index = -1;
+	    if (cobb_target_edge(pristine, frame.face_index, side, edge_index) &&
+		    edge_index < minimum_edge_index) {
+		minimum_edge_index = edge_index;
+		frame.side_index = side;
+	    }
+	}
+	double measured_gap = 0.0;
+	double applied_displacement = 0.0;
+	ON_Brep *base = cobb_endpoint_moving_seam_variant(pristine, origin,
+	    -0.9 * tol->dist, frame, measured_gap, applied_displacement);
+	struct endpoint_transform_case {
+	    const char *name;
+	    double scale;
+	    ON_3dVector translation;
+	    ON_3dVector axis;
+	    double angle;
+	} transform_cases[] = {
+	    {"translated", 1.0, ON_3dVector(-31.25, 47.5, 103.75),
+		ON_3dVector(0.0, 0.0, 1.0), 0.0},
+	    {"oblique-rotated-translated", 1.0,
+		ON_3dVector(-19.0, 23.0, 41.0),
+		ON_3dVector(1.0, -2.0, 0.5), 0.731},
+	    {"small-similarity", 0.01,
+		ON_3dVector(1.25, -2.5, 5.0),
+		ON_3dVector(-0.3, 1.0, 0.7), -1.113},
+	    {"large-similarity", 1.0e4,
+		ON_3dVector(1.0e6, -2.0e6, 3.0e6),
+		ON_3dVector(2.0, 0.25, -1.0), 2.017}
+	};
+	if (!base) {
+	    std::printf("FAIL: endpoint-moving similarity construction\n");
+	    failures++;
+	} else {
+	    for (size_t case_index = 0; case_index <
+		    sizeof(transform_cases) / sizeof(transform_cases[0]);
+		    ++case_index) {
+		const endpoint_transform_case &test = transform_cases[case_index];
+		const ON_Xform xform = cobb_axis_angle_similarity_transform(
+		    test.scale, test.translation, test.axis, test.angle);
+		ON_Brep *variant = new ON_Brep(*base);
+		bool transformed = variant->Transform(xform);
+		for (int vertex_index = 0;
+			transformed && vertex_index < variant->m_V.Count();
+			++vertex_index)
+		    variant->m_V[vertex_index].m_tolerance =
+			base->m_V[vertex_index].m_tolerance * test.scale;
+		for (int edge_index = 0;
+			transformed && edge_index < variant->m_E.Count();
+			++edge_index)
+		    variant->m_E[edge_index].m_tolerance =
+			base->m_E[edge_index].m_tolerance * test.scale;
+		struct bn_tol case_tol = *tol;
+		case_tol.dist = tol->dist * test.scale;
+		case_tol.dist_sq = case_tol.dist * case_tol.dist;
+		double edge_vertex_gap = 0.0;
+		double lift_vertex_gap = 0.0;
+		if (!transformed || !variant->IsValid() || !variant->IsSolid() ||
+			!cobb_edge_endpoint_contract(variant, frame.edge_index,
+			    case_tol.dist, edge_vertex_gap, lift_vertex_gap)) {
+		    std::printf("FAIL: endpoint-moving similarity %s "
+			"geometry endpoint=%.17g/%.17g\n", test.name,
+			edge_vertex_gap, lift_vertex_gap);
+		    delete variant;
+		    failures++;
+		    continue;
+		}
+
+		struct rt_i *rtip = rt_dirbuild_inmem(NULL, 0, NULL, 0);
+		if (!rtip) {
+		    std::printf("FAIL: endpoint-moving similarity %s rt_i\n",
+			test.name);
+		    delete variant;
+		    failures++;
+		    continue;
+		}
+		rtip->rti_tol = case_tol;
+		struct resource resource = {};
+		rt_init_resource(&resource, 0, rtip);
+		struct rt_brep_internal variant_internal = {};
+		variant_internal.magic = RT_BREP_INTERNAL_MAGIC;
+		variant_internal.brep = variant;
+		struct rt_db_internal variant_intern;
+		RT_DB_INTERNAL_INIT(&variant_intern);
+		variant_intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
+		variant_intern.idb_type = ID_BREP;
+		variant_intern.idb_meth = &OBJ[ID_BREP];
+		variant_intern.idb_ptr = &variant_internal;
+		struct soltab *stp = prep_solid(rtip, &variant_intern, ID_BREP);
+		if (!stp) {
+		    std::printf("FAIL: endpoint-moving similarity %s prep\n",
+			test.name);
+		    failures++;
+		} else {
+		    for (int reverse = 0; reverse <= 1; ++reverse) {
+			const sampled_ray base_ray = cobb_seam_grazing_ray(frame,
+			    origin, radius, 0.25 * tol->dist, reverse != 0);
+			const partition_result base_oracle = shoot_partitions(
+			    implicit_model, base_ray);
+			partition_result oracle = base_oracle;
+			if (oracle.partitions == 1) {
+			    oracle.intervals[0].in_dist *= test.scale;
+			    oracle.intervals[0].out_dist *= test.scale;
+			}
+			const ON_3dPoint transformed_origin =
+			    cobb_transform_point(xform, ON_3dPoint(base_ray.origin));
+			ON_3dVector transformed_direction = cobb_transform_vector(
+			    xform, ON_3dVector(base_ray.direction));
+			sampled_ray ray;
+			const bool direction_valid = transformed_direction.Unitize();
+			VSET(ray.origin, transformed_origin.x,
+			    transformed_origin.y, transformed_origin.z);
+			VSET(ray.direction, transformed_direction.x,
+			    transformed_direction.y, transformed_direction.z);
+			struct rt_brep_shot_trace trace;
+			(void)shoot_brep_trace(stp, rtip, &resource, ray, trace);
+			const struct rt_brep_trace_edge *target_edge =
+			    brep_trace_edge(trace, frame.edge_index);
+			if (!direction_valid || !target_edge ||
+				!target_edge->correspondence_supported ||
+				!target_edge->discrepancy_endpoints_certified ||
+				!target_edge->discrepancy_bounded ||
+				target_edge->discrepancy_bound_exhausted ||
+				!target_edge->discrepancy_authorized ||
+				target_edge->discrepancy_proof_class !=
+				    RT_BREP_SEAM_GAP_INSIDE ||
+				!trace.physical_event_seam_certified ||
+				!brep_trace_seam_event_stream_valid(trace,
+				    target_edge, variant, oracle, case_tol.dist,
+				    false, 2.5e-4)) {
+			    std::printf("FAIL: endpoint-moving similarity %s "
+				"reverse=%d edge/endpoints/bounded/authorized="
+				"%d/%d/%d/%d proof=%d certified=%zu cells=%zu\n",
+				test.name, reverse, target_edge != NULL,
+				target_edge ?
+				target_edge->discrepancy_endpoints_certified : -1,
+				target_edge ?
+				target_edge->discrepancy_bounded : -1,
+				target_edge ?
+				target_edge->discrepancy_authorized : -1,
+				target_edge ?
+				target_edge->discrepancy_proof_class : -1,
+				trace.physical_event_seam_certified,
+				target_edge ?
+				target_edge->discrepancy_bound_cells : 0);
+			    std::printf("  seam attempt/root/closure/continuation/"
+				"cert/fail=%zu/%zu/%zu/%zu/%zu/%zu "
+				"roots/boxes/final/selected=%zu/%zu/%zu/%zu "
+				"sector/state/ray-dot=%d/%d/%.17g\n",
+				trace.physical_event_seam_attempts,
+				trace.physical_event_seam_root_candidates,
+				trace.physical_event_seam_closure_candidates,
+				trace.physical_event_seam_continuation_candidates,
+				trace.physical_event_seam_certified,
+				trace.physical_event_seam_failures,
+				trace.stored_local_roots,
+				trace.stored_surface_boxes, trace.final_segments,
+				trace.prepared_production_selected,
+				target_edge ? target_edge->sector_valid : -1,
+				target_edge ? target_edge->closest_state : -1,
+				target_edge ? target_edge->ray_edge_dot : NAN);
+			    failures++;
+			} else {
+			    endpoint_similarity_cases++;
+			    minimum_similarity_cells = std::min(
+				minimum_similarity_cells,
+				target_edge->discrepancy_bound_cells);
+			    maximum_similarity_cells = std::max(
+				maximum_similarity_cells,
+				target_edge->discrepancy_bound_cells);
+			}
+		    }
+		    free_solid(stp);
+		}
+		rt_clean_resource_basic(rtip, &resource);
+		BU_PTBL_SET(&rtip->rti_resources, 0, NULL);
+		rt_i_destroy(rtip);
+	    }
+	}
+	delete base;
+    }
+
+
+    /* A large edge tolerance or the opposite endpoint's vertex tolerance
+     * must not make the independent endpoint oracle accept an under-declared
+     * endpoint.  Do not send this intentionally invalid metadata through
+     * BREP prep; malformed-model prep hardening is a separate concern. */
+    for (int endpoint = 0; endpoint < 2; ++endpoint) {
+	cobb_seam_frame frame;
+	int minimum_edge_index = pristine->m_E.Count();
+	for (int side = 0; side < 4; ++side) {
+	    int edge_index = -1;
+	    if (cobb_target_edge(pristine, frame.face_index, side, edge_index) &&
+		    edge_index < minimum_edge_index) {
+		minimum_edge_index = edge_index;
+		frame.side_index = side;
+	    }
+	}
+	double measured_gap = 0.0;
+	double applied_displacement = 0.0;
+	ON_Brep *variant = cobb_endpoint_moving_seam_variant(pristine, origin,
+	    2.0 * tol->dist, frame, measured_gap, applied_displacement);
+	if (!variant || frame.edge_index < 0 ||
+		frame.edge_index >= variant->m_E.Count()) {
+	    std::printf("FAIL: endpoint-moving under-declared construction\n");
+	    delete variant;
+	    failures++;
+	    continue;
+	}
+	const int vertex_index =
+	    variant->m_E[frame.edge_index].m_vi[endpoint];
+	if (vertex_index < 0 || vertex_index >= variant->m_V.Count()) {
+	    std::printf("FAIL: endpoint-moving under-declared vertex\n");
+	    delete variant;
+	    failures++;
+	    continue;
+	}
+	variant->m_V[vertex_index].m_tolerance = 0.5 * tol->dist;
+	double edge_vertex_gap = 0.0;
+	double lift_vertex_gap = 0.0;
+	if (cobb_edge_endpoint_contract(variant, frame.edge_index, tol->dist,
+		edge_vertex_gap, lift_vertex_gap)) {
+	    std::printf("FAIL: endpoint-moving under-declared endpoint=%d "
+		"edge/trim-gap=%.17g/%.17g\n", endpoint,
+		edge_vertex_gap, lift_vertex_gap);
+	    failures++;
+	} else {
+	    endpoint_tolerance_rejections++;
+	}
+	delete variant;
+    }
+
+
+    if (rays != 60 || endpoint_certificates != rays ||
+	    inside_gap_proofs != rays || exhausted_gap_proofs ||
+	    !maximum_gap_cells || certified_pairs < 2 || legacy_one_hit > 16 ||
+	    selected < certified_pairs || oracle_differences > 46 ||
+	    uncertainty_differences > 46 || outside_uncertainty_differences ||
+	    below_envelope_leaks || endpoint_tolerance_rejections != 2 ||
+	    endpoint_similarity_cases != 8) {
+	std::printf("FAIL: endpoint-moving Cobb ratchet rays=%zu/60 "
+	    "certified/above=%zu/%zu endpoints/inside=%zu/%zu exhausted/cells="
+	    "%zu/%zu legacy/selected=%zu/%zu differences=%zu/%zu/%zu "
+	    "leaks=%zu endpoint-rejections=%zu/2 similarity=%zu/8\n", rays,
+	    certified_pairs,
+	    above_envelope_pairs,
+	    endpoint_certificates, inside_gap_proofs, exhausted_gap_proofs,
+	    maximum_gap_cells, legacy_one_hit, selected, oracle_differences,
+	    uncertainty_differences, outside_uncertainty_differences,
+	    below_envelope_leaks, endpoint_tolerance_rejections,
+	    endpoint_similarity_cases);
+	failures++;
+    }
+    std::printf("Cobb endpoint-moving seam trend: rays=%zu "
+	"endpoint/inside=%zu/%zu "
+	"legacy-one-hit=%zu certified=%zu selected=%zu "
+	"oracle-differences=%zu uncertainty=%zu outside=%zu leaks=%zu "
+	"gap-exhausted=%zu max-gap-cells=%zu max-oracle-error=%.3g "
+	"max-calibration=%.3g endpoint-edge/lift=%.3g/%.3g "
+	"endpoint-rejections=%zu similarity=%zu cells=%zu/%zu\n", rays,
+	endpoint_certificates, inside_gap_proofs, legacy_one_hit,
+	certified_pairs, selected,
+	oracle_differences, uncertainty_differences,
+	outside_uncertainty_differences, below_envelope_leaks,
+	exhausted_gap_proofs, maximum_gap_cells, maximum_outside_error,
+	maximum_calibration_error, maximum_edge_vertex_gap,
+	maximum_lift_vertex_gap, endpoint_tolerance_rejections,
+	endpoint_similarity_cases, minimum_similarity_cells,
+	maximum_similarity_cells);
+    free_prepared_model(implicit_model);
+    delete pristine;
+    return failures;
+}
+
+
+static int
 check_cobb_bowed_seam_corpus(const struct bn_tol *tol, bool emit_report,
     struct rt_i *trace_rtip, struct resource *trace_resource)
 {
@@ -10901,7 +14259,8 @@ check_cobb_bowed_seam_corpus(const struct bn_tol *tol, bool emit_report,
 		    if (trace.physical_event_seam_certified) {
 			if (!trace.prepared_production_selected ||
 				!brep_trace_seam_event_stream_valid(trace,
-				target_edge, implicit_result, tol->dist)) {
+				    target_edge, variant, implicit_result,
+				    tol->dist)) {
 			    std::printf("FAIL: bowed Cobb seam event stream "
 				"sign=%d g/T=%.3g h/T=%.3g reverse=%d "
 				"selected=%zu events=%zu/%zu complete=%zu "
@@ -11537,22 +14896,27 @@ check_cobb_bowed_seam_corpus(const struct bn_tol *tol, bool emit_report,
 	    prepared_partition_promotions);
 	failures++;
     }
-    if (prepared_seam_pairs != 16 ||
-	    root_events.prepared_production_selected != 118 ||
-	    root_events.physical_event_seam != 32 ||
-	    root_events.physical_event_seam_certified != 16 ||
+    if (prepared_seam_pairs != 22 ||
+	    root_events.prepared_production_selected != 124 ||
+	    root_events.physical_event_seam != 44 ||
+	    root_events.physical_event_seam_certified != 22 ||
 	    root_events.physical_event_seam_edge_only_candidates != 14 ||
-	    root_events.physical_event_seam_ownership_failures != 6 ||
-	    root_events.physical_event_seam_witness_failures != 6 ||
+	    root_events.physical_event_seam_ownership_failures ||
+	    root_events.physical_event_seam_witness_failures ||
 	    root_events.physical_event_seam_box_failures ||
 	    root_events.physical_event_seam_root_coverage_failures ||
 	    root_events.physical_event_seam_witness_boxes != 4 ||
-	    root_events.physical_event_seam_witness_roots != 4) {
-	std::printf("FAIL: prepared Cobb seam certification pairs=%zu/16 "
-	    "selected=%zu/118 "
-	    "events=%zu/32 certified=%zu/16 edge-only=%zu/14 "
-	    "ownership=%zu/6 witness=%zu/6 box/root=%zu/%zu "
-	    "witness-box/root=%zu/%zu\n", prepared_seam_pairs,
+	    root_events.physical_event_seam_witness_roots != 4 ||
+	    root_events.physical_event_seam_contact_pairs != 6 ||
+	    root_events.physical_event_seam_contact_boxes != 12 ||
+	    root_events.physical_event_seam_contact_roots != 12 ||
+	    root_events.physical_event_seam_contact_miss_roots) {
+	std::printf("FAIL: prepared Cobb seam certification pairs=%zu/22 "
+	    "selected=%zu/124 "
+	    "events=%zu/44 certified=%zu/22 edge-only=%zu/14 "
+	    "ownership=%zu witness=%zu box/root=%zu/%zu "
+	    "witness-box/root=%zu/%zu contact=%zu/%zu/%zu/%zu\n",
+	    prepared_seam_pairs,
 	    root_events.prepared_production_selected,
 	    root_events.physical_event_seam,
 	    root_events.physical_event_seam_certified,
@@ -11562,7 +14926,11 @@ check_cobb_bowed_seam_corpus(const struct bn_tol *tol, bool emit_report,
 	    root_events.physical_event_seam_box_failures,
 	    root_events.physical_event_seam_root_coverage_failures,
 	    root_events.physical_event_seam_witness_boxes,
-	    root_events.physical_event_seam_witness_roots);
+	    root_events.physical_event_seam_witness_roots,
+	    root_events.physical_event_seam_contact_pairs,
+	    root_events.physical_event_seam_contact_boxes,
+	    root_events.physical_event_seam_contact_roots,
+	    root_events.physical_event_seam_contact_miss_roots);
 	failures++;
     }
     if (root_events.surface_krawczyk_boxes) {
@@ -11675,10 +15043,20 @@ main(int argc, char **argv)
 	BU_STR_EQUAL(argv[1], "--grazing-report");
     const bool report_cobb = argc == 2 &&
 	BU_STR_EQUAL(argv[1], "--cobb-report");
+    const bool report_cobb_oblique = argc == 2 &&
+	BU_STR_EQUAL(argv[1], "--cobb-oblique-report");
     const bool affine_only = argc == 2 &&
 	BU_STR_EQUAL(argv[1], "--affine-only");
     const bool interval_only = argc == 2 &&
 	BU_STR_EQUAL(argv[1], "--interval-only");
+    const bool local_root_only = argc == 2 &&
+	BU_STR_EQUAL(argv[1], "--local-root-only");
+    const bool grazing_root_only = argc == 2 &&
+	BU_STR_EQUAL(argv[1], "--grazing-root-only");
+    const bool trim_interval_only = argc == 2 &&
+	BU_STR_EQUAL(argv[1], "--trim-interval-only");
+    const bool source_union_only = argc == 2 &&
+	BU_STR_EQUAL(argv[1], "--source-union-only");
     const bool fold_only = argc == 2 &&
 	BU_STR_EQUAL(argv[1], "--fold-only");
     const bool core_only = argc == 2 &&
@@ -11689,23 +15067,57 @@ main(int argc, char **argv)
 	BU_STR_EQUAL(argv[1], "--crofton-only");
     const bool seam_only = argc == 2 &&
 	BU_STR_EQUAL(argv[1], "--seam-only");
-    if (argc != 1 && !report_grazing && !report_cobb && !affine_only &&
-	    !interval_only && !fold_only && !core_only && !directed_only &&
-	    !crofton_only && !seam_only)
+    const bool endpoint_only = argc == 2 &&
+	BU_STR_EQUAL(argv[1], "--endpoint-only");
+    const bool nonisoparametric_only = argc == 2 &&
+	BU_STR_EQUAL(argv[1], "--nonisoparametric-only");
+    const bool contact_trim_only = argc == 2 &&
+	BU_STR_EQUAL(argv[1], "--contact-trim-only");
+    if (argc != 1 && !report_grazing && !report_cobb &&
+	    !report_cobb_oblique && !affine_only &&
+	    !interval_only && !local_root_only && !grazing_root_only &&
+	    !trim_interval_only &&
+	    !source_union_only &&
+	    !fold_only && !core_only &&
+	    !directed_only &&
+	    !crofton_only && !seam_only && !endpoint_only &&
+	    !nonisoparametric_only && !contact_trim_only)
 	bu_exit(1, "Usage: %s [--grazing-report|--cobb-report|"
-	    "--affine-only|--interval-only|--fold-only|--core-only|"
-	    "--directed-only|--crofton-only|--seam-only]\n", argv[0]);
+	    "--cobb-oblique-report|"
+	    "--affine-only|--interval-only|--local-root-only|"
+	    "--grazing-root-only|"
+	    "--trim-interval-only|"
+	    "--source-union-only|--fold-only|"
+	    "--core-only|"
+	    "--directed-only|--crofton-only|--seam-only|--endpoint-only|"
+	    "--nonisoparametric-only|--contact-trim-only]\n",
+	    argv[0]);
     if (interval_only) {
 	const int interval_failures = check_brep_interval_enclosures() +
-	    check_brep_fold_interval_classifier();
+	    check_brep_local_root_solver() +
+	    check_brep_weighted_local_root_solver() +
+	    check_brep_fold_interval_classifier() +
+	    check_brep_source_union_solver() +
+	    check_brep_trim_interval_solver();
 	return interval_failures ? 1 : 0;
     }
+    if (local_root_only)
+	return (check_brep_local_root_solver() +
+	    check_brep_weighted_local_root_solver()) ? 1 : 0;
+    if (trim_interval_only)
+	return check_brep_trim_interval_solver() ? 1 : 0;
+    if (source_union_only)
+	return check_brep_source_union_solver() ? 1 : 0;
     if (fold_only)
 	return check_brep_fold_solver() ? 1 : 0;
-    const bool split_core = directed_only || crofton_only || seam_only;
+    const bool split_core = directed_only || grazing_root_only ||
+	crofton_only || seam_only || endpoint_only;
     const bool run_directed = !split_core || directed_only;
+    const bool run_grazing_root = !split_core || directed_only ||
+	grazing_root_only;
     const bool run_crofton = !split_core || crofton_only;
     const bool run_seam = !split_core || seam_only;
+    const bool run_endpoint = !split_core || endpoint_only;
 
     const double radius = 10.0;
     struct rt_ell_internal ell = {};
@@ -11733,6 +15145,33 @@ main(int argc, char **argv)
 
     struct resource resp = {};
     rt_init_resource(&resp, 0, rtip);
+
+    if (nonisoparametric_only) {
+	const int nonisoparametric_failures =
+	    check_cobb_nonisoparametric_oblique(&rtip->rti_tol);
+	rt_clean_resource_basic(rtip, &resp);
+	BU_PTBL_SET(&rtip->rti_resources, 0, NULL);
+	rt_i_destroy(rtip);
+	return nonisoparametric_failures ? 1 : 0;
+    }
+
+    if (contact_trim_only) {
+	const int contact_trim_failures =
+	    check_cobb_contact_trim_oblique(&rtip->rti_tol);
+	rt_clean_resource_basic(rtip, &resp);
+	BU_PTBL_SET(&rtip->rti_resources, 0, NULL);
+	rt_i_destroy(rtip);
+	return contact_trim_failures ? 1 : 0;
+    }
+
+    if (report_cobb_oblique) {
+	const int oblique_failures = check_cobb_oblique_contact_trend(
+	    &rtip->rti_tol, true);
+	rt_clean_resource_basic(rtip, &resp);
+	BU_PTBL_SET(&rtip->rti_resources, 0, NULL);
+	rt_i_destroy(rtip);
+	return oblique_failures ? 1 : 0;
+    }
 
     if (affine_only) {
 	const int affine_failures =
@@ -11792,7 +15231,11 @@ main(int argc, char **argv)
     int failures = 0;
     if (!core_only && !split_core) {
 	failures += check_brep_interval_enclosures();
+	failures += check_brep_local_root_solver();
+	failures += check_brep_weighted_local_root_solver();
 	failures += check_brep_fold_interval_classifier();
+	failures += check_brep_source_union_solver();
+	failures += check_brep_trim_interval_solver();
 	failures += check_brep_fold_solver();
     }
     if (run_directed) {
@@ -11816,6 +15259,9 @@ main(int argc, char **argv)
 	if (report_grazing)
 	    grazing_report(implicit_stp, brep_stp, rtip, &resp, radius);
     }
+    if (run_grazing_root)
+	failures += check_grazing_local_root_certificate_trend(brep_stp, rtip,
+	    &resp, radius);
 
     free_solid(brep_stp);
     free_solid(implicit_stp);
@@ -11849,6 +15295,9 @@ main(int argc, char **argv)
 	failures += check_brep_concave_vertex_fan(&rtip->rti_tol, rtip,
 	    &resp);
 	failures += check_cobb_classifier_invariance(&rtip->rti_tol);
+	failures += check_cobb_oblique_contact_trend(&rtip->rti_tol, false);
+	failures += check_cobb_nonisoparametric_oblique(&rtip->rti_tol);
+	failures += check_cobb_contact_trim_oblique(&rtip->rti_tol);
 	failures += check_cobb_ambiguous_correspondence(&rtip->rti_tol, rtip,
 	    &resp);
 	failures += check_cobb_discrepancy_bound_budget(&rtip->rti_tol, rtip,
@@ -11858,6 +15307,10 @@ main(int argc, char **argv)
 	failures += check_cobb_bowed_seam_corpus(&rtip->rti_tol, report_cobb,
 	    rtip, &resp);
     }
+
+    if (run_endpoint)
+	failures += check_cobb_endpoint_moving_seam_corpus(&rtip->rti_tol,
+	    rtip, &resp);
 
     rt_clean_resource_basic(rtip, &resp);
     BU_PTBL_SET(&rtip->rti_resources, 0, NULL);
