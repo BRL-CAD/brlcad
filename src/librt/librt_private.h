@@ -473,9 +473,11 @@ RT_EXPORT extern int rt_bot_shot_specific(
 #define RT_BREP_TRACE_MAX_ROOTS 64
 #define RT_BREP_TRACE_MAX_EDGES 64
 #define RT_BREP_TRACE_MAX_SURFACE_BOXES 64
+#define RT_BREP_TRACE_MAX_FOLD_ROOTS 64
 #define RT_BREP_TRACE_MAX_LOCAL_ROOTS 64
 #define RT_BREP_TRACE_MAX_LOCAL_CLUSTERS 64
 #define RT_BREP_TRACE_MAX_LOCAL_SEGMENTS 8
+#define RT_BREP_EXPANSION_CAPACITY 128
 #define RT_BREP_TRACE_CLEANUP_STAGES 5
 #define RT_BREP_TRACE_SOLVER_STATUS_COUNT 11
 #define RT_BREP_TRACE_CORRECTOR_STATUS_COUNT 8
@@ -491,6 +493,9 @@ RT_EXPORT extern int rt_bot_shot_specific(
 #define RT_BREP_TRACE_LEAVING 1
 #define RT_BREP_TRACE_LOCAL_CONTACT 2
 #define RT_BREP_TRACE_LOCAL_UNRESOLVED 3
+#define RT_BREP_FOLD_GAP_RESOLVED 1
+#define RT_BREP_FOLD_GAP_SUBMINIMUM 2
+#define RT_BREP_FOLD_GAP_AMBIGUOUS 3
 #define RT_BREP_PREPARED_FALLBACK_NONE 0
 #define RT_BREP_PREPARED_FALLBACK_NON_SOLID 1
 #define RT_BREP_PREPARED_FALLBACK_PLATE 2
@@ -556,6 +561,32 @@ struct rt_brep_trace_surface_box {
     int face_index;
     int span_index;
     int depth;
+};
+
+struct rt_brep_trace_fold_root {
+    fastf_t dist;
+    fastf_t t_min;
+    fastf_t t_max;
+    fastf_t uv[2];
+    fastf_t uv_min[2];
+    fastf_t uv_max[2];
+    fastf_t normal_dot;
+    fastf_t trim_distance;
+    int face_index;
+    int span_index;
+    int adjacent_face_index;
+    int trim_status;
+    int hit_class;
+    int determinant_sign;
+    int direction;
+};
+
+struct rt_brep_fold_interval_test_result {
+    fastf_t gap_minimum;
+    fastf_t gap_maximum;
+    fastf_t minimum_t_minimum;
+    fastf_t minimum_t_maximum;
+    int classification;
 };
 
 struct rt_brep_trace_local_root {
@@ -639,6 +670,10 @@ struct rt_brep_shot_trace {
     size_t candidate_surface_spans;
     size_t excluded_surface_spans;
     size_t surface_subdivision_boxes;
+    size_t surface_rotated_hull_attempts;
+    size_t surface_rotated_hull_exclusions;
+    size_t surface_rotated_hull_retained;
+    size_t surface_rotated_hull_inconclusive;
     size_t surface_clip_attempts;
     size_t surface_clip_contractions;
     size_t surface_clip_u_contractions;
@@ -655,6 +690,83 @@ struct rt_brep_shot_trace {
     size_t surface_krawczyk_boxes;
     size_t surface_krawczyk_min_depth;
     size_t surface_krawczyk_max_depth;
+    size_t surface_fold_attempts;
+    size_t surface_fold_candidates;
+    size_t surface_fold_krawczyk_attempts;
+    size_t surface_fold_krawczyk_available;
+    size_t surface_fold_krawczyk_certified;
+    size_t surface_fold_restriction_failures;
+    size_t surface_fold_expansion_attempts;
+    size_t surface_fold_expansion_available;
+    size_t surface_fold_expansion_certified;
+    size_t surface_fold_expansion_failures;
+    size_t surface_fold_expansion_contraction_attempts;
+    size_t surface_fold_expansion_contracted;
+    size_t surface_fold_expansion_contraction_empty;
+    size_t surface_fold_expansion_contraction_unchanged;
+    size_t surface_fold_expansion_high_water;
+    size_t surface_fold_corridor_attempts;
+    size_t surface_fold_corridor_available;
+    size_t surface_fold_corridor_regular_signed;
+    size_t surface_fold_corridor_boundaries_opposed;
+    size_t surface_fold_corridor_determinant_signed;
+    size_t surface_fold_corridor_unique;
+    size_t surface_fold_corridor_graph_attempts;
+    size_t surface_fold_corridor_graph_certified;
+    size_t surface_fold_corridor_graph_boxes;
+    size_t surface_fold_corridor_graph_contractions;
+    size_t surface_fold_corridor_graph_failures;
+    size_t surface_fold_corridor_graph_restriction_failures;
+    size_t surface_fold_corridor_graph_determinant_failures;
+    size_t surface_fold_corridor_graph_sign_conflicts;
+    size_t surface_fold_corridor_graph_depth_exhausted;
+    size_t surface_fold_corridor_graph_workspace_exhausted;
+    size_t surface_fold_boundary_existence_attempts;
+    size_t surface_fold_boundary_existence_available;
+    size_t surface_fold_boundary_existence_certified;
+    size_t surface_fold_boundary_existence_contractions;
+    size_t surface_fold_boundary_existence_failures;
+    size_t surface_fold_strip_excluded;
+    size_t surface_fold_strip_boxes;
+    size_t surface_fold_strip_contractions;
+    size_t surface_fold_strip_restriction_failures;
+    size_t surface_fold_strip_arithmetic_failures;
+    size_t surface_fold_strip_depth_exhausted;
+    size_t surface_fold_strip_workspace_exhausted;
+    size_t surface_fold_complete;
+    size_t surface_fold_roots;
+    size_t stored_surface_fold_roots;
+    size_t surface_fold_root_overflow;
+    size_t surface_fold_root_failures;
+    size_t surface_fold_localization_attempts;
+    size_t surface_fold_localization_certified;
+    size_t surface_fold_localization_contractions;
+    size_t surface_fold_localization_failures;
+    size_t surface_fold_direction_checks;
+    size_t surface_fold_direction_mismatches;
+    size_t surface_fold_trim_queries;
+    size_t surface_fold_trim_candidates;
+    size_t surface_fold_trim_failures;
+    size_t surface_fold_topology_pairs;
+    size_t surface_fold_duplicate_events;
+    size_t surface_fold_material_pairs;
+    size_t surface_fold_void_pairs;
+    size_t surface_fold_resolved_pairs;
+    size_t surface_fold_subminimum_contacts;
+    size_t surface_fold_tolerance_ambiguous;
+    size_t surface_fold_unmatched_roots;
+    size_t surface_fold_promoted_pairs;
+    fastf_t surface_fold_minimum_t;
+    fastf_t surface_fold_pair_gap_min;
+    fastf_t surface_fold_pair_gap_max;
+    fastf_t surface_fold_segment_in;
+    fastf_t surface_fold_segment_out;
+    size_t surface_fold_corridor_failures;
+    size_t surface_fold_corridor_high_water;
+    fastf_t surface_fold_min_determinant_ratio;
+    fastf_t surface_fold_best_image_excess;
+    fastf_t surface_fold_expansion_min_determinant_ratio;
+    fastf_t surface_fold_expansion_best_image_excess;
     size_t surface_subdivision_max_depth;
     size_t surface_workspace_high_water;
     size_t surface_workspace_exhausted;
@@ -662,6 +774,8 @@ struct rt_brep_shot_trace {
     size_t surface_box_overflow;
     struct rt_brep_trace_surface_box
 	surface_boxes[RT_BREP_TRACE_MAX_SURFACE_BOXES];
+    struct rt_brep_trace_fold_root
+	surface_fold_roots_data[RT_BREP_TRACE_MAX_FOLD_ROOTS];
     size_t local_root_attempts;
     size_t local_root_candidates;
     size_t stored_local_roots;
@@ -795,6 +909,84 @@ struct rt_brep_coefficient_test_result {
     fastf_t function_maximum[2];
     fastf_t ray_minimum;
     fastf_t ray_maximum;
+    int expansion_available;
+    size_t expansion_high_water;
+    fastf_t expansion_function_minimum[2];
+    fastf_t expansion_function_maximum[2];
+};
+
+struct rt_brep_linear_hull_test_result {
+    fastf_t minimum[2];
+    fastf_t maximum[2];
+    int excluded;
+};
+
+#define RT_BREP_FOLD_TEST_MAX_CANDIDATES 4
+#define RT_BREP_DETERMINANT_TEST_MAX_ORDER 30
+#define RT_BREP_DETERMINANT_TEST_MAX_COEFFICIENTS 900
+
+struct rt_brep_fold_test_result {
+    int frame_available;
+    int regular_direction;
+    int capacity_exhausted;
+    size_t samples;
+    size_t regular_solves;
+    size_t brackets;
+    size_t candidate_count;
+    fastf_t uv[RT_BREP_FOLD_TEST_MAX_CANDIDATES][2];
+    fastf_t residual[RT_BREP_FOLD_TEST_MAX_CANDIDATES];
+    fastf_t weak_bracket_width[RT_BREP_FOLD_TEST_MAX_CANDIDATES];
+};
+
+struct rt_brep_determinant_test_result {
+    int u_order;
+    int v_order;
+    fastf_t minimum[RT_BREP_DETERMINANT_TEST_MAX_COEFFICIENTS];
+    fastf_t maximum[RT_BREP_DETERMINANT_TEST_MAX_COEFFICIENTS];
+};
+
+struct rt_brep_krawczyk_test_result {
+    int available;
+    int certified;
+    fastf_t determinant_ratio;
+    fastf_t image_minimum[2];
+    fastf_t image_maximum[2];
+};
+
+struct rt_brep_corridor_test_result {
+    int available;
+    int regular_derivative_signed;
+    int regular_boundaries_opposed;
+    int determinant_signed;
+    int unique;
+    int determinant_sign;
+};
+
+struct rt_brep_fold_graph_test_result {
+    int available;
+    int regular_derivative_signed;
+    int regular_boundaries_opposed;
+    int whole_determinant_signed;
+    int graph_determinant_signed;
+    int determinant_sign;
+    int boundary_existence_available;
+    int boundary_existence_certified;
+    int system_excluded;
+    size_t graph_boxes;
+    size_t graph_contractions;
+    size_t graph_restriction_failures;
+    size_t graph_determinant_failures;
+    size_t graph_sign_conflicts;
+    size_t graph_depth_exhausted;
+    size_t graph_workspace_exhausted;
+    size_t boundary_existence_contractions;
+    size_t strip_boxes;
+    size_t strip_contractions;
+    size_t strip_restriction_failures;
+    size_t strip_arithmetic_failures;
+    size_t strip_depth_exhausted;
+    size_t strip_workspace_exhausted;
+    size_t expansion_high_water;
 };
 
 RT_EXPORT extern int _rt_brep_interval_test(
@@ -803,9 +995,53 @@ RT_EXPORT extern int _rt_brep_interval_test(
     const fastf_t root[2], struct rt_brep_interval_test_result *result);
 RT_EXPORT extern int _rt_brep_interval_product_test(
     const fastf_t first[2], const fastf_t second[2], fastf_t result[2]);
+RT_EXPORT extern int _rt_brep_expansion_interval_product_test(
+    const fastf_t first[2], const fastf_t second[2], fastf_t result[2],
+    size_t *expansion_high_water);
 RT_EXPORT extern int _rt_brep_interval_divide_test(
     const fastf_t numerator[2], const fastf_t denominator[2],
     fastf_t result[2]);
+RT_EXPORT extern int _rt_brep_linear_hull_test(
+    const fastf_t *first_coefficients, const fastf_t *second_coefficients,
+    size_t count, const fastf_t coefficient_error[2],
+    const fastf_t transform[2][2],
+    struct rt_brep_linear_hull_test_result *result);
+RT_EXPORT extern int _rt_brep_fold_test(
+    const fastf_t *first_coefficients, const fastf_t *second_coefficients,
+    int u_order, int v_order, const fastf_t coefficient_error[2],
+    struct rt_brep_fold_test_result *result);
+RT_EXPORT extern int _rt_brep_determinant_test(
+    const fastf_t *first_coefficients, const fastf_t *first_error,
+    const fastf_t *second_coefficients, const fastf_t *second_error,
+    int u_order, int v_order,
+    struct rt_brep_determinant_test_result *result);
+RT_EXPORT extern int _rt_brep_determinant_restrict_test(
+    const fastf_t *input_minimum, const fastf_t *input_maximum,
+    int u_order, int v_order, const fastf_t minimum[2],
+    const fastf_t maximum[2], fastf_t *output_minimum,
+    fastf_t *output_maximum);
+RT_EXPORT extern int _rt_brep_krawczyk_test(
+    const fastf_t *first_coefficients, const fastf_t *first_error,
+    const fastf_t *second_coefficients, const fastf_t *second_error,
+    int u_order, int v_order, const fastf_t root[2],
+    struct rt_brep_krawczyk_test_result *result);
+RT_EXPORT extern int _rt_brep_expansion_krawczyk_test(
+    const fastf_t *first_coefficients, const fastf_t *first_error,
+    const fastf_t *second_coefficients, const fastf_t *second_error,
+    int u_order, int v_order, const fastf_t root[2],
+    struct rt_brep_krawczyk_test_result *result,
+    size_t *expansion_high_water);
+RT_EXPORT extern int _rt_brep_corridor_test(
+    const fastf_t *first_coefficients, const fastf_t *first_error,
+    const fastf_t *second_coefficients, const fastf_t *second_error,
+    int u_order, int v_order, int regular_direction,
+    struct rt_brep_corridor_test_result *result);
+RT_EXPORT extern int _rt_brep_fold_graph_test(
+    const fastf_t *first_minimum, const fastf_t *first_maximum,
+    const fastf_t *second_minimum, const fastf_t *second_maximum,
+    int u_order, int v_order, int regular_direction, int test_determinant,
+    int test_exclusion,
+    struct rt_brep_fold_graph_test_result *result);
 RT_EXPORT extern int _rt_brep_coefficient_test(
     const fastf_t cv[4], const fastf_t origin[3], const fastf_t direction[3],
     const fastf_t planes[2][3],
@@ -814,6 +1050,20 @@ RT_EXPORT extern int _rt_brep_restrict_test(
     const fastf_t *input, int u_order, int v_order, fastf_t input_error,
     const fastf_t minimum[2], const fastf_t maximum[2], fastf_t *output,
     fastf_t *output_error);
+RT_EXPORT extern int _rt_brep_interval_restrict_test(
+    const fastf_t *input, const fastf_t *input_error, int u_order,
+    int v_order, const fastf_t minimum[2], const fastf_t maximum[2],
+    fastf_t *output_minimum, fastf_t *output_maximum);
+RT_EXPORT extern int _rt_brep_expansion_interval_test(
+    const fastf_t *first_coefficients, const fastf_t *second_coefficients,
+    int u_order, int v_order, const fastf_t coefficient_error[2],
+    const fastf_t root[2], struct rt_brep_interval_test_result *result,
+    size_t *expansion_high_water);
+RT_EXPORT extern int _rt_brep_expansion_restrict_test(
+    const fastf_t *input, const fastf_t *input_error, int u_order,
+    int v_order, const fastf_t minimum[2], const fastf_t maximum[2],
+    fastf_t *output_minimum, fastf_t *output_maximum,
+    size_t *expansion_high_water);
 RT_EXPORT extern int _rt_brep_reparameterize_test(
     const fastf_t *input, int u_order, int v_order, fastf_t input_error,
     const fastf_t minimum[2], const fastf_t maximum[2], fastf_t *output,
@@ -822,6 +1072,10 @@ RT_EXPORT extern int _rt_brep_clip_test(
     const fastf_t *first_coefficients, const fastf_t *second_coefficients,
     int u_order, int v_order, const fastf_t coefficient_error[2],
     fastf_t parameter_range[4]);
+RT_EXPORT extern int _rt_brep_fold_interval_test(
+    const fastf_t lower[2], const fastf_t upper[2],
+    const fastf_t direction[3], fastf_t model_tolerance,
+    struct rt_brep_fold_interval_test_result *result);
 
 RT_EXPORT extern int _rt_brep_shot_trace(
     struct soltab *stp, struct xray *rp, struct application *ap,

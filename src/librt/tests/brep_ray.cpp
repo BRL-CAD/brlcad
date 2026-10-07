@@ -493,8 +493,14 @@ brep_trace_fixed_workspaces_match(const struct rt_brep_shot_trace &trace,
 	  trace.local_corrector_min_failure_ratio > 1.0 &&
 	  trace.local_corrector_max_failure_ratio >=
 	    trace.local_corrector_min_failure_ratio));
+    const bool rotated_hulls_match =
+	trace.surface_rotated_hull_attempts ==
+	trace.surface_rotated_hull_exclusions +
+	trace.surface_rotated_hull_retained +
+	trace.surface_rotated_hull_inconclusive;
     return leaf_workspace_matches &&
 	corrector_statuses_match &&
+	rotated_hulls_match &&
 	trace.prepared_production_attempts == 1 &&
 	trace.prepared_production_eligible ==
 	    trace.prepared_production_selected &&
@@ -532,6 +538,12 @@ brep_trace_fixed_workspaces_match(const struct rt_brep_shot_trace &trace,
 	trace.face_trim_hit_class_mismatches == 0 &&
 	trace.face_trim_adjacency_mismatches == 0 &&
 	trace.face_trim_equivalence_mismatches == 0 &&
+	(trace.surface_fold_root_failures ||
+	 trace.surface_fold_trim_queries + trace.surface_fold_trim_failures ==
+	    trace.stored_surface_fold_roots) &&
+	trace.surface_fold_promoted_pairs <= 1 &&
+	(!trace.surface_fold_promoted_pairs ||
+	 trace.prepared_production_selected) &&
 	trace.local_trim_failures == 0 &&
 	trace.local_trim_queries + trace.local_trim_failures ==
 	    trace.stored_local_roots &&
@@ -3136,6 +3148,14 @@ static bool
 exact_dyadic_add(const exact_dyadic &first, const exact_dyadic &second,
     exact_dyadic &result)
 {
+    if (!first.mantissa) {
+	result = second;
+	return exact_dyadic_normalize(result);
+    }
+    if (!second.mantissa) {
+	result = first;
+	return exact_dyadic_normalize(result);
+    }
     const int exponent = std::min(first.exponent, second.exponent);
     const int first_shift = first.exponent - exponent;
     const int second_shift = second.exponent - exponent;
@@ -3241,12 +3261,13 @@ exact_dyadic_bezier_split(const exact_dyadic *input, int order,
     const exact_dyadic &parameter, exact_dyadic *left,
     exact_dyadic *right)
 {
-    if (!input || !left || !right || order < 2 || order > 16)
+    if (!input || !left || !right || order < 2 ||
+	    order > RT_BREP_DETERMINANT_TEST_MAX_ORDER)
 	return false;
     exact_dyadic complement;
     if (!exact_dyadic_subtract({1, 0}, parameter, complement))
 	return false;
-    exact_dyadic work[16];
+    exact_dyadic work[RT_BREP_DETERMINANT_TEST_MAX_ORDER];
     for (int i = 0; i < order; ++i)
 	work[i] = input[i];
     left[0] = work[0];
@@ -3282,8 +3303,8 @@ exact_dyadic_bezier_restrict_quarters(const exact_dyadic *input, int order,
     if (!input || !output || minimum_quarters < 0 ||
 	    maximum_quarters > 4 || minimum_quarters >= maximum_quarters)
 	return false;
-    exact_dyadic first[16];
-    exact_dyadic second[16];
+    exact_dyadic first[RT_BREP_DETERMINANT_TEST_MAX_ORDER];
+    exact_dyadic second[RT_BREP_DETERMINANT_TEST_MAX_ORDER];
     const exact_dyadic *current = input;
     if (maximum_quarters == 2) {
 	if (!exact_dyadic_bezier_split_half(input, order, first, second))
@@ -3480,6 +3501,221 @@ exact_dyadic_value(const exact_dyadic &value)
 }
 
 
+static uint64_t
+exact_binomial_coefficient(int degree, int index)
+{
+    if (index < 0 || index > degree)
+	return 0;
+    index = std::min(index, degree - index);
+    uint64_t result = 1;
+    for (int i = 1; i <= index; ++i)
+	result = result * (uint64_t)(degree - index + i) / (uint64_t)i;
+    return result;
+}
+
+
+static bool
+exact_integer_surface_derivative(const int64_t *input, int u_order,
+    int v_order, int direction, int64_t *output, int output_order[2])
+{
+    if (!input || !output || !output_order ||
+	    (direction != 0 && direction != 1) ||
+	    u_order < 2 || v_order < 2 || u_order > 16 || v_order > 16)
+	return false;
+    output_order[0] = u_order - (direction == 0 ? 1 : 0);
+    output_order[1] = v_order - (direction == 1 ? 1 : 0);
+    const int degree = direction == 0 ? u_order - 1 : v_order - 1;
+    for (int i = 0; i < output_order[0]; ++i) {
+	for (int j = 0; j < output_order[1]; ++j) {
+	    const size_t previous = (size_t)i * v_order + j;
+	    const size_t next = direction == 0 ?
+		(size_t)(i + 1) * v_order + j :
+		(size_t)i * v_order + j + 1;
+	    output[(size_t)i * output_order[1] + j] =
+		degree * (input[next] - input[previous]);
+	}
+    }
+    return true;
+}
+
+
+static bool
+exact_integer_surface_product_coefficient(const int64_t *first,
+    const int first_order[2], const int64_t *second,
+    const int second_order[2], int output_i, int output_j,
+    int64_t &numerator, uint64_t &denominator)
+{
+    if (!first || !first_order || !second || !second_order ||
+	    first_order[0] < 1 || first_order[1] < 1 ||
+	    second_order[0] < 1 || second_order[1] < 1)
+	return false;
+    const int first_degree[2] = {
+	first_order[0] - 1, first_order[1] - 1
+    };
+    const int second_degree[2] = {
+	second_order[0] - 1, second_order[1] - 1
+    };
+    const uint64_t u_denominator = exact_binomial_coefficient(
+	first_degree[0] + second_degree[0], output_i);
+    const uint64_t v_denominator = exact_binomial_coefficient(
+	first_degree[1] + second_degree[1], output_j);
+    if (!u_denominator || !v_denominator ||
+	    u_denominator > UINT64_MAX / v_denominator)
+	return false;
+    denominator = u_denominator * v_denominator;
+    numerator = 0;
+    const int first_u_minimum = std::max(0,
+	output_i - second_degree[0]);
+    const int first_u_maximum = std::min(first_degree[0], output_i);
+    const int first_v_minimum = std::max(0,
+	output_j - second_degree[1]);
+    const int first_v_maximum = std::min(first_degree[1], output_j);
+    for (int i = first_u_minimum; i <= first_u_maximum; ++i) {
+	const int second_i = output_i - i;
+	const uint64_t u_weight =
+	    exact_binomial_coefficient(first_degree[0], i) *
+	    exact_binomial_coefficient(second_degree[0], second_i);
+	for (int j = first_v_minimum; j <= first_v_maximum; ++j) {
+	    const int second_j = output_j - j;
+	    const uint64_t v_weight =
+		exact_binomial_coefficient(first_degree[1], j) *
+		exact_binomial_coefficient(second_degree[1], second_j);
+	    if (u_weight > UINT64_MAX / v_weight)
+		return false;
+	    const uint64_t weight = u_weight * v_weight;
+	    const int64_t value =
+		first[(size_t)i * first_order[1] + j] *
+		second[(size_t)second_i * second_order[1] + second_j];
+	    if (value && weight > (uint64_t)INT64_MAX /
+		    (uint64_t)llabs(value))
+		return false;
+	    const int64_t term = value * (int64_t)weight;
+	    if ((term > 0 && numerator > INT64_MAX - term) ||
+		    (term < 0 && numerator < INT64_MIN - term))
+		return false;
+	    numerator += term;
+	}
+    }
+    return true;
+}
+
+
+struct exact_integer_interval {
+    int64_t minimum;
+    int64_t maximum;
+};
+
+
+static bool
+exact_integer_interval_surface_derivative(const exact_integer_interval *input,
+    int u_order, int v_order, int direction, exact_integer_interval *output,
+    int output_order[2])
+{
+    if (!input || !output || !output_order ||
+	    (direction != 0 && direction != 1) ||
+	    u_order < 2 || v_order < 2 || u_order > 16 || v_order > 16)
+	return false;
+    output_order[0] = u_order - (direction == 0 ? 1 : 0);
+    output_order[1] = v_order - (direction == 1 ? 1 : 0);
+    const int degree = direction == 0 ? u_order - 1 : v_order - 1;
+    for (int i = 0; i < output_order[0]; ++i) {
+	for (int j = 0; j < output_order[1]; ++j) {
+	    const size_t previous = (size_t)i * v_order + j;
+	    const size_t next = direction == 0 ?
+		(size_t)(i + 1) * v_order + j :
+		(size_t)i * v_order + j + 1;
+	    exact_integer_interval &value =
+		output[(size_t)i * output_order[1] + j];
+	    value.minimum = degree *
+		(input[next].minimum - input[previous].maximum);
+	    value.maximum = degree *
+		(input[next].maximum - input[previous].minimum);
+	}
+    }
+    return true;
+}
+
+
+static bool
+exact_integer_interval_surface_product_coefficient(
+    const exact_integer_interval *first, const int first_order[2],
+    const exact_integer_interval *second, const int second_order[2],
+    int output_i, int output_j, int64_t &minimum_numerator,
+    int64_t &maximum_numerator, uint64_t &denominator)
+{
+    if (!first || !first_order || !second || !second_order ||
+	    first_order[0] < 1 || first_order[1] < 1 ||
+	    second_order[0] < 1 || second_order[1] < 1)
+	return false;
+    const int first_degree[2] = {
+	first_order[0] - 1, first_order[1] - 1
+    };
+    const int second_degree[2] = {
+	second_order[0] - 1, second_order[1] - 1
+    };
+    const uint64_t u_denominator = exact_binomial_coefficient(
+	first_degree[0] + second_degree[0], output_i);
+    const uint64_t v_denominator = exact_binomial_coefficient(
+	first_degree[1] + second_degree[1], output_j);
+    if (!u_denominator || !v_denominator ||
+	    u_denominator > UINT64_MAX / v_denominator)
+	return false;
+    denominator = u_denominator * v_denominator;
+    minimum_numerator = 0;
+    maximum_numerator = 0;
+    const int first_u_minimum = std::max(0,
+	output_i - second_degree[0]);
+    const int first_u_maximum = std::min(first_degree[0], output_i);
+    const int first_v_minimum = std::max(0,
+	output_j - second_degree[1]);
+    const int first_v_maximum = std::min(first_degree[1], output_j);
+    for (int i = first_u_minimum; i <= first_u_maximum; ++i) {
+	const int second_i = output_i - i;
+	const uint64_t u_weight =
+	    exact_binomial_coefficient(first_degree[0], i) *
+	    exact_binomial_coefficient(second_degree[0], second_i);
+	for (int j = first_v_minimum; j <= first_v_maximum; ++j) {
+	    const int second_j = output_j - j;
+	    const uint64_t v_weight =
+		exact_binomial_coefficient(first_degree[1], j) *
+		exact_binomial_coefficient(second_degree[1], second_j);
+	    if (u_weight > UINT64_MAX / v_weight)
+		return false;
+	    const uint64_t weight = u_weight * v_weight;
+	    const exact_integer_interval &a =
+		first[(size_t)i * first_order[1] + j];
+	    const exact_integer_interval &b =
+		second[(size_t)second_i * second_order[1] + second_j];
+	    const int64_t products[4] = {
+		a.minimum * b.minimum, a.minimum * b.maximum,
+		a.maximum * b.minimum, a.maximum * b.maximum
+	    };
+	    const int64_t minimum = *std::min_element(products, products + 4);
+	    const int64_t maximum = *std::max_element(products, products + 4);
+	    if ((minimum && weight > (uint64_t)INT64_MAX /
+		    (uint64_t)llabs(minimum)) ||
+		    (maximum && weight > (uint64_t)INT64_MAX /
+		    (uint64_t)llabs(maximum)))
+		return false;
+	    const int64_t minimum_term = minimum * (int64_t)weight;
+	    const int64_t maximum_term = maximum * (int64_t)weight;
+	    if ((minimum_term > 0 &&
+		    minimum_numerator > INT64_MAX - minimum_term) ||
+		    (minimum_term < 0 &&
+		    minimum_numerator < INT64_MIN - minimum_term) ||
+		    (maximum_term > 0 &&
+		    maximum_numerator > INT64_MAX - maximum_term) ||
+		    (maximum_term < 0 &&
+		    maximum_numerator < INT64_MIN - maximum_term))
+		return false;
+	    minimum_numerator += minimum_term;
+	    maximum_numerator += maximum_term;
+	}
+    }
+    return true;
+}
+
+
 static int
 check_brep_interval_enclosures()
 {
@@ -3488,6 +3724,13 @@ check_brep_interval_enclosures()
     const int coordinate_exponents[] = {-300, 0, 300};
     const int direction_exponents[] = {-100, 0, 100};
     const int plane_exponents[] = {-50, 0, 50};
+    const int linear_transform_exponents[] = {-100, 0, 100};
+    const int64_t linear_transform_mantissa[][2][2] = {
+	{{1, 0}, {0, 1}},
+	{{1, 1}, {-1, 1}},
+	{{3, -2}, {1, 4}},
+	{{1, -1}, {1, 1}}
+    };
     const int64_t product_intervals[][4] = {
 	{-3, 5, -7, 2}, {1, 4, 2, 8}, {-9, -2, -5, -1},
 	{-8, -1, 2, 7}, {0, 3, -4, 0}
@@ -3515,11 +3758,32 @@ check_brep_interval_enclosures()
     const fastf_t root[2] = {0.5, 0.5};
     size_t cases = 0;
     size_t function_checks = 0;
+    size_t expansion_function_checks = 0;
     size_t derivative_checks = 0;
+    size_t expansion_derivative_checks = 0;
+    size_t expansion_interval_contractions = 0;
+    size_t expansion_interval_high_water = 0;
     size_t product_checks = 0;
+    size_t expansion_product_checks = 0;
+    size_t expansion_product_contractions = 0;
+    size_t expansion_product_high_water = 0;
+    size_t expansion_product_fallbacks = 0;
     size_t division_checks = 0;
+    size_t linear_hull_checks = 0;
+    size_t determinant_checks = 0;
+    size_t determinant_signed = 0;
+    size_t determinant_uncertain_checks = 0;
+    size_t determinant_restriction_checks = 0;
     size_t coefficient_checks = 0;
+    size_t expansion_coefficient_checks = 0;
+    size_t expansion_coefficient_contractions = 0;
+    size_t expansion_coefficient_high_water = 0;
     size_t restriction_checks = 0;
+    size_t per_coefficient_restriction_checks = 0;
+    size_t expansion_restriction_checks = 0;
+    size_t expansion_restriction_contractions = 0;
+    size_t expansion_restriction_high_water = 0;
+    size_t expansion_normalization_fallbacks = 0;
     size_t reparameterization_checks = 0;
     size_t clip_checks = 0;
     size_t clip_contractions = 0;
@@ -3600,6 +3864,36 @@ check_brep_interval_enclosures()
 				plane_exponents[plane_scale], weight, equation);
 			    failures++;
 			}
+			expansion_coefficient_checks++;
+			expansion_coefficient_high_water = std::max(
+			    expansion_coefficient_high_water,
+			    observed.expansion_high_water);
+			const long double interval_width =
+			    (long double)observed.function_maximum[equation] -
+			    observed.function_minimum[equation];
+			const long double expansion_width =
+			    (long double)observed.
+				expansion_function_maximum[equation] -
+			    observed.expansion_function_minimum[equation];
+			if (!observed.expansion_available ||
+				(long double)observed.
+				    expansion_function_minimum[equation] >
+				exact_value ||
+				(long double)observed.
+				    expansion_function_maximum[equation] <
+				exact_value || expansion_width > interval_width) {
+			    std::printf("FAIL: expansion coefficient enclosure "
+				"scale=%d/%d/%d weight=%d equation=%d "
+				"width=%.9Lg/%.9Lg high=%zu\n",
+				coordinate_exponents[coordinate_scale],
+				direction_exponents[direction_scale],
+				plane_exponents[plane_scale], weight, equation,
+				expansion_width, interval_width,
+				observed.expansion_high_water);
+			    failures++;
+			}
+			if (expansion_width < interval_width)
+			    expansion_coefficient_contractions++;
 		    }
 		    const int64_t ray_dot_mantissa =
 			numerator_mantissa[0] + numerator_mantissa[1];
@@ -3674,7 +3968,46 @@ check_brep_interval_enclosures()
 			product_exponents[second_scale]);
 		    failures++;
 		}
+		fastf_t expansion_observed[2] = {};
+		size_t expansion_high_water = 0;
+		expansion_product_checks++;
+		if (!_rt_brep_expansion_interval_product_test(first, second,
+			expansion_observed, &expansion_high_water) ||
+			(long double)expansion_observed[0] > expected_minimum ||
+			(long double)expansion_observed[1] < expected_maximum ||
+			(long double)expansion_observed[1] -
+			    expansion_observed[0] >
+			(long double)observed[1] - observed[0]) {
+		    std::printf("FAIL: expansion interval product enclosure "
+			"case=%zu scale=%d/%d\n", interval_index,
+			product_exponents[first_scale],
+			product_exponents[second_scale]);
+		    failures++;
+		}
+		expansion_product_high_water = std::max(
+		    expansion_product_high_water, expansion_high_water);
+		if ((long double)expansion_observed[1] -
+			expansion_observed[0] <
+			(long double)observed[1] - observed[0])
+		    expansion_product_contractions++;
 	    }
+	}
+    }
+
+    {
+	const fastf_t denormal = std::ldexp(1.0,
+	    DBL_MIN_EXP - DBL_MANT_DIG);
+	const fastf_t first[2] = {denormal, denormal};
+	const fastf_t second[2] = {0.5, 0.5};
+	fastf_t observed[2] = {};
+	size_t high_water = 0;
+	if (_rt_brep_expansion_interval_product_test(first, second, observed,
+		&high_water)) {
+	    std::printf("FAIL: expansion product accepted unrepresentable "
+		"subnormal residual\n");
+	    failures++;
+	} else {
+	    expansion_product_fallbacks++;
 	}
     }
 
@@ -3763,6 +4096,103 @@ check_brep_interval_enclosures()
 		    std::ldexp(1.0, scale_exponent - 32),
 		    std::ldexp(1.0, scale_exponent - 32)
 		};
+		for (size_t transform_case = 0; transform_case <
+			sizeof(linear_transform_mantissa) /
+			sizeof(linear_transform_mantissa[0]); ++transform_case) {
+		    for (size_t transform_scale = 0; transform_scale <
+			    sizeof(linear_transform_exponents) /
+			    sizeof(linear_transform_exponents[0]);
+			    ++transform_scale) {
+			fastf_t transform[2][2];
+			exact_dyadic exact_transform[2][2];
+			for (int row = 0; row < 2; ++row) {
+			    for (int column = 0; column < 2; ++column) {
+				exact_transform[row][column] = {
+				    linear_transform_mantissa[transform_case]
+					[row][column],
+				    linear_transform_exponents[transform_scale]
+				};
+				transform[row][column] = std::ldexp(
+				    (double)exact_transform[row][column].mantissa,
+				    exact_transform[row][column].exponent);
+			    }
+			}
+			struct rt_brep_linear_hull_test_result observed_hull = {};
+			if (!_rt_brep_linear_hull_test(values[0], values[1],
+				count, coefficient_error, transform,
+				&observed_hull)) {
+			    std::printf("FAIL: linear hull unavailable order=%d/%d "
+				"scale=%d transform=%zu/%d\n", u_order, v_order,
+				scale_exponent, transform_case,
+				linear_transform_exponents[transform_scale]);
+			    failures++;
+			    continue;
+			}
+			bool expected_excluded = false;
+			for (int row = 0; row < 2; ++row) {
+			    long double expected_minimum = LDBL_MAX;
+			    long double expected_maximum = -LDBL_MAX;
+			    for (size_t i = 0; i < count; ++i) {
+				exact_dyadic nominal = {0, 0};
+				exact_dyadic uncertainty = {0, 0};
+				for (int source = 0; source < 2; ++source) {
+				    exact_dyadic term;
+				    exact_dyadic error_term;
+				    exact_dyadic magnitude =
+					exact_transform[row][source];
+				    magnitude.mantissa = llabs(magnitude.mantissa);
+				    const exact_dyadic exact_error = {
+					1, scale_exponent - 32
+				    };
+				    if (!exact_dyadic_multiply(
+					    exact_transform[row][source],
+					    exact[source][i], term) ||
+					    !exact_dyadic_add(nominal, term, nominal) ||
+					    !exact_dyadic_multiply(magnitude,
+						exact_error, error_term) ||
+					    !exact_dyadic_add(uncertainty,
+						error_term, uncertainty)) {
+					failures++;
+					continue;
+				    }
+				}
+				exact_dyadic lower;
+				exact_dyadic upper;
+				if (!exact_dyadic_subtract(nominal, uncertainty,
+					lower) || !exact_dyadic_add(nominal,
+					uncertainty, upper)) {
+				    failures++;
+				    continue;
+				}
+				expected_minimum = std::min(expected_minimum,
+				    exact_dyadic_value(lower));
+				expected_maximum = std::max(expected_maximum,
+				    exact_dyadic_value(upper));
+			    }
+			    linear_hull_checks += count;
+			    if ((long double)observed_hull.minimum[row] >
+				    expected_minimum ||
+				    (long double)observed_hull.maximum[row] <
+				    expected_maximum) {
+				std::printf("FAIL: linear hull enclosure order=%d/%d "
+				    "scale=%d transform=%zu/%d row=%d\n", u_order,
+				    v_order, scale_exponent, transform_case,
+				    linear_transform_exponents[transform_scale], row);
+				failures++;
+			    }
+			    if (expected_minimum > 0.0L ||
+				    expected_maximum < 0.0L)
+				expected_excluded = true;
+			}
+			if (observed_hull.excluded && !expected_excluded) {
+			    std::printf("FAIL: linear hull false exclusion "
+				"order=%d/%d scale=%d transform=%zu/%d\n",
+				u_order, v_order, scale_exponent, transform_case,
+				linear_transform_exponents[transform_scale]);
+			    failures++;
+			}
+		    }
+		}
 		struct rt_brep_interval_test_result observed = {};
 		cases++;
 		if (!_rt_brep_interval_test(values[0], values[1], u_order,
@@ -3772,6 +4202,21 @@ check_brep_interval_enclosures()
 		    failures++;
 		    continue;
 		}
+		struct rt_brep_interval_test_result expansion_observed = {};
+		size_t expansion_evaluation_high_water = 0;
+		if (!_rt_brep_expansion_interval_test(values[0], values[1],
+			u_order, v_order, coefficient_error, root,
+			&expansion_observed,
+			&expansion_evaluation_high_water)) {
+		    std::printf("FAIL: expansion interval audit unavailable "
+			"order=%d/%d scale=%d\n", u_order, v_order,
+			scale_exponent);
+		    failures++;
+		    continue;
+		}
+		expansion_interval_high_water = std::max(
+		    expansion_interval_high_water,
+		    expansion_evaluation_high_water);
 
 		for (int equation = 0; equation < 2; ++equation) {
 		    exact_dyadic midpoint = {};
@@ -3801,6 +4246,21 @@ check_brep_interval_enclosures()
 			    width_ratio);
 			failures++;
 		    }
+		    const long double expansion_lower =
+			expansion_observed.function_minimum[equation];
+		    const long double expansion_upper =
+			expansion_observed.function_maximum[equation];
+		    expansion_function_checks++;
+		    if (expansion_lower > nominal - error ||
+			    expansion_upper < nominal + error ||
+			    expansion_upper - expansion_lower > upper - lower) {
+			std::printf("FAIL: expansion function enclosure "
+			    "order=%d/%d scale=%d equation=%d\n", u_order,
+			    v_order, scale_exponent, equation);
+			failures++;
+		    }
+		    if (expansion_upper - expansion_lower < upper - lower)
+			expansion_interval_contractions++;
 
 		    for (int direction = 0; direction < 2; ++direction) {
 			const int degree = direction == 0 ? u_order - 1 :
@@ -3836,6 +4296,30 @@ check_brep_interval_enclosures()
 					"equation=%d direction=%d\n",
 					u_order, v_order, scale_exponent,
 					equation, direction);
+				    failures++;
+				}
+				const long double expansion_derivative_minimum =
+				    expansion_observed.jacobian_minimum
+					[equation][direction];
+				const long double expansion_derivative_maximum =
+				    expansion_observed.jacobian_maximum
+					[equation][direction];
+				expansion_derivative_checks++;
+				if (expansion_derivative_minimum >
+					derivative - derivative_error ||
+					expansion_derivative_maximum <
+					derivative + derivative_error ||
+					expansion_derivative_maximum -
+					expansion_derivative_minimum >
+					(long double)observed.jacobian_maximum
+					    [equation][direction] -
+					observed.jacobian_minimum
+					    [equation][direction]) {
+				    std::printf("FAIL: expansion derivative "
+					"enclosure order=%d/%d scale=%d "
+					"equation=%d direction=%d\n", u_order,
+					v_order, scale_exponent, equation,
+					direction);
 				    failures++;
 				}
 			    }
@@ -3903,6 +4387,113 @@ check_brep_interval_enclosures()
 				    u_order, v_order, scale_exponent,
 				    restriction, i, restriction_width_ratio);
 				failures++;
+				    }
+				}
+				exact_dyadic exact_lower_input[256];
+				exact_dyadic exact_upper_input[256];
+				exact_dyadic exact_lower_output[256];
+				exact_dyadic exact_upper_output[256];
+				fastf_t individual_error[256] = {};
+				fastf_t interval_minimum[256] = {};
+				fastf_t interval_maximum[256] = {};
+				bool individual_exact = true;
+				for (size_t i = 0; i < count; ++i) {
+				    const exact_dyadic error_value = {
+					(int64_t)(i % 3 + 1), scale_exponent - 8
+				    };
+				    individual_error[i] =
+					(fastf_t)exact_dyadic_value(error_value);
+				    if (!exact_dyadic_subtract(exact[equation][i],
+					    error_value, exact_lower_input[i]) ||
+					    !exact_dyadic_add(exact[equation][i],
+						error_value, exact_upper_input[i]))
+					individual_exact = false;
+				}
+				if (!individual_exact ||
+					!exact_dyadic_surface_restrict_quarters(
+					    exact_lower_input, u_order, v_order,
+					    minimum_quarters, maximum_quarters,
+					    exact_lower_output) ||
+					!exact_dyadic_surface_restrict_quarters(
+					    exact_upper_input, u_order, v_order,
+					    minimum_quarters, maximum_quarters,
+					    exact_upper_output) ||
+					!_rt_brep_interval_restrict_test(
+					    values[equation], individual_error, u_order,
+					    v_order, minimum, maximum, interval_minimum,
+					    interval_maximum)) {
+				    std::printf("FAIL: per-coefficient restriction "
+					"unavailable order=%d/%d scale=%d case=%zu\n",
+					u_order, v_order, scale_exponent, restriction);
+				    failures++;
+				} else {
+				    for (size_t i = 0; i < count; ++i) {
+					const long double exact_minimum =
+					    exact_dyadic_value(exact_lower_output[i]);
+					const long double exact_maximum =
+					    exact_dyadic_value(exact_upper_output[i]);
+					per_coefficient_restriction_checks++;
+					if ((long double)interval_minimum[i] >
+						exact_minimum ||
+						(long double)interval_maximum[i] <
+						exact_maximum) {
+					    std::printf("FAIL: per-coefficient restriction "
+						"enclosure order=%d/%d scale=%d "
+						"case=%zu coefficient=%zu\n", u_order,
+						v_order, scale_exponent, restriction, i);
+					    failures++;
+					}
+				    }
+				}
+				fastf_t expansion_minimum[256] = {};
+				fastf_t expansion_maximum[256] = {};
+				size_t expansion_high_water = 0;
+				if (!individual_exact ||
+					!_rt_brep_expansion_restrict_test(
+					    values[equation], individual_error, u_order,
+					    v_order, minimum, maximum,
+					    expansion_minimum, expansion_maximum,
+					    &expansion_high_water)) {
+				    std::printf("FAIL: expansion restriction unavailable "
+					"order=%d/%d scale=%d case=%zu\n", u_order,
+					v_order, scale_exponent, restriction);
+				    failures++;
+				} else {
+				    expansion_restriction_high_water = std::max(
+					expansion_restriction_high_water,
+					expansion_high_water);
+				    for (size_t i = 0; i < count; ++i) {
+					const long double exact_minimum =
+					    exact_dyadic_value(exact_lower_output[i]);
+					const long double exact_maximum =
+					    exact_dyadic_value(exact_upper_output[i]);
+					expansion_restriction_checks++;
+					const long double interval_width =
+					    (long double)interval_maximum[i] -
+					    interval_minimum[i];
+					const long double expansion_width =
+					    (long double)expansion_maximum[i] -
+					    expansion_minimum[i];
+					if ((long double)expansion_minimum[i] >
+						exact_minimum ||
+						(long double)expansion_maximum[i] <
+						exact_maximum ||
+						expansion_width > interval_width) {
+					    std::printf("FAIL: expansion restriction "
+						"enclosure order=%d/%d scale=%d "
+						"case=%zu coefficient=%zu width=%.17Lg/%.17Lg "
+						"bounds=%.17Lg/%.17Lg:%.17Lg/%.17Lg\n",
+						u_order, v_order, scale_exponent,
+						restriction, i, expansion_width,
+						interval_width,
+						(long double)expansion_minimum[i],
+						exact_minimum,
+						(long double)expansion_maximum[i],
+						exact_maximum);
+					    failures++;
+					}
+					if (expansion_width < interval_width)
+					    expansion_restriction_contractions++;
 				    }
 				}
 			    }
@@ -4031,6 +4622,393 @@ check_brep_interval_enclosures()
 	}
     }
 
+    const int determinant_scale_exponents[] = {-200, 0, 200};
+    const int determinant_restriction_quarters[][2] = {
+	{0, 2}, {1, 2}, {2, 4}
+    };
+    /*
+     * Determinant orders are even from 2 through 30.  Exercise every order
+     * as each tensor axis, then the maximum-order corner.  Since restriction
+     * is separable, this covers the two univariate operators without an
+     * unnecessarily expensive all-pairs matrix.
+     */
+    for (int order_case = 0; order_case < 30; ++order_case) {
+	const int u_order = order_case < 15 ? 2 + 2 * order_case :
+	    (order_case < 29 ? 2 : RT_BREP_DETERMINANT_TEST_MAX_ORDER);
+	const int v_order = order_case < 15 ? 2 :
+	    (order_case < 29 ? 4 + 2 * (order_case - 15) :
+	    RT_BREP_DETERMINANT_TEST_MAX_ORDER);
+	for (size_t scale_index = 0; scale_index <
+		sizeof(determinant_scale_exponents) /
+		sizeof(determinant_scale_exponents[0]); ++scale_index) {
+		const int scale_exponent =
+		    determinant_scale_exponents[scale_index];
+		exact_dyadic exact_minimum[
+		    RT_BREP_DETERMINANT_TEST_MAX_COEFFICIENTS];
+		exact_dyadic exact_maximum[
+		    RT_BREP_DETERMINANT_TEST_MAX_COEFFICIENTS];
+		fastf_t input_minimum[
+		    RT_BREP_DETERMINANT_TEST_MAX_COEFFICIENTS] = {};
+		fastf_t input_maximum[
+		    RT_BREP_DETERMINANT_TEST_MAX_COEFFICIENTS] = {};
+		fastf_t output_minimum[
+		    RT_BREP_DETERMINANT_TEST_MAX_COEFFICIENTS] = {};
+		fastf_t output_maximum[
+		    RT_BREP_DETERMINANT_TEST_MAX_COEFFICIENTS] = {};
+		for (int i = 0; i < u_order; ++i) {
+		    for (int j = 0; j < v_order; ++j) {
+			const size_t index = (size_t)i * v_order + j;
+			const int64_t center = 4 *
+			    ((3 * i + 5 * j + u_order + v_order) % 5 - 2);
+			const int64_t error = (i + 2 * j) % 2 + 1;
+			exact_minimum[index] = {
+			    center - error, scale_exponent
+			};
+			exact_maximum[index] = {
+			    center + error, scale_exponent
+			};
+			input_minimum[index] = (fastf_t)exact_dyadic_value(
+			    exact_minimum[index]);
+			input_maximum[index] = (fastf_t)exact_dyadic_value(
+			    exact_maximum[index]);
+		    }
+		}
+		for (int direction = 0; direction < 2; ++direction) {
+		    for (size_t restriction = 0; restriction <
+			    sizeof(determinant_restriction_quarters) /
+			    sizeof(determinant_restriction_quarters[0]);
+			    ++restriction) {
+			const int minimum_quarters =
+			    determinant_restriction_quarters[restriction][0];
+			const int maximum_quarters =
+			    determinant_restriction_quarters[restriction][1];
+			fastf_t minimum[2] = {0.0, 0.0};
+			fastf_t maximum[2] = {1.0, 1.0};
+			minimum[direction] = 0.25 * minimum_quarters;
+			maximum[direction] = 0.25 * maximum_quarters;
+			if (!_rt_brep_determinant_restrict_test(input_minimum,
+				input_maximum, u_order, v_order, minimum, maximum,
+				output_minimum, output_maximum)) {
+			    std::printf("FAIL: determinant restriction unavailable "
+				"order=%d/%d scale=%d direction=%d case=%zu\n",
+				u_order, v_order, scale_exponent, direction,
+				restriction);
+			    failures++;
+			    continue;
+			}
+			const int line_count = direction == 0 ? v_order : u_order;
+			const int direction_order = direction == 0 ?
+			    u_order : v_order;
+			for (int line = 0; line < line_count; ++line) {
+			    exact_dyadic lower_source[
+				RT_BREP_DETERMINANT_TEST_MAX_ORDER];
+			    exact_dyadic upper_source[
+				RT_BREP_DETERMINANT_TEST_MAX_ORDER];
+			    exact_dyadic lower_expected[
+				RT_BREP_DETERMINANT_TEST_MAX_ORDER];
+			    exact_dyadic upper_expected[
+				RT_BREP_DETERMINANT_TEST_MAX_ORDER];
+			    for (int k = 0; k < direction_order; ++k) {
+				const size_t index = direction == 0 ?
+				    (size_t)k * v_order + line :
+				    (size_t)line * v_order + k;
+				lower_source[k] = exact_minimum[index];
+				upper_source[k] = exact_maximum[index];
+			    }
+			    if (!exact_dyadic_bezier_restrict_quarters(
+				    lower_source, direction_order, minimum_quarters,
+				    maximum_quarters, lower_expected) ||
+				    !exact_dyadic_bezier_restrict_quarters(
+				    upper_source, direction_order, minimum_quarters,
+				    maximum_quarters, upper_expected)) {
+				std::printf("FAIL: exact determinant restriction "
+				    "unavailable order=%d/%d direction=%d "
+				    "case=%zu line=%d\n", u_order, v_order,
+				    direction, restriction, line);
+				failures++;
+				continue;
+			    }
+			    for (int k = 0; k < direction_order; ++k) {
+				const size_t index = direction == 0 ?
+				    (size_t)k * v_order + line :
+				    (size_t)line * v_order + k;
+				const long double expected_minimum =
+				    exact_dyadic_value(lower_expected[k]);
+				const long double expected_maximum =
+				    exact_dyadic_value(upper_expected[k]);
+				determinant_restriction_checks++;
+				if ((long double)output_minimum[index] >
+					expected_minimum ||
+					(long double)output_maximum[index] <
+					expected_maximum) {
+				    std::printf("FAIL: determinant restriction "
+					"enclosure order=%d/%d scale=%d "
+					"direction=%d case=%zu coefficient=%zu\n",
+					u_order, v_order, scale_exponent,
+					direction, restriction, index);
+				    failures++;
+				}
+			    }
+			}
+		    }
+		}
+	}
+    }
+    for (int u_order = 2; u_order <= 16; ++u_order) {
+	for (int v_order = 2; v_order <= 16; ++v_order) {
+	    int64_t exact_coefficient[2][256] = {};
+	    int64_t exact_derivative[2][2][256] = {};
+	    int derivative_order[2][2][2] = {};
+	    double coefficient_error[2][256] = {};
+	    for (int i = 0; i < u_order; ++i) {
+		for (int j = 0; j < v_order; ++j) {
+		    const size_t index = (size_t)i * v_order + j;
+		    exact_coefficient[0][index] = (3 * i + u_order) & 1;
+		    exact_coefficient[1][index] =
+			(3 * i + 5 * j + u_order + v_order) & 1;
+		}
+	    }
+	    bool derivatives_available = true;
+	    for (int equation = 0; equation < 2; ++equation) {
+		for (int direction = 0; direction < 2; ++direction) {
+		    if (!exact_integer_surface_derivative(
+			    exact_coefficient[equation], u_order, v_order,
+			    direction, exact_derivative[equation][direction],
+			    derivative_order[equation][direction]))
+			derivatives_available = false;
+		}
+	    }
+	    if (!derivatives_available) {
+		failures++;
+		continue;
+	    }
+	    for (size_t scale_index = 0; scale_index <
+		    sizeof(determinant_scale_exponents) /
+		    sizeof(determinant_scale_exponents[0]); ++scale_index) {
+		const int scale_exponent =
+		    determinant_scale_exponents[scale_index];
+		for (int equation = 0; equation < 2; ++equation) {
+		    for (int i = 0; i < u_order; ++i) {
+			for (int j = 0; j < v_order; ++j) {
+			    const size_t index = (size_t)i * v_order + j;
+			    values[equation][index] = std::ldexp(
+				(double)exact_coefficient[equation][index],
+				scale_exponent);
+			}
+		    }
+		}
+		struct rt_brep_determinant_test_result observed = {};
+		if (!_rt_brep_determinant_test(values[0], coefficient_error[0],
+			values[1], coefficient_error[1], u_order, v_order,
+			&observed) || observed.u_order != 2 * u_order - 2 ||
+			observed.v_order != 2 * v_order - 2) {
+		    std::printf("FAIL: determinant coefficients unavailable "
+			"order=%d/%d scale=%d output=%d/%d\n", u_order,
+			v_order, scale_exponent, observed.u_order,
+			observed.v_order);
+		    failures++;
+		    continue;
+		}
+		for (int i = 0; i < observed.u_order; ++i) {
+		    for (int j = 0; j < observed.v_order; ++j) {
+			int64_t positive_numerator = 0;
+			int64_t negative_numerator = 0;
+			uint64_t positive_denominator = 0;
+			uint64_t negative_denominator = 0;
+			if (!exact_integer_surface_product_coefficient(
+				exact_derivative[0][0],
+				derivative_order[0][0],
+				exact_derivative[1][1],
+				derivative_order[1][1], i, j,
+				positive_numerator, positive_denominator) ||
+				!exact_integer_surface_product_coefficient(
+				exact_derivative[0][1],
+				derivative_order[0][1],
+				exact_derivative[1][0],
+				derivative_order[1][0], i, j,
+				negative_numerator, negative_denominator) ||
+				positive_denominator != negative_denominator) {
+			    std::printf("FAIL: exact determinant unavailable "
+				"order=%d/%d coefficient=%d/%d\n", u_order,
+				v_order, i, j);
+			    failures++;
+			    continue;
+			}
+			const int64_t exact_numerator =
+			    positive_numerator - negative_numerator;
+			const long double exact_value = std::ldexp(
+			    (long double)exact_numerator /
+				(long double)positive_denominator,
+			    2 * scale_exponent);
+			const size_t index = (size_t)i * observed.v_order + j;
+			determinant_checks++;
+			if (exact_numerator &&
+				((observed.minimum[index] > 0.0 &&
+				  observed.maximum[index] > 0.0) ||
+				 (observed.minimum[index] < 0.0 &&
+				  observed.maximum[index] < 0.0)))
+			    determinant_signed++;
+			if ((long double)observed.minimum[index] > exact_value ||
+				(long double)observed.maximum[index] < exact_value) {
+			    std::printf("FAIL: determinant coefficient enclosure "
+				"order=%d/%d scale=%d coefficient=%d/%d "
+				"range=%.17g/%.17g exact=%.21Lg\n", u_order,
+				v_order, scale_exponent, i, j,
+				observed.minimum[index], observed.maximum[index],
+				exact_value);
+			    failures++;
+			}
+		    }
+		}
+	    }
+	}
+    }
+
+    for (int u_order = 2; u_order <= 8; ++u_order) {
+	for (int v_order = 2; v_order <= 8; ++v_order) {
+	    exact_integer_interval exact_coefficient[2][256] = {};
+	    exact_integer_interval exact_derivative[2][2][256] = {};
+	    int derivative_order[2][2][2] = {};
+	    int64_t center[2][256] = {};
+	    int64_t error[2][256] = {};
+	    double determinant_error[2][256] = {};
+	    for (int i = 0; i < u_order; ++i) {
+		for (int j = 0; j < v_order; ++j) {
+		    const size_t index = (size_t)i * v_order + j;
+		    center[0][index] = 4 * ((3 * i + u_order) & 1);
+		    center[1][index] = 4 *
+			((3 * i + 5 * j + u_order + v_order) & 1);
+		    error[1][index] = (i + 2 * j) % 2 + 1;
+		    for (int equation = 0; equation < 2; ++equation) {
+			exact_coefficient[equation][index] = {
+			    center[equation][index] - error[equation][index],
+			    center[equation][index] + error[equation][index]
+			};
+		    }
+		}
+	    }
+	    bool derivatives_available = true;
+	    for (int equation = 0; equation < 2; ++equation) {
+		for (int direction = 0; direction < 2; ++direction) {
+		    if (!exact_integer_interval_surface_derivative(
+			    exact_coefficient[equation], u_order, v_order,
+			    direction, exact_derivative[equation][direction],
+			    derivative_order[equation][direction]))
+			derivatives_available = false;
+		}
+	    }
+	    if (!derivatives_available) {
+		failures++;
+		continue;
+	    }
+	    for (size_t scale_index = 0; scale_index <
+		    sizeof(determinant_scale_exponents) /
+		    sizeof(determinant_scale_exponents[0]); ++scale_index) {
+		const int unit_exponent =
+		    determinant_scale_exponents[scale_index] - 2;
+		for (int equation = 0; equation < 2; ++equation) {
+		    for (int i = 0; i < u_order; ++i) {
+			for (int j = 0; j < v_order; ++j) {
+			    const size_t index = (size_t)i * v_order + j;
+			    values[equation][index] = std::ldexp(
+				(double)center[equation][index], unit_exponent);
+			    determinant_error[equation][index] = std::ldexp(
+				(double)error[equation][index], unit_exponent);
+			}
+		    }
+		}
+		struct rt_brep_determinant_test_result observed = {};
+		if (!_rt_brep_determinant_test(values[0], determinant_error[0],
+			values[1], determinant_error[1], u_order, v_order,
+			&observed)) {
+		    std::printf("FAIL: uncertain determinant unavailable "
+			"order=%d/%d scale=%d\n", u_order, v_order,
+			determinant_scale_exponents[scale_index]);
+		    failures++;
+		    continue;
+		}
+		for (int i = 0; i < observed.u_order; ++i) {
+		    for (int j = 0; j < observed.v_order; ++j) {
+			int64_t positive_minimum = 0;
+			int64_t positive_maximum = 0;
+			int64_t negative_minimum = 0;
+			int64_t negative_maximum = 0;
+			uint64_t positive_denominator = 0;
+			uint64_t negative_denominator = 0;
+			if (!exact_integer_interval_surface_product_coefficient(
+				exact_derivative[0][0],
+				derivative_order[0][0],
+				exact_derivative[1][1],
+				derivative_order[1][1], i, j,
+				positive_minimum, positive_maximum,
+				positive_denominator) ||
+				!exact_integer_interval_surface_product_coefficient(
+				exact_derivative[0][1],
+				derivative_order[0][1],
+				exact_derivative[1][0],
+				derivative_order[1][0], i, j,
+				negative_minimum, negative_maximum,
+				negative_denominator) ||
+				positive_denominator != negative_denominator) {
+			    std::printf("FAIL: exact uncertain determinant "
+				"unavailable order=%d/%d coefficient=%d/%d\n",
+				u_order, v_order, i, j);
+			    failures++;
+			    continue;
+			}
+			const int64_t exact_minimum_numerator =
+			    positive_minimum - negative_maximum;
+			const int64_t exact_maximum_numerator =
+			    positive_maximum - negative_minimum;
+			const long double exact_minimum = std::ldexp(
+			    (long double)exact_minimum_numerator /
+				(long double)positive_denominator,
+			    2 * unit_exponent);
+			const long double exact_maximum = std::ldexp(
+			    (long double)exact_maximum_numerator /
+				(long double)positive_denominator,
+			    2 * unit_exponent);
+			const size_t index = (size_t)i * observed.v_order + j;
+			determinant_uncertain_checks++;
+			if ((long double)observed.minimum[index] > exact_minimum ||
+				(long double)observed.maximum[index] < exact_maximum) {
+			    std::printf("FAIL: uncertain determinant enclosure "
+				"order=%d/%d scale=%d coefficient=%d/%d\n",
+				u_order, v_order,
+				determinant_scale_exponents[scale_index], i, j);
+			    failures++;
+			}
+		    }
+		}
+	    }
+	}
+    }
+
+    {
+	const fastf_t denormal = std::ldexp(1.0,
+	    DBL_MIN_EXP - DBL_MANT_DIG);
+	const fastf_t mixed_scale[4] = {
+	    4.0 * denormal, 1.0, -0.5, 0.25
+	};
+	const fastf_t mixed_error[4] = {
+	    2.0 * denormal, 0.0, 0.0, 0.0
+	};
+	const fastf_t minimum[2] = {0.0, 0.0};
+	const fastf_t maximum[2] = {0.75, 0.75};
+	fastf_t observed_minimum[4] = {};
+	fastf_t observed_maximum[4] = {};
+	size_t high_water = 0;
+	if (_rt_brep_expansion_restrict_test(mixed_scale, mixed_error, 2, 2,
+		minimum, maximum, observed_minimum, observed_maximum,
+		&high_water)) {
+	    std::printf("FAIL: expansion restriction accepted lossy "
+		"power-of-two normalization\n");
+	    failures++;
+	} else {
+	    expansion_normalization_fallbacks++;
+	}
+    }
+
     const double clip_roots[][2] = {
 	{0.125, 0.875}, {0.5, 0.5}, {0.9375, 0.0625}
     };
@@ -4097,16 +5075,720 @@ check_brep_interval_enclosures()
 
     if (!failures) {
 	std::printf("BREP interval enclosure audit: PASS cases=%zu "
-	    "function=%zu derivative=%zu product=%zu quotient=%zu "
-	    "coefficient=%zu restriction=%zu reparameterization=%zu "
+	    "function=%zu+%zu derivative=%zu+%zu/%zu/%zu "
+	    "product=%zu+%zu/%zu/%zu+%zu quotient=%zu "
+	    "linear-hull=%zu determinant=%zu/%zu+%zu restrict=%zu "
+	    "coefficient=%zu+%zu/%zu/%zu "
+	    "restriction=%zu+%zu+%zu/%zu/%zu "
+	    "normalization-fallback=%zu "
+	    "reparameterization=%zu "
 	    "clip=%zu/%zu "
 	    "max-width/error=%.9Lg/%.9Lg/%.9Lg\n",
-	    cases, function_checks, derivative_checks, product_checks,
-	    division_checks, coefficient_checks, restriction_checks,
+	    cases, function_checks, expansion_function_checks,
+	    derivative_checks, expansion_derivative_checks,
+	    expansion_interval_contractions, expansion_interval_high_water,
+	    product_checks, expansion_product_checks,
+	    expansion_product_contractions, expansion_product_high_water,
+	    expansion_product_fallbacks,
+	    division_checks, linear_hull_checks, determinant_signed,
+	    determinant_checks, determinant_uncertain_checks,
+	    determinant_restriction_checks, coefficient_checks,
+	    expansion_coefficient_checks, expansion_coefficient_contractions,
+	    expansion_coefficient_high_water,
+	    restriction_checks, per_coefficient_restriction_checks,
+	    expansion_restriction_checks,
+	    expansion_restriction_contractions,
+	    expansion_restriction_high_water,
+	    expansion_normalization_fallbacks,
 	    reparameterization_checks, clip_contractions, clip_checks,
 	    maximum_function_width_ratio,
 	    maximum_restriction_width_ratio,
 	    maximum_reparameterization_width_ratio);
+    }
+    return failures;
+}
+
+
+static int
+check_brep_fold_interval_classifier()
+{
+    struct interval_case {
+	const char *name;
+	double lower[2];
+	double upper[2];
+	int expected;
+    } cases[] = {
+	{"resolved", {1.0, 1.01}, {1.12, 1.13},
+	    RT_BREP_FOLD_GAP_RESOLVED},
+	{"subminimum", {1.0, 1.01}, {1.04, 1.05},
+	    RT_BREP_FOLD_GAP_SUBMINIMUM},
+	{"ambiguous", {1.0, 1.01}, {1.09, 1.12},
+	    RT_BREP_FOLD_GAP_AMBIGUOUS},
+	{"contact", {1.0, 1.01}, {1.005, 1.006},
+	    RT_BREP_FOLD_GAP_SUBMINIMUM}
+    };
+    const double direction_scales[] = {0.25, 1.0, 16.0};
+    const double model_scales[] = {0.01, 1.0, 1.0e4};
+    const double base_direction[3] = {3.0, 4.0, 0.0};
+    const double base_tolerance = 0.5;
+    int failures = 0;
+    size_t checks = 0;
+    for (size_t case_index = 0;
+	    case_index < sizeof(cases) / sizeof(cases[0]); ++case_index) {
+	for (size_t direction_index = 0; direction_index <
+		sizeof(direction_scales) / sizeof(direction_scales[0]);
+		++direction_index) {
+	    for (size_t model_index = 0; model_index <
+		    sizeof(model_scales) / sizeof(model_scales[0]);
+		    ++model_index) {
+		const double direction_scale =
+		    direction_scales[direction_index];
+		const double model_scale = model_scales[model_index];
+		const double parameter_scale = model_scale / direction_scale;
+		fastf_t lower[2] = {
+		    cases[case_index].lower[0] * parameter_scale,
+		    cases[case_index].lower[1] * parameter_scale
+		};
+		fastf_t upper[2] = {
+		    cases[case_index].upper[0] * parameter_scale,
+		    cases[case_index].upper[1] * parameter_scale
+		};
+		fastf_t direction[3] = {
+		    base_direction[0] * direction_scale,
+		    base_direction[1] * direction_scale,
+		    base_direction[2] * direction_scale
+		};
+		struct rt_brep_fold_interval_test_result result = {};
+		checks++;
+		const long double exact_gap_minimum =
+		    (long double)upper[0] - (long double)lower[1];
+		const long double exact_gap_maximum =
+		    (long double)upper[1] - (long double)lower[0];
+		const long double exact_minimum_t =
+		    (long double)(base_tolerance * model_scale) /
+		    hypotl((long double)direction[0],
+			(long double)direction[1]);
+		if (!_rt_brep_fold_interval_test(lower, upper, direction,
+			base_tolerance * model_scale, &result) ||
+			result.classification != cases[case_index].expected ||
+			(long double)result.gap_minimum > exact_gap_minimum ||
+			(long double)result.gap_maximum < exact_gap_maximum ||
+			(long double)result.minimum_t_minimum > exact_minimum_t ||
+			(long double)result.minimum_t_maximum < exact_minimum_t) {
+		    std::printf("FAIL: fold interval %s direction/model=%.3g/"
+			"%.3g class=%d/%d gap=%.17g/%.17g min=%.17g/%.17g\n",
+			cases[case_index].name, direction_scale, model_scale,
+			result.classification, cases[case_index].expected,
+			result.gap_minimum, result.gap_maximum,
+			result.minimum_t_minimum,
+			result.minimum_t_maximum);
+		    failures++;
+		}
+	    }
+	}
+    }
+
+    fastf_t valid_lower[2] = {1.0, 1.01};
+    fastf_t valid_upper[2] = {1.12, 1.13};
+    fastf_t valid_direction[3] = {3.0, 4.0, 0.0};
+    fastf_t reversed[2] = {1.01, 1.0};
+    fastf_t zero_direction[3] = {0.0, 0.0, 0.0};
+    struct rt_brep_fold_interval_test_result result = {};
+    if (_rt_brep_fold_interval_test(reversed, valid_upper,
+	    valid_direction, base_tolerance, &result) ||
+	    _rt_brep_fold_interval_test(valid_lower, valid_upper,
+	    zero_direction, base_tolerance, &result) ||
+	    _rt_brep_fold_interval_test(valid_lower, valid_upper,
+	    valid_direction, -base_tolerance, &result)) {
+	std::printf("FAIL: fold interval invalid-input rejection\n");
+	failures++;
+    }
+    if (!failures)
+	std::printf("BREP fold interval classifier: PASS cases=%zu "
+	    "classes=resolved/subminimum/ambiguous/contact\n", checks);
+    return failures;
+}
+
+
+static int
+check_brep_fold_solver()
+{
+    const double equation_transform[][2][2] = {
+	{{1.0, 0.0}, {0.0, 1.0}},
+	{{0.0, 1.0}, {1.0, 0.0}},
+	{{-1.0, 0.0}, {0.0, 1.0}},
+	{{std::ldexp(1.0, 100), 0.0},
+	 {0.0, std::ldexp(1.0, -100)}},
+	{{0.0, std::ldexp(1.0, -100)},
+	 {-std::ldexp(1.0, 100), 0.0}}
+    };
+    struct parameter_variant {
+	bool reverse_u;
+	bool reverse_v;
+	bool swap;
+    } parameter_variants[] = {
+	{false, false, false},
+	{true, false, false},
+	{false, true, false},
+	{false, false, true},
+	{true, true, true}
+    };
+    const int separation_exponents[] = {4, 8, 12, 16, 20, 24};
+    const double regular_root = 0.37;
+    int failures = 0;
+    size_t systems = 0;
+    size_t expected_roots = 0;
+    size_t maximum_regular_solves = 0;
+    size_t certificate_boxes = 0;
+    size_t expansion_certificate_boxes = 0;
+    size_t expansion_certificate_high_water = 0;
+    size_t corridor_boxes = 0;
+    size_t graph_corridor_cases = 0;
+    size_t graph_strip_cases = 0;
+    size_t graph_contact_cases = 0;
+    size_t graph_proof_boxes = 0;
+    size_t graph_proof_contractions = 0;
+    size_t graph_boundary_available = 0;
+    size_t graph_boundary_certificates = 0;
+    size_t graph_boundary_contractions = 0;
+    size_t graph_strip_boxes = 0;
+    size_t graph_strip_contractions = 0;
+    size_t graph_expansion_high_water = 0;
+    size_t certificates_below_old_cutoff = 0;
+    double minimum_separation = DBL_MAX;
+    double maximum_root_error = 0.0;
+    double maximum_residual_ratio = 0.0;
+    double minimum_determinant_ratio = DBL_MAX;
+
+    const auto run_case = [&](double epsilon, size_t transform_index,
+	    size_t variant_index, size_t expected_count,
+	    double root_separation) {
+	double base[2][9];
+	for (int i = 0; i < 3; ++i) {
+	    for (int j = 0; j < 3; ++j) {
+		const size_t index = (size_t)i * 3 + j;
+		base[0][index] = 0.5 * i - regular_root;
+		const double weak_control[3] = {
+		    0.25 - epsilon, -0.25 - epsilon,
+		    0.25 - epsilon
+		};
+		base[1][index] = weak_control[j];
+	    }
+	}
+	const parameter_variant &variant = parameter_variants[variant_index];
+	double parameterized[2][9];
+	for (int equation = 0; equation < 2; ++equation) {
+	    double reversed[9];
+	    for (int i = 0; i < 3; ++i) {
+		for (int j = 0; j < 3; ++j) {
+		    const int source_i = variant.reverse_u ? 2 - i : i;
+		    const int source_j = variant.reverse_v ? 2 - j : j;
+		    reversed[(size_t)i * 3 + j] =
+			base[equation][(size_t)source_i * 3 + source_j];
+		}
+	    }
+	    for (int i = 0; i < 3; ++i) {
+		for (int j = 0; j < 3; ++j) {
+		    parameterized[equation][(size_t)i * 3 + j] =
+			variant.swap ? reversed[(size_t)j * 3 + i] :
+			reversed[(size_t)i * 3 + j];
+		}
+	    }
+	}
+	double coefficients[2][9];
+	double coefficient_scale = 0.0;
+	for (int equation = 0; equation < 2; ++equation) {
+	    for (size_t i = 0; i < 9; ++i) {
+		coefficients[equation][i] =
+		    equation_transform[transform_index][equation][0] *
+			parameterized[0][i] +
+		    equation_transform[transform_index][equation][1] *
+			parameterized[1][i];
+		coefficient_scale = std::max(coefficient_scale,
+		    fabs(coefficients[equation][i]));
+	    }
+	}
+	const fastf_t coefficient_error[2] = {0.0, 0.0};
+	struct rt_brep_fold_test_result observed = {};
+	struct rt_brep_fold_test_result repeated = {};
+	systems++;
+	expected_roots += expected_count;
+	if (!_rt_brep_fold_test(coefficients[0], coefficients[1], 3, 3,
+		coefficient_error, &observed) ||
+		!_rt_brep_fold_test(coefficients[0], coefficients[1], 3, 3,
+		    coefficient_error, &repeated)) {
+	    std::printf("FAIL: fold solver rejected epsilon=%.17g "
+		"transform=%zu variant=%zu\n", epsilon, transform_index,
+		variant_index);
+	    failures++;
+	    return;
+	}
+	bool deterministic = observed.frame_available == repeated.frame_available &&
+	    observed.regular_direction == repeated.regular_direction &&
+	    observed.capacity_exhausted == repeated.capacity_exhausted &&
+	    observed.samples == repeated.samples &&
+	    observed.regular_solves == repeated.regular_solves &&
+	    observed.brackets == repeated.brackets &&
+	    observed.candidate_count == repeated.candidate_count;
+	for (size_t i = 0; deterministic && i < observed.candidate_count; ++i) {
+	    deterministic = std::memcmp(observed.uv[i], repeated.uv[i],
+		sizeof(observed.uv[i])) == 0 &&
+		std::memcmp(&observed.residual[i], &repeated.residual[i],
+		    sizeof(observed.residual[i])) == 0 &&
+		std::memcmp(&observed.weak_bracket_width[i],
+		    &repeated.weak_bracket_width[i],
+		    sizeof(observed.weak_bracket_width[i])) == 0;
+	}
+	if (!deterministic) {
+	    std::printf("FAIL: fold solver nondeterministic epsilon=%.17g "
+		"transform=%zu variant=%zu\n", epsilon, transform_index,
+		variant_index);
+	    failures++;
+	    return;
+	}
+	maximum_regular_solves = std::max(maximum_regular_solves,
+	    observed.regular_solves);
+	if (!observed.frame_available || observed.samples != 17 ||
+		observed.regular_solves < observed.samples ||
+		observed.regular_solves > 147 ||
+		observed.brackets != expected_count ||
+		observed.capacity_exhausted ||
+		observed.candidate_count != expected_count) {
+	    std::printf("FAIL: fold candidate/work epsilon=%.17g "
+		"transform=%zu variant=%zu observed=%zu expected=%zu "
+		"frame/capacity=%d/%d samples/solves/brackets=%zu/%zu/%zu\n",
+		epsilon, transform_index,
+		variant_index, observed.candidate_count, expected_count,
+		observed.frame_available, observed.capacity_exhausted,
+		observed.samples, observed.regular_solves, observed.brackets);
+	    failures++;
+	    return;
+	}
+	if (!expected_count)
+	    return;
+	double expected[2][2] = {};
+	if (expected_count == 1) {
+	    expected[0][0] = regular_root;
+	    expected[0][1] = 0.5;
+	} else {
+	    expected[0][0] = expected[1][0] = regular_root;
+	    expected[0][1] = 0.5 - 0.5 * root_separation;
+	    expected[1][1] = 0.5 + 0.5 * root_separation;
+	}
+	for (size_t root_index = 0; root_index < expected_count;
+		++root_index) {
+	    if (variant.reverse_u)
+		expected[root_index][0] = 1.0 - expected[root_index][0];
+	    if (variant.reverse_v)
+		expected[root_index][1] = 1.0 - expected[root_index][1];
+	    if (variant.swap)
+		std::swap(expected[root_index][0], expected[root_index][1]);
+	}
+	bool used[RT_BREP_FOLD_TEST_MAX_CANDIDATES] = {};
+	for (size_t expected_index = 0; expected_index < expected_count;
+		++expected_index) {
+	    size_t best_index = SIZE_MAX;
+	    double best_error = DBL_MAX;
+	    for (size_t candidate_index = 0;
+		    candidate_index < observed.candidate_count;
+		    ++candidate_index) {
+		if (used[candidate_index])
+		    continue;
+		const double error = hypot(
+		    observed.uv[candidate_index][0] -
+			expected[expected_index][0],
+		    observed.uv[candidate_index][1] -
+			expected[expected_index][1]);
+		if (error < best_error) {
+		    best_error = error;
+		    best_index = candidate_index;
+		}
+	    }
+	    if (best_index == SIZE_MAX || best_error > 2.0e-12) {
+		std::printf("FAIL: fold candidate location epsilon=%.17g "
+		    "transform=%zu variant=%zu root=%zu error=%.17g\n",
+		    epsilon, transform_index, variant_index, expected_index,
+		    best_error);
+		failures++;
+		continue;
+	    }
+	    used[best_index] = true;
+	    maximum_root_error = std::max(maximum_root_error, best_error);
+	    const double residual_ratio = coefficient_scale > 0.0 ?
+		observed.residual[best_index] / coefficient_scale :
+		observed.residual[best_index];
+	    maximum_residual_ratio = std::max(maximum_residual_ratio,
+		residual_ratio);
+	    if (!(residual_ratio <= 2.0e-12)) {
+		std::printf("FAIL: fold candidate residual epsilon=%.17g "
+		    "transform=%zu variant=%zu root=%zu ratio=%.17g\n",
+		    epsilon, transform_index, variant_index, expected_index,
+		    residual_ratio);
+		failures++;
+	    }
+	}
+    };
+
+    for (size_t transform_index = 0; transform_index <
+	    sizeof(equation_transform) / sizeof(equation_transform[0]);
+	    ++transform_index) {
+	for (size_t variant_index = 0; variant_index <
+		sizeof(parameter_variants) / sizeof(parameter_variants[0]);
+		++variant_index) {
+	    for (size_t separation_index = 0; separation_index <
+		    sizeof(separation_exponents) /
+		    sizeof(separation_exponents[0]); ++separation_index) {
+		const double separation = std::ldexp(1.0,
+		    -separation_exponents[separation_index]);
+		const double epsilon = 0.25 * separation * separation;
+		minimum_separation = std::min(minimum_separation, separation);
+		run_case(epsilon, transform_index, variant_index, 2,
+		    separation);
+	    }
+	    run_case(0.0, transform_index, variant_index, 1, 0.0);
+	    run_case(-std::ldexp(1.0, -20), transform_index, variant_index,
+		0, 0.0);
+	}
+    }
+
+    const int parameter_shear_exponents[] = {0, 10, 20};
+    for (size_t shear_index = 0; shear_index <
+	    sizeof(parameter_shear_exponents) /
+	    sizeof(parameter_shear_exponents[0]); ++shear_index) {
+	const double shear = std::ldexp(1.0,
+	    parameter_shear_exponents[shear_index]);
+	for (size_t separation_index = 0; separation_index <
+		sizeof(separation_exponents) /
+		sizeof(separation_exponents[0]); ++separation_index) {
+	    const double separation = std::ldexp(1.0,
+		-separation_exponents[separation_index]);
+	    const double delta = 0.5 * separation;
+	    const double epsilon = delta * delta;
+	    const double regular_width = 0.25;
+	    const double weak_width = std::min(0.5 * delta,
+		regular_width / (8.0 * shear));
+	    for (int side = -1; side <= 1; side += 2) {
+		double corridor_coefficients[2][9];
+		double corridor_errors[2][9] = {};
+		const double corridor_minimum = side < 0 ?
+		    -1.5 * delta : 0.25 * delta;
+		const double corridor_maximum = side < 0 ?
+		    -0.25 * delta : 1.5 * delta;
+		const double corridor_width =
+		    corridor_maximum - corridor_minimum;
+		const double corridor_regular_width =
+		    4.0 * shear * delta + 0.25;
+		const double corridor_weak_control[3] = {
+		    corridor_minimum * corridor_minimum - epsilon,
+		    corridor_minimum * corridor_maximum - epsilon,
+		    corridor_maximum * corridor_maximum - epsilon
+		};
+		for (int i = 0; i < 3; ++i) {
+		    for (int j = 0; j < 3; ++j) {
+			const size_t index = (size_t)i * 3 + j;
+			const double weak_parameter = corridor_minimum +
+			    0.5 * j * corridor_width;
+			corridor_coefficients[0][index] =
+			    corridor_regular_width * (0.5 * i - 0.5) +
+			    shear * (weak_parameter - side * delta);
+			corridor_coefficients[1][index] =
+			    corridor_weak_control[j];
+		    }
+		}
+		struct rt_brep_corridor_test_result corridor = {};
+		corridor_boxes++;
+		if (!_rt_brep_corridor_test(corridor_coefficients[0],
+			corridor_errors[0], corridor_coefficients[1],
+			corridor_errors[1], 3, 3, 0, &corridor) ||
+			!corridor.available || !corridor.unique ||
+			corridor.determinant_sign != side) {
+		    std::printf("FAIL: fold corridor proof unavailable "
+			"separation=%.17g shear=2^%d side=%d "
+			"available/derivative/boundary/determinant/unique="
+			"%d/%d/%d/%d/%d sign=%d\n", separation,
+			parameter_shear_exponents[shear_index], side,
+			corridor.available, corridor.regular_derivative_signed,
+			corridor.regular_boundaries_opposed,
+			corridor.determinant_signed, corridor.unique,
+			corridor.determinant_sign);
+		    failures++;
+		}
+
+		double coefficients[2][9];
+		double errors[2][9] = {};
+		const double weak_minimum = side * delta - 0.5 * weak_width;
+		const double weak_maximum = weak_minimum + weak_width;
+		const double weak_control[3] = {
+		    weak_minimum * weak_minimum - epsilon,
+		    weak_minimum * weak_maximum - epsilon,
+		    weak_maximum * weak_maximum - epsilon
+		};
+		for (int i = 0; i < 3; ++i) {
+		    for (int j = 0; j < 3; ++j) {
+			const size_t index = (size_t)i * 3 + j;
+			coefficients[0][index] =
+			    regular_width * (0.5 * i - 0.5) +
+			    shear * weak_width * (0.5 * j - 0.5);
+			coefficients[1][index] = weak_control[j];
+		    }
+		}
+		struct rt_brep_determinant_test_result determinant = {};
+		struct rt_brep_krawczyk_test_result krawczyk = {};
+		struct rt_brep_krawczyk_test_result expansion_krawczyk = {};
+		size_t expansion_high_water = 0;
+		const fastf_t root[2] = {0.5, 0.5};
+		certificate_boxes++;
+		if (!_rt_brep_determinant_test(coefficients[0], errors[0],
+			coefficients[1], errors[1], 3, 3, &determinant) ||
+			!_rt_brep_krawczyk_test(coefficients[0], errors[0],
+			    coefficients[1], errors[1], 3, 3, root,
+			    &krawczyk) || !krawczyk.available ||
+			!krawczyk.certified ||
+			!_rt_brep_expansion_krawczyk_test(coefficients[0],
+			    errors[0], coefficients[1], errors[1], 3, 3,
+			    root, &expansion_krawczyk,
+			    &expansion_high_water) ||
+			!expansion_krawczyk.available ||
+			!expansion_krawczyk.certified) {
+		    std::printf("FAIL: fold certificate unavailable "
+			"separation=%.17g shear=2^%d side=%d "
+			"available/certified=%d/%d+%d/%d ratio=%.17g/%.17g\n",
+			separation,
+			parameter_shear_exponents[shear_index], side,
+			krawczyk.available, krawczyk.certified,
+			expansion_krawczyk.available,
+			expansion_krawczyk.certified,
+			krawczyk.determinant_ratio,
+			expansion_krawczyk.determinant_ratio);
+		    failures++;
+		    continue;
+		}
+		expansion_certificate_boxes++;
+		expansion_certificate_high_water = std::max(
+		    expansion_certificate_high_water, expansion_high_water);
+		bool determinant_signed = true;
+		const size_t determinant_count =
+		    (size_t)determinant.u_order * determinant.v_order;
+		for (size_t i = 0; i < determinant_count; ++i) {
+		    if ((side < 0 && !(determinant.maximum[i] < 0.0)) ||
+			    (side > 0 && !(determinant.minimum[i] > 0.0))) {
+			determinant_signed = false;
+			break;
+		    }
+		}
+		if (!determinant_signed) {
+		    std::printf("FAIL: fold determinant sign unavailable "
+			"separation=%.17g shear=2^%d side=%d\n", separation,
+			parameter_shear_exponents[shear_index], side);
+		    failures++;
+		}
+		minimum_determinant_ratio = std::min(minimum_determinant_ratio,
+		    (double)krawczyk.determinant_ratio);
+		if (krawczyk.determinant_ratio <
+			BREP_INTERSECTION_ROOT_EPSILON)
+		    certificates_below_old_cutoff++;
+	    }
+	}
+    }
+
+    /*
+     * Exercise the bounded implicit-graph proof independently of the direct
+     * whole-box result.  A coupled term varies the determinant away from the
+     * regular graph enough to make its whole-box sign uncertain, while all
+     * coefficients, errors, domains, and scales are dyadic.  Restricting the
+     * original determinant onto the contracted graph enclosure must recover
+     * the strict sign without a reparameterization scale loss.
+     */
+    const int graph_scale_exponents[] = {-100, 0, 100};
+    const auto run_graph_box = [&](double q_minimum, double q_maximum,
+	    double epsilon, int side, bool swap, int scale_exponent,
+	    bool test_determinant, bool expected_excluded,
+	    const char *label) {
+	fastf_t minimum[2][9] = {};
+	fastf_t maximum[2][9] = {};
+	const double regular_width = 0.25;
+	const double delta = sqrt(std::max(0.0, epsilon));
+	const double coupling = 8.0 * delta;
+	const double q_control[3] = {
+	    q_minimum, 0.5 * q_minimum + 0.5 * q_maximum, q_maximum
+	};
+	const double q_squared_control[3] = {
+	    q_minimum * q_minimum,
+	    q_minimum * q_maximum,
+	    q_maximum * q_maximum
+	};
+	const double base_error = epsilon > 0.0 ?
+	    std::ldexp(epsilon, -40) : 0.0;
+	for (int i = 0; i < 3; ++i) {
+	    const double phi = regular_width * (0.5 * i - 0.5);
+	    for (int j = 0; j < 3; ++j) {
+		const size_t source_index = (size_t)i * 3 + j;
+		const size_t index = swap ? (size_t)j * 3 + i : source_index;
+		const double value[2] = {
+		    std::ldexp(phi, scale_exponent),
+		    std::ldexp(q_squared_control[j] - epsilon +
+			coupling * phi * q_control[j], -scale_exponent)
+		};
+		const double error[2] = {
+		    std::ldexp(base_error, scale_exponent),
+		    std::ldexp(base_error, -scale_exponent)
+		};
+		for (int equation = 0; equation < 2; ++equation) {
+		    minimum[equation][index] = value[equation] -
+			error[equation];
+		    maximum[equation][index] = value[equation] +
+			error[equation];
+		}
+	    }
+	}
+	struct rt_brep_fold_graph_test_result observed = {};
+	const int regular_direction = swap ? 1 : 0;
+	if (!_rt_brep_fold_graph_test(minimum[0], maximum[0], minimum[1],
+		maximum[1], 3, 3, regular_direction,
+		test_determinant ? 1 : 0, test_determinant ? 0 : 1,
+		&observed) || !observed.available ||
+		!observed.regular_derivative_signed ||
+		!observed.regular_boundaries_opposed) {
+	    std::printf("FAIL: fold graph unavailable %s epsilon=%.17g "
+		"side=%d swap=%d scale=%d available/regular/boundary="
+		"%d/%d/%d\n", label, epsilon, side, swap, scale_exponent,
+		observed.available, observed.regular_derivative_signed,
+		observed.regular_boundaries_opposed);
+	    failures++;
+	    return;
+	}
+	graph_expansion_high_water = std::max(graph_expansion_high_water,
+	    observed.expansion_high_water);
+	graph_boundary_available += observed.boundary_existence_available ? 1 : 0;
+	graph_boundary_certificates +=
+	    observed.boundary_existence_certified ? 1 : 0;
+	graph_boundary_contractions +=
+	    observed.boundary_existence_contractions;
+	if (observed.expansion_high_water >= RT_BREP_EXPANSION_CAPACITY) {
+	    std::printf("FAIL: fold graph expansion capacity %s high=%zu\n",
+		label, observed.expansion_high_water);
+	    failures++;
+	}
+	if (test_determinant) {
+	    graph_corridor_cases++;
+	    graph_proof_boxes += observed.graph_boxes;
+	    graph_proof_contractions += observed.graph_contractions;
+	    const int expected_sign = swap ? -side : side;
+	    if (observed.whole_determinant_signed ||
+		    !observed.graph_determinant_signed ||
+		    observed.determinant_sign != expected_sign ||
+		    !observed.graph_boxes || !observed.graph_contractions ||
+		    !observed.boundary_existence_available ||
+		    !observed.boundary_existence_certified ||
+		    !observed.boundary_existence_contractions) {
+		std::printf("FAIL: fold implicit determinant %s epsilon=%.17g "
+		    "side=%d swap=%d scale=%d whole/graph/sign=%d/%d/%d "
+		    "expected=%d boxes/contractions=%zu/%zu "
+		    "boundary=%d/%d/%zu "
+		    "failure=r%zu/d%zu/s%zu/z%zu/w%zu\n", label,
+		    epsilon, side, swap, scale_exponent,
+		    observed.whole_determinant_signed,
+		    observed.graph_determinant_signed,
+		    observed.determinant_sign, expected_sign,
+		    observed.graph_boxes, observed.graph_contractions,
+		    observed.boundary_existence_available,
+		    observed.boundary_existence_certified,
+		    observed.boundary_existence_contractions,
+		    observed.graph_restriction_failures,
+		    observed.graph_determinant_failures,
+		    observed.graph_sign_conflicts,
+		    observed.graph_depth_exhausted,
+		    observed.graph_workspace_exhausted);
+		failures++;
+	    }
+	} else {
+	    graph_strip_boxes += observed.strip_boxes;
+	    graph_strip_contractions += observed.strip_contractions;
+	    if (epsilon > 0.0)
+		graph_strip_cases++;
+	    else
+		graph_contact_cases++;
+	    if ((observed.system_excluded != (expected_excluded ? 1 : 0)) ||
+		    !observed.boundary_existence_available ||
+		    observed.boundary_existence_certified ||
+		    !observed.strip_boxes ||
+		    (expected_excluded && !observed.strip_contractions) ||
+		    observed.strip_restriction_failures ||
+		    observed.strip_arithmetic_failures ||
+		    observed.strip_workspace_exhausted ||
+		    observed.strip_depth_exhausted !=
+			(expected_excluded ? 0u : 1u)) {
+		std::printf("FAIL: fold implicit strip %s epsilon=%.17g "
+		    "side=%d swap=%d scale=%d excluded=%d expected=%d "
+		    "boundary=%d/%d/%zu boxes/contractions=%zu/%zu "
+		    "failure=r%zu/a%zu/z%zu/w%zu\n",
+		    label, epsilon, side,
+		    swap, scale_exponent, observed.system_excluded,
+		    expected_excluded ? 1 : 0,
+		    observed.boundary_existence_available,
+		    observed.boundary_existence_certified,
+		    observed.boundary_existence_contractions,
+		    observed.strip_boxes,
+		    observed.strip_contractions,
+		    observed.strip_restriction_failures,
+		    observed.strip_arithmetic_failures,
+		    observed.strip_depth_exhausted,
+		    observed.strip_workspace_exhausted);
+		failures++;
+	    }
+	}
+    };
+
+    for (size_t separation_index = 0; separation_index <
+	    sizeof(separation_exponents) / sizeof(separation_exponents[0]);
+	    ++separation_index) {
+	const double delta = std::ldexp(1.0,
+	    -separation_exponents[separation_index] - 1);
+	const double epsilon = delta * delta;
+	for (int side = -1; side <= 1; side += 2) {
+	    const double corridor_minimum = side < 0 ?
+		-1.5 * delta : 0.25 * delta;
+	    const double corridor_maximum = side < 0 ?
+		-0.25 * delta : 1.5 * delta;
+	    const double strip_minimum = side < 0 ? -0.5 * delta : 0.0;
+	    const double strip_maximum = side < 0 ? 0.0 : 0.5 * delta;
+	    for (int swap = 0; swap <= 1; ++swap) {
+		for (size_t scale_index = 0; scale_index <
+			sizeof(graph_scale_exponents) /
+			sizeof(graph_scale_exponents[0]); ++scale_index) {
+		    run_graph_box(corridor_minimum, corridor_maximum,
+			epsilon, side, swap != 0,
+			graph_scale_exponents[scale_index], true, false,
+			"corridor");
+		    run_graph_box(strip_minimum, strip_maximum, epsilon,
+			side, swap != 0, graph_scale_exponents[scale_index],
+			false, true, "strip");
+		}
+	    }
+	}
+    }
+    run_graph_box(0.0, 0.5, 0.0, 1, false, 0, false, false,
+	"contact");
+
+    if (!failures) {
+	std::printf("BREP fold solver corpus: PASS systems=%zu roots=%zu "
+	    "min-separation=%.9g max-error/residual=%.9g/%.9g "
+	    "max-regular-solves=%zu certificates=%zu/%zu+%zu/%zu "
+	    "corridors=%zu graph=%zu/%zu/%zu boxes=%zu/%zu+%zu/%zu "
+	    "boundary=%zu/%zu/%zu "
+	    "high=%zu "
+	    "min-det-ratio=%.9g\n",
+	    systems, expected_roots, minimum_separation,
+	    maximum_root_error, maximum_residual_ratio,
+	    maximum_regular_solves, certificate_boxes,
+	    certificates_below_old_cutoff, expansion_certificate_boxes,
+	    expansion_certificate_high_water, corridor_boxes,
+	    graph_corridor_cases, graph_strip_cases, graph_contact_cases,
+	    graph_proof_boxes, graph_proof_contractions, graph_strip_boxes,
+	    graph_strip_contractions, graph_boundary_available,
+	    graph_boundary_certificates, graph_boundary_contractions,
+	    graph_expansion_high_water,
+	    minimum_determinant_ratio);
     }
     return failures;
 }
@@ -4453,13 +6135,13 @@ check_ellipsoid_adaptive_affine(const struct bn_tol *tol)
 	    ON_3dVector(1.0, 0.4, -0.2), -0.917, 1.0e-6,
 	    {RT_BREP_PREPARED_FALLBACK_NONE,
 	     RT_BREP_PREPARED_FALLBACK_NONE,
-	     RT_BREP_PREPARED_FALLBACK_UNCERTIFIED}},
+	     RT_BREP_PREPARED_FALLBACK_NONE}},
 	{"extreme-condition", ON_3dVector(0.001, 0.05, 1.0),
 	    ON_3dVector(17.0, -29.0, 43.0),
 	    ON_3dVector(-0.6, 0.3, 1.0), 0.583, 1.0e-4,
-	    {RT_BREP_PREPARED_FALLBACK_SURFACE_BOXES,
-	     RT_BREP_PREPARED_FALLBACK_UNCERTIFIED,
-	     RT_BREP_PREPARED_FALLBACK_SURFACE_BOXES}},
+	    {RT_BREP_PREPARED_FALLBACK_NONE,
+	     RT_BREP_PREPARED_FALLBACK_NONE,
+	     RT_BREP_PREPARED_FALLBACK_NONE}},
 	{"large-triaxial", ON_3dVector(100.0, 600.0, 2500.0),
 	    ON_3dVector(1.0e6, -2.0e6, 3.0e6),
 	    ON_3dVector(2.0, 0.25, -1.0), 2.017, 0.0,
@@ -4486,6 +6168,16 @@ check_ellipsoid_adaptive_affine(const struct bn_tol *tol)
 	size_t production_segments = 0;
 	size_t selected = 0;
 	size_t fallback[RT_BREP_PREPARED_FALLBACK_COUNT] = {};
+	size_t fold_attempts = 0;
+	size_t fold_candidates = 0;
+	size_t fold_certified = 0;
+	double fold_minimum_ratio = DBL_MAX;
+	size_t expansion_attempts = 0;
+	size_t expansion_available = 0;
+	size_t expansion_certified = 0;
+	size_t expansion_failures = 0;
+	size_t expansion_high_water = 0;
+	double expansion_minimum_ratio = DBL_MAX;
 	double minimum_chord_ratio = DBL_MAX;
 	double maximum_chord_ratio = 0.0;
 	double maximum_endpoint_error = 0.0;
@@ -4495,6 +6187,9 @@ check_ellipsoid_adaptive_affine(const struct bn_tol *tol)
     size_t total_rays = 0;
     size_t total_krawczyk = 0;
     size_t total_boxes = 0;
+    size_t total_rotated_hull_attempts = 0;
+    size_t total_rotated_hull_exclusions = 0;
+    size_t total_rotated_hull_inconclusive = 0;
     size_t minimum_boxes = SIZE_MAX;
     size_t maximum_boxes = 0;
     size_t minimum_depth = SIZE_MAX;
@@ -4513,6 +6208,11 @@ check_ellipsoid_adaptive_affine(const struct bn_tol *tol)
     double maximum_prepared_error = 0.0;
     size_t grazing_rays = 0;
     size_t grazing_resolved_misses = 0;
+    size_t grazing_expansion_ratchets = 0;
+    size_t grazing_corridor_ratchets = 0;
+    size_t grazing_fold_event_ratchets = 0;
+    size_t grazing_gap_maximum_boxes = 0;
+    size_t grazing_gap_rotated_exclusions = 0;
 
     const auto check_affine_grazing_case = [&](const affine_case &test,
 	    const ON_Xform &xform,
@@ -4581,6 +6281,32 @@ check_ellipsoid_adaptive_affine(const struct bn_tol *tol)
 		summary.implicit_segments += implicit_result.segments;
 		summary.production_segments += production_result.segments;
 		summary.selected += trace.prepared_production_selected;
+		summary.fold_attempts += trace.surface_fold_attempts;
+		summary.fold_candidates += trace.surface_fold_candidates;
+		summary.fold_certified +=
+		    trace.surface_fold_krawczyk_certified;
+		summary.expansion_attempts +=
+		    trace.surface_fold_expansion_attempts;
+		summary.expansion_available +=
+		    trace.surface_fold_expansion_available;
+		summary.expansion_certified +=
+		    trace.surface_fold_expansion_certified;
+		summary.expansion_failures +=
+		    trace.surface_fold_expansion_failures;
+		summary.expansion_high_water = std::max(
+		    summary.expansion_high_water,
+		    trace.surface_fold_expansion_high_water);
+		if (trace.surface_fold_krawczyk_available) {
+		    summary.fold_minimum_ratio = std::min(
+			summary.fold_minimum_ratio,
+			(double)trace.surface_fold_min_determinant_ratio);
+		}
+		if (trace.surface_fold_expansion_available) {
+		    summary.expansion_minimum_ratio = std::min(
+			summary.expansion_minimum_ratio,
+			(double)trace.
+			    surface_fold_expansion_min_determinant_ratio);
+		}
 		if (trace.prepared_production_fallback >= 0 &&
 			trace.prepared_production_fallback <
 			RT_BREP_PREPARED_FALLBACK_COUNT)
@@ -4619,8 +6345,14 @@ check_ellipsoid_adaptive_affine(const struct bn_tol *tol)
 		    trace.local_event_stored_segments == 1 ?
 		    std::max(fabs(trace.local_event_segment_in[0] /
 			direction_length - grazing_in),
-		    fabs(trace.local_event_segment_out[0] /
-			direction_length - grazing_out)) : 0.0;
+			fabs(trace.local_event_segment_out[0] /
+			    direction_length - grazing_out)) : 0.0;
+		const double fold_event_error =
+		    trace.surface_fold_resolved_pairs == 1 ?
+		    std::max(fabs(trace.surface_fold_segment_in /
+			direction_length - grazing_in),
+		    fabs(trace.surface_fold_segment_out /
+			direction_length - grazing_out)) : DBL_MAX;
 		summary.maximum_endpoint_error = std::max(
 		    summary.maximum_endpoint_error, production_error);
 		const bool required_hit = clearance > 0.0 &&
@@ -4637,20 +6369,337 @@ check_ellipsoid_adaptive_affine(const struct bn_tol *tol)
 		    brep_interval_ended[reverse];
 		if (!production_segments)
 		    brep_interval_ended[reverse] = true;
-		if (analytic_resolved && !production_segments)
+		size_t expansion_certificate_floor = SIZE_MAX;
+		if (!std::strcmp(test.name, "high-condition") &&
+			ratio_index == 5)
+		    expansion_certificate_floor = 2;
+		if (!std::strcmp(test.name, "extreme-condition") &&
+			ratio_index == 4)
+		    expansion_certificate_floor = 2;
+		if (!std::strcmp(test.name, "extreme-condition") &&
+			ratio_index == 5)
+		    expansion_certificate_floor = 0;
+		const bool known_expansion_case =
+		    expansion_certificate_floor != SIZE_MAX;
+		if (known_expansion_case) {
+		    const bool expansion_improved =
+			trace.surface_fold_expansion_certified ||
+			trace.surface_fold_expansion_best_image_excess <
+			    trace.surface_fold_best_image_excess;
+		    const bool expansion_bad = !known_expansion_case ||
+			!trace.surface_fold_expansion_attempts ||
+			trace.surface_fold_expansion_available !=
+			    trace.surface_fold_expansion_attempts ||
+			trace.surface_fold_expansion_failures ||
+			!trace.surface_fold_expansion_contraction_attempts ||
+			trace.surface_fold_expansion_contraction_attempts !=
+			    trace.surface_fold_expansion_contracted +
+			    trace.surface_fold_expansion_contraction_empty +
+			    trace.surface_fold_expansion_contraction_unchanged ||
+			(expansion_certificate_floor &&
+			 !trace.surface_fold_expansion_contracted) ||
+			!trace.surface_fold_expansion_high_water ||
+			trace.surface_fold_expansion_high_water >=
+			    RT_BREP_EXPANSION_CAPACITY ||
+			trace.surface_fold_expansion_certified <
+			    expansion_certificate_floor ||
+			!expansion_improved;
+		    grazing_expansion_ratchets++;
+		    if (expansion_bad) {
+			std::printf("FAIL: affine grazing expansion ratchet %s "
+			    "ratio=%.3g reverse=%d "
+			    "attempts/available/certified/failures="
+			    "%zu/%zu/%zu/%zu contraction=%zu/%zu/%zu/%zu "
+			    "floor=%zu "
+			    "excess=%.3g/%.3g high-water=%zu/%d\n",
+			    test.name,
+			    grazing_clearance_ratios[ratio_index], reverse,
+			    trace.surface_fold_expansion_attempts,
+			    trace.surface_fold_expansion_available,
+			    trace.surface_fold_expansion_certified,
+			    trace.surface_fold_expansion_failures,
+			    trace.surface_fold_expansion_contraction_attempts,
+			    trace.surface_fold_expansion_contracted,
+			    trace.surface_fold_expansion_contraction_empty,
+			    trace.surface_fold_expansion_contraction_unchanged,
+			    expansion_certificate_floor,
+			    trace.surface_fold_best_image_excess,
+			    trace.surface_fold_expansion_best_image_excess,
+			    trace.surface_fold_expansion_high_water,
+			    RT_BREP_EXPANSION_CAPACITY);
+			failures++;
+		    }
+		    const bool corridor_bad =
+			trace.surface_fold_corridor_attempts != 2 ||
+			trace.surface_fold_corridor_available != 2 ||
+			trace.surface_fold_corridor_regular_signed != 2 ||
+			trace.surface_fold_corridor_boundaries_opposed != 2 ||
+			trace.surface_fold_corridor_determinant_signed != 2 ||
+			trace.surface_fold_corridor_unique != 2 ||
+			trace.surface_fold_corridor_graph_attempts !=
+			    trace.surface_fold_corridor_graph_certified ||
+			trace.surface_fold_corridor_graph_failures ||
+			trace.surface_fold_corridor_graph_restriction_failures ||
+			trace.surface_fold_corridor_graph_determinant_failures ||
+			trace.surface_fold_corridor_graph_sign_conflicts ||
+			trace.surface_fold_corridor_graph_depth_exhausted ||
+			trace.surface_fold_corridor_graph_workspace_exhausted ||
+			trace.surface_fold_boundary_existence_attempts != 2 ||
+			trace.surface_fold_boundary_existence_available != 2 ||
+			trace.surface_fold_boundary_existence_certified != 2 ||
+			!trace.surface_fold_boundary_existence_contractions ||
+			trace.surface_fold_boundary_existence_failures ||
+			trace.surface_fold_strip_excluded != 2 ||
+			!trace.surface_fold_strip_boxes ||
+			!trace.surface_fold_strip_contractions ||
+			trace.surface_fold_strip_restriction_failures ||
+			trace.surface_fold_strip_arithmetic_failures ||
+			trace.surface_fold_strip_depth_exhausted ||
+			trace.surface_fold_strip_workspace_exhausted ||
+			trace.surface_fold_complete != 2 ||
+			trace.surface_fold_corridor_failures ||
+			!trace.surface_fold_corridor_high_water ||
+			trace.surface_fold_corridor_high_water >=
+			    RT_BREP_EXPANSION_CAPACITY;
+		    grazing_corridor_ratchets++;
+		    if (corridor_bad) {
+			std::printf("FAIL: affine grazing corridor ratchet %s "
+			    "ratio=%.3g reverse=%d corridor="
+			    "%zu/%zu/%zu/%zu/%zu/%zu graph="
+			    "%zu/%zu/%zu/%zu/%zu/%zu/%zu existence="
+			    "%zu/%zu/%zu/%zu/%zu strip="
+			    "%zu/%zu/%zu complete=%zu/%zu failures/high=%zu/%zu\n",
+			    test.name, grazing_clearance_ratios[ratio_index],
+			    reverse, trace.surface_fold_corridor_attempts,
+			    trace.surface_fold_corridor_available,
+			    trace.surface_fold_corridor_regular_signed,
+			    trace.surface_fold_corridor_boundaries_opposed,
+			    trace.surface_fold_corridor_determinant_signed,
+			    trace.surface_fold_corridor_unique,
+			    trace.surface_fold_corridor_graph_attempts,
+			    trace.surface_fold_corridor_graph_certified,
+			    trace.surface_fold_corridor_graph_failures,
+			    trace.surface_fold_corridor_graph_restriction_failures,
+			    trace.surface_fold_corridor_graph_determinant_failures,
+			    trace.surface_fold_corridor_graph_depth_exhausted,
+			    trace.surface_fold_corridor_graph_workspace_exhausted,
+			    trace.surface_fold_boundary_existence_attempts,
+			    trace.surface_fold_boundary_existence_available,
+			    trace.surface_fold_boundary_existence_certified,
+			    trace.surface_fold_boundary_existence_contractions,
+			    trace.surface_fold_boundary_existence_failures,
+			    trace.surface_fold_strip_excluded,
+			    trace.surface_fold_strip_boxes,
+			    trace.surface_fold_strip_contractions,
+			    trace.surface_fold_complete,
+			    trace.surface_fold_expansion_certified,
+			    trace.surface_fold_corridor_failures,
+			    trace.surface_fold_corridor_high_water);
+			failures++;
+		    }
+		    bool fold_roots_clean =
+			trace.stored_surface_fold_roots == 2;
+		    for (size_t fold_index = 0; fold_roots_clean &&
+			    fold_index < trace.stored_surface_fold_roots;
+			    ++fold_index) {
+			const struct rt_brep_trace_fold_root &root =
+			    trace.surface_fold_roots_data[fold_index];
+			fold_roots_clean = root.trim_status == 0 &&
+			    root.hit_class == 0;
+		    }
+		    const bool fold_event_bad =
+			trace.surface_fold_roots != 2 ||
+			trace.stored_surface_fold_roots != 2 ||
+			trace.surface_fold_root_overflow ||
+			trace.surface_fold_root_failures ||
+			trace.surface_fold_localization_attempts != 48 ||
+			!trace.surface_fold_localization_certified ||
+			!trace.surface_fold_localization_contractions ||
+			trace.surface_fold_localization_failures ||
+			trace.surface_fold_direction_checks != 2 ||
+			trace.surface_fold_direction_mismatches ||
+			trace.surface_fold_trim_queries != 2 ||
+			trace.surface_fold_trim_failures ||
+			!fold_roots_clean ||
+			trace.surface_fold_topology_pairs != 1 ||
+			trace.surface_fold_duplicate_events ||
+			trace.surface_fold_material_pairs != 1 ||
+			trace.surface_fold_void_pairs ||
+			trace.surface_fold_resolved_pairs != 1 ||
+			trace.surface_fold_subminimum_contacts ||
+			trace.surface_fold_tolerance_ambiguous ||
+			trace.surface_fold_unmatched_roots ||
+			!(trace.surface_fold_pair_gap_min >
+			    trace.surface_fold_minimum_t) ||
+			!(trace.surface_fold_segment_in <
+			    trace.surface_fold_segment_out) ||
+			trace.surface_fold_promoted_pairs != 1 ||
+			fold_event_error > normalized_limit;
+		    grazing_fold_event_ratchets++;
+		    if (fold_event_bad) {
+			std::printf("FAIL: affine fold event ratchet %s "
+			    "ratio=%.3g reverse=%d roots=%zu/%zu/%zu/%zu "
+			    "localize=%zu/%zu/%zu/%zu directions=%zu/%zu "
+			    "events=%zu/%zu/%zu/%zu/%zu/%zu/%zu/%zu "
+			    "gap/min=%.3g/%.3g/%.3g segment=%.17g/%.17g "
+			    "error/limit=%.3g/%.3g\n", test.name,
+			    grazing_clearance_ratios[ratio_index], reverse,
+			    trace.surface_fold_roots,
+			    trace.stored_surface_fold_roots,
+			    trace.surface_fold_root_overflow,
+			    trace.surface_fold_root_failures,
+			    trace.surface_fold_localization_attempts,
+			    trace.surface_fold_localization_certified,
+			    trace.surface_fold_localization_contractions,
+			    trace.surface_fold_localization_failures,
+			    trace.surface_fold_direction_checks,
+			    trace.surface_fold_direction_mismatches,
+			    trace.surface_fold_topology_pairs,
+			    trace.surface_fold_duplicate_events,
+			    trace.surface_fold_material_pairs,
+			    trace.surface_fold_void_pairs,
+			    trace.surface_fold_resolved_pairs,
+			    trace.surface_fold_subminimum_contacts,
+			    trace.surface_fold_tolerance_ambiguous,
+			    trace.surface_fold_unmatched_roots,
+			    trace.surface_fold_pair_gap_min,
+			    trace.surface_fold_pair_gap_max,
+			    trace.surface_fold_minimum_t,
+			    trace.surface_fold_segment_in,
+			    trace.surface_fold_segment_out,
+			    fold_event_error, normalized_limit);
+			failures++;
+		    }
+		}
+		if (analytic_resolved && !production_segments) {
 		    grazing_resolved_misses++;
+		    grazing_gap_maximum_boxes = std::max(
+			grazing_gap_maximum_boxes,
+			trace.surface_isolated_boxes);
+		    grazing_gap_rotated_exclusions +=
+			trace.surface_rotated_hull_exclusions;
+		    std::printf("Ellipsoid affine fold gap %s ratio=%.3g "
+			"reverse=%d boxes=%zu fold=%zu/%zu/%zu/%zu "
+			"min-ratio/excess=%.3g/%.3g "
+			"expansion=%zu/%zu/%zu/%zu/%.3g/%.3g/%zu "
+			"corridor=%zu/%zu/%zu/%zu/%zu/%zu "
+			"graph=%zu/%zu/%zu/%zu/%zu "
+			"existence=%zu/%zu/%zu/%zu/%zu "
+			"strip=%zu/%zu/%zu/%zu total=%zu/%zu "
+			"fold-roots=%zu/%zu/%zu/%zu directions=%zu/%zu "
+			"localize=%zu/%zu/%zu/%zu "
+			"events=%zu/%zu/%zu/%zu/%zu/%zu/%zu/%zu "
+			"gap/min=%.3g/%.3g/%.3g segment=%.17g/%.17g "
+			"local=%zu/%zu/%zu/%zu\n",
+			test.name,
+			grazing_clearance_ratios[ratio_index], reverse,
+			trace.surface_isolated_boxes,
+			trace.surface_fold_attempts,
+			trace.surface_fold_candidates,
+			trace.surface_fold_krawczyk_available,
+			trace.surface_fold_krawczyk_certified,
+			trace.surface_fold_min_determinant_ratio,
+			trace.surface_fold_best_image_excess,
+			trace.surface_fold_expansion_attempts,
+			trace.surface_fold_expansion_available,
+			trace.surface_fold_expansion_certified,
+			trace.surface_fold_expansion_failures,
+			trace.surface_fold_expansion_min_determinant_ratio,
+			trace.surface_fold_expansion_best_image_excess,
+			trace.surface_fold_expansion_high_water,
+			trace.surface_fold_corridor_attempts,
+			trace.surface_fold_corridor_available,
+			trace.surface_fold_corridor_regular_signed,
+			trace.surface_fold_corridor_boundaries_opposed,
+			trace.surface_fold_corridor_determinant_signed,
+			trace.surface_fold_corridor_unique,
+			trace.surface_fold_corridor_graph_attempts,
+			trace.surface_fold_corridor_graph_certified,
+			trace.surface_fold_corridor_graph_boxes,
+			trace.surface_fold_corridor_graph_contractions,
+			trace.surface_fold_corridor_graph_failures,
+			trace.surface_fold_boundary_existence_attempts,
+			trace.surface_fold_boundary_existence_available,
+			trace.surface_fold_boundary_existence_certified,
+			trace.surface_fold_boundary_existence_contractions,
+			trace.surface_fold_boundary_existence_failures,
+			trace.surface_fold_strip_excluded,
+			trace.surface_fold_complete,
+			trace.surface_fold_strip_boxes,
+			trace.surface_fold_strip_contractions,
+			trace.surface_fold_corridor_failures,
+			trace.surface_fold_corridor_high_water,
+			trace.surface_fold_roots,
+			trace.stored_surface_fold_roots,
+			trace.surface_fold_root_overflow,
+			trace.surface_fold_root_failures,
+			trace.surface_fold_direction_checks,
+			trace.surface_fold_direction_mismatches,
+			trace.surface_fold_localization_attempts,
+			trace.surface_fold_localization_certified,
+			trace.surface_fold_localization_contractions,
+			trace.surface_fold_localization_failures,
+			trace.surface_fold_topology_pairs,
+			trace.surface_fold_duplicate_events,
+			trace.surface_fold_material_pairs,
+			trace.surface_fold_void_pairs,
+			trace.surface_fold_resolved_pairs,
+			trace.surface_fold_subminimum_contacts,
+			trace.surface_fold_tolerance_ambiguous,
+			trace.surface_fold_unmatched_roots,
+			trace.surface_fold_pair_gap_min,
+			trace.surface_fold_pair_gap_max,
+			trace.surface_fold_minimum_t,
+			trace.surface_fold_segment_in,
+			trace.surface_fold_segment_out,
+			trace.local_root_candidates,
+			trace.stored_local_roots,
+			trace.local_root_failures,
+			trace.local_root_duplicates);
+		    for (size_t fold_index = 0; fold_index <
+			    trace.stored_surface_fold_roots; ++fold_index) {
+			const struct rt_brep_trace_fold_root &root =
+			    trace.surface_fold_roots_data[fold_index];
+			std::printf("  fold root %zu face/span=%d/%d "
+			    "t=%.17g [%.17g %.17g] uv=%.17g/%.17g "
+			    "trim/class=%d/%d distance=%.17g\n", fold_index,
+			    root.face_index, root.span_index, root.dist,
+			    root.t_min, root.t_max, root.uv[0], root.uv[1],
+			    root.trim_status, root.hit_class,
+			    root.trim_distance);
+		    }
+		    for (size_t local_index = 0;
+			    local_index < trace.stored_local_roots; ++local_index) {
+			const struct rt_brep_trace_local_root &root =
+			    trace.local_roots[local_index];
+			std::printf("  local root %zu face/span=%d/%d "
+			    "t=%.17g uv=%.17g/%.17g\n", local_index,
+			    root.face_index, root.span_index, root.dist,
+			    root.uv[0], root.uv[1]);
+		    }
+		}
 		const bool reversal_mismatch = reverse &&
 		    production_result.segments != forward_production_segments;
 		if (!reverse)
 		    forward_production_segments = production_result.segments;
+		const bool fold_selected =
+		    trace.surface_fold_promoted_pairs == 1;
 		const bool selected_partition_matches =
 		    !trace.prepared_production_selected ||
-		    (trace.local_event_final_segments == production_segments &&
-		     trace.local_event_stored_segments == production_segments &&
-		     (!production_segments ||
-		      prepared_error <= normalized_limit));
-		const bool bad = production_result.segments !=
-			legacy_result.segments ||
+		    (fold_selected ?
+		     production_segments == 1 &&
+			fold_event_error <= normalized_limit :
+		     trace.local_event_final_segments == production_segments &&
+			trace.local_event_stored_segments == production_segments &&
+			(!production_segments ||
+			 prepared_error <= normalized_limit));
+		const bool solver_partition_matches =
+		    production_result.segments == legacy_result.segments ||
+		    (fold_selected && production_result.segments ==
+		    implicit_result.segments);
+		const bool fixed_match =
+		    brep_trace_fixed_workspaces_match(trace, true);
+		const bool bad = !solver_partition_matches ||
 		    trace.final_segments != production_segments ||
 		    (clearance > 0.0 && implicit_result.segments != 1) ||
 		    (clearance < 0.0 && implicit_result.segments != 0) ||
@@ -4664,14 +6713,14 @@ check_ellipsoid_adaptive_affine(const struct bn_tol *tol)
 		    production_error > normalized_limit ||
 		    legacy_error > normalized_limit ||
 		    !selected_partition_matches ||
-		    !brep_trace_fixed_workspaces_match(trace, true) ||
+		    !fixed_match ||
 		    trace.surface_workspace_exhausted ||
 		    trace.surface_clip_restriction_failures;
 		if (bad) {
 		    std::printf("FAIL: affine grazing %s ratio=%.3g "
 			"reverse=%d chord/T=%.3g "
 			"segments=%d/%d/%d/%zu required/trend=%d/%d "
-			"selection=%zu/%d "
+			"selection=%zu/%d fold=%d fixed=%d partition=%d "
 			"leaves=%zu/%zu boxes=%zu/%zu "
 			"errors=%.3g/%.3g/%.3g/%.3g limit=%.3g\n",
 			test.name, grazing_clearance_ratios[ratio_index],
@@ -4680,7 +6729,8 @@ check_ellipsoid_adaptive_affine(const struct bn_tol *tol)
 			trace.final_segments, required_hit,
 			restarted || reversal_mismatch,
 			trace.prepared_production_selected,
-			trace.prepared_production_fallback,
+			trace.prepared_production_fallback, fold_selected,
+			fixed_match, selected_partition_matches,
 			trace.fixed_leaf_count, trace.fixed_leaf_overflow,
 			trace.surface_subdivision_boxes,
 			trace.surface_box_overflow, implicit_error,
@@ -4852,6 +6902,12 @@ check_ellipsoid_adaptive_affine(const struct bn_tol *tol)
 		    total_rays++;
 		    total_krawczyk += trace.surface_krawczyk_boxes;
 		    total_boxes += trace.surface_subdivision_boxes;
+		    total_rotated_hull_attempts +=
+			trace.surface_rotated_hull_attempts;
+		    total_rotated_hull_exclusions +=
+			trace.surface_rotated_hull_exclusions;
+		    total_rotated_hull_inconclusive +=
+			trace.surface_rotated_hull_inconclusive;
 		    minimum_boxes = std::min(minimum_boxes,
 			trace.surface_subdivision_boxes);
 		    maximum_boxes = std::max(maximum_boxes,
@@ -4923,8 +6979,7 @@ check_ellipsoid_adaptive_affine(const struct bn_tol *tol)
 			implicit_error > normalized_limit ||
 			production_error > normalized_limit ||
 			legacy_error > normalized_limit ||
-			!brep_trace_fixed_workspaces_match(trace,
-			    !expected_selected) ||
+			!brep_trace_fixed_workspaces_match(trace, true) ||
 			trace.legacy_unique_roots != 2 ||
 			trace.prepared_production_selected !=
 			    (expected_selected ? 1 : 0) ||
@@ -4974,8 +7029,7 @@ check_ellipsoid_adaptive_affine(const struct bn_tol *tol)
 			    trace.prepared_production_selected,
 			    trace.prepared_production_fallback,
 			    expected_fallback,
-			    brep_trace_fixed_workspaces_match(trace,
-				!expected_selected),
+			    brep_trace_fixed_workspaces_match(trace, true),
 			    trace.fixed_leaf_count, trace.fixed_leaf_stored,
 			    trace.fixed_leaf_overflow, trace.fixed_hit_count,
 			    trace.fixed_hit_stored, trace.fixed_hit_overflow,
@@ -5017,9 +7071,25 @@ check_ellipsoid_adaptive_affine(const struct bn_tol *tol)
     }
     /* The capability floor is enforced per affine case above.  Keep the
      * aggregate gap monotone while allowing later solver work to reduce it. */
-    if (grazing_resolved_misses > 6) {
-	std::printf("FAIL: ellipsoid affine resolved grazing misses=%zu/6\n",
+    if (grazing_resolved_misses) {
+	std::printf("FAIL: ellipsoid affine resolved grazing misses=%zu/0\n",
 	    grazing_resolved_misses);
+	failures++;
+    }
+    if (grazing_expansion_ratchets != 6 || grazing_corridor_ratchets != 6 ||
+	    grazing_fold_event_ratchets != 6) {
+	std::printf("FAIL: ellipsoid affine fold ratchets=%zu/%zu/%zu "
+	    "expected=6\n", grazing_expansion_ratchets,
+	    grazing_corridor_ratchets, grazing_fold_event_ratchets);
+	failures++;
+    }
+    if (grazing_resolved_misses &&
+	    (grazing_gap_maximum_boxes > 2 ||
+	     !grazing_gap_rotated_exclusions)) {
+	std::printf("FAIL: ellipsoid affine rotated grazing isolation "
+	    "gaps=%zu max-boxes=%zu exclusions=%zu\n",
+	    grazing_resolved_misses, grazing_gap_maximum_boxes,
+	    grazing_gap_rotated_exclusions);
 	failures++;
     }
     for (size_t ratio_index = 0; ratio_index <
@@ -5040,7 +7110,9 @@ check_ellipsoid_adaptive_affine(const struct bn_tol *tol)
 	std::printf("Ellipsoid affine grazing ratio=% .3g rays=%zu "
 	    "segments=%zu/%zu selected=%zu "
 	    "fallback=%zu/%zu/%zu/%zu chord/T=%.3g/%.3g "
-	    "max-error=%.3g\n", grazing_clearance_ratios[ratio_index],
+	    "fold=%zu/%zu/%zu/%.3g expansion=%zu/%zu/%zu/%zu/%.3g/%zu "
+	    "max-error=%.3g\n",
+	    grazing_clearance_ratios[ratio_index],
 	    summary.rays, summary.implicit_segments,
 	    summary.production_segments, summary.selected,
 	    summary.fallback[RT_BREP_PREPARED_FALLBACK_NONE],
@@ -5048,6 +7120,15 @@ check_ellipsoid_adaptive_affine(const struct bn_tol *tol)
 	    summary.fallback[RT_BREP_PREPARED_FALLBACK_UNCERTIFIED],
 	    summary.fallback[RT_BREP_PREPARED_FALLBACK_PARTITION],
 	    summary.minimum_chord_ratio, summary.maximum_chord_ratio,
+	    summary.fold_attempts, summary.fold_candidates,
+	    summary.fold_certified,
+	    summary.fold_minimum_ratio < DBL_MAX ?
+		summary.fold_minimum_ratio : 0.0,
+	    summary.expansion_attempts, summary.expansion_available,
+	    summary.expansion_certified, summary.expansion_failures,
+	    summary.expansion_minimum_ratio < DBL_MAX ?
+		summary.expansion_minimum_ratio : 0.0,
+	    summary.expansion_high_water,
 	    summary.maximum_endpoint_error);
     }
 
@@ -5056,15 +7137,21 @@ check_ellipsoid_adaptive_affine(const struct bn_tol *tol)
 	    "rays=%zu selected=%zu fallback=%zu/%zu "
 	    "condition=%.3g/%.3g krawczyk=%zu "
 	    "cert-depth=%zu/%zu boxes=%zu/%zu/%zu "
+	    "rotated-hull=%zu/%zu/%zu "
 	    "max-errors=%.3g/%.3g/%.3g/%.3g\n", total_rays,
 	    selected_rays, surface_box_fallbacks, uncertified_fallbacks,
 	    minimum_condition, maximum_condition, total_krawczyk,
 	    minimum_depth, maximum_depth, minimum_boxes, total_boxes,
-	    maximum_boxes, maximum_implicit_error, maximum_production_error,
+	    maximum_boxes, total_rotated_hull_exclusions,
+	    total_rotated_hull_attempts, total_rotated_hull_inconclusive,
+	    maximum_implicit_error, maximum_production_error,
 	    maximum_legacy_error, maximum_prepared_error);
 	std::printf("Ellipsoid affine grazing ratchet: PASS rays=%zu "
-	    "resolved-gaps=%zu floors=1e-6/1e-6/1e-4\n",
-	    grazing_rays, grazing_resolved_misses);
+	    "resolved-gaps=%zu expansion/corridor/event-ratchets=%zu/%zu/%zu "
+	    "floors=1e-6/1e-6/1e-4\n",
+	    grazing_rays, grazing_resolved_misses,
+	    grazing_expansion_ratchets, grazing_corridor_ratchets,
+	    grazing_fold_event_ratchets);
     }
     return failures;
 }
@@ -7589,9 +9676,35 @@ main(int argc, char **argv)
 	BU_STR_EQUAL(argv[1], "--cobb-report");
     const bool affine_only = argc == 2 &&
 	BU_STR_EQUAL(argv[1], "--affine-only");
-    if (argc != 1 && !report_grazing && !report_cobb && !affine_only)
+    const bool interval_only = argc == 2 &&
+	BU_STR_EQUAL(argv[1], "--interval-only");
+    const bool fold_only = argc == 2 &&
+	BU_STR_EQUAL(argv[1], "--fold-only");
+    const bool core_only = argc == 2 &&
+	BU_STR_EQUAL(argv[1], "--core-only");
+    const bool directed_only = argc == 2 &&
+	BU_STR_EQUAL(argv[1], "--directed-only");
+    const bool crofton_only = argc == 2 &&
+	BU_STR_EQUAL(argv[1], "--crofton-only");
+    const bool seam_only = argc == 2 &&
+	BU_STR_EQUAL(argv[1], "--seam-only");
+    if (argc != 1 && !report_grazing && !report_cobb && !affine_only &&
+	    !interval_only && !fold_only && !core_only && !directed_only &&
+	    !crofton_only && !seam_only)
 	bu_exit(1, "Usage: %s [--grazing-report|--cobb-report|"
-	    "--affine-only]\n", argv[0]);
+	    "--affine-only|--interval-only|--fold-only|--core-only|"
+	    "--directed-only|--crofton-only|--seam-only]\n", argv[0]);
+    if (interval_only) {
+	const int interval_failures = check_brep_interval_enclosures() +
+	    check_brep_fold_interval_classifier();
+	return interval_failures ? 1 : 0;
+    }
+    if (fold_only)
+	return check_brep_fold_solver() ? 1 : 0;
+    const bool split_core = directed_only || crofton_only || seam_only;
+    const bool run_directed = !split_core || directed_only;
+    const bool run_crofton = !split_core || crofton_only;
+    const bool run_seam = !split_core || seam_only;
 
     const double radius = 10.0;
     struct rt_ell_internal ell = {};
@@ -7676,54 +9789,72 @@ main(int argc, char **argv)
     };
 
     int failures = 0;
-    failures += check_brep_interval_enclosures();
-    for (size_t repeat = 0; repeat < 16; ++repeat) {
-	for (size_t i = 0; i < sizeof(rays) / sizeof(rays[0]); ++i)
-	    failures += check_ray(rays[i].label, implicit_stp, brep_stp,
-		rtip, &resp, rays[i].origin, rays[i].direction,
-		rays[i].expected_in, rays[i].expected_out);
+    if (!core_only && !split_core) {
+	failures += check_brep_interval_enclosures();
+	failures += check_brep_fold_interval_classifier();
+	failures += check_brep_fold_solver();
     }
+    if (run_directed) {
+	for (size_t repeat = 0; repeat < 16; ++repeat) {
+	    for (size_t i = 0; i < sizeof(rays) / sizeof(rays[0]); ++i)
+		failures += check_ray(rays[i].label, implicit_stp, brep_stp,
+		    rtip, &resp, rays[i].origin, rays[i].direction,
+		    rays[i].expected_in, rays[i].expected_out);
+	}
 
-    failures += check_grazing_ratchet(implicit_stp, brep_stp, rtip, &resp,
-	radius);
+	failures += check_grazing_ratchet(implicit_stp, brep_stp, rtip,
+	    &resp, radius);
 
-    point_t small_center = {1.25, -2.5, 5.0};
-    failures += check_transformed_sphere(rtip, &resp, "small-translated",
-	small_center, 0.01);
-    point_t large_center = {1.0e6, -2.0e6, 3.0e6};
-    failures += check_transformed_sphere(rtip, &resp, "large-translated",
-	large_center, 1.0e4);
+	point_t small_center = {1.25, -2.5, 5.0};
+	failures += check_transformed_sphere(rtip, &resp,
+	    "small-translated", small_center, 0.01);
+	point_t large_center = {1.0e6, -2.0e6, 3.0e6};
+	failures += check_transformed_sphere(rtip, &resp,
+	    "large-translated", large_center, 1.0e4);
 
-    if (report_grazing)
-	grazing_report(implicit_stp, brep_stp, rtip, &resp, radius);
+	if (report_grazing)
+	    grazing_report(implicit_stp, brep_stp, rtip, &resp, radius);
+    }
 
     free_solid(brep_stp);
     free_solid(implicit_stp);
 
-    point_t sphere_min = {-radius, -radius, -radius};
-    point_t sphere_max = {radius, radius, radius};
-    failures += check_shared_crofton_fixture("sphere", &ell_intern,
-	&rtip->rti_tol, sphere_min, sphere_max,
-	4.0 * M_PI * radius * radius,
-	(4.0 / 3.0) * M_PI * radius * radius * radius, 32000);
-    failures += check_shared_primitive_corpus(&rtip->rti_tol);
-    failures += check_brep_leaf_csg_corpus(&rtip->rti_tol);
-    failures += check_cobb_sphere_corpus(&rtip->rti_tol);
-    failures += check_brep_edge_sector_box(&rtip->rti_tol, rtip, &resp);
-    failures += check_brep_edge_sector_concave(&rtip->rti_tol, rtip, &resp);
-    failures += check_brep_edge_sector_seam(&rtip->rti_tol, rtip, &resp);
-    failures += check_brep_vertex_fan_fallback(&rtip->rti_tol, rtip, &resp);
-    failures += check_sphere_adaptive_similarity(&rtip->rti_tol);
-    failures += check_ellipsoid_adaptive_affine(&rtip->rti_tol);
-    failures += check_cobb_classifier_invariance(&rtip->rti_tol);
-    failures += check_cobb_ambiguous_correspondence(&rtip->rti_tol, rtip,
-	&resp);
-    failures += check_cobb_discrepancy_bound_budget(&rtip->rti_tol, rtip,
-	&resp);
-    failures += check_cobb_tolerance_metadata(&rtip->rti_tol, rtip, &resp);
-    failures += check_cobb_bowed_seam_corpus(&rtip->rti_tol, report_cobb,
-	rtip, &resp);
-    failures += check_crofton_sphere(&ell_intern, &rtip->rti_tol, radius);
+    if (run_directed)
+	failures += check_sphere_adaptive_similarity(&rtip->rti_tol);
+
+    if (run_crofton) {
+	point_t sphere_min = {-radius, -radius, -radius};
+	point_t sphere_max = {radius, radius, radius};
+	failures += check_shared_crofton_fixture("sphere", &ell_intern,
+	    &rtip->rti_tol, sphere_min, sphere_max,
+	    4.0 * M_PI * radius * radius,
+	    (4.0 / 3.0) * M_PI * radius * radius * radius, 32000);
+	failures += check_shared_primitive_corpus(&rtip->rti_tol);
+	failures += check_brep_leaf_csg_corpus(&rtip->rti_tol);
+	failures += check_cobb_sphere_corpus(&rtip->rti_tol);
+	failures += check_crofton_sphere(&ell_intern, &rtip->rti_tol, radius);
+    }
+
+    if (!core_only && !split_core)
+	failures += check_ellipsoid_adaptive_affine(&rtip->rti_tol);
+
+    if (run_seam) {
+	failures += check_brep_edge_sector_box(&rtip->rti_tol, rtip, &resp);
+	failures += check_brep_edge_sector_concave(&rtip->rti_tol, rtip,
+	    &resp);
+	failures += check_brep_edge_sector_seam(&rtip->rti_tol, rtip, &resp);
+	failures += check_brep_vertex_fan_fallback(&rtip->rti_tol, rtip,
+	    &resp);
+	failures += check_cobb_classifier_invariance(&rtip->rti_tol);
+	failures += check_cobb_ambiguous_correspondence(&rtip->rti_tol, rtip,
+	    &resp);
+	failures += check_cobb_discrepancy_bound_budget(&rtip->rti_tol, rtip,
+	    &resp);
+	failures += check_cobb_tolerance_metadata(&rtip->rti_tol, rtip,
+	    &resp);
+	failures += check_cobb_bowed_seam_corpus(&rtip->rti_tol, report_cobb,
+	    rtip, &resp);
+    }
 
     rt_clean_resource_basic(rtip, &resp);
     BU_PTBL_SET(&rtip->rti_resources, 0, NULL);

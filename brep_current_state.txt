@@ -97,11 +97,9 @@ transform, as expected, without changing classification.
 An independent nonuniform affine ellipsoid matrix now maps analytic sphere
 chords through rotated principal scales and compares implicit, promoted,
 forced-legacy, and reconstructed-prepared results.  All ordinary production
-partitions remain oracle-equivalent through condition number 1,000.  The
-prepared path selects 28 of 36 rays; the remaining high-condition cases
-exercise four isolated-box-capacity and four uncertified fallbacks, including
-one 197-leaf legacy traversal that explicitly exceeds and falls back from the
-fixed 128-leaf workspace.
+partitions remain oracle-equivalent through condition number 1,000.  After
+conditioned equation-hull exclusion, the prepared path selects all 36 rays
+with no fallback and visits 970 surface boxes in the complete matrix.
 The same construction now sweeps 78 mapped grazing/contact/miss rays at
 conditions 13.3, 100, and 1,000.  It proved that angular grazing deletion was
 not affine invariant and now preserves tolerance-resolved ENTER/LEAVE pairs.
@@ -136,6 +134,19 @@ Production raw-hit collection, stable sorting, and all legacy cleanup stages
 now use a fixed 128-hit workspace.  Capacity overflow reruns the deterministic
 solve into the legacy list before cleanup or segment publication; trace mode
 keeps exact raw-order, per-stage, and final-event equivalence gates.
+The localized real-fold path now combines the portable, fixed-size error-free
+expansion tier with complete regular-graph endpoint existence and fold-strip
+proofs for all twelve known hard real candidates.  It localizes each proven
+root to a rigorous ray-parameter interval, pairs mutually unique observations
+across one shared Bezier-span boundary, derives direction from the certified
+determinant sign, and classifies the pair against an outward model minimum-
+segment interval.  A deliberately narrow production gate accepts only one
+resolved, clean-interior ENTER/LEAVE pair with exactly two complete parents,
+no ambiguity/capacity/failure state, and no unrelated local root.  It restores
+all six formerly missing condition-100 and condition-1,000 analytic grazing
+chords while exact contact, subminimum/ambiguous intervals, near-trim roots,
+and unsupported topology retain the dense-tree fallback.  The fixed 128-hit
+path remains allocation-free and no tree density has changed.
 Parallel BREP import, cache deserialization, and SurfaceTree construction now
 also pass the complete cache matrix under ThreadSanitizer without suppressions.
 Phase 0 baselines documented in brep_raytrace_plan.txt remain authoritative.
@@ -1482,6 +1493,780 @@ ESTABLISHED FINDINGS
     but cannot authorize exclusion.  Exact contact, incomplete coverage, or
     fixed-workspace exhaustion must remain explicit conservative fallbacks.
 
+50. A bounded diagnostic prototype gives positive evidence that the broader
+    solver goal is tractable under the supported-patch, model-tolerance, and
+    explicit-fallback contract.  Mapping the analytic root t values back into
+    all retained boxes showed that the missing affine pair is not hidden in an
+    arbitrary interior singularity.  Its two roots approach the ellipsoid's
+    equatorial Bezier-span boundary from opposite sides: the relevant boxes
+    are spans 6 and 7 meeting at v=0.5.  With unrestricted diagnostic storage,
+    they appeared at box indices 64/65 of 104 for condition 100 and 206/207 of
+    546 for condition 1,000.  The ordinary 64-box observation limit therefore
+    did not even retain the relevant boxes before local correction.
+
+    A locally invertible rotation of the two ray-plane equations, aligned to
+    the dominant projected surface derivative, was then applied only as a
+    conservative coefficient-hull exclusion test.  Each rotated coefficient
+    was formed with the already outward interval addition/scaling operations.
+    This reduced the false terminal ambiguity corridor from 104 and 546 boxes
+    to exactly the two boundary-adjacent boxes.  Because F=0 implies M F=0 for
+    any nonsingular finite 2x2 matrix M, the idea has a straightforward
+    no-false-exclusion argument; at the prototype stage, a permanent
+    implementation still needed a direct exact-dyadic enclosure gate for the
+    new coefficient combinations and explicit telemetry before promotion.
+
+    A second prototype solved the dominant rotated equation for the regular
+    parameter at fixed values of the weak parameter, then bracketed the signed
+    weak equation independently on each side of the span boundary.  It
+    recovered two local roots in all four previously missed condition-1,000
+    directed shots, including both h/T=1e-8 shots whose transformed analytic
+    chord is 30.5 model tolerances.  Thus the roots are numerically recoverable
+    without deeper global subdivision or tolerance inflation.  The
+    condition-100 case produced three raw local observations because one
+    existing Newton result and the two one-sided span results were not yet
+    seam-deduplicated.
+
+    The prototype was intentionally reverted after measurement.  Its roots
+    were not published: strict Krawczyk inclusion on the original terminal
+    boxes still fails as the roots approach their shared box boundary, and the
+    production completeness gate correctly reports uncertified fallback.
+    Promotion therefore requires smaller one-sided root boxes, conservative
+    exclusion of every remaining rotated box, separate certification of each
+    simple root, and topology-aware cross-span event deduplication.  Exact
+    contact must remain ambiguous/fallback because strict regular-root
+    certification is expected to fail at the double root.
+
+    This narrows the tractability boundary.  Correct, substantially cheaper
+    raytracing is a realistic engineering target for valid positive-weight
+    patches within supported order, explicit model tolerances, fixed-workspace
+    limits, and conservative fallback.  A universal exact, fixed-time,
+    fixed-memory classifier for arbitrary rational surfaces, degenerate
+    trims, and unspecified modeling intent is not a realistic target.  The
+    project should continue to state the former contract explicitly rather
+    than accidentally promising the latter.
+
+51. The conditioned equation-hull exclusion from Finding 50 is now a
+    permanent, allocation-free part of prepared surface isolation.  After the
+    ordinary per-equation Bernstein hull retains a box, the implementation
+    forms interval derivative hulls for both projected ray-plane equations.
+    The midpoint column with the greater Euclidean magnitude supplies a local
+    orthonormal equation basis.  Every transformed Bernstein coefficient is
+    then formed from outward interval scaling and addition, including the
+    complete inherited coefficient uncertainty.  A box is excluded only when
+    one transformed coefficient hull proves that zero is absent.  A bad or
+    nonfinite conditioning hint is inconclusive and retains the box; it cannot
+    authorize exclusion.
+
+    The safety property does not depend on the midpoint derivative being an
+    accurate Jacobian estimate.  For every finite 2x2 matrix M, F=0 implies
+    M F=0, so an outward enclosure of a transformed component that omits zero
+    proves that the original system has no root in the box.  The derivative
+    column only selects a useful search basis.  This deliberately gives the
+    rotation less authority than the interval coefficient arithmetic.
+
+    A private exact-dyadic gate now audits arbitrary two-equation linear hulls
+    at every supported tensor order from 2x2 through 16x16.  Four signed
+    integer matrices, transform exponents -100, 0, and 100, and coefficient
+    exponents -400, -40, 0, 40, and 400 exercise 2,187,000 transformed
+    coefficients.  Each observed lower and upper bound must enclose the exact
+    nominal value plus declared uncertainty, and an observed exclusion may
+    occur only when the exact hull also excludes zero.  A new
+    `--interval-only` test mode runs this arithmetic gate without constructing
+    the ray corpus.
+
+    The permanent exclusion reproduces the diagnostic localization: each of
+    the six unresolved high-condition affine grazing shots now retains at
+    most two terminal boxes and performs at least one rotated-hull exclusion.
+    It does not publish an uncertified root, and the production hit results
+    remain unchanged.  On the 36 ordinary affine shots, all 36 now select the
+    prepared result with no fallback through condition 1,000.  Surface-box
+    visits fall from 16,860 to 970, a 94.2 percent reduction, with 446
+    exclusions in 920 rotated-hull attempts and no inconclusive arithmetic.
+    The normal sphere, seam, crack, trim, Cobb, affine-grazing, and
+    Cauchy-Crofton gates preserve their prior classifications and partitions;
+    the complete corpus still ends with `BREP ray correctness corpus: PASS`.
+    Focused optimized and ASan/UBSan `--affine-only` and `--interval-only`
+    runs pass without a sanitizer diagnostic.  Certification, full local
+    coverage, and cross-span deduplication remain prerequisites for promoting
+    the recovered fold roots.
+
+52. A second bounded fold experiment narrows the remaining proof and
+    precision requirements without changing production behavior.  On each of
+    the two boundary-adjacent boxes for every one of the six unresolved affine
+    rays, a nine-sample regular/weak decomposition found a scalar sign bracket
+    and converged it with fixed bisection.  All twelve expected local
+    candidates were recovered with transformed residuals between zero and
+    about 2e-16.  Their nearest parent-boundary distances were 0.00176 through
+    0.0257 of the relevant box width, so the candidates were not numerical
+    artifacts placed exactly on the shared span boundary.
+
+    Strict Krawczyk trials on candidate-centered anisotropic boxes exposed the
+    actual precision limit.  The normalized midpoint-Jacobian determinant
+    ratios were about 1.25e-7 for condition 100 and 4.4e-8 through 4.6e-7 for
+    condition 1,000.  Patch-wide common coefficient errors could not certify
+    any of the twelve roots.  Fused `CV-origin*weight` construction, fused dot
+    accumulation, one-sided error-free-transform envelopes, and preservation
+    of individual coefficient intervals instead of collapsing them to the
+    worst patch-wide error allowed binary64 interval Krawczyk to certify both
+    condition-100 candidates and one side of each condition-1,000 h/T=1e-6
+    pair.  A provisional outward long-double path certified both sides of the
+    latter pair on this platform.  Neither binary64 nor the 64-bit-mantissa
+    long-double path certified the condition-1,000 h/T=1e-8 pair; its analytic
+    chord is nevertheless 30.5 model tolerances and therefore cannot be
+    dismissed as a minimum-size contact.
+
+    Root existence is only part of publication.  The experiment also tested a
+    fold-specific uniqueness argument.  If the dominant transformed equation
+    is strictly monotone in the regular parameter, has opposite signs on its
+    two regular boundaries, and the Bernstein polynomial for the projected
+    Jacobian determinant is one-signed, the implicit regular-equation corridor
+    has at most one crossing.  Krawczyk existence then makes that root unique
+    in the parent.  When the parent touches the zero-determinant fold boundary,
+    an interval-excluded boundary strip can be removed before applying the
+    same argument.  This certified one of the two parent boxes in each hard
+    condition-100 shot and, after locally conditioning the strip exclusion,
+    one parent in each condition-1,000 h/T=1e-6 shot.  The opposite parents
+    remained inconclusive.  Generic complement subdivision was a poor
+    substitute: even a 1,024-box allowance per parent exhausted while refining
+    interval ambiguity next to the certified box.
+
+    The experimental implementation was reverted after measurement.  It had
+    no exact-dyadic audit for the new Bernstein-product determinant, no
+    portable extended-precision contract, no complete two-parent coverage,
+    and no cross-span event deduplication.  The evidence favors a small hybrid
+    path: use conditioned hulls to localize the fold, bounded scalar brackets
+    to propose both one-sided roots, per-coefficient or expansion arithmetic
+    for certification, and a monotonic corridor/degree proof rather than a
+    dense complement tiling.  Assemble every failed certificate and threshold
+    case into a C/C++ solver corpus before further arithmetic changes.  An
+    uncertified case must continue to use the existing fallback.
+
+    This further supports tractability under the stated engineering contract.
+    The search and candidate solve are already bounded and reliable on the
+    known failures; the open work is a finite set of enclosure, uniqueness,
+    and topology proofs.  It does not make arbitrary degenerate rational
+    patches with unspecified tolerance intent into a tractable exact,
+    fixed-resource problem, and the implementation should not promise that.
+
+53. The first permanent focused fold-solver corpus now ratchets bounded
+    candidate recovery independently of root certification and production hit
+    publication.  A private allocation-free test entry reuses the same
+    conditioned derivative frame as the production rotated-hull exclusion.
+    It samples 17 ordered weak-parameter values, solves the regular equation
+    with at most 56 bisections, bisects each weak sign bracket at most 64
+    times, and stores at most four candidates in caller-provided fixed arrays.
+    Exhaustion and all work counts are explicit.  The routine only proposes
+    nominal roots; coefficient-error bounds do not turn it into an existence,
+    uniqueness, or completeness certificate.
+
+    The analytic tensor-product system is
+
+      phi(u,v) = u - 0.37
+      psi(u,v) = (v - 0.5)^2 - epsilon.
+
+    For positive epsilon, its two roots have prescribed separation
+    2*sqrt(epsilon).  The permanent matrix sweeps separations 2^-4 through
+    2^-24, exact contact at epsilon=0, and a strict miss at negative epsilon.
+    Five exact binary equation bases cover identity, equation exchange, sign
+    reversal, and diagonal/off-diagonal scale ratios of 2^200.  Five parameter
+    variants cover reversal of either coordinate, exchange of u and v, and a
+    combined exchange/reversal.  The result is 200 systems with 325 expected
+    roots.  Candidate count, one-to-one analytic location, normalized
+    residual, bracket count, the fixed 17 samples, a 147-solve theoretical
+    ceiling, capacity, and frame availability are all hard gates.  The first
+    optimized run found every root through 5.96046448e-8 separation with zero
+    represented location/residual error and used at most 61 regular solves.
+
+    This corpus also records an important scope boundary.  A derivative-only
+    orthogonal equation frame is invariant to signed permutation and wide
+    independent binary scaling, but it does not undo an arbitrary shear that
+    hides a large multiple of the weak equation in the regular equation.
+    Non-dyadic equation mixing can also perturb or numerically split an exact
+    double root below coefficient precision.  Such cases need explicit
+    input/construction-error envelopes and stronger rank-revealing or
+    coefficient-aware conditioning before they can be claimed as invariants;
+    loosening the root-location tolerance would hide the issue.  The
+    production hull exclusion remains safe for every finite mixing matrix
+    because transformed hulls have exclusion authority only when their
+    outward intervals omit zero.  Candidate recovery has no such authority.
+
+    Factoring the production frame construction into the shared helper leaves
+    all prior hull decisions unchanged.  Focused optimized `--fold-only`,
+    `--interval-only`, and `--affine-only` gates pass.  The ordinary affine
+    baseline remains 36/36 selected, 970 surface boxes, and 446 exclusions in
+    920 rotated-hull attempts; the six known grazing gaps are unchanged.  The
+    next promotion step is therefore not more sampling.  It is exact-audited
+    per-coefficient construction plus complete one-sided existence/uniqueness
+    proofs for both hard span parents and physical cross-span deduplication.
+
+54. The arithmetic and synthetic-proof layer needed by that next step is now
+    permanent but still has no production publication authority.  A fixed
+    Bernstein tensor-product operator forms interval control coefficients for
+    each product in
+
+      det(J) = phi_p psi_q - phi_q psi_p
+
+    before subtracting them.  Derivative coefficients retain individual
+    intervals.  Each product coefficient uses the exact Bernstein degree-
+    elevation weights, with the rational binomial ratios themselves enclosed
+    by outward interval division and multiplication.  Surface orders through
+    16x16 produce determinant orders through 30x30 in caller-bounded storage;
+    nonfinite arithmetic or an unsupported order is inconclusive.
+
+    The independent oracle does not approximate those rational coefficients
+    by resampling.  It accumulates their integer numerators with the exact
+    binomial weights, divides once in long-double only to compare the final
+    rational value, and uses dyadic input scaling.  It gates 172,800 nominal
+    determinant coefficients over every input order from 2x2 through 16x16 at
+    scales 2^-200, 1, and 2^200.  All 172,800 have a strict observed sign and
+    enclose the exact value.  A second exact integer-interval oracle applies
+    independent, coefficient-varying uncertainty through order 8x8 and gates
+    9,408 additional lower/upper enclosures at the same scales.  This closes
+    the missing Bernstein-product audit identified in Finding 52; it does not
+    yet close the separate fused ray-plane coefficient-construction audit.
+
+    A per-coefficient Krawczyk qualification path now also removes the fixed
+    1e-6 determinant-ratio rejection from the proof decision.  The computed
+    inverse is only a finite point preconditioner: Krawczyk remains valid for
+    any such approximate matrix because outward intervals enclose every
+    product with F and J.  Strict containment of the resulting image, not a
+    condition-number guess, is authoritative.  Singular, nonfinite, or
+    non-contained cases remain uncertified.  This distinction is important:
+    poor conditioning may make the enclosure fail, but a fixed angular cutoff
+    must not reject a proof that the enclosure actually establishes.
+
+    The focused fold corpus adds 36 candidate-centered root boxes: both sides
+    of separations 2^-4 through 2^-24 under parameter shears 1, 2^10, and
+    2^20.  All 36 have strict Krawczyk inclusion.  Twenty-four lie below the
+    old 1e-6 cutoff, and the smallest normalized determinant ratio is about
+    5.68e-14.  The root boxes narrow in the weak direction as shear grows so
+    coefficient magnitude does not swamp the small local residual.  An
+    initial fixed relative width failed the larger shear cases even when their
+    determinant ratio was less extreme; that useful failure shows that local
+    aspect ratio and coefficient-roundoff control are part of the proof, not
+    performance-only tuning.
+
+    Each root certificate is paired with a larger one-sided corridor for the
+    same analytic system.  A fixed interval test proves that phi_p excludes
+    zero, phi has strict opposite signs on its two p boundaries for all q, and
+    every Bernstein coefficient of det(J) has the expected side sign.  These
+    three facts make the regular-equation locus continuous and single-valued
+    and make psi strictly monotone along it.  Krawczyk existence in the nested
+    root box therefore establishes exactly one root in each of the 36 tested
+    corridors, rather than merely converging to a candidate.  Exact contact
+    still has no strict determinant sign and is intentionally not certified.
+
+    Optimized and ASan/UBSan `--fold-only` and `--interval-only` gates pass;
+    the complete optimized ray/Crofton corpus again ends with
+    `BREP ray correctness corpus: PASS`.  Production hit behavior is
+    unchanged.  Promotion against the six real affine misses still requires
+    interval-preserving fused ray-plane coefficient construction and
+    restriction, proof or exclusion of the strip between each corridor and
+    the fold boundary, qualification of both real span parents, and
+    cross-span physical-event deduplication.
+
+55. The real ray-plane interval plumbing and a permanent shadow fold probe
+    now separate candidate discovery from the remaining precision failure.
+    Each prepared span retains an outward interval for every ray-plane
+    Bernstein coefficient, and those intervals follow the same outside-span
+    reparameterization as the nominal coefficients.  Terminal candidate boxes
+    are restricted directly from those original per-coefficient intervals;
+    they are never widened into one patch-wide error first.  Centered
+    homogeneous coordinates use a fused `CV-origin*weight` operation with one
+    outward representable step, and the nominal ray and ray-plane dot products
+    use fused accumulation.  The existing exact coefficient audit still
+    passes.
+
+    A new exact-dyadic restriction gate varies every source coefficient's
+    uncertainty independently.  It covers every supported order pair, three
+    quarter-grid sub-boxes, signed patterns, and the existing wide coefficient
+    scales.  All 546,750 lower and 546,750 upper output bounds enclose the
+    exact restricted values.  This closes the binary64 per-coefficient
+    construction/restriction plumbing item; it does not establish that
+    binary64 intervals are narrow enough for every grazing certificate.
+
+    On each terminal adaptive box retained by the conditioned equation hull,
+    a trace-only, allocation-free probe now runs the fixed 17-sample fold
+    candidate solver.  It optionally applies at most twelve bounded nominal
+    Newton steps to center the candidate, tries eight nested symmetric
+    candidate boxes, restricts the original coefficient intervals directly,
+    and applies the threshold-free interval Krawczyk test.  It records search,
+    restriction, proof, determinant-ratio, and Krawczyk-image-excess telemetry.
+    No outcome changes traversal, publishes a hit, or terminates production
+    isolation.
+
+    The result is decisive on the six known affine grazing gaps.  All twelve
+    expected roots are recovered from the twelve terminal boxes, with two
+    candidates and sixteen Krawczyk trials per forward/reverse hard shot, but
+    none receives strict binary64 inclusion.  The condition-100 h/T=1e-8
+    cases have minimum determinant ratios about 1.24e-7 to 1.26e-7 and best
+    normalized image excesses 0.058 to 0.0663.  The condition-1,000 h/T=1e-6
+    cases have ratios about 4.61e-7 to 4.62e-7 and excesses 0.337 to 0.365.
+    At h/T=1e-8 the ratios fall to about 4.42e-8 to 4.47e-8 and the image
+    excess rises to 40.9 through 41.5.  An anisotropic aspect-ratio grid and
+    the nominal Newton refinement did not move this boundary; the grid was
+    reverted because it only added work and reduced easier certificate
+    counts.  The evidence therefore identifies enclosure precision, not root
+    search, iteration count, or the old determinant threshold, as the next
+    problem.
+
+    The focused optimized and ASan/UBSan `--interval-only`, `--fold-only`, and
+    `--affine-only` gates pass.  The interval audit reports 546,750 common-
+    error and 546,750 per-coefficient restrictions; the fold corpus retains
+    200 systems, 325 roots, 36 strict root certificates, and 36 uniqueness
+    corridors.  The complete optimized ray/Cauchy-Crofton corpus ends with
+    `BREP ray correctness corpus: PASS`.  Production partitions and the six
+    recorded grazing gaps remain unchanged.  Fused nominal arithmetic changes
+    the ordinary affine diagnostic baseline by one conservative hull decision
+    to 36/36 selected, 970 surface boxes, and 445 exclusions in 919 attempts.
+
+    This also preserves the transformation contract established by the Cobb
+    and analytic sphere gates.  Translation, arbitrary rigid rotation, and
+    uniform scale are classifier similarities when geometry, rays, and every
+    model-space length tolerance transform together; the current directed
+    Cobb classifier and sphere solver matrices pass that invariant.  Keeping
+    a fixed absolute tolerance while scaling the geometry is a different
+    modeling contract and is not expected to be invariant.  Nonuniform scale
+    is not a similarity, so it is tested separately through the analytic
+    sphere-to-ellipsoid affine oracle.  Ordinary affine rays pass through
+    condition 1,000, while the six tangent-limit gaps above prevent a broader
+    affine-grazing invariance claim.
+
+    The next arithmetic step is a portable fixed-size error-free expansion or
+    equivalent rigorously outward precision tier, applied only to localized
+    ambiguous boxes and checked against an independent exact oracle.  It must
+    not rely on platform `long double`.  After it certifies the real roots,
+    both adjacent span parents still need complete corridor/fold-boundary
+    coverage and cross-span physical-event deduplication before production
+    promotion.
+
+56. A portable fixed-size expansion precision tier now implements the next
+    arithmetic checkpoint without changing production authority.  Each
+    expansion stores at most 128 binary64 components.  Error-free `TwoSum`
+    addition and an FMA residual for `TwoProduct` preserve the exact result of
+    operations on the represented inputs.  Nonfinite arithmetic, a product
+    whose residual could underflow below the representable binary64 expansion
+    range, or capacity exhaustion returns inconclusive.  There is no heap
+    allocation and no dependence on platform `long double`.
+
+    Ray-plane coefficients are constructed as exact expansions of the
+    represented operations in
+
+      CV - origin * weight
+
+    followed by each projected ray-plane dot product.  These bounds describe
+    the exact equation defined by the stored binary64 CV, origin, and plane
+    components; they do not claim that the binary64 plane-frame construction
+    equals an ideal real-valued frame.  Expansion results are converted to an
+    outward binary64 interval and intersected with the independently outward
+    ordinary interval, so the shadow tier is never wider and cannot invent an
+    exclusion or root if both arithmetic paths satisfy their contracts.
+
+    Local restriction uses the tensor-product Bezier blossom directly.  An
+    output coefficient with index i is the blossom with degree-i copies of
+    the lower parameter endpoint and i copies of the upper endpoint.  This
+    avoids the non-dyadic `a/b` division in a two-split restriction.  Each
+    scalar equation is first normalized by an exactly represented power of
+    two selected from its maximum coefficient magnitude.  Independent
+    nonzero equation scaling preserves its zero set and greatly reduces
+    underflow risk.  Full expansions are retained throughout the bounded
+    blossom; an experiment that compacted after every interpolation was safe
+    but did not improve a real certificate and was reverted.
+
+    Expansion evaluation, derivative hulls, interval endpoint products, and
+    the Krawczyk correction/remainder/image arithmetic use the same fixed
+    representation.  Every expansion interval is intersected with the
+    ordinary outward result.  Tight endpoint algebra did not add a real
+    certificate beyond exact coefficient construction and restriction,
+    indicating that the dominant remaining uncertainty is upstream geometry,
+    candidate/proof-box layout, or the missing one-sided coverage theorem
+    rather than the final Krawczyk additions and products.
+
+    The permanent exact-oracle audit now reports:
+
+      function       2,250 ordinary + 2,250 expansion checks
+      derivative     324,000 + 324,000 checks, 2,250 contractions
+      product        45 + 45 checks, all 45 contractions
+      coefficient    162 ordinary + 108 expansion checks, all 108 contractions
+      restriction    546,750 common-error + 546,750 per-coefficient
+                     + 546,750 expansion checks, 544,500 contractions
+
+    All observed expansion bounds enclose the exact oracle.  The largest
+    expansion in these arithmetic gates uses four components; the product and
+    coefficient gates use one.  Separate gates require conservative fallback
+    for a product residual below the binary64 subnormal range and for a mixed-
+    scale power-of-two normalization that cannot round-trip every nonzero
+    endpoint exactly.  The synthetic fold corpus independently recertifies all
+    36 roots with the expansion Krawczyk path, uses at most two components,
+    and retains all 36 one-sided uniqueness corridors.
+
+    On the six unresolved affine shots, the expansion path is available for
+    all 96 attempted nested boxes with no failure.  It certifies both roots in
+    each directed condition-100 h/T=1e-8 shot and one root in each directed
+    condition-1,000 h/T=1e-6 shot: six of the twelve real candidates.  The
+    per-shot certificate ratchet is therefore 2, 2, 1, 1, 0, 0.  The hardest
+    condition-1,000 h/T=1e-8 pair remains uncertified, but its best normalized
+    Krawczyk image excess falls from about 40.9--41.5 to 11.1--13.1.  Real
+    expansion high-water is 17 of 128 components.  Increasing symmetric proof
+    depth from eight to sixteen levels and adding a second weak-direction
+    anisotropic mode produced no new certificates and were reverted.
+
+    Exact transformed contact currently records two expansion certificates.
+    Those equations are the exact equations of their represented binary64
+    inputs, which may be slightly split by affine and frame construction; a
+    numerical certificate must therefore not be confused with a physical
+    ENTER/LEAVE interval.  Exact contact, minimum-size classification, parent
+    completeness, and cross-span event identity remain separate gates.  The
+    expansion path is consequently trace-only and cannot terminate traversal
+    or publish a hit.
+
+    The real affine ratchet permits a later production improvement to remove
+    any of the six gaps.  While a gap exists it requires a recognized hard
+    case, a nonzero expansion attempt count, complete availability, zero
+    arithmetic failures, high-water below 128, the recorded certificate
+    floor, and either a certificate or a strictly smaller image excess than
+    binary64.  This prevents a fixed-this/broke-that precision regression
+    without freezing the present miss count.
+
+    Optimized `--interval-only`, `--fold-only`, `--affine-only`, and the full
+    ray/Cauchy-Crofton corpus pass.  Focused ASan/UBSan builds pass the same
+    three paths with no diagnostic; leak checking remains disabled because
+    the host ptrace wrapper is incompatible with LeakSanitizer.  The full
+    optimized corpus again ends with `BREP ray correctness corpus: PASS`, and
+    production partitions remain unchanged.  The maximum-order blossom has
+    a transient fixed stack cost on the order of 100 KiB, so stack use and
+    execution cost must be profiled or moved into an existing bounded shot
+    workspace before production promotion.
+
+    This result reinforces the tractability boundary rather than closing the
+    solver task.  Portable precision resolves half of the known real proof
+    failures and materially contracts the rest.  More symmetric depth is not
+    the next lever.  The next step is a one-sided corridor/fold-boundary strip
+    proof using the conditioned regular/weak frame, with more faithful
+    candidate-centered parameter geometry and, if still necessary, exact
+    expansion propagation through the frame construction itself.  Both span
+    parents and their intervening strips must be accounted for before the two
+    observations can be deduplicated into a physical event.
+
+57. The real one-sided corridor and fold-boundary strip theorem is now
+    implemented as an allocation-free, trace-only proof.  The central
+    decomposition is deliberately stronger than a grid of local root solves.
+    In a candidate-conditioned equation frame, let phi be the regular
+    equation and p its regular parameter.  The parent corridor first proves
+    that phi_p has one strict sign and that phi has strict, opposed signs on
+    the two p boundaries for every weak parameter q.  The implicit function
+    is consequently one continuous p(q) graph crossing the whole weak
+    interval.  The frame and the choice of p are nominal conditioning hints;
+    only outward coefficient intervals authorize a proof.
+
+    A full-corridor Bernstein sign for det(J) is still accepted when it is
+    available, but it is unnecessarily strong near a fold.  The new bounded
+    graph proof subdivides q, restricts the original coefficient intervals to
+    each slab, and applies at most four interval-Newton contractions to phi in
+    p.  It then requires one common strict determinant sign on the enclosure
+    of phi=0 in every slab.  This is sufficient: psi is strictly monotone
+    along the unique phi graph even if det(J) changes sign elsewhere in the
+    two-dimensional corridor.  Restriction failure, nonfinite arithmetic,
+    sign conflict, depth exhaustion, or fixed-workspace exhaustion is
+    explicitly inconclusive.
+
+    An important failed intermediate implementation recomputed det(J) after
+    restricting and reparameterizing a very thin p interval.  Reparameterizing
+    the equations multiplies the p derivatives, and hence the determinant, by
+    the contracted interval width.  That artificial scale loss made a strict
+    sign harder to prove as the graph enclosure improved.  The corrected path
+    forms the determinant polynomial on the q slab before p contraction,
+    tracks the contracted p range back in the original slab coordinates, and
+    restricts that already-formed determinant polynomial to the range.  Its
+    values and sign are preserved without the extra derivative scale factor.
+    Power-of-two equation normalization remains a best-effort zero-set-
+    preserving aid inside graph contraction, never an independent authority.
+
+    The adjacent fold-boundary strip uses the same regular-graph contraction.
+    It covers the weak interval with a fixed depth-eight binary traversal and
+    proves on every contracted graph enclosure that either phi or psi has a
+    coefficient hull excluding zero.  Thus no second system root lies between
+    the certified corridor and its fold-side boundary.  The traversal uses a
+    16-entry stack, a 511-box visit cap, fixed tensor arrays, and no allocation.
+    Arithmetic, restriction, depth, and workspace failures have separate
+    telemetry and retain the dense-tree fallback.  An exact-contact fixture
+    intentionally reaches the depth bound and remains unexcluded, confirming
+    that the path does not turn contact uncertainty into a material interval.
+
+    The first whole-box hull chooses the regular/weak axis.  A
+    candidate-Jacobian frame conditions the two equations, after which each
+    real candidate tries the dyadic fractions 1/16, 1/8, 1/4, 3/8, 1/2, 5/8,
+    3/4, and 7/8 between the candidate and its nearest weak boundary.  Direct
+    restrictions always start from the original expansion coefficient
+    intervals.  A complete shadow proof requires expansion Krawczyk existence,
+    a unique one-sided corridor, and exclusion of the remaining fold strip.
+    None of these outcomes yet terminates traversal or publishes a hit.
+
+    The strengthened dyadic synthetic graph corpus has 72 corridor cases:
+    six root separations, both sides, both parameter orientations, and
+    independent equation scales 2^-100, 1, and 2^100.  A coupled term is large
+    enough that the determinant has no strict sign on the whole corridor in
+    every case.  Restriction to the contracted implicit graph recovers the
+    expected strict sign in all 72, using 162 contractions.  Another 72
+    root-free strip cases are all excluded, using 198 contractions, while the
+    exact-contact case remains inconclusive.  The optimized fold summary is:
+
+      graph=72/72/1 boxes=72/162+81/198 high=7
+
+    where the first triplet is corridor/strip/contact case count and the two
+    box pairs report determinant-graph and strip boxes/contractions.
+
+    The determinant restriction itself has a new exact-dyadic enclosure gate.
+    It covers every supported even determinant order from 2 through 30 in
+    both tensor directions, all three half/quarter subintervals, scales
+    2^-200, 1, and 2^200, plus the 30x30 maximum-order corner.  All 33,408
+    checked output coefficients contain the exact restricted lower and upper
+    controls.  The older complete determinant construction audits remain
+    172,800 exact nominal coefficients plus 9,408 coefficient-varying interval
+    cases.  This directly guards the corrected preserve-scale operation rather
+    than relying only on a real-ray behavioral success.
+
+    All six hard directed affine shots now permanently ratchet the proof path
+    even if a later production fix eliminates their recorded miss.  Both
+    condition-100 parents have complete existence, corridor uniqueness, and
+    strip exclusion in each ray direction.  Every condition-1,000 candidate
+    also has its unique corridor and both adjacent strips covered.  At h/T=
+    1e-6, expansion Krawczyk existence still certifies only one of the two
+    candidates per direction; at h/T=1e-8 it certifies neither.  The remaining
+    per-shot complete-proof counts are therefore 2, 2, 1, 1, 0, 0 even though
+    corridor and strip counts are 2/2 throughout.  This isolates the next
+    blocker to candidate existence precision or upstream frame construction,
+    not missing parent coverage.
+
+    Optimized `--fold-only`, `--affine-only`, and `--interval-only` pass.  The
+    independent fold and affine modes were run concurrently as separate
+    processes; their optimized wall times are approximately 0.04 and 1.42
+    seconds.  ASan/UBSan `--fold-only`, `--affine-only`, and `--interval-only`
+    likewise pass when sharded as independent processes.  The full optimized
+    corpus ends with `BREP ray correctness corpus: PASS`.  Process-level build
+    and test parallelism is safe and useful now.  Shared-process parallelism
+    remains a separate qualification task because OpenNURBS/model fixtures and
+    global state must first be audited, and arithmetic counters must stay
+    deterministic.
+
+    Production behavior remains unchanged.  Finding 59 below supersedes the
+    proposed frame-first next step by proving the remaining existence cases
+    on the unique regular graph.  Only after cross-span event identity and
+    minimum-segment/contact classification agree may the shadow event replace
+    the dense-tree fallback.
+
+58. A first exact-perpendicular ray-plane frame experiment was rejected and
+    reverted after the new permanent ratchets exposed a trade rather than a
+    monotone improvement.  The prototype selected the largest ray-direction
+    component k, applied a common exact power-of-two scale, and formed the two
+    algebraic normals
+
+      n1[k] = -d[a], n1[a] = d[k]
+      n2[k] = -d[b], n2[b] = d[k]
+
+    for cyclic (k,a,b).  In exact real arithmetic both dot products with d
+    vanish and n1 cross n2 equals d[k] d, avoiding the current Unitize/cross-
+    product rounding.  This is still a useful construction for a future exact
+    frame path.
+
+    As a drop-in replacement, however, it reduced each directed condition-100
+    expansion existence floor from two roots to one and changed several
+    ordinary prepared-selector counts.  It removed the two transformed exact-
+    contact expansion certificates and improved one hardest condition-1,000
+    image excess from about 13.1 to 10.1, but the other remained about 11.7
+    and neither hardest root certified.  The net result violated the existing
+    affine ratchet and was reverted without a source change.
+
+    This shows that exact ray-plane representation, equation conditioning, and
+    candidate proof-box geometry are coupled.  Do not replace the frame on the
+    strength of orthogonality alone.  A next experiment should retain the
+    present floors, compare bounded exact algebraic pivot frames as shadow
+    alternatives, and construct each candidate box in the selected frame's
+    conditioning geometry.  Exact contact improving while ordinary roots
+    regress is diagnostic evidence, not a promotion result.
+
+59. All twelve known hard affine fold candidates now have complete shadow
+    existence/uniqueness/strip proofs without changing production hit
+    publication.  Two monotone additions closed the former existence gap.
+
+    First, `brep_trace_expansion_krawczyk_contractions` turns an unsuccessful
+    expansion Krawczyk image into a bounded contraction opportunity.  It
+    intersects the outward image with [0,1]^2, maps the retained box outward
+    into original span coordinates, restricts again from the original
+    expansion-valued coefficient net, and retries at the new midpoint.  The
+    loop has at most four attempts, fixed stack arrays, no allocation, and
+    separate attempt/applied/empty-or-degenerate/unchanged/failure telemetry.
+    A failed or unchanged contraction remains inconclusive.  This improves
+    the six directed real-shot expansion certificate floors from
+    2/2/1/1/0/0 to 2/2/2/2/0/0: both condition-1,000 h/T=1e-6 candidates now
+    certify in each ray direction.  The h/T=1e-8 Krawczyk images are
+    classified as unchanged and retain their existing 11--13 normalized
+    excess; the ratchet intentionally permits that conservative outcome.
+
+    Second, two-dimensional Krawczyk inclusion is no longer the sole
+    existence theorem after a unique regular graph has been established.
+    `brep_fold_graph_boundary_existence` takes the already-proved phi=0 graph
+    p(q).  On q=0 and q=1 it uses bounded one-dimensional interval Newton to
+    contract p around the unique phi root, restricting both expansion-valued
+    boundary curves at every step.  A strict psi sign on each contracted
+    endpoint enclosure, with opposite signs at the two q boundaries, proves
+    existence by continuity.  The existing common strict det(J) sign on the
+    graph makes psi strictly monotone and supplies uniqueness.  Exact
+    singleton p contractions are evaluated directly.  A zero/uncertain psi
+    endpoint, restriction/arithmetic failure, or unavailable graph remains
+    inconclusive, so exact contact is not promoted to a crossing.
+
+    The theorem is independently gated through `_rt_brep_fold_graph_test`.
+    The exact-dyadic synthetic matrix reports endpoint existence available in
+    all 145 cases.  It certifies all 72 root-bearing, whole-determinant-
+    unsigned corridors and certifies none of the 72 root-free strips or the
+    exact-contact case.  The aggregate is:
+
+      graph=72/72/1 boxes=72/162+81/198 boundary=145/72/778 high=7
+
+    Thus the positive and negative paths both cover axis interchange,
+    separations through 2^-24, and independent equation scales 2^-100, 1,
+    and 2^100.  The real affine ratchet requires two available and certified
+    endpoint proofs, nonzero contractions, zero failures, both unique
+    corridors, and both excluded fold strips for every hard shot.  Its
+    complete-parent counts are now 2/2/2/2/2/2 even though the separately
+    retained expansion Krawczyk floors are 2/2/2/2/0/0.
+
+    This changes the next engineering boundary.  More frame precision may
+    still improve numerical conditioning, but it is no longer required to
+    prove these twelve roots.  The immediate solver task is to prove that the
+    two adjacent-span observations denote one physical event, deduplicate
+    them without erasing distinct close roots, and apply the model minimum-
+    segment/exact-contact policy before any shadow result gains production
+    authority.  The dense-tree fallback remains active until that work and
+    its partition/Crofton gates are complete.
+
+60. Cross-span fold events now have a conservative production path, and all
+    six known tolerance-resolved affine grazing gaps are closed.
+
+    A complete parent proof now stores one fixed-capacity fold-root record
+    containing the face/span identity, nominal UV and ray parameter, localized
+    UV box, rigorous outward ray-parameter interval, and determinant sign.
+    `brep_trace_localize_fold_root` tries 24 dyadically shrinking slabs about
+    the candidate in the weak parameter.  Every retained slab independently
+    re-establishes the regular phi graph, proves endpoint existence, contracts
+    the regular parameter, maps the enclosure back to the original span, and
+    computes the rational ray-t hull.  The smallest certified hull is retained.
+    This is fixed work with stack arrays and no shot-time allocation.  The six
+    directed hard shots use 48 localization attempts apiece, certify 8--24
+    nested ranges, and report zero localization failures.
+
+    Candidate identity is topological rather than distance-only.  Two fold
+    roots may pair only when they belong to the same face, lie on distinct
+    Bezier spans sharing exactly one tensor-product boundary, and have
+    overlapping domains in the transverse parameter.  The candidate graph
+    must give both roots mutual degree one; corner and many-to-many cases are
+    deliberately unsupported.  For the ray-plane frame used here the
+    certified determinant sign is the sign of `(Su x Sv) dot D`; face reversal
+    flips it.  A negative oriented sign is ENTERING and a positive sign is
+    LEAVING.  Nominal surface normals are checked against that proof direction
+    but are not used as an angular grazing threshold.  Same-direction roots
+    with overlapping t hulls are duplicate observations.  Opposite directions
+    give an ENTER/LEAVE material pair or LEAVE/ENTER void pair according to
+    ray order.  Ambiguous topology, direction, or multiplicity falls back.
+
+    The material-gap decision is rigorous and scale-aware.  Outward interval
+    operations compute `tol->dist / |D|`, subtract the two localized t hulls,
+    and use strict comparisons.  A gap whose lower bound exceeds the minimum-
+    t upper bound is resolved; a gap whose upper bound is below the minimum-t
+    lower bound is a subminimum contact; overlap with the decision boundary is
+    tolerance-ambiguous.  `_rt_brep_fold_interval_test` and a 36-case private
+    matrix permanently gate resolved, subminimum, straddling-ambiguous, and
+    overlapping-contact behavior under 0.01x/10,000x model scaling and
+    0.25x/16x non-unit ray-direction scaling.  Invalid intervals, zero
+    direction, and negative tolerance reject.
+
+    Production authorization is intentionally narrower than proof discovery.
+    It requires exactly two terminal boxes, no ordinary Krawczyk roots, two
+    complete parent/fold-strip proofs, one mutually unique resolved material
+    pair, no duplicate/void/subminimum/ambiguous/unmatched event, no arithmetic,
+    localization, capacity, direction, or trim failure, and two CLEAN_HIT
+    classifications strictly inside the face trims.  Every local-corrector
+    observation must either match a fold t hull or be a single collapsed
+    observation on one of the two adjacent spans inside the certified pair
+    hull.  Any unrelated local root forces fallback.  The two proven hits are
+    published directly, so the legacy normal-angle grazing cleanup cannot
+    erase a rigorously resolved close pair.  Near-trim fold roots are not yet
+    authorized; seam/crack policy remains independent and conservative.
+
+    The condition-100 h/T=1e-8 pair exposed why the collapsed-local rule is
+    necessary: its ordinary corrector reports one root between the two
+    disjoint certified t intervals.  The two condition-1,000 h/T=1e-6 and two
+    h/T=1e-8 directed cases have no local roots at all.  The strict fold path
+    now publishes all six analytic intervals, matches both endpoint oracles
+    within the scaled model tolerance, preserves ray reversal, and reduces
+    the resolved-gap count from six to zero.  The signed sweep remains
+    monotone: exact contact is not published, negative clearances remain
+    misses, and positive chords below the model minimum are not claimed as
+    material.  Dense SurfaceTree construction and every fallback population
+    remain unchanged pending the broader corpus and performance gates.
+
+61. The monolithic BREP ray correctness executable is now process-sharded at
+    its safe semantic boundaries.  CTest registers six deterministic entries:
+    directed sphere/pole/grazing and similarity rays, shared-line Crofton and
+    CSG fixtures, Cobb/seam and topology fixtures, exhaustive interval
+    arithmetic, fold proofs, and nonuniform affine behavior.  The executable
+    retains its no-argument complete-corpus behavior, and `--core-only`
+    remains available as a manual combined model-work mode.  No coverage was
+    removed; the split only changes CTest scheduling.
+
+    The first four-way split reduced the isolated optimized qualification
+    wall time from approximately 238 seconds to 135.91 seconds, a roughly
+    43 percent reduction.  Splitting the model work further into directed,
+    Crofton, and seam entries produced six tests with an aggregate wall time
+    of 138.02 seconds under `ctest --parallel 6`; the exhaustive interval
+    enclosure audit remained the 137.98-second critical path.  Further
+    interval subdivision is intentionally deferred: it would optimize test
+    plumbing rather than advance the correctness-first production design.
+
+    The no-argument optimized executable again ends with
+    `BREP ray correctness corpus: PASS`, including the complete interval,
+    fold, grazing, Crofton, affine, and seam matrices.  The five sanitizer
+    shards affected by model-work dispatch (`directed`, `crofton`, `seam`,
+    `fold`, and `affine`) pass concurrently in 308.91 seconds with
+    `halt_on_error=1` and no ASan/UBSan diagnostic.  The exhaustive interval
+    sanitizer gate was already independently clean and its code path is
+    unchanged by this dispatch-only split.
+
+    This is the chosen validation parallelism boundary.  Continue using
+    independent CTest processes and parallel builds.  Do not add threads
+    inside the solver merely to shorten tests until OpenNURBS shared state,
+    fixture ownership, BRL-CAD resources, and deterministic telemetry have an
+    independent thread-safety qualification.  Correct root/event semantics
+    and the intended production pipeline now take priority over further test
+    runtime work.
+
+62. The detailed plan now defines the intended production raytracer as one
+    atomic proof/evidence pipeline rather than a series of local hit-cleanup
+    heuristics.  A fixed-capacity per-ray completion ledger must account for
+    every candidate span and terminal box as conservatively excluded,
+    completely resolved regular, completely resolved boundary, resolved
+    contact, or unresolved.  Unresolved is never a miss; it selects the
+    whole-ray fallback before segment publication.
+
+    The seven explicit stages are object/prep dispatch, conservative broad
+    phase, complete local root isolation, trim/geometric classification,
+    topology-first physical event resolution, ordered solid-state assembly,
+    and atomic publication.  Newton supplies representatives but no proof
+    authority.  Events reference immutable root records, identify physical
+    identity through topology plus certified intervals, and carry ENTER,
+    LEAVE, CONTACT, or unresolved state.  Minimum material size is decided
+    only by outward comparison against `rti_tol.dist / |D|`.
+
+    A selected prepared solid ray must prove complete coverage, a completely
+    resolved event stream, valid {0,1} material state from negative infinity,
+    finite endpoint provenance, and output capacity.  Any failure reruns the
+    complete legacy ray during rollout; partial prepared and legacy hits are
+    never spliced.  The legacy SurfaceTree is a continuity fallback and a
+    comparison source, not a correctness oracle.  The implementation plan now
+    has a separate certified-event/atomic-assembly phase before tree-density
+    reduction and cache redesign.
+
 
 IMPLEMENTATION CHECKLIST
 ------------------------
@@ -1519,6 +2304,9 @@ IMPLEMENTATION CHECKLIST
     [x] Record rejection reasons and provenance in this continuation log.
 
 [ ] Paired correctness harness
+    [x] Register directed, Crofton, seam, interval, fold, and affine
+        correctness partitions as independent deterministic CTest processes;
+        retain the no-argument complete-corpus executable.
     [ ] Compare implicit/CSG and converted BREP ordered partitions.
         [x] Seed in-memory C++ corpus with paired sphere raw segments and
             normal rt_shootray partitions.
@@ -1640,7 +2428,7 @@ IMPLEMENTATION CHECKLIST
             [x] Preserve tolerance-resolved ENTER/LEAVE material intervals
                 during grazing cleanup instead of deleting them solely by a
                 non-affine-invariant normal-angle cutoff.
-            [ ] Resolve the six remaining high-condition affine grazing
+            [x] Resolve the six remaining high-condition affine grazing
                 solver/isolation misses before claiming tangent-limit affine
                 invariance or reducing dense-tree fallback.
                 [x] Classify every bounded surface/local corrector outcome and
@@ -1648,9 +2436,79 @@ IMPLEMENTATION CHECKLIST
                 [x] Rule out additional isotropic depth, acceptance-tolerance
                     inflation, and weak-direction seed multiplication as safe
                     general repairs.
-                [ ] Implement allocation-free fold-direction bracketing with
+                [x] Localize the missing roots to opposite sides of the
+                    equatorial Bezier-span boundary and demonstrate that a
+                    rotated interval hull reduces 104/546 boxes to two.
+                [x] Demonstrate one-sided regular/weak scalar bracketing that
+                    recovers both condition-1,000 root pairs without tolerance
+                    inflation; keep the prototype unpromoted and reverted.
+                [x] Permanently apply an exact-audited, allocation-free
+                    conditioned equation hull, reducing each unresolved case
+                    to at most two terminal boxes without changing hit
+                    publication.
+                [x] Measure one-sided candidate, Krawczyk, coefficient-
+                    precision, monotonic-uniqueness, and complement-coverage
+                    boundaries on all twelve localized hard boxes; revert the
+                    unqualified prototype after recording the results.
+                [x] Implement allocation-free fold-direction bracketing with
                     conservative full-box exclusion/coverage and separate
-                    certification of both nearby roots.
+                    certification of both nearby roots, plus cross-span event
+                    deduplication.
+                    [x] Add a fixed-work analytic two-root/contact/miss
+                        candidate corpus across parameter symmetries and exact
+                        binary equation conditioning, with explicit work and
+                        capacity gates and no production publication authority.
+                    [x] Add allocation-free implicit-graph determinant and
+                        fold-strip coverage with bounded depth/workspace,
+                        explicit inconclusive outcomes, and exact-contact
+                        fallback.
+                    [x] Preserve per-coefficient or expansion enclosures and
+                        exact-audit fused construction, restriction,
+                        Bernstein products, and the selected precision tier.
+                        [x] Implement interval Bernstein derivative/product/
+                            determinant coefficients through order 30 and
+                            exact-audit nominal values at every supported
+                            order plus independent uncertainties through 8x8.
+                        [x] Preserve determinant value scale by restricting the
+                            pre-contraction polynomial to the graph enclosure;
+                            exact-audit restriction through order 30.
+                        [x] Preserve binary64 per-coefficient intervals through
+                            real fused ray-plane construction,
+                            reparameterization, and arbitrary local
+                            restriction; exact-audit all supported orders.
+                        [x] Add and exact-audit a portable error-free expansion
+                            or equivalent outward precision tier for the real
+                            cases binary64 cannot certify.
+                    [x] Prove both one-sided parent boxes complete with a
+                        monotonic corridor or equivalent degree certificate;
+                        do not use broad complement subdivision as the normal
+                        path.
+                        [x] Gate the theorem on 36 analytic sheared one-sided
+                            corridors paired with strict Krawczyk existence
+                            boxes down to determinant ratio 5.68e-14.
+                        [x] Apply the unique-corridor and fold-strip proof to
+                            both real parents for all six affine misses.
+                        [x] Supply strict existence for the remaining six real
+                            candidates with opposed endpoint signs on the
+                            unique regular graph; complete-parent counts are
+                            now 2/2/2/2/2/2.
+                    [x] Add every failed certificate/aspect-ratio/precision
+                        case to a focused C/C++ fold-solver corpus.
+                        [x] Keep all twelve real hard boxes in the focused
+                            affine C++ ratchet with candidate, determinant,
+                            and Krawczyk-image-excess telemetry.
+                    [x] Localize each complete fold root to a certified
+                        ray-parameter interval, pair mutually unique adjacent
+                        spans, and derive ENTER/LEAVE direction from the
+                        certified determinant orientation.
+                    [x] Classify resolved, subminimum, ambiguous, and contact
+                        gap intervals against an outward `tol->dist / |D|`
+                        bound, with model- and direction-scale invariance.
+                    [x] Publish only a clean-interior, exactly two-parent,
+                        resolved material pair; consume only matching or
+                        pair-hull-collapsed local observations and retain
+                        fallback for trims, ambiguity, and unsupported
+                        topology.
             [x] Keep grazing, singular, and boundary roots on the conservative
                 depth-24 path.
             [x] Independently audit outward rounding and coefficient-error
@@ -1692,6 +2550,23 @@ IMPLEMENTATION CHECKLIST
     [x] Assemble the uniquely certified continuation and existing event into
         an ordered production material interval and gate both endpoints
         against the implicit oracle and similarity transforms.
+    [ ] Replace legacy cleanup authority with the explicit completion-ledger
+        and physical-event pipeline.
+        [x] Select the prepared result atomically only after whole-ray span,
+            box, root, hit, and partition qualification; otherwise leave
+            output untouched and run the complete fallback.
+        [x] Require prepared/excluded span equality, one stored terminal box
+            per isolated box, and a compatible local or fold root for every
+            terminal box in the currently supported selectors.
+        [ ] Store immutable per-box dispositions and certified root records
+            independently from physical event records.
+        [ ] Derive ordinary interior ENTER/LEAVE from bounded oriented
+            determinant evidence rather than nominal-normal cleanup.
+        [ ] Resolve supported interior, fold, edge, crack, and later vertex
+            clusters into ENTER/LEAVE/CONTACT events without deleting source
+            evidence.
+        [ ] Assemble a complete {0,1} solid-state stream and apply the outward
+            minimum-segment classifier before atomic publication.
     [ ] Reduce default tree density only after publication equivalence passes.
     [ ] Version and verify prep cache changes.
 
@@ -2218,6 +3093,65 @@ Cobb sphere baseline:
     and the complete normal `rt_brep_ray` corpus pass.  Ordinary affine rays
     remain 36/36; the grazing output reports six bounded high-condition
     resolved gaps and no reversal inconsistency or classification restart.
+    Repeated after permanent conditioned equation-hull exclusion and its
+    2,187,000-case exact-dyadic audit: the full optimized corpus and focused
+    `--affine-only` and `--interval-only` gates pass.  All 36 ordinary affine
+    rays select prepared production with no fallback; their surface-box visits
+    fall from 16,860 to 970.  The six known grazing gaps remain unchanged but
+    retain at most two terminal boxes each.
+    Repeated after the fixed-work fold candidate corpus: focused
+    `--fold-only`, `--interval-only`, and `--affine-only` gates and the full
+    optimized corpus pass.  The new matrix covers 200 analytic systems and
+    325 expected roots through 2^-24 separation with at most 61 regular
+    solves.  The complete corpus again ends with
+    `BREP ray correctness corpus: PASS`; production grazing behavior and the
+    970-box ordinary affine baseline remain unchanged.
+    Repeated after exact-audited Bernstein determinant arithmetic and the
+    synthetic one-sided proof matrix: `--interval-only` passes 172,800 nominal
+    and 9,408 uncertain determinant coefficients; `--fold-only` passes 36
+    root certificates and 36 uniqueness corridors.  The full optimized
+    corpus again ends with `BREP ray correctness corpus: PASS` and leaves
+    production hit selection unchanged.
+    Repeated after real per-coefficient restriction and the shadow fold proof
+    probe: `--interval-only` exact-audits 546,750 common-error plus 546,750
+    independently uncertain restrictions; `--fold-only` retains all 200
+    systems/325 roots and 36 certificates/corridors; `--affine-only` recovers
+    all twelve hard candidates and records zero real binary64 certificates.
+    The complete optimized corpus again ends with
+    `BREP ray correctness corpus: PASS`; production partitions are unchanged.
+    Repeated after the portable expansion tier and real certificate ratchet:
+    `--interval-only` passes 2,250 expansion function, 324,000 derivative, 45
+    product, 108 coefficient, 546,750 restriction, and two conservative-
+    fallback checks; `--fold-only`
+    recertifies all 36 analytic roots; and `--affine-only` passes the six-case
+    real ratchet with certificate floors 2/2/1/1/0/0 and zero expansion
+    failures.  The complete optimized corpus again ends with
+    `BREP ray correctness corpus: PASS`; all shared implicit/BREP Crofton
+    fixtures report zero differing lines and production partitions remain
+    unchanged.  Cache-write warnings in the restricted execution environment
+    are nonfatal and exercise the existing uncached continuation path.
+    Repeated after bounded Krawczyk contraction and regular-graph endpoint
+    existence: process-sharded optimized `--fold-only`, `--affine-only`, and
+    `--interval-only` pass.  The fold aggregate is
+    `boundary=145/72/778`; the affine ratchet has expansion floors
+    2/2/2/2/0/0 and complete-parent counts 2/2/2/2/2/2.  The full optimized
+    corpus again ends with `BREP ray correctness corpus: PASS`, all shared
+    implicit/BREP Crofton fixtures have zero differing lines, and production
+    partitions remain unchanged.  The broader optimized CTest group passes
+    13/13 with four-way process parallelism.
+    Repeated after cross-span fold-event localization, classification, and
+    strict clean-interior production promotion: process-sharded optimized
+    `--fold-only`, `--affine-only`, and `--interval-only` pass.  The private
+    gap classifier passes 36 resolved/subminimum/ambiguous/contact cases under
+    model and non-unit direction scaling.  The affine sweep reports
+    `resolved-gaps=0` and all six complete fold pairs publish oracle-matching
+    chords.  The complete optimized corpus again ends with
+    `BREP ray correctness corpus: PASS`; every shared implicit/BREP Crofton
+    fixture has zero differing lines.  Cache-write warnings in the restricted
+    environment remain expected and nonfatal.
+    The remaining optimized cache, Crofton, primitive-conversion, and three
+    NURBS regression checks pass 12/12 with four-way CTest parallelism in
+    5.16 seconds; the full direct ray corpus supplies the thirteenth gate.
 
   cmake --build .build --target rt_brep_ray -j8
     PASS
@@ -2295,6 +3229,38 @@ Cobb sphere baseline:
     Repeated after structured surface/local corrector outcomes and bounded
     failure-ratio telemetry: the focused 78-ray `--affine-only` run passes
     with no ASan or UBSan diagnostic.
+    Repeated after conditioned equation-hull exclusion with halt-on-error:
+    focused `--affine-only` and `--interval-only` runs pass with no ASan or
+    UBSan diagnostic.  The latter audits 2,187,000 transformed coefficients.
+    Repeated after the bounded fold candidate implementation with halt-on-
+    error: the focused `--fold-only` 200-system matrix passes with no ASan or
+    UBSan diagnostic.
+    Repeated after determinant and one-sided proof qualification with halt-on-
+    error: focused `--fold-only` and `--interval-only` pass with no ASan or
+    UBSan diagnostic.
+    Repeated after per-coefficient restriction and the shadow real-fold probe
+    with halt-on-error: focused `--interval-only`, `--fold-only`, and
+    `--affine-only` pass with no ASan or UBSan diagnostic.
+    Repeated after fixed-size expansion coefficient/restriction/Krawczyk
+    arithmetic and the real certificate ratchet: focused `--interval-only`,
+    `--fold-only`, and `--affine-only` pass with no ASan or UBSan diagnostic.
+    Repeated after implicit-graph determinant and fold-strip coverage:
+    process-sharded `--interval-only`, `--fold-only`, and `--affine-only` pass
+    with halt_on_error=1 and no ASan or UBSan diagnostic.  The interval gate
+    includes 33,408 exact determinant-restriction checks through order 30.
+    Repeated after bounded Krawczyk contraction and regular-graph endpoint
+    existence: process-sharded `--fold-only` and `--affine-only` pass with
+    halt_on_error=1 and no ASan or UBSan diagnostic.  The fold gate proves all
+    72 positive endpoint cases and rejects all 73 root-free/contact cases.
+    The separately sharded exhaustive `--interval-only` gate also passes with
+    no diagnostic.
+    Repeated after strict cross-span fold production with halt_on_error=1:
+    process-sharded `--fold-only` and `--affine-only` pass with no ASan or
+    UBSan diagnostic, including all six newly promoted grazing chords.  The
+    exhaustive `--interval-only` gate passes separately and includes the 36
+    model/direction-scale fold-gap classifier cases.
+    Leak detection remains disabled because the host ptrace wrapper makes
+    LeakSanitizer terminate before the test begins.
 
   env ASAN_OPTIONS=detect_leaks=0 UBSAN_OPTIONS=print_stacktrace=1 \
     ctest --test-dir .build-asan -j4 -R '^rt_cache_.*$' \
@@ -2354,32 +3320,62 @@ Legacy cleanup:
 NEXT ACTIONS
 ------------
 
-1. Replace the bounded correspondence screen with a conservative global
+1. Implement the first explicit completion-ledger/event increment without
+   broadening production authority.  Preserve immutable terminal-box and root
+   records, add separate fixed-capacity physical event records, and prove
+   ordinary clean-interior ENTER/LEAVE orientation with the same outward
+   determinant arithmetic used by the fold path.  Shadow the resulting event
+   stream against current prepared publication and the implicit/CSG oracles;
+   keep whole-ray atomic fallback on any coverage, orientation, event, state,
+   or capacity uncertainty.
+2. Replace the bounded correspondence screen with a conservative global
    injectivity/orientation proof.  Extend the shadow seam-gap certificate with
    an efficient exact-locus proof and explicit unsupported/capacity fallback,
    then tighten the g=T decision before it can replace sampled production
    authorization.  Keep model-space, UV, numerical-root, t-cluster, and
    minimum-segment tolerances distinct.
-2. Implement and gate cyclic convex/concave vertex-fan transitions before any
+3. Implement and gate cyclic convex/concave vertex-fan transitions before any
    multi-edge crack repair.  Preserve the current explicit fallback for
    unsupported, non-manifold, ambiguous, and capacity-limited fans.
-3. Profile the strict ordinary-root production selector on stratified analytic
-   and STEP cases.  Separate prepared-attempt cost, selected ordinary rays,
-   uncertified grazing fallback, and each unsupported/capacity reason.  Use the
-   mapped tangent/grazing ratchet to eliminate the six remaining condition-100
-   and condition-1,000 resolved misses, then analyze anisotropic seam
-   tolerances.  Separate old-solver root absence from prepared box explosion
-   and local-corrector failure.  Find a lower-cost dispatch or fallback strategy
+4. Profile the strict ordinary- and fold-root production selectors on
+   stratified analytic and STEP cases.  Separate prepared-attempt cost,
+   selected ordinary rays, selected clean-interior fold pairs, uncertified
+   grazing fallback, near-trim rejection, and every unsupported/capacity
+   reason.  The mapped tangent/grazing ratchet now eliminates all six former
+   condition-100 and condition-1,000 resolved misses.  Its fixed-work
+   candidate, Bernstein determinant, synthetic corridor, fused real
+   coefficient, per-coefficient restriction, root localization, cross-span
+   identity, and minimum-segment paths are permanent gates.  Binary64
+   Krawczyk still certifies none of the twelve hard roots; the portable
+   fixed-size expansion tier plus bounded Krawczyk contraction certifies eight
+   with floors 2/2/2/2/0/0, while regular-graph endpoint signs prove existence
+   for all twelve and complete-parent counts remain 2/2/2/2/2/2.  Extend the
+   physical event resolver beyond the initial same-face, one-boundary,
+   clean-interior pair only after corner/many-to-many topology and near-trim
+   seam interactions receive independent qualification.  Analyze anisotropic
+   seam tolerances without weakening the current fold gate.  Keep exact or
+   bounded alternative frame construction as a later conditioning
+   improvement, not as a blocker for these roots.
+   Separate old-solver root absence from prepared
+   box explosion and local-corrector failure.  Find a lower-cost dispatch or
+   fallback strategy
    before reducing tree density: the first correctness-only promotion passes
    every qualified partition oracle but increases the grazing-heavy ray corpus
    from 24.07 to about 69 seconds.  Do not lower density until every fallback
    population remains correct without relying on a tree that is no longer
    dense enough.
-4. Extend the BREP-leaf hierarchy corpus to nested multi-interval regions,
+5. Extend the BREP-leaf hierarchy corpus to nested multi-interval regions,
    transformations, noncoincident production-style trees, and tolerance-
    scaled thin walls.  Keep evaluated ON_Boolean solids and reverse NIST
    BREP-to-CSG recognition as later, separately classified qualification tiers.
-5. Add endpoint-moving gap/overlap, trim-only, edge-only, vertex, G1, and
+6. Add endpoint-moving gap/overlap, trim-only, edge-only, vertex, G1, and
    combined-error Cobb families, then remove the remaining duplicated Cobb
    control net from brep_invalid.cpp while independently gating its invalid
    topology behavior.
+7. Use the registered directed, Crofton, seam, interval, fold, and affine
+   CTest processes with `ctest -j`; retain the no-argument full executable for
+   compatibility qualification.  Keep pure arithmetic counters deterministic
+   and do not introduce shared-process parallelism into OpenNURBS/model
+   construction until separately qualified.  The exhaustive interval matrix
+   is the remaining sanitizer critical path, but subdividing it is deferred
+   while correctness and the production pipeline are the priority.
