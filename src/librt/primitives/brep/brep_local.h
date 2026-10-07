@@ -53,6 +53,8 @@ struct brep_edge_trim_cell {
 
 
 struct brep_edge_record {
+    ON_BoundingBox bbox;
+    double bbox_coordinate_scale = 0.0;
     size_t span_begin = 0;
     size_t span_count = 0;
     double tolerance = ON_UNSET_VALUE;
@@ -71,6 +73,7 @@ struct brep_edge_record {
     int edge_index = -1;
     int face_index[2] = {-1, -1};
     bool supported = false;
+    bool bbox_coordinate_scale_valid = false;
     bool discrepancy_measured = false;
     bool correspondence_screened = false;
     bool correspondence_supported = false;
@@ -113,10 +116,23 @@ struct brep_face_record {
     double bbox_coordinate_scale = 0.0;
     size_t span_begin = 0;
     size_t span_count = 0;
+    size_t span_tree_root = 0;
     int face_index = -1;
     int nurb_form_status = 0;
     bool status2_revolution_singular_map = false;
     bool supported = false;
+    bool bbox_coordinate_scale_valid = false;
+    bool span_tree_available = false;
+};
+
+
+/* A balanced hierarchy over one face's contiguous Bezier spans.  Traversal
+ * retains span order so bounded root collection stays deterministic. */
+struct brep_prepared_span_node {
+    ON_BoundingBox bbox;
+    double bbox_coordinate_scale = 0.0;
+    size_t span_count = 0;
+    bool cullable = false;
     bool bbox_coordinate_scale_valid = false;
 };
 
@@ -134,6 +150,20 @@ struct brep_prepared_face_node {
     size_t left_child = 0;
     size_t right_child = 0;
     bool cullable = false;
+    bool leaf = false;
+    bool bbox_coordinate_scale_valid = false;
+};
+
+
+/* A compact immutable hierarchy over BREP face bounds.  Leaves retain their
+ * source index, allowing callers to restore the original face order after
+ * spatial selection. */
+struct brep_face_bvh_node {
+    ON_BoundingBox bbox;
+    double bbox_coordinate_scale = 0.0;
+    size_t left_child = 0;
+    size_t right_child = 0;
+    size_t index = 0;
     bool leaf = false;
     bool bbox_coordinate_scale_valid = false;
 };
@@ -169,6 +199,8 @@ struct brep_vertex_record {
 struct brep_specific {
     ON_Brep *brep = NULL;
     BrepBoundingVolume *bvh = NULL;
+    std::vector<brep_face_bvh_node> legacy_face_nodes;
+    size_t legacy_face_root = (size_t)-1;
     std::vector<const brlcad::CurveTree *> ctrees;
     std::vector<brep_edge_record> edge_records;
     std::vector<brep_edge_span> edge_spans;
@@ -176,7 +208,10 @@ struct brep_specific {
     std::vector<brep_trim_span> edge_trim_spans;
     std::vector<brep_face_record> face_records;
     std::vector<brep_surface_span> surface_spans;
+    std::vector<brep_prepared_span_node> prepared_span_nodes;
     std::vector<brep_prepared_face_node> prepared_face_nodes;
+    std::vector<brep_face_bvh_node> prepared_face_bvh_nodes;
+    size_t prepared_face_bvh_root = (size_t)-1;
     std::vector<brep_vertex_record> vertex_records;
     int surface_tree_depth_limit = 0;
     int surface_tree_maximum_depth = 0;
