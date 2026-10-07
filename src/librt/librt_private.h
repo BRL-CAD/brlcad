@@ -459,6 +459,10 @@ RT_EXPORT extern void rt_vshot_via_shot(
     struct soltab **stp, struct xray **rp, struct seg *segp, int n,
     struct application *ap);
 
+/* Compress a serialized prep payload in the exact on-disk cache format.
+ * Returns nonzero on success and replaces external's buffer and byte count. */
+RT_EXPORT extern int _rt_cache_compress_external(struct bu_external *external);
+
 /* Shoot a BoT using prep state owned by another primitive. */
 struct bot_specific;
 RT_EXPORT extern int rt_bot_shot_specific(
@@ -549,6 +553,293 @@ RT_EXPORT extern int rt_bot_shot_specific(
 #define RT_BREP_PREPARED_FALLBACK_PARTITION 12
 #define RT_BREP_PREPARED_FALLBACK_COUNT 13
 
+/* Capacity transitions from the allocation-free legacy transaction to its
+ * allocating implementation.  They are independent of prepared-solver
+ * fallback reasons: a ray may have a prepared rejection and still complete
+ * without either legacy capacity fallback. */
+#define RT_BREP_LEGACY_CAPACITY_FALLBACK_LEAF_WORKSPACE 0
+#define RT_BREP_LEGACY_CAPACITY_FALLBACK_HIT_WORKSPACE 1
+#define RT_BREP_LEGACY_CAPACITY_FALLBACK_COUNT 2
+
+/* Semantic actions retained by legacy hit cleanup.  Each counter records the
+ * number of observations removed or coalesced for the named reason.  Keeping
+ * these reasons orthogonal makes zero-use branches visible to corpus and
+ * production telemetry without changing cleanup authority. */
+#define RT_BREP_LEGACY_CLEANUP_COINCIDENT_GRAZING 0
+#define RT_BREP_LEGACY_CLEANUP_NEAR_MISS_SHADOW 1
+#define RT_BREP_LEGACY_CLEANUP_NEAR_MISS_CRACK_MERGE 2
+#define RT_BREP_LEGACY_CLEANUP_NEAR_MISS_CRACK_CANCEL 3
+#define RT_BREP_LEGACY_CLEANUP_NEAR_MISS_NONADJACENT_DROP 4
+#define RT_BREP_LEGACY_CLEANUP_CLEAN_OVERLAP 5
+#define RT_BREP_LEGACY_CLEANUP_NEAR_HIT_SHADOW 6
+#define RT_BREP_LEGACY_CLEANUP_NEAR_HIT_CRACK_MERGE 7
+#define RT_BREP_LEGACY_CLEANUP_TRIMMED_INVALID 8
+#define RT_BREP_LEGACY_CLEANUP_PARAMETER_OOB 9
+#define RT_BREP_LEGACY_CLEANUP_ISOLATED_GRAZING 10
+#define RT_BREP_LEGACY_CLEANUP_DUPLICATE_CANCEL 11
+#define RT_BREP_LEGACY_CLEANUP_DUPLICATE_COLLAPSE 12
+#define RT_BREP_LEGACY_CLEANUP_SOLID_COINCIDENT 13
+#define RT_BREP_LEGACY_CLEANUP_SOLID_UNMATCHED_ENTER 14
+#define RT_BREP_LEGACY_CLEANUP_SOLID_UNMATCHED_LEAVE 15
+#define RT_BREP_LEGACY_CLEANUP_SOLID_INTERIOR_WINDING 16
+#define RT_BREP_LEGACY_CLEANUP_OPEN_SAME_DIRECTION 17
+#define RT_BREP_LEGACY_CLEANUP_OPEN_ODD_ENDPOINT 18
+#define RT_BREP_LEGACY_CLEANUP_COUNT 19
+
+/* Orthogonal detail for RT_BREP_PREPARED_FALLBACK_UNCERTIFIED.  These values
+ * describe why the prepared proof stopped; they never authorize a different
+ * solver decision. */
+#define RT_BREP_PREPARED_UNCERTIFIED_NONE 0
+#define RT_BREP_PREPARED_UNCERTIFIED_TANGENT_CONTACT 1
+#define RT_BREP_PREPARED_UNCERTIFIED_COEFFICIENT_EXPANSION 2
+#define RT_BREP_PREPARED_UNCERTIFIED_EXACT_RESTRICTION 3
+#define RT_BREP_PREPARED_UNCERTIFIED_REFINEMENT_BUDGET 4
+#define RT_BREP_PREPARED_UNCERTIFIED_CORRECTOR 5
+#define RT_BREP_PREPARED_UNCERTIFIED_KRAWCZYK_UNIQUENESS 6
+#define RT_BREP_PREPARED_UNCERTIFIED_UNKNOWN 7
+#define RT_BREP_PREPARED_UNCERTIFIED_COUNT 8
+
+/* Failure stages for the opt-in legacy-seeded regular verifier.  Stage zero
+ * means that the complete independent certificate succeeded. */
+#define RT_BREP_SEEDED_VERIFY_COMPLETE 0
+#define RT_BREP_SEEDED_VERIFY_INPUT 1
+#define RT_BREP_SEEDED_VERIFY_CANDIDATES 2
+#define RT_BREP_SEEDED_VERIFY_ROOT_CLASS 3
+#define RT_BREP_SEEDED_VERIFY_ROOT_MAP 4
+#define RT_BREP_SEEDED_VERIFY_COEFFICIENTS 5
+#define RT_BREP_SEEDED_VERIFY_LOCAL_ROOT 6
+#define RT_BREP_SEEDED_VERIFY_TRIM_DIRECTION 7
+#define RT_BREP_SEEDED_VERIFY_DEGREE 8
+#define RT_BREP_SEEDED_VERIFY_COMPLEMENT 9
+#define RT_BREP_SEEDED_VERIFY_PARTITION 10
+#define RT_BREP_SEEDED_VERIFY_STAGE_COUNT 11
+
+/* Decision-only lanes for the shadow BREP routing redesign.  These never
+ * change production authority until their corpus and performance gates pass. */
+#define RT_BREP_ROUTE_LEGACY_DIRECT 0
+#define RT_BREP_ROUTE_SEEDED_ORDINARY_VERIFY 1
+#define RT_BREP_ROUTE_EXISTING_COMPLEX_PREPARED 2
+#define RT_BREP_ROUTE_LANE_COUNT 3
+
+/* Immutable prep-time routing capabilities.  Capability is necessary but not
+ * sufficient for authority: ray-local root and partition checks still apply. */
+#define RT_BREP_ROUTE_CAP_PACKED_CONTROLS (1u << 0)
+#define RT_BREP_ROUTE_CAP_DEGREE_THEOREM (1u << 1)
+#define RT_BREP_ROUTE_CAP_SEEDED_ORDINARY (1u << 2)
+#define RT_BREP_ROUTE_CAP_COUNT 3
+
+/* Conservative prep-time routing risks.  UNQUALIFIED deliberately remains on
+ * every face until a truth-corpus stratum authorizes a narrower class. */
+#define RT_BREP_ROUTE_RISK_UNQUALIFIED (1u << 0)
+#define RT_BREP_ROUTE_RISK_UNSUPPORTED (1u << 1)
+#define RT_BREP_ROUTE_RISK_REPARAMETERIZED (1u << 2)
+#define RT_BREP_ROUTE_RISK_SINGULAR (1u << 3)
+#define RT_BREP_ROUTE_RISK_PERIODIC (1u << 4)
+#define RT_BREP_ROUTE_RISK_INNER_TRIM (1u << 5)
+#define RT_BREP_ROUTE_RISK_TOPOLOGY_BOUNDARY (1u << 6)
+#define RT_BREP_ROUTE_RISK_NONMANIFOLD (1u << 7)
+#define RT_BREP_ROUTE_RISK_SEAM (1u << 8)
+#define RT_BREP_ROUTE_RISK_BOUNDARY_CONTACT_CORRECTION (1u << 9)
+#define RT_BREP_ROUTE_RISK_DIRECTIONAL_GRAZING (1u << 10)
+#define RT_BREP_ROUTE_RISK_COUNT 11
+
+/* Orthogonal route decision.  The retained base is always legacy.  Optional
+ * prepared authority is permitted only by the separate publication gate after
+ * a complete, supported whole-ray transaction. */
+#define RT_BREP_ROUTE_BASE_LEGACY 0
+#define RT_BREP_ROUTE_WORK_NONE 0
+#define RT_BREP_ROUTE_WORK_SEEDED_ORDINARY 1
+#define RT_BREP_ROUTE_WORK_COMPLEX_PREPARED 2
+#define RT_BREP_ROUTE_WORK_COUNT 3
+#define RT_BREP_ROUTE_AUTHORITY_LEGACY 0
+#define RT_BREP_ROUTE_AUTHORITY_PREPARED 1
+#define RT_BREP_ROUTE_QUAL_UNQUALIFIED (1u << 0)
+#define RT_BREP_ROUTE_QUAL_EMPTY (1u << 1)
+#define RT_BREP_ROUTE_QUAL_CLEAN_ORDINARY (1u << 2)
+#define RT_BREP_ROUTE_QUAL_CORRECTION_RISK (1u << 3)
+#define RT_BREP_ROUTE_QUAL_UNSUPPORTED (1u << 4)
+#define RT_BREP_ROUTE_QUAL_MIXED_HAZARD (1u << 5)
+#define RT_BREP_ROUTE_QUAL_COUNT 6
+
+/* Fail-closed feature-cell lookup diagnostics.  Keep these reasons separate:
+ * a missing root-to-cell association is a different defect from corrupt or
+ * unavailable prep metadata, even though both retain legacy authority. */
+#define RT_BREP_ROUTE_LOOKUP_METADATA_UNAVAILABLE 0
+#define RT_BREP_ROUTE_LOOKUP_NULL_LEAF 1
+#define RT_BREP_ROUTE_LOOKUP_NONLEAF 2
+#define RT_BREP_ROUTE_LOOKUP_FACE_INDEX 3
+#define RT_BREP_ROUTE_LOOKUP_LEAF_ORDINAL 4
+#define RT_BREP_ROUTE_LOOKUP_RECORD_RANGE 5
+#define RT_BREP_ROUTE_LOOKUP_CELL_IDENTITY 6
+#define RT_BREP_ROUTE_LOOKUP_UNMATCHED_ROOT 7
+#define RT_BREP_ROUTE_LOOKUP_REASON_COUNT 8
+
+#define RT_BREP_ROOT_DEGREE_DETAIL_NONE 0
+#define RT_BREP_ROOT_DEGREE_DETAIL_INPUT 1
+#define RT_BREP_ROOT_DEGREE_DETAIL_BOUNDARY_PIECE 2
+#define RT_BREP_ROOT_DEGREE_DETAIL_BOUNDARY_SUBDIVISION 3
+#define RT_BREP_ROOT_DEGREE_DETAIL_CROSS_ARITHMETIC 4
+#define RT_BREP_ROOT_DEGREE_DETAIL_CROSS_ZERO 5
+#define RT_BREP_ROOT_DEGREE_DETAIL_ORIENTATION 6
+#define RT_BREP_ROOT_DEGREE_DETAIL_COUNT 7
+
+/* Evidence states for the bounded cell/span missing-root certificate.  A
+ * positive count is an exact regular surface-root count for one association,
+ * not yet a material hit: localization, duplicate ownership, and trim
+ * classification remain separate proof obligations. */
+#define RT_BREP_ROUTE_CERT_INCOMPLETE 0
+#define RT_BREP_ROUTE_CERT_ROOT_FREE 1
+#define RT_BREP_ROUTE_CERT_ROOT_POSITIVE 2
+#define RT_BREP_ROUTE_CERT_STATE_COUNT 3
+
+/* Fail-closed reasons for an incomplete cell/span certificate.  Keep these
+ * stable so audit corpora can distinguish unsupported geometry from numerical
+ * or bounded-resource failures. */
+#define RT_BREP_ROUTE_CERT_FAILURE_NONE 0
+#define RT_BREP_ROUTE_CERT_FAILURE_INPUT 1
+#define RT_BREP_ROUTE_CERT_FAILURE_RAY_FRAME 2
+#define RT_BREP_ROUTE_CERT_FAILURE_STATUS2_MAPPING 3
+#define RT_BREP_ROUTE_CERT_FAILURE_SINGULAR 4
+#define RT_BREP_ROUTE_CERT_FAILURE_OVERLAP 5
+#define RT_BREP_ROUTE_CERT_FAILURE_COEFFICIENTS 6
+#define RT_BREP_ROUTE_CERT_FAILURE_REPARAMETERIZATION 7
+#define RT_BREP_ROUTE_CERT_FAILURE_DETERMINANT 8
+#define RT_BREP_ROUTE_CERT_FAILURE_BOUNDARY 9
+#define RT_BREP_ROUTE_CERT_FAILURE_ORIENTATION 10
+#define RT_BREP_ROUTE_CERT_FAILURE_RESOURCE 11
+#define RT_BREP_ROUTE_CERT_FAILURE_COUNT 12
+
+struct rt_brep_route_decision {
+    int base_transaction;
+    int optional_work;
+    int publication_authority;
+    unsigned int qualification_flags;
+    unsigned int capability_flags;
+    unsigned int reason_flags;
+    size_t candidate_cells;
+    size_t hazard_roots;
+    size_t contact_roots;
+    /* Geometry-invariant span normal hulls are intersected with this ray's
+     * direction.  Only spans whose ray-visible subpatches cannot prove
+     * transverse are sent to the bounded whole-ray prepared transaction. */
+    size_t directional_probe_attempts;
+    size_t directional_probe_complete;
+    size_t directional_candidate_faces;
+    size_t directional_candidate_spans;
+    size_t directional_cached_transverse_spans;
+    size_t directional_cache_hits;
+    size_t directional_cache_misses;
+    size_t directional_cache_build_failures;
+    size_t directional_cache_box_tests;
+    size_t directional_cache_cleared_spans;
+    size_t directional_ray_excluded_boxes;
+    size_t directional_refined_boxes;
+    size_t directional_refined_transverse_boxes;
+    /* Traversals first spend a 256-box common-case allowance.  Only an
+     * unresolved fixed-workspace traversal enters the continuation stage;
+     * these counters distinguish its cost and successful span proofs from
+     * hard-budget exhaustion. */
+    size_t directional_continuation_attempts;
+    size_t directional_continuation_boxes;
+    size_t directional_continuation_resolved_spans;
+    size_t directional_ambiguous_spans;
+    size_t directional_unsupported_spans;
+    size_t directional_workspace_overflow;
+    size_t directional_grazing_triggered;
+    size_t directional_probe_nanoseconds;
+    /* Observations for a possible legacy missing root.  The probe is evaluated
+     * only for an otherwise supported empty legacy stream.  Direct mode reuses
+     * the intersected SurfaceTree feature cells; explicit audit mode selects
+     * the same class through an independent correction-cell BVH and also runs
+     * whole-face diagnostics.  Only a separately enabled, complete positive
+     * cell/span certificate may request the existing atomic prepared
+     * transaction; these counters never grant publication authority alone. */
+    size_t empty_correction_cells;
+    size_t missing_root_candidate_spans;
+    size_t missing_root_retained_spans;
+    size_t missing_root_restricted_spans;
+    size_t missing_root_inconclusive_spans;
+    size_t missing_root_workspace_overflow;
+    size_t missing_root_prepared_candidate_faces;
+    size_t missing_root_prepared_candidate_spans;
+    size_t missing_root_prepared_retained_spans;
+    size_t missing_root_prepared_only_spans;
+    size_t missing_root_prepared_only_retained_spans;
+    size_t missing_root_prepared_inconclusive_spans;
+    size_t missing_root_prepared_candidate_failures;
+    /* Per-cell/span certificate evidence.  Root counts are summed only as
+     * association telemetry and must not be interpreted as globally unique
+     * roots.  A complete positive set is solely a production routing signal;
+     * the independently certified prepared transaction remains responsible
+     * for localization, trim classification, ownership, and publication. */
+    size_t missing_root_certificate_associations;
+    size_t missing_root_certificate_state[RT_BREP_ROUTE_CERT_STATE_COUNT];
+    size_t missing_root_certificate_regular_root_count;
+    /* Per complete cell, compare its exact regular surface-root count with
+     * the conservatively over-counted raw legacy observations in that same
+     * cell.  A positive deficit is stronger evidence than a merely positive
+     * certificate; absence of a deficit is diagnostic, not negative proof. */
+    size_t missing_root_certificate_observed_roots;
+    size_t missing_root_certificate_deficit_cells;
+    size_t missing_root_certificate_deficit_roots;
+    size_t missing_root_certificate_cached_bbox_exclusions;
+    size_t missing_root_certificate_hull_exclusions;
+    size_t missing_root_certificate_subdivision_attempts;
+    size_t missing_root_certificate_subdivision_boxes;
+    size_t missing_root_certificate_subdivision_hull_exclusions;
+    size_t missing_root_certificate_subdivision_exclusions;
+    size_t missing_root_certificate_degree_attempts;
+    size_t missing_root_certificate_degree_complete;
+    size_t missing_root_certificate_failure_reason[
+	RT_BREP_ROUTE_CERT_FAILURE_COUNT];
+    size_t missing_root_certificate_degree_failure_detail[
+	RT_BREP_ROOT_DEGREE_DETAIL_COUNT];
+    size_t missing_root_certificate_boundary_pieces;
+    size_t missing_root_certificate_boundary_splits;
+    size_t missing_root_certificate_boundary_edges;
+    size_t missing_root_certificate_expansion_high_water;
+    size_t missing_root_certificate_nanoseconds;
+    size_t missing_root_certificate_complete;
+    size_t missing_root_certificate_triggered;
+    /* A nonempty legacy solve can still collapse during solid winding
+     * cleanup when one side of an interval was not found.  This is a
+     * stronger missing-root signal than an empty raw stream and permits a
+     * bounded, allocation-free, whole-ray refinement replay. */
+    size_t legacy_transaction_incomplete;
+    size_t selective_refinement_attempted;
+    size_t selective_refinement_complete;
+    size_t selective_refinement_level;
+    size_t selective_refinement_hits;
+    size_t selective_refinement_reversal_mismatches;
+    size_t selective_refinement_nanoseconds;
+    size_t cell_lookup_failures;
+    size_t cell_lookup_failure_reasons[RT_BREP_ROUTE_LOOKUP_REASON_COUNT];
+    size_t roots_unmapped_after_leaf_overflow;
+    size_t decision_nanoseconds;
+};
+
+/* Result from the audit-only missing-root fault-injection entry points.  One
+ * helper removes all collected raw legacy hits; the incomplete-transaction
+ * helper removes one endpoint so solid cleanup observes and discards the
+ * unmatched survivor.  Independently prepared/certified evidence remains
+ * available so tests can verify recovery and atomic fallback end to end. */
+struct rt_brep_route_test_result {
+    struct rt_brep_route_decision decision;
+    size_t suppressed_legacy_raw_hits;
+    size_t suppressed_legacy_route_roots;
+    int legacy_root_fault_injected;
+    int incomplete_transaction_fault_injected;
+    int suppressed_legacy_hit_overflow;
+    int suppressed_legacy_root_overflow;
+    int optional_attempted;
+    int general_prepared_attempted;
+    int optional_complete;
+    int optional_published;
+    int require_empty_partition;
+    int prepared_fallback;
+    int prepared_uncertified_reason;
+};
+
 struct rt_brep_trace_root {
     fastf_t dist;
     fastf_t uv[2];
@@ -619,6 +910,7 @@ struct rt_brep_trace_surface_box {
     int depth;
     int disposition;
     int determinant_sign;
+    int uncertified_reason;
 };
 
 struct rt_brep_trace_fold_root {
@@ -649,7 +941,16 @@ struct rt_brep_fold_interval_test_result {
 
 struct rt_brep_trace_local_root {
     fastf_t dist;
+    /* Outward source-box interval retained with the certified root. */
+    fastf_t t_min;
+    fastf_t t_max;
     fastf_t uv[2];
+    /* Original-surface parameter and evaluate-once geometric ledger. */
+    fastf_t surface_uv[2];
+    fastf_t point[3];
+    fastf_t normal[3];
+    fastf_t derivative_u[3];
+    fastf_t derivative_v[3];
     fastf_t residual;
     fastf_t normal_dot;
     fastf_t trim_distance;
@@ -660,6 +961,8 @@ struct rt_brep_trace_local_root {
     int trim_status;
     int hit_class;
     int direction;
+    int evaluation_valid;
+    int derivatives_valid;
 };
 
 struct rt_brep_trace_singular_span {
@@ -730,6 +1033,8 @@ struct rt_brep_shot_trace {
     size_t fixed_after_duplicates;
     size_t fixed_after_direction_cleanup;
     size_t fixed_cleanup_mismatches;
+    size_t legacy_cleanup_actions[RT_BREP_LEGACY_CLEANUP_COUNT];
+    size_t legacy_cleanup_action_mismatches;
     size_t trim_queries;
     size_t trim_noalloc_candidates;
     size_t trim_allocating_candidates;
@@ -1076,6 +1381,64 @@ struct rt_brep_shot_trace {
     fastf_t root_match_max_uv_error;
     fastf_t root_match_max_trim_error;
     fastf_t root_match_max_normal_dot_error;
+    size_t seeded_verify_attempts;
+    size_t seeded_verify_complete;
+    size_t seeded_verify_legacy_groups;
+    size_t seeded_verify_candidate_faces;
+    size_t seeded_verify_candidate_spans;
+    size_t seeded_verify_hull_excluded_spans;
+    size_t seeded_verify_mapped_roots;
+    size_t seeded_verify_local_attempts;
+    size_t seeded_verify_local_certified;
+    size_t seeded_verify_degree_attempts;
+    size_t seeded_verify_degree_complete;
+    size_t seeded_verify_degree_determinant_failures;
+    size_t seeded_verify_degree_boundary_failures;
+    size_t seeded_verify_degree_orientation_failures;
+    size_t seeded_verify_degree_count_mismatches;
+    size_t seeded_verify_degree_sign_mismatches;
+    size_t seeded_verify_degree_count_low;
+    size_t seeded_verify_degree_count_high;
+    size_t seeded_verify_degree_mismatch_local_exact;
+    size_t seeded_verify_degree_mismatch_local_inexact;
+    size_t seeded_verify_degree_extra_local_roots;
+    size_t seeded_verify_degree_extra_local_trimmed;
+    size_t seeded_verify_degree_extra_local_untrimmed;
+    size_t seeded_verify_degree_surplus_empty;
+    size_t seeded_verify_degree_surplus_seeded;
+    size_t seeded_verify_degree_surplus_corrector_attempts;
+    size_t seeded_verify_degree_surplus_corrector_converged;
+    size_t seeded_verify_degree_surplus_local_attempts;
+    size_t seeded_verify_degree_surplus_local_certified;
+    size_t seeded_verify_degree_surplus_trimmed_certified;
+    size_t seeded_verify_degree_surplus_untrimmed;
+    size_t seeded_verify_degree_surplus_nanoseconds;
+    size_t seeded_verify_degree_root_count;
+    size_t seeded_verify_degree_seed_count;
+    size_t seeded_verify_degree_boundary_pieces;
+    size_t seeded_verify_degree_boundary_splits;
+    size_t seeded_verify_degree_boundary_edges;
+    size_t seeded_verify_degree_expansion_high_water;
+    size_t seeded_verify_degree_nanoseconds;
+    size_t seeded_verify_degree_complement_agreements;
+    size_t seeded_verify_degree_complement_disagreements;
+    size_t seeded_verify_degree_failure_detail[RT_BREP_ROOT_DEGREE_DETAIL_COUNT];
+    size_t seeded_verify_complement_visited;
+    size_t seeded_verify_complement_high_water;
+    size_t seeded_verify_partition_events;
+    size_t seeded_verify_nanoseconds;
+    size_t seeded_verify_stage_nanoseconds[RT_BREP_SEEDED_VERIFY_STAGE_COUNT];
+    int seeded_verify_failure_stage;
+    int seeded_route_lane;
+    unsigned int seeded_route_capability_flags;
+    unsigned int seeded_route_risk_flags;
+    size_t route_decision_attempts;
+    struct rt_brep_route_decision route_decision;
+    /* Audit-only positive control: rerun the decision with the observed
+     * correction-risk roots hidden, then record whether the independent
+     * missing-root probe would have raised a signal. */
+    size_t missing_root_counterfactual_attempts;
+    struct rt_brep_route_decision missing_root_counterfactual;
     size_t local_event_groups;
     size_t local_event_contacts;
     size_t local_event_clean_misses;
@@ -1119,11 +1482,27 @@ struct rt_brep_shot_trace {
     size_t local_event_segment_overflow;
     fastf_t local_event_segment_in[RT_BREP_TRACE_MAX_LOCAL_SEGMENTS];
     fastf_t local_event_segment_out[RT_BREP_TRACE_MAX_LOCAL_SEGMENTS];
+    size_t prepared_preflight_attempts;
+    size_t prepared_preflight_available;
+    size_t prepared_preflight_candidate_faces;
+    size_t prepared_preflight_candidate_spans;
+    size_t prepared_preflight_early_fallbacks;
+    int prepared_preflight_fallback;
+    /* Selective publication currently certifies only empty corrections whose
+     * prepared proof retains no surface candidate box. */
+    size_t prepared_require_surface_box_free;
+    size_t prepared_selective_class_rejections;
+    size_t prepared_selective_candidate_surface_spans;
+    size_t prepared_selective_subdivision_boxes;
+    size_t prepared_selective_surface_boxes;
     size_t prepared_production_attempts;
     size_t prepared_production_eligible;
     size_t prepared_production_selected;
     int prepared_production_fallback;
+    int prepared_production_uncertified_reason;
     size_t prepared_production_hits;
+    size_t prepared_hit_cached_evaluations;
+    size_t prepared_hit_surface_evaluations;
     fastf_t local_cluster_tolerance;
     size_t local_root_clusters;
     size_t stored_local_clusters;
@@ -1260,7 +1639,69 @@ struct rt_brep_prep_stats {
     size_t surface_tree_leaves;
     size_t curve_trees;
     size_t curve_tree_leaves;
+    size_t bezier_spans;
+    size_t packed_surface_controls;
+    size_t packed_surface_control_values;
+    unsigned int routing_capability_flags;
+    unsigned int routing_risk_flags;
+    size_t routing_seeded_faces;
+    size_t routing_seeded_spans;
+    size_t routing_unqualified_faces;
+    size_t routing_unsupported_faces;
+    size_t routing_reparameterized_faces;
+    size_t routing_singular_spans;
+    size_t routing_periodic_faces;
+    size_t routing_inner_trim_faces;
+    size_t routing_boundary_faces;
+    size_t routing_nonmanifold_faces;
+    size_t routing_seam_faces;
+    size_t routing_feature_cells;
+    size_t routing_seeded_cells;
+    size_t routing_unsupported_cells;
+    size_t routing_trim_boundary_cells;
+    size_t routing_domain_boundary_cells;
+    size_t routing_correction_cells;
+    size_t routing_feature_cell_span_bindings;
+    size_t routing_cell_span_packs;
+    size_t routing_complete_cell_span_packs;
+    size_t routing_cell_span_control_intervals;
+    size_t routing_cell_span_subpatch_boxes;
+    size_t routing_cell_span_pack_budget_bytes;
+    size_t routing_cell_span_pack_used_bytes;
+    size_t routing_direction_cache_bytes;
+    size_t routing_direction_cache_capacity;
+    size_t routing_direction_cache_ready_entries;
+    size_t routing_correction_bvh_nodes;
     size_t surface_tree_build_microseconds;
+    /* Retained bytes owned by the prepared primitive.  These counts include
+     * allocated container capacity but exclude allocator bookkeeping. */
+    size_t retained_bytes;
+    size_t retained_used_bytes;
+    size_t retained_unused_capacity_bytes;
+    size_t retained_core_bytes;
+    size_t retained_brep_bytes;
+    size_t retained_surface_tree_bytes;
+    size_t retained_curve_tree_bytes;
+    size_t retained_edge_bytes;
+    size_t retained_surface_bytes;
+    size_t retained_hierarchy_bytes;
+    size_t retained_routing_bytes;
+    size_t retained_vertex_bytes;
+    /* Unused container/arena capacity attributed to the categories above.
+     * ON_Brep does not expose an equivalent breakdown. */
+    size_t retained_surface_tree_unused_capacity_bytes;
+    size_t retained_curve_tree_unused_capacity_bytes;
+    size_t retained_edge_unused_capacity_bytes;
+    size_t retained_surface_unused_capacity_bytes;
+    size_t retained_hierarchy_unused_capacity_bytes;
+    size_t retained_routing_unused_capacity_bytes;
+    size_t retained_vertex_unused_capacity_bytes;
+    size_t retained_routing_feature_cell_unused_capacity_bytes;
+    size_t retained_routing_binding_unused_capacity_bytes;
+    size_t retained_routing_pack_unused_capacity_bytes;
+    size_t retained_routing_control_unused_capacity_bytes;
+    size_t retained_routing_subpatch_unused_capacity_bytes;
+    size_t retained_routing_bvh_unused_capacity_bytes;
 };
 
 #define RT_BREP_SOURCE_UNION_TEST_ROOT 1
@@ -1283,6 +1724,25 @@ struct rt_brep_source_union_test_result {
     size_t component_boxes;
     fastf_t uv_minimum[2];
     fastf_t uv_maximum[2];
+};
+
+#define RT_BREP_ROOT_DEGREE_COMPLETE 0
+#define RT_BREP_ROOT_DEGREE_INPUT 1
+#define RT_BREP_ROOT_DEGREE_DETERMINANT 2
+#define RT_BREP_ROOT_DEGREE_BOUNDARY 3
+#define RT_BREP_ROOT_DEGREE_ORIENTATION 4
+
+struct rt_brep_root_degree_test_result {
+    int available;
+    int determinant_sign;
+    int degree;
+    size_t root_count;
+    int failure_stage;
+    int failure_detail;
+    size_t boundary_pieces;
+    size_t boundary_splits;
+    size_t boundary_edges;
+    size_t expansion_high_water;
 };
 
 #define RT_BREP_TRIM_INTERVAL_TEST_MAX_SPANS 4
@@ -1375,6 +1835,11 @@ RT_EXPORT extern int _rt_brep_determinant_restrict_test(
     int u_order, int v_order, const fastf_t minimum[2],
     const fastf_t maximum[2], fastf_t *output_minimum,
     fastf_t *output_maximum);
+RT_EXPORT extern int _rt_brep_root_degree_test(
+    const fastf_t *first_coefficients, const fastf_t *first_error,
+    const fastf_t *second_coefficients, const fastf_t *second_error,
+    int u_order, int v_order,
+    struct rt_brep_root_degree_test_result *result);
 RT_EXPORT extern int _rt_brep_krawczyk_test(
     const fastf_t *first_coefficients, const fastf_t *first_error,
     const fastf_t *second_coefficients, const fastf_t *second_error,
@@ -1400,6 +1865,11 @@ RT_EXPORT extern int _rt_brep_set_surface_tree_depth(
     struct rt_i *rtip, int depth_limit);
 RT_EXPORT extern int _rt_brep_prep_stats(
     const struct soltab *stp, struct rt_brep_prep_stats *result);
+RT_EXPORT extern size_t _rt_brep_routing_pack_cache_budget(void);
+RT_EXPORT extern size_t _rt_brep_routing_pack_cache_required(
+    const struct soltab *stp);
+RT_EXPORT extern size_t _rt_brep_routing_pack_cache_prepare(
+    struct soltab *stp, size_t budget_bytes);
 RT_EXPORT extern int _rt_brep_local_root_tube_test(
     fastf_t image_displacement, fastf_t edge_distance,
     fastf_t trim_distance, fastf_t tolerance, fastf_t roundoff,
@@ -1452,6 +1922,15 @@ RT_EXPORT extern int _rt_brep_reparameterize_test(
     const fastf_t *input, int u_order, int v_order, fastf_t input_error,
     const fastf_t minimum[2], const fastf_t maximum[2], fastf_t *output,
     fastf_t *output_error);
+RT_EXPORT extern int _rt_brep_arc_nurbs_parameter_test(
+    fastf_t domain_minimum, fastf_t domain_maximum, fastf_t angle,
+    fastf_t input, int to_nurbs, fastf_t *output);
+RT_EXPORT extern int _rt_brep_profile_nurbs_parameter_test(
+    const void *profile, fastf_t input, int to_nurbs, fastf_t *output);
+RT_EXPORT extern int _rt_brep_profile_nurbs_interval_test(
+    const void *profile, fastf_t input_minimum, fastf_t input_maximum,
+    fastf_t *output_minimum, fastf_t *output_maximum,
+    size_t *piece_count);
 RT_EXPORT extern int _rt_brep_clip_test(
     const fastf_t *first_coefficients, const fastf_t *second_coefficients,
     int u_order, int v_order, const fastf_t coefficient_error[2],
@@ -1465,9 +1944,33 @@ RT_EXPORT extern size_t _rt_brep_direction_cleanup_test(
     fastf_t distance_tolerance, fastf_t *retained_distances,
     size_t retained_capacity);
 RT_EXPORT extern size_t _rt_brep_cleanup_stream_test(
-    const fastf_t *distances, const int *normal_signs,
+    const fastf_t *distances, const fastf_t *normal_dots,
     const int *hit_classes, size_t count, fastf_t distance_tolerance,
     fastf_t *retained_distances, size_t retained_capacity);
+RT_EXPORT extern size_t _rt_brep_cleanup_diagnostics_test(
+    const fastf_t *distances, const fastf_t *normal_dots,
+    const int *hit_classes, size_t count, fastf_t distance_tolerance,
+    fastf_t *retained_distances, size_t retained_capacity,
+    size_t *action_counts, size_t action_capacity);
+
+/* Rich reduced hit used only to exercise the complete legacy cleanup reason
+ * map.  Face indices are synthetic and -1 means that no face is attached. */
+struct rt_brep_cleanup_test_hit {
+    fastf_t distance;
+    fastf_t normal_dot;
+    int hit_class;
+    int trimmed;
+    int close_to_edge;
+    int parameter_oob;
+    int face_index;
+    int adjacent_face_index;
+};
+
+RT_EXPORT extern size_t _rt_brep_cleanup_reason_test(
+    const struct rt_brep_cleanup_test_hit *input, size_t count,
+    fastf_t distance_tolerance, int solid_orientation,
+    fastf_t *retained_distances, size_t retained_capacity,
+    size_t *action_counts, size_t action_capacity);
 
 RT_EXPORT extern int _rt_brep_shot_trace(
     struct soltab *stp, struct xray *rp, struct application *ap,
@@ -1478,6 +1981,17 @@ RT_EXPORT extern int _rt_brep_shot_legacy_trace(
 RT_EXPORT extern int _rt_brep_shot_legacy(
     struct soltab *stp, struct xray *rp, struct application *ap,
     struct seg *seghead);
+RT_EXPORT extern int _rt_brep_shot_route(
+    struct soltab *stp, struct xray *rp, struct application *ap,
+    struct seg *seghead, int publish_optional);
+RT_EXPORT extern int _rt_brep_shot_route_missing_root_test(
+    struct soltab *stp, struct xray *rp, struct application *ap,
+    struct seg *seghead, int publish_optional,
+    struct rt_brep_route_test_result *result);
+RT_EXPORT extern int _rt_brep_shot_route_incomplete_test(
+    struct soltab *stp, struct xray *rp, struct application *ap,
+    struct seg *seghead, int publish_optional,
+    struct rt_brep_route_test_result *result);
 
 
 __END_DECLS
