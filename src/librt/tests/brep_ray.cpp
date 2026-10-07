@@ -24,6 +24,7 @@
 #include <cstdlib>
 #include <cstring>
 #include <ctime>
+#include <limits>
 #include <random>
 #include <vector>
 
@@ -34,6 +35,7 @@
 #include "brep/surfacetree.h"
 #include "raytrace.h"
 #include "rt/geom.h"
+#include "rt/primitives/brep.h"
 #include "brep.h"
 #include "wdb.h"
 #include "../librt_private.h"
@@ -46,6 +48,21 @@ struct ray_result {
     double out_dist = 0.0;
     vect_t in_normal = VINIT_ZERO;
     vect_t out_normal = VINIT_ZERO;
+};
+
+
+struct curvature_sample {
+    struct hit hit = RT_HIT_INIT_ZERO;
+    struct curvature value = RT_CURVATURE_INIT_ZERO;
+    bool available = false;
+};
+
+
+struct curvature_ray_result {
+    int shot_hits = 0;
+    int segments = 0;
+    curvature_sample in;
+    curvature_sample out;
 };
 
 
@@ -195,6 +212,172 @@ prep_solid(struct rt_i *rtip, struct rt_db_internal *intern, int type)
 	}
     }
     return stp;
+}
+
+
+static struct soltab *
+deserialize_solid(struct rt_i *rtip, struct rt_db_internal *intern, int type,
+    struct bu_external *payload, size_t version)
+{
+    if (!rtip || !intern || !payload)
+	return NULL;
+    struct soltab *stp = (struct soltab *)bu_calloc(1,
+	sizeof(struct soltab), "cached direct ray test soltab");
+    stp->l.magic = RT_SOLTAB_MAGIC;
+    stp->l2.magic = RT_SOLTAB2_MAGIC;
+    stp->st_rtip = rtip;
+    struct directory *dp = (struct directory *)bu_calloc(1,
+	sizeof(struct directory), "cached direct ray test directory");
+    dp->d_magic = RT_DIR_MAGIC;
+    dp->d_namep = (char *)"cached_direct_ray_test.s";
+    stp->st_dp = dp;
+    stp->st_id = type;
+    stp->st_meth = &OBJ[type];
+
+    size_t payload_version = version;
+    if (rt_obj_prep_serialize(stp, intern, payload, &payload_version) != 0 ||
+	    payload_version != version || !stp->st_specific) {
+	if (stp->st_specific && stp->st_meth && stp->st_meth->ft_free)
+	    stp->st_meth->ft_free(stp);
+	bu_free((void *)stp->st_dp, "cached direct ray test directory");
+	bu_free(stp, "cached direct ray test soltab");
+	return NULL;
+    }
+    return stp;
+}
+
+
+static bool
+status2_cache_stats_match(const struct rt_brep_prep_stats &fresh,
+	const struct rt_brep_prep_stats &cached)
+{
+    return fresh.routing_direction_cache_bytes &&
+	fresh.routing_direction_cache_capacity &&
+	cached.surface_tree_build_microseconds == 0 &&
+	cached.surface_tree_depth_limit == fresh.surface_tree_depth_limit &&
+	cached.surface_tree_maximum_depth ==
+	    fresh.surface_tree_maximum_depth &&
+	cached.surface_tree_nodes == fresh.surface_tree_nodes &&
+	cached.surface_tree_leaves == fresh.surface_tree_leaves &&
+	cached.curve_trees == fresh.curve_trees &&
+	cached.curve_tree_leaves == fresh.curve_tree_leaves &&
+	cached.bezier_spans == fresh.bezier_spans &&
+	cached.packed_surface_controls == fresh.packed_surface_controls &&
+	cached.packed_surface_control_values ==
+	    fresh.packed_surface_control_values &&
+	cached.routing_capability_flags == fresh.routing_capability_flags &&
+	cached.routing_risk_flags == fresh.routing_risk_flags &&
+	cached.routing_seeded_faces == fresh.routing_seeded_faces &&
+	cached.routing_seeded_spans == fresh.routing_seeded_spans &&
+	cached.routing_unqualified_faces == fresh.routing_unqualified_faces &&
+	cached.routing_unsupported_faces == fresh.routing_unsupported_faces &&
+	cached.routing_reparameterized_faces ==
+	    fresh.routing_reparameterized_faces &&
+	cached.routing_singular_spans == fresh.routing_singular_spans &&
+	cached.routing_periodic_faces == fresh.routing_periodic_faces &&
+	cached.routing_inner_trim_faces == fresh.routing_inner_trim_faces &&
+	cached.routing_boundary_faces == fresh.routing_boundary_faces &&
+	cached.routing_nonmanifold_faces == fresh.routing_nonmanifold_faces &&
+	cached.routing_seam_faces == fresh.routing_seam_faces &&
+	cached.routing_feature_cells == fresh.routing_feature_cells &&
+	cached.routing_seeded_cells == fresh.routing_seeded_cells &&
+	cached.routing_unsupported_cells == fresh.routing_unsupported_cells &&
+	cached.routing_trim_boundary_cells ==
+	    fresh.routing_trim_boundary_cells &&
+	cached.routing_domain_boundary_cells ==
+	    fresh.routing_domain_boundary_cells &&
+	cached.routing_correction_cells == fresh.routing_correction_cells &&
+	cached.routing_feature_cell_span_bindings ==
+	    fresh.routing_feature_cell_span_bindings &&
+	cached.routing_cell_span_packs == fresh.routing_cell_span_packs &&
+	cached.routing_complete_cell_span_packs ==
+	    fresh.routing_complete_cell_span_packs &&
+	cached.routing_cell_span_control_intervals ==
+	    fresh.routing_cell_span_control_intervals &&
+	cached.routing_cell_span_subpatch_boxes ==
+	    fresh.routing_cell_span_subpatch_boxes &&
+	cached.routing_cell_span_pack_budget_bytes ==
+	    fresh.routing_cell_span_pack_budget_bytes &&
+	cached.routing_cell_span_pack_used_bytes ==
+	    fresh.routing_cell_span_pack_used_bytes &&
+	cached.routing_direction_cache_bytes ==
+	    fresh.routing_direction_cache_bytes &&
+	cached.routing_direction_cache_capacity ==
+	    fresh.routing_direction_cache_capacity &&
+	cached.routing_direction_cache_ready_entries ==
+	    fresh.routing_direction_cache_ready_entries &&
+	cached.routing_correction_bvh_nodes ==
+	    fresh.routing_correction_bvh_nodes;
+}
+
+
+static bool
+status2_cached_route_matches(const ray_result &fresh_result,
+	const struct rt_brep_route_test_result &fresh_route,
+	const ray_result &cached_result,
+	const struct rt_brep_route_test_result &cached_route)
+{
+    return cached_result.shot_hits == fresh_result.shot_hits &&
+	cached_result.segments == fresh_result.segments &&
+	!std::memcmp(&cached_result.in_dist, &fresh_result.in_dist,
+	    sizeof(cached_result.in_dist)) &&
+	!std::memcmp(&cached_result.out_dist, &fresh_result.out_dist,
+	    sizeof(cached_result.out_dist)) &&
+	!std::memcmp(cached_result.in_normal, fresh_result.in_normal,
+	    sizeof(cached_result.in_normal)) &&
+	!std::memcmp(cached_result.out_normal, fresh_result.out_normal,
+	    sizeof(cached_result.out_normal)) &&
+	cached_route.legacy_root_fault_injected ==
+	    fresh_route.legacy_root_fault_injected &&
+	cached_route.suppressed_legacy_raw_hits ==
+	    fresh_route.suppressed_legacy_raw_hits &&
+	cached_route.suppressed_legacy_route_roots ==
+	    fresh_route.suppressed_legacy_route_roots &&
+	cached_route.suppressed_legacy_hit_overflow ==
+	    fresh_route.suppressed_legacy_hit_overflow &&
+	cached_route.suppressed_legacy_root_overflow ==
+	    fresh_route.suppressed_legacy_root_overflow &&
+	cached_route.optional_attempted == fresh_route.optional_attempted &&
+	cached_route.optional_complete == fresh_route.optional_complete &&
+	cached_route.optional_published == fresh_route.optional_published &&
+	cached_route.require_empty_partition ==
+	    fresh_route.require_empty_partition &&
+	cached_route.prepared_fallback == fresh_route.prepared_fallback &&
+	cached_route.prepared_uncertified_reason ==
+	    fresh_route.prepared_uncertified_reason &&
+	cached_route.decision.base_transaction ==
+	    fresh_route.decision.base_transaction &&
+	cached_route.decision.optional_work ==
+	    fresh_route.decision.optional_work &&
+	cached_route.decision.publication_authority ==
+	    fresh_route.decision.publication_authority &&
+	cached_route.decision.qualification_flags ==
+	    fresh_route.decision.qualification_flags &&
+	cached_route.decision.capability_flags ==
+	    fresh_route.decision.capability_flags &&
+	cached_route.decision.reason_flags ==
+	    fresh_route.decision.reason_flags &&
+	cached_route.decision.candidate_cells ==
+	    fresh_route.decision.candidate_cells &&
+	cached_route.decision.hazard_roots ==
+	    fresh_route.decision.hazard_roots &&
+	cached_route.decision.contact_roots ==
+	    fresh_route.decision.contact_roots &&
+	cached_route.decision.empty_correction_cells ==
+	    fresh_route.decision.empty_correction_cells &&
+	cached_route.decision.missing_root_certificate_associations ==
+	    fresh_route.decision.missing_root_certificate_associations &&
+	!std::memcmp(cached_route.decision.missing_root_certificate_state,
+	    fresh_route.decision.missing_root_certificate_state,
+	    sizeof(cached_route.decision.missing_root_certificate_state)) &&
+	!std::memcmp(cached_route.decision.missing_root_certificate_failure_reason,
+	    fresh_route.decision.missing_root_certificate_failure_reason,
+	    sizeof(cached_route.decision.
+		missing_root_certificate_failure_reason)) &&
+	cached_route.decision.missing_root_certificate_complete ==
+	    fresh_route.decision.missing_root_certificate_complete &&
+	cached_route.decision.missing_root_certificate_triggered ==
+	    fresh_route.decision.missing_root_certificate_triggered;
 }
 
 
@@ -566,6 +749,48 @@ shoot_solid(struct soltab *stp, struct rt_i *rtip, struct resource *resp,
 }
 
 
+static curvature_ray_result
+shoot_solid_curvature(struct soltab *stp, struct rt_i *rtip,
+    struct resource *resp, const point_t origin, const vect_t direction)
+{
+    curvature_ray_result result;
+    struct application ap;
+    struct seg seghead;
+
+    RT_APPLICATION_INIT(&ap);
+    ap.a_rt_i = rtip;
+    ap.a_resource = resp;
+    ap.a_onehit = 0;
+    VMOVE(ap.a_ray.r_pt, origin);
+    VMOVE(ap.a_ray.r_dir, direction);
+    VUNITIZE(ap.a_ray.r_dir);
+    ap.a_ray.magic = RT_RAY_MAGIC;
+    BU_LIST_INIT(&seghead.l);
+
+    result.shot_hits = rt_obj_shot(stp, &ap.a_ray, &ap, &seghead);
+    struct seg *segp;
+    for (BU_LIST_FOR(segp, seg, &seghead.l)) {
+	result.segments++;
+	if (result.segments != 1)
+	    continue;
+	result.in.hit = segp->seg_in;
+	result.out.hit = segp->seg_out;
+	rt_obj_norm(&result.in.hit, stp, &ap.a_ray);
+	rt_obj_norm(&result.out.hit, stp, &ap.a_ray);
+	result.in.available =
+	    rt_obj_curve(&result.in.value, &result.in.hit, stp) == 0;
+	result.out.available =
+	    rt_obj_curve(&result.out.value, &result.out.hit, stp) == 0;
+    }
+
+    while (BU_LIST_WHILE(segp, seg, &seghead.l)) {
+	BU_LIST_DEQUEUE(&segp->l);
+	RT_FREE_SEG(segp, resp);
+    }
+    return result;
+}
+
+
 static ray_result
 shoot_brep_legacy(struct soltab *stp, struct rt_i *rtip,
     struct resource *resp, const point_t origin, const vect_t direction)
@@ -585,6 +810,50 @@ shoot_brep_legacy(struct soltab *stp, struct rt_i *rtip,
     BU_LIST_INIT(&seghead.l);
 
     result.shot_hits = _rt_brep_shot_legacy(stp, &ap.a_ray, &ap, &seghead);
+    struct seg *segp;
+    for (BU_LIST_FOR(segp, seg, &seghead.l)) {
+	result.segments++;
+	if (result.segments != 1)
+	    continue;
+	result.in_dist = segp->seg_in.hit_dist;
+	result.out_dist = segp->seg_out.hit_dist;
+	struct hit in = segp->seg_in;
+	struct hit out = segp->seg_out;
+	rt_obj_norm(&in, stp, &ap.a_ray);
+	rt_obj_norm(&out, stp, &ap.a_ray);
+	VMOVE(result.in_normal, in.hit_normal);
+	VMOVE(result.out_normal, out.hit_normal);
+    }
+
+    while (BU_LIST_WHILE(segp, seg, &seghead.l)) {
+	BU_LIST_DEQUEUE(&segp->l);
+	RT_FREE_SEG(segp, resp);
+    }
+    return result;
+}
+
+
+static ray_result
+shoot_brep_route(struct soltab *stp, struct rt_i *rtip,
+    struct resource *resp, const point_t origin, const vect_t direction,
+    bool publish_optional)
+{
+    ray_result result;
+    struct application ap;
+    struct seg seghead;
+
+    RT_APPLICATION_INIT(&ap);
+    ap.a_rt_i = rtip;
+    ap.a_resource = resp;
+    ap.a_onehit = 0;
+    VMOVE(ap.a_ray.r_pt, origin);
+    VMOVE(ap.a_ray.r_dir, direction);
+    VUNITIZE(ap.a_ray.r_dir);
+    ap.a_ray.magic = RT_RAY_MAGIC;
+    BU_LIST_INIT(&seghead.l);
+
+    result.shot_hits = _rt_brep_shot_route(stp, &ap.a_ray, &ap, &seghead,
+	publish_optional ? 1 : 0);
     struct seg *segp;
     for (BU_LIST_FOR(segp, seg, &seghead.l)) {
 	result.segments++;
@@ -631,6 +900,219 @@ shoot_brep_trace(struct soltab *stp, struct rt_i *rtip,
 	RT_FREE_SEG(segp, resp);
     }
     return hits;
+}
+
+
+static ray_result
+shoot_brep_trace_result(struct soltab *stp, struct rt_i *rtip,
+    struct resource *resp, const point_t origin, const vect_t direction,
+    struct rt_brep_shot_trace &trace)
+{
+    ray_result result;
+    struct application ap;
+    struct seg seghead;
+    struct xray xray;
+
+    RT_APPLICATION_INIT(&ap);
+    ap.a_rt_i = rtip;
+    ap.a_resource = resp;
+    ap.a_onehit = 0;
+    VMOVE(xray.r_pt, origin);
+    VMOVE(xray.r_dir, direction);
+    VUNITIZE(xray.r_dir);
+    xray.magic = RT_RAY_MAGIC;
+    ap.a_ray = xray;
+    BU_LIST_INIT(&seghead.l);
+
+    result.shot_hits = _rt_brep_shot_trace(stp, &xray, &ap, &seghead,
+	&trace);
+    struct seg *segp;
+    for (BU_LIST_FOR(segp, seg, &seghead.l)) {
+	result.segments++;
+	if (result.segments != 1)
+	    continue;
+	result.in_dist = segp->seg_in.hit_dist;
+	result.out_dist = segp->seg_out.hit_dist;
+	struct hit in = segp->seg_in;
+	struct hit out = segp->seg_out;
+	rt_obj_norm(&in, stp, &xray);
+	rt_obj_norm(&out, stp, &xray);
+	VMOVE(result.in_normal, in.hit_normal);
+	VMOVE(result.out_normal, out.hit_normal);
+    }
+
+    while (BU_LIST_WHILE(segp, seg, &seghead.l)) {
+	BU_LIST_DEQUEUE(&segp->l);
+	RT_FREE_SEG(segp, resp);
+    }
+    return result;
+}
+
+
+static ray_result
+shoot_brep_missing_root_route(struct soltab *stp, struct rt_i *rtip,
+    struct resource *resp, const point_t origin, const vect_t direction,
+    bool publish_optional, struct rt_brep_route_test_result &route)
+{
+    ray_result result;
+    struct application ap;
+    struct seg seghead;
+    struct xray xray;
+
+    RT_APPLICATION_INIT(&ap);
+    ap.a_rt_i = rtip;
+    ap.a_resource = resp;
+    ap.a_onehit = 0;
+    VMOVE(xray.r_pt, origin);
+    VMOVE(xray.r_dir, direction);
+    VUNITIZE(xray.r_dir);
+    xray.magic = RT_RAY_MAGIC;
+    ap.a_ray = xray;
+    BU_LIST_INIT(&seghead.l);
+    route = {};
+
+    result.shot_hits = _rt_brep_shot_route_missing_root_test(stp, &xray,
+	&ap, &seghead, publish_optional ? 1 : 0, &route);
+    struct seg *segp;
+    for (BU_LIST_FOR(segp, seg, &seghead.l)) {
+	result.segments++;
+	if (result.segments != 1)
+	    continue;
+	result.in_dist = segp->seg_in.hit_dist;
+	result.out_dist = segp->seg_out.hit_dist;
+	struct hit in = segp->seg_in;
+	struct hit out = segp->seg_out;
+	rt_obj_norm(&in, stp, &xray);
+	rt_obj_norm(&out, stp, &xray);
+	VMOVE(result.in_normal, in.hit_normal);
+	VMOVE(result.out_normal, out.hit_normal);
+    }
+
+    while (BU_LIST_WHILE(segp, seg, &seghead.l)) {
+	BU_LIST_DEQUEUE(&segp->l);
+	RT_FREE_SEG(segp, resp);
+    }
+    return result;
+}
+
+
+static ray_result
+shoot_brep_incomplete_route(struct soltab *stp, struct rt_i *rtip,
+    struct resource *resp, const point_t origin, const vect_t direction,
+    bool publish_optional, struct rt_brep_route_test_result &route)
+{
+    ray_result result;
+    struct application ap;
+    struct seg seghead;
+    struct xray xray;
+
+    RT_APPLICATION_INIT(&ap);
+    ap.a_rt_i = rtip;
+    ap.a_resource = resp;
+    ap.a_onehit = 0;
+    VMOVE(xray.r_pt, origin);
+    VMOVE(xray.r_dir, direction);
+    VUNITIZE(xray.r_dir);
+    xray.magic = RT_RAY_MAGIC;
+    ap.a_ray = xray;
+    BU_LIST_INIT(&seghead.l);
+    route = {};
+
+    result.shot_hits = _rt_brep_shot_route_incomplete_test(stp, &xray,
+	&ap, &seghead, publish_optional ? 1 : 0, &route);
+    struct seg *segp;
+    for (BU_LIST_FOR(segp, seg, &seghead.l)) {
+	result.segments++;
+	if (result.segments != 1)
+	    continue;
+	result.in_dist = segp->seg_in.hit_dist;
+	result.out_dist = segp->seg_out.hit_dist;
+	struct hit in = segp->seg_in;
+	struct hit out = segp->seg_out;
+	rt_obj_norm(&in, stp, &xray);
+	rt_obj_norm(&out, stp, &xray);
+	VMOVE(result.in_normal, in.hit_normal);
+	VMOVE(result.out_normal, out.hit_normal);
+    }
+
+    while (BU_LIST_WHILE(segp, seg, &seghead.l)) {
+	BU_LIST_DEQUEUE(&segp->l);
+	RT_FREE_SEG(segp, resp);
+    }
+    return result;
+}
+
+
+static int
+check_incomplete_transaction_recovery_ray(struct soltab *stp,
+    struct rt_i *rtip, struct resource *resp, const point_t origin,
+    const vect_t direction, const ray_result &legacy, int reverse)
+{
+    int failures = 0;
+    struct rt_brep_route_test_result direct_route;
+    struct rt_brep_route_test_result published_route;
+    const ray_result direct = shoot_brep_incomplete_route(stp, rtip, resp,
+	origin, direction, false, direct_route);
+    const ray_result published = shoot_brep_incomplete_route(stp, rtip, resp,
+	origin, direction, true, published_route);
+    const double tolerance = std::max(rtip->rti_tol.dist,
+	65536.0 * DBL_EPSILON * std::max(1.0,
+	    std::max(fabs(legacy.in_dist), fabs(legacy.out_dist))));
+    const bool recovered = legacy.segments == 1 && !direct.segments &&
+	published.segments == legacy.segments &&
+	fabs(published.in_dist - legacy.in_dist) <= tolerance &&
+	fabs(published.out_dist - legacy.out_dist) <= tolerance;
+    const bool direct_valid = direct_route.legacy_root_fault_injected &&
+	direct_route.incomplete_transaction_fault_injected &&
+	direct_route.suppressed_legacy_raw_hits == 1 &&
+	direct_route.suppressed_legacy_route_roots == 1 &&
+	!direct_route.suppressed_legacy_hit_overflow &&
+	!direct_route.suppressed_legacy_root_overflow &&
+	direct_route.decision.legacy_transaction_incomplete &&
+	direct_route.decision.missing_root_certificate_complete &&
+	direct_route.decision.missing_root_certificate_triggered &&
+	direct_route.decision.selective_refinement_attempted &&
+	direct_route.decision.selective_refinement_complete &&
+	direct_route.decision.selective_refinement_level == 1 &&
+	direct_route.decision.selective_refinement_hits == 2 &&
+	!direct_route.decision.selective_refinement_reversal_mismatches &&
+	direct_route.optional_attempted && direct_route.optional_complete &&
+	!direct_route.optional_published &&
+	!direct_route.general_prepared_attempted;
+    const bool publication_valid =
+	published_route.legacy_root_fault_injected &&
+	published_route.incomplete_transaction_fault_injected &&
+	published_route.decision.legacy_transaction_incomplete &&
+	published_route.decision.selective_refinement_attempted &&
+	published_route.decision.selective_refinement_complete &&
+	published_route.decision.selective_refinement_hits == 2 &&
+	!published_route.decision.selective_refinement_reversal_mismatches &&
+	published_route.optional_attempted && published_route.optional_complete &&
+	published_route.optional_published &&
+	!published_route.general_prepared_attempted;
+    if (!recovered || !direct_valid || !publication_valid) {
+	std::printf("FAIL: incomplete transaction recovery reverse=%d "
+	    "segments=%d/%d/%d suppressed=%zu/%zu "
+	    "incomplete/certificate/trigger=%zu/%zu/%zu "
+	    "refine=%zu/%zu/%zu/%zu reverse-mismatch=%zu "
+	    "optional/direct-publish/published/general=%d/%d/%d/%d\n",
+	    reverse, legacy.segments, direct.segments, published.segments,
+	    direct_route.suppressed_legacy_raw_hits,
+	    direct_route.suppressed_legacy_route_roots,
+	    direct_route.decision.legacy_transaction_incomplete,
+	    direct_route.decision.missing_root_certificate_complete,
+	    direct_route.decision.missing_root_certificate_triggered,
+	    direct_route.decision.selective_refinement_attempted,
+	    direct_route.decision.selective_refinement_complete,
+	    direct_route.decision.selective_refinement_level,
+	    direct_route.decision.selective_refinement_hits,
+	    direct_route.decision.selective_refinement_reversal_mismatches,
+	    direct_route.optional_attempted, direct_route.optional_published,
+	    published_route.optional_published,
+	    direct_route.general_prepared_attempted);
+	failures++;
+    }
+    return failures;
 }
 
 
@@ -994,7 +1476,7 @@ check_brep_direction_cleanup()
     };
     const fastf_t near_forward_distances[] =
 	{2.0, 2.0002, 3.0, 6.0, 7.0, 8.0, 9.0, 10.0};
-    const int near_forward_signs[] = {-1, -1, 1, -1, -1, -1, 1, 1};
+    const fastf_t near_forward_signs[] = {-1, -1, 1, -1, -1, -1, 1, 1};
     const int near_forward_classes[] = {cleanup_near_hit, cleanup_near_miss,
 	cleanup_near_miss, cleanup_clean_hit, cleanup_clean_hit,
 	cleanup_clean_hit, cleanup_clean_hit, cleanup_clean_hit};
@@ -1004,7 +1486,7 @@ check_brep_direction_cleanup()
 	0.001, near_forward_retained, 8);
     const fastf_t near_reverse_distances[] =
 	{2.0, 3.0, 4.0, 5.0, 6.0, 9.0, 9.9998, 10.0};
-    const int near_reverse_signs[] = {-1, -1, 1, 1, 1, -1, 1, 1};
+    const fastf_t near_reverse_signs[] = {-1, -1, 1, 1, 1, -1, 1, 1};
     const int near_reverse_classes[] = {cleanup_clean_hit, cleanup_clean_hit,
 	cleanup_clean_hit, cleanup_clean_hit, cleanup_clean_hit,
 	cleanup_near_miss, cleanup_near_miss, cleanup_near_hit};
@@ -1040,7 +1522,7 @@ check_brep_direction_cleanup()
      * is odd.  Local coalescence followed by balanced matching must retain
      * the same outer interval for both representations and under reversal. */
     const fastf_t side_forward_distances[] = {1.0, 2.0, 2.0002, 3.0, 4.0};
-    const int side_forward_signs[] = {-1, -1, -1, 1, 1};
+    const fastf_t side_forward_signs[] = {-1, -1, -1, 1, 1};
     const int side_hit_classes[] = {cleanup_near_miss, cleanup_near_hit,
 	cleanup_near_hit, cleanup_near_miss, cleanup_near_miss};
     const int side_miss_classes[] = {cleanup_near_miss, cleanup_near_hit,
@@ -1054,7 +1536,7 @@ check_brep_direction_cleanup()
 	side_forward_distances, side_forward_signs, side_miss_classes, 5,
 	0.001, side_miss_retained, 5);
     const fastf_t side_reverse_distances[] = {1.0, 2.0, 2.9998, 3.0, 4.0};
-    const int side_reverse_signs[] = {-1, -1, 1, 1, 1};
+    const fastf_t side_reverse_signs[] = {-1, -1, 1, 1, 1};
     const int side_reverse_classes[] = {cleanup_near_miss,
 	cleanup_near_miss, cleanup_near_hit, cleanup_near_hit,
 	cleanup_near_miss};
@@ -1088,7 +1570,7 @@ check_brep_direction_cleanup()
      * An isolated zero-normal root is not one endpoint of the affine-grazing
      * theorem: both endpoints of that theorem must be grazing. */
     const fastf_t coplanar_distances[] = {1.0, 1.25, 1.5, 1.75, 2.0};
-    const int coplanar_signs[] = {-1, 0, 0, 0, 1};
+    const fastf_t coplanar_signs[] = {-1, 0, 0, 0, 1};
     const int coplanar_classes[] = {cleanup_clean_hit, cleanup_clean_hit,
 	cleanup_clean_hit, cleanup_clean_hit, cleanup_clean_hit};
     fastf_t coplanar_retained[5] = {};
@@ -1104,6 +1586,35 @@ check_brep_direction_cleanup()
 	return 1;
     }
 
+    /* Reduced recursive-child edge-graze reversal defect.  These roots all
+     * lie on one coplanar face.  Their normal dots contain only evaluation
+     * roundoff, whose alternating signs used to manufacture a material pair
+     * in one ray direction but not the other. */
+    const fastf_t roundoff_forward_distances[] = {1.0, 2.0, 3.0, 4.0};
+    const fastf_t roundoff_forward_dots[] =
+	{2.63695329298993e-28, 1.75796886199329e-28,
+	 -3.51593772398658e-28, 0.0};
+    const int roundoff_classes[] = {cleanup_clean_hit, cleanup_clean_hit,
+	cleanup_clean_hit, cleanup_clean_hit};
+    fastf_t roundoff_forward_retained[4] = {};
+    const size_t roundoff_forward_count = _rt_brep_cleanup_stream_test(
+	roundoff_forward_distances, roundoff_forward_dots,
+	roundoff_classes, 4, 0.001, roundoff_forward_retained, 4);
+    const fastf_t roundoff_reverse_distances[] = {1.0, 2.0, 3.0, 4.0};
+    const fastf_t roundoff_reverse_dots[] =
+	{0.0, 3.51593772398658e-28, -1.75796886199329e-28,
+	 -2.63695329298993e-28};
+    fastf_t roundoff_reverse_retained[4] = {};
+    const size_t roundoff_reverse_count = _rt_brep_cleanup_stream_test(
+	roundoff_reverse_distances, roundoff_reverse_dots,
+	roundoff_classes, 4, 0.001, roundoff_reverse_retained, 4);
+    if (roundoff_forward_count != 0 || roundoff_reverse_count != 0) {
+	std::printf("FAIL: BREP coplanar roundoff cleanup forward=%zu "
+	    "reverse=%zu\n", roundoff_forward_count,
+	    roundoff_reverse_count);
+	return 1;
+    }
+
     /* Reduced Recurta 10057 pair 3: each real transverse boundary is
      * accompanied by roots from faces containing the ray.  A zero-normal
      * observation's direction bit is arbitrary and must not erase the
@@ -1111,7 +1622,7 @@ check_brep_direction_cleanup()
      * interval. */
     const fastf_t shadow_forward_distances[] =
 	{1.0, 1.0, 1.0, 2.0, 2.0};
-    const int shadow_forward_signs[] = {-1, 0, 0, 1, 0};
+    const fastf_t shadow_forward_signs[] = {-1, 0, 0, 1, 0};
     const int shadow_forward_classes[] = {cleanup_near_miss,
 	cleanup_near_miss, cleanup_near_miss, cleanup_near_miss,
 	cleanup_near_hit};
@@ -1121,7 +1632,7 @@ check_brep_direction_cleanup()
 	shadow_forward_classes, 5, 0.001, shadow_forward_retained, 5);
     const fastf_t shadow_reverse_distances[] =
 	{3.0, 3.0, 4.0, 4.0, 4.0};
-    const int shadow_reverse_signs[] = {-1, 0, 1, 0, 0};
+    const fastf_t shadow_reverse_signs[] = {-1, 0, 1, 0, 0};
     const int shadow_reverse_classes[] = {cleanup_near_miss,
 	cleanup_near_hit, cleanup_near_miss, cleanup_near_miss,
 	cleanup_near_miss};
@@ -1142,6 +1653,60 @@ check_brep_direction_cleanup()
 	    shadow_forward_count, shadow_forward_retained[0],
 	    shadow_forward_retained[1], shadow_reverse_count,
 	    shadow_reverse_retained[0], shadow_reverse_retained[1]);
+	return 1;
+    }
+
+    /* Reduced example_nonsimple_island_04 edge 15 reversal defect.  A
+     * transverse near-hit and duplicate trim-shadow misses occupy the same
+     * event.  The shadow precedes the witness in one direction and follows it
+     * in the other; cleanup must retain the transverse witness both ways. */
+    const fastf_t ordered_shadow_forward_distances[] =
+	{1.0, 2.0, 2.0, 2.0, 3.0};
+    const fastf_t ordered_shadow_forward_signs[] = {-1, 1, 1, -1, 1};
+    const int ordered_shadow_forward_classes[] = {cleanup_clean_hit,
+	cleanup_near_miss, cleanup_near_miss, cleanup_near_hit,
+	cleanup_clean_hit};
+    fastf_t ordered_shadow_forward_retained[5] = {};
+    const size_t ordered_shadow_forward_count = _rt_brep_cleanup_stream_test(
+	ordered_shadow_forward_distances, ordered_shadow_forward_signs,
+	ordered_shadow_forward_classes, 5, 0.001,
+	ordered_shadow_forward_retained, 5);
+    const fastf_t ordered_shadow_reverse_distances[] =
+	{1.0, 2.0, 2.0, 2.0, 3.0};
+    const fastf_t ordered_shadow_reverse_signs[] = {-1, 1, -1, -1, 1};
+    const int ordered_shadow_reverse_classes[] = {cleanup_clean_hit,
+	cleanup_near_hit, cleanup_near_miss, cleanup_near_miss,
+	cleanup_clean_hit};
+    fastf_t ordered_shadow_reverse_retained[5] = {};
+    const size_t ordered_shadow_reverse_count = _rt_brep_cleanup_stream_test(
+	ordered_shadow_reverse_distances, ordered_shadow_reverse_signs,
+	ordered_shadow_reverse_classes, 5, 0.001,
+	ordered_shadow_reverse_retained, 5);
+    const double ordered_shadow_chord = 4.0;
+    if (ordered_shadow_forward_count != 2 ||
+	    ordered_shadow_reverse_count != 2 ||
+	    !NEAR_EQUAL(ordered_shadow_forward_retained[0], 2.0,
+		SMALL_FASTF) ||
+	    !NEAR_EQUAL(ordered_shadow_forward_retained[1], 3.0,
+		SMALL_FASTF) ||
+	    !NEAR_EQUAL(ordered_shadow_reverse_retained[0], 1.0,
+		SMALL_FASTF) ||
+	    !NEAR_EQUAL(ordered_shadow_reverse_retained[1], 2.0,
+		SMALL_FASTF) ||
+	    !NEAR_EQUAL(ordered_shadow_reverse_retained[0],
+		ordered_shadow_chord - ordered_shadow_forward_retained[1],
+		SMALL_FASTF) ||
+	    !NEAR_EQUAL(ordered_shadow_reverse_retained[1],
+		ordered_shadow_chord - ordered_shadow_forward_retained[0],
+		SMALL_FASTF)) {
+	std::printf("FAIL: BREP ordered trim-shadow cleanup forward=%zu "
+	    "[%.17g %.17g] reverse=%zu [%.17g %.17g]\n",
+	    ordered_shadow_forward_count,
+	    ordered_shadow_forward_retained[0],
+	    ordered_shadow_forward_retained[1],
+	    ordered_shadow_reverse_count,
+	    ordered_shadow_reverse_retained[0],
+	    ordered_shadow_reverse_retained[1]);
 	return 1;
     }
 
@@ -1206,6 +1771,512 @@ check_brep_direction_cleanup()
 	    witness_reverse_retained[0]);
 	return 1;
     }
+
+    /* The externally reported cleanup reasons must identify the semantic
+     * action, not merely a before/after hit count.  These reduced streams
+     * cover the common shadow/grazing/duplicate and winding fallbacks and
+     * require every unrelated reason to remain zero. */
+    const auto check_diagnostic = [](const char *label,
+	    const fastf_t *distances, const fastf_t *dots,
+	    const int *classes, size_t input_count, size_t expected_count,
+	    int expected_action, size_t expected_events) {
+	fastf_t retained[8] = {};
+	size_t actions[RT_BREP_LEGACY_CLEANUP_COUNT] = {};
+	const size_t retained_count = _rt_brep_cleanup_diagnostics_test(
+	    distances, dots, classes, input_count, 0.001, retained, 8,
+	    actions, RT_BREP_LEGACY_CLEANUP_COUNT);
+	size_t total_events = 0;
+	for (int action = 0; action < RT_BREP_LEGACY_CLEANUP_COUNT;
+		++action)
+	    total_events += actions[action];
+	if (retained_count != expected_count ||
+		actions[expected_action] != expected_events ||
+		total_events != expected_events) {
+	    std::printf("FAIL: BREP cleanup diagnostic %s retained=%zu/%zu "
+		"action=%d events=%zu/%zu total=%zu\n", label,
+		retained_count, expected_count, expected_action,
+		actions[expected_action], expected_events, total_events);
+	    return 1;
+	}
+	return 0;
+    };
+
+    const fastf_t diagnostic_shadow_distances[] = {1.0, 1.0, 2.0};
+    const fastf_t diagnostic_shadow_dots[] = {-1.0, -1.0, 1.0};
+    const int diagnostic_shadow_classes[] = {
+	cleanup_clean_hit, cleanup_near_miss, cleanup_clean_hit};
+    if (check_diagnostic("near-miss-shadow", diagnostic_shadow_distances,
+	    diagnostic_shadow_dots, diagnostic_shadow_classes, 3, 2,
+	    RT_BREP_LEGACY_CLEANUP_NEAR_MISS_SHADOW, 1))
+	return 1;
+
+    const fastf_t diagnostic_grazing_distances[] = {1.0};
+    const fastf_t diagnostic_grazing_dots[] = {0.0};
+    const int diagnostic_grazing_classes[] = {cleanup_clean_hit};
+    if (check_diagnostic("isolated-grazing", diagnostic_grazing_distances,
+	    diagnostic_grazing_dots, diagnostic_grazing_classes, 1, 0,
+	    RT_BREP_LEGACY_CLEANUP_ISOLATED_GRAZING, 1))
+	return 1;
+
+    const fastf_t diagnostic_duplicate_distances[] = {1.0, 1.0};
+    const fastf_t diagnostic_duplicate_dots[] = {-1.0, 1.0};
+    const int diagnostic_duplicate_classes[] = {
+	cleanup_clean_hit, cleanup_clean_hit};
+    if (check_diagnostic("duplicate-cancel", diagnostic_duplicate_distances,
+	    diagnostic_duplicate_dots, diagnostic_duplicate_classes, 2, 0,
+	    RT_BREP_LEGACY_CLEANUP_DUPLICATE_CANCEL, 2))
+	return 1;
+
+    const fastf_t diagnostic_interior_distances[] = {1.0, 2.0, 3.0, 4.0};
+    const fastf_t diagnostic_interior_dots[] = {-1.0, -1.0, 1.0, 1.0};
+    const int diagnostic_interior_classes[] = {
+	cleanup_clean_hit, cleanup_clean_hit, cleanup_clean_hit,
+	cleanup_clean_hit};
+    if (check_diagnostic("solid-interior", diagnostic_interior_distances,
+	    diagnostic_interior_dots, diagnostic_interior_classes, 4, 2,
+	    RT_BREP_LEGACY_CLEANUP_SOLID_INTERIOR_WINDING, 2))
+	return 1;
+
+    const fastf_t diagnostic_enter_distances[] = {1.0, 2.0, 3.0};
+    const fastf_t diagnostic_enter_dots[] = {-1.0, -1.0, 1.0};
+    const int diagnostic_enter_classes[] = {
+	cleanup_clean_hit, cleanup_clean_hit, cleanup_clean_hit};
+    if (check_diagnostic("unmatched-enter", diagnostic_enter_distances,
+	    diagnostic_enter_dots, diagnostic_enter_classes, 3, 2,
+	    RT_BREP_LEGACY_CLEANUP_SOLID_UNMATCHED_ENTER, 1))
+	return 1;
+
+    const fastf_t diagnostic_leave_distances[] = {1.0, 2.0, 3.0};
+    const fastf_t diagnostic_leave_dots[] = {-1.0, 1.0, 1.0};
+    const int diagnostic_leave_classes[] = {
+	cleanup_clean_hit, cleanup_clean_hit, cleanup_clean_hit};
+    if (check_diagnostic("unmatched-leave", diagnostic_leave_distances,
+	    diagnostic_leave_dots, diagnostic_leave_classes, 3, 2,
+	    RT_BREP_LEGACY_CLEANUP_SOLID_UNMATCHED_LEAVE, 1))
+	return 1;
+    return 0;
+}
+
+
+static int
+check_brep_cleanup_reason_reachability()
+{
+    enum cleanup_reason_hit_class {
+	cleanup_reason_clean_hit = 0,
+	cleanup_reason_clean_miss = 1,
+	cleanup_reason_near_hit = 2,
+	cleanup_reason_near_miss = 3
+    };
+
+    const auto check_case = [](const char *label,
+	    const struct rt_brep_cleanup_test_hit *input, size_t input_count,
+	    int solid_orientation, size_t expected_retained, int target_action,
+	    size_t expected_target_events, size_t expected_total_events) {
+	fastf_t retained[8] = {};
+	size_t actions[RT_BREP_LEGACY_CLEANUP_COUNT] = {};
+	const size_t retained_count = _rt_brep_cleanup_reason_test(input,
+	    input_count, 0.001, solid_orientation, retained, 8, actions,
+	    RT_BREP_LEGACY_CLEANUP_COUNT);
+	size_t total_events = 0;
+	for (int action = 0; action < RT_BREP_LEGACY_CLEANUP_COUNT;
+		++action)
+	    total_events += actions[action];
+	if (retained_count != expected_retained ||
+		target_action < 0 ||
+		target_action >= RT_BREP_LEGACY_CLEANUP_COUNT ||
+		actions[target_action] != expected_target_events ||
+		total_events != expected_total_events) {
+	    std::printf("FAIL: BREP cleanup reason %s retained=%zu/%zu "
+		"action=%d events=%zu/%zu total=%zu/%zu\n", label,
+		retained_count, expected_retained, target_action,
+		target_action >= 0 &&
+		    target_action < RT_BREP_LEGACY_CLEANUP_COUNT ?
+		    actions[target_action] : SIZE_MAX,
+		expected_target_events, total_events, expected_total_events);
+	    return 1;
+	}
+	return 0;
+    };
+
+    int failures = 0;
+
+    const struct rt_brep_cleanup_test_hit grazing_positive[] = {
+	{1.0, -1.0, cleanup_reason_clean_hit, 0, 0, 0, -1, -1},
+	{1.0005, 0.0, cleanup_reason_clean_hit, 0, 0, 0, -1, -1}
+    };
+    failures += check_case("coincident-grazing-positive", grazing_positive,
+	2, 1, 1, RT_BREP_LEGACY_CLEANUP_COINCIDENT_GRAZING, 1, 1);
+    const struct rt_brep_cleanup_test_hit grazing_negative[] = {
+	{1.0, -1.0, cleanup_reason_clean_hit, 0, 0, 0, -1, -1},
+	{1.002, 0.0, cleanup_reason_clean_hit, 0, 0, 0, -1, -1}
+    };
+    failures += check_case("coincident-grazing-negative", grazing_negative,
+	2, 1, 1, RT_BREP_LEGACY_CLEANUP_COINCIDENT_GRAZING, 0, 1);
+
+    const struct rt_brep_cleanup_test_hit near_miss_shadow_positive[] = {
+	{1.0, -1.0, cleanup_reason_clean_hit, 0, 0, 0, -1, -1},
+	{1.0005, -1.0, cleanup_reason_near_miss, 1, 1, 0, -1, -1},
+	{2.0, 1.0, cleanup_reason_clean_hit, 0, 0, 0, -1, -1}
+    };
+    failures += check_case("near-miss-shadow-positive",
+	near_miss_shadow_positive, 3, 1, 2,
+	RT_BREP_LEGACY_CLEANUP_NEAR_MISS_SHADOW, 1, 1);
+    const struct rt_brep_cleanup_test_hit near_miss_shadow_negative[] = {
+	{1.0, -1.0, cleanup_reason_clean_hit, 0, 0, 0, -1, -1},
+	{1.002, -1.0, cleanup_reason_near_miss, 0, 1, 0, -1, -1},
+	{2.0, 1.0, cleanup_reason_clean_hit, 0, 0, 0, -1, -1}
+    };
+    failures += check_case("near-miss-shadow-negative",
+	near_miss_shadow_negative, 3, 0, 2,
+	RT_BREP_LEGACY_CLEANUP_NEAR_MISS_SHADOW, 0, 1);
+
+    const struct rt_brep_cleanup_test_hit crack_merge_positive[] = {
+	{1.0, -1.0, cleanup_reason_near_miss, 1, 1, 0, 0, 1},
+	{1.0005, -1.0, cleanup_reason_near_miss, 1, 1, 0, 1, 0}
+    };
+    failures += check_case("near-miss-crack-merge-positive",
+	crack_merge_positive, 2, 1, 1,
+	RT_BREP_LEGACY_CLEANUP_NEAR_MISS_CRACK_MERGE, 1, 1);
+    const struct rt_brep_cleanup_test_hit crack_merge_negative[] = {
+	{1.0, -1.0, cleanup_reason_near_miss, 1, 1, 0, 0, 1},
+	{1.0005, 1.0, cleanup_reason_near_miss, 1, 1, 0, 1, 0}
+    };
+    failures += check_case("near-miss-crack-merge-negative",
+	crack_merge_negative, 2, 1, 0,
+	RT_BREP_LEGACY_CLEANUP_NEAR_MISS_CRACK_MERGE, 0, 2);
+
+    failures += check_case("near-miss-crack-cancel-positive",
+	crack_merge_negative, 2, 1, 0,
+	RT_BREP_LEGACY_CLEANUP_NEAR_MISS_CRACK_CANCEL, 2, 2);
+    failures += check_case("near-miss-crack-cancel-negative",
+	crack_merge_positive, 2, 1, 1,
+	RT_BREP_LEGACY_CLEANUP_NEAR_MISS_CRACK_CANCEL, 0, 1);
+
+    const struct rt_brep_cleanup_test_hit nonadjacent_positive[] = {
+	{1.0, -1.0, cleanup_reason_near_miss, 1, 1, 0, 0, -1},
+	{1.0005, -1.0, cleanup_reason_near_miss, 1, 1, 0, 1, -1}
+    };
+    failures += check_case("near-miss-nonadjacent-positive",
+	nonadjacent_positive, 2, 1, 1,
+	RT_BREP_LEGACY_CLEANUP_NEAR_MISS_NONADJACENT_DROP, 1, 1);
+    failures += check_case("near-miss-nonadjacent-negative",
+	crack_merge_positive, 2, 1, 1,
+	RT_BREP_LEGACY_CLEANUP_NEAR_MISS_NONADJACENT_DROP, 0, 1);
+
+    const struct rt_brep_cleanup_test_hit near_hit_merge_positive[] = {
+	{1.0, -1.0, cleanup_reason_near_hit, 0, 1, 0, -1, -1},
+	{1.0005, -1.0, cleanup_reason_near_hit, 0, 1, 0, -1, -1}
+    };
+    failures += check_case("near-hit-crack-merge-positive",
+	near_hit_merge_positive, 2, 0, 1,
+	RT_BREP_LEGACY_CLEANUP_NEAR_HIT_CRACK_MERGE, 1, 1);
+    const struct rt_brep_cleanup_test_hit near_hit_merge_negative[] = {
+	{1.0, -1.0, cleanup_reason_near_hit, 0, 1, 0, -1, -1},
+	{1.0005, 1.0, cleanup_reason_near_hit, 0, 1, 0, -1, -1}
+    };
+    failures += check_case("near-hit-crack-merge-negative",
+	near_hit_merge_negative, 2, 0, 2,
+	RT_BREP_LEGACY_CLEANUP_NEAR_HIT_CRACK_MERGE, 0, 0);
+
+    const struct rt_brep_cleanup_test_hit isolated_grazing_positive[] = {
+	{1.0, 0.0, cleanup_reason_clean_hit, 0, 0, 0, -1, -1}
+    };
+    failures += check_case("isolated-grazing-positive",
+	isolated_grazing_positive, 1, 1, 0,
+	RT_BREP_LEGACY_CLEANUP_ISOLATED_GRAZING, 1, 1);
+    const struct rt_brep_cleanup_test_hit isolated_grazing_negative[] = {
+	{1.0, -1.0, cleanup_reason_clean_hit, 0, 0, 0, -1, -1}
+    };
+    failures += check_case("isolated-grazing-negative",
+	isolated_grazing_negative, 1, 1, 1,
+	RT_BREP_LEGACY_CLEANUP_ISOLATED_GRAZING, 0, 0);
+
+    const struct rt_brep_cleanup_test_hit duplicate_cancel_positive[] = {
+	{1.0, -1.0, cleanup_reason_clean_hit, 0, 0, 0, -1, -1},
+	{1.0, 1.0, cleanup_reason_clean_hit, 0, 0, 0, -1, -1}
+    };
+    failures += check_case("duplicate-cancel-positive",
+	duplicate_cancel_positive, 2, 1, 0,
+	RT_BREP_LEGACY_CLEANUP_DUPLICATE_CANCEL, 2, 2);
+    const struct rt_brep_cleanup_test_hit duplicate_cancel_negative[] = {
+	{1.0, -1.0, cleanup_reason_clean_hit, 0, 0, 0, -1, -1},
+	{1.0, -1.0, cleanup_reason_clean_hit, 0, 0, 0, -1, -1}
+    };
+    failures += check_case("duplicate-cancel-negative",
+	duplicate_cancel_negative, 2, 1, 1,
+	RT_BREP_LEGACY_CLEANUP_DUPLICATE_CANCEL, 0, 1);
+
+    failures += check_case("duplicate-collapse-positive",
+	duplicate_cancel_negative, 2, 1, 1,
+	RT_BREP_LEGACY_CLEANUP_DUPLICATE_COLLAPSE, 1, 1);
+    const struct rt_brep_cleanup_test_hit duplicate_collapse_negative[] = {
+	{1.0, -1.0, cleanup_reason_clean_hit, 0, 0, 0, -1, -1},
+	{1.0005, -1.0, cleanup_reason_clean_hit, 0, 0, 0, -1, -1},
+	{2.0, 1.0, cleanup_reason_clean_hit, 0, 0, 0, -1, -1}
+    };
+    failures += check_case("duplicate-collapse-negative",
+	duplicate_collapse_negative, 3, 1, 2,
+	RT_BREP_LEGACY_CLEANUP_DUPLICATE_COLLAPSE, 0, 1);
+
+    const struct rt_brep_cleanup_test_hit unmatched_enter_positive[] = {
+	{1.0, -1.0, cleanup_reason_clean_hit, 0, 0, 0, -1, -1},
+	{2.0, -1.0, cleanup_reason_clean_hit, 0, 0, 0, -1, -1},
+	{3.0, 1.0, cleanup_reason_clean_hit, 0, 0, 0, -1, -1}
+    };
+    failures += check_case("solid-unmatched-enter-positive",
+	unmatched_enter_positive, 3, 1, 2,
+	RT_BREP_LEGACY_CLEANUP_SOLID_UNMATCHED_ENTER, 1, 1);
+    const struct rt_brep_cleanup_test_hit balanced_solid[] = {
+	{1.0, -1.0, cleanup_reason_clean_hit, 0, 0, 0, -1, -1},
+	{2.0, 1.0, cleanup_reason_clean_hit, 0, 0, 0, -1, -1}
+    };
+    failures += check_case("solid-unmatched-enter-negative", balanced_solid,
+	2, 1, 2, RT_BREP_LEGACY_CLEANUP_SOLID_UNMATCHED_ENTER, 0, 0);
+
+    const struct rt_brep_cleanup_test_hit unmatched_leave_positive[] = {
+	{1.0, -1.0, cleanup_reason_clean_hit, 0, 0, 0, -1, -1},
+	{2.0, 1.0, cleanup_reason_clean_hit, 0, 0, 0, -1, -1},
+	{3.0, 1.0, cleanup_reason_clean_hit, 0, 0, 0, -1, -1}
+    };
+    failures += check_case("solid-unmatched-leave-positive",
+	unmatched_leave_positive, 3, 1, 2,
+	RT_BREP_LEGACY_CLEANUP_SOLID_UNMATCHED_LEAVE, 1, 1);
+    failures += check_case("solid-unmatched-leave-negative", balanced_solid,
+	2, 1, 2, RT_BREP_LEGACY_CLEANUP_SOLID_UNMATCHED_LEAVE, 0, 0);
+
+    const struct rt_brep_cleanup_test_hit interior_winding_positive[] = {
+	{1.0, -1.0, cleanup_reason_clean_hit, 0, 0, 0, -1, -1},
+	{2.0, -1.0, cleanup_reason_clean_hit, 0, 0, 0, -1, -1},
+	{3.0, 1.0, cleanup_reason_clean_hit, 0, 0, 0, -1, -1},
+	{4.0, 1.0, cleanup_reason_clean_hit, 0, 0, 0, -1, -1}
+    };
+    failures += check_case("solid-interior-winding-positive",
+	interior_winding_positive, 4, 1, 2,
+	RT_BREP_LEGACY_CLEANUP_SOLID_INTERIOR_WINDING, 2, 2);
+    failures += check_case("solid-interior-winding-negative", balanced_solid,
+	2, 1, 2, RT_BREP_LEGACY_CLEANUP_SOLID_INTERIOR_WINDING, 0, 0);
+
+    /* CLEAN_OVERLAP is gated by the presence of a near-miss stream and an
+     * explicit adjacent-face owner relationship. */
+    const struct rt_brep_cleanup_test_hit clean_overlap_positive[] = {
+	{1.0, -1.0, cleanup_reason_clean_hit, 0, 0, 0, 0, -1},
+	{1.5, -1.0, cleanup_reason_clean_hit, 0, 0, 0, 1, 0},
+	{2.0, 1.0, cleanup_reason_near_miss, 0, 1, 0, 2, -1}
+    };
+    failures += check_case("clean-overlap-positive", clean_overlap_positive,
+	3, 0, 2, RT_BREP_LEGACY_CLEANUP_CLEAN_OVERLAP, 1, 1);
+    const struct rt_brep_cleanup_test_hit clean_overlap_negative[] = {
+	{1.0, -1.0, cleanup_reason_clean_hit, 0, 0, 0, 0, -1},
+	{1.5, 1.0, cleanup_reason_clean_hit, 0, 0, 0, 1, 0},
+	{2.0, -1.0, cleanup_reason_near_miss, 0, 1, 0, 2, -1},
+	{3.0, 1.0, cleanup_reason_clean_hit, 0, 0, 0, 3, -1}
+    };
+    failures += check_case("clean-overlap-negative", clean_overlap_negative,
+	4, 0, 4, RT_BREP_LEGACY_CLEANUP_CLEAN_OVERLAP, 0, 0);
+
+    /* A near hit shadows only a coincident observation with the same material
+     * direction.  The opposite-direction control must remain intact. */
+    const struct rt_brep_cleanup_test_hit near_hit_positive[] = {
+	{1.0, -1.0, cleanup_reason_clean_hit, 0, 0, 0, -1, -1},
+	{1.0005, -1.0, cleanup_reason_near_hit, 0, 1, 0, -1, -1},
+	{2.0, 1.0, cleanup_reason_clean_hit, 0, 0, 0, -1, -1}
+    };
+    failures += check_case("near-hit-shadow-positive", near_hit_positive, 3,
+	0, 2, RT_BREP_LEGACY_CLEANUP_NEAR_HIT_SHADOW, 1, 1);
+    const struct rt_brep_cleanup_test_hit near_hit_negative[] = {
+	{1.0, -1.0, cleanup_reason_clean_hit, 0, 0, 0, -1, -1},
+	{1.0005, 1.0, cleanup_reason_near_hit, 0, 1, 0, -1, -1}
+    };
+    failures += check_case("near-hit-shadow-negative", near_hit_negative, 2,
+	0, 2, RT_BREP_LEGACY_CLEANUP_NEAR_HIT_SHADOW, 0, 0);
+
+    const struct rt_brep_cleanup_test_hit trimmed_positive[] = {
+	{1.0, -1.0, cleanup_reason_clean_miss, 1, 0, 0, -1, -1}
+    };
+    failures += check_case("trimmed-invalid-positive", trimmed_positive, 1,
+	1, 0, RT_BREP_LEGACY_CLEANUP_TRIMMED_INVALID, 1, 1);
+    const struct rt_brep_cleanup_test_hit trimmed_negative[] = {
+	{1.0, -1.0, cleanup_reason_clean_miss, 1, 1, 0, -1, -1}
+    };
+    failures += check_case("trimmed-invalid-negative", trimmed_negative, 1,
+	1, 1, RT_BREP_LEGACY_CLEANUP_TRIMMED_INVALID, 0, 0);
+
+    const struct rt_brep_cleanup_test_hit oob_positive[] = {
+	{1.0, -1.0, cleanup_reason_clean_hit, 0, 0, 1, -1, -1}
+    };
+    failures += check_case("parameter-oob-positive", oob_positive, 1, 1, 0,
+	RT_BREP_LEGACY_CLEANUP_PARAMETER_OOB, 1, 1);
+    const struct rt_brep_cleanup_test_hit oob_negative[] = {
+	{1.0, -1.0, cleanup_reason_clean_hit, 0, 0, 0, -1, -1}
+    };
+    failures += check_case("parameter-oob-negative", oob_negative, 1, 1, 1,
+	RT_BREP_LEGACY_CLEANUP_PARAMETER_OOB, 0, 0);
+
+    /* Model-tolerance coincidence is intentionally wider than the exact
+     * duplicate threshold exercised by the preceding cleanup stage. */
+    const struct rt_brep_cleanup_test_hit solid_coincident_positive[] = {
+	{1.0, -1.0, cleanup_reason_clean_hit, 0, 0, 0, -1, -1},
+	{1.0005, -1.0, cleanup_reason_clean_hit, 0, 0, 0, -1, -1},
+	{2.0, 1.0, cleanup_reason_clean_hit, 0, 0, 0, -1, -1}
+    };
+    failures += check_case("solid-coincident-positive",
+	solid_coincident_positive, 3, 1, 2,
+	RT_BREP_LEGACY_CLEANUP_SOLID_COINCIDENT, 1, 1);
+    const struct rt_brep_cleanup_test_hit solid_coincident_negative[] = {
+	{1.0, -1.0, cleanup_reason_clean_hit, 0, 0, 0, -1, -1},
+	{1.002, -1.0, cleanup_reason_clean_hit, 0, 0, 0, -1, -1},
+	{2.0, 1.0, cleanup_reason_clean_hit, 0, 0, 0, -1, -1}
+    };
+    failures += check_case("solid-coincident-negative",
+	solid_coincident_negative, 3, 1, 2,
+	RT_BREP_LEGACY_CLEANUP_SOLID_COINCIDENT, 0, 1);
+
+    const struct rt_brep_cleanup_test_hit open_same_positive[] = {
+	{1.0, -1.0, cleanup_reason_clean_hit, 0, 0, 0, -1, -1},
+	{2.0, -1.0, cleanup_reason_clean_hit, 0, 0, 0, -1, -1}
+    };
+    failures += check_case("open-same-direction-positive",
+	open_same_positive, 2, 0, 1,
+	RT_BREP_LEGACY_CLEANUP_OPEN_SAME_DIRECTION, 1, 1);
+    const struct rt_brep_cleanup_test_hit open_same_negative[] = {
+	{1.0, -1.0, cleanup_reason_clean_hit, 0, 0, 0, -1, -1},
+	{2.0, 1.0, cleanup_reason_clean_hit, 0, 0, 0, -1, -1}
+    };
+    failures += check_case("open-same-direction-negative",
+	open_same_negative, 2, 0, 2,
+	RT_BREP_LEGACY_CLEANUP_OPEN_SAME_DIRECTION, 0, 0);
+
+    const struct rt_brep_cleanup_test_hit open_odd_positive[] = {
+	{1.0, -1.0, cleanup_reason_clean_hit, 0, 0, 0, -1, -1},
+	{2.0, 1.0, cleanup_reason_clean_hit, 0, 0, 0, -1, -1},
+	{3.0, -1.0, cleanup_reason_clean_hit, 0, 0, 0, -1, -1}
+    };
+    failures += check_case("open-odd-endpoint-positive", open_odd_positive,
+	3, 0, 2, RT_BREP_LEGACY_CLEANUP_OPEN_ODD_ENDPOINT, 1, 1);
+    const struct rt_brep_cleanup_test_hit open_odd_negative[] = {
+	{1.0, -1.0, cleanup_reason_clean_hit, 0, 0, 0, -1, -1},
+	{2.0, 1.0, cleanup_reason_clean_hit, 0, 0, 0, -1, -1}
+    };
+    failures += check_case("open-odd-endpoint-negative", open_odd_negative,
+	2, 0, 2, RT_BREP_LEGACY_CLEANUP_OPEN_ODD_ENDPOINT, 0, 0);
+
+    return failures;
+}
+
+
+static int
+check_brep_evaluation_cache(struct soltab *brep_stp, struct rt_i *rtip,
+    struct resource *resp, double radius)
+{
+    ON_3dVector direction(0.371, 0.529, 0.763);
+    ON_3dVector first = ON_CrossProduct(direction,
+	ON_3dVector(0.0, 0.0, 1.0));
+    if (!direction.Unitize() || !first.Unitize()) {
+	std::printf("FAIL: evaluation-cache ray frame is singular\n");
+	return 1;
+    }
+    ON_3dVector second = ON_CrossProduct(direction, first);
+    if (!second.Unitize()) {
+	std::printf("FAIL: evaluation-cache second ray frame is singular\n");
+	return 1;
+    }
+    const ON_3dPoint closest = 0.31 * radius * first +
+	0.17 * radius * second;
+    const ON_3dPoint origin = closest - 2.0 * radius * direction;
+    sampled_ray ray;
+    VSET(ray.origin, origin.x, origin.y, origin.z);
+    VSET(ray.direction, direction.x, direction.y, direction.z);
+
+    struct rt_brep_shot_trace trace;
+    const int hits = shoot_brep_trace(brep_stp, rtip, resp, ray, trace);
+    bool valid = hits == 2 && trace.prepared_production_selected == 1 &&
+	trace.prepared_production_fallback == RT_BREP_PREPARED_FALLBACK_NONE &&
+	trace.prepared_production_hits == 2 &&
+	trace.stored_local_roots == 2 && trace.stored_physical_events == 2 &&
+	trace.physical_event_complete == 1 &&
+	trace.physical_event_material_segments == 1 &&
+	!trace.local_root_overflow && !trace.local_trim_failures;
+    const double point_tolerance = std::max(1.0e-9,
+	(double)rtip->rti_tol.dist);
+
+    for (size_t root_index = 0;
+	    root_index < trace.stored_local_roots; ++root_index) {
+	const struct rt_brep_trace_local_root &root =
+	    trace.local_roots[root_index];
+	ON_3dPoint point(root.point[0], root.point[1], root.point[2]);
+	ON_3dVector normal(root.normal[0], root.normal[1], root.normal[2]);
+	ON_3dVector derivative_u(root.derivative_u[0], root.derivative_u[1],
+	    root.derivative_u[2]);
+	ON_3dVector derivative_v(root.derivative_v[0], root.derivative_v[1],
+	    root.derivative_v[2]);
+	ON_3dVector derivative_normal = ON_CrossProduct(derivative_u,
+	    derivative_v);
+	const ON_3dPoint ray_point = origin + root.dist * direction;
+	const double normal_length = normal.Length();
+	const double cached_dot = normal * direction;
+	const double dot_scale = std::max(1.0,
+	    std::max(fabs(cached_dot), fabs(root.normal_dot)));
+	if (!root.evaluation_valid || !root.derivatives_valid ||
+		!std::isfinite(root.surface_uv[0]) ||
+		!std::isfinite(root.surface_uv[1]) || !point.IsValid() ||
+		!normal.IsValid() || !derivative_u.IsValid() ||
+		!derivative_v.IsValid() || !derivative_normal.Unitize() ||
+		!std::isfinite(root.t_min) || !std::isfinite(root.t_max) ||
+		root.t_min > root.dist || root.dist > root.t_max ||
+		fabs(normal_length - 1.0) > 4096.0 * DBL_EPSILON ||
+		fabs(cached_dot - root.normal_dot) >
+		    4096.0 * DBL_EPSILON * dot_scale ||
+		point.DistanceTo(ray_point) > point_tolerance) {
+	    std::printf("FAIL: evaluation-cache root %zu valid=%d/%d "
+		"t=(%.17g,%.17g,%.17g) point-error=%.17g "
+		"normal-length=%.17g dot-error=%.17g\n", root_index,
+		root.evaluation_valid, root.derivatives_valid, root.t_min,
+		root.dist, root.t_max, point.DistanceTo(ray_point),
+		normal_length, fabs(cached_dot - root.normal_dot));
+	    valid = false;
+	}
+    }
+
+    size_t local_root_events = 0;
+    for (size_t event_index = 0;
+	    event_index < trace.stored_physical_events; ++event_index) {
+	const struct rt_brep_trace_physical_event &event =
+	    trace.physical_events[event_index];
+	if (event.source_kind != RT_BREP_TRACE_EVENT_SOURCE_LOCAL_ROOT ||
+		event.source_root >= trace.stored_local_roots) {
+	    valid = false;
+	    continue;
+	}
+	const struct rt_brep_trace_local_root &root =
+	    trace.local_roots[event.source_root];
+	if (event.certificate != RT_BREP_TRACE_EVENT_REGULAR_INTERIOR ||
+		event.face_index != root.face_index ||
+		event.span_index != root.span_index || event.dist != root.dist ||
+		event.uv[0] != root.uv[0] || event.uv[1] != root.uv[1] ||
+		event.direction != root.direction)
+	    valid = false;
+	local_root_events++;
+    }
+    if (local_root_events != trace.stored_physical_events ||
+	    trace.prepared_hit_cached_evaluations != local_root_events ||
+	    trace.prepared_hit_surface_evaluations != 0)
+	valid = false;
+
+    if (!valid) {
+	std::printf("FAIL: evaluation-cache hits=%d selected=%zu fallback=%d "
+	    "roots/events=%zu/%zu cached/surface=%zu/%zu complete=%zu\n",
+	    hits, trace.prepared_production_selected,
+	    trace.prepared_production_fallback, trace.stored_local_roots,
+	    trace.stored_physical_events,
+	    trace.prepared_hit_cached_evaluations,
+	    trace.prepared_hit_surface_evaluations,
+	    trace.physical_event_complete);
+	return 1;
+    }
+    std::printf("BREP evaluate-once cache: roots=%zu events=%zu cached=%zu "
+	"surface=%zu\n", trace.stored_local_roots,
+	trace.stored_physical_events, trace.prepared_hit_cached_evaluations,
+	trace.prepared_hit_surface_evaluations);
     return 0;
 }
 
@@ -4304,6 +5375,36 @@ check_status2_revolution_sphere_case(struct rt_i *rtip,
 	    origin, direction, radius, 3.0 * radius);
 	failures += check_pole_prepared_trace(label, brep_stp, rtip, resp,
 	    origin, direction, radius, 3.0 * radius, true);
+	struct rt_brep_route_test_result route_probe;
+	const ray_result routed_probe = shoot_brep_missing_root_route(brep_stp,
+	    rtip, resp, origin, direction, true, route_probe);
+	const size_t certificate_associations =
+	    route_probe.decision.missing_root_certificate_associations;
+	const bool singular_certificate_rejected = !certificate_associations ||
+	    (route_probe.decision.missing_root_certificate_state[
+		RT_BREP_ROUTE_CERT_INCOMPLETE] &&
+	     route_probe.decision.missing_root_certificate_failure_reason[
+		RT_BREP_ROUTE_CERT_FAILURE_SINGULAR]);
+	if (routed_probe.segments || !singular_certificate_rejected ||
+		!route_probe.legacy_root_fault_injected ||
+		!route_probe.suppressed_legacy_raw_hits ||
+		route_probe.decision.missing_root_certificate_triggered ||
+		route_probe.optional_attempted || route_probe.optional_published) {
+	    std::printf("FAIL: %s status-2 routing singular control "
+		"segments=%d associations=%zu states=%zu/%zu/%zu "
+		"singular=%zu trigger/attempt/publish=%zu/%d/%d\n", label,
+		routed_probe.segments,
+		route_probe.decision.missing_root_certificate_associations,
+		route_probe.decision.missing_root_certificate_state[0],
+		route_probe.decision.missing_root_certificate_state[1],
+		route_probe.decision.missing_root_certificate_state[2],
+		route_probe.decision.missing_root_certificate_failure_reason[
+		    RT_BREP_ROUTE_CERT_FAILURE_SINGULAR],
+		route_probe.decision.missing_root_certificate_triggered,
+		route_probe.optional_attempted,
+		route_probe.optional_published);
+	    failures++;
+	}
     }
     free_solid(brep_stp);
     free_solid(implicit_stp);
@@ -4333,6 +5434,1448 @@ check_status2_revolution_sphere_poles(struct rt_i *rtip,
 	failures += check_status2_revolution_sphere_case(rtip, resp,
 	    cases[i].name, cases[i].center, cases[i].radius, cases[i].axis);
     return failures;
+}
+
+
+static int
+check_status2_revolution_line_profile(struct rt_i *rtip,
+    struct resource *resp)
+{
+    if (!rtip || !resp)
+	return 1;
+
+    const double radius = 3.0;
+    const double height = 8.0;
+    const ON_Circle circle(ON_xy_plane, radius);
+    const ON_Cylinder cylinder(circle, height);
+    ON_RevSurface *revolution = cylinder.IsValid() ?
+	cylinder.RevSurfaceForm(NULL) : NULL;
+    if (revolution) {
+	/* Exercise nondefault domains on both the angular and line maps. */
+	revolution->SetDomain(0, -7.0, 11.0);
+	revolution->SetDomain(1, -4.0, 12.0);
+    }
+    ON_Brep *brep = revolution ?
+	ON_BrepRevSurface(revolution, true, true, NULL) : NULL;
+    if (!brep && revolution)
+	delete revolution;
+
+    int side_face_index = -1;
+    const ON_RevSurface *side = NULL;
+    for (int face_index = 0; brep && face_index < brep->m_F.Count();
+	    ++face_index) {
+	const ON_Surface *candidate = brep->m_F[face_index].SurfaceOf();
+	const ON_RevSurface *candidate_revolution =
+	    ON_RevSurface::Cast(candidate);
+	if (candidate_revolution &&
+		ON_LineCurve::Cast(candidate_revolution->m_curve)) {
+	    side_face_index = face_index;
+	    side = candidate_revolution;
+	    break;
+	}
+    }
+    ON_NurbsSurface nurbs;
+    const int nurb_form_status = side ? side->GetNurbForm(nurbs) : 0;
+    double parameter[2] = {ON_UNSET_VALUE, ON_UNSET_VALUE};
+    if (side) {
+	const int angle_parameter = side->m_bTransposed ? 1 : 0;
+	const int profile_parameter = 1 - angle_parameter;
+	parameter[angle_parameter] = side->Domain(angle_parameter).
+	    ParameterAt(1.0e-3 / (2.0 * ON_PI));
+	parameter[profile_parameter] = side->Domain(profile_parameter).
+	    ParameterAt(0.647);
+    }
+    ON_3dPoint point;
+    ON_3dVector radial;
+    bool frame_valid = side && side->EvPoint(parameter[0], parameter[1],
+	point);
+    if (frame_valid) {
+	const ON_3dPoint axis_point = side->m_axis.ClosestPointTo(point);
+	radial = point - axis_point;
+	frame_valid = point.IsValid() && axis_point.IsValid() &&
+	    radial.Unitize();
+    }
+
+    struct rt_brep_internal brep_internal = {};
+    brep_internal.magic = RT_BREP_INTERNAL_MAGIC;
+    brep_internal.brep = brep;
+    struct rt_db_internal brep_intern;
+    RT_DB_INTERNAL_INIT(&brep_intern);
+    brep_intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
+    brep_intern.idb_type = ID_BREP;
+    brep_intern.idb_meth = &OBJ[ID_BREP];
+    brep_intern.idb_ptr = &brep_internal;
+    struct soltab *stp = brep && brep->IsValid() && brep->IsSolid() &&
+	side_face_index >= 0 && nurb_form_status == 2 && frame_valid ?
+	prep_solid(rtip, &brep_intern, ID_BREP) : NULL;
+    if (!stp) {
+	std::printf("FAIL: status-2 revolution line profile "
+	    "prep/status/face/frame=%d/%d/%d/%d\n", stp != NULL,
+	    nurb_form_status, side_face_index, frame_valid ? 1 : 0);
+	if (brep_internal.brep)
+	    delete brep_internal.brep;
+	return 1;
+    }
+
+    int failures = 0;
+    struct rt_brep_prep_stats prep_stats = {};
+    if (!_rt_brep_prep_stats(stp, &prep_stats) ||
+	    !(prep_stats.routing_capability_flags &
+		RT_BREP_ROUTE_CAP_DEGREE_THEOREM) ||
+	    !prep_stats.routing_feature_cell_span_bindings) {
+	std::printf("FAIL: status-2 revolution line routing prep "
+	    "capabilities=%u bindings=%zu\n",
+	    prep_stats.routing_capability_flags,
+	    prep_stats.routing_feature_cell_span_bindings);
+	failures++;
+    }
+    size_t recoveries = 0;
+    size_t incomplete_recoveries = 0;
+    for (int reverse = 0; reverse <= 1; ++reverse) {
+	const ON_3dPoint probe_origin = reverse ?
+	    point - 4.0 * radius * radial : point + 2.0 * radius * radial;
+	const ON_3dVector probe_direction = reverse ? radial : -radial;
+	point_t origin = {probe_origin.x, probe_origin.y, probe_origin.z};
+	vect_t direction = {probe_direction.x, probe_direction.y,
+	    probe_direction.z};
+	const ray_result legacy = shoot_brep_legacy(stp, rtip, resp, origin,
+	    direction);
+	const int incomplete_failure =
+	    check_incomplete_transaction_recovery_ray(stp, rtip, resp, origin,
+		direction, legacy, reverse);
+	failures += incomplete_failure;
+	incomplete_recoveries += incomplete_failure ? 0 : 1;
+	struct rt_brep_route_test_result route_probe;
+	const ray_result routed = shoot_brep_missing_root_route(stp, rtip,
+	    resp, origin, direction, true, route_probe);
+	const double endpoint_tolerance = std::max(rtip->rti_tol.dist,
+	    65536.0 * DBL_EPSILON * std::max(1.0,
+		std::max(fabs(legacy.in_dist), fabs(legacy.out_dist))));
+	const bool recovered = legacy.segments == 1 &&
+	    routed.segments == legacy.segments &&
+	    fabs(routed.in_dist - legacy.in_dist) <= endpoint_tolerance &&
+	    fabs(routed.out_dist - legacy.out_dist) <= endpoint_tolerance &&
+	    route_probe.legacy_root_fault_injected &&
+	    route_probe.suppressed_legacy_raw_hits &&
+	    route_probe.decision.missing_root_certificate_associations &&
+	    route_probe.decision.missing_root_certificate_state[
+		RT_BREP_ROUTE_CERT_ROOT_POSITIVE] &&
+	    !route_probe.decision.missing_root_certificate_failure_reason[
+		RT_BREP_ROUTE_CERT_FAILURE_STATUS2_MAPPING] &&
+	    route_probe.decision.missing_root_certificate_complete &&
+	    route_probe.decision.missing_root_certificate_triggered &&
+	    route_probe.optional_attempted && route_probe.optional_complete &&
+	    route_probe.optional_published;
+	if (recovered) {
+	    recoveries++;
+	} else {
+	    std::printf("FAIL: status-2 revolution line routing reverse=%d "
+		"segments=%d/%d associations=%zu states=%zu/%zu/%zu "
+		"failures(map/singular/reparam/determinant/boundary/"
+		"orientation/resource)=%zu/%zu/%zu/%zu/%zu/%zu/%zu "
+		"complete/trigger/attempt/done/pub=%zu/%zu/%d/%d/%d\n",
+		reverse, legacy.segments,
+		routed.segments,
+		route_probe.decision.missing_root_certificate_associations,
+		route_probe.decision.missing_root_certificate_state[0],
+		route_probe.decision.missing_root_certificate_state[1],
+		route_probe.decision.missing_root_certificate_state[2],
+		route_probe.decision.missing_root_certificate_failure_reason[
+		    RT_BREP_ROUTE_CERT_FAILURE_STATUS2_MAPPING],
+		route_probe.decision.missing_root_certificate_failure_reason[
+		    RT_BREP_ROUTE_CERT_FAILURE_SINGULAR],
+		route_probe.decision.missing_root_certificate_failure_reason[
+		    RT_BREP_ROUTE_CERT_FAILURE_REPARAMETERIZATION],
+		route_probe.decision.missing_root_certificate_failure_reason[
+		    RT_BREP_ROUTE_CERT_FAILURE_DETERMINANT],
+		route_probe.decision.missing_root_certificate_failure_reason[
+		    RT_BREP_ROUTE_CERT_FAILURE_BOUNDARY],
+		route_probe.decision.missing_root_certificate_failure_reason[
+		    RT_BREP_ROUTE_CERT_FAILURE_ORIENTATION],
+		route_probe.decision.missing_root_certificate_failure_reason[
+		    RT_BREP_ROUTE_CERT_FAILURE_RESOURCE],
+		route_probe.decision.missing_root_certificate_complete,
+		route_probe.decision.missing_root_certificate_triggered,
+		route_probe.optional_attempted, route_probe.optional_complete,
+		route_probe.optional_published);
+	    failures++;
+	}
+    }
+    if (recoveries != 2)
+	failures++;
+    if (!failures)
+	std::printf("Status-2 revolution line routing: PASS routing=%zu/2 "
+	    "incomplete-recovery=%zu/2\n", recoveries,
+	    incomplete_recoveries);
+    free_solid(stp);
+    return failures;
+}
+
+
+static ON_Xform
+cobb_axis_angle_similarity_transform(double scale,
+    const ON_3dVector &translation, ON_3dVector axis, double angle);
+
+
+static ON_PolyCurve *
+status2_split_profile_polycurve(const ON_Curve *source, int segment_count,
+    bool mixed_nurbs, bool reverse)
+{
+    if (!source || segment_count < 1 || segment_count > 16 ||
+	    !source->Domain().IsIncreasing())
+	return NULL;
+    ON_PolyCurve *polycurve = new ON_PolyCurve(segment_count);
+    if (!polycurve)
+	return NULL;
+    const ON_Interval source_domain = source->Domain();
+    for (int segment_index = 0; segment_index < segment_count;
+	    ++segment_index) {
+	const ON_Interval piece_domain(
+	    source_domain.ParameterAt((double)segment_index / segment_count),
+	    source_domain.ParameterAt((double)(segment_index + 1) /
+		segment_count));
+	ON_Curve *segment = source->DuplicateCurve();
+	if (!segment || !segment->Trim(piece_domain)) {
+	    delete segment;
+	    delete polycurve;
+	    return NULL;
+	}
+	if (mixed_nurbs && segment_index % 2) {
+	    ON_NurbsCurve *nurbs = segment->NurbsCurve();
+	    delete segment;
+	    segment = nurbs;
+	}
+	if (!segment || !segment->IsValid() || !polycurve->Append(segment)) {
+	    delete segment;
+	    delete polycurve;
+	    return NULL;
+	}
+    }
+    if (!polycurve->SetDomain(-37.0, 91.0) ||
+	    (reverse && !polycurve->Reverse()) || !polycurve->IsValid()) {
+	delete polycurve;
+	return NULL;
+    }
+    return polycurve;
+}
+
+
+/* Construct one independently reversed proxy piece without changing the
+ * polycurve locus.  The backing curve is reversed first and the proxy is
+ * reversed again, so the piece has the original endpoint order while its
+ * composed parameter map exercises both reversals.  The caller owns the
+ * returned backing curve separately from the polycurve. */
+static ON_PolyCurve *
+status2_reversed_proxy_piece_polycurve(const ON_Curve *source,
+    int proxy_segment, ON_Curve **proxy_backing)
+{
+    if (proxy_backing)
+	*proxy_backing = NULL;
+    if (!source || !proxy_backing || proxy_segment < 0 ||
+	    proxy_segment >= 4 || !source->Domain().IsIncreasing())
+	return NULL;
+    ON_PolyCurve *polycurve = new ON_PolyCurve(4);
+    const ON_Interval source_domain = source->Domain();
+    for (int segment_index = 0; polycurve && segment_index < 4;
+	    ++segment_index) {
+	const ON_Interval piece_domain(source_domain.ParameterAt(
+	    0.25 * segment_index), source_domain.ParameterAt(
+	    0.25 * (segment_index + 1)));
+	ON_Curve *segment = source->DuplicateCurve();
+	if (!segment || !segment->Trim(piece_domain)) {
+	    delete segment;
+	    delete polycurve;
+	    delete *proxy_backing;
+	    *proxy_backing = NULL;
+	    return NULL;
+	}
+	if (segment_index == proxy_segment) {
+	    if (!segment->Reverse()) {
+		delete segment;
+		delete polycurve;
+		return NULL;
+	    }
+	    ON_CurveProxy *proxy = new ON_CurveProxy(segment);
+	    if (!proxy || !proxy->Reverse() || !proxy->IsValid()) {
+		delete proxy;
+		delete segment;
+		delete polycurve;
+		return NULL;
+	    }
+	    *proxy_backing = segment;
+	    segment = proxy;
+	} else if (segment_index % 2) {
+	    ON_NurbsCurve *nurbs = segment->NurbsCurve();
+	    delete segment;
+	    segment = nurbs;
+	}
+	if (!segment || !segment->IsValid() || !polycurve->Append(segment)) {
+	    delete segment;
+	    delete polycurve;
+	    delete *proxy_backing;
+	    *proxy_backing = NULL;
+	    return NULL;
+	}
+    }
+    if (!polycurve || !polycurve->SetDomain(-37.0, 91.0) ||
+	    !polycurve->IsValid()) {
+	delete polycurve;
+	delete *proxy_backing;
+	*proxy_backing = NULL;
+	return NULL;
+    }
+    return polycurve;
+}
+
+
+/* Recreate the PolyCurve::Write payload with an intentionally malformed
+ * interior parameter.  Read() accepts historical serialized arrays and
+ * leaves IsValid() to reject structural damage, which is the boundary the
+ * routing parser must defend. */
+static ON_PolyCurve *
+status2_malformed_serialized_polycurve(const ON_PolyCurve &source,
+    bool overlap)
+{
+    const int count = source.Count();
+    if (count < 2 || source.SegmentParameters().Count() != count + 1)
+	return NULL;
+    ON_SimpleArray<double> parameters(source.SegmentParameters());
+    parameters[1] = overlap ? parameters[2] + 1.0 : parameters[0];
+
+    ON_Write3dmBufferArchive writer(0, 0, 0, 0);
+    const ON_BoundingBox empty_bbox;
+    bool written = writer.Write3dmChunkVersion(1, 0) &&
+	writer.WriteInt(count) && writer.WriteInt(0) && writer.WriteInt(0) &&
+	writer.WriteBoundingBox(empty_bbox) && writer.WriteArray(parameters);
+    for (int segment_index = 0; written && segment_index < count;
+	    ++segment_index) {
+	const ON_Curve *segment = source.SegmentCurve(segment_index);
+	written = segment && writer.WriteObject(*segment);
+    }
+    if (!written || !writer.SizeOfArchive() || !writer.Buffer())
+	return NULL;
+
+    ON_Read3dmBufferArchive reader(writer.SizeOfArchive(), writer.Buffer(),
+	false, writer.Archive3dmVersion(), writer.ArchiveOpenNURBSVersion());
+    ON_PolyCurve *result = new ON_PolyCurve(count);
+    if (!result || !result->Read(reader)) {
+	delete result;
+	return NULL;
+    }
+    return result;
+}
+
+
+static ON_PolyCurve *
+status2_rectangle_polycurve(bool reverse)
+{
+    const ON_3dPoint points[] = {
+	ON_3dPoint(9.0, 0.0, -3.0),
+	ON_3dPoint(15.0, 0.0, -3.0),
+	ON_3dPoint(15.0, 0.0, 3.0),
+	ON_3dPoint(9.0, 0.0, 3.0),
+	ON_3dPoint(9.0, 0.0, -3.0)
+    };
+    ON_PolyCurve *polycurve = new ON_PolyCurve(4);
+    for (int segment_index = 0; polycurve && segment_index < 4;
+	    ++segment_index) {
+	ON_LineCurve *line = new ON_LineCurve(points[segment_index],
+	    points[segment_index + 1]);
+	if (line)
+	    line->SetDomain(-11.0 + 17.0 * segment_index,
+		-4.0 + 17.0 * segment_index);
+	if (!line || !polycurve->Append(line)) {
+	    delete line;
+	    delete polycurve;
+	    return NULL;
+	}
+    }
+    if (!polycurve || !polycurve->SetDomain(-37.0, 91.0) ||
+	    (reverse && !polycurve->Reverse()) || !polycurve->IsValid()) {
+	delete polycurve;
+	return NULL;
+    }
+    return polycurve;
+}
+
+
+static int
+check_status2_revolution_proxy_profiles(struct rt_i *rtip,
+    struct resource *resp, const char *benchmark_name = NULL)
+{
+    if (!rtip || !resp)
+	return 1;
+    enum proxy_target_type {
+	PROXY_TARGET_ARC,
+	PROXY_TARGET_LINE,
+	PROXY_TARGET_NURBS,
+	PROXY_TARGET_POLYCURVE,
+	PROXY_TARGET_POLYCURVE_LINE,
+	PROXY_TARGET_POLYCURVE_REVERSED_PIECE,
+	PROXY_TARGET_NESTED_POLYCURVE,
+	PROXY_TARGET_PROXY
+    };
+    struct proxy_route_case {
+	const char *name;
+	proxy_target_type target_type;
+	double subdomain_minimum;
+	double subdomain_maximum;
+	bool reverse_proxy;
+	bool transformed;
+	bool cap_profile;
+	bool supported;
+    } cases[] = {
+	{"direct-arc", PROXY_TARGET_ARC, 0.0, 1.0, false, false, false,
+	    true},
+	{"reversed-arc", PROXY_TARGET_ARC, 0.0, 1.0, true, false, false,
+	    true},
+	{"transformed-subdomain-line", PROXY_TARGET_LINE, 0.0, 1.0, false,
+	    true, true, true},
+	{"direct-nurbs", PROXY_TARGET_NURBS, 0.0, 1.0, false,
+	    false, false, true},
+	{"polycurve", PROXY_TARGET_POLYCURVE, 0.0, 1.0, false, false,
+	    false, true},
+	{"reversed-polycurve", PROXY_TARGET_POLYCURVE, 0.0, 1.0, true,
+	    false, false, true},
+	{"subdomain-polycurve-line", PROXY_TARGET_POLYCURVE_LINE, 0.125,
+	    0.875, false, true, true, true},
+	{"reversed-proxy-piece-polycurve",
+	    PROXY_TARGET_POLYCURVE_REVERSED_PIECE, 0.0, 1.0, true, false,
+	    false, true},
+	{"invalid-proxy-of-proxy", PROXY_TARGET_PROXY, 0.0, 1.0, false,
+	    false, false, false}
+    };
+    size_t positive_rays = 0;
+    size_t positive_recoveries = 0;
+    size_t negative_rays = 0;
+    size_t negative_rejections = 0;
+    size_t cache_reconstructions = 0;
+    size_t cached_route_matches = 0;
+    int failures = 0;
+
+    for (size_t case_index = 0;
+	    case_index < sizeof(cases) / sizeof(cases[0]); ++case_index) {
+	const proxy_route_case &test = cases[case_index];
+	const double scale = test.transformed ? 2.5 : 1.0;
+	const ON_3dPoint center = test.transformed ?
+	    ON_3dPoint(-100.0, 75.0, 20.0) : ON_3dPoint::Origin;
+	ON_3dVector axis = test.transformed ?
+	    ON_3dVector(-1.0, 0.5, 2.0) : ON_3dVector::ZAxis;
+	axis.Unitize();
+	const ON_Plane plane(center, axis);
+	ON_RevSurface *revolution = NULL;
+	if (test.target_type == PROXY_TARGET_LINE ||
+		test.target_type == PROXY_TARGET_POLYCURVE_LINE) {
+	    const ON_Cylinder cylinder(ON_Circle(plane, 3.0 * scale),
+		8.0 * scale);
+	    revolution = cylinder.IsValid() ? cylinder.RevSurfaceForm(NULL) :
+		NULL;
+	} else {
+	    const ON_Torus torus(plane, 12.0 * scale, 3.0 * scale);
+	    revolution = torus.IsValid() ? torus.RevSurfaceForm(NULL) : NULL;
+	}
+	ON_Curve *source = revolution ? revolution->m_curve : NULL;
+	ON_Curve *target = NULL;
+	ON_Curve *target_dependency = NULL;
+	if (revolution)
+	    revolution->m_curve = NULL;
+	if (source && test.target_type == PROXY_TARGET_LINE) {
+	    const ON_Interval source_domain = source->Domain();
+	    const ON_3dPoint start = source->PointAt(source_domain.Min());
+	    const ON_3dPoint end = source->PointAt(source_domain.Max());
+	    const ON_3dVector delta = end - start;
+	    ON_LineCurve *line = new ON_LineCurve(start - 0.25 * delta,
+		end + 0.25 * delta);
+	    if (line)
+		line->SetDomain(-37.0, 91.0);
+	    target = line;
+	} else if (source && test.target_type == PROXY_TARGET_NURBS) {
+	    target = source->NurbsCurve();
+	} else if (source && test.target_type == PROXY_TARGET_POLYCURVE) {
+	    target = status2_split_profile_polycurve(source, 4, true, false);
+	} else if (source &&
+		test.target_type == PROXY_TARGET_POLYCURVE_LINE) {
+	    target = status2_split_profile_polycurve(source, 4, true, false);
+	} else if (source &&
+		test.target_type == PROXY_TARGET_POLYCURVE_REVERSED_PIECE) {
+	    target = status2_reversed_proxy_piece_polycurve(source, 2,
+		&target_dependency);
+	} else if (source &&
+		test.target_type == PROXY_TARGET_NESTED_POLYCURVE) {
+	    ON_PolyCurve *inner = status2_split_profile_polycurve(source, 2,
+		false, false);
+	    ON_PolyCurve *outer = inner ? new ON_PolyCurve(1) : NULL;
+	    if (!outer || !outer->Append(inner)) {
+		delete inner;
+		delete outer;
+		outer = NULL;
+	    }
+	    target = outer;
+	} else if (source && test.target_type == PROXY_TARGET_PROXY) {
+	    target_dependency = source;
+	    source = NULL;
+	    ON_CurveProxy *inner = new ON_CurveProxy(target_dependency);
+	    if (inner)
+		inner->SetDomain(-11.0, 29.0);
+	    target = inner;
+	} else {
+	    target = source;
+	    source = NULL;
+	}
+	delete source;
+
+	ON_CurveProxy *proxy = target ? new ON_CurveProxy() : NULL;
+	ON_Interval real_domain = target ? target->Domain() :
+	    ON_Interval::EmptyInterval;
+	if (target && test.target_type == PROXY_TARGET_LINE) {
+	    real_domain = ON_Interval(target->Domain().ParameterAt(1.0 / 6.0),
+		target->Domain().ParameterAt(5.0 / 6.0));
+	} else if (target) {
+	    real_domain = ON_Interval(target->Domain().ParameterAt(
+		test.subdomain_minimum), target->Domain().ParameterAt(
+		test.subdomain_maximum));
+	}
+	if (proxy) {
+	    proxy->SetProxyCurve(target, real_domain);
+	    if (test.reverse_proxy)
+		proxy->Reverse();
+	    proxy->SetDomain(-4.0, 12.0);
+	}
+	if (!revolution || !target || !proxy || !proxy->IsValid()) {
+	    std::printf("FAIL: status-2 proxy routing construction %s\n",
+		test.name);
+	    delete proxy;
+	    delete target;
+	    delete target_dependency;
+	    delete revolution;
+	    failures++;
+	    continue;
+	}
+	revolution->m_curve = proxy;
+	revolution->SetDomain(0, -7.0, 11.0);
+	revolution->m_bbox.Destroy();
+	revolution->DestroyRuntimeCache(true);
+	ON_Brep *brep = ON_BrepRevSurface(revolution, test.cap_profile,
+	    test.cap_profile, NULL);
+	if (!brep)
+	    delete revolution;
+	else
+	    brep->SetTrimIsoFlags();
+
+	int side_face_index = -1;
+	const ON_RevSurface *side = NULL;
+	for (int face_index = 0; brep && face_index < brep->m_F.Count();
+		++face_index) {
+	    const ON_RevSurface *candidate = ON_RevSurface::Cast(
+		brep->m_F[face_index].SurfaceOf());
+	    if (candidate) {
+		side_face_index = face_index;
+		side = candidate;
+		break;
+	    }
+	}
+	/* Reversing only the profile reverses the revolution's parametric
+	 * normal.  ON_BrepRevSurface builds topology from the locus and does not
+	 * compensate its face flag for this proxy-only orientation change. */
+	if (brep && side_face_index >= 0 && test.reverse_proxy) {
+	    brep->FlipFace(brep->m_F[side_face_index]);
+	    brep->SetTrimIsoFlags();
+	}
+	ON_NurbsSurface nurbs;
+	const int nurb_form_status = side ? side->GetNurbForm(nurbs) : 0;
+	double parameter[2] = {ON_UNSET_VALUE, ON_UNSET_VALUE};
+	if (side) {
+	    const int angle_parameter = side->m_bTransposed ? 1 : 0;
+	    const int profile_parameter = 1 - angle_parameter;
+	    parameter[angle_parameter] = side->Domain(angle_parameter).
+		ParameterAt(1.0e-3 / (2.0 * ON_PI));
+	    parameter[profile_parameter] = side->Domain(profile_parameter).
+		ParameterAt(0.647);
+	}
+	ON_3dPoint point;
+	ON_3dVector derivative[2];
+	ON_3dVector normal;
+	bool frame_valid = side && side->Ev1Der(parameter[0], parameter[1],
+	    point, derivative[0], derivative[1]);
+	if (frame_valid) {
+	    normal = ON_CrossProduct(derivative[0], derivative[1]);
+	    frame_valid = point.IsValid() && normal.Unitize();
+	}
+	const bool verify_cache = BU_STR_EQUAL(test.name, "polycurve");
+	ON_Brep *cached_brep = verify_cache && brep ?
+	    new ON_Brep(*brep) : NULL;
+	struct rt_brep_internal cached_brep_internal = {};
+	cached_brep_internal.magic = RT_BREP_INTERNAL_MAGIC;
+	cached_brep_internal.brep = cached_brep;
+	struct rt_db_internal cached_brep_intern;
+	RT_DB_INTERNAL_INIT(&cached_brep_intern);
+	cached_brep_intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
+	cached_brep_intern.idb_type = ID_BREP;
+	cached_brep_intern.idb_meth = &OBJ[ID_BREP];
+	cached_brep_intern.idb_ptr = &cached_brep_internal;
+
+	struct rt_brep_internal brep_internal = {};
+	brep_internal.magic = RT_BREP_INTERNAL_MAGIC;
+	brep_internal.brep = brep;
+	struct rt_db_internal brep_intern;
+	RT_DB_INTERNAL_INIT(&brep_intern);
+	brep_intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
+	brep_intern.idb_type = ID_BREP;
+	brep_intern.idb_meth = &OBJ[ID_BREP];
+	brep_intern.idb_ptr = &brep_internal;
+	struct soltab *stp = brep && brep->IsValid() && brep->IsSolid() &&
+	    side_face_index >= 0 && nurb_form_status == 2 && frame_valid ?
+	    prep_solid(rtip, &brep_intern, ID_BREP) : NULL;
+	if (!stp) {
+	    if (brep) {
+		ON_TextLog validity_log(stdout);
+		(void)brep->IsValid(&validity_log);
+	    }
+	    std::printf("FAIL: status-2 proxy routing prep %s "
+		"valid/solid/status/face/frame=%d/%d/%d/%d/%d\n", test.name,
+		brep ? brep->IsValid() : 0, brep ? brep->IsSolid() : 0,
+		nurb_form_status, side_face_index, frame_valid ? 1 : 0);
+	    if (brep_internal.brep)
+		delete brep_internal.brep;
+	    if (cached_brep_internal.brep)
+		delete cached_brep_internal.brep;
+	    delete target;
+	    delete target_dependency;
+	    failures++;
+	    continue;
+	}
+
+	struct rt_brep_prep_stats prep_stats = {};
+	const bool stats_valid = _rt_brep_prep_stats(stp, &prep_stats);
+	struct soltab *cached_stp = NULL;
+	struct rt_brep_prep_stats cached_stats = {};
+	bool cached_stats_valid = false;
+	if (verify_cache) {
+	    struct bu_external payload = BU_EXTERNAL_INIT_ZERO;
+	    size_t version = (size_t)-1;
+	    const bool serialized = !rt_obj_prep_serialize(stp, &brep_intern,
+		&payload, &version) && version != (size_t)-1 &&
+		payload.ext_buf && payload.ext_nbytes;
+	    if (serialized)
+		cached_stp = deserialize_solid(rtip, &cached_brep_intern,
+		    ID_BREP, &payload, version);
+	    bu_free_external(&payload);
+	    cached_stats_valid = cached_stp && stats_valid &&
+		_rt_brep_prep_stats(cached_stp, &cached_stats) &&
+		status2_cache_stats_match(prep_stats, cached_stats);
+	    if (cached_stats_valid) {
+		cache_reconstructions++;
+	    } else {
+		std::printf("FAIL: status-2 proxy cache reconstruction %s "
+		    "serialized/stats=%d/%d depth=%d/%d spans=%zu/%zu "
+		    "cells=%zu/%zu packs=%zu/%zu complete=%zu/%zu "
+		    "capabilities=%u/%u\n", test.name,
+		    serialized ? 1 : 0, cached_stp ? 1 : 0,
+		    prep_stats.surface_tree_depth_limit,
+		    cached_stats.surface_tree_depth_limit,
+		    prep_stats.bezier_spans, cached_stats.bezier_spans,
+		    prep_stats.routing_feature_cells,
+		    cached_stats.routing_feature_cells,
+		    prep_stats.routing_cell_span_packs,
+		    cached_stats.routing_cell_span_packs,
+		    prep_stats.routing_complete_cell_span_packs,
+		    cached_stats.routing_complete_cell_span_packs,
+		    prep_stats.routing_capability_flags,
+		    cached_stats.routing_capability_flags);
+		failures++;
+	    }
+	}
+	for (int reverse = 0; reverse <= 1; ++reverse) {
+	    const ON_3dPoint probe_origin = reverse ?
+		point - 12.0 * scale * normal : point + 6.0 * scale * normal;
+	    const ON_3dVector probe_direction = reverse ? normal : -normal;
+	    point_t origin = {probe_origin.x, probe_origin.y, probe_origin.z};
+	    vect_t direction = {probe_direction.x, probe_direction.y,
+		probe_direction.z};
+	    const ray_result legacy = shoot_brep_legacy(stp, rtip, resp,
+		origin, direction);
+	    struct rt_brep_route_test_result route_probe;
+	    const ray_result routed = shoot_brep_missing_root_route(stp, rtip,
+		resp, origin, direction, true, route_probe);
+	    if (verify_cache && cached_stp) {
+		struct rt_brep_route_test_result cached_route_probe;
+		const ray_result cached_routed = shoot_brep_missing_root_route(
+		    cached_stp, rtip, resp, origin, direction, true,
+		    cached_route_probe);
+		if (status2_cached_route_matches(routed, route_probe,
+			cached_routed, cached_route_probe)) {
+		    cached_route_matches++;
+		} else {
+		    std::printf("FAIL: status-2 proxy cached route %s "
+			"reverse=%d segments=%d/%d publication=%d/%d\n",
+			test.name, reverse, routed.segments,
+			cached_routed.segments, route_probe.optional_published,
+			cached_route_probe.optional_published);
+		    failures++;
+		}
+	    }
+	    const double endpoint_tolerance = std::max(rtip->rti_tol.dist,
+		65536.0 * DBL_EPSILON * std::max(1.0,
+		    std::max(fabs(legacy.in_dist), fabs(legacy.out_dist))));
+	    bool good = false;
+	    if (test.supported) {
+		positive_rays++;
+		good = stats_valid && (prep_stats.routing_capability_flags &
+		    RT_BREP_ROUTE_CAP_DEGREE_THEOREM) &&
+		    prep_stats.routing_feature_cell_span_bindings &&
+		    legacy.segments == 1 && routed.segments == legacy.segments &&
+		    fabs(routed.in_dist - legacy.in_dist) <= endpoint_tolerance &&
+		    fabs(routed.out_dist - legacy.out_dist) <= endpoint_tolerance &&
+		    route_probe.legacy_root_fault_injected &&
+		    route_probe.suppressed_legacy_raw_hits &&
+		    route_probe.decision.missing_root_certificate_associations &&
+		    route_probe.decision.missing_root_certificate_state[
+			RT_BREP_ROUTE_CERT_ROOT_POSITIVE] &&
+		    !route_probe.decision.missing_root_certificate_failure_reason[
+			RT_BREP_ROUTE_CERT_FAILURE_STATUS2_MAPPING] &&
+		    route_probe.decision.missing_root_certificate_complete &&
+		    route_probe.decision.missing_root_certificate_triggered &&
+		    route_probe.optional_attempted && route_probe.optional_complete &&
+		    route_probe.optional_published;
+		if (good)
+		    positive_recoveries++;
+	    } else {
+		negative_rays++;
+		good = legacy.segments == 1 && !routed.segments &&
+		    route_probe.legacy_root_fault_injected &&
+		    route_probe.suppressed_legacy_raw_hits &&
+		    route_probe.decision.missing_root_certificate_associations &&
+		    route_probe.decision.missing_root_certificate_state[
+			RT_BREP_ROUTE_CERT_INCOMPLETE] &&
+		    route_probe.decision.missing_root_certificate_failure_reason[
+			RT_BREP_ROUTE_CERT_FAILURE_STATUS2_MAPPING] &&
+		    !route_probe.decision.missing_root_certificate_triggered &&
+		    !route_probe.optional_attempted &&
+		    !route_probe.optional_published && stats_valid &&
+		    !(prep_stats.routing_capability_flags &
+			RT_BREP_ROUTE_CAP_DEGREE_THEOREM);
+		if (good)
+		    negative_rejections++;
+	    }
+	    if (!good) {
+		std::printf("FAIL: status-2 proxy routing %s reverse=%d "
+		    "segments=%d/%d associations=%zu states=%zu/%zu/%zu "
+		    "mapping=%zu cells/correction/hazard/contact=%zu/%zu/%zu/%zu "
+		    "qual/reason=%u/%u suppressed=%zu/%zu "
+		    "complete/trigger/attempt/done/pub=%zu/%zu/%d/%d/%d "
+		    "capabilities=%u packs=%zu\n",
+		    test.name, reverse, legacy.segments, routed.segments,
+		    route_probe.decision.missing_root_certificate_associations,
+		    route_probe.decision.missing_root_certificate_state[0],
+		    route_probe.decision.missing_root_certificate_state[1],
+		    route_probe.decision.missing_root_certificate_state[2],
+		    route_probe.decision.missing_root_certificate_failure_reason[
+			RT_BREP_ROUTE_CERT_FAILURE_STATUS2_MAPPING],
+		    route_probe.decision.candidate_cells,
+		    route_probe.decision.empty_correction_cells,
+		    route_probe.decision.hazard_roots,
+		    route_probe.decision.contact_roots,
+		    route_probe.decision.qualification_flags,
+		    route_probe.decision.reason_flags,
+		    route_probe.suppressed_legacy_raw_hits,
+		    route_probe.suppressed_legacy_route_roots,
+		    route_probe.decision.missing_root_certificate_complete,
+		    route_probe.decision.missing_root_certificate_triggered,
+		    route_probe.optional_attempted, route_probe.optional_complete,
+		    route_probe.optional_published,
+		    stats_valid ? prep_stats.routing_capability_flags : 0,
+		    stats_valid ?
+			prep_stats.routing_complete_cell_span_packs : 0);
+		failures++;
+	    }
+	}
+
+	if (benchmark_name && BU_STR_EQUAL(benchmark_name, test.name)) {
+	    std::vector<sampled_ray> benchmark_rays;
+	    const size_t grid_size = 20;
+	    benchmark_rays.reserve(grid_size * grid_size + 2);
+	    for (size_t row = 0; row < grid_size; ++row) {
+		for (size_t column = 0; column < grid_size; ++column) {
+		    sampled_ray ray;
+		    const double x = -16.0 + 32.0 * column / (grid_size - 1);
+		    const double y = -16.0 + 32.0 * row / (grid_size - 1);
+		    VSET(ray.origin, x, y, 20.0);
+		    VSET(ray.direction, 0.0, 0.0, -1.0);
+		    benchmark_rays.push_back(ray);
+		}
+	    }
+	    for (int reverse = 0; reverse <= 1; ++reverse) {
+		sampled_ray ray;
+		const ON_3dPoint probe_origin = reverse ?
+		    point - 12.0 * normal : point + 6.0 * normal;
+		const ON_3dVector probe_direction = reverse ? normal : -normal;
+		VSET(ray.origin, probe_origin.x, probe_origin.y, probe_origin.z);
+		VSET(ray.direction, probe_direction.x, probe_direction.y,
+		    probe_direction.z);
+		benchmark_rays.push_back(ray);
+	    }
+
+	    size_t expected_segments = 0;
+	    std::vector<ray_result> legacy_results;
+	    legacy_results.reserve(benchmark_rays.size());
+	    for (size_t ray_index = 0; ray_index < benchmark_rays.size();
+		    ++ray_index) {
+		const sampled_ray &ray = benchmark_rays[ray_index];
+		const ray_result legacy = shoot_brep_legacy(stp, rtip, resp,
+		    ray.origin, ray.direction);
+		const ray_result routed = shoot_brep_route(stp, rtip, resp,
+		    ray.origin, ray.direction, true);
+		legacy_results.push_back(legacy);
+		expected_segments += (size_t)legacy.segments;
+		if (legacy.segments != routed.segments ||
+			(legacy.segments &&
+			 (legacy.in_dist != routed.in_dist ||
+			  legacy.out_dist != routed.out_dist))) {
+		    std::printf("FAIL: status-2 proxy throughput output "
+			"ray=%zu segments=%d/%d distances=%.17g/%.17g "
+			"%.17g/%.17g\n", ray_index, legacy.segments,
+			routed.segments, legacy.in_dist, routed.in_dist,
+			legacy.out_dist, routed.out_dist);
+		    failures++;
+		}
+	    }
+
+	    size_t segment_sink = 0;
+	    const int64_t calibration_start = bu_gettime();
+	    for (size_t ray_index = 0; ray_index < benchmark_rays.size();
+		    ++ray_index) {
+		const sampled_ray &ray = benchmark_rays[ray_index];
+		segment_sink += (size_t)shoot_brep_legacy(stp, rtip, resp,
+		    ray.origin, ray.direction).segments;
+	    }
+	    const int64_t calibration_elapsed = std::max(INT64_C(1),
+		bu_gettime() - calibration_start);
+	    const int64_t target_microseconds =
+		test.target_type == PROXY_TARGET_POLYCURVE ? 1500000 : 500000;
+	    const size_t repetitions = std::max((size_t)1,
+		std::min((size_t)128, (size_t)((target_microseconds +
+		    calibration_elapsed - 1) / calibration_elapsed)));
+	    const size_t trial_count = 7;
+	    std::vector<double> legacy_wall;
+	    std::vector<double> route_wall;
+	    std::vector<double> legacy_cpu;
+	    std::vector<double> route_cpu;
+	    const auto measure_batch = [&](bool routed) {
+		const int64_t wall_start = bu_gettime();
+		const std::clock_t cpu_start = std::clock();
+		for (size_t ray_index = 0;
+			ray_index < benchmark_rays.size(); ++ray_index) {
+		    const sampled_ray &ray = benchmark_rays[ray_index];
+		    const ray_result result = routed ?
+			shoot_brep_route(stp, rtip, resp, ray.origin,
+			    ray.direction, true) :
+			shoot_brep_legacy(stp, rtip, resp, ray.origin,
+			    ray.direction);
+		    segment_sink += (size_t)result.segments;
+		}
+		const std::clock_t cpu_end = std::clock();
+		const int64_t wall_elapsed = bu_gettime() - wall_start;
+		const double wall_us = (double)wall_elapsed;
+		const double cpu_us = cpu_start != (std::clock_t)-1 &&
+		    cpu_end != (std::clock_t)-1 && cpu_end >= cpu_start ?
+		    1000000.0 * (double)(cpu_end - cpu_start) /
+			CLOCKS_PER_SEC : INFINITY;
+		return std::pair<double, double>(wall_us, cpu_us);
+	    };
+	    for (size_t trial = 0; trial < trial_count; ++trial) {
+		double legacy_wall_elapsed = 0.0;
+		double route_wall_elapsed = 0.0;
+		double legacy_cpu_elapsed = 0.0;
+		double route_cpu_elapsed = 0.0;
+		for (size_t repetition = 0; repetition < repetitions;
+			repetition++) {
+		    std::pair<double, double> legacy_measurement;
+		    std::pair<double, double> route_measurement;
+		    if (!((trial + repetition) % 2)) {
+			legacy_measurement = measure_batch(false);
+			route_measurement = measure_batch(true);
+		    } else {
+			route_measurement = measure_batch(true);
+			legacy_measurement = measure_batch(false);
+		    }
+		    legacy_wall_elapsed += legacy_measurement.first;
+		    legacy_cpu_elapsed += legacy_measurement.second;
+		    route_wall_elapsed += route_measurement.first;
+		    route_cpu_elapsed += route_measurement.second;
+		}
+		const double shot_count = (double)(repetitions *
+		    benchmark_rays.size());
+		legacy_wall.push_back(legacy_wall_elapsed / shot_count);
+		legacy_cpu.push_back(legacy_cpu_elapsed / shot_count);
+		route_wall.push_back(route_wall_elapsed / shot_count);
+		route_cpu.push_back(route_cpu_elapsed / shot_count);
+	    }
+	    std::sort(legacy_wall.begin(), legacy_wall.end());
+	    std::sort(route_wall.begin(), route_wall.end());
+	    std::sort(legacy_cpu.begin(), legacy_cpu.end());
+	    std::sort(route_cpu.begin(), route_cpu.end());
+	    const size_t median = trial_count / 2;
+	    const double wall_ratio = legacy_wall[median] /
+		route_wall[median];
+	    const double cpu_ratio = legacy_cpu[median] /
+		route_cpu[median];
+	    const bool performance_pass = std::isfinite(wall_ratio) &&
+		std::isfinite(cpu_ratio) && wall_ratio >= 0.95 &&
+		cpu_ratio >= 0.95;
+	    std::printf("Status-2 proxy throughput %s: %s rays/trial=%zu "
+		"segments/batch=%zu legacy-us=%.6f/%.6f "
+		"routed-us=%.6f/%.6f ratio=%.4f/%.4f sink=%zu\n",
+		test.name, performance_pass ? "PASS" : "FAIL",
+		repetitions * benchmark_rays.size(), expected_segments,
+		legacy_wall[median], legacy_cpu[median], route_wall[median],
+		route_cpu[median], wall_ratio, cpu_ratio, segment_sink);
+	    if (!performance_pass)
+		failures++;
+	}
+	free_solid(cached_stp);
+	if (cached_brep_internal.brep)
+	    delete cached_brep_internal.brep;
+	free_solid(stp);
+	delete target;
+	delete target_dependency;
+    }
+
+	if (positive_recoveries != positive_rays || positive_rays != 16 ||
+	    negative_rejections != negative_rays || negative_rays != 2 ||
+	    cache_reconstructions != 1 || cached_route_matches != 2) {
+	std::printf("FAIL: status-2 proxy routing coverage positive=%zu/%zu "
+	    "negative=%zu/%zu cache=%zu/1 routes=%zu/2 "
+	    "expected=16/16,2/2,1/1,2/2\n", positive_recoveries,
+	    positive_rays, negative_rejections, negative_rays,
+	    cache_reconstructions, cached_route_matches);
+	failures++;
+    }
+    if (!failures)
+	std::printf("Status-2 proxy routing: PASS positive=%zu/%zu "
+	    "negative=%zu/%zu cache=%zu/1 routes=%zu/2\n",
+	    positive_recoveries, positive_rays, negative_rejections,
+	    negative_rays, cache_reconstructions, cached_route_matches);
+    return failures;
+}
+
+
+static int
+check_status2_revolution_polycurve_profiles(struct rt_i *rtip,
+    struct resource *resp, bool run_benchmark = false)
+{
+    if (!rtip || !resp)
+	return 1;
+    struct polycurve_route_case {
+	const char *name;
+	int segment_count;
+	bool mixed_nurbs;
+	bool line_profile;
+	bool reverse;
+	bool transpose;
+	bool transform;
+	bool benchmark;
+    } cases[] = {
+	{"one-arc", 1, false, false, false, false, false, false},
+	{"two-arc-reversed-transposed", 2, false, false, true, true,
+	    false, false},
+	{"four-mixed", 4, true, false, false, false, false, true},
+	{"four-mixed-transformed", 4, true, false, false, true, true,
+	    false},
+	{"four-line-reversed", 4, false, true, true, false, false, false}
+    };
+    size_t positive_rays = 0;
+    size_t positive_recoveries = 0;
+    int failures = 0;
+
+    for (size_t case_index = 0;
+	    case_index < sizeof(cases) / sizeof(cases[0]); ++case_index) {
+	const polycurve_route_case &test = cases[case_index];
+	const ON_Torus torus(ON_xy_plane, 12.0, 3.0);
+	ON_RevSurface *revolution = torus.IsValid() ?
+	    torus.RevSurfaceForm(NULL) : NULL;
+	ON_Curve *source = revolution ? revolution->m_curve : NULL;
+	if (revolution)
+	    revolution->m_curve = NULL;
+	ON_PolyCurve *profile = test.line_profile ?
+	    status2_rectangle_polycurve(test.reverse) :
+	    status2_split_profile_polycurve(source, test.segment_count,
+		test.mixed_nurbs, test.reverse);
+	delete source;
+	if (!revolution || !profile) {
+	    delete revolution;
+	    delete profile;
+	    std::printf("FAIL: status-2 polycurve routing construction %s\n",
+		test.name);
+	    failures++;
+	    continue;
+	}
+	revolution->m_curve = profile;
+	revolution->SetDomain(0, -7.0, 11.0);
+	revolution->m_bbox.Destroy();
+	revolution->DestroyRuntimeCache(true);
+	ON_Brep *brep = ON_BrepRevSurface(revolution, false, false, NULL);
+	if (!brep)
+	    delete revolution;
+	if (brep && test.transpose && !brep->m_F[0].Transpose()) {
+	    delete brep;
+	    brep = NULL;
+	}
+	if (brep && test.reverse) {
+	    brep->FlipFace(brep->m_F[0]);
+	    brep->SetTrimIsoFlags();
+	}
+	if (brep && test.transform) {
+	    const ON_Xform xform = cobb_axis_angle_similarity_transform(2.5,
+		ON_3dVector(-100.0, 75.0, 20.0),
+		ON_3dVector(-1.0, 0.5, 2.0), -0.317);
+	    if (!brep->Transform(xform)) {
+		delete brep;
+		brep = NULL;
+	    }
+	}
+	const ON_RevSurface *side = brep && brep->m_F.Count() == 1 ?
+	    ON_RevSurface::Cast(brep->m_F[0].SurfaceOf()) : NULL;
+	ON_NurbsSurface nurbs;
+	const int nurb_form_status = side ? side->GetNurbForm(nurbs) : 0;
+	fastf_t mapped_profile_minimum = ON_UNSET_VALUE;
+	fastf_t mapped_profile_maximum = ON_UNSET_VALUE;
+	size_t mapped_profile_pieces = 0;
+	const ON_Interval side_profile_domain = side && side->m_curve ?
+	    side->m_curve->Domain() : ON_Interval::EmptyInterval;
+	const bool profile_map_valid = side && side->m_curve &&
+	    _rt_brep_profile_nurbs_interval_test(side->m_curve,
+		side_profile_domain.Min(), side_profile_domain.Max(),
+		&mapped_profile_minimum, &mapped_profile_maximum,
+		&mapped_profile_pieces);
+	if (side && side->m_curve && !profile_map_valid) {
+	    const ON_PolyCurve *diagnostic_polycurve =
+		ON_PolyCurve::Cast(side->m_curve);
+	    std::printf("status-2 profile diagnostic %s class=%s valid=%d "
+		"domain=%.17g/%.17g poly/count/nested/closed=%d/%d/%d/%d\n",
+		test.name, side->m_curve->ClassId()->ClassName(),
+		side->m_curve->IsValid() ? 1 : 0, side_profile_domain.Min(),
+		side_profile_domain.Max(), diagnostic_polycurve ? 1 : 0,
+		diagnostic_polycurve ? diagnostic_polycurve->Count() : 0,
+		diagnostic_polycurve && diagnostic_polycurve->IsNested() ? 1 : 0,
+		diagnostic_polycurve && diagnostic_polycurve->IsClosed() ? 1 : 0);
+	    for (int segment_index = 0; diagnostic_polycurve &&
+		    segment_index < diagnostic_polycurve->Count();
+		    ++segment_index) {
+		const ON_Curve *diagnostic_segment =
+		    diagnostic_polycurve->SegmentCurve(segment_index);
+		const ON_Interval diagnostic_domain = diagnostic_segment ?
+		    diagnostic_segment->Domain() : ON_Interval::EmptyInterval;
+		const ON_Interval diagnostic_profile_domain =
+		    diagnostic_polycurve->SegmentDomain(segment_index);
+		fastf_t diagnostic_minimum = ON_UNSET_VALUE;
+		fastf_t diagnostic_maximum = ON_UNSET_VALUE;
+		size_t diagnostic_pieces = 0;
+		const bool diagnostic_map = diagnostic_segment &&
+		    _rt_brep_profile_nurbs_interval_test(diagnostic_segment,
+			diagnostic_domain.Min(), diagnostic_domain.Max(),
+			&diagnostic_minimum, &diagnostic_maximum,
+			&diagnostic_pieces);
+		const ON_3dPoint diagnostic_start = diagnostic_segment ?
+		    diagnostic_segment->PointAtStart() : ON_3dPoint::UnsetPoint;
+		const ON_3dPoint diagnostic_end = diagnostic_segment ?
+		    diagnostic_segment->PointAtEnd() : ON_3dPoint::UnsetPoint;
+		const ON_3dPoint diagnostic_previous = segment_index ?
+		    diagnostic_polycurve->SegmentCurve(segment_index - 1)->
+			PointAtEnd() : diagnostic_start;
+		std::printf("  segment=%d class=%s valid/map/pieces=%d/%d/%zu "
+		    "profile-domain=%.17g/%.17g domain=%.17g/%.17g "
+		    "join-delta=%.17g/%.17g/%.17g mapped=%.17g/%.17g\n",
+		    segment_index, diagnostic_segment ?
+			diagnostic_segment->ClassId()->ClassName() : "none",
+		    diagnostic_segment && diagnostic_segment->IsValid() ? 1 : 0,
+		    diagnostic_map ? 1 : 0, diagnostic_pieces,
+		    diagnostic_profile_domain.Min(),
+		    diagnostic_profile_domain.Max(), diagnostic_domain.Min(),
+		    diagnostic_domain.Max(),
+		    diagnostic_start.x - diagnostic_previous.x,
+		    diagnostic_start.y - diagnostic_previous.y,
+		    diagnostic_start.z - diagnostic_previous.z,
+		    diagnostic_minimum, diagnostic_maximum);
+	    }
+	}
+	double parameter[2] = {ON_UNSET_VALUE, ON_UNSET_VALUE};
+	if (side) {
+	    const int angle_parameter = side->m_bTransposed ? 1 : 0;
+	    const int profile_parameter = 1 - angle_parameter;
+	    parameter[angle_parameter] = side->Domain(angle_parameter).
+		ParameterAt(1.0e-3 / (2.0 * ON_PI));
+	    parameter[profile_parameter] = side->Domain(profile_parameter).
+		ParameterAt(test.line_profile ? 0.375 : 0.647);
+	}
+	ON_3dPoint point;
+	ON_3dVector derivative[2];
+	ON_3dVector normal;
+	bool frame_valid = side && side->Ev1Der(parameter[0], parameter[1],
+	    point, derivative[0], derivative[1]);
+	if (frame_valid) {
+	    normal = ON_CrossProduct(derivative[0], derivative[1]);
+	    frame_valid = point.IsValid() && normal.Unitize();
+	}
+
+	struct rt_brep_internal brep_internal = {};
+	brep_internal.magic = RT_BREP_INTERNAL_MAGIC;
+	brep_internal.brep = brep;
+	struct rt_db_internal brep_intern;
+	RT_DB_INTERNAL_INIT(&brep_intern);
+	brep_intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
+	brep_intern.idb_type = ID_BREP;
+	brep_intern.idb_meth = &OBJ[ID_BREP];
+	brep_intern.idb_ptr = &brep_internal;
+	struct soltab *stp = brep && brep->IsValid() && brep->IsSolid() &&
+	    nurb_form_status == 2 && frame_valid ?
+	    prep_solid(rtip, &brep_intern, ID_BREP) : NULL;
+	if (!stp) {
+	    std::printf("FAIL: status-2 polycurve routing prep %s "
+		"valid/solid/status/frame=%d/%d/%d/%d\n", test.name,
+		brep ? brep->IsValid() : 0, brep ? brep->IsSolid() : 0,
+		nurb_form_status, frame_valid ? 1 : 0);
+	    if (brep_internal.brep)
+		delete brep_internal.brep;
+	    failures++;
+	    continue;
+	}
+
+	struct rt_brep_prep_stats prep_stats = {};
+	const bool stats_valid = _rt_brep_prep_stats(stp, &prep_stats);
+	for (int reverse_ray = 0; reverse_ray <= 1; ++reverse_ray) {
+	    const double scale = test.transform ? 2.5 : 1.0;
+	    const ON_3dPoint probe_origin = reverse_ray ?
+		point - 12.0 * scale * normal :
+		point + 6.0 * scale * normal;
+	    const ON_3dVector probe_direction = reverse_ray ? normal : -normal;
+	    point_t origin = {probe_origin.x, probe_origin.y, probe_origin.z};
+	    vect_t direction = {probe_direction.x, probe_direction.y,
+		probe_direction.z};
+	    const ray_result legacy = shoot_brep_legacy(stp, rtip, resp,
+		origin, direction);
+	    struct rt_brep_route_test_result route_probe;
+	    const ray_result routed = shoot_brep_missing_root_route(stp, rtip,
+		resp, origin, direction, true, route_probe);
+	    const double endpoint_tolerance = std::max(rtip->rti_tol.dist,
+		65536.0 * DBL_EPSILON * std::max(1.0,
+		    std::max(fabs(legacy.in_dist), fabs(legacy.out_dist))));
+	    positive_rays++;
+	    const bool good = profile_map_valid &&
+		mapped_profile_pieces == (size_t)test.segment_count &&
+		stats_valid &&
+		(prep_stats.routing_capability_flags &
+		    RT_BREP_ROUTE_CAP_DEGREE_THEOREM) &&
+		prep_stats.routing_feature_cell_span_bindings &&
+		legacy.segments == 1 && routed.segments == legacy.segments &&
+		fabs(routed.in_dist - legacy.in_dist) <= endpoint_tolerance &&
+		fabs(routed.out_dist - legacy.out_dist) <= endpoint_tolerance &&
+		route_probe.legacy_root_fault_injected &&
+		route_probe.suppressed_legacy_raw_hits &&
+		route_probe.decision.missing_root_certificate_associations &&
+		route_probe.decision.missing_root_certificate_state[
+		    RT_BREP_ROUTE_CERT_ROOT_POSITIVE] &&
+		!route_probe.decision.missing_root_certificate_failure_reason[
+		    RT_BREP_ROUTE_CERT_FAILURE_STATUS2_MAPPING] &&
+		route_probe.decision.missing_root_certificate_complete &&
+		route_probe.decision.missing_root_certificate_triggered &&
+		route_probe.optional_attempted && route_probe.optional_complete &&
+		route_probe.optional_published;
+	    if (good) {
+		positive_recoveries++;
+	    } else {
+		std::printf("FAIL: status-2 polycurve routing %s reverse=%d "
+		    "segments=%d/%d associations=%zu states=%zu/%zu/%zu "
+		    "mapping=%zu complete/trigger/attempt/done/pub="
+		    "%zu/%zu/%d/%d/%d capabilities=%u packs=%zu "
+		    "profile-map=%d/%zu/%.17g/%.17g\n",
+		    test.name, reverse_ray, legacy.segments, routed.segments,
+		    route_probe.decision.missing_root_certificate_associations,
+		    route_probe.decision.missing_root_certificate_state[0],
+		    route_probe.decision.missing_root_certificate_state[1],
+		    route_probe.decision.missing_root_certificate_state[2],
+		    route_probe.decision.missing_root_certificate_failure_reason[
+			RT_BREP_ROUTE_CERT_FAILURE_STATUS2_MAPPING],
+		    route_probe.decision.missing_root_certificate_complete,
+		    route_probe.decision.missing_root_certificate_triggered,
+		    route_probe.optional_attempted, route_probe.optional_complete,
+		    route_probe.optional_published,
+		    stats_valid ? prep_stats.routing_capability_flags : 0,
+		    stats_valid ?
+			prep_stats.routing_complete_cell_span_packs : 0,
+		    profile_map_valid ? 1 : 0, mapped_profile_pieces,
+		    mapped_profile_minimum, mapped_profile_maximum);
+		failures++;
+	    }
+	}
+
+	if (run_benchmark && test.benchmark) {
+	    std::vector<sampled_ray> benchmark_rays;
+	    const size_t grid_size = 20;
+	    benchmark_rays.reserve(grid_size * grid_size);
+	    for (size_t row = 0; row < grid_size; ++row) {
+		for (size_t column = 0; column < grid_size; ++column) {
+		    sampled_ray ray;
+		    VSET(ray.origin,
+			-16.0 + 32.0 * column / (grid_size - 1),
+			-16.0 + 32.0 * row / (grid_size - 1), 20.0);
+		    VSET(ray.direction, 0.0, 0.0, -1.0);
+		    benchmark_rays.push_back(ray);
+		}
+	    }
+	    size_t expected_segments = 0;
+	    for (size_t ray_index = 0; ray_index < benchmark_rays.size();
+		    ++ray_index) {
+		const sampled_ray &ray = benchmark_rays[ray_index];
+		const ray_result legacy = shoot_brep_legacy(stp, rtip, resp,
+		    ray.origin, ray.direction);
+		const ray_result routed = shoot_brep_route(stp, rtip, resp,
+		    ray.origin, ray.direction, true);
+		expected_segments += (size_t)legacy.segments;
+		if (legacy.segments != routed.segments ||
+			(legacy.segments &&
+			 (legacy.in_dist != routed.in_dist ||
+			  legacy.out_dist != routed.out_dist))) {
+		    std::printf("FAIL: status-2 polycurve throughput output "
+			"ray=%zu segments=%d/%d distances=%.17g/%.17g "
+			"%.17g/%.17g\n", ray_index, legacy.segments,
+			routed.segments, legacy.in_dist, routed.in_dist,
+			legacy.out_dist, routed.out_dist);
+		    failures++;
+		}
+	    }
+
+	    size_t segment_sink = 0;
+	    const int64_t calibration_start = bu_gettime();
+	    for (size_t ray_index = 0; ray_index < benchmark_rays.size();
+		    ++ray_index) {
+		const sampled_ray &ray = benchmark_rays[ray_index];
+		segment_sink += (size_t)shoot_brep_legacy(stp, rtip, resp,
+		    ray.origin, ray.direction).segments;
+	    }
+	    const int64_t calibration_elapsed = std::max(INT64_C(1),
+		bu_gettime() - calibration_start);
+	    const size_t repetitions = std::max((size_t)1,
+		std::min((size_t)128, (size_t)((500000 +
+		    calibration_elapsed - 1) / calibration_elapsed)));
+	    const size_t trial_count = 7;
+	    std::vector<double> legacy_wall;
+	    std::vector<double> route_wall;
+	    std::vector<double> legacy_cpu;
+	    std::vector<double> route_cpu;
+	    const auto measure = [&](bool routed) {
+		const int64_t wall_start = bu_gettime();
+		const std::clock_t cpu_start = std::clock();
+		for (size_t repetition = 0; repetition < repetitions;
+			repetition++) {
+		    for (size_t ray_index = 0;
+			    ray_index < benchmark_rays.size(); ++ray_index) {
+			const sampled_ray &ray = benchmark_rays[ray_index];
+			const ray_result result = routed ?
+			    shoot_brep_route(stp, rtip, resp, ray.origin,
+				ray.direction, true) :
+			    shoot_brep_legacy(stp, rtip, resp, ray.origin,
+				ray.direction);
+			segment_sink += (size_t)result.segments;
+		    }
+		}
+		const std::clock_t cpu_end = std::clock();
+		const int64_t wall_elapsed = bu_gettime() - wall_start;
+		const double shot_count = (double)(repetitions *
+		    benchmark_rays.size());
+		const double wall_us = wall_elapsed / shot_count;
+		const double cpu_us = cpu_start != (std::clock_t)-1 &&
+		    cpu_end != (std::clock_t)-1 && cpu_end >= cpu_start ?
+		    1000000.0 * (double)(cpu_end - cpu_start) /
+			(CLOCKS_PER_SEC * shot_count) : INFINITY;
+		return std::pair<double, double>(wall_us, cpu_us);
+	    };
+	    for (size_t trial = 0; trial < trial_count; ++trial) {
+		std::pair<double, double> legacy_measurement;
+		std::pair<double, double> route_measurement;
+		if (!(trial % 2)) {
+		    legacy_measurement = measure(false);
+		    route_measurement = measure(true);
+		} else {
+		    route_measurement = measure(true);
+		    legacy_measurement = measure(false);
+		}
+		legacy_wall.push_back(legacy_measurement.first);
+		legacy_cpu.push_back(legacy_measurement.second);
+		route_wall.push_back(route_measurement.first);
+		route_cpu.push_back(route_measurement.second);
+	    }
+	    std::sort(legacy_wall.begin(), legacy_wall.end());
+	    std::sort(route_wall.begin(), route_wall.end());
+	    std::sort(legacy_cpu.begin(), legacy_cpu.end());
+	    std::sort(route_cpu.begin(), route_cpu.end());
+	    const size_t median = trial_count / 2;
+	    const double wall_ratio = legacy_wall[median] /
+		route_wall[median];
+	    const double cpu_ratio = legacy_cpu[median] /
+		route_cpu[median];
+	    const bool performance_pass = std::isfinite(wall_ratio) &&
+		std::isfinite(cpu_ratio) && wall_ratio >= 0.95 &&
+		cpu_ratio >= 0.95;
+	    std::printf("Status-2 polycurve throughput: %s rays/trial=%zu "
+		"segments/batch=%zu legacy-us=%.6f/%.6f "
+		"routed-us=%.6f/%.6f ratio=%.4f/%.4f sink=%zu\n",
+		performance_pass ? "PASS" : "FAIL",
+		repetitions * benchmark_rays.size(), expected_segments,
+		legacy_wall[median], legacy_cpu[median], route_wall[median],
+		route_cpu[median], wall_ratio, cpu_ratio, segment_sink);
+	    if (!performance_pass)
+		failures++;
+	}
+	free_solid(stp);
+    }
+
+    const size_t expected_positive =
+	2 * sizeof(cases) / sizeof(cases[0]);
+    if (positive_recoveries != positive_rays ||
+	    positive_rays != expected_positive) {
+	std::printf("FAIL: status-2 polycurve routing coverage=%zu/%zu "
+	    "expected=%zu\n", positive_recoveries, positive_rays,
+	    expected_positive);
+	failures++;
+    }
+    if (!failures)
+	std::printf("Status-2 polycurve routing: PASS positive=%zu/%zu\n",
+	    positive_recoveries, positive_rays);
+    return failures;
+}
+
+
+static int
+check_status2_revolution_unsupported_profile(struct rt_i *rtip,
+    struct resource *resp)
+{
+    if (!rtip || !resp)
+	return 1;
+    struct rt_tor_internal torus = {};
+    torus.magic = RT_TOR_INTERNAL_MAGIC;
+    VSET(torus.v, 0.0, 0.0, 0.0);
+    VSET(torus.h, 0.0, 0.0, 1.0);
+    VSET(torus.a, 12.0, 0.0, 0.0);
+    VSET(torus.b, 0.0, 12.0, 0.0);
+    torus.r_a = torus.r_b = 12.0;
+    torus.r_h = 3.0;
+    struct rt_db_internal torus_intern;
+    RT_DB_INTERNAL_INIT(&torus_intern);
+    torus_intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
+    torus_intern.idb_type = ID_TOR;
+    torus_intern.idb_meth = &OBJ[ID_TOR];
+    torus_intern.idb_ptr = &torus;
+
+    ON_Brep *brep = ON_Brep::New();
+    OBJ[ID_TOR].ft_brep(&brep, &torus_intern, &rtip->rti_tol);
+    const int surface_index = brep && brep->m_F.Count() == 1 ?
+	brep->m_F[0].m_si : -1;
+    ON_RevSurface *revolution = surface_index >= 0 &&
+	surface_index < brep->m_S.Count() ?
+	ON_RevSurface::Cast(brep->m_S[surface_index]) : NULL;
+    ON_Curve *segment = revolution && revolution->m_curve ?
+	revolution->m_curve->DuplicateCurve() : NULL;
+    ON_PolyCurve *inner = segment ? new ON_PolyCurve(1) : NULL;
+    if (inner && inner->Append(segment))
+	segment = NULL;
+    ON_PolyCurve *profile = inner ? new ON_PolyCurve(1) : NULL;
+    if (profile && profile->Append(inner))
+	inner = NULL;
+    if (segment || inner || !profile || !profile->IsValid()) {
+	delete segment;
+	delete inner;
+	delete profile;
+	delete brep;
+	std::printf("FAIL: status-2 nested-polycurve control construction\n");
+	return 1;
+    }
+    delete revolution->m_curve;
+    revolution->m_curve = profile;
+    revolution->m_bbox.Destroy();
+    revolution->DestroyRuntimeCache(true);
+    brep->DestroyRuntimeCache(true);
+
+    ON_NurbsSurface nurbs;
+    const ON_Surface *surface = brep->m_F[0].SurfaceOf();
+    const int nurb_form_status = surface ? surface->GetNurbForm(nurbs) : 0;
+    double parameter[2] = {
+	surface ? surface->Domain(0).ParameterAt(1.0e-3 / (2.0 * ON_PI)) :
+	    ON_UNSET_VALUE,
+	surface ? surface->Domain(1).ParameterAt(0.647 / (2.0 * ON_PI)) :
+	    ON_UNSET_VALUE
+    };
+    ON_3dPoint point;
+    ON_3dVector derivative[2];
+    ON_3dVector normal;
+    bool frame_valid = surface && surface->Ev1Der(parameter[0], parameter[1],
+	point, derivative[0], derivative[1]);
+    if (frame_valid) {
+	normal = ON_CrossProduct(derivative[0], derivative[1]);
+	frame_valid = point.IsValid() && normal.Unitize();
+    }
+
+    struct rt_brep_internal brep_internal = {};
+    brep_internal.magic = RT_BREP_INTERNAL_MAGIC;
+    brep_internal.brep = brep;
+    struct rt_db_internal brep_intern;
+    RT_DB_INTERNAL_INIT(&brep_intern);
+    brep_intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
+    brep_intern.idb_type = ID_BREP;
+    brep_intern.idb_meth = &OBJ[ID_BREP];
+    brep_intern.idb_ptr = &brep_internal;
+    struct soltab *stp = nurb_form_status == 2 && frame_valid &&
+	brep->IsValid() && brep->IsSolid() ?
+	prep_solid(rtip, &brep_intern, ID_BREP) : NULL;
+    if (!stp) {
+	std::printf("FAIL: status-2 unsupported profile prep/status/frame="
+	    "%d/%d\n", nurb_form_status, frame_valid ? 1 : 0);
+	if (brep_internal.brep)
+	    delete brep_internal.brep;
+	return 1;
+    }
+
+    point_t origin = {
+	point.x + 6.0 * normal.x,
+	point.y + 6.0 * normal.y,
+	point.z + 6.0 * normal.z
+    };
+    vect_t direction = {-normal.x, -normal.y, -normal.z};
+    const ray_result legacy = shoot_brep_legacy(stp, rtip, resp, origin,
+	direction);
+    struct rt_brep_route_test_result route_probe;
+    const ray_result routed = shoot_brep_missing_root_route(stp, rtip, resp,
+	origin, direction, true, route_probe);
+    struct rt_brep_prep_stats prep_stats = {};
+    const bool stats_valid = _rt_brep_prep_stats(stp, &prep_stats);
+    const bool rejected = legacy.segments == 1 && !routed.segments &&
+	route_probe.legacy_root_fault_injected &&
+	route_probe.suppressed_legacy_raw_hits &&
+	route_probe.decision.missing_root_certificate_associations &&
+	route_probe.decision.missing_root_certificate_state[
+	    RT_BREP_ROUTE_CERT_INCOMPLETE] &&
+	route_probe.decision.missing_root_certificate_failure_reason[
+	    RT_BREP_ROUTE_CERT_FAILURE_STATUS2_MAPPING] &&
+	!route_probe.decision.missing_root_certificate_triggered &&
+	!route_probe.optional_attempted && !route_probe.optional_published &&
+	stats_valid && !(prep_stats.routing_capability_flags &
+	    RT_BREP_ROUTE_CAP_DEGREE_THEOREM);
+    if (!rejected)
+	std::printf("FAIL: nested-polycurve status-2 routing control "
+	    "segments=%d/%d associations=%zu states=%zu/%zu/%zu "
+	    "mapping=%zu trigger/attempt/publish=%zu/%d/%d capabilities=%u\n",
+	    legacy.segments, routed.segments,
+	    route_probe.decision.missing_root_certificate_associations,
+	    route_probe.decision.missing_root_certificate_state[0],
+	    route_probe.decision.missing_root_certificate_state[1],
+	    route_probe.decision.missing_root_certificate_state[2],
+	    route_probe.decision.missing_root_certificate_failure_reason[
+		RT_BREP_ROUTE_CERT_FAILURE_STATUS2_MAPPING],
+	    route_probe.decision.missing_root_certificate_triggered,
+	    route_probe.optional_attempted, route_probe.optional_published,
+	    prep_stats.routing_capability_flags);
+
+    free_solid(stp);
+    return rejected ? 0 : 1;
 }
 
 
@@ -7005,6 +9548,734 @@ cobb_transform_vector(const ON_Xform &xform, const ON_3dVector &vector)
 
 
 static int
+check_status2_arc_parameter_map()
+{
+    struct arc_map_case {
+	const char *name;
+	double angle;
+	double domain_minimum;
+	double domain_maximum;
+	double radius;
+	bool reverse;
+    } cases[] = {
+	{"full", 2.0 * ON_PI, 0.0, 2.0 * ON_PI, 1.0, false},
+	{"large-domain", 2.0 * ON_PI, 0.0, 6.0e4 * ON_PI,
+	    3.0e4, false},
+	{"large-domain-reversed", 2.0 * ON_PI, 0.0,
+	    6.0e4 * ON_PI, 3.0e4, true},
+	{"half-reversed", ON_PI, -37.0, 19.0, 10.0, true},
+	{"partial", ON_PI / 3.0, 7.0, 29.0, 0.25, false}
+    };
+    const size_t sample_count = 4097;
+    size_t checked = 0;
+    double maximum_point_error = 0.0;
+    double maximum_round_trip_error = 0.0;
+    int failures = 0;
+
+    for (size_t case_index = 0;
+	    case_index < sizeof(cases) / sizeof(cases[0]); ++case_index) {
+	const arc_map_case &test = cases[case_index];
+	ON_Circle circle(ON_xy_plane, test.radius);
+	ON_Arc arc(circle, ON_Interval(0.0, test.angle));
+	ON_ArcCurve curve(arc, test.domain_minimum, test.domain_maximum);
+	if ((test.reverse && !curve.Reverse()) || !curve.IsValid()) {
+	    std::printf("FAIL: status-2 arc parameter setup %s\n",
+		test.name);
+	    failures++;
+	    continue;
+	}
+	ON_NurbsCurve nurbs;
+	if (curve.GetNurbForm(nurbs) != 2 || !nurbs.IsValid()) {
+	    std::printf("FAIL: status-2 arc NURBS conversion %s\n",
+		test.name);
+	    failures++;
+	    continue;
+	}
+	const ON_Interval domain = curve.Domain();
+	double previous = -DBL_MAX;
+	for (size_t sample = 0; sample < sample_count; ++sample) {
+	    const double fraction = (double)sample / (sample_count - 1);
+	    const double parameter = domain.ParameterAt(fraction);
+	    fastf_t mapped = ON_UNSET_VALUE;
+	    fastf_t round_trip = ON_UNSET_VALUE;
+	    if (!_rt_brep_arc_nurbs_parameter_test(domain.Min(),
+		    domain.Max(), curve.AngleRadians(), parameter, 1,
+		    &mapped) ||
+		    !_rt_brep_arc_nurbs_parameter_test(domain.Min(),
+		    domain.Max(), curve.AngleRadians(), mapped, 0,
+		    &round_trip)) {
+		std::printf("FAIL: status-2 arc parameter map %s sample=%zu\n",
+		    test.name, sample);
+		failures++;
+		break;
+	    }
+	    if ((sample && !(mapped > previous)) ||
+		    mapped < nurbs.Domain().Min() ||
+		    mapped > nurbs.Domain().Max()) {
+		std::printf("FAIL: status-2 arc parameter monotonicity %s "
+		    "sample=%zu mapped/previous=%.17g/%.17g\n", test.name,
+		    sample, mapped, previous);
+		failures++;
+		break;
+	    }
+	    previous = mapped;
+	    const double round_trip_error = fabs(round_trip - parameter);
+	    maximum_round_trip_error = std::max(maximum_round_trip_error,
+		round_trip_error / std::max(1.0, domain.Length()));
+	    if (round_trip_error > 4096.0 * DBL_EPSILON *
+		    std::max(1.0, std::max(fabs(parameter),
+			std::max(fabs(domain.Min()), fabs(domain.Max()))))) {
+		std::printf("FAIL: status-2 arc parameter inverse %s "
+		    "sample=%zu source/result=%.17g/%.17g\n", test.name,
+		    sample, parameter, round_trip);
+		failures++;
+		break;
+	    }
+	    const ON_3dPoint curve_point = curve.PointAt(parameter);
+	    const ON_3dPoint nurbs_point = nurbs.PointAt(mapped);
+	    const double point_error = curve_point.DistanceTo(nurbs_point);
+	    maximum_point_error = std::max(maximum_point_error,
+		point_error / std::max(1.0, test.radius));
+	    if (!curve_point.IsValid() || !nurbs_point.IsValid() ||
+		    point_error > 8192.0 * DBL_EPSILON *
+			std::max(1.0, test.radius)) {
+		std::printf("FAIL: status-2 arc parameter locus %s sample=%zu "
+		    "error=%.17g\n", test.name, sample, point_error);
+		failures++;
+		break;
+	    }
+	    checked++;
+	}
+    }
+
+    if (!failures)
+	std::printf("Status-2 arc parameter mapping: PASS samples=%zu "
+	    "max-errors=%.3g/%.3g\n", checked, maximum_point_error,
+	    maximum_round_trip_error);
+    return failures;
+}
+
+
+static int
+check_status2_proxy_parameter_map()
+{
+    enum proxy_target_type {
+	PROXY_ARC,
+	PROXY_LINE,
+	PROXY_NURBS,
+	PROXY_POLYCURVE,
+	PROXY_POLYCURVE_REVERSED_PIECE,
+	PROXY_NESTED_POLYCURVE,
+	PROXY_PROXY
+    };
+    struct proxy_map_case {
+	const char *name;
+	proxy_target_type target_type;
+	double subdomain_minimum;
+	double subdomain_maximum;
+	bool reverse;
+	bool transform;
+	bool supported;
+    } cases[] = {
+	{"direct-arc", PROXY_ARC, 0.0, 1.0, false, false, true},
+	{"reversed-arc", PROXY_ARC, 0.0, 1.0, true, false, true},
+	{"subdomain-arc", PROXY_ARC, 0.17, 0.83, false, false, true},
+	{"transformed-subdomain-reversed-arc", PROXY_ARC, 0.11, 0.91,
+	    true, true, true},
+	{"subdomain-reversed-line", PROXY_LINE, 0.19, 0.79, true, true,
+	    true},
+	{"subdomain-reversed-nurbs", PROXY_NURBS, 0.13, 0.87, true, true,
+	    true},
+	{"polycurve", PROXY_POLYCURVE, 0.0, 1.0, false, false, true},
+	{"subdomain-reversed-polycurve", PROXY_POLYCURVE, 0.11, 0.89, true,
+	    true, true},
+	{"reversed-proxy-piece-polycurve", PROXY_POLYCURVE_REVERSED_PIECE,
+	    0.0, 1.0, true, false, true},
+	{"invalid-nested-polycurve", PROXY_NESTED_POLYCURVE, 0.0, 1.0,
+	    false, false, false},
+	{"invalid-proxy-of-proxy", PROXY_PROXY, 0.0, 1.0, false, false,
+	    false}
+    };
+    const size_t sample_count = 4097;
+    size_t checked = 0;
+    size_t rejected = 0;
+    size_t polycurve_intervals = 0;
+    double maximum_point_error = 0.0;
+    double maximum_round_trip_error = 0.0;
+    int failures = 0;
+
+    for (size_t case_index = 0;
+	    case_index < sizeof(cases) / sizeof(cases[0]); ++case_index) {
+	const proxy_map_case &test = cases[case_index];
+	ON_Curve *target = NULL;
+	ON_Curve *target_dependency = NULL;
+	const ON_Circle circle(ON_xy_plane, 7.0);
+	const ON_Arc arc(circle, ON_Interval(0.0, 2.0 * ON_PI));
+	if (test.target_type == PROXY_ARC) {
+	    target = new ON_ArcCurve(arc, -37.0, 91.0);
+	} else if (test.target_type == PROXY_LINE) {
+	    ON_LineCurve *line = new ON_LineCurve(ON_3dPoint(7.0, 0.0,
+		-11.0), ON_3dPoint(7.0, 0.0, 17.0));
+	    if (line)
+		line->SetDomain(-37.0, 91.0);
+	    target = line;
+	} else if (test.target_type == PROXY_NURBS) {
+	    ON_NurbsCurve *nurbs = new ON_NurbsCurve();
+	    ON_ArcCurve source(arc, -37.0, 91.0);
+	    if (!nurbs || source.GetNurbForm(*nurbs) != 2) {
+		delete nurbs;
+		nurbs = NULL;
+	    }
+	    target = nurbs;
+	} else if (test.target_type == PROXY_POLYCURVE) {
+	    ON_ArcCurve source(arc, -37.0, 91.0);
+	    target = status2_split_profile_polycurve(&source, 4, true,
+		false);
+	} else if (test.target_type == PROXY_POLYCURVE_REVERSED_PIECE) {
+	    ON_ArcCurve source(arc, -37.0, 91.0);
+	    target = status2_reversed_proxy_piece_polycurve(&source, 2,
+		&target_dependency);
+	} else if (test.target_type == PROXY_NESTED_POLYCURVE) {
+	    ON_ArcCurve source(arc, -37.0, 91.0);
+	    ON_PolyCurve *inner = status2_split_profile_polycurve(&source, 2,
+		false, false);
+	    ON_PolyCurve *outer = inner ? new ON_PolyCurve(1) : NULL;
+	    if (!outer || !outer->Append(inner)) {
+		delete inner;
+		delete outer;
+		outer = NULL;
+	    }
+	    target = outer;
+	} else {
+	    target_dependency = new ON_ArcCurve(arc, -37.0, 91.0);
+	    ON_CurveProxy *inner = target_dependency ?
+		new ON_CurveProxy(target_dependency) : NULL;
+	    if (inner)
+		inner->SetDomain(-11.0, 29.0);
+	    target = inner;
+	}
+	const ON_Xform xform = cobb_axis_angle_similarity_transform(1.0e4,
+	    ON_3dVector(1.0e6, -2.0e6, 3.0e6),
+	    ON_3dVector(2.0, 0.25, -1.0), 2.017);
+	if (!target || (test.transform && !target->Transform(xform)) ||
+		!target->IsValid()) {
+	    std::printf("FAIL: status-2 proxy parameter setup %s\n",
+		test.name);
+	    delete target;
+	    delete target_dependency;
+	    failures++;
+	    continue;
+	}
+	const ON_Interval target_domain = target->Domain();
+	const ON_Interval real_domain(
+	    target_domain.ParameterAt(test.subdomain_minimum),
+	    target_domain.ParameterAt(test.subdomain_maximum));
+	ON_CurveProxy proxy;
+	proxy.SetProxyCurve(target, real_domain);
+	if (test.reverse)
+	    proxy.Reverse();
+	proxy.SetDomain(-2.5e5, 7.5e5);
+	ON_NurbsCurve proxy_nurbs;
+	const int nurb_status = proxy.GetNurbForm(proxy_nurbs);
+	if (!proxy.IsValid() || nurb_status < 1 ||
+		!proxy_nurbs.IsValid()) {
+	    std::printf("FAIL: status-2 proxy NURBS setup %s status=%d\n",
+		test.name, nurb_status);
+	    delete target;
+	    delete target_dependency;
+	    failures++;
+	    continue;
+	}
+	ON_Curve *effective_curve = test.supported &&
+	    (test.target_type == PROXY_POLYCURVE ||
+	     test.target_type == PROXY_POLYCURVE_REVERSED_PIECE) ?
+	    proxy.DuplicateCurve() : NULL;
+	const ON_PolyCurve *effective_polycurve =
+	    ON_PolyCurve::Cast(effective_curve);
+	std::vector<ON_NurbsCurve> effective_nurbs;
+	if (effective_polycurve) {
+	    effective_nurbs.resize((size_t)effective_polycurve->Count());
+	    for (int segment_index = 0;
+		    segment_index < effective_polycurve->Count();
+		    ++segment_index) {
+		const ON_Curve *segment =
+		    effective_polycurve->SegmentCurve(segment_index);
+		if (!segment || segment->GetNurbForm(
+			effective_nurbs[(size_t)segment_index]) < 1 ||
+			!effective_nurbs[(size_t)segment_index].SetDomain(
+			    effective_polycurve->SegmentDomain(
+				segment_index).Min(),
+			    effective_polycurve->SegmentDomain(
+				segment_index).Max())) {
+		    effective_nurbs.clear();
+		    break;
+		}
+	    }
+	}
+	if (test.supported &&
+		(test.target_type == PROXY_POLYCURVE ||
+		 test.target_type == PROXY_POLYCURVE_REVERSED_PIECE) &&
+		(!effective_polycurve || effective_nurbs.size() !=
+		    (size_t)effective_polycurve->Count())) {
+	    std::printf("FAIL: status-2 proxy independent NURBS setup %s\n",
+		test.name);
+	    delete effective_curve;
+	    delete target;
+	    delete target_dependency;
+	    failures++;
+	    continue;
+	}
+
+	const ON_Interval domain = proxy.Domain();
+	double previous = -DBL_MAX;
+	for (size_t sample = 0; sample < sample_count; ++sample) {
+	    const double fraction = (double)sample / (sample_count - 1);
+	    const double parameter = domain.ParameterAt(fraction);
+	    fastf_t mapped = ON_UNSET_VALUE;
+	    fastf_t round_trip = ON_UNSET_VALUE;
+	    const bool mapped_ok = _rt_brep_profile_nurbs_parameter_test(
+		&proxy, parameter, 1, &mapped) != 0;
+	    if (!test.supported) {
+		if (mapped_ok) {
+		    std::printf("FAIL: status-2 proxy invalid target accepted %s\n",
+			test.name);
+		    failures++;
+		}
+		rejected++;
+		break;
+	    }
+	    if (!mapped_ok || !_rt_brep_profile_nurbs_parameter_test(
+		    &proxy, mapped, 0, &round_trip)) {
+		std::printf("FAIL: status-2 proxy parameter map %s sample=%zu\n",
+		    test.name, sample);
+		failures++;
+		break;
+	    }
+	    if ((sample && !(mapped > previous)) ||
+		    mapped < proxy_nurbs.Domain().Min() ||
+		    mapped > proxy_nurbs.Domain().Max()) {
+		std::printf("FAIL: status-2 proxy monotonicity %s sample=%zu "
+		    "mapped/previous=%.17g/%.17g\n", test.name, sample,
+		    mapped, previous);
+		failures++;
+		break;
+	    }
+	    previous = mapped;
+	    const double round_trip_error = fabs(round_trip - parameter);
+	    maximum_round_trip_error = std::max(maximum_round_trip_error,
+		round_trip_error / std::max(1.0, domain.Length()));
+	    if (round_trip_error > 8192.0 * DBL_EPSILON * std::max(1.0,
+		    std::max(fabs(parameter), std::max(fabs(domain.Min()),
+			fabs(domain.Max()))))) {
+		std::printf("FAIL: status-2 proxy inverse %s sample=%zu "
+		    "source/result=%.17g/%.17g\n", test.name, sample,
+		    parameter, round_trip);
+		failures++;
+		break;
+	    }
+	    const ON_3dPoint curve_point = proxy.PointAt(parameter);
+	    ON_3dPoint nurbs_point = proxy_nurbs.PointAt(mapped);
+	    if (effective_polycurve) {
+		const int segment_index =
+		    effective_polycurve->SegmentIndex(mapped);
+		if (segment_index < 0 ||
+			(size_t)segment_index >= effective_nurbs.size()) {
+		    std::printf("FAIL: status-2 proxy independent NURBS "
+			"lookup %s sample=%zu\n", test.name, sample);
+		    failures++;
+		    break;
+		}
+		nurbs_point = effective_nurbs[(size_t)segment_index].PointAt(
+		    mapped);
+	    }
+	    const double point_error = curve_point.DistanceTo(nurbs_point);
+	    double coordinate_scale = 1.0;
+	    for (int coordinate = 0; coordinate < 3; ++coordinate)
+		coordinate_scale = std::max(coordinate_scale,
+		    std::max(fabs(curve_point[coordinate]),
+			fabs(nurbs_point[coordinate])));
+	    maximum_point_error = std::max(maximum_point_error,
+		point_error / coordinate_scale);
+	    if (!curve_point.IsValid() || !nurbs_point.IsValid() ||
+		    point_error > 65536.0 * DBL_EPSILON * coordinate_scale) {
+		std::printf("FAIL: status-2 proxy locus %s sample=%zu "
+		    "error=%.17g scale=%.17g\n", test.name, sample,
+		    point_error, coordinate_scale);
+		failures++;
+		break;
+	    }
+	    checked++;
+	}
+	for (int boundary = 0; effective_polycurve &&
+		boundary <= effective_polycurve->Count(); ++boundary) {
+	    const double center = boundary == effective_polycurve->Count() ?
+		effective_polycurve->Domain().Max() :
+		effective_polycurve->SegmentDomain(boundary).Min();
+	    const double lower = boundary == 0 ? center :
+		std::max(domain.Min(), center - 0.2 *
+		    effective_polycurve->SegmentDomain(boundary - 1).Length());
+	    const double upper = boundary == effective_polycurve->Count() ?
+		center : std::min(domain.Max(), center + 0.2 *
+		    effective_polycurve->SegmentDomain(boundary).Length());
+	    if (!(lower < upper))
+		continue;
+	    fastf_t mapped_minimum = ON_UNSET_VALUE;
+	    fastf_t mapped_maximum = ON_UNSET_VALUE;
+	    fastf_t scalar_minimum = ON_UNSET_VALUE;
+	    fastf_t scalar_maximum = ON_UNSET_VALUE;
+	    size_t piece_count = 0;
+	    if (!_rt_brep_profile_nurbs_interval_test(&proxy, lower, upper,
+		    &mapped_minimum, &mapped_maximum, &piece_count) ||
+		    piece_count != effective_nurbs.size() ||
+		    !_rt_brep_profile_nurbs_parameter_test(&proxy, lower, 1,
+			&scalar_minimum) ||
+		    !_rt_brep_profile_nurbs_parameter_test(&proxy, upper, 1,
+			&scalar_maximum) ||
+		    fabs(mapped_minimum - scalar_minimum) >
+			8192.0 * DBL_EPSILON * std::max(1.0,
+			    domain.Length()) ||
+		    fabs(mapped_maximum - scalar_maximum) >
+			8192.0 * DBL_EPSILON * std::max(1.0,
+			    domain.Length())) {
+		std::printf("FAIL: status-2 proxy polycurve interval %s "
+		    "boundary=%d pieces=%zu/%zu mapped=%.17g/%.17g "
+		    "scalar=%.17g/%.17g\n", test.name, boundary,
+		    piece_count, effective_nurbs.size(), mapped_minimum,
+		    mapped_maximum, scalar_minimum, scalar_maximum);
+		failures++;
+	    } else {
+		polycurve_intervals++;
+	    }
+	}
+	delete effective_curve;
+	delete target;
+	delete target_dependency;
+    }
+
+    size_t supported_cases = 0;
+    for (size_t case_index = 0;
+	    case_index < sizeof(cases) / sizeof(cases[0]); ++case_index)
+	if (cases[case_index].supported)
+	    supported_cases++;
+    const size_t rejected_cases = sizeof(cases) / sizeof(cases[0]) -
+	supported_cases;
+    const size_t expected_checked = supported_cases * sample_count;
+    if (checked != expected_checked || rejected != rejected_cases) {
+	std::printf("FAIL: status-2 proxy parameter coverage=%zu/%zu "
+	    "rejected=%zu/%zu\n", checked, expected_checked, rejected,
+	    rejected_cases);
+	failures++;
+    }
+    if (!failures)
+	std::printf("Status-2 proxy parameter mapping: PASS samples=%zu "
+	    "intervals=%zu rejected=%zu max-errors=%.3g/%.3g\n", checked,
+	    polycurve_intervals, rejected,
+	    maximum_point_error, maximum_round_trip_error);
+    return failures;
+}
+
+
+static int
+check_status2_polycurve_parameter_map()
+{
+    enum polycurve_map_type {
+	POLYCURVE_ARC,
+	POLYCURVE_MIXED,
+	POLYCURVE_LINE
+    };
+    struct polycurve_map_case {
+	const char *name;
+	polycurve_map_type type;
+	int segment_count;
+	bool reverse;
+	bool transform;
+    } cases[] = {
+	{"one-arc", POLYCURVE_ARC, 1, false, false},
+	{"two-arc-reversed", POLYCURVE_ARC, 2, true, false},
+	{"four-mixed-transformed", POLYCURVE_MIXED, 4, false, true},
+	{"four-line-reversed", POLYCURVE_LINE, 4, true, true}
+    };
+    const size_t sample_count = 4097;
+    size_t checked = 0;
+    size_t intervals = 0;
+    size_t rejected = 0;
+    double maximum_point_error = 0.0;
+    double maximum_round_trip_error = 0.0;
+    int failures = 0;
+    const ON_Circle circle(ON_xy_plane, 7.0);
+    const ON_Arc arc(circle, ON_Interval(0.0, 2.0 * ON_PI));
+    ON_ArcCurve source(arc, -37.0, 91.0);
+    const ON_Xform xform = cobb_axis_angle_similarity_transform(1.0e4,
+	ON_3dVector(1.0e6, -2.0e6, 3.0e6),
+	ON_3dVector(2.0, 0.25, -1.0), 2.017);
+
+    for (size_t case_index = 0;
+	    case_index < sizeof(cases) / sizeof(cases[0]); ++case_index) {
+	const polycurve_map_case &test = cases[case_index];
+	ON_PolyCurve *polycurve = test.type == POLYCURVE_LINE ?
+	    status2_rectangle_polycurve(test.reverse) :
+	    status2_split_profile_polycurve(&source, test.segment_count,
+		test.type == POLYCURVE_MIXED, test.reverse);
+	if (!polycurve || (test.transform && !polycurve->Transform(xform)) ||
+		!polycurve->IsValid()) {
+	    std::printf("FAIL: status-2 polycurve setup %s\n", test.name);
+	    delete polycurve;
+	    failures++;
+	    continue;
+	}
+	ON_NurbsCurve nurbs;
+	const int nurb_status = polycurve->GetNurbForm(nurbs);
+	if (nurb_status < 1 || !nurbs.IsValid()) {
+	    std::printf("FAIL: status-2 polycurve NURBS %s status=%d\n",
+		test.name, nurb_status);
+	    delete polycurve;
+	    failures++;
+	    continue;
+	}
+	const ON_Interval domain = polycurve->Domain();
+	double previous = -DBL_MAX;
+	for (size_t sample_index = 0; sample_index < sample_count;
+		++sample_index) {
+	    const double parameter = domain.ParameterAt(
+		(double)sample_index / (sample_count - 1));
+	    fastf_t mapped = ON_UNSET_VALUE;
+	    fastf_t round_trip = ON_UNSET_VALUE;
+	    if (!_rt_brep_profile_nurbs_parameter_test(polycurve, parameter,
+		    1, &mapped) ||
+		    !_rt_brep_profile_nurbs_parameter_test(polycurve, mapped,
+			0, &round_trip) ||
+		    (sample_index && !(mapped > previous))) {
+		std::printf("FAIL: status-2 polycurve map %s sample=%zu\n",
+		    test.name, sample_index);
+		failures++;
+		break;
+	    }
+	    previous = mapped;
+	    const double round_trip_error = fabs(round_trip - parameter);
+	    maximum_round_trip_error = std::max(maximum_round_trip_error,
+		round_trip_error / std::max(1.0, domain.Length()));
+	    if (round_trip_error > 8192.0 * DBL_EPSILON *
+		    std::max(1.0, std::max(fabs(parameter),
+			std::max(fabs(domain.Min()), fabs(domain.Max()))))) {
+		std::printf("FAIL: status-2 polycurve inverse %s sample=%zu "
+		    "source/result=%.17g/%.17g\n", test.name,
+		    sample_index, parameter, round_trip);
+		failures++;
+		break;
+	    }
+	    const ON_3dPoint curve_point = polycurve->PointAt(parameter);
+	    const ON_3dPoint nurbs_point = nurbs.PointAt(mapped);
+	    const double point_error = curve_point.DistanceTo(nurbs_point);
+	    double coordinate_scale = 1.0;
+	    for (int coordinate = 0; coordinate < 3; ++coordinate)
+		coordinate_scale = std::max(coordinate_scale,
+		    std::max(fabs(curve_point[coordinate]),
+			fabs(nurbs_point[coordinate])));
+	    maximum_point_error = std::max(maximum_point_error,
+		point_error / coordinate_scale);
+	    if (!curve_point.IsValid() || !nurbs_point.IsValid() ||
+		    point_error > 65536.0 * DBL_EPSILON * coordinate_scale) {
+		std::printf("FAIL: status-2 polycurve locus %s sample=%zu "
+		    "error=%.17g scale=%.17g\n", test.name, sample_index,
+		    point_error, coordinate_scale);
+		failures++;
+		break;
+	    }
+	    checked++;
+	}
+
+	for (int boundary = 0; boundary <= polycurve->Count(); ++boundary) {
+	    const double center = boundary == polycurve->Count() ?
+		polycurve->Domain().Max() :
+		polycurve->SegmentDomain(boundary).Min();
+	    const double lower = boundary == 0 ? center :
+		std::max(domain.Min(), center - 0.2 *
+		    polycurve->SegmentDomain(boundary - 1).Length());
+	    const double upper = boundary == polycurve->Count() ? center :
+		std::min(domain.Max(), center + 0.2 *
+		    polycurve->SegmentDomain(boundary).Length());
+	    if (!(lower < upper))
+		continue;
+	    fastf_t mapped_minimum = ON_UNSET_VALUE;
+	    fastf_t mapped_maximum = ON_UNSET_VALUE;
+	    size_t piece_count = 0;
+	    fastf_t scalar_minimum = ON_UNSET_VALUE;
+	    fastf_t scalar_maximum = ON_UNSET_VALUE;
+	    const bool interval_ok = _rt_brep_profile_nurbs_interval_test(
+		polycurve, lower, upper, &mapped_minimum, &mapped_maximum,
+		&piece_count) != 0;
+	    if (!interval_ok || piece_count != (size_t)polycurve->Count() ||
+		    !_rt_brep_profile_nurbs_parameter_test(polycurve, lower, 1,
+			&scalar_minimum) ||
+		    !_rt_brep_profile_nurbs_parameter_test(polycurve, upper, 1,
+			&scalar_maximum) ||
+		    fabs(mapped_minimum - scalar_minimum) >
+			8192.0 * DBL_EPSILON *
+			    std::max(1.0, domain.Length()) ||
+		    fabs(mapped_maximum - scalar_maximum) >
+			8192.0 * DBL_EPSILON *
+			    std::max(1.0, domain.Length())) {
+		std::printf("FAIL: status-2 polycurve interval %s boundary=%d "
+		    "pieces=%zu/%d mapped=%.17g/%.17g scalar=%.17g/%.17g\n",
+		    test.name, boundary, piece_count, polycurve->Count(),
+		    mapped_minimum, mapped_maximum, scalar_minimum,
+		    scalar_maximum);
+		failures++;
+	    } else {
+		intervals++;
+	    }
+	}
+	delete polycurve;
+    }
+
+    const auto expect_rejected = [&](const char *name, ON_Curve *profile) {
+	fastf_t mapped = ON_UNSET_VALUE;
+	fastf_t minimum = ON_UNSET_VALUE;
+	fastf_t maximum = ON_UNSET_VALUE;
+	size_t piece_count = 0;
+	const ON_Interval domain = profile ? profile->Domain() :
+	    ON_Interval::EmptyInterval;
+	const bool scalar_accepted = profile && domain.IsIncreasing() &&
+	    _rt_brep_profile_nurbs_parameter_test(profile, domain.Mid(), 1,
+		&mapped);
+	const bool interval_accepted = profile && domain.IsIncreasing() &&
+	    _rt_brep_profile_nurbs_interval_test(profile, domain.Min(),
+		domain.Max(), &minimum, &maximum, &piece_count);
+	if (scalar_accepted || interval_accepted) {
+	    std::printf("FAIL: status-2 polycurve negative accepted %s "
+		"scalar/interval/pieces=%d/%d/%zu\n", name,
+		scalar_accepted ? 1 : 0, interval_accepted ? 1 : 0,
+		piece_count);
+	    failures++;
+	} else {
+	    rejected++;
+	}
+	delete profile;
+    };
+
+    ON_PolyCurve *nested_inner = status2_split_profile_polycurve(&source,
+	2, false, false);
+    ON_PolyCurve *nested = nested_inner ? new ON_PolyCurve(1) : NULL;
+    if (nested && nested->Append(nested_inner))
+	nested_inner = NULL;
+    if (nested_inner || !nested) {
+	delete nested_inner;
+	delete nested;
+	nested = NULL;
+	failures++;
+    }
+    expect_rejected("nested", nested);
+
+    ON_3dPointArray polyline_points;
+    polyline_points.Append(ON_3dPoint(0.0, 0.0, 0.0));
+    polyline_points.Append(ON_3dPoint(1.0, 2.0, 0.0));
+    polyline_points.Append(ON_3dPoint(3.0, 2.0, 0.0));
+    ON_PolyCurve *unsupported = new ON_PolyCurve(1);
+    ON_PolylineCurve *polyline = new ON_PolylineCurve(polyline_points);
+    if (unsupported && polyline && unsupported->Append(polyline))
+	polyline = NULL;
+    if (polyline || !unsupported) {
+	delete polyline;
+	delete unsupported;
+	unsupported = NULL;
+	failures++;
+    }
+    expect_rejected("unsupported-segment", unsupported);
+
+    ON_PolyCurve *gap = new ON_PolyCurve(2);
+    ON_LineCurve *gap_first = new ON_LineCurve(ON_3dPoint(0.0, 0.0, 0.0),
+	ON_3dPoint(1.0, 0.0, 0.0));
+    ON_LineCurve *gap_second = new ON_LineCurve(ON_3dPoint(2.0, 0.0, 0.0),
+	ON_3dPoint(3.0, 0.0, 0.0));
+    if (gap && gap_first && gap->Append(gap_first))
+	gap_first = NULL;
+    if (gap && gap_second && gap->Append(gap_second))
+	gap_second = NULL;
+    if (gap_first || gap_second || !gap) {
+	delete gap_first;
+	delete gap_second;
+	delete gap;
+	gap = NULL;
+	failures++;
+    }
+    expect_rejected("gap", gap);
+
+    /* OpenNURBS permits small arc-adjacent gaps.  Routing deliberately uses
+     * a much tighter roundoff envelope and must reject a geometrically valid
+     * polycurve whose join is outside that envelope. */
+    ON_PolyCurve *near_gap = status2_split_profile_polycurve(&source, 2,
+	true, false);
+    ON_Curve *near_gap_segment = near_gap ? near_gap->SegmentCurve(1) : NULL;
+    ON_3dPoint near_gap_start = near_gap_segment ?
+	near_gap_segment->PointAtStart() : ON_3dPoint::UnsetPoint;
+    near_gap_start.z += 1.0e-10;
+    if (!near_gap_segment || !near_gap_start.IsValid() ||
+	    !near_gap_segment->SetStartPoint(near_gap_start)) {
+	delete near_gap;
+	near_gap = NULL;
+	failures++;
+    }
+    if (near_gap)
+	near_gap->DestroyRuntimeCache(true);
+    if (!near_gap || !near_gap->IsValid()) {
+	std::printf("FAIL: status-2 near-gap control is not valid\n");
+	delete near_gap;
+	near_gap = NULL;
+	failures++;
+    }
+    expect_rejected("near-gap", near_gap);
+
+    /* Model the two malformed parameter arrays that a hostile or damaged
+     * serialized PolyCurve can present before any routing metadata exists.
+     * The top-level domain remains increasing, but one interior segment is
+     * respectively zero-width or overlaps its neighbor. */
+    ON_PolyCurve *serialized_source = status2_split_profile_polycurve(&source,
+	2, false, false);
+    ON_PolyCurve *zero_width = serialized_source ?
+	status2_malformed_serialized_polycurve(*serialized_source, false) : NULL;
+    if (!zero_width)
+	failures++;
+    expect_rejected("serialized-zero-width", zero_width);
+
+    ON_PolyCurve *overlap = serialized_source ?
+	status2_malformed_serialized_polycurve(*serialized_source, true) : NULL;
+    if (!overlap)
+	failures++;
+    expect_rejected("serialized-overlap", overlap);
+    delete serialized_source;
+
+    ON_PolyCurve *overflow = new ON_PolyCurve(1025);
+    for (int segment_index = 0; overflow && segment_index < 1025;
+	    ++segment_index) {
+	ON_LineCurve *line = new ON_LineCurve(
+	    ON_3dPoint((double)segment_index, 0.0, 0.0),
+	    ON_3dPoint((double)segment_index + 1.0, 0.0, 0.0));
+	if (!line || !overflow->Append(line)) {
+	    delete line;
+	    delete overflow;
+	    overflow = NULL;
+	}
+    }
+    expect_rejected("piece-overflow", overflow);
+
+    const size_t expected_checked =
+	(sizeof(cases) / sizeof(cases[0])) * sample_count;
+    if (checked != expected_checked || rejected != 7) {
+	std::printf("FAIL: status-2 polycurve coverage samples=%zu/%zu "
+	    "intervals=%zu rejected=%zu/7\n", checked, expected_checked,
+	    intervals, rejected);
+	failures++;
+    }
+    if (!failures)
+	std::printf("Status-2 polycurve parameter mapping: PASS samples=%zu "
+	    "intervals=%zu rejected=%zu max-errors=%.3g/%.3g\n", checked,
+	    intervals, rejected, maximum_point_error,
+	    maximum_round_trip_error);
+    return failures;
+}
+
+
+static int
 check_torus_status2_similarity(const struct bn_tol *tol)
 {
     if (!tol || !(tol->dist > 0.0) || !std::isfinite(tol->dist))
@@ -7015,13 +10286,23 @@ check_torus_status2_similarity(const struct bn_tol *tol)
 	ON_3dVector translation;
 	ON_3dVector axis;
 	double angle;
+	bool reverse_surface;
+	bool transpose_surface;
+	bool nurbs_profile;
     } cases[] = {
 	{"translated-rotated", 1.0, ON_3dVector(-31.25, 47.5, 103.75),
-	    ON_3dVector(1.0, -2.0, 0.5), 0.731},
+	    ON_3dVector(1.0, -2.0, 0.5), 0.731, false, false, false},
 	{"small", 0.01, ON_3dVector(1.25, -2.5, 5.0),
-	    ON_3dVector(-0.3, 1.0, 0.7), -1.113},
+	    ON_3dVector(-0.3, 1.0, 0.7), -1.113, true, false, false},
 	{"large", 1.0e4, ON_3dVector(1.0e6, -2.0e6, 3.0e6),
-	    ON_3dVector(2.0, 0.25, -1.0), 2.017}
+	    ON_3dVector(2.0, 0.25, -1.0), 2.017, true, false, false},
+	{"large-transposed", 1.0e4,
+	    ON_3dVector(1.0e6, -2.0e6, 3.0e6),
+	    ON_3dVector(2.0, 0.25, -1.0), 2.017, true, true, false},
+	{"transposed", 2.5, ON_3dVector(-100.0, 75.0, 20.0),
+	    ON_3dVector(-1.0, 0.5, 2.0), -0.317, false, true, false},
+	{"nurbs-profile", 0.75, ON_3dVector(13.0, -29.0, 41.0),
+	    ON_3dVector(0.25, -0.75, 1.0), 1.217, true, true, true}
     };
     const double chord_ratios[] = {2.0, 1.1};
     const double theta = 0.731;
@@ -7039,6 +10320,8 @@ check_torus_status2_similarity(const struct bn_tol *tol)
     size_t implicit_artifacts = 0;
     size_t maximum_refinements = 0;
     size_t maximum_high_water = 0;
+    size_t route_rays = 0;
+    size_t route_recoveries = 0;
     double maximum_implicit_error = 0.0;
     double maximum_brep_error = 0.0;
 
@@ -7091,11 +10374,59 @@ check_torus_status2_similarity(const struct bn_tol *tol)
 	struct soltab *implicit_stp = prep_solid(rtip, &torus_intern, ID_TOR);
 	ON_Brep *brep = ON_Brep::New();
 	OBJ[ID_TOR].ft_brep(&brep, &torus_intern, &case_tol);
+	if (brep && test.nurbs_profile && brep->m_F.Count() == 1) {
+	    const int surface_index = brep->m_F[0].m_si;
+	    ON_RevSurface *revolution = surface_index >= 0 &&
+		surface_index < brep->m_S.Count() ?
+		ON_RevSurface::Cast(brep->m_S[surface_index]) : NULL;
+	    ON_NurbsCurve *profile = revolution && revolution->m_curve ?
+		revolution->m_curve->NurbsCurve() : NULL;
+	    if (!profile || !profile->IsValid()) {
+		delete profile;
+		delete brep;
+		brep = NULL;
+	    } else {
+		delete revolution->m_curve;
+		revolution->m_curve = profile;
+		revolution->m_bbox.Destroy();
+		revolution->DestroyRuntimeCache(true);
+		brep->DestroyRuntimeCache(true);
+	    }
+	}
+	if (brep && brep->m_F.Count() == 1 &&
+		((test.reverse_surface && !brep->m_F[0].Reverse(0)) ||
+		 (test.transpose_surface && !brep->m_F[0].Transpose()))) {
+	    delete brep;
+	    brep = NULL;
+	}
 	ON_NurbsSurface nurbs;
 	const ON_Surface *surface = brep && brep->m_F.Count() == 1 ?
 	    brep->m_F[0].SurfaceOf() : NULL;
 	const int nurb_form_status = surface ?
 	    surface->GetNurbForm(nurbs) : 0;
+	ON_3dPoint route_point;
+	ON_3dVector route_normal;
+	bool route_frame_valid = false;
+	const ON_RevSurface *route_revolution =
+	    ON_RevSurface::Cast(surface);
+	if (route_revolution) {
+	    const int angle_parameter = route_revolution->m_bTransposed ? 1 : 0;
+	    const int profile_parameter = 1 - angle_parameter;
+	    double parameter[2];
+	    parameter[angle_parameter] = surface->Domain(angle_parameter).
+		ParameterAt(1.0e-3 / (2.0 * ON_PI));
+	    parameter[profile_parameter] =
+		surface->Domain(profile_parameter).ParameterAt(0.647 /
+		    (2.0 * ON_PI));
+	    ON_3dVector derivative[2];
+	    route_frame_valid = surface->Ev1Der(parameter[0], parameter[1],
+		route_point, derivative[0], derivative[1]);
+	    if (route_frame_valid) {
+		route_normal = ON_CrossProduct(derivative[0], derivative[1]);
+		route_frame_valid = route_point.IsValid() &&
+		    route_normal.Unitize();
+	    }
+	}
 	struct rt_brep_internal brep_internal = {};
 	brep_internal.magic = RT_BREP_INTERNAL_MAGIC;
 	brep_internal.brep = brep;
@@ -7150,9 +10481,9 @@ check_torus_status2_similarity(const struct bn_tol *tol)
 			const ray_result implicit_result = shoot_solid(
 			    implicit_stp, rtip, &resource, ray.origin,
 			    ray.direction);
-			const ray_result brep_result = shoot_solid(brep_stp,
-			    rtip, &resource, ray.origin, ray.direction);
-			struct rt_brep_shot_trace trace;
+		    const ray_result brep_result = shoot_solid(brep_stp,
+			rtip, &resource, ray.origin, ray.direction);
+		    struct rt_brep_shot_trace trace;
 			(void)shoot_brep_trace(brep_stp, rtip, &resource, ray,
 			    trace);
 			const double implicit_error =
@@ -7232,6 +10563,90 @@ check_torus_status2_similarity(const struct bn_tol *tol)
 	    }
 	}
 
+	if (brep_stp && route_frame_valid) {
+	    const double route_radius = 3.0 * test.scale;
+	    struct rt_brep_prep_stats prep_stats = {};
+	    if (!_rt_brep_prep_stats(brep_stp, &prep_stats) ||
+		    !(prep_stats.routing_capability_flags &
+			RT_BREP_ROUTE_CAP_DEGREE_THEOREM) ||
+		    !prep_stats.routing_feature_cell_span_bindings) {
+		std::printf("FAIL: status-2 torus routing prep %s "
+		    "capabilities=%u bindings=%zu\n", test.name,
+		    prep_stats.routing_capability_flags,
+		    prep_stats.routing_feature_cell_span_bindings);
+		failures++;
+	    }
+	    for (int reverse = 0; reverse <= 1; ++reverse) {
+		const ON_3dPoint probe_origin = reverse ?
+		    route_point - 4.0 * route_radius * route_normal :
+		    route_point + 2.0 * route_radius * route_normal;
+		const ON_3dVector probe_direction = reverse ? route_normal :
+		    -route_normal;
+		point_t origin_v = {probe_origin.x, probe_origin.y,
+		    probe_origin.z};
+		vect_t direction_v = {probe_direction.x, probe_direction.y,
+		    probe_direction.z};
+		struct rt_brep_route_test_result route_probe;
+		const ray_result legacy_probe = shoot_brep_legacy(brep_stp,
+		    rtip, &resource, origin_v, direction_v);
+		const ray_result routed_probe = shoot_brep_missing_root_route(
+		    brep_stp, rtip, &resource, origin_v, direction_v, true,
+		    route_probe);
+		const double endpoint_tolerance = std::max(case_tol.dist,
+		    65536.0 * DBL_EPSILON * std::max(1.0,
+			std::max(fabs(legacy_probe.in_dist),
+			    fabs(legacy_probe.out_dist))));
+		const bool recovered = legacy_probe.segments == 1 &&
+		    routed_probe.segments == legacy_probe.segments &&
+		    fabs(routed_probe.in_dist - legacy_probe.in_dist) <=
+			endpoint_tolerance &&
+		    fabs(routed_probe.out_dist - legacy_probe.out_dist) <=
+			endpoint_tolerance &&
+		    route_probe.legacy_root_fault_injected &&
+		    route_probe.suppressed_legacy_raw_hits &&
+		    route_probe.decision.missing_root_certificate_associations &&
+		    route_probe.decision.missing_root_certificate_state[
+			RT_BREP_ROUTE_CERT_ROOT_POSITIVE] &&
+		    !route_probe.decision.missing_root_certificate_failure_reason[
+			RT_BREP_ROUTE_CERT_FAILURE_STATUS2_MAPPING] &&
+		    route_probe.decision.missing_root_certificate_complete &&
+		    route_probe.decision.missing_root_certificate_triggered &&
+		    route_probe.optional_attempted && route_probe.optional_complete &&
+		    route_probe.optional_published;
+		route_rays++;
+		if (recovered) {
+		    route_recoveries++;
+		} else {
+		    std::printf("FAIL: status-2 torus routing %s reverse=%d "
+			"segments=%d/%d associations=%zu states=%zu/%zu/%zu "
+			"failures(map/singular/reparam/boundary/determinant)="
+			"%zu/%zu/%zu/%zu/%zu complete/trigger/attempt/done/pub="
+			"%zu/%zu/%d/%d/%d\n", test.name, reverse,
+			legacy_probe.segments, routed_probe.segments,
+			route_probe.decision.missing_root_certificate_associations,
+			route_probe.decision.missing_root_certificate_state[0],
+			route_probe.decision.missing_root_certificate_state[1],
+			route_probe.decision.missing_root_certificate_state[2],
+			route_probe.decision.missing_root_certificate_failure_reason[
+			    RT_BREP_ROUTE_CERT_FAILURE_STATUS2_MAPPING],
+			route_probe.decision.missing_root_certificate_failure_reason[
+			    RT_BREP_ROUTE_CERT_FAILURE_SINGULAR],
+			route_probe.decision.missing_root_certificate_failure_reason[
+			    RT_BREP_ROUTE_CERT_FAILURE_REPARAMETERIZATION],
+			route_probe.decision.missing_root_certificate_failure_reason[
+			    RT_BREP_ROUTE_CERT_FAILURE_BOUNDARY],
+			route_probe.decision.missing_root_certificate_failure_reason[
+			    RT_BREP_ROUTE_CERT_FAILURE_DETERMINANT],
+			route_probe.decision.missing_root_certificate_complete,
+			route_probe.decision.missing_root_certificate_triggered,
+			route_probe.optional_attempted,
+			route_probe.optional_complete,
+			route_probe.optional_published);
+		    failures++;
+		}
+	    }
+	}
+
 	free_solid(brep_stp);
 	if (!brep_stp && brep_internal.brep)
 	    delete brep_internal.brep;
@@ -7241,17 +10656,30 @@ check_torus_status2_similarity(const struct bn_tol *tol)
 	rt_i_destroy(rtip);
     }
 
-    if (rays != 12 || selected != rays || expansion_ratchets != rays) {
+	const size_t expected_rays =
+	    4 * (sizeof(cases) / sizeof(cases[0]));
+	const size_t expected_route_rays =
+	    2 * (sizeof(cases) / sizeof(cases[0]));
+	if (rays != expected_rays || selected != rays ||
+		expansion_ratchets != rays) {
 	std::printf("FAIL: status-2 torus similarity coverage="
-	    "%zu/%zu/%zu expected=12\n", rays, selected,
-	    expansion_ratchets);
+	    "%zu/%zu/%zu expected=%zu\n", rays, selected,
+	    expansion_ratchets, expected_rays);
+	failures++;
+    }
+    if (route_rays != expected_route_rays ||
+	    route_recoveries != route_rays) {
+	std::printf("FAIL: status-2 torus routing recovery=%zu/%zu "
+	    "expected=%zu\n", route_recoveries, route_rays,
+	    expected_route_rays);
 	failures++;
     }
     if (!failures)
 	std::printf("Status-2 torus similarity invariance: PASS "
 	    "rays=%zu selected=%zu expansion=%zu implicit-artifacts=%zu "
-	    "max-refine/high=%zu/%zu max-errors=%.3g/%.3g\n", rays,
-	    selected, expansion_ratchets, implicit_artifacts,
+	    "routing=%zu/%zu max-refine/high=%zu/%zu "
+	    "max-errors=%.3g/%.3g\n", rays, selected, expansion_ratchets,
+	    implicit_artifacts, route_recoveries, route_rays,
 	    maximum_refinements, maximum_high_water, maximum_implicit_error,
 	    maximum_brep_error);
     return failures;
@@ -9350,6 +12778,159 @@ check_brep_interval_enclosures()
 	    maximum_restriction_width_ratio,
 	    maximum_reparameterization_width_ratio);
     }
+    return failures;
+}
+
+
+static int
+check_brep_root_degree_certificate()
+{
+    int failures = 0;
+    size_t checks = 0;
+    size_t completed = 0;
+    size_t rejected = 0;
+    size_t adaptive_splits = 0;
+    size_t maximum_expansion = 0;
+    const auto check = [&](const char *label, const fastf_t *first,
+	const fastf_t *first_error, const fastf_t *second,
+	const fastf_t *second_error, int u_order, int v_order,
+	bool expected_available, int expected_failure, int expected_sign,
+	int expected_degree, size_t expected_count, bool require_split) {
+	struct rt_brep_root_degree_test_result result = {};
+	checks++;
+	if (!_rt_brep_root_degree_test(first, first_error, second,
+		second_error, u_order, v_order, &result)) {
+	    std::printf("FAIL: root degree input unavailable case=%s\n", label);
+	    failures++;
+	    return;
+	}
+	if (!!result.available != expected_available ||
+		result.failure_stage != expected_failure) {
+	    std::printf("FAIL: root degree disposition case=%s "
+		"available/stage=%d/%d expected=%d/%d\n", label,
+		result.available, result.failure_stage,
+		expected_available ? 1 : 0, expected_failure);
+	    failures++;
+	    return;
+	}
+	if (!expected_available) {
+	    rejected++;
+	    return;
+	}
+	completed++;
+	adaptive_splits += result.boundary_splits;
+	maximum_expansion = std::max(maximum_expansion,
+	    result.expansion_high_water);
+	if (result.determinant_sign != expected_sign ||
+		result.degree != expected_degree ||
+		result.root_count != expected_count ||
+		!result.boundary_pieces || !result.boundary_edges ||
+		(require_split && !result.boundary_splits)) {
+	    std::printf("FAIL: root degree result case=%s "
+		"sign/degree/count=%d/%d/%zu expected=%d/%d/%zu "
+		"pieces/splits/edges=%zu/%zu/%zu\n", label,
+		result.determinant_sign, result.degree, result.root_count,
+		expected_sign, expected_degree, expected_count,
+		result.boundary_pieces, result.boundary_splits,
+		result.boundary_edges);
+	    failures++;
+	}
+    };
+
+    const fastf_t zero_error[6] = {};
+    const fastf_t positive_first[4] = {
+	-0.25, -0.25, 0.75, 0.75
+    };
+    const fastf_t positive_second[4] = {
+	-0.75, 0.25, -0.75, 0.25
+    };
+    check("affine-positive", positive_first, zero_error, positive_second,
+	zero_error, 2, 2, true, RT_BREP_ROOT_DEGREE_COMPLETE, 1, 1, 1,
+	false);
+
+    const fastf_t negative_second[4] = {
+	0.75, -0.25, 0.75, -0.25
+    };
+    check("affine-negative", positive_first, zero_error, negative_second,
+	zero_error, 2, 2, true, RT_BREP_ROOT_DEGREE_COMPLETE, -1, -1, 1,
+	false);
+
+    const fastf_t empty_first[4] = {0.25, 0.25, 1.25, 1.25};
+    const fastf_t empty_second[4] = {-0.5, 0.5, -0.5, 0.5};
+    check("affine-empty", empty_first, zero_error, empty_second,
+	zero_error, 2, 2, true, RT_BREP_ROOT_DEGREE_COMPLETE, 1, 0, 0,
+	false);
+
+    const fastf_t boundary_first[4] = {0.0, 0.0, 1.0, 1.0};
+    check("boundary-root", boundary_first, zero_error, empty_second,
+	zero_error, 2, 2, false, RT_BREP_ROOT_DEGREE_BOUNDARY, 0, 0, 0,
+	false);
+
+    const fastf_t changing_first[4] = {-0.5, -0.5, 0.5, 0.5};
+    const fastf_t changing_second[4] = {0.0, -1.0, 0.0, 1.0};
+    check("determinant-change", changing_first, zero_error,
+	changing_second, zero_error, 2, 2, false,
+	RT_BREP_ROOT_DEGREE_DETERMINANT, 0, 0, 0, false);
+
+    /* The bottom quadratic control hull contains the origin, although its
+     * Bezier arc does not.  This case requires certified boundary subdivision
+     * instead of accepting only whole-side hulls. */
+    const fastf_t curved_first[6] = {
+	-0.5, -0.5, 0.0, 0.0, 0.5, 0.5
+    };
+    const fastf_t curved_second[6] = {
+	-0.3, 0.7, 0.2, 1.2, -0.3, 0.7
+    };
+    check("adaptive-boundary", curved_first, zero_error, curved_second,
+	zero_error, 3, 2, true, RT_BREP_ROOT_DEGREE_COMPLETE, 1, 1, 1,
+	true);
+
+    const fastf_t near_first[4] = {
+	-1.0e-6, -1.0e-6, 1.0 - 1.0e-6, 1.0 - 1.0e-6
+    };
+    const fastf_t near_first_error[4] = {
+	2.0e-6, 2.0e-6, 2.0e-6, 2.0e-6
+    };
+    check("uncertain-boundary", near_first, near_first_error, empty_second,
+	zero_error, 2, 2, false, RT_BREP_ROOT_DEGREE_BOUNDARY, 0, 0, 0,
+	false);
+
+    const int scale_exponents[] = {-400, -40, 40, 400};
+    for (size_t scale_index = 0; scale_index <
+	    sizeof(scale_exponents) / sizeof(scale_exponents[0]);
+	    ++scale_index) {
+	const fastf_t scale = std::ldexp(1.0, scale_exponents[scale_index]);
+	fastf_t first[4];
+	fastf_t second[4];
+	fastf_t error[4];
+	for (size_t i = 0; i < 4; ++i) {
+	    first[i] = scale * positive_first[i];
+	    second[i] = scale * positive_second[i];
+	    error[i] = fabs(scale) * std::ldexp(1.0, -48);
+	}
+	char label[64];
+	std::snprintf(label, sizeof(label), "scaled-affine-%d",
+	    scale_exponents[scale_index]);
+	check(label, first, error, second, error, 2, 2, true,
+	    RT_BREP_ROOT_DEGREE_COMPLETE, 1, 1, 1, false);
+    }
+
+    fastf_t invalid_error[4] = {};
+    invalid_error[1] = -1.0;
+    struct rt_brep_root_degree_test_result invalid_result = {};
+    checks++;
+    if (_rt_brep_root_degree_test(positive_first, invalid_error,
+	    positive_second, zero_error, 2, 2, &invalid_result)) {
+	std::printf("FAIL: root degree accepted negative coefficient error\n");
+	failures++;
+    } else {
+	rejected++;
+    }
+
+    if (!failures)
+	std::printf("BREP root degree certificate: PASS checks=%zu "
+	    "complete/rejected=%zu/%zu adaptive-splits=%zu expansion=%zu\n",
+	    checks, completed, rejected, adaptive_splits, maximum_expansion);
     return failures;
 }
 
@@ -17930,6 +21511,17 @@ check_cobb_bowed_seam_corpus(const struct bn_tol *tol, bool emit_report,
 			    trace.edge_observations != trace.stored_edges ||
 			    trace.manifold_edges != 12 ||
 			    trace.prepared_edge_spans != 12 ||
+			    trace.prepared_preflight_attempts != 1 ||
+			    trace.prepared_preflight_available != 1 ||
+			    trace.prepared_preflight_early_fallbacks != 0 ||
+			    trace.prepared_preflight_fallback !=
+				RT_BREP_PREPARED_FALLBACK_NONE ||
+			    trace.prepared_preflight_candidate_faces >
+				trace.supported_surface_faces ||
+			    trace.prepared_preflight_candidate_spans <
+				trace.candidate_surface_spans ||
+			    trace.prepared_preflight_candidate_spans >
+				trace.prepared_surface_spans ||
 			    trace.supported_surface_faces != 6 ||
 			    trace.unsupported_surface_faces != 0 ||
 			    trace.prepared_surface_spans != 6 ||
@@ -19166,6 +22758,707 @@ check_brep_trim_classifier_exact_join()
 }
 
 
+static bool
+curvature_sample_valid(const curvature_sample &sample)
+{
+    if (!sample.available || !std::isfinite(sample.value.crv_c1) ||
+	    !std::isfinite(sample.value.crv_c2) ||
+	    !std::isfinite(sample.value.crv_pdir[X]) ||
+	    !std::isfinite(sample.value.crv_pdir[Y]) ||
+	    !std::isfinite(sample.value.crv_pdir[Z]))
+	return false;
+
+    const double curvature_scale = std::max(1.0,
+	std::max(fabs(sample.value.crv_c1), fabs(sample.value.crv_c2)));
+    if (fabs(sample.value.crv_c1) > fabs(sample.value.crv_c2) +
+	    256.0 * DBL_EPSILON * curvature_scale)
+	return false;
+
+    const double direction_length = MAGNITUDE(sample.value.crv_pdir);
+    const double normal_length = MAGNITUDE(sample.hit.hit_normal);
+    if (!std::isfinite(direction_length) ||
+	    fabs(direction_length - 1.0) > 1.0e-10 ||
+	    !std::isfinite(normal_length) || normal_length <= SMALL_FASTF)
+	return false;
+    return fabs(VDOT(sample.value.crv_pdir, sample.hit.hit_normal)) <=
+	1.0e-10 * normal_length;
+}
+
+
+static bool
+curvature_sample_matches(const curvature_sample &sample, double expected_c1,
+    double expected_c2)
+{
+    if (!curvature_sample_valid(sample))
+	return false;
+    const double scale = std::max(1.0, std::max(fabs(expected_c1),
+	fabs(expected_c2)));
+    const double tolerance = 1.0e-8 * scale;
+    return fabs(sample.value.crv_c1 - expected_c1) <= tolerance &&
+	fabs(sample.value.crv_c2 - expected_c2) <= tolerance;
+}
+
+
+static int
+check_converted_curvature_fixture(const char *label,
+    struct rt_db_internal *intern, int type, const struct bn_tol *tol,
+    struct rt_i *rtip, struct resource *resource, const sampled_ray rays[2],
+    double expected_c1, double expected_c2)
+{
+    struct soltab *implicit_stp = prep_solid(rtip, intern, type);
+    ON_Brep *brep = ON_Brep::New();
+    OBJ[type].ft_brep(&brep, intern, tol);
+    struct rt_brep_internal brep_internal = {};
+    brep_internal.magic = RT_BREP_INTERNAL_MAGIC;
+    brep_internal.brep = brep;
+    struct rt_db_internal brep_intern;
+    RT_DB_INTERNAL_INIT(&brep_intern);
+    brep_intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
+    brep_intern.idb_type = ID_BREP;
+    brep_intern.idb_meth = &OBJ[ID_BREP];
+    brep_intern.idb_ptr = &brep_internal;
+    struct soltab *brep_stp = brep ?
+	prep_solid(rtip, &brep_intern, ID_BREP) : NULL;
+    if (!implicit_stp || !brep_stp) {
+	std::printf("FAIL: BREP curvature %s preparation implicit/BREP=%d/%d\n",
+	    label, implicit_stp != NULL, brep_stp != NULL);
+	free_solid(brep_stp);
+	free_solid(implicit_stp);
+	delete brep_internal.brep;
+	return 1;
+    }
+
+    int failures = 0;
+    for (size_t ray_index = 0; ray_index < 2; ++ray_index) {
+	const curvature_ray_result implicit = shoot_solid_curvature(implicit_stp,
+	    rtip, resource, rays[ray_index].origin,
+	    rays[ray_index].direction);
+	const curvature_ray_result converted = shoot_solid_curvature(brep_stp,
+	    rtip, resource, rays[ray_index].origin,
+	    rays[ray_index].direction);
+	const bool valid = implicit.segments == 1 && converted.segments == 1 &&
+	    curvature_sample_matches(implicit.in, expected_c1, expected_c2) &&
+	    curvature_sample_matches(implicit.out, expected_c1, expected_c2) &&
+	    curvature_sample_matches(converted.in, expected_c1, expected_c2) &&
+	    curvature_sample_matches(converted.out, expected_c1, expected_c2);
+	if (!valid) {
+	    std::printf("FAIL: BREP curvature %s ray=%zu segments=%d/%d "
+		"implicit-in/out=%.17g/%.17g %.17g/%.17g "
+		"BREP-in/out=%.17g/%.17g %.17g/%.17g\n", label,
+		ray_index, implicit.segments, converted.segments,
+		implicit.in.value.crv_c1, implicit.in.value.crv_c2,
+		implicit.out.value.crv_c1, implicit.out.value.crv_c2,
+		converted.in.value.crv_c1, converted.in.value.crv_c2,
+		converted.out.value.crv_c1, converted.out.value.crv_c2);
+	    failures++;
+	}
+    }
+
+    free_solid(brep_stp);
+    free_solid(implicit_stp);
+    if (!failures)
+	std::printf("BREP curvature %s: PASS\n", label);
+    return failures;
+}
+
+
+static int
+check_brep_curvature_fallback(const struct bn_tol *tol, struct rt_i *rtip,
+    struct resource *resource)
+{
+    const double radius = 5.0;
+    struct rt_ell_internal sphere = {};
+    sphere.magic = RT_ELL_INTERNAL_MAGIC;
+    VSET(sphere.v, 1.0, -2.0, 3.0);
+    VSET(sphere.a, radius, 0.0, 0.0);
+    VSET(sphere.b, 0.0, radius, 0.0);
+    VSET(sphere.c, 0.0, 0.0, radius);
+    struct rt_db_internal sphere_intern;
+    RT_DB_INTERNAL_INIT(&sphere_intern);
+    sphere_intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
+    sphere_intern.idb_type = ID_ELL;
+    sphere_intern.idb_meth = &OBJ[ID_ELL];
+    sphere_intern.idb_ptr = &sphere;
+
+    ON_Brep *brep = ON_Brep::New();
+    OBJ[ID_ELL].ft_brep(&brep, &sphere_intern, tol);
+    struct rt_brep_internal brep_internal = {};
+    brep_internal.magic = RT_BREP_INTERNAL_MAGIC;
+    brep_internal.brep = brep;
+    struct rt_db_internal brep_intern;
+    RT_DB_INTERNAL_INIT(&brep_intern);
+    brep_intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
+    brep_intern.idb_type = ID_BREP;
+    brep_intern.idb_meth = &OBJ[ID_BREP];
+    brep_intern.idb_ptr = &brep_internal;
+    struct soltab *brep_stp = brep ?
+	prep_solid(rtip, &brep_intern, ID_BREP) : NULL;
+    if (!brep_stp) {
+	std::printf("FAIL: BREP curvature fallback preparation\n");
+	delete brep_internal.brep;
+	return 1;
+    }
+
+    sampled_ray ray;
+    VSET(ray.origin, 11.0, 8.0, 13.0);
+    VSET(ray.direction, -1.0, -1.0, -1.0);
+    const curvature_ray_result result = shoot_solid_curvature(brep_stp,
+	rtip, resource, ray.origin, ray.direction);
+    int failures = 0;
+    if (result.segments != 1 || !curvature_sample_valid(result.in)) {
+	std::printf("FAIL: BREP curvature fallback seed segment=%d\n",
+	    result.segments);
+	failures++;
+    } else {
+	/* hit_normal already includes face reversal.  Reversing that oriented
+	 * normal models the same parametric surface used by a reversed face and
+	 * must reverse both signed curvatures without changing their ordering. */
+	curvature_sample reversed = result.in;
+	VREVERSE(reversed.hit.hit_normal, result.in.hit.hit_normal);
+	reversed.available =
+	    rt_obj_curve(&reversed.value, &reversed.hit, brep_stp) == 0;
+	if (!curvature_sample_matches(reversed, 1.0 / radius,
+		1.0 / radius)) {
+	    std::printf("FAIL: BREP curvature reversed face normal=%.17g/%.17g\n",
+		reversed.value.crv_c1, reversed.value.crv_c2);
+	    failures++;
+	}
+
+	curvature_sample invalid_face = result.in;
+	invalid_face.hit.hit_surfno = -1;
+	invalid_face.available = rt_obj_curve(&invalid_face.value,
+	    &invalid_face.hit, brep_stp) == 0;
+	if (!curvature_sample_matches(invalid_face, 0.0, 0.0)) {
+	    std::printf("FAIL: BREP curvature invalid-face fallback=%.17g/%.17g\n",
+		invalid_face.value.crv_c1, invalid_face.value.crv_c2);
+	    failures++;
+	}
+
+	curvature_sample invalid_uv = result.in;
+	invalid_uv.hit.hit_vpriv[X] = std::numeric_limits<double>::quiet_NaN();
+	invalid_uv.available = rt_obj_curve(&invalid_uv.value, &invalid_uv.hit,
+	    brep_stp) == 0;
+	if (!curvature_sample_matches(invalid_uv, 0.0, 0.0)) {
+	    std::printf("FAIL: BREP curvature invalid-UV fallback=%.17g/%.17g\n",
+		invalid_uv.value.crv_c1, invalid_uv.value.crv_c2);
+	    failures++;
+	}
+
+	curvature_sample singular_normal = result.in;
+	VSETALL(singular_normal.hit.hit_normal, 0.0);
+	singular_normal.available = rt_obj_curve(&singular_normal.value,
+	    &singular_normal.hit, brep_stp) == 0;
+	const bool singular_valid = singular_normal.available &&
+	    singular_normal.value.crv_c1 == 0.0 &&
+	    singular_normal.value.crv_c2 == 0.0 &&
+	    fabs(singular_normal.value.crv_pdir[X] - 1.0) <= SMALL_FASTF &&
+	    fabs(singular_normal.value.crv_pdir[Y]) <= SMALL_FASTF &&
+	    fabs(singular_normal.value.crv_pdir[Z]) <= SMALL_FASTF;
+	if (!singular_valid) {
+	    std::printf("FAIL: BREP curvature singular-normal fallback="
+		"%.17g/%.17g dir=(%.17g %.17g %.17g)\n",
+		singular_normal.value.crv_c1,
+		singular_normal.value.crv_c2,
+		V3ARGS(singular_normal.value.crv_pdir));
+	    failures++;
+	}
+    }
+
+    free_solid(brep_stp);
+    if (!failures)
+	std::printf("BREP curvature orientation/fallback: PASS\n");
+    return failures;
+}
+
+
+static int
+check_brep_curvature_contract(const struct bn_tol *tol, struct rt_i *rtip,
+    struct resource *resource)
+{
+    int failures = 0;
+
+    struct rt_ell_internal sphere = {};
+    sphere.magic = RT_ELL_INTERNAL_MAGIC;
+    VSET(sphere.v, 1.0, -2.0, 3.0);
+    VSET(sphere.a, 5.0, 0.0, 0.0);
+    VSET(sphere.b, 0.0, 5.0, 0.0);
+    VSET(sphere.c, 0.0, 0.0, 5.0);
+    struct rt_db_internal sphere_intern;
+    RT_DB_INTERNAL_INIT(&sphere_intern);
+    sphere_intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
+    sphere_intern.idb_type = ID_ELL;
+    sphere_intern.idb_meth = &OBJ[ID_ELL];
+    sphere_intern.idb_ptr = &sphere;
+    sampled_ray sphere_rays[2];
+    VSET(sphere_rays[0].origin, 11.0, 8.0, 13.0);
+    VSET(sphere_rays[0].direction, -1.0, -1.0, -1.0);
+    VSET(sphere_rays[1].origin, -9.0, -12.0, -7.0);
+    VSET(sphere_rays[1].direction, 1.0, 1.0, 1.0);
+    failures += check_converted_curvature_fixture("sphere", &sphere_intern,
+	ID_ELL, tol, rtip, resource, sphere_rays, -0.2, -0.2);
+
+    struct rt_tgc_internal cylinder = {};
+    cylinder.magic = RT_TGC_INTERNAL_MAGIC;
+    VSET(cylinder.v, 2.0, -3.0, -6.0);
+    VSET(cylinder.h, 0.0, 0.0, 12.0);
+    VSET(cylinder.a, 3.0, 0.0, 0.0);
+    VSET(cylinder.b, 0.0, 3.0, 0.0);
+    VMOVE(cylinder.c, cylinder.a);
+    VMOVE(cylinder.d, cylinder.b);
+    struct rt_db_internal cylinder_intern;
+    RT_DB_INTERNAL_INIT(&cylinder_intern);
+    cylinder_intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
+    cylinder_intern.idb_type = ID_TGC;
+    cylinder_intern.idb_meth = &OBJ[ID_TGC];
+    cylinder_intern.idb_ptr = &cylinder;
+    sampled_ray cylinder_rays[2];
+    VSET(cylinder_rays[0].origin, 12.0, -3.0, 0.0);
+    VSET(cylinder_rays[0].direction, -1.0, 0.0, 0.0);
+    VSET(cylinder_rays[1].origin, -8.0, -3.0, 0.0);
+    VSET(cylinder_rays[1].direction, 1.0, 0.0, 0.0);
+    failures += check_converted_curvature_fixture("cylinder",
+	&cylinder_intern, ID_TGC, tol, rtip, resource, cylinder_rays, 0.0,
+	-1.0 / 3.0);
+
+    struct rt_arb_internal box = {};
+    box.magic = RT_ARB_INTERNAL_MAGIC;
+    VSET(box.pt[0], -4.0, -3.0, -2.0);
+    VSET(box.pt[1], 4.0, -3.0, -2.0);
+    VSET(box.pt[2], 4.0, 3.0, -2.0);
+    VSET(box.pt[3], -4.0, 3.0, -2.0);
+    VSET(box.pt[4], -4.0, -3.0, 2.0);
+    VSET(box.pt[5], 4.0, -3.0, 2.0);
+    VSET(box.pt[6], 4.0, 3.0, 2.0);
+    VSET(box.pt[7], -4.0, 3.0, 2.0);
+    struct rt_db_internal box_intern;
+    RT_DB_INTERNAL_INIT(&box_intern);
+    box_intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
+    box_intern.idb_type = ID_ARB8;
+    box_intern.idb_meth = &OBJ[ID_ARB8];
+    box_intern.idb_ptr = &box;
+    sampled_ray box_rays[2];
+    VSET(box_rays[0].origin, 0.5, 0.25, 8.0);
+    VSET(box_rays[0].direction, 0.0, 0.0, -1.0);
+    VSET(box_rays[1].origin, 0.5, 0.25, -8.0);
+    VSET(box_rays[1].direction, 0.0, 0.0, 1.0);
+    failures += check_converted_curvature_fixture("plane", &box_intern,
+	ID_ARB8, tol, rtip, resource, box_rays, 0.0, 0.0);
+
+    const double root_half = sqrt(0.5);
+    struct rt_ell_internal ellipsoid = {};
+    ellipsoid.magic = RT_ELL_INTERNAL_MAGIC;
+    VSET(ellipsoid.v, 4.0, -2.0, 1.0);
+    VSET(ellipsoid.a, 3.0 * root_half, 3.0 * root_half, 0.0);
+    VSET(ellipsoid.b, -2.0 * root_half, 2.0 * root_half, 0.0);
+    VSET(ellipsoid.c, 0.0, 0.0, 1.0);
+    struct rt_db_internal ellipsoid_intern;
+    RT_DB_INTERNAL_INIT(&ellipsoid_intern);
+    ellipsoid_intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
+    ellipsoid_intern.idb_type = ID_ELL;
+    ellipsoid_intern.idb_meth = &OBJ[ID_ELL];
+    ellipsoid_intern.idb_ptr = &ellipsoid;
+    sampled_ray ellipsoid_rays[2];
+    VJOIN1(ellipsoid_rays[0].origin, ellipsoid.v, 2.0, ellipsoid.a);
+    VREVERSE(ellipsoid_rays[0].direction, ellipsoid.a);
+    VJOIN1(ellipsoid_rays[1].origin, ellipsoid.v, -2.0, ellipsoid.a);
+    VMOVE(ellipsoid_rays[1].direction, ellipsoid.a);
+    failures += check_converted_curvature_fixture("rotated ellipsoid",
+	&ellipsoid_intern, ID_ELL, tol, rtip, resource, ellipsoid_rays,
+	-0.75, -3.0);
+
+    failures += check_brep_curvature_fallback(tol, rtip, resource);
+    return failures;
+}
+
+
+static double
+plate_transform_determinant(const ON_Xform &xform)
+{
+    return
+	xform[0][0] * (xform[1][1] * xform[2][2] -
+	    xform[1][2] * xform[2][1]) -
+	xform[0][1] * (xform[1][0] * xform[2][2] -
+	    xform[1][2] * xform[2][0]) +
+	xform[0][2] * (xform[1][0] * xform[2][1] -
+	    xform[1][1] * xform[2][0]);
+}
+
+
+static ON_Brep *
+make_brep_plate_disk(const ON_Xform &xform)
+{
+    const double radius = 5.0;
+    ON_Brep *brep = ON_Brep::New();
+    ON_Plane plate_plane(ON_xy_plane);
+    ON_PlaneSurface *surface = new ON_PlaneSurface(plate_plane);
+    surface->SetDomain(0, -radius, radius);
+    surface->SetDomain(1, -radius, radius);
+    surface->SetExtents(0, surface->Domain(0));
+    surface->SetExtents(1, surface->Domain(1));
+    ON_BrepFace &face = brep->NewFace(brep->AddSurface(surface));
+
+    ON_NurbsCurve boundary;
+    const ON_Circle circle(plate_plane, radius);
+    ON_SimpleArray<ON_Curve *> curves;
+    if (!circle.GetNurbForm(boundary)) {
+	delete brep;
+	return NULL;
+    }
+    curves.Append(&boundary);
+    if (!brep->NewPlanarFaceLoop(face.m_face_index, ON_BrepLoop::outer,
+	    curves, true)) {
+	delete brep;
+	return NULL;
+    }
+    brep->SetTrimIsoFlags(brep->m_F[0]);
+
+    if (!xform.IsIdentity() && !brep->Transform(xform)) {
+	delete brep;
+	return NULL;
+    }
+    /* Match rt_brep_mat: a negative-determinant transform reverses the
+	 * parameter frame, so flip the BREP to preserve the oriented face. */
+    if (plate_transform_determinant(xform) < 0.0)
+	brep->Flip();
+
+    if (!brep->IsValid(NULL) || brep->IsSolid()) {
+	delete brep;
+	return NULL;
+    }
+    return brep;
+}
+
+
+static struct soltab *
+prep_brep_plate_disk(struct rt_i *rtip, const ON_Xform &xform,
+    double thickness, bool nocos)
+{
+    ON_Brep *brep = make_brep_plate_disk(xform);
+    if (!brep)
+	return NULL;
+
+    struct rt_brep_internal plate_internal = {};
+    plate_internal.magic = RT_BREP_INTERNAL_MAGIC;
+    plate_internal.brep = brep;
+    struct rt_db_internal plate_intern;
+    RT_DB_INTERNAL_INIT(&plate_intern);
+    plate_intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
+    plate_intern.idb_type = ID_BREP;
+    plate_intern.idb_meth = &OBJ[ID_BREP];
+    plate_intern.idb_ptr = &plate_internal;
+    char thickness_string[64];
+    snprintf(thickness_string, sizeof(thickness_string), "%.17g",
+	thickness);
+    (void)bu_avs_add(&plate_intern.idb_avs, "_plate_mode_thickness",
+	thickness_string);
+    (void)bu_avs_add(&plate_intern.idb_avs, "_plate_mode_nocos",
+	nocos ? "1" : "0");
+
+    struct soltab *stp = prep_solid(rtip, &plate_intern, ID_BREP);
+    bu_avs_free(&plate_intern.idb_avs);
+    if (plate_internal.brep)
+	delete plate_internal.brep;
+    return stp;
+}
+
+
+static bool
+plate_ray_result_matches(const ray_result &result, double center_distance,
+    double line_of_sight, const ON_3dVector &entry_normal)
+{
+    if (result.shot_hits != 1 || result.segments != 1 ||
+	    !std::isfinite(result.in_dist) ||
+	    !std::isfinite(result.out_dist) ||
+	    !std::isfinite(line_of_sight) || line_of_sight < 0.0)
+	return false;
+
+    const double distance_scale = std::max(1.0,
+	std::max(fabs(center_distance), fabs(line_of_sight)));
+    const double distance_tolerance = 2.0e-8 * distance_scale;
+    if (fabs(result.in_dist - (center_distance - 0.5 * line_of_sight)) >
+	    distance_tolerance ||
+	    fabs(result.out_dist - (center_distance + 0.5 * line_of_sight)) >
+	    distance_tolerance)
+	return false;
+
+    const double in_length = MAGNITUDE(result.in_normal);
+    const double out_length = MAGNITUDE(result.out_normal);
+    if (!std::isfinite(in_length) || !std::isfinite(out_length) ||
+	    fabs(in_length - 1.0) > 1.0e-10 ||
+	    fabs(out_length - 1.0) > 1.0e-10)
+	return false;
+    const double in_alignment = result.in_normal[X] * entry_normal.x +
+	result.in_normal[Y] * entry_normal.y +
+	result.in_normal[Z] * entry_normal.z;
+    const double opposite = VDOT(result.in_normal, result.out_normal);
+    return in_alignment >= 1.0 - 1.0e-10 &&
+	opposite <= -1.0 + 1.0e-10;
+}
+
+
+static int
+check_brep_plate_settings_parser()
+{
+    struct rt_db_internal intern;
+    RT_DB_INTERNAL_INIT(&intern);
+    struct parser_case {
+	const char *value;
+	double expected;
+    } cases[] = {
+	{"0.75", 0.75},
+	{"-2.5", 2.5},
+	{"nan", 0.0},
+	{"-nan", 0.0},
+	{"inf", 0.0},
+	{"-inf", 0.0},
+	{"1e9999", 0.0},
+	{"1.25junk", 0.0},
+	{"", 0.0}
+    };
+
+    int failures = 0;
+    for (size_t case_index = 0;
+	    case_index < sizeof(cases) / sizeof(cases[0]); ++case_index) {
+	(void)bu_avs_add(&intern.idb_avs, "_plate_mode_thickness",
+	    cases[case_index].value);
+	double thickness = -1.0;
+	int nocos = -1;
+	rt_brep_plate_mode_getvals(&thickness, &nocos, &intern);
+	if (!std::isfinite(thickness) ||
+		fabs(thickness - cases[case_index].expected) > 1.0e-14 ||
+		nocos != 0) {
+	    std::printf("FAIL: BREP plate parser value='%s' thickness/nocos="
+		"%.17g/%d expected=%.17g/0\n", cases[case_index].value,
+		thickness, nocos, cases[case_index].expected);
+	    failures++;
+	}
+    }
+
+    (void)bu_avs_add(&intern.idb_avs, "_plate_mode_nocos", "1");
+    double thickness = -1.0;
+    int nocos = 0;
+    rt_brep_plate_mode_getvals(&thickness, &nocos, &intern);
+    if (nocos != 1) {
+	std::printf("FAIL: BREP plate parser nocos=1 observed=%d\n", nocos);
+	failures++;
+    }
+    (void)bu_avs_add(&intern.idb_avs, "_plate_mode_nocos", "true");
+    rt_brep_plate_mode_getvals(&thickness, &nocos, &intern);
+    if (nocos != 0) {
+	std::printf("FAIL: BREP plate parser invalid nocos observed=%d\n",
+	    nocos);
+	failures++;
+    }
+    bu_avs_free(&intern.idb_avs);
+    return failures;
+}
+
+
+static int
+check_brep_plate_transform(const char *label, const ON_Xform &xform,
+    struct rt_i *rtip, struct resource *resource)
+{
+    const double thickness = 0.6;
+    const double center_distance = 20.0;
+    const ON_3dPoint center = cobb_transform_point(xform,
+	ON_3dPoint::Origin);
+    ON_3dVector tangent = cobb_transform_vector(xform,
+	ON_3dVector::XAxis);
+    ON_3dVector second = cobb_transform_vector(xform,
+	ON_3dVector::YAxis);
+    ON_3dVector face_normal = ON_CrossProduct(tangent, second);
+    if (!tangent.Unitize() || !face_normal.Unitize()) {
+	std::printf("FAIL: BREP plate %s transformed frame\n", label);
+	return 1;
+    }
+    if (plate_transform_determinant(xform) < 0.0)
+	face_normal.Reverse();
+
+    int failures = 0;
+    for (int nocos = 0; nocos <= 1; ++nocos) {
+	struct soltab *stp = prep_brep_plate_disk(rtip, xform, thickness,
+	    nocos != 0);
+	if (!stp) {
+	    std::printf("FAIL: BREP plate %s mode=%s preparation\n", label,
+		nocos ? "nocos" : "cos");
+	    failures++;
+	    continue;
+	}
+
+	const double slopes[] = {0.0, 0.75};
+	for (size_t slope_index = 0;
+		slope_index < sizeof(slopes) / sizeof(slopes[0]);
+		++slope_index) {
+	    ON_3dVector forward = -face_normal + slopes[slope_index] * tangent;
+	    if (!forward.Unitize()) {
+		failures++;
+		continue;
+	    }
+	    for (int reverse = 0; reverse <= 1; ++reverse) {
+		ON_3dVector direction = reverse ? -forward : forward;
+		const ON_3dPoint origin = center - center_distance * direction;
+		sampled_ray ray;
+		VSET(ray.origin, origin.x, origin.y, origin.z);
+		VSET(ray.direction, direction.x, direction.y, direction.z);
+
+		const double cosine = fabs(face_normal * direction);
+		const double line_of_sight = nocos ? thickness :
+		    thickness / cosine;
+		ON_3dVector entry_normal(face_normal);
+		if (entry_normal * direction > 0.0)
+		    entry_normal.Reverse();
+
+		const ray_result fixed = shoot_solid(stp, rtip, resource,
+		    ray.origin, ray.direction);
+		struct rt_brep_shot_trace trace = {};
+		const ray_result traced = shoot_brep_trace_result(stp, rtip,
+		    resource, ray.origin, ray.direction, trace);
+		const bool fixed_valid = plate_ray_result_matches(fixed,
+		    center_distance, line_of_sight, entry_normal);
+		const bool traced_valid = plate_ray_result_matches(traced,
+		    center_distance, line_of_sight, entry_normal);
+		const double compare_scale = std::max(1.0,
+		    std::max(fabs(fixed.in_dist), fabs(fixed.out_dist)));
+		const bool paths_match = fixed.segments == traced.segments &&
+		    fixed.shot_hits == traced.shot_hits &&
+		    fabs(fixed.in_dist - traced.in_dist) <=
+			2.0e-10 * compare_scale &&
+		    fabs(fixed.out_dist - traced.out_dist) <=
+			2.0e-10 * compare_scale &&
+		    VDOT(fixed.in_normal, traced.in_normal) >=
+			1.0 - 1.0e-10 &&
+		    VDOT(fixed.out_normal, traced.out_normal) >=
+			1.0 - 1.0e-10;
+		const bool prepared_disabled =
+		    trace.prepared_production_attempts == 1 &&
+		    trace.prepared_production_eligible == 0 &&
+		    trace.prepared_production_selected == 0 &&
+		    trace.prepared_production_fallback ==
+			RT_BREP_PREPARED_FALLBACK_PLATE &&
+		    trace.final_segments == 1;
+		if (!fixed_valid || !traced_valid || !paths_match ||
+			!prepared_disabled) {
+		    std::printf("FAIL: BREP plate %s mode=%s slope/reverse="
+			"%.2f/%d hits/segments=%d/%d,%d/%d "
+			"dist=%.17g/%.17g,%.17g/%.17g expected=%.17g+/-%.17g "
+			"prepared=%zu/%zu/%zu fallback=%d final=%zu\n",
+			label, nocos ? "nocos" : "cos",
+			slopes[slope_index], reverse, fixed.shot_hits,
+			fixed.segments, traced.shot_hits, traced.segments,
+			fixed.in_dist, fixed.out_dist, traced.in_dist,
+			traced.out_dist, center_distance,
+			0.5 * line_of_sight,
+			trace.prepared_production_attempts,
+			trace.prepared_production_eligible,
+			trace.prepared_production_selected,
+			trace.prepared_production_fallback,
+			trace.final_segments);
+		    failures++;
+		}
+	    }
+	}
+	free_solid(stp);
+    }
+    return failures;
+}
+
+
+static int
+check_brep_plate_grazing(struct rt_i *rtip, struct resource *resource)
+{
+    const ON_Xform identity(ON_Xform::IdentityTransformation);
+    const double thickness = 0.001;
+    struct soltab *stp = prep_brep_plate_disk(rtip, identity, thickness,
+	false);
+    if (!stp) {
+	std::printf("FAIL: BREP plate grazing preparation\n");
+	return 1;
+    }
+
+    int failures = 0;
+    sampled_ray exact;
+    VSET(exact.origin, 0.0, 0.0, 1.0);
+    VSET(exact.direction, 1.0, 0.0, 0.0);
+    const ray_result exact_result = shoot_solid(stp, rtip, resource,
+	exact.origin, exact.direction);
+    if (exact_result.shot_hits || exact_result.segments) {
+	std::printf("FAIL: BREP plate exact grazing hits/segments=%d/%d\n",
+	    exact_result.shot_hits, exact_result.segments);
+	failures++;
+    }
+
+    const double cosine = 2.0 * BREP_GRAZING_DOT_TOL;
+    const double tangent = sqrt(1.0 - cosine * cosine);
+    ON_3dVector direction(tangent, 0.0, -cosine);
+    const double center_distance = 20.0;
+    const ON_3dPoint origin = ON_3dPoint::Origin -
+	center_distance * direction;
+    sampled_ray near_ray;
+    VSET(near_ray.origin, origin.x, origin.y, origin.z);
+    VSET(near_ray.direction, direction.x, direction.y, direction.z);
+    const double line_of_sight = thickness / cosine;
+    const ON_3dVector entry_normal(0.0, 0.0, 1.0);
+    const ray_result near_result = shoot_solid(stp, rtip, resource,
+	near_ray.origin, near_ray.direction);
+    struct rt_brep_shot_trace trace = {};
+    const ray_result near_trace = shoot_brep_trace_result(stp, rtip,
+	resource, near_ray.origin, near_ray.direction, trace);
+    if (!plate_ray_result_matches(near_result, center_distance,
+	    line_of_sight, entry_normal) ||
+	    !plate_ray_result_matches(near_trace, center_distance,
+		line_of_sight, entry_normal) ||
+	    trace.prepared_production_fallback !=
+		RT_BREP_PREPARED_FALLBACK_PLATE ||
+	    trace.prepared_production_selected || trace.final_segments != 1) {
+	std::printf("FAIL: BREP plate near-grazing hits/segments=%d/%d,%d/%d "
+	    "dist=%.17g/%.17g,%.17g/%.17g los=%.17g fallback=%d "
+	    "selected/final=%zu/%zu\n", near_result.shot_hits,
+	    near_result.segments, near_trace.shot_hits, near_trace.segments,
+	    near_result.in_dist, near_result.out_dist, near_trace.in_dist,
+	    near_trace.out_dist, line_of_sight,
+	    trace.prepared_production_fallback,
+	    trace.prepared_production_selected, trace.final_segments);
+	failures++;
+    }
+
+    free_solid(stp);
+    return failures;
+}
+
+
+static int
+check_brep_plate_contract(struct rt_i *rtip, struct resource *resource)
+{
+    int failures = check_brep_plate_settings_parser();
+    struct transform_case {
+	const char *name;
+	ON_Xform xform;
+    } cases[] = {
+	{"identity", ON_Xform(ON_Xform::IdentityTransformation)},
+	{"rigid", cobb_axis_angle_similarity_transform(1.0,
+	    ON_3dVector(3.0, -4.0, 2.0), ON_3dVector(1.0, 2.0, 3.0),
+	    0.47)},
+	{"uniform-scale", cobb_axis_angle_similarity_transform(2.5,
+	    ON_3dVector(-7.0, 1.0, 5.0), ON_3dVector(2.0, -1.0, 1.0),
+	    -0.63)},
+	{"reflection", cobb_axis_angle_affine_transform(
+	    ON_3dVector(-1.0, 1.0, 1.0), ON_3dVector(2.0, 3.0, -1.0),
+	    ON_3dVector(0.0, 0.0, 1.0), 0.31)},
+	{"nonuniform", cobb_axis_angle_affine_transform(
+	    ON_3dVector(3.0, 0.5, 1.25), ON_3dVector(-2.0, 6.0, 4.0),
+	    ON_3dVector(1.0, 1.0, -2.0), 0.72)}
+    };
+    for (size_t case_index = 0;
+	    case_index < sizeof(cases) / sizeof(cases[0]); ++case_index)
+	failures += check_brep_plate_transform(cases[case_index].name,
+	    cases[case_index].xform, rtip, resource);
+    failures += check_brep_plate_grazing(rtip, resource);
+    if (!failures)
+	std::printf("BREP plate-mode contract: PASS\n");
+    return failures;
+}
+
+
 int
 main(int argc, char **argv)
 {
@@ -19198,12 +23491,27 @@ main(int argc, char **argv)
     const bool report_cobb_oblique = mode &&
 	BU_STR_EQUAL(mode, "--cobb-oblique-report");
     const bool affine_only = mode && BU_STR_EQUAL(mode, "--affine-only");
+    const bool status2_routing_only = mode &&
+	BU_STR_EQUAL(mode, "--status2-routing-only");
+    const bool status2_proxy_throughput = mode &&
+	BU_STR_EQUAL(mode, "--status2-proxy-throughput");
+    const bool status2_proxy_polycurve_throughput = mode &&
+	BU_STR_EQUAL(mode, "--status2-proxy-polycurve-throughput");
+    const bool status2_polycurve_throughput = mode &&
+	BU_STR_EQUAL(mode, "--status2-polycurve-throughput");
     const bool interval_only = mode && BU_STR_EQUAL(mode, "--interval-only");
+    const bool degree_only = mode && BU_STR_EQUAL(mode, "--degree-only");
     const bool restriction_only = mode &&
 	BU_STR_EQUAL(mode, "--restriction-only");
     const bool local_root_only = mode &&
 	BU_STR_EQUAL(mode, "--local-root-only");
+    const bool evaluation_cache_only = mode &&
+	BU_STR_EQUAL(mode, "--evaluation-cache-only");
+    const bool incomplete_recovery_only = mode &&
+	BU_STR_EQUAL(mode, "--incomplete-recovery-only");
     const bool cleanup_only = mode && BU_STR_EQUAL(mode, "--cleanup-only");
+    const bool cleanup_reasons_only = mode &&
+	BU_STR_EQUAL(mode, "--cleanup-reasons-only");
     const bool grazing_root_only = mode &&
 	BU_STR_EQUAL(mode, "--grazing-root-only");
     const bool trim_interval_only = mode &&
@@ -19213,6 +23521,8 @@ main(int argc, char **argv)
     const bool source_union_only = mode &&
 	BU_STR_EQUAL(mode, "--source-union-only");
     const bool fold_only = mode && BU_STR_EQUAL(mode, "--fold-only");
+    const bool curve_only = mode && BU_STR_EQUAL(mode, "--curve-only");
+    const bool plate_only = mode && BU_STR_EQUAL(mode, "--plate-only");
     const bool core_only = mode && BU_STR_EQUAL(mode, "--core-only");
     const bool pole_only = mode && BU_STR_EQUAL(mode, "--pole-only");
     const bool directed_only = mode && BU_STR_EQUAL(mode, "--directed-only");
@@ -19236,12 +23546,17 @@ main(int argc, char **argv)
 	BU_STR_EQUAL(mode, "--throughput-contact-only");
     if (mode && !report_grazing && !report_cobb &&
 	    !report_cobb_oblique && !affine_only &&
-	    !interval_only && !restriction_only && !local_root_only &&
-	    !cleanup_only &&
+	    !status2_routing_only && !status2_proxy_throughput &&
+	    !status2_proxy_polycurve_throughput &&
+	    !status2_polycurve_throughput &&
+	    !interval_only && !degree_only && !restriction_only &&
+	    !local_root_only && !evaluation_cache_only &&
+	    !incomplete_recovery_only &&
+	    !cleanup_only && !cleanup_reasons_only &&
 	    !grazing_root_only &&
 	    !trim_interval_only && !trim_classifier_only &&
 	    !source_union_only &&
-	    !fold_only && !core_only && !pole_only &&
+	    !fold_only && !curve_only && !plate_only && !core_only && !pole_only &&
 	    !directed_only &&
 	    !crofton_only && !crofton_hard_only && !regular_stream_only &&
 	    !seam_only && !seam_authority_only && !endpoint_only &&
@@ -19249,12 +23564,19 @@ main(int argc, char **argv)
 	    !throughput_only && !throughput_contact_only)
 	bu_exit(1, "Usage: %s [--grazing-report|--cobb-report|"
 	    "--cobb-oblique-report|"
-	    "--affine-only|--interval-only|--restriction-only|"
-	    "--local-root-only|--cleanup-only|"
+	    "--affine-only|--status2-routing-only|"
+	    "--status2-proxy-throughput|"
+	    "--status2-proxy-polycurve-throughput|"
+	    "--status2-polycurve-throughput|"
+	    "--interval-only|"
+	    "--degree-only|--restriction-only|"
+	    "--local-root-only|--evaluation-cache-only|"
+	    "--incomplete-recovery-only|"
+	    "--cleanup-only|--cleanup-reasons-only|"
 	    "--grazing-root-only|"
 	    "--trim-interval-only|"
 	    "--trim-classifier-only|"
-	    "--source-union-only|--fold-only|"
+	    "--source-union-only|--fold-only|--curve-only|--plate-only|"
 	    "--core-only|--pole-only|"
 	    "--directed-only|--crofton-only|--crofton-hard-only|"
 	    "--regular-stream-only|"
@@ -19265,6 +23587,7 @@ main(int argc, char **argv)
 	    argv[0], BREP_MAX_FT_DEPTH);
     if (interval_only) {
 	const int interval_failures = check_brep_interval_enclosures() +
+	    check_brep_root_degree_certificate() +
 	    check_brep_local_root_solver() +
 	    check_brep_weighted_local_root_solver() +
 	    check_brep_fold_interval_classifier() +
@@ -19272,6 +23595,8 @@ main(int argc, char **argv)
 	    check_brep_trim_interval_solver();
 	return interval_failures ? 1 : 0;
     }
+    if (degree_only)
+	return check_brep_root_degree_certificate() ? 1 : 0;
     if (restriction_only)
 	return check_brep_expansion_endpoint_restrictions() ? 1 : 0;
     if (local_root_only)
@@ -19279,6 +23604,8 @@ main(int argc, char **argv)
 	    check_brep_weighted_local_root_solver()) ? 1 : 0;
     if (cleanup_only)
 	return check_brep_direction_cleanup() ? 1 : 0;
+    if (cleanup_reasons_only)
+	return check_brep_cleanup_reason_reachability() ? 1 : 0;
     if (trim_interval_only)
 	return check_brep_trim_interval_solver() ? 1 : 0;
     if (trim_classifier_only)
@@ -19290,7 +23617,8 @@ main(int argc, char **argv)
     if (fold_only)
 	return check_brep_fold_solver() ? 1 : 0;
     const bool split_core = pole_only || directed_only || grazing_root_only ||
-	crofton_only || seam_only || endpoint_only;
+	crofton_only || seam_only || endpoint_only || evaluation_cache_only ||
+	incomplete_recovery_only;
     const bool run_directed = !split_core || directed_only;
     const bool run_grazing_root = !split_core || directed_only ||
 	grazing_root_only;
@@ -19324,6 +23652,79 @@ main(int argc, char **argv)
 
     struct resource resp = {};
     rt_init_resource(&resp, 0, rtip);
+
+    if (incomplete_recovery_only) {
+	const int recovery_failures = check_status2_revolution_line_profile(
+	    rtip, &resp);
+	rt_clean_resource_basic(rtip, &resp);
+	BU_PTBL_SET(&rtip->rti_resources, 0, NULL);
+	rt_i_destroy(rtip);
+	return recovery_failures ? 1 : 0;
+    }
+
+    if (status2_routing_only) {
+	const int status2_failures =
+	    check_status2_arc_parameter_map() +
+	    check_status2_proxy_parameter_map() +
+	    check_status2_polycurve_parameter_map() +
+	    check_status2_revolution_sphere_poles(rtip, &resp) +
+	    check_torus_status2_similarity(&rtip->rti_tol) +
+	    check_status2_revolution_line_profile(rtip, &resp) +
+	    check_status2_revolution_proxy_profiles(rtip, &resp) +
+	    check_status2_revolution_polycurve_profiles(rtip, &resp) +
+	    check_status2_revolution_unsupported_profile(rtip, &resp);
+	rt_clean_resource_basic(rtip, &resp);
+	BU_PTBL_SET(&rtip->rti_resources, 0, NULL);
+	rt_i_destroy(rtip);
+	return status2_failures ? 1 : 0;
+    }
+
+    if (status2_proxy_throughput) {
+	const int proxy_failures = check_status2_proxy_parameter_map() +
+	    check_status2_revolution_proxy_profiles(rtip, &resp,
+		"direct-arc");
+	rt_clean_resource_basic(rtip, &resp);
+	BU_PTBL_SET(&rtip->rti_resources, 0, NULL);
+	rt_i_destroy(rtip);
+	return proxy_failures ? 1 : 0;
+    }
+
+    if (status2_proxy_polycurve_throughput) {
+	const int proxy_failures = check_status2_proxy_parameter_map() +
+	    check_status2_revolution_proxy_profiles(rtip, &resp,
+		"polycurve");
+	rt_clean_resource_basic(rtip, &resp);
+	BU_PTBL_SET(&rtip->rti_resources, 0, NULL);
+	rt_i_destroy(rtip);
+	return proxy_failures ? 1 : 0;
+    }
+
+    if (status2_polycurve_throughput) {
+	const int polycurve_failures = check_status2_polycurve_parameter_map() +
+	    check_status2_revolution_polycurve_profiles(rtip, &resp, true) +
+	    check_status2_revolution_unsupported_profile(rtip, &resp);
+	rt_clean_resource_basic(rtip, &resp);
+	BU_PTBL_SET(&rtip->rti_resources, 0, NULL);
+	rt_i_destroy(rtip);
+	return polycurve_failures ? 1 : 0;
+    }
+
+    if (curve_only) {
+	const int curve_failures = check_brep_curvature_contract(
+	    &rtip->rti_tol, rtip, &resp);
+	rt_clean_resource_basic(rtip, &resp);
+	BU_PTBL_SET(&rtip->rti_resources, 0, NULL);
+	rt_i_destroy(rtip);
+	return curve_failures ? 1 : 0;
+    }
+
+    if (plate_only) {
+	const int plate_failures = check_brep_plate_contract(rtip, &resp);
+	rt_clean_resource_basic(rtip, &resp);
+	BU_PTBL_SET(&rtip->rti_resources, 0, NULL);
+	rt_i_destroy(rtip);
+	return plate_failures ? 1 : 0;
+    }
 
     if (throughput_only || throughput_contact_only) {
 	const int throughput_failures = check_cobb_production_throughput(
@@ -19445,8 +23846,11 @@ main(int argc, char **argv)
     };
 
     int failures = 0;
+    if (evaluation_cache_only)
+	failures += check_brep_evaluation_cache(brep_stp, rtip, &resp, radius);
     if (!core_only && !split_core) {
 	failures += check_brep_interval_enclosures();
+	failures += check_brep_root_degree_certificate();
 	failures += check_brep_local_root_solver();
 	failures += check_brep_weighted_local_root_solver();
 	failures += check_brep_fold_interval_classifier();
@@ -19454,6 +23858,7 @@ main(int argc, char **argv)
 	failures += check_brep_trim_interval_solver();
 	failures += check_brep_fold_solver();
 	failures += check_brep_direction_cleanup();
+	failures += check_brep_cleanup_reason_reachability();
     }
     if (run_directed) {
 	for (size_t repeat = 0; repeat < 16; ++repeat) {
@@ -19510,7 +23915,14 @@ main(int argc, char **argv)
 	    false, false, false);
 	failures += check_torus_grazing_local_root_certificate_trend(rtip,
 	    &resp);
+	failures += check_status2_arc_parameter_map();
+	failures += check_status2_proxy_parameter_map();
+	failures += check_status2_polycurve_parameter_map();
 	failures += check_torus_status2_similarity(&rtip->rti_tol);
+	failures += check_status2_revolution_line_profile(rtip, &resp);
+	failures += check_status2_revolution_proxy_profiles(rtip, &resp);
+	failures += check_status2_revolution_polycurve_profiles(rtip, &resp);
+	failures += check_status2_revolution_unsupported_profile(rtip, &resp);
     }
 
     free_solid(brep_stp);

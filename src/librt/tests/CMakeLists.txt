@@ -126,6 +126,11 @@ brlcad_add_test(NAME rt_cache_parallel_multiple_identical_objects  COMMAND rt_ca
 brlcad_add_test(NAME rt_cache_serial_multiple_different_objects COMMAND rt_cache 5 10)
 brlcad_add_test(NAME rt_cache_parallel_multiple_different_objects  COMMAND rt_cache 6 10)
 brlcad_add_test(NAME rt_cache_parallel_multiple_different_objects_hierarchy_1  COMMAND rt_cache 7 10)
+brlcad_add_test(NAME rt_cache_brep_depth_variants COMMAND rt_cache 8)
+brlcad_add_test(NAME rt_cache_brep_concurrent_depth_variants COMMAND rt_cache 9)
+brlcad_add_test(NAME rt_cache_payload_compression COMMAND rt_cache 11)
+brlcad_add_test(NAME rt_cache_corruption_recovery COMMAND rt_cache 12)
+brlcad_add_test(NAME rt_cache_format_migration COMMAND rt_cache 13)
 
 # lod testing
 brlcad_addexec(rt_lod lod.c "librt;libbg;${M_LIBRARY}" TEST)
@@ -199,6 +204,18 @@ brlcad_add_test(NAME rt_brep_io COMMAND rt_brep_io)
 # Directed analytic primitive vs converted-BRep ray intersections
 brlcad_addexec(rt_brep_ray brep_ray.cpp "librt;libbrep;libwdb;libbu;${M_LIBRARY}" TEST)
 brlcad_add_test(NAME rt_brep_ray COMMAND rt_brep_ray --directed-only)
+brlcad_add_test(
+  NAME rt_brep_ray_incomplete_transaction_recovery
+  COMMAND rt_brep_ray --incomplete-recovery-only --surface-tree-depth=3
+)
+brlcad_add_test(
+  NAME rt_brep_ray_status2_packless
+  COMMAND rt_brep_ray --status2-routing-only
+)
+set_property(
+  TEST rt_brep_ray_status2_packless
+  PROPERTY ENVIRONMENT "LIBRT_BREP_ROUTING_PACK_CACHE_BYTES=0"
+)
 
 # Mixed collapsed-pole and regular BREP ray events
 brlcad_addexec(rt_brep_mixed_pole brep_mixed_pole.cpp librt;libbrep;libbu;${M_LIBRARY} TEST)
@@ -257,11 +274,20 @@ brlcad_add_test(
   COMMAND rt_brep_ray --defect-only
 )
 brlcad_add_test(NAME rt_brep_ray_interval COMMAND rt_brep_ray --interval-only)
+brlcad_add_test(NAME rt_brep_ray_degree COMMAND rt_brep_ray --degree-only)
 brlcad_add_test(
   NAME rt_brep_ray_local_root
   COMMAND rt_brep_ray --local-root-only
 )
+brlcad_add_test(
+  NAME rt_brep_ray_evaluation_cache
+  COMMAND rt_brep_ray --evaluation-cache-only
+)
 brlcad_add_test(NAME rt_brep_ray_cleanup COMMAND rt_brep_ray --cleanup-only)
+brlcad_add_test(
+  NAME rt_brep_ray_cleanup_reasons
+  COMMAND rt_brep_ray --cleanup-reasons-only
+)
 brlcad_add_test(
   NAME rt_brep_ray_grazing_root
   COMMAND rt_brep_ray --grazing-root-only
@@ -280,6 +306,35 @@ brlcad_add_test(
 )
 brlcad_add_test(NAME rt_brep_ray_fold COMMAND rt_brep_ray --fold-only)
 brlcad_add_test(NAME rt_brep_ray_affine COMMAND rt_brep_ray --affine-only)
+brlcad_add_test(
+  NAME rt_brep_ray_status2_routing
+  COMMAND rt_brep_ray --status2-routing-only
+)
+set_property(
+  TEST rt_brep_ray_status2_routing
+  PROPERTY ENVIRONMENT "LIBRT_BREP_ROUTING_PACK_CACHE_BYTES=8388608"
+)
+brlcad_add_test(
+  NAME rt_brep_ray_status2_proxy_throughput
+  COMMAND rt_brep_ray --status2-proxy-throughput
+)
+brlcad_add_test(
+  NAME rt_brep_ray_status2_proxy_polycurve_throughput
+  COMMAND rt_brep_ray --status2-proxy-polycurve-throughput
+)
+brlcad_add_test(
+  NAME rt_brep_ray_status2_polycurve_throughput
+  COMMAND rt_brep_ray --status2-polycurve-throughput
+)
+set_tests_properties(
+  rt_brep_ray_throughput
+  rt_brep_ray_status2_proxy_throughput
+  rt_brep_ray_status2_proxy_polycurve_throughput
+  rt_brep_ray_status2_polycurve_throughput
+  PROPERTIES RUN_SERIAL TRUE
+)
+brlcad_add_test(NAME rt_brep_ray_curve COMMAND rt_brep_ray --curve-only)
+brlcad_add_test(NAME rt_brep_ray_plate COMMAND rt_brep_ray --plate-only)
 
 # stand-alone Crofton estimator tests
 brlcad_addexec(rt_crofton crofton.c "librt;libwdb;libbu;${M_LIBRARY}" TEST)

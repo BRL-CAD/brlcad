@@ -14,6 +14,16 @@ foreach(im ${NIST_SAMPLE_MODELS})
   g_target(${im} "BRL-CAD Geometry Models/Sample")
 endforeach(im ${NIST_SAMPLE_MODELS})
 
+if(TARGET rt_cache AND TARGET NIST_MBE_PMI_11.g)
+  add_dependencies(rt_cache NIST_MBE_PMI_11.g)
+  brlcad_add_test(
+    NAME rt_cache_brep_unsupported_cells
+    COMMAND rt_cache 10
+      ${CMAKE_BINARY_DIR}/${DATA_DIR}/db/nist/NIST_MBE_PMI_11.g
+      Document_item.s
+  )
+endif()
+
 cmakefiles(
   ${NIST_SAMPLE_MODELS}
   CMakeLists.txt
