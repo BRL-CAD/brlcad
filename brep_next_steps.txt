@@ -1,0 +1,2936 @@
+BREP RAYTRACE NEXT IMPLEMENTATION STEPS
+=======================================
+
+Last updated: 2026-10-08
+Repository: brlcad
+Status source: brep_current_state.txt
+
+
+CURRENT BASELINE
+----------------
+
+2026-10-08 POST-REBASE EXECUTION PLAN
+
+The implementation is a 30-commit review series on fetched `origin/main`
+`e7c61497df`.  The accuracy and memory conclusions are unchanged: the GTA02
+oracle confirms ten corrections in both directions and three equivalent
+prepared completions, and the 8 MiB scene-pack configuration uses 1.538 GiB
+peak working set versus 4.923 GiB on main.  The current-main archive measures
+routed/legacy SHOT at 1.1940x CPU and 1.1904x wall, routed/main SHOT at 1.1694x
+CPU and 1.1752x wall, prep at 1.2199x main, and prep-plus-shot at 1.2078x main.
+The route is production-viable as an opt-in, but the <=1.10x performance goal
+and external release qualification remain open.
+
+The final clean-tip 63-face archive measures routed throughput at 1.901x CPU
+and 1.908x wall relative to current main, with exact routed/legacy result
+agreement.  Its paired routed/legacy time medians are 1.1007x CPU and 1.0918x
+wall.  Consequently there is no fundamental small/mid-face-count performance
+blocker; the remaining target is the whole-assembly overhead identified below.
+
+1. [DONE, LOW-DISTORTION PROFILING] Route counters are fixed per-worker slots
+   indexed by `a_resource->re_cpu` and merged only for the final report.  Trace
+   storage is inline/thread-local, and six mutually exclusive phases use
+   staggered deterministic 1-in-64 timing while exact populations remain
+   unsampled.  Phase data is outside the returned route-decision object, so
+   unprofiled shots retain the original hot-path layout.  Serial and `-P 2`
+   tests verify merged populations, phase accounting, and identical images.
+   A seven-trial 1,024-square 63-face check measures profiled/unprofiled paired
+   medians of 1.0173x CPU and 1.0147x wall, satisfying the <=1.02x gate.
+
+2. [P1, CELL/SPAN FAST PATH] The 1,024-square GTA profile attributes estimated
+   aggregate phase time of 42.081 s to cell/span traversal, 11.339 s to replay,
+   7.562 s to root certification, 3.689 s to eligibility/dispatch, 0.391 s to
+   grazing continuation, and 0.289 s to direction-cache work.  First flatten
+   each prepared cell's immutable span references into compact contiguous
+   ranges, hoist ray-frame and bounding context once per object/direction, and
+   eliminate repeated identity/range checks already proved during prep.  Keep
+   the current checked scalar path for malformed or old cached data.  Gate
+   each step with the exact-ray oracle, 63-face digest, GTA route populations,
+   and 0/8/64 MiB cache modes.  Exit goal: reduce cell/span phase time by at
+   least 40 percent and move paired GTA routed/legacy SHOT to <=1.12x.
+
+3. [P1, REPLAY AND ROOT-CERTIFICATE COST] Preserve the positive missing-root
+   certificate as admission authority.  Add a cheap, conservative rejection
+   stage using prep-owned cell/span summaries, then evaluate compact 2-by-2
+   replay records charged to the existing scene budget.  A rejection is valid
+   only when it proves that no complete trimmed transaction can result; face,
+   cell, root, or deficit counts alone are prohibited because earlier variants
+   lost real GTA corrections.  Exit goal: retain all ten correction rays and
+   three equivalence completions while cutting combined certificate/replay
+   phase time by at least 30 percent.
+
+4. [DONE BASELINE; P1 MULTIVIEW CACHE POLICY] Keep the implemented flexible
+   cache hierarchy: persistent prep keys include serialized representation,
+   depth, and acceleration options; four prep-owned direction entries per
+   B-Rep are immutable and reader-pinned; and cell/span packs share one
+   deterministic weighted 8 MiB scene budget with an exact packless fallback.
+   Next, run a fixed multi-camera sequence and record per-object hits, misses,
+   builds, replacements, useful pack accesses, and retained bytes.  Only if
+   that evidence shows churn should the four-entry policy become a bounded
+   scene-level pool.  Exit goal: identical results at depths 3/8 and budgets
+   0/8/64 MiB, deterministic 1/2/all-worker behavior, and retained memory below
+   2 GiB or 40 percent of main.
+
+5. [P1, PREPARATION COST] Attribute the stable approximately 22-percent
+   branch/main prep-wall gap between base B-Rep metadata, exact normal
+   enclosures, cache serialization, and scene-pack construction.  Recheck on a
+   quiet host; the later 37--41 second cold runs were host-load contaminated and
+   are not new baseline evidence.  Qualify the faster second-order enclosure
+   only with direct first/second/exact differential tests, cache reload parity,
+   the full GTA oracle, expanded corpus, and sanitizers.  Exit goal: paired prep
+   <=1.20x current main without changing risk populations or moving work into
+   ray shooting.
+
+6. [P0, EXTERNAL DURABILITY] Build the final review tip on Linux or BSD with
+   Clang and GCC.  Run the focused matrix and a reduced GTA render under
+   ASan+UBSan, then exercise parallel cache prep/shooting under TSan (or the
+   platform race detector) and leak checking.  Cover fresh, cold, warm,
+   corrupt, and migrated caches at depths 3 and 8.  Exit goal: zero undefined
+   behavior, race, leak, stale-depth reuse, or shot-time allocation.
+
+7. [P0, PRODUCTION CORPUS] Add at least two independently sourced top-level
+   STEP/FRAME assemblies with fixed silhouette, tangent, periodic, singular,
+   transformed, and overlapping-CSG views.  Archive ordered segments, normal
+   images, route populations, reversal results, memory, and timings for routed,
+   branch legacy, and main.  Adjudicate every publication independently; main
+   is a comparison lane, not an accuracy oracle.  Exit goal: no unexplained
+   segment regression, no reversal mismatch, and deterministic 1-, 2-, and
+   all-worker results.
+
+8. [P1, FINAL PERFORMANCE GATE] Repeat seven alternating 63-face and GTA02
+   trials on a quiet or reserved host after items 2 and 3.  Report paired CPU
+   and wall ratios as the authority; retain independent medians for context.
+   The status-2 proxy microbenchmark currently straddles its 0.95 throughput
+   threshold (0.987 isolated, 0.926--0.931 under adjacent load) while all of
+   its correctness checks pass.  Stabilize that test without weakening its
+   threshold.  Exit goal: routed/main and routed/branch-legacy SHOT <=1.10x,
+   with unchanged digests and exact-ray results.
+
+9. [P0, DEFAULT-ON PROMOTION] After external durability and production-corpus
+   gates pass, enable certified publication by default with an explicit legacy
+   escape switch.  Rebuild and repeat the focused matrix, repository/license
+   checks, 63-face and GTA paired archives, exact-ray oracle, memory series,
+   and production corpus from the exact release binaries.  Required acceptance
+   remains bounded memory, allocation-free shot certification/replay,
+   deterministic authority, independently verified corrections, and paired
+   SHOT time <=1.20x branch legacy.  The <=1.10x target must not be achieved by
+   weakening accuracy.
+
+
+2026-10-07 FINAL LOCAL QUALIFICATION AND HANDOFF PLAN
+
+The redesign has passed the local production-viability gates.  It keeps the
+depth-3 tree, performs ray-direction-dependent grazing certification in a
+fixed workspace, continues from 256 toward 1,024 boxes only when ambiguity
+remains, allocates no shot-time certification/replay storage, and uses one
+deterministic weighted 8 MiB scene-pack budget.  Ten selective corrections
+are independently confirmed in both directions, including a near-tangent
+torus case checked by analytic quartic roots.  Three general-prepared
+completions match depth-3 and depth-8 legacy transactions.  Four additional
+full-resolution views are byte-identical to branch legacy after whole-tree
+CSG evaluation.
+
+The final seven-trial GTA archive, `brlcad_build/gta02-paired-final-v1`, passes
+the explicit release limits: median paired routed/legacy CPU and wall time are
+1.1979x and 1.1612x.  Routed SHOT CPU time is 1.158x clean main and wall time
+is 1.029x main by independent medians, although wall scheduling is noisy.
+The quieter prior archive remains the end-to-end reference at 19.004 seconds
+routed versus 18.015 branch legacy and 15.792 main.  The 63-face route remains
+about 1.95x main.  This supports production viability, but not yet default-on
+release, because durability and platform breadth remain untested here.
+
+1. [DONE, PERMANENT GATE] Keep the ten-correction exact-ray oracle and three
+   equivalence completions in `bench/brep_gta02_oracle.cmake`.  Preserve actual
+   hierarchy transforms, both ray directions, face ownership, endpoint
+   windows, trim checks, and the analytic face-188 torus roots.  Any routing,
+   replay, cache, or prep optimization must pass this oracle unchanged.
+
+2. [DONE, PERMANENT GATE] Keep the paired benchmark reporting in
+   `bench/brep_raytrace.cmake`.  Release measurements must use odd alternating
+   trials and report every paired CPU/wall ratio, their observed medians, the
+   independent throughput medians, prep-plus-shot latency, hashes, and host
+   spread.  Acceptance remains paired CPU <=1.20x and paired wall <=1.20x;
+   <=1.10x remains the optimization goal rather than a correctness trade.
+
+3. [P0, EXTERNAL DURABILITY] On a supported Linux or BSD toolchain, build and
+   run the 103-test focused matrix plus a reduced GTA render under ASan and
+   UBSan, then run TSan or an available race detector and leak checking.
+   Repeat fresh/cold/warm/corrupt/migrated caches at depths 3 and 8 while
+   multiple B-Reps prep concurrently.  Goal: zero leak, race, use-after-free,
+   undefined behavior, stale-depth reuse, or shot-time allocation.  This is
+   blocked only by the absence of GCC/Clang, WSL, and Docker on the current
+   Windows host; it requires another environment, not an algorithm redesign.
+
+4. [P0, PRODUCTION CORPUS] Add at least two independent top-level STEP/FRAME
+   assemblies and views chosen for silhouettes, tangent contact, periodic
+   seams, singularities, transforms, and overlapping CSG.  Archive routed,
+   branch-legacy, and main images plus route populations.  Independently
+   adjudicate every new publication; sample non-publication differences by
+   risk class rather than treating main as ground truth.  Goal: no unexplained
+   segment regression, zero reversal mismatch, and deterministic images over
+   repeated 1-, 2-, and all-core runs.
+
+5. [P1, COMMON-PATH CPU] Reduce the measured 1.1979x GTA routed/legacy CPU
+   ratio toward <=1.10x.  First profile with per-worker counters merged after
+   the frame, separating eligibility/dispatch, direction-cache lookup,
+   immutable cell/span walks, grazing continuation, root certificate, and
+   replay.  Optimize repeated metadata traversal and reader synchronization
+   before changing mathematical tests.  Success requires unchanged oracle,
+   image hashes, route populations, cache bounds, and zero shot-time malloc.
+
+6. [P1, REPLAY ADMISSION] Reverse oblique attempts 62,012 optional
+   transactions for six completions, five of which are selective level-1
+   corrections.  Test a cheaper conservative rejection certificate and/or
+   prep-built 2-by-2 replay records charged to the existing scene budget.
+   A candidate may be rejected only when a complete usable trimmed event
+   transaction is proven impossible; simple face, cell, root, or deficit
+   counts remain prohibited because prior versions lost real corrections.
+   Goal: retain all ten correction rays and three equivalence rays while
+   measurably reducing CPU time without transferring it to prep or memory.
+
+7. [P1, CACHE EVOLUTION] Retain exact depth/format/generation keys, immutable
+   reader-pinned entries, weighted water filling, the 8 MiB scene-pack default,
+   and exact packless fallback.  Measure direction-entry hit/churn and retained
+   bytes over multi-camera animation before introducing a scene-level
+   direction-entry allowance or eviction policy.  Any policy must leave
+   authority independent of admission and reproduce identical 0/8/64 MiB
+   results at depths 3 and 8.  Goal: bounded retained memory below 2 GiB or 40
+   percent of main with no cache-dependent correctness.
+
+8. [P1, PREP OPTION] Qualify the second-order normal enclosure only as an
+   optional optimization.  Require direct first/second/exact differential
+   tests, the complete GTA oracle, cache reload parity, the expanded corpus,
+   and sanitizer results.  Every inconclusive/capacity case must preserve the
+   exact restriction fallback.  Goal: recover its observed prep advantage
+   without increasing the grazing-risk population or changing publication.
+
+9. [P0, DEFAULT-ON PROMOTION] After items 3 and 4 pass, enable certified
+   publication by default with an explicit legacy escape switch.  Rebuild and
+   repeat the focused matrix, repository/license checks, 63-face archive, GTA
+   paired archive, memory series, and production corpus from the exact release
+   binaries.  Production-ready acceptance is bounded memory, allocation-free
+   shot certification/replay, deterministic authority, independently verified
+   corrections, paired trace time <=1.20x branch legacy, and no durability
+   finding.  Item 5's <=1.10x target is desirable follow-up, not a reason to
+   weaken accuracy.
+
+
+2026-10-07 STAGED-CERTIFICATION RESULT AND CONCRETE RELEASE PLAN
+
+The routing redesign is now demonstrated on both the 63-face fixture and the
+complete GTA02 top-level assembly.  Production still uses a shallow depth-3
+SurfaceTree.  Direction-dependent grazing proof begins with the established
+256-box fixed workspace and, only when ray-visible work remains unresolved,
+continues the same traversal toward a 1,024-box hard limit.  It neither
+restarts the proof nor allocates during shooting.  An explicit budget of 256
+or less retains the old one-stage fail-closed behavior.
+
+At 128 square only 2 of 15,377 probes continue, consuming 46 additional boxes;
+both resolve.  At 1,024 square only 120 of 987,879 probes continue.  Those
+continuations consume 5,853 boxes and resolve 247 spans; six spans remain
+ambiguous, trigger conservative fallback, and no workspace overflows.  This
+is the intended direction-dependent refinement, not a return to uniform depth
+8.  The routed image remains
+`FD626C13AF6A8171DD405DE5044949903A0681CDAD144F152A6D1159B15143D4`.
+
+The fixed five-ray GTA oracle now gives each endpoint a window no wider than
+3e-5.  Every depth-3 legacy ray misses in both directions, every depth-8
+reference finds one interval, and the production level-1 replay publishes the
+same faces and interval with zero reversal mismatch.  The largest observed
+reference/replay endpoint difference is 7.02e-8.  This converts the five
+publications from an inference based on image differences into explicit,
+repeatable ray evidence.
+
+The final 63-face seven-trial archive reports 441,505.68 CPU and 432,887.67
+wall rays/second for routed execution, 486,296.12/475,761.73 for branch legacy,
+and 226,719.14/222,242.80 for main.  Routing is 1.95 times main and costs
+10.1/9.9 percent CPU/wall time versus branch legacy, with exact routed/legacy
+aggregates and result digests.
+
+Two complete GTA seven-trial archives put CPU overhead at a repeatable
+19.1--19.2 percent versus branch legacy.  Wall time is host-noise sensitive:
+the first ratio-of-medians result is 20.16 percent, while the quieter repeat's
+paired-trial median is 19.87 percent (its unpaired ratio of medians is 24.63
+percent because unrelated stalls moved the two medians to different trials).
+In the repeat, routed total prep is 13.785 seconds versus 13.904 for branch
+legacy and 11.554 for main; median prep-plus-shot wall time is 19.004 seconds
+versus 18.015 and 15.792.  The implementation is therefore at the agreed
+20-percent production boundary, not separated from main by a fundamental
+algorithmic gap.
+
+Measured peak working sets at 0, 8, and 64 MiB scene-pack budgets are 1.532,
+1.538, and 1.603 GiB; main is 4.923 GiB.  The 8 MiB default uses 31.25 percent
+of main's memory (68.75 percent saving).  The 64 MiB setting adds prep cost
+without a demonstrated tracing benefit, so 8 MiB remains the production
+choice.
+
+The optimized Ninja build, all 103 focused route/cache tests (including the
+corrected four-event audit expectation), the final five-test critical subset,
+the exact GTA oracle, `regress-licenses`, `regress-repository`, and
+`git diff --check` pass.  Remaining work below is release qualification and
+targeted optimization, not recovery of a broken local build.
+
+1. [P0, RELEASE TIMING CONTRACT] Extend `bench/brep_raytrace.cmake` to report
+   paired per-trial routed/legacy CPU- and wall-time ratios in addition to the
+   existing ratios of independent medians.  Repeat the GTA archive on a
+   reserved host and record both measures.  The acceptance goal is <=1.20 for
+   CPU and wall, plus a documented end-to-end prep-plus-shot comparison.  If
+   wall scheduling still straddles 1.20 while CPU remains stable near 1.19,
+   make the explicit project decision whether the five certified corrections
+   and 68.75-percent memory saving justify that boundary cost.
+
+2. [P0, ACCURACY CORPUS] Retain the five exact GTA rays as a mandatory oracle,
+   including both directions, depth-8 reference intervals, face ownership,
+   and the <=3e-5 endpoint windows.  Add deterministic samples from axis,
+   silhouette, and deliberately grazing top-level views.  Adjudicate a
+   representative stratified subset of the remaining main/branch normal-image
+   differences with the deep solver; do not treat main's pixels as ground
+   truth.  Exit goal: every published correction is independently confirmed
+   and no routed segment regression remains unexplained.
+
+3. [P0, DURABILITY] Run ASan/UBSan, the available Windows concurrency tools,
+   and leak checking on the focused route/cache matrix and a reduced GTA
+   render.  Repeat on at least one non-Windows platform.  Exercise cache
+   fresh/cold/warm/corrupt/migration paths at depths 3 and 8 while other B-Reps
+   prep concurrently.  Exit goal: no leak, race, undefined behavior, stale
+   depth reuse, or shot-time allocation in certification/replay.
+
+4. [P1, COMMON-PATH COST] Optimize only against a profile with timing counters
+   collected per worker and merged after the frame, so atomic instrumentation
+   does not distort the hot path.  Separate object eligibility, shared
+   direction-cache lookup, cell/span metadata walks, root certificate, and
+   replay.  First target repeated immutable metadata traversal and cache-reader
+   synchronization; preserve exact keys, immutable publication, and fail-closed
+   fallback.  Goal: <=1.10 routed/legacy CPU and paired wall time without any
+   oracle or digest change.
+
+5. [P1, REPLAY ADMISSION] The full GTA frame currently attempts about 14,976
+   level-1 replays to publish five corrections.  Evaluate a cheaper conservative
+   admission certificate and prep-built 2-by-2 replay data charged to the same
+   scene budget.  A rejection is permitted only when incompleteness is proved
+   impossible; the five oracle rays must remain admitted.  Record candidates,
+   rejections, completions, reversal failures, bytes, and time.  Reject the
+   optimization if it loses any correction or merely moves cost into prep.
+
+6. [P1, CACHE POLICY] Retain deterministic weighted water filling, the 8 MiB
+   scene-wide pack ceiling, exact depth/format/generation keys, four immutable
+   direction entries per prepared object, and allocation-free scalar fallback.
+   Add a scene-level allowance for direction-entry storage only if measured
+   perspective or multi-view workloads make the fixed per-object allocation
+   material.  Admission and eviction must never affect authority.  Keep 0,
+   8, and 64 MiB memory/prep/shot sensitivity results in every release report.
+
+7. [P1, PREP OPTION] Qualify the second-order normal enclosure before enabling
+   it.  Require first/second/exact differential tests, the five GTA oracle
+   rays, cache reload parity, broader STEP/FRAME models, and sanitizer results.
+   Every inconclusive or capacity case must retain the exact restriction
+   fallback.  Goal: recover its previously observed faster-than-main prep
+   without widening the grazing-risk population or changing publication.
+
+8. [P0, PROMOTION] Keep certified publication opt-in until items 1--3 pass on
+   archived binaries.  Then enable it by default with an explicit legacy
+   escape switch, rerun the full focused matrix, repository/license checks,
+   63-face benchmark, GTA archive, and production corpus.  Production-ready
+   means bounded memory, no shot-time allocation, deterministic authority,
+   independently confirmed corrections, and measured latency at the accepted
+   threshold; it does not mean byte equality with main's different legacy
+   intersector.
+
+
+2026-10-06 WEIGHTED-CACHE QUALIFICATION AND REMAINING RELEASE PLAN
+
+The bounded caching redesign is implemented and qualified locally.  One
+scene-wide 8 MiB pack payload is now distributed by deterministic projected-
+area-weighted water filling, then each object admits its largest projected
+correction cells first.  It remains depth/format safe, prep-built, immutable,
+optional, and allocation-free during shooting.  Weighted 8 MiB cuts the GTA
+128-square missing-root certificate from 64.212 to 30.900 milliseconds versus
+equal sharing and beats the equal-share 64 MiB result of 40.065 milliseconds.
+The final 63-face route is 1.91 times clean main and has 8.8 percent time
+overhead versus branch legacy with exact routed/legacy output.  On GTA, five
+certified replay completions recover five intersections and one independently
+confirmed visible pixel, while the latest loaded-host series is 20.9 percent
+CPU / 25.2 percent wall above branch legacy.
+
+1. [DONE, RETAIN] Keep weighted scene-wide pack admission.  Preserve the hard
+   configured payload ceiling, per-object eligible-byte caps, stable remainder
+   ordering, projected-area cell priority, sub-minimum early exit, checked
+   arithmetic, and exact packless fallback.  Do not restore independent
+   per-object allowances.  Keep reporting assigned and actually constructed
+   bytes separately; neither number includes vector/allocator overhead.
+
+2. [DONE, RETAIN] Keep the 256-box adaptive grazing default.  A seven-trial
+   1,024-box 63-face comparison changes neither output nor the 91.4-percent
+   near-legacy throughput ratio.  Although 1,024 removes 119 GTA overflows and
+   saves about 1.05 aggregate seconds of optional work in a profiled frame, it
+   quadruples worst-case span work.  Keep 1,024 available for experiments.  If
+   revisited, implement a two-stage fixed-workspace continuation: begin at 256
+   and continue toward 1,024 only for an ambiguity whose known fallback cost
+   warrants it.  It must remain fail closed and allocate nothing during shot.
+
+3. [P0, QUIET PERFORMANCE ARCHIVE] Repeat seven alternating final-binary runs
+   of routed level 1, branch legacy, and clean main for the 1024-square GTA
+   top-level combination on an otherwise idle host.  Record GETTREE, pack
+   PREP, SHOT CPU/wall, peak working set, hit/miss totals, five replay
+   publications, normal/depth hashes, executable hashes, and trial ranges.
+   Required result is <=1.20 routed/legacy CPU and wall time, or an explicit
+   project waiver based on the confirmed correction and approximately
+   68-percent peak-memory saving.  The present 1.209/1.252 loaded-host ratios
+   are evidence of proximity, not a passed release gate.
+
+4. [P0, ACCURACY ORACLE] Freeze reproducers for all five GTA replay
+   completions and the MFM diagnostic near miss.  Independently solve ordered
+   distances, UVs, face/trim ownership, normals, and reverse rays with an
+   audit-only high-precision/adaptively deep method.  Extend to axis,
+   silhouette, and deliberately grazing views.  Required result is independent
+   confirmation of every publication and zero unexplained segment regression;
+   do not infer correctness for the other 46,324 main/branch pixel differences
+   from the one confirmed MCB correction.
+
+5. [P1, CACHE/MEMORY ACCOUNTING] Measure process peak and retained memory at
+   0, 8, and 64 MiB scene-pack settings.  Break out unique-span normals,
+   cell/span bindings, pack records, controls, subpatch boxes, correction BVH,
+   four-entry object direction caches, vector capacity, and allocator
+   overhead.  Confirm depth-3/depth-8 fresh, cold, warm, concurrent, corrupt,
+   and migrated caches reproduce identical routing populations.  Goal: a
+   measured <=2 GiB or <=40-percent-of-main branch peak and a useful-bytes/
+   prep-time/SHOT-time curve, not only a logical payload bound.
+
+6. [P1, HOT PATH] Profile the final quiet GTA binary by classification,
+   directional proof, missing-root observation/certificate, level-1 replay,
+   and general prepared fallback.  First remove repeated immutable-domain and
+   metadata walks from the 14,986 replay-candidate population.  Any cached
+   2-by-2 replay data must be prep-built, depth/version keyed, charged to the
+   same scene budget, and optional on exhaustion.  Preserve whole-ray replay,
+   reverse equality, alternating partition proof, and atomic legacy fallback.
+   Optimization target is <=1.10 same-branch time after the <=1.20 release
+   gate is stable.
+
+7. [P1, PREP OPTION] Qualify the exact second-order normal enclosure before
+   considering it as default.  Its prior GTA median of 8.546 wall / 155.922
+   CPU seconds is faster than main, but it still needs direct first/second/
+   exact differential tests, cache reload parity, broader STEP/FRAME models,
+   and sanitizers.  Every inconclusive/capacity case must retain the exact
+   restriction fallback.
+
+8. [P1/P2, RELEASE DURABILITY] Run BRP6 fresh/cold/warm/reversal coverage, the
+   larger NIST routing suite, available STEP/FRAME production corpora,
+   deterministic overlap-claimant diagnostics, repository/license checks,
+   and ASan/UBSan/TSan/leak configurations on supported platforms.  Preserve
+   the 103-test focused matrix and the final 63-face archive as mandatory
+   gates.  Default-on promotion requires no unexplained accuracy, ownership,
+   depth, cache, race, allocation, or sanitizer finding.
+
+Current decision: the routing and cache architecture is viable and the branch
+has a real accuracy gain.  It is locally production-performance viable on the
+63-face object and close on the full GTA hierarchy, but it is not yet a
+demonstrated production-ready default until items 3, 4, 5, and 8 close.
+
+
+2026-10-06 POST-RECOVERY IMPLEMENTATION PLAN
+
+The route now has a demonstrated GTA accuracy gain: five certified level-1
+whole-ray replays recover ten hits with zero reversal mismatches, and the MCB
+correction changes pixel (452,230) from branch-legacy background to the exact
+clean-main normal.  The routed image differs from branch legacy at one pixel.
+This is meaningful evidence, but it is not yet a production-default decision.
+The latest unprofiled full-scene medians are 1.2377/1.2608 times branch legacy
+by SHOT CPU/wall and 1.2345/1.3033 times freshly repeated main.  They improve
+on the former 1.316 same-branch CPU ratio but remain outside the 1.20 ceiling.
+
+1. [DONE, RETAIN] Keep allocation-free whole-ray selective replay with level 1
+   as the production default.  Preserve the independent reverse-direction
+   equality check, alternating partition requirement, fixed workspaces, and
+   atomic legacy fallback.  Keep level 2 available only through
+   `LIBRT_BREP_SELECTIVE_REFINEMENT_MAX_LEVEL=2` until a corpus demonstrates
+   that its extra 4-by-4 solve cost recovers a case level 1 cannot.  The
+   permanent injected incomplete-transaction test must continue to complete
+   at level 1 without invoking the general prepared solver.
+
+2. [P0, ACCURACY] Adjudicate every published GTA transaction.  Freeze named
+   ray reproducers for the five completions, beginning with MCB interval
+   135.1831815864--135.7898724698 and the MFM diagnostic near miss.  Compare
+   ordered distances, UVs, face ownership, trims, normals, and reversed rays
+   against an audit-only high-precision/adaptively deep solver.  Expand to
+   axis, silhouette, and deliberately grazing top-level views.  Exit goal:
+   every publication independently confirmed, zero reversal mismatch, and no
+   unexplained segment regression.
+
+3. [P0, PERFORMANCE] Close the remaining approximately four percentage-point
+   CPU gap to the 1.20 same-branch ceiling without weakening selection.
+   Profile routing classification, cell/span certification, cleanup, replay,
+   and general prepared fallback separately on a quiet host.  Optimize the
+   complete level-1 transaction itself first: precompute or scene-budget the
+   immutable 2-by-2 subcell data, remove repeated BBNode/domain setup, and
+   retain fixed ray-local hit storage.  Any cached representation must be
+   depth- and format-keyed, allocated during prep, admitted from the existing
+   scene-wide byte budget, immutable when published, and optional on failure.
+   Exit goal: no image/population change and routed SHOT <=1.20 times branch
+   legacy in both CPU and wall medians over seven alternating trials.
+
+4. [REJECTED GATES, DO NOT REINTRODUCE] Do not select replay by face count,
+   cell count, root count, or a positive count deficit.  Refining only
+   certificate-selected cells lost the MCB correction and all five scene
+   completions.  Of 14,986 attempts, only 75 have a positive per-cell
+   certified-root deficit, while none of the five successful replays do.
+   Absence of that deficit is not negative proof.  A future cheaper selector
+   must prove completeness of the usable trimmed event transaction, including
+   ownership and same-side cleanup, not merely count untrimmed surface roots.
+
+5. [P0, REPEATABLE BENCHMARK] Produce a quiet-host archive with seven
+   alternating runs each of routed level 1, branch legacy, and clean main for
+   both the timer-stable 63-face case and the 1024-square GTA top-level comb.
+   Pin identical view, CPU count, SurfaceTree depth, direction depth, cache
+   state, and material-independent output.  Record GETTREE, scene pack PREP,
+   SHOT CPU/wall, peak working set, B-Rep calls, hit/miss totals, publications,
+   replay levels/cost, hashes, executable hashes, and environment.  Report
+   host-load spread rather than selecting the fastest trial.
+
+6. [P1, CACHE AND MEMORY] Retain one scene-wide routing-pack budget and the
+   prep-owned direction cache.  Measure budgets 0, 8 MiB, and a larger
+   sensitivity point on GTA, including vector capacity and allocator overhead.
+   If level-1 subcell metadata is cached, debit it from the same scene budget
+   and compare saved SHOT time against added prep and retained bytes.  Exit
+   goal: no ray-time allocation, no per-object unbounded allowance, branch
+   peak <=2 GiB or <=40 percent of main, and exact depth-3/depth-8 coexistence.
+
+7. [P1/P2, RELEASE] Complete BRP6 cold/warm/corruption and reversal coverage,
+   the larger NIST and STEP/FRAME corpus, deterministic overlap-claimant
+   reporting, repository/license checks, and ASan/UBSan/TSan/leak runs on a
+   supported platform.  Default-on promotion requires the independent
+   accuracy oracle, <=1.20 same-branch trace ratio (or an explicit project
+   waiver justified by the measured accuracy and approximately 68-percent
+   memory benefit), bounded prep/cache memory, and zero sanitizer finding.
+
+Current conclusion: the design is viable and has a real accuracy win, but the
+latest conservative measurement is not yet a demonstrated production-ready
+default.  The blockers are a small remaining hot-path margin and breadth of
+qualification, not a fundamental NURBS, hierarchy-depth, or memory obstacle.
+
+Checkpoint verification is clean: the optimized Ninja rebuild and complete
+serial focused matrix pass 103/103 tests in 1,407.87 seconds, including all
+certificate-telemetry, incomplete-transaction, reversal, direct-image,
+profile, scene-cache, and throughput gates.  The previously load-sensitive
+status-2 proxy-throughput test also passes an isolated rerun.
+`regress-repository`, `regress-licenses`, and `git diff --check` pass (with
+only expected Windows line-ending notices from the diff check).
+
+
+2026-10-06 EARLIER PRODUCTION DECISION BASELINE (SUPERSEDED WHERE NOTED ABOVE)
+
+The redesigned path is now locally performance-viable for full-hierarchy
+raytracing.  Use a 20-percent same-branch-legacy tracing-time ceiling as the
+production acceptance gate; continue to treat 10 percent as an optimization
+target, not a release blocker, when the larger accuracy and memory benefits
+hold.  The timer-stable 63-face route has 5.84 percent CPU / 7.65 percent wall
+time overhead, and seven 1024-square GTA02 surface-normal trials have 8.75
+percent CPU / 9.65 percent wall overhead.  GTA02 peak working
+set is 1.581 GiB versus 4.977 GiB on clean main, a 68.24-percent reduction.
+
+The 68.0117-percent GTA02 `unsupported` population is not failed raytracing.
+It is 41,060 of 60,372 profiled B-Rep calls to open/non-solid objects, for
+which a solid enter/exit replacement certificate is inapplicable.  Production
+runs detect that object-level condition and go directly to the legacy
+intersector; profiling alone constructs the full decision to count it.  The
+4,210 unmatched-root observations are within the same population, and no
+identity, ordinal, range, or cache corruption was found.  Do not weaken the
+solid proof or force these calls through it merely to improve a routing-rate
+statistic.
+
+The implemented cache baseline is retained.  Persistent prep-cache records
+are keyed by selected SurfaceTree depth and format variant.  Direction entries
+are prep-owned, immutable after publication, reader-pinned, and keyed by
+object generation, complete ray direction, depth, and format.  Cell/span packs
+are allocated only after complete scene inventory from one configurable
+`LIBRT_BREP_ROUTING_PACK_CACHE_BYTES` budget; partial/exhausted allocation uses
+the exact fixed-workspace scalar path.  GTA02 currently uses 8,208,992 of an
+8,388,608-byte budget across 188 eligible solids.  No grazing or routing
+certificate allocates during a shot.
+
+1. [DONE, RETAIN AS A PERMANENT GATE] Preserve the root-overflow hardening.
+   Directional probing must not run after root overflow, no optional lane may
+   replace `RT_BREP_ROUTE_QUAL_UNSUPPORTED`, and overflow must retain the
+   complete legacy transaction.  Keep
+   `brep_audit_routing_unsupported_no_work`, the distinct publication pair 42,
+   event-class rejection pair 46, and the named `directional_grazing`
+   telemetry in the focused matrix.
+
+2. [DONE, CURRENT CACHE DESIGN] Keep scene-wide pack ownership, the 8 MiB
+   configurable default, depth/version cache keys, four bounded shared
+   direction entries per eligible B-Rep, immutable publication, reader pins,
+   and allocation-free scalar fallback.  The 101-test serial focused matrix
+   passes, including depth variants, concurrent depth variants, compression,
+   corruption recovery, format migration, unsupported cells, and scene-wide
+   pack bounds.  Do not restore an independent per-object pack allowance.
+
+3. [DECISION, MEASURE AGAIN BEFORE CHANGING] Retain the 256 by 256 direction
+   grid for the next qualification round.  Its extra scene memory is small
+   relative to the measured 3.40 GiB saving over main, while the most recent
+   128/256 profiling showed only a small but favorable routing-time change.
+   Repeat a controlled 128/256 A/B on the final binary before changing the
+   default.  Keep 256 only if it improves median geometry-only SHOT CPU by at
+   least one percent without pushing the GTA branch peak above 2 GiB;
+   otherwise return to 128.  Grid choice must not affect the result digest.
+
+4. [P0 ACCURACY GATE] Build an independent multi-view GTA02 ray oracle.  Use
+   at least the current 35/25 view plus axis, silhouette, and deliberately
+   grazing views.  Record per-ray ordered segments, hit points, normals, face
+   identity, and reversal results for clean main, branch legacy, and routed.
+   Adjudicate every disagreement with an audit-only high-precision/adaptively
+   deep solver; this reference depth is not a production SurfaceTree setting.
+   Required result: every published correction agrees with the independent
+   oracle, no certified route regression, every incomplete/capacity case keeps
+   legacy, and all known boundary/contact correction fixtures remain positive.
+   Until this is complete, describe the current 46,325/1,048,576 main-versus-
+   branch normal-pixel differences as unadjudicated, not automatically
+   improved.  The sole presently confirmed exception is MCB pixel (452,230).
+
+5. [DONE FOR CURRENT VIEW; MULTI-VIEW ARCHIVE REMAINS] Seven alternating
+   1024-square GTA02 top-level-combination normal renders pass.  Routed and
+   branch legacy have one identical hash and identical B-Rep aggregates in all
+   fourteen runs.  Routed medians are 107.406 CPU / 4.91244 wall seconds versus
+   98.7656 / 4.48017 for legacy, or 1.0875/1.0965 times legacy.  Clean-main
+   medians are 102.188 / 4.77968, putting routed at 1.0511/1.0278 times main.
+   Routed total-prep median is 13.08443 wall seconds versus 12.24812 for main.
+   Extend the same native-redirection protocol to the multi-view accuracy set,
+   archive its manifests and hashes, and retain the requirements that routed
+   SHOT is no more than 1.20 times branch legacy and peak memory is no more
+   than 40 percent of main or 2 GiB on the reference host.
+
+6. [P1 ACCURACY EXTENSION, PROFILE BEFORE IMPLEMENTING] Leave open/non-solid
+   B-Reps on legacy unless the production corpus demonstrates a material
+   accuracy or speed problem in that lane.  If it does, design a separate
+   open-surface certificate based on ordered surface events, not solid parity.
+   It must have its own positive/negative oracle, preserve plate semantics,
+   allocate nothing per ray, and fall back atomically.  The current 68-percent
+   count alone is not a reason to undertake this work because those calls are
+   already traced and bypass most routing overhead.
+
+7. [P1 HOT PATH, ONLY IF THE 20-PERCENT GATE FAILS] Optimize the existing
+   certified route from measured profiles.  First targets are the compact
+   routing decision and directional projection; missing-root certification is
+   smaller on current GTA02.  The latest 128-square profile records 276.138 ms
+   decision, 232.565 ms directional, 29.160 ms missing-root certification, and
+   7.364 ms for two unsuccessful optional transactions over 60,372 B-Rep
+   calls.  Precompute immutable per-object/per-cell summaries and eliminate
+   repeated metadata walks, while retaining exact direction keys and all
+   fail-closed checks.  Do not revive whole-face unpacked-control-hull
+   reconstruction: it regressed directional time from about 243 to 568 ms and
+   decision time from about 288 to 618 ms.
+
+8. [P1 PREP GATE] Keep total branch preparation at or below 1.20 times the
+   clean-main median on GTA02.  The current seven-trial series records 13.08443
+   wall seconds routed versus 12.24812 on main, a 6.83-percent difference.
+   The earlier unloaded main baseline of 10.90 seconds illustrates host-load
+   sensitivity; both comparisons remain far below the rejected
+   65.9--67.8-second per-object pack design.  Qualify the faster second-order
+   normal enclosure only after
+   exact/second-order differential tests, multi-view grazing checks, cache
+   reload parity, and sanitizers.  Every inconclusive enclosure must use the
+   exact restriction fallback.
+
+9. [P1 OVERLAP DETERMINISM] Separate ray-intersection qualification from GTA's
+   coincident-overlap material claimant.  Add a deterministic claimant report
+   or tie-break regression before requiring cross-run shaded hashes.  Until
+   then, gate geometry with normal/depth images and ordered segments, and use
+   shaded comparisons only between runs with demonstrably identical claimant
+   ordering.  A changed shaded hash with an identical normal/depth digest is
+   not by itself a B-Rep intersection failure.
+
+10. [P1 CACHE/MEMORY SENSITIVITY] Run scene pack budgets 0, 8 MiB, and at least
+    one larger value plus direction-grid 128/256 variants.  Report actual peak
+    working set and retained bytes for unique-span normals, cell/span bindings,
+    pack payloads, direction grids, correction BVHs, and allocator capacity.
+    If fixed per-object direction entries become significant on larger scenes,
+    replace their storage with a prep-allocated scene-wide pool and bounded
+    admission/replacement; a miss or collision must use the exact scalar path
+    and must never allocate during shooting.
+
+11. [P1/P2 RELEASE QUALIFICATION] Re-run BRP6 fresh/cold/warm and reversal
+    coverage, the larger NIST routing corpus, broader STEP/FRAME assemblies,
+    repository/license checks, `git diff --check`, and ASan/UBSan/TSan or the
+    closest supported platform equivalents.  Stress concurrent cache reload,
+    object destruction, reader pins, generation changes, and mixed requested
+    depths.  Required result: no unexplained routing, depth, reload, ownership,
+    race, leak, or sanitizer difference.
+
+12. [RELEASE DECISION] Enable certified routing by default only after items 4,
+    5, 9, and 11 pass.  The current local evidence is sufficient to call the
+    design viable: exact same-branch hierarchy geometry, controlled accuracy
+    corrections, 5.8--8.8 percent representative CPU overhead, and 68.24
+    percent lower GTA peak memory.  It is not sufficient to claim that every
+    main-versus-branch GTA pixel difference is more accurate without the
+    independent oracle.
+
+
+2026-10-02 OUTER PROXY/POLYCURVE SLICE EXECUTED; RELEASE QUALIFICATION REMAINS
+
+One affine `ON_CurveProxy` over a qualified flat `ON_PolyCurve` is now a
+supported nonsingular status-2 routing class.  The bounded slice table composes
+the outer proxy domain and reversal with every leaf map, validates the entire
+target polycurve, clips proper subdomains without recursion, and continues to
+build per-piece revolution surfaces independently.  Full, reversed,
+transformed, proper-subdomain, mixed arc/NURBS/line, and individually reversed
+piece cases pass.  Nested polycurves, proxy-of-proxy targets, malformed
+partitions, invalid joins, unsupported pieces, and capacity overflow retain
+whole-ray legacy authority.
+
+The permanent gate now passes 36,873 proxy mapping samples, 15 proxy boundary
+intervals, 16,388 polycurve samples, 15 polycurve boundary intervals, seven
+malformed/unsupported polycurve rejections, 16/16 positive two-direction
+publications, and 2/2 negative fallbacks.  A direct BRP6 round trip reconstructs
+the new representation at depths three and eight with identical depth, span,
+feature-cell, capability, and cell/span-pack populations and identical routed
+publication in both probe directions.  Balanced seven-trial throughput runs
+retain 96.8--99.1 percent of same-branch legacy CPU throughput and exact
+output.
+
+The canonical archive
+`brlcad_build/brep-raytrace-status2-proxy-polycurve-final-v1` reaches
+469,292.76 routed rays/CPU-second and 460,846.49 rays/wall-second: 98.6/97.5
+percent of branch legacy and 207.7/206.9 percent of clean main.  Every trial
+matches branch legacy exactly.  Its manifest/results/summary hashes are
+`CCEA0E787B23DDACBB770F493F062D8B0222D089E1262F9C694ED517E64F33CF`/
+`5153F2AA3468FACDE34B15FB29D79C0E3FC13DA121AB5A3B281830FDAE905C5B`/
+`A3EE5FDB70A05C16BAA8D696C911D8E609F43FA7D016031EB0E31FEE111F494C`.
+The full optimized build, all 99 focused tests, repository/license checks, and
+whitespace validation pass.  NIST v14 passes 8 databases, 11 objects, 1,298
+rays, 22 fresh two-depth preps, and 44 isolated cold/warm cache preps without a
+result, reversal, depth, lookup, correction, prep, or cache-prep failure.
+
+There is no observed correctness, cache, or performance barrier for this
+qualified route.  It is a demonstrated locally production-viable opt-in path,
+not yet an unconditional production default.  The installed NIST inventory
+contains no remaining unqualified status-2 representation, so no further
+representation should be promoted speculatively.  P1 platform/sanitizer work,
+P2 corpus acquisition and inventory, and production-sized positive-authority
+performance workloads are now the concrete release priorities.  Recursive
+proxy/polycurve graphs remain explicit negative controls until corpus
+prevalence and a separate bounded proof justify one.
+
+
+2026-10-02 FLAT POLYCURVE SLICE EXECUTED; RELEASE QUALIFICATION REMAINS
+
+Flat `ON_PolyCurve` revolution profiles are now a qualified status-2 routing
+class when every one of at most 1,024 pieces is an arc, line, direct NURBS, or
+one-layer proxy with a previously proved map.  The immutable prep table stores
+each global segment interval and its complete composed map.  Every queried
+interval is split at piece boundaries, independently mapped and checked, then
+outward-rounded before association.  Unsupported, nested, discontinuous,
+nonmonotone, or over-capacity forms retain whole-ray legacy authority.
+
+Heterogeneous polycurves require one additional preparation rule.  OpenNURBS'
+whole-polycurve conversion averages adjacent NURBS endpoints and can move an
+arc/NURBS join by a few ulps after construction or transformation.  Prepared
+routing therefore converts each qualified revolution-profile piece
+independently, assigns it the global `SegmentDomain`, and restores deterministic
+UV span order.  Both one-sided source loci are retained.  Only joins within a
+4,096-epsilon coordinate-scaled roundoff envelope are accepted; an
+OpenNURBS-valid but larger near-gap is a permanent rejection test.
+
+The permanent polycurve gate passes 16,388 dense mapping samples, 15
+boundary-straddling interval checks, five negative classes, and 10/10
+two-direction prepared publications across one- and multi-piece, mixed,
+reversed, transposed, transformed, and line profiles.  Three independent
+seven-trial throughput runs retain at least 98.7 percent of same-branch legacy
+CPU and wall throughput with exact output.  The depth-aware cache regression
+now prepares this mixed polycurve at depths three and eight and requires exact
+fresh/cached routing populations.
+
+The code-identical canonical 63-face archive
+`brlcad_build/brep-raytrace-status2-polycurve-final-v2` reaches 466,033.78
+routed rays/CPU-second and 458,360.62 rays/wall-second: 97.2/96.7 percent of
+branch legacy and 202.1/202.2 percent of clean main.  Every routed trial
+matches branch legacy exactly.  The full optimized build, all 98 focused
+tests, repository/license checks, and whitespace validation pass.  The
+post-change NIST v13 suite also passes 8 databases, 11 objects, 1,298 rays, 22
+fresh two-depth preps, and 44 isolated cold/warm cache preps without a result,
+depth, reversal, lookup, correction, or prep failure.  This is a
+demonstrated locally production-viable opt-in path; P1/P2 evidence still gates
+an unconditional default.  The next bounded P4 candidate is one affine proxy
+over a qualified flat polycurve, followed by corpus-selected status-2 forms;
+seam, pole, and fold authority remains a separate proof problem.
+
+
+2026-10-01 STATUS-2 PROXY SLICE EXECUTED; RELEASE QUALIFICATION REMAINS
+
+The local status-2 representation inventory is now implemented.  `brep-audit`
+emits per-face surface/profile RTTI, face and proxy orientation, revolution
+transposition, closure, periodicity, singular sides, polycurve segments, and a
+deterministic evidence-only 9-by-9 forward/inverse mapping report.  The report
+includes containment, round-trip error, separability/axis map, monotonicity,
+strictness, and orientation; samples never authorize routing.  A permanent
+positive/negative CTest fixes the current synthetic inventory at 32 direct
+revolutions (12 arc, 16 line, four NURBS) and excludes the native-NURBS sphere.
+
+`brlcad_build/brep-status2-inventory-nist-v1` inventories all eight installed
+NIST databases: 11 objects, 2,437 faces, and 537 status-2 faces.  They are all
+direct revolutions (115 arc and 422 line profiles); none uses a surface/profile
+proxy, transposed revolution, polycurve, or other status-2 representation.
+Every face completes both 81-sample directions with zero containment,
+round-trip, tolerance, separability, monotonicity, or strictness failure.  The
+maximum normalized round-trip error is 9.59e-15.  Consequently the local
+inventory task is complete.  Purpose-built proxy fixtures now close the first
+locally absent representation class; polycurve and other-class discovery still
+depend on dedicated fixtures and the P2 corpora.
+
+The viable redesign has now been implemented and verified.  For valid direct
+`ON_RevSurface` instances with `ON_ArcCurve`, `ON_LineCurve`, or direct
+`ON_NurbsCurve` profiles, SurfaceTree intervals are explicitly mapped into the
+converted NURBS parameter space.  Arc conversion uses the analytic one-, two-,
+or four-span rational-quadratic relation rather than OpenNURBS' numerically
+unstable geometric inverse at quadrant boundaries.  Forward/inverse round
+trips, separability, strict monotonicity, domain containment, outward rounding,
+and singular-side checks are mandatory.  Mapped intervals drive span
+association, restricted control packs, and degree certificates.  One affine
+`ON_CurveProxy` layer over any of those three profiles is also qualified.  Its
+map explicitly composes `RealCurveParameter`, the underlying qualified map,
+and `ThisCurveParameter`; a proxy arc uses its trimmed effective sweep.  Nested
+proxies, polycurve targets, and all other status-2 forms continue to fail
+closed to the untouched legacy transaction.
+
+Proxy execution also exposed and closed a SurfaceTree fan-out defect:
+OpenNURBS proxy bounding boxes ignored the selected subdomain, so depth-eight
+rays could exhaust the 128-leaf workspace before reaching routing.  Trimmed
+proxy revolutions now use their conservative NURBS control-hull bound, with the
+old path retained if conversion fails.  This is a candidate-reduction fix, not
+an expansion of authority.
+
+The permanent positive gate covers 12 transformed/reversed/transposed
+arc/direct-NURBS torus routing cases and two reversed/nonreversed capped line-
+profile cylinder cases with nondefault domains.  The former extreme combined
+1e4 scale, large translation, reversal, and transposition failure now routes
+correctly in both directions.  A 20,485-sample independent locus oracle proves
+monotonicity, analytic inversion, and arc/NURBS point identity with maximum
+normalized errors of 1.78e-15/3.47e-16.  Unsupported profiles remain negative
+controls, and 1,320 sphere-pole associations remain singular and unsupported.
+The complete status-2 gate passes at both SurfaceTree depths three and eight.
+The proxy extension adds a 24,582-sample parameter oracle, 8/8 positive
+two-direction publications, 2/2 invalid-target fallbacks, and a permanent
+seven-trial throughput gate.  Its routed/legacy wall and CPU throughput are
+99.90/99.81 percent with exact output.  The focused matrix is now 97 tests:
+40 `rt_brep_*`, 44 `brep_audit_*`, and 13 `rt_cache_*`.
+
+The preceding status-2-specific imported archive is
+`brlcad_build/brep-raytrace-status2-analytic-imported-v2`.  At one CPU and 1024
+square, the imported 214-face route reaches 90,079.01 rays/CPU-second and
+84,717.73 rays/wall-second: 98.4/97.2 percent of branch legacy and
+133.4/131.3 percent of clean main.  The final 21-trial 63-face adjudication in
+`brlcad_build/brep-raytrace-status2-analytic-multiface-21-v2` reaches
+456,522.88 CPU and 445,705.26 wall rays/second, 95.9/95.6 percent of branch
+legacy and 249.0/252.0 percent of main.  Every routed trial repeats and exactly
+matches branch-legacy ray counts, hit counts, and image digests.  The 63-face
+goal is therefore realistic and locally met: no fundamental performance
+blocker is visible in the qualified route.
+
+The final rebuilt-binary archive,
+`brlcad_build/brep-raytrace-status2-inventory-final-v1`, independently retains
+that conclusion.  Seven alternating one-CPU, 1024-square trials put the
+63-face route at 462,819.75 CPU and 461,039.79 wall rays/second, 96.6/96.8
+percent of branch legacy and 198.6/202.5 percent of clean main.  The 214-face
+route reaches 145,257.28/142,766.78, 99.1/99.0 percent of branch legacy and
+146.1/145.5 percent of main.  Every routed result repeats and matches
+same-branch legacy exactly.
+
+The exact post-proxy archive,
+`brlcad_build/brep-raytrace-status2-proxy-final-v1`, supersedes the 63-face
+half of that checkpoint.  Its routed median is 469,292.76 CPU and 461,594.88
+wall rays/second, 97.2/97.0 percent of branch legacy and 201.4/202.4 percent
+of clean main.  All seven trials repeat and match legacy exactly.  Its
+manifest/results/summary hashes are
+`A71A2AFAA0B4E4F004352F3AB0466E979281C2241A09286EC77B4E72AB161468`/
+`26B8419D4E3EAE57116B4045CC7DFCA81B961BB6B78B700C1D2A9C08DF535E0C`/
+`D4D723D1EEA1DBECC237D2F09FBB857CD17A90C5296A7F2EC4DFDCA39332745B`.
+
+The inventory manifest/CSV/JSONL hashes are
+`1FDCE937ED37F8B924B1C34FC4426843FEB2255A8760B7C1A01277D4E9636F08`/
+`699C7FCCBE3F77B475B31B515DADA5D634A16C0CAD604468ADCC7D58FB6E9769`/
+`F395A93CBC694386186073488492C04C89D37D49EE4C10D2C23FFF7A91F61791`.
+The final performance manifest/results/summary hashes are
+`FBC352D36849DBB012C69C895A03E0A818D2ED3F99E23224E0E656BD04D4B3C2`/
+`4F8F51115B95D8C39BFE216333870D9BF5D35EE28BA46DCA3FC7DA23DBBCF09D`/
+`352397AACBC701829310183B1EF4431E39AE20752F570762439FA9D776B2E257`.
+
+The imported route profile now binds 2,135 cell/span associations instead of
+3,569.  It proves 2,134 root-free, rejects one determinant-incomplete case,
+triggers and publishes none, and spends 3.881 ms (1,817.9 ns/association) in
+the final rerun.  Degree-theorem capability coverage rises from 72,909 to
+209,425 rays.  This is the expected outcome of the redesign: less conservative
+fan-out without expanding
+authority when a mapping or proof is incomplete.
+
+Depth-aware cache behavior is also implemented, not merely planned.  The
+generic primitive cache identity contains the complete queried format and
+configuration variant, including BREP depth, so depth-three and depth-eight
+BRP6 objects coexist.  Cache format 4 validates complete object structure,
+identity, version, compressed-body fingerprint, bounded LZ4 input/output, and
+decoded length, and atomically self-heals invalid entries.  The reader now
+sizes and reads through the same open handle, closing the Windows pathname-
+size/atomic-replacement race.  The eight-process/two-depth stress passes 25
+consecutive repetitions after the repair.
+
+`brlcad_build/brep-routing-suite-nist-v12` is the new exact-binary cache/depth
+baseline.  It passes 8 installed databases, 11 solids, 1,298 rays, 22 fresh
+preps, and 44 isolated cold/warm cache preps with no exits, result differences,
+depth differences, reversal mismatches, genuine lookup failures, missed
+corrections, prep failures, or cache-prep failures.  All populations agree.
+The full optimized Ninja build, all 97 focused tests (66.51 seconds),
+`regress-licenses`, `regress-repository`, and `git diff --check` pass.
+
+The implementation is a demonstrated locally production-viable opt-in NURBS
+raytracer, not yet an unconditional cross-platform production default.  The
+remaining work is ordered below.  A later item may not weaken whole-ray atomic
+fallback or the exact-output and performance gates to make an earlier item
+appear complete.
+
+
+EXECUTABLE ROADMAP FROM THIS CHECKPOINT
+---------------------------------------
+
+1. Complete independent release-platform qualification (P1).
+
+   Implementation:
+     a. Build the exact source on Linux/Clang with ASan+UBSan and run the full
+	99-test focused matrix and NIST v14-equivalent suite at depths three
+	and eight.
+     b. Run leak detection in a compatible environment.  Build a separate
+        TSan tree and run all 13 cache tests, repeated parallel two-depth prep,
+        and parallel shooting.
+     c. Repeat the release build, focused suite, NIST suite, and canonical
+        performance cases on at least one non-MSVC host.
+   Exit goal: zero sanitizer, leak, or race diagnostics; zero population or
+   image differences; immutable compiler/configuration logs and hashes.
+
+2. Run the unavailable production corpus (P2).
+
+   Implementation:
+     a. Acquire FRAME, Recurta, SC, UCP, and 0353 through the project-approved
+        data channel and freeze a versioned manifest with file hashes.
+     b. Run fixed-seed random, face-normal, edge-normal, seam, pole, grazing,
+        and reversal strata at depths three and eight, both fresh and cached.
+     c. Reduce every discrepancy to a named replay and classify every fallback
+        before changing authority.
+   Exit goal: zero unexplained partition, reversal, cache, or depth differences;
+   every nonlegacy result covered by a permanent independent oracle.
+
+3. Finish Milestone 6 one status-2 representation at a time (P4).
+
+   Current completion: direct revolution profiles using arc, line, and NURBS
+   curves, one affine proxy over those classes, flat polycurves composed from
+   those qualified pieces, and one affine outer proxy over a qualified flat
+   polycurve are enabled for nonsingular interval routing.  This remains
+   class-specific rather than generic status-2 authority.
+
+   Implementation:
+     a. [DONE LOCALLY] Maintain the new corpus inventory keyed by original
+        surface/profile RTTI, transpose/reversal and proxy flags, closure,
+        periodicity, singular sides, polycurve segments, and actual
+        forward/inverse mapping behavior.  Re-run it on every P2 corpus as it
+        becomes available; sampled evidence must never grant authority.
+     b. [DONE] Retain the extreme combined scale+reverse+transpose arc fixture
+        and dense parameter-map oracle.  The diagnosed OpenNURBS antipodal-
+        root instability is bypassed by the analytic rational-quadratic map;
+        both extreme ray directions now route and publish correctly.
+     c. [DONE FOR ONE AFFINE PROXY LAYER] `ON_CurveProxy` routing has direct,
+        reversed, subdomain, transformed, and invalid-target fixtures.  It
+        composes `RealCurveParameter`/`ThisCurveParameter` with the qualified
+        underlying map, propagates orientation explicitly, and retains the
+        analytic and 95-percent same-branch gates.  Nested proxies remain a
+        separate unsupported class.
+     d. [DONE FOR FLAT POLYCURVES] The immutable, bounded piece table,
+        segment-boundary interval splitting, independent per-piece surface
+        conversion, deterministic span order, roundoff-only join policy,
+        positive publication fixtures, negative controls, cache/depth check,
+        and 95-percent performance gate are permanent.  Nested polycurves and
+        unresolved joins remain unsupported.
+     e. [DONE FOR ONE OUTER AFFINE PROXY] The outer-proxy map is composed with
+	the complete qualified piece partition without recursion.  Full,
+	reversed, transformed, and proper-subdomain fixtures, malformed
+	serialized partitions, BRP6 reconstruction, and a balanced 95-percent
+	throughput gate are permanent.  Proxy-of-proxy and nested-polycurve
+	graphs remain explicit negatives.
+     f. [CORPUS SELECTION REQUIRED] The installed NIST inventory has no
+	remaining unqualified status-2 representation.  Inventory FRAME,
+	Recurta, SC, UCP, and 0353 before selecting another mapping class;
+	choose the most prevalent finite representation with a reviewable
+	composition bound.  Do not promote recursion solely from synthetic
+	availability.
+     g. Qualify seam, fold, and pole authority separately from rectangular
+	interval mapping; collapsed sides must retain the existing singular
+	theorem or legacy fallback.
+   Exit goal per promoted class: 100-percent positive/negative oracle coverage,
+   reversal and similarity invariance, no all-spans association fallback on a
+   successfully mapped cell, zero output differences, and at least 95 percent
+   of same-branch legacy throughput on a workload that exercises the class.
+
+4. Decide the production depth policy using the completed flexible cache.
+
+   Implementation:
+     a. Keep depth eight as the production default while P1/P2 are open.
+     b. On the complete corpus, compare exact results, fallback distribution,
+        prep time, retained/peak memory, cache size/load time, and shot rate at
+        depths three and eight.  Confirm both variants coexist and reload with
+        exact populations under concurrent writers.
+     c. Promote depth three only if it has zero unexplained correctness or
+        sanitizer differences and a material measured resource/throughput win.
+   Exit goal: one documented default-depth decision; no cache-format change is
+   currently required.  BRP7 remains deferred unless measurement shows BRP6
+   reconstruction is again a production bottleneck.
+
+5. Expand performance qualification around real authority, not just controls.
+
+   Implementation:
+     a. Add production-sized renders that actually trigger each certified
+        optional transaction, paired with nearby negative controls.
+     b. Record association fan-out, certificate completion/failure, optional
+        attempt/publication fractions, stage time, p95 latency, and peak memory.
+     c. Optimize only measured hot stages.  Candidate next experiments are
+        reuse of restricted nets and immutable packs, then coherent-ray/vshot
+        batching; SIMD or broader caching requires an exact outward-safe proof.
+   Exit goal per representative workload: median routed CPU and wall throughput
+   at least 95 percent of branch legacy and 100 percent of clean main, exact
+   approved output, bounded p95, and no increase in unsupported work.
+
+6. Promote defaults in a reversible staged rollout.
+
+   Implementation:
+     a. After items 1--5 pass, select one reviewed configuration and document
+        cache migration, telemetry, rollback controls, and supported authority
+        classes.
+     b. Enable direct routing first while retaining legacy publication, then
+        enable only independently certified publication classes.  Keep an
+        emergency legacy-only control through at least one release cycle.
+   Exit goal: cross-platform evidence supports the default, unsupported cases
+   remain explicitly visible and legacy-authoritative, and release acceptance
+   does not depend on an unavailable diagnostic environment.
+
+
+The selective router, bounded status-1 cell/span missing-root certificate,
+depth-qualified BRP6 cache, and atomic publication transaction are implemented.
+The redesign determination is positive: there is no observed fundamental
+NURBS, topology, cache, publication, or main-branch performance barrier.
+Default production behavior remains unchanged.  Direct routing requires
+`LIBRT_BREP_ROUTE_DIRECT=1`, missing-root certification additionally requires
+`LIBRT_BREP_ROUTE_MISSING_ROOT_CERTIFICATE=1`, and prepared publication remains
+separately gated by `LIBRT_BREP_ROUTE_PUBLISH=1`.
+
+P3 generic-cache corruption recovery is complete on this host.  Cache format 4
+adds bounded DB5/attribute parsing, embedded-name and complete-version checks,
+a compressed-body 128-bit fingerprint, bounded LZ4 input/output validation,
+exact decoded-length enforcement, deterministic format-3 migration, and
+same-name atomic self-healing.  The permanent recovery test injects seven
+independent corruptions and requires fresh rebuild, replacement, and a
+subsequent exact cache hit for each.
+
+The final imported-prep audit found and fixed one production defect.  Six valid
+installed NIST solids have legacy SurfaceTree leaves with invalid boxes or
+degenerate parameter domains.  Optional feature-cell construction had treated
+those leaves as a primitive-prep failure.  Such leaves now become stable,
+serializable `UNSUPPORTED` placeholders, are excluded from certificate
+authority, and retain legacy.  Any remaining optional routing-index failure
+likewise disables routing metadata instead of failing legacy BREP prep.
+
+BRP6 and the generic primitive-qualified format-4 cache key keep SurfaceTree depth
+variants distinct.  Cache-file bytes are no longer retained in a process-wide
+mapped-file hash: each lookup owns a transient read buffer, drops the compressed
+entry after decompression, and drops the decoded BRP6 stream before rebuilding
+the derived routing store.  Cell/span bindings, certificate packs, and the
+correction-cell BVH are rebuilt and validated on load.  Control intervals have
+a 64 MiB ceiling and subpatch work has a stable 2^20-record ceiling independent
+of compiler layout; no ray-dependent answer is cached.  The cap is now checked
+before discarded interval/subpatch construction, and one midpoint de Casteljau
+split supplies both hierarchy children.  Cache compression records the actual
+LZ4 result rather than its maximum allocation bound.  Failure paths release all
+owned externals and temporary-file state.
+
+The permanent `rt_cache_brep_unsupported_cells` test cold-writes the real NIST
+11 model at depths three and eight, requires two cache objects, and reloads both
+variants with zero tree-build time and exact tree/control/routing/unsupported-
+cell/binding/pack/BVH statistics.  The concurrent synthetic test races eight
+writers and rejects partial or cross-depth publication.  The corruption and
+migration tests reject malformed outer DB5, attributes, identity, version,
+declared size, fingerprint, and LZ4 data, then prove self-healing.  A larger
+BRP7 payload is deferred: after the lifetime/work redesign, warm BRP6 is already
+faster than fresh construction on the largest installed cases.
+
+The exact-source `brlcad_build/brep-routing-suite-nist-v9` archive passes 8
+installed NIST databases, 11 BREP solids, 1,298 rays, and 22 fresh prep runs at
+depths three and eight plus 44 isolated cold/warm cache-prep runs.  It has zero
+object exits, prep or cache-prep failures,
+prepared/legacy differences, depth differences, reversal mismatches, feature-
+cell lookup failures, or missed corrections; 728 unmapped roots occur only
+after the expected fixed leaf-workspace overflow.  Six solids exercise 1,586
+unsupported cells at depth three and 54,946 at depth eight.  The largest raw
+depth-eight BRP6 payload is 125,056,675 bytes (about 119.3 MiB) and its actual
+compressed payload is 57,795,784 bytes, a 53.8-percent reduction.  NIST 2 depth
+eight contains 380,302 leaves, 146,657 packs, and 1,048,575 cached subpatch
+boxes.  Retained-memory attribution identified routing as the largest category.
+Removing unused per-subpatch and feature-cell scale state, deleting the
+redundant binding vector, using checked 32-bit pack/cell indices and byte-sized
+orders, and exactly pre-counting association packs while preserving a layout-
+independent work cap cuts exact retained bytes from 368,590,004 to 329,511,548
+and routing bytes from 207,454,360 to 168,375,928.  Used bytes are 324,332,252;
+unused capacity is 5,179,296, including 4,051,040 in routing.  Binding and pack
+slack are zero; the remaining routing slack is principally 3,988,928 control-
+vector bytes.  The v9 suite records maximum fresh/cold/warm prep times of
+3.020629/3.453865/2.997272 seconds and maximum fresh/warm process peaks of
+394,145,792/430,587,904 bytes.  On all three depth-eight cases at the
+1,048,575-subpatch cap, warm load is 0.8--3.0 percent faster than fresh and warm
+peak RSS is only 5.7--9.2 percent above fresh, satisfying the P3 15-percent
+gate.  Aggregate 527,511,971 raw cache
+bytes still compress to 215,835,513 bytes, and maximum exact retention remains
+329,511,548 bytes.  Depth three is substantially cheaper and has no observed
+NIST ray difference, but broader corpus and sanitizer gates are still required
+before changing the global default from eight.  The v9 manifest hash is
+`ADE3E9FDF8C1F4F1D5EC09ED167EBC00C63E112383DD089C7C1E60374CFD8927`.
+
+The current unprofiled production path rejects a nonempty root stream before
+the second leaf/root classifier pass when no retained root is a numerical trim
+contact.  Such a stream cannot request optional work under the current policy,
+so this removes redundant bookkeeping without adding a heuristic or changing
+authority.  Empty streams still run the missing-root certificate, contact
+streams still run the complete classifier, and profile/private-test paths keep
+the detailed populations.
+
+Two independent cache-disabled, one-CPU, 1024-square seven-trial 63-face
+archives, `brlcad_build/brep-raytrace-root-contact-fast-v1` and `-v2`, reach
+479,349.03 and 482,797.58 median rays/CPU-second.  They are respectively 96.4
+and 97.8 percent of branch legacy and 200.7 and 201.4 percent of clean main.
+The independent 214-face imported archive reaches 148,800.14 rays/CPU-second,
+99.1 percent of branch legacy and 146.1 percent of main.  Every routed trial
+repeats and matches branch legacy in ray/hit aggregates and image digest.
+Main comparability and the stricter repeatable 95-percent-of-branch-legacy goal
+are therefore complete for the current selective route; there is no observed
+fundamental routing-performance barrier.
+
+The final post-cache-hardening archive independently reconfirms this result.
+`brlcad_build/brep-raytrace-production-verified-v3` uses cache-disabled,
+one-CPU, 1024-square, seven-trial alternating runs.  The 63-face route reaches
+479,349.03 rays/CPU-second, 96.4 percent of branch legacy and 200.0 percent of
+clean main.  The 214-face imported route reaches 148,800.14, 99.1 percent of
+branch legacy and 145.7 percent of main.  Every trial repeats and routed output
+matches branch legacy exactly.  Its manifest/results/summary SHA-256 values are
+`8F83DD600F65E695D2B88F64E1B7C0C1ADBFA28665D66F78B771B463896507E8`/
+`A950C6FE3A181743FE042E9FF9E438FA70C188F716D193F0CE1267F70AF73F4F`/
+`D0587919069F37D4867D83BBBDCEE153C9DF95DE1A29E9FF3BA77A1286AFAFB0`.
+
+The local P5 scaling/view matrix is now implemented and executed.  The
+`brlcad_build/brep-raytrace-scaling-views-v1` archive contains 18 independent
+1024-square configurations: the 63-face and imported 214-face cases at three
+views and `-P 1`, `-P 2`, and `-P 24`, each with one warm-up and seven
+alternating trials per implementation.  All 126 routed results repeat and
+match branch legacy exactly.  Routed CPU/wall medians are 139.9--210.5 and
+135.2--203.1 percent of clean main.  Routed wall medians are 96.7--103.9
+percent of branch legacy.  Two-CPU wall scaling is 1.75--1.99x and 24-CPU
+scaling is 12.91--14.96x.  Seventy-one of 72 raw 1024-square performance gates
+pass.
+
+The one raw miss is narrowly bounded rather than architectural.  On the
+63-face 215/15 all-core configuration, seven-trial routed CPU throughput is
+94.5 percent of branch legacy while wall throughput is 99.3 percent; a repeat
+is 97.2/98.5 percent and a 21-trial 1024-square run is 94.1/98.5 percent.
+These approximately 3.3-CPU-second samples are reported in 15.625-ms Windows
+quanta.  The final current-binary adjudication uses 2048 square and 21 trials:
+its longer samples pass at 97.4/96.9 percent of branch legacy and 203.0/198.5
+percent of main by CPU/wall throughput, with exact results.  The local strict
+gate is therefore closed at adequate measurement resolution; retain the small-
+frame result as a timer-resolution warning.  Profiling attributes the bounded
+cost to root-observation and root-free certificate work, not an expensive
+fallback loop: three 63-face views perform 197,770 root-free associations with
+no incomplete certificate, lookup failure, overflow, or trigger; only 21
+event-class attempts occur (0.562 ms total), all fail closed.
+
+The preceding exact executable was independently covered by
+`brep-raytrace-production-verified-v4`.  At one CPU the 63-face route was
+96.4/96.9 percent of branch legacy and 200.7/202.1 percent of main by CPU/wall;
+the imported route is 99.1/99.3 percent of legacy and 145.9/146.3 percent of
+main.  The newer `brep-raytrace-status2-analytic-imported-v2` and
+`brep-raytrace-status2-analytic-multiface-21-v2` archives are the active
+baselines described above.  All results are exact.  The final
+optimized build, 96 focused tests, and repository/license regressions pass.
+
+The optimized Ninja build and focused matrix are clean: 99/99 tests (42
+`rt_brep_*`, 44 `brep_audit_*`, and 13 `rt_cache_*`).  The injected
+missing-root transaction still proves positive recovery and atomic fallback.
+`rt_brep_route_direct` also runs an unprofiled production render and requires
+its output to match branch legacy byte for byte.
+The latest NIST routing suite and combined performance archive were made from
+the rebuilt binaries.  `regress-repository` and `regress-licenses` also pass on
+this checkpoint.  Remaining release gates are Linux ASan/UBSan, TSan, leak and
+another-platform execution; FRAME, Recurta, SC, UCP, and 0353 corpus access;
+and positive certificates for the remaining status-2 representations, seam,
+pole, singular, tangent, and mixed-hazard classes.  These unavailable or
+unsupported cases must remain explicitly fail-closed and legacy-authoritative.
+
+
+REMAINING PRODUCTION GOALS
+--------------------------
+
+P0. Preserve the verified route while qualifying it for default use.
+
+  * Keep the three controls independent until the remaining release gates pass:
+    direct routing, missing-root certification, and prepared publication.
+    Unsupported, incomplete, over-capacity, and nonfinite cases must continue
+    to publish the untouched legacy transaction.
+  * Make `brep-raytrace-status2-analytic-imported-v2`, the 21-trial 63-face
+    `brep-raytrace-status2-analytic-multiface-21-v2` archive, the post-proxy
+    `brep-raytrace-status2-proxy-final-v1` archive, the post-polycurve
+    `brep-raytrace-status2-polycurve-final-v2` archive, the outer-proxy/
+    polycurve `brep-raytrace-status2-proxy-polycurve-final-v1` archive, the
+    three-view scaling matrix, the 2048-square all-core adjudication, the
+    99-test focused matrix, and NIST v14 mandatory comparison baselines.  Any
+    routing change
+    must retain exact
+    branch-legacy results and at least 95 percent of branch-legacy median
+    throughput on both the 63-face and 214-face workloads.
+  * Exit goal: one reviewed configuration/default policy, with rollback and
+    telemetry documented, after P1 and P2 are green.  Do not infer default
+    readiness merely from the completed Windows qualification.
+
+P1. Complete sanitizer and platform qualification.
+
+  * Current blocker: this Windows host reports that WSL is not installed; no
+    qualifying Linux sanitizer or independent-platform environment is present.
+  * On Linux, build current source with Clang ASan+UBSan and run the full 99-test
+    focused matrix plus the NIST routing suite.  Run leak detection outside the
+    ptrace environment that invalidated the earlier LeakSanitizer attempt.
+  * Build a separate TSan configuration and run all 13 cache tests, especially
+    the eight-process depth race, plus parallel prep/shoot smoke tests.  Repeat
+    the release suite on at least one non-MSVC platform.
+  * Exit goal: zero sanitizer findings, leaks, data races, result differences,
+    and cache-population differences.  Archive compiler/configuration, logs,
+    manifests, and hashes.
+
+P2. Run the unavailable production corpora and quantify fallback coverage.
+
+  * Execute FRAME, Recurta, SC, UCP, and 0353 at depth three and eight with the
+    existing random and feature-chord strata.  Preserve named object/ray
+    reproducers for every discrepancy or unsupported class.
+  * Require zero prepared/legacy output differences, depth differences,
+    reversal mismatches, missed certified corrections, and genuine cell lookup
+    failures.  Capacity overflow is acceptable only when it is identified and
+    legacy remains authoritative.
+  * Report rays by `none`, `complex_prepared`, successful publication, and each
+    fallback reason.  Exit goal: all available production models represented by
+    immutable manifests and every nonlegacy publication backed by an existing
+    theorem/regression.
+
+P3. [COMPLETE LOCALLY 2026-10-01] Harden generic-cache corruption recovery.
+
+  * Integration coverage now rejects a truncated outer cache object, invalid
+    declared uncompressed size, damaged LZ4 body even with a recomputed hash,
+    malformed attributes, wrong version, wrong embedded name, and a payload
+    fingerprint mismatch.  Every case performs normal prep, atomically replaces
+    the same pathname, and then produces an exact cache hit.
+  * Bounded LZ4 validation required format 4.  Formats 1--3 are deterministically
+    cleared and reinitialized; depth/configuration remains in the identity.
+  * Exit evidence: NIST v14 has exact fresh/cold/warm populations.  Every capped
+    depth-eight case loads warm 2.5--4.9 percent faster than fresh, with warm RSS
+    only 5.7--8.8 percent above fresh.  BRP7 remains unjustified because the
+    requested 20-percent additional win is neither needed nor demonstrated.
+
+P4. [PARTIAL: BOUNDED DIRECT, PROXY, AND POLYCURVE PROFILES 2026-10-02]
+Expand authority only where proof and coverage justify it.
+
+  * The local representation inventory is complete and reusable.  The installed
+    NIST set contributes 537 status-2 faces, but all are already-qualified
+    direct arc/line revolutions; it contains no proxy, polycurve, transposed-
+    revolution, or other status-2 form.  Purpose-built proxy, flat-polycurve,
+    and outer-proxy/polycurve fixtures cover bounded locally absent classes.
+    Re-run the inventory over each newly available P2 corpus to select the next
+    real class.
+  * Arc-, line-, direct-NURBS-, and single-proxy-profile revolution intervals
+    and flat compositions of those pieces, including one affine outer proxy,
+    are now mapped and qualified for nonsingular certificate routing.  No
+    remaining unqualified representation occurs in the installed inventory;
+    select the next class from P2 representation counts.  Treat recursive
+    proxies, nested polycurves, all other status-2 forms, seam, pole, singular,
+    tangent, curved-vertex, arbitrary many-to-many edge/vertex, and mixed-
+    hazard cases as separate authority classes.  Add a positive proof fixture,
+    nearby negative fixture, reversal/similarity checks, and imported replay
+    before enabling each class.
+  * Preserve whole-ray atomic fallback; never turn incomplete root isolation or
+    mapping into a miss.  Exit goal for each class: exact partition equality on
+    its full corpus, no reversal asymmetry, and an independently reviewable
+    certificate statement.
+
+P5. [LOCAL MATRIX AND HIGH-RESOLUTION GATES COMPLETE 2026-10-01]
+Broaden the performance envelope without weakening correctness.
+
+  * The Windows three-view, two-model, `-P 1`/`-P 2`/all-core matrix is
+    complete.  `bench/brep_raytrace.cmake` now reports CPU and wall medians/
+    ranges plus nearest-rank elapsed p95 and can require exact routed/legacy
+    output.  `bench/brep_raytrace_matrix.cmake` drives and archives the full
+    matrix.  Repeat it on Linux and a second host and add large assemblies.
+  * Profile only workloads that actually enter prepared authority.  For local
+    contact cases, prioritize reuse of already-restricted interior nets and
+    cheaper certified exits; for large models, measure face/span BVH cull rate,
+    memory locality, and batched-vshot opportunities before changing layout.
+  * Retain the 2048-square, 21-trial all-core check for the 63-face 215/15 view
+    so Windows CPU-time quantization cannot decide the gate.  It currently
+    passes at 97.4 percent of legacy CPU throughput and 96.9 percent of legacy
+    wall throughput.  Optimize repeated observation/cell work only when a
+    profile shows a material win; never skip a certificate or turn an
+    incomplete result into a miss.
+  * Exit goal: routed median remains at least 95 percent of branch legacy and
+    at least 100 percent of clean main per representative case, with exact
+    legacy output, bounded p95 latency, and no growth in fallback work.
+
+The final corpus-derived policy requests complex work only when a structurally
+supported, within-capacity, nonempty stream has all-hazard roots, at least one
+numerical trim-contact root, and an intersected prep cell carrying the
+boundary/contact-correction bit.  Structural or capacity failures retain
+legacy immediately because they cannot pass prepared publication authority.
+Everything else requests no optional work.  The seeded verifier remains
+available but is not selected.  Audit strata are computed independently of
+route choice.
+
+The final 97-object broad archive,
+`brlcad_build/brep-routing-corpus-contact-v4`,
+contains 16,828 rays: 9,200 empty, 4,464
+clean ordinary, 1,434 mixed hazard, 1,532 all hazard, 198 unsupported, and zero
+unclassified.  Routes are 15,142 `none`, zero `seeded_ordinary`, and 1,686
+`complex_prepared`.  All 18 independently certified corrections route complex
+and none is missed.  The 12-object deep archive,
+`brlcad_build/brep-routing-corpus-contact-deep-v3`,
+contains 7,602 rays, routed
+6,996/0/606, and routes all 28 corrections complex with none missed.  Both
+have zero lookup failures, depth differences, unresolved correction oracles,
+verifier attempts, or prepared/legacy reversal mismatches.  The broad
+manifest/summary/JSONL SHA-256 values are
+`4f2cd8d7085afaf9ac5b7d5e8aba266d68955096c98a0a67c4607594f7a95319`,
+`3a1fdaf74e8525d5f27509c9c6d2225d8a9dae347c73bf5f556da0e70d938f12`,
+and `ec828fa143735d90b545c43fd1286668ce53d4dbff0a016eaedf1494b74a681d`.
+The corresponding deep hashes are
+`72149bf50394b7114a2581119e8056bafa0b0fa640277ad7aae314597192830a`,
+`c105aee1c30a5abeb075aaeaf40ab01401ef43def1fd78d9d5e04f502037e2d5`,
+and `02946e4501bc9aafd869b159d9c9fbd8f12b98a2cf56d44f4829ed35713100bf`.
+
+The installed imported NIST sweep now covers 1,298 rays across NIST 1--11
+(the combined 7--10 database contributes four BREP solids).  It has zero depth
+differences, prepared/legacy reversals, missed corrections, or genuine
+feature-cell lookup failures.  The initial NIST 7--10 result's 236 apparent
+lookup failures were all roots observed only after the fixed leaf workspace
+overflowed and the allocating legacy fallback traversed beyond its retained
+prefix.  Metadata, face, ordinal, record-range, and cell-identity failures
+were all zero.  The router already classified those rays unsupported, did no
+optional work, and retained legacy.  Lookup telemetry now reports eight true
+failure reasons separately and records these expected omissions as
+`roots_unmapped_after_leaf_overflow`.  The corrected four-object archive is
+`brlcad_build/brep-routing-corpus-nist7-10-redesign`:
+472 rays, zero lookup/depth/result/reversal differences, 236 overflow-only
+omissions, 14 leaf-workspace fallback rays, and 12 hit-workspace fallback
+rays.  Its manifest/summary/JSONL hashes are
+`bbbbc3de569813aca66733592aa851528fc5e687a8c34b5cd044a9e3944e653d`,
+`8fb748bdcaf79f0bd2ccadc8e4f200822b91f53c771628513c553d40a4376953`,
+and `befe3b27709ca98261759147095a633319c2f44f87e46120c354e8969df944db`.
+
+The direct 512-square 63-face negative control now has 108,091 BREP shots, all
+in `none`, with zero optional attempts, zero lookup failures, 1,471 hazard
+roots, and two numerical contact roots.  Decision time repeats at
+17.296--17.997 ms total (0.160--0.166 microseconds per BREP shot).  Its 48,977
+hits, 59,114 misses, and SHA-256
+`b4d6da3ce06919176dc9f0d020c95a36f981e0491097476be9310cae0f3f3c8d`
+match branch legacy exactly.
+
+At timer-stable 1024 square, the latest seven alternating cache-disabled
+one-CPU trials give 472,597.63 selective-publication, 489,845.72 branch-legacy,
+and 237,974.70 main rays/CPU-second.  Selective publication is 198.59 percent
+of main and 96.48 percent of branch legacy.  The increment is 0.07451
+microseconds per ray, or 3.65 percent in CPU time, so both the hard
+95-percent-of-main gate and stricter five-percent-over-legacy goal pass.  The
+ranges are 462,819.75--482,797.58 routed, 482,797.58--524,288 branch legacy,
+and 233,828.79--240,533.56 main.  Publication and
+legacy repeat exactly at
+1,048,576 rays, 431,984 intersections, 195,946 hits, 236,038 misses, and image
+SHA-256 `bae0f54613a66a328278ba9b6aa17cc9c1e249be86bce0db95ed12d2cdaf2b6e`.
+A fresh Cobb control for the legacy-authority router gives
+209,380 routed, 209,380 branch legacy, and 190,119 main rays/CPU-second; routed
+is 100.0 percent of branch legacy and 110.1 percent of main with the exact
+legacy digest.
+
+A final-source seven-trial alternating routed/branch-legacy recheck after the
+lookup-diagnostic change gives 472,597.63 routed and 486,296.12 legacy median
+rays/CPU-second, or 97.18 percent.  Ranges are
+469,292.76--486,296.12 and 482,797.58--497,102.70 respectively; the routed
+increment is 0.05961 microseconds per ray, or 2.90 percent in CPU time.  All
+fourteen renders have the approved branch digest, so reason-specific
+diagnostics and correct overflow classification remain inside the preferred
+five-percent budget.
+
+The generic prep cache identity now includes the primitive's complete queried
+format/configuration variant.  BREP format six (`BRP6`) stores and validates
+depth-specific feature cells.  Depth-three and depth-eight cache objects
+coexist and reload exactly; byte-exact endpoint comparison rejects corruption
+and NaN/noncanonical endpoint data.  The fixed per-ray ledger now also retains
+each certified local root's mapped UV, point, derivatives, oriented normal,
+trim/topology data, and outward t interval through physical-event publication.
+The oblique sphere gate publishes two regular events with two cached and zero
+fallback surface evaluations; this per-ray change does not alter BRP6.  The
+complete optimized Release Ninja
+build succeeds.  The focused gate now contains 89 tests, including the
+root-independent missing-root probe, atomic publication of all ten permanent
+correction pairs, attempted-but-incomplete
+legacy fallback, explicit early event-class rejection, unsupported overflow
+with zero optional work, full segment-payload comparison, the exact 63-face
+negative render, all 17 permanent reversal replays, the reduced coplanar-
+roundoff cleanup regression, bounded prepared-work/time distributions, the
+analytic plate-mode contract, legacy cleanup/capacity telemetry with exact
+fixed-versus-allocating reason-map agreement, positive/negative reachability
+for all 19 cleanup actions, the evaluate-once certified-root ledger, and all
+nine cache tests.  All 89 pass; the 78-ray
+affine gate, `regress-repository`, and `regress-licenses`
+also pass on
+the current redesign source checkpoint.
+
+Legacy fallback and cleanup telemetry is now externally diagnosable under the
+opt-in production profile and in `brep-audit`.  The final-source archive,
+`brlcad_build/brep-legacy-cleanup-corpus-final`,
+reproduces 16,828 rays, 18 corrections, and zero missed; candidate and reference
+depths have zero cleanup-reason-map mismatches and identical cleanup/capacity
+populations.  Leaf- and hit-workspace fallbacks occur on 38 and 124 rays.
+Twelve of 19 cleanup actions are observed.  The seven zero-observed actions are
+`clean_overlap`, `near_hit_shadow`, `trimmed_invalid`, `parameter_oob`,
+`solid_coincident`, `open_same_direction`, and `open_odd_endpoint`; the reduced
+cleanup-reason gate constructively reaches each with a positive and nearby
+negative stream.  All seven remain required and must not be removed.
+Manifest/summary/JSONL/
+cleanup-CSV/capacity-CSV SHA-256 values are
+`92aeb931c9538b92d40f6cb24b545dc7c4027bf65d615bce5d025f0893b8650b`,
+`3a1fdaf74e8525d5f27509c9c6d2225d8a9dae347c73bf5f556da0e70d938f12`,
+`b10b539b09e95abffd541606bf90b203de02f0fd65651cbb187899f0545d2b96`,
+`b011a67530adca32fdc95b79236bffc38bddb0b6362acc05aea4fde2c815d3c4`,
+and `8540a680ad35a30083076031a47bb08d830bff97511bba5df1853798689456c2`.
+
+The 708-ray depth-eight 63-face audit is the strongest current transaction
+check: 38 rays request complex work, two complete and publish the two certified
+corrections, 36 reject at the narrow semantic event-class gate, and the other
+670 rays do no optional work.  Two of those no-work observations are explicit
+capacity-unsupported cases.  All 708 published results are valid; 706 match
+legacy, two match prepared, and the full distance/face/point/UV/normal/
+ownership comparison reports zero mismatches.  The focused sphere fallback
+replay separately proves that two incomplete optional attempts publish legacy
+exactly.
+
+Selective publication now accepts only a complete surface-box-free empty
+partition, which is the semantic shape of every currently certified
+boundary/contact correction.  It rejects at the first retained surface root
+box, and rejects any completed nonempty partition, without changing the
+general prepared solver.  On a fresh feature-heavy profile the 38 attempts
+take 3.507 ms total (92.300 microseconds/attempt): two successful corrections
+take 0.037 ms and 36 event-class rejections take 3.471 ms.  This is more than a
+99.95-percent reduction from the historical 7.10--8.23 seconds and exceeds the
+90-percent reduction target.  Imported STEP/FRAME measurement remains needed
+to show that the corpus population is representative, but failed exhaustive
+isolation is no longer the current-class performance blocker.
+
+The current evidence is deliberately narrow.  The sweep found no
+clean-ordinary, empty/missing-root, or mixed clean/hazard correction.  Empty
+and mixed streams therefore remain unqualified legacy with no optional work.
+Production promotion requires positive and matched negative coverage for those
+strata and an independent certificate for every promoted result.  The atomic
+publication mechanism itself is now implemented and qualified for the observed
+boundary/contact class, but no default authority change is authorized.
+
+
+CONCRETE REMAINING ROUTING PLAN
+-------------------------------
+
+1. [PARTIAL; INJECTED MISSING-ROOT GATE COMPLETE 2026-09-30] Expand
+   correction observability before changing authority.
+   Add independently adjudicated positive cases for missing-root/empty,
+   clean-ordinary, mixed clean/hazard, seam, pole, singular, periodic, and
+   status-2 disagreements, each with nearby matched negative controls.  Record
+   route reasons as well as lanes.  Gate: 100 percent recall, zero correction
+   in `none`, zero unresolved oracle, and a measured false-positive-work rate
+   for every stratum.  Current result: the complete 97-object sweep still has
+   no natural prepared-hit/legacy-miss case.  The private pre-transaction fault
+   fixture now supplies independently checked missing-root positives and
+   negatives: four exposed faults with agreeing normal-legacy/prepared oracles
+   are recovered exactly, and every incomplete or unselected result retains the
+   injected base atomically.  Natural missing-root discovery remains useful
+   corpus expansion; clean-ordinary, mixed-hazard, seam, pole, singular,
+   periodic, and status-2 positive authority remain open.
+
+2. [IMPLEMENTED, QUALIFICATION OPEN 2026-09-30] Add authority that does not
+   depend on an existing legacy root.
+
+     a. [DONE] Materialize every depth-specific SurfaceTree leaf as an
+        immutable routing feature cell with its 3-D box/scale, parameter
+        domain, face/leaf identity, capability/risk bits, and flat prepared-
+        span range.  Bind status-1 cells only to overlapping spans and bind
+        status-2 cells conservatively to every span on the face.
+     b. [DONE] Reuse the already intersected SurfaceTree cells in direct mode
+        and traverse a separate correction-cell BVH in audit mode.  The audit
+        hierarchy proves that candidate selection does not depend on roots.
+        Whole-face prepared traversal remains diagnostic only.  The prior 14
+        alleged misses were ordinary roots on unrelated portions of rays, not
+        roots in the intersected correction cells.
+     c. [DONE] Use correction-cell intersection as the allocation-free first-
+        stage signal.  Do not run the low-selectivity full-span hull in the
+        production-shaped path.  Current performance is 97.86 percent of
+        branch legacy and 202.85 percent of main; focused candidates fall from
+        102 faces/92 spans to 16 faces/10 spans and from 46 to four signal rays.
+     d. [DONE] Implement a bounded cell/span result with an exact root-count
+        interval and explicit fail-closed reasons.  Nonfinite input, invalid
+        ray frames, status-2 mappings, singular/overlap cases, coefficient or
+        restriction failure, uncertain determinant/boundary/orientation, and
+        resource exhaustion all return `incomplete`, never `root-free`.
+     e. [DONE FOR REGULAR STATUS-1 ROOT COUNTS] Restrict outward interval
+        homogeneous controls to the exact cell/span overlap, reject by cached
+        tolerance-expanded subpatch boxes and Bernstein hulls, subdivide with a
+        bounded workspace, and use the existing boundary-degree proof for an
+        exact regular-root count.  Association-level counts are deliberately
+        not claimed globally unique and do not themselves authorize
+        publication.
+     f. [DONE BY TRANSACTIONAL VALIDATION FOR THE CURRENT SCOPE] A complete
+        positive surface-root certificate selects the general prepared solver,
+        which performs trim/event classification and validates the whole-ray
+        material partition.  The certificate itself does not promote an
+        unclassified root.  Status-2, seam, pole, singular, tangent, and other
+        unqualified certificate cases remain incomplete until they receive
+        narrower independent proofs.
+     g. [DONE FOR EMPTY LEGACY STREAMS] The certificate runs only when the
+        retained legacy root ledger is empty.  Root-free results and incomplete
+        results request no optional work.  A complete positive result requests
+        the general prepared transaction (`require_empty_partition=false`);
+        publication still requires a complete supported whole-ray result and
+        the separate publication flag.  No prepared prefix can mix with a
+        legacy suffix.
+     h. [DONE] Cache only ray-independent certificate inputs.  Every bound
+        status-1 association has a derived pack of outward restricted
+        homogeneous-control intervals and a depth-three subpatch-box hierarchy.
+        BRP6 retains depth-specific source cells and spans; bindings, packs, and
+        the correction BVH are rebuilt and validated on fresh prep and reload.
+         Control intervals retain a 64 MiB limit; subpatches have a stable
+         2^20-record limit so packing cannot silently change coverage.  Failed
+         packs stay explicitly incomplete.  Qualified direct-revolution
+         status-2 intervals now use their mapped packs; every other status-2
+         form remains unsupported for certification.  No per-ray answer is
+         cached.
+      i. [DONE FOR THE CURRENT ROUTE 2026-09-30] Budget the second stage against
+         its selected population.  Root-contact fast rejection closes the
+         repeatable near-legacy gap without weakening a certificate.  The latest
+         final-layout archives retain 97.8 percent of branch legacy and 202.2
+         percent of clean main on the 63-face case, and 100.0 percent of branch
+         legacy and 145.6 percent of main on the imported case.  Reapply both
+         gates to every new positive class and broader imported fixture; never
+         turn an incomplete result into a negative to meet the budget.
+
+   Remaining gates: the deterministic pre-transaction fault fixture now proves
+   a real missing base transaction, general prepared selection, successful
+   recovery against an independent oracle, and incomplete atomic fallback.
+   Maintain 100 percent recall and zero unresolved promoted oracles as new
+   event classes are added.  The dispatch-plus-selected-work budget now passes
+   on Cobb, the 63-face render, and the 214-face imported NIST render; repeat it
+   for each newly promoted class and broaden the imported corpus.
+
+3. [DONE 2026-09-30] Repair the shared event/reversal defects independently of
+   routing.  All 15 archived failures and two ordering cases exposed during
+   closure are permanent focused replays.  Coincident trimmed `NEAR_MISS`
+   shadows can no longer override real surface hits based on insertion order,
+   and coplanar roundoff direction signs below the backward-error floor can no
+   longer create grazing intervals.  Gate result: both final archives have
+   zero prepared and legacy reversal mismatches.
+
+4. [DONE FOR THE CURRENT CERTIFIED CLASS 2026-09-30] Implement atomic certified
+   publication behind a separate opt-in flag.
+   Build points, UVs, normals, face identities, ordered t intervals, and segment
+   ownership entirely from the independently certified candidate transaction.
+   Swap it in only after whole-ray validation; on any failure or capacity limit
+   publish the untouched retained legacy transaction.  Gate: all corpus
+   corrections publish the oracle-approved result, all negative controls keep
+   their approved digest, and no mixed-source transaction is possible.  The
+   ten permanent correction pairs, an incomplete-attempt fallback, a 708-ray
+   mixed publication audit, and the exact render control pass.  New correction
+   classes still require their own independent certificates before they can
+   gain authority.
+
+5. [DONE FOR THE CURRENT ROUTE 2026-09-30] Measure
+   feature-heavy performance, not only negative controls.
+   Profile dispatch and optional work separately on correction replays and a
+   larger STEP/FRAME render.  Precompute only predicates shown by the expanded
+   confusion matrix to be useful; remove repeated cell/root scans and duplicate
+   evaluation.  Gate: both Cobb and 63-face remain at least 95 percent of main
+   and within five percent of branch legacy, while correction-heavy workloads
+   publish certified results within a documented budget.  The current 63-face
+   feature evidence is 38 attempts, two completions, 36 early semantic
+   rejections, and 3.507 ms of optional work.  The surface-box-free empty-
+   correction path retains every known correction and cuts failed optional
+   work by more than 99.95 percent.  The final 214-face imported NIST render
+   now retains 99.1 percent of branch legacy and 146.1 percent of main, with
+   exact branch-legacy aggregates and digests.  A necessary-condition fast
+   rejection removes the redundant second leaf/root pass from nonempty streams
+   with no numerical trim-contact root.  Two independent 63-face archives reach
+   96.4 and 97.8 percent of branch legacy and 200.7 and 201.4 percent of main,
+   so both current performance gates pass repeatably.  Any new correction
+   class must establish its own cost bound before publication authority
+   expands, and a broader imported STEP/FRAME set remains a release-quality
+   diversity goal.  The audit-only broad hull must not select complex work.
+
+6. Complete production qualification.
+   Run the full Ninja build, focused route/cache gates, exact image/count/hash
+   controls, sanitizers, depth-three/depth-eight BRP6 coexistence and corruption
+   tests, larger STEP/FRAME corpus, repository/license checks, and repeated
+   alternating benchmarks.  Gate: no unexplained result change, sanitizer
+   diagnostic, cache identity mismatch, missed correction, or performance-gate
+   failure before any default-authority proposal.  Current result: the full
+   optimized build, affine/repository/license gates, BRP6 depth/cache
+   checks, exact controls, and repeated 63-face benchmarks pass.  The current
+   focused matrix passes 99/99, including status-2 representation inventory,
+   status-2 interval routing, the
+   pre-transaction missing-root
+   fault, concurrent depth-variant stress, cache corruption recovery/migration,
+   and a real imported NIST 11 unsupported-cell cold-write/reload at depths
+   three and eight.  The NIST v14 suite passes all 8 databases, 11 solids, 1,298
+   rays, 22 fresh preps, and 44 isolated cold/warm cache preps.
+   The final imported and 63-face main-relative and near-legacy performance
+   gates pass, with exact branch-legacy output in every trial.
+   `regress-repository` and `regress-licenses` pass on the current source.
+   Sanitizers, cross-platform runs, broader STEP/FRAME diversity, and corpus
+   coverage for unobserved correction classes remain open.
+
+
+SUPERSEDED BROAD-CLASSIFIER CHECKPOINT (HISTORICAL)
+----------------------------------------------------
+
+The following baseline records why the earlier face-wide three-lane policy was
+rejected.  It is retained for performance provenance and is superseded by the
+orthogonal selective baseline above.
+
+The certified prepared solver is production-active and falls back atomically
+to the legacy solver for an entire ray whenever any proof is incomplete.
+Prepared and legacy face BVHs and per-face span hierarchies are implemented.
+Candidate preflight, first-failure attribution, an ordinary-regular event fast
+path, and a fixed-capacity per-ray edge-observation cache are implemented.  The
+optimized Release Ninja build is clean and the focused gate passes 39/39
+BREP/audit tests and 8/8 cache tests.
+
+An audit-only legacy-seeded routing verifier is now implemented.  It uses
+legacy roots only as candidate locations, independently certifies local roots,
+trim/direction, complete span root count, and the final alternating partition,
+and never changes production output.  Whole-span Jacobian sign, adaptive
+boundary separation, exact-expansion Brouwer degree, and independent recovery
+of trimmed-away surplus roots are implemented.  The six-axis 63-face test
+completes 6/6.  On 134 axis/random rays it completes 128/134 and 82/88 current
+prepared selections; after excluding four deliberate non-ordinary root-class
+rejects, strict-ordinary selected coverage is 82/84 (97.6 percent).  All 296
+joint degree/complement proofs agree.  Each of 124 one-root count surpluses is
+independently Krawczyk-certified and proved wholly trimmed.  On 52 axis/feature
+rays it completes all 10 current selected rays, deliberately rejects 34
+boundary/grazing rays, and retains 126/126 proof agreement.  This establishes
+correctness feasibility, not production readiness.
+
+Immutable packed homogeneous controls and a telemetry-only three-lane
+dispatcher are now implemented.  The 63-face object packs 75 spans, 332
+controls, and 1,328 doubles.  On the 134-ray sample the shadow lanes are
+40 `LEGACY_DIRECT`, 90 `SEEDED_ORDINARY_VERIFY`, and four
+`EXISTING_COMPLEX_PREPARED`; the seeded lane completes 88/90 and every lane has
+zero root mismatch.  On 52 feature rays all 18 ordinary rays complete in the
+seeded lane and all 34 boundary/grazing rays enter the complex lane.  Production
+routing and output are unchanged.  This proves that explicit conservative
+lanes can be implemented.  The opt-in render-wide profile now proves that the
+present predicates do not meet the speed budget: on the 128-square fixture,
+400/6,766 BREP shots are direct, 6,305/6,766 (93.19 percent) are seeded, and 61
+are complex.  The seeded verifier completes 6,256/6,305 with zero root-event
+mismatch, but two runs cost 111.594--116.059 microseconds per attempt; even
+subtracting all 46.529--48.709-microsecond complement work leaves
+65.065--67.351 microseconds.  Seeded rays are 38.48 percent of all 16,384 frame
+rays, while the 95-percent-of-main headroom allows only about 6.48 microseconds
+per attempt at that population.  The current classifier is therefore rejected
+for production performance.
+
+Depth-aware caching was implemented on 2026-09-29.  The generic cache identity
+now includes a primitive-queried format/configuration variant.  BREP format 3
+first added requested SurfaceTree depth to that variant.  The current BREP
+format/version is five with a `BRP5` payload header, packed-control rebuilds,
+and routing-metadata reconstruction requirements.  Depth-three and
+depth-eight objects coexist, and the regression verifies exact hierarchy,
+packed span/control statistics, and risk/capability statistics on both cache
+reloads.  Any future prep option or risk-bit representation that changes
+acceleration/routing data must be added to the queried variant before that
+option is enabled in cached production.
+
+The current controlled Cobb render passes the speed gate.  Across seven
+cache-disabled alternating single-CPU trials, median throughput is 195,933
+rays/CPU-second versus 177,808 on main, or 110.2 percent.  Branch prepared and
+branch legacy-only images match exactly.  Branch and main aggregate counts
+match, but their stable image digests differ and must not be called equivalent
+without adjudication.  Wide ranges in this run make the alternating median,
+not any individual trial, the usable comparison.
+
+That result does not generalize to the production prepared path.  On the
+63-face multi-face fixture, the current prepared median is only 1,896 rays/CPU-
+second versus a timer-quantized 174,763 on main: 1.1 percent.  It improves 4.9
+percent over the preceding 1,808-ray/CPU-second checkpoint and preserves the
+branch legacy-only digest, but the representative speed gate still fails by a
+large margin.  Event-stage work fell from 2,592.686 to 1,269.622 ms in the
+controlled profile; span discovery/isolation is now 4,931.498 ms, 74.88 percent
+of total shot time.  Remaining work is primarily failed prepared isolation,
+not legacy trim traversal or Newton tuning.
+
+
+SUPERSEDED BROAD-CLASSIFIER FEASIBILITY DECISION
+-------------------------------------------------
+
+Near-main speed is not reachable by event micro-optimization alone.  The
+current median gap is about 92x, and main's 128-square timing is coarse enough
+that the true ratio may be larger or smaller.  In the controlled profile,
+span discovery/isolation alone takes 4.931 seconds; deleting the entire 1.270-
+second event phase would still leave throughput tens of times below main.
+Reaching the 95-percent gate therefore requires avoiding or radically
+shortening most failed proof attempts, not another small constant-factor win.
+
+There is no evidence of a fundamental geometry or legacy-raytracer limit.  The
+branch legacy-only path is already competitive with or faster than main, and
+on the 63-face fixture it has the exact same digest as the prepared path.  The
+current structural blocker is the policy of attempting exhaustive interval
+isolation before discovering that 3,894 rays require legacy fallback.
+
+The preferred architecture is now legacy-seeded and independently certified.
+Run the fixed-workspace legacy solve once and retain its complete transaction.
+Use its roots only as seed coordinates.  A separate verifier must establish
+candidate-span coverage, unique local roots, trim and direction, complete root
+count, ordered alternating material intervals, and publication data derived
+from certified boxes.  On success it may replace the transaction atomically;
+on any failure it returns the already complete legacy transaction.  There is
+never a prepared prefix, legacy suffix, or raw legacy root promoted as proof.
+
+This architecture can remove the present 92x failure-tax, but the measured
+verifier cannot run on every candidate ray and satisfy the 95-percent gate.
+Seven fresh post-packed-input trials put the full 134-ray shadow verifier at a
+7.8772 ms median (7.7349--8.4229 ms).  Coefficient construction is 0.6143 ms,
+about 74.7 percent below its earlier 2.431 ms median.  Removing the old
+comparison-only complement stage estimates the new degree path at 4.2621 ms,
+or 31.81 microseconds per audited ray.  A timer-stable 512-square seven-trial
+endpoint comparison measures branch legacy-only at 479,349 rays/CPU-second
+median versus main at 229,825, or 208.6 percent; the corresponding per-render-
+ray costs are about 2.09 and 4.35 microseconds.  Thus legacy tracing is not the
+barrier.  Spending all headroom down to the 95-percent-of-main gate would
+optimistically allow the verifier on about 7.8 percent of render rays (about
+5.3 percent when the aggregate verifier cost is charged only across the 90
+substantive seeded attempts).  The deliberately stricter five-percent
+incremental-overhead budget allows only about 0.68 percent.  Dispatch and
+publication costs reduce both limits.  The render-wide profile now measures
+6,305 seeded attempts among 16,384 frame rays (38.48 percent), costing
+111.594--116.059 microseconds each.  Even deleting all complement work leaves
+65.065--67.351 microseconds per attempt, while the 95-percent-of-main headroom
+permits about 6.48 microseconds at that attempted fraction.  This rejects the
+current classifier and shows that face-level risk union is too broad: 94.09 percent of
+BREP shots inherit `UNQUALIFIED` plus topology-boundary risk.  The 61 complex
+shadows also average 2.151--2.207 ms each and contribute 8.01--8.22
+microseconds per frame ray at their present population.  Thus generic
+ambiguity cannot automatically authorize the exhaustive prepared path; that
+cost must be limited to corpus-proven correction classes or removed as well.
+
+The redesign remains realistic only if a truth corpus shows that actual
+accuracy corrections occupy sparse strata which cheap prep-time and ray-local
+feature predicates can observe.  Qualified clean ordinary rays then go
+directly to the retained legacy transaction; only observable correction-risk
+rays pay the independent verifier; true boundary/seam/singular ambiguity goes
+to the existing complex path.  If corrections also occur among otherwise
+indistinguishable clean ordinary rays, selective routing cannot solve the
+problem by itself.  That case requires roughly a tenfold faster amortized or
+ray-bundle certificate, a relaxed speed goal, or retaining legacy authority
+for the class.  Fully certifying every ray while matching the legacy heuristic
+within five percent remains unsupported and should not be promised.
+
+Production activation is gated on two facts not yet established: every known
+legacy/prepared disagreement must either be corrected by the new independent
+certificate or rejected, and a timer-stable render must reach at least 95
+percent of main.  In addition, no known correction ray may be classified
+`LEGACY_DIRECT`, and seeded attempts plus dispatch cost must fit the aggregate
+budget.  Until all pass, the verifier remains shadow-only and the current
+production authority remains unchanged.
+
+
+WORKING RULES
+-------------
+
+1. Correctness remains fail-closed.  Never turn an unresolved event into a
+   miss, mix a prepared prefix with a legacy suffix, or widen a tolerance to
+   make a benchmark pass.
+2. Measure normal production separately from trace/audit mode.  Trace mode may
+   deliberately execute both prepared and legacy work.
+3. Compare identical geometry, rays, compiler mode, CPU count, cache state,
+   and output checks.  Report medians and ranges, not a single favorable run.
+4. Make one performance hypothesis per change and retain telemetry proving
+   which work was removed.  Keep accuracy and reversal gates green at every
+   checkpoint.
+5. Do not change the production SurfaceTree depth from eight until Milestone 5
+   passes.  Cached depth variants make the experiment safe; they do not prove
+   that a shallower tree is correct.
+6. Treat the primitive-queried cache variant as part of every prep-option
+   change.  Before enabling a new option in cached production, encode it in the
+   variant, record enough payload metadata to reject a mismatch, and add a
+   coexistence/reload test analogous to the depth-three/depth-eight test.
+
+
+WAVE 1 - PRODUCTION MEASUREMENT AND QUALIFICATION
+-------------------------------------------------
+
+Milestone 1: Reach representative production speed parity with main
+
+Status on 2026-09-30: COMPLETE FOR SELECTIVE ROUTING.  The reproducible driver,
+same-branch result gate, and selective Cobb, 63-face, and 214-face imported
+gates pass.  Two independent 63-face archives reach 200.7 and 201.4 percent of
+clean main and 96.4 and 97.8 percent of optimized branch legacy.  The imported
+route reaches 146.1 percent of main and 99.1 percent of branch legacy.  Every
+routed result matches branch legacy exactly.  The exhaustive broad prepared
+path remains unsuitable and is not the production design; selective
+publication remains opt-in pending the independent release gates.
+
+Implementation steps:
+
+  a. [DONE] Maintain `bench/brep_raytrace.cmake` as the portable benchmark
+     driver for Cobb and the 63-face fixture.  Keep commit/build/database
+     hashes, arguments, cache state, counts, image hashes, ranges, and medians
+     in every archived result.
+  b. [DONE] Run one warm-up and seven measured alternating branch/main trials,
+     single-CPU and cache-disabled.  Report speed, aggregate agreement, and
+     byte-result agreement independently.
+  c. [DONE] Retain branch `prepared enabled` and `legacy only` controls.  A
+     prepared optimization must preserve the branch result signature or carry
+     a named, independently checked accuracy correction.
+  d. [DONE] Split the prepared shot into a cheap complete-candidate preflight
+     and an expensive proof pass.  Immutable prep support flags and conservative
+     face/span bounds are checked once; the complete face-candidate list is
+     retained and reused by proof traversal.
+  e. [DONE FOR THE CURRENT ROUTE] Preflight exits on proved invalid frames,
+     unsupported candidates, and fixed-capacity failures while retaining
+     legacy atomically.  A statistical work cap is not proof and must not be
+     used for this decision.
+  f. [DONE FOR THE CURRENT CERTIFIED CLASS] Event-stage timing, compact
+     ownership/interval ledgers, shared edge/seam observations, bounded root
+     certificates, and early semantic rejection are implemented.  New event
+     classes must add a proof before changing this disposition.
+  g. [DONE 2026-09-30] Reject an unprofiled nonempty stream before the second
+     leaf/root classification pass when no retained root is a numerical trim
+     contact.  That condition is necessary for the current policy to select
+     optional work.  Empty and contact streams retain the complete route, and
+     diagnostics retain full populations.  Two independent 63-face archives
+     now pass the 95-percent branch-legacy target at 96.4 and 97.8 percent.
+  h. [DONE FOR CERTIFIED LOCAL-ROOT EVENT COMPOSITION 2026-09-30] Edge
+     observations are evaluated once and reused by edge and seam resolvers.
+     Each accepted local root now retains its outward source-box t interval,
+     mapped original-surface UV, surface point, first derivatives, oriented
+     unit normal, trim classification, and topology indices.  Duplicate seeds
+     union their t intervals before surface evaluation.  Candidate cleanup,
+     grouped-event cleanup, seam-existing construction, and final physical-hit
+     publication reuse the retained mapping and normal.  Final publication
+     first requires exact source-root/face/span/distance/UV/classification/
+     direction correspondence and otherwise uses the established fallback.
+     `rt_brep_ray_evaluation_cache` proves two regular roots and events use two
+     cached evaluations and zero fallback surface evaluations.
+
+Acceptance gates:
+
+  * Stage 1: every representative benchmark has median production throughput
+    at least 95 percent of main.  Selective Cobb, 63-face, and imported NIST
+    pass; the rejected exhaustive multi-face prepared path does not.
+  * Stage 2: median throughput is at least 100 percent of main, or a documented
+    exception quantifies and independently validates an approved accuracy or
+    capability gain.
+  * Branch prepared and branch legacy-only benchmark signatures remain equal
+    where they were equal at this checkpoint.  Branch/main image differences
+    must be classified ray-by-ray; equal aggregate counts are not equivalence.
+  * No individual supported benchmark regresses by more than five percent
+    without a named follow-up and evidence that another required gate improved.
+    The current 63-face route costs 2.2 percent versus branch legacy in the
+    final-layout archive (2.2--3.6 percent over the latest independent
+    checkpoints), so this gate passes repeatably.
+
+
+Milestone 2: Attribute prepared attempt, selection, and fallback cost
+
+Status on 2026-09-29: MOSTLY COMPLETE.  Opt-in production telemetry assigns
+more than 99 percent of measured time and reports disjoint result populations,
+fallback sunk cost, phase cost, root work, sparse Newton evaluation cost, and
+authoritative `UNCERTIFIED` subreasons.  It now also times each physical-event
+resolver independently, which exposed and verified removal of the duplicate
+edge/seam observation pass.  Sampling/hardware profiles on larger corpus
+objects and bounded cost distributions remain.
+
+Implementation steps:
+
+  a. [DONE] Add opt-in wall/CPU phase counters around face traversal, span
+     traversal, coefficient construction, interval exclusion, root isolation,
+     event certification/composition, hit construction, and legacy fallback.
+  b. [DONE] Report rays in four disjoint populations: early prepared miss,
+     prepared selection, prepared rejection followed by legacy hit, and
+     prepared rejection followed by legacy miss.
+  c. [DONE] Break rejection time down by the existing fallback enum and report
+     work already spent before each rejection.  A fallback count without its
+     sunk cost is insufficient.
+  d. [DONE] Subdivide `UNCERTIFIED` by the first authoritative failure.  Each
+     unresolved terminal box records coefficient-expansion, exact-restriction,
+     exact-refinement-budget, corrector, or Krawczyk-uniqueness failure; the
+     early tangent/contact rejection has its own cause and an unknown catch-all
+     remains fail-closed.  The production profile records the ray's first cause
+     plus sunk time, spans, subdivision boxes, isolated boxes, and Krawczyk
+     boxes.  On the 128-square multi-face fixture, all 3,894 rays are actionable:
+     288 corrector failures and 3,606 Krawczyk uniqueness failures.
+  e. [NEXT] Profile optimized non-trace binaries using sampling and hardware
+     counters.  Retain one Cobb profile and one large STEP/FRAME profile per
+     checkpoint.
+  f. [DONE] Keep clocks and atomic aggregation disabled unless
+     `LIBRT_BREP_PROFILE=1`; ordinary production pays no per-phase clock reads.
+  g. [DONE 2026-09-30] Add percentile or bounded histogram reporting for
+     subdivision boxes, isolated roots, and sunk time.  Fixed logarithmic
+     histograms now report p50/p90/p99 upper bounds and overflow counts for
+     every selected/fallback reason without retaining per-ray samples.  A
+     permanent 16-square 63-face render verifies histogram populations against
+     the existing result counters.  Its 66 uncertified rays report subdivision
+     p50 <=128 boxes and p90/p99 <=256 instead of only an 82.74-box average.
+  h. [NEXT] Remove or compile out any remaining timing overhead in ordinary
+     production after the opt-in telemetry path is proven.
+
+Acceptance gates:
+
+  * At least 95 percent of measured shot CPU time is assigned to named phases.
+  * Prepared-selected and fallback rays have independent cost distributions.
+  * The top three costs have reproducible call paths and a proposed experiment;
+    no optimization is accepted on elapsed time alone.
+  * At least 99 percent of `UNCERTIFIED` rays are assigned an actionable first-
+    failure subreason before a heuristic dispatcher is considered.
+
+
+Milestone 3: Qualify the current solver under sanitizers
+
+Current evidence: the rebuilt optimized Windows matrix passes all 81 BREP/audit
+tests and all 13 cache tests.  This does not substitute for the external
+sanitizer, leak, or thread-sanitizer runs below.
+
+Implementation steps:
+
+  a. Build the current source with ASan/UBSan in a supported environment and
+     run all 81 BREP/audit tests plus all 13 cache tests.
+  b. Run fresh and cached prep at depths three and eight, repeated prep/free,
+     reversal pairs, and fixed-workspace exhaustion/fallback cases.
+  c. Run leak checking on a host where the runtime supports it.  Keep the
+     existing ptrace limitation recorded separately rather than calling a
+     leak-disabled run a leak pass.
+  d. Add a reduced permanent regression for every diagnostic before fixing it.
+
+Acceptance gate: zero ASan/UBSan diagnostics in the complete matrix and a
+separate successful leak run, or a narrowly documented external-runtime
+exception with independent ownership evidence.
+
+
+Milestone 4: Expand stratified STEP and FRAME qualification
+
+Current evidence: the installed NIST slice is complete for this checkpoint.
+`brep-routing-suite-nist-v13` covers 8 databases, 11 BREP solids, 1,298 rays,
+22 fresh depth-three/depth-eight prep runs, and 44 cache preps with zero result,
+reversal, lookup, missed-correction, prep, or cache-prep differences.  It also
+records unsupported-cell, payload, prep-time, and peak-RSS populations.  FRAME,
+Recurta, SC, UCP, and
+0353 are unavailable on this host, so the complete manifest gate remains open.
+
+Implementation steps:
+
+  a. Define a versioned corpus manifest spanning face count, trim count,
+     rational order, span count, status-1/status-2 forms, scale, topology,
+     and known difficult event classes.  Include FRAME and the recorded NIST,
+     Recurta, SC, UCP, and 0353 objects.
+  b. For each object run centered axes, fixed-seed random chords, face-normal,
+     edge-normal, seam, pole, tangent/grazing, and reversal pairs at depths
+     three and eight.
+  c. Store partition digests, maximum endpoint/normal deltas, prepared selection
+     and fallback populations, face/span cull populations, prep counts/time,
+     cache state, and peak RSS.
+  d. Promote every difference into a small C/C++ replay before changing policy.
+     Imported depth eight is a continuity reference, not an analytic oracle.
+
+Acceptance gate: the complete manifest has no unexplained partition or
+reversal difference, no cache-depth mismatch, and stable named fallback
+populations.  Every supported analytic conversion also agrees with its exact
+primitive oracle.
+
+
+Milestone 5: Decide whether depth three may become the production default
+
+Dependencies: Milestones 1 through 4 and the depth-aware cache implementation.
+
+Current evidence: the NIST v14 depth-three/depth-eight comparison has zero ray,
+reversal, or lookup differences and shows a substantial depth-three resource
+reduction.  The real NIST 11 cache regression cold-writes and
+reloads both variants independently with exact prepared statistics.  This is
+not authorization to promote depth three: the broader imported manifest,
+sanitizers, another platform, and resource/performance gates must pass first.
+Production depth remains eight.
+
+Implementation steps:
+
+  a. Run the full analytic, imported, sanitizer, cache, performance, and memory
+     matrices at depths three and eight with distinct cache objects.
+  b. Compare exact segment counts and classifications; bound endpoint and
+     normal differences by the existing model/numerical policy.
+  c. Quantify prep time, node/leaf count, cache size, peak RSS, selection rate,
+     fallback distribution, and shot throughput for both depths.
+  d. If depth three fails, retain eight and classify whether the cause is
+     missing candidate coverage, proof cost, or true numerical disagreement.
+
+Acceptance gate: depth three may be promoted only with zero unexplained
+accuracy/reversal/sanitizer differences, no material fallback regression, and
+a measured resource or throughput win.  Otherwise depth eight remains the
+default and the comparison stays a regression gate.
+
+
+WAVE 2 - COMPLETE THE CERTIFIED EVENT DOMAIN
+--------------------------------------------
+
+Milestone 6: Expand status-2 interval mappings [PARTIAL 2026-10-02]
+
+Current evidence: direct `ON_RevSurface` instances with arc, line, and direct
+NURBS profiles, one affine `ON_CurveProxy` layer over those profiles, and flat
+`ON_PolyCurve` compositions of qualified pieces, including one affine outer
+proxy, now have checked, outward-rounded interval maps.  The direct, proxy,
+and polycurve dense oracles pass 20,485, 36,873, and 16,388 samples.  Combined
+coverage also passes 30 boundary-straddling intervals, seven malformed or
+unsupported polycurve forms, 16/16 positive two-direction publications, 2/2
+negative fallbacks, and exact BRP6 reconstruction at depths three and eight.
+Independent per-piece surface conversion avoids whole-polycurve endpoint
+averaging while preserving a strict roundoff-only join policy.  Three balanced
+outer-proxy/polycurve workload runs retain 96.8--99.1 percent of same-branch
+legacy CPU throughput.  This completes nonsingular rectangular interval
+routing for these bounded classes only; singular sphere poles and recursive or
+unresolved compositions still fail closed.
+
+Implementation steps:
+
+  a. [DONE LOCALLY; EXTERNAL EXPANSION OPEN] Inventory status-2 OpenNURBS forms
+     by original surface/profile class, proxy and orientation flags,
+     transposition, closure, periodicity, singular sides, polycurve segments,
+     and sampled forward/inverse parameter behavior.  The synthetic and
+     installed NIST inventories are permanent and reproducible.  Extend the
+     same inventory to P2 data and add purpose-built polycurve fixtures; do not
+     infer support from the absence of a form locally.
+  b. [DONE FOR ARC/LINE/DIRECT-NURBS AND ONE PROXY LAYER] Keep the class-
+     specific outward-rounded maps and locus proofs.  Forward/inverse, domain,
+     separability, strict-monotonicity, singular-side, and invalid-target checks
+     are permanent.  Do not recursively accept proxy-of-proxy forms without a
+     separately bounded composition proof.
+  c. [DONE FOR FLAT `ON_PolyCurve`] Build an immutable prep-time piece table
+     containing each `SegmentDomain`, target curve class/domain, orientation,
+     and mapped NURBS interval.  Require a finite, ordered, gap-free, nonoverlapping
+     partition and independently qualify every segment using an existing
+     analytic map.  Split each SurfaceTree cell at all enclosed segment
+     boundaries, outward-map every piece, and associate the union; never bridge
+     a material discontinuity or unresolved boundary.  Convert prepared
+     surfaces one piece at a time so heterogeneous joins are not moved by
+     OpenNURBS endpoint averaging.
+  d. [DONE] Add one- and multi-
+     segment arc/line/NURBS fixtures,
+     reversed polycurves, reversed segments, nondefault domains, transforms,
+     cells that straddle every segment junction, and both ray directions.  Add
+     negative fixtures for gaps, overlaps, empty/zero-width segments, mixed
+     unsupported targets, discontinuities, nested proxies, and segment-count
+     overflow.  Require exact direct/polycurve locus and routed/legacy output,
+     no all-spans fallback for qualified cells, and at least 95 percent of
+     same-branch legacy throughput.  Positive cases, ordinary and near-gap
+     rejection, unsupported target, nested polycurve, overflow, serialized
+     overlap/zero-width corruption, and individually reversed proxy-piece
+     checks now pass.
+  e. [DONE FOR ONE OUTER AFFINE PROXY] Compose an affine proxy over a qualified
+     flat polycurve while preserving the piece cap and rejecting recursive
+     proxy/polycurve graphs.  Full, reversed, transformed, proper-subdomain,
+     cache/depth, and throughput gates now pass.
+  f. [CORPUS SELECTION REQUIRED] Inventory every P2 corpus and select the most
+     prevalent remaining finite status-2 representation.  The installed NIST
+     set supplies no candidate beyond already-qualified direct forms; do not
+     infer that recursive proxy/polycurve graphs should be next.
+  g. [PARTIAL] Extend reparameterized regular, pole, seam, and fold certificates
+     one class at a time.  Reject a class if its inverse or topology map is not
+     unique over the candidate interval.  Pole/seam/fold authority is separate
+     from rectangular interval mapping and remains incomplete.
+  h. [DONE FOR THE PROMOTED CLASSES] Retain transformed, scaled, reversed,
+     transposed, nondefault-domain, and degenerate controls for each promoted
+     class, plus a nearby unsupported control that must fallback.  Retain the
+     extreme combined transform/reverse/transpose and proxy-subdomain cases as
+     permanent positive regressions.
+
+Acceptance gate: each promoted status-2 class has analytic or independently
+evaluated interval oracles, complete mapping coverage, reversal invariance,
+and explicit unsupported neighbors.  No generic status-2 authority is inferred
+from samples.
+
+
+Milestone 7: Certify remaining vertex, edge, contact, and tangent streams
+
+Implementation steps:
+
+  a. Implement a curved vertex-link theorem using bounded tangent and normal
+     variation over each incident face neighborhood.  Keep planar fan authority
+     as the existing fast special case.
+  b. Represent many-to-many edge/vertex events as a bounded overlap graph over
+     certified t intervals and topology links.  Prove component completeness
+     before assigning an entering/leaving transition.
+  c. Separate exact tangency, face contact, tolerance-healed intended closure,
+     and near-but-disconnected controls.  Each gets its own eligibility policy.
+  d. Extend stream composition only after every event has unique ownership,
+     complete source-box/root accounting, and a valid material transition.
+  e. Preserve atomic whole-ray fallback for nonmanifold, ambiguous, exhausted,
+     or over-capacity components.
+
+Acceptance gate: permanent transformed/reversed tests cover curved vertices,
+many-to-many edges, exact tangency, near contact, and negative controls with no
+direction dependence or unsupported selection.
+
+
+Milestone 8: Consolidate physical-event interval composition
+
+Implementation steps:
+
+  a. Replace class-specific representative-t adjacency tests with one bounded
+     overlap/component utility using the existing outward t intervals.
+  b. Make event ordering, coalescence, source ownership, winding transition,
+     and minimum-segment checks explicit stages with invariant assertions.
+  c. Define capacity limits in one place and report the exact limit that caused
+     fallback.  Test each limit at N-1, N, and N+1.
+  d. Reduce duplicate mixed-stream implementations after their test populations
+     prove semantic equivalence.
+
+Acceptance gate: all currently certified regular/fold/pole/periodic/seam/edge/
+vertex combinations use shared interval-composition invariants, with unchanged
+results and lower or equal measured cost.
+
+
+WAVE 3 - DATA LAYOUT, BATCHING, AND PRODUCT COMPLETION
+-----------------------------------------------------
+
+Milestone 9: Pack immutable span/trim data and add conservative SIMD
+
+Implementation steps:
+
+  a. [PARTIAL] Retained byte categories and raw/compressed cache contribution are
+     measured on the installed corpus and largest NIST object.  Add the missing
+     per-face/span/trim/BVH breakdown on Cobb, SC, and FRAME.
+  b. [PARTIAL] Remove unused per-subpatch and per-feature-cell scale state,
+     delete the duplicate association vector, compact checked indices/counts
+     and orders, and exactly reserve the pack array.  Together these save
+     39,078,456 retained bytes (10.60 percent) on NIST 2 with identical work
+     populations and lower observed peak RSS.  Continue replacing pointer-heavy
+     runtime records with indexed packed arrays after prep; keep the build
+     representation temporary and account for peak duplication.
+  c. Store hot traversal fields separately from cold certificate/topology data.
+     Preserve deterministic source indices and cache reconstruction.
+  d. Vectorize only outward-safe coefficient hull, bbox, and interval operations.
+     Provide a scalar reference and lane-by-lane enclosure tests at NaN,
+     infinity, subnormal, scale, and boundary cases.
+
+Acceptance gates: at least a 25 percent reduction in retained prepared bytes on
+FRAME or SC, no increase in peak RSS without explanation, bitwise-identical
+classifications against scalar reference, and a measurable shot-throughput win.
+
+
+Milestone 10: Implement a true batched `rt_brep_vshot`
+
+Implementation steps:
+
+  a. Group rays by soltab and traverse face/span BVHs in packets while preserving
+     each ray's independent fixed workspace and fallback decision.
+  b. Batch bbox and coefficient-hull screens first; do not batch certificate
+     state until scalar equivalence is demonstrated.
+  c. Compact surviving lane indices between stages and send only rejected lanes
+     through scalar legacy fallback.  Never combine event streams across rays.
+  d. Compare packet widths and scalar cutover thresholds on coherent primary
+     rays and incoherent secondary rays.
+
+Acceptance gates: exact scalar/vector segment equivalence for the complete
+corpus, sanitizer-clean mixed-lane fallback, and at least 1.5x throughput on a
+coherent packet benchmark without more than a five percent incoherent loss.
+
+
+Milestone 11: Bound prep time, cache size, and long-lived RSS
+
+Current evidence: raw and actual compressed BRP6 sizes, compression time,
+accounted retained bytes, used bytes, unused capacity, and per-subsystem and
+per-routing-vector retention are now reported.  NIST 2 depth eight has
+125,056,675 raw bytes, 57,795,784 compressed bytes, and 329,511,548 retained
+bytes after association packing.  Packing removes 39,078,456 retained bytes
+without changing its 380,302 leaves, 146,657 packs, 637,586 control intervals,
+or 1,048,575 subpatch boxes.  Three fresh processes give median peak RSS
+395,554,816 bytes and median prep 5.295403 seconds.  Exact cold/reload statistics, depth
+separation, compressed-payload effectiveness, and concurrent publication are
+permanent tests.  External heap profiling, larger parallel-prep stress, and
+explicit FRAME/SC budgets remain open.
+
+Implementation steps:
+
+  a. [DONE LOCALLY 2026-09-30] Record fresh prep, serialized and actual
+     compressed size, retained/used/unused bytes by subsystem, peak RSS, and
+     post-free RSS.  Keep cached-prep wall time as a remaining dashboard field.
+  b. [PARTIAL] Process-per-run controls now separate exact live accounting from
+     peak RSS, and repeated prep/free telemetry exists.  Run an external heap
+     profiler to attribute allocator retention and transient construction peaks.
+  c. [PARTIAL] Pack derived subpatch and association records and keep their work
+     caps independent of layout.  Redundant bindings are gone, cell/pack indices
+     are checked 32-bit values, orders are byte-sized, exact association
+     pre-counting leaves zero pack slack, and unused feature-cell scale state is
+     gone.  Next target the measured 3,988,928-byte control-vector slack and
+     compare build-then-pack/release for SurfaceTree construction without
+     increasing peak RSS; also evaluate streamed cache serialization.  Avoid
+     shared mutable SurfaceTrees or a global maximum-retaining pool.
+  d. [PARTIAL] Concurrent cache creation at both depths is a permanent test.
+     Add multi-object parallel prep/RSS stress once the larger corpora are
+     available.
+
+Acceptance gates: cached prep reproduces fresh statistics and geometry, repeated
+cycles have bounded live bytes, FRAME/SC meet an explicit host memory budget,
+and any residual RSS growth is attributed to allocator retention with evidence.
+
+
+Milestone 12: Finish the primitive contract and retire legacy debt
+
+Implementation steps:
+
+  a. [DONE 2026-09-30] Implement `rt_brep_curve` principal curvature from the
+     certified hit UV and oriented surface derivatives, with singular/undefined
+     results handled by the documented librt convention.  The implementation
+     evaluates second surface derivatives, uses the normalized face-oriented
+     hit normal for curvature sign, explicitly restores librt's
+     `|crv_c1| <= |crv_c2|` ordering, and returns zero curvature plus a unit
+     tangent on invalid or undefined input.  `rt_brep_ray_curve` covers sphere,
+     cylinder, plane, rotated nonuniform ellipsoid, both ray directions,
+     reversed oriented normals, and invalid face/UV/normal fallback.  The full
+     optimized build and expanded 80-test focused matrix pass.
+  b. [DONE 2026-09-30] Qualify plate-mode obliquity, thickness, normals, and
+     grazing behavior under transforms; keep it outside solid prepared
+     authority until its contract is complete.  Thickness parsing rejects
+     empty, malformed, overflow, NaN, and infinite values.  LOS construction
+     handles non-unit normals and directions, rejects zero-length/nonfinite and
+     grazing input, and preserves both cosine and `nocos` behavior.  Emitted
+     entry/exit normals are unit and opposite with entry against the ray, and
+     return values count only emitted segments.  `rt_brep_ray_plate` covers an
+     open planar disk under identity, rigid, uniform-scale, reflection, and
+     nonuniform transforms; perpendicular, oblique, reversed, exact-grazing,
+     and near-grazing rays; parser failures; fixed/trace equivalence; and the
+     mandatory `RT_BREP_PREPARED_FALLBACK_PLATE` with zero prepared selection.
+     The optimized build and expanded 81-test focused matrix pass.
+  c. [DONE 2026-09-30] Make legacy
+     fallback counters and reasons externally diagnosable, then use the corpus
+     to identify genuinely unreachable legacy cleanup branches.  Both capacity
+     fallbacks and all 19 semantic cleanup actions now have stable names,
+     opt-in production counters, per-ray/aggregate audit JSON, and exact fixed-
+     versus-allocating reason-map comparison.  The permanent reduced-stream
+     test covers positive attribution and both capacity reasons.  The final
+     97-object corpus has zero reason-map mismatches, observes both capacity
+     reasons and 12 cleanup actions, and leaves seven actions zero-observed.
+     `rt_brep_ray_cleanup_reasons` now supplies a positive and nearby negative
+     stream for all 19 actions and constructively reaches those seven.  No
+     cleanup branch is genuinely unreachable or eligible for removal.
+  d. [STANDING GATE - NO CURRENT CANDIDATE] Remove a legacy branch only after a
+     dedicated negative/positive regression, production telemetry showing no
+     required use, and sanitizer qualification.  All 19 actions are currently
+     reachable and retained.
+
+Acceptance gate: curvature and plate behavior have analytic tests, supported
+solid corpus rays no longer depend on unnamed legacy behavior, and every retained
+fallback branch has a documented reason and test.
+
+
+Milestone 13: Refactor, document, and set the production release gate
+
+Implementation steps:
+
+  a. Split the large BREP implementation into prep data, traversal, interval
+     arithmetic, root certificates, physical events, legacy fallback, cache I/O,
+     and telemetry modules without changing behavior.
+  b. Move shared invariants and capacity definitions into narrow internal APIs;
+     document ownership, thread safety, cache-version dependencies, and numeric
+     assumptions at each boundary.
+  c. Keep `brep_current_state.txt` as the evidence log and update this file when
+     a gate changes.  Archive reproducible benchmark/corpus manifests with the
+     commit that produced them.
+  d. Define a final dashboard: build, 81 correctness/audit tests, cache variants,
+     sanitizer/leak result, corpus coverage, main-relative speed, prep/RSS, cache
+     size, selection/fallback distribution, and scalar/vshot throughput.
+
+Acceptance gate: all dashboard entries are green, no status claim relies on an
+unrecorded local model or one-off command, public behavior is documented, and
+the implementation is reviewable in bounded modules.
+
+
+NEXT CHECKPOINT ORDER
+---------------------
+
+Current execution order (this list supersedes the historical checkpoint log
+below):
+
+1. Run the complete 81-test BREP/audit and 13-test cache matrix under Linux
+   ASan/UBSan, then complete TSan, leak, and at least one additional-platform
+   qualification.  Preserve fresh/cached depth-three/depth-eight, reversal,
+   workspace-exhaustion, and repeated prep/free coverage.
+2. Acquire and run FRAME, Recurta, SC, UCP, and 0353 with the versioned corpus
+   driver.  Add independently adjudicated natural positives for the currently
+   unsupported authority strata and matched negatives; retain legacy whenever
+   a certificate class remains incomplete.
+3. Decide whether depth three may replace depth eight only after the broader
+   corpus, sanitizer/platform, performance, and resource gates pass.  Until
+   then, keep depth eight as the production default and both cache variants as
+   permanent coexistence/reload regressions.
+4. Expand status-2, seam, pole, singular, tangent, periodic, and mixed-hazard
+   authority one independently certified class at a time.  Require complete
+   positive/negative/reversal coverage and atomic whole-ray fallback before
+   enabling each class.
+5. Continue packed immutable layout, true batched `rt_brep_vshot`, bounded
+   prep/cache/RSS work, and implementation modularization.  Measure each change
+   against exact scalar results, cache reconstruction, and the main/branch-
+   legacy performance controls.  Retain the 2048-square all-core adjudication
+   at 215/15 so CPU timer quantization cannot obscure regressions; preserve its
+   wall, p95, exactness, and main-relative results.
+
+HISTORICAL CHECKPOINT LOG
+-------------------------
+
+1. [DONE 2026-09-29] Split `UNCERTIFIED` into first-failure subreasons without
+   changing solver decisions.  All 43 focused tests pass; the 128-square SHA-256
+   remains `99a0e4d8e5888703d53b9a8f77e30c9c1dc6ae7ddee3b46b1b9ded621ad6ee22`;
+   selected/UNCERTIFIED/EVENT_CLASS remain 2,611/3,894/261; and actionable
+   attribution is 100.00 percent.
+2. [DONE 2026-09-29] Add immutable prep support flags and a conservative
+   candidate preflight.  Build the face-candidate list once and reuse it during
+   proof traversal.  Only proved invalid/unsupported cases exit early.  Full
+   Release build and all 43 focused tests pass.
+3. [DONE 2026-09-29] Instrument event substages, run the ordinary status-1
+   regular finalizer before topology reconstruction only after a compact
+   ownership/interval proof, and share one lazy fixed-capacity edge-observation
+   cache between edge and seam resolvers.  Event time falls from 2,592.686 to
+   1,269.622 ms, seam duplicate work from 1,078.136 to 0.564 ms, and the result
+   hash and 2,611/3,894/261 populations remain unchanged.
+4. [DONE 2026-09-29] Prototype legacy-seeded independent verification in audit
+   mode.  The prototype maps strict-interior status-1 seeds to unique spans,
+   certifies local roots with bounded Krawczyk, rechecks trim and determinant
+   direction, proves complete span root counts, and validates the complete
+   alternating partition.  It is shadow-only.  `--seeded-verify`, complete JSON
+   stage/failure telemetry, and a permanent multiface six-axis test assert 6/6
+   completion.  The current full Release build and 47/47 focused tests pass.
+5. [PARTIAL - BLOCKING] Build the routing truth corpus before changing
+   authority.  Archive
+   deterministic rays from every known legacy/prepared partition, face,
+   orientation, or cleanup disagreement, plus ordinary agreement controls,
+   empty rays, multiple roots on one span, boundary roots, tangencies, trims,
+   seams, poles, status-2 forms, and workspace limits.  For each ray record raw
+   seeds, independent local boxes, candidate-span accounting, root count,
+   trim/direction, final intervals, and the analytic or reduced-stream oracle.
+   Gate: every completed certificate matches its oracle; every unsupported case
+   rejects; and at least one known accuracy correction is completed correctly.
+
+   Current evidence: `bench/brep_routing_corpus.cmake` implements the
+   reproducible driver.  The 97-object/16,828-ray broad sweep and the targeted
+   12-object/7,602-ray deep sweep satisfy the observed boundary/contact
+   correction gate with zero missed corrections, but the corpus still lacks a
+   positive missing-root/empty, clean-ordinary, or mixed-hazard correction and
+   does not yet include the full imported STEP/FRAME manifest.  Final v4/v3
+   reruns have zero prepared or legacy reversal mismatches; all 15 archived
+   failures and two closure cases are permanent tests.  The remaining block is
+   correction-class and imported-workload coverage, not reversal closure.
+6. [PARTIAL 2026-09-29: THEOREM IMPLEMENTED, COST GATE OPEN] Replace ordinary
+   complement tiling with a certified root-count
+   theorem.  For each candidate span:
+
+     a. Prove the projected two-equation map is nonzero on the complete span
+        boundary using outward Bernstein/interval bounds.
+     b. Prove one nonzero Jacobian-determinant sign over the span.  If a single
+        sign cannot be proved, reject this fast theorem rather than sampling.
+     c. Compute an interval-safe boundary winding/Brouwer degree and require its
+        signed root count to equal the number and sign of disjoint local
+        Krawczyk certificates.
+     d. Count trimmed-out roots too; classify trim only after complete untrimmed
+        surface-root coverage.  Send span-boundary roots to the existing
+        adjacent-span theorem.
+     e. Retain the current complement walker as a shadow oracle and bounded
+        fallback during development, not as the expected production fast path.
+
+   Gate: zero disagreement with complement exclusion where both complete;
+   at least 95 percent completion on strict-interior ordinary selected rays in
+   the routing corpus; at least 80 percent less complement-stage time on the
+   134-ray sample; and explicit failure reasons for every incomplete proof.
+
+   Current evidence: 296/296 joint proofs agree, strict-ordinary selected
+   coverage is 82/84 (97.6 percent), all 124 one-root surpluses are certified
+   trimmed, and four determinant-inconclusive spans are the only degree
+   failures.  The O(n) interval-Jacobian hull, lazy expansion-tightening, and
+   packed homogeneous controls lower the seven-run full median from 13.493 to
+   7.8772 ms and the no-complement estimate from 8.477 to 4.2621 ms.  Keep the
+   old complement walker comparison-only and leave this milestone open until
+   dispatch meets the aggregate render budget.
+7. [PARTIAL 2026-09-29: HOMOGENEOUS INPUT GATE PASSED] Reduce independent
+   coefficient and root-certificate cost.  Pack the
+   homogeneous span controls, derivative controls, boundary curves, domains,
+   and conservative error scales needed by the new theorem into immutable prep
+   arrays.  Form ray-plane coefficients once per candidate span, reuse them for
+   local and global proofs, and evaluate the certified root point/derivatives/
+   normal/trim once into a fixed ledger.  Test scalar versus outward-safe SIMD
+   enclosure lane by lane.  Any new prep representation or option must update
+   the queried cache variant and payload version and add a depth/configuration
+   coexistence reload test.  Gate: halve coefficient-stage time and perform no
+   repeated OpenNURBS or trim evaluation for one certified root.
+
+   Current evidence: 75 spans/332 controls/1,328 doubles are immutable and
+   pointer-bound only after vector finalization.  `BRP6` cache reloads reproduce
+   those counts and routing metadata at depths three and eight.  Lazy exact
+   staging lowers the
+   coefficient median from 2.431 to 0.6143 ms (74.7 percent), so the first cost
+   gate passes.  The evaluate-once certified-root event ledger is implemented:
+   an oblique regular sphere trace retains two complete root evaluations and
+   final publication consumes both with zero surface-evaluation fallback.
+   Derivative/boundary/error prep packs remain open, as do measurements proving
+   the no-repeat property for each independently rechecked complex certificate
+   class.
+8. [PARTIAL 2026-09-30: SELECTIVE PUBLICATION AND CURRENT-CLASS COST GATES PASSED]
+   Complete the routing redesign and qualify it for opt-in publication.
+
+   The implemented policy no longer treats a lane as publication authority.
+   It records a legacy base transaction, optional work (`none`,
+   `seeded_ordinary`, or `complex_prepared`), qualification/reason bits, and
+   legacy publication authority independently.  The original broad-policy
+   requirements below are retained for provenance; requirements a, b, and e
+   are implemented, c remains available but is not selected by the current
+   corpus policy, and d's generic-ambiguity rule was superseded by the sparse
+   all-root boundary/contact predicate.
+
+     a. Build immutable per-object, face, and span risk/capability bits during
+        prep.  Include status-2 mappings, singular/periodic sides, trim and
+        topology-boundary classes, and every truth-corpus correction class.
+        Serialize these bits only after incrementing the queried cache variant
+        and payload version and adding coexistence/reload tests.
+     b. Intersect those bits with the complete fixed-workspace ray candidate
+        set before choosing a lane.  `LEGACY_DIRECT` is allowed only when no
+        intersected candidate belongs to an accuracy-risk class; absence of a
+        legacy seed alone is never evidence for this decision.
+     c. Choose `SEEDED_ORDINARY_VERIFY` only for supported status-1,
+        nonsingular, strict-interior, transverse, within-capacity observations
+        whose complete candidate spans are eligible for the degree theorem.
+        Any failed precondition routes to the complex lane or retained legacy
+        transaction; it never becomes a miss.
+     d. Choose `EXISTING_COMPLEX_PREPARED` for known correction-risk rays and
+        boundary, fold, seam, pole, status-2, contact, or ambiguous streams not
+        covered by the ordinary theorem.  Preserve its present whole-ray
+        fallback until a narrower certificate is independently qualified.
+     e. Emit a shadow confusion matrix by corpus stratum and render: lane,
+        actual certificate result, current prepared result, legacy/prepared
+        disagreement, cost, and false-positive attempt.  Normal production
+        keeps this telemetry and all clocks disabled.
+
+   The decision may use immutable prep support and complete fixed-workspace
+   legacy observations, never a timing cap.  Record predicted attempts,
+   completions, false-positive proof attempts, current prepared selections that
+   would be skipped, and known correction rays sent to each lane.  Keep normal
+   clocks/counters disabled.  Gate: no known correction is sent directly to
+   legacy; the measured attempted fraction and per-attempt cost fit a render-
+   wide overhead budget of at most five percent of main.
+
+   Current evidence: the reproducible 97-object sweep records 16,828 rays in
+   six disjoint observation strata and finds 18 correction rays.  The targeted
+   deep sweep records 7,602 rays and finds 28 correction rays in 14 pairs,
+   including a new representative 63-face replay.  Every correction in both
+   runs is an independently certified prepared-miss/legacy-hit
+   boundary/contact miss in `all_hazard`, every one selects
+   `complex_prepared`, and none select `none` or `seeded_ordinary`.  Lookup
+   failures, depth differences, unresolved correction oracles, actual verifier
+   attempts, and prepared/legacy reversal mismatches are zero in the final
+   archives.  The final direct 512-square profile routes all 108,091
+   BREP shots to `none`, with zero seeded or complex attempts.  Decision time
+   repeats at 17.296--17.997 ms total.  At timer-stable 1024 square, seven
+   unprofiled trials reach 472,597.63 rays/CPU-second versus 237,974.70 on main
+   (198.59 percent) and 489,845.72 on branch legacy (96.48 percent).  The
+   0.07451-microsecond-per-ray increment is 3.65 percent in CPU time, and the
+   output is byte-identical to branch legacy authority.  The separately enabled publication
+   transaction publishes all ten permanent correction-pair replays.  On the
+   complete 708-ray 63-face audit it makes 38 optional attempts, publishes the
+   two completed certified corrections, rejects 36 unsupported event classes
+   at the first retained surface box, retains legacy for the other 706 rays,
+   and has zero full-payload mismatches.  Two capacity-unsupported rays now do
+   no optional work.  The attempts cost 3.507 ms total, down more than 99.95
+   percent from the historical 7.10--8.23 seconds.  An attempted-but-incomplete
+   sphere replay also retains legacy exactly.  `BRP6` stores and exactly
+   validates the depth-specific feature cells, and the full 89-test focused
+   gate passes, including concurrent depth-variant publication/reload stress.
+
+   This meets the mechanics, observed-correction recall, hard measured
+   95-percent-of-main budget, stricter five-percent-over-legacy budget on the
+   zero-optional 63-face control, depth/cache, direct-output, injected missing-
+   root recovery, and representative NIST performance gates.  It does not
+   establish natural-corpus recall for clean-ordinary, empty/missing-root, or
+   mixed clean/hazard corrections, nor broad STEP/FRAME diversity.  Default
+   production authority therefore remains unchanged; selective prepared
+   authority is available only behind both explicit route flags.
+
+   Historical implementation order for the rejected broad classifier (steps
+   1--4 are now complete in the selective design):
+
+     1. [DONE FOR INITIAL CORPUS] Build the positive correction corpus first.  Recover or reduce every
+        case in which prepared and legacy partitions differ, give each an
+        independent analytic/reduced-stream oracle, and add ordinary negative
+        controls with the same face and ray classes.  Until this corpus exists,
+        `UNQUALIFIED` may be subdivided for telemetry but never cleared for
+        production authority.
+     2. [DONE] Replace the fixed lane enum as the policy representation with an
+        orthogonal decision record: retained base transaction (always legacy),
+        optional work (`NONE`, seeded ordinary, or complex prepared),
+        qualification state, correction/risk reasons, and publication
+        authority.  This lets a generic unqualified ray retain legacy without
+        automatically paying the 2.151--2.207-ms complex path, while recording
+        that it is not a qualified direct ray.
+     3. [DONE] Refine face-wide topology flags into conservative span/SurfaceTree-leaf
+        feature cells.  Mark only cells whose UV bounds overlap trim, seam,
+        singular, periodic, or correction-class bounds.  Accumulate those bits
+        while traversing the already required fixed-workspace legacy leaves;
+        do not run a second face BVH merely to dispatch.  Shadow-compare this
+        candidate set with the prepared-face set before using it.  Because the
+        cells depend on SurfaceTree depth, serialize them in the depth/config
+        cache variant, bump the payload beyond `BRP5`, and add mixed-depth
+        coexistence/reload corruption checks.
+     4. [DONE] Add a fixed-capacity ray-local hazard ledger.  Intersect candidate-cell
+        risks with strict root/span interior, trim and seam distance bounds,
+        grazing/contact state, periodic images, capacity overflow, and every
+        corpus correction predicate.  A missing legacy root cannot report its
+        own risk, so prep-time candidate-cell correction bits remain mandatory.
+        No clocks, allocations, statistical caps, or sampled winding may enter
+        the production decision.
+     5. [PARTIAL] Run the revised decision in shadow mode over the truth corpus and at
+        least one larger STEP/FRAME render.  Report by stratum: qualified
+        direct, unqualified legacy retention, seeded work, complex work,
+        verifier success, prepared/legacy disagreement, false-positive work,
+         and nanoseconds.  Require 100-percent correction recall (zero known
+         corrections in `NONE`) before considering authority.
+         The reproducible 97-object CSG sweep and 12-object deep sweep now pass
+         this recall gate for the observed boundary/contact class and report
+         disjoint strata.  A 214-face imported NIST production render now
+         passes; broader imported STEP/FRAME diversity remains open.
+     6. Enforce an aggregate budget equation using measured render-ray
+         fractions.  The old broad-policy coefficients (67.351 microseconds per
+         seeded attempt and 1,131.887 per complex attempt) are conservative
+         historical inputs, not current steady-state costs.  The latest
+         zero-optional 63-face control measures a 0.07451-microsecond-per-render-
+         ray increment, 3.65 percent over branch legacy in CPU time, and
+         therefore passes the preferred five-percent gate.  Recompute
+         seeded/complex coefficients
+         and allowable fractions on the expanded correction-heavy corpus; do
+         not infer optional-work capacity from the zero-attempt control.
+     7. Optimize only lanes that survive that confusion matrix.  First remove
+        the duplicate candidate traversal and comparison complement; then
+        precompute boundary/derivative packs and evaluate each certified event
+        once.  If required correction work still exceeds the equation, test an
+        interval ray-bundle certificate to amortize proof across coherent rays.
+        If important corrections remain indistinguishable from clean ordinary
+        rays and bundle cost still misses the gate, record the 95-percent target
+        as blocked for certified correction coverage rather than weakening the
+        correctness contract.
+
+   Remaining implementation order and measurable goals:
+
+     1. [PARTIAL] Expand the truth corpus specifically for missing-root/empty,
+        clean-ordinary, mixed clean/hazard, seam, pole, singular, periodic, and
+        status-2 disagreements.  Pair every positive with nearby negative
+         controls.  Goal: an independent oracle for every correction and zero
+         known corrections in `none`.
+     2. [DONE 2026-09-30] Permanently replay and repair every shared reversal
+        mismatch from the broad and deep archives.  All 17 focused replays pass,
+        both final archives have zero prepared and legacy reversal mismatches,
+        and the approved correction oracles are unchanged.
+     3. [IMPLEMENTED FOR STATUS-1; QUALIFICATION OPEN] The empty-cell/missing-
+         root certificate does not depend on a legacy root.  The permanent
+         pre-transaction fault fixture proves positive recovery and atomic
+         fallback.  Keep unsupported empty streams on legacy.  Goal for every
+         added stratum: 100-percent recall with a measured false-positive work
+         rate.
+     4. Decide whether any correction class needs `seeded_ordinary`.  If none
+         does, leave that optional work disabled.  If one does, qualify only its
+         observable stratum and remove the comparison complement from the
+         direct path.  Goal: no verifier work on generic clean ordinary rays.
+     5. [DONE FOR THE CURRENT CERTIFIED CLASS AND NIST FIXTURE 2026-09-30]
+        Keep dispatch plus selected-work overhead within five percent of branch
+        legacy.  The 1024-square 63-face control measures a 0.07451-
+        microsecond-per-render-ray increment, or 3.65 percent in CPU time,
+        with zero optional work.  The 708-ray feature-heavy audit now spends
+        3.507 ms on
+        38 attempts: two corrections complete in 0.037 ms total and 36
+        unsupported event classes reject in 3.471 ms at the first retained
+        surface box.  This is more than 99.95 percent below the historical
+         7.10--8.23 seconds and preserves both corrections.  The 214-face NIST
+         render is 99.3 percent of branch legacy over seven trials and 98.9
+         percent with publication enabled.  Broaden the imported corpus and
+         reopen this gate separately for each new correction class.
+     6. [DONE 2026-09-30] Implement one nonduplicated opt-in routed transaction.  Run legacy once,
+        retain it untouched, execute only selected optional work, and account
+        dispatch, optional work, and publication separately.  Goal: seven-trial
+        measured throughput at least 95 percent of main with the approved
+        branch hash before any correction publication is enabled.  The final
+        timer-stable median is 472,597.63 rays/CPU-second, 198.59 percent of main
+        and 96.48 percent of branch legacy, with the exact branch-legacy hash.
+        Publication remains legacy.
+     7. [DONE FOR CURRENT CERTIFIED CLASS 2026-09-30] Add atomic certified
+        publication behind a separate opt-in flag.  Only
+         a complete independently certified optional transaction may replace
+         legacy; any failure, overflow, or unsupported case publishes the whole
+         retained legacy transaction.  Goal: all truth-corpus corrections use
+         the oracle-approved result with no partial transaction or hash drift on
+         negative controls.  `LIBRT_BREP_ROUTE_PUBLISH=1` requires direct
+         routing, publication happens before any legacy segment is emitted, and
+         all ten permanent correction pairs pass.  The 708-ray 63-face audit
+         publishes two corrections and preserves 706 legacy results with zero
+         distance, face, point, UV, normal, ordering, or ownership mismatch.
+     8. [PARTIAL] Run larger STEP/FRAME, sanitizer, cache-depth, reversal,
+        full Ninja, repository, and license gates.  The full build, focused
+        89-test suite, reversal closure, cache-depth tests, ten-repeat
+        concurrent depth-variant cache stress, representative NIST render, and
+        publication-enabled NIST confirmation pass.  The final repository and
+        license checks also pass.  Broader STEP/FRAME, sanitizer, and cross-
+        platform gates remain.
+        Default promotion requires zero
+        unexplained differences, zero sanitizer diagnostics, exact BRP6 reload,
+        and both performance gates documented from the direct transaction.
+
+9. [DONE FOR CURRENT CERTIFIED CLASS 2026-09-30] Turn successful optional work into an atomic candidate
+   transaction.  Publish points, UVs, normals, face identities, and t intervals
+   derived from the independently certified boxes and final bounded evaluation,
+   not copied legacy values.  Validate ordering, orientation, minimum segment,
+   and hit construction before swapping the transaction into the segment list.
+   On any error or capacity limit, discard it and emit the untouched whole-ray
+   legacy transaction.  Gate first in trace/shadow mode, then behind an opt-in
+   production flag; exact branch signatures and every truth-corpus oracle must
+   remain green before default activation.  This transaction is now active only
+   under the two opt-in flags.  Extend it only as new correction classes gain
+   their own complete certificates.
+10. [GATE] After each retained routing change, run the 89 focused tests, exact
+    512-square hash/population check, and Cobb/multi-face profiles.  At major
+    checkpoints run seven alternating trials and a larger image whose main
+    timing is stable.  Report certificate attempt fraction and average overhead
+    as well as throughput.  Cobb and the 63-face case must each reach at least
+    95 percent of main without changing their approved branch signatures.  A
+    verifier that is faster than the old prepared path but misses this aggregate
+    gate is progress, not production completion.
+11. [DEFERRED, NOT REMOVED] Retain terminal-box disposition, deterministic
+    replays for the 288 corrector and 3,606 Krawczyk-uniqueness failures, and
+    root/event data reuse for the existing complex prepared lane.  Resume this
+    work for accuracy cases the seeded ordinary theorem cannot cover; it is no
+    longer the primary route to 63-face speed parity.  The measured parent-to-
+    child complement-restriction experiment was about ten percent slower and
+    must not be restored without a materially different layout or profile.
+12. [PARALLEL GATES] Run Milestones 3 and 4 (sanitizers and the stratified
+    STEP/FRAME corpus) alongside the routing checkpoints.  They block the depth
+    decision in Milestone 5.  Production depth remains eight; cached depth
+    coexistence is infrastructure, not evidence for changing the default.
+
+Milestones 6 through 8 then expand proven authority without weakening fallback.
+Undertake packed data and vshot only after scalar profiles and event semantics
+are stable.  Memory, contract cleanup, and modularization remain release gates
+rather than optional polish.
+
+
+2026-10-05 GTA02 PRODUCTION-SCALING PLAN
+----------------------------------------
+
+The immediate blocker is duplicate prep work, not the shallow SurfaceTree
+policy.  Execute the following in order; do not substitute uniform depth 8 or
+ray-time allocation for any step.
+
+1. Keep the current exact checkpoint green.  The parameter-domain span index
+   stays; depth-0 bindings keep their exact restricted hull.  Gate every change
+   first with `rt_brep_ray_status2_polycurve_throughput`, whose current exact
+   ratio is 0.9981 and whose output/routing checks pass.
+
+2. [PARTIAL; EXACT RECTANGLE TREE NOT SELECTED] Keep the implemented shared
+   rational-normal polynomial per unique Bezier span.  Prefer an immutable
+   shallow subdivision over the exact rectangle-reconstruction tree
+   whose node budget is capped per span and scene, independent of SurfaceTree
+   binding count.  The experimental tree covered 700,398 GTA bindings with
+   621,760 splits before its run was stopped: recreating almost one node per
+   binding is not reuse.  Its greater-than-three-minute timing was confounded
+   by directional depth three and serialized PowerShell profiling and must not
+   be cited as a controlled performance result.  Prefer a small deterministic
+   cover and only refine spans whose conservative normal cone is inconclusive.
+
+3. Replace each directional cell/span binding's copied hull with a compact
+   reference to the smallest bounded cover of the cell/span intersection.
+   Do not require the cover to reproduce every padded cell edge.  A
+   conservative parent or small set of nodes is valid; refine with the existing
+   fixed ray-local stack only when the ray direction is inconclusive.  Measure
+   this ambiguous fraction before increasing the shared depth.  Overflow or
+   malformed mappings must retain legacy authority.
+
+4. Preserve the current exact cell-local decision as the semantic oracle.
+   Differentially compare old eager bindings and the new shared hierarchy over
+   all focused rays, including the status-2/polycurve case that exposed 48
+   differences when a full-span hull was used directly.  Goal: zero decision,
+   segment, distance, face, UV, normal, ordering, or ownership differences.
+
+5. Make cache ownership explicit.  Replace the per-B-Rep 8 MiB default with a
+   scene-wide budget assigned after object inventory (an equal conservative
+   share is acceptable only as an interim implementation).  Account separately
+   for unique-span hierarchy nodes, cell references, packs, and the correction
+   BVH.  Small one-object tests must retain enough budget to satisfy existing
+   throughput gates; all exhaustion paths remain correct without allocation.
+
+6. Redesign the direction cache after prep is under control.  The current
+   thread-local table has 64 object slots for GTA's 306 B-Reps and each worker
+   independently rebuilds entries.  Introduce a small fixed shared per-object,
+   per-direction cache with safe publication, immutable entries, bounded
+   replacement, and no shot-time allocation.  Construct projected silhouettes
+   from unique span-hierarchy nodes rather than dense leaf bindings.
+
+7. Measure the redesign at each checkpoint.  Required gates are: exact focused
+   status-2 output; the 63-face correctness/throughput benchmark; GTA depth-3
+   cold prep; GTA 128-square routed and branch-legacy renders; a zero-pack
+   control; the focused test matrix; full Ninja; and `git diff --check`.
+   Initial GTA targets are GETTREE within 20 percent of main (then parity),
+   routed SHOT within 10 percent of branch legacy, no new silhouette or
+   branch-legacy differences, and bounded scene memory.  The demonstrated
+   10.215-second indexed/full-span experiment versus main's 10.900 seconds is
+   the prep feasibility datum, not a correctness-qualified result.
+
+8. Only after the scalar hierarchy and shared direction cache pass those gates,
+   evaluate coherent packet/vshot reuse.  Production completion additionally
+   requires broader STEP/FRAME coverage, sanitizers, cache reload/depth stress,
+   and explicit documentation of every remaining fallback population.
+
+
+2026-10-05 CORRECTED GTA02 EXECUTION CHECKPOINT
+-----------------------------------------------
+
+1. [DONE] Replace serialized/profile-contaminated GTA prep numbers with native
+   process-redirection measurements.  Clean main is 10.900 wall / 197.516 CPU
+   seconds.  The former 137--146 second branch numbers are not performance
+   evidence: inner per-object logging blocked on PowerShell output and charged
+   that wait to routing prep.
+
+2. [DONE] Remove invariant Bernstein-product work from the coefficient inner
+   loop and use sign-directed interval products.  The exhaustive interval
+   corpus and the sensitive status-2 corpus pass.
+
+3. [DONE FOR EXACT DEFAULT] Partition unique-span normal construction for
+   B-Reps with at least 1,024 spans using the existing recursive/concurrent
+   `bu_parallel` facility.  Binding writes are disjoint and completion counts
+   are atomic.  Current exact GTA prep is 12.083--12.520 wall seconds, within
+   11--15 percent of main and inside the original 20-percent gate.  Keep the
+   recursive parallel and prepared-cache concurrency tests in the focused
+   matrix.
+
+4. [EXPERIMENTAL, PROMOTION GATE] Qualify the second-order Taylor normal
+   enclosure.  Its Hessian remainder is conservative, its status-2 result is
+   exact, it restores GTA's exact 124 directional triggers, and three cold GTA
+   trials have a median 8.546 wall / 155.922 CPU seconds--about 21 percent
+   faster than main.  Before making it default, add direct first/second/exact
+   enclosure differential tests, run the focused sanitizer matrix, and repeat
+   the broader STEP/FRAME corpus.  Any inconclusive or capacity path keeps the
+   exact restriction fallback.
+
+5. [NEXT] Replace the 64-entry thread-local direction cache with a bounded
+   shared cache keyed by prepared-object generation, complete ray direction,
+   selected depth, and certificate format version.  Publish only immutable
+   completed entries, use bounded replacement, and allocate all entry storage
+   during prep.  A builder failure or collision must leave the exact scalar
+   path authoritative.  GTA qualification must demonstrate stable cache miss
+   counts across repeated 24-worker renders as well as SHOT wall/CPU medians;
+   current scheduling alone varies misses from 618 to 2,541.
+
+6. [NEXT] Move the remaining per-binding normal payload toward compact
+   references or lazy direction-specific decisions only after the shared-cache
+   gate.  Measure retained bytes and build counts separately for unique spans,
+   bindings, packs, and projected masks.  Do not trade the now-main-comparable
+   exact prep path for a wider bound whose extra grazing work loses end-to-end
+   throughput.
+
+7. [GATE] Re-run cold GTA exact and second-order prep, unprofiled routed and
+   branch-legacy 128-square images, the 63-face throughput fixture, focused
+   tests, full Ninja, `git diff --check`, and sanitizers.  Performance profiles
+   must use native redirection and timing tests must run alone.  Production
+   promotion requires the approved branch image/segment oracles, no new
+   silhouette differences, stable cache behavior, bounded scene memory, and no
+   shot-time allocation.
+
+
+2026-10-05 SHARED-CACHE EXECUTION UPDATE
+----------------------------------------
+
+1. [DONE] Replace the thread-local 64-object direction cache with four
+   prep-owned shared entries per B-Rep.  Exact direction, object generation,
+   selected depth, and format are part of the key.  Reads are lock-free,
+   completed entries are immutable and reader-pinned, construction is
+   nonblocking, replacement is bounded, and every failure uses the exact
+   allocation-free scalar path.  GTA02 now has a stable 45 misses in each of
+   three 24-worker runs and preserves the 124-trigger population and approved
+   branch hash.
+
+2. [DONE AS SAFE DEFAULT; REDESIGN STILL OPEN] Disable eager routing cell/span
+   packs by default and retain the byte setting as an explicit experiment.  A
+   controlled GTA02 profile showed that the old independent 8 MiB allowance
+   built 193,537 packs and increased GETTREE from 13.131 to 67.805 wall seconds.
+   The current unprofiled zero-pack default takes 12.769 seconds versus 10.900
+   on main and reproduces branch legacy exactly.  The opt-in cache-on path stays
+   covered by `rt_brep_ray_status2_routing` with an explicit 8 MiB setting.
+
+3. [DONE FOR ROUTING; ASSEMBLY OVERLAP DETERMINISM OPEN] The cache-on/cacheless
+   shaded disagreement is not a routed-hit disagreement.  Pack-on routed and
+   legacy images have the same hash, as do zero-pack routed and legacy images;
+   pack-on and zero-pack surface-normal renders are byte-for-byte identical.
+   The 272 affected shaded pixels remain foreground and change coherently by
+   material color in this overlap-heavy assembly.  Use same-prep-mode legacy
+   comparisons and material-independent normal/depth products for routing
+   gates.  Separately add deterministic overlap-claimant reporting before using
+   a cross-prep shaded hash as a whole-assembly correctness oracle.
+
+4. [NEXT, MEMORY DESIGN] Do not restore a per-object eager allowance.  If packs
+   prove useful after item 3, inventory the complete scene first, assign a
+   global retained-byte budget, prioritize measured hot/correction strata, and
+   report reserved, constructed, useful, and exhausted counts separately.
+   Compare that design against the zero-pack stack reconstruction; remove the
+   pack cache if it cannot amortize both prep and retained memory on GTA02.
+
+5. [DONE FOR GTA FALSE POSITIVES; TRUE CORRECTIONS RETAINED] The 124 GTA02
+   optional attempts were conservative false alarms caused by exhausting the
+   64-box directional workspace, not detected tangencies.  A 256-box budget
+   leaves two triggers and 9.2 milliseconds of optional work.  A 1,024-box
+   fixed-stack budget completes all 15,377 probes with zero ambiguity,
+   overflow, trigger, or optional transaction; it visits 33,053 adaptive boxes
+   and takes 229.084 aggregate milliseconds.  This is ray-visible adaptive
+   subdivision, not uniform SurfaceTree depth, and performs no shot-time
+   allocation.  All ten routing-truth audits and the direct status-2 positive
+   routes still exercise and publish genuine corrections.  Retain explicit
+   overflow/failure telemetry and never reinterpret exhaustion as a miss.
+
+6. [GATE] Repeat the packless GTA02 prep/render series, branch-legacy and main
+   comparison, cache-on differential replay, status-2 routing and throughput
+   tests, 63-face benchmark, focused CTest matrix, full Ninja, `git diff
+   --check`, cache-depth/reload stress, and sanitizer coverage.  Production
+   completion still requires routed SHOT within 10 percent of branch legacy on
+   a timer-stable workload.  The clean 1,024-box GTA medians are 1.20312 CPU /
+   0.10351 wall seconds routed versus 1.04688 / 0.07860 branch legacy: about
+   14.9 percent more CPU and 31.7 percent more wall time, no longer the stale
+   approximately 3.4x gap.  Every valid image and hit aggregate matches.
+
+
+2026-10-05 PREP-TIME DISPOSITION AND 1,024-BOX CHECKPOINT
+---------------------------------------------------------
+
+1. [ROOT CAUSE CLOSED] The alarming branch prep number was the eager routing
+   pack experiment.  An independent 8 MiB allowance on each B-Rep constructed
+   193,537 packs across 304/306 objects and raised routing-cell prep from
+   83.161 to 1,105.031 aggregate seconds, producing 65.854--67.805 seconds of
+   GETTREE wall time.  Zero bytes is now the production default; the explicit
+   opt-in remains covered by the status-2 test.
+
+2. [CURRENT EXACT BASELINE] Three valid routed GTA trials have a 13.20277 wall
+   / 277.672 CPU-second GETTREE median; three interleaved legacy-only trials
+   have 13.06442 / 274.781.  Clean main is 10.89963 / 197.516.  The branch is
+   currently about 21.1 percent slower in prep wall time in this sample, near
+   the initial 20-percent gate and far from the former sixfold result.  Routing
+   mode itself has no material prep cost.  The 83.161-second routing-cell sum
+   is dominated by 78.633 seconds of exact shared normal-envelope construction;
+   SurfaceTrees sum to 56.894 seconds and edge prep to 45.493 seconds.
+
+3. [PROMOTION PATH] Qualify the second-order normal enclosure, whose three-run
+   GTA median is 8.546 wall / 155.922 CPU seconds and therefore faster than
+   main.  Required evidence remains direct first/second/exact differential
+   testing, focused sanitizers, broad STEP/FRAME coverage, cache reload parity,
+   and exact grazing/correction results.  Preserve exact restriction fallback
+   for every inconclusive or capacity result.
+
+4. [NEXT IMPLEMENTATION] Compact the per-binding normal metadata and measure
+   retained/peak scene memory before considering any new cache.  If immutable
+   packs later demonstrate reuse, allocate them from one scene-wide retained-
+   byte budget and admit only measured hot/correction strata.  Record reserved,
+   built, hit, useful, evicted, saturated, and fallback counts.  Do not restore
+   an eager per-object allowance.
+
+5. [NEXT QUALIFICATION] Re-run the timer-stable 63-face benchmark against main,
+   then the focused CTest/cache-depth matrix, full Ninja, whitespace checks,
+   and sanitizer suites.  GTA's short all-core shot sample is now close in CPU
+   but still outside the stricter 10-percent branch-legacy goal; use larger
+   images or repeated frames before making a production throughput decision.
+
+
+2026-10-05 SCENE-CACHE EXECUTION AND CONCRETE REMAINING GOALS
+------------------------------------------------------------
+
+1. [DONE] Replace the per-B-Rep routing-pack allowance with one scene-wide
+   budget assigned after complete solid inventory.  Primitive prep now leaves
+   packs empty; `rt_prep_parallel` computes every B-Rep's eligible bytes,
+   divides the configured total deterministically, and populates immutable
+   packs in parallel.  The default is 8 MiB total, not 8 MiB per object.  Any
+   zero, partial, or exhausted allocation uses the exact allocation-free
+   fixed-workspace path.
+
+2. [DONE] Add a permanent multi-object cache-bound test.  With a 1 MiB test
+   allowance, `rt_brep_scene_pack_cache` requires nonzero population of
+   multiple B-Reps while rejecting total use above the configured scene
+   budget.  Keep this test in every focused cache/prep matrix.
+
+3. [DONE] Re-measure GTA02 prep with native process redirection.  The scene
+   cache uses 8,029,376 of 8,388,608 bytes across 304/306 B-Reps.  GETTREE is
+   11.97390 seconds and parallel pack population is 0.51297 seconds, about
+   12.49 seconds total versus clean main's 10.90.  Interleaved routed and
+   legacy total-prep medians are 12.91986 and 13.02717 seconds.  The former
+   65.854--67.805-second result is closed as per-object eager duplication, not
+   a fundamental preparation limit.
+
+4. [DONE] Select 256 as the default fixed-stack adaptive grazing budget.  It
+   leaves two GTA02 false triggers costing 9.2 aggregate milliseconds versus
+   124 triggers near the former 64-box limit.  The 1,024-box experiment removes
+   both, but does not materially improve the timer-stable 63-face result.  Keep
+   the runtime range 1--1,024, explicit overflow telemetry, genuine correction
+   fixtures, and the no-allocation shot contract.
+
+5. [DONE; PERFORMANCE FOLLOW-UP OPEN] Complete the seven-trial one-CPU
+   1,024-square 63-face comparison.  The certified routed path reaches
+   444,429.56 CPU and 439,992.30 wall rays/second, 187.4/188.1 percent of clean
+   main and 90.1/90.3 percent of branch legacy.  All routed and legacy ray,
+   intersection, hit/miss, and result digests match exactly.  Main-relative
+   production speed is demonstrated; the stricter 95-percent same-branch gate
+   is still missed by approximately five percentage points.
+
+6. [NEXT, HOT PATH] Reduce certified-routing overhead without weakening
+   authority.  Profile the routing decision, directional certificate, and
+   missing-root observation/certificate separately on the final binary.  The
+   latest complete-pack profile attributes roughly 207 ms to routing decisions,
+   58 ms to directional certification, and 49 ms to the missing-root
+   certificate over 431,984 B-Rep shots, with no optional transactions.  First
+   target the missing-root observation/certificate and repeated metadata walks;
+   retain exact branch-legacy results and atomic fail-closed fallback.  Goal:
+   at least 95 percent of branch legacy on both CPU and wall throughput over
+   seven alternating trials.
+
+7. [NEXT, MEMORY] Measure process peak working set plus retained B-Rep bytes on
+   GTA02 with scene budgets 0, 8 MiB, and at least one larger sensitivity
+   point.  Report unique-span normals, cell/span bindings, routing packs and
+   controls, correction BVH, and shared direction-cache storage separately.
+   Verify actual retained pack storage is bounded by the configured total;
+   account explicitly for vector capacity and allocator overhead.  Goal: a
+   documented scene-memory ceiling and a measured throughput/prep tradeoff,
+   not merely a logical byte counter.
+
+8. [NEXT, GTA PRODUCTION WORKLOAD] Render one or more top-level GTA02
+   combinations at a resolution large enough to amortize approximately
+   12.5 seconds of prep and stabilize all-core shooting.  Compare clean main,
+   branch legacy, and certified routing using identical view, CPU count,
+   lighting, and cache state.  Record GETTREE, pack-PREP, SHOT CPU/wall,
+   intersections, hits/misses, a material-independent normal/depth digest, and
+   same-prep-mode shaded digests.  Treat cross-prep shaded claimant changes in
+   coincident assembly overlaps separately from B-Rep hit correctness.
+
+9. [PARTIAL, CORRECTNESS AND DURABILITY] The scene-cache test, both cache depth
+   variants, status-2 packless/routing/throughput gates, direct route, profile
+   histogram, and all ten `brep_audit_routing_truth_*` cases pass 18/18.  A
+   complete optimized Ninja rebuild and `git diff --check` pass.  Still run
+   the remainder of the complete `rt_brep_*`, `brep_audit_*`, and `rt_cache_*`
+   focused matrix; BRP6 fresh/cold/warm reload and reversal coverage; the
+   larger NIST routing suite; repository/license checks; and sanitizer/thread/
+   leak configurations.  Required result: no unexplained routing, reload,
+   depth, ownership, race, allocation, or sanitizer difference.
+
+10. [PROMOTION GATE] Qualify the faster second-order normal enclosure only with
+    direct first/second/exact differential tests and broader STEP/FRAME and
+    sanitizer evidence.  Its 8.546-second GTA median is evidence that
+    faster-than-main preparation is feasible, not yet authority to replace the
+    exact default.  Every inconclusive or capacity case must keep the exact
+    restriction fallback.
+
+11. [RELEASE DECISION] Promote certified routing only after the top-level GTA
+    render demonstrates usable end-to-end latency, the 95-percent same-branch
+    target is met or explicitly waived based on a documented accuracy/speed
+    tradeoff, scene memory is bounded in measurement, and the platform/corpus
+    gates above pass.  There is presently no known architectural prep blocker;
+    remaining risk is hot-path certification cost and breadth of qualification.
