@@ -43,6 +43,12 @@ file(
 )
 
 cmakefiles(
+  brep_gta02_oracle.cmake
+  brep_raytrace.cmake
+  brep_raytrace_matrix.cmake
+  brep_routing_corpus.cmake
+  brep_routing_suite.cmake
+  brep_status2_inventory.cmake
   CMakeLists.txt
   pixcmp_test.cmake
   run.sh
