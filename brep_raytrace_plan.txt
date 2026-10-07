@@ -730,6 +730,89 @@ conditioning, and conservative bounds may change work without changing the
 physical answer.  Nonuniform scaling is not a similarity and needs a separate
 affine/ellipsoid qualification rather than reuse of this invariant.
 
+For that separate gate, map the exact sphere, its interior transverse rays,
+and the analytic chord through A = R diag(sx, sy, sz) plus translation.  If d
+is the original unit ray direction, normalize A d for shooting and scale the
+expected ray parameters by |A d|.  This retains an analytic oracle without
+solving a second ellipsoid equation numerically.  Construct the implicit ELL
+from the three transformed radius vectors, convert the same ELL to BREP, and
+compare implicit, promoted production, forced legacy, and reconstructed
+prepared partitions in both directions.  A general affine map has no single
+length scale; use the smallest singular value to scale the model distance
+tolerance so the thinnest principal direction remains conservative, and use
+the transformed direction length to normalize endpoint errors.
+
+Sweep both overall scale and singular-value condition number.  Moderate cases
+must select the prepared path.  Higher-condition cases that reach depth or
+workspace limits must preserve the production partition through an exact,
+observable fallback reason.  Independently ratchet prepared isolated-box and
+legacy SurfaceTree-leaf capacity fallback: an ellipsoid may exceed either one
+without being allowed to truncate candidates.  Keep a focused affine-only
+test mode so conditioning boundaries can be iterated without rerunning the
+full Crofton corpus.  This establishes ordinary transverse behavior only;
+repeat the grazing trend under affine distortion before claiming a tangent or
+seam classifier invariant beyond similarities.
+
+The affine grazing gate must map the complete line construction, not merely
+scale an already normalized world ray.  For a base-sphere unit direction d,
+choose a perpendicular closest-point direction n and signed clearance h, form
+the base line at (R-h)n, and transform both its origin and d by A.  Normalize
+A d only for librt shooting.  The exact transformed parameter endpoints are
+(2R +/- sqrt(R^2-(R-h)^2)) |A d|.  Report both h in units of the original
+model tolerance and the physical chord in units of the transformed model
+tolerance.  Sweep positive clearances logarithmically through exact contact
+and mirrored negative clearances, and shoot both directions.  Translation,
+rotation, anisotropic scale, and reversal then share the same analytic source
+line while exercising different numerical conditioning.
+
+This test must distinguish three stages that can otherwise look like the same
+miss:
+
+  * root absence: neither the legacy SurfaceTree solver nor the prepared local
+    corrector produces the analytic roots;
+
+  * qualification fallback: prepared boxes or roots exist but cannot be
+    certified or exceed fixed capacity, after which the complete legacy result
+    must be retained; and
+
+  * post-solve classification loss: two finite, ordered roots exist but cleanup
+    deletes or merges them.
+
+In particular, a fixed normal-dot grazing threshold cannot decide whether a
+solid interval exists.  Normal angle is not invariant under a general affine
+map: both endpoint normals of a long, thin ellipsoid chord can be arbitrarily
+close to perpendicular to the ray.  Grazing cleanup may delete an isolated
+contact, invalid trimmed candidate, or out-of-bounds root, but it must retain
+an adjacent ENTERING/LEAVING pair when its parameter separation represents at
+least rti_tol.dist in model space.  For a non-unit ray this threshold is
+rti_tol.dist/|d|.  Permit only a scale-aware floating-point evaluation slack;
+do not enlarge the modeling tolerance.  Apply the same decision to fixed,
+allocating, shadow-event, and prepared-publication cleanup so allocation mode
+cannot change topology.
+
+The initial implemented matrix uses conditions 13.3, 100, and 1,000; signed
+h/T values 100, 1, 0.01, 1e-4, 1e-6, 1e-8, 0, and their negative mirrors; and
+both directions, for 78 rays.  It found and repaired post-solve angular
+deletion on 16 directed rays.  The remaining monotone capability boundary is
+not yet the desired invariant: condition 100 misses a 3.08-T chord at h/T =
+1e-8, and condition 1,000 misses 305-T and 30.5-T chords at h/T = 1e-6 and
+1e-8.  These six cases have no stored legacy roots and no publishable prepared
+local roots, so solver/isolation—not cleanup—is now the next target.  Keep
+per-condition floors as one-way ratchets: improvements may reduce the miss
+count, but a hit may never disappear at a larger clearance or restart closer
+to tangency.  Require reversal agreement, analytic endpoint accuracy for every
+retained interval, stable misses for negative h, and explicit prepared fallback
+accounting.
+
+Do not use the implicit ELL as the sole oracle exactly at transformed
+tangency.  The first matrix shows direction-dependent, sub-resolution implicit
+segments on three of six exact-contact shots due to discriminant cancellation.
+Use the analytic zero-material contact at h=0; continue to compare the implicit
+and BREP results at representably positive and negative clearances.  This does
+not weaken later Cauchy-Crofton validation because exact tangencies have measure
+zero, but directed boundary tests must report the implicit artifact rather than
+canonize it as expected solid material.
+
 The first production publication boundary is deliberately stricter than root
 convergence.  A prepared result may replace the SurfaceTree result only when:
 
@@ -821,6 +904,74 @@ Use the isolated t intervals and a local sign/winding test on either side of
 the event.  If two root intervals remain inseparable at the model tolerance,
 return one ambiguous cluster to the topology resolver rather than deleting
 both based on normal signs.
+
+The expected generic limit is a fold, not a discontinuous hit/miss switch.
+After a well-conditioned local change of parameter and projected-equation
+basis, the poorly conditioned component has the leading form
+
+  psi(q) = a (q - q0)^2 - epsilon + higher-order terms.
+
+On the material side, the two simple roots approach one another with
+separation proportional to sqrt(epsilon); their normal/ray dot products and
+the smallest singular value of the ray-plane Jacobian ordinarily vanish at
+the same rate.  At epsilon = 0 they form a double contact with no material
+interval, and on the other side there is no root.  A fixed angular cutoff
+therefore deletes legitimate intervals at a representation- and
+affine-transform-dependent distance from tangency.  The required behavioral
+trend is instead monotone two-root, contact, no-root behavior, with the two
+roots retained while their physical chord exceeds the model minimum-segment
+tolerance.
+
+The condition-100 and condition-1,000 affine ellipsoid ratchet shows that the
+regular corrector needs a separate fold path.  Its first implementation should
+be a bounded branch-and-prune procedure, not tolerance inflation:
+
+  1. On a terminal ambiguous parameter box, evaluate a candidate point and a
+     scaled 2x2 SVD or equivalent rank-revealing factorization of the
+     projected Jacobian.  Let p be the well-conditioned right-singular
+     direction, q the weak direction, and rotate the two equations by the
+     corresponding left-singular basis.  The factorization is a search hint;
+     interval bounds remain authoritative.
+
+  2. Contract the regular equation in p for bounded q strips using interval
+     Newton/Hansen-Sengupta or Bernstein clipping.  Split an axis-aligned UV
+     box along the coordinate with the largest component of q rather than
+     representing an unbounded rotated parameter polygon.  Discard a child
+     only when outward-rounded Bernstein or interval bounds prove that one of
+     the two equations excludes zero.
+
+  3. Along the retained regular-equation corridor, evaluate the weak scalar
+     equation on ordered q strips.  Scalar samples and the estimated fold
+     point may schedule work, but may not prove root absence.  Search both
+     sides of the estimated fold separately so one Newton basin cannot consume
+     or hide the neighboring root.
+
+  4. Correct each candidate inside its own bounded box.  A strict-interior
+     Krawczyk inclusion continues to certify each regular root away from exact
+     contact.  Root boxes must be disjoint in the weak direction or remain an
+     explicitly ambiguous cluster.
+
+  5. Account for the complete parent box: every portion must be either
+     coefficient-excluded, covered by a certified root box, or retained as
+     unresolved.  Two converged candidates alone do not prove that the pair is
+     complete.  Exact contact, an uncertifiable singular box, interval
+     dependency, or workspace exhaustion uses the conservative fallback.
+
+  6. Once two roots are certified, compare their ray-parameter interval gap
+     to rti_tol.dist/|D| with floating-point enclosure.  Publish an
+     ENTER/LEAVE interval only if its physical length is tolerance-resolved;
+     otherwise hand one ambiguous contact cluster to solid-event resolution.
+
+  7. Use fixed arrays for the strip/box stack, candidate brackets, and SVD
+     scratch.  Record high-water marks and an explicit fold-workspace fallback;
+     do not allocate during shot.
+
+This path deliberately separates three questions: numerical convergence,
+existence/uniqueness certification, and solid classification.  Deflation or
+regularized Newton methods for corank-one singular polynomial roots are useful
+references for exact-contact diagnostics, but they do not by themselves prove
+that all nearby simple roots were found.  The branch-and-prune coverage proof
+is still required.
 
 5.5 Allocation-free ray-time workspace
 
@@ -1645,9 +1796,11 @@ Correctness:
 
   * In the signed grazing sweep, raw root separation follows the analytic
     trend from two roots through a double contact to no roots.  Final librt
-    classification matches the implicit oracle and has at most one contiguous
+    classification matches the analytic oracle and has at most one contiguous
     tolerance-controlled transition band, with no odd-hit or alternating
-    hit/miss islands.
+    hit/miss islands.  The implicit primitive agrees outside its measured
+    floating-point contact uncertainty; exact transformed-discriminant
+    artifacts are reported rather than used as ground truth.
 
   * Sewn Cobb seam/vertex rays do not leak for g <= T.
 
@@ -1817,6 +1970,26 @@ Algorithm and geometry references:
     https://arxiv.org/abs/2011.05000.  This is a modern polynomial-system use
     of the Krawczyk method and reinforces that every function/Jacobian bound
     and interval arithmetic operation must be rigorous for certification.
+
+  * A. Mantzaflaris and B. Mourrain, "Deflation and Certified Isolation of
+    Singular Zeros of Polynomial Systems," 2011,
+    https://arxiv.org/abs/1101.3140.  Its symbolic-numeric treatment of
+    singular roots and interval-backed certification is relevant to an exact
+    tangent, but does not replace global box coverage for two close simple
+    roots.
+
+  * N. Li and L. Zhi, "Computing Isolated Singular Solutions of Polynomial
+    Systems: Case of Breadth One," SIAM Journal on Numerical Analysis 50(1),
+    2012, https://doi.org/10.1137/110827247.  This is relevant to the generic
+    corank-one fold model and regularized local refinement.
+
+  * T. Tejima, M. Fujita, and T. Matsuoka, "Direct Ray Tracing of
+    Full-Featured Subdivision Surfaces with Bezier Clipping," Journal of
+    Computer Graphics Techniques 4(1), 2015,
+    https://jcgt.org/published/0004/01/04/.  It is a modern low-memory example
+    of direct patch intersection using Bezier clipping.  BRL-CAD additionally
+    needs solid-event, trim-tolerance, and completeness certification suitable
+    for engineering solids.
 
   * S. Guthe, A. Balazs, and R. Klein, "GPU-based Trimming and Tessellation of
     NURBS and T-Spline Surfaces," and related Bauhaus work on ray casting
