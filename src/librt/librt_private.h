@@ -515,6 +515,7 @@ RT_EXPORT extern int rt_bot_shot_specific(
 #define RT_BREP_TRACE_EVENT_SEAM_CONTACT_EXISTING 7
 #define RT_BREP_TRACE_EVENT_SEAM_CONTACT_CONTINUATION 8
 #define RT_BREP_TRACE_EVENT_SINGULAR_POLE 9
+#define RT_BREP_TRACE_EVENT_REGULAR_NEAR_TRIM 10
 #define RT_BREP_TRACE_EVENT_SOURCE_LOCAL_ROOT 1
 #define RT_BREP_TRACE_EVENT_SOURCE_FOLD_ROOT 2
 #define RT_BREP_TRACE_EVENT_SOURCE_SEAM_CONTINUATION 3
@@ -549,10 +550,15 @@ struct rt_brep_trace_root {
     fastf_t uv[2];
     fastf_t normal_dot;
     fastf_t trim_distance;
+    fastf_t face_trim_distance;
+    size_t trim_candidates;
+    size_t face_trim_candidates;
     int face_index;
     int adjacent_face_index;
     int trim_status;
+    int face_trim_status;
     int hit_class;
+    int face_hit_class;
     int direction;
 };
 
@@ -1021,6 +1027,7 @@ struct rt_brep_shot_trace {
     size_t root_event_mismatches;
     size_t root_trim_status_mismatches;
     size_t root_hit_class_mismatches;
+    size_t root_near_side_equivalences;
     size_t root_direction_mismatches;
     size_t root_adjacency_mismatches;
     fastf_t root_match_max_t_error;
@@ -1400,8 +1407,19 @@ RT_EXPORT extern int _rt_brep_fold_interval_test(
     const fastf_t lower[2], const fastf_t upper[2],
     const fastf_t direction[3], fastf_t model_tolerance,
     struct rt_brep_fold_interval_test_result *result);
+RT_EXPORT extern size_t _rt_brep_direction_cleanup_test(
+    const fastf_t *distances, const int *normal_signs, size_t count,
+    fastf_t distance_tolerance, fastf_t *retained_distances,
+    size_t retained_capacity);
+RT_EXPORT extern size_t _rt_brep_cleanup_stream_test(
+    const fastf_t *distances, const int *normal_signs,
+    const int *hit_classes, size_t count, fastf_t distance_tolerance,
+    fastf_t *retained_distances, size_t retained_capacity);
 
 RT_EXPORT extern int _rt_brep_shot_trace(
+    struct soltab *stp, struct xray *rp, struct application *ap,
+    struct seg *seghead, struct rt_brep_shot_trace *trace);
+RT_EXPORT extern int _rt_brep_shot_legacy_trace(
     struct soltab *stp, struct xray *rp, struct application *ap,
     struct seg *seghead, struct rt_brep_shot_trace *trace);
 RT_EXPORT extern int _rt_brep_shot_legacy(

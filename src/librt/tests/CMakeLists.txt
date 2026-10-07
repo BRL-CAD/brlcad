@@ -231,6 +231,7 @@ brlcad_add_test(
   NAME rt_brep_ray_local_root
   COMMAND rt_brep_ray --local-root-only
 )
+brlcad_add_test(NAME rt_brep_ray_cleanup COMMAND rt_brep_ray --cleanup-only)
 brlcad_add_test(
   NAME rt_brep_ray_grazing_root
   COMMAND rt_brep_ray --grazing-root-only
@@ -238,6 +239,10 @@ brlcad_add_test(
 brlcad_add_test(
   NAME rt_brep_ray_trim_interval
   COMMAND rt_brep_ray --trim-interval-only
+)
+brlcad_add_test(
+  NAME rt_brep_ray_trim_classifier
+  COMMAND rt_brep_ray --trim-classifier-only
 )
 brlcad_add_test(
   NAME rt_brep_ray_source_union

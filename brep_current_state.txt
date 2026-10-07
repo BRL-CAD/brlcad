@@ -11,6 +11,64 @@ as the authoritative continuation log until all acceptance gates pass.
 CURRENT PHASE
 -------------
 
+2026-08-09 ACTIVE FEATURE-TARGETED IMPORTED RAYS
+
+The local-cleanup checkpoint is committed locally as 6aac11e5a8, "Make BREP
+hit cleanup reversal invariant".  It was not pushed.  The next increment adds
+deterministic face-normal, edge-normal, and edge-grazing chords to imported
+depth comparison.  The first 24-feature run on the 186-face 0353 STEP object
+found five depth differences and 5/7 reversal failures that its random chord
+run missed.
+
+The failures reduced to two superseded cleanup policies.  Odd NEAR_MISS
+endpoint deletion ran before local representative coalescence, and coplanar
+zero-normal roots could borrow the affine-grazing material theorem from one
+ordinary transverse neighbor.  Endpoint deletion is removed in favor of the
+already qualified symmetric balanced matcher.  Grazing iteration no longer
+skips the element returned by erase, and a resolved grazing interval now
+requires both endpoint normal dots to be grazing.  Reduced C++ streams ratchet
+near-side representative invariance and a coplanar root continuum.
+
+All 24 feature pairs plus three axis controls now pass at adaptive depths three
+and eight in both directions, with maximum endpoint delta 5.38e-8.  One
+coincident endpoint selects face 151 versus 152 at the two depths while
+retaining the same point and oriented normal; it is recorded separately from
+partition equality.  The affine-grazing and broad optimized gates pass.
+Feature rays remain imported invariance probes rather than analytic oracles;
+they supplement the directed implicit-to-BREP, Cauchy-Crofton, grazing-ladder,
+and seam-perturbation truth program.
+
+2026-08-09 ACTIVE LOCAL CLEANUP AND SC STRATUM COMPLETION
+
+The loop-topology checkpoint is committed locally as 6e2c6f4ad6, "Make BREP
+trim classification topology aware".  It was not pushed.  The final selected
+object in the initial 14-database ray stratum, the 848-face SC solid, exposed
+a direction-dependent legacy hit-cleanup failure even though adaptive depths
+three and eight found the same nine surface roots.
+
+SC deterministic pair 22 mixed one genuinely coincident near-hit/near-miss
+observation with a later near-miss/clean pair several model units apart.  The
+historical code let sorted adjacency imply event identity and erased or
+reinterpreted the distant pair.  It then deleted a complete trailing suffix
+after an unmatched entry, whereas the reversed stream retained the analogous
+balanced interval.  The fixed and allocating cleanup implementations now
+require the existing model-derived ray-parameter coincidence envelope for
+every near-miss interaction.  They remove unmatched entries in a reverse scan
+and unmatched exits in a forward scan before nonzero-winding compaction.  The
+two scans exchange under ray reversal and retain the maximal balanced stream.
+
+The C++ cleanup corpus contains reduced exact streams for both defects.  Exact
+SC pair 22 and the complete 70-ray legacy-only comparison now pass in both
+directions at depths three and eight.  The full prepared trace also passes,
+but selects none of its 35 eligible rays: 31 are uncertified, two exhaust the
+surface-box workspace, and two fail event classification.  Its 2,498
+candidate spans, 18,336 subdivision boxes, 1,235 isolated boxes, and 225
+unresolved physical events reinforce the planned performance priority:
+profile normal production and reduce face/span candidate and proof work before
+tuning Newton evaluation.  Correctness gates remain authoritative, production
+depth remains eight, and the Abert-informed optimization phase follows only
+after broader analytic and imported qualification.
+
 2026-08-09 ACTIVE IMPORTED-RAY DEPTH COMPARISON AND STATUS-2 POLES
 
 The preceding database profiling checkpoint is committed locally as
@@ -6639,41 +6697,889 @@ STEP ray-prep observability and dense-tree census (Finding 80):
   prevents LeakSanitizer qualification.
 
 
+Imported solid winding and overlap cleanup (Finding 81):
+
+  This increment follows local commit `0ab3ea838f` (`Audit imported BREP ray
+  depth and status-2 poles`).  It is not yet committed at the time this note
+  is written.  Modified sources are:
+
+    src/gtools/brep-audit.cpp
+    src/librt/librt_private.h
+    src/librt/primitives/brep/brep.cpp
+    src/librt/tests/CMakeLists.txt
+    src/librt/tests/brep_ray.cpp
+    brep_raytrace_plan.txt
+    brep_current_state.txt
+
+  The first three additional stratified manifest objects passed 70-ray fresh
+  depth-three/depth-eight partition and reversal comparison:
+
+    non_grabcad/0353/0353-24-03.g Product_step46_item.s
+      22 segments, one prepared selection, 16 surface-box overflows;
+    non_grabcad/0353/0353-70-13.g Product_step18_item.s
+      12 segments, 14 prepared selections; and
+    non_grabcad/0353/0353-97-15.g Product_step46_item.s
+      12 segments, 23 prepared selections, 16,440 surface-box overflows.
+
+  All have zero depth or reversal differences.  The next object,
+  `second/bearings/UCP-206.g`, `UCP_206_item.s`, exposed a real legacy solid
+  assembly failure.  It is a valid, solid 127-face BREP with three face
+  components.  Both requested tree depths returned the same raw roots, so the
+  failure was not caused by insufficient SurfaceTree density.
+
+  Exact deterministic witnesses:
+
+    pair 3
+      origin=(111.69115224698913, 7.5836018757108423,
+              52.269242654264914)
+      direction=(-0.94416363033127593, -0.21463855715332145,
+                 -0.24997065616349057)
+      chord=232.45171770344157
+
+      The post-trim stream was ENTER, LEAVE, ENTER forward and LEAVE, ENTER,
+      LEAVE in reverse.  Direction-dependent odd-tail removal selected
+      different intervals.
+
+    pair 0, the +X axis chord
+      origin=(-123.77915341990379, 18.274326988514922,
+              -9.2370555648813024e-14)
+      direction=(1,0,0)
+      chord=247.55830683980759
+
+      Accepted directions were LEAVE, ENTER, ENTER, LEAVE, LEAVE, ENTER.
+      Historical same-direction cleanup kept the last ENTER and first LEAVE,
+      effectively intersecting overlapping shell ranges.  It published two
+      segments with inverted endpoint normals.  Tightening `brep-audit` so a
+      solid entry normal dot must be negative and an exit dot positive made
+      this a hard failure instead of telemetry only.
+
+    pair 26
+      origin=(-109.55455871766632, -18.860350561763859,
+              -44.046489176349951)
+      direction=(0.97624929252184156, 0.17547275793085171,
+                 0.12706939078607674)
+      chord=238.1312905423778
+
+      This distinguished true overlap from duplicate observations of one
+      seam event.  Same-direction face-67/104 roots differ by about 2.4e-5,
+      within the object's 5e-4 model tolerance.  Treating them as independent
+      winding changes made the reverse ray lose its interval.
+
+  A second concrete bug existed in both allocating and fixed cleanup loops.
+  Each initialized an entering sign but attempted to replace it only under an
+  iterator/index condition that was unreachable because iteration began at
+  the second hit.  The direct fix and first-hit sign regression were useful,
+  but raw-root tracing proved they were not the complete behavioral solution.
+
+  New audit diagnostics in `brep-audit`:
+
+    --ray-pair=N
+      Select one indexed deterministic chord pair.  With `--ray-count=0`,
+      pairs 0..2 are the three axis chords and later values select the same
+      fixed-seed random chord stream used by the full audit.
+
+    --legacy-only
+      Build fresh requested-depth SurfaceTrees and run the legacy solve only,
+      omitting expensive prepared local-box tracing.  This makes cleanup and
+      depth questions separable without using a cache.
+
+  Failure records now preserve selected pair index, trace mode, all raw roots
+  and final intervals, intersected leaves, solver calls, cleanup-stage counts,
+  overflow, face component, UV, normal dot, trim status/distance, hit class,
+  direction and adjacent face.  Filtering maps failure records to the correct
+  selected ray.  `_rt_brep_shot_legacy_trace` is exported internally so the
+  detailed audit can retain telemetry while explicitly bypassing the prepared
+  attempt.
+
+  The final legacy solid rule has two separate operations:
+
+    1. Same-event coalescence at model resolution.  Its ray-parameter envelope
+       is max(BREP_SAME_POINT_TOLERANCE, tol.dist/|D|), widened by 128 epsilon
+       at parameter scale.  Only consecutive same-direction observations are
+       coalesced.  Keep the first ENTER and last LEAVE, which are the union
+       extrema and map into each other under ray reversal.  Opposite
+       directions are never coalesced because they can bound a real close
+       grazing interval.
+
+    2. Nonzero-winding material assembly.  Starting outside, retain the first
+       ENTER changing winding 0->1 and the LEAVE changing 1->0.  Nested outward
+       shells raise winding and therefore produce a union envelope.  Disjoint
+       shells return to zero and produce separate intervals.  Inward-oriented
+       cavities produce the expected temporary zero winding.  Finding 84
+       supersedes the original asymmetric prefix/suffix handling: a reverse
+       scan removes only entries without a later exit and a forward scan
+       removes only exits without an earlier retained entry.  The maximal
+       balanced stream is therefore retained under reversal without bridging
+       a gap.  A sole unmatched observation is retained for the later
+       certified seam/closure resolver; dropping it broke all intended Cobb
+       crack repairs and was caught before promotion.
+
+  `brep_hit_workspace` compacts in place with no allocation.  The allocating
+  list performs exactly the same choices for equivalence testing.  Plate and
+  non-solid paths keep their previous first-hit convention.  The prepared
+  pipeline remains stricter: it publishes only a complete owned event ledger
+  and falls back atomically on unresolved winding/event identity.  General
+  prepared winding above one still needs explicit independently owned shell
+  events; the legacy parameter-local policy is not used as a proof.
+
+  `_rt_brep_direction_cleanup_test` now accepts a model-distance tolerance and
+  covers:
+
+    * nested ENTER/ENTER/ENTER/LEAVE/LEAVE/LEAVE union envelopes;
+    * reversal of the complete envelope;
+    * odd ENTER/LEAVE/ENTER and reversed LEAVE/ENTER/LEAVE streams;
+    * leading/trailing unmatched events bracketing nested material;
+    * same-direction tolerance clusters with reversal; and
+    * a coalesced singleton retained as a seam-closure witness.
+
+  The independent analytic fixture constructs radius-five implicit spheres at
+  x=-3 and x=+3, converts each to BREP, and appends the two closed shells into
+  one BREP primitive.  The oracle remains the implicit CSG union.  Its x-axis
+  interval is [12,28].  Before the fix the BREP returned the intersection
+  [18,22] in both directions; after the fix both directions return [12,28].
+  The existing disjoint-sphere union continues to return distinct intervals.
+  This isolates solid assembly from STEP, trim, tree density, and BREP Boolean
+  conversion.
+
+  An intermediate version that discarded every unmatched leading/trailing
+  event passed UCP but failed the seam gate.  Cobb classifier cases lost their
+  singleton closure candidate, all 14 below-envelope production repairs
+  disappeared, and two prepared promotions became regressions.  Retaining a
+  single witness restored:
+
+    * Cobb classifier similarity/parameter invariance;
+    * ambiguous trim-correspondence fallback;
+    * 14/14 below-envelope repairs with zero crack leaks;
+    * two prepared promotions and zero regressions;
+    * 322/322 prepared selections in the bowed matrix; and
+    * the complete 416-ray bowed seam matrix.
+
+  Final optimized validation on the exact source:
+
+    .build/src/librt/tests/rt_brep_ray --seam-only
+
+  PASS in about 383 seconds.  All seam, closure, overlap, similarity, defect,
+  prepared-promotion, and isolated trim/edge checks pass.
+
+    ctest --test-dir .build -R '^rt_brep_ray($|_)' \
+      -E '^rt_brep_ray_seam$' -j14 --output-on-failure
+
+  PASS: 17/17 in 156.82 seconds.  Together with the standalone seam result,
+  the complete registered 18-shard gate passes.  Cleanup and hard Crofton pass
+  independently; the new combined-overlapping-sphere fixture reports two
+  directed cases and zero failures.
+
+    .build/bin/brep-audit --ray-depth-compare --ray-count=32 \
+      ${STEP_CORPUS_DIR}/second/bearings/UCP-206.g UCP_206_item.s
+
+  PASS: 70 rays, 16 hit rays, 20 segments, zero invalid rays, orientation
+  anomalies, depth differences, or reversal mismatches.  Maximum depth-three
+  versus depth-eight endpoint difference is 7.19e-10.  Eight rays select
+  prepared production, six fall back for box capacity and 56 as uncertified.
+
+  UCP performance/capacity baseline:
+
+    depth 3: 7,620 nodes, 5,139 leaves, about 1.02 seconds wall prep;
+    depth 8: 170,816 nodes, 84,360 leaves, about 16.92 seconds wall prep;
+    prepared trace: 821,770 subdivisions, 105,414 isolated boxes,
+      104,323 fold attempts, 103,100 surface-box overflow attempts;
+    peak optimized audit RSS: about 244 MB.
+
+  Final ASAN+UBSAN validation, with leak scanning disabled because of the host
+  ptrace wrapper:
+
+    env ASAN_OPTIONS=detect_leaks=0:halt_on_error=1 \
+      UBSAN_OPTIONS=halt_on_error=1:print_stacktrace=1 \
+      .build-asan/src/librt/tests/rt_brep_ray --cleanup-only
+
+    env ASAN_OPTIONS=detect_leaks=0:halt_on_error=1 \
+      UBSAN_OPTIONS=halt_on_error=1:print_stacktrace=1 \
+      .build-asan/src/librt/tests/rt_brep_ray --crofton-hard-only
+
+    env ASAN_OPTIONS=detect_leaks=0:halt_on_error=1 \
+      UBSAN_OPTIONS=halt_on_error=1:print_stacktrace=1 \
+      .build-asan/bin/brep-audit --ray-depth-compare --ray-count=0 \
+        --ray-pair=N --legacy-only \
+        ${STEP_CORPUS_DIR}/second/bearings/UCP-206.g UCP_206_item.s
+
+  PASS for cleanup, hard analytic/Crofton, and N=0,3,26 with no sanitizer
+  diagnostic.  The three imported processes were intentionally parallel and
+  each peaked near 1.13 GB RSS under instrumentation.
+
+  Performance direction remains correctness first, optimization second.  The
+  UCP trace now supplies a concrete workload for the later Abert-informed
+  phase: eliminate flat/global face-span work, reduce dense seed trees, compact
+  immutable data, vectorize conservative projection/rejection, implement a
+  real batched vshot, and profile the corrector before changing it.  Do not
+  optimize away the exact partition, crack, reversal, Crofton, or grazing
+  gates established here.
+
+
+Trim endpoint classification and NIST depth discrepancy (Finding 82):
+
+  The next broader imported checks produced these legacy-only 70-ray results:
+
+    non_grabcad/recurta/step_ap203/10077.g id2_item.s
+      PASS, 5,458/138,371 depth-three/eight nodes, 22 segments;
+    nist/NIST_MBE_PMI_1.g Document_item.s
+      PASS, 1,763/53,051 nodes, 20 segments;
+    second/case_fan_120mm.g case_fan_120mm_v3_item.s
+      PASS, 682 faces, 31,388/744,484 nodes, 24 segments; and
+    non_grabcad/a.g A_item.s
+      correctly reported non-solid for its 471 faces.
+
+  `nist/NIST_MBE_PMI_11.g`, `Document_item.s`, then exposed a real
+  density-dependent result.  Exact deterministic pair 1 is:
+
+    origin=(-7.1054273576010019e-15, -58.828516522601504,
+            -0.075000000000000622)
+    direction=(0, 0.99999999999999989, 0)
+    chord=117.65703304520302
+
+  Before repair, adaptive depths zero through seven returned only interval
+  `[74.828516522601504,90.328516522601504]`; depth eight also returned
+  `[27.328516522601504,42.828516522601504]`.  Both depths were reversal
+  stable.  All depths found the same surface root on face 7 at
+  `t=27.328516522601504`, UV approximately
+  `(4.71238898038469,1.695)`, normal dot `-1`.  The difference was trim
+  classification, not root convergence.
+
+  At depths zero through seven the leaf and full face CurveTree called this a
+  clean miss.  At depth eight the leaf had
+  `m_checkTrim=false,m_trimmed=false`, accepted the root without evaluating
+  the point, and disagreed with the full CurveTree.  The dense tree was
+  accidentally masking a classifier defect.  This is direct evidence that
+  depth eight is a reference for detecting change, not ground truth.
+
+  Face topology establishes the intended answer.  Face 7 is a cylindrical
+  patch with outer loop 9 covering approximately
+  `u=[pi,2*pi],v=[0.27,1.77]`; the root is plainly inside.  The upper boundary
+  is split between trims 39 and 40.  Trim 39 ends about `2.2e-8` in u beyond
+  the query, while trim 40 begins roughly `1.6e-4` on the other side.  The
+  two intervals are also the physically symmetric cross section of the
+  annular model.
+
+  The defect was a tolerance inconsistency inside the CurveTree classifier.
+  `CurveTree::isTrimmed` selected candidates with the structural
+  `BREP_UV_DIST_FUZZ` envelope (`1e-6`), but `BRNode::isTrimmed` repeated the u
+  bounding-box test exactly.  The correct upper trim was counted as a
+  candidate and then rejected before curve evaluation, leaving only lower
+  crossings and the wrong winding.  `BRNode::isTrimmed` now uses the same UV
+  envelope and clamps the admitted u coordinate to the leaf endpoint before
+  curve evaluation.  This does not expand `BREP_EDGE_MISS_TOLERANCE`,
+  model-distance closure, or hit-event coalescence, and a query beyond the UV
+  envelope is still outside.
+
+  `brep-audit` failure records now include fixed cleanup stage counts and
+  per-root leaf/full-face trim status, distance, candidate count, hit class,
+  and aggregate equivalence counters.  These fields made the accidental
+  depth-eight shortcut visible without changing production behavior.
+
+  A new source-only fixture, available as
+  `rt_brep_ray --trim-classifier-only`, constructs a planar outer loop with a
+  split upper trim reproducing the endpoint discrepancy.  It requires a
+  query inside the `BREP_UV_DIST_FUZZ` envelope to be classified inside with
+  the expected crossing distance, and a query beyond that envelope to remain
+  outside.  It is registered as `rt_brep_ray_trim_classifier`, following the
+  rule that difficult imported failures are reduced into the C/C++ corpus.
+
+  Validation on the exact source:
+
+    .build/src/librt/tests/rt_brep_ray --trim-classifier-only
+
+  PASS.  Exact NIST pair 1 passes for every candidate depth zero through
+  seven against depth eight, with four hits, two intervals, zero classifier
+  equivalence differences, and reversal equality.  The complete audit:
+
+    .build/bin/brep-audit --ray-depth-compare --ray-count=32 \
+      ${STEP_CORPUS_DIR}/nist/NIST_MBE_PMI_11.g Document_item.s
+
+  PASS: 70 rays, 10 hit rays, 14 segments, zero invalid rays, orientation
+  anomalies, depth differences, or reversal mismatches; maximum endpoint
+  delta `1.42e-14`; 44 prepared selections at both depths.  Depth three uses
+  2,146 nodes/1,556 leaves and depth eight 62,790/31,932.
+
+  Final optimized validation on the exact clamped source is 19/19 registered
+  ray shards.  The new classifier plus complete seam/crack matrix passed 2/2
+  in 234.82 seconds; all other 17 shards passed concurrently in 175.53
+  seconds.  Rebuilt ASAN/UBSAN runs of the classifier fixture and exact NIST
+  depth-three/depth-eight pair pass without a diagnostic.  Leak scanning
+  remains disabled for the established host ptrace limitation.
+
+  This repair removes an accidental dependency on the densest tree, but does
+  not justify lowering the production depth yet.  Complete the remaining
+  imported strata and analytic/seam/grazing gates first.  Once correct answers
+  and fallback authority are stable, the planned Abert-informed performance
+  phase remains an explicit deliverable: profile normal production, then
+  optimize broadly applicable face/span traversal, immutable data layout,
+  conservative vectorized rejection, batched vshot, and the corrector if it
+  is measurably hot.  Matching Abert exactly is not a requirement.
+
+
+Loop-topology trim classifier and exact join ownership (Finding 83):
+
+  The first per-loop parity implementation exposed and repaired four
+  independent correctness defects that the historical closest-trim direction
+  rule could not represent.
+
+  1. Outer and inner loops are now classified separately.  A point is in
+     material when it is in at least one declared outer loop and no declared
+     inner loop.  Imported curve orientation is not used to infer hole
+     topology.  Unknown loops retain a parity compatibility path.
+
+  2. The parity ray follows a nonperiodic parameter direction when possible:
+     +U when V is closed, otherwise +V.  Queries are normalized into closed
+     surface domains.  CurveTree prep constructs per-loop periodic leaf images
+     only in the transverse coordinate, sorted for both U and V scans.  It
+     does not replicate infinitely along the parity ray.  The derived index is
+     rebuilt after normal construction and cache deserialization, so the
+     serialized format and pointer ownership do not change.
+
+  3. `BRNode::crossesAbove` and `crossesRight` implement exact half-open
+     endpoint ownership.  A separate fixed-workspace curve-distance estimate
+     supplies proximity and adjacency.  Classification no longer chooses
+     material from the orientation of the nearest curve above the query.
+
+  4. The 0.005 UV endpoint allowance is authorized only at a real topological
+     join displacement.  Prep compares each ordered trim endpoint with its
+     neighbor, reducing coordinate differences modulo a closed surface
+     period.  Only the incident leaf whose lower fixed-coordinate endpoint is
+     displaced toward the gap may extend, and only by the caller's existing
+     tolerance.  Exact joins retain one half-open owner and receive no crack
+     extension.
+
+  The fourth rule was required by exact UCP pair 3.  Its unmatched face-8
+  event occurred at UV
+  `(0.49347747834767419,0.37960829068592117)`.  Production originally called
+  it inside with trim distance 0.0155288.  An independent sampled outer loop
+  converged from 16 through 4,096 samples per trim to outside, with minimum
+  boundary distance 0.0157269, safely beyond the crack envelope.  Exact trim
+  44 already supplied a crossing; trim 45 joined it to about 8e-17 but the
+  blind endpoint allowance added a duplicate third crossing.  Join-gated
+  extension removes that event.  Exact UCP pair 3 then has one interval in
+  both directions with zero depth delta.
+
+  The genuine NIST crack remains repaired.  Face 7 at UV approximately
+  `(4.71238898038469,1.695)` agrees with the sampled oracle, returns inside at
+  depths three and eight, and restores both material intervals.  Its ordered
+  upper trims have an actual roughly 1.6e-4 coordinate displacement, so prep
+  grants the bounded endpoint extension.  The source classifier shard now
+  contains a displaced join, an explicitly typed same-orientation inner hole,
+  and an exact triangle join whose false extension would change an outside
+  query from two crossings to three.  All pass:
+
+    .build/src/librt/tests/rt_brep_ray --trim-classifier-only
+
+  `brep-audit --trim-query face,u,v` is now a high-resolution independent
+  diagnostic.  It samples each ordered loop at 16, 64, 256, 1,024, and 4,096
+  segments per trim and records loop type, raw/curve/cover endpoints, join and
+  closing gaps, lifted bounding boxes, query image, signed area, horizontal
+  and vertical crossings, and boundary distance.  It also reports the
+  production parity-ray direction, exact half-open BRNode crossings,
+  candidates, prepared leaf images, and closest adjacent face.
+
+  The polygon result is an oracle only when the three densest levels agree and
+  every lifted loop closes within BREP_EDGE_MISS_TOLERANCE.  UCP face 103 loop
+  119 closes two U periods away in the selected cover
+  (`cover_closing_gap=188.495559...`).  Its planar polygon answer changes with
+  lift, while quotient-space production correctly accepts the full periodic
+  band.  Such output is marked `oracle_applicable=false`; per-level invalid
+  matches and `final_matches_production` are null.  It is not a production
+  mismatch.  Doubly periodic surfaces still require a separately qualified
+  torus-domain classifier before this rule is generalized.
+
+  SurfaceTree trim prep now uses a CurveTree cell certificate rather than
+  retaining a copied list of trim pointers in every BBNode.  A cell stays
+  pointwise when a trim box is geometrically near or an actually displaced
+  tolerance endpoint can change parity over its fixed-coordinate range.
+  Exact endpoints far along the ray axis do not force subdivision because
+  their incident crossings change parity by an even count.  Ray-time point
+  classification scans immutable prepared vectors without allocation.
+
+  This is already a material acceleration-structure reduction at the same
+  requested depth.  The final FRAME 70-ray audit passes with no depth, face,
+  orientation, or reversal difference and maximum endpoint delta
+  `1.5781040474394104e-8`.  Its depth-three/eight trees are now
+  32,661/818,332 nodes and 20,052/412,008 leaves.  The preceding conservative
+  endpoint-column build used 66,998/2,574,043 nodes and 44,223/1,297,795
+  leaves.  NIST passes all 70 rays with maximum endpoint delta 1.42e-14 and
+  retains 2,146/62,794 nodes and 1,556/31,936 leaves.
+
+  The final single-process UCP 70-ray audit passes with zero depth, face,
+  orientation, invalid-ray, or reversal differences and maximum endpoint
+  delta `7.1902661602507578e-10`.  The refined classifier builds
+  7,587/254,910 nodes and 5,146/131,064 leaves at requested depths three/eight;
+  measured wall prep was 0.98/26.07 seconds on this host.  This trim-heavy
+  object has 122,835 CurveTree leaves, so profile normal production separately
+  from trace mode before drawing performance conclusions.
+
+  A separate UCP pair-43 failure was not a trim error.  Near-hit cleanup
+  erased any same-direction NEAR_HIT adjacent to a clean event, even when the
+  two ray parameters were several units apart.  Both allocating and fixed
+  cleanup now require `brep_solid_events_coincident` at the model-derived
+  parameter tolerance before removing or merging them.  Exact pairs 0, 1,
+  3, and 43 all pass depth-three/eight and reversal checks; pair 43's maximum
+  endpoint delta is `9.9475983006414026e-13`.
+
+  Production root classification retains measured join-gap healing.  The
+  optional raw half-open result is exposed only to audit diagnostics.  This is
+  intentional: production must represent the solid modeling intent across a
+  sub-tolerance displaced seam, while the audit needs an unhealed view of the
+  numerical boundary.  Healing remains bounded by the existing tolerance and
+  a prep-certified displacement; it does not restore the former blind endpoint
+  extension.
+
+  Two valid root correctors can land on opposite sides of an exact trim by a
+  few ulps.  When both roots are independently near the trim and agree in ray
+  parameter, face/span, direction, and adjacency, NEAR_HIT versus NEAR_MISS is
+  now recorded as a `near-side-equivalent` raw classification difference, not
+  a semantic physical-event difference.  Solid authority remains with the
+  subsequent seam/edge transaction.  The final Cobb matrix contains two such
+  equivalences and zero semantic root-event mismatches.
+
+  A separate `REGULAR_NEAR_TRIM` event certificate repairs the isolated
+  displaced-trim transition.  It is available only after a manifold-edge
+  transaction has selected the boundary component and the bounded complement
+  search certifies a disjoint regular component.  Publication additionally
+  requires an inside NEAR_HIT from the local-root source, at least one source
+  box, and no independent edge or vertex ownership.  All six similarity and
+  reversal witnesses contain exactly one manifold-edge and one regular-near-
+  trim event; maximum normalized error is 6.22e-9.
+
+  The non-isoparametric fixture showed that a roughly 1.25e-6 difference from
+  the analytic sphere is real geometry, not a missed polish: its deliberately
+  bowed NURBS surface has a transverse solve residual of only 2.31e-13.  The
+  certified interval and resolved seam transaction are the oracle on that
+  altered surface; the sphere remains a tight representative-drift ratchet.
+  Opposite-face and contact-face fixtures each pass all 16 transform/reversal
+  cases.
+
+  The oblique grazing trend passes 16/16 configurations inside the certified
+  conditioning envelope as clearance converges toward point contact.  Six
+  deliberately almost-parallel ray/edge cases remain outside the theorem and
+  all fail closed without publishing a speculative hit.  This establishes the
+  desired behavioral trend: stable contact resolution while the bounds are
+  decisive, then an explicit fallback rather than a silent hit loss.
+
+  Final optimized seam validation:
+
+    .build/src/librt/tests/rt_brep_ray --seam-only
+
+  PASS.  The 416-ray bowed matrix has zero below-envelope leaks, 14/14 legacy
+  crack repairs, zero reversal inconsistencies, 280 certified production
+  selections, 136 uncertified fallbacks, and 24 validated seam pairs.  Two
+  failed ownership attempts are accounted box failures and publish nothing.
+  Eight contact pairs have two source boxes and roots each and one allowable
+  raw half-open miss-side root each.  The experimental local cleanup had two
+  ambiguous comparisons only when both gap and clearance exceeded the model
+  tolerance by 10%; no ambiguity occurred inside tolerance and no comparison
+  was an oracle regression.  Finding 84's event-local near-miss cleanup
+  removes both remaining ambiguities without changing the selection,
+  fallback, or seam-pair populations.  A 280-selection floor preserves the
+  conservative fallback increase as an explicit performance/certification
+  ratchet.
+
+    ctest --test-dir .build -R '^rt_brep_ray($|_)' \
+      -E '^rt_brep_ray_seam$' -j14 --output-on-failure
+
+  PASS: 18/18 in 139.15 seconds.  The exact NIST pair 1 and UCP pairs 0, 1, 3,
+  and 43 pass depth-three/eight partition and reversal comparison.  All seven
+  optimized serial/parallel cache tests pass after removal of per-BBNode trim
+  pointer lists and legacy CurveTree leaf-key serialization.
+
+  Final ASAN+UBSAN validation on rebuilt binaries, with leak scanning disabled
+  for the established host ptrace limitation:
+
+    env ASAN_OPTIONS=detect_leaks=0:halt_on_error=1 \
+      UBSAN_OPTIONS=halt_on_error=1:print_stacktrace=1 \
+      ctest --test-dir .build-asan \
+        -R '^(rt_brep_ray_(trim_classifier|defect|nonisoparametric|contact_trim|cleanup)|rt_cache_.*)$' \
+        -j4 --output-on-failure
+
+  PASS: 12/12 in 202.82 seconds with no sanitizer diagnostic.
+
+  Correctness remains ahead of optimization, but the next performance work is
+  now concrete.  Recover the 42 selections lost to conservative certification
+  only with general proofs; profile normal production separately from trace;
+  then pursue the Abert-informed object/face/span BVH, compact immutable data,
+  conservative SIMD rejection, batched vshot, and corrector/evaluation work if
+  measured hot.  Preserve directed implicit-to-BREP partitions, paired
+  Cauchy-Crofton area/volume convergence, grazing ladders, crack perturbations,
+  similarity/reversal tests, and the difficult-root C/C++ corpus as hard gates.
+
+  Imported agreement remains evidence of invariant behavior, not a geometric
+  oracle.  The stronger truth program is unchanged: analytic implicit-to-BREP
+  directed partitions, paired implicit/BREP Cauchy-Crofton area and volume,
+  signed grazing ladders converging toward point tangency, Cobb seam/crack
+  perturbations, scale/translation/rotation invariance, and later CSG-tree
+  substitution in both directions.  Keep the production depth at eight while
+  completing those gates.  The topology-aware cell theorem can be optimized;
+  it must not be replaced by unrestricted endpoint fuzz or closest-trim
+  orientation.
+
+
+Local near-miss resolution and reversal-invariant balanced runs (Finding 84):
+
+  The 848-face `IBEX_SOLID_item.s` in
+  `original/SC_solid_stp_20260429.g` completed the sampled ray comparison for
+  the largest model in the initial 14-database preparation stratum.  Its
+  deterministic pair 22 has origin
+
+    (95.848591855513888, -55.740815264982629,
+     -11.3876265194396)
+
+  direction
+
+    (-0.58941604087522914, 0.74193704918254422,
+     0.31955929936283961)
+
+  and chord `255.39858798473995`.  Fresh adaptive-depth-three and depth-eight
+  trees found the same nine roots.  Before repair the forward legacy path
+  returned no intervals and the reversed path returned two.  Prepared tracing
+  also failed closed with six unresolved events, so it did not conceal or
+  supply the fallback answer.
+
+  Raw cleanup telemetry isolated two direction-sensitive policies.  First,
+  NEAR_MISS cleanup used sorted adjacency and matching normal direction as if
+  they proved one physical event.  Forward cleanup let a leaving near miss at
+  about 71.715 interact with a clean entry at about 75.263 despite their
+  several-unit separation.  Reversal changed ordering and retained a
+  different stream.  Near-miss versus non-miss removal, consecutive near-miss
+  merging, and near-miss versus clean/near-hit relabeling now all require
+  `brep_solid_events_coincident` using the established model-derived parameter
+  envelope.  The fixed and allocating paths implement the same locality rule.
+
+  Second, the old solid winding code ignored leading unmatched exits but
+  deleted the whole suffix after an unmatched trailing entry.  A stream
+  equivalent to ENTER, ENTER, ENTER, LEAVE, LEAVE consequently lost its
+  balanced interior in one direction while the reversed form retained it.
+  Cleanup now reverse-scans to remove only entries with no later exit, then
+  forward-scans to remove only exits with no earlier retained entry.  This is
+  allocation-free parenthesis matching.  The surviving stream is compacted
+  to the same nonzero-winding union intervals as before.  A lone original
+  observation remains available to the certified crack/closure repair.
+
+  A new source test helper accepts complete synthetic hit-class streams.
+  `--cleanup-only` ratchets both ENTER/ENTER/ENTER/LEAVE/LEAVE and the reduced
+  SC stream, including a locally coincident near-hit/near-miss pair and a
+  distant adjacent near-miss/clean pair.  Each test supplies the exact
+  reversed stream and compares the full retained partition under
+  `t_reverse = chord - t_forward`.  It is deliberately C++ data rather than a
+  model-specific `.g` fixture and joins the difficult-case corpus required to
+  prevent fixed-this/broke-that solver work.
+
+  Exact pair 22 now returns two intervals in both directions and at both
+  depths:
+
+    [58.107629653..., 71.715107548...]
+    [93.746252051..., 184.158146005...]
+
+  The complete 70-ray legacy-only SC comparison passes with 16 hit rays, 54
+  misses, 26 segments, zero invalid/orientation/depth/reversal differences,
+  and maximum depth delta `3.3064736726373667e-8`.  The final depth-three tree
+  has 270,839 nodes and 172,669 leaves; depth eight has 3,494,794 nodes and
+  1,787,007 leaves; both use 60,527 CurveTree leaves.  Peak resident memory was
+  about 973 MB.
+
+  The full prepared-plus-legacy 70-ray trace also passes.  Both requested
+  depths report 35 eligible/attempted rays, zero selections, 31 uncertified
+  fallbacks, two surface-box overflows, and two event-class fallbacks.  Each
+  reports 2,498 candidate spans, 18,336 subdivision boxes, 1,235 isolated
+  boxes, 213 fold attempts, eight fold certificates, 18 surface-box
+  overflows, 35 physically complete ledgers, and 225 unresolved physical
+  events.  Wall time was 7m43.79s, CPU time 559.33s, and peak RSS 950,184 KB
+  on this host.  This is trace instrumentation, not a controlled normal-shot
+  benchmark, but it makes the general optimization target clear: reduce
+  object/face/span candidate traversal and proof work before assuming Newton
+  iteration is the primary cost.
+
+  Optimized validation after the repair is 18/18 non-seam ray shards in
+  150.68 seconds plus a complete passing seam shard.  The seam matrix retains
+  280 selections, 136 uncertified fallbacks, 24 seam pairs, zero leaks, and
+  14/14 known crack repairs.  Its formerly two out-of-tolerance experimental
+  local ambiguities are now zero because distant sorted events cannot modify
+  one another.  Rebuilt ASAN/UBSAN `--cleanup-only` passes with no diagnostic;
+  the exact high-memory SC replay was qualified in the optimized build rather
+  than multiplied under ASAN.
+
+  This repair improves the tolerant legacy fallback; it is not prepared
+  authority.  The prepared ledger still fails the whole ray on incomplete
+  ownership, unresolved event identity, unsupported trim/seam topology, or
+  nonzero final winding.  Parameter coincidence prevents a known local crack
+  observation from corrupting an otherwise usable fallback but does not prove
+  arbitrary roots equivalent.
+
+  Correctness remains the immediate priority.  Production adaptive depth
+  stays eight while analytic implicit-to-BREP partitions, paired
+  Cauchy-Crofton area/volume convergence, signed grazing ladders, Cobb crack
+  perturbations, similarity/reversal invariance, feature-targeted imported
+  rays, and later CSG-tree substitutions expand.  Once these answers and
+  fallback boundaries are stable, the performance phase should profile normal
+  production, prioritize a compact object/face/span BVH and conservative
+  batched rejection, implement a real `vshot`, and optimize OpenNURBS
+  evaluation/Newton correction only when measured hot.  The goal is a broadly
+  applicable certified pipeline, not exact reproduction of Abert et al.
+
+
+Feature-targeted chords and coplanar grazing cleanup (Finding 85):
+
+  `brep-audit --ray-depth-compare` now accepts
+  `--feature-ray-count=N`.  After the stable three axis and requested random
+  pairs it appends a stratified mix of face-domain-midpoint normal chords,
+  edge-midpoint face-normal chords, and edge-midpoint face-conormal chords.
+  The last category is locally tangent to the incident face and transverse to
+  the edge.  Points, tangents, normals, and conormals come directly from BREP
+  surfaces and trims, not a tessellation.  Bounding-sphere endpoints keep the
+  finite chord outside the object envelope.
+
+  Output separately records requested and actual random/feature populations,
+  every feature category, target face and edge, sample kind, and the exact
+  global pair line.  Existing `--ray-pair` replay remains stable for axis and
+  random pairs when feature count is zero; with feature sampling enabled it
+  selects the recorded global index.  Invalid domains, singular evaluations,
+  and targets outside the envelope are skipped.  Available feature counts can
+  therefore be below the request and are never padded with invented geometry.
+
+  These are coverage and invariance probes, not imported geometric truth.
+  The underlying surface midpoint may be trimmed away, and a local edge graze
+  may correctly be a contact-only miss.  The applicable assertions remain
+  complete finite oriented partitions, fresh depth-three/depth-eight equality,
+  and reversal invariance.  Analytic implicit-to-BREP partitions and paired
+  Cauchy-Crofton convergence retain oracle authority.
+
+  The first feature run targeted `Product_step18_item.s` in
+  `non_grabcad/0353/0353-02-57.g`: eight face-normal, eight edge-normal, and
+  eight edge-graze pairs plus three axis controls, for 54 directed rays.  Its
+  earlier 64-random-pair run passed, but the targeted run initially found five
+  differing rays, five candidate-depth reversal failures, and seven reference-
+  depth reversal failures.  Maximum partition disagreement was 2.5 model
+  units.
+
+  One class was the odd NEAR_MISS endpoint heuristic left ahead of Finding
+  84's symmetric matcher.  Pair 10 placed two coincident entry observations on
+  a seam.  One depth classified them NEAR_HIT/NEAR_HIT and the other
+  NEAR_HIT/NEAR_MISS.  The old odd-count stage discarded a distant outer
+  boundary before the first representation could coalesce.  Removing raw
+  front/back deletion from fixed and allocating cleanup leaves local event
+  identity and balanced matching to make the decision.  A reduced C++ stream
+  now changes only the coincident near-side representative and requires the
+  same outer partition under reversal.
+
+  Pair 11 exposed a distinct dense-tree continuum.  Its edge-normal line is
+  coplanar with face 11.  Depth three reported six raw observations and the
+  correct 0.8-unit interval.  Depth eight reported 130 raw observations, 126
+  after near cleanup, including many CLEAN_HIT samples with zero normal dot
+  along the face.  Cleanup retained one arbitrary sample next to a transverse
+  entry and published a 0.025-unit interval; reversal selected the opposite
+  end of the continuum.
+
+  The fixed grazing loop intentionally copied a historical allocating-list
+  iterator bug: erasing the first item advanced past the new first item.  Both
+  containers now test the returned item immediately.  More importantly,
+  `brep_resolved_grazing_pair` now enforces the premise recorded in Finding 48:
+  both endpoints, not only the currently inspected one, must be grazing before
+  ordered separation can preserve an affine-grazing material interval.  A
+  zero-normal contact cannot borrow authority from a transverse entry.  The
+  existing trim, direction, finite-distance, and minimum-size conditions are
+  unchanged.  A pure C++ stream with three zero-normal coplanar samples between
+  ordinary entry and exit requires all three to disappear.
+
+  Final feature replay passes every pair with zero depth-partition and reversal
+  differences and maximum endpoint delta
+  `5.3813607792108087e-8`.  Pair 11 returns
+  `[19.511658187986882,20.31165818798695]` in both depths and its exact reversed
+  interval.  The depth-eight allocating trace still records 130 raw roots and
+  a 64-root trace capacity overflow, but cleanup reduces the full list to the
+  same two physical endpoints; production's fixed hit workspace falls back to
+  that allocating path on capacity overflow.
+
+  Pair 9 has one explicitly non-semantic face-identity difference.  Coincident
+  faces 151--154 contribute the same two-unit interval.  Depth-three reverse
+  cleanup retains face 151 at entry; depth eight retains a face-152 root about
+  5.7e-14 earlier.  Both normals and endpoints agree and both map to the
+  face-151 forward exit.  `face_difference_ray_indices` now records exact
+  examples and includes them in diagnostic records.  This is a prepared
+  topological-ownership target, not permission to call different material
+  partitions equivalent.
+
+  The registered converted-sphere audit now requests all three feature types.
+  Exact feature pair 5 replay records an edge graze with four raw seam roots
+  and no material interval in either direction.  The focused affine gate
+  passes all 78 directed trend rays after requiring two grazing endpoints.
+  The complete non-seam optimized gate passes 18/18 in 176.33 seconds.  The
+  Cobb local comparison is tightened from its obsolete two-promotion floor to
+  zero regressions and zero ambiguous partition changes: the general legacy
+  cleanup now supplies the two formerly promoted correct answers.  The final
+  seam run passes all 416 matrix rays with 16/16 crack repairs, zero leaks,
+  zero reversal inconsistencies, 280 prepared selections, 136 conservative
+  fallbacks, and 24 certified seam pairs.  Rebuilt ASAN/UBSAN `--cleanup-only`
+  and feature-enabled `brep_audit_ray_depth_compare` pass with no diagnostic.
+
+  Add feature populations to every subsequent imported manifest result.  Use
+  exact selected-pair replay and reduce every failure to a source stream or
+  small analytic BREP before changing production behavior.  Continue random
+  chords for broad occupancy, signed grazing ladders for tangent-limit truth,
+  Cauchy-Crofton sampling for integral convergence, and Cobb perturbations for
+  crack policy; no one sampling mode substitutes for the others.
+
+
+Transverse ownership of coincident coplanar roots (Finding 86):
+
+  The next independent feature-ray slice used four Recurta AP203 solids that
+  were previously measured only by the prep census.  Each run used fresh
+  adaptive-depth-three and depth-eight trees, the legacy solver, three axis
+  pairs, and a stratified total of 12 feature pairs: four face-normal, four
+  edge-normal, and four edge-grazing pairs.  Every chord was shot in both
+  directions.  Three objects passed immediately:
+
+    * `10007.g/id2_item.s`, 15 faces, passes all 30 rays with maximum endpoint
+      delta `3.1835818425918205e-9`.  One reverse edge-normal endpoint changes
+      owning seam face without changing the material partition.
+    * `10062.g/id2_item.s`, 3,623 faces, passes all 30 rays with maximum
+      endpoint delta `5.504829658775634e-8` and no face-owner difference.
+    * `10088.g/id2_item.s`, 5,771 faces, passes all 30 rays with maximum
+      endpoint delta `6.6577683810464805e-8` and no face-owner difference.
+
+  `10057.g/id2_item.s`, a 301-face solid, initially had no depth-dependent
+  partition difference but failed reversal at both depths on global pair 3.
+  This face-normal chord targets face 37 and has origin
+
+    (-4.25, -42.493022533117163, -96)
+
+  direction `(0,1,0)`, and chord length `84.986045066234325`.  The forward
+  solve returned no material while reversal returned a 9.7-unit interval.
+  Both depths produced the same underlying roots, so this was neither a tree
+  density problem nor a nonlinear-solve discrepancy.
+
+  At each physical endpoint, one near-trim root was transverse to the ray and
+  one or more roots came from planar faces containing the ray.  A coplanar
+  root has zero normal dot, but `brep_hit::direction` must still contain one of
+  ENTERING or LEAVING and historically obtains the LEAVING value from the
+  nonnegative sign of zero.  Early NEAR_MISS cleanup compared that arbitrary
+  bit before the grazing stage.  In one ray order it paired a transverse
+  NEAR_MISS with a coincident zero-normal root and erased the real boundary;
+  reversal changed the arbitrary comparison and retained it.
+
+  Solid cleanup now establishes local event authority before any near-trim
+  pairing.  Within one model-distance event cluster, if at least one
+  observation is transverse, the fixed workspace and allocating list both
+  remove coincident observations whose normal dot is within
+  `BREP_GRAZING_DOT_TOL`.  The transverse witness owns the material state
+  transition.  Entirely grazing clusters are unchanged, as are separated
+  entering/leaving grazing pairs and all plate/open-surface cleanup.  The
+  cluster envelope is the existing model-space parameter tolerance, including
+  ray-direction scaling and floating-point slack; sorted adjacency alone does
+  not establish identity.  Production remains allocation-free on the fixed
+  path.
+
+  A pure C++ stream at `src/librt/tests/brep_ray.cpp:1079` reduces the imported
+  arrangement to a transverse NEAR_MISS plus coincident zero-normal NEAR_MISS
+  and NEAR_HIT shadows at each endpoint.  It requires the same interval after
+  reversal.  The production helpers are at
+  `src/librt/primitives/brep/brep.cpp:13918` and `:13957`; both are called before
+  near-miss cleanup.  Exact imported pair 3 now returns
+  `[35.643022533117161,45.343022533117164]` forward and
+  `[39.643022533117161,49.343022533117164]` in reverse at both depths, with
+  zero fixed/list discrepancy on those rays.  The complete 15-pair object run
+  passes all 30 rays, has no face-owner difference, and has maximum depth delta
+  `2.9734749773524527e-8`.
+
+  This slice also sharpens the prep scaling problem.  The depth-three and
+  depth-eight results respectively retained:
+
+    * `10007`: 1,484/61,268 surface leaves and 37,016 curve leaves, 75.2 MiB
+      process peak;
+    * `10062`: 8,916/48,170 surface leaves and 118,694 curve leaves, 348.1 MiB
+      process peak;
+    * `10088`: 9,373/52,213 surface leaves and 108,433 curve leaves, 310.0 MiB
+      process peak; and
+    * `10057`: 6,603/315,415 surface leaves and 482,684 curve leaves at either
+      surface depth, 585.0 MiB process peak.
+
+  Curve-tree population does not respond to the adaptive surface-depth knob.
+  On `10057`, curve leaves outnumber shallow surface leaves by 73 to 1 and even
+  outnumber dense surface leaves.  In the first concurrent high-face-count
+  pass, end-to-end prep wall time was about 44--48 seconds at depth three and
+  71 seconds at depth eight, while reported surface-tree build time was only
+  0.88 and 15--17 seconds.  A repeat under different concurrent scheduling
+  reported about 21--30 seconds of wall time and 0.31--5.95 seconds of surface
+  build time.  Do not treat either concurrent pass as a serial benchmark; the
+  variability itself requires isolated phase and allocation counters.  In
+  every run, substantial wall work is outside the reported surface build and
+  the curve population is unchanged.  These measurements make CurveTree
+  design, per-face setup, and retained/temporary ownership part of the
+  required prep-memory audit; surface-tree compaction alone cannot solve
+  scaling.
+
+  Qualification is green.  `rt_brep_ray --cleanup-only` passes.  The optimized
+  non-seam gate passes 18/18 in 168.01 seconds.  The 416-ray seam gate passes in
+  251.46 seconds.  Rebuilt ASAN/UBSAN cleanup-only and feature-enabled
+  `brep_audit_ray_depth_compare` pass with leak scanning disabled for the
+  established host-runtime limitation and no sanitizer diagnostic.
+
+
 NEXT ACTIONS
 ------------
 
-Current priority after the structural-knot/regular-stream checkpoint:
+Current priority after the local-cleanup/initial-stratum checkpoint:
 
 A. Keep the production adaptive depth at eight.  The first reproducible
-   14-database depth-three/eight prep stratum and the first three imported
-   identical-ray comparisons are recorded above.  Run `--ray-depth-compare`
-   across the remaining strata, retaining complete partition/reversal results,
-   prepared selection and fallback populations, face/span/status-2/trim/scale
-   fields, actual requested-depth prep statistics, RSS, and cache behavior.
-   Add feature-targeted rays so a high miss fraction does not masquerade as
-   coverage.  Successful tree builds and agreement with depth eight do not by
-   themselves establish an arbitrary-BREP default.
+   14-database depth-three/eight prep stratum, the imported comparisons, the
+   status-2 pole repair, UCP winding/overlap repair, NIST trim-endpoint repair,
+   and SC local-cleanup repair are recorded above.  The selected objects in
+   that initial stratum now have sampled ray comparisons.  Expand into new
+   strata with `--ray-depth-compare`; the new Recurta 10007/10057/10062/10088
+   slice passes after the 10057 coplanar-shadow repair.  Use `--ray-pair` and
+   `--legacy-only`
+   to ratchet every failure before paying for a full trace.  Retain complete
+   partition/reversal results, orientation, prepared selection and fallback
+   populations,
+   face/span/status-2/trim/scale fields, actual requested-depth prep
+   statistics, RSS, and cache behavior.  Include stratified face-normal,
+   edge-normal, and edge-grazing populations so a high random miss fraction
+   does not masquerade as coverage.  Successful tree builds and agreement
+   with depth eight do not by themselves establish an arbitrary-BREP default.
 B. Preserve adaptive depth three as the present conservative experimental
    plateau.  Do not spend correctness effort forcing special fixtures to
    depth zero.  Any candidate production reduction must retain the complete
-   18-shard optimized ray gate, the seven rebuilt-cache cases, sanitizer
+   19-shard optimized ray gate, the seven rebuilt-cache cases, sanitizer
    qualification, and exact identical-line partition results.
 C. Use the deterministic hard replay as the seed of the difficult-solver C/C++
-   corpus.  The first genuine STEP failure is now captured as the status-2
-   analytic-revolution sphere pole and ratcheted under scale, translation,
-   rotation, and reversal.  Add every subsequent imported discrepancy with
-   its complete geometry, ray, tolerance, span, box, root, event, and fallback
-   evidence; do not tune against an unnamed `.g` model or replace one failure
-   with another.
+   corpus.  The status-2 analytic-revolution sphere pole is ratcheted under
+   scale, translation, rotation, and reversal.  The UCP solid-assembly failure
+   is ratcheted by pure hit streams, an appended-overlapping-sphere CSG-union
+   oracle, exact imported pairs 0/3/26, and the complete 70-ray audit.  The
+   NIST depth discrepancy is ratcheted by a split-trim endpoint fixture and
+   exact pair 1 at every adaptive depth.  SC pair 22 is ratcheted by a pure
+   hit-class stream that distinguishes coincident and merely adjacent events,
+   plus exact imported and complete 70-ray replay.  The first targeted 0353
+   discrepancy is ratcheted by near-side-representation and coplanar-continuum
+   streams plus exact pairs 10/11 and the complete 24-feature replay.  Add
+   Recurta 10057 pair 3 as the coplanar-shadow stream: coincident zero-normal
+   observations may not use an arbitrary direction bit to erase a transverse
+   near-trim boundary.  Its complete 15-pair replay is the imported gate.  Add
+   every subsequent imported discrepancy with its complete geometry, ray,
+   tolerance, span, box, root, event, and fallback evidence; do not tune
+   against an unnamed `.g` model or replace one failure with another.
 D. Extend prepared authority only with separate complete proofs for the
    remaining categories: mixed fold/regular streams, trim-near and
    topology-boundary events, contact-only rays, curved vertex links, and
    many-to-many edge clusters.  Preserve tolerance-healed seam behavior and
    the whole-ray fallback; never reinterpret unresolved as miss.
-E. Once the density/default and cache decision is qualified, begin the plan's
-   certified-pipeline performance phase.  Measure normal production separately
-   from trace mode, because trace deliberately reruns the legacy path after a
-   prepared selection.  Profile phase costs first, then prioritize the
+E. Before general solve optimization, audit retained and peak prep memory in
+   SurfaceTree, CurveTree, per-face NURBS forms, trim polylines, and temporary
+   construction work.  Reconstruct the removed static-`ON_Surface` change and
+   its correctness failure, but do not restore shared mutable surface state.
+   Attribute bytes and wall time by structure on 10007/10057/10062/10088,
+   distinguish ownership from duplication, and test safe immutable sharing,
+   arenas, flat/compact post-build arrays, lazy local trim refinement, and
+   cache serialization effects.  Curve leaves are already the dominant
+   retained count on 10057 and are independent of surface depth.
+F. Once the memory representation and density/default decision are qualified,
+   begin the plan's certified-pipeline performance phase.  Measure normal
+   production separately from trace mode, because trace deliberately reruns
+   the legacy path after a prepared selection.  Profile phase costs first,
+   then prioritize the
    object-level face/span BVH, compact immutable span/trim arrays,
    conservative SIMD coefficient work, and a real batched vshot.  Optimize
    Newton/OpenNURBS evaluation only if profiles identify it as hot.

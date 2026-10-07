@@ -25,11 +25,13 @@
 #include "common.h"
 
 #include <algorithm>
+#include <cerrno>
 #include <cfloat>
 #include <cmath>
 #include <cstring>
 #include <fstream>
 #include <cstdint>
+#include <cstdlib>
 #include <iomanip>
 #include <iostream>
 #include <limits>
@@ -467,7 +469,38 @@ struct ray_audit_shot {
     bool valid = true;
     bool prepared_selected = false;
     int fallback = RT_BREP_PREPARED_FALLBACK_UNSUPPORTED;
+    size_t intersected_leaves = 0;
+    size_t solver_calls = 0;
+    size_t stored_roots = 0;
+    size_t root_overflow = 0;
+    size_t raw_hits = 0;
+    size_t after_near_miss = 0;
+    size_t after_near_hit = 0;
+    size_t after_grazing = 0;
+    size_t after_duplicates = 0;
+    size_t after_direction_cleanup = 0;
+    size_t final_hits = 0;
+    size_t fixed_after_near_miss = 0;
+    size_t fixed_after_near_hit = 0;
+    size_t fixed_after_grazing = 0;
+    size_t fixed_after_duplicates = 0;
+    size_t fixed_after_direction_cleanup = 0;
+    size_t fixed_cleanup_mismatches = 0;
+    size_t trim_equivalence_mismatches = 0;
+    size_t face_trim_status_mismatches = 0;
+    size_t face_trim_hit_class_mismatches = 0;
+    size_t face_trim_adjacency_mismatches = 0;
+    size_t face_trim_equivalence_mismatches = 0;
+    std::vector<struct rt_brep_trace_root> roots;
     std::vector<ray_audit_interval> intervals;
+};
+
+enum ray_audit_sample_kind {
+    RAY_AUDIT_AXIS_CHORD = 0,
+    RAY_AUDIT_RANDOM_CHORD,
+    RAY_AUDIT_FACE_NORMAL_CHORD,
+    RAY_AUDIT_EDGE_NORMAL_CHORD,
+    RAY_AUDIT_EDGE_GRAZE_CHORD
 };
 
 struct ray_audit_sample {
@@ -476,6 +509,17 @@ struct ray_audit_sample {
     double chord_length = 0.0;
     size_t pair_index = 0;
     bool reverse = false;
+    ray_audit_sample_kind kind = RAY_AUDIT_RANDOM_CHORD;
+    int face_index = -1;
+    int edge_index = -1;
+};
+
+struct ray_audit_feature_target {
+    point_t point = VINIT_ZERO;
+    vect_t direction = VINIT_ZERO;
+    ray_audit_sample_kind kind = RAY_AUDIT_FACE_NORMAL_CHORD;
+    int face_index = -1;
+    int edge_index = -1;
 };
 
 struct ray_audit_prep {
@@ -534,6 +578,7 @@ struct ray_audit_comparison {
     size_t face_differences = 0;
     double maximum_distance_delta = 0.0;
     std::vector<size_t> differing_ray_indices;
+    std::vector<size_t> face_difference_ray_indices;
     std::vector<size_t> candidate_reversal_indices;
     std::vector<size_t> reference_reversal_indices;
 };
@@ -543,6 +588,45 @@ struct audit_prepared_brep {
     struct soltab *stp = NULL;
     struct resource resource = {};
     bool resource_initialized = false;
+};
+
+struct trim_query_spec {
+    int face_index = -1;
+    ON_2dPoint uv = ON_2dPoint::UnsetPoint;
+};
+
+struct trim_polygon_range {
+    int trim_index = -1;
+    bool have_points = false;
+    ON_2dPoint raw_start = ON_2dPoint::UnsetPoint;
+    ON_2dPoint raw_end = ON_2dPoint::UnsetPoint;
+    ON_2dPoint curve_start = ON_2dPoint::UnsetPoint;
+    ON_2dPoint curve_end = ON_2dPoint::UnsetPoint;
+    ON_2dPoint cover_start = ON_2dPoint::UnsetPoint;
+    ON_2dPoint cover_end = ON_2dPoint::UnsetPoint;
+    ON_2dPoint cover_min = ON_2dPoint::UnsetPoint;
+    ON_2dPoint cover_max = ON_2dPoint::UnsetPoint;
+};
+
+struct trim_polygon_loop {
+    int loop_index = -1;
+    ON_BrepLoop::TYPE type = ON_BrepLoop::unknown;
+    size_t trim_count = 0;
+    size_t invalid_samples = 0;
+    double maximum_join_gap = 0.0;
+    double closing_gap = 0.0;
+    double cover_closing_gap = 0.0;
+    double signed_area = 0.0;
+    double minimum_boundary_distance = INFINITY;
+    size_t crossings = 0;
+    size_t vertical_crossings = 0;
+    bool inside = false;
+    bool have_bbox = false;
+    ON_2dPoint bbox_min = ON_2dPoint::UnsetPoint;
+    ON_2dPoint bbox_max = ON_2dPoint::UnsetPoint;
+    ON_2dPoint query_image = ON_2dPoint::UnsetPoint;
+    std::vector<trim_polygon_range> trim_ranges;
+    std::vector<ON_2dPoint> points;
 };
 
 
@@ -756,6 +840,538 @@ load_brep(struct db_i *dbip, struct directory *dp, struct rt_db_internal *intern
 	return BRLCAD_ERROR;
     }
     return BRLCAD_OK;
+}
+
+static bool
+parse_trim_query(const char *arg, trim_query_spec &query)
+{
+    if (!arg || !arg[0])
+	return false;
+    char *end = NULL;
+    errno = 0;
+    const long face_index = strtol(arg, &end, 10);
+    if (errno || end == arg || *end != ',' || face_index < 0 ||
+	    face_index > INT_MAX)
+	return false;
+    const char *u_start = end + 1;
+    errno = 0;
+    const double u = strtod(u_start, &end);
+    if (errno || end == u_start || *end != ',' || !std::isfinite(u))
+	return false;
+    const char *v_start = end + 1;
+    errno = 0;
+    const double v = strtod(v_start, &end);
+    if (errno || end == v_start || *end || !std::isfinite(v))
+	return false;
+    query.face_index = (int)face_index;
+    query.uv = ON_2dPoint(u, v);
+    return true;
+}
+
+static const char *
+trim_loop_type_name(ON_BrepLoop::TYPE type)
+{
+    switch (type) {
+	case ON_BrepLoop::outer: return "outer";
+	case ON_BrepLoop::inner: return "inner";
+	case ON_BrepLoop::slit: return "slit";
+	case ON_BrepLoop::crvonsrf: return "curve_on_surface";
+	case ON_BrepLoop::ptonsrf: return "point_on_surface";
+	case ON_BrepLoop::unknown: return "unknown";
+	case ON_BrepLoop::type_count: return "type_count";
+    }
+    return "invalid";
+}
+
+static double
+trim_periodic_delta(double first, double second, bool closed,
+    double period)
+{
+    double delta = first - second;
+    if (closed && period > 0.0 && std::isfinite(period))
+	delta -= nearbyint(delta / period) * period;
+    return delta;
+}
+
+static double
+trim_periodic_distance(const ON_2dPoint &first, const ON_2dPoint &second,
+    const bool closed[2], const double period[2])
+{
+    const double du = trim_periodic_delta(first.x, second.x, closed[0],
+	period[0]);
+    const double dv = trim_periodic_delta(first.y, second.y, closed[1],
+	period[1]);
+    return hypot(du, dv);
+}
+
+static ON_2dPoint
+trim_unwrap_after(const ON_2dPoint &point, const ON_2dPoint &previous,
+    const bool closed[2], const double period[2])
+{
+    ON_2dPoint unwrapped(point);
+    if (closed[0] && period[0] > 0.0)
+	unwrapped.x += nearbyint((previous.x - unwrapped.x) / period[0]) *
+	    period[0];
+    if (closed[1] && period[1] > 0.0)
+	unwrapped.y += nearbyint((previous.y - unwrapped.y) / period[1]) *
+	    period[1];
+    return unwrapped;
+}
+
+static double
+trim_point_segment_distance(const ON_2dPoint &query,
+    const ON_2dPoint &first, const ON_2dPoint &second)
+{
+    const double dx = second.x - first.x;
+    const double dy = second.y - first.y;
+    const double length_squared = dx * dx + dy * dy;
+    if (!(length_squared > 0.0))
+	return query.DistanceTo(first);
+    const double parameter = std::max(0.0, std::min(1.0,
+	((query.x - first.x) * dx + (query.y - first.y) * dy) /
+	length_squared));
+    return hypot(query.x - (first.x + parameter * dx),
+	query.y - (first.y + parameter * dy));
+}
+
+static void
+trim_polygon_classify(trim_polygon_loop &result, const ON_2dPoint &query,
+    const bool closed[2], const double period[2])
+{
+    if (result.points.size() < 2)
+	return;
+    result.bbox_min = result.points[0];
+    result.bbox_max = result.points[0];
+    for (size_t i = 1; i < result.points.size(); ++i) {
+	result.bbox_min.x = std::min(result.bbox_min.x, result.points[i].x);
+	result.bbox_min.y = std::min(result.bbox_min.y, result.points[i].y);
+	result.bbox_max.x = std::max(result.bbox_max.x, result.points[i].x);
+	result.bbox_max.y = std::max(result.bbox_max.y, result.points[i].y);
+    }
+    result.have_bbox = true;
+    result.query_image = query;
+    if (closed[0] && period[0] > 0.0) {
+	const double center = 0.5 * (result.bbox_min.x + result.bbox_max.x);
+	result.query_image.x += nearbyint((center - result.query_image.x) /
+	    period[0]) * period[0];
+    }
+    if (closed[1] && period[1] > 0.0) {
+	const double center = 0.5 * (result.bbox_min.y + result.bbox_max.y);
+	result.query_image.y += nearbyint((center - result.query_image.y) /
+	    period[1]) * period[1];
+    }
+
+    const size_t count = result.points.size();
+    for (size_t current = 0, previous = count - 1; current < count;
+	    previous = current++) {
+	const ON_2dPoint &first = result.points[previous];
+	const ON_2dPoint &second = result.points[current];
+	result.minimum_boundary_distance = std::min(
+	    result.minimum_boundary_distance,
+	    trim_point_segment_distance(result.query_image, first, second));
+	result.signed_area += first.x * second.y - second.x * first.y;
+	if (((second.y <= result.query_image.y &&
+		result.query_image.y < first.y) ||
+		(first.y <= result.query_image.y &&
+		result.query_image.y < second.y)) &&
+		result.query_image.x <
+		(first.x - second.x) *
+		(result.query_image.y - second.y) /
+		(first.y - second.y) + second.x)
+	    result.crossings++;
+	if (((second.x <= result.query_image.x &&
+		result.query_image.x < first.x) ||
+		(first.x <= result.query_image.x &&
+		 result.query_image.x < second.x)) &&
+		result.query_image.y <
+		(first.y - second.y) *
+		(result.query_image.x - second.x) /
+		(first.x - second.x) + second.y)
+	    result.vertical_crossings++;
+    }
+    result.signed_area *= 0.5;
+    result.inside = (result.crossings & 1U) != 0;
+}
+
+static trim_polygon_loop
+trim_sample_loop(const ON_BrepFace &face, const ON_BrepLoop &loop,
+    size_t segments_per_trim, const ON_2dPoint &query,
+    const bool closed[2], const double period[2])
+{
+    trim_polygon_loop result;
+    result.loop_index = loop.m_loop_index;
+    result.type = loop.m_type;
+    result.trim_count = (size_t)std::max(0, loop.TrimCount());
+    result.trim_ranges.reserve(result.trim_count);
+    result.points.reserve(result.trim_count * (segments_per_trim + 1));
+    ON_2dPoint first_raw = ON_2dPoint::UnsetPoint;
+    ON_2dPoint previous_raw_end = ON_2dPoint::UnsetPoint;
+    bool have_first = false;
+    bool have_previous_end = false;
+
+    for (int trim_index = 0; trim_index < loop.TrimCount(); ++trim_index) {
+	const ON_BrepTrim *trim = loop.Trim(trim_index);
+	if (!trim) {
+	    result.invalid_samples += segments_per_trim + 1;
+	    continue;
+	}
+	const ON_Interval domain = trim->Domain();
+	trim_polygon_range range;
+	range.trim_index = trim->m_trim_index;
+	const ON_Curve *trim_curve = trim->TrimCurveOf();
+	if (trim_curve) {
+	    const ON_Interval curve_domain = trim_curve->Domain();
+	    const ON_3dPoint curve_start = trim_curve->PointAt(
+		curve_domain.Min());
+	    const ON_3dPoint curve_end = trim_curve->PointAt(
+		curve_domain.Max());
+	    range.curve_start = ON_2dPoint(curve_start.x, curve_start.y);
+	    range.curve_end = ON_2dPoint(curve_end.x, curve_end.y);
+	}
+	ON_2dPoint trim_start = ON_2dPoint::UnsetPoint;
+	ON_2dPoint trim_end = ON_2dPoint::UnsetPoint;
+	bool have_trim_start = false;
+	bool have_trim_end = false;
+	for (size_t sample = 0; sample <= segments_per_trim; ++sample) {
+	    const double fraction = (double)sample /
+		(double)segments_per_trim;
+	    const ON_3dPoint evaluated = trim->PointAt(
+		domain.ParameterAt(fraction));
+	    const ON_2dPoint raw(evaluated.x, evaluated.y);
+	    if (!std::isfinite(raw.x) || !std::isfinite(raw.y)) {
+		result.invalid_samples++;
+		continue;
+	    }
+	    if (!have_trim_start) {
+		trim_start = raw;
+		have_trim_start = true;
+	    }
+	    trim_end = raw;
+	    have_trim_end = true;
+	    ON_2dPoint unwrapped(raw);
+	    if (!result.points.empty())
+		unwrapped = trim_unwrap_after(raw, result.points.back(), closed,
+		    period);
+	    result.points.push_back(unwrapped);
+	    if (!range.have_points) {
+		range.raw_start = raw;
+		range.cover_start = unwrapped;
+		range.cover_min = unwrapped;
+		range.cover_max = unwrapped;
+		range.have_points = true;
+	    }
+	    range.raw_end = raw;
+	    range.cover_end = unwrapped;
+	    range.cover_min.x = std::min(range.cover_min.x, unwrapped.x);
+	    range.cover_min.y = std::min(range.cover_min.y, unwrapped.y);
+	    range.cover_max.x = std::max(range.cover_max.x, unwrapped.x);
+	    range.cover_max.y = std::max(range.cover_max.y, unwrapped.y);
+	}
+	result.trim_ranges.push_back(range);
+	if (have_trim_start) {
+	    if (!have_first) {
+		first_raw = trim_start;
+		have_first = true;
+	    }
+	    if (have_previous_end)
+		result.maximum_join_gap = std::max(result.maximum_join_gap,
+		    trim_periodic_distance(previous_raw_end, trim_start, closed,
+			period));
+	}
+	if (have_trim_end) {
+	    previous_raw_end = trim_end;
+	    have_previous_end = true;
+	}
+    }
+    if (have_first && have_previous_end) {
+	result.closing_gap = trim_periodic_distance(previous_raw_end,
+	    first_raw, closed, period);
+	result.maximum_join_gap = std::max(result.maximum_join_gap,
+	    result.closing_gap);
+    }
+    if (result.points.size() > 1)
+	result.cover_closing_gap = result.points.front().DistanceTo(
+	    result.points.back());
+    trim_polygon_classify(result, query, closed, period);
+    (void)face;
+    return result;
+}
+
+static int
+trim_query(struct db_i *dbip, const char *db_path, struct directory *dp,
+    const trim_query_spec &query)
+{
+    struct rt_db_internal intern;
+    if (load_brep(dbip, dp, &intern) != BRLCAD_OK)
+	return 2;
+    struct rt_brep_internal *bi =
+	(struct rt_brep_internal *)intern.idb_ptr;
+    RT_BREP_CK_MAGIC(bi);
+    if (query.face_index < 0 || query.face_index >= bi->brep->m_F.Count()) {
+	std::cerr << "Face index is out of range: " << query.face_index << "\n";
+	rt_db_free_internal(&intern);
+	return 2;
+    }
+    const ON_BrepFace &face = bi->brep->m_F[query.face_index];
+    const ON_Surface *surface = face.SurfaceOf();
+    if (!surface) {
+	std::cerr << "Face has no surface: " << query.face_index << "\n";
+	rt_db_free_internal(&intern);
+	return 2;
+    }
+    const ON_Interval domain[2] = {surface->Domain(0), surface->Domain(1)};
+    const bool closed[2] = {surface->IsClosed(0), surface->IsClosed(1)};
+    const double period[2] = {domain[0].Length(), domain[1].Length()};
+
+    brlcad::CurveTree curve_tree(&face);
+    const brlcad::BRNode *closest = NULL;
+    double closest_distance = -1.0;
+    size_t candidates = 0;
+    const bool production_trimmed = curve_tree.isTrimmed(query.uv,
+	&closest, closest_distance, BREP_EDGE_MISS_TOLERANCE, &candidates);
+    const brlcad::BRNode *exact_closest = NULL;
+    double exact_closest_distance = -1.0;
+    size_t exact_candidates = 0;
+    const bool exact_trimmed = curve_tree.isTrimmed(query.uv,
+	&exact_closest, exact_closest_distance, BREP_EDGE_MISS_TOLERANCE,
+	&exact_candidates, false);
+
+    ON_2dPoint crossing_query(query.uv);
+    for (int direction = 0; direction < 2; ++direction) {
+	if (!closed[direction] || !(period[direction] > 0.0))
+	    continue;
+	crossing_query[direction] -= floor(
+	    (crossing_query[direction] - domain[direction].Min()) /
+	    period[direction]) * period[direction];
+	if (crossing_query[direction] >= domain[direction].Max())
+	    crossing_query[direction] = domain[direction].Min();
+    }
+    struct curve_crossing {
+	int trim_index;
+	int adjoining_face;
+	bool inner;
+	bool vertical;
+	double distance;
+	ON_Interval parameter;
+	ON_Interval curve_domain;
+	ON_3dPoint start;
+	ON_3dPoint end;
+	point_t minimum;
+	point_t maximum;
+    };
+    std::vector<curve_crossing> curve_crossings;
+    const bool horizontal_classification_ray = closed[1];
+    std::list<const brlcad::BRNode *> curve_leaves;
+    curve_tree.getLeaves(curve_leaves);
+    for (std::list<const brlcad::BRNode *>::const_iterator leaf =
+	    curve_leaves.begin(); leaf != curve_leaves.end(); ++leaf) {
+	curve_crossing event;
+	event.distance = -1.0;
+	if (!(horizontal_classification_ray ?
+		(*leaf)->crossesRight(crossing_query, event.distance, 0.0) :
+		(*leaf)->crossesAbove(crossing_query, event.distance, 0.0)))
+	    continue;
+	event.trim_index = (*leaf)->trimIndex();
+	event.adjoining_face = (*leaf)->m_adj_face_index;
+	event.inner = (*leaf)->m_innerTrim;
+	event.vertical = (*leaf)->m_Vertical;
+	event.parameter = (*leaf)->parameterInterval();
+	event.curve_domain = (*leaf)->curveDomain();
+	event.start = (*leaf)->startPoint();
+	event.end = (*leaf)->endPoint();
+	(*leaf)->GetBBox(event.minimum, event.maximum);
+	curve_crossings.push_back(event);
+    }
+
+    static const size_t levels[] = {16, 64, 256, 1024, 4096};
+    bool classifications[sizeof(levels) / sizeof(levels[0])] = {};
+    bool level_valid[sizeof(levels) / sizeof(levels[0])] = {};
+    std::cout << std::setprecision(17)
+	<< "{\"format\":\"brlcad-brep-trim-query-v1\""
+	<< ",\"database\":" << json_quote(db_path)
+	<< ",\"object\":" << json_quote(dp->d_namep)
+	<< ",\"face\":" << query.face_index
+	<< ",\"query_uv\":[" << query.uv.x << "," << query.uv.y << "]"
+	<< ",\"surface\":{\"domain_u\":[" << domain[0].Min() << ","
+	<< domain[0].Max() << "],\"domain_v\":[" << domain[1].Min()
+	<< "," << domain[1].Max() << "],\"closed_u\":"
+	<< (closed[0] ? "true" : "false") << ",\"closed_v\":"
+	<< (closed[1] ? "true" : "false") << "}"
+	<< ",\"production\":{\"trimmed\":"
+	<< (production_trimmed ? "true" : "false")
+	<< ",\"closest_distance\":" << closest_distance
+	<< ",\"candidates\":" << candidates
+	<< ",\"prepared_leaf_images\":"
+	<< curve_tree.preparedLeafImageCount()
+	<< ",\"closest_adjoining_face\":"
+	<< (closest ? closest->m_adj_face_index : -1) << "}"
+	<< ",\"exact\":{\"trimmed\":"
+	<< (exact_trimmed ? "true" : "false")
+	<< ",\"closest_distance\":" << exact_closest_distance
+	<< ",\"candidates\":" << exact_candidates
+	<< ",\"closest_adjoining_face\":"
+	<< (exact_closest ? exact_closest->m_adj_face_index : -1) << "}"
+	<< ",\"crossing_query_uv\":[" << crossing_query.x << ","
+	<< crossing_query.y << "]"
+	<< ",\"classification_ray\":" << json_quote(
+	    horizontal_classification_ray ? "positive_u" : "positive_v")
+	<< ",\"curve_crossings_mode\":\"exact_native_half_open\""
+	<< ",\"curve_crossings\":[";
+    for (size_t crossing_index = 0;
+	    crossing_index < curve_crossings.size(); ++crossing_index) {
+	if (crossing_index)
+	    std::cout << ",";
+	const curve_crossing &event = curve_crossings[crossing_index];
+	std::cout << "{\"trim\":" << event.trim_index
+	    << ",\"adjoining_face\":" << event.adjoining_face
+	    << ",\"inner\":" << (event.inner ? "true" : "false")
+	    << ",\"vertical\":" << (event.vertical ? "true" : "false")
+	    << ",\"distance\":" << event.distance
+	    << ",\"parameter\":[" << event.parameter.Min() << ","
+	    << event.parameter.Max() << "]"
+	    << ",\"curve_domain\":[" << event.curve_domain.Min() << ","
+	    << event.curve_domain.Max() << "]"
+	    << ",\"start\":[" << event.start.x << "," << event.start.y
+	    << "]"
+	    << ",\"end\":[" << event.end.x << "," << event.end.y << "]"
+	    << ",\"bbox\":[[" << event.minimum[X] << ","
+	    << event.minimum[Y] << "],[" << event.maximum[X] << ","
+	    << event.maximum[Y] << "]]}";
+    }
+    std::cout << "]"
+	<< ",\"levels\":[";
+
+    for (size_t level = 0; level < sizeof(levels) / sizeof(levels[0]);
+	    ++level) {
+	if (level)
+	    std::cout << ",";
+	std::vector<trim_polygon_loop> loops;
+	loops.reserve((size_t)face.LoopCount());
+	bool any_outer = false;
+	bool inside_outer = false;
+	bool inside_inner = false;
+	bool parity = false;
+	bool valid = true;
+	double minimum_distance = INFINITY;
+	for (int loop_slot = 0; loop_slot < face.LoopCount(); ++loop_slot) {
+	    const ON_BrepLoop *loop = face.Loop(loop_slot);
+	    if (!loop)
+		continue;
+	    loops.push_back(trim_sample_loop(face, *loop, levels[level],
+		query.uv, closed, period));
+	    const trim_polygon_loop &sampled = loops.back();
+	    valid = valid && sampled.invalid_samples == 0 &&
+		sampled.points.size() >= 3 &&
+		sampled.cover_closing_gap <= BREP_EDGE_MISS_TOLERANCE;
+	    minimum_distance = std::min(minimum_distance,
+		sampled.minimum_boundary_distance);
+	    if (sampled.type == ON_BrepLoop::outer) {
+		any_outer = true;
+		inside_outer = inside_outer || sampled.inside;
+	    } else if (sampled.type == ON_BrepLoop::inner) {
+		inside_inner = inside_inner || sampled.inside;
+	    }
+	    if (sampled.type == ON_BrepLoop::outer ||
+		    sampled.type == ON_BrepLoop::inner ||
+		    sampled.type == ON_BrepLoop::unknown)
+		parity = parity != sampled.inside;
+	}
+	const bool polygon_inside = any_outer ?
+	    inside_outer && !inside_inner : parity;
+	classifications[level] = polygon_inside;
+	level_valid[level] = valid;
+	std::cout << "{\"segments_per_trim\":" << levels[level]
+	    << ",\"valid\":" << (valid ? "true" : "false")
+	    << ",\"inside\":" << (polygon_inside ? "true" : "false")
+	    << ",\"trimmed\":" << (polygon_inside ? "false" : "true")
+	    << ",\"matches_production\":";
+	if (valid)
+	    std::cout << (production_trimmed != polygon_inside ?
+		"true" : "false");
+	else
+	    std::cout << "null";
+	std::cout << ",\"minimum_boundary_distance\":" << minimum_distance
+	    << ",\"stable_from_previous\":"
+	    << (level > 0 && classifications[level] ==
+		classifications[level - 1] ? "true" : "false")
+	    << ",\"loops\":[";
+	for (size_t loop_index = 0; loop_index < loops.size(); ++loop_index) {
+	    const trim_polygon_loop &sampled = loops[loop_index];
+	    if (loop_index)
+		std::cout << ",";
+	    std::cout << "{\"loop\":" << sampled.loop_index
+		<< ",\"type\":" << json_quote(
+		    trim_loop_type_name(sampled.type))
+		<< ",\"trims\":" << sampled.trim_count
+		<< ",\"points\":" << sampled.points.size()
+		<< ",\"invalid_samples\":" << sampled.invalid_samples
+		<< ",\"inside\":" << (sampled.inside ? "true" : "false")
+		<< ",\"crossings\":" << sampled.crossings
+		<< ",\"vertical_crossings\":"
+		<< sampled.vertical_crossings
+		<< ",\"signed_area\":" << sampled.signed_area
+		<< ",\"minimum_boundary_distance\":"
+		<< sampled.minimum_boundary_distance
+		<< ",\"maximum_topology_join_gap\":"
+		<< sampled.maximum_join_gap
+		<< ",\"closing_gap\":" << sampled.closing_gap
+		<< ",\"cover_closing_gap\":" << sampled.cover_closing_gap
+		<< ",\"lift_closed\":" <<
+		(sampled.cover_closing_gap <= BREP_EDGE_MISS_TOLERANCE ?
+		 "true" : "false")
+		<< ",\"query_image\":[" << sampled.query_image.x << ","
+		<< sampled.query_image.y << "]"
+		<< ",\"bbox\":[[" << sampled.bbox_min.x << ","
+		<< sampled.bbox_min.y << "],[" << sampled.bbox_max.x << ","
+		<< sampled.bbox_max.y << "]]"
+		<< ",\"trim_ranges\":[";
+	    for (size_t range_index = 0;
+		    range_index < sampled.trim_ranges.size(); ++range_index) {
+		if (range_index)
+		    std::cout << ",";
+		const trim_polygon_range &range =
+		    sampled.trim_ranges[range_index];
+		std::cout << "{\"trim\":" << range.trim_index
+		    << ",\"valid\":" << (range.have_points ? "true" : "false");
+		if (range.have_points) {
+		    std::cout << ",\"raw_start\":[" << range.raw_start.x << ","
+			<< range.raw_start.y << "]"
+		    << ",\"raw_end\":[" << range.raw_end.x << ","
+			<< range.raw_end.y << "]"
+			<< ",\"curve_start\":[" << range.curve_start.x << ","
+			<< range.curve_start.y << "]"
+			<< ",\"curve_end\":[" << range.curve_end.x << ","
+			<< range.curve_end.y << "]"
+			<< ",\"cover_start\":[" << range.cover_start.x << ","
+			<< range.cover_start.y << "]"
+			<< ",\"cover_end\":[" << range.cover_end.x << ","
+			<< range.cover_end.y << "]"
+			<< ",\"cover_bbox\":[[" << range.cover_min.x << ","
+			<< range.cover_min.y << "],[" << range.cover_max.x << ","
+			<< range.cover_max.y << "]]";
+		}
+		std::cout << "}";
+	    }
+	    std::cout << "]}";
+	}
+	std::cout << "]}";
+    }
+    const size_t level_count = sizeof(levels) / sizeof(levels[0]);
+    const bool converged = level_valid[level_count - 1] &&
+	level_valid[level_count - 2] && level_valid[level_count - 3] &&
+	classifications[level_count - 1] == classifications[level_count - 2] &&
+	classifications[level_count - 2] == classifications[level_count - 3];
+    std::cout << "],\"converged\":" << (converged ? "true" : "false")
+	<< ",\"oracle_applicable\":" << (converged ? "true" : "false")
+	<< ",\"final_matches_production\":";
+    if (converged)
+	std::cout << (production_trimmed != classifications[level_count - 1] ?
+	    "true" : "false");
+    else
+	std::cout << "null";
+    std::cout << "}\n";
+    rt_db_free_internal(&intern);
+    return converged ? 0 : 1;
 }
 
 static const char *
@@ -1062,7 +1678,8 @@ ray_audit_point_on_sphere(double radius, const point_t center, point_t point,
 
 static void
 ray_audit_add_chord(std::vector<ray_audit_sample> &samples,
-    const point_t first, const point_t second, size_t pair_index)
+    const point_t first, const point_t second, size_t pair_index,
+    ray_audit_sample_kind kind, int face_index = -1, int edge_index = -1)
 {
     vect_t delta;
     VSUB2(delta, second, first);
@@ -1075,6 +1692,9 @@ ray_audit_add_chord(std::vector<ray_audit_sample> &samples,
     VMOVE(forward.direction, delta);
     forward.chord_length = length;
     forward.pair_index = pair_index;
+    forward.kind = kind;
+    forward.face_index = face_index;
+    forward.edge_index = edge_index;
     samples.push_back(forward);
     ray_audit_sample reverse;
     VMOVE(reverse.origin, second);
@@ -1082,6 +1702,9 @@ ray_audit_add_chord(std::vector<ray_audit_sample> &samples,
     reverse.chord_length = length;
     reverse.pair_index = pair_index;
     reverse.reverse = true;
+    reverse.kind = kind;
+    reverse.face_index = face_index;
+    reverse.edge_index = edge_index;
     samples.push_back(reverse);
 }
 
@@ -1106,7 +1729,8 @@ ray_audit_samples(const point_t bmin, const point_t bmax,
 	VMOVE(second, center);
 	first[axis] -= radius;
 	second[axis] += radius;
-	ray_audit_add_chord(samples, first, second, pair_index++);
+	ray_audit_add_chord(samples, first, second, pair_index++,
+	    RAY_AUDIT_AXIS_CHORD);
     }
     std::mt19937_64 rng(seed);
     while (pair_index < random_chords + 3) {
@@ -1115,11 +1739,192 @@ ray_audit_samples(const point_t bmin, const point_t bmax,
 	ray_audit_point_on_sphere(radius, center, first, rng);
 	ray_audit_point_on_sphere(radius, center, second, rng);
 	const size_t before = samples.size();
-	ray_audit_add_chord(samples, first, second, pair_index);
+	ray_audit_add_chord(samples, first, second, pair_index,
+	    RAY_AUDIT_RANDOM_CHORD);
 	if (samples.size() != before)
 	    pair_index++;
     }
     return samples;
+}
+
+static const char *
+ray_audit_sample_kind_name(ray_audit_sample_kind kind)
+{
+    switch (kind) {
+	case RAY_AUDIT_AXIS_CHORD:
+	    return "axis";
+	case RAY_AUDIT_RANDOM_CHORD:
+	    return "random";
+	case RAY_AUDIT_FACE_NORMAL_CHORD:
+	    return "face_normal";
+	case RAY_AUDIT_EDGE_NORMAL_CHORD:
+	    return "edge_normal";
+	case RAY_AUDIT_EDGE_GRAZE_CHORD:
+	    return "edge_graze";
+    }
+    return "unknown";
+}
+
+static bool
+ray_audit_add_feature_chord(std::vector<ray_audit_sample> &samples,
+    const ray_audit_feature_target &target, const point_t center,
+    double radius, size_t pair_index)
+{
+    vect_t offset;
+    VSUB2(offset, target.point, center);
+    const double projection = VDOT(offset, target.direction);
+    const double discriminant = projection * projection -
+	(VDOT(offset, offset) - radius * radius);
+    if (!(discriminant > 0.0) || !std::isfinite(discriminant))
+	return false;
+    const double root = sqrt(discriminant);
+    const double lower = -projection - root;
+    const double upper = -projection + root;
+    point_t first;
+    point_t second;
+    VJOIN1(first, target.point, lower, target.direction);
+    VJOIN1(second, target.point, upper, target.direction);
+    const size_t before = samples.size();
+    ray_audit_add_chord(samples, first, second, pair_index, target.kind,
+	target.face_index, target.edge_index);
+    return samples.size() != before;
+}
+
+static void
+ray_audit_add_feature_target(std::vector<ray_audit_feature_target> &targets,
+    const ON_3dPoint &point, const ON_3dVector &direction,
+    ray_audit_sample_kind kind, int face_index, int edge_index)
+{
+    ON_3dVector unit = direction;
+    if (!point.IsValid() || !unit.IsValid() || !unit.Unitize())
+	return;
+    ray_audit_feature_target target;
+    VSET(target.point, point.x, point.y, point.z);
+    VSET(target.direction, unit.x, unit.y, unit.z);
+    target.kind = kind;
+    target.face_index = face_index;
+    target.edge_index = edge_index;
+    targets.push_back(target);
+}
+
+static void
+ray_audit_select_feature_targets(
+    std::vector<ray_audit_feature_target> &selected,
+    const std::vector<ray_audit_feature_target> &available, size_t count)
+{
+    if (!count || available.empty())
+	return;
+    count = std::min(count, available.size());
+    selected.reserve(selected.size() + count);
+    for (size_t i = 0; i < count; ++i) {
+	const size_t index = std::min(available.size() - 1,
+	    ((2 * i + 1) * available.size()) / (2 * count));
+	selected.push_back(available[index]);
+    }
+}
+
+static size_t
+ray_audit_add_feature_samples(std::vector<ray_audit_sample> &samples,
+    const ON_Brep &brep, const point_t bmin, const point_t bmax,
+    size_t requested_count, double minimum_radius)
+{
+    if (!requested_count)
+	return 0;
+    std::vector<ray_audit_feature_target> face_targets;
+    std::vector<ray_audit_feature_target> edge_normal_targets;
+    std::vector<ray_audit_feature_target> edge_graze_targets;
+
+    for (int face_index = 0; face_index < brep.m_F.Count(); ++face_index) {
+	const ON_BrepFace &face = brep.m_F[face_index];
+	const ON_Surface *surface = face.SurfaceOf();
+	if (!surface)
+	    continue;
+	const ON_Interval u = surface->Domain(0);
+	const ON_Interval v = surface->Domain(1);
+	if (!u.IsIncreasing() || !v.IsIncreasing())
+	    continue;
+	ON_3dPoint point;
+	ON_3dVector normal;
+	if (!surface_EvNormal(surface, u.Mid(), v.Mid(), point, normal))
+	    continue;
+	if (face.m_bRev)
+	    normal.Reverse();
+	ray_audit_add_feature_target(face_targets, point, normal,
+	    RAY_AUDIT_FACE_NORMAL_CHORD, face_index, -1);
+    }
+
+    for (int edge_index = 0; edge_index < brep.m_E.Count(); ++edge_index) {
+	const ON_BrepEdge &edge = brep.m_E[edge_index];
+	for (int trim_slot = 0; trim_slot < edge.m_ti.Count(); ++trim_slot) {
+	    const int trim_index = edge.m_ti[trim_slot];
+	    if (trim_index < 0 || trim_index >= brep.m_T.Count())
+		continue;
+	    const ON_BrepTrim &trim = brep.m_T[trim_index];
+	    const ON_Surface *surface = trim.SurfaceOf();
+	    const ON_Interval domain = trim.Domain();
+	    const int face_index = trim.FaceIndexOf();
+	    if (!surface || !domain.IsIncreasing() || face_index < 0 ||
+		    face_index >= brep.m_F.Count())
+		continue;
+	    ON_3dPoint uv;
+	    ON_3dVector uv_tangent;
+	    ON_3dPoint point;
+	    ON_3dVector du;
+	    ON_3dVector dv;
+	    if (!trim.Ev1Der(domain.Mid(), uv, uv_tangent) ||
+		    !surface->Ev1Der(uv.x, uv.y, point, du, dv))
+		continue;
+	    ON_3dVector tangent = uv_tangent.x * du + uv_tangent.y * dv;
+	    ON_3dVector normal = ON_CrossProduct(du, dv);
+	    if (!tangent.Unitize() || !normal.Unitize())
+		continue;
+	    if (brep.m_F[face_index].m_bRev)
+		normal.Reverse();
+	    const ON_3dVector conormal = ON_CrossProduct(normal, tangent);
+	    ray_audit_add_feature_target(edge_normal_targets, point, normal,
+		RAY_AUDIT_EDGE_NORMAL_CHORD, face_index, edge_index);
+	    ray_audit_add_feature_target(edge_graze_targets, point, conormal,
+		RAY_AUDIT_EDGE_GRAZE_CHORD, face_index, edge_index);
+	    break;
+	}
+    }
+
+    const std::vector<ray_audit_feature_target> *categories[] = {
+	&face_targets, &edge_normal_targets, &edge_graze_targets
+    };
+    size_t quotas[3] = {};
+    size_t assigned = 0;
+    while (assigned < requested_count) {
+	bool advanced = false;
+	for (size_t category = 0; category < 3 && assigned < requested_count;
+		category++) {
+	    if (quotas[category] >= categories[category]->size())
+		continue;
+	    quotas[category]++;
+	    assigned++;
+	    advanced = true;
+	}
+	if (!advanced)
+	    break;
+    }
+    std::vector<ray_audit_feature_target> selected;
+    for (size_t category = 0; category < 3; ++category)
+	ray_audit_select_feature_targets(selected, *categories[category],
+	    quotas[category]);
+
+    point_t center;
+    vect_t diagonal;
+    VADD2SCALE(center, bmin, bmax, 0.5);
+    VSUB2(diagonal, bmax, bmin);
+    const double radius = std::max(0.55 * MAGNITUDE(diagonal),
+	minimum_radius);
+    size_t pair_index = samples.size() / 2;
+    const size_t before = samples.size();
+    for (size_t i = 0; i < selected.size(); ++i)
+	if (ray_audit_add_feature_chord(samples, selected[i], center, radius,
+		pair_index))
+	    pair_index++;
+    return (samples.size() - before) / 2;
 }
 
 static double
@@ -1148,7 +1953,7 @@ ray_audit_distance_tolerance(const ray_audit_sample &sample,
 static ray_audit_shot
 ray_audit_shoot(audit_prepared_brep &prepared,
     const ray_audit_sample &sample, const struct bn_tol *tol,
-    struct rt_brep_shot_trace *trace)
+    struct rt_brep_shot_trace *trace, bool legacy_only)
 {
     ray_audit_shot result;
     struct application ap;
@@ -1162,10 +1967,41 @@ ray_audit_shoot(audit_prepared_brep &prepared,
     VMOVE(ray.r_dir, sample.direction);
     ray.magic = RT_RAY_MAGIC;
     BU_LIST_INIT(&seghead.l);
-    result.hit_count = _rt_brep_shot_trace(prepared.stp, &ray, &ap,
-	&seghead, trace);
+    result.hit_count = legacy_only ?
+	_rt_brep_shot_legacy_trace(prepared.stp, &ray, &ap, &seghead, trace) :
+	_rt_brep_shot_trace(prepared.stp, &ray, &ap, &seghead, trace);
     result.prepared_selected = trace->prepared_production_selected == 1;
     result.fallback = trace->prepared_production_fallback;
+    result.intersected_leaves = trace->intersected_leaves;
+    result.solver_calls = trace->solver_calls;
+    result.stored_roots = trace->stored_roots;
+    result.root_overflow = trace->root_overflow;
+    result.raw_hits = trace->raw_hits;
+    result.after_near_miss = trace->after_near_miss;
+    result.after_near_hit = trace->after_near_hit;
+    result.after_grazing = trace->after_grazing;
+    result.after_duplicates = trace->after_duplicates;
+    result.after_direction_cleanup = trace->after_direction_cleanup;
+    result.final_hits = trace->final_hits;
+    result.fixed_after_near_miss = trace->fixed_after_near_miss;
+    result.fixed_after_near_hit = trace->fixed_after_near_hit;
+    result.fixed_after_grazing = trace->fixed_after_grazing;
+    result.fixed_after_duplicates = trace->fixed_after_duplicates;
+    result.fixed_after_direction_cleanup =
+	trace->fixed_after_direction_cleanup;
+    result.fixed_cleanup_mismatches = trace->fixed_cleanup_mismatches;
+    result.trim_equivalence_mismatches = trace->trim_equivalence_mismatches;
+    result.face_trim_status_mismatches =
+	trace->face_trim_status_mismatches;
+    result.face_trim_hit_class_mismatches =
+	trace->face_trim_hit_class_mismatches;
+    result.face_trim_adjacency_mismatches =
+	trace->face_trim_adjacency_mismatches;
+    result.face_trim_equivalence_mismatches =
+	trace->face_trim_equivalence_mismatches;
+    result.roots.assign(trace->roots,
+	trace->roots + std::min(trace->stored_roots,
+	    (size_t)RT_BREP_TRACE_MAX_ROOTS));
 
     struct seg *segp;
     for (BU_LIST_FOR(segp, seg, &seghead.l)) {
@@ -1205,6 +2041,8 @@ ray_audit_shoot(audit_prepared_brep &prepared,
 		!std::isfinite(interval.out_dist) ||
 		!std::isfinite(interval.in_normal_dot) ||
 		!std::isfinite(interval.out_normal_dot) ||
+		interval.in_normal_dot > 1.0e-8 ||
+		interval.out_normal_dot < -1.0e-8 ||
 		interval.in_dist > interval.out_dist + distance_tolerance ||
 		(i && interval.in_dist <
 		    result.intervals[i - 1].out_dist - distance_tolerance))
@@ -1268,7 +2106,8 @@ ray_audit_accumulate(ray_audit_telemetry &total,
 
 static ray_audit_depth_run
 ray_audit_run_depth(struct db_i *dbip, struct directory *dp, int depth,
-    const struct bn_tol *tol, const std::vector<ray_audit_sample> &samples)
+    const struct bn_tol *tol, const std::vector<ray_audit_sample> &samples,
+    bool legacy_only)
 {
     ray_audit_depth_run run;
     audit_prepared_brep prepared;
@@ -1280,7 +2119,7 @@ ray_audit_run_depth(struct db_i *dbip, struct directory *dp, int depth,
 	    "brep ray audit trace");
     for (size_t i = 0; i < samples.size(); ++i) {
 	ray_audit_shot shot = ray_audit_shoot(prepared, samples[i], tol,
-	    trace);
+	    trace, legacy_only);
 	ray_audit_accumulate(run.telemetry, shot, *trace);
 	run.shots.push_back(shot);
     }
@@ -1358,12 +2197,15 @@ ray_audit_compare(const std::vector<ray_audit_sample> &samples,
     for (size_t i = 0; i < count; ++i) {
 	result.candidate_invalid_rays += candidate.shots[i].valid ? 0 : 1;
 	result.reference_invalid_rays += reference.shots[i].valid ? 0 : 1;
+	const size_t face_differences_before = result.face_differences;
 	if (!ray_audit_shots_equivalent(samples[i], candidate.shots[i],
 		reference.shots[i], tol, result.maximum_distance_delta,
 		result.face_differences)) {
 	    result.differing_rays++;
 	    ray_audit_store_example(result.differing_ray_indices, i);
 	}
+	if (result.face_differences != face_differences_before)
+	    ray_audit_store_example(result.face_difference_ray_indices, i);
 	if (candidate.shots[i].prepared_selected !=
 		reference.shots[i].prepared_selected ||
 		candidate.shots[i].fallback != reference.shots[i].fallback)
@@ -1470,7 +2312,8 @@ print_ray_audit_indices(const std::vector<size_t> &indices)
 }
 
 static void
-print_ray_audit_shot(const ray_audit_shot &shot)
+print_ray_audit_shot(const ray_audit_shot &shot,
+    const std::vector<int> &face_components)
 {
     std::cout << "{\"valid\":" << (shot.valid ? "true" : "false")
 	<< ",\"hit_count\":" << shot.hit_count
@@ -1478,6 +2321,55 @@ print_ray_audit_shot(const ray_audit_shot &shot)
 	<< (shot.prepared_selected ? "true" : "false")
 	<< ",\"fallback\":" << json_quote(
 	    ray_audit_fallback_name(shot.fallback))
+	<< ",\"intersected_leaves\":" << shot.intersected_leaves
+	<< ",\"solver_calls\":" << shot.solver_calls
+	<< ",\"cleanup\":{\"raw\":" << shot.raw_hits
+	<< ",\"after_near_miss\":" << shot.after_near_miss
+	<< ",\"after_near_hit\":" << shot.after_near_hit
+	<< ",\"after_grazing\":" << shot.after_grazing
+	<< ",\"after_duplicates\":" << shot.after_duplicates
+	<< ",\"after_direction\":" << shot.after_direction_cleanup
+	<< ",\"final\":" << shot.final_hits << "}"
+	<< ",\"fixed_cleanup\":{\"after_near_miss\":"
+	<< shot.fixed_after_near_miss
+	<< ",\"after_near_hit\":" << shot.fixed_after_near_hit
+	<< ",\"after_grazing\":" << shot.fixed_after_grazing
+	<< ",\"after_duplicates\":" << shot.fixed_after_duplicates
+	<< ",\"after_direction\":" << shot.fixed_after_direction_cleanup
+	<< ",\"mismatches\":" << shot.fixed_cleanup_mismatches << "}"
+	<< ",\"trim_equivalence\":{\"leaf_allocating\":"
+	<< shot.trim_equivalence_mismatches
+	<< ",\"face_status\":" << shot.face_trim_status_mismatches
+	<< ",\"face_class\":" << shot.face_trim_hit_class_mismatches
+	<< ",\"face_adjacency\":"
+	<< shot.face_trim_adjacency_mismatches
+	<< ",\"face_total\":" << shot.face_trim_equivalence_mismatches
+	<< "}"
+	<< ",\"root_overflow\":" << shot.root_overflow
+	<< ",\"roots\":[";
+    for (size_t i = 0; i < shot.roots.size(); ++i) {
+	const struct rt_brep_trace_root &root = shot.roots[i];
+	if (i)
+	    std::cout << ",";
+	std::cout << "{\"dist\":" << root.dist
+	    << ",\"face\":" << root.face_index
+	    << ",\"component\":" << (root.face_index >= 0 &&
+		(size_t)root.face_index < face_components.size() ?
+		face_components[root.face_index] : -1)
+	    << ",\"uv\":[" << root.uv[0] << "," << root.uv[1] << "]"
+	    << ",\"normal_dot\":" << root.normal_dot
+	    << ",\"trim_status\":" << root.trim_status
+	    << ",\"trim_distance\":" << root.trim_distance
+	    << ",\"trim_candidates\":" << root.trim_candidates
+	    << ",\"hit_class\":" << root.hit_class
+	    << ",\"face_trim_status\":" << root.face_trim_status
+	    << ",\"face_trim_distance\":" << root.face_trim_distance
+	    << ",\"face_trim_candidates\":" << root.face_trim_candidates
+	    << ",\"face_hit_class\":" << root.face_hit_class
+	    << ",\"direction\":" << root.direction
+	    << ",\"adjacent_face\":" << root.adjacent_face_index << "}";
+    }
+    std::cout << "],\"stored_roots\":" << shot.stored_roots
 	<< ",\"intervals\":[";
     for (size_t i = 0; i < shot.intervals.size(); ++i) {
 	if (i)
@@ -1498,11 +2390,21 @@ print_ray_audit_failure_records(
     const std::vector<ray_audit_sample> &samples,
     const ray_audit_depth_run &candidate,
     const ray_audit_depth_run &reference,
-    const ray_audit_comparison &comparison)
+    const ray_audit_comparison &comparison,
+    const std::vector<int> &face_components)
 {
     std::vector<size_t> pairs;
-    for (size_t i = 0; i < comparison.differing_ray_indices.size(); ++i)
-	pairs.push_back(comparison.differing_ray_indices[i] / 2);
+    for (size_t i = 0; i < comparison.differing_ray_indices.size(); ++i) {
+	const size_t ray_index = comparison.differing_ray_indices[i];
+	if (ray_index < samples.size())
+	    pairs.push_back(samples[ray_index].pair_index);
+    }
+    for (size_t i = 0; i < comparison.face_difference_ray_indices.size();
+	    ++i) {
+	const size_t ray_index = comparison.face_difference_ray_indices[i];
+	if (ray_index < samples.size())
+	    pairs.push_back(samples[ray_index].pair_index);
+    }
     pairs.insert(pairs.end(), comparison.candidate_reversal_indices.begin(),
 	comparison.candidate_reversal_indices.end());
     pairs.insert(pairs.end(), comparison.reference_reversal_indices.begin(),
@@ -1515,15 +2417,31 @@ print_ray_audit_failure_records(
     for (size_t record_index = 0; record_index < pairs.size();
 	    ++record_index) {
 	const size_t pair = pairs[record_index];
-	const size_t forward = 2 * pair;
-	const size_t reverse = forward + 1;
-	if (forward >= samples.size() ||
+	size_t forward = SIZE_MAX;
+	size_t reverse = SIZE_MAX;
+	for (size_t sample_index = 0; sample_index < samples.size();
+		sample_index++) {
+	    if (samples[sample_index].pair_index != pair)
+		continue;
+	    if (samples[sample_index].reverse)
+		reverse = sample_index;
+	    else
+		forward = sample_index;
+	}
+	if (forward == SIZE_MAX || reverse == SIZE_MAX ||
+		forward >= samples.size() ||
+		forward >= candidate.shots.size() ||
 		reverse >= candidate.shots.size() ||
+		forward >= reference.shots.size() ||
 		reverse >= reference.shots.size())
 	    continue;
 	if (record_index)
 	    std::cout << ",";
 	std::cout << "{\"pair_index\":" << pair
+	    << ",\"sample_kind\":"
+	    << json_quote(ray_audit_sample_kind_name(samples[forward].kind))
+	    << ",\"target_face\":" << samples[forward].face_index
+	    << ",\"target_edge\":" << samples[forward].edge_index
 	    << ",\"forward_ray_index\":" << forward
 	    << ",\"reverse_ray_index\":" << reverse
 	    << ",\"origin\":[" << samples[forward].origin[X] << ","
@@ -1534,22 +2452,69 @@ print_ray_audit_failure_records(
 	    << samples[forward].direction[Z] << "]"
 	    << ",\"chord_length\":" << samples[forward].chord_length
 	    << ",\"candidate_forward\":";
-	print_ray_audit_shot(candidate.shots[forward]);
+	print_ray_audit_shot(candidate.shots[forward], face_components);
 	std::cout << ",\"candidate_reverse\":";
-	print_ray_audit_shot(candidate.shots[reverse]);
+	print_ray_audit_shot(candidate.shots[reverse], face_components);
 	std::cout << ",\"reference_forward\":";
-	print_ray_audit_shot(reference.shots[forward]);
+	print_ray_audit_shot(reference.shots[forward], face_components);
 	std::cout << ",\"reference_reverse\":";
-	print_ray_audit_shot(reference.shots[reverse]);
+	print_ray_audit_shot(reference.shots[reverse], face_components);
 	std::cout << "}";
     }
     std::cout << "]";
 }
 
+static std::vector<int>
+ray_audit_face_components(const ON_Brep &brep, size_t &component_count)
+{
+    const size_t face_count = (size_t)brep.m_F.Count();
+    std::vector<std::vector<int> > adjacency(face_count);
+    for (int edge_index = 0; edge_index < brep.m_E.Count(); ++edge_index) {
+	const ON_BrepEdge &edge = brep.m_E[edge_index];
+	std::vector<int> faces;
+	for (int trim_slot = 0; trim_slot < edge.m_ti.Count(); ++trim_slot) {
+	    const int trim_index = edge.m_ti[trim_slot];
+	    if (trim_index < 0 || trim_index >= brep.m_T.Count())
+		continue;
+	    const int face_index = brep.m_T[trim_index].FaceIndexOf();
+	    if (face_index >= 0 && (size_t)face_index < face_count &&
+		    std::find(faces.begin(), faces.end(), face_index) ==
+			faces.end())
+		faces.push_back(face_index);
+	}
+	for (size_t first = 0; first < faces.size(); ++first)
+	    for (size_t second = first + 1; second < faces.size(); ++second) {
+		adjacency[faces[first]].push_back(faces[second]);
+		adjacency[faces[second]].push_back(faces[first]);
+	    }
+    }
+    std::vector<int> components(face_count, -1);
+    component_count = 0;
+    for (size_t seed = 0; seed < face_count; ++seed) {
+	if (components[seed] >= 0)
+	    continue;
+	std::vector<size_t> pending(1, seed);
+	components[seed] = (int)component_count;
+	for (size_t next = 0; next < pending.size(); ++next) {
+	    const size_t face = pending[next];
+	    for (size_t i = 0; i < adjacency[face].size(); ++i) {
+		const size_t neighbor = (size_t)adjacency[face][i];
+		if (components[neighbor] >= 0)
+		    continue;
+		components[neighbor] = (int)component_count;
+		pending.push_back(neighbor);
+	    }
+	}
+	component_count++;
+    }
+    return components;
+}
+
 static int
 ray_depth_compare(struct db_i *dbip, const char *db_path,
     struct directory *dp, int candidate_depth, int reference_depth,
-    size_t random_chords)
+    size_t random_chords, size_t feature_chords, long selected_pair,
+    bool legacy_only)
 {
     struct rt_db_internal intern;
     bool solid = false;
@@ -1557,35 +2522,57 @@ ray_depth_compare(struct db_i *dbip, const char *db_path,
     point_t bmin = VINIT_ZERO;
     point_t bmax = VINIT_ZERO;
     bool have_bbox = false;
+    size_t component_count = 0;
+    std::vector<int> face_components;
+    struct bn_tol tol = BN_TOL_INIT_TOL;
+    std::vector<ray_audit_sample> samples;
+    const size_t generated_random_chords = selected_pair >= 3 &&
+	!feature_chords ? std::max(random_chords,
+	    (size_t)selected_pair - 2) : random_chords;
     if (load_brep(dbip, dp, &intern) == BRLCAD_OK) {
 	struct rt_brep_internal *bi =
 	    (struct rt_brep_internal *)intern.idb_ptr;
 	RT_BREP_CK_MAGIC(bi);
 	face_count = bi->brep->m_F.Count();
 	solid = bi->brep->IsSolid();
+	face_components = ray_audit_face_components(*bi->brep,
+	    component_count);
 	const ON_BoundingBox bbox = bi->brep->BoundingBox();
 	if (bbox.IsValid()) {
 	    VMOVE(bmin, bbox.m_min);
 	    VMOVE(bmax, bbox.m_max);
 	    have_bbox = true;
 	}
+	if (have_bbox && solid) {
+	    samples = ray_audit_samples(bmin, bmax,
+		generated_random_chords,
+		std::max(100.0 * tol.dist, 1.0e-6));
+	    (void)ray_audit_add_feature_samples(samples, *bi->brep, bmin,
+		bmax, feature_chords,
+		std::max(100.0 * tol.dist, 1.0e-6));
+	}
 	rt_db_free_internal(&intern);
     }
-    struct bn_tol tol = BN_TOL_INIT_TOL;
-    const std::vector<ray_audit_sample> samples = have_bbox && solid ?
-	ray_audit_samples(bmin, bmax, random_chords,
-	    std::max(100.0 * tol.dist, 1.0e-6)) :
-	std::vector<ray_audit_sample>();
+    if (selected_pair >= 0)
+	samples.erase(std::remove_if(samples.begin(), samples.end(),
+	    [selected_pair](const ray_audit_sample &sample) {
+		return sample.pair_index != (size_t)selected_pair;
+	    }), samples.end());
+    size_t sample_kind_pairs[5] = {};
+    for (size_t i = 0; i < samples.size(); ++i)
+	if (!samples[i].reverse && samples[i].kind >= RAY_AUDIT_AXIS_CHORD &&
+		samples[i].kind <= RAY_AUDIT_EDGE_GRAZE_CHORD)
+	    sample_kind_pairs[samples[i].kind]++;
     ray_audit_depth_run reference;
     ray_audit_depth_run candidate;
     if (!samples.empty()) {
 	/* Direct primitive prep is deliberate: the persistent prep-cache key
 	 * does not currently encode an explicitly requested adaptive depth. */
 	reference = ray_audit_run_depth(dbip, dp, reference_depth, &tol,
-	    samples);
+	    samples, legacy_only);
 	if (reference.prep.ret == BRLCAD_OK)
 	    candidate = ray_audit_run_depth(dbip, dp, candidate_depth, &tol,
-		samples);
+		samples, legacy_only);
     }
     const ray_audit_comparison comparison =
 	(candidate.prep.ret == BRLCAD_OK && reference.prep.ret == BRLCAD_OK) ?
@@ -1609,13 +2596,32 @@ ray_depth_compare(struct db_i *dbip, const char *db_path,
 	<< ",\"status\":" << json_quote(status)
 	<< ",\"solid\":" << (solid ? "true" : "false")
 	<< ",\"faces\":" << face_count
+	<< ",\"face_components\":" << component_count
 	<< ",\"tolerance\":{\"distance\":" << tol.dist
 	<< ",\"distance_squared\":" << tol.dist_sq
 	<< ",\"perpendicular\":" << tol.perp
 	<< ",\"parallel\":" << tol.para << "}"
+	<< ",\"trace_mode\":" << json_quote(legacy_only ?
+	    "legacy_only" : "prepared_and_legacy")
 	<< ",\"sampling\":{\"seed\":\"0x9e3779b97f4a7c15\""
-	<< ",\"axis_chord_pairs\":3,\"random_chord_pairs\":"
-	<< random_chords << ",\"total_chord_pairs\":"
+	<< ",\"selected_pair_index\":" << selected_pair
+	<< ",\"requested_random_chord_pairs\":" << random_chords
+	<< ",\"requested_feature_chord_pairs\":" << feature_chords
+	<< ",\"axis_chord_pairs\":"
+	<< sample_kind_pairs[RAY_AUDIT_AXIS_CHORD]
+	<< ",\"random_chord_pairs\":"
+	<< sample_kind_pairs[RAY_AUDIT_RANDOM_CHORD]
+	<< ",\"face_normal_chord_pairs\":"
+	<< sample_kind_pairs[RAY_AUDIT_FACE_NORMAL_CHORD]
+	<< ",\"edge_normal_chord_pairs\":"
+	<< sample_kind_pairs[RAY_AUDIT_EDGE_NORMAL_CHORD]
+	<< ",\"edge_graze_chord_pairs\":"
+	<< sample_kind_pairs[RAY_AUDIT_EDGE_GRAZE_CHORD]
+	<< ",\"feature_chord_pairs\":"
+	<< (sample_kind_pairs[RAY_AUDIT_FACE_NORMAL_CHORD] +
+	    sample_kind_pairs[RAY_AUDIT_EDGE_NORMAL_CHORD] +
+	    sample_kind_pairs[RAY_AUDIT_EDGE_GRAZE_CHORD])
+	<< ",\"total_chord_pairs\":"
 	<< samples.size() / 2 << ",\"rays\":" << samples.size() << "}"
 	<< ",\"reference\":{\"prep\":";
     print_ray_audit_prep(reference.prep);
@@ -1638,6 +2644,9 @@ ray_depth_compare(struct db_i *dbip, const char *db_path,
 	<< ",\"disposition_differences\":"
 	<< comparison.disposition_differences
 	<< ",\"face_differences\":" << comparison.face_differences
+	<< ",\"face_difference_ray_indices\":";
+    print_ray_audit_indices(comparison.face_difference_ray_indices);
+    std::cout
 	<< ",\"maximum_distance_delta\":"
 	<< comparison.maximum_distance_delta
 	<< ",\"differing_ray_indices\":";
@@ -1646,10 +2655,17 @@ ray_depth_compare(struct db_i *dbip, const char *db_path,
     print_ray_audit_indices(comparison.candidate_reversal_indices);
     std::cout << ",\"reference_reversal_pair_indices\":";
     print_ray_audit_indices(comparison.reference_reversal_indices);
-	std::cout << ",\"failure_records\":";
+    std::cout << ",\"failure_records\":";
     print_ray_audit_failure_records(samples, candidate, reference,
-	comparison);
-    std::cout << "},\"process_peak_rss_bytes\":" << peak_rss_bytes()
+	comparison, face_components);
+    std::cout << "},\"selected_pair_records\":";
+    ray_audit_comparison selected_record;
+    if (selected_pair >= 0)
+	selected_record.candidate_reversal_indices.push_back(
+	    (size_t)selected_pair);
+    print_ray_audit_failure_records(samples, candidate, reference,
+	selected_record, face_components);
+    std::cout << ",\"process_peak_rss_bytes\":" << peak_rss_bytes()
 	<< "}\n";
     return pass ? 0 : 1;
 }
@@ -3992,11 +5008,15 @@ main(int argc, const char **argv)
     long image_size = 1024;
     const char *batch_object_file = NULL;
     const char *mode_name = "both";
-    struct bu_opt_desc d[54];
+    struct bu_opt_desc d[58];
     long surface_tree_depth = BREP_MAX_FT_DEPTH;
     long candidate_depth = 3;
     long reference_depth = RT_BREP_DEFAULT_SURFACE_TREE_DEPTH;
     long ray_count = 64;
+    long feature_ray_count = 0;
+    long ray_pair = -1;
+    int legacy_only = 0;
+    const char *trim_query_arg = NULL;
     BU_OPT(d[0], "h", "help", "", NULL, &print_help, "Print help and exit");
     BU_OPT(d[1], "l", "list", "", NULL, &list_only, "List BRep primitive names");
     BU_OPT(d[2], "", "ratio-min", "#", &bu_opt_fastf_t, &ratio_min, "Minimum acceptable generated/reference dimension ratio");
@@ -4107,16 +5127,32 @@ main(int argc, const char **argv)
 	&reference_depth, "Reference adaptive SurfaceTree depth");
     BU_OPT(d[52], "", "ray-count", "#", &bu_opt_long, &ray_count,
 	"Deterministic random chord pairs (three axis pairs are added)");
-    BU_OPT_NULL(d[53]);
+    BU_OPT(d[53], "", "ray-pair", "#", &bu_opt_long, &ray_pair,
+	"Shoot only one deterministic chord pair by global index");
+    BU_OPT(d[54], "", "legacy-only", "", NULL, &legacy_only,
+	"Skip prepared solving while tracing the legacy SurfaceTree path");
+    BU_OPT(d[55], "", "trim-query", "face,u,v", &bu_opt_str,
+	&trim_query_arg,
+	"Compare production and sampled-polygon trim classification");
+    BU_OPT(d[56], "", "feature-ray-count", "#", &bu_opt_long,
+	&feature_ray_count,
+	"Deterministic face-normal, edge-normal, and edge-grazing chord pairs");
+    BU_OPT_NULL(d[57]);
     int ac = bu_opt_parse(NULL, argc, argv, d);
+    trim_query_spec parsed_trim_query;
+    const bool trim_query_only = trim_query_arg != NULL;
+    const bool trim_query_valid = !trim_query_only ||
+	parse_trim_query(trim_query_arg, parsed_trim_query);
     const char *usage =
 	"Usage: brep-audit [options] "
 	"[--list|--batch|--prep-only|--surface-trees-only|"
-	"--surface-trees-all|--ray-depth-compare] file.g [brep]\n";
+	"--surface-trees-all|--ray-depth-compare|"
+	"--trim-query face,u,v] file.g [brep]\n";
     const int exclusive_modes = (list_only ? 1 : 0) + (batch ? 1 : 0) +
 	(prep_only ? 1 : 0) + (surface_trees_only ? 1 : 0) +
-	(surface_trees_all ? 1 : 0) + (ray_depth_compare_only ? 1 : 0);
-    if (print_help || exclusive_modes > 1 ||
+	(surface_trees_all ? 1 : 0) + (ray_depth_compare_only ? 1 : 0) +
+	(trim_query_only ? 1 : 0);
+    if (print_help || exclusive_modes > 1 || !trim_query_valid ||
 	    ((list_only || batch || surface_trees_all) && ac != 1) ||
 	    (!list_only && !batch && !surface_trees_all && ac != 2) ||
 	    ratio_min <= 0.0 || ratio_max < ratio_min || tess_abs < 0.0 ||
@@ -4129,10 +5165,13 @@ main(int argc, const char **argv)
 	    candidate_depth < 0 || candidate_depth > BREP_MAX_FT_DEPTH ||
 	    reference_depth < 0 || reference_depth > BREP_MAX_FT_DEPTH ||
 	    ray_count < 0 || ray_count > 1000000 ||
+	    feature_ray_count < 0 || feature_ray_count > 1000000 ||
+	    ray_pair < -1 || ray_pair > 1000002 ||
 	    (!ray_depth_compare_only &&
 	     (candidate_depth != 3 ||
 	      reference_depth != RT_BREP_DEFAULT_SURFACE_TREE_DEPTH ||
-	      ray_count != 64)) ||
+	      ray_count != 64 || feature_ray_count != 0 ||
+	      ray_pair != -1 || legacy_only)) ||
 	    jobs < 0 || max_time_ms < 0 || max_result_mib < 0 ||
 	    max_working_mib < 0 ||
 	    max_points < 0 || max_triangles < 0 ||
@@ -4318,7 +5357,14 @@ main(int argc, const char **argv)
 
     if (ray_depth_compare_only) {
 	const int ret = ray_depth_compare(dbip, argv[0], dp,
-	    (int)candidate_depth, (int)reference_depth, (size_t)ray_count);
+	    (int)candidate_depth, (int)reference_depth, (size_t)ray_count,
+	    (size_t)feature_ray_count, ray_pair, legacy_only != 0);
+	db_close(dbip);
+	return ret;
+    }
+
+    if (trim_query_only) {
+	const int ret = trim_query(dbip, argv[0], dp, parsed_trim_query);
 	db_close(dbip);
 	return ret;
     }
