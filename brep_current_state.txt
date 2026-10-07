@@ -1,7 +1,7 @@
 BREP RAYTRACE IMPLEMENTATION CURRENT STATE
 ==========================================
 
-Last updated: 2026-08-07
+Last updated: 2026-08-08
 Repository: .
 Implementation specification: brep_raytrace_plan.txt
 Active objective: Implement the complete specification, preserving this file
@@ -26,8 +26,9 @@ now supplies both the legacy unsewn patch set and a closed 8-vertex/12-edge
 solid; the pristine sewn form matches the implicit sphere on its first 8,000
 shared lines.  An endpoint-preserving bowed support-seam sweep now calibrates
 actual 3D discrepancy and records grazing behavior across 416 directed rays.
-It has reproduced a below-tolerance crack leak without yet changing seam
-policy.  Fixed-capacity raw-shot tracing now distinguishes missing physical
+It retains 15 reproducible legacy one-event crack cases and now repairs all 15
+in production without closing any g > T, contact, or exterior case.  Fixed-
+capacity raw-shot tracing now distinguishes missing physical
 roots from trim rejection and legacy hit cleanup without changing production
 behavior.  Direct shared-edge observations also prove that every current
 below-envelope leak has eligible 3D evidence on the intended mated edge.
@@ -35,11 +36,45 @@ Compact positive-weight rational Bezier spans and conservative control-hull
 boxes for eligible edges are now prepared in both normal and cached prep.
 An observation-only cross-section classifier validates incident trim lifts and
 distinguishes material-side, contact, and exterior edge proximity.  A further
-shadow-only event classifier now identifies uniquely repairable unmatched
-solid hits from that evidence and is invariant under tested similarities.
+event classifier now identifies uniquely repairable unmatched solid hits from
+that evidence and is invariant under tested similarities.  Edge-sector,
+discrepancy, and continuation paths now resolve the corresponding incident
+trim parameter geometrically instead of assuming equal normalized parameter
+speed; an exact-locus Möbius trim-reparameterization fixture gates this
+representation invariance.
+Supported, visibly discrepant two-trim edges now also receive a prep-time
+shadow certificate for their geometric edge/lifted-trim Hausdorff gap.  It is
+knot-aware, adaptive, similarity-gated, and bounded by a solid-wide work
+budget.  Exact-looking, unsupported, and budget-exhausted records remain
+explicitly uncertified, and production seam authorization is unchanged.
+A prep-time open-edge correspondence screen now also withholds seam evidence
+when either lifted trim reverses direction or maps non-monotonically along its
+edge.  A bowed forward/backward/forward trim and convex exact/near vertex-fan
+rays permanently gate the explicit non-repair paths; general vertex-fan
+transition resolution is still unsupported.
 Exact-parameter positive-weight surface spans and conservative ray-plane
 coefficient exclusion are prepared, and a bounded adjacent-support
-continuation solve recovers the missing bowed-seam endpoints in shadow mode.
+continuation solve recovers the missing bowed-seam endpoints.
+Fixed-capacity de Casteljau subdivision now narrows ordinary span candidates
+to conservative UV and ray-t boxes while reporting all workspace limits.
+Bounded outside-span reparameterization now certifies the continuation root
+and assembles an oracle-matching material interval in production.
+Every retained ordinary surface box now also runs an allocation-free bounded
+local corrector.  Its shadow roots reproduce the resolved sphere grazing
+limit independently of SurfaceTree seeds and remain invariant across the
+existing similarity corpus.  A fixed preliminary same-face clustering stage
+now exposes ordered enter/leave/contact behavior without changing production
+events.
+Production trim classification now scans the prepared trim leaves directly;
+the former copied-list implementation remains trace-only as an exact
+equivalence oracle.  The full traced corpus hard-gates candidate counts,
+status, selected trim node, and distance.
+Production raw-hit collection, stable sorting, and all legacy cleanup stages
+now use a fixed 128-hit workspace.  Capacity overflow reruns the deterministic
+solve into the legacy list before cleanup or segment publication; trace mode
+keeps exact raw-order, per-stage, and final-event equivalence gates.
+Parallel BREP import, cache deserialization, and SurfaceTree construction now
+also pass the complete cache matrix under ThreadSanitizer without suppressions.
 Phase 0 baselines documented in brep_raytrace_plan.txt remain authoritative.
 
 
@@ -242,12 +277,12 @@ ESTABLISHED FINDINGS
     evaluates both surface lifts and oriented normals, projects loop-interior
     conormals into the edge cross-section, and selects the interior angular
     sector from the material side of both faces.  It rejects the sector unless
-    both lifts are within the declared edge tolerance.  A sharp convex ARB8
+    both lifts are within the then-effective edge tolerance.  A sharp convex ARB8
     edge, a 270-degree concave edge on a capped L extrusion, and a periodic
     same-face sphere seam now permanently check inside/contact/outside offsets
-    in both ray directions.  Across 200 tolerance-qualified target
-    observations in the bowed Cobb matrix, it classifies 116 inside, 32
-    contact, and 52 outside; all 15 current crack leaks have valid inside-
+    in both ray directions.  With the initial model/declared tolerance policy,
+    252 target observations in the bowed Cobb matrix qualify: 152 inside, 32
+    contact, and 68 outside; all 15 current crack leaks have valid inside-
     sector evidence.  Maximum target lift-discrepancy error is about
     2.51e-15 mm.  This remains trace-only.  General STEP use still needs
     stronger trim/edge parameter-correspondence qualification and vertex-fan
@@ -303,6 +338,381 @@ ESTABLISHED FINDINGS
     need explicit fallback and uniqueness proofs.  No synthetic hit is
     emitted.
 
+26. Tensor-product scalar Bernstein nets are sufficient for allocation-free
+    conservative root isolation on the ordinary [0,1]^2 surface span.  The
+    prepared homogeneous control points generate two ray-plane numerator nets
+    plus a ray-t numerator and positive weight net.  A depth-first stack keeps
+    only parameter boxes; fixed scratch arrays re-extract each subdomain with
+    de Casteljau restriction.  Orders above 16 make the face unsupported, the
+    pending stack is capped at 64, and depth is capped at 24.  Every capacity,
+    overflow, maximum depth, visited-box count, retained-box count, and stack
+    high-water mark is observable.  Retained UV boxes carry conservative ray-t
+    intervals from the rational convex hull.  Across the bowed Cobb matrix the
+    maximum is 226 visited boxes, six retained boxes, depth 24, and stack high-
+    water 24; every legacy Newton root lies in both a retained UV box and its
+    t interval.  The representative root is narrowed to duplicate
+    trim-boundary boxes with t about [19.90313,19.90660], far smaller than its
+    0.1897 mm analytic chord.  The ordinary sphere grazing sweep retains both
+    analytic roots down through one model tolerance and no one box covers both
+    roots once the chord is at least 10T.  Exact tangency retains a contact box
+    while production emits no interval.  On the miss side, only nine
+    floating-limit cases remain ambiguous and the largest clearance is about
+    2.27e-9 T; ambiguity beyond 1e-6 T is now forbidden.  Peak sphere work is
+    228 boxes, eight retained boxes, and stack high-water 25.  Similarity cases
+    preserve candidate, visited, and retained counts.  This still needs safe
+    coefficient treatment for the continuation's outside-span extension and
+    an adaptive termination/box corrector before it can replace dense trees.
+
+27. A bounded Bezier continuation interval can be handled without assuming
+    the rational convex-hull property survives arbitrary extrapolation.
+    Algebraic de Casteljau reparameterization maps the requested outside-span
+    rectangle back to [0,1]^2.  Its exact control-net operator infinity norm
+    is computed from transformed Bernstein basis vectors and used to amplify
+    all inherited coefficient error bounds.  The reparameterized weight hull
+    must remain positive beyond that error or the certificate fails.  The
+    normal fixed-capacity isolator then proves which UV/t boxes remain.  A
+    continuation is certified only when every retained box contains the
+    solved root cluster and none can also contain the existing root.  All 15
+    below-envelope leaks pass.  Maximum certificate work is 93 boxes, stack
+    high-water 20, and maximum retained t-cluster width about 5.15e-5 mm;
+    there are no positive-weight, workspace, trace-capacity, or existing-root
+    overlaps.  The certified transition pair assembles exactly one shadow
+    material segment for all 15 leaks, with both endpoints within 1e-7 mm of
+    the implicit sphere interval in both ray directions.  Normal segment
+    emission is still unchanged.  General activation remains blocked on
+    stronger trim/edge correspondence, declared/inferred tolerance policy,
+    non-isoparametric and vertex cases, stable shading endpoint provenance,
+    and conservative fallback integration.
+
+28. Edge tolerance metadata must not collapse unset, explicit zero, and a
+    positive declaration into one sentinel test.  Prep now records the ray
+    model tolerance, raw edge declaration, initial measured edge-to-both-trim-
+    lift discrepancy, effective envelope, inferred/declaration source, and an
+    explicit discrepancy-authorized bit.  The effective envelope is at least
+    rti_tol.dist; valid edge and endpoint-vertex declarations can enlarge it.
+    Explicit zero remains a declaration rather than being inferred.  An unset
+    edge tolerance is initially inferred from the larger of model tolerance
+    and sampled discrepancy.  The discrepancy must actually lie within the
+    envelope before edge boxes, sectors, closure, or continuation qualify.
+    A g=2T Cobb metadata matrix proves these outcomes: correct and double
+    declarations authorize visibly; unset is inferred and authorizes; zero
+    and half-discrepancy declarations remain under-authorized and do not even
+    select an expanded edge span.  Rotation, translation, 0.01x, and 10,000x
+    tests also preserve model tolerance, measured discrepancy, and
+    authorization after scaling.  The present prep measurement is a fixed
+    33-sample observation, deliberately reduced from an expensive 257-sample
+    diagnostic.  It is not a conservative discrepancy proof, so this policy
+    cannot by itself authorize general production closure.  The narrowly
+    promoted one-event resolver additionally requires both incident trim
+    lifts evaluated at the event's edge parameter to be within rti_tol.dist,
+    plus unique topology/sector evidence and a complete root certificate.
+    General edge-envelope policy still requires knot-aware adaptive bounds.
+    Cached prep now explicitly rebuilds both edge and surface derived records
+    using the active rti tolerance; the serialized cache remains version zero.
+
+29. A retained coefficient box can seed a mathematical surface root without
+    consulting the legacy SurfaceTree.  Trace mode maps a fixed deterministic
+    set consisting of the box center, four corners, and four edge midpoints
+    into its prepared rational Bezier span.  Each seed runs a fixed
+    24-iteration, line-searched corrector bounded by that box.  Projecting
+    Newton steps onto the box is necessary for roots on shared Bezier-span
+    boundaries; the residual test still prevents a projected boundary point
+    from becoming a false root.  Same-span results are deduplicated with a
+    scale-aware numerical t tolerance.  Attempts, failures, duplicates,
+    unique candidates, and capacity overflow are separately observable.  The
+    ordinary convergence target scales with the local support diagonal, while
+    a separate 32-epsilon world-coordinate floor admits only the cancellation
+    inherent in evaluating translated geometry.  The retained-box t check
+    uses the same scale-aware numerical allowance rather than a fixed model-
+    space constant.
+
+    On the analytic R=10 sphere, all 36 cases with chord at least T recover
+    two distinct local root clusters and both analytic endpoints within
+    8.56e-8 mm.  All 23 positive cases below T collapse to one contact-sized
+    cluster; exact tangency also forms one cluster and no material segment.
+    On the miss side, numerical contact candidates occur only within about
+    2.84e-10 T, tighter than the existing 1e-6 T ambiguity gate.  The complete
+    bowed Cobb matrix has no local root absent from the legacy candidate set.
+    Fourteen of the 15 below-envelope leaks expose one in-domain local cluster.
+    The remaining sub-tolerance boundary case has three: the valid entry, the
+    bowed-face crossing, and the exact seam-boundary crossing.  A center-only
+    solve had found only the first two; the alternate boundary seeds make the
+    third basin observable.  All 15 still require the separately certified
+    adjacent-support root to reproduce the implicit interval.  The machine
+    report records every local face, span, UV, t, residual, normal dot, and
+    iteration count plus per-ray attempt accounting.
+
+    Identity, rigid rotation/translation, translated 0.01x scale, and
+    translated 10,000x scale now gate the local corrector's failure count,
+    normalized regular-root positions, residuals, and physical contact-cluster
+    count alongside the edge-sector and closure classifier.  Raw numerical
+    representatives of an exactly singular contact may differ while still
+    forming the same one physical cluster.  This answers the similarity
+    question for the present controlled corpus: the classifier and bounded
+    local solve are invariant when all model-space tolerances scale with the
+    geometry.
+    Arbitrary nonuniform scaling is not a similarity and remains a separate
+    transformed-surface case.  These roots are still trace-only: production
+    traversal, trim/event classification, adaptive termination, and fallback
+    integration are not yet changed.
+
+30. Local mathematical roots now feed a first allocation-free clustering
+    stage rather than relying on test-side vectors alone.  A fixed insertion
+    sort orders at most 64 roots by t.  The initial compatibility rule joins
+    only roots on the same face whose t values are within 0.1 of the active
+    model distance tolerance; each cluster records its t and normal-dot range,
+    root count, entering/leaving/tangent observations, face, and preliminary
+    ENTER/LEAVE/CONTACT/UNRESOLVED class.  Capacity and the provisional
+    clustering tolerance are explicit trace fields.  This 0.1T value is a
+    shadow rollout policy, not the final ray-interval or minimum-valid-size
+    tolerance.
+
+    Every sphere case with analytic chord at least T now produces exactly two
+    ordered clusters, ENTER followed by LEAVE.  Exact tangency produces one
+    CONTACT cluster.  The classifier similarity matrix gates cluster counts;
+    exactly singular raw representative counts may change with floating
+    conditioning, but identity, rigid, 0.01x, and 10,000x cases all retain one
+    physical contact cluster.  The bowed leak matrix produces cluster-count
+    histogram 14/0/1 for one/two/three clusters.  Machine output includes each
+    cluster and exact attempt = unique + duplicate + failure accounting.
+
+    This is deliberately not the final topology resolver.  Cross-face roots
+    require shared-edge/same-surface-seam compatibility, trimmed candidates
+    require evidence-preserving classification, clusters need certified t
+    intervals rather than point-distance grouping, and minimum-segment policy
+    must remain separate.  No production event or segment is emitted from
+    these preliminary clusters.
+
+31. Surface-tree leaf discovery now has an allocation-free fixed-array
+    overload in shadow mode.  It traverses the existing prepared child vectors
+    in exactly the same depth-first order as the std::list overload, stores up
+    to 128 leaf pointers in caller-owned memory, continues counting after
+    capacity, and reports overflow explicitly.  Trace-mode shooting still
+    invokes the allocating traversal first and uses its list for the live
+    solver loop; the fixed traversal is compared by total count and pointer
+    order, so the list remains an automatic correctness fallback while the
+    shadow path is qualified.
+
+    Every traced sphere grazing/contact/miss ray, tolerance-metadata ray,
+    convex/concave/periodic sector ray, classifier similarity ray, and all 416
+    bowed-seam rays now hard-gate count equality, order equality, and absence
+    of overflow.  The ordinary sphere grazing sweep reaches 8 intersected
+    leaves, the bowed matrix reaches 12, and the translated/rotated 0.01x
+    similarity reaches 68.  The latter initially exhausted a 64-entry trial
+    capacity, demonstrating that geometric similarity does not imply an
+    invariant dense-tree leaf count even though the physical event classifier
+    remains invariant.  The retained 128-entry trace workspace is 1 KiB of
+    pointers on 64-bit systems and has explicit accounting; it is not a claim
+    that 128 is sufficient for arbitrary corpus models.
+
+    This shadow checkpoint removes allocation from leaf collection itself,
+    not from the complete production shot.  Hit lists, miss/trim cleanup, and
+    fallback/event integration still allocate.  Any live promotion must make
+    its capacity decision before partial solver or cleanup side effects.
+
+32. After the count/order shadow gate passed, production leaf discovery was
+    promoted to the 128-pointer fixed array.  Capacity is resolved before any
+    surface solver or hit-cleanup state is mutated.  A ray exceeding capacity
+    immediately rebuilds the legacy std::list and runs the unchanged solver
+    loop from that list; a bounded ray runs the solver in the already-proven
+    fixed-array order.  Trace mode deliberately builds both representations,
+    reports whether fallback was selected, and continues to gate their exact
+    equivalence.  All current trace fixtures take the bounded path, and the
+    focused cache, analytic, Cobb, and NURBS suite remains 13/13.  A separate
+    Debug build instrumented with AddressSanitizer and UndefinedBehavior-
+    Sanitizer also passes the complete rt_brep_ray corpus without a sanitizer
+    diagnostic.  LeakSanitizer cannot run under the host ptrace wrapper and is
+    explicitly not claimed by this gate.
+
+    This promotion removes dynamic allocation from production surface-tree
+    leaf collection for bounded rays.  It does not yet make BREP shooting
+    allocation-free: brep_hit and cleanup structures remain std::list based,
+    and an over-capacity leaf ray intentionally allocates in the safe legacy
+    fallback.  Root/event conversion must preserve the same rule: decide to
+    fall back before applying any partial cleanup or material-state change.
+
+33. ThreadSanitizer qualification of parallel cache prep exposed four real
+    publication races before it could validate SurfaceTree ownership.  The
+    libbu small-object heap raced on its process-global lazy atexit flag, and
+    bu_dir used a process-global scratch buffer even when callers supplied an
+    output buffer.  Heap registration is now serialized only when a per-CPU
+    size bin is initialized, and the legacy implicit bu_dir result buffer is
+    thread-local.  The ordinary bu_dir and heap tests pass.
+
+    openNURBS ONX_Model construction, archive reading/writing, and destruction
+    rebuild render-setting defaults through non-reentrant localtime().  All
+    ONX_Model lifetimes in the BREP primitive are now wrapped by the reserved
+    datetime semaphore.  This serializes BREP archive import/export, not
+    SurfaceTree construction or ray prep.  It can be narrowed or removed once
+    the external OpenNURBS implementation uses localtime_r/localtime_s.
+
+    More importantly, _rt_find_identical_solid published a soltab by setting
+    st_id before primitive prep or cache deserialization completed.  A second
+    tree-walk worker could therefore consume st_specific while
+    rt_brep_prep_serialize was still assigning it.  soltab now has an explicit
+    prep-complete publication flag protected by the same directory-hash
+    semaphore used for identical-solid lookup.  Matching workers wait without
+    holding the semaphore, and success or failure publishes all primitive
+    pointers, bounds, and path state before reuse.  The hierarchy fixture also
+    exposed the documented race caused by incrementing directory d_uses under
+    different region and solid locks; both uses now share the directory-hash
+    semaphore without nested lock ordering.
+
+    The normal focused suite remains 13/13, the ASan/UBSan focused suite is
+    12/12 with leak detection disabled for the host ptrace limitation, and all
+    seven serial/parallel cache tests pass under ThreadSanitizer with
+    halt_on_error=1 and no suppression file.  This is the first direct race
+    qualification of the repaired per-BREP SurfaceTree and CurveTree ownership
+    path; it does not prove unrelated librt operations outside this cache
+    matrix race-free.
+
+34. A topological edge parameter and an incident trim parameter do not in
+    general have the same normalized fraction, even when both curves describe
+    exactly the same locus.  The former discrepancy sampler, material-sector
+    frame, and continuation seed all made that representation-dependent
+    assumption.  They now map an edge point to each incident surface-lifted
+    trim geometrically: an orientation-aware normalized value is only an
+    initial hint, a fixed 33-sample scan finds a deterministic basin, and a
+    bounded 24-step Gauss-Newton corrector with an eight-step line search
+    minimizes 3D lift distance.  The composed trim/surface derivative is used
+    only by correction; point-only scans avoid unnecessary derivative work.
+    The routine allocates no ray-time memory and rejects invalid domains,
+    topology, evaluation results, and nonfinite arithmetic.
+
+    A copied bowed Cobb sphere converts both trims of the target edge to NURBS
+    and applies opposite Möbius reparameterizations c=0.05 and c=20.  This
+    changes the UV point evaluated at the trim-domain midpoint by at least
+    0.452 while preserving the curve locus to 2.48e-16.  The fixture refreshes
+    each OpenNURBS proxy domain after knot roundoff and requires the BREP to
+    remain valid.  Against the identity case it preserves all inward,
+    contact, and exterior sector states in both ray directions, measured
+    discrepancy, unique closure and missing direction, continuation
+    certificate, and published production interval.  The existing rotation,
+    translation, 0.01x, and 10,000x similarity cases remain unchanged.
+
+    This establishes regular two-trim correspondence invariance for the
+    controlled fixture.  By itself it is not a conservative proof of the
+    maximum seam discrepancy: the preparatory 33 edge samples and
+    correspondence basin scan remain fixed.  Finding 35 adds a bounded shadow
+    certificate for its supported regular subset; ambiguous or
+    self-overlapping trims, exact-locus promotion, and vertex fans remain open
+    and must retain explicit unsupported fallback.
+
+35. A prep-time shadow pass now constructs a knot-aware conservative interval
+    for the geometric gap between each supported shared 3D edge locus and
+    each of its two surface-lifted trim loci.  The edge was already decomposed
+    into exact-parameter positive-weight rational Bezier spans.  The new pass
+    converts each trim to an exact NURBS form, splits it at every positive knot
+    span, and uses the prepared exact-parameter positive-weight surface spans.
+    It rejects unsupported order, weights, domains, topology, incomplete trim
+    coverage, inconsistent orientation, nonfinite evaluation, and ambiguous
+    endpoint correspondence instead of manufacturing a certificate.
+
+    Each initial cell pairs one edge Bezier span with the incident trim
+    interval found by the fixed geometric edge-to-lift projection.  Adjacent
+    mapped intervals must be continuous and cover the complete trim domain in
+    the direction required by m_bRev3d.  Child midpoints repeat the geometric
+    projection inside the parent trim interval using a bounded nine-sample
+    basin scan.  This preserves the nonlinear trim-reparameterization result
+    without restoring the equal-normalized-speed assumption.
+
+    Positive rational Bezier convexity supplies the actual bound.  The edge
+    control points bound its Hausdorff deviation from its endpoint chord.  A
+    knot-aware restricted trim control hull bounds the UV interval, and each
+    overlapping prepared surface patch is restricted to that rectangle with
+    fixed-array homogeneous de Casteljau operations.  The restricted positive
+    surface control hull then bounds the lifted trim's deviation from its
+    endpoint chord.  Exact segment Hausdorff distance plus or minus the two
+    chord deviations gives a conservative cell interval; maxima combine cells
+    and the two incident faces.  The UV rectangle is padded by a
+    parameter-scale roundoff allowance before surface restriction.
+
+    Cells subdivide until the aggregate interval is no wider than 0.1 model
+    tolerance, with maximum depth 24.  Prep work is limited to 4,096 visited
+    cells per solid.  Capacity exhaustion is recorded on both an interrupted
+    edge and any later otherwise-eligible edge; no partial result is marked
+    bounded.  Per-edge lower/upper limits, target width, cells, maximum depth,
+    and exhaustion state are exposed in the trace and Cobb CSV.  Temporary
+    vectors and Bezier objects are prep-time only; the pass adds no ray-time
+    allocation.
+
+    Scope is deliberately narrow at this checkpoint.  Exact-looking records
+    at or below max(roundoff, 1e-6 T) remain unbounded because a zero fixed
+    sample is not an exact-locus proof.  Records whose established sample is
+    already beyond the model envelope skip the expensive upper certificate.
+    The bound is shadow evidence only: discrepancy_authorized and production
+    crack repair still use the pre-existing sampled policy.  Promotion needs
+    complete exact-locus handling, unsupported/capacity fallback policy, and
+    a tighter decision at the g=T boundary.
+
+    The bowed Cobb target requires 2,046 cells at depth 9 and its worst final
+    interval width is 0.0823 T.  It remains bounded under identity, opposite
+    c=0.05/c=20 trim reparameterizations, rigid transform, 0.01x similarity,
+    and 10,000x similarity with scaled model tolerances.  Every dense
+    calibrated g<=T bowed case lies inside its reported interval; g>T cases
+    are explicitly outside this shadow pass.  A separate three-seam matching
+    fixture consumes exactly 4,096 cells, certifies two seams, and marks the
+    third exhausted, proving that capacity neither truncates nor silently
+    qualifies a record.
+
+    Prep-cost experiments prevented an attractive local algorithm from
+    becoming a new global cost.  Allocating OpenNURBS patch restriction in
+    every cell made rt_brep_ray take 47.8 seconds; fixed homogeneous arrays
+    reduced that to about 33 seconds; the 0.1 T target took 22.15 seconds.
+    Skipping exact-looking records reduced it to 9.06 seconds.  Imported NIST
+    geometry still exposed roughly 60 seconds of prep on many sub-tolerance
+    seams; skipping already-rejected samples reduced that to 11.74 seconds,
+    and the solid-wide budget reduced NIST03_MISS_01 to about 0.7 seconds.
+    The current normal focused gate completes in about 10 seconds.  These are
+    engineering observations on this host, not performance acceptance limits.
+
+36. Edge-sector and crack-repair evidence now require a prep-time regular
+    correspondence screen in addition to sampled discrepancy authorization.
+    Each incident trim is converted to NURBS, visited four times in every
+    positive knot span (at most 256 samples), lifted through its face, and
+    projected geometrically back to the 3D edge.  The fixed projection uses a
+    33-point basin scan followed by at most 24 second-derivative corrections
+    and an eight-step line search.  In trim-domain order, projected edge
+    parameters must remain monotone with the direction implied by m_bRev3d,
+    and the unit lifted tangent must retain positive oriented agreement with
+    the local unit edge tangent.  Closed or numerically degenerate edges,
+    failed NURBS/evaluation/projection, more than 256 samples, a reversal, or
+    a stationary/opposed tangent leave correspondence_supported false.
+
+    correspondence_supported is traced per edge and is now necessary for an
+    expanded candidate edge span, within-edge evidence, material-sector
+    classification, the adaptive discrepancy shadow pass, and production
+    crack repair.  It does not suppress ordinary surface intersection or the
+    legacy solid result.  This is a bounded rejection screen, not a proof of
+    global injectivity: a sufficiently localized higher-order reversal could
+    still occur between samples.  Exact proof or a conservative derivative
+    subdivision remains required before calling all accepted trims uniquely
+    correlated.
+
+    The ambiguity fixture starts with the known g=T bowed Cobb seam whose
+    h=0.9T ray otherwise activates the certified production repair.  One trim
+    is replaced by a piecewise-linear NURBS that follows the identical UV
+    boundary forward, backward, and forward.  Its 3D locus and sampled gap
+    remain authorized, but the middle span reverses both edge parameter and
+    tangent.  In both ray directions the screen is false, no candidate edge
+    span or sector is published, and the legacy one-event crack remains
+    observable without closure, continuation, or a manufactured segment.
+
+    A converted convex ARB8 supplies the initial vertex-fan fallback fixture.
+    Body-diagonal rays in both directions and rays beginning exactly at the
+    vertex observe all three incident edges as CONTACT while preserving the
+    two-hit/one-interval solid result and never invoking closure.  A second
+    line passes 0.25T inside the vertex fan; three incident edges qualify and
+    two independently classify the ray as material-side, but neither ray
+    direction attempts edge closure.  This gates non-repair at a multi-edge
+    locus while a cyclic oriented vertex-fan resolver is still absent.
+
+    The focused normal gate passes 13/13 (rt_brep_ray about 10.2 seconds and
+    NIST03_MISS_01 about 0.82 seconds).  The focused ASan/UBSan gate passes
+    12/12 with halt-on-error and leak detection disabled for the existing host
+    limitation; rt_brep_ray completes in about 40.2 seconds without a
+    diagnostic.
+
 
 IMPLEMENTATION CHECKLIST
 ------------------------
@@ -315,8 +725,8 @@ IMPLEMENTATION CHECKLIST
     [x] Remove unused m_face_user.p storage.
     [x] Own deserialized CurveTrees and verify teardown order.
     [x] Exercise ownership through existing normal/cached prep regression
-        tests.  A dedicated sanitizer build remains part of the broader
-        robustness gate.
+        tests, ASan/UBSan, and the unsuppressed ThreadSanitizer cache matrix.
+        LeakSanitizer remains blocked by the host ptrace wrapper.
 
 [ ] Phase 1 solver hardening
     [x] Add structured solver outcomes without changing final seam policy.
@@ -366,24 +776,49 @@ IMPLEMENTATION CHECKLIST
             cached prep.
         [ ] Measure face/edge lift discrepancy and resolve unset, zero,
             under-declared, and over-declared tolerance policies.
+            [x] Record initial sampled discrepancy, model/declaration source,
+                inferred envelope, and explicit authorization state.
+            [x] Gate correct, unset, zero, half, and double declarations on a
+                controlled g=2T Cobb seam.
+            [ ] Replace fixed sampling with conservative knot-aware adaptive
+                discrepancy bounds before production use.
+                [x] Add a shadow Hausdorff interval for supported, visibly
+                    discrepant regular two-trim edges within the model
+                    envelope, with explicit depth/cell capacity reporting.
+                [x] Gate nonlinear trim reparameterization, similarity,
+                    dense bowed-gap containment, and solid-wide budget
+                    exhaustion.
+                [ ] Prove exact-looking loci, qualify unsupported/exhausted
+                    fallback, tighten the g=T decision, and only then replace
+                    sampled production authorization.
     [ ] Preserve near-trim candidate evidence through local event resolution.
+        [x] Add fixed-capacity same-face preliminary local-root clusters and
+            entering/leaving/contact observability in shadow mode.
     [x] Observe fixed-work 3D ray/shared-edge distance and declared edge-
         tolerance qualification independently of the UV trim tree.
     [x] Classify shadow-mode edge material sectors and validate smooth and
         sharp-convex inside/contact/outside behavior under ray reversal.
     [x] Gate sharp convex, re-entrant concave, and periodic same-surface edge
         sectors for inside/contact/outside states under ray reversal.
-    [x] Classify uniquely compatible unmatched solid events in shadow mode,
+    [x] Classify uniquely compatible unmatched solid events and activate the
+        fully certified subset in production,
         including ordered missing directions and non-activation on target
         contact/exterior states.
     [x] Gate edge-sector and closure classifications under rotation,
         translation, and 0.01x/10,000x uniform scaling with scaled model
-        tolerances.
+        tolerances, including bounded local-root counts and positions.
     [x] Recover the missing controlled bowed-seam endpoint with a bounded,
-        allocation-free adjacent-support continuation in shadow mode and gate
+        allocation-free adjacent-support continuation and gate
         it against the implicit oracle and similarities.
-    [ ] Qualify general trim/edge parameter correspondence and add vertex-fan
-        sector fixtures.
+    [x] Remove the equal-normalized-speed assumption for regular two-trim edge
+        correspondence and gate opposite nonlinear trim reparameterizations.
+    [x] Add initial vertex-fan and ambiguous-correspondence fallback gates.
+        [x] Gate exact and near convex three-edge fan rays without invoking
+            the unsupported vertex transition resolver.
+        [x] Screen a bowed forward/backward/forward trim and retain its
+            one-event crack without unsafe repair in both directions.
+        [ ] Replace the bounded regularity screen with a conservative global
+            injectivity/orientation proof and implement cyclic vertex fans.
     [ ] Add sewn and perturbed Cobb fixtures and threshold matrices.
         [x] Add reusable legacy-unsewn and solid-sewn Cobb constructors.
         [x] Gate topology, face/seam/vertex rays, scale, and 8,000 shared
@@ -400,9 +835,30 @@ IMPLEMENTATION CHECKLIST
     [ ] Implement conservative coefficient exclusion and local subdivision.
         [x] Implement initial two-plane homogeneous coefficient exclusion with
             translation-aware numerical margins in shadow mode.
-        [ ] Add de Casteljau subdivision/clipping and interval isolation.
+        [x] Add fixed-capacity de Casteljau subdivision and conservative UV/t
+            interval isolation on ordinary surface spans.
+        [x] Correct each retained ordinary box with a bounded, allocation-free
+            projected Newton solve and gate the two-root/contact/miss trend.
+        [x] Use fixed center/corner/edge-midpoint seeds and report convergence,
+            deduplication, failure, and capacity accounting independently.
+        [x] Add bounded outside-span reparameterization with exact operator-
+            norm error amplification and positive-weight certification.
+        [ ] Add safe clipping and adaptive termination.
     [ ] Use fixed-capacity allocation-free shot workspace with explicit
         fallback on unsupported weights/order/capacity.
+        [x] Bound direct surface order, subdivision stack, trace output, and
+            scratch control nets; expose every overflow/high-water result.
+        [ ] Integrate fixed traversal/root/event arrays and fallback dispatch.
+            [x] Add and corpus-gate a 128-entry fixed leaf traversal shadow,
+                including total count, exact order, and overflow reporting.
+            [x] Promote bounded production leaf collection to the fixed array
+                with pre-solve fallback to the legacy list on overflow.
+            [x] Move live raw-hit sorting and cleanup to fixed event storage,
+                with a clean pre-mutation fallback to the allocating
+                implementation on capacity overflow.
+    [x] Assemble the uniquely certified continuation and existing event into
+        an ordered production material interval and gate both endpoints
+        against the implicit oracle and similarity transforms.
     [ ] Reduce default tree density only after shadow equivalence passes.
     [ ] Version and verify prep cache changes.
 
@@ -673,25 +1129,44 @@ Cobb sphere baseline:
     edge, and a converted sphere's two-trim periodic same-face seam.  Offsets
     at +/-T/2 and exact contact all classify correctly in both ray directions.
     On the bowed Cobb sweep, all 15 leaks are authorized, span-selected, valid
-    inside-sector observations; qualified target states total 116 inside, 32
-    contact, and 52 outside.  Maximum error in the measured target lift
+    inside-sector observations; the initial effective-envelope policy expands
+    qualified target states to 152 inside, 32 contact, and 68 outside.  Maximum
+    error in the measured target lift
     discrepancy is about 2.51e-15 mm.
 
-  * A shadow-only closure pass runs after legacy direction cleanup and only
+  * Prepared edge records now distinguish raw declared tolerance, model
+    tolerance, inferred status, sampled maximum edge/trim-lift discrepancy,
+    effective envelope, and authorization.  Edge span expansion and all later
+    sector/closure work require the discrepancy-authorized bit.  A five-case
+    g=2T Cobb metadata fixture permanently distinguishes correct, unset,
+    explicit-zero, half-discrepancy, and double-discrepancy declarations.
+    Similarity fixtures require all length-valued fields to scale together.
+
+  * Cache deserialization rebuilds edge records with the active rti tolerance
+    and rebuilds prepared surface spans before using deserialized trees.  The
+    derived records are still not serialized, so cache version zero remains
+    compatible.
+
+  * The closure pass runs after direction cleanup and only
     considers solid, non-plate BREPs with one unmatched final hit.  A candidate
     must be a tolerance-qualified valid inside sector, share the hit's face,
     and have the t ordering required for the opposite event direction.  The
     bowed matrix hard-gates one and only one target-edge candidate for every
-    current below-envelope leak; all 15 are found without changing production
-    segment lists.
+    legacy below-envelope leak.  Production activation additionally requires
+    the measured face/edge discrepancy to be no larger than rti_tol.dist;
+    both incident trim lifts at the actual event parameter must independently
+    be within rti_tol.dist.  Imported topology tolerances larger than the
+    model tolerance cannot silently broaden closure, and the sampled prep
+    discrepancy is not treated as sufficient proof by itself.
 
   * A dedicated similarity corpus transforms the representative inward
     g/T=1, h/T=0.9 bowed case and its contact/exterior companions.  Identity,
     rigid rotation/translation, translated 0.01x scale, and translated 10,000x
     scale preserve the target edge, candidate span, inside/contact/outside
     state, unique closure count, missing enter/leave direction, and event
-    ordering in both ray directions.  BREP edge/vertex and ray model
-    tolerances are explicitly scaled as model-space lengths.
+    ordering and the published repaired interval in both ray directions.
+    BREP edge/vertex and ray model tolerances are explicitly scaled as model-
+    space lengths.
 
   * Prepared face records now decompose exact-parameter NURBS surfaces at all
     nonempty knot rectangles into positive-weight rational Bezier patches.
@@ -702,14 +1177,146 @@ Cobb sphere baseline:
     and six spans; the representative near-tangent line retains two spans and
     this count is unchanged by all similarity fixtures.
 
-  * After a unique authorized closure is found, the trace path can reflect the
+  * After a unique authorized closure is found, the resolver reflects the
     existing adjacent-face UV root across the associated trim tangent and run
     a fixed-budget, line-searched solve on a bounded extension of that
     prepared Bezier support.  Every current leak produces one correctly
     oriented opposite event.  The maximum endpoint error against the implicit
     sphere over all 15 is approximately 2.71e-8 mm.  Continuation attempts,
     candidate count, face/UV/t, residual, normal dot, and iteration count are
-    available in --cobb-report.  Production segments remain unchanged.
+    available in --cobb-report.  A certified continuation now becomes a
+    CRACK_HIT endpoint retaining face, UV, normal, and adjacency provenance.
+
+  * Scalar de Casteljau restriction now subdivides each non-excluded
+    ray-plane coefficient pair using a fixed 64-box depth-first stack and
+    maximum order 16 scratch nets.  Retained depth-24 boxes include global UV
+    bounds and rational-convex-hull ray-t intervals.  Every bowed-matrix raw
+    Newton root must fall inside one such UV/t box; overflow or silent loss is
+    a test failure.  The machine report emits every retained box.
+
+  * The analytic sphere grazing sweep independently requires both roots to be
+    covered while their chord is at least T, and requires no single box to
+    contain both once the chord is at least 10T.  Exact tangency retains a
+    conservative contact box but produces no final segment.  Negative-h
+    ambiguity is measured on every representable mirrored sample and may not
+    spread beyond 1e-6 T; the present largest is approximately 2.27e-9 T.
+
+  * Each retained ordinary box now seeds a projected, bounded local corrector
+    over its prepared Bezier support.  For chord >= T, all 36 sphere cases
+    recover both analytic roots with maximum endpoint error about 8.56e-8 mm.
+    The 23 positive sub-T cases and exact tangency each form one contact-sized
+    cluster.  Miss-side local candidates are confined to about 2.84e-10 T.
+    The nine deterministic seeds per box produce at most 72 attempts per
+    sphere line and 54 per bowed Cobb line, use fixed trace capacity, and
+    perform no ray-time allocation.  Candidate roots, residuals, normals,
+    iterations, failures, and deduplication counts are emitted under
+    --cobb-report.
+
+  * The classifier similarity gate includes local-root failure counts, scaled
+    residuals, normalized regular-root positions, and the physical cluster
+    count at exact contact.  Identity, rigid rotation/translation, translated
+    0.01x, and translated 10,000x fixtures pass when their model-space
+    tolerances are scaled with the geometry.  Raw contact representatives may
+    differ with floating conditioning but always collapse to one cluster.
+
+  * A fixed 64-entry preliminary root-cluster array now classifies same-face
+    observations.  Resolved sphere grazing produces ordered ENTER/LEAVE
+    clusters, tangency produces one CONTACT, cluster capacity never exhausts,
+    and the bowed leak histogram is 14/0/1 for one/two/three clusters.  This
+    remains upstream of trim/topology compatibility and material winding.
+
+  * A caller-owned 128-pointer leaf array now shadows the std::list surface-
+    tree traversal.  All traced corpus rays require identical leaf count and
+    pointer order.  Current maxima are 8 for the sphere grazing sweep, 12 for
+    the bowed Cobb matrix, and 68 for the 0.01x transformed classifier.  The
+    fixed overload counts beyond capacity and exposes overflow.  At this
+    shadow checkpoint the production solver still consumed the list, so no
+    shot result changed.
+
+  * Production now consumes the fixed leaf array when it fits.  Overflow is
+    detected before solving and selects the legacy list path.  Trace mode
+    still constructs both and exposes fallback state, so order equivalence
+    remains continuously checked while normal bounded rays avoid list-node
+    allocation during leaf discovery.
+
+  * Production trim classification no longer constructs a filtered
+    std::list for every converged Newton candidate.  It applies the same UV
+    bounding-box filter while scanning the SurfaceTree's prepared
+    m_trims_above list and feeds the retained BRNodes to a common classifier.
+    This removes the per-candidate list-node allocations without changing the
+    prepared tree or the established tolerance policy.
+
+  * The former allocating path is retained as isTrimmedAllocating for
+    transition-time trace diagnostics only.  Every traced candidate in the
+    sphere/grazing, similarity, edge-sector, seam-metadata, and 416-ray bowed
+    Cobb corpora must match candidate count, trim status, exact selected
+    BRNode pointer, and bitwise-identical closest-trim distance.  Any mismatch
+    fails rt_brep_ray.  The legacy closest-node semantics, including the
+    under-trim update rule, are deliberately preserved pending a separately
+    justified correctness audit.
+
+  * brep_hit no longer retains a const face reference whose assignment
+    operator wrote through const_cast and could overwrite ON_BrepFace
+    geometry.  It now holds a non-owning const pointer and copies that pointer
+    safely.  The uninitialized active member and its only consumer, an unused
+    debug helper, were removed along with the unused MissList declaration.
+
+  * A fixed 128-hit workspace now collects raw production hits, performs a
+    stable insertion sort, and applies index-based equivalents of every
+    legacy near-miss, near-hit, grazing, duplicate, and direction cleanup
+    stage.  Solid and plate segment publication consume the fixed result
+    directly.  Workspace slots are assigned in full only as hits arrive, so
+    the other capacity slots are not eagerly initialized for every shot.
+
+  * Trace mode still runs the legacy std::list path from the same solved hits.
+    It bitwise-compares every raw hit after stable sorting, hard-gates the hit
+    count after each cleanup stage, and compares every final hit field.  The
+    complete directed/Crofton/similarity/metadata/Cobb corpus has zero raw-
+    order, stage-count, or final-event mismatches.  Observed raw-hit high-water
+    marks are 4 for sphere grazing and the transformed classifier, and 6 for
+    the bowed Cobb matrix, versus capacity 128.
+
+  * Hit-workspace overflow is detected before cleanup or segment publication.
+    Production then reruns the deterministic surface solve into the legacy
+    list; trace mode exposes overflow and fallback as hard-gated counters.
+    Surface-leaf traversal has its independent 128-pointer fallback.  Thus the
+    bounded common path avoids dynamic leaf, trim-query, raw-hit, sort, and
+    cleanup containers, while unsupported capacity cases retain correctness.
+
+  * Outside-span continuation rectangles are reparameterized algebraically
+    into Bernstein form.  The code computes the absolute row-sum norm of each
+    one-dimensional basis transformation, multiplies the tensor norms, and
+    inflates ray-plane, ray-t, and weight errors accordingly.  A certificate
+    requires the complete transformed weight hull to remain positive and the
+    fixed isolator to retain only boxes belonging to the recovered root
+    cluster.  No retained box may cover the original root.
+
+  * All 15 legacy one-event crack cases are certified and repaired in
+    production.  The worst eligible case visits 93 boxes with stack high-
+    water 20 and retains a t cluster no wider than approximately 3.47e-5 mm.
+    Every repaired endpoint matches the implicit sphere within 1e-7 mm.  The
+    416-ray matrix reports zero below-envelope leaks, while g > T, contact,
+    exterior, ambiguous, edge-overflow, and edge-evaluation-failure cases do
+    not activate closure.  The CSV continuation record exposes certificate
+    counts, capacity state, t bounds, and the resulting interval.
+
+  * Closure also requires the repaired material interval to be at least the
+    model distance tolerance after conversion through |ray direction|.
+    Certificate t comparisons use a span/coordinate-conditioned numerical
+    tolerance rather than a fixed model-space constant.  These conditions and
+    the published segment endpoints pass identity, rigid, 0.01x, and 10,000x
+    similarity cases when geometry and model tolerances scale together.
+
+  * Incident edge/trim correspondence no longer assumes equal normalized
+    parameter speed.  The discrepancy sampler, both material-sector frames,
+    and continuation reflection seed use the same fixed-work geometric lift
+    projection.  The nonlinear c=0.05/c=20 trim fixture preserves the locus
+    to 2.48e-16 despite a 0.452 midpoint parameter shift, and retains the
+    identity case's sector states, closure decision, certificate, and final
+    segment in both directions.  The normal full corpus passes in 8.46
+    seconds on the current host (versus 8.81 seconds immediately before this
+    change; these single-run timings are informational, not a performance
+    threshold).
 
   cmake --build .build --target \
     librt rt_primitive_brep rt_brep_ray rt_cache rt_crofton -j8
@@ -719,10 +1326,85 @@ Cobb sphere baseline:
     -R '^(rt_brep_ray|rt_crofton|rt_primitive_brep|rt_cache_.*|regress-nurbs_(NIST03_MISS_01|SPH_SOLID_HIT_LEN_01|BOX_PLATE_HIT_LEN_01))$' \
     --output-on-failure
     PASS: 13/13; rt_brep_ray completes in approximately 8 seconds with
-    trace-only edge qualification enabled across all 416 bowed-seam rays
+    trace-only edge qualification, fixed leaf-traversal equivalence, and
+    allocating/no-allocation trim equivalence enabled across all 416 bowed-
+    seam rays.  The matrix retains 15 legacy one-event cases, repairs all 15
+    in production, and has zero below-envelope leaks.  Repeated after the
+    geometric edge/trim correspondence change and nonlinear parameter fixture:
+    13/13, with rt_brep_ray at 8.70 seconds in the parallel gate.
+    Repeated after the adaptive seam-gap shadow certificate and explicit
+    4,096-cell exhaustion fixture: 13/13, with NIST03_MISS_01 at about 0.7
+    seconds and rt_brep_ray at about 10 seconds.  The bowed certificate uses
+    2,046 cells at depth 9 with maximum interval width about 0.0823 T; the
+    three-seam fixture reports two bounded and one exhausted at exactly the
+    solid-wide budget.
 
   cmake --build .build --target rt_brep_ray -j8
     PASS
+
+  cmake -S . -B .build-asan -G Ninja \
+    -DBRLCAD_EXT_DIR=${BRLCAD_EXT_DIR} \
+    -DBRLCAD_ENABLE_ADDRESS_SANITIZER=ON \
+    -DBRLCAD_ENABLE_UNDEFINED_SANITIZER=ON \
+    -DBRLCAD_OPTIMIZED=OFF -DBRLCAD_DEBUGGING=ON \
+    -DCMAKE_BUILD_TYPE=Debug
+  cmake --build .build-asan --target librt rt_brep_ray rt_cache -j8
+  env ASAN_OPTIONS=detect_leaks=0 UBSAN_OPTIONS=print_stacktrace=1 \
+    .build-asan/src/librt/tests/rt_brep_ray
+    PASS: full ray corpus, no ASan or UBSan diagnostics.  Leak detection is
+    disabled because LeakSanitizer is incompatible with the host ptrace
+    wrapper; leak qualification remains open.
+    Repeated after the adaptive seam-gap pass with halt_on_error=1: the direct
+    full corpus and the focused 12/12 ASan/UBSan gate pass without diagnostics.
+
+  env ASAN_OPTIONS=detect_leaks=0:halt_on_error=1 \
+    UBSAN_OPTIONS=halt_on_error=1 \
+    .build-asan/src/librt/tests/rt_brep_ray
+    PASS after geometric edge/trim parameter correspondence and the nonlinear
+    trim-reparameterization fixture, with no ASan or UBSan diagnostic.
+
+  env ASAN_OPTIONS=detect_leaks=0 UBSAN_OPTIONS=print_stacktrace=1 \
+    ctest --test-dir .build-asan -j4 \
+    -R '^(rt_brep_ray|rt_primitive_brep|rt_cache_.*|regress-nurbs_(NIST03_MISS_01|SPH_SOLID_HIT_LEN_01|BOX_PLATE_HIT_LEN_01))$' \
+    --output-on-failure
+    PASS: 12/12 after fixed-hit and certified crack-closure production
+    promotion, including solid and plate segment publication, with no ASan or
+    UBSan diagnostics.  Repeated after geometric edge/trim correspondence and
+    nonlinear parameter invariance: 12/12 in 38.57 seconds, again with no
+    ASan or UBSan diagnostic.
+
+  env ASAN_OPTIONS=detect_leaks=0 UBSAN_OPTIONS=print_stacktrace=1 \
+    ctest --test-dir .build-asan -j4 -R '^rt_cache_.*$' \
+    --output-on-failure
+    PASS: 7/7 serial and parallel ordinary/cached prep ownership tests, with
+    no ASan or UBSan diagnostics.
+
+  cmake --build .build-asan --target \
+    rt_primitive_brep analyze_nhit NIST_MBE_PMI_3.g -j8
+  env ASAN_OPTIONS=detect_leaks=0 UBSAN_OPTIONS=print_stacktrace=1 \
+    ctest --test-dir .build-asan -j4 \
+    -R '^(rt_primitive_brep|regress-nurbs_(NIST03_MISS_01|SPH_SOLID_HIT_LEN_01|BOX_PLATE_HIT_LEN_01))$' \
+    --output-on-failure
+    PASS: 4/4 conversion and NURBS regression tests, with no ASan or UBSan
+    diagnostics.  Together with rt_brep_ray and the cache matrix, the focused
+    sanitizer gate is 12/12.  The combined 12-test command also passes in one
+    run (approximately 38 seconds), ruling out ordering dependence among the
+    focused sanitizer fixtures.
+
+  cmake -S . -B .build-tsan -G Ninja \
+    -DBRLCAD_EXT_DIR=${BRLCAD_EXT_DIR} \
+    -DBRLCAD_ENABLE_THREAD_SANITIZER=ON \
+    -DBRLCAD_OPTIMIZED=OFF -DBRLCAD_DEBUGGING=ON \
+    -DCMAKE_BUILD_TYPE=Debug
+  cmake --build .build-tsan --target librt rt_cache -j8
+  env TSAN_OPTIONS=halt_on_error=1:second_deadlock_stack=1 \
+    ctest --test-dir .build-tsan -j4 -R '^rt_cache_.*$' \
+    --output-on-failure
+    PASS: 7/7 serial, parallel, identical, different, and hierarchy cache
+    cases with no TSan diagnostic and no suppression file.  The diagnostic
+    first found and drove repairs for OpenNURBS calendar serialization, libbu
+    heap/path lazy state, soltab prep publication, and directory instance
+    locking before this clean gate was reached.
 
   .build/src/librt/tests/rt_brep_ray
     PASS: shared partition/Crofton sphere and all directed cases
@@ -749,17 +1431,20 @@ Legacy cleanup:
 NEXT ACTIONS
 ------------
 
-1. Add vertex-fan fixtures and qualify edge/trim parameter correspondence
-   without assuming normalized parameter speed.  Keep model-space, UV,
-   numerical-root, t-cluster, and minimum-segment tolerances distinct.
-2. Add explicit shadow event/winding/contact classes, then activate topology-
-   local crack closure only for fully supported manifold events.
-   Restore a crossing inside its authorized envelope, preserve ray-reversal
-   symmetry, fall back on unsupported cases, and promote each repaired bowed-
-   seam row from the known-defect count to exact solid-interval parity.
-3. Add a safeguarded local correction/contact classification beyond the first
-   conditioned Newton improvement.  Do not lower tree density until candidate
-   exclusion and fallback behavior are observable and proven equivalent.
+1. Replace the bounded correspondence screen with a conservative global
+   injectivity/orientation proof.  Extend the shadow seam-gap certificate with
+   an efficient exact-locus proof and explicit unsupported/capacity fallback,
+   then tighten the g=T decision before it can replace sampled production
+   authorization.  Keep model-space, UV, numerical-root, t-cluster, and
+   minimum-segment tolerances distinct.
+2. Implement and gate cyclic convex/concave vertex-fan transitions before any
+   multi-edge crack repair.  Preserve the current explicit fallback for
+   unsupported, non-manifold, ambiguous, and capacity-limited fans.
+3. Add explicit local root clustering, trim/event classification, and
+   adaptive subdivision termination beyond the first bounded corrector.  Do
+   not lower tree density until candidate exclusion, event equivalence, and
+   unsupported/capacity fallback behavior are observable and proven
+   equivalent.
 4. Extend the BREP-leaf hierarchy corpus to nested multi-interval regions,
    transformations, noncoincident production-style trees, and tolerance-
    scaled thin walls.  Keep evaluated ON_Boolean solids and reverse NIST

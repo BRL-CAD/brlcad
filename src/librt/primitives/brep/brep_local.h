@@ -40,9 +40,23 @@ struct brep_edge_record {
     size_t span_begin = 0;
     size_t span_count = 0;
     double tolerance = ON_UNSET_VALUE;
+    double model_tolerance = 0.0;
+    double declared_tolerance = ON_UNSET_VALUE;
+    double measured_discrepancy = ON_UNSET_VALUE;
+    double discrepancy_lower_bound = ON_UNSET_VALUE;
+    double discrepancy_upper_bound = ON_UNSET_VALUE;
+    double discrepancy_bound_tolerance = ON_UNSET_VALUE;
+    size_t discrepancy_bound_cells = 0;
+    size_t discrepancy_bound_depth = 0;
     int edge_index = -1;
     int face_index[2] = {-1, -1};
     bool supported = false;
+    bool discrepancy_measured = false;
+    bool correspondence_supported = false;
+    bool discrepancy_bounded = false;
+    bool discrepancy_bound_exhausted = false;
+    bool discrepancy_authorized = false;
+    bool tolerance_inferred = false;
 };
 
 
@@ -51,6 +65,7 @@ struct brep_surface_span {
     ON_BoundingBox bbox;
     ON_Interval surface_domain[2];
     int face_index = -1;
+    int span_index = -1;
 };
 
 

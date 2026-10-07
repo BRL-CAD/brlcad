@@ -116,13 +116,29 @@ namespace brlcad {
 	/** Test whether a ray intersects the 3D bounding volume of the
 	 * node - if so, and node is not a leaf node, query children.  If
 	 * leaf node, and intersects, add to list.
+	 *
+	 * The fixed-array overload appends while count is below capacity,
+	 * increments count for every intersected leaf, and sets overflow if
+	 * any leaf cannot be stored.  The caller initializes count and
+	 * overflow and may use the total count to select a fallback.
 	 */
 	bool intersectsHierarchy(const ON_Ray &ray, std::list<const BBNode *> &results) const;
+	bool intersectsHierarchy(const ON_Ray &ray, const BBNode **results,
+		std::size_t capacity, std::size_t &count,
+		bool &overflow) const;
 
 	ON_2dPoint getClosestPointEstimate(const ON_3dPoint &pt) const;
 	ON_2dPoint getClosestPointEstimate(const ON_3dPoint &pt, ON_Interval &u, ON_Interval &v) const;
 	int getLeavesBoundingPoint(const ON_3dPoint &pt, std::list<const BBNode *> &out) const;
-	bool isTrimmed(const ON_2dPoint &uv, const BRNode **closest, double &closesttrim, double within_distance_tol) const;
+	/** Classify against the prepared trim leaves without allocating.
+	 * isTrimmedAllocating retains the former filtered-list path for
+	 * transition-time equivalence diagnostics only. */
+	bool isTrimmed(const ON_2dPoint &uv, const BRNode **closest,
+		double &closesttrim, double within_distance_tol,
+		std::size_t *candidate_count = NULL) const;
+	bool isTrimmedAllocating(const ON_2dPoint &uv, const BRNode **closest,
+		double &closesttrim, double within_distance_tol,
+		std::size_t *candidate_count = NULL) const;
 
 	void BuildBBox();
 	bool prepTrims();

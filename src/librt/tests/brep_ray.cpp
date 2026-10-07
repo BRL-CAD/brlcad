@@ -417,6 +417,35 @@ shoot_brep_trace(struct soltab *stp, struct rt_i *rtip,
 
 
 static bool
+brep_trace_fixed_workspaces_match(const struct rt_brep_shot_trace &trace)
+{
+    return !trace.fixed_leaf_overflow &&
+	!trace.fixed_leaf_fallback &&
+	trace.fixed_leaf_count == trace.fixed_leaf_stored &&
+	trace.fixed_leaf_count == trace.intersected_leaves &&
+	trace.fixed_leaf_mismatches == 0 &&
+	!trace.fixed_hit_overflow &&
+	!trace.fixed_hit_fallback &&
+	trace.fixed_hit_count == trace.fixed_hit_stored &&
+	trace.fixed_hit_count == trace.raw_hits &&
+	trace.fixed_hit_mismatches == 0 &&
+	trace.fixed_after_near_miss == trace.after_near_miss &&
+	trace.fixed_after_near_hit == trace.after_near_hit &&
+	trace.fixed_after_grazing == trace.after_grazing &&
+	trace.fixed_after_duplicates == trace.after_duplicates &&
+	trace.fixed_after_direction_cleanup == trace.after_direction_cleanup &&
+	trace.fixed_cleanup_mismatches == 0 &&
+	trace.trim_queries == trace.candidate_roots &&
+	trace.trim_noalloc_candidates == trace.trim_allocating_candidates &&
+	trace.trim_candidate_mismatches == 0 &&
+	trace.trim_status_mismatches == 0 &&
+	trace.trim_closest_mismatches == 0 &&
+	trace.trim_distance_mismatches == 0 &&
+	trace.trim_equivalence_mismatches == 0;
+}
+
+
+static bool
 finite_unit_vector(const vect_t value)
 {
     return std::isfinite(value[X]) && std::isfinite(value[Y]) &&
@@ -488,6 +517,78 @@ ray_class(const ray_result &result, double tolerance)
     if (fabs(result.out_dist - result.in_dist) <= tolerance)
 	return "CONTACT";
     return "INTERVAL";
+}
+
+
+static bool
+brep_trace_covers_t(const struct rt_brep_shot_trace &trace, double dist,
+    double tolerance)
+{
+    for (size_t i = 0; i < trace.stored_surface_boxes; ++i) {
+	const struct rt_brep_trace_surface_box &box = trace.surface_boxes[i];
+	if (dist >= box.t_min - tolerance && dist <= box.t_max + tolerance)
+	    return true;
+    }
+    return false;
+}
+
+
+static bool
+brep_trace_box_covers_both(const struct rt_brep_shot_trace &trace,
+    double first, double second, double tolerance)
+{
+    for (size_t i = 0; i < trace.stored_surface_boxes; ++i) {
+	const struct rt_brep_trace_surface_box &box = trace.surface_boxes[i];
+	if (first >= box.t_min - tolerance && first <= box.t_max + tolerance &&
+		second >= box.t_min - tolerance &&
+		second <= box.t_max + tolerance)
+	    return true;
+    }
+    return false;
+}
+
+
+static size_t
+brep_trace_unique_local_roots(const struct rt_brep_shot_trace &trace,
+    double tolerance)
+{
+    std::vector<double> distances;
+    distances.reserve(trace.stored_local_roots);
+    for (size_t i = 0; i < trace.stored_local_roots; ++i)
+	distances.push_back(trace.local_roots[i].dist);
+    std::sort(distances.begin(), distances.end());
+    size_t unique = 0;
+    double previous = 0.0;
+    for (size_t i = 0; i < distances.size(); ++i) {
+	if (!unique || fabs(distances[i] - previous) > tolerance) {
+	    unique++;
+	    previous = distances[i];
+	}
+    }
+    return unique;
+}
+
+
+static bool
+brep_trace_local_root_near(const struct rt_brep_shot_trace &trace,
+    double distance, double tolerance)
+{
+    for (size_t i = 0; i < trace.stored_local_roots; ++i) {
+	if (fabs(trace.local_roots[i].dist - distance) <= tolerance)
+	    return true;
+    }
+    return false;
+}
+
+
+static double
+brep_trace_local_root_error(const struct rt_brep_shot_trace &trace,
+    double distance)
+{
+    double error = INFINITY;
+    for (size_t i = 0; i < trace.stored_local_roots; ++i)
+	error = std::min(error, fabs(trace.local_roots[i].dist - distance));
+    return error;
 }
 
 
@@ -579,6 +680,24 @@ check_grazing_ratchet(struct soltab *implicit_stp, struct soltab *brep_stp,
     int failures = 0;
     bool brep_interval_ended = false;
     double previous_brep_chord = INFINITY;
+    size_t maximum_isolation_boxes = 0;
+    size_t maximum_isolated_boxes = 0;
+    size_t maximum_workspace = 0;
+    size_t outside_ambiguous = 0;
+    double largest_outside_ambiguous = 0.0;
+    size_t maximum_local_attempts = 0;
+    size_t maximum_local_failures = 0;
+    size_t maximum_local_duplicates = 0;
+    size_t maximum_fixed_leaves = 0;
+    size_t maximum_fixed_hits = 0;
+    size_t resolved_local_misses = 0;
+    size_t resolved_local_cases = 0;
+    size_t subtolerance_local_contacts = 0;
+    size_t subtolerance_local_misses = 0;
+    size_t subtolerance_local_invalid = 0;
+    double maximum_local_endpoint_error = 0.0;
+    size_t outside_local_candidates = 0;
+    double largest_outside_local_candidate = 0.0;
     vect_t direction = {1.0, 0.0, 0.0};
     const std::vector<double> clearances = grazing_clearances(radius,
 	rtip->rti_tol.dist);
@@ -600,6 +719,123 @@ check_grazing_ratchet(struct soltab *implicit_stp, struct soltab *brep_stp,
 	    direction);
 	ray_result repeated_result = shoot_solid(brep_stp, rtip, resp, origin,
 	    direction);
+	sampled_ray trace_ray;
+	VMOVE(trace_ray.origin, origin);
+	VMOVE(trace_ray.direction, direction);
+	struct rt_brep_shot_trace trace;
+	(void)shoot_brep_trace(brep_stp, rtip, resp, trace_ray, trace);
+	maximum_fixed_leaves = std::max(maximum_fixed_leaves,
+	    trace.fixed_leaf_count);
+	maximum_fixed_hits = std::max(maximum_fixed_hits,
+	    trace.fixed_hit_count);
+	maximum_isolation_boxes = std::max(maximum_isolation_boxes,
+	    trace.surface_subdivision_boxes);
+	maximum_isolated_boxes = std::max(maximum_isolated_boxes,
+	    trace.surface_isolated_boxes);
+	maximum_workspace = std::max(maximum_workspace,
+	    trace.surface_workspace_high_water);
+	maximum_local_attempts = std::max(maximum_local_attempts,
+	    trace.local_root_attempts);
+	maximum_local_failures = std::max(maximum_local_failures,
+	    trace.local_root_failures);
+	maximum_local_duplicates = std::max(maximum_local_duplicates,
+	    trace.local_root_duplicates);
+	const double expected_in = 2.0 * radius - analytic_chord * 0.5;
+	const double expected_out = 2.0 * radius + analytic_chord * 0.5;
+	const bool roots_covered = brep_trace_covers_t(trace, expected_in,
+	    1.0e-7) && brep_trace_covers_t(trace, expected_out, 1.0e-7);
+	const bool roots_separated = !brep_trace_box_covers_both(trace,
+	    expected_in, expected_out, 1.0e-7);
+	const bool local_roots_covered = brep_trace_local_root_near(trace,
+	    expected_in, 1.0e-7) && brep_trace_local_root_near(trace,
+	    expected_out, 1.0e-7);
+	if (analytic_chord >= rtip->rti_tol.dist) {
+	    resolved_local_cases++;
+	    maximum_local_endpoint_error = std::max(
+		maximum_local_endpoint_error,
+		std::max(brep_trace_local_root_error(trace, expected_in),
+		brep_trace_local_root_error(trace, expected_out)));
+	    if (!local_roots_covered ||
+		    brep_trace_unique_local_roots(trace,
+		    0.1 * rtip->rti_tol.dist) != 2 ||
+		    trace.stored_local_clusters != 2 ||
+		    trace.local_clusters[0].classification !=
+		    RT_BREP_TRACE_ENTERING ||
+		    trace.local_clusters[1].classification !=
+		    RT_BREP_TRACE_LEAVING) {
+		resolved_local_misses++;
+		std::printf("Local grazing diagnostic h/T=%.17g chord/T=%.17g "
+		    "attempts=%zu candidates=%zu failures=%zu unique=%zu "
+		    "expected=%.17g/%.17g\n", h / rtip->rti_tol.dist,
+		    analytic_chord / rtip->rti_tol.dist,
+		    trace.local_root_attempts, trace.local_root_candidates,
+		    trace.local_root_failures,
+		    brep_trace_unique_local_roots(trace, 1.0e-7),
+		    expected_in, expected_out);
+		for (size_t local_index = 0;
+			local_index < trace.stored_local_roots; ++local_index) {
+		    const struct rt_brep_trace_local_root &root =
+			trace.local_roots[local_index];
+		    std::printf("  local root %zu face=%d span=%d t=%.17g "
+			"uv=%.17g/%.17g residual=%.17g normal=%.17g\n",
+			local_index, root.face_index, root.span_index, root.dist,
+			root.uv[0], root.uv[1], root.residual,
+			root.normal_dot);
+		}
+		for (size_t box_index = 0;
+			box_index < trace.stored_surface_boxes; ++box_index) {
+		    const struct rt_brep_trace_surface_box &box =
+			trace.surface_boxes[box_index];
+		    std::printf("  local box %zu face=%d span=%d "
+			"uv=%.17g/%.17g %.17g/%.17g t=%.17g/%.17g\n",
+			box_index, box.face_index, box.span_index,
+			box.uv_min[0], box.uv_max[0], box.uv_min[1],
+			box.uv_max[1], box.t_min, box.t_max);
+		}
+	    }
+	} else {
+	    const size_t contact_clusters = brep_trace_unique_local_roots(trace,
+		rtip->rti_tol.dist);
+	    if (contact_clusters)
+		subtolerance_local_contacts++;
+	    else
+		subtolerance_local_misses++;
+	    bool local_outside_contact = contact_clusters > 1;
+	    for (size_t local_index = 0;
+		    local_index < trace.stored_local_roots; ++local_index) {
+		if (fabs(trace.local_roots[local_index].dist - 2.0 * radius) >
+			rtip->rti_tol.dist)
+		    local_outside_contact = true;
+	    }
+	    if (local_outside_contact)
+		subtolerance_local_invalid++;
+	}
+	if (!brep_trace_fixed_workspaces_match(trace) ||
+		!trace.supported_surface_faces ||
+		trace.candidate_surface_spans + trace.excluded_surface_spans !=
+		trace.prepared_surface_spans || trace.surface_workspace_exhausted ||
+		trace.surface_box_overflow ||
+		trace.local_root_overflow ||
+		trace.local_cluster_overflow ||
+		trace.local_root_candidates != trace.stored_local_roots ||
+		trace.local_root_clusters != trace.stored_local_clusters ||
+		trace.local_root_attempts != trace.local_root_candidates +
+		trace.local_root_failures + trace.local_root_duplicates ||
+		trace.surface_isolated_boxes != trace.stored_surface_boxes ||
+		trace.final_segments != (size_t)brep_result.segments ||
+		(analytic_chord >= rtip->rti_tol.dist && !roots_covered) ||
+		(analytic_chord >= 10.0 * rtip->rti_tol.dist &&
+		!roots_separated)) {
+	    std::printf("FAIL: grazing isolation h/R=%.17g spans=%zu/%zu "
+		"boxes=%zu/%zu workspace=%zu+%zu covered=%d separated=%d\n",
+		h / radius, trace.candidate_surface_spans,
+		trace.prepared_surface_spans, trace.surface_subdivision_boxes,
+		trace.surface_isolated_boxes,
+		trace.surface_workspace_high_water,
+		trace.surface_workspace_exhausted, roots_covered,
+		roots_separated);
+	    failures++;
+	}
 
 	if (brep_result.segments != repeated_result.segments ||
 	    (brep_result.segments == 1 &&
@@ -633,8 +869,6 @@ check_grazing_ratchet(struct soltab *implicit_stp, struct soltab *brep_stp,
 
 	if (analytic_chord + rtip->rti_tol.dist * 1.0e-6 >=
 		rtip->rti_tol.dist) {
-	    const double expected_in = 2.0 * radius - analytic_chord * 0.5;
-	    const double expected_out = 2.0 * radius + analytic_chord * 0.5;
 	    if (implicit_result.segments != 1 || brep_result.segments != 1 ||
 		    fabs(brep_result.in_dist - expected_in) > rtip->rti_tol.dist ||
 		    fabs(brep_result.out_dist - expected_out) > rtip->rti_tol.dist) {
@@ -655,6 +889,28 @@ check_grazing_ratchet(struct soltab *implicit_stp, struct soltab *brep_stp,
 	}
     }
 
+    std::printf("Sphere grazing isolation: max-boxes=%zu max-isolated=%zu "
+	"workspace-high-water=%zu local-attempts=%zu local-failures=%zu "
+	"local-duplicates=%zu "
+	"resolved-local-misses=%zu/%zu max-local-endpoint=%.3g "
+	"sub-T-contact/miss/invalid=%zu/%zu/%zu\n",
+	maximum_isolation_boxes,
+	maximum_isolated_boxes, maximum_workspace, maximum_local_attempts,
+	maximum_local_failures, maximum_local_duplicates,
+	resolved_local_misses, resolved_local_cases,
+	maximum_local_endpoint_error, subtolerance_local_contacts,
+	subtolerance_local_misses, subtolerance_local_invalid);
+    if (resolved_local_misses) {
+	std::printf("FAIL: bounded local roots missed %zu resolved sphere "
+	    "grazing cases\n", resolved_local_misses);
+	failures++;
+    }
+    if (subtolerance_local_invalid) {
+	std::printf("FAIL: %zu sub-tolerance grazing cases did not collapse "
+	    "to a contact-sized local cluster\n", subtolerance_local_invalid);
+	failures++;
+    }
+
     /* Exact tangency and every representable mirrored outside clearance must
      * be misses for both the analytic and converted representations. */
     point_t tangent_origin = {-2.0 * radius, radius, 0.0};
@@ -662,9 +918,52 @@ check_grazing_ratchet(struct soltab *implicit_stp, struct soltab *brep_stp,
 	tangent_origin, direction);
     ray_result brep_tangent = shoot_solid(brep_stp, rtip, resp,
 	tangent_origin, direction);
+    sampled_ray tangent_trace_ray;
+    VMOVE(tangent_trace_ray.origin, tangent_origin);
+    VMOVE(tangent_trace_ray.direction, direction);
+    struct rt_brep_shot_trace tangent_trace;
+    (void)shoot_brep_trace(brep_stp, rtip, resp, tangent_trace_ray,
+	tangent_trace);
+    maximum_fixed_leaves = std::max(maximum_fixed_leaves,
+	tangent_trace.fixed_leaf_count);
+    maximum_fixed_hits = std::max(maximum_fixed_hits,
+	tangent_trace.fixed_hit_count);
     if (implicit_tangent.segments != 0 || brep_tangent.segments != 0) {
 	std::printf("FAIL: exact tangent did not miss: implicit=%d BREP=%d\n",
 	    implicit_tangent.segments, brep_tangent.segments);
+	failures++;
+    }
+    if (!brep_trace_fixed_workspaces_match(tangent_trace) ||
+	    !brep_trace_covers_t(tangent_trace, 2.0 * radius, 1.0e-7) ||
+	    tangent_trace.surface_workspace_exhausted ||
+	    tangent_trace.surface_box_overflow ||
+	    tangent_trace.local_root_overflow ||
+	    tangent_trace.local_cluster_overflow ||
+	    tangent_trace.stored_local_clusters != 1 ||
+	    tangent_trace.local_clusters[0].classification !=
+	    RT_BREP_TRACE_LOCAL_CONTACT ||
+	    tangent_trace.local_root_attempts !=
+	    tangent_trace.local_root_candidates +
+	    tangent_trace.local_root_failures +
+	    tangent_trace.local_root_duplicates) {
+	std::printf("FAIL: exact tangent isolation boxes=%zu workspace=%zu+%zu\n",
+	    tangent_trace.surface_isolated_boxes,
+	    tangent_trace.surface_workspace_high_water,
+	    tangent_trace.surface_workspace_exhausted);
+	failures++;
+    }
+    std::printf("Sphere tangent local roots: attempts=%zu candidates=%zu "
+	"failures=%zu contact-clusters=%zu\n",
+	tangent_trace.local_root_attempts,
+	tangent_trace.local_root_candidates, tangent_trace.local_root_failures,
+	brep_trace_unique_local_roots(tangent_trace,
+	0.1 * rtip->rti_tol.dist));
+    if (!brep_trace_local_root_near(tangent_trace, 2.0 * radius,
+	    0.1 * rtip->rti_tol.dist) ||
+	    brep_trace_unique_local_roots(tangent_trace,
+	    0.1 * rtip->rti_tol.dist) != 1) {
+	std::printf("FAIL: bounded local roots did not form one tangent "
+	    "contact cluster\n");
 	failures++;
     }
 
@@ -677,6 +976,36 @@ check_grazing_ratchet(struct soltab *implicit_stp, struct soltab *brep_stp,
 	    origin, direction);
 	ray_result brep_result = shoot_solid(brep_stp, rtip, resp, origin,
 	    direction);
+	sampled_ray trace_ray;
+	VMOVE(trace_ray.origin, origin);
+	VMOVE(trace_ray.direction, direction);
+	struct rt_brep_shot_trace trace;
+	(void)shoot_brep_trace(brep_stp, rtip, resp, trace_ray, trace);
+	maximum_fixed_leaves = std::max(maximum_fixed_leaves,
+	    trace.fixed_leaf_count);
+	maximum_fixed_hits = std::max(maximum_fixed_hits,
+	    trace.fixed_hit_count);
+	if (!brep_trace_fixed_workspaces_match(trace) ||
+		trace.surface_workspace_exhausted || trace.surface_box_overflow ||
+		trace.local_root_overflow ||
+		trace.local_cluster_overflow ||
+		trace.local_root_clusters != trace.stored_local_clusters ||
+		trace.local_root_attempts != trace.local_root_candidates +
+		trace.local_root_failures + trace.local_root_duplicates) {
+	    std::printf("FAIL: outside grazing isolation overflow h/R=%.17g\n",
+		h / radius);
+	    failures++;
+	}
+	if (trace.surface_isolated_boxes) {
+	    outside_ambiguous++;
+	    largest_outside_ambiguous = std::max(largest_outside_ambiguous,
+		-h);
+	}
+	if (trace.local_root_candidates) {
+	    outside_local_candidates += trace.local_root_candidates;
+	    largest_outside_local_candidate = std::max(
+		largest_outside_local_candidate, -h);
+	}
 	if (implicit_result.segments != 0 || brep_result.segments != 0) {
 	    std::printf("FAIL: outside grazing h/R=%.17g did not miss: "
 		"implicit=%d BREP=%d\n", h / radius,
@@ -684,6 +1013,25 @@ check_grazing_ratchet(struct soltab *implicit_stp, struct soltab *brep_stp,
 	    failures++;
 	}
     }
+    std::printf("Sphere grazing miss-side isolation: ambiguous=%zu "
+	"largest-h/T=%.9g local-candidates=%zu largest-local-h/T=%.9g\n",
+	outside_ambiguous, largest_outside_ambiguous / rtip->rti_tol.dist,
+	outside_local_candidates,
+	largest_outside_local_candidate / rtip->rti_tol.dist);
+    if (largest_outside_ambiguous > 1.0e-6 * rtip->rti_tol.dist) {
+	std::printf("FAIL: miss-side isolation ambiguity spread to h/T=%.17g\n",
+	    largest_outside_ambiguous / rtip->rti_tol.dist);
+	failures++;
+    }
+    if (largest_outside_local_candidate >
+	    1.0e-6 * rtip->rti_tol.dist) {
+	std::printf("FAIL: miss-side local roots spread to h/T=%.17g\n",
+	    largest_outside_local_candidate / rtip->rti_tol.dist);
+	failures++;
+    }
+    std::printf("Sphere fixed workspaces: leaves=%zu/%d raw-hits=%zu/%d\n",
+	maximum_fixed_leaves, RT_BREP_MAX_LEAVES, maximum_fixed_hits,
+	RT_BREP_MAX_HITS);
 
     /* The implicit sphere rejects an outward ray beginning on its surface.
      * BREP currently returns the entirely nonpositive segment [-2R, 0].
@@ -1941,6 +2289,26 @@ brep_trace_edge(const struct rt_brep_shot_trace &trace, int edge_index)
 }
 
 
+static bool
+brep_trace_root_isolated(const struct rt_brep_shot_trace &trace,
+    const struct rt_brep_trace_root &root)
+{
+    const double parameter_tolerance = 1.0e-12;
+    for (size_t i = 0; i < trace.stored_surface_boxes; ++i) {
+	const struct rt_brep_trace_surface_box &box = trace.surface_boxes[i];
+	if (box.face_index == root.face_index &&
+		root.uv[0] >= box.uv_min[0] - parameter_tolerance &&
+		root.uv[0] <= box.uv_max[0] + parameter_tolerance &&
+		root.uv[1] >= box.uv_min[1] - parameter_tolerance &&
+		root.uv[1] <= box.uv_max[1] + parameter_tolerance &&
+		root.dist >= box.t_min - 1.0e-7 &&
+		root.dist <= box.t_max + 1.0e-7)
+	    return true;
+    }
+    return false;
+}
+
+
 static ON_Xform
 cobb_similarity_transform(double scale, const ON_3dVector &translation)
 {
@@ -1988,8 +2356,119 @@ cobb_transform_vector(const ON_Xform &xform, const ON_3dVector &vector)
 }
 
 
+static bool
+cobb_reparameterize_edge_trims(ON_Brep *brep, int edge_index,
+    double &maximum_locus_error, double &minimum_midpoint_shift)
+{
+    maximum_locus_error = 0.0;
+    minimum_midpoint_shift = DBL_MAX;
+    double coordinate_scale = 1.0;
+    if (!brep || edge_index < 0 || edge_index >= brep->m_E.Count())
+	return false;
+    const ON_BrepEdge &edge = brep->m_E[edge_index];
+    if (edge.m_ti.Count() != 2)
+	return false;
+
+    const double constants[2] = {0.05, 20.0};
+    for (int side = 0; side < 2; ++side) {
+	const int trim_index = edge.m_ti[side];
+	if (trim_index < 0 || trim_index >= brep->m_T.Count())
+	    return false;
+	ON_BrepTrim &trim = brep->m_T[trim_index];
+	ON_NurbsCurve *curve = brep->MakeTrimCurveNurb(trim);
+	if (!curve || !curve->Domain().IsIncreasing())
+	    return false;
+	const ON_NurbsCurve original(*curve);
+	const ON_Interval domain = curve->Domain();
+	const ON_3dPoint original_midpoint = original.PointAt(domain.Mid());
+	if (!curve->Reparameterize(constants[side]))
+	    return false;
+	for (int sample = 0; sample <= 64; ++sample) {
+	    const double fraction = (double)sample / 64.0;
+	    /* Reparameterize maps every old knot k to
+	     * c*k/((c-1)*k+1).  Invert that map to find the original
+	     * parameter evaluated at this new parameter. */
+	    const double denominator = constants[side] +
+		(1.0 - constants[side]) * fraction;
+	    const double mapped_fraction = fraction / denominator;
+	    const ON_3dPoint expected = original.PointAt(
+		domain.ParameterAt(mapped_fraction));
+	    const ON_3dPoint actual = curve->PointAt(
+		domain.ParameterAt(fraction));
+	    if (!expected.IsValid() || !actual.IsValid())
+		return false;
+	    coordinate_scale = std::max(coordinate_scale,
+		std::max(fabs(expected.x), std::max(fabs(expected.y),
+		std::max(fabs(actual.x), fabs(actual.y)))));
+	    maximum_locus_error = std::max(maximum_locus_error,
+		expected.DistanceTo(actual));
+	}
+	minimum_midpoint_shift = std::min(minimum_midpoint_shift,
+	    original_midpoint.DistanceTo(curve->PointAt(domain.Mid())));
+	curve->DestroyRuntimeCache(true);
+	/* Reparameterize() can move an endpoint knot by roundoff.  Refresh the
+	 * proxy's cached real-curve domain so the unchanged full locus remains a
+	 * valid trim representation. */
+	trim.SetProxyCurve(curve);
+    }
+    brep->DestroyRuntimeCache(true);
+    const double locus_limit = 4096.0 * DBL_EPSILON * coordinate_scale;
+    return std::isfinite(maximum_locus_error) &&
+	std::isfinite(minimum_midpoint_shift) &&
+	maximum_locus_error <= locus_limit &&
+	minimum_midpoint_shift > 0.1 && brep->IsValid();
+}
+
+
+static bool
+cobb_make_ambiguous_edge_trim(ON_Brep *brep, int edge_index)
+{
+    if (!brep || edge_index < 0 || edge_index >= brep->m_E.Count())
+	return false;
+    const ON_BrepEdge &edge = brep->m_E[edge_index];
+    if (edge.m_ti.Count() != 2)
+	return false;
+    const int trim_index = edge.m_ti[0];
+    if (trim_index < 0 || trim_index >= brep->m_T.Count())
+	return false;
+    ON_BrepTrim &trim = brep->m_T[trim_index];
+    const ON_Curve *original = trim.TrimCurveOf();
+    if (!original || !original->Domain().IsIncreasing())
+	return false;
+    const ON_Interval domain = original->Domain();
+    const ON_3dPoint start = original->PointAt(domain.Min());
+    const ON_3dPoint end = original->PointAt(domain.Max());
+    if (!start.IsValid() || !end.IsValid() ||
+	    start.DistanceTo(end) <= DBL_MIN)
+	return false;
+
+    /* Traverse the same boundary forward, backward, then forward.  The locus
+     * stays on the valid UV boundary, but its edge correspondence is not
+     * one-to-one and the middle span has the wrong orientation. */
+    ON_NurbsCurve *ambiguous = ON_NurbsCurve::New(2, false, 2, 4);
+    if (!ambiguous || !ambiguous->SetCV(0, start) ||
+	    !ambiguous->SetCV(1, end) || !ambiguous->SetCV(2, start) ||
+	    !ambiguous->SetCV(3, end) ||
+	    !ambiguous->MakeClampedUniformKnotVector() ||
+	    !ambiguous->SetDomain(domain.Min(), domain.Max())) {
+	delete ambiguous;
+	return false;
+    }
+    const int curve_index = brep->AddTrimCurve(ambiguous);
+    if (curve_index < 0) {
+	delete ambiguous;
+	return false;
+    }
+    if (!brep->SetTrimCurve(trim, curve_index))
+	return false;
+    brep->SetTrimIsoFlags(trim);
+    brep->DestroyRuntimeCache(true);
+    return true;
+}
+
+
 static int
-check_cobb_classifier_transform_invariance(const struct bn_tol *tol)
+check_cobb_classifier_invariance(const struct bn_tol *tol)
 {
     const double radius = 10.0;
     const ON_3dPoint origin(0.0, 0.0, 0.0);
@@ -2001,7 +2480,7 @@ check_cobb_classifier_transform_invariance(const struct bn_tol *tol)
 	frame, measured_gap, displacement);
     delete pristine;
     if (!base) {
-	std::printf("FAIL: Cobb transform-invariance construction\n");
+	std::printf("FAIL: Cobb classifier-invariance construction\n");
 	return 1;
     }
 
@@ -2010,17 +2489,36 @@ check_cobb_classifier_transform_invariance(const struct bn_tol *tol)
 	double scale;
 	ON_3dVector translation;
 	bool rotate;
+	bool reparameterize;
     } cases[] = {
-	{"identity", 1.0, ON_3dVector(0.0, 0.0, 0.0), false},
-	{"rotated-translated", 1.0, ON_3dVector(13.0, -17.0, 29.0), true},
-	{"small-similarity", 0.01, ON_3dVector(1.25, -2.5, 5.0), true},
+	{"identity", 1.0, ON_3dVector(0.0, 0.0, 0.0), false, false},
+	{"trim-reparameterized", 1.0, ON_3dVector(0.0, 0.0, 0.0),
+	    false, true},
+	{"rotated-translated", 1.0, ON_3dVector(13.0, -17.0, 29.0),
+	    true, false},
+	{"small-similarity", 0.01, ON_3dVector(1.25, -2.5, 5.0),
+	    true, false},
 	{"large-similarity", 1.0e4,
-	    ON_3dVector(1.0e6, -2.0e6, 3.0e6), true}
+	    ON_3dVector(1.0e6, -2.0e6, 3.0e6), true, false}
     };
     double reference_existing[2] = {0.0, 0.0};
     double reference_continuation[2] = {0.0, 0.0};
     size_t reference_surface_candidates[3][2] = {};
+    size_t reference_subdivision_boxes[3][2] = {};
+    size_t reference_isolated_boxes[3][2] = {};
+    size_t reference_local_root_count[3][2] = {};
+    size_t reference_local_cluster_count[3][2] = {};
+    size_t reference_local_root_failures[3][2] = {};
+    double reference_local_root_distances[3][2]
+	[RT_BREP_TRACE_MAX_LOCAL_ROOTS] = {};
     int failures = 0;
+    size_t maximum_fixed_leaves = 0;
+    size_t maximum_fixed_hits = 0;
+    size_t maximum_discrepancy_cells = 0;
+    size_t maximum_discrepancy_depth = 0;
+    double maximum_discrepancy_width_ratio = 0.0;
+    double maximum_parameter_locus_error = 0.0;
+    double minimum_parameter_midpoint_shift = DBL_MAX;
 
     for (size_t case_index = 0;
 	    case_index < sizeof(cases) / sizeof(cases[0]); ++case_index) {
@@ -2034,6 +2532,22 @@ check_cobb_classifier_transform_invariance(const struct bn_tol *tol)
 	    delete variant;
 	    failures++;
 	    continue;
+	}
+	if (test.reparameterize) {
+	    double locus_error = 0.0;
+	    double midpoint_shift = 0.0;
+	    if (!cobb_reparameterize_edge_trims(variant, frame.edge_index,
+		    locus_error, midpoint_shift)) {
+		std::printf("FAIL: Cobb %s trim reparameterization\n",
+		    test.name);
+		delete variant;
+		failures++;
+		continue;
+	    }
+	    maximum_parameter_locus_error = std::max(
+		maximum_parameter_locus_error, locus_error);
+	    minimum_parameter_midpoint_shift = std::min(
+		minimum_parameter_midpoint_shift, midpoint_shift);
 	}
 	/* ON_Brep tolerances are model-space lengths.  Restore their exact
 	 * similarity-scaled values independently of Transform's policy. */
@@ -2101,10 +2615,30 @@ check_cobb_classifier_transform_invariance(const struct bn_tol *tol)
 			transformed_origin.y, transformed_origin.z);
 		    VSET(ray.direction, transformed_direction.x,
 			transformed_direction.y, transformed_direction.z);
+		    const ray_result production_result = shoot_solid(stp, rtip,
+			&resource, ray.origin, ray.direction);
 		    struct rt_brep_shot_trace trace;
-		    (void)shoot_brep_trace(stp, rtip, &resource, ray, trace);
+		    const int trace_hits = shoot_brep_trace(stp, rtip,
+			&resource, ray, trace);
+		maximum_fixed_leaves = std::max(maximum_fixed_leaves,
+		    trace.fixed_leaf_count);
+		maximum_fixed_hits = std::max(maximum_fixed_hits,
+		    trace.fixed_hit_count);
 		    const struct rt_brep_trace_edge *edge =
 			brep_trace_edge(trace, frame.edge_index);
+		    if (edge && edge->discrepancy_bounded) {
+			maximum_discrepancy_cells = std::max(
+			    maximum_discrepancy_cells,
+			    edge->discrepancy_bound_cells);
+			maximum_discrepancy_depth = std::max(
+			    maximum_discrepancy_depth,
+			    edge->discrepancy_bound_depth);
+			maximum_discrepancy_width_ratio = std::max(
+			    maximum_discrepancy_width_ratio,
+			    (edge->discrepancy_upper_bound -
+			    edge->discrepancy_lower_bound) /
+			    (tol->dist * test.scale));
+		    }
 		    const size_t expected_closures = expected_state == 1 ? 1 : 0;
 		    const int expected_direction = reverse ?
 			RT_BREP_TRACE_ENTERING : RT_BREP_TRACE_LEAVING;
@@ -2116,11 +2650,90 @@ check_cobb_classifier_transform_invariance(const struct bn_tol *tol)
 			4096.0 * DBL_EPSILON * coordinate_scale / test.scale);
 		    const double normalized_root_limit = std::max(
 			normalized_limit, 0.01 * tol->dist);
-		    if (case_index == 0)
+		    std::vector<double> local_root_distances;
+		    local_root_distances.reserve(trace.stored_local_roots);
+		    bool local_root_invalid = false;
+		    for (size_t root_index = 0;
+			    root_index < trace.stored_local_roots; ++root_index) {
+			const struct rt_brep_trace_local_root &root =
+			    trace.local_roots[root_index];
+			local_root_distances.push_back(root.dist / test.scale);
+			if (!std::isfinite(root.dist) ||
+				!std::isfinite(root.residual) ||
+				root.residual / test.scale > normalized_root_limit)
+			    local_root_invalid = true;
+		    }
+		    std::sort(local_root_distances.begin(),
+			local_root_distances.end());
+		    const size_t local_cluster_count =
+			trace.stored_local_clusters;
+		    if (case_index == 0) {
 			reference_surface_candidates[state_index][reverse] =
 			    trace.candidate_surface_spans;
-		    bool bad = !edge || !edge->candidate_spans ||
+			reference_subdivision_boxes[state_index][reverse] =
+			    trace.surface_subdivision_boxes;
+			reference_isolated_boxes[state_index][reverse] =
+			    trace.surface_isolated_boxes;
+			reference_local_root_count[state_index][reverse] =
+			    local_root_distances.size();
+			reference_local_cluster_count[state_index][reverse] =
+			    local_cluster_count;
+			reference_local_root_failures[state_index][reverse] =
+			    trace.local_root_failures;
+			for (size_t root_index = 0;
+				root_index < local_root_distances.size(); ++root_index)
+			    reference_local_root_distances[state_index][reverse]
+				[root_index] = local_root_distances[root_index];
+		    }
+		    bool local_roots_differ = expected_state == 0 ?
+			local_cluster_count !=
+			reference_local_cluster_count[state_index][reverse] :
+			local_root_distances.size() !=
+			reference_local_root_count[state_index][reverse];
+		    if (!local_roots_differ && expected_state != 0) {
+			for (size_t root_index = 0;
+				root_index < local_root_distances.size(); ++root_index) {
+			    if (fabs(local_root_distances[root_index] -
+				    reference_local_root_distances[state_index]
+				    [reverse][root_index]) > normalized_root_limit) {
+				local_roots_differ = true;
+				break;
+			    }
+			}
+		    }
+		    if (expected_state == 0) {
+			local_roots_differ = local_roots_differ ||
+			    local_cluster_count != 1;
+			for (size_t root_index = 0;
+				root_index < local_root_distances.size(); ++root_index) {
+			    if (fabs(local_root_distances[root_index] -
+				    2.0 * radius) > 0.1 * tol->dist)
+				local_roots_differ = true;
+			}
+		    }
+		    bool bad = !brep_trace_fixed_workspaces_match(trace) ||
+			!edge || !edge->candidate_spans ||
 			!edge->within_edge_tolerance || !edge->sector_valid ||
+			!edge->discrepancy_bounded ||
+			edge->discrepancy_bound_exhausted ||
+			edge->discrepancy_lower_bound < 0.0 ||
+			edge->discrepancy_upper_bound <
+			edge->discrepancy_lower_bound ||
+			edge->measured_discrepancy >
+			edge->discrepancy_upper_bound + normalized_limit *
+			test.scale ||
+			edge->discrepancy_upper_bound -
+			edge->discrepancy_lower_bound >
+			edge->discrepancy_bound_tolerance +
+			normalized_limit * test.scale ||
+			edge->tolerance_inferred ||
+			!edge->discrepancy_measured ||
+			!edge->correspondence_supported ||
+			!edge->discrepancy_authorized ||
+			fabs(edge->model_tolerance / test.scale -
+			tol->dist) > normalized_limit ||
+			fabs(edge->measured_discrepancy / test.scale -
+			measured_gap) > normalized_limit ||
 			trace.supported_surface_faces != 6 ||
 			trace.unsupported_surface_faces != 0 ||
 			trace.prepared_surface_spans != 6 ||
@@ -2128,6 +2741,26 @@ check_cobb_classifier_transform_invariance(const struct bn_tol *tol)
 			trace.excluded_surface_spans != 6 ||
 			trace.candidate_surface_spans !=
 			reference_surface_candidates[state_index][reverse] ||
+			trace.surface_subdivision_boxes !=
+			reference_subdivision_boxes[state_index][reverse] ||
+			trace.surface_isolated_boxes !=
+			reference_isolated_boxes[state_index][reverse] ||
+			trace.surface_workspace_exhausted != 0 ||
+			trace.local_root_overflow != 0 ||
+			trace.local_cluster_overflow != 0 ||
+			trace.local_root_candidates !=
+			trace.stored_local_roots ||
+			trace.local_root_clusters !=
+			trace.stored_local_clusters ||
+			fabs(trace.local_cluster_tolerance / test.scale -
+			0.1 * tol->dist) > normalized_limit ||
+			trace.local_root_attempts !=
+			trace.local_root_candidates +
+			trace.local_root_failures +
+			trace.local_root_duplicates ||
+			trace.local_root_failures !=
+			reference_local_root_failures[state_index][reverse] ||
+			local_root_invalid || local_roots_differ ||
 			edge->closest_state != expected_state ||
 			fabs(edge->distance / test.scale - fabs(clearance)) >
 			normalized_limit ||
@@ -2152,28 +2785,80 @@ check_cobb_classifier_transform_invariance(const struct bn_tol *tol)
 			    trace.closure_edge_dist <= trace.closure_existing_dist);
 			bad = bad || trace.continuation_attempts != 1 ||
 			    trace.continuation_candidates != 1 ||
+			    trace.continuation_certified_candidates != 1 ||
+			    !trace.continuation_certificate_root_boxes ||
+			    trace.continuation_certificate_root_boxes !=
+			    trace.continuation_certificate_isolated ||
+			    trace.continuation_certificate_exhausted != 0 ||
+			    trace.continuation_certificate_existing_overlap != 0 ||
+			    trace.continuation_dist <
+			    trace.continuation_certificate_t_min -
+			    normalized_root_limit * test.scale ||
+			    trace.continuation_dist >
+			    trace.continuation_certificate_t_max +
+			    normalized_root_limit * test.scale ||
 			    trace.continuation_face_index < 0 ||
 			    fabs(trace.continuation_dist / test.scale -
 			    reference_continuation[reverse]) >
 			    normalized_root_limit ||
 			    (reverse ? trace.continuation_dist >=
 			    trace.closure_edge_dist : trace.continuation_dist <=
-			    trace.closure_edge_dist);
+			    trace.closure_edge_dist) ||
+			    trace.closure_shadow_segments != 1 ||
+			    trace_hits != 2 || trace.final_segments != 1 ||
+			    production_result.segments != 1 ||
+			    fabs(production_result.in_dist -
+			    trace.closure_shadow_in_dist) >
+			    normalized_root_limit * test.scale ||
+			    fabs(production_result.out_dist -
+			    trace.closure_shadow_out_dist) >
+			    normalized_root_limit * test.scale ||
+			    trace.closure_shadow_in_dist >=
+			    trace.closure_shadow_out_dist;
 		    } else {
 			bad = bad || trace.continuation_attempts != 0 ||
-			    trace.continuation_candidates != 0;
+			    trace.continuation_candidates != 0 ||
+			    trace.continuation_certified_candidates != 0 ||
+			    trace.continuation_certificate_boxes != 0 ||
+			    trace.closure_shadow_segments != 0 || trace_hits != 0 ||
+			    trace.final_segments != 0 ||
+			    production_result.segments != 0;
 		    }
 		    if (bad) {
 			std::printf("FAIL: Cobb %s classifier state=%d "
 			    "reverse=%d observed=%d distance=%.17g "
 			    "edge-t=%.17g closure=%zu/%zu direction=%d/%d "
-			    "existing-t=%.17g\n", test.name, expected_state,
+			    "existing-t=%.17g local=%zu/%zu clusters=%zu/%zu "
+			    "failures=%zu/%zu invalid=%d differ=%d "
+			    "leaves=%zu/%zu stored=%zu overflow=%zu fallback=%zu "
+			    "mismatch=%zu hits=%zu/%zu overflow=%zu fallback=%zu "
+			    "mismatch=%zu "
+			    "trim=%zu/%zu/%zu mismatch=%zu\n",
+			    test.name,
+			    expected_state,
 			    reverse, edge ? edge->closest_state : -99,
 			    edge ? edge->distance : INFINITY,
 			    edge ? edge->ray_dist : INFINITY,
 			    trace.closure_candidates, expected_closures,
 			    trace.closure_missing_direction,
-			    expected_direction, trace.closure_existing_dist);
+			    expected_direction, trace.closure_existing_dist,
+			    local_root_distances.size(),
+			    reference_local_root_count[state_index][reverse],
+			    local_cluster_count,
+			    reference_local_cluster_count[state_index][reverse],
+			    trace.local_root_failures,
+			    reference_local_root_failures[state_index][reverse],
+			    local_root_invalid, local_roots_differ,
+			    trace.intersected_leaves, trace.fixed_leaf_count,
+			    trace.fixed_leaf_stored, trace.fixed_leaf_overflow,
+			    trace.fixed_leaf_fallback,
+			    trace.fixed_leaf_mismatches, trace.fixed_hit_count,
+			    trace.fixed_hit_stored, trace.fixed_hit_overflow,
+			    trace.fixed_hit_fallback,
+			    trace.fixed_hit_mismatches, trace.trim_queries,
+			    trace.trim_noalloc_candidates,
+			    trace.trim_allocating_candidates,
+			    trace.trim_equivalence_mismatches);
 			failures++;
 		    }
 		}
@@ -2186,8 +2871,392 @@ check_cobb_classifier_transform_invariance(const struct bn_tol *tol)
     }
 
     delete base;
+    if (!failures) {
+	std::printf("Cobb classifier similarity/parameter invariance: PASS "
+	    "max-leaves=%zu/%d max-raw-hits=%zu/%d "
+	    "parameter-locus-error=%.3g midpoint-shift=%.3g "
+	    "seam-bound-cells=%zu depth=%zu width/T=%.3g\n",
+	    maximum_fixed_leaves, RT_BREP_MAX_LEAVES,
+	    maximum_fixed_hits, RT_BREP_MAX_HITS,
+	    maximum_parameter_locus_error,
+	    minimum_parameter_midpoint_shift, maximum_discrepancy_cells,
+	    maximum_discrepancy_depth, maximum_discrepancy_width_ratio);
+    }
+    return failures;
+}
+
+
+static int
+check_cobb_ambiguous_correspondence(const struct bn_tol *tol,
+    struct rt_i *rtip, struct resource *resource)
+{
+    const double radius = 10.0;
+    const ON_3dPoint origin(0.0, 0.0, 0.0);
+    ON_Brep *pristine = ON_Brep_CobbSphereSewn(radius, origin);
+    cobb_seam_frame frame;
+    double measured_gap = 0.0;
+    double displacement = 0.0;
+    ON_Brep *variant = cobb_bowed_seam_variant(pristine, origin,
+	-tol->dist, frame, measured_gap, displacement);
+    delete pristine;
+    if (!variant || !cobb_make_ambiguous_edge_trim(variant,
+	    frame.edge_index)) {
+	std::printf("FAIL: Cobb ambiguous correspondence construction\n");
+	delete variant;
+	return 1;
+    }
+
+    struct rt_brep_internal variant_internal = {};
+    variant_internal.magic = RT_BREP_INTERNAL_MAGIC;
+    variant_internal.brep = variant;
+    struct rt_db_internal variant_intern;
+    RT_DB_INTERNAL_INIT(&variant_intern);
+    variant_intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
+    variant_intern.idb_type = ID_BREP;
+    variant_intern.idb_meth = &OBJ[ID_BREP];
+    variant_intern.idb_ptr = &variant_internal;
+    struct soltab *stp = prep_solid(rtip, &variant_intern, ID_BREP);
+    if (!stp) {
+	std::printf("FAIL: Cobb ambiguous correspondence prep\n");
+	return 1;
+    }
+
+    int failures = 0;
+    for (int reverse = 0; reverse <= 1; ++reverse) {
+	const sampled_ray ray = cobb_seam_grazing_ray(frame, origin, radius,
+	    0.9 * tol->dist, reverse != 0);
+	struct rt_brep_shot_trace trace;
+	(void)shoot_brep_trace(stp, rtip, resource, ray, trace);
+	const struct rt_brep_trace_edge *edge = brep_trace_edge(trace,
+	    frame.edge_index);
+	if (!brep_trace_fixed_workspaces_match(trace) || !edge ||
+		!edge->discrepancy_measured ||
+		!edge->discrepancy_authorized ||
+		edge->correspondence_supported || edge->candidate_spans ||
+		edge->within_edge_tolerance || edge->sector_valid ||
+		edge->discrepancy_bounded ||
+		edge->discrepancy_bound_exhausted ||
+		trace.closure_candidates || trace.continuation_attempts ||
+		trace.closure_shadow_segments ||
+		trace.after_direction_cleanup != 1 || trace.final_segments != 0) {
+	    std::printf("FAIL: Cobb ambiguous correspondence reverse=%d "
+		"edge=%d measured=%d authorized=%d correspondence=%d "
+		"spans=%zu within=%d sector=%d bound=%d exhausted=%d "
+		"closure=%zu continuation=%zu segment=%zu cleanup=%zu\n",
+		reverse,
+		frame.edge_index, edge ? edge->discrepancy_measured : -1,
+		edge ? edge->discrepancy_authorized : -1,
+		edge ? edge->correspondence_supported : -1,
+		edge ? edge->candidate_spans : 0,
+		edge ? edge->within_edge_tolerance : -1,
+		edge ? edge->sector_valid : -1,
+		edge ? edge->discrepancy_bounded : -1,
+		edge ? edge->discrepancy_bound_exhausted : -1,
+		trace.closure_candidates, trace.continuation_attempts,
+		trace.closure_shadow_segments, trace.after_direction_cleanup);
+	    failures++;
+	}
+    }
+
+    free_solid(stp);
     if (!failures)
-	std::printf("Cobb classifier similarity invariance: PASS\n");
+	std::printf("Cobb ambiguous trim correspondence fallback: PASS\n");
+    return failures;
+}
+
+
+static int
+check_cobb_discrepancy_bound_budget(const struct bn_tol *tol,
+    struct rt_i *rtip, struct resource *resource)
+{
+    const size_t expected_cell_budget = 4096;
+    const size_t target_count = 3;
+    const double radius = 10.0;
+    const ON_3dPoint origin(0.0, 0.0, 0.0);
+    ON_Brep *variant = ON_Brep_CobbSphereSewn(radius, origin);
+    if (!variant) {
+	std::printf("FAIL: Cobb adaptive seam budget construction\n");
+	return 1;
+    }
+
+    struct budget_target {
+	int face_index = -1;
+	int side_index = -1;
+	int edge_index = -1;
+	double measured_discrepancy = INFINITY;
+    } targets[target_count];
+    std::vector<bool> used_faces(variant->m_F.Count(), false);
+    size_t targets_found = 0;
+    for (int face_index = 0; face_index < variant->m_F.Count() &&
+	    targets_found < target_count; ++face_index) {
+	if (used_faces[face_index])
+	    continue;
+	for (int side_index = 0; side_index < 4; ++side_index) {
+	    int edge_index = -1;
+	    if (!cobb_target_edge(variant, face_index, side_index,
+		    edge_index))
+		continue;
+	    const ON_BrepEdge &edge = variant->m_E[edge_index];
+	    if (edge.m_ti.Count() != 2)
+		continue;
+	    int other_face = -1;
+	    bool contains_face = false;
+	    bool valid_faces = true;
+	    for (int trim_side = 0; trim_side < 2; ++trim_side) {
+		const int trim_index = edge.m_ti[trim_side];
+		if (trim_index < 0 || trim_index >= variant->m_T.Count()) {
+		    valid_faces = false;
+		    break;
+		}
+		const int incident_face =
+		    variant->m_T[trim_index].FaceIndexOf();
+		if (incident_face == face_index)
+		    contains_face = true;
+		else
+		    other_face = incident_face;
+	    }
+	    if (!valid_faces || !contains_face || other_face < 0 ||
+		    other_face >= variant->m_F.Count() ||
+		    used_faces[other_face])
+		continue;
+	    targets[targets_found].face_index = face_index;
+	    targets[targets_found].side_index = side_index;
+	    targets[targets_found].edge_index = edge_index;
+	    used_faces[face_index] = true;
+	    used_faces[other_face] = true;
+	    targets_found++;
+	    break;
+	}
+    }
+
+    bool construction_ok = targets_found == target_count;
+    for (size_t target_index = 0; construction_ok &&
+	    target_index < target_count; ++target_index) {
+	budget_target &target = targets[target_index];
+	construction_ok = cobb_perturb_boundary_interior(variant,
+	    target.face_index, target.side_index, origin, -0.5 * tol->dist);
+	if (!construction_ok)
+	    break;
+	target.measured_discrepancy = cobb_seam_discrepancy(variant,
+	    target.edge_index);
+	construction_ok = std::isfinite(target.measured_discrepancy) &&
+	    target.measured_discrepancy > 1.0e-6 * tol->dist &&
+	    target.measured_discrepancy <= tol->dist;
+	if (construction_ok)
+	    variant->m_E[target.edge_index].m_tolerance =
+		target.measured_discrepancy * 1.01;
+    }
+    if (!construction_ok || !variant->IsValid()) {
+	std::printf("FAIL: Cobb adaptive seam budget geometry targets=%zu/%zu\n",
+	    targets_found, target_count);
+	delete variant;
+	return 1;
+    }
+
+    struct rt_brep_internal variant_internal = {};
+    variant_internal.magic = RT_BREP_INTERNAL_MAGIC;
+    variant_internal.brep = variant;
+    struct rt_db_internal variant_intern;
+    RT_DB_INTERNAL_INIT(&variant_intern);
+    variant_intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
+    variant_intern.idb_type = ID_BREP;
+    variant_intern.idb_meth = &OBJ[ID_BREP];
+    variant_intern.idb_ptr = &variant_internal;
+    struct soltab *stp = prep_solid(rtip, &variant_intern, ID_BREP);
+    if (!stp) {
+	std::printf("FAIL: Cobb adaptive seam budget prep\n");
+	return 1;
+    }
+
+    sampled_ray ray;
+    VSET(ray.origin, 0.0, 0.0, 2.0 * radius);
+    VSET(ray.direction, 0.0, 0.0, -1.0);
+    struct rt_brep_shot_trace trace;
+    (void)shoot_brep_trace(stp, rtip, resource, ray, trace);
+    size_t bounded_count = 0;
+    size_t exhausted_count = 0;
+    size_t total_cells = 0;
+    int failures = 0;
+    const double limit = std::max(1.0e-10 * tol->dist,
+	512.0 * DBL_EPSILON * radius);
+    for (size_t target_index = 0; target_index < target_count;
+	    ++target_index) {
+	const budget_target &target = targets[target_index];
+	const struct rt_brep_trace_edge *edge = brep_trace_edge(trace,
+	    target.edge_index);
+	if (!edge) {
+	    std::printf("FAIL: Cobb adaptive seam budget edge=%d missing\n",
+		target.edge_index);
+	    failures++;
+	    continue;
+	}
+	total_cells += edge->discrepancy_bound_cells;
+	if (edge->discrepancy_bounded)
+	    bounded_count++;
+	if (edge->discrepancy_bound_exhausted)
+	    exhausted_count++;
+	bool invalid = !edge->discrepancy_measured ||
+	    !edge->correspondence_supported ||
+	    !edge->discrepancy_authorized ||
+	    (edge->discrepancy_bounded &&
+	    edge->discrepancy_bound_exhausted);
+	if (edge->discrepancy_bounded) {
+	    invalid = invalid || edge->discrepancy_lower_bound >
+		target.measured_discrepancy + limit ||
+		edge->discrepancy_upper_bound <
+		target.measured_discrepancy - limit ||
+		edge->discrepancy_upper_bound -
+		edge->discrepancy_lower_bound >
+		edge->discrepancy_bound_tolerance + limit;
+	} else {
+	    invalid = invalid || !edge->discrepancy_bound_exhausted;
+	}
+	if (invalid) {
+	    std::printf("FAIL: Cobb adaptive seam budget edge=%d "
+		"measured=%.17g bound=%.17g/%.17g target=%.17g "
+		"bounded=%d exhausted=%d cells=%zu depth=%zu\n",
+		target.edge_index, target.measured_discrepancy,
+		edge->discrepancy_lower_bound,
+		edge->discrepancy_upper_bound,
+		edge->discrepancy_bound_tolerance,
+		edge->discrepancy_bounded,
+		edge->discrepancy_bound_exhausted,
+		edge->discrepancy_bound_cells,
+		edge->discrepancy_bound_depth);
+	    failures++;
+	}
+    }
+    if (!brep_trace_fixed_workspaces_match(trace) || bounded_count < 1 ||
+	    exhausted_count < 1 || total_cells > expected_cell_budget) {
+	std::printf("FAIL: Cobb adaptive seam budget bounded=%zu exhausted=%zu "
+	    "cells=%zu/%zu\n", bounded_count, exhausted_count, total_cells,
+	    expected_cell_budget);
+	failures++;
+    }
+    free_solid(stp);
+    if (!failures)
+	std::printf("Cobb adaptive seam budget: PASS bounded=%zu "
+	    "exhausted=%zu cells=%zu/%zu\n", bounded_count,
+	    exhausted_count, total_cells, expected_cell_budget);
+    return failures;
+}
+
+
+static int
+check_cobb_tolerance_metadata(const struct bn_tol *tol, struct rt_i *rtip,
+    struct resource *resource)
+{
+    const double radius = 10.0;
+    const ON_3dPoint origin(0.0, 0.0, 0.0);
+    ON_Brep *pristine = ON_Brep_CobbSphereSewn(radius, origin);
+    if (!pristine) {
+	std::printf("FAIL: Cobb tolerance-metadata pristine construction\n");
+	return 1;
+    }
+    struct metadata_case {
+	const char *name;
+	double declared_ratio;
+	bool unset;
+	bool inferred;
+	bool authorized;
+    } cases[] = {
+	{"correct", 1.01, false, false, true},
+	{"unset", 0.0, true, true, true},
+	{"explicit-zero", 0.0, false, false, false},
+	{"half", 0.5, false, false, false},
+	{"double", 2.0, false, false, true}
+    };
+
+    int failures = 0;
+    for (size_t case_index = 0;
+	    case_index < sizeof(cases) / sizeof(cases[0]); ++case_index) {
+	cobb_seam_frame frame;
+	double measured_gap = 0.0;
+	double displacement = 0.0;
+	ON_Brep *variant = cobb_bowed_seam_variant(pristine, origin,
+	    -2.0 * tol->dist, frame, measured_gap, displacement);
+	if (!variant) {
+	    std::printf("FAIL: Cobb %s tolerance variant\n",
+		cases[case_index].name);
+	    failures++;
+	    continue;
+	}
+	variant->m_E[frame.edge_index].m_tolerance = cases[case_index].unset ?
+	    ON_UNSET_VALUE : cases[case_index].declared_ratio * measured_gap;
+
+	struct rt_brep_internal variant_internal = {};
+	variant_internal.magic = RT_BREP_INTERNAL_MAGIC;
+	variant_internal.brep = variant;
+	struct rt_db_internal variant_intern;
+	RT_DB_INTERNAL_INIT(&variant_intern);
+	variant_intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
+	variant_intern.idb_type = ID_BREP;
+	variant_intern.idb_meth = &OBJ[ID_BREP];
+	variant_intern.idb_ptr = &variant_internal;
+	struct soltab *stp = prep_solid(rtip, &variant_intern, ID_BREP);
+	if (!stp) {
+	    std::printf("FAIL: Cobb %s tolerance prep\n",
+		cases[case_index].name);
+	    failures++;
+	    continue;
+	}
+
+	const sampled_ray ray = cobb_seam_grazing_ray(frame, origin, radius,
+	    0.9 * tol->dist, false);
+	struct rt_brep_shot_trace trace;
+	(void)shoot_brep_trace(stp, rtip, resource, ray, trace);
+	const struct rt_brep_trace_edge *edge =
+	    brep_trace_edge(trace, frame.edge_index);
+	double expected_tolerance = tol->dist;
+	if (cases[case_index].unset)
+	    expected_tolerance = std::max(expected_tolerance, measured_gap);
+	else
+	    expected_tolerance = std::max(expected_tolerance,
+		cases[case_index].declared_ratio * measured_gap);
+	const double limit = std::max(1.0e-10 * tol->dist,
+	    512.0 * DBL_EPSILON * radius);
+	const bool declared_ok = cases[case_index].unset ?
+	    edge && !ON_IsValid(edge->declared_tolerance) :
+	    edge && fabs(edge->declared_tolerance -
+	    cases[case_index].declared_ratio * measured_gap) <= limit;
+	if (!brep_trace_fixed_workspaces_match(trace) ||
+		!edge || !edge->discrepancy_measured ||
+		!edge->correspondence_supported ||
+		edge->discrepancy_bounded ||
+		edge->discrepancy_bound_exhausted ||
+		!declared_ok || edge->tolerance_inferred !=
+		cases[case_index].inferred ||
+		edge->discrepancy_authorized != cases[case_index].authorized ||
+		fabs(edge->model_tolerance - tol->dist) > limit ||
+		fabs(edge->measured_discrepancy - measured_gap) > limit ||
+		fabs(edge->edge_tolerance - expected_tolerance) > limit ||
+		edge->within_edge_tolerance != cases[case_index].authorized ||
+		(cases[case_index].authorized && !edge->candidate_spans) ||
+		(!cases[case_index].authorized && edge->candidate_spans)) {
+	    std::printf("FAIL: Cobb %s tolerance metadata declared=%.17g "
+		"model=%.17g measured=%.17g bound=%.17g/%.17g "
+		"effective=%.17g "
+		"inferred=%d/%d authorized=%d/%d within=%d spans=%zu\n",
+		cases[case_index].name,
+		edge ? edge->declared_tolerance : INFINITY,
+		edge ? edge->model_tolerance : INFINITY,
+		edge ? edge->measured_discrepancy : INFINITY,
+		edge ? edge->discrepancy_lower_bound : INFINITY,
+		edge ? edge->discrepancy_upper_bound : INFINITY,
+		edge ? edge->edge_tolerance : INFINITY,
+		edge ? edge->tolerance_inferred : -1,
+		cases[case_index].inferred,
+		edge ? edge->discrepancy_authorized : -1,
+		cases[case_index].authorized,
+		edge ? edge->within_edge_tolerance : -1,
+		edge ? edge->candidate_spans : 0);
+	    failures++;
+	}
+	free_solid(stp);
+    }
+    delete pristine;
+    if (!failures)
+	std::printf("Cobb seam tolerance metadata: PASS\n");
     return failures;
 }
 
@@ -2259,7 +3328,9 @@ check_brep_edge_sector_fixture(const char *label, ON_Brep *brep,
 		brep_trace_edge(trace, target_edge_index);
 	    const double expected_distance = expected_state ?
 		0.5 * tol->dist : 0.0;
-	    if (!observation || !observation->within_edge_tolerance ||
+	    if (!brep_trace_fixed_workspaces_match(trace) ||
+		    !observation || !observation->within_edge_tolerance ||
+		    !observation->correspondence_supported ||
 		    !observation->candidate_spans ||
 		    !observation->sector_valid ||
 		    observation->closest_state != expected_state ||
@@ -2415,6 +3486,193 @@ check_brep_edge_sector_seam(const struct bn_tol *tol, struct rt_i *rtip,
 
 
 static int
+check_brep_vertex_fan_fallback(const struct bn_tol *tol, struct rt_i *rtip,
+    struct resource *resource)
+{
+    struct rt_arb_internal box = {};
+    box.magic = RT_ARB_INTERNAL_MAGIC;
+    VSET(box.pt[0], -4.0, -3.0, -2.0);
+    VSET(box.pt[1], 4.0, -3.0, -2.0);
+    VSET(box.pt[2], 4.0, 3.0, -2.0);
+    VSET(box.pt[3], -4.0, 3.0, -2.0);
+    VSET(box.pt[4], -4.0, -3.0, 2.0);
+    VSET(box.pt[5], 4.0, -3.0, 2.0);
+    VSET(box.pt[6], 4.0, 3.0, 2.0);
+    VSET(box.pt[7], -4.0, 3.0, 2.0);
+    struct rt_db_internal box_intern;
+    RT_DB_INTERNAL_INIT(&box_intern);
+    box_intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
+    box_intern.idb_type = ID_ARB8;
+    box_intern.idb_meth = &OBJ[ID_ARB8];
+    box_intern.idb_ptr = &box;
+
+    ON_Brep *brep = ON_Brep::New();
+    OBJ[ID_ARB8].ft_brep(&brep, &box_intern, tol);
+    const ON_3dPoint target_point(4.0, 3.0, 2.0);
+    int target_vertex = -1;
+    if (brep) {
+	for (int vertex_index = 0; vertex_index < brep->m_V.Count();
+		++vertex_index) {
+	    if (brep->m_V[vertex_index].point.DistanceTo(target_point) <=
+		    1.0e-12) {
+		target_vertex = vertex_index;
+		break;
+	    }
+	}
+    }
+    int incident_edges[3] = {-1, -1, -1};
+    size_t incident_count = 0;
+    if (brep && target_vertex >= 0) {
+	for (int edge_index = 0; edge_index < brep->m_E.Count();
+		++edge_index) {
+	    const ON_BrepEdge &edge = brep->m_E[edge_index];
+	    if (edge.m_vi[0] != target_vertex && edge.m_vi[1] != target_vertex)
+		continue;
+	    if (incident_count < 3)
+		incident_edges[incident_count] = edge_index;
+	    incident_count++;
+	}
+    }
+    if (!brep || !brep->IsSolid() || target_vertex < 0 ||
+	    incident_count != 3) {
+	std::printf("FAIL: convex vertex-fan geometry vertex=%d edges=%zu\n",
+	    target_vertex, incident_count);
+	delete brep;
+	return 1;
+    }
+    for (int edge_index = 0; edge_index < brep->m_E.Count(); ++edge_index)
+	brep->m_E[edge_index].m_tolerance = tol->dist;
+
+    struct rt_brep_internal brep_internal = {};
+    brep_internal.magic = RT_BREP_INTERNAL_MAGIC;
+    brep_internal.brep = brep;
+    struct rt_db_internal brep_intern;
+    RT_DB_INTERNAL_INIT(&brep_intern);
+    brep_intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
+    brep_intern.idb_type = ID_BREP;
+    brep_intern.idb_meth = &OBJ[ID_BREP];
+    brep_intern.idb_ptr = &brep_internal;
+    struct soltab *stp = prep_solid(rtip, &brep_intern, ID_BREP);
+    if (!stp) {
+	std::printf("FAIL: convex vertex-fan BREP prep\n");
+	delete brep_internal.brep;
+	return 1;
+    }
+
+    ON_3dVector diagonal(1.0, 1.0, 1.0);
+    diagonal.Unitize();
+    struct vertex_ray_case {
+	const char *name;
+	ON_3dPoint origin;
+	ON_3dVector direction;
+    } cases[] = {
+	{"through-forward", target_point + 20.0 * diagonal, -diagonal},
+	{"through-reverse", target_point - 20.0 * diagonal, diagonal},
+	{"surface-outward", target_point, diagonal},
+	{"surface-inward", target_point, -diagonal}
+    };
+    int failures = 0;
+    size_t maximum_contact_edges = 0;
+    size_t maximum_near_inside_edges = 0;
+    size_t maximum_near_closure_candidates = 0;
+    for (size_t case_index = 0;
+	    case_index < sizeof(cases) / sizeof(cases[0]); ++case_index) {
+	sampled_ray ray;
+	VSET(ray.origin, cases[case_index].origin.x,
+	    cases[case_index].origin.y, cases[case_index].origin.z);
+	VSET(ray.direction, cases[case_index].direction.x,
+	    cases[case_index].direction.y, cases[case_index].direction.z);
+	struct rt_brep_shot_trace trace;
+	const int trace_hits = shoot_brep_trace(stp, rtip, resource, ray,
+	    trace);
+	size_t contact_edges = 0;
+	bool invalid_edge = false;
+	for (size_t incident = 0; incident < 3; ++incident) {
+	    const struct rt_brep_trace_edge *edge = brep_trace_edge(trace,
+		incident_edges[incident]);
+	    if (!edge || !edge->correspondence_supported ||
+		    !edge->within_edge_tolerance || !edge->candidate_spans ||
+		    !edge->sector_valid || edge->closest_state != 0 ||
+		    edge->distance > 1.0e-10)
+		invalid_edge = true;
+	    else
+		contact_edges++;
+	}
+	maximum_contact_edges = std::max(maximum_contact_edges,
+	    contact_edges);
+	if (!brep_trace_fixed_workspaces_match(trace) || invalid_edge ||
+		contact_edges != 3 || trace.closure_candidates ||
+		trace.continuation_attempts || trace.closure_shadow_segments ||
+		trace_hits != 2 || trace.final_segments != 1) {
+	    std::printf("FAIL: convex vertex-fan %s contacts=%zu/3 "
+		"closure=%zu continuation=%zu shadow=%zu "
+		"hits=%d/2 final=%zu/1\n", cases[case_index].name,
+		contact_edges, trace.closure_candidates,
+		trace.continuation_attempts, trace.closure_shadow_segments,
+		trace_hits, trace.final_segments);
+	    failures++;
+	}
+    }
+
+    ON_3dVector fan_direction(1.0, -1.0, 0.0);
+    fan_direction.Unitize();
+    const ON_3dPoint fan_closest = target_point -
+	0.25 * tol->dist * ON_3dVector(1.0, 1.0, 1.0);
+    for (int reverse = 0; reverse <= 1; ++reverse) {
+	const ON_3dVector direction = reverse ? -fan_direction :
+	    fan_direction;
+	const ON_3dPoint ray_origin = fan_closest - 20.0 * direction;
+	sampled_ray ray;
+	VSET(ray.origin, ray_origin.x, ray_origin.y, ray_origin.z);
+	VSET(ray.direction, direction.x, direction.y, direction.z);
+	struct rt_brep_shot_trace trace;
+	(void)shoot_brep_trace(stp, rtip, resource, ray, trace);
+	size_t qualified_edges = 0;
+	size_t inside_edges = 0;
+	int states[3] = {-99, -99, -99};
+	for (size_t incident = 0; incident < 3; ++incident) {
+	    const struct rt_brep_trace_edge *edge = brep_trace_edge(trace,
+		incident_edges[incident]);
+	    if (!edge)
+		continue;
+	    states[incident] = edge->closest_state;
+	    if (edge->correspondence_supported &&
+		    edge->within_edge_tolerance && edge->candidate_spans &&
+		    edge->sector_valid) {
+		qualified_edges++;
+		if (edge->closest_state == 1)
+		    inside_edges++;
+	    }
+	}
+	const bool ambiguous_closure = trace.closure_candidates == 0 ||
+	    trace.closure_candidates >= 2;
+	maximum_near_inside_edges = std::max(maximum_near_inside_edges,
+	    inside_edges);
+	maximum_near_closure_candidates = std::max(
+	    maximum_near_closure_candidates, trace.closure_candidates);
+	if (!brep_trace_fixed_workspaces_match(trace) ||
+		qualified_edges != 3 || inside_edges < 2 ||
+		!ambiguous_closure || trace.continuation_attempts ||
+		trace.closure_shadow_segments) {
+	    std::printf("FAIL: convex vertex-fan near reverse=%d "
+		"qualified=%zu/3 inside=%zu states=%d/%d/%d closure=%zu "
+		"continuation=%zu shadow=%zu final=%zu\n", reverse,
+		qualified_edges, inside_edges, states[0], states[1], states[2],
+		trace.closure_candidates, trace.continuation_attempts,
+		trace.closure_shadow_segments, trace.final_segments);
+	    failures++;
+	}
+    }
+    free_solid(stp);
+    if (!failures)
+	std::printf("Convex vertex-fan fallback: PASS contact-edges=%zu "
+	    "near-inside=%zu closure-candidates=%zu\n", maximum_contact_edges,
+	    maximum_near_inside_edges, maximum_near_closure_candidates);
+    return failures;
+}
+
+
+static int
 check_cobb_bowed_seam_corpus(const struct bn_tol *tol, bool emit_report,
     struct rt_i *trace_rtip, struct resource *trace_resource)
 {
@@ -2450,6 +3708,8 @@ check_cobb_bowed_seam_corpus(const struct bn_tol *tol, bool emit_report,
     size_t excessive_differences = 0;
     size_t uncertainty_band_invalid = 0;
     size_t below_envelope_crack_leaks = 0;
+    size_t below_envelope_legacy_cases = 0;
+    size_t below_envelope_repairs = 0;
     size_t reversal_inconsistencies = 0;
     size_t leaks_before_candidate_storage = 0;
     size_t leaks_during_trim_classification = 0;
@@ -2458,13 +3718,34 @@ check_cobb_bowed_seam_corpus(const struct bn_tol *tol, bool emit_report,
     size_t leaks_with_inside_sector_evidence = 0;
     size_t leaks_with_shadow_closure = 0;
     size_t leaks_with_shadow_continuation = 0;
+    size_t leaks_with_certified_continuation = 0;
+    size_t leaks_with_shadow_segment = 0;
+    size_t leaks_with_single_local_cluster = 0;
+    size_t leaks_with_double_local_cluster = 0;
+    size_t leaks_with_triple_local_cluster = 0;
+    size_t local_roots_without_legacy_root = 0;
     size_t sector_inside = 0;
     size_t sector_contact = 0;
     size_t sector_outside = 0;
+    size_t maximum_subdivision_boxes = 0;
+    size_t maximum_isolated_boxes = 0;
+    size_t maximum_subdivision_depth = 0;
+    size_t maximum_workspace_high_water = 0;
+    size_t maximum_certificate_boxes = 0;
+    size_t maximum_certificate_workspace = 0;
+    size_t maximum_local_root_attempts = 0;
+    size_t maximum_local_root_failures = 0;
+    size_t maximum_local_root_duplicates = 0;
+    size_t maximum_fixed_leaves = 0;
+    size_t maximum_fixed_hits = 0;
+    size_t maximum_discrepancy_bound_cells = 0;
+    size_t maximum_discrepancy_bound_depth = 0;
+    double maximum_discrepancy_bound_width_ratio = 0.0;
     double maximum_calibration_error = 0.0;
     double maximum_edge_distance_error = 0.0;
     double maximum_lift_error = 0.0;
     double maximum_continuation_error = 0.0;
+    double maximum_certificate_width = 0.0;
 
     if (emit_report) {
 	std::printf("cobb_family,direction,g_over_T,h_over_T,"
@@ -2478,22 +3759,53 @@ check_cobb_bowed_seam_corpus(const struct bn_tol *tol, bool emit_report,
 	    "target_edge_within,target_sector_valid,target_closest_state,"
 	    "supported_surface_faces,unsupported_surface_faces,"
 	    "prepared_surface_spans,candidate_surface_spans,"
-	    "excluded_surface_spans\n");
+	    "excluded_surface_spans,subdivision_boxes,isolated_boxes,"
+	    "subdivision_max_depth,workspace_high_water,"
+	    "workspace_exhausted\n");
+	std::printf("cobb_leaf_traversal_columns,direction,g_over_T,h_over_T,"
+	    "reverse,list_leaves,fixed_leaves,fixed_stored,overflow,"
+	    "fallback,order_mismatches,raw_hits,fixed_hits,fixed_hit_stored,"
+	    "fixed_hit_overflow,fixed_hit_fallback,fixed_hit_mismatches,"
+	    "trim_queries,"
+	    "trim_noalloc_candidates,trim_allocating_candidates,"
+	    "trim_mismatches\n");
 	std::printf("cobb_closure_columns,direction,g_over_T,h_over_T,reverse,"
 	    "candidate_count,edge_index,edge_t,existing_t,missing_direction\n");
 	std::printf("cobb_continuation_columns,direction,g_over_T,h_over_T,"
 	    "reverse,attempts,candidates,face,t,u,v,residual,normal_dot,"
-	    "iterations\n");
+	    "iterations,certificate_boxes,certificate_isolated,"
+	    "certificate_root_boxes,certificate_workspace,"
+	    "certificate_exhausted,certificate_existing_overlap,"
+	    "certified_candidates,certificate_t_min,certificate_t_max,"
+	    "shadow_segments,shadow_in,shadow_out\n");
+	std::printf("cobb_box_columns,direction,g_over_T,h_over_T,reverse,"
+	    "box_index,face,u_min,u_max,v_min,v_max,t_min,t_max,depth\n");
 	std::printf("cobb_root_columns,direction,g_over_T,h_over_T,reverse,"
 	    "root_index,face,t,u,v,normal_dot,trim_distance,trim_status,"
 	    "hit_class,adjacent_face\n");
+	std::printf("cobb_local_root_columns,direction,g_over_T,h_over_T,"
+	    "reverse,root_index,face,span,t,u,v,residual,normal_dot,"
+	    "iterations\n");
+	std::printf("cobb_local_summary_columns,direction,g_over_T,h_over_T,"
+	    "reverse,attempts,candidates,failures,duplicates,overflow,"
+	    "cluster_tolerance,clusters,cluster_overflow\n");
+	std::printf("cobb_local_cluster_columns,direction,g_over_T,h_over_T,"
+	    "reverse,cluster_index,face,t_min,t_max,normal_dot_min,"
+	    "normal_dot_max,roots,entering,leaving,tangent,classification\n");
 	std::printf("cobb_solver_columns,direction,g_over_T,h_over_T,reverse,"
 	    "solver_calls,no_root,converged_regular,converged_singular,"
 	    "duplicate,outside_domain,jacobian_singular,stalled,"
 	    "iteration_limit,evaluation_failed,nonfinite,capacity_exhausted\n");
 	std::printf("cobb_edge_columns,direction,g_over_T,h_over_T,reverse,"
 	    "edge_index,face0,face1,distance,ray_t,edge_parameter,"
-	    "edge_tolerance,candidate_spans,within_edge_tolerance,lift0,lift1,"
+	    "edge_tolerance,model_tolerance,declared_tolerance,"
+	    "measured_discrepancy,discrepancy_lower_bound,"
+	    "discrepancy_upper_bound,discrepancy_bound_tolerance,"
+	    "discrepancy_bounded,discrepancy_bound_cells,"
+	    "discrepancy_bound_depth,discrepancy_bound_exhausted,"
+	    "discrepancy_measured,correspondence_supported,"
+	    "discrepancy_authorized,tolerance_inferred,candidate_spans,"
+	    "within_edge_tolerance,lift0,lift1,"
 	    "normal_dot0,normal_dot1,ray_edge_dot,sector_valid,closest_state\n");
     }
 
@@ -2584,8 +3896,41 @@ check_cobb_bowed_seam_corpus(const struct bn_tol *tol, bool emit_report,
 		    struct rt_brep_shot_trace trace;
 		    (void)shoot_brep_trace(trace_stp, trace_rtip,
 			trace_resource, ray, trace);
+		    maximum_fixed_leaves = std::max(maximum_fixed_leaves,
+			trace.fixed_leaf_count);
+		    maximum_fixed_hits = std::max(maximum_fixed_hits,
+			trace.fixed_hit_count);
 		    const size_t unique_candidates = brep_trace_unique_roots(trace);
-		    if (trace.root_overflow ||
+		    maximum_subdivision_boxes = std::max(maximum_subdivision_boxes,
+			trace.surface_subdivision_boxes);
+		    maximum_isolated_boxes = std::max(maximum_isolated_boxes,
+			trace.surface_isolated_boxes);
+		    maximum_subdivision_depth = std::max(
+			maximum_subdivision_depth,
+			trace.surface_subdivision_max_depth);
+		    maximum_workspace_high_water = std::max(
+			maximum_workspace_high_water,
+			trace.surface_workspace_high_water);
+		    maximum_local_root_attempts = std::max(
+			maximum_local_root_attempts, trace.local_root_attempts);
+		    maximum_local_root_failures = std::max(
+			maximum_local_root_failures, trace.local_root_failures);
+		    maximum_local_root_duplicates = std::max(
+			maximum_local_root_duplicates,
+			trace.local_root_duplicates);
+		    maximum_certificate_boxes = std::max(
+			maximum_certificate_boxes,
+			trace.continuation_certificate_boxes);
+		    maximum_certificate_workspace = std::max(
+			maximum_certificate_workspace,
+			trace.continuation_certificate_workspace);
+		    if (trace.continuation_certificate_root_boxes)
+			maximum_certificate_width = std::max(
+			    maximum_certificate_width,
+			    trace.continuation_certificate_t_max -
+			    trace.continuation_certificate_t_min);
+		    if (!brep_trace_fixed_workspaces_match(trace) ||
+			    trace.root_overflow ||
 			    trace.solver_calls != trace.intersected_leaves ||
 			    trace.candidate_roots != trace.stored_roots ||
 			    trace.final_segments != variant_result.partitions ||
@@ -2600,6 +3945,24 @@ check_cobb_bowed_seam_corpus(const struct bn_tol *tol, bool emit_report,
 			    trace.candidate_surface_spans +
 			    trace.excluded_surface_spans !=
 			    trace.prepared_surface_spans ||
+			    trace.surface_subdivision_boxes <
+			    trace.candidate_surface_spans ||
+			    trace.surface_workspace_exhausted != 0 ||
+			    trace.surface_box_overflow != 0 ||
+			    trace.local_root_overflow != 0 ||
+			    trace.local_cluster_overflow != 0 ||
+			    trace.local_root_candidates !=
+			    trace.stored_local_roots ||
+			    trace.local_root_clusters !=
+			    trace.stored_local_clusters ||
+			    fabs(trace.local_cluster_tolerance -
+			    0.1 * tol->dist) > 1.0e-15 ||
+			    trace.local_root_attempts !=
+			    trace.local_root_candidates +
+			    trace.local_root_failures +
+			    trace.local_root_duplicates ||
+			    trace.surface_isolated_boxes !=
+			    trace.stored_surface_boxes ||
 			    (trace.final_hits != 1 &&
 			    trace.closure_candidates != 0) ||
 			    trace.candidate_edge_spans >
@@ -2620,8 +3983,61 @@ check_cobb_bowed_seam_corpus(const struct bn_tol *tol, bool emit_report,
 			    trace.prepared_edge_spans);
 			failures++;
 		    }
+		    for (size_t root_index = 0;
+			    root_index < trace.stored_roots; ++root_index) {
+			if (!brep_trace_root_isolated(trace,
+				trace.roots[root_index])) {
+			    std::printf("FAIL: bowed Cobb root exclusion sign=%d "
+				"g/T=%.3g h/T=%.3g reverse=%d root=%zu "
+				"face=%d uv=%.17g/%.17g boxes=%zu\n", sign,
+				gap_ratios[ratio_index],
+				clearance_ratios[clearance_index], reverse,
+				root_index, trace.roots[root_index].face_index,
+				trace.roots[root_index].uv[0],
+				trace.roots[root_index].uv[1],
+				trace.stored_surface_boxes);
+			    failures++;
+			}
+		    }
+		    for (size_t local_index = 0;
+			    local_index < trace.stored_local_roots; ++local_index) {
+			bool matched = false;
+			for (size_t root_index = 0;
+				root_index < trace.stored_roots; ++root_index) {
+			    if (fabs(trace.local_roots[local_index].dist -
+				    trace.roots[root_index].dist) <=
+				    0.1 * tol->dist) {
+				matched = true;
+				break;
+			    }
+			}
+			if (!matched) {
+			    local_roots_without_legacy_root++;
+			    std::printf("FAIL: bowed Cobb local root lacks legacy "
+				"root sign=%d g/T=%.3g h/T=%.3g reverse=%d "
+				"root=%zu t=%.17g legacy=%zu\n", sign,
+				gap_ratios[ratio_index],
+				clearance_ratios[clearance_index], reverse,
+				local_index, trace.local_roots[local_index].dist,
+				trace.stored_roots);
+			    failures++;
+			}
+		    }
 		    const struct rt_brep_trace_edge *target_edge =
 			brep_trace_edge(trace, frame.edge_index);
+		    if (target_edge && target_edge->discrepancy_bounded) {
+			maximum_discrepancy_bound_cells = std::max(
+			    maximum_discrepancy_bound_cells,
+			    target_edge->discrepancy_bound_cells);
+			maximum_discrepancy_bound_depth = std::max(
+			    maximum_discrepancy_bound_depth,
+			    target_edge->discrepancy_bound_depth);
+			maximum_discrepancy_bound_width_ratio = std::max(
+			    maximum_discrepancy_bound_width_ratio,
+			    (target_edge->discrepancy_upper_bound -
+			    target_edge->discrepancy_lower_bound) /
+			    tol->dist);
+		    }
 		    if (!target_edge) {
 			std::printf("FAIL: bowed Cobb target edge observation sign=%d "
 			    "g/T=%.3g h/T=%.3g reverse=%d edge=%d\n", sign,
@@ -2636,6 +4052,22 @@ check_cobb_bowed_seam_corpus(const struct bn_tol *tol, bool emit_report,
 			maximum_edge_distance_error, edge_distance_error);
 		    const double edge_distance_limit = std::max(1.0e-10 * tol->dist,
 			512.0 * DBL_EPSILON * radius);
+		    const bool expected_discrepancy_bound =
+			measured_gap <= tol->dist + edge_distance_limit;
+		    const bool invalid_discrepancy_bound = target_edge &&
+			(expected_discrepancy_bound ?
+			(!target_edge->discrepancy_bounded ||
+			target_edge->discrepancy_bound_exhausted ||
+			target_edge->discrepancy_lower_bound >
+			measured_gap + edge_distance_limit ||
+			target_edge->discrepancy_upper_bound <
+			measured_gap - edge_distance_limit ||
+			target_edge->discrepancy_upper_bound -
+			target_edge->discrepancy_lower_bound >
+			target_edge->discrepancy_bound_tolerance +
+			edge_distance_limit) :
+			(target_edge->discrepancy_bounded ||
+			target_edge->discrepancy_bound_exhausted));
 		    const bool expected_edge_evidence = target_edge &&
 			fabs(clearance) <= target_edge->edge_tolerance +
 			edge_distance_limit;
@@ -2655,6 +4087,17 @@ check_cobb_bowed_seam_corpus(const struct bn_tol *tol, bool emit_report,
 			    sector_contact++;
 		    }
 		    if (!target_edge || edge_distance_error > edge_distance_limit ||
+			    !target_edge->discrepancy_measured ||
+			    !target_edge->correspondence_supported ||
+			    invalid_discrepancy_bound ||
+			    !target_edge->discrepancy_authorized ||
+			    target_edge->tolerance_inferred ||
+			    fabs(target_edge->model_tolerance - tol->dist) >
+			    edge_distance_limit ||
+			    fabs(target_edge->declared_tolerance -
+			    1.01 * measured_gap) > edge_distance_limit ||
+			    fabs(target_edge->measured_discrepancy - measured_gap) >
+			    edge_distance_limit ||
 			    target_edge->within_edge_tolerance !=
 			    expected_edge_evidence ||
 			    (target_edge->within_edge_tolerance &&
@@ -2754,6 +4197,9 @@ check_cobb_bowed_seam_corpus(const struct bn_tol *tol, bool emit_report,
 		    const bool crack_leak = clearance > 0.0 &&
 			implicit_result.partitions > 0 &&
 			variant_result.partitions == 0;
+		    const bool legacy_crack_case =
+			gap_ratios[ratio_index] <= 1.0 && clearance > 0.0 &&
+			implicit_result.partitions > 0 && trace.final_hits == 1;
 		    if (clearance <= 0.0 && trace.closure_candidates != 0) {
 			std::printf("FAIL: bowed Cobb exterior/contact closure "
 			    "sign=%d g/T=%.3g h/T=%.3g reverse=%d "
@@ -2765,7 +4211,40 @@ check_cobb_bowed_seam_corpus(const struct bn_tol *tol, bool emit_report,
 		    }
 		    if (gap_ratios[ratio_index] <= 1.0 && crack_leak)
 			below_envelope_crack_leaks++;
-		    if (gap_ratios[ratio_index] <= 1.0 && crack_leak) {
+		    if (legacy_crack_case) {
+			below_envelope_legacy_cases++;
+			if (variant_result.partitions == 1 &&
+				trace.final_segments == 1)
+			    below_envelope_repairs++;
+			const size_t unique_local_roots =
+			    trace.stored_local_clusters;
+			if (unique_local_roots == 1) {
+			    leaks_with_single_local_cluster++;
+			} else if (unique_local_roots == 2) {
+			    leaks_with_double_local_cluster++;
+			} else if (unique_local_roots == 3) {
+			    leaks_with_triple_local_cluster++;
+			} else {
+			    std::printf("FAIL: bowed Cobb crack leak has %zu local "
+				"roots sign=%d g/T=%.3g h/T=%.3g reverse=%d "
+				"attempts=%zu failures=%zu\n", unique_local_roots,
+				sign, gap_ratios[ratio_index],
+				clearance_ratios[clearance_index], reverse,
+				trace.local_root_attempts,
+				trace.local_root_failures);
+			    failures++;
+			}
+			if (!brep_trace_local_root_near(trace,
+				trace.closure_existing_dist,
+				BREP_SAME_POINT_TOLERANCE)) {
+			    std::printf("FAIL: bowed Cobb existing closure root "
+				"lacks local root sign=%d g/T=%.3g h/T=%.3g "
+				"reverse=%d t=%.17g\n", sign,
+				gap_ratios[ratio_index],
+				clearance_ratios[clearance_index], reverse,
+				trace.closure_existing_dist);
+			    failures++;
+			}
 			if (target_edge && target_edge->within_edge_tolerance)
 			    leaks_with_target_edge_evidence++;
 			if (target_edge && target_edge->sector_valid &&
@@ -2776,6 +4255,10 @@ check_cobb_bowed_seam_corpus(const struct bn_tol *tol, bool emit_report,
 			    leaks_with_shadow_closure++;
 			if (trace.continuation_candidates == 1)
 			    leaks_with_shadow_continuation++;
+			if (trace.continuation_certified_candidates == 1)
+			    leaks_with_certified_continuation++;
+			if (trace.closure_shadow_segments == 1)
+			    leaks_with_shadow_segment++;
 			const double expected_continuation_dist = reverse ?
 			    implicit_result.intervals[0].in_dist :
 			    implicit_result.intervals[0].out_dist;
@@ -2814,6 +4297,25 @@ check_cobb_bowed_seam_corpus(const struct bn_tol *tol, bool emit_report,
 			    (target_edge ? target_edge->face_index[0] : -1);
 			if (trace.continuation_attempts != 1 ||
 				trace.continuation_candidates != 1 ||
+				trace.continuation_certified_candidates != 1 ||
+				!trace.continuation_certificate_root_boxes ||
+				trace.continuation_certificate_root_boxes !=
+				trace.continuation_certificate_isolated ||
+				trace.continuation_certificate_exhausted ||
+				trace.continuation_certificate_existing_overlap ||
+				expected_continuation_dist <
+				trace.continuation_certificate_t_min - 1.0e-7 ||
+				expected_continuation_dist >
+				trace.continuation_certificate_t_max + 1.0e-7 ||
+				(trace.closure_existing_dist >=
+				trace.continuation_certificate_t_min - 1.0e-7 &&
+				trace.closure_existing_dist <=
+				trace.continuation_certificate_t_max + 1.0e-7) ||
+				trace.closure_shadow_segments != 1 ||
+				fabs(trace.closure_shadow_in_dist -
+				implicit_result.intervals[0].in_dist) > 1.0e-7 ||
+				fabs(trace.closure_shadow_out_dist -
+				implicit_result.intervals[0].out_dist) > 1.0e-7 ||
 				trace.continuation_face_index !=
 				expected_continuation_face ||
 				continuation_error > 1.0e-7 ||
@@ -2838,6 +4340,16 @@ check_cobb_bowed_seam_corpus(const struct bn_tol *tol, bool emit_report,
 				trace.continuation_normal_dot);
 			    failures++;
 			}
+			if (variant_result.partitions != 1 ||
+				trace.final_segments != 1) {
+			    std::printf("FAIL: bowed Cobb certified repair was not "
+				"published sign=%d g/T=%.3g h/T=%.3g reverse=%d "
+				"partitions=%zu segments=%zu\n", sign,
+				gap_ratios[ratio_index],
+				clearance_ratios[clearance_index], reverse,
+				variant_result.partitions, trace.final_segments);
+			    failures++;
+			}
 			if (unique_candidates < 2) {
 			    leaks_before_candidate_storage++;
 			} else if (trace.raw_hits < 2) {
@@ -2846,9 +4358,17 @@ check_cobb_bowed_seam_corpus(const struct bn_tol *tol, bool emit_report,
 			    leaks_during_hit_cleanup++;
 			}
 		    }
-		    /* Preserve the measured defect as a one-way ratchet: a future
-		     * repair may close any of these cracks, but leakage must not
-		     * spread deeper than the actual support mismatch. */
+		    if (gap_ratios[ratio_index] > 1.0 &&
+			    trace.closure_candidates != 0) {
+			std::printf("FAIL: bowed Cobb above-model-tolerance "
+			    "closure sign=%d g/T=%.3g h/T=%.3g reverse=%d "
+			    "candidates=%zu\n", sign, gap_ratios[ratio_index],
+			    clearance_ratios[clearance_index], reverse,
+			    trace.closure_candidates);
+			failures++;
+		    }
+		    /* Outside the measured support mismatch, the deliberately bowed
+		     * surface must not change the implicit solid classification. */
 		    if (gap_ratios[ratio_index] <= 1.0 &&
 			    clearance > 1.01 * measured_gap &&
 			    implicit_result.partitions !=
@@ -2863,11 +4383,29 @@ check_cobb_bowed_seam_corpus(const struct bn_tol *tol, bool emit_report,
 			failures++;
 		    }
 		    if (emit_report) {
+			std::printf("cobb_leaf_traversal,%s,%.9g,%.9g,%d,"
+			    "%zu,%zu,%zu,%zu,%zu,%zu,"
+			    "%zu,%zu,%zu,%zu,%zu,%zu,"
+			    "%zu,%zu,%zu,%zu\n",
+			    sign > 0 ? "outward" : "inward",
+			    measured_gap / tol->dist,
+			    clearance / tol->dist, reverse,
+			    trace.intersected_leaves, trace.fixed_leaf_count,
+			    trace.fixed_leaf_stored, trace.fixed_leaf_overflow,
+			    trace.fixed_leaf_fallback,
+			    trace.fixed_leaf_mismatches, trace.raw_hits,
+			    trace.fixed_hit_count, trace.fixed_hit_stored,
+			    trace.fixed_hit_overflow,
+			    trace.fixed_hit_fallback,
+			    trace.fixed_hit_mismatches, trace.trim_queries,
+			    trace.trim_noalloc_candidates,
+			    trace.trim_allocating_candidates,
+			    trace.trim_equivalence_mismatches);
 			std::printf("bowed_surface_seam,%s,%.9g,%.9g,%d,%.9g,"
 			    "%zu,%zu,%.9g,%.9g,%.9g,%d,%d,%d,%zu,%zu,%zu,"
 			    "%zu,%zu,%zu,%zu,%zu,%zu,%zu,%zu,%zu,%zu,%zu,"
 			    "%zu,%.9g,%.9g,%zu,%d,%d,%d,%zu,%zu,%zu,%zu,"
-			    "%zu\n",
+			    "%zu,%zu,%zu,%zu,%zu,%zu\n",
 			    sign > 0 ? "outward" :
 			    "inward", measured_gap / tol->dist,
 			    clearance / tol->dist, reverse,
@@ -2895,7 +4433,12 @@ check_cobb_bowed_seam_corpus(const struct bn_tol *tol, bool emit_report,
 			    trace.unsupported_surface_faces,
 			    trace.prepared_surface_spans,
 			    trace.candidate_surface_spans,
-			    trace.excluded_surface_spans);
+			    trace.excluded_surface_spans,
+			    trace.surface_subdivision_boxes,
+			    trace.surface_isolated_boxes,
+			    trace.surface_subdivision_max_depth,
+			    trace.surface_workspace_high_water,
+			    trace.surface_workspace_exhausted);
 			std::printf("cobb_closure,%s,%.9g,%.9g,%d,%zu,%d,"
 			    "%.17g,%.17g,%d\n",
 			    sign > 0 ? "outward" : "inward",
@@ -2905,7 +4448,9 @@ check_cobb_bowed_seam_corpus(const struct bn_tol *tol, bool emit_report,
 			    trace.closure_existing_dist,
 			    trace.closure_missing_direction);
 			std::printf("cobb_continuation,%s,%.9g,%.9g,%d,%zu,%zu,"
-			    "%d,%.17g,%.17g,%.17g,%.17g,%.17g,%zu\n",
+			    "%d,%.17g,%.17g,%.17g,%.17g,%.17g,%zu,%zu,%zu,"
+			    "%zu,%zu,%zu,%zu,%zu,%.17g,%.17g,%zu,%.17g,"
+			    "%.17g\n",
 			    sign > 0 ? "outward" : "inward",
 			    measured_gap / tol->dist, clearance / tol->dist,
 			    reverse, trace.continuation_attempts,
@@ -2915,7 +4460,33 @@ check_cobb_bowed_seam_corpus(const struct bn_tol *tol, bool emit_report,
 			    trace.continuation_uv[1],
 			    trace.continuation_residual,
 			    trace.continuation_normal_dot,
-			    trace.continuation_iterations);
+			    trace.continuation_iterations,
+			    trace.continuation_certificate_boxes,
+			    trace.continuation_certificate_isolated,
+			    trace.continuation_certificate_root_boxes,
+			    trace.continuation_certificate_workspace,
+			    trace.continuation_certificate_exhausted,
+			    trace.continuation_certificate_existing_overlap,
+			    trace.continuation_certified_candidates,
+			    trace.continuation_certificate_t_min,
+			    trace.continuation_certificate_t_max,
+			    trace.closure_shadow_segments,
+			    trace.closure_shadow_in_dist,
+			    trace.closure_shadow_out_dist);
+			for (size_t box_index = 0;
+				box_index < trace.stored_surface_boxes;
+				++box_index) {
+			    const struct rt_brep_trace_surface_box &box =
+				trace.surface_boxes[box_index];
+			    std::printf("cobb_box,%s,%.9g,%.9g,%d,%zu,%d,"
+				"%.17g,%.17g,%.17g,%.17g,%.17g,%.17g,%d\n",
+				sign > 0 ? "outward" : "inward",
+				measured_gap / tol->dist,
+				clearance / tol->dist, reverse, box_index,
+				box.face_index, box.uv_min[0], box.uv_max[0],
+				box.uv_min[1], box.uv_max[1], box.t_min,
+				box.t_max, box.depth);
+			}
 			for (size_t root_index = 0;
 				root_index < trace.stored_roots; ++root_index) {
 			    const struct rt_brep_trace_root &root =
@@ -2929,6 +4500,47 @@ check_cobb_bowed_seam_corpus(const struct bn_tol *tol, bool emit_report,
 				root.uv[1], root.normal_dot,
 				root.trim_distance, root.trim_status,
 				root.hit_class, root.adjacent_face_index);
+			}
+			for (size_t root_index = 0;
+				root_index < trace.stored_local_roots;
+				++root_index) {
+			    const struct rt_brep_trace_local_root &root =
+				trace.local_roots[root_index];
+			    std::printf("cobb_local_root,%s,%.9g,%.9g,%d,%zu,"
+				"%d,%d,%.17g,%.17g,%.17g,%.17g,%.17g,%zu\n",
+				sign > 0 ? "outward" : "inward",
+				measured_gap / tol->dist,
+				clearance / tol->dist, reverse, root_index,
+				root.face_index, root.span_index, root.dist,
+				root.uv[0], root.uv[1], root.residual,
+				root.normal_dot, root.iterations);
+			}
+			std::printf("cobb_local_summary,%s,%.9g,%.9g,%d,%zu,%zu,"
+			    "%zu,%zu,%zu,%.17g,%zu,%zu\n",
+			    sign > 0 ? "outward" : "inward",
+			    measured_gap / tol->dist, clearance / tol->dist,
+			    reverse, trace.local_root_attempts,
+			    trace.local_root_candidates, trace.local_root_failures,
+			    trace.local_root_duplicates,
+			    trace.local_root_overflow,
+			    trace.local_cluster_tolerance,
+			    trace.stored_local_clusters,
+			    trace.local_cluster_overflow);
+			for (size_t cluster_index = 0;
+				cluster_index < trace.stored_local_clusters;
+				++cluster_index) {
+			    const struct rt_brep_trace_local_cluster &cluster =
+				trace.local_clusters[cluster_index];
+			    std::printf("cobb_local_cluster,%s,%.9g,%.9g,%d,%zu,"
+				"%d,%.17g,%.17g,%.17g,%.17g,%zu,%zu,%zu,%zu,%d\n",
+				sign > 0 ? "outward" : "inward",
+				measured_gap / tol->dist,
+				clearance / tol->dist, reverse, cluster_index,
+				cluster.face_index, cluster.dist_min,
+				cluster.dist_max, cluster.normal_dot_min,
+				cluster.normal_dot_max, cluster.roots,
+				cluster.entering_roots, cluster.leaving_roots,
+				cluster.tangent_roots, cluster.classification);
 			}
 			std::printf("cobb_solver,%s,%.9g,%.9g,%d,%zu",
 			    sign > 0 ? "outward" : "inward",
@@ -2945,7 +4557,9 @@ check_cobb_bowed_seam_corpus(const struct bn_tol *tol, bool emit_report,
 			    const struct rt_brep_trace_edge &edge =
 				trace.edges[edge_observation];
 			    std::printf("cobb_edge,%s,%.9g,%.9g,%d,%d,%d,%d,"
-				"%.17g,%.17g,%.17g,%.17g,%zu,%d,%.17g,%.17g,"
+				"%.17g,%.17g,%.17g,%.17g,%.17g,%.17g,%.17g,"
+				"%.17g,%.17g,%.17g,%d,%zu,%zu,%d,"
+				"%d,%d,%d,%d,%zu,%d,%.17g,%.17g,"
 				"%.17g,%.17g,%.17g,%d,%d\n",
 				sign > 0 ? "outward" : "inward",
 				measured_gap / tol->dist,
@@ -2954,6 +4568,20 @@ check_cobb_bowed_seam_corpus(const struct bn_tol *tol, bool emit_report,
 				edge.face_index[1], edge.distance,
 				edge.ray_dist, edge.edge_parameter,
 				edge.edge_tolerance,
+				edge.model_tolerance,
+				edge.declared_tolerance,
+				edge.measured_discrepancy,
+				edge.discrepancy_lower_bound,
+				edge.discrepancy_upper_bound,
+				edge.discrepancy_bound_tolerance,
+				edge.discrepancy_bounded,
+				edge.discrepancy_bound_cells,
+				edge.discrepancy_bound_depth,
+				edge.discrepancy_bound_exhausted,
+				edge.discrepancy_measured,
+				edge.correspondence_supported,
+				edge.discrepancy_authorized,
+				edge.tolerance_inferred,
 				edge.candidate_spans,
 				edge.within_edge_tolerance,
 				edge.lift_distance[0], edge.lift_distance[1],
@@ -2971,26 +4599,63 @@ check_cobb_bowed_seam_corpus(const struct bn_tol *tol, bool emit_report,
 	}
     }
 
+    if (!below_envelope_legacy_cases || below_envelope_crack_leaks ||
+	    below_envelope_repairs != below_envelope_legacy_cases) {
+	std::printf("FAIL: bowed Cobb production repair coverage "
+	    "legacy=%zu repaired=%zu leaks=%zu\n",
+	    below_envelope_legacy_cases, below_envelope_repairs,
+	    below_envelope_crack_leaks);
+	failures++;
+    }
+
     std::printf("Cobb bowed seam matrix: rays=%zu differing=%zu "
 	"uncertainty-band=%zu outside-band=%zu band-invalid=%zu "
-	"below-envelope-leaks=%zu reversal-inconsistencies=%zu "
-	"leak-stages=%zu/%zu/%zu edge-evidence=%zu "
+	"below-envelope-leaks=%zu legacy-cases=%zu repairs=%zu "
+	"reversal-inconsistencies=%zu legacy-stages=%zu/%zu/%zu "
+	"edge-evidence=%zu "
 	"inside-evidence=%zu shadow-closure=%zu "
-	"shadow-continuation=%zu "
+	"shadow-continuation=%zu certified-continuation=%zu "
+	"shadow-segment=%zu local-clusters=%zu/%zu/%zu "
 	"sector-states=%zu/%zu/%zu "
 	"max-edge-error=%.3g max-lift-error=%.3g "
 	"max-continuation-error=%.3g max-calibration=%.3g\n",
 	total_rays, differing_partitions, uncertainty_band_differences,
 	excessive_differences, uncertainty_band_invalid,
-	below_envelope_crack_leaks, reversal_inconsistencies,
+	below_envelope_crack_leaks, below_envelope_legacy_cases,
+	below_envelope_repairs,
+	reversal_inconsistencies,
 	leaks_before_candidate_storage, leaks_during_trim_classification,
 	leaks_during_hit_cleanup, leaks_with_target_edge_evidence,
 	leaks_with_inside_sector_evidence, leaks_with_shadow_closure,
 	leaks_with_shadow_continuation,
+	leaks_with_certified_continuation,
+	leaks_with_shadow_segment,
+	leaks_with_single_local_cluster,
+	leaks_with_double_local_cluster,
+	leaks_with_triple_local_cluster,
 	sector_inside, sector_contact,
 	sector_outside, maximum_edge_distance_error, maximum_lift_error,
 	maximum_continuation_error,
 	maximum_calibration_error);
+    std::printf("Cobb surface isolation: max-boxes=%zu max-isolated=%zu "
+	"max-depth=%zu workspace-high-water=%zu local-attempts=%zu "
+	"local-failures=%zu local-duplicates=%zu unmatched-local=%zu\n",
+	maximum_subdivision_boxes, maximum_isolated_boxes,
+	maximum_subdivision_depth, maximum_workspace_high_water,
+	maximum_local_root_attempts, maximum_local_root_failures,
+	maximum_local_root_duplicates,
+	local_roots_without_legacy_root);
+    std::printf("Cobb continuation certificate: max-boxes=%zu "
+	"workspace-high-water=%zu max-t-width=%.9g\n",
+	maximum_certificate_boxes, maximum_certificate_workspace,
+	maximum_certificate_width);
+    std::printf("Cobb fixed workspaces: leaves=%zu/%d raw-hits=%zu/%d\n",
+	maximum_fixed_leaves, RT_BREP_MAX_LEAVES, maximum_fixed_hits,
+	RT_BREP_MAX_HITS);
+    std::printf("Cobb adaptive seam bounds: cells=%zu depth=%zu "
+	"max-width/T=%.6g\n", maximum_discrepancy_bound_cells,
+	maximum_discrepancy_bound_depth,
+	maximum_discrepancy_bound_width_ratio);
     free_prepared_model(implicit_model);
     delete pristine;
     return failures;
@@ -3169,7 +4834,13 @@ main(int argc, char **argv)
     failures += check_brep_edge_sector_box(&rtip->rti_tol, rtip, &resp);
     failures += check_brep_edge_sector_concave(&rtip->rti_tol, rtip, &resp);
     failures += check_brep_edge_sector_seam(&rtip->rti_tol, rtip, &resp);
-    failures += check_cobb_classifier_transform_invariance(&rtip->rti_tol);
+    failures += check_brep_vertex_fan_fallback(&rtip->rti_tol, rtip, &resp);
+    failures += check_cobb_classifier_invariance(&rtip->rti_tol);
+    failures += check_cobb_ambiguous_correspondence(&rtip->rti_tol, rtip,
+	&resp);
+    failures += check_cobb_discrepancy_bound_budget(&rtip->rti_tol, rtip,
+	&resp);
+    failures += check_cobb_tolerance_metadata(&rtip->rti_tol, rtip, &resp);
     failures += check_cobb_bowed_seam_corpus(&rtip->rti_tol, report_cobb,
 	rtip, &resp);
     failures += check_crofton_sphere(&ell_intern, &rtip->rti_tol, radius);

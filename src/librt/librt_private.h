@@ -462,15 +462,24 @@ RT_EXPORT extern int rt_bot_shot_specific(
     struct application *ap, struct seg *seghead);
 
 
+/* Allocation-free BREP surface-tree traversal capacity. */
+#define RT_BREP_MAX_LEAVES 128
+#define RT_BREP_MAX_HITS 128
+
 /* Fixed-capacity BREP shot observations for in-librt correctness tests.
  * Solver status indices match the private brep_solver_status_t order in
  * primitives/brep/brep.cpp.  Root classes are CLEAN_HIT, CLEAN_MISS,
  * NEAR_HIT, NEAR_MISS, and CRACK_HIT at values 0 through 4. */
 #define RT_BREP_TRACE_MAX_ROOTS 64
 #define RT_BREP_TRACE_MAX_EDGES 64
+#define RT_BREP_TRACE_MAX_SURFACE_BOXES 64
+#define RT_BREP_TRACE_MAX_LOCAL_ROOTS 64
+#define RT_BREP_TRACE_MAX_LOCAL_CLUSTERS 64
 #define RT_BREP_TRACE_SOLVER_STATUS_COUNT 11
 #define RT_BREP_TRACE_ENTERING 0
 #define RT_BREP_TRACE_LEAVING 1
+#define RT_BREP_TRACE_LOCAL_CONTACT 2
+#define RT_BREP_TRACE_LOCAL_UNRESOLVED 3
 
 struct rt_brep_trace_root {
     fastf_t dist;
@@ -489,19 +498,90 @@ struct rt_brep_trace_edge {
     fastf_t ray_dist;
     fastf_t edge_parameter;
     fastf_t edge_tolerance;
+    fastf_t model_tolerance;
+    fastf_t declared_tolerance;
+    fastf_t measured_discrepancy;
+    fastf_t discrepancy_lower_bound;
+    fastf_t discrepancy_upper_bound;
+    fastf_t discrepancy_bound_tolerance;
     fastf_t lift_distance[2];
     fastf_t face_normal_dot[2];
     fastf_t ray_edge_dot;
     int edge_index;
     int face_index[2];
     size_t candidate_spans;
+    size_t discrepancy_bound_cells;
+    size_t discrepancy_bound_depth;
     int within_edge_tolerance;
     int sector_valid;
     int closest_state;
+    int discrepancy_measured;
+    int correspondence_supported;
+    int discrepancy_bounded;
+    int discrepancy_bound_exhausted;
+    int discrepancy_authorized;
+    int tolerance_inferred;
+};
+
+struct rt_brep_trace_surface_box {
+    fastf_t uv_min[2];
+    fastf_t uv_max[2];
+    fastf_t t_min;
+    fastf_t t_max;
+    int face_index;
+    int span_index;
+    int depth;
+};
+
+struct rt_brep_trace_local_root {
+    fastf_t dist;
+    fastf_t uv[2];
+    fastf_t residual;
+    fastf_t normal_dot;
+    size_t iterations;
+    int face_index;
+    int span_index;
+};
+
+struct rt_brep_trace_local_cluster {
+    fastf_t dist_min;
+    fastf_t dist_max;
+    fastf_t normal_dot_min;
+    fastf_t normal_dot_max;
+    size_t roots;
+    size_t entering_roots;
+    size_t leaving_roots;
+    size_t tangent_roots;
+    int face_index;
+    int classification;
 };
 
 struct rt_brep_shot_trace {
     size_t intersected_leaves;
+    size_t fixed_leaf_count;
+    size_t fixed_leaf_stored;
+    size_t fixed_leaf_overflow;
+    size_t fixed_leaf_mismatches;
+    size_t fixed_leaf_fallback;
+    size_t fixed_hit_count;
+    size_t fixed_hit_stored;
+    size_t fixed_hit_overflow;
+    size_t fixed_hit_mismatches;
+    size_t fixed_hit_fallback;
+    size_t fixed_after_near_miss;
+    size_t fixed_after_near_hit;
+    size_t fixed_after_grazing;
+    size_t fixed_after_duplicates;
+    size_t fixed_after_direction_cleanup;
+    size_t fixed_cleanup_mismatches;
+    size_t trim_queries;
+    size_t trim_noalloc_candidates;
+    size_t trim_allocating_candidates;
+    size_t trim_candidate_mismatches;
+    size_t trim_status_mismatches;
+    size_t trim_closest_mismatches;
+    size_t trim_distance_mismatches;
+    size_t trim_equivalence_mismatches;
     size_t solver_calls;
     size_t solver_status[RT_BREP_TRACE_SOLVER_STATUS_COUNT];
     size_t candidate_roots;
@@ -521,6 +601,29 @@ struct rt_brep_shot_trace {
     size_t prepared_surface_spans;
     size_t candidate_surface_spans;
     size_t excluded_surface_spans;
+    size_t surface_subdivision_boxes;
+    size_t surface_isolated_boxes;
+    size_t surface_subdivision_max_depth;
+    size_t surface_workspace_high_water;
+    size_t surface_workspace_exhausted;
+    size_t stored_surface_boxes;
+    size_t surface_box_overflow;
+    struct rt_brep_trace_surface_box
+	surface_boxes[RT_BREP_TRACE_MAX_SURFACE_BOXES];
+    size_t local_root_attempts;
+    size_t local_root_candidates;
+    size_t stored_local_roots;
+    size_t local_root_overflow;
+    size_t local_root_failures;
+    size_t local_root_duplicates;
+    struct rt_brep_trace_local_root
+	local_roots[RT_BREP_TRACE_MAX_LOCAL_ROOTS];
+    fastf_t local_cluster_tolerance;
+    size_t local_root_clusters;
+    size_t stored_local_clusters;
+    size_t local_cluster_overflow;
+    struct rt_brep_trace_local_cluster
+	local_clusters[RT_BREP_TRACE_MAX_LOCAL_CLUSTERS];
     struct rt_brep_trace_edge edges[RT_BREP_TRACE_MAX_EDGES];
     size_t raw_hits;
     size_t after_near_miss;
@@ -543,6 +646,18 @@ struct rt_brep_shot_trace {
     fastf_t continuation_residual;
     fastf_t continuation_normal_dot;
     int continuation_face_index;
+    size_t continuation_certificate_boxes;
+    size_t continuation_certificate_isolated;
+    size_t continuation_certificate_root_boxes;
+    size_t continuation_certificate_workspace;
+    size_t continuation_certificate_exhausted;
+    size_t continuation_certificate_existing_overlap;
+    size_t continuation_certified_candidates;
+    fastf_t continuation_certificate_t_min;
+    fastf_t continuation_certificate_t_max;
+    size_t closure_shadow_segments;
+    fastf_t closure_shadow_in_dist;
+    fastf_t closure_shadow_out_dist;
 };
 
 RT_EXPORT extern int _rt_brep_shot_trace(
