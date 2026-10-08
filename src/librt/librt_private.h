@@ -709,6 +709,17 @@ RT_EXPORT extern int rt_bot_shot_specific(
 #define RT_BREP_ROUTE_CERT_FAILURE_RESOURCE 11
 #define RT_BREP_ROUTE_CERT_FAILURE_COUNT 12
 
+/* Mutually exclusive route-profile phases.  For a timing-sampled decision,
+ * their sum covers the measured routing decision plus any selective replay;
+ * the ordinary unprofiled path does not read a profiling clock. */
+#define RT_BREP_ROUTE_PHASE_ELIGIBILITY_DISPATCH 0
+#define RT_BREP_ROUTE_PHASE_DIRECTION_CACHE 1
+#define RT_BREP_ROUTE_PHASE_CELL_SPAN 2
+#define RT_BREP_ROUTE_PHASE_GRAZING_CONTINUATION 3
+#define RT_BREP_ROUTE_PHASE_ROOT_CERTIFICATE 4
+#define RT_BREP_ROUTE_PHASE_SELECTIVE_REPLAY 5
+#define RT_BREP_ROUTE_PHASE_COUNT 6
+
 struct rt_brep_route_decision {
     int base_transaction;
     int optional_work;
@@ -1434,6 +1445,9 @@ struct rt_brep_shot_trace {
     unsigned int seeded_route_risk_flags;
     size_t route_decision_attempts;
     struct rt_brep_route_decision route_decision;
+    /* Profile-only timing lives with the opt-in trace rather than enlarging
+     * the production route decision returned for every B-Rep shot. */
+    size_t route_phase_nanoseconds[RT_BREP_ROUTE_PHASE_COUNT];
     /* Audit-only positive control: rerun the decision with the observed
      * correction-risk roots hidden, then record whether the independent
      * missing-root probe would have raised a signal. */

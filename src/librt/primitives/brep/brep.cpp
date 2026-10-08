@@ -33082,6 +33082,51 @@ brep_directional_root_jacobian_transverse(
 }
 
 
+struct brep_route_phase_profile {
+    size_t nanoseconds[RT_BREP_ROUTE_PHASE_COUNT] = {};
+};
+
+
+class brep_route_phase_timer {
+public:
+    brep_route_phase_timer(brep_route_phase_profile *profile, int phase,
+	bool start_now = true) :
+	m_profile(profile), m_phase(phase)
+    {
+	if (start_now)
+	    start();
+    }
+
+    ~brep_route_phase_timer()
+    {
+	stop();
+    }
+
+    void start()
+    {
+	if (m_profile && !m_running) {
+	    m_start = brep_shot_profile_now();
+	    m_running = true;
+	}
+    }
+
+    void stop()
+    {
+	if (!m_running)
+	    return;
+	m_profile->nanoseconds[m_phase] +=
+	    (size_t)(brep_shot_profile_now() - m_start);
+	m_running = false;
+    }
+
+private:
+    brep_route_phase_profile *m_profile;
+    int m_phase;
+    bool m_running = false;
+    uint64_t m_start = 0;
+};
+
+
 /* Return true only when every ray-visible part of this span has a normal
  * whose angle to the ray is bounded away from the grazing threshold.  Full
  * span metadata handles the common case.  An inconclusive span is refined in
@@ -33093,8 +33138,11 @@ brep_route_directional_span_transverse(
     struct rt_brep_route_decision &decision,
     const brep_surface_span &span, const ON_Ray &ray,
     const brep_ray_coefficient_context &coefficient_context,
-    const brep_subdivision_box &initial_box)
+    const brep_subdivision_box &initial_box,
+    brep_route_phase_profile *route_profile)
 {
+    brep_route_phase_timer continuation_timer(route_profile,
+	RT_BREP_ROUTE_PHASE_GRAZING_CONTINUATION, false);
     brep_surface_coefficients coefficients;
     if (!brep_surface_coefficients_init(coefficients, span,
 	    coefficient_context, false)) {
@@ -33150,6 +33198,7 @@ brep_route_directional_span_transverse(
 	 * former one-stage fail-closed behavior. */
 	if (box_budget > initial_box_budget &&
 		decision.directional_refined_boxes >= initial_box_budget) {
+	    continuation_timer.start();
 	    if (!decision.directional_continuation_attempts)
 		decision.directional_continuation_attempts++;
 	    decision.directional_continuation_boxes++;
@@ -33340,7 +33389,8 @@ brep_route_directional_packed_span_transverse(
     const brep_routing_cell_span_pack *pack,
     const ON_Ray &ray,
     const brep_ray_coefficient_context &coefficient_context,
-    const brep_surface_bbox_cull_context &cull_context)
+    const brep_surface_bbox_cull_context &cull_context,
+    brep_route_phase_profile *route_profile)
 {
     if (!bs || !pack || !pack->controls_complete || !pack->subpatch_count ||
 	    !pack->bbox_coordinate_scale_valid ||
@@ -33391,7 +33441,7 @@ brep_route_directional_packed_span_transverse(
 	const size_t left_index = 2 * work.node_index + 1;
 	if (left_index >= pack->subpatch_count) {
 	    if (!brep_route_directional_span_transverse(decision, span, ray,
-		    coefficient_context, work.box))
+		    coefficient_context, work.box, route_profile))
 		return BREP_DIRECTIONAL_THREAD_CACHE_AMBIGUOUS;
 	    continue;
 	}
@@ -34602,15 +34652,32 @@ static void
 brep_route_probe_directional_grazing(struct rt_brep_route_decision &decision,
     const struct brep_specific *bs,
     const brep_routing_feature_cell *const *cells, size_t cell_count,
-    const ON_Ray &ray,
-    const struct bn_tol *tol, bool measure)
+    const ON_Ray &ray, const struct bn_tol *tol,
+    brep_route_phase_profile *route_profile)
 {
+    const bool measure = route_profile != NULL;
     const uint64_t start = measure ? brep_shot_profile_now() : 0;
+    const size_t cache_nanoseconds_before = measure ? route_profile->nanoseconds[
+	RT_BREP_ROUTE_PHASE_DIRECTION_CACHE] : 0;
+    const size_t continuation_nanoseconds_before = measure ?
+	route_profile->nanoseconds[RT_BREP_ROUTE_PHASE_GRAZING_CONTINUATION] : 0;
     decision.directional_probe_attempts++;
     const auto finish = [&]() {
-	if (measure)
-	    decision.directional_probe_nanoseconds =
-		(size_t)(brep_shot_profile_now() - start);
+	if (!measure)
+	    return;
+	decision.directional_probe_nanoseconds =
+	    (size_t)(brep_shot_profile_now() - start);
+	const size_t cache_nanoseconds =
+	    route_profile->nanoseconds[RT_BREP_ROUTE_PHASE_DIRECTION_CACHE] -
+	    cache_nanoseconds_before;
+	const size_t continuation_nanoseconds = route_profile->nanoseconds[
+	    RT_BREP_ROUTE_PHASE_GRAZING_CONTINUATION] -
+	    continuation_nanoseconds_before;
+	const size_t attributed_nanoseconds = std::min(
+	    decision.directional_probe_nanoseconds,
+	    cache_nanoseconds + continuation_nanoseconds);
+	route_profile->nanoseconds[RT_BREP_ROUTE_PHASE_CELL_SPAN] +=
+	    decision.directional_probe_nanoseconds - attributed_nanoseconds;
     };
     if (!bs || (cell_count && !cells) || !bs->is_solid || bs->plate_mode ||
 	    !(bs->prepared_support_flags & BREP_PREPARED_SUPPORT_SURFACE_DATA) ||
@@ -34622,9 +34689,13 @@ brep_route_probe_directional_grazing(struct rt_brep_route_decision &decision,
     }
 
     bool object_cache_hit = false;
-    const enum brep_directional_thread_cache_result early_object_cached =
-	brep_directional_object_cache_lookup(decision, bs, ray, tol,
-	    object_cache_hit);
+    enum brep_directional_thread_cache_result early_object_cached;
+    {
+	brep_route_phase_timer cache_timer(route_profile,
+	    RT_BREP_ROUTE_PHASE_DIRECTION_CACHE);
+	early_object_cached = brep_directional_object_cache_lookup(decision, bs,
+	    ray, tol, object_cache_hit);
+    }
     if (object_cache_hit &&
 	    early_object_cached == BREP_DIRECTIONAL_THREAD_CACHE_TRANSVERSE) {
 	decision.directional_probe_complete = 1;
@@ -34651,9 +34722,13 @@ brep_route_probe_directional_grazing(struct rt_brep_route_decision &decision,
     }
 
     if (!object_cache_hit) {
-	const enum brep_directional_thread_cache_result object_cached =
-	    brep_route_directional_object_cache(decision, bs, ray, first, second,
-		coefficient_context, tol);
+	enum brep_directional_thread_cache_result object_cached;
+	{
+	    brep_route_phase_timer cache_timer(route_profile,
+		RT_BREP_ROUTE_PHASE_DIRECTION_CACHE);
+	    object_cached = brep_route_directional_object_cache(decision, bs,
+		ray, first, second, coefficient_context, tol);
+	}
 	if (object_cached == BREP_DIRECTIONAL_THREAD_CACHE_TRANSVERSE) {
 	    decision.directional_probe_complete = 1;
 	    finish();
@@ -34772,7 +34847,8 @@ brep_route_probe_directional_grazing(struct rt_brep_route_decision &decision,
 			    subpatch.normalized_maximum[parameter];
 		    }
 		    transverse = brep_route_directional_span_transverse(
-			decision, span, ray, coefficient_context, initial_box);
+			decision, span, ray, coefficient_context, initial_box,
+			route_profile);
 		}
 		continue;
 	    }
@@ -34782,7 +34858,7 @@ brep_route_probe_directional_grazing(struct rt_brep_route_decision &decision,
 		const enum brep_directional_thread_cache_result packed =
 		    brep_route_directional_packed_span_transverse(decision, bs,
 			binding, span, pack, ray, coefficient_context,
-			cull_context);
+			cull_context, route_profile);
 		if (packed == BREP_DIRECTIONAL_THREAD_CACHE_TRANSVERSE)
 		    continue;
 		if (packed == BREP_DIRECTIONAL_THREAD_CACHE_AMBIGUOUS) {
@@ -34807,7 +34883,7 @@ brep_route_probe_directional_grazing(struct rt_brep_route_decision &decision,
 		    binding.normalized_maximum[parameter];
 	    }
 	    transverse = brep_route_directional_span_transverse(decision, span,
-		ray, coefficient_context, initial_box);
+		ray, coefficient_context, initial_box, route_profile);
 	}
     }
     decision.directional_probe_complete = 1;
@@ -36006,8 +36082,12 @@ brep_route_decide(const struct brep_specific *bs,
     size_t root_overflow, const ON_Ray &ray, const struct bn_tol *tol,
     bool legacy_transaction_incomplete,
     bool probe_missing_roots, bool certify_missing_roots,
-    bool diagnose_missing_root_restriction, bool measure)
+    bool diagnose_missing_root_restriction,
+    brep_route_phase_profile *route_profile)
 {
+    const bool measure = route_profile != NULL;
+    if (route_profile)
+	*route_profile = {};
     const uint64_t start = measure ? brep_shot_profile_now() : 0;
     struct rt_brep_route_decision decision = {};
     decision.base_transaction = RT_BREP_ROUTE_BASE_LEGACY;
@@ -36016,6 +36096,34 @@ brep_route_decide(const struct brep_specific *bs,
     decision.qualification_flags = RT_BREP_ROUTE_QUAL_UNQUALIFIED;
     decision.legacy_transaction_incomplete =
 	legacy_transaction_incomplete ? 1 : 0;
+    const auto finish = [&]() {
+	if (!measure)
+	    return decision;
+	decision.decision_nanoseconds =
+	    (size_t)(brep_shot_profile_now() - start);
+	size_t remaining = decision.decision_nanoseconds;
+	const int measured_phases[] = {
+	    RT_BREP_ROUTE_PHASE_DIRECTION_CACHE,
+	    RT_BREP_ROUTE_PHASE_CELL_SPAN,
+	    RT_BREP_ROUTE_PHASE_GRAZING_CONTINUATION
+	};
+	for (size_t phase_index = 0;
+		phase_index < sizeof(measured_phases) / sizeof(measured_phases[0]);
+		++phase_index) {
+	    size_t &phase = route_profile->nanoseconds[
+		measured_phases[phase_index]];
+	    phase = std::min(phase, remaining);
+	    remaining -= phase;
+	}
+	size_t &certificate = route_profile->nanoseconds[
+	    RT_BREP_ROUTE_PHASE_ROOT_CERTIFICATE];
+	certificate = std::min(decision.missing_root_certificate_nanoseconds,
+	    remaining);
+	remaining -= certificate;
+	route_profile->nanoseconds[RT_BREP_ROUTE_PHASE_ELIGIBILITY_DISPATCH] =
+	    remaining;
+	return decision;
+    };
 
     const size_t stored_roots = roots ? std::min(root_count,
 	(size_t)RT_BREP_TRACE_MAX_ROOTS) : 0;
@@ -36060,15 +36168,18 @@ brep_route_decide(const struct brep_specific *bs,
 	 * the retained empty transaction.  Audit mode deliberately keeps its
 	 * independent correction-cell BVH traversal below. */
 	decision.qualification_flags |= RT_BREP_ROUTE_QUAL_EMPTY;
-	if (measure)
-	    decision.decision_nanoseconds =
-		(size_t)(brep_shot_profile_now() - start);
-	return decision;
+	return finish();
     }
+    bool direction_cache_clear = false;
     if (metadata_available && stored_roots &&
 	    !legacy_transaction_incomplete && !leaf_overflow &&
-	    !root_overflow && !observed_root_hazard && !decision.contact_roots &&
-	    brep_directional_object_cache_direction_clear(bs, ray, tol) &&
+	    !root_overflow && !observed_root_hazard && !decision.contact_roots) {
+	brep_route_phase_timer cache_timer(route_profile,
+	    RT_BREP_ROUTE_PHASE_DIRECTION_CACHE);
+	direction_cache_clear =
+	    brep_directional_object_cache_direction_clear(bs, ray, tol);
+    }
+    if (direction_cache_clear &&
 	    brep_route_roots_clear_of_leaf_boundaries(roots, stored_roots,
 		leaves, leaf_count)) {
 	/* The cached projection proves that every possible surface root is
@@ -36082,23 +36193,23 @@ brep_route_decide(const struct brep_specific *bs,
 	decision.directional_cache_box_tests = 1;
 	decision.directional_cache_cleared_spans = 1;
 	decision.qualification_flags |= RT_BREP_ROUTE_QUAL_CLEAN_ORDINARY;
-	if (measure)
-	    decision.decision_nanoseconds =
-		(size_t)(brep_shot_profile_now() - start);
-	return decision;
+	return finish();
     }
+    bool correction_cache_clear = false;
     if (metadata_available && collect_correction_cells && !leaf_overflow &&
-	    !root_overflow &&
-	    brep_directional_object_cache_correction_clear(bs, ray, tol)) {
+	    !root_overflow) {
+	brep_route_phase_timer cache_timer(route_profile,
+	    RT_BREP_ROUTE_PHASE_DIRECTION_CACHE);
+	correction_cache_clear =
+	    brep_directional_object_cache_correction_clear(bs, ray, tol);
+    }
+    if (correction_cache_clear) {
 	/* The direction-coherent cache encloses every correction-risk feature
 	 * cell.  A clear query is therefore a complete rejection for the only
 	 * empty-stream class this selector is authorized to recover.  Keep the
 	 * retained empty legacy transaction without walking unrelated cells. */
 	decision.qualification_flags |= RT_BREP_ROUTE_QUAL_EMPTY;
-	if (measure)
-	    decision.decision_nanoseconds =
-		(size_t)(brep_shot_profile_now() - start);
-	return decision;
+	return finish();
     }
     bool have_capability = false;
     unsigned int candidate_risk_flags = 0;
@@ -36193,7 +36304,7 @@ brep_route_decide(const struct brep_specific *bs,
     if (stored_roots && metadata_available && !leaf_overflow &&
 	    !root_overflow && !decision.cell_lookup_failures)
 	brep_route_probe_directional_grazing(decision, bs, directional_cells,
-	    directional_cell_count, ray, tol, measure);
+	    directional_cell_count, ray, tol, route_profile);
 
     decision.reason_flags |= candidate_risk_flags;
 
@@ -36285,10 +36396,7 @@ brep_route_decide(const struct brep_specific *bs,
 	decision.optional_work = RT_BREP_ROUTE_WORK_COMPLEX_PREPARED;
     }
 
-    if (measure)
-	decision.decision_nanoseconds =
-	    (size_t)(brep_shot_profile_now() - start);
-    return decision;
+    return finish();
 }
 
 
@@ -36301,10 +36409,13 @@ brep_trace_route_decision(struct rt_brep_shot_trace *trace,
     if (!trace)
 	return;
     trace->route_decision_attempts++;
+    brep_route_phase_profile route_profile;
     trace->route_decision = brep_route_decide(bs, leaves, leaf_count,
 	leaf_overflow, trace->roots, trace->stored_roots,
 	trace->root_overflow, ray, tol, legacy_transaction_incomplete,
-	true, true, true, true);
+	true, true, true, &route_profile);
+    for (int phase = 0; phase < RT_BREP_ROUTE_PHASE_COUNT; ++phase)
+	trace->route_phase_nanoseconds[phase] = route_profile.nanoseconds[phase];
     const struct rt_brep_route_decision &decision = trace->route_decision;
 
     /* Existing independently observed boundary/contact roots are the only
@@ -36318,7 +36429,7 @@ brep_trace_route_decision(struct rt_brep_shot_trace *trace,
 	trace->missing_root_counterfactual_attempts++;
 	trace->missing_root_counterfactual = brep_route_decide(bs, leaves,
 	    leaf_count, leaf_overflow, trace->roots, 0, 0, ray, tol, false, true,
-	    true, true, true);
+	    true, true, NULL);
     }
 
     trace->seeded_route_lane = decision.optional_work;
@@ -43561,130 +43672,273 @@ brep_shot_profile_enabled()
 
 
 /* Render-wide routing telemetry is deliberately separate from the production
- * phase profiler.  It executes a complete trace transaction only when
- * explicitly requested, aggregates the shadow decision, and never publishes
- * that transaction's segments. */
-struct brep_route_profile_totals {
-    std::atomic<uint64_t> shots = {0};
-    std::atomic<uint64_t> unrouted = {0};
-    std::atomic<uint64_t> verifier_attempts = {0};
-    std::atomic<uint64_t> shadow_nanoseconds = {0};
-    std::atomic<uint64_t> direct_transactions = {0};
-    std::atomic<uint64_t> optional_attempts = {0};
-    std::atomic<uint64_t> optional_complete = {0};
-    std::atomic<uint64_t> optional_published = {0};
-    std::atomic<uint64_t> optional_nanoseconds = {0};
-    std::atomic<uint64_t>
-	optional_fallback_count[RT_BREP_PREPARED_FALLBACK_COUNT] = {};
-    std::atomic<uint64_t>
-	optional_fallback_nanoseconds[RT_BREP_PREPARED_FALLBACK_COUNT] = {};
-    std::atomic<uint64_t>
-	optional_uncertified_count[RT_BREP_PREPARED_UNCERTIFIED_COUNT] = {};
-    std::atomic<uint64_t>
-	optional_uncertified_nanoseconds[RT_BREP_PREPARED_UNCERTIFIED_COUNT] = {};
-    std::atomic<uint64_t> lane_rays[RT_BREP_ROUTE_LANE_COUNT] = {};
-    std::atomic<uint64_t> lane_complete[RT_BREP_ROUTE_LANE_COUNT] = {};
-    std::atomic<uint64_t> lane_prepared_selected[RT_BREP_ROUTE_LANE_COUNT] = {};
-    std::atomic<uint64_t> lane_root_mismatch_rays[RT_BREP_ROUTE_LANE_COUNT] = {};
-    std::atomic<uint64_t> lane_root_mismatch_events[RT_BREP_ROUTE_LANE_COUNT] = {};
-    std::atomic<uint64_t> lane_shadow_nanoseconds[RT_BREP_ROUTE_LANE_COUNT] = {};
-    std::atomic<uint64_t>
-	lane_optional_nanoseconds[RT_BREP_ROUTE_LANE_COUNT] = {};
-    std::atomic<uint64_t> lane_published[RT_BREP_ROUTE_LANE_COUNT] = {};
-    std::atomic<uint64_t> lane_verifier_nanoseconds[RT_BREP_ROUTE_LANE_COUNT] = {};
-    std::atomic<uint64_t>
-	lane_stage_nanoseconds[RT_BREP_ROUTE_LANE_COUNT]
-		[RT_BREP_SEEDED_VERIFY_STAGE_COUNT] = {};
-    std::atomic<uint64_t>
-	failure_stage[RT_BREP_SEEDED_VERIFY_STAGE_COUNT] = {};
-    std::atomic<uint64_t> capability_rays[RT_BREP_ROUTE_CAP_COUNT] = {};
-    std::atomic<uint64_t> risk_rays[RT_BREP_ROUTE_RISK_COUNT] = {};
-    std::atomic<uint64_t> qualification_rays[RT_BREP_ROUTE_QUAL_COUNT] = {};
-    std::atomic<uint64_t> capability_mask = {0};
-    std::atomic<uint64_t> risk_mask = {0};
-    std::atomic<uint64_t> decision_nanoseconds = {0};
-    std::atomic<uint64_t> candidate_cells = {0};
-    std::atomic<uint64_t> hazard_roots = {0};
-    std::atomic<uint64_t> contact_roots = {0};
-    std::atomic<uint64_t> legacy_transaction_incomplete = {0};
-    std::atomic<uint64_t> selective_refinement_attempted = {0};
-    std::atomic<uint64_t> selective_refinement_complete = {0};
-    std::atomic<uint64_t> selective_refinement_max_level = {0};
-    std::atomic<uint64_t> selective_refinement_hits = {0};
-    std::atomic<uint64_t> selective_refinement_reversal_mismatches = {0};
-    std::atomic<uint64_t> selective_refinement_nanoseconds = {0};
-    std::atomic<uint64_t> directional_probe_attempts = {0};
-    std::atomic<uint64_t> directional_probe_complete = {0};
-    std::atomic<uint64_t> directional_candidate_faces = {0};
-    std::atomic<uint64_t> directional_candidate_spans = {0};
-    std::atomic<uint64_t> directional_cached_transverse_spans = {0};
-    std::atomic<uint64_t> directional_cache_hits = {0};
-    std::atomic<uint64_t> directional_cache_misses = {0};
-    std::atomic<uint64_t> directional_cache_build_failures = {0};
-    std::atomic<uint64_t> directional_cache_box_tests = {0};
-    std::atomic<uint64_t> directional_cache_cleared_spans = {0};
-    std::atomic<uint64_t> directional_ray_excluded_boxes = {0};
-    std::atomic<uint64_t> directional_refined_boxes = {0};
-    std::atomic<uint64_t> directional_refined_transverse_boxes = {0};
-    std::atomic<uint64_t> directional_continuation_attempts = {0};
-    std::atomic<uint64_t> directional_continuation_boxes = {0};
-    std::atomic<uint64_t> directional_continuation_resolved_spans = {0};
-    std::atomic<uint64_t> directional_ambiguous_spans = {0};
-    std::atomic<uint64_t> directional_unsupported_spans = {0};
-    std::atomic<uint64_t> directional_workspace_overflow = {0};
-    std::atomic<uint64_t> directional_grazing_triggered = {0};
-    std::atomic<uint64_t> directional_probe_nanoseconds = {0};
-    std::atomic<uint64_t> cell_lookup_failures = {0};
-    std::atomic<uint64_t>
-	cell_lookup_failure_reasons[RT_BREP_ROUTE_LOOKUP_REASON_COUNT] = {};
-    std::atomic<uint64_t> empty_correction_cells = {0};
-    std::atomic<uint64_t> missing_root_candidate_spans = {0};
-    std::atomic<uint64_t> missing_root_retained_spans = {0};
-    std::atomic<uint64_t> missing_root_restricted_spans = {0};
-    std::atomic<uint64_t> missing_root_inconclusive_spans = {0};
-    std::atomic<uint64_t> missing_root_workspace_overflow = {0};
-    std::atomic<uint64_t> missing_root_signal_rays = {0};
-    std::atomic<uint64_t> missing_root_prepared_candidate_faces = {0};
-    std::atomic<uint64_t> missing_root_prepared_candidate_spans = {0};
-    std::atomic<uint64_t> missing_root_prepared_retained_spans = {0};
-    std::atomic<uint64_t> missing_root_prepared_only_spans = {0};
-    std::atomic<uint64_t> missing_root_prepared_only_retained_spans = {0};
-    std::atomic<uint64_t> missing_root_prepared_inconclusive_spans = {0};
-    std::atomic<uint64_t> missing_root_prepared_candidate_failures = {0};
-    std::atomic<uint64_t> missing_root_prepared_signal_rays = {0};
-    std::atomic<uint64_t> missing_root_certificate_associations = {0};
-    std::atomic<uint64_t>
-	missing_root_certificate_state[RT_BREP_ROUTE_CERT_STATE_COUNT] = {};
-    std::atomic<uint64_t> missing_root_certificate_regular_root_count = {0};
-    std::atomic<uint64_t> missing_root_certificate_observed_roots = {0};
-    std::atomic<uint64_t> missing_root_certificate_deficit_cells = {0};
-    std::atomic<uint64_t> missing_root_certificate_deficit_roots = {0};
-    std::atomic<uint64_t> missing_root_certificate_cached_bbox_exclusions = {0};
-    std::atomic<uint64_t> missing_root_certificate_hull_exclusions = {0};
-    std::atomic<uint64_t> missing_root_certificate_subdivision_attempts = {0};
-    std::atomic<uint64_t> missing_root_certificate_subdivision_boxes = {0};
-    std::atomic<uint64_t>
-	missing_root_certificate_subdivision_hull_exclusions = {0};
-    std::atomic<uint64_t> missing_root_certificate_subdivision_exclusions = {0};
-    std::atomic<uint64_t> missing_root_certificate_degree_attempts = {0};
-    std::atomic<uint64_t> missing_root_certificate_degree_complete = {0};
-    std::atomic<uint64_t> missing_root_certificate_failure_reason[
-	RT_BREP_ROUTE_CERT_FAILURE_COUNT] = {};
-    std::atomic<uint64_t> missing_root_certificate_degree_failure_detail[
-	RT_BREP_ROOT_DEGREE_DETAIL_COUNT] = {};
-    std::atomic<uint64_t> missing_root_certificate_boundary_pieces = {0};
-    std::atomic<uint64_t> missing_root_certificate_boundary_splits = {0};
-    std::atomic<uint64_t> missing_root_certificate_boundary_edges = {0};
-    std::atomic<uint64_t> missing_root_certificate_expansion_high_water = {0};
-    std::atomic<uint64_t> missing_root_certificate_nanoseconds = {0};
-    std::atomic<uint64_t> missing_root_certificate_complete_rays = {0};
-    std::atomic<uint64_t> missing_root_certificate_triggered_rays = {0};
+ * phase profiler.  A worker writes only its fixed slot, avoiding atomics and
+ * cache-line migration in the shot path.  The slots are merged after workers
+ * have stopped, when the atexit report is emitted. */
+struct brep_route_profile_counter {
+    uint64_t value = 0;
+
+    void fetch_add(uint64_t increment, std::memory_order)
+    {
+	value += increment;
+    }
+
+    void fetch_or(uint64_t bits, std::memory_order)
+    {
+	value |= bits;
+    }
+
+    uint64_t load(std::memory_order = std::memory_order_relaxed) const
+    {
+	return value;
+    }
+
+    bool compare_exchange_weak(uint64_t &expected, uint64_t desired,
+	std::memory_order)
+    {
+	if (value == expected) {
+	    value = desired;
+	    return true;
+	}
+	expected = value;
+	return false;
+    }
 };
+
+#define BREP_ROUTE_PROFILE_SUM_FIELDS(_field) \
+    _field(shots) \
+    _field(unrouted) \
+    _field(timing_samples) \
+    _field(verifier_attempts) \
+    _field(shadow_nanoseconds) \
+    _field(direct_transactions) \
+    _field(optional_attempts) \
+    _field(optional_complete) \
+    _field(optional_published) \
+    _field(optional_nanoseconds) \
+    _field(decision_nanoseconds) \
+    _field(candidate_cells) \
+    _field(hazard_roots) \
+    _field(contact_roots) \
+    _field(legacy_transaction_incomplete) \
+    _field(selective_refinement_attempted) \
+    _field(selective_refinement_complete) \
+    _field(selective_refinement_hits) \
+    _field(selective_refinement_reversal_mismatches) \
+    _field(selective_refinement_nanoseconds) \
+    _field(directional_probe_attempts) \
+    _field(directional_probe_complete) \
+    _field(directional_candidate_faces) \
+    _field(directional_candidate_spans) \
+    _field(directional_cached_transverse_spans) \
+    _field(directional_cache_hits) \
+    _field(directional_cache_misses) \
+    _field(directional_cache_build_failures) \
+    _field(directional_cache_box_tests) \
+    _field(directional_cache_cleared_spans) \
+    _field(directional_ray_excluded_boxes) \
+    _field(directional_refined_boxes) \
+    _field(directional_refined_transverse_boxes) \
+    _field(directional_continuation_attempts) \
+    _field(directional_continuation_boxes) \
+    _field(directional_continuation_resolved_spans) \
+    _field(directional_ambiguous_spans) \
+    _field(directional_unsupported_spans) \
+    _field(directional_workspace_overflow) \
+    _field(directional_grazing_triggered) \
+    _field(directional_probe_timing_attempts) \
+    _field(directional_probe_nanoseconds) \
+    _field(cell_lookup_failures) \
+    _field(empty_correction_cells) \
+    _field(missing_root_candidate_spans) \
+    _field(missing_root_retained_spans) \
+    _field(missing_root_restricted_spans) \
+    _field(missing_root_inconclusive_spans) \
+    _field(missing_root_workspace_overflow) \
+    _field(missing_root_signal_rays) \
+    _field(missing_root_prepared_candidate_faces) \
+    _field(missing_root_prepared_candidate_spans) \
+    _field(missing_root_prepared_retained_spans) \
+    _field(missing_root_prepared_only_spans) \
+    _field(missing_root_prepared_only_retained_spans) \
+    _field(missing_root_prepared_inconclusive_spans) \
+    _field(missing_root_prepared_candidate_failures) \
+    _field(missing_root_prepared_signal_rays) \
+    _field(missing_root_certificate_associations) \
+    _field(missing_root_certificate_regular_root_count) \
+    _field(missing_root_certificate_observed_roots) \
+    _field(missing_root_certificate_deficit_cells) \
+    _field(missing_root_certificate_deficit_roots) \
+    _field(missing_root_certificate_cached_bbox_exclusions) \
+    _field(missing_root_certificate_hull_exclusions) \
+    _field(missing_root_certificate_subdivision_attempts) \
+    _field(missing_root_certificate_subdivision_boxes) \
+    _field(missing_root_certificate_subdivision_hull_exclusions) \
+    _field(missing_root_certificate_subdivision_exclusions) \
+    _field(missing_root_certificate_degree_attempts) \
+    _field(missing_root_certificate_degree_complete) \
+    _field(missing_root_certificate_boundary_pieces) \
+    _field(missing_root_certificate_boundary_splits) \
+    _field(missing_root_certificate_boundary_edges) \
+    _field(missing_root_certificate_timing_associations) \
+    _field(missing_root_certificate_nanoseconds) \
+    _field(missing_root_certificate_complete_rays) \
+    _field(missing_root_certificate_triggered_rays)
+
+#define BREP_ROUTE_PROFILE_MAX_FIELDS(_field) \
+    _field(selective_refinement_max_level) \
+    _field(missing_root_certificate_expansion_high_water)
+
+#define BREP_ROUTE_PROFILE_OR_FIELDS(_field) \
+    _field(capability_mask) \
+    _field(risk_mask)
+
+#define BREP_ROUTE_PROFILE_ARRAY_FIELDS(_field) \
+    _field(optional_fallback_count, RT_BREP_PREPARED_FALLBACK_COUNT) \
+    _field(optional_fallback_nanoseconds, RT_BREP_PREPARED_FALLBACK_COUNT) \
+    _field(optional_uncertified_count, RT_BREP_PREPARED_UNCERTIFIED_COUNT) \
+    _field(optional_uncertified_nanoseconds, RT_BREP_PREPARED_UNCERTIFIED_COUNT) \
+    _field(lane_rays, RT_BREP_ROUTE_LANE_COUNT) \
+    _field(lane_complete, RT_BREP_ROUTE_LANE_COUNT) \
+    _field(lane_prepared_selected, RT_BREP_ROUTE_LANE_COUNT) \
+    _field(lane_root_mismatch_rays, RT_BREP_ROUTE_LANE_COUNT) \
+    _field(lane_root_mismatch_events, RT_BREP_ROUTE_LANE_COUNT) \
+    _field(lane_shadow_nanoseconds, RT_BREP_ROUTE_LANE_COUNT) \
+    _field(lane_optional_nanoseconds, RT_BREP_ROUTE_LANE_COUNT) \
+    _field(lane_published, RT_BREP_ROUTE_LANE_COUNT) \
+    _field(lane_verifier_nanoseconds, RT_BREP_ROUTE_LANE_COUNT) \
+    _field(failure_stage, RT_BREP_SEEDED_VERIFY_STAGE_COUNT) \
+    _field(capability_rays, RT_BREP_ROUTE_CAP_COUNT) \
+    _field(risk_rays, RT_BREP_ROUTE_RISK_COUNT) \
+    _field(qualification_rays, RT_BREP_ROUTE_QUAL_COUNT) \
+    _field(cell_lookup_failure_reasons, RT_BREP_ROUTE_LOOKUP_REASON_COUNT) \
+    _field(missing_root_certificate_state, RT_BREP_ROUTE_CERT_STATE_COUNT) \
+    _field(missing_root_certificate_failure_reason, RT_BREP_ROUTE_CERT_FAILURE_COUNT) \
+    _field(missing_root_certificate_degree_failure_detail, RT_BREP_ROOT_DEGREE_DETAIL_COUNT) \
+    _field(phase_nanoseconds, RT_BREP_ROUTE_PHASE_COUNT)
+
+struct brep_route_profile_totals {
+#define BREP_ROUTE_PROFILE_DECLARE_SCALAR(_name) \
+    brep_route_profile_counter _name = {};
+    BREP_ROUTE_PROFILE_SUM_FIELDS(BREP_ROUTE_PROFILE_DECLARE_SCALAR)
+    BREP_ROUTE_PROFILE_MAX_FIELDS(BREP_ROUTE_PROFILE_DECLARE_SCALAR)
+    BREP_ROUTE_PROFILE_OR_FIELDS(BREP_ROUTE_PROFILE_DECLARE_SCALAR)
+#undef BREP_ROUTE_PROFILE_DECLARE_SCALAR
+#define BREP_ROUTE_PROFILE_DECLARE_ARRAY(_name, _count) \
+    brep_route_profile_counter _name[_count] = {};
+    BREP_ROUTE_PROFILE_ARRAY_FIELDS(BREP_ROUTE_PROFILE_DECLARE_ARRAY)
+#undef BREP_ROUTE_PROFILE_DECLARE_ARRAY
+    brep_route_profile_counter
+	lane_stage_nanoseconds[RT_BREP_ROUTE_LANE_COUNT]
+	    [RT_BREP_SEEDED_VERIFY_STAGE_COUNT] = {};
+};
+
+struct alignas(64) brep_route_profile_worker_slot {
+    brep_route_profile_totals totals;
+    brep_route_phase_profile current_phase;
+};
+
+/* The final slot handles a valid serial caller that does not provide a
+ * registered resource.  rt_uniresource is not legal in parallel, so this
+ * fallback does not weaken the one-writer-per-slot contract. */
+static brep_route_profile_worker_slot
+    brep_route_profile_workers[MAX_PSW + 1] = {};
+
+static const uint64_t BREP_ROUTE_PROFILE_TIMING_STRIDE = 64;
+
+
+static size_t
+brep_route_profile_worker_index(const struct application *ap)
+{
+    if (ap && ap->a_resource && ap->a_resource->re_cpu >= 0 &&
+	    ap->a_resource->re_cpu < MAX_PSW)
+	return (size_t)ap->a_resource->re_cpu;
+    return MAX_PSW;
+}
+
+
+static brep_route_profile_totals &
+brep_route_profile_data(const struct application *ap)
+{
+    return brep_route_profile_workers[brep_route_profile_worker_index(ap)].totals;
+}
+
+
+static brep_route_phase_profile &
+brep_route_profile_phase_data(const struct application *ap)
+{
+    return brep_route_profile_workers[
+	brep_route_profile_worker_index(ap)].current_phase;
+}
+
+
+static bool
+brep_route_profile_sample_timing(const struct application *ap)
+{
+    const size_t worker = brep_route_profile_worker_index(ap);
+    const brep_route_profile_totals &totals = brep_route_profile_data(ap);
+    /* Stagger the deterministic samples so all workers do not time their
+     * first, cache-building shot and then exaggerate that cold cost by the
+     * sampling scale.  Seventeen is coprime to the power-of-two stride. */
+    const uint64_t offset = (17 * worker +
+	BREP_ROUTE_PROFILE_TIMING_STRIDE / 2) %
+	BREP_ROUTE_PROFILE_TIMING_STRIDE;
+    return (totals.shots.load() + offset) %
+	BREP_ROUTE_PROFILE_TIMING_STRIDE == 0;
+}
+
+
+static void
+brep_route_profile_merge(brep_route_profile_totals &destination,
+    const brep_route_profile_totals &source)
+{
+#define BREP_ROUTE_PROFILE_MERGE_SUM(_name) \
+    destination._name.fetch_add(source._name.load(), std::memory_order_relaxed);
+    BREP_ROUTE_PROFILE_SUM_FIELDS(BREP_ROUTE_PROFILE_MERGE_SUM)
+#undef BREP_ROUTE_PROFILE_MERGE_SUM
+#define BREP_ROUTE_PROFILE_MERGE_MAX(_name) \
+    destination._name.value = std::max(destination._name.value, \
+	source._name.load());
+    BREP_ROUTE_PROFILE_MAX_FIELDS(BREP_ROUTE_PROFILE_MERGE_MAX)
+#undef BREP_ROUTE_PROFILE_MERGE_MAX
+#define BREP_ROUTE_PROFILE_MERGE_OR(_name) \
+    destination._name.fetch_or(source._name.load(), std::memory_order_relaxed);
+    BREP_ROUTE_PROFILE_OR_FIELDS(BREP_ROUTE_PROFILE_MERGE_OR)
+#undef BREP_ROUTE_PROFILE_MERGE_OR
+#define BREP_ROUTE_PROFILE_MERGE_ARRAY(_name, _count) \
+    for (int index = 0; index < _count; ++index) \
+	destination._name[index].fetch_add(source._name[index].load(), \
+	    std::memory_order_relaxed);
+    BREP_ROUTE_PROFILE_ARRAY_FIELDS(BREP_ROUTE_PROFILE_MERGE_ARRAY)
+#undef BREP_ROUTE_PROFILE_MERGE_ARRAY
+    for (int lane = 0; lane < RT_BREP_ROUTE_LANE_COUNT; ++lane)
+	for (int stage = 0; stage < RT_BREP_SEEDED_VERIFY_STAGE_COUNT; ++stage)
+	    destination.lane_stage_nanoseconds[lane][stage].fetch_add(
+		source.lane_stage_nanoseconds[lane][stage].load(),
+		std::memory_order_relaxed);
+}
+
+
+static brep_route_profile_totals
+brep_route_profile_snapshot(size_t &active_workers)
+{
+    brep_route_profile_totals totals;
+    active_workers = 0;
+    for (size_t worker = 0; worker <= MAX_PSW; ++worker) {
+	const brep_route_profile_totals &source =
+	    brep_route_profile_workers[worker].totals;
+	if (!source.shots.load())
+	    continue;
+	active_workers++;
+	brep_route_profile_merge(totals, source);
+    }
+    return totals;
+}
 
 
 static void
 brep_route_profile_observe_directional(brep_route_profile_totals &totals,
-    const struct rt_brep_route_decision &decision)
+    const struct rt_brep_route_decision &decision, bool timing_sampled)
 {
     totals.directional_probe_attempts.fetch_add(
 	decision.directional_probe_attempts, std::memory_order_relaxed);
@@ -43729,22 +43983,17 @@ brep_route_profile_observe_directional(brep_route_profile_totals &totals,
 	decision.directional_workspace_overflow, std::memory_order_relaxed);
     totals.directional_grazing_triggered.fetch_add(
 	decision.directional_grazing_triggered, std::memory_order_relaxed);
+    if (timing_sampled)
+	totals.directional_probe_timing_attempts.fetch_add(
+	    decision.directional_probe_attempts, std::memory_order_relaxed);
     totals.directional_probe_nanoseconds.fetch_add(
 	decision.directional_probe_nanoseconds, std::memory_order_relaxed);
 }
 
 
-static brep_route_profile_totals &
-brep_route_profile_data()
-{
-    static brep_route_profile_totals totals;
-    return totals;
-}
-
-
 static void
 brep_route_profile_observe_certificate(brep_route_profile_totals &totals,
-    const struct rt_brep_route_decision &decision)
+    const struct rt_brep_route_decision &decision, bool timing_sampled)
 {
     totals.missing_root_certificate_associations.fetch_add(
 	decision.missing_root_certificate_associations,
@@ -43806,6 +44055,10 @@ brep_route_profile_observe_certificate(brep_route_profile_totals &totals,
     totals.missing_root_certificate_boundary_edges.fetch_add(
 	decision.missing_root_certificate_boundary_edges,
 	std::memory_order_relaxed);
+    if (timing_sampled)
+	totals.missing_root_certificate_timing_associations.fetch_add(
+	    decision.missing_root_certificate_associations,
+	    std::memory_order_relaxed);
     uint64_t observed =
 	totals.missing_root_certificate_expansion_high_water.load(
 	    std::memory_order_relaxed);
@@ -43878,10 +44131,14 @@ brep_seeded_verify_stage_name(int stage)
 
 static void
 brep_route_profile_observe(const struct rt_brep_shot_trace *trace,
-    uint64_t shadow_nanoseconds)
+    uint64_t shadow_nanoseconds, const struct application *ap)
 {
-    brep_route_profile_totals &totals = brep_route_profile_data();
+    brep_route_profile_totals &totals = brep_route_profile_data(ap);
     totals.shots.fetch_add(1, std::memory_order_relaxed);
+
+    const bool timing_sampled = trace && trace->route_decision_attempts;
+    totals.timing_samples.fetch_add(timing_sampled ? 1 : 0,
+	std::memory_order_relaxed);
     totals.shadow_nanoseconds.fetch_add(shadow_nanoseconds,
 	std::memory_order_relaxed);
     if (!trace || !trace->route_decision_attempts ||
@@ -43933,7 +44190,12 @@ brep_route_profile_observe(const struct rt_brep_shot_trace *trace,
     totals.contact_roots.fetch_add(trace->route_decision.contact_roots,
 	std::memory_order_relaxed);
     brep_route_profile_observe_refinement(totals, trace->route_decision);
-    brep_route_profile_observe_directional(totals, trace->route_decision);
+    brep_route_profile_observe_directional(totals, trace->route_decision,
+	timing_sampled);
+    for (int phase = 0; phase < RT_BREP_ROUTE_PHASE_COUNT; ++phase)
+	totals.phase_nanoseconds[phase].fetch_add(
+	    trace->route_phase_nanoseconds[phase],
+	    std::memory_order_relaxed);
     totals.cell_lookup_failures.fetch_add(
 	trace->route_decision.cell_lookup_failures,
 	std::memory_order_relaxed);
@@ -43989,7 +44251,8 @@ brep_route_profile_observe(const struct rt_brep_shot_trace *trace,
     totals.missing_root_prepared_signal_rays.fetch_add(
 	trace->route_decision.missing_root_prepared_retained_spans ? 1 : 0,
 	std::memory_order_relaxed);
-    brep_route_profile_observe_certificate(totals, trace->route_decision);
+    brep_route_profile_observe_certificate(totals, trace->route_decision,
+	timing_sampled);
     for (int bit = 0; bit < RT_BREP_ROUTE_CAP_COUNT; ++bit)
 	if (trace->seeded_route_capability_flags & (1u << bit))
 	    totals.capability_rays[bit].fetch_add(1,
@@ -44006,12 +44269,17 @@ brep_route_profile_observe(const struct rt_brep_shot_trace *trace,
 
 static void
 brep_route_profile_observe_direct(
-    const struct rt_brep_route_decision &decision, bool optional_attempted,
+    const struct rt_brep_route_decision &decision,
+    const brep_route_phase_profile *route_profile, bool optional_attempted,
     bool optional_complete, bool optional_published, int optional_fallback,
-    int optional_uncertified_reason, uint64_t optional_nanoseconds)
+    int optional_uncertified_reason, uint64_t optional_nanoseconds,
+    const struct application *ap)
 {
-    brep_route_profile_totals &totals = brep_route_profile_data();
+    brep_route_profile_totals &totals = brep_route_profile_data(ap);
     totals.shots.fetch_add(1, std::memory_order_relaxed);
+    const bool timing_sampled = route_profile != NULL;
+    totals.timing_samples.fetch_add(timing_sampled ? 1 : 0,
+	std::memory_order_relaxed);
     totals.direct_transactions.fetch_add(1, std::memory_order_relaxed);
     const int lane = decision.optional_work;
     if (lane < 0 || lane >= RT_BREP_ROUTE_LANE_COUNT) {
@@ -44064,7 +44332,11 @@ brep_route_profile_observe_direct(
     totals.contact_roots.fetch_add(decision.contact_roots,
 	std::memory_order_relaxed);
     brep_route_profile_observe_refinement(totals, decision);
-    brep_route_profile_observe_directional(totals, decision);
+    brep_route_profile_observe_directional(totals, decision, timing_sampled);
+    for (int phase = 0; phase < RT_BREP_ROUTE_PHASE_COUNT; ++phase)
+	totals.phase_nanoseconds[phase].fetch_add(
+	    route_profile ? route_profile->nanoseconds[phase] : 0,
+	    std::memory_order_relaxed);
     totals.cell_lookup_failures.fetch_add(decision.cell_lookup_failures,
 	std::memory_order_relaxed);
     for (int reason = 0; reason < RT_BREP_ROUTE_LOOKUP_REASON_COUNT; ++reason) {
@@ -44112,7 +44384,7 @@ brep_route_profile_observe_direct(
     totals.missing_root_prepared_signal_rays.fetch_add(
 	decision.missing_root_prepared_retained_spans ? 1 : 0,
 	std::memory_order_relaxed);
-    brep_route_profile_observe_certificate(totals, decision);
+    brep_route_profile_observe_certificate(totals, decision, timing_sampled);
     for (int bit = 0; bit < RT_BREP_ROUTE_CAP_COUNT; ++bit)
 	if (decision.capability_flags & (1u << bit))
 	    totals.capability_rays[bit].fetch_add(1,
@@ -44130,8 +44402,15 @@ brep_route_profile_observe_direct(
 static void
 brep_route_profile_report()
 {
-    const brep_route_profile_totals &totals = brep_route_profile_data();
+    size_t active_workers = 0;
+    const brep_route_profile_totals totals =
+	brep_route_profile_snapshot(active_workers);
     const uint64_t shots = totals.shots.load();
+    const uint64_t timing_samples = totals.timing_samples.load();
+    const double timing_scale = timing_samples ?
+	shots / (double)timing_samples : 0.0;
+    const double estimated_decision_nanoseconds =
+	totals.decision_nanoseconds.load() * timing_scale;
     const uint64_t unrouted = totals.unrouted.load();
     const uint64_t verifier_attempts = totals.verifier_attempts.load();
     uint64_t routed = 0;
@@ -44144,6 +44423,8 @@ brep_route_profile_report()
     const uint64_t optional_published = totals.optional_published.load();
     bu_log("BREP route profile: base=legacy authority=%s shots=%llu "
 	"routed=%llu unrouted=%llu direct-transactions=%llu "
+	"worker-slots=%llu aggregation=per-worker trace-storage=thread-local-inline "
+	"timing-samples=%llu timing-stride=%llu "
 	"verifier-attempts=%llu verifier-complete=%llu verifier-failed=%llu "
 	"shadow-ms=%.3f decision-ms=%.3f decision-us/ray=%.3f "
 	"optional-attempts=%llu optional-complete=%llu optional-published=%llu "
@@ -44172,13 +44453,17 @@ brep_route_profile_report()
 	(unsigned long long)shots, (unsigned long long)routed,
 	(unsigned long long)unrouted,
 	(unsigned long long)totals.direct_transactions.load(),
+	(unsigned long long)active_workers,
+	(unsigned long long)timing_samples,
+	(unsigned long long)BREP_ROUTE_PROFILE_TIMING_STRIDE,
 	(unsigned long long)verifier_attempts,
 	(unsigned long long)complete,
 	(unsigned long long)(verifier_attempts > complete ?
 	    verifier_attempts - complete : 0),
 	totals.shadow_nanoseconds.load() / 1000000.0,
-	totals.decision_nanoseconds.load() / 1000000.0,
-	routed ? totals.decision_nanoseconds.load() / (1000.0 * routed) : 0.0,
+	estimated_decision_nanoseconds / 1000000.0,
+	timing_samples ? totals.decision_nanoseconds.load() /
+	    (1000.0 * timing_samples) : 0.0,
 	(unsigned long long)optional_attempts,
 	(unsigned long long)totals.optional_complete.load(),
 	(unsigned long long)optional_published,
@@ -44216,6 +44501,29 @@ brep_route_profile_report()
 	(unsigned long long)totals.capability_mask.load(),
 	(unsigned long long)totals.risk_mask.load());
 
+    static const char *phase_names[RT_BREP_ROUTE_PHASE_COUNT] = {
+	"eligibility-dispatch", "direction-cache", "cell-span",
+	"grazing-continuation", "root-certificate", "selective-replay"
+    };
+    uint64_t phase_total = 0;
+    for (int phase = 0; phase < RT_BREP_ROUTE_PHASE_COUNT; ++phase) {
+	const uint64_t nanoseconds = totals.phase_nanoseconds[phase].load();
+	phase_total += nanoseconds;
+	bu_log("BREP route phase: name=%s nanoseconds=%llu estimated-ms=%.3f "
+	    "ns/sample=%.1f\n", phase_names[phase],
+	    (unsigned long long)nanoseconds,
+	    nanoseconds * timing_scale / 1000000.0,
+	    timing_samples ? nanoseconds / (double)timing_samples : 0.0);
+    }
+    const uint64_t decision_plus_replay =
+	totals.decision_nanoseconds.load() +
+	totals.phase_nanoseconds[RT_BREP_ROUTE_PHASE_SELECTIVE_REPLAY].load();
+    bu_log("BREP route phase accounting: total-nanoseconds=%llu "
+	"decision-plus-replay-nanoseconds=%llu balanced=%s\n",
+	(unsigned long long)phase_total,
+	(unsigned long long)decision_plus_replay,
+	phase_total == decision_plus_replay ? "yes" : "no");
+
     const uint64_t lookup_failures = totals.cell_lookup_failures.load();
     if (lookup_failures) {
 	static const char *lookup_reason_name[RT_BREP_ROUTE_LOOKUP_REASON_COUNT] = {
@@ -44237,6 +44545,10 @@ brep_route_profile_report()
     const uint64_t directional_attempts =
 	totals.directional_probe_attempts.load();
     if (directional_attempts) {
+	const uint64_t directional_timing_attempts =
+	    totals.directional_probe_timing_attempts.load();
+	const double directional_scale = directional_timing_attempts ?
+	    directional_attempts / (double)directional_timing_attempts : 0.0;
 	bu_log("BREP route directional grazing: attempts=%llu complete=%llu "
 	    "candidate-faces=%llu candidate-spans=%llu "
 	    "cached-transverse=%llu cache-hits=%llu cache-misses=%llu "
@@ -44246,7 +44558,7 @@ brep_route_profile_report()
 	    "continuations=%llu continuation-boxes=%llu "
 	    "continuation-resolved-spans=%llu ambiguous-spans=%llu "
 	    "unsupported-spans=%llu workspace-overflow=%llu triggered=%llu "
-	    "elapsed-ms=%.3f ns/attempt=%.1f\n",
+	    "timing-samples=%llu elapsed-ms=%.3f ns/attempt=%.1f\n",
 	    (unsigned long long)directional_attempts,
 	    (unsigned long long)totals.directional_probe_complete.load(),
 	    (unsigned long long)totals.directional_candidate_faces.load(),
@@ -44273,9 +44585,12 @@ brep_route_profile_report()
 	    (unsigned long long)totals.directional_unsupported_spans.load(),
 	    (unsigned long long)totals.directional_workspace_overflow.load(),
 	    (unsigned long long)totals.directional_grazing_triggered.load(),
-	    totals.directional_probe_nanoseconds.load() / 1000000.0,
-	    totals.directional_probe_nanoseconds.load() /
-		(double)directional_attempts);
+	    (unsigned long long)directional_timing_attempts,
+	    totals.directional_probe_nanoseconds.load() * directional_scale /
+		1000000.0,
+	    directional_timing_attempts ?
+		totals.directional_probe_nanoseconds.load() /
+		(double)directional_timing_attempts : 0.0);
     }
 
     const uint64_t certificate_associations =
@@ -44283,6 +44598,11 @@ brep_route_profile_report()
     if (certificate_associations) {
 	const uint64_t certificate_nanoseconds =
 	    totals.missing_root_certificate_nanoseconds.load();
+	const uint64_t certificate_timing_associations =
+	    totals.missing_root_certificate_timing_associations.load();
+	const double certificate_scale = certificate_timing_associations ?
+	    certificate_associations /
+		(double)certificate_timing_associations : 0.0;
 	bu_log("BREP route missing-root certificate: associations=%llu "
 	    "incomplete=%llu root-free=%llu root-positive=%llu "
 	    "regular-root-count=%llu observed-roots=%llu "
@@ -44293,7 +44613,8 @@ brep_route_profile_report()
 	    "subdivision-hull-exclusions=%llu subdivision-exclusions=%llu "
 	    "degree-attempts=%llu degree-complete=%llu "
 	    "boundary-pieces=%llu boundary-splits=%llu boundary-edges=%llu "
-	    "expansion-high-water=%llu elapsed-ms=%.3f ns/association=%.1f\n",
+	    "expansion-high-water=%llu timing-samples=%llu "
+	    "elapsed-ms=%.3f ns/association=%.1f\n",
 	    (unsigned long long)certificate_associations,
 	    (unsigned long long)totals.missing_root_certificate_state[
 		RT_BREP_ROUTE_CERT_INCOMPLETE].load(),
@@ -44337,8 +44658,10 @@ brep_route_profile_report()
 		totals.missing_root_certificate_boundary_edges.load(),
 	    (unsigned long long)
 		totals.missing_root_certificate_expansion_high_water.load(),
-	    certificate_nanoseconds / 1000000.0,
-	    certificate_nanoseconds / (double)certificate_associations);
+	    (unsigned long long)certificate_timing_associations,
+	    certificate_nanoseconds * certificate_scale / 1000000.0,
+	    certificate_timing_associations ? certificate_nanoseconds /
+		(double)certificate_timing_associations : 0.0);
 	for (int reason = 1; reason < RT_BREP_ROUTE_CERT_FAILURE_COUNT;
 		++reason) {
 	    const uint64_t count =
@@ -44465,9 +44788,8 @@ brep_route_profile_enabled()
     static const bool enabled = []() {
 	const char *setting = getenv("LIBRT_BREP_ROUTE_PROFILE");
 	const bool requested = setting && setting[0] &&
-	    !BU_STR_EQUAL(setting, "0") && !BU_STR_EQUAL(setting, "off");
+	!BU_STR_EQUAL(setting, "0") && !BU_STR_EQUAL(setting, "off");
 	if (requested) {
-	    (void)brep_route_profile_data();
 	    std::atexit(brep_route_profile_report);
 	}
 	return requested;
@@ -44562,22 +44884,13 @@ brep_route_detail_next_id()
 
 class brep_route_profile_trace_storage {
 public:
-    ~brep_route_profile_trace_storage()
-    {
-	if (m_trace)
-	    bu_free(m_trace, "BREP route profile trace");
-    }
-
     struct rt_brep_shot_trace *get()
     {
-	if (!m_trace)
-	    m_trace = (struct rt_brep_shot_trace *)bu_calloc(1,
-		sizeof(*m_trace), "BREP route profile trace");
-	return m_trace;
+	return &m_trace;
     }
 
 private:
-    struct rt_brep_shot_trace *m_trace = NULL;
+    struct rt_brep_shot_trace m_trace = {};
 };
 
 
@@ -44957,6 +45270,7 @@ rt_brep_shot_impl(struct soltab *stp, struct xray *rp,
     bool fixed_leaf_overflow = false;
     brep_route_observation_workspace route_observations;
     struct rt_brep_route_decision direct_decision;
+    brep_route_phase_profile *direct_route_profile = NULL;
     bool direct_optional_published = false;
     const uint64_t face_start = profile.begin();
     if (!brep_collect_legacy_face_leaves(bs, r, fixed_leaves,
@@ -45002,7 +45316,7 @@ rt_brep_shot_impl(struct soltab *stp, struct xray *rp,
     }
     brep_observe_edges(trace, bs, r);
     const auto run_selective_refinement = [&](struct rt_brep_route_decision &decision,
-	    size_t maximum_level) {
+	    size_t maximum_level, size_t *phase_nanoseconds) {
 	if (!decision.legacy_transaction_incomplete ||
 		!decision.missing_root_certificate_triggered ||
 		prepared_selected || fixed_leaf_overflow)
@@ -45019,6 +45333,9 @@ rt_brep_shot_impl(struct soltab *stp, struct xray *rp,
 	    maximum_level);
 	decision.selective_refinement_nanoseconds =
 	    (size_t)(brep_shot_profile_now() - start);
+	if (phase_nanoseconds)
+	    phase_nanoseconds[RT_BREP_ROUTE_PHASE_SELECTIVE_REPLAY] =
+		decision.selective_refinement_nanoseconds;
 	decision.selective_refinement_level = level;
 	decision.selective_refinement_hits = refined_hits.size();
 	decision.selective_refinement_reversal_mismatches =
@@ -45043,7 +45360,8 @@ rt_brep_shot_impl(struct soltab *stp, struct xray *rp,
 		legacy_transaction_incomplete);
 	    run_selective_prepared();
 	    if (run_selective_refinement(trace->route_decision,
-		    BREP_SELECTIVE_REFINEMENT_MAX_LEVEL)) {
+		    BREP_SELECTIVE_REFINEMENT_MAX_LEVEL,
+		    trace->route_phase_nanoseconds)) {
 		trace->prepared_production_selected++;
 		trace->prepared_production_fallback =
 		    RT_BREP_PREPARED_FALLBACK_NONE;
@@ -45063,7 +45381,9 @@ rt_brep_shot_impl(struct soltab *stp, struct xray *rp,
     const auto run_direct_routing = [&](bool legacy_transaction_incomplete) {
 	if (!selective_direct_evaluate)
 	    return;
-	const bool measure = selective_profile;
+	const bool profile_route = selective_profile;
+	const bool measure = profile_route && brep_route_profile_sample_timing(ap);
+	direct_route_profile = measure ? &brep_route_profile_phase_data(ap) : NULL;
 	const bool certify_missing_roots =
 	    legacy_root_fault != BREP_LEGACY_ROOT_FAULT_NONE ||
 	    brep_route_missing_root_certificate_enabled();
@@ -45074,7 +45394,7 @@ rt_brep_shot_impl(struct soltab *stp, struct xray *rp,
 	    route_observations.root_overflow, r, tol,
 	    legacy_transaction_incomplete,
 	    brep_route_missing_root_probe_enabled() || certify_missing_roots,
-	    certify_missing_roots, false, measure);
+	    certify_missing_roots, false, direct_route_profile);
 
 	bool optional_attempted = false;
 	bool optional_complete = false;
@@ -45083,7 +45403,8 @@ rt_brep_shot_impl(struct soltab *stp, struct xray *rp,
 	if (direct_decision.optional_work ==
 		RT_BREP_ROUTE_WORK_COMPLEX_PREPARED) {
 	    optional_attempted = true;
-	    const uint64_t route_start = measure ? brep_shot_profile_now() : 0;
+	    const uint64_t route_start = profile_route ?
+		brep_shot_profile_now() : 0;
 	    /* A certified incomplete legacy transaction has a narrower and much
 	     * cheaper recovery than the general prepared solver.  Replay it first,
 	     * and retain legacy if the bounded replay is inconclusive.  The only
@@ -45097,7 +45418,8 @@ rt_brep_shot_impl(struct soltab *stp, struct xray *rp,
 		direct_decision.missing_root_certificate_triggered;
 	    if (selective_replay)
 		optional_complete = run_selective_refinement(direct_decision,
-		    brep_selective_refinement_max_level());
+		    brep_selective_refinement_max_level(), direct_route_profile ?
+		    direct_route_profile->nanoseconds : NULL);
 	    const bool require_empty_partition =
 		!direct_decision.missing_root_certificate_triggered &&
 		!direct_decision.directional_grazing_triggered;
@@ -45131,7 +45453,7 @@ rt_brep_shot_impl(struct soltab *stp, struct xray *rp,
 	    if (direct_optional_published)
 		direct_decision.publication_authority =
 		    RT_BREP_ROUTE_AUTHORITY_PREPARED;
-	    if (measure)
+	    if (profile_route)
 		optional_nanoseconds = brep_shot_profile_now() - route_start;
 	}
 	if (route_test) {
@@ -45145,7 +45467,7 @@ rt_brep_shot_impl(struct soltab *stp, struct xray *rp,
 	    route_test->prepared_uncertified_reason =
 		prepared_uncertified_reason;
 	}
-	if (measure && optional_attempted && brep_route_detail_enabled()) {
+	if (profile_route && optional_attempted && brep_route_detail_enabled()) {
 	    const uint64_t detail_id = brep_route_detail_next_id();
 	bu_log("BREP route optional detail: id=%llu solid=%s "
 		"origin=(%.17g,%.17g,%.17g) direction=(%.17g,%.17g,%.17g) "
@@ -45216,11 +45538,12 @@ rt_brep_shot_impl(struct soltab *stp, struct xray *rp,
 		    root.trim_distance, root.trim_status, root.hit_class);
 	    }
 	}
-	if (measure)
+	if (profile_route)
 	    brep_route_profile_observe_direct(direct_decision,
+		direct_route_profile,
 		optional_attempted, optional_complete, direct_optional_published,
 		prepared_fallback,
-		prepared_uncertified_reason, optional_nanoseconds);
+		prepared_uncertified_reason, optional_nanoseconds, ap);
     };
     if (!fixed_leaf_count) {
 	run_trace_routing(false);
@@ -45992,7 +46315,7 @@ rt_brep_shot(struct soltab *stp, struct xray *rp, struct application *ap,
 	(void)rt_brep_shot_impl(stp, rp, ap, &shadow_seghead, route_trace,
 	    allow_prepared, BREP_SELECTIVE_ROUTE_SHADOW);
 	brep_route_profile_observe(route_trace,
-	    brep_shot_profile_now() - shadow_start);
+	    brep_shot_profile_now() - shadow_start, ap);
 	struct seg *segment;
 	while (BU_LIST_WHILE(segment, seg, &shadow_seghead.l)) {
 	    BU_LIST_DEQUEUE(&segment->l);

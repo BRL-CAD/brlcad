@@ -9,12 +9,13 @@ endforeach()
 
 set(test_object recursive_child_linkage_complex_subtractions.s)
 set(direct_image "${TEST_DIR}/brep-route-direct.pix")
+set(parallel_image "${TEST_DIR}/brep-route-direct-p2.pix")
 set(publish_image "${TEST_DIR}/brep-route-publish.pix")
 set(probe_image "${TEST_DIR}/brep-route-missing-root-probe.pix")
 set(certificate_image "${TEST_DIR}/brep-route-missing-root-certificate.pix")
 set(production_image "${TEST_DIR}/brep-route-production.pix")
 set(legacy_image "${TEST_DIR}/brep-route-legacy.pix")
-file(REMOVE "${direct_image}" "${publish_image}" "${probe_image}"
+file(REMOVE "${direct_image}" "${parallel_image}" "${publish_image}" "${probe_image}"
   "${certificate_image}" "${production_image}" "${legacy_image}")
 
 execute_process(
@@ -43,9 +44,101 @@ if(NOT direct_log MATCHES
     "BREP route profile: base=legacy authority=legacy shots=[1-9][0-9]* routed=[1-9][0-9]* unrouted=0 direct-transactions=[1-9][0-9]*")
   message(FATAL_ERROR "Direct route telemetry is missing or invalid\n${direct_log}")
 endif()
+if(NOT direct_log MATCHES
+    "worker-slots=1 aggregation=per-worker trace-storage=thread-local-inline")
+  message(FATAL_ERROR
+    "Direct route did not use inline per-worker telemetry\n${direct_log}"
+  )
+endif()
+if(NOT direct_log MATCHES
+    "timing-samples=[1-9][0-9]* timing-stride=64")
+  message(FATAL_ERROR
+    "Direct route did not use the bounded timing sample\n${direct_log}"
+  )
+endif()
+foreach(phase eligibility-dispatch direction-cache cell-span
+    grazing-continuation root-certificate selective-replay)
+  if(NOT direct_log MATCHES
+      "BREP route phase: name=${phase} nanoseconds=[0-9]+")
+    message(FATAL_ERROR "Direct route omitted the ${phase} phase\n${direct_log}")
+  endif()
+endforeach()
+if(NOT direct_log MATCHES
+    "BREP route phase accounting: total-nanoseconds=[0-9]+ decision-plus-replay-nanoseconds=[0-9]+ balanced=yes")
+  message(FATAL_ERROR "Direct route phase accounting is not exact\n${direct_log}")
+endif()
 if(NOT direct_log MATCHES "shadow-ms=0\\.000")
   message(FATAL_ERROR "Direct route unexpectedly ran a shadow transaction\n${direct_log}")
 endif()
+
+# Exercise the fixed worker slots concurrently.  Merging after the frame must
+# preserve the complete ray and lane populations as well as the rendered image.
+execute_process(
+  COMMAND
+    "${CMAKE_COMMAND}" -E env
+    "LIBRT_CACHE=off"
+    "LIBRT_BREP_SOLVER="
+    "LIBRT_BREP_ROUTE_DIRECT=1"
+    "LIBRT_BREP_ROUTE_PUBLISH="
+    "LIBRT_BREP_ROUTE_MISSING_ROOT_CERTIFICATE="
+    "LIBRT_BREP_ROUTE_PROFILE=1"
+    "LIBRT_BREP_PROFILE="
+    "${RT}" -B -P 2 -s 64 -a 35 -e 25 -o "${parallel_image}"
+    "${DB}" "${test_object}"
+  RESULT_VARIABLE parallel_result
+  OUTPUT_VARIABLE parallel_stdout
+  ERROR_VARIABLE parallel_stderr
+)
+set(parallel_log "${parallel_stdout}${parallel_stderr}")
+if(NOT parallel_result EQUAL 0 OR NOT EXISTS "${parallel_image}")
+  message(FATAL_ERROR
+    "Parallel direct routed render failed (${parallel_result})\n${parallel_log}"
+  )
+endif()
+if(NOT parallel_log MATCHES
+    "worker-slots=2 aggregation=per-worker trace-storage=thread-local-inline")
+  message(FATAL_ERROR
+    "Parallel direct route did not merge two worker slots\n${parallel_log}"
+  )
+endif()
+if(NOT parallel_log MATCHES
+    "timing-samples=[1-9][0-9]* timing-stride=64")
+  message(FATAL_ERROR
+    "Parallel direct route did not use the bounded timing sample\n${parallel_log}"
+  )
+endif()
+if(NOT parallel_log MATCHES
+    "BREP route phase accounting: total-nanoseconds=[0-9]+ decision-plus-replay-nanoseconds=[0-9]+ balanced=yes")
+  message(FATAL_ERROR
+    "Parallel direct route phase accounting is not exact\n${parallel_log}"
+  )
+endif()
+string(REGEX MATCH "BREP route profile:[^\n]*shots=([0-9]+)"
+  direct_profile_header "${direct_log}")
+set(direct_shots "${CMAKE_MATCH_1}")
+string(REGEX MATCH "BREP route profile:[^\n]*shots=([0-9]+)"
+  parallel_profile_header "${parallel_log}")
+set(parallel_shots "${CMAKE_MATCH_1}")
+if(direct_shots STREQUAL "" OR parallel_shots STREQUAL "" OR
+    NOT direct_shots STREQUAL parallel_shots)
+  message(FATAL_ERROR
+    "Serial/parallel shot populations differ: ${direct_shots} != ${parallel_shots}"
+  )
+endif()
+foreach(lane none seeded-ordinary complex-prepared)
+  string(REGEX MATCH "BREP route lane: name=${lane} rays=([0-9]+)"
+    direct_lane_line "${direct_log}")
+  set(direct_lane_rays "${CMAKE_MATCH_1}")
+  string(REGEX MATCH "BREP route lane: name=${lane} rays=([0-9]+)"
+    parallel_lane_line "${parallel_log}")
+  set(parallel_lane_rays "${CMAKE_MATCH_1}")
+  if(direct_lane_rays STREQUAL "" OR parallel_lane_rays STREQUAL "" OR
+      NOT direct_lane_rays STREQUAL parallel_lane_rays)
+    message(FATAL_ERROR
+      "Serial/parallel ${lane} populations differ: ${direct_lane_rays} != ${parallel_lane_rays}"
+    )
+  endif()
+endforeach()
 if(NOT direct_log MATCHES "optional-attempts=0 optional-complete=0")
   message(FATAL_ERROR
     "Direct route regressed to optional work on the 63-face negative control\n${direct_log}"
@@ -222,6 +315,7 @@ if(NOT legacy_result EQUAL 0 OR NOT EXISTS "${legacy_image}")
 endif()
 
 file(SHA256 "${direct_image}" direct_sha256)
+file(SHA256 "${parallel_image}" parallel_sha256)
 file(SHA256 "${publish_image}" publish_sha256)
 file(SHA256 "${probe_image}" probe_sha256)
 file(SHA256 "${certificate_image}" certificate_sha256)
@@ -230,6 +324,11 @@ file(SHA256 "${legacy_image}" legacy_sha256)
 if(NOT direct_sha256 STREQUAL legacy_sha256)
   message(FATAL_ERROR
     "Direct route output differs from legacy: ${direct_sha256} != ${legacy_sha256}"
+  )
+endif()
+if(NOT parallel_sha256 STREQUAL legacy_sha256)
+  message(FATAL_ERROR
+    "Parallel direct route output differs from legacy: ${parallel_sha256} != ${legacy_sha256}"
   )
 endif()
 if(NOT publish_sha256 STREQUAL legacy_sha256)
@@ -253,5 +352,5 @@ if(NOT production_sha256 STREQUAL legacy_sha256)
   )
 endif()
 
-file(REMOVE "${direct_image}" "${publish_image}" "${probe_image}"
+file(REMOVE "${direct_image}" "${parallel_image}" "${publish_image}" "${probe_image}"
   "${certificate_image}" "${production_image}" "${legacy_image}")
