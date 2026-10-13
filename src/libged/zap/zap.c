@@ -33,9 +33,6 @@
 extern int ged_zap2_core(struct ged *gedp, int argc, const char *argv[]);
 
 #define FIRST_SOLID(_sp)      ((_sp)->s_fullpath.fp_names[0])
-#define FREE_BV_SCENE_OBJ(p, fp) { \
-        BU_LIST_APPEND(fp, &((p)->l)); \
-        BV_FREE_VLIST(vlfree, &((p)->s_vlist)); }
 
 static void
 dl_zap(struct ged *gedp)
@@ -47,8 +44,6 @@ dl_zap(struct ged *gedp)
     struct bu_ptbl dls = BU_PTBL_INIT_ZERO;
     struct directory *dp = RT_DIR_NULL;
     size_t i = 0;
-    struct bv_scene_obj *free_scene_obj = bv_set_fsos(&gedp->ged_views);
-    struct bu_list *vlfree = &rt_vlfree;
 
     while (BU_LIST_WHILE(gdlp, display_list, hdlp)) {
 
@@ -70,7 +65,7 @@ dl_zap(struct ged *gedp)
 	    }
 
 	    BU_LIST_DEQUEUE(&sp->l);
-	    FREE_BV_SCENE_OBJ(sp, &free_scene_obj->l);
+	    bv_obj_put(sp);
 	}
 
 	BU_LIST_DEQUEUE(&gdlp->l);

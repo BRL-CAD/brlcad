@@ -104,21 +104,11 @@ dl_add_path(int dashflag, struct bu_list *vhead, const struct db_full_path *path
     if (!dgcdp || !dgcdp->v)
 	return;
 
-    struct bv_scene_obj *sp = bv_obj_get(dgcdp->v, BV_DB_OBJS);
+    struct bv_scene_obj *sp = _ged_dl_get_scene_obj(dgcdp->v);
     if (!sp)
 	return;
 
-    struct ged_bv_data *bdata = (sp->s_u_data) ? (struct ged_bv_data *)sp->s_u_data : NULL;
-    if (!bdata) {
-	BU_GET(bdata, struct ged_bv_data);
-	db_full_path_init(&bdata->s_fullpath);
-	sp->s_u_data = (void *)bdata;
-    } else {
-	bdata->s_fullpath.fp_len = 0;
-    }
-    if (!sp->s_u_data)
-	return;
-
+    struct ged_bv_data *bdata = (struct ged_bv_data *)sp->s_u_data;
 
     if (BU_LIST_IS_EMPTY(&(sp->s_vlist)))
 	sp->s_vlen = 0;
@@ -322,17 +312,10 @@ append_solid_to_display_list(
     }
 
     /* create solid */
-    struct bv_scene_obj *sp = bv_obj_get(bv_data->v, BV_DB_OBJS);
-    struct ged_bv_data *bdata = (sp->s_u_data) ? (struct ged_bv_data *)sp->s_u_data : NULL;
-    if (!bdata) {
-	BU_GET(bdata, struct ged_bv_data);
-	db_full_path_init(&bdata->s_fullpath);
-	sp->s_u_data = (void *)bdata;
-    } else {
-	bdata->s_fullpath.fp_len = 0;
-    }
-    if (!sp->s_u_data)
+    struct bv_scene_obj *sp = _ged_dl_get_scene_obj(bv_data->v);
+    if (!sp)
 	return TREE_NULL;
+    struct ged_bv_data *bdata = (struct ged_bv_data *)sp->s_u_data;
 
     sp->s_size = 0;
     VSETALL(sp->s_center, 0.0);
@@ -345,6 +328,7 @@ append_solid_to_display_list(
 		bu_log("plot failure - invalid path\n");
 	    }
 
+	    bv_obj_put(sp);
             return TREE_NULL;
         }
 
@@ -376,6 +360,8 @@ append_solid_to_display_list(
 		bu_log("plot failure - invalid path\n");
 	    }
 
+	    BV_FREE_VLIST(sp->vlfree, &vhead);
+	    bv_obj_put(sp);
             return TREE_NULL;
         }
 

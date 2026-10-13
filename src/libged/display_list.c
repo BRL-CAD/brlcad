@@ -39,14 +39,37 @@
 #include "./ged_private.h"
 
 #define FIRST_SOLID(_sp)      ((_sp)->s_fullpath.fp_names[0])
-#define FREE_BV_SCENE_OBJ(p, fp, vlf) { \
-        BU_LIST_APPEND(fp, &((p)->l)); \
-        BV_FREE_VLIST(vlf, &((p)->s_vlist)); }
 
 
 /* defined in draw_calc.cpp */
 extern fastf_t brep_est_avg_curve_len(struct rt_brep_internal *bi);
 extern void createDListSolid(struct bv_scene_obj *sp);
+
+static void
+dl_free_scene_data(struct bv_scene_obj *sp)
+{
+    struct ged_bv_data *data = (struct ged_bv_data *)sp->s_u_data;
+    db_free_full_path(&data->s_fullpath);
+    BU_PUT(data, struct ged_bv_data);
+    sp->s_u_data = NULL;
+}
+
+struct bv_scene_obj *
+_ged_dl_get_scene_obj(struct bview *v)
+{
+    struct bv_scene_obj *sp = bv_obj_get(v, BV_DB_OBJS);
+    if (!sp)
+	return NULL;
+
+    struct ged_bv_data *data;
+    BU_GET(data, struct ged_bv_data);
+    db_full_path_init(&data->s_fullpath);
+    sp->s_u_data = data;
+    sp->s_free_callback = dl_free_scene_data;
+    /* Legacy plot producers allocate their vectors from librt's pool. */
+    sp->vlfree = &rt_vlfree;
+    return sp;
+}
 
 static struct display_list *
 dl_add_to_display(struct bu_list *hdlp, struct db_i *dbip,
@@ -256,13 +279,12 @@ dl_bounding_sph(struct bu_list *hdlp, vect_t *min, vect_t *max, int pflag)
 
 static void
 erase_scene_obj(struct ged *gedp, struct display_list *gdlp,
-		struct bv_scene_obj *sp, struct bv_scene_obj *free_scene_obj,
-		struct bu_list *vlfree)
+		struct bv_scene_obj *sp)
 {
     ged_destroy_vlist_cb(gedp, sp->s_dlist, 1);
     BU_LIST_DEQUEUE(&sp->l);
     _ged_dl_scene_path_remove(gedp, gdlp, sp);
-    FREE_BV_SCENE_OBJ(sp, &free_scene_obj->l, vlfree);
+    bv_obj_put(sp);
 }
 
 
@@ -285,8 +307,6 @@ dl_erasePathFromDisplay(struct ged *gedp, const char *path, int allow_split)
     int exact = 0;
     int found_subpath;
     int have_scene_index = 0;
-    struct bv_scene_obj *free_scene_obj = bv_set_fsos(&gedp->ged_views);
-    struct bu_list *vlfree = &rt_vlfree;
 
     if (db_string_to_path(&subpath, dbip, path) == 0)
 	found_subpath = 1;
@@ -333,8 +353,7 @@ dl_erasePathFromDisplay(struct ged *gedp, const char *path, int allow_split)
 		for (size_t i = 0; i < BU_PTBL_LEN(&scene_matches); i++) {
 		    sp = (struct bv_scene_obj *)
 			BU_PTBL_GET(&scene_matches, i);
-		    erase_scene_obj(gedp, gdlp, sp, free_scene_obj,
-			vlfree);
+		    erase_scene_obj(gedp, gdlp, sp);
 		    need_split = 1;
 		}
 	    } else {
@@ -353,8 +372,7 @@ dl_erasePathFromDisplay(struct ged *gedp, const char *path, int allow_split)
 
 		    if (db_full_path_match_top(&subpath,
 			    &bdata->s_fullpath)) {
-			erase_scene_obj(gedp, gdlp, sp, free_scene_obj,
-			    vlfree);
+			erase_scene_obj(gedp, gdlp, sp);
 			need_split = 1;
 		    }
 
@@ -420,11 +438,10 @@ _ged_erase_legacy_overlap_plot(struct ged *gedp)
 static void
 eraseAllSubpathsFromSolidList(struct ged *gedp, struct display_list *gdlp,
 			      struct db_full_path *subpath,
-			      const int skip_first, struct bu_list *vlfree)
+			      const int skip_first)
 {
     struct bv_scene_obj *sp;
     struct bv_scene_obj *nsp;
-    struct bv_scene_obj *free_scene_obj = bv_set_fsos(&gedp->ged_views);
 
     _ged_dl_scene_path_invalidate(gedp, gdlp);
     sp = BU_LIST_NEXT(bv_scene_obj, &gdlp->dl_head_scene_obj);
@@ -436,7 +453,7 @@ eraseAllSubpathsFromSolidList(struct ged *gedp, struct display_list *gdlp,
 	}
 	struct ged_bv_data *bdata = (struct ged_bv_data *)sp->s_u_data;
 	if (db_full_path_subset(&bdata->s_fullpath, subpath, skip_first)) {
-	    erase_scene_obj(gedp, gdlp, sp, free_scene_obj, vlfree);
+	    erase_scene_obj(gedp, gdlp, sp);
 	}
 	sp = nsp;
     }
@@ -457,7 +474,6 @@ _dl_eraseAllNamesFromDisplay(struct ged *gedp,  const char *name, const int skip
     struct db_i *dbip = gedp->dbip;
     struct display_list *gdlp;
     struct display_list *next_gdlp;
-    struct bu_list *vlfree = &rt_vlfree;
 
     _ged_dl_path_sync(gedp);
     gdlp = BU_LIST_NEXT(display_list, hdlp);
@@ -496,7 +512,7 @@ _dl_eraseAllNamesFromDisplay(struct ged *gedp,  const char *name, const int skip
 	    struct db_full_path subpath;
 
 	    if (db_string_to_path(&subpath, dbip, name) == 0) {
-		eraseAllSubpathsFromSolidList(gedp, gdlp, &subpath, skip_first, vlfree);
+		eraseAllSubpathsFromSolidList(gedp, gdlp, &subpath, skip_first);
 		db_free_full_path(&subpath);
 	    }
 	}
@@ -513,11 +529,9 @@ _dl_eraseFirstSubpath(struct ged *gedp,
 		      struct db_full_path *subpath,
 		      const int skip_first)
 {
-    struct bv_scene_obj *free_scene_obj = bv_set_fsos(&gedp->ged_views);
     struct bv_scene_obj *sp;
     struct bv_scene_obj *nsp;
     struct db_full_path dup_path;
-    struct bu_list *vlfree = &rt_vlfree;
 
     db_full_path_init(&dup_path);
     _ged_dl_scene_path_invalidate(gedp, gdlp);
@@ -542,7 +556,7 @@ _dl_eraseFirstSubpath(struct ged *gedp,
 	    bdata->s_fullpath.fp_len = full_len;
 	    BU_LIST_DEQUEUE(&sp->l);
 	    _ged_dl_scene_path_remove(gedp, gdlp, sp);
-	    FREE_BV_SCENE_OBJ(sp, &free_scene_obj->l, vlfree);
+	    bv_obj_put(sp);
 
 	    BU_LIST_DEQUEUE(&gdlp->l);
 
@@ -625,10 +639,8 @@ void
 _dl_freeDisplayListItem (struct ged *gedp, struct display_list *gdlp)
 {
     struct db_i *dbip = gedp->dbip;
-    struct bv_scene_obj *free_scene_obj = bv_set_fsos(&gedp->ged_views);
     struct bv_scene_obj *sp;
     struct directory *dp;
-    struct bu_list *vlfree = &rt_vlfree;
 
     if (gedp->ged_destroy_vlist_callback != GED_DESTROY_VLIST_FUNC_NULL) {
 
@@ -649,7 +661,7 @@ _dl_freeDisplayListItem (struct ged *gedp, struct display_list *gdlp)
 	}
 
 	BU_LIST_DEQUEUE(&sp->l);
-	FREE_BV_SCENE_OBJ(sp, &free_scene_obj->l, vlfree);
+	bv_obj_put(sp);
     }
 
     /* Free up the display list */
@@ -812,17 +824,10 @@ int invent_solid(struct ged *gedp, char *name, struct bu_list *vhead, long int r
     }
 
     /* Obtain a fresh solid structure, and fill it in */
-    sp = bv_obj_get(gedp->ged_gvp, BV_DB_OBJS);
-    struct ged_bv_data *bdata = (sp->s_u_data) ? (struct ged_bv_data *)sp->s_u_data : NULL;
-    if (!bdata) {
-	BU_GET(bdata, struct ged_bv_data);
-	db_full_path_init(&bdata->s_fullpath);
-	sp->s_u_data = (void *)bdata;
-    } else {
-	bdata->s_fullpath.fp_len = 0;
-    }
-    if (!sp->s_u_data)
+    sp = _ged_dl_get_scene_obj(gedp->ged_gvp);
+    if (!sp)
 	return -1;
+    struct ged_bv_data *bdata = (struct ged_bv_data *)sp->s_u_data;
 
     /* Need to enter phony name in directory structure */
     dp = db_diradd(dbip, name, RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (void *)&type);

@@ -324,6 +324,7 @@ GED_EXPORT extern int _ged_combadd2(struct ged *gedp,
 			 int validate);
 
 /* defined in display_list.c */
+GED_EXPORT extern struct bv_scene_obj *_ged_dl_get_scene_obj(struct bview *v);
 extern struct display_list *_ged_dl_addToDisplay(struct ged *gedp, const char *name);
 GED_EXPORT extern void _dl_eraseAllNamesFromDisplay(struct ged *gedp, const char *name, const int skip_first);
 GED_EXPORT extern void _dl_eraseAllPathsFromDisplay(struct ged *gedp, const char *path, const int skip_first);
