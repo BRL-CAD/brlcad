@@ -85,6 +85,7 @@ endif()
 set(LIBDMGL_SRCS
   dm-gl.c
   dm-gl_lod.cpp
+  dm-extgl.cpp
 )
 
 if(BRLCAD_ENABLE_OPENGL AND OPENGL_TARGETS)
@@ -130,6 +131,7 @@ set_target_properties(dm_plugins PROPERTIES FOLDER "BRL-CAD Plugins")
 
 # Backend implementations
 add_subdirectory(X)
+add_subdirectory(extgl)
 add_subdirectory(glx)
 add_subdirectory(plot)
 add_subdirectory(postscript)
@@ -148,6 +150,7 @@ set(
   TODO
   dm-gl.c
   dm-gl.h
+  dm-extgl.cpp
   if_TEMPLATE.c
   null/dm-Null.h
   include/private.h

@@ -71,6 +71,16 @@ libdm_init(void)
 {
     bu_vls_init(&init_msgs);
 
+    int plugin_load_mode = BU_RTLD_NOW;
+#ifdef RTLD_DEEPBIND
+    /* A display plugin may intentionally carry an OpenGL implementation that
+     * differs from the host process.  Prefer its dependency scope so an
+     * embedded OSMesa backend cannot intercept another backend's symbols. */
+    /* AddressSanitizer rejects this flag, including in instrumented hosts. */
+    if (!bu_dlsym(RTLD_DEFAULT, "__asan_init"))
+	plugin_load_mode |= RTLD_DEEPBIND;
+#endif
+
     const char *ppath = bu_dir(NULL, 0, BU_DIR_LIBEXEC, "dm", NULL);
     char **dm_filenames;
     struct bu_vls plugin_pattern = BU_VLS_INIT_ZERO;
@@ -83,7 +93,7 @@ libdm_init(void)
 	void *dl_handle;
 	bool dm_without_fb = false;
 
-	dl_handle = bu_dlopen(pfile, BU_RTLD_NOW);
+	dl_handle = bu_dlopen(pfile, plugin_load_mode);
 	if (!dl_handle) {
 	    const char * const error_msg = bu_dlerror();
 	    if (error_msg)
@@ -138,7 +148,7 @@ libdm_init(void)
 	    }
 	    std::string key(dname);
 	    std::transform(key.begin(), key.end(), key.begin(), [](unsigned char c){ return std::tolower(c); });
-	    dm_without_fb = (key == "plot" || key == "ps" || key == "tkswrast");
+	    dm_without_fb = (key == "extgl" || key == "plot" || key == "ps" || key == "tkswrast");
 	    if (get_dm_map().find(key) != get_dm_map().end()) {
 		bu_vls_printf(&init_msgs, "Warning - file '%s' provides backend '%s' but that backend has already been loaded, skipping\n", pfile, dname);
 		bu_dlclose(dl_handle);

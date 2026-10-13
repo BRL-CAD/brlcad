@@ -81,6 +81,9 @@ struct swrastinfo {
 #define CMG(x) ((struct fb_cmap *)((x)->i->if_cmap))->cmg
 #define CMB(x) ((struct fb_cmap *)((x)->i->if_cmap))->cmb
 
+static int swrast_free(struct fb *ifp);
+extern void swrast_detach_fb(struct dm *dmp, struct fb *ifp);
+
 
 static void
 swrast_xmit_scanlines(struct fb *ifp, int ybase, int nlines, int xbase, int npix)
@@ -326,15 +329,6 @@ swrast_open_existing(struct fb *ifp, int width, int height, struct fb_platform_s
 	}
     }
 
-    ifp->i->dmp = (struct dm *)fb_p->data;
-
-    if (ifp->i->dmp) {
-	ifp->i->dmp->i->fbp = ifp;
-
-	// Since the fb is in the context of a dm, print its debugging output in dm style
-	gl_debug_print(ifp->i->dmp, "FB: qtgl_open_existing", ifp->i->dmp->i->dm_debugLevel);
-    }
-
     ifp->i->if_width = ifp->i->if_max_width = width;
     ifp->i->if_height = ifp->i->if_max_height = height;
 
@@ -349,13 +343,17 @@ swrast_open_existing(struct fb *ifp, int width, int height, struct fb_platform_s
 
     /* Allocate memory */
     if (!SWRAST(ifp)->mi_memwidth) {
-	if (swrast_getmem(ifp) < 0)
+	if (swrast_getmem(ifp) < 0) {
+	    swrast_free(ifp);
 	    return -1;
+	}
     }
 
     fb_clipper(ifp);
 
-    swrast_configureWindow(ifp, width, height);
+    ifp->i->dmp = (struct dm *)fb_p->data;
+    if (ifp->i->dmp)
+	ifp->i->dmp->i->fbp = ifp;
 
     return 0;
 }
@@ -465,9 +463,8 @@ fb_swrast_close(struct fb *UNUSED(ifp))
 int
 swrast_close_existing(struct fb *ifp)
 {
-    struct swrastinfo *qi = SWRAST(ifp);
-    qi->alive = 0;
-    return 0;
+    swrast_detach_fb(ifp->i->dmp, ifp);
+    return swrast_free(ifp);
 }
 
 /*

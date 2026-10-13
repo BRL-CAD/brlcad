@@ -77,11 +77,11 @@ QgSW::QgSW(QWidget *parent, struct fb *fbp)
 
 QgSW::~QgSW()
 {
-    if (dmp)
-	dm_close(dmp);
     if (ifp && !fb_get_standalone(ifp)) {
 	fb_close_existing(ifp);
     }
+    if (dmp)
+	dm_close(dmp);
     BU_PUT(local_v, struct bv);
 }
 
@@ -122,7 +122,9 @@ void QgSW::paintEvent(QPaintEvent *e)
 
 	    // If we have a framebuffer, now we can open it
 	    if (ifp) {
-		struct fb_platform_specific *fbps = fb_get_platform_specific(FB_QTGL_MAGIC);
+		struct fb_platform_specific *fbps = fb_get_platform_specific(FB_SWFB_MAGIC);
+		if (!fbps)
+		    return;
 		fbps->data = (void *)dmp;
 		fb_setup_existing(ifp, dm_get_width(dmp), dm_get_height(dmp), fbps);
 		fb_put_platform_specific(fbps);
@@ -188,14 +190,9 @@ void QgSW::resizeEvent(QResizeEvent *e)
 {
     QWidget::resizeEvent(e);
     if (dmp && v) {
-	dm_set_width(dmp, width());
-	dm_set_height(dmp, height());
 	v->gv_width = width();
 	v->gv_height = height();
 	dm_configure_win(dmp, 0);
-	if (ifp) {
-	    fb_configure_window(ifp, v->gv_width, v->gv_height);
-	}
 	dm_set_dirty(dmp, 1);
 	emit changed();
     }

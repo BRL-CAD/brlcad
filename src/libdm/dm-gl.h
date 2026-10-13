@@ -131,6 +131,8 @@ struct gl_vars {
     struct gl_internal_vars i;
 };
 
+DMGL_EXPORT extern struct dm dm_extgl;
+
 
 /* For debugging - print specified string, and additional state
  * information depending on dm_debugLevel settings (such as

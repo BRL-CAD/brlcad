@@ -1,4 +1,4 @@
-set(dm_headers defines.h faceplate.h fbserv.h util.h view.h)
+set(dm_headers defines.h extgl.h faceplate.h fbserv.h util.h view.h)
 brlcad_manage_files(dm_headers ${INCLUDE_DIR}/brlcad/dm REQUIRED libdm)
 
 cmakefiles(CMakeLists.txt)

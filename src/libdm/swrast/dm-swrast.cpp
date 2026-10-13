@@ -51,6 +51,8 @@ extern "C" {
 #include "../include/gl_text.h"
 
 #define ENABLE_POINT_SMOOTH 1
+#define SWRAST_MAX_FRAMEBUFFER_DIMENSION 4096
+#define SWRAST_PIXEL_BYTES 4
 
 #define VIEWFACTOR      (1.0/(*dmp->i->dm_vp))
 #define VIEWSIZE        (2.0*(*dmp->i->dm_vp))
@@ -86,7 +88,8 @@ swrast_makeCurrent(struct dm *dmp)
     if (dmp->i->dm_debugLevel)
 	bu_log("swrast_makeCurrent()\n");
 
-    if (!OSMesaMakeCurrent(pv->ctx, pv->os_b, GL_UNSIGNED_BYTE, pv->v->gv_width, pv->v->gv_height)) {
+    if (!OSMesaMakeCurrent(pv->ctx, pv->os_b, GL_UNSIGNED_BYTE,
+	    pv->buffer_width, pv->buffer_height)) {
 	bu_log("OSMesaMakeCurrent failed!\n");
 	return BRLCAD_ERROR;
     }
@@ -98,6 +101,36 @@ static int
 swrast_doevent(struct dm *UNUSED(dmp), void *UNUSED(vclientData), void *UNUSED(veventPtr))
 {
     /* allow further processing of this event */
+    return BRLCAD_OK;
+}
+
+static int
+swrast_resize_buffer(struct swrast_vars *pv, int width, int height)
+{
+    if (width <= 0 || height <= 0 || width > SWRAST_MAX_FRAMEBUFFER_DIMENSION ||
+	height > SWRAST_MAX_FRAMEBUFFER_DIMENSION) {
+	bu_log("swrast: invalid OSMesa dimensions %d x %d\n", width, height);
+	return BRLCAD_ERROR;
+    }
+
+    void *buffer = pv->os_b;
+    if (width != pv->buffer_width || height != pv->buffer_height) {
+	size_t bytes = (size_t)width * height * SWRAST_PIXEL_BYTES * sizeof(GLubyte);
+	buffer = bu_malloc(bytes, "OSMesa rendering buffer");
+    }
+    if (!OSMesaMakeCurrent(pv->ctx, buffer, GL_UNSIGNED_BYTE, width, height)) {
+	if (buffer != pv->os_b)
+	    bu_free(buffer, "OSMesa rendering buffer");
+	bu_log("OSMesaMakeCurrent failed!\n");
+	return BRLCAD_ERROR;
+    }
+    if (buffer != pv->os_b) {
+	if (pv->os_b)
+	    bu_free(pv->os_b, "OSMesa rendering buffer");
+	pv->os_b = buffer;
+    }
+    pv->buffer_width = width;
+    pv->buffer_height = height;
     return BRLCAD_OK;
 }
 
@@ -114,26 +147,18 @@ swrast_configureWin(struct dm *dmp, int UNUSED(force))
     int width = pv->v->gv_width;
     int height = pv->v->gv_height;
 
-    if (!width || !height) {
-	bu_log("swrast_configureWin: Zero sized window\n");
+    if (swrast_resize_buffer(pv, width, height) != BRLCAD_OK)
 	return BRLCAD_ERROR;
-    }
-
-    // 4096 is from MAX_WIDTH and MAX_HEIGHT as set in OSMesa's config.h.  We
-    // need to provide enough memory here for OSMesa to do all of its work
-    // (textures, etc.), not just the current dm image.
-    pv->os_b = bu_realloc(pv->os_b, 4096 * 4096 * sizeof(GLubyte)*4, "OSMesa rendering buffer");
-    if (!pv->os_b) {
-	bu_log("swrast_configureWin: render buffer allocation failed\n");
-	return BRLCAD_ERROR;
-    }
-
-    if (!OSMesaMakeCurrent(pv->ctx, pv->os_b, GL_UNSIGNED_BYTE, width, height)) {
-	bu_log("OSMesaMakeCurrent failed!\n");
-	return BRLCAD_ERROR;
-    }
 
     gl_reshape(dmp, width, height);
+
+    if (dmp->i->fbp &&
+	(fb_getwidth(dmp->i->fbp) != width ||
+	 fb_getheight(dmp->i->fbp) != height) &&
+	fb_configure_window(dmp->i->fbp, width, height) != 0) {
+	bu_log("swrast_configureWin: framebuffer resize failed\n");
+	return BRLCAD_ERROR;
+    }
 
     /* this is where font information is set up, if not already done */
     if (!pv->fs) {
@@ -156,16 +181,27 @@ int
 swrast_close(struct dm *dmp)
 {
     struct swrast_vars *pv = (struct swrast_vars *)dmp->i->dm_vars.priv_vars;
+    if (dmp->i->fbp) {
+	if (pv->owns_framebuffer) {
+	    (void)swrast_makeCurrent(dmp);
+	    (void)fb_close_existing(dmp->i->fbp);
+	} else {
+	    dmp->i->fbp->i->dmp = NULL;
+	}
+    }
     if (pv->fs) {
 	(void)swrast_makeCurrent(dmp);
 	glfonsDelete(pv->fs);
 	pv->fs = NULL;
     }
-    bu_free(pv->os_b, "OSMesa rendering buffer");
+    if (pv->os_b)
+	bu_free(pv->os_b, "OSMesa rendering buffer");
     bu_vls_free(&dmp->i->dm_dName);
     bu_vls_free(&dmp->i->dm_tkName);
     bu_vls_free(&dmp->i->dm_pathName);
-    OSMesaDestroyContext((OSMesaContext)pv->ctx);
+    if (pv->ctx)
+	OSMesaDestroyContext(pv->ctx);
+    (void)gl_put_internal(dmp);
     bu_free(dmp->i->dm_vars.priv_vars, "swrast_close: swrast_vars");
     bu_free(dmp->i->dm_vars.pub_vars, "swrast_close: dm_swvars");
     bu_vls_free(&(dmp->i->dm_log));
@@ -210,6 +246,9 @@ swrast_open(void *ctx, void *UNUSED(interp), int argc, const char **argv)
     dmp->i->dm_bytes_per_pixel = sizeof(GLuint);
     dmp->i->dm_bits_per_channel = 8;
     bu_vls_init(&(dmp->i->dm_log));
+    bu_vls_init(&dmp->i->dm_pathName);
+    bu_vls_init(&dmp->i->dm_tkName);
+    bu_vls_init(&dmp->i->dm_dName);
 
     BU_ALLOC(dmp->i->dm_vars.pub_vars, struct dm_swvars);
     pubvars = (struct dm_swvars *)dmp->i->dm_vars.pub_vars;
@@ -224,11 +263,8 @@ swrast_open(void *ctx, void *UNUSED(interp), int argc, const char **argv)
     int height = (!privars->v->gv_height) ? 512 : privars->v->gv_height;
     privars->v->gv_width = width;
     privars->v->gv_height = height;
-    privars->os_b = bu_realloc(privars->os_b, width * height * sizeof(GLubyte)*4, "OSMesa rendering buffer");
-    if (!OSMesaMakeCurrent(privars->ctx, privars->os_b, GL_UNSIGNED_BYTE, width, height)) {
-	bu_log("OSMesaMakeCurrent failed!\n");
-	bu_free(dmp->i->dm_vars.pub_vars, "swrast_open: dmp->i->dm_vars.pub_vars");
-	bu_free(dmp, "swrast_open: dmp");
+    if (!privars->ctx || swrast_resize_buffer(privars, width, height) != BRLCAD_OK) {
+	(void)swrast_close(dmp);
 	return DM_NULL;
     }
 
@@ -237,10 +273,6 @@ swrast_open(void *ctx, void *UNUSED(interp), int argc, const char **argv)
     glvars_init(dmp);
 
     dmp->i->dm_vp = &mvars->i.default_viewscale;
-
-    bu_vls_init(&dmp->i->dm_pathName);
-    bu_vls_init(&dmp->i->dm_tkName);
-    bu_vls_init(&dmp->i->dm_dName);
 
     dm_processOptions(dmp, &init_proc_vls, --argc, ++argv);
 
@@ -291,7 +323,10 @@ swrast_open(void *ctx, void *UNUSED(interp), int argc, const char **argv)
 	glDrawBuffer(GL_FRONT);
 
     /* do viewport, ortho commands and initialize font */
-    (void)swrast_configureWin(dmp, 1);
+    if (swrast_configureWin(dmp, 1) != BRLCAD_OK) {
+	(void)swrast_close(dmp);
+	return DM_NULL;
+    }
 
     /* Lines will be solid when stippling disabled, dashed when enabled*/
     glLineStipple(1, 0xCF33);
@@ -343,19 +378,31 @@ swrast_String2DBBox(struct dm *dmp, vect2d_t *bmin, vect2d_t *bmax, const char *
 }
 
 
+void
+swrast_detach_fb(struct dm *dmp, struct fb *ifp)
+{
+    if (dmp && dmp->i->fbp == ifp) {
+	struct swrast_vars *pv = (struct swrast_vars *)dmp->i->dm_vars.priv_vars;
+	pv->owns_framebuffer = false;
+	dmp->i->fbp = FB_NULL;
+    }
+}
+
 int
 swrast_openFb(struct dm *dmp)
 {
     struct fb_platform_specific *fb_ps;
     //struct swrast_fb_info *ofb_ps;
-    //struct swrast_vars *privars = (struct swrast_vars *)dmp->i->dm_vars.priv_vars;
+    struct swrast_vars *pv = (struct swrast_vars *)dmp->i->dm_vars.priv_vars;
 
     fb_ps = fb_get_platform_specific(FB_SWFB_MAGIC);
-    //ofb_ps = (struct swrast_fb_info *)fb_ps->data;
-    //ofb_ps->glc = privars->qw;
+    if (!fb_ps)
+	return BRLCAD_ERROR;
+    fb_ps->data = dmp;
     dmp->i->fbp = fb_open_existing("swrast", dm_get_width(dmp), dm_get_height(dmp), fb_ps);
     fb_put_platform_specific(fb_ps);
-    return 0;
+    pv->owns_framebuffer = dmp->i->fbp != FB_NULL;
+    return pv->owns_framebuffer ? BRLCAD_OK : BRLCAD_ERROR;
 }
 
 int

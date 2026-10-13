@@ -113,12 +113,13 @@ fb_setup_existing(struct fb *ifp, int width, int height, struct fb_platform_spec
 struct fb *
 fb_open_existing(const char *file, int width, int height, struct fb_platform_specific *fb_p)
 {
-    struct fb *ifp;
-    ifp = (struct fb *)calloc(1, sizeof(struct fb));
-    ifp->i = (struct fb_impl *) calloc(1, sizeof(struct fb_impl));
-    fb_set_interface(ifp, file);
-    fb_set_magic(ifp, FB_MAGIC);
-    fb_setup_existing(ifp, width, height, fb_p);
+    struct fb *ifp = fb_raw(file);
+    if (!ifp)
+	return FB_NULL;
+    if (!ifp->i->if_open_existing || ifp->i->if_open_existing(ifp, width, height, fb_p) < 0) {
+	fb_put(ifp);
+	return FB_NULL;
+    }
     return ifp;
 }
 

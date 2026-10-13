@@ -225,9 +225,9 @@ tkswrast_configureWin(struct dm *dmp, int force)
     sv->v->gv_width = width;
     sv->v->gv_height = height;
 
-    dmp->i->dm_width = width;
-    dmp->i->dm_height = height;
-    dmp->i->dm_aspect = (fastf_t)width / (fastf_t)height;
+    int result = tv->orig_configureWin(dmp, 1);
+    if (result != BRLCAD_OK)
+	return result;
 
     if (!tv->mapped_once && width > 1 && height > 1) {
 	tv->mapped_once = 1;
@@ -239,7 +239,7 @@ tkswrast_configureWin(struct dm *dmp, int force)
 		bu_vls_addr(&dmp->i->dm_pathName), dmp->i->dm_width, dmp->i->dm_height, dmp->i->dm_aspect);
     }
 
-    return tv->orig_configureWin(dmp, 1);
+    return BRLCAD_OK;
 }
 
 static int

@@ -73,6 +73,9 @@ struct swrast_vars {
     int *perspective_mode;
     int ovec;		/* Old color map entry number */
     char is_direct;
+    int buffer_width;
+    int buffer_height;
+    bool owns_framebuffer;
 };
 
 struct dm_swvars {

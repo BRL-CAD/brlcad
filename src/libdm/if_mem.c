@@ -49,6 +49,7 @@ struct mem_info {
     int mem_dirty;	/* !0 implies unflushed written data */
     int cmap_dirty;	/* !0 implies unflushed written cmap */
     int write_thru;	/* !0 implies pass-thru write mode */
+    struct fb_mem_platform_data presentation;
 };
 #define MI(ptr) ((struct mem_info *)((ptr)->i->u1.p))
 #define MIL(ptr) ((ptr)->i->u1.p)		/* left hand side version */
@@ -73,6 +74,17 @@ static struct modeflags {
       "Pre-Read attached frame buffer data - else assumes clear" },
     { '\0', 0, 0, "" }
 };
+
+static int mem_close(struct fb *ifp);
+
+static unsigned char *
+mem_alloc_pixels(int width, int height)
+{
+    /* The legacy read, write and clear routines use signed byte offsets. */
+    if (width <= 0 || height <= 0 || width > INT_MAX / 3 / height)
+	return NULL;
+    return (unsigned char *)calloc((size_t)width * height, 3);
+}
 
 
 static int
@@ -162,8 +174,10 @@ mem_open(struct fb *ifp, const char *file, int width, int height)
 	if (height > 0)
 	    ifp->i->if_height = height;
     }
-    if ((MI(ifp)->mem = (unsigned char *)calloc(ifp->i->if_width*ifp->i->if_height, 3)) == NULL) {
+    if ((MI(ifp)->mem = mem_alloc_pixels(ifp->i->if_width, ifp->i->if_height)) == NULL) {
 	fb_log("mem_open:  memory buffer malloc failed\n");
+	if (MI(ifp)->fbp)
+	    fb_close(MI(ifp)->fbp);
 	(void)free(MIL(ifp));
 	return -1;
     }
@@ -189,45 +203,85 @@ mem_open(struct fb *ifp, const char *file, int width, int height)
 }
 
 static struct fb_platform_specific *
-mem_get_fbps(uint32_t UNUSED(magic))
+mem_get_fbps(uint32_t magic)
 {
-        return NULL;
+    struct fb_platform_specific *fbps;
+    BU_GET(fbps, struct fb_platform_specific);
+    fbps->magic = magic;
+    fbps->data = NULL;
+    return fbps;
 }
 
 
 static void
-mem_put_fbps(struct fb_platform_specific *UNUSED(fbps))
+mem_put_fbps(struct fb_platform_specific *fbps)
 {
-        return;
+    if (fbps)
+	BU_PUT(fbps, struct fb_platform_specific);
 }
 
 static int
-mem_open_existing(struct fb *UNUSED(ifp), int UNUSED(width), int UNUSED(height), struct fb_platform_specific *UNUSED(fb_p))
+mem_open_existing(struct fb *ifp, int width, int height, struct fb_platform_specific *fb_p)
 {
-        return 0;
+    if (!fb_p || fb_p->magic != FB_MEMORY_MAGIC ||
+	mem_open(ifp, "/dev/mem", width, height) != 0)
+	return -1;
+
+    if (fb_p->data) {
+	MI(ifp)->presentation =
+	    *(struct fb_mem_platform_data *)fb_p->data;
+    }
+    ifp->i->if_xzoom = 1;
+    ifp->i->if_yzoom = 1;
+    ifp->i->if_xcenter = ifp->i->if_width / 2;
+    ifp->i->if_ycenter = ifp->i->if_height / 2;
+    return 0;
 }
 
 static int
-mem_close_existing(struct fb *UNUSED(ifp))
+mem_close_existing(struct fb *ifp)
 {
-        return 0;
+    return mem_close(ifp);
 }
 
 static int
-mem_configure_window(struct fb *UNUSED(ifp), int UNUSED(width), int UNUSED(height))
+mem_configure_window(struct fb *ifp, int width, int height)
 {
-        return 0;
+    if (!MI(ifp) || !MI(ifp)->presentation.refresh || width <= 0 || height <= 0 ||
+	(width == ifp->i->if_width && height == ifp->i->if_height))
+	return 0;
+
+    unsigned char *pixels = mem_alloc_pixels(width, height);
+    if (!pixels)
+	return -1;
+    free(MI(ifp)->mem);
+    MI(ifp)->mem = pixels;
+    MI(ifp)->mem_dirty = 1;
+    ifp->i->if_width = width;
+    ifp->i->if_height = height;
+    ifp->i->if_xzoom = 1;
+    ifp->i->if_yzoom = 1;
+    ifp->i->if_xcenter = width / 2;
+    ifp->i->if_ycenter = height / 2;
+    return 0;
 }
 
 static int
-mem_refresh(struct fb *UNUSED(ifp), int UNUSED(x), int UNUSED(y), int UNUSED(w), int UNUSED(h))
+mem_refresh(struct fb *ifp, int x, int y, int w, int h)
 {
-        return 0;
+    if (!MI(ifp)->presentation.refresh)
+	return 0;
+    return MI(ifp)->presentation.refresh(MI(ifp)->presentation.data,
+	MI(ifp)->mem, ifp->i->if_width, ifp->i->if_height,
+	ifp->i->if_xcenter, ifp->i->if_ycenter,
+	ifp->i->if_xzoom, ifp->i->if_yzoom, x, y, w, h);
 }
 
 static int
 mem_close(struct fb *ifp)
 {
+    if (ifp->i->dmp && ifp->i->dmp->i->fbp == ifp)
+	ifp->i->dmp->i->fbp = FB_NULL;
     /*
      * Flush memory/cmap to attached frame buffer if any
      */

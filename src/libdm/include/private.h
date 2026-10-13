@@ -169,6 +169,20 @@ struct fb_clip {
     double obottom;
 };
 
+/*
+ * Optional presentation hook used when /dev/mem is attached to an existing
+ * display manager.  Keeping the pixels in the memory framebuffer lets fbserv
+ * use the normal libfb protocol while the owning display manager decides how
+ * those pixels are presented in its native context.
+ */
+struct fb_mem_platform_data {
+    void *data;
+    int (*refresh)(void *data, const unsigned char *pixels,
+	int image_width, int image_height,
+	int xcenter, int ycenter, int xzoom, int yzoom,
+	int x, int y, int width, int height);
+};
+
 DM_EXPORT extern int fb_sim_writerect(struct fb *ifp, int xmin, int ymin, int _width, int _height, const unsigned char *pp);
 DM_EXPORT extern int fb_sim_bwwriterect(struct fb *ifp, int xmin, int ymin, int _width, int _height, const unsigned char *pp);
 
