@@ -34,6 +34,7 @@
 
 #include "ged.h"
 #include "ged/view.h"
+#include "dm/faceplate.h"
 
 extern void sl_halt_scroll(struct rt_edit *, int, int, int, void *);	/* in scroll.c */
 extern void sl_toggle_scroll(struct rt_edit *, int, int, int, void *);
@@ -325,172 +326,105 @@ mmenu_set_all(struct mged_state *s, int index, struct rt_edit_menu_item *value)
 }
 
 
-void
-mged_highlight_menu_item(struct mged_state *s, struct rt_edit_menu_item *mptr, int y)
+/* The edit library owns menu contents and actions.  Flatten the active
+ * lists only at the display boundary, retaining their original indices
+ * when invoking editing callbacks. */
+static struct rt_edit_menu_item *
+faceplate_menu_item(struct mged_state *s, size_t row, int *menu, int *item)
 {
-    switch (mptr->menu_arg) {
-	case BV_RATE_TOGGLE:
-	    if (mged_variables->mv_rateknobs) {
-		dm_set_fg(DMP,
-			       color_scheme->cs_menu_text1[0],
-			       color_scheme->cs_menu_text1[1],
-			       color_scheme->cs_menu_text1[2], 1, 1.0);
-		dm_draw_string_2d(DMP, "Rate",
-				  GED2PM1(MENUX), GED2PM1(y-15), 0, 0);
-		dm_set_fg(DMP,
-			       color_scheme->cs_menu_text2[0],
-			       color_scheme->cs_menu_text2[1],
-			       color_scheme->cs_menu_text2[2], 1, 1.0);
-		dm_draw_string_2d(DMP, "/Abs",
-				  GED2PM1(MENUX+4*40), GED2PM1(y-15), 0, 0);
-	    } else {
-		dm_set_fg(DMP,
-			       color_scheme->cs_menu_text2[0],
-			       color_scheme->cs_menu_text2[1],
-			       color_scheme->cs_menu_text2[2], 1, 1.0);
-		dm_draw_string_2d(DMP, "Rate/",
-				  GED2PM1(MENUX), GED2PM1(y-15), 0, 0);
-		dm_set_fg(DMP,
-			       color_scheme->cs_menu_text1[0],
-			       color_scheme->cs_menu_text1[1],
-			       color_scheme->cs_menu_text1[2], 1, 1.0);
-		dm_draw_string_2d(DMP, "Abs",
-				  GED2PM1(MENUX+5*40), GED2PM1(y-15), 0, 0);
-	    }
-	    break;
-	default:
-	    break;
+    for (*menu = 0; *menu < NMENU; (*menu)++) {
+        struct rt_edit_menu_item *items = menu_state->ms_menus[*menu];
+        if (!items) continue;
+        for (*item = 0; items[*item].menu_string[0]; (*item)++) {
+            if (!row) return &items[*item];
+            row--;
+        }
     }
+    return NULL;
 }
 
+static int
+faceplate_menu_get(void *data, size_t row, struct dm_faceplate_item *result)
+{
+    struct mged_state *s = (struct mged_state *)data;
+    int menu, item;
+    struct rt_edit_menu_item *entry = faceplate_menu_item(s, row, &menu, &item);
+    if (!entry) return 0;
+    result->label = entry->menu_string;
+    VMOVE(result->color, item ? color_scheme->cs_menu_text2 : color_scheme->cs_menu_title);
+    result->selected = menu_state->ms_flag &&
+        menu_state->ms_cur_menu == menu && menu_state->ms_cur_item == item;
+    return 1;
+}
 
-/*
- * Draw one or more menus onto the display.
- * If "menu_state->ms_flag" is non-zero, then the last selected
- * menu item will be indicated with an arrow.
- */
+static void
+faceplate_menu_select(void *data, size_t row, fastf_t UNUSED(value), int activate)
+{
+    struct mged_state *s = (struct mged_state *)data;
+    int menu, item;
+    struct rt_edit_menu_item *entry = faceplate_menu_item(s, row, &menu, &item);
+    if (!entry) return;
+    menu_state->ms_cur_item = item;
+    menu_state->ms_cur_menu = menu;
+    menu_state->ms_flag = 1;
+    /* The editing callback can clear ms_flag when no arrow is desired. */
+    if (activate && entry->menu_func)
+        entry->menu_func(MEDIT(s), entry->menu_arg, menu, item, s);
+}
+
+static int
+faceplate_menu_label(struct dm *dmp, void *data, size_t row, fastf_t x, fastf_t y)
+{
+    struct mged_state *s = (struct mged_state *)data;
+    int menu, item;
+    struct rt_edit_menu_item *entry = faceplate_menu_item(s, row, &menu, &item);
+    const int *color;
+    const fastf_t character_width = 40.0 * INV_BV;
+    if (!entry || menu_state->ms_menus[menu] != second_menu ||
+        entry->menu_arg != BV_RATE_TOGGLE) return 0;
+
+    color = mged_variables->mv_rateknobs ?
+        color_scheme->cs_menu_text1 : color_scheme->cs_menu_text2;
+    dm_set_fg(dmp, color[0], color[1], color[2], 1, 1.0);
+    dm_draw_string_2d(dmp, mged_variables->mv_rateknobs ? "Rate" : "Rate/", x, y, 0, 0);
+    color = mged_variables->mv_rateknobs ?
+        color_scheme->cs_menu_text2 : color_scheme->cs_menu_text1;
+    dm_set_fg(dmp, color[0], color[1], color[2], 1, 1.0);
+    x += (mged_variables->mv_rateknobs ? 4 : 5) * character_width;
+    dm_draw_string_2d(dmp, mged_variables->mv_rateknobs ? "/Abs" : "Abs", x, y, 0, 0);
+    return 1;
+}
+
+static void
+faceplate_menu_controls(struct mged_state *s, struct dm_faceplate_controls *controls)
+{
+    dm_faceplate_controls_init(controls, DM_FACEPLATE_MENU);
+    controls->top = GED2PM1(menu_state->ms_top);
+    controls->data = s;
+    controls->item = faceplate_menu_get;
+    controls->select = faceplate_menu_select;
+    controls->draw_label = faceplate_menu_label;
+    controls->line_width = mged_variables->mv_linewidth;
+    VMOVE(controls->line_color, color_scheme->cs_menu_line);
+    VMOVE(controls->arrow_color, color_scheme->cs_menu_arrow);
+}
+
 void
 mmenu_display(struct mged_state *s, int y_top)
 {
-    static int menu, item;
-    struct rt_edit_menu_item **m;
-    struct rt_edit_menu_item *mptr;
-    int y = y_top;
-
-    menu_state->ms_top = y - MENU_DY / 2;
-    dm_set_fg(DMP,
-		   color_scheme->cs_menu_line[0],
-		   color_scheme->cs_menu_line[1],
-		   color_scheme->cs_menu_line[2], 1, 1.0);
-
-    dm_set_line_attr(DMP, mged_variables->mv_linewidth, 0);
-
-    dm_draw_line_2d(DMP,
-		    GED2PM1(MENUXLIM), GED2PM1(menu_state->ms_top),
-		    GED2PM1((int)BV_MIN), GED2PM1(menu_state->ms_top));
-
-    for (menu=0, m = menu_state->ms_menus; m - menu_state->ms_menus < NMENU; m++, menu++) {
-	if (*m == NULL) continue;
-	for (item=0, mptr = *m; mptr->menu_string[0] != '\0' && y > TITLE_YBASE; mptr++, y += MENU_DY, item++) {
-	    if ((*m == (struct rt_edit_menu_item *)second_menu
-		 && (mptr->menu_arg == BV_RATE_TOGGLE
-		     || mptr->menu_arg == BV_EDIT_TOGGLE
-		     || mptr->menu_arg == BV_EYEROT_TOGGLE)))
-		mged_highlight_menu_item(s, mptr, y);
-	    else {
-		if (mptr == *m)
-		    dm_set_fg(DMP,
-				   color_scheme->cs_menu_title[0],
-				   color_scheme->cs_menu_title[1],
-				   color_scheme->cs_menu_title[2], 1, 1.0);
-		else
-		    dm_set_fg(DMP,
-				   color_scheme->cs_menu_text2[0],
-				   color_scheme->cs_menu_text2[1],
-				   color_scheme->cs_menu_text2[2], 1, 1.0);
-		dm_draw_string_2d(DMP, mptr->menu_string,
-				  GED2PM1(MENUX), GED2PM1(y-15), 0, 0);
-	    }
-	    dm_set_fg(DMP,
-			   color_scheme->cs_menu_line[0],
-			   color_scheme->cs_menu_line[1],
-			   color_scheme->cs_menu_line[2], 1, 1.0);
-	    dm_draw_line_2d(DMP,
-			    GED2PM1(MENUXLIM), GED2PM1(y+(MENU_DY/2)),
-			    GED2PM1((int)BV_MIN), GED2PM1(y+(MENU_DY/2)));
-	    if (menu_state->ms_cur_item == item && menu_state->ms_cur_menu == menu && menu_state->ms_flag) {
-		/* prefix item selected with "==>" */
-		dm_set_fg(DMP,
-			       color_scheme->cs_menu_arrow[0],
-			       color_scheme->cs_menu_arrow[1],
-			       color_scheme->cs_menu_arrow[2], 1, 1.0);
-		dm_draw_string_2d(DMP, "==>",
-				  GED2PM1((int)BV_MIN), GED2PM1(y-15), 0, 0);
-	    }
-	}
-    }
-
-    if (y == y_top)
-	return;	/* no active menus */
-
-    dm_set_fg(DMP,
-		   color_scheme->cs_menu_line[0],
-		   color_scheme->cs_menu_line[1],
-		   color_scheme->cs_menu_line[2], 1, 1.0);
-
-    dm_set_line_attr(DMP, mged_variables->mv_linewidth, 0);
-
-    dm_draw_line_2d(DMP,
-		    GED2PM1(MENUXLIM), GED2PM1(menu_state->ms_top-1),
-		    GED2PM1(MENUXLIM), GED2PM1(y-(MENU_DY/2)));
+    struct dm_faceplate_controls controls;
+    menu_state->ms_top = y_top - MENU_DY / 2;
+    faceplate_menu_controls(s, &controls);
+    dm_faceplate_controls_draw(DMP, &controls);
 }
 
-
-/*
- * Called with Y coordinate of pen in menu area.
- *
- * Returns:
- * 1 if menu claims these pen coordinates,
- * 0 if pen is BELOW menu
- * -1 if pen is ABOVE menu (error)
- */
 int
 mmenu_select(struct mged_state *s, int pen_y, int do_func)
 {
-    static int menu, item;
-    struct rt_edit_menu_item **m;
-    struct rt_edit_menu_item *mptr;
-    int yy;
-
-    if (pen_y > menu_state->ms_top)
-	return -1;	/* pen above menu area */
-
-    /*
-     * Start at the top of the list and see if the pen is
-     * above here.
-     */
-    yy = menu_state->ms_top;
-
-    for (menu=0, m=menu_state->ms_menus; m - menu_state->ms_menus < NMENU; m++, menu++) {
-	if (*m == NULL) continue;
-	for (item=0, mptr = *m;
-	     mptr->menu_string[0] != '\0';
-	     mptr++, item++) {
-	    yy += MENU_DY;
-	    if (pen_y <= yy)
-		continue;	/* pen is below this item */
-	    menu_state->ms_cur_item = item;
-	    menu_state->ms_cur_menu = menu;
-	    menu_state->ms_flag = 1;
-	    /* It's up to the menu_func to set menu_state->ms_flag=0
-	     * if no arrow is desired */
-	    if (do_func && mptr->menu_func != NULL)
-		(*(mptr->menu_func))(MEDIT(s), mptr->menu_arg, menu, item, s);
-
-	    return 1;		/* menu claims pen value */
-	}
-    }
-    return 0;		/* pen below menu area */
+    struct dm_faceplate_controls controls;
+    if (pen_y > menu_state->ms_top) return -1;
+    faceplate_menu_controls(s, &controls);
+    return dm_faceplate_controls_select(&controls, GED2PM1(MENUX), GED2PM1(pen_y), do_func);
 }
 
 

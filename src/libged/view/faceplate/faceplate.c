@@ -235,7 +235,7 @@ _fp_cmd_scale(void *ds, int argc, const char **argv)
 int
 _fp_cmd_params(void *ds, int argc, const char **argv)
 {
-    const char *usage_string = "faceplate [options] params [0|1] [size 0/1] [center 0/1] [az 0/1] [el 0/1] [tw 0/1] [fps 0/1] [color r/g/b] [font_size [#]";
+    const char *usage_string = "faceplate [options] params [0|1] [size 0/1] [center 0/1] [az 0/1] [el 0/1] [tw 0/1] [fps 0/1] [color r/g/b] [font_size #|auto]";
     const char *purpose_string = "Enable/disable params and set color/font size.";
     if (_fp_cmd_msgs(ds, argc, argv, usage_string, purpose_string)) {
 	return BRLCAD_OK;
@@ -369,11 +369,15 @@ _fp_cmd_params(void *ds, int argc, const char **argv)
 	}
 	if (BU_STR_EQUAL("font_size", argv[0])) {
 	    argc--; argv++;
-	    int fsize;
+	    int fsize = 0;
 	    struct bu_vls msg = BU_VLS_INIT_ZERO;
-	    if (bu_opt_int(&msg, argc, argv, &fsize) == -1) {
-		bu_vls_printf(gedp->ged_result_str, "invalid font size specification\n");
+	    if (!BU_STR_EQUAL(argv[0], "auto") &&
+		(bu_opt_int(&msg, argc, argv, &fsize) != 1 || fsize < 0)) {
+		bu_vls_printf(gedp->ged_result_str, "font size must be auto or a nonnegative integer\n");
+		bu_vls_free(&msg);
+		return BRLCAD_ERROR;
 	    }
+	    bu_vls_free(&msg);
 	    v->gv_s->gv_view_params.font_size = fsize;
 	    return BRLCAD_OK;
 	}

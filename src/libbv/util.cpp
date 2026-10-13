@@ -708,7 +708,7 @@ bv_settings_init(struct bview_settings *s)
     s->gv_view_params.draw_tw = 1;
     s->gv_view_params.draw_fps = 0;
     VSET(s->gv_view_params.color, 255, 255, 0);
-    s->gv_view_params.font_size = DM_DEFAULT_FONT_SIZE;
+    s->gv_view_params.font_size = 0;
 
     s->gv_view_scale.gos_draw = 0;
     s->gv_view_scale.gos_font_size = DM_DEFAULT_FONT_SIZE;

@@ -31,6 +31,7 @@
 
 #include "vmath.h"
 #include "ged.h"
+#include "dm/faceplate.h"
 #include "./mged.h"
 #include "./mged_dm.h"
 
@@ -313,10 +314,6 @@ second_menu_scroll_display(fastf_t *f, struct scroll_item *mptr, struct mged_sta
 	    return;
     }
 
-    dm_set_fg(DMP,
-	    color_scheme->cs_slider_text2[0],
-	    color_scheme->cs_slider_text2[1],
-	    color_scheme->cs_slider_text2[2], 1, 1.0);
 }
 
 /* Handle edit mode values for a given scroll item.
@@ -392,10 +389,6 @@ edit_scroll_display(fastf_t *f, struct scroll_item *mptr, struct mged_state *s)
 	    return 0;
     }
 
-    dm_set_fg(DMP,
-	    color_scheme->cs_slider_text1[0],
-	    color_scheme->cs_slider_text1[1],
-	    color_scheme->cs_slider_text1[2], 1, 1.0);
     return 1;
 }
 
@@ -449,10 +442,6 @@ view_scroll_display(fastf_t *f, struct scroll_item *mptr, struct mged_state *s)
 	    return;
     }
 
-    dm_set_fg(DMP,
-	    color_scheme->cs_slider_text2[0],
-	    color_scheme->cs_slider_text2[1],
-	    color_scheme->cs_slider_text2[2], 1, 1.0);
 }
 
 /************************************************************************
@@ -461,141 +450,79 @@ view_scroll_display(fastf_t *f, struct scroll_item *mptr, struct mged_state *s)
  *									*
  ************************************************************************/
 
-/*
- * The parameter is the Y pixel address of the starting
- * screen Y to be used, and the return value is the last screen Y
- * position used.
- */
+static struct scroll_item *
+faceplate_slider_item(struct mged_state *s, size_t row, int *group)
+{
+    for (*group = 0; scroll_array[*group]; (*group)++) {
+        struct scroll_item *item;
+        for (item = scroll_array[*group]; item->scroll_string[0]; item++) {
+            if (!row) return item;
+            row--;
+        }
+    }
+    return NULL;
+}
+
+static int
+faceplate_slider_get(void *data, size_t row, struct dm_faceplate_item *result)
+{
+    struct mged_state *s = (struct mged_state *)data;
+    int group, editing = 0;
+    struct scroll_item *item = faceplate_slider_item(s, row, &group);
+    if (!item) return 0;
+    result->label = item->scroll_string;
+    result->value = 0;
+    if (group) {
+        second_menu_scroll_display(&result->value, item, s);
+    } else {
+        if (mged_variables->mv_transform == 'e' &&
+            (EDIT_ROTATE || EDIT_TRAN || EDIT_SCALE))
+            editing = edit_scroll_display(&result->value, item, s);
+        if (!editing) view_scroll_display(&result->value, item, s);
+    }
+    VMOVE(result->color, editing ? color_scheme->cs_slider_text1 : color_scheme->cs_slider_text2);
+    return 1;
+}
+
+static void
+faceplate_slider_select(void *data, size_t row, fastf_t value, int activate)
+{
+    struct mged_state *s = (struct mged_state *)data;
+    int group;
+    struct scroll_item *item = faceplate_slider_item(s, row, &group);
+    if (activate && item && item->scroll_func) item->scroll_func(item, value);
+}
+
+static void
+faceplate_slider_controls(struct mged_state *s, struct dm_faceplate_controls *controls)
+{
+    dm_faceplate_controls_init(controls, DM_FACEPLATE_SLIDER);
+    controls->top = GED2PM1(scroll_top);
+    controls->dead_zone = SL_TOL;
+    controls->data = s;
+    controls->item = faceplate_slider_get;
+    controls->select = faceplate_slider_select;
+    controls->line_width = mged_variables->mv_linewidth;
+    VMOVE(controls->line_color, color_scheme->cs_slider_line);
+}
+
 int
 scroll_display(struct mged_state *s, int y_top)
 {
-    int y;
-    struct scroll_item *mptr;
-    struct scroll_item **m;
-    int xpos;
-    int second_menu = -1;
-    fastf_t f = 0;
-
+    struct dm_faceplate_controls controls;
     scroll_top = y_top;
-    y = y_top;
-
-    dm_set_line_attr(DMP, mged_variables->mv_linewidth, 0);
-
-    /* Precompute if any edit mode could be active */
-    int edit_flag = 0;
-    if (EDIT_ROTATE && mged_variables->mv_transform == 'e') edit_flag = 1;
-    else if (EDIT_TRAN && mged_variables->mv_transform == 'e') edit_flag = 1;
-    else if (EDIT_SCALE && mged_variables->mv_transform == 'e') edit_flag = 1;
-
-    for (m = &scroll_array[0]; *m != NULL; m++) {
-	++second_menu;
-	for (mptr = *m; mptr->scroll_string[0] != '\0'; mptr++) {
-	    y += SCROLL_DY;		/* y is now bottom line pos */
-
-	    f = 0.0;
-	    int did_op = 0;
-
-	    if (second_menu) {
-		/* ADC menu has priority when present */
-		second_menu_scroll_display(&f, mptr, s);
-		did_op = 1;
-	    } else if (edit_flag) {
-		/* Try edit logic first */
-		did_op = edit_scroll_display(&f, mptr, s);
-	    }
-
-	    if (!did_op && !second_menu) {
-		/* Fallback to view (non-edit) logic */
-		view_scroll_display(&f, mptr, s);
-	    }
-
-	    if (f > 0)
-		xpos = (f + SL_TOL) * BV_MAX;
-	    else if (f < 0)
-		xpos = (f - SL_TOL) * -MENUXLIM;
-	    else
-		xpos = 0;
-
-	    dm_draw_string_2d(DMP, mptr->scroll_string,
-		    GED2PM1(xpos), GED2PM1(y-SCROLL_DY/2), 0, 0);
-	    dm_set_fg(DMP,
-		    color_scheme->cs_slider_line[0],
-		    color_scheme->cs_slider_line[1],
-		    color_scheme->cs_slider_line[2], 1, 1.0);
-	    dm_draw_line_2d(DMP,
-		    GED2PM1((int)BV_MAX), GED2PM1(y),
-		    GED2PM1(MENUXLIM), GED2PM1(y));
-	}
-    }
-
-    if (y != y_top) {
-	/* Sliders were drawn, so make left vert edge */
-	dm_set_fg(DMP,
-		color_scheme->cs_slider_line[0],
-		color_scheme->cs_slider_line[1],
-		color_scheme->cs_slider_line[2], 1, 1.0);
-	dm_draw_line_2d(DMP,
-		GED2PM1(MENUXLIM), GED2PM1(scroll_top-1),
-		GED2PM1(MENUXLIM), GED2PM1(y));
-    }
-    return y;
+    faceplate_slider_controls(s, &controls);
+    return (int)lrint(dm_faceplate_controls_draw(DMP, &controls) / INV_BV);
 }
 
-
-/*
- * Called with Y coordinate of pen in menu area.
- *
- * Returns:
- * 1 if menu claims these pen coordinates,
- * 0 if pen is BELOW scroll
- * -1 if pen is ABOVE scroll (error)
- */
 int
 scroll_select(struct mged_state *s, int pen_x, int pen_y, int do_func)
 {
-    int yy;
-    struct scroll_item **m;
-    struct scroll_item *mptr;
-
-    if (!mged_variables->mv_sliders) return 0;	/* not enabled */
-
-    if (pen_y > scroll_top)
-	return -1;	/* pen above menu area */
-
-    /*
-     * Start at the top of the list and see if the pen is
-     * above here.
-     */
-    yy = scroll_top;
-    for (m = &scroll_array[0]; *m != NULL; m++) {
-	for (mptr = *m; mptr->scroll_string[0] != '\0'; mptr++) {
-	    fastf_t val;
-	    yy += SCROLL_DY;	/* bottom line pos */
-	    if (pen_y < yy)
-		continue;	/* pen below this item */
-
-	    /*
-	     * Record the location of scroll marker.
-	     * Note that the left side has less width than
-	     * the right side, due to the presence of the
-	     * menu text area on the left.
-	     */
-	    if (pen_x >= 0) {
-		val = pen_x * INV_BV;
-	    } else {
-		val = pen_x/(double)(-MENUXLIM);
-	    }
-
-	    /* See if hooked function has been specified */
-	    if (!mptr->scroll_func) continue;
-
-	    if (do_func)
-		(*(mptr->scroll_func))(mptr, val);
-
-	    return 1;		/* scroll claims pen value */
-	}
-    }
-    return 0;		/* pen below scroll area */
+    struct dm_faceplate_controls controls;
+    if (!mged_variables->mv_sliders) return 0;
+    if (pen_y > scroll_top) return -1;
+    faceplate_slider_controls(s, &controls);
+    return dm_faceplate_controls_select(&controls, GED2PM1(pen_x), GED2PM1(pen_y), do_func);
 }
 
 

@@ -524,7 +524,8 @@ struct dm_impl dm_null_impl = {
     0,				/* Tcl interpreter */
     NULL,                       /* Drawing context */
     NULL,                       /* App data */
-    NULL                        /* dlist sensors */
+    NULL,                       /* dlist sensors */
+    NULL                        /* faceplate GUI */
 };
 
 struct dm dm_null = { DM_MAGIC, &dm_null_impl, 0 };

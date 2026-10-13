@@ -1541,7 +1541,8 @@ struct dm_impl dm_ogl_impl = {
     0,				/* Tcl interpreter */
     NULL,                       /* Drawing context */
     NULL,                       /* App data */
-    NULL                        /* dlist sensors */
+    NULL,                       /* dlist sensors */
+    NULL                        /* faceplate GUI */
 };
 
 struct dm dm_ogl = { DM_MAGIC, &dm_ogl_impl, 0 };

@@ -6,6 +6,12 @@ brlcad_addexec(dm_test dm_test.c "libdm;libbu" TEST)
 brlcad_addexec(test_dm_dlist_sensor test_dlist_sensor.c "libdm;libbv;libbu" TEST)
 brlcad_add_test(NAME dm_dlist_sensor COMMAND test_dm_dlist_sensor)
 
+brlcad_addexec(test_dm_faceplate faceplate.c "libdm;libbu" TEST)
+brlcad_add_test(NAME dm_faceplate COMMAND test_dm_faceplate)
+
+brlcad_addexec(test_dm_status_text status_text.c "libdm;libbv;libbu" TEST)
+brlcad_add_test(NAME dm_status_text COMMAND test_dm_status_text)
+
 # Fontstash is a private libdm implementation detail.  Exercise it with a
 # renderer mock so atlas, ownership, and UTF-8 behavior do not require OpenGL.
 set_source_files_properties(fontstash_test.c PROPERTIES LANGUAGE CXX)
@@ -33,6 +39,8 @@ brlcad_add_test(NAME dm_fb_disk_fd COMMAND test_fb_disk_fd)
 cmakefiles(CMakeLists.txt)
 cmakefiles(
   dm_test.c
+  faceplate.c
+  status_text.c
   fontstash_test.c
   test_dlist_sensor.c
   #test_fb_standard_stream.c

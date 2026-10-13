@@ -20,6 +20,8 @@
 
 #include "common.h"
 
+#include <string.h>
+
 #include "bu/datetime.h"
 #include "bu/units.h"
 #include "bu/vls.h"
@@ -28,6 +30,7 @@
 #include "bv/util.h"
 #define DM_WITH_RT
 #include "dm.h"
+#include "dm/faceplate.h"
 
 void
 dm_draw_arrow(struct dm *dmp, point_t A, point_t B, fastf_t tip_length, fastf_t tip_width, fastf_t sf)
@@ -301,6 +304,98 @@ dm_draw_lines(struct dm *dmp, struct bv_data_line_state *gdlsp)
 
 
 
+/* Bounds are measured by the backend, in pixels, since a fixed character
+ * estimate cannot accommodate proportional fonts or display scaling. */
+static fastf_t
+status_text_width(struct dm *dmp, const char *text)
+{
+    vect2d_t bmin = {0, 0}, bmax = {0, 0};
+    if (dm_string_bbox_2d(dmp, &bmin, &bmax, text, 0, 0, 0, 0) == BRLCAD_OK &&
+	bmax[0] > bmin[0])
+	return bmax[0] - bmin[0];
+    /* Older backends without bounds use a conservative full-em estimate. */
+    return strlen(text) * dm_get_fontsize(dmp);
+}
+
+static void
+draw_status_text(struct dm *dmp, const char *text, int requested_size)
+{
+    const int auto_max_size = 14;
+    const int auto_min_size = 10;
+    const fastf_t line_spacing = 1.3;
+    const fastf_t descent_fraction = 0.25;
+    const fastf_t margin_fraction = 0.02;
+    const int minimum_margin = 6;
+    int width = dm_get_width(dmp), height = dm_get_height(dmp);
+    int size = requested_size > 0 ? requested_size : auto_max_size;
+    int saved_size = dm_get_fontsize(dmp);
+    struct bu_vls wrapped = BU_VLS_INIT_ZERO;
+    struct bu_vls line = BU_VLS_INIT_ZERO;
+    size_t lines = 0;
+    const char *start = text;
+    if (width <= 0 || height <= 0 || !text || !text[0]) return;
+    fastf_t margin = FMAX(minimum_margin, width * margin_fraction);
+    fastf_t available = FMAX(1, width - 2 * margin);
+    dm_set_fontsize(dmp, size);
+    if (requested_size <= 0) {
+	while (size > auto_min_size && status_text_width(dmp, text) > available)
+	    dm_set_fontsize(dmp, --size);
+    }
+
+    vect2d_t bmin = {0, 0}, bmax = {0, 0};
+    fastf_t text_height = size;
+    if (dm_string_bbox_2d(dmp, &bmin, &bmax, "Mg", 0, 0, 0, 0) == BRLCAD_OK &&
+	bmax[1] > bmin[1]) text_height = bmax[1] - bmin[1];
+
+    /* Keep the established fixed-size anchor whenever the whole line fits.
+     * Existing callers and image controls rely on that placement. */
+    const fastf_t fixed_x = -0.98;
+    const fastf_t fixed_y = -0.965;
+    fastf_t fixed_left = (fixed_x + 1) * 0.5 * width;
+    fastf_t fixed_baseline = (fixed_y + 1) * 0.5 * height;
+    fastf_t descent = text_height * descent_fraction;
+    if (requested_size > 0 && status_text_width(dmp, text) <= width - 2 * fixed_left &&
+	fixed_baseline >= descent && fixed_baseline + text_height < height) {
+	(void)dm_draw_string_2d(dmp, text, fixed_x, fixed_y, 0, 0);
+	dm_set_fontsize(dmp, saved_size);
+	return;
+    }
+
+    fastf_t advance = text_height * line_spacing;
+    fastf_t bottom_baseline = FMAX(minimum_margin, height * margin_fraction) + descent;
+    fastf_t top_baseline = height - text_height;
+    /* Keep the first fields visible when the viewport cannot fit every row. */
+    while (*start && bottom_baseline + lines * advance <= top_baseline) {
+	size_t length = strlen(start), fit = 0, space = 0;
+	for (size_t i = 1; i <= length; i++) {
+	    bu_vls_strncpy(&line, start, i);
+	    if (status_text_width(dmp, bu_vls_cstr(&line)) > available) break;
+	    fit = i;
+	    if (start[i-1] == ' ') space = i-1;
+	}
+	if (!fit) break;
+	if (fit < length && space) fit = space;
+	bu_vls_strncat(&wrapped, start, fit);
+	bu_vls_putc(&wrapped, '\n');
+	lines++;
+	start += fit;
+	while (*start == ' ') start++;
+    }
+    char *row = lines ? bu_vls_addr(&wrapped) : NULL;
+    for (size_t remaining = lines; remaining > 0; remaining--) {
+	char *end = strchr(row, '\n');
+	*end = '\0';
+	fastf_t baseline = bottom_baseline + (remaining - 1) * advance;
+	(void)dm_draw_string_2d(dmp, row, -1 + 2 * margin / width,
+	    -1 + 2 * baseline / height, 0, 0);
+	row = end + 1;
+    }
+    bu_vls_free(&line);
+    bu_vls_free(&wrapped);
+    dm_set_fontsize(dmp, saved_size);
+}
+
+
 void
 dm_draw_faceplate(struct bview *v)
 {
@@ -375,14 +470,11 @@ dm_draw_faceplate(struct bview *v)
     if (v->gv_s->gv_rect.draw && v->gv_s->gv_rect.line_width)
 	dm_draw_rect(dmp, &v->gv_s->gv_rect);
 
+    dm_draw_faceplate_gui(dmp);
+
     /* View parameters - drawn last so the FPS incorporates as much as possible
      * of the drawing work. */
     if (v->gv_s->gv_view_params.draw) {
-
-	// Save current font size
-	int ofontsize = dm_get_fontsize(dmp);
-	// Set font size for params
-	dm_set_fontsize(dmp, v->gv_s->gv_view_params.font_size);
 
 	struct bu_vls vls = BU_VLS_INIT_ZERO;
 	point_t center;
@@ -435,11 +527,9 @@ dm_draw_faceplate(struct bview *v)
 			v->gv_s->gv_view_params.color[1],
 			v->gv_s->gv_view_params.color[2],
 			1, 1.0);
-	(void)dm_draw_string_2d(dmp, bu_vls_addr(&vls), -0.98, -0.965, 10, 0);
+	draw_status_text(dmp, bu_vls_cstr(&vls), ps->font_size);
 	bu_vls_free(&vls);
 
-	// Restore previous font setting
-	dm_set_fontsize(dmp, ofontsize);
     }
 }
 

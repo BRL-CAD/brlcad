@@ -43,7 +43,7 @@
 
 __BEGIN_DECLS
 
-#define DM_API (1*1000000 + (BRLCAD_VERSION_MAJOR*10000) + (BRLCAD_VERSION_MINOR*100) + BRLCAD_VERSION_PATCH)
+#define DM_API (2*1000000 + (BRLCAD_VERSION_MAJOR*10000) + (BRLCAD_VERSION_MINOR*100) + BRLCAD_VERSION_PATCH)
 
 struct dm_vars {
     void *pub_vars;
@@ -177,6 +177,7 @@ struct dm_impl {
     void *dm_udata;		/**< @brief associate general application data here */
     /** @brief singly-linked list of dlist sensors; NULL when empty */
     struct dm_dlist_sensor *dm_dlist_sensors;
+    const struct dm_faceplate_gui *dm_faceplate_gui;
 };
 
 struct fb_impl {

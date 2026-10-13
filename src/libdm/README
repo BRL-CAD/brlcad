@@ -12,3 +12,20 @@
   that back over into librt.
 
 * break cyclic dependency with libged, enable screengrab without libged being aware of libdm
+
+Faceplate controls
+------------------
+
+dm/faceplate.h provides the classic in-view menu and slider drawing and hit
+testing, extracted from MGED. A dm_faceplate_controls provider enumerates rows
+and receives selections. The application retains its editing state, units,
+command interpreter and database knowledge. An optional label renderer can
+highlight application-specific modes without adding those modes to libdm.
+
+dm_set_faceplate_gui registers a borrowed description on a display manager;
+dm_draw_faceplate draws it alongside the existing bv overlays. Registration
+is optional and disabled by default. Applications drawing their own HUD can
+instead call dm_faceplate_controls_draw and dm_faceplate_controls_select
+directly, as MGED does to retain its historical placement of edit information.
+Use matching normalized HUD coordinates for drawing and input. Hidden rows
+are excluded from both drawing and selection.

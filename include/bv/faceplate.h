@@ -94,7 +94,7 @@ struct bv_params_state {
     int draw_tw;           /* Print view twist */
     int draw_fps;          /* Print frame per second */
     int color[3];          /* Set params color */
-    int font_size;         /* Set params font size */
+    int font_size;         /* Positive: fixed size, zero: adapt and wrap */
 };
 
 

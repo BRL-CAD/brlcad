@@ -48,6 +48,7 @@ extern "C" {
 }
 
 #include "../include/private.h"
+#include "../include/gl_text.h"
 
 #define ENABLE_POINT_SMOOTH 1
 
@@ -335,185 +336,32 @@ qtgl_open(void *ctx, void *UNUSED(interp), int argc, const char **argv)
     return dmp;
 }
 
-/*
- * Output a string.
- * The starting position of the beam is as specified.
- */
 static int
-qtgl_drawString2D(struct dm *dmp, const char *str, fastf_t ix, fastf_t iy, int UNUSED(size), int use_aspect)
+qtgl_font_size(struct dm *dmp, const struct qtgl_vars *privars)
 {
-    struct gl_vars *mvars = (struct gl_vars *)dmp->i->m_vars;
-    struct qtgl_vars *privars = (struct qtgl_vars *)dmp->i->dm_vars.priv_vars;
+    /* Fontstash uses device pixels, while Qt exposes the font size in
+     * device-independent pixels. */
+    return dm_get_fontsize(dmp) * privars->qw->devicePixelRatioF();
+}
 
+
+static int
+qtgl_drawString2D(struct dm *dmp, const char *str, fastf_t x, fastf_t y, int UNUSED(size), int use_aspect)
+{
+    struct qtgl_vars *privars = (struct qtgl_vars *)dmp->i->dm_vars.priv_vars;
     gl_debug_print(dmp, "qtgl_drawString2D", dmp->i->dm_debugLevel);
-
-    // If the positions are out of range on the positive side, just don't draw -
-    // text will go to the right and not be visible
-    fastf_t x = ix;
-    fastf_t y = (use_aspect) ? iy * dmp->i->dm_aspect : iy;
-    if (x > 1 || y > 1)
-	return BRLCAD_OK;
-
-    // If we're given coordinates out of the view bounds to the left we need to do
-    // some shifting so the gl raster position routines can work - we may need to do
-    // partial drawing if the text is long enough.
-    int nxc = (x < -1) ? 1 : 0;
-    int nyc = (y < -1) ? 1 : 0;
-    x = (nxc) ? x + 2 : x;
-    y = (nyc) ? y + 2 : y;
-
-    if (privars->fontNormal != FONS_INVALID) {
-
-	/* First, we set the position using glRasterPos2f like ogl does */
-	glRasterPos2f(x, y);
-
-	/* Next, we set up for fontstash */
-	/* Fontstash sizes are OpenGL/device pixels.  Keep the public dm font
-	 * size in Qt's device-independent pixel units. */
-	fastf_t font_size = dm_get_fontsize(dmp) * privars->qw->devicePixelRatioF();
-	int blend_state = glIsEnabled(GL_BLEND);
-	glEnable(GL_BLEND);
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
-	/* We want to restore the original state we were in when
-	 * we started the text operation - save it */
-	GLint mm;
-	glGetIntegerv(GL_MATRIX_MODE, &mm);
-
-	// Set up an identity matrix for text drawing
-	glMatrixMode(GL_PROJECTION);
-	glPushMatrix();
-	if (dmp->i->dm_debugLevel > 4)
-	    gl_debug_print(dmp, "qtgl_drawString2D 1:", dmp->i->dm_debugLevel);
-	glLoadIdentity();
-	if (dmp->i->dm_debugLevel > 4)
-	    gl_debug_print(dmp, "qtgl_drawString2D 2:", dmp->i->dm_debugLevel);
-
-	// Fontstash does not work in OpenGL raster coordinates,
-	// so we need the view and the coordinates in window
-	// XY coordinates.
-	glOrtho(0,dm_get_width(dmp),dm_get_height(dmp),0,-1,1);
-	if (dmp->i->dm_debugLevel > 4)
-	    gl_debug_print(dmp, "qtgl_drawString2D 3:", dmp->i->dm_debugLevel);
-
-	GLfloat pos[4];
-	glGetFloatv(GL_CURRENT_RASTER_POSITION, pos);
-	fastf_t coord_x = pos[0];
-	fastf_t coord_y = (fastf_t)dm_get_height(dmp)-pos[1];
-	coord_x = (nxc) ? -1*(dm_get_width(dmp) - coord_x) : coord_x;
-	coord_y = (nyc) ? coord_y + (fastf_t)dm_get_height(dmp) : coord_y;
-
-	// Have info and OpenGL state, do the text drawing
-	fonsSetFont(privars->fs, privars->fontNormal);
-	unsigned int color = glfonsRGBA(dmp->i->dm_fg[0], dmp->i->dm_fg[1], dmp->i->dm_fg[2], 255);
-	fonsSetSize(privars->fs, (int)font_size); /* cast to int so we always get a font */
-	fonsSetColor(privars->fs, color);
-	fonsDrawText(privars->fs, coord_x, coord_y, str, NULL);
-	if (dmp->i->dm_debugLevel > 4)
-	    gl_debug_print(dmp, "qtgl_drawString2D 4:", dmp->i->dm_debugLevel);
-
-	// Restore previous projection matrix
-	glPopMatrix();
-	if (dmp->i->dm_debugLevel > 4)
-	    gl_debug_print(dmp, "qtgl_drawString2D 5:", dmp->i->dm_debugLevel);
-
-	// Restore view matrix (changed by glOrtho call)
-	glPopMatrix();
-	if (dmp->i->dm_debugLevel > 4)
-	    gl_debug_print(dmp, "qtgl_drawString2D 6:", dmp->i->dm_debugLevel);
-
-	// Put us back in whatever mode we were in before starting the text draw
-	glMatrixMode(mm);
-	if (dmp->i->dm_debugLevel > 4)
-	    gl_debug_print(dmp, "qtgl_drawString2D 7:", dmp->i->dm_debugLevel);
-
-	if (!blend_state) glDisable(GL_BLEND);
-
-	glOrtho(-mvars->i.xlim_view, mvars->i.xlim_view, -mvars->i.ylim_view, mvars->i.ylim_view, dmp->i->dm_clipmin[2], dmp->i->dm_clipmax[2]);
-    }
-
-    if (dmp->i->dm_debugLevel > 1)
-	gl_debug_print(dmp, "qtgl_drawString2D done:", dmp->i->dm_debugLevel);
-
-    return BRLCAD_OK;
+    return dm_gl_draw_text(dmp, privars->fs, privars->fontNormal, qtgl_font_size(dmp, privars), str, x, y, use_aspect);
 }
+
 
 static int
-qtgl_String2DBBox(struct dm *dmp, vect2d_t *bmin, vect2d_t *bmax, const char *str, fastf_t ix, fastf_t iy, int UNUSED(size), int use_aspect)
+qtgl_String2DBBox(struct dm *dmp, vect2d_t *bmin, vect2d_t *bmax, const char *str, fastf_t x, fastf_t y, int UNUSED(size), int use_aspect)
 {
     struct qtgl_vars *privars = (struct qtgl_vars *)dmp->i->dm_vars.priv_vars;
-
     gl_debug_print(dmp, "qtgl_String2DBBox", dmp->i->dm_debugLevel);
-
-    // If the positions are out of range on the positive side, just don't draw -
-    // text will go to the right and not be visible
-    fastf_t x = ix;
-    fastf_t y = (use_aspect) ? iy * dmp->i->dm_aspect : iy;
-    if (x > 1 || y > 1)
-	return BRLCAD_ERROR;
-
-    // If we're given coordinates out of the view bounds to the left we need to do
-    // some shifting so the gl raster position routines can work - we may need to do
-    // partial drawing if the text is long enough.
-    int nxc = (x < -1) ? 1 : 0;
-    int nyc = (y < -1) ? 1 : 0;
-    x = (nxc) ? x + 2 : x;
-    y = (nyc) ? y + 2 : y;
-
-    // TODO - match the state management here to the actual drawing of text in
-    // the function above.
-    if (privars->fontNormal != FONS_INVALID) {
-
-	/* Stash the previous raster position */
-	GLfloat rasterpos[4];
-	glGetFloatv(GL_CURRENT_RASTER_POSITION, rasterpos);
-
-	/* First, we set the position using glRasterPos2f like ogl does */
-	glRasterPos2f(x, y);
-
-	/* Next, we set up for fontstash */
-	fastf_t font_size = dm_get_fontsize(dmp) * privars->qw->devicePixelRatioF();
-
-	// Fontstash does not work in OpenGL raster coordinates,
-	// so we need the view and the coordinates in window
-	// XY coordinates.
-	glMatrixMode(GL_PROJECTION);
-	glPushMatrix();
-	glLoadIdentity();
-	glOrtho(0,dm_get_width(dmp),dm_get_height(dmp),0,-1,1);
-	GLfloat pos[4];
-	glGetFloatv(GL_CURRENT_RASTER_POSITION, pos);
-	fastf_t coord_x = pos[0];
-	fastf_t coord_y = (fastf_t)dm_get_height(dmp)-pos[1];
-	coord_x = (nxc) ? -1*(dm_get_width(dmp) - coord_x) : coord_x;
-	coord_y = (nyc) ? coord_y + (fastf_t)dm_get_height(dmp) : coord_y;
-
-	// Have info and OpenGL state, proceed
-	fonsSetFont(privars->fs, privars->fontNormal);
-	fonsSetSize(privars->fs, (int)font_size); /* cast to int so we always get a font */
-
-	float bounds[4] = {0.0, 0.0, 0.0, 0.0};
-	fonsTextBounds(privars->fs, coord_x, coord_y, str, NULL, (float *)bounds);
-	//int width = fonsTextBounds(privars->fs, coord_x, coord_y, str, NULL, (float *)bounds);
-	//bu_log("%s bounds: min(%f,%f) max(%f,%f)\n", str, bounds[0], bounds[1], bounds[2], bounds[3]);
-	//bu_log("%s width %d\n", str, width);
-
-	// Done with text, put matrices back
-	glPopMatrix();
-	glMatrixMode(GL_PROJECTION);
-	glPopMatrix();
-
-	if (bmin)
-	    V2SET(*bmin, bounds[0], bounds[1]);
-	if (bmax)
-	    V2SET(*bmax, bounds[2], bounds[3]);
-    }
-
-    if (dmp->i->dm_debugLevel > 1)
-	gl_debug_print(dmp, "qtgl_String2DBBox after:", dmp->i->dm_debugLevel);
-
-    return BRLCAD_OK;
+    return dm_gl_text_bounds(dmp, privars->fs, privars->fontNormal, qtgl_font_size(dmp, privars), bmin, bmax, str, x, y, use_aspect);
 }
+
 
 int
 qtgl_openFb(struct dm *dmp)
@@ -693,7 +541,8 @@ struct dm_impl dm_qtgl_impl = {
     0,				/* Tcl interpreter */
     NULL,                       /* Drawing context */
     NULL,                       /* App data */
-    NULL                        /* dlist sensors */
+    NULL,                       /* dlist sensors */
+    NULL                        /* faceplate GUI */
 };
 
 struct dm dm_qtgl = { DM_MAGIC, &dm_qtgl_impl, 0 };
