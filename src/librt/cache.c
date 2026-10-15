@@ -59,6 +59,7 @@ extern int brl_LZ4_decompress_fast (const char* source, char* dest, int original
 #define CACHE_FORMAT 3
 
 static const char * const cache_mime_type = "brlcad/cache";
+static char incompatible_cache_dir[MAXPATHLEN] = {0};
 
 
 #define CACHE_LOG(...) if (cache && cache->log) cache->log(__VA_ARGS__);
@@ -801,6 +802,13 @@ rt_cache_open(void)
 	dir = bu_dir(cache->dir, MAXPATHLEN, BU_DIR_CACHE, ".rt", NULL);
     }
 
+    bu_semaphore_acquire(BU_SEM_GENERAL);
+    if (BU_STR_EQUAL(cache->dir, incompatible_cache_dir)) {
+	bu_semaphore_release(BU_SEM_GENERAL);
+	return NULL;
+    }
+    bu_semaphore_release(BU_SEM_GENERAL);
+
     if (!cache_init(cache)) {
 	return NULL;
     }
@@ -809,6 +817,7 @@ rt_cache_open(void)
 
     format = cache_format(cache);
     if (format < 0) {
+	bu_hash_destroy(cache->entry_hash);
 	return NULL;
     } else if (format == 0) {
 	struct bu_vls path = BU_VLS_INIT_ZERO;
@@ -894,11 +903,23 @@ rt_cache_open(void)
 	/* reinit */
 	format = cache_format(cache);
     } else if (format > CACHE_FORMAT) {
-	CACHE_LOG("NOTE: Cache at %s was created with a newer version of %s\n", dir, PACKAGE_NAME);
-	CACHE_LOG("      Delete or move folder to enable caching with this version.\n");
+	int report_incompatible = 0;
+	bu_semaphore_acquire(BU_SEM_GENERAL);
+	if (!BU_STR_EQUAL(cache->dir, incompatible_cache_dir)) {
+	    bu_strlcpy(incompatible_cache_dir, cache->dir, MAXPATHLEN);
+	    report_incompatible = 1;
+	}
+	bu_semaphore_release(BU_SEM_GENERAL);
+	if (report_incompatible) {
+	    CACHE_LOG("NOTE: Cache at %s was created with a newer version of %s\n",
+		dir, PACKAGE_NAME);
+	    CACHE_LOG("      Delete or move folder and restart to enable caching "
+		"with this version.\n");
+	}
     }
 
     if (format != CACHE_FORMAT) {
+	bu_hash_destroy(cache->entry_hash);
 	return NULL;
     }
 
