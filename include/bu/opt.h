@@ -226,6 +226,21 @@ struct bu_opt_desc {
 BU_EXPORT extern int bu_opt_parse(struct bu_vls *msgs, size_t ac, const char **argv, const struct bu_opt_desc *ds);
 
 
+/**
+ * Parse only the leading options in @p argv using @p ds.
+ *
+ * Uses the same option syntax, return values, and argument reordering as
+ * bu_opt_parse(), but stops at the first unrecognized argument (including a
+ * positional argument) or an explicit "--" terminator.  That argument and
+ * all subsequent arguments remain unused and retain their relative order.
+ * The "--" terminator itself is consumed.
+ *
+ * This allows a caller to accept a positional argument followed by a command
+ * whose options must not be interpreted by the caller's option parser.
+ */
+BU_EXPORT extern int bu_opt_parse_leading(struct bu_vls *msgs, size_t ac, const char **argv, const struct bu_opt_desc *ds);
+
+
 /** Output format options for bu_opt documentation generation */
 typedef enum {
     BU_OPT_ASCII,

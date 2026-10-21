@@ -108,6 +108,15 @@ if(BRLCAD_ENABLE_TCL)
   brlcad_include_dirs(mged_startup_test MGED_STARTUP_TEST_INCLUDE_DIRS PRIVATE)
   brlcad_add_test(NAME mged_startup_modes COMMAND mged_startup_test)
 
+  brlcad_add_test(
+    NAME mged_command_options
+    COMMAND
+      "${CMAKE_COMMAND}"
+      "-DMGED=$<TARGET_FILE:mged>"
+      "-DTEST_DIR=${CMAKE_CURRENT_BINARY_DIR}"
+      -P "${CMAKE_CURRENT_SOURCE_DIR}/test_command_options.cmake"
+  )
+
   # MGED is one of the programs that gets a start menu entry
   set_property(
     INSTALL "${BIN_DIR}/$<TARGET_FILE_NAME:mged>"
@@ -137,6 +146,7 @@ set(
   mged_startup.h
   mged_wdb.h
   sedit.h
+  test_command_options.cmake
   test_gqa_prefix.cmake
 )
 cmakefiles(${mged_ignore_files})

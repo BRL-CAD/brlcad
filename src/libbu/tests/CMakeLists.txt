@@ -661,6 +661,7 @@ brlcad_add_test(NAME bu_vls_simplify_11 COMMAND bu_test test_vls_simplify "^%tes
 #
 
 brlcad_add_test(NAME bu_opt_null  COMMAND bu_test test_opt 0 0 0)
+brlcad_add_test(NAME bu_opt_leading COMMAND bu_test test_opt 5 0 0)
 
 # Verbosity (custom handler) testing
 brlcad_add_test(NAME bu_opt_1_v_00  COMMAND bu_test test_opt 1 v 0)

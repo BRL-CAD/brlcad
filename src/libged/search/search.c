@@ -36,7 +36,7 @@
 #endif
 
 #include "bu/cmd.h"
-#include "bu/getopt.h"
+#include "bu/opt.h"
 #include "bu/path.h"
 #include "bu/sort.h"
 #include "bu/defines.h"
@@ -327,43 +327,29 @@ search_print_objs_to_vls(const struct bu_ptbl *objs, struct bu_vls *out)
  * next  v: will print types
  */
 static void
-_handle_verbosity(int* search_flags, int* fp_flags)
+_handle_verbosity(int *search_flags, int *fp_flags, size_t count)
 {
-    if (bu_optarg) {
-	// unless succeeded by another flag, bu_getopt assumes -v is either supplied
-	// an argument or is at the end of the string, neither of which are likely
-	// for search - filter out a following arg from the optarg if it's not a 'v'
-	if (bu_optarg[0] != 'v')
-	    bu_optind--;
-	else {
-	    // handle -vv, -vvv, -vvvv..
-	    switch (strnlen(bu_optarg, 2)) {
-	        case 2:
-		    *fp_flags |= DB_FP_PRINT_TYPE;
-		    /* fallthrough */
-	        case 1:
-		    *fp_flags |= DB_FP_PRINT_BOOL;
-		    /* fallthrough */
-	        default:
-		    *search_flags |= DB_SEARCH_PRINT_TOTAL;
-		    break;
-	    }
-	    return;
-	}
+    /* Preserve the established distinction between a grouped verbosity
+     * level and a separate -v that increases the current level. */
+    if (count > 1) {
+	if (count > 2)
+	    *fp_flags |= DB_FP_PRINT_TYPE;
+	*fp_flags |= DB_FP_PRINT_BOOL;
+	*search_flags |= DB_SEARCH_PRINT_TOTAL;
+	return;
     }
 
-    // else - handle separate instance of -v (ie -v -v -v)
     if (!(*search_flags & DB_SEARCH_PRINT_TOTAL)) {
 	*search_flags |= DB_SEARCH_PRINT_TOTAL;
-	return;					// first time, enable totals
+	return;
     }
 
     if (!(*fp_flags & DB_FP_PRINT_BOOL)) {
 	*fp_flags |= DB_FP_PRINT_BOOL;
-	return;					// second time, enable bools
+	return;
     }
 
-    *fp_flags |= DB_FP_PRINT_TYPE;		// max verbosity, enable types (everything else is already on)
+    *fp_flags |= DB_FP_PRINT_TYPE;
 }
 
 
@@ -371,8 +357,6 @@ int
 ged_search_core(struct ged *gedp, int argc, const char *argv_orig[])
 {
     size_t i;
-    int c;
-    int optcnt;
     int aflag = 0; /* flag controlling whether hidden objects are examined */
     int wflag = 0; /* flag controlling whether to fail quietly or not */
     int flags = 0;
@@ -389,8 +373,6 @@ ged_search_core(struct ged *gedp, int argc, const char *argv_orig[])
     struct bu_vls search_string = BU_VLS_INIT_ZERO;
     struct bu_ptbl *search_set;
     const char *usage = "[-a] [-v[v..]] [-Q] [-h] [path] [expressions...]\n";
-    /* COPY argv_orig to argv; */
-    char **argv = NULL;
 
 
     bu_clbk_t clbk = NULL;
@@ -402,51 +384,40 @@ ged_search_core(struct ged *gedp, int argc, const char *argv_orig[])
 	return BRLCAD_ERROR;
     }
 
-    /* Find how many options we have. Once we get support
-     * for long options, this logic will have to get more sophisticated
-     * (do db_lookup on things to see if they are paths, recognize
-     * toplevel path specifiers, etc. */
-    optcnt = 0;
-    for (i = 1; i < (size_t)argc; i++) {
-	if ((argv_orig[i][0] == '-')) {
-	    int len = strlen(argv_orig[i]);
-	    if ((len == 2) || (len > 1 && argv_orig[i][1] == 'v'))
-		// ugly, but verbosity is currently the only option that can have more than 1 character
-		optcnt++;
-	} else {
-	    break;
-	}
+    struct bu_opt_desc options[6];
+    BU_OPT(options[0], "a", NULL, "", NULL, &aflag, "Include hidden objects");
+    BU_OPT(options[1], "Q", NULL, "", NULL, &wflag, "Fail quietly");
+    BU_OPT(options[2], "h", NULL, "", NULL, &want_help, "Print help");
+    BU_OPT(options[3], "?", NULL, "", NULL, &want_help, "Print help");
+    BU_OPT(options[4], "v", NULL, "", NULL, NULL, "Increase verbosity");
+    BU_OPT_NULL(options[5]);
+
+    char **argv = bu_argv_dup(argc, argv_orig);
+    int remaining = bu_opt_parse_leading(NULL, argc - 1, (const char **)(argv + 1), options);
+    if (remaining < 0) {
+	bu_argv_free(argc, argv);
+	bu_vls_sprintf(gedp->ged_result_str, "Error: option %s is unknown.\nUsage: %s", argv_orig[0], usage);
+	return BRLCAD_ERROR;
     }
 
-    /* Options have to come before paths and search expressions, so don't look
-     * any further than the max possible option count */
-    bu_optind = 1;
-    while ((bu_optind < (optcnt + 1)) && ((c = bu_getopt(argc, (char * const *)argv_orig, "?aQhv::")) != -1)) {
-	if (bu_optopt == '?') c='h';
-	switch (c) {
-	    case 'a':
-		aflag = 1;
-		flags |= DB_SEARCH_HIDDEN;
-		break;
-	    case 'v':
-		_handle_verbosity(&flags, &print_verbose_info);
-		break;
-
-	    case 'Q':
-		wflag = 1;
-		flags |= DB_SEARCH_QUIET;
-		break;
-	    case 'h':
-		want_help = 1;
-		break;
-	    default:
-		bu_vls_sprintf(gedp->ged_result_str, "Error: option %s is unknown.\nUsage: %s", argv_orig[0], usage);
-		return BRLCAD_ERROR;
+    /* Consumed options are at the end of argv.  Interpret verbosity per
+     * token before freeing them so -vv -vv keeps its existing meaning. */
+    for (i = (size_t)remaining + 1; i < (size_t)argc; i++) {
+	size_t verbosity = 0;
+	for (const char *cp = argv[i]; *cp; cp++) {
+	    if (*cp == 'v')
+		verbosity++;
 	}
+	if (verbosity)
+	    _handle_verbosity(&flags, &print_verbose_info, verbosity);
+	bu_free(argv[i], "search option");
     }
-
-    argc -= (bu_optind - 1);
-    argv_orig += (bu_optind - 1);
+    argc = remaining + 1;
+    argv[argc] = NULL;
+    if (aflag)
+	flags |= DB_SEARCH_HIDDEN;
+    if (wflag)
+	flags |= DB_SEARCH_QUIET;
 
     if (want_help || argc == 1) {
 	if (!wflag) {
@@ -454,11 +425,9 @@ ged_search_core(struct ged *gedp, int argc, const char *argv_orig[])
 	} else {
 	    bu_vls_trunc(gedp->ged_result_str, 0);
 	}
+	bu_argv_free(argc, argv);
 	return BRLCAD_OK;
     }
-
-    /* COPY argv_orig to argv; */
-    argv = bu_argv_dup(argc, argv_orig);
 
     /* initialize search set */
     BU_ALLOC(search_set, struct bu_ptbl);

@@ -698,8 +698,8 @@ can_be_opt(const char *opt)
 }
 
 
-int
-bu_opt_parse(struct bu_vls *msgs, size_t argc, const char **argv, const struct bu_opt_desc *ds)
+static int
+opt_parse(struct bu_vls *msgs, size_t argc, const char **argv, const struct bu_opt_desc *ds, int leading_only)
 {
     size_t i = 0;
     size_t j = 0;
@@ -711,13 +711,19 @@ bu_opt_parse(struct bu_vls *msgs, size_t argc, const char **argv, const struct b
 	return -1;
 
     /* Now identify opt/arg pairs.*/
-    while (i < (size_t)argc) {
+    while (i < argc && (!leading_only || !BU_PTBL_LEN(&unknown_args))) {
 	int desc_found = 0;
 	int desc_ind = 0;
 	int opt_cnt = 0;
 	const char *eq_arg = NULL;
 	const struct bu_opt_desc *desc = NULL;
 	struct bu_ptbl opts = BU_PTBL_INIT_ZERO;
+
+	if (leading_only && BU_STR_EQUAL(argv[i], "--")) {
+	    bu_ptbl_ins(&known_args, (long *)argv[i]);
+	    i++;
+	    break;
+	}
 
 	/* If argv[i] isn't an option, stick the argv entry (and any
 	 * immediately following non-option entries) into the unknown
@@ -971,6 +977,11 @@ bu_opt_parse(struct bu_vls *msgs, size_t argc, const char **argv, const struct b
 	bu_ptbl_free(&opts);
     }
 
+    /* A positional argument ends leading-option parsing.  Its entire suffix
+     * belongs to the caller, including any option-looking arguments. */
+    for (; i < argc; i++)
+	bu_ptbl_ins(&unknown_args, (long *)argv[i]);
+
     /* Rearrange argv so the unused options are ordered at the front
      * of the array.
      */
@@ -993,6 +1004,20 @@ bu_opt_parse(struct bu_vls *msgs, size_t argc, const char **argv, const struct b
     bu_ptbl_free(&known_args);
 
     return ret_argc;
+}
+
+
+int
+bu_opt_parse(struct bu_vls *msgs, size_t argc, const char **argv, const struct bu_opt_desc *ds)
+{
+    return opt_parse(msgs, argc, argv, ds, 0);
+}
+
+
+int
+bu_opt_parse_leading(struct bu_vls *msgs, size_t argc, const char **argv, const struct bu_opt_desc *ds)
+{
+    return opt_parse(msgs, argc, argv, ds, 1);
 }
 
 

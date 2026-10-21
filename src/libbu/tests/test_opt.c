@@ -934,6 +934,80 @@ scan_double_test(int test_num)
 }
 
 
+static int
+test_leading_options(void)
+{
+    enum { MAX_ARGS = 8 };
+    const struct {
+	const char *args[MAX_ARGS];
+	int consumed;
+	int flag;
+	const char *attach;
+	int number;
+	int vector_set;
+    } cases[] = {
+	{{"model.g", "repair", "-o", "fixed.s", NULL}, 0, 0, NULL, 0, 0},
+	{{"-c", "-a", "nu", "model.g", "repair", "-o", "fixed.s", NULL}, 3, 1, "nu", 0, 0},
+	{{"-ca", "nu", "model.g", NULL}, 0, 0, NULL, 0, 0},
+	{{"-c", "-anu", "model.g", "-a", "other", NULL}, 2, 1, "nu", 0, 0},
+	{{"-cc", "model.g", "-c", NULL}, 1, 1, NULL, 0, 0},
+	{{"--classic", "--attach=nu", "model.g", "--help", NULL}, 2, 1, "nu", 0, 0},
+	{{"--number", "-1", "model.g", "--number", "bad", NULL}, 2, 0, NULL, -1, 0},
+	{{"--vector", "1", "2", "3", "model.g", "--vector", "bad", NULL}, 4, 0, NULL, 0, 1},
+	{{"-c", "--", "-model.g", "-c", NULL}, 2, 1, NULL, 0, 0},
+	{{"--unknown", "--classic", "model.g", NULL}, 0, 0, NULL, 0, 0},
+	{{"-c", NULL}, 1, 1, NULL, 0, 0},
+	{{"--", NULL}, 1, 0, NULL, 0, 0},
+	{{NULL}, 0, 0, NULL, 0, 0},
+	{{"-a", NULL}, -1, 0, NULL, 0, 0},
+	{{"--number", "bad", "model.g", NULL}, -1, 0, NULL, 0, 0}
+    };
+    int failures = 0;
+
+    for (size_t i = 0; i < sizeof(cases) / sizeof(cases[0]); i++) {
+	const char *args[MAX_ARGS];
+	const char *attach = NULL;
+	int flag = 0;
+	int number = 0;
+	vect_t vector = VINIT_ZERO;
+	const vect_t expected_vector = {1, 2, 3};
+	struct bu_vls msgs = BU_VLS_INIT_ZERO;
+	struct bu_opt_desc options[5];
+	int argc = 0;
+	int ret;
+	int failed;
+
+	BU_OPT(options[0], "c", "classic", "", NULL, &flag, "Classic mode");
+	BU_OPT(options[1], "a", "attach", "type", bu_opt_str, &attach, "Attach target");
+	BU_OPT(options[2], "n", "number", "#", bu_opt_int, &number, "Number");
+	BU_OPT(options[3], "V", "vector", "x y z", bu_opt_vect_t, &vector, "Vector");
+	BU_OPT_NULL(options[4]);
+	memcpy(args, cases[i].args, sizeof(args));
+	while (args[argc])
+	    argc++;
+	ret = bu_opt_parse_leading(&msgs, argc, args, options);
+	failed = ret != (cases[i].consumed < 0 ? -1 : argc - cases[i].consumed);
+	if (ret >= 0) {
+	    failed |= flag != cases[i].flag || number != cases[i].number;
+	    failed |= (attach == NULL) != (cases[i].attach == NULL);
+	    if (attach && cases[i].attach)
+		failed |= !BU_STR_EQUAL(attach, cases[i].attach);
+	    if (cases[i].vector_set)
+		failed |= !VNEAR_EQUAL(vector, expected_vector, SMALL_FASTF);
+	    for (int j = 0; j < ret; j++)
+		failed |= !BU_STR_EQUAL(args[j], cases[i].args[j + cases[i].consumed]);
+	}
+	if (failed) {
+	    bu_log("Leading option case %zu failed: %s\n", i, bu_vls_cstr(&msgs));
+	    failures++;
+	}
+	bu_vls_free(&msgs);
+    }
+
+    return failures ? -1 : 0;
+}
+
+
 int
 main(int argc, char *argv[])
 {
@@ -983,6 +1057,8 @@ main(int argc, char *argv[])
 	case 4:
 	    return scan_double_test(test_num);
 	    break;
+	case 5:
+	    return test_leading_options();
     }
 
     return ret;

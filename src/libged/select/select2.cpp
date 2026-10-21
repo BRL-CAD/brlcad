@@ -458,30 +458,19 @@ ged_select2_core(struct ged *gedp, int argc, const char *argv[])
     BU_OPT(d[1], "S", "set",  "name",  &bu_opt_vls,   &gd.curr_set,  "Specify set to operate on");
     BU_OPT_NULL(d[2]);
 
-    // High level options are only defined prior to the subcommand
-    int cmd_pos = -1;
-    for (int i = 0; i < argc; i++) {
-	if (bu_cmd_valid(_select_cmds, argv[i]) == BRLCAD_OK) {
-	    cmd_pos = i;
-	    break;
-	}
+    argc = bu_opt_parse_leading(NULL, argc, argv, d);
+    if (!argc && !help) {
+	bu_vls_printf(gedp->ged_result_str, ": no valid subcommand specified\n");
+	bu_vls_free(&gd.curr_set);
+	return BRLCAD_ERROR;
     }
-
-    // Clear out any high level opts prior to subcommand
-    int acnt = (cmd_pos >= 0) ? cmd_pos : argc;
-    int ac_ret = bu_opt_parse(NULL, acnt, argv, d);
-    if (ac_ret) {
+    int cmd_pos = (argc > 0 && bu_cmd_valid(_select_cmds, argv[0]) == BRLCAD_OK) ? 0 : -1;
+    if (argc <= 0 || cmd_pos < 0) {
 	help = 1;
-    } else {
-	for (int i = 0; i < acnt; i++) {
-	    argc--; argv++;
-	}
     }
 
     if (help) {
 	if (cmd_pos >= 0) {
-	    argc = argc - cmd_pos;
-	    argv = &argv[cmd_pos];
 	    _ged_subcmd_help(gedp, (struct bu_opt_desc *)d, (const struct bu_cmdtab *)_select_cmds, "select", "[options] subcommand [args]", &gd, argc, argv);
 	} else {
 	    _ged_subcmd_help(gedp, (struct bu_opt_desc *)d, (const struct bu_cmdtab *)_select_cmds, "select", "[options] subcommand [args]", &gd, 0, NULL);

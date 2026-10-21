@@ -430,7 +430,19 @@ ged_faceplate_core(struct ged *gedp, int argc, const char *argv[])
 
     gd.gopts = d;
 
-    int ac = bu_opt_parse(NULL, argc, argv, d);
+    int ac = bu_opt_parse_leading(NULL, argc, argv, d);
+    if (ac < 0)
+	return BRLCAD_ERROR;
+
+    /* Verbosity has also been accepted after the subcommand.  Retain that
+     * spelling while leaving help options for the appropriate child. */
+    if (ac > 1) {
+	struct bu_opt_desc verbose_opts[2] = {d[1], BU_OPT_DESC_NULL};
+	int child_ac = bu_opt_parse(NULL, ac - 1, argv + 1, verbose_opts);
+	if (child_ac < 0)
+	    return BRLCAD_ERROR;
+	ac = child_ac + 1;
+    }
 
     if (!ac || help) {
 	_ged_subcmd_help(gedp, (struct bu_opt_desc *)d, (const struct bu_cmdtab *)_fp_cmds,

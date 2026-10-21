@@ -25,10 +25,8 @@
 
 #include "common.h"
 
-#include <stdlib.h>
-#include <string.h>
-
-#include "bu/cmd.h"
+#include "bu/opt.h"
+#include "bu/str.h"
 #include "rt/geom.h"
 
 #include "../ged_private.h"
@@ -37,12 +35,10 @@
 int
 ged_bot_smooth_core(struct ged *gedp, int argc, const char *argv[])
 {
-    char *new_bot_name, *old_bot_name;
     struct directory *dp_old, *dp_new;
     struct rt_bot_internal *old_bot;
     struct rt_db_internal intern;
     fastf_t tolerance_angle=180.0;
-    int arg_index=1;
     static const char *usage = "[-t angle_tolerance] new_bot old_bot";
 
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
@@ -71,25 +67,19 @@ ged_bot_smooth_core(struct ged *gedp, int argc, const char *argv[])
 	return BRLCAD_ERROR;
     }
 
-    while (*argv[arg_index] == '-') {
-	/* this is an option */
-	if (BU_STR_EQUAL(argv[arg_index], "-t")) {
-	    arg_index++;
-	    tolerance_angle = atof(argv[arg_index]);
-	} else {
-	    bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	    return BRLCAD_ERROR;
-	}
-	arg_index++;
-    }
-
-    if (arg_index >= argc) {
-	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+    struct bu_opt_desc options[2];
+    BU_OPT(options[0], "t", NULL, "angle_tolerance", bu_opt_fastf_t, &tolerance_angle, "Normal angle tolerance");
+    BU_OPT_NULL(options[1]);
+    const char *cmd = argv[0];
+    argc = bu_opt_parse_leading(NULL, argc - 1, argv + 1, options);
+    argv++;
+    if (argc < 2 || argv[0][0] == '-') {
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", cmd, usage);
 	return BRLCAD_ERROR;
     }
 
-    new_bot_name = (char *)argv[arg_index++];
-    old_bot_name = (char *)argv[arg_index];
+    const char *new_bot_name = argv[0];
+    const char *old_bot_name = argv[1];
 
     GED_DB_LOOKUP(gedp, dp_old, old_bot_name, LOOKUP_QUIET, BRLCAD_ERROR);
 

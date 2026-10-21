@@ -2782,13 +2782,12 @@ main(int argc, char *argv[])
     BU_OPT(opt_defs[52], NULL, "geo-color",        "R G B",   parse_opt_color, &cl.geo_def_color,    "default geometry wireframe colour");
     BU_OPT_NULL(opt_defs[53]);
 
-    /* bu_opt_parse does not consume argv[0] (the program name).
-     * Skip it manually so that the remaining args match what the
-     * original bu_getopt-based code expected after optind adjustment. */
+    /* The database ends MGED's options.  Subsequent arguments belong to the
+     * command and may use the same option names as MGED itself. */
     int orig_argc = argc;
     argc--;
     argv++;
-    argc = bu_opt_parse(&parse_msgs, (size_t)argc, (const char **)argv, opt_defs);
+    argc = bu_opt_parse_leading(&parse_msgs, (size_t)argc, (const char **)argv, opt_defs);
 
     if (bu_vls_strlen(&parse_msgs) > 0) {
 	/* Print any warnings/errors from the parser */

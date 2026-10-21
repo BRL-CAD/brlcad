@@ -29,6 +29,10 @@ Options that affect per-session appearance (variables, grid, colour) are applied
 
 When no mode option is specified, _MGED_ starts its graphical interface if standard input is a terminal and graphics support is available. It starts headless when standard input is redirected or connected to a pipe. Use *-C* to request the GUI or *-c* to request the classic command-line interface explicitly; these choices do not depend on whether standard input or output is attached to a terminal. Supplying an _mged_command_ selects one-shot headless operation.
 
+MGED options must precede the database name. Arguments after the database name
+belong to the command, including any command options. Use `--` to end MGED option
+processing explicitly.
+
 
 [[options]]
 == OPTIONS

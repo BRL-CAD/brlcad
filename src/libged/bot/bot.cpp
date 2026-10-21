@@ -1532,23 +1532,25 @@ ged_bot_core(struct ged *gedp, int argc, const char *argv[])
 	return BRLCAD_OK;
     }
 
-    // High level options are only defined prior to the subcommand
-    int cmd_pos = -1;
-    for (int i = 0; i < argc; i++) {
-	if (bu_cmd_valid(_bot_cmds, argv[i]) == BRLCAD_OK) {
-	    cmd_pos = i;
+    /* Keep accepting legacy operands before the subcommand, but let the
+     * option parser consume option values before testing command names. */
+    bool have_subcommand = false;
+    while (argc > 0) {
+	int opt_ret = bu_opt_parse_leading(NULL, argc, argv, d);
+	if (opt_ret < 0)
+	    break;
+	argc = opt_ret;
+	if (!argc)
+	    break;
+	if (bu_cmd_valid(_bot_cmds, argv[0]) == BRLCAD_OK) {
+	    have_subcommand = true;
 	    break;
 	}
+	argc--; argv++;
     }
 
-    int acnt = (cmd_pos >= 0) ? cmd_pos : argc;
-
-    int opt_ret = bu_opt_parse(NULL, acnt, argv, d);
-
     if (help) {
-	if (cmd_pos >= 0) {
-	    argc = argc - cmd_pos;
-	    argv = &argv[cmd_pos];
+	if (have_subcommand) {
 	    _ged_subcmd_help(gedp, boptd, bcmds, "bot", b_args, &gb, argc, argv);
 	} else {
 	    _ged_subcmd_help(gedp, boptd, bcmds, "bot", b_args, &gb, 0, NULL);
@@ -1557,22 +1559,11 @@ ged_bot_core(struct ged *gedp, int argc, const char *argv[])
     }
 
     // Must have a subcommand
-    if (cmd_pos == -1) {
+    if (!have_subcommand) {
 	bu_vls_printf(gedp->ged_result_str, ": no valid subcommand specified\n");
 	_ged_subcmd_help(gedp, boptd, bcmds, "bot", b_args, &gb, 0, NULL);
 	return BRLCAD_ERROR;
     }
-
-    if (opt_ret < 0) {
-	_ged_subcmd_help(gedp, boptd, bcmds, "bot", b_args, &gb, 0, NULL);
-	return BRLCAD_ERROR;
-    }
-
-    // Jump the processing past any options specified
-    for (int i = cmd_pos; i < argc; i++) {
-	argv[i - cmd_pos] = argv[i];
-    }
-    argc = argc - cmd_pos;
 
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
     if (gb.visualize || BU_STR_EQUAL(argv[0], "plot")) {

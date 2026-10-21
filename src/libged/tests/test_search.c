@@ -83,6 +83,57 @@ int run_search_check_count(struct ged *dbp, int expected_count, int num_args, ..
     return 0;
 }
 
+static int
+check_search_options(struct ged *gedp)
+{
+    enum { MAX_ARGS = 8 };
+    const struct {
+	const char *args[MAX_ARGS];
+	const char *equivalent[MAX_ARGS];
+    } cases[] = {
+	{{"search", "-v", "-v", "/", "-type", "region", NULL},
+	 {"search", "-vv", "/", "-type", "region", NULL}},
+	{{"search", "-v", "-v", "-v", "/", "-type", "region", NULL},
+	 {"search", "-vvv", "/", "-type", "region", NULL}},
+	{{"search", "-vv", "-vv", "/", "-type", "region", NULL},
+	 {"search", "-vv", "/", "-type", "region", NULL}},
+	{{"search", "-v", "-vv", "/", "-type", "region", NULL},
+	 {"search", "-vv", "/", "-type", "region", NULL}},
+	{{"search", "-vv", "-v", "/", "-type", "region", NULL},
+	 {"search", "-vvv", "/", "-type", "region", NULL}},
+	{{"search", "-Q", "|", NULL}, {"search", "|", NULL}},
+	{{"search", "-a", "-a", "|", NULL}, {"search", "-a", "|", NULL}},
+	{{"search", "-?", NULL}, {"search", "-h", NULL}}
+    };
+    int failures = 0;
+
+    for (size_t i = 0; i < sizeof(cases) / sizeof(cases[0]); i++) {
+	const char *args[MAX_ARGS];
+	int argc = 0;
+	int ret;
+	char *result;
+	memcpy(args, cases[i].args, sizeof(args));
+	while (args[argc])
+	    argc++;
+	ret = ged_exec_search(gedp, argc, args);
+	result = bu_strdup(bu_vls_cstr(gedp->ged_result_str));
+	memcpy(args, cases[i].equivalent, sizeof(args));
+	argc = 0;
+	while (args[argc])
+	    argc++;
+	int equivalent_ret = ged_exec_search(gedp, argc, args);
+	if (ret != BRLCAD_OK || equivalent_ret != BRLCAD_OK ||
+	    !BU_STR_EQUAL(result, bu_vls_cstr(gedp->ged_result_str))) {
+	    bu_log("FAIL: search option compatibility case %zu\n", i);
+	    failures++;
+	}
+	bu_free(result, "search result");
+    }
+
+    return failures;
+}
+
+
 int
 main(int ac, char *av[]) {
     struct ged *dbp;
@@ -189,6 +240,14 @@ main(int ac, char *av[]) {
 		ret_code += run_search_check_count(dbp, 0, 3, "|", "-name", "not\"a\"name");
 		ret_code += run_search_check_count(dbp, 0, 3, "|", "-name", "not\\a\\name");
 		ret_code += run_search_check_count(dbp, 0, 3, "|", "-name", "");
+		break;
+	    case 6:
+		ret_code += check_search_options(dbp);
+		/* Predicate values must not become global options when the
+		 * search path is omitted. */
+		ret_code += run_search_check_count(dbp, 0, 2, "-name", "-v");
+		ret_code += run_search_check_count(dbp, 0, 2, "-name", "-Q");
+		ret_code += run_search_check_count(dbp, 0, 2, "-name", "-h");
 		break;
 	    default:
 		goto finish_tests;

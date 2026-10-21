@@ -719,17 +719,10 @@ _fp_cmd_model_axes(void *bs, int argc, const char **argv)
 
     gd->gopts = d;
 
-    // High level options are only defined prior to the subcommand
-    int cmd_pos = -1;
-    for (int i = 0; i < argc; i++) {
-	if (bu_cmd_valid(_fp_axes_cmds, argv[i]) == BRLCAD_OK) {
-	    cmd_pos = i;
-	    break;
-	}
-    }
-
-    int acnt = (cmd_pos >= 0) ? cmd_pos : argc;
-    (void)bu_opt_parse(NULL, acnt, argv, d);
+    argc = bu_opt_parse_leading(NULL, argc, argv, d);
+    if (argc < 0)
+	return BRLCAD_ERROR;
+    int cmd_pos = (argc > 0 && bu_cmd_valid(_fp_axes_cmds, argv[0]) == BRLCAD_OK) ? 0 : -1;
 
     struct _ged_fp_axes_info ainfo;
     ainfo.gd = gd;
@@ -778,17 +771,10 @@ _fp_cmd_view_axes(void *bs, int argc, const char **argv)
 
     gd->gopts = d;
 
-    // High level options are only defined prior to the subcommand
-    int cmd_pos = -1;
-    for (int i = 0; i < argc; i++) {
-	if (bu_cmd_valid(_fp_axes_cmds, argv[i]) == BRLCAD_OK) {
-	    cmd_pos = i;
-	    break;
-	}
-    }
-
-    int acnt = (cmd_pos >= 0) ? cmd_pos : argc;
-    (void)bu_opt_parse(NULL, acnt, argv, d);
+    argc = bu_opt_parse_leading(NULL, argc, argv, d);
+    if (argc < 0)
+	return BRLCAD_ERROR;
+    int cmd_pos = (argc > 0 && bu_cmd_valid(_fp_axes_cmds, argv[0]) == BRLCAD_OK) ? 0 : -1;
 
     struct _ged_fp_axes_info ainfo;
     ainfo.gd = gd;

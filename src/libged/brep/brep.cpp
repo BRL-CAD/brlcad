@@ -1537,24 +1537,25 @@ ged_brep_core(struct ged *gedp, int argc, const char *argv[])
     }
 
 
-    // High level options are only defined prior to the subcommand
-    int cmd_pos = -1;
-    for (int i = 0; i < argc; i++) {
-	if (bu_cmd_valid(_brep_cmds, argv[i]) == BRLCAD_OK) {
-	    cmd_pos = i;
-	    break;
-	}
+    /* Global options have historically been accepted on either side of
+     * the object name, up to the subcommand.  Preserve both positions. */
+    int opt_ret = bu_opt_parse_leading(NULL, argc, argv, d);
+    const char *solid_name = (opt_ret > 0) ? argv[0] : NULL;
+    const char **cmd_argv = (opt_ret > 0) ? argv + 1 : argv;
+    int cmd_argc = (opt_ret > 1) ? bu_opt_parse_leading(NULL, opt_ret - 1, cmd_argv, d) : 0;
+
+    /* Subcommand help is also available without an object name. */
+    if (solid_name && bu_cmd_valid(_brep_cmds, solid_name) == BRLCAD_OK &&
+	(cmd_argc <= 0 || bu_cmd_valid(_brep_cmds, cmd_argv[0]) != BRLCAD_OK)) {
+	solid_name = NULL;
+	cmd_argv = argv;
+	cmd_argc = opt_ret;
     }
-
-    int acnt = (cmd_pos >= 0) ? cmd_pos : argc;
-
-    int opt_ret = bu_opt_parse(NULL, acnt, argv, d);
+    bool have_subcommand = cmd_argc > 0 && bu_cmd_valid(_brep_cmds, cmd_argv[0]) == BRLCAD_OK;
 
     if (help) {
-	if (cmd_pos >= 0) {
-	    argc = argc - cmd_pos;
-	    argv = &argv[cmd_pos];
-	    _ged_subcmd_help(gedp, bdesc, bcmds, "brep", bargs_help, &gb, argc, argv);
+	if (have_subcommand) {
+	    _ged_subcmd_help(gedp, bdesc, bcmds, "brep", bargs_help, &gb, cmd_argc, cmd_argv);
 	} else {
 	    _ged_subcmd_help(gedp, bdesc, bcmds, "brep", bargs_help, &gb, 0, NULL);
 	}
@@ -1562,14 +1563,14 @@ ged_brep_core(struct ged *gedp, int argc, const char *argv[])
     }
 
     // Must have a subcommand
-    if (cmd_pos == -1) {
+    if (!have_subcommand) {
 	bu_vls_printf(gedp->ged_result_str, ": no valid subcommand specified\n");
 	_ged_subcmd_help(gedp, bdesc, bcmds, "brep", bargs_help, &gb, 0, NULL);
 	return BRLCAD_ERROR;
     }
 
 
-    if (opt_ret != 1) {
+    if (!solid_name || opt_ret < 0 || cmd_argc < 0) {
 	bu_vls_printf(gedp->ged_result_str, ": no object specified before subcommand\n");
 	bu_vls_printf(gedp->ged_result_str, "brep [options] <objname> subcommand [args]\n");
 	if (color) {
@@ -1585,7 +1586,7 @@ ged_brep_core(struct ged *gedp, int argc, const char *argv[])
     gb.gedp = gedp;
     gb.wdbp = wdb_dbopen(gb.gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
     gb.cmds = _brep_cmds;
-    gb.solid_name = std::string(argv[0]);
+    gb.solid_name = std::string(solid_name);
     gb.dp = db_lookup(gedp->dbip, gb.solid_name.c_str(), LOOKUP_NOISY);
     if (gb.dp == RT_DIR_NULL) {
 	bu_vls_printf(gedp->ged_result_str, ": %s is not a solid or does not exist in database", gb.solid_name.c_str());
@@ -1613,8 +1614,8 @@ ged_brep_core(struct ged *gedp, int argc, const char *argv[])
     gb.plotres = plotres;
 
     // Jump the processing past any options specified
-    argc = argc - cmd_pos;
-    argv = &argv[cmd_pos];
+    argc = cmd_argc;
+    argv = cmd_argv;
 
     int ret;
     if (bu_cmd(_brep_cmds, argc, argv, 0, (void *)&gb, &ret) == BRLCAD_OK) {

@@ -746,8 +746,8 @@ const struct bu_cmdtab _view_cmds[] = {
     { (char *)NULL,      NULL}
 };
 
-int
-ged_view_core(struct ged *gedp, int argc, const char *argv[])
+static int
+view_dispatch(struct ged *gedp, int argc, const char *argv[])
 {
     int help = 0;
     struct _ged_view_info gd;
@@ -756,15 +756,10 @@ ged_view_core(struct ged *gedp, int argc, const char *argv[])
     gd.cv = NULL;
     gd.verbosity = 0;
 
-    // Sanity
-    if (UNLIKELY(!gedp || !argc || !argv)) {
-	return BRLCAD_ERROR;
-    }
-
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
 
-    // We know we're the dm command - start processing args
+    // Skip the command name before parsing its options.
     argc--; argv++;
 
     // See if we have any high level options set
@@ -777,30 +772,14 @@ ged_view_core(struct ged *gedp, int argc, const char *argv[])
 
     gd.gopts = d;
 
-    // High level options are only defined prior to the subcommand
-    int cmd_pos = -1;
-    for (int i = 0; i < argc; i++) {
-	if (bu_cmd_valid(_view_cmds, argv[i]) == BRLCAD_OK) {
-	    cmd_pos = i;
-	    break;
-	}
-    }
-
-    // Clear out any high level opts prior to subcommand
-    int acnt = (cmd_pos >= 0) ? cmd_pos : argc;
-    int ac_ret = bu_opt_parse(NULL, acnt, argv, d);
-    if (ac_ret) {
+    argc = bu_opt_parse_leading(NULL, argc, argv, d);
+    int cmd_pos = (argc > 0 && bu_cmd_valid(_view_cmds, argv[0]) == BRLCAD_OK) ? 0 : -1;
+    if (argc < 0 || (argc > 0 && cmd_pos < 0)) {
 	help = 1;
-    } else {
-	for (int i = 0; i < acnt; i++) {
-	    argc--; argv++;
-	}
     }
 
     if (help) {
 	if (cmd_pos >= 0) {
-	    argc = argc - cmd_pos;
-	    argv = &argv[cmd_pos];
 	    _ged_subcmd_help(gedp, (struct bu_opt_desc *)d, (const struct bu_cmdtab *)_view_cmds, "view", "[options] subcommand [args]", &gd, argc, argv);
 	} else {
 	    _ged_subcmd_help(gedp, (struct bu_opt_desc *)d, (const struct bu_cmdtab *)_view_cmds, "view", "[options] subcommand [args]", &gd, 0, NULL);
@@ -852,6 +831,21 @@ ged_view_core(struct ged *gedp, int argc, const char *argv[])
 
     bu_vls_free(&vname);
     return BRLCAD_ERROR;
+}
+
+int
+ged_view_core(struct ged *gedp, int argc, const char *argv[])
+{
+    if (UNLIKELY(!gedp || argc <= 0 || !argv))
+	return BRLCAD_ERROR;
+
+    /* View callers reuse their argument arrays. Keep parser permutations
+     * local to this invocation, including those made by subcommands. */
+    const char **args = (const char **)bu_calloc((size_t)argc + 1, sizeof(*args), "view arguments");
+    memcpy(args, argv, (size_t)argc * sizeof(*args));
+    int ret = view_dispatch(gedp, argc, args);
+    bu_free(args, "view arguments");
+    return ret;
 }
 
 int
