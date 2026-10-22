@@ -526,6 +526,7 @@ brlcad_add_test(NAME bg_geogram_optimizer COMMAND bg_geogram_optimizer)
 cmakefiles(
   bg_test.c.in
   geogram_optimizer.cpp
+  pca.c
   plane_dist.c
   plane_isect.c
   plane_pt.c

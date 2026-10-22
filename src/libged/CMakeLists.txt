@@ -328,6 +328,7 @@ set(
   LIBGED_SOURCES
   ${GED_CMD_SRC}
   ${GED_STATIC_REGISTRATION_CPP}
+  canonicalize.cpp
   edit_buf.cpp
   exec.cpp
   ged_init.cpp
@@ -354,6 +355,8 @@ set(
   wdb_importFg4Section.c
   wireframe_eval.c
 )
+
+cmakefiles(canonicalize_private.h)
 
 set_property(
   SOURCE ged_init.cpp

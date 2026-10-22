@@ -1,0 +1,140 @@
+= UNPUSH(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD MGED Commands
+
+== NAME
+unpush - infer and restore shared geometry from pushed object trees
+
+== SYNOPSIS
+
+[source]
+----
+unpush [-D] [-L] [-v] [-m rigid|similarity|affine] object [object ...]
+----
+
+
+[[description]]
+== DESCRIPTION
+
+The *unpush* command examines the trees rooted at the specified _objects_ and
+looks for primitive shapes and combinations that differ only by a recoverable
+placement transform.  It can replace those copies with shared objects and move
+their differing placements into combination leaf matrices.  This is a
+geometric inference operation: it does not require provenance or other
+metadata from an earlier *push*, *xpush*, or *npush* operation.
+
+Candidate primitives are first canonicalized into a stable local frame.
+Candidates are accepted as a group only after their attributes and geometry
+match within the database tolerance and the proposed replacement has been
+reconstructed under every leaf matrix that will be changed.  Combination and
+region candidates are analyzed from the leaves upward.  Their boolean tree
+structure, operand order, child identities and relative matrices, region
+properties, material and rendering fields, and custom attributes must agree.
+Boolean operands are not reordered.
+
+The command currently canonicalizes halfspaces, ellipsoids and spheres, tori,
+elliptical tori, right parabolic and hyperbolic cylinders, elliptical
+paraboloids and hyperboloids, particles, TGC and REC shapes, ARB4 through ARB8
+shapes, BOT meshes, and superellipsoids.  Other primitive types are reported
+as unsupported and are left unchanged.
+Invalid supported shapes are reported as failures and are also left unchanged.
+
+
+[[modes]]
+== TRANSFORM MODES
+
+The *-m* option limits the class of transforms that may be recovered:
+
+* *rigid* permits translation and rotation.
+* *similarity* additionally permits uniform scale.
+* *affine* permits primitive canonicalizers to consider nonuniform scale and
+  shear.
+
+Dry-run analysis defaults to *affine*.  Database writes constrain an affine
+request to *similarity*, because BRL-CAD combination matrices do not accept
+general shear.  The report explicitly notes this constraint.
+
+
+[[options]]
+== OPTIONS
+
+*-D*, *--dry-run*::
+Analyze and report possible sharing without modifying the database.  Running a
+dry run first is strongly recommended.
+
+*-L*, *--local*::
+Restrict changed references to the selected trees.  Objects still referenced
+outside those trees are retained, and descendants of a selected combination
+whose definition is itself exposed outside the selection are not changed.
+Without *-L*, *unpush* may update matching references elsewhere in the database
+so a redundant object can be removed globally.
+
+*-m* _mode_, *--mode* _mode_::
+Select *rigid*, *similarity*, or *affine* transform inference as described
+above.
+
+*-v*, *--verbosity*::
+Increase reporting detail.  Repeat the option to include replacement matrices
+for primitive references.
+
+*-h*, *--help*::
+Print command help.
+
+
+[[writes]]
+== DATABASE CHANGES AND RECOVERY
+
+Before writing, *unpush* accounts for database references and prepares every
+affected object in memory.  It writes new canonical primitives first, then
+updates parent combinations and top-level wrappers, reads the results back, and
+validates the exact rewritten leaves.  Superseded objects are deleted only
+after the updated reference counts show that they are unused.  If an object
+write or validation fails, the command restores the saved object definitions
+and removes newly written canonical primitives when it is safe to do so.
+
+Selected top-level primitive names are preserved by replacing those primitives
+with one-leaf wrapper combinations.  A selected top-level non-region
+combination may likewise become a one-leaf combination referencing the shared
+representative.  Top-level regions are never nested inside wrapper regions;
+such consolidation is deferred, although safe sharing below those regions may
+still be restored.
+
+The recovery process does not copy the complete database, which keeps it
+practical for multi-gigabyte models.  It protects against errors detected by
+the running command, but it is not a crash-atomic database transaction.  Keep
+an external backup when modifying valuable data, particularly when storage or
+system reliability is uncertain.
+
+
+[[examples]]
+== EXAMPLES
+
+.Analyze an assembly without changing it.
+[example]
+====
+mged>**unpush -D -v -m similarity vehicle**
+====
+
+.Restore sharing only within two selected assemblies.
+[example]
+====
+mged>**unpush -L left_wheel right_wheel**
+====
+
+
+[[see_also]]
+== SEE ALSO
+
+*npush*(nged), *push*(nged), *xpush*(nged), *facetize*(nged)
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

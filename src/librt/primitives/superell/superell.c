@@ -998,8 +998,122 @@ rt_superell_mat(struct rt_db_internal *rop, const mat_t mat, const struct rt_db_
     MAT4X3VEC(top->a, mat, sa);
     MAT4X3VEC(top->b, mat, sb);
     MAT4X3VEC(top->c, mat, sc);
+    top->n = tip->n;
+    top->e = tip->e;
 
     return BRLCAD_OK;
+}
+
+
+static void
+superell_canonical_orientation(mat_t orientation, const vect_t a,
+			       const vect_t b, const vect_t c)
+{
+    MAT_IDN(orientation);
+    orientation[0] = a[X];
+    orientation[4] = a[Y];
+    orientation[8] = a[Z];
+    orientation[1] = b[X];
+    orientation[5] = b[Y];
+    orientation[9] = b[Z];
+    orientation[2] = c[X];
+    orientation[6] = c[Y];
+    orientation[10] = c[Z];
+}
+
+
+C_DECL int
+rt_superell_canonicalize(struct rt_db_internal *canonical,
+			 mat_t canonical_to_input,
+			 const struct rt_db_internal *input,
+			 const struct bn_tol *tol,
+			 enum rt_canonicalize_mode mode)
+{
+    static const fastf_t maximum_curvature = 10000.0;
+    const struct rt_superell_internal *sip;
+    struct rt_superell_internal *csip;
+    const fastf_t *input_axes[3];
+    vect_t axes[3];
+    vect_t cross;
+    fastf_t lengths[3];
+    fastf_t canonical_lengths[3];
+    fastf_t uniform_scale = 1.0;
+    mat_t orientation;
+    mat_t scale;
+    mat_t oriented_scale;
+    mat_t translate;
+
+    if (!canonical || !canonical_to_input || !input || !tol)
+	return RT_CANONICALIZE_ERROR;
+    if (mode < RT_CANONICALIZE_RIGID || mode > RT_CANONICALIZE_AFFINE)
+	return RT_CANONICALIZE_ERROR;
+    if (input->idb_type != ID_SUPERELL)
+	return RT_CANONICALIZE_ERROR;
+
+    sip = (const struct rt_superell_internal *)input->idb_ptr;
+    RT_SUPERELL_CK_MAGIC(sip);
+    if (!isfinite(sip->v[X]) || !isfinite(sip->v[Y]) ||
+	!isfinite(sip->v[Z]) || !isfinite(sip->n) || !isfinite(sip->e) ||
+	sip->n <= tol->dist || sip->e <= tol->dist ||
+	sip->n > maximum_curvature || sip->e > maximum_curvature)
+	return RT_CANONICALIZE_ERROR;
+
+    input_axes[0] = sip->a;
+    input_axes[1] = sip->b;
+    input_axes[2] = sip->c;
+    for (size_t i = 0; i < 3; i++) {
+	lengths[i] = MAGNITUDE(input_axes[i]);
+	if (!isfinite(lengths[i]) || lengths[i] <= tol->dist)
+	    return RT_CANONICALIZE_ERROR;
+	VSCALE(axes[i], input_axes[i], 1.0 / lengths[i]);
+    }
+    if (!NEAR_ZERO(VDOT(axes[0], axes[1]), tol->perp) ||
+	!NEAR_ZERO(VDOT(axes[0], axes[2]), tol->perp) ||
+	!NEAR_ZERO(VDOT(axes[1], axes[2]), tol->perp))
+	return RT_CANONICALIZE_ERROR;
+
+    /* Axis signs do not change a superellipsoid.  Keep the placement a
+     * proper transform by selecting the third sign from the input frame. */
+    VCROSS(cross, axes[0], axes[1]);
+    if (VDOT(cross, axes[2]) < 0.0)
+	VREVERSE(axes[2], axes[2]);
+
+    if (mode == RT_CANONICALIZE_AFFINE) {
+	VSETALL(canonical_lengths, 1.0);
+	for (size_t i = 0; i < 3; i++)
+	    VSCALE(axes[i], axes[i], lengths[i]);
+	superell_canonical_orientation(orientation, axes[0], axes[1], axes[2]);
+	MAT_IDN(translate);
+	MAT_DELTAS_VEC(translate, sip->v);
+	bn_mat_mul(canonical_to_input, translate, orientation);
+    } else {
+	if (mode == RT_CANONICALIZE_SIMILARITY)
+	    uniform_scale = fmax(lengths[0], fmax(lengths[1], lengths[2]));
+	for (size_t i = 0; i < 3; i++)
+	    canonical_lengths[i] = lengths[i] / uniform_scale;
+	superell_canonical_orientation(orientation, axes[0], axes[1], axes[2]);
+	MAT_IDN(scale);
+	scale[15] = 1.0 / uniform_scale;
+	bn_mat_mul(oriented_scale, orientation, scale);
+	MAT_IDN(translate);
+	MAT_DELTAS_VEC(translate, sip->v);
+	bn_mat_mul(canonical_to_input, translate, oriented_scale);
+    }
+
+    canonical->idb_major_type = DB5_MAJORTYPE_BRLCAD;
+    canonical->idb_minor_type = ID_SUPERELL;
+    canonical->idb_meth = &OBJ[ID_SUPERELL];
+    BU_ALLOC(canonical->idb_ptr, struct rt_superell_internal);
+    csip = (struct rt_superell_internal *)canonical->idb_ptr;
+    csip->magic = RT_SUPERELL_INTERNAL_MAGIC;
+    VSETALL(csip->v, 0.0);
+    VSET(csip->a, canonical_lengths[0], 0.0, 0.0);
+    VSET(csip->b, 0.0, canonical_lengths[1], 0.0);
+    VSET(csip->c, 0.0, 0.0, canonical_lengths[2]);
+    csip->n = sip->n;
+    csip->e = sip->e;
+
+    return RT_CANONICALIZE_OK;
 }
 
 

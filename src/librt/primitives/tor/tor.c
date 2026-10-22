@@ -1840,6 +1840,68 @@ rt_tor_mat(struct rt_db_internal *rop, const mat_t mat, const struct rt_db_inter
     return BRLCAD_OK;
 }
 
+
+C_DECL int
+rt_tor_canonicalize(struct rt_db_internal *canonical,
+		    mat_t canonical_to_input,
+		    const struct rt_db_internal *input,
+		    const struct bn_tol *tol,
+		    enum rt_canonicalize_mode mode)
+{
+    const struct rt_tor_internal *tip;
+    struct rt_tor_internal *ctip;
+    vect_t normal;
+    vect_t zaxis = VINIT_ZERO;
+    mat_t rotate;
+    mat_t scale_mat;
+    mat_t rotated_scale;
+    mat_t translate;
+    fastf_t normal_mag;
+    fastf_t uniform_scale = 1.0;
+
+    if (!canonical || !canonical_to_input || !input || !tol)
+	return RT_CANONICALIZE_ERROR;
+    if (mode < RT_CANONICALIZE_RIGID || mode > RT_CANONICALIZE_AFFINE)
+	return RT_CANONICALIZE_ERROR;
+    if (input->idb_type != ID_TOR)
+	return RT_CANONICALIZE_ERROR;
+
+    tip = (const struct rt_tor_internal *)input->idb_ptr;
+    RT_TOR_CK_MAGIC(tip);
+    normal_mag = MAGNITUDE(tip->h);
+    if (normal_mag <= tol->dist || tip->r_a <= tol->dist || tip->r_h <= tol->dist)
+	return RT_CANONICALIZE_ERROR;
+
+    VSCALE(normal, tip->h, 1.0 / normal_mag);
+    VSET(zaxis, 0.0, 0.0, 1.0);
+    bn_mat_fromto(rotate, zaxis, normal, tol);
+
+    if (mode != RT_CANONICALIZE_RIGID)
+	uniform_scale = tip->r_a;
+    MAT_IDN(scale_mat);
+    scale_mat[15] = 1.0 / uniform_scale;
+    bn_mat_mul(rotated_scale, rotate, scale_mat);
+    MAT_IDN(translate);
+    MAT_DELTAS_VEC(translate, tip->v);
+    bn_mat_mul(canonical_to_input, translate, rotated_scale);
+
+    canonical->idb_major_type = DB5_MAJORTYPE_BRLCAD;
+    canonical->idb_minor_type = ID_TOR;
+    canonical->idb_meth = &OBJ[ID_TOR];
+    BU_ALLOC(canonical->idb_ptr, struct rt_tor_internal);
+    ctip = (struct rt_tor_internal *)canonical->idb_ptr;
+    ctip->magic = RT_TOR_INTERNAL_MAGIC;
+    VSETALL(ctip->v, 0.0);
+    VSET(ctip->h, 0.0, 0.0, 1.0);
+    ctip->r_a = tip->r_a / uniform_scale;
+    ctip->r_h = tip->r_h / uniform_scale;
+    VSET(ctip->a, ctip->r_a, 0.0, 0.0);
+    VSET(ctip->b, 0.0, ctip->r_a, 0.0);
+    ctip->r_b = ctip->r_a;
+
+    return RT_CANONICALIZE_OK;
+}
+
 /**
  * Taken from the database record:
  * v vertex (point) of center of torus.
