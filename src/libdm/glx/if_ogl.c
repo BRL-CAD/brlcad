@@ -779,21 +779,21 @@ ogl_configureWindow(struct fb *ifp, int width, int height)
 }
 
 static void
-ogl_action_fb_print_pixel_rgb(const struct bu_vls *event_json, void *registered_data, void *event_data)
+ogl_action_fb_print_pixel_rgb(const char *event_json, void *UNUSED(registered_data), void *event_data)
 {
     struct fb *ifp = (struct fb *)event_data;
     int x = -1, y = -1;
-    char *p;
-    
+    const char *p;
+
     if (!ifp) return;
-    
-    if ((p = strstr(bu_vls_cstr(event_json), "\"x\":"))) {
+
+    if ((p = strstr(event_json, "\"x\":"))) {
         sscanf(p + 4, "%d", &x);
     }
-    if ((p = strstr(bu_vls_cstr(event_json), "\"y\":"))) {
+    if ((p = strstr(event_json, "\"y\":"))) {
         sscanf(p + 4, "%d", &y);
     }
-    
+
     if (x < 0 || y < 0) {
         fb_log("No RGB (outside image viewport)\n");
         return;
@@ -807,7 +807,7 @@ ogl_action_fb_print_pixel_rgb(const struct bu_vls *event_json, void *registered_
 }
 
 static void
-ogl_action_fb_close_window(const struct bu_vls *event_json, void *registered_data, void *event_data)
+ogl_action_fb_close_window(const char *UNUSED(event_json), void *UNUSED(registered_data), void *event_data)
 {
     struct fb *ifp = (struct fb *)event_data;
     if (ifp) OGL(ifp)->alive = 0;

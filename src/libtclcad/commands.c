@@ -48,6 +48,7 @@
 #include "bu/cmd.h"
 #include "bu/path.h"
 #include "bu/process.h"
+#include "bu/str.h"
 #include "bu/units.h"
 #include "bu/binding.h"
 #include "vmath.h"
@@ -2825,7 +2826,9 @@ to_data_vZ(struct ged *gedp,
 }
 
 
-static void tclcad_action_eval_aet(const struct bu_vls *ev, void *reg, void *event_data) {
+static void
+tclcad_action_eval_aet(const char *UNUSED(ev), void *reg, void *event_data)
+{
     struct bview *gdvp = (struct bview *)event_data;
     const char *aet_args = (const char *)reg;
     struct bu_vls cmd = BU_VLS_INIT_ZERO;
@@ -2834,26 +2837,30 @@ static void tclcad_action_eval_aet(const struct bu_vls *ev, void *reg, void *eve
     bu_vls_free(&cmd);
 }
 
-static void tclcad_action_mouse_drag(const struct bu_vls *ev, void *reg, void *event_data) {
+static void
+tclcad_action_mouse_drag(const char *ev, void *reg, void *event_data)
+{
     struct bview *gdvp = (struct bview *)event_data;
     const char *cmd_name = (const char *)reg;
     int cx = gdvp->gv_prevMouseX;
     int cy = gdvp->gv_prevMouseY;
-    char *p;
-    if ((p = strstr(bu_vls_cstr(ev), "\"cx\":"))) sscanf(p + 5, "%d", &cx);
-    if ((p = strstr(bu_vls_cstr(ev), "\"cy\":"))) sscanf(p + 5, "%d", &cy);
-    
+    const char *p;
+    if ((p = strstr(ev, "\"cx\":"))) sscanf(p + 5, "%d", &cx);
+    if ((p = strstr(ev, "\"cy\":"))) sscanf(p + 5, "%d", &cy);
+
     struct bu_vls cmd = BU_VLS_INIT_ZERO;
     bu_vls_printf(&cmd, "%s %s %s %d %d", bu_vls_cstr(&current_top->to_gedp->go_name), cmd_name, bu_vls_cstr(&gdvp->gv_name), cx, cy);
     Tcl_Eval(current_top->to_interp, bu_vls_cstr(&cmd));
     bu_vls_free(&cmd);
 }
 
-static void tclcad_action_wheel_scale(const struct bu_vls *ev, void *reg, void *event_data) {
+static void
+tclcad_action_wheel_scale(const char *ev, void *UNUSED(reg), void *event_data)
+{
     struct bview *gdvp = (struct bview *)event_data;
     int delta = 0;
-    char *p;
-    if ((p = strstr(bu_vls_cstr(ev), "\"delta\":"))) sscanf(p + 8, "%d", &delta);
+    const char *p;
+    if ((p = strstr(ev, "\"delta\":"))) sscanf(p + 8, "%d", &delta);
     const char *sf = (delta > 0) ? "1.1" : "0.9";
     struct bu_vls cmd = BU_VLS_INIT_ZERO;
     bu_vls_printf(&cmd, "%s zoom %s %s", bu_vls_cstr(&current_top->to_gedp->go_name), bu_vls_cstr(&gdvp->gv_name), sf);
@@ -2861,15 +2868,17 @@ static void tclcad_action_wheel_scale(const struct bu_vls *ev, void *reg, void *
     bu_vls_free(&cmd);
 }
 
-static void tclcad_action_mouse_click(const struct bu_vls *ev, void *reg, void *event_data) {
+static void
+tclcad_action_mouse_click(const char *ev, void *reg, void *event_data)
+{
     struct bview *gdvp = (struct bview *)event_data;
     const char *cmd_format = (const char *)reg;
     int cx = gdvp->gv_prevMouseX;
     int cy = gdvp->gv_prevMouseY;
-    char *p;
-    if ((p = strstr(bu_vls_cstr(ev), "\"cx\":"))) sscanf(p + 5, "%d", &cx);
-    if ((p = strstr(bu_vls_cstr(ev), "\"cy\":"))) sscanf(p + 5, "%d", &cy);
-    
+    const char *p;
+    if ((p = strstr(ev, "\"cx\":"))) sscanf(p + 5, "%d", &cx);
+    if ((p = strstr(ev, "\"cy\":"))) sscanf(p + 5, "%d", &cy);
+
     struct bu_vls cmd = BU_VLS_INIT_ZERO;
     bu_vls_printf(&cmd, cmd_format, bu_vls_cstr(&current_top->to_gedp->go_name), bu_vls_cstr(&gdvp->gv_name), cx, cy);
     Tcl_Eval(current_top->to_interp, bu_vls_cstr(&cmd));
@@ -2878,12 +2887,14 @@ static void tclcad_action_mouse_click(const struct bu_vls *ev, void *reg, void *
 
 static int bindings_loaded_mged = 0;
 
-static int tclcad_load_bindings_cmd(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[]) {
+static int
+tclcad_load_bindings_cmd(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *argv[])
+{
     if (argc < 2) {
         Tcl_AppendResult(interp, "wrong # args: should be \"", argv[0], " <json_path>\"", NULL);
         return TCL_ERROR;
     }
-    
+
     char *path = (char *)bu_dir(NULL, 0, BU_DIR_DATA, argv[1], NULL);
     if (!path) {
         Tcl_AppendResult(interp, "Failed to resolve path: ", argv[1], NULL);
@@ -2908,7 +2919,9 @@ static int tclcad_load_bindings_cmd(ClientData clientData, Tcl_Interp *interp, i
     return TCL_OK;
 }
 
-static int tclcad_dispatch_event_cmd(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[]) {
+static int
+tclcad_dispatch_event_cmd(ClientData clientData, Tcl_Interp *UNUSED(interp), int argc, const char *argv[])
+{
     if (argc < 8) return TCL_OK;
     struct tclcad_obj *to = (struct tclcad_obj *)clientData;
     struct bview *gdvp = bv_set_find_view(&to->to_gedp->ged_views, argv[2]);
@@ -2917,29 +2930,29 @@ static int tclcad_dispatch_event_cmd(ClientData clientData, Tcl_Interp *interp, 
     int x = atoi(argv[5]);
     int y = atoi(argv[6]);
     int state = atoi(argv[7]);
-    
+
     struct bu_vls ev = BU_VLS_INIT_ZERO;
     bu_vls_printf(&ev, "{\"type\": \"%s\"", argv[3]);
-    
-    if (!strcmp(argv[3], "key-press")) {
+
+    if (!bu_strcmp(argv[3], "key-press")) {
         char key_str[16] = {0};
         bu_strlcpy(key_str, argv[4], sizeof(key_str));
         if (strlen(key_str) == 1 && key_str[0] >= 'a' && key_str[0] <= 'z') {
             key_str[0] = key_str[0] - 'a' + 'A';
         }
         bu_vls_printf(&ev, ", \"key\": \"%s\"", key_str);
-    } else if (!strcmp(argv[3], "mouse-wheel")) {
+    } else if (!bu_strcmp(argv[3], "mouse-wheel")) {
         int delta = (argc > 8) ? atoi(argv[8]) : 0;
-        int mdelta = -1 * delta / 120; 
+        int mdelta = -1 * delta / 120;
         bu_vls_printf(&ev, ", \"delta\": %d", mdelta);
     } else {
-        int btn = atoi(argv[4]) - 1; 
-        if (!strcmp(argv[3], "mouse-move")) {
+        int btn = atoi(argv[4]) - 1;
+        if (!bu_strcmp(argv[3], "mouse-move")) {
             if (state & 0x100) btn = 0;
             else if (state & 0x200) btn = 1;
             else if (state & 0x400) btn = 2;
             else btn = -1;
-            
+
             int dx = x - gdvp->gv_prevMouseX;
             int dy = y - gdvp->gv_prevMouseY;
             bu_vls_printf(&ev, ", \"dx\": %d, \"dy\": %d, \"mode\": 0", dx, dy);
@@ -2947,7 +2960,7 @@ static int tclcad_dispatch_event_cmd(ClientData clientData, Tcl_Interp *interp, 
         if (btn >= 0) bu_vls_printf(&ev, ", \"button\": %d", btn);
         bu_vls_printf(&ev, ", \"cx\": %d, \"cy\": %d", x, y);
     }
-    
+
     if (state & (1 | 4 | 8)) {
         bu_vls_printf(&ev, ", \"modifiers\": [");
         int added = 0;
@@ -2957,12 +2970,12 @@ static int tclcad_dispatch_event_cmd(ClientData clientData, Tcl_Interp *interp, 
         bu_vls_printf(&ev, "]");
     }
     bu_vls_printf(&ev, "}");
-    
+
     bu_binding_process_event("dm", bu_vls_cstr(&ev), gdvp);
-    
+
     gdvp->gv_prevMouseX = x;
     gdvp->gv_prevMouseY = y;
-    
+
     bu_vls_free(&ev);
     return TCL_OK;
 }

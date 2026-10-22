@@ -227,7 +227,7 @@ bu_binding_register_schema(const char *context, const char *json_path)
 }
 
 void
-bu_binding_schema_add_action(const char *context, const char *action_name, const char *description)
+bu_binding_schema_add_action(const char *context, const char *action_name, const char *UNUSED(description))
 {
     if (!context || !action_name) return;
     std::string ctx(context);

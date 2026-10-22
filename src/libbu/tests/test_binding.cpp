@@ -21,14 +21,16 @@
 #include "common.h"
 
 #include <stdio.h>
-#include <string.h>
 
+#include "bu/app.h"
 #include "bu/binding.h"
 #include "bu/vls.h"
 
-int action_triggered = 0;
+static int action_triggered = 0;
 
-void mock_action_handler(const char *event_json, void *registered_data, void *event_data) {
+static void
+mock_action_handler(const char *event_json, void *UNUSED(registered_data), void *UNUSED(event_data))
+{
     action_triggered = 1;
     printf("Action handler triggered with JSON: %s\n", event_json);
 }

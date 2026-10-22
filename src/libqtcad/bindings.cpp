@@ -41,6 +41,7 @@ extern "C" {
 #include "bu/binding.h"
 #include "bu/file.h"
 #include "bu/log.h"
+#include "bu/str.h"
 }
 
 typedef void (*bounds_update_t)(struct bview *);
@@ -244,7 +245,7 @@ int CADkeyPressEvent(struct bview *v, int UNUSED(x_prev), int UNUSED(y_prev), QK
         key_str[0] = (char)k->key();
     } else {
         QString kstr = QKeySequence(k->key()).toString();
-        strncpy(key_str, kstr.toStdString().c_str(), 7);
+        bu_strlcpy(key_str, kstr.toStdString().c_str(), sizeof(key_str));
     }
     
     bu_vls_sprintf(&ev_json, "{\"type\": \"key-press\", \"key\": \"%s\"", key_str);
