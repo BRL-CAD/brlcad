@@ -21,10 +21,12 @@
 #include <cmath>
 #include <stdio.h>
 #include <sstream>
+#include <utility>
 
 #include "frontend/csg_capture.h"
 #include "frontend/model_capture.h"
 #include "frontend/snapshot_writer.h"
+#include "shared/mesh_normalization.h"
 
 
 static const double CREO_BRL_FEET_TO_INCHES = 12.0;
@@ -385,6 +387,129 @@ capture_model_version(ProMdl model, std::string *version)
 }
 
 
+int
+creo_brl_capture_tessellation_data(const ProSurfaceTessellationData *tessellation,
+                                    int surface_count,
+                                    double model_to_mm,
+                                    int write_normals,
+                                    struct snapshot_mesh_capture *mesh)
+{
+    std::vector<struct creo_brl_snapshot_vector> source_vertices;
+    std::vector<struct creo_brl_snapshot_triangle> source_triangles;
+    std::vector<struct creo_brl_snapshot_vector> source_normals;
+    struct creo_brl_mesh_normalization normalized = {};
+    struct snapshot_mesh_capture captured = {};
+    size_t facet_count = 0u;
+
+    if (!mesh)
+        return 0;
+    *mesh = snapshot_mesh_capture();
+    if (!tessellation || surface_count <= 0 || !std::isfinite(model_to_mm) ||
+        model_to_mm <= 0.0)
+        return 0;
+
+    for (int surface = 0; surface < surface_count; ++surface) {
+        const ProSurfaceTessellationData& data = tessellation[surface];
+        const size_t surface_facet_count = data.n_facets >= 0 ?
+                                               static_cast<size_t>(data.n_facets) : 0u;
+
+        if (data.n_vertices < 0 || data.n_facets < 0 ||
+            surface_facet_count > source_triangles.max_size() - facet_count ||
+            (data.n_facets > 0 && (!data.vertices || !data.facets ||
+                                   (write_normals && !data.normals))))
+            return 0;
+        facet_count += surface_facet_count;
+    }
+    if (facet_count == 0u ||
+        facet_count > source_vertices.max_size() /
+                          CREO_BRL_SNAPSHOT_TRIANGLE_VERTEX_COUNT ||
+        (write_normals &&
+         facet_count > source_normals.max_size() /
+                           CREO_BRL_SNAPSHOT_TRIANGLE_VERTEX_COUNT))
+        return 0;
+
+    source_vertices.reserve(facet_count * CREO_BRL_SNAPSHOT_TRIANGLE_VERTEX_COUNT);
+    source_triangles.reserve(facet_count);
+    if (write_normals)
+        source_normals.reserve(facet_count * CREO_BRL_SNAPSHOT_TRIANGLE_VERTEX_COUNT);
+
+    for (int surface = 0; surface < surface_count; ++surface) {
+        const ProSurfaceTessellationData& data = tessellation[surface];
+
+        for (int facet = 0; facet < data.n_facets; ++facet) {
+            struct creo_brl_snapshot_triangle triangle = {};
+
+            for (size_t corner = 0; corner < CREO_BRL_SNAPSHOT_TRIANGLE_VERTEX_COUNT; ++corner) {
+                const int source_index = data.facets[facet][corner];
+                struct creo_brl_snapshot_vector vertex = {};
+
+                if (source_index < 0 || source_index >= data.n_vertices)
+                    return 0;
+                set_vector(&vertex, data.vertices[source_index], model_to_mm);
+                for (size_t coordinate = 0;
+                     coordinate < CREO_BRL_SNAPSHOT_COORDINATE_COUNT; ++coordinate) {
+                    if (!std::isfinite(vertex.coordinates[coordinate]))
+                        return 0;
+                }
+
+                if (source_vertices.size() >= UINT32_MAX)
+                    return 0;
+                triangle.vertices[corner] =
+                    static_cast<uint32_t>(source_vertices.size());
+                source_vertices.push_back(vertex);
+
+                if (write_normals) {
+                    struct creo_brl_snapshot_vector normal = {};
+
+                    set_vector(&normal, data.normals[source_index], 1.0);
+                    for (size_t coordinate = 0;
+                         coordinate < CREO_BRL_SNAPSHOT_COORDINATE_COUNT; ++coordinate) {
+                        if (!std::isfinite(normal.coordinates[coordinate]))
+                            return 0;
+                    }
+                    source_normals.push_back(normal);
+                }
+            }
+            source_triangles.push_back(triangle);
+        }
+    }
+
+    if (!creo_brl_normalize_mesh(source_vertices, source_triangles, &normalized))
+        return 0;
+
+    captured.vertices = std::move(normalized.vertices);
+    captured.triangles = std::move(normalized.triangles);
+    captured.is_solid = normalized.is_solid;
+    if (write_normals) {
+        if (normalized.source_triangle_indices.size() >
+            captured.normals.max_size() /
+                CREO_BRL_SNAPSHOT_TRIANGLE_VERTEX_COUNT)
+            return 0;
+        captured.normals.reserve(normalized.source_triangle_indices.size() *
+                                 CREO_BRL_SNAPSHOT_TRIANGLE_VERTEX_COUNT);
+        captured.normal_indices.reserve(normalized.source_triangle_indices.size() *
+                                        CREO_BRL_SNAPSHOT_TRIANGLE_VERTEX_COUNT);
+        for (size_t accepted_index = 0;
+             accepted_index < normalized.source_triangle_indices.size(); ++accepted_index) {
+            const struct creo_brl_snapshot_triangle& source_triangle =
+                source_triangles[normalized.source_triangle_indices[accepted_index]];
+
+            for (size_t corner = 0;
+                 corner < CREO_BRL_SNAPSHOT_TRIANGLE_VERTEX_COUNT; ++corner) {
+                if (captured.normals.size() >= UINT32_MAX)
+                    return 0;
+                captured.normal_indices.push_back(
+                    static_cast<uint32_t>(captured.normals.size()));
+                captured.normals.push_back(source_normals[source_triangle.vertices[corner]]);
+            }
+        }
+    }
+
+    *mesh = std::move(captured);
+    return 1;
+}
+
+
 static int
 capture_tessellation(ProMdl model, double scale, const struct creo_brl_snapshot_settings *settings,
                      std::vector<struct creo_brl_snapshot_vector> *vertices,
@@ -397,49 +522,28 @@ capture_tessellation(ProMdl model, double scale, const struct creo_brl_snapshot_
     const double chord = settings->max_chord / scale;
     const double angle = settings->min_angle;
     const int write_normals = (settings->flags & CREO_BRL_SNAPSHOT_SETTING_WRITE_NORMALS) != 0;
+    struct snapshot_mesh_capture mesh = {};
+    int result = 0;
 
-    if (chord <= 0.0 || angle <= 0.0 ||
-        ProPartTessellate(ProMdlToPart(model), chord, angle, PRO_B_TRUE, &tessellation) != PRO_TK_NO_ERROR ||
-        ProArraySizeGet((ProArray)tessellation, &surface_count) != PRO_TK_NO_ERROR)
-        goto failure;
-
-    for (int surface = 0; surface < surface_count; ++surface) {
-        const ProSurfaceTessellationData *data = &tessellation[surface];
-        for (int facet = 0; facet < data->n_facets; ++facet) {
-            struct creo_brl_snapshot_triangle triangle = {};
-            const size_t first_vertex = vertices->size();
-
-            if (first_vertex > UINT32_MAX - CREO_BRL_SNAPSHOT_TRIANGLE_VERTEX_COUNT)
-                goto failure;
-
-            for (unsigned int corner = 0; corner < CREO_BRL_SNAPSHOT_TRIANGLE_VERTEX_COUNT; ++corner) {
-                struct creo_brl_snapshot_vector vertex = {};
-                const int source_index = data->facets[facet][corner];
-                if (source_index < 0 || source_index >= data->n_vertices)
-                    goto failure;
-                set_vector(&vertex, data->vertices[source_index], scale);
-                vertices->push_back(vertex);
-                triangle.vertices[corner] = (uint32_t)(first_vertex + corner);
-
-                if (write_normals) {
-                    struct creo_brl_snapshot_vector normal = {};
-                    set_vector(&normal, data->normals[source_index], 1.0);
-                    normals->push_back(normal);
-                    normal_indices->push_back((uint32_t)(normals->size() - 1));
-                }
-            }
-
-            triangles->push_back(triangle);
-        }
+    if (chord > 0.0 && angle > 0.0 &&
+        ProPartTessellate(ProMdlToPart(model), chord, angle, PRO_B_TRUE,
+                          &tessellation) == PRO_TK_NO_ERROR &&
+        tessellation &&
+        ProArraySizeGet((ProArray)tessellation, &surface_count) == PRO_TK_NO_ERROR) {
+        result = creo_brl_capture_tessellation_data(
+            tessellation, surface_count, scale, write_normals, &mesh);
     }
 
-    (void)ProPartTessellationFree(&tessellation);
-    return !vertices->empty();
-
-failure:
     if (tessellation)
         (void)ProPartTessellationFree(&tessellation);
-    return 0;
+    if (!result)
+        return 0;
+
+    vertices->swap(mesh.vertices);
+    triangles->swap(mesh.triangles);
+    normals->swap(mesh.normals);
+    normal_indices->swap(mesh.normal_indices);
+    return 1;
 }
 
 

@@ -48,6 +48,15 @@ struct snapshot_part_capture {
 };
 
 
+struct snapshot_mesh_capture {
+    std::vector<struct creo_brl_snapshot_vector> vertices;
+    std::vector<struct creo_brl_snapshot_triangle> triangles;
+    std::vector<struct creo_brl_snapshot_vector> normals;
+    std::vector<uint32_t> normal_indices;
+    int is_solid;
+};
+
+
 struct snapshot_assembly_capture {
     struct creo_brl_snapshot_assembly assembly;
     std::string model_name;
@@ -62,6 +71,14 @@ struct snapshot_scene_capture {
     std::vector<struct snapshot_part_capture> parts;
     std::vector<struct snapshot_assembly_capture> assemblies;
 };
+
+
+int creo_brl_capture_tessellation_data(
+    const ProSurfaceTessellationData *tessellation,
+    int surface_count,
+    double model_to_mm,
+    int write_normals,
+    struct snapshot_mesh_capture *mesh);
 
 
 int creo_brl_frontend_capture_model_scene(ProMdl model,

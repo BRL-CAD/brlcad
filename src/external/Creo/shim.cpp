@@ -73,6 +73,7 @@ extern "C" int ProParameterVisit(void **, void*, int (*)(ProParameter*, int, voi
 extern "C" int ProParamvalueTypeGet(void **,void *) {return 0;}
 extern "C" int ProParamvalueValueGet(void **,int,void *) {return 0;}
 extern "C" int ProPartDensityGet(void*,double*) {return 0;}
+extern "C" int ProPartMaterialNameGet(void*,wchar_t*) {return 0;}
 extern "C" int ProPartTessellate(void*,double,double,int,ProSurfaceTessellationData**) {return 0;}
 extern "C" int ProSolidBodiesCollect(void*, ProSolidBody**) {return 0;}
 extern "C" int ProSolidBodySurfaceVisit(void*,int(*)(void*,int,void*),void*) {return 0;}

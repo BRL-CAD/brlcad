@@ -43,6 +43,7 @@ static const char MANIFEST_LINE_ENDING = 10;
 static const uint64_t VALID_SNAPSHOT_SIZE_DELTA = 0u;
 static const uint64_t INVALID_SNAPSHOT_SIZE_DELTA = 1u;
 static const int FIXTURE_REGION_ID = 42;
+static const double MESH_NEARBY_VERTEX_OFFSET_MM = 0.0001;
 
 
 struct fixture_definition {
@@ -1190,7 +1191,9 @@ main(int argument_count, char *arguments[])
         "scene_normalized_mesh.manifest",
         0u,
         {{{0.0, 0.0, 0.0}}, {{100.0, 0.0, 0.0}}, {{100.0, 100.0, 0.0}},
-         {{0.0, 0.0, 0.0}}, {{100.0, 100.0, 0.0}}, {{0.0, 100.0, 0.0}}},
+         {{MESH_NEARBY_VERTEX_OFFSET_MM, 0.0, 0.0}},
+         {{100.0, 100.0 + MESH_NEARBY_VERTEX_OFFSET_MM, 0.0}},
+         {{0.0, 100.0, 0.0}}},
         {{{0u, 1u, 2u}}, {{3u, 4u, 5u}}}, {}, {}, 100.0, 100.0, 0.0);
     const fixture_definition normals_fixture = make_mesh_fixture(
         "scene_mesh_with_normals",

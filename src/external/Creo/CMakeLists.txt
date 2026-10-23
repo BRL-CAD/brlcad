@@ -10,6 +10,9 @@
 set(CREO2BRL_SHARED_SOURCES
   part_writer.cpp
   )
+set(CREO2BRL_MESH_SOURCES
+  shared/mesh_normalization.cpp
+  )
 
 set(CREO2BRL_FRONTEND_OPTION_SOURCES
   frontend/profile_path.cpp
@@ -52,6 +55,7 @@ set(CREO2BRL_CORE_SOURCES
   conversion/profile_reader.cpp
   conversion/scene_convert.cpp
   ${CREO2BRL_SHARED_SOURCES}
+  ${CREO2BRL_MESH_SOURCES}
   )
 
 if(NOT DEFINED BRLCAD_BUILDTEST_EXTERNALS)
@@ -359,7 +363,8 @@ if(NOT DEFINED BRLCAD_BUILDTEST_EXTERNALS)
 
   add_library(creo-brl SHARED
     loader.c
-    ${CREO2BRL_FRONTEND_SOURCES})
+    ${CREO2BRL_FRONTEND_SOURCES}
+    ${CREO2BRL_MESH_SOURCES})
   target_include_directories(creo-brl PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}")
   target_link_libraries(creo-brl ${WIN_LIBS} ${CREO_PTK_DLL_LIBS})
   set_target_properties(creo-brl PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CREO_BUNDLE_BIN_DIR}")
@@ -513,6 +518,7 @@ else(NOT DEFINED BRLCAD_BUILDTEST_EXTERNALS)
   set(CREO2BRL_SOURCES
     ${CREO2BRL_LEGACY_SOURCES}
     ${CREO2BRL_FRONTEND_SOURCES}
+    ${CREO2BRL_MESH_SOURCES}
     shim.cpp
     )
   add_library(creo-brl ${CREO2BRL_SOURCES})
@@ -555,10 +561,12 @@ else(NOT DEFINED BRLCAD_BUILDTEST_EXTERNALS)
     profile_controls.h
     shared/core_api.h
     shared/conversion_options.h
+    shared/mesh_normalization.h
     resources/creo-brl-msg.txt
     resources/creo_brl.res
     resources/ptc_materials.mtl
     shim.h
+    tests/test_capture_policy.cpp
     )
   CMAKEFILES(${creo_dist_files})
   CMAKEFILES(CMakeLists.txt)

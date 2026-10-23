@@ -26,11 +26,11 @@
 #include <string.h>
 
 #include "conversion/name_allocator.h"
-#include "bg/trimesh.h"
 #include "bg/vert_tree.h"
 #include "bu/avs.h"
 #include "part_writer.h"
 #include "shared/core_api.h"
+#include "shared/mesh_normalization.h"
 #include "wdb.h"
 
 
@@ -232,31 +232,9 @@ cleanup:
 
 
 static int
-failed_facet(double min_edge, size_t v1, size_t v2, size_t v3, const struct bg_vert_tree *tree)
-{
-    point_t point1, point2, point3;
-    const double minimum_edge = fabs(min_edge);
-
-    if (v1 == v2 || v2 == v3 || v1 == v3)
-        return 1;
-
-    VMOVE(point1, &tree->the_array[v1 * 3]);
-    VMOVE(point2, &tree->the_array[v2 * 3]);
-    VMOVE(point3, &tree->the_array[v3 * 3]);
-
-    if (DIST_PNT_PNT(point1, point2) < minimum_edge ||
-        DIST_PNT_PNT(point2, point3) < minimum_edge ||
-        DIST_PNT_PNT(point1, point3) < minimum_edge)
-        return 1;
-
-    return 0;
-}
-
-
-static int
-facet_winds_ccw(size_t v1, size_t v2, size_t v3,
+facet_winds_ccw(uint32_t v1, uint32_t v2, uint32_t v3,
                 size_t n1, size_t n2, size_t n3,
-                const struct bg_vert_tree *vertices,
+                const std::vector<fastf_t>& vertices,
                 const struct bg_vert_tree *normals)
 {
     vect_t point1, point2, point3;
@@ -264,9 +242,9 @@ facet_winds_ccw(size_t v1, size_t v2, size_t v3,
     vect_t edge12, edge13;
     vect_t facet_normal, average_normal;
 
-    VMOVE(point1, &vertices->the_array[v1 * 3]);
-    VMOVE(point2, &vertices->the_array[v2 * 3]);
-    VMOVE(point3, &vertices->the_array[v3 * 3]);
+    VMOVE(point1, &vertices[(size_t)v1 * 3]);
+    VMOVE(point2, &vertices[(size_t)v2 * 3]);
+    VMOVE(point3, &vertices[(size_t)v3 * 3]);
     VMOVE(normal1, &normals->the_array[n1 * 3]);
     VMOVE(normal2, &normals->the_array[n2 * 3]);
     VMOVE(normal3, &normals->the_array[n3 * 3]);
@@ -298,15 +276,25 @@ normalize_snapshot_mesh(const struct creo_brl_snapshot_part *part,
                         std::vector<int>& source_normal_indices,
                         struct normalized_mesh *mesh)
 {
-    struct bg_vert_tree *vertex_tree = NULL;
     struct bg_vert_tree *normal_tree = NULL;
     const int has_normals = (part->flags & CREO_BRL_SNAPSHOT_PART_HAS_NORMALS) != 0;
     const int use_normals = has_normals && settings &&
                             (settings->flags & CREO_BRL_SNAPSHOT_SETTING_WRITE_NORMALS) != 0;
-    const double min_edge = settings ? settings->min_edge : 0.0;
-    const double min_edge_sq = min_edge * min_edge;
+    const double vertex_tolerance_squared = CREO_BRL_MESH_VERTEX_TOLERANCE_MM *
+                                            CREO_BRL_MESH_VERTEX_TOLERANCE_MM;
+    std::vector<struct creo_brl_snapshot_vector> normalization_vertices;
+    std::vector<struct creo_brl_snapshot_triangle> normalization_triangles;
+    struct creo_brl_mesh_normalization normalization = {};
 
-    if (!mesh)
+    if (!part || !mesh || source_vertices.size() % CREO_BRL_SNAPSHOT_COORDINATE_COUNT != 0 ||
+        source_triangles.size() % CREO_BRL_SNAPSHOT_TRIANGLE_VERTEX_COUNT != 0 ||
+        source_vertices.size() / CREO_BRL_SNAPSHOT_COORDINATE_COUNT != part->vertex_count ||
+        source_triangles.size() / CREO_BRL_SNAPSHOT_TRIANGLE_VERTEX_COUNT != part->triangle_count ||
+        (use_normals &&
+         (source_normals.size() % CREO_BRL_SNAPSHOT_COORDINATE_COUNT != 0 ||
+          source_normals.size() / CREO_BRL_SNAPSHOT_COORDINATE_COUNT !=
+              part->normal_count ||
+          source_normal_indices.size() != source_triangles.size())))
         return 0;
 
     mesh->vertices.clear();
@@ -315,61 +303,108 @@ normalize_snapshot_mesh(const struct creo_brl_snapshot_part *part,
     mesh->face_normals.clear();
     mesh->is_solid = 0;
 
-    vertex_tree = bg_vert_tree_create();
-    normal_tree = bg_vert_tree_create();
-    if (!vertex_tree || !normal_tree)
+    normalization_vertices.resize(source_vertices.size() /
+                                  CREO_BRL_SNAPSHOT_COORDINATE_COUNT);
+    for (size_t vertex = 0; vertex < normalization_vertices.size(); ++vertex) {
+        for (size_t coordinate = 0;
+             coordinate < CREO_BRL_SNAPSHOT_COORDINATE_COUNT; ++coordinate) {
+            normalization_vertices[vertex].coordinates[coordinate] =
+                source_vertices[vertex * CREO_BRL_SNAPSHOT_COORDINATE_COUNT + coordinate];
+        }
+    }
+    normalization_triangles.resize(source_triangles.size() /
+                                   CREO_BRL_SNAPSHOT_TRIANGLE_VERTEX_COUNT);
+    for (size_t triangle = 0; triangle < normalization_triangles.size(); ++triangle) {
+        for (size_t corner = 0;
+             corner < CREO_BRL_SNAPSHOT_TRIANGLE_VERTEX_COUNT; ++corner) {
+            const int source_vertex = source_triangles[
+                triangle * CREO_BRL_SNAPSHOT_TRIANGLE_VERTEX_COUNT + corner];
+
+            if (source_vertex < 0)
+                goto cleanup;
+            normalization_triangles[triangle].vertices[corner] =
+                static_cast<uint32_t>(source_vertex);
+        }
+    }
+
+    if (!creo_brl_normalize_mesh(normalization_vertices, normalization_triangles,
+                                 &normalization))
         goto cleanup;
 
-    for (uint64_t triangle_index = 0; triangle_index < part->triangle_count; ++triangle_index) {
-        const size_t face_offset = (size_t)triangle_index * CREO_BRL_SNAPSHOT_TRIANGLE_VERTEX_COUNT;
-        const size_t vertex_offset1 = (size_t)source_triangles[face_offset + 0] * 3;
-        const size_t vertex_offset2 = (size_t)source_triangles[face_offset + 1] * 3;
-        const size_t vertex_offset3 = (size_t)source_triangles[face_offset + 2] * 3;
-        size_t v1, v2, v3;
+    if (normalization.vertices.size() > mesh->vertices.max_size() /
+                                            CREO_BRL_SNAPSHOT_COORDINATE_COUNT ||
+        normalization.triangles.size() > mesh->faces.max_size() /
+                                             CREO_BRL_SNAPSHOT_TRIANGLE_VERTEX_COUNT)
+        goto cleanup;
+    mesh->vertices.reserve(normalization.vertices.size() *
+                           CREO_BRL_SNAPSHOT_COORDINATE_COUNT);
+    for (size_t vertex = 0; vertex < normalization.vertices.size(); ++vertex) {
+        mesh->vertices.insert(mesh->vertices.end(),
+                              normalization.vertices[vertex].coordinates,
+                              normalization.vertices[vertex].coordinates +
+                                  CREO_BRL_SNAPSHOT_COORDINATE_COUNT);
+    }
+    mesh->faces.reserve(normalization.triangles.size() *
+                        CREO_BRL_SNAPSHOT_TRIANGLE_VERTEX_COUNT);
+
+    if (use_normals) {
+        normal_tree = bg_vert_tree_create();
+        if (!normal_tree)
+            goto cleanup;
+        mesh->face_normals.reserve(normalization.triangles.size() *
+                                   CREO_BRL_SNAPSHOT_TRIANGLE_VERTEX_COUNT);
+    }
+
+    for (size_t triangle_index = 0;
+         triangle_index < normalization.triangles.size(); ++triangle_index) {
+        const size_t source_triangle_index =
+            normalization.source_triangle_indices[triangle_index];
+        const size_t face_offset = source_triangle_index *
+                                   CREO_BRL_SNAPSHOT_TRIANGLE_VERTEX_COUNT;
+        const struct creo_brl_snapshot_triangle& triangle =
+            normalization.triangles[triangle_index];
+        const uint32_t v1 = triangle.vertices[0];
+        const uint32_t v2 = triangle.vertices[1];
+        const uint32_t v3 = triangle.vertices[2];
         size_t n1 = 0, n2 = 0, n3 = 0;
 
-        v1 = bg_vert_tree_add(vertex_tree,
-                              source_vertices[vertex_offset1 + 0],
-                              source_vertices[vertex_offset1 + 1],
-                              source_vertices[vertex_offset1 + 2],
-                              min_edge_sq);
-        v2 = bg_vert_tree_add(vertex_tree,
-                              source_vertices[vertex_offset2 + 0],
-                              source_vertices[vertex_offset2 + 1],
-                              source_vertices[vertex_offset2 + 2],
-                              min_edge_sq);
-        v3 = bg_vert_tree_add(vertex_tree,
-                              source_vertices[vertex_offset3 + 0],
-                              source_vertices[vertex_offset3 + 1],
-                              source_vertices[vertex_offset3 + 2],
-                              min_edge_sq);
-
         if (use_normals) {
-            const size_t normal_offset1 = (size_t)source_normal_indices[face_offset + 0] * 3;
-            const size_t normal_offset2 = (size_t)source_normal_indices[face_offset + 1] * 3;
-            const size_t normal_offset3 = (size_t)source_normal_indices[face_offset + 2] * 3;
+            if (source_normal_indices[face_offset + 0] < 0 ||
+                source_normal_indices[face_offset + 1] < 0 ||
+                source_normal_indices[face_offset + 2] < 0)
+                goto cleanup;
+            const size_t normal_offset1 =
+                (size_t)source_normal_indices[face_offset + 0] * 3;
+            const size_t normal_offset2 =
+                (size_t)source_normal_indices[face_offset + 1] * 3;
+            const size_t normal_offset3 =
+                (size_t)source_normal_indices[face_offset + 2] * 3;
+
+            if (source_normals.size() < CREO_BRL_SNAPSHOT_COORDINATE_COUNT ||
+                normal_offset1 > source_normals.size() - 3u ||
+                normal_offset2 > source_normals.size() - 3u ||
+                normal_offset3 > source_normals.size() - 3u)
+                goto cleanup;
 
             n1 = bg_vert_tree_add(normal_tree,
                                   source_normals[normal_offset1 + 0],
                                   source_normals[normal_offset1 + 1],
                                   source_normals[normal_offset1 + 2],
-                                  min_edge_sq);
+                                  vertex_tolerance_squared);
             n2 = bg_vert_tree_add(normal_tree,
                                   source_normals[normal_offset2 + 0],
                                   source_normals[normal_offset2 + 1],
                                   source_normals[normal_offset2 + 2],
-                                  min_edge_sq);
+                                  vertex_tolerance_squared);
             n3 = bg_vert_tree_add(normal_tree,
                                   source_normals[normal_offset3 + 0],
                                   source_normals[normal_offset3 + 1],
                                   source_normals[normal_offset3 + 2],
-                                  min_edge_sq);
+                                  vertex_tolerance_squared);
         }
 
-        if (failed_facet(min_edge, v1, v2, v3, vertex_tree))
-            continue;
-
-        if (use_normals && facet_winds_ccw(v1, v3, v2, n1, n3, n2, vertex_tree, normal_tree)) {
+        if (use_normals && facet_winds_ccw(v1, v3, v2, n1, n3, n2,
+                                           mesh->vertices, normal_tree)) {
             mesh->faces.push_back((int)v1);
             mesh->faces.push_back((int)v3);
             mesh->faces.push_back((int)v2);
@@ -388,29 +423,24 @@ normalize_snapshot_mesh(const struct creo_brl_snapshot_part *part,
         }
     }
 
-    if (mesh->faces.empty() || vertex_tree->curr_vert == 0)
+    if (mesh->faces.empty() || mesh->vertices.empty())
         goto cleanup;
     if (use_normals && mesh->face_normals.empty())
         goto cleanup;
 
-    mesh->vertices.assign(vertex_tree->the_array,
-                          vertex_tree->the_array + vertex_tree->curr_vert * 3);
     if (use_normals) {
         mesh->normals.assign(normal_tree->the_array,
                              normal_tree->the_array + normal_tree->curr_vert * 3);
     }
-    mesh->is_solid = !bg_trimesh_solid((int)vertex_tree->curr_vert,
-                                       (int)(mesh->faces.size() / 3),
-                                       vertex_tree->the_array,
-                                       mesh->faces.data(), NULL);
+    mesh->is_solid = normalization.is_solid;
 
-    bg_vert_tree_destroy(vertex_tree);
-    bg_vert_tree_destroy(normal_tree);
+    if (normal_tree)
+        bg_vert_tree_destroy(normal_tree);
     return 1;
 
 cleanup:
-    bg_vert_tree_destroy(vertex_tree);
-    bg_vert_tree_destroy(normal_tree);
+    if (normal_tree)
+        bg_vert_tree_destroy(normal_tree);
     mesh->vertices.clear();
     mesh->faces.clear();
     mesh->normals.clear();

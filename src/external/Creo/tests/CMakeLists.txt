@@ -44,3 +44,35 @@ add_test(
     NAME creo_profile_options
     COMMAND "$<TARGET_FILE:creo_profile_options_test>" "${CMAKE_CURRENT_BINARY_DIR}"
 )
+
+add_executable(creo_capture_policy_test
+    test_capture_policy.cpp
+    "${CMAKE_CURRENT_SOURCE_DIR}/../frontend/model_capture.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/../shared/mesh_normalization.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/../shim.cpp"
+)
+target_include_directories(creo_capture_policy_test PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/..")
+target_compile_definitions(creo_capture_policy_test PRIVATE TEST_BUILD BRLCADBUILD HAVE_CONFIG_H)
+target_link_libraries(creo_capture_policy_test PRIVATE ${CREO_BRLCAD_LIBS})
+add_dependencies(creo_capture_policy_test creo-brl-core)
+set_target_properties(
+    creo_capture_policy_test
+    PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CREO_BUNDLE_BIN_DIR}"
+)
+
+add_test(
+    NAME creo_capture_policy
+    COMMAND "$<TARGET_FILE:creo_capture_policy_test>"
+)
+
+foreach(mesh_case IN ITEMS
+    mesh-near-vertices
+    mesh-collapsed-facet
+)
+  string(REPLACE "-" "_" mesh_name "${mesh_case}")
+  add_test(
+      NAME "creo_chunk5_gap_${mesh_name}"
+      COMMAND "$<TARGET_FILE:creo_capture_policy_test>" "${mesh_case}"
+  )
+  set_tests_properties("creo_chunk5_gap_${mesh_name}" PROPERTIES LABELS "chunk5-gap")
+endforeach()
