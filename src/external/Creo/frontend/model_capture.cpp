@@ -17,6 +17,7 @@
 
 #include "common.h"
 
+#include <algorithm>
 #include <ctype.h>
 #include <cmath>
 #include <stdio.h>
@@ -33,6 +34,10 @@ static const double CREO_BRL_FEET_TO_INCHES = 12.0;
 static const double CREO_BRL_CENTIMETERS_PER_INCH = 2.54;
 static const double CREO_BRL_MILLIMETERS_PER_INCH = 25.4;
 static const double CREO_BRL_METERS_PER_INCH = 0.0254;
+static const size_t CREO_BRL_TESSELLATION_ATTEMPT_COUNT = 20u;
+static const size_t CREO_BRL_MAXIMUM_FACET_COUNT = 100000u;
+static const double CREO_BRL_MINIMUM_CHORD_FACTOR = 0.1;
+static const double CREO_BRL_MAXIMUM_ANGLE_FACTOR = 1.5;
 static int
 wide_to_utf8(const wchar_t *wide_text, std::string *text)
 {
@@ -316,13 +321,6 @@ model_scale_to_mm(ProMdl model, double *scale)
 }
 
 
-static void
-set_vector(struct creo_brl_snapshot_vector *destination, const ProVector source, double scale)
-{
-    VSCALE(destination->coordinates, source, scale);
-}
-
-
 static unsigned char
 snapshot_color_component(double component)
 {
@@ -388,10 +386,65 @@ capture_model_version(ProMdl model, std::string *version)
 
 
 int
+creo_brl_build_tessellation_policy(const struct creo_brl_snapshot_settings *settings,
+                                    double model_to_mm,
+                                    double bbox_diagonal_mm,
+                                    struct snapshot_tessellation_policy *policy)
+{
+    double maximum_chord = 0.0;
+    double minimum_chord = 0.0;
+    double maximum_angle = 0.0;
+
+    if (!settings || !policy || !std::isfinite(model_to_mm) || model_to_mm <= 0.0 ||
+        !std::isfinite(settings->max_chord) || settings->max_chord <= 0.0 ||
+        !std::isfinite(settings->min_angle) || settings->min_angle <= 0.0 ||
+        settings->min_angle > CREO_BRL_SNAPSHOT_ANGLE_MAXIMUM)
+        return 0;
+
+    if (settings->chord_mode == CREO_BRL_SNAPSHOT_CHORD_RELATIVE) {
+        if (!std::isfinite(bbox_diagonal_mm) || bbox_diagonal_mm <= 0.0 ||
+            settings->max_chord > CREO_BRL_SNAPSHOT_PERCENT_MAXIMUM)
+            return 0;
+        maximum_chord = bbox_diagonal_mm * settings->max_chord /
+                        (CREO_BRL_SNAPSHOT_PERCENT_MAXIMUM * model_to_mm);
+    } else if (settings->chord_mode == CREO_BRL_SNAPSHOT_CHORD_ABSOLUTE) {
+        maximum_chord = settings->max_chord / model_to_mm;
+    } else {
+        return 0;
+    }
+
+    minimum_chord = maximum_chord * CREO_BRL_MINIMUM_CHORD_FACTOR;
+    maximum_angle = (std::min)(CREO_BRL_SNAPSHOT_ANGLE_MAXIMUM,
+                               settings->min_angle * CREO_BRL_MAXIMUM_ANGLE_FACTOR);
+    if (!std::isfinite(maximum_chord) || maximum_chord <= 0.0 ||
+        !std::isfinite(minimum_chord) || minimum_chord <= 0.0)
+        return 0;
+
+    policy->attempts.clear();
+    policy->attempts.reserve(CREO_BRL_TESSELLATION_ATTEMPT_COUNT);
+    policy->maximum_facet_count = CREO_BRL_MAXIMUM_FACET_COUNT;
+    for (size_t index = 0; index < CREO_BRL_TESSELLATION_ATTEMPT_COUNT; ++index) {
+        const double fraction = CREO_BRL_TESSELLATION_ATTEMPT_COUNT > 1u ?
+                                    static_cast<double>(index) /
+                                        static_cast<double>(CREO_BRL_TESSELLATION_ATTEMPT_COUNT - 1u) :
+                                    0.0;
+        struct snapshot_tessellation_attempt attempt = {};
+
+        attempt.chord = maximum_chord - (maximum_chord - minimum_chord) * fraction;
+        attempt.angle = settings->min_angle + (maximum_angle - settings->min_angle) * fraction;
+        policy->attempts.push_back(attempt);
+    }
+
+    return 1;
+}
+
+
+int
 creo_brl_capture_tessellation_data(const ProSurfaceTessellationData *tessellation,
                                     int surface_count,
                                     double model_to_mm,
                                     int write_normals,
+                                    size_t maximum_facet_count,
                                     struct snapshot_mesh_capture *mesh)
 {
     std::vector<struct creo_brl_snapshot_vector> source_vertices;
@@ -405,22 +458,22 @@ creo_brl_capture_tessellation_data(const ProSurfaceTessellationData *tessellatio
         return 0;
     *mesh = snapshot_mesh_capture();
     if (!tessellation || surface_count <= 0 || !std::isfinite(model_to_mm) ||
-        model_to_mm <= 0.0)
+        model_to_mm <= 0.0 || maximum_facet_count == 0u)
         return 0;
 
     for (int surface = 0; surface < surface_count; ++surface) {
         const ProSurfaceTessellationData& data = tessellation[surface];
-        const size_t surface_facet_count = data.n_facets >= 0 ?
-                                               static_cast<size_t>(data.n_facets) : 0u;
 
         if (data.n_vertices < 0 || data.n_facets < 0 ||
-            surface_facet_count > source_triangles.max_size() - facet_count ||
+            static_cast<size_t>(data.n_facets) > maximum_facet_count - facet_count ||
             (data.n_facets > 0 && (!data.vertices || !data.facets ||
                                    (write_normals && !data.normals))))
             return 0;
-        facet_count += surface_facet_count;
+        facet_count += static_cast<size_t>(data.n_facets);
     }
-    if (facet_count == 0u ||
+    if (facet_count == 0u)
+        return 0;
+    if (facet_count > source_triangles.max_size() ||
         facet_count > source_vertices.max_size() /
                           CREO_BRL_SNAPSHOT_TRIANGLE_VERTEX_COUNT ||
         (write_normals &&
@@ -445,9 +498,10 @@ creo_brl_capture_tessellation_data(const ProSurfaceTessellationData *tessellatio
 
                 if (source_index < 0 || source_index >= data.n_vertices)
                     return 0;
-                set_vector(&vertex, data.vertices[source_index], model_to_mm);
-                for (size_t coordinate = 0;
-                     coordinate < CREO_BRL_SNAPSHOT_COORDINATE_COUNT; ++coordinate) {
+                for (size_t coordinate = 0; coordinate < CREO_BRL_SNAPSHOT_COORDINATE_COUNT;
+                     ++coordinate) {
+                    vertex.coordinates[coordinate] =
+                        data.vertices[source_index][coordinate] * model_to_mm;
                     if (!std::isfinite(vertex.coordinates[coordinate]))
                         return 0;
                 }
@@ -461,9 +515,9 @@ creo_brl_capture_tessellation_data(const ProSurfaceTessellationData *tessellatio
                 if (write_normals) {
                     struct creo_brl_snapshot_vector normal = {};
 
-                    set_vector(&normal, data.normals[source_index], 1.0);
                     for (size_t coordinate = 0;
                          coordinate < CREO_BRL_SNAPSHOT_COORDINATE_COUNT; ++coordinate) {
+                        normal.coordinates[coordinate] = data.normals[source_index][coordinate];
                         if (!std::isfinite(normal.coordinates[coordinate]))
                             return 0;
                     }
@@ -510,40 +564,127 @@ creo_brl_capture_tessellation_data(const ProSurfaceTessellationData *tessellatio
 }
 
 
-static int
-capture_tessellation(ProMdl model, double scale, const struct creo_brl_snapshot_settings *settings,
-                     std::vector<struct creo_brl_snapshot_vector> *vertices,
-                     std::vector<struct creo_brl_snapshot_triangle> *triangles,
-                     std::vector<struct creo_brl_snapshot_vector> *normals,
-                     std::vector<uint32_t> *normal_indices)
+int
+creo_brl_run_tessellation_policy(const struct snapshot_tessellation_policy *policy,
+                                  int require_solidity,
+                                  snapshot_tessellation_attempt_fn capture_attempt,
+                                  void *context,
+                                  struct snapshot_mesh_capture *mesh)
 {
+    if (!mesh)
+        return 0;
+    *mesh = snapshot_mesh_capture();
+    if (!policy || policy->attempts.empty() || policy->maximum_facet_count == 0u ||
+        !capture_attempt)
+        return 0;
+
+    for (size_t index = 0; index < policy->attempts.size(); ++index) {
+        struct snapshot_mesh_capture attempt_mesh = {};
+
+        if (!capture_attempt(context, &policy->attempts[index],
+                             policy->maximum_facet_count, &attempt_mesh) ||
+            attempt_mesh.vertices.empty() || attempt_mesh.triangles.empty() ||
+            attempt_mesh.triangles.size() > policy->maximum_facet_count ||
+            (require_solidity && !attempt_mesh.is_solid))
+            continue;
+
+        *mesh = std::move(attempt_mesh);
+        return 1;
+    }
+
+    return 0;
+}
+
+
+struct toolkit_tessellation_context {
+    ProMdl model;
+    double model_to_mm;
+    int write_normals;
+};
+
+
+static int
+capture_toolkit_tessellation_attempt(void *context,
+                                     const struct snapshot_tessellation_attempt *attempt,
+                                     size_t maximum_facet_count,
+                                     struct snapshot_mesh_capture *mesh)
+{
+    struct toolkit_tessellation_context *toolkit =
+        static_cast<struct toolkit_tessellation_context *>(context);
     ProSurfaceTessellationData *tessellation = NULL;
     int surface_count = 0;
-    const double chord = settings->max_chord / scale;
-    const double angle = settings->min_angle;
-    const int write_normals = (settings->flags & CREO_BRL_SNAPSHOT_SETTING_WRITE_NORMALS) != 0;
-    struct snapshot_mesh_capture mesh = {};
     int result = 0;
 
-    if (chord > 0.0 && angle > 0.0 &&
-        ProPartTessellate(ProMdlToPart(model), chord, angle, PRO_B_TRUE,
-                          &tessellation) == PRO_TK_NO_ERROR &&
+    if (!toolkit || !toolkit->model || !attempt || !mesh)
+        return 0;
+
+    if (ProPartTessellate(ProMdlToPart(toolkit->model), attempt->chord,
+                          attempt->angle, PRO_B_TRUE, &tessellation) == PRO_TK_NO_ERROR &&
         tessellation &&
         ProArraySizeGet((ProArray)tessellation, &surface_count) == PRO_TK_NO_ERROR) {
         result = creo_brl_capture_tessellation_data(
-            tessellation, surface_count, scale, write_normals, &mesh);
+            tessellation, surface_count, toolkit->model_to_mm,
+            toolkit->write_normals, maximum_facet_count, mesh);
     }
 
     if (tessellation)
         (void)ProPartTessellationFree(&tessellation);
-    if (!result)
+    return result;
+}
+
+
+static int
+capture_tessellation(ProMdl model,
+                     double model_to_mm,
+                     double bbox_diagonal_mm,
+                     const struct creo_brl_snapshot_settings *settings,
+                     struct snapshot_part_capture *capture)
+{
+    struct snapshot_tessellation_policy policy;
+    struct snapshot_mesh_capture mesh = {};
+    struct toolkit_tessellation_context context = {};
+
+    if (!capture)
+        return 0;
+    capture->vertices.clear();
+    capture->triangles.clear();
+    capture->normals.clear();
+    capture->normal_indices.clear();
+    if (!creo_brl_build_tessellation_policy(settings, model_to_mm,
+                                             bbox_diagonal_mm, &policy))
         return 0;
 
-    vertices->swap(mesh.vertices);
-    triangles->swap(mesh.triangles);
-    normals->swap(mesh.normals);
-    normal_indices->swap(mesh.normal_indices);
+    context.model = model;
+    context.model_to_mm = model_to_mm;
+    context.write_normals =
+        (settings->flags & CREO_BRL_SNAPSHOT_SETTING_WRITE_NORMALS) != 0;
+    if (!creo_brl_run_tessellation_policy(
+            &policy,
+            (settings->flags & CREO_BRL_SNAPSHOT_SETTING_CHECK_SOLIDITY) != 0,
+            capture_toolkit_tessellation_attempt, &context, &mesh))
+        return 0;
+
+    capture->vertices.swap(mesh.vertices);
+    capture->triangles.swap(mesh.triangles);
+    capture->normals.swap(mesh.normals);
+    capture->normal_indices.swap(mesh.normal_indices);
     return 1;
+}
+
+
+void
+creo_brl_mark_bbox_fallback(struct snapshot_part_capture *capture)
+{
+    if (!capture)
+        return;
+
+    capture->vertices.clear();
+    capture->triangles.clear();
+    capture->normals.clear();
+    capture->normal_indices.clear();
+    capture->part.flags &= ~(CREO_BRL_SNAPSHOT_PART_HAS_MESH |
+                             CREO_BRL_SNAPSHOT_PART_HAS_NORMALS);
+    capture->part.flags |= CREO_BRL_SNAPSHOT_PART_HAS_BBOX_FALLBACK;
 }
 
 
@@ -625,8 +766,8 @@ capture_part_definition(ProMdl model,
         capture->part.bbox_volume = dx * dy * dz;
     }
 
-    if (capture_tessellation(model, scale, settings, &capture->vertices, &capture->triangles,
-                             &capture->normals, &capture->normal_indices)) {
+    if (capture_tessellation(model, scale, capture->part.bbox_diagonal,
+                             settings, capture)) {
         if (suppression_applied)
             creo_brl_resume_suppressed_features(model, suppressed_features);
         capture->part.flags |= CREO_BRL_SNAPSHOT_PART_HAS_MESH;
@@ -637,7 +778,7 @@ capture_part_definition(ProMdl model,
     if (have_bbox && (settings->flags & CREO_BRL_SNAPSHOT_SETTING_CREATE_BOXES)) {
         if (suppression_applied)
             creo_brl_resume_suppressed_features(model, suppressed_features);
-        capture->part.flags |= CREO_BRL_SNAPSHOT_PART_HAS_BBOX_FALLBACK;
+        creo_brl_mark_bbox_fallback(capture);
         return CREO_BRL_SNAPSHOT_CAPTURE_SUCCESS;
     }
 
