@@ -30,10 +30,6 @@
 #include "shared/mesh_normalization.h"
 
 
-static const double CREO_BRL_FEET_TO_INCHES = 12.0;
-static const double CREO_BRL_CENTIMETERS_PER_INCH = 2.54;
-static const double CREO_BRL_MILLIMETERS_PER_INCH = 25.4;
-static const double CREO_BRL_METERS_PER_INCH = 0.0254;
 static const size_t CREO_BRL_TESSELLATION_ATTEMPT_COUNT = 20u;
 static const size_t CREO_BRL_MAXIMUM_FACET_COUNT = 100000u;
 static const double CREO_BRL_MINIMUM_CHORD_FACTOR = 0.1;
@@ -290,33 +286,57 @@ capture_all_parameters(ProMdl model,
 }
 
 
-static int
-model_scale_to_mm(ProMdl model, double *scale)
+int
+creo_brl_model_scale_to_mm(ProMdl model, double *scale)
 {
     ProUnitsystem system;
-    ProUnititem length;
-    char unit_name[PRO_NAME_SIZE + 1] = {0};
-    double inches = 0.0;
+    ProUnititem model_length_unit;
+    ProUnititem millimeter_unit;
+    ProUnitConversion conversion = {};
+    ProName millimeter_name = L"mm";
 
-    if (ProMdlPrincipalunitsystemGet(model, &system) != PRO_TK_NO_ERROR ||
-        ProUnitsystemUnitGet(&system, PRO_UNITTYPE_LENGTH, &length) != PRO_TK_NO_ERROR)
+    if (!model || !scale ||
+        ProMdlPrincipalunitsystemGet(model, &system) != PRO_TK_NO_ERROR ||
+        ProUnitsystemUnitGet(&system, PRO_UNITTYPE_LENGTH, &model_length_unit) !=
+            PRO_TK_NO_ERROR ||
+        ProUnitInit(model, millimeter_name, &millimeter_unit) != PRO_TK_NO_ERROR ||
+        ProUnitConversionCalculate(&model_length_unit, &millimeter_unit,
+                                   &conversion) != PRO_TK_NO_ERROR ||
+        !std::isfinite(conversion.scale) || conversion.scale <= 0.0)
         return 0;
 
-    ProWstringToString(unit_name, length.name);
-    if (strcmp(unit_name, "ft") == 0)
-        inches = CREO_BRL_FEET_TO_INCHES;
-    else if (strcmp(unit_name, "in") == 0)
-        inches = 1.0;
-    else if (strcmp(unit_name, "cm") == 0)
-        inches = 1.0 / CREO_BRL_CENTIMETERS_PER_INCH;
-    else if (strcmp(unit_name, "mm") == 0)
-        inches = 1.0 / CREO_BRL_MILLIMETERS_PER_INCH;
-    else if (strcmp(unit_name, "m") == 0)
-        inches = 1.0 / CREO_BRL_METERS_PER_INCH;
-    else
+    *scale = conversion.scale;
+    return 1;
+}
+
+
+int
+creo_brl_component_matrix_to_mm(const ProMatrix creo_matrix,
+                                double parent_to_mm,
+                                double child_to_mm,
+                                struct creo_brl_snapshot_matrix *matrix)
+{
+    if (!matrix || !std::isfinite(parent_to_mm) || parent_to_mm <= 0.0 ||
+        !std::isfinite(child_to_mm) || child_to_mm <= 0.0)
         return 0;
 
-    *scale = inches * CREO_BRL_MILLIMETERS_PER_INCH;
+    for (size_t column = 0; column < 4u; ++column) {
+        for (size_t row = 0; row < 4u; ++row) {
+            double value = creo_matrix[row][column];
+
+            if (!std::isfinite(value))
+                return 0;
+            if (row < CREO_BRL_SNAPSHOT_COORDINATE_COUNT &&
+                column < CREO_BRL_SNAPSHOT_COORDINATE_COUNT)
+                value *= parent_to_mm / child_to_mm;
+            else if (row == CREO_BRL_SNAPSHOT_COORDINATE_COUNT &&
+                     column < CREO_BRL_SNAPSHOT_COORDINATE_COUNT)
+                value *= parent_to_mm;
+
+            matrix->elements[column * 4u + row] = value;
+        }
+    }
+
     return 1;
 }
 
@@ -722,7 +742,7 @@ capture_part_definition(ProMdl model,
     capture->strings = snapshot_part_strings();
 
     if (!capture_model_name(model, &capture->strings.model_name) ||
-        !model_scale_to_mm(model, &scale))
+        !creo_brl_model_scale_to_mm(model, &scale))
         return CREO_BRL_SNAPSHOT_CAPTURE_MODEL_FAILURE;
 
     capture->part.region_id = settings->region_id;
@@ -847,35 +867,29 @@ capture_scene_part(ProMdl model, struct snapshot_scene_capture *scene, uint32_t 
 
 static int
 capture_component_matrix(ProMdl parent,
+                         ProMdl child,
                          ProFeature *feature,
                          struct creo_brl_snapshot_matrix *matrix)
 {
     ProAsmcomppath component_path;
     ProIdTable component_ids;
     ProMatrix creo_matrix;
-    double scale = 0.0;
+    double parent_to_mm = 0.0;
+    double child_to_mm = 0.0;
 
-    MAT_IDN(matrix->elements);
-    if (!model_scale_to_mm(parent, &scale))
+    if (!parent || !child || !feature || !matrix ||
+        !creo_brl_model_scale_to_mm(parent, &parent_to_mm) ||
+        !creo_brl_model_scale_to_mm(child, &child_to_mm))
         return 0;
 
     component_ids[0] = feature->id;
     if (ProAsmcomppathInit(ProMdlToSolid(parent), component_ids, 1, &component_path) !=
             PRO_TK_NO_ERROR ||
         ProAsmcomppathTrfGet(&component_path, PRO_B_TRUE, creo_matrix) != PRO_TK_NO_ERROR)
-        return 1;
+        return 0;
 
-    for (unsigned int column = 0; column < 4; ++column) {
-        for (unsigned int row = 0; row < 4; ++row) {
-            double value = creo_matrix[row][column];
-
-            if (row == 3 && column < CREO_BRL_SNAPSHOT_COORDINATE_COUNT)
-                value *= scale;
-            matrix->elements[column * 4 + row] = value;
-        }
-    }
-
-    return 1;
+    return creo_brl_component_matrix_to_mm(creo_matrix, parent_to_mm,
+                                            child_to_mm, matrix);
 }
 
 
@@ -930,7 +944,7 @@ capture_scene_component(ProFeature *feature, ProError UNUSED(status), ProAppData
     ProMdlIsSkeleton(model, &is_skeleton);
     if (is_skeleton)
         return PRO_TK_NO_ERROR;
-    if (!capture_component_matrix(context->parent, feature, &member.matrix)) {
+    if (!capture_component_matrix(context->parent, model, feature, &member.matrix)) {
         context->result = CREO_BRL_SNAPSHOT_CAPTURE_MODEL_FAILURE;
         return PRO_TK_NO_ERROR;
     }

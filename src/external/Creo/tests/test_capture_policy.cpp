@@ -5,6 +5,7 @@
 #include <string>
 #include <vector>
 
+#include "bu/units.h"
 #include "frontend/model_capture.h"
 
 
@@ -43,6 +44,138 @@ near_equal(double left, double right)
 {
     const double scale = std::fmax(1.0, std::fmax(std::fabs(left), std::fabs(right)));
     return std::fabs(left - right) <= 1.0e-12 * scale;
+}
+
+
+static void
+identity_matrix(ProMatrix matrix)
+{
+    for (size_t row = 0; row < 4; ++row) {
+        for (size_t column = 0; column < 4; ++column)
+            matrix[row][column] = row == column ? 1.0 : 0.0;
+    }
+}
+
+
+static int
+test_component_unit_matrices()
+{
+    const double inch_to_mm = bu_units_conversion("in");
+    const double mm_to_mm = bu_units_conversion("mm");
+    ProMatrix creo_matrix;
+    struct creo_brl_snapshot_matrix matrix = {};
+
+    identity_matrix(creo_matrix);
+    creo_matrix[3][0] = 2.0;
+    creo_matrix[3][1] = -3.0;
+    creo_matrix[3][2] = 4.0;
+    if (!expect(creo_brl_component_matrix_to_mm(
+                    creo_matrix, inch_to_mm, inch_to_mm, &matrix),
+                "equal-unit component matrix conversion failed") ||
+        !expect(near_equal(matrix.elements[0], 1.0) &&
+                    near_equal(matrix.elements[5], 1.0) &&
+                    near_equal(matrix.elements[10], 1.0),
+                "equal-unit component matrix changed the linear transform") ||
+        !expect(near_equal(matrix.elements[3], 2.0 * inch_to_mm) &&
+                    near_equal(matrix.elements[7], -3.0 * inch_to_mm) &&
+                    near_equal(matrix.elements[11], 4.0 * inch_to_mm),
+                "equal-unit component translation was not converted to millimeters"))
+        return 0;
+
+    if (!expect(creo_brl_component_matrix_to_mm(
+                    creo_matrix, mm_to_mm, inch_to_mm, &matrix),
+                "inch-child/mm-parent component matrix conversion failed") ||
+        !expect(near_equal(matrix.elements[0], mm_to_mm / inch_to_mm) &&
+                    near_equal(matrix.elements[5], mm_to_mm / inch_to_mm) &&
+                    near_equal(matrix.elements[10], mm_to_mm / inch_to_mm) &&
+                    near_equal(matrix.elements[3], 2.0),
+                "inch-child/mm-parent component scale was applied twice"))
+        return 0;
+
+    return expect(creo_brl_component_matrix_to_mm(
+                      creo_matrix, inch_to_mm, mm_to_mm, &matrix),
+                  "mm-child/inch-parent component matrix conversion failed") &&
+           expect(near_equal(matrix.elements[0], inch_to_mm) &&
+                      near_equal(matrix.elements[5], inch_to_mm) &&
+                      near_equal(matrix.elements[10], inch_to_mm) &&
+                      near_equal(matrix.elements[3], 2.0 * inch_to_mm),
+                  "mm-child/inch-parent component scale was lost");
+}
+
+
+static int
+expect_matrix(const struct creo_brl_snapshot_matrix& matrix,
+              const double expected[CREO_BRL_SNAPSHOT_MATRIX_ELEMENT_COUNT],
+              const char *message)
+{
+    for (size_t index = 0; index < CREO_BRL_SNAPSHOT_MATRIX_ELEMENT_COUNT; ++index) {
+        if (!near_equal(matrix.elements[index], expected[index])) {
+            std::fprintf(stderr, "%s at element %zu: expected %.15g, got %.15g\n",
+                         message, index, expected[index], matrix.elements[index]);
+            return 0;
+        }
+    }
+
+    return 1;
+}
+
+
+static int
+test_rotated_component_unit_matrices()
+{
+    const double inch_to_mm = bu_units_conversion("in");
+    const double mm_to_mm = bu_units_conversion("mm");
+    const double mm_parent_expected[CREO_BRL_SNAPSHOT_MATRIX_ELEMENT_COUNT] = {
+        0.0, -mm_to_mm / inch_to_mm, 0.0, 2.0,
+        mm_to_mm / inch_to_mm, 0.0, 0.0, -3.0,
+        0.0, 0.0, mm_to_mm / inch_to_mm, 4.0,
+        0.0, 0.0, 0.0, 1.0
+    };
+    const double inch_parent_expected[CREO_BRL_SNAPSHOT_MATRIX_ELEMENT_COUNT] = {
+        0.0, -inch_to_mm, 0.0, 2.0 * inch_to_mm,
+        inch_to_mm, 0.0, 0.0, -3.0 * inch_to_mm,
+        0.0, 0.0, inch_to_mm, 4.0 * inch_to_mm,
+        0.0, 0.0, 0.0, 1.0
+    };
+    ProMatrix creo_matrix;
+    struct creo_brl_snapshot_matrix matrix = {};
+
+    identity_matrix(creo_matrix);
+    creo_matrix[0][0] = 0.0;
+    creo_matrix[0][1] = 1.0;
+    creo_matrix[1][0] = -1.0;
+    creo_matrix[1][1] = 0.0;
+    creo_matrix[3][0] = 2.0;
+    creo_matrix[3][1] = -3.0;
+    creo_matrix[3][2] = 4.0;
+
+    if (!expect(creo_brl_component_matrix_to_mm(
+                    creo_matrix, mm_to_mm, inch_to_mm, &matrix),
+                "rotated inch-child/mm-parent matrix conversion failed") ||
+        !expect_matrix(matrix, mm_parent_expected,
+                       "rotated inch-child/mm-parent matrix was not transposed and scaled"))
+        return 0;
+
+    return expect(creo_brl_component_matrix_to_mm(
+                      creo_matrix, inch_to_mm, mm_to_mm, &matrix),
+                  "rotated mm-child/inch-parent matrix conversion failed") &&
+           expect_matrix(matrix, inch_parent_expected,
+                         "rotated mm-child/inch-parent matrix was not transposed and scaled");
+}
+
+
+static int
+test_toolkit_derived_length_scale()
+{
+    static const double CUSTOM_UNIT_TO_MM = 37.25;
+    struct snapshot_part_capture model_token = {};
+    double scale = 0.0;
+
+    creo_brl_shim_set_length_unit(L"custom_length", CUSTOM_UNIT_TO_MM);
+    return expect(creo_brl_model_scale_to_mm(&model_token, &scale),
+                  "Toolkit-convertible custom length unit was rejected") &&
+           expect(near_equal(scale, CUSTOM_UNIT_TO_MM),
+                  "Toolkit-derived custom length conversion was not preserved");
 }
 
 
@@ -86,6 +219,7 @@ test_tessellation_policy()
 {
     static const size_t EXPECTED_ATTEMPTS = 20u;
     static const size_t EXPECTED_MAXIMUM_FACETS = 100000u;
+    const double inch_to_mm = bu_units_conversion("in");
     struct creo_brl_snapshot_settings settings = {};
     struct snapshot_tessellation_policy policy;
     struct snapshot_mesh_capture mesh = {};
@@ -94,7 +228,7 @@ test_tessellation_policy()
     settings.chord_mode = CREO_BRL_SNAPSHOT_CHORD_RELATIVE;
     settings.max_chord = 10.0;
     settings.min_angle = 0.2;
-    if (!expect(creo_brl_build_tessellation_policy(&settings, 25.4, 254.0, &policy),
+    if (!expect(creo_brl_build_tessellation_policy(&settings, inch_to_mm, 10.0 * inch_to_mm, &policy),
                 "relative tessellation policy was rejected") ||
         !expect(policy.attempts.size() == EXPECTED_ATTEMPTS &&
                     policy.maximum_facet_count == EXPECTED_MAXIMUM_FACETS,
@@ -124,8 +258,8 @@ test_tessellation_policy()
         return 0;
 
     settings.chord_mode = CREO_BRL_SNAPSHOT_CHORD_ABSOLUTE;
-    settings.max_chord = 2.54;
-    if (!expect(creo_brl_build_tessellation_policy(&settings, 25.4, 254.0, &policy),
+    settings.max_chord = 0.1 * inch_to_mm;
+    if (!expect(creo_brl_build_tessellation_policy(&settings, inch_to_mm, 10.0 * inch_to_mm, &policy),
                 "absolute tessellation policy was rejected") ||
         !expect(near_equal(policy.attempts.front().chord, 0.1) &&
                     near_equal(policy.attempts.back().chord, 0.01),
@@ -133,7 +267,7 @@ test_tessellation_policy()
         return 0;
 
     settings.max_chord = 0.0;
-    return expect(!creo_brl_build_tessellation_policy(&settings, 25.4, 254.0, &policy),
+    return expect(!creo_brl_build_tessellation_policy(&settings, inch_to_mm, 10.0 * inch_to_mm, &policy),
                   "invalid tessellation settings produced attempts");
 }
 
@@ -171,8 +305,9 @@ test_tessellation_data_transaction()
     surface.normals = normals;
     surface.n_facets = 4;
     surface.facets = tetrahedron;
+    const double inch_to_mm = bu_units_conversion("in");
     if (!expect(creo_brl_capture_tessellation_data(
-                    &surface, 1, 25.4, 1, 100000u, &mesh),
+                    &surface, 1, inch_to_mm, 1, 100000u, &mesh),
                 "valid tessellation data was rejected") ||
         !expect(mesh.vertices.size() == 4u && mesh.triangles.size() == 4u &&
                     mesh.normals.size() == 12u && mesh.normal_indices.size() == 12u &&
@@ -183,7 +318,7 @@ test_tessellation_data_transaction()
     surface.n_facets = 2;
     surface.facets = partially_invalid;
     if (!expect(!creo_brl_capture_tessellation_data(
-                    &surface, 1, 25.4, 1, 100000u, &mesh),
+                    &surface, 1, inch_to_mm, 1, 100000u, &mesh),
                 "late invalid facet was accepted") ||
         !expect(mesh.vertices.empty() && mesh.triangles.empty() &&
                     mesh.normals.empty() && mesh.normal_indices.empty(),
@@ -193,7 +328,7 @@ test_tessellation_data_transaction()
     surface.n_facets = 100001;
     surface.facets = NULL;
     if (!expect(!creo_brl_capture_tessellation_data(
-                    &surface, 1, 25.4, 0, 100000u, &mesh),
+                    &surface, 1, inch_to_mm, 0, 100000u, &mesh),
                 "facet limit did not reject oversized output"))
         return 0;
 
@@ -293,6 +428,10 @@ test_capture_rejects_replay_collapsed_facet()
 static int
 run_named_test(const std::string& name)
 {
+    if (name == "rotated-mixed-units")
+        return test_rotated_component_unit_matrices();
+    if (name == "toolkit-derived-units")
+        return test_toolkit_derived_length_scale();
     if (name == "mesh-near-vertices")
         return test_capture_uses_replay_vertex_tolerance();
     if (name == "mesh-collapsed-facet")
@@ -311,7 +450,8 @@ main(int argument_count, char *arguments[])
     if (argument_count != 1)
         return 1;
 
-    return test_tessellation_policy() &&
+    return test_component_unit_matrices() &&
+                   test_tessellation_policy() &&
                    test_tessellation_data_transaction() &&
                    test_capture_uses_replay_vertex_tolerance() &&
                    test_capture_rejects_replay_collapsed_facet() ?

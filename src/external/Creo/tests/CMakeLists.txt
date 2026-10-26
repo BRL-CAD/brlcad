@@ -65,7 +65,13 @@ add_test(
     COMMAND "$<TARGET_FILE:creo_capture_policy_test>"
 )
 
+add_test(
+    NAME creo_component_rotated_mixed_units
+    COMMAND "$<TARGET_FILE:creo_capture_policy_test>" rotated-mixed-units
+)
+
 foreach(mesh_case IN ITEMS
+    toolkit-derived-units
     mesh-near-vertices
     mesh-collapsed-facet
 )

@@ -19,6 +19,50 @@
 #include "shim.h"
 #include "shared/core_api.h"
 
+static ProName shim_model_name = L"";
+static ProName shim_length_unit_name = L"";
+static double shim_length_unit_to_mm = 1.0;
+static int shim_unit_system = 0;
+static int shim_model_name_is_configured = 0;
+static int shim_length_unit_is_configured = 0;
+
+
+static void
+copy_wide_text(wchar_t *destination, size_t destination_size, const wchar_t *source)
+{
+    size_t index = 0;
+
+    if (!destination || destination_size == 0)
+        return;
+    if (source) {
+        while (index + 1u < destination_size && source[index] != L'\0') {
+            destination[index] = source[index];
+            ++index;
+        }
+    }
+    destination[index] = L'\0';
+}
+
+
+extern "C" void
+creo_brl_shim_set_length_unit(const wchar_t *name, double conversion_to_mm)
+{
+    copy_wide_text(shim_length_unit_name,
+                   sizeof(shim_length_unit_name) / sizeof(shim_length_unit_name[0]),
+                   name);
+    shim_length_unit_to_mm = conversion_to_mm;
+    shim_length_unit_is_configured = 1;
+}
+
+
+extern "C" void
+creo_brl_shim_set_model_name(const wchar_t *name)
+{
+    copy_wide_text(shim_model_name,
+                   sizeof(shim_model_name) / sizeof(shim_model_name[0]), name);
+    shim_model_name_is_configured = 1;
+}
+
 /* Functions */
 extern "C" void creo_brl_show_status(const char *) {}
 extern "C" void creo_brl_core_load_profile_shim(void) {}
@@ -58,8 +102,20 @@ extern "C" int ProGeomitemdataGet(void**,void***) {return 0;}
 extern "C" int ProLinedataGet(void**,Pro3dPnt,Pro3dPnt) {return 0;}
 extern "C" int ProMaterialCurrentGet(void*,ProMaterial*) {return 0;}
 extern "C" int ProMdlCurrentGet(void**) {return 0;}
-extern "C" int ProMdlMdlnameGet(void*,wchar_t*) {return 0;}
-extern "C" int ProMdlPrincipalunitsystemGet(void*,void**) {return 0;}
+extern "C" int ProMdlMdlnameGet(void*,wchar_t *name)
+{
+    if (!name || !shim_model_name_is_configured)
+        return PRO_TK_BAD_INPUTS;
+    copy_wide_text(name, PRO_NAME_SIZE + 1u, shim_model_name);
+    return PRO_TK_NO_ERROR;
+}
+extern "C" int ProMdlPrincipalunitsystemGet(void*,void **system)
+{
+    if (!system || !shim_length_unit_is_configured)
+        return PRO_TK_BAD_INPUTS;
+    *system = &shim_unit_system;
+    return PRO_TK_NO_ERROR;
+}
 extern "C" int ProMdlToModelitem(void*,void**) {return 0;}
 extern "C" int ProMdlTypeGet(void*,int*) {return 0;}
 extern "C" int ProMdlVerstampGet(void*, void**) {return 0;}
@@ -102,9 +158,30 @@ extern "C" int ProUIPushbuttonActivateActionSet(const char *,const char *,void (
 extern "C" int ProUIRadiogroupSelectednamesGet(const char*,const char*,int*,char***) {return 0;}
 extern "C" int ProUIRadiogroupSelectednamesSet(const char*,const char*,int ,char** ) {return 0;}
 extern "C" int ProUITextareaValueSet(const char *,const char *,wchar_t*) {return 0;}
-extern "C" int ProUnitConversionCalculate(ProUnititem*,ProUnititem*,ProUnitConversion*) {return 0;}
+extern "C" int ProUnitConversionCalculate(ProUnititem*,ProUnititem*,ProUnitConversion *conversion)
+{
+    if (!conversion || !shim_length_unit_is_configured)
+        return PRO_TK_BAD_INPUTS;
+    conversion->scale = shim_length_unit_to_mm;
+    return PRO_TK_NO_ERROR;
+}
+extern "C" int ProUnitInit(void *owner,const wchar_t *name,ProUnititem *unit)
+{
+    if (!unit || !name)
+        return PRO_TK_BAD_INPUTS;
+    unit->owner = owner;
+    copy_wide_text(unit->name, PRO_NAME_SIZE + 1u, name);
+    return PRO_TK_NO_ERROR;
+}
 extern "C" int ProUnitsystemTypeGet(void**,ProUnitsystemType*) {return 0;}
-extern "C" int ProUnitsystemUnitGet(void**,int,ProUnititem*) {return 0;}
+extern "C" int ProUnitsystemUnitGet(void **system,int unit_type,ProUnititem *unit)
+{
+    if (!system || !*system || unit_type != PRO_UNITTYPE_LENGTH || !unit)
+        return PRO_TK_BAD_INPUTS;
+    unit->owner = *system;
+    copy_wide_text(unit->name, PRO_NAME_SIZE + 1u, shim_length_unit_name);
+    return PRO_TK_NO_ERROR;
+}
 extern "C" int ProUtilCollectParameters(void**,void**) {return 0;}
 extern "C" int ProValueDataGet(void*,ProValueData*) {return 0;}
 extern "C" int ProVerstampEqual(void*, void*) {return 0;}
@@ -126,8 +203,21 @@ extern "C" void ProSurfaceToNURBS(void*,void***) {}
 extern "C" void ProSurfacedataGet(void*,int*,double*,double*,int*,void**,int*) {}
 extern "C" void ProUIInputpanelMaxlenSet(const char*,const char*,int) {}
 extern "C" void ProUIMessageDialogDisplay(int,const wchar_t *,const wchar_t *,ProUIMessageButton*,int,ProUIMessageButton*) {}
-extern "C" void ProUnitInit(void*,const wchar_t *,ProUnititem*) {}
-extern "C" void ProWstringToString(char*, wchar_t*) {}
+extern "C" void ProWstringToString(char *destination, wchar_t *source)
+{
+    size_t index = 0;
+
+    if (!destination)
+        return;
+    if (source) {
+        while (source[index] != L'\0') {
+            destination[index] = source[index] >= 0 && source[index] <= 0x7f ?
+                                     (char)source[index] : '?';
+            ++index;
+        }
+    }
+    destination[index] = '\0';
+}
 extern "C" void** PRO_CURVE_DATA(void*) {return NULL;}
 
 // Local Variables:

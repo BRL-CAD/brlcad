@@ -94,6 +94,11 @@ struct snapshot_scene_capture {
 };
 
 
+int creo_brl_model_scale_to_mm(ProMdl model, double *scale);
+int creo_brl_component_matrix_to_mm(const ProMatrix creo_matrix,
+                                    double parent_to_mm,
+                                    double child_to_mm,
+                                    struct creo_brl_snapshot_matrix *matrix);
 int creo_brl_build_tessellation_policy(
     const struct creo_brl_snapshot_settings *settings,
     double model_to_mm,
