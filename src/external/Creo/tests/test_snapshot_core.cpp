@@ -1550,7 +1550,7 @@ cleanup:
 int
 main(int argument_count, char *arguments[])
 {
-    if (argument_count != 3)
+    if (argument_count != 3 && argument_count != 4)
         return 1;
 
     const std::string working_directory = arguments[1];
@@ -1767,6 +1767,53 @@ main(int argument_count, char *arguments[])
     success_log_fixture.settings.log_type = CREO_BRL_SNAPSHOT_LOG_SUCCESS;
     fallback_log_fixture.log_name = "creo_phase4_fallback.log";
     fallback_log_fixture.settings.log_type = CREO_BRL_SNAPSHOT_LOG_FAILURE;
+
+    if (argument_count == 4) {
+        const std::string gap_case = arguments[3];
+        fixture_definition gap_fixture = metadata_fixture;
+
+        if (gap_case == "name-numeric-only") {
+            gap_fixture.fixture_name = "chunk5_gap_name_numeric_only";
+            gap_fixture.snapshot_name = "creo_chunk5_gap_name_numeric_only.snapshot";
+            gap_fixture.output_name = "creo_chunk5_gap_name_numeric_only.g";
+            gap_fixture.rename_parameters = "serial_number,nomenclature";
+            gap_fixture.parameters.push_back(
+                std::make_pair(std::string("serial_number"), std::string("12345")));
+            return run_phase4_fixture(working_directory, gap_fixture, 0,
+                                      "widget_7.r", "widget_7.s", "all", 0) ? 0 : 1;
+        }
+        if (gap_case == "name-whitespace") {
+            gap_fixture.fixture_name = "chunk5_gap_name_whitespace";
+            gap_fixture.snapshot_name = "creo_chunk5_gap_name_whitespace.snapshot";
+            gap_fixture.output_name = "creo_chunk5_gap_name_whitespace.g";
+            gap_fixture.rename_parameters = "display_name";
+            gap_fixture.parameters.push_back(
+                std::make_pair(std::string("display_name"), std::string(" Widget 7 ")));
+            return run_phase4_fixture(working_directory, gap_fixture, 0,
+                                      "widget_7.r", "widget_7.s", "all", 0) ? 0 : 1;
+        }
+        if (gap_case == "name-regex") {
+            gap_fixture.fixture_name = "chunk5_gap_name_regex";
+            gap_fixture.snapshot_name = "creo_chunk5_gap_name_regex.snapshot";
+            gap_fixture.output_name = "creo_chunk5_gap_name_regex.g";
+            gap_fixture.rename_parameters = "^export_.*$";
+            gap_fixture.parameters.push_back(
+                std::make_pair(std::string("export_name"), std::string("Bracket A")));
+            return run_phase4_fixture(working_directory, gap_fixture, 0,
+                                      "bracket_a.r", "bracket_a.s", "all", 0) ? 0 : 1;
+        }
+        if (gap_case == "assembly-rename") {
+            gap_fixture = assembly_none_fixture;
+            gap_fixture.fixture_name = "chunk5_gap_assembly_rename";
+            gap_fixture.snapshot_name = "creo_chunk5_gap_assembly_rename.snapshot";
+            gap_fixture.output_name = "creo_chunk5_gap_assembly_rename.g";
+            gap_fixture.rename_parameters = "assembly_code";
+            return run_assembly_fixture(working_directory, gap_fixture,
+                                        FIXTURE_SUBASSEMBLY_NAME, "a-42") ? 0 : 1;
+        }
+
+        return test_failuref(arguments[3], "unknown snapshot-core test case") ? 0 : 1;
+    }
 
     std::remove(malformed_snapshot_path.c_str());
     std::remove(invalid_size_snapshot_path.c_str());

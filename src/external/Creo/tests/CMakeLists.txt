@@ -13,6 +13,23 @@ add_test(
     "${CMAKE_CURRENT_SOURCE_DIR}/fixtures"
 )
 
+foreach(gap_case IN ITEMS
+    name-numeric-only
+    name-whitespace
+    name-regex
+    assembly-rename
+)
+  string(REPLACE "-" "_" gap_name "${gap_case}")
+  add_test(
+      NAME "creo_chunk5_gap_${gap_name}"
+      COMMAND "$<TARGET_FILE:creo_snapshot_core_test>"
+        "${CMAKE_CURRENT_BINARY_DIR}"
+        "${CMAKE_CURRENT_SOURCE_DIR}/fixtures"
+        "${gap_case}"
+  )
+  set_tests_properties("creo_chunk5_gap_${gap_name}" PROPERTIES LABELS "chunk5-gap")
+endforeach()
+
 add_executable(creo_core_abi_test test_core_abi.cpp)
 target_include_directories(creo_core_abi_test PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/..")
 add_dependencies(creo_core_abi_test creo-brl-core)
@@ -50,6 +67,7 @@ add_executable(creo_capture_policy_test
     "${CMAKE_CURRENT_SOURCE_DIR}/../frontend/model_capture.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/../frontend/csg_capture.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/../shared/mesh_normalization.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/../shared/name_selection.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/../shim.cpp"
 )
 target_include_directories(creo_capture_policy_test PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/..")

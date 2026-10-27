@@ -62,77 +62,6 @@ struct normalized_mesh {
 
 
 static std::string
-trim_text(const std::string& text)
-{
-    const size_t begin = text.find_first_not_of(" \t\n\v\f\r");
-
-    if (begin == std::string::npos)
-        return std::string();
-
-    const size_t end = text.find_last_not_of(" \t\n\v\f\r");
-    return text.substr(begin, end - begin + 1);
-}
-
-
-static std::string
-lower_ascii(const std::string& text)
-{
-    std::string lowered = text;
-
-    for (size_t index = 0; index < lowered.size(); ++index) {
-        const unsigned char character = (unsigned char)lowered[index];
-
-        if (character >= 'A' && character <= 'Z')
-            lowered[index] = (char)(character - 'A' + 'a');
-    }
-
-    return lowered;
-}
-
-
-static void
-parse_parameter_list(const std::string& text, std::vector<std::string> *names)
-{
-    std::istringstream lines(text);
-    std::string line;
-
-    if (!names)
-        return;
-
-    while (std::getline(lines, line)) {
-        std::istringstream items(line);
-        std::string item;
-
-        while (std::getline(items, item, ',')) {
-            const std::string trimmed = trim_text(item);
-
-            if (!trimmed.empty())
-                names->push_back(lower_ascii(trimmed));
-        }
-    }
-}
-
-
-static int
-find_named_value(const std::vector<struct snapshot_named_value>& values,
-                 const std::string& name,
-                 std::string *value)
-{
-    const std::string lowered_name = lower_ascii(name);
-
-    for (size_t index = 0; index < values.size(); ++index) {
-        if (lower_ascii(values[index].name) == lowered_name) {
-            if (value)
-                *value = values[index].value;
-            return 1;
-        }
-    }
-
-    return 0;
-}
-
-
-static std::string
 format_double(double value)
 {
     std::ostringstream stream;
@@ -179,25 +108,6 @@ creo_brl_add_snapshot_mass_properties(struct bu_attribute_value_set *attributes,
     bu_avs_add(attributes, CREO_BRL_CORE_VOLUME_ATTRIBUTE, format_double(volume).c_str());
     bu_avs_add(attributes, CREO_BRL_CORE_SURFACE_AREA_ATTRIBUTE,
                format_double(surface_area).c_str());
-}
-
-
-static std::string
-snapshot_part_name_source(const std::string& rename_parameters,
-                          const std::string& model_name,
-                          const std::vector<struct snapshot_named_value>& parameters)
-{
-    std::vector<std::string> preferred_names;
-
-    parse_parameter_list(rename_parameters, &preferred_names);
-    for (size_t index = 0; index < preferred_names.size(); ++index) {
-        std::string value;
-
-        if (find_named_value(parameters, preferred_names[index], &value) && !trim_text(value).empty())
-            return value;
-    }
-
-    return model_name;
 }
 
 
@@ -504,7 +414,8 @@ write_part_definition(struct db_i *database,
 {
     std::string solid_name;
     std::string region_name;
-    const std::string name_source = snapshot_part_name_source(rename_parameters, model_name, parameters);
+    const std::string name_source =
+        creo_brl_snapshot_name_source(rename_parameters, model_name, parameters);
     struct bu_list members;
 
     if (!creo_brl_snapshot_object_names(database, creo_brl_snapshot_name_root(name_source),

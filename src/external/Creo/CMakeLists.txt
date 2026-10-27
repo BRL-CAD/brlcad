@@ -12,6 +12,7 @@ set(CREO2BRL_SHARED_SOURCES
   )
 set(CREO2BRL_MESH_SOURCES
   shared/mesh_normalization.cpp
+  shared/name_selection.cpp
   )
 
 set(CREO2BRL_FRONTEND_OPTION_SOURCES
@@ -562,6 +563,7 @@ else(NOT DEFINED BRLCAD_BUILDTEST_EXTERNALS)
     shared/core_api.h
     shared/conversion_options.h
     shared/mesh_normalization.h
+    shared/name_selection.h
     resources/creo-brl-msg.txt
     resources/creo_brl.res
     resources/ptc_materials.mtl

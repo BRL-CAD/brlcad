@@ -8,6 +8,17 @@
 struct db_i;
 
 
+struct snapshot_named_value {
+    std::string name;
+    std::string value;
+};
+
+
+std::string creo_brl_snapshot_name_source(
+    const std::string& rename_parameters,
+    const std::string& model_name,
+    const std::vector<struct snapshot_named_value>& parameters);
+
 std::string creo_brl_snapshot_name_root(const std::string& source_name);
 
 int creo_brl_snapshot_unique_name(struct db_i *database,

@@ -318,6 +318,7 @@ static int
 snapshot_write_part_definition(FILE *snapshot_file,
                                const struct creo_brl_snapshot_part *part,
                                const struct creo_brl_snapshot_settings *settings,
+                               const std::string& rename_parameters,
                                FILE *log_file,
                                struct db_i *database,
                                struct rt_wdb *writer,
@@ -325,7 +326,6 @@ snapshot_write_part_definition(FILE *snapshot_file,
 {
     const int has_mesh = (part->flags & CREO_BRL_SNAPSHOT_PART_HAS_MESH) != 0;
     const int has_normals = (part->flags & CREO_BRL_SNAPSHOT_PART_HAS_NORMALS) != 0;
-    std::string rename_parameters;
     std::string model_name;
     std::string model_version;
     std::string material_name;
@@ -340,8 +340,7 @@ snapshot_write_part_definition(FILE *snapshot_file,
     if (!snapshot_file || !part || !settings)
         return CREO_BRL_CORE_CONVERT_INVALID_REQUEST;
 
-    if (!snapshot_read_text(snapshot_file, &settings->rename_parameters, &rename_parameters) ||
-        !snapshot_read_text(snapshot_file, &part->model_name, &model_name) ||
+    if (!snapshot_read_text(snapshot_file, &part->model_name, &model_name) ||
         !snapshot_read_text(snapshot_file, &part->model_version, &model_version) ||
         !snapshot_read_text(snapshot_file, &part->material_name, &material_name) ||
         !snapshot_read_named_values(snapshot_file, &part->attributes, part->attribute_count, &attributes) ||
@@ -500,6 +499,7 @@ creo_brl_convert_snapshot_scene(FILE *snapshot_file,
                                 const struct creo_brl_snapshot_scene *scene)
 {
     std::string output_path;
+    std::string rename_parameters;
     std::vector<struct snapshot_part_output> part_outputs;
     std::vector<struct snapshot_assembly_input> assemblies;
     std::vector<std::string> assembly_names;
@@ -517,7 +517,9 @@ creo_brl_convert_snapshot_scene(FILE *snapshot_file,
         std::string log_path;
 
         if (!snapshot_read_text(snapshot_file, &scene->settings.output_path, &output_path) ||
-            !snapshot_read_text(snapshot_file, &scene->settings.log_path, &log_path)) {
+            !snapshot_read_text(snapshot_file, &scene->settings.log_path, &log_path) ||
+            !snapshot_read_text(snapshot_file, &scene->settings.rename_parameters,
+                                &rename_parameters)) {
             result = CREO_BRL_CORE_CONVERT_INVALID_SNAPSHOT;
             goto cleanup;
         }
@@ -542,6 +544,7 @@ creo_brl_convert_snapshot_scene(FILE *snapshot_file,
                 goto cleanup;
             }
             result = snapshot_write_part_definition(snapshot_file, &part, &scene->settings,
+                                                    rename_parameters,
                                                     log_file, database, writer,
                                                     &part_outputs[(size_t)index]);
             if (result != CREO_BRL_CORE_CONVERT_SUCCESS)
@@ -554,6 +557,7 @@ creo_brl_convert_snapshot_scene(FILE *snapshot_file,
         for (uint64_t index = 0; index < scene->assembly_count; ++index) {
             struct snapshot_assembly_input& assembly = assemblies[(size_t)index];
             const uint64_t offset = scene->assemblies.offset + index * sizeof(struct creo_brl_snapshot_assembly);
+            std::string name_source;
 
             if (!snapshot_read_at(snapshot_file, offset, &assembly.record,
                                   sizeof(assembly.record)) ||
@@ -567,7 +571,11 @@ creo_brl_convert_snapshot_scene(FILE *snapshot_file,
                 result = CREO_BRL_CORE_CONVERT_INVALID_SNAPSHOT;
                 goto cleanup;
             }
-            if (!creo_brl_snapshot_unique_name(database, creo_brl_snapshot_name_root(assembly.model_name),
+
+            name_source = creo_brl_snapshot_name_source(
+                rename_parameters, assembly.model_name, assembly.parameters);
+            if (!creo_brl_snapshot_unique_name(database,
+                                               creo_brl_snapshot_name_root(name_source),
                                                reserved_names, &assembly_names[(size_t)index])) {
                 result = CREO_BRL_CORE_CONVERT_OUTPUT_FAILED;
                 goto cleanup;

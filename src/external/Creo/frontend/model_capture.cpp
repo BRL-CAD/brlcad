@@ -18,23 +18,24 @@
 #include "common.h"
 
 #include <algorithm>
-#include <ctype.h>
 #include <cmath>
 #include <limits>
 #include <stdio.h>
-#include <sstream>
 #include <utility>
 
 #include "frontend/csg_capture.h"
 #include "frontend/model_capture.h"
 #include "frontend/snapshot_writer.h"
 #include "shared/mesh_normalization.h"
+#include "shared/name_selection.h"
 
 
 static const size_t CREO_BRL_TESSELLATION_ATTEMPT_COUNT = 20u;
 static const size_t CREO_BRL_MAXIMUM_FACET_COUNT = 100000u;
 static const double CREO_BRL_MINIMUM_CHORD_FACTOR = 0.1;
 static const double CREO_BRL_MAXIMUM_ANGLE_FACTOR = 1.5;
+
+
 static int
 wide_to_utf8(const wchar_t *wide_text, std::string *text)
 {
@@ -54,31 +55,6 @@ wide_to_utf8(const wchar_t *wide_text, std::string *text)
 
     text->resize((size_t)size - 1);
     return 1;
-}
-
-
-static std::string
-trim_text(const std::string& text)
-{
-    const size_t begin = text.find_first_not_of(" \t\n\v\f\r");
-
-    if (begin == std::string::npos)
-        return std::string();
-
-    const size_t end = text.find_last_not_of(" \t\n\v\f\r");
-    return text.substr(begin, end - begin + 1);
-}
-
-
-static std::string
-lower_ascii(const std::string& text)
-{
-    std::string lowered = text;
-
-    for (size_t index = 0; index < lowered.size(); ++index)
-        lowered[index] = (char)tolower((unsigned char)lowered[index]);
-
-    return lowered;
 }
 
 
@@ -115,29 +91,6 @@ collect_model_parameters(ProModelitem *model_item, ProParameter **parameters)
     }
 
     return error;
-}
-
-
-static void
-parse_parameter_list(const std::string& text, std::vector<std::string> *names)
-{
-    std::istringstream lines(text);
-    std::string line;
-
-    if (!names)
-        return;
-
-    while (std::getline(lines, line)) {
-        std::istringstream items(line);
-        std::string item;
-
-        while (std::getline(items, item, ',')) {
-            const std::string trimmed = trim_text(item);
-
-            if (!trimmed.empty())
-                names->push_back(lower_ascii(trimmed));
-        }
-    }
 }
 
 
@@ -205,49 +158,154 @@ capture_parameter_value(ProMdl model, const std::string& parameter_name, std::st
 }
 
 
+static const struct snapshot_named_value_capture *
+find_captured_parameter(const std::vector<struct snapshot_named_value_capture>& parameters,
+                        const std::string& name)
+{
+    for (size_t index = 0; index < parameters.size(); ++index) {
+        if (parameters[index].name == name)
+            return &parameters[index];
+    }
+
+    return NULL;
+}
+
+
+static int
+capture_parameter(ProMdl model,
+                  const std::string& parameter_name,
+                  std::vector<struct snapshot_named_value_capture> *parameters)
+{
+    const std::string normalized_name = creo_brl_name_text_lower(parameter_name);
+    std::string value;
+
+    if (!parameters || normalized_name.empty())
+        return 0;
+    if (find_captured_parameter(*parameters, normalized_name))
+        return 1;
+    if (!capture_parameter_value(model, normalized_name, &value))
+        return 0;
+
+    struct snapshot_named_value_capture parameter = {};
+    parameter.name = normalized_name;
+    parameter.value = value;
+    parameters->push_back(parameter);
+    return 1;
+}
+
+
 static void
 capture_requested_parameters(ProMdl model,
                              const std::string& names_text,
                              std::vector<struct snapshot_named_value_capture> *parameters)
 {
-    std::vector<std::string> names;
+    const std::vector<creo_brl_name_selector> selectors =
+        creo_brl_parse_name_selectors(names_text);
 
     if (!parameters)
         return;
 
-    parse_parameter_list(names_text, &names);
-    for (size_t index = 0; index < names.size(); ++index) {
-        const std::string& name = names[index];
-        std::string value;
-        int already_captured = 0;
-
-        for (size_t existing = 0; existing < parameters->size(); ++existing) {
-            if ((*parameters)[existing].name == name) {
-                already_captured = 1;
-                break;
-            }
-        }
-        if (already_captured || !capture_parameter_value(model, name, &value))
-            continue;
-
-        struct snapshot_named_value_capture parameter = {};
-        parameter.name = name;
-        parameter.value = value;
-        parameters->push_back(parameter);
-    }
+    for (size_t index = 0; index < selectors.size(); ++index)
+        (void)capture_parameter(model, selectors[index].exact_name(), parameters);
 }
 
 
 static int
-parameter_is_already_captured(const std::vector<struct snapshot_named_value_capture>& parameters,
-                              const std::string& name)
+collect_model_parameter_array(ProMdl model,
+                              ProParameter **collected_parameters,
+                              int *count)
 {
-    for (size_t index = 0; index < parameters.size(); ++index) {
-        if (parameters[index].name == name)
-            return 1;
+    ProModelitem model_item;
+
+    if (!collected_parameters || !count ||
+        ProMdlToModelitem(model, &model_item) != PRO_TK_NO_ERROR ||
+        collect_model_parameters(&model_item, collected_parameters) != PRO_TK_NO_ERROR)
+        return 0;
+
+    if (ProArraySizeGet((ProArray)*collected_parameters, count) != PRO_TK_NO_ERROR) {
+        (void)ProArrayFree((ProArray *)collected_parameters);
+        *collected_parameters = NULL;
+        return 0;
     }
 
-    return 0;
+    return 1;
+}
+
+
+static int
+parameter_has_string_value(ProParameter *parameter)
+{
+    ProParamvalue value;
+    ProParamvalueType type;
+    ProUnititem units;
+
+    return parameter &&
+           ProParameterValueWithUnitsGet(parameter, &value, &units) ==
+               PRO_TK_NO_ERROR &&
+           ProParamvalueTypeGet(&value, &type) == PRO_TK_NO_ERROR &&
+           type == PRO_PARAM_STRING;
+}
+
+
+static void
+capture_rename_parameters(ProMdl model,
+                          const std::string& names_text,
+                          std::vector<struct snapshot_named_value_capture> *parameters)
+{
+    const std::vector<creo_brl_name_selector> selectors =
+        creo_brl_parse_name_selectors(names_text);
+    ProParameter *collected_parameters = NULL;
+    int parameter_count = 0;
+    int has_pattern = 0;
+
+    if (!parameters)
+        return;
+
+    for (size_t selector_index = 0;
+         selector_index < selectors.size(); ++selector_index)
+        has_pattern = has_pattern || selectors[selector_index].has_pattern();
+
+    if (has_pattern)
+        (void)collect_model_parameter_array(model, &collected_parameters,
+                                            &parameter_count);
+
+    /* Regex selection depends on Toolkit visitation order.  Capture the
+     * relevant candidates in that order so replay can make the same choice. */
+    for (int parameter_index = 0;
+         parameter_index < parameter_count; ++parameter_index) {
+        char parameter_name[CREO_NAME_MAX] = {'\0'};
+        int should_capture = 0;
+
+        ProWstringToString(parameter_name,
+                           collected_parameters[parameter_index].id);
+        for (size_t selector_index = 0;
+             selector_index < selectors.size(); ++selector_index) {
+            const creo_brl_name_selector& selector = selectors[selector_index];
+
+            if (selector.matches_exact(parameter_name) ||
+                (selector.matches_pattern(parameter_name) &&
+                 parameter_has_string_value(&collected_parameters[parameter_index]))) {
+                should_capture = 1;
+                break;
+            }
+        }
+        if (should_capture)
+            (void)capture_parameter(model, parameter_name, parameters);
+    }
+
+    if (collected_parameters)
+        (void)ProArrayFree((ProArray *)&collected_parameters);
+
+    /* Direct lookup remains authoritative and also covers Toolkit builds
+     * where parameter visitation cannot enumerate the requested value. */
+    for (size_t selector_index = 0;
+         selector_index < selectors.size(); ++selector_index) {
+        if (!find_captured_parameter(*parameters,
+                                     selectors[selector_index].exact_name())) {
+            (void)capture_parameter(model, selectors[selector_index].exact_name(),
+                                    parameters);
+        }
+    }
 }
 
 
@@ -255,32 +313,18 @@ static void
 capture_all_parameters(ProMdl model,
                        std::vector<struct snapshot_named_value_capture> *parameters)
 {
-    ProModelitem model_item;
     ProParameter *collected_parameters = NULL;
     int count = 0;
 
-    if (!parameters || ProMdlToModelitem(model, &model_item) != PRO_TK_NO_ERROR ||
-        collect_model_parameters(&model_item, &collected_parameters) != PRO_TK_NO_ERROR)
+    if (!parameters ||
+        !collect_model_parameter_array(model, &collected_parameters, &count))
         return;
-
-    if (ProArraySizeGet((ProArray)collected_parameters, &count) != PRO_TK_NO_ERROR) {
-        (void)ProArrayFree((ProArray *)&collected_parameters);
-        return;
-    }
 
     for (int index = 0; index < count; ++index) {
         char parameter_name[CREO_NAME_MAX] = {'\0'};
-        std::string value;
-        struct snapshot_named_value_capture parameter = {};
 
         ProWstringToString(parameter_name, collected_parameters[index].id);
-        parameter.name = lower_ascii(parameter_name);
-        if (parameter.name.empty() || parameter_is_already_captured(*parameters, parameter.name) ||
-            !capture_parameter_value(model, parameter.name, &value))
-            continue;
-
-        parameter.value = value;
-        parameters->push_back(parameter);
+        (void)capture_parameter(model, parameter_name, parameters);
     }
 
     (void)ProArrayFree((ProArray *)&collected_parameters);
@@ -295,8 +339,8 @@ capture_selected_parameters(ProMdl model,
     if (!settings || !parameters)
         return;
 
-    capture_requested_parameters(model, settings->rename_parameters, parameters);
-    if (trim_text(settings->preserve_parameters).empty())
+    capture_rename_parameters(model, settings->rename_parameters, parameters);
+    if (creo_brl_name_text_trim(settings->preserve_parameters).empty())
         capture_all_parameters(model, parameters);
     else
         capture_requested_parameters(model, settings->preserve_parameters, parameters);

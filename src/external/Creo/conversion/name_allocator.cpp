@@ -10,11 +10,95 @@
 #include <string.h>
 
 #include "raytrace.h"
+#include "shared/name_selection.h"
 
 
 static const char CREO_BRL_CORE_REGION_SUFFIX[] = ".r";
 static const char CREO_BRL_CORE_UNKNOWN_NAME[] = "unknown";
 static const char CREO_BRL_CORE_NAME_KEEP_CHARACTERS[] = "+-.=_";
+
+
+static int
+has_ascii_letter(const std::string& text)
+{
+    for (size_t index = 0; index < text.size(); ++index) {
+        const unsigned char character = (unsigned char)text[index];
+
+        if ((character >= 'A' && character <= 'Z') ||
+            (character >= 'a' && character <= 'z'))
+            return 1;
+    }
+
+    return 0;
+}
+
+
+static int
+selectable_parameter_value(const std::string& value, std::string *selected_value)
+{
+    if (!selected_value)
+        return 0;
+
+    *selected_value = creo_brl_name_text_trim(value);
+    return has_ascii_letter(*selected_value);
+}
+
+
+std::string
+creo_brl_snapshot_name_source(
+    const std::string& rename_parameters,
+    const std::string& model_name,
+    const std::vector<struct snapshot_named_value>& parameters)
+{
+    const std::vector<creo_brl_name_selector> selectors =
+        creo_brl_parse_name_selectors(rename_parameters);
+
+    for (size_t selector_index = 0;
+         selector_index < selectors.size(); ++selector_index) {
+        const creo_brl_name_selector& selector = selectors[selector_index];
+        int exact_value_was_found = 0;
+        int exact_value_was_empty = 0;
+
+        for (size_t parameter_index = 0;
+             parameter_index < parameters.size(); ++parameter_index) {
+            if (!selector.matches_exact(parameters[parameter_index].name))
+                continue;
+
+            exact_value_was_found = 1;
+            std::string selected_value;
+
+            if (selectable_parameter_value(parameters[parameter_index].value,
+                                           &selected_value))
+                return selected_value;
+
+            /* The historic lookup attempted regex only when exact lookup
+             * produced no value; a nonempty numeric value advances directly
+             * to the next configured selector. */
+            exact_value_was_empty = selected_value.empty();
+            if (!exact_value_was_empty)
+                break;
+        }
+
+        if (!selector.has_pattern() ||
+            (exact_value_was_found && !exact_value_was_empty))
+            continue;
+
+        for (size_t parameter_index = 0;
+             parameter_index < parameters.size(); ++parameter_index) {
+            if (!selector.matches_pattern(parameters[parameter_index].name))
+                continue;
+
+            std::string selected_value;
+
+            if (selectable_parameter_value(parameters[parameter_index].value,
+                                           &selected_value))
+                return selected_value;
+            break;
+        }
+    }
+
+    return model_name;
+}
 
 
 std::string

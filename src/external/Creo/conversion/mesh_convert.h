@@ -13,6 +13,7 @@
 #include <vmath.h>
 
 #include "common.h"
+#include "conversion/name_allocator.h"
 #include "conversion_snapshot.h"
 
 
@@ -31,12 +32,6 @@ extern const char CREO_BRL_CORE_FALLBACK_ATTRIBUTE[];
 struct snapshot_part_output {
     std::string region_name;
     int used_bbox_fallback;
-};
-
-
-struct snapshot_named_value {
-    std::string name;
-    std::string value;
 };
 
 
