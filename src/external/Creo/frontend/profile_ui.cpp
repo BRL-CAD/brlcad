@@ -26,7 +26,6 @@ static const char CONTROL_MINIMUM_HOLE[] = "min_hole";
 static const char CONTROL_MINIMUM_CHAMFER[] = "min_chamfer";
 static const char CONTROL_MINIMUM_ROUND[] = "min_round";
 static const char CONTROL_FACETS_ONLY[] = "facets_only";
-static const char CONTROL_EXPORT_STL[] = "export_stl";
 static const char CONTROL_CHECK_SOLIDITY[] = "check_solidity";
 static const char CONTROL_CREATE_BOXES[] = "create_boxes";
 static const char CONTROL_WRITE_NORMALS[] = "write_normals";
@@ -44,12 +43,6 @@ static const char RADIO_CHORD_ABSOLUTE[] = "millimeter";
 static const char RADIO_CHORD_RELATIVE[] = "percent";
 static const char DEFAULT_OUTPUT_SUFFIX[] = ".g";
 static const char DEFAULT_LOG_SUFFIX[] = "_log.txt";
-
-static const double CREO_BRL_DEFAULT_MIN_EDGE_MM = 0.000254;
-static const double CREO_BRL_MAX_ANGLE_FACTOR = 1.5;
-static const int32_t CREO_BRL_DEFAULT_MAX_FACETS = 0;
-static const int32_t CREO_BRL_DEFAULT_MAX_STEPS = 1;
-
 
 int
 creo_brl_frontend_default_output_paths(const char *model_name,
@@ -257,8 +250,6 @@ creo_brl_frontend_apply_options_to_controls(
            set_text(controls, CONTROL_MINIMUM_ROUND, options->minimum_round) &&
            set_check(controls, CONTROL_FACETS_ONLY, options->flags,
                      CREO_BRL_CONVERSION_OPTION_FACETS_ONLY) &&
-           set_check(controls, CONTROL_EXPORT_STL, options->flags,
-                     CREO_BRL_CONVERSION_OPTION_EXPORT_STL) &&
            set_check(controls, CONTROL_CHECK_SOLIDITY, options->flags,
                      CREO_BRL_CONVERSION_OPTION_CHECK_SOLIDITY) &&
            set_check(controls, CONTROL_CREATE_BOXES, options->flags,
@@ -303,10 +294,14 @@ creo_brl_frontend_capture_snapshot_options(
         return 0;
     settings->chord_mode = selection == RADIO_CHORD_RELATIVE ? CREO_BRL_SNAPSHOT_CHORD_RELATIVE :
                                                                CREO_BRL_SNAPSHOT_CHORD_ABSOLUTE;
-    settings->max_angle = settings->min_angle * CREO_BRL_MAX_ANGLE_FACTOR;
-    settings->max_facets = CREO_BRL_DEFAULT_MAX_FACETS;
-    settings->max_steps = CREO_BRL_DEFAULT_MAX_STEPS;
-    settings->min_edge = CREO_BRL_DEFAULT_MIN_EDGE_MM;
+    if (settings->min_luminance < 0 ||
+        settings->min_luminance > CREO_BRL_SNAPSHOT_LUMINANCE_MAXIMUM ||
+        settings->max_chord <= 0.0 ||
+        (settings->chord_mode == CREO_BRL_SNAPSHOT_CHORD_RELATIVE &&
+         settings->max_chord > CREO_BRL_SNAPSHOT_PERCENT_MAXIMUM) ||
+        settings->min_angle <= 0.0 ||
+        settings->min_angle > CREO_BRL_SNAPSHOT_ANGLE_MAXIMUM)
+        return 0;
 
     if (!read_check(controls, CONTROL_ELIMINATE_SMALL_FEATURES,
                     CREO_BRL_SNAPSHOT_SETTING_ELIMINATE_SMALL_FEATURES, &settings->flags))
@@ -314,13 +309,13 @@ creo_brl_frontend_capture_snapshot_options(
     if ((settings->flags & CREO_BRL_SNAPSHOT_SETTING_ELIMINATE_SMALL_FEATURES) != 0 &&
         (!read_number(controls, CONTROL_MINIMUM_HOLE, &settings->min_hole) ||
          !read_number(controls, CONTROL_MINIMUM_CHAMFER, &settings->min_chamfer) ||
-         !read_number(controls, CONTROL_MINIMUM_ROUND, &settings->min_round)))
+         !read_number(controls, CONTROL_MINIMUM_ROUND, &settings->min_round) ||
+         settings->min_hole < 0.0 || settings->min_chamfer < 0.0 ||
+         settings->min_round < 0.0))
         return 0;
 
     return read_check(controls, CONTROL_FACETS_ONLY,
                       CREO_BRL_SNAPSHOT_SETTING_FACETS_ONLY, &settings->flags) &&
-           read_check(controls, CONTROL_EXPORT_STL,
-                      CREO_BRL_SNAPSHOT_SETTING_EXPORT_STL, &settings->flags) &&
            read_check(controls, CONTROL_CHECK_SOLIDITY,
                       CREO_BRL_SNAPSHOT_SETTING_CHECK_SOLIDITY, &settings->flags) &&
            read_check(controls, CONTROL_CREATE_BOXES,

@@ -391,24 +391,26 @@ snapshot_settings_are_valid(FILE *snapshot_file,
         settings->chord_mode > CREO_BRL_SNAPSHOT_CHORD_RELATIVE ||
         settings->log_type < CREO_BRL_SNAPSHOT_LOG_NONE ||
         settings->log_type > CREO_BRL_SNAPSHOT_LOG_ALL ||
-        !std::isfinite(settings->max_angle) || !std::isfinite(settings->min_angle) ||
-        !std::isfinite(settings->max_chord) || !std::isfinite(settings->min_chord) ||
-        !std::isfinite(settings->min_edge) || !std::isfinite(settings->min_hole) ||
-        !std::isfinite(settings->min_chamfer) || !std::isfinite(settings->min_round) ||
+        settings->min_luminance < 0 ||
+        settings->min_luminance > CREO_BRL_SNAPSHOT_LUMINANCE_MAXIMUM ||
+        !std::isfinite(settings->min_angle) || settings->min_angle <= 0.0 ||
+        settings->min_angle > CREO_BRL_SNAPSHOT_ANGLE_MAXIMUM ||
+        !std::isfinite(settings->max_chord) || settings->max_chord <= 0.0 ||
+        (settings->chord_mode == CREO_BRL_SNAPSHOT_CHORD_RELATIVE &&
+         settings->max_chord > CREO_BRL_SNAPSHOT_PERCENT_MAXIMUM) ||
+        !std::isfinite(settings->min_hole) || settings->min_hole < 0.0 ||
+        !std::isfinite(settings->min_chamfer) || settings->min_chamfer < 0.0 ||
+        !std::isfinite(settings->min_round) || settings->min_round < 0.0 ||
         !snapshot_range_is_valid(&settings->output_path, snapshot_size, data_offset) ||
         !snapshot_range_is_valid(&settings->log_path, snapshot_size, data_offset) ||
         !snapshot_range_is_valid(&settings->material_path, snapshot_size, data_offset) ||
-        !snapshot_range_is_valid(&settings->stl_path, snapshot_size, data_offset) ||
-        !snapshot_range_is_valid(&settings->rename_parameters, snapshot_size, data_offset) ||
-        !snapshot_range_is_valid(&settings->preserve_parameters, snapshot_size, data_offset))
+        !snapshot_range_is_valid(&settings->rename_parameters, snapshot_size, data_offset))
         return 0;
 
     return snapshot_text_is_valid(snapshot_file, &settings->output_path, 1) &&
            snapshot_text_is_valid(snapshot_file, &settings->log_path, 0) &&
            snapshot_text_is_valid(snapshot_file, &settings->material_path, 0) &&
-           snapshot_text_is_valid(snapshot_file, &settings->stl_path, 0) &&
-           snapshot_text_is_valid(snapshot_file, &settings->rename_parameters, 0) &&
-           snapshot_text_is_valid(snapshot_file, &settings->preserve_parameters, 0);
+           snapshot_text_is_valid(snapshot_file, &settings->rename_parameters, 0);
 }
 
 
@@ -444,7 +446,6 @@ snapshot_part_is_valid(FILE *snapshot_file,
     if ((part->flags & ~CREO_BRL_SNAPSHOT_PART_FLAG_MASK) != 0 || part->region_id < 1 ||
         has_mesh == has_bbox || part->color_is_set !=
             ((part->flags & CREO_BRL_SNAPSHOT_PART_HAS_COLOR) != 0) ||
-        !std::isfinite(part->model_to_mm) || part->model_to_mm <= 0.0 ||
         !std::isfinite(part->bbox_diagonal) || part->bbox_diagonal < 0.0 ||
         !std::isfinite(part->bbox_volume) || part->bbox_volume < 0.0 ||
         !std::isfinite(part->bbox_area) || part->bbox_area < 0.0 ||

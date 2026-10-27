@@ -47,7 +47,6 @@ static const char ATTRIBUTE_MINIMUM_HOLE[] = "minimum_hole_diameter";
 static const char ATTRIBUTE_MINIMUM_CHAMFER[] = "minimum_chamfer_dimension";
 static const char ATTRIBUTE_MINIMUM_ROUND[] = "minimum_blend_radius";
 static const char ATTRIBUTE_FACETS_ONLY[] = "facetize_everything";
-static const char ATTRIBUTE_EXPORT_STL[] = "export_facets_to_stl";
 static const char ATTRIBUTE_CHECK_SOLIDITY[] = "reject_failed_bots";
 static const char ATTRIBUTE_CREATE_BOXES[] = "box_replaces_failed_part";
 static const char ATTRIBUTE_WRITE_NORMALS[] = "write_surface_normals";
@@ -68,7 +67,6 @@ static const char *const PROFILE_ATTRIBUTE_NAMES[] = {
     ATTRIBUTE_MINIMUM_CHAMFER,
     ATTRIBUTE_MINIMUM_ROUND,
     ATTRIBUTE_FACETS_ONLY,
-    ATTRIBUTE_EXPORT_STL,
     ATTRIBUTE_CHECK_SOLIDITY,
     ATTRIBUTE_CREATE_BOXES,
     ATTRIBUTE_WRITE_NORMALS,
@@ -307,8 +305,6 @@ apply_profile_attributes(const struct bu_attribute_value_set *attributes,
         options->minimum_round = value;
     apply_checkbox(bu_avs_get(attributes, ATTRIBUTE_FACETS_ONLY),
                    CREO_BRL_CONVERSION_OPTION_FACETS_ONLY, &options->view.flags);
-    apply_checkbox(bu_avs_get(attributes, ATTRIBUTE_EXPORT_STL),
-                   CREO_BRL_CONVERSION_OPTION_EXPORT_STL, &options->view.flags);
     apply_checkbox(bu_avs_get(attributes, ATTRIBUTE_CHECK_SOLIDITY),
                    CREO_BRL_CONVERSION_OPTION_CHECK_SOLIDITY, &options->view.flags);
     apply_checkbox(bu_avs_get(attributes, ATTRIBUTE_CREATE_BOXES),

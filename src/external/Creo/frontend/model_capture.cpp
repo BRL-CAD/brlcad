@@ -848,7 +848,6 @@ creo_brl_capture_part_definition(ProMdl model,
         !creo_brl_model_scale_to_mm(model, &scale))
         return CREO_BRL_SNAPSHOT_CAPTURE_MODEL_FAILURE;
 
-    capture->part.model_to_mm = scale;
     capture_model_version(model, &capture->strings.model_version);
     capture_selected_parameters(model, settings_strings, &capture->parameters);
 

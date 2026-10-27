@@ -35,6 +35,12 @@ struct snapshot_part_output {
 };
 
 
+struct snapshot_material_translation {
+    int material_id;
+    int los;
+};
+
+
 void creo_brl_add_snapshot_named_values(
     struct bu_attribute_value_set *attributes,
     const std::vector<struct snapshot_named_value>& values);
@@ -53,6 +59,7 @@ int creo_brl_convert_snapshot_part(const struct creo_brl_snapshot_part *part,
                                    const std::string& model_name,
                                    const std::string& model_version,
                                    const std::string& material_name,
+                                   const struct snapshot_material_translation *material_translation,
                                    const std::vector<struct snapshot_named_value>& attributes,
                                    const std::vector<struct snapshot_named_value>& parameters,
                                    const std::vector<std::string>& subtraction_names,

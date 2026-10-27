@@ -241,8 +241,7 @@ write_settings_strings(FILE *snapshot_file,
     return write_text(snapshot_file, strings.output_path, &settings->output_path) &&
            write_text(snapshot_file, strings.log_path, &settings->log_path) &&
            write_text(snapshot_file, strings.material_path, &settings->material_path) &&
-           write_text(snapshot_file, strings.rename_parameters, &settings->rename_parameters) &&
-           write_text(snapshot_file, strings.preserve_parameters, &settings->preserve_parameters);
+           write_text(snapshot_file, strings.rename_parameters, &settings->rename_parameters);
 }
 
 

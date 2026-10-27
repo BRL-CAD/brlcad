@@ -93,8 +93,8 @@ struct fixture_definition {
     int compare_manifest;
     struct creo_brl_snapshot_settings settings;
     struct creo_brl_snapshot_part part;
+    std::string material_path;
     std::string rename_parameters;
-    std::string preserve_parameters;
     std::vector<std::pair<std::string, std::string> > attributes;
     std::vector<std::pair<std::string, std::string> > parameters;
     std::vector<struct creo_brl_snapshot_tgc_subtraction> tgc_subtractions;
@@ -242,6 +242,16 @@ write_file(const std::string& path, const std::vector<unsigned char>& contents)
 }
 
 
+static int
+write_text_file(const std::string& path, const std::string& contents)
+{
+    std::ofstream output(path.c_str(), std::ios::binary);
+
+    output.write(contents.data(), static_cast<std::streamsize>(contents.size()));
+    return output.good();
+}
+
+
 static void
 set_bbox(struct creo_brl_snapshot_part *part,
          double min_x, double min_y, double min_z,
@@ -288,13 +298,15 @@ make_mesh_fixture(const char *fixture_name,
     fixture.compare_manifest = 1;
     fixture.settings.flags = settings_flags;
     fixture.settings.log_type = CREO_BRL_SNAPSHOT_LOG_NONE;
+    fixture.settings.chord_mode = CREO_BRL_SNAPSHOT_CHORD_RELATIVE;
+    fixture.settings.max_chord = 0.3;
+    fixture.settings.min_angle = 0.5;
     fixture.part.flags = CREO_BRL_SNAPSHOT_PART_HAS_MESH |
                          CREO_BRL_SNAPSHOT_PART_HAS_COLOR |
                          CREO_BRL_SNAPSHOT_PART_HAS_MATERIAL;
     if (!normals.empty() && !normal_indices.empty())
         fixture.part.flags |= CREO_BRL_SNAPSHOT_PART_HAS_NORMALS;
     fixture.part.region_id = FIXTURE_REGION_ID;
-    fixture.part.model_to_mm = 1.0;
     fixture.part.color_is_set = 1;
     std::memcpy(fixture.part.color, FIXTURE_COLOR, sizeof(fixture.part.color));
     set_bbox(&fixture.part, 0.0, 0.0, 0.0, max_x, max_y, max_z);
@@ -324,11 +336,13 @@ make_bbox_fallback_fixture(const char *fixture_name,
     fixture.compare_manifest = 1;
     fixture.settings.flags = settings_flags;
     fixture.settings.log_type = CREO_BRL_SNAPSHOT_LOG_NONE;
+    fixture.settings.chord_mode = CREO_BRL_SNAPSHOT_CHORD_RELATIVE;
+    fixture.settings.max_chord = 0.3;
+    fixture.settings.min_angle = 0.5;
     fixture.part.flags = CREO_BRL_SNAPSHOT_PART_HAS_BBOX_FALLBACK |
                          CREO_BRL_SNAPSHOT_PART_HAS_COLOR |
                          CREO_BRL_SNAPSHOT_PART_HAS_MATERIAL;
     fixture.part.region_id = FIXTURE_REGION_ID;
-    fixture.part.model_to_mm = 1.0;
     fixture.part.color_is_set = 1;
     std::memcpy(fixture.part.color, FIXTURE_COLOR, sizeof(fixture.part.color));
     set_bbox(&fixture.part, 0.0, 0.0, 0.0, 100.0, 100.0, 10.0);
@@ -452,10 +466,10 @@ write_snapshot_fixture(const std::string& snapshot_path,
                      assemblies.size() * sizeof(assemblies[0]), &scene.assemblies) ||
         !append_data(&contents, output_path.data(), output_path.size(), &scene.settings.output_path) ||
         !append_data(&contents, log_path.data(), log_path.size(), &scene.settings.log_path) ||
+        !append_data(&contents, fixture.material_path.data(), fixture.material_path.size(),
+                     &scene.settings.material_path) ||
         !append_data(&contents, fixture.rename_parameters.data(), fixture.rename_parameters.size(),
-                     &scene.settings.rename_parameters) ||
-        !append_data(&contents, fixture.preserve_parameters.data(), fixture.preserve_parameters.size(),
-                     &scene.settings.preserve_parameters))
+                     &scene.settings.rename_parameters))
         return 0;
 
     for (size_t index = 0; index < parts.size(); ++index) {
@@ -1091,6 +1105,77 @@ cleanup:
 
 
 static int
+verify_rendering_fixture(const std::string& output_path, const char *fixture_name)
+{
+    static const unsigned char EXPECTED_COLOR[] = {38u, 77u, 115u};
+    struct db_i *database = db_open(output_path.c_str(), DB_OPEN_READONLY);
+    struct directory *region_directory = RT_DIR_NULL;
+    struct rt_db_internal region_internal = RT_DB_INTERNAL_INIT_ZERO;
+    int result = 0;
+
+    if (database == DBI_NULL || db_dirbuild(database) < 0)
+        goto cleanup;
+    region_directory = db_lookup(database, FIXTURE_REGION_NAME, LOOKUP_QUIET);
+    if (region_directory == RT_DIR_NULL ||
+        rt_db_get_internal(&region_internal, region_directory, database, NULL) < 0 ||
+        region_internal.idb_type != ID_COMBINATION)
+        goto cleanup;
+
+    {
+        const struct rt_comb_internal *region =
+            static_cast<const struct rt_comb_internal *>(region_internal.idb_ptr);
+
+        result = region->rgb_valid &&
+                 std::memcmp(region->rgb, EXPECTED_COLOR, sizeof(EXPECTED_COLOR)) == 0 &&
+                 expect_phase4_attribute(database, FIXTURE_REGION_NAME, "ptc_rgb",
+                                         "17/34/51", fixture_name) &&
+                 expect_phase4_attribute(database, FIXTURE_REGION_NAME, "material_id",
+                                         "321", fixture_name) &&
+                 expect_phase4_attribute(database, FIXTURE_REGION_NAME, "los",
+                                         "75", fixture_name);
+    }
+
+cleanup:
+    if (region_internal.idb_ptr)
+        rt_db_free_internal(&region_internal);
+    if (database != DBI_NULL)
+        db_close(database);
+    return result;
+}
+
+
+static int
+run_rendering_fixture(const std::string& working_directory,
+                      const fixture_definition& fixture)
+{
+    const std::string snapshot_path = path_join(working_directory, fixture.snapshot_name);
+    const std::string output_path = path_join(working_directory, fixture.output_name);
+    int result = 0;
+
+    std::remove(snapshot_path.c_str());
+    std::remove(output_path.c_str());
+    std::remove(fixture.material_path.c_str());
+    if (!write_text_file(fixture.material_path,
+                         "# material_id and los fixture\nFIXTURE_MATERIAL 321 75\n") ||
+        !write_snapshot_fixture(snapshot_path, output_path, std::string(), fixture,
+                                VALID_SNAPSHOT_SIZE_DELTA) ||
+        creo_brl_core_convert(snapshot_path.c_str()) != CREO_BRL_CORE_CONVERT_SUCCESS ||
+        !verify_rendering_fixture(output_path, fixture.fixture_name)) {
+        test_failuref(fixture.fixture_name, "rendering metadata verification failed");
+        goto cleanup;
+    }
+
+    result = 1;
+
+cleanup:
+    std::remove(snapshot_path.c_str());
+    std::remove(output_path.c_str());
+    std::remove(fixture.material_path.c_str());
+    return result;
+}
+
+
+static int
 phase5_hole_name(size_t index,
                  size_t hole_count,
                  std::string *name)
@@ -1547,6 +1632,38 @@ cleanup:
 }
 
 
+static int
+run_fixture_group(const std::string& working_directory,
+                  const std::string& fixtures_directory,
+                  const std::vector<fixture_definition>& fixtures)
+{
+    for (size_t index = 0; index < fixtures.size(); ++index) {
+        if (!run_fixture(working_directory, fixtures_directory, fixtures[index]))
+            return 0;
+    }
+
+    return 1;
+}
+
+
+static fixture_definition
+make_invalid_fixture(const fixture_definition& source,
+                     const char *fixture_name,
+                     const char *snapshot_name,
+                     const char *output_name)
+{
+    fixture_definition fixture = source;
+
+    fixture.fixture_name = fixture_name;
+    fixture.snapshot_name = snapshot_name;
+    fixture.output_name = output_name;
+    fixture.manifest_name = NULL;
+    fixture.compare_manifest = 0;
+    fixture.expected_result = CREO_BRL_CORE_CONVERT_INVALID_SNAPSHOT;
+    return fixture;
+}
+
+
 int
 main(int argument_count, char *arguments[])
 {
@@ -1634,7 +1751,6 @@ main(int argument_count, char *arguments[])
     failure_fixture.part.volume = 3.75;
     failure_fixture.part.surface_area = 4.5;
     failure_fixture.rename_parameters = "nomenclature";
-    failure_fixture.preserve_parameters = "part_number";
     failure_fixture.attributes.push_back(std::make_pair(std::string("custom_attr"), std::string("custom_value")));
     failure_fixture.parameters.push_back(std::make_pair(std::string("nomenclature"), std::string("Widget 7")));
     failure_fixture.parameters.push_back(std::make_pair(std::string("part_number"), std::string("PN-42")));
@@ -1671,7 +1787,6 @@ main(int argument_count, char *arguments[])
     metadata_fixture.part.volume = 3.75;
     metadata_fixture.part.surface_area = 4.5;
     metadata_fixture.rename_parameters = "nomenclature";
-    metadata_fixture.preserve_parameters = "part_number";
     metadata_fixture.attributes.push_back(std::make_pair(std::string("custom_attr"), std::string("custom_value")));
     metadata_fixture.parameters.push_back(std::make_pair(std::string("nomenclature"), std::string("Widget 7")));
     metadata_fixture.parameters.push_back(std::make_pair(std::string("part_number"), std::string("PN-42")));
@@ -1681,7 +1796,6 @@ main(int argument_count, char *arguments[])
     fallback_metadata_fixture.part.volume = 3.75;
     fallback_metadata_fixture.part.surface_area = 4.5;
     fallback_metadata_fixture.rename_parameters = "nomenclature";
-    fallback_metadata_fixture.preserve_parameters = "part_number";
     fallback_metadata_fixture.attributes.push_back(std::make_pair(std::string("custom_attr"), std::string("custom_value")));
     fallback_metadata_fixture.parameters.push_back(std::make_pair(std::string("nomenclature"), std::string("Widget 7")));
     fallback_metadata_fixture.parameters.push_back(std::make_pair(std::string("part_number"), std::string("PN-42")));
@@ -1693,10 +1807,12 @@ main(int argument_count, char *arguments[])
                                              {{6.0, 0.0, 0.0}}, {{0.0, 3.0, -3.0}}});
     fixture_definition success_log_fixture = metadata_fixture;
     fixture_definition fallback_log_fixture = fallback_metadata_fixture;
+    fixture_definition rendering_fixture = normalized_mesh_fixture;
     fixture_definition collision_fixture = normalized_mesh_fixture;
     fixture_definition assembly_none_fixture = normalized_mesh_fixture;
     fixture_definition assembly_x_to_z_fixture;
     fixture_definition assembly_y_to_z_fixture;
+    std::vector<fixture_definition> invalid_validation_fixtures;
     struct fixture_assembly_definition subassembly = {};
     struct fixture_assembly_definition root_assembly = {};
     struct fixture_assembly_definition collision_assembly = {};
@@ -1767,6 +1883,14 @@ main(int argument_count, char *arguments[])
     success_log_fixture.settings.log_type = CREO_BRL_SNAPSHOT_LOG_SUCCESS;
     fallback_log_fixture.log_name = "creo_phase4_fallback.log";
     fallback_log_fixture.settings.log_type = CREO_BRL_SNAPSHOT_LOG_FAILURE;
+    rendering_fixture.fixture_name = "scene_luminance_material";
+    rendering_fixture.snapshot_name = "creo_chunk5_luminance_material.snapshot";
+    rendering_fixture.output_name = "creo_chunk5_luminance_material.g";
+    rendering_fixture.manifest_name = NULL;
+    rendering_fixture.compare_manifest = 0;
+    rendering_fixture.settings.min_luminance = 30;
+    rendering_fixture.material_path =
+        path_join(working_directory, "creo_chunk5_material_translation.mtl");
 
     if (argument_count == 4) {
         const std::string gap_case = arguments[3];
@@ -1815,6 +1939,66 @@ main(int argument_count, char *arguments[])
         return test_failuref(arguments[3], "unknown snapshot-core test case") ? 0 : 1;
     }
 
+    {
+        fixture_definition invalid_fixture = make_invalid_fixture(
+            normalized_mesh_fixture, "invalid_zero_chord",
+            "creo_chunk5_invalid_zero_chord.snapshot",
+            "creo_chunk5_invalid_zero_chord.g");
+        invalid_fixture.settings.max_chord = 0.0;
+        invalid_validation_fixtures.push_back(invalid_fixture);
+
+        invalid_fixture = make_invalid_fixture(
+            normalized_mesh_fixture, "invalid_angle",
+            "creo_chunk5_invalid_angle.snapshot",
+            "creo_chunk5_invalid_angle.g");
+        invalid_fixture.settings.min_angle = 1.1;
+        invalid_validation_fixtures.push_back(invalid_fixture);
+
+        invalid_fixture = make_invalid_fixture(
+            normalized_mesh_fixture, "invalid_relative_chord",
+            "creo_chunk5_invalid_relative_chord.snapshot",
+            "creo_chunk5_invalid_relative_chord.g");
+        invalid_fixture.settings.max_chord = 101.0;
+        invalid_validation_fixtures.push_back(invalid_fixture);
+
+        invalid_fixture = make_invalid_fixture(
+            normalized_mesh_fixture, "invalid_small_feature_range",
+            "creo_chunk5_invalid_small_feature.snapshot",
+            "creo_chunk5_invalid_small_feature.g");
+        invalid_fixture.settings.min_hole = -1.0;
+        invalid_validation_fixtures.push_back(invalid_fixture);
+
+        invalid_fixture = make_invalid_fixture(
+            normalized_mesh_fixture, "invalid_region_id",
+            "creo_chunk5_invalid_region.snapshot",
+            "creo_chunk5_invalid_region.g");
+        invalid_fixture.part.region_id = 0;
+        invalid_validation_fixtures.push_back(invalid_fixture);
+
+        invalid_fixture = make_invalid_fixture(
+            normalized_mesh_fixture, "invalid_bbox_metric",
+            "creo_chunk5_invalid_bbox.snapshot",
+            "creo_chunk5_invalid_bbox.g");
+        invalid_fixture.part.bbox_area = -1.0;
+        invalid_validation_fixtures.push_back(invalid_fixture);
+
+        invalid_fixture = make_invalid_fixture(
+            normalized_mesh_fixture, "invalid_empty_assembly",
+            "creo_chunk5_invalid_empty_assembly.snapshot",
+            "creo_chunk5_invalid_empty_assembly.g");
+        invalid_fixture.assemblies.push_back({});
+        invalid_fixture.assemblies[0].model_name = "empty.asm";
+        invalid_validation_fixtures.push_back(invalid_fixture);
+
+        invalid_fixture = make_invalid_fixture(
+            assembly_none_fixture, "invalid_assembly_mass",
+            "creo_chunk5_invalid_assembly_mass.snapshot",
+            "creo_chunk5_invalid_assembly_mass.g");
+        invalid_fixture.assemblies[1].mass =
+            (std::numeric_limits<double>::infinity)();
+        invalid_validation_fixtures.push_back(invalid_fixture);
+    }
+
     std::remove(malformed_snapshot_path.c_str());
     std::remove(invalid_size_snapshot_path.c_str());
     std::remove(invalid_triangle_snapshot_path.c_str());
@@ -1835,6 +2019,9 @@ main(int argument_count, char *arguments[])
         !run_assembly_fixture(working_directory, assembly_x_to_z_fixture) ||
         !run_assembly_fixture(working_directory, assembly_y_to_z_fixture) ||
         !run_multi_part_collision_fixture(working_directory, collision_fixture) ||
+        !run_rendering_fixture(working_directory, rendering_fixture) ||
+        !run_fixture_group(working_directory, fixtures_directory,
+                           invalid_validation_fixtures) ||
         !run_phase5_hole_fixture(working_directory, hole_fixture) ||
         !run_phase4_log_fixture(working_directory, success_log_fixture,
                                 "SUCCESS: Part \"fixture_part\" converted") ||

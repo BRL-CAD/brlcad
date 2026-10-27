@@ -59,7 +59,9 @@ set_target_properties(
 
 add_test(
     NAME creo_profile_options
-    COMMAND "$<TARGET_FILE:creo_profile_options_test>" "${CMAKE_CURRENT_BINARY_DIR}"
+    COMMAND "$<TARGET_FILE:creo_profile_options_test>"
+      "${CMAKE_CURRENT_BINARY_DIR}"
+      "${CMAKE_CURRENT_SOURCE_DIR}/../resources/Creo_to_BRL.g"
 )
 
 add_executable(creo_capture_policy_test

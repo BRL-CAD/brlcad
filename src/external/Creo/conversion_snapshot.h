@@ -31,12 +31,12 @@
 #define CREO_BRL_SNAPSHOT_TRIANGLE_SIZE 12u
 #define CREO_BRL_SNAPSHOT_TGC_SUBTRACTION_SIZE 144u
 #define CREO_BRL_SNAPSHOT_NAMED_VALUE_SIZE 32u
-#define CREO_BRL_SNAPSHOT_SETTINGS_SIZE 192u
-#define CREO_BRL_SNAPSHOT_PART_SIZE 340u
+#define CREO_BRL_SNAPSHOT_SETTINGS_SIZE 128u
+#define CREO_BRL_SNAPSHOT_PART_SIZE 332u
 #define CREO_BRL_SNAPSHOT_MATRIX_SIZE 128u
 #define CREO_BRL_SNAPSHOT_ASSEMBLY_MEMBER_SIZE 136u
 #define CREO_BRL_SNAPSHOT_ASSEMBLY_SIZE 116u
-#define CREO_BRL_SNAPSHOT_SCENE_SIZE 248u
+#define CREO_BRL_SNAPSHOT_SCENE_SIZE 184u
 
 #define CREO_BRL_SNAPSHOT_COORDINATE_COUNT 3u
 #define CREO_BRL_SNAPSHOT_TRIANGLE_VERTEX_COUNT 3u
@@ -79,16 +79,14 @@ enum creo_brl_snapshot_chord_mode {
 enum creo_brl_snapshot_settings_flag {
     CREO_BRL_SNAPSHOT_SETTING_ELIMINATE_SMALL_FEATURES = 1u << 0,
     CREO_BRL_SNAPSHOT_SETTING_FACETS_ONLY = 1u << 1,
-    CREO_BRL_SNAPSHOT_SETTING_EXPORT_STL = 1u << 2,
-    CREO_BRL_SNAPSHOT_SETTING_CHECK_SOLIDITY = 1u << 3,
-    CREO_BRL_SNAPSHOT_SETTING_CREATE_BOXES = 1u << 4,
-    CREO_BRL_SNAPSHOT_SETTING_WRITE_NORMALS = 1u << 5
+    CREO_BRL_SNAPSHOT_SETTING_CHECK_SOLIDITY = 1u << 2,
+    CREO_BRL_SNAPSHOT_SETTING_CREATE_BOXES = 1u << 3,
+    CREO_BRL_SNAPSHOT_SETTING_WRITE_NORMALS = 1u << 4
 };
 
 #define CREO_BRL_SNAPSHOT_SETTINGS_FLAG_MASK \
     (CREO_BRL_SNAPSHOT_SETTING_ELIMINATE_SMALL_FEATURES | \
      CREO_BRL_SNAPSHOT_SETTING_FACETS_ONLY | \
-     CREO_BRL_SNAPSHOT_SETTING_EXPORT_STL | \
      CREO_BRL_SNAPSHOT_SETTING_CHECK_SOLIDITY | \
      CREO_BRL_SNAPSHOT_SETTING_CREATE_BOXES | \
      CREO_BRL_SNAPSHOT_SETTING_WRITE_NORMALS)
@@ -161,29 +159,21 @@ struct creo_brl_snapshot_settings {
     int32_t chord_mode;
     int32_t region_id;
     int32_t min_luminance;
-    int32_t max_facets;
-    int32_t max_steps;
     int32_t log_type;
-    double max_angle;
     double min_angle;
     double max_chord;
-    double min_chord;
-    double min_edge;
     double min_hole;
     double min_chamfer;
     double min_round;
     struct creo_brl_snapshot_range output_path;
     struct creo_brl_snapshot_range log_path;
     struct creo_brl_snapshot_range material_path;
-    struct creo_brl_snapshot_range stl_path;
     struct creo_brl_snapshot_range rename_parameters;
-    struct creo_brl_snapshot_range preserve_parameters;
 };
 
 struct creo_brl_snapshot_part {
     uint32_t flags;
     int32_t region_id;
-    double model_to_mm;
     double bbox_diagonal;
     double bbox_volume;
     double bbox_area;

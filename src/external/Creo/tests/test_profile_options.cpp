@@ -19,7 +19,8 @@ extern "C" {
 #include "shared/core_api.h"
 
 
-static const int EXPECTED_ARGUMENT_COUNT = 2;
+static const int EXPECTED_ARGUMENT_COUNT = 3;
+static const char OBSOLETE_STL_ATTRIBUTE[] = "export_facets_to_stl";
 static const size_t PROFILE_PATH_BUFFER_SIZE = 1024;
 static const size_t SMALL_PROFILE_PATH_BUFFER_SIZE = 4;
 static const char PROFILE_TITLE[] = "Creo profile test";
@@ -461,13 +462,12 @@ test_profile_reader(const std::string& directory)
         {"minimum_luminance", "12"},
         {"chord_mode", "millimeter"},
         {"maximum_chord_height", "0.9"},
-        {"minimum_angle_control", "2.5"},
+        {"minimum_angle_control", "0.75"},
         {"eliminate_small_features", "on"},
         {"minimum_hole_diameter", "0.1"},
         {"minimum_chamfer_dimension", "0.2"},
         {"minimum_blend_radius", "0.3"},
         {"facetize_everything", "off"},
-        {"export_facets_to_stl", "on"},
         {"reject_failed_bots", "on"},
         {"box_replaces_failed_part", "on"},
         {"write_surface_normals", "on"}
@@ -491,12 +491,11 @@ test_profile_reader(const std::string& directory)
                   "integer profile fields were not parsed") &&
            expect(observed.chord_mode == CREO_BRL_CONVERSION_CHORD_ABSOLUTE,
                   "chord mode was not parsed") &&
-           expect(observed.maximum_chord == "0.9" && observed.minimum_angle == "2.5",
+           expect(observed.maximum_chord == "0.9" && observed.minimum_angle == "0.75",
                   "tessellation fields were not parsed") &&
            expect(observed.minimum_hole == "0.1" && observed.minimum_chamfer == "0.2" &&
                   observed.minimum_round == "0.3", "small-feature fields were not parsed") &&
            expect(observed.flags == (CREO_BRL_CONVERSION_OPTION_ELIMINATE_SMALL_FEATURES |
-                                     CREO_BRL_CONVERSION_OPTION_EXPORT_STL |
                                      CREO_BRL_CONVERSION_OPTION_CHECK_SOLIDITY |
                                      CREO_BRL_CONVERSION_OPTION_CREATE_BOXES |
                                      CREO_BRL_CONVERSION_OPTION_WRITE_NORMALS),
@@ -637,6 +636,44 @@ test_default_output_paths()
 }
 
 
+static int
+test_bundled_profile(const char *profile_path)
+{
+    struct db_i *database = db_open(profile_path, DB_OPEN_READONLY);
+    struct directory *global = RT_DIR_NULL;
+    struct bu_attribute_value_set attributes = BU_AVS_INIT_ZERO;
+    int attribute_absent = 0;
+
+    if (database != DBI_NULL && db_dirbuild(database) >= 0) {
+        global = db_lookup(database, DB5_GLOBAL_OBJECT_NAME, LOOKUP_QUIET);
+        attribute_absent = global != RT_DIR_NULL &&
+                           db5_get_attributes(database, &attributes, global) == 0 &&
+                           bu_avs_get(&attributes, OBSOLETE_STL_ATTRIBUTE) == NULL;
+    }
+    bu_avs_free(&attributes);
+    if (database != DBI_NULL)
+        db_close(database);
+    if (!expect(attribute_absent,
+                "bundled profile retained the obsolete STL attribute"))
+        return 0;
+
+    reset_observed();
+    creo_brl_core_load_profile(profile_path, PROFILE_MATERIAL_DIRECTORY);
+    return expect(observed.received, "bundled profile did not publish options") &&
+           expect(observed.flags == CREO_BRL_CONVERSION_OPTION_FACETS_ONLY,
+                  "bundled profile option flags changed") &&
+           expect(observed.region_counter == "1000" &&
+                      observed.minimum_luminance == "30" &&
+                      observed.maximum_chord == "0.3" &&
+                      observed.minimum_angle == "0.5",
+                  "bundled profile numeric settings changed") &&
+           expect(observed.minimum_hole == "0" &&
+                      observed.minimum_chamfer == "0" &&
+                      observed.minimum_round == "0",
+                  "bundled profile small-feature settings changed");
+}
+
+
 int
 main(int argc, char *argv[])
 {
@@ -646,9 +683,10 @@ main(int argc, char *argv[])
         capture_options
     };
     const std::string directory = argc == EXPECTED_ARGUMENT_COUNT ? argv[1] : "";
+    const char *bundled_profile = argc == EXPECTED_ARGUMENT_COUNT ? argv[2] : NULL;
 
     if (argc != EXPECTED_ARGUMENT_COUNT) {
-        std::fprintf(stderr, "Usage: %s <output-directory>\n", argv[0]);
+        std::fprintf(stderr, "Usage: %s <output-directory> <bundled-profile>\n", argv[0]);
         return 1;
     }
 
@@ -662,6 +700,8 @@ main(int argc, char *argv[])
     if (!test_ui_mapping(directory))
         return 1;
     if (!test_default_output_paths())
+        return 1;
+    if (!test_bundled_profile(bundled_profile))
         return 1;
     if (!test_defaults_and_invalid_profiles(directory))
         return 1;

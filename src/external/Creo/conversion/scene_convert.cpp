@@ -7,8 +7,12 @@
 #include "conversion/scene_convert.h"
 
 #include <cmath>
+#include <cstring>
 #include <limits.h>
+#include <map>
+#include <sstream>
 #include <string>
+#include <utility>
 #include <vector>
 
 #ifdef _WIN32
@@ -21,11 +25,17 @@
 #include "conversion/name_allocator.h"
 #include "raytrace.h"
 #include "shared/core_api.h"
+#include "shared/name_selection.h"
 #include "wdb.h"
 
 
 static const char CREO_BRL_CORE_TOP_LEVEL_NAME[] = "all";
 static const char CREO_BRL_CORE_HOLE_SUFFIX[] = ".s";
+static const size_t CREO_BRL_MATERIAL_LINE_SIZE = 4096u;
+static const char CREO_BRL_MATERIAL_COMMENT_CHARACTERS[] = "!@#$%^&*/<>?";
+
+
+typedef std::map<std::string, struct snapshot_material_translation> material_translation_map;
 
 
 struct snapshot_assembly_input {
@@ -135,6 +145,34 @@ snapshot_open_output_database(const char *output_path, struct db_i **database)
 }
 
 
+static FILE *
+snapshot_open_utf8_file(const char *path, const wchar_t *wide_mode, const char *mode)
+{
+    if (!path || !path[0] || !mode)
+        return NULL;
+
+#ifdef _WIN32
+    {
+        const int wide_path_length = MultiByteToWideChar(CP_UTF8, MB_ERR_INVALID_CHARS,
+                                                         path, -1, NULL, 0);
+        std::vector<wchar_t> wide_path;
+
+        if (!wide_mode || wide_path_length <= 0)
+            return NULL;
+
+        wide_path.resize((size_t)wide_path_length);
+        if (MultiByteToWideChar(CP_UTF8, MB_ERR_INVALID_CHARS, path, -1,
+                                &wide_path[0], wide_path_length) != wide_path_length)
+            return NULL;
+
+        return _wfopen(&wide_path[0], wide_mode);
+    }
+#else
+    return fopen(path, mode);
+#endif
+}
+
+
 static int
 snapshot_open_log_file(const char *log_path, FILE **log_file)
 {
@@ -145,27 +183,38 @@ snapshot_open_log_file(const char *log_path, FILE **log_file)
     if (!log_path || log_path[0] == '\0')
         return 1;
 
-#ifdef _WIN32
-    {
-        const int wide_path_length = MultiByteToWideChar(CP_UTF8, MB_ERR_INVALID_CHARS,
-                                                         log_path, -1, NULL, 0);
-        std::vector<wchar_t> wide_path;
-
-        if (wide_path_length <= 0)
-            return 0;
-
-        wide_path.resize((size_t)wide_path_length);
-        if (MultiByteToWideChar(CP_UTF8, MB_ERR_INVALID_CHARS, log_path, -1,
-                                &wide_path[0], wide_path_length) != wide_path_length)
-            return 0;
-
-        *log_file = _wfopen(&wide_path[0], L"wb");
-        return *log_file != NULL;
-    }
-#else
-    *log_file = fopen(log_path, "wb");
+    *log_file = snapshot_open_utf8_file(log_path, L"wb", "wb");
     return *log_file != NULL;
-#endif
+}
+
+
+static void
+load_material_translations(const std::string& path, material_translation_map *translations)
+{
+    char line[CREO_BRL_MATERIAL_LINE_SIZE] = {'\0'};
+    FILE *material_file = NULL;
+
+    if (!translations)
+        return;
+    translations->clear();
+    if (path.empty() ||
+        !(material_file = snapshot_open_utf8_file(path.c_str(), L"rb", "rb")))
+        return;
+
+    while (fgets(line, sizeof(line), material_file)) {
+        std::istringstream input(line);
+        std::string material_name;
+        struct snapshot_material_translation translation = {};
+
+        if (!(input >> material_name) ||
+            strchr(CREO_BRL_MATERIAL_COMMENT_CHARACTERS, material_name[0]) ||
+            !(input >> translation.material_id >> translation.los))
+            continue;
+
+        translations->insert(std::make_pair(creo_brl_name_text_lower(material_name), translation));
+    }
+
+    fclose(material_file);
 }
 
 
@@ -319,6 +368,7 @@ snapshot_write_part_definition(FILE *snapshot_file,
                                const struct creo_brl_snapshot_part *part,
                                const struct creo_brl_snapshot_settings *settings,
                                const std::string& rename_parameters,
+                               const material_translation_map& material_translations,
                                FILE *log_file,
                                struct db_i *database,
                                struct rt_wdb *writer,
@@ -336,6 +386,7 @@ snapshot_write_part_definition(FILE *snapshot_file,
     std::vector<int> triangles;
     std::vector<fastf_t> normals;
     std::vector<int> normal_indices;
+    const struct snapshot_material_translation *material_translation = NULL;
 
     if (!snapshot_file || !part || !settings)
         return CREO_BRL_CORE_CONVERT_INVALID_REQUEST;
@@ -356,6 +407,14 @@ snapshot_write_part_definition(FILE *snapshot_file,
                                     &normal_indices))))))
         return CREO_BRL_CORE_CONVERT_INVALID_SNAPSHOT;
 
+    {
+        const material_translation_map::const_iterator found =
+            material_translations.find(creo_brl_name_text_lower(material_name));
+
+        if (found != material_translations.end())
+            material_translation = &found->second;
+    }
+
     if (part->tgc_subtraction_count > 0) {
         const int csg_result = snapshot_read_tgc_subtractions(snapshot_file, part,
                                                               model_name,
@@ -368,6 +427,7 @@ snapshot_write_part_definition(FILE *snapshot_file,
 
     return creo_brl_convert_snapshot_part(part, settings, rename_parameters,
                                           model_name, model_version, material_name,
+                                          material_translation,
                                           attributes, parameters, subtraction_names,
                                           vertices, triangles, normals, normal_indices,
                                           log_file,
@@ -505,6 +565,7 @@ creo_brl_convert_snapshot_scene(FILE *snapshot_file,
     std::vector<std::string> assembly_names;
     std::vector<int> assembly_written;
     std::vector<std::string> reserved_names;
+    material_translation_map material_translations;
     struct db_i *database = DBI_NULL;
     struct rt_wdb *writer = RT_WDB_NULL;
     FILE *log_file = NULL;
@@ -515,9 +576,11 @@ creo_brl_convert_snapshot_scene(FILE *snapshot_file,
 
     try {
         std::string log_path;
+        std::string material_path;
 
         if (!snapshot_read_text(snapshot_file, &scene->settings.output_path, &output_path) ||
             !snapshot_read_text(snapshot_file, &scene->settings.log_path, &log_path) ||
+            !snapshot_read_text(snapshot_file, &scene->settings.material_path, &material_path) ||
             !snapshot_read_text(snapshot_file, &scene->settings.rename_parameters,
                                 &rename_parameters)) {
             result = CREO_BRL_CORE_CONVERT_INVALID_SNAPSHOT;
@@ -528,6 +591,7 @@ creo_brl_convert_snapshot_scene(FILE *snapshot_file,
             result = CREO_BRL_CORE_CONVERT_OUTPUT_FAILED;
             goto cleanup;
         }
+        load_material_translations(material_path, &material_translations);
         if (!snapshot_open_output_database(output_path.c_str(), &database) ||
             !(writer = wdb_dbopen(database, RT_WDB_TYPE_DB_DISK))) {
             result = CREO_BRL_CORE_CONVERT_OUTPUT_FAILED;
@@ -545,6 +609,7 @@ creo_brl_convert_snapshot_scene(FILE *snapshot_file,
             }
             result = snapshot_write_part_definition(snapshot_file, &part, &scene->settings,
                                                     rename_parameters,
+                                                    material_translations,
                                                     log_file, database, writer,
                                                     &part_outputs[(size_t)index]);
             if (result != CREO_BRL_CORE_CONVERT_SUCCESS)

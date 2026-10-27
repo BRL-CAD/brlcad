@@ -20,6 +20,7 @@
 
 #include "conversion/mesh_convert.h"
 
+#include <algorithm>
 #include <cmath>
 #include <iomanip>
 #include <sstream>
@@ -47,6 +48,9 @@ static const char CREO_BRL_CORE_DENSITY_ATTRIBUTE[] = "density";
 static const char CREO_BRL_CORE_MASS_ATTRIBUTE[] = "mass";
 static const char CREO_BRL_CORE_VOLUME_ATTRIBUTE[] = "volume";
 static const char CREO_BRL_CORE_SURFACE_AREA_ATTRIBUTE[] = "surface_area";
+static const char CREO_BRL_CORE_ORIGINAL_COLOR_ATTRIBUTE[] = "ptc_rgb";
+static const char CREO_BRL_CORE_MATERIAL_ID_ATTRIBUTE[] = "material_id";
+static const char CREO_BRL_CORE_LOS_ATTRIBUTE[] = "los";
 static const char CREO_BRL_CORE_RPP_AREA_ATTRIBUTE[] = "rpp_area";
 static const char CREO_BRL_CORE_RPP_DIAGONAL_ATTRIBUTE[] = "rpp_diag";
 static const char CREO_BRL_CORE_RPP_VOLUME_ATTRIBUTE[] = "rpp_vol";
@@ -111,6 +115,93 @@ creo_brl_add_snapshot_mass_properties(struct bu_attribute_value_set *attributes,
 }
 
 
+static unsigned char
+color_component(double value)
+{
+    const long rounded = std::lround(value * 255.0);
+
+    return static_cast<unsigned char>((std::max)(0L, (std::min)(255L, rounded)));
+}
+
+
+static int
+adjust_color_luminance(unsigned char color[CREO_BRL_SNAPSHOT_COLOR_COMPONENT_COUNT],
+                       int32_t minimum_luminance,
+                       std::string *original_color)
+{
+    const unsigned char maximum_component =
+        (std::max)(color[0], (std::max)(color[1], color[2]));
+    const unsigned char minimum_component =
+        (std::min)(color[0], (std::min)(color[1], color[2]));
+    const double luminance =
+        (static_cast<double>(maximum_component) + minimum_component) / 510.0;
+    const double red = color[0] / 255.0;
+    const double green = color[1] / 255.0;
+    const double blue = color[2] / 255.0;
+    const double maximum = (std::max)(red, (std::max)(green, blue));
+    const double minimum = (std::min)(red, (std::min)(green, blue));
+    const double delta = maximum - minimum;
+    double hue = 0.0;
+    double saturation = 0.0;
+    double chroma = 0.0;
+    double secondary = 0.0;
+    double offset = 0.0;
+    double adjusted[CREO_BRL_SNAPSHOT_COLOR_COMPONENT_COUNT] = {};
+    std::ostringstream original;
+
+    if (minimum_luminance <= 0 ||
+        std::lround(luminance * CREO_BRL_SNAPSHOT_PERCENT_MAXIMUM) >=
+            minimum_luminance)
+        return 0;
+
+    original << static_cast<unsigned int>(color[0]) << '/'
+             << static_cast<unsigned int>(color[1]) << '/'
+             << static_cast<unsigned int>(color[2]);
+    if (original_color)
+        *original_color = original.str();
+
+    if (delta > 0.0) {
+        if (maximum == red)
+            hue = 60.0 * std::fmod((green - blue) / delta, 6.0);
+        else if (maximum == green)
+            hue = 60.0 * ((blue - red) / delta + 2.0);
+        else
+            hue = 60.0 * ((red - green) / delta + 4.0);
+        if (hue < 0.0)
+            hue += 360.0;
+
+        const double denominator = 1.0 - std::fabs(2.0 * luminance - 1.0);
+        if (denominator > 0.0)
+            saturation = delta / denominator;
+    }
+
+    const double target_luminance =
+        minimum_luminance / CREO_BRL_SNAPSHOT_PERCENT_MAXIMUM;
+    chroma = (1.0 - std::fabs(2.0 * target_luminance - 1.0)) * saturation;
+    secondary = chroma * (1.0 - std::fabs(std::fmod(hue / 60.0, 2.0) - 1.0));
+    offset = target_luminance - chroma / 2.0;
+
+    switch (static_cast<int>(hue / 60.0) % 6) {
+        case 0:
+            adjusted[0] = chroma; adjusted[1] = secondary; break;
+        case 1:
+            adjusted[0] = secondary; adjusted[1] = chroma; break;
+        case 2:
+            adjusted[1] = chroma; adjusted[2] = secondary; break;
+        case 3:
+            adjusted[1] = secondary; adjusted[2] = chroma; break;
+        case 4:
+            adjusted[0] = secondary; adjusted[2] = chroma; break;
+        default:
+            adjusted[0] = chroma; adjusted[2] = secondary; break;
+    }
+
+    for (size_t component = 0; component < CREO_BRL_SNAPSHOT_COLOR_COMPONENT_COUNT; ++component)
+        color[component] = color_component(adjusted[component] + offset);
+    return 1;
+}
+
+
 static int
 snapshot_write_attributes(struct db_i *database,
                           const char *solid_name,
@@ -119,6 +210,8 @@ snapshot_write_attributes(struct db_i *database,
                           const std::string& model_name,
                           const std::string& model_version,
                           const std::string& material_name,
+                          const struct snapshot_material_translation *material_translation,
+                          const std::string& original_color,
                           const std::vector<struct snapshot_named_value>& attributes_in,
                           const std::vector<struct snapshot_named_value>& parameters,
                           int has_mesh)
@@ -157,6 +250,15 @@ snapshot_write_attributes(struct db_i *database,
                material_name.empty() ? CREO_BRL_CORE_UNDEFINED_MATERIAL : material_name.c_str());
     creo_brl_add_snapshot_named_values(&attributes, attributes_in);
     creo_brl_add_snapshot_named_values(&attributes, parameters);
+    if (material_translation && material_translation->material_id >= 0) {
+        bu_avs_add(&attributes, CREO_BRL_CORE_MATERIAL_ID_ATTRIBUTE,
+                   std::to_string(material_translation->material_id).c_str());
+        bu_avs_add(&attributes, CREO_BRL_CORE_LOS_ATTRIBUTE,
+                   std::to_string(material_translation->los).c_str());
+    }
+    if (!original_color.empty())
+        bu_avs_add(&attributes, CREO_BRL_CORE_ORIGINAL_COLOR_ATTRIBUTE,
+                   original_color.c_str());
     if ((part->flags & CREO_BRL_SNAPSHOT_PART_HAS_MASS_PROPERTIES) != 0) {
         creo_brl_add_snapshot_mass_properties(&attributes, 1, part->density,
                                               part->mass, part->volume,
@@ -395,10 +497,12 @@ static int
 write_part_definition(struct db_i *database,
                       struct rt_wdb *writer,
                       const struct creo_brl_snapshot_part *part,
+                      const struct creo_brl_snapshot_settings *settings,
                       const std::string& rename_parameters,
                       const std::string& model_name,
                       const std::string& model_version,
                       const std::string& material_name,
+                      const struct snapshot_material_translation *material_translation,
                       const std::vector<struct snapshot_named_value>& attributes,
                       const std::vector<struct snapshot_named_value>& parameters,
                       const std::vector<std::string>& subtraction_names,
@@ -414,9 +518,20 @@ write_part_definition(struct db_i *database,
 {
     std::string solid_name;
     std::string region_name;
+    std::string original_color;
+    unsigned char output_color[CREO_BRL_SNAPSHOT_COLOR_COMPONENT_COUNT] = {};
+    const unsigned char *region_color = NULL;
     const std::string name_source =
         creo_brl_snapshot_name_source(rename_parameters, model_name, parameters);
     struct bu_list members;
+
+    if (part->color_is_set) {
+        memcpy(output_color, part->color, sizeof(output_color));
+        if (settings)
+            (void)adjust_color_luminance(output_color, settings->min_luminance,
+                                         &original_color);
+        region_color = output_color;
+    }
 
     if (!creo_brl_snapshot_object_names(database, creo_brl_snapshot_name_root(name_source),
                                         has_mesh ? CREO_BRL_CORE_SOLID_SUFFIX : CREO_BRL_CORE_RPP_SUFFIX,
@@ -442,10 +557,11 @@ write_part_definition(struct db_i *database,
     }
 
     if (mk_comb(writer, region_name.c_str(), &members, 1, NULL, NULL,
-                part->color_is_set ? part->color : NULL,
+                region_color,
                 (int)part->region_id, 0, 0, 0, 0, 0, 0) != 0 ||
         !snapshot_write_attributes(database, solid_name.c_str(), region_name.c_str(), part,
                                    model_name, model_version, material_name,
+                                   material_translation, original_color,
                                    attributes, parameters, has_mesh))
         return CREO_BRL_CORE_CONVERT_OUTPUT_FAILED;
 
@@ -503,6 +619,7 @@ creo_brl_convert_snapshot_part(const struct creo_brl_snapshot_part *part,
                                const std::string& model_name,
                                const std::string& model_version,
                                const std::string& material_name,
+                               const struct snapshot_material_translation *material_translation,
                                const std::vector<struct snapshot_named_value>& attributes,
                                const std::vector<struct snapshot_named_value>& parameters,
                                const std::vector<std::string>& subtraction_names,
@@ -535,8 +652,9 @@ creo_brl_convert_snapshot_part(const struct creo_brl_snapshot_part *part,
                                      CREO_BRL_CORE_CONVERT_OUTPUT_FAILED, output);
             return CREO_BRL_CORE_CONVERT_OUTPUT_FAILED;
         }
-        result = write_part_definition(database, writer, part, rename_parameters,
+        result = write_part_definition(database, writer, part, settings, rename_parameters,
                                        model_name, model_version, material_name,
+                                       material_translation,
                                        attributes, parameters, subtraction_names,
                                        0, 0, 0, NULL, NULL, 0, NULL, NULL,
                                        output);
@@ -552,8 +670,9 @@ creo_brl_convert_snapshot_part(const struct creo_brl_snapshot_part *part,
             return CREO_BRL_CORE_CONVERT_OUTPUT_FAILED;
         }
 
-        result = write_part_definition(database, writer, part, rename_parameters,
+        result = write_part_definition(database, writer, part, settings, rename_parameters,
                                        model_name, model_version, material_name,
+                                       material_translation,
                                        attributes, parameters, subtraction_names,
                                        0, 0, 0, NULL, NULL, 0, NULL, NULL,
                                        output);
@@ -561,8 +680,9 @@ creo_brl_convert_snapshot_part(const struct creo_brl_snapshot_part *part,
         return result;
     }
 
-    result = write_part_definition(database, writer, part, rename_parameters,
+    result = write_part_definition(database, writer, part, settings, rename_parameters,
                                    model_name, model_version, material_name,
+                                   material_translation,
                                    attributes, parameters, subtraction_names, 1,
                                    mesh.vertices.size() / 3,
                                    mesh.faces.size() / 3,

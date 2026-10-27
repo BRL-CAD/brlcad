@@ -459,7 +459,6 @@
 (Layout surface_controls
     (Components
         (CheckButton   facets_only)
-        (CheckButton   export_stl)
         (CheckButton   check_solidity)
         (CheckButton   create_boxes)
         (CheckButton   write_normals)
@@ -474,14 +473,6 @@
         (facets_only.LeftOffset        7)
         (facets_only.Set               False)
         (facets_only.TopOffset         0)
-        (export_stl.AttachLeft         True)
-        (export_stl.AttachTop          True)
-        (export_stl.BottomOffset       0)
-        (export_stl.HelpText           "Select this to export faceted approximation to an STL file")
-        (export_stl.Label              "Export facets to STL file")
-        (export_stl.LeftOffset         7)
-        (export_stl.Set                False)
-        (export_stl.TopOffset          0)
         (check_solidity.AttachLeft     True)
         (check_solidity.AttachTop      True)
         (check_solidity.BottomOffset   0)
@@ -515,9 +506,8 @@
         (.RightOffset                  10)
         (.TopOffset                    2)
         (.Layout
-            (Grid (Rows 1 1 1 1 1) (Cols 1)
+            (Grid (Rows 1 1 1 1) (Cols 1)
                 facets_only
-                export_stl
                 check_solidity
                 create_boxes
                 write_normals
