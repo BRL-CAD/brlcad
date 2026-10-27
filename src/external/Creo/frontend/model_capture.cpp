@@ -20,6 +20,7 @@
 #include <algorithm>
 #include <ctype.h>
 #include <cmath>
+#include <limits>
 #include <stdio.h>
 #include <sstream>
 #include <utility>
@@ -286,6 +287,22 @@ capture_all_parameters(ProMdl model,
 }
 
 
+static void
+capture_selected_parameters(ProMdl model,
+                            const struct snapshot_settings_strings *settings,
+                            std::vector<struct snapshot_named_value_capture> *parameters)
+{
+    if (!settings || !parameters)
+        return;
+
+    capture_requested_parameters(model, settings->rename_parameters, parameters);
+    if (trim_text(settings->preserve_parameters).empty())
+        capture_all_parameters(model, parameters);
+    else
+        capture_requested_parameters(model, settings->preserve_parameters, parameters);
+}
+
+
 int
 creo_brl_model_scale_to_mm(ProMdl model, double *scale)
 {
@@ -374,19 +391,60 @@ capture_part_appearance(ProMdl model, struct creo_brl_snapshot_part *part)
 }
 
 
+static int
+store_mass_properties(const ProMassProperty *mass_properties,
+                      uint32_t mass_properties_flag,
+                      uint32_t *flags,
+                      double *density,
+                      double *mass,
+                      double *volume,
+                      double *surface_area)
+{
+    if (!mass_properties || !flags || !density || !mass || !volume || !surface_area ||
+        !std::isfinite(mass_properties->density) ||
+        !std::isfinite(mass_properties->mass) ||
+        !std::isfinite(mass_properties->volume) ||
+        !std::isfinite(mass_properties->surface_area))
+        return 0;
+
+    *density = mass_properties->density;
+    *mass = mass_properties->mass;
+    *volume = mass_properties->volume;
+    *surface_area = mass_properties->surface_area;
+    *flags |= mass_properties_flag;
+    return 1;
+}
+
+
+int
+creo_brl_set_assembly_mass_properties(
+    const ProMassProperty *mass_properties,
+    struct snapshot_assembly_capture *capture)
+{
+    if (!mass_properties || !capture)
+        return 0;
+
+    return store_mass_properties(
+        mass_properties, CREO_BRL_SNAPSHOT_ASSEMBLY_HAS_MASS_PROPERTIES,
+        &capture->assembly.flags, &capture->assembly.density,
+        &capture->assembly.mass, &capture->assembly.volume,
+        &capture->assembly.surface_area);
+}
+
+
 static void
-capture_mass_properties(ProMdl model, struct creo_brl_snapshot_part *part)
+capture_part_mass_properties(ProMdl model, struct creo_brl_snapshot_part *part)
 {
     ProMassProperty mass_properties = {};
 
-    if (ProSolidMassPropertyGet(ProMdlToSolid(model), NULL, &mass_properties) != PRO_TK_NO_ERROR)
+    if (!part ||
+        ProSolidMassPropertyGet(ProMdlToSolid(model), NULL, &mass_properties) != PRO_TK_NO_ERROR)
         return;
 
-    part->density = mass_properties.density;
-    part->mass = mass_properties.mass;
-    part->volume = mass_properties.volume;
-    part->surface_area = mass_properties.surface_area;
-    part->flags |= CREO_BRL_SNAPSHOT_PART_HAS_MASS_PROPERTIES;
+    store_mass_properties(&mass_properties,
+                          CREO_BRL_SNAPSHOT_PART_HAS_MASS_PROPERTIES,
+                          &part->flags, &part->density, &part->mass,
+                          &part->volume, &part->surface_area);
 }
 
 
@@ -745,22 +803,14 @@ capture_part_definition(ProMdl model,
         !creo_brl_model_scale_to_mm(model, &scale))
         return CREO_BRL_SNAPSHOT_CAPTURE_MODEL_FAILURE;
 
-    capture->part.region_id = settings->region_id;
     capture->part.model_to_mm = scale;
     capture_model_version(model, &capture->strings.model_version);
-    if (settings_strings) {
-        capture_requested_parameters(model, settings_strings->rename_parameters, &capture->parameters);
-
-        if (trim_text(settings_strings->preserve_parameters).empty())
-            capture_all_parameters(model, &capture->parameters);
-        else
-            capture_requested_parameters(model, settings_strings->preserve_parameters, &capture->parameters);
-    }
+    capture_selected_parameters(model, settings_strings, &capture->parameters);
 
     (void)creo_brl_capture_feature_suppression(model, scale, settings, capture,
                                                &suppressed_features, &suppression_applied);
     capture_part_appearance(model, &capture->part);
-    capture_mass_properties(model, &capture->part);
+    capture_part_mass_properties(model, &capture->part);
 
     if (ProPartMaterialNameGet(ProMdlToPart(model), material_name) == PRO_TK_NO_ERROR &&
         wide_to_utf8(material_name, &capture->strings.material_name) &&
@@ -805,7 +855,7 @@ capture_part_definition(ProMdl model,
     if (suppression_applied)
         creo_brl_resume_suppressed_features(model, suppressed_features);
 
-    return CREO_BRL_SNAPSHOT_CAPTURE_TESSELLATION_FAILURE;
+    return CREO_BRL_SNAPSHOT_CAPTURE_SKIPPED;
 }
 
 
@@ -822,6 +872,31 @@ scene_part_index(const struct snapshot_scene_capture *scene,
     }
 
     return 0;
+}
+
+
+int
+creo_brl_commit_part_capture(struct snapshot_scene_capture *scene,
+                             struct snapshot_part_capture *capture,
+                             uint32_t *index_out)
+{
+    if (!scene || !capture || !index_out || capture->strings.model_name.empty())
+        return CREO_BRL_SCENE_PART_COMMIT_ERROR;
+    if (scene_part_index(scene, capture->strings.model_name, index_out))
+        return CREO_BRL_SCENE_PART_REUSED;
+    if (scene->parts.size() >= UINT32_MAX)
+        return CREO_BRL_SCENE_PART_COMMIT_ERROR;
+
+    if (scene->next_region_id < 1)
+        scene->next_region_id = 1;
+    if (scene->next_region_id > (std::numeric_limits<int32_t>::max)())
+        return CREO_BRL_SCENE_PART_COMMIT_ERROR;
+
+    capture->part.region_id = static_cast<int32_t>(scene->next_region_id);
+    ++scene->next_region_id;
+    *index_out = static_cast<uint32_t>(scene->parts.size());
+    scene->parts.push_back(std::move(*capture));
+    return CREO_BRL_SCENE_PART_ADDED;
 }
 
 
@@ -852,16 +927,14 @@ capture_scene_part(ProMdl model, struct snapshot_scene_capture *scene, uint32_t 
         return CREO_BRL_SNAPSHOT_CAPTURE_MODEL_FAILURE;
     if (scene_part_index(scene, model_name, index_out))
         return CREO_BRL_SNAPSHOT_CAPTURE_SUCCESS;
-    if (scene->parts.size() >= UINT32_MAX)
-        return CREO_BRL_SNAPSHOT_CAPTURE_MODEL_FAILURE;
-
     result = capture_part_definition(model, &scene->settings, &scene->settings_strings, &capture);
     if (result != CREO_BRL_SNAPSHOT_CAPTURE_SUCCESS)
         return result;
 
-    *index_out = (uint32_t)scene->parts.size();
-    scene->parts.push_back(capture);
-    return CREO_BRL_SNAPSHOT_CAPTURE_SUCCESS;
+    return creo_brl_commit_part_capture(scene, &capture, index_out) ==
+                   CREO_BRL_SCENE_PART_ADDED ?
+               CREO_BRL_SNAPSHOT_CAPTURE_SUCCESS :
+               CREO_BRL_SNAPSHOT_CAPTURE_MODEL_FAILURE;
 }
 
 
@@ -906,19 +979,53 @@ struct snapshot_component_context {
 };
 
 
+int
+creo_brl_capture_child_result(int capture_result)
+{
+    if (capture_result == CREO_BRL_SNAPSHOT_CAPTURE_SUCCESS)
+        return CREO_BRL_CAPTURE_CHILD_APPEND;
+    if (capture_result == CREO_BRL_SNAPSHOT_CAPTURE_SKIPPED)
+        return CREO_BRL_CAPTURE_CHILD_SKIP;
+
+    return CREO_BRL_CAPTURE_CHILD_FATAL;
+}
+
+
+int
+creo_brl_finalize_assembly_capture(struct snapshot_scene_capture *scene,
+                                   uint32_t assembly_index)
+{
+    if (!scene || assembly_index >= scene->assemblies.size())
+        return CREO_BRL_SNAPSHOT_CAPTURE_MODEL_FAILURE;
+    if (!scene->assemblies[assembly_index].members.empty())
+        return CREO_BRL_SNAPSHOT_CAPTURE_SUCCESS;
+    if (assembly_index + 1u != scene->assemblies.size())
+        return CREO_BRL_SNAPSHOT_CAPTURE_MODEL_FAILURE;
+
+    scene->assemblies.pop_back();
+    return CREO_BRL_SNAPSHOT_CAPTURE_SKIPPED;
+}
+
+
 static ProError
-snapshot_component_filter(ProFeature *feature, ProAppData *UNUSED(data))
+snapshot_component_filter(ProFeature *feature, ProAppData UNUSED(data))
 {
     ProFeattype feature_type;
     ProFeatStatus feature_status;
+    ProError error = PRO_TK_GENERAL_ERROR;
 
-    if (ProFeatureTypeGet(feature, &feature_type) != PRO_TK_NO_ERROR ||
-        feature_type != PRO_FEAT_COMPONENT ||
-        ProFeatureStatusGet(feature, &feature_status) != PRO_TK_NO_ERROR ||
-        feature_status != PRO_FEAT_ACTIVE)
+    if (!feature)
+        return PRO_TK_BAD_INPUTS;
+    error = ProFeatureTypeGet(feature, &feature_type);
+    if (error != PRO_TK_NO_ERROR)
+        return error;
+    if (feature_type != PRO_FEAT_COMPONENT)
         return PRO_TK_CONTINUE;
+    error = ProFeatureStatusGet(feature, &feature_status);
+    if (error != PRO_TK_NO_ERROR)
+        return error;
 
-    return PRO_TK_NO_ERROR;
+    return feature_status == PRO_FEAT_ACTIVE ? PRO_TK_NO_ERROR : PRO_TK_CONTINUE;
 }
 
 
@@ -931,6 +1038,7 @@ capture_scene_component(ProFeature *feature, ProError UNUSED(status), ProAppData
     ProMdlType model_type;
     ProBoolean is_skeleton = PRO_B_FALSE;
     struct creo_brl_snapshot_assembly_member member = {};
+    int disposition = CREO_BRL_CAPTURE_CHILD_FATAL;
     int result = CREO_BRL_SNAPSHOT_CAPTURE_MODEL_FAILURE;
 
     if (context->result != CREO_BRL_SNAPSHOT_CAPTURE_SUCCESS)
@@ -959,7 +1067,10 @@ capture_scene_component(ProFeature *feature, ProError UNUSED(status), ProAppData
         return PRO_TK_NO_ERROR;
     }
 
-    if (result != CREO_BRL_SNAPSHOT_CAPTURE_SUCCESS) {
+    disposition = creo_brl_capture_child_result(result);
+    if (disposition == CREO_BRL_CAPTURE_CHILD_SKIP)
+        return PRO_TK_NO_ERROR;
+    if (disposition == CREO_BRL_CAPTURE_CHILD_FATAL) {
         context->result = result;
         return PRO_TK_NO_ERROR;
     }
@@ -985,6 +1096,14 @@ capture_scene_assembly(ProMdl model,
         return CREO_BRL_SNAPSHOT_CAPTURE_MODEL_FAILURE;
 
     capture_model_version(model, &capture.model_version);
+    capture_selected_parameters(model, &scene->settings_strings, &capture.parameters);
+    {
+        ProMassProperty mass_properties = {};
+
+        if (ProSolidMassPropertyGet(ProMdlToSolid(model), NULL, &mass_properties) ==
+            PRO_TK_NO_ERROR)
+            (void)creo_brl_set_assembly_mass_properties(&mass_properties, &capture);
+    }
     *index_out = (uint32_t)scene->assemblies.size();
     scene->assemblies.push_back(capture);
 
@@ -999,7 +1118,7 @@ capture_scene_assembly(ProMdl model,
         return context.result == CREO_BRL_SNAPSHOT_CAPTURE_SUCCESS ?
                    CREO_BRL_SNAPSHOT_CAPTURE_MODEL_FAILURE : context.result;
 
-    return CREO_BRL_SNAPSHOT_CAPTURE_SUCCESS;
+    return creo_brl_finalize_assembly_capture(scene, *index_out);
 }
 
 
@@ -1017,14 +1136,21 @@ creo_brl_frontend_capture_model_scene(ProMdl model,
 
     capture->settings = *settings;
     capture->settings_strings = *settings_strings;
+    capture->next_region_id = settings->region_id > 0 ? settings->region_id : 1;
 
     if (model_type == PRO_MDL_PART) {
         *root_type = CREO_BRL_SNAPSHOT_SCENE_NODE_PART;
-        return capture_scene_part(model, capture, root_index);
+        const int result = capture_scene_part(model, capture, root_index);
+
+        return result == CREO_BRL_SNAPSHOT_CAPTURE_SKIPPED ?
+                   CREO_BRL_SNAPSHOT_CAPTURE_EMPTY_MODEL : result;
     }
     if (model_type == PRO_MDL_ASSEMBLY) {
         *root_type = CREO_BRL_SNAPSHOT_SCENE_NODE_ASSEMBLY;
-        return capture_scene_assembly(model, capture, root_index);
+        const int result = capture_scene_assembly(model, capture, root_index);
+
+        return result == CREO_BRL_SNAPSHOT_CAPTURE_SKIPPED ?
+                   CREO_BRL_SNAPSHOT_CAPTURE_EMPTY_MODEL : result;
     }
 
     return CREO_BRL_SNAPSHOT_CAPTURE_UNSUPPORTED_MODEL;

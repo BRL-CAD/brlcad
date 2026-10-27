@@ -158,7 +158,8 @@ frontend_capture_failure_message(int result)
         case CREO_BRL_SNAPSHOT_CAPTURE_MODEL_FAILURE:
             return "FAILURE: Unable to read active model metadata or supported length units.";
         case CREO_BRL_SNAPSHOT_CAPTURE_TESSELLATION_FAILURE:
-            return "FAILURE: Unable to tessellate a model part; enable bounding-box fallback or adjust tessellation controls.";
+        case CREO_BRL_SNAPSHOT_CAPTURE_EMPTY_MODEL:
+            return "FAILURE: The active model contains no convertible solid geometry.";
         case CREO_BRL_SNAPSHOT_CAPTURE_WRITE_FAILURE:
             return "FAILURE: Unable to create the temporary conversion request.";
         default:

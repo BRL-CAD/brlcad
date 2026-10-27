@@ -28,6 +28,14 @@ static const char CREO_BRL_CORE_TOP_LEVEL_NAME[] = "all";
 static const char CREO_BRL_CORE_HOLE_SUFFIX[] = ".s";
 
 
+struct snapshot_assembly_input {
+    struct creo_brl_snapshot_assembly record;
+    std::string model_name;
+    std::string model_version;
+    std::vector<struct snapshot_named_value> parameters;
+};
+
+
 static int
 snapshot_seek(FILE *snapshot_file, uint64_t offset)
 {
@@ -371,20 +379,29 @@ snapshot_write_part_definition(FILE *snapshot_file,
 static int
 snapshot_write_assembly_attributes(struct db_i *database,
                                    const char *assembly_name,
+                                   const struct creo_brl_snapshot_assembly *assembly_record,
                                    const std::string& model_name,
-                                   const std::string& model_version)
+                                   const std::string& model_version,
+                                   const std::vector<struct snapshot_named_value>& parameters)
 {
     struct bu_attribute_value_set attributes = BU_AVS_INIT_ZERO;
     struct directory *assembly = db_lookup(database, assembly_name, LOOKUP_QUIET);
     int result = 0;
 
-    if (assembly == RT_DIR_NULL || db5_get_attributes(database, &attributes, assembly) != 0)
+    if (!assembly_record || assembly == RT_DIR_NULL ||
+        db5_get_attributes(database, &attributes, assembly) != 0)
         goto cleanup;
 
     bu_avs_add(&attributes, CREO_BRL_CORE_IMPORTER_ATTRIBUTE, CREO_BRL_CORE_IMPORTER_VALUE);
     bu_avs_add(&attributes, CREO_BRL_CORE_MODEL_NAME_ATTRIBUTE, model_name.c_str());
     if (!model_version.empty())
         bu_avs_add(&attributes, CREO_BRL_CORE_MODEL_VERSION_ATTRIBUTE, model_version.c_str());
+    creo_brl_add_snapshot_named_values(&attributes, parameters);
+    creo_brl_add_snapshot_mass_properties(
+        &attributes,
+        (assembly_record->flags & CREO_BRL_SNAPSHOT_ASSEMBLY_HAS_MASS_PROPERTIES) != 0,
+        assembly_record->density, assembly_record->mass,
+        assembly_record->volume, assembly_record->surface_area);
     result = db5_update_attributes(assembly, &attributes, database) == 0;
 
 cleanup:
@@ -395,7 +412,7 @@ cleanup:
 
 static int
 snapshot_write_assembly(FILE *snapshot_file,
-                        const struct creo_brl_snapshot_assembly *assembly,
+                        const struct snapshot_assembly_input *assembly,
                         const std::vector<struct snapshot_part_output>& part_outputs,
                         const std::vector<std::string>& assembly_names,
                         const std::vector<int>& assembly_written,
@@ -403,19 +420,18 @@ snapshot_write_assembly(FILE *snapshot_file,
                         struct rt_wdb *writer,
                         const std::string& assembly_name)
 {
-    std::string model_name;
-    std::string model_version;
+    const struct creo_brl_snapshot_assembly *assembly_record =
+        assembly ? &assembly->record : NULL;
     struct wmember members;
     uint64_t member_index = 0;
 
-    if (!snapshot_read_text(snapshot_file, &assembly->model_name, &model_name) ||
-        !snapshot_read_text(snapshot_file, &assembly->model_version, &model_version))
-        return CREO_BRL_CORE_CONVERT_INVALID_SNAPSHOT;
+    if (!assembly_record)
+        return CREO_BRL_CORE_CONVERT_INVALID_REQUEST;
 
     BU_LIST_INIT(&members.l);
-    for (member_index = 0; member_index < assembly->member_count; ++member_index) {
+    for (member_index = 0; member_index < assembly_record->member_count; ++member_index) {
         struct creo_brl_snapshot_assembly_member member = {};
-        const uint64_t offset = assembly->members.offset +
+        const uint64_t offset = assembly_record->members.offset +
                                 member_index * sizeof(struct creo_brl_snapshot_assembly_member);
         const char *target_name = NULL;
         mat_t matrix = {};
@@ -444,7 +460,9 @@ snapshot_write_assembly(FILE *snapshot_file,
     }
 
     if (mk_lcomb(writer, assembly_name.c_str(), &members, 0, NULL, NULL, NULL, 0) != 0 ||
-        !snapshot_write_assembly_attributes(database, assembly_name.c_str(), model_name, model_version))
+        !snapshot_write_assembly_attributes(database, assembly_name.c_str(), assembly_record,
+                                            assembly->model_name, assembly->model_version,
+                                            assembly->parameters))
         return CREO_BRL_CORE_CONVERT_OUTPUT_FAILED;
 
     return CREO_BRL_CORE_CONVERT_SUCCESS;
@@ -483,7 +501,7 @@ creo_brl_convert_snapshot_scene(FILE *snapshot_file,
 {
     std::string output_path;
     std::vector<struct snapshot_part_output> part_outputs;
-    std::vector<struct creo_brl_snapshot_assembly> assemblies;
+    std::vector<struct snapshot_assembly_input> assemblies;
     std::vector<std::string> assembly_names;
     std::vector<int> assembly_written;
     std::vector<std::string> reserved_names;
@@ -534,15 +552,24 @@ creo_brl_convert_snapshot_scene(FILE *snapshot_file,
         assembly_names.resize((size_t)scene->assembly_count);
         assembly_written.assign((size_t)scene->assembly_count, 0);
         for (uint64_t index = 0; index < scene->assembly_count; ++index) {
-            std::string model_name;
+            struct snapshot_assembly_input& assembly = assemblies[(size_t)index];
             const uint64_t offset = scene->assemblies.offset + index * sizeof(struct creo_brl_snapshot_assembly);
 
-            if (!snapshot_read_at(snapshot_file, offset, &assemblies[(size_t)index],
-                                  sizeof(assemblies[(size_t)index])) ||
-                !snapshot_read_text(snapshot_file, &assemblies[(size_t)index].model_name, &model_name) ||
-                !creo_brl_snapshot_unique_name(database, creo_brl_snapshot_name_root(model_name),
-                                               reserved_names, &assembly_names[(size_t)index])) {
+            if (!snapshot_read_at(snapshot_file, offset, &assembly.record,
+                                  sizeof(assembly.record)) ||
+                !snapshot_read_text(snapshot_file, &assembly.record.model_name,
+                                    &assembly.model_name) ||
+                !snapshot_read_text(snapshot_file, &assembly.record.model_version,
+                                    &assembly.model_version) ||
+                !snapshot_read_named_values(snapshot_file, &assembly.record.parameters,
+                                            assembly.record.parameter_count,
+                                            &assembly.parameters)) {
                 result = CREO_BRL_CORE_CONVERT_INVALID_SNAPSHOT;
+                goto cleanup;
+            }
+            if (!creo_brl_snapshot_unique_name(database, creo_brl_snapshot_name_root(assembly.model_name),
+                                               reserved_names, &assembly_names[(size_t)index])) {
+                result = CREO_BRL_CORE_CONVERT_OUTPUT_FAILED;
                 goto cleanup;
             }
             reserved_names.push_back(assembly_names[(size_t)index]);
@@ -552,14 +579,17 @@ creo_brl_convert_snapshot_scene(FILE *snapshot_file,
             int wrote_assembly = 0;
 
             for (uint64_t index = 0; index < scene->assembly_count; ++index) {
-                const struct creo_brl_snapshot_assembly *assembly = &assemblies[(size_t)index];
+                const struct snapshot_assembly_input *assembly = &assemblies[(size_t)index];
+                const struct creo_brl_snapshot_assembly *assembly_record = &assembly->record;
                 int dependencies_written = 1;
 
                 if (assembly_written[(size_t)index])
                     continue;
-                for (uint64_t member_index = 0; member_index < assembly->member_count; ++member_index) {
+                for (uint64_t member_index = 0;
+                     member_index < assembly_record->member_count; ++member_index) {
                     struct creo_brl_snapshot_assembly_member member = {};
-                    const uint64_t offset = assembly->members.offset + member_index * sizeof(member);
+                    const uint64_t offset = assembly_record->members.offset +
+                                            member_index * sizeof(member);
 
                     if (!snapshot_read_at(snapshot_file, offset, &member, sizeof(member))) {
                         result = CREO_BRL_CORE_CONVERT_INVALID_SNAPSHOT;

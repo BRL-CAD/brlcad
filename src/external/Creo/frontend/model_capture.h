@@ -7,6 +7,7 @@
 #define CREO_FRONTEND_MODEL_CAPTURE_H
 
 #include <stddef.h>
+#include <stdint.h>
 
 #include <string>
 #include <vector>
@@ -83,6 +84,7 @@ struct snapshot_assembly_capture {
     std::string model_name;
     std::string model_version;
     std::vector<struct creo_brl_snapshot_assembly_member> members;
+    std::vector<struct snapshot_named_value_capture> parameters;
 };
 
 
@@ -91,6 +93,21 @@ struct snapshot_scene_capture {
     struct snapshot_settings_strings settings_strings;
     std::vector<struct snapshot_part_capture> parts;
     std::vector<struct snapshot_assembly_capture> assemblies;
+    int64_t next_region_id;
+};
+
+
+enum creo_brl_scene_part_commit_result {
+    CREO_BRL_SCENE_PART_COMMIT_ERROR = -1,
+    CREO_BRL_SCENE_PART_REUSED = 0,
+    CREO_BRL_SCENE_PART_ADDED = 1
+};
+
+
+enum creo_brl_capture_child_disposition {
+    CREO_BRL_CAPTURE_CHILD_FATAL = -1,
+    CREO_BRL_CAPTURE_CHILD_SKIP = 0,
+    CREO_BRL_CAPTURE_CHILD_APPEND = 1
 };
 
 
@@ -118,6 +135,15 @@ int creo_brl_run_tessellation_policy(
     void *context,
     struct snapshot_mesh_capture *mesh);
 void creo_brl_mark_bbox_fallback(struct snapshot_part_capture *capture);
+int creo_brl_capture_child_result(int capture_result);
+int creo_brl_finalize_assembly_capture(struct snapshot_scene_capture *scene,
+                                       uint32_t assembly_index);
+int creo_brl_commit_part_capture(struct snapshot_scene_capture *scene,
+                                 struct snapshot_part_capture *capture,
+                                 uint32_t *index_out);
+int creo_brl_set_assembly_mass_properties(
+    const ProMassProperty *mass_properties,
+    struct snapshot_assembly_capture *capture);
 
 
 int creo_brl_frontend_capture_model_scene(ProMdl model,

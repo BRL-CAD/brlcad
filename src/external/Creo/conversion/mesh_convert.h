@@ -18,6 +18,7 @@
 
 struct db_i;
 struct rt_wdb;
+struct bu_attribute_value_set;
 
 extern const char CREO_BRL_CORE_IMPORTER_ATTRIBUTE[];
 extern const char CREO_BRL_CORE_IMPORTER_VALUE[];
@@ -37,6 +38,18 @@ struct snapshot_named_value {
     std::string name;
     std::string value;
 };
+
+
+void creo_brl_add_snapshot_named_values(
+    struct bu_attribute_value_set *attributes,
+    const std::vector<struct snapshot_named_value>& values);
+void creo_brl_add_snapshot_mass_properties(
+    struct bu_attribute_value_set *attributes,
+    int available,
+    double density,
+    double mass,
+    double volume,
+    double surface_area);
 
 
 int creo_brl_convert_snapshot_part(const struct creo_brl_snapshot_part *part,

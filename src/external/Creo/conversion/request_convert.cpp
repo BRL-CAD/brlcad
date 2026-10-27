@@ -441,12 +441,16 @@ snapshot_part_is_valid(FILE *snapshot_file,
     const int has_normals = (part->flags & CREO_BRL_SNAPSHOT_PART_HAS_NORMALS) != 0;
     const int has_material = (part->flags & CREO_BRL_SNAPSHOT_PART_HAS_MATERIAL) != 0;
 
-    if ((part->flags & ~CREO_BRL_SNAPSHOT_PART_FLAG_MASK) != 0 ||
+    if ((part->flags & ~CREO_BRL_SNAPSHOT_PART_FLAG_MASK) != 0 || part->region_id < 1 ||
         has_mesh == has_bbox || part->color_is_set !=
             ((part->flags & CREO_BRL_SNAPSHOT_PART_HAS_COLOR) != 0) ||
         !std::isfinite(part->model_to_mm) || part->model_to_mm <= 0.0 ||
-        !std::isfinite(part->bbox_diagonal) || !std::isfinite(part->bbox_volume) ||
-        !std::isfinite(part->bbox_area) || !std::isfinite(part->surface_area) ||
+        !std::isfinite(part->bbox_diagonal) || part->bbox_diagonal < 0.0 ||
+        !std::isfinite(part->bbox_volume) || part->bbox_volume < 0.0 ||
+        !std::isfinite(part->bbox_area) || part->bbox_area < 0.0 ||
+        !std::isfinite(part->density) ||
+        !std::isfinite(part->mass) || !std::isfinite(part->volume) ||
+        !std::isfinite(part->surface_area) ||
         !snapshot_bbox_is_valid(part) ||
         !snapshot_range_is_valid(&part->model_name, snapshot_size, data_offset) ||
         !snapshot_range_is_valid(&part->model_version, snapshot_size, data_offset) ||
@@ -520,13 +524,23 @@ snapshot_assembly_is_valid(FILE *snapshot_file,
 {
     uint64_t member_index = 0;
 
-    if (!snapshot_range_is_valid(&assembly->model_name, snapshot_size, data_offset) ||
+    if ((assembly->flags & ~CREO_BRL_SNAPSHOT_ASSEMBLY_FLAG_MASK) != 0 ||
+        !std::isfinite(assembly->density) || !std::isfinite(assembly->mass) ||
+        !std::isfinite(assembly->volume) || !std::isfinite(assembly->surface_area) ||
+        !snapshot_range_is_valid(&assembly->model_name, snapshot_size, data_offset) ||
         !snapshot_range_is_valid(&assembly->model_version, snapshot_size, data_offset) ||
+        assembly->member_count == 0 ||
         !snapshot_range_has_records(&assembly->members, assembly->member_count,
                                     sizeof(struct creo_brl_snapshot_assembly_member),
                                     snapshot_size, data_offset) ||
+        !snapshot_range_has_records(&assembly->parameters, assembly->parameter_count,
+                                    sizeof(struct creo_brl_snapshot_named_value),
+                                    snapshot_size, data_offset) ||
         !snapshot_text_is_valid(snapshot_file, &assembly->model_name, 1) ||
         !snapshot_text_is_valid(snapshot_file, &assembly->model_version, 0) ||
+        !snapshot_named_values_are_valid(snapshot_file, &assembly->parameters,
+                                         assembly->parameter_count,
+                                         snapshot_size, data_offset) ||
         !snapshot_seek(snapshot_file, assembly->members.offset))
         return 0;
 

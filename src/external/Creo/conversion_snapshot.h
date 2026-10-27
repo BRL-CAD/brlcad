@@ -35,7 +35,7 @@
 #define CREO_BRL_SNAPSHOT_PART_SIZE 340u
 #define CREO_BRL_SNAPSHOT_MATRIX_SIZE 128u
 #define CREO_BRL_SNAPSHOT_ASSEMBLY_MEMBER_SIZE 136u
-#define CREO_BRL_SNAPSHOT_ASSEMBLY_SIZE 56u
+#define CREO_BRL_SNAPSHOT_ASSEMBLY_SIZE 116u
 #define CREO_BRL_SNAPSHOT_SCENE_SIZE 248u
 
 #define CREO_BRL_SNAPSHOT_COORDINATE_COUNT 3u
@@ -109,6 +109,13 @@ enum creo_brl_snapshot_part_flag {
      CREO_BRL_SNAPSHOT_PART_HAS_COLOR | \
      CREO_BRL_SNAPSHOT_PART_HAS_MATERIAL | \
      CREO_BRL_SNAPSHOT_PART_HAS_MASS_PROPERTIES)
+
+enum creo_brl_snapshot_assembly_flag {
+    CREO_BRL_SNAPSHOT_ASSEMBLY_HAS_MASS_PROPERTIES = 1u << 0
+};
+
+#define CREO_BRL_SNAPSHOT_ASSEMBLY_FLAG_MASK \
+    CREO_BRL_SNAPSHOT_ASSEMBLY_HAS_MASS_PROPERTIES
 
 #pragma pack(push, 1)
 
@@ -219,10 +226,17 @@ struct creo_brl_snapshot_assembly_member {
 };
 
 struct creo_brl_snapshot_assembly {
+    uint32_t flags;
+    double density;
+    double mass;
+    double volume;
+    double surface_area;
     struct creo_brl_snapshot_range model_name;
     struct creo_brl_snapshot_range model_version;
     struct creo_brl_snapshot_range members;
     uint64_t member_count;
+    struct creo_brl_snapshot_range parameters;
+    uint64_t parameter_count;
 };
 
 struct creo_brl_snapshot_scene {

@@ -2,11 +2,13 @@
 
 #include <cmath>
 #include <cstdio>
+#include <limits>
 #include <string>
 #include <vector>
 
 #include "bu/units.h"
 #include "frontend/model_capture.h"
+#include "frontend/snapshot_writer.h"
 
 
 int
@@ -425,6 +427,121 @@ test_capture_rejects_replay_collapsed_facet()
 }
 
 
+static struct snapshot_part_capture
+named_part(const char *name)
+{
+    struct snapshot_part_capture capture = {};
+
+    capture.strings.model_name = name;
+    return capture;
+}
+
+
+static int
+test_scene_results_and_region_ids()
+{
+    struct snapshot_scene_capture scene = {};
+    struct snapshot_part_capture first = named_part("first.prt");
+    struct snapshot_part_capture reused = named_part("first.prt");
+    struct snapshot_part_capture second = named_part("second.prt");
+    uint32_t index = 0;
+
+    scene.next_region_id = -12;
+    if (!expect(creo_brl_commit_part_capture(&scene, &first, &index) ==
+                    CREO_BRL_SCENE_PART_ADDED && index == 0u &&
+                    scene.parts[0].part.region_id == 1,
+                "non-positive initial region ID was not normalized") ||
+        !expect(creo_brl_commit_part_capture(&scene, &reused, &index) ==
+                    CREO_BRL_SCENE_PART_REUSED && index == 0u &&
+                    scene.next_region_id == 2,
+                "reused part consumed another region ID") ||
+        !expect(creo_brl_commit_part_capture(&scene, &second, &index) ==
+                    CREO_BRL_SCENE_PART_ADDED && index == 1u &&
+                    scene.parts[1].part.region_id == 2,
+                "unique parts did not receive consecutive region IDs"))
+        return 0;
+
+    scene = {};
+    scene.next_region_id = (std::numeric_limits<int32_t>::max)();
+    first = named_part("maximum.prt");
+    reused = named_part("maximum.prt");
+    second = named_part("overflow.prt");
+    if (!expect(creo_brl_commit_part_capture(&scene, &first, &index) ==
+                    CREO_BRL_SCENE_PART_ADDED &&
+                    scene.parts[0].part.region_id == (std::numeric_limits<int32_t>::max)(),
+                "maximum region ID was not allocated") ||
+        !expect(creo_brl_commit_part_capture(&scene, &reused, &index) ==
+                    CREO_BRL_SCENE_PART_REUSED,
+                "region overflow check rejected a reused definition") ||
+        !expect(creo_brl_commit_part_capture(&scene, &second, &index) ==
+                    CREO_BRL_SCENE_PART_COMMIT_ERROR,
+                "region ID overflow was not reported"))
+        return 0;
+
+    int appended_children = 0;
+    const int child_results[] = {
+        CREO_BRL_SNAPSHOT_CAPTURE_SUCCESS,
+        CREO_BRL_SNAPSHOT_CAPTURE_SKIPPED
+    };
+    for (size_t child = 0; child < 2u; ++child) {
+        const int disposition = creo_brl_capture_child_result(child_results[child]);
+
+        if (disposition == CREO_BRL_CAPTURE_CHILD_APPEND)
+            ++appended_children;
+    }
+
+    struct snapshot_assembly_capture parent = {};
+    struct snapshot_assembly_capture empty_child = {};
+    parent.members.resize(1u);
+    scene.assemblies.push_back(parent);
+    scene.assemblies.push_back(empty_child);
+
+    return expect(appended_children == 1,
+                  "skipped child hid a valid sibling") &&
+           expect(creo_brl_capture_child_result(CREO_BRL_SNAPSHOT_CAPTURE_MODEL_FAILURE) ==
+                      CREO_BRL_CAPTURE_CHILD_FATAL,
+                  "fatal child capture error was omitted") &&
+           expect(creo_brl_finalize_assembly_capture(&scene, 1u) ==
+                      CREO_BRL_SNAPSHOT_CAPTURE_SKIPPED,
+                  "empty subassembly was not skipped") &&
+           expect(scene.assemblies.size() == 1u &&
+                      scene.assemblies[0].members.size() == 1u,
+                  "empty subassembly removal discarded a valid sibling") &&
+           expect(creo_brl_finalize_assembly_capture(&scene, 0u) ==
+                      CREO_BRL_SNAPSHOT_CAPTURE_SUCCESS,
+                  "nonempty assembly was not retained") &&
+           expect(creo_brl_finalize_assembly_capture(&scene, 1u) ==
+                      CREO_BRL_SNAPSHOT_CAPTURE_MODEL_FAILURE,
+                  "invalid assembly finalization was not fatal");
+}
+
+
+static int
+test_assembly_metadata_capture()
+{
+    ProMassProperty mass_properties = {};
+    struct snapshot_assembly_capture capture = {};
+
+    mass_properties.density = 7.5;
+    mass_properties.mass = 125.0;
+    mass_properties.volume = 16.5;
+    mass_properties.surface_area = 48.0;
+    return expect(creo_brl_set_assembly_mass_properties(&mass_properties, &capture),
+                  "assembly mass properties were not captured") &&
+           expect((capture.assembly.flags &
+                       CREO_BRL_SNAPSHOT_ASSEMBLY_HAS_MASS_PROPERTIES) != 0,
+                  "assembly mass-property flag was not captured") &&
+           expect(near_equal(capture.assembly.density, mass_properties.density) &&
+                      near_equal(capture.assembly.mass, mass_properties.mass) &&
+                      near_equal(capture.assembly.volume, mass_properties.volume) &&
+                      near_equal(capture.assembly.surface_area,
+                                 mass_properties.surface_area),
+                  "assembly mass-property values changed during capture") &&
+           expect(!creo_brl_set_assembly_mass_properties(NULL, &capture),
+                  "missing assembly mass properties were accepted");
+}
+
+
 static int
 run_named_test(const std::string& name)
 {
@@ -453,6 +570,8 @@ main(int argument_count, char *arguments[])
     return test_component_unit_matrices() &&
                    test_tessellation_policy() &&
                    test_tessellation_data_transaction() &&
+                   test_scene_results_and_region_ids() &&
+                   test_assembly_metadata_capture() &&
                    test_capture_uses_replay_vertex_tolerance() &&
                    test_capture_rejects_replay_collapsed_facet() ?
                0 : 1;

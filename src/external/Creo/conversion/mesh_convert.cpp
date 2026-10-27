@@ -47,6 +47,9 @@ static const char CREO_BRL_CORE_DENSITY_ATTRIBUTE[] = "density";
 static const char CREO_BRL_CORE_MASS_ATTRIBUTE[] = "mass";
 static const char CREO_BRL_CORE_VOLUME_ATTRIBUTE[] = "volume";
 static const char CREO_BRL_CORE_SURFACE_AREA_ATTRIBUTE[] = "surface_area";
+static const char CREO_BRL_CORE_RPP_AREA_ATTRIBUTE[] = "rpp_area";
+static const char CREO_BRL_CORE_RPP_DIAGONAL_ATTRIBUTE[] = "rpp_diag";
+static const char CREO_BRL_CORE_RPP_VOLUME_ATTRIBUTE[] = "rpp_vol";
 
 
 struct normalized_mesh {
@@ -147,12 +150,35 @@ format_double(double value)
 }
 
 
-static void
-add_named_values(struct bu_attribute_value_set *attributes,
-                 const std::vector<struct snapshot_named_value>& values)
+void
+creo_brl_add_snapshot_named_values(
+    struct bu_attribute_value_set *attributes,
+    const std::vector<struct snapshot_named_value>& values)
 {
+    if (!attributes)
+        return;
+
     for (size_t index = 0; index < values.size(); ++index)
         bu_avs_add(attributes, values[index].name.c_str(), values[index].value.c_str());
+}
+
+
+void
+creo_brl_add_snapshot_mass_properties(struct bu_attribute_value_set *attributes,
+                                      int available,
+                                      double density,
+                                      double mass,
+                                      double volume,
+                                      double surface_area)
+{
+    if (!attributes || !available)
+        return;
+
+    bu_avs_add(attributes, CREO_BRL_CORE_DENSITY_ATTRIBUTE, format_double(density).c_str());
+    bu_avs_add(attributes, CREO_BRL_CORE_MASS_ATTRIBUTE, format_double(mass).c_str());
+    bu_avs_add(attributes, CREO_BRL_CORE_VOLUME_ATTRIBUTE, format_double(volume).c_str());
+    bu_avs_add(attributes, CREO_BRL_CORE_SURFACE_AREA_ATTRIBUTE,
+               format_double(surface_area).c_str());
 }
 
 
@@ -198,8 +224,15 @@ snapshot_write_attributes(struct db_i *database,
 
     bu_avs_add(&attributes, CREO_BRL_CORE_IMPORTER_ATTRIBUTE, CREO_BRL_CORE_IMPORTER_VALUE);
     bu_avs_add(&attributes, CREO_BRL_CORE_MODEL_NAME_ATTRIBUTE, model_name.c_str());
-    if (!has_mesh)
+    if (!has_mesh) {
         bu_avs_add(&attributes, CREO_BRL_CORE_FALLBACK_ATTRIBUTE, model_name.c_str());
+        bu_avs_add(&attributes, CREO_BRL_CORE_RPP_AREA_ATTRIBUTE,
+                   format_double(part->bbox_area).c_str());
+        bu_avs_add(&attributes, CREO_BRL_CORE_RPP_DIAGONAL_ATTRIBUTE,
+                   format_double(part->bbox_diagonal).c_str());
+        bu_avs_add(&attributes, CREO_BRL_CORE_RPP_VOLUME_ATTRIBUTE,
+                   format_double(part->bbox_volume).c_str());
+    }
     if (db5_update_attributes(solid, &attributes, database) != 0)
         goto cleanup;
 
@@ -212,14 +245,12 @@ snapshot_write_attributes(struct db_i *database,
         bu_avs_add(&attributes, CREO_BRL_CORE_MODEL_VERSION_ATTRIBUTE, model_version.c_str());
     bu_avs_add(&attributes, CREO_BRL_CORE_MATERIAL_ATTRIBUTE,
                material_name.empty() ? CREO_BRL_CORE_UNDEFINED_MATERIAL : material_name.c_str());
-    add_named_values(&attributes, attributes_in);
-    add_named_values(&attributes, parameters);
+    creo_brl_add_snapshot_named_values(&attributes, attributes_in);
+    creo_brl_add_snapshot_named_values(&attributes, parameters);
     if ((part->flags & CREO_BRL_SNAPSHOT_PART_HAS_MASS_PROPERTIES) != 0) {
-        bu_avs_add(&attributes, CREO_BRL_CORE_DENSITY_ATTRIBUTE, format_double(part->density).c_str());
-        bu_avs_add(&attributes, CREO_BRL_CORE_MASS_ATTRIBUTE, format_double(part->mass).c_str());
-        bu_avs_add(&attributes, CREO_BRL_CORE_VOLUME_ATTRIBUTE, format_double(part->volume).c_str());
-        bu_avs_add(&attributes, CREO_BRL_CORE_SURFACE_AREA_ATTRIBUTE,
-                   format_double(part->surface_area).c_str());
+        creo_brl_add_snapshot_mass_properties(&attributes, 1, part->density,
+                                              part->mass, part->volume,
+                                              part->surface_area);
     } else if (std::isfinite(part->density) && part->density > 0.0) {
         bu_avs_add(&attributes, CREO_BRL_CORE_DENSITY_ATTRIBUTE, format_double(part->density).c_str());
     }

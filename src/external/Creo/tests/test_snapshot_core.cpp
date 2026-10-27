@@ -3,9 +3,11 @@
 #include <algorithm>
 #include <cmath>
 #include <cstdio>
+#include <cstdlib>
 #include <cstring>
 #include <fstream>
 #include <iomanip>
+#include <limits>
 #include <sstream>
 #include <string>
 #include <utility>
@@ -27,6 +29,12 @@ static const char FIXTURE_MATERIAL_NAME[] = "fixture_material";
 static const char FIXTURE_SOLID_NAME[] = "fixture_part.s";
 static const char FIXTURE_FALLBACK_NAME[] = "fixture_part.rpp";
 static const char FIXTURE_REGION_NAME[] = "fixture_part.r";
+static const char COLLIDING_MODEL_NAME[] = "fixture@part";
+static const char COLLIDING_SOLID_NAME[] = "fixture_part_1.s";
+static const char COLLIDING_REGION_NAME[] = "fixture_part_1.r";
+static const char COLLISION_ASSEMBLY_NAME[] = "collision_root.asm";
+static const char FIXTURE_SUBASSEMBLY_NAME[] = "fixture_subassembly.asm";
+static const char FIXTURE_ROOT_ASSEMBLY_NAME[] = "fixture_root.asm";
 static const char FIXTURE_TOP_LEVEL_NAME[] = "all";
 static const char MALFORMED_SNAPSHOT_NAME[] = "creo_phase3_malformed.snapshot";
 static const char INVALID_SIZE_SNAPSHOT_NAME[] = "creo_phase3_invalid_size.snapshot";
@@ -44,6 +52,35 @@ static const uint64_t VALID_SNAPSHOT_SIZE_DELTA = 0u;
 static const uint64_t INVALID_SNAPSHOT_SIZE_DELTA = 1u;
 static const int FIXTURE_REGION_ID = 42;
 static const double MESH_NEARBY_VERTEX_OFFSET_MM = 0.0001;
+static const int COLLIDING_REGION_ID = FIXTURE_REGION_ID + 1;
+
+
+struct fixture_assembly_definition {
+    std::string model_name;
+    std::string model_version;
+    uint32_t flags;
+    double density;
+    double mass;
+    double volume;
+    double surface_area;
+    std::vector<std::pair<std::string, std::string> > parameters;
+    std::vector<struct creo_brl_snapshot_assembly_member> members;
+};
+
+
+struct fixture_part_definition {
+    struct creo_brl_snapshot_part part;
+    std::string model_name;
+    std::string model_version;
+    std::string material_name;
+    std::vector<std::pair<std::string, std::string> > attributes;
+    std::vector<std::pair<std::string, std::string> > parameters;
+    std::vector<struct creo_brl_snapshot_tgc_subtraction> tgc_subtractions;
+    std::vector<struct creo_brl_snapshot_vector> vertices;
+    std::vector<struct creo_brl_snapshot_triangle> triangles;
+    std::vector<struct creo_brl_snapshot_vector> normals;
+    std::vector<uint32_t> normal_indices;
+};
 
 
 struct fixture_definition {
@@ -65,6 +102,9 @@ struct fixture_definition {
     std::vector<struct creo_brl_snapshot_triangle> triangles;
     std::vector<struct creo_brl_snapshot_vector> normals;
     std::vector<uint32_t> normal_indices;
+    std::vector<struct fixture_part_definition> additional_parts;
+    std::vector<struct fixture_assembly_definition> assemblies;
+    uint32_t root_index;
 };
 
 
@@ -296,6 +336,72 @@ make_bbox_fallback_fixture(const char *fixture_name,
 }
 
 
+static struct fixture_part_definition
+primary_part_definition(const struct fixture_definition& fixture)
+{
+    struct fixture_part_definition part = {};
+
+    part.part = fixture.part;
+    part.model_name = FIXTURE_MODEL_NAME;
+    part.model_version = FIXTURE_MODEL_VERSION;
+    part.material_name = FIXTURE_MATERIAL_NAME;
+    part.attributes = fixture.attributes;
+    part.parameters = fixture.parameters;
+    part.tgc_subtractions = fixture.tgc_subtractions;
+    part.vertices = fixture.vertices;
+    part.triangles = fixture.triangles;
+    part.normals = fixture.normals;
+    part.normal_indices = fixture.normal_indices;
+    return part;
+}
+
+
+static int
+append_part_definition(std::vector<unsigned char> *contents,
+                       const struct fixture_part_definition& fixture,
+                       struct creo_brl_snapshot_part *part)
+{
+    if (!contents || !part)
+        return 0;
+
+    part->vertex_count = fixture.vertices.size();
+    part->triangle_count = fixture.triangles.size();
+    part->normal_count = fixture.normals.size();
+    part->normal_index_count = fixture.normal_indices.size();
+    part->tgc_subtraction_count = fixture.tgc_subtractions.size();
+    return append_data(contents, fixture.model_name.data(), fixture.model_name.size(),
+                       &part->model_name) &&
+           append_data(contents, fixture.model_version.data(), fixture.model_version.size(),
+                       &part->model_version) &&
+           append_data(contents, fixture.material_name.data(), fixture.material_name.size(),
+                       &part->material_name) &&
+           append_data(contents,
+                       fixture.vertices.empty() ? NULL : fixture.vertices.data(),
+                       fixture.vertices.size() * sizeof(fixture.vertices[0]),
+                       &part->vertices) &&
+           append_data(contents,
+                       fixture.triangles.empty() ? NULL : fixture.triangles.data(),
+                       fixture.triangles.size() * sizeof(fixture.triangles[0]),
+                       &part->triangles) &&
+           append_data(contents,
+                       fixture.normals.empty() ? NULL : fixture.normals.data(),
+                       fixture.normals.size() * sizeof(fixture.normals[0]),
+                       &part->normals) &&
+           append_data(contents,
+                       fixture.normal_indices.empty() ? NULL : fixture.normal_indices.data(),
+                       fixture.normal_indices.size() * sizeof(fixture.normal_indices[0]),
+                       &part->normal_indices) &&
+           append_data(contents,
+                       fixture.tgc_subtractions.empty() ? NULL : fixture.tgc_subtractions.data(),
+                       fixture.tgc_subtractions.size() * sizeof(fixture.tgc_subtractions[0]),
+                       &part->tgc_subtractions) &&
+           append_named_values(contents, fixture.attributes, &part->attributes,
+                               &part->attribute_count) &&
+           append_named_values(contents, fixture.parameters, &part->parameters,
+                               &part->parameter_count);
+}
+
+
 static int
 write_snapshot_fixture(const std::string& snapshot_path,
                        const std::string& output_path,
@@ -305,67 +411,91 @@ write_snapshot_fixture(const std::string& snapshot_path,
 {
     struct creo_brl_snapshot_header header = {};
     struct creo_brl_snapshot_scene scene = {};
-    struct creo_brl_snapshot_part part = fixture.part;
+    std::vector<struct fixture_part_definition> part_fixtures;
+    std::vector<struct creo_brl_snapshot_part> parts;
+    std::vector<struct creo_brl_snapshot_assembly> assemblies(fixture.assemblies.size());
     std::vector<unsigned char> contents;
     const size_t header_offset = 0;
     const size_t scene_offset = sizeof(header);
     const size_t part_offset = sizeof(header) + sizeof(scene);
 
+    part_fixtures.reserve(1u + fixture.additional_parts.size());
+    part_fixtures.push_back(primary_part_definition(fixture));
+    part_fixtures.insert(part_fixtures.end(), fixture.additional_parts.begin(),
+                         fixture.additional_parts.end());
+    parts.resize(part_fixtures.size());
+    for (size_t index = 0; index < parts.size(); ++index)
+        parts[index] = part_fixtures[index].part;
+    const size_t assembly_offset = part_offset + parts.size() * sizeof(parts[0]);
+
     std::memcpy(header.magic, creo_brl_snapshot_magic, sizeof(header.magic));
 
     scene.settings = fixture.settings;
-    scene.part_count = 1u;
+    scene.part_count = parts.size();
     scene.parts.offset = part_offset;
-    scene.parts.size = sizeof(part);
-    scene.root_type = CREO_BRL_SNAPSHOT_SCENE_NODE_PART;
+    scene.parts.size = parts.size() * sizeof(parts[0]);
+    scene.assembly_count = assemblies.size();
+    if (!assemblies.empty()) {
+        scene.assemblies.offset = assembly_offset;
+        scene.assemblies.size = assemblies.size() * sizeof(assemblies[0]);
+    }
+    scene.root_type = assemblies.empty() ?
+                          CREO_BRL_SNAPSHOT_SCENE_NODE_PART :
+                          CREO_BRL_SNAPSHOT_SCENE_NODE_ASSEMBLY;
+    scene.root_index = fixture.root_index;
 
     if (!append_record(&contents, &header, sizeof(header)) ||
         !append_record(&contents, &scene, sizeof(scene)) ||
-        !append_record(&contents, &part, sizeof(part)) ||
+        !append_data(&contents, parts.data(), parts.size() * sizeof(parts[0]),
+                     &scene.parts) ||
+        !append_data(&contents, assemblies.empty() ? NULL : assemblies.data(),
+                     assemblies.size() * sizeof(assemblies[0]), &scene.assemblies) ||
         !append_data(&contents, output_path.data(), output_path.size(), &scene.settings.output_path) ||
         !append_data(&contents, log_path.data(), log_path.size(), &scene.settings.log_path) ||
         !append_data(&contents, fixture.rename_parameters.data(), fixture.rename_parameters.size(),
                      &scene.settings.rename_parameters) ||
         !append_data(&contents, fixture.preserve_parameters.data(), fixture.preserve_parameters.size(),
-                     &scene.settings.preserve_parameters) ||
-        !append_data(&contents, FIXTURE_MODEL_NAME, std::strlen(FIXTURE_MODEL_NAME), &part.model_name) ||
-        !append_data(&contents, FIXTURE_MODEL_VERSION, std::strlen(FIXTURE_MODEL_VERSION),
-                     &part.model_version) ||
-        !append_data(&contents, FIXTURE_MATERIAL_NAME, std::strlen(FIXTURE_MATERIAL_NAME),
-                     &part.material_name) ||
-        !append_data(&contents,
-                     fixture.vertices.empty() ? NULL : fixture.vertices.data(),
-                     fixture.vertices.size() * sizeof(fixture.vertices[0]), &part.vertices) ||
-        !append_data(&contents,
-                     fixture.triangles.empty() ? NULL : fixture.triangles.data(),
-                     fixture.triangles.size() * sizeof(fixture.triangles[0]), &part.triangles) ||
-        !append_data(&contents,
-                     fixture.normals.empty() ? NULL : fixture.normals.data(),
-                     fixture.normals.size() * sizeof(fixture.normals[0]), &part.normals) ||
-        !append_data(&contents,
-                     fixture.normal_indices.empty() ? NULL : fixture.normal_indices.data(),
-                     fixture.normal_indices.size() * sizeof(fixture.normal_indices[0]),
-                     &part.normal_indices) ||
-        !append_data(&contents,
-                     fixture.tgc_subtractions.empty() ? NULL : fixture.tgc_subtractions.data(),
-                     fixture.tgc_subtractions.size() * sizeof(fixture.tgc_subtractions[0]),
-                     &part.tgc_subtractions) ||
-        !append_named_values(&contents, fixture.attributes, &part.attributes, &part.attribute_count) ||
-        !append_named_values(&contents, fixture.parameters, &part.parameters, &part.parameter_count))
+                     &scene.settings.preserve_parameters))
         return 0;
 
-    part.vertex_count = fixture.vertices.size();
-    part.triangle_count = fixture.triangles.size();
-    part.normal_count = fixture.normals.size();
-    part.normal_index_count = fixture.normal_indices.size();
-    part.tgc_subtraction_count = fixture.tgc_subtractions.size();
+    for (size_t index = 0; index < parts.size(); ++index) {
+        if (!append_part_definition(&contents, part_fixtures[index], &parts[index]) ||
+            !replace_record(&contents, part_offset + index * sizeof(parts[index]),
+                            &parts[index], sizeof(parts[index])))
+            return 0;
+    }
+
+    for (size_t index = 0; index < assemblies.size(); ++index) {
+        assemblies[index].flags = fixture.assemblies[index].flags;
+        assemblies[index].density = fixture.assemblies[index].density;
+        assemblies[index].mass = fixture.assemblies[index].mass;
+        assemblies[index].volume = fixture.assemblies[index].volume;
+        assemblies[index].surface_area = fixture.assemblies[index].surface_area;
+        assemblies[index].member_count = fixture.assemblies[index].members.size();
+        if (!append_data(&contents, fixture.assemblies[index].model_name.data(),
+                         fixture.assemblies[index].model_name.size(), &assemblies[index].model_name) ||
+            !append_data(&contents, fixture.assemblies[index].model_version.data(),
+                         fixture.assemblies[index].model_version.size(), &assemblies[index].model_version) ||
+            !append_data(&contents,
+                         fixture.assemblies[index].members.empty() ? NULL :
+                             fixture.assemblies[index].members.data(),
+                         fixture.assemblies[index].members.size() *
+                             sizeof(fixture.assemblies[index].members[0]),
+                         &assemblies[index].members) ||
+            !append_named_values(&contents, fixture.assemblies[index].parameters,
+                                 &assemblies[index].parameters,
+                                 &assemblies[index].parameter_count) ||
+            !replace_record(&contents, assembly_offset + index * sizeof(assemblies[index]),
+                            &assemblies[index], sizeof(assemblies[index])))
+            return 0;
+    }
+
     if (contents.size() > UINT64_MAX - snapshot_size_adjustment)
         return 0;
     header.snapshot_size = (uint64_t)contents.size() + snapshot_size_adjustment;
 
     return replace_record(&contents, header_offset, &header, sizeof(header)) &&
            replace_record(&contents, scene_offset, &scene, sizeof(scene)) &&
-           replace_record(&contents, part_offset, &part, sizeof(part)) &&
            write_file(snapshot_path, contents);
 }
 
@@ -523,11 +653,43 @@ expect_phase4_attribute(struct db_i *database,
 
 
 static int
+expect_numeric_attribute(struct db_i *database,
+                         const char *object_name,
+                         const char *attribute_name,
+                         double expected_value,
+                         const char *fixture_name)
+{
+    std::string value;
+    char *end = NULL;
+    double observed = 0.0;
+
+    if (!read_attribute(database, object_name, attribute_name, &value)) {
+        std::fprintf(stderr, "%s: missing attribute %s on %s\n",
+                     fixture_name, attribute_name, object_name);
+        return 0;
+    }
+
+    observed = std::strtod(value.c_str(), &end);
+    if (!end || *end != '\0' ||
+        std::fabs(observed - expected_value) >
+            1.0e-12 * (std::max)(1.0, std::fabs(expected_value))) {
+        std::fprintf(stderr, "%s: attribute %s on %s expected %g got '%s'\n",
+                     fixture_name, attribute_name, object_name,
+                     expected_value, value.c_str());
+        return 0;
+    }
+
+    return 1;
+}
+
+
+static int
 verify_phase4_metadata(const std::string& output_path,
                        const char *fixture_name,
                        const char *region_name,
                        const char *solid_name,
                        const char *top_name,
+                       const struct creo_brl_snapshot_part *part,
                        int expect_fallback)
 {
     struct db_i *database = db_open(output_path.c_str(), DB_OPEN_READONLY);
@@ -563,7 +725,15 @@ verify_phase4_metadata(const std::string& output_path,
         goto cleanup;
 
     if (expect_fallback)
-        result = read_attribute(database, solid_name, FALLBACK_ATTRIBUTE, &value) && value == FIXTURE_MODEL_NAME;
+        result = part &&
+                 read_attribute(database, solid_name, FALLBACK_ATTRIBUTE, &value) &&
+                 value == FIXTURE_MODEL_NAME &&
+                 expect_numeric_attribute(database, solid_name, "rpp_area",
+                                          part->bbox_area, fixture_name) &&
+                 expect_numeric_attribute(database, solid_name, "rpp_diag",
+                                          part->bbox_diagonal, fixture_name) &&
+                 expect_numeric_attribute(database, solid_name, "rpp_vol",
+                                          part->bbox_volume, fixture_name);
     else
         result = !read_attribute(database, solid_name, FALLBACK_ATTRIBUTE, &value);
 
@@ -711,6 +881,212 @@ expect_matrix(const matp_t actual,
     }
 
     return 1;
+}
+
+
+static void
+set_fixture_matrix(struct creo_brl_snapshot_matrix *matrix,
+                   double translate_x,
+                   double translate_y,
+                   double translate_z)
+{
+    static const double identity[CREO_BRL_SNAPSHOT_MATRIX_ELEMENT_COUNT] = {
+        1.0, 0.0, 0.0, 0.0,
+        0.0, 1.0, 0.0, 0.0,
+        0.0, 0.0, 1.0, 0.0,
+        0.0, 0.0, 0.0, 1.0
+    };
+
+    std::memcpy(matrix->elements, identity, sizeof(identity));
+    matrix->elements[3] = translate_x;
+    matrix->elements[7] = translate_y;
+    matrix->elements[11] = translate_z;
+}
+
+
+static int
+verify_assembly_fixture(const std::string& output_path,
+                        const fixture_definition& fixture,
+                        const char *expected_subassembly_name,
+                        const char *expected_root_name)
+{
+    struct db_i *database = db_open(output_path.c_str(), DB_OPEN_READONLY);
+    struct directory *subassembly_directory = RT_DIR_NULL;
+    struct directory *root_directory = RT_DIR_NULL;
+    struct directory *top_directory = RT_DIR_NULL;
+    struct rt_db_internal subassembly_internal = RT_DB_INTERNAL_INIT_ZERO;
+    struct rt_db_internal root_internal = RT_DB_INTERNAL_INIT_ZERO;
+    struct rt_db_internal top_internal = RT_DB_INTERNAL_INIT_ZERO;
+    std::string importer;
+    std::string model_name;
+    std::string model_version;
+    int result = 0;
+
+    if (database == DBI_NULL || db_dirbuild(database) < 0)
+        goto cleanup;
+    subassembly_directory = db_lookup(database, expected_subassembly_name, LOOKUP_QUIET);
+    root_directory = db_lookup(database, expected_root_name, LOOKUP_QUIET);
+    top_directory = db_lookup(database, FIXTURE_TOP_LEVEL_NAME, LOOKUP_QUIET);
+    if (subassembly_directory == RT_DIR_NULL || root_directory == RT_DIR_NULL ||
+        top_directory == RT_DIR_NULL ||
+        rt_db_get_internal(&subassembly_internal, subassembly_directory, database, NULL) < 0 ||
+        rt_db_get_internal(&root_internal, root_directory, database, NULL) < 0 ||
+        rt_db_get_internal(&top_internal, top_directory, database, NULL) < 0 ||
+        subassembly_internal.idb_type != ID_COMBINATION ||
+        root_internal.idb_type != ID_COMBINATION || top_internal.idb_type != ID_COMBINATION ||
+        !read_attribute(database, expected_subassembly_name, IMPORTER_ATTRIBUTE, &importer) ||
+        !read_attribute(database, expected_root_name, MODEL_NAME_ATTRIBUTE, &model_name) ||
+        !read_attribute(database, expected_root_name, MODEL_VERSION_ATTRIBUTE, &model_version) ||
+        importer != IMPORTER_VALUE || model_name != fixture.assemblies[1].model_name ||
+        model_version != "root-version" ||
+        !expect_phase4_attribute(database, expected_root_name, "assembly_code", "A-42",
+                                 fixture.fixture_name) ||
+        !expect_phase4_attribute(database, expected_root_name, "density", "7.5",
+                                 fixture.fixture_name) ||
+        !expect_phase4_attribute(database, expected_root_name, "mass", "125",
+                                 fixture.fixture_name) ||
+        !expect_phase4_attribute(database, expected_root_name, "volume", "16.5",
+                                 fixture.fixture_name) ||
+        !expect_phase4_attribute(database, expected_root_name, "surface_area", "48",
+                                 fixture.fixture_name))
+        goto cleanup;
+
+    result = expect_matrix(
+                 tree_find_leaf_matrix(
+                     static_cast<const struct rt_comb_internal *>(subassembly_internal.idb_ptr)->tree,
+                     FIXTURE_REGION_NAME),
+                 fixture.assemblies[0].members[0].matrix.elements,
+                 fixture.fixture_name, "subassembly part transform") &&
+             expect_matrix(
+                 tree_find_leaf_matrix(
+                     static_cast<const struct rt_comb_internal *>(root_internal.idb_ptr)->tree,
+                     expected_subassembly_name),
+                 fixture.assemblies[1].members[0].matrix.elements,
+                 fixture.fixture_name, "nested assembly transform") &&
+             expect_matrix(
+                 tree_find_leaf_matrix(
+                     static_cast<const struct rt_comb_internal *>(top_internal.idb_ptr)->tree,
+                     expected_root_name),
+                 phase5_expected_top_matrix(fixture.settings.xform_mode),
+                 fixture.fixture_name, "top-level transform");
+
+cleanup:
+    if (subassembly_internal.idb_ptr)
+        rt_db_free_internal(&subassembly_internal);
+    if (root_internal.idb_ptr)
+        rt_db_free_internal(&root_internal);
+    if (top_internal.idb_ptr)
+        rt_db_free_internal(&top_internal);
+    if (database != DBI_NULL)
+        db_close(database);
+    return result;
+}
+
+
+static int
+run_assembly_fixture(const std::string& working_directory,
+                     const fixture_definition& fixture,
+                     const char *expected_subassembly_name = FIXTURE_SUBASSEMBLY_NAME,
+                     const char *expected_root_name = FIXTURE_ROOT_ASSEMBLY_NAME)
+{
+    const std::string snapshot_path = path_join(working_directory, fixture.snapshot_name);
+    const std::string output_path = path_join(working_directory, fixture.output_name);
+    int result = 0;
+
+    std::remove(snapshot_path.c_str());
+    std::remove(output_path.c_str());
+    if (!write_snapshot_fixture(snapshot_path, output_path, std::string(), fixture,
+                                VALID_SNAPSHOT_SIZE_DELTA)) {
+        test_failuref(fixture.fixture_name, "failed to write assembly snapshot");
+        goto cleanup;
+    }
+    if (creo_brl_core_convert(snapshot_path.c_str()) != CREO_BRL_CORE_CONVERT_SUCCESS) {
+        test_failuref(fixture.fixture_name, "assembly snapshot conversion failed");
+        goto cleanup;
+    }
+    if (!verify_assembly_fixture(output_path, fixture,
+                                 expected_subassembly_name, expected_root_name)) {
+        test_failuref(fixture.fixture_name, "assembly output verification failed");
+        goto cleanup;
+    }
+
+    result = 1;
+
+cleanup:
+    std::remove(snapshot_path.c_str());
+    std::remove(output_path.c_str());
+    return result;
+}
+
+
+static int
+verify_multi_part_collision_fixture(const std::string& output_path,
+                                    const char *fixture_name)
+{
+    struct db_i *database = db_open(output_path.c_str(), DB_OPEN_READONLY);
+    std::string primary_model_name;
+    std::string colliding_model_name;
+    int result = 0;
+
+    if (database == DBI_NULL || db_dirbuild(database) < 0)
+        goto cleanup;
+
+    result = object_exists(database, FIXTURE_SOLID_NAME) &&
+             object_exists(database, FIXTURE_REGION_NAME) &&
+             object_exists(database, COLLIDING_SOLID_NAME) &&
+             object_exists(database, COLLIDING_REGION_NAME) &&
+             object_exists(database, COLLISION_ASSEMBLY_NAME) &&
+             object_exists(database, FIXTURE_TOP_LEVEL_NAME) &&
+             combination_has_leaf(database, COLLISION_ASSEMBLY_NAME,
+                                  FIXTURE_REGION_NAME) &&
+             combination_has_leaf(database, COLLISION_ASSEMBLY_NAME,
+                                  COLLIDING_REGION_NAME) &&
+             combination_has_leaf(database, FIXTURE_TOP_LEVEL_NAME,
+                                  COLLISION_ASSEMBLY_NAME) &&
+             read_attribute(database, FIXTURE_REGION_NAME, MODEL_NAME_ATTRIBUTE,
+                            &primary_model_name) &&
+             read_attribute(database, COLLIDING_REGION_NAME, MODEL_NAME_ATTRIBUTE,
+                            &colliding_model_name) &&
+             primary_model_name == FIXTURE_MODEL_NAME &&
+             colliding_model_name == COLLIDING_MODEL_NAME;
+    if (!result)
+        test_failuref(fixture_name, "multi-part collision output was incomplete");
+
+cleanup:
+    if (database != DBI_NULL)
+        db_close(database);
+    return result;
+}
+
+
+static int
+run_multi_part_collision_fixture(const std::string& working_directory,
+                                 const fixture_definition& fixture)
+{
+    const std::string snapshot_path = path_join(working_directory, fixture.snapshot_name);
+    const std::string output_path = path_join(working_directory, fixture.output_name);
+    int result = 0;
+
+    std::remove(snapshot_path.c_str());
+    std::remove(output_path.c_str());
+    if (!write_snapshot_fixture(snapshot_path, output_path, std::string(), fixture,
+                                VALID_SNAPSHOT_SIZE_DELTA)) {
+        test_failuref(fixture.fixture_name, "failed to write multi-part snapshot");
+        goto cleanup;
+    }
+    if (creo_brl_core_convert(snapshot_path.c_str()) != CREO_BRL_CORE_CONVERT_SUCCESS) {
+        test_failuref(fixture.fixture_name, "multi-part snapshot conversion failed");
+        goto cleanup;
+    }
+    if (!verify_multi_part_collision_fixture(output_path, fixture.fixture_name))
+        goto cleanup;
+
+    result = 1;
+
+cleanup:
+    std::remove(snapshot_path.c_str());
+    std::remove(output_path.c_str());
+    return result;
 }
 
 
@@ -886,7 +1262,8 @@ run_phase4_fixture(const std::string& working_directory,
         creo_brl_core_convert(snapshot_path.c_str()) != CREO_BRL_CORE_CONVERT_SUCCESS ||
         !verify_phase4_metadata(output_path, fixture.fixture_name,
                                 expected_region_name, expected_solid_name,
-                                expected_top_name, expect_fallback)) {
+                                expected_top_name, &fixture.part,
+                                expect_fallback)) {
         test_failuref(fixture.fixture_name, "phase 4 verification failed");
         goto cleanup;
     }
@@ -1316,6 +1693,76 @@ main(int argument_count, char *arguments[])
                                              {{6.0, 0.0, 0.0}}, {{0.0, 3.0, -3.0}}});
     fixture_definition success_log_fixture = metadata_fixture;
     fixture_definition fallback_log_fixture = fallback_metadata_fixture;
+    fixture_definition collision_fixture = normalized_mesh_fixture;
+    fixture_definition assembly_none_fixture = normalized_mesh_fixture;
+    fixture_definition assembly_x_to_z_fixture;
+    fixture_definition assembly_y_to_z_fixture;
+    struct fixture_assembly_definition subassembly = {};
+    struct fixture_assembly_definition root_assembly = {};
+    struct fixture_assembly_definition collision_assembly = {};
+    struct fixture_part_definition colliding_part =
+        primary_part_definition(normalized_mesh_fixture);
+    struct creo_brl_snapshot_assembly_member part_member = {};
+    struct creo_brl_snapshot_assembly_member assembly_member = {};
+    struct creo_brl_snapshot_assembly_member primary_collision_member = {};
+    struct creo_brl_snapshot_assembly_member secondary_collision_member = {};
+
+    part_member.target_type = CREO_BRL_SNAPSHOT_SCENE_NODE_PART;
+    set_fixture_matrix(&part_member.matrix, 10.0, 20.0, 30.0);
+    subassembly.model_name = FIXTURE_SUBASSEMBLY_NAME;
+    subassembly.model_version = "subassembly-version";
+    subassembly.members.push_back(part_member);
+    assembly_member.target_type = CREO_BRL_SNAPSHOT_SCENE_NODE_ASSEMBLY;
+    set_fixture_matrix(&assembly_member.matrix, -5.0, 15.0, 25.0);
+    root_assembly.model_name = FIXTURE_ROOT_ASSEMBLY_NAME;
+    root_assembly.model_version = "root-version";
+    root_assembly.flags = CREO_BRL_SNAPSHOT_ASSEMBLY_HAS_MASS_PROPERTIES;
+    root_assembly.density = 7.5;
+    root_assembly.mass = 125.0;
+    root_assembly.volume = 16.5;
+    root_assembly.surface_area = 48.0;
+    root_assembly.parameters.push_back(
+        std::make_pair(std::string("assembly_code"), std::string("A-42")));
+    root_assembly.members.push_back(assembly_member);
+    assembly_none_fixture.fixture_name = "scene_assembly_none";
+    assembly_none_fixture.snapshot_name = "creo_phase5_assembly_none.snapshot";
+    assembly_none_fixture.output_name = "creo_phase5_assembly_none.g";
+    assembly_none_fixture.manifest_name = NULL;
+    assembly_none_fixture.compare_manifest = 0;
+    assembly_none_fixture.assemblies.push_back(subassembly);
+    assembly_none_fixture.assemblies.push_back(root_assembly);
+    assembly_none_fixture.root_index = 1u;
+    assembly_x_to_z_fixture = assembly_none_fixture;
+    assembly_x_to_z_fixture.fixture_name = "scene_assembly_x_to_z";
+    assembly_x_to_z_fixture.snapshot_name = "creo_phase5_assembly_x_to_z.snapshot";
+    assembly_x_to_z_fixture.output_name = "creo_phase5_assembly_x_to_z.g";
+    assembly_x_to_z_fixture.settings.xform_mode = CREO_BRL_SNAPSHOT_XFORM_X_TO_Z;
+    assembly_y_to_z_fixture = assembly_none_fixture;
+    assembly_y_to_z_fixture.fixture_name = "scene_assembly_y_to_z";
+    assembly_y_to_z_fixture.snapshot_name = "creo_phase5_assembly_y_to_z.snapshot";
+    assembly_y_to_z_fixture.output_name = "creo_phase5_assembly_y_to_z.g";
+    assembly_y_to_z_fixture.settings.xform_mode = CREO_BRL_SNAPSHOT_XFORM_Y_TO_Z;
+    colliding_part.part.region_id = COLLIDING_REGION_ID;
+    colliding_part.model_name = COLLIDING_MODEL_NAME;
+    colliding_part.model_version = "collision-version";
+    primary_collision_member.target_type = CREO_BRL_SNAPSHOT_SCENE_NODE_PART;
+    primary_collision_member.target_index = 0u;
+    set_fixture_matrix(&primary_collision_member.matrix, 0.0, 0.0, 0.0);
+    secondary_collision_member.target_type = CREO_BRL_SNAPSHOT_SCENE_NODE_PART;
+    secondary_collision_member.target_index = 1u;
+    set_fixture_matrix(&secondary_collision_member.matrix, 0.0, 0.0, 0.0);
+    collision_assembly.model_name = COLLISION_ASSEMBLY_NAME;
+    collision_assembly.model_version = "collision-root-version";
+    collision_assembly.members.push_back(primary_collision_member);
+    collision_assembly.members.push_back(secondary_collision_member);
+    collision_fixture.fixture_name = "scene_multi_part_collision";
+    collision_fixture.snapshot_name = "creo_chunk5_multi_part_collision.snapshot";
+    collision_fixture.output_name = "creo_chunk5_multi_part_collision.g";
+    collision_fixture.manifest_name = NULL;
+    collision_fixture.compare_manifest = 0;
+    collision_fixture.additional_parts.push_back(colliding_part);
+    collision_fixture.assemblies.push_back(collision_assembly);
+    collision_fixture.root_index = 0u;
     success_log_fixture.log_name = "creo_phase4_success.log";
     success_log_fixture.settings.log_type = CREO_BRL_SNAPSHOT_LOG_SUCCESS;
     fallback_log_fixture.log_name = "creo_phase4_fallback.log";
@@ -1337,6 +1784,10 @@ main(int argument_count, char *arguments[])
                            "widget_7.r", "widget_7.rpp", "all", 1) ||
         !run_phase4_fixture(working_directory, metadata_fixture, 1,
                            "widget_7_1.r", "widget_7_1.s", "all_1", 0) ||
+        !run_assembly_fixture(working_directory, assembly_none_fixture) ||
+        !run_assembly_fixture(working_directory, assembly_x_to_z_fixture) ||
+        !run_assembly_fixture(working_directory, assembly_y_to_z_fixture) ||
+        !run_multi_part_collision_fixture(working_directory, collision_fixture) ||
         !run_phase5_hole_fixture(working_directory, hole_fixture) ||
         !run_phase4_log_fixture(working_directory, success_log_fixture,
                                 "SUCCESS: Part \"fixture_part\" converted") ||

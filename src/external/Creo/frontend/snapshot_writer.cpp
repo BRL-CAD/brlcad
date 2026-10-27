@@ -345,11 +345,15 @@ write_scene_snapshot(const char *snapshot_path, struct snapshot_scene_capture *c
         struct snapshot_assembly_capture *assembly = &capture->assemblies[index];
 
         assembly->assembly.member_count = assembly->members.size();
+        assembly->assembly.parameter_count = assembly->parameters.size();
         if (!write_text(snapshot_file, assembly->model_name, &assembly->assembly.model_name) ||
             !write_text(snapshot_file, assembly->model_version, &assembly->assembly.model_version) ||
             !write_range(snapshot_file, assembly->members.data(),
                          assembly->members.size() * sizeof(assembly->members[0]),
-                         &assembly->assembly.members))
+                         &assembly->assembly.members) ||
+            !write_named_values(snapshot_file, assembly->parameters,
+                                &assembly->assembly.parameters,
+                                &assembly->assembly.parameter_count))
             goto cleanup;
     }
     if (!finish_snapshot(snapshot_file, &header) ||
