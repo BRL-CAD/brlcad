@@ -48,6 +48,7 @@ add_test(
 add_executable(creo_capture_policy_test
     test_capture_policy.cpp
     "${CMAKE_CURRENT_SOURCE_DIR}/../frontend/model_capture.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/../frontend/csg_capture.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/../shared/mesh_normalization.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/../shim.cpp"
 )
@@ -72,6 +73,7 @@ add_test(
 
 foreach(mesh_case IN ITEMS
     toolkit-derived-units
+    capture-failure-classification
     mesh-near-vertices
     mesh-collapsed-facet
 )

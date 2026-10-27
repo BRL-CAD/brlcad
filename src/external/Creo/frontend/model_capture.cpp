@@ -776,17 +776,18 @@ capture_model_name(ProMdl model, std::string *model_name)
 }
 
 
-static int
-capture_part_definition(ProMdl model,
-                        const struct creo_brl_snapshot_settings *settings,
-                        const struct snapshot_settings_strings *settings_strings,
-                        struct snapshot_part_capture *capture)
+int
+creo_brl_capture_part_definition(ProMdl model,
+                                 const struct creo_brl_snapshot_settings *settings,
+                                 const struct snapshot_settings_strings *settings_strings,
+                                 struct snapshot_part_capture *capture)
 {
     ProName material_name;
     Pro3dPnt bbox[2];
     double scale = 0.0;
     int have_bbox = 0;
-    int suppression_applied = 0;
+    int suppression_result = CREO_BRL_FEATURE_SUPPRESSION_CAPTURE_FAILED;
+    int result = CREO_BRL_SNAPSHOT_CAPTURE_MODEL_FAILURE;
     std::vector<int> suppressed_features;
 
     memset(&capture->part, 0, sizeof(capture->part));
@@ -807,8 +808,6 @@ capture_part_definition(ProMdl model,
     capture_model_version(model, &capture->strings.model_version);
     capture_selected_parameters(model, settings_strings, &capture->parameters);
 
-    (void)creo_brl_capture_feature_suppression(model, scale, settings, capture,
-                                               &suppressed_features, &suppression_applied);
     capture_part_appearance(model, &capture->part);
     capture_part_mass_properties(model, &capture->part);
 
@@ -836,26 +835,36 @@ capture_part_definition(ProMdl model,
         capture->part.bbox_volume = dx * dy * dz;
     }
 
-    if (capture_tessellation(model, scale, capture->part.bbox_diagonal,
-                             settings, capture)) {
-        if (suppression_applied)
-            creo_brl_resume_suppressed_features(model, suppressed_features);
-        capture->part.flags |= CREO_BRL_SNAPSHOT_PART_HAS_MESH;
-        if (!capture->normals.empty())
-            capture->part.flags |= CREO_BRL_SNAPSHOT_PART_HAS_NORMALS;
-        return CREO_BRL_SNAPSHOT_CAPTURE_SUCCESS;
-    }
-    if (have_bbox && (settings->flags & CREO_BRL_SNAPSHOT_SETTING_CREATE_BOXES)) {
-        if (suppression_applied)
-            creo_brl_resume_suppressed_features(model, suppressed_features);
-        creo_brl_mark_bbox_fallback(capture);
-        return CREO_BRL_SNAPSHOT_CAPTURE_SUCCESS;
+    suppression_result = creo_brl_capture_feature_suppression(
+        model, scale, settings, capture, &suppressed_features);
+    if (suppression_result == CREO_BRL_FEATURE_SUPPRESSION_RESTORE_FAILED)
+        return CREO_BRL_SNAPSHOT_CAPTURE_RESTORATION_FAILURE;
+    if (suppression_result == CREO_BRL_FEATURE_SUPPRESSION_CAPTURE_FAILED)
+        return CREO_BRL_SNAPSHOT_CAPTURE_MODEL_FAILURE;
+
+    try {
+        if (capture_tessellation(model, scale, capture->part.bbox_diagonal,
+                                 settings, capture)) {
+            capture->part.flags |= CREO_BRL_SNAPSHOT_PART_HAS_MESH;
+            if (!capture->normals.empty())
+                capture->part.flags |= CREO_BRL_SNAPSHOT_PART_HAS_NORMALS;
+            result = CREO_BRL_SNAPSHOT_CAPTURE_SUCCESS;
+        } else if (have_bbox &&
+                   (settings->flags & CREO_BRL_SNAPSHOT_SETTING_CREATE_BOXES)) {
+            creo_brl_mark_bbox_fallback(capture);
+            result = CREO_BRL_SNAPSHOT_CAPTURE_SUCCESS;
+        } else {
+            result = CREO_BRL_SNAPSHOT_CAPTURE_SKIPPED;
+        }
+    } catch (...) {
+        result = CREO_BRL_SNAPSHOT_CAPTURE_MODEL_FAILURE;
     }
 
-    if (suppression_applied)
-        creo_brl_resume_suppressed_features(model, suppressed_features);
+    if (suppression_result == CREO_BRL_FEATURE_SUPPRESSION_APPLIED &&
+        !creo_brl_resume_suppressed_features(model, suppressed_features))
+        return CREO_BRL_SNAPSHOT_CAPTURE_RESTORATION_FAILURE;
 
-    return CREO_BRL_SNAPSHOT_CAPTURE_SKIPPED;
+    return result;
 }
 
 
@@ -927,7 +936,7 @@ capture_scene_part(ProMdl model, struct snapshot_scene_capture *scene, uint32_t 
         return CREO_BRL_SNAPSHOT_CAPTURE_MODEL_FAILURE;
     if (scene_part_index(scene, model_name, index_out))
         return CREO_BRL_SNAPSHOT_CAPTURE_SUCCESS;
-    result = capture_part_definition(model, &scene->settings, &scene->settings_strings, &capture);
+    result = creo_brl_capture_part_definition(model, &scene->settings, &scene->settings_strings, &capture);
     if (result != CREO_BRL_SNAPSHOT_CAPTURE_SUCCESS)
         return result;
 

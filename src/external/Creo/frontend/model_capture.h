@@ -144,6 +144,11 @@ int creo_brl_commit_part_capture(struct snapshot_scene_capture *scene,
 int creo_brl_set_assembly_mass_properties(
     const ProMassProperty *mass_properties,
     struct snapshot_assembly_capture *capture);
+int creo_brl_capture_part_definition(
+    ProMdl model,
+    const struct creo_brl_snapshot_settings *settings,
+    const struct snapshot_settings_strings *settings_strings,
+    struct snapshot_part_capture *capture);
 
 
 int creo_brl_frontend_capture_model_scene(ProMdl model,

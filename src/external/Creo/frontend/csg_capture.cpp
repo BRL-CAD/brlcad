@@ -4,6 +4,7 @@
 
 #include "common.h"
 
+#include <algorithm>
 #include <cmath>
 #include <stdio.h>
 
@@ -18,12 +19,6 @@ enum creo_brl_csg_feature_class {
     CREO_BRL_CSG_FEATURE_HOLE = 1,
     CREO_BRL_CSG_FEATURE_ROUND = 2,
     CREO_BRL_CSG_FEATURE_CHAMFER = 3
-};
-
-enum creo_brl_csg_feature_action {
-    CREO_BRL_CSG_FEATURE_KEEP = 0,
-    CREO_BRL_CSG_FEATURE_SUPPRESS = 1,
-    CREO_BRL_CSG_FEATURE_SUBTRACT = 2
 };
 
 struct creo_brl_csg_feature_inputs {
@@ -43,11 +38,134 @@ struct creo_brl_csg_feature_inputs {
 };
 
 
+int
+creo_brl_csg_hole_action(int eliminate_small_features,
+                         int facets_only,
+                         int hole_supported,
+                         double diameter,
+                         double minimum_diameter)
+{
+    if (!eliminate_small_features)
+        return CREO_BRL_CSG_FEATURE_KEEP;
+    if (diameter < minimum_diameter)
+        return CREO_BRL_CSG_FEATURE_SUPPRESS;
+    if (facets_only || !hole_supported)
+        return CREO_BRL_CSG_FEATURE_KEEP;
+
+    return CREO_BRL_CSG_FEATURE_SUBTRACT;
+}
+
+
+int
+creo_brl_csg_feature_adds_material(ProFeattype feature_type)
+{
+    if (feature_type >= PRO_FEAT_UDF_THREAD)
+        return 1;
+
+    switch (feature_type) {
+        case PRO_FEAT_FIRST_FEAT:
+        case PRO_FEAT_SHAFT:
+        case PRO_FEAT_PROTRUSION:
+        case PRO_FEAT_NECK:
+        case PRO_FEAT_FLANGE:
+        case PRO_FEAT_RIB:
+        case PRO_FEAT_EAR:
+        case PRO_FEAT_DOME:
+        case PRO_FEAT_LOC_PUSH:
+        case PRO_FEAT_UDF:
+        case PRO_FEAT_DRAFT:
+        case PRO_FEAT_SHELL:
+        case PRO_FEAT_DOME2:
+        case PRO_FEAT_IMPORT:
+        case PRO_FEAT_MERGE:
+        case PRO_FEAT_MOLD:
+        case PRO_FEAT_OFFSET:
+        case PRO_FEAT_REPLACE_SURF:
+        case PRO_FEAT_PIPE:
+            return 1;
+        default:
+            return 0;
+    }
+}
+
+
+int
+creo_brl_csg_hole_is_eligible(const std::vector<int>& feature_sequence,
+                               size_t hole_index)
+{
+    if (hole_index >= feature_sequence.size() ||
+        feature_sequence[hole_index] != CREO_BRL_CSG_SEQUENCE_HOLE)
+        return 0;
+
+    for (size_t index = hole_index + 1u; index < feature_sequence.size(); ++index) {
+        if (feature_sequence[index] == CREO_BRL_CSG_SEQUENCE_MATERIAL_ADDING)
+            return 0;
+    }
+
+    return 1;
+}
+
+
+int
+creo_brl_restore_features(const std::vector<int>& feature_ids,
+                           creo_brl_feature_change_fn resume_feature,
+                           void *context)
+{
+    int restored = 1;
+
+    if (!resume_feature)
+        return 0;
+    for (size_t index = 0; index < feature_ids.size(); ++index) {
+        if (!resume_feature(context, feature_ids[index]))
+            restored = 0;
+    }
+
+    return restored;
+}
+
+
+int
+creo_brl_suppress_features_transactionally(
+    const std::vector<int>& feature_ids,
+    creo_brl_feature_change_fn suppress_feature,
+    creo_brl_feature_change_fn resume_feature,
+    void *context,
+    std::vector<int> *suppressed_features)
+{
+    if (!suppress_feature || !resume_feature || !suppressed_features)
+        return CREO_BRL_FEATURE_SUPPRESSION_RESTORE_FAILED;
+
+    suppressed_features->clear();
+    if (feature_ids.empty())
+        return CREO_BRL_FEATURE_SUPPRESSION_NOT_APPLIED;
+    suppressed_features->reserve(feature_ids.size());
+    for (size_t index = 0; index < feature_ids.size(); ++index) {
+        const int feature_id = feature_ids[index];
+
+        if (std::find(suppressed_features->begin(), suppressed_features->end(), feature_id) !=
+            suppressed_features->end())
+            continue;
+        if (!suppress_feature(context, feature_id)) {
+            if (!creo_brl_restore_features(*suppressed_features, resume_feature, context))
+                return CREO_BRL_FEATURE_SUPPRESSION_RESTORE_FAILED;
+            suppressed_features->clear();
+            return CREO_BRL_FEATURE_SUPPRESSION_NOT_APPLIED;
+        }
+        suppressed_features->push_back(feature_id);
+    }
+
+    return suppressed_features->empty() ? CREO_BRL_FEATURE_SUPPRESSION_NOT_APPLIED :
+                                          CREO_BRL_FEATURE_SUPPRESSION_APPLIED;
+}
+
+
 static int
 should_capture_hole_subtractions(const struct creo_brl_csg_feature_inputs *inputs)
 {
     return inputs && inputs->feature_class == CREO_BRL_CSG_FEATURE_HOLE &&
-           inputs->eliminate_small_features && !inputs->facets_only;
+           creo_brl_csg_hole_action(inputs->eliminate_small_features,
+                                    inputs->facets_only, 1, inputs->diameter,
+                                    inputs->min_hole) == CREO_BRL_CSG_FEATURE_SUBTRACT;
 }
 
 
@@ -59,11 +177,11 @@ decide_feature_action(const struct creo_brl_csg_feature_inputs *inputs)
 
     switch (inputs->feature_class) {
         case CREO_BRL_CSG_FEATURE_HOLE:
-            if (inputs->diameter < inputs->min_hole)
-                return CREO_BRL_CSG_FEATURE_SUPPRESS;
-            if (inputs->facets_only || !inputs->hole_supported)
-                return CREO_BRL_CSG_FEATURE_KEEP;
-            return CREO_BRL_CSG_FEATURE_SUBTRACT;
+            return creo_brl_csg_hole_action(inputs->eliminate_small_features,
+                                            inputs->facets_only,
+                                            inputs->hole_supported,
+                                            inputs->diameter,
+                                            inputs->min_hole);
         case CREO_BRL_CSG_FEATURE_ROUND:
             return (inputs->has_diameter && inputs->radius < inputs->min_round) ?
                        CREO_BRL_CSG_FEATURE_SUPPRESS :
@@ -97,11 +215,20 @@ unit_perpendicular_vector(vect_t perpendicular, const vect_t direction)
 }
 
 
+struct csg_hole_candidate {
+    size_t sequence_index;
+    std::vector<int> feature_ids;
+    std::vector<struct creo_brl_snapshot_tgc_subtraction> subtractions;
+};
+
+
 struct feature_capture_context {
     ProMdl model;
     const struct creo_brl_snapshot_settings *settings;
     double model_to_mm;
     std::vector<int> suppressed_features;
+    std::vector<int> feature_sequence;
+    std::vector<struct csg_hole_candidate> hole_candidates;
     std::vector<struct creo_brl_snapshot_tgc_subtraction> *tgc_subtractions;
     double radius;
     double diameter;
@@ -211,65 +338,134 @@ append_dependent_features(ProMdl model, ProFeature *feature, std::vector<int> *f
 }
 
 
+struct toolkit_feature_change_context {
+    ProMdl model;
+    int *feature_id;
+    ProFeatureDeleteOptions *delete_options;
+    ProFeatureResumeOptions *resume_options;
+};
+
+
 static int
-suppress_feature_ids(ProMdl model, const std::vector<int>& feature_ids)
+suppress_toolkit_feature(void *data, int feature_id)
 {
-    ProFeatureDeleteOptions *delete_options = NULL;
-    int *feature_id = NULL;
-    int ok = 1;
+    struct toolkit_feature_change_context *context =
+        static_cast<struct toolkit_feature_change_context *>(data);
+
+    if (!context || !context->model || !context->feature_id || !context->delete_options)
+        return 0;
+    context->feature_id[0] = feature_id;
+    return ProFeatureWithoptionsSuppress(ProMdlToSolid(context->model),
+                                         context->feature_id,
+                                         context->delete_options,
+                                         PRO_REGEN_NO_FLAGS) == PRO_TK_NO_ERROR;
+}
+
+
+static int
+resume_toolkit_feature(void *data, int feature_id)
+{
+    struct toolkit_feature_change_context *context =
+        static_cast<struct toolkit_feature_change_context *>(data);
+    ProFeature feature;
+    ProFeatStatus status;
+
+    if (!context || !context->model || !context->feature_id || !context->resume_options ||
+        ProFeatureInit(ProMdlToSolid(context->model), feature_id, &feature) != PRO_TK_NO_ERROR ||
+        ProFeatureStatusGet(&feature, &status) != PRO_TK_NO_ERROR)
+        return 0;
+    if (status == PRO_FEAT_ACTIVE)
+        return 1;
+    if (status != PRO_FEAT_SUPPRESSED)
+        return 0;
+
+    context->feature_id[0] = feature_id;
+    if (ProFeatureWithoptionsResume(ProMdlToSolid(context->model),
+                                    context->feature_id,
+                                    context->resume_options,
+                                    PRO_REGEN_NO_FLAGS) != PRO_TK_NO_ERROR)
+        return 0;
+
+    return ProFeatureStatusGet(&feature, &status) == PRO_TK_NO_ERROR &&
+           status == PRO_FEAT_ACTIVE;
+}
+
+
+static int
+allocate_feature_change_arrays(struct toolkit_feature_change_context *context,
+                               int include_delete_options)
+{
+    if (!context ||
+        ProArrayAlloc(1, sizeof(int), 1, (ProArray *)&context->feature_id) !=
+            PRO_TK_NO_ERROR ||
+        ProArrayAlloc(1, sizeof(ProFeatureResumeOptions), 1,
+                      (ProArray *)&context->resume_options) != PRO_TK_NO_ERROR ||
+        (include_delete_options &&
+         ProArrayAlloc(1, sizeof(ProFeatureDeleteOptions), 1,
+                       (ProArray *)&context->delete_options) != PRO_TK_NO_ERROR))
+        return 0;
+
+    context->resume_options[0] =
+        (ProFeatureResumeOptions)PRO_FEAT_RESUME_INCLUDE_PARENTS;
+    if (include_delete_options)
+        context->delete_options[0] =
+            (ProFeatureDeleteOptions)PRO_FEAT_DELETE_NO_OPTS;
+    return 1;
+}
+
+
+static void
+free_feature_change_arrays(struct toolkit_feature_change_context *context)
+{
+    if (!context)
+        return;
+    if (context->delete_options)
+        (void)ProArrayFree((ProArray *)&context->delete_options);
+    if (context->resume_options)
+        (void)ProArrayFree((ProArray *)&context->resume_options);
+    if (context->feature_id)
+        (void)ProArrayFree((ProArray *)&context->feature_id);
+}
+
+
+static int
+suppress_feature_ids(ProMdl model,
+                     const std::vector<int>& feature_ids,
+                     std::vector<int> *suppressed_features)
+{
+    struct toolkit_feature_change_context context = {};
+    int result = CREO_BRL_FEATURE_SUPPRESSION_RESTORE_FAILED;
+
+    if (!model || !suppressed_features)
+        return result;
+    context.model = model;
+    if (allocate_feature_change_arrays(&context, 1)) {
+        result = creo_brl_suppress_features_transactionally(
+            feature_ids, suppress_toolkit_feature, resume_toolkit_feature,
+            &context, suppressed_features);
+    }
+    free_feature_change_arrays(&context);
+    return result;
+}
+
+
+int
+creo_brl_resume_suppressed_features(ProMdl model,
+                                    const std::vector<int>& feature_ids)
+{
+    struct toolkit_feature_change_context context = {};
+    int result = 0;
 
     if (!model)
         return 0;
     if (feature_ids.empty())
         return 1;
-    if (ProArrayAlloc(1, sizeof(ProFeatureDeleteOptions), 1, (ProArray *)&delete_options) != PRO_TK_NO_ERROR ||
-        ProArrayAlloc(1, sizeof(int), 1, (ProArray *)&feature_id) != PRO_TK_NO_ERROR) {
-        ok = 0;
-        goto cleanup;
-    }
 
-    delete_options[0] = (ProFeatureDeleteOptions)PRO_FEAT_DELETE_CLIP;
-    for (size_t index = 0; index < feature_ids.size(); ++index) {
-        feature_id[0] = feature_ids[index];
-        if (ProFeatureWithoptionsSuppress(ProMdlToSolid(model), feature_id,
-                                          delete_options, PRO_REGEN_NO_FLAGS) != PRO_TK_NO_ERROR) {
-            ok = 0;
-            break;
-        }
-    }
-
-cleanup:
-    if (delete_options)
-        (void)ProArrayFree((ProArray *)&delete_options);
-    if (feature_id)
-        (void)ProArrayFree((ProArray *)&feature_id);
-    return ok;
-}
-
-
-void
-creo_brl_resume_suppressed_features(ProMdl model, const std::vector<int>& feature_ids)
-{
-    ProFeatureResumeOptions *resume_options = NULL;
-    int *feature_id = NULL;
-
-    if (!model || feature_ids.empty())
-        return;
-    if (ProArrayAlloc(1, sizeof(ProFeatureResumeOptions), 1, (ProArray *)&resume_options) != PRO_TK_NO_ERROR ||
-        ProArrayAlloc(1, sizeof(int), 1, (ProArray *)&feature_id) != PRO_TK_NO_ERROR)
-        goto cleanup;
-
-    resume_options[0] = (ProFeatureResumeOptions)PRO_FEAT_RESUME_INCLUDE_PARENTS;
-    for (size_t index = 0; index < feature_ids.size(); ++index) {
-        feature_id[0] = feature_ids[index];
-        (void)ProFeatureResume(ProMdlToSolid(model), feature_id, 1, resume_options, PRO_REGEN_NO_FLAGS);
-    }
-
-cleanup:
-    if (resume_options)
-        (void)ProArrayFree((ProArray *)&resume_options);
-    if (feature_id)
-        (void)ProArrayFree((ProArray *)&feature_id);
+    context.model = model;
+    if (allocate_feature_change_arrays(&context, 0))
+        result = creo_brl_restore_features(feature_ids, resume_toolkit_feature, &context);
+    free_feature_change_arrays(&context);
+    return result;
 }
 
 
@@ -558,21 +754,30 @@ capture_hole_subtractions(const struct feature_capture_context *context,
 static ProError
 small_feature_filter(ProFeature *feature, ProAppData UNUSED(data))
 {
-    ProFeattype feature_type;
     ProFeatStatus feature_status;
+    ProError error = PRO_TK_GENERAL_ERROR;
 
-    if (ProFeatureTypeGet(feature, &feature_type) != PRO_TK_NO_ERROR ||
-        ProFeatureStatusGet(feature, &feature_status) != PRO_TK_NO_ERROR ||
-        feature_status != PRO_FEAT_ACTIVE)
-        return PRO_TK_CONTINUE;
+    if (!feature)
+        return PRO_TK_BAD_INPUTS;
+    error = ProFeatureStatusGet(feature, &feature_status);
+    if (error != PRO_TK_NO_ERROR)
+        return error;
 
-    switch (feature_type) {
-        case PRO_FEAT_HOLE:
-        case PRO_FEAT_ROUND:
-        case PRO_FEAT_CHAMFER:
-            return PRO_TK_NO_ERROR;
-        default:
-            return PRO_TK_CONTINUE;
+    return feature_status == PRO_FEAT_ACTIVE ? PRO_TK_NO_ERROR : PRO_TK_CONTINUE;
+}
+
+
+static void
+append_unique_feature_ids(std::vector<int> *destination,
+                          const std::vector<int>& feature_ids)
+{
+    if (!destination)
+        return;
+
+    for (size_t index = 0; index < feature_ids.size(); ++index) {
+        if (std::find(destination->begin(), destination->end(), feature_ids[index]) ==
+            destination->end())
+            destination->push_back(feature_ids[index]);
     }
 }
 
@@ -584,19 +789,35 @@ capture_small_feature(ProFeature *feature, ProError UNUSED(status), ProAppData a
     ProFeattype feature_type;
     struct creo_brl_csg_feature_inputs inputs = {};
     std::vector<struct creo_brl_snapshot_tgc_subtraction> hole_subtractions;
-    const size_t previous_count = context ? context->suppressed_features.size() : 0;
+    size_t sequence_index = 0u;
     const double scale = context ? context->model_to_mm : 0.0;
 
     if (!context || !context->settings || scale <= 0.0)
         return PRO_TK_BAD_INPUTS;
+    if (ProFeatureTypeGet(feature, &feature_type) != PRO_TK_NO_ERROR)
+        return PRO_TK_GENERAL_ERROR;
+
+    sequence_index = context->feature_sequence.size();
+    if (feature_type == PRO_FEAT_HOLE)
+        context->feature_sequence.push_back(CREO_BRL_CSG_SEQUENCE_HOLE);
+    else if (creo_brl_csg_feature_adds_material(feature_type)) {
+        context->feature_sequence.push_back(CREO_BRL_CSG_SEQUENCE_MATERIAL_ADDING);
+        return PRO_TK_NO_ERROR;
+    } else {
+        context->feature_sequence.push_back(CREO_BRL_CSG_SEQUENCE_OTHER);
+    }
+
+    if (feature_type != PRO_FEAT_HOLE && feature_type != PRO_FEAT_ROUND &&
+        feature_type != PRO_FEAT_CHAMFER)
+        return PRO_TK_NO_ERROR;
+
     context->radius = 0.0;
     context->diameter = 0.0;
     context->dist1 = 0.0;
     context->dist2 = 0.0;
     context->has_diameter = 0;
     context->has_distances = 0;
-    if (ProFeatureTypeGet(feature, &feature_type) != PRO_TK_NO_ERROR ||
-        ProFeatureDimensionVisit(feature, capture_feature_dimensions, feature_dimension_filter,
+    if (ProFeatureDimensionVisit(feature, capture_feature_dimensions, feature_dimension_filter,
                                  (ProAppData)context) != PRO_TK_NO_ERROR)
         return PRO_TK_GENERAL_ERROR;
 
@@ -629,19 +850,48 @@ capture_small_feature(ProFeature *feature, ProError UNUSED(status), ProAppData a
     }
 
     switch (decide_feature_action(&inputs)) {
-        case CREO_BRL_CSG_FEATURE_SUPPRESS:
-            context->suppressed_features.push_back(feature->id);
+        case CREO_BRL_CSG_FEATURE_SUPPRESS: {
+            std::vector<int> feature_ids;
+
+            append_dependent_features(context->model, feature, &feature_ids);
+            feature_ids.push_back(feature->id);
+            append_unique_feature_ids(&context->suppressed_features, feature_ids);
             break;
-        case CREO_BRL_CSG_FEATURE_SUBTRACT:
-            context->suppressed_features.push_back(feature->id);
-            context->tgc_subtractions->insert(context->tgc_subtractions->end(),
-                                              hole_subtractions.begin(), hole_subtractions.end());
+        }
+        case CREO_BRL_CSG_FEATURE_SUBTRACT: {
+            struct csg_hole_candidate candidate = {};
+
+            candidate.sequence_index = sequence_index;
+            append_dependent_features(context->model, feature, &candidate.feature_ids);
+            candidate.feature_ids.push_back(feature->id);
+            candidate.subtractions.swap(hole_subtractions);
+            context->hole_candidates.push_back(candidate);
             break;
+        }
     }
 
-    if (context->suppressed_features.size() > previous_count)
-        append_dependent_features(context->model, feature, &context->suppressed_features);
     return PRO_TK_NO_ERROR;
+}
+
+
+static void
+commit_eligible_hole_candidates(struct feature_capture_context *context)
+{
+    if (!context || !context->tgc_subtractions)
+        return;
+
+    for (size_t index = 0; index < context->hole_candidates.size(); ++index) {
+        const struct csg_hole_candidate& candidate = context->hole_candidates[index];
+
+        if (!creo_brl_csg_hole_is_eligible(context->feature_sequence,
+                                            candidate.sequence_index))
+            continue;
+        append_unique_feature_ids(&context->suppressed_features,
+                                  candidate.feature_ids);
+        context->tgc_subtractions->insert(context->tgc_subtractions->end(),
+                                          candidate.subtractions.begin(),
+                                          candidate.subtractions.end());
+    }
 }
 
 
@@ -650,18 +900,16 @@ creo_brl_capture_feature_suppression(ProMdl model,
                                      double scale,
                                      const struct creo_brl_snapshot_settings *settings,
                                      struct snapshot_part_capture *capture,
-                                     std::vector<int> *suppressed_features,
-                                     int *suppression_applied)
+                                     std::vector<int> *suppressed_features)
 {
     struct feature_capture_context context = {};
 
-    if (!model || !settings || !capture || !suppressed_features || !suppression_applied)
-        return 0;
+    if (!model || !settings || !capture || !suppressed_features)
+        return CREO_BRL_FEATURE_SUPPRESSION_CAPTURE_FAILED;
 
-    *suppression_applied = 0;
     suppressed_features->clear();
     if ((settings->flags & CREO_BRL_SNAPSHOT_SETTING_ELIMINATE_SMALL_FEATURES) == 0)
-        return 1;
+        return CREO_BRL_FEATURE_SUPPRESSION_NOT_APPLIED;
 
     context.model = model;
     context.settings = settings;
@@ -671,21 +919,26 @@ creo_brl_capture_feature_suppression(ProMdl model,
                           (ProFeatureFilterAction)small_feature_filter,
                           (ProAppData)&context) != PRO_TK_NO_ERROR) {
         capture->tgc_subtractions.clear();
-        report_capture_warning("failed to inspect small features; falling back to unsuppressed tessellation", 0);
-        return 1;
+        report_capture_warning("failed to inspect small features", 0);
+        return CREO_BRL_FEATURE_SUPPRESSION_CAPTURE_FAILED;
     }
 
+    commit_eligible_hole_candidates(&context);
     *suppressed_features = context.suppressed_features;
     if (suppressed_features->empty())
-        return 1;
-    if (!suppress_feature_ids(model, *suppressed_features)) {
-        creo_brl_resume_suppressed_features(model, *suppressed_features);
-        suppressed_features->clear();
+        return CREO_BRL_FEATURE_SUPPRESSION_NOT_APPLIED;
+    const int suppression_result = suppress_feature_ids(model, context.suppressed_features,
+                                                        suppressed_features);
+    if (suppression_result == CREO_BRL_FEATURE_SUPPRESSION_RESTORE_FAILED) {
+        capture->tgc_subtractions.clear();
+        report_capture_warning("failed to restore a partial feature suppression", 0);
+        return CREO_BRL_FEATURE_SUPPRESSION_RESTORE_FAILED;
+    }
+    if (suppression_result == CREO_BRL_FEATURE_SUPPRESSION_NOT_APPLIED) {
         capture->tgc_subtractions.clear();
         report_capture_warning("failed to suppress captured features; falling back to unsuppressed tessellation", 0);
-        return 1;
+        return CREO_BRL_FEATURE_SUPPRESSION_NOT_APPLIED;
     }
 
-    *suppression_applied = 1;
-    return 1;
+    return CREO_BRL_FEATURE_SUPPRESSION_APPLIED;
 }

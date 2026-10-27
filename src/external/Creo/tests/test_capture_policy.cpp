@@ -7,27 +7,9 @@
 #include <vector>
 
 #include "bu/units.h"
+#include "frontend/csg_capture.h"
 #include "frontend/model_capture.h"
 #include "frontend/snapshot_writer.h"
-
-
-int
-creo_brl_capture_feature_suppression(
-    ProMdl,
-    double,
-    const struct creo_brl_snapshot_settings *,
-    struct snapshot_part_capture *,
-    std::vector<int> *,
-    int *)
-{
-    return 0;
-}
-
-
-void
-creo_brl_resume_suppressed_features(ProMdl, const std::vector<int>&)
-{
-}
 
 
 static int
@@ -46,6 +28,112 @@ near_equal(double left, double right)
 {
     const double scale = std::fmax(1.0, std::fmax(std::fabs(left), std::fabs(right)));
     return std::fabs(left - right) <= 1.0e-12 * scale;
+}
+
+
+struct feature_change_fixture {
+    int suppress_failure;
+    int resume_failure;
+    std::vector<int> suppress_calls;
+    std::vector<int> resume_calls;
+};
+
+
+static int
+fake_suppress_feature(void *context, int feature_id)
+{
+    struct feature_change_fixture *fixture =
+        static_cast<struct feature_change_fixture *>(context);
+
+    fixture->suppress_calls.push_back(feature_id);
+    return feature_id != fixture->suppress_failure;
+}
+
+
+static int
+fake_resume_feature(void *context, int feature_id)
+{
+    struct feature_change_fixture *fixture =
+        static_cast<struct feature_change_fixture *>(context);
+
+    fixture->resume_calls.push_back(feature_id);
+    return feature_id != fixture->resume_failure;
+}
+
+
+static int
+test_suppression_transaction()
+{
+    const std::vector<int> feature_ids = {10, 20, 30};
+    std::vector<int> suppressed;
+    struct feature_change_fixture fixture = {};
+
+    if (!expect(creo_brl_suppress_features_transactionally(
+                    std::vector<int>(), fake_suppress_feature, fake_resume_feature,
+                    &fixture, &suppressed) == CREO_BRL_FEATURE_SUPPRESSION_NOT_APPLIED,
+                "empty suppression transaction was not a no-op") ||
+        !expect(fixture.suppress_calls.empty() && fixture.resume_calls.empty() && suppressed.empty(),
+                "empty suppression transaction invoked a feature operation"))
+        return 0;
+
+    fixture = {};
+    fixture.suppress_failure = 20;
+    if (!expect(creo_brl_suppress_features_transactionally(
+                    feature_ids, fake_suppress_feature, fake_resume_feature,
+                    &fixture, &suppressed) == CREO_BRL_FEATURE_SUPPRESSION_NOT_APPLIED,
+                "partial suppression did not roll back cleanly") ||
+        !expect(fixture.suppress_calls == std::vector<int>({10, 20}),
+                "partial suppression attempted unexpected feature IDs") ||
+        !expect(fixture.resume_calls == std::vector<int>({10}) && suppressed.empty(),
+                "partial suppression did not restore only successful changes"))
+        return 0;
+
+    fixture = {};
+    if (!expect(creo_brl_suppress_features_transactionally(
+                    feature_ids, fake_suppress_feature, fake_resume_feature,
+                    &fixture, &suppressed) == CREO_BRL_FEATURE_SUPPRESSION_APPLIED,
+                "complete suppression transaction failed") ||
+        !expect(suppressed == feature_ids,
+                "complete suppression did not report the successful feature IDs") ||
+        !expect(creo_brl_restore_features(suppressed, fake_resume_feature, &fixture),
+                "capture-success cleanup failed") ||
+        !expect(fixture.resume_calls == feature_ids,
+                "capture-success cleanup did not restore every feature"))
+        return 0;
+
+    fixture = {};
+    suppressed.clear();
+    if (!expect(creo_brl_suppress_features_transactionally(
+                    feature_ids, fake_suppress_feature, fake_resume_feature,
+                    &fixture, &suppressed) == CREO_BRL_FEATURE_SUPPRESSION_APPLIED,
+                "capture-failure setup did not suppress features") ||
+        !expect(creo_brl_restore_features(suppressed, fake_resume_feature, &fixture),
+                "capture-failure cleanup failed"))
+        return 0;
+
+    fixture = {};
+    suppressed.clear();
+    if (!expect(creo_brl_suppress_features_transactionally(
+                    feature_ids, fake_suppress_feature, fake_resume_feature,
+                    &fixture, &suppressed) == CREO_BRL_FEATURE_SUPPRESSION_APPLIED,
+                "restoration-failure setup did not suppress features"))
+        return 0;
+    fixture.resume_failure = 20;
+    if (!expect(!creo_brl_restore_features(suppressed, fake_resume_feature, &fixture),
+                "post-capture restoration failure was not reported") ||
+        !expect(fixture.resume_calls == feature_ids,
+                "restoration stopped before attempting every suppressed feature"))
+        return 0;
+
+    fixture = {};
+    fixture.suppress_failure = 20;
+    fixture.resume_failure = 10;
+    return expect(creo_brl_suppress_features_transactionally(
+                      feature_ids, fake_suppress_feature, fake_resume_feature,
+                      &fixture, &suppressed) == CREO_BRL_FEATURE_SUPPRESSION_RESTORE_FAILED,
+                  "restoration failure was not fatal") &&
+           expect(suppressed == std::vector<int>({10}),
+                  "restoration failure lost the still-modified feature ID");
 }
 
 
@@ -178,6 +266,72 @@ test_toolkit_derived_length_scale()
                   "Toolkit-convertible custom length unit was rejected") &&
            expect(near_equal(scale, CUSTOM_UNIT_TO_MM),
                   "Toolkit-derived custom length conversion was not preserved");
+}
+
+
+static int
+test_pre_suppression_capture_failure_classification()
+{
+    struct creo_brl_snapshot_settings settings = {};
+    struct snapshot_settings_strings settings_strings;
+    struct snapshot_part_capture capture = {};
+    int model_token = 0;
+
+    creo_brl_shim_set_model_name(L"classification_part");
+    creo_brl_shim_set_length_unit(L"mm", bu_units_conversion("mm"));
+    settings.flags = CREO_BRL_SNAPSHOT_SETTING_ELIMINATE_SMALL_FEATURES;
+
+    return expect(creo_brl_capture_part_definition(
+                      &model_token, &settings, &settings_strings, &capture) ==
+                      CREO_BRL_SNAPSHOT_CAPTURE_MODEL_FAILURE,
+                  "pre-suppression feature inspection failure was misreported as a restoration failure");
+}
+
+
+static int
+test_feature_order_policy()
+{
+    const std::vector<int> base_hole = {
+        CREO_BRL_CSG_SEQUENCE_OTHER,
+        CREO_BRL_CSG_SEQUENCE_HOLE
+    };
+    const std::vector<int> hole_then_add = {
+        CREO_BRL_CSG_SEQUENCE_OTHER,
+        CREO_BRL_CSG_SEQUENCE_HOLE,
+        CREO_BRL_CSG_SEQUENCE_MATERIAL_ADDING
+    };
+    const std::vector<int> multiple_holes = {
+        CREO_BRL_CSG_SEQUENCE_HOLE,
+        CREO_BRL_CSG_SEQUENCE_OTHER,
+        CREO_BRL_CSG_SEQUENCE_HOLE,
+        CREO_BRL_CSG_SEQUENCE_MATERIAL_ADDING,
+        CREO_BRL_CSG_SEQUENCE_HOLE
+    };
+
+    return expect(creo_brl_csg_hole_is_eligible(base_hole, 1u),
+                  "base-to-hole sequence rejected a safe replacement") &&
+           expect(!creo_brl_csg_hole_is_eligible(hole_then_add, 1u),
+                  "later additive material did not invalidate an earlier hole") &&
+           expect(!creo_brl_csg_hole_is_eligible(multiple_holes, 0u) &&
+                      !creo_brl_csg_hole_is_eligible(multiple_holes, 2u) &&
+                      creo_brl_csg_hole_is_eligible(multiple_holes, 4u),
+                  "multiple-hole ordering produced the wrong eligibility") &&
+           expect(creo_brl_csg_feature_adds_material(PRO_FEAT_PROTRUSION) &&
+                      creo_brl_csg_feature_adds_material(PRO_FEAT_UDF_THREAD) &&
+                      !creo_brl_csg_feature_adds_material(PRO_FEAT_HOLE),
+                  "material-adding feature classification changed") &&
+           expect(creo_brl_csg_hole_action(1, 0, 1, 10.0, 5.0) ==
+                      CREO_BRL_CSG_FEATURE_SUBTRACT,
+                  "eligible hole was not selected for CSG subtraction") &&
+           expect(creo_brl_csg_hole_action(1, 1, 1, 10.0, 5.0) ==
+                      CREO_BRL_CSG_FEATURE_KEEP,
+                  "facets-only mode retained CSG subtraction") &&
+           expect(creo_brl_csg_hole_action(1, 1, 1, 2.0, 5.0) ==
+                      CREO_BRL_CSG_FEATURE_SUPPRESS,
+                  "facets-only mode disabled independent small-hole suppression") &&
+           expect(creo_brl_csg_hole_action(0, 0, 1, 2.0, 5.0) ==
+                      CREO_BRL_CSG_FEATURE_KEEP,
+                  "disabled small-feature processing changed a hole");
 }
 
 
@@ -549,6 +703,8 @@ run_named_test(const std::string& name)
         return test_rotated_component_unit_matrices();
     if (name == "toolkit-derived-units")
         return test_toolkit_derived_length_scale();
+    if (name == "capture-failure-classification")
+        return test_pre_suppression_capture_failure_classification();
     if (name == "mesh-near-vertices")
         return test_capture_uses_replay_vertex_tolerance();
     if (name == "mesh-collapsed-facet")
@@ -567,9 +723,11 @@ main(int argument_count, char *arguments[])
     if (argument_count != 1)
         return 1;
 
-    return test_component_unit_matrices() &&
+    return test_suppression_transaction() &&
+                   test_component_unit_matrices() &&
                    test_tessellation_policy() &&
                    test_tessellation_data_transaction() &&
+                   test_feature_order_policy() &&
                    test_scene_results_and_region_ids() &&
                    test_assembly_metadata_capture() &&
                    test_capture_uses_replay_vertex_tolerance() &&

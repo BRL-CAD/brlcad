@@ -157,7 +157,8 @@ frontend_capture_failure_message(int result)
             return "FAILURE: Only active Creo parts and assemblies can be converted.";
         case CREO_BRL_SNAPSHOT_CAPTURE_MODEL_FAILURE:
             return "FAILURE: Unable to read active model metadata or supported length units.";
-        case CREO_BRL_SNAPSHOT_CAPTURE_TESSELLATION_FAILURE:
+        case CREO_BRL_SNAPSHOT_CAPTURE_RESTORATION_FAILURE:
+            return "FAILURE: Unable to restore temporarily suppressed Creo features.";
         case CREO_BRL_SNAPSHOT_CAPTURE_EMPTY_MODEL:
             return "FAILURE: The active model contains no convertible solid geometry.";
         case CREO_BRL_SNAPSHOT_CAPTURE_WRITE_FAILURE:
