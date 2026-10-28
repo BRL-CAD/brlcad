@@ -35,8 +35,8 @@
 #include <ProUIMessage.h>
 #include <ProUtil.h>
 
-#include "conversion_snapshot.h"
-#include "frontend_api.h"
+#include "shared/conversion_snapshot.h"
+#include "shared/frontend_api.h"
 #include "frontend/profile_path.h"
 #include "shared/core_api.h"
 
@@ -292,6 +292,12 @@ void
 creo_brl_show_status(const char *message)
 {
     show_status_message(message);
+}
+
+void
+creo_brl_show_popup(const char *title, const char *message)
+{
+    show_popup_message(title, message);
 }
 
 void

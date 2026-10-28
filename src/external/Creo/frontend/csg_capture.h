@@ -9,8 +9,8 @@
 
 #include <vector>
 
-#include "creo-brl.h"
-#include "conversion_snapshot.h"
+#include "frontend/creo_toolkit.h"
+#include "shared/conversion_snapshot.h"
 
 
 struct snapshot_part_capture;

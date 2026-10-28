@@ -5,9 +5,9 @@
 !* Date:    2/5/2024
 !*
 !* Notes:
-!*  1) Refer to: ..\src\external\Creo\main.cpp for more information
-!*  2) ProToolkit function calls within "main.cpp" rely on this file
-!*  3) Summary of ProToolkit component name reliance:
+!*  1) ProToolkit calls in frontend/dialog_controller.cpp and
+!*     frontend/snapshot_writer.cpp rely on this file.
+!*  2) Summary of ProToolkit component name reliance:
 !*
 !*         ProToolkit Function             Component Name
 !*     ---------------------------------------------------
@@ -23,7 +23,7 @@
 !*      ProUIRadiogroupSelectednamesGet     RadioGroup
 !*     ---------------------------------------------------
 !*
-!*  4) Upon installation, locate this resource file here:
+!*  3) Upon installation, locate this resource file here:
 !*
 !*      C:\Program Files\PTC\Creo {version}\Common Files\text\resource
 !*

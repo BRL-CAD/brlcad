@@ -1,29 +1,29 @@
-This is a tool developed to export CREO geometry into the BRL-CAD .g file
-format.  It will require CREO 3 to run, and to build it requires CREO 3 with
-the development toolkits installed and proper licenses available, as well as a
-BRL-CAD install built with the same compiler as that used to build CREO.
+This tool exports Creo Parametric parts and assemblies into BRL-CAD .g
+databases.  Building it requires a Creo installation with the Pro/Toolkit
+SDK and license available, together with a compatible 64-bit BRL-CAD
+package.
 
-Misc Notes:
+Notes:
 
-When installing CREO 3, the development libraries are *not* part of the
-default install - be sure to keep an eye out for the opportunity to install
-extra components and enable them.  If you forget they can be added
-post-install without requiring a full reinstall, but without those components
-the converter cannot be built.
+1. Pro/Toolkit is an optional component in the Creo installer.  Enable the
+   API Toolkits option during installation (or add it afterwards through
+   the Creo installer) so the Pro/Toolkit headers, libraries, and
+   protk_unlock.bat utility are present under Common Files/protoolkit.
 
-Before building a package of the converter for distribution, you need to
-"unlock" the dll.  The CMake logic provides a convenience build target called
-"UNLOCK" that will do this for you, but (at least as of CREO3) it will lock up
-the Pro/Toolkit license for 15 minutes.
+2. The CMake build produces a self-contained, relocatable bundle under
+   <build>/Creo/<config>/ containing:
+     bin/        creo-brl.dll, creo-brl-core.dll, and BRL-CAD runtime DLLs
+     text/       Creo UI resource and message files, plus ptc_materials.mtl
+     config/     Default Creo_to_BRL.g profile
+     creo-brl.dat
 
-To avoid needing to unlock the dll after each build for testing, you need to
-set up your CREO instance to load the toolkit.  See
-https://www.ptcusercommunity.com/thread/121253
+   No BRL-CAD DLLs or resource files need to be copied into the Creo
+   installation directory.  Point Creo at creo-brl.dat via config.pro
+   (protkdat / creotkdat / toolkit_registry_file) or Tools -> Auxiliary
+   Applications.
 
-BRL-CAD's DLL files must be placed in the appropriate locations within the CREO
-hierarchy so the CREO executable can find them, even when testing a development
-build - even if the dll files from BRL-CAD are located in the same directory as
-the creo-brl.dll file, they will not be located and the plugin will fail to
-load (without any log message indicating why.) The BRL-CAD libs *must* first be
-in position (see other docs for details.)
-
+3. Before distributing a built plugin bundle, run the CMake UNLOCK target
+   (which invokes Creo's protk_unlock.bat utility on the plugin binary).
+   For iterative local development without unlocking after every build,
+   configure CREOPMA_FEATURE_NAME in parametric.psf so Creo acquires a
+   Pro/Toolkit license at startup.

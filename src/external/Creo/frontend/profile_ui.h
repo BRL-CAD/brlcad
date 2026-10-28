@@ -3,7 +3,7 @@
 
 #include <string>
 
-#include "conversion_snapshot.h"
+#include "shared/conversion_snapshot.h"
 #include "shared/conversion_options.h"
 
 struct creo_brl_frontend_control_api {

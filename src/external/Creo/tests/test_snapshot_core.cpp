@@ -15,7 +15,7 @@
 
 #include "wdb.h"
 #include "bu/avs.h"
-#include "conversion_snapshot.h"
+#include "shared/conversion_snapshot.h"
 #include "raytrace.h"
 #include "rt/geom.h"
 #include "rt/nongeom.h"

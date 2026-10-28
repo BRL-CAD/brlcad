@@ -29,7 +29,6 @@
 #include "conversion/name_allocator.h"
 #include "bg/vert_tree.h"
 #include "bu/avs.h"
-#include "part_writer.h"
 #include "shared/core_api.h"
 #include "shared/mesh_normalization.h"
 #include "wdb.h"
@@ -63,6 +62,30 @@ struct normalized_mesh {
     std::vector<int> face_normals;
     int is_solid;
 };
+
+
+static int
+write_bot(struct rt_wdb *writer,
+          const char *name,
+          size_t vertex_count,
+          size_t face_count,
+          fastf_t *vertices,
+          int *faces,
+          size_t normal_count,
+          fastf_t *normals,
+          int *face_normals)
+{
+    if (normal_count > 0) {
+        const unsigned char normal_flags = RT_BOT_HAS_SURFACE_NORMALS | RT_BOT_USE_NORMALS;
+
+        return mk_bot_w_normals(writer, name, RT_BOT_SOLID, RT_BOT_CCW, normal_flags,
+                                vertex_count, face_count, vertices, faces,
+                                NULL, NULL, normal_count, normals, face_normals);
+    }
+
+    return mk_bot(writer, name, RT_BOT_SOLID, RT_BOT_CCW, 0,
+                  vertex_count, face_count, vertices, faces, NULL, NULL);
+}
 
 
 static std::string
@@ -537,9 +560,8 @@ write_part_definition(struct db_i *database,
                                         has_mesh ? CREO_BRL_CORE_SOLID_SUFFIX : CREO_BRL_CORE_RPP_SUFFIX,
                                         &solid_name, &region_name) ||
         (has_mesh ?
-         creo_brl_write_bot(writer, solid_name.c_str(), normal_count > 0,
-                            vertex_count, face_count, vertices, faces,
-                            normal_count, normals, face_normals) :
+         write_bot(writer, solid_name.c_str(), vertex_count, face_count,
+                   vertices, faces, normal_count, normals, face_normals) :
          mk_rpp(writer, solid_name.c_str(), part->bbox_min.coordinates,
                 part->bbox_max.coordinates)) != 0)
         return CREO_BRL_CORE_CONVERT_OUTPUT_FAILED;

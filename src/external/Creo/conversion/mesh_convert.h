@@ -14,7 +14,7 @@
 
 #include "common.h"
 #include "conversion/name_allocator.h"
-#include "conversion_snapshot.h"
+#include "shared/conversion_snapshot.h"
 
 
 struct db_i;

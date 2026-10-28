@@ -29,13 +29,11 @@
 #include "frontend/dialog_controller.h"
 
 
-#if !defined(CREO_EXEC_PLUGIN)
 extern "C" void __cdecl
 creo_brl_frontend_apply_options(const struct creo_brl_conversion_options *options)
 {
     creo_brl_frontend_dialog_apply_options(options);
 }
-#endif
 
 
 extern "C" int

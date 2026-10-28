@@ -49,7 +49,14 @@ struct snapshot_assembly_input {
 static int
 snapshot_seek(FILE *snapshot_file, uint64_t offset)
 {
-    return snapshot_file && offset <= INT64_MAX && _fseeki64(snapshot_file, (__int64)offset, SEEK_SET) == 0;
+    if (!snapshot_file || offset > INT64_MAX)
+        return 0;
+
+#ifdef _WIN32
+    return _fseeki64(snapshot_file, (__int64)offset, SEEK_SET) == 0;
+#else
+    return fseek(snapshot_file, (long)offset, SEEK_SET) == 0;
+#endif
 }
 
 

@@ -28,23 +28,41 @@
 #include <stdarg.h>
 #include <windows.h>
 
-#include "creo-brl.h"
-#include "conversion_snapshot.h"
+#include "frontend/creo_toolkit.h"
+#include "shared/conversion_snapshot.h"
 #include "frontend/dialog_controller.h"
 #include "frontend/profile_ui.h"
 #include "frontend/snapshot_writer.h"
 #include "shared/core_api.h"
 
 extern "C" void creo_brl_show_status(const char *message);
+extern "C" void creo_brl_show_popup(const char *title, const char *message);
 extern "C" void creo_brl_core_load_profile_shim(void);
-#if defined(CREO_EXEC_PLUGIN)
-extern "C" void creo_brl_core_doit_shim(char *dialog, char *component, ProAppData appdata);
-#else
 extern "C" int creo_brl_core_convert_shim(const char *snapshot_path);
-#endif
 
 static const wchar_t FRONTEND_SNAPSHOT_PREFIX[] = L"cbr";
 static const size_t FRONTEND_SNAPSHOT_UTF8_PATH_SIZE = MAX_PATH * 4;
+static const char FRONTEND_STATUS_COMPONENT[] = "conv_status";
+static const char FRONTEND_RESTORATION_WARNING_TITLE[] = "WARNING:  Restoration Failure";
+static const char FRONTEND_RESTORATION_WARNING_MESSAGE[] =
+    "During the conversion, one or more parts contained features that were\n"
+    "suppressed.  After the conversion was complete, attempts were made to\n"
+    "resume these same features.  One or more of these attempts has failed\n"
+    "to resume them, so some features remain suppressed.\n\n"
+    "To avoid permanent changes to the current Creo model, please exit\n"
+    "without saving any changes.";
+
+static void
+frontend_set_dialog_status(const char *message)
+{
+    wchar_t wide_message[CREO_MSG_MAX] = {L'\0'};
+
+    if (!message)
+        return;
+
+    ProStringToWstring(wide_message, (char *)message);
+    (void)ProUILabelTextSet(CREO_UI_NAME, (char *)FRONTEND_STATUS_COMPONENT, wide_message);
+}
 
 static void
 frontend_status(const char *fmt, ...)
@@ -57,10 +75,20 @@ frontend_status(const char *fmt, ...)
     va_end(ap);
 
     creo_brl_show_status(msg);
+    frontend_set_dialog_status(msg);
+}
+
+static void
+frontend_error(const char *title, const char *message)
+{
+    if (!message)
+        return;
+
+    frontend_status("%s", message);
+    creo_brl_show_popup(title ? title : "Creo-BRL Error", message);
 }
 
 
-#if !defined(CREO_EXEC_PLUGIN)
 static int
 frontend_set_text(void *UNUSED(context), const char *resource, const char *value)
 {
@@ -111,12 +139,11 @@ void
 creo_brl_frontend_dialog_apply_options(const struct creo_brl_conversion_options *options)
 {
     if (!creo_brl_frontend_apply_options_to_controls(options, &frontend_controls))
-        frontend_status("FAILURE: Unable to apply Creo-BRL profile settings.");
+        frontend_error("Creo-BRL Profile Warning",
+                       "FAILURE: Unable to apply Creo-BRL profile settings.");
 }
-#endif
 
 
-#if !defined(CREO_EXEC_PLUGIN)
 static int
 frontend_snapshot_path(wchar_t *wide_path, size_t wide_path_size,
                        char *utf8_path, size_t utf8_path_size)
@@ -185,7 +212,6 @@ frontend_core_failure_message(int result)
             return "FAILURE: The runtime core failed to convert the active model.";
     }
 }
-#endif
 
 
 /* Activates small feature settings */
@@ -195,59 +221,41 @@ activate_small_feats(char *dialog_name, char *button_name, ProAppData UNUSED(dat
     ProBoolean state;
 
     if (ProUICheckbuttonGetState(dialog_name, button_name, &state) != PRO_TK_NO_ERROR) {
-        frontend_status("FAILURE: Unable to obtain check button state: \"Ignore minimum sizes\"");
+        frontend_error("Creo-BRL UI Error",
+                       "FAILURE: Unable to obtain check button state: \"Ignore minimum sizes\"");
         return;
     }
 
     if (state) {
         if (ProUIInputpanelEditable(dialog_name, "min_hole") != PRO_TK_NO_ERROR) {
-            frontend_status("FAILURE: Unable to activate: \"Hole diameter\"");
+            frontend_error("Creo-BRL UI Error",
+                           "FAILURE: Unable to activate: \"Hole diameter\"");
             return;
         }
         if (ProUIInputpanelEditable(dialog_name, "min_chamfer") != PRO_TK_NO_ERROR) {
-            frontend_status("FAILURE: Unable to activate: \"Chamfer dimension\"");
+            frontend_error("Creo-BRL UI Error",
+                           "FAILURE: Unable to activate: \"Chamfer dimension\"");
             return;
         }
         if (ProUIInputpanelEditable(dialog_name, "min_round") != PRO_TK_NO_ERROR) {
-            frontend_status("FAILURE: Unable to activate: \"Blend radius\"");
+            frontend_error("Creo-BRL UI Error",
+                           "FAILURE: Unable to activate: \"Blend radius\"");
             return;
         }
     } else {
         if (ProUIInputpanelReadOnly(dialog_name, "min_hole") != PRO_TK_NO_ERROR) {
-            frontend_status("FAILURE: Unable to de-activate: \"Hole diameter\"");
+            frontend_error("Creo-BRL UI Error",
+                           "FAILURE: Unable to de-activate: \"Hole diameter\"");
             return;
         }
         if (ProUIInputpanelReadOnly(dialog_name, "min_chamfer") != PRO_TK_NO_ERROR) {
-            frontend_status("FAILURE: Unable to de-activate: \"Chamfer dimension\"");
+            frontend_error("Creo-BRL UI Error",
+                           "FAILURE: Unable to de-activate: \"Chamfer dimension\"");
             return;
         }
         if (ProUIInputpanelReadOnly(dialog_name, "min_round") != PRO_TK_NO_ERROR) {
-            frontend_status("FAILURE: Unable to de-activate: \"Blend radius\"");
-            return;
-        }
-    }
-}
-
-
-/* Activates export STL setting */
-static void
-activate_export_stl(char *dialog_name, char *button_name, ProAppData UNUSED(data))
-{
-    ProBoolean state;
-
-    if (ProUICheckbuttonGetState(dialog_name, button_name, &state) != PRO_TK_NO_ERROR) {
-        frontend_status("FAILURE: Unable to obtain check button state: \"Facetize everything, (no CSG)\"");
-        return;
-    }
-
-    if (state) {
-        if (ProUICheckbuttonEnable(dialog_name, "export_stl") != PRO_TK_NO_ERROR) {
-            frontend_status("FAILURE: Unable to activate: \"Export facets to STL file\"");
-            return;
-        }
-    } else {
-        if (ProUICheckbuttonDisable(dialog_name, "export_stl") != PRO_TK_NO_ERROR) {
-            frontend_status("FAILURE: Unable to de-activate: \"Export facets to STL file\"");
+            frontend_error("Creo-BRL UI Error",
+                           "FAILURE: Unable to de-activate: \"Blend radius\"");
             return;
         }
     }
@@ -265,9 +273,6 @@ do_quit(char *UNUSED(dialog), char *UNUSED(component), ProAppData UNUSED(appdata
 static void
 frontend_convert(char *dialog, char *component, ProAppData appdata)
 {
-#if defined(CREO_EXEC_PLUGIN)
-    creo_brl_core_doit_shim(dialog, component, appdata);
-#else
     wchar_t snapshot_path_wide[MAX_PATH] = {L'\0'};
     char snapshot_path[FRONTEND_SNAPSHOT_UTF8_PATH_SIZE] = {'\0'};
     int capture_result = CREO_BRL_SNAPSHOT_CAPTURE_INVALID_REQUEST;
@@ -279,7 +284,8 @@ frontend_convert(char *dialog, char *component, ProAppData appdata)
 
     if (!frontend_snapshot_path(snapshot_path_wide, _countof(snapshot_path_wide),
                                 snapshot_path, sizeof(snapshot_path))) {
-        frontend_status("FAILURE: Unable to create a temporary conversion request path.");
+        frontend_error("Creo-BRL Conversion Failure",
+                       "FAILURE: Unable to create a temporary conversion request path.");
         return;
     }
 
@@ -287,7 +293,14 @@ frontend_convert(char *dialog, char *component, ProAppData appdata)
     capture_result = creo_brl_frontend_capture_snapshot(snapshot_path);
     if (capture_result != CREO_BRL_SNAPSHOT_CAPTURE_SUCCESS) {
         (void)DeleteFileW(snapshot_path_wide);
-        frontend_status(frontend_capture_failure_message(capture_result));
+        if (capture_result == CREO_BRL_SNAPSHOT_CAPTURE_RESTORATION_FAILURE) {
+            frontend_status("%s", frontend_capture_failure_message(capture_result));
+            creo_brl_show_popup(FRONTEND_RESTORATION_WARNING_TITLE,
+                                FRONTEND_RESTORATION_WARNING_MESSAGE);
+        } else {
+            frontend_error("Creo-BRL Capture Failure",
+                           frontend_capture_failure_message(capture_result));
+        }
         return;
     }
 
@@ -295,12 +308,13 @@ frontend_convert(char *dialog, char *component, ProAppData appdata)
     core_result = creo_brl_core_convert_shim(snapshot_path);
     (void)DeleteFileW(snapshot_path_wide);
     if (core_result != CREO_BRL_CORE_CONVERT_SUCCESS) {
-        frontend_status(frontend_core_failure_message(core_result));
+        frontend_error("Creo-BRL Conversion Failure",
+                       frontend_core_failure_message(core_result));
         return;
     }
 
-    frontend_status("Creo part conversion completed.");
-#endif
+    creo_brl_show_status("Status: Conversion complete, (Convert/Quit)?");
+    frontend_set_dialog_status("Status: Conversion complete, (Convert/Quit)?");
 }
 
 
@@ -313,7 +327,7 @@ creo_brl_frontend_dialog_command(uiCmdCmdId UNUSED(command), uiCmdValue *UNUSED(
     int destroy_dialog = 0;
     int err;
 
-    frontend_status("Launching Creo to BRL-CAD converter...");
+    creo_brl_show_status("Launching Creo to BRL-CAD converter...");
 
     if (ProUIDialogCreate(CREO_UI_NAME, CREO_UI_NAME) != PRO_TK_NO_ERROR) {
         sprintf_s(status, sizeof(status), "FAILURE: Unable to create dialog box for creo-brl");
@@ -324,11 +338,7 @@ creo_brl_frontend_dialog_command(uiCmdCmdId UNUSED(command), uiCmdValue *UNUSED(
 
     if (ProUICheckbuttonActivateActionSet(CREO_UI_NAME, "elim_small", activate_small_feats, NULL) != PRO_TK_NO_ERROR) {
         sprintf_s(status, sizeof(status), "FAILURE: Unable to set action for \"Ignore minimum sizes\" checkbutton");
-        goto print_msg;
-    }
-
-    if (ProUICheckbuttonActivateActionSet(CREO_UI_NAME, "facets_only", activate_export_stl, NULL) != PRO_TK_NO_ERROR) {
-        sprintf_s(status, sizeof(status), "FAILURE: Unable to set action for \"Facetize everything, (no CSG)\" checkbutton");
+        destroy_dialog = 1;
         goto print_msg;
     }
 
@@ -376,7 +386,7 @@ creo_brl_frontend_dialog_command(uiCmdCmdId UNUSED(command), uiCmdValue *UNUSED(
 
 print_msg:
     if (status[0] != '\0')
-        creo_brl_show_status(status);
+        frontend_error("Creo-BRL Dialog Failure", status);
     if (destroy_dialog)
         ProUIDialogDestroy(CREO_UI_NAME);
 

@@ -29,7 +29,7 @@
 #endif
 
 #include "conversion/scene_convert.h"
-#include "conversion_snapshot.h"
+#include "shared/conversion_snapshot.h"
 #include "shared/core_api.h"
 
 

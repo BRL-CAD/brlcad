@@ -14,7 +14,7 @@ extern "C" {
 
 #include "frontend/profile_path.h"
 #include "frontend/profile_ui.h"
-#include "frontend_api.h"
+#include "shared/frontend_api.h"
 #include "shared/conversion_options.h"
 #include "shared/core_api.h"
 

@@ -5,16 +5,6 @@
 # Revised: 2/6/2024                                                    #
 #----------------------------------------------------------------------#
 
-# Establish the list of Source files - this is needed
-# both for the plugin build and the main BRL-CAD build
-set(CREO2BRL_SHARED_SOURCES
-  part_writer.cpp
-  )
-set(CREO2BRL_MESH_SOURCES
-  shared/mesh_normalization.cpp
-  shared/name_selection.cpp
-  )
-
 set(CREO2BRL_FRONTEND_OPTION_SOURCES
   frontend/profile_path.cpp
   frontend/profile_ui.cpp
@@ -39,24 +29,17 @@ foreach(frontend_option_source ${CREO2BRL_FRONTEND_OPTION_SOURCES})
   list(APPEND CREO2BRL_FRONTEND_OPTION_SOURCE_PATHS "${CMAKE_CURRENT_SOURCE_DIR}/${frontend_option_source}")
 endforeach()
 
-set(CREO2BRL_LEGACY_SOURCES
-  assembly.cpp
-  csg.cpp
-  main.cpp
-  part.cpp
-  util.cpp
-  ${CREO2BRL_SHARED_SOURCES}
-  )
-
 set(CREO2BRL_CORE_SOURCES
   core.cpp
-  conversion/request_convert.cpp
   conversion/mesh_convert.cpp
   conversion/name_allocator.cpp
   conversion/profile_reader.cpp
+  conversion/request_convert.cpp
   conversion/scene_convert.cpp
-  ${CREO2BRL_SHARED_SOURCES}
-  ${CREO2BRL_MESH_SOURCES}
+  )
+set(CREO2BRL_SHARED_SOURCES
+  shared/mesh_normalization.cpp
+  shared/name_selection.cpp
   )
 
 if(NOT DEFINED BRLCAD_BUILDTEST_EXTERNALS)
@@ -125,8 +108,9 @@ if(NOT DEFINED BRLCAD_BUILDTEST_EXTERNALS)
     z_brl
     )
   set(CREO_BRLCAD_RUNTIME_DLLS)
+  file(TO_CMAKE_PATH "${BRLCAD_DIR}" CREO_BRLCAD_PACKAGE_DIR)
   foreach(dll_name ${CREO_BRLCAD_RUNTIME_DLL_NAMES})
-    set(dll_path "${BRLCAD_DIR}/bin/${dll_name}.dll")
+    set(dll_path "${CREO_BRLCAD_PACKAGE_DIR}/bin/${dll_name}.dll")
     if(NOT EXISTS "${dll_path}")
       message(FATAL_ERROR "Missing BRL-CAD runtime DLL: ${dll_path}")
     endif()
@@ -176,9 +160,33 @@ if(NOT DEFINED BRLCAD_BUILDTEST_EXTERNALS)
   set(CREO_BUNDLE_ROOT "${CMAKE_BINARY_DIR}/Creo")
   set(CREO_BUNDLE_DIR "${CREO_BUNDLE_ROOT}/$<CONFIG>")
   set(CREO_BUNDLE_BIN_DIR "${CREO_BUNDLE_DIR}/bin")
-  if(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
-    set(CMAKE_INSTALL_PREFIX "${CREO_BUNDLE_DIR}" CACHE PATH "Creo-BRL deployment directory" FORCE)
+  set(CREO_BUILD_ONLY_BIN_DIR "${CMAKE_BINARY_DIR}/BuildOnly/$<CONFIG>/bin")
+  set(CREO_TEST_BIN_DIR "${CMAKE_BINARY_DIR}/Tests/$<CONFIG>/bin")
+  set(CREO_DEFAULT_INSTALL_DIR "${CREO_BUNDLE_ROOT}/Install")
+  string(FIND "${CMAKE_INSTALL_PREFIX}" "$<CONFIG>" CREO_INSTALL_CONFIG_TOKEN)
+  if(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT OR
+     NOT CREO_INSTALL_CONFIG_TOKEN EQUAL -1)
+    set(CMAKE_INSTALL_PREFIX "${CREO_DEFAULT_INSTALL_DIR}"
+      CACHE PATH "Creo-BRL deployment directory" FORCE)
   endif()
+
+  function(creo_configure_dat output_prefix output_name startup executable)
+    set(DAT_STARTUP "${startup}")
+    set(DAT_EXEC_FILE "${CREO_BUNDLE_DIR}/bin/${executable}")
+    set(DAT_TEXT_DIR "${CREO_BUNDLE_DIR}/text")
+    set(bundle_input "${CMAKE_CURRENT_BINARY_DIR}/${output_name}.bundle.in")
+    set(bundle_output "${CMAKE_CURRENT_BINARY_DIR}/${output_name}-$<CONFIG>.dat")
+    configure_file(creo-brl.dat.in "${bundle_input}" @ONLY)
+    file(GENERATE OUTPUT "${bundle_output}" INPUT "${bundle_input}")
+
+    set(DAT_EXEC_FILE "${CMAKE_INSTALL_PREFIX}/bin/${executable}")
+    set(DAT_TEXT_DIR "${CMAKE_INSTALL_PREFIX}/text")
+    set(install_output "${CMAKE_CURRENT_BINARY_DIR}/${output_name}.install.dat")
+    configure_file(creo-brl.dat.in "${install_output}" @ONLY)
+
+    set(${output_prefix}_BUNDLE_FILE "${bundle_output}" PARENT_SCOPE)
+    set(${output_prefix}_INSTALL_FILE "${install_output}" PARENT_SCOPE)
+  endfunction()
 
   # Bundle-specific usage and relocation notes.
   set(CREO_BUNDLE_README "${CMAKE_CURRENT_BINARY_DIR}/README.bundle.txt")
@@ -239,24 +247,26 @@ if(NOT DEFINED BRLCAD_BUILDTEST_EXTERNALS)
   set(c_flag_list   ${c_flag_list}   ${cc_mach} ${cc_flags})
   set(cxx_flag_list ${cxx_flag_list} ${cc_mach} ${cc_flags})
 
-  # Remove duplicates
-  list(REMOVE_DUPLICATES c_flag_list)
-  list(REMOVE_DUPLICATES cxx_flag_list)
-
   # BRL-CAD definitions
   set(brlcad_defs "-DHAVE_CONFIG_H"    "-DBRLCAD_DLL"     "-DBRLCADBUILD"     "-DBU_DLL_IMPORTS"
                   "-DBN_DLL_IMPORTS"   "-DBV_DLL_IMPORTS" "-DNMG_DLL_IMPORTS" "-DBG_DLL_IMPORTS"
                   "-DBREP_DLL_IMPORTS" "-DRT_DLL_IMPORTS" "-DWDB_DLL_IMPORTS" "-DTIE_DLL_IMPORTS"
                   "-DDB5_DLL_IMPORTS"  "-DOPENNURBS_IMPORTS")
+  list(APPEND c_flag_list ${brlcad_defs})
+  list(APPEND cxx_flag_list ${brlcad_defs})
+
+  # Reconfiguration starts from the cached flags, so deduplicate only after
+  # all required definitions have joined the lists.
+  list(REMOVE_DUPLICATES c_flag_list)
+  list(REMOVE_DUPLICATES cxx_flag_list)
 
   # Convert these to plain strings
-  string(REPLACE ";" " " brlcad_defs   "${brlcad_defs}")
   string(REPLACE ";" " " c_flag_list   "${c_flag_list}")
   string(REPLACE ";" " " cxx_flag_list "${cxx_flag_list}")
 
   # Settings global to all configurations
-  set(CMAKE_C_FLAGS             "${c_flag_list}   ${brlcad_defs}"   CACHE STRING "" FORCE)
-  set(CMAKE_CXX_FLAGS           "${cxx_flag_list} ${brlcad_defs}"   CACHE STRING "" FORCE)
+  set(CMAKE_C_FLAGS             "${c_flag_list}"   CACHE STRING "" FORCE)
+  set(CMAKE_CXX_FLAGS           "${cxx_flag_list}" CACHE STRING "" FORCE)
   set(CMAKE_SHARED_LINKER_FLAGS "/subsystem:console /machine:amd64" CACHE STRING "" FORCE)
   set(CMAKE_EXE_LINKER_FLAGS    "/subsystem:console /machine:amd64" CACHE STRING "" FORCE)
 
@@ -353,7 +363,7 @@ if(NOT DEFINED BRLCAD_BUILDTEST_EXTERNALS)
     wsock32.lib
     )
 
-  add_library(creo-brl-core SHARED ${CREO2BRL_CORE_SOURCES})
+  add_library(creo-brl-core SHARED ${CREO2BRL_CORE_SOURCES} ${CREO2BRL_SHARED_SOURCES})
   target_include_directories(creo-brl-core PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}")
   set_property(TARGET creo-brl-core APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H CREO_BRL_CORE_BUILD)
   target_link_libraries(creo-brl-core REGEX::REGEX ${WIN_LIBS} ${CREO_BRLCAD_LIBS})
@@ -365,16 +375,24 @@ if(NOT DEFINED BRLCAD_BUILDTEST_EXTERNALS)
   add_library(creo-brl SHARED
     loader.c
     ${CREO2BRL_FRONTEND_SOURCES}
-    ${CREO2BRL_MESH_SOURCES})
+    ${CREO2BRL_SHARED_SOURCES})
   target_include_directories(creo-brl PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}")
   target_link_libraries(creo-brl ${WIN_LIBS} ${CREO_PTK_DLL_LIBS})
   set_target_properties(creo-brl PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CREO_BUNDLE_BIN_DIR}")
   add_dependencies(creo-brl creo-brl-core)
 
-  set(DAT_STARTUP "dll")
-  set(DAT_EXEC_FILE "${CMAKE_INSTALL_PREFIX}/bin/creo-brl.dll")
-  set(DAT_TEXT_DIR "${CMAKE_INSTALL_PREFIX}/text")
-  configure_file(creo-brl.dat.in "${CMAKE_CURRENT_BINARY_DIR}/creo-brl.dat" @ONLY)
+  add_library(creo-brl-compile-shim SHARED
+    ${CREO2BRL_FRONTEND_SOURCES}
+    ${CREO2BRL_SHARED_SOURCES}
+    shim.cpp)
+  target_include_directories(creo-brl-compile-shim PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}")
+  target_compile_definitions(creo-brl-compile-shim PRIVATE TEST_BUILD BRLCADBUILD HAVE_CONFIG_H)
+  target_link_libraries(creo-brl-compile-shim PRIVATE REGEX::REGEX ${CREO_BRLCAD_LIBS})
+  set_target_properties(creo-brl-compile-shim PROPERTIES
+    RUNTIME_OUTPUT_DIRECTORY "${CREO_BUILD_ONLY_BIN_DIR}"
+    FOLDER "BRL-CAD Executables/Build Only")
+
+  creo_configure_dat(CREO_PLUGIN_DAT creo-brl dll creo-brl.dll)
 
   file(GLOB RESOURCE_FILES "${CMAKE_CURRENT_SOURCE_DIR}/resources/*.res")
   add_custom_command(TARGET creo-brl POST_BUILD
@@ -384,7 +402,7 @@ if(NOT DEFINED BRLCAD_BUILDTEST_EXTERNALS)
       "${CREO_BUNDLE_DIR}/text/resource"
       "${CREO_BUNDLE_DIR}/config"
     COMMAND "${CMAKE_COMMAND}" -E copy_if_different
-      "${CMAKE_CURRENT_BINARY_DIR}/creo-brl.dat" "${CREO_BUNDLE_DIR}/creo-brl.dat"
+      "${CREO_PLUGIN_DAT_BUNDLE_FILE}" "${CREO_BUNDLE_DIR}/creo-brl.dat"
     COMMAND "${CMAKE_COMMAND}" -E copy_if_different
       "${CREO_BUNDLE_README}" "${CREO_BUNDLE_DIR}/README.txt"
     COMMAND "${CMAKE_COMMAND}" -E copy_if_different
@@ -406,43 +424,56 @@ if(NOT DEFINED BRLCAD_BUILDTEST_EXTERNALS)
     COMMAND_EXPAND_LISTS
     )
 
+  set(CREO_BUNDLE_VERIFY_SCRIPT "${CMAKE_CURRENT_SOURCE_DIR}/tests/verify_bundle.cmake")
+  add_custom_target(creo-bundle-check
+    COMMAND "${CMAKE_COMMAND}"
+      "-DCREO_BUNDLE_BIN_DIR=$<TARGET_FILE_DIR:creo-brl>"
+      "-DCREO_EXPECT_EXEC_PLUGIN=${CREO_EXEC_PLUGIN}"
+      -P "${CREO_BUNDLE_VERIFY_SCRIPT}"
+    DEPENDS creo-brl
+    COMMENT "Verifying deployable Creo-BRL bundle contents"
+    )
+  add_test(
+    NAME creo_bundle_contents
+    COMMAND "${CMAKE_COMMAND}"
+      "-DCREO_BUNDLE_BIN_DIR=$<TARGET_FILE_DIR:creo-brl>"
+      "-DCREO_EXPECT_EXEC_PLUGIN=${CREO_EXEC_PLUGIN}"
+      -P "${CREO_BUNDLE_VERIFY_SCRIPT}"
+    )
+
   # Keep install/CPack output identical to the build-tree bundle layout.
   install(TARGETS creo-brl creo-brl-core RUNTIME DESTINATION bin)
   install(FILES ${CREO_BRLCAD_RUNTIME_DLLS} DESTINATION bin)
-  install(FILES "${CMAKE_CURRENT_BINARY_DIR}/creo-brl.dat" DESTINATION .)
+  install(FILES "${CREO_PLUGIN_DAT_INSTALL_FILE}" DESTINATION . RENAME creo-brl.dat)
   install(FILES "${CREO_BUNDLE_README}" DESTINATION . RENAME README.txt)
   install(FILES resources/creo-brl-msg.txt resources/ptc_materials.mtl DESTINATION text/usascii)
   install(FILES ${RESOURCE_FILES} DESTINATION text/resource)
   install(FILES resources/Creo_to_BRL.g DESTINATION config)
 
-  #----------------------------------------------------------------------#
-  # Debugging executable version of plugin - only use this if necessary. #
-  # For normal debugging, it is preferable to use the DLL in order to    #
-  # avoid getting into situations where the .exe converter plugin works  #
-  # but the DLL does not.  Note that this is also identified as a        #
-  # possible issue in the Creo dev documentation.                        #
-  #----------------------------------------------------------------------#
+  # Keep the optional spawned diagnostic mode on the same migrated frontend
+  # implementation as the primary DLL so debugging cannot revive legacy code.
   if(CREO_EXEC_PLUGIN)
     add_executable(creo-brl-exe
-      ${CREO2BRL_LEGACY_SOURCES}
-      frontend.cpp
-      ${CREO2BRL_FRONTEND_DIALOG_SOURCES}
-      frontend/profile_ui.cpp)
+      loader.c
+      ${CREO2BRL_FRONTEND_SOURCES}
+      ${CREO2BRL_SHARED_SOURCES})
     target_include_directories(creo-brl-exe PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}")
-    target_link_libraries(creo-brl-exe REGEX::REGEX ${WIN_LIBS} ${CREO_PTK_EXE_LIBS} ${CREO_UCORE_LIB} ${CREO_UDATA_LIB} ${CREO_BRLCAD_LIBS})
+    target_link_libraries(creo-brl-exe
+      REGEX::REGEX
+      ${WIN_LIBS}
+      ${CREO_PTK_EXE_LIBS}
+      ${CREO_UCORE_LIB}
+      ${CREO_UDATA_LIB})
     set_target_properties(creo-brl-exe PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CREO_BUNDLE_BIN_DIR}")
-    set_property(TARGET creo-brl-exe APPEND PROPERTY COMPILE_DEFINITIONS TINYCTHREAD_DLL_IMPORTS CREO_EXEC_PLUGIN)
+    add_dependencies(creo-brl-exe creo-brl-core)
 
-    set(DAT_STARTUP "spawn")
-    set(DAT_EXEC_FILE "${CMAKE_INSTALL_PREFIX}/bin/creo-brl-exe.exe")
-    set(DAT_TEXT_DIR "${CMAKE_INSTALL_PREFIX}/text")
-    configure_file(creo-brl.dat.in "${CMAKE_CURRENT_BINARY_DIR}/creo-brl-debug.dat" @ONLY)
+    creo_configure_dat(CREO_DEBUG_DAT creo-brl-debug spawn creo-brl-exe.exe)
     add_custom_command(TARGET creo-brl-exe POST_BUILD
       COMMAND "${CMAKE_COMMAND}" -E copy_if_different
-        "${CMAKE_CURRENT_BINARY_DIR}/creo-brl-debug.dat" "${CREO_BUNDLE_DIR}/creo-brl-debug.dat"
-      )
+        "${CREO_DEBUG_DAT_BUNDLE_FILE}" "${CREO_BUNDLE_DIR}/creo-brl-debug.dat")
+    add_dependencies(creo-bundle-check creo-brl-exe)
     install(TARGETS creo-brl-exe RUNTIME DESTINATION bin)
-    install(FILES "${CMAKE_CURRENT_BINARY_DIR}/creo-brl-debug.dat" DESTINATION .)
+    install(FILES "${CREO_DEBUG_DAT_INSTALL_FILE}" DESTINATION . RENAME creo-brl-debug.dat)
   endif()
 
   message("--")
@@ -470,7 +501,7 @@ if(NOT DEFINED BRLCAD_BUILDTEST_EXTERNALS)
       "${CREO_PTK_UNLOCKER}" "$<TARGET_FILE:creo-brl>"
     ${CREO_PTK_UNLOCK_EXE_COMMAND}
     DEPENDS creo-brl creo-brl-core ${CREO_PTK_UNLOCK_EXE_DEPENDENCY}
-    COMMENT "Unlocking Creo-BRL dll"
+    COMMENT "Unlocking Creo-BRL plugins"
   )
 
   #----------------------------------------------------------------------#
@@ -517,12 +548,13 @@ else(NOT DEFINED BRLCAD_BUILDTEST_EXTERNALS)
   CHECK_CXX_FLAG("Wno-maybe-uninitialized")
 
   set(CREO2BRL_SOURCES
-    ${CREO2BRL_LEGACY_SOURCES}
     ${CREO2BRL_FRONTEND_SOURCES}
-    ${CREO2BRL_MESH_SOURCES}
+    ${CREO2BRL_SHARED_SOURCES}
     shim.cpp
     )
+
   add_library(creo-brl ${CREO2BRL_SOURCES})
+  target_include_directories(creo-brl PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}")
   set_property(TARGET creo-brl APPEND PROPERTY COMPILE_DEFINITIONS TEST_BUILD BRLCADBUILD HAVE_CONFIG_H)
   target_link_libraries(creo-brl librt libwdb libbrep libbg libnmg libbv libbn libbu REGEX::REGEX)
   set_target_properties(creo-brl PROPERTIES FOLDER "BRL-CAD Executables/Build Only")
@@ -548,27 +580,38 @@ else(NOT DEFINED BRLCAD_BUILDTEST_EXTERNALS)
     README.txt
     cmake_uninstall.cmake.in
     creo-brl.dat.in
-    creo-brl.h
-    conversion_snapshot.h
+    conversion/mesh_convert.h
     conversion/name_allocator.h
     conversion/scene_convert.h
     frontend/csg_capture.h
+    frontend/creo_toolkit.h
     frontend/dialog_controller.h
     frontend/profile_path.h
     frontend/model_capture.h
     frontend/profile_ui.h
     frontend/snapshot_writer.h
-    part_writer.h
-    profile_controls.h
-    shared/core_api.h
     shared/conversion_options.h
+    shared/conversion_snapshot.h
+    shared/core_api.h
+    shared/frontend_api.h
     shared/mesh_normalization.h
     shared/name_selection.h
     resources/creo-brl-msg.txt
     resources/creo_brl.res
+    resources/Creo_to_BRL.g
     resources/ptc_materials.mtl
     shim.h
+    tests/CMakeLists.txt
     tests/test_capture_policy.cpp
+    tests/test_core_abi.cpp
+    tests/test_profile_options.cpp
+    tests/test_snapshot_core.cpp
+    tests/verify_bundle.cmake
+    tests/fixtures/scene_bbox_fallback.manifest
+    tests/fixtures/scene_box_fallback.manifest
+    tests/fixtures/scene_mesh_with_normals.manifest
+    tests/fixtures/scene_normalized_mesh.manifest
+    tests/fixtures/scene_solid_mesh.manifest
     )
   CMAKEFILES(${creo_dist_files})
   CMAKEFILES(CMakeLists.txt)

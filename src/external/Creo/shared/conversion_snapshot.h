@@ -10,7 +10,7 @@
  * version 2.1 as published by the Free Software Foundation.
  */
 /**
- * @file conversion_snapshot.h
+ * @file shared/conversion_snapshot.h
  *
  * Toolkit-free on-disk request contract between the Creo facade and core.
  *

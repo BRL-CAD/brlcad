@@ -20,9 +20,10 @@
 #include <stdio.h>
 #include <string>
 #include <vector>
+#include <windows.h>
 
-#include "creo-brl.h"
-#include "conversion_snapshot.h"
+#include "frontend/creo_toolkit.h"
+#include "shared/conversion_snapshot.h"
 #include "frontend/model_capture.h"
 #include "frontend/profile_ui.h"
 #include "frontend/snapshot_writer.h"

@@ -3,7 +3,7 @@
 
 #include <stdio.h>
 
-#include "conversion_snapshot.h"
+#include "shared/conversion_snapshot.h"
 
 
 int creo_brl_convert_snapshot_scene(FILE *snapshot_file,

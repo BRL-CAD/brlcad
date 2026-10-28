@@ -14,7 +14,7 @@ extern "C" {
 #include "wdb.h"
 }
 
-#include "frontend_api.h"
+#include "shared/frontend_api.h"
 #include "shared/conversion_options.h"
 #include "shared/core_api.h"
 

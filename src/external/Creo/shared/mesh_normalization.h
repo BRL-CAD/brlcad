@@ -10,7 +10,7 @@
 
 #include <vector>
 
-#include "conversion_snapshot.h"
+#include "shared/conversion_snapshot.h"
 
 
 extern const double CREO_BRL_MESH_VERTEX_TOLERANCE_MM;
