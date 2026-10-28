@@ -38,83 +38,32 @@ static const char CREO_BRL_MATERIAL_COMMENT_CHARACTERS[] = "!@#$%^&*/<>?";
 typedef std::map<std::string, struct snapshot_material_translation> material_translation_map;
 
 
-struct snapshot_assembly_input {
-    struct creo_brl_snapshot_assembly record;
-    std::string model_name;
-    std::string model_version;
-    std::vector<struct snapshot_named_value> parameters;
-};
-
-
 static int
-snapshot_seek(FILE *snapshot_file, uint64_t offset)
+snapshot_write_tgc_subtractions(const struct snapshot_part_capture& part_capture,
+                                struct db_i *database,
+                                struct rt_wdb *writer,
+                                std::vector<std::string> *subtraction_names)
 {
-    if (!snapshot_file || offset > INT64_MAX)
-        return 0;
+    const std::vector<struct creo_brl_snapshot_tgc_subtraction>& subtractions =
+        part_capture.tgc_subtractions;
+    const std::string hole_name_root =
+        creo_brl_snapshot_name_root(part_capture.strings.model_name) + "_hole";
 
-#ifdef _WIN32
-    return _fseeki64(snapshot_file, (__int64)offset, SEEK_SET) == 0;
-#else
-    return fseek(snapshot_file, (long)offset, SEEK_SET) == 0;
-#endif
-}
-
-
-static int
-snapshot_read(FILE *snapshot_file, void *buffer, size_t size)
-{
-    return size == 0 || (snapshot_file && buffer && fread(buffer, 1, size, snapshot_file) == size);
-}
-
-
-static int
-snapshot_read_at(FILE *snapshot_file, uint64_t offset, void *buffer, size_t size)
-{
-    return snapshot_seek(snapshot_file, offset) && snapshot_read(snapshot_file, buffer, size);
-}
-
-
-static int
-snapshot_count_as_size(uint64_t count, size_t multiplier, size_t *size)
-{
-    if (!size || multiplier == 0 || count > SIZE_MAX / multiplier)
-        return 0;
-
-    *size = (size_t)count * multiplier;
-    return 1;
-}
-
-
-static int
-snapshot_read_tgc_subtractions(FILE *snapshot_file,
-                               const struct creo_brl_snapshot_part *part,
-                               const std::string& model_name,
-                               struct db_i *database,
-                               struct rt_wdb *writer,
-                               std::vector<std::string> *subtraction_names)
-{
-    const std::string hole_name_root = creo_brl_snapshot_name_root(model_name) + "_hole";
-
-    if (!snapshot_file || !part || !database || !writer || !subtraction_names)
+    if (!database || !writer || !subtraction_names)
         return CREO_BRL_CORE_CONVERT_INVALID_REQUEST;
 
     subtraction_names->clear();
-    if (part->tgc_subtraction_count == 0)
+    if (subtractions.empty())
         return CREO_BRL_CORE_CONVERT_SUCCESS;
-    if (!snapshot_seek(snapshot_file, part->tgc_subtractions.offset))
-        return CREO_BRL_CORE_CONVERT_INVALID_SNAPSHOT;
 
-    subtraction_names->reserve((size_t)part->tgc_subtraction_count);
-    for (uint64_t index = 0; index < part->tgc_subtraction_count; ++index) {
-        struct creo_brl_snapshot_tgc_subtraction subtraction = {};
+    subtraction_names->reserve(subtractions.size());
+    for (size_t index = 0; index < subtractions.size(); ++index) {
+        const struct creo_brl_snapshot_tgc_subtraction& subtraction = subtractions[index];
         std::string solid_name;
         std::string unused_region_name;
         std::string hole_name = hole_name_root;
 
-        if (!snapshot_read(snapshot_file, &subtraction, sizeof(subtraction)))
-            return CREO_BRL_CORE_CONVERT_INVALID_SNAPSHOT;
-
-        if (part->tgc_subtraction_count > 1)
+        if (subtractions.size() > 1)
             hole_name += "_" + std::to_string(index + 1u);
         if (!creo_brl_snapshot_object_names(database, hole_name, CREO_BRL_CORE_HOLE_SUFFIX,
                                             &solid_name, &unused_region_name) ||
@@ -226,217 +175,37 @@ load_material_translations(const std::string& path, material_translation_map *tr
 
 
 static int
-snapshot_read_text(FILE *snapshot_file,
-                   const struct creo_brl_snapshot_range *range,
-                   std::string *text)
-{
-    if (!range || !text || range->size > SIZE_MAX)
-        return 0;
-
-    text->resize((size_t)range->size);
-    return (range->size == 0 ||
-            snapshot_read_at(snapshot_file, range->offset, &(*text)[0], text->size())) &&
-           text->find('\0') == std::string::npos;
-}
-
-
-static int
-snapshot_read_named_values(FILE *snapshot_file,
-                           const struct creo_brl_snapshot_range *range,
-                           uint64_t count,
-                           std::vector<struct snapshot_named_value> *values)
-{
-    uint64_t index = 0;
-
-    if (!range || !values)
-        return 0;
-    if (count == 0) {
-        values->clear();
-        return 1;
-    }
-
-    values->clear();
-    values->reserve((size_t)count);
-    for (index = 0; index < count; ++index) {
-        struct creo_brl_snapshot_named_value record = {};
-        struct snapshot_named_value value = {};
-        const uint64_t offset = range->offset + index * sizeof(record);
-
-        if (!snapshot_read_at(snapshot_file, offset, &record, sizeof(record)) ||
-            !snapshot_read_text(snapshot_file, &record.name, &value.name) ||
-            !snapshot_read_text(snapshot_file, &record.value, &value.value))
-            return 0;
-        values->push_back(value);
-    }
-
-    return 1;
-}
-
-
-static int
-snapshot_read_vectors(FILE *snapshot_file,
-                      const struct creo_brl_snapshot_range *range,
-                      uint64_t count,
-                      std::vector<fastf_t> *vectors)
-{
-    size_t coordinate_count = 0;
-    uint64_t index = 0;
-
-    if (!range || !vectors ||
-        !snapshot_count_as_size(count, CREO_BRL_SNAPSHOT_COORDINATE_COUNT, &coordinate_count) ||
-        coordinate_count > vectors->max_size() || !snapshot_seek(snapshot_file, range->offset))
-        return 0;
-
-    vectors->resize(coordinate_count);
-    for (index = 0; index < count; ++index) {
-        struct creo_brl_snapshot_vector vector = {};
-        size_t coordinate = 0;
-
-        if (!snapshot_read(snapshot_file, &vector, sizeof(vector)))
-            return 0;
-
-        for (coordinate = 0; coordinate < CREO_BRL_SNAPSHOT_COORDINATE_COUNT; ++coordinate) {
-            if (!std::isfinite(vector.coordinates[coordinate]))
-                return 0;
-            (*vectors)[(size_t)index * CREO_BRL_SNAPSHOT_COORDINATE_COUNT + coordinate] =
-                (fastf_t)vector.coordinates[coordinate];
-        }
-    }
-
-    return 1;
-}
-
-
-static int
-snapshot_read_triangles(FILE *snapshot_file,
-                        const struct creo_brl_snapshot_range *range,
-                        uint64_t count,
-                        uint64_t vertex_count,
-                        std::vector<int> *triangles)
-{
-    size_t index_count = 0;
-    uint64_t index = 0;
-
-    if (!range || !triangles ||
-        !snapshot_count_as_size(count, CREO_BRL_SNAPSHOT_TRIANGLE_VERTEX_COUNT, &index_count) ||
-        index_count > triangles->max_size() || !snapshot_seek(snapshot_file, range->offset))
-        return 0;
-
-    triangles->resize(index_count);
-    for (index = 0; index < count; ++index) {
-        struct creo_brl_snapshot_triangle triangle = {};
-        size_t vertex = 0;
-
-        if (!snapshot_read(snapshot_file, &triangle, sizeof(triangle)))
-            return 0;
-
-        for (vertex = 0; vertex < CREO_BRL_SNAPSHOT_TRIANGLE_VERTEX_COUNT; ++vertex) {
-            if ((uint64_t)triangle.vertices[vertex] >= vertex_count || triangle.vertices[vertex] > INT_MAX)
-                return 0;
-            (*triangles)[(size_t)index * CREO_BRL_SNAPSHOT_TRIANGLE_VERTEX_COUNT + vertex] =
-                (int)triangle.vertices[vertex];
-        }
-    }
-
-    return 1;
-}
-
-
-static int
-snapshot_read_indices(FILE *snapshot_file,
-                      const struct creo_brl_snapshot_range *range,
-                      uint64_t count,
-                      uint64_t maximum,
-                      std::vector<int> *indices)
-{
-    size_t index_count = 0;
-    uint64_t index = 0;
-
-    if (!range || !indices || !snapshot_count_as_size(count, 1, &index_count) ||
-        index_count > indices->max_size() || !snapshot_seek(snapshot_file, range->offset))
-        return 0;
-
-    indices->resize(index_count);
-    for (index = 0; index < count; ++index) {
-        uint32_t value = 0;
-
-        if (!snapshot_read(snapshot_file, &value, sizeof(value)) ||
-            (uint64_t)value >= maximum || value > INT_MAX)
-            return 0;
-        (*indices)[(size_t)index] = (int)value;
-    }
-
-    return 1;
-}
-
-
-static int
-snapshot_write_part_definition(FILE *snapshot_file,
-                               const struct creo_brl_snapshot_part *part,
-                               const struct creo_brl_snapshot_settings *settings,
-                               const std::string& rename_parameters,
+snapshot_write_part_definition(const struct snapshot_part_capture& part_capture,
+                               const struct snapshot_scene_capture& scene,
                                const material_translation_map& material_translations,
                                FILE *log_file,
                                struct db_i *database,
                                struct rt_wdb *writer,
                                struct snapshot_part_output *output)
 {
-    const int has_mesh = (part->flags & CREO_BRL_SNAPSHOT_PART_HAS_MESH) != 0;
-    const int has_normals = (part->flags & CREO_BRL_SNAPSHOT_PART_HAS_NORMALS) != 0;
-    std::string model_name;
-    std::string model_version;
-    std::string material_name;
-    std::vector<struct snapshot_named_value> attributes;
-    std::vector<struct snapshot_named_value> parameters;
     std::vector<std::string> subtraction_names;
-    std::vector<fastf_t> vertices;
-    std::vector<int> triangles;
-    std::vector<fastf_t> normals;
-    std::vector<int> normal_indices;
     const struct snapshot_material_translation *material_translation = NULL;
-
-    if (!snapshot_file || !part || !settings)
-        return CREO_BRL_CORE_CONVERT_INVALID_REQUEST;
-
-    if (!snapshot_read_text(snapshot_file, &part->model_name, &model_name) ||
-        !snapshot_read_text(snapshot_file, &part->model_version, &model_version) ||
-        !snapshot_read_text(snapshot_file, &part->material_name, &material_name) ||
-        !snapshot_read_named_values(snapshot_file, &part->attributes, part->attribute_count, &attributes) ||
-        !snapshot_read_named_values(snapshot_file, &part->parameters, part->parameter_count, &parameters) ||
-        (has_mesh &&
-         (!snapshot_read_vectors(snapshot_file, &part->vertices, part->vertex_count, &vertices) ||
-          !snapshot_read_triangles(snapshot_file, &part->triangles, part->triangle_count,
-                                   part->vertex_count, &triangles) ||
-          (has_normals &&
-            (!snapshot_read_vectors(snapshot_file, &part->normals, part->normal_count, &normals) ||
-             !snapshot_read_indices(snapshot_file, &part->normal_indices,
-                                    part->normal_index_count, part->normal_count,
-                                    &normal_indices))))))
-        return CREO_BRL_CORE_CONVERT_INVALID_SNAPSHOT;
 
     {
         const material_translation_map::const_iterator found =
-            material_translations.find(creo_brl_name_text_lower(material_name));
+            material_translations.find(
+                creo_brl_name_text_lower(part_capture.strings.material_name));
 
         if (found != material_translations.end())
             material_translation = &found->second;
     }
 
-    if (part->tgc_subtraction_count > 0) {
-        const int csg_result = snapshot_read_tgc_subtractions(snapshot_file, part,
-                                                              model_name,
-                                                              database, writer,
-                                                              &subtraction_names);
+    if (!part_capture.tgc_subtractions.empty()) {
+        const int csg_result = snapshot_write_tgc_subtractions(
+            part_capture, database, writer, &subtraction_names);
 
         if (csg_result != CREO_BRL_CORE_CONVERT_SUCCESS)
             return csg_result;
     }
 
-    return creo_brl_convert_snapshot_part(part, settings, rename_parameters,
-                                          model_name, model_version, material_name,
+    return creo_brl_convert_snapshot_part(part_capture, scene,
                                           material_translation,
-                                          attributes, parameters, subtraction_names,
-                                          vertices, triangles, normals, normal_indices,
+                                          subtraction_names,
                                           log_file,
                                           database, writer, output);
 }
@@ -445,29 +214,29 @@ snapshot_write_part_definition(FILE *snapshot_file,
 static int
 snapshot_write_assembly_attributes(struct db_i *database,
                                    const char *assembly_name,
-                                   const struct creo_brl_snapshot_assembly *assembly_record,
-                                   const std::string& model_name,
-                                   const std::string& model_version,
-                                   const std::vector<struct snapshot_named_value>& parameters)
+                                   const struct snapshot_assembly_capture& assembly_capture)
 {
+    const struct creo_brl_snapshot_assembly& assembly_record = assembly_capture.assembly;
     struct bu_attribute_value_set attributes = BU_AVS_INIT_ZERO;
     struct directory *assembly = db_lookup(database, assembly_name, LOOKUP_QUIET);
     int result = 0;
 
-    if (!assembly_record || assembly == RT_DIR_NULL ||
+    if (assembly == RT_DIR_NULL ||
         db5_get_attributes(database, &attributes, assembly) != 0)
         goto cleanup;
 
     bu_avs_add(&attributes, CREO_BRL_CORE_IMPORTER_ATTRIBUTE, CREO_BRL_CORE_IMPORTER_VALUE);
-    bu_avs_add(&attributes, CREO_BRL_CORE_MODEL_NAME_ATTRIBUTE, model_name.c_str());
-    if (!model_version.empty())
-        bu_avs_add(&attributes, CREO_BRL_CORE_MODEL_VERSION_ATTRIBUTE, model_version.c_str());
-    creo_brl_add_snapshot_named_values(&attributes, parameters);
+    bu_avs_add(&attributes, CREO_BRL_CORE_MODEL_NAME_ATTRIBUTE, assembly_capture.model_name.c_str());
+    if (!assembly_capture.model_version.empty()) {
+        bu_avs_add(&attributes, CREO_BRL_CORE_MODEL_VERSION_ATTRIBUTE,
+                   assembly_capture.model_version.c_str());
+    }
+    creo_brl_add_snapshot_named_values(&attributes, assembly_capture.parameters);
     creo_brl_add_snapshot_mass_properties(
         &attributes,
-        (assembly_record->flags & CREO_BRL_SNAPSHOT_ASSEMBLY_HAS_MASS_PROPERTIES) != 0,
-        assembly_record->density, assembly_record->mass,
-        assembly_record->volume, assembly_record->surface_area);
+        (assembly_record.flags & CREO_BRL_SNAPSHOT_ASSEMBLY_HAS_MASS_PROPERTIES) != 0,
+        assembly_record.density, assembly_record.mass,
+        assembly_record.volume, assembly_record.surface_area);
     result = db5_update_attributes(assembly, &attributes, database) == 0;
 
 cleanup:
@@ -477,8 +246,7 @@ cleanup:
 
 
 static int
-snapshot_write_assembly(FILE *snapshot_file,
-                        const struct snapshot_assembly_input *assembly,
+snapshot_write_assembly(const struct snapshot_assembly_capture& assembly,
                         const std::vector<struct snapshot_part_output>& part_outputs,
                         const std::vector<std::string>& assembly_names,
                         const std::vector<int>& assembly_written,
@@ -486,26 +254,13 @@ snapshot_write_assembly(FILE *snapshot_file,
                         struct rt_wdb *writer,
                         const std::string& assembly_name)
 {
-    const struct creo_brl_snapshot_assembly *assembly_record =
-        assembly ? &assembly->record : NULL;
     struct wmember members;
-    uint64_t member_index = 0;
-
-    if (!assembly_record)
-        return CREO_BRL_CORE_CONVERT_INVALID_REQUEST;
 
     BU_LIST_INIT(&members.l);
-    for (member_index = 0; member_index < assembly_record->member_count; ++member_index) {
-        struct creo_brl_snapshot_assembly_member member = {};
-        const uint64_t offset = assembly_record->members.offset +
-                                member_index * sizeof(struct creo_brl_snapshot_assembly_member);
+    for (size_t member_index = 0; member_index < assembly.members.size(); ++member_index) {
+        const struct creo_brl_snapshot_assembly_member& member = assembly.members[member_index];
         const char *target_name = NULL;
         mat_t matrix = {};
-
-        if (!snapshot_read_at(snapshot_file, offset, &member, sizeof(member))) {
-            mk_freemembers(&members.l);
-            return CREO_BRL_CORE_CONVERT_INVALID_SNAPSHOT;
-        }
 
         if (member.target_type == CREO_BRL_SNAPSHOT_SCENE_NODE_PART) {
             target_name = part_outputs[member.target_index].region_name.c_str();
@@ -526,9 +281,7 @@ snapshot_write_assembly(FILE *snapshot_file,
     }
 
     if (mk_lcomb(writer, assembly_name.c_str(), &members, 0, NULL, NULL, NULL, 0) != 0 ||
-        !snapshot_write_assembly_attributes(database, assembly_name.c_str(), assembly_record,
-                                            assembly->model_name, assembly->model_version,
-                                            assembly->parameters))
+        !snapshot_write_assembly_attributes(database, assembly_name.c_str(), assembly))
         return CREO_BRL_CORE_CONVERT_OUTPUT_FAILED;
 
     return CREO_BRL_CORE_CONVERT_SUCCESS;
@@ -562,13 +315,13 @@ snapshot_orientation_matrix(int32_t xform_mode, mat_t matrix)
 
 
 int
-creo_brl_convert_snapshot_scene(FILE *snapshot_file,
-                                const struct creo_brl_snapshot_scene *scene)
+creo_brl_convert_snapshot_scene(const struct snapshot_scene_capture& scene)
 {
-    std::string output_path;
-    std::string rename_parameters;
+    const std::string& output_path = scene.settings_strings.output_path;
+    const std::string& log_path = scene.settings_strings.log_path;
+    const std::string& material_path = scene.settings_strings.material_path;
+    const std::string& rename_parameters = scene.settings_strings.rename_parameters;
     std::vector<struct snapshot_part_output> part_outputs;
-    std::vector<struct snapshot_assembly_input> assemblies;
     std::vector<std::string> assembly_names;
     std::vector<int> assembly_written;
     std::vector<std::string> reserved_names;
@@ -578,22 +331,8 @@ creo_brl_convert_snapshot_scene(FILE *snapshot_file,
     FILE *log_file = NULL;
     int result = CREO_BRL_CORE_CONVERT_OUTPUT_FAILED;
 
-    if (!snapshot_file || !scene)
-        return CREO_BRL_CORE_CONVERT_INVALID_REQUEST;
-
     try {
-        std::string log_path;
-        std::string material_path;
-
-        if (!snapshot_read_text(snapshot_file, &scene->settings.output_path, &output_path) ||
-            !snapshot_read_text(snapshot_file, &scene->settings.log_path, &log_path) ||
-            !snapshot_read_text(snapshot_file, &scene->settings.material_path, &material_path) ||
-            !snapshot_read_text(snapshot_file, &scene->settings.rename_parameters,
-                                &rename_parameters)) {
-            result = CREO_BRL_CORE_CONVERT_INVALID_SNAPSHOT;
-            goto cleanup;
-        }
-        if (scene->settings.log_type != CREO_BRL_SNAPSHOT_LOG_NONE &&
+        if (scene.settings.log_type != CREO_BRL_SNAPSHOT_LOG_NONE &&
             !snapshot_open_log_file(log_path.c_str(), &log_file)) {
             result = CREO_BRL_CORE_CONVERT_OUTPUT_FAILED;
             goto cleanup;
@@ -605,76 +344,46 @@ creo_brl_convert_snapshot_scene(FILE *snapshot_file,
             goto cleanup;
         }
 
-        part_outputs.resize((size_t)scene->part_count);
-        for (uint64_t index = 0; index < scene->part_count; ++index) {
-            struct creo_brl_snapshot_part part = {};
-            const uint64_t offset = scene->parts.offset + index * sizeof(struct creo_brl_snapshot_part);
-
-            if (!snapshot_read_at(snapshot_file, offset, &part, sizeof(part))) {
-                result = CREO_BRL_CORE_CONVERT_INVALID_SNAPSHOT;
-                goto cleanup;
-            }
-            result = snapshot_write_part_definition(snapshot_file, &part, &scene->settings,
-                                                    rename_parameters,
+        part_outputs.resize(scene.parts.size());
+        for (size_t index = 0; index < scene.parts.size(); ++index) {
+            result = snapshot_write_part_definition(scene.parts[index], scene,
                                                     material_translations,
                                                     log_file, database, writer,
-                                                    &part_outputs[(size_t)index]);
+                                                    &part_outputs[index]);
             if (result != CREO_BRL_CORE_CONVERT_SUCCESS)
                 goto cleanup;
         }
 
-        assemblies.resize((size_t)scene->assembly_count);
-        assembly_names.resize((size_t)scene->assembly_count);
-        assembly_written.assign((size_t)scene->assembly_count, 0);
-        for (uint64_t index = 0; index < scene->assembly_count; ++index) {
-            struct snapshot_assembly_input& assembly = assemblies[(size_t)index];
-            const uint64_t offset = scene->assemblies.offset + index * sizeof(struct creo_brl_snapshot_assembly);
-            std::string name_source;
-
-            if (!snapshot_read_at(snapshot_file, offset, &assembly.record,
-                                  sizeof(assembly.record)) ||
-                !snapshot_read_text(snapshot_file, &assembly.record.model_name,
-                                    &assembly.model_name) ||
-                !snapshot_read_text(snapshot_file, &assembly.record.model_version,
-                                    &assembly.model_version) ||
-                !snapshot_read_named_values(snapshot_file, &assembly.record.parameters,
-                                            assembly.record.parameter_count,
-                                            &assembly.parameters)) {
-                result = CREO_BRL_CORE_CONVERT_INVALID_SNAPSHOT;
-                goto cleanup;
-            }
-
-            name_source = creo_brl_snapshot_name_source(
+        assembly_names.resize(scene.assemblies.size());
+        assembly_written.assign(scene.assemblies.size(), 0);
+        for (size_t index = 0; index < scene.assemblies.size(); ++index) {
+            const struct snapshot_assembly_capture& assembly = scene.assemblies[index];
+            const std::string name_source = creo_brl_snapshot_name_source(
                 rename_parameters, assembly.model_name, assembly.parameters);
+
             if (!creo_brl_snapshot_unique_name(database,
                                                creo_brl_snapshot_name_root(name_source),
-                                               reserved_names, &assembly_names[(size_t)index])) {
+                                               reserved_names, &assembly_names[index])) {
                 result = CREO_BRL_CORE_CONVERT_OUTPUT_FAILED;
                 goto cleanup;
             }
-            reserved_names.push_back(assembly_names[(size_t)index]);
+            reserved_names.push_back(assembly_names[index]);
         }
 
-        for (uint64_t remaining = scene->assembly_count; remaining > 0;) {
+        for (size_t remaining = scene.assemblies.size(); remaining > 0;) {
             int wrote_assembly = 0;
 
-            for (uint64_t index = 0; index < scene->assembly_count; ++index) {
-                const struct snapshot_assembly_input *assembly = &assemblies[(size_t)index];
-                const struct creo_brl_snapshot_assembly *assembly_record = &assembly->record;
+            for (size_t index = 0; index < scene.assemblies.size(); ++index) {
+                const struct snapshot_assembly_capture& assembly = scene.assemblies[index];
                 int dependencies_written = 1;
 
-                if (assembly_written[(size_t)index])
+                if (assembly_written[index])
                     continue;
-                for (uint64_t member_index = 0;
-                     member_index < assembly_record->member_count; ++member_index) {
-                    struct creo_brl_snapshot_assembly_member member = {};
-                    const uint64_t offset = assembly_record->members.offset +
-                                            member_index * sizeof(member);
+                for (size_t member_index = 0;
+                     member_index < assembly.members.size(); ++member_index) {
+                    const struct creo_brl_snapshot_assembly_member& member =
+                        assembly.members[member_index];
 
-                    if (!snapshot_read_at(snapshot_file, offset, &member, sizeof(member))) {
-                        result = CREO_BRL_CORE_CONVERT_INVALID_SNAPSHOT;
-                        goto cleanup;
-                    }
                     if (member.target_type == CREO_BRL_SNAPSHOT_SCENE_NODE_ASSEMBLY &&
                         !assembly_written[member.target_index]) {
                         dependencies_written = 0;
@@ -684,12 +393,12 @@ creo_brl_convert_snapshot_scene(FILE *snapshot_file,
                 if (!dependencies_written)
                     continue;
 
-                result = snapshot_write_assembly(snapshot_file, assembly, part_outputs,
+                result = snapshot_write_assembly(assembly, part_outputs,
                                                  assembly_names, assembly_written,
-                                                 database, writer, assembly_names[(size_t)index]);
+                                                 database, writer, assembly_names[index]);
                 if (result != CREO_BRL_CORE_CONVERT_SUCCESS)
                     goto cleanup;
-                assembly_written[(size_t)index] = 1;
+                assembly_written[index] = 1;
                 --remaining;
                 wrote_assembly = 1;
             }
@@ -701,9 +410,9 @@ creo_brl_convert_snapshot_scene(FILE *snapshot_file,
         }
 
         {
-            const char *root_name = scene->root_type == CREO_BRL_SNAPSHOT_SCENE_NODE_PART ?
-                                        part_outputs[scene->root_index].region_name.c_str() :
-                                        assembly_names[scene->root_index].c_str();
+            const char *root_name = scene.root_type == CREO_BRL_SNAPSHOT_SCENE_NODE_PART ?
+                                        part_outputs[scene.root_index].region_name.c_str() :
+                                        assembly_names[scene.root_index].c_str();
             std::string top_level_name;
             struct wmember members;
             mat_t orientation;
@@ -713,7 +422,7 @@ creo_brl_convert_snapshot_scene(FILE *snapshot_file,
                 result = CREO_BRL_CORE_CONVERT_OUTPUT_FAILED;
                 goto cleanup;
             }
-            snapshot_orientation_matrix(scene->settings.xform_mode, orientation);
+            snapshot_orientation_matrix(scene.settings.xform_mode, orientation);
             BU_LIST_INIT(&members.l);
             if (mk_addmember(root_name, &members.l, orientation, WMOP_UNION) == WMEMBER_NULL ||
                 mk_lcomb(writer, top_level_name.c_str(), &members, 0, NULL, NULL, NULL, 0) != 0) {
@@ -734,4 +443,23 @@ cleanup:
     if (database != DBI_NULL)
         db_close(database);
     return result;
+}
+
+
+extern "C" CREO_BRL_CORE_EXPORT int CREO_BRL_CORE_CALL
+creo_brl_core_convert(const char *snapshot_path)
+{
+    struct snapshot_scene_capture scene = {};
+    const int io_result = creo_brl_snapshot_read(snapshot_path, &scene);
+
+    switch (io_result) {
+        case CREO_BRL_SNAPSHOT_IO_SUCCESS:
+            return creo_brl_convert_snapshot_scene(scene);
+        case CREO_BRL_SNAPSHOT_IO_INVALID_REQUEST:
+            return CREO_BRL_CORE_CONVERT_INVALID_REQUEST;
+        case CREO_BRL_SNAPSHOT_IO_OPEN_FAILED:
+            return CREO_BRL_CORE_CONVERT_OPEN_FAILED;
+        default:
+            return CREO_BRL_CORE_CONVERT_INVALID_SNAPSHOT;
+    }
 }

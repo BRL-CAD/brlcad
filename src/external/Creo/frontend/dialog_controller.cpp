@@ -31,8 +31,8 @@
 #include "frontend/creo_toolkit.h"
 #include "shared/conversion_snapshot.h"
 #include "frontend/dialog_controller.h"
+#include "frontend/model_capture.h"
 #include "frontend/profile_ui.h"
-#include "frontend/snapshot_writer.h"
 #include "shared/core_api.h"
 
 extern "C" void creo_brl_show_status(const char *message);
@@ -124,15 +124,132 @@ frontend_set_radio(void *UNUSED(context), const char *resource, const char *sele
 }
 
 
+static int
+frontend_get_text(void *UNUSED(context), const char *name, std::string *text)
+{
+    wchar_t *wide_text = NULL;
+    std::string converted_text;
+    int size = 0;
+    const ProError err = ProUIInputpanelValueGet(CREO_UI_NAME, (char *)name, &wide_text);
+    int converted = 0;
+
+    if (err == PRO_TK_NO_ERROR && wide_text && text) {
+        size = WideCharToMultiByte(CP_UTF8, WC_ERR_INVALID_CHARS, wide_text, -1,
+                                   NULL, 0, NULL, NULL);
+        if (size > 0) {
+            converted_text.resize((size_t)size);
+            converted = WideCharToMultiByte(CP_UTF8, WC_ERR_INVALID_CHARS, wide_text, -1,
+                                             &converted_text[0], size, NULL, NULL) == size;
+            if (converted) {
+                converted_text.resize((size_t)size - 1);
+                *text = converted_text;
+            }
+        }
+    }
+
+    if (wide_text)
+        (void)ProWstringFree(wide_text);
+
+    return converted;
+}
+
+
+static int
+frontend_get_check(void *UNUSED(context), const char *name, int *checked)
+{
+    ProBoolean state = PRO_B_FALSE;
+
+    if (!checked || ProUICheckbuttonGetState(CREO_UI_NAME, (char *)name, &state) != PRO_TK_NO_ERROR)
+        return 0;
+
+    *checked = state != PRO_B_FALSE;
+    return 1;
+}
+
+
+static int
+frontend_get_radio(void *UNUSED(context), const char *name, std::string *selection)
+{
+    char **names = NULL;
+    int count = 0;
+    const ProError err = ProUIRadiogroupSelectednamesGet(CREO_UI_NAME, (char *)name, &count, &names);
+
+    if (err != PRO_TK_NO_ERROR || count != 1 || !names || !names[0]) {
+        if (names)
+            ProStringarrayFree(names, count);
+        return 0;
+    }
+
+    *selection = names[0];
+    ProStringarrayFree(names, count);
+    return 1;
+}
+
+
 static const struct creo_brl_frontend_control_api frontend_controls = {
     NULL,
     frontend_set_text,
     frontend_set_check,
     frontend_set_radio,
-    NULL,
-    NULL,
-    NULL
+    frontend_get_text,
+    frontend_get_check,
+    frontend_get_radio
 };
+
+
+static int
+capture_settings(struct creo_brl_snapshot_settings *settings, snapshot_settings_strings *strings)
+{
+    struct creo_brl_frontend_snapshot_options captured = {};
+
+    if (!settings || !strings ||
+        !creo_brl_frontend_capture_snapshot_options(&frontend_controls, &captured))
+        return 0;
+
+    *settings = captured.settings;
+    strings->output_path = captured.output_path;
+    strings->log_path = captured.log_path;
+    strings->material_path = captured.material_path;
+    strings->rename_parameters = captured.rename_parameters;
+    strings->preserve_parameters = captured.preserve_parameters;
+    return 1;
+}
+
+
+static int
+frontend_capture_snapshot(const char *snapshot_path)
+{
+    struct creo_brl_snapshot_settings settings = {};
+    struct snapshot_settings_strings settings_strings;
+    ProMdl model = NULL;
+    ProMdlType model_type;
+
+    if (!snapshot_path || !snapshot_path[0])
+        return CREO_BRL_SNAPSHOT_CAPTURE_INVALID_REQUEST;
+    if (!capture_settings(&settings, &settings_strings))
+        return CREO_BRL_SNAPSHOT_CAPTURE_DIALOG_FAILURE;
+    if (ProMdlCurrentGet(&model) != PRO_TK_NO_ERROR)
+        return CREO_BRL_SNAPSHOT_CAPTURE_NO_ACTIVE_MODEL;
+    if (ProMdlTypeGet(model, &model_type) != PRO_TK_NO_ERROR)
+        return CREO_BRL_SNAPSHOT_CAPTURE_MODEL_FAILURE;
+
+    if (model_type == PRO_MDL_PART || model_type == PRO_MDL_ASSEMBLY) {
+        struct snapshot_scene_capture capture = {};
+        const int result = creo_brl_frontend_capture_model_scene(
+            model, model_type, &settings, &settings_strings,
+            &capture, &capture.root_type, &capture.root_index);
+
+        if (result != CREO_BRL_SNAPSHOT_CAPTURE_SUCCESS)
+            return result;
+
+        return creo_brl_snapshot_write(snapshot_path, capture) ==
+                       CREO_BRL_SNAPSHOT_IO_SUCCESS ?
+                   CREO_BRL_SNAPSHOT_CAPTURE_SUCCESS :
+                   CREO_BRL_SNAPSHOT_CAPTURE_WRITE_FAILURE;
+    }
+
+    return CREO_BRL_SNAPSHOT_CAPTURE_UNSUPPORTED_MODEL;
+}
 
 
 void
@@ -290,7 +407,7 @@ frontend_convert(char *dialog, char *component, ProAppData appdata)
     }
 
     frontend_status("Capturing active Creo model for BRL-CAD conversion...");
-    capture_result = creo_brl_frontend_capture_snapshot(snapshot_path);
+    capture_result = frontend_capture_snapshot(snapshot_path);
     if (capture_result != CREO_BRL_SNAPSHOT_CAPTURE_SUCCESS) {
         (void)DeleteFileW(snapshot_path_wide);
         if (capture_result == CREO_BRL_SNAPSHOT_CAPTURE_RESTORATION_FAILURE) {

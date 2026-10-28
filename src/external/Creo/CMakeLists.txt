@@ -12,7 +12,6 @@ set(CREO2BRL_FRONTEND_OPTION_SOURCES
 set(CREO2BRL_FRONTEND_CAPTURE_SOURCES
   frontend/model_capture.cpp
   frontend/csg_capture.cpp
-  frontend/snapshot_writer.cpp
   )
 set(CREO2BRL_FRONTEND_DIALOG_SOURCES
   frontend/dialog_controller.cpp
@@ -34,10 +33,10 @@ set(CREO2BRL_CORE_SOURCES
   conversion/mesh_convert.cpp
   conversion/name_allocator.cpp
   conversion/profile_reader.cpp
-  conversion/request_convert.cpp
   conversion/scene_convert.cpp
   )
 set(CREO2BRL_SHARED_SOURCES
+  shared/conversion_snapshot.cpp
   shared/mesh_normalization.cpp
   shared/name_selection.cpp
   )
@@ -589,7 +588,6 @@ else(NOT DEFINED BRLCAD_BUILDTEST_EXTERNALS)
     frontend/profile_path.h
     frontend/model_capture.h
     frontend/profile_ui.h
-    frontend/snapshot_writer.h
     shared/conversion_options.h
     shared/conversion_snapshot.h
     shared/core_api.h

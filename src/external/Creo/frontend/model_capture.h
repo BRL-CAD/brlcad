@@ -16,38 +16,17 @@
 #include "shared/conversion_snapshot.h"
 
 
-struct snapshot_settings_strings {
-    std::string output_path;
-    std::string log_path;
-    std::string material_path;
-    std::string rename_parameters;
-    std::string preserve_parameters;
-};
-
-
-struct snapshot_part_strings {
-    std::string model_name;
-    std::string model_version;
-    std::string material_name;
-};
-
-
-struct snapshot_named_value_capture {
-    std::string name;
-    std::string value;
-};
-
-
-struct snapshot_part_capture {
-    struct creo_brl_snapshot_part part;
-    struct snapshot_part_strings strings;
-    std::vector<struct snapshot_named_value_capture> attributes;
-    std::vector<struct snapshot_named_value_capture> parameters;
-    std::vector<struct creo_brl_snapshot_tgc_subtraction> tgc_subtractions;
-    std::vector<struct creo_brl_snapshot_vector> vertices;
-    std::vector<struct creo_brl_snapshot_triangle> triangles;
-    std::vector<struct creo_brl_snapshot_vector> normals;
-    std::vector<uint32_t> normal_indices;
+enum creo_brl_snapshot_capture_result {
+    CREO_BRL_SNAPSHOT_CAPTURE_SUCCESS = 0,
+    CREO_BRL_SNAPSHOT_CAPTURE_INVALID_REQUEST = -1,
+    CREO_BRL_SNAPSHOT_CAPTURE_DIALOG_FAILURE = -2,
+    CREO_BRL_SNAPSHOT_CAPTURE_MODEL_FAILURE = -3,
+    CREO_BRL_SNAPSHOT_CAPTURE_WRITE_FAILURE = -4,
+    CREO_BRL_SNAPSHOT_CAPTURE_NO_ACTIVE_MODEL = -5,
+    CREO_BRL_SNAPSHOT_CAPTURE_UNSUPPORTED_MODEL = -6,
+    CREO_BRL_SNAPSHOT_CAPTURE_RESTORATION_FAILURE = -7,
+    CREO_BRL_SNAPSHOT_CAPTURE_EMPTY_MODEL = -8,
+    CREO_BRL_SNAPSHOT_CAPTURE_SKIPPED = 1
 };
 
 
@@ -77,24 +56,6 @@ typedef int (*snapshot_tessellation_attempt_fn)(
     const struct snapshot_tessellation_attempt *attempt,
     size_t maximum_facet_count,
     struct snapshot_mesh_capture *mesh);
-
-
-struct snapshot_assembly_capture {
-    struct creo_brl_snapshot_assembly assembly;
-    std::string model_name;
-    std::string model_version;
-    std::vector<struct creo_brl_snapshot_assembly_member> members;
-    std::vector<struct snapshot_named_value_capture> parameters;
-};
-
-
-struct snapshot_scene_capture {
-    struct creo_brl_snapshot_settings settings;
-    struct snapshot_settings_strings settings_strings;
-    std::vector<struct snapshot_part_capture> parts;
-    std::vector<struct snapshot_assembly_capture> assemblies;
-    int64_t next_region_id;
-};
 
 
 enum creo_brl_scene_part_commit_result {

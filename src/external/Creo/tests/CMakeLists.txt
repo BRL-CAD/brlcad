@@ -19,7 +19,10 @@ function(creo_configure_test_runtime target)
 endfunction()
 
 
-add_executable(creo_snapshot_core_test test_snapshot_core.cpp)
+add_executable(creo_snapshot_core_test
+    test_snapshot_core.cpp
+    "${CMAKE_CURRENT_SOURCE_DIR}/../shared/conversion_snapshot.cpp"
+)
 target_include_directories(creo_snapshot_core_test PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/..")
 target_link_libraries(creo_snapshot_core_test PRIVATE creo-brl-core)
 creo_configure_test_runtime(creo_snapshot_core_test)

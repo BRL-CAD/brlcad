@@ -137,94 +137,17 @@ path_join(const std::string& directory, const char *name)
 }
 
 
-static int
-append_data(std::vector<unsigned char> *contents,
-            const void *data,
-            size_t data_size,
-            struct creo_brl_snapshot_range *range)
+static std::vector<struct snapshot_named_value>
+make_named_values(const std::vector<std::pair<std::string, std::string> >& pairs)
 {
-    const unsigned char *bytes = static_cast<const unsigned char *>(data);
+    std::vector<struct snapshot_named_value> values(pairs.size());
 
-    if (!contents || !range)
-        return 0;
-
-    if (data_size == 0) {
-        range->offset = 0;
-        range->size = 0;
-        return 1;
+    for (size_t index = 0; index < pairs.size(); ++index) {
+        values[index].name = pairs[index].first;
+        values[index].value = pairs[index].second;
     }
 
-    range->offset = (uint64_t)contents->size();
-    range->size = (uint64_t)data_size;
-    contents->insert(contents->end(), bytes, bytes + data_size);
-    return 1;
-}
-
-
-static int
-append_record(std::vector<unsigned char> *contents, const void *record, size_t record_size)
-{
-    struct creo_brl_snapshot_range unused_range = {};
-
-    return append_data(contents, record, record_size, &unused_range);
-}
-
-
-static int
-replace_record(std::vector<unsigned char> *contents,
-               size_t offset,
-               const void *record,
-               size_t record_size);
-
-
-static int
-append_named_values(std::vector<unsigned char> *contents,
-                    const std::vector<std::pair<std::string, std::string> >& values,
-                    struct creo_brl_snapshot_range *range,
-                    uint64_t *count)
-{
-    const size_t records_offset = contents->size();
-    std::vector<struct creo_brl_snapshot_named_value> records(values.size());
-
-    if (!contents || !range || !count)
-        return 0;
-
-    *count = values.size();
-    if (values.empty()) {
-        range->offset = 0;
-        range->size = 0;
-        return 1;
-    }
-
-    if (!append_data(contents, records.data(), values.size() * sizeof(records[0]), range))
-        return 0;
-
-    for (size_t index = 0; index < values.size(); ++index) {
-        if (!append_data(contents, values[index].first.data(), values[index].first.size(),
-                         &records[index].name) ||
-            !append_data(contents, values[index].second.data(), values[index].second.size(),
-                         &records[index].value) ||
-            !replace_record(contents, records_offset + index * sizeof(records[index]),
-                            &records[index], sizeof(records[index])))
-            return 0;
-    }
-
-    return 1;
-}
-
-
-static int
-replace_record(std::vector<unsigned char> *contents,
-               size_t offset,
-               const void *record,
-               size_t record_size)
-{
-    if (!contents || !record || offset > contents->size() ||
-        record_size > contents->size() - offset)
-        return 0;
-
-    std::memcpy(&(*contents)[offset], record, record_size);
-    return 1;
+    return values;
 }
 
 
@@ -370,49 +293,62 @@ primary_part_definition(const struct fixture_definition& fixture)
 }
 
 
-static int
-append_part_definition(std::vector<unsigned char> *contents,
-                       const struct fixture_part_definition& fixture,
-                       struct creo_brl_snapshot_part *part)
+static struct snapshot_part_capture
+make_part_capture(const struct fixture_part_definition& fixture)
 {
-    if (!contents || !part)
-        return 0;
+    struct snapshot_part_capture capture = {};
 
-    part->vertex_count = fixture.vertices.size();
-    part->triangle_count = fixture.triangles.size();
-    part->normal_count = fixture.normals.size();
-    part->normal_index_count = fixture.normal_indices.size();
-    part->tgc_subtraction_count = fixture.tgc_subtractions.size();
-    return append_data(contents, fixture.model_name.data(), fixture.model_name.size(),
-                       &part->model_name) &&
-           append_data(contents, fixture.model_version.data(), fixture.model_version.size(),
-                       &part->model_version) &&
-           append_data(contents, fixture.material_name.data(), fixture.material_name.size(),
-                       &part->material_name) &&
-           append_data(contents,
-                       fixture.vertices.empty() ? NULL : fixture.vertices.data(),
-                       fixture.vertices.size() * sizeof(fixture.vertices[0]),
-                       &part->vertices) &&
-           append_data(contents,
-                       fixture.triangles.empty() ? NULL : fixture.triangles.data(),
-                       fixture.triangles.size() * sizeof(fixture.triangles[0]),
-                       &part->triangles) &&
-           append_data(contents,
-                       fixture.normals.empty() ? NULL : fixture.normals.data(),
-                       fixture.normals.size() * sizeof(fixture.normals[0]),
-                       &part->normals) &&
-           append_data(contents,
-                       fixture.normal_indices.empty() ? NULL : fixture.normal_indices.data(),
-                       fixture.normal_indices.size() * sizeof(fixture.normal_indices[0]),
-                       &part->normal_indices) &&
-           append_data(contents,
-                       fixture.tgc_subtractions.empty() ? NULL : fixture.tgc_subtractions.data(),
-                       fixture.tgc_subtractions.size() * sizeof(fixture.tgc_subtractions[0]),
-                       &part->tgc_subtractions) &&
-           append_named_values(contents, fixture.attributes, &part->attributes,
-                               &part->attribute_count) &&
-           append_named_values(contents, fixture.parameters, &part->parameters,
-                               &part->parameter_count);
+    capture.part = fixture.part;
+    capture.strings.model_name = fixture.model_name;
+    capture.strings.model_version = fixture.model_version;
+    capture.strings.material_name = fixture.material_name;
+    capture.attributes = make_named_values(fixture.attributes);
+    capture.parameters = make_named_values(fixture.parameters);
+    capture.tgc_subtractions = fixture.tgc_subtractions;
+    capture.vertices = fixture.vertices;
+    capture.triangles = fixture.triangles;
+    capture.normals = fixture.normals;
+    capture.normal_indices = fixture.normal_indices;
+    return capture;
+}
+
+
+static struct snapshot_scene_capture
+make_scene_capture(const std::string& output_path,
+                   const std::string& log_path,
+                   const fixture_definition& fixture)
+{
+    struct snapshot_scene_capture scene = {};
+
+    scene.settings = fixture.settings;
+    scene.settings_strings.output_path = output_path;
+    scene.settings_strings.log_path = log_path;
+    scene.settings_strings.material_path = fixture.material_path;
+    scene.settings_strings.rename_parameters = fixture.rename_parameters;
+
+    scene.parts.reserve(1u + fixture.additional_parts.size());
+    scene.parts.push_back(make_part_capture(primary_part_definition(fixture)));
+    for (size_t index = 0; index < fixture.additional_parts.size(); ++index)
+        scene.parts.push_back(make_part_capture(fixture.additional_parts[index]));
+
+    scene.assemblies.resize(fixture.assemblies.size());
+    for (size_t index = 0; index < fixture.assemblies.size(); ++index) {
+        scene.assemblies[index].assembly.flags = fixture.assemblies[index].flags;
+        scene.assemblies[index].assembly.density = fixture.assemblies[index].density;
+        scene.assemblies[index].assembly.mass = fixture.assemblies[index].mass;
+        scene.assemblies[index].assembly.volume = fixture.assemblies[index].volume;
+        scene.assemblies[index].assembly.surface_area = fixture.assemblies[index].surface_area;
+        scene.assemblies[index].model_name = fixture.assemblies[index].model_name;
+        scene.assemblies[index].model_version = fixture.assemblies[index].model_version;
+        scene.assemblies[index].members = fixture.assemblies[index].members;
+        scene.assemblies[index].parameters = make_named_values(fixture.assemblies[index].parameters);
+    }
+
+    scene.root_type = scene.assemblies.empty() ?
+                          CREO_BRL_SNAPSHOT_SCENE_NODE_PART :
+                          CREO_BRL_SNAPSHOT_SCENE_NODE_ASSEMBLY;
+    scene.root_index = fixture.root_index;
+    return scene;
 }
 
 
@@ -423,94 +359,26 @@ write_snapshot_fixture(const std::string& snapshot_path,
                        const fixture_definition& fixture,
                        uint64_t snapshot_size_adjustment)
 {
-    struct creo_brl_snapshot_header header = {};
-    struct creo_brl_snapshot_scene scene = {};
-    std::vector<struct fixture_part_definition> part_fixtures;
-    std::vector<struct creo_brl_snapshot_part> parts;
-    std::vector<struct creo_brl_snapshot_assembly> assemblies(fixture.assemblies.size());
+    const struct snapshot_scene_capture scene =
+        make_scene_capture(output_path, log_path, fixture);
+
+    if (snapshot_size_adjustment == 0)
+        return creo_brl_snapshot_write(snapshot_path.c_str(), scene) ==
+               CREO_BRL_SNAPSHOT_IO_SUCCESS;
+
     std::vector<unsigned char> contents;
-    const size_t header_offset = 0;
-    const size_t scene_offset = sizeof(header);
-    const size_t part_offset = sizeof(header) + sizeof(scene);
+    uint64_t declared_size = 0;
 
-    part_fixtures.reserve(1u + fixture.additional_parts.size());
-    part_fixtures.push_back(primary_part_definition(fixture));
-    part_fixtures.insert(part_fixtures.end(), fixture.additional_parts.begin(),
-                         fixture.additional_parts.end());
-    parts.resize(part_fixtures.size());
-    for (size_t index = 0; index < parts.size(); ++index)
-        parts[index] = part_fixtures[index].part;
-    const size_t assembly_offset = part_offset + parts.size() * sizeof(parts[0]);
-
-    std::memcpy(header.magic, creo_brl_snapshot_magic, sizeof(header.magic));
-
-    scene.settings = fixture.settings;
-    scene.part_count = parts.size();
-    scene.parts.offset = part_offset;
-    scene.parts.size = parts.size() * sizeof(parts[0]);
-    scene.assembly_count = assemblies.size();
-    if (!assemblies.empty()) {
-        scene.assemblies.offset = assembly_offset;
-        scene.assemblies.size = assemblies.size() * sizeof(assemblies[0]);
-    }
-    scene.root_type = assemblies.empty() ?
-                          CREO_BRL_SNAPSHOT_SCENE_NODE_PART :
-                          CREO_BRL_SNAPSHOT_SCENE_NODE_ASSEMBLY;
-    scene.root_index = fixture.root_index;
-
-    if (!append_record(&contents, &header, sizeof(header)) ||
-        !append_record(&contents, &scene, sizeof(scene)) ||
-        !append_data(&contents, parts.data(), parts.size() * sizeof(parts[0]),
-                     &scene.parts) ||
-        !append_data(&contents, assemblies.empty() ? NULL : assemblies.data(),
-                     assemblies.size() * sizeof(assemblies[0]), &scene.assemblies) ||
-        !append_data(&contents, output_path.data(), output_path.size(), &scene.settings.output_path) ||
-        !append_data(&contents, log_path.data(), log_path.size(), &scene.settings.log_path) ||
-        !append_data(&contents, fixture.material_path.data(), fixture.material_path.size(),
-                     &scene.settings.material_path) ||
-        !append_data(&contents, fixture.rename_parameters.data(), fixture.rename_parameters.size(),
-                     &scene.settings.rename_parameters))
+    if (creo_brl_snapshot_encode(scene, &contents) != CREO_BRL_SNAPSHOT_IO_SUCCESS ||
+        contents.size() < CREO_BRL_SNAPSHOT_MAGIC_SIZE + sizeof(declared_size))
         return 0;
 
-    for (size_t index = 0; index < parts.size(); ++index) {
-        if (!append_part_definition(&contents, part_fixtures[index], &parts[index]) ||
-            !replace_record(&contents, part_offset + index * sizeof(parts[index]),
-                            &parts[index], sizeof(parts[index])))
-            return 0;
-    }
-
-    for (size_t index = 0; index < assemblies.size(); ++index) {
-        assemblies[index].flags = fixture.assemblies[index].flags;
-        assemblies[index].density = fixture.assemblies[index].density;
-        assemblies[index].mass = fixture.assemblies[index].mass;
-        assemblies[index].volume = fixture.assemblies[index].volume;
-        assemblies[index].surface_area = fixture.assemblies[index].surface_area;
-        assemblies[index].member_count = fixture.assemblies[index].members.size();
-        if (!append_data(&contents, fixture.assemblies[index].model_name.data(),
-                         fixture.assemblies[index].model_name.size(), &assemblies[index].model_name) ||
-            !append_data(&contents, fixture.assemblies[index].model_version.data(),
-                         fixture.assemblies[index].model_version.size(), &assemblies[index].model_version) ||
-            !append_data(&contents,
-                         fixture.assemblies[index].members.empty() ? NULL :
-                             fixture.assemblies[index].members.data(),
-                         fixture.assemblies[index].members.size() *
-                             sizeof(fixture.assemblies[index].members[0]),
-                         &assemblies[index].members) ||
-            !append_named_values(&contents, fixture.assemblies[index].parameters,
-                                 &assemblies[index].parameters,
-                                 &assemblies[index].parameter_count) ||
-            !replace_record(&contents, assembly_offset + index * sizeof(assemblies[index]),
-                            &assemblies[index], sizeof(assemblies[index])))
-            return 0;
-    }
-
-    if (contents.size() > UINT64_MAX - snapshot_size_adjustment)
+    std::memcpy(&declared_size, &contents[CREO_BRL_SNAPSHOT_MAGIC_SIZE], sizeof(declared_size));
+    if (declared_size > UINT64_MAX - snapshot_size_adjustment)
         return 0;
-    header.snapshot_size = (uint64_t)contents.size() + snapshot_size_adjustment;
-
-    return replace_record(&contents, header_offset, &header, sizeof(header)) &&
-           replace_record(&contents, scene_offset, &scene, sizeof(scene)) &&
-           write_file(snapshot_path, contents);
+    declared_size += snapshot_size_adjustment;
+    std::memcpy(&contents[CREO_BRL_SNAPSHOT_MAGIC_SIZE], &declared_size, sizeof(declared_size));
+    return write_file(snapshot_path, contents);
 }
 
 
@@ -2003,6 +1871,44 @@ main(int argument_count, char *arguments[])
     std::remove(invalid_size_snapshot_path.c_str());
     std::remove(invalid_triangle_snapshot_path.c_str());
     std::remove(invalid_triangle_output_path.c_str());
+
+    {
+        const std::string roundtrip_snapshot_path =
+            path_join(working_directory, "creo_codec_roundtrip.snapshot");
+        const struct snapshot_scene_capture expected_scene =
+            make_scene_capture("expected_out.g", "expected.log", assembly_none_fixture);
+        struct snapshot_scene_capture decoded_scene = {};
+
+        std::remove(roundtrip_snapshot_path.c_str());
+        if (creo_brl_snapshot_write(NULL, expected_scene) != CREO_BRL_SNAPSHOT_IO_INVALID_REQUEST ||
+            creo_brl_snapshot_write(EMPTY_REQUEST, expected_scene) !=
+                CREO_BRL_SNAPSHOT_IO_INVALID_REQUEST ||
+            creo_brl_snapshot_read(NULL, &decoded_scene) != CREO_BRL_SNAPSHOT_IO_INVALID_REQUEST ||
+            creo_brl_snapshot_read(EMPTY_REQUEST, &decoded_scene) !=
+                CREO_BRL_SNAPSHOT_IO_INVALID_REQUEST ||
+            creo_brl_snapshot_read(roundtrip_snapshot_path.c_str(), NULL) !=
+                CREO_BRL_SNAPSHOT_IO_INVALID_REQUEST ||
+            creo_brl_snapshot_write(roundtrip_snapshot_path.c_str(), expected_scene) !=
+                CREO_BRL_SNAPSHOT_IO_SUCCESS ||
+            creo_brl_snapshot_read(roundtrip_snapshot_path.c_str(), &decoded_scene) !=
+                CREO_BRL_SNAPSHOT_IO_SUCCESS ||
+            decoded_scene.settings_strings.output_path != expected_scene.settings_strings.output_path ||
+            decoded_scene.settings_strings.log_path != expected_scene.settings_strings.log_path ||
+            decoded_scene.parts.size() != expected_scene.parts.size() ||
+            decoded_scene.assemblies.size() != expected_scene.assemblies.size() ||
+            decoded_scene.root_type != expected_scene.root_type ||
+            decoded_scene.root_index != expected_scene.root_index ||
+            decoded_scene.parts[0].strings.model_name != expected_scene.parts[0].strings.model_name ||
+            decoded_scene.parts[0].vertices.size() != expected_scene.parts[0].vertices.size() ||
+            decoded_scene.parts[0].triangles.size() != expected_scene.parts[0].triangles.size() ||
+            decoded_scene.assemblies[1].model_name != expected_scene.assemblies[1].model_name ||
+            decoded_scene.assemblies[1].members.size() != expected_scene.assemblies[1].members.size()) {
+            std::remove(roundtrip_snapshot_path.c_str());
+            test_failure("snapshot codec roundtrip test failed");
+            goto cleanup;
+        }
+        std::remove(roundtrip_snapshot_path.c_str());
+    }
 
     if (!run_fixture(working_directory, fixtures_directory, normalized_mesh_fixture) ||
         !run_fixture(working_directory, fixtures_directory, normals_fixture) ||

@@ -26,7 +26,6 @@
 
 #include "frontend/csg_capture.h"
 #include "frontend/model_capture.h"
-#include "frontend/snapshot_writer.h"
 #include "shared/mesh_normalization.h"
 #include "shared/name_selection.h"
 
@@ -159,8 +158,8 @@ capture_parameter_value(ProMdl model, const std::string& parameter_name, std::st
 }
 
 
-static const struct snapshot_named_value_capture *
-find_captured_parameter(const std::vector<struct snapshot_named_value_capture>& parameters,
+static const struct snapshot_named_value *
+find_captured_parameter(const std::vector<struct snapshot_named_value>& parameters,
                         const std::string& name)
 {
     for (size_t index = 0; index < parameters.size(); ++index) {
@@ -175,7 +174,7 @@ find_captured_parameter(const std::vector<struct snapshot_named_value_capture>& 
 static int
 capture_parameter(ProMdl model,
                   const std::string& parameter_name,
-                  std::vector<struct snapshot_named_value_capture> *parameters)
+                  std::vector<struct snapshot_named_value> *parameters)
 {
     const std::string normalized_name = creo_brl_name_text_lower(parameter_name);
     std::string value;
@@ -187,7 +186,7 @@ capture_parameter(ProMdl model,
     if (!capture_parameter_value(model, normalized_name, &value))
         return 0;
 
-    struct snapshot_named_value_capture parameter = {};
+    struct snapshot_named_value parameter = {};
     parameter.name = normalized_name;
     parameter.value = value;
     parameters->push_back(parameter);
@@ -198,7 +197,7 @@ capture_parameter(ProMdl model,
 static void
 capture_requested_parameters(ProMdl model,
                              const std::string& names_text,
-                             std::vector<struct snapshot_named_value_capture> *parameters)
+                             std::vector<struct snapshot_named_value> *parameters)
 {
     const std::vector<creo_brl_name_selector> selectors =
         creo_brl_parse_name_selectors(names_text);
@@ -251,7 +250,7 @@ parameter_has_string_value(ProParameter *parameter)
 static void
 capture_rename_parameters(ProMdl model,
                           const std::string& names_text,
-                          std::vector<struct snapshot_named_value_capture> *parameters)
+                          std::vector<struct snapshot_named_value> *parameters)
 {
     const std::vector<creo_brl_name_selector> selectors =
         creo_brl_parse_name_selectors(names_text);
@@ -312,7 +311,7 @@ capture_rename_parameters(ProMdl model,
 
 static void
 capture_all_parameters(ProMdl model,
-                       std::vector<struct snapshot_named_value_capture> *parameters)
+                       std::vector<struct snapshot_named_value> *parameters)
 {
     ProParameter *collected_parameters = NULL;
     int count = 0;
@@ -335,7 +334,7 @@ capture_all_parameters(ProMdl model,
 static void
 capture_selected_parameters(ProMdl model,
                             const struct snapshot_settings_strings *settings,
-                            std::vector<struct snapshot_named_value_capture> *parameters)
+                            std::vector<struct snapshot_named_value> *parameters)
 {
     if (!settings || !parameters)
         return;

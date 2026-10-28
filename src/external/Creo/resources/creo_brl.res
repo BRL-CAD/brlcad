@@ -5,8 +5,8 @@
 !* Date:    2/5/2024
 !*
 !* Notes:
-!*  1) ProToolkit calls in frontend/dialog_controller.cpp and
-!*     frontend/snapshot_writer.cpp rely on this file.
+!*  1) ProToolkit calls in frontend/dialog_controller.cpp rely on
+!*     this file.
 !*  2) Summary of ProToolkit component name reliance:
 !*
 !*         ProToolkit Function             Component Name

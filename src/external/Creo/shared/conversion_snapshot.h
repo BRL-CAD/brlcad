@@ -12,32 +12,22 @@
 /**
  * @file shared/conversion_snapshot.h
  *
- * Toolkit-free on-disk request contract between the Creo facade and core.
- *
- * Snapshots store little-endian IEEE 754 values.  Every variable-size
- * range is an absolute byte range in the snapshot and is length-bounded; no
- * record relies on process pointers or null-terminated text.
+ * Toolkit-free scene representation and snapshot codec shared by the Creo
+ * facade, runtime conversion core, and tests.
  */
 
 #ifndef CREO_CONVERSION_SNAPSHOT_H
 #define CREO_CONVERSION_SNAPSHOT_H
 
+#include <stddef.h>
 #include <stdint.h>
 
-#define CREO_BRL_SNAPSHOT_MAGIC_SIZE 8u
-#define CREO_BRL_SNAPSHOT_HEADER_SIZE 16u
-#define CREO_BRL_SNAPSHOT_RANGE_SIZE 16u
-#define CREO_BRL_SNAPSHOT_VECTOR_SIZE 24u
-#define CREO_BRL_SNAPSHOT_TRIANGLE_SIZE 12u
-#define CREO_BRL_SNAPSHOT_TGC_SUBTRACTION_SIZE 144u
-#define CREO_BRL_SNAPSHOT_NAMED_VALUE_SIZE 32u
-#define CREO_BRL_SNAPSHOT_SETTINGS_SIZE 128u
-#define CREO_BRL_SNAPSHOT_PART_SIZE 332u
-#define CREO_BRL_SNAPSHOT_MATRIX_SIZE 128u
-#define CREO_BRL_SNAPSHOT_ASSEMBLY_MEMBER_SIZE 136u
-#define CREO_BRL_SNAPSHOT_ASSEMBLY_SIZE 116u
-#define CREO_BRL_SNAPSHOT_SCENE_SIZE 184u
+#ifdef __cplusplus
+#  include <string>
+#  include <vector>
+#endif
 
+#define CREO_BRL_SNAPSHOT_MAGIC_SIZE 8u
 #define CREO_BRL_SNAPSHOT_COORDINATE_COUNT 3u
 #define CREO_BRL_SNAPSHOT_TRIANGLE_VERTEX_COUNT 3u
 #define CREO_BRL_SNAPSHOT_COLOR_COMPONENT_COUNT 3u
@@ -48,8 +38,12 @@
 #define CREO_BRL_SNAPSHOT_ANGLE_MAXIMUM 1.0
 #define CREO_BRL_SNAPSHOT_LUMINANCE_MAXIMUM 100
 
-static const unsigned char creo_brl_snapshot_magic[CREO_BRL_SNAPSHOT_MAGIC_SIZE] = {
-    'C', 'R', 'E', 'O', 'B', 'R', 'L', '\0'
+enum creo_brl_snapshot_io_result {
+    CREO_BRL_SNAPSHOT_IO_SUCCESS = 0,
+    CREO_BRL_SNAPSHOT_IO_INVALID_REQUEST = -1,
+    CREO_BRL_SNAPSHOT_IO_OPEN_FAILED = -2,
+    CREO_BRL_SNAPSHOT_IO_INVALID_SNAPSHOT = -3,
+    CREO_BRL_SNAPSHOT_IO_WRITE_FAILED = -4
 };
 
 enum creo_brl_snapshot_scene_node_type {
@@ -117,11 +111,6 @@ enum creo_brl_snapshot_assembly_flag {
 
 #pragma pack(push, 1)
 
-struct creo_brl_snapshot_range {
-    uint64_t offset;
-    uint64_t size;
-};
-
 struct creo_brl_snapshot_vector {
     double coordinates[CREO_BRL_SNAPSHOT_COORDINATE_COUNT];
 };
@@ -143,15 +132,18 @@ struct creo_brl_snapshot_matrix {
     double elements[CREO_BRL_SNAPSHOT_MATRIX_ELEMENT_COUNT];
 };
 
-struct creo_brl_snapshot_named_value {
-    struct creo_brl_snapshot_range name;
-    struct creo_brl_snapshot_range value;
+/*
+ * Scenes reuse the same part record for each unique part definition. The
+ * member matrix is serialized in BRL-CAD mat_t order, with translation
+ * already converted to millimeters by the facade.
+ */
+struct creo_brl_snapshot_assembly_member {
+    uint32_t target_type;
+    uint32_t target_index;
+    struct creo_brl_snapshot_matrix matrix;
 };
 
-struct creo_brl_snapshot_header {
-    unsigned char magic[CREO_BRL_SNAPSHOT_MAGIC_SIZE];
-    uint64_t snapshot_size;
-};
+#pragma pack(pop)
 
 struct creo_brl_snapshot_settings {
     uint32_t flags;
@@ -165,10 +157,6 @@ struct creo_brl_snapshot_settings {
     double min_hole;
     double min_chamfer;
     double min_round;
-    struct creo_brl_snapshot_range output_path;
-    struct creo_brl_snapshot_range log_path;
-    struct creo_brl_snapshot_range material_path;
-    struct creo_brl_snapshot_range rename_parameters;
 };
 
 struct creo_brl_snapshot_part {
@@ -185,34 +173,6 @@ struct creo_brl_snapshot_part {
     double surface_area;
     struct creo_brl_snapshot_vector bbox_min;
     struct creo_brl_snapshot_vector bbox_max;
-    struct creo_brl_snapshot_range model_name;
-    struct creo_brl_snapshot_range model_version;
-    struct creo_brl_snapshot_range material_name;
-    struct creo_brl_snapshot_range vertices;
-    uint64_t vertex_count;
-    struct creo_brl_snapshot_range triangles;
-    uint64_t triangle_count;
-    struct creo_brl_snapshot_range normals;
-    uint64_t normal_count;
-    struct creo_brl_snapshot_range normal_indices;
-    uint64_t normal_index_count;
-    struct creo_brl_snapshot_range tgc_subtractions;
-    uint64_t tgc_subtraction_count;
-    struct creo_brl_snapshot_range attributes;
-    uint64_t attribute_count;
-    struct creo_brl_snapshot_range parameters;
-    uint64_t parameter_count;
-};
-
-/*
- * Scenes reuse the same part record for each unique part definition. The
- * member matrix is serialized in BRL-CAD mat_t order, with translation
- * already converted to millimeters by the facade.
- */
-struct creo_brl_snapshot_assembly_member {
-    uint32_t target_type;
-    uint32_t target_index;
-    struct creo_brl_snapshot_matrix matrix;
 };
 
 struct creo_brl_snapshot_assembly {
@@ -221,24 +181,68 @@ struct creo_brl_snapshot_assembly {
     double mass;
     double volume;
     double surface_area;
-    struct creo_brl_snapshot_range model_name;
-    struct creo_brl_snapshot_range model_version;
-    struct creo_brl_snapshot_range members;
-    uint64_t member_count;
-    struct creo_brl_snapshot_range parameters;
-    uint64_t parameter_count;
 };
 
-struct creo_brl_snapshot_scene {
+#ifdef __cplusplus
+
+struct snapshot_settings_strings {
+    std::string output_path;
+    std::string log_path;
+    std::string material_path;
+    std::string rename_parameters;
+    std::string preserve_parameters;
+};
+
+struct snapshot_part_strings {
+    std::string model_name;
+    std::string model_version;
+    std::string material_name;
+};
+
+struct snapshot_named_value {
+    std::string name;
+    std::string value;
+};
+
+struct snapshot_part_capture {
+    struct creo_brl_snapshot_part part;
+    struct snapshot_part_strings strings;
+    std::vector<struct snapshot_named_value> attributes;
+    std::vector<struct snapshot_named_value> parameters;
+    std::vector<struct creo_brl_snapshot_tgc_subtraction> tgc_subtractions;
+    std::vector<struct creo_brl_snapshot_vector> vertices;
+    std::vector<struct creo_brl_snapshot_triangle> triangles;
+    std::vector<struct creo_brl_snapshot_vector> normals;
+    std::vector<uint32_t> normal_indices;
+};
+
+struct snapshot_assembly_capture {
+    struct creo_brl_snapshot_assembly assembly;
+    std::string model_name;
+    std::string model_version;
+    std::vector<struct creo_brl_snapshot_assembly_member> members;
+    std::vector<struct snapshot_named_value> parameters;
+};
+
+struct snapshot_scene_capture {
     struct creo_brl_snapshot_settings settings;
-    struct creo_brl_snapshot_range parts;
-    uint64_t part_count;
-    struct creo_brl_snapshot_range assemblies;
-    uint64_t assembly_count;
+    struct snapshot_settings_strings settings_strings;
+    std::vector<struct snapshot_part_capture> parts;
+    std::vector<struct snapshot_assembly_capture> assemblies;
     uint32_t root_type;
     uint32_t root_index;
+    int64_t next_region_id;
 };
 
-#pragma pack(pop)
+int creo_brl_snapshot_encode(const struct snapshot_scene_capture& scene,
+                             std::vector<unsigned char> *buffer);
+
+int creo_brl_snapshot_write(const char *snapshot_path,
+                            const struct snapshot_scene_capture& scene);
+
+int creo_brl_snapshot_read(const char *snapshot_path,
+                           struct snapshot_scene_capture *scene);
+
+#endif /* __cplusplus */
 
 #endif /* CREO_CONVERSION_SNAPSHOT_H */

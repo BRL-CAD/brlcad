@@ -229,16 +229,15 @@ static int
 snapshot_write_attributes(struct db_i *database,
                           const char *solid_name,
                           const char *region_name,
-                          const struct creo_brl_snapshot_part *part,
-                          const std::string& model_name,
-                          const std::string& model_version,
-                          const std::string& material_name,
+                          const struct snapshot_part_capture& part_capture,
                           const struct snapshot_material_translation *material_translation,
                           const std::string& original_color,
-                          const std::vector<struct snapshot_named_value>& attributes_in,
-                          const std::vector<struct snapshot_named_value>& parameters,
                           int has_mesh)
 {
+    const struct creo_brl_snapshot_part& part = part_capture.part;
+    const std::string& model_name = part_capture.strings.model_name;
+    const std::string& model_version = part_capture.strings.model_version;
+    const std::string& material_name = part_capture.strings.material_name;
     struct bu_attribute_value_set attributes = BU_AVS_INIT_ZERO;
     struct directory *solid = db_lookup(database, solid_name, LOOKUP_QUIET);
     struct directory *region = db_lookup(database, region_name, LOOKUP_QUIET);
@@ -253,11 +252,11 @@ snapshot_write_attributes(struct db_i *database,
     if (!has_mesh) {
         bu_avs_add(&attributes, CREO_BRL_CORE_FALLBACK_ATTRIBUTE, model_name.c_str());
         bu_avs_add(&attributes, CREO_BRL_CORE_RPP_AREA_ATTRIBUTE,
-                   format_double(part->bbox_area).c_str());
+                   format_double(part.bbox_area).c_str());
         bu_avs_add(&attributes, CREO_BRL_CORE_RPP_DIAGONAL_ATTRIBUTE,
-                   format_double(part->bbox_diagonal).c_str());
+                   format_double(part.bbox_diagonal).c_str());
         bu_avs_add(&attributes, CREO_BRL_CORE_RPP_VOLUME_ATTRIBUTE,
-                   format_double(part->bbox_volume).c_str());
+                   format_double(part.bbox_volume).c_str());
     }
     if (db5_update_attributes(solid, &attributes, database) != 0)
         goto cleanup;
@@ -271,8 +270,8 @@ snapshot_write_attributes(struct db_i *database,
         bu_avs_add(&attributes, CREO_BRL_CORE_MODEL_VERSION_ATTRIBUTE, model_version.c_str());
     bu_avs_add(&attributes, CREO_BRL_CORE_MATERIAL_ATTRIBUTE,
                material_name.empty() ? CREO_BRL_CORE_UNDEFINED_MATERIAL : material_name.c_str());
-    creo_brl_add_snapshot_named_values(&attributes, attributes_in);
-    creo_brl_add_snapshot_named_values(&attributes, parameters);
+    creo_brl_add_snapshot_named_values(&attributes, part_capture.attributes);
+    creo_brl_add_snapshot_named_values(&attributes, part_capture.parameters);
     if (material_translation && material_translation->material_id >= 0) {
         bu_avs_add(&attributes, CREO_BRL_CORE_MATERIAL_ID_ATTRIBUTE,
                    std::to_string(material_translation->material_id).c_str());
@@ -282,12 +281,12 @@ snapshot_write_attributes(struct db_i *database,
     if (!original_color.empty())
         bu_avs_add(&attributes, CREO_BRL_CORE_ORIGINAL_COLOR_ATTRIBUTE,
                    original_color.c_str());
-    if ((part->flags & CREO_BRL_SNAPSHOT_PART_HAS_MASS_PROPERTIES) != 0) {
-        creo_brl_add_snapshot_mass_properties(&attributes, 1, part->density,
-                                              part->mass, part->volume,
-                                              part->surface_area);
-    } else if (std::isfinite(part->density) && part->density > 0.0) {
-        bu_avs_add(&attributes, CREO_BRL_CORE_DENSITY_ATTRIBUTE, format_double(part->density).c_str());
+    if ((part.flags & CREO_BRL_SNAPSHOT_PART_HAS_MASS_PROPERTIES) != 0) {
+        creo_brl_add_snapshot_mass_properties(&attributes, 1, part.density,
+                                              part.mass, part.volume,
+                                              part.surface_area);
+    } else if (std::isfinite(part.density) && part.density > 0.0) {
+        bu_avs_add(&attributes, CREO_BRL_CORE_DENSITY_ATTRIBUTE, format_double(part.density).c_str());
     }
     result = db5_update_attributes(region, &attributes, database) == 0;
 
@@ -334,33 +333,28 @@ facet_winds_ccw(uint32_t v1, uint32_t v2, uint32_t v3,
 
 
 static int
-normalize_snapshot_mesh(const struct creo_brl_snapshot_part *part,
-                        const struct creo_brl_snapshot_settings *settings,
-                        std::vector<fastf_t>& source_vertices,
-                        std::vector<int>& source_triangles,
-                        std::vector<fastf_t>& source_normals,
-                        std::vector<int>& source_normal_indices,
+normalize_snapshot_mesh(const struct snapshot_part_capture& part_capture,
+                        const struct creo_brl_snapshot_settings& settings,
                         struct normalized_mesh *mesh)
 {
     struct bg_vert_tree *normal_tree = NULL;
-    const int has_normals = (part->flags & CREO_BRL_SNAPSHOT_PART_HAS_NORMALS) != 0;
-    const int use_normals = has_normals && settings &&
-                            (settings->flags & CREO_BRL_SNAPSHOT_SETTING_WRITE_NORMALS) != 0;
+    const struct creo_brl_snapshot_part& part = part_capture.part;
+    const std::vector<struct creo_brl_snapshot_vector>& source_vertices = part_capture.vertices;
+    const std::vector<struct creo_brl_snapshot_triangle>& source_triangles = part_capture.triangles;
+    const std::vector<struct creo_brl_snapshot_vector>& source_normals = part_capture.normals;
+    const std::vector<uint32_t>& source_normal_indices = part_capture.normal_indices;
+    const int has_normals = (part.flags & CREO_BRL_SNAPSHOT_PART_HAS_NORMALS) != 0;
+    const int use_normals = has_normals &&
+                            (settings.flags & CREO_BRL_SNAPSHOT_SETTING_WRITE_NORMALS) != 0;
     const double vertex_tolerance_squared = CREO_BRL_MESH_VERTEX_TOLERANCE_MM *
                                             CREO_BRL_MESH_VERTEX_TOLERANCE_MM;
-    std::vector<struct creo_brl_snapshot_vector> normalization_vertices;
-    std::vector<struct creo_brl_snapshot_triangle> normalization_triangles;
     struct creo_brl_mesh_normalization normalization = {};
 
-    if (!part || !mesh || source_vertices.size() % CREO_BRL_SNAPSHOT_COORDINATE_COUNT != 0 ||
-        source_triangles.size() % CREO_BRL_SNAPSHOT_TRIANGLE_VERTEX_COUNT != 0 ||
-        source_vertices.size() / CREO_BRL_SNAPSHOT_COORDINATE_COUNT != part->vertex_count ||
-        source_triangles.size() / CREO_BRL_SNAPSHOT_TRIANGLE_VERTEX_COUNT != part->triangle_count ||
+    if (!mesh ||
         (use_normals &&
-         (source_normals.size() % CREO_BRL_SNAPSHOT_COORDINATE_COUNT != 0 ||
-          source_normals.size() / CREO_BRL_SNAPSHOT_COORDINATE_COUNT !=
-              part->normal_count ||
-          source_normal_indices.size() != source_triangles.size())))
+         (source_normals.empty() ||
+          source_normal_indices.size() !=
+              source_triangles.size() * CREO_BRL_SNAPSHOT_TRIANGLE_VERTEX_COUNT)))
         return 0;
 
     mesh->vertices.clear();
@@ -369,32 +363,7 @@ normalize_snapshot_mesh(const struct creo_brl_snapshot_part *part,
     mesh->face_normals.clear();
     mesh->is_solid = 0;
 
-    normalization_vertices.resize(source_vertices.size() /
-                                  CREO_BRL_SNAPSHOT_COORDINATE_COUNT);
-    for (size_t vertex = 0; vertex < normalization_vertices.size(); ++vertex) {
-        for (size_t coordinate = 0;
-             coordinate < CREO_BRL_SNAPSHOT_COORDINATE_COUNT; ++coordinate) {
-            normalization_vertices[vertex].coordinates[coordinate] =
-                source_vertices[vertex * CREO_BRL_SNAPSHOT_COORDINATE_COUNT + coordinate];
-        }
-    }
-    normalization_triangles.resize(source_triangles.size() /
-                                   CREO_BRL_SNAPSHOT_TRIANGLE_VERTEX_COUNT);
-    for (size_t triangle = 0; triangle < normalization_triangles.size(); ++triangle) {
-        for (size_t corner = 0;
-             corner < CREO_BRL_SNAPSHOT_TRIANGLE_VERTEX_COUNT; ++corner) {
-            const int source_vertex = source_triangles[
-                triangle * CREO_BRL_SNAPSHOT_TRIANGLE_VERTEX_COUNT + corner];
-
-            if (source_vertex < 0)
-                goto cleanup;
-            normalization_triangles[triangle].vertices[corner] =
-                static_cast<uint32_t>(source_vertex);
-        }
-    }
-
-    if (!creo_brl_normalize_mesh(normalization_vertices, normalization_triangles,
-                                 &normalization))
+    if (!creo_brl_normalize_mesh(source_vertices, source_triangles, &normalization))
         goto cleanup;
 
     if (normalization.vertices.size() > mesh->vertices.max_size() /
@@ -435,37 +404,29 @@ normalize_snapshot_mesh(const struct creo_brl_snapshot_part *part,
         size_t n1 = 0, n2 = 0, n3 = 0;
 
         if (use_normals) {
-            if (source_normal_indices[face_offset + 0] < 0 ||
-                source_normal_indices[face_offset + 1] < 0 ||
-                source_normal_indices[face_offset + 2] < 0)
-                goto cleanup;
-            const size_t normal_offset1 =
-                (size_t)source_normal_indices[face_offset + 0] * 3;
-            const size_t normal_offset2 =
-                (size_t)source_normal_indices[face_offset + 1] * 3;
-            const size_t normal_offset3 =
-                (size_t)source_normal_indices[face_offset + 2] * 3;
+            const uint32_t normal_index1 = source_normal_indices[face_offset + 0];
+            const uint32_t normal_index2 = source_normal_indices[face_offset + 1];
+            const uint32_t normal_index3 = source_normal_indices[face_offset + 2];
 
-            if (source_normals.size() < CREO_BRL_SNAPSHOT_COORDINATE_COUNT ||
-                normal_offset1 > source_normals.size() - 3u ||
-                normal_offset2 > source_normals.size() - 3u ||
-                normal_offset3 > source_normals.size() - 3u)
+            if (normal_index1 >= source_normals.size() ||
+                normal_index2 >= source_normals.size() ||
+                normal_index3 >= source_normals.size())
                 goto cleanup;
 
             n1 = bg_vert_tree_add(normal_tree,
-                                  source_normals[normal_offset1 + 0],
-                                  source_normals[normal_offset1 + 1],
-                                  source_normals[normal_offset1 + 2],
+                                  source_normals[normal_index1].coordinates[0],
+                                  source_normals[normal_index1].coordinates[1],
+                                  source_normals[normal_index1].coordinates[2],
                                   vertex_tolerance_squared);
             n2 = bg_vert_tree_add(normal_tree,
-                                  source_normals[normal_offset2 + 0],
-                                  source_normals[normal_offset2 + 1],
-                                  source_normals[normal_offset2 + 2],
+                                  source_normals[normal_index2].coordinates[0],
+                                  source_normals[normal_index2].coordinates[1],
+                                  source_normals[normal_index2].coordinates[2],
                                   vertex_tolerance_squared);
             n3 = bg_vert_tree_add(normal_tree,
-                                  source_normals[normal_offset3 + 0],
-                                  source_normals[normal_offset3 + 1],
-                                  source_normals[normal_offset3 + 2],
+                                  source_normals[normal_index3].coordinates[0],
+                                  source_normals[normal_index3].coordinates[1],
+                                  source_normals[normal_index3].coordinates[2],
                                   vertex_tolerance_squared);
         }
 
@@ -519,15 +480,9 @@ cleanup:
 static int
 write_part_definition(struct db_i *database,
                       struct rt_wdb *writer,
-                      const struct creo_brl_snapshot_part *part,
-                      const struct creo_brl_snapshot_settings *settings,
-                      const std::string& rename_parameters,
-                      const std::string& model_name,
-                      const std::string& model_version,
-                      const std::string& material_name,
+                      const struct snapshot_part_capture& part_capture,
+                      const struct snapshot_scene_capture& scene,
                       const struct snapshot_material_translation *material_translation,
-                      const std::vector<struct snapshot_named_value>& attributes,
-                      const std::vector<struct snapshot_named_value>& parameters,
                       const std::vector<std::string>& subtraction_names,
                       int has_mesh,
                       size_t vertex_count,
@@ -539,20 +494,23 @@ write_part_definition(struct db_i *database,
                       int *face_normals,
                       struct snapshot_part_output *output)
 {
+    const struct creo_brl_snapshot_part& part = part_capture.part;
+    const struct creo_brl_snapshot_settings& settings = scene.settings;
+    const std::string& rename_parameters = scene.settings_strings.rename_parameters;
+    const std::string& model_name = part_capture.strings.model_name;
     std::string solid_name;
     std::string region_name;
     std::string original_color;
     unsigned char output_color[CREO_BRL_SNAPSHOT_COLOR_COMPONENT_COUNT] = {};
     const unsigned char *region_color = NULL;
     const std::string name_source =
-        creo_brl_snapshot_name_source(rename_parameters, model_name, parameters);
+        creo_brl_snapshot_name_source(rename_parameters, model_name, part_capture.parameters);
     struct bu_list members;
 
-    if (part->color_is_set) {
-        memcpy(output_color, part->color, sizeof(output_color));
-        if (settings)
-            (void)adjust_color_luminance(output_color, settings->min_luminance,
-                                         &original_color);
+    if (part.color_is_set) {
+        memcpy(output_color, part.color, sizeof(output_color));
+        (void)adjust_color_luminance(output_color, settings.min_luminance,
+                                     &original_color);
         region_color = output_color;
     }
 
@@ -562,8 +520,8 @@ write_part_definition(struct db_i *database,
         (has_mesh ?
          write_bot(writer, solid_name.c_str(), vertex_count, face_count,
                    vertices, faces, normal_count, normals, face_normals) :
-         mk_rpp(writer, solid_name.c_str(), part->bbox_min.coordinates,
-                part->bbox_max.coordinates)) != 0)
+         mk_rpp(writer, solid_name.c_str(), part.bbox_min.coordinates,
+                part.bbox_max.coordinates)) != 0)
         return CREO_BRL_CORE_CONVERT_OUTPUT_FAILED;
 
     BU_LIST_INIT(&members);
@@ -580,11 +538,10 @@ write_part_definition(struct db_i *database,
 
     if (mk_comb(writer, region_name.c_str(), &members, 1, NULL, NULL,
                 region_color,
-                (int)part->region_id, 0, 0, 0, 0, 0, 0) != 0 ||
-        !snapshot_write_attributes(database, solid_name.c_str(), region_name.c_str(), part,
-                                   model_name, model_version, material_name,
-                                   material_translation, original_color,
-                                   attributes, parameters, has_mesh))
+                (int)part.region_id, 0, 0, 0, 0, 0, 0) != 0 ||
+        !snapshot_write_attributes(database, solid_name.c_str(), region_name.c_str(),
+                                   part_capture, material_translation, original_color,
+                                   has_mesh))
         return CREO_BRL_CORE_CONVERT_OUTPUT_FAILED;
 
     output->region_name = region_name;
@@ -635,77 +592,61 @@ snapshot_log_part_result(FILE *log_file,
 
 
 int
-creo_brl_convert_snapshot_part(const struct creo_brl_snapshot_part *part,
-                               const struct creo_brl_snapshot_settings *settings,
-                               const std::string& rename_parameters,
-                               const std::string& model_name,
-                               const std::string& model_version,
-                               const std::string& material_name,
+creo_brl_convert_snapshot_part(const struct snapshot_part_capture& part_capture,
+                               const struct snapshot_scene_capture& scene,
                                const struct snapshot_material_translation *material_translation,
-                               const std::vector<struct snapshot_named_value>& attributes,
-                               const std::vector<struct snapshot_named_value>& parameters,
                                const std::vector<std::string>& subtraction_names,
-                               std::vector<fastf_t>& vertices,
-                               std::vector<int>& triangles,
-                               std::vector<fastf_t>& normals,
-                               std::vector<int>& normal_indices,
                                FILE *log_file,
                                struct db_i *database,
                                struct rt_wdb *writer,
                                struct snapshot_part_output *output)
 {
-    const int has_mesh = (part->flags & CREO_BRL_SNAPSHOT_PART_HAS_MESH) != 0;
-    const int has_bbox_fallback = (part->flags & CREO_BRL_SNAPSHOT_PART_HAS_BBOX_FALLBACK) != 0;
-    const int require_solidity = settings &&
-                                 (settings->flags & CREO_BRL_SNAPSHOT_SETTING_CHECK_SOLIDITY) != 0;
-    const int allow_box_fallback = settings &&
-                                   (settings->flags & CREO_BRL_SNAPSHOT_SETTING_CREATE_BOXES) != 0;
-    const int write_normals = settings &&
-                              (settings->flags & CREO_BRL_SNAPSHOT_SETTING_WRITE_NORMALS) != 0;
+    const struct creo_brl_snapshot_part& part = part_capture.part;
+    const struct creo_brl_snapshot_settings& settings = scene.settings;
+    const std::string& model_name = part_capture.strings.model_name;
+    const int has_mesh = (part.flags & CREO_BRL_SNAPSHOT_PART_HAS_MESH) != 0;
+    const int has_bbox_fallback = (part.flags & CREO_BRL_SNAPSHOT_PART_HAS_BBOX_FALLBACK) != 0;
+    const int require_solidity = (settings.flags & CREO_BRL_SNAPSHOT_SETTING_CHECK_SOLIDITY) != 0;
+    const int allow_box_fallback = (settings.flags & CREO_BRL_SNAPSHOT_SETTING_CREATE_BOXES) != 0;
+    const int write_normals = (settings.flags & CREO_BRL_SNAPSHOT_SETTING_WRITE_NORMALS) != 0;
     struct normalized_mesh mesh = {};
     int result = CREO_BRL_CORE_CONVERT_OUTPUT_FAILED;
 
-    if (!part || !database || !writer || !output)
+    if (!database || !writer || !output)
         return CREO_BRL_CORE_CONVERT_INVALID_REQUEST;
 
     if (!has_mesh || has_bbox_fallback) {
         if (!has_bbox_fallback) {
-            snapshot_log_part_result(log_file, settings, model_name,
+            snapshot_log_part_result(log_file, &settings, model_name,
                                      CREO_BRL_CORE_CONVERT_OUTPUT_FAILED, output);
             return CREO_BRL_CORE_CONVERT_OUTPUT_FAILED;
         }
-        result = write_part_definition(database, writer, part, settings, rename_parameters,
-                                       model_name, model_version, material_name,
-                                       material_translation,
-                                       attributes, parameters, subtraction_names,
+        result = write_part_definition(database, writer, part_capture, scene,
+                                       material_translation, subtraction_names,
                                        0, 0, 0, NULL, NULL, 0, NULL, NULL,
                                        output);
-        snapshot_log_part_result(log_file, settings, model_name, result, output);
+        snapshot_log_part_result(log_file, &settings, model_name, result, output);
         return result;
     }
 
-    if (!normalize_snapshot_mesh(part, settings, vertices, triangles, normals, normal_indices, &mesh) ||
+    if (!normalize_snapshot_mesh(part_capture, settings, &mesh) ||
         (require_solidity && !mesh.is_solid)) {
         if (!allow_box_fallback) {
-            snapshot_log_part_result(log_file, settings, model_name,
+            snapshot_log_part_result(log_file, &settings, model_name,
                                      CREO_BRL_CORE_CONVERT_OUTPUT_FAILED, output);
             return CREO_BRL_CORE_CONVERT_OUTPUT_FAILED;
         }
 
-        result = write_part_definition(database, writer, part, settings, rename_parameters,
-                                       model_name, model_version, material_name,
-                                       material_translation,
-                                       attributes, parameters, subtraction_names,
+        result = write_part_definition(database, writer, part_capture, scene,
+                                       material_translation, subtraction_names,
                                        0, 0, 0, NULL, NULL, 0, NULL, NULL,
                                        output);
-        snapshot_log_part_result(log_file, settings, model_name, result, output);
+        snapshot_log_part_result(log_file, &settings, model_name, result, output);
         return result;
     }
 
-    result = write_part_definition(database, writer, part, settings, rename_parameters,
-                                   model_name, model_version, material_name,
-                                   material_translation,
-                                   attributes, parameters, subtraction_names, 1,
+    result = write_part_definition(database, writer, part_capture, scene,
+                                   material_translation, subtraction_names, 1,
                                    mesh.vertices.size() / 3,
                                    mesh.faces.size() / 3,
                                    mesh.vertices.data(),
@@ -714,6 +655,6 @@ creo_brl_convert_snapshot_part(const struct creo_brl_snapshot_part *part,
                                    write_normals ? mesh.normals.data() : NULL,
                                    write_normals ? mesh.face_normals.data() : NULL,
                                    output);
-    snapshot_log_part_result(log_file, settings, model_name, result, output);
+    snapshot_log_part_result(log_file, &settings, model_name, result, output);
     return result;
 }

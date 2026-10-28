@@ -4,14 +4,10 @@
 #include <string>
 #include <vector>
 
+#include "shared/conversion_snapshot.h"
+
 
 struct db_i;
-
-
-struct snapshot_named_value {
-    std::string name;
-    std::string value;
-};
 
 
 std::string creo_brl_snapshot_name_source(

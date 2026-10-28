@@ -53,20 +53,10 @@ void creo_brl_add_snapshot_mass_properties(
     double surface_area);
 
 
-int creo_brl_convert_snapshot_part(const struct creo_brl_snapshot_part *part,
-                                   const struct creo_brl_snapshot_settings *settings,
-                                   const std::string& rename_parameters,
-                                   const std::string& model_name,
-                                   const std::string& model_version,
-                                   const std::string& material_name,
+int creo_brl_convert_snapshot_part(const struct snapshot_part_capture& part_capture,
+                                   const struct snapshot_scene_capture& scene,
                                    const struct snapshot_material_translation *material_translation,
-                                   const std::vector<struct snapshot_named_value>& attributes,
-                                   const std::vector<struct snapshot_named_value>& parameters,
                                    const std::vector<std::string>& subtraction_names,
-                                   std::vector<fastf_t>& vertices,
-                                   std::vector<int>& triangles,
-                                   std::vector<fastf_t>& normals,
-                                   std::vector<int>& normal_indices,
                                    FILE *log_file,
                                    struct db_i *database,
                                    struct rt_wdb *writer,
