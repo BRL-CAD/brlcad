@@ -536,7 +536,8 @@ test_invalid_values(const std::string& directory)
     const std::string profile_path = path_join(directory, INVALID_VALUE_PROFILE_FILE_NAME);
     struct fake_controls controls = {};
     struct creo_brl_frontend_control_api controls_api = fake_control_api;
-    struct creo_brl_frontend_snapshot_options snapshot = {};
+    struct creo_brl_snapshot_settings settings = {};
+    struct snapshot_settings_strings strings = {};
     struct creo_brl_conversion_options view = {};
 
     if (!expect(write_profile(profile_path, invalid_attributes,
@@ -565,7 +566,7 @@ test_invalid_values(const std::string& directory)
     controls.text["out_fname"] = "invalid_value.g";
     controls.text["log_fname"] = "invalid_value.log";
 
-    return expect(!creo_brl_frontend_capture_snapshot_options(&controls_api, &snapshot),
+    return expect(!creo_brl_frontend_capture_snapshot_options(&controls_api, &settings, &strings),
                   "invalid numeric profile value bypassed dialog validation");
 }
 
@@ -576,7 +577,8 @@ test_ui_mapping(const std::string& directory)
     struct fake_controls controls = {};
     struct creo_brl_frontend_control_api controls_api = fake_control_api;
     struct creo_brl_conversion_options view = observed_view();
-    struct creo_brl_frontend_snapshot_options snapshot = {};
+    struct creo_brl_snapshot_settings settings = {};
+    struct snapshot_settings_strings strings = {};
     const std::string profile_path = path_join(directory, PROFILE_FILE_NAME);
     const std::string source_before = read_file(profile_path);
 
@@ -600,18 +602,18 @@ test_ui_mapping(const std::string& directory)
     controls.radios["chord_mode"] = "percent";
     controls.checks["facets_only"] = 1;
 
-    if (!expect(creo_brl_frontend_capture_snapshot_options(&controls_api, &snapshot),
+    if (!expect(creo_brl_frontend_capture_snapshot_options(&controls_api, &settings, &strings),
                 "edited controls did not produce snapshot settings"))
         return 0;
 
-    return expect(snapshot.output_path == "ui_edited.g" && snapshot.log_path == "ui_edited.log",
+    return expect(strings.output_path == "ui_edited.g" && strings.log_path == "ui_edited.log",
                   "UI edits were not embedded in snapshot strings") &&
-           expect(snapshot.settings.region_id == 501 &&
-                  snapshot.settings.log_type == CREO_BRL_SNAPSHOT_LOG_ALL &&
-                  snapshot.settings.xform_mode == CREO_BRL_SNAPSHOT_XFORM_X_TO_Z &&
-                  snapshot.settings.chord_mode == CREO_BRL_SNAPSHOT_CHORD_RELATIVE,
+           expect(settings.region_id == 501 &&
+                  settings.log_type == CREO_BRL_SNAPSHOT_LOG_ALL &&
+                  settings.xform_mode == CREO_BRL_SNAPSHOT_XFORM_X_TO_Z &&
+                  settings.chord_mode == CREO_BRL_SNAPSHOT_CHORD_RELATIVE,
                   "UI edits were not embedded in snapshot settings") &&
-           expect((snapshot.settings.flags & CREO_BRL_SNAPSHOT_SETTING_FACETS_ONLY) != 0,
+           expect((settings.flags & CREO_BRL_SNAPSHOT_SETTING_FACETS_ONLY) != 0,
                   "UI checkbox edit was not embedded in snapshot settings") &&
            expect(source_before == read_file(profile_path),
                   "UI mapping rewrote the selected profile file");

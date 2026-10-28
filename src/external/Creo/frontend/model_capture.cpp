@@ -517,22 +517,17 @@ creo_brl_build_tessellation_policy(const struct creo_brl_snapshot_settings *sett
     double minimum_chord = 0.0;
     double maximum_angle = 0.0;
 
-    if (!settings || !policy || !std::isfinite(model_to_mm) || model_to_mm <= 0.0 ||
-        !std::isfinite(settings->max_chord) || settings->max_chord <= 0.0 ||
-        !std::isfinite(settings->min_angle) || settings->min_angle <= 0.0 ||
-        settings->min_angle > CREO_BRL_SNAPSHOT_ANGLE_MAXIMUM)
+    if (!policy || !creo_brl_validate_snapshot_settings(settings) ||
+        !std::isfinite(model_to_mm) || model_to_mm <= 0.0)
         return 0;
 
     if (settings->chord_mode == CREO_BRL_SNAPSHOT_CHORD_RELATIVE) {
-        if (!std::isfinite(bbox_diagonal_mm) || bbox_diagonal_mm <= 0.0 ||
-            settings->max_chord > CREO_BRL_SNAPSHOT_PERCENT_MAXIMUM)
+        if (!std::isfinite(bbox_diagonal_mm) || bbox_diagonal_mm <= 0.0)
             return 0;
         maximum_chord = bbox_diagonal_mm * settings->max_chord /
                         (CREO_BRL_SNAPSHOT_PERCENT_MAXIMUM * model_to_mm);
-    } else if (settings->chord_mode == CREO_BRL_SNAPSHOT_CHORD_ABSOLUTE) {
-        maximum_chord = settings->max_chord / model_to_mm;
     } else {
-        return 0;
+        maximum_chord = settings->max_chord / model_to_mm;
     }
 
     minimum_chord = maximum_chord * CREO_BRL_MINIMUM_CHORD_FACTOR;

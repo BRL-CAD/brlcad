@@ -32,15 +32,6 @@ static const char CONTROL_WRITE_NORMALS[] = "write_normals";
 static const char CONTROL_OUTPUT_PATH[] = "out_fname";
 static const char CONTROL_LOG_PATH[] = "log_fname";
 
-static const char RADIO_LOG_FAILURE[] = "failure";
-static const char RADIO_LOG_SUCCESS[] = "success";
-static const char RADIO_LOG_FAILURE_OR_SUCCESS[] = "failure/success";
-static const char RADIO_LOG_ALL[] = "all/(debug)";
-static const char RADIO_TRANSFORM_NONE[] = "none";
-static const char RADIO_TRANSFORM_X_TO_Z[] = "x_to_z";
-static const char RADIO_TRANSFORM_Y_TO_Z[] = "y_to_z";
-static const char RADIO_CHORD_ABSOLUTE[] = "millimeter";
-static const char RADIO_CHORD_RELATIVE[] = "percent";
 static const char DEFAULT_OUTPUT_SUFFIX[] = ".g";
 static const char DEFAULT_LOG_SUFFIX[] = "_log.txt";
 
@@ -86,46 +77,6 @@ set_check(const struct creo_brl_frontend_control_api *controls,
 {
     return controls && controls->set_check &&
            controls->set_check(controls->context, control, (flags & flag) != 0);
-}
-
-
-static const char *
-log_type_selection(int32_t log_type)
-{
-    switch (log_type) {
-        case CREO_BRL_CONVERSION_LOG_FAILURE:
-            return RADIO_LOG_FAILURE;
-        case CREO_BRL_CONVERSION_LOG_SUCCESS:
-            return RADIO_LOG_SUCCESS;
-        case CREO_BRL_CONVERSION_LOG_FAILURE_OR_SUCCESS:
-            return RADIO_LOG_FAILURE_OR_SUCCESS;
-        case CREO_BRL_CONVERSION_LOG_ALL:
-            return RADIO_LOG_ALL;
-        default:
-            return RADIO_LOG_ALL;
-    }
-}
-
-
-static const char *
-xform_selection(int32_t xform_mode)
-{
-    switch (xform_mode) {
-        case CREO_BRL_CONVERSION_XFORM_X_TO_Z:
-            return RADIO_TRANSFORM_X_TO_Z;
-        case CREO_BRL_CONVERSION_XFORM_Y_TO_Z:
-            return RADIO_TRANSFORM_Y_TO_Z;
-        default:
-            return RADIO_TRANSFORM_NONE;
-    }
-}
-
-
-static const char *
-chord_selection(int32_t chord_mode)
-{
-    return chord_mode == CREO_BRL_CONVERSION_CHORD_ABSOLUTE ?
-               RADIO_CHORD_ABSOLUTE : RADIO_CHORD_RELATIVE;
 }
 
 
@@ -206,24 +157,6 @@ read_radio(const struct creo_brl_frontend_control_api *controls,
 }
 
 
-static int
-snapshot_log_type(const std::string& selection, int32_t *log_type)
-{
-    if (selection == RADIO_LOG_FAILURE)
-        *log_type = CREO_BRL_SNAPSHOT_LOG_FAILURE;
-    else if (selection == RADIO_LOG_SUCCESS)
-        *log_type = CREO_BRL_SNAPSHOT_LOG_SUCCESS;
-    else if (selection == RADIO_LOG_FAILURE_OR_SUCCESS)
-        *log_type = CREO_BRL_SNAPSHOT_LOG_FAILURE_OR_SUCCESS;
-    else if (selection == RADIO_LOG_ALL)
-        *log_type = CREO_BRL_SNAPSHOT_LOG_ALL;
-    else
-        return 0;
-
-    return 1;
-}
-
-
 int
 creo_brl_frontend_apply_options_to_controls(
     const struct creo_brl_conversion_options *options,
@@ -231,16 +164,16 @@ creo_brl_frontend_apply_options_to_controls(
 {
     return options && controls && controls->set_radio &&
            controls->set_radio(controls->context, CONTROL_LOG_TYPE,
-                               log_type_selection(options->log_type)) &&
+                               creo_brl_log_type_token(options->log_type)) &&
            set_text(controls, CONTROL_MATERIAL_PATH, options->material_path) &&
            set_text(controls, CONTROL_PARAMETER_RENAME, options->rename_parameters) &&
            set_text(controls, CONTROL_PARAMETER_SAVE, options->preserve_parameters) &&
            controls->set_radio(controls->context, CONTROL_TRANSFORM,
-                               xform_selection(options->xform_mode)) &&
+                               creo_brl_xform_mode_token(options->xform_mode)) &&
            set_text(controls, CONTROL_REGION_COUNTER, options->region_counter) &&
            set_text(controls, CONTROL_MINIMUM_LUMINANCE, options->minimum_luminance) &&
            controls->set_radio(controls->context, CONTROL_CHORD_MODE,
-                               chord_selection(options->chord_mode)) &&
+                               creo_brl_chord_mode_token(options->chord_mode)) &&
            set_text(controls, CONTROL_MAXIMUM_CHORD, options->maximum_chord) &&
            set_text(controls, CONTROL_MINIMUM_ANGLE, options->minimum_angle) &&
            set_check(controls, CONTROL_ELIMINATE_SMALL_FEATURES, options->flags,
@@ -262,46 +195,38 @@ creo_brl_frontend_apply_options_to_controls(
 int
 creo_brl_frontend_capture_snapshot_options(
     const struct creo_brl_frontend_control_api *controls,
-    struct creo_brl_frontend_snapshot_options *options)
+    struct creo_brl_snapshot_settings *settings,
+    struct snapshot_settings_strings *strings)
 {
     std::string selection;
-    struct creo_brl_snapshot_settings *settings = NULL;
 
-    if (!controls || !options)
+    if (!controls || !settings || !strings)
         return 0;
 
-    *options = {};
-    settings = &options->settings;
+    *settings = {};
+    *strings = {};
 
-    if (!read_text(controls, CONTROL_OUTPUT_PATH, &options->output_path) || options->output_path.empty() ||
-        !read_text(controls, CONTROL_LOG_PATH, &options->log_path) ||
-        !read_text(controls, CONTROL_MATERIAL_PATH, &options->material_path) ||
-        !read_text(controls, CONTROL_PARAMETER_RENAME, &options->rename_parameters) ||
-        !read_text(controls, CONTROL_PARAMETER_SAVE, &options->preserve_parameters) ||
+    if (!read_text(controls, CONTROL_OUTPUT_PATH, &strings->output_path) ||
+        strings->output_path.empty() ||
+        !read_text(controls, CONTROL_LOG_PATH, &strings->log_path) ||
+        !read_text(controls, CONTROL_MATERIAL_PATH, &strings->material_path) ||
+        !read_text(controls, CONTROL_PARAMETER_RENAME, &strings->rename_parameters) ||
+        !read_text(controls, CONTROL_PARAMETER_SAVE, &strings->preserve_parameters) ||
         !read_integer(controls, CONTROL_REGION_COUNTER, &settings->region_id) ||
         !read_integer(controls, CONTROL_MINIMUM_LUMINANCE, &settings->min_luminance) ||
         !read_number(controls, CONTROL_MAXIMUM_CHORD, &settings->max_chord) ||
         !read_number(controls, CONTROL_MINIMUM_ANGLE, &settings->min_angle) ||
         !read_radio(controls, CONTROL_LOG_TYPE, &selection) ||
-        !snapshot_log_type(selection, &settings->log_type) ||
+        !creo_brl_parse_log_type_token(selection.c_str(), &settings->log_type) ||
         !read_radio(controls, CONTROL_TRANSFORM, &selection))
         return 0;
 
-    settings->xform_mode = selection == RADIO_TRANSFORM_X_TO_Z ? CREO_BRL_SNAPSHOT_XFORM_X_TO_Z :
-                           selection == RADIO_TRANSFORM_Y_TO_Z ? CREO_BRL_SNAPSHOT_XFORM_Y_TO_Z :
-                                                                   CREO_BRL_SNAPSHOT_XFORM_NONE;
+    if (!creo_brl_parse_xform_mode_token(selection.c_str(), &settings->xform_mode))
+        settings->xform_mode = CREO_BRL_SNAPSHOT_XFORM_NONE;
     if (!read_radio(controls, CONTROL_CHORD_MODE, &selection))
         return 0;
-    settings->chord_mode = selection == RADIO_CHORD_RELATIVE ? CREO_BRL_SNAPSHOT_CHORD_RELATIVE :
-                                                               CREO_BRL_SNAPSHOT_CHORD_ABSOLUTE;
-    if (settings->min_luminance < 0 ||
-        settings->min_luminance > CREO_BRL_SNAPSHOT_LUMINANCE_MAXIMUM ||
-        settings->max_chord <= 0.0 ||
-        (settings->chord_mode == CREO_BRL_SNAPSHOT_CHORD_RELATIVE &&
-         settings->max_chord > CREO_BRL_SNAPSHOT_PERCENT_MAXIMUM) ||
-        settings->min_angle <= 0.0 ||
-        settings->min_angle > CREO_BRL_SNAPSHOT_ANGLE_MAXIMUM)
-        return 0;
+    if (!creo_brl_parse_chord_mode_token(selection.c_str(), &settings->chord_mode))
+        settings->chord_mode = CREO_BRL_SNAPSHOT_CHORD_ABSOLUTE;
 
     if (!read_check(controls, CONTROL_ELIMINATE_SMALL_FEATURES,
                     CREO_BRL_SNAPSHOT_SETTING_ELIMINATE_SMALL_FEATURES, &settings->flags))
@@ -309,12 +234,11 @@ creo_brl_frontend_capture_snapshot_options(
     if ((settings->flags & CREO_BRL_SNAPSHOT_SETTING_ELIMINATE_SMALL_FEATURES) != 0 &&
         (!read_number(controls, CONTROL_MINIMUM_HOLE, &settings->min_hole) ||
          !read_number(controls, CONTROL_MINIMUM_CHAMFER, &settings->min_chamfer) ||
-         !read_number(controls, CONTROL_MINIMUM_ROUND, &settings->min_round) ||
-         settings->min_hole < 0.0 || settings->min_chamfer < 0.0 ||
-         settings->min_round < 0.0))
+         !read_number(controls, CONTROL_MINIMUM_ROUND, &settings->min_round)))
         return 0;
 
-    return read_check(controls, CONTROL_FACETS_ONLY,
+    return creo_brl_validate_snapshot_settings(settings) &&
+           read_check(controls, CONTROL_FACETS_ONLY,
                       CREO_BRL_SNAPSHOT_SETTING_FACETS_ONLY, &settings->flags) &&
            read_check(controls, CONTROL_CHECK_SOLIDITY,
                       CREO_BRL_SNAPSHOT_SETTING_CHECK_SOLIDITY, &settings->flags) &&

@@ -19,8 +19,11 @@
 #ifndef CREO_CONVERSION_SNAPSHOT_H
 #define CREO_CONVERSION_SNAPSHOT_H
 
+#include <math.h>
 #include <stddef.h>
 #include <stdint.h>
+
+#include "shared/conversion_options.h"
 
 #ifdef __cplusplus
 #  include <string>
@@ -52,38 +55,38 @@ enum creo_brl_snapshot_scene_node_type {
 };
 
 enum creo_brl_snapshot_log_type {
-    CREO_BRL_SNAPSHOT_LOG_NONE = -1,
-    CREO_BRL_SNAPSHOT_LOG_FAILURE = 0,
-    CREO_BRL_SNAPSHOT_LOG_SUCCESS = 1,
-    CREO_BRL_SNAPSHOT_LOG_FAILURE_OR_SUCCESS = 2,
-    CREO_BRL_SNAPSHOT_LOG_ALL = 3
+    CREO_BRL_SNAPSHOT_LOG_NONE = CREO_BRL_CONVERSION_LOG_NONE,
+    CREO_BRL_SNAPSHOT_LOG_FAILURE = CREO_BRL_CONVERSION_LOG_FAILURE,
+    CREO_BRL_SNAPSHOT_LOG_SUCCESS = CREO_BRL_CONVERSION_LOG_SUCCESS,
+    CREO_BRL_SNAPSHOT_LOG_FAILURE_OR_SUCCESS = CREO_BRL_CONVERSION_LOG_FAILURE_OR_SUCCESS,
+    CREO_BRL_SNAPSHOT_LOG_ALL = CREO_BRL_CONVERSION_LOG_ALL
 };
 
 enum creo_brl_snapshot_xform_mode {
-    CREO_BRL_SNAPSHOT_XFORM_NONE = 0,
-    CREO_BRL_SNAPSHOT_XFORM_X_TO_Z = 1,
-    CREO_BRL_SNAPSHOT_XFORM_Y_TO_Z = 2
+    CREO_BRL_SNAPSHOT_XFORM_NONE = CREO_BRL_CONVERSION_XFORM_NONE,
+    CREO_BRL_SNAPSHOT_XFORM_X_TO_Z = CREO_BRL_CONVERSION_XFORM_X_TO_Z,
+    CREO_BRL_SNAPSHOT_XFORM_Y_TO_Z = CREO_BRL_CONVERSION_XFORM_Y_TO_Z
 };
 
 enum creo_brl_snapshot_chord_mode {
-    CREO_BRL_SNAPSHOT_CHORD_ABSOLUTE = 0,
-    CREO_BRL_SNAPSHOT_CHORD_RELATIVE = 1
+    CREO_BRL_SNAPSHOT_CHORD_ABSOLUTE = CREO_BRL_CONVERSION_CHORD_ABSOLUTE,
+    CREO_BRL_SNAPSHOT_CHORD_RELATIVE = CREO_BRL_CONVERSION_CHORD_RELATIVE
 };
 
 enum creo_brl_snapshot_settings_flag {
-    CREO_BRL_SNAPSHOT_SETTING_ELIMINATE_SMALL_FEATURES = 1u << 0,
-    CREO_BRL_SNAPSHOT_SETTING_FACETS_ONLY = 1u << 1,
-    CREO_BRL_SNAPSHOT_SETTING_CHECK_SOLIDITY = 1u << 2,
-    CREO_BRL_SNAPSHOT_SETTING_CREATE_BOXES = 1u << 3,
-    CREO_BRL_SNAPSHOT_SETTING_WRITE_NORMALS = 1u << 4
+    CREO_BRL_SNAPSHOT_SETTING_ELIMINATE_SMALL_FEATURES =
+        CREO_BRL_CONVERSION_OPTION_ELIMINATE_SMALL_FEATURES,
+    CREO_BRL_SNAPSHOT_SETTING_FACETS_ONLY =
+        CREO_BRL_CONVERSION_OPTION_FACETS_ONLY,
+    CREO_BRL_SNAPSHOT_SETTING_CHECK_SOLIDITY =
+        CREO_BRL_CONVERSION_OPTION_CHECK_SOLIDITY,
+    CREO_BRL_SNAPSHOT_SETTING_CREATE_BOXES =
+        CREO_BRL_CONVERSION_OPTION_CREATE_BOXES,
+    CREO_BRL_SNAPSHOT_SETTING_WRITE_NORMALS =
+        CREO_BRL_CONVERSION_OPTION_WRITE_NORMALS
 };
 
-#define CREO_BRL_SNAPSHOT_SETTINGS_FLAG_MASK \
-    (CREO_BRL_SNAPSHOT_SETTING_ELIMINATE_SMALL_FEATURES | \
-     CREO_BRL_SNAPSHOT_SETTING_FACETS_ONLY | \
-     CREO_BRL_SNAPSHOT_SETTING_CHECK_SOLIDITY | \
-     CREO_BRL_SNAPSHOT_SETTING_CREATE_BOXES | \
-     CREO_BRL_SNAPSHOT_SETTING_WRITE_NORMALS)
+#define CREO_BRL_SNAPSHOT_SETTINGS_FLAG_MASK CREO_BRL_CONVERSION_OPTION_FLAG_MASK
 
 enum creo_brl_snapshot_part_flag {
     CREO_BRL_SNAPSHOT_PART_HAS_MESH = 1u << 0,
@@ -158,6 +161,29 @@ struct creo_brl_snapshot_settings {
     double min_chamfer;
     double min_round;
 };
+
+static inline int
+creo_brl_validate_snapshot_settings(const struct creo_brl_snapshot_settings *settings)
+{
+    return settings &&
+           (settings->flags & ~CREO_BRL_SNAPSHOT_SETTINGS_FLAG_MASK) == 0 &&
+           settings->xform_mode >= CREO_BRL_SNAPSHOT_XFORM_NONE &&
+           settings->xform_mode <= CREO_BRL_SNAPSHOT_XFORM_Y_TO_Z &&
+           settings->chord_mode >= CREO_BRL_SNAPSHOT_CHORD_ABSOLUTE &&
+           settings->chord_mode <= CREO_BRL_SNAPSHOT_CHORD_RELATIVE &&
+           settings->log_type >= CREO_BRL_SNAPSHOT_LOG_NONE &&
+           settings->log_type <= CREO_BRL_SNAPSHOT_LOG_ALL &&
+           settings->min_luminance >= 0 &&
+           settings->min_luminance <= CREO_BRL_SNAPSHOT_LUMINANCE_MAXIMUM &&
+           isfinite(settings->min_angle) && settings->min_angle > 0.0 &&
+           settings->min_angle <= CREO_BRL_SNAPSHOT_ANGLE_MAXIMUM &&
+           isfinite(settings->max_chord) && settings->max_chord > 0.0 &&
+           (settings->chord_mode != CREO_BRL_SNAPSHOT_CHORD_RELATIVE ||
+            settings->max_chord <= CREO_BRL_SNAPSHOT_PERCENT_MAXIMUM) &&
+           isfinite(settings->min_hole) && settings->min_hole >= 0.0 &&
+           isfinite(settings->min_chamfer) && settings->min_chamfer >= 0.0 &&
+           isfinite(settings->min_round) && settings->min_round >= 0.0;
+}
 
 struct creo_brl_snapshot_part {
     uint32_t flags;

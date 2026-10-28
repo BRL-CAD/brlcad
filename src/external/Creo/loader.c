@@ -343,10 +343,9 @@ creo_brl_core_load_profile_shim(void)
         show_status_message("Unable to determine the bundled Creo-BRL material path.");
 
     profile_environment_value(environment_profile, sizeof(environment_profile));
-    if (!creo_brl_resolve_profile_path(environment_profile, working_directory_path,
-                                       bundled_profile_path, profile_path_exists, NULL,
-                                       profile_path, sizeof(profile_path)))
-        show_status_message("No Creo-BRL profile was found; using defaults.");
+    (void)creo_brl_resolve_profile_path(environment_profile, working_directory_path,
+                                        bundled_profile_path, profile_path_exists, NULL,
+                                        profile_path, sizeof(profile_path));
 
     core_load_profile_fn(profile_path[0] ? profile_path : NULL, material_directory_path);
 }

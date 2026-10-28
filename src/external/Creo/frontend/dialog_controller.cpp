@@ -198,25 +198,6 @@ static const struct creo_brl_frontend_control_api frontend_controls = {
 
 
 static int
-capture_settings(struct creo_brl_snapshot_settings *settings, snapshot_settings_strings *strings)
-{
-    struct creo_brl_frontend_snapshot_options captured = {};
-
-    if (!settings || !strings ||
-        !creo_brl_frontend_capture_snapshot_options(&frontend_controls, &captured))
-        return 0;
-
-    *settings = captured.settings;
-    strings->output_path = captured.output_path;
-    strings->log_path = captured.log_path;
-    strings->material_path = captured.material_path;
-    strings->rename_parameters = captured.rename_parameters;
-    strings->preserve_parameters = captured.preserve_parameters;
-    return 1;
-}
-
-
-static int
 frontend_capture_snapshot(const char *snapshot_path)
 {
     struct creo_brl_snapshot_settings settings = {};
@@ -226,7 +207,9 @@ frontend_capture_snapshot(const char *snapshot_path)
 
     if (!snapshot_path || !snapshot_path[0])
         return CREO_BRL_SNAPSHOT_CAPTURE_INVALID_REQUEST;
-    if (!capture_settings(&settings, &settings_strings))
+    if (!creo_brl_frontend_capture_snapshot_options(&frontend_controls,
+                                                    &settings,
+                                                    &settings_strings))
         return CREO_BRL_SNAPSHOT_CAPTURE_DIALOG_FAILURE;
     if (ProMdlCurrentGet(&model) != PRO_TK_NO_ERROR)
         return CREO_BRL_SNAPSHOT_CAPTURE_NO_ACTIVE_MODEL;

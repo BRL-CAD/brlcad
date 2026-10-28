@@ -74,15 +74,6 @@ static const char *const PROFILE_ATTRIBUTE_NAMES[] = {
 };
 
 static const char PROFILE_VALUE_ON[] = "on";
-static const char PROFILE_VALUE_LOG_FAILURE[] = "failure";
-static const char PROFILE_VALUE_LOG_SUCCESS[] = "success";
-static const char PROFILE_VALUE_LOG_FAILURE_OR_SUCCESS[] = "failure/success";
-static const char PROFILE_VALUE_LOG_ALL[] = "all/(debug)";
-static const char PROFILE_VALUE_XFORM_NONE[] = "none";
-static const char PROFILE_VALUE_XFORM_X_TO_Z[] = "x_to_z";
-static const char PROFILE_VALUE_XFORM_Y_TO_Z[] = "y_to_z";
-static const char PROFILE_VALUE_CHORD_ABSOLUTE[] = "millimeter";
-static const char PROFILE_VALUE_CHORD_RELATIVE[] = "percent";
 
 static struct creo_brl_frontend_api frontend_api = {};
 
@@ -193,63 +184,6 @@ apply_checkbox(const char *value, uint32_t flag, uint32_t *flags)
 
 
 static int
-parse_log_type(const char *value, int32_t *log_type)
-{
-    if (!value || !log_type)
-        return 0;
-
-    if (bu_strcmp(value, PROFILE_VALUE_LOG_FAILURE) == 0)
-        *log_type = CREO_BRL_CONVERSION_LOG_FAILURE;
-    else if (bu_strcmp(value, PROFILE_VALUE_LOG_SUCCESS) == 0)
-        *log_type = CREO_BRL_CONVERSION_LOG_SUCCESS;
-    else if (bu_strcmp(value, PROFILE_VALUE_LOG_FAILURE_OR_SUCCESS) == 0)
-        *log_type = CREO_BRL_CONVERSION_LOG_FAILURE_OR_SUCCESS;
-    else if (bu_strcmp(value, PROFILE_VALUE_LOG_ALL) == 0)
-        *log_type = CREO_BRL_CONVERSION_LOG_ALL;
-    else
-        return 0;
-
-    return 1;
-}
-
-
-static int
-parse_xform_mode(const char *value, int32_t *xform_mode)
-{
-    if (!value || !xform_mode)
-        return 0;
-
-    if (bu_strcmp(value, PROFILE_VALUE_XFORM_X_TO_Z) == 0)
-        *xform_mode = CREO_BRL_CONVERSION_XFORM_X_TO_Z;
-    else if (bu_strcmp(value, PROFILE_VALUE_XFORM_Y_TO_Z) == 0)
-        *xform_mode = CREO_BRL_CONVERSION_XFORM_Y_TO_Z;
-    else if (bu_strcmp(value, PROFILE_VALUE_XFORM_NONE) == 0)
-        *xform_mode = CREO_BRL_CONVERSION_XFORM_NONE;
-    else
-        return 0;
-
-    return 1;
-}
-
-
-static int
-parse_chord_mode(const char *value, int32_t *chord_mode)
-{
-    if (!value || !chord_mode)
-        return 0;
-
-    if (bu_strcmp(value, PROFILE_VALUE_CHORD_ABSOLUTE) == 0)
-        *chord_mode = CREO_BRL_CONVERSION_CHORD_ABSOLUTE;
-    else if (bu_strcmp(value, PROFILE_VALUE_CHORD_RELATIVE) == 0)
-        *chord_mode = CREO_BRL_CONVERSION_CHORD_RELATIVE;
-    else
-        return 0;
-
-    return 1;
-}
-
-
-static int
 has_profile_attributes(const struct bu_attribute_value_set *attributes)
 {
     if (!attributes)
@@ -275,7 +209,7 @@ apply_profile_attributes(const struct bu_attribute_value_set *attributes,
         return;
 
     value = bu_avs_get(attributes, ATTRIBUTE_LOG_TYPE);
-    (void)parse_log_type(value, &options->view.log_type);
+    (void)creo_brl_parse_log_type_token(value, &options->view.log_type);
     if ((value = bu_avs_get(attributes, ATTRIBUTE_MATERIAL_PATH)))
         options->material_path = bu_strcmp(value, PROFILE_LEGACY_MATERIAL_FILE) == 0 ?
                                      bundled_material_path(material_directory) : value;

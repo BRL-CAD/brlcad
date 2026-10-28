@@ -885,26 +885,10 @@ snapshot_read_valid_settings(FILE *snapshot_file,
                              struct creo_brl_snapshot_settings *settings,
                              struct snapshot_settings_strings *strings)
 {
-    if ((disk_settings.flags & ~CREO_BRL_SNAPSHOT_SETTINGS_FLAG_MASK) != 0 ||
-        disk_settings.xform_mode < CREO_BRL_SNAPSHOT_XFORM_NONE ||
-        disk_settings.xform_mode > CREO_BRL_SNAPSHOT_XFORM_Y_TO_Z ||
-        disk_settings.chord_mode < CREO_BRL_SNAPSHOT_CHORD_ABSOLUTE ||
-        disk_settings.chord_mode > CREO_BRL_SNAPSHOT_CHORD_RELATIVE ||
-        disk_settings.log_type < CREO_BRL_SNAPSHOT_LOG_NONE ||
-        disk_settings.log_type > CREO_BRL_SNAPSHOT_LOG_ALL ||
-        disk_settings.min_luminance < 0 ||
-        disk_settings.min_luminance > CREO_BRL_SNAPSHOT_LUMINANCE_MAXIMUM ||
-        !std::isfinite(disk_settings.min_angle) || disk_settings.min_angle <= 0.0 ||
-        disk_settings.min_angle > CREO_BRL_SNAPSHOT_ANGLE_MAXIMUM ||
-        !std::isfinite(disk_settings.max_chord) || disk_settings.max_chord <= 0.0 ||
-        (disk_settings.chord_mode == CREO_BRL_SNAPSHOT_CHORD_RELATIVE &&
-         disk_settings.max_chord > CREO_BRL_SNAPSHOT_PERCENT_MAXIMUM) ||
-        !std::isfinite(disk_settings.min_hole) || disk_settings.min_hole < 0.0 ||
-        !std::isfinite(disk_settings.min_chamfer) || disk_settings.min_chamfer < 0.0 ||
-        !std::isfinite(disk_settings.min_round) || disk_settings.min_round < 0.0)
+    copy_settings_from_disk(disk_settings, settings);
+    if (!creo_brl_validate_snapshot_settings(settings))
         return 0;
 
-    copy_settings_from_disk(disk_settings, settings);
     strings->preserve_parameters.clear();
     return snapshot_read_valid_text(snapshot_file, &disk_settings.output_path,
                                     snapshot_size, data_offset, 1, &strings->output_path) &&
