@@ -3446,6 +3446,33 @@ foreach(ad ${ALL_DIRS})
 endforeach(ad ${ALL_DIRS})
 
 #------------------------------------------------------------------------------
+# Generate the SBOM after all other install rules so it describes the actual
+# install or CPack staging tree rather than the build tree.
+get_property(BRLCAD_BEXT_COMPONENT_MANIFEST GLOBAL PROPERTY BRLCAD_BEXT_COMPONENT_MANIFEST)
+get_property(BRLCAD_BEXT_SBOM GLOBAL PROPERTY BRLCAD_BEXT_SBOM)
+brlcad_repository_git_command(BRLCAD_SBOM_GIT_COMMAND)
+execute_process(
+  COMMAND ${BRLCAD_SBOM_GIT_COMMAND} rev-parse HEAD
+  WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
+  RESULT_VARIABLE BRLCAD_SBOM_GIT_RESULT
+  OUTPUT_VARIABLE BRLCAD_SBOM_REVISION
+  OUTPUT_STRIP_TRAILING_WHITESPACE
+)
+if(NOT BRLCAD_SBOM_GIT_RESULT EQUAL 0)
+  set(BRLCAD_SBOM_REVISION "${BRLCAD_VERSION}")
+endif()
+set(BRLCAD_SBOM_EXECUTABLE "$<TARGET_FILE:brlcad-sbom>")
+set(BRLCAD_INSTALL_SBOM_SCRIPT_IN "${CMAKE_BINARY_DIR}/CMakeFiles/BRLCAD_GenerateInstallSbom.cmake.in")
+set(BRLCAD_INSTALL_SBOM_SCRIPT "${CMAKE_BINARY_DIR}/CMakeFiles/BRLCAD_GenerateInstallSbom-$<CONFIG>.cmake")
+configure_file(
+  "${BRLCAD_CMAKE_DIR}/BRLCAD_GenerateInstallSbom.cmake.in"
+  "${BRLCAD_INSTALL_SBOM_SCRIPT_IN}"
+  @ONLY
+)
+file(GENERATE OUTPUT "${BRLCAD_INSTALL_SBOM_SCRIPT}" INPUT "${BRLCAD_INSTALL_SBOM_SCRIPT_IN}")
+install(SCRIPT "${BRLCAD_INSTALL_SBOM_SCRIPT}")
+distclean("${BRLCAD_INSTALL_SBOM_SCRIPT_IN}")
+
 # CPack is used to produce tgz files, RPMS, etc.
 #
 # TODO - CPack's package_source makes lots of copies of files, which is a problem

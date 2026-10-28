@@ -933,6 +933,104 @@ function(brlcad_load_bext_manifest manifest install_root valid_var reason_var)
   set(${reason_var} "" PARENT_SCOPE)
 endfunction(brlcad_load_bext_manifest)
 
+function(brlcad_load_bext_install_exclude_manifest manifest install_root valid_var reason_var)
+  set(${valid_var} FALSE PARENT_SCOPE)
+  set(${reason_var} "unknown manifest error" PARENT_SCOPE)
+
+  file(READ "${manifest}" _brlcad_manifest_json)
+  string(JSON _brlcad_schema ERROR_VARIABLE _brlcad_schema_error GET "${_brlcad_manifest_json}" schema)
+  if(NOT "${_brlcad_schema_error}" STREQUAL "NOTFOUND" OR NOT "${_brlcad_schema}" STREQUAL "1")
+    set(${reason_var} "unsupported or invalid schema" PARENT_SCOPE)
+    return()
+  endif()
+
+  string(JSON _brlcad_platform ERROR_VARIABLE _brlcad_platform_error GET "${_brlcad_manifest_json}" platform)
+  if(NOT "${_brlcad_platform_error}" STREQUAL "NOTFOUND" OR
+     NOT "${_brlcad_platform}" STREQUAL "${CMAKE_SYSTEM_NAME}")
+    set(${reason_var} "platform does not match the BRL-CAD build" PARENT_SCOPE)
+    return()
+  endif()
+
+  string(JSON _brlcad_count ERROR_VARIABLE _brlcad_count_error LENGTH "${_brlcad_manifest_json}" files)
+  if(NOT "${_brlcad_count_error}" STREQUAL "NOTFOUND")
+    set(${reason_var} "manifest is missing the files category" PARENT_SCOPE)
+    return()
+  endif()
+
+  set(_brlcad_excluded_files)
+  if(_brlcad_count GREATER 0)
+    math(EXPR _brlcad_last "${_brlcad_count} - 1")
+    foreach(_brlcad_index RANGE 0 ${_brlcad_last})
+      string(JSON _brlcad_relative ERROR_VARIABLE _brlcad_path_error GET
+        "${_brlcad_manifest_json}" files ${_brlcad_index})
+      if(NOT "${_brlcad_path_error}" STREQUAL "NOTFOUND" OR
+         IS_ABSOLUTE "${_brlcad_relative}" OR
+         "${_brlcad_relative}" MATCHES "(^|/)\\.\\.(/|$)" OR
+         NOT EXISTS "${install_root}/${_brlcad_relative}")
+        set(${reason_var} "invalid or missing install exclusion path: ${_brlcad_relative}" PARENT_SCOPE)
+        return()
+      endif()
+      list(APPEND _brlcad_excluded_files "${_brlcad_relative}")
+    endforeach()
+  endif()
+  list(REMOVE_DUPLICATES _brlcad_excluded_files)
+  set(BEXT_INSTALL_EXCLUDED_FILES "${_brlcad_excluded_files}" PARENT_SCOPE)
+  set(${valid_var} TRUE PARENT_SCOPE)
+  set(${reason_var} "" PARENT_SCOPE)
+endfunction(brlcad_load_bext_install_exclude_manifest)
+
+function(brlcad_load_bext_component_manifest manifest install_root valid_var reason_var)
+  set(${valid_var} FALSE PARENT_SCOPE)
+  set(${reason_var} "unknown manifest error" PARENT_SCOPE)
+
+  file(READ "${manifest}" _brlcad_manifest_json)
+  string(JSON _brlcad_schema ERROR_VARIABLE _brlcad_schema_error GET "${_brlcad_manifest_json}" schema)
+  if(NOT "${_brlcad_schema_error}" STREQUAL "NOTFOUND" OR NOT "${_brlcad_schema}" STREQUAL "1")
+    set(${reason_var} "unsupported or invalid schema" PARENT_SCOPE)
+    return()
+  endif()
+
+  string(JSON _brlcad_platform ERROR_VARIABLE _brlcad_platform_error GET "${_brlcad_manifest_json}" platform)
+  if(NOT "${_brlcad_platform_error}" STREQUAL "NOTFOUND" OR
+     NOT "${_brlcad_platform}" STREQUAL "${CMAKE_SYSTEM_NAME}")
+    set(${reason_var} "platform does not match the BRL-CAD build" PARENT_SCOPE)
+    return()
+  endif()
+
+  string(JSON _brlcad_files_type ERROR_VARIABLE _brlcad_files_error TYPE "${_brlcad_manifest_json}" files)
+  if(NOT "${_brlcad_files_error}" STREQUAL "NOTFOUND" OR NOT _brlcad_files_type STREQUAL "ARRAY")
+    set(${reason_var} "manifest is missing the files category" PARENT_SCOPE)
+    return()
+  endif()
+
+  set(_brlcad_component_records)
+  set(_brlcad_component_paths)
+  file(STRINGS "${manifest}" _brlcad_component_lines REGEX "\"path\"")
+  foreach(_brlcad_line ${_brlcad_component_lines})
+      if(NOT _brlcad_line MATCHES "^[ \t]*\\{\"path\": \"([^\"]+)\", \"component\": \"([A-Za-z0-9_.+-]+)\"\\},?[ \t]*$")
+        set(${reason_var} "malformed component ownership entry" PARENT_SCOPE)
+        return()
+      endif()
+      set(_brlcad_relative "${CMAKE_MATCH_1}")
+      set(_brlcad_component "${CMAKE_MATCH_2}")
+      if(IS_ABSOLUTE "${_brlcad_relative}" OR
+         "${_brlcad_relative}" MATCHES "(^|/)\\.\\.(/|$)" OR
+         NOT EXISTS "${install_root}/${_brlcad_relative}")
+        set(${reason_var} "invalid component ownership entry: ${_brlcad_relative}" PARENT_SCOPE)
+        return()
+      endif()
+      if("${_brlcad_relative}" IN_LIST _brlcad_component_paths)
+        set(${reason_var} "duplicate component ownership path: ${_brlcad_relative}" PARENT_SCOPE)
+        return()
+      endif()
+      list(APPEND _brlcad_component_paths "${_brlcad_relative}")
+      list(APPEND _brlcad_component_records "${_brlcad_relative}|${_brlcad_component}")
+  endforeach()
+  set(BEXT_COMPONENT_RECORDS "${_brlcad_component_records}" PARENT_SCOPE)
+  set(${valid_var} TRUE PARENT_SCOPE)
+  set(${reason_var} "" PARENT_SCOPE)
+endfunction(brlcad_load_bext_component_manifest)
+
 #####################################################################
 # Processing for BRLCAD_EXT_INSTALL_DIR contents. We need to
 # keep the build directory copies of ${BRLCAD_EXT_DIR}/install files
@@ -1004,6 +1102,45 @@ function(brlcad_bext_process)
   endif()
   if(EXISTS "${BEXT_MANIFEST_PATH}")
     set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS "${BEXT_MANIFEST_PATH}")
+  endif()
+  set(BEXT_INSTALL_EXCLUDE_MANIFEST_PATH "${BRLCAD_EXT_DIR}/bext-install-exclude-manifest.json")
+  set(BEXT_INSTALL_EXCLUDED_FILES)
+  if(EXISTS "${BEXT_INSTALL_EXCLUDE_MANIFEST_PATH}")
+    brlcad_load_bext_install_exclude_manifest(
+      "${BEXT_INSTALL_EXCLUDE_MANIFEST_PATH}"
+      "${BRLCAD_EXT_INSTALL_DIR}"
+      BEXT_INSTALL_EXCLUDE_MANIFEST_VALID
+      BEXT_INSTALL_EXCLUDE_MANIFEST_ERROR
+    )
+    if(NOT BEXT_INSTALL_EXCLUDE_MANIFEST_VALID)
+      message(FATAL_ERROR "Invalid bext install exclusion manifest: ${BEXT_INSTALL_EXCLUDE_MANIFEST_ERROR}")
+    endif()
+    message("Using bext install exclusion manifest: ${BEXT_INSTALL_EXCLUDE_MANIFEST_PATH}")
+    set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS "${BEXT_INSTALL_EXCLUDE_MANIFEST_PATH}")
+  endif()
+  set(BEXT_COMPONENT_MANIFEST_PATH "${BRLCAD_EXT_DIR}/bext-component-manifest.json")
+  if(EXISTS "${BEXT_COMPONENT_MANIFEST_PATH}")
+    brlcad_load_bext_component_manifest(
+      "${BEXT_COMPONENT_MANIFEST_PATH}"
+      "${BRLCAD_EXT_INSTALL_DIR}"
+      BEXT_COMPONENT_MANIFEST_VALID
+      BEXT_COMPONENT_MANIFEST_ERROR
+    )
+    if(NOT BEXT_COMPONENT_MANIFEST_VALID)
+      message(FATAL_ERROR "Invalid bext component manifest: ${BEXT_COMPONENT_MANIFEST_ERROR}")
+    endif()
+    message("Using bext component manifest: ${BEXT_COMPONENT_MANIFEST_PATH}")
+    set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS "${BEXT_COMPONENT_MANIFEST_PATH}")
+    set_property(GLOBAL PROPERTY BRLCAD_BEXT_COMPONENT_MANIFEST "${BEXT_COMPONENT_MANIFEST_PATH}")
+  else()
+    message("Bext component manifest unavailable; installed SBOM will omit bext package records")
+  endif()
+  set(BEXT_SBOM_PATH "${BRLCAD_EXT_DIR}/bext.spdx.json")
+  if(EXISTS "${BEXT_SBOM_PATH}")
+    set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS "${BEXT_SBOM_PATH}")
+    set_property(GLOBAL PROPERTY BRLCAD_BEXT_SBOM "${BEXT_SBOM_PATH}")
+  elseif(EXISTS "${BEXT_COMPONENT_MANIFEST_PATH}")
+    message(WARNING "Bext component ownership is available but bext.spdx.json is absent; installed SBOM will omit bext package records")
   endif()
   set(BEXT_CONTENT_STAMP_PATH "${BRLCAD_EXT_DIR}/bext-content-stamp")
   if(EXISTS "${BEXT_CONTENT_STAMP_PATH}")
@@ -1864,8 +2001,10 @@ endfunction()
   # directory. Now we set up the install rules.  It is for these
   # stages that we need complete knowledge of the third party files,
   # since configure re-defines all of these rules on every pass.
+  set(TP_INSTALL_FILES ${TP_FILES})
+  list(REMOVE_ITEM TP_INSTALL_FILES ${BEXT_INSTALL_EXCLUDED_FILES})
   set(_brlcad_ext_text_install_rules 0)
-  foreach(tf ${TP_FILES})
+  foreach(tf ${TP_INSTALL_FILES})
     # Rather than doing the PROGRAMS install for all binary files, we
     # target just those in the bin directory - those are the ones we
     # would expect to want CMake's *_EXECUTE permissions during
@@ -1914,7 +2053,7 @@ endfunction()
     else()
       install(FILES "${CMAKE_BINARY_DIR}/${tf}" DESTINATION "${dir}")
     endif()
-  endforeach(tf ${TP_FILES})
+  endforeach(tf ${TP_INSTALL_FILES})
   if(_brlcad_ext_text_install_rules)
     message("Adding install rules for ${_brlcad_ext_text_install_rules} third party text files.")
   endif()

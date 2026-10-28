@@ -190,6 +190,9 @@ distclean("${CMAKE_BINARY_DIR}/BRLCAD_CPackOptions.cmake")
 set(CPACK_PROJECT_CONFIG_FILE "${CMAKE_BINARY_DIR}/BRLCAD_CPackOptions.cmake")
 
 include(CPack)
+if(TARGET package AND TARGET brlcad-sbom)
+  add_dependencies(package brlcad-sbom)
+endif()
 
 distclean("${CMAKE_BINARY_DIR}/CPackConfig.cmake")
 distclean("${CMAKE_BINARY_DIR}/CPackSourceConfig.cmake")

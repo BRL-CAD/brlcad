@@ -7,6 +7,11 @@ endfunction(SetTargetFolder)
 # The following are build or utility tools written by BRL-CAD developers
 # specifically for use with our build and maintenance processes
 
+add_executable(brlcad-sbom brlcad-sbom.cpp)
+target_include_directories(brlcad-sbom PRIVATE "${CMAKE_SOURCE_DIR}/src/libbu")
+target_compile_features(brlcad-sbom PRIVATE cxx_std_17)
+settargetfolder(brlcad-sbom "Compilation Utilities")
+
 # asciiquack - AsciiDoc processor used to build BRL-CAD documentation
 add_subdirectory(asciiquack)
 
@@ -24,6 +29,7 @@ endif(BUILD_TESTING)
 cmakefiles(
   CMakeLists.txt
   README
+  brlcad-sbom.cpp
   asciiquack/CMakeLists.txt
   asciiquack/LICENSE
   asciiquack/README.md
