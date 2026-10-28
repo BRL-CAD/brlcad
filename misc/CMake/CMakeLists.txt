@@ -11,6 +11,7 @@ set(
   BRLCAD_EXT_Setup.cmake
   BRLCAD_ExternalDeps.cmake
   BRLCAD_Find_Package.cmake
+  BRLCAD_GenerateInstallSbom.cmake.in
   BRLCAD_Install_Prefix.cmake
   BRLCAD_Path_Privacy.cmake
   InstallPathPrivacy.cmake.in

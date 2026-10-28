@@ -1,0 +1,19 @@
+set(_brlcad_sbom_arguments
+  --install-root "$ENV{DESTDIR}${CMAKE_INSTALL_PREFIX}"
+  --output "$ENV{DESTDIR}${CMAKE_INSTALL_PREFIX}/@DOC_DIR@/brlcad.spdx.json"
+  --version "@BRLCAD_VERSION@"
+  --revision "@BRLCAD_SBOM_REVISION@"
+)
+if(EXISTS [==[@BRLCAD_BEXT_COMPONENT_MANIFEST@]==] AND EXISTS [==[@BRLCAD_BEXT_SBOM@]==])
+  list(APPEND _brlcad_sbom_arguments
+    --component-manifest [==[@BRLCAD_BEXT_COMPONENT_MANIFEST@]==]
+    --dependency-sbom [==[@BRLCAD_BEXT_SBOM@]==]
+  )
+endif()
+execute_process(
+  COMMAND [==[@BRLCAD_SBOM_EXECUTABLE@]==] ${_brlcad_sbom_arguments}
+  RESULT_VARIABLE _brlcad_sbom_result
+)
+if(NOT _brlcad_sbom_result EQUAL 0)
+  message(FATAL_ERROR "Unable to generate the installed BRL-CAD SBOM")
+endif()
