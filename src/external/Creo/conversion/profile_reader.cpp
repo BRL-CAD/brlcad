@@ -14,9 +14,9 @@ extern "C" {
 #include "wdb.h"
 }
 
+#include "conversion/profile_reader.h"
 #include "shared/frontend_api.h"
 #include "shared/conversion_options.h"
-#include "shared/core_api.h"
 
 
 static const size_t PROFILE_MESSAGE_MAX = 4096;
@@ -218,13 +218,13 @@ apply_profile_attributes(const struct bu_attribute_value_set *attributes,
     if ((value = bu_avs_get(attributes, ATTRIBUTE_PRESERVE_PARAMETERS)))
         options->preserve_parameters = value;
     value = bu_avs_get(attributes, ATTRIBUTE_TRANSFORM);
-    (void)parse_xform_mode(value, &options->view.xform_mode);
+    (void)creo_brl_parse_xform_mode_token(value, &options->view.xform_mode);
     if ((value = bu_avs_get(attributes, ATTRIBUTE_REGION_COUNTER)))
         options->region_counter = value;
     if ((value = bu_avs_get(attributes, ATTRIBUTE_MINIMUM_LUMINANCE)))
         options->minimum_luminance = value;
     value = bu_avs_get(attributes, ATTRIBUTE_CHORD_MODE);
-    (void)parse_chord_mode(value, &options->view.chord_mode);
+    (void)creo_brl_parse_chord_mode_token(value, &options->view.chord_mode);
     if ((value = bu_avs_get(attributes, ATTRIBUTE_MAXIMUM_CHORD)))
         options->maximum_chord = value;
     if ((value = bu_avs_get(attributes, ATTRIBUTE_MINIMUM_ANGLE)))
@@ -286,8 +286,8 @@ cleanup:
 }
 
 
-extern "C" CREO_BRL_CORE_EXPORT void CREO_BRL_CORE_CALL
-creo_brl_core_set_frontend_api(const struct creo_brl_frontend_api *api)
+void
+creo_brl_set_profile_frontend_api(const struct creo_brl_frontend_api *api)
 {
     if (api)
         frontend_api = *api;
@@ -296,8 +296,8 @@ creo_brl_core_set_frontend_api(const struct creo_brl_frontend_api *api)
 }
 
 
-extern "C" CREO_BRL_CORE_EXPORT void CREO_BRL_CORE_CALL
-creo_brl_core_load_profile(const char *profile_path, const char *material_directory)
+void
+creo_brl_load_profile_options(const char *profile_path, const char *material_directory)
 {
     struct profile_options options = {};
 

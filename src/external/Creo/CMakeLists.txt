@@ -581,6 +581,7 @@ else(NOT DEFINED BRLCAD_BUILDTEST_EXTERNALS)
     creo-brl.dat.in
     conversion/mesh_convert.h
     conversion/name_allocator.h
+    conversion/profile_reader.h
     conversion/scene_convert.h
     frontend/csg_capture.h
     frontend/creo_toolkit.h

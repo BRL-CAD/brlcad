@@ -22,6 +22,7 @@
 #include <math.h>
 #include <stddef.h>
 #include <stdint.h>
+#include <stdio.h>
 
 #include "shared/conversion_options.h"
 
@@ -259,6 +260,10 @@ struct snapshot_scene_capture {
     uint32_t root_index;
     int64_t next_region_id;
 };
+
+FILE *creo_brl_open_utf8_file(const char *path,
+                              const wchar_t *wide_mode,
+                              const char *mode);
 
 int creo_brl_snapshot_encode(const struct snapshot_scene_capture& scene,
                              std::vector<unsigned char> *buffer);

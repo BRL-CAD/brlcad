@@ -9,24 +9,12 @@
 #include <stdio.h>
 
 #include <string>
-#include <vector>
-#include <vmath.h>
 
-#include "common.h"
-#include "conversion/name_allocator.h"
 #include "shared/conversion_snapshot.h"
 
 
 struct db_i;
 struct rt_wdb;
-struct bu_attribute_value_set;
-
-extern const char CREO_BRL_CORE_IMPORTER_ATTRIBUTE[];
-extern const char CREO_BRL_CORE_IMPORTER_VALUE[];
-extern const char CREO_BRL_CORE_MODEL_NAME_ATTRIBUTE[];
-extern const char CREO_BRL_CORE_MODEL_VERSION_ATTRIBUTE[];
-extern const char CREO_BRL_CORE_MATERIAL_ATTRIBUTE[];
-extern const char CREO_BRL_CORE_FALLBACK_ATTRIBUTE[];
 
 
 struct snapshot_part_output {
@@ -41,26 +29,19 @@ struct snapshot_material_translation {
 };
 
 
-void creo_brl_add_snapshot_named_values(
-    struct bu_attribute_value_set *attributes,
-    const std::vector<struct snapshot_named_value>& values);
-void creo_brl_add_snapshot_mass_properties(
-    struct bu_attribute_value_set *attributes,
-    int available,
-    double density,
-    double mass,
-    double volume,
-    double surface_area);
+int creo_brl_write_snapshot_assembly_attributes(
+    struct db_i *database,
+    const char *assembly_name,
+    const struct snapshot_assembly_capture& assembly_capture);
 
-
-int creo_brl_convert_snapshot_part(const struct snapshot_part_capture& part_capture,
-                                   const struct snapshot_scene_capture& scene,
-                                   const struct snapshot_material_translation *material_translation,
-                                   const std::vector<std::string>& subtraction_names,
-                                   FILE *log_file,
-                                   struct db_i *database,
-                                   struct rt_wdb *writer,
-                                   struct snapshot_part_output *output);
+int creo_brl_convert_snapshot_part(
+    const struct snapshot_part_capture& part_capture,
+    const struct snapshot_scene_capture& scene,
+    const struct snapshot_material_translation *material_translation,
+    FILE *log_file,
+    struct db_i *database,
+    struct rt_wdb *writer,
+    struct snapshot_part_output *output);
 
 
 #endif /* CREO_CONVERSION_MESH_CONVERT_H */

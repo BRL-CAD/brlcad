@@ -168,8 +168,8 @@ static_assert(sizeof(struct snapshot_disk_scene) == CREO_BRL_SNAPSHOT_SCENE_SIZE
               "Snapshot scene layout changed");
 
 
-static FILE *
-snapshot_open_file(const char *snapshot_path, const wchar_t *wide_mode, const char *mode)
+FILE *
+creo_brl_open_utf8_file(const char *snapshot_path, const wchar_t *wide_mode, const char *mode)
 {
     if (!snapshot_path || !snapshot_path[0] || !mode)
         return NULL;
@@ -547,7 +547,7 @@ creo_brl_snapshot_write(const char *snapshot_path,
     if (encode_result != CREO_BRL_SNAPSHOT_IO_SUCCESS)
         return encode_result;
 
-    snapshot_file = snapshot_open_file(snapshot_path, L"wb", "wb");
+    snapshot_file = creo_brl_open_utf8_file(snapshot_path, L"wb", "wb");
     if (!snapshot_file)
         return CREO_BRL_SNAPSHOT_IO_WRITE_FAILED;
 
@@ -1089,7 +1089,7 @@ creo_brl_snapshot_read(const char *snapshot_path,
     if (!snapshot_path || !snapshot_path[0] || !scene_out)
         return CREO_BRL_SNAPSHOT_IO_INVALID_REQUEST;
 
-    snapshot_file = snapshot_open_file(snapshot_path, L"rb", "rb");
+    snapshot_file = creo_brl_open_utf8_file(snapshot_path, L"rb", "rb");
     if (!snapshot_file)
         return CREO_BRL_SNAPSHOT_IO_OPEN_FAILED;
 

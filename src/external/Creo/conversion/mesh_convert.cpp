@@ -36,12 +36,12 @@
 
 static const char CREO_BRL_CORE_SOLID_SUFFIX[] = ".s";
 static const char CREO_BRL_CORE_RPP_SUFFIX[] = ".rpp";
-const char CREO_BRL_CORE_IMPORTER_ATTRIBUTE[] = "importer";
-const char CREO_BRL_CORE_IMPORTER_VALUE[] = "creo-g";
-const char CREO_BRL_CORE_MODEL_NAME_ATTRIBUTE[] = "ptc_name";
-const char CREO_BRL_CORE_MODEL_VERSION_ATTRIBUTE[] = "ptc_version_stamp";
-const char CREO_BRL_CORE_MATERIAL_ATTRIBUTE[] = "ptc_material_name";
-const char CREO_BRL_CORE_FALLBACK_ATTRIBUTE[] = "tess_fail";
+static const char CREO_BRL_CORE_IMPORTER_ATTRIBUTE[] = "importer";
+static const char CREO_BRL_CORE_IMPORTER_VALUE[] = "creo-g";
+static const char CREO_BRL_CORE_MODEL_NAME_ATTRIBUTE[] = "ptc_name";
+static const char CREO_BRL_CORE_MODEL_VERSION_ATTRIBUTE[] = "ptc_version_stamp";
+static const char CREO_BRL_CORE_MATERIAL_ATTRIBUTE[] = "ptc_material_name";
+static const char CREO_BRL_CORE_FALLBACK_ATTRIBUTE[] = "tess_fail";
 static const char CREO_BRL_CORE_UNDEFINED_MATERIAL[] = "undefined";
 static const char CREO_BRL_CORE_DENSITY_ATTRIBUTE[] = "density";
 static const char CREO_BRL_CORE_MASS_ATTRIBUTE[] = "mass";
@@ -106,8 +106,8 @@ format_double(double value)
 }
 
 
-void
-creo_brl_add_snapshot_named_values(
+static void
+add_snapshot_named_values(
     struct bu_attribute_value_set *attributes,
     const std::vector<struct snapshot_named_value>& values)
 {
@@ -119,13 +119,13 @@ creo_brl_add_snapshot_named_values(
 }
 
 
-void
-creo_brl_add_snapshot_mass_properties(struct bu_attribute_value_set *attributes,
-                                      int available,
-                                      double density,
-                                      double mass,
-                                      double volume,
-                                      double surface_area)
+static void
+add_snapshot_mass_properties(struct bu_attribute_value_set *attributes,
+                             int available,
+                             double density,
+                             double mass,
+                             double volume,
+                             double surface_area)
 {
     if (!attributes || !available)
         return;
@@ -270,21 +270,21 @@ snapshot_write_attributes(struct db_i *database,
         bu_avs_add(&attributes, CREO_BRL_CORE_MODEL_VERSION_ATTRIBUTE, model_version.c_str());
     bu_avs_add(&attributes, CREO_BRL_CORE_MATERIAL_ATTRIBUTE,
                material_name.empty() ? CREO_BRL_CORE_UNDEFINED_MATERIAL : material_name.c_str());
-    creo_brl_add_snapshot_named_values(&attributes, part_capture.attributes);
-    creo_brl_add_snapshot_named_values(&attributes, part_capture.parameters);
+    add_snapshot_named_values(&attributes, part_capture.attributes);
+    add_snapshot_named_values(&attributes, part_capture.parameters);
     if (material_translation && material_translation->material_id >= 0) {
         bu_avs_add(&attributes, CREO_BRL_CORE_MATERIAL_ID_ATTRIBUTE,
-                   std::to_string(material_translation->material_id).c_str());
+                    std::to_string(material_translation->material_id).c_str());
         bu_avs_add(&attributes, CREO_BRL_CORE_LOS_ATTRIBUTE,
-                   std::to_string(material_translation->los).c_str());
+                    std::to_string(material_translation->los).c_str());
     }
     if (!original_color.empty())
         bu_avs_add(&attributes, CREO_BRL_CORE_ORIGINAL_COLOR_ATTRIBUTE,
                    original_color.c_str());
     if ((part.flags & CREO_BRL_SNAPSHOT_PART_HAS_MASS_PROPERTIES) != 0) {
-        creo_brl_add_snapshot_mass_properties(&attributes, 1, part.density,
-                                              part.mass, part.volume,
-                                              part.surface_area);
+        add_snapshot_mass_properties(&attributes, 1, part.density,
+                                     part.mass, part.volume,
+                                     part.surface_area);
     } else if (std::isfinite(part.density) && part.density > 0.0) {
         bu_avs_add(&attributes, CREO_BRL_CORE_DENSITY_ATTRIBUTE, format_double(part.density).c_str());
     }
@@ -293,6 +293,86 @@ snapshot_write_attributes(struct db_i *database,
 cleanup:
     bu_avs_free(&attributes);
     return result;
+}
+
+
+int
+creo_brl_write_snapshot_assembly_attributes(
+    struct db_i *database,
+    const char *assembly_name,
+    const struct snapshot_assembly_capture& assembly_capture)
+{
+    const struct creo_brl_snapshot_assembly& assembly_record = assembly_capture.assembly;
+    struct bu_attribute_value_set attributes = BU_AVS_INIT_ZERO;
+    struct directory *assembly = db_lookup(database, assembly_name, LOOKUP_QUIET);
+    int result = 0;
+
+    if (assembly == RT_DIR_NULL ||
+        db5_get_attributes(database, &attributes, assembly) != 0)
+        goto cleanup;
+
+    bu_avs_add(&attributes, CREO_BRL_CORE_IMPORTER_ATTRIBUTE, CREO_BRL_CORE_IMPORTER_VALUE);
+    bu_avs_add(&attributes, CREO_BRL_CORE_MODEL_NAME_ATTRIBUTE, assembly_capture.model_name.c_str());
+    if (!assembly_capture.model_version.empty()) {
+        bu_avs_add(&attributes, CREO_BRL_CORE_MODEL_VERSION_ATTRIBUTE,
+                   assembly_capture.model_version.c_str());
+    }
+    add_snapshot_named_values(&attributes, assembly_capture.parameters);
+    add_snapshot_mass_properties(
+        &attributes,
+        (assembly_record.flags & CREO_BRL_SNAPSHOT_ASSEMBLY_HAS_MASS_PROPERTIES) != 0,
+        assembly_record.density, assembly_record.mass,
+        assembly_record.volume, assembly_record.surface_area);
+    result = db5_update_attributes(assembly, &attributes, database) == 0;
+
+cleanup:
+    bu_avs_free(&attributes);
+    return result;
+}
+
+
+static int
+snapshot_write_tgc_subtractions(const struct snapshot_part_capture& part_capture,
+                                struct db_i *database,
+                                struct rt_wdb *writer,
+                                std::vector<std::string> *subtraction_names)
+{
+    const std::vector<struct creo_brl_snapshot_tgc_subtraction>& subtractions =
+        part_capture.tgc_subtractions;
+    const std::string hole_name_root =
+        creo_brl_snapshot_name_root(part_capture.strings.model_name) + "_hole";
+
+    if (!database || !writer || !subtraction_names)
+        return CREO_BRL_CORE_CONVERT_INVALID_REQUEST;
+
+    subtraction_names->clear();
+    if (subtractions.empty())
+        return CREO_BRL_CORE_CONVERT_SUCCESS;
+
+    subtraction_names->reserve(subtractions.size());
+    for (size_t index = 0; index < subtractions.size(); ++index) {
+        const struct creo_brl_snapshot_tgc_subtraction& subtraction = subtractions[index];
+        std::string solid_name;
+        std::string unused_region_name;
+        std::string hole_name = hole_name_root;
+
+        if (subtractions.size() > 1)
+            hole_name += "_" + std::to_string(index + 1u);
+        if (!creo_brl_snapshot_object_names(database, hole_name, CREO_BRL_CORE_SOLID_SUFFIX,
+                                            &solid_name, &unused_region_name) ||
+            mk_tgc(writer, solid_name.c_str(),
+                   subtraction.base.coordinates,
+                   subtraction.height.coordinates,
+                   subtraction.a.coordinates,
+                   subtraction.b.coordinates,
+                   subtraction.c.coordinates,
+                   subtraction.d.coordinates) != 0)
+            return CREO_BRL_CORE_CONVERT_OUTPUT_FAILED;
+
+        subtraction_names->push_back(solid_name);
+    }
+
+    return CREO_BRL_CORE_CONVERT_SUCCESS;
 }
 
 
@@ -595,7 +675,6 @@ int
 creo_brl_convert_snapshot_part(const struct snapshot_part_capture& part_capture,
                                const struct snapshot_scene_capture& scene,
                                const struct snapshot_material_translation *material_translation,
-                               const std::vector<std::string>& subtraction_names,
                                FILE *log_file,
                                struct db_i *database,
                                struct rt_wdb *writer,
@@ -609,11 +688,20 @@ creo_brl_convert_snapshot_part(const struct snapshot_part_capture& part_capture,
     const int require_solidity = (settings.flags & CREO_BRL_SNAPSHOT_SETTING_CHECK_SOLIDITY) != 0;
     const int allow_box_fallback = (settings.flags & CREO_BRL_SNAPSHOT_SETTING_CREATE_BOXES) != 0;
     const int write_normals = (settings.flags & CREO_BRL_SNAPSHOT_SETTING_WRITE_NORMALS) != 0;
+    std::vector<std::string> subtraction_names;
     struct normalized_mesh mesh = {};
     int result = CREO_BRL_CORE_CONVERT_OUTPUT_FAILED;
 
     if (!database || !writer || !output)
         return CREO_BRL_CORE_CONVERT_INVALID_REQUEST;
+
+    if (!part_capture.tgc_subtractions.empty()) {
+        const int csg_result = snapshot_write_tgc_subtractions(
+            part_capture, database, writer, &subtraction_names);
+
+        if (csg_result != CREO_BRL_CORE_CONVERT_SUCCESS)
+            return csg_result;
+    }
 
     if (!has_mesh || has_bbox_fallback) {
         if (!has_bbox_fallback) {
