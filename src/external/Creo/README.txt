@@ -23,7 +23,26 @@ Notes:
    Applications.
 
 3. Before distributing a built plugin bundle, run the CMake UNLOCK target
-   (which invokes Creo's protk_unlock.bat utility on the plugin binary).
-   For iterative local development without unlocking after every build,
-   configure CREOPMA_FEATURE_NAME in parametric.psf so Creo acquires a
-   Pro/Toolkit license at startup.
+   (which invokes Creo's protk_unlock.bat utility on creo-brl.dll).
+
+   !! Avoid running UNLOCK multiple times during active development: each
+   CLI invocation checks out a Pro/Toolkit seat and immediately exits, which
+   typically triggers a 15-minute FlexLM linger freeze on shared license
+   servers. For iterative local development without repeating UNLOCK or
+   restarting Creo:
+
+   - Core-only changes:
+     Creo only checks the Pro/Toolkit unlock signature on creo-brl.dll,
+     which loads creo-brl-core.dll dynamically via LoadLibraryExW and
+     unloads it on stop.  Once creo-brl.dll is unlocked, changes to
+     core.cpp or conversion/* only require rebuilding the creo-brl-core
+        > cmake --build <build> --target creo-brl-core
+
+   - On-demand license toggling for frontend/* or loader.c changes:
+     When rebuilding creo-brl.dll without unlocking, check out the
+     Pro/Toolkit license inside your running Creo session via
+     File -> Options -> Licensing
+     Creo will load unlocked creo-brl.dll without stacking locks of the
+     license with the caveat of a license being held the entire time the 
+     option is enabled. Uncheck the license in File -> Options -> Licensing
+     when done to return it to the shared pool.
