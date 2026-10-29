@@ -15,6 +15,9 @@
  * either coincidental or necessary for compilation.
  */
 
+#ifndef CREO_SHIM_H
+#define CREO_SHIM_H
+
 #include "common.h"
 
 #include <stdio.h> /* for size_t */
@@ -230,6 +233,8 @@ extern "C" void** PRO_CURVE_DATA(void*);
 
 extern "C" void creo_brl_shim_set_length_unit(const wchar_t*,double);
 extern "C" void creo_brl_shim_set_model_name(const wchar_t*);
+
+#endif /* CREO_SHIM_H */
 
 // Local Variables:
 // tab-width: 8

@@ -35,11 +35,6 @@
 #include "frontend/profile_ui.h"
 #include "shared/core_api.h"
 
-extern "C" void creo_brl_show_status(const char *message);
-extern "C" void creo_brl_show_popup(const char *title, const char *message);
-extern "C" void creo_brl_core_load_profile_shim(void);
-extern "C" int creo_brl_core_convert_shim(const char *snapshot_path);
-
 static const wchar_t FRONTEND_SNAPSHOT_PREFIX[] = L"cbr";
 static const size_t FRONTEND_SNAPSHOT_UTF8_PATH_SIZE = MAX_PATH * 4;
 static const char FRONTEND_STATUS_COMPONENT[] = "conv_status";
@@ -235,8 +230,8 @@ frontend_capture_snapshot(const char *snapshot_path)
 }
 
 
-void
-creo_brl_frontend_dialog_apply_options(const struct creo_brl_conversion_options *options)
+extern "C" void __cdecl
+creo_brl_frontend_apply_options(const struct creo_brl_conversion_options *options)
 {
     if (!creo_brl_frontend_apply_options_to_controls(options, &frontend_controls))
         frontend_error("Creo-BRL Profile Warning",
@@ -318,7 +313,15 @@ frontend_core_failure_message(int result)
 static void
 activate_small_feats(char *dialog_name, char *button_name, ProAppData UNUSED(data))
 {
-    ProBoolean state;
+    static const struct {
+        const char *control;
+        const char *label;
+    } small_feature_fields[] = {
+        {"min_hole", "Hole diameter"},
+        {"min_chamfer", "Chamfer dimension"},
+        {"min_round", "Blend radius"}
+    };
+    ProBoolean state = PRO_B_FALSE;
 
     if (ProUICheckbuttonGetState(dialog_name, button_name, &state) != PRO_TK_NO_ERROR) {
         frontend_error("Creo-BRL UI Error",
@@ -326,36 +329,19 @@ activate_small_feats(char *dialog_name, char *button_name, ProAppData UNUSED(dat
         return;
     }
 
-    if (state) {
-        if (ProUIInputpanelEditable(dialog_name, "min_hole") != PRO_TK_NO_ERROR) {
-            frontend_error("Creo-BRL UI Error",
-                           "FAILURE: Unable to activate: \"Hole diameter\"");
-            return;
-        }
-        if (ProUIInputpanelEditable(dialog_name, "min_chamfer") != PRO_TK_NO_ERROR) {
-            frontend_error("Creo-BRL UI Error",
-                           "FAILURE: Unable to activate: \"Chamfer dimension\"");
-            return;
-        }
-        if (ProUIInputpanelEditable(dialog_name, "min_round") != PRO_TK_NO_ERROR) {
-            frontend_error("Creo-BRL UI Error",
-                           "FAILURE: Unable to activate: \"Blend radius\"");
-            return;
-        }
-    } else {
-        if (ProUIInputpanelReadOnly(dialog_name, "min_hole") != PRO_TK_NO_ERROR) {
-            frontend_error("Creo-BRL UI Error",
-                           "FAILURE: Unable to de-activate: \"Hole diameter\"");
-            return;
-        }
-        if (ProUIInputpanelReadOnly(dialog_name, "min_chamfer") != PRO_TK_NO_ERROR) {
-            frontend_error("Creo-BRL UI Error",
-                           "FAILURE: Unable to de-activate: \"Chamfer dimension\"");
-            return;
-        }
-        if (ProUIInputpanelReadOnly(dialog_name, "min_round") != PRO_TK_NO_ERROR) {
-            frontend_error("Creo-BRL UI Error",
-                           "FAILURE: Unable to de-activate: \"Blend radius\"");
+    const int editable = state != PRO_B_FALSE;
+    for (size_t index = 0;
+         index < sizeof(small_feature_fields) / sizeof(small_feature_fields[0]); ++index) {
+        const ProError err = editable ?
+            ProUIInputpanelEditable(dialog_name, (char *)small_feature_fields[index].control) :
+            ProUIInputpanelReadOnly(dialog_name, (char *)small_feature_fields[index].control);
+
+        if (err != PRO_TK_NO_ERROR) {
+            char message[CREO_MSG_MAX] = {'\0'};
+            sprintf_s(message, sizeof(message), "FAILURE: Unable to %s: \"%s\"",
+                      editable ? "activate" : "de-activate",
+                      small_feature_fields[index].label);
+            frontend_error("Creo-BRL UI Error", message);
             return;
         }
     }
@@ -419,9 +405,9 @@ frontend_convert(char *dialog, char *component, ProAppData appdata)
 
 
 /* Driver routine for converting Creo to BRL-CAD */
-int
-creo_brl_frontend_dialog_command(uiCmdCmdId UNUSED(command), uiCmdValue *UNUSED(p_value),
-                                 void *UNUSED(p_push_cmd_data))
+extern "C" int
+creo_brl_frontend_command(uiCmdCmdId UNUSED(command), uiCmdValue *UNUSED(p_value),
+                          void *UNUSED(p_push_cmd_data))
 {
     char status[CREO_MSG_MAX] = {'\0'};
     int destroy_dialog = 0;
@@ -468,15 +454,11 @@ creo_brl_frontend_dialog_command(uiCmdCmdId UNUSED(command), uiCmdValue *UNUSED(
             char name[CREO_NAME_MAX] = {'\0'};
             std::string output_path;
             std::string log_path;
-            wchar_t wout[CREO_NAME_MAX];
 
             ProWstringToString(name, wname);
             if (creo_brl_frontend_default_output_paths(name, &output_path, &log_path)) {
-                ProStringToWstring(wout, (char *)output_path.c_str());
-                ProUIInputpanelValueSet(CREO_UI_NAME, "out_fname", wout);
-
-                ProStringToWstring(wout, (char *)log_path.c_str());
-                ProUIInputpanelValueSet(CREO_UI_NAME, "log_fname", wout);
+                (void)frontend_set_text(NULL, "out_fname", output_path.c_str());
+                (void)frontend_set_text(NULL, "log_fname", log_path.c_str());
             }
         }
     }
@@ -491,4 +473,11 @@ print_msg:
         ProUIDialogDestroy(CREO_UI_NAME);
 
     return 0;
+}
+
+
+extern "C" uiCmdAccessState
+creo_brl_frontend_access(uiCmdAccessMode UNUSED(access_mode))
+{
+    return ACCESS_AVAILABLE;
 }

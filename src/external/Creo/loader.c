@@ -35,10 +35,11 @@
 #include <ProUIMessage.h>
 #include <ProUtil.h>
 
-#include "shared/conversion_snapshot.h"
-#include "shared/frontend_api.h"
+#include "frontend/dialog_controller.h"
 #include "frontend/profile_path.h"
+#include "shared/conversion_snapshot.h"
 #include "shared/core_api.h"
+#include "shared/frontend_api.h"
 
 #define FRONTEND_MSG_FILE "creo-brl-msg.txt"
 #define FRONTEND_TITLE_MAX 512
@@ -137,9 +138,6 @@ show_popup_message(const char *title, const char *message)
     ProUIMessageDialogDisplay(PROUIMESSAGE_INFO, wtitle, wmsg, button, PRO_UI_MESSAGE_OK, &bresult);
     (void)ProArrayFree((ProArray *)&button);
 }
-
-extern void __cdecl creo_brl_frontend_apply_options(
-    const struct creo_brl_conversion_options *options);
 
 static const struct creo_brl_frontend_api frontend_api = {
     show_status_message,
@@ -284,9 +282,6 @@ unload_core(void)
     if (module_to_free)
         FreeLibrary(module_to_free);
 }
-
-extern int creo_brl_frontend_command(uiCmdCmdId command, uiCmdValue *p_value, void *p_push_cmd_data);
-extern uiCmdAccessState creo_brl_frontend_access(uiCmdAccessMode access_mode);
 
 void
 creo_brl_show_status(const char *message)

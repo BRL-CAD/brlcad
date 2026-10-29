@@ -7,8 +7,11 @@
 #  define _WSTUDIO_DEFINED
 #endif
 
-#if !defined(TEST_BUILD)
+#ifdef __cplusplus
 extern "C" {
+#endif
+
+#if !defined(TEST_BUILD)
 #  include <pd_proto.h>
 #  include <ProToolkit.h>
 #  include <ProArray.h>
@@ -36,16 +39,15 @@ extern "C" {
 #  include <ProUIPushbutton.h>
 #  include <ProUIRadiogroup.h>
 #  include <ProUtil.h>
-}
 #else
-extern "C" {
 #  include "shim.h"
-}
 #endif
 
-extern "C" {
 #include "vmath.h"
+
+#ifdef __cplusplus
 }
+#endif
 
 #define CREO_UI_NAME "creo_brl"
 #define CREO_NAME_MAX (240 * 2)

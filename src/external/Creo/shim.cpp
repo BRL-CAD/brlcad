@@ -5,6 +5,7 @@
 #include "common.h"
 
 #include "shim.h"
+#include "frontend/dialog_controller.h"
 #include "shared/core_api.h"
 
 
