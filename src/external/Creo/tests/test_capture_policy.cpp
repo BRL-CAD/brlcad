@@ -487,6 +487,24 @@ test_tessellation_data_transaction()
                 "facet limit did not reject oversized output"))
         return 0;
 
+    struct creo_brl_shim_model fallback_model = {};
+    fallback_model.magic = CREO_BRL_SHIM_MODEL_MAGIC;
+    fallback_model.name = L"fallback_part.prt";
+    fallback_model.type = PRO_MDL_PART;
+    fallback_model.length_unit_name = L"mm";
+    fallback_model.length_unit_to_mm = 1.0;
+    fallback_model.has_bbox = 1;
+    fallback_model.bbox[1][0] = 10.0;
+    fallback_model.bbox[1][1] = 20.0;
+    fallback_model.bbox[1][2] = 30.0;
+
+    struct creo_brl_snapshot_settings settings = {};
+    struct snapshot_settings_strings settings_strings;
+    settings.chord_mode = CREO_BRL_SNAPSHOT_CHORD_ABSOLUTE;
+    settings.max_chord = 1.0;
+    settings.min_angle = 0.5;
+    settings.flags = CREO_BRL_SNAPSHOT_SETTING_CREATE_BOXES;
+
     struct snapshot_part_capture part = {};
     part.part.flags = CREO_BRL_SNAPSHOT_PART_HAS_MESH |
                       CREO_BRL_SNAPSHOT_PART_HAS_NORMALS;
@@ -494,8 +512,11 @@ test_tessellation_data_transaction()
     part.triangles.resize(1u);
     part.normals.resize(3u);
     part.normal_indices.resize(3u);
-    creo_brl_mark_bbox_fallback(&part);
-    return expect((part.part.flags & CREO_BRL_SNAPSHOT_PART_HAS_BBOX_FALLBACK) != 0 &&
+    return expect(creo_brl_capture_part_definition(
+                      &fallback_model, &settings, &settings_strings, &part) ==
+                      CREO_BRL_SNAPSHOT_CAPTURE_SUCCESS,
+                  "bounding-box fallback part capture failed") &&
+           expect((part.part.flags & CREO_BRL_SNAPSHOT_PART_HAS_BBOX_FALLBACK) != 0 &&
                       (part.part.flags & (CREO_BRL_SNAPSHOT_PART_HAS_MESH |
                                           CREO_BRL_SNAPSHOT_PART_HAS_NORMALS)) == 0,
                   "bounding-box fallback retained mesh flags") &&
@@ -631,66 +652,158 @@ test_scene_results_and_region_ids()
                 "region ID overflow was not reported"))
         return 0;
 
-    int appended_children = 0;
-    const int child_results[] = {
-        CREO_BRL_SNAPSHOT_CAPTURE_SUCCESS,
-        CREO_BRL_SNAPSHOT_CAPTURE_SKIPPED
-    };
-    for (size_t child = 0; child < 2u; ++child) {
-        const int disposition = creo_brl_capture_child_result(child_results[child]);
+    struct creo_brl_shim_model valid_part = {};
+    valid_part.magic = CREO_BRL_SHIM_MODEL_MAGIC;
+    valid_part.name = L"valid.prt";
+    valid_part.type = PRO_MDL_PART;
+    valid_part.length_unit_name = L"mm";
+    valid_part.length_unit_to_mm = 1.0;
+    valid_part.has_bbox = 1;
+    valid_part.bbox[1][0] = 10.0;
+    valid_part.bbox[1][1] = 10.0;
+    valid_part.bbox[1][2] = 10.0;
 
-        if (disposition == CREO_BRL_CAPTURE_CHILD_APPEND)
-            ++appended_children;
-    }
+    struct creo_brl_shim_model skipped_part = {};
+    skipped_part.magic = CREO_BRL_SHIM_MODEL_MAGIC;
+    skipped_part.name = L"skipped.prt";
+    skipped_part.type = PRO_MDL_PART;
+    skipped_part.length_unit_name = L"mm";
+    skipped_part.length_unit_to_mm = 1.0;
+    skipped_part.has_bbox = 0;
 
-    struct snapshot_assembly_capture parent = {};
-    struct snapshot_assembly_capture empty_child = {};
-    parent.members.resize(1u);
-    scene.assemblies.push_back(parent);
-    scene.assemblies.push_back(empty_child);
+    struct creo_brl_shim_component empty_subassembly_children[1] = {};
+    empty_subassembly_children[0].model = &skipped_part;
+    identity_matrix(empty_subassembly_children[0].matrix);
 
-    return expect(appended_children == 1,
-                  "skipped child hid a valid sibling") &&
-           expect(creo_brl_capture_child_result(CREO_BRL_SNAPSHOT_CAPTURE_MODEL_FAILURE) ==
-                      CREO_BRL_CAPTURE_CHILD_FATAL,
-                  "fatal child capture error was omitted") &&
-           expect(creo_brl_finalize_assembly_capture(&scene, 1u) ==
-                      CREO_BRL_SNAPSHOT_CAPTURE_SKIPPED,
-                  "empty subassembly was not skipped") &&
-           expect(scene.assemblies.size() == 1u &&
-                      scene.assemblies[0].members.size() == 1u,
-                  "empty subassembly removal discarded a valid sibling") &&
-           expect(creo_brl_finalize_assembly_capture(&scene, 0u) ==
-                      CREO_BRL_SNAPSHOT_CAPTURE_SUCCESS,
-                  "nonempty assembly was not retained") &&
-           expect(creo_brl_finalize_assembly_capture(&scene, 1u) ==
+    struct creo_brl_shim_model empty_subassembly = {};
+    empty_subassembly.magic = CREO_BRL_SHIM_MODEL_MAGIC;
+    empty_subassembly.name = L"empty_sub.asm";
+    empty_subassembly.type = PRO_MDL_ASSEMBLY;
+    empty_subassembly.length_unit_name = L"mm";
+    empty_subassembly.length_unit_to_mm = 1.0;
+    empty_subassembly.components = empty_subassembly_children;
+    empty_subassembly.component_count = 1u;
+
+    struct creo_brl_shim_component root_children[3] = {};
+    root_children[0].model = &valid_part;
+    identity_matrix(root_children[0].matrix);
+    root_children[1].model = &skipped_part;
+    identity_matrix(root_children[1].matrix);
+    root_children[2].model = &empty_subassembly;
+    identity_matrix(root_children[2].matrix);
+
+    struct creo_brl_shim_model root_assembly = {};
+    root_assembly.magic = CREO_BRL_SHIM_MODEL_MAGIC;
+    root_assembly.name = L"root.asm";
+    root_assembly.type = PRO_MDL_ASSEMBLY;
+    root_assembly.length_unit_name = L"mm";
+    root_assembly.length_unit_to_mm = 1.0;
+    root_assembly.components = root_children;
+    root_assembly.component_count = 3u;
+
+    struct creo_brl_snapshot_settings settings = {};
+    struct snapshot_settings_strings settings_strings;
+    settings.chord_mode = CREO_BRL_SNAPSHOT_CHORD_ABSOLUTE;
+    settings.max_chord = 1.0;
+    settings.min_angle = 0.5;
+    settings.flags = CREO_BRL_SNAPSHOT_SETTING_CREATE_BOXES;
+
+    scene = {};
+    if (!expect(creo_brl_frontend_capture_model_scene(
+                    &root_assembly, PRO_MDL_ASSEMBLY, &settings, &settings_strings, &scene) ==
+                    CREO_BRL_SNAPSHOT_CAPTURE_SUCCESS,
+                "assembly scene capture with skipped children failed") ||
+        !expect(scene.assemblies.size() == 1u &&
+                    scene.assemblies[0].members.size() == 1u &&
+                    scene.parts.size() == 1u,
+                "skipped child or empty subassembly was not pruned cleanly") ||
+        !expect(creo_brl_frontend_capture_model_scene(
+                    &empty_subassembly, PRO_MDL_ASSEMBLY, &settings, &settings_strings, &scene) ==
+                    CREO_BRL_SNAPSHOT_CAPTURE_EMPTY_MODEL,
+                "completely empty root assembly did not report EMPTY_MODEL"))
+        return 0;
+
+    struct creo_brl_shim_model invalid_part = {};
+    invalid_part.magic = CREO_BRL_SHIM_MODEL_MAGIC;
+    invalid_part.name = NULL;
+    invalid_part.type = PRO_MDL_PART;
+    invalid_part.length_unit_name = L"mm";
+    invalid_part.length_unit_to_mm = 1.0;
+    root_children[1].model = &invalid_part;
+    scene = {};
+    return expect(creo_brl_frontend_capture_model_scene(
+                      &root_assembly, PRO_MDL_ASSEMBLY, &settings, &settings_strings, &scene) ==
                       CREO_BRL_SNAPSHOT_CAPTURE_MODEL_FAILURE,
-                  "invalid assembly finalization was not fatal");
+                  "fatal child capture error was omitted");
 }
 
 
 static int
 test_assembly_metadata_capture()
 {
-    ProMassProperty mass_properties = {};
-    struct snapshot_assembly_capture capture = {};
+    struct creo_brl_shim_model part_child = {};
+    part_child.magic = CREO_BRL_SHIM_MODEL_MAGIC;
+    part_child.name = L"child.prt";
+    part_child.type = PRO_MDL_PART;
+    part_child.length_unit_name = L"mm";
+    part_child.length_unit_to_mm = 1.0;
+    part_child.has_bbox = 1;
+    part_child.bbox[1][0] = 5.0;
+    part_child.bbox[1][1] = 5.0;
+    part_child.bbox[1][2] = 5.0;
 
-    mass_properties.density = 7.5;
-    mass_properties.mass = 125.0;
-    mass_properties.volume = 16.5;
-    mass_properties.surface_area = 48.0;
-    return expect(creo_brl_set_assembly_mass_properties(&mass_properties, &capture),
-                  "assembly mass properties were not captured") &&
-           expect((capture.assembly.flags &
-                       CREO_BRL_SNAPSHOT_ASSEMBLY_HAS_MASS_PROPERTIES) != 0,
-                  "assembly mass-property flag was not captured") &&
-           expect(near_equal(capture.assembly.density, mass_properties.density) &&
-                      near_equal(capture.assembly.mass, mass_properties.mass) &&
-                      near_equal(capture.assembly.volume, mass_properties.volume) &&
-                      near_equal(capture.assembly.surface_area,
-                                 mass_properties.surface_area),
-                  "assembly mass-property values changed during capture") &&
-           expect(!creo_brl_set_assembly_mass_properties(NULL, &capture),
+    struct creo_brl_shim_component children[1] = {};
+    children[0].model = &part_child;
+    identity_matrix(children[0].matrix);
+
+    struct creo_brl_shim_model assembly_model = {};
+    assembly_model.magic = CREO_BRL_SHIM_MODEL_MAGIC;
+    assembly_model.name = L"meta.asm";
+    assembly_model.type = PRO_MDL_ASSEMBLY;
+    assembly_model.length_unit_name = L"mm";
+    assembly_model.length_unit_to_mm = 1.0;
+    assembly_model.has_mass_properties = 1;
+    assembly_model.mass_properties.density = 7.5;
+    assembly_model.mass_properties.mass = 125.0;
+    assembly_model.mass_properties.volume = 16.5;
+    assembly_model.mass_properties.surface_area = 48.0;
+    assembly_model.components = children;
+    assembly_model.component_count = 1u;
+
+    struct creo_brl_snapshot_settings settings = {};
+    struct snapshot_settings_strings settings_strings;
+    settings.chord_mode = CREO_BRL_SNAPSHOT_CHORD_ABSOLUTE;
+    settings.max_chord = 1.0;
+    settings.min_angle = 0.5;
+    settings.flags = CREO_BRL_SNAPSHOT_SETTING_CREATE_BOXES;
+
+    struct snapshot_scene_capture scene = {};
+    if (!expect(creo_brl_frontend_capture_model_scene(
+                    &assembly_model, PRO_MDL_ASSEMBLY, &settings, &settings_strings, &scene) ==
+                    CREO_BRL_SNAPSHOT_CAPTURE_SUCCESS &&
+                scene.assemblies.size() == 1u,
+                "assembly metadata scene capture failed"))
+        return 0;
+
+    const struct snapshot_assembly_capture& capture = scene.assemblies[0];
+    if (!expect((capture.assembly.flags &
+                 CREO_BRL_SNAPSHOT_ASSEMBLY_HAS_MASS_PROPERTIES) != 0,
+                "assembly mass-property flag was not captured") ||
+        !expect(near_equal(capture.assembly.density, assembly_model.mass_properties.density) &&
+                near_equal(capture.assembly.mass, assembly_model.mass_properties.mass) &&
+                near_equal(capture.assembly.volume, assembly_model.mass_properties.volume) &&
+                near_equal(capture.assembly.surface_area,
+                           assembly_model.mass_properties.surface_area),
+                "assembly mass-property values changed during capture"))
+        return 0;
+
+    assembly_model.has_mass_properties = 0;
+    scene = {};
+    return expect(creo_brl_frontend_capture_model_scene(
+                      &assembly_model, PRO_MDL_ASSEMBLY, &settings, &settings_strings, &scene) ==
+                      CREO_BRL_SNAPSHOT_CAPTURE_SUCCESS &&
+                  (scene.assemblies[0].assembly.flags &
+                   CREO_BRL_SNAPSHOT_ASSEMBLY_HAS_MASS_PROPERTIES) == 0,
                   "missing assembly mass properties were accepted");
 }
 

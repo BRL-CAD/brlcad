@@ -65,13 +65,6 @@ enum creo_brl_scene_part_commit_result {
 };
 
 
-enum creo_brl_capture_child_disposition {
-    CREO_BRL_CAPTURE_CHILD_FATAL = -1,
-    CREO_BRL_CAPTURE_CHILD_SKIP = 0,
-    CREO_BRL_CAPTURE_CHILD_APPEND = 1
-};
-
-
 int creo_brl_model_scale_to_mm(ProMdl model, double *scale);
 int creo_brl_component_matrix_to_mm(const ProMatrix creo_matrix,
                                     double parent_to_mm,
@@ -95,16 +88,9 @@ int creo_brl_run_tessellation_policy(
     snapshot_tessellation_attempt_fn capture_attempt,
     void *context,
     struct snapshot_mesh_capture *mesh);
-void creo_brl_mark_bbox_fallback(struct snapshot_part_capture *capture);
-int creo_brl_capture_child_result(int capture_result);
-int creo_brl_finalize_assembly_capture(struct snapshot_scene_capture *scene,
-                                       uint32_t assembly_index);
 int creo_brl_commit_part_capture(struct snapshot_scene_capture *scene,
                                  struct snapshot_part_capture *capture,
                                  uint32_t *index_out);
-int creo_brl_set_assembly_mass_properties(
-    const ProMassProperty *mass_properties,
-    struct snapshot_assembly_capture *capture);
 int creo_brl_capture_part_definition(
     ProMdl model,
     const struct creo_brl_snapshot_settings *settings,
@@ -112,13 +98,12 @@ int creo_brl_capture_part_definition(
     struct snapshot_part_capture *capture);
 
 
-int creo_brl_frontend_capture_model_scene(ProMdl model,
-                                          ProMdlType model_type,
-                                          const struct creo_brl_snapshot_settings *settings,
-                                          const struct snapshot_settings_strings *settings_strings,
-                                          struct snapshot_scene_capture *capture,
-                                          uint32_t *root_type,
-                                          uint32_t *root_index);
+int creo_brl_frontend_capture_model_scene(
+    ProMdl model,
+    ProMdlType model_type,
+    const struct creo_brl_snapshot_settings *settings,
+    const struct snapshot_settings_strings *settings_strings,
+    struct snapshot_scene_capture *capture);
 
 
 #endif /* CREO_FRONTEND_MODEL_CAPTURE_H */

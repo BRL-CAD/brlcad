@@ -449,9 +449,9 @@ suppress_feature_ids(ProMdl model,
 }
 
 
-int
-creo_brl_resume_suppressed_features(ProMdl model,
-                                    const std::vector<int>& feature_ids)
+static int
+resume_suppressed_features(ProMdl model,
+                           const std::vector<int>& feature_ids)
 {
     struct toolkit_feature_change_context context = {};
     int result = 0;
@@ -895,12 +895,12 @@ commit_eligible_hole_candidates(struct feature_capture_context *context)
 }
 
 
-int
-creo_brl_capture_feature_suppression(ProMdl model,
-                                     double scale,
-                                     const struct creo_brl_snapshot_settings *settings,
-                                     struct snapshot_part_capture *capture,
-                                     std::vector<int> *suppressed_features)
+static int
+capture_feature_suppression(ProMdl model,
+                            double scale,
+                            const struct creo_brl_snapshot_settings *settings,
+                            struct snapshot_part_capture *capture,
+                            std::vector<int> *suppressed_features)
 {
     struct feature_capture_context context = {};
 
@@ -941,4 +941,49 @@ creo_brl_capture_feature_suppression(ProMdl model,
     }
 
     return CREO_BRL_FEATURE_SUPPRESSION_APPLIED;
+}
+
+
+creo_brl_scoped_feature_suppression::creo_brl_scoped_feature_suppression() :
+    model_(NULL),
+    active_(0)
+{
+}
+
+
+creo_brl_scoped_feature_suppression::~creo_brl_scoped_feature_suppression()
+{
+    (void)finish();
+}
+
+
+int
+creo_brl_scoped_feature_suppression::begin(
+    ProMdl model,
+    double scale,
+    const struct creo_brl_snapshot_settings *settings,
+    struct snapshot_part_capture *capture)
+{
+    const int result = capture_feature_suppression(
+        model, scale, settings, capture, &suppressed_features_);
+
+    if (result == CREO_BRL_FEATURE_SUPPRESSION_APPLIED) {
+        model_ = model;
+        active_ = 1;
+    }
+    return result;
+}
+
+
+int
+creo_brl_scoped_feature_suppression::finish()
+{
+    if (!active_)
+        return 1;
+
+    active_ = 0;
+    const int restored = resume_suppressed_features(model_, suppressed_features_);
+    suppressed_features_.clear();
+    model_ = NULL;
+    return restored;
 }

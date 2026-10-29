@@ -4,6 +4,8 @@
 
 #include "common.h"
 
+#include <cstring>
+
 #include "shim.h"
 #include "frontend/dialog_controller.h"
 #include "shared/core_api.h"
@@ -15,6 +17,19 @@ static double shim_length_unit_to_mm = 1.0;
 static int shim_unit_system = 0;
 static int shim_model_name_is_configured = 0;
 static int shim_length_unit_is_configured = 0;
+static const struct creo_brl_shim_model *shim_active_assembly = NULL;
+
+
+static const struct creo_brl_shim_model *
+as_shim_model(const void *handle)
+{
+    const struct creo_brl_shim_model *candidate =
+        static_cast<const struct creo_brl_shim_model *>(handle);
+
+    return (candidate && candidate->magic == CREO_BRL_SHIM_MODEL_MAGIC) ?
+               candidate :
+               NULL;
+}
 
 
 static void
@@ -62,9 +77,34 @@ extern "C" int ProArrayAlloc(int, int, int, void **) { return 0; }
 extern "C" int ProArrayFree(void **) { return 0; }
 extern "C" int ProArrayObjectAdd(ProArray *, int, int, void *) { return 0; }
 extern "C" int ProArraySizeGet(ProArray, int *) { return 0; }
-extern "C" int ProAsmcompMdlGet(ProFeature *, void **) { return 0; }
-extern "C" int ProAsmcomppathInit(void *, ProIdTable, int, void **) { return 0; }
-extern "C" int ProAsmcomppathTrfGet(void **, int, ProMatrix) { return 0; }
+extern "C" int ProAsmcompMdlGet(ProFeature *feature, void **model)
+{
+    if (!feature || !model || !shim_active_assembly || feature->id < 0 ||
+        static_cast<size_t>(feature->id) >= shim_active_assembly->component_count)
+        return PRO_TK_BAD_INPUTS;
+    *model = shim_active_assembly->components[feature->id].model;
+    return *model ? PRO_TK_NO_ERROR : PRO_TK_BAD_INPUTS;
+}
+extern "C" int ProAsmcomppathInit(void *owner, ProIdTable ids, int count, void **path)
+{
+    const struct creo_brl_shim_model *model = as_shim_model(owner);
+
+    if (!model || !ids || count != 1 || !path || ids[0] < 0 ||
+        static_cast<size_t>(ids[0]) >= model->component_count)
+        return PRO_TK_BAD_INPUTS;
+    *path = const_cast<struct creo_brl_shim_component *>(&model->components[ids[0]]);
+    return PRO_TK_NO_ERROR;
+}
+extern "C" int ProAsmcomppathTrfGet(void **path, int, ProMatrix matrix)
+{
+    const struct creo_brl_shim_component *component =
+        path ? static_cast<const struct creo_brl_shim_component *>(*path) : NULL;
+
+    if (!component || !matrix)
+        return PRO_TK_BAD_INPUTS;
+    std::memcpy(matrix, component->matrix, sizeof(ProMatrix));
+    return PRO_TK_NO_ERROR;
+}
 extern "C" int ProDimensionTypeGet(void **, int *) { return 0; }
 extern "C" int ProDimensionValueGet(void **, double *) { return 0; }
 extern "C" int ProElementDoubleGet(void *, void *, double *) { return 0; }
@@ -78,29 +118,69 @@ extern "C" int ProFeatureDimensionVisit(ProFeature *, int (*)(void **, int, void
 extern "C" int ProFeatureElemtreeExtract(ProFeature *, void *, int, void **) { return 0; }
 extern "C" int ProFeatureGeomitemVisit(ProFeature *, int, int (*)(void **, int, void *), int (*)(void **, void *), void *) { return 0; }
 extern "C" int ProFeatureInit(void *, int, ProFeature *) { return 0; }
-extern "C" int ProFeatureStatusGet(ProFeature *, ProFeatStatus *) { return 0; }
-extern "C" int ProFeatureTypeGet(ProFeature *, int *) { return 0; }
+extern "C" int ProFeatureStatusGet(ProFeature *feature, ProFeatStatus *status)
+{
+    if (!feature || !status || !shim_active_assembly)
+        return 0;
+    *status = PRO_FEAT_ACTIVE;
+    return PRO_TK_NO_ERROR;
+}
+extern "C" int ProFeatureTypeGet(ProFeature *feature, int *type)
+{
+    if (!feature || !type || !shim_active_assembly)
+        return 0;
+    *type = PRO_FEAT_COMPONENT;
+    return PRO_TK_NO_ERROR;
+}
 extern "C" int ProFeatureWithoptionsResume(void *, int *, void *, int) { return 0; }
 extern "C" int ProFeatureWithoptionsSuppress(void *, int *, void *, int) { return 0; }
 extern "C" int ProGeomitemdataGet(void **, void ***) { return 0; }
 extern "C" int ProLinedataGet(void **, Pro3dPnt, Pro3dPnt) { return 0; }
 extern "C" int ProMdlCurrentGet(void **) { return 0; }
-extern "C" int ProMdlMdlnameGet(void *, wchar_t *name)
+extern "C" int ProMdlMdlnameGet(void *handle, wchar_t *name)
 {
-    if (!name || !shim_model_name_is_configured)
+    const struct creo_brl_shim_model *model = as_shim_model(handle);
+
+    if (!name)
+        return PRO_TK_BAD_INPUTS;
+    if (model) {
+        if (!model->name || !model->name[0])
+            return PRO_TK_BAD_INPUTS;
+        copy_wide_text(name, PRO_NAME_SIZE + 1u, model->name);
+        return PRO_TK_NO_ERROR;
+    }
+    if (!shim_model_name_is_configured)
         return PRO_TK_BAD_INPUTS;
     copy_wide_text(name, PRO_NAME_SIZE + 1u, shim_model_name);
     return PRO_TK_NO_ERROR;
 }
-extern "C" int ProMdlPrincipalunitsystemGet(void *, void **system)
+extern "C" int ProMdlPrincipalunitsystemGet(void *handle, void **system)
 {
-    if (!system || !shim_length_unit_is_configured)
+    const struct creo_brl_shim_model *model = as_shim_model(handle);
+
+    if (!system)
+        return PRO_TK_BAD_INPUTS;
+    if (model) {
+        if (model->length_unit_to_mm <= 0.0)
+            return PRO_TK_BAD_INPUTS;
+        *system = handle;
+        return PRO_TK_NO_ERROR;
+    }
+    if (!shim_length_unit_is_configured)
         return PRO_TK_BAD_INPUTS;
     *system = &shim_unit_system;
     return PRO_TK_NO_ERROR;
 }
 extern "C" int ProMdlToModelitem(void *, void **) { return 0; }
-extern "C" int ProMdlTypeGet(void *, int *) { return 0; }
+extern "C" int ProMdlTypeGet(void *handle, int *type)
+{
+    const struct creo_brl_shim_model *model = as_shim_model(handle);
+
+    if (!model || !type || model->type == 0)
+        return 0;
+    *type = model->type;
+    return PRO_TK_NO_ERROR;
+}
 extern "C" int ProMdlVerstampGet(void *, void **) { return 0; }
 extern "C" int ProParameterInit(void *, wchar_t *, void *) { return 0; }
 extern "C" int ProParameterValueWithUnitsGet(ProParameter *, void *, void *) { return 0; }
@@ -110,9 +190,57 @@ extern "C" int ProParamvalueValueGet(void **, int, void *) { return 0; }
 extern "C" int ProPartDensityGet(void *, double *) { return 0; }
 extern "C" int ProPartMaterialNameGet(void *, wchar_t *) { return 0; }
 extern "C" int ProPartTessellate(void *, double, double, int, ProSurfaceTessellationData **) { return 0; }
-extern "C" int ProSolidFeatVisit(void *, int (*)(ProFeature *, int, void *), int (*)(ProFeature *, void *), void *) { return 0; }
-extern "C" int ProSolidMassPropertyGet(void *, void *, ProMassProperty *) { return 0; }
-extern "C" int ProSolidOutlineGet(void *, Pro3dPnt *) { return 0; }
+extern "C" int ProSolidFeatVisit(void *handle, int (*visit)(ProFeature *, int, void *), int (*filter)(ProFeature *, void *), void *app_data)
+{
+    const struct creo_brl_shim_model *model = as_shim_model(handle);
+
+    if (!model)
+        return 0;
+    if (model->feat_visit_error != 0)
+        return model->feat_visit_error;
+    if (model->type != PRO_MDL_ASSEMBLY)
+        return PRO_TK_NO_ERROR;
+
+    const struct creo_brl_shim_model *previous_assembly = shim_active_assembly;
+    for (size_t index = 0; index < model->component_count; ++index) {
+        ProFeature feature = { static_cast<int>(index) };
+
+        shim_active_assembly = model;
+        if (filter) {
+            const int filter_status = filter(&feature, app_data);
+            if (filter_status == PRO_TK_CONTINUE)
+                continue;
+            if (filter_status != PRO_TK_NO_ERROR) {
+                shim_active_assembly = previous_assembly;
+                return filter_status;
+            }
+        }
+        if (visit && visit(&feature, PRO_TK_NO_ERROR, app_data) != PRO_TK_NO_ERROR) {
+            shim_active_assembly = previous_assembly;
+            return PRO_TK_GENERAL_ERROR;
+        }
+    }
+    shim_active_assembly = previous_assembly;
+    return PRO_TK_NO_ERROR;
+}
+extern "C" int ProSolidMassPropertyGet(void *handle, void *, ProMassProperty *mass_properties)
+{
+    const struct creo_brl_shim_model *model = as_shim_model(handle);
+
+    if (!model || !model->has_mass_properties || !mass_properties)
+        return 0;
+    *mass_properties = model->mass_properties;
+    return PRO_TK_NO_ERROR;
+}
+extern "C" int ProSolidOutlineGet(void *handle, Pro3dPnt *bbox)
+{
+    const struct creo_brl_shim_model *model = as_shim_model(handle);
+
+    if (!model || !model->has_bbox || !bbox)
+        return 0;
+    std::memcpy(bbox, model->bbox, sizeof(model->bbox));
+    return PRO_TK_NO_ERROR;
+}
 extern "C" int ProStringarrayFree(char **, int) { return 0; }
 extern "C" int ProSurfaceSideAppearancepropsGet(void **, int, ProSurfaceAppearanceProps *) { return 0; }
 extern "C" int ProUICheckbuttonActivateActionSet(const char *, const char *, void (*)(char *, char *, void *), void *) { return 0; }
@@ -130,9 +258,17 @@ extern "C" int ProUILabelTextSet(const char *, const char *, wchar_t *) { return
 extern "C" int ProUIPushbuttonActivateActionSet(const char *, const char *, void (*)(char *, char *, void *), void *) { return 0; }
 extern "C" int ProUIRadiogroupSelectednamesGet(const char *, const char *, int *, char ***) { return 0; }
 extern "C" int ProUIRadiogroupSelectednamesSet(const char *, const char *, int, char **) { return 0; }
-extern "C" int ProUnitConversionCalculate(ProUnititem *, ProUnititem *, ProUnitConversion *conversion)
+extern "C" int ProUnitConversionCalculate(ProUnititem *from, ProUnititem *, ProUnitConversion *conversion)
 {
-    if (!conversion || !shim_length_unit_is_configured)
+    const struct creo_brl_shim_model *model = from ? as_shim_model(from->owner) : NULL;
+
+    if (!conversion)
+        return PRO_TK_BAD_INPUTS;
+    if (model) {
+        conversion->scale = model->length_unit_to_mm;
+        return PRO_TK_NO_ERROR;
+    }
+    if (!shim_length_unit_is_configured)
         return PRO_TK_BAD_INPUTS;
     conversion->scale = shim_length_unit_to_mm;
     return PRO_TK_NO_ERROR;
@@ -147,16 +283,23 @@ extern "C" int ProUnitInit(void *owner, wchar_t *name, ProUnititem *unit)
 }
 extern "C" int ProUnitsystemUnitGet(void **system, int unit_type, ProUnititem *unit)
 {
+    const struct creo_brl_shim_model *model = system ? as_shim_model(*system) : NULL;
+
     if (!system || !*system || unit_type != PRO_UNITTYPE_LENGTH || !unit)
         return PRO_TK_BAD_INPUTS;
     unit->owner = *system;
-    copy_wide_text(unit->name, PRO_NAME_SIZE + 1u, shim_length_unit_name);
+    copy_wide_text(unit->name, PRO_NAME_SIZE + 1u,
+                   (model && model->length_unit_name) ? model->length_unit_name : shim_length_unit_name);
     return PRO_TK_NO_ERROR;
 }
 extern "C" int ProVerstampStringFree(char **) { return 0; }
 extern "C" int ProVerstampStringGet(void *, char **) { return 0; }
 extern "C" int ProWstringFree(wchar_t *) { return 0; }
-extern "C" void ProMdlIsSkeleton(void *, int *) {}
+extern "C" void ProMdlIsSkeleton(void *, int *is_skeleton)
+{
+    if (is_skeleton)
+        *is_skeleton = PRO_B_FALSE;
+}
 extern "C" void ProPartTessellationFree(ProSurfaceTessellationData **) {}
 extern "C" void ProStringToWstring(wchar_t *, char *) {}
 extern "C" void ProUIInputpanelMaxlenSet(const char *, const char *, int) {}

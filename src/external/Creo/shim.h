@@ -234,6 +234,28 @@ extern "C" void** PRO_CURVE_DATA(void*);
 extern "C" void creo_brl_shim_set_length_unit(const wchar_t*,double);
 extern "C" void creo_brl_shim_set_model_name(const wchar_t*);
 
+#define CREO_BRL_SHIM_MODEL_MAGIC 0x4342534du
+
+struct creo_brl_shim_component {
+    void *model;
+    ProMatrix matrix;
+};
+
+struct creo_brl_shim_model {
+    unsigned int magic;
+    const wchar_t *name;
+    ProMdlType type;
+    const wchar_t *length_unit_name;
+    double length_unit_to_mm;
+    int has_bbox;
+    Pro3dPnt bbox[2];
+    int has_mass_properties;
+    ProMassProperty mass_properties;
+    int feat_visit_error;
+    const struct creo_brl_shim_component *components;
+    size_t component_count;
+};
+
 #endif /* CREO_SHIM_H */
 
 // Local Variables:

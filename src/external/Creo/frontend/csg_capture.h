@@ -60,14 +60,25 @@ int creo_brl_csg_hole_is_eligible(const std::vector<int>& feature_sequence,
                                   size_t hole_index);
 
 
-int creo_brl_capture_feature_suppression(ProMdl model,
-                                         double scale,
-                                         const struct creo_brl_snapshot_settings *settings,
-                                         struct snapshot_part_capture *capture,
-                                         std::vector<int> *suppressed_features);
+class creo_brl_scoped_feature_suppression {
+public:
+    creo_brl_scoped_feature_suppression();
+    ~creo_brl_scoped_feature_suppression();
 
-int creo_brl_resume_suppressed_features(ProMdl model,
-                                        const std::vector<int>& feature_ids);
+    int begin(ProMdl model,
+              double scale,
+              const struct creo_brl_snapshot_settings *settings,
+              struct snapshot_part_capture *capture);
+    int finish();
+
+private:
+    creo_brl_scoped_feature_suppression(const creo_brl_scoped_feature_suppression&);
+    creo_brl_scoped_feature_suppression& operator=(const creo_brl_scoped_feature_suppression&);
+
+    ProMdl model_;
+    std::vector<int> suppressed_features_;
+    int active_;
+};
 
 
 #endif /* CREO_FRONTEND_CSG_CAPTURE_H */

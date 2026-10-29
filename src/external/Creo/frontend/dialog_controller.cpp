@@ -214,8 +214,7 @@ frontend_capture_snapshot(const char *snapshot_path)
     if (model_type == PRO_MDL_PART || model_type == PRO_MDL_ASSEMBLY) {
         struct snapshot_scene_capture capture = {};
         const int result = creo_brl_frontend_capture_model_scene(
-            model, model_type, &settings, &settings_strings,
-            &capture, &capture.root_type, &capture.root_index);
+            model, model_type, &settings, &settings_strings, &capture);
 
         if (result != CREO_BRL_SNAPSHOT_CAPTURE_SUCCESS)
             return result;
