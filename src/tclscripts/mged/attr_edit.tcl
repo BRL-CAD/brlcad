@@ -24,7 +24,7 @@
 
 package require Iwidgets
 
-class Attr_editor {
+::itcl::class Attr_editor {
     inherit itk::Toplevel
 
     # remembers the attribute names at the start of editing
@@ -106,7 +106,7 @@ class Attr_editor {
 	    frame $itk_interior.fr_obj -relief flat -bd 3
 	}
 	label $itk_interior.fr_obj.obj_l -text "Object:" -width 7 -anchor w
-	entry $itk_interior.fr_obj.obj_e -textvariable [scope obj_name]
+	entry $itk_interior.fr_obj.obj_e -textvariable [::itcl::scope obj_name]
 	set objb $itk_interior.fr_obj.obj_e
 	pack $itk_interior.fr_obj.obj_l \
 	    -expand no -side left -anchor w
@@ -125,10 +125,10 @@ class Attr_editor {
 	set fnew [frame $itk_interior.fr_attr.fr_new -relief flat -bd 3]
 
 	button $fnew.new -text "New Attribute"\
-	    -command [code $this new_attr]
-	label $fnew.attr_l -textvariable [scope attr_entry_label] -width 19 -anchor e
+	    -command [::itcl::code $this new_attr]
+	label $fnew.attr_l -textvariable [::itcl::scope attr_entry_label] -width 19 -anchor e
 	entry $fnew.attr_e\
-	    -textvariable [scope cur_attr_name]
+	    -textvariable [::itcl::scope cur_attr_name]
 	set attrn $fnew.attr_e
 	grid $fnew.new -row 0 -column 0 -padx 3 -pady 3
 	grid $fnew.attr_l -row 0 -column 1 -padx 3\
@@ -147,19 +147,19 @@ class Attr_editor {
 	$fr_pane.pane_attrs add names
 	set name_pane [$fr_pane.pane_attrs childsite names]
 	label $name_pane.lbl -text "Attribute Names"
-	listbox $name_pane.attrs -height 10 -listvar [scope cur_attrs]\
-	    -yscrollcommand [code $name_pane.asb set]\
+	listbox $name_pane.attrs -height 10 -listvar [::itcl::scope cur_attrs]\
+	    -yscrollcommand [::itcl::code $name_pane.asb set]\
 	    -exportselection false
 	set listb $name_pane.attrs
-	scrollbar $name_pane.asb -command [code $name_pane.attrs yview]
+	scrollbar $name_pane.asb -command [::itcl::code $name_pane.attrs yview]
 
 	$fr_pane.pane_attrs add values
 	set value_pane [$fr_pane.pane_attrs childsite values]
 	label $value_pane.lbl -text "Attribute Value"
 	text $value_pane.txt -width 40 -height 10\
-	    -yscrollcommand [code $value_pane.sbt set]
+	    -yscrollcommand [::itcl::code $value_pane.sbt set]
 	set textb $value_pane.txt
-	scrollbar $value_pane.sbt -command [code $value_pane.txt yview]
+	scrollbar $value_pane.sbt -command [::itcl::code $value_pane.txt yview]
 
 	grid $name_pane.lbl -row 0 -column 1
 	grid $name_pane.asb -row 1 -column 0 -sticky nsw
@@ -186,11 +186,11 @@ class Attr_editor {
 	frame $itk_interior.fr_attr.frc1 -relief flat -bd 3
 
 	button $itk_interior.fr_attr.frc1.reset_all -text "reset all"\
-	    -command [code $this do_reset_all]
+	    -command [::itcl::code $this do_reset_all]
 	button $itk_interior.fr_attr.frc1.reset_sel -text "reset selected"\
-	    -command [code $this do_reset_selected]
+	    -command [::itcl::code $this do_reset_selected]
 	button $itk_interior.fr_attr.frc1.delete_selected -text "delete selected"\
-	    -command [code $this do_delete_sel]
+	    -command [::itcl::code $this do_delete_sel]
 	grid $itk_interior.fr_attr.frc1.reset_all -row 0 -column 0 -padx 3 -pady 3
 	grid $itk_interior.fr_attr.frc1.reset_sel -row 0 -column 1 -padx 3 -pady 3
 	grid $itk_interior.fr_attr.frc1.delete_selected -row 0 -column 2\
@@ -207,9 +207,9 @@ class Attr_editor {
 	itk_component add controls {
 	    frame $itk_interior.frc -relief flat -bd 3
 	}
-	button $itk_interior.frc.ok -text "ok" -command [code $this do_ok]
-	button $itk_interior.frc.apply -text "apply" -command [code $this do_apply]
-	button $itk_interior.frc.dismiss -text "dismiss" -command [code $this do_dismiss]
+	button $itk_interior.frc.ok -text "ok" -command [::itcl::code $this do_ok]
+	button $itk_interior.frc.apply -text "apply" -command [::itcl::code $this do_apply]
+	button $itk_interior.frc.dismiss -text "dismiss" -command [::itcl::code $this do_dismiss]
 	grid $itk_interior.frc.ok -row 0 -column 0 -padx 3 -pady 3
 	grid $itk_interior.frc.apply -row 0 -column 1 -padx 3 -pady 3
 	grid $itk_interior.frc.dismiss -row 0 -column 2 -padx 3 -pady 3
@@ -222,12 +222,12 @@ class Attr_editor {
 
 	# this keeps the attribute name entry widget current when a selection is made
 	# in the attribute name list box
-	bind $listb <<ListboxSelect>> [code $this update_attr_text]
+	bind $listb <<ListboxSelect>> [::itcl::code $this update_attr_text]
 
 	# this keeps the cur_value entry for the selected attribute current with the
 	# text in the text widget
-	bind $textb <KeyRelease> [code $this update_cur_attr]
-	bind $textb <ButtonRelease-2> +[code $this update_cur_attr]
+	bind $textb <KeyRelease> [::itcl::code $this update_cur_attr]
+	bind $textb <ButtonRelease-2> +[::itcl::code $this update_cur_attr]
 	# re-order the bindings so that the above binding is performed after
 	# any text is pasted
 	set bindings [bindtags $textb]
@@ -238,11 +238,11 @@ class Attr_editor {
 
 	# this allows the attributes of a new object to be edited by typing name
 	# into the object entry widget and hitting enter
-	bind $objb <Key-Return> [code $this do_new_obj]
+	bind $objb <Key-Return> [::itcl::code $this do_new_obj]
 
 	# this allows an attribute name to be changed by editing the contents of the
 	# attribute name entry widget and hitting enter
-	bind $attrn <Key-Return> [code $this update_cur_attr_name]
+	bind $attrn <Key-Return> [::itcl::code $this update_cur_attr_name]
 
 	# help on context data
 	hoc_register_data $itk_interior.fr_obj.obj_e "Object" {
@@ -353,7 +353,7 @@ class Attr_editor {
 	#	grab release $fnew.attr_e
 	if { [string length $cur_attr_name] == 0 } {
 	    # restore normal binding for attribute name entry widget
-	    bind $fnew.attr_e <Key-Return> [code $this update_cur_attr_name]
+	    bind $fnew.attr_e <Key-Return> [::itcl::code $this update_cur_attr_name]
 	    $fnew.attr_e configure -bg #123456
 	    # d9d9d9
 	    set attr_entry_label "Attribute Name:"
@@ -375,7 +375,7 @@ class Attr_editor {
 	update_attr_text
 
 	# restore normal binding for attribute name entry widget
-	bind $fnew.attr_e <Key-Return> [code $this update_cur_attr_name]
+	bind $fnew.attr_e <Key-Return> [::itcl::code $this update_cur_attr_name]
 	$fnew.attr_e configure -bg #234567
 	# d9d9d9
 	set attr_entry_label "Attribute Name:"
@@ -392,7 +392,7 @@ class Attr_editor {
 	$textb delete 1.0 end
 	$listb selection clear 0 end
 
-	bind $fnew.attr_e <Key-Return> [code $this create_new_attribute]
+	bind $fnew.attr_e <Key-Return> [::itcl::code $this create_new_attribute]
 	#	grab set $fnew.attr_e
 	focus $fnew.attr_e
 	$fnew.attr_e configure -bg #f3c846
@@ -533,7 +533,7 @@ class Attr_editor {
 
     # method called by "dismiss" button
     method do_dismiss {} {
-	delete object $this
+	::itcl::delete object $this
     }
 
     # method called by "reset selected" button

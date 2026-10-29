@@ -600,7 +600,7 @@ Isst_Init(Tcl_Interp *interp)
     /*
      * Initialize Tcl
      */
-    if (Tcl_InitStubs(interp, "8.1", 0) == NULL) {
+    if (Tcl_InitStubs(interp, BRLCAD_TCL_MIN_VERSION, 0) == NULL) {
 	return TCL_ERROR;
     }
 

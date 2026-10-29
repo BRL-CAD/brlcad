@@ -89,6 +89,28 @@ proc search_exec_remat_check {} {
     }
 }
 
+# Pass the empty ancestor list within Tcl, since the search expression's
+# string parser cannot preserve an empty -exec argument.
+proc search_exec_cycle_check {path} {
+    set name [file tail $path]
+    set cycles [check_cycle {} $name]
+    ::brlcad::ged attr set $name search_exec_cycle $cycles
+    return 1
+}
+
+# Native commands are not serialized by the interpreter snapshot.  The raw
+# GED namespace dispatcher must be installed explicitly in the worker.
+proc search_exec_ged_namespace {path} {
+    if {[::brlcad::bu file_null] ne [bu_file_null] ||
+	[::brlcad::bn hdivide {2 4 6 2}] ne {1 2 3}} {
+	error "FAIL canonical utility namespaces in search worker"
+    }
+    set name [file tail $path]
+    ::brlcad::ged attr set $name search_exec_ged_namespace \
+	{canonical GED namespace in search worker}
+    return 1
+}
+
 # Regression support for a "search -exec that creates a matching child"
 # infinite loop.  A proc that wraps each matched comb (comb -w) inserts a new
 # non-region comb named <name>.c as a child of the comb being walked.  If the
@@ -130,6 +152,8 @@ proc search_exec_verify {} {
 	r6 search_exec_proc_alias {alias to copied proc}
 	r7 search_exec_namespaced_alias {namespaced alias to GED}
 	r8 search_exec_alias_query {search_exec_alias_target search_exec_proc_alias}
+	r1 search_exec_ged_namespace {canonical GED namespace in search worker}
+	r1 search_exec_cycle 0
 	r5 search_exec_alias {alias value {with braces} \path}
     } {
 	set actual [attr get $obj $key]

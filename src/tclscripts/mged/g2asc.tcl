@@ -37,7 +37,7 @@ proc init_g2asc { id } {
     catch { destroy $top }
 
     # get the name of the ascii database to save
-    set db_name [_mged_opendb]
+    set db_name [::brlcad::mged opendb]
     set default_name [file tail [file rootname $db_name]].asc
     set ftypes {{{Ascii Database} {.asc}} {{All Files} {*}}}
     set filename [tk_getSaveFile -parent .$id -filetypes $ftypes \

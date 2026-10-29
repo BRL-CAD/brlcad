@@ -36,7 +36,7 @@ package require Tk
 package require Itcl
 package require tklitehtml 0.1.0
 
-if {[llength [info commands manpage_search_terms]] == 0} {
+if {[llength [info commands ::brlcad::help::manpage_search_terms]] == 0} {
     set helpcomm_path [file join [bu_dir data] "tclscripts" "helpcomm.tcl"]
     if {[file exists $helpcomm_path]} {
 	source $helpcomm_path
@@ -194,12 +194,12 @@ if {[llength [info commands manpage_search_terms]] == 0} {
 	}
 	set score 0
 	if {$query ne ""} {
-	    set section_label [manpage_search_section_label $section]
-	    set record [manpage_search_index_file $name $section_label $pathname html]
+	    set section_label [::brlcad::help::manpage_search_section_label $section]
+	    set record [::brlcad::help::manpage_search_index_file $name $section_label $pathname html]
 	    if {$record eq ""} {
 		continue
 	    }
-	    set score [manpage_search_rank_record $query $search_mode $record]
+	    set score [::brlcad::help::manpage_search_rank_record $query $search_mode $record]
 	}
 	if {$score >= 0} {
 	    lappend ranked [list $score $page]
@@ -217,7 +217,7 @@ if {[llength [info commands manpage_search_terms]] == 0} {
 	set page [lindex $result 1]
 	lassign $page name section pathname
 	lappend listed_pages $page
-	$toc insert end "$name ([manpage_search_section_label $section])"
+	$toc insert end "$name ([::brlcad::help::manpage_search_section_label $section])"
 	if {[file normalize $pathname] eq $selected_path} {
 	    set index [expr {[$toc size] - 1}]
 	    $toc selection set $index
@@ -285,7 +285,7 @@ if {[llength [info commands manpage_search_terms]] == 0} {
 
     set current_section all
     if {$itk_option(-defaultDir) ne ""} {
-	set current_section [manpage_search_section_dir $itk_option(-defaultDir)]
+	set current_section [::brlcad::help::manpage_search_section_dir $itk_option(-defaultDir)]
     }
     if {![dict exists $sections $current_section]} {
 	error "Manual section must be 1, 3, 5, or n"

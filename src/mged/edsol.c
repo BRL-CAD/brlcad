@@ -431,7 +431,7 @@ ecmd_bot_pickt_multihit_clbk(int UNUSED(ac), const char **UNUSED(av), void *d, v
     b->bot_verts[1] = -1;
     b->bot_verts[2] = -1;
 
-    int ret_tcl = Tcl_VarEval(s->interp, "bot_face_select ", bu_vls_cstr(vls), (char *)NULL);
+    int ret_tcl = Tcl_VarEval(s->interp, "::brlcad::mged::bot_face::init ", bu_vls_cstr(vls), (char *)NULL);
     int ret = BRLCAD_OK;
     if (ret_tcl != TCL_OK) {
 	bu_log("bot_face_select failed: %s\n", Tcl_GetStringResult(s->interp));

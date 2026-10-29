@@ -96,14 +96,19 @@ comment in `setup.c` that all plain libged commands should be reachable from MGE
 The functionality is already reachable in MGED under the listed name; exposing the
 documented spelling is possible but is **not** a standard one-line add.
 
+Raw libged spellings, including names which conflict with Tcl or Tk, are available
+through `::brlcad::ged subcommand ...`.  MGED-aware wrappers are separately available
+through `::brlcad::mged subcommand ...`; the coverage discussion below concerns the
+legacy unqualified command surface.
+
 ### `concat`  (already available as `dbconcat`)
 
 **Name conflict:** Tcl's built-in `concat` command concatenates lists and is used by
 MGED's Tcl scripts. Registering `ged_exec_concat` as a top-level command replaces that
 built-in with the database concatenation command, breaking normal Tcl evaluation.
 
-**To expose the documented name:** it cannot safely be exposed unqualified in MGED's
-Tcl interpreter. Continue using `dbconcat`, or provide the GED spelling in a namespace.
+**To use the documented name:** call `::brlcad::ged concat`; for the legacy
+unqualified interface, continue using `dbconcat`.
 
 ### `glob`  (already available as `db_glob`)
 
@@ -111,8 +116,8 @@ Tcl interpreter. Continue using `dbconcat`, or provide the GED spelling in a nam
 The libged command instead matches database objects. Registering `ged_exec_glob` as a
 top-level command replaces Tcl's filesystem command and breaks scripts that use it.
 
-**To expose the documented name:** it cannot safely be exposed unqualified in MGED's
-Tcl interpreter. Continue using `db_glob`, or provide the GED spelling in a namespace.
+**To use the documented name:** call `::brlcad::ged glob`; for the legacy
+unqualified interface, continue using `db_glob`.
 
 ### `list`  (already available as `l`)
 
@@ -121,8 +126,8 @@ MGED's Tcl command and callback handling. Registering `ged_exec_list` as a top-l
 command replaces the Tcl built-in, causing ordinary list elements to be interpreted as
 database object names and breaking MGED startup and regression scripts.
 
-**To expose the documented name:** it cannot safely be exposed unqualified in MGED's
-Tcl interpreter. Continue using `l`, or provide the GED spelling in a namespace.
+**To use the documented name:** call `::brlcad::ged list`; for the legacy
+unqualified interface, continue using `l`.
 
 ### `blast`  (already available as `B`)
 
@@ -200,7 +205,7 @@ ged_grid_core (src/libged/grid/grid.c:97) gets/sets the view grid parameters (ge
 
 ### `help`
 
-**Name conflict:** mged Tcl 'help'/'apropos'/'?' procs (help_comm in src/tclscripts/helpcomm.tcl, src/tclscripts/mged/help.tcl) providing the real per-command help browser
+**Name conflict:** mged Tcl 'help'/'apropos'/'?' procs (::brlcad::help::help_comm in src/tclscripts/helpcomm.tcl, src/tclscripts/mged/help.tcl) providing the real per-command help browser
 
 ged_help_core (src/libged/help/help.cpp:250) is an experimental/incomplete implementation: it recursively lists and tokenizes doc files (emitting 'Processing ...'/'Found N files' logs) and returns nothing useful to the user. mged already provides a fully functional 'help', 'apropos', and '?' via Tcl procs (help_comm/mged_help_data driven by helplib.tcl) that print per-command usage and descriptions. Registering ged_exec_help would collide with and override the working Tcl help system with an inferior/broken one.
 

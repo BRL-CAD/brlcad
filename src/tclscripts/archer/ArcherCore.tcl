@@ -2157,10 +2157,10 @@ namespace delete ::ArcherCoreBootstrap
 }
 
 ::itcl::body ArcherCore::closeMged {} {
-    catch {delete object $itk_component(rtcntrl)}
-    #    catch {delete object $itk_component(vac)}
-    #    catch {delete object $itk_component(mac)}
-    catch {delete object $itk_component(ged)}
+    catch {::itcl::delete object $itk_component(rtcntrl)}
+    #    catch {::itcl::delete object $itk_component(vac)}
+    #    catch {::itcl::delete object $itk_component(mac)}
+    catch {::itcl::delete object $itk_component(ged)}
 }
 
 ::itcl::body ArcherCore::updateRtControl {} {

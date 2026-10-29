@@ -67,6 +67,10 @@
 
 cmake_minimum_required(VERSION 3.22)
 
+# Tcl 8.6 is the oldest release supported by BRL-CAD.  Keep this value
+# centralized so dependency discovery and compiled Tcl extensions agree.
+set(BRLCAD_TCL_MIN_VERSION "8.6")
+
 #---------------------------------------------------------------------
 # BRL-CAD's version is centrally stored in include/conf/.  See HACKING
 # for details on updating the version.
@@ -494,6 +498,7 @@ config_h_append(BRLCAD "#define __CONFIG_H__\n")
 # Set up some of the define statements for path information and other basics
 config_h_append(BRLCAD "#define PACKAGE \"brlcad\"\n")
 config_h_append(BRLCAD "#define PACKAGE_NAME \"BRL-CAD\"\n")
+config_h_append(BRLCAD "#define BRLCAD_TCL_MIN_VERSION \"${BRLCAD_TCL_MIN_VERSION}\"\n")
 
 #----------------------------------------------------------------------
 # Let our code know what the minimum active C++ standard is - behavior

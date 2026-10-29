@@ -2522,19 +2522,16 @@ package provide Archer 1.0
 }
 
 
-proc Archer::html_help_load {browser url} {
+proc ::Archer::html_help_load {browser url} {
+    # The browser displays navigation errors while retaining its current page.
     catch {$browser goto $url}
 }
 
-proc Archer::html_help_display {_browser url _attributes} {
-    global htmlviewer
-
-    Archer::html_help_load $htmlviewer $url
+proc ::Archer::html_help_display {viewer _browser url _attributes} {
+    ::Archer::html_help_load $viewer $url
 }
 
 ::itcl::body Archer::buildarcherHelp {} {
-    global htmlviewer
-
     itk_component add archerHelp {
 	::iwidgets::dialog $itk_interior.archerHelp \
 	    -modality none \
@@ -2565,9 +2562,8 @@ proc Archer::html_help_display {_browser url _attributes} {
     } {}
     set docstoc $itk_component(archerHelpToC)
 
-    set docstoclist [::tklitehtml::browser $docstoc.htmlview \
-	-width 250 -linkcommand Archer::html_help_display]
-    Archer::html_help_load $docstoclist \
+    set docstoclist [::tklitehtml::browser $docstoc.htmlview -width 250]
+    ::Archer::html_help_load $docstoclist \
 	[file join [bu_dir doc] html main_menu.html]
 
     grid $docstoclist -sticky nsew -in $docstoc
@@ -2586,7 +2582,9 @@ proc Archer::html_help_display {_browser url _attributes} {
     set sfcs $itk_component(archerHelpF)
 
     set htmlviewer [::tklitehtml::browser $sfcs.htmlview]
-    Archer::html_help_load $htmlviewer [file join [bu_dir doc] html books \
+    $docstoclist configure -linkcommand \
+	[list ::Archer::html_help_display $htmlviewer]
+    ::Archer::html_help_load $htmlviewer [file join [bu_dir doc] html books \
 	BRL-CAD_Tutorial_Series-VolumeI.html]
 
     grid $htmlviewer -sticky nsew -in $sfcs

@@ -41,6 +41,9 @@
 #include "./tclcad_private.h"
 
 
+#define BN_COMMAND_NAMESPACE "::brlcad::bn"
+
+
 void
 bn_quat_distance_wrapper(double *dp, quat_t q1, quat_t q2)
 {
@@ -1322,45 +1325,59 @@ bn_cmd_random(ClientData UNUSED(clientData),
     return TCL_OK;
 }
 
+static int
+register_bn_commands(Tcl_Interp *interp)
+{
+    static const struct tclcad_cmdtab additional_commands[] = {
+	{"noise_perlin", "bn_noise_perlin", (Tcl_CmdProc *)bn_cmd_noise_perlin, NULL},
+	{"noise_turb", "bn_noise_turb", (Tcl_CmdProc *)bn_cmd_noise, NULL},
+	{"noise_fbm", "bn_noise_fbm", (Tcl_CmdProc *)bn_cmd_noise, NULL},
+	{"noise_slice", "bn_noise_slice", (Tcl_CmdProc *)bn_cmd_noise_slice, NULL},
+	{"random", "bn_random", (Tcl_CmdProc *)bn_cmd_random, NULL},
+	{NULL, NULL, NULL, NULL}
+    };
+    const size_t additional_count =
+	(sizeof(additional_commands) / sizeof(additional_commands[0])) - 1;
+    struct tclcad_cmdtab *commands;
+    struct math_func_link *mp;
+    size_t math_count = 0;
+    size_t i = 0;
+    int ret;
+
+    for (mp = math_funcs; mp->name != NULL; mp++)
+	math_count++;
+    commands = (struct tclcad_cmdtab *)bu_calloc(
+	math_count + additional_count + 1, sizeof(struct tclcad_cmdtab),
+	"BN Tcl command namespace");
+
+    for (mp = math_funcs; mp->name != NULL; mp++) {
+	commands[i].tcc_name = mp->name;
+	commands[i].tcc_legacy_name = mp->name;
+	commands[i].tcc_func = (Tcl_CmdProc *)mp->func;
+	i++;
+    }
+    for (i = 0; i < additional_count; i++)
+	commands[math_count + i] = additional_commands[i];
+
+    ret = tclcad_register_cmd_namespace(interp, BN_COMMAND_NAMESPACE,
+	commands);
+    bu_free(commands, "BN Tcl command namespace");
+    return ret;
+}
+
+
 void
 tclcad_bn_setup(Tcl_Interp *interp)
 {
-    struct math_func_link *mp;
-
-    for (mp = math_funcs; mp->name != NULL; mp++) {
-	(void)Tcl_CreateCommand(interp, mp->name,
-				(Tcl_CmdProc *)mp->func,
-				(ClientData)NULL,
-				(Tcl_CmdDeleteProc *)NULL);
-    }
-
-    (void)Tcl_CreateCommand(interp, "bn_noise_perlin",
-			    (Tcl_CmdProc *)bn_cmd_noise_perlin, (ClientData)NULL,
-			    (Tcl_CmdDeleteProc *)NULL);
-
-    (void)Tcl_CreateCommand(interp, "bn_noise_turb",
-			    (Tcl_CmdProc *)bn_cmd_noise, (ClientData)NULL,
-			    (Tcl_CmdDeleteProc *)NULL);
-
-    (void)Tcl_CreateCommand(interp, "bn_noise_fbm",
-			    (Tcl_CmdProc *)bn_cmd_noise, (ClientData)NULL,
-			    (Tcl_CmdDeleteProc *)NULL);
-
-    (void)Tcl_CreateCommand(interp, "bn_noise_slice",
-			    (Tcl_CmdProc *)bn_cmd_noise_slice, (ClientData)NULL,
-			    (Tcl_CmdDeleteProc *)NULL);
-
-    (void)Tcl_CreateCommand(interp, "bn_random",
-			    (Tcl_CmdProc *)bn_cmd_random, (ClientData)NULL,
-			    (Tcl_CmdDeleteProc *)NULL);
+    /* Preserve the legacy void API; Bn_Init reports registration failures. */
+    (void)register_bn_commands(interp);
 }
 
 
 TCLCAD_EXPORT int
 Bn_Init(Tcl_Interp *interp)
 {
-    tclcad_bn_setup(interp);
-    return TCL_OK;
+    return register_bn_commands(interp);
 }
 
 /*

@@ -2346,9 +2346,9 @@ macro(find_package_tcl)
 
   set(TCL_ROOT "${CMAKE_BINARY_DIR}")
   if(F_REQUIRED)
-    find_package(TCL REQUIRED)
+    find_package(TCL ${BRLCAD_TCL_MIN_VERSION} REQUIRED)
   else()
-    find_package(TCL)
+    find_package(TCL ${BRLCAD_TCL_MIN_VERSION})
   endif()
 
   # Ensure the bundled Tcl/Tk shared libraries have a SONAME.  Without

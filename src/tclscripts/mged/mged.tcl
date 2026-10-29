@@ -376,7 +376,7 @@ proc do_LoadScript { id } {
 		return
 	    }
 
-	    _mged_units $mged_display(units)
+	    ::brlcad::mged units $mged_display(units)
 	}
 
 	proc do_rt_script { id } {
@@ -515,19 +515,22 @@ proc echo args {
 #==============================================================================
 # HTML support
 #==============================================================================
-namespace eval ::mged::manual {
+namespace eval ::brlcad::mged::manual {
+    namespace export init
+
+    variable message ""
 }
 
-proc ::mged::manual::file_uri {path} {
+proc ::brlcad::mged::manual::file_uri {path} {
     return [::tklitehtml::file_uri $path]
 }
 
-proc ::mged::manual::local_path {location} {
+proc ::brlcad::mged::manual::local_path {location} {
     return [::tklitehtml::local_path $location]
 }
 
-proc ::mged::manual::navigate {viewer args} {
-    global message
+proc ::brlcad::mged::manual::navigate {viewer args} {
+    variable message
 
     if {[catch {$viewer {*}$args} error]} {
 	set message $error
@@ -537,7 +540,7 @@ proc ::mged::manual::navigate {viewer args} {
     return 1
 }
 
-proc ::mged::manual::go_to {viewer screen} {
+proc ::brlcad::mged::manual::go_to {viewer screen} {
     global ::tk::Priv
 
     set initial_path [pwd]
@@ -566,8 +569,8 @@ proc ::mged::manual::go_to {viewer screen} {
 	"Cannot read file $filename." error 0 OK
 }
 
-proc ia_man {parent screen} {
-    global mged_html_dir message
+proc ::brlcad::mged::manual::init {parent screen} {
+    global mged_html_dir
 
     package require tklitehtml 0.1.0
 
@@ -582,18 +585,22 @@ proc ia_man {parent screen} {
     set viewer [::tklitehtml::browser $w.html]
     button $w.f.close -text Close -command [list destroy $w]
     button $w.f.goto -text "Go To" \
-	-command [list ::mged::manual::go_to $viewer $screen]
+	-command [list ::brlcad::mged::manual::go_to $viewer $screen]
     button $w.f.back -text "Back" \
-	-command [list ::mged::manual::navigate $viewer back]
+	-command [list ::brlcad::mged::manual::navigate $viewer back]
 
     pack $w.f.close $w.f.goto $w.f.back -side left -fill x -expand yes
-    label $w.message -textvariable message -anchor w
+    label $w.message -textvariable ::brlcad::mged::manual::message -anchor w
     pack $w.message -side top -anchor w -fill x
     pack $viewer -side top -fill both -expand yes
     update idletasks
 
     set contents [file join $mged_html_dir contents.html]
-    ::mged::manual::navigate $viewer goto $contents
+    ::brlcad::mged::manual::navigate $viewer goto $contents
+}
+
+proc ia_man {parent screen} {
+    tailcall ::brlcad::mged::manual::init $parent $screen
 }
 
 #==============================================================================

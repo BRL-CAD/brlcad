@@ -650,7 +650,8 @@ _create_search_interp(struct mged_state *s)
      *     any init call
      *   - the package/auto-load infrastructure so that 'proc' bodies replayed
      *     from the main interp can call package commands if needed
-     *   - the _mged_ged_exec bridge and unknown forwarder (installed below)
+     *   - the canonical GED dispatcher, _mged_ged_exec bridge, and unknown
+     *     forwarder (installed below)
      *
      * tclcad_init would additionally load Itcl, Ged_Init, etc.  In
      * Tcl 8.6 that causes global side-effects (shared literal tables, Itcl
@@ -674,9 +675,14 @@ _create_search_interp(struct mged_state *s)
     }
 
     /* Register the GED bridge command. */
-    (void)Tcl_CreateCommand(search_interp, "_mged_ged_exec",
+    if (!Tcl_CreateCommand(search_interp, "_mged_ged_exec",
 	    mged_search_ged_exec, (ClientData)s,
-	    (Tcl_CmdDeleteProc *)NULL);
+	    (Tcl_CmdDeleteProc *)NULL)) {
+	bu_log("search interp: failed to register GED bridge: %s\n",
+	       Tcl_GetStringResult(search_interp));
+	Tcl_DeleteInterp(search_interp);
+	return NULL;
+    }
 
     /* Sync the main interp state (procs, variables, namespaces, aliases).
      * This must happen BEFORE installing the custom 'unknown' proc below,
@@ -699,6 +705,16 @@ _create_search_interp(struct mged_state *s)
 	    bu_log("search interp: snapshot replay error: %s\n",
 		   Tcl_GetStringResult(search_interp));
 	Tcl_DecrRefCount(snap);
+    }
+
+    /* Native commands are not part of the interpreter snapshot.  Register
+     * the canonical raw GED dispatcher explicitly on the worker thread. */
+    if (mged_register_ged_cmd_namespace(search_interp, mged_search_ged_cmd,
+	    (ClientData)s) != TCL_OK) {
+	bu_log("search interp: failed to register GED namespace: %s\n",
+	       Tcl_GetStringResult(search_interp));
+	Tcl_DeleteInterp(search_interp);
+	return NULL;
     }
 
     /* Native GED commands are not part of the interpreter snapshot.  Add

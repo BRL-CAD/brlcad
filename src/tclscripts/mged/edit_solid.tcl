@@ -463,15 +463,15 @@ proc esol_apply { id w sform } {
 
     if $esol_control($id,draw) {
 	if [esol_isdrawn $esol_control($id,name)] {
-	    eval _mged_draw [_mged_who]
+	    ::brlcad::mged draw {*}[::brlcad::mged who]
 	} else {
-	    _mged_draw $esol_control($id,name)
+	    ::brlcad::mged draw $esol_control($id,name)
 	}
     }
 }
 
 proc esol_isdrawn { sol } {
-    set sol_list [_mged_solid_report -2]
+    set sol_list [::brlcad::mged solid_report -2]
 
     if {-1 < [lsearch -exact $sol_list $sol]} {
 	return 1

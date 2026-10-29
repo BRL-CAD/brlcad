@@ -46,22 +46,22 @@ proc help {args} {
     global help_data
 
     if {[llength $args] > 0} {
-	return [help_comm help_data $args]
+	return [::brlcad::help::help_comm help_data $args]
     } else {
-	return [help_comm help_data]
+	return [::brlcad::help::help_comm help_data]
     }
 }
 
 proc ? {} {
 	   global help_data
 
-	   return [?_comm help_data 20 4]
+	   return [::brlcad::help::?_comm help_data 20 4]
        }
 
 proc apropos key {
     global help_data
 
-    return [apropos_comm help_data $key]
+    return [::brlcad::help::apropos_comm help_data $key]
 }
 
 

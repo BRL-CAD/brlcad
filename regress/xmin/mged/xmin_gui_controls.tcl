@@ -76,9 +76,9 @@ proc ::mged::xmin::view_state {} {
 }
 
 proc ::mged::xmin::set_view {azimuth elevation center_point view_size} {
-    _mged_ae $azimuth $elevation
-    _mged_center {*}$center_point
-    _mged_size $view_size
+    ::brlcad::mged ae $azimuth $elevation
+    ::brlcad::mged center {*}$center_point
+    ::brlcad::mged size $view_size
     settle
     return [view_state]
 }
@@ -127,9 +127,10 @@ proc ::mged::xmin::exercise_view_ring {id top} {
 }
 
 proc ::mged::xmin::exercise_grid {id top} {
-    global grid_control mged_gui
+    global mged_gui
 
     invoke $top {Tools {Grid Control Panel}}
+    upvar #0 ::brlcad::mged::grid::grid_control grid_control
     set panel $top.grid_control
     ::gui::test::require {[winfo exists $panel] && [winfo ismapped $panel]} \
 	"Grid Control Panel did not open"
@@ -174,10 +175,10 @@ proc ::mged::xmin::exercise_grid {id top} {
 }
 
 proc ::mged::xmin::exercise_adc {id top} {
-    global mged_adc_control
     variable adc_distance_tolerance
 
     invoke $top {Tools {ADC Control Panel}}
+    upvar #0 ::brlcad::mged::adc::mged_adc_control mged_adc_control
     set panel $top.adc_control
     ::gui::test::require {[winfo exists $panel] && [winfo ismapped $panel]} \
 	"ADC Control Panel did not open"
@@ -187,8 +188,8 @@ proc ::mged::xmin::exercise_adc {id top} {
 
     set mged_adc_control($id,coords) model
     set mged_adc_control($id,interpval) abs
-    adc_adjust_coords $id
-    adc_interpval $id
+    ::brlcad::mged::adc::adjust_coords $id
+    ::brlcad::mged::adc::set_interpretation $id
     set mged_adc_control($id,pos) {1 2 3}
     set mged_adc_control($id,dst) 4.5
     set mged_adc_control($id,a1) 15
@@ -299,7 +300,7 @@ proc ::mged::xmin::finish {status message} {
     if {$status != 0} {
 	puts stderr $message
     }
-    _mged_quit
+    ::brlcad::mged quit
 }
 
 proc ::mged::xmin::run {} {

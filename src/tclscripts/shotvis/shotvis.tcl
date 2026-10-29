@@ -207,7 +207,7 @@ proc save_nirt {args} {
 }
 
 # replace existing class
-catch {delete class ShotVis} error
+catch {::itcl::delete class ShotVis} error
 
 ::itcl::class ShotVis {
     inherit ::itk::Toplevel

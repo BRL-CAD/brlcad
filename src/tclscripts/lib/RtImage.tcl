@@ -25,13 +25,15 @@
 
 package provide cadwidgets::RtImage 1.0
 
-proc ::pid_wait { pid } {
+namespace eval ::cadwidgets {
+
+proc pid_wait {pid} {
     if {$::tcl_platform(platform) == "windows"} {
 	set task_cmd [auto_execok tasklist]
 	set task_args [list $task_cmd /FI "PID eq $pid" /FI {STATUS eq running} "/NH"]
 	set task_list "$pid"
 	while {[string match "*$pid*" $task_list]} {
-	    catch {eval exec $task_args} task_list
+	    catch {exec {*}$task_args} task_list
 	    after 50
 	}
     } else {
@@ -40,8 +42,6 @@ proc ::pid_wait { pid } {
 	}
     }
 }
-
-namespace eval cadwidgets {
 
 proc rtimage_exec_log {cmd log_file} {
     if {[catch {exec {*}$cmd >& $log_file} msg]} {
@@ -450,6 +450,11 @@ proc rtimage {rtimage_dict} {
 }
 
 #end namespace cadwidgets
+}
+
+# Compatibility interface.  New callers should use the owning namespace.
+proc ::pid_wait {args} {
+    tailcall ::cadwidgets::pid_wait {*}$args
 }
 
 

@@ -24,43 +24,43 @@
 
 #	Ensure that all commands that this script uses without defining
 #	are provided by the calling application
-check_externs "_mged_press _mged_ill _mged_matpick"
+check_externs "::brlcad::mged"
 
 proc solid_illum {spath {ri 1}} {
-    set state [_mged_status state]
+    set state [::brlcad::mged status state]
 
     switch $state {
 	VIEWING {
-	    _mged_press sill
+	    ::brlcad::mged press sill
 	}
 	default {
-	    _mged_press reject
-	    _mged_press sill
+	    ::brlcad::mged press reject
+	    ::brlcad::mged press sill
 	}
     }
 
-    _mged_ill -e -n -i $ri $spath
+    ::brlcad::mged ill -e -n -i $ri $spath
 }
 
 proc matrix_illum { spath path_pos {ri 1}} {
-    set state [_mged_status state]
+    set state [::brlcad::mged status state]
 
     switch $state {
 	VIEWING {
-	    _mged_press oill
-	    _mged_ill -e -i $ri $spath
+	    ::brlcad::mged press oill
+	    ::brlcad::mged ill -e -i $ri $spath
 	}
 	"OBJ PICK" {
-	    _mged_ill -e -i $ri $spath
+	    ::brlcad::mged ill -e -i $ri $spath
 	}
 	default {
-	    _mged_press reject
-	    _mged_press oill
-	    _mged_ill -e -i $ri $spath
+	    ::brlcad::mged press reject
+	    ::brlcad::mged press oill
+	    ::brlcad::mged ill -e -i $ri $spath
 	}
     }
 
-    _mged_matpick -n $path_pos
+    ::brlcad::mged matpick -n $path_pos
 }
 
 # Local Variables:

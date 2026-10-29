@@ -19,10 +19,10 @@
 #
 ###
 #  routines implement the gui for the BRL-CAD shaders
-# shader_params is a global array containing all the values for this shader gui
+# ::brlcad::mged::shader::shader_params contains the shader GUI state
 # make your shader param names unique
 # the 'id' is passed to these routines to use for uniqueness
-# the top-level interface is 'do_shader'
+# the canonical top-level interface is '::brlcad::mged::shader::do_shader'
 # See "comb.tcl" for an explanation of the widget hierarchy
 
 # To implement a new shader gui:
@@ -38,7 +38,8 @@
 
 # proc do_newshader { shade_var id } - Creates the frame to hold the shader widgets and
 #	creates the labels, entries, buttons... Also registers 'help-on-context' data.
-#	all entry widgets should bind <KeyRelease> to "do_shader_apply".
+#	all entry widgets should bind <KeyRelease> to the canonical
+#	::brlcad::mged::shader::do_shader_apply command.
 #	calls 'set_newshader_values' to set initial settings of widgets.
 #	returns the created frame name.
 
@@ -52,6 +53,19 @@
 # proc set_newshader_defaults { id }
 #	This routine sets the default values for this shader
 
+namespace eval ::brlcad::mged::shader {
+
+namespace export do_shader do_shader_apply is_good_shader set_shader_params
+
+variable shader_params
+
+proc init {id window} {
+    variable shader_params
+
+    set shader_params($id,window) $window
+    set shader_params($id,shader_name) ""
+}
+
 proc vec_compare { v1 v2 n } {
     for { set i 0 } { $i < $n } { incr i } {
 	if { [expr [lindex $v1 $i] != [lindex $v2 $i]] } then {
@@ -63,15 +77,15 @@ proc vec_compare { v1 v2 n } {
 
 # extern routines (the "extern" shader)
 proc do_extern { shade_var id } {
-    global shader_params
+    variable shader_params
     upvar #0 $shade_var shader_str
 
     catch { destroy $shader_params($id,window).fr }
     frame $shader_params($id,window).fr
 
     label $shader_params($id,window).fr.file -text File
-    entry $shader_params($id,window).fr.file_e -width 20 -textvariable shader_params($id,extern_file)
-    bind $shader_params($id,window).fr.file_e <KeyRelease> "do_shader_apply $shade_var $id"
+    entry $shader_params($id,window).fr.file_e -width 20 -textvariable ::brlcad::mged::shader::shader_params($id,extern_file)
+    bind $shader_params($id,window).fr.file_e <KeyRelease> [list ::brlcad::mged::shader::do_shader_apply $shade_var $id]
 
     hoc_register_data $shader_params($id,window).fr.file "File" {
 	{summary "The 'extern' shader is merely another way of assigning shaders to combinations.\n\
@@ -113,7 +127,7 @@ proc do_extern { shade_var id } {
 }
 
 proc set_extern_values { shader_str id } {
-    global shader_params
+    variable shader_params
 
     if { [llength $shader_str] > 1 } then {
 	set params [lindex $shader_str 1]
@@ -133,7 +147,7 @@ proc set_extern_values { shader_str id } {
 }
 
 proc do_extern_apply { shade_var id } {
-    global shader_params
+    variable shader_params
     upvar #0 $shade_var shade_str
 
     set params ""
@@ -145,7 +159,7 @@ proc do_extern_apply { shade_var id } {
 }
 
 proc set_extern_defaults { id } {
-    global shader_params
+    variable shader_params
 
     set shader_params($id,extern_file) ""
 }
@@ -157,23 +171,23 @@ proc color_trigger { shade_var id name1 name2 op } {
 }
 
 proc do_camo {  shade_var id } {
-    global shader_params
+    variable shader_params
     upvar #0 $shade_var shader_str
 
     catch { destroy $shader_params($id,window).fr }
     frame $shader_params($id,window).fr
 
-    trace vdelete shader_params($id,c1) w "color_trigger $shade_var $id"
-    trace vdelete shader_params($id,c2) w "color_trigger $shade_var $id"
-    trace vdelete shader_params($id,c3) w "color_trigger $shade_var $id"
+    trace vdelete shader_params($id,c1) w [list ::brlcad::mged::shader::color_trigger $shade_var $id]
+    trace vdelete shader_params($id,c2) w [list ::brlcad::mged::shader::color_trigger $shade_var $id]
+    trace vdelete shader_params($id,c3) w [list ::brlcad::mged::shader::color_trigger $shade_var $id]
 
     set shader_params($id,c1) ""
     set shader_params($id,c2) ""
     set shader_params($id,c3) ""
 
     label $shader_params($id,window).fr.lacun -text Lacunarity
-    entry $shader_params($id,window).fr.lacun_e -width 7 -textvariable shader_params($id,lacun)
-    bind $shader_params($id,window).fr.lacun_e <KeyRelease> "do_shader_apply $shade_var $id"
+    entry $shader_params($id,window).fr.lacun_e -width 7 -textvariable ::brlcad::mged::shader::shader_params($id,lacun)
+    bind $shader_params($id,window).fr.lacun_e <KeyRelease> [list ::brlcad::mged::shader::do_shader_apply $shade_var $id]
     hoc_register_data $shader_params($id,window).fr.lacun "Lacunarity" {
 	{summary "The 'camo' shader creates a pseudo-random tri-color camouflage pattern\n\
 			on the object using a fractal noise pattern. This is a procedural shader\n\
@@ -198,8 +212,8 @@ proc do_camo {  shade_var id } {
     }
 
     label $shader_params($id,window).fr.h -text "H value"
-    entry $shader_params($id,window).fr.h_e -width 7 -textvariable shader_params($id,hval)
-    bind $shader_params($id,window).fr.h_e <KeyRelease> "do_shader_apply $shade_var $id"
+    entry $shader_params($id,window).fr.h_e -width 7 -textvariable ::brlcad::mged::shader::shader_params($id,hval)
+    bind $shader_params($id,window).fr.h_e <KeyRelease> [list ::brlcad::mged::shader::do_shader_apply $shade_var $id]
     hoc_register_data $shader_params($id,window).fr.h "H Value" {
 	{summary "The 'camo' shader creates a pseudo-random tri-color camouflage pattern\n\
 			on the object using a fractal noise pattern. This is a procedural shader\n\
@@ -220,8 +234,8 @@ proc do_camo {  shade_var id } {
     }
 
     label $shader_params($id,window).fr.octaves -text "Octaves"
-    entry $shader_params($id,window).fr.octaves_e -width 7 -textvariable shader_params($id,octaves)
-    bind $shader_params($id,window).fr.octaves_e <KeyRelease> "do_shader_apply $shade_var $id"
+    entry $shader_params($id,window).fr.octaves_e -width 7 -textvariable ::brlcad::mged::shader::shader_params($id,octaves)
+    bind $shader_params($id,window).fr.octaves_e <KeyRelease> [list ::brlcad::mged::shader::do_shader_apply $shade_var $id]
     hoc_register_data $shader_params($id,window).fr.octaves "Octaves" {
 	{summary "The 'camo' shader creates a pseudo-random tri-color camouflage pattern\n\
 			on the object using a fractal noise pattern. This is a procedural shader\n\
@@ -244,8 +258,8 @@ proc do_camo {  shade_var id } {
     }
 
     label $shader_params($id,window).fr.size -text "Noise Size"
-    entry $shader_params($id,window).fr.size_e -width 7 -textvariable shader_params($id,size)
-    bind $shader_params($id,window).fr.size_e <KeyRelease> "do_shader_apply $shade_var $id"
+    entry $shader_params($id,window).fr.size_e -width 7 -textvariable ::brlcad::mged::shader::shader_params($id,size)
+    bind $shader_params($id,window).fr.size_e <KeyRelease> [list ::brlcad::mged::shader::do_shader_apply $shade_var $id]
     hoc_register_data $shader_params($id,window).fr.size "Noise Size" {
 	{summary "The 'camo' shader creates a pseudo-random tri-color camouflage pattern\n\
 			on the object using a fractal noise pattern. This is a procedural shader\n\
@@ -266,8 +280,8 @@ proc do_camo {  shade_var id } {
     }
 
     label $shader_params($id,window).fr.scale -text "Noise Scale (X, Y, Z)"
-    entry $shader_params($id,window).fr.scale_e -width 20 -textvariable shader_params($id,scale)
-    bind $shader_params($id,window).fr.scale_e <KeyRelease> "do_shader_apply $shade_var $id"
+    entry $shader_params($id,window).fr.scale_e -width 20 -textvariable ::brlcad::mged::shader::shader_params($id,scale)
+    bind $shader_params($id,window).fr.scale_e <KeyRelease> [list ::brlcad::mged::shader::do_shader_apply $shade_var $id]
     hoc_register_data $shader_params($id,window).fr.scale "Noise Scale" {
 	{summary "The 'camo' shader creates a pseudo-random tri-color camouflage pattern\n\
 			on the object using a fractal noise pattern. This is a procedural shader\n\
@@ -291,9 +305,9 @@ proc do_camo {  shade_var id } {
 
     label $shader_params($id,window).fr.c1 -text "Color #1"
     frame $shader_params($id,window).fr.c1_e
-    color_entry_build $shader_params($id,window).fr.c1_e color shader_params($id,c1)\
+    color_entry_build $shader_params($id,window).fr.c1_e color ::brlcad::mged::shader::shader_params($id,c1)\
 	"color_entry_chooser $id $shader_params($id,window).fr.c1_e color \"Color #1\"\
-		 shader_params $id,c1"\
+		 ::brlcad::mged::shader::shader_params $id,c1"\
 	12 $shader_params($id,c1) not_rt
     hoc_register_data $shader_params($id,window).fr.c1 "Color #1" {
 	{summary "The 'camo' shader creates a pseudo-random tri-color camouflage pattern\n\
@@ -307,9 +321,9 @@ proc do_camo {  shade_var id } {
 
     label $shader_params($id,window).fr.c2 -text "Background Color"
     frame $shader_params($id,window).fr.c2_e
-    color_entry_build $shader_params($id,window).fr.c2_e color shader_params($id,c2)\
+    color_entry_build $shader_params($id,window).fr.c2_e color ::brlcad::mged::shader::shader_params($id,c2)\
 	"color_entry_chooser $id $shader_params($id,window).fr.c2_e color \"Background Color\"\
-		 shader_params $id,c2"\
+		 ::brlcad::mged::shader::shader_params $id,c2"\
 	12 $shader_params($id,c2) not_rt
     hoc_register_data $shader_params($id,window).fr.c2 "Background Color" {
 	{summary "The 'camo' shader creates a pseudo-random tri-color camouflage pattern\n\
@@ -323,9 +337,9 @@ proc do_camo {  shade_var id } {
 
     label $shader_params($id,window).fr.c3 -text "Color #2"
     frame $shader_params($id,window).fr.c3_e
-    color_entry_build $shader_params($id,window).fr.c3_e color shader_params($id,c3)\
+    color_entry_build $shader_params($id,window).fr.c3_e color ::brlcad::mged::shader::shader_params($id,c3)\
 	"color_entry_chooser $id $shader_params($id,window).fr.c3_e color \"Color #2\"\
-		 shader_params $id,c3"\
+		 ::brlcad::mged::shader::shader_params $id,c3"\
 	12 $shader_params($id,c3) not_rt
     hoc_register_data $shader_params($id,window).fr.c3 "Color #2" {
 	{summary "The 'camo' shader creates a pseudo-random tri-color camouflage pattern\n\
@@ -338,8 +352,8 @@ proc do_camo {  shade_var id } {
     }
 
     label $shader_params($id,window).fr.t1 -text "Threshold #1"
-    entry $shader_params($id,window).fr.t1_e -width 7 -textvariable  shader_params($id,t1)
-    bind $shader_params($id,window).fr.t1_e <KeyRelease> "do_shader_apply $shade_var $id"
+    entry $shader_params($id,window).fr.t1_e -width 7 -textvariable  ::brlcad::mged::shader::shader_params($id,t1)
+    bind $shader_params($id,window).fr.t1_e <KeyRelease> [list ::brlcad::mged::shader::do_shader_apply $shade_var $id]
     hoc_register_data $shader_params($id,window).fr.t1 "Noise Scale" {
 	{summary "The 'camo' shader creates a pseudo-random tri-color camouflage pattern\n\
 			on the object using a fractal noise pattern. This is a procedural shader\n\
@@ -362,8 +376,8 @@ proc do_camo {  shade_var id } {
     }
 
     label $shader_params($id,window).fr.t2 -text "Threshold #2"
-    entry $shader_params($id,window).fr.t2_e -width 7 -textvariable  shader_params($id,t2)
-    bind $shader_params($id,window).fr.t2_e <KeyRelease> "do_shader_apply $shade_var $id"
+    entry $shader_params($id,window).fr.t2_e -width 7 -textvariable  ::brlcad::mged::shader::shader_params($id,t2)
+    bind $shader_params($id,window).fr.t2_e <KeyRelease> [list ::brlcad::mged::shader::do_shader_apply $shade_var $id]
     hoc_register_data $shader_params($id,window).fr.t2 "Noise Scale" {
 	{summary "The 'camo' shader creates a pseudo-random tri-color camouflage pattern\n\
 			on the object using a fractal noise pattern. This is a procedural shader\n\
@@ -386,8 +400,8 @@ proc do_camo {  shade_var id } {
     }
 
     label $shader_params($id,window).fr.delta -text "Noise Delta (X, Y, Z)"
-    entry $shader_params($id,window).fr.delta_e -width 20  -textvariable shader_params($id,delta)
-    bind $shader_params($id,window).fr.delta_e <KeyRelease> "do_shader_apply $shade_var $id"
+    entry $shader_params($id,window).fr.delta_e -width 20  -textvariable ::brlcad::mged::shader::shader_params($id,delta)
+    bind $shader_params($id,window).fr.delta_e <KeyRelease> [list ::brlcad::mged::shader::do_shader_apply $shade_var $id]
     hoc_register_data $shader_params($id,window).fr.delta "Noise Delta" {
 	{summary "The 'camo' shader creates a pseudo-random tri-color camouflage pattern\n\
 			on the object using a fractal noise pattern. This is a procedural shader\n\
@@ -409,9 +423,9 @@ proc do_camo {  shade_var id } {
 
     set_camo_values $shader_str $id
 
-    trace variable shader_params($id,c1) w "color_trigger $shade_var $id"
-    trace variable shader_params($id,c2) w "color_trigger $shade_var $id"
-    trace variable shader_params($id,c3) w "color_trigger $shade_var $id"
+    trace variable shader_params($id,c1) w [list ::brlcad::mged::shader::color_trigger $shade_var $id]
+    trace variable shader_params($id,c2) w [list ::brlcad::mged::shader::color_trigger $shade_var $id]
+    trace variable shader_params($id,c3) w [list ::brlcad::mged::shader::color_trigger $shade_var $id]
 
     grid $shader_params($id,window).fr.c2 -row 0 -column 0 -columnspan 2 -sticky e
     grid $shader_params($id,window).fr.c2_e.colorF
@@ -445,7 +459,7 @@ proc do_camo {  shade_var id } {
 }
 
 proc set_camo_values { shader_str id } {
-    global shader_params
+    variable shader_params
 
     if { [llength $shader_str] > 1 } then {
 	set params [lindex $shader_str 1]
@@ -578,7 +592,7 @@ proc set_camo_values { shader_str id } {
 }
 
 proc do_camo_apply { shade_var id } {
-    global shader_params
+    variable shader_params
     upvar #0 $shade_var shade_str
 
     set params ""
@@ -675,7 +689,7 @@ proc do_camo_apply { shade_var id } {
 }
 
 proc set_camo_defaults { id } {
-    global shader_params
+    variable shader_params
 
     set shader_params($id,def_lacun) 2.1753974
     set shader_params($id,def_hval) 1.0
@@ -692,15 +706,15 @@ proc set_camo_defaults { id } {
 
 # Projection routines
 proc do_prj {  shade_var id } {
-    global shader_params
+    variable shader_params
     upvar #0 $shade_var shader_str
 
     catch { destroy $shader_params($id,window).fr }
     frame $shader_params($id,window).fr
 
     label $shader_params($id,window).fr.fname -text "Parameter File"
-    entry $shader_params($id,window).fr.fname_e -width 20 -textvariable shader_params($id,fname)
-    bind $shader_params($id,window).fr.fname_e <KeyRelease> "do_shader_apply $shade_var $id"
+    entry $shader_params($id,window).fr.fname_e -width 20 -textvariable ::brlcad::mged::shader::shader_params($id,fname)
+    bind $shader_params($id,window).fr.fname_e <KeyRelease> [list ::brlcad::mged::shader::do_shader_apply $shade_var $id]
 
     hoc_register_data $shader_params($id,window).fr.fname "File Name" {
 	{summary "The projection shader projects one or more images on the object.\n\
@@ -731,7 +745,7 @@ proc do_prj {  shade_var id } {
 }
 
 proc set_prj_values { shader_str id } {
-    global shader_params
+    variable shader_params
 
     set shader_params($id,fname) ""
 
@@ -752,7 +766,7 @@ proc set_prj_values { shader_str id } {
 }
 
 proc do_prj_apply { shade_var id } {
-    global shader_params
+    variable shader_params
     upvar #0 $shade_var shade_str
 
     set params ""
@@ -765,14 +779,14 @@ proc do_prj_apply { shade_var id } {
 }
 
 proc set_prj_defaults { id } {
-    global shader_params
+    variable shader_params
 
     set shader_params($id,fname) ""
 }
 
 # FAKESTAR routines
 proc do_fakestar { shade_var id } {
-    global shader_params
+    variable shader_params
     upvar #0 $shade_var shader_str
 
     catch { destroy $shader_params($id,window).fr }
@@ -809,7 +823,7 @@ proc set_fakestar_defaults { id } {
 
 # TESTMAP routines
 proc do_testmap { shade_var id } {
-    global shader_params
+    variable shader_params
     upvar #0 $shade_var shader_str
 
     catch { destroy $shader_params($id,window).fr }
@@ -846,21 +860,21 @@ proc set_testmap_defaults { id } {
 
 # CHECKER routines
 proc do_checker { shade_var id } {
-    global shader_params
+    variable shader_params
     upvar #0 $shade_var shader_str
 
     catch { destroy $shader_params($id,window).fr }
     frame $shader_params($id,window).fr
 
     label $shader_params($id,window).fr.color1 -text "First Color"
-    entry $shader_params($id,window).fr.color1_e -width 15 -textvariable shader_params($id,ckr_a)
-    bind $shader_params($id,window).fr.color1_e <KeyRelease> "do_shader_apply $shade_var $id"
+    entry $shader_params($id,window).fr.color1_e -width 15 -textvariable ::brlcad::mged::shader::shader_params($id,ckr_a)
+    bind $shader_params($id,window).fr.color1_e <KeyRelease> [list ::brlcad::mged::shader::do_shader_apply $shade_var $id]
     label $shader_params($id,window).fr.color2 -text "Second Color"
-    entry $shader_params($id,window).fr.color2_e -width 15 -textvariable shader_params($id,ckr_b)
-    bind $shader_params($id,window).fr.color2_e <KeyRelease> "do_shader_apply $shade_var $id"
+    entry $shader_params($id,window).fr.color2_e -width 15 -textvariable ::brlcad::mged::shader::shader_params($id,ckr_b)
+    bind $shader_params($id,window).fr.color2_e <KeyRelease> [list ::brlcad::mged::shader::do_shader_apply $shade_var $id]
     label $shader_params($id,window).fr.scale -text "Scale"
-    entry $shader_params($id,window).fr.scale_e -width 15 -textvariable shader_params($id,ckr_scale)
-    bind $shader_params($id,window).fr.scale_e <KeyRelease> "do_shader_apply $shade_var $id"
+    entry $shader_params($id,window).fr.scale_e -width 15 -textvariable ::brlcad::mged::shader::shader_params($id,ckr_scale)
+    bind $shader_params($id,window).fr.scale_e <KeyRelease> [list ::brlcad::mged::shader::do_shader_apply $shade_var $id]
 
     hoc_register_data $shader_params($id,window).fr.color1_e "First Color" {
 	{summary "Enter one of the colors to use in the checkerboard pattern\n\
@@ -911,7 +925,7 @@ proc do_checker { shade_var id } {
 }
 
 proc set_checker_values { shader_str id } {
-    global shader_params
+    variable shader_params
 
     set shader_params($id,ckr_a) $shader_params($id,def_ckr_a)
     set shader_params($id,ckr_b) $shader_params($id,def_ckr_b)
@@ -957,7 +971,7 @@ proc set_checker_values { shader_str id } {
 }
 
 proc do_checker_apply { shade_var id } {
-    global shader_params
+    variable shader_params
     upvar #0 $shade_var shader
 
     set params ""
@@ -990,7 +1004,7 @@ proc do_checker_apply { shade_var id } {
 }
 
 proc set_checker_defaults { id } {
-    global shader_params
+    variable shader_params
 
     set shader_params($id,def_ckr_a) [list 255 255 255]
     set shader_params($id,def_ckr_b) [list 0 0 0]
@@ -1012,36 +1026,36 @@ proc do_glass { shade_var id } {
 }
 
 proc do_phong { shade_var id } {
-    global shader_params
+    variable shader_params
     upvar #0 $shade_var shader_str
 
     catch { destroy $shader_params($id,window).fr }
     frame $shader_params($id,window).fr
 
     label $shader_params($id,window).fr.trans -text Transparency
-    entry $shader_params($id,window).fr.trans_e -width 5 -textvariable shader_params($id,trans)
-    bind $shader_params($id,window).fr.trans_e <KeyRelease> "do_shader_apply $shade_var $id"
+    entry $shader_params($id,window).fr.trans_e -width 5 -textvariable ::brlcad::mged::shader::shader_params($id,trans)
+    bind $shader_params($id,window).fr.trans_e <KeyRelease> [list ::brlcad::mged::shader::do_shader_apply $shade_var $id]
     label $shader_params($id,window).fr.refl -text "mirror reflectance"
-    entry $shader_params($id,window).fr.refl_e -width 5 -textvariable shader_params($id,refl)
-    bind $shader_params($id,window).fr.refl_e <KeyRelease> "do_shader_apply $shade_var $id"
+    entry $shader_params($id,window).fr.refl_e -width 5 -textvariable ::brlcad::mged::shader::shader_params($id,refl)
+    bind $shader_params($id,window).fr.refl_e <KeyRelease> [list ::brlcad::mged::shader::do_shader_apply $shade_var $id]
     label $shader_params($id,window).fr.spec -text "Specular reflectivity"
-    entry $shader_params($id,window).fr.spec_e -width 5 -textvariable shader_params($id,spec)
-    bind $shader_params($id,window).fr.spec_e <KeyRelease> "do_shader_apply $shade_var $id"
+    entry $shader_params($id,window).fr.spec_e -width 5 -textvariable ::brlcad::mged::shader::shader_params($id,spec)
+    bind $shader_params($id,window).fr.spec_e <KeyRelease> [list ::brlcad::mged::shader::do_shader_apply $shade_var $id]
     label $shader_params($id,window).fr.diff -text "Diffuse reflectivity"
-    entry $shader_params($id,window).fr.diff_e -width 5 -textvariable shader_params($id,diff)
-    bind $shader_params($id,window).fr.diff_e <KeyRelease> "do_shader_apply $shade_var $id"
+    entry $shader_params($id,window).fr.diff_e -width 5 -textvariable ::brlcad::mged::shader::shader_params($id,diff)
+    bind $shader_params($id,window).fr.diff_e <KeyRelease> [list ::brlcad::mged::shader::do_shader_apply $shade_var $id]
     label $shader_params($id,window).fr.ri -text "Refractive index"
-    entry $shader_params($id,window).fr.ri_e -width 5 -textvariable shader_params($id,ri)
-    bind $shader_params($id,window).fr.ri_e <KeyRelease> "do_shader_apply $shade_var $id"
+    entry $shader_params($id,window).fr.ri_e -width 5 -textvariable ::brlcad::mged::shader::shader_params($id,ri)
+    bind $shader_params($id,window).fr.ri_e <KeyRelease> [list ::brlcad::mged::shader::do_shader_apply $shade_var $id]
     label $shader_params($id,window).fr.shine -text Shininess
-    entry $shader_params($id,window).fr.shine_e -width 5 -textvariable shader_params($id,shine)
-    bind $shader_params($id,window).fr.shine_e <KeyRelease> "do_shader_apply $shade_var $id"
+    entry $shader_params($id,window).fr.shine_e -width 5 -textvariable ::brlcad::mged::shader::shader_params($id,shine)
+    bind $shader_params($id,window).fr.shine_e <KeyRelease> [list ::brlcad::mged::shader::do_shader_apply $shade_var $id]
     label $shader_params($id,window).fr.ext -text Extinction
-    entry $shader_params($id,window).fr.ext_e -width 5 -textvariable shader_params($id,ext)
-    bind $shader_params($id,window).fr.ext_e <KeyRelease> "do_shader_apply $shade_var $id"
+    entry $shader_params($id,window).fr.ext_e -width 5 -textvariable ::brlcad::mged::shader::shader_params($id,ext)
+    bind $shader_params($id,window).fr.ext_e <KeyRelease> [list ::brlcad::mged::shader::do_shader_apply $shade_var $id]
     label $shader_params($id,window).fr.emiss -text Emission
-    entry $shader_params($id,window).fr.emiss_e -width 5 -textvariable shader_params($id,emiss)
-    bind $shader_params($id,window).fr.emiss_e <KeyRelease> "do_shader_apply $shade_var $id"
+    entry $shader_params($id,window).fr.emiss_e -width 5 -textvariable ::brlcad::mged::shader::shader_params($id,emiss)
+    bind $shader_params($id,window).fr.emiss_e <KeyRelease> [list ::brlcad::mged::shader::do_shader_apply $shade_var $id]
 
     hoc_register_data $shader_params($id,window).fr.emiss Emissivity {
 	{summary "In addition to reflecting and transmitting light,\n\
@@ -1252,7 +1266,7 @@ proc set_mirror_values { shader_str id } {
 }
 
 proc set_phong_values { shader_str id } {
-    global shader_params
+    variable shader_params
 
     set shader_params($id,trans) $shader_params($id,def_trans)
     set shader_params($id,refl) $shader_params($id,def_refl)
@@ -1366,7 +1380,7 @@ proc do_mirror_apply { shade_var id } {
 
 
 proc do_phong_apply { id } {
-    global shader_params
+    variable shader_params
 
     set params ""
 
@@ -1417,7 +1431,7 @@ proc do_phong_apply { id } {
 }
 
 proc set_plastic_defaults { id } {
-    global shader_params
+    variable shader_params
 
     set shader_params($id,def_shine) 10
     set shader_params($id,def_spec) 0.7
@@ -1430,7 +1444,7 @@ proc set_plastic_defaults { id } {
 }
 
 proc set_mirror_defaults { id } {
-    global shader_params
+    variable shader_params
 
     set shader_params($id,def_shine) 4
     set shader_params($id,def_spec) 0.6
@@ -1443,7 +1457,7 @@ proc set_mirror_defaults { id } {
 }
 
 proc set_glass_defaults { id } {
-    global shader_params
+    variable shader_params
 
     set shader_params($id,def_shine) 4
     set shader_params($id,def_spec) 0.7
@@ -1466,7 +1480,7 @@ proc set_bwtexture_defaults { id } {
 }
 
 proc set_texture_defaults { id } {
-    global shader_params
+    variable shader_params
 
     set shader_params($id,def_width) 512
     set shader_params($id,def_height) 512
@@ -1481,7 +1495,7 @@ proc set_bwtexture_values { shader_str id } {
 }
 
 proc set_texture_values { shader_str id } {
-    global shader_params
+    variable shader_params
 
     #       make sure all the entry variables start empty
 
@@ -1555,7 +1569,7 @@ proc set_texture_values { shader_str id } {
     }
 }
 
-set light_data {
+variable light_data {
     e	fraction	f	1.0	"fraction of total light contributed"		"0..1" 		0 0 \
     e	angle		a	180	"angle of light cone"				"0..180" 	1 0 \
     e	target		d	{0 0 0}	"Point to which light is directed\n   (angle must be less than 180)"   "any X,Y,Z"	2 0 \
@@ -1567,8 +1581,8 @@ set light_data {
 
 
 proc set_light_defaults { id } {
-    global shader_params
-    global light_data
+    variable shader_params
+    variable light_data
 
     foreach {type name abbrev def_val desc range row col } $light_data {
 	set shader_params(def_light_$abbrev) $def_val
@@ -1578,8 +1592,8 @@ proc set_light_defaults { id } {
 }
 
 proc assign_light_defaults { id } {
-    global shader_params
-    global light_data
+    variable shader_params
+    variable light_data
 
     foreach {type name abbrev def_val desc range row col } $light_data {
 	set shader_params($id,light_$abbrev) $def_val
@@ -1589,8 +1603,8 @@ proc assign_light_defaults { id } {
 }
 
 proc do_light { shade_var id } {
-    global shader_params
-    global light_data
+    variable shader_params
+    variable light_data
     upvar #0 $shade_var shader_str
 
     # Destroy our frame in case it already exists
@@ -1627,10 +1641,10 @@ proc do_light { shade_var id } {
 	    e {
 		# Create the labeled entry widgets
 		grid [label $w.${abbrev}_lbl -text $name ] -row $row -column $col
-		grid [entry $w.${abbrev}_ent -width 10 -textvariable shader_params($id,light_$abbrev)]\
+		grid [entry $w.${abbrev}_ent -width 10 -textvariable ::brlcad::mged::shader::shader_params($id,light_$abbrev)]\
 		    -row $row -column [expr $col + 1]
 
-		bind $w.${abbrev}_ent <KeyRelease> "do_shader_apply $shade_var $id"
+		bind $w.${abbrev}_ent <KeyRelease> [list ::brlcad::mged::shader::do_shader_apply $shade_var $id]
 
 		hoc_register_data $w.${abbrev}_lbl $name [list [list summary $summary] [list range "$range (default: $def_val)"]]
 		hoc_register_data $w.${abbrev}_ent $name [list [list summary $summary] [list range "$range (default: $def_val)"]]
@@ -1638,8 +1652,8 @@ proc do_light { shade_var id } {
 	    c {
 		# Create checkboxes
 		grid [checkbutton $w.${abbrev} -text $name -relief sunken -bd 3 \
-			  -variable shader_params($id,light_$abbrev) \
-			  -command "do_shader_apply $shade_var $id"] \
+			  -variable ::brlcad::mged::shader::shader_params($id,light_$abbrev) \
+			  -command [list ::brlcad::mged::shader::do_shader_apply $shade_var $id]] \
 		    -row $row -column $col
 
 		hoc_register_data $w.${abbrev} $name [list [list summary $summary] [list range "$range (default: $def_val)"]]
@@ -1660,8 +1674,8 @@ proc do_light { shade_var id } {
     # Create the scale for shadow rays
     grid [scale $w.shadows -orient horiz -label "Shadow Rays" \
 	      -from 0 -to 64 -bd 3 -relief sunken \
-	      -command "light_scale $shade_var $id $w.icon"\
-	      -variable shader_params($id,light_s) ] \
+	      -command [list ::brlcad::mged::shader::light_scale $shade_var $id $w.icon]\
+	      -variable ::brlcad::mged::shader::shader_params($id,light_s) ] \
 	-row 0 -column 2 -rowspan 3 -columnspan 2 -sticky nesw
     hoc_register_data $w.shadows shadows [list [list summary "number of rays to fire at light source in determining shadow\n0 rays means no shadows"] [list range "0..64"]]
 
@@ -1684,7 +1698,7 @@ proc do_light { shade_var id } {
 
 # called when user modifies shader string directly
 proc set_light_values { shader_str id } {
-    global shader_params
+    variable shader_params
 
     # grab OUR shader parameters from the shader string
     if { [llength $shader_str] > 1 } then {
@@ -1733,7 +1747,7 @@ proc set_light_values { shader_str id } {
 # use do_shader_apply directly for scale widgets  That's why we have this
 # wrapper proc
 proc light_scale {shade_var id icon val args} {
-    global shader_params
+    variable shader_params
     do_shader_apply $shade_var $id
 }
 
@@ -1741,7 +1755,7 @@ proc light_scale {shade_var id icon val args} {
 # A shader string from it.
 # This is called when the user modifies a value in one of the entry widgets
 proc do_light_apply { shade_var id } {
-    global shader_params
+    variable shader_params
     upvar #0 $shade_var shader
 
     set params ""
@@ -1761,7 +1775,7 @@ proc do_light_apply { shade_var id } {
 }
 
 proc do_light_icon { id } {
-    global shader_params
+    variable shader_params
 
     set name ""
 
@@ -1791,7 +1805,7 @@ proc do_bwtexture_apply { shade_var id } {
 }
 
 proc do_texture_apply { shade_var id } {
-    global shader_params
+    variable shader_params
     upvar #0 $shade_var shader
 
     set params ""
@@ -1842,7 +1856,7 @@ proc do_bwtexture { shade_var id } {
 }
 
 proc do_texture { shade_var id } {
-    global shader_params
+    variable shader_params
     upvar #0 $shade_var shader_str
 
     catch { destroy $shader_params($id,window).fr }
@@ -1853,37 +1867,37 @@ proc do_texture { shade_var id } {
 
     label $shader_params($id,window).fr.file_fr.file -text "Texture File Name"
     entry $shader_params($id,window).fr.file_fr.file_e -width 20 \
-	-textvariable shader_params($id,file)
-    bind $shader_params($id,window).fr.file_fr.file_e <KeyRelease> "do_shader_apply $shade_var $id"
+	-textvariable ::brlcad::mged::shader::shader_params($id,file)
+    bind $shader_params($id,window).fr.file_fr.file_e <KeyRelease> [list ::brlcad::mged::shader::do_shader_apply $shade_var $id]
     label $shader_params($id,window).fr.file_fr.width -text "File Width (pixels)"
     entry $shader_params($id,window).fr.file_fr.width_e -width 5 \
-	-textvariable shader_params($id,width)
-    bind $shader_params($id,window).fr.file_fr.width_e <KeyRelease> "do_shader_apply $shade_var $id"
+	-textvariable ::brlcad::mged::shader::shader_params($id,width)
+    bind $shader_params($id,window).fr.file_fr.width_e <KeyRelease> [list ::brlcad::mged::shader::do_shader_apply $shade_var $id]
     label $shader_params($id,window).fr.file_fr.height -text "File height (pixels)"
     entry $shader_params($id,window).fr.file_fr.height_e -width 5 \
-	-textvariable shader_params($id,height)
+	-textvariable ::brlcad::mged::shader::shader_params($id,height)
     bind $shader_params($id,window).fr.file_fr.height_e \
-	<KeyRelease> "do_shader_apply $shade_var $id"
+	<KeyRelease> [list ::brlcad::mged::shader::do_shader_apply $shade_var $id]
     label $shader_params($id,window).fr.repl.mirror -text "Mirror Adjacent tiles"
     checkbutton $shader_params($id,window).fr.repl.mirror_e \
-	-variable shader_params($id,mirror) \
-	-command "do_shader_apply $shade_var $id"
+	-variable ::brlcad::mged::shader::shader_params($id,mirror) \
+	-command [list ::brlcad::mged::shader::do_shader_apply $shade_var $id]
     label $shader_params($id,window).fr.repl.u_scale -text "in U-direction"
     entry $shader_params($id,window).fr.repl.u_scale_e -width 4 \
-	-textvariable shader_params($id,tx_scale_u)
-    bind $shader_params($id,window).fr.repl.u_scale_e <KeyRelease> "do_shader_apply $shade_var $id"
+	-textvariable ::brlcad::mged::shader::shader_params($id,tx_scale_u)
+    bind $shader_params($id,window).fr.repl.u_scale_e <KeyRelease> [list ::brlcad::mged::shader::do_shader_apply $shade_var $id]
     label $shader_params($id,window).fr.repl.v_scale -text "in V-direction"
     entry $shader_params($id,window).fr.repl.v_scale_e -width 4 \
-	-textvariable shader_params($id,tx_scale_v)
-    bind $shader_params($id,window).fr.repl.v_scale_e <KeyRelease> "do_shader_apply $shade_var $id"
+	-textvariable ::brlcad::mged::shader::shader_params($id,tx_scale_v)
+    bind $shader_params($id,window).fr.repl.v_scale_e <KeyRelease> [list ::brlcad::mged::shader::do_shader_apply $shade_var $id]
     label $shader_params($id,window).fr.transp_fr.trans -text "Transparency (RGB)"
     entry $shader_params($id,window).fr.transp_fr.trans_e -width 11 \
-	-textvariable shader_params($id,transp)
+	-textvariable ::brlcad::mged::shader::shader_params($id,transp)
     bind $shader_params($id,window).fr.transp_fr.trans_e <KeyRelease> \
-	"do_shader_apply $shade_var $id"
+	[list ::brlcad::mged::shader::do_shader_apply $shade_var $id]
     checkbutton $shader_params($id,window).fr.transp_fr.valid_e \
-	-variable shader_params($id,trans_valid) \
-	-command  "do_shader_apply $shade_var $id"
+	-variable ::brlcad::mged::shader::shader_params($id,trans_valid) \
+	-command  [list ::brlcad::mged::shader::do_shader_apply $shade_var $id]
 
     hoc_register_data $shader_params($id,window).fr.file_e File {
 	{ summary "Enter the name of the file containing the texture to be mapped to this\n\
@@ -2047,7 +2061,7 @@ proc do_texture { shade_var id } {
 # STACK routines
 
 proc do_stack_apply { shade_var id } {
-    global shader_params
+    variable shader_params
     upvar #0 $shade_var shade_str
 
     # this may be called via a binding in some other shader and so might get the 'id' from
@@ -2088,13 +2102,13 @@ proc do_stack_apply { shade_var id } {
 }
 
 proc set_stack_defaults { id } {
-    global shader_params
+    variable shader_params
 
     set shader_params($id,stack_len) 0
 }
 
 proc stack_delete { index shade_var id } {
-    global shader_params
+    variable shader_params
 
     # destroy the shader subwindow
     catch {destroy $shader_params($id,stk_$index,window) }
@@ -2104,8 +2118,18 @@ proc stack_delete { index shade_var id } {
     set shader_params($id,stk_$index,shader_name) ""
 }
 
+proc _stack_delete_apply {index shade_var id} {
+    stack_delete $index $shade_var $id
+    do_shader_apply $shade_var $id
+}
+
+proc _stack_add_apply {shader shade_var id childsite} {
+    stack_add $shader $shade_var $id $childsite
+    do_shader_apply $shade_var $id
+}
+
 proc stack_add { shader shade_var id childsite} {
-    global shader_params
+    variable shader_params
 
     set index $shader_params($id,stack_len)
     incr shader_params($id,stack_len)
@@ -2121,8 +2145,8 @@ proc stack_add { shader shade_var id childsite} {
     set shader_params($id,stk_$index,shader_name) $shader
 
     button $childsite.stk_$index.del -text delete -width 8 \
-	-command "stack_delete $index $shade_var $id;\
-			do_shader_apply $shade_var $id"
+	-command [list ::brlcad::mged::shader::_stack_delete_apply \
+	    $index $shade_var $id]
     hoc_register_data $childsite.stk_$index.del "Delete" {
 	{summary "The 'stack' shader applies a series of shaders to the\n\
 			object being edited. This button will delete one shader\n\
@@ -2194,7 +2218,7 @@ proc stack_add { shader shade_var id childsite} {
 
 # do not call this routine without first deleting the index_th window
 proc stack_insert { index shader shade_var id } {
-    global shader_params
+    variable shader_params
 
     set childsite [$shader_params($id,window).fr.leesf childsite]
     frame $childsite.stk_$index -relief raised -bd 3
@@ -2206,8 +2230,8 @@ proc stack_insert { index shader shade_var id } {
 	label $childsite.stk_$index.lab -text "Unrecognized Shader" -bg CadetBlue -fg white
     }
     button $childsite.stk_$index.del -text delete -width 8 \
-	-command "stack_delete $index $shade_var $id;\
-			do_shader_apply $shade_var $id"
+	-command [list ::brlcad::mged::shader::_stack_delete_apply \
+	    $index $shade_var $id]
     hoc_register_data $childsite.stk_$index.del "Delete" {
 	{summary "The 'stack' shader applies a series of shaders to the\n\
 			object being edited. This button will delete one shader\n\
@@ -2286,7 +2310,7 @@ proc stack_insert { index shader shade_var id } {
 }
 
 proc set_stack_values { shade_str id } {
-    global shader_params
+    variable shader_params
 
     set err [catch "set shade_length [llength $shade_str]"]
     if { $err != 0 } {return}
@@ -2374,7 +2398,7 @@ proc set_stack_values { shade_str id } {
 }
 
 proc do_stack { shade_var id } {
-    global shader_params
+    variable shader_params
     upvar #0 $shade_var shade_str
 
     catch { destroy $shader_params($id,window).fr }
@@ -2393,38 +2417,28 @@ proc do_stack { shade_var id } {
     }
 
     menu $shader_params($id,window).fr.add.m -tearoff 0
-    $shader_params($id,window).fr.add.m add command \
-	-label plastic -command "stack_add plastic $shade_var $id $childsite; do_shader_apply $shade_var $id"
-    $shader_params($id,window).fr.add.m add command \
-	-label glass -command "stack_add glass $shade_var $id $childsite; do_shader_apply $shade_var $id"
-    $shader_params($id,window).fr.add.m add command \
-	-label mirror -command "stack_add mirror $shade_var $id $childsite; do_shader_apply $shade_var $id"
-
-    $shader_params($id,window).fr.add.m add command \
-	-label light -command "stack_add light $shade_var $id $childsite; do_shader_apply $shade_var $id"
-
-    $shader_params($id,window).fr.add.m add command \
-	-label "bump map" -command "stack_add bump $shade_var $id $childsite; do_shader_apply $shade_var $id"
-    $shader_params($id,window).fr.add.m add command \
-	-label texture -command "stack_add texture $shade_var $id $childsite; do_shader_apply $shade_var $id"
-    $shader_params($id,window).fr.add.m add command \
-	-label bwtexture -command "stack_add bwtexture $shade_var $id $childsite; do_shader_apply $shade_var $id"
-    $shader_params($id,window).fr.add.m add command \
-	-label fakestar -command "stack_add fakestar $shade_var $id $childsite; do_shader_apply $shade_var $id"
-    $shader_params($id,window).fr.add.m add command \
-	-label cloud -command "stack_add cloud $shade_var $id $childsite; do_shader_apply $shade_var $id"
-    $shader_params($id,window).fr.add.m add command \
-	-label checker -command "stack_add checker $shade_var $id $childsite; do_shader_apply $shade_var $id"
-    $shader_params($id,window).fr.add.m add command \
-	-label camouflage -command "stack_add camo $shade_var $id $childsite; do_shader_apply $shade_var $id"
-    $shader_params($id,window).fr.add.m add command \
-	-label projection -command "stack_add prj $shade_var $id $childsite; do_shader_apply $shade_var $id"
-    $shader_params($id,window).fr.add.m add command \
-	-label air -command "stack_add air $shade_var $id $childsite; do_shader_apply $shade_var $id"
-    $shader_params($id,window).fr.add.m add command \
-	-label testmap -command "stack_add testmap $shade_var $id $childsite; do_shader_apply $shade_var $id"
-    $shader_params($id,window).fr.add.m add command \
-	-label Unknown -command "stack_add unknown $shade_var $id $childsite; do_shader_apply $shade_var $id"
+    foreach {label shader} {
+	plastic plastic
+	glass glass
+	mirror mirror
+	light light
+	{bump map} bump
+	texture texture
+	bwtexture bwtexture
+	fakestar fakestar
+	cloud cloud
+	checker checker
+	camouflage camo
+	projection prj
+	air air
+	testmap testmap
+	Unknown unknown
+    } {
+	$shader_params($id,window).fr.add.m add command \
+	    -label $label \
+	    -command [list ::brlcad::mged::shader::_stack_add_apply \
+		$shader $shade_var $id $childsite]
+    }
 
     grid $shader_params($id,window).fr.add -columnspan 2 -row 0
     grid $shader_params($id,window).fr.leesf -sticky nsew -row 1
@@ -2443,7 +2457,7 @@ proc do_stack { shade_var id } {
 }
 
 proc env_select { shader shade_var id } {
-    global shader_params
+    variable shader_params
 
     if { [winfo exists $shader_params($id,window).fr.env] } {
 	set err [catch "set tmp $shader_params($id,env,shader_name)"]
@@ -2532,12 +2546,19 @@ proc env_select { shader shade_var id } {
     #	do_envmap_apply $shade_var $id
 }
 
+proc _env_select_apply {shader shade_var id} {
+    env_select $shader $shade_var $id
+    do_shader_apply $shade_var $id
+}
+
 proc set_envmap_defaults { id } {
+    variable shader_params
+
     set shader_params($id,env,shader_name) ""
 }
 
 proc do_envmap_apply { shade_var id } {
-    global shader_params
+    variable shader_params
     upvar #0 $shade_var shade_str
 
     set params ""
@@ -2567,7 +2588,7 @@ proc do_envmap_apply { shade_var id } {
 }
 
 proc set_envmap_values { shade_str id } {
-    global shader_params
+    variable shader_params
 
     set err [catch "set shade_length [llength $shade_str]"]
     if { $err != 0 } {return}
@@ -2604,7 +2625,7 @@ proc set_envmap_values { shade_str id } {
 }
 
 proc do_envmap { shade_var id } {
-    global shader_params
+    variable shader_params
     upvar #0 $shade_var shade_str
 
     catch { destroy $shader_params($id,window).fr }
@@ -2620,34 +2641,27 @@ proc do_envmap { shade_var id } {
     }
 
     menu $shader_params($id,window).fr.sel_env.m -tearoff 0
-    $shader_params($id,window).fr.sel_env.m add command \
-	-label plastic -command "env_select plastic $shade_var $id; do_shader_apply $shade_var $id"
-    $shader_params($id,window).fr.sel_env.m add command \
-	-label glass -command "env_select glass $shade_var $id; do_shader_apply $shade_var $id"
-    $shader_params($id,window).fr.sel_env.m add command \
-	-label mirror -command "env_select mirror $shade_var $id; do_shader_apply $shade_var $id"
-    $shader_params($id,window).fr.sel_env.m add command \
-	-label "bump map" -command "env_select bump $shade_var $id; do_shader_apply $shade_var $id"
-    $shader_params($id,window).fr.sel_env.m add command \
-	-label texture -command "env_select texture $shade_var $id; do_shader_apply $shade_var $id"
-    $shader_params($id,window).fr.sel_env.m add command \
-	-label bwtexture -command "env_select bwtexture $shade_var $id; do_shader_apply $shade_var $id"
-    $shader_params($id,window).fr.sel_env.m add command \
-	-label fakestar -command "env_select fakestar $shade_var $id; do_shader_apply $shade_var $id"
-    $shader_params($id,window).fr.sel_env.m add command \
-	-label cloud -command "env_select cloud $shade_var $id; do_shader_apply $shade_var $id"
-    $shader_params($id,window).fr.sel_env.m add command \
-	-label checker -command "env_select checker $shade_var $id; do_shader_apply $shade_var $id"
-    $shader_params($id,window).fr.sel_env.m add command \
-	-label camouflage -command "env_select camo $shade_var $id; do_shader_apply $shade_var $id"
-    $shader_params($id,window).fr.sel_env.m add command \
-	-label projection -command "env_select prj $shade_var $id; do_shader_apply $shade_var $id"
-    $shader_params($id,window).fr.sel_env.m add command \
-	-label testmap -command "env_select testmap $shade_var $id; do_shader_apply $shade_var $id"
-    $shader_params($id,window).fr.sel_env.m add command \
-	-label Unrecognized -command "env_select unknown $shade_var $id; do_shader_apply $shade_var $id"
-    $shader_params($id,window).fr.sel_env.m add command \
-	-label stack -command "env_select stack $shade_var $id; do_shader_apply $shade_var $id"
+    foreach {label shader} {
+	plastic plastic
+	glass glass
+	mirror mirror
+	{bump map} bump
+	texture texture
+	bwtexture bwtexture
+	fakestar fakestar
+	cloud cloud
+	checker checker
+	camouflage camo
+	projection prj
+	testmap testmap
+	Unrecognized unknown
+	stack stack
+    } {
+	$shader_params($id,window).fr.sel_env.m add command \
+	    -label $label \
+	    -command [list ::brlcad::mged::shader::_env_select_apply \
+		$shader $shade_var $id]
+    }
 
     grid $shader_params($id,window).fr.sel_env
 
@@ -2659,18 +2673,18 @@ proc do_envmap { shade_var id } {
 }
 
 proc do_cloud { shade_var id } {
-    global shader_params
+    variable shader_params
     upvar #0 $shade_var shader_str
 
     catch { destroy $shader_params($id,window).fr }
     frame $shader_params($id,window).fr
 
     label $shader_params($id,window).fr.cl_thresh -text Threshold
-    entry $shader_params($id,window).fr.cl_thresh_e -width 5 -textvariable shader_params($id,cl_thresh)
-    bind $shader_params($id,window).fr.cl_thresh_e <KeyRelease> "do_shader_apply $shade_var $id"
+    entry $shader_params($id,window).fr.cl_thresh_e -width 5 -textvariable ::brlcad::mged::shader::shader_params($id,cl_thresh)
+    bind $shader_params($id,window).fr.cl_thresh_e <KeyRelease> [list ::brlcad::mged::shader::do_shader_apply $shade_var $id]
     label $shader_params($id,window).fr.cl_range -text Range
-    entry $shader_params($id,window).fr.cl_range_e -width 5 -textvariable shader_params($id,cl_range)
-    bind $shader_params($id,window).fr.cl_range_e <KeyRelease> "do_shader_apply $shade_var $id"
+    entry $shader_params($id,window).fr.cl_range_e -width 5 -textvariable ::brlcad::mged::shader::shader_params($id,cl_range)
+    bind $shader_params($id,window).fr.cl_range_e <KeyRelease> [list ::brlcad::mged::shader::do_shader_apply $shade_var $id]
 
     hoc_register_data $shader_params($id,window).fr.cl_thresh Threshold {
 	{summary "A value (from 0 to 1) is calculated for each point in the texture\n\
@@ -2712,7 +2726,7 @@ proc do_cloud { shade_var id } {
 }
 
 proc set_cloud_values { shader_str id } {
-    global shader_params
+    variable shader_params
 
     set shader_params($id,cl_thresh) $shader_params($id,def_cl_thresh)
     set shader_params($id,cl_range) $shader_params($id,def_cl_range)
@@ -2749,7 +2763,7 @@ proc set_cloud_values { shader_str id } {
 }
 
 proc do_cloud_apply { shade_var id } {
-    global shader_params
+    variable shader_params
     upvar #0 $shade_var shader
 
     set params ""
@@ -2771,25 +2785,25 @@ proc do_cloud_apply { shade_var id } {
 }
 
 proc set_cloud_defaults { id } {
-    global shader_params
+    variable shader_params
 
     set shader_params($id,def_cl_thresh) 0.35
     set shader_params($id,def_cl_range) 0.3
 }
 
 proc do_unknown { shade_var id } {
-    global shader_params
+    variable shader_params
     upvar #0 $shade_var shader_str
 
     catch { destroy $shader_params($id,window).fr }
     frame $shader_params($id,window).fr
 
     label $shader_params($id,window).fr.name -text "Shader Name"
-    entry $shader_params($id,window).fr.name_e -width 15 -textvariable shader_params($id,unk_name)
-    bind $shader_params($id,window).fr.name_e <KeyRelease> "do_shader_apply $shade_var $id"
+    entry $shader_params($id,window).fr.name_e -width 15 -textvariable ::brlcad::mged::shader::shader_params($id,unk_name)
+    bind $shader_params($id,window).fr.name_e <KeyRelease> [list ::brlcad::mged::shader::do_shader_apply $shade_var $id]
     label $shader_params($id,window).fr.param -text "Shader Parameters"
-    entry $shader_params($id,window).fr.param_e -width 20 -textvariable shader_params($id,unk_param)
-    bind $shader_params($id,window).fr.param_e <KeyRelease> "do_shader_apply $shade_var $id"
+    entry $shader_params($id,window).fr.param_e -width 20 -textvariable ::brlcad::mged::shader::shader_params($id,unk_param)
+    bind $shader_params($id,window).fr.param_e <KeyRelease> [list ::brlcad::mged::shader::do_shader_apply $shade_var $id]
 
     hoc_register_data $shader_params($id,window).fr.name_e "Shader Name" {
 	{summary "Enter the name of a BRL-CAD shader"}
@@ -2819,7 +2833,7 @@ proc do_unknown { shade_var id } {
 }
 
 proc set_unknown_values { shader_str id } {
-    global shader_params
+    variable shader_params
 
     set shader_params($id,unk_param) ""
 
@@ -2846,7 +2860,7 @@ proc set_unknown_values { shader_str id } {
 }
 
 proc do_unknown_apply { shade_var id } {
-    global shader_params
+    variable shader_params
     upvar #0 $shade_var shader
     set shader [list $shader_params($id,unk_name) $shader_params($id,unk_param)]
 
@@ -2860,23 +2874,23 @@ proc set_unknown_defaults { id } {
 }
 
 proc do_air { shade_var id } {
-    global shader_params
+    variable shader_params
     upvar #0 $shade_var shader_str
 
     catch { destroy $shader_params($id,window).fr }
     frame $shader_params($id,window).fr
 
     label $shader_params($id,window).fr.density -text "Density"
-    entry $shader_params($id,window).fr.density_e -width 5 -textvariable shader_params($id,density)
-    bind $shader_params($id,window).fr.density_e <KeyRelease> "do_shader_apply $shade_var $id"
+    entry $shader_params($id,window).fr.density_e -width 5 -textvariable ::brlcad::mged::shader::shader_params($id,density)
+    bind $shader_params($id,window).fr.density_e <KeyRelease> [list ::brlcad::mged::shader::do_shader_apply $shade_var $id]
 
     label $shader_params($id,window).fr.delta -text "Delta"
-    entry $shader_params($id,window).fr.delta_e -width 5 -textvariable shader_params($id,delta)
-    bind $shader_params($id,window).fr.delta_e <KeyRelease> "do_shader_apply $shade_var $id"
+    entry $shader_params($id,window).fr.delta_e -width 5 -textvariable ::brlcad::mged::shader::shader_params($id,delta)
+    bind $shader_params($id,window).fr.delta_e <KeyRelease> [list ::brlcad::mged::shader::do_shader_apply $shade_var $id]
 
     label $shader_params($id,window).fr.scale -text "Scale"
-    entry $shader_params($id,window).fr.scale_e -width 5 -textvariable shader_params($id,air_scale)
-    bind $shader_params($id,window).fr.scale_e <KeyRelease> "do_shader_apply $shade_var $id"
+    entry $shader_params($id,window).fr.scale_e -width 5 -textvariable ::brlcad::mged::shader::shader_params($id,air_scale)
+    bind $shader_params($id,window).fr.scale_e <KeyRelease> [list ::brlcad::mged::shader::do_shader_apply $shade_var $id]
 
     hoc_register_data $shader_params($id,window).fr.density "Density" {
 	{summary "The 'air' shader implements Beer's law to produce realistic\n\
@@ -2908,7 +2922,7 @@ proc do_air { shade_var id } {
 }
 
 proc set_air_values { shader_str id } {
-    global shader_params
+    variable shader_params
 
     set shader_params($id,density) $shader_params($id,def_density)
     set shader_params($id,delta) $shader_params($id,def_delta)
@@ -2958,7 +2972,7 @@ proc set_air_values { shader_str id } {
 }
 
 proc do_air_apply { shade_var id } {
-    global shader_params
+    variable shader_params
     upvar #0 $shade_var shade_str
 
     set params ""
@@ -2985,7 +2999,7 @@ proc do_air_apply { shade_var id } {
 }
 
 proc set_air_defaults { id } {
-    global shader_params
+    variable shader_params
 
     set shader_params($id,def_density) 0.1
     set shader_params($id,def_air_scale) 0.01
@@ -2995,7 +3009,8 @@ proc set_air_defaults { id } {
 # This proc is called whenever the user types in the main 'shader' entry widget
 proc set_shader_params { shade_var id } {
     upvar #0 $shade_var shade_str
-    global shader_params errorInfo
+    variable shader_params
+    global errorInfo
 
     set err [catch "set shader [lindex $shade_str 0]"]
     if { $err != 0 } {return}
@@ -3022,7 +3037,8 @@ proc set_shader_params { shade_var id } {
 #	to hold the shader string, e.g., "plastic { sh 8 dp .1 }"
 #	These routines will update that variable
 proc do_shader { shade_var id frame_name } {
-    global shader_params errorInfo
+    variable shader_params
+    global errorInfo
     upvar #0 $shade_var shade_str
 
     set shader_params($id,parent_window_id) $id
@@ -3038,7 +3054,7 @@ proc do_shader { shade_var id frame_name } {
 	if { [llength [info procs do_$material]] == 1 &&
 	     [llength [info procs set_${material}_defaults]] == 1} {
 	    set_${material}_defaults $id
-	    set mywin [do_$material $shade_var $id]
+	    set my_win [do_$material $shade_var $id]
 	} else {
 	    set_unknown_defaults $id
 	    set my_win [do_unknown $shade_var $id]
@@ -3066,6 +3082,26 @@ proc do_shader_apply { shade_var id } {
 proc is_good_shader { shader } {
 
     return [llength [info procs do_$shader] ]
+}
+
+}
+
+# Keep the historical shader entry points autoloadable while implementation
+# details and state remain in their owning namespace.
+proc set_shader_params {shade_var id} {
+    tailcall ::brlcad::mged::shader::set_shader_params $shade_var $id
+}
+
+proc do_shader {shade_var id frame_name} {
+    tailcall ::brlcad::mged::shader::do_shader $shade_var $id $frame_name
+}
+
+proc do_shader_apply {shade_var id} {
+    tailcall ::brlcad::mged::shader::do_shader_apply $shade_var $id
+}
+
+proc is_good_shader {shader} {
+    tailcall ::brlcad::mged::shader::is_good_shader $shader
 }
 
 # Local Variables:

@@ -23,8 +23,11 @@
 #	Routines common to the BRL-CAD help system.
 #
 
+namespace eval ::brlcad::help {
+
 proc help_comm {data args} {
     global $data
+    set info ""
 
     if {[llength $args] > 0} {
 	foreach cmd [join $args] {
@@ -46,6 +49,7 @@ proc help_comm {data args} {
 proc ?_comm {data min ncol} {
     global $data
 
+    set info ""
     set i 1
     foreach cmd [lsort [array names [subst $data]]] {
 	append info [format "%-[subst $min]s" $cmd]
@@ -322,7 +326,7 @@ proc manpage_search_files {sections} {
 
 
 proc manpage_search_index_file {name section path format} {
-    global manpage_search_cache
+    variable manpage_search_cache
 
     set key "$path|$format"
     if {[info exists manpage_search_cache($key)]} {
@@ -420,6 +424,82 @@ proc manpage_search {query args} {
 
     return [string trimright $info]
 }
+
+}
+
+# Declare these wrappers individually so Tcl's indexer keeps the
+# historical commands autoloadable.
+proc help_comm {data args} {
+    tailcall ::brlcad::help::help_comm $data {*}$args
+}
+proc ?_comm {data min ncol} {
+    tailcall ::brlcad::help::?_comm $data $min $ncol
+}
+proc apropos_comm {data key} {
+    tailcall ::brlcad::help::apropos_comm $data $key
+}
+proc manpage_search_terms {query} {
+    tailcall ::brlcad::help::manpage_search_terms $query
+}
+proc manpage_search_count {haystack needle} {
+    tailcall ::brlcad::help::manpage_search_count $haystack $needle
+}
+proc manpage_search_score {query fields} {
+    tailcall ::brlcad::help::manpage_search_score $query $fields
+}
+proc manpage_search_normalize {text} {
+    tailcall ::brlcad::help::manpage_search_normalize $text
+}
+proc manpage_search_html_to_text {html} {
+    tailcall ::brlcad::help::manpage_search_html_to_text $html
+}
+proc manpage_search_html_section {html section} {
+    tailcall ::brlcad::help::manpage_search_html_section $html $section
+}
+proc manpage_search_roff_inline {line} {
+    tailcall ::brlcad::help::manpage_search_roff_inline $line
+}
+proc manpage_search_roff_macro_text {line} {
+    tailcall ::brlcad::help::manpage_search_roff_macro_text $line
+}
+proc manpage_search_roff_to_text {roff} {
+    tailcall ::brlcad::help::manpage_search_roff_to_text $roff
+}
+proc manpage_search_roff_section {roff section} {
+    tailcall ::brlcad::help::manpage_search_roff_section $roff $section
+}
+proc manpage_search_section_text {raw format section} {
+    tailcall ::brlcad::help::manpage_search_section_text $raw $format $section
+}
+proc manpage_search_plain_text {raw format} {
+    tailcall ::brlcad::help::manpage_search_plain_text $raw $format
+}
+proc manpage_search_summary {name_section} {
+    tailcall ::brlcad::help::manpage_search_summary $name_section
+}
+proc manpage_search_section_dir {section} {
+    tailcall ::brlcad::help::manpage_search_section_dir $section
+}
+proc manpage_search_section_label {section_dir} {
+    tailcall ::brlcad::help::manpage_search_section_label $section_dir
+}
+proc manpage_search_ext {section_dir format} {
+    tailcall ::brlcad::help::manpage_search_ext $section_dir $format
+}
+proc manpage_search_files {sections} {
+    tailcall ::brlcad::help::manpage_search_files $sections
+}
+proc manpage_search_index_file {name section path format} {
+    tailcall ::brlcad::help::manpage_search_index_file $name $section $path $format
+}
+proc manpage_search_rank_record {query mode record} {
+    tailcall ::brlcad::help::manpage_search_rank_record $query $mode $record
+}
+proc manpage_search {query args} {
+    tailcall ::brlcad::help::manpage_search $query {*}$args
+}
+
+package provide brlcad::help 1.0
 
 # Local Variables:
 # mode: Tcl

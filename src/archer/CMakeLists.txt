@@ -55,26 +55,29 @@ set(
   archer_utility_FILES
   plugins/Utility/README
   plugins/Utility/attrGroupsDisplayUtilityP.tcl
-  plugins/Utility/attrGroupsDisplayUtilityP/AttrGroupsDisplayUtilityP.tcl
   plugins/Utility/botUtilityP.tcl
-  plugins/Utility/botUtilityP/BotUtilityP.tcl
   plugins/Utility/lodUtilityP.tcl
-  plugins/Utility/lodUtilityP/LODUtilityP.tcl
 )
 set(archer_wizard_FILES
   plugins/Wizards/humanwizard.tcl
-  plugins/Wizards/humanwizard/HumanWizard.tcl
   plugins/Wizards/tankwizard.tcl
+  plugins/Wizards/tirewizard.tcl
+)
+set(
+  archer_plugin_support_FILES
+  plugins/Utility/attrGroupsDisplayUtilityP/AttrGroupsDisplayUtilityP.tcl
+  plugins/Utility/botUtilityP/BotUtilityP.tcl
+  plugins/Utility/lodUtilityP/LODUtilityP.tcl
+  plugins/Wizards/humanwizard/HumanWizard.tcl
   plugins/Wizards/tankwizard/TankWizard.tcl
   plugins/Wizards/tankwizard/images/tank.png
-  plugins/Wizards/tirewizard.tcl
   plugins/Wizards/tirewizard/TireWizard.tcl
 )
 
 if(BRLCAD_ENABLE_TCL)
   # Archer scans only the plugin category directories for registration scripts.
   # Keep class definitions in their subdirectories so they are not sourced twice.
-  foreach(plugin_file IN LISTS archer_utility_FILES archer_wizard_FILES)
+  foreach(plugin_file IN LISTS archer_utility_FILES archer_wizard_FILES archer_plugin_support_FILES)
     get_filename_component(plugin_dir "${plugin_file}" DIRECTORY)
     file(RELATIVE_PATH plugin_dir "${CMAKE_CURRENT_SOURCE_DIR}/plugins" "${CMAKE_CURRENT_SOURCE_DIR}/${plugin_dir}")
     brlcad_adddata("${plugin_file}" "plugins/archer/${plugin_dir}")
@@ -90,6 +93,7 @@ set(
   plugins/Core/README
   ${archer_utility_FILES}
   ${archer_wizard_FILES}
+  ${archer_plugin_support_FILES}
   ${archer_txt}
   archer_launch.tcl
   archer.c

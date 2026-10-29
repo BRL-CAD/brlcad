@@ -99,8 +99,20 @@ if ![info exists mged_default(font_init)] {
     set mged_default(font_init) ""
 }
 
-if ![info exists font_scheme_data] {
-    set font_scheme_data { {fs_button_font button_font Buttons}
+namespace eval ::brlcad::mged::font {
+
+namespace export font_gui_init font_init font_scheme_init
+
+variable font_gui
+
+# Preserve startup customization while moving this private data out of the
+# global namespace.
+if {[info exists ::font_scheme_data]} {
+    variable font_scheme_data $::font_scheme_data
+    unset ::font_scheme_data
+} elseif {![info exists font_scheme_data]} {
+    variable font_scheme_data {
+	{fs_button_font button_font Buttons}
 	{fs_entry_font entry_font Entries}
 	{fs_label_font label_font Labels}
 	{fs_list_font list_font Lists}
@@ -119,19 +131,19 @@ proc font_init {} {
     global mged_default
 
     # create named fonts used by GUI components
-    eval font create text_font $mged_default(text_font)
-    eval font create menu_font $mged_default(menu_font)
-    eval font create button_font $mged_default(button_font)
-    eval font create menubutton_font $mged_default(menubutton_font)
-    eval font create list_font $mged_default(list_font)
-    eval font create label_font $mged_default(label_font)
-    eval font create entry_font $mged_default(entry_font)
+    font create text_font {*}$mged_default(text_font)
+    font create menu_font {*}$mged_default(menu_font)
+    font create button_font {*}$mged_default(button_font)
+    font create menubutton_font {*}$mged_default(menubutton_font)
+    font create list_font {*}$mged_default(list_font)
+    font create label_font {*}$mged_default(label_font)
+    font create entry_font {*}$mged_default(entry_font)
 
     # create named fonts used by the font gui
-    eval font create bold_font $mged_default(bold_font)
-    eval font create italic_font $mged_default(italic_font)
-    eval font create underline_font $mged_default(underline_font)
-    eval font create overstrike_font $mged_default(overstrike_font)
+    font create bold_font {*}$mged_default(bold_font)
+    font create italic_font {*}$mged_default(italic_font)
+    font create underline_font {*}$mged_default(underline_font)
+    font create overstrike_font {*}$mged_default(overstrike_font)
 
     option add *Text.font text_font
     option add *Menu.font menu_font
@@ -149,8 +161,8 @@ proc font_init {} {
 proc font_scheme_init { id } {
     global mged_gui
     global mged_default
-    global font_gui
-    global font_scheme_data
+    variable font_gui
+    variable font_scheme_data
 
     set top .$id.font_scheme
     set gui_top .$id.font_gui
@@ -177,21 +189,22 @@ proc font_scheme_init { id } {
 	set fstitle [lindex $datum 2]
 
 	if {$fname == {}} {
-	    set cb font_scheme_callback_all
+	    set cb ::brlcad::mged::font::font_scheme_callback_all
+	    set fconfig {}
 
 	    #  Create the named font fs_all_font.
-	    catch {eval font create $fsname $mged_default(all_font)}
+	    catch {font create $fsname {*}$mged_default(all_font)}
 
 	    # make l2 and l3 placeholders
 	    set l2 x
 	    set l3 x
 	} else {
-	    set cb font_scheme_callback
+	    set cb ::brlcad::mged::font::font_scheme_callback
 
 	    # Create the named font used by the font scheme control panel
 	    #     and initialize with the font used by the GUI component.
 	    set fconfig [font configure $fname]
-	    catch {eval font create $fsname $fconfig}
+	    catch {font create $fsname {*}$fconfig}
 
 	    set l2 $top._$fstitle\L2
 	    set l3 $top._$fstitle\L3
@@ -209,13 +222,14 @@ proc font_scheme_init { id } {
 
     ################## buttons along bottom ##################
     button $top.okB -relief raised -text "OK"\
-	-command "font_scheme_ok $id $top $gui_top"
+	-command [list ::brlcad::mged::font::font_scheme_ok $id $top $gui_top]
     button $top.applyB -relief raised -text "Apply"\
-	-command "font_scheme_apply $id"
+	-command [list ::brlcad::mged::font::font_scheme_apply $id]
     button $top.resetB -relief raised -text "Reset"\
-	-command "font_scheme_reset $id $top"
+	-command [list ::brlcad::mged::font::font_scheme_reset $id $top]
     button $top.dismissB -relief raised -text "Dismiss"\
-	-command "font_scheme_dismiss $id $top $gui_top"
+	-command [list ::brlcad::mged::font::font_scheme_dismiss \
+	    $id $top $gui_top]
     grid $top.okB $top.applyB x $top.resetB x $top.dismissB -sticky nsew -in $top.gridF2
     grid columnconfigure $top.gridF2 2 -weight 1
     grid columnconfigure $top.gridF2 4 -weight 1
@@ -231,7 +245,7 @@ proc font_scheme_init { id } {
 
     # disallow the user to resize
     wm resizable $top 0 0
-    wm protocol $top WM_DELETE_WINDOW "catch { destroy $top }"
+    wm protocol $top WM_DELETE_WINDOW [list catch [list destroy $top]]
     wm title $top "Fonts"
 }
 
@@ -249,24 +263,23 @@ proc font_scheme_build_display { id top gui_top fsname fstitle fconfig cb l1 l2 
     }
 
     menubutton $mb -menu $mbm -indicatoron 1
-    #	bind $mb <Enter> "%W configure -relief raised; break"
-    #	bind $mb <Leave> "%W configure -relief flat; break"
     menu $mbm -title "" -tearoff $mged_default(tearoff_menus)
 
-    $mbm add command -label "courier 12" \
-	-command " $cb $id $top $fsname $fstitle \"-family courier -size 12 -weight normal -slant roman -underline 0 -overstrike 0\""
-    $mbm add command -label "courier 18" \
-	-command "$cb $id $top $fsname $fstitle \"-family courier -size 18 -weight normal -slant roman -underline 0 -overstrike 0\""
-    $mbm add command -label "fixed 12" \
-	-command "$cb $id $top $fsname $fstitle \"-family fixed -size 12 -weight normal -slant roman -underline 0 -overstrike 0\""
-    $mbm add command -label "fixed 18" \
-	-command "$cb $id $top $fsname $fstitle \"-family fixed -size 18 -weight normal -slant roman -underline 0 -overstrike 0\""
-    $mbm add command -label "helvetica 12" \
-	-command "$cb $id $top $fsname $fstitle \"-family helvetica -size 12 -weight normal -slant roman -underline 0 -overstrike 0\""
-    $mbm add command -label "helvetica 18" \
-	-command "$cb $id $top $fsname $fstitle \"-family helvetica -size 18 -weight normal -slant roman -underline 0 -overstrike 0\""
+    foreach {label config} {
+	{courier 12} {-family courier -size 12 -weight normal -slant roman -underline 0 -overstrike 0}
+	{courier 18} {-family courier -size 18 -weight normal -slant roman -underline 0 -overstrike 0}
+	{fixed 12} {-family fixed -size 12 -weight normal -slant roman -underline 0 -overstrike 0}
+	{fixed 18} {-family fixed -size 18 -weight normal -slant roman -underline 0 -overstrike 0}
+	{helvetica 12} {-family helvetica -size 12 -weight normal -slant roman -underline 0 -overstrike 0}
+	{helvetica 18} {-family helvetica -size 18 -weight normal -slant roman -underline 0 -overstrike 0}
+    } {
+	$mbm add command -label $label \
+	    -command [list $cb $id $top $fsname $fstitle $config]
+    }
+    set callback [list $cb $id $top $fsname $fstitle]
     $mbm add command -label "Font Tool..." \
-	-command "font_gui_init $id $gui_top $fsname $fstitle \"$cb $id $top $fsname $fstitle\""
+	-command [list ::brlcad::mged::font::font_gui_init \
+	    $id $gui_top $fsname $fstitle $callback]
 }
 
 ## - font_gui_init
@@ -275,15 +288,19 @@ proc font_scheme_build_display { id top gui_top fsname fstitle fconfig cb l1 l2 
 #
 proc font_gui_init { id top fname title callback } {
     global mged_gui
-    global font_gui
+    variable font_gui
 
     if [winfo exists $top] {
 	set font_gui($id,callback) $callback
 	font_set_name $id $fname
-	font_bindCB $id $top.weightCB font_gui($id,weight) bold 0
-	font_bindCB $id $top.slantCB font_gui($id,slant) italic 0
-	font_bindCB $id $top.underlineCB font_gui($id,underline) 1 0
-	font_bindCB $id $top.overstrikeCB font_gui($id,overstrike) 1 0
+	font_bindCB $top.weightCB \
+	    ::brlcad::mged::font::font_gui($id,weight) bold 0
+	font_bindCB $top.slantCB \
+	    ::brlcad::mged::font::font_gui($id,slant) italic 0
+	font_bindCB $top.underlineCB \
+	    ::brlcad::mged::font::font_gui($id,underline) 1 0
+	font_bindCB $top.overstrikeCB \
+	    ::brlcad::mged::font::font_gui($id,overstrike) 1 0
 	wm title $top "$title Font"
 
 	raise $top
@@ -307,63 +324,72 @@ proc font_gui_init { id top fname title callback } {
 
     # family
     menubutton $top.familyMB -relief raised -bd 2 -indicatoron 1 \
-	-textvariable font_gui($id,family) \
+	-textvariable ::brlcad::mged::font::font_gui($id,family) \
 	-menu $top.familyMB.menu
     font_build_familyM $id $top.familyMB.menu
 
     # size
     frame $top.sizeF -relief sunken -bd 2
-    entry $top.sizeE -relief flat -textvariable font_gui($id,size) -width 3
+    entry $top.sizeE -relief flat \
+	-textvariable ::brlcad::mged::font::font_gui($id,size) -width 3
     menubutton $top.sizeMB -relief raised -bd 2 -indicatoron 1 -menu $top.sizeMB.menu
     font_build_sizeM $id $top.sizeMB.menu
     grid $top.sizeE $top.sizeMB -sticky nsew -in $top.sizeF
     grid rowconfigure $top.sizeF 0 -weight 1
     grid columnconfigure $top.sizeF 0 -weight 1
-    bind $top.sizeE <Return> "font_update $id"
+    bind $top.sizeE <Return> [list ::brlcad::mged::font::font_update $id]
 
     # weight
     checkbutton $top.weightCB -offvalue normal -onvalue bold \
-	-variable font_gui($id,weight) \
+	-variable ::brlcad::mged::font::font_gui($id,weight) \
 	-indicatoron 0 \
 	-width 2 \
 	-text B \
 	-font bold_font \
 	-selectcolor #ececec \
-	-command "font_bindCB $id $top.weightCB font_gui($id,weight) bold 1; font_update $id"
-    font_bindCB $id $top.weightCB font_gui($id,weight) bold 0
+	-command [list ::brlcad::mged::font::font_toggle $id \
+	    $top.weightCB ::brlcad::mged::font::font_gui($id,weight) bold]
+    font_bindCB $top.weightCB \
+	::brlcad::mged::font::font_gui($id,weight) bold 0
 
     # slant
     checkbutton $top.slantCB -offvalue roman -onvalue italic \
-	-variable font_gui($id,slant) \
+	-variable ::brlcad::mged::font::font_gui($id,slant) \
 	-indicatoron 0 \
 	-width 2 \
 	-text I \
 	-font italic_font \
 	-selectcolor #ececec \
-	-command "font_bindCB $id $top.slantCB font_gui($id,slant) italic 1; font_update $id"
-    font_bindCB $id $top.slantCB font_gui($id,slant) italic 0
+	-command [list ::brlcad::mged::font::font_toggle $id \
+	    $top.slantCB ::brlcad::mged::font::font_gui($id,slant) italic]
+    font_bindCB $top.slantCB \
+	::brlcad::mged::font::font_gui($id,slant) italic 0
 
     # underline
     checkbutton $top.underlineCB -offvalue 0 -onvalue 1 \
-	-variable font_gui($id,underline) \
+	-variable ::brlcad::mged::font::font_gui($id,underline) \
 	-indicatoron 0 \
 	-width 2 \
 	-text U \
 	-font underline_font \
 	-selectcolor #ececec \
-	-command "font_bindCB $id $top.underlineCB font_gui($id,underline) 1 1; font_update $id"
-    font_bindCB $id $top.underlineCB font_gui($id,underline) 1 0
+	-command [list ::brlcad::mged::font::font_toggle $id \
+	    $top.underlineCB ::brlcad::mged::font::font_gui($id,underline) 1]
+    font_bindCB $top.underlineCB \
+	::brlcad::mged::font::font_gui($id,underline) 1 0
 
     # overstrike
     checkbutton $top.overstrikeCB -offvalue 0 -onvalue 1 \
-	-variable font_gui($id,overstrike)\
+	-variable ::brlcad::mged::font::font_gui($id,overstrike)\
 	-indicatoron 0 \
 	-width 2 \
 	-text O \
 	-font overstrike_font \
 	-selectcolor #ececec \
-	-command "font_bindCB $id $top.overstrikeCB font_gui($id,overstrike) 1 1; font_update $id"
-    font_bindCB $id $top.overstrikeCB font_gui($id,overstrike) 1 0
+	-command [list ::brlcad::mged::font::font_toggle $id \
+	    $top.overstrikeCB ::brlcad::mged::font::font_gui($id,overstrike) 1]
+    font_bindCB $top.overstrikeCB \
+	::brlcad::mged::font::font_gui($id,overstrike) 1 0
 
     grid x $top.familyMB $top.sizeF $top.weightCB $top.slantCB \
 	$top.underlineCB $top.overstrikeCB x \
@@ -383,13 +409,13 @@ proc font_gui_init { id top fname title callback } {
     ################# buttons along bottom ################
     frame $top.gridF3
     button $top.okB -relief raised -text "OK"\
-	-command "font_ok $id $top"
+	-command [list ::brlcad::mged::font::font_ok $id $top]
     button $top.applyB -relief raised -text "Apply"\
-	-command "font_apply $id"
+	-command [list ::brlcad::mged::font::font_apply $id]
     button $top.resetB -relief raised -text "Reset"\
-	-command "font_reset $id $top"
+	-command [list ::brlcad::mged::font::font_reset $id]
     button $top.dismissB -relief raised -text "Dismiss"\
-	-command "font_dismiss $id $top"
+	-command [list ::brlcad::mged::font::font_dismiss $id $top]
     grid $top.okB $top.applyB x $top.resetB x $top.dismissB -sticky nsew -in $top.gridF3
     grid columnconfigure $top.gridF3 2 -weight 1
     grid columnconfigure $top.gridF3 4 -weight 1
@@ -406,26 +432,8 @@ proc font_gui_init { id top fname title callback } {
 
     # disallow the user to resize
     wm resizable $top 0 0
-    wm protocol $top WM_DELETE_WINDOW "catch { destroy $top }"
+    wm protocol $top WM_DELETE_WINDOW [list catch [list destroy $top]]
     wm title $top "$title Font"
-}
-
-## - font_build_nameM
-#
-# Build menu of named fonts.
-#
-proc font_build_nameM { id m } {
-    global mged_default
-    global font_gui
-
-    set named_fonts [font_get_names]
-
-    font_build_menu $id $m $named_fonts font_set_name "Named Fonts"
-    $m configure -postcommand "font_name_post $id $m font_set_name"
-
-    # for now initialize using first font name in list
-    set fname [lindex $named_fonts 0]
-    font_set_name $id $fname
 }
 
 ## - font_build_familyM
@@ -453,7 +461,8 @@ proc font_build_familyM { id m } {
 
 	set fam [lrange $families $i $j]
 	$m add cascade -label "Family $n" -menu $m.cmenu$n
-	font_build_menu $id $m.cmenu$n $fam font_set_family "Font Family $n"
+	font_build_menu $id $m.cmenu$n $fam \
+	    ::brlcad::mged::font::font_set_family "Font Family $n"
     }
 }
 
@@ -463,25 +472,8 @@ proc font_build_familyM { id m } {
 #
 proc font_build_sizeM { id m } {
     set sizes { 4 6 8 10 12 14 16 18 20 22 24 26 28 30 }
-    font_build_menu $id $m $sizes font_set_size "Font Size"
-}
-
-## - font_build_weightM
-#
-# Build menu of font weights.
-#
-proc font_build_weightM { id m } {
-    set weights { bold normal }
-    font_build_menu $id $m $weights font_set_weight "Font Weight"
-}
-
-## - font_build_slantM
-#
-# Build menu of font slant values.
-#
-proc font_build_slantM { id m } {
-    set slants { italic roman }
-    font_build_menu $id $m $slants font_set_slant "Font Slant"
+    font_build_menu $id $m $sizes \
+	::brlcad::mged::font::font_set_size "Font Size"
 }
 
 ## - font_build_menu
@@ -499,20 +491,7 @@ proc font_build_menu { id menu items cmd title } {
 
     foreach item $items {
 	$menu add command -label $item \
-	    -command "$cmd $id \"$item\""
-    }
-}
-
-## - font_update_menu
-#
-# Update menu items.
-#
-proc font_update_menu { id menu items cmd } {
-    $menu delete 0 end
-
-    foreach item $items {
-	$menu add command -label $item \
-	    -command "$cmd $id \"$item\""
+	    -command [list {*}$cmd $id $item]
     }
 }
 
@@ -521,14 +500,14 @@ proc font_update_menu { id menu items cmd } {
 # Update gui to reflect the font name.
 #
 proc font_set_name { id name } {
-    global font_gui
+    variable font_gui
 
     set font_gui($id,name) $name
 
     set ret [catch {font configure $font_gui($id,name)} font_params]
     if {$ret == 0} {
 	# configure font_gui_font
-	catch {eval font configure font_gui_font($id) $font_params}
+	catch {font configure font_gui_font($id) {*}$font_params}
 
 	# update variables
 	set font_gui($id,family) [lindex $font_params 1]
@@ -541,30 +520,16 @@ proc font_set_name { id name } {
 }
 
 proc font_set_family { id family } {
-    global font_gui
+    variable font_gui
 
     set font_gui($id,family) $family
     font_update $id
 }
 
 proc font_set_size { id size } {
-    global font_gui
+    variable font_gui
 
     set font_gui($id,size) $size
-    font_update $id
-}
-
-proc font_set_weight { id weight } {
-    global font_gui
-
-    set font_gui($id,weight) $weight
-    font_update $id
-}
-
-proc font_set_slant { id slant } {
-    global font_gui
-
-    set font_gui($id,slant) $slant
     font_update $id
 }
 
@@ -575,10 +540,10 @@ proc font_set_slant { id slant } {
 # Otherwise, disable the bindings and leave the button
 # in a sunken state.
 #
-proc font_bindCB { id w var val callback } {
-    global font_gui
+proc font_bindCB {w var val callback} {
+    upvar #0 $var value
 
-    if {[subst $[subst $var]] == $val} {
+    if {$value eq $val} {
 	# In this case (i.e. the button is checked),
 	# so the border is set to a nonzero value
 	# to make the button appear sunken.
@@ -599,12 +564,17 @@ proc font_bindCB { id w var val callback } {
     }
 }
 
+proc font_toggle {id w var val} {
+    font_bindCB $w $var $val 1
+    font_update $id
+}
+
 ## - font_update
 #
 # update label to reflect the state of the font gui
 #
 proc font_update { id } {
-    global font_gui
+    variable font_gui
 
     font configure font_gui_font($id) \
 	-family $font_gui($id,family) \
@@ -613,38 +583,6 @@ proc font_update { id } {
 	-slant $font_gui($id,slant) \
 	-underline $font_gui($id,underline) \
 	-overstrike $font_gui($id,overstrike)
-}
-
-## - font_name_post
-#
-# Populate "Named Fonts" menu before posting.
-#
-proc font_name_post { id menu cmd } {
-    set named_fonts [font_get_names]
-
-    font_update_menu $id $menu $named_fonts $cmd
-}
-
-## - font_get_names
-#
-# Returns a list of named fonts with all
-# occurrences of font_gui_font* removed.
-#
-proc font_get_names {} {
-    set named_fonts [lsort [font names]]
-
-    # check to see if font_gui_font* is in list of named fonts
-    set index [lsearch -glob $named_fonts font_gui_font*]
-
-    while {$index >= 0} {
-	# remove font_gui_font* from sorted list
-	set named_fonts [lreplace $named_fonts $index $index]
-
-	# check to see if font_gui_font* is in list of named fonts
-	set index [lsearch -glob $named_fonts font_gui_font*]
-    }
-
-    return $named_fonts
 }
 
 ## - font_ok
@@ -661,7 +599,7 @@ proc font_ok { id top } {
 # apply gui settings to the font name font_gui($id,name)
 #
 proc font_apply { id } {
-    global font_gui
+    variable font_gui
 
     if {$font_gui($id,name) == ""} {
 	return
@@ -670,15 +608,16 @@ proc font_apply { id } {
     set font_params [font configure font_gui_font($id)]
 
     # try to create new font with parameters from font_gui_font($id)
-    set ret [catch {eval font create $font_gui($id,name) $font_params}]
+    set ret [catch {font create $font_gui($id,name) {*}$font_params}]
 
     # if failed, assume it already exists, so configure using font_gui_font($id) parameters
     if {$ret} {
-	catch {eval font configure $font_gui($id,name) $font_params}
+	catch {font configure $font_gui($id,name) {*}$font_params}
     }
 
     if {$font_gui($id,callback) != {}} {
-	eval $font_gui($id,callback) {$font_params}
+	set callback [list {*}$font_gui($id,callback) $font_params]
+	uplevel #0 $callback
     }
 }
 
@@ -687,8 +626,8 @@ proc font_apply { id } {
 # if the named font $font_gui($id,name) exists,
 # use its' parameters to configure font_gui_font($id)
 #
-proc font_reset { id top } {
-    global font_gui
+proc font_reset {id} {
+    variable font_gui
 
     font_set_name $id $font_gui($id,name)
 }
@@ -698,19 +637,14 @@ proc font_dismiss { id top } {
     font delete font_gui_font($id)
 }
 
-proc font_scheme_callback { id top font key fconfig } {
-    global font_gui
-
-    #    set fconfig [font configure $font]
-    eval font configure $font $fconfig
+proc font_scheme_callback {_id top font key fconfig} {
+    font configure $font {*}$fconfig
     $top._$key\L2 configure -text [lindex $fconfig 1]
     $top._$key\L3 configure -text [lindex $fconfig 3]
 }
 
-proc font_scheme_callback_all { id top font key fconfig } {
-    global font_scheme_data
-
-    #    set fconfig [font configure $font]
+proc font_scheme_callback_all {id top _font _key fconfig} {
+    variable font_scheme_data
 
     foreach datum $font_scheme_data {
 	set fsname [lindex $datum 0]($id)
@@ -721,24 +655,7 @@ proc font_scheme_callback_all { id top font key fconfig } {
 	    font_scheme_callback $id $top $fsname $key $fconfig
 	} else {
 	    # configure fs_all_font($id)
-	    eval font configure $fsname $fconfig
-	}
-    }
-}
-
-proc font_scheme_set { id top font fconfig } {
-    eval font configure $font $fconfig
-}
-
-proc font_scheme_set_all { id top font fconfig } {
-    global font_scheme_data
-
-    foreach datum $font_scheme_data {
-	set font [lindex $datum 0]($id)
-	set fname [lindex $datum 1]
-
-	if {$fname != {}} {
-	    font_scheme_set $id $top $font $fconfig
+	    font configure $fsname {*}$fconfig
 	}
     }
 }
@@ -749,8 +666,8 @@ proc font_scheme_ok { id top gui_top } {
 }
 
 proc font_scheme_apply { id } {
-    global font_scheme_data
     global mged_default
+    variable font_scheme_data
 
     # apply the font_scheme font configurations to the gui component fonts
     foreach datum $font_scheme_data {
@@ -759,7 +676,7 @@ proc font_scheme_apply { id } {
 
 	set fsconfig [font configure $fsname]
 	if {$fname != {}} {
-	    eval font configure $fname $fsconfig
+	    font configure $fname {*}$fsconfig
 	    set mged_default($fname) $fsconfig
 	} else {
 	    set mged_default(all_font) $fsconfig
@@ -768,7 +685,7 @@ proc font_scheme_apply { id } {
 }
 
 proc font_scheme_reset { id top } {
-    global font_scheme_data
+    variable font_scheme_data
 
     # apply the gui component font configurations to the font_scheme fonts
     foreach datum $font_scheme_data {
@@ -778,14 +695,14 @@ proc font_scheme_reset { id top } {
 	if {$fname != {}} {
 	    set fstitle [lindex $datum 2]
 	    set fconfig [font configure $fname]
-	    eval font configure $fsname $fconfig
+	    font configure $fsname {*}$fconfig
 	    font_scheme_callback $id $top $fsname $fstitle $fconfig
 	}
     }
 }
 
 proc font_scheme_dismiss { id top gui_top } {
-    global font_scheme_data
+    variable font_scheme_data
 
     destroy $top
     catch {destroy $gui_top}
@@ -795,6 +712,23 @@ proc font_scheme_dismiss { id top gui_top } {
 	set fsname [lindex $datum 0]($id)
 	font delete $fsname
     }
+}
+
+}
+
+# Retain the historical control-panel entry points while the implementation
+# and state live in their owning namespace.
+proc font_init {} {
+    tailcall ::brlcad::mged::font::font_init
+}
+
+proc font_scheme_init {id} {
+    tailcall ::brlcad::mged::font::font_scheme_init $id
+}
+
+proc font_gui_init {id top fname title callback} {
+    tailcall ::brlcad::mged::font::font_gui_init \
+	$id $top $fname $title $callback
 }
 
 # Local Variables:

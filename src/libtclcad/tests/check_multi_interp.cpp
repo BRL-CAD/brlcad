@@ -94,7 +94,12 @@ check_gui_packages(Tcl_Interp *interp)
 	"expr {"
 	" [llength [info commands ::Archer]] == 1 &&"
 	" [llength [info commands ::cadwidgets::Ged]] == 1 &&"
-	" [llength [info commands ::RtWizard::Wizard]] == 1"
+	" [llength [info commands ::RtWizard::Wizard]] == 1 &&"
+	" [lsort [namespace eval ::sdialogs {namespace export}]] eq"
+	"  [list Entrydialog Listdialog Stddlgs entrydialog listdialog] &&"
+	" [lsort [namespace eval ::swidgets {namespace export}]] eq"
+	"  [list Selectlists Togglearrow Tooltip Tree Treenode selectlists"
+	"   tkgetdir togglearrow tooltip tree treenode]"
 	"}";
 
     if (!eval_ok(interp, script) || !result_is(interp, "1")) {
@@ -108,13 +113,112 @@ check_gui_packages(Tcl_Interp *interp)
 
 
 static bool
+check_component_namespaces(Tcl_Interp *interp)
+{
+    const char *script =
+	"foreach component {bu bn dm fb} {"
+	" if {![namespace exists ::brlcad::$component]} {"
+	"  error \"missing ::brlcad::$component namespace\""
+	" }"
+	"};"
+	"expr {"
+	" [::brlcad::bu dir data] eq [bu_dir data] &&"
+	" [::brlcad::bu file_null] eq [bu_file_null] &&"
+	" [::brlcad::bn noise_perlin 1 2 3] =="
+	"  [bn_noise_perlin 1 2 3] &&"
+	" [::brlcad::bn hdivide {2 4 6 2}] eq"
+	"  [hdivide {2 4 6 2}] &&"
+	" [::brlcad::dm list] eq [dm_list] &&"
+	" [::brlcad::fb common_file_size __missing__] eq"
+	"  [fb_common_file_size __missing__] &&"
+	" [list namespace commands] eq {namespace commands}"
+	"}";
+
+    if (!eval_ok(interp, script) || !result_is(interp, "1")) {
+	std::fprintf(stderr, "component namespace check failed: %s\n",
+	    Tcl_GetStringResult(interp));
+	return false;
+    }
+
+    return true;
+}
+
+
+static bool
+check_itcl_commands_scoped(Tcl_Interp *interp)
+{
+    static const char * const global_commands[] = {
+	"::body", "::class", "::code", "::configbody", "::delete",
+	"::delete_helper", "::ensemble", "::filter", "::find",
+	"::forward", "::local", "::mixin", "::scope", NULL
+    };
+
+    if (!has_command(interp, "::itcl::class") ||
+	!has_command(interp, "::itcl::body") ||
+	!has_command(interp, "::itcl::code") ||
+	!has_command(interp, "::itcl::scope")) {
+	std::fprintf(stderr, "Itcl did not provide its qualified commands\n");
+	return false;
+    }
+
+    for (const char * const *command = global_commands; *command; command++) {
+	if (has_command(interp, *command)) {
+	    std::fprintf(stderr, "Itcl command was imported globally: %s\n",
+		*command);
+	    return false;
+	}
+    }
+
+    return true;
+}
+
+
+static bool
+check_gui_commands_scoped(Tcl_Interp *interp)
+{
+    static const char * const global_commands[] = {
+	"::Archetype", "::Hierarchy", "::Toplevel", "::Widget", "::dialog",
+	"::remove_destroy_hook", "::scrolledlistbox", "::tabnotebook",
+	"::usual", NULL
+    };
+    const char *script =
+	"foreach command {"
+	" ::itk::Archetype ::itk::Toplevel ::itk::Widget ::itk::usual"
+	" ::iwidgets::Hierarchy ::iwidgets::dialog"
+	" ::iwidgets::scrolledlistbox ::iwidgets::tabnotebook"
+	"} {"
+	" if {![llength [info commands $command]] && ![auto_load $command]} {"
+	"  error \"$command is not autoloadable\""
+	" }"
+	"}";
+
+    if (!eval_ok(interp, script))
+	return false;
+
+    for (const char * const *command = global_commands; *command; command++) {
+	if (has_command(interp, *command)) {
+	    std::fprintf(stderr, "Itk/Iwidgets command was imported globally: %s\n",
+		*command);
+	    return false;
+	}
+    }
+
+    return true;
+}
+
+
+static bool
 check_initialized(Tcl_Interp *interp, const char *value, bool init_gui)
 {
     if (!has_command(interp, "bu_dir") ||
 	!has_command(interp, "bn_noise_perlin") ||
 	!has_command(interp, "dm_open") ||
 	!has_command(interp, "go_open") ||
-	!has_command(interp, "ch_open")) {
+	!has_command(interp, "ch_open") ||
+	!has_command(interp, "::brlcad::bu") ||
+	!has_command(interp, "::brlcad::bn") ||
+	!has_command(interp, "::brlcad::dm") ||
+	!has_command(interp, "::brlcad::fb")) {
 	std::fprintf(stderr, "libtclcad did not register all expected commands\n");
 	return false;
     }
@@ -128,7 +232,13 @@ check_initialized(Tcl_Interp *interp, const char *value, bool init_gui)
 	return false;
     }
 
+    if (init_gui && !check_gui_commands_scoped(interp))
+	return false;
     if (init_gui && !check_gui_packages(interp))
+	return false;
+    if (!check_component_namespaces(interp))
+	return false;
+    if (!check_itcl_commands_scoped(interp))
 	return false;
 
     if (init_gui) {
@@ -205,12 +315,16 @@ check_framebuffer_registry_growth(Tcl_Interp *interp)
 {
     const char *script =
 	"for {set i 0} {$i < 10} {incr i} {"
-	" fb_open lifecycle_fb_$i /dev/mem -s 4"
+	" if {$i == 4} {"
+	"  ::brlcad::fb open ::brlcad::fb::lifecycle_fb_$i /dev/mem -s 4"
+	" } else {"
+	"  fb_open lifecycle_fb_$i /dev/mem -s 4"
+	" }"
 	"};"
 	"if {[llength [fb_open]] != 10} {"
 	" error {framebuffer registry has the wrong initial size}"
 	"};"
-	"rename lifecycle_fb_4 {};"
+	"rename ::brlcad::fb::lifecycle_fb_4 {};"
 	"if {[llength [fb_open]] != 9} {"
 	" error {framebuffer registry has the wrong size after deletion}"
 	"};"
@@ -226,14 +340,24 @@ static bool
 open_shared_runtime_objects(Tcl_Interp *first, Tcl_Interp *second, bool init_gui)
 {
     const char *open_framebuffer = "fb_open shared_fb /dev/mem -s 16";
+    const char *open_namespaced_framebuffer =
+	"::brlcad::fb open ::brlcad::fb::shared_fb /dev/mem -s 8";
     const char *open_display_manager = "dm_open shared_dm X";
+    const char *open_namespaced_display_manager =
+	"::brlcad::dm open ::brlcad::dm::shared_dm X";
 
     if (!eval_ok(first, open_framebuffer) ||
 	!eval_ok(second, open_framebuffer) ||
+	!eval_ok(first, open_namespaced_framebuffer) ||
+	!eval_ok(second, open_namespaced_framebuffer) ||
 	!eval_ok(first, "llength [fb_open]") ||
-	!result_is(first, "1") ||
+	!result_is(first, "2") ||
 	!eval_ok(second, "llength [fb_open]") ||
-	!result_is(second, "1")) {
+	!result_is(second, "2") ||
+	!eval_ok(first, "::brlcad::fb::shared_fb getwidth") ||
+	!result_is(first, "8") ||
+	!eval_ok(second, "::brlcad::fb::shared_fb getheight") ||
+	!result_is(second, "8")) {
 	std::fprintf(stderr, "framebuffer registry crossed interpreter boundaries\n");
 	return false;
     }
@@ -241,10 +365,14 @@ open_shared_runtime_objects(Tcl_Interp *first, Tcl_Interp *second, bool init_gui
     if (init_gui &&
 	(!eval_ok(first, open_display_manager) ||
 	 !eval_ok(second, open_display_manager) ||
+	 !eval_ok(first, open_namespaced_display_manager) ||
+	 !eval_ok(second, open_namespaced_display_manager) ||
 	 !eval_ok(first, "llength [dm_open]") ||
-	 !result_is(first, "1") ||
+	 !result_is(first, "2") ||
 	 !eval_ok(second, "llength [dm_open]") ||
-	 !result_is(second, "1"))) {
+	 !result_is(second, "2") ||
+	 !eval_ok(first, "::brlcad::dm::shared_dm get_aspect") ||
+	 !eval_ok(second, "::brlcad::dm::shared_dm get_aspect"))) {
 	std::fprintf(stderr, "display manager registry crossed interpreter boundaries\n");
 	return false;
     }
@@ -292,11 +420,12 @@ main(int argc, const char **argv)
      * The GUI run also checks the supported core-to-GUI upgrade sequence.
      */
     if (Ged_Init(first) != TCL_OK || !has_command(first, "go_open") ||
-	has_command(first, "bu_dir") || !init_tclcad(first, 0) ||
+	has_command(first, "bu_dir") || Bu_Init(first) != TCL_OK ||
+	!has_command(first, "::brlcad::bu") || !init_tclcad(first, 0) ||
 	(init_gui && !init_tclcad(first, 1)) ||
 	!init_tclcad(first, init_gui) ||
 	!init_tclcad(second, 0) ||
-	(init_gui && !eval_ok(second, "package require Tk 8.6")) ||
+	(init_gui && !eval_ok(second, "package require tklitehtml 0.1.0")) ||
 	!init_tclcad(second, init_gui) ||
 	!check_initialized(first, "first", init_gui) ||
 	!check_initialized(second, "second", init_gui) ||
@@ -317,7 +446,11 @@ main(int argc, const char **argv)
 	result_is(second, "0") ||
 	!eval_ok(second, "shared_fb getwidth") ||
 	!result_is(second, "16") ||
-	(init_gui && !eval_ok(second, "shared_dm get_aspect"))) {
+	!eval_ok(second, "::brlcad::fb::shared_fb getwidth") ||
+	!result_is(second, "8") ||
+	(init_gui &&
+	 (!eval_ok(second, "shared_dm get_aspect") ||
+	  !eval_ok(second, "::brlcad::dm::shared_dm get_aspect")))) {
 	Tcl_DeleteInterp(second);
 	return 1;
     }

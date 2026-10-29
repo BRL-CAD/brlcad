@@ -90,7 +90,7 @@ proc mouse_get_spath { x y } {
 	    "lbdcHack %W %x %y %t $id s2 junkpath"
     }
     bind_listbox $top "<ButtonRelease-1>" \
-	"%W selection clear 0 end; _mged_press reject"
+	"%W selection clear 0 end; ::brlcad::mged press reject"
 
     wm protocol $top WM_DELETE_WINDOW "mouse_spath_destroy $id $top"
 
@@ -138,16 +138,16 @@ proc mouse_get_spath_and_pos { x y } {
 
     bind_listbox $top "<B1-Motion>"\
 	"set item \[%W index @%x,%y\];\
-	    _mged_press reject;\
-	    _mged_press oill;\
-	    _mged_ill -i 1 \$mged_gui($id,mgs_path);\
-	    _mged_matpick -n \$item"
+	    ::brlcad::mged press reject;\
+	    ::brlcad::mged press oill;\
+	    ::brlcad::mged ill -i 1 \$mged_gui($id,mgs_path);\
+	    ::brlcad::mged matpick -n \$item"
     if 0 {
 	bind_listbox $top "<ButtonPress-1>"\
 	    "set item \[%W index @%x,%y\];\
-	    _mged_press oill;\
-	    _mged_ill -i 1 \$mged_gui($id,mgs_path);\
-	    _mged_matpick -n \$item"
+	    ::brlcad::mged press oill;\
+	    ::brlcad::mged ill -i 1 \$mged_gui($id,mgs_path);\
+	    ::brlcad::mged matpick -n \$item"
 	bind_listbox $top "<Double-1>"\
 	    "set mged_gui($id,mgs_pos) \[%W index @%x,%y\];\
 	    destroy $top"
@@ -156,7 +156,7 @@ proc mouse_get_spath_and_pos { x y } {
 	    "lbdcHack %W %x %y %t $id m2 \$mged_gui($id,mgs_path)"
     }
     bind_listbox $top "<ButtonRelease-1>" \
-	"%W selection clear 0 end; _mged_press reject"
+	"%W selection clear 0 end; ::brlcad::mged press reject"
 
     wm protocol $top WM_DELETE_WINDOW "mouse_spath_and_pos_destroy $id $top"
 
@@ -250,7 +250,7 @@ proc mouse_get_comb { x y } {
     }
     bind_listbox $top "<ButtonRelease-1>"\
 	"%W selection clear 0 end;\
-	    _mged_press reject"
+	    ::brlcad::mged press reject"
 
     wm protocol $top WM_DELETE_WINDOW "mouse_comb_destroy $id $top"
 
@@ -285,7 +285,7 @@ proc mouse_solid_edit_select { x y } {
 	return
     }
 
-    _mged_sed -i 1 $spath
+    ::brlcad::mged sed -i 1 $spath
 
     mged_apply_all [winset] "set mouse_behavior d"
     foreach id $mged_players {
@@ -310,9 +310,9 @@ proc mouse_matrix_edit_select { x y } {
 	return
     }
 
-    _mged_press oill
-    _mged_ill -e -i 1 [lindex $spath_and_pos 0]
-    _mged_matpick [lindex $spath_and_pos 1]
+    ::brlcad::mged press oill
+    ::brlcad::mged ill -e -i 1 [lindex $spath_and_pos 0]
+    ::brlcad::mged matpick [lindex $spath_and_pos 1]
 
     mged_apply_all [winset] "set mouse_behavior d"
     foreach id $mged_players {
@@ -365,7 +365,7 @@ proc mouse_rt_obj_select { x y } {
 	-
 	one {
 	    rt_olist_set $id $component
-	    do_Raytrace $id _mged_rt
+	    do_Raytrace $id [list ::brlcad::mged rt]
 	}
 	several {
 	    rt_olist_add $id $component

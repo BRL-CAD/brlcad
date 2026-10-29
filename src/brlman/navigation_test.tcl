@@ -70,6 +70,10 @@ if {[catch {
     package require Iwidgets
     set scripts [file join [file dirname [info script]] .. tclscripts]
     source [file join $scripts helpcomm.tcl]
+    # Browser search and section selection must use the canonical helpers.
+    foreach command [info commands ::manpage_search_*] {
+	rename $command {}
+    }
     source [file join $scripts man_browser.tcl]
     wm withdraw .
     set ::background_errors {}

@@ -5191,6 +5191,9 @@ include/tclcad/misc.h: TCLCAD_EXPORT struct tclcad_io_data *
 include/tclcad/misc.h: TCLCAD_EXPORT void
 include/tclcad/misc.h: TCLCAD_EXPORT void
 include/tclcad/misc.h: TCLCAD_EXPORT void
+include/tclcad/setup.h: TCLCAD_EXPORT extern int tclcad_create_namespace(Tcl_Interp *interp, const char *namespace_name);
+include/tclcad/setup.h: TCLCAD_EXPORT extern int tclcad_register_cmd_namespace(Tcl_Interp *interp,
+include/tclcad/setup.h: TCLCAD_EXPORT extern int tclcad_register_objcmd_namespace(Tcl_Interp *interp,
 include/tclcad/setup.h: TCLCAD_EXPORT extern int tclcad_tk_setup(Tcl_Interp *interp);
 include/tclcad/setup.h: TCLCAD_EXPORT extern void tclcad_auto_path(Tcl_Interp *interp);
 include/tclcad/setup.h: TCLCAD_EXPORT extern void tclcad_tcl_library(Tcl_Interp *interp);

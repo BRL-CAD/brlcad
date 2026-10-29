@@ -33,7 +33,7 @@ if ![info exists mged_gui(mged,screen)] {
 
 #	Ensure that all commands that this script uses without defining
 #	are provided by the calling application
-check_externs "_mged_solid_report _mged_press _mged_who _mged_ill"
+check_externs "::brlcad::mged"
 
 proc build_edit_menu_all { type } {
     global mged_players
@@ -59,7 +59,7 @@ proc build_edit_menu_all { type } {
 	destroy $mged_gui($id,edit_menu)
     }
 
-    set paths [_mged_solid_report -1]
+    set paths [::brlcad::mged solid_report -1]
     if {![llength $paths]} {
 	cad_dialog $::tk::Priv(cad_dialog) $mged_gui($id,screen)\
 	    "No primitives are being displayed!"\
@@ -68,7 +68,7 @@ proc build_edit_menu_all { type } {
 	return
     }
 
-    _mged_press reject
+    ::brlcad::mged press reject
     build_solid_menu $type $id $paths
 
     mged_apply_all [winset] "set mouse_behavior d"
@@ -106,21 +106,21 @@ proc ray_build_edit_menu { type x y } {
 	return
     }
 
-    _mged_press reject
+    ::brlcad::mged press reject
 
     switch $type {
 	s {
 	    if {[llength $paths] == 1} {
-		_mged_press sill
-		_mged_ill -i 1 [lindex $paths 0]
+		::brlcad::mged press sill
+		::brlcad::mged ill -i 1 [lindex $paths 0]
 	    } elseif {[llength $paths] > 1} {
 		build_solid_menu s1 $id $paths
 	    }
 	}
 	o {
 	    if {[llength $paths] == 1} {
-		_mged_press oill
-		_mged_ill -i 1 [lindex $paths 0]
+		::brlcad::mged press oill
+		::brlcad::mged ill -i 1 [lindex $paths 0]
 		build_matrix_menu $id [lindex $paths 0]
 	    } elseif {[llength $paths] > 1} {
 		build_solid_menu o $id $paths
@@ -171,7 +171,7 @@ proc build_solid_menu { type id paths } {
     bind_listbox $top "<ButtonPress-1>" \
 	"lbdcHack %W %x %y %t $id $type junkpath"
     bind_listbox $top "<ButtonRelease-1>" \
-	"%W selection clear 0 end; _mged_press reject"
+	"%W selection clear 0 end; ::brlcad::mged press reject"
 }
 
 proc build_matrix_menu { id path } {
@@ -196,7 +196,7 @@ proc build_matrix_menu { id path } {
 
     regexp "\[^/\].*" $path match
     set path_components [split $match /]
-    create_listbox $top $screen Matrix $path_components "_mged_press reject; destroy $top"
+    create_listbox $top $screen Matrix $path_components "::brlcad::mged press reject; destroy $top"
     set mged_gui($id,edit_menu) $top
 
     bind_listbox $top "<B1-Motion>" \
@@ -205,7 +205,7 @@ proc build_matrix_menu { id path } {
     bind_listbox $top "<ButtonPress-1>" \
 	"lbdcHack %W %x %y %t $id m1 $path"
     bind_listbox $top "<ButtonRelease-1>" \
-	"%W selection clear 0 end; _mged_press reject"
+	"%W selection clear 0 end; ::brlcad::mged press reject"
 }
 
 # Local Variables:

@@ -23,7 +23,7 @@
 #	MGED's default Tcl/Tk interface.
 #
 
-check_externs "_mged_attach _mged_tie _mged_view_ring"
+check_externs "::brlcad::mged"
 
 set mged_Priv(arb8) {arb8 arb7 arb6 arb5 arb4 rpp}
 set mged_Priv(cones) {rcc rec rhc rpc tec tgc trc}
@@ -156,7 +156,7 @@ if {![info exists mged_gui(loadScriptDir)]} {
 }
 
 if {![info exists mged_default(font_init)]} {
-    font_init
+    ::brlcad::mged::font::font_init
 }
 
 if {![info exists mged_default(status_bar)]} {
@@ -284,7 +284,7 @@ proc mged_open_manual {parent screen} {
 	return
     }
 
-    ia_man $parent $screen
+    ::brlcad::mged::manual::init $parent $screen
 }
 
 proc gui { args } {
@@ -574,7 +574,8 @@ proc gui { args } {
 	-command ".$id.t delete 1.0 end; mged_print_prompt .$id.t {mged> }; .$id.t insert insert \" \"; beginning_of_line .$id.t; .$id.t edit reset;"
     hoc_register_menu_data "File" "Clear Command Window" "Delete all text from command window"\
 	{ { summary "Delete all text from command window" } see_also }
-    .$id.menubar.file add command -label "Exit" -underline 1 -command _mged_quit
+    .$id.menubar.file add command -label "Exit" -underline 1 \
+	-command [list ::brlcad::mged quit]
     hoc_register_menu_data "File" "Exit" "Exit MGED"\
 	{ { summary "Exit MGED." }
 	    { see_also "exit q quit" } }
@@ -588,22 +589,23 @@ proc gui { args } {
     menu .$id.menubar.file.export -title "Export" -tearoff $mged_default(tearoff_menus)
     .$id.menubar.file.export add command -label "Ascii Database" -underline 0 -command "init_g2asc $id"
     hoc_register_menu_data "Export" "Ascii Database" "g2asc Ascii Database" { { summary "Export the current database in ascii format using g2asc" } { see_also g2asc } }
-    .$id.menubar.file.export add command -label "Database Objects" -underline 0 -command "init_extractTool $id"
+    .$id.menubar.file.export add command -label "Database Objects" -underline 0 \
+	-command [list ::brlcad::mged::extract::init $id]
     hoc_register_menu_data "Export" "Extract Objects" "Extract Objects" { { summary "Tool for extracting objects out of the current database." } { see_also keep } }
 
     menu .$id.menubar.file.renderview -title "Render View" -tearoff $mged_default(tearoff_menus)
     .$id.menubar.file.renderview add command -label "RT Script..." -underline 0\
-	-command "init_rtScriptTool $id"
+	-command [list ::brlcad::mged::rt_script::init $id]
     hoc_register_menu_data "Render View" "RT Script..." "RT Script File"\
 	{ { summary "Save the current view as an RT script file." }
 	    { see_also saveview } }
     .$id.menubar.file.renderview add command -label "Plot..." -underline 1\
-	-command "init_plotTool $id"
+	-command [list ::brlcad::mged::plot::init $id]
     hoc_register_menu_data "Render View As" "Plot..." "Plot File"\
 	{ { summary "Render the current view to a Plot file." }
 	    { see_also pl } }
     .$id.menubar.file.renderview add command -label "PostScript..." -underline 0\
-	-command "init_psTool $id"
+	-command [list ::brlcad::mged::postscript::init $id]
     hoc_register_menu_data "Render View As" "PostScript..." "PostScript File"\
 	{ { summary "Render the current view to a PostScript file." }
 	    { see_also ps } }
@@ -622,7 +624,7 @@ proc gui { args } {
 	{ { summary "Tool for setting colors." }
 	    { see_also "rset" } }
     .$id.menubar.file.pref add command -label "Fonts" -underline 0 \
-	-command "font_scheme_init $id"
+	-command [list ::brlcad::mged::font::font_scheme_init $id]
     hoc_register_menu_data "Preferences" "Fonts" "Fonts" \
 	{ { summary "Tool for creating/configuring named fonts." }
 	    { see_also "font" } }
@@ -1390,7 +1392,7 @@ hoc_register_menu_data "Create" "$ptype..." "Make a $ptype" $ksl
 
     menu .$id.menubar.settings.grid -title "Grid" -tearoff $mged_default(tearoff_menus)
     .$id.menubar.settings.grid add command -label "Anchor" -underline 0\
-	-command "do_grid_anchor $id"
+	-command [list ::brlcad::mged::grid::do_grid_anchor $id]
     hoc_register_menu_data "Grid" "Anchor" "Grid Anchor"\
 	{ { summary "Pops up the grid anchor entry dialog." }
 	    { see_also "rset" } }
@@ -1421,14 +1423,14 @@ hoc_register_menu_data "Create" "$ptype..." "Make a $ptype" $ksl
 
     menu .$id.menubar.settings.grid.spacing -title "Grid Spacing" -tearoff $mged_default(tearoff_menus)
     .$id.menubar.settings.grid.spacing add command -label "Autosize" -underline 0\
-	-command "grid_spacing_autosize $id; grid_spacing_apply $id b"
+	-command [list ::brlcad::mged::grid::grid_spacing_autosize_apply $id]
     hoc_register_menu_data "Grid Spacing" "Autosize" "Grid Spacing - Autosize"\
 	{ { summary "Set the grid spacing according to the current view size.
 	The number of ticks will be between 20 and 200 in user units.
 	The major spacing will be set to 10 ticks per major." }
 	    { see_also "rset" } }
     .$id.menubar.settings.grid.spacing add command -label "Arbitrary" -underline 1\
-	-command "do_grid_spacing $id b"
+	-command [list ::brlcad::mged::grid::do_grid_spacing $id b]
     hoc_register_menu_data "Grid Spacing" "Arbitrary" "Grid Spacing - Arbitrary"\
 	{ { summary "Pops up the grid spacing entry dialog. The user
 	can use this to set both the horizontal and
@@ -1436,80 +1438,80 @@ hoc_register_menu_data "Create" "$ptype..." "Make a $ptype" $ksl
 	    { see_also "rset" } }
     .$id.menubar.settings.grid.spacing add separator
     .$id.menubar.settings.grid.spacing add command -label "Micrometer" -underline 4\
-	-command "set_grid_spacing $id micrometer 1"
+	-command [list ::brlcad::mged::grid::set_grid_spacing $id micrometer 1]
     hoc_register_menu_data "Grid Spacing" "Micrometer" "Grid Spacing - Micrometer"\
 	{ { summary "Set the horizontal and vertical tick
 	spacing to 1 micrometer." }
 	    { see_also "rset" } }
     .$id.menubar.settings.grid.spacing add command -label "Millimeter" -underline 2\
-	-command "set_grid_spacing $id millimeter 1"
+	-command [list ::brlcad::mged::grid::set_grid_spacing $id millimeter 1]
     hoc_register_menu_data "Grid Spacing" "Millimeter" "Grid Spacing - Millimeter"\
 	{ { summary "Set the horizontal and vertical tick
 	spacing to 1 millimeter." }
 	    { see_also "rset" } }
     .$id.menubar.settings.grid.spacing add command -label "Centimeter" -underline 0\
-	-command "set_grid_spacing $id centimeter 1"
+	-command [list ::brlcad::mged::grid::set_grid_spacing $id centimeter 1]
     hoc_register_menu_data "Grid Spacing" "Centimeter" "Grid Spacing - Centimeter"\
 	{ { summary "Set the horizontal and vertical tick
 	spacing to 1 centimeter." }
 	    { see_also "rset" } }
     .$id.menubar.settings.grid.spacing add command -label "Decimeter" -underline 0\
-	-command "set_grid_spacing $id decimeter 1"
+	-command [list ::brlcad::mged::grid::set_grid_spacing $id decimeter 1]
     hoc_register_menu_data "Grid Spacing" "Decimeter" "Grid Spacing - Decimeter"\
 	{ { summary "Set the horizontal and vertical tick
 	spacing to 1 decimeter." }
 	    { see_also "rset" } }
     .$id.menubar.settings.grid.spacing add command -label "Meter" -underline 0\
-	-command "set_grid_spacing $id meter 1"
+	-command [list ::brlcad::mged::grid::set_grid_spacing $id meter 1]
     hoc_register_menu_data "Grid Spacing" "Meter" "Grid Spacing - Meter"\
 	{ { summary "Set the horizontal and vertical tick
 	spacing to 1 meter." }
 	    { see_also "rset" } }
     .$id.menubar.settings.grid.spacing add command -label "Kilometer" -underline 0\
-	-command "set_grid_spacing $id kilometer 1"
+	-command [list ::brlcad::mged::grid::set_grid_spacing $id kilometer 1]
     hoc_register_menu_data "Grid Spacing" "Kilometer" "Grid Spacing - Kilometer"\
 	{ { summary "Set the horizontal and vertical tick
 	spacing to 1 kilometer." }
 	    { see_also "rset" } }
     .$id.menubar.settings.grid.spacing add separator
     .$id.menubar.settings.grid.spacing add command -label "1/10 Inch" -underline 0\
-	-command "set_grid_spacing $id \"1/10 inch\" 1"
+	-command [list ::brlcad::mged::grid::set_grid_spacing $id {1/10 inch} 1]
     hoc_register_menu_data "Grid Spacing" "1/10 Inch" "Grid Spacing - 1/10 Inch"\
 	{ { summary "Set the horizontal and vertical tick
 	spacing to 1/10 inches." }
 	    { see_also "rset" } }
     .$id.menubar.settings.grid.spacing add command -label "1/4 Inch" -underline 2\
-	-command "set_grid_spacing $id \"1/4 inch\" 1"
+	-command [list ::brlcad::mged::grid::set_grid_spacing $id {1/4 inch} 1]
     hoc_register_menu_data "Grid Spacing" "1/4 Inch" "Grid Spacing - 1/4 Inch"\
 	{ { summary "Set the horizontal and vertical tick
 	spacing to 1/4 inches." }
 	    { see_also "rset" } }
     .$id.menubar.settings.grid.spacing add command -label "1/2 Inch" -underline 2\
-	-command "set_grid_spacing $id \"1/2 inch\" 1"
+	-command [list ::brlcad::mged::grid::set_grid_spacing $id {1/2 inch} 1]
     hoc_register_menu_data "Grid Spacing" "1/2 Inch" "Grid Spacing - 1/2 Inch"\
 	{ { summary "Set the horizontal and vertical tick
 	spacing to 1/2 inches." }
 	    { see_also "rset" } }
     .$id.menubar.settings.grid.spacing add command -label "Inch" -underline 0\
-	-command "set_grid_spacing $id inch 1"
+	-command [list ::brlcad::mged::grid::set_grid_spacing $id inch 1]
     hoc_register_menu_data "Grid Spacing" "Inch" "Grid Spacing - Inch"\
 	{ { summary "Set the horizontal and vertical tick
 	spacing to 1 inch." }
 	    { see_also "rset" } }
     .$id.menubar.settings.grid.spacing add command -label "Foot" -underline 0\
-	-command "set_grid_spacing $id foot 1"
+	-command [list ::brlcad::mged::grid::set_grid_spacing $id foot 1]
     hoc_register_menu_data "Grid Spacing" "Foot" "Grid Spacing - Foot"\
 	{ { summary "Set the horizontal and vertical tick
 	spacing to 1 foot." }
 	    { see_also "rset" } }
     .$id.menubar.settings.grid.spacing add command -label "Yard" -underline 0\
-	-command "set_grid_spacing $id yard 1"
+	-command [list ::brlcad::mged::grid::set_grid_spacing $id yard 1]
     hoc_register_menu_data "Grid Spacing" "Yard" "Grid Spacing - Yard"\
 	{ { summary "Set the horizontal and vertical tick
 	spacing to 1 yard." }
 	    { see_also "rset" } }
     .$id.menubar.settings.grid.spacing add command -label "Mile" -underline 3\
-	-command "set_grid_spacing $id mile 1"
+	-command [list ::brlcad::mged::grid::set_grid_spacing $id mile 1]
     hoc_register_menu_data "Grid Spacing" "Mile" "Grid Spacing - Mile"\
 	{ { summary "Set the horizontal and vertical tick
 	spacing to 1 mile." }
@@ -1520,37 +1522,37 @@ hoc_register_menu_data "Create" "$ptype..." "Make a $ptype" $ksl
     #
     menu .$id.menubar.settings.grid_spacing -title "Grid Spacing" -tearoff $mged_default(tearoff_menus)
     .$id.menubar.settings.grid_spacing add command -label "Autosize" -underline 0\
-	-command "grid_spacing_autosize $id; grid_spacing_apply $id b"
+	-command [list ::brlcad::mged::grid::grid_spacing_autosize_apply $id]
     .$id.menubar.settings.grid_spacing add command -label "Arbitrary" -underline 1\
-	-command "do_grid_spacing $id b"
+	-command [list ::brlcad::mged::grid::do_grid_spacing $id b]
     .$id.menubar.settings.grid_spacing add separator
     .$id.menubar.settings.grid_spacing add command -label "Micrometer" -underline 4\
-	-command "set_grid_spacing $id micrometer 1"
+	-command [list ::brlcad::mged::grid::set_grid_spacing $id micrometer 1]
     .$id.menubar.settings.grid_spacing add command -label "Millimeter" -underline 2\
-	-command "set_grid_spacing $id millimeter 1"
+	-command [list ::brlcad::mged::grid::set_grid_spacing $id millimeter 1]
     .$id.menubar.settings.grid_spacing add command -label "Centimeter" -underline 0\
-	-command "set_grid_spacing $id centimeter 1"
+	-command [list ::brlcad::mged::grid::set_grid_spacing $id centimeter 1]
     .$id.menubar.settings.grid_spacing add command -label "Decimeter" -underline 0\
-	-command "set_grid_spacing $id decimeter 1"
+	-command [list ::brlcad::mged::grid::set_grid_spacing $id decimeter 1]
     .$id.menubar.settings.grid_spacing add command -label "Meter" -underline 0\
-	-command "set_grid_spacing $id meter 1"
+	-command [list ::brlcad::mged::grid::set_grid_spacing $id meter 1]
     .$id.menubar.settings.grid_spacing add command -label "Kilometer" -underline 0\
-	-command "set_grid_spacing $id kilometer 1"
+	-command [list ::brlcad::mged::grid::set_grid_spacing $id kilometer 1]
     .$id.menubar.settings.grid_spacing add separator
     .$id.menubar.settings.grid_spacing add command -label "1/10 Inch" -underline 0\
-	-command "set_grid_spacing $id \"1/10 inch\" 1"
+	-command [list ::brlcad::mged::grid::set_grid_spacing $id {1/10 inch} 1]
     .$id.menubar.settings.grid_spacing add command -label "1/4 Inch" -underline 2\
-	-command "set_grid_spacing $id \"1/4 inch\" 1"
+	-command [list ::brlcad::mged::grid::set_grid_spacing $id {1/4 inch} 1]
     .$id.menubar.settings.grid_spacing add command -label "1/2 Inch" -underline 2\
-	-command "set_grid_spacing $id \"1/2 inch\" 1"
+	-command [list ::brlcad::mged::grid::set_grid_spacing $id {1/2 inch} 1]
     .$id.menubar.settings.grid_spacing add command -label "Inch" -underline 0\
-	-command "set_grid_spacing $id inch 1"
+	-command [list ::brlcad::mged::grid::set_grid_spacing $id inch 1]
     .$id.menubar.settings.grid_spacing add command -label "Foot" -underline 0\
-	-command "set_grid_spacing $id foot 1"
+	-command [list ::brlcad::mged::grid::set_grid_spacing $id foot 1]
     .$id.menubar.settings.grid_spacing add command -label "Yard" -underline 0\
-	-command "set_grid_spacing $id yard 1"
+	-command [list ::brlcad::mged::grid::set_grid_spacing $id yard 1]
     .$id.menubar.settings.grid_spacing add command -label "Mile" -underline 3\
-	-command "set_grid_spacing $id mile 1"
+	-command [list ::brlcad::mged::grid::set_grid_spacing $id mile 1]
 
     menu .$id.menubar.settings.coord -title "Constraint Coords" -tearoff $mged_default(tearoff_menus)
     .$id.menubar.settings.coord add radiobutton -value m -variable mged_gui($id,coords)\
@@ -1674,7 +1676,7 @@ hoc_register_menu_data "Create" "$ptype..." "Make a $ptype" $ksl
 	    { see_also "rset" } }
     .$id.menubar.modes add checkbutton -offvalue 0 -onvalue 1 -variable mged_gui($id,adc_draw)\
 	-label "Angle/Dist Cursor" -underline 0 \
-	-command "adc_CBHandler $id"
+	-command [list ::brlcad::mged::adc::toggle_draw $id]
     hoc_register_menu_data "Modes" "Angle/Dist Cursor" "Angle/Dist Cursor"\
 	{ { summary "Toggle drawing the angle distance cursor." }
 	    { see_also "adc" } }
@@ -1878,13 +1880,13 @@ hoc_register_menu_data "Create" "$ptype..." "Make a $ptype" $ksl
 
     menu .$id.menubar.tools -title "Tools" -tearoff $mged_default(tearoff_menus)
     .$id.menubar.tools add command -label "ADC Control Panel" -underline 0\
-	-command "init_adc_control $id"
+	-command [list ::brlcad::mged::adc::init $id]
     hoc_register_menu_data "Tools" "ADC Control Panel" "ADC Control Panel"\
 	{ { summary "Tool for controlling the angle distance cursor." }
 	    { see_also "adc" } }
 
     .$id.menubar.tools add command -label "Grid Control Panel" -underline 0\
-	-command "init_grid_control $id"
+	-command [list ::brlcad::mged::grid::init_grid_control $id]
     hoc_register_menu_data "Tools" "Grid Control Panel" "Grid Control Panel"\
 	{ { summary "Tool for setting grid parameters." }
 	    { see_also "rset" } }
@@ -2273,7 +2275,7 @@ hoc_register_menu_data "Create" "$ptype..." "Make a $ptype" $ksl
     }
 
     cmd_win open $id
-    _mged_tie $id $mged_gui($id,active_dm)
+    ::brlcad::mged tie $id $mged_gui($id,active_dm)
     reconfig_gui_default $id
 
     # Force display manager windows to update their respective color schemes
@@ -2306,7 +2308,7 @@ hoc_register_menu_data "Create" "$ptype..." "Make a $ptype" $ksl
     bind $mged_gui($id,top) <KeyPress> { break }
     bind $mged_gui($id,top) <Configure> "mged_handle_configure $id"
 
-    set dbname [_mged_opendb]
+    set dbname [::brlcad::mged opendb]
     set_wm_title $id $dbname
 
     # Finish widget layout before either toplevel is mapped so the window
@@ -2408,7 +2410,7 @@ proc reconfig_gui_default { id } {
     global mged_display
 
     cmd_win set $id
-    set dm_id [_mged_tie $id]
+    set dm_id [::brlcad::mged tie $id]
     if { [llength $dm_id] != 1 } {
 	return
     }
@@ -2607,7 +2609,7 @@ proc set_active_dm { id } {
     update_mged_vars $id
     #		 set view_ring($id) [view_ring get]
 
-    _mged_tie $id $mged_gui($id,active_dm)
+    ::brlcad::mged tie $id $mged_gui($id,active_dm)
     reconfig_gui_default $id
 
     if {!$mged_gui($id,multi_pane)} {
@@ -2620,15 +2622,15 @@ proc set_active_dm { id } {
     #		 update_view_ring_entries $id d
 
     # update adc control panel
-    adc_load $id
+    ::brlcad::mged::adc::load $id
 
     # update grid control panel
-    grid_control_reset $id
+    ::brlcad::mged::grid::grid_control_reset $id
 
     # update query ray control panel
     qray_reset $id
 
-    set dbname [_mged_opendb]
+    set dbname [::brlcad::mged opendb]
     set_wm_title $id $dbname
 }
 
@@ -2753,12 +2755,12 @@ proc view_ring_add {id} {
     }
 
     # get view parameters
-    set aet [_mged_ae]
-    set center [_mged_center]
-    set size [_mged_size]
+    set aet [::brlcad::mged ae]
+    set center [::brlcad::mged center]
+    set size [::brlcad::mged size]
 
     # save view commands
-    set vcmds "_mged_ae $aet; _mged_center $center; _mged_size $size"
+    set vcmds "::brlcad::mged ae $aet; ::brlcad::mged center $center; ::brlcad::mged size $size"
 
     # format view parameters for display in menu
     set aet [format "az=%.2f el=%.2f tw=%.2f" \
@@ -3040,7 +3042,7 @@ proc update_view_ring_labels { id } {
     global view_ring
 
     if {0} {
-	if {[_mged_opendb] == ""} {
+	if {[::brlcad::mged opendb] == ""} {
 	    error "No database has been opened!"
 	}
 
@@ -3131,12 +3133,12 @@ proc adc { args } {
     global mged_gui
     global transform
 
-    set result [eval _mged_adc $args]
+    set result [::brlcad::mged adc {*}$args]
 
     # toggling ADC on/off
     if { ![llength $args] } {
 	set dm_id [winset]
-	set tie_list [_mged_tie]
+	set tie_list [::brlcad::mged tie]
 	set id mged
 
 	# see if dm_id is tied to a command window
@@ -3148,7 +3150,7 @@ proc adc { args } {
 	}
 
 	if {[info exists mged_gui($id,adc_draw)]} {
-	    set mged_gui($id,adc_draw) [_mged_adc draw]
+	    set mged_gui($id,adc_draw) [::brlcad::mged adc draw]
 	}
 
 	default_mouse_bindings [winset]

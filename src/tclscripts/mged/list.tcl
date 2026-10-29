@@ -118,13 +118,13 @@ proc lbdcHack {w x y t id type path} {
 		matrix_illum $path $item
 	    }
 	    bf {
-		bot_face_sel_apply $item
+		::brlcad::mged::bot_face::apply $item
 	    }
 	}
     } else {
 	switch $type {
 	    s1 {
-		_mged_sed -i 1 $item
+		::brlcad::mged sed -i 1 $item
 	    }
 	    s2 {
 		set mged_gui($id,mgs_path) $item
@@ -145,15 +145,15 @@ proc lbdcHack {w x y t id type path} {
 		comb_reset $id
 	    }
 	    m1 {
-		_mged_press oill
-		_mged_ill -e -i 1 $path
-		_mged_matpick $item
+		::brlcad::mged press oill
+		::brlcad::mged ill -e -i 1 $path
+		::brlcad::mged matpick $item
 	    }
 	    m2 {
 		set mged_gui($id,mgs_pos) $item
 	    }
 	    bf {
-		bot_face_sel_apply $item
+		::brlcad::mged::bot_face::apply $item
 	    }
 	}
 

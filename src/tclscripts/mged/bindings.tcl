@@ -169,9 +169,9 @@ proc default_key_bindings { w } {
     bind $w S "winset $w; catch {sed_reset}; break"
 
     # default control+key shortcuts
-    bind $w <Control-n> "winset $w; _mged_view_ring next; break"
-    bind $w <Control-p> "winset $w; _mged_view_ring prev; break"
-    bind $w <Control-t> "winset $w; _mged_view_ring toggle; break"
+    bind $w <Control-n> "winset $w; ::brlcad::mged view_ring next; break"
+    bind $w <Control-p> "winset $w; ::brlcad::mged view_ring prev; break"
+    bind $w <Control-t> "winset $w; ::brlcad::mged view_ring toggle; break"
 
     # shift grips navigation
     bind $w <Control-Shift-Down> "winset $w; knob -i aY \$mged_default(tran_factor); break"

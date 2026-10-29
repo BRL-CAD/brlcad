@@ -23,22 +23,26 @@
 #	routines for displaying a Tcl/Tk widget for selecting a BOT face
 #
 
-proc bot_face_sel_apply { face } {
+namespace eval ::brlcad::mged::bot_face {
+
+namespace export init
+
+proc apply { face } {
     if { [llength $face] != 3 } {
 	return -code error "BOT face does not have 3 vertices"
     }
 
-    _mged_p {*}$face
-    _mged_get_solid_keypoint
-    _mged_refresh
+    ::brlcad::mged p {*}$face
+    ::brlcad::mged get_solid_keypoint
+    ::brlcad::mged refresh
 }
 
-proc bot_face_select { face_list } {
+proc init { face_list } {
     global mged_gui
     global ::tk::Priv
 
 
-    set win [winset]
+    set win [::brlcad::mged winset]
     set id [get_player_id_dm $win]
     if {$id == "mged"} {
 	mouse_init_mged_gui
@@ -46,7 +50,7 @@ proc bot_face_select { face_list } {
 
     set w .bot_face_select
 
-    if { [winfo exists $w] } { catch "destroy $w" }
+    if { [winfo exists $w] } { catch {destroy $w} }
 
     if [info exists mged_gui($id,screen)] {
 	set screen $mged_gui($id,screen)
@@ -56,27 +60,28 @@ proc bot_face_select { face_list } {
 
     set face_list_len [llength $face_list]
     if { $face_list_len == 0 } {
-	bot_face_sel_abort $w
+	abort $w
 	return
     }
 
     if { $face_list_len == 1 } {
 	set face [lindex $face_list 0]
 	if { [llength $face] != 3 } {
-	    bot_face_sel_abort $w
+	    abort $w
 	    cad_dialog $::tk::Priv(cad_dialog) $screen "Internal Error"  "Face does not have 3 vertices" error 0 OK
 	    return
 	}
-	bot_face_sel_apply $face
+	apply $face
 	return
     }
 
-    create_listbox $w $screen "BOT Triangle" $face_list "bot_face_sel_abort $w"
-    wm protocol $w WM_DELETE_WINDOW [list bot_face_sel_abort $w]
-    bind_listbox $w "<B1-Motion>"\
-	"bot_face_sel_apply \[get_listbox_entry %W %x %y\]"
+    set abort_command [list ::brlcad::mged::bot_face::abort $w]
+    create_listbox $w $screen "BOT Triangle" $face_list $abort_command
+    wm protocol $w WM_DELETE_WINDOW $abort_command
+    bind_listbox $w "<B1-Motion>" \
+	[list ::brlcad::mged::bot_face::select_entry %W %x %y]
     bind_listbox $w "<ButtonPress-1>" \
-	"lbdcHack %W %x %y %t $id bf junkpath"
+	[list ::lbdcHack %W %x %y %t $id bf junkpath]
     hoc_register_data $w.listbox "BOT Triangle Select" {
 	{summary "Use your left mouse button to highlight entries in this list.
 Each entry shows the three vertex numbers that make up a single triangle.
@@ -84,10 +89,28 @@ Double click to select a triangle for editing."}
     }
 }
 
-proc bot_face_sel_abort { w } {
-    _mged_get_solid_keypoint
-    _mged_refresh
+proc abort { w } {
+    ::brlcad::mged get_solid_keypoint
+    ::brlcad::mged refresh
     catch {destroy $w}
+}
+
+proc select_entry {window x y} {
+    apply [get_listbox_entry $window $x $y]
+}
+
+}
+
+proc bot_face_select {face_list} {
+    tailcall ::brlcad::mged::bot_face::init $face_list
+}
+
+proc bot_face_sel_apply {face} {
+    tailcall ::brlcad::mged::bot_face::apply $face
+}
+
+proc bot_face_sel_abort {window} {
+    tailcall ::brlcad::mged::bot_face::abort $window
 }
 
 # Local Variables:

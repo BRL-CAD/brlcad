@@ -161,19 +161,8 @@ tclcad_init_gui(Tcl_Interp *interp, struct bu_vls *tlog)
 	return TCL_ERROR;
     }
 
-    if (Tcl_Import(interp, Tcl_GetGlobalNamespace(interp),
-		"::itk::*", /* allowOverwrite */ 1) != TCL_OK ||
-	Tcl_Import(interp, Tcl_GetGlobalNamespace(interp),
-		"::iwidgets::*", /* allowOverwrite */ 1) != TCL_OK) {
-	if (tlog)
-	    bu_vls_printf(tlog, "Tcl_Import ERROR:\n%s\n", Tcl_GetStringResult(interp));
-	return TCL_ERROR;
-    }
-
     if (Tcl_Eval(interp,
-	    "auto_mkindex_parser::slavehook { _%@namespace import -force ::tk::* }") != TCL_OK ||
-	Tcl_Eval(interp,
-	    "auto_mkindex_parser::slavehook { _%@namespace import -force ::itk::* }") != TCL_OK) {
+	    "auto_mkindex_parser::slavehook { _%@namespace import -force ::tk::* }") != TCL_OK) {
 	if (tlog)
 	    bu_vls_printf(tlog, "Tcl_Eval ERROR:\n%s\n", Tcl_GetStringResult(interp));
 	return TCL_ERROR;
@@ -267,6 +256,19 @@ tclcad_init(Tcl_Interp *interp, int init_gui, struct bu_vls *tlog)
 
     tclcad_auto_path(interp);
 
+#ifdef HAVE_TK
+    /* Keep headless initialization display-free while allowing later loads. */
+    Tcl_StaticPackage(NULL, "Tklitehtml", Tklitehtml_Init, NULL);
+    if (Tcl_Eval(interp,
+	    "package ifneeded tklitehtml 0.1.0 {"
+	    "package require Tk 8.6; load {} Tklitehtml}") != TCL_OK) {
+	if (tlog)
+	    bu_vls_printf(tlog, "TkLiteHtml package registration ERROR:\n%s\n",
+		    Tcl_GetStringResult(interp));
+	return TCL_ERROR;
+    }
+#endif
+
     /* Initialize [incr Tcl] */
     if (Tcl_Eval(interp, "package require Itcl " TCLCAD_ITCL_MIN_VERSION) != TCL_OK) {
 	if (tlog)
@@ -313,25 +315,6 @@ tclcad_init(Tcl_Interp *interp, int init_gui, struct bu_vls *tlog)
     Cho_Init(interp);
 
     Tcl_PkgProvide(interp, "Tclcad", brlcad_version());
-
-    /* Import Itcl into the global namespace
-     *
-     * TODO - this is probably a bad idea - figure out why we're doing it and
-     * whether we really need to... */
-
-    if (Tcl_Import(interp, Tcl_GetGlobalNamespace(interp),
-		"::itcl::*", /* allowOverwrite */ 1) != TCL_OK) {
-	if (tlog)
-	    bu_vls_printf(tlog, "Tcl_Import ERROR:\n%s\n", Tcl_GetStringResult(interp));
-	return TCL_ERROR;
-    }
-
-    if (Tcl_Eval(interp,
-	    "auto_mkindex_parser::slavehook { _%@namespace import -force ::itcl::* }") != TCL_OK) {
-	if (tlog)
-	    bu_vls_printf(tlog, "Tcl_Eval ERROR:\n%s\n", Tcl_GetStringResult(interp));
-	return TCL_ERROR;
-    }
 
     state->initialized |= TCLCAD_CORE_INITIALIZED;
     if (init_gui && tclcad_init_gui(interp, tlog) != TCL_OK)
