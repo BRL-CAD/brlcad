@@ -1145,7 +1145,7 @@ _nirt_in_ovlp(struct nirt_overlap **op, std::set<struct nirt_overlap *> &ovlps, 
 	// If the overlap is beyond the current distance, see if it is
 	// the closest
 	if (o->in_dist > curr_dist) {
-	    if (closest_dist > o->out_dist) {
+	    if (closest_dist > o->in_dist) {
 		closest_dist = o->in_dist;
 		closest_ovlp = o;
 	    }
@@ -1379,18 +1379,18 @@ _nirt_if_hit(struct application *ap, struct partition *part_head, struct seg *UN
 	    while (seg_ovlps.size()) {
 		struct nirt_overlap *op = NULL;
 		if (_nirt_in_ovlp(&op, seg_ovlps, curr_dist)) {
-		    // Current distance is in an overlap - draw the overlap.  If the ovlp
-		    // extends beyond the segment (is that possible?) Draw only until the
-		    // end of the segment - else, draw to the end of the overlap.
-		    if (op->out_dist > s->d_out) {
-			VMOVE(curr_pnt, s->out);
-			curr_dist = s->d_out;
-		    } else {
+		    point_t overlap_start;
+		    if (NEAR_EQUAL(op->in_dist, part->pt_outhit->hit_dist, ap->a_rt_i->rti_tol.dist)) {
+			VMOVE(overlap_start, op->in_point);
 			VMOVE(curr_pnt, op->out_point);
 			curr_dist = op->out_dist;
+		    } else {
+			VMOVE(overlap_start, curr_pnt);
+			curr_dist = (op->out_dist < part->pt_outhit->hit_dist) ? op->out_dist : part->pt_outhit->hit_dist;
+			VJOIN1(curr_pnt, ap->a_ray.r_pt, curr_dist, ap->a_ray.r_dir);
 		    }
 		    vhead = bv_vlblock_find(nss->i->segs, ovlp_rgb[RED], ovlp_rgb[GRN], ovlp_rgb[BLU]);
-		    BV_ADD_VLIST(nss->i->segs->free_vlist_hd, vhead, op->in_point, BV_VLIST_LINE_MOVE);
+		    BV_ADD_VLIST(nss->i->segs->free_vlist_hd, vhead, overlap_start, BV_VLIST_LINE_MOVE);
 		    BV_ADD_VLIST(nss->i->segs->free_vlist_hd, vhead, curr_pnt, BV_VLIST_LINE_DRAW);
 		    seg_ovlps.erase(op);
 		} else {

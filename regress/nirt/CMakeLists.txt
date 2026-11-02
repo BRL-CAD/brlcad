@@ -1,6 +1,6 @@
 if(SH_EXEC AND TARGET mged)
   brlcad_add_test(NAME regress-nirt COMMAND ${SH_EXEC} "${CMAKE_CURRENT_SOURCE_DIR}/nirt.sh" ${CMAKE_SOURCE_DIR})
-  brlcad_regression_test(regress-nirt "mged;nirt" TEST_DEFINED)
+  brlcad_regression_test(regress-nirt "mged;nirt;plot3-asc" TEST_DEFINED)
 endif(SH_EXEC AND TARGET mged)
 
 cmakefiles(
@@ -17,6 +17,11 @@ set(
   nirt.out
   nirt.ref
   nirt.out.raw-E
+  nirt_order_expected.txt
+  nirt_order_one.plot
+  nirt_order_one.txt
+  nirt_order_two.plot
+  nirt_order_two.txt
 )
 
 set_property(DIRECTORY APPEND PROPERTY ADDITIONAL_MAKE_CLEAN_FILES "${nirt_outfiles}")
