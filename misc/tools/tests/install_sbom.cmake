@@ -41,9 +41,19 @@ function(configure_install_sbom output allow_dirty)
   set(BRLCAD_SBOM_GIT_COMMAND "${GIT_EXECUTABLE}")
   set(BRLCAD_SBOM_EXECUTABLE "${SBOM_TOOL}")
   set(BRLCAD_VERSION "1.0.0")
-  set(BRLCAD_BEXT_COMPONENT_MANIFEST "${TEST_ROOT}/missing-components.json")
-  set(BRLCAD_BEXT_SBOM "${TEST_ROOT}/missing-dependencies.spdx.json")
+  if(NOT DEFINED BRLCAD_BEXT_COMPONENT_MANIFEST)
+    set(BRLCAD_BEXT_COMPONENT_MANIFEST "${TEST_ROOT}/missing-components.json")
+  endif()
+  if(NOT DEFINED BRLCAD_BEXT_SBOM)
+    set(BRLCAD_BEXT_SBOM "${TEST_ROOT}/missing-dependencies.spdx.json")
+  endif()
   configure_file("${INSTALL_SBOM_TEMPLATE}" "${output}" @ONLY)
+endfunction()
+
+function(configure_install_sbom_with_dependencies output)
+  set(BRLCAD_BEXT_COMPONENT_MANIFEST "${TEST_ROOT}/components.json")
+  set(BRLCAD_BEXT_SBOM "${TEST_ROOT}/dependencies.spdx.json")
+  configure_install_sbom("${output}" OFF)
 endfunction()
 
 set(default_script "${TEST_ROOT}/build/install-sbom-default.cmake")
@@ -91,4 +101,55 @@ execute_process(
 )
 if(validation_result EQUAL 0 OR EXISTS "${output}")
   message(FATAL_ERROR "Install SBOM validation failure left a publishable output")
+endif()
+
+file(WRITE "${TEST_ROOT}/install/lib/zlib-test.txt" "zlib\n")
+file(WRITE "${TEST_ROOT}/components.json" [=[
+{
+  "schema": "https://brlcad.org/schema/bext-component-manifest-v2",
+  "platform": "regression-test",
+  "install_root": "install",
+  "generated_by": "bext",
+  "files": [
+    {"path": "lib/zlib-test.txt", "component": "zlib"}
+  ],
+  "packages": [
+    {"component": "zlib", "id": "zlib/zlib", "spdx_id": "SPDXRef-Package-zlib", "primary": true}
+  ]
+}
+]=])
+file(WRITE "${TEST_ROOT}/dependencies.spdx.json" [=[
+{
+  "spdxVersion": "SPDX-2.3",
+  "dataLicense": "CC0-1.0",
+  "SPDXID": "SPDXRef-DOCUMENT",
+  "name": "bext-regression-test",
+  "documentNamespace": "https://brlcad.org/sbom/install-regression-test",
+  "creationInfo": {"created": "2026-01-01T00:00:00Z", "creators": ["Tool: regression-test"]},
+  "packages": [
+    {
+      "name": "zlib",
+      "SPDXID": "SPDXRef-Package-zlib",
+      "versionInfo": "1.3.2",
+      "downloadLocation": "https://zlib.net/zlib-1.3.2.tar.gz",
+      "filesAnalyzed": false,
+      "licenseConcluded": "Zlib",
+      "licenseDeclared": "Zlib",
+      "copyrightText": "NOASSERTION"
+    }
+  ],
+  "relationships": []
+}
+]=])
+set(dependency_script "${TEST_ROOT}/build/install-sbom-dependencies.cmake")
+configure_install_sbom_with_dependencies("${dependency_script}")
+execute_process(
+  COMMAND "${CMAKE_COMMAND}"
+    -DCMAKE_INSTALL_PREFIX=${TEST_ROOT}/install
+    "-DCMAKE_INSTALL_MANIFEST_FILES=${installed_file};${TEST_ROOT}/install/lib/zlib-test.txt"
+    -P "${dependency_script}"
+  RESULT_VARIABLE dependency_result
+)
+if(NOT dependency_result EQUAL 0 OR NOT EXISTS "${output}")
+  message(FATAL_ERROR "Install SBOM treated a staged bext file as BRL-CAD-owned")
 endif()
