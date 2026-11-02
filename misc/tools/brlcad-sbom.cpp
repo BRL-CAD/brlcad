@@ -286,10 +286,14 @@ audit_installed_files(const options &opts, const std::map<std::string, std::stri
             continue;
         }
         const auto component = component_owners.find(relative);
+        const bool project_owned = brlcad_files.count(relative) != 0;
+        if (component != component_owners.end() && project_owned) {
+            throw std::runtime_error("installed file has conflicting BRL-CAD and bext ownership: " + relative);
+        }
         std::string owner;
         if (component != component_owners.end()) {
             owner = component->second;
-        } else if (brlcad_files.count(relative) != 0) {
+        } else if (project_owned) {
             owner = "BRL-CAD";
         } else {
             unattributed.push_back(relative);

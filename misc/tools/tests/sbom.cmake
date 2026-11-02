@@ -141,6 +141,13 @@ if(NOT zlib_contains_file)
   message(FATAL_ERROR "Installed dependency file is not attributed to its package")
 endif()
 
+file(APPEND "${TEST_ROOT}/project-files.txt" "${TEST_ROOT}/install/lib/zlib-test.txt\n")
+execute_process(COMMAND "${SBOM_TOOL}" ${arguments} RESULT_VARIABLE ownership_result ERROR_QUIET)
+if(ownership_result EQUAL 0 OR EXISTS "${output}")
+  message(FATAL_ERROR "SBOM generation did not reject conflicting file ownership")
+endif()
+file(WRITE "${TEST_ROOT}/project-files.txt" "${TEST_ROOT}/install/bin/brlcad-test.txt\n")
+
 file(READ "${TEST_ROOT}/components.json" valid_component_manifest)
 string(REPLACE "SPDXRef-Package-zlib" "SPDXRef-Package-missing" invalid_component_manifest "${valid_component_manifest}")
 file(WRITE "${TEST_ROOT}/components.json" "${invalid_component_manifest}")
