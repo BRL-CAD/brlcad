@@ -24,9 +24,19 @@
  */
 
 #include "ged.h"
+#include "bu/sort.h"
 
 extern int ged_who2_core(struct ged *gedp, int argc, const char **argv);
 extern int ged_who_solids_core(struct ged *gedp, int argc, const char **argv);
+
+static int
+path_cmp(const void *a, const void *b, void *UNUSED(context))
+{
+    const struct display_list * const *gdl_a = (const struct display_list * const *)a;
+    const struct display_list * const *gdl_b = (const struct display_list * const *)b;
+
+    return bu_strcmp(bu_vls_cstr(&(*gdl_a)->dl_path), bu_vls_cstr(&(*gdl_b)->dl_path));
+}
 
 /*
  * List the objects currently prepped for drawing
@@ -91,15 +101,34 @@ ged_who_core(struct ged *gedp, int argc, const char *argv[])
 	}
     }
 
+    size_t path_count = 0;
     for (BU_LIST_FOR(gdlp, display_list, (struct bu_list *)ged_dl(gedp))) {
 	if (((struct directory *)gdlp->dl_dp)->d_addr == RT_DIR_PHONY_ADDR) {
 	    if (skip_phony) continue;
 	} else {
 	    if (skip_real) continue;
 	}
-
-	bu_vls_printf(gedp->ged_result_str, "%s ", bu_vls_addr(&gdlp->dl_path));
+	path_count++;
     }
+
+    if (!path_count)
+	return BRLCAD_OK;
+
+    struct display_list **paths = (struct display_list **)bu_calloc(path_count, sizeof(struct display_list *), "who paths");
+    size_t path_index = 0;
+    for (BU_LIST_FOR(gdlp, display_list, (struct bu_list *)ged_dl(gedp))) {
+	if (((struct directory *)gdlp->dl_dp)->d_addr == RT_DIR_PHONY_ADDR) {
+	    if (skip_phony) continue;
+	} else {
+	    if (skip_real) continue;
+	}
+	paths[path_index++] = gdlp;
+    }
+
+    bu_sort(paths, path_count, sizeof(struct display_list *), path_cmp, NULL);
+    for (path_index = 0; path_index < path_count; path_index++)
+	bu_vls_printf(gedp->ged_result_str, "%s ", bu_vls_addr(&paths[path_index]->dl_path));
+    bu_free(paths, "who paths");
 
     return BRLCAD_OK;
 }

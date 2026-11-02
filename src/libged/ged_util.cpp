@@ -28,6 +28,7 @@
 
 #include "common.h"
 
+#include <algorithm>
 #include <stdlib.h>
 #include <string.h>
 
@@ -1061,8 +1062,11 @@ ged_scale_args(struct ged *gedp, int argc, const char *argv[], fastf_t *sf1, fas
 size_t
 ged_who_argc(struct ged *gedp)
 {
+    if (!gedp)
+	return 0;
+
     if (gedp->new_cmd_forms) {
-	if (!gedp || !gedp->ged_gvp || !gedp->dbi_state)
+	if (!gedp->ged_gvp || !gedp->dbi_state)
 	    return 0;
 	DbiState *dbis = (DbiState *)gedp->dbi_state;
 	BViewState *bvs = dbis->get_view_state(gedp->ged_gvp);
@@ -1096,32 +1100,7 @@ ged_who_argc(struct ged *gedp)
 int
 ged_who_argv(struct ged *gedp, char **start, const char **end)
 {
-    char **vp = start;
     if (!gedp)
-	return 0;
-    if (gedp->new_cmd_forms) {
-	if (!gedp->ged_gvp || !gedp->dbi_state)
-	    return 0;
-	DbiState *dbis = (DbiState *)gedp->dbi_state;
-	BViewState *bvs = dbis->get_view_state(gedp->ged_gvp);
-	if (bvs) {
-	    std::vector<std::string> drawn_paths = bvs->list_drawn_paths(-1, true);
-	    for (size_t i = 0; i < drawn_paths.size(); i++) {
-		if ((vp != NULL) && ((const char **)vp < end)) {
-		    *vp++ = bu_strdup(drawn_paths[i].c_str());
-		} else {
-		    bu_vls_printf(gedp->ged_result_str, "INTERNAL ERROR: ged_who_argv() ran out of space at %s\n", drawn_paths[i].c_str());
-		    break;
-		}
-	    }
-	} else {
-	    return 0;
-	}
-    }
-
-    struct display_list *gdlp;
-
-    if (!gedp || !gedp->i->ged_gdp || !gedp->i->ged_gdp->gd_headDisplay)
 	return 0;
 
     if (UNLIKELY(!start || !end)) {
@@ -1129,21 +1108,41 @@ ged_who_argv(struct ged *gedp, char **start, const char **end)
 	return 0;
     }
 
-    for (BU_LIST_FOR(gdlp, display_list, gedp->i->ged_gdp->gd_headDisplay)) {
-	if (((struct directory *)gdlp->dl_dp)->d_addr == RT_DIR_PHONY_ADDR)
-	    continue;
+    std::vector<std::string> drawn_paths;
+    if (gedp->new_cmd_forms) {
+	if (!gedp->ged_gvp || !gedp->dbi_state)
+	    return 0;
+	DbiState *dbis = (DbiState *)gedp->dbi_state;
+	BViewState *bvs = dbis->get_view_state(gedp->ged_gvp);
+	if (!bvs)
+	    return 0;
+	drawn_paths = bvs->list_drawn_paths(-1, true);
+    } else {
+	struct display_list *gdlp;
 
-	if ((vp != NULL) && ((const char **)vp < end)) {
-	    *vp++ = bu_strdup(bu_vls_addr(&gdlp->dl_path));
-	} else {
-	    bu_vls_printf(gedp->ged_result_str, "INTERNAL ERROR: ged_who_argv() ran out of space at %s\n", ((struct directory *)gdlp->dl_dp)->d_namep);
-	    break;
+	if (!gedp->i->ged_gdp || !gedp->i->ged_gdp->gd_headDisplay)
+	    return 0;
+
+	for (BU_LIST_FOR(gdlp, display_list, gedp->i->ged_gdp->gd_headDisplay)) {
+	    if (((struct directory *)gdlp->dl_dp)->d_addr == RT_DIR_PHONY_ADDR)
+		continue;
+	    drawn_paths.push_back(std::string(bu_vls_addr(&gdlp->dl_path)));
 	}
     }
 
-    if ((vp != NULL) && ((const char **)vp < end)) {
-	*vp = (char *) 0;
+    std::sort(drawn_paths.begin(), drawn_paths.end());
+
+    char **vp = start;
+    for (size_t i = 0; i < drawn_paths.size(); i++) {
+	if ((const char **)vp >= end) {
+	    bu_vls_printf(gedp->ged_result_str, "INTERNAL ERROR: ged_who_argv() ran out of space at %s\n", drawn_paths[i].c_str());
+	    break;
+	}
+	*vp++ = bu_strdup(drawn_paths[i].c_str());
     }
+
+    if ((const char **)vp < end)
+	*vp = NULL;
 
     return vp-start;
 }
