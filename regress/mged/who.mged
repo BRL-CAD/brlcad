@@ -10,18 +10,22 @@ who
 d who.c
 d who_sph1.s
 
+Z
 in_sph order_first 1
 in_sph order_second 2
-e order_second.s
-e order_first.s
-set forward_order [who]
+set expected_order "order_first_sph1.s order_second_sph2.s"
+e order_second_sph2.s
+e order_first_sph1.s
+set reverse_draw_order "[string trim [who]]"
 Z
-e order_first.s
-e order_second.s
-set reverse_order [who]
-if {$forward_order ne $reverse_order} {
-    puts "FAIL who ordering differs: '$forward_order' != '$reverse_order'"
-    exit 1
+e order_first_sph1.s
+e order_second_sph2.s
+set forward_draw_order "[string trim [who]]"
+if {$reverse_draw_order ne $expected_order ||
+    $forward_draw_order ne $expected_order} {
+    error "FAIL who ordering: expected '$expected_order', got \
+'$reverse_draw_order' and '$forward_draw_order'"
 }
+puts "PASS who ordering"
 
 puts "*** 'who' testing completed ***"
