@@ -8,7 +8,10 @@ endfunction(SetTargetFolder)
 # specifically for use with our build and maintenance processes
 
 add_executable(brlcad-sbom brlcad-sbom.cpp)
-target_include_directories(brlcad-sbom PRIVATE "${CMAKE_SOURCE_DIR}/src/libbu")
+target_include_directories(brlcad-sbom PRIVATE
+  "${CMAKE_SOURCE_DIR}/src/gtools/gist"
+  "${CMAKE_SOURCE_DIR}/src/libbu"
+)
 target_sources(brlcad-sbom PRIVATE "${CMAKE_SOURCE_DIR}/src/libbu/sha1.c")
 target_compile_features(brlcad-sbom PRIVATE cxx_std_17)
 settargetfolder(brlcad-sbom "Compilation Utilities")

@@ -10,6 +10,7 @@
  */
 
 #include "json.hpp"
+#include "picohash.h"
 #include "sha1.h"
 
 #include <algorithm>
@@ -34,6 +35,12 @@ struct installed_file {
     std::string path;
     std::string owner;
     std::string sha1;
+    std::string sha256;
+};
+
+struct file_hashes {
+    std::string sha1;
+    std::string sha256;
 };
 
 struct options {
@@ -115,29 +122,34 @@ hexadecimal(const unsigned char *bytes, std::size_t count)
     return stream.str();
 }
 
-static std::string
-sha1_file(const fs::path &path)
+static file_hashes
+hash_file(const fs::path &path)
 {
     std::ifstream input(path, std::ios::binary);
     if (!input) {
         throw std::runtime_error("unable to hash installed file " + path.string());
     }
-    SHA1_CTX context;
-    SHA1Init(&context);
+    SHA1_CTX sha1_context;
+    SHA1Init(&sha1_context);
+    picohash_ctx_t sha256_context;
+    picohash_init_sha256(&sha256_context);
     char buffer[64 * 1024];
     while (input) {
         input.read(buffer, sizeof(buffer));
         const std::streamsize count = input.gcount();
         if (count > 0) {
-            SHA1Update(&context, reinterpret_cast<const unsigned char *>(buffer), static_cast<uint32_t>(count));
+            SHA1Update(&sha1_context, reinterpret_cast<const unsigned char *>(buffer), static_cast<uint32_t>(count));
+            picohash_update(&sha256_context, buffer, static_cast<std::size_t>(count));
         }
     }
     if (!input.eof()) {
         throw std::runtime_error("failed while hashing installed file " + path.string());
     }
-    unsigned char digest[20];
-    SHA1Final(digest, &context);
-    return hexadecimal(digest, sizeof(digest));
+    unsigned char sha1_digest[20];
+    unsigned char sha256_digest[PICOHASH_SHA256_DIGEST_LENGTH];
+    SHA1Final(sha1_digest, &sha1_context);
+    picohash_final(&sha256_context, sha256_digest);
+    return {hexadecimal(sha1_digest, sizeof(sha1_digest)), hexadecimal(sha256_digest, sizeof(sha256_digest))};
 }
 
 static std::string
@@ -148,6 +160,17 @@ sha1_text(const std::string &text)
     SHA1Update(&context, reinterpret_cast<const unsigned char *>(text.data()), static_cast<uint32_t>(text.size()));
     unsigned char digest[20];
     SHA1Final(digest, &context);
+    return hexadecimal(digest, sizeof(digest));
+}
+
+static std::string
+sha256_text(const std::string &text)
+{
+    picohash_ctx_t context;
+    picohash_init_sha256(&context);
+    picohash_update(&context, text.data(), text.size());
+    unsigned char digest[PICOHASH_SHA256_DIGEST_LENGTH];
+    picohash_final(&context, digest);
     return hexadecimal(digest, sizeof(digest));
 }
 
@@ -299,9 +322,14 @@ audit_installed_files(const options &opts, const std::map<std::string, std::stri
             unattributed.push_back(relative);
             continue;
         }
-        const std::string checksum = fs::is_symlink(status) ?
-            sha1_text(fs::read_symlink(entry.path()).generic_string()) : sha1_file(entry.path());
-        files.push_back({relative, owner, checksum});
+        file_hashes hashes;
+        if (fs::is_symlink(status)) {
+            const std::string target = fs::read_symlink(entry.path()).generic_string();
+            hashes = {sha1_text(target), sha256_text(target)};
+        } else {
+            hashes = hash_file(entry.path());
+        }
+        files.push_back({relative, owner, hashes.sha1, hashes.sha256});
     }
     if (!unattributed.empty()) {
         std::sort(unattributed.begin(), unattributed.end());
@@ -487,17 +515,12 @@ generate_sbom(const options &opts)
     for (const auto &file : installed_files) {
         identity += "\n" + file.path + " " + file.sha1;
     }
-    SHA1_CTX identity_context;
-    SHA1Init(&identity_context);
-    SHA1Update(&identity_context, reinterpret_cast<const unsigned char *>(identity.data()), static_cast<uint32_t>(identity.size()));
-    unsigned char identity_digest[20];
-    SHA1Final(identity_digest, &identity_context);
     json result = {
         {"spdxVersion", "SPDX-2.3"},
         {"dataLicense", "CC0-1.0"},
         {"SPDXID", "SPDXRef-DOCUMENT"},
         {"name", "BRL-CAD-" + opts.version + "-installed"},
-        {"documentNamespace", "https://github.com/BRL-CAD/brlcad/sbom/" + opts.revision + "/" + hexadecimal(identity_digest, sizeof(identity_digest))},
+        {"documentNamespace", "https://github.com/BRL-CAD/brlcad/sbom/" + opts.revision + "/" + sha256_text(identity)},
         {"creationInfo", {{"created", opts.created}, {"creators", json::array({"Tool: brlcad-sbom"})}}},
         {"packages", json::array()},
         {"files", json::array()},
@@ -542,7 +565,10 @@ generate_sbom(const options &opts)
         result["files"].push_back({
             {"fileName", "./" + file.path},
             {"SPDXID", id},
-            {"checksums", json::array({{{"algorithm", "SHA1"}, {"checksumValue", file.sha1}}})},
+            {"checksums", json::array({
+                {{"algorithm", "SHA1"}, {"checksumValue", file.sha1}},
+                {{"algorithm", "SHA256"}, {"checksumValue", file.sha256}}
+            })},
             {"licenseConcluded", "NOASSERTION"},
             {"copyrightText", "NOASSERTION"}
         });
