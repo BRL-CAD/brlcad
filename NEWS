@@ -10,7 +10,7 @@ descriptive text that emphasizes or further describes significant
 changes made.  See document footer for additional details.
 
 ----------------------------------------------------------------------
---- 2026-10-30  Release 7.46.0                                     ---
+--- 2026-11-02  Release 7.46.0                                     ---
 ----------------------------------------------------------------------
 
 This release expands geometry conversion and improves modeling
@@ -29,6 +29,7 @@ with mkbuilding, annotation editing, and primitive repair.  Geometry
 analysis, image utilities, Windows support, documentation, and bundled
 dependencies also receive substantial updates.
 
+* fixed nirt plotting in MGED with overlaps - Cliff Yapp
 * corrected Archer logic for saving window size - Cliff Yapp
 * fixed inside BoT rays, DSP surface normals, PNTS bounds - Cliff Yapp
 * improved mged fallback HTML manual viewer - Cliff Yapp
