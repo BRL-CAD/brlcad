@@ -175,6 +175,28 @@ if(missing_package_result EQUAL 0 OR EXISTS "${output}")
 endif()
 file(WRITE "${TEST_ROOT}/components.json" "${valid_component_manifest}")
 
+string(REPLACE
+  [=["primary": true]=]
+  [=["primary": "true"]=]
+  malformed_package_manifest "${valid_component_manifest}")
+file(WRITE "${TEST_ROOT}/components.json" "${malformed_package_manifest}")
+execute_process(COMMAND "${SBOM_TOOL}" ${arguments} RESULT_VARIABLE malformed_package_result ERROR_QUIET)
+if(malformed_package_result EQUAL 0 OR EXISTS "${output}")
+  message(FATAL_ERROR "SBOM generation did not reject a malformed package mapping")
+endif()
+
+string(REPLACE
+  [=[{"component": "zlib", "id": "zlib/zlib", "spdx_id": "SPDXRef-Package-zlib", "primary": true}]=]
+  [=[{"component": "zlib", "id": "zlib/zlib", "spdx_id": "SPDXRef-Package-zlib", "primary": true},
+    {"component": "zlib", "id": "zlib/alternate", "spdx_id": "SPDXRef-Package-zlib-alternate", "primary": true}]=]
+  duplicate_primary_manifest "${valid_component_manifest}")
+file(WRITE "${TEST_ROOT}/components.json" "${duplicate_primary_manifest}")
+execute_process(COMMAND "${SBOM_TOOL}" ${arguments} RESULT_VARIABLE duplicate_primary_result ERROR_QUIET)
+if(duplicate_primary_result EQUAL 0 OR EXISTS "${output}")
+  message(FATAL_ERROR "SBOM generation did not reject duplicate primary packages")
+endif()
+file(WRITE "${TEST_ROOT}/components.json" "${valid_component_manifest}")
+
 file(WRITE "${TEST_ROOT}/install/unattributed.txt" "unattributed\n")
 execute_process(COMMAND "${SBOM_TOOL}" ${arguments} RESULT_VARIABLE audit_result ERROR_QUIET)
 if(audit_result EQUAL 0 OR EXISTS "${output}")
