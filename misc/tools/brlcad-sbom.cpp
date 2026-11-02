@@ -207,18 +207,6 @@ project_files(const options &opts)
     return files;
 }
 
-static std::string
-project_from_comment(const json &package)
-{
-    const std::string comment = package.at("comment").get<std::string>();
-    static const std::regex project_pattern(R"((?:^|;\s*)bext project:\s*([^;]+))");
-    std::smatch match;
-    if (!std::regex_search(comment, match, project_pattern)) {
-        throw std::runtime_error("bext package has no project association: " + package.at("SPDXID").get<std::string>());
-    }
-    return match[1].str();
-}
-
 static bool
 safe_relative_path(const fs::path &path)
 {
@@ -235,20 +223,21 @@ safe_relative_path(const fs::path &path)
 
 struct installed_components {
     std::map<std::string, std::string> owners;
-    std::map<std::string, std::set<std::string>> selected_packages;
+    std::map<std::string, std::string> package_components;
+    std::map<std::string, std::string> primary_packages;
 };
 
 static installed_components
 read_installed_components(const options &opts)
 {
     const json manifest = read_json(opts.component_manifest);
-    if (!manifest.is_object() || (manifest.size() != 5 && manifest.size() != 6) ||
-        (manifest.size() == 6 && !manifest.contains("selected_packages")) ||
-        manifest.value("schema", "") != "https://brlcad.org/schema/bext-component-manifest-v1" ||
+    if (!manifest.is_object() || manifest.size() != 6 ||
+        manifest.value("schema", "") != "https://brlcad.org/schema/bext-component-manifest-v2" ||
         manifest.value("install_root", "") != "install" || manifest.value("generated_by", "") != "bext" ||
         !manifest.contains("platform") || !manifest.at("platform").is_string() ||
         manifest.at("platform").get<std::string>().empty() ||
-        !manifest.contains("files") || !manifest.at("files").is_array()) {
+        !manifest.contains("files") || !manifest.at("files").is_array() ||
+        !manifest.contains("packages") || !manifest.at("packages").is_array()) {
         throw std::runtime_error("unsupported or invalid bext component manifest");
     }
 
@@ -269,25 +258,27 @@ read_installed_components(const options &opts)
             throw std::runtime_error("duplicate component ownership path: " + relative);
         }
     }
-    if (manifest.contains("selected_packages")) {
-        if (!manifest.at("selected_packages").is_array()) {
-            throw std::runtime_error("invalid selected package list");
+    static const std::regex spdx_id_pattern(R"(^SPDXRef-[A-Za-z0-9.-]+$)");
+    std::set<std::string> package_ids;
+    for (const auto &entry : manifest.at("packages")) {
+        if (!entry.is_object() || entry.size() != 4 ||
+            !entry.contains("component") || !entry.at("component").is_string() ||
+            !entry.contains("id") || !entry.at("id").is_string() ||
+            !entry.contains("spdx_id") || !entry.at("spdx_id").is_string() ||
+            !entry.contains("primary") || !entry.at("primary").is_boolean()) {
+            throw std::runtime_error("invalid component package entry");
         }
-        static const std::regex spdx_id_pattern(R"(^SPDXRef-[A-Za-z0-9.-]+$)");
-        for (const auto &entry : manifest.at("selected_packages")) {
-            if (!entry.is_object() || entry.size() != 2 ||
-                !entry.contains("component") || !entry.at("component").is_string() ||
-                !entry.contains("spdx_id") || !entry.at("spdx_id").is_string()) {
-                throw std::runtime_error("invalid selected package entry");
-            }
-            const std::string component = entry.at("component").get<std::string>();
-            const std::string spdx_id = entry.at("spdx_id").get<std::string>();
-            if (component.empty() || !std::regex_match(spdx_id, spdx_id_pattern)) {
-                throw std::runtime_error("invalid selected package entry: " + component + ": " + spdx_id);
-            }
-            if (!result.selected_packages[component].insert(spdx_id).second) {
-                throw std::runtime_error("duplicate selected package entry: " + component + ": " + spdx_id);
-            }
+        const std::string component = entry.at("component").get<std::string>();
+        const std::string id = entry.at("id").get<std::string>();
+        const std::string spdx_id = entry.at("spdx_id").get<std::string>();
+        if (component.empty() || id.empty() || !std::regex_match(spdx_id, spdx_id_pattern)) {
+            throw std::runtime_error("invalid component package entry: " + component + ": " + spdx_id);
+        }
+        if (!package_ids.insert(id).second || !result.package_components.emplace(spdx_id, component).second) {
+            throw std::runtime_error("duplicate component package entry: " + id + ": " + spdx_id);
+        }
+        if (entry.at("primary").get<bool>() && !result.primary_packages.emplace(component, spdx_id).second) {
+            throw std::runtime_error("component has multiple primary packages: " + component);
         }
     }
     return result;
@@ -420,11 +411,13 @@ generate_sbom(const options &opts)
     json retained_relationships = json::array();
     json extracted_licenses = json::array();
     std::map<std::string, std::string> component_owners;
-    std::map<std::string, std::set<std::string>> selected_package_ids;
+    std::map<std::string, std::string> package_components;
+    std::map<std::string, std::string> primary_package_ids;
     if (!opts.component_manifest.empty()) {
         installed_components components = read_installed_components(opts);
         component_owners = std::move(components.owners);
-        selected_package_ids = std::move(components.selected_packages);
+        package_components = std::move(components.package_components);
+        primary_package_ids = std::move(components.primary_packages);
     }
     const std::vector<installed_file> installed_files = audit_installed_files(opts, component_owners);
     std::map<std::string, std::size_t> component_counts;
@@ -444,37 +437,43 @@ generate_sbom(const options &opts)
 
         std::set<std::string> resolved_projects;
         for (auto package : dependency_sbom.at("packages")) {
-            const std::string project = project_from_comment(package);
+            const std::string package_id = package.at("SPDXID").get<std::string>();
+            const auto package_component = package_components.find(package_id);
+            if (package_component == package_components.end()) {
+                continue;
+            }
+            const std::string &project = package_component->second;
             const auto count = component_counts.find(project);
             if (count == component_counts.end()) {
                 continue;
             }
-            const std::string package_id = package.at("SPDXID").get<std::string>();
-            const auto selected = selected_package_ids.find(project);
-            if (selected != selected_package_ids.end() && selected->second.count(package_id) == 0) {
-                continue;
+            std::string comment = package.value("comment", "");
+            if (!comment.empty()) {
+                comment += "; ";
             }
-            package["comment"] = package.at("comment").get<std::string>() +
-                "; installed files attributed to bext project " + project + ": " + std::to_string(count->second);
+            package["comment"] = comment + "installed files attributed to bext project " + project + ": " +
+                std::to_string(count->second);
             selected_ids.insert(package_id);
-            project_package_ids.emplace(project, package_id);
             selected_packages.push_back(std::move(package));
             resolved_projects.insert(project);
         }
-        for (const auto &selection : selected_package_ids) {
-            if (component_counts.count(selection.first) == 0) {
+        for (const auto &package_component : package_components) {
+            if (component_counts.count(package_component.second) == 0) {
                 continue;
             }
-            for (const auto &package_id : selection.second) {
-                if (selected_ids.count(package_id) == 0) {
-                    throw std::runtime_error("selected bext package is absent from dependency SBOM: " + package_id);
-                }
+            if (selected_ids.count(package_component.first) == 0) {
+                throw std::runtime_error("selected bext package is absent from dependency SBOM: " + package_component.first);
             }
         }
         for (const auto &component : component_counts) {
             if (resolved_projects.count(component.first) == 0) {
                 throw std::runtime_error("no bext SPDX package describes installed component: " + component.first);
             }
+            const auto primary = primary_package_ids.find(component.first);
+            if (primary == primary_package_ids.end() || selected_ids.count(primary->second) == 0) {
+                throw std::runtime_error("installed component has no selected primary package: " + component.first);
+            }
+            project_package_ids.emplace(component.first, primary->second);
         }
 
         if (!dependency_sbom.contains("relationships") || !dependency_sbom.at("relationships").is_array()) {
@@ -532,9 +531,10 @@ generate_sbom(const options &opts)
 
     result["packages"].push_back(brlcad_package(opts, installed_files));
     for (auto &package : selected_packages) {
-        const std::string project = project_from_comment(package);
+        const std::string package_id = package.at("SPDXID").get<std::string>();
+        const std::string &project = package_components.at(package_id);
         const auto primary = project_package_ids.find(project);
-        if (primary != project_package_ids.end() && primary->second == package.at("SPDXID").get<std::string>()) {
+        if (primary != project_package_ids.end() && primary->second == package_id) {
             package["filesAnalyzed"] = true;
             package["packageVerificationCode"] = {{"packageVerificationCodeValue", package_verification_code(installed_files, project)}};
         }

@@ -991,25 +991,23 @@ function(brlcad_load_bext_component_manifest manifest install_root valid_var rea
   string(JSON _brlcad_generated_by ERROR_VARIABLE _brlcad_generated_by_error GET "${_brlcad_manifest_json}" generated_by)
   if(NOT "${_brlcad_root_error}" STREQUAL "NOTFOUND" OR NOT _brlcad_root_type STREQUAL "OBJECT" OR
      NOT "${_brlcad_root_size_error}" STREQUAL "NOTFOUND" OR
-     (_brlcad_root_size LESS 5 OR _brlcad_root_size GREATER 6) OR
+     NOT _brlcad_root_size EQUAL 6 OR
      NOT "${_brlcad_schema_error}" STREQUAL "NOTFOUND" OR
      NOT "${_brlcad_install_root_error}" STREQUAL "NOTFOUND" OR
      NOT "${_brlcad_generated_by_error}" STREQUAL "NOTFOUND" OR
      NOT "${_brlcad_install_root}" STREQUAL "install" OR
      NOT "${_brlcad_generated_by}" STREQUAL "bext" OR
-     NOT "${_brlcad_schema}" STREQUAL "https://brlcad.org/schema/bext-component-manifest-v1")
+     NOT "${_brlcad_schema}" STREQUAL "https://brlcad.org/schema/bext-component-manifest-v2")
     set(${reason_var} "unsupported or invalid schema" PARENT_SCOPE)
     return()
   endif()
 
-  if(_brlcad_root_size EQUAL 6)
-    string(JSON _brlcad_selected_type ERROR_VARIABLE _brlcad_selected_error TYPE
-      "${_brlcad_manifest_json}" selected_packages)
-    if(NOT "${_brlcad_selected_error}" STREQUAL "NOTFOUND" OR
-       NOT _brlcad_selected_type STREQUAL "ARRAY")
-      set(${reason_var} "manifest has an invalid selected package list" PARENT_SCOPE)
-      return()
-    endif()
+  string(JSON _brlcad_packages_type ERROR_VARIABLE _brlcad_packages_error TYPE
+    "${_brlcad_manifest_json}" packages)
+  if(NOT "${_brlcad_packages_error}" STREQUAL "NOTFOUND" OR
+     NOT _brlcad_packages_type STREQUAL "ARRAY")
+    set(${reason_var} "manifest has an invalid package list" PARENT_SCOPE)
+    return()
   endif()
 
   string(JSON _brlcad_platform ERROR_VARIABLE _brlcad_platform_error GET "${_brlcad_manifest_json}" platform)

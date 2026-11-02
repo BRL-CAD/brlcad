@@ -9,15 +9,15 @@ file(WRITE "${TEST_ROOT}/install/lib/zlib-test.txt" "zlib\n")
 file(WRITE "${TEST_ROOT}/project-files.txt" "${TEST_ROOT}/install/bin/brlcad-test.txt\n")
 file(WRITE "${TEST_ROOT}/components.json" [=[
 {
-  "schema": "https://brlcad.org/schema/bext-component-manifest-v1",
+  "schema": "https://brlcad.org/schema/bext-component-manifest-v2",
   "platform": "regression-test",
   "install_root": "install",
   "generated_by": "bext",
   "files": [
     {"path": "lib/zlib-test.txt", "component": "zlib"}
   ],
-  "selected_packages": [
-    {"component": "zlib", "spdx_id": "SPDXRef-Package-zlib"}
+  "packages": [
+    {"component": "zlib", "id": "zlib/zlib", "spdx_id": "SPDXRef-Package-zlib", "primary": true}
   ]
 }
 ]=])
@@ -42,8 +42,7 @@ file(WRITE "${TEST_ROOT}/dependencies.spdx.json" [=[
       "primaryPackagePurpose": "LIBRARY",
       "licenseConcluded": "Zlib",
       "licenseDeclared": "Zlib",
-      "copyrightText": "NOASSERTION",
-      "comment": "bext project: zlib; output: install"
+      "copyrightText": "NOASSERTION"
     },
     {
       "name": "unused bundled source",
