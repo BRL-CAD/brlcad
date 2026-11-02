@@ -66,6 +66,11 @@ if test ! -f "$NIRT" ; then
     echo "Unable to find nirt, aborting"
     exit 1
 fi
+PLOT3ASC="`ensearch plot3-asc`"
+if test ! -f "$PLOT3ASC" ; then
+    echo "Unable to find plot3-asc, aborting"
+    exit 1
+fi
 
 rm -f nirt.mged nirt.g
 cat > nirt.mged <<EOF
@@ -89,6 +94,11 @@ attr set center_cube_color.r color 0/255/0
 attr set right_cube_color.r color 0/0/255
 comb center_cube_air u center_box.s
 attr set center_cube_air region 1 air 1
+in enclosing_box.s rpp -2 2 -2 2 -4 4
+in nested_box.s rpp -1 1 -1 1 -1 1
+r enclosing_region.r u enclosing_box.s
+r nested_region.r u nested_box.s
+g nested_assembly.g nested_region.r
 EOF
 
 $MGED -c >> $LOGFILE 2>&1 << EOF
@@ -574,6 +584,22 @@ EOF
 
 run cmp nirt.ref nirt.out
 STATUS=$?
+
+if [ X$STATUS = X0 ] ; then
+    "$NIRT" -H 0 -b --plotfile nirt_order_one.plot \
+	-e "xyz 0 0 5; dir 0 0 -1; s; q" nirt.g enclosing_region.r nested_assembly.g >> "$LOGFILE" 2>&1
+    "$NIRT" -H 0 -b --plotfile nirt_order_two.plot \
+	-e "xyz 0 0 5; dir 0 0 -1; s; q" nirt.g nested_assembly.g enclosing_region.r >> "$LOGFILE" 2>&1
+    "$PLOT3ASC" nirt_order_one.plot | awk '$1 == "C" { overlap = ($2 == 255 && $3 == 255 && $4 == 255); next } overlap && ($1 == "O" || $1 == "Q") { print $1, $2, $3, $4 }' > nirt_order_one.txt
+    "$PLOT3ASC" nirt_order_two.plot | awk '$1 == "C" { overlap = ($2 == 255 && $3 == 255 && $4 == 255); next } overlap && ($1 == "O" || $1 == "Q") { print $1, $2, $3, $4 }' > nirt_order_two.txt
+    printf 'O 0 0 1\nQ 0 0 -1\n' > nirt_order_expected.txt
+    run cmp nirt_order_expected.txt nirt_order_one.txt
+    STATUS=$?
+    if [ X$STATUS = X0 ] ; then
+	run cmp nirt_order_expected.txt nirt_order_two.txt
+	STATUS=$?
+    fi
+fi
 
 if [ X$STATUS = X0 ] ; then
     log "-> nirt.sh succeeded"
