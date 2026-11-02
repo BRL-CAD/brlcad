@@ -35,6 +35,9 @@ struct snapshot_mesh_capture {
     std::vector<struct creo_brl_snapshot_triangle> triangles;
     std::vector<struct creo_brl_snapshot_vector> normals;
     std::vector<uint32_t> normal_indices;
+    size_t total_surface_count;
+    size_t captured_surface_count;
+    int incomplete_tessellation;
     int is_solid;
 };
 

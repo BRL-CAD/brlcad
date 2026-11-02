@@ -633,39 +633,85 @@ write_part_definition(struct db_i *database,
 static void
 snapshot_log_part_result(FILE *log_file,
                          const struct creo_brl_snapshot_settings *settings,
-                         const std::string& model_name,
+                         const struct snapshot_part_capture& part_capture,
                          int result,
-                         const struct snapshot_part_output *output)
+                         const struct snapshot_part_output *output,
+                         int is_solid,
+                         const char *failure_reason)
 {
     const int32_t log_type = settings ? settings->log_type : CREO_BRL_SNAPSHOT_LOG_NONE;
+    const std::string& model_name = part_capture.strings.model_name;
+    const std::string& diagnostic_note = part_capture.strings.diagnostic_note;
+    const uint32_t part_flags = part_capture.part.flags;
+    const char *reason = (failure_reason && failure_reason[0] != '\0') ?
+                             failure_reason :
+                             (diagnostic_note.empty() ? NULL : diagnostic_note.c_str());
+    const int log_failures =
+        log_type == CREO_BRL_SNAPSHOT_LOG_FAILURE ||
+        log_type == CREO_BRL_SNAPSHOT_LOG_FAILURE_OR_SUCCESS ||
+        log_type == CREO_BRL_SNAPSHOT_LOG_ALL;
+    const int log_successes =
+        log_type == CREO_BRL_SNAPSHOT_LOG_SUCCESS ||
+        log_type == CREO_BRL_SNAPSHOT_LOG_FAILURE_OR_SUCCESS ||
+        log_type == CREO_BRL_SNAPSHOT_LOG_ALL;
 
     if (!log_file || !output || log_type == CREO_BRL_SNAPSHOT_LOG_NONE)
         return;
 
     if (result == CREO_BRL_CORE_CONVERT_SUCCESS) {
         if (output->used_bbox_fallback) {
-            if (log_type == CREO_BRL_SNAPSHOT_LOG_FAILURE ||
-                log_type == CREO_BRL_SNAPSHOT_LOG_FAILURE_OR_SUCCESS ||
-                log_type == CREO_BRL_SNAPSHOT_LOG_ALL) {
-                fprintf(log_file, "FAILURE: Part \"%s\" replaced with bounding box\n",
-                        model_name.c_str());
+            if (log_failures) {
+                if (reason) {
+                    fprintf(log_file,
+                            "FAILURE: Part \"%s\" replaced with bounding box (%s)\n",
+                            model_name.c_str(), reason);
+                } else {
+                    fprintf(log_file,
+                            "FAILURE: Part \"%s\" replaced with bounding box\n",
+                            model_name.c_str());
+                }
                 fflush(log_file);
             }
-        } else if (log_type == CREO_BRL_SNAPSHOT_LOG_SUCCESS ||
-                   log_type == CREO_BRL_SNAPSHOT_LOG_FAILURE_OR_SUCCESS ||
-                   log_type == CREO_BRL_SNAPSHOT_LOG_ALL) {
-            fprintf(log_file, "SUCCESS: Part \"%s\" converted\n", model_name.c_str());
-            fflush(log_file);
+            return;
         }
 
+        if ((part_flags & CREO_BRL_SNAPSHOT_PART_OMITTED_QUILTS) != 0) {
+            fprintf(log_file,
+                    "WARNING: Part \"%s\" converted with limitations (%s)\n",
+                    model_name.c_str(),
+                    !diagnostic_note.empty() ?
+                        diagnostic_note.c_str() :
+                        "open quilt surfaces were omitted; converted passing solid geometry only");
+        }
+        if ((part_flags & CREO_BRL_SNAPSHOT_PART_INCOMPLETE_TESS) != 0) {
+            const char *incomplete_note =
+                (!diagnostic_note.empty() &&
+                 (part_flags & CREO_BRL_SNAPSHOT_PART_OMITTED_QUILTS) == 0) ?
+                    diagnostic_note.c_str() :
+                    "some surfaces have missing or overlapping triangles";
+            fprintf(log_file,
+                    "WARNING: Part \"%s\" tessellation is incomplete (%s)\n",
+                    model_name.c_str(), incomplete_note);
+        }
+        if (!is_solid || (part_flags & CREO_BRL_SNAPSHOT_PART_NON_SOLID) != 0) {
+            fprintf(log_file,
+                    "WARNING: Part \"%s\" BoT is not a closed solid (contains open surface or quilt geometry)\n",
+                    model_name.c_str());
+        }
+        if (log_successes)
+            fprintf(log_file, "SUCCESS: Part \"%s\" converted\n", model_name.c_str());
+        fflush(log_file);
         return;
     }
 
-    if (result == CREO_BRL_CORE_CONVERT_OUTPUT_FAILED &&
-        (log_type == CREO_BRL_SNAPSHOT_LOG_FAILURE ||
-         log_type == CREO_BRL_SNAPSHOT_LOG_FAILURE_OR_SUCCESS ||
-         log_type == CREO_BRL_SNAPSHOT_LOG_ALL)) {
-        fprintf(log_file, "FAILURE: Part \"%s\" not converted\n", model_name.c_str());
+    if (result == CREO_BRL_CORE_CONVERT_OUTPUT_FAILED && log_failures) {
+        if (reason) {
+            fprintf(log_file, "FAILURE: Part \"%s\" not converted (%s)\n",
+                    model_name.c_str(), reason);
+        } else {
+            fprintf(log_file, "FAILURE: Part \"%s\" not converted\n",
+                    model_name.c_str());
+        }
         fflush(log_file);
     }
 }
@@ -682,7 +728,6 @@ creo_brl_convert_snapshot_part(const struct snapshot_part_capture& part_capture,
 {
     const struct creo_brl_snapshot_part& part = part_capture.part;
     const struct creo_brl_snapshot_settings& settings = scene.settings;
-    const std::string& model_name = part_capture.strings.model_name;
     const int has_mesh = (part.flags & CREO_BRL_SNAPSHOT_PART_HAS_MESH) != 0;
     const int has_bbox_fallback = (part.flags & CREO_BRL_SNAPSHOT_PART_HAS_BBOX_FALLBACK) != 0;
     const int require_solidity = (settings.flags & CREO_BRL_SNAPSHOT_SETTING_CHECK_SOLIDITY) != 0;
@@ -690,6 +735,7 @@ creo_brl_convert_snapshot_part(const struct snapshot_part_capture& part_capture,
     const int write_normals = (settings.flags & CREO_BRL_SNAPSHOT_SETTING_WRITE_NORMALS) != 0;
     std::vector<std::string> subtraction_names;
     struct normalized_mesh mesh = {};
+    int normalized_ok = 0;
     int result = CREO_BRL_CORE_CONVERT_OUTPUT_FAILED;
 
     if (!database || !writer || !output)
@@ -705,23 +751,32 @@ creo_brl_convert_snapshot_part(const struct snapshot_part_capture& part_capture,
 
     if (!has_mesh || has_bbox_fallback) {
         if (!has_bbox_fallback) {
-            snapshot_log_part_result(log_file, &settings, model_name,
-                                     CREO_BRL_CORE_CONVERT_OUTPUT_FAILED, output);
+            snapshot_log_part_result(
+                log_file, &settings, part_capture,
+                CREO_BRL_CORE_CONVERT_OUTPUT_FAILED, output, 0,
+                "part contains no mesh or bounding-box fallback");
             return CREO_BRL_CORE_CONVERT_OUTPUT_FAILED;
         }
         result = write_part_definition(database, writer, part_capture, scene,
                                        material_translation, subtraction_names,
                                        0, 0, 0, NULL, NULL, 0, NULL, NULL,
                                        output);
-        snapshot_log_part_result(log_file, &settings, model_name, result, output);
+        snapshot_log_part_result(log_file, &settings, part_capture, result,
+                                 output, 0, NULL);
         return result;
     }
 
-    if (!normalize_snapshot_mesh(part_capture, settings, &mesh) ||
-        (require_solidity && !mesh.is_solid)) {
+    normalized_ok = normalize_snapshot_mesh(part_capture, settings, &mesh);
+    if (!normalized_ok || (require_solidity && !mesh.is_solid)) {
+        const char *mesh_failure_reason =
+            !normalized_ok ?
+                "mesh normalization failed (no valid non-degenerate facets)" :
+                "mesh failed solidity check (non-solid BoT rejected)";
+
         if (!allow_box_fallback) {
-            snapshot_log_part_result(log_file, &settings, model_name,
-                                     CREO_BRL_CORE_CONVERT_OUTPUT_FAILED, output);
+            snapshot_log_part_result(log_file, &settings, part_capture,
+                                     CREO_BRL_CORE_CONVERT_OUTPUT_FAILED,
+                                     output, 0, mesh_failure_reason);
             return CREO_BRL_CORE_CONVERT_OUTPUT_FAILED;
         }
 
@@ -729,7 +784,8 @@ creo_brl_convert_snapshot_part(const struct snapshot_part_capture& part_capture,
                                        material_translation, subtraction_names,
                                        0, 0, 0, NULL, NULL, 0, NULL, NULL,
                                        output);
-        snapshot_log_part_result(log_file, &settings, model_name, result, output);
+        snapshot_log_part_result(log_file, &settings, part_capture, result,
+                                 output, 0, mesh_failure_reason);
         return result;
     }
 
@@ -743,6 +799,7 @@ creo_brl_convert_snapshot_part(const struct snapshot_part_capture& part_capture,
                                    write_normals ? mesh.normals.data() : NULL,
                                    write_normals ? mesh.face_normals.data() : NULL,
                                    output);
-    snapshot_log_part_result(log_file, &settings, model_name, result, output);
+    snapshot_log_part_result(log_file, &settings, part_capture, result, output,
+                             mesh.is_solid, NULL);
     return result;
 }

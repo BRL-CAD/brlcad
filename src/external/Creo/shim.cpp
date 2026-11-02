@@ -18,6 +18,8 @@ static int shim_unit_system = 0;
 static int shim_model_name_is_configured = 0;
 static int shim_length_unit_is_configured = 0;
 static const struct creo_brl_shim_model *shim_active_assembly = NULL;
+static const ProSurfaceTessellationData *shim_active_tessellation = NULL;
+static int shim_active_tessellation_count = 0;
 
 
 static const struct creo_brl_shim_model *
@@ -76,7 +78,14 @@ extern "C" int creo_brl_core_convert_shim(const char *) { return CREO_BRL_CORE_C
 extern "C" int ProArrayAlloc(int, int, int, void **) { return 0; }
 extern "C" int ProArrayFree(void **) { return 0; }
 extern "C" int ProArrayObjectAdd(ProArray *, int, int, void *) { return 0; }
-extern "C" int ProArraySizeGet(ProArray, int *) { return 0; }
+extern "C" int ProArraySizeGet(ProArray array, int *size)
+{
+    if (array && size && array == shim_active_tessellation) {
+        *size = shim_active_tessellation_count;
+        return PRO_TK_NO_ERROR;
+    }
+    return 0;
+}
 extern "C" int ProAsmcompMdlGet(ProFeature *feature, void **model)
 {
     if (!feature || !model || !shim_active_assembly || feature->id < 0 ||
@@ -189,7 +198,31 @@ extern "C" int ProParamvalueTypeGet(void **, void *) { return 0; }
 extern "C" int ProParamvalueValueGet(void **, int, void *) { return 0; }
 extern "C" int ProPartDensityGet(void *, double *) { return 0; }
 extern "C" int ProPartMaterialNameGet(void *, wchar_t *) { return 0; }
-extern "C" int ProPartTessellate(void *, double, double, int, ProSurfaceTessellationData **) { return 0; }
+extern "C" int ProPartTessellate(void *handle, double, double, int include_quilts, ProSurfaceTessellationData **tessellation)
+{
+    const struct creo_brl_shim_model *model = as_shim_model(handle);
+
+    shim_active_tessellation = NULL;
+    shim_active_tessellation_count = 0;
+    if (!model || !tessellation)
+        return 0;
+
+    if (include_quilts != PRO_B_FALSE) {
+        if (!model->tessellation)
+            return model->tessellation_error ? model->tessellation_error : 0;
+        *tessellation = const_cast<ProSurfaceTessellationData *>(model->tessellation);
+        shim_active_tessellation = model->tessellation;
+        shim_active_tessellation_count = model->tessellation_surface_count;
+        return model->tessellation_error ? model->tessellation_error : PRO_TK_NO_ERROR;
+    }
+
+    if (!model->solid_only_tessellation)
+        return model->solid_only_tessellation_error ? model->solid_only_tessellation_error : 0;
+    *tessellation = const_cast<ProSurfaceTessellationData *>(model->solid_only_tessellation);
+    shim_active_tessellation = model->solid_only_tessellation;
+    shim_active_tessellation_count = model->solid_only_surface_count;
+    return model->solid_only_tessellation_error ? model->solid_only_tessellation_error : PRO_TK_NO_ERROR;
+}
 extern "C" int ProSolidFeatVisit(void *handle, int (*visit)(ProFeature *, int, void *), int (*filter)(ProFeature *, void *), void *app_data)
 {
     const struct creo_brl_shim_model *model = as_shim_model(handle);
@@ -300,7 +333,13 @@ extern "C" void ProMdlIsSkeleton(void *, int *is_skeleton)
     if (is_skeleton)
         *is_skeleton = PRO_B_FALSE;
 }
-extern "C" void ProPartTessellationFree(ProSurfaceTessellationData **) {}
+extern "C" void ProPartTessellationFree(ProSurfaceTessellationData **tessellation)
+{
+    if (tessellation)
+        *tessellation = NULL;
+    shim_active_tessellation = NULL;
+    shim_active_tessellation_count = 0;
+}
 extern "C" void ProStringToWstring(wchar_t *, char *) {}
 extern "C" void ProUIInputpanelMaxlenSet(const char *, const char *, int) {}
 extern "C" void ProWstringToString(char *destination, wchar_t *source)

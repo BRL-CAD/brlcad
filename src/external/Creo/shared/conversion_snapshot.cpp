@@ -37,11 +37,11 @@
 #define CREO_BRL_SNAPSHOT_TGC_SUBTRACTION_SIZE 144u
 #define CREO_BRL_SNAPSHOT_NAMED_VALUE_SIZE 32u
 #define CREO_BRL_SNAPSHOT_SETTINGS_SIZE 128u
-#define CREO_BRL_SNAPSHOT_PART_SIZE 332u
+#define CREO_BRL_SNAPSHOT_PART_SIZE 348u
 #define CREO_BRL_SNAPSHOT_MATRIX_SIZE 128u
 #define CREO_BRL_SNAPSHOT_ASSEMBLY_MEMBER_SIZE 136u
 #define CREO_BRL_SNAPSHOT_ASSEMBLY_SIZE 116u
-#define CREO_BRL_SNAPSHOT_SCENE_SIZE 184u
+#define CREO_BRL_SNAPSHOT_SCENE_SIZE 232u
 
 static const unsigned char creo_brl_snapshot_magic[CREO_BRL_SNAPSHOT_MAGIC_SIZE] = {
     'C', 'R', 'E', 'O', 'B', 'R', 'L', '\0'
@@ -99,6 +99,7 @@ struct snapshot_disk_part {
     struct snapshot_disk_range model_name;
     struct snapshot_disk_range model_version;
     struct snapshot_disk_range material_name;
+    struct snapshot_disk_range diagnostic_note;
     struct snapshot_disk_range vertices;
     uint64_t vertex_count;
     struct snapshot_disk_range triangles;
@@ -135,6 +136,10 @@ struct snapshot_disk_scene {
     uint64_t part_count;
     struct snapshot_disk_range assemblies;
     uint64_t assembly_count;
+    struct snapshot_disk_range skipped_parts;
+    uint64_t skipped_part_count;
+    struct snapshot_disk_range skipped_assemblies;
+    uint64_t skipped_assembly_count;
     uint32_t root_type;
     uint32_t root_index;
 };
@@ -194,6 +199,43 @@ creo_brl_open_utf8_file(const char *snapshot_path, const wchar_t *wide_mode, con
     (void)wide_mode;
     return fopen(snapshot_path, mode);
 #endif
+}
+
+
+static void
+log_skipped_item_list(FILE *log_file,
+                      const char *kind,
+                      const std::vector<struct snapshot_named_value>& items)
+{
+    for (size_t index = 0; index < items.size(); ++index) {
+        const struct snapshot_named_value& item = items[index];
+
+        if (!item.value.empty()) {
+            fprintf(log_file, "FAILURE: %s \"%s\" not converted (%s)\n",
+                    kind, item.name.c_str(), item.value.c_str());
+        } else {
+            fprintf(log_file, "FAILURE: %s \"%s\" not converted\n",
+                    kind, item.name.c_str());
+        }
+    }
+}
+
+
+void
+creo_brl_snapshot_log_skipped_items(FILE *log_file,
+                                    const struct snapshot_scene_capture& scene)
+{
+    const int32_t log_type = scene.settings.log_type;
+
+    if (!log_file ||
+        (log_type != CREO_BRL_SNAPSHOT_LOG_FAILURE &&
+         log_type != CREO_BRL_SNAPSHOT_LOG_FAILURE_OR_SUCCESS &&
+         log_type != CREO_BRL_SNAPSHOT_LOG_ALL))
+        return;
+
+    log_skipped_item_list(log_file, "Part", scene.skipped_parts);
+    log_skipped_item_list(log_file, "Assembly", scene.skipped_assemblies);
+    fflush(log_file);
 }
 
 
@@ -414,6 +456,7 @@ buffer_append_part_capture(std::vector<unsigned char> *contents,
     return buffer_append_text(contents, capture.strings.model_name, &disk_part->model_name) &&
            buffer_append_text(contents, capture.strings.model_version, &disk_part->model_version) &&
            buffer_append_text(contents, capture.strings.material_name, &disk_part->material_name) &&
+           buffer_append_text(contents, capture.strings.diagnostic_note, &disk_part->diagnostic_note) &&
            buffer_append_data(contents,
                               capture.vertices.empty() ? NULL : capture.vertices.data(),
                               capture.vertices.size() * sizeof(capture.vertices[0]),
@@ -488,7 +531,13 @@ creo_brl_snapshot_encode(const struct snapshot_scene_capture& scene,
             !buffer_append_text(buffer, scene.settings_strings.material_path,
                                 &disk_scene.settings.material_path) ||
             !buffer_append_text(buffer, scene.settings_strings.rename_parameters,
-                                &disk_scene.settings.rename_parameters))
+                                &disk_scene.settings.rename_parameters) ||
+            !buffer_append_named_values(buffer, scene.skipped_parts,
+                                        &disk_scene.skipped_parts,
+                                        &disk_scene.skipped_part_count) ||
+            !buffer_append_named_values(buffer, scene.skipped_assemblies,
+                                        &disk_scene.skipped_assemblies,
+                                        &disk_scene.skipped_assembly_count))
             return CREO_BRL_SNAPSHOT_IO_WRITE_FAILED;
 
         for (size_t index = 0; index < scene.parts.size(); ++index) {
@@ -952,6 +1001,9 @@ snapshot_read_valid_part(FILE *snapshot_file,
         !snapshot_read_valid_text(snapshot_file, &disk_part.material_name,
                                   snapshot_size, data_offset, has_material,
                                   &part_capture->strings.material_name) ||
+        !snapshot_read_valid_text(snapshot_file, &disk_part.diagnostic_note,
+                                  snapshot_size, data_offset, 0,
+                                  &part_capture->strings.diagnostic_note) ||
         !snapshot_read_valid_tgc_subtractions(snapshot_file, &disk_part.tgc_subtractions,
                                               disk_part.tgc_subtraction_count,
                                               snapshot_size, data_offset,
@@ -1143,7 +1195,15 @@ creo_brl_snapshot_read(const char *snapshot_path,
         if (data_offset > file_size ||
             !snapshot_read_valid_settings(snapshot_file, disk_scene.settings,
                                           file_size, data_offset,
-                                          &decoded.settings, &decoded.settings_strings))
+                                          &decoded.settings, &decoded.settings_strings) ||
+            !snapshot_read_valid_named_values(snapshot_file, &disk_scene.skipped_parts,
+                                              disk_scene.skipped_part_count,
+                                              file_size, data_offset,
+                                              &decoded.skipped_parts) ||
+            !snapshot_read_valid_named_values(snapshot_file, &disk_scene.skipped_assemblies,
+                                              disk_scene.skipped_assembly_count,
+                                              file_size, data_offset,
+                                              &decoded.skipped_assemblies))
             goto cleanup;
 
         if ((disk_scene.root_type == CREO_BRL_SNAPSHOT_SCENE_NODE_PART &&

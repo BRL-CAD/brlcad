@@ -94,6 +94,7 @@
 #define PRO_FEAT_RESUME_INCLUDE_PARENTS         69
 #define PRO_REGEN_NO_FLAGS                      70
 #define PRO_FEAT_DELETE_NO_OPTS                 71
+#define PRO_TK_INCOMPLETE_TESS                  72
 
 /* Conversions used by the migrated frontend. */
 #define ProMdlToSolid(mdl) ((ProSolid) mdl)
@@ -254,6 +255,12 @@ struct creo_brl_shim_model {
     int feat_visit_error;
     const struct creo_brl_shim_component *components;
     size_t component_count;
+    ProError tessellation_error;
+    const ProSurfaceTessellationData *tessellation;
+    int tessellation_surface_count;
+    ProError solid_only_tessellation_error;
+    const ProSurfaceTessellationData *solid_only_tessellation;
+    int solid_only_surface_count;
 };
 
 #endif /* CREO_SHIM_H */

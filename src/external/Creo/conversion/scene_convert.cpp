@@ -231,6 +231,7 @@ creo_brl_convert_snapshot_scene(const struct snapshot_scene_capture& scene)
             if (result != CREO_BRL_CORE_CONVERT_SUCCESS)
                 goto cleanup;
         }
+        creo_brl_snapshot_log_skipped_items(log_file, scene);
 
         assembly_names.resize(scene.assemblies.size());
         assembly_written.assign(scene.assemblies.size(), 0);

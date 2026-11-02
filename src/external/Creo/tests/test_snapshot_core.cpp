@@ -73,6 +73,7 @@ struct fixture_part_definition {
     std::string model_name;
     std::string model_version;
     std::string material_name;
+    std::string diagnostic_note;
     std::vector<std::pair<std::string, std::string> > attributes;
     std::vector<std::pair<std::string, std::string> > parameters;
     std::vector<struct creo_brl_snapshot_tgc_subtraction> tgc_subtractions;
@@ -95,8 +96,11 @@ struct fixture_definition {
     struct creo_brl_snapshot_part part;
     std::string material_path;
     std::string rename_parameters;
+    std::string diagnostic_note;
     std::vector<std::pair<std::string, std::string> > attributes;
     std::vector<std::pair<std::string, std::string> > parameters;
+    std::vector<std::pair<std::string, std::string> > skipped_parts;
+    std::vector<std::pair<std::string, std::string> > skipped_assemblies;
     std::vector<struct creo_brl_snapshot_tgc_subtraction> tgc_subtractions;
     std::vector<struct creo_brl_snapshot_vector> vertices;
     std::vector<struct creo_brl_snapshot_triangle> triangles;
@@ -282,6 +286,7 @@ primary_part_definition(const struct fixture_definition& fixture)
     part.model_name = FIXTURE_MODEL_NAME;
     part.model_version = FIXTURE_MODEL_VERSION;
     part.material_name = FIXTURE_MATERIAL_NAME;
+    part.diagnostic_note = fixture.diagnostic_note;
     part.attributes = fixture.attributes;
     part.parameters = fixture.parameters;
     part.tgc_subtractions = fixture.tgc_subtractions;
@@ -302,6 +307,7 @@ make_part_capture(const struct fixture_part_definition& fixture)
     capture.strings.model_name = fixture.model_name;
     capture.strings.model_version = fixture.model_version;
     capture.strings.material_name = fixture.material_name;
+    capture.strings.diagnostic_note = fixture.diagnostic_note;
     capture.attributes = make_named_values(fixture.attributes);
     capture.parameters = make_named_values(fixture.parameters);
     capture.tgc_subtractions = fixture.tgc_subtractions;
@@ -330,6 +336,8 @@ make_scene_capture(const std::string& output_path,
     scene.parts.push_back(make_part_capture(primary_part_definition(fixture)));
     for (size_t index = 0; index < fixture.additional_parts.size(); ++index)
         scene.parts.push_back(make_part_capture(fixture.additional_parts[index]));
+    scene.skipped_parts = make_named_values(fixture.skipped_parts);
+    scene.skipped_assemblies = make_named_values(fixture.skipped_assemblies);
 
     scene.assemblies.resize(fixture.assemblies.size());
     for (size_t index = 0; index < fixture.assemblies.size(); ++index) {
@@ -1675,6 +1683,7 @@ main(int argument_count, char *arguments[])
                                              {{6.0, 0.0, 0.0}}, {{0.0, 3.0, -3.0}}});
     fixture_definition success_log_fixture = metadata_fixture;
     fixture_definition fallback_log_fixture = fallback_metadata_fixture;
+    fixture_definition partial_warning_log_fixture = metadata_fixture;
     fixture_definition rendering_fixture = normalized_mesh_fixture;
     fixture_definition collision_fixture = normalized_mesh_fixture;
     fixture_definition assembly_none_fixture = normalized_mesh_fixture;
@@ -1751,6 +1760,24 @@ main(int argument_count, char *arguments[])
     success_log_fixture.settings.log_type = CREO_BRL_SNAPSHOT_LOG_SUCCESS;
     fallback_log_fixture.log_name = "creo_phase4_fallback.log";
     fallback_log_fixture.settings.log_type = CREO_BRL_SNAPSHOT_LOG_FAILURE;
+    fallback_log_fixture.diagnostic_note = "mesh failed solidity check (non-solid BoT rejected)";
+    partial_warning_log_fixture.fixture_name = "scene_partial_warning_log";
+    partial_warning_log_fixture.snapshot_name = "creo_partial_warning_log.snapshot";
+    partial_warning_log_fixture.output_name = "creo_partial_warning_log.g";
+    partial_warning_log_fixture.log_name = "creo_partial_warning_log.log";
+    partial_warning_log_fixture.settings.log_type = CREO_BRL_SNAPSHOT_LOG_ALL;
+    partial_warning_log_fixture.part.flags |=
+        CREO_BRL_SNAPSHOT_PART_INCOMPLETE_TESS |
+        CREO_BRL_SNAPSHOT_PART_OMITTED_QUILTS |
+        CREO_BRL_SNAPSHOT_PART_NON_SOLID;
+    partial_warning_log_fixture.diagnostic_note =
+        "open quilt surfaces failed solidity check; converted passing solid geometry only";
+    partial_warning_log_fixture.skipped_parts.push_back(
+        std::make_pair(std::string("failed_quilt.prt"),
+                       std::string("mesh failed solidity check (non-solid BoT rejected)")));
+    partial_warning_log_fixture.skipped_assemblies.push_back(
+        std::make_pair(std::string("empty_sub.asm"),
+                       std::string("all child components failed or contained no convertible geometry")));
     rendering_fixture.fixture_name = "scene_luminance_material";
     rendering_fixture.snapshot_name = "creo_chunk5_luminance_material.snapshot";
     rendering_fixture.output_name = "creo_chunk5_luminance_material.g";
@@ -1932,9 +1959,19 @@ main(int argument_count, char *arguments[])
         !run_phase4_log_fixture(working_directory, success_log_fixture,
                                 "SUCCESS: Part \"fixture_part\" converted") ||
         !run_phase4_log_fixture(working_directory, fallback_log_fixture,
-                                "FAILURE: Part \"fixture_part\" replaced with bounding box") ||
+                                "FAILURE: Part \"fixture_part\" replaced with bounding box (mesh failed solidity check (non-solid BoT rejected))") ||
         !run_phase4_log_fixture(working_directory, failure_fixture,
-                                "FAILURE: Part \"fixture_part\" not converted") ||
+                                "FAILURE: Part \"fixture_part\" not converted (mesh failed solidity check (non-solid BoT rejected))") ||
+        !run_phase4_log_fixture(working_directory, partial_warning_log_fixture,
+                                "WARNING: Part \"fixture_part\" converted with limitations (open quilt surfaces failed solidity check; converted passing solid geometry only)") ||
+        !run_phase4_log_fixture(working_directory, partial_warning_log_fixture,
+                                "WARNING: Part \"fixture_part\" tessellation is incomplete") ||
+        !run_phase4_log_fixture(working_directory, partial_warning_log_fixture,
+                                "WARNING: Part \"fixture_part\" BoT is not a closed solid") ||
+        !run_phase4_log_fixture(working_directory, partial_warning_log_fixture,
+                                "FAILURE: Part \"failed_quilt.prt\" not converted (mesh failed solidity check (non-solid BoT rejected))") ||
+        !run_phase4_log_fixture(working_directory, partial_warning_log_fixture,
+                                "FAILURE: Assembly \"empty_sub.asm\" not converted (all child components failed or contained no convertible geometry)") ||
         !run_fixture(working_directory, fixtures_directory, invalid_triangle_fixture) ||
         !write_malformed_snapshot(malformed_snapshot_path) ||
         creo_brl_core_convert(malformed_snapshot_path.c_str()) != CREO_BRL_CORE_CONVERT_INVALID_SNAPSHOT ||

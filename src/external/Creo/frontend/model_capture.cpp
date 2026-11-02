@@ -572,6 +572,7 @@ creo_brl_capture_tessellation_data(const ProSurfaceTessellationData *tessellatio
     struct creo_brl_mesh_normalization normalized = {};
     struct snapshot_mesh_capture captured = {};
     size_t facet_count = 0u;
+    size_t captured_surface_count = 0u;
 
     if (!mesh)
         return 0;
@@ -588,6 +589,8 @@ creo_brl_capture_tessellation_data(const ProSurfaceTessellationData *tessellatio
             (data.n_facets > 0 && (!data.vertices || !data.facets ||
                                    (write_normals && !data.normals))))
             return 0;
+        if (data.n_facets > 0)
+            ++captured_surface_count;
         facet_count += static_cast<size_t>(data.n_facets);
     }
     if (facet_count == 0u)
@@ -652,6 +655,10 @@ creo_brl_capture_tessellation_data(const ProSurfaceTessellationData *tessellatio
 
     captured.vertices = std::move(normalized.vertices);
     captured.triangles = std::move(normalized.triangles);
+    captured.total_surface_count = static_cast<size_t>(surface_count);
+    captured.captured_surface_count = captured_surface_count;
+    captured.incomplete_tessellation =
+        captured_surface_count < static_cast<size_t>(surface_count);
     captured.is_solid = normalized.is_solid;
     if (write_normals) {
         if (normalized.source_triangle_indices.size() >
@@ -690,6 +697,9 @@ creo_brl_run_tessellation_policy(const struct snapshot_tessellation_policy *poli
                                   void *context,
                                   struct snapshot_mesh_capture *mesh)
 {
+    struct snapshot_mesh_capture best_partial_mesh = {};
+    int have_partial_mesh = 0;
+
     if (!mesh)
         return 0;
     *mesh = snapshot_mesh_capture();
@@ -707,7 +717,26 @@ creo_brl_run_tessellation_policy(const struct snapshot_tessellation_policy *poli
             (require_solidity && !attempt_mesh.is_solid))
             continue;
 
-        *mesh = std::move(attempt_mesh);
+        if (!attempt_mesh.incomplete_tessellation &&
+            attempt_mesh.captured_surface_count >= attempt_mesh.total_surface_count) {
+            *mesh = std::move(attempt_mesh);
+            return 1;
+        }
+
+        if (!have_partial_mesh ||
+            attempt_mesh.captured_surface_count > best_partial_mesh.captured_surface_count) {
+            best_partial_mesh = std::move(attempt_mesh);
+            have_partial_mesh = 1;
+            if (best_partial_mesh.captured_surface_count >=
+                best_partial_mesh.total_surface_count) {
+                *mesh = std::move(best_partial_mesh);
+                return 1;
+            }
+        }
+    }
+
+    if (have_partial_mesh) {
+        *mesh = std::move(best_partial_mesh);
         return 1;
     }
 
@@ -719,7 +748,49 @@ struct toolkit_tessellation_context {
     ProMdl model;
     double model_to_mm;
     int write_normals;
+    ProBoolean include_quilts;
+    int saw_surfaces;
+    int saw_facets;
+    int saw_non_solid_mesh;
+    int exceeded_facet_limit;
+    int rejected_degenerate_facets;
+    int saw_tessellation_error;
 };
+
+
+static std::string
+describe_tessellation_failure(const struct toolkit_tessellation_context& context,
+                              int require_solidity)
+{
+    if (require_solidity && context.saw_non_solid_mesh)
+        return "mesh failed solidity check (non-solid BoT rejected)";
+    if (context.exceeded_facet_limit)
+        return "tessellation exceeded maximum facet limit (100000)";
+    if (context.rejected_degenerate_facets)
+        return "all tessellated facets were degenerate below vertex tolerance";
+    if (!context.saw_surfaces || !context.saw_facets)
+        return "model contains no tessellatable surfaces or facets";
+    if (context.saw_tessellation_error)
+        return "Creo tessellation failed";
+    return "unable to tessellate part geometry";
+}
+
+
+static std::string
+format_incomplete_tessellation_note(const struct snapshot_mesh_capture& mesh)
+{
+    char buffer[160] = {'\0'};
+
+    if (mesh.total_surface_count > 0u &&
+        mesh.captured_surface_count < mesh.total_surface_count) {
+        snprintf(buffer, sizeof(buffer),
+                 "%zu of %zu surface(s) tessellated; some surfaces have missing or overlapping triangles",
+                 mesh.captured_surface_count, mesh.total_surface_count);
+        return buffer;
+    }
+
+    return "some surfaces have missing or overlapping triangles";
+}
 
 
 static int
@@ -737,13 +808,37 @@ capture_toolkit_tessellation_attempt(void *context,
     if (!toolkit || !toolkit->model || !attempt || !mesh)
         return 0;
 
-    if (ProPartTessellate(ProMdlToPart(toolkit->model), attempt->chord,
-                          attempt->angle, PRO_B_TRUE, &tessellation) == PRO_TK_NO_ERROR &&
+    const ProError error = ProPartTessellate(
+        ProMdlToPart(toolkit->model), attempt->chord, attempt->angle,
+        toolkit->include_quilts, &tessellation);
+    if ((error == PRO_TK_NO_ERROR || error == PRO_TK_INCOMPLETE_TESS) &&
         tessellation &&
         ProArraySizeGet((ProArray)tessellation, &surface_count) == PRO_TK_NO_ERROR) {
+        size_t raw_facets = 0u;
+
+        if (surface_count > 0)
+            toolkit->saw_surfaces = 1;
+        for (int surface = 0; surface < surface_count; ++surface) {
+            if (tessellation[surface].n_facets > 0) {
+                toolkit->saw_facets = 1;
+                raw_facets += static_cast<size_t>(tessellation[surface].n_facets);
+            }
+        }
         result = creo_brl_capture_tessellation_data(
             tessellation, surface_count, toolkit->model_to_mm,
             toolkit->write_normals, maximum_facet_count, mesh);
+        if (result) {
+            if (error == PRO_TK_INCOMPLETE_TESS)
+                mesh->incomplete_tessellation = 1;
+            if (!mesh->is_solid)
+                toolkit->saw_non_solid_mesh = 1;
+        } else if (raw_facets > maximum_facet_count) {
+            toolkit->exceeded_facet_limit = 1;
+        } else if (raw_facets > 0u) {
+            toolkit->rejected_degenerate_facets = 1;
+        }
+    } else if (error != PRO_TK_NO_ERROR) {
+        toolkit->saw_tessellation_error = 1;
     }
 
     if (tessellation)
@@ -762,6 +857,9 @@ capture_tessellation(ProMdl model,
     struct snapshot_tessellation_policy policy;
     struct snapshot_mesh_capture mesh = {};
     struct toolkit_tessellation_context context = {};
+    const int require_solidity =
+        (settings->flags & CREO_BRL_SNAPSHOT_SETTING_CHECK_SOLIDITY) != 0;
+    int omitted_quilts = 0;
 
     if (!capture)
         return 0;
@@ -770,18 +868,53 @@ capture_tessellation(ProMdl model,
     capture->normals.clear();
     capture->normal_indices.clear();
     if (!creo_brl_build_tessellation_policy(settings, model_to_mm,
-                                             bbox_diagonal_mm, &policy))
+                                             bbox_diagonal_mm, &policy)) {
+        capture->strings.diagnostic_note =
+            (settings->chord_mode == CREO_BRL_SNAPSHOT_CHORD_RELATIVE &&
+             (!std::isfinite(bbox_diagonal_mm) || bbox_diagonal_mm <= 0.0)) ?
+                "model has no bounding box for relative chord tessellation" :
+                "invalid tessellation policy settings";
         return 0;
+    }
 
     context.model = model;
     context.model_to_mm = model_to_mm;
     context.write_normals =
         (settings->flags & CREO_BRL_SNAPSHOT_SETTING_WRITE_NORMALS) != 0;
+    context.include_quilts = PRO_B_TRUE;
     if (!creo_brl_run_tessellation_policy(
-            &policy,
-            (settings->flags & CREO_BRL_SNAPSHOT_SETTING_CHECK_SOLIDITY) != 0,
-            capture_toolkit_tessellation_attempt, &context, &mesh))
-        return 0;
+            &policy, require_solidity,
+            capture_toolkit_tessellation_attempt, &context, &mesh)) {
+        const std::string primary_failure =
+            describe_tessellation_failure(context, require_solidity);
+        struct toolkit_tessellation_context solid_only_context = {};
+
+        solid_only_context.model = model;
+        solid_only_context.model_to_mm = model_to_mm;
+        solid_only_context.write_normals = context.write_normals;
+        solid_only_context.include_quilts = PRO_B_FALSE;
+        if (!creo_brl_run_tessellation_policy(
+                &policy, require_solidity,
+                capture_toolkit_tessellation_attempt, &solid_only_context, &mesh)) {
+            capture->strings.diagnostic_note = primary_failure;
+            return 0;
+        }
+
+        omitted_quilts = 1;
+        capture->part.flags |= CREO_BRL_SNAPSHOT_PART_OMITTED_QUILTS;
+        capture->strings.diagnostic_note =
+            (require_solidity && context.saw_non_solid_mesh) ?
+                "open quilt surfaces failed solidity check; converted passing solid geometry only" :
+                "quilt surface tessellation failed; converted passing solid geometry only";
+    }
+
+    if (mesh.incomplete_tessellation) {
+        capture->part.flags |= CREO_BRL_SNAPSHOT_PART_INCOMPLETE_TESS;
+        if (!omitted_quilts)
+            capture->strings.diagnostic_note = format_incomplete_tessellation_note(mesh);
+    }
+    if (!mesh.is_solid)
+        capture->part.flags |= CREO_BRL_SNAPSHOT_PART_NON_SOLID;
 
     capture->vertices.swap(mesh.vertices);
     capture->triangles.swap(mesh.triangles);
@@ -802,7 +935,10 @@ mark_bbox_fallback(struct snapshot_part_capture *capture)
     capture->normals.clear();
     capture->normal_indices.clear();
     capture->part.flags &= ~(CREO_BRL_SNAPSHOT_PART_HAS_MESH |
-                             CREO_BRL_SNAPSHOT_PART_HAS_NORMALS);
+                             CREO_BRL_SNAPSHOT_PART_HAS_NORMALS |
+                             CREO_BRL_SNAPSHOT_PART_INCOMPLETE_TESS |
+                             CREO_BRL_SNAPSHOT_PART_OMITTED_QUILTS |
+                             CREO_BRL_SNAPSHOT_PART_NON_SOLID);
     capture->part.flags |= CREO_BRL_SNAPSHOT_PART_HAS_BBOX_FALLBACK;
 }
 
@@ -896,6 +1032,12 @@ creo_brl_capture_part_definition(ProMdl model,
             mark_bbox_fallback(capture);
             result = CREO_BRL_SNAPSHOT_CAPTURE_SUCCESS;
         } else {
+            if (!have_bbox &&
+                capture->strings.diagnostic_note ==
+                    "model contains no tessellatable surfaces or facets") {
+                capture->strings.diagnostic_note =
+                    "model has no bounding box or tessellatable geometry";
+            }
             result = CREO_BRL_SNAPSHOT_CAPTURE_SKIPPED;
         }
     } catch (...) {
@@ -966,6 +1108,21 @@ scene_assembly_index(const struct snapshot_scene_capture *scene,
 }
 
 
+static void
+record_skipped_item(std::vector<struct snapshot_named_value> *items,
+                    const std::string& name,
+                    const std::string& reason)
+{
+    if (!items || name.empty() || find_captured_parameter(*items, name))
+        return;
+
+    struct snapshot_named_value item = {};
+    item.name = name;
+    item.value = reason;
+    items->push_back(item);
+}
+
+
 static int
 capture_scene_part(ProMdl model, struct snapshot_scene_capture *scene, uint32_t *index_out)
 {
@@ -977,7 +1134,14 @@ capture_scene_part(ProMdl model, struct snapshot_scene_capture *scene, uint32_t 
         return CREO_BRL_SNAPSHOT_CAPTURE_MODEL_FAILURE;
     if (scene_part_index(scene, model_name, index_out))
         return CREO_BRL_SNAPSHOT_CAPTURE_SUCCESS;
+    if (find_captured_parameter(scene->skipped_parts, model_name))
+        return CREO_BRL_SNAPSHOT_CAPTURE_SKIPPED;
     result = creo_brl_capture_part_definition(model, &scene->settings, &scene->settings_strings, &capture);
+    if (result == CREO_BRL_SNAPSHOT_CAPTURE_SKIPPED) {
+        record_skipped_item(&scene->skipped_parts, model_name,
+                            capture.strings.diagnostic_note);
+        return result;
+    }
     if (result != CREO_BRL_SNAPSHOT_CAPTURE_SUCCESS)
         return result;
 
@@ -1059,6 +1223,10 @@ finalize_assembly_capture(struct snapshot_scene_capture *scene,
     if (assembly_index + 1u != scene->assemblies.size())
         return CREO_BRL_SNAPSHOT_CAPTURE_MODEL_FAILURE;
 
+    record_skipped_item(
+        &scene->skipped_assemblies,
+        scene->assemblies[assembly_index].model_name,
+        "all child components failed or contained no convertible geometry");
     scene->assemblies.pop_back();
     return CREO_BRL_SNAPSHOT_CAPTURE_SKIPPED;
 }

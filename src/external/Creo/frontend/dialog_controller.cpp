@@ -192,16 +192,95 @@ static const struct creo_brl_frontend_control_api frontend_controls = {
 };
 
 
+static const size_t FRONTEND_MAX_REPORTED_SKIPPED_PARTS = 5u;
+
+
+static void
+frontend_log_empty_capture(const struct snapshot_scene_capture& scene)
+{
+    const int32_t log_type = scene.settings.log_type;
+    const std::string& log_path = scene.settings_strings.log_path;
+    FILE *log_file = NULL;
+
+    if (log_path.empty() ||
+        (log_type != CREO_BRL_SNAPSHOT_LOG_FAILURE &&
+         log_type != CREO_BRL_SNAPSHOT_LOG_FAILURE_OR_SUCCESS &&
+         log_type != CREO_BRL_SNAPSHOT_LOG_ALL))
+        return;
+
+    log_file = creo_brl_open_utf8_file(log_path.c_str(), L"wb", "wb");
+    if (!log_file)
+        return;
+
+    creo_brl_snapshot_log_skipped_items(log_file, scene);
+    fclose(log_file);
+}
+
+
+static std::string
+frontend_empty_model_message(const struct snapshot_scene_capture& scene)
+{
+    std::string message =
+        "FAILURE: The active model contains no convertible solid geometry.";
+
+    for (size_t index = 0;
+         index < scene.skipped_parts.size() &&
+         index < FRONTEND_MAX_REPORTED_SKIPPED_PARTS;
+         ++index) {
+        const struct snapshot_named_value& item = scene.skipped_parts[index];
+
+        message += "\nPart \"" + item.name + "\" not converted";
+        if (!item.value.empty())
+            message += " (" + item.value + ")";
+    }
+    if (scene.skipped_parts.size() > FRONTEND_MAX_REPORTED_SKIPPED_PARTS)
+        message += "\n(See log file for additional failed parts.)";
+
+    return message;
+}
+
+
+static std::string
+frontend_completion_status(const struct snapshot_scene_capture& scene)
+{
+    static const uint32_t LIMITATION_FLAGS =
+        CREO_BRL_SNAPSHOT_PART_HAS_BBOX_FALLBACK |
+        CREO_BRL_SNAPSHOT_PART_INCOMPLETE_TESS |
+        CREO_BRL_SNAPSHOT_PART_OMITTED_QUILTS |
+        CREO_BRL_SNAPSHOT_PART_NON_SOLID;
+    size_t warning_count = 0u;
+    char buffer[CREO_MSG_MAX] = {'\0'};
+
+    for (size_t index = 0; index < scene.parts.size(); ++index) {
+        if ((scene.parts[index].part.flags & LIMITATION_FLAGS) != 0)
+            ++warning_count;
+    }
+
+    if (!scene.skipped_parts.empty()) {
+        sprintf_s(buffer, sizeof(buffer),
+                  "Status: Conversion complete (%zu converted, %zu failed - see log), (Convert/Quit)?",
+                  scene.parts.size(), scene.skipped_parts.size());
+        return buffer;
+    }
+    if (warning_count > 0u)
+        return "Status: Conversion complete with warnings (see log), (Convert/Quit)?";
+
+    return "Status: Conversion complete, (Convert/Quit)?";
+}
+
+
 static int
-frontend_capture_snapshot(const char *snapshot_path)
+frontend_capture_snapshot(const char *snapshot_path,
+                          struct snapshot_scene_capture *captured_scene)
 {
     struct creo_brl_snapshot_settings settings = {};
     struct snapshot_settings_strings settings_strings;
     ProMdl model = NULL;
     ProMdlType model_type;
 
-    if (!snapshot_path || !snapshot_path[0])
+    if (!snapshot_path || !snapshot_path[0] || !captured_scene)
         return CREO_BRL_SNAPSHOT_CAPTURE_INVALID_REQUEST;
+    *captured_scene = snapshot_scene_capture();
     if (!creo_brl_frontend_capture_snapshot_options(&frontend_controls,
                                                     &settings,
                                                     &settings_strings))
@@ -212,14 +291,16 @@ frontend_capture_snapshot(const char *snapshot_path)
         return CREO_BRL_SNAPSHOT_CAPTURE_MODEL_FAILURE;
 
     if (model_type == PRO_MDL_PART || model_type == PRO_MDL_ASSEMBLY) {
-        struct snapshot_scene_capture capture = {};
         const int result = creo_brl_frontend_capture_model_scene(
-            model, model_type, &settings, &settings_strings, &capture);
+            model, model_type, &settings, &settings_strings, captured_scene);
 
-        if (result != CREO_BRL_SNAPSHOT_CAPTURE_SUCCESS)
+        if (result != CREO_BRL_SNAPSHOT_CAPTURE_SUCCESS) {
+            if (result == CREO_BRL_SNAPSHOT_CAPTURE_EMPTY_MODEL)
+                frontend_log_empty_capture(*captured_scene);
             return result;
+        }
 
-        return creo_brl_snapshot_write(snapshot_path, capture) ==
+        return creo_brl_snapshot_write(snapshot_path, *captured_scene) ==
                        CREO_BRL_SNAPSHOT_IO_SUCCESS ?
                    CREO_BRL_SNAPSHOT_CAPTURE_SUCCESS :
                    CREO_BRL_SNAPSHOT_CAPTURE_WRITE_FAILURE;
@@ -360,6 +441,7 @@ frontend_convert(char *dialog, char *component, ProAppData appdata)
 {
     wchar_t snapshot_path_wide[MAX_PATH] = {L'\0'};
     char snapshot_path[FRONTEND_SNAPSHOT_UTF8_PATH_SIZE] = {'\0'};
+    struct snapshot_scene_capture captured_scene = {};
     int capture_result = CREO_BRL_SNAPSHOT_CAPTURE_INVALID_REQUEST;
     int core_result = CREO_BRL_CORE_CONVERT_INVALID_REQUEST;
 
@@ -375,13 +457,19 @@ frontend_convert(char *dialog, char *component, ProAppData appdata)
     }
 
     frontend_status("Capturing active Creo model for BRL-CAD conversion...");
-    capture_result = frontend_capture_snapshot(snapshot_path);
+    capture_result = frontend_capture_snapshot(snapshot_path, &captured_scene);
     if (capture_result != CREO_BRL_SNAPSHOT_CAPTURE_SUCCESS) {
         (void)DeleteFileW(snapshot_path_wide);
         if (capture_result == CREO_BRL_SNAPSHOT_CAPTURE_RESTORATION_FAILURE) {
             frontend_status("%s", frontend_capture_failure_message(capture_result));
             creo_brl_show_popup(FRONTEND_RESTORATION_WARNING_TITLE,
                                 FRONTEND_RESTORATION_WARNING_MESSAGE);
+        } else if (capture_result == CREO_BRL_SNAPSHOT_CAPTURE_EMPTY_MODEL &&
+                   !captured_scene.skipped_parts.empty()) {
+            const std::string detail = frontend_empty_model_message(captured_scene);
+
+            frontend_status("%s", frontend_capture_failure_message(capture_result));
+            creo_brl_show_popup("Creo-BRL Capture Failure", detail.c_str());
         } else {
             frontend_error("Creo-BRL Capture Failure",
                            frontend_capture_failure_message(capture_result));
@@ -398,8 +486,12 @@ frontend_convert(char *dialog, char *component, ProAppData appdata)
         return;
     }
 
-    creo_brl_show_status("Status: Conversion complete, (Convert/Quit)?");
-    frontend_set_dialog_status("Status: Conversion complete, (Convert/Quit)?");
+    {
+        const std::string status = frontend_completion_status(captured_scene);
+
+        creo_brl_show_status(status.c_str());
+        frontend_set_dialog_status(status.c_str());
+    }
 }
 
 

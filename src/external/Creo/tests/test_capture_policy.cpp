@@ -717,10 +717,26 @@ test_scene_results_and_region_ids()
                     scene.assemblies[0].members.size() == 1u &&
                     scene.parts.size() == 1u,
                 "skipped child or empty subassembly was not pruned cleanly") ||
-        !expect(creo_brl_frontend_capture_model_scene(
+        !expect(scene.skipped_parts.size() == 1u &&
+                    scene.skipped_parts[0].name == "skipped.prt" &&
+                    scene.skipped_parts[0].value ==
+                        "model has no bounding box or tessellatable geometry",
+                "skipped child part and its failure reason were not recorded") ||
+        !expect(scene.skipped_assemblies.size() == 1u &&
+                    scene.skipped_assemblies[0].name == "empty_sub.asm" &&
+                    scene.skipped_assemblies[0].value ==
+                        "all child components failed or contained no convertible geometry",
+                "skipped empty subassembly and its failure reason were not recorded"))
+        return 0;
+
+    scene = {};
+    if (!expect(creo_brl_frontend_capture_model_scene(
                     &empty_subassembly, PRO_MDL_ASSEMBLY, &settings, &settings_strings, &scene) ==
                     CREO_BRL_SNAPSHOT_CAPTURE_EMPTY_MODEL,
-                "completely empty root assembly did not report EMPTY_MODEL"))
+                "completely empty root assembly did not report EMPTY_MODEL") ||
+        !expect(scene.skipped_parts.size() == 1u &&
+                    scene.skipped_parts[0].name == "skipped.prt",
+                "empty root assembly lost the failing child part reason"))
         return 0;
 
     struct creo_brl_shim_model invalid_part = {};
@@ -809,6 +825,125 @@ test_assembly_metadata_capture()
 
 
 static int
+test_best_effort_incomplete_and_solid_only_capture()
+{
+    point_t quilt_vertices[3] = {
+        {0.0, 0.0, 0.0},
+        {10.0, 0.0, 0.0},
+        {0.0, 10.0, 0.0}
+    };
+    facet_set quilt_facets[1] = {
+        {0, 1, 2}
+    };
+    ProSurfaceTessellationData quilt_surfaces[2] = {};
+    quilt_surfaces[0].n_vertices = 3;
+    quilt_surfaces[0].vertices = quilt_vertices;
+    quilt_surfaces[0].n_facets = 1;
+    quilt_surfaces[0].facets = quilt_facets;
+    quilt_surfaces[1].n_vertices = 0;
+    quilt_surfaces[1].n_facets = 0;
+
+    point_t solid_vertices[4] = {
+        {0.0, 0.0, 0.0},
+        {10.0, 0.0, 0.0},
+        {0.0, 10.0, 0.0},
+        {0.0, 0.0, 10.0}
+    };
+    facet_set solid_facets[4] = {
+        {0, 2, 1},
+        {0, 1, 3},
+        {1, 2, 3},
+        {2, 0, 3}
+    };
+    ProSurfaceTessellationData solid_surface = {};
+    solid_surface.n_vertices = 4;
+    solid_surface.vertices = solid_vertices;
+    solid_surface.n_facets = 4;
+    solid_surface.facets = solid_facets;
+
+    struct creo_brl_shim_model hybrid_model = {};
+    hybrid_model.magic = CREO_BRL_SHIM_MODEL_MAGIC;
+    hybrid_model.name = L"office_chair.prt";
+    hybrid_model.type = PRO_MDL_PART;
+    hybrid_model.length_unit_name = L"mm";
+    hybrid_model.length_unit_to_mm = 1.0;
+    hybrid_model.has_bbox = 1;
+    hybrid_model.bbox[1][0] = 10.0;
+    hybrid_model.bbox[1][1] = 10.0;
+    hybrid_model.bbox[1][2] = 10.0;
+    hybrid_model.tessellation_error = PRO_TK_INCOMPLETE_TESS;
+    hybrid_model.tessellation = quilt_surfaces;
+    hybrid_model.tessellation_surface_count = 2;
+    hybrid_model.solid_only_tessellation_error = PRO_TK_NO_ERROR;
+    hybrid_model.solid_only_tessellation = &solid_surface;
+    hybrid_model.solid_only_surface_count = 1;
+
+    struct creo_brl_snapshot_settings settings = {};
+    struct snapshot_settings_strings settings_strings;
+    struct snapshot_part_capture part = {};
+
+    settings.chord_mode = CREO_BRL_SNAPSHOT_CHORD_ABSOLUTE;
+    settings.max_chord = 1.0;
+    settings.min_angle = 0.5;
+    settings.flags = 0u;
+    if (!expect(creo_brl_capture_part_definition(
+                    &hybrid_model, &settings, &settings_strings, &part) ==
+                    CREO_BRL_SNAPSHOT_CAPTURE_SUCCESS,
+                "best-effort capture rejected PRO_TK_INCOMPLETE_TESS when solidity was disabled") ||
+        !expect(part.triangles.size() == 1u &&
+                    (part.part.flags & CREO_BRL_SNAPSHOT_PART_HAS_MESH) != 0 &&
+                    (part.part.flags & CREO_BRL_SNAPSHOT_PART_INCOMPLETE_TESS) != 0 &&
+                    (part.part.flags & CREO_BRL_SNAPSHOT_PART_NON_SOLID) != 0 &&
+                    (part.part.flags & CREO_BRL_SNAPSHOT_PART_OMITTED_QUILTS) == 0,
+                "best-effort capture did not record incomplete and non-solid flags") ||
+        !expect(part.strings.diagnostic_note ==
+                    "1 of 2 surface(s) tessellated; some surfaces have missing or overlapping triangles",
+                "best-effort capture did not record incomplete surface counts"))
+        return 0;
+
+    settings.flags = CREO_BRL_SNAPSHOT_SETTING_CHECK_SOLIDITY;
+    part = {};
+    if (!expect(creo_brl_capture_part_definition(
+                    &hybrid_model, &settings, &settings_strings, &part) ==
+                    CREO_BRL_SNAPSHOT_CAPTURE_SUCCESS,
+                "solid-only fallback failed when open quilts failed solidity check") ||
+        !expect(part.triangles.size() == 4u &&
+                    (part.part.flags & CREO_BRL_SNAPSHOT_PART_HAS_MESH) != 0 &&
+                    (part.part.flags & CREO_BRL_SNAPSHOT_PART_OMITTED_QUILTS) != 0 &&
+                    (part.part.flags & CREO_BRL_SNAPSHOT_PART_NON_SOLID) == 0,
+                "solid-only fallback did not convert passing solid geometry") ||
+        !expect(part.strings.diagnostic_note ==
+                    "open quilt surfaces failed solidity check; converted passing solid geometry only",
+                "solid-only fallback did not record omitted-quilt limitation"))
+        return 0;
+
+    hybrid_model.solid_only_tessellation = NULL;
+    hybrid_model.solid_only_surface_count = 0;
+    part = {};
+    if (!expect(creo_brl_capture_part_definition(
+                    &hybrid_model, &settings, &settings_strings, &part) ==
+                    CREO_BRL_SNAPSHOT_CAPTURE_SKIPPED,
+                "pure non-solid quilt part was not skipped when solidity was required") ||
+        !expect(part.strings.diagnostic_note ==
+                    "mesh failed solidity check (non-solid BoT rejected)",
+                "skipped non-solid part lost solidity failure reason"))
+        return 0;
+
+    settings.flags = CREO_BRL_SNAPSHOT_SETTING_CHECK_SOLIDITY |
+                     CREO_BRL_SNAPSHOT_SETTING_CREATE_BOXES;
+    part = {};
+    return expect(creo_brl_capture_part_definition(
+                      &hybrid_model, &settings, &settings_strings, &part) ==
+                      CREO_BRL_SNAPSHOT_CAPTURE_SUCCESS,
+                  "bbox fallback failed for rejected non-solid part") &&
+           expect((part.part.flags & CREO_BRL_SNAPSHOT_PART_HAS_BBOX_FALLBACK) != 0 &&
+                      part.strings.diagnostic_note ==
+                          "mesh failed solidity check (non-solid BoT rejected)",
+                  "bbox fallback lost the underlying solidity failure reason");
+}
+
+
+static int
 run_named_test(const std::string& name)
 {
     if (name == "rotated-mixed-units")
@@ -821,6 +956,8 @@ run_named_test(const std::string& name)
         return test_capture_uses_replay_vertex_tolerance();
     if (name == "mesh-collapsed-facet")
         return test_capture_rejects_replay_collapsed_facet();
+    if (name == "best-effort-capture")
+        return test_best_effort_incomplete_and_solid_only_capture();
 
     std::fprintf(stderr, "unknown capture-policy test case: %s\n", name.c_str());
     return 0;
@@ -843,6 +980,7 @@ main(int argument_count, char *arguments[])
                    test_scene_results_and_region_ids() &&
                    test_assembly_metadata_capture() &&
                    test_capture_uses_replay_vertex_tolerance() &&
-                   test_capture_rejects_replay_collapsed_facet() ?
+                   test_capture_rejects_replay_collapsed_facet() &&
+                   test_best_effort_incomplete_and_solid_only_capture() ?
                0 : 1;
 }

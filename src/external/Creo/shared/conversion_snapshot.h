@@ -95,7 +95,10 @@ enum creo_brl_snapshot_part_flag {
     CREO_BRL_SNAPSHOT_PART_HAS_NORMALS = 1u << 2,
     CREO_BRL_SNAPSHOT_PART_HAS_COLOR = 1u << 3,
     CREO_BRL_SNAPSHOT_PART_HAS_MATERIAL = 1u << 4,
-    CREO_BRL_SNAPSHOT_PART_HAS_MASS_PROPERTIES = 1u << 5
+    CREO_BRL_SNAPSHOT_PART_HAS_MASS_PROPERTIES = 1u << 5,
+    CREO_BRL_SNAPSHOT_PART_INCOMPLETE_TESS = 1u << 6,
+    CREO_BRL_SNAPSHOT_PART_OMITTED_QUILTS = 1u << 7,
+    CREO_BRL_SNAPSHOT_PART_NON_SOLID = 1u << 8
 };
 
 #define CREO_BRL_SNAPSHOT_PART_FLAG_MASK \
@@ -104,7 +107,10 @@ enum creo_brl_snapshot_part_flag {
      CREO_BRL_SNAPSHOT_PART_HAS_NORMALS | \
      CREO_BRL_SNAPSHOT_PART_HAS_COLOR | \
      CREO_BRL_SNAPSHOT_PART_HAS_MATERIAL | \
-     CREO_BRL_SNAPSHOT_PART_HAS_MASS_PROPERTIES)
+     CREO_BRL_SNAPSHOT_PART_HAS_MASS_PROPERTIES | \
+     CREO_BRL_SNAPSHOT_PART_INCOMPLETE_TESS | \
+     CREO_BRL_SNAPSHOT_PART_OMITTED_QUILTS | \
+     CREO_BRL_SNAPSHOT_PART_NON_SOLID)
 
 enum creo_brl_snapshot_assembly_flag {
     CREO_BRL_SNAPSHOT_ASSEMBLY_HAS_MASS_PROPERTIES = 1u << 0
@@ -224,6 +230,7 @@ struct snapshot_part_strings {
     std::string model_name;
     std::string model_version;
     std::string material_name;
+    std::string diagnostic_note;
 };
 
 struct snapshot_named_value {
@@ -256,6 +263,8 @@ struct snapshot_scene_capture {
     struct snapshot_settings_strings settings_strings;
     std::vector<struct snapshot_part_capture> parts;
     std::vector<struct snapshot_assembly_capture> assemblies;
+    std::vector<struct snapshot_named_value> skipped_parts;
+    std::vector<struct snapshot_named_value> skipped_assemblies;
     uint32_t root_type;
     uint32_t root_index;
     int64_t next_region_id;
@@ -264,6 +273,10 @@ struct snapshot_scene_capture {
 FILE *creo_brl_open_utf8_file(const char *path,
                               const wchar_t *wide_mode,
                               const char *mode);
+
+void creo_brl_snapshot_log_skipped_items(
+    FILE *log_file,
+    const struct snapshot_scene_capture& scene);
 
 int creo_brl_snapshot_encode(const struct snapshot_scene_capture& scene,
                              std::vector<unsigned char> *buffer);
