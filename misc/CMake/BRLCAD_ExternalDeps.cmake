@@ -984,10 +984,32 @@ function(brlcad_load_bext_component_manifest manifest install_root valid_var rea
   set(${reason_var} "unknown manifest error" PARENT_SCOPE)
 
   file(READ "${manifest}" _brlcad_manifest_json)
+  string(JSON _brlcad_root_type ERROR_VARIABLE _brlcad_root_error TYPE "${_brlcad_manifest_json}")
+  string(JSON _brlcad_root_size ERROR_VARIABLE _brlcad_root_size_error LENGTH "${_brlcad_manifest_json}")
   string(JSON _brlcad_schema ERROR_VARIABLE _brlcad_schema_error GET "${_brlcad_manifest_json}" schema)
-  if(NOT "${_brlcad_schema_error}" STREQUAL "NOTFOUND" OR NOT "${_brlcad_schema}" STREQUAL "1")
+  string(JSON _brlcad_install_root ERROR_VARIABLE _brlcad_install_root_error GET "${_brlcad_manifest_json}" install_root)
+  string(JSON _brlcad_generated_by ERROR_VARIABLE _brlcad_generated_by_error GET "${_brlcad_manifest_json}" generated_by)
+  if(NOT "${_brlcad_root_error}" STREQUAL "NOTFOUND" OR NOT _brlcad_root_type STREQUAL "OBJECT" OR
+     NOT "${_brlcad_root_size_error}" STREQUAL "NOTFOUND" OR
+     (_brlcad_root_size LESS 5 OR _brlcad_root_size GREATER 6) OR
+     NOT "${_brlcad_schema_error}" STREQUAL "NOTFOUND" OR
+     NOT "${_brlcad_install_root_error}" STREQUAL "NOTFOUND" OR
+     NOT "${_brlcad_generated_by_error}" STREQUAL "NOTFOUND" OR
+     NOT "${_brlcad_install_root}" STREQUAL "install" OR
+     NOT "${_brlcad_generated_by}" STREQUAL "bext" OR
+     NOT "${_brlcad_schema}" STREQUAL "https://brlcad.org/schema/bext-component-manifest-v1")
     set(${reason_var} "unsupported or invalid schema" PARENT_SCOPE)
     return()
+  endif()
+
+  if(_brlcad_root_size EQUAL 6)
+    string(JSON _brlcad_selected_type ERROR_VARIABLE _brlcad_selected_error TYPE
+      "${_brlcad_manifest_json}" selected_packages)
+    if(NOT "${_brlcad_selected_error}" STREQUAL "NOTFOUND" OR
+       NOT _brlcad_selected_type STREQUAL "ARRAY")
+      set(${reason_var} "manifest has an invalid selected package list" PARENT_SCOPE)
+      return()
+    endif()
   endif()
 
   string(JSON _brlcad_platform ERROR_VARIABLE _brlcad_platform_error GET "${_brlcad_manifest_json}" platform)
@@ -1003,16 +1025,23 @@ function(brlcad_load_bext_component_manifest manifest install_root valid_var rea
     return()
   endif()
 
-  set(_brlcad_component_records)
   set(_brlcad_component_paths)
-  file(STRINGS "${manifest}" _brlcad_component_lines REGEX "\"path\"")
-  foreach(_brlcad_line ${_brlcad_component_lines})
-      if(NOT _brlcad_line MATCHES "^[ \t]*\\{\"path\": \"([^\"]+)\", \"component\": \"([A-Za-z0-9_.+-]+)\"\\},?[ \t]*$")
+  string(JSON _brlcad_component_count LENGTH "${_brlcad_manifest_json}" files)
+  if(_brlcad_component_count GREATER 0)
+    math(EXPR _brlcad_component_last "${_brlcad_component_count} - 1")
+    foreach(_brlcad_index RANGE 0 ${_brlcad_component_last})
+      string(JSON _brlcad_entry_type ERROR_VARIABLE _brlcad_entry_type_error TYPE "${_brlcad_manifest_json}" files ${_brlcad_index})
+      string(JSON _brlcad_entry_size ERROR_VARIABLE _brlcad_entry_size_error LENGTH "${_brlcad_manifest_json}" files ${_brlcad_index})
+      string(JSON _brlcad_relative ERROR_VARIABLE _brlcad_path_error GET "${_brlcad_manifest_json}" files ${_brlcad_index} path)
+      string(JSON _brlcad_component ERROR_VARIABLE _brlcad_component_error GET "${_brlcad_manifest_json}" files ${_brlcad_index} component)
+      if(NOT "${_brlcad_entry_type_error}" STREQUAL "NOTFOUND" OR NOT _brlcad_entry_type STREQUAL "OBJECT" OR
+         NOT "${_brlcad_entry_size_error}" STREQUAL "NOTFOUND" OR NOT _brlcad_entry_size EQUAL 2 OR
+         NOT "${_brlcad_path_error}" STREQUAL "NOTFOUND" OR
+         NOT "${_brlcad_component_error}" STREQUAL "NOTFOUND" OR
+         "${_brlcad_component}" STREQUAL "")
         set(${reason_var} "malformed component ownership entry" PARENT_SCOPE)
         return()
       endif()
-      set(_brlcad_relative "${CMAKE_MATCH_1}")
-      set(_brlcad_component "${CMAKE_MATCH_2}")
       if(IS_ABSOLUTE "${_brlcad_relative}" OR
          "${_brlcad_relative}" MATCHES "(^|/)\\.\\.(/|$)" OR
          NOT EXISTS "${install_root}/${_brlcad_relative}")
@@ -1024,9 +1053,8 @@ function(brlcad_load_bext_component_manifest manifest install_root valid_var rea
         return()
       endif()
       list(APPEND _brlcad_component_paths "${_brlcad_relative}")
-      list(APPEND _brlcad_component_records "${_brlcad_relative}|${_brlcad_component}")
-  endforeach()
-  set(BEXT_COMPONENT_RECORDS "${_brlcad_component_records}" PARENT_SCOPE)
+    endforeach()
+  endif()
   set(${valid_var} TRUE PARENT_SCOPE)
   set(${reason_var} "" PARENT_SCOPE)
 endfunction(brlcad_load_bext_component_manifest)
@@ -2003,6 +2031,9 @@ endfunction()
   # since configure re-defines all of these rules on every pass.
   set(TP_INSTALL_FILES ${TP_FILES})
   list(REMOVE_ITEM TP_INSTALL_FILES ${BEXT_INSTALL_EXCLUDED_FILES})
+  if(TP_INSTALL_FILES)
+    set_property(GLOBAL PROPERTY BRLCAD_BEXT_SBOM_REQUIRED TRUE)
+  endif()
   set(_brlcad_ext_text_install_rules 0)
   foreach(tf ${TP_INSTALL_FILES})
     # Rather than doing the PROGRAMS install for all binary files, we

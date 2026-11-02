@@ -1,8 +1,97 @@
+set(_brlcad_install_root "$ENV{DESTDIR}${CMAKE_INSTALL_PREFIX}")
+set(_brlcad_project_manifest "@CMAKE_BINARY_DIR@/CMakeFiles/brlcad-installed-files.txt")
+file(WRITE "${_brlcad_project_manifest}" "")
+foreach(_brlcad_installed_file IN LISTS CMAKE_INSTALL_MANIFEST_FILES)
+  file(APPEND "${_brlcad_project_manifest}" "${_brlcad_installed_file}\n")
+endforeach()
+
+set(_brlcad_revision "@BRLCAD_SBOM_REVISION@")
+set(_brlcad_created "@BRLCAD_SBOM_CREATED@")
+set(_brlcad_allow_dirty "@BRLCAD_SBOM_ALLOW_DIRTY@")
+set(_brlcad_bext_sbom_required "@BRLCAD_BEXT_SBOM_REQUIRED@")
+if(EXISTS [==[@CMAKE_SOURCE_DIR@/.git]==])
+  set(_brlcad_git_command [==[@BRLCAD_SBOM_GIT_COMMAND@]==])
+  execute_process(COMMAND ${_brlcad_git_command} rev-parse HEAD
+    WORKING_DIRECTORY [==[@CMAKE_SOURCE_DIR@]==]
+    RESULT_VARIABLE _brlcad_git_result OUTPUT_VARIABLE _brlcad_revision
+    OUTPUT_STRIP_TRAILING_WHITESPACE)
+  execute_process(COMMAND ${_brlcad_git_command} show -s --format=%ct HEAD
+    WORKING_DIRECTORY [==[@CMAKE_SOURCE_DIR@]==]
+    RESULT_VARIABLE _brlcad_time_result OUTPUT_VARIABLE _brlcad_epoch
+    OUTPUT_STRIP_TRAILING_WHITESPACE)
+  execute_process(COMMAND ${_brlcad_git_command} status --porcelain --untracked-files=normal
+    WORKING_DIRECTORY [==[@CMAKE_SOURCE_DIR@]==]
+    RESULT_VARIABLE _brlcad_status_result OUTPUT_VARIABLE _brlcad_status
+    OUTPUT_STRIP_TRAILING_WHITESPACE)
+  execute_process(
+    COMMAND ${_brlcad_git_command} submodule foreach --quiet --recursive "git status --porcelain --untracked-files=normal"
+    WORKING_DIRECTORY [==[@CMAKE_SOURCE_DIR@]==]
+    RESULT_VARIABLE _brlcad_submodule_status_result
+    OUTPUT_VARIABLE _brlcad_submodule_status
+    OUTPUT_STRIP_TRAILING_WHITESPACE
+  )
+  if(NOT _brlcad_git_result EQUAL 0 OR NOT _brlcad_time_result EQUAL 0 OR
+     NOT _brlcad_status_result EQUAL 0 OR NOT _brlcad_submodule_status_result EQUAL 0)
+    message(FATAL_ERROR "Unable to determine BRL-CAD source provenance for the SBOM")
+  endif()
+  if(_brlcad_status OR _brlcad_submodule_status)
+    if(NOT _brlcad_allow_dirty)
+      message(FATAL_ERROR "Refusing to generate an SBOM from a dirty BRL-CAD source tree; set BRLCAD_SBOM_ALLOW_DIRTY=ON only for a deliberate non-release build")
+    endif()
+    execute_process(
+      COMMAND ${_brlcad_git_command} diff --binary --full-index --no-ext-diff HEAD --
+      WORKING_DIRECTORY [==[@CMAKE_SOURCE_DIR@]==]
+      RESULT_VARIABLE _brlcad_diff_result
+      OUTPUT_VARIABLE _brlcad_diff
+    )
+    execute_process(
+      COMMAND ${_brlcad_git_command} ls-files --others --exclude-standard -- ":!*/"
+      COMMAND ${_brlcad_git_command} hash-object --stdin-paths --no-filters
+      WORKING_DIRECTORY [==[@CMAKE_SOURCE_DIR@]==]
+      RESULTS_VARIABLE _brlcad_untracked_results
+      OUTPUT_VARIABLE _brlcad_untracked_hashes
+    )
+    execute_process(
+      COMMAND ${_brlcad_git_command} submodule foreach --recursive "git diff --binary --full-index --no-ext-diff HEAD --"
+      WORKING_DIRECTORY [==[@CMAKE_SOURCE_DIR@]==]
+      RESULT_VARIABLE _brlcad_submodule_diff_result
+      OUTPUT_VARIABLE _brlcad_submodule_diff
+    )
+    execute_process(
+      COMMAND ${_brlcad_git_command} submodule foreach --recursive
+        "git ls-files --others --exclude-standard | while IFS= read -r path; do if test -d \"$path\"; then find \"$path\" -type f ! -name .git -print; else printf '%s\\n' \"$path\"; fi; done | git hash-object --stdin-paths --no-filters"
+      WORKING_DIRECTORY [==[@CMAKE_SOURCE_DIR@]==]
+      RESULT_VARIABLE _brlcad_submodule_untracked_result
+      OUTPUT_VARIABLE _brlcad_submodule_untracked_hashes
+    )
+    if(NOT _brlcad_diff_result EQUAL 0 OR NOT "${_brlcad_untracked_results}" STREQUAL "0;0" OR
+       NOT _brlcad_submodule_diff_result EQUAL 0 OR NOT _brlcad_submodule_untracked_result EQUAL 0)
+      message(FATAL_ERROR "Unable to fingerprint the dirty BRL-CAD source tree")
+    endif()
+    string(SHA256 _brlcad_dirty_digest
+      "${_brlcad_status}\n${_brlcad_diff}\n${_brlcad_untracked_hashes}\n${_brlcad_submodule_status}\n${_brlcad_submodule_diff}\n${_brlcad_submodule_untracked_hashes}")
+    string(SUBSTRING "${_brlcad_dirty_digest}" 0 12 _brlcad_dirty_digest)
+    string(APPEND _brlcad_revision "-dirty-${_brlcad_dirty_digest}")
+  endif()
+  set(_brlcad_saved_epoch "$ENV{SOURCE_DATE_EPOCH}")
+  set(ENV{SOURCE_DATE_EPOCH} "${_brlcad_epoch}")
+  string(TIMESTAMP _brlcad_created "%Y-%m-%dT%H:%M:%SZ" UTC)
+  set(ENV{SOURCE_DATE_EPOCH} "${_brlcad_saved_epoch}")
+endif()
+
+if(_brlcad_bext_sbom_required AND
+   (NOT EXISTS [==[@BRLCAD_BEXT_COMPONENT_MANIFEST@]==] OR NOT EXISTS [==[@BRLCAD_BEXT_SBOM@]==]))
+  file(REMOVE "${_brlcad_install_root}/@DOC_DIR@/brlcad.spdx.json")
+  message(FATAL_ERROR "Bundled dependencies are installed but complete bext SBOM metadata is unavailable")
+endif()
+
 set(_brlcad_sbom_arguments
-  --install-root "$ENV{DESTDIR}${CMAKE_INSTALL_PREFIX}"
+  --install-root "${_brlcad_install_root}"
+  --project-manifest "${_brlcad_project_manifest}"
   --output "$ENV{DESTDIR}${CMAKE_INSTALL_PREFIX}/@DOC_DIR@/brlcad.spdx.json"
   --version "@BRLCAD_VERSION@"
-  --revision "@BRLCAD_SBOM_REVISION@"
+  --revision "${_brlcad_revision}"
+  --created "${_brlcad_created}"
 )
 if(EXISTS [==[@BRLCAD_BEXT_COMPONENT_MANIFEST@]==] AND EXISTS [==[@BRLCAD_BEXT_SBOM@]==])
   list(APPEND _brlcad_sbom_arguments
@@ -16,4 +105,14 @@ execute_process(
 )
 if(NOT _brlcad_sbom_result EQUAL 0)
   message(FATAL_ERROR "Unable to generate the installed BRL-CAD SBOM")
+endif()
+find_program(_brlcad_spdx_validator NAMES pyspdxtools)
+if(_brlcad_spdx_validator)
+  execute_process(
+    COMMAND "${_brlcad_spdx_validator}" --infile "$ENV{DESTDIR}${CMAKE_INSTALL_PREFIX}/@DOC_DIR@/brlcad.spdx.json" --version SPDX-2.3
+    RESULT_VARIABLE _brlcad_validation_result
+  )
+  if(NOT _brlcad_validation_result EQUAL 0)
+    message(FATAL_ERROR "The installed BRL-CAD SBOM failed SPDX validation")
+  endif()
 endif()
