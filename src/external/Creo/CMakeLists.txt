@@ -194,9 +194,9 @@ if(NOT DEFINED BRLCAD_BUILDTEST_EXTERNALS)
     "To use this bundle, copy it to the deployment location and point Creo at\n"
     "creo-brl.dat using protkdat, creotkdat, toolkit_registry_file, or the\n"
     "Auxiliary Applications interface.\n\n"
-    "If the bundle is moved, update exec_file and text_dir in creo-brl.dat,\n"
-    "then update the Creo setting that points at creo-brl.dat.  No files need\n"
-    "to be copied into the Creo installation directory.\n"
+    "If the bundle is moved, run relocate.bat (or update exec_file and text_dir\n"
+    "in creo-brl.dat, then update the Creo setting that points at creo-brl.dat).\n"
+    "No files need to be copied into the Creo installation directory.\n"
     )
 
   #----------------------------------------------------------------------#
@@ -336,6 +336,7 @@ if(NOT DEFINED BRLCAD_BUILDTEST_EXTERNALS)
   #     text/       Creo messages and resources                          #
   #     config/     default user profile                                 #
   #     creo-brl.dat                                                     #
+  #     relocate.bat                                                     #
   #     README.txt                                                       #
   #                                                                      #
   # CMAKE_INSTALL_PREFIX defines the expected deployment location        #
@@ -402,6 +403,8 @@ if(NOT DEFINED BRLCAD_BUILDTEST_EXTERNALS)
     COMMAND "${CMAKE_COMMAND}" -E copy_if_different
       "${CREO_PLUGIN_DAT_BUNDLE_FILE}" "${CREO_BUNDLE_DIR}/creo-brl.dat"
     COMMAND "${CMAKE_COMMAND}" -E copy_if_different
+      "${CMAKE_CURRENT_SOURCE_DIR}/relocate.bat" "${CREO_BUNDLE_DIR}/relocate.bat"
+    COMMAND "${CMAKE_COMMAND}" -E copy_if_different
       "${CREO_BUNDLE_README}" "${CREO_BUNDLE_DIR}/README.txt"
     COMMAND "${CMAKE_COMMAND}" -E copy_if_different
       "${CMAKE_CURRENT_SOURCE_DIR}/resources/creo-brl-msg.txt" "${CREO_BUNDLE_DIR}/text/usascii/creo-brl-msg.txt"
@@ -443,6 +446,7 @@ if(NOT DEFINED BRLCAD_BUILDTEST_EXTERNALS)
   install(TARGETS creo-brl creo-brl-core RUNTIME DESTINATION bin)
   install(FILES ${CREO_BRLCAD_RUNTIME_DLLS} DESTINATION bin)
   install(FILES "${CREO_PLUGIN_DAT_INSTALL_FILE}" DESTINATION . RENAME creo-brl.dat)
+  install(FILES relocate.bat DESTINATION .)
   install(FILES "${CREO_BUNDLE_README}" DESTINATION . RENAME README.txt)
   install(FILES resources/creo-brl-msg.txt resources/ptc_materials.mtl DESTINATION text/usascii)
   install(FILES ${RESOURCE_FILES} DESTINATION text/resource)
@@ -578,6 +582,7 @@ else(NOT DEFINED BRLCAD_BUILDTEST_EXTERNALS)
     README.txt
     cmake_uninstall.cmake.in
     creo-brl.dat.in
+    relocate.bat
     conversion/mesh_convert.h
     conversion/name_allocator.h
     conversion/profile_reader.h

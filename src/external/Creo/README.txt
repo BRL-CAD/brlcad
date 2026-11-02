@@ -16,11 +16,13 @@ Notes:
      text/       Creo UI resource and message files, plus ptc_materials.mtl
      config/     Default Creo_to_BRL.g profile
      creo-brl.dat
+     relocate.bat
 
    No BRL-CAD DLLs or resource files need to be copied into the Creo
    installation directory.  Point Creo at creo-brl.dat via config.pro
    (protkdat / creotkdat / toolkit_registry_file) or Tools -> Auxiliary
-   Applications.
+   Applications.  If the bundle is moved, run relocate.bat from the new
+   bundle directory to update creo-brl.dat and config.pro.
 
 3. Before distributing a built plugin bundle, run the CMake UNLOCK target
    (which invokes Creo's protk_unlock.bat utility on creo-brl.dll).

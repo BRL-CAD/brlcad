@@ -8,6 +8,7 @@ set(required_bundle_files
   bin/creo-brl-core.dll
   config/Creo_to_BRL.g
   creo-brl.dat
+  relocate.bat
   README.txt
   text/resource/creo_brl.res
   text/usascii/creo-brl-msg.txt
@@ -56,3 +57,63 @@ foreach(bundle_file ${bundle_files})
     message(FATAL_ERROR "Build-only artifact leaked into Creo-BRL bundle: ${bundle_file}")
   endif()
 endforeach()
+
+if(WIN32)
+  get_filename_component(CREO_BUNDLE_PARENT_DIR "${CREO_BUNDLE_DIR}" DIRECTORY)
+  set(relocate_test_dir "${CREO_BUNDLE_PARENT_DIR}/relocate_test")
+  file(REMOVE_RECURSE "${relocate_test_dir}")
+  file(MAKE_DIRECTORY "${relocate_test_dir}/bundle")
+  file(COPY "${CREO_BUNDLE_DIR}/relocate.bat" DESTINATION "${relocate_test_dir}/bundle")
+  file(WRITE "${relocate_test_dir}/bundle/creo-brl.dat"
+    "name creo-brl\nstartup dll\nallow_stop TRUE\nexec_file C:/old/bin/creo-brl.dll\ntext_dir C:/old/text\ndescription CREO to BRL-CAD\nend\n")
+  file(WRITE "${relocate_test_dir}/config.pro"
+    "pro_unit_length unit_inch\nprotkdat C:\\old\\creo-brl.dat\n")
+  file(TO_NATIVE_PATH "${relocate_test_dir}/config.pro" native_config_pro)
+  file(TO_NATIVE_PATH "${relocate_test_dir}/bundle/creo-brl.dat" native_dat_file)
+  file(TO_NATIVE_PATH "${relocate_test_dir}/bundle/relocate.bat" native_relocate_bat)
+  file(WRITE "${relocate_test_dir}/decline.txt" "n\n")
+  file(WRITE "${relocate_test_dir}/confirm.txt" "y\n")
+
+  execute_process(
+    COMMAND "${native_relocate_bat}" "${native_config_pro}"
+    INPUT_FILE "${relocate_test_dir}/decline.txt"
+    RESULT_VARIABLE decline_result
+    OUTPUT_VARIABLE decline_output
+    ERROR_VARIABLE decline_error
+    )
+  if(NOT decline_result EQUAL 0)
+    message(FATAL_ERROR "relocate.bat (decline) failed: ${decline_error}")
+  endif()
+  set(expected_prompt "Update ${native_config_pro} to ${native_dat_file} [Y/n]")
+  string(FIND "${decline_output}" "${expected_prompt}" prompt_pos)
+  if(prompt_pos EQUAL -1)
+    message(FATAL_ERROR "Expected prompt '${expected_prompt}', got '${decline_output}'")
+  endif()
+  require_dat_entry("${relocate_test_dir}/bundle/creo-brl.dat" exec_file
+    "${relocate_test_dir}/bundle/bin/creo-brl.dll")
+  require_dat_entry("${relocate_test_dir}/bundle/creo-brl.dat" text_dir
+    "${relocate_test_dir}/bundle/text")
+  file(READ "${relocate_test_dir}/config.pro" declined_config)
+  string(FIND "${declined_config}" "C:\\old\\creo-brl.dat" old_pos)
+  if(old_pos EQUAL -1)
+    message(FATAL_ERROR "config.pro was modified despite declining confirmation")
+  endif()
+
+  execute_process(
+    COMMAND "${native_relocate_bat}" "${native_config_pro}"
+    INPUT_FILE "${relocate_test_dir}/confirm.txt"
+    RESULT_VARIABLE confirm_result
+    OUTPUT_VARIABLE confirm_output
+    ERROR_VARIABLE confirm_error
+    )
+  if(NOT confirm_result EQUAL 0)
+    message(FATAL_ERROR "relocate.bat (confirm) failed: ${confirm_error}")
+  endif()
+  file(STRINGS "${relocate_test_dir}/config.pro" updated_config_lines)
+  list(FIND updated_config_lines "pro_unit_length unit_inch" unit_line_index)
+  list(FIND updated_config_lines "protkdat ${native_dat_file}" dat_line_index)
+  if(unit_line_index EQUAL -1 OR dat_line_index EQUAL -1)
+    message(FATAL_ERROR "config.pro was not updated as expected: ${updated_config_lines}")
+  endif()
+  file(REMOVE_RECURSE "${relocate_test_dir}")
+endif()
