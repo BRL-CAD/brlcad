@@ -155,3 +155,27 @@ execute_process(COMMAND "${SBOM_TOOL}" ${arguments} RESULT_VARIABLE audit_result
 if(audit_result EQUAL 0 OR EXISTS "${output}")
   message(FATAL_ERROR "SBOM generation did not reject unattributed content")
 endif()
+file(REMOVE "${TEST_ROOT}/install/unattributed.txt")
+
+if(UNIX)
+  file(CREATE_LINK "zlib-test.txt" "${TEST_ROOT}/install/lib/zlib-link.txt"
+    SYMBOLIC RESULT link_result)
+  if(link_result)
+    message(FATAL_ERROR "Unable to create SBOM symlink test fixture: ${link_result}")
+  endif()
+  string(REPLACE
+    [=[{"path": "lib/zlib-test.txt", "component": "zlib"}]=]
+    [=[{"path": "lib/zlib-test.txt", "component": "zlib"},
+    {"path": "lib/zlib-link.txt", "component": "zlib"}]=]
+    symlink_component_manifest "${valid_component_manifest}")
+  file(WRITE "${TEST_ROOT}/components.json" "${symlink_component_manifest}")
+  execute_process(COMMAND "${SBOM_TOOL}" ${arguments} RESULT_VARIABLE symlink_result)
+  if(NOT symlink_result EQUAL 0)
+    message(FATAL_ERROR "SBOM generation failed for an installed symlink")
+  endif()
+  file(READ "${output}" symlink_sbom)
+  string(JSON symlink_file_count LENGTH "${symlink_sbom}" files)
+  if(NOT symlink_file_count EQUAL 3)
+    message(FATAL_ERROR "SBOM did not preserve the installed symlink path")
+  endif()
+endif()

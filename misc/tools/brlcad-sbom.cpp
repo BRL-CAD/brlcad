@@ -154,9 +154,10 @@ sha1_text(const std::string &text)
 static std::string
 relative_install_path(const fs::path &root, const fs::path &path)
 {
-    std::error_code error;
-    fs::path relative = fs::relative(path, root, error);
-    if (error || !safe_relative_path(relative)) {
+    const fs::path absolute_root = fs::absolute(root).lexically_normal();
+    const fs::path absolute_path = fs::absolute(path).lexically_normal();
+    const fs::path relative = absolute_path.lexically_relative(absolute_root);
+    if (!safe_relative_path(relative)) {
         throw std::runtime_error("installed path is outside the install root: " + path.string());
     }
     return relative.generic_string();
