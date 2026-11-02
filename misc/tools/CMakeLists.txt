@@ -20,6 +20,11 @@ add_custom_target(brlcad-sbom-regress
     -DSBOM_TOOL=$<TARGET_FILE:brlcad-sbom>
     -DTEST_ROOT=${CMAKE_CURRENT_BINARY_DIR}/sbom-test
     -P "${CMAKE_CURRENT_SOURCE_DIR}/tests/sbom.cmake"
+  COMMAND "${CMAKE_COMMAND}"
+    -DSBOM_TOOL=$<TARGET_FILE:brlcad-sbom>
+    -DTEST_ROOT=${CMAKE_CURRENT_BINARY_DIR}/install-sbom-test
+    -DINSTALL_SBOM_TEMPLATE=${BRLCAD_CMAKE_DIR}/BRLCAD_GenerateInstallSbom.cmake.in
+    -P "${CMAKE_CURRENT_SOURCE_DIR}/tests/install_sbom.cmake"
   DEPENDS brlcad-sbom
   VERBATIM
 )
@@ -43,6 +48,7 @@ cmakefiles(
   CMakeLists.txt
   README
   brlcad-sbom.cpp
+  tests/install_sbom.cmake
   tests/sbom.cmake
   asciiquack/CMakeLists.txt
   asciiquack/LICENSE
