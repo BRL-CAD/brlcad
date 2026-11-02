@@ -47,6 +47,15 @@ static const char FRONTEND_RESTORATION_WARNING_MESSAGE[] =
     "To avoid permanent changes to the current Creo model, please exit\n"
     "without saving any changes.";
 
+static BOOL CALLBACK
+frontend_redraw_thread_window(HWND window, LPARAM UNUSED(parameter))
+{
+    if (IsWindowVisible(window))
+        (void)RedrawWindow(window, NULL, NULL, RDW_UPDATENOW | RDW_ALLCHILDREN);
+
+    return TRUE;
+}
+
 static void
 frontend_set_dialog_status(const char *message)
 {
@@ -57,6 +66,7 @@ frontend_set_dialog_status(const char *message)
 
     ProStringToWstring(wide_message, (char *)message);
     (void)ProUILabelTextSet(CREO_UI_NAME, (char *)FRONTEND_STATUS_COMPONENT, wide_message);
+    (void)EnumThreadWindows(GetCurrentThreadId(), frontend_redraw_thread_window, 0);
 }
 
 static void
@@ -489,8 +499,7 @@ frontend_convert(char *dialog, char *component, ProAppData appdata)
     {
         const std::string status = frontend_completion_status(captured_scene);
 
-        creo_brl_show_status(status.c_str());
-        frontend_set_dialog_status(status.c_str());
+        frontend_status("%s", status.c_str());
     }
 }
 
