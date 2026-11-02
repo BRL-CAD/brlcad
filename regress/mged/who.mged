@@ -10,4 +10,18 @@ who
 d who.c
 d who_sph1.s
 
+in_sph order_first 1
+in_sph order_second 2
+e order_second.s
+e order_first.s
+set forward_order [who]
+Z
+e order_first.s
+e order_second.s
+set reverse_order [who]
+if {$forward_order ne $reverse_order} {
+    puts "FAIL who ordering differs: '$forward_order' != '$reverse_order'"
+    exit 1
+}
+
 puts "*** 'who' testing completed ***"
