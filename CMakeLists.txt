@@ -3450,6 +3450,11 @@ endforeach(ad ${ALL_DIRS})
 # install or CPack staging tree rather than the build tree.
 get_property(BRLCAD_BEXT_COMPONENT_MANIFEST GLOBAL PROPERTY BRLCAD_BEXT_COMPONENT_MANIFEST)
 get_property(BRLCAD_BEXT_SBOM GLOBAL PROPERTY BRLCAD_BEXT_SBOM)
+get_property(BRLCAD_BEXT_SBOM_REQUIRED GLOBAL PROPERTY BRLCAD_BEXT_SBOM_REQUIRED)
+if(NOT BRLCAD_BEXT_SBOM_REQUIRED)
+  set(BRLCAD_BEXT_SBOM_REQUIRED FALSE)
+endif()
+option(BRLCAD_SBOM_ALLOW_DIRTY "Allow non-release SBOMs from dirty source trees" OFF)
 brlcad_repository_git_command(BRLCAD_SBOM_GIT_COMMAND)
 execute_process(
   COMMAND ${BRLCAD_SBOM_GIT_COMMAND} rev-parse HEAD
@@ -3461,6 +3466,7 @@ execute_process(
 if(NOT BRLCAD_SBOM_GIT_RESULT EQUAL 0)
   set(BRLCAD_SBOM_REVISION "${BRLCAD_VERSION}")
 endif()
+file(TIMESTAMP "${CMAKE_SOURCE_DIR}/CMakeLists.txt" BRLCAD_SBOM_CREATED "%Y-%m-%dT%H:%M:%SZ" UTC)
 set(BRLCAD_SBOM_EXECUTABLE "$<TARGET_FILE:brlcad-sbom>")
 set(BRLCAD_INSTALL_SBOM_SCRIPT_IN "${CMAKE_BINARY_DIR}/CMakeFiles/BRLCAD_GenerateInstallSbom.cmake.in")
 set(BRLCAD_INSTALL_SBOM_SCRIPT "${CMAKE_BINARY_DIR}/CMakeFiles/BRLCAD_GenerateInstallSbom-$<CONFIG>.cmake")
