@@ -1,5 +1,7 @@
 set(_brlcad_install_root "$ENV{DESTDIR}${CMAKE_INSTALL_PREFIX}")
 set(_brlcad_project_manifest "@CMAKE_BINARY_DIR@/CMakeFiles/brlcad-installed-files.txt")
+set(_brlcad_sbom_output "${_brlcad_install_root}/@DOC_DIR@/brlcad.spdx.json")
+file(REMOVE "${_brlcad_sbom_output}")
 file(WRITE "${_brlcad_project_manifest}" "")
 foreach(_brlcad_installed_file IN LISTS CMAKE_INSTALL_MANIFEST_FILES)
   file(APPEND "${_brlcad_project_manifest}" "${_brlcad_installed_file}\n")
@@ -81,14 +83,13 @@ endif()
 
 if(_brlcad_bext_sbom_required AND
    (NOT EXISTS [==[@BRLCAD_BEXT_COMPONENT_MANIFEST@]==] OR NOT EXISTS [==[@BRLCAD_BEXT_SBOM@]==]))
-  file(REMOVE "${_brlcad_install_root}/@DOC_DIR@/brlcad.spdx.json")
   message(FATAL_ERROR "Bundled dependencies are installed but complete bext SBOM metadata is unavailable")
 endif()
 
 set(_brlcad_sbom_arguments
   --install-root "${_brlcad_install_root}"
   --project-manifest "${_brlcad_project_manifest}"
-  --output "$ENV{DESTDIR}${CMAKE_INSTALL_PREFIX}/@DOC_DIR@/brlcad.spdx.json"
+  --output "${_brlcad_sbom_output}"
   --version "@BRLCAD_VERSION@"
   --revision "${_brlcad_revision}"
   --created "${_brlcad_created}"
@@ -109,10 +110,11 @@ endif()
 find_program(_brlcad_spdx_validator NAMES pyspdxtools)
 if(_brlcad_spdx_validator)
   execute_process(
-    COMMAND "${_brlcad_spdx_validator}" --infile "$ENV{DESTDIR}${CMAKE_INSTALL_PREFIX}/@DOC_DIR@/brlcad.spdx.json" --version SPDX-2.3
+    COMMAND "${_brlcad_spdx_validator}" --infile "${_brlcad_sbom_output}" --version SPDX-2.3
     RESULT_VARIABLE _brlcad_validation_result
   )
   if(NOT _brlcad_validation_result EQUAL 0)
+    file(REMOVE "${_brlcad_sbom_output}")
     message(FATAL_ERROR "The installed BRL-CAD SBOM failed SPDX validation")
   endif()
 endif()
