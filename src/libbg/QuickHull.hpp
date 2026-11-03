@@ -350,6 +350,7 @@ namespace quickhull {
 		    std::shared_ptr<std::vector<size_t>> m_pointsOnPositiveSide;
 
 		    Face() : m_he(std::numeric_limits<size_t>::max()),
+		    m_P(),
 		    m_mostDistantPointDist(0),
 		    m_mostDistantPoint(0),
 		    m_visibilityCheckedOnIteration(0),

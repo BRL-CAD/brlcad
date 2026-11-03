@@ -46,6 +46,19 @@ icv_jpeg_error_exit(j_common_ptr cinfo)
     longjmp(myerr->setjmp_buffer, 1);
 }
 
+static int
+icv_jpeg_quality(int quality)
+{
+    const int min_quality = 1;
+    const int max_quality = 100;
+
+    if (quality < min_quality)
+	return min_quality;
+    if (quality > max_quality)
+	return max_quality;
+    return quality;
+}
+
 int
 jpeg_write(icv_image_t *bif, FILE *fp, int quality)
 {
@@ -92,9 +105,7 @@ jpeg_write(icv_image_t *bif, FILE *fp, int quality)
     cinfo.in_color_space = JCS_RGB;
 
     jpeg_set_defaults(&cinfo);
-    if (quality < 1) quality = 1;
-    if (quality > 100) quality = 100;
-    jpeg_set_quality(&cinfo, quality, TRUE);
+    jpeg_set_quality(&cinfo, icv_jpeg_quality(quality), TRUE);
 
     // Force 4:4:4 (disable chroma subsampling) - for
     // raytraced images, which usually have sharp edges,
@@ -187,9 +198,7 @@ jpeg_write_mem(icv_image_t *bif, unsigned char **outbuffer, size_t *outsize, int
     cinfo.in_color_space = JCS_RGB;
 
     jpeg_set_defaults(&cinfo);
-    if (quality < 1) quality = 1;
-    if (quality > 100) quality = 100;
-    jpeg_set_quality(&cinfo, quality, TRUE);
+    jpeg_set_quality(&cinfo, icv_jpeg_quality(quality), TRUE);
 
     // Force 4:4:4 (disable chroma subsampling) - for
     // raytraced images, which usually have sharp edges,

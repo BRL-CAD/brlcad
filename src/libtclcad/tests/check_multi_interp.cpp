@@ -31,6 +31,7 @@
 #include "bu/app.h"
 #include "bu/file.h"
 #include "bu/vls.h"
+#include "bn.h"
 #include "tclcad.h"
 #include "../tclcad_private.h"
 
@@ -108,6 +109,34 @@ check_gui_packages(Tcl_Interp *interp)
 
 
 static bool
+check_hdivide(Tcl_Interp *interp)
+{
+    const struct {
+	const char *command;
+	vect_t expected;
+    } cases[] = {
+	{"hdivide {2 4 6 2}", {1.0, 2.0, 3.0}},
+	{"hdivide {2 4 6 -2}", {-1.0, -2.0, -3.0}},
+	{"hdivide {2 4 6 0}", {0.0, 0.0, 0.0}}
+    };
+    const fastf_t tolerance = 1.0e-12;
+
+    for (const auto &test : cases) {
+	vect_t actual = VINIT_ZERO;
+	if (!eval_ok(interp, test.command))
+	    return false;
+	if (bn_decode_vect(actual, Tcl_GetStringResult(interp)) != ELEMENTS_PER_VECT ||
+	    !VNEAR_EQUAL(actual, test.expected, tolerance)) {
+	    std::fprintf(stderr, "Unexpected result for %s: %s\n", test.command,
+		    Tcl_GetStringResult(interp));
+	    return false;
+	}
+    }
+    return true;
+}
+
+
+static bool
 check_initialized(Tcl_Interp *interp, const char *value, bool init_gui)
 {
     if (!has_command(interp, "bu_dir") ||
@@ -118,6 +147,8 @@ check_initialized(Tcl_Interp *interp, const char *value, bool init_gui)
 	std::fprintf(stderr, "libtclcad did not register all expected commands\n");
 	return false;
     }
+    if (!check_hdivide(interp))
+	return false;
     if (init_gui &&
 	(!has_command(interp, "frame") ||
 	 !Tcl_PkgPresent(interp, "Tk", "8.6", 0) ||

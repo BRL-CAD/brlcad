@@ -534,12 +534,6 @@ bot_exterior_classify_crofton(struct rt_i *rtip,
 	return 0;
     }
 
-    /* Per-CPU resources */
-    struct resource *resources = (struct resource *)bu_calloc(
-	MAX_PSW, sizeof(struct resource), "ext resources");
-    for (int i = 0; i < MAX_PSW; i++)
-	rt_init_resource(&resources[i], i, rtip);
-
     size_t n_faces = bot->num_faces;
 
     if (opts->vis_threshold > 0.0)
@@ -559,8 +553,24 @@ bot_exterior_classify_crofton(struct rt_i *rtip,
      * own dedicated slot to be dequeued. */
     moodycamel::ConcurrentQueue<size_t> face_queue(n_faces);
     moodycamel::ProducerToken face_ptok(face_queue);
-    for (size_t i = 0; i < n_faces; i++)
-	face_queue.enqueue(face_ptok, i);
+    if (!face_ptok.valid()) {
+	bu_log("bot exterior: unable to allocate work queue producer\n");
+	bu_free(mask, "face_exterior");
+	return -1;
+    }
+    for (size_t i = 0; i < n_faces; i++) {
+	if (!face_queue.enqueue(face_ptok, i)) {
+	    bu_log("bot exterior: unable to queue face %zu\n", i);
+	    bu_free(mask, "face_exterior");
+	    return -1;
+	}
+    }
+
+    /* Allocate ray resources only after the work queue is ready. */
+    struct resource *resources = (struct resource *)bu_calloc(
+	MAX_PSW, sizeof(struct resource), "ext resources");
+    for (int i = 0; i < MAX_PSW; i++)
+	rt_init_resource(&resources[i], i, rtip);
 
     ext_focused2_progress prog;
     prog.faces_done.store(0, std::memory_order_relaxed);

@@ -52,6 +52,7 @@ if(BUILD_TESTING)
   add_dependencies(bu_dylib test_plugin_1 test_plugin_2)
 
   brlcad_add_test(NAME bu_dylib COMMAND bu_dylib)
+  brlcad_add_test(NAME bu_dylib_exit_unload COMMAND bu_dylib --unload-at-exit)
 
   # On some platforms distclean has additional cleanup to do
   distclean("${CMAKE_BINARY_DIR}/${BIN_DIR}/bu_dylib.pdb")

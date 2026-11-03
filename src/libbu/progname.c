@@ -76,6 +76,7 @@ bu_argv0_full_path(void)
 {
     static char buffer[MAXPATHLEN] = {0};
     char tbuf[MAXPATHLEN] = {0};
+    const char separator[] = {BU_DIR_SEPARATOR, '\0'};
     const char *argv0 = bu_progname;
     const char *which;
 
@@ -117,7 +118,7 @@ bu_argv0_full_path(void)
 
     if (argv0[0] == BU_DIR_SEPARATOR) {
 	/* seems to already be a full path */
-	snprintf(buffer, sizeof(buffer), "%s", argv0);
+	bu_strlcpy(buffer, argv0, sizeof(buffer));
 	return buffer;
     }
 
@@ -138,13 +139,14 @@ bu_argv0_full_path(void)
      * directory is changed, we'll get the wrong path for argv0.
      */
     bu_getcwd(buffer, sizeof(buffer));
-    snprintf(buffer+strlen(buffer), sizeof(buffer)-strlen(buffer), "%c%s", BU_DIR_SEPARATOR, argv0);
+    bu_strlcat(buffer, separator, sizeof(buffer));
+    bu_strlcat(buffer, argv0, sizeof(buffer));
     if (bu_file_exists(buffer, NULL)) {
 	return buffer;
     }
 
     /* give up */
-    snprintf(buffer, sizeof(buffer), "%s", argv0);
+    bu_strlcpy(buffer, argv0, sizeof(buffer));
     return buffer;
 }
 

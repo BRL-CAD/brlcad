@@ -56,7 +56,7 @@ bn_mat4x3vec(fastf_t *o, mat_t m, vect_t i)
 
 
 static void
-bn_hdivide(fastf_t *o, const hvect_t i)
+bn_hdivide(hvect_t o, const hvect_t i)
 {
     HDIVIDE(o, i);
 }
@@ -333,7 +333,7 @@ tclcad_bn_hdivide(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, c
 {
     struct bu_vls result = BU_VLS_INIT_ZERO;
     hvect_t i = HINIT_ZERO;
-    vect_t o = VINIT_ZERO;
+    hvect_t o = HINIT_ZERO;
     if (argc < 2 || bn_decode_hvect(i, argv[1]) < 4) {
 	bu_vls_printf(&result, "usage: %s hvect", argv[0]);
 	goto error;

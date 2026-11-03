@@ -39,7 +39,7 @@ int
 _nmg_tessellate(struct rt_bot_internal **nbot, struct rt_db_internal *intern, tess_opts *s)
 {
     int status = -1;
-    int ret = BRLCAD_ERROR;
+    volatile int ret = BRLCAD_ERROR;
     struct bu_list *vlfree = &rt_vlfree;
 
     if (!nbot || !intern || !intern->idb_meth || !s ||

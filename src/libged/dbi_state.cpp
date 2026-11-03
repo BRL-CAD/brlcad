@@ -2171,7 +2171,7 @@ BViewState::cache_collapsed()
 	    std::unordered_map<unsigned long long, std::vector<unsigned long long>>::iterator k_it;
 	    k_it = s_keys.find(*ms_it);
 	    if (k_it->second.size() == 1) {
-		mode_collapsed[mm_it->first].push_back(k_it->second);
+		mode_collapsed[mm_it->first].emplace_back(1, k_it->second.front());
 	        unsigned long long dhash = dbis->path_hash(k_it->second, 0);
 		drawn_paths[mm_it->first].insert(dhash);
 	    } else {
@@ -2196,7 +2196,7 @@ BViewState::cache_collapsed()
 	    std::unordered_map<unsigned long long, std::vector<unsigned long long>>::iterator k_it;
 	    k_it = s_keys.find(*ms_it);
 	    if (k_it->second.size() == 1) {
-		all_collapsed.push_back(k_it->second);
+		all_collapsed.emplace_back(1, k_it->second.front());
 	        unsigned long long dhash = dbis->path_hash(k_it->second, 0);
 		all_drawn_paths.insert(dhash);
 	    } else {
@@ -3339,7 +3339,7 @@ BSelectState::collapse()
     // top level objects and need no further processing.
     for (s_it = selected.begin(); s_it != selected.end(); s_it++) {
 	if (s_it->second.size() == 1) {
-	    collapsed.push_back(s_it->second);
+	    collapsed.emplace_back(1, s_it->second.front());
 	} else {
 	    depth_groups[s_it->second.size()].insert(s_it->first);
 	}

@@ -37,6 +37,10 @@
 // upon assigning any computed values)
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wconversion"
+#if !defined(__clang__) && __GNUC__ >= 14
+// GCC misidentifies atomic subobjects after the producer base-to-derived cast.
+#pragma GCC diagnostic ignored "-Wstringop-overflow"
+#endif
 
 #ifdef MCDBGQ_USE_RELACY
 #pragma GCC diagnostic ignored "-Wint-to-pointer-cast"

@@ -200,21 +200,13 @@ png_write(icv_image_t *bif, FILE *fp)
     if (UNLIKELY(!fp))
 	return BRLCAD_ERROR;
 
-    int png_color_type;
-    std::string scene_json;
-
     if (bif->channels > 4 || bif->channels == 0) {
 	bu_log("png_write : Invalid number of channels (%d)\n", (int)bif->channels);
 	return BRLCAD_ERROR;
     }
 
-    switch (bif->color_space) {
-	case ICV_COLOR_SPACE_GRAY:
-	    png_color_type = (bif->channels == 2) ? PNG_COLOR_TYPE_GRAY_ALPHA : PNG_COLOR_TYPE_GRAY;
-	    break;
-	default:
-	    png_color_type = (bif->channels == 4) ? PNG_COLOR_TYPE_RGBA : PNG_COLOR_TYPE_RGB;
-    }
+    /* An error jump must not invalidate modified C++ string state. */
+    const std::string scene_json = bif->render_info ? render_info_to_json(bif->render_info) : std::string();
 
     unsigned char *data = icv_data2uchar(bif);
 
@@ -231,6 +223,14 @@ png_write(icv_image_t *bif, FILE *fp)
 	bu_free(data, "png write uchar data");
 	return BRLCAD_ERROR;
     }
+    int png_color_type;
+    switch (bif->color_space) {
+	case ICV_COLOR_SPACE_GRAY:
+	    png_color_type = (bif->channels == 2) ? PNG_COLOR_TYPE_GRAY_ALPHA : PNG_COLOR_TYPE_GRAY;
+	    break;
+	default:
+	    png_color_type = (bif->channels == 4) ? PNG_COLOR_TYPE_RGBA : PNG_COLOR_TYPE_RGB;
+    }
 
     png_init_io(png_ptr, fp);
     png_set_IHDR(png_ptr, info_ptr, (unsigned)bif->width, (unsigned)bif->height, 8, png_color_type,
@@ -239,8 +239,6 @@ png_write(icv_image_t *bif, FILE *fp)
 
     /* Embed render metadata as a single JSON tEXt chunk when available */
     if (bif->render_info) {
-	scene_json = render_info_to_json(bif->render_info);
-
 	png_text text_chunk;
 	memset(&text_chunk, 0, sizeof(text_chunk));
 	text_chunk.compression = PNG_TEXT_COMPRESSION_NONE;

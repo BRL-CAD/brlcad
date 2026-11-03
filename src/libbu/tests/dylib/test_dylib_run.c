@@ -14,18 +14,33 @@
 
 #include "common.h"
 
+#include <stdlib.h>
+
 #include "bu.h"
 #include "dylib.h"
 
 
+static void
+unload_plugins_at_exit(void)
+{
+    if (bu_dlunload())
+	bu_exit(EXIT_FAILURE, "Failed to unload plugins during exit.\n");
+}
+
+
 int
-main(int UNUSED(ac), const char *av[])
+main(int ac, const char *av[])
 {
     int expected_plugins = 2;
     struct bu_ptbl plugins = BU_PTBL_INIT_ZERO;
     struct bu_ptbl handles = BU_PTBL_INIT_ZERO;
 
     bu_setprogname(av[0]);
+
+    if (ac > 2 || (ac == 2 && !BU_STR_EQUAL(av[1], "--unload-at-exit"))) {
+	bu_log("Usage: %s [--unload-at-exit]\n", av[0]);
+	return EXIT_FAILURE;
+    }
 
     int pcnt = dylib_load_plugins(&plugins, &handles);
     if (pcnt < expected_plugins) {
@@ -98,6 +113,11 @@ main(int UNUSED(ac), const char *av[])
 	expected_results = 0;
     }
     bu_ptbl_free(&handles);
+
+    if (ac == 2 && atexit(unload_plugins_at_exit)) {
+	bu_log("Failed to register plugin unload handler.\n");
+	return EXIT_FAILURE;
+    }
 
     // If everything is as expected, return 0
     return (!expected_results);

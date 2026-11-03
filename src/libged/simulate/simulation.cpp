@@ -662,7 +662,7 @@ Simulation::updateRoiProxies(const fastf_t seconds)
 	body->getCollisionShape()->getAabb(predicted_transform, predicted_min, predicted_max);
 
 	// Union of current and predicted AABBs
-	btVector3 swept_min, swept_max;
+	btVector3 swept_min(0.0, 0.0, 0.0), swept_max(0.0, 0.0, 0.0);
 	for (int i = 0; i < 3; ++i) {
 	    swept_min[i] = btMin(current_min[i], predicted_min[i]);
 	    swept_max[i] = btMax(current_max[i], predicted_max[i]);

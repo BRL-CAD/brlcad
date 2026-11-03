@@ -125,23 +125,28 @@ void SHA1Init(SHA1_CTX* context)
 
 void SHA1Update(SHA1_CTX* context, const unsigned char* data, uint32_t len)
 {
-    uint32_t i, j;
+    const uint32_t previous_count = context->count[0];
+    uint32_t buffer_used = (previous_count >> 3) & (SHA1_BLOCK_SIZE - 1);
+    const uint32_t block_space = SHA1_BLOCK_SIZE - buffer_used;
 
-    j = context->count[0];
-    if ((context->count[0] += len << 3) < j)
+    if ((context->count[0] += len << 3) < previous_count)
 	context->count[1]++;
     context->count[1] += (len>>29);
-    j = (j >> 3) & 63;
-    if ((j + len) > 63) {
-	memcpy(&context->buffer[j], data, (i = 64-j));
+    /* Remaining-byte bounds cannot wrap when an update approaches UINT32_MAX. */
+    if (len >= block_space) {
+	memcpy(&context->buffer[buffer_used], data, block_space);
 	SHA1Transform(context->state, context->buffer);
-	for ( ; i + 63 < len; i += 64) {
-	    SHA1Transform(context->state, &data[i]);
+	data += block_space;
+	len -= block_space;
+	while (len >= SHA1_BLOCK_SIZE) {
+	    SHA1Transform(context->state, data);
+	    data += SHA1_BLOCK_SIZE;
+	    len -= SHA1_BLOCK_SIZE;
 	}
-	j = 0;
+	buffer_used = 0;
     }
-    else i = 0;
-    memcpy(&context->buffer[j], &data[i], len - i);
+    if (len)
+	memcpy(&context->buffer[buffer_used], data, len);
 }
 
 
@@ -174,34 +179,6 @@ void SHA1Final(unsigned char digest[20], SHA1_CTX* context)
     memset(&finalcount, '\0', sizeof(finalcount));
 }
 /* ================ end of sha1.c ================ */
-
-#if 0
-#define BUFSIZE 4096
-
-int
-main(int argc, char **argv)
-{
-    SHA1_CTX ctx;
-    unsigned char hash[20], buf[BUFSIZE];
-    int i;
-
-    for(i=0;i<BUFSIZE;i++)
-	buf[i] = i;
-
-    SHA1Init(&ctx);
-    for(i=0;i<1000;i++)
-	SHA1Update(&ctx, buf, BUFSIZE);
-    SHA1Final(hash, &ctx);
-
-    printf("SHA1=");
-    for(i=0;i<20;i++)
-	printf("%02x", hash[i]);
-    printf("\n");
-    return 0;
-}
-
-#endif
-
 
 /*
  * Local Variables:

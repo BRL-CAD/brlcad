@@ -107,6 +107,11 @@ endif()
 set_source_files_properties(test_uuid.c PROPERTIES NO_CXX_COMPILE TRUE)
 brlcad_addexec(bu_test_uuid "test_uuid.c" libbu TEST)
 
+# Keep the private SHA-1 implementation out of the public library interface.
+set_source_files_properties(test_sha1.c ../sha1.c PROPERTIES NO_CXX_COMPILE TRUE)
+brlcad_addexec(bu_test_sha1 "test_sha1.c;../sha1.c" "" TEST)
+brlcad_add_test(NAME bu_sha1 COMMAND bu_test_sha1)
+
 # Benchmark-only target: build it, but don't schedule it under CTest.
 brlcad_addexec(test_bitv_benchmark "test_bitv_benchmark.c" libbu TEST)
 

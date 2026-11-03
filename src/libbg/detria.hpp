@@ -1532,6 +1532,11 @@ namespace detria
             size_t _count;
         };
 
+#if defined(__GNUC__) && !defined(__clang__)
+// Processing smaller partitions first bounds the sorter's stack depth.
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Warray-bounds"
+#endif
         template <typename T, size_t MaxSize>
         struct FixedSizeStack
         {
@@ -1687,6 +1692,10 @@ namespace detria
                 }
             }
         };
+
+#if defined(__GNUC__) && !defined(__clang__)
+#pragma GCC diagnostic pop
+#endif
 
         // Helper to decide if a type has a `reserve` function
         template <template <typename, typename> typename, typename = void>

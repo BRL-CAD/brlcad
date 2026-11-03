@@ -49,6 +49,12 @@
 #include <new>
 #include <math.h>
 
+#if defined(__GNUC__) && !defined(__clang__)
+// Expansion allocations extend x_ beyond its declared two elements.
+#  pragma GCC diagnostic push
+#  pragma GCC diagnostic ignored "-Warray-bounds"
+#endif
+
 /**
  * \file geogram/numerics/multi_precision.h
  * \brief Implementation of multi-precision arithmetics
@@ -1642,5 +1648,9 @@ namespace GEOBRL {
 
     /************************************************************************/
 }
+
+#if defined(__GNUC__) && !defined(__clang__)
+#  pragma GCC diagnostic pop
+#endif
 
 #endif

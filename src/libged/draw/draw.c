@@ -123,9 +123,8 @@ dl_add_path(int dashflag, struct bu_list *vhead, const struct db_full_path *path
     if (BU_LIST_IS_EMPTY(&(sp->s_vlist)))
 	sp->s_vlen = 0;
 
-    struct bv_vlist *bvv = (struct bv_vlist *)vhead;
-    sp->s_vlen += bv_vlist_cmd_cnt(bvv);
-    BU_LIST_APPEND_LIST(&(sp->s_vlist), &(bvv->l));
+    sp->s_vlen += bv_vlist_cmd_cnt((struct bv_vlist *)vhead);
+    BU_LIST_APPEND_LIST(&(sp->s_vlist), vhead);
 
     bv_scene_obj_bound(sp, dgcdp->v);
 
@@ -218,9 +217,8 @@ draw_solid_wireframe(struct bv_scene_obj *sp, struct bview *gvp, struct db_i *db
     if (BU_LIST_IS_EMPTY(&(sp->s_vlist)))
 	sp->s_vlen = 0;
 
-    struct bv_vlist *bvv = (struct bv_vlist *)&vhead;
-    sp->s_vlen += bv_vlist_cmd_cnt(bvv);
-    BU_LIST_APPEND_LIST(&(sp->s_vlist), &(bvv->l));
+    sp->s_vlen += bv_vlist_cmd_cnt((struct bv_vlist *)&vhead);
+    BU_LIST_APPEND_LIST(&(sp->s_vlist), &vhead);
 
     return 0;
 }
@@ -384,9 +382,8 @@ append_solid_to_display_list(
 	if (BU_LIST_IS_EMPTY(&(sp->s_vlist)))
 	    sp->s_vlen = 0;
 
-	struct bv_vlist *bvv = (struct bv_vlist *)&vhead;
-	sp->s_vlen += bv_vlist_cmd_cnt(bvv);
-	BU_LIST_APPEND_LIST(&(sp->s_vlist), &(bvv->l));
+	sp->s_vlen += bv_vlist_cmd_cnt((struct bv_vlist *)&vhead);
+	BU_LIST_APPEND_LIST(&(sp->s_vlist), &vhead);
 
 	bv_scene_obj_bound(sp, bv_data->v);
 

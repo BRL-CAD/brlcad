@@ -116,6 +116,8 @@ bu_dlunload(void)
 	n_handles--;
     }
     bu_free(handles, "free handles");
+    handles = NULL;
+    max_handles = 0;
     return ret;
 }
 

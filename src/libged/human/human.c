@@ -935,16 +935,13 @@ makeArmy(struct rt_wdb (*file), struct human_data_t *dude, int number, int showB
     point_t locations;
     int x = 0;
     int y = 0;
-    int num;
-    char testname[10] = {'0'};
+    int num = 0;
     char suffix[MAXLENGTH];
     VSET(locations, 0, 0, 0); /* Starting location */
-    num = 0.0;
 
     for (x = 0; x<number; x++) {
 	for (y = 0; y<number; y++) {
-	    sprintf(testname, "%d", num);
-	    bu_strlcpy(suffix, testname, MAXLENGTH);
+	    snprintf(suffix, sizeof(suffix), "%d", num);
 	    RandAuto(dude);	/*Generates random heights for random height, and thus random size, creation. */
 	    Auto(dude);
 	    makeBody(file, suffix, dude, locations, showBoxes);
