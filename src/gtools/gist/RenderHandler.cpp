@@ -713,6 +713,27 @@ makeRenderSection(IFPainter& img, InformationGatherer& info, int offsetX, int of
     // SCALE: shrinking factor on images placed onto the IFPainter
     double SCALE = 0.92;
 
+    std::map<char, std::string> faceRenders;
+    std::vector<char> requestedFaces;
+    std::vector<RenderRequest> renderRequests;
+    for (int i = 0; i < bestLayout.getMapSize(); ++i) {
+	const char face = bestLayout.getMapChar(i);
+	if (face == ' ' || face == '\n' || face == '.' || face == 'A' || face == '|' || face == '-') {
+	    continue;
+	}
+	if (faceRenders.find(face) != faceRenders.end()) {
+	    continue;
+	}
+
+	faceRenders[face] = "";
+	requestedFaces.push_back(face);
+	renderRequests.push_back({faceDetails[face].face, info.largestComponents[0].name, ""});
+    }
+    const std::vector<std::string> renders = renderPerspectives(renderRequests, opt);
+    for (size_t i = 0; i < renders.size(); ++i) {
+	faceRenders[requestedFaces[i]] = renders[i];
+    }
+
     // render all layout elements
     for (int i = 0; i < bestLayout.getMapSize(); ++i) {
 	char next = bestLayout.getMapChar(i);
@@ -725,7 +746,7 @@ makeRenderSection(IFPainter& img, InformationGatherer& info, int offsetX, int of
 		img.drawLine(offsetX + coords[0], offsetY + coords[1], offsetX + coords[2], offsetY + coords[3], 3, cv::Scalar(100, 100, 100));
 		break;
 	    default: // draw face
-		std::string render = renderPerspective(faceDetails[next].face, opt, info.largestComponents[0].name);
+		const std::string &render = faceRenders[next];
 
 		// find new coordinates using scaling factor
 		double oldW = coords[2] - coords[0];
