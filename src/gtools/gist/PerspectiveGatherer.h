@@ -60,10 +60,23 @@ struct FaceDetails
     ModelDimension heightContributor;
 };
 
+struct RenderRequest
+{
+    RenderingFace face;
+    std::string component;
+    std::string ghost;
+};
+
 std::map<char,FaceDetails> getFaceDetails();
 
-// TODO: add correct parameters and return type
+/** Render one model perspective using the configured CPU limit. */
 std::string renderPerspective(RenderingFace face, Options& opt, std::string component, std::string ghost="");
+
+/**
+ * Render a group of independent perspectives.  Preview requests may run in
+ * parallel, while full-quality requests remain sequential.
+ */
+std::vector<std::string> renderPerspectives(const std::vector<RenderRequest> &requests, Options &opt);
 
 /*
  * Local Variables:

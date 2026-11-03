@@ -19,6 +19,32 @@
  */
 
 #include "PerspectiveGatherer.h"
+#include "Timing.h"
+
+static const char *
+renderingFaceName(RenderingFace face)
+{
+    switch (face) {
+	case FRONT:
+	    return "render.front";
+	case TOP:
+	    return "render.top";
+	case RIGHT:
+	    return "render.right";
+	case LEFT:
+	    return "render.left";
+	case BACK:
+	    return "render.back";
+	case BOTTOM:
+	    return "render.bottom";
+	case DETAILED:
+	    return "render.detailed";
+	case GHOST:
+	    return "render.ghost";
+    }
+
+    return "render.unknown";
+}
 
 static bool
 renderIsUniformColor(const std::string &imgPath)
@@ -101,9 +127,10 @@ static std::string createOutputBase(std::string inFile, std::string workingDir, 
 }
 
 
-std::string
-renderPerspective(RenderingFace face, Options& opt, std::string component, std::string ghost)
+static std::string
+renderPerspectiveWithCpuLimit(RenderingFace face, Options &opt, std::string component, std::string ghost, size_t cpuCount)
 {
+    const int64_t renderStart = GistTiming::start();
     constexpr const char *fullRenderSize = "1024";
     constexpr const char *previewRenderSize = "256";
     constexpr const char *previewDetailedRenderSize = "512";
@@ -116,9 +143,8 @@ renderPerspective(RenderingFace face, Options& opt, std::string component, std::
 	outputname += "_preview";
     }
 
-    std::string render;
     std::string cmd;
-    std::string ncpu(std::to_string(opt.getNCPU()));
+    std::string ncpu(std::to_string(cpuCount));
     const char* renderSize = opt.getPreviewMode() ? previewRenderSize : fullRenderSize;
     const char* detailedRenderSize = opt.getPreviewMode() ? previewDetailedRenderSize : fullRenderSize;
     const char* ambient = opt.getPreviewMode() ? previewAmbientSettings : fullAmbientSettings;
@@ -262,8 +288,10 @@ renderPerspective(RenderingFace face, Options& opt, std::string component, std::
 		if (opt.verbosePrinting())
 		    bu_log("\tSkipping %s: render contains only background color\n", outputname.c_str());
 		bu_file_delete(outputname.c_str());
+		GistTiming::log(opt.verbosePrinting(), opt.getPreviewMode(), "cache", renderingFaceName(face), renderStart);
 		return "";
 	    }
+            GistTiming::log(opt.verbosePrinting(), opt.getPreviewMode(), "cache", renderingFaceName(face), renderStart);
             return outputname;
         } else {
             // sanity delete
@@ -275,16 +303,18 @@ renderPerspective(RenderingFace face, Options& opt, std::string component, std::
     bu_process_create(&p, av, BU_PROCESS_HIDE_WINDOW | BU_PROCESS_OUT_EQ_ERR);
 
     char buff[128];
-    std::string result = "";
-    int read_cnt = 0;
-    while ((read_cnt = bu_process_read_n(p, BU_PROCESS_STDOUT, 128-1, buff)) > 0) {
+    std::string result;
+    int readCount = 0;
+    while ((readCount = bu_process_read_n(p, BU_PROCESS_STDOUT, 128-1, buff)) > 0) {
         /* NOTE: read does not ensure null-termination, thus buffersize-1 */
-        buff[read_cnt] = '\0';
+        buff[readCount] = '\0';
         result += buff;
     }
 
-    if (bu_process_wait_n(&p, 0) != 0) {
-        bu_exit(BRLCAD_ERROR, "ERROR: render process failed\n");
+    const int renderStatus = bu_process_wait_n(&p, 0);
+    if (renderStatus != 0) {
+	bu_exit(BRLCAD_ERROR, "ERROR: %s process failed (status %d):\n%s\n",
+		renderingFaceName(face), renderStatus, result.c_str());
     }
 
     if (!bu_file_exists(outputname.c_str(), NULL)) {
@@ -295,12 +325,61 @@ renderPerspective(RenderingFace face, Options& opt, std::string component, std::
 	    bu_log("\tSkipping %s: render contains only background color\n", outputname.c_str());
 	}
 	bu_file_delete(outputname.c_str());
+	GistTiming::log(opt.verbosePrinting(), opt.getPreviewMode(), "detail", renderingFaceName(face), renderStart);
 	return "";
     } else if (opt.verbosePrinting()) {
         bu_log("\tGenerated %s\n", outputname.c_str());
     }
 
-	return outputname;
+    GistTiming::log(opt.verbosePrinting(), opt.getPreviewMode(), "detail", renderingFaceName(face), renderStart);
+    return outputname;
+}
+
+std::string
+renderPerspective(RenderingFace face, Options &opt, std::string component, std::string ghost)
+{
+    return renderPerspectiveWithCpuLimit(face, opt, component, ghost, opt.getNCPU());
+}
+
+std::vector<std::string>
+renderPerspectives(const std::vector<RenderRequest> &requests, Options &opt)
+{
+    std::vector<std::string> renders(requests.size());
+    if (requests.empty()) {
+	return renders;
+    }
+
+    const size_t availableCpus = opt.getNCPU();
+    const size_t workerCount = opt.getPreviewMode() ? std::min(requests.size(), availableCpus) : 1;
+    const size_t cpusPerWorker = std::max<size_t>(1, availableCpus / workerCount);
+    if (workerCount == 1) {
+	for (size_t i = 0; i < requests.size(); ++i) {
+	    const RenderRequest &request = requests[i];
+	    renders[i] = renderPerspectiveWithCpuLimit(request.face, opt, request.component, request.ghost, cpusPerWorker);
+	}
+	return renders;
+    }
+
+    std::atomic_size_t nextRequest(0);
+    std::vector<std::future<void>> workers;
+    workers.reserve(workerCount);
+    for (size_t i = 0; i < workerCount; ++i) {
+	workers.push_back(std::async(std::launch::async, [&]() {
+	    while (true) {
+		const size_t requestIndex = nextRequest.fetch_add(1);
+		if (requestIndex >= requests.size()) {
+		    return;
+		}
+		const RenderRequest &request = requests[requestIndex];
+		renders[requestIndex] = renderPerspectiveWithCpuLimit(request.face, opt, request.component, request.ghost, cpusPerWorker);
+	    }
+	}));
+    }
+    for (std::future<void> &worker : workers) {
+	worker.get();
+    }
+
+    return renders;
 }
 
 // Local Variables:
