@@ -175,7 +175,7 @@ function(brlcad_bext_init BEXT_SHA1)
   # NOTE: This test must come AFTER inclusion of BRLCAD_Build_Types
   if(CMAKE_BUILD_TYPE AND EXISTS "${BRLCAD_EXT_NOINSTALL_DIR}")
     find_program(DUMPBIN_EXEC dumpbin)
-    set(TEST_BINFILE ${BRLCAD_EXT_NOINSTALL_DIR}/bin/strclear.exe)
+    set(TEST_BINFILE ${BRLCAD_EXT_NOINSTALL_DIR}/bin/astyle.exe)
     if(DUMPBIN_EXEC AND EXISTS ${TEST_BINFILE})
       # dumpbin doesn't like CMake style paths
       file(TO_NATIVE_PATH "${TEST_BINFILE}" TBFN)
