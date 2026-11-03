@@ -37,6 +37,7 @@ model/ply					ply
 model/shp					shp
 model/step					stp step
 model/stl					stl
+model/vnd.blender				blend
 model/vnd.brlcad+binary				g brlcad
 model/vnd.brlcad+asc				asc
 model/vnd.fastgen				bdf fas fg fg4
