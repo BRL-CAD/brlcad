@@ -29,6 +29,7 @@ with mkbuilding, annotation editing, and primitive repair.  Geometry
 analysis, image utilities, Windows support, documentation, and bundled
 dependencies also receive substantial updates.
 
+* updated MGED who cmd output to provide sorted output - Cliff Yapp
 * fixed nirt plotting in MGED with overlaps - Cliff Yapp
 * corrected Archer logic for saving window size - Cliff Yapp
 * fixed inside BoT rays, DSP surface normals, PNTS bounds - Cliff Yapp
