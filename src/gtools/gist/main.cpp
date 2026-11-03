@@ -19,6 +19,7 @@
  */
 
 #include "pch.h"
+#include "Timing.h"
 
 /* Wrap bu_log to clean up code */
 static void
@@ -36,6 +37,9 @@ statusPrint(std::string msg, int verbosePrinting)
 void
 generateReport(Options opt)
 {
+    const int64_t reportStart = GistTiming::start();
+    int64_t phaseStart = reportStart;
+
     // Compose in one stable coordinate system.  Scaling the completed page
     // keeps low- and high-PPI reports visually identical and avoids leaking
     // output resolution into fixed-pixel drawing details.
@@ -52,9 +56,11 @@ generateReport(Options opt)
         bu_log("ERROR: Information gathering failed.\n");
         return;
     }
+    GistTiming::log(opt.verbosePrinting(), opt.getPreviewMode(), "phase", "information", phaseStart);
     statusPrint("...Finished gathering information", opt.verbosePrinting());
 
     // Correct units and measurement presentation
+    phaseStart = GistTiming::start();
     if (opt.isOriginalUnitsLength()) {
         info.correctDefaultUnitsLength();
     }
@@ -63,6 +69,7 @@ generateReport(Options opt)
     }
 
     info.checkScientificNotation();
+    GistTiming::log(opt.verbosePrinting(), opt.getPreviewMode(), "phase", "formatting", phaseStart);
 
     // Define commonly used ratio variables
     int margin = layoutWidth / 150;
@@ -86,15 +93,22 @@ generateReport(Options opt)
     makeTopSection(img, info, topSection.x(), topSection.y(), topSection.width(), topSection.height());
     makeBottomSection(img, info, bottomSection.x(), bottomSection.y(), bottomSection.width(), bottomSection.height());
     statusPrint("    *Raytracing main renderings", opt.verbosePrinting());
+    phaseStart = GistTiming::start();
     makeRenderSection(img, info, renderSection.x(), renderSection.y(), renderSection.width(), renderSection.height(), opt);
+    GistTiming::log(opt.verbosePrinting(), opt.getPreviewMode(), "phase", "main-render-section", phaseStart);
     statusPrint("    ...Finished renderings", opt.verbosePrinting());
     statusPrint("    *Writing file information", opt.verbosePrinting());
+    phaseStart = GistTiming::start();
     makeFileInfoSection(img, info, fileSection.x(), fileSection.y(), fileSection.width(), fileSection.height(), opt);
+    GistTiming::log(opt.verbosePrinting(), opt.getPreviewMode(), "phase", "file-section", phaseStart);
     statusPrint("    ...Finished writing", opt.verbosePrinting());
     statusPrint("    *Building hierarchy graphic", opt.verbosePrinting());
+    phaseStart = GistTiming::start();
     makeHierarchySection(img, info, hierarchySection.x(), hierarchySection.y(), hierarchySection.width(), hierarchySection.height(), opt);
+    GistTiming::log(opt.verbosePrinting(), opt.getPreviewMode(), "phase", "hierarchy-section", phaseStart);
     statusPrint("    ...Finished hierarchy", opt.verbosePrinting());
     statusPrint("    *Drawing Logos", opt.verbosePrinting());
+    phaseStart = GistTiming::start();
     //brl-cad logo
     std::string model_logo_path = info.getModelLogoPath();
     img.drawTransparentImage(3250, 10, 200, 200, model_logo_path, 250);
@@ -102,12 +116,15 @@ generateReport(Options opt)
     if (opt.getLogopath() != ""){
         img.drawTransparentImage(3250, 2280, 200, 200, opt.getLogopath(), 250);
     }
+    GistTiming::log(opt.verbosePrinting(), opt.getPreviewMode(), "phase", "logos", phaseStart);
     statusPrint("    ...Finished logos", opt.verbosePrinting());
-    statusPrint(opt.getOpenGUI() ? "...Finished report" : std::string("...Finished report: " + opt.getOutFile()), opt.verbosePrinting());
 
+    phaseStart = GistTiming::start();
     img.scaleTo(opt.getWidth(), opt.getLength());
+    GistTiming::log(opt.verbosePrinting(), opt.getPreviewMode(), "phase", "page-resize", phaseStart);
 
     // optionally, display the scene
+    phaseStart = GistTiming::start();
     if (opt.getOpenGUI()) {
         img.openInGUI();
     }
@@ -116,6 +133,9 @@ generateReport(Options opt)
     if (opt.getExportToFile()) {
         img.exportToFile(opt.getOutFile());
     }
+    GistTiming::log(opt.verbosePrinting(), opt.getPreviewMode(), "phase", "output", phaseStart);
+    GistTiming::log(opt.verbosePrinting(), opt.getPreviewMode(), "total", "report", reportStart);
+    statusPrint(opt.getOpenGUI() ? "...Finished report" : std::string("...Finished report: " + opt.getOutFile()), opt.verbosePrinting());
 }
 
 static void
