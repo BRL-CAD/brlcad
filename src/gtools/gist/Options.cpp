@@ -277,7 +277,7 @@ void Options::setInFile(std::string f) {
 
 void Options::setExeDir(std::string f) {
     if (f[f.size() - 1] != '/' && f[f.size() - 1] != '\\')
-	f = f + '\\';
+	f += BU_DIR_SEPARATOR;
     exeDir = f;
 }
 
