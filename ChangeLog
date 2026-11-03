@@ -1,3 +1,9 @@
+commit 93d216fdb82b6e796c0ebd5520e615ef0e9ed1e8
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Tue Nov 3 09:33:14 2026 -0500
+
+    Mention who cmd in NEWS file
+
 commit 5f2d35c76c52c6bd23b6e4d8d325860e10651bbf
 Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
 Date:   Mon Nov 2 12:45:15 2026 -0500
