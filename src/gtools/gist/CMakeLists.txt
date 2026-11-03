@@ -11,6 +11,7 @@ set(
   Position.h
   README.md
   RenderHandler.h
+  Timing.h
   TODO
   pch.h
   picohash.h
