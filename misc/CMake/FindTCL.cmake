@@ -717,13 +717,19 @@ mark_as_advanced(
 # target-based link syntax (which produces relocatable exports).
 if(TCL_FOUND AND NOT TARGET TCL::TCL)
   add_library(TCL::TCL SHARED IMPORTED GLOBAL)
-  get_filename_component(_tcl_soname "${TCL_LIBRARY}" NAME)
   set_target_properties(TCL::TCL PROPERTIES
-    IMPORTED_LOCATION "${TCL_LIBRARY}"
-    IMPORTED_SONAME   "${_tcl_soname}"
     INTERFACE_INCLUDE_DIRECTORIES "${TCL_INCLUDE_PATH}"
   )
-  unset(_tcl_soname)
+  if(WIN32)
+    set_property(TARGET TCL::TCL PROPERTY IMPORTED_IMPLIB "${TCL_LIBRARY}")
+  else()
+    get_filename_component(_tcl_soname "${TCL_LIBRARY}" NAME)
+    set_target_properties(TCL::TCL PROPERTIES
+      IMPORTED_LOCATION "${TCL_LIBRARY}"
+      IMPORTED_SONAME   "${_tcl_soname}"
+    )
+    unset(_tcl_soname)
+  endif()
 endif()
 
 if(TCL_FOUND AND TCL_STUB_LIBRARY AND NOT TARGET TCL::Stub)
@@ -736,13 +742,19 @@ endif()
 
 if(TCL_ENABLE_TK AND TK_FOUND AND NOT TARGET TK::TK)
   add_library(TK::TK SHARED IMPORTED GLOBAL)
-  get_filename_component(_tk_soname "${TK_LIBRARY}" NAME)
   set_target_properties(TK::TK PROPERTIES
-    IMPORTED_LOCATION "${TK_LIBRARY}"
-    IMPORTED_SONAME   "${_tk_soname}"
     INTERFACE_INCLUDE_DIRECTORIES "${TK_INCLUDE_PATH}"
   )
-  unset(_tk_soname)
+  if(WIN32)
+    set_property(TARGET TK::TK PROPERTY IMPORTED_IMPLIB "${TK_LIBRARY}")
+  else()
+    get_filename_component(_tk_soname "${TK_LIBRARY}" NAME)
+    set_target_properties(TK::TK PROPERTIES
+      IMPORTED_LOCATION "${TK_LIBRARY}"
+      IMPORTED_SONAME   "${_tk_soname}"
+    )
+    unset(_tk_soname)
+  endif()
   if(TARGET TCL::TCL)
     set_property(TARGET TK::TK APPEND PROPERTY INTERFACE_LINK_LIBRARIES TCL::TCL)
   endif()
