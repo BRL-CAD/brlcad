@@ -82,9 +82,16 @@ int fileno(FILE *stream);
 
 #  include <unistd.h>
 
-/* provide a stub so we don't need to wrap all setmode() calls */
-static inline int setmode(int UNUSED(a), int UNUSED(b)) {return 42;}
-static int (* volatile setmode_func)(int, int) = setmode; /* quell use */
+/* POSIX descriptors have no text/binary distinction.  Use a private name
+ * because BSD also declares an unrelated permission-mode setmode(). */
+static inline int brlcad_setmode(int fd, int mode)
+{
+    (void)fd;
+    (void)mode;
+    return 0;
+}
+static int (* volatile brlcad_setmode_func)(int, int) = brlcad_setmode; /* quell use */
+#  define setmode brlcad_setmode
 #endif
 
 /* needed for testing O_TEMPORARY and O_BINARY */

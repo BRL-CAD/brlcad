@@ -9,5 +9,5 @@ Name: libbv
 Description: BRL-CAD View Library
 Version: @BRLCAD_VERSION@
 Requires: libbg libbn libbu
-Libs: -L${libdir} -lbg -lbn -lbu -llmdb @LIBM@
+Libs: -L${libdir} -lbg -lbn -lbu @LIBLMDB@ @LIBM@
 Cflags: -I${includedir}/brlcad -I${includedir}

@@ -12,6 +12,8 @@ set(
   BRLCAD_ExternalDeps.cmake
   BRLCAD_Find_Package.cmake
   BRLCAD_Install_Prefix.cmake
+  BRLCAD_Path_Privacy.cmake
+  InstallPathPrivacy.cmake.in
   BRLCAD_Options.cmake
   BRLCAD_Probe_Validation.cmake
   BRLCAD_Regress_Util.cmake

@@ -1,0 +1,121 @@
+# InstallPathPrivacy.cmake.in
+# BRL-CAD
+#
+# Copyright (c) 2026 United States Government as represented by
+# the U.S. Army Research Laboratory.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions
+# are met:
+#
+# 1. Redistributions of source code must retain the above copyright
+# notice, this list of conditions and the following disclaimer.
+#
+# 2. Redistributions in binary form must reproduce the above
+# copyright notice, this list of conditions and the following
+# disclaimer in the documentation and/or other materials provided
+# with the distribution.
+#
+# 3. The name of the author may not be used to endorse or promote
+# products derived from this software without specific prior written
+# permission.
+#
+# THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS
+# OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+# WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+# ARE DISCLAIMED. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY
+# DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+# DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
+# GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+# INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+# WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+# NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+# SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+#
+###
+
+# Process the complete installed file set, including diagnostics and static SDKs.
+set(root "$ENV{DESTDIR}${CMAKE_INSTALL_PREFIX}")
+# Keep other formats' existing install-name handling while refreshing their SBOMs.
+if("@CMAKE_EXECUTABLE_FORMAT@" STREQUAL "ELF")
+  set(strclear "@STRCLEAR_EXECUTABLE@")
+  set(plief "@P_RPATH_EXECUTABLE@")
+  set(producer_paths "@producer_paths@")
+  set(configured_prefix "@CMAKE_INSTALL_PREFIX@")
+  set(work "@CMAKE_BINARY_DIR@/CMakeFiles/install-privacy")
+  file(MAKE_DIRECTORY "${work}")
+  file(GLOB_RECURSE files LIST_DIRECTORIES FALSE "${root}/*")
+  set(inputs "")
+  foreach(path IN LISTS files)
+    if(NOT IS_SYMLINK "${path}")
+      string(APPEND inputs "${path}\n")
+    endif()
+  endforeach()
+  file(WRITE "${work}/all.txt" "${inputs}")
+  execute_process(COMMAND "${strclear}" --classify --files "${work}/all.txt"
+    OUTPUT_VARIABLE records RESULT_VARIABLE result)
+  if(NOT result EQUAL 0)
+    message(FATAL_ERROR "Cannot classify installed artifacts for path cleanup")
+  endif()
+  string(REPLACE "\n" ";" records "${records}")
+  set(binary_files "")
+  set(fallback_files "")
+  set(elf_files)
+  foreach(record IN LISTS records)
+    if(record STREQUAL "")
+      continue()
+    endif()
+    string(JSON path GET "${record}" path)
+    string(JSON type GET "${record}" type)
+    if(type STREQUAL "TEXT")
+      continue()
+    endif()
+    file(RELATIVE_PATH relative "${root}" "${path}")
+    if(relative MATCHES "(^|/)libbu([.]|$)")
+      string(APPEND fallback_files "${path}\n")
+    else()
+      string(APPEND binary_files "${path}\n")
+    endif()
+    file(READ "${path}" magic OFFSET 0 LIMIT 4 HEX)
+    if(magic STREQUAL "7f454c46" AND plief)
+      execute_process(COMMAND "${plief}" --print-rpath "${path}"
+        OUTPUT_VARIABLE rpath RESULT_VARIABLE result OUTPUT_STRIP_TRAILING_WHITESPACE)
+      if(NOT result EQUAL 0)
+        message(FATAL_ERROR "Cannot read installed RPATH: ${path}")
+      endif()
+      string(REPLACE ";" ":" rpath "${rpath}")
+      if(NOT rpath STREQUAL "")
+        string(SHA256 key "${path}")
+        set(rpath_${key} "${rpath}")
+        list(APPEND elf_files "${path}")
+      endif()
+    endif()
+  endforeach()
+  foreach(group binary fallback)
+    if("${${group}_files}" STREQUAL "")
+      continue()
+    endif()
+    file(WRITE "${work}/${group}.txt" "${${group}_files}")
+    set(preserve)
+    set(targets ${producer_paths} "${configured_prefix}" "${CMAKE_INSTALL_PREFIX}")
+    if(group STREQUAL "fallback")
+      set(preserve --preserve "${configured_prefix}")
+      list(REMOVE_ITEM targets "${configured_prefix}")
+    endif()
+    execute_process(COMMAND "${strclear}" -p -b -c ${preserve}
+      --files "${work}/${group}.txt" ${targets} RESULT_VARIABLE result)
+    if(NOT result EQUAL 0)
+      message(FATAL_ERROR "Installed binary path cleanup failed (${group})")
+    endif()
+  endforeach()
+  foreach(path IN LISTS elf_files)
+    string(SHA256 key "${path}")
+    execute_process(COMMAND "${plief}" --set-rpath "${rpath_${key}}" "${path}"
+      RESULT_VARIABLE result OUTPUT_QUIET)
+    if(NOT result EQUAL 0)
+      message(FATAL_ERROR "Cannot restore installed RPATH: ${path}")
+    endif()
+  endforeach()
+endif()
+include("@CMAKE_BINARY_DIR@/CMakeFiles/RefreshSpdx.cmake")
+bext_refresh_spdx("${root}")

@@ -2829,6 +2829,9 @@ endif()
 #-----------------------------------------------------------------------------
 # Add misc/tools for tools that are used in BRL-CAD's build process or for
 # maintenance activities.
+include(BRLCAD_Path_Privacy)
+brlcad_configure_path_privacy()
+
 add_subdirectory(misc/tools)
 
 # Now that the user options are set and we have misc/tools... if we're going to
@@ -3281,6 +3284,8 @@ endforeach(ad ${ALL_DIRS})
 # (or at least REALLY slows things down) if we want to include bext as part of the
 # overall release tarballs.  May have to look into a custom solution to do the
 # job more efficiently
+brlcad_install_path_privacy()
+
 include(BRLCAD_CPack)
 
 # Some files to ignore for distcheck.  The files and directories prefixed with

@@ -9,5 +9,5 @@ Name: libbg
 Description: BRL-CAD Geometry Library
 Version: @BRLCAD_VERSION@
 Requires: libbn libbu
-Libs: -L${libdir} -lbn -lbu -llmdb @LIBM@
+Libs: -L${libdir} -lbn -lbu @LIBLMDB@ @LIBM@
 Cflags: -I${includedir}/brlcad -I${includedir}
