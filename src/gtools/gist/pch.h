@@ -46,6 +46,8 @@
 
 // Necessary C++ header files
 #include <algorithm>
+#include <atomic>
+#include <future>
 #include <iostream>
 #include <cstdlib>
 #include <cstdio>
