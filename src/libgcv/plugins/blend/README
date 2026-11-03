@@ -1,0 +1,40 @@
+BRL-CAD Blender reader
+======================
+
+The reader parses Blender's self-describing binary project format directly.  It
+does not link to Blender or use Blender source code.  The implementation reads
+the file header and block table, decodes the embedded SDNA schema, resolves old
+memory addresses within bounded file blocks, and accesses geometry by SDNA
+field name rather than host-language structure layouts.
+
+Geometry support
+----------------
+
+* 32-bit and 64-bit pointer encodings
+* little-endian and big-endian files
+* uncompressed and gzip-compressed files
+* object instances and their world transformation matrices
+* legacy MVert/MFace meshes
+* MVert/MLoop/MPoly meshes
+* attribute-backed meshes using position, corner-vertex, and face-offset data
+* concave polygon triangulation using libbg ear clipping
+
+Meshes are written as unoriented BRL-CAD BOT primitives.  Materials, animation,
+modifiers, and non-mesh object data do not affect the imported geometry.  The
+reader reports unsupported object data types and malformed or unresolved data
+instead of interpreting unknown layouts speculatively.  Zstandard-compressed
+files and the extended header introduced after Blender 4.x are recognized but
+not currently decoded.
+
+Format references
+-----------------
+
+The implementation was informed by the following independently published
+descriptions and permissively licensed references:
+
+* Library of Congress, "Blender 3D Data File (BLEND)," fdd000559.
+* Kaitai Struct format gallery, ".blend file format of Blender" (CC0-1.0).
+* Jeroen Bakker, "The mystery of the blend" binary-format notes.
+* Open Asset Import Library Blender importer and test corpus (BSD-3-Clause).
+
+No GPL source code or GPL parsing library is used by this plugin.

@@ -21,6 +21,7 @@ set_target_properties(gcv_plugins PROPERTIES FOLDER "BRL-CAD Plugins")
 
 add_subdirectory(asc)
 add_subdirectory(assetimport)
+add_subdirectory(blend)
 add_subdirectory(decimate)
 add_subdirectory(fastgen4)
 add_subdirectory(gdal)
