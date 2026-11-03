@@ -173,75 +173,63 @@ makeFileInfoSection(IFPainter& img, InformationGatherer& info, int offsetX, int 
 void
 makeHierarchySection(IFPainter& img, InformationGatherer& info, int offsetX, int offsetY, int width, int height, Options& opt)
 {
-
+    constexpr size_t MAX_HIERARCHY_THUMBNAILS = 4;
     int textHeight = height / 20;
 
-    int N = 4; // number of sub components you want
+    if (info.largestComponents.size() < 2) {
+	return;
+    }
+
+    const int thumbnailCount = static_cast<int>(std::min(MAX_HIERARCHY_THUMBNAILS, info.largestComponents.size() - 1));
     int offY = height * (2.6 - 1) / 3 + offsetY;
     int offX = offsetX + 5;
     int imgH = height / 2.6;
-    int imgW = (width - 5*fmin(N, info.largestComponents.size()-1)) / fmin(N, info.largestComponents.size()-1);
+    int imgW = (width - 5 * thumbnailCount) / thumbnailCount;
     int hierarchyLabelWidth = std::max(imgW - 20, textHeight * 4);
 
-    int centerPt = offX + imgW/2 + (fmin(N-1, info.largestComponents.size()-2)*imgW) / 2;
+    int centerPt = offX + thumbnailCount * imgW / 2;
 
     // main component
-    //img.drawImageFitted(offX + width/10, offsetY + textHeight/3, imgW, imgH, render);
     std::string mainLabel = fitHierarchyLabel(img, textHeight, width - 20, info.largestComponents[0].name, TO_BOLD);
     img.drawTextCentered(offsetX + width / 2, offY - 180, textHeight, width - 20, mainLabel, TO_BOLD);
 
-    img.drawLine(offX + imgW/2, offY - 100, offX + fmin(N-1, info.largestComponents.size()-2)*imgW + imgW/2, offY - 100, 3, cv::Scalar(94, 58, 32));
+    img.drawLine(offX + imgW / 2, offY - 100, offX + (thumbnailCount - 1) * imgW + imgW / 2, offY - 100, 3, cv::Scalar(94, 58, 32));
     img.drawLine(centerPt, offY-100, centerPt, offY-130, 3, cv::Scalar(94, 58, 32));
     img.drawCirc(centerPt, offY-130, 7, -1, cv::Scalar(94, 58, 32));
-    // img.drawCirc(centerPt, offY-30, 20, 3, cv::Scalar(94, 58, 32));
 
-    // entity summary
-    // int curiX = 0;
-    // img.drawTextRightAligned(offsetX + width*9/10, offsetY + 20 + curiX * textYOffset, textHeight/1.3, width, "Groups & Assemblies:", TO_BOLD);
-    // img.drawText(offsetX + width*9/10, offsetY + 20 + curiX++ * textYOffset, textHeight/1.3, width, " " + info.getInfo("groups_assemblies"), TO_BOLD);
-    // img.drawTextRightAligned(offsetX + width*9/10, offsetY + 20 + curiX * textYOffset, textHeight/1.3, width, "Regions & Parts:", TO_BOLD);
-    // img.drawText(offsetX + width*9/10, offsetY + 20 + curiX++ * textYOffset, textHeight/1.3, width, " " + info.getInfo("regions_parts"), TO_BOLD);
-    // img.drawTextRightAligned(offsetX + width*9/10, offsetY + 20 + curiX * textYOffset, textHeight/1.3, width, "Primitive Shapes:", TO_BOLD);
-    // img.drawText(offsetX + width*9/10, offsetY + 20 + curiX++ * textYOffset, textHeight/1.3, width, " " + info.getInfo("primitives"), TO_BOLD);
-
-
-
-    // sub components
-    std::string render = "";
-    for (int i = 1; i < fmin(N, info.largestComponents.size()); i++) {
-	render = renderPerspective(GHOST, opt, info.largestComponents[i].name, info.largestComponents[0].name);
-	// std::cout << "INSIDE factshandler DBG: " << render << std::endl;
-	img.drawImageTransparentFitted(offX + (i-1)*imgW, offY, imgW, imgH, render);
-	std::string childLabel = fitHierarchyLabel(img, textHeight, hierarchyLabelWidth, hierarchyDisplayLabel(info.largestComponents[i].name), TO_BOLD);
-	img.drawTextCentered(offX + (i-1)*imgW + imgW/2, offY-70, textHeight, hierarchyLabelWidth, childLabel, TO_BOLD);
-	img.drawLine(offX + (i-1)*imgW + imgW/2, offY-100, offX + (i-1)*imgW + imgW/2, offY-70, 3, cv::Scalar(94, 58, 32));
-	img.drawCirc(offX + (i-1)*imgW + imgW/2, offY-70, 7, -1, cv::Scalar(94, 58, 32));
-	// img.drawCirc(offX + (i-1)*imgW + imgW/2, offY+10, 20, 3, cv::Scalar(94, 58, 32));
-	// img.drawLine(offX + (i-1)*imgW + imgW/2 - imgW/10, offY+10, offX + (i-1)*imgW + imgW/2 + imgW/10, offY+10, 3, cv::Scalar(0, 0, 0));
+    std::vector<std::string> components;
+    std::vector<std::string> labels;
+    const size_t directThumbnailCount = std::min(MAX_HIERARCHY_THUMBNAILS - 1, info.largestComponents.size() - 1);
+    for (size_t i = 1; i <= directThumbnailCount; ++i) {
+	components.push_back(info.largestComponents[i].name);
+	labels.push_back(hierarchyDisplayLabel(info.largestComponents[i].name));
     }
 
-    if (info.largestComponents.size() > (size_t)N) {
-	// render the smaller sub components all in one
-	size_t omitted_components = info.largestComponents.size() - N;
-	std::string subcomponents = "";
-	for (size_t i = N; i < info.largestComponents.size(); i++) {
+    if (info.largestComponents.size() > MAX_HIERARCHY_THUMBNAILS) {
+	const size_t omittedComponents = info.largestComponents.size() - MAX_HIERARCHY_THUMBNAILS;
+	std::string subcomponents;
+	for (size_t i = MAX_HIERARCHY_THUMBNAILS; i < info.largestComponents.size(); ++i) {
 	    subcomponents += info.largestComponents[i].name + " ";
 	}
-	subcomponents.pop_back();   // pop trailing space
+	subcomponents.pop_back();
+	components.push_back(subcomponents);
+	labels.push_back(omittedComponents == 1 ? hierarchyDisplayLabel(subcomponents) : std::to_string(omittedComponents) + " more");
+    }
 
-	std::string omitted_label;
-	if (omitted_components == 1)	// we just have one - print the name
-	    omitted_label = fitHierarchyLabel(img, textHeight, hierarchyLabelWidth, hierarchyDisplayLabel(subcomponents), TO_BOLD);
-	else
-	    omitted_label = std::to_string(omitted_components) + " more";
+    std::vector<RenderRequest> requests;
+    requests.reserve(components.size());
+    for (const std::string &component : components) {
+	requests.push_back({GHOST, component, info.largestComponents[0].name});
+    }
+    const std::vector<std::string> renders = renderPerspectives(requests, opt);
 
-	render = renderPerspective(GHOST, opt, subcomponents, info.largestComponents[0].name);
-	img.drawImageTransparentFitted(offX + (N-1)*imgW, offY, imgW, imgH, render);
-	img.drawTextCentered(offX + (N-1)*imgW + imgW/2, offY-70, textHeight, hierarchyLabelWidth, omitted_label, TO_BOLD);
-	img.drawLine(offX + (N-1)*imgW + imgW/2, offY-100, offX + (N-1)*imgW + imgW/2, offY-70, 3, cv::Scalar(94, 58, 32));
-	img.drawCirc(offX + (N-1)*imgW + imgW/2, offY-70, 7, -1, cv::Scalar(94, 58, 32));
-	// img.drawCirc(offX + (N-1)*imgW + imgW/2, offY+10, 20, 3, cv::Scalar(94, 58, 32));
-	// img.drawLine(offX + (N-1)*imgW + imgW/2 - imgW/10, offY+10, offX + (N-1)*imgW + imgW/2 + imgW/10, offY+10, 3, cv::Scalar(0, 0, 0));
+    for (size_t i = 0; i < renders.size(); ++i) {
+	const int thumbnailCenter = offX + i * imgW + imgW / 2;
+	img.drawImageTransparentFitted(offX + i * imgW, offY, imgW, imgH, renders[i]);
+	const std::string label = fitHierarchyLabel(img, textHeight, hierarchyLabelWidth, labels[i], TO_BOLD);
+	img.drawTextCentered(thumbnailCenter, offY - 70, textHeight, hierarchyLabelWidth, label, TO_BOLD);
+	img.drawLine(thumbnailCenter, offY - 100, thumbnailCenter, offY - 70, 3, cv::Scalar(94, 58, 32));
+	img.drawCirc(thumbnailCenter, offY - 70, 7, -1, cv::Scalar(94, 58, 32));
     }
 }
 
