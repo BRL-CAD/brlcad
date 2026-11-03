@@ -21,6 +21,7 @@
 #include "vmath.h"
 #include "pch.h"
 #include "InformationGatherer.h"
+#include "Timing.h"
 #include "bu/log.h"
 
 // flush results, if we have any, then exit
@@ -284,7 +285,9 @@ getVerificationData(struct ged* UNUSED(g), Options* opt, std::map<std::string, s
         result += buffer;
     }
 
-    if (bu_process_wait_n(&p, 0) != 0) {
+
+    const int volumeStatus = bu_process_wait_n(&p, 0);
+    if (volumeStatus != 0) {
 	reportAndExit("Problem collecting gqa volume, aborting\n", result);
     }
 
@@ -504,6 +507,8 @@ InformationGatherer::~InformationGatherer()
 bool
 InformationGatherer::gatherInformation(std::string UNUSED(name))
 {
+    int64_t detailStart = GistTiming::start();
+
     //Open database
     std::string filePath = opt->getInFile();
     g = ged_open("db", filePath.c_str(), 1);
@@ -564,14 +569,19 @@ InformationGatherer::gatherInformation(std::string UNUSED(name))
     } else {
         mUnit = opt->getUnitMass();
     }
+    GistTiming::log(opt->verbosePrinting(), opt->getPreviewMode(), "detail", "information.database", detailStart);
 
 
+    detailStart = GistTiming::start();
     getMainComp();
     if (largestComponents.size() == 0) {
         return false;
     }
+    GistTiming::log(opt->verbosePrinting(), opt->getPreviewMode(), "detail", "information.main-component", detailStart);
 
+    detailStart = GistTiming::start();
     getSubComp();
+    GistTiming::log(opt->verbosePrinting(), opt->getPreviewMode(), "detail", "information.subcomponents", detailStart);
 
     // got largest component. Following information gathering should use it
     if (opt->getTopComp().empty()) {
@@ -598,6 +608,7 @@ InformationGatherer::gatherInformation(std::string UNUSED(name))
     unitsMap["bbVolume"] = u3;
 
     //Gather entity counts
+    detailStart = GistTiming::start();
     // init infoMap in case searches fail
     infoMap["assemblies"] = "ERROR";
     infoMap["primitives"] = "ERROR";
@@ -633,8 +644,10 @@ InformationGatherer::gatherInformation(std::string UNUSED(name))
     db_search_free(&results);
     // store total
     infoMap.insert(std::pair<std::string, std::string>("total", std::to_string(totalEntities)));
+    GistTiming::log(opt->verbosePrinting(), opt->getPreviewMode(), "detail", "information.entity-counts", detailStart);
 
     //Gather volume and mass
+    detailStart = GistTiming::start();
     double volume = 0;
     double mass = 0;
     bool hasDensities = true;
@@ -648,6 +661,7 @@ InformationGatherer::gatherInformation(std::string UNUSED(name))
     } else {
         getVerificationData(g, opt, infoMap, volume, mass, hasDensities, surfArea00, surfArea090, surfArea900, lUnit, mUnit);
     }
+    GistTiming::log(opt->verbosePrinting(), opt->getPreviewMode(), "detail", "information.verification", detailStart);
     const bool previewMode = opt->getPreviewMode();
     const std::string unavailable = "N/A";
     std::string vol = previewMode ? unavailable : formatDouble(volume);
