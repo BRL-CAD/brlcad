@@ -1,3 +1,15 @@
+/**
+ *               C R E O _ T O O L K I T . H
+ * BRL-CAD
+ *
+ * Copyright (c) 2026 United States Government as represented by
+ * the U.S. Army Research Laboratory.
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public License
+ * version 2.1 as published by the Free Software Foundation.
+ */
+
 #ifndef CREO_FRONTEND_CREO_TOOLKIT_H
 #define CREO_FRONTEND_CREO_TOOLKIT_H
 

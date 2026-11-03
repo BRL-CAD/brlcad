@@ -281,7 +281,6 @@ if(NOT DEFINED BRLCAD_BUILDTEST_EXTERNALS)
     "${BRLCAD_INCLUDE_DIRS}"
     "${CREO_PTK_INC_DIR}"
     "${CREO_PTK_APP_INC_DIR}"
-    "${OPENNURBS_INCLUDE_DIRS}"
     )
 
   #----------------------------------------------------------------------#
@@ -418,10 +417,15 @@ if(NOT DEFINED BRLCAD_BUILDTEST_EXTERNALS)
     COMMENT "Assembling Creo-BRL bundle in ${CREO_BUNDLE_ROOT}/$<CONFIG>"
     )
 
-  # Stage the BRL-CAD runtime DLL set alongside the facade and core.
+  # Stage the BRL-CAD runtime DLL set alongside the facade and core, and keep
+  # the test runtime directory's copy of creo-brl-core.dll current when Ninja
+  # restat skips relinking the test executables.
   add_custom_command(TARGET creo-brl-core POST_BUILD
+    COMMAND "${CMAKE_COMMAND}" -E make_directory "${CREO_TEST_BIN_DIR}"
     COMMAND "${CMAKE_COMMAND}" -E copy_if_different
       ${CREO_BRLCAD_RUNTIME_DLLS} "${CREO_BUNDLE_BIN_DIR}"
+    COMMAND "${CMAKE_COMMAND}" -E copy_if_different
+      "$<TARGET_FILE:creo-brl-core>" "${CREO_TEST_BIN_DIR}"
     COMMAND_EXPAND_LISTS
     )
 
@@ -537,11 +541,10 @@ else(NOT DEFINED BRLCAD_BUILDTEST_EXTERNALS)
   brlcad_find_package(REGEX REQUIRED)
 
   set(CREO_DIRS
-    "${BRLCAD_BINARY_DIR}/${INCLUDE_DIR}"
-    "${BRLCAD_SOURCE_DIR}/${INCLUDE_DIR}"
-    "${OPENNURBS_INCLUDE_DIRS}"
-     )
-  BRLCAD_INCLUDE_DIRS(creo-brl "${CREO_DIRS}" PUBLIC)
+    "${CMAKE_CURRENT_BINARY_DIR}/../../../include"
+    "${CMAKE_CURRENT_SOURCE_DIR}/../../../include"
+    "${CMAKE_CURRENT_SOURCE_DIR}"
+  )
 
   #----------------------------------------------------------------------#
   # The build shims aren't so great at mocking the initialization        #
@@ -550,15 +553,32 @@ else(NOT DEFINED BRLCAD_BUILDTEST_EXTERNALS)
   CHECK_CXX_FLAG("Wno-maybe-uninitialized")
 
   set(CREO2BRL_SOURCES
+    ${CREO2BRL_CORE_SOURCES}
     ${CREO2BRL_FRONTEND_SOURCES}
     ${CREO2BRL_SHARED_SOURCES}
     shim.cpp
-    )
+  )
 
   add_library(creo-brl ${CREO2BRL_SOURCES})
-  target_include_directories(creo-brl PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}")
-  set_property(TARGET creo-brl APPEND PROPERTY COMPILE_DEFINITIONS TEST_BUILD BRLCADBUILD HAVE_CONFIG_H)
-  target_link_libraries(creo-brl librt libwdb libbrep libbg libnmg libbv libbn libbu REGEX::REGEX)
+  target_include_directories(creo-brl BEFORE PRIVATE ${CREO_DIRS})
+  set_property(
+    TARGET creo-brl
+    APPEND
+    PROPERTY COMPILE_DEFINITIONS TEST_BUILD BRLCADBUILD HAVE_CONFIG_H CREO_BRL_CORE_BUILD
+  )
+  target_link_libraries(
+    creo-brl
+    librt
+    libwdb
+    libbrep
+    libbg
+    libnmg
+    libbv
+    libbn
+    libbu
+    REGEX::REGEX
+    ${WINSOCK_LIB}
+  )
   set_target_properties(creo-brl PROPERTIES FOLDER "BRL-CAD Executables/Build Only")
   if(HIDE_INTERNAL_SYMBOLS)
     set_property(TARGET creo-brl APPEND PROPERTY COMPILE_DEFINITIONS "BU_DLL_IMPORTS")
@@ -571,13 +591,11 @@ else(NOT DEFINED BRLCAD_BUILDTEST_EXTERNALS)
     set_property(TARGET creo-brl APPEND PROPERTY COMPILE_DEFINITIONS "DB5_DLL_IMPORTS")
     set_property(TARGET creo-brl APPEND PROPERTY COMPILE_DEFINITIONS "WDB_DLL_IMPORTS")
     set_property(TARGET creo-brl APPEND PROPERTY COMPILE_DEFINITIONS "TIE_DLL_IMPORTS")
-    set_property(TARGET creo-brl APPEND PROPERTY COMPILE_DEFINITIONS "OPENNURBS_IMPORTS")
   endif()
 
   # Distcheck file list
   set(creo_dist_files
     ${CREO2BRL_SOURCES}
-    ${CREO2BRL_CORE_SOURCES}
     loader.c
     README.txt
     cmake_uninstall.cmake.in
@@ -615,9 +633,12 @@ else(NOT DEFINED BRLCAD_BUILDTEST_EXTERNALS)
     tests/fixtures/scene_mesh_with_normals.manifest
     tests/fixtures/scene_normalized_mesh.manifest
     tests/fixtures/scene_solid_mesh.manifest
-    )
+  )
   CMAKEFILES(${creo_dist_files})
   CMAKEFILES(CMakeLists.txt)
+
+  # On some platforms distclean has additional cleanup to do
+  distclean("${CMAKE_BINARY_DIR}/${BIN_DIR}/creo-brl.pdb")
 
 endif(NOT DEFINED BRLCAD_BUILDTEST_EXTERNALS)
 

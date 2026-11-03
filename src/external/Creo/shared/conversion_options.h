@@ -1,8 +1,25 @@
+/**
+ *          C O N V E R S I O N _ O P T I O N S . H
+ * BRL-CAD
+ *
+ * Copyright (c) 2026 United States Government as represented by
+ * the U.S. Army Research Laboratory.
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public License
+ * version 2.1 as published by the Free Software Foundation.
+ */
+/**
+ * @file shared/conversion_options.h
+ *
+ * Shared conversion option tokens and structures between the facade and core.
+ */
+
 #ifndef CREO_SHARED_CONVERSION_OPTIONS_H
 #define CREO_SHARED_CONVERSION_OPTIONS_H
 
 #include <stdint.h>
-#include <string.h>
+#include <bu/str.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -74,13 +91,13 @@ creo_brl_parse_log_type_token(const char *token, int32_t *log_type)
     if (!token || !log_type)
         return 0;
 
-    if (strcmp(token, CREO_BRL_OPTION_TOKEN_LOG_FAILURE) == 0)
+    if (bu_strcmp(token, CREO_BRL_OPTION_TOKEN_LOG_FAILURE) == 0) 
         *log_type = CREO_BRL_CONVERSION_LOG_FAILURE;
-    else if (strcmp(token, CREO_BRL_OPTION_TOKEN_LOG_SUCCESS) == 0)
+    else if (bu_strcmp(token, CREO_BRL_OPTION_TOKEN_LOG_SUCCESS) == 0)
         *log_type = CREO_BRL_CONVERSION_LOG_SUCCESS;
-    else if (strcmp(token, CREO_BRL_OPTION_TOKEN_LOG_FAILURE_OR_SUCCESS) == 0)
+    else if (bu_strcmp(token, CREO_BRL_OPTION_TOKEN_LOG_FAILURE_OR_SUCCESS) == 0)
         *log_type = CREO_BRL_CONVERSION_LOG_FAILURE_OR_SUCCESS;
-    else if (strcmp(token, CREO_BRL_OPTION_TOKEN_LOG_ALL) == 0)
+    else if (bu_strcmp(token, CREO_BRL_OPTION_TOKEN_LOG_ALL) == 0)
         *log_type = CREO_BRL_CONVERSION_LOG_ALL;
     else
         return 0;
@@ -107,11 +124,11 @@ creo_brl_parse_xform_mode_token(const char *token, int32_t *xform_mode)
     if (!token || !xform_mode)
         return 0;
 
-    if (strcmp(token, CREO_BRL_OPTION_TOKEN_XFORM_X_TO_Z) == 0)
+    if (bu_strcmp(token, CREO_BRL_OPTION_TOKEN_XFORM_X_TO_Z) == 0)
         *xform_mode = CREO_BRL_CONVERSION_XFORM_X_TO_Z;
-    else if (strcmp(token, CREO_BRL_OPTION_TOKEN_XFORM_Y_TO_Z) == 0)
+    else if (bu_strcmp(token, CREO_BRL_OPTION_TOKEN_XFORM_Y_TO_Z) == 0)
         *xform_mode = CREO_BRL_CONVERSION_XFORM_Y_TO_Z;
-    else if (strcmp(token, CREO_BRL_OPTION_TOKEN_XFORM_NONE) == 0)
+    else if (bu_strcmp(token, CREO_BRL_OPTION_TOKEN_XFORM_NONE) == 0)
         *xform_mode = CREO_BRL_CONVERSION_XFORM_NONE;
     else
         return 0;
@@ -133,9 +150,9 @@ creo_brl_parse_chord_mode_token(const char *token, int32_t *chord_mode)
     if (!token || !chord_mode)
         return 0;
 
-    if (strcmp(token, CREO_BRL_OPTION_TOKEN_CHORD_ABSOLUTE) == 0)
+    if (bu_strcmp(token, CREO_BRL_OPTION_TOKEN_CHORD_ABSOLUTE) == 0)
         *chord_mode = CREO_BRL_CONVERSION_CHORD_ABSOLUTE;
-    else if (strcmp(token, CREO_BRL_OPTION_TOKEN_CHORD_RELATIVE) == 0)
+    else if (bu_strcmp(token, CREO_BRL_OPTION_TOKEN_CHORD_RELATIVE) == 0)
         *chord_mode = CREO_BRL_CONVERSION_CHORD_RELATIVE;
     else
         return 0;

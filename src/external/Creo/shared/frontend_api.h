@@ -1,3 +1,15 @@
+/**
+ *              F R O N T E N D _ A P I . H
+ * BRL-CAD
+ *
+ * Copyright (c) 2026 United States Government as represented by
+ * the U.S. Army Research Laboratory.
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public License
+ * version 2.1 as published by the Free Software Foundation.
+ */
+
 #ifndef CREO_BRL_FRONTEND_API_H
 #define CREO_BRL_FRONTEND_API_H
 

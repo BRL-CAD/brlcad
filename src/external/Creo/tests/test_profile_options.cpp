@@ -1,3 +1,15 @@
+/**
+ *         T E S T _ P R O F I L E _ O P T I O N S . C P P
+ * BRL-CAD
+ *
+ * Copyright (c) 2026 United States Government as represented by
+ * the U.S. Army Research Laboratory.
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public License
+ * version 2.1 as published by the Free Software Foundation.
+ */
+
 #include "common.h"
 
 #include <cstdio>
@@ -8,6 +20,7 @@
 #include <string>
 
 extern "C" {
+#include "bu/app.h"
 #include "raytrace.h"
 #include "wdb.h"
 }
@@ -686,6 +699,8 @@ main(int argc, char *argv[])
     };
     const std::string directory = argc == EXPECTED_ARGUMENT_COUNT ? argv[1] : "";
     const char *bundled_profile = argc == EXPECTED_ARGUMENT_COUNT ? argv[2] : NULL;
+
+    bu_setprogname(argv[0]);
 
     if (argc != EXPECTED_ARGUMENT_COUNT) {
         std::fprintf(stderr, "Usage: %s <output-directory> <bundled-profile>\n", argv[0]);

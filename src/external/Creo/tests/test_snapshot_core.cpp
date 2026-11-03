@@ -1,3 +1,15 @@
+/**
+ *           T E S T _ S N A P S H O T _ C O R E . C P P
+ * BRL-CAD
+ *
+ * Copyright (c) 2026 United States Government as represented by
+ * the U.S. Army Research Laboratory.
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public License
+ * version 2.1 as published by the Free Software Foundation.
+ */
+
 #include "common.h"
 
 #include <algorithm>
@@ -14,7 +26,9 @@
 #include <vector>
 
 #include "wdb.h"
+#include "bu/app.h"
 #include "bu/avs.h"
+#include "bu/file.h"
 #include "shared/conversion_snapshot.h"
 #include "raytrace.h"
 #include "rt/geom.h"
@@ -883,8 +897,8 @@ run_assembly_fixture(const std::string& working_directory,
     const std::string output_path = path_join(working_directory, fixture.output_name);
     int result = 0;
 
-    std::remove(snapshot_path.c_str());
-    std::remove(output_path.c_str());
+    bu_file_delete(snapshot_path.c_str());
+    bu_file_delete(output_path.c_str());
     if (!write_snapshot_fixture(snapshot_path, output_path, std::string(), fixture,
                                 VALID_SNAPSHOT_SIZE_DELTA)) {
         test_failuref(fixture.fixture_name, "failed to write assembly snapshot");
@@ -903,8 +917,8 @@ run_assembly_fixture(const std::string& working_directory,
     result = 1;
 
 cleanup:
-    std::remove(snapshot_path.c_str());
-    std::remove(output_path.c_str());
+    bu_file_delete(snapshot_path.c_str());
+    bu_file_delete(output_path.c_str());
     return result;
 }
 
@@ -957,8 +971,8 @@ run_multi_part_collision_fixture(const std::string& working_directory,
     const std::string output_path = path_join(working_directory, fixture.output_name);
     int result = 0;
 
-    std::remove(snapshot_path.c_str());
-    std::remove(output_path.c_str());
+    bu_file_delete(snapshot_path.c_str());
+    bu_file_delete(output_path.c_str());
     if (!write_snapshot_fixture(snapshot_path, output_path, std::string(), fixture,
                                 VALID_SNAPSHOT_SIZE_DELTA)) {
         test_failuref(fixture.fixture_name, "failed to write multi-part snapshot");
@@ -974,8 +988,8 @@ run_multi_part_collision_fixture(const std::string& working_directory,
     result = 1;
 
 cleanup:
-    std::remove(snapshot_path.c_str());
-    std::remove(output_path.c_str());
+    bu_file_delete(snapshot_path.c_str());
+    bu_file_delete(output_path.c_str());
     return result;
 }
 
@@ -1028,9 +1042,9 @@ run_rendering_fixture(const std::string& working_directory,
     const std::string output_path = path_join(working_directory, fixture.output_name);
     int result = 0;
 
-    std::remove(snapshot_path.c_str());
-    std::remove(output_path.c_str());
-    std::remove(fixture.material_path.c_str());
+    bu_file_delete(snapshot_path.c_str());
+    bu_file_delete(output_path.c_str());
+    bu_file_delete(fixture.material_path.c_str());
     if (!write_text_file(fixture.material_path,
                          "# material_id and los fixture\nFIXTURE_MATERIAL 321 75\n") ||
         !write_snapshot_fixture(snapshot_path, output_path, std::string(), fixture,
@@ -1044,9 +1058,9 @@ run_rendering_fixture(const std::string& working_directory,
     result = 1;
 
 cleanup:
-    std::remove(snapshot_path.c_str());
-    std::remove(output_path.c_str());
-    std::remove(fixture.material_path.c_str());
+    bu_file_delete(snapshot_path.c_str());
+    bu_file_delete(output_path.c_str());
+    bu_file_delete(fixture.material_path.c_str());
     return result;
 }
 
@@ -1174,10 +1188,10 @@ run_phase4_log_fixture(const std::string& working_directory,
     std::string log_contents;
     int result = 0;
 
-    std::remove(snapshot_path.c_str());
-    std::remove(output_path.c_str());
+    bu_file_delete(snapshot_path.c_str());
+    bu_file_delete(output_path.c_str());
     if (!log_path.empty())
-        std::remove(log_path.c_str());
+        bu_file_delete(log_path.c_str());
     if (!write_snapshot_fixture(snapshot_path, output_path, log_path, fixture, VALID_SNAPSHOT_SIZE_DELTA) ||
         creo_brl_core_convert(snapshot_path.c_str()) != fixture.expected_result ||
         log_path.empty() || !read_text_file(log_path, &log_contents) ||
@@ -1191,10 +1205,10 @@ run_phase4_log_fixture(const std::string& working_directory,
     result = 1;
 
 cleanup:
-    std::remove(snapshot_path.c_str());
-    std::remove(output_path.c_str());
+    bu_file_delete(snapshot_path.c_str());
+    bu_file_delete(output_path.c_str());
     if (!log_path.empty())
-        std::remove(log_path.c_str());
+        bu_file_delete(log_path.c_str());
     return result;
 }
 
@@ -1213,10 +1227,10 @@ run_phase4_fixture(const std::string& working_directory,
     const std::string log_path = fixture.log_name ? path_join(working_directory, fixture.log_name) : std::string();
     int result = 0;
 
-    std::remove(snapshot_path.c_str());
-    std::remove(output_path.c_str());
+    bu_file_delete(snapshot_path.c_str());
+    bu_file_delete(output_path.c_str());
     if (!log_path.empty())
-        std::remove(log_path.c_str());
+        bu_file_delete(log_path.c_str());
     if (precreate_output && !write_collision_database(output_path))
         return test_failuref(fixture.fixture_name, "failed to precreate output database");
     if (!write_snapshot_fixture(snapshot_path, output_path, log_path, fixture, VALID_SNAPSHOT_SIZE_DELTA) ||
@@ -1232,10 +1246,10 @@ run_phase4_fixture(const std::string& working_directory,
     result = 1;
 
 cleanup:
-    std::remove(snapshot_path.c_str());
-    std::remove(output_path.c_str());
+    bu_file_delete(snapshot_path.c_str());
+    bu_file_delete(output_path.c_str());
     if (!log_path.empty())
-        std::remove(log_path.c_str());
+        bu_file_delete(log_path.c_str());
     return result;
 }
 
@@ -1248,8 +1262,8 @@ run_phase5_hole_fixture(const std::string& working_directory,
     const std::string output_path = path_join(working_directory, fixture.output_name);
     int result = 0;
 
-    std::remove(snapshot_path.c_str());
-    std::remove(output_path.c_str());
+    bu_file_delete(snapshot_path.c_str());
+    bu_file_delete(output_path.c_str());
     if (!write_snapshot_fixture(snapshot_path, output_path, std::string(), fixture,
                                 VALID_SNAPSHOT_SIZE_DELTA)) {
         test_failuref(fixture.fixture_name, "failed to write snapshot");
@@ -1262,8 +1276,8 @@ run_phase5_hole_fixture(const std::string& working_directory,
     result = verify_phase5_hole_fixture(output_path, fixture);
 
 cleanup:
-    std::remove(snapshot_path.c_str());
-    std::remove(output_path.c_str());
+    bu_file_delete(snapshot_path.c_str());
+    bu_file_delete(output_path.c_str());
     return result;
 }
 
@@ -1446,7 +1460,9 @@ read_manifest(const char *path, std::string *contents)
         return 0;
 
     *contents = std::string(std::istreambuf_iterator<char>(input), std::istreambuf_iterator<char>());
-    contents->erase(std::remove(contents->begin(), contents->end(), '\r'), contents->end());
+    contents->erase(
+        std::remove_if(contents->begin(), contents->end(), [](char ch) { return ch == '\r'; }),
+        contents->end());
     return 1;
 }
 
@@ -1466,10 +1482,10 @@ run_fixture(const std::string& working_directory,
     std::string actual_manifest;
     int result = 0;
 
-    std::remove(snapshot_path.c_str());
-    std::remove(output_path.c_str());
+    bu_file_delete(snapshot_path.c_str());
+    bu_file_delete(output_path.c_str());
     if (!log_path.empty())
-        std::remove(log_path.c_str());
+        bu_file_delete(log_path.c_str());
 
     if (!write_snapshot_fixture(snapshot_path, output_path, log_path, fixture, VALID_SNAPSHOT_SIZE_DELTA)) {
         test_failuref(fixture.fixture_name, "failed to write snapshot fixture");
@@ -1500,10 +1516,10 @@ run_fixture(const std::string& working_directory,
     result = 1;
 
 cleanup:
-    std::remove(snapshot_path.c_str());
-    std::remove(output_path.c_str());
+    bu_file_delete(snapshot_path.c_str());
+    bu_file_delete(output_path.c_str());
     if (!log_path.empty())
-        std::remove(log_path.c_str());
+        bu_file_delete(log_path.c_str());
     return result;
 }
 
@@ -1543,6 +1559,8 @@ make_invalid_fixture(const fixture_definition& source,
 int
 main(int argument_count, char *arguments[])
 {
+    bu_setprogname(arguments[0]);
+
     if (argument_count != 3 && argument_count != 4)
         return 1;
 
@@ -1894,10 +1912,10 @@ main(int argument_count, char *arguments[])
         invalid_validation_fixtures.push_back(invalid_fixture);
     }
 
-    std::remove(malformed_snapshot_path.c_str());
-    std::remove(invalid_size_snapshot_path.c_str());
-    std::remove(invalid_triangle_snapshot_path.c_str());
-    std::remove(invalid_triangle_output_path.c_str());
+    bu_file_delete(malformed_snapshot_path.c_str());
+    bu_file_delete(invalid_size_snapshot_path.c_str());
+    bu_file_delete(invalid_triangle_snapshot_path.c_str());
+    bu_file_delete(invalid_triangle_output_path.c_str());
 
     {
         const std::string roundtrip_snapshot_path =
@@ -1906,7 +1924,7 @@ main(int argument_count, char *arguments[])
             make_scene_capture("expected_out.g", "expected.log", assembly_none_fixture);
         struct snapshot_scene_capture decoded_scene = {};
 
-        std::remove(roundtrip_snapshot_path.c_str());
+        bu_file_delete(roundtrip_snapshot_path.c_str());
         if (creo_brl_snapshot_write(NULL, expected_scene) != CREO_BRL_SNAPSHOT_IO_INVALID_REQUEST ||
             creo_brl_snapshot_write(EMPTY_REQUEST, expected_scene) !=
                 CREO_BRL_SNAPSHOT_IO_INVALID_REQUEST ||
@@ -1930,11 +1948,11 @@ main(int argument_count, char *arguments[])
             decoded_scene.parts[0].triangles.size() != expected_scene.parts[0].triangles.size() ||
             decoded_scene.assemblies[1].model_name != expected_scene.assemblies[1].model_name ||
             decoded_scene.assemblies[1].members.size() != expected_scene.assemblies[1].members.size()) {
-            std::remove(roundtrip_snapshot_path.c_str());
+            bu_file_delete(roundtrip_snapshot_path.c_str());
             test_failure("snapshot codec roundtrip test failed");
             goto cleanup;
         }
-        std::remove(roundtrip_snapshot_path.c_str());
+        bu_file_delete(roundtrip_snapshot_path.c_str());
     }
 
     if (!run_fixture(working_directory, fixtures_directory, normalized_mesh_fixture) ||
@@ -1988,9 +2006,9 @@ main(int argument_count, char *arguments[])
     result = 0;
 
 cleanup:
-    std::remove(malformed_snapshot_path.c_str());
-    std::remove(invalid_size_snapshot_path.c_str());
-    std::remove(invalid_triangle_snapshot_path.c_str());
-    std::remove(invalid_triangle_output_path.c_str());
+    bu_file_delete(malformed_snapshot_path.c_str());
+    bu_file_delete(invalid_size_snapshot_path.c_str());
+    bu_file_delete(invalid_triangle_snapshot_path.c_str());
+    bu_file_delete(invalid_triangle_output_path.c_str());
     return result;
 }

@@ -24,7 +24,10 @@ add_executable(creo_snapshot_core_test
     "${CMAKE_CURRENT_SOURCE_DIR}/../shared/conversion_snapshot.cpp"
 )
 target_include_directories(creo_snapshot_core_test PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/..")
-target_link_libraries(creo_snapshot_core_test PRIVATE creo-brl-core)
+target_link_libraries(creo_snapshot_core_test PRIVATE
+    creo-brl-core
+    ${CREO_BRLCAD_LIBS}
+)
 creo_configure_test_runtime(creo_snapshot_core_test)
 
 add_test(
@@ -55,6 +58,7 @@ endforeach()
 
 add_executable(creo_core_abi_test test_core_abi.cpp)
 target_include_directories(creo_core_abi_test PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/..")
+target_link_libraries(creo_core_abi_test PRIVATE ${CREO_BRLCAD_LIBS})
 creo_configure_test_runtime(creo_core_abi_test)
 
 add_test(

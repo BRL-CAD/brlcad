@@ -1,8 +1,23 @@
+/**
+ *               T E S T _ C O R E _ A B I . C P P
+ * BRL-CAD
+ *
+ * Copyright (c) 2026 United States Government as represented by
+ * the U.S. Army Research Laboratory.
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public License
+ * version 2.1 as published by the Free Software Foundation.
+ */
+
+#include "common.h"
+
 #include <cstdio>
 #include <cstdlib>
 
 #include <windows.h>
 
+#include "bu/app.h"
 #include "shared/core_api.h"
 
 
@@ -79,6 +94,8 @@ cleanup:
 int
 main(int argc, char *argv[])
 {
+    bu_setprogname(argv[0]);
+
     if (argc != EXPECTED_ARGUMENT_COUNT) {
         std::fprintf(stderr, "Usage: %s <core-library>\n", argv[0]);
         return EXIT_FAILURE;

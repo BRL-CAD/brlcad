@@ -1,4 +1,17 @@
 /**
+ *             S C E N E _ C O N V E R T . C P P
+ * BRL-CAD
+ *
+ * Copyright (c) 2026 United States Government as represented by
+ * the U.S. Army Research Laboratory.
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public License
+ * version 2.1 as published by the Free Software Foundation.
+ */
+/**
+ * @file conversion/scene_convert.cpp
+ *
  * Snapshot scene replay and output policy helpers for the runtime core.
  */
 
@@ -82,7 +95,7 @@ load_material_translations(const std::string& path, material_translation_map *tr
         !(material_file = creo_brl_open_utf8_file(path.c_str(), L"rb", "rb")))
         return;
 
-    while (fgets(line, sizeof(line), material_file)) {
+    while (bu_fgets(line, sizeof(line), material_file)) {
         std::istringstream input(line);
         std::string material_name;
         struct snapshot_material_translation translation = {};

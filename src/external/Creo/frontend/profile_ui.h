@@ -1,3 +1,15 @@
+/**
+ *                P R O F I L E _ U I . H
+ * BRL-CAD
+ *
+ * Copyright (c) 2026 United States Government as represented by
+ * the U.S. Army Research Laboratory.
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public License
+ * version 2.1 as published by the Free Software Foundation.
+ */
+
 #ifndef CREO_FRONTEND_PROFILE_UI_H
 #define CREO_FRONTEND_PROFILE_UI_H
 

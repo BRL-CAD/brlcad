@@ -1,3 +1,15 @@
+/**
+ *         T E S T _ C A P T U R E _ P O L I C Y . C P P
+ * BRL-CAD
+ *
+ * Copyright (c) 2026 United States Government as represented by
+ * the U.S. Army Research Laboratory.
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public License
+ * version 2.1 as published by the Free Software Foundation.
+ */
+
 #include "common.h"
 
 #include <cmath>
@@ -6,6 +18,7 @@
 #include <string>
 #include <vector>
 
+#include "bu/app.h"
 #include "bu/units.h"
 #include "frontend/csg_capture.h"
 #include "frontend/model_capture.h"
@@ -967,6 +980,8 @@ run_named_test(const std::string& name)
 int
 main(int argument_count, char *arguments[])
 {
+    bu_setprogname(arguments[0]);
+
     if (argument_count == 2)
         return run_named_test(arguments[1]) ? 0 : 1;
     if (argument_count != 1)
