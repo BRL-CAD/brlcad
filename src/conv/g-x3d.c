@@ -998,9 +998,11 @@ nmg_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, unio
 	return curtree;
     }
 
-    if (ret_tree)
+    if (ret_tree) {
 	r = ret_tree->tr_d.td_r;
-    else
+	/* Region cleanup below owns r; db_free_tree must not free it again. */
+	ret_tree->tr_d.td_r = NULL;
+    } else
 	r = (struct nmgregion *)NULL;
 
     regions_converted++;
