@@ -10,35 +10,35 @@ set(STEP_SCHEMA_E4_FILE ${CMAKE_CURRENT_SOURCE_DIR}/ap242e4.exp)
 if(BRLCAD_ENABLE_STEP)
   generate_schema_inputs(
     ${STEP_SCHEMA_E1_FILE} ap242e1g ap242e1
-    AP242_MANAGED_MODEL_BASED_3D_ENGINEERING_MIM_LF_E1
+    schema-ap242e1
   )
   generate_schema_inputs(
     ${STEP_SCHEMA_E1_FILE} gap242e1 ap242e1
-    AP242_MANAGED_MODEL_BASED_3D_ENGINEERING_MIM_LF_E1
+    schema-ap242e1
   )
   generate_schema_inputs(
     ${STEP_SCHEMA_E2_FILE} ap242e2g ap242e2
-    AP242_MANAGED_MODEL_BASED_3D_ENGINEERING_MIM_LF_E2
+    schema-ap242e2
   )
   generate_schema_inputs(
     ${STEP_SCHEMA_E2_FILE} gap242e2 ap242e2
-    AP242_MANAGED_MODEL_BASED_3D_ENGINEERING_MIM_LF_E2
+    schema-ap242e2
   )
   generate_schema_inputs(
     ${STEP_SCHEMA_E3_FILE} ap242e3g ap242e3
-    AP242_MANAGED_MODEL_BASED_3D_ENGINEERING_MIM_LF_E3
+    schema-ap242e3
   )
   generate_schema_inputs(
     ${STEP_SCHEMA_E3_FILE} gap242e3 ap242e3
-    AP242_MANAGED_MODEL_BASED_3D_ENGINEERING_MIM_LF_E3
+    schema-ap242e3
   )
   generate_schema_inputs(
     ${STEP_SCHEMA_E4_FILE} ap242e4g ap242e4
-    AP242_MANAGED_MODEL_BASED_3D_ENGINEERING_MIM_LF_E4
+    schema-ap242e4
   )
   generate_schema_inputs(
     ${STEP_SCHEMA_E4_FILE} gap242e4 ap242e4
-    AP242_MANAGED_MODEL_BASED_3D_ENGINEERING_MIM_LF_E4
+    schema-ap242e4
   )
 endif(BRLCAD_ENABLE_STEP)
 

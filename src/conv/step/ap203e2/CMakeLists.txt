@@ -1,8 +1,8 @@
 set(STEP_SCHEMA_FILE ${CMAKE_CURRENT_SOURCE_DIR}/ap203e2.exp)
 
 if(BRLCAD_ENABLE_STEP)
-  generate_schema_inputs(${STEP_SCHEMA_FILE} ap203e2g ap203e2)
-  generate_schema_inputs(${STEP_SCHEMA_FILE} gap203e2 ap203e2)
+  generate_schema_inputs(${STEP_SCHEMA_FILE} ap203e2g ap203e2 schema-ap203e2)
+  generate_schema_inputs(${STEP_SCHEMA_FILE} gap203e2 ap203e2 schema-ap203e2)
 endif(BRLCAD_ENABLE_STEP)
 
 set(

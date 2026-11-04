@@ -606,8 +606,7 @@ if(BRLCAD_ENABLE_STEP)
     step_ap203_import_cli step_ap203_export_cli
   )
   step_add_schema_plugin(
-    ap203e2 AP203E2 AP203e2
-    AP203_CONFIGURATION_CONTROLLED_3D_DESIGN_OF_MECHANICAL_PARTS_AND_ASSEMBLIES_MIM_LF
+    ap203e2 AP203E2 AP203e2 schema-ap203e2
     step_ap203e2_import_cli step_ap203e2_export_cli
   )
   step_add_schema_plugin(
@@ -615,23 +614,19 @@ if(BRLCAD_ENABLE_STEP)
     step_ap214_import_cli step_ap214_export_cli
   )
   step_add_schema_plugin(
-    ap242e1 AP242E1 AP242
-    AP242_MANAGED_MODEL_BASED_3D_ENGINEERING_MIM_LF_E1
+    ap242e1 AP242E1 AP242 schema-ap242e1
     step_ap242_import_cli step_ap242_export_cli
   )
   step_add_schema_plugin(
-    ap242e2 AP242E2 AP242
-    AP242_MANAGED_MODEL_BASED_3D_ENGINEERING_MIM_LF_E2
+    ap242e2 AP242E2 AP242 schema-ap242e2
     step_ap242_import_cli step_ap242_export_cli
   )
   step_add_schema_plugin(
-    ap242e3 AP242E3 AP242
-    AP242_MANAGED_MODEL_BASED_3D_ENGINEERING_MIM_LF_E3
+    ap242e3 AP242E3 AP242 schema-ap242e3
     step_ap242_import_cli step_ap242_export_cli
   )
   step_add_schema_plugin(
-    ap242e4 AP242E4 AP242
-    AP242_MANAGED_MODEL_BASED_3D_ENGINEERING_MIM_LF_E4
+    ap242e4 AP242E4 AP242 schema-ap242e4
     step_ap242_import_cli step_ap242_export_cli
   )
 
