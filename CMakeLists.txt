@@ -93,6 +93,12 @@ project(
 )
 #######
 
+if(CMAKE_HOST_SYSTEM_NAME STREQUAL "FreeBSD" AND
+    (CMAKE_C_COMPILER_ID STREQUAL "GNU" OR CMAKE_CXX_COMPILER_ID STREQUAL "GNU"))
+  # GCC cannot reliably remap precompiled-header images on FreeBSD.
+  set(CMAKE_DISABLE_PRECOMPILE_HEADERS ON)
+endif()
+
 # Policy CMP0009: FILE GLOB_RECURSE calls should not follow symlinks by default
 if(POLICY CMP0009)
   cmake_policy(SET CMP0009 NEW)
