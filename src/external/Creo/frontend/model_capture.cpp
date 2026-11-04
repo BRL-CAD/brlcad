@@ -19,43 +19,22 @@
 
 #include <algorithm>
 #include <cmath>
+#include <cstring>
 #include <limits>
 #include <stdio.h>
 #include <utility>
-#include <windows.h>
 
 #include "frontend/csg_capture.h"
 #include "frontend/model_capture.h"
 #include "shared/mesh_normalization.h"
 #include "shared/name_selection.h"
+#include "frontend/string_conversion.h"
 
 
 static const size_t CREO_BRL_TESSELLATION_ATTEMPT_COUNT = 20u;
 static const size_t CREO_BRL_MAXIMUM_FACET_COUNT = 100000u;
 static const double CREO_BRL_MINIMUM_CHORD_FACTOR = 0.1;
 static const double CREO_BRL_MAXIMUM_ANGLE_FACTOR = 1.5;
-
-
-static int
-wide_to_utf8(const wchar_t *wide_text, std::string *text)
-{
-    int size = 0;
-
-    if (!wide_text || !text)
-        return 0;
-
-    size = WideCharToMultiByte(CP_UTF8, WC_ERR_INVALID_CHARS, wide_text, -1, NULL, 0, NULL, NULL);
-    if (size <= 0)
-        return 0;
-
-    text->resize((size_t)size);
-    if (WideCharToMultiByte(CP_UTF8, WC_ERR_INVALID_CHARS, wide_text, -1,
-                            &(*text)[0], size, NULL, NULL) != size)
-        return 0;
-
-    text->resize((size_t)size - 1);
-    return 1;
-}
 
 
 static ProError
@@ -120,7 +99,7 @@ capture_parameter_value(ProMdl model, const std::string& parameter_name, std::st
 
             if (ProParamvalueValueGet(&parameter_value, parameter_type, (void *)wide_value) != PRO_TK_NO_ERROR)
                 return 0;
-            return wide_to_utf8(wide_value, value) && !value->empty();
+            return creo_brl_wide_to_utf8(wide_value, value) && !value->empty();
         }
         case PRO_PARAM_INTEGER: {
             int integer_value = 0;
@@ -949,7 +928,7 @@ capture_model_name(ProMdl model, std::string *model_name)
     ProName name;
 
     return ProMdlMdlnameGet(model, name) == PRO_TK_NO_ERROR &&
-           wide_to_utf8(name, model_name) && !model_name->empty();
+           creo_brl_wide_to_utf8(name, model_name) && !model_name->empty();
 }
 
 
@@ -991,7 +970,7 @@ creo_brl_capture_part_definition(ProMdl model,
     capture_part_mass_properties(model, &capture->part);
 
     if (ProPartMaterialNameGet(ProMdlToPart(model), material_name) == PRO_TK_NO_ERROR &&
-        wide_to_utf8(material_name, &capture->strings.material_name) &&
+        creo_brl_wide_to_utf8(material_name, &capture->strings.material_name) &&
         !capture->strings.material_name.empty())
         capture->part.flags |= CREO_BRL_SNAPSHOT_PART_HAS_MATERIAL;
     if ((capture->part.flags & CREO_BRL_SNAPSHOT_PART_HAS_MASS_PROPERTIES) == 0 &&

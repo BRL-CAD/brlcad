@@ -19,6 +19,7 @@
 #  include <ProUICmd.h>
 #endif
 #include "shared/conversion_options.h"
+#include "shared/frontend_api.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -29,7 +30,7 @@ void creo_brl_show_popup(const char *title, const char *message);
 void creo_brl_core_load_profile_shim(void);
 int creo_brl_core_convert_shim(const char *snapshot_path);
 
-void __cdecl creo_brl_frontend_apply_options(
+void CREO_BRL_FRONTEND_CALL creo_brl_frontend_apply_options(
     const struct creo_brl_conversion_options *options);
 int creo_brl_frontend_command(
     uiCmdCmdId command,

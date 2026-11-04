@@ -28,6 +28,7 @@ extern "C" {
 }
 
 #include "conversion/profile_reader.h"
+#include "shared/secure_crt.h"
 #include "shared/frontend_api.h"
 #include "shared/conversion_options.h"
 

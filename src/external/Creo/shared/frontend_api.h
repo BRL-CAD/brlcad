@@ -15,13 +15,19 @@
 
 #include "shared/conversion_options.h"
 
+#ifdef _WIN32
+#  define CREO_BRL_FRONTEND_CALL __cdecl
+#else
+#  define CREO_BRL_FRONTEND_CALL
+#endif
+
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-typedef void (__cdecl *creo_brl_status_fn_t)(const char *message);
-typedef void (__cdecl *creo_brl_popup_fn_t)(const char *title, const char *message);
-typedef void (__cdecl *creo_brl_apply_options_fn_t)(
+typedef void (CREO_BRL_FRONTEND_CALL *creo_brl_status_fn_t)(const char *message);
+typedef void (CREO_BRL_FRONTEND_CALL *creo_brl_popup_fn_t)(const char *title, const char *message);
+typedef void (CREO_BRL_FRONTEND_CALL *creo_brl_apply_options_fn_t)(
     const struct creo_brl_conversion_options *options);
 
 struct creo_brl_frontend_api {

@@ -88,6 +88,7 @@ add_executable(creo_capture_policy_test
     test_capture_policy.cpp
     "${CMAKE_CURRENT_SOURCE_DIR}/../frontend/model_capture.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/../frontend/csg_capture.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/../frontend/string_conversion.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/../shared/mesh_normalization.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/../shared/name_selection.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/../shim.cpp"

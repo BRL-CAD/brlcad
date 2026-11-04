@@ -26,17 +26,29 @@
 
 #include "common.h"
 #include <stdarg.h>
-#include <windows.h>
+#include <stdio.h>
+
+#ifdef _WIN32
+#  include <windows.h>
+#endif
 
 #include "frontend/creo_toolkit.h"
 #include "shared/conversion_snapshot.h"
 #include "frontend/dialog_controller.h"
 #include "frontend/model_capture.h"
 #include "frontend/profile_ui.h"
+#include "frontend/string_conversion.h"
 #include "shared/core_api.h"
+#include "shared/secure_crt.h"
 
+#ifdef _WIN32
 static const wchar_t FRONTEND_SNAPSHOT_PREFIX[] = L"cbr";
 static const size_t FRONTEND_SNAPSHOT_UTF8_PATH_SIZE = MAX_PATH * 4;
+static const size_t FRONTEND_SNAPSHOT_WIDE_PATH_SIZE = MAX_PATH;
+#else
+static const size_t FRONTEND_SNAPSHOT_UTF8_PATH_SIZE = MAXPATHLEN;
+static const size_t FRONTEND_SNAPSHOT_WIDE_PATH_SIZE = MAXPATHLEN;
+#endif
 static const char FRONTEND_STATUS_COMPONENT[] = "conv_status";
 static const char FRONTEND_RESTORATION_WARNING_TITLE[] = "WARNING:  Restoration Failure";
 static const char FRONTEND_RESTORATION_WARNING_MESSAGE[] =
@@ -47,6 +59,7 @@ static const char FRONTEND_RESTORATION_WARNING_MESSAGE[] =
     "To avoid permanent changes to the current Creo model, please exit\n"
     "without saving any changes.";
 
+#ifdef _WIN32
 static BOOL CALLBACK
 frontend_redraw_thread_window(HWND window, LPARAM UNUSED(parameter))
 {
@@ -55,6 +68,7 @@ frontend_redraw_thread_window(HWND window, LPARAM UNUSED(parameter))
 
     return TRUE;
 }
+#endif
 
 static void
 frontend_set_dialog_status(const char *message)
@@ -66,7 +80,9 @@ frontend_set_dialog_status(const char *message)
 
     ProStringToWstring(wide_message, (char *)message);
     (void)ProUILabelTextSet(CREO_UI_NAME, (char *)FRONTEND_STATUS_COMPONENT, wide_message);
+#ifdef _WIN32
     (void)EnumThreadWindows(GetCurrentThreadId(), frontend_redraw_thread_window, 0);
+#endif
 }
 
 static void
@@ -134,22 +150,13 @@ frontend_get_text(void *UNUSED(context), const char *name, std::string *text)
 {
     wchar_t *wide_text = NULL;
     std::string converted_text;
-    int size = 0;
     const ProError err = ProUIInputpanelValueGet(CREO_UI_NAME, (char *)name, &wide_text);
     int converted = 0;
 
     if (err == PRO_TK_NO_ERROR && wide_text && text) {
-        size = WideCharToMultiByte(CP_UTF8, WC_ERR_INVALID_CHARS, wide_text, -1,
-                                   NULL, 0, NULL, NULL);
-        if (size > 0) {
-            converted_text.resize((size_t)size);
-            converted = WideCharToMultiByte(CP_UTF8, WC_ERR_INVALID_CHARS, wide_text, -1,
-                                             &converted_text[0], size, NULL, NULL) == size;
-            if (converted) {
-                converted_text.resize((size_t)size - 1);
-                *text = converted_text;
-            }
-        }
+        converted = creo_brl_wide_to_utf8(wide_text, &converted_text);
+        if (converted)
+            *text = converted_text;
     }
 
     if (wide_text)
@@ -320,7 +327,7 @@ frontend_capture_snapshot(const char *snapshot_path,
 }
 
 
-extern "C" void __cdecl
+extern "C" void CREO_BRL_FRONTEND_CALL
 creo_brl_frontend_apply_options(const struct creo_brl_conversion_options *options)
 {
     if (!creo_brl_frontend_apply_options_to_controls(options, &frontend_controls))
@@ -333,6 +340,7 @@ static int
 frontend_snapshot_path(wchar_t *wide_path, size_t wide_path_size,
                        char *utf8_path, size_t utf8_path_size)
 {
+#ifdef _WIN32
     wchar_t temporary_directory[MAX_PATH] = {L'\0'};
     const DWORD directory_length = GetTempPathW(_countof(temporary_directory), temporary_directory);
     DWORD file_number = 0;
@@ -354,6 +362,24 @@ frontend_snapshot_path(wchar_t *wide_path, size_t wide_path_size,
     }
 
     return 1;
+#else
+    (void)wide_path;
+    (void)wide_path_size;
+    (void)utf8_path;
+    (void)utf8_path_size;
+    return 0;
+#endif
+}
+
+
+static void
+frontend_delete_snapshot(const wchar_t *wide_path)
+{
+#ifdef _WIN32
+    (void)DeleteFileW(wide_path);
+#else
+    (void)wide_path;
+#endif
 }
 
 
@@ -449,7 +475,7 @@ do_quit(char *UNUSED(dialog), char *UNUSED(component), ProAppData UNUSED(appdata
 static void
 frontend_convert(char *dialog, char *component, ProAppData appdata)
 {
-    wchar_t snapshot_path_wide[MAX_PATH] = {L'\0'};
+    wchar_t snapshot_path_wide[FRONTEND_SNAPSHOT_WIDE_PATH_SIZE] = {L'\0'};
     char snapshot_path[FRONTEND_SNAPSHOT_UTF8_PATH_SIZE] = {'\0'};
     struct snapshot_scene_capture captured_scene = {};
     int capture_result = CREO_BRL_SNAPSHOT_CAPTURE_INVALID_REQUEST;
@@ -459,7 +485,8 @@ frontend_convert(char *dialog, char *component, ProAppData appdata)
     (void)component;
     (void)appdata;
 
-    if (!frontend_snapshot_path(snapshot_path_wide, _countof(snapshot_path_wide),
+    if (!frontend_snapshot_path(snapshot_path_wide,
+                                sizeof(snapshot_path_wide) / sizeof(snapshot_path_wide[0]),
                                 snapshot_path, sizeof(snapshot_path))) {
         frontend_error("Creo-BRL Conversion Failure",
                        "FAILURE: Unable to create a temporary conversion request path.");
@@ -469,7 +496,7 @@ frontend_convert(char *dialog, char *component, ProAppData appdata)
     frontend_status("Capturing active Creo model for BRL-CAD conversion...");
     capture_result = frontend_capture_snapshot(snapshot_path, &captured_scene);
     if (capture_result != CREO_BRL_SNAPSHOT_CAPTURE_SUCCESS) {
-        (void)DeleteFileW(snapshot_path_wide);
+        frontend_delete_snapshot(snapshot_path_wide);
         if (capture_result == CREO_BRL_SNAPSHOT_CAPTURE_RESTORATION_FAILURE) {
             frontend_status("%s", frontend_capture_failure_message(capture_result));
             creo_brl_show_popup(FRONTEND_RESTORATION_WARNING_TITLE,
@@ -489,7 +516,7 @@ frontend_convert(char *dialog, char *component, ProAppData appdata)
 
     frontend_status("Writing BRL-CAD geometry...");
     core_result = creo_brl_core_convert_shim(snapshot_path);
-    (void)DeleteFileW(snapshot_path_wide);
+    frontend_delete_snapshot(snapshot_path_wide);
     if (core_result != CREO_BRL_CORE_CONVERT_SUCCESS) {
         frontend_error("Creo-BRL Conversion Failure",
                        frontend_core_failure_message(core_result));

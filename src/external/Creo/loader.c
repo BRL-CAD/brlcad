@@ -113,7 +113,7 @@ show_toolkit_error(const wchar_t *context, int tk_err)
         MB_OK | MB_ICONERROR | MB_TOPMOST);
 }
 
-static void __cdecl
+static void CREO_BRL_FRONTEND_CALL
 show_status_message(const char *message)
 {
     ProFileName msgfil = {'\0'};
@@ -123,7 +123,7 @@ show_status_message(const char *message)
     ProMessageDisplay(msgfil, "USER_INFO", (char *)message);
 }
 
-static void __cdecl
+static void CREO_BRL_FRONTEND_CALL
 show_popup_message(const char *title, const char *message)
 {
     wchar_t wtitle[FRONTEND_TITLE_MAX];

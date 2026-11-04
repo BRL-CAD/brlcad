@@ -20,6 +20,7 @@ set(CREO2BRL_FRONTEND_SOURCES
   ${CREO2BRL_FRONTEND_DIALOG_SOURCES}
   ${CREO2BRL_FRONTEND_CAPTURE_SOURCES}
   ${CREO2BRL_FRONTEND_OPTION_SOURCES}
+  frontend/string_conversion.cpp
   )
 set(CREO2BRL_FRONTEND_OPTION_SOURCE_PATHS)
 foreach(frontend_option_source ${CREO2BRL_FRONTEND_OPTION_SOURCES})
@@ -611,12 +612,14 @@ else(NOT DEFINED BRLCAD_BUILDTEST_EXTERNALS)
     frontend/profile_path.h
     frontend/model_capture.h
     frontend/profile_ui.h
+    frontend/string_conversion.h
     shared/conversion_options.h
     shared/conversion_snapshot.h
     shared/core_api.h
     shared/frontend_api.h
     shared/mesh_normalization.h
     shared/name_selection.h
+    shared/secure_crt.h
     resources/creo-brl-msg.txt
     resources/creo_brl.res
     resources/Creo_to_BRL.g

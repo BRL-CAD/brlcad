@@ -158,14 +158,14 @@ write_invalid_profile(const std::string& path)
 }
 
 
-static void __cdecl
+static void CREO_BRL_FRONTEND_CALL
 capture_status(const char *message)
 {
     last_status = message ? message : "";
 }
 
 
-static void __cdecl
+static void CREO_BRL_FRONTEND_CALL
 capture_popup(const char *UNUSED(title), const char *UNUSED(message))
 {
 }
@@ -178,7 +178,7 @@ copy_option(const char *value)
 }
 
 
-static void __cdecl
+static void CREO_BRL_FRONTEND_CALL
 capture_options(const struct creo_brl_conversion_options *options)
 {
     if (!options)
