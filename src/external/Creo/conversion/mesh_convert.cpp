@@ -26,6 +26,7 @@
 #include <sstream>
 #include <string.h>
 
+#include "vmath.h"
 #include "conversion/name_allocator.h"
 #include "bg/vert_tree.h"
 #include "bu/avs.h"
@@ -184,9 +185,9 @@ adjust_color_luminance(unsigned char color[CREO_BRL_SNAPSHOT_COLOR_COMPONENT_COU
         *original_color = original.str();
 
     if (delta > 0.0) {
-        if (maximum == red)
+        if (EQUAL(maximum, red))
             hue = 60.0 * std::fmod((green - blue) / delta, 6.0);
-        else if (maximum == green)
+        else if (EQUAL(maximum, green))
             hue = 60.0 * ((blue - red) / delta + 2.0);
         else
             hue = 60.0 * ((red - green) / delta + 4.0);
