@@ -30,6 +30,7 @@
 #include <fstream>
 #include <limits>
 #include <map>
+#include <memory>
 #include <set>
 #include <stdexcept>
 #include <string>
@@ -39,6 +40,7 @@
 #include <zlib.h>
 
 #include "bg/polygon.h"
+#include "brep/defines.h"
 #include "bu/path.h"
 #include "gcv/api.h"
 #include "raytrace.h"
@@ -52,6 +54,12 @@ constexpr size_t BLEND_HEADER_SIZE = 12;
 constexpr size_t READ_CHUNK_SIZE = 64 * 1024;
 constexpr size_t MAX_BLEND_SIZE = static_cast<size_t>(2) * 1024 * 1024 * 1024;
 constexpr std::array<unsigned char, 4> ZSTD_MAGIC = {0x28, 0xb5, 0x2f, 0xfd};
+constexpr int64_t SPLINE_TYPE_MASK = 7;
+constexpr int64_t SPLINE_TYPE_POLY = 0;
+constexpr int64_t SPLINE_TYPE_BEZIER = 1;
+constexpr int64_t SPLINE_TYPE_NURBS = 4;
+constexpr int64_t SPLINE_CYCLIC = 1;
+constexpr int64_t SPLINE_BEZIER_KNOTS = 4;
 
 class ParseError : public std::runtime_error {
 public:
@@ -606,6 +614,14 @@ checked_count(int64_t value, const std::string &label)
     return static_cast<size_t>(value);
 }
 
+static size_t
+checked_product(size_t first, size_t second, const std::string &label)
+{
+    if (second > 0 && first > std::numeric_limits<size_t>::max() / second)
+	throw ParseError(label + " is too large");
+    return first * second;
+}
+
 static std::array<double, 16>
 object_matrix(const BlendFile &file, const DataView &object)
 {
@@ -904,7 +920,7 @@ datablock_name(const BlendFile &file, const DataView &view)
 
 static std::string
 safe_name(const std::string &source, const std::string &fallback,
-    std::set<std::string> &used_names)
+    const char *extension, std::set<std::string> &used_names)
 {
     std::string name = source.empty() ? fallback : source;
     for (char &character : name) {
@@ -914,9 +930,9 @@ safe_name(const std::string &source, const std::string &fallback,
     }
     if (name.empty())
 	name = fallback;
-    std::string candidate = name + ".bot";
+    std::string candidate = name + extension;
     for (size_t suffix = 1; !used_names.insert(candidate).second; ++suffix)
-	candidate = name + "_" + std::to_string(suffix) + ".bot";
+	candidate = name + "_" + std::to_string(suffix) + extension;
     return candidate;
 }
 
@@ -933,25 +949,295 @@ object_selected(const struct gcv_opts *options, const std::string &name)
 }
 
 static void
+transform_point(double point[3], const std::array<double, 16> &matrix,
+    fastf_t scale)
+{
+    double transformed[3] = {
+	matrix[0] * point[0] + matrix[1] * point[1] + matrix[2] * point[2] + matrix[3],
+	matrix[4] * point[0] + matrix[5] * point[1] + matrix[6] * point[2] + matrix[7],
+	matrix[8] * point[0] + matrix[9] * point[1] + matrix[10] * point[2] + matrix[11]
+    };
+    for (size_t axis = 0; axis < 3; ++axis) {
+	transformed[axis] *= scale;
+	if (!std::isfinite(transformed[axis]))
+	    throw ParseError("object transform produced a non-finite coordinate");
+	point[axis] = transformed[axis];
+    }
+}
+
+static void
 transform_vertices(MeshGeometry &geometry, const std::array<double, 16> &matrix,
     fastf_t scale)
 {
     for (size_t vertex = 0; vertex < geometry.vertices.size() / 3; ++vertex) {
-	double x = geometry.vertices[vertex * 3];
-	double y = geometry.vertices[vertex * 3 + 1];
-	double z = geometry.vertices[vertex * 3 + 2];
-	double transformed[3] = {
-	    matrix[0] * x + matrix[1] * y + matrix[2] * z + matrix[3],
-	    matrix[4] * x + matrix[5] * y + matrix[6] * z + matrix[7],
-	    matrix[8] * x + matrix[9] * y + matrix[10] * z + matrix[11]
+	double point[3] = {
+	    geometry.vertices[vertex * 3],
+	    geometry.vertices[vertex * 3 + 1],
+	    geometry.vertices[vertex * 3 + 2]
 	};
+	transform_point(point, matrix, scale);
 	for (size_t axis = 0; axis < 3; ++axis) {
-	    transformed[axis] *= scale;
-	    if (!std::isfinite(transformed[axis]))
-		throw ParseError("object transform produced a non-finite vertex coordinate");
-	    geometry.vertices[vertex * 3 + axis] = static_cast<fastf_t>(transformed[axis]);
+	    geometry.vertices[vertex * 3 + axis] = static_cast<fastf_t>(point[axis]);
 	}
     }
+}
+
+struct SplinePoint {
+    ON_3dPoint point;
+    double weight = 1.0;
+};
+
+static std::vector<SplinePoint>
+read_spline_points(const BlendFile &file, const DataView &spline,
+    const std::array<double, 16> &matrix, fastf_t scale)
+{
+    size_t point_count_u = checked_count(integer_value(file, spline, "pntsu"),
+	"spline U control-point count");
+    size_t point_count_v = checked_count(integer_value(file, spline, "pntsv"),
+	"spline V control-point count");
+    if (point_count_u == 0 || point_count_v == 0)
+	throw ParseError("spline has no control points");
+    size_t point_count = checked_product(point_count_u, point_count_v,
+	"spline control-point count");
+    DataView points = array_view(file, pointer_value(file, spline, "bp"),
+	"BPoint", point_count);
+
+    std::vector<SplinePoint> result;
+    result.reserve(point_count);
+    for (size_t index = 0; index < point_count; ++index) {
+	DataView point_view = array_element(points, index);
+	const DnaField *coordinates = require_field(point_view, "vec");
+	if (coordinates->pointer || coordinates->size != sizeof(float) * 4)
+	    throw ParseError("BPoint.vec is not a four-component float array");
+	double point[3];
+	for (size_t axis = 0; axis < 3; ++axis)
+	    point[axis] = float_value(file, point_view.data + coordinates->offset +
+		axis * sizeof(float));
+	transform_point(point, matrix, scale);
+	double weight = float_value(file, point_view.data + coordinates->offset +
+	    3 * sizeof(float));
+	if (!std::isfinite(weight) || weight <= 0.0)
+	    throw ParseError("NURBS control point has an invalid weight");
+	result.push_back({ON_3dPoint(point[0], point[1], point[2]), weight});
+    }
+    return result;
+}
+
+static void
+set_curve_knots(const BlendFile &file, const DataView &spline,
+    ON_NurbsCurve &curve, int64_t flags)
+{
+    uint64_t address = pointer_value(file, spline, "knotsu");
+    if (address == 0) {
+	bool made = (flags & SPLINE_CYCLIC) ? curve.MakePeriodicUniformKnotVector(1.0) :
+	    curve.MakeClampedUniformKnotVector(1.0);
+	if (!made)
+	    throw ParseError("could not construct a default NURBS curve knot vector");
+	return;
+    }
+    size_t knot_count = static_cast<size_t>(curve.KnotCount());
+    DataView knots = raw_array_view(file, address, sizeof(float), knot_count + 2,
+	"NURBS curve knot vector");
+    size_t source_offset = (!(flags & SPLINE_CYCLIC) &&
+	(flags & SPLINE_BEZIER_KNOTS)) ? 2 : 1;
+    for (size_t index = 0; index < knot_count; ++index) {
+	double knot = float_value(file, knots.data + (index + source_offset) * sizeof(float));
+	if (!std::isfinite(knot) || !curve.SetKnot(static_cast<int>(index), knot))
+	    throw ParseError("NURBS curve has an invalid knot vector");
+    }
+}
+
+static void
+set_surface_knots(const BlendFile &file, const DataView &spline,
+    ON_NurbsSurface &surface, int direction, const char *field_name, bool cyclic)
+{
+    uint64_t address = pointer_value(file, spline, field_name);
+    if (address == 0) {
+	bool made = cyclic ? surface.MakePeriodicUniformKnotVector(direction, 1.0) :
+	    surface.MakeClampedUniformKnotVector(direction, 1.0);
+	if (!made)
+	    throw ParseError("could not construct a default NURBS surface knot vector");
+	return;
+    }
+    size_t knot_count = static_cast<size_t>(surface.KnotCount(direction));
+    DataView knots = raw_array_view(file, address, sizeof(float), knot_count + 2,
+	"NURBS surface knot vector");
+    for (size_t index = 0; index < knot_count; ++index) {
+	double knot = float_value(file, knots.data + (index + 1) * sizeof(float));
+	if (!std::isfinite(knot) ||
+	    !surface.SetKnot(direction, static_cast<int>(index), knot))
+	    throw ParseError("NURBS surface has an invalid knot vector");
+    }
+}
+
+static void
+set_control_point(ON_NurbsCurve &curve, int index, const SplinePoint &point,
+    bool rational)
+{
+    bool set = rational ? curve.SetCV(index, ON_4dPoint(point.point.x * point.weight,
+	point.point.y * point.weight, point.point.z * point.weight, point.weight)) :
+	curve.SetCV(index, point.point);
+    if (!set)
+	throw ParseError("could not set a NURBS curve control point");
+}
+
+static void
+set_control_point(ON_NurbsSurface &surface, int u, int v,
+    const SplinePoint &point, bool rational)
+{
+    bool set = rational ? surface.SetCV(u, v, ON_4dPoint(point.point.x * point.weight,
+	point.point.y * point.weight, point.point.z * point.weight, point.weight)) :
+	surface.SetCV(u, v, point.point);
+    if (!set)
+	throw ParseError("could not set a NURBS surface control point");
+}
+
+static std::unique_ptr<ON_NurbsCurve>
+make_nurbs_curve(const BlendFile &file, const DataView &spline,
+    const std::array<double, 16> &matrix, fastf_t scale)
+{
+    size_t source_count = checked_count(integer_value(file, spline, "pntsu"),
+	"NURBS curve control-point count");
+    size_t order = checked_count(integer_value(file, spline, "orderu"),
+	"NURBS curve order");
+    int64_t flags = integer_value(file, spline, "flagu");
+    bool cyclic = (flags & SPLINE_CYCLIC) != 0;
+    if (source_count < 2 || order < 2 || order > source_count)
+	throw ParseError("NURBS curve has invalid control-point count or order");
+    bool bezier_knots = !cyclic && (flags & SPLINE_BEZIER_KNOTS);
+    /* Blender's Bezier knot mode can leave incomplete control-point groups
+     * outside the active degree-sized knot spans. */
+    size_t inactive_count = bezier_knots ? (source_count - 1) % (order - 1) : 0;
+    bool trim_inactive_start = inactive_count > 0;
+    size_t active_count = source_count;
+    active_count -= inactive_count;
+    if (active_count < order)
+	throw ParseError("NURBS curve has invalid control-point count or order");
+    size_t extra_count = cyclic ? order - 1 : 0;
+    if (active_count > static_cast<size_t>(INT_MAX) - extra_count)
+	throw ParseError("NURBS curve has too many control points");
+
+    std::vector<SplinePoint> points = read_spline_points(file, spline, matrix, scale);
+    bool rational = std::any_of(points.begin(), points.end(),
+	[](const SplinePoint &point) { return !EQUAL(point.weight, 1.0); });
+    int control_count = static_cast<int>(active_count + extra_count);
+    std::unique_ptr<ON_NurbsCurve> curve(
+	ON_NurbsCurve::New(3, rational, static_cast<int>(order), control_count));
+    if (!curve)
+	throw ParseError("could not allocate a NURBS curve");
+    if (bezier_knots && source_count == order) {
+	if (!curve->MakeClampedUniformKnotVector(1.0))
+	    throw ParseError("could not construct a Bezier-style NURBS knot vector");
+    } else {
+	set_curve_knots(file, spline, *curve, flags);
+    }
+    size_t source_offset = trim_inactive_start ? 1 : 0;
+    for (int index = 0; index < control_count; ++index) {
+	size_t source = static_cast<size_t>(index) % active_count + source_offset;
+	set_control_point(*curve, index, points[source], rational);
+    }
+    ON_wString validation_messages;
+    ON_TextLog validation_log(validation_messages);
+    if (!curve->IsValid(&validation_log)) {
+	ON_String validation_text(validation_messages);
+	std::string knots;
+	for (int index = 0; index < curve->KnotCount(); ++index) {
+	    if (!knots.empty())
+		knots += ",";
+	    knots += std::to_string(curve->Knot(index));
+	}
+	throw ParseError("constructed NURBS curve (flags " +
+	    std::to_string(integer_value(file, spline, "flagu")) +
+	    ", knots " + knots + ") is invalid: " +
+	    static_cast<const char *>(validation_text));
+    }
+    return curve;
+}
+
+static std::unique_ptr<ON_NurbsSurface>
+make_nurbs_surface(const BlendFile &file, const DataView &spline,
+    const std::array<double, 16> &matrix, fastf_t scale)
+{
+    size_t source_count_u = checked_count(integer_value(file, spline, "pntsu"),
+	"NURBS surface U control-point count");
+    size_t source_count_v = checked_count(integer_value(file, spline, "pntsv"),
+	"NURBS surface V control-point count");
+    size_t order_u = checked_count(integer_value(file, spline, "orderu"),
+	"NURBS surface U order");
+    size_t order_v = checked_count(integer_value(file, spline, "orderv"),
+	"NURBS surface V order");
+    bool cyclic_u = (integer_value(file, spline, "flagu") & SPLINE_CYCLIC) != 0;
+    bool cyclic_v = (integer_value(file, spline, "flagv") & SPLINE_CYCLIC) != 0;
+    if (source_count_u < 2 || source_count_v < 2 || order_u < 2 || order_v < 2 ||
+	order_u > source_count_u || order_v > source_count_v)
+	throw ParseError("NURBS surface has invalid dimensions or orders");
+    size_t count_u = source_count_u + (cyclic_u ? order_u - 1 : 0);
+    size_t count_v = source_count_v + (cyclic_v ? order_v - 1 : 0);
+    if (count_u > INT_MAX || count_v > INT_MAX)
+	throw ParseError("NURBS surface has too many control points");
+
+    std::vector<SplinePoint> points = read_spline_points(file, spline, matrix, scale);
+    bool rational = std::any_of(points.begin(), points.end(),
+	[](const SplinePoint &point) { return !EQUAL(point.weight, 1.0); });
+    std::unique_ptr<ON_NurbsSurface> surface(ON_NurbsSurface::New(3, rational,
+	static_cast<int>(order_u), static_cast<int>(order_v),
+	static_cast<int>(count_u), static_cast<int>(count_v)));
+    if (!surface)
+	throw ParseError("could not allocate a NURBS surface");
+    set_surface_knots(file, spline, *surface, 0, "knotsu", cyclic_u);
+    set_surface_knots(file, spline, *surface, 1, "knotsv", cyclic_v);
+    for (size_t v = 0; v < count_v; ++v) {
+	for (size_t u = 0; u < count_u; ++u) {
+	    size_t source = (v % source_count_v) * source_count_u +
+		(u % source_count_u);
+	    set_control_point(*surface, static_cast<int>(u), static_cast<int>(v),
+		points[source], rational);
+	}
+    }
+    ON_wString validation_messages;
+    ON_TextLog validation_log(validation_messages);
+    if (!surface->IsValid(&validation_log)) {
+	ON_String validation_text(validation_messages);
+	throw ParseError(std::string("constructed NURBS surface is invalid: ") +
+	    static_cast<const char *>(validation_text));
+    }
+    return surface;
+}
+
+static void
+add_wire_curve(ON_Brep &brep, std::unique_ptr<ON_NurbsCurve> curve)
+{
+    ON_3dPoint start = curve->PointAtStart();
+    ON_3dPoint end = curve->PointAtEnd();
+    int curve_index = brep.AddEdgeCurve(curve.release());
+    int start_vertex = brep.NewVertex(start).m_vertex_index;
+    int end_vertex = start_vertex;
+    if (start.DistanceTo(end) > SMALL_FASTF)
+	end_vertex = brep.NewVertex(end).m_vertex_index;
+    brep.m_V[start_vertex].m_tolerance = 0.0;
+    brep.m_V[end_vertex].m_tolerance = 0.0;
+    ON_BrepEdge &edge = brep.NewEdge(brep.m_V[start_vertex],
+	brep.m_V[end_vertex], curve_index);
+    edge.m_tolerance = 0.0;
+}
+
+static bool
+write_region(struct rt_wdb *output, struct wmember &all,
+    const std::string &primitive_name)
+{
+    struct wmember region;
+    BU_LIST_INIT(&region.l);
+    if (!mk_addmember(primitive_name.c_str(), &region.l, nullptr, WMOP_UNION))
+	return false;
+    size_t extension = primitive_name.find_last_of('.');
+    std::string region_name = primitive_name.substr(0, extension) + ".r";
+    if (mk_lcomb(output, region_name.c_str(), &region, 1, nullptr, nullptr,
+	nullptr, 0) < 0) {
+	mk_freemembers(&region.l);
+	bu_log("BLEND Reader: failed to write region %s\n", region_name.c_str());
+	return false;
+    }
+    return mk_addmember(region_name.c_str(), &all.l, nullptr, WMOP_UNION) != nullptr;
 }
 
 static bool
@@ -970,18 +1256,30 @@ write_mesh(struct rt_wdb *output, struct wmember &all, MeshGeometry &geometry,
 	bu_log("BLEND Reader: failed to write BOT %s\n", name.c_str());
 	return false;
     }
-    struct wmember region;
-    BU_LIST_INIT(&region.l);
-    if (!mk_addmember(name.c_str(), &region.l, nullptr, WMOP_UNION))
-	return false;
-    std::string region_name = name.substr(0, name.size() - 4) + ".r";
-    if (mk_lcomb(output, region_name.c_str(), &region, 1, nullptr, nullptr,
-	nullptr, 0) < 0) {
-	mk_freemembers(&region.l);
-	bu_log("BLEND Reader: failed to write region %s\n", region_name.c_str());
+    return write_region(output, all, name);
+}
+
+static bool
+write_brep(struct rt_wdb *output, struct wmember &all, ON_Brep &brep,
+    const std::string &name)
+{
+    brep.Compact();
+
+    brep.SetTolerancesBoxesAndFlags(false, false, false, false,
+	true, true, true, true);
+    ON_wString validation_messages;
+    ON_TextLog validation_log(validation_messages);
+    if (!brep.IsValid(&validation_log)) {
+	ON_String validation_text(validation_messages);
+	bu_log("BLEND Reader: BREP %s is invalid: %s\n", name.c_str(),
+	    static_cast<const char *>(validation_text));
 	return false;
     }
-    return mk_addmember(region_name.c_str(), &all.l, nullptr, WMOP_UNION) != nullptr;
+    if (mk_brep(output, name.c_str(), &brep) < 0) {
+	bu_log("BLEND Reader: failed to write BREP %s\n", name.c_str());
+	return false;
+    }
+    return write_region(output, all, name);
 }
 
 static bool
@@ -994,8 +1292,67 @@ convert_mesh_object(const BlendFile &file, const DataView &object,
 	return false;
     MeshGeometry geometry = read_legacy_mesh(file, mesh);
     transform_vertices(geometry, object_matrix(file, object), options->scale_factor);
-    std::string name = safe_name(object_name, datablock_name(file, mesh), used_names);
+    std::string name = safe_name(object_name, datablock_name(file, mesh), ".bot", used_names);
     return write_mesh(output, all, geometry, name);
+}
+
+static std::unique_ptr<ON_Brep>
+read_nurbs_brep(const BlendFile &file, const DataView &curve,
+    const std::array<double, 16> &matrix, fastf_t scale)
+{
+    DataView splines = embedded_view(file, curve, "nurb");
+    uint64_t address = pointer_value(file, splines, "first");
+    std::set<uint64_t> visited;
+    std::unique_ptr<ON_Brep> brep(ON_Brep::New());
+    size_t imported = 0;
+    size_t unsupported = 0;
+
+    while (address != 0) {
+	if (!visited.insert(address).second)
+	    throw ParseError("NURBS spline list contains a cycle");
+	DataView spline = address_view(file, address);
+	if (!spline || spline.structure->name != "Nurb")
+	    throw ParseError("NURBS spline list contains an invalid pointer");
+	uint64_t next = pointer_value(file, spline, "next");
+	int64_t type = integer_value(file, spline, "type") & SPLINE_TYPE_MASK;
+	if (type == SPLINE_TYPE_NURBS) {
+	    size_t point_count_v = checked_count(integer_value(file, spline, "pntsv"),
+		"NURBS V control-point count");
+	    if (point_count_v > 1) {
+		std::unique_ptr<ON_NurbsSurface> surface =
+		    make_nurbs_surface(file, spline, matrix, scale);
+		if (!brep->NewFace(*surface))
+		    throw ParseError("could not add a NURBS surface to a BREP");
+	    } else {
+		add_wire_curve(*brep, make_nurbs_curve(file, spline, matrix, scale));
+	    }
+	    ++imported;
+	} else {
+	    ++unsupported;
+	}
+	address = next;
+    }
+    if (unsupported > 0)
+	bu_log("BLEND Reader: skipped %zu non-NURBS spline%s in a Curve object\n",
+	    unsupported, unsupported == 1 ? "" : "s");
+    if (imported == 0)
+	throw ParseError("Curve object contains no supported NURBS splines");
+    return brep;
+}
+
+static bool
+convert_curve_object(const BlendFile &file, const DataView &object,
+    const DataView &curve, const struct gcv_opts *options, struct rt_wdb *output,
+    struct wmember &all, std::set<std::string> &used_names)
+{
+    std::string object_name = datablock_name(file, object);
+    if (!object_selected(options, object_name))
+	return false;
+    std::unique_ptr<ON_Brep> brep = read_nurbs_brep(file, curve,
+	object_matrix(file, object), options->scale_factor);
+    std::string name = safe_name(object_name, datablock_name(file, curve),
+	".brep", used_names);
+    return write_brep(output, all, *brep, name);
 }
 
 static size_t
@@ -1028,17 +1385,20 @@ convert_objects(const BlendFile &file, const struct gcv_opts *options,
 		    datablock_name(file, object).c_str());
 		continue;
 	    }
-	    if (data.structure->name != "Mesh") {
+	    if (data.structure->name != "Mesh" && data.structure->name != "Curve") {
 		if (reported_types.insert(data.structure->name).second)
 		    bu_log("BLEND Reader: object geometry type %s is not supported; skipping instances\n",
 			data.structure->name.c_str());
 		continue;
 	    }
 	    try {
-		if (convert_mesh_object(file, object, data, options, output, all, used_names))
+		bool converted_object = data.structure->name == "Mesh" ?
+		    convert_mesh_object(file, object, data, options, output, all, used_names) :
+		    convert_curve_object(file, object, data, options, output, all, used_names);
+		if (converted_object)
 		    ++converted;
 	    } catch (const ParseError &error) {
-		bu_log("BLEND Reader: cannot import mesh object %s: %s\n",
+		bu_log("BLEND Reader: cannot import object %s: %s\n",
 		    datablock_name(file, object).c_str(), error.what());
 	    }
 	}
@@ -1094,7 +1454,7 @@ blend_read(struct gcv_context *context, const struct gcv_opts *options,
 	    mk_freemembers(&all.l);
 	    throw ParseError("could not create the top-level all combination");
 	}
-	bu_log("BLEND Reader: converted %zu mesh object%s\n", converted,
+	bu_log("BLEND Reader: converted %zu geometry object%s\n", converted,
 	    converted == 1 ? "" : "s");
 	return 1;
     } catch (const std::exception &error) {

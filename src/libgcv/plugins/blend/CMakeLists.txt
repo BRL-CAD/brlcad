@@ -5,7 +5,7 @@ set(BLEND_SRCS
   )
 
 gcv_plugin_library(gcv-blend SHARED ${BLEND_SRCS})
-target_link_libraries(gcv-blend libgcv libwdb librt libbg libbu ZLIB::ZLIB)
+target_link_libraries(gcv-blend libgcv libwdb librt libbg libbu OPENNURBS::OPENNURBS ZLIB::ZLIB)
 set_property(TARGET gcv-blend APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
 validate_style(gcv-blend "${BLEND_SRCS}")
 plugin_setup(gcv-blend gcv)

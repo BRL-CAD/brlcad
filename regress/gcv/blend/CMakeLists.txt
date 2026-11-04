@@ -14,8 +14,8 @@ gcv_regress_util(
   "blend"
   "tetra.blend"
   DEPS "gcv;gcv-blend;blend_fixture_file"
-  EXPECTED_FILE_SIZE "456"
-  EXPECTED_FILE_SIZE_DELTA "32"
+  EXPECTED_FILE_SIZE "12144"
+  EXPECTED_FILE_SIZE_DELTA "128"
 )
 
 distclean("${BLEND_FIXTURE}")

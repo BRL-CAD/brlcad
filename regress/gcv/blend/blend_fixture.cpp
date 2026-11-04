@@ -27,9 +27,22 @@ constexpr uint64_t OBJECT_ADDRESS = 0x1000;
 constexpr uint64_t MESH_ADDRESS = 0x2000;
 constexpr uint64_t VERTEX_ADDRESS = 0x3000;
 constexpr uint64_t FACE_ADDRESS = 0x4000;
+constexpr uint64_t CURVE_OBJECT_ADDRESS = 0x5000;
+constexpr uint64_t CURVE_ADDRESS = 0x6000;
+constexpr uint64_t NURB_ADDRESS = 0x7000;
+constexpr uint64_t CONTROL_POINT_ADDRESS = 0x8000;
+constexpr uint64_t KNOT_U_ADDRESS = 0x9000;
+constexpr uint64_t KNOT_V_ADDRESS = 0xa000;
+constexpr uint64_t CURVE_NURB_ADDRESS = 0xb000;
+constexpr uint64_t CURVE_CONTROL_POINT_ADDRESS = 0xc000;
+constexpr uint64_t CURVE_KNOT_ADDRESS = 0xd000;
 constexpr size_t ID_NAME_SIZE = 66;
 constexpr uint32_t TETRAHEDRON_VERTEX_COUNT = 4;
 constexpr uint32_t TETRAHEDRON_FACE_COUNT = 4;
+constexpr uint32_t SURFACE_POINT_COUNT_U = 4;
+constexpr uint32_t SURFACE_POINT_COUNT_V = 4;
+constexpr uint32_t SURFACE_POINT_COUNT = SURFACE_POINT_COUNT_U * SURFACE_POINT_COUNT_V;
+constexpr uint32_t CURVE_POINT_COUNT = 4;
 
 enum DnaNameIndex : uint16_t {
     NAME_ID_NAME,
@@ -49,7 +62,23 @@ enum DnaNameIndex : uint16_t {
     NAME_VERTEX_1,
     NAME_VERTEX_2,
     NAME_VERTEX_3,
-    NAME_VERTEX_4
+    NAME_VERTEX_4,
+    NAME_FIRST,
+    NAME_LAST,
+    NAME_NEXT,
+    NAME_PREVIOUS,
+    NAME_TYPE,
+    NAME_POINTS_U,
+    NAME_POINTS_V,
+    NAME_ORDER_U,
+    NAME_ORDER_V,
+    NAME_FLAG_U,
+    NAME_FLAG_V,
+    NAME_KNOTS_U,
+    NAME_KNOTS_V,
+    NAME_CONTROL_POINTS,
+    NAME_HOMOGENEOUS_COORDINATE,
+    NAME_NURB_LIST
 };
 
 enum DnaTypeIndex : uint16_t {
@@ -63,7 +92,12 @@ enum DnaTypeIndex : uint16_t {
     TYPE_VERTEX,
     TYPE_FACE,
     TYPE_LOOP,
-    TYPE_POLYGON
+    TYPE_POLYGON,
+    TYPE_SHORT,
+    TYPE_LIST_BASE,
+    TYPE_CURVE,
+    TYPE_NURB,
+    TYPE_BPOINT
 };
 
 enum DnaStructureIndex : uint32_t {
@@ -72,6 +106,10 @@ enum DnaStructureIndex : uint32_t {
     STRUCTURE_MESH,
     STRUCTURE_VERTEX,
     STRUCTURE_FACE,
+    STRUCTURE_LIST_BASE,
+    STRUCTURE_CURVE,
+    STRUCTURE_NURB,
+    STRUCTURE_BPOINT,
     STRUCTURE_COUNT
 };
 
@@ -150,17 +188,21 @@ align_four(std::vector<unsigned char> &bytes)
 static std::vector<unsigned char>
 make_sdna()
 {
-    const std::array<std::string, 18> names = {
+    const std::array<std::string, 34> names = {
 	"name[66]", "_pad[2]", "id", "*data", "obmat[4][4]",
 	"totvert", "totface", "totpoly", "totloop", "*mvert",
-	"*mface", "*mpoly", "*mloop", "co[3]", "v1", "v2", "v3", "v4"
+	"*mface", "*mpoly", "*mloop", "co[3]", "v1", "v2", "v3", "v4",
+	"*first", "*last", "*next", "*prev", "type", "pntsu", "pntsv",
+	"orderu", "orderv", "flagu", "flagv", "*knotsu", "*knotsv",
+	"*bp", "vec[4]", "nurb"
     };
-    const std::array<std::string, 11> types = {
+    const std::array<std::string, 16> types = {
 	"char", "float", "int", "void", "ID", "Object", "Mesh",
-	"MVert", "MFace", "MLoop", "MPoly"
+	"MVert", "MFace", "MLoop", "MPoly", "short", "ListBase",
+	"Curve", "Nurb", "BPoint"
     };
-    const std::array<uint16_t, 11> lengths = {
-	1, 4, 4, 0, 68, 140, 116, 12, 16, 8, 12
+    const std::array<uint16_t, 16> lengths = {
+	1, 4, 4, 0, 68, 140, 116, 12, 16, 8, 12, 2, 16, 84, 58, 16
     };
 
     std::vector<unsigned char> dna;
@@ -216,16 +258,45 @@ make_sdna()
     for (uint16_t name = NAME_VERTEX_1; name <= NAME_VERTEX_4; ++name) {
 	append_sdna_field(dna, TYPE_INTEGER, static_cast<DnaNameIndex>(name));
     }
+
+    append_u16(dna, TYPE_LIST_BASE);
+    append_u16(dna, 2);
+    append_sdna_field(dna, TYPE_NURB, NAME_FIRST);
+    append_sdna_field(dna, TYPE_NURB, NAME_LAST);
+
+    append_u16(dna, TYPE_CURVE);
+    append_u16(dna, 2);
+    append_sdna_field(dna, TYPE_ID, NAME_ID);
+    append_sdna_field(dna, TYPE_LIST_BASE, NAME_NURB_LIST);
+
+    append_u16(dna, TYPE_NURB);
+    append_u16(dna, 12);
+    append_sdna_field(dna, TYPE_NURB, NAME_NEXT);
+    append_sdna_field(dna, TYPE_NURB, NAME_PREVIOUS);
+    append_sdna_field(dna, TYPE_SHORT, NAME_TYPE);
+    append_sdna_field(dna, TYPE_INTEGER, NAME_POINTS_U);
+    append_sdna_field(dna, TYPE_INTEGER, NAME_POINTS_V);
+    append_sdna_field(dna, TYPE_SHORT, NAME_ORDER_U);
+    append_sdna_field(dna, TYPE_SHORT, NAME_ORDER_V);
+    append_sdna_field(dna, TYPE_SHORT, NAME_FLAG_U);
+    append_sdna_field(dna, TYPE_SHORT, NAME_FLAG_V);
+    append_sdna_field(dna, TYPE_FLOAT, NAME_KNOTS_U);
+    append_sdna_field(dna, TYPE_FLOAT, NAME_KNOTS_V);
+    append_sdna_field(dna, TYPE_BPOINT, NAME_CONTROL_POINTS);
+
+    append_u16(dna, TYPE_BPOINT);
+    append_u16(dna, 1);
+    append_sdna_field(dna, TYPE_FLOAT, NAME_HOMOGENEOUS_COORDINATE);
     return dna;
 }
 
 static std::vector<unsigned char>
-make_object()
+make_object(const std::string &name, uint64_t data_address)
 {
     std::vector<unsigned char> object;
-    append_fixed_text(object, "OBTetrahedron", ID_NAME_SIZE);
+    append_fixed_text(object, "OB" + name, ID_NAME_SIZE);
     object.insert(object.end(), 2, 0);
-    append_u64(object, MESH_ADDRESS);
+    append_u64(object, data_address);
     const std::array<float, 16> matrix = {
 	1.0f, 0.0f, 0.0f, 0.0f,
 	0.0f, 1.0f, 0.0f, 0.0f,
@@ -235,6 +306,81 @@ make_object()
     for (float value : matrix)
 	append_float(object, value);
     return object;
+}
+
+static std::vector<unsigned char>
+make_curve()
+{
+    std::vector<unsigned char> curve;
+    append_fixed_text(curve, "CUSurface", ID_NAME_SIZE);
+    curve.insert(curve.end(), 2, 0);
+    append_u64(curve, NURB_ADDRESS);
+    append_u64(curve, CURVE_NURB_ADDRESS);
+    return curve;
+}
+
+static std::vector<unsigned char>
+make_nurb(uint64_t next, uint64_t previous, uint32_t points_u,
+    uint32_t points_v, uint16_t order_u, uint16_t order_v,
+    uint64_t knots_u, uint64_t knots_v, uint64_t control_points)
+{
+    std::vector<unsigned char> nurb;
+    append_u64(nurb, next);
+    append_u64(nurb, previous);
+    append_u16(nurb, 4);
+    append_u32(nurb, points_u);
+    append_u32(nurb, points_v);
+    append_u16(nurb, order_u);
+    append_u16(nurb, order_v);
+    append_u16(nurb, 0);
+    append_u16(nurb, 0);
+    append_u64(nurb, knots_u);
+    append_u64(nurb, knots_v);
+    append_u64(nurb, control_points);
+    return nurb;
+}
+
+static std::vector<unsigned char>
+make_curve_control_points()
+{
+    const std::array<std::array<float, 4>, CURVE_POINT_COUNT> points = {{
+	{{0.0f, 0.0f, 2.0f, 1.0f}},
+	{{1.0f, 0.0f, 3.0f, 0.75f}},
+	{{2.0f, 1.0f, 3.0f, 1.0f}},
+	{{3.0f, 1.0f, 2.0f, 1.0f}}
+    }};
+    std::vector<unsigned char> result;
+    for (const auto &point : points) {
+	for (float value : point)
+	    append_float(result, value);
+    }
+    return result;
+}
+
+static std::vector<unsigned char>
+make_control_points()
+{
+    std::vector<unsigned char> points;
+    for (uint32_t v = 0; v < SURFACE_POINT_COUNT_V; ++v) {
+	for (uint32_t u = 0; u < SURFACE_POINT_COUNT_U; ++u) {
+	    append_float(points, static_cast<float>(u));
+	    append_float(points, static_cast<float>(v));
+	    append_float(points, (u == 1 || u == 2) && (v == 1 || v == 2) ? 1.0f : 0.0f);
+	    append_float(points, u == 1 && v == 1 ? 0.5f : 1.0f);
+	}
+    }
+    return points;
+}
+
+static std::vector<unsigned char>
+make_knots()
+{
+    const std::array<float, 7> values = {{0.0f, 0.0f, 0.0f, 0.5f,
+	1.0f, 1.0f, 1.0f}};
+    std::vector<unsigned char> knots;
+    for (float value : values)
+	append_float(knots, value);
+    return knots;
 }
 
 static std::vector<unsigned char>
@@ -293,12 +439,30 @@ make_fixture()
 {
     std::vector<unsigned char> file;
     append_text(file, "BLENDER-v300");
-    append_block(file, "OB", OBJECT_ADDRESS, STRUCTURE_OBJECT, 1, make_object());
+    append_block(file, "OB", OBJECT_ADDRESS, STRUCTURE_OBJECT, 1,
+	make_object("Tetrahedron", MESH_ADDRESS));
     append_block(file, "ME", MESH_ADDRESS, STRUCTURE_MESH, 1, make_mesh());
     append_block(file, "DATA", VERTEX_ADDRESS, STRUCTURE_VERTEX,
 	TETRAHEDRON_VERTEX_COUNT, make_vertices());
     append_block(file, "DATA", FACE_ADDRESS, STRUCTURE_FACE,
 	TETRAHEDRON_FACE_COUNT, make_faces());
+    append_block(file, "OB", CURVE_OBJECT_ADDRESS, STRUCTURE_OBJECT, 1,
+	make_object("NurbsSurface", CURVE_ADDRESS));
+    append_block(file, "CU", CURVE_ADDRESS, STRUCTURE_CURVE, 1, make_curve());
+    append_block(file, "DATA", NURB_ADDRESS, STRUCTURE_NURB, 1,
+	make_nurb(CURVE_NURB_ADDRESS, 0, SURFACE_POINT_COUNT_U,
+	    SURFACE_POINT_COUNT_V, 3, 3, KNOT_U_ADDRESS, KNOT_V_ADDRESS,
+	    CONTROL_POINT_ADDRESS));
+    append_block(file, "DATA", CURVE_NURB_ADDRESS, STRUCTURE_NURB, 1,
+	make_nurb(0, NURB_ADDRESS, CURVE_POINT_COUNT, 1, 3, 0,
+	    CURVE_KNOT_ADDRESS, 0, CURVE_CONTROL_POINT_ADDRESS));
+    append_block(file, "DATA", CONTROL_POINT_ADDRESS, STRUCTURE_BPOINT,
+	SURFACE_POINT_COUNT, make_control_points());
+    append_block(file, "DATA", KNOT_U_ADDRESS, STRUCTURE_ID, 7, make_knots());
+    append_block(file, "DATA", KNOT_V_ADDRESS, STRUCTURE_ID, 7, make_knots());
+    append_block(file, "DATA", CURVE_CONTROL_POINT_ADDRESS, STRUCTURE_BPOINT,
+	CURVE_POINT_COUNT, make_curve_control_points());
+    append_block(file, "DATA", CURVE_KNOT_ADDRESS, STRUCTURE_ID, 7, make_knots());
     append_block(file, "DNA1", 0, STRUCTURE_ID, 1, make_sdna());
     append_block(file, "ENDB", 0, 0, 0, {});
     return file;
