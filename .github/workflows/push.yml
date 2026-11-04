@@ -1,5 +1,5 @@
 # This file defines Continuous Integration (CI) tests for BRL-CAD using the
-# Github Actions framework that are executed each time a commit is pushed.
+# Github Actions framework that run on pushes to main or manual requests.
 # Currently it defines configurations for Windows, Linux and OSX.
 #
 # For more information about available platforms for testing, see:
@@ -18,6 +18,8 @@ name: Per-push
 
 on:
   push:
+    branches: [main]
+  workflow_dispatch:
 
 jobs:
 
@@ -28,7 +30,6 @@ jobs:
       fail-fast: true
     env:
       DEBIAN_FRONTEND: noninteractive
-    if: github.event_name == 'push'
     steps:
       - name: Setup - CMake
         uses: lukka/get-cmake@latest
@@ -100,7 +101,6 @@ jobs:
       fail-fast: true
     env:
       DEBIAN_FRONTEND: noninteractive
-    if: github.event_name == 'push'
     steps:
       - name: Setup - CMake
         uses: lukka/get-cmake@latest
@@ -158,7 +158,6 @@ jobs:
       fail-fast: true
     env:
       DEBIAN_FRONTEND: noninteractive
-    if: github.event_name == 'push'
     steps:
       - name: Setup - CMake
         uses: lukka/get-cmake@latest
@@ -205,7 +204,6 @@ jobs:
     runs-on: windows-2025
     strategy:
       fail-fast: true
-    if: github.event_name == 'push'
     steps:
       - name: Setup - CMake
         uses: lukka/get-cmake@latest
@@ -275,7 +273,6 @@ jobs:
     runs-on: windows-2025
     strategy:
       fail-fast: true
-    if: github.event_name == 'push'
     steps:
       - name: Setup - CMake
         uses: lukka/get-cmake@latest

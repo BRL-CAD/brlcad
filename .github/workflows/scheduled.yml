@@ -5,15 +5,14 @@
 #
 # Tests here are intended to test more expensive integrations and longer
 # builds than the ones targeted at per-commit feedback.  The tradeoff is
-# that a failure in these tests might be cause by any commit within a
-# 24 hour block of time, so the developer will need to track down the
-# specifics themselves.
+# that a failure in these tests might be caused by any commit within a
+# week, so the developer will need to track down the specifics themselves.
 
 name: Scheduled
 
 on:
   schedule:
-    - cron: '0 3 * * *' # daily at 03:00 UTC
+    - cron: '0 3 * * 0' # Sundays at 03:00 UTC
   workflow_dispatch:
 
 jobs:
@@ -230,7 +229,7 @@ jobs:
       fail-fast: true
     env:
       DEBIAN_FRONTEND: noninteractive
-    if: ${{ !cancelled() && github.ref == 'refs/heads/main' }}
+    if: ${{ !cancelled() && (github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch') }}
     steps:
       - name: Setup - CMake
         uses: lukka/get-cmake@latest
@@ -300,7 +299,7 @@ jobs:
       fail-fast: true
     env:
       DEBIAN_FRONTEND: noninteractive
-    if: ${{ !cancelled() && github.ref == 'refs/heads/main' }}
+    if: ${{ !cancelled() && (github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch') }}
     steps:
       - name: Setup - CMake
         uses: lukka/get-cmake@latest

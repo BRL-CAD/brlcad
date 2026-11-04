@@ -9,7 +9,7 @@ name: Distcheck
 on:
   workflow_dispatch:
   schedule:
-    - cron: '30 3 * * 5'
+    - cron: '30 3 * * 0' # Every Sunday 03:30 UTC
 
 jobs:
   bext:
@@ -57,7 +57,7 @@ jobs:
     needs: [bext]
     env:
       DEBIAN_FRONTEND: noninteractive
-    if: ${{ !cancelled() && github.ref == 'refs/heads/main' }}
+    if: ${{ !cancelled() && (github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch') }}
     steps:
       - name: Setup - CMake
         uses: lukka/get-cmake@latest
@@ -96,7 +96,7 @@ jobs:
     needs: [bext]
     env:
       DEBIAN_FRONTEND: noninteractive
-    if: ${{ !cancelled() && github.ref == 'refs/heads/main' }}
+    if: ${{ !cancelled() && (github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch') }}
     steps:
       - name: Setup - CMake
         uses: lukka/get-cmake@latest
@@ -135,7 +135,7 @@ jobs:
     needs: [bext]
     env:
       DEBIAN_FRONTEND: noninteractive
-    if: ${{ !cancelled() && github.ref == 'refs/heads/main' }}
+    if: ${{ !cancelled() && (github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch') }}
     steps:
       - name: Setup - CMake
         uses: lukka/get-cmake@latest
@@ -174,7 +174,7 @@ jobs:
     needs: [bext]
     env:
       DEBIAN_FRONTEND: noninteractive
-    if: ${{ !cancelled() && github.ref == 'refs/heads/main' }}
+    if: ${{ !cancelled() && (github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch') }}
     steps:
       - name: Setup - CMake
         uses: lukka/get-cmake@latest
@@ -213,7 +213,7 @@ jobs:
     needs: [bext]
     env:
       DEBIAN_FRONTEND: noninteractive
-    if: ${{ !cancelled() && github.ref == 'refs/heads/main' }}
+    if: ${{ !cancelled() && (github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch') }}
     steps:
       - name: Setup - CMake
         uses: lukka/get-cmake@latest
@@ -252,7 +252,7 @@ jobs:
     needs: [distcheck-default_build_type]
     env:
       DEBIAN_FRONTEND: noninteractive
-    if: ${{ !cancelled() && github.ref == 'refs/heads/main' }}
+    if: ${{ !cancelled() && (github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch') }}
     steps:
       - name: Setup - CMake
         uses: lukka/get-cmake@latest
@@ -291,7 +291,7 @@ jobs:
     needs: [distcheck-debug]
     env:
       DEBIAN_FRONTEND: noninteractive
-    if: ${{ !cancelled() && github.ref == 'refs/heads/main' }}
+    if: ${{ !cancelled() && (github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch') }}
     steps:
       - name: Setup - CMake
         uses: lukka/get-cmake@latest
@@ -330,7 +330,7 @@ jobs:
     needs: [distcheck-release]
     env:
       DEBIAN_FRONTEND: noninteractive
-    if: ${{ !cancelled() && github.ref == 'refs/heads/main' }}
+    if: ${{ !cancelled() && (github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch') }}
     steps:
       - name: Setup - CMake
         uses: lukka/get-cmake@latest
@@ -369,7 +369,7 @@ jobs:
     needs: [distcheck-no_unity_debug]
     env:
       DEBIAN_FRONTEND: noninteractive
-    if: ${{ !cancelled() && github.ref == 'refs/heads/main' }}
+    if: ${{ !cancelled() && (github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch') }}
     steps:
       - name: Setup - CMake
         uses: lukka/get-cmake@latest
@@ -408,7 +408,7 @@ jobs:
     needs: [distcheck-no_unity_release]
     env:
       DEBIAN_FRONTEND: noninteractive
-    if: ${{ !cancelled() && github.ref == 'refs/heads/main' }}
+    if: ${{ !cancelled() && (github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch') }}
     steps:
       - name: Setup - CMake
         uses: lukka/get-cmake@latest
@@ -447,7 +447,7 @@ jobs:
     needs: [distcheck-enableall_debug]
     env:
       DEBIAN_FRONTEND: noninteractive
-    if: ${{ !cancelled() && github.ref == 'refs/heads/main' }}
+    if: ${{ !cancelled() && (github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch') }}
     steps:
       - name: Setup - CMake
         uses: lukka/get-cmake@latest
@@ -486,7 +486,7 @@ jobs:
     needs: [distcheck-enableall_release]
     env:
       DEBIAN_FRONTEND: noninteractive
-    if: ${{ !cancelled() && github.ref == 'refs/heads/main' }}
+    if: ${{ !cancelled() && (github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch') }}
     steps:
       - name: Setup - CMake
         uses: lukka/get-cmake@latest
@@ -525,7 +525,7 @@ jobs:
     needs: [distcheck-prepared_debug]
     env:
       DEBIAN_FRONTEND: noninteractive
-    if: ${{ !cancelled() && github.ref == 'refs/heads/main' }}
+    if: ${{ !cancelled() && (github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch') }}
     steps:
       - name: Setup - CMake
         uses: lukka/get-cmake@latest
@@ -564,7 +564,7 @@ jobs:
     needs: [distcheck-prepared_release]
     env:
       DEBIAN_FRONTEND: noninteractive
-    if: ${{ !cancelled() && github.ref == 'refs/heads/main' }}
+    if: ${{ !cancelled() && (github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch') }}
     steps:
       - name: Setup - CMake
         uses: lukka/get-cmake@latest
@@ -603,7 +603,7 @@ jobs:
     needs: [distcheck-no_tcl]
     env:
       DEBIAN_FRONTEND: noninteractive
-    if: ${{ !cancelled() && github.ref == 'refs/heads/main' }}
+    if: ${{ !cancelled() && (github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch') }}
     steps:
       - name: Setup - CMake
         uses: lukka/get-cmake@latest
