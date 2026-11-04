@@ -40,6 +40,13 @@ if(BRLCAD_EXTRADOCS)
   brlcad_add_test(NAME brlman-console-output
     COMMAND ${CMAKE_COMMAND} -DBRLMAN=$<TARGET_FILE:brlman>
       -P ${CMAKE_CURRENT_SOURCE_DIR}/console_test.cmake)
+  if(TEST brlman-console-output)
+    # The console test reads the generated manual page at runtime.
+    add_custom_target(brlman-console-test-data
+      DEPENDS "${PROJECT_BINARY_DIR}/${DOC_DIR}/html/man1/brlman.html")
+    add_dependencies(unit brlman-console-test-data)
+    add_dependencies(check brlman-console-test-data)
+  endif()
 endif()
 if(NOT BRLCAD_ENABLE_QT AND TARGET libtclcad AND TK_LIBRARY)
   set(reflow_test_command ${TCL_TCLSH} "${CMAKE_CURRENT_SOURCE_DIR}/reflow_test.tcl"
