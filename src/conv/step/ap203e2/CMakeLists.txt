@@ -272,35 +272,9 @@ set(
   ../step-g/step-g.cpp
 )
 
-set(
-  ap203e2g_LIBS
-  libwdb
-  librt
-  libbu
-  libbrep
-  ${ap203e2g_SCHEMA_BINDINGS_TARGET}
-  ${STEPCODE_UTILS_LIBRARY}
-  ${STEPCODE_EDITOR_LIBRARY}
-  ${STEPCODE_DAI_LIBRARY}
-  ${STEPCODE_CORE_LIBRARY}
-  OPENNURBS::OPENNURBS
-)
-
 if(STEPCODE_LAZY_FOUND)
   list(APPEND ap203e2g_SOURCES ../STEPLazySession.cpp)
-  list(APPEND ap203e2g_LIBS ${STEPCODE_LAZY_LIBRARY})
 endif()
-
-set(
-  AP203_INCLUDE_DIRS
-  ${CMAKE_CURRENT_BINARY_DIR}
-  ${ap203e2g_SCHEMA_OUT_DIR}
-  ${CMAKE_CURRENT_SOURCE_DIR}
-  ${CMAKE_CURRENT_SOURCE_DIR}/..
-  ${CMAKE_CURRENT_SOURCE_DIR}/../step-g
-  ${STEPCODE_INCLUDE_DIRS}
-  ${CMAKE_SOURCE_DIR}/src/libbrep # for PullbackCurve.h
-)
 
 if(BRLCAD_ENABLE_STEP)
   step_use_import_common_objects(ap203e2g_TARGET_SOURCES ap203e2g_SOURCES)

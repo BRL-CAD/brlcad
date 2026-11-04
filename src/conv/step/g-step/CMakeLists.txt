@@ -33,20 +33,6 @@ cmakefiles(${gstep_SOURCES})
 
 if(BRLCAD_ENABLE_STEP)
   step_record_schema_sources(AP203 EXPORT gstep_SOURCES)
-  set(
-    gstep_LIBS
-    libwdb
-    librt
-    libbrep
-    libbn
-    libbu
-    ${gstep_SCHEMA_BINDINGS_TARGET}
-    ${STEPCODE_UTILS_LIBRARY}
-    ${STEPCODE_EDITOR_LIBRARY}
-    ${STEPCODE_DAI_LIBRARY}
-    ${STEPCODE_CORE_LIBRARY}
-    OPENNURBS::OPENNURBS
-  )
 
   set(
     gstep_INCLUDE_DIRS

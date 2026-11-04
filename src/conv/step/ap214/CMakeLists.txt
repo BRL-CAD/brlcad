@@ -275,23 +275,8 @@ set(
   ../step-g/VolumeUnit.cpp
 )
 
-set(
-  ap214g_LIBS
-  libwdb
-  librt
-  libbu
-  libbrep
-  ${ap214g_SCHEMA_BINDINGS_TARGET}
-  ${STEPCODE_UTILS_LIBRARY}
-  ${STEPCODE_EDITOR_LIBRARY}
-  ${STEPCODE_DAI_LIBRARY}
-  ${STEPCODE_CORE_LIBRARY}
-  OPENNURBS::OPENNURBS
-)
-
 if(STEPCODE_LAZY_FOUND)
   list(APPEND ap214g_SOURCES ../STEPLazySession.cpp)
-  list(APPEND ap214g_LIBS ${STEPCODE_LAZY_LIBRARY})
 endif()
 
 set(

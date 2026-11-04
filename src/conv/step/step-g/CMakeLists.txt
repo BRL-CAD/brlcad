@@ -484,24 +484,6 @@ cmakefiles(${stepg_HDRS})
 
 if(BRLCAD_ENABLE_STEP)
   set(
-    stepg_LIBS
-    libwdb
-    librt
-    libbu
-    libbrep
-    ${stepg_SCHEMA_BINDINGS_TARGET}
-    ${STEPCODE_UTILS_LIBRARY}
-    ${STEPCODE_EDITOR_LIBRARY}
-    ${STEPCODE_DAI_LIBRARY}
-    ${STEPCODE_CORE_LIBRARY}
-    OPENNURBS::OPENNURBS
-  )
-
-  if(STEPCODE_LAZY_FOUND)
-    list(APPEND stepg_LIBS ${STEPCODE_LAZY_LIBRARY})
-  endif()
-
-  set(
     AP203_INCLUDE_DIRS
     ${CMAKE_CURRENT_BINARY_DIR}
     ${CMAKE_CURRENT_SOURCE_DIR}
