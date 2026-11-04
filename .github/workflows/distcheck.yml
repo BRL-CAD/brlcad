@@ -9,7 +9,7 @@ name: Distcheck
 on:
   workflow_dispatch:
   schedule:
-    - cron: '30 3 * * 0' # Every Sunday 03:30 UTC
+    - cron: '30 3 * * 0' # Every Sunday at 03:30 UTC
 
 jobs:
   bext:
