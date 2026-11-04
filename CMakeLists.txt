@@ -2620,7 +2620,7 @@ if(MSVC)
   # Studio in all situations:
   # https://learn.microsoft.com/en-us/cpp/build/reference/utf-8-set-source-and-executable-character-sets-to-utf-8
   set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /utf-8")
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /utf-8")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /utf-8 /bigobj")
 
   # Before we finalize, set some specific global linker flags
   set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /STACK:10000000 /NOLOGO")
