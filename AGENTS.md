@@ -21,7 +21,7 @@ Review your changes for code smells, duplicated logic, hardcoded values, overly 
 
 ## Git
 
-Never commit without permission (ask every time).  Never push to remote.  Never use `codex`, `chatgpt`, `openai`, `gemini`, `antigravity`, `copilot`, `claude`, `llm`, `ai`, or similar terms in branch names, tag names, commits, PRs, comments, and other metadata.  Do not add generated-by notices or otherwise indicate authorship unless user explicitly requests.  Do not include specific machine information - full file system paths, machine names, IP addresses, or other identifiable information in commit messages, code, comments or documentation.
+Never commit without permission (ask every time).  Never push to remote.  Never use `codex`, `chatgpt`, `openai`, `gemini`, `antigravity`, `copilot`, `claude`, `llm`, `ai`, or similar terms in branch names, tag names, commits, PRs, comments, and other metadata.  Do not add generated-by notices or otherwise indicate authorship unless user explicitly requests.  Line wrap commit messages at 72 characters.  Do not include specific machine information - full file system paths, machine names, IP addresses, or other identifiable information in commit messages, code, comments or documentation.
 
 ## Repository Coding Conventions
 
