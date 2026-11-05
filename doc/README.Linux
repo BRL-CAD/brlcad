@@ -7,6 +7,7 @@ Linux distributions.
 Table of Contents
 -----------------
 Parallel Builds
+Intel oneAPI (IntelLLVM)
 64-bit Compile
 32-bit Compile
 Arch Linux
@@ -19,6 +20,73 @@ BRL-CAD compilation can take advantage of multiple CPUs.  With
 Make based builds, this is done using the "-j" flag - e.g. a
 six core machine will build faster using "make -j6" to utilize
 all cores.
+
+
+Intel oneAPI (IntelLLVM)
+-----------------------
+
+IntelLLVM 2026.2 has been validated with a full Release build, including
+Tcl/Tk, Qt, GDAL, OpenVDB, and documentation. Use a separate build tree
+from GCC or Clang builds, and build bext with the same Intel toolchain.
+
+Initialize oneAPI in each Bash shell before configuring, building,
+testing, or running the applications:
+
+  source "$oneapi_root/setvars.sh"
+  export CC=icx
+  export CXX=icpx
+
+Set oneapi_root to the oneAPI installation directory. Native GCC/G++
+development files are also required. If the Intel driver selects a
+cross compiler's GNU runtime, use the native-GCC-selection wrappers
+described in bext's INSTALL.md, under "Intel oneAPI on Linux". Retain
+those absolute CC and CXX wrapper paths for both projects. Passing GNU
+selection flags only through top-level CMake flags is insufficient for
+some nested bext builds.
+
+The following example runs from the BRL-CAD source directory and assumes
+that a sibling bext checkout has completed its .build_intel build:
+
+  bext_build="$(cd ../bext/.build_intel && pwd)"
+  cmake -S . -B .build_intel -G Ninja \
+    -DCMAKE_BUILD_TYPE=Release \
+    -DCMAKE_INSTALL_PREFIX="$PWD/.build_intel/install" \
+    -DCMAKE_C_COMPILER="$CC" -DCMAKE_CXX_COMPILER="$CXX" \
+    -DBRLCAD_EXT_DIR="$bext_build" -DBRLCAD_BUNDLED_LIBS=BUNDLED \
+    -DBRLCAD_ENABLE_TCL=ON -DBRLCAD_ENABLE_QT=ON \
+    -DBRLCAD_ENABLE_GDAL=ON -DBRLCAD_ENABLE_OPENVDB=ON \
+    -DBRLCAD_EXTRADOCS=ON
+  cmake --build .build_intel --parallel 4
+
+BRL-CAD requests -fno-fast-math when supported. Keep precise arithmetic
+enabled: Intel's default reassociation and reciprocal approximations
+can alter geometric calculations and image quantization at ordinary
+optimization levels. The build retains optimization and strict warnings.
+
+For headless correctness testing, install Xvfb and xdotool and use:
+
+  xvfb-run -a -s '-screen 0 1280x1024x24' \
+    env LIBGL_ALWAYS_SOFTWARE=1 \
+    ctest --test-dir .build_intel --parallel 4 --output-on-failure \
+      -E '^NOTE:' -LE '^Benchmark$'
+
+The NOTE test is intentionally failing; the Benchmark label selects
+performance measurement rather than correctness testing. Large-database
+tests may report a memory skip: the 5 GiB case currently estimates about
+25 GiB of live title copies.
+
+Install only after the build and tests have completed:
+
+  cmake --install .build_intel
+
+The oneAPI environment is also required when running installed binaries:
+
+  .build_intel/install/bin/rt --help
+
+The install does not bundle the Intel shared runtimes. Reinitialize
+oneAPI before launching tools such as mged, rt, art, and qged from a new
+shell. Downstream projects should use .build_intel/install as their
+BRL-CAD prefix; leave the bext install tree unchanged.
 
 
 64-bit Compile (on a platform that defaults to 32-bit)
