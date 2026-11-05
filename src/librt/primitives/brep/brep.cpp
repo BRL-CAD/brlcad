@@ -674,8 +674,28 @@ utah_pushBack(const BBNode* sbv, ON_2dPoint &uv)
 }
 
 
+static double
+utah_root_tolerance(const ON_Ray &ray, const ON_3dPoint &surface_point,
+    double model_tolerance)
+{
+    /* The Newton residual is the subtraction of two world-coordinate plane
+     * evaluations.  A fixed absolute threshold can be smaller than the
+     * representable cancellation error for large-coordinate models. */
+    const double coordinate_scale = std::max({1.0,
+	std::fabs(ray.m_origin.x), std::fabs(ray.m_origin.y),
+	std::fabs(ray.m_origin.z), std::fabs(surface_point.x),
+	std::fabs(surface_point.y), std::fabs(surface_point.z)});
+    const double roundoff_tolerance = 64.0 *
+	std::numeric_limits<double>::epsilon() * coordinate_scale;
+    return std::max({1.0e-7, model_tolerance, roundoff_tolerance});
+}
+
+
 static int
-utah_newton_solver(const BBNode* sbv, const ON_Surface* surf, const ON_Ray& r, ON_2dPoint* ouv, double* t, ON_3dVector* N, bool& converged, ON_2dPoint* suv, const int count, const int iu, const int iv)
+utah_newton_solver(const BBNode* sbv, const ON_Surface* surf, const ON_Ray& r,
+    ON_2dPoint* ouv, double* t, ON_3dVector* N, bool& converged,
+    ON_2dPoint* suv, const int count, const int iu, const int iv,
+    double model_tolerance)
 {
     int i = 0;
     int intersects = 0;
@@ -809,13 +829,7 @@ utah_newton_solver(const BBNode* sbv, const ON_Surface* surf, const ON_Ray& r, O
 	    }
 	}
 
-/* if we get this close to a root, good enough.  No particular
- * significance other than it's below our typical distance tol and
- * above double precision tol.
- */
-#define ROOT_TOL 1.E-7
-
-	if (rootdist < ROOT_TOL) {
+	if (rootdist < utah_root_tolerance(r, S, model_tolerance)) {
 	    int ulow = (sbv->m_u.m_t[0] <= sbv->m_u.m_t[1]) ? 0 : 1;
 	    int vlow = (sbv->m_v.m_t[0] <= sbv->m_v.m_t[1]) ? 0 : 1;
 	    if ((sbv->m_u.m_t[ulow] - VUNITIZE_TOL < uv.x && uv.x < sbv->m_u.m_t[1 - ulow] + VUNITIZE_TOL) &&
@@ -845,7 +859,9 @@ utah_newton_solver(const BBNode* sbv, const ON_Surface* surf, const ON_Ray& r, O
 
 
 static int
-utah_newton_4corner_solver(const BBNode* sbv, const ON_Surface* surf, const ON_Ray& r, ON_2dPoint* ouv, double* t, ON_3dVector* N, bool& converged, int docorners)
+utah_newton_4corner_solver(const BBNode* sbv, const ON_Surface* surf,
+    const ON_Ray& r, ON_2dPoint* ouv, double* t, ON_3dVector* N,
+    bool& converged, int docorners, double model_tolerance)
 {
     int intersects = 0;
     converged = false;
@@ -855,7 +871,8 @@ utah_newton_4corner_solver(const BBNode* sbv, const ON_Surface* surf, const ON_R
 		ON_2dPoint uv;
 		uv.x = sbv->m_u[iu];
 		uv.y = sbv->m_v[iv];
-		intersects += utah_newton_solver(sbv, surf, r, ouv, t, N, converged, &uv, intersects, iu, iv);
+		intersects += utah_newton_solver(sbv, surf, r, ouv, t, N,
+		    converged, &uv, intersects, iu, iv, model_tolerance);
 	    }
 	}
     }
@@ -863,13 +880,16 @@ utah_newton_4corner_solver(const BBNode* sbv, const ON_Surface* surf, const ON_R
     ON_2dPoint uv;
     uv.x = sbv->m_u.Mid();
     uv.y = sbv->m_v.Mid();
-    intersects += utah_newton_solver(sbv, surf, r, ouv, t, N, converged, &uv, intersects, -1, -1);
+    intersects += utah_newton_solver(sbv, surf, r, ouv, t, N, converged,
+	&uv, intersects, -1, -1, model_tolerance);
     return intersects;
 }
 
 
 static int
-utah_brep_intersect(const BBNode* sbv, const ON_BrepFace* face, const ON_Surface* surf, pt2d_t& uv, const ON_Ray& ray, std::list<brep_hit>& hits)
+utah_brep_intersect(const BBNode* sbv, const ON_BrepFace* face,
+    const ON_Surface* surf, pt2d_t& uv, const ON_Ray& ray,
+    std::list<brep_hit>& hits, double model_tolerance)
 {
 #define MAX_BREP_SUBDIVISION_INTERSECTS 5
     ON_3dVector N[MAX_BREP_SUBDIVISION_INTERSECTS];
@@ -882,9 +902,11 @@ utah_brep_intersect(const BBNode* sbv, const ON_BrepFace* face, const ON_Surface
     double grazing_float = sbv->m_normal * ray.m_dir;
 
     if (fabs(grazing_float) < 0.2) {
-	numhits = utah_newton_4corner_solver(sbv, surf, ray, ouv, t, N, converged, 1);
+	numhits = utah_newton_4corner_solver(sbv, surf, ray, ouv, t, N,
+	    converged, 1, model_tolerance);
     } else {
-	numhits = utah_newton_4corner_solver(sbv, surf, ray, ouv, t, N, converged, 0);
+	numhits = utah_newton_4corner_solver(sbv, surf, ray, ouv, t, N,
+	    converged, 0, model_tolerance);
     }
 
     if (converged) {
@@ -1101,12 +1123,15 @@ rt_brep_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct
     // find all the hits (XXX very inefficient right now!)
     std::list<brep_hit> hits;
     MissList misses;
+    const double model_tolerance = (ap != NULL && ap->a_rt_i != NULL &&
+	ap->a_rt_i->rti_tol.dist > 0.0) ? ap->a_rt_i->rti_tol.dist :
+	BN_TOL_DIST;
     for (std::list<const BBNode*>::const_iterator i = inters.begin(); i != inters.end(); i++) {
 	const BBNode* sbv = (*i);
 	const ON_BrepFace* f = &sbv->get_face();
 	const ON_Surface* surf = f->SurfaceOf();
 	pt2d_t uv = {sbv->m_u.Mid(), sbv->m_v.Mid()};
-	utah_brep_intersect(sbv, f, surf, uv, r, hits);
+	utah_brep_intersect(sbv, f, surf, uv, r, hits, model_tolerance);
     }
 
     // sort the hits
@@ -3405,6 +3430,7 @@ rt_brep_boolean(struct rt_db_internal *out, const struct rt_db_internal *ip1, co
 {
     RT_CK_DB_INTERNAL(ip1);
     RT_CK_DB_INTERNAL(ip2);
+    RT_DB_INTERNAL_INIT(out);
     struct rt_brep_internal *bip1, *bip2;
     bip1 = (struct rt_brep_internal *)ip1->idb_ptr;
     bip2 = (struct rt_brep_internal *)ip2->idb_ptr;
@@ -3428,21 +3454,23 @@ rt_brep_boolean(struct rt_db_internal *out, const struct rt_db_internal *ip1, co
 	    operation_type = BOOLEAN_INTERSECT;
 	    break;
 	default:
-	    return -1;
+	    return BREP_BOOLEAN_UNSUPPORTED;
     }
 
     brep_out = ON_Brep::New();
 
-    int ret;
-    if ((ret = ON_Boolean(brep_out, brep1, brep2, operation_type)) < 0)
+
+    int ret = ON_Boolean(brep_out, brep1, brep2, operation_type);
+    if (ret != BREP_BOOLEAN_SUCCESS) {
+	delete brep_out;
 	return ret;
+	}
 
     // make the final rt_db_internal
     struct rt_brep_internal *bip_out;
     BU_ALLOC(bip_out, struct rt_brep_internal);
     bip_out->magic = RT_BREP_INTERNAL_MAGIC;
     bip_out->brep = brep_out;
-    RT_DB_INTERNAL_INIT(out);
     out->idb_ptr = (void *)bip_out;
     out->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     out->idb_meth = &OBJ[ID_BREP];

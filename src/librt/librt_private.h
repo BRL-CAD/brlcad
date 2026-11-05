@@ -38,6 +38,10 @@
 #include "rt/db4.h"
 #include "raytrace.h"
 
+#ifdef __cplusplus
+class ON_Brep;
+#endif
+
 /* Ramanujan approximation for the circumference of an ellipse with semi-axes a, b.
  * Formula: pi*(a+b) * [1 + 3*h / (10 + sqrt(4 - 3*h))]  where h = ((a-b)/(a+b))^2
  * Note: only the 3*h term is divided by (10+sqrt(...)), NOT the whole (1+3*h). */
@@ -64,6 +68,46 @@
 
 
 __BEGIN_DECLS
+
+/* Relative sampling scales used by tolerance-controlled faceted B-Rep
+ * converters.  These values are also exposed as conversion metadata, so keep
+ * the converter and reporting paths tied to the same definitions. */
+#define RT_HRT_BREP_RELATIVE_TOLERANCE 0.001
+#define RT_METABALL_BREP_RELATIVE_TOLERANCE 0.0025
+
+#ifdef __cplusplus
+/* Convert an ELL while reporting the maximum radial displacement when two
+ * machine-equal axes are represented by one spheroid radius. */
+void _rt_ell_brep_with_info(ON_Brep **brep,
+	const struct rt_db_internal *internal, const struct bn_tol *tol,
+	fastf_t *maximum_approximation);
+
+/* Convert a PIPE while reporting the largest model-space displacement of any
+ * nonzero bend omitted because its B-Rep boundaries are tolerance-coincident.
+ * This is internal conversion metadata, not a certified Hausdorff bound. */
+void _rt_pipe_brep_with_info(ON_Brep **brep,
+	const struct rt_db_internal *internal, const struct bn_tol *tol,
+	fastf_t *maximum_approximation);
+#endif
+
+/* ARS internal curves carry an extra, non-counted copy of vertex zero at
+ * index pts_per_curve.  Validate that invariant and the tessellator's
+ * existing no-backtracking requirement before constructing NMG topology. */
+int _rt_ars_tessellable(const struct rt_ars_internal *ars,
+	const struct bn_tol *tol, int log_diagnostics);
+
+/* The direct DSP B-Rep converter constructs a Bezier surface whose order is
+ * proportional to the source raster dimensions.  Keep its deterministic
+ * resource ceiling shared with conversion preflight. */
+#define RT_DSP_BREP_MAX_CONTROL_POINTS 256U
+
+/* VOL-to-B-Rep conversion first creates one NMG face for each maximal
+ * coherent grid-aligned boundary patch.  Bound that intermediate topology
+ * before allocating it; nmg_model_fuse can otherwise consume unbounded time
+ * and memory on detailed voxel data. */
+#define RT_VOL_BREP_MAX_INITIAL_PATCHES 100000UL
+int _rt_vol_brep_patch_count(const struct rt_vol_internal *vol,
+	size_t limit, size_t *patch_count);
 
 struct db_i_internal {
     uint32_t dbi_magic;

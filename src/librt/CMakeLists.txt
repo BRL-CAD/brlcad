@@ -99,6 +99,7 @@ set(
   cmd.c
   cyclic.c
   db_glob.c
+  comb/brep_boolean_worker.cpp
   comb/comb.c
   comb/comb_brep.cpp
   comb/comb_mirror.c
@@ -213,6 +214,7 @@ set(
   primitives/hf/hf.c
   primitives/hf/hf_brep.cpp
   primitives/hrt/hrt.c
+  primitives/hrt/hrt_brep.cpp
   primitives/hrt/hrt_mirror.c
   primitives/hyp/hyp.c
   primitives/hyp/hyp_brep.cpp
@@ -221,6 +223,7 @@ set(
   primitives/joint/joint_brep.cpp
   primitives/joint/joint_mirror.c
   primitives/metaball/metaball.c
+  primitives/metaball/metaball_brep.cpp
   primitives/metaball/metaball_tri.c
   primitives/mirror.c
   primitives/nmg/nmg.c
@@ -475,6 +478,7 @@ brlcad_addlib(librt "${LIBRT_SOURCES}" "${RT_INCLUDE_DIRS}" "${RT_LOCAL_INCLUDE_
   #   subdirectory unsafe to batch.
   UNITY_BUILD_SKIP
     rt_init.cpp
+    comb/brep_boolean_worker.cpp
     search.cpp
     search_old.cpp
     primitives/annot/annot.c
@@ -547,6 +551,16 @@ if(MUSL_LD)
   )
   set_target_properties(librt PROPERTIES OUTPUT_NAME "librt_")
 endif(MUSL_LD)
+
+# B-Rep evaluation is intentionally hosted out of process.  The reusable
+# protocol, pool, and server implementation live in librt; this executable is
+# only the persistent worker entry point.
+brlcad_addexec(
+  brep_boolean_worker
+  comb/brep_boolean_worker_main.cpp
+  "librt;libbu"
+  NO_MAN
+)
 
 # The following is build code for test applications used during
 # development

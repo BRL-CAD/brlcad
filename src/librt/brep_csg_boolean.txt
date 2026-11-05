@@ -1,8 +1,9 @@
 B-REP TO CSG IMPLICIT CONVERSION AND SUPPORTING BOOLEAN GEOMETRY
 Research findings and implementation plan
 
-Status: design and planning document; no implementation has begun
-Date: 2026-08-01
+Status: B-Rep-to-CSG design remains planned; supporting CSG-to-B-Rep
+        hardening and corpus validation are implemented
+Updated: 2026-10-07
 
 
 1. PURPOSE AND SCOPE
@@ -243,7 +244,7 @@ db/m35.asc, db/havoc.asc, db/terra.asc, db/goliath.asc, and db/moss.asc are
 available as broader real-model inputs.  They are valuable stress tests but
 must not replace small, generated, single-purpose regression cases.
 
-There is currently no committed matrix recording:
+There is still no committed B-Rep-to-CSG recognition matrix recording:
 
   * expected recognized primitive parameters;
   * expected face-to-feature assignments;
@@ -253,18 +254,31 @@ There is currently no committed matrix recording:
   * topology validity; or
   * work counts and time limits.
 
+The supporting CSG-to-B-Rep evaluator now has a separate component-level
+share/db matrix.  test_brep_corpus isolates every combination in a subprocess,
+records structured conversion outcomes and timeouts, validates B-Rep topology,
+and compares successful results to the source CSG with deterministic Crofton
+rays.  That matrix validates the round-trip/evaluator side of this project; it
+does not replace the generated primitive-parameter, face-coverage, and
+canonical-tree tests required for B-Rep-to-CSG recognition above.
+
 3.8 Current CSG-to-B-Rep evaluator
 
-src/librt/comb/comb_brep.cpp recursively converts leaves through ft_brep and
-calls ON_Boolean at every internal Boolean node.  It has no options object,
-work budget, perturb retry, result validation policy, or diagnostic record.
+The CSG-to-B-Rep evaluator is supporting infrastructure for this inverse
+conversion plan, but its implementation state now changes too quickly to
+duplicate here.  Its authoritative algorithm, status, worker-isolation,
+regularization, Manifold-oracle, and validation documentation is in:
 
-The current ON_Boolean implementation contains a critical face-intersection
-bug.  It builds the second vector of Subsurface trees in st2, but tests
-surf_tree2.Count() before calling ON_Intersect.  surf_tree2 is not the
-populated vector in that path, so eligible face pairs are skipped.  The
-temporary branch fixed this by checking st2.size().  This one-line defect
-must be corrected before any current-tree Boolean baseline is meaningful.
+  doc/asciidoc/devguides/bool_eval_development.adoc
+
+The measured follow-on work, corpus baselines, acceptance gates, and current
+priorities are in the repository-root file:
+
+  brep_next_steps.txt
+
+Those documents describe implemented behavior rather than planned
+B-Rep-to-CSG recognition.  The recognition architecture in sections 4-5 below
+remains future work and must continue to tolerate structured evaluator failure.
 
 
 4. TARGET ARCHITECTURE

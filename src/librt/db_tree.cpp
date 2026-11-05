@@ -2586,8 +2586,9 @@ db_tree_parse(struct bu_vls *vls, const char *str)
     }
 
     op = db_str2op(argv[0]);
+    const bool xor_operator = argv[0][0] == '^';
 
-    if (op == DB_OP_NULL) {
+    if (op == DB_OP_NULL && !xor_operator) {
 
 	/* didn't find a csg operator, so see what other tree element it is */
 
@@ -2672,7 +2673,12 @@ db_tree_parse(struct bu_vls *vls, const char *str)
 
 	/* found a csg operator */
 
-	switch (op) {
+	if (xor_operator) {
+	    BU_GET(tp, union tree);
+	    RT_TREE_INIT(tp);
+	    tp->tr_b.tb_op = OP_XOR;
+	} else {
+	    switch (op) {
 	    default:
 	    case DB_OP_UNION:
 		/* Binary: Union: {u {lhs} {rhs}} */
@@ -2692,6 +2698,7 @@ db_tree_parse(struct bu_vls *vls, const char *str)
 		RT_TREE_INIT(tp);
 		tp->tr_b.tb_op = OP_SUBTRACT;
 		break;
+	    }
 	}
 
 	if (argv[1] == (char *)NULL || argv[2] == (char *)NULL) {
