@@ -770,14 +770,24 @@ getSurfacePoint(
     double est2 = uline_len_est(sinfo, u1, u2, v2);
     double est3 = vline_len_est(sinfo, u1, v1, v2);
     double est4 = vline_len_est(sinfo, u2, v1, v2);
+    const double umid_est = uline_len_est(sinfo, u1, u2, v);
+    const double vmid_est = vline_len_est(sinfo, u, v1, v2);
 
     double uavg = (est1+est2)/2.0;
     double vavg = (est3+est4)/2.0;
 
-    if (est1 < 0.01*sinfo->within_dist && est2 < 0.01*sinfo->within_dist) {
+    /* Opposite parameter-space sides can both collapse at singularities
+     * while the patch interior still spans a substantial surface.  A sphere
+     * from pole to pole is the canonical example.  Only discard the patch as
+     * dimensionally degenerate when its middle iso is short as well. */
+    if (est1 < 0.01*sinfo->within_dist &&
+	    est2 < 0.01*sinfo->within_dist &&
+	    umid_est < 0.01*sinfo->within_dist) {
 	return false;
     }
-    if (est3 < 0.01*sinfo->within_dist && est4 < 0.01*sinfo->within_dist) {
+    if (est3 < 0.01*sinfo->within_dist &&
+	    est4 < 0.01*sinfo->within_dist &&
+	    vmid_est < 0.01*sinfo->within_dist) {
 	return false;
     }
 

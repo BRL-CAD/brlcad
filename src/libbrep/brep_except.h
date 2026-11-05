@@ -55,6 +55,13 @@ GeometryGenerationError(const std::string &msg = "") : std::runtime_error(msg) {
 };
 
 
+class BooleanBudgetExceeded : public std::runtime_error
+{
+public:
+BooleanBudgetExceeded(const std::string &msg = "") : std::runtime_error(msg) {}
+};
+
+
 class IntervalGenerationError : public std::runtime_error
 {
 public:

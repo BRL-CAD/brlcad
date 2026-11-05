@@ -35,6 +35,12 @@
 #define MAX_CSI_DEPTH NR_MAX_DEPTH
 #define MAX_SSI_DEPTH NR_MAX_DEPTH
 
+// Bound candidate pairs for subdivision-based intersection algorithms.
+// Exceeding these limits is reported explicitly, never as no intersection.
+#define MAX_SSI_CANDIDATE_PAIRS 65536
+#define MAX_CCI_CANDIDATE_PAIRS MAX_SSI_CANDIDATE_PAIRS
+#define MAX_CSI_CANDIDATE_PAIRS MAX_SSI_CANDIDATE_PAIRS
+
 // Used to prevent an infinite loop in the unlikely event that we
 // can't provide a good starting point for the Newton-Raphson
 // Iteration.

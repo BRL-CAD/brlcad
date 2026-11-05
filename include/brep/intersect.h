@@ -33,7 +33,29 @@
 
 #ifdef __cplusplus
 
+#include <memory>
+
 extern "C++" {
+
+namespace brlcad {
+
+    class IntersectionWorkBudget;
+    typedef std::shared_ptr<IntersectionWorkBudget> IntersectionWorkBudgetHandle;
+
+    /** Create a candidate-pair budget shared by one intersection operation.
+     * A zero limit returns an unlimited handle. */
+    extern BREP_EXPORT IntersectionWorkBudgetHandle CreateIntersectionWorkBudget(
+	size_t maximum_candidate_pairs);
+    /** Return the budget installed on the calling thread, if any. */
+    extern BREP_EXPORT IntersectionWorkBudgetHandle CurrentIntersectionWorkBudget();
+    /** Install a budget so nested CCI, CSI, and SSI calls share its limit. */
+    extern BREP_EXPORT void SetIntersectionWorkBudget(
+	const IntersectionWorkBudgetHandle &work_budget);
+    extern BREP_EXPORT void ClearIntersectionWorkBudget();
+    /** Return true after the installed budget cannot admit more work. */
+    extern BREP_EXPORT bool IntersectionWorkBudgetExceeded();
+
+}
 
 /**
  * Dump the information of an ON_SSX_EVENT.
@@ -243,6 +265,19 @@ ON_Intersect(const ON_3dPoint &pointA,
 	     Subsurface *treeB = 0);
 
 /**
+ * Return true only when two complete curves are geometrically equivalent
+ * within tolerance with a monotonic parameter correspondence.  If
+ * reverse_second is true, curveA's increasing parameter direction must
+ * correspond to curveB's decreasing parameter direction.  A false result
+ * means equivalence could not be certified; it does not prove disjointness.
+ */
+extern BREP_EXPORT bool
+ON_CurvesAreEquivalent(const ON_Curve *curveA,
+		       const ON_Curve *curveB,
+		       double tolerance,
+		       bool reverse_second = false);
+
+/**
  * An overload of ON_Intersect for curve-curve intersection.
  * Intersect curveA with curveB.
  *
@@ -267,7 +302,9 @@ ON_Intersect(const ON_3dPoint &pointA,
  * @param treeB [in] optional curve tree for curveB, to avoid re
  *     computation
  *
- * @return Number of intersection events appended to x.
+ * @return Number of intersection events appended to x, or
+ *     BREP_CCI_BUDGET_EXCEEDED if subdivision work is exhausted.  In that
+ *     case, no events are appended to x.
  */
 extern BREP_EXPORT int
 ON_Intersect(const ON_Curve *curveA,
@@ -313,7 +350,9 @@ ON_Intersect(const ON_Curve *curveA,
  * @param treeB [in] optional surface tree for surfaceB, to avoid
  *     re-computation
  *
- * @return Number of intersection events appended to x.
+ * @return Number of intersection events appended to x, or
+ *     BREP_CSI_BUDGET_EXCEEDED if subdivision work is exhausted.  In that
+ *     case, no events are appended to x.
  */
 extern BREP_EXPORT int
 ON_Intersect(const ON_Curve *curveA,
@@ -327,6 +366,13 @@ ON_Intersect(const ON_Curve *curveA,
 	     ON_CurveArray *overlap2d = 0,
 	     Subcurve *treeA = 0,
 	     Subsurface *treeB = 0);
+
+enum {
+    BREP_INTERSECTION_BUDGET_EXCEEDED = -1,
+    BREP_CCI_BUDGET_EXCEEDED = BREP_INTERSECTION_BUDGET_EXCEEDED,
+    BREP_CSI_BUDGET_EXCEEDED = BREP_INTERSECTION_BUDGET_EXCEEDED,
+    BREP_SSI_BUDGET_EXCEEDED = BREP_INTERSECTION_BUDGET_EXCEEDED
+};
 
 /**
  * An overload of ON_Intersect for surface-surface intersection.
@@ -358,7 +404,9 @@ ON_Intersect(const ON_Curve *curveA,
  * @param treeB [in] optional surface tree for surfaceB, to avoid
  *     re-computation
  *
- * @return Number of intersection events appended to x.
+ * @return Number of intersection events appended to x, or
+ *     BREP_SSI_BUDGET_EXCEEDED if subdivision work is exhausted.  In that
+ *     case, no events are appended to x.
  */
 extern BREP_EXPORT int
 ON_Intersect(const ON_Surface *surfA,

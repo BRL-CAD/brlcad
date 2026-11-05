@@ -33,7 +33,6 @@
 #include "raytrace.h"
 
 struct TrimmedFace;
-struct LinkedCurve;
 
 class DebugPlot {
 public:
@@ -83,7 +82,7 @@ public:
 
     void LinkedCurves(
 	const ON_Surface *surf,
-	ON_ClassArray<LinkedCurve> &linked_curves);
+	const ON_SimpleArray<const ON_Curve *> &linked_curves);
 
     void
     Plot3DCurveFrom2D(

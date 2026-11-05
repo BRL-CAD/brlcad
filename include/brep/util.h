@@ -62,6 +62,9 @@ extern BREP_EXPORT void ON_MinMaxInit(ON_3dPoint *min, ON_3dPoint *max);
 extern BREP_EXPORT bool ON_NearZero(double x, double tolerance = ON_ZERO_TOLERANCE);
 
 extern BREP_EXPORT bool face_GetBoundingBox(const ON_BrepFace &face,ON_BoundingBox& bbox,bool bGrowBox);
+extern BREP_EXPORT bool
+brep_GetTrimmedBoundingBox(const ON_Brep &brep, ON_BoundingBox &bbox,
+			   bool bGrowBox);
 extern BREP_EXPORT bool surface_GetBoundingBox(const ON_Surface *surf,const ON_Interval &u_interval,const ON_Interval &v_interval,ON_BoundingBox& bbox,bool bGrowBox);
 extern BREP_EXPORT bool surface_EvNormal(const ON_Surface *surf,double s,double t,ON_3dPoint& point,ON_3dVector& normal,int side=0,int* hint=0);
 

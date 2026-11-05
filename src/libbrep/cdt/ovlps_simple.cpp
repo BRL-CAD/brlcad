@@ -434,7 +434,7 @@ check_faces_validity(std::set<std::pair<cdt_mesh_t *, cdt_mesh_t *>> &check_pair
 	struct ON_Brep_CDT_State *s_cdt = *s_it;
 	if (!CDT_Audit(s_cdt)) {
 	    std::cerr << "Invalid: " << s_cdt->name << " edge data\n";
-	    bu_exit(1, "urk\n");
+	    valid = false;
 	}
     }
 
