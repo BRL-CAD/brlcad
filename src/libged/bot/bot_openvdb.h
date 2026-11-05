@@ -94,8 +94,7 @@ struct rt_bot_internal *sdf_to_bot(openvdb::FloatGrid::Ptr grid, double adaptivi
  *
  * Converts the mesh to a signed-distance field and extracts a
  * guaranteed-manifold mesh from the 0-isovalue surface.  The result is
- * validated for manifoldness and positive volume (negative volume would
- * indicate an inside-out reconstruction).
+ * validated for manifoldness and outward-facing normals.
  *
  * @param bot        Source BoT (read-only).
  * @param voxel_size Voxel edge length in model units.  Pass <= 0 to

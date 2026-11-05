@@ -59,13 +59,12 @@
  * botDataAdapter
  *
  * Adapts an rt_bot_internal for use with openvdb::tools::meshToVolume.
- * meshToVolume expects world-space coordinates from getIndexSpacePoint
- * when a transform is supplied (the name "IndexSpace" in the OpenVDB
- * template interface is misleading — values are converted by the caller
- * using the provided transform).
+ * meshToVolume requires index-space points even when a grid transform is
+ * supplied, so model coordinates must be converted using that transform.
  * ---------------------------------------------------------------------- */
 struct botDataAdapter {
     struct rt_bot_internal *bot;
+    const openvdb::math::Transform &transform;
 
     size_t polygonCount() const { return bot->num_faces; }
     size_t pointCount()   const { return bot->num_vertices; }
@@ -76,9 +75,11 @@ struct botDataAdapter {
 	pos[X] = bot->vertices[(idx * 3) + X];
 	pos[Y] = bot->vertices[(idx * 3) + Y];
 	pos[Z] = bot->vertices[(idx * 3) + Z];
+	pos = transform.worldToIndex(pos);
     }
 
-    explicit botDataAdapter(struct rt_bot_internal *bip) : bot(bip) {}
+    botDataAdapter(struct rt_bot_internal *bip, const openvdb::math::Transform &xform)
+	: bot(bip), transform(xform) {}
 };
 
 
@@ -117,9 +118,9 @@ bot_to_sdf(struct rt_bot_internal *bot, double voxel_size)
 
     openvdb::initialize();
 
-    struct botDataAdapter bda(bot);
     openvdb::math::Transform::Ptr xform =
 	openvdb::math::Transform::createLinearTransform(voxel_size);
+    struct botDataAdapter bda(bot, *xform);
 
     return openvdb::tools::meshToVolume<openvdb::FloatGrid>(
 	bda, *xform, exteriorBandWidth, interiorBandWidth);
@@ -230,8 +231,7 @@ sdf_to_bot(openvdb::FloatGrid::Ptr grid, double adaptivity)
  * pipeline.  Converts the mesh to a signed-distance field and extracts a
  * guaranteed-manifold mesh from the 0-isovalue surface.
  *
- * Validates the result: checks that it is manifold and has positive volume
- * (negative volume would indicate an inside-out reconstruction).
+ * Validates the result: checks that it is manifold and outward-facing.
  *
  * Returns a new rt_bot_internal on success, NULL on failure.
  * Caller is responsible for freeing the returned bot.
@@ -249,7 +249,10 @@ bot_openvdb_repair(struct rt_bot_internal *bot, double voxel_size)
     struct rt_bot_internal *cand = sdf_to_bot(grid, 0.0);
     if (!cand || cand->num_faces == 0) {
 	bu_log("bot_openvdb_repair: volumeToMesh produced no faces\n");
-	if (cand) { bu_free(cand->vertices, "verts"); bu_free(cand->faces, "faces"); BU_PUT(cand, struct rt_bot_internal); }
+	if (cand) {
+	    rt_bot_internal_free(cand);
+	    BU_PUT(cand, struct rt_bot_internal);
+	}
 	return NULL;
     }
 
@@ -259,24 +262,23 @@ bot_openvdb_repair(struct rt_bot_internal *bot, double voxel_size)
 	    !bg_trimesh_manifold_accepted((int)cand->num_vertices,
 		(int)cand->num_faces, cand->vertices, cand->faces)) {
 	bu_log("bot_openvdb_repair: result is not manifold (unexpected)\n");
-	bu_free(cand->vertices, "verts"); bu_free(cand->faces, "faces");
+	rt_bot_internal_free(cand);
 	BU_PUT(cand, struct rt_bot_internal);
 	return NULL;
     }
 
-    /* Validate: positive volume means outward-facing normals (correct).
-     * If the volume is negative the mesh is topologically manifold but
-     * inside-out (all face normals point inward).  Swapping vertices 1
-     * and 2 of every triangle reverses the winding order globally and
-     * turns it into a valid outward-facing solid without touching the
-     * vertex data or rebuilding the mesh. */
-    if (mcheck.Volume() <= 0.0) {
+    /* Certification does not determine which side of the surface is outward.
+     * Reuse the BoT orientation check before correcting the winding. */
+    const int inside_out = rt_bot_inside_out(cand);
+    if (inside_out < 0) {
+	bu_log("bot_openvdb_repair: could not determine result orientation\n");
+	rt_bot_internal_free(cand);
+	BU_PUT(cand, struct rt_bot_internal);
+	return NULL;
+    }
+    if (inside_out > 0) {
 	bu_log("bot_openvdb_repair: result is inside-out; flipping winding order\n");
-	for (size_t i = 0; i < cand->num_faces; i++) {
-	    int tmp = cand->faces[i * 3 + 1];
-	    cand->faces[i * 3 + 1] = cand->faces[i * 3 + 2];
-	    cand->faces[i * 3 + 2] = tmp;
-	}
+	rt_bot_flip(cand);
     }
 
     return cand;
