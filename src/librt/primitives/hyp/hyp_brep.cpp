@@ -80,7 +80,12 @@ rt_hyp_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *t
     cpts.Append(onp3);
     ON_BezierCurve *bezcurve = new ON_BezierCurve(cpts);
     bezcurve->MakeRational();
-    bezcurve->SetWeight(1, bezcurve->Weight(0)/eip->hyp_bnr);
+    const double middle_weight = bezcurve->Weight(0) / eip->hyp_bnr;
+    /* SetWeight changes only the homogeneous weight; it does not rescale the
+     * stored xyz coordinates.  Supply the middle control point explicitly in
+     * homogeneous form so its Euclidean location remains b*bnr^2. */
+    bezcurve->SetCV(1, ON_4dPoint(middle_weight * ep2[X],
+	middle_weight * ep2[Y], middle_weight * ep2[Z], middle_weight));
 
     ON_NurbsCurve* tnurbscurve = ON_NurbsCurve::New();
     bezcurve->GetNurbForm(*tnurbscurve);

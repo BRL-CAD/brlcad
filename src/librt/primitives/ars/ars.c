@@ -487,6 +487,92 @@ rt_ars_ifree(struct rt_db_internal *ip)
 }
 
 
+int
+_rt_ars_tessellable(const struct rt_ars_internal *arip,
+	const struct bn_tol *tol, int log_diagnostics)
+{
+    int bad_ars = 0;
+
+    if (arip == NULL || arip->magic != RT_ARS_INTERNAL_MAGIC ||
+	tol == NULL || tol->magic != BN_TOL_MAGIC ||
+	arip->ncurves < 2 || arip->pts_per_curve < 3 ||
+	arip->curves == NULL)
+    {
+	if (log_diagnostics)
+	    bu_log("ARS tessellation rejected malformed internal data.\n");
+	return 0;
+    }
+
+    /* Check for a legal ARS */
+    for (size_t i = 0; i < arip->ncurves; i++) {
+	if (arip->curves[i] == NULL) {
+	    if (log_diagnostics)
+		bu_log("ARS tessellation rejected missing curve #%zu.\n", i);
+	    return 0;
+	}
+
+	const fastf_t *first_pt = arip->curves[i];
+	const fastf_t *closing_pt = &arip->curves[i][arip->pts_per_curve *
+	    ELEMENTS_PER_VECT];
+	if (!VNEAR_EQUAL(first_pt, closing_pt, tol->dist)) {
+	    if (log_diagnostics) {
+		bu_log("ARS: curve #%zu has an invalid closing copy "
+		    "(first=(%g %g %g) closing=(%g %g %g) dist=%g > "
+		    "tol=%g).\n", i, V3ARGS(first_pt), V3ARGS(closing_pt),
+		    DIST_PNT_PNT(first_pt, closing_pt), tol->dist);
+	    }
+	    bad_ars = 1;
+	}
+
+	if (i == arip->ncurves - 1)
+	    continue;
+	for (size_t j = 2; j < arip->pts_per_curve; j++) {
+	    fastf_t dist;
+	    vect_t pca;
+	    int code;
+	    const fastf_t *previous2 = &arip->curves[i][(j - 2) *
+		ELEMENTS_PER_VECT];
+	    const fastf_t *previous = &arip->curves[i][(j - 1) *
+		ELEMENTS_PER_VECT];
+	    const fastf_t *current = &arip->curves[i][j *
+		ELEMENTS_PER_VECT];
+
+	    if (VNEAR_EQUAL(previous2, previous, tol->dist))
+		continue;
+
+	    code = bg_dist_pnt3_lseg3(&dist, pca, previous2, previous,
+		current, tol);
+
+	    if (code < 2) {
+		if (log_diagnostics) {
+		    bu_log("ARS curve backtracks on itself.\n");
+		    bu_log("\tCurve #%zu, points #%zu through %zu are:\n",
+			i, j - 2, j);
+		    bu_log("\t\t%zu (%f %f %f)\n", j - 2,
+			V3ARGS(previous2));
+		    bu_log("\t\t%zu (%f %f %f)\n", j - 1,
+			V3ARGS(previous));
+		    bu_log("\t\t%zu (%f %f %f)\n", j,
+			V3ARGS(current));
+		}
+		bad_ars = 1;
+		j++;
+	    }
+	}
+    }
+
+    if (bad_ars) {
+	if (log_diagnostics) {
+	    bu_log("ARS tessellation skipped: solid has malformed or "
+		"non-manifold curve data.\n");
+	}
+	return 0;
+    }
+
+    return 1;
+}
+
+
 C_DECL int
 rt_ars_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct bg_tess_tol *UNUSED(ttol), const struct bn_tol *tol)
 {
@@ -498,76 +584,16 @@ rt_ars_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     struct vertex **verts;
     struct faceuse *fu;
     struct bu_ptbl kill_fus;
-    int bad_ars = 0;
-    int open_seam_ars = 0;
     struct bu_list *vlfree = &rt_vlfree;
 
+    if (r != NULL)
+	*r = NULL;
     RT_CK_DB_INTERNAL(ip);
     arip = (struct rt_ars_internal *)ip->idb_ptr;
     RT_ARS_CK_MAGIC(arip);
 
-    /* Check for a legal ARS */
-    for (i = 0; i < arip->ncurves-1; i++) {
-	for (j = 2; j < arip->pts_per_curve; j++) {
-	    fastf_t dist;
-	    vect_t pca;
-	    int code;
-
-	    if (VNEAR_EQUAL(ARS_PT(0, -2), ARS_PT(0, -1), tol->dist))
-		continue;
-
-	    code = bg_dist_pnt3_lseg3(&dist, pca, ARS_PT(0, -2), ARS_PT(0, -1), ARS_PT(0, 0), tol);
-
-	    if (code < 2) {
-		bu_log("ARS curve backtracks on itself!!!\n");
-		bu_log("\tCurve #%zu, points #%zu through %zu are:\n", i, j-2, j);
-		bu_log("\t\t%zu (%f %f %f)\n", j-2, V3ARGS(ARS_PT(0, -2)));
-		bu_log("\t\t%zu (%f %f %f)\n", j-1, V3ARGS(ARS_PT(0, -1)));
-		bu_log("\t\t%zu (%f %f %f)\n", j, V3ARGS(ARS_PT(0, 0)));
-		bad_ars = 1;
-		j++;
-	    }
-	}
-
-	/* Check that each ring curve closes in 3D (first point == last data
-	 * point at index pts_per_curve-1, the closing copy).  If the curve
-	 * is closed in XY but has a Z discontinuity at the seam (e.g.,
-	 * real-world terrain rings that do not return to the same elevation),
-	 * the tessellation will produce open edges because the seam-closing
-	 * quad (j == pts_per_curve-2) will have mismatched endpoints.  This
-	 * is not a bug in the tessellation algorithm — the source data is
-	 * inherently non-manifold and cannot be closed without modifying it.
-	 *
-	 * A single degenerate apex curve (all points identical) is exempt
-	 * from this check since it has no meaningful "seam".                 */
-	{
-	    fastf_t *first_pt = arip->curves[i];
-	    fastf_t *last_pt  = &arip->curves[i][(arip->pts_per_curve - 1) *
-						 ELEMENTS_PER_VECT];
-	    if (!VNEAR_EQUAL(first_pt, last_pt, tol->dist)) {
-		bu_log("ARS: curve #%zu is not closed in 3D "
-		       "(first=(%g %g %g) last=(%g %g %g) dist=%g > tol=%g).\n",
-		       i,
-		       V3ARGS(first_pt), V3ARGS(last_pt),
-		       DIST_PNT_PNT(first_pt, last_pt), tol->dist);
-		open_seam_ars = 1;
-	    }
-	}
-    }
-
-    if (bad_ars) {
-	bu_log("ARS tessellation skipped: solid has non-manifold geometry "
-	       "(backtracking curve).\n"
-	       "\tThis ARS solid cannot produce a valid closed mesh and will "
-	       "not be tessellated.\n");
+    if (!_rt_ars_tessellable(arip, tol, 1))
 	return -1;
-    }
-    if (open_seam_ars) {
-	bu_log("WARNING: This ARS solid has non-closed 3D ring seams.\n"
-		"\tTessellation will be attempted, but the result may not be a "
-		"closed manifold mesh (and incorrect).\n");
-    }
-
     bu_ptbl_init(&kill_fus, 64, " &kill_fus");
 
     /* Build the topology of the ARS.  Start by allocating storage */
@@ -595,14 +621,10 @@ rt_ars_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 	    double_ended = 0;
 	}
 
-	/* The curve has pts_per_curve-1 unique points followed by a closing
-	 * copy of the first point at index pts_per_curve-1.  Stop at index
-	 * pts_per_curve-2: the last quad (j==pts_per_curve-2) already uses
-	 * the closing copy as its j+1 vertex, sealing the ring.  Processing
-	 * j==pts_per_curve-1 would access curves[i][(pts_per_curve)*3], which
-	 * is one element past the allocated array, and would create a spurious
-	 * duplicate (or garbage) triangle that leaves open boundary edges.   */
-	for (j = 0; j < arip->pts_per_curve - 1; j++) {
+	/* pts_per_curve counts the stored ring vertices.  Import allocates one
+	 * additional point at index pts_per_curve and copies vertex zero there,
+	 * so the final strip segment closes the ring without special casing. */
+	for (j = 0; j < arip->pts_per_curve; j++) {
 	    struct vertex **corners[3];
 
 

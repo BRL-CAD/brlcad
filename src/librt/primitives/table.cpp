@@ -2092,7 +2092,7 @@ const struct rt_functab OBJ[] = {
 	RTFUNCTAB_FUNC_VSHOT_CAST(rt_metaball_vshot),
 	RTFUNCTAB_FUNC_TESS_CAST(rt_metaball_tess),
 	NULL, /* tnurb */
-	NULL, /* brep */
+	RTFUNCTAB_FUNC_BREP_CAST(rt_metaball_brep),
 	RTFUNCTAB_FUNC_IMPORT5_CAST(rt_metaball_import5),
 	RTFUNCTAB_FUNC_EXPORT5_CAST(rt_metaball_export5),
 	NULL, /* import4 */
@@ -2454,9 +2454,9 @@ const struct rt_functab OBJ[] = {
 	RTFUNCTAB_FUNC_PLOT_CAST(rt_hrt_plot),
 	NULL, /* adaptive_plot */
 	RTFUNCTAB_FUNC_VSHOT_CAST(rt_hrt_vshot),
-	NULL, /* tess */
+	RTFUNCTAB_FUNC_TESS_CAST(rt_hrt_tess),
 	NULL, /* tnurb */
-	NULL, /* brep */
+	RTFUNCTAB_FUNC_BREP_CAST(rt_hrt_brep),
 	RTFUNCTAB_FUNC_IMPORT5_CAST(rt_hrt_import5),
 	RTFUNCTAB_FUNC_EXPORT5_CAST(rt_hrt_export5),
 	NULL, /* import4 */

@@ -77,7 +77,7 @@ rt_rhc_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *U
 
     VMOVE(tmppt, eip->rhc_B);
     VUNITIZE(tmppt);
-    VSCALE(tmppt, tmppt, w1 * intercept_dist);
+    VSCALE(tmppt, tmppt, intercept_dist);
     VADD2(ep2, p1_origin, tmppt);
     VADD2(ep3, p1_origin, x_dir);
     ON_3dPoint onp1 = ON_3dPoint(ep1);
@@ -90,7 +90,11 @@ rt_rhc_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *U
     cpts.Append(onp3);
     ON_BezierCurve *bcurve = new ON_BezierCurve(cpts);
     bcurve->MakeRational();
-    bcurve->SetWeight(1, w1);
+    /* SetCV takes homogeneous coordinates for a rational curve.  Supplying
+     * the translated Euclidean control point and then changing only its
+     * weight divides the world-space translation by that weight. */
+    bcurve->SetCV(1, ON_4dPoint(w1 * ep2[X], w1 * ep2[Y],
+	w1 * ep2[Z], w1));
 
     ON_NurbsCurve* hypnurbscurve = ON_NurbsCurve::New();
 

@@ -22,7 +22,7 @@
  * Cauchy-Crofton sampling estimator for surface area and volume.
  *
  * This file is the single authoritative implementation of the Crofton
- * ray-sampling algorithm.  It exposes three public symbols:
+ * ray-sampling and deterministic comparison algorithms.
  *
  *   rt_crofton_shoot()     -- core estimator given a prepared rt_i;
  *                             shared with libanalyze for code reuse
@@ -53,11 +53,15 @@
 
 #include "common.h"
 
+#include <algorithm>
 #include <chrono>
 #include <climits>
+#include <cmath>
 #include <condition_variable>
 #include <cstdint>
 #include <exception>
+#include <limits>
+#include <map>
 #include <mutex>
 #include <random>
 #include <stdlib.h>
@@ -66,6 +70,7 @@
 #include <string.h>
 #include <thread>
 #include <time.h>
+#include <utility>
 #include <vector>
 
 #include "vmath.h"
@@ -234,9 +239,7 @@ crofton_hit(struct application *ap, struct partition *PartHeadp,
                 out_solid, &ap->a_ray, partition->pt_outflip);
             sample->thickness = thickness;
             sample->ray_id = worker->rays[worker->current_ray].id;
-            if (!VNEAR_ZERO(sample->in_normal, VUNITIZE_TOL) &&
-                !VNEAR_ZERO(sample->out_normal, VUNITIZE_TOL))
-                worker->local_segment_count++;
+            worker->local_segment_count++;
         }
     }
 
@@ -950,6 +953,471 @@ rt_crofton_result_free(struct rt_crofton_result *result)
         bu_free(result->segments, "Crofton segments");
     struct rt_crofton_result empty = RT_CROFTON_RESULT_INIT;
     *result = empty;
+}
+
+
+namespace {
+
+using CroftonSegmentList =
+    std::vector<const struct rt_crofton_segment *>;
+using CroftonSegmentMap = std::map<size_t, CroftonSegmentList>;
+
+struct CroftonBoundary {
+    fastf_t distance;
+    const fastf_t *point;
+    const fastf_t *normal;
+};
+
+struct CroftonInterval {
+    CroftonBoundary entry;
+    CroftonBoundary exit;
+};
+
+constexpr fastf_t CROFTON_COMPARE_TANGENT_DOT_LIMIT = 0.05;
+/* This is a floating-point cancellation guard, not a modeling tolerance. */
+constexpr fastf_t CROFTON_COMPARE_ROUNDOFF_ULPS = 64.0;
+
+
+static bool
+crofton_prepared_bounds(point_t minimum, point_t maximum,
+    struct rt_i *rtip)
+{
+    VSETALL(minimum, MAX_FASTF);
+    VSETALL(maximum, -MAX_FASTF);
+    struct soltab *solid;
+    RT_VISIT_ALL_SOLTABS_START(solid, rtip) {
+	VMIN(minimum, solid->st_min);
+	VMAX(maximum, solid->st_max);
+    } RT_VISIT_ALL_SOLTABS_END;
+    return minimum[X] < MAX_FASTF && minimum[X] <= maximum[X] &&
+	minimum[Y] <= maximum[Y] && minimum[Z] <= maximum[Z];
+}
+
+
+static double
+crofton_relative_error(double source, double candidate)
+{
+    if (source <= SMALL_FASTF) {
+	return candidate <= SMALL_FASTF ? 0.0 :
+	    std::numeric_limits<double>::infinity();
+    }
+    return std::fabs(candidate - source) / source;
+}
+
+
+static double
+crofton_percentile(std::vector<fastf_t> &values, double fraction)
+{
+    if (values.empty())
+	return 0.0;
+    std::sort(values.begin(), values.end());
+    size_t index = static_cast<size_t>(
+	std::ceil(fraction * static_cast<double>(values.size())));
+    index = index ? index - 1 : 0;
+    return values[std::min(index, values.size() - 1)];
+}
+
+
+static void
+crofton_map_segments(CroftonSegmentMap &mapped,
+    const struct rt_crofton_result &result)
+{
+    for (size_t i = 0; i < result.segment_count; ++i)
+	mapped[result.segments[i].ray_id].push_back(&result.segments[i]);
+}
+
+
+static fastf_t
+crofton_segment_roundoff_tolerance(const struct rt_crofton_segment &segment)
+{
+    fastf_t coordinate_scale = 1.0;
+    for (size_t coordinate = 0; coordinate < 3; ++coordinate) {
+	coordinate_scale = std::max(coordinate_scale,
+	    std::fabs(segment.in_point[coordinate]));
+	coordinate_scale = std::max(coordinate_scale,
+	    std::fabs(segment.out_point[coordinate]));
+    }
+    return CROFTON_COMPARE_ROUNDOFF_ULPS *
+	std::numeric_limits<fastf_t>::epsilon() * coordinate_scale;
+}
+
+
+static bool
+crofton_segment_is_numerically_degenerate(
+    const struct rt_crofton_segment &segment, fastf_t *measured_length = NULL)
+{
+    const fastf_t length = DIST_PNT_PNT(segment.in_point,
+	segment.out_point);
+    if (measured_length != NULL)
+	*measured_length = length;
+    return std::isfinite(length) &&
+	length <= crofton_segment_roundoff_tolerance(segment);
+}
+
+
+static bool
+crofton_ray_direction(vect_t direction,
+    const CroftonSegmentList &source,
+    const CroftonSegmentList &candidate)
+{
+    const CroftonSegmentList *lists[] = {&source, &candidate};
+    for (const CroftonSegmentList *segments : lists) {
+	for (const struct rt_crofton_segment *segment : *segments) {
+	    if (crofton_segment_is_numerically_degenerate(*segment))
+		continue;
+	    VSUB2(direction, segment->out_point, segment->in_point);
+	    if (!VNEAR_ZERO(direction, VUNITIZE_TOL)) {
+		VUNITIZE(direction);
+		return true;
+	    }
+	}
+    }
+    VSET(direction, 1.0, 0.0, 0.0);
+    return false;
+}
+
+
+static std::vector<CroftonInterval>
+crofton_merged_intervals(const CroftonSegmentList &segments,
+    const vect_t direction, fastf_t tolerance,
+    size_t &numerically_degenerate_count,
+    double &maximum_numerically_degenerate_length)
+{
+    std::vector<CroftonInterval> intervals;
+    intervals.reserve(segments.size());
+    for (const struct rt_crofton_segment *segment : segments) {
+	fastf_t segment_length = 0.0;
+	if (crofton_segment_is_numerically_degenerate(*segment,
+		&segment_length))
+	{
+	    ++numerically_degenerate_count;
+	    maximum_numerically_degenerate_length = std::max(
+		maximum_numerically_degenerate_length,
+		static_cast<double>(segment_length));
+	    continue;
+	}
+	CroftonInterval interval = {
+	    {VDOT(segment->in_point, direction), segment->in_point,
+		segment->in_normal},
+	    {VDOT(segment->out_point, direction), segment->out_point,
+		segment->out_normal}
+	};
+	if (interval.entry.distance > interval.exit.distance)
+	    std::swap(interval.entry, interval.exit);
+	intervals.push_back(interval);
+    }
+    std::sort(intervals.begin(), intervals.end(),
+	[](const CroftonInterval &left, const CroftonInterval &right) {
+	    return left.entry.distance < right.entry.distance;
+	});
+
+    std::vector<CroftonInterval> merged;
+    for (const CroftonInterval &interval : intervals) {
+	if (merged.empty() || interval.entry.distance >
+		merged.back().exit.distance + tolerance)
+	{
+	    merged.push_back(interval);
+	} else if (interval.exit.distance > merged.back().exit.distance) {
+	    merged.back().exit = interval.exit;
+	}
+    }
+    return merged;
+}
+
+
+static double
+crofton_interval_length(const std::vector<CroftonInterval> &intervals)
+{
+    double length = 0.0;
+    for (const CroftonInterval &interval : intervals)
+	length += interval.exit.distance - interval.entry.distance;
+    return length;
+}
+
+
+static double
+crofton_interval_disagreement(const std::vector<CroftonInterval> &source,
+    const std::vector<CroftonInterval> &candidate,
+    const vect_t direction, double &maximum_span,
+    double &maximum_normal_separation)
+{
+    struct BoundaryEvent {
+	fastf_t distance;
+	int source_delta;
+	int candidate_delta;
+	const fastf_t *normal;
+    };
+    std::vector<BoundaryEvent> events;
+    events.reserve(2 * (source.size() + candidate.size()));
+    for (const CroftonInterval &interval : source) {
+	events.push_back({interval.entry.distance, 1, 0,
+	    interval.entry.normal});
+	events.push_back({interval.exit.distance, -1, 0,
+	    interval.exit.normal});
+    }
+    for (const CroftonInterval &interval : candidate) {
+	events.push_back({interval.entry.distance, 0, 1,
+	    interval.entry.normal});
+	events.push_back({interval.exit.distance, 0, -1,
+	    interval.exit.normal});
+    }
+    std::sort(events.begin(), events.end(),
+	[](const BoundaryEvent &left, const BoundaryEvent &right) {
+	    return left.distance < right.distance;
+	});
+
+    int source_depth = 0;
+    int candidate_depth = 0;
+    fastf_t previous = events.empty() ? 0.0 : events.front().distance;
+    double previous_incidence = 0.0;
+    for (size_t event_index = 0; event_index < events.size();) {
+	const fastf_t current = events[event_index].distance;
+	const size_t group_begin = event_index;
+	double current_incidence = 0.0;
+	while (event_index < events.size() &&
+	    events[event_index].distance == current)
+	{
+	    const fastf_t *normal = events[event_index].normal;
+	    const double magnitude = normal ? MAGNITUDE(normal) : 0.0;
+	    if (magnitude > VUNITIZE_TOL && std::isfinite(magnitude)) {
+		current_incidence = std::max(current_incidence,
+		    std::fabs(VDOT(normal, direction)) / magnitude);
+	    }
+	    ++event_index;
+	}
+	if ((source_depth > 0) != (candidate_depth > 0)) {
+	    const double span = current - previous;
+	    maximum_span = std::max(maximum_span,
+		span);
+	    maximum_normal_separation = std::max(
+		maximum_normal_separation, span * std::max(previous_incidence,
+		    current_incidence));
+	}
+	for (size_t grouped_index = group_begin;
+	     grouped_index < event_index; ++grouped_index)
+	{
+	    source_depth += events[grouped_index].source_delta;
+	    candidate_depth += events[grouped_index].candidate_delta;
+	}
+	previous = current;
+	previous_incidence = current_incidence;
+    }
+
+    size_t source_index = 0;
+    size_t candidate_index = 0;
+    double intersection = 0.0;
+    while (source_index < source.size() && candidate_index < candidate.size())
+    {
+	const CroftonInterval &source_interval = source[source_index];
+	const CroftonInterval &candidate_interval = candidate[candidate_index];
+	const fastf_t entry = std::max(source_interval.entry.distance,
+	    candidate_interval.entry.distance);
+	const fastf_t exit = std::min(source_interval.exit.distance,
+	    candidate_interval.exit.distance);
+	if (exit > entry)
+	    intersection += exit - entry;
+	if (source_interval.exit.distance < candidate_interval.exit.distance)
+	    ++source_index;
+	else
+	    ++candidate_index;
+    }
+    return crofton_interval_length(source) + crofton_interval_length(candidate) -
+	2.0 * intersection;
+}
+
+} // namespace
+
+
+int
+rt_crofton_compare(struct rt_crofton_comparison *comparison,
+    struct rt_i *source, struct rt_i *candidate,
+    const struct rt_crofton_params *params, size_t ray_offset,
+    const fastf_t *bbox_min, const fastf_t *bbox_max)
+{
+    if (!comparison || !source || !candidate ||
+	((bbox_min == NULL) != (bbox_max == NULL)))
+    {
+	return -1;
+    }
+    struct rt_crofton_comparison empty = RT_CROFTON_COMPARISON_INIT;
+    *comparison = empty;
+
+    point_t common_min;
+    point_t common_max;
+    if (bbox_min != NULL) {
+	VMOVE(common_min, bbox_min);
+	VMOVE(common_max, bbox_max);
+    } else {
+	point_t source_min;
+	point_t source_max;
+	point_t candidate_min;
+	point_t candidate_max;
+	if (!crofton_prepared_bounds(source_min, source_max, source) ||
+	    !crofton_prepared_bounds(candidate_min, candidate_max, candidate))
+	{
+	    return -1;
+	}
+	VMOVE(common_min, source_min);
+	VMOVE(common_max, source_max);
+	VMIN(common_min, candidate_min);
+	VMAX(common_max, candidate_max);
+    }
+    if (!std::isfinite(common_min[X]) || !std::isfinite(common_min[Y]) ||
+	!std::isfinite(common_min[Z]) || !std::isfinite(common_max[X]) ||
+	!std::isfinite(common_max[Y]) || !std::isfinite(common_max[Z]) ||
+	common_min[X] > common_max[X] || common_min[Y] > common_max[Y] ||
+	common_min[Z] > common_max[Z])
+    {
+	return -1;
+    }
+
+    struct rt_crofton_result source_result = RT_CROFTON_RESULT_INIT;
+    struct rt_crofton_result candidate_result = RT_CROFTON_RESULT_INIT;
+    const int source_status = rt_crofton_collect(&source_result, source,
+	params, ray_offset, common_min, common_max);
+    const int candidate_status = rt_crofton_collect(&candidate_result,
+	candidate, params, ray_offset, common_min, common_max);
+    if (source_status < 0 || candidate_status < 0 ||
+	source_result.ray_count != candidate_result.ray_count)
+    {
+	rt_crofton_result_free(&source_result);
+	rt_crofton_result_free(&candidate_result);
+	return -1;
+    }
+
+    comparison->ray_count = source_result.ray_count;
+    comparison->source_segment_count = source_result.segment_count;
+    comparison->candidate_segment_count = candidate_result.segment_count;
+
+    CroftonSegmentMap source_rays;
+    CroftonSegmentMap candidate_rays;
+    crofton_map_segments(source_rays, source_result);
+    crofton_map_segments(candidate_rays, candidate_result);
+
+    std::vector<size_t> ray_ids;
+    ray_ids.reserve(source_rays.size() + candidate_rays.size());
+    for (const auto &entry : source_rays)
+	ray_ids.push_back(entry.first);
+    for (const auto &entry : candidate_rays)
+	ray_ids.push_back(entry.first);
+    std::sort(ray_ids.begin(), ray_ids.end());
+    ray_ids.erase(std::unique(ray_ids.begin(), ray_ids.end()), ray_ids.end());
+
+    std::vector<fastf_t> endpoint_errors;
+    size_t source_crossings = 0;
+    size_t candidate_crossings = 0;
+    double candidate_chord = 0.0;
+    const fastf_t interval_tolerance = std::max(source->rti_tol.dist,
+	candidate->rti_tol.dist);
+    for (size_t ray_id : ray_ids) {
+	const CroftonSegmentList &source_segments = source_rays[ray_id];
+	const CroftonSegmentList &candidate_segments = candidate_rays[ray_id];
+
+	vect_t direction;
+	const bool have_direction = crofton_ray_direction(direction,
+	    source_segments, candidate_segments);
+	size_t source_degenerate_count = 0;
+	size_t candidate_degenerate_count = 0;
+	const std::vector<CroftonInterval> source_intervals =
+	    crofton_merged_intervals(source_segments, direction,
+		interval_tolerance, source_degenerate_count,
+		comparison->source_max_numerically_degenerate_length);
+	const std::vector<CroftonInterval> candidate_intervals =
+	    crofton_merged_intervals(candidate_segments, direction,
+		interval_tolerance, candidate_degenerate_count,
+		comparison->candidate_max_numerically_degenerate_length);
+	comparison->source_numerically_degenerate_segments +=
+	    source_degenerate_count;
+	comparison->candidate_numerically_degenerate_segments +=
+	    candidate_degenerate_count;
+	if (source_degenerate_count || candidate_degenerate_count)
+	    ++comparison->numerically_degenerate_rays;
+	if (!have_direction)
+	    continue;
+	if (!source_intervals.empty())
+	    ++comparison->source_hit_rays;
+	if (!candidate_intervals.empty())
+	    ++comparison->candidate_hit_rays;
+	double ray_maximum_disagreement = 0.0;
+	double ray_maximum_normal_disagreement = 0.0;
+	const double ray_disagreement = crofton_interval_disagreement(
+	    source_intervals, candidate_intervals, direction,
+	    ray_maximum_disagreement, ray_maximum_normal_disagreement);
+	if (source_intervals.size() != candidate_intervals.size()) {
+	    ++comparison->partition_mismatch_rays;
+	    comparison->maximum_partition_disagreement = std::max(
+		comparison->maximum_partition_disagreement,
+		ray_maximum_disagreement);
+	    comparison->maximum_normal_partition_disagreement = std::max(
+		comparison->maximum_normal_partition_disagreement,
+		ray_maximum_normal_disagreement);
+	    if (ray_maximum_normal_disagreement <= interval_tolerance)
+		++comparison->sub_tolerance_partition_mismatch_rays;
+	    else
+		++comparison->material_partition_mismatch_rays;
+	}
+	source_crossings += 2 * source_intervals.size();
+	candidate_crossings += 2 * candidate_intervals.size();
+	comparison->source_chord += crofton_interval_length(source_intervals);
+	candidate_chord += crofton_interval_length(candidate_intervals);
+	comparison->chord_disagreement += ray_disagreement;
+
+	if (source_intervals.size() != candidate_intervals.size())
+	    continue;
+	for (size_t i = 0; i < source_intervals.size(); ++i) {
+	    const CroftonInterval &source_interval = source_intervals[i];
+	    const CroftonInterval &candidate_interval = candidate_intervals[i];
+	    if (std::fabs(VDOT(source_interval.entry.normal, direction)) >=
+		    CROFTON_COMPARE_TANGENT_DOT_LIMIT)
+	    {
+		endpoint_errors.push_back(DIST_PNT_PNT(
+		    source_interval.entry.point, candidate_interval.entry.point));
+	    }
+	    if (std::fabs(VDOT(source_interval.exit.normal, direction)) >=
+		    CROFTON_COMPARE_TANGENT_DOT_LIMIT)
+	    {
+		endpoint_errors.push_back(DIST_PNT_PNT(
+		    source_interval.exit.point, candidate_interval.exit.point));
+	    }
+	}
+    }
+
+    vect_t common_diagonal;
+    VSUB2(common_diagonal, common_max, common_min);
+    const double sampling_radius = 0.5 * MAGNITUDE(common_diagonal);
+    if (comparison->ray_count) {
+	const double ray_count = static_cast<double>(comparison->ray_count);
+	const double disk_area = M_PI * sampling_radius * sampling_radius;
+	comparison->source_surface_area = 2.0 * disk_area *
+	    static_cast<double>(source_crossings) / ray_count;
+	comparison->candidate_surface_area = 2.0 * disk_area *
+	    static_cast<double>(candidate_crossings) / ray_count;
+	comparison->source_volume = disk_area * comparison->source_chord /
+	    ray_count;
+	comparison->candidate_volume = disk_area * candidate_chord / ray_count;
+    }
+    comparison->surface_area_error_fraction = crofton_relative_error(
+	comparison->source_surface_area, comparison->candidate_surface_area);
+    comparison->volume_error_fraction = crofton_relative_error(
+	comparison->source_volume, comparison->candidate_volume);
+    comparison->partition_mismatch_fraction = comparison->ray_count ?
+	static_cast<double>(comparison->partition_mismatch_rays) /
+	    static_cast<double>(comparison->ray_count) : 0.0;
+    comparison->chord_error_fraction = comparison->source_chord >
+	SMALL_FASTF ? comparison->chord_disagreement /
+	comparison->source_chord : (comparison->chord_disagreement <=
+	SMALL_FASTF ? 0.0 : std::numeric_limits<double>::infinity());
+    comparison->compared_endpoint_count = endpoint_errors.size();
+    comparison->endpoint_error_p95 = crofton_percentile(endpoint_errors, 0.95);
+    comparison->endpoint_error_p99 = crofton_percentile(endpoint_errors, 0.99);
+    if (!endpoint_errors.empty()) {
+	comparison->endpoint_error_max = *std::max_element(
+	    endpoint_errors.begin(), endpoint_errors.end());
+    }
+
+    rt_crofton_result_free(&source_result);
+    rt_crofton_result_free(&candidate_result);
+    return 0;
 }
 
 

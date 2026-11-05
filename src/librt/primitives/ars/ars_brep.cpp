@@ -39,24 +39,27 @@ extern "C" {
 extern "C" void
 rt_ars_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *tol)
 {
+    if (b == NULL || *b == NULL)
+	return;
+
     struct rt_db_internal *tmp_internal;
-    struct bg_tess_tol ttmptol;
+    struct bg_tess_tol ttmptol = BG_TESS_TOL_INIT_TOL;
 
     BU_ALLOC(tmp_internal, struct rt_db_internal);
     RT_DB_INTERNAL_INIT(tmp_internal);
 
-    ttmptol.abs = 0;
-    ttmptol.rel = 0.01;
-    ttmptol.norm = 0;
-
     const struct bg_tess_tol *ttol = &ttmptol;
     struct model *arsm = nmg_mm();
-    struct nmgregion *arsr;
+    struct nmgregion *arsr = NULL;
 
     tmp_internal->idb_ptr = (void *)ip->idb_ptr;
-    rt_ars_tess(&arsr, arsm, tmp_internal, ttol, tol);
-    tmp_internal->idb_ptr = (void *)arsm;
-    rt_nmg_brep(b, tmp_internal, tol);
+    const int tess_result = rt_ars_tess(&arsr, arsm, tmp_internal, ttol, tol);
+    if (tess_result == 0 && arsr != NULL) {
+	tmp_internal->idb_ptr = (void *)arsm;
+	rt_nmg_brep(b, tmp_internal, tol);
+    } else {
+	(*b)->Destroy();
+    }
 
     FREE_MODEL(arsm);
     bu_free(tmp_internal, "free temporary rt_db_internal");

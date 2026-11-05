@@ -1628,6 +1628,9 @@ rt_ebm_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     BN_CK_TOL(tol);
     NMG_CK_MODEL(m);
 
+    if (r != NULL)
+	*r = NULL;
+
     RT_CK_DB_INTERNAL(ip);
     eip = (struct rt_ebm_internal *)ip->idb_ptr;
     RT_EBM_CK_MAGIC(eip);
@@ -1777,7 +1780,8 @@ rt_ebm_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     VSET(h, 0.0, 0.0, eip->tallness);
     MAT4X3VEC(height, eip->mat, h);
 
-    nmg_extrude_face(fu, height, vlfree, tol);
+    if (nmg_extrude_face(fu, height, vlfree, tol) != 0)
+	goto fail;
 
     nmg_region_a(*r, tol);
 

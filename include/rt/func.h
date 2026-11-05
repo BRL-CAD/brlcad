@@ -255,6 +255,62 @@ struct rt_crofton_result {
 
 
 /**
+ * Deterministic ray-by-ray comparison of two prepared geometry instances.
+ *
+ * The comparison uses one common sampling volume and the same Crofton ray
+ * sequence for both instances.  Partition mismatches detect topology and
+ * occupancy changes that aggregate area or volume estimates can miss, while
+ * chord and endpoint errors quantify geometric disagreement on matching rays.
+ * Raytracers may report a coincident entry/exit pair for a zero-thickness
+ * boundary sheet.  Such pairs are removed only when their endpoint separation
+ * is within a coordinate-scale floating-point roundoff bound; the raw segment
+ * and rejected-degenerate counts remain available for diagnostics.  This is
+ * deliberately much stricter than the modeling tolerance so that real thin
+ * volumes continue to participate in every comparison metric.
+ */
+struct rt_crofton_comparison {
+    size_t ray_count;
+    size_t source_hit_rays;
+    size_t candidate_hit_rays;
+    size_t partition_mismatch_rays;
+    size_t source_segment_count;
+    size_t candidate_segment_count;
+    /** Raw segments rejected as floating-point zero-length intervals. */
+    size_t source_numerically_degenerate_segments;
+    size_t candidate_numerically_degenerate_segments;
+    /** Rays on which either representation reported such an interval. */
+    size_t numerically_degenerate_rays;
+    /** Partition mismatches whose boundary-normal projected thickness is no
+     * greater than the raytrace tolerance.  These may reflect representation-
+     * specific culling of real, but tolerance-scale, material. */
+    size_t sub_tolerance_partition_mismatch_rays;
+    /** Partition mismatches containing a larger material disagreement. */
+    size_t material_partition_mismatch_rays;
+    size_t compared_endpoint_count;
+    double source_max_numerically_degenerate_length;
+    double candidate_max_numerically_degenerate_length;
+    double maximum_partition_disagreement;
+    double maximum_normal_partition_disagreement;
+    double partition_mismatch_fraction;
+    double endpoint_error_p95;
+    double endpoint_error_p99;
+    double endpoint_error_max;
+    double source_chord;
+    double chord_disagreement;
+    double chord_error_fraction;
+    double source_surface_area;
+    double candidate_surface_area;
+    double surface_area_error_fraction;
+    double source_volume;
+    double candidate_volume;
+    double volume_error_fraction;
+};
+
+/** Initialize an rt_crofton_comparison before first use. */
+#define RT_CROFTON_COMPARISON_INIT { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0 }
+
+
+/**
  * Run the Cauchy-Crofton ray-sampling estimator on an already-prepared
  * raytrace instance.  The caller owns @p rtip and must call rt_free_rti
  * after this function returns.
@@ -382,6 +438,25 @@ RT_EXPORT extern int rt_crofton_collect(struct rt_crofton_result *result,
 /** Release storage owned by a structured Crofton result. */
 RT_EXPORT extern void rt_crofton_result_free(
 					struct rt_crofton_result *result);
+
+/**
+ * Compare two prepared raytrace instances using identical deterministic rays.
+ *
+ * @p comparison is reset before use.  @p source and @p candidate must have
+ * been prepared with rt_prep_parallel().  If @p bbox_min and @p bbox_max are
+ * NULL, their union is derived from the prepared soltab bounds.  Supplying
+ * only one bound is invalid.  The caller retains ownership of both instances.
+ *
+ * @return 0 on success, -1 on invalid input or sampling failure.
+ */
+RT_EXPORT extern int rt_crofton_compare(
+					struct rt_crofton_comparison *comparison,
+					struct rt_i *source,
+					struct rt_i *candidate,
+					const struct rt_crofton_params *params,
+					size_t ray_offset,
+					const fastf_t *bbox_min,
+					const fastf_t *bbox_max);
 
 
 /**

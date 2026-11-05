@@ -10,6 +10,50 @@ struct eto_specific {
     double eu, ev, fu, fv;
 };
 
+
+double eto_refine_root(global const struct eto_specific *eto,
+	const double3 ray_origin, const double3 ray_direction, double root)
+{
+    const double rc_sq = eto->eto_rc * eto->eto_rc;
+    const double rd_sq = eto->eto_rd * eto->eto_rd;
+
+    for (int iteration = 0; iteration < 8; ++iteration) {
+	const double3 point = ray_origin + root * ray_direction;
+	const double radial_sq = point.x * point.x + point.y * point.y;
+	if (radial_sq <= SMALL_FASTF)
+	    break;
+
+	const double radial = sqrt(radial_sq);
+	const double radial_offset = radial - eto->eto_r;
+	const double major_coordinate = eto->eu * radial_offset +
+	    eto->ev * point.z;
+	const double minor_coordinate = eto->fu * radial_offset +
+	    eto->fv * point.z;
+	const double value = major_coordinate * major_coordinate / rc_sq +
+	    minor_coordinate * minor_coordinate / rd_sq - 1.0;
+
+	const double radial_derivative =
+	    (point.x * ray_direction.x + point.y * ray_direction.y) / radial;
+	const double major_derivative = eto->eu * radial_derivative +
+	    eto->ev * ray_direction.z;
+	const double minor_derivative = eto->fu * radial_derivative +
+	    eto->fv * ray_direction.z;
+	const double derivative =
+	    2.0 * major_coordinate * major_derivative / rc_sq +
+	    2.0 * minor_coordinate * minor_derivative / rd_sq;
+	if (fabs(derivative) <= SMALL_FASTF)
+	    break;
+
+	const double correction = value / derivative;
+	root -= correction;
+	if (fabs(correction) <= 1.0e-13 * (1.0 + fabs(root)))
+	    break;
+    }
+
+    return root;
+}
+
+
 int eto_shot(RESULT_TYPE *res, const double3 r_pt, const double3 r_dir, const uint idx, global const struct eto_specific *eto)
 {
     double3 dprime;		/* D' */
@@ -136,6 +180,9 @@ int eto_shot(RESULT_TYPE *res, const double3 r_pt, const double3 r_dir, const ui
 	if (NEAR_ZERO(val[j].im, 0.0001))
 	    k[i++] = val[j].re;
     }
+
+    for (j = 0; j < i; ++j)
+	k[j] = eto_refine_root(eto, cor_pprime, dprime, k[j]);
 
     /* reverse above translation by adding distance to all 'k' values. */
     for (j = 0; j < i; ++j)

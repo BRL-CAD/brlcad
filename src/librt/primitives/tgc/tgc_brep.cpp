@@ -139,6 +139,18 @@ rt_tgc_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *U
     (*b)->NewRuledFace((*b)->m_E[ell1eind], false, (*b)->m_E[ell2eind], false);
 
     (*b)->Compact();
+
+    /* NewPlanarFaceLoop and NewRuledFace inherit their orientation from the
+     * A/B ellipse frame.  The TGC definition permits H to point to either
+     * side of that frame.  The construction above is outward when A x B and
+     * H agree, and consistently inward when they oppose.  IsSolid() accepts
+     * either orientation, but an inward component mixed with an outward
+     * component produces consecutive equal-direction ray hits and incorrect
+     * partitions. */
+    vect_t base_normal;
+    VCROSS(base_normal, eip->a, eip->b);
+    if (VDOT(base_normal, eip->h) < 0.0)
+	(*b)->Flip();
 }
 
 

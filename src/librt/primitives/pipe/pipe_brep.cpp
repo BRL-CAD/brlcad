@@ -34,6 +34,8 @@
 #include "wdb.h"
 #include "primitives/brep/primitive_brep.h"
 
+#include "../../librt_private.h"
+
 
 static void
 generate_curves(fastf_t id, fastf_t od, ON_Plane *plane,
@@ -50,6 +52,38 @@ generate_curves(fastf_t id, fastf_t od, ON_Plane *plane,
 	innercirclestart.GetNurbForm(*icurve);
 	inner->Append(ON_Curve::Cast(icurve));
     }
+}
+
+
+/* A ruled surface connects equal curve parameters.  Rebuilding every pipe
+ * section with bn_vec_ortho() gives geometrically identical circles, but an
+ * arbitrary seam rotation can twist the ruled surface between them.  Carry
+ * the preceding section's seam and direction forward along straight runs. */
+static bool
+generate_aligned_curves(fastf_t id, fastf_t od,
+	const ON_3dPoint &origin, const ON_Curve *reference,
+	ON_SimpleArray<ON_Curve*> *outer,
+	ON_SimpleArray<ON_Curve*> *inner, ON_Plane *plane)
+{
+    if (reference == NULL || plane == NULL)
+	return false;
+
+    ON_Arc reference_arc;
+    if (!reference->IsArc(NULL, &reference_arc, ON_ZERO_TOLERANCE) ||
+	!reference_arc.IsCircle())
+    {
+	return false;
+    }
+    ON_3dVector x_axis = reference->PointAtStart() - reference_arc.Center();
+    ON_3dVector y_axis = reference->TangentAt(reference->Domain().Min());
+    if (!x_axis.Unitize() || !y_axis.Unitize())
+	return false;
+
+    *plane = ON_Plane(origin, x_axis, y_axis);
+    if (!plane->IsValid())
+	return false;
+    generate_curves(id, od, plane, outer, inner);
+    return outer->Count() == 1 && inner->Count() == (id > 0.0 ? 1 : 0);
 }
 
 
@@ -148,8 +182,14 @@ make_bend_surface(const ON_Curve &start_curve, const ON_Line &axis,
 	return false;
     ON_RevSurface* revsurf = ON_RevSurface::New();
     revsurf->m_curve = profile;
-    revsurf->m_axis = axis;
-    revsurf->m_angle = ON_Interval(2*ON_PI - angle, 2*ON_PI);
+
+    /* The start section is swept toward the bend end by a negative rotation
+     * about axis.  Express the same motion as a positive, zero-based interval
+     * about the reversed axis.  For very small bends, placing both parameters
+     * next to 2*pi can make openNURBS collapse the two boundary curves to the
+     * same periodic representative. */
+    revsurf->m_axis = ON_Line(axis.from, axis.from - axis.Direction());
+    revsurf->m_angle = ON_Interval(0.0, angle);
     revsurf->m_t = revsurf->m_angle;
     revsurf->m_bTransposed = false;
     revsurf->BoundingBox();
@@ -165,8 +205,27 @@ make_bend_surface(const ON_Curve &start_curve, const ON_Line &axis,
     }
     for (int i = 0; i < (*bend)->m_E.Count(); ++i) {
 	const ON_BrepEdge &edge = (*bend)->m_E[i];
+	const ON_BoundingBox bounds = start_curve.BoundingBox();
+	double coordinate_scale = 1.0;
+	if (bounds.IsValid()) {
+	    coordinate_scale = std::max(coordinate_scale,
+		std::fabs(bounds.m_min.x));
+	    coordinate_scale = std::max(coordinate_scale,
+		std::fabs(bounds.m_min.y));
+	    coordinate_scale = std::max(coordinate_scale,
+		std::fabs(bounds.m_min.z));
+	    coordinate_scale = std::max(coordinate_scale,
+		std::fabs(bounds.m_max.x));
+	    coordinate_scale = std::max(coordinate_scale,
+		std::fabs(bounds.m_max.y));
+	    coordinate_scale = std::max(coordinate_scale,
+		std::fabs(bounds.m_max.z));
+	}
+	const double identity_tolerance = std::min(tolerance,
+	    std::max(ON_ZERO_TOLERANCE,
+		64.0 * ON_EPSILON * coordinate_scale));
 	if (edge.IsClosed() && !brep_curves_coincident(edge,
-		start_curve, tolerance, NULL)) {
+		start_curve, identity_tolerance, NULL)) {
 	    *end_curve = edge.DuplicateCurve();
 	    break;
 	}
@@ -177,6 +236,29 @@ make_bend_surface(const ON_Curve &start_curve, const ON_Line &axis,
 	return false;
     }
     return true;
+}
+
+
+static double
+bend_maximum_motion(fastf_t angle, fastf_t bend_radius,
+	fastf_t outer_diameter)
+{
+    const double sweep_radius = std::fabs(bend_radius) +
+	0.5 * std::fabs(outer_diameter);
+    return 2.0 * sweep_radius *
+	std::sin(0.5 * std::fabs(angle));
+}
+
+
+static bool
+bend_is_sub_tolerance(fastf_t angle, fastf_t bend_radius,
+	fastf_t outer_diameter, const struct bn_tol *tol)
+{
+    const double tolerance = (tol && tol->dist > 0.0) ?
+	tol->dist : RT_LEN_TOL;
+    const double maximum_motion = bend_maximum_motion(angle, bend_radius,
+	outer_diameter);
+    return std::isfinite(maximum_motion) && maximum_motion <= tolerance;
 }
 
 
@@ -232,8 +314,12 @@ make_curved_surfaces(ON_Brep **b,
 
 
 extern "C" void
-rt_pipe_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *tol)
+_rt_pipe_brep_with_info(ON_Brep **b, const struct rt_db_internal *ip,
+	const struct bn_tol *tol, fastf_t *maximum_approximation)
 {
+    if (maximum_approximation != NULL)
+	*maximum_approximation = 0.0;
+
     struct rt_pipe_internal *pip;
 
     struct wdb_pipe_pnt *prevp;
@@ -297,7 +383,7 @@ rt_pipe_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *
     nextp = BU_LIST_NEXT(wdb_pipe_pnt, &curp->l);
     if (BU_LIST_IS_HEAD(&curp->l, &pip->pipe_segs_head)) return;
 
-    VMOVE(current_point, curp->pp_coord);
+    VMOVE(current_point, prevp->pp_coord);
 
     VSUB2(pipe_dir, prevp->pp_coord, curp->pp_coord);
     bn_vec_ortho(x_dir, pipe_dir);
@@ -352,15 +438,14 @@ rt_pipe_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *
 
 	if (BU_LIST_IS_HEAD(&nextp->l, &pip->pipe_segs_head)) {
 	    // last segment, always linear
-	    VSUB2(pipe_dir, prevp->pp_coord, curp->pp_coord);
-	    bn_vec_ortho(x_dir, pipe_dir);
-	    VCROSS(y_dir, pipe_dir, x_dir);
-	    VUNITIZE(y_dir);
 	    plane_origin = ON_3dPoint(curp->pp_coord);
-	    plane_x_dir = ON_3dVector(x_dir);
-	    plane_y_dir = ON_3dVector(y_dir);
-	    endplane = ON_Plane(plane_origin, plane_x_dir, plane_y_dir);
-	    generate_curves(curp->pp_id, curp->pp_od, &endplane, &endoutercurves, &endinnercurves);
+	    if (!generate_aligned_curves(curp->pp_id, curp->pp_od,
+		    plane_origin, startoutercurves[0], &endoutercurves,
+		    &endinnercurves, &endplane)) {
+		bu_log("rt_pipe_brep: could not align terminal section curves\n");
+		(*b)->Destroy();
+		return;
+	    }
 	    if (!make_linear_surfaces(b, &startoutercurves, &endoutercurves,
 		    &startinnercurves, &endinnercurves)) {
 		bu_log("rt_pipe_brep: could not construct terminal ruled surfaces\n");
@@ -374,25 +459,42 @@ rt_pipe_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *
 	if (!(VNEAR_ZERO(n1, RT_LEN_TOL))) {
 	    // isn't duplicate point, proceed
 	    VSUB2(n2, nextp->pp_coord, curp->pp_coord);
-	    VCROSS(norm, n1, n2);
 	    VUNITIZE(n1);
 	    VUNITIZE(n2);
-	    angle = M_PI - acos(VDOT(n1, n2));
+	    VCROSS(norm, n1, n2);
+	    fastf_t direction_dot = VDOT(n1, n2);
+	    CLAMP(direction_dot, -1.0, 1.0);
+	    /* atan2 retains tiny real turns that acos(dot) rounds either to
+	     * exactly zero or to a much larger sqrt(machine-epsilon) angle. */
+	    angle = atan2(MAGNITUDE(norm), -direction_dot);
 	    dist_to_bend = curp->pp_bendradius * tan(angle/2.0);
+	    const double maximum_motion = bend_maximum_motion(angle,
+		curp->pp_bendradius, curp->pp_od);
 
 	    if (std::isnan(dist_to_bend) ||
 		VNEAR_ZERO(norm, SQRT_SMALL_FASTF) ||
-		NEAR_ZERO(dist_to_bend, SQRT_SMALL_FASTF)) {
-		// points are collinear, treat as linear segment
-		VSUB2(pipe_dir, current_point, curp->pp_coord);
-		bn_vec_ortho(x_dir, pipe_dir);
-		VCROSS(y_dir, pipe_dir, x_dir);
-		VUNITIZE(y_dir);
+		NEAR_ZERO(dist_to_bend, SQRT_SMALL_FASTF) ||
+		bend_is_sub_tolerance(angle, curp->pp_bendradius,
+		    curp->pp_od, tol)) {
+		if (maximum_approximation != NULL &&
+		    std::isfinite(maximum_motion) && maximum_motion > 0.0 &&
+		    maximum_motion <= MAX_FASTF)
+		{
+		    *maximum_approximation = std::max(*maximum_approximation,
+			static_cast<fastf_t>(maximum_motion));
+		}
+		/* A bend whose entire swept section moves by no more than the
+		 * modeling tolerance has coincident B-Rep boundaries.  Treat it
+		 * as a straight joint instead of creating an indeterminate,
+		 * effectively zero-area face. */
 		plane_origin = ON_3dPoint(curp->pp_coord);
-		plane_x_dir = ON_3dVector(x_dir);
-		plane_y_dir = ON_3dVector(y_dir);
-		endplane = ON_Plane(plane_origin, plane_x_dir, plane_y_dir);
-		generate_curves(curp->pp_id, curp->pp_od, &endplane, &endoutercurves, &endinnercurves);
+		if (!generate_aligned_curves(curp->pp_id, curp->pp_od,
+			plane_origin, startoutercurves[0], &endoutercurves,
+			&endinnercurves, &endplane)) {
+		    bu_log("rt_pipe_brep: could not align straight section curves\n");
+		    (*b)->Destroy();
+		    return;
+		}
 		if (!make_linear_surfaces(b, &startoutercurves,
 			&endoutercurves, &startinnercurves,
 			&endinnercurves)) {
@@ -411,15 +513,14 @@ rt_pipe_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *
 
 		// Linear part first
 		VJOIN1(bend_start, curp->pp_coord, dist_to_bend, n1);
-		VSUB2(pipe_dir, prevp->pp_coord, curp->pp_coord);
-		bn_vec_ortho(x_dir, pipe_dir);
-		VCROSS(y_dir, pipe_dir, x_dir);
-		VUNITIZE(y_dir);
 		plane_origin = ON_3dPoint(bend_start);
-		plane_x_dir = ON_3dVector(x_dir);
-		plane_y_dir = ON_3dVector(y_dir);
-		endplane = ON_Plane(plane_origin, plane_x_dir, plane_y_dir);
-		generate_curves(curp->pp_id, curp->pp_od, &endplane, &endoutercurves, &endinnercurves);
+		if (!generate_aligned_curves(curp->pp_id, curp->pp_od,
+			plane_origin, startoutercurves[0], &endoutercurves,
+			&endinnercurves, &endplane)) {
+		    bu_log("rt_pipe_brep: could not align pre-bend section curves\n");
+		    (*b)->Destroy();
+		    return;
+		}
 		if (!make_linear_surfaces(b, &startoutercurves,
 			&endoutercurves, &startinnercurves,
 			&endinnercurves)) {
@@ -447,28 +548,14 @@ rt_pipe_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *
 	nextp = BU_LIST_NEXT(wdb_pipe_pnt, &curp->l);
     }
     // In the case of the final segment, also create the end face.
-    for (int i = 0; i < startoutercurves.Count(); ++i)
-	delete startoutercurves[i];
-    for (int i = 0; i < startinnercurves.Count(); ++i)
-	delete startinnercurves[i];
-    startoutercurves.Empty();
-    startinnercurves.Empty();
     endoutercurves.Empty();
     endinnercurves.Empty();
-
-    /* Match the terminal ruled surfaces' section frame so the cap circles
-     * use the same seam vertices.  Reversing this vector produces the same
-     * circle loci with seams rotated by 180 degrees, leaving naked edges. */
-    VSUB2(pipe_dir, prevp->pp_coord, curp->pp_coord);
-    bn_vec_ortho(x_dir, pipe_dir);
-    VCROSS(y_dir, pipe_dir, x_dir);
-    VUNITIZE(y_dir);
-    plane_origin = ON_3dPoint(curp->pp_coord);
-    plane_x_dir = ON_3dVector(x_dir);
-    plane_y_dir = ON_3dVector(y_dir);
-    endplane = ON_Plane(plane_origin, plane_x_dir, plane_y_dir);
-
-    generate_curves(curp->pp_id, curp->pp_od, &endplane, &endoutercurves, &endinnercurves);
+    for (int i = 0; i < startoutercurves.Count(); ++i)
+	endoutercurves.Append(startoutercurves[i]);
+    for (int i = 0; i < startinnercurves.Count(); ++i)
+	endinnercurves.Append(startinnercurves[i]);
+    startoutercurves.Empty();
+    startinnercurves.Empty();
 
     ON_PlaneSurface* ebp = new ON_PlaneSurface();
     ebp->m_plane = endplane;
@@ -538,6 +625,14 @@ rt_pipe_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *
 	(*b)->Destroy();
 	return;
     }
+}
+
+
+extern "C" void
+rt_pipe_brep(ON_Brep **b, const struct rt_db_internal *ip,
+	const struct bn_tol *tol)
+{
+    _rt_pipe_brep_with_info(b, ip, tol, NULL);
 }
 
 

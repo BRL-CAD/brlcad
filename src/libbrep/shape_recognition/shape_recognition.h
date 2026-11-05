@@ -24,6 +24,8 @@
  */
 
 #include "common.h"
+
+#include <set>
 #include "bu/ptbl.h"
 #include "brep/defines.h"
 #include "brep/csg.h"

@@ -364,6 +364,29 @@ static point_t point_offset[8] = {
     {0, 1, 1}, {1, 1, 1}, {1, 1, 0}, {0, 1, 0}};
 
 
+/* Copy the marching-cubes table entry as local cube-edge indices.  This is
+ * used by implicit primitive B-Rep conversion to build indexed meshes without
+ * relying on tolerance-based NMG vertex fusion.  triangle_edges must have
+ * room for the marching-cubes maximum of 15 indices. */
+int
+rt_mc_cube_triangle_edges(int *triangle_edges, int pv)
+{
+    int edge_count = 0;
+    const int *vi;
+
+    if (!triangle_edges || pv < 0 || pv > 255)
+	return -1;
+
+    vi = (const int *)(mc_tris[pv]);
+    while (*vi >= 0) {
+	if (edge_count >= 15)
+	    return -1;
+	triangle_edges[edge_count++] = *vi++;
+    }
+    return edge_count / 3;
+}
+
+
 /* returns the number of triangles added or -1 on failure */
 int
 rt_tri_mc_realize_cube(fastf_t *tris, int pv, point_t *edges)
@@ -737,7 +760,7 @@ fire_row(int cpu, void * ptr)
 int
 nmg_mc_evaluate(struct shell *s, struct rt_i *rtip, const struct db_full_path *pathp, const struct bg_tess_tol *ttol, const struct bn_tol *tol)
 {
-    struct mci_s m;
+    struct mci_s m = {0};
     int i;
 
     m.s = s;
@@ -745,12 +768,18 @@ nmg_mc_evaluate(struct shell *s, struct rt_i *rtip, const struct db_full_path *p
     m.tol = tol;
     m.count = 0;
 
-    m.ncpu = bu_avail_cpus();
     m.ncpu = 1; /* seems to be an issue with confused loop calculation in the NMG code. */
-    for (i = 0; i < MAX_PSW; i++)
-	rt_init_resource(&m.resources[i], i, rtip);
 
-    rt_gettree(rtip, db_path_to_string(pathp));
+    char *path = db_path_to_string(pathp);
+    if (!path)
+	return -1;
+    int tree_status = rt_gettree(rtip, path);
+    bu_free(path, "marching cubes database path");
+    if (tree_status != 0)
+	return -1;
+
+    for (i = 0; i < m.ncpu; ++i)
+	rt_init_resource(&m.resources[i], i, rtip);
     rt_prep_parallel(rtip, m.ncpu);
 
     /* use rel value * bounding spheres diameter or the abs tolerance */
@@ -760,6 +789,11 @@ nmg_mc_evaluate(struct shell *s, struct rt_i *rtip, const struct db_full_path *p
     m.endy=bin(rtip->mdl_max[Y], m.step) + m.step;
 
     bu_parallel(fire_row, m.ncpu, &m);
+
+    for (i = 0; i < m.ncpu; ++i) {
+	rt_clean_resource_basic(rtip, &m.resources[i]);
+	BU_PTBL_SET(&rtip->rti_resources, i, NULL);
+    }
 
     return m.count;
 }

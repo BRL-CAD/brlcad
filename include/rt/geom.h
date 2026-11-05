@@ -1222,7 +1222,13 @@ struct rt_hrt_internal
     vect_t xdir;	/**< @brief unit vector in x direction */
     vect_t ydir;     	/**< @brief unit vector in y direction */
     vect_t zdir;      	/**< @brief unit vector in z direction */
-    fastf_t d;          /**< @brief distance to cusps */
+    /**
+     * Legacy cusp-distance parameter.  The implemented HRT ray surface has
+     * been defined entirely by v/xdir/ydir/zdir since its introduction in
+     * 2013; d is retained, serialized, and required to be positive for
+     * database compatibility, but does not alter that implicit surface.
+     */
+    fastf_t d;
 };
 #define RT_HRT_CK_MAGIC(_p) BU_CKMAG(_p, RT_HRT_INTERNAL_MAGIC, "rt_hrt_internal")
 

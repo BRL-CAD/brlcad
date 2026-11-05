@@ -141,6 +141,60 @@ struct eto_specific {
 };
 
 
+/* Refine a real root of the squared quartic against the unsquared ETO
+ * equation.  The general polynomial solver is intentionally scale agnostic;
+ * for large, eccentric ETOs its otherwise acceptable relative error can
+ * amount to several thousandths of a model unit.  Working in the translated
+ * ray frame used to form the quartic keeps this Newton correction well
+ * conditioned and also puts the returned point back on the actual (rather
+ * than merely squared) implicit surface. */
+static fastf_t
+eto_refine_root(const struct eto_specific *eto, const vect_t ray_origin,
+	const vect_t ray_direction, fastf_t root)
+{
+    const fastf_t rc_sq = eto->eto_rc * eto->eto_rc;
+    const fastf_t rd_sq = eto->eto_rd * eto->eto_rd;
+
+    for (int iteration = 0; iteration < 8; ++iteration) {
+	point_t point;
+	VJOIN1(point, ray_origin, root, ray_direction);
+	const fastf_t radial_sq = point[X] * point[X] +
+	    point[Y] * point[Y];
+	if (radial_sq <= SMALL_FASTF)
+	    break;
+
+	const fastf_t radial = sqrt(radial_sq);
+	const fastf_t radial_offset = radial - eto->eto_r;
+	const fastf_t major_coordinate = eto->eu * radial_offset +
+	    eto->ev * point[Z];
+	const fastf_t minor_coordinate = eto->fu * radial_offset +
+	    eto->fv * point[Z];
+	const fastf_t value = major_coordinate * major_coordinate / rc_sq +
+	    minor_coordinate * minor_coordinate / rd_sq - 1.0;
+
+	const fastf_t radial_derivative =
+	    (point[X] * ray_direction[X] +
+	     point[Y] * ray_direction[Y]) / radial;
+	const fastf_t major_derivative = eto->eu * radial_derivative +
+	    eto->ev * ray_direction[Z];
+	const fastf_t minor_derivative = eto->fu * radial_derivative +
+	    eto->fv * ray_direction[Z];
+	const fastf_t derivative =
+	    2.0 * major_coordinate * major_derivative / rc_sq +
+	    2.0 * minor_coordinate * minor_derivative / rd_sq;
+	if (NEAR_ZERO(derivative, SMALL_FASTF))
+	    break;
+
+	const fastf_t correction = value / derivative;
+	root -= correction;
+	if (fabs(correction) <= 1.0e-13 * (1.0 + fabs(root)))
+	    break;
+    }
+
+    return root;
+}
+
+
 EXTERNCPP const struct bu_structparse rt_eto_parse[] = {
     { "%f", 3, "V",   bu_offsetofarray(struct rt_eto_internal, eto_V, fastf_t, X), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     { "%f", 3, "N",   bu_offsetofarray(struct rt_eto_internal, eto_N, fastf_t, X), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
@@ -304,7 +358,11 @@ rt_eto_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 	return 1;
     }
 
-    eto->ev = fabs(VDOT(Cu, Nu));	/* vertical component of Cu */
+    /* Preserve the tilt of C toward either side of the revolution plane.
+     * Taking the absolute value mirrors negative-tilt ETOs across that plane
+     * in the ray representation while plotting, tessellation, and B-Rep
+     * conversion all retain the signed direction. */
+    eto->ev = VDOT(Cu, Nu);	/* vertical component of Cu */
     eto->eu = sqrt(1.0 - eto->ev * eto->ev);	/* horiz component */
     eto->fu = -eto->ev;
     eto->fv =  eto->eu;
@@ -515,6 +573,9 @@ rt_eto_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct 
 	    k[i++] = val[j].re;
     }
 
+    for (j = 0; j < i; ++j)
+	k[j] = eto_refine_root(eto, cor_pprime, dprime, k[j]);
+
     /* reverse above translation by adding distance to all 'k' values. */
     for (j = 0; j < i; ++j)
 	k[j] -= cor_proj;
@@ -675,6 +736,9 @@ rt_eto_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, str
 	    if (NEAR_ZERO(val[j].im, 0.0001))
 		k[i++] = val[j].re;
 	}
+
+	for (j = 0; j < i; ++j)
+	    k[j] = eto_refine_root(eto, cor_pprime, dprime, k[j]);
 
 	/* reverse above translation by adding distance to all 'k' values. */
 	for (j = 0; j < i; ++j)
@@ -2367,10 +2431,6 @@ rt_eto_functab_validate(struct bu_vls *error_msg, const struct rt_db_internal *i
         bu_vls_printf(error_msg, "%s{\"problem_type\":\"zero_length_n_vector\"}", comma);
         comma = ",";
         issues++;
-    } else if (!NEAR_EQUAL(MAGSQ(eto->eto_N), 1.0, tol->dist)) {
-        bu_vls_printf(error_msg, "%s{\"problem_type\":\"n_not_unit_length\"}", comma);
-        comma = ",";
-        issues++;
     }
 
     if (MAGNITUDE(eto->eto_C) < tol->dist) {
@@ -2395,15 +2455,6 @@ rt_eto_functab_validate(struct bu_vls *error_msg, const struct rt_db_internal *i
         bu_vls_printf(error_msg, "%s{\"problem_type\":\"rd_greater_than_c\"}", comma);
         comma = ",";
         issues++;
-    }
-
-    if (MAGNITUDE(eto->eto_N) > SQRT_SMALL_FASTF && MAGNITUDE(eto->eto_C) > SQRT_SMALL_FASTF) {
-        fastf_t f = VDOT(eto->eto_N, eto->eto_C) / MAGNITUDE(eto->eto_C);
-        if (!NEAR_ZERO(f, tol->perp)) {
-            bu_vls_printf(error_msg, "%s{\"problem_type\":\"n_not_perp_c\"}", comma);
-            comma = ",";
-            issues++;
-        }
     }
 
     bu_vls_printf(error_msg, "]");

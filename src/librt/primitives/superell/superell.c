@@ -299,6 +299,31 @@ rt_superell_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rti
     eip = (struct rt_superell_internal *)ip->idb_ptr;
     RT_SUPERELL_CK_MAGIC(eip);
 
+    /* A superellipsoid with unit north-south and east-west exponents is
+     * exactly an ellipsoid.  Use the ellipsoid implementation for this case
+     * so shot distances and the associated norm/curve/uv/free methods all
+     * have the mature ellipsoid semantics. */
+    if (eip->n == 1.0 && eip->e == 1.0) {
+	struct rt_ell_internal ell = {0};
+	struct rt_db_internal internal;
+
+	ell.magic = RT_ELL_INTERNAL_MAGIC;
+	VMOVE(ell.v, eip->v);
+	VMOVE(ell.a, eip->a);
+	VMOVE(ell.b, eip->b);
+	VMOVE(ell.c, eip->c);
+
+	RT_DB_INTERNAL_INIT(&internal);
+	internal.idb_major_type = DB5_MAJORTYPE_BRLCAD;
+	internal.idb_minor_type = ID_ELL;
+	internal.idb_meth = &OBJ[ID_ELL];
+	internal.idb_ptr = &ell;
+
+	stp->st_id = ID_ELL;
+	stp->st_meth = &OBJ[ID_ELL];
+	return rt_obj_prep(stp, &internal, rtip);
+    }
+
     /* Validate that |A| > 0, |B| > 0, |C| > 0 */
     magsq_a = MAGSQ(eip->a);
     magsq_b = MAGSQ(eip->b);

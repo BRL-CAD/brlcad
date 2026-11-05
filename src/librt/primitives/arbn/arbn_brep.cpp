@@ -42,14 +42,10 @@ extern "C" void
 rt_arbn_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *tol)
 {
     struct rt_db_internal *tmp_internal;
-    struct bg_tess_tol ttmptol;
+    struct bg_tess_tol ttmptol = BG_TESS_TOL_INIT_TOL;
 
     BU_ALLOC(tmp_internal, struct rt_db_internal);
     RT_DB_INTERNAL_INIT(tmp_internal);
-
-    ttmptol.abs = 0;
-    ttmptol.rel = 0.01;
-    ttmptol.norm = 0;
 
     const struct bg_tess_tol *ttol = &ttmptol;
     struct model *arbn_nmg = nmg_mm();

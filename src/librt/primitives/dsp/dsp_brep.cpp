@@ -25,19 +25,23 @@
 
 #include "common.h"
 
+#include <vector>
+
 #include "raytrace.h"
 #include "rt/geom.h"
 #include "brep.h"
+
+#include "../../librt_private.h"
 
 /* private header */
 #include "./dsp.h"
 
 #define MOVEPT(_p) MAT4X3PNT(_p, dsp_ip->dsp_stom, p_temp)
-#define MAX_CNT 256
 
-fastf_t C[2*MAX_CNT+1][2*MAX_CNT+1]; // Combination. Assume xcnt & ycnt are not greater than 256
-
-int DegreeReduction(int n, ON_3dPointArray &bezcurv, fastf_t tol, fastf_t &maxerr)
+static int
+degree_reduction(int n, ON_3dPointArray &bezcurv, fastf_t tol,
+    fastf_t &maxerr, const std::vector<fastf_t> &combinations,
+    size_t combination_stride)
 {
     /* This function reduces the degree of a Bezier curve by one.
      * For details about the algorithm, see:
@@ -51,7 +55,7 @@ int DegreeReduction(int n, ON_3dPointArray &bezcurv, fastf_t tol, fastf_t &maxer
     if (tol < 0.0)
 	return -1;
     if (bezcurv.Count() != n + 1) {
-	bu_log("DegreeReduction(): The Bezier curve should has %d control points!\n", n + 1);
+	bu_log("degree_reduction(): the Bezier curve should have %d control points\n", n + 1);
 	return -2;
     }
     if (n < 1)
@@ -72,7 +76,7 @@ int DegreeReduction(int n, ON_3dPointArray &bezcurv, fastf_t tol, fastf_t &maxer
     for (int i = 0; i < n; i++) {
 	ON_3dPoint newpt;
 	fastf_t lambda = pow(2.0, 1 - 2*n);
-	sum += C[2*n][2*i];
+	sum += combinations[2*n*combination_stride + 2*i];
 	lambda *= sum;
 	if (NEAR_ZERO(lambda, 1e-6))
 	    lambda = 0.0;
@@ -81,7 +85,7 @@ int DegreeReduction(int n, ON_3dPointArray &bezcurv, fastf_t tol, fastf_t &maxer
 	newpt = (1 - lambda) * left[i] + lambda * right[i];
 	tmpcurve.Append(newpt);
 	if (!tmpcurve.Capacity()) {
-	    bu_log("DegreeReduction(): error appending newpt on line %d\n", __LINE__);
+	    bu_log("degree_reduction(): error appending newpt on line %d\n", __LINE__);
 	    return -2;
 	}
     }
@@ -110,12 +114,23 @@ rt_dsp_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *)
 {
     struct rt_dsp_internal *dsp_ip;
 
-    if (!b)
+    if (!b || !*b)
 	return;
 
     RT_CK_DB_INTERNAL(ip);
     dsp_ip = (struct rt_dsp_internal *)ip->idb_ptr;
     RT_DSP_CK_MAGIC(dsp_ip);
+
+    if (dsp_ip->dsp_xcnt < 2 || dsp_ip->dsp_ycnt < 2 ||
+	dsp_ip->dsp_xcnt > RT_DSP_BREP_MAX_CONTROL_POINTS ||
+	dsp_ip->dsp_ycnt > RT_DSP_BREP_MAX_CONTROL_POINTS)
+    {
+	bu_log("DSP B-Rep conversion supports dimensions from 2 through %u; got %u by %u\n",
+	    RT_DSP_BREP_MAX_CONTROL_POINTS, dsp_ip->dsp_xcnt,
+	    dsp_ip->dsp_ycnt);
+	(*b)->Destroy();
+	return;
+    }
 
     /* A DSP brep is broken down into faces as follows:
      *
@@ -444,11 +459,20 @@ rt_dsp_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *)
     fastf_t tol = max_delta * 5.0 * dsp_ip->dsp_ycnt;
     fastf_t maxerr = 0.0;
     // Calculate the combinations
-    C[0][0] = 1;
-    for (int i = 1; i <= MAX_CNT*2; i++) {
-	C[i][0] = C[i][i] = 1;
-	for (int j = 1; j < i; j++) {
-	    C[i][j] = C[i - 1][j - 1] + C[i - 1][j];
+    const size_t maximum_control_points = dsp_ip->dsp_xcnt >
+	dsp_ip->dsp_ycnt ? dsp_ip->dsp_xcnt : dsp_ip->dsp_ycnt;
+    const size_t maximum_combination_row = 2 * (maximum_control_points - 1);
+    const size_t combination_stride = maximum_combination_row + 1;
+    std::vector<fastf_t> combinations(
+	combination_stride * combination_stride, 0.0);
+    combinations[0] = 1.0;
+    for (size_t i = 1; i <= maximum_combination_row; i++) {
+	combinations[i * combination_stride] = 1.0;
+	combinations[i * combination_stride + i] = 1.0;
+	for (size_t j = 1; j < i; j++) {
+	    combinations[i * combination_stride + j] =
+		combinations[(i - 1) * combination_stride + j - 1] +
+		combinations[(i - 1) * combination_stride + j];
 	}
     }
 
@@ -464,9 +488,11 @@ rt_dsp_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *)
 	    bezcurvarray[y]->Append(cv);
 	}
     }
-    while (currentdegree && !exceedtol) {
+    while (currentdegree > 2 && !exceedtol) {
 	for (unsigned int y = 0; y < dsp_ip->dsp_ycnt; y++) {
-	    if (DegreeReduction(currentdegree - 1, *bezcurvarray[y], tol, maxerr) == -1) {
+	    if (degree_reduction(currentdegree - 1, *bezcurvarray[y],
+		tol, maxerr, combinations, combination_stride) != 0)
+	    {
 		exceedtol = true;
 		break;
 	    }
@@ -498,9 +524,11 @@ rt_dsp_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *)
 	    bezcurvarray[x]->Append(cv);
 	}
     }
-    while (currentdegree && !exceedtol) {
+    while (currentdegree > 2 && !exceedtol) {
 	for (int x = 0; x < reducedsurf->m_order[0]; x++) {
-	    if (DegreeReduction(currentdegree - 1, *bezcurvarray[x], tol, maxerr) == -1) {
+	    if (degree_reduction(currentdegree - 1, *bezcurvarray[x],
+		tol, maxerr, combinations, combination_stride) != 0)
+	    {
 		exceedtol = true;
 		break;
 	    }
@@ -520,9 +548,10 @@ rt_dsp_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *)
     }
 
     ON_NurbsSurface *tnurbssurf = ON_NurbsSurface::New();
-    reducedsurf->GetNurbForm(*tnurbssurf);
-    (*b)->NewFace(*tnurbssurf);
+    if (reducedsurf->GetNurbForm(*tnurbssurf))
+	(*b)->NewFace(*tnurbssurf);
 
+    delete tnurbssurf;
     delete bezsurf;
     delete reducedsurf;
 }

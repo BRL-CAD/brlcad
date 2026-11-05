@@ -25,9 +25,14 @@
  *
  * Algorithm:
  *
- * Given V, X, Y, Z and d, there is a set of points on this heart
+ * Given V, X, Y, and Z, there is a set of points on this heart
  *
- * { (x, y, z) | (x, y, z) is on heart defined by V, X, Y, Z and d }
+ * { (x, y, z) | (x, y, z) is on heart defined by V, X, Y, and Z }
+ *
+ * Database records also contain the legacy scalar d.  The implemented ray
+ * primitive has never used d to define the implicit surface; it is retained
+ * and validated for database compatibility.  Conversion code must preserve
+ * these established ray semantics.
  *
  * Through a series of Transformations, this set will be transformed
  * into a set of points on a heart centered at the origin
@@ -39,14 +44,9 @@
  *
  * X' = S(R(X - V))
  *
- * where R(X) = (Z/(|X|))
- *		(Y/(|Y|)) . X
- *		(Z/(|Z|))
- *
- * and S(X) =	(1/|A|   0     0)
- *		(0    1/|A|   0) . X
- *		(0      0   1/|A|)
- * where |A| = d
+ * where the rows of S(R(X)) are X/(X dot X), Y/(Y dot Y), and
+ * Z/(Z dot Z).  Thus each axis vector maps to its corresponding unit
+ * canonical coordinate.
  *
  * To find the intersection of a line with the heart, consider the
  * parametric line L:
@@ -93,13 +93,13 @@
  *
  * let w =  X**2 + 9/4*Y**2 + Z**2 - 1 , then the sextic equation becomes:
  *
- *    w**3 - Y**3 * (X**2 + 9/80 * Y**2)  =  0.
+ *    w**3 - Z**3 * (X**2 + 9/80 * Y**2)  =  0.
  *
  * For f(x, y, z) = 0, the gradient of f() is (df/dx, df/dy, df/dz).
  *
- *    df/dx = 6 * x * (w**2 - y**3)
- *    df/dy = 6 * (12/27 * w**2 * y**2 - 1/2 * y**2 * (x**2 + 9 / 80*z**3))
- *    df/dz = 6 * (w**2 * z - 160 / 9 * y**3 * z**2)
+ *    df/dx = 6 * X * (w**2 - Z**3/3)
+ *    df/dy = 6 * Y * (9/4 * w**2 - 3/80 * Z**3)
+ *    df/dz = 6 * Z * (w**2 - 1/2 * Z * (X**2 + 9/80 * Y**2))
  *
  * Note that the normal vector produced above will not have
  * length.  Also, to make this useful for the original heart, it will
@@ -140,12 +140,72 @@ struct hrt_specific {
     vect_t hrt_X; /* unit-length X vector */
     vect_t hrt_Y; /* unit-length Y vector */
     vect_t hrt_Z; /* unit-length Z vector */
-    fastf_t hrt_d; /* for distance to upper and lower cusps */
     vect_t hrt_invsq; /* [ 1.0 / |X|**2, 1.0 / |Y|**2, 1.0 / |Z|**2 ] */
     mat_t hrt_SoR; /* Scale(Rot(vect)) */
     mat_t hrt_invRSSR; /* invRot(Scale(Scale(vect))) */
     mat_t hrt_invR; /* transposed rotation matrix */
 };
+
+
+static int
+hrt_ray_polynomial(bn_poly_t *polynomial, const vect_t direction,
+	const vect_t origin)
+{
+    bn_poly_t x = BN_POLY_INIT_ZERO;
+    bn_poly_t y = BN_POLY_INIT_ZERO;
+    bn_poly_t z = BN_POLY_INIT_ZERO;
+    bn_poly_t x_squared = BN_POLY_INIT_ZERO;
+    bn_poly_t y_squared = BN_POLY_INIT_ZERO;
+    bn_poly_t z_squared = BN_POLY_INIT_ZERO;
+    bn_poly_t scaled_y_squared = BN_POLY_INIT_ZERO;
+    bn_poly_t quadratic_sum = BN_POLY_INIT_ZERO;
+    bn_poly_t heart_quadratic = BN_POLY_INIT_ZERO;
+    bn_poly_t heart_quadratic_squared = BN_POLY_INIT_ZERO;
+    bn_poly_t heart_quadratic_cubed = BN_POLY_INIT_ZERO;
+    bn_poly_t lobe_y_squared = BN_POLY_INIT_ZERO;
+    bn_poly_t lobe_quadratic = BN_POLY_INIT_ZERO;
+    bn_poly_t z_cubed = BN_POLY_INIT_ZERO;
+    bn_poly_t lobe_term = BN_POLY_INIT_ZERO;
+
+    x.dgr = y.dgr = z.dgr = 1;
+    x.cf[0] = direction[X];
+    x.cf[1] = origin[X];
+    y.cf[0] = direction[Y];
+    y.cf[1] = origin[Y];
+    z.cf[0] = direction[Z];
+    z.cf[1] = origin[Z];
+
+    if (!bn_poly_mul(&x_squared, &x, &x) ||
+	!bn_poly_mul(&y_squared, &y, &y) ||
+	!bn_poly_mul(&z_squared, &z, &z))
+    {
+	return 0;
+    }
+
+    scaled_y_squared = y_squared;
+    bn_poly_scale(&scaled_y_squared, 9.0 / 4.0);
+    bn_poly_add(&quadratic_sum, &x_squared, &scaled_y_squared);
+    bn_poly_add(&heart_quadratic, &quadratic_sum, &z_squared);
+    heart_quadratic.cf[heart_quadratic.dgr] -= 1.0;
+    if (!bn_poly_mul(&heart_quadratic_squared, &heart_quadratic,
+	    &heart_quadratic) ||
+	!bn_poly_mul(&heart_quadratic_cubed, &heart_quadratic_squared,
+	    &heart_quadratic))
+    {
+	return 0;
+    }
+
+    lobe_y_squared = y_squared;
+    bn_poly_scale(&lobe_y_squared, 9.0 / 80.0);
+    bn_poly_add(&lobe_quadratic, &x_squared, &lobe_y_squared);
+    if (!bn_poly_mul(&z_cubed, &z_squared, &z) ||
+	!bn_poly_mul(&lobe_term, &z_cubed, &lobe_quadratic))
+    {
+	return 0;
+    }
+    bn_poly_sub(polynomial, &heart_quadratic_cubed, &lobe_term);
+    return polynomial->dgr == 6;
+}
 
 #ifdef USE_OPENCL
 /* largest data members first */
@@ -179,56 +239,23 @@ C_DECL int
 rt_hrt_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struct bn_tol *UNUSED(tol))
 {
     struct rt_hrt_internal *hip;
-    fastf_t magsq_x, magsq_y, magsq_z;
-    vect_t Xu, Yu, Zu;
-    mat_t R;
-    fastf_t f;
+    static const fastf_t local_min[3] = {-1.14, -0.68, -1.0};
+    static const fastf_t local_max[3] = {1.14, 0.68, 1.25};
 
     hip = (struct rt_hrt_internal *)ip->idb_ptr;
     RT_HRT_CK_MAGIC(hip);
 
-    magsq_x = MAGSQ(hip->xdir);
-    magsq_y = MAGSQ(hip->ydir);
-    magsq_z = MAGSQ(hip->zdir);
-
-    /* Create unit length versions of X, Y, Z  */
-    f = 1.0/sqrt(magsq_x);
-    VSCALE(Xu, hip->xdir, f);
-    f = 1.0/sqrt(magsq_y);
-    VSCALE(Yu, hip->ydir, f);
-    f = 1.0/sqrt(magsq_z);
-    VSCALE(Zu, hip->zdir, f);
-
-    MAT_IDN(R);
-    VMOVE(&R[0], Xu);
-    VMOVE(&R[4], Yu);
-    VMOVE(&R[8], Zu);
-
-    /**
-     * View-points from directly above and besides the heart indicate that it is
-     * elliptical, Y-axis is the major axis, X-axis the minor axis and the
-     * ratio of the radius of the minor axis to the radius of the major axis
-     * is 2/3
-     */
-    /* X */
-    f = hip->xdir[X];
-    (*min)[X] = hip->v[X] - f * 2/3;
-    (*max)[X] = hip->v[X] + f * 2/3;
-
-    /* Y */
-    f = hip->ydir[Y];
-    (*min)[Y] = hip->v[Y] - f;
-    (*max)[Y] = hip->v[Y] + f;
-
-    /* Z */
-    f = hip->zdir[Z];
-    /**
-     * 1.0 stands for the length of zdir vector and 0.25 closely approximates
-     * some value which encloses the displacement from upper cusp to highest
-     * point of either lobe in the Z direction
-     */
-    (*min)[Z] = hip->v[Z] - f;
-    (*max)[Z] = hip->v[Z] + f * 1.25;
+    VSETALL(*min, MAX_FASTF);
+    VSETALL(*max, -MAX_FASTF);
+    for (unsigned int corner = 0; corner < 8; ++corner) {
+	const fastf_t x = (corner & 1) ? local_max[X] : local_min[X];
+	const fastf_t y = (corner & 2) ? local_max[Y] : local_min[Y];
+	const fastf_t z = (corner & 4) ? local_max[Z] : local_min[Z];
+	point_t point;
+	VJOIN3(point, hip->v, x, hip->xdir, y, hip->ydir, z, hip->zdir);
+	VMIN(*min, point);
+	VMAX(*max, point);
+    }
 
     return 0;
 }
@@ -254,7 +281,7 @@ rt_hrt_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     struct rt_hrt_internal *hip;
     fastf_t magsq_x, magsq_y, magsq_z;
     mat_t R, TEMP;
-    vect_t Xu, Yu, Zu;
+    vect_t Xu, Yu, Zu, work;
     fastf_t f;
 
     hip = (struct rt_hrt_internal *)ip->idb_ptr;
@@ -271,11 +298,11 @@ rt_hrt_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 	return 1;
     }
     if (hip->d < rtip->rti_tol.dist) {
-	bu_log("rt_hrt_prep(): hrt(%s) near-zero length <d> distance to cusps (%g) causes problems\n", stp->st_name, hip->d);
+	bu_log("rt_hrt_prep(): hrt(%s) legacy <d> parameter must be positive (%g)\n", stp->st_name, hip->d);
 	return 1;
     }
     if (hip->d > 10000.0) {
-	bu_log("rt_hrt_prep(): hrt(%s) very large <d> distance to cusps (%g) causes problems\n", stp->st_name, hip->d);
+	bu_log("rt_hrt_prep(): hrt(%s) very large legacy <d> parameter (%g)\n", stp->st_name, hip->d);
 	/* BAD */
     }
 
@@ -315,8 +342,6 @@ rt_hrt_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     BU_GET(hrt, struct hrt_specific);
     stp->st_specific = (void *)hrt;
 
-    hrt->hrt_d = hip->d;
-
     VMOVE(hrt->hrt_V, hip->v);
 
     VSET(hrt->hrt_invsq, 1.0/magsq_x, 1.0/magsq_y, 1.0/magsq_z);
@@ -346,19 +371,15 @@ rt_hrt_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     VSCALE(&hrt->hrt_SoR[4], hip->ydir, hrt->hrt_invsq[1]);
     VSCALE(&hrt->hrt_SoR[8], hip->zdir, hrt->hrt_invsq[2]);
 
-    /* compute bounding sphere  */
-    VMOVE(stp->st_center, hrt->hrt_V);
-
-    /**
-     * 1.0 stands for the length of zdir vector and 0.25 closely approximates
-     * some value which encloses the displacement from upper cusp to highest
-     * point of either lobe in the Z direction
-     */
-    f = hip->zdir[Z] * 1.25;
-    stp->st_aradius = stp->st_bradius = sqrt(f);
-
     /* compute bounding RPP */
     if (rt_hrt_bbox(ip, &(stp->st_min), &(stp->st_max), &rtip->rti_tol)) return 1;
+
+    /* Derive both spheres from the transformed RPP.  Using only zdir[Z]
+     * under-bounds rotated, translated, and nonuniform hearts. */
+    VADD2SCALE(stp->st_center, stp->st_min, stp->st_max, 0.5);
+    VSUB2(work, stp->st_max, stp->st_center);
+    stp->st_aradius = FMAX(work[X], FMAX(work[Y], work[Z]));
+    stp->st_bradius = MAGNITUDE(work);
 
     return 0;                /* OK */
 }
@@ -395,8 +416,11 @@ rt_hrt_print(register const struct soltab *stp)
  * W = D*t + P
  *
  * First, convert the line to the coordinate system of a "standard"
- * heart.  This is a heart which lies in the X-Y plane, circles the
- * origin, and whose distance to cusps is one.
+ * heart.  This is a heart which lies in the X-Y plane and circles the
+ * origin.  The historical design text described d as a cusp scale, but the
+ * implemented ray surface has always used the three axis lengths as its
+ * scale.  Preserve that behavior so existing databases and all derived
+ * representations agree.
  *
  * Then find the equation of that line and the heart, which
  * turns out (by substituting X, Y, Z above into the sextic equation above)
@@ -424,10 +448,9 @@ rt_hrt_shot(struct soltab *stp, register struct xray *rp, struct application *ap
     vect_t pprime;              /* P' : The new shot point */
     vect_t trans;               /* Translated shot vector */
     vect_t norm_pprime;         /* P' with normalized distance from heart */
-    bn_poly_t Xsqr, Ysqr, Zsqr; /* X^2, 9/4*Y^2, Z^2 - 1 */
-    bn_poly_t  Acube, S;    /* The sextic equation (of power 6) and A^3 */
-    bn_poly_t Zcube, A;     /* Z^3 and  X^2 + 9/4 * Y^2 + Z^2 - 1 */
-    bn_poly_t X2_Y2, Z3_X2_Y2;  /* X^2 + 9/80*Y^2 and Z^3*(X^2 + 9/80*Y^2) */
+    fastf_t cor_proj;
+    fastf_t direction_scale;
+    bn_poly_t S = BN_POLY_INIT_ZERO;
     bn_complex_t complex[6];    /* The complex roots */
     double real[6];             /* The real roots */
     int i;
@@ -444,6 +467,9 @@ rt_hrt_shot(struct soltab *stp, register struct xray *rp, struct application *ap
     pprime[Z] = (hrt->hrt_SoR[8]*trans[X] + hrt->hrt_SoR[9]*trans[Y] + hrt->hrt_SoR[10]*trans[Z]) * 1.0/(hrt->hrt_SoR[15]);
     /* Translate ray direction vector */
     MAT4X3VEC(dprime, hrt->hrt_SoR, rp->r_dir);
+    direction_scale = MAGNITUDE(dprime);
+    if (direction_scale <= SMALL_FASTF)
+	return 0;
     VUNITIZE(dprime);
 
     /* Normalize distance from the heart. Substitutes a corrected ray
@@ -452,75 +478,12 @@ rt_hrt_shot(struct soltab *stp, register struct xray *rp, struct application *ap
      * along the direction of the ray to the closest point near the
      * heart's center vertex. Thus, the New ray origin is normalized.
      */
-    VSCALE(norm_pprime, dprime, VDOT(pprime, dprime));
+    cor_proj = VDOT(pprime, dprime);
+    VSCALE(norm_pprime, dprime, cor_proj);
     VSUB2(norm_pprime, pprime, norm_pprime);
 
-    /**
-     * Generate the sextic equation S(t) = 0 to be passed through the root finder.
-     */
-    /* X**2 */
-    Xsqr.dgr = 2;
-    Xsqr.cf[0] = dprime[X] * dprime[X];
-    Xsqr.cf[1] = 2 * dprime[X] * pprime[X];
-    Xsqr.cf[2] = pprime[X] * pprime[X];
-
-    /* 9/4 * Y**2*/
-    Ysqr.dgr = 2;
-    Ysqr.cf[0] = 9/4 * dprime[Y] * dprime[Y];
-    Ysqr.cf[1] = 9/2 * dprime[Y] * pprime[Y];
-    Ysqr.cf[2] = 9/4 * (pprime[Y] * pprime[Y]);
-
-    /* Z**2 - 1 */
-    Zsqr.dgr = 2;
-    Zsqr.cf[0] = dprime[Z] * dprime[Z];
-    Zsqr.cf[1] = 2 * dprime[Z] * pprime[Z];
-    Zsqr.cf[2] = pprime[Z] * pprime[Z] - 1.0 ;
-
-    /* A = X^2 + 9/4 * Y^2 + Z^2 - 1 */
-    A.dgr = 2;
-    A.cf[0] = Xsqr.cf[0] + Ysqr.cf[0] + Zsqr.cf[0];
-    A.cf[1] = Xsqr.cf[1] + Ysqr.cf[1] + Zsqr.cf[1];
-    A.cf[2] = Xsqr.cf[2] + Ysqr.cf[2] + Zsqr.cf[2];
-
-    /* Z**3 */
-    Zcube.dgr = 3;
-    Zcube.cf[0] = dprime[Z] * Zsqr.cf[0];
-    Zcube.cf[1] = 1.5 * dprime[Z] * Zsqr.cf[1];
-    Zcube.cf[2] = 1.5 * pprime[Z] * Zsqr.cf[1];
-    Zcube.cf[3] = pprime[Z] * ( Zsqr.cf[2] + 1.0 );
-
-    Acube.dgr = 6;
-    Acube.cf[0] = A.cf[0] * A.cf[0] * A.cf[0];
-    Acube.cf[1] = 3.0 * A.cf[0] * A.cf[0] * A.cf[1];
-    Acube.cf[2] = 3.0 * (A.cf[0] * A.cf[0] * A.cf[2] + A.cf[0] * A.cf[1] * A.cf[1]);
-    Acube.cf[3] = 6.0 * A.cf[0] * A.cf[1] * A.cf[2] + A.cf[1] * A.cf[1] * A.cf[1];
-    Acube.cf[4] = 3.0 * (A.cf[0] * A.cf[2] * A.cf[2] + A.cf[1] * A.cf[1] * A.cf[2]);
-    Acube.cf[5] = 3.0 * A.cf[1] * A.cf[2] * A.cf[2];
-    Acube.cf[6] = A.cf[2] * A.cf[2] * A.cf[2];
-
-    /* X**2 + 9/80 Y**2 */
-    X2_Y2.dgr = 2;
-    X2_Y2.cf[0] = Xsqr.cf[0] + Ysqr.cf[0] / 20 ;
-    X2_Y2.cf[1] = Xsqr.cf[1] + Ysqr.cf[1] / 20 ;
-    X2_Y2.cf[2] = Xsqr.cf[2] + Ysqr.cf[2] / 20 ;
-
-    /* Z**3 * (X**2 + 9/80 * Y**2) */
-    Z3_X2_Y2.dgr = 5;
-    Z3_X2_Y2.cf[0] = Zcube.cf[0] * X2_Y2.cf[0];
-    Z3_X2_Y2.cf[1] = X2_Y2.cf[0] * Zcube.cf[1];
-    Z3_X2_Y2.cf[2] = X2_Y2.cf[0] * Zcube.cf[2] + X2_Y2.cf[1] * Zcube.cf[0] + X2_Y2.cf[1] * Zcube.cf[1] + X2_Y2.cf[2] * Zcube.cf[0];
-    Z3_X2_Y2.cf[3] = X2_Y2.cf[0] * Zcube.cf[3] + X2_Y2.cf[1] * Zcube.cf[2] + X2_Y2.cf[2] * Zcube.cf[1];
-    Z3_X2_Y2.cf[4] = X2_Y2.cf[1] * Zcube.cf[3] + X2_Y2.cf[2] * Zcube.cf[2];
-    Z3_X2_Y2.cf[5] = X2_Y2.cf[2] * Zcube.cf[3];
-
-    S.dgr = 6;
-    S.cf[0] = Acube.cf[0];
-    S.cf[1] = Acube.cf[1] - Z3_X2_Y2.cf[0];
-    S.cf[2] = Acube.cf[2] - Z3_X2_Y2.cf[1];
-    S.cf[3] = Acube.cf[3] - Z3_X2_Y2.cf[2];
-    S.cf[4] = Acube.cf[4] - Z3_X2_Y2.cf[3];
-    S.cf[5] = Acube.cf[5] - Z3_X2_Y2.cf[4];
-    S.cf[6] = Acube.cf[6] - Z3_X2_Y2.cf[5];
+    if (!hrt_ray_polynomial(&S, dprime, norm_pprime))
+	return 0;
 
     /* It is known that the equation is sextic (of order 6). Therefore, if the
      * root finder returns other than 6 roots, return an error.
@@ -550,7 +513,7 @@ rt_hrt_shot(struct soltab *stp, register struct xray *rp, struct application *ap
      */
     for (j = 0, i = 0; j < 6; j++) {
 	if (NEAR_ZERO(complex[j].im, ap->a_rt_i->rti_tol.dist))
-	    real[i++] = complex[j].re;
+	    real[i++] = complex[j].re - cor_proj;
     }
     /* Here, 'i' is number of points found */
     switch (i) {
@@ -615,8 +578,8 @@ rt_hrt_shot(struct soltab *stp, register struct xray *rp, struct application *ap
     /* real[1] is entry point, and real[0] is farthest exit point */
     RT_GET_SEG(segp, ap->a_resource);
     segp->seg_stp = stp;
-    segp->seg_in.hit_dist = real[1];
-    segp->seg_out.hit_dist = real[0];
+    segp->seg_in.hit_dist = real[1] / direction_scale;
+    segp->seg_out.hit_dist = real[0] / direction_scale;
     segp->seg_in.hit_surfno = segp->seg_out.hit_surfno = 0;
     /* Set aside vector for rt_hrt_norm() later */
     VJOIN1(segp->seg_in.hit_vpriv, pprime, real[1], dprime);
@@ -630,8 +593,8 @@ rt_hrt_shot(struct soltab *stp, register struct xray *rp, struct application *ap
     /* real[3] is entry point, and real[2] is exit point */
     RT_GET_SEG(segp, ap->a_resource);
     segp->seg_stp = stp;
-    segp->seg_in.hit_dist = real[3];
-    segp->seg_out.hit_dist = real[2];
+    segp->seg_in.hit_dist = real[3] / direction_scale;
+    segp->seg_out.hit_dist = real[2] / direction_scale;
     segp->seg_in.hit_surfno = segp->seg_out.hit_surfno = 0;
     /* Set aside vector for rt_hrt_norm() later */
     VJOIN1(segp->seg_in.hit_vpriv, pprime, real[3], dprime);
@@ -645,8 +608,8 @@ rt_hrt_shot(struct soltab *stp, register struct xray *rp, struct application *ap
     /* real[5] is entry point, and real[4] is exit point */
     RT_GET_SEG(segp, ap->a_resource);
     segp->seg_stp = stp;
-    segp->seg_in.hit_dist = real[5];
-    segp->seg_out.hit_dist = real[4];
+    segp->seg_in.hit_dist = real[5] / direction_scale;
+    segp->seg_out.hit_dist = real[4] / direction_scale;
     segp->seg_in.hit_surfno = segp->seg_out.hit_surfno = 0;
     /* Set aside vector for rt_hrt_norm() later */
     VJOIN1(segp->seg_in.hit_vpriv, pprime, real[5], dprime);
@@ -656,286 +619,15 @@ rt_hrt_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 }
 
 
-#define RT_HRT_SEG_MISS(SEG)		(SEG).seg_stp=(struct soltab *) 0;
 /**
- * This is the Becker vector version
+ * Baseline flat-array vshot: delegate to the scalar implementation so the
+ * vector path has identical polynomial, transform, and root semantics.
  */
 C_DECL void
-rt_hrt_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, struct application *ap)
+rt_hrt_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n,
+    struct application *ap)
 {
-    register struct hrt_specific *hrt;
-    vect_t dprime;
-    vect_t pprime;
-    vect_t work;
-    vect_t norm_pprime;
-    bn_poly_t Xsqr, Ysqr, Zsqr;
-    bn_poly_t A, Acube, Zcube;
-    bn_poly_t X2_Y2, Z3_X2_Y2;
-    bn_poly_t *S;
-    bn_complex_t (*complex)[6];
-    int num_roots, num_zero;
-    register int i;
-    fastf_t *cor_proj;
-
-    /* Allocate space for polynomials and roots */
-    S = (bn_poly_t *)bu_malloc(n * sizeof(bn_poly_t) * 6, "hrt bn_complex_t");
-    complex = (bn_complex_t (*)[6])bu_malloc(n * sizeof(bn_complex_t) * 6, "hrt bn_complex_t");
-    cor_proj = (fastf_t *)bu_malloc(n * sizeof(fastf_t), "hrt_proj");
-
-    /* Initialize seg_stp to assume hit (zero will then flag a miss) */
-    for (i = 0; i < n; i++ )
-	segp[i].seg_stp = stp[i];
-
-    /* for each ray/heart pair */
-    for (i = 0; i < n; i++) {
-	if (segp[i].seg_stp == 0)
-	    continue;		/* Skip this iteration */
-
-	hrt = (struct hrt_specific *)stp[i]->st_specific;
-
-	/* Translate ray direction vector */
-	MAT4X3VEC(dprime, hrt->hrt_SoR, rp[i]->r_dir);
-	VUNITIZE(dprime);
-
-	/* Use segp[i].seg_in.hit_normal as tmp to hold dprime */
-	VMOVE(segp[i].seg_in.hit_normal, dprime);
-	VSUB2(work, rp[i]->r_pt, hrt->hrt_V);
-	MAT4X3VEC(pprime, hrt->hrt_SoR, work);
-
-	/* use segp[i].seg_out.hit_normal as tmp to hold pprime */
-	VMOVE(segp[i].seg_out.hit_normal, pprime);
-
-	/* Normalize distance from the heart. Substitutes a corrected ray
-	 * point, which contains a translation along the ray direction to
-	 * the closest approach to vertex of the heart.Translating the ray
-	 * along the direction of the ray to the closest point near the
-	 * heart's center vertex. Thus, the New ray origin is normalized.
-	 */
-	cor_proj[i] = VDOT(pprime, dprime);
-	VSCALE(norm_pprime, dprime, cor_proj[i]);
-	VSUB2(norm_pprime, pprime, norm_pprime);
-
-	/*
-	 * Generate sextic equation S(t) = 0 to be passed through the root finder
-	 */
-	/* X**2 */
-	Xsqr.dgr = 2;
-	Xsqr.cf[0] = dprime[X] * dprime[X];
-	Xsqr.cf[1] = 2 * dprime[X] * pprime[X];
-	Xsqr.cf[2] = pprime[X] * pprime[X];
-
-	/* 9/4 * Y**2*/
-	Ysqr.dgr = 2;
-	Ysqr.cf[0] = 9/4 * dprime[Y] * dprime[Y];
-	Ysqr.cf[1] = 9/2 * dprime[Y] * pprime[Y];
-	Ysqr.cf[2] = 9/4 * (pprime[Y] * pprime[Y]);
-
-	/* Z**2 - 1 */
-	Zsqr.dgr = 2;
-	Zsqr.cf[0] = dprime[Z] * dprime[Z];
-	Zsqr.cf[1] = 2 * dprime[Z] * pprime[Z];
-	Zsqr.cf[2] = pprime[Z] * pprime[Z] - 1.0 ;
-
-	/* A = X^2 + 9/4 * Y^2 + Z^2 - 1 */
-	A.dgr = 2;
-	A.cf[0] = Xsqr.cf[0] + Ysqr.cf[0] + Zsqr.cf[0];
-	A.cf[1] = Xsqr.cf[1] + Ysqr.cf[1] + Zsqr.cf[1];
-	A.cf[2] = Xsqr.cf[2] + Ysqr.cf[2] + Zsqr.cf[2];
-
-	/* Z**3 */
-	Zcube.dgr = 3;
-	Zcube.cf[0] = dprime[Z] * Zsqr.cf[0];
-	Zcube.cf[1] = 1.5 * dprime[Z] * Zsqr.cf[1];
-	Zcube.cf[2] = 1.5 * pprime[Z] * Zsqr.cf[1];
-	Zcube.cf[3] = pprime[Z] * ( Zsqr.cf[2] + 1.0 );
-
-	/* A**3 */
-	Acube.dgr = 6;
-	Acube.cf[0] = A.cf[0] * A.cf[0] * A.cf[0];
-	Acube.cf[1] = 3.0 * A.cf[0] * A.cf[0] * A.cf[1];
-	Acube.cf[2] = 3.0 * (A.cf[0] * A.cf[0] * A.cf[2] + A.cf[0] * A.cf[1] * A.cf[1]);
-	Acube.cf[3] = 6.0 * A.cf[0] * A.cf[1] * A.cf[2] + A.cf[1] * A.cf[1] * A.cf[1];
-	Acube.cf[4] = 3.0 * (A.cf[0] * A.cf[2] * A.cf[2] + A.cf[1] * A.cf[1] * A.cf[2]);
-	Acube.cf[5] = 3.0 * A.cf[1] * A.cf[2] * A.cf[2];
-	Acube.cf[6] = A.cf[2] * A.cf[2] * A.cf[2];
-
-	/* X**2 + 9/80 Y**2 */
-	X2_Y2.dgr = 2;
-	X2_Y2.cf[0] = Xsqr.cf[0] + Ysqr.cf[0] / 20 ;
-	X2_Y2.cf[1] = Xsqr.cf[1] + Ysqr.cf[1] / 20 ;
-	X2_Y2.cf[2] = Xsqr.cf[2] + Ysqr.cf[2] / 20 ;
-
-	/* Z**3 * (X**2 + 9/80 * Y**2) */
-	Z3_X2_Y2.dgr = 5;
-	Z3_X2_Y2.cf[0] = Zcube.cf[0] * X2_Y2.cf[0];
-	Z3_X2_Y2.cf[1] = X2_Y2.cf[0] * Zcube.cf[1];
-	Z3_X2_Y2.cf[2] = X2_Y2.cf[0] * Zcube.cf[2] + X2_Y2.cf[1] * Zcube.cf[0] + X2_Y2.cf[1] * Zcube.cf[1] + X2_Y2.cf[2] * Zcube.cf[0];
-	Z3_X2_Y2.cf[3] = X2_Y2.cf[0] * Zcube.cf[3] + X2_Y2.cf[1] * Zcube.cf[2] + X2_Y2.cf[2] * Zcube.cf[1];
-	Z3_X2_Y2.cf[4] = X2_Y2.cf[1] * Zcube.cf[3] + X2_Y2.cf[2] * Zcube.cf[2];
-	Z3_X2_Y2.cf[5] = X2_Y2.cf[2] * Zcube.cf[3];
-
-	/* S(t) = 0 */
-	S[i].dgr = 6;
-	S[i].cf[0] = Acube.cf[0];
-	S[i].cf[1] = Acube.cf[1] - Z3_X2_Y2.cf[0];
-	S[i].cf[2] = Acube.cf[2] - Z3_X2_Y2.cf[1];
-	S[i].cf[3] = Acube.cf[3] - Z3_X2_Y2.cf[2];
-	S[i].cf[4] = Acube.cf[4] - Z3_X2_Y2.cf[3];
-	S[i].cf[5] = Acube.cf[5] - Z3_X2_Y2.cf[4];
-	S[i].cf[6] = Acube.cf[6] - Z3_X2_Y2.cf[5];
-
-    }
-    for (i = 0; i < n; i++) {
-	continue;		/* Skip this iteration */
-    /*
-     * It is known that the equation is sextic (of order 6).
-     * Therefore, if the root finder returns other than six roots, Error
-     */
-    if ((num_roots = rt_poly_roots(&(S[i]), &(complex[i][0]), (*stp)->st_dp->d_namep)) != 6) {
-	if (num_roots > 0) {
-	    bu_log("hrt: rt_poly_roots() 6 != %d\n", num_roots);
-	    bn_pr_roots("hrt", complex[i], num_roots);
-	} else if (num_roots < 0) {
-	    static int reported = 0;
-	    bu_log("LIBRT: The root solver failed to converge on a solution for %s\n", stp[i]->st_dp->d_namep);
-	    if (!reported) {
-		VPRINT("while shooting from: \t", rp[i]->r_pt);
-		VPRINT("while shooting at:\t", rp[i]->r_dir);
-		bu_log("Additional heart convergence failure details will be suppressed.\n");
-		reported = 1;
-	    }
-	}
-	RT_HRT_SEG_MISS(segp[i]);
-    }
-
-    /* for each ray/heart pair */
-    for (i = 0; i < n; i++) {
-	if (segp[i].seg_stp == 0)
-	    continue;		/* Skip current iteration */
-
-    /* Only real roots indicate an intersection in real space.
-     *
-     * Look at each root returned; if the imaginary part is zero or
-     * sufficiently close, then use the real part as one value of 't'
-     * for the intersections
-     *
-     * Reverse translation by adding distance to all 'real' values
-     * Reuse S to hold 'real' values
-     */
-    num_zero = 0;
-    if (NEAR_ZERO(complex[i][0].im, ap->a_rt_i->rti_tol.dist)) {
-	S[i].cf[num_zero++] = complex[i][0].re - cor_proj[i];
-    }
-    if (NEAR_ZERO(complex[i][1].im, ap->a_rt_i->rti_tol.dist)) {
-	S[i].cf[num_zero++] = complex[i][1].re - cor_proj[i];
-    }
-    if (NEAR_ZERO(complex[i][2].im, ap->a_rt_i->rti_tol.dist)) {
-	S[i].cf[num_zero++] = complex[i][2].re - cor_proj[i];
-    }
-    if (NEAR_ZERO(complex[i][3].im, ap->a_rt_i->rti_tol.dist)) {
-	S[i].cf[num_zero++] = complex[i][3].re - cor_proj[i];
-    }
-    if (NEAR_ZERO(complex[i][4].im, ap->a_rt_i->rti_tol.dist)) {
-	S[i].cf[num_zero++] = complex[i][4].re - cor_proj[i];
-    }
-    if (NEAR_ZERO(complex[i][5].im, ap->a_rt_i->rti_tol.dist)) {
-	S[i].cf[num_zero++] = complex[i][5].re - cor_proj[i];
-    }
-    S[i].dgr = num_zero;
-
-    /* Here 'i' is the number of points found */
-    if (num_zero == 0) {
-	RT_HRT_SEG_MISS(segp[i]);		/* MISS */
-    } else if ((num_zero != 2 && num_zero != 4 ) && (num_zero != 6)) {
-		RT_HRT_SEG_MISS(segp[i]);	/* MISS */
-	    }
-    }
-
-    /* Process each one segment hit */
-    for (i = 0; i < n; i++) {
-	if (segp[i].seg_stp == 0)
-	    continue;				/* Skip This Iteration */
-	if (S[i].dgr != 2)
-	    continue;				/* Not one segment */
-
-	hrt = (struct hrt_specific *)stp[i]->st_specific;
-
-	/* segp[i].seg_in.hit_normal holds dprime */
-	/* segp[i].seg_out.hit_normal holds pprime */
-	if (S[i].cf[1] < S[i].cf[0]) {
-	    /* S[i].cf[1] is entry point */
-	    segp[i].seg_in.hit_dist = S[i].cf[1];
-	    segp[i].seg_in.hit_dist = S[i].cf[0];
-	    /* Set aside vector for rt_hrt_norm() later */
-	    VJOIN1(segp[i].seg_in.hit_vpriv, segp[i].seg_out.hit_normal, S[i].cf[1], segp[i].seg_in.hit_normal);
-	    VJOIN1(segp[i].seg_in.hit_vpriv, segp[i].seg_out.hit_normal, S[i].cf[0], segp[i].seg_in.hit_normal);
-	    } else {
-		/* S[i].cf[0] is entry point */
-		segp[i].seg_in.hit_dist = S[i].cf[0];
-		segp[i].seg_in.hit_dist = S[i].cf[1];
-		/* Set aside vector for rt_hrt_norm() later */
-		VJOIN1(segp[i].seg_in.hit_vpriv, segp[i].seg_out.hit_normal, S[i].cf[0], segp[i].seg_in.hit_normal);
-		VJOIN1(segp[i].seg_in.hit_vpriv, segp[i].seg_out.hit_normal, S[i].cf[1], segp[i].seg_in.hit_normal);
-	    }
-    }
-
-    /* Process each two segment hit */
-    for (i = 0; i < n; i++) {
-	if (segp[i].seg_stp == 0)
-	    continue;				/* Skip This Iteration */
-	if (S[i].dgr != 4)
-	    continue;				/* Not one segment */
-
-	hrt = (struct hrt_specific *)stp[i]->st_specific;
-
-	/* Sort most distant to least distant */
-	rt_pnt_sort(S[i].cf, 4);
-	/* Now, t[0] > t[npts - 1] */
-	/* segp[i].seg_in.hit_normal holds dprime */
-	VMOVE(dprime, segp[i].seg_out.hit_normal);
-	/* segp[i].seg_out.hit_normal holds pprime */
-	VMOVE(pprime, segp[i].seg_out.hit_normal);
-
-	/* S[i].cf[1] is entry point */
-	segp[i].seg_in.hit_dist = S[i].cf[3];
-	segp[i].seg_in.hit_dist = S[i].cf[2];
-	/* Set aside vector for rt_hrt_norm() later */
-	VJOIN1(segp[i].seg_in.hit_vpriv, segp[i].seg_out.hit_normal, S[i].cf[1], segp[i].seg_in.hit_normal);
-	VJOIN1(segp[i].seg_in.hit_vpriv, segp[i].seg_out.hit_normal, S[i].cf[0], segp[i].seg_in.hit_normal);
-    }
-
-    /* Process each three segment hit */
-    for (i = 0; i < n; i++) {
-	if (segp[i].seg_stp == 0)
-	    continue;				/* Skip This Iteration */
-	if (S[i].dgr != 6)
-	    continue;				/* Not one segment */
-
-	hrt = (struct hrt_specific *)stp[i]->st_specific;
-
-	/* Sort most distant to least distant */
-	rt_pnt_sort(S[i].cf, 6);
-	/* Now, t[0] > t[npts - 1] */
-	/* segp[i].seg_in.hit_normal holds dprime */
-	VMOVE(dprime, segp[i].seg_out.hit_normal);
-	/* segp[i].seg_out.hit_normal holds pprime */
-	VMOVE(pprime, segp[i].seg_out.hit_normal);
-
-	/* S[i].cf[1] is entry point */
-	segp[i].seg_in.hit_dist = S[i].cf[5];
-	segp[i].seg_in.hit_dist = S[i].cf[4];
-	/* Set aside vector for rt_hrt_norm() later */
-	VJOIN1(segp[i].seg_in.hit_vpriv, pprime, S[i].cf[5], dprime);
-	VJOIN1(segp[i].seg_in.hit_vpriv, pprime, S[i].cf[4], dprime);
-    }
-
-    }
-
-    /* Free tmp space used */
-    bu_free((char *)S, "hrt S");
-    bu_free((char *)complex, "hrt complex");
-    bu_free((char *)cor_proj, "hrt_cor_proj");
-
+    rt_vshot_via_shot(rt_hrt_shot, stp, rp, segp, n, ap);
 }
 
 
@@ -958,28 +650,40 @@ rt_hrt_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, str
  * For f(x, y, z) = 0, the gradient of f() is (df/dx, df/dy, df/dz).
  *
  * df/dx = 6 * X * (w**2 - Z**3/3)
- * df/dy = 6 * Y * (12/27 * w**2 - 80/3 * Z**3)
+ * df/dy = 6 * Y * (9/4 * w**2 - 3/80 * Z**3)
  * df/dz = 6 * Z * ( w**2 - 1/2 * Z * (X**2 + 9/80 * Y**2))
  *
  * Since we rescale the gradient (normal) to unity, we divide the
  * above equations by six here.
  */
 C_DECL void
-rt_hrt_norm(struct hit *hitp, struct soltab *UNUSED(stp), struct xray *rp)
+rt_hrt_norm(struct hit *hitp, struct soltab *stp, struct xray *rp)
 {
 
     fastf_t w, fx, fy, fz;
     vect_t work;
+    struct hrt_specific *hrt = (struct hrt_specific *)stp->st_specific;
 
     VJOIN1(hitp->hit_point, rp->r_pt, hitp->hit_dist, rp->r_dir);
     w = hitp->hit_vpriv[X] * hitp->hit_vpriv[X]
 	+ 9.0/4.0 * hitp->hit_vpriv[Y] * hitp->hit_vpriv[Y]
 	+ hitp->hit_vpriv[Z] * hitp->hit_vpriv[Z] - 1.0;
-    fx = (w * w - 1/3 * hitp->hit_vpriv[Z] * hitp->hit_vpriv[Z] * hitp->hit_vpriv[Z]) * hitp->hit_vpriv[X];
-    fy = hitp->hit_vpriv[Y] * (12/27 * w * w - 80/3 * hitp->hit_vpriv[Z] * hitp->hit_vpriv[Z] * hitp->hit_vpriv[Z]);
-    fz = (w * w - 0.5 * hitp->hit_vpriv[Z] * (hitp->hit_vpriv[X] * hitp->hit_vpriv[X] + 9/80 * hitp->hit_vpriv[Y] * hitp->hit_vpriv[Y])) * hitp->hit_vpriv[Z];
+    fx = (w * w - 1.0/3.0 * hitp->hit_vpriv[Z] *
+	hitp->hit_vpriv[Z] * hitp->hit_vpriv[Z]) * hitp->hit_vpriv[X];
+    fy = hitp->hit_vpriv[Y] * (9.0/4.0 * w * w - 3.0/80.0 *
+	hitp->hit_vpriv[Z] * hitp->hit_vpriv[Z] * hitp->hit_vpriv[Z]);
+    fz = (w * w - 0.5 * hitp->hit_vpriv[Z] *
+	(hitp->hit_vpriv[X] * hitp->hit_vpriv[X] + 9.0/80.0 *
+	 hitp->hit_vpriv[Y] * hitp->hit_vpriv[Y])) * hitp->hit_vpriv[Z];
     VSET(work, fx, fy, fz);
-    VMOVE(hitp->hit_normal, work);
+    VSET(hitp->hit_normal,
+	hrt->hrt_SoR[0] * work[X] + hrt->hrt_SoR[4] * work[Y] +
+	    hrt->hrt_SoR[8] * work[Z],
+	hrt->hrt_SoR[1] * work[X] + hrt->hrt_SoR[5] * work[Y] +
+	    hrt->hrt_SoR[9] * work[Z],
+	hrt->hrt_SoR[2] * work[X] + hrt->hrt_SoR[6] * work[Y] +
+	    hrt->hrt_SoR[10] * work[Z]);
+    VUNITIZE(hitp->hit_normal);
 }
 
 
@@ -1680,7 +1384,8 @@ rt_hrt_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose
 	INTCLAMP(mag_z * mm2local));
     bu_vls_strcat(str, buf);
 
-    sprintf(buf, "\td=%g\n", INTCLAMP(hip->d));
+    sprintf(buf, "\td=%g (legacy compatibility parameter)\n",
+	INTCLAMP(hip->d));
     bu_vls_strcat(str, buf);
 
     if (!verbose) return 0;

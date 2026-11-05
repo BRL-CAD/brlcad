@@ -559,7 +559,12 @@ rt_part_shot(struct soltab *stp, register struct xray *rp, struct application *a
 	check_v = check_h = 1;
 	goto check_hemispheres;
     }
-    check_v = check_h = 0;
+    /* The clipped hemisphere tests are valid independently of the cone
+     * roots.  Always evaluate them: using root positions as an optimization
+     * can leave a single hit when roundoff places a tangent-cone root on the
+     * wrong side of a join plane, which is then emitted as a zero-thickness
+     * segment. */
+    check_v = check_h = 1;
 
     /* Find roots of the equation, using formula for quadratic */
     /* Note that vrad' = 1 and hrad' = hrad/vrad */
@@ -875,7 +880,10 @@ rt_part_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, st
 	    check_v = check_h = 1;
 	    goto check_hemispheres;
 	}
-	check_v = check_h = 0;
+	/* As in the scalar path, the join-plane clipping makes both
+	 * hemisphere tests safe and avoids losing a hit to cone-root
+	 * roundoff at a tangent join. */
+	check_v = check_h = 1;
 
 	/* Find roots of the equation, using formula for quadratic */
 	/* Note that vrad' = 1 and hrad' = hrad/vrad */

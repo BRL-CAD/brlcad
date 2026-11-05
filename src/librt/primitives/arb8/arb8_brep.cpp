@@ -28,6 +28,7 @@
 
 #include "raytrace.h"
 #include "rt/geom.h"
+#include "rt/primitives/arb8.h"
 #include "nmg.h"
 #include "brep.h"
 
@@ -40,24 +41,37 @@ extern "C" {
 extern "C" void
 rt_arb_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *tol)
 {
+    const struct rt_arb_internal *arb =
+	(const struct rt_arb_internal *)ip->idb_ptr;
+    struct rt_arb_internal repaired;
+    int validation_issues = 0;
+    (void)rt_arb_validate(NULL, arb, tol, &validation_issues);
+    if (validation_issues & RT_ARB_VALIDATE_NONSTANDARD) {
+	memset(&repaired, 0, sizeof(repaired));
+	if (rt_arb_repair(&repaired, arb, tol, 0) < 0)
+	    return;
+	arb = &repaired;
+	(void)rt_arb_validate(NULL, arb, tol, &validation_issues);
+    }
+    if (validation_issues & ~RT_ARB_VALIDATE_CONCAVE)
+	return;
+
     struct rt_db_internal *tmp_internal;
-    struct bg_tess_tol ttmptol;
+    struct bg_tess_tol ttmptol = BG_TESS_TOL_INIT_TOL;
 
     BU_ALLOC(tmp_internal, struct rt_db_internal);
     RT_DB_INTERNAL_INIT(tmp_internal);
 
-    ttmptol.abs = 0;
-    ttmptol.rel = 0.01;
-    ttmptol.norm = 0;
-
     const struct bg_tess_tol *ttol = &ttmptol;
     struct model *arbm = nmg_mm();
-    struct nmgregion *arbr;
+    struct nmgregion *arbr = NULL;
 
-    tmp_internal->idb_ptr = (void *)ip->idb_ptr;
-    rt_arb_tess(&arbr, arbm, tmp_internal, ttol, tol);
-    tmp_internal->idb_ptr = (void *)arbm;
-    rt_nmg_brep(b, tmp_internal, tol);
+    tmp_internal->idb_ptr = (void *)arb;
+    const int tess_result = rt_arb_tess(&arbr, arbm, tmp_internal, ttol, tol);
+    if (tess_result == 0 && arbr != NULL) {
+	tmp_internal->idb_ptr = (void *)arbm;
+	rt_nmg_brep(b, tmp_internal, tol);
+    }
 
     FREE_MODEL(arbm);
     bu_free(tmp_internal, "free temporary rt_db_internal");

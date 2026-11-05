@@ -42,27 +42,42 @@ rt_superell_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_t
     sip = (struct rt_superell_internal *)ip->idb_ptr;
     RT_SUPERELL_CK_MAGIC(sip);
 
-    // First, create brep of an ellipsoid
-    struct rt_ell_internal *eip;
-    BU_ALLOC(eip, struct rt_ell_internal);
-    eip->magic = RT_ELL_INTERNAL_MAGIC;
-    VMOVE(eip->v, sip->v);
-    VMOVE(eip->a, sip->a);
-    VMOVE(eip->b, sip->b);
-    VMOVE(eip->c, sip->c);
+    // First, create the corresponding ellipsoid.
+    struct rt_ell_internal eip = {};
+    eip.magic = RT_ELL_INTERNAL_MAGIC;
+    VMOVE(eip.v, sip->v);
+    VMOVE(eip.a, sip->a);
+    VMOVE(eip.b, sip->b);
+    VMOVE(eip.c, sip->c);
 
     struct rt_db_internal tmp_internal;
     RT_DB_INTERNAL_INIT(&tmp_internal);
     tmp_internal.idb_major_type = DB5_MAJORTYPE_BRLCAD;
-    tmp_internal.idb_ptr = (void *)eip;
+    tmp_internal.idb_ptr = (void *)&eip;
     tmp_internal.idb_minor_type = ID_ELL;
     tmp_internal.idb_meth = &OBJ[ID_ELL];
+
+    /* With unit north-south and east-west exponents, a superellipsoid is
+     * exactly an ellipsoid.  Preserve the exact rational NURBS produced by
+     * the ellipsoid converter instead of approximating it by replacing its
+     * control-point weights. */
+    if (sip->e == 1.0 && sip->n == 1.0) {
+	rt_ell_brep(b, &tmp_internal, tol);
+	return;
+    }
 
     ON_Brep *tmp_brep = ON_Brep::New();
     rt_ell_brep(&tmp_brep, &tmp_internal, tol);
 
     ON_NurbsSurface *surf = ON_NurbsSurface::New();
-    tmp_brep->m_S[0]->GetNurbForm(*surf);
+    if (!tmp_brep || tmp_brep->m_S.Count() != 1 ||
+	!tmp_brep->m_S[0] || !tmp_brep->m_S[0]->GetNurbForm(*surf))
+    {
+	delete surf;
+	delete tmp_brep;
+	return;
+    }
+    delete tmp_brep;
 
     // Calculate the weight value
     // See: Joe F. Thompson, B. K. Soni, N. P. Weatherill. Handbook of Grid Generation.
@@ -235,14 +250,14 @@ rt_superell_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_t
 	    invS[10] = MAGNITUDE(sip->c);
 	    bn_mat_mul(invRinvS, invR, invS);
 
-	    for (int j = 0; j < surface[j]->CVCount(0); j++) {
-		for (int k = 0; k < surface[k]->CVCount(1); k++) {
+	for (int j = 0; j < surface[i]->CVCount(0); j++) {
+		for (int k = 0; k < surface[i]->CVCount(1); k++) {
 		    point_t cvpt;
 		    ON_4dPoint ctrlpt;
 		    surface[i]->GetCV(j, k, ctrlpt);
 		    MAT3X3VEC(cvpt, invRinvS, ctrlpt);
 		    point_t scale_v;
-		    VSCALE(scale_v, eip->v, ctrlpt.w);
+		    VSCALE(scale_v, sip->v, ctrlpt.w);
 		    VADD2(cvpt, scale_v, cvpt);
 		    ON_4dPoint newpt = ON_4dPoint(cvpt[0], cvpt[1], cvpt[2], ctrlpt.w);
 		    surface[i]->SetCV(j, k, newpt);

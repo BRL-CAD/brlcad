@@ -19,8 +19,10 @@
  */
 /** @file half_brep.cpp
  *
- * The b-rep conversion of primitive HALF (halfspace) should be
- * ignored. Return a NULL ON_Brep pointer.
+ * An infinite halfspace has no finite closed B-Rep representation.  Direct
+ * conversion therefore returns NULL.  Combination conversion supplies finite
+ * operand bounds and constructs a bounded proxy before evaluating a halfspace
+ * in context.
  *
  */
 
@@ -40,9 +42,6 @@ rt_hlf_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *)
     hip = (struct rt_half_internal *)ip->idb_ptr;
     RT_HALF_CK_MAGIC(hip);
 
-    /*TODO - we need to do *something* here - try ON_BrepTrimmedPlane
-     * with the trimming curves defined by the max dimensions of the model space
-     * intersecting with the plane. */
     *b = NULL;
 }
 

@@ -1196,7 +1196,26 @@ arb_tri_uses_shared_vertex(const int t1[3], const int t2[3])
 
 
 static int
-arb_add_face_tris(int tris[12][3], int tcnt, const int face[4], int nface)
+arb_tris_have_same_winding(const point_t v[8], int a0, int a1, int a2,
+			   int b0, int b1, int b2)
+{
+    vect_t a_first, a_second, a_normal;
+    vect_t b_first, b_second, b_normal;
+
+    VSUB2(a_first, v[a1], v[a0]);
+    VSUB2(a_second, v[a2], v[a0]);
+    VCROSS(a_normal, a_first, a_second);
+    VSUB2(b_first, v[b1], v[b0]);
+    VSUB2(b_second, v[b2], v[b0]);
+    VCROSS(b_normal, b_first, b_second);
+
+    return VDOT(a_normal, b_normal) > 0.0;
+}
+
+
+static int
+arb_add_face_tris(int tris[12][3], int tcnt, const point_t v[8],
+		  const int face[4], int nface)
 {
     if (nface == 3) {
 	tris[tcnt][0] = face[0];
@@ -1204,13 +1223,34 @@ arb_add_face_tris(int tris[12][3], int tcnt, const int face[4], int nface)
 	tris[tcnt][2] = face[2];
 	return tcnt + 1;
     }
+    /* A fan about face[0] is not a valid triangulation when face[3] is
+     * reflex.  Use the diagonal whose two triangles have consistent
+     * winding.  A simple planar quadrilateral always has at least one such
+     * diagonal; self-intersecting cycles are rejected before this helper is
+     * called. */
+    if (arb_tris_have_same_winding(v, face[0], face[1], face[2],
+	    face[0], face[2], face[3])) {
+	tris[tcnt][0] = face[0];
+	tris[tcnt][1] = face[1];
+	tris[tcnt][2] = face[2];
+	tcnt++;
+
+	tris[tcnt][0] = face[0];
+	tris[tcnt][1] = face[2];
+	tris[tcnt][2] = face[3];
+	return tcnt + 1;
+    }
+
+    if (!arb_tris_have_same_winding(v, face[0], face[1], face[3],
+	    face[1], face[2], face[3]))
+	return -1;
 
     tris[tcnt][0] = face[0];
     tris[tcnt][1] = face[1];
-    tris[tcnt][2] = face[2];
+    tris[tcnt][2] = face[3];
     tcnt++;
 
-    tris[tcnt][0] = face[0];
+    tris[tcnt][0] = face[1];
     tris[tcnt][1] = face[2];
     tris[tcnt][2] = face[3];
     return tcnt + 1;
@@ -1223,13 +1263,27 @@ arb_face_cycle_is_twisted(const point_t v[8], const int face[4], const struct bn
     int uniq[4];
     int nuniq = arb_face_unique(uniq, v, face, tol);
 
+    vect_t first_dir;
+    vect_t second_dir;
+    fastf_t distances[2];
+
     if (nuniq < 4)
 	return 0;
 
-    return bg_tri_tri_isect_coplanar((fastf_t *)v[uniq[0]], (fastf_t *)v[uniq[1]], (fastf_t *)v[uniq[2]],
-				     (fastf_t *)v[uniq[0]], (fastf_t *)v[uniq[2]], (fastf_t *)v[uniq[3]], 1) ? 0 :
-	bg_tri_tri_isect_coplanar((fastf_t *)v[uniq[0]], (fastf_t *)v[uniq[1]], (fastf_t *)v[uniq[3]],
-				  (fastf_t *)v[uniq[1]], (fastf_t *)v[uniq[2]], (fastf_t *)v[uniq[3]], 1);
+    /* Concavity says nothing about whether the boundary cycle crosses
+     * itself.  Test the two pairs of non-adjacent boundary edges directly;
+     * the previous triangle-overlap test mislabeled a valid reflex quad
+     * whenever only its second diagonal was interior. */
+    VSUB2(first_dir, v[uniq[1]], v[uniq[0]]);
+    VSUB2(second_dir, v[uniq[3]], v[uniq[2]]);
+    if (bg_isect_lseg3_lseg3(distances, v[uniq[0]], first_dir,
+	    v[uniq[2]], second_dir, tol) >= 0)
+	return 1;
+
+    VSUB2(first_dir, v[uniq[2]], v[uniq[1]]);
+    VSUB2(second_dir, v[uniq[0]], v[uniq[3]]);
+    return bg_isect_lseg3_lseg3(distances, v[uniq[1]], first_dir,
+	v[uniq[3]], second_dir, tol) >= 0;
 }
 
 
@@ -1262,7 +1316,10 @@ arb_is_twisted(const struct rt_arb_internal *arb, int cgtype, const struct bn_to
 	if (arb_face_cycle_is_twisted(v, face, tol))
 	    return 1;
 
-	ntcnt = arb_add_face_tris(tris, tcnt, face_verts[nfaces], face_vert_cnt[nfaces]);
+	ntcnt = arb_add_face_tris(tris, tcnt, v, face_verts[nfaces],
+	    face_vert_cnt[nfaces]);
+	if (ntcnt < 0)
+	    return 1;
 	for (int t = tcnt; t < ntcnt; t++)
 	    tri_faces[t] = nfaces;
 	tcnt = ntcnt;
@@ -3115,6 +3172,32 @@ rt_arb_repair(struct rt_arb_internal *out_arb, const struct rt_arb_internal *arb
 }
 
 
+static fastf_t
+arb_face_cycles_volume6(const struct rt_arb_internal *aip,
+			const struct prep_arb *pap)
+{
+    fastf_t volume6 = 0.0;
+
+    /* The canonical ARB face cycles form a consistently oriented closed
+     * shell, but a reflection can reverse all of them.  Use a translated
+     * divergence-theorem sum to determine their global orientation.  A
+     * signed triangle fan remains valid for a simple concave polygon. */
+    for (int i = 0; i < pap->pa_faces; i++) {
+	vect_t first;
+	VSUB2(first, aip->pt[pap->pa_pindex[0][i]], pap->pa_center);
+	for (int j = 1; j < pap->pa_npts[i] - 1; j++) {
+	    vect_t second, third, cross;
+	    VSUB2(second, aip->pt[pap->pa_pindex[j][i]], pap->pa_center);
+	    VSUB2(third, aip->pt[pap->pa_pindex[j + 1][i]], pap->pa_center);
+	    VCROSS(cross, second, third);
+	    volume6 += VDOT(first, cross);
+	}
+    }
+
+    return volume6;
+}
+
+
 /**
  * "Tessellate" an ARB into an NMG data structure.  Purely a
  * mechanical transformation of one faceted object into another.
@@ -3134,6 +3217,8 @@ rt_arb_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     struct vertex *verts[8];
     struct vertex **vertp[4];
     struct bu_list *vlfree = &rt_vlfree;
+    int concave = 0;
+    int reverse_concave_winding = 0;
 
     RT_CK_DB_INTERNAL(ip);
     aip = (struct rt_arb_internal *)ip->idb_ptr;
@@ -3204,6 +3289,13 @@ rt_arb_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     pa.pa_doopt = 0;		/* no UV stuff */
     pa.pa_tol_sq = tol->dist_sq;
     if (rt_arb_mk_planes(&pa, aip, "(tess)") < 0) return -2;
+    {
+	int validation_issues = 0;
+	(void)rt_arb_validate(NULL, aip, tol, &validation_issues);
+	concave = validation_issues == RT_ARB_VALIDATE_CONCAVE;
+	if (concave)
+	    reverse_concave_winding = arb_face_cycles_volume6(aip, &pa) < 0.0;
+    }
 
     for (i = 0; i < 8; i++)
 	verts[i] = (struct vertex *)0;
@@ -3213,7 +3305,8 @@ rt_arb_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 
     /* Process each face */
     for (i = 0; i < pa.pa_faces; i++) {
-	if (pa.pa_clockwise[i] != 0) {
+	if ((concave && !reverse_concave_winding) ||
+	    (!concave && pa.pa_clockwise[i] != 0)) {
 	    /* Counter-Clockwise orientation (CCW) */
 	    vertp[0] = &verts[pa.pa_pindex[0][i]];
 	    vertp[1] = &verts[pa.pa_pindex[1][i]];
@@ -3239,7 +3332,7 @@ rt_arb_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 	}
 	if ((fu[i] = nmg_cmface(s, vertp, pa.pa_npts[i])) == 0) {
 	    bu_log("rt_arb_tess(): nmg_cmface() fail on face %d\n", i);
-	    continue;
+	    return -2;
 	}
     }
 
@@ -3247,10 +3340,20 @@ rt_arb_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     for (i = 0; i < 8; i++)
 	if (verts[i]) nmg_vertex_gv(verts[i], aip->pt[i]);
 
-    /* Associate face geometry */
+    /* Associate face geometry.  The old three-point plane calculation is
+     * safe for convex faces.  For a reflex face it can select the opposite
+     * direction from the complete boundary, so use Newell's method. */
     for (i = 0; i < pa.pa_faces; i++) {
-	/* We already know the plane equations, this is fast */
-	nmg_face_g(fu[i], pa.pa_face[i].peqn);
+	if (concave) {
+	    plane_t loop_plane;
+	    struct loopuse *lu = BU_LIST_FIRST(loopuse, &fu[i]->lu_hd);
+	    nmg_loop_plane_newell(lu, loop_plane);
+	    if (VNEAR_ZERO(loop_plane, SMALL_FASTF))
+		return -2;
+	    nmg_face_g(fu[i], loop_plane);
+	} else {
+	    nmg_face_g(fu[i], pa.pa_face[i].peqn);
+	}
     }
 
     /* Mark edges as real */
@@ -4094,7 +4197,24 @@ rt_arb_perturb(struct rt_db_internal **oip, const struct rt_db_internal *ip, int
     struct bn_tol arb_tol = BN_TOL_INIT_TOL;
     arb_tol.dist = 0.0001; /* to get old behavior of rt_arb_std_type() */
     arb_tol.dist_sq = arb_tol.dist * arb_tol.dist;
-    int arbType = rt_arb_std_type(ip, &arb_tol);
+    struct rt_arb_internal repaired = {0};
+    struct rt_db_internal repaired_internal;
+    const struct rt_db_internal *working_ip = ip;
+    int validation_issues = 0;
+    (void)rt_arb_validate(NULL, oarb, &arb_tol, &validation_issues);
+    if (validation_issues & RT_ARB_VALIDATE_NONSTANDARD) {
+	/* Plane offsetting depends on the canonical face table.  Legacy ARBs
+	 * may encode the same valid volume with their duplicate vertices in a
+	 * different slot pattern, so canonicalize that representation before
+	 * calculating the planes. */
+	if (rt_arb_repair(&repaired, oarb, &arb_tol, 0) < 0)
+	    return BRLCAD_ERROR;
+	oarb = &repaired;
+	repaired_internal = *ip;
+	repaired_internal.idb_ptr = &repaired;
+	working_ip = &repaired_internal;
+    }
+    int arbType = rt_arb_std_type(working_ip, &arb_tol);
 
     // For arbs, we bump all the faces in or out.  Rather than trying to
     // update all the vertices to reflect all the planar moves without
@@ -4129,24 +4249,20 @@ rt_arb_perturb(struct rt_db_internal **oip, const struct rt_db_internal *ip, int
 	bg_plane_closest_pt(&fx, &fy, &planes[i], &arb_center);
 	point_t cp;
 	bg_plane_pt_at(&cp, &planes[i], fx, fy);
-	// Out of the box, rt_arb_calc_planes apparently aren't necessarily
-	// suitable for use in an ARBN primitive. Make sure normal points out
-	// from center.
-	vect_t cvec;
-	VSUB2(cvec, cp, arb_center);
-	VUNITIZE(cvec);
-	if (VDOT(planes[i], cvec) < 0) {
+	/* ARBN uses outward-facing planes with the interior on the
+	 * non-positive side of each plane. */
+	if (DIST_PNT_PLANE(arb_center, planes[i]) > 0.0) {
 	    HREVERSE(planes[i], planes[i]);
 	}
-	vect_t pnorm;
-	VMOVE(pnorm, planes[i]);
-	VUNITIZE(pnorm);
-	VSCALE(pnorm, pnorm, val);
+	vect_t normal;
+	VMOVE(normal, planes[i]);
+	VUNITIZE(normal);
+	vect_t offset;
+	VSCALE(offset, normal, val);
 	point_t np;
-	VADD2(np, cp, pnorm);
+	VADD2(np, cp, offset);
 	plane_t nplane;
-	VUNITIZE(pnorm);
-	bg_plane_pt_nrml(&nplane, np, pnorm);
+	bg_plane_pt_nrml(&nplane, np, normal);
 	HMOVE(planes[i], nplane);
 	afaces++;
     }
@@ -4168,7 +4284,7 @@ rt_arb_perturb(struct rt_db_internal **oip, const struct rt_db_internal *ip, int
     for (int i = 0; i < 6; i++) {
 	if (arb_faces[type][i*4] == -1)
 	    continue;
-	HMOVE(arbn->eqn[afaces], planes[afaces]);
+	HMOVE(arbn->eqn[afaces], planes[i]);
 	afaces++;
     }
 

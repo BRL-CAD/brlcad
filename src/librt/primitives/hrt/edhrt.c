@@ -52,7 +52,7 @@ _hrt_validate(struct rt_edit *s, const struct rt_hrt_internal *h)
     }
 
     if (h->d <= SMALL_FASTF) {
-	bu_vls_printf(s->log_str, "HRT cusp distance 'd' must be positive\n");
+	bu_vls_printf(s->log_str, "HRT legacy parameter 'd' must be positive\n");
 	return BRLCAD_ERROR;
     }
 

@@ -25,6 +25,7 @@
 
 #include "common.h"
 
+#include <algorithm>
 #include <vector>
 
 #include "raytrace.h"
@@ -97,6 +98,22 @@ CurveOnPlane(const ON_Curve &curve, const ON_Plane &plane, double tolerance)
 }
 
 
+static double
+CurveMeanProjection(const ON_Curve &curve, const ON_3dPoint &origin,
+	const ON_3dVector &direction)
+{
+    const ON_Interval domain = curve.Domain();
+    const double parameters[] = {0.0, 0.173, 0.419, 0.731, 1.0};
+    double projection = 0.0;
+    for (size_t i = 0; i < sizeof(parameters) / sizeof(parameters[0]); ++i) {
+	projection += (curve.PointAt(domain.ParameterAt(parameters[i])) -
+	    origin) * direction;
+    }
+    return projection / static_cast<double>(
+	sizeof(parameters) / sizeof(parameters[0]));
+}
+
+
 extern "C" void
 rt_revolve_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *tol)
 {
@@ -117,11 +134,52 @@ rt_revolve_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_to
 
     //  Find plane in 3 space corresponding to the sketch.
 
-    vect_t startpoint;
-    VADD2(startpoint, rip->v3d, rip->r);
-    plane_origin = ON_3dPoint(startpoint);
-    plane_x_dir = ON_3dVector(eip->u_vec);
-    plane_y_dir = ON_3dVector(eip->v_vec);
+    // REVOLVE uses the referenced sketch only for its two-dimensional
+    // profile.  Its model-space frame is defined by the primitive: V is the
+    // profile origin, normalized R is the radial/sketch-X direction, and the
+    // normalized revolve axis is the sketch-Y direction.  In particular, R
+    // is not a translation and the sketch object's own embedding is ignored
+    // by rt_revolve_prep(), rt_revolve_shot(), and rt_revolve_plot().
+    plane_origin = ON_3dPoint(rip->v3d);
+    plane_x_dir = ON_3dVector(rip->r);
+    plane_y_dir = ON_3dVector(rip->axis3d);
+    if (!plane_x_dir.Unitize() || !plane_y_dir.Unitize()) {
+	(*b)->Destroy();
+	return;
+    }
+
+    // A partial revolution whose profile terminates on the axis has start
+    // and end caps that share an axis edge.  ON_RevSurface represents a
+    // closed generating curve as one face and cannot encode that shared-edge
+    // singularity as a valid solid.  Move a one-sided, axis-touching profile
+    // radially by three quarters of the model tolerance: this preserves its
+    // semantics within the asserted tolerance while keeping the opposing cap
+    // boundaries farther apart than the stitch tolerance.  Profiles that
+    // cross the axis remain unsupported rather than being changed into a
+    // different solid.
+    if (!full_revolve && eip->vert_count > 0 && eip->verts) {
+	const double model_tolerance = (tol && tol->dist > 0.0) ?
+	    tol->dist : BN_TOL_DIST;
+	double minimum_x = eip->verts[0][X];
+	double maximum_x = minimum_x;
+	for (size_t vertex_index = 1; vertex_index < eip->vert_count;
+	     ++vertex_index)
+	{
+	    minimum_x = std::min(minimum_x, eip->verts[vertex_index][X]);
+	    maximum_x = std::max(maximum_x, eip->verts[vertex_index][X]);
+	}
+	double radial_offset = 0.0;
+	if (minimum_x >= -model_tolerance &&
+	    minimum_x <= model_tolerance && maximum_x > model_tolerance)
+	{
+	    radial_offset = 0.75 * model_tolerance - minimum_x;
+	} else if (maximum_x >= -model_tolerance &&
+	    maximum_x <= model_tolerance && minimum_x < -model_tolerance)
+	{
+	    radial_offset = -0.75 * model_tolerance - maximum_x;
+	}
+	plane_origin += radial_offset * plane_x_dir;
+    }
     const ON_Plane sketch_plane = ON_Plane(plane_origin, plane_x_dir, plane_y_dir);
     ON_Xform embedding;
     if (!rt_sketch_brep_embedding(&embedding, plane_origin, plane_x_dir,
@@ -164,6 +222,11 @@ rt_revolve_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_to
 	}
 	ON_Xform rotation;
 	rotation.Rotation(rip->ang, axis_direction, ON_3dPoint(rip->v3d));
+	ON_3dVector end_radial_direction = rotation * plane_x_dir;
+	if (!end_radial_direction.Unitize()) {
+	    (*b)->Destroy();
+	    return;
+	}
 	ON_Plane end_plane(sketch_plane);
 	if (!end_plane.Transform(rotation)) {
 	    (*b)->Destroy();
@@ -180,10 +243,24 @@ rt_revolve_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_to
 		continue;
 	    const bool on_start = CurveOnPlane(edge, sketch_plane, tolerance);
 	    const bool on_end = CurveOnPlane(edge, end_plane, tolerance);
-	    if (on_start && !on_end)
+	    if (on_start && !on_end) {
 		start_edges.Append(i);
-	    else if (on_end && !on_start)
+	    } else if (on_end && !on_start) {
 		end_edges.Append(i);
+	    } else if (on_start && on_end) {
+		// At a half turn the two cap planes are the same infinite
+		// plane.  Distinguish their boundary edges by the radial
+		// half-plane in which the curve lies.
+		const double start_projection = CurveMeanProjection(edge,
+		    ON_3dPoint(rip->v3d), plane_x_dir);
+		const double end_projection = CurveMeanProjection(edge,
+		    ON_3dPoint(rip->v3d), end_radial_direction);
+		if (start_projection > end_projection + tolerance) {
+		    start_edges.Append(i);
+		} else if (end_projection > start_projection + tolerance) {
+		    end_edges.Append(i);
+		}
+	    }
 	}
 	if (start_edges.Count() != profile_loop_count ||
 	    end_edges.Count() != profile_loop_count) {

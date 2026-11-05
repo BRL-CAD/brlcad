@@ -198,14 +198,21 @@ rt_brep_mate_planar_cap_loops(ON_Brep &brep,
     }
 
     const ON_BrepLoop *outer_loop = brep.m_F[face_index].OuterLoop();
-    if (!outer_loop)
+    const int current_surface_index = brep.m_F[face_index].m_si;
+    ON_PlaneSurface *current_cap_surface = current_surface_index >= 0 &&
+	current_surface_index < brep.m_S.Count() ? ON_PlaneSurface::Cast(
+	    brep.m_S[current_surface_index]) : NULL;
+    if (!outer_loop || !current_cap_surface)
 	return false;
-    cap_surface->SetDomain(0, outer_loop->m_pbox.m_min.x,
+    /* brep_stitch_naked_edges() may replace brep with a validated copy.
+     * Reacquire the owned surface from the current face instead of retaining
+     * the pointer passed to AddSurface() across that transactional update. */
+    current_cap_surface->SetDomain(0, outer_loop->m_pbox.m_min.x,
 	outer_loop->m_pbox.m_max.x);
-    cap_surface->SetDomain(1, outer_loop->m_pbox.m_min.y,
+    current_cap_surface->SetDomain(1, outer_loop->m_pbox.m_min.y,
 	outer_loop->m_pbox.m_max.y);
-    cap_surface->SetExtents(0, cap_surface->Domain(0));
-    cap_surface->SetExtents(1, cap_surface->Domain(1));
+    current_cap_surface->SetExtents(0, current_cap_surface->Domain(0));
+    current_cap_surface->SetExtents(1, current_cap_surface->Domain(1));
     if (flip_face)
 	brep.FlipFace(brep.m_F[face_index]);
     brep.SetTrimIsoFlags(brep.m_F[face_index]);

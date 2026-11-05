@@ -103,6 +103,15 @@ rt_metaball_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *i
     V_MAX(mtol, ttol->rel * radius * 10);
     V_MAX(mtol, tol->dist);
 
+    /* Marching cubes needs an exterior sample layer on every side of the
+     * implicit surface.  The metaball bounds may touch the isosurface (and
+     * blended fields can exceed the individual-point estimate slightly), so
+     * beginning the grid exactly at min can clip a cap from the first slice.
+     * Pad both sides by one cell to ensure boundary cubes transition from
+     * outside to inside and back to outside. */
+    VSET(min, min[X] - mtol, min[Y] - mtol, min[Z] - mtol);
+    VSET(max, max[X] + mtol, max[Y] + mtol, max[Z] + mtol);
+
     *r = nmg_mrsv(m);	/* new empty nmg */
     s = BU_LIST_FIRST(shell, &(*r)->s_hd);
 

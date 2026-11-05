@@ -117,16 +117,28 @@ rt_ehy_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *t
     hyp_surf->m_bTransposed = false;
     hyp_surf->BoundingBox();
 
-    ON_NurbsSurface *ehycurvedsurf = ON_NurbsSurface::New();
-    if (hyp_surf->GetNurbForm(*ehycurvedsurf, 0.0) <= 0) {
-	delete ehycurvedsurf;
+    /* A circular EHY is already represented exactly by the revolution.
+     * Retaining that analytic form gives surface intersection access to its
+     * profile and sweep directions; flattening it into a general NURBS patch
+     * needlessly turns simple revolution intersections into a two-dimensional
+     * refinement problem.  An elliptical EHY still needs the nonuniformly
+     * transformed NURBS representation below. */
+    ON_Surface *side_surface = NULL;
+    if (eip->ehy_r1 == eip->ehy_r2) {
+	side_surface = hyp_surf;
+    } else {
+	ON_NurbsSurface *ehycurvedsurf = ON_NurbsSurface::New();
+	if (hyp_surf->GetNurbForm(*ehycurvedsurf, 0.0) <= 0) {
+	    delete ehycurvedsurf;
+	    delete hyp_surf;
+	    delete tnurbscurve;
+	    delete bcurve;
+	    bu_log("rt_ehy_brep: unable to construct exact NURBS side surface!\n");
+	    return;
+	}
 	delete hyp_surf;
-	delete tnurbscurve;
-	delete bcurve;
-	bu_log("rt_ehy_brep: unable to construct exact NURBS side surface!\n");
-	return;
+	side_surface = ehycurvedsurf;
     }
-    delete hyp_surf;
     delete tnurbscurve;
     delete bcurve;
 
@@ -152,14 +164,14 @@ rt_ehy_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *t
     transform[2][3] = eip->ehy_V[2];
 
 
-    if (!ehycurvedsurf->Transform(transform)) {
-	delete ehycurvedsurf;
+    if (!side_surface->Transform(transform)) {
+	delete side_surface;
 	bu_log("rt_ehy_brep: unable to transform surface into the EHY frame!\n");
 	return;
     }
 
     ON_Brep *ehy_brep = new ON_Brep();
-    const int side_surface_index = ehy_brep->AddSurface(ehycurvedsurf);
+    const int side_surface_index = ehy_brep->AddSurface(side_surface);
     ON_BrepFace &side_face = ehy_brep->NewFace(side_surface_index);
     ehy_brep->FlipFace(side_face);
     if (!ehy_brep->NewOuterLoop(side_face.m_face_index)) {

@@ -39,6 +39,12 @@ rt_eto_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *)
     eip = (struct rt_eto_internal *)ip->idb_ptr;
     RT_ETO_CK_MAGIC(eip);
 
+    if (MAGNITUDE(eip->eto_N) < RT_LEN_TOL ||
+	MAGNITUDE(eip->eto_C) < RT_LEN_TOL || eip->eto_r < RT_LEN_TOL ||
+	eip->eto_rd < RT_LEN_TOL ||
+	eip->eto_rd > MAGNITUDE(eip->eto_C))
+	return;
+
     point_t p_origin;
     vect_t v1, v1a, x_dir, y_dir;
     ON_3dPoint plane_origin;
@@ -93,20 +99,28 @@ rt_eto_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *)
     //  Generate an ON_Curve from the ellipse and revolve it
     //  around eto_N
 
-    ON_NurbsCurve ellcurve;
-    ellipse.GetNurbForm(ellcurve);
+    ON_NurbsCurve *ellcurve = ON_NurbsCurve::New();
+    if (!ellipse.GetNurbForm(*ellcurve)) {
+	delete ellcurve;
+	return;
+    }
     point_t eto_endvertex;
     VADD2(eto_endvertex, eip->eto_V, eip->eto_N);
     ON_3dPoint eto_vertex_pt = ON_3dPoint(eip->eto_V);
     ON_3dPoint eto_endvertex_pt = ON_3dPoint(eto_endvertex);
     ON_Line revaxis = ON_Line(eto_vertex_pt, eto_endvertex_pt);
-    ON_RevSurface* eto_surf = ON_RevSurface::New();
-    eto_surf->m_curve = &ellcurve;
-    eto_surf->m_axis = revaxis;
+    ON_RevSurface eto_surf;
+    eto_surf.m_curve = ellcurve;
+    eto_surf.m_axis = revaxis;
+    eto_surf.m_angle = ON_Interval(0.0, 2.0 * ON_PI);
+    eto_surf.m_t = eto_surf.m_angle;
+    eto_surf.m_bTransposed = false;
+    eto_surf.BoundingBox();
 
     /* Create brep with one face*/
-    ON_BrepFace *newface = (*b)->NewFace(*eto_surf);
-    (*b)->FlipFace(*newface);
+    ON_BrepFace *newface = (*b)->NewFace(eto_surf);
+    if (newface)
+	(*b)->FlipFace(*newface);
 //    (*b)->Standardize();
  //   (*b)->Compact();
 }

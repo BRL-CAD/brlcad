@@ -509,25 +509,6 @@ rt_edit_eto_repair(struct bu_vls *log_str, struct rt_db_internal *ip, const stru
         }
     }
 
-    /* Check if C and N are perpendicular */
-    fastf_t mag_c = MAGNITUDE(eto->eto_C);
-    if (mag_c > SQRT_SMALL_FASTF) {
-        fastf_t f = VDOT(eto->eto_N, eto->eto_C) / mag_c;
-        if (!NEAR_ZERO(f, tol->perp)) {
-            vect_t proj;
-            /* Project C onto the plane defined by normal N */
-            fastf_t dot = VDOT(eto->eto_C, eto->eto_N);
-            VSCALE(proj, eto->eto_N, dot);
-            VSUB2(eto->eto_C, eto->eto_C, proj);
-            /* Restore original magnitude of C */
-            fastf_t new_mag = MAGNITUDE(eto->eto_C);
-            if (new_mag > SQRT_SMALL_FASTF) {
-                VSCALE(eto->eto_C, eto->eto_C, mag_c / new_mag);
-                repaired++;
-            }
-        }
-    }
-
     if (repaired > 0 && log_str) {
         bu_vls_printf(log_str, "{\"status\":\"success\",\"message\":\"Successfully repaired ETO\"}");
     }
