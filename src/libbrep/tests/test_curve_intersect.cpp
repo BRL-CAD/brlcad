@@ -40,7 +40,11 @@ test_cci(ON_Curve *c1, ON_Curve *c2)
     ON_SimpleArray<ON_X_EVENT> x;
 
     // Use default tolerance
-    ON_Intersect(c1, c2, x);
+    const int result = ON_Intersect(c1, c2, x);
+    if (result < 0) {
+	bu_log("Curve intersection work limit exceeded.\n");
+	return;
+    }
 
     if (x.Count() == 0) {
 	bu_log("No intersection.\n");
@@ -62,7 +66,11 @@ test_csi(ON_Curve *c1, ON_Surface *s2)
     ON_SimpleArray<ON_X_EVENT> x;
 
     // Use default tolerance
-    ON_Intersect(c1, s2, x);
+    const int result = ON_Intersect(c1, s2, x);
+    if (result < 0) {
+	bu_log("Curve-surface intersection work limit exceeded.\n");
+	return;
+    }
 
     if (x.Count() == 0) {
 	bu_log("No intersection.\n");
