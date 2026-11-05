@@ -45,6 +45,7 @@
 #include "gcv/api.h"
 #include "raytrace.h"
 #include "rt/geom.h"
+#include "rt/primitives/annot.h"
 #include "vmath.h"
 #include "wdb.h"
 
@@ -60,6 +61,11 @@ constexpr int64_t SPLINE_TYPE_BEZIER = 1;
 constexpr int64_t SPLINE_TYPE_NURBS = 4;
 constexpr int64_t SPLINE_CYCLIC = 1;
 constexpr int64_t SPLINE_BEZIER_KNOTS = 4;
+constexpr int64_t META_ELEMENT_BALL = 0;
+constexpr int64_t META_ELEMENT_NEGATIVE = 2;
+constexpr fastf_t METABALL_THRESHOLD = 1.0;
+constexpr double OBJECT_SCALE_TOLERANCE = 1.0e-8;
+constexpr fastf_t DEFAULT_POINT_RADIUS = 0.01;
 
 class ParseError : public std::runtime_error {
 public:
@@ -561,6 +567,20 @@ float_value(const BlendFile &file, const unsigned char *data)
     return value;
 }
 
+static double
+float_field(const BlendFile &file, const DataView &view, const std::string &name)
+{
+    const DnaField *field = require_field(view, name);
+    if (field->pointer || field->array_count != 1 || field->size != sizeof(float))
+	throw ParseError("field " + view.structure->name + "." + name +
+	    " is not a scalar float");
+    double value = float_value(file, view.data + field->offset);
+    if (!std::isfinite(value))
+	throw ParseError("field " + view.structure->name + "." + name +
+	    " is not finite");
+    return value;
+}
+
 static std::string
 string_value(const DataView &view, const std::string &name)
 {
@@ -691,6 +711,21 @@ raw_array_view(const BlendFile &file, uint64_t address, size_t element_size,
 	throw ParseError(description + " extends beyond its file block");
     view.size = element_size * count;
     return view;
+}
+
+static std::string
+pointed_string_value(const BlendFile &file, const DataView &view,
+    const std::string &pointer_name, const std::string &length_name)
+{
+    size_t length = checked_count(integer_value(file, view, length_name),
+	view.structure->name + " string length");
+    DataView characters = raw_array_view(file, pointer_value(file, view,
+	pointer_name), sizeof(char), length + 1, view.structure->name + " string");
+    const char *text = reinterpret_cast<const char *>(characters.data);
+    size_t actual_length = 0;
+    while (actual_length < length && text[actual_length] != '\0')
+	++actual_length;
+    return std::string(text, actual_length);
 }
 
 static void
@@ -965,6 +1000,33 @@ transform_point(double point[3], const std::array<double, 16> &matrix,
     }
 }
 
+static double
+metaball_radius_scale(const std::array<double, 16> &matrix, fastf_t scale,
+    bool &non_uniform)
+{
+    std::array<double, 3> axis_scales;
+    for (size_t axis = 0; axis < axis_scales.size(); ++axis) {
+	double squared = 0.0;
+	for (size_t component = 0; component < 3; ++component) {
+	    double value = matrix[component * 4 + axis];
+	    squared += value * value;
+	}
+	axis_scales[axis] = std::sqrt(squared);
+	if (!std::isfinite(axis_scales[axis]) || axis_scales[axis] <= 0.0)
+	    throw ParseError("metaball object transform has an invalid scale");
+    }
+    double radius_scale = *std::max_element(axis_scales.begin(), axis_scales.end());
+    non_uniform = std::any_of(axis_scales.begin(), axis_scales.end(),
+	[radius_scale](double axis_scale) {
+	    return std::abs(axis_scale - radius_scale) >
+		radius_scale * OBJECT_SCALE_TOLERANCE;
+	});
+    radius_scale *= std::abs(static_cast<double>(scale));
+    if (!std::isfinite(radius_scale) || radius_scale <= 0.0)
+	throw ParseError("metaball scale factor is invalid");
+    return radius_scale;
+}
+
 static void
 transform_vertices(MeshGeometry &geometry, const std::array<double, 16> &matrix,
     fastf_t scale)
@@ -982,14 +1044,138 @@ transform_vertices(MeshGeometry &geometry, const std::array<double, 16> &matrix,
     }
 }
 
+struct PointCloudGeometry {
+    std::vector<fastf_t> vertices;
+    std::vector<fastf_t> radii;
+};
+
+static PointCloudGeometry
+read_point_cloud(const BlendFile &file, const DataView &point_cloud,
+    const std::array<double, 16> &matrix, fastf_t scale)
+{
+    size_t point_count = checked_count(integer_value(file, point_cloud,
+	"totpoint"), "point-cloud point count");
+    if (point_count == 0)
+	throw ParseError("point cloud has no points");
+    uint64_t position_address = custom_layer_address(file, point_cloud,
+	"pdata", "position");
+    if (position_address == 0)
+	throw ParseError("point cloud has no position layer");
+    DataView positions = raw_array_view(file, position_address,
+	sizeof(float) * 3, point_count, "point-cloud position layer");
+    PointCloudGeometry geometry;
+    geometry.vertices.resize(point_count * 3);
+    for (size_t point = 0; point < point_count; ++point) {
+	for (size_t axis = 0; axis < 3; ++axis) {
+	    geometry.vertices[point * 3 + axis] = static_cast<fastf_t>(
+		float_value(file, positions.data +
+		(point * 3 + axis) * sizeof(float)));
+	}
+    }
+    MeshGeometry transformed;
+    transformed.vertices.swap(geometry.vertices);
+    transform_vertices(transformed, matrix, scale);
+    transformed.vertices.swap(geometry.vertices);
+
+    bool non_uniform = false;
+    double radius_scale = metaball_radius_scale(matrix, scale, non_uniform);
+    if (non_uniform)
+	bu_log("BLEND Reader: using the largest object-axis scale for point radii\n");
+    uint64_t radius_address = custom_layer_address(file, point_cloud,
+	"pdata", "radius");
+    geometry.radii.resize(point_count, DEFAULT_POINT_RADIUS * radius_scale);
+    if (radius_address != 0) {
+	DataView radii = raw_array_view(file, radius_address, sizeof(float),
+	    point_count, "point-cloud radius layer");
+	for (size_t point = 0; point < point_count; ++point) {
+	    double radius = float_value(file, radii.data + point * sizeof(float));
+	    radius *= radius_scale;
+	    if (!std::isfinite(radius) || radius <= 0.0)
+		throw ParseError("point cloud contains an invalid radius");
+	    geometry.radii[point] = static_cast<fastf_t>(radius);
+	}
+    }
+    return geometry;
+}
+
 struct SplinePoint {
     ON_3dPoint point;
     double weight = 1.0;
 };
 
+struct BezierPoint {
+    ON_3dPoint left;
+    ON_3dPoint point;
+    ON_3dPoint right;
+};
+
+using MetaballControl = std::array<fastf_t, 5>;
+
+static std::vector<MetaballControl>
+read_metaball_controls(const BlendFile &file, const DataView &metaball,
+    const std::array<double, 16> &matrix, fastf_t scale, size_t &unsupported)
+{
+    DataView elements = embedded_view(file, metaball, "elems");
+    uint64_t address = pointer_value(file, elements, "first");
+    std::set<uint64_t> visited;
+    bool non_uniform = false;
+    double radius_scale = metaball_radius_scale(matrix, scale, non_uniform);
+    if (non_uniform)
+	bu_log("BLEND Reader: using the largest object-axis scale for spherical metaball elements\n");
+
+    std::vector<MetaballControl> controls;
+    unsupported = 0;
+    while (address != 0) {
+	if (!visited.insert(address).second)
+	    throw ParseError("metaball element list contains a cycle");
+	DataView element = address_view(file, address);
+	if (!element || element.structure->name != "MetaElem")
+	    throw ParseError("metaball element list contains an invalid pointer");
+	uint64_t next = pointer_value(file, element, "next");
+	int64_t element_type = integer_value(file, element, "type");
+	if (element_type != META_ELEMENT_BALL) {
+	    const DnaField *extent_x = element.structure->field("expx");
+	    const DnaField *extent_y = element.structure->field("expy");
+	    const DnaField *extent_z = element.structure->field("expz");
+	    if (extent_x && extent_y && extent_z) {
+		bu_log("BLEND Reader: metaball element type %lld with extents %g, %g, %g is not supported\n",
+		    static_cast<long long>(element_type), float_field(file, element, "expx"),
+		    float_field(file, element, "expy"), float_field(file, element, "expz"));
+	    } else {
+		bu_log("BLEND Reader: metaball element type %lld is not supported\n",
+		    static_cast<long long>(element_type));
+	    }
+	    ++unsupported;
+	    address = next;
+	    continue;
+	}
+	double point[3] = {
+	    float_field(file, element, "x"),
+	    float_field(file, element, "y"),
+	    float_field(file, element, "z")
+	};
+	transform_point(point, matrix, scale);
+	double radius = float_field(file, element, "rad") * radius_scale;
+	if (radius <= 0.0)
+	    throw ParseError("metaball element has a non-positive radius");
+	double stiffness = float_field(file, element, "s");
+	if (stiffness <= 0.0)
+	    throw ParseError("metaball element has a non-positive stiffness");
+	bool negative = (integer_value(file, element, "flag") &
+	    META_ELEMENT_NEGATIVE) != 0;
+	controls.push_back({static_cast<fastf_t>(point[0]),
+	    static_cast<fastf_t>(point[1]), static_cast<fastf_t>(point[2]),
+	    static_cast<fastf_t>(negative ? -radius : radius),
+	    static_cast<fastf_t>(stiffness)});
+	address = next;
+    }
+    return controls;
+}
+
 static std::vector<SplinePoint>
 read_spline_points(const BlendFile &file, const DataView &spline,
-    const std::array<double, 16> &matrix, fastf_t scale)
+    const std::array<double, 16> &matrix, fastf_t scale,
+    bool require_positive_weights = true)
 {
     size_t point_count_u = checked_count(integer_value(file, spline, "pntsu"),
 	"spline U control-point count");
@@ -1016,11 +1202,63 @@ read_spline_points(const BlendFile &file, const DataView &spline,
 	transform_point(point, matrix, scale);
 	double weight = float_value(file, point_view.data + coordinates->offset +
 	    3 * sizeof(float));
-	if (!std::isfinite(weight) || weight <= 0.0)
-	    throw ParseError("NURBS control point has an invalid weight");
+	if (!std::isfinite(weight) || (require_positive_weights && weight <= 0.0))
+	    throw ParseError("spline control point has an invalid weight");
 	result.push_back({ON_3dPoint(point[0], point[1], point[2]), weight});
     }
     return result;
+}
+
+static std::vector<BezierPoint>
+read_bezier_points(const BlendFile &file, const DataView &spline,
+    const std::array<double, 16> &matrix, fastf_t scale)
+{
+    size_t point_count = checked_count(integer_value(file, spline, "pntsu"),
+	"Bezier curve control-point count");
+    if (point_count < 2)
+	throw ParseError("Bezier curve has fewer than two control points");
+    DataView points = array_view(file, pointer_value(file, spline, "bezt"),
+	"BezTriple", point_count);
+
+    std::vector<BezierPoint> result;
+    result.reserve(point_count);
+    for (size_t index = 0; index < point_count; ++index) {
+	DataView point_view = array_element(points, index);
+	const DnaField *coordinates = require_field(point_view, "vec");
+	if (coordinates->pointer || coordinates->size != sizeof(float) * 9)
+	    throw ParseError("BezTriple.vec is not a three-by-three float array");
+	std::array<ON_3dPoint, 3> transformed;
+	for (size_t control = 0; control < transformed.size(); ++control) {
+	    double point[3];
+	    for (size_t axis = 0; axis < 3; ++axis) {
+		point[axis] = float_value(file, point_view.data + coordinates->offset +
+		    (control * 3 + axis) * sizeof(float));
+	    }
+	    transform_point(point, matrix, scale);
+	    transformed[control] = ON_3dPoint(point[0], point[1], point[2]);
+	}
+	result.push_back({transformed[0], transformed[1], transformed[2]});
+    }
+    return result;
+}
+
+static std::unique_ptr<ON_NurbsCurve>
+make_clamped_curve(const std::vector<ON_3dPoint> &points)
+{
+    if (points.size() < 2 || points.size() > static_cast<size_t>(INT_MAX))
+	throw ParseError("spline segment has an invalid control-point count");
+    int order = static_cast<int>(points.size());
+    std::unique_ptr<ON_NurbsCurve> curve(
+	ON_NurbsCurve::New(3, false, order, order));
+    if (!curve || !curve->MakeClampedUniformKnotVector(1.0))
+	throw ParseError("could not construct a spline segment");
+    for (int index = 0; index < order; ++index) {
+	if (!curve->SetCV(index, points[static_cast<size_t>(index)]))
+	    throw ParseError("could not set a spline segment control point");
+    }
+    if (!curve->IsValid())
+	throw ParseError("constructed spline segment is invalid");
+    return curve;
 }
 
 static void
@@ -1221,6 +1459,43 @@ add_wire_curve(ON_Brep &brep, std::unique_ptr<ON_NurbsCurve> curve)
     edge.m_tolerance = 0.0;
 }
 
+static void
+add_bezier_spline(const BlendFile &file, const DataView &spline,
+    const std::array<double, 16> &matrix, fastf_t scale, ON_Brep &brep)
+{
+    if (checked_count(integer_value(file, spline, "pntsv"),
+	"Bezier curve V control-point count") > 1)
+	throw ParseError("Bezier surfaces are not supported");
+    std::vector<BezierPoint> points = read_bezier_points(file, spline, matrix, scale);
+    bool cyclic = (integer_value(file, spline, "flagu") & SPLINE_CYCLIC) != 0;
+    size_t segment_count = cyclic ? points.size() : points.size() - 1;
+    for (size_t index = 0; index < segment_count; ++index) {
+	const BezierPoint &start = points[index];
+	const BezierPoint &end = points[(index + 1) % points.size()];
+	add_wire_curve(brep, make_clamped_curve({start.point, start.right,
+	    end.left, end.point}));
+    }
+}
+
+static void
+add_poly_spline(const BlendFile &file, const DataView &spline,
+    const std::array<double, 16> &matrix, fastf_t scale, ON_Brep &brep)
+{
+    if (checked_count(integer_value(file, spline, "pntsv"),
+	"poly curve V control-point count") > 1)
+	throw ParseError("poly surfaces are not supported");
+    std::vector<SplinePoint> points = read_spline_points(file, spline, matrix,
+	scale, false);
+    if (points.size() < 2)
+	throw ParseError("poly curve has fewer than two control points");
+    bool cyclic = (integer_value(file, spline, "flagu") & SPLINE_CYCLIC) != 0;
+    size_t segment_count = cyclic ? points.size() : points.size() - 1;
+    for (size_t index = 0; index < segment_count; ++index) {
+	add_wire_curve(brep, make_clamped_curve({points[index].point,
+	    points[(index + 1) % points.size()].point}));
+    }
+}
+
 static bool
 write_region(struct rt_wdb *output, struct wmember &all,
     const std::string &primitive_name)
@@ -1260,6 +1535,20 @@ write_mesh(struct rt_wdb *output, struct wmember &all, MeshGeometry &geometry,
 }
 
 static bool
+write_point_cloud(struct rt_wdb *output, struct wmember &all,
+    const PointCloudGeometry &geometry, const std::string &name)
+{
+    size_t point_count = geometry.vertices.size() / 3;
+    if (mk_pnts(output, name.c_str(), RT_PNT_TYPE_SCA, DEFAULT_POINT_RADIUS,
+	point_count, geometry.vertices.data(), nullptr, geometry.radii.data(),
+	nullptr) < 0) {
+	bu_log("BLEND Reader: failed to write point cloud %s\n", name.c_str());
+	return false;
+    }
+    return write_region(output, all, name);
+}
+
+static bool
 write_brep(struct rt_wdb *output, struct wmember &all, ON_Brep &brep,
     const std::string &name)
 {
@@ -1283,6 +1572,72 @@ write_brep(struct rt_wdb *output, struct wmember &all, ON_Brep &brep,
 }
 
 static bool
+write_metaball(struct rt_wdb *output, struct wmember &all,
+    const std::vector<MetaballControl> &controls, const std::string &name)
+{
+    std::vector<const fastf_t *> control_pointers;
+    control_pointers.reserve(controls.size());
+    for (const MetaballControl &control : controls)
+	control_pointers.push_back(control.data());
+    if (mk_metaball(output, name.c_str(), controls.size(), METABALL_ISOPOTENTIAL,
+	METABALL_THRESHOLD, control_pointers.data()) < 0) {
+	bu_log("BLEND Reader: failed to write metaball %s\n", name.c_str());
+	return false;
+    }
+    return write_region(output, all, name);
+}
+
+static bool
+write_text_annotation(struct rt_wdb *output, struct wmember &all,
+    const std::string &name, const std::string &text, fastf_t text_size,
+    const std::array<double, 16> &matrix, fastf_t scale)
+{
+    double origin[3] = {0.0, 0.0, 0.0};
+    double u_point[3] = {1.0, 0.0, 0.0};
+    double v_point[3] = {0.0, 1.0, 0.0};
+    transform_point(origin, matrix, scale);
+    transform_point(u_point, matrix, scale);
+    transform_point(v_point, matrix, scale);
+
+    point2d_t reference = {0.0, 0.0};
+    int reverse = 0;
+    struct txt_seg text_segment = {};
+    text_segment.magic = ANN_TSEG_MAGIC;
+    text_segment.ref_pt = 0;
+    text_segment.rel_pos = RT_TXT_POS_BL;
+    text_segment.txt_size = text_size;
+    bu_vls_init(&text_segment.label);
+    bu_vls_strcpy(&text_segment.label, text.c_str());
+    void *segment = &text_segment;
+
+    struct rt_annot_seg_style style = {};
+    style.role = RT_ANNOT_ROLE_TEXT;
+    style.line_pattern = RT_ANNOT_LINE_CONTINUOUS;
+    struct rt_annot_internal annotation = {};
+    annotation.magic = RT_ANNOT_INTERNAL_MAGIC;
+    VSET(annotation.V, origin[0], origin[1], origin[2]);
+    VSET(annotation.u_vec, u_point[0] - origin[0], u_point[1] - origin[1],
+	u_point[2] - origin[2]);
+    VSET(annotation.v_vec, v_point[0] - origin[0], v_point[1] - origin[1],
+	v_point[2] - origin[2]);
+    annotation.flags = RT_ANNOT_MODEL_SPACE;
+    annotation.vert_count = 1;
+    annotation.verts = &reference;
+    annotation.ant.count = 1;
+    annotation.ant.reverse = &reverse;
+    annotation.ant.segments = &segment;
+    annotation.styles = &style;
+
+    bool written = !rt_annot_validate(&annotation, nullptr) &&
+	mk_annot(output, name.c_str(), &annotation) >= 0 &&
+	mk_addmember(name.c_str(), &all.l, nullptr, WMOP_UNION) != nullptr;
+    bu_vls_free(&text_segment.label);
+    if (!written)
+	bu_log("BLEND Reader: failed to write text annotation %s\n", name.c_str());
+    return written;
+}
+
+static bool
 convert_mesh_object(const BlendFile &file, const DataView &object,
     const DataView &mesh, const struct gcv_opts *options, struct rt_wdb *output,
     struct wmember &all, std::set<std::string> &used_names)
@@ -1296,8 +1651,24 @@ convert_mesh_object(const BlendFile &file, const DataView &object,
     return write_mesh(output, all, geometry, name);
 }
 
+static bool
+convert_point_cloud_object(const BlendFile &file, const DataView &object,
+    const DataView &point_cloud, const struct gcv_opts *options,
+    struct rt_wdb *output, struct wmember &all,
+    std::set<std::string> &used_names)
+{
+    std::string object_name = datablock_name(file, object);
+    if (!object_selected(options, object_name))
+	return false;
+    PointCloudGeometry geometry = read_point_cloud(file, point_cloud,
+	object_matrix(file, object), options->scale_factor);
+    std::string name = safe_name(object_name, datablock_name(file, point_cloud),
+	".pnts", used_names);
+    return write_point_cloud(output, all, geometry, name);
+}
+
 static std::unique_ptr<ON_Brep>
-read_nurbs_brep(const BlendFile &file, const DataView &curve,
+read_curve_brep(const BlendFile &file, const DataView &curve,
     const std::array<double, 16> &matrix, fastf_t scale)
 {
     DataView splines = embedded_view(file, curve, "nurb");
@@ -1309,10 +1680,10 @@ read_nurbs_brep(const BlendFile &file, const DataView &curve,
 
     while (address != 0) {
 	if (!visited.insert(address).second)
-	    throw ParseError("NURBS spline list contains a cycle");
+	    throw ParseError("Curve spline list contains a cycle");
 	DataView spline = address_view(file, address);
 	if (!spline || spline.structure->name != "Nurb")
-	    throw ParseError("NURBS spline list contains an invalid pointer");
+	    throw ParseError("Curve spline list contains an invalid pointer");
 	uint64_t next = pointer_value(file, spline, "next");
 	int64_t type = integer_value(file, spline, "type") & SPLINE_TYPE_MASK;
 	if (type == SPLINE_TYPE_NURBS) {
@@ -1326,18 +1697,51 @@ read_nurbs_brep(const BlendFile &file, const DataView &curve,
 	    } else {
 		add_wire_curve(*brep, make_nurbs_curve(file, spline, matrix, scale));
 	    }
-	    ++imported;
+	} else if (type == SPLINE_TYPE_BEZIER) {
+	    add_bezier_spline(file, spline, matrix, scale, *brep);
+	} else if (type == SPLINE_TYPE_POLY) {
+	    add_poly_spline(file, spline, matrix, scale, *brep);
 	} else {
 	    ++unsupported;
+	    address = next;
+	    continue;
 	}
+	++imported;
 	address = next;
     }
     if (unsupported > 0)
-	bu_log("BLEND Reader: skipped %zu non-NURBS spline%s in a Curve object\n",
+	bu_log("BLEND Reader: skipped %zu unsupported spline%s in a Curve object\n",
 	    unsupported, unsupported == 1 ? "" : "s");
     if (imported == 0)
-	throw ParseError("Curve object contains no supported NURBS splines");
+	throw ParseError("Curve object contains no supported splines");
     return brep;
+}
+
+static bool
+convert_text_object(const BlendFile &file, const DataView &object,
+    const DataView &curve, const struct gcv_opts *options, struct rt_wdb *output,
+    struct wmember &all, std::set<std::string> &used_names)
+{
+    std::string object_name = datablock_name(file, object);
+    if (!object_selected(options, object_name))
+	return false;
+    std::string text = pointed_string_value(file, curve, "str", "len");
+    if (text.empty())
+	throw ParseError("font object has no text");
+    double text_size = float_field(file, curve, "fsize");
+    if (text_size <= 0.0)
+	throw ParseError("font object has a non-positive text size");
+    const DnaField *extrude = curve.structure->field("extrude");
+    const DnaField *bevel = curve.structure->field("bevel_depth");
+    if ((extrude && !ZERO(float_field(file, curve, "extrude"))) ||
+	(bevel && !ZERO(float_field(file, curve, "bevel_depth"))))
+	bu_log("BLEND Reader: text object %s imported as planar annotation; extrusion and bevel are not represented\n",
+	    object_name.c_str());
+    std::string name = safe_name(object_name, datablock_name(file, curve),
+	".annot", used_names);
+    return write_text_annotation(output, all, name, text,
+	static_cast<fastf_t>(text_size), object_matrix(file, object),
+	options->scale_factor);
 }
 
 static bool
@@ -1345,14 +1749,42 @@ convert_curve_object(const BlendFile &file, const DataView &object,
     const DataView &curve, const struct gcv_opts *options, struct rt_wdb *output,
     struct wmember &all, std::set<std::string> &used_names)
 {
+    const DnaField *text = curve.structure->field("str");
+    if (text && text->pointer && pointer_value(file, curve, "str") != 0)
+	return convert_text_object(file, object, curve, options, output, all, used_names);
     std::string object_name = datablock_name(file, object);
     if (!object_selected(options, object_name))
 	return false;
-    std::unique_ptr<ON_Brep> brep = read_nurbs_brep(file, curve,
+    std::unique_ptr<ON_Brep> brep = read_curve_brep(file, curve,
 	object_matrix(file, object), options->scale_factor);
     std::string name = safe_name(object_name, datablock_name(file, curve),
 	".brep", used_names);
     return write_brep(output, all, *brep, name);
+}
+
+static bool
+convert_metaball_object(const BlendFile &file, const DataView &object,
+    const DataView &metaball, const struct gcv_opts *options,
+    struct rt_wdb *output, struct wmember &all,
+    std::set<std::string> &used_names)
+{
+    std::string object_name = datablock_name(file, object);
+    if (!object_selected(options, object_name))
+	return false;
+    double threshold = float_field(file, metaball, "thresh");
+    if (threshold <= 0.0)
+	throw ParseError("metaball has a non-positive threshold");
+    size_t unsupported = 0;
+    std::vector<MetaballControl> controls = read_metaball_controls(file,
+	metaball, object_matrix(file, object), options->scale_factor, unsupported);
+    if (unsupported > 0)
+	bu_log("BLEND Reader: skipped %zu non-spherical metaball element%s in object %s\n",
+	    unsupported, unsupported == 1 ? "" : "s", object_name.c_str());
+    if (controls.empty())
+	throw ParseError("metaball contains no supported spherical elements");
+    std::string name = safe_name(object_name, datablock_name(file, metaball),
+	".metaball", used_names);
+    return write_metaball(output, all, controls, name);
 }
 
 static size_t
@@ -1385,16 +1817,29 @@ convert_objects(const BlendFile &file, const struct gcv_opts *options,
 		    datablock_name(file, object).c_str());
 		continue;
 	    }
-	    if (data.structure->name != "Mesh" && data.structure->name != "Curve") {
+	    if (data.structure->name != "Mesh" && data.structure->name != "Curve" &&
+		data.structure->name != "MetaBall" &&
+		data.structure->name != "PointCloud") {
 		if (reported_types.insert(data.structure->name).second)
 		    bu_log("BLEND Reader: object geometry type %s is not supported; skipping instances\n",
 			data.structure->name.c_str());
 		continue;
 	    }
 	    try {
-		bool converted_object = data.structure->name == "Mesh" ?
-		    convert_mesh_object(file, object, data, options, output, all, used_names) :
-		    convert_curve_object(file, object, data, options, output, all, used_names);
+		bool converted_object = false;
+		if (data.structure->name == "Mesh") {
+		    converted_object = convert_mesh_object(file, object, data, options,
+			output, all, used_names);
+		} else if (data.structure->name == "Curve") {
+		    converted_object = convert_curve_object(file, object, data, options,
+			output, all, used_names);
+		} else if (data.structure->name == "MetaBall") {
+		    converted_object = convert_metaball_object(file, object, data, options,
+			output, all, used_names);
+		} else {
+		    converted_object = convert_point_cloud_object(file, object, data,
+			options, output, all, used_names);
+		}
 		if (converted_object)
 		    ++converted;
 	    } catch (const ParseError &error) {
