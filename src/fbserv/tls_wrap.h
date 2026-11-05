@@ -202,10 +202,12 @@ _fbserv_tls_gen_selfsigned(SSL_CTX *ctx)
 
     X509_set_pubkey(cert, pkey);
 
-    name = X509_get_subject_name(cert);
-    X509_NAME_add_entry_by_txt(name, "CN", MBSTRING_ASC,
-			       (unsigned char *)"fbserv", -1, -1, 0);
-    X509_set_issuer_name(cert, name);
+    name = X509_NAME_new();
+    if (!name) goto out;
+    if (X509_NAME_add_entry_by_txt(name, "CN", MBSTRING_ASC,
+				   (const unsigned char *)"fbserv", -1, -1, 0) != 1) goto out;
+    if (X509_set_subject_name(cert, name) != 1) goto out;
+    if (X509_set_issuer_name(cert, name) != 1) goto out;
 
     if (X509_sign(cert, pkey, EVP_sha256()) == 0) goto out;
 
@@ -218,6 +220,7 @@ _fbserv_tls_gen_selfsigned(SSL_CTX *ctx)
 out:
     if (!ok)
 	_fbserv_tls_log_errors("fbserv TLS cert gen");
+    if (name) X509_NAME_free(name);
     if (cert) X509_free(cert);
     if (pkey) EVP_PKEY_free(pkey);
     return ok;
