@@ -298,16 +298,15 @@ tvsub(struct timeval *tdiff, struct timeval *t1, struct timeval *t0)
 static void
 prusage(struct rusage *r0, struct rusage *r1, struct timeval *e, struct timeval *b, char *outp)
 {
-    struct timeval tdiff;
-    time_t t;
+    time_t cpu_centiseconds;
     int ms;
-    t = (r1->ru_utime.tv_sec-r0->ru_utime.tv_sec)*100+
+    cpu_centiseconds = (r1->ru_utime.tv_sec-r0->ru_utime.tv_sec)*100+
         (r1->ru_utime.tv_usec-r0->ru_utime.tv_usec)/10000+
         (r1->ru_stime.tv_sec-r0->ru_stime.tv_sec)*100+
         (r1->ru_stime.tv_usec-r0->ru_stime.tv_usec)/10000;
     ms = (e->tv_sec-b->tv_sec)*100 + (e->tv_usec-b->tv_usec)/10000;
     sprintf(outp, "%ld.%01ld user+sys, %d ms real",
-            (long int)tdiff.tv_sec, (long int)tdiff.tv_usec/100000L, ms*10);
+            (long int)(cpu_centiseconds / 100), (long int)(cpu_centiseconds % 100) / 10, ms*10);
 }
 
 double
