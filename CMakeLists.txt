@@ -610,6 +610,7 @@ if(BRLCAD_ENABLE_PARALLEL_CONFIG_PROBES)
       pipe
       fvisibility=hidden
       fno-strict-aliasing
+      fno-fast-math
       fno-common
       fexceptions
     )
@@ -700,6 +701,11 @@ mark_as_advanced(
 # enabled with GCC as we do use aliasing and type-punning.
 check_c_flag(fno-strict-aliasing)
 check_cxx_flag(fno-strict-aliasing)
+
+# Ray tracing and image conversion require IEEE arithmetic, including when a
+# compiler defaults to reassociation and approximate reciprocals at -O3.
+check_c_flag(fno-fast-math)
+check_cxx_flag(fno-fast-math)
 
 # check for -fno-common (libtcl needs it on darwin)
 check_c_flag(fno-common)
