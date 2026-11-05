@@ -40,6 +40,10 @@
 #  include <sys/syscall.h>
 #endif
 
+#ifdef HAVE_SYS_SYSINFO_H
+#  include <sys/sysinfo.h>
+#endif
+
 #ifdef linux
 #  include <sys/stat.h>
 #endif
