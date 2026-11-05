@@ -101,7 +101,7 @@ int test_eto(void) {
     intern.idb_meth = &OBJ[ID_ETO];
 
     VSET(eto.eto_V, 0, 0, 0);
-    VSET(eto.eto_N, 0, 0, 1);
+    VSET(eto.eto_N, 0, 0, 2);
     VSET(eto.eto_C, 5, 0, 0);
     eto.eto_r = 5.0;
     eto.eto_rd = 2.0;
@@ -110,16 +110,29 @@ int test_eto(void) {
     VSET(eto.eto_C, 5, 0, 1);
 
     issues = OBJ[ID_ETO].ft_validate(&msg, &intern, &tol);
-    if (issues == 0) {
-	bu_log("ETO validate failed to catch non-perpendicular N and C!\n");
+
+    /* ETO explicitly permits the ellipse major axis to tilt out of the
+     * revolution plane, and N is a direction rather than a unit-vector
+     * invariant. */
+    if (issues != 0) {
+	bu_log("ETO validate rejected a valid tilted ETO: %s\n",
+	    bu_vls_cstr(&msg));
 	ret = 1;
     }
 
     if (EDOBJ[ID_ETO].ft_repair) {
+	vect_t original_c;
+	VMOVE(original_c, eto.eto_C);
 	bu_vls_trunc(&msg, 0);
 	int rep = EDOBJ[ID_ETO].ft_repair(&msg, &intern, &tol, 0, NULL);
 	if (rep < 0) {
-	    bu_log("ETO repair returned error!\n");
+	    bu_log("ETO repair failed to canonicalize N!\n");
+	    ret = 1;
+	}
+	if (!NEAR_EQUAL(MAGNITUDE(eto.eto_N), 1.0, tol.dist) ||
+	    !VNEAR_EQUAL(eto.eto_C, original_c, tol.dist))
+	{
+	    bu_log("ETO repair changed the tilted geometry!\n");
 	    ret = 1;
 	}
 

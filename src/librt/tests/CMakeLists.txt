@@ -192,9 +192,19 @@ brlcad_add_test(NAME rt_prim_tess COMMAND rt_prim_tess)
 brlcad_addexec(rt_primitive_brep primitive_brep.cpp "librt;libbrep;libbu;${M_LIBRARY}" TEST)
 brlcad_add_test(NAME rt_primitive_brep COMMAND rt_primitive_brep)
 
+# Faceted B-Reps generated from implicit primitives
+brlcad_addexec(rt_implicit_brep implicit_brep.cpp "librt;libbrep;libwdb;libbu;${M_LIBRARY}" TEST)
+brlcad_add_test(NAME rt_implicit_brep COMMAND rt_implicit_brep)
+
 # BREP archive I/O and concurrent import
 brlcad_addexec(rt_brep_io brep_io.cpp "librt;libbrep;libbu;Threads::Threads;${M_LIBRARY}" TEST)
 brlcad_add_test(NAME rt_brep_io COMMAND rt_brep_io)
+
+# Persistent crash-isolated B-Rep evaluation workers
+brlcad_addexec(rt_brep_boolean_worker_test brep_boolean_worker.cpp "librt;libbrep;libwdb;libbu;${M_LIBRARY}" TEST)
+add_dependencies(rt_brep_boolean_worker_test brep_boolean_worker)
+brlcad_add_test(NAME rt_brep_boolean_worker COMMAND rt_brep_boolean_worker_test)
+set_tests_properties(rt_brep_boolean_worker PROPERTIES TIMEOUT 60)
 
 # stand-alone Crofton estimator tests
 brlcad_addexec(rt_crofton crofton.c "librt;libwdb;libbu;${M_LIBRARY}" TEST)
@@ -225,6 +235,7 @@ set(
   binary_attribute.c
   binunif.c
   bound_internal.c
+  brep_boolean_worker.cpp
   brep_boolean_tests.g
   brep_import.c
   brep_io.cpp
@@ -237,6 +248,7 @@ set(
   dsp_sa_vol_check.c
   extreme_ssi_test.g
   invalid_inmem.c
+  implicit_brep.cpp
   lcomb_large.c
   matrix_tests.g
   metaball_adjust.c

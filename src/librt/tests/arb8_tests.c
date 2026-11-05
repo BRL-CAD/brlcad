@@ -32,6 +32,7 @@
 #include "bu.h"
 #include "vmath.h"
 #include "bg.h"
+#include "nmg.h"
 #include "wdb.h"
 #include "raytrace.h"
 
@@ -390,6 +391,26 @@ static const arb8_validation_case_t arb8_validation_cases[] = {
       {1.0, 1.0, 1.0},
       {0.6, 0.4, 1.0}},
      RT_ARB_VALIDATE_CONCAVE},
+    {"MoreConcavePlanar",
+     {{0.0, 0.0, 0.0},
+      {1.0, 0.0, 0.0},
+      {0.3, 0.3, 0.0},
+      {0.0, 1.0, 0.0},
+      {0.0, 0.0, 1.0},
+      {1.0, 0.0, 1.0},
+      {0.3, 0.3, 1.0},
+      {0.0, 1.0, 1.0}},
+     RT_ARB_VALIDATE_CONCAVE},
+    {"SelfIntersectingPlanarFaces",
+     {{0.0, 0.0, 0.0},
+      {1.0, 1.0, 0.0},
+      {0.0, 1.0, 0.0},
+      {1.0, 0.0, 0.0},
+      {0.0, 0.0, 1.0},
+      {1.0, 1.0, 1.0},
+      {0.0, 1.0, 1.0},
+      {1.0, 0.0, 1.0}},
+     RT_ARB_VALIDATE_CONCAVE | RT_ARB_VALIDATE_TWISTED},
     {"TwistedTopOrder",
      {{0, 0, 0}, {1, 0, 0}, {1, 1, 0}, {0, 1, 0}, {0, 0, 1}, {1, 1, 1}, {1, 0, 1}, {0, 1, 1}},
      RT_ARB_VALIDATE_NONCOPLANAR | RT_ARB_VALIDATE_TWISTED},
@@ -428,6 +449,98 @@ run_validation_tests(void)
 	bu_vls_free(&msg);
     }
 
+    return failures;
+}
+
+
+static int
+check_concave_nmg_case(const char *label, const point_t vertices[8])
+{
+    struct rt_arb_internal arb;
+    struct rt_db_internal intern;
+    struct bg_tess_tol ttol = BG_TESS_TOL_INIT_TOL;
+    struct bn_tol tol = BN_TOL_INIT_TOL;
+    struct model *model = nmg_mm();
+    struct nmgregion *region = NULL;
+    int face_count = 0;
+    int failed = 0;
+
+    memset(&arb, 0, sizeof(arb));
+    arb.magic = RT_ARB_INTERNAL_MAGIC;
+    memcpy(arb.pt, vertices, sizeof(point_t) * 8);
+
+    RT_DB_INTERNAL_INIT(&intern);
+    intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
+    intern.idb_minor_type = ID_ARB8;
+    intern.idb_ptr = &arb;
+    intern.idb_meth = &OBJ[ID_ARB8];
+
+    if (rt_obj_tess(&region, model, &intern, &ttol, &tol) != 0 || !region) {
+	failed = 1;
+    } else {
+	struct shell *shell = BU_LIST_FIRST(shell, &region->s_hd);
+	struct faceuse *fu;
+
+	if (nmg_ck_closed_surf(shell, &tol) != 0)
+	    failed = 1;
+	for (BU_LIST_FOR(fu, faceuse, &shell->fu_hd)) {
+	    struct loopuse *lu;
+	    plane_t loop_plane;
+	    vect_t face_normal;
+
+	    if (fu->orientation != OT_SAME)
+		continue;
+	    face_count++;
+	    lu = BU_LIST_FIRST(loopuse, &fu->lu_hd);
+	    nmg_loop_plane_newell(lu, loop_plane);
+	    NMG_GET_FU_NORMAL(face_normal, fu);
+	    if (VDOT(loop_plane, face_normal) <= 0.0)
+		failed = 1;
+	}
+    }
+
+    if (face_count != 6)
+	failed = 1;
+    if (failed)
+	bu_log("  FAIL %s NMG topology/orientation (faces %d)\n", label,
+	    face_count);
+    else
+	bu_log("  PASS %s NMG topology/orientation\n", label);
+
+    FREE_MODEL(model);
+    return failed;
+}
+
+
+static int
+run_concave_nmg_tests(void)
+{
+    const point_t first_diagonal[8] = {
+	{0.0, 0.0, 0.0}, {1.0, 0.0, 0.0},
+	{0.3, 0.3, 0.0}, {0.0, 1.0, 0.0},
+	{0.0, 0.0, 1.0}, {1.0, 0.0, 1.0},
+	{0.3, 0.3, 1.0}, {0.0, 1.0, 1.0}
+    };
+    const point_t second_diagonal[8] = {
+	{0.0, 0.0, 0.0}, {1.0, 0.0, 0.0},
+	{1.0, 1.0, 0.0}, {0.6, 0.4, 0.0},
+	{0.0, 0.0, 1.0}, {1.0, 0.0, 1.0},
+	{1.0, 1.0, 1.0}, {0.6, 0.4, 1.0}
+    };
+    const point_t mirrored[8] = {
+	{0.0, 0.0, 0.0}, {-1.0, 0.0, 0.0},
+	{-0.3, 0.3, 0.0}, {0.0, 1.0, 0.0},
+	{0.0, 0.0, 1.0}, {-1.0, 0.0, 1.0},
+	{-0.3, 0.3, 1.0}, {0.0, 1.0, 1.0}
+    };
+    int failures = 0;
+
+    bu_log("Concave ARB NMG tests:\n");
+    failures += check_concave_nmg_case("first-diagonal concavity",
+	first_diagonal);
+    failures += check_concave_nmg_case("second-diagonal concavity",
+	second_diagonal);
+    failures += check_concave_nmg_case("mirrored concavity", mirrored);
     return failures;
 }
 
@@ -758,6 +871,7 @@ main(int ac, char *av[])
     failures += run_arb_encoding_tests();
     failures += run_arb_mk_encoding_tests();
     failures += run_validation_tests();
+    failures += run_concave_nmg_tests();
     failures += run_3face_intersect_tests();
     failures += run_bg_3plane_intersection_tests();
     failures += run_repair_tests();

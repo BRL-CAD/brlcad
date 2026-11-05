@@ -344,6 +344,295 @@ build_convergence_db(struct db_i **dbip_out)
 }
 
 
+static struct rt_i *
+prepare_comparison_object(struct db_i *dbip, const char *name)
+{
+    struct rt_i *rtip = rt_i_create(dbip);
+    if (!rtip)
+	return NULL;
+    if (rt_gettree(rtip, name) != 0) {
+	rt_i_destroy(rtip);
+	return NULL;
+    }
+    rt_prep_parallel(rtip, 1);
+    return rtip;
+}
+
+
+static int
+add_union_combination(struct rt_wdb *wdbp, const char *name,
+	const char *const *member_names, size_t member_count, int region)
+{
+    struct wmember members;
+    BU_LIST_INIT(&members.l);
+    for (size_t i = 0; i < member_count; ++i) {
+	if (!mk_addmember(member_names[i], &members.l, NULL, WMOP_UNION)) {
+	    mk_freemembers(&members.l);
+	    return -1;
+	}
+    }
+    return mk_lcomb(wdbp, name, &members, region, NULL, NULL, NULL, 0);
+}
+
+
+static int
+ellipsoid_normal(vect_t normal, const point_t point, const point_t center,
+	const vect_t a, const vect_t b, const vect_t c)
+{
+    vect_t offset;
+    VSUB2(offset, point, center);
+    VSETALL(normal, 0.0);
+    const fastf_t aa = MAGSQ(a);
+    const fastf_t bb = MAGSQ(b);
+    const fastf_t cc = MAGSQ(c);
+    if (aa <= SMALL_FASTF || bb <= SMALL_FASTF || cc <= SMALL_FASTF)
+	return -1;
+    VJOIN1(normal, normal, VDOT(offset, a) / (aa * aa), a);
+    VJOIN1(normal, normal, VDOT(offset, b) / (bb * bb), b);
+    VJOIN1(normal, normal, VDOT(offset, c) / (cc * cc), c);
+    if (VNEAR_ZERO(normal, VUNITIZE_TOL))
+	return -1;
+    VUNITIZE(normal);
+    return 0;
+}
+
+
+static int
+test_crofton_transformed_normals(void)
+{
+    struct db_i *dbip = db_open_inmem();
+    if (!dbip)
+	return 1;
+    struct rt_wdb *wdbp = wdb_dbopen(dbip, RT_WDB_TYPE_DB_INMEM);
+    if (!wdbp) {
+	db_close(dbip);
+	return 1;
+    }
+
+    const point_t center = {4.0, -3.0, 2.0};
+    const vect_t a = {8.0, 6.0, 0.0};
+    const vect_t b = {-2.4, 3.2, 0.0};
+    const vect_t c = {0.0, 0.0, 2.0};
+    if (mk_ell(wdbp, "normal_affine.s", center, a, b, c) < 0) {
+	db_close(dbip);
+	return 1;
+    }
+    db_update_nref(dbip);
+
+    struct rt_i *rtip = prepare_comparison_object(dbip, "normal_affine.s");
+    if (!rtip) {
+	db_close(dbip);
+	return 1;
+    }
+
+    struct rt_crofton_params params = {4096u, 0.0, 0.0};
+    struct rt_crofton_result result = RT_CROFTON_RESULT_INIT;
+    int failures = 0;
+    if (rt_crofton_collect(&result, rtip, &params, 0, NULL, NULL) <= 0 ||
+	!result.segments || result.segment_count == 0)
+    {
+	failures++;
+    } else {
+	for (size_t i = 0; i < result.segment_count; ++i) {
+	    vect_t expected_in;
+	    vect_t expected_out;
+	    if (ellipsoid_normal(expected_in, result.segments[i].in_point,
+		    center, a, b, c) < 0 ||
+		ellipsoid_normal(expected_out, result.segments[i].out_point,
+		    center, a, b, c) < 0 ||
+		VDOT(expected_in, result.segments[i].in_normal) <
+		    1.0 - 1.0e-7 ||
+		VDOT(expected_out, result.segments[i].out_normal) <
+		    1.0 - 1.0e-7)
+	    {
+		printf("  affine ellipsoid transformed normal mismatch\n");
+		failures++;
+		break;
+	    }
+	}
+    }
+
+    rt_crofton_result_free(&result);
+    rt_i_destroy(rtip);
+    db_close(dbip);
+    printf("  Crofton transformed normals: %d failure(s)\n", failures);
+    return failures;
+}
+
+
+static int
+test_crofton_comparison(void)
+{
+    int failures = 0;
+    struct db_i *dbip = db_open_inmem();
+    if (!dbip)
+	return 1;
+    struct rt_wdb *wdbp = wdb_dbopen(dbip, RT_WDB_TYPE_DB_INMEM);
+    if (!wdbp) {
+	db_close(dbip);
+	return 1;
+    }
+
+    point_t source_min = {0.0, 0.0, 0.0};
+    point_t source_max = {10.0, 10.0, 10.0};
+    point_t left_min = {0.0, 0.0, 0.0};
+    point_t left_max = {5.0, 10.0, 10.0};
+    point_t right_min = {5.0, 0.0, 0.0};
+    point_t right_max = {10.0, 10.0, 10.0};
+    point_t shifted_min = {20.0, 0.0, 0.0};
+    point_t shifted_max = {30.0, 10.0, 10.0};
+    point_t thin_min = {40.0, 0.0, 0.0};
+    point_t thin_max = {50.0, 10.0, 0.1};
+    if (mk_rpp(wdbp, "compare_source.s", source_min, source_max) < 0 ||
+	mk_rpp(wdbp, "compare_identical.s", source_min, source_max) < 0 ||
+	mk_rpp(wdbp, "compare_left.s", left_min, left_max) < 0 ||
+	mk_rpp(wdbp, "compare_right.s", right_min, right_max) < 0 ||
+	mk_rpp(wdbp, "compare_shifted.s", shifted_min, shifted_max) < 0 ||
+	mk_rpp(wdbp, "compare_thin.s", thin_min, thin_max) < 0)
+    {
+	db_close(dbip);
+	return 1;
+    }
+    const char *left_members[] = {"compare_left.s"};
+    const char *right_members[] = {"compare_right.s"};
+    const char *partitioned_members[] = {
+	"compare_left.r", "compare_right.r"
+    };
+    if (add_union_combination(wdbp, "compare_left.r", left_members,
+	    sizeof(left_members) / sizeof(left_members[0]), 1) < 0 ||
+	add_union_combination(wdbp, "compare_right.r", right_members,
+	    sizeof(right_members) / sizeof(right_members[0]), 1) < 0 ||
+	add_union_combination(wdbp, "compare_partitioned.c", partitioned_members,
+	    sizeof(partitioned_members) / sizeof(partitioned_members[0]), 0) < 0)
+    {
+	db_close(dbip);
+	return 1;
+    }
+    db_update_nref(dbip);
+
+    struct rt_i *source = prepare_comparison_object(dbip,
+	"compare_source.s");
+    struct rt_i *identical = prepare_comparison_object(dbip,
+	"compare_identical.s");
+    struct rt_i *shifted = prepare_comparison_object(dbip,
+	"compare_shifted.s");
+    struct rt_i *partitioned = prepare_comparison_object(dbip,
+	"compare_partitioned.c");
+    struct rt_i *thin = prepare_comparison_object(dbip, "compare_thin.s");
+    if (!source || !identical || !shifted || !partitioned || !thin) {
+	if (source)
+	    rt_i_destroy(source);
+	if (identical)
+	    rt_i_destroy(identical);
+	if (shifted)
+	    rt_i_destroy(shifted);
+	if (partitioned)
+	    rt_i_destroy(partitioned);
+	if (thin)
+	    rt_i_destroy(thin);
+	db_close(dbip);
+	return 1;
+    }
+
+    struct rt_crofton_params params = {4096u, 0.0, 0.0};
+    struct rt_crofton_comparison comparison = RT_CROFTON_COMPARISON_INIT;
+    if (rt_crofton_compare(&comparison, source, identical, &params, 0,
+	    NULL, NULL) != 0 || comparison.ray_count != params.n_rays ||
+	comparison.partition_mismatch_rays != 0 ||
+	comparison.source_segment_count != comparison.candidate_segment_count ||
+	comparison.endpoint_error_max > SMALL_FASTF ||
+	comparison.chord_error_fraction > SMALL_FASTF ||
+	comparison.surface_area_error_fraction > SMALL_FASTF ||
+	comparison.volume_error_fraction > SMALL_FASTF)
+    {
+	printf("  identical Crofton comparison failed\n");
+	failures++;
+    }
+
+    comparison = (struct rt_crofton_comparison)RT_CROFTON_COMPARISON_INIT;
+    if (rt_crofton_compare(&comparison, source, shifted, &params, 0,
+	    NULL, NULL) != 0 || comparison.ray_count != params.n_rays ||
+	comparison.partition_mismatch_rays == 0 ||
+	comparison.chord_error_fraction <= 0.1)
+    {
+	printf("  displaced Crofton comparison failed\n");
+	failures++;
+    }
+
+    const double partition_equivalence_tolerance = 1.0e-12;
+    comparison = (struct rt_crofton_comparison)RT_CROFTON_COMPARISON_INIT;
+    if (rt_crofton_compare(&comparison, partitioned, source, &params, 0,
+	    NULL, NULL) != 0 || comparison.ray_count != params.n_rays ||
+	comparison.source_segment_count == comparison.candidate_segment_count ||
+	comparison.partition_mismatch_rays != 0 ||
+	comparison.sub_tolerance_partition_mismatch_rays != 0 ||
+	comparison.material_partition_mismatch_rays != 0 ||
+	comparison.endpoint_error_max > BN_TOL_DIST ||
+	comparison.chord_error_fraction > partition_equivalence_tolerance ||
+	comparison.surface_area_error_fraction >
+	    partition_equivalence_tolerance ||
+	comparison.volume_error_fraction > partition_equivalence_tolerance)
+    {
+	printf("  partition-invariant Crofton comparison failed: "
+	    "segments %zu/%zu, mismatches %zu, endpoint %.17g, "
+	    "chord %.17g, area %.17g, volume %.17g\n",
+	    comparison.source_segment_count,
+	    comparison.candidate_segment_count,
+	    comparison.partition_mismatch_rays,
+	    comparison.endpoint_error_max,
+	    comparison.chord_error_fraction,
+	    comparison.surface_area_error_fraction,
+	    comparison.volume_error_fraction);
+	failures++;
+    }
+
+    if (rt_crofton_compare(NULL, source, identical, &params, 0,
+	    NULL, NULL) != -1)
+    {
+	printf("  invalid Crofton comparison input was accepted\n");
+	failures++;
+    }
+
+    /* Numerical zero filtering must not become a modeling-tolerance filter.
+     * This 100:1 plate is thin but its real partitions are still many orders
+     * of magnitude above floating-point roundoff and must survive comparison
+     * normalization. */
+    comparison = (struct rt_crofton_comparison)RT_CROFTON_COMPARISON_INIT;
+    if (rt_crofton_compare(&comparison, thin, thin, &params, 0,
+	    NULL, NULL) != 0 || comparison.source_segment_count == 0 ||
+	comparison.source_numerically_degenerate_segments != 0 ||
+	comparison.candidate_numerically_degenerate_segments != 0 ||
+	comparison.partition_mismatch_rays != 0 ||
+	comparison.sub_tolerance_partition_mismatch_rays != 0 ||
+	comparison.material_partition_mismatch_rays != 0 ||
+	comparison.chord_error_fraction > SMALL_FASTF ||
+	comparison.surface_area_error_fraction > SMALL_FASTF ||
+	comparison.volume_error_fraction > SMALL_FASTF)
+    {
+	printf("  thin-volume Crofton comparison failed: segments %zu/%zu, "
+	    "numeric-zero %zu/%zu, mismatch %zu, chord %.17g, area %.17g, "
+	    "volume %.17g\n", comparison.source_segment_count,
+	    comparison.candidate_segment_count,
+	    comparison.source_numerically_degenerate_segments,
+	    comparison.candidate_numerically_degenerate_segments,
+	    comparison.partition_mismatch_rays,
+	    comparison.chord_error_fraction,
+	    comparison.surface_area_error_fraction,
+	    comparison.volume_error_fraction);
+	failures++;
+    }
+
+    rt_i_destroy(source);
+    rt_i_destroy(identical);
+    rt_i_destroy(shifted);
+    rt_i_destroy(partitioned);
+    rt_i_destroy(thin);
+    db_close(dbip);
+    printf("  Crofton semantic comparison: %d failure(s)\n", failures);
+    return failures;
+}
+
+
 static int
 run_convergence_case(struct db_i *dbip,
 		     const char *objname,
@@ -572,6 +861,8 @@ main(int argc, char *argv[])
     int failures = 0;
     failures += verify_crofton_estimates();
     failures += test_crofton_convergence_timing();
+    failures += test_crofton_transformed_normals();
+    failures += test_crofton_comparison();
 
     printf("\n=== Summary: %d failure(s) ===\n", failures);
     return (failures > 0) ? 1 : 0;

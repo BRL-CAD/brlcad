@@ -22,6 +22,7 @@
 #include "bu/log.h"
 #include "raytrace.h"
 #include "rt/geom.h"
+#include "rt/primitives/pipe.h"
 #include "brep.h"
 #include "wdb.h"
 
@@ -358,15 +359,14 @@ check_revolve(const char *name, double angle, int expected_faces)
 static int
 check_ars(void)
 {
-    const size_t point_count = 9;
-    fastf_t curve_data[3][point_count * 3] = {};
+    const size_t point_count = 8;
+    fastf_t curve_data[3][(point_count + 1) * 3] = {};
     fastf_t *curves[3] = {curve_data[0], curve_data[1], curve_data[2]};
     const double ring[point_count][2] = {
 	{10.0, 0.0}, {7.071067811865, 7.071067811865},
 	{0.0, 10.0}, {-7.071067811865, 7.071067811865},
 	{-10.0, 0.0}, {-7.071067811865, -7.071067811865},
-	{0.0, -10.0}, {7.071067811865, -7.071067811865},
-	{10.0, 0.0}
+	{0.0, -10.0}, {7.071067811865, -7.071067811865}
     };
     for (size_t i = 0; i < point_count; ++i) {
 	curve_data[1][3 * i] = ring[i][0];
@@ -374,6 +374,8 @@ check_ars(void)
 	curve_data[1][3 * i + 2] = 5.0;
 	curve_data[2][3 * i + 2] = 10.0;
     }
+    for (size_t curve = 0; curve < 3; ++curve)
+	VMOVE(&curve_data[curve][3 * point_count], curve_data[curve]);
 
     struct rt_ars_internal ars = {};
     ars.magic = RT_ARS_INTERNAL_MAGIC;
@@ -392,14 +394,8 @@ check_ars(void)
 
 
 static int
-check_bot(void)
+check_bot_case(const char *name, fastf_t *vertices)
 {
-    fastf_t vertices[] = {
-	0.0, 0.0, 0.0,
-	10.0, 0.0, 0.0,
-	0.0, 10.0, 0.0,
-	0.0, 0.0, 10.0
-    };
     int faces[] = {0, 2, 1, 0, 1, 3, 0, 3, 2, 1, 2, 3};
     struct rt_bot_internal bot = {};
     bot.magic = RT_BOT_INTERNAL_MAGIC;
@@ -416,13 +412,81 @@ check_bot(void)
     intern.idb_minor_type = ID_BOT;
     intern.idb_ptr = &bot;
     intern.idb_meth = &OBJ[ID_BOT];
-    return check_brep("solid BOT tetrahedron", &intern, 4);
+    return check_brep(name, &intern, 4);
+}
+
+
+static int
+check_bot(void)
+{
+    fastf_t vertices[] = {
+	0.0, 0.0, 0.0,
+	10.0, 0.0, 0.0,
+	0.0, 10.0, 0.0,
+	0.0, 0.0, 10.0
+    };
+    /* The 0-1-2 face has a 0.0001 mm minimum altitude.  It is nonzero and
+     * explicitly part of this closed BoT, despite being below BN_TOL_DIST.
+     * BoT-to-BRep conversion must preserve it rather than applying the
+     * general NMG tessellator's coarse collinearity test and opening the
+     * shell. */
+    fastf_t sliver_vertices[] = {
+	0.0, 0.0, 0.0,
+	10.0, 0.0, 0.0,
+	5.0, 0.0001, 0.0,
+	0.0, 0.0, 10.0
+    };
+
+    int result = check_bot_case("solid BOT tetrahedron", vertices);
+    result |= check_bot_case("solid BOT tetrahedron with explicit sliver face",
+	sliver_vertices);
+    return result;
+}
+
+
+static int
+check_vol(void)
+{
+    const size_t dimension = 2;
+    const size_t padded_dimension = dimension + 4;
+    std::vector<unsigned char> map(padded_dimension * padded_dimension *
+	padded_dimension, 0);
+    for (size_t z = 0; z < dimension; ++z) {
+	for (size_t y = 0; y < dimension; ++y) {
+	    for (size_t x = 0; x < dimension; ++x) {
+		const size_t index = ((z + 2) * padded_dimension + y + 2) *
+		    padded_dimension + x + 2;
+		map[index] = 255;
+	    }
+	}
+    }
+
+    struct rt_vol_internal vol = {};
+    vol.magic = RT_VOL_INTERNAL_MAGIC;
+    vol.xdim = dimension;
+    vol.ydim = dimension;
+    vol.zdim = dimension;
+    vol.lo = 1;
+    vol.hi = 255;
+    VSETALL(vol.cellsize, 1.0);
+    MAT_IDN(vol.mat);
+    vol.map = map.data();
+
+    struct rt_db_internal intern;
+    RT_DB_INTERNAL_INIT(&intern);
+    intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
+    intern.idb_minor_type = ID_VOL;
+    intern.idb_ptr = &vol;
+    intern.idb_meth = &OBJ[ID_VOL];
+    return check_brep("solid 2x2x2 VOL", &intern, 6);
 }
 
 
 static int
 check_pipe_case(const char *name, const double (*coordinates)[3],
-	size_t point_count, int expected_faces)
+	size_t point_count, int expected_faces,
+	const double *outer_diameters = NULL, double inner_diameter = 4.0,
+	double bend_radius = 5.0)
 {
     struct rt_pipe_internal pipe = {};
     pipe.pipe_magic = RT_PIPE_INTERNAL_MAGIC;
@@ -433,10 +497,15 @@ check_pipe_case(const char *name, const double (*coordinates)[3],
 	BU_LIST_INIT(&points[i].l);
 	VSET(points[i].pp_coord, coordinates[i][0], coordinates[i][1],
 	    coordinates[i][2]);
-	points[i].pp_id = 4.0;
-	points[i].pp_od = 8.0;
-	points[i].pp_bendradius = 5.0;
+	points[i].pp_id = inner_diameter;
+	points[i].pp_od = outer_diameters ? outer_diameters[i] : 8.0;
+	points[i].pp_bendradius = bend_radius;
 	BU_LIST_INSERT(&pipe.pipe_segs_head, &points[i].l);
+    }
+
+    if (rt_pipe_validate(NULL, &pipe, 0) != 0) {
+	bu_log("ERROR: %s input PIPE is invalid\n", name);
+	return 1;
     }
 
     struct rt_db_internal intern;
@@ -461,6 +530,9 @@ check_pipe_case(const char *name, const double (*coordinates)[3],
 static int
 check_pipe(void)
 {
+    const double straight_run[3][3] = {
+	{0.0, 0.0, 0.0}, {0.0, 0.0, 10.0}, {0.0, 0.0, 30.0}
+    };
     const double right_bend[4][3] = {
 	{0.0, 0.0, 0.0}, {0.0, 0.0, 30.0},
 	{0.0, 0.0, 30.0}, {20.0, 0.0, 30.0}
@@ -473,12 +545,198 @@ check_pipe(void)
 	{0.0, 0.0, 0.0}, {0.0, 0.0, 30.0},
 	{20.0, 0.0, 30.0}, {20.0, 20.0, 30.0}
     };
-    int result = check_pipe_case("bent hollow PIPE with duplicate point",
+    /* Real-world coordinates often acquire a few ulps of transverse drift
+     * while an otherwise straight PIPE is transformed.  The first interior
+     * point below consequently has a genuine nonzero turn even though its
+     * direction dot product rounds to -1.  Its swept bend boundaries are
+     * coincident at modeling tolerance and must not become a zero-area B-Rep
+     * face. */
+    const double sub_tolerance_bend[5][3] = {
+	{21.851590595207873946, 3.839178032743594038,
+	    34.568928140429669327},
+	{21.851590595207877499, 3.839178032743594038,
+	    34.813777536181625294},
+	{21.851590595207877499, 3.839178032743594038,
+	    35.071513742236312794},
+	{21.851590595207873946, 3.848843140470644464,
+	    39.341880506304910625},
+	{0.0, 192.992871093749926104, 72.840867668204083429}
+    };
+    const double sub_tolerance_diameters[5] = {
+	1.778, 3.311175825425637154, 1.778, 1.778, 1.778
+    };
+    int result = check_pipe_case("multi-segment straight hollow PIPE",
+	straight_run, 3, 6);
+    result |= check_pipe_case("bent hollow PIPE with duplicate point",
 	right_bend, 4, 8);
     result |= check_pipe_case("oppositely oriented hollow PIPE bend",
 	left_bend, 3, 8);
     result |= check_pipe_case("compound hollow PIPE bends", compound_bend,
 	4, 12);
+    result |= check_pipe_case("PIPE with sub-tolerance roundoff bend",
+	sub_tolerance_bend, 5, 8, sub_tolerance_diameters, 0.0, 1.778);
+    return result;
+}
+
+
+static int
+check_perturbed_thin_arb()
+{
+    struct rt_arb_internal arb = {};
+    arb.magic = RT_ARB_INTERNAL_MAGIC;
+    VSET(arb.pt[0], 0.0, 0.0, 0.0);
+    VSET(arb.pt[1], 10.0, -20.0, 0.0);
+    VSET(arb.pt[2], 10.0, -20.0, 4.0);
+    VSET(arb.pt[3], 0.0, 0.0, 4.0);
+    VSET(arb.pt[4], -0.1, 0.0, 0.0);
+    VSET(arb.pt[5], 9.9, -20.0, 0.0);
+    VSET(arb.pt[6], 9.9, -20.0, 4.0);
+    VSET(arb.pt[7], -0.1, 0.0, 4.0);
+
+    struct rt_db_internal intern;
+    RT_DB_INTERNAL_INIT(&intern);
+    intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
+    intern.idb_minor_type = ID_ARB8;
+    intern.idb_ptr = &arb;
+    intern.idb_meth = &OBJ[ID_ARB8];
+
+    struct rt_db_internal *perturbed = NULL;
+    if (intern.idb_meth->ft_perturb(&perturbed, &intern, 0,
+	-BN_TOL_DIST) != BRLCAD_OK || perturbed == NULL)
+    {
+	bu_log("ERROR: thin ARB perturbation failed\n");
+	return 1;
+    }
+
+    const int result = check_brep("perturbed thin ARB", perturbed, 6);
+    rt_db_free_internal(perturbed);
+    BU_PUT(perturbed, struct rt_db_internal);
+    return result;
+}
+
+
+static int
+check_perturbed_arb6()
+{
+    struct rt_arb_internal arb = {};
+    arb.magic = RT_ARB_INTERNAL_MAGIC;
+    VSET(arb.pt[0], 0.0, 0.0, 0.0);
+    VSET(arb.pt[1], 10.0, 0.0, 0.0);
+    VSET(arb.pt[2], 10.0, 10.0, 0.0);
+    VSET(arb.pt[3], 0.0, 10.0, 0.0);
+    VSET(arb.pt[4], 5.0, 0.0, 10.0);
+    VMOVE(arb.pt[5], arb.pt[4]);
+    VSET(arb.pt[6], 5.0, 10.0, 10.0);
+    VMOVE(arb.pt[7], arb.pt[6]);
+
+    struct rt_db_internal intern;
+    RT_DB_INTERNAL_INIT(&intern);
+    intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
+    intern.idb_minor_type = ID_ARB8;
+    intern.idb_ptr = &arb;
+    intern.idb_meth = &OBJ[ID_ARB8];
+
+    struct bn_tol tol = BN_TOL_INIT_TOL;
+    int validation_issues = 0;
+    (void)rt_arb_validate(NULL, &arb, &tol, &validation_issues);
+    if (validation_issues != 0) {
+	bu_log("ERROR: ARB6 perturbation test input is invalid (issues=%d)\n",
+	    validation_issues);
+	return 1;
+    }
+
+    struct rt_db_internal *perturbed = NULL;
+    if (intern.idb_meth->ft_perturb(&perturbed, &intern, 0,
+	-0.2 * BN_TOL_DIST) != BRLCAD_OK || perturbed == NULL)
+    {
+	bu_log("ERROR: ARB6 perturbation failed\n");
+	return 1;
+    }
+
+    int result = check_brep("perturbed ARB6", perturbed, 5);
+    rt_db_free_internal(perturbed);
+    BU_PUT(perturbed, struct rt_db_internal);
+
+    /* Legacy databases also contain geometrically valid ARB6 wedges whose
+     * duplicate vertices occupy a non-canonical pair of slots.  Perturbation
+     * must canonicalize that encoding before offsetting its face planes. */
+    VSET(arb.pt[0], -1.2, -0.5, 2.0);
+    VSET(arb.pt[1], 1.2, -0.5, 2.0);
+    VSET(arb.pt[2], 1.2, 0.5, 2.0);
+    VSET(arb.pt[3], -1.2, 0.5, 2.0);
+    VSET(arb.pt[4], -1.2, 0.0, -1.2);
+    VSET(arb.pt[5], 1.2, 0.0, -1.2);
+    VMOVE(arb.pt[6], arb.pt[5]);
+    VMOVE(arb.pt[7], arb.pt[4]);
+    validation_issues = 0;
+    (void)rt_arb_validate(NULL, &arb, &tol, &validation_issues);
+    if (validation_issues != RT_ARB_VALIDATE_NONSTANDARD) {
+	bu_log("ERROR: legacy ARB6 perturbation test has unexpected issues=%d\n",
+	    validation_issues);
+	return 1;
+    }
+
+    perturbed = NULL;
+    if (intern.idb_meth->ft_perturb(&perturbed, &intern, 0,
+	-0.2 * BN_TOL_DIST) != BRLCAD_OK || perturbed == NULL)
+    {
+	bu_log("ERROR: legacy ARB6 perturbation failed\n");
+	return 1;
+    }
+    result |= check_brep("perturbed legacy ARB6", perturbed, 5);
+    rt_db_free_internal(perturbed);
+    BU_PUT(perturbed, struct rt_db_internal);
+    return result;
+}
+
+
+static int
+check_concave_arb_case(const char *name, const point_t vertices[8])
+{
+    struct rt_arb_internal arb = {};
+    arb.magic = RT_ARB_INTERNAL_MAGIC;
+    for (size_t i = 0; i < 8; ++i)
+	VMOVE(arb.pt[i], vertices[i]);
+
+    struct rt_db_internal intern;
+    RT_DB_INTERNAL_INIT(&intern);
+    intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
+    intern.idb_minor_type = ID_ARB8;
+    intern.idb_ptr = &arb;
+    intern.idb_meth = &OBJ[ID_ARB8];
+
+    return check_brep(name, &intern, 6);
+}
+
+
+static int
+check_concave_arb()
+{
+    const point_t first_diagonal_concave[8] = {
+	{0.0, 0.0, 0.0}, {1.0, 0.0, 0.0},
+	{0.3, 0.3, 0.0}, {0.0, 1.0, 0.0},
+	{0.0, 0.0, 1.0}, {1.0, 0.0, 1.0},
+	{0.3, 0.3, 1.0}, {0.0, 1.0, 1.0}
+    };
+    const point_t second_diagonal_concave[8] = {
+	{0.0, 0.0, 0.0}, {1.0, 0.0, 0.0},
+	{1.0, 1.0, 0.0}, {0.6, 0.4, 0.0},
+	{0.0, 0.0, 1.0}, {1.0, 0.0, 1.0},
+	{1.0, 1.0, 1.0}, {0.6, 0.4, 1.0}
+    };
+    const point_t mirrored_first_diagonal_concave[8] = {
+	{0.0, 0.0, 0.0}, {-1.0, 0.0, 0.0},
+	{-0.3, 0.3, 0.0}, {0.0, 1.0, 0.0},
+	{0.0, 0.0, 1.0}, {-1.0, 0.0, 1.0},
+	{-0.3, 0.3, 1.0}, {0.0, 1.0, 1.0}
+    };
+
+    int result = check_concave_arb_case("planar concave ARB using first diagonal",
+	first_diagonal_concave);
+    result |= check_concave_arb_case("planar concave ARB using second diagonal",
+	second_diagonal_concave);
+    result |= check_concave_arb_case("mirrored planar concave ARB",
+	mirrored_first_diagonal_concave);
     return result;
 }
 
@@ -541,6 +799,10 @@ main(int argc, char **argv)
     result |= check_revolve("full REVOLVE with inner loop", 2.0 * ON_PI, 2);
     result |= check_ars();
     result |= check_bot();
+    result |= check_vol();
+    result |= check_perturbed_thin_arb();
+    result |= check_perturbed_arb6();
+    result |= check_concave_arb();
 
     return result;
 }

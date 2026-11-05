@@ -3117,17 +3117,14 @@ test_arb(void)
  *
  * An ARS solid is defined as ncurves cross-sectional rings.  Ring 0 and
  * ring ncurves-1 are typically degenerate (all pts the same) to form
- * top/bottom caps.  pts_per_curve includes the repeated first/last point
- * that closes each ring.  Each "curve" pointer points to pts_per_curve*3
- * fastf_t values.
+ * top/bottom caps.  pts_per_curve counts the stored ring vertices.  Each
+ * internal curve also has a non-counted copy of point zero at index
+ * pts_per_curve so tessellation can close the final strip segment.
  *
  * NOTE on the real-world "terrain ARS" (NC=5, PPC=201, object named "ars"
- * in primitives.asc):  the three terrain ring curves (C1, C2, C3) close in
- * XY but NOT in Z — the last data point of each ring differs from the first
- * point by 0.56–2.24 mm in Z.  This seam discontinuity means the ARS data
- * is inherently non-manifold: rt_ars_tess detects this and returns -1 with
- * a diagnostic message.  The .g scanner treats ARS TESS-FAIL as a graceful
- * skip (not a failure), mirroring how such geometry would behave in the wild.
+ * in primitives.asc): the final stored point of a ring is not required to
+ * equal its first point.  The extra closing copy supplied by import closes
+ * the ring after that final edge.
  * The bicone ARS (object "ars_bicone" in primitives.asc) exercises the
  * tessellation logic for valid closed ARS geometry.
  *
@@ -3140,7 +3137,8 @@ test_arb(void)
  * closing duplicate of point 0.  The returned array has (n_sides + 1)
  * entries, matching the convention of rt_ars_import5 which always appends
  * a copy of the first point at index pts_per_curve.
- * Callers should set aip.pts_per_curve = n_sides + 1.
+ * Callers should set aip.pts_per_curve = n_sides; the extra closing copy is
+ * allocated but is not included in that count.
  */
 static fastf_t *
 ars_make_ring(size_t n_sides, double r, double cx, double cy, double z)
@@ -3202,7 +3200,7 @@ test_ars(void)
     {
 	const size_t ncurves = 4;
 	const size_t n_sides = 8;          /* number of polygon sides */
-	const size_t ppc = n_sides + 1;    /* pts_per_curve: n_sides unique + 1 closing copy */
+	const size_t ppc = n_sides;
 	fastf_t **curves = (fastf_t **)bu_calloc(ncurves, sizeof(fastf_t *), "ars curves");
 
 	curves[0] = ars_make_cap(n_sides, 0.0, 0.0, 0.0);       /* bottom cap */
@@ -3232,7 +3230,7 @@ test_ars(void)
     {
 	const size_t ncurves = 4;
 	const size_t n_sides = 12;
-	const size_t ppc = n_sides + 1;
+	const size_t ppc = n_sides;
 	fastf_t **curves = (fastf_t **)bu_calloc(ncurves, sizeof(fastf_t *), "ars curves");
 
 	curves[0] = ars_make_cap(n_sides, 0.0, 0.0, 0.0);       /* bottom cap */
@@ -3256,7 +3254,7 @@ test_ars(void)
     {
 	const size_t ncurves = 5;
 	const size_t n_sides = 16;
-	const size_t ppc = n_sides + 1;
+	const size_t ppc = n_sides;
 	const double R = 10.0;
 	fastf_t **curves = (fastf_t **)bu_calloc(ncurves, sizeof(fastf_t *), "ars curves");
 
@@ -3287,7 +3285,7 @@ test_ars(void)
     {
 	const size_t ncurves = 4;
 	const size_t n_sides = 64;
-	const size_t ppc = n_sides + 1;
+	const size_t ppc = n_sides;
 	fastf_t **curves = (fastf_t **)bu_calloc(ncurves, sizeof(fastf_t *), "ars curves");
 
 	curves[0] = ars_make_cap(n_sides, 0.0, 0.0, 0.0);
@@ -3311,7 +3309,7 @@ test_ars(void)
     {
 	const size_t ncurves = 8;
 	const size_t n_sides = 10;
-	const size_t ppc = n_sides + 1;
+	const size_t ppc = n_sides;
 	fastf_t **curves = (fastf_t **)bu_calloc(ncurves, sizeof(fastf_t *), "ars curves");
 
 	curves[0] = ars_make_cap(n_sides, 0.0, 0.0, 0.0);
@@ -3334,37 +3332,31 @@ test_ars(void)
 	bu_free(curves, "ars curves");
     }
 
-    /* ---- ARS non-manifold open seam (simulates real-world bad data) ---
+    /* ---- ARS malformed internal closing copy --------------------------
      *
-     * This documents a known bad input shape.  The ring
-     * curve closes in XY but NOT in Z — the closing copy at index n_sides
-     * has the same XY as point 0 but a different Z value, exactly the pattern
-     * seen in real-world terrain ARS data.  Historically rt_ars_tess produced
-     * a mesh for this input, even though it may be flawed.  Keep that runtime
-     * behavior intact and do not make this validation test depend on either
-     * accepting or rejecting the case.                                      */
+     * Corrupt the extra closing copy at index pts_per_curve.  This cannot
+     * occur after a normal database import, but guards callers constructing
+     * rt_ars_internal data directly. */
     {
 	const size_t ncurves = 3;
 	const size_t n_sides = 8;       /* number of polygon sides */
-	const size_t ppc = n_sides + 1; /* pts_per_curve: n_sides unique + 1 closing copy */
+	const size_t ppc = n_sides;
 	fastf_t **curves = (fastf_t **)bu_calloc(ncurves, sizeof(fastf_t *), "ars curves");
 
 	/* C0: bottom cap (n_sides+1 points, all zeros). */
 	curves[0] = ars_make_cap(n_sides, 0.0, 0.0, 0.0);
 
-	/* C1: ring that closes in XY but has a Z-seam discontinuity.
-	 * Points 0..n_sides-1 are a regular polygon at r=5, z=5.
-	 * The closing copy at index n_sides has the same XY as point 0
-	 * but a different Z (5 + 2.24), simulating the terrain ARS defect. */
+	/* C1: valid stored vertices followed by a corrupt closing copy. */
 	{
-	    fastf_t *ring = (fastf_t *)bu_calloc(ppc * 3, sizeof(fastf_t), "ars ring");
+	    fastf_t *ring = (fastf_t *)bu_calloc((ppc + 1) * 3,
+		sizeof(fastf_t), "ars ring");
 	    for (size_t k = 0; k < n_sides; k++) {
 		double angle = k * M_2PI / n_sides;
 		ring[k*3+0] = (fastf_t)(5.0 * cos(angle));
 		ring[k*3+1] = (fastf_t)(5.0 * sin(angle));
 		ring[k*3+2] = 5.0f;
 	    }
-	    /* Closing copy: same XY as point 0 but different Z (seam gap). */
+	    /* Closing copy: same XY as point 0 but different Z. */
 	    ring[n_sides*3+0] = ring[0];
 	    ring[n_sides*3+1] = ring[1];
 	    ring[n_sides*3+2] = 5.0f + 2.24f; /* Z discontinuity */
@@ -3379,9 +3371,8 @@ test_ars(void)
 	aip.curves = curves;
 
 	init_tols(&ttol, &tol, 0.0, 0.01, 0.0);
-	fprintf(stderr,
-		"  SKIP %-48s  (ARS: non-closed 3D seam, historical tessellation behavior retained)\n",
-		"ars non-manifold open-seam");
+	if (!run_tess("ars malformed internal closing copy", &ip, &ttol,
+		&tol, 1)) failures++;
 
 	for (size_t i = 0; i < ncurves; i++)
 	    bu_free(curves[i], "ars ring");

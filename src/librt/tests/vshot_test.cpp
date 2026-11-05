@@ -40,11 +40,13 @@
 
 #include "common.h"
 
+#include <algorithm>
 #include <cstdio>
 #include <cstdlib>
 #include <cstdint>
 #include <cinttypes>
 #include <cmath>
+#include <cstring>
 #include <random>
 
 #include "vmath.h"
@@ -59,6 +61,195 @@
 
 
 #define MAXN 256
+#define HRT_RAY_COUNT 64
+
+
+static struct soltab *
+prep_heart(struct rt_i *rtip, const struct rt_hrt_internal *heart,
+	struct directory *entry, const char *name)
+{
+    struct rt_db_internal internal;
+    RT_DB_INTERNAL_INIT(&internal);
+    internal.idb_major_type = DB5_MAJORTYPE_BRLCAD;
+    internal.idb_type = ID_HRT;
+    internal.idb_meth = &OBJ[ID_HRT];
+    internal.idb_ptr = const_cast<struct rt_hrt_internal *>(heart);
+
+    std::memset(entry, 0, sizeof(*entry));
+    entry->d_magic = RT_DIR_MAGIC;
+    entry->d_namep = const_cast<char *>(name);
+
+    struct soltab *stp = static_cast<struct soltab *>(
+	bu_calloc(1, sizeof(struct soltab), "HRT vshot soltab"));
+    stp->l.magic = RT_SOLTAB_MAGIC;
+    stp->l2.magic = RT_SOLTAB2_MAGIC;
+    stp->st_rtip = rtip;
+    stp->st_dp = entry;
+    stp->st_id = ID_HRT;
+    stp->st_meth = &OBJ[ID_HRT];
+    if (OBJ[ID_HRT].ft_prep(stp, &internal, rtip)) {
+	bu_free(stp, "HRT vshot soltab");
+	return NULL;
+    }
+    return stp;
+}
+
+
+static bool
+scalar_outer_span(const struct rt_functab *ft, struct soltab *stp,
+	struct xray *ray, struct application *ap, struct resource *resp,
+	double &entry, double &exit)
+{
+    struct seg head;
+    BU_LIST_INIT(&head.l);
+    const int shot_status = ft->ft_shot(stp, ray, ap, &head);
+    bool hit = shot_status > 0 && !BU_LIST_IS_EMPTY(&head.l);
+    entry = INFINITY;
+    exit = -INFINITY;
+    struct seg *segment;
+    for (BU_LIST_FOR(segment, seg, &head.l)) {
+	entry = std::min(entry,
+	    static_cast<double>(segment->seg_in.hit_dist));
+	exit = std::max(exit,
+	    static_cast<double>(segment->seg_out.hit_dist));
+    }
+    while (BU_LIST_WHILE(segment, seg, &head.l)) {
+	BU_LIST_DEQUEUE(&segment->l);
+	RT_FREE_SEG(segment, resp);
+    }
+    return hit;
+}
+
+
+static int
+check_hrt_vshot(struct rt_i *rtip, struct resource *resp)
+{
+    struct rt_hrt_internal first = {};
+    first.hrt_magic = RT_HRT_INTERNAL_MAGIC;
+    VSET(first.v, 3.0, -2.0, 5.0);
+    VSET(first.xdir, 8.0, 6.0, 0.0);
+    VSET(first.ydir, -3.0, 4.0, 0.0);
+    VSET(first.zdir, 0.0, 0.0, 4.0);
+    first.d = 0.5;
+
+    /* d is a validated legacy field.  A second value must preserve the
+     * established scalar HRT surface, and therefore the B-Rep contract. */
+    struct rt_hrt_internal second = first;
+    second.d = 2.0;
+
+    struct directory first_entry;
+    struct directory second_entry;
+    struct soltab *first_stp = prep_heart(rtip, &first, &first_entry,
+	"hrt-vshot-first.s");
+    struct soltab *second_stp = prep_heart(rtip, &second, &second_entry,
+	"hrt-vshot-second.s");
+    if (!first_stp || !second_stp) {
+	if (first_stp) {
+	    first_stp->st_meth->ft_free(first_stp);
+	    bu_free(first_stp, "HRT vshot soltab");
+	}
+	if (second_stp) {
+	    second_stp->st_meth->ft_free(second_stp);
+	    bu_free(second_stp, "HRT vshot soltab");
+	}
+	return 1;
+    }
+
+    struct application ap;
+    RT_APPLICATION_INIT(&ap);
+    ap.a_rt_i = rtip;
+    ap.a_resource = resp;
+
+    struct xray rays[HRT_RAY_COUNT];
+    struct xray *ray_ptrs[HRT_RAY_COUNT];
+    struct soltab *first_stps[HRT_RAY_COUNT];
+    struct soltab *second_stps[HRT_RAY_COUNT];
+    bool scalar_hits[HRT_RAY_COUNT];
+    double scalar_entries[HRT_RAY_COUNT];
+    double scalar_exits[HRT_RAY_COUNT];
+
+    for (int i = 0; i < HRT_RAY_COUNT; ++i) {
+	const double angle = M_2PI * static_cast<double>(i) /
+	    static_cast<double>(HRT_RAY_COUNT);
+	vect_t shell = {cos(angle), sin(angle), 0.5 * sin(2.0 * angle)};
+	VUNITIZE(shell);
+	point_t origin;
+	VJOIN3(origin, first.v, 3.0 * shell[X], first.xdir,
+	    3.0 * shell[Y], first.ydir, 3.0 * shell[Z], first.zdir);
+	point_t target;
+	VJOIN3(target, first.v, 0.25 * cos(5.0 * angle), first.xdir,
+	    0.15 * sin(3.0 * angle), first.ydir,
+	    0.20 * cos(7.0 * angle), first.zdir);
+
+	std::memset(&rays[i], 0, sizeof(rays[i]));
+	rays[i].magic = RT_RAY_MAGIC;
+	rays[i].index = i;
+	VMOVE(rays[i].r_pt, origin);
+	VSUB2(rays[i].r_dir, target, origin);
+	VUNITIZE(rays[i].r_dir);
+	ray_ptrs[i] = &rays[i];
+	first_stps[i] = first_stp;
+	second_stps[i] = second_stp;
+	scalar_hits[i] = scalar_outer_span(first_stp->st_meth, first_stp,
+	    &rays[i], &ap, resp, scalar_entries[i], scalar_exits[i]);
+    }
+
+    struct seg first_segments[HRT_RAY_COUNT] = {};
+    struct seg second_segments[HRT_RAY_COUNT] = {};
+    first_stp->st_meth->ft_vshot(first_stps, ray_ptrs, first_segments,
+	HRT_RAY_COUNT, &ap);
+    second_stp->st_meth->ft_vshot(second_stps, ray_ptrs, second_segments,
+	HRT_RAY_COUNT, &ap);
+
+    int failures = 0;
+    for (unsigned int corner = 0; corner < 8; ++corner) {
+	point_t point = {
+	    (corner & 1) ? first_stp->st_max[X] : first_stp->st_min[X],
+	    (corner & 2) ? first_stp->st_max[Y] : first_stp->st_min[Y],
+	    (corner & 4) ? first_stp->st_max[Z] : first_stp->st_min[Z]
+	};
+	if (DIST_PNT_PNT(point, first_stp->st_center) >
+		first_stp->st_bradius + 1.0e-9)
+	{
+	    ++failures;
+	    break;
+	}
+    }
+    int hits = 0;
+    for (int i = 0; i < HRT_RAY_COUNT; ++i) {
+	const bool first_hit = first_segments[i].seg_stp != NULL;
+	const bool second_hit = second_segments[i].seg_stp != NULL;
+	if (scalar_hits[i])
+	    ++hits;
+	if (first_hit != scalar_hits[i] || second_hit != scalar_hits[i]) {
+	    ++failures;
+	    continue;
+	}
+	if (!scalar_hits[i])
+	    continue;
+	if (!NEAR_EQUAL(first_segments[i].seg_in.hit_dist,
+		scalar_entries[i], 1.0e-6) ||
+	    !NEAR_EQUAL(first_segments[i].seg_out.hit_dist,
+		scalar_exits[i], 1.0e-6) ||
+	    !NEAR_EQUAL(second_segments[i].seg_in.hit_dist,
+		first_segments[i].seg_in.hit_dist, 1.0e-6) ||
+	    !NEAR_EQUAL(second_segments[i].seg_out.hit_dist,
+		first_segments[i].seg_out.hit_dist, 1.0e-6))
+	{
+	    ++failures;
+	}
+    }
+    if (hits == 0)
+	++failures;
+
+    std::printf("# HRT correctness: %d/%d rays hit, %d scalar/vshot or d-contract mismatch(es)\n",
+	hits, HRT_RAY_COUNT, failures);
+    first_stp->st_meth->ft_free(first_stp);
+    second_stp->st_meth->ft_free(second_stp);
+    bu_free(first_stp, "HRT vshot soltab");
+    bu_free(second_stp, "HRT vshot soltab");
+    return failures ? 1 : 0;
+}
 
 
 int
@@ -111,6 +302,9 @@ main(int argc, char *argv[])
 
     rt_init_resource(&rt_uniresource, 0, rtip);
     struct resource *resp = &rt_uniresource;	/* RT_*_SEG macros need a ptr lvalue */
+
+    if (check_hrt_vshot(rtip, resp))
+	bu_exit(1, "FAIL: HRT scalar/vshot compatibility regression\n");
 
     /* ------------------------------------------------------------------
      * Hand-build and prep one soltab via the exported functab.

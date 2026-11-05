@@ -4,6 +4,22 @@ brlcad_add_test(NAME facetize_worker_protocol COMMAND facetize_worker_protocol_t
 brlcad_addexec(facetize_validation_test "validation.cpp;../validation.cpp" "libwdb;librt;libbu" TEST)
 brlcad_add_test(NAME facetize_validation COMMAND facetize_validation_test)
 
+brlcad_addexec(facetize_brep_output_test brep_output.cpp "libged;libwdb;librt;libbu" TEST_USESDATA)
+if(TARGET facetize_brep_output_test)
+  add_dependencies(facetize_brep_output_test ged_plugins brep_boolean_worker)
+  set(FACETIZE_BREP_OUTPUT_TMP "${CMAKE_CURRENT_BINARY_DIR}/facetize_brep_output_tmp")
+  brlcad_add_test(
+    NAME facetize_brep_output
+    COMMAND facetize_brep_output_test "${FACETIZE_BREP_OUTPUT_TMP}"
+  )
+  set_tests_properties(
+    facetize_brep_output
+    PROPERTIES
+      ENVIRONMENT "BU_DIR_CACHE=${FACETIZE_BREP_OUTPUT_TMP}/cache"
+      TIMEOUT 60
+  )
+endif(TARGET facetize_brep_output_test)
+
 brlcad_addexec(facetize_recovery_test recovery.cpp "libged;libwdb;librt;libbu" TEST_USESDATA)
 if(TARGET facetize_recovery_test)
   add_dependencies(facetize_recovery_test ged_plugins facetize_process)
@@ -22,6 +38,7 @@ endif(TARGET facetize_recovery_test)
 
 cmakefiles(
   CMakeLists.txt
+  brep_output.cpp
   recovery.cpp
   validation.cpp
   worker.cpp
