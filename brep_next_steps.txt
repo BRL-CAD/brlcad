@@ -1,0 +1,864 @@
+NURBS B-REP BOOLEAN NEXT STEPS
+=============================
+
+Status: Milestones 1 through 6 complete; continue one failure signature at a time
+Updated: 2026-10-27
+
+
+1. PURPOSE
+----------
+
+Improve per-region conversion of BRL-CAD CSG trees into valid, semantically
+equivalent NURBS B-Reps while preserving the fail-closed behavior already in
+place.  The objective is sustained, measurable improvement on real models,
+not a claim that arbitrary NURBS Boolean evaluation can be made infallible.
+
+The production path is `facetize --regions --brep-output`.  It evaluates
+regions in persistent crash-isolated workers.  Strict mode publishes no
+partial hierarchy; `--tolerate-failures` publishes successful B-Reps while
+retaining explicitly marked source CSG for failed regions.
+
+The detailed algorithm and debugging reference is:
+
+  doc/asciidoc/devguides/bool_eval_development.adoc
+
+
+2. CURRENT BASELINE
+-------------------
+
+The Milestone 3 checkpoint baseline was:
+
+  * M35 32-region hard set: 19 valid approximate B-Reps and 13 retained CSG
+    regions, all with indeterminate Boolean results.
+  * Havoc: 303 regions evaluated with four workers; 89 valid B-Reps (79 exact
+    and 10 approximate) and 214 retained CSG regions (193 indeterminate,
+    11 worker timeouts, 7 invalid inputs, and 3 work-budget failures).
+  * Worker crashes, malformed responses, and timeouts are isolated from the
+    caller, and queued work continues on replacement workers.
+  * Thin-partition and thin-chord divergence may retain a topologically valid
+    solid with an explicit note; these categories are not silently promoted to
+    exact semantic agreement.
+  * Deterministic, tolerance-bounded planar regularization and bounded ARB
+    repair are available and always report approximate conversion metadata.
+  * Manifold is integrated in shadow mode as a conservative planar topology
+    and classification oracle.  Exact NURBS geometry remains authoritative.
+
+The stored failure-diagnostic sweep contains repeated attempts as well as
+unique regions, so it is not a conversion-rate report.  It nevertheless shows
+where engineering effort has leverage: 241 of 392 recorded failing attempts
+ended with nonsolid output, and 67 ended with an unbalanced trim arrangement.
+The Manifold shadow classified none of those difficult rows and generally
+abstained, confirming that the current planar oracle does not replace the
+remaining curved-surface work.
+
+Milestone 1 is complete.  Conversion results carry a stable first-failure
+record through the persistent-worker protocol, corpus CSV rows, and facetize
+output attributes.  Setting LIBRT_BREP_BOOLEAN_FAILURE_DIR also writes a
+standalone operand-pair database whose failure.r object replays the failed
+operation.
+
+The completed implementation was compared with checkpoint 491ca6cf89 on the
+same 392-attempt diagnostic cohort, using 64 validation rays, Manifold shadow
+mode, a 120-second component timeout, and 12 isolated jobs.  This cohort
+contains repeated attempts and is a diagnostic scorecard rather than a
+conversion-rate sample.  The accepted outcomes were unchanged: both builds
+produced 37 approximate successes, 11 semantic mismatches, and 6
+semantic-unavailable valid solids.  The checkpoint recorded 337 conversion
+failures and one timeout; the current build completed that timed-out attempt
+as an indeterminate edge-stitch failure, for 338 conversion failures.  Thus
+the milestone's conversion gain is zero, as intended, with no invalid
+published result.
+
+The new evidence refined the formerly broad failures as follows:
+
+  * 175 of 251 `unmatched_edge` records now identify a missing SSI mate:
+    134 open and 41 closed.  The other 76 remain `unmatched_edge`.
+  * All 67 `arrangement_unbalanced` records now identify the direction of the
+    imbalance: 44 have excess incoming incidence and 23 have excess outgoing
+    incidence.
+  * Three of eight `ambiguous_edge_match` records were also refined: two are
+    missing open-SSI mates and one is an SSI edge partition.  Five remain
+    ambiguous.
+
+Consequently, 245 previously broad records now have a narrower cause.  The
+current cohort contains 136 open-SSI missing mates, 41 closed-SSI missing
+mates, one SSI edge partition, 44 excess-incoming arrangements, and 23
+excess-outgoing arrangements.  An invariant audit found no malformed records:
+all 177 missing-mate reports identify both source faces and the surviving
+naked edge while reporting no peer edge; the partition report identifies both
+edges and three competing matches; and all 67 arrangement reports identify
+the imbalanced edge and a positive working tolerance.  The SSI classification
+also requires matching source-face provenance, parameter-space SSI geometry,
+and model-space SSI geometry, so an unrelated shared curve cannot satisfy the
+ledger test.
+
+Focused tests cover API initialization and stable descriptions, work-budget
+evidence, first-failing tree paths, snapshot creation and standalone replay,
+nested diagnostics across the persistent-worker protocol, malformed detailed
+responses, and facetize attribute propagation.  The related 19 intersection,
+arrangement, Boolean, and resource-limit tests also pass.
+
+Milestone 2 is complete.  The production `facetize --regions --brep-output`
+path was rerun on the same 32 individually selected M35 region roots with four
+persistent workers and a 120-second per-region limit.  All 13 retained regions
+now have a specific first-failure signature:
+
+  * `open_ssi_missing_mate` (8): `r5`, `r21`, `r24`, `r26`, `r28`, `r32`,
+    `r571`, and `r1052`;
+  * `naked_edge_partition` (2): `r17` and `r573`;
+  * `arrangement_excess_outgoing` (2): `r6` and `r583`; and
+  * `arrangement_excess_incoming` (1): `r698`.
+
+The two formerly generic unmatched-edge results are unresolved but certified
+partition candidates rather than arbitrary naked edges.  `r17` has one edge
+opposed by a three-edge chain covering its model-space locus; `r573` has two
+one-to-two seams.  This read-only classification records the reference edge,
+one peer edge, both source faces, and the attempted repair tolerance.  It does
+not alter output topology or turn an indeterminate result into a success.
+
+Three standalone ASCII replay fixtures freeze representatives of every
+repeated signature: open-SSI missing mate, naked-edge partition, and excess
+outgoing arrangement incidence.  The corpus driver can require an expected
+detailed failure stage and reason, and all three fixtures produced the same
+classification in three consecutive runs.
+
+The 32-region conversion totals are unchanged:
+
+                                  Before    After    Delta
+  Exact B-Reps                          0        0        0
+  Approximate B-Reps                   19       19        0
+  Retained original CSG                13       13        0
+  Worker crashes                        0        0        0
+  Invalid published B-Reps              0        0        0
+
+B-Rep coverage therefore remains 19 of 32 (59.375 percent), a zero percentage
+point conversion change.  The gain from this diagnostic milestone is a fully
+partitioned M35 failure set and stable minimal replay gates for the next
+vertical repairs.
+
+Milestone 3 is complete.  A fresh production
+`facetize --regions --brep-output --tolerate-failures` run evaluated all 303
+Havoc regions with four persistent workers and a 120-second per-region limit.
+It again produced 79 exact and 10 approximate B-Reps while retaining 214
+regions as original CSG.  The 193 ordinary indeterminate results divide into:
+
+  * 80 `open_ssi_missing_mate`;
+  * 31 `unmatched_edge`;
+  * 25 `closed_ssi_missing_mate`;
+  * 19 `arrangement_excess_incoming`;
+  * 11 `arrangement_excess_outgoing`;
+  * 9 `pre_repair_invalid`;
+  * 6 `face_split`;
+  * 3 `arrangement_transition`;
+  * 2 each of `naked_edge_partition`, `ambiguous_edge_match`, `edge_stitch`,
+    and `face_classification`; and
+  * 1 `ssi_edge_partition`.
+
+The other 21 retained regions remain separate from that geometry-failure
+population: 11 timed out, 7 ended with invalid input, and 3 exhausted a work
+budget.  Five invalid-input results identify invalid primitive leaves
+(`s.wind1` in four regions and `s.bld210.o1` in one); the other two preserve an
+earlier Boolean diagnostic before the final invalid status.  Two budget
+results identify SSI work-budget exhaustion; the third preserves an earlier
+unmatched-edge diagnostic before a regularized retry exhausted its budget.
+
+Compared with the prior 303-region artifact, all 89 successful regions and all
+7 invalid-input and 3 budget results are unchanged.  Fifteen former timeouts
+completed as indeterminate results: 11 exposed `open_ssi_missing_mate`, 3
+exposed `arrangement_excess_incoming`, and 1 exposed
+`arrangement_excess_outgoing`.  This is useful diagnostic yield, but a single
+bounded run is not treated as proof of a deterministic runtime improvement.
+
+The conversion delta remains zero:
+
+                                  Before    After    Delta
+  Exact B-Reps                         79       79        0
+  Approximate B-Reps                   10       10        0
+  Retained original CSG               214      214        0
+  Worker timeouts                       26       11      -15
+  Invalid inputs                         7        7        0
+  Work-budget failures                   3        3        0
+  Parent-process crashes                 0        0        0
+  Invalid published B-Reps               0        0        0
+
+Havoc B-Rep coverage therefore remains 89 of 303 (29.373 percent).  The
+largest tractable signature is `open_ssi_missing_mate`: 80 of 193 ordinary
+indeterminate results (41.45 percent), or 26.40 percent of the whole model.
+Within it, the 16 `lt_[1-8]_r.mis1` and `rt_[1-8]_r.mis1` regions have the same
+intersection operation and operand topology, the same 8 candidates, 12
+events, 8 residual naked edges, and no projection failures.  Their repeated,
+transform-related structure makes this the first Milestone 4 repair cohort.
+
+Milestone 4 is complete.  The repair closes a narrowly certified annular-face
+partition when exactly two open SSI chains run between the outer boundary and
+one inner loop.  It also recognizes a hit at the seam vertex of a single
+closed trim.  The repair reuses the exact SSI and existing boundary curves; it
+does not perturb, refit, or synthesize intersection geometry.  A standalone
+six-face replay fixture now requires exact fidelity and passes all 16,384
+semantic rays.
+
+On the production `facetize --regions --brep-output` path, the M35 hard set is
+unchanged at 19 approximate B-Reps and 13 retained CSG regions (59.375 percent
+coverage).  A direct evaluator invocation converted `r24`, but the production
+worker's required named-object wrapper changes the deterministic perturbation
+path and does not convert it.  The direct-only result is therefore excluded
+from the production score.  This distinction must remain explicit in future
+corpus measurements.
+
+The full 303-region Havoc run moved `r.wipe9` from an
+`open_ssi_missing_mate` failure to a valid, solid, 27-face approximate B-Rep.
+The conversion is stable across three fresh production worker pools.  A
+production-equivalent wrapped-tree validation is likewise stable across three
+repetitions and passes a 4,096-ray semantic comparison; a separate 16,384-ray
+comparison also passes.  The latter observed seven material-partition
+mismatch rays (0.0427 percent), a 0.00284 percent chord error, and a 0.00262
+percent volume error, all within the declared tolerance-bounded approximate
+policy.
+
+The Havoc production totals therefore changed as follows:
+
+                                  Before    After    Delta
+  Exact B-Reps                         79       79        0
+  Approximate B-Reps                   10       11       +1
+  Retained original CSG               214      213       -1
+  Worker timeouts                       11       14       +3
+  Invalid inputs                         7        7        0
+  Work-budget failures                   3        3        0
+  Parent-process crashes                 0        0        0
+  Invalid published B-Reps               0        0        0
+
+Havoc B-Rep coverage is now 90 of 303 (29.703 percent), an increase of one
+region or 0.330 percentage points.  The timeout delta is not a geometry
+regression: the four newly timed-out regions all completed as their previous
+`open_ssi_missing_mate` failures when isolated under the same 120-second
+limit, while one formerly timed-out region completed with that signature.
+They remain close enough to the limit that full-run scheduling changes the
+observed timeout population, so the raw timeout count is reported rather than
+treated as a deterministic improvement or regression.
+
+All 16 missile regions advanced beyond `open_ssi_missing_mate`: five now stop
+at `arrangement_excess_incoming`, ten at
+`arrangement_excess_outgoing`, and `lt_4_r.mis1` at `curve_projection`.
+`r.tail40` also advanced from `open_ssi_missing_mate` to
+`arrangement_excess_incoming`.  These are diagnostic advances rather than new
+conversions.  Excluding timeout, invalid-input, and budget outcomes, the 189
+remaining Havoc indeterminate results now divide into:
+
+  * 59 `open_ssi_missing_mate`;
+  * 31 `unmatched_edge`;
+  * 25 each of `closed_ssi_missing_mate` and
+    `arrangement_excess_incoming`;
+  * 21 `arrangement_excess_outgoing`;
+  * 9 `pre_repair_invalid`;
+  * 6 `face_split`;
+  * 3 `arrangement_transition`;
+  * 2 each of `ambiguous_edge_match`, `naked_edge_partition`,
+    `face_classification`, and `edge_stitch`; and
+  * 1 each of `ssi_edge_partition` and `curve_projection`.
+
+Validation also found and fixed a worker-protocol defect in which a valid
+empty Boolean result was serialized as a failure.  Focused empty-result,
+shared-edge, worker-pool, topology, periodic-inner-loop, pipe, thin-partition,
+concave-ARB, and facetize tests pass.  One configured pinewood test could not
+find its database in this build tree; running the identical test against the
+available database passed all 16,384 rays.
+
+Milestone 5 is complete.  The planar Manifold shadow now constructs its
+operand proxies before coplanar replacement can mix their provenance.  It
+canonicalizes every represented open-SSI endpoint to the common authoritative
+model-space curve, certifies which SSI boundaries occur in both proxies, and
+excludes every coplanar or one-sided-SSI source face from comparison.  Thus a
+Manifold-generated coplanar cut is never treated as NURBS geometry or as a
+decision for the affected exact face.  The remaining unchanged regions may be
+compared, while curved, open, or otherwise uncertified proxies still abstain.
+
+On the seven-operation planar box cohort in `brep_boolean_xor_manifold_shadow`,
+the previous shadow classified one operation and 12 regions.  It now classifies
+four operations and compares 24 regions: all 24 selection decisions agree with
+the exact classifier, all 20 applicable orientation decisions agree, and there
+are no disagreements.  The other 48 regions are explicitly excluded because
+their source faces participate in coplanar replacement.  Three transverse
+operations still abstain because their assembled split proxies are not closed
+solids.  This is a gain of three classified operations and 12 independently
+checked exact decisions, not a conversion gain.
+
+The two existing Havoc face-classification failures were rerun as the target
+failure cohort.  All 29 attempted Boolean nodes are now accounted for: all 25
+in `3_r.wipe9` and all 4 in `r.tgear4` abstain before producing an oracle
+decision.  The first failing `3_r.wipe9` node has planar tetrahedron/box inputs,
+but its split proxy is not a closed solid and contains an invalid polygonal
+boundary loop.  The `r.tgear4` replay contains a curved, non-polygonal operand,
+which is intentionally outside the certified planar subset.  Consequently the
+Milestone 5 conversion delta is zero.  Its measurable value is stronger
+coverage and evidence: coplanar operations can now validate unaffected exact
+regions, every attempted failure-cohort node has an explicit abstention, and
+the next proxy work is narrowed to closed split-topology construction rather
+than Manifold classification itself.
+
+Milestone 6 is complete.  Fresh production reruns used four persistent workers
+and the same 120-second per-region limit.  The 32-region M35 hard set completed
+in 25.45 seconds and exactly reproduced its prior conversion totals:
+
+                                  Before    After    Delta
+  Exact B-Reps                          0        0        0
+  Approximate B-Reps                   19       19        0
+  Retained original CSG                13       13        0
+  Worker timeouts                       0        0        0
+  Invalid inputs                        0        0        0
+  Work-budget failures                  0        0        0
+  Parent-process crashes                0        0        0
+  Invalid published B-Reps              0        0        0
+
+The 13 M35 failures also reproduced the Milestone 2 taxonomy exactly: eight
+`open_ssi_missing_mate`, two `naked_edge_partition`, two
+`arrangement_excess_outgoing`, and one `arrangement_excess_incoming`.  A fresh
+64-ray semantic pass over the 19 published results reproduced 10 approximate
+passes, six semantic mismatches, and three semantic-unavailable results whose
+source CSG is not raytraceable as a region hierarchy.  All 19 published
+B-Reps were valid and solid.
+
+The full 303-region Havoc production run completed in 1,393.19 seconds.  It
+reproduced the post-Milestone-4 conversion coverage and changed only the
+scheduling-sensitive timeout partition:
+
+                                  Before    After    Delta
+  Exact B-Reps                         79       79        0
+  Approximate B-Reps                   11       11        0
+  Retained original CSG               213      213        0
+  Ordinary indeterminate              189      194       +5
+  Worker timeouts                       14        9       -5
+  Invalid inputs                         7        7        0
+  Work-budget failures                   3        3        0
+  Parent-process crashes                 0        0        0
+  Invalid published B-Reps               0        0        0
+
+The same nine regions timed out as a subset of the prior 14; `r.bld401`,
+`r.tur2`, `r.wind10`, `r.wind10i1`, and `r.wind10i2` completed as ordinary
+indeterminate results, and no region newly timed out.  This is diagnostic
+yield rather than a conversion gain.  The 194 ordinary indeterminate results
+now divide into:
+
+  * 63 `open_ssi_missing_mate`;
+  * 31 `unmatched_edge`;
+  * 25 each of `closed_ssi_missing_mate` and
+    `arrangement_excess_incoming`;
+  * 22 `arrangement_excess_outgoing`;
+  * 9 `pre_repair_invalid`;
+  * 6 `face_split`;
+  * 3 `arrangement_transition`;
+  * 2 each of `ambiguous_edge_match`, `naked_edge_partition`, `edge_stitch`,
+    and `face_classification`; and
+  * 1 each of `ssi_edge_partition` and `curve_projection`.
+
+Thus `open_ssi_missing_mate` remains the dominant failure signature.  A fresh
+64-ray direct semantic sweep of the 90 production-success region names found
+79 exact passes, nine approximate passes, one approximate mismatch
+(`r.wind6`), and the known direct-versus-production wrapper distinction for
+`r.wipe9`.  The latter direct invocation remained indeterminate; its unchanged
+production-equivalent wrapper already passes 4,096 and 16,384 rays.  The
+`r.wind6` result remains the known thin-partition semantic-divergence case: the
+sparse 64-ray run classified it as a mismatch, while the prior 16,384-ray run
+retained it with an explicit `thin_partition_divergence` note.  Milestone 6
+therefore changes no conversions and introduces no new published invalidity or
+parent-process crash.
+
+
+3. GOALS AND NON-GOALS
+----------------------
+
+Goals:
+
+  1. Keep parent-process crashes and invalid published B-Reps at zero.
+  2. Convert broad failures into stable, actionable failure signatures.
+  3. Increase exact and certified approximate per-region B-Rep coverage.
+  4. Preserve semantic fidelity and explicitly retain legitimate thin-volume
+     disagreements rather than discarding valid solids.
+  5. Bound work, memory, perturbation, and repair displacement.
+  6. Make every accepted repair reproducible, transactional, and auditable.
+  7. Make corpus changes visible as per-region state transitions.
+
+Non-goals:
+
+  * Do not force a result from ambiguous topology or missing intersections.
+  * Do not broaden global tolerances merely to turn failures into successes.
+  * Do not delete near-zero-area topology based on area alone; a small face
+    may bound a real thin volume.
+  * Do not copy Manifold-generated intersection geometry into the B-Rep.
+  * Do not expand the Manifold oracle to curved inputs until a shared-edge
+    sampling and approximation-tube certificate exists.
+  * Do not claim universal support for arbitrary NURBS Booleans.
+
+
+4. FORWARD-PROGRESS PROCESS
+---------------------------
+
+4.1 Record the first failing Boolean node
+
+Every indeterminate evaluation should report a stable stage and reason, the
+CSG node path and operation, relevant operand face and edge identities,
+tolerances, work counters, retry information, and topology counts before and
+after each attempted repair.
+
+Add an opt-in failure snapshot containing the two evaluated operand B-Reps and
+the operation at the first failing tree node.  Where needed, include the SSI
+triplets and their provenance.  The snapshot must be replayable without the
+original database or the rest of its CSG tree.
+
+4.2 Refine the failure taxonomy
+
+Replace `output_not_solid` and `other` with the earliest proved cause.  At
+minimum distinguish:
+
+  * missing, duplicate, or incorrectly clipped SSI events;
+  * curve-to-surface projection or lift-certification failure;
+  * endpoint-cluster or overlap-span inconsistency;
+  * unbalanced arrangement incidence or unmatched continuation;
+  * incorrect face selection or orientation;
+  * unmatched `1:1` or `1:N` edge partitions;
+  * missing cap or ambiguous source provenance;
+  * valid but nonsolid output after all certified repairs;
+  * invalid source geometry, work-budget exhaustion, and timeout.
+
+Improved diagnosis counts as forward progress even before a geometry fix: it
+turns a broad failure into a bounded engineering task and prevents unrelated
+changes from masking it.
+
+4.3 Minimize and freeze a reproducer
+
+For each common signature, reduce the saved failure to the smallest face pair
+or Boolean node that preserves the failure.  Commit that fixture and a focused
+test before changing the algorithm.  A repair should address a class of
+equivalent failures, not a database object name.
+
+4.4 Implement one vertical fix
+
+Change one failure class at a time.  Perform any topology repair on a copy and
+commit it only when all expected invariants improve.  Keep risky algorithms
+behind the worker boundary and, where appropriate, behind a shadow or feature
+gate until corpus evidence supports enabling them.
+
+4.5 Validate in widening rings
+
+Run, in order:
+
+  1. the minimized unit or replay test;
+  2. related intersection, arrangement, assembly, and primitive tests;
+  3. the affected M35/Havoc cohort;
+  4. the complete M35 hard set;
+  5. the full Havoc per-region run; and
+  6. the scheduled installed-database matrix under sanitizers.
+
+Use deterministic inputs and repeat numerically sensitive tests enough times
+to reveal order or scheduling dependence.  Full-corpus runs should emit a CSV
+that can be compared to the checkpoint baseline by component name.
+
+
+5. ACCEPTANCE GATES
+-------------------
+
+A new successful conversion is accepted only when:
+
+  * the output is nonempty when the regularized Boolean is nonempty;
+  * `ON_Brep::IsValid()` and `ON_Brep::IsSolid()` pass;
+  * topology changes match the repair's declared postconditions;
+  * curve and trim lifts remain within their certified tolerance;
+  * deterministic Crofton comparison passes, or the result enters one of the
+    explicitly bounded thin-divergence retention categories;
+  * exact results remain exact, while every perturbation, sampled primitive,
+    transform normalization, or ARB repair is marked approximate; and
+  * the result and its metadata are stable across repeated runs.
+
+The corpus scorecard is lexicographic:
+
+  1. no parent crashes or invalid published output;
+  2. no increase in material semantic mismatches;
+  3. no unexplained exact-to-approximate regressions;
+  4. fewer generic failures and more specific diagnostics;
+  5. more exact or certified approximate successes; and
+  6. lower bounded work and runtime for equivalent outcomes.
+
+A higher raw success count does not constitute progress if an earlier gate
+regresses.
+
+
+6. TECHNICAL APPROACH BY FAILURE CLASS
+--------------------------------------
+
+6.1 Nonsolid output
+
+Add an edge-accounting ledger before repair.  For every naked edge, record its
+source edge or SSI, incident face, traversal, parameter interval, closest
+opposite candidate, endpoint error, curve-locus error, and whether the expected
+mate is absent or merely partitioned differently.
+
+Address the resulting categories independently:
+
+  * merge only uniquely matching `1:1` edges;
+  * normalize tolerance-scale connectors only when their complete locus lies
+    in the repair ball;
+  * repair `1:N` partitions only with complete monotone interval coverage,
+    opposite traversal, valid trim lifts, and unambiguous provenance; and
+  * construct a missing cap only from a unique containing source face and a
+    certified closed boundary.
+
+All operations remain copy, validate, then publish.
+
+6.2 Unbalanced trim-loop arrangements
+
+Treat imbalance as evidence, not as a condition to patch by adding or deleting
+an arbitrary arc.  At every unbalanced node determine whether the cause is:
+
+  * an absent or duplicate intersection event;
+  * incorrect overlap interval normalization;
+  * an endpoint that should or should not have clustered;
+  * a discarded short arc whose endpoint nodes were not merged; or
+  * a wrong material-side classification.
+
+Preserve equal incoming and outgoing degree, deterministic maximum-score
+continuation matching, complete edge consumption, and closed-loop validation.
+
+6.3 Curve-to-surface projection
+
+Do not independently reconstruct the two parameter curves of a complete SSI
+event.  Preserve the model curve and both parameter curves as one triplet.
+For genuinely clipped or repaired curves:
+
+  * unwrap periodic parameter domains before fitting;
+  * constrain endpoints and known seam or pole representatives;
+  * project/fix the whole ordered curve consistently rather than isolated
+    samples;
+  * adaptively subdivide where the lift error or parameter velocity demands
+    it; and
+  * certify the lifted curve against the model-space curve over each interval.
+
+If no representative satisfies the tolerance and continuity constraints,
+return a projection-specific indeterminate result.
+
+6.4 Degenerate topology and regularization
+
+Use dimensional and topological evidence, not face area alone.  Collapse an
+edge or omit an arc only when its full locus is tolerance-bounded and doing so
+preserves the intended incidence and material classification.  Retain valid
+thin solids even when ray partition conventions disagree at sub-tolerance
+scale.
+
+Continue to attempt the exact tree first.  Bounded deterministic perturbation
+is a fallback for certified near-coplanar configurations, remains below the
+modeling tolerance after all transforms, and records approximate fidelity and
+the requested displacement.
+
+6.5 Manifold oracle
+
+Concentrate first on planar/planar interactions.  Build both proxies from the
+same sampled SSI vertices and constraints, triangulate exact split-face loops,
+and preserve operand and split-face provenance through Manifold.  Accept an
+oracle decision only if all output triangles retain recognized provenance and
+every new boundary maps to a certified exact SSI.
+
+Develop in shadow mode.  Enable fallback decisions only for a signature whose
+focused tests and corpus cohort show no unexplained selection or orientation
+disagreements.  Manifold may select exact NURBS face regions and adjacency; it
+must not supply final B-Rep curves or vertices.
+
+6.6 Invalid ARBs
+
+Search for the closest valid planar, non-self-intersecting ARB using bounded
+reordering and constrained vertex adjustment.  Certify maximum displacement,
+planarity, orientation, convex-hull volume change, and the effect of pending
+transforms.  Do not simply relax the absolute cap for `s.wind1`; its required
+repair currently exceeds that cap.  If no certified repair is sufficiently
+close, preserve the source CSG with an invalid-input note.
+
+6.7 Timeouts and work-budget failures
+
+Record candidate-pair counts and time by CCI, CSI, SSI, face splitting,
+classification, and assembly.  First add spatial pruning, reuse pair results,
+and eliminate repeated retry work.  Increase a budget only when measurements
+show bounded legitimate work rather than combinatorial growth.
+
+
+7. IMMEDIATE MILESTONES
+-----------------------
+
+  1. COMPLETE (2026-10-07): refine the implemented first-failing-node
+     snapshot/replay record with SSI, arrangement, and edge-ledger cause
+     codes.
+
+     Result: zero conversion delta on the matched 392-attempt cohort; 245
+     broad records refined, including 175 of 251 unmatched edges and all 67
+     unbalanced arrangements.  The detailed counts, evidence invariants,
+     replay capability, and test coverage are recorded in Section 2.
+
+  2. COMPLETE (2026-10-08): assign each of the 13 remaining M35 hard-set
+     regions to a precise failure signature and create focused fixtures for
+     repeated signatures.
+
+     Result: zero conversion delta on the 32-region set, which remains 0 exact,
+     19 approximate, and 13 retained CSG.  The failures are eight open-SSI
+     missing mates, two naked-edge partitions, two excess-outgoing
+     arrangements, and one excess-incoming arrangement.  Three standalone
+     fixtures freeze the repeated classes, and the corpus driver now supports
+     required detailed failure-stage and failure-reason assertions.  The full
+     region mapping, fixture stability, and before/after totals are recorded in
+     Section 2.
+
+  3. COMPLETE (2026-10-08): split the Havoc retained population by the same
+     taxonomy while keeping timeout, invalid-input, and budget populations
+     separate.
+
+     Result: zero conversion delta on the 303-region set, which remains 79
+     exact, 10 approximate, and 214 retained CSG.  The fresh run classified
+     all 193 ordinary indeterminate results into 13 signatures and reduced the
+     observed timeout population from 26 to 11 by completing 15 formerly
+     timed-out regions.  `open_ssi_missing_mate` is the largest class at 80,
+     including a homogeneous 16-region missile cohort selected for Milestone
+     4.  The complete counts and before/after accounting are in Section 2.
+
+  4. COMPLETE (2026-10-08): repair the certified planar-annulus variant of
+     `open_ssi_missing_mate`, including endpoints at a one-trim closed-loop
+     seam, and demonstrate production per-region transitions.
+
+     Result: the exact six-face fixture passes 16,384 semantic rays.  M35
+     production coverage is unchanged at 19 of 32 (59.375 percent).  Havoc
+     gains one stable approximate B-Rep, `r.wipe9`, moving from 89 to 90 of 303
+     regions (29.373 to 29.703 percent, +0.330 percentage points).  All 16
+     missile-cohort failures and `r.tail40` advance to narrower downstream
+     arrangement or projection signatures.  The full counts, timeout
+     isolation result, semantic evidence, and direct-versus-production `r24`
+     distinction are recorded in Section 2.
+
+  5. COMPLETE (2026-10-08): extend the planar Manifold shadow only where exact
+     shared-boundary proxy construction can be certified, then evaluate it on
+     a controlled planar cohort and the existing classification failures.
+
+     Result: the seven-operation planar cohort improves from one classified
+     operation with 12 decisions to four classified operations with 24
+     comparable decisions.  All 24 selections and all 20 applicable
+     orientations agree with exact classification; there are zero
+     disagreements, 48 coplanar-region abstentions, and three whole-operation
+     open-proxy abstentions.  The two-region Havoc classification cohort
+     contributes 29 attempted nodes, all explicitly accounted for as
+     abstentions and none suitable for a certified decision.  The work remains
+     shadow-only, so its conversion delta is zero.  The implementation and
+     remaining proxy limitations are recorded in Section 2.
+
+  6. COMPLETE (2026-10-27): repeat the full M35 and Havoc baselines and update
+     this document with the new counts and dominant failure class.
+
+     Result: M35 remains 0 exact, 19 approximate, and 13 retained CSG.  Havoc
+     remains 79 exact, 11 approximate, and 213 retained CSG.  Five of the 14
+     previously timed-out Havoc regions completed as ordinary indeterminate
+     results, leaving nine timeouts and increasing that population from 189 to
+     194.  There were no new timeouts, crashes, invalid publications, or
+     conversion changes.  `open_ssi_missing_mate` remains dominant at 63
+     ordinary Havoc failures.  The full accounting and semantic-validation
+     qualifications are recorded in Section 2.
+
+  7. COMPLETE (2026-10-27): isolate the smallest repeated
+     `open_ssi_missing_mate` cohort and identify the next certified repair
+     class.
+
+     The 63-case cohort was clustered by Boolean diagnostics.  The smallest
+     repeated signature is `lt_r.roc2` / `rt_r.roc2`: two SSI candidates, five
+     events, no projection failures, and four naked output edges.  A standalone
+     `failure.r` snapshot reproduces the failure at `edge_repair` on face 3
+     against peer face 0, with edge 7 lacking a mate.
+
+     The intersection is between a valid one-face doubly periodic B-Rep and a
+     valid three-face capped/revolved solid.  One closed SSI is preserved and
+     one of four open SSI records finds an edge on both sides.  The remaining
+     records expose asymmetric partitioning: the capped face retains open SSI
+     pieces, while the periodic face assembles corresponding seam-crossing
+     pieces into different boundaries.
+
+     The raw open-SSI parameter curves have low synchronized lift error, but
+     the fallback pullbacks are accepted through locus-coincidence validation
+     and may have substantially different parameter speed.  Consequently, UV
+     endpoint distance is not reliable evidence for joining these fragments.
+     Two downstream experiments were rejected and reverted: broadening the
+     pointlike-connector UV allowance did not change the result, while using
+     shared model-curve endpoints during output assembly moved the failure
+     earlier and doubled the naked-edge count.
+
+     The adjacent OpenNURBS source provides the expected seam-changing,
+     periodicity, pullback, and pushup primitives but no higher-level Boolean
+     repair suitable for direct reuse.  The next implementation should retain
+     shared model-curve provenance while linking the periodic-face fragments,
+     then require unique complete coverage of that model locus before changing
+     topology.  Do not loosen global tolerances or accept UV proximity alone.
+
+     A provenance-retention prototype was subsequently compiled and replayed
+     against `failure.r`.  It identified curves 1 and 3 as sharing both model
+     endpoints, rather than a unique join endpoint: one endpoint pair spans the
+     periodic seam, while the other repaired pullback endpoints differ by
+     approximately 0.0186 in UV despite mapping to the same original SSI model
+     endpoint.  Treating the latter as an ordinary join would therefore trust
+     the raw SSI endpoint over the repaired parameter curve without proving
+     that the intervening UV connector lifts to a point.  The prototype did not
+     alter the failure and was removed.  A future repair must validate the
+     repaired UV endpoints against the surface (including the entire connector)
+     or rebuild a mutually consistent pullback before joining these fragments.
+
+     A second prototype preserved complete open SSI triplets whenever both raw
+     parameter curves were synchronized with the model curve, avoiding a
+     numerically destructive full-domain `sub_curve` operation.  This retained
+     the raw curves whose lift errors were near machine precision instead of
+     the fallback pullbacks with errors from 0.0186 through 12.44 model units.
+     However, `failure.r` then failed earlier in `trim_arrangement` with two
+     unbalanced nodes (`arrangement_excess_incoming`) rather than producing a
+     valid result.  This prototype was also removed.  The result demonstrates
+     that the raw SSI triplet is geometrically preferable but exposes a distinct
+     seam-aware arrangement problem; pullback preservation and arrangement
+     repair must be developed and certified together.
+
+     The coupled repair is now implemented.  Full synchronized parameter curves
+     are preserved only when at least one side is doubly periodic and the curve
+     materially traverses a periodic domain.  If the resulting arrangement has
+     exactly one incoming/outgoing imbalance, an otherwise unselected periodic
+     boundary path is admitted only after unique-path, source-provenance,
+     periodic-span, model-locus, coincident-anchor, transition, and closed-loop
+     certification on a trial copy.  The original isolated replay now produces
+     an exact, valid, solid result with no naked edges and passes 4,096 semantic
+     rays.
+
+     Replaying the complete mirrored components exposed a second failure later
+     in the same Boolean.  The full-tree replay showed that repaired SSI
+     endpoints stopped within modeling tolerance of source trim boundaries.
+     This prevented one periodic side face from splitting, and an existing
+     annular-face repair also rejected two otherwise certified outer-to-inner
+     arcs solely because both came from the same peer face.
+
+     The endpoint repair now operates transactionally: it requires unique
+     boundary candidates at both ends of at least one source face, proves each
+     UV connector remains pointlike in model space, synchronizes the peer
+     surface parameters, and validates the complete repaired triplet's locus
+     and orientation before publication.  The annular repair now accepts the
+     same-peer case while retaining its two-arc uniqueness, common-inner-loop,
+     separated-endpoint, provenance, loop-validity, and nondegeneracy checks.
+     The downstream snapshot now produces an exact five-face valid solid with
+     no naked edges and passes 4,096 semantic rays.
+
+     Full `lt_r.roc2` and `rt_r.roc2` evaluation confirms that this Boolean no
+     longer supplies their terminal failure.  They advance to different later
+     nodes: `lt_r.roc2` reaches a `surface_intersection/work_budget` result and
+     `rt_r.roc2` reaches `output_validation/unmatched_edge`.  Those signatures
+     are separate follow-on work and should not be weakened into this repair.
+
+  8. COMPLETE (2026-10-28): eliminate the coaxial cone/revolution SSI
+     fragmentation exposed by the `lt_r.roc2` work-budget repair.
+
+     Same-locus cone recognition first avoids subdividing coincident conical
+     parameter subdomains to the SSI work cap.  The subsequent face-6 failure
+     was not safely repairable by flattening its three fitted fragments: a
+     bidirectional model-space projection check exceeded the existing repair
+     tolerance.  `ON_Intersect` now recognizes a full-domain coaxial cone and
+     surface of revolution, intersects the meridian profile with both exact
+     cone-generator planes, rejects overlap and apex cases, and sweeps each
+     unique isolated profile root into an exact circle.  Parameter curves are
+     synchronized to that circle, split transactionally at an offset cone
+     seam, constrained to both surface domains, and accepted only after full
+     lift-coherence validation.
+
+     The focused replay now produces an exact valid eight-face solid and passes
+     4,096 semantic rays.
+     The three earlier repair snapshots also continue to produce exact valid
+     solids and pass 4,096 rays.  Complete `lt_r.roc2` and `rt_r.roc2`
+     evaluation advances beyond this node to the same later independent
+     `edge_repair/open_ssi_missing_mate` failure at tree path
+     `r.L.L.L.L.L.L.L.L.L` (faces 1/10, edge 25).  The isolated replay showed
+     that its three certified shared SSI arcs match one output edge on face 1
+     and no output edges on face 10; the peer face therefore was not
+     split/selected along those loci.  This is not evidence for increasing
+     tolerance or stitching the 35 residual naked edges and requires separate
+     face-splitting and region-selection analysis.
+
+This loop is repeated one failure signature at a time.  The hybrid per-region
+output remains the usable product while conversion coverage improves.
+
+  9. COMPLETE (2026-10-28): replace the malformed parallel-axis cone/cylinder
+     SSI with a bounded analytic intersection.
+
+     The generic solver returned two nominally closed face-2/10 events whose
+     model curves missed the cylinder by about 0.0023, more than ten times the
+     available repair tolerance.  The new fail-closed specialization accepts
+     only recognized cone/cylinder pairs with parallel, distinct axes and full
+     rotational domains.  It intersects their physical axial ranges, solves
+     the admissible cylinder-angle intervals analytically, adaptively samples
+     the exact locus, synchronizes both native parameter curves, and publishes
+     events only after complete domain and lift-coherence checks.
+
+     The focused replay now produces an exact valid 13-face solid and passes
+     4,096 semantic rays.  All four earlier repair replays also retain exact
+     valid-solid output and pass 4,096 rays.
+
+     Full `lt_r.roc2` and `rt_r.roc2` evaluation advances one tree level to a
+     shared independent `trim_arrangement/arrangement_excess_incoming` failure
+     at path `r.L.L.L.L.L.L.L.L` (face 2, edge 21).  The isolated replays show
+     that the local imbalance contains a tolerance-scale duplicated coincident
+     segment between nodes 43 and 45.  Selecting the source-continuous copy
+     balances the local arrangement but was rejected: downstream validation
+     reports 83 naked edges.  This establishes that the segment is a symptom,
+     not a safe bridge; future work must resolve the duplicate SSI/boundary
+     provenance before selection rather than stitching the arrangement.
+
+ 10. COMPLETE (2026-10-28): resolve the duplicated reverse-overlap spur and
+     the downstream independently fitted seam representations.
+
+     A three-connector coincident arrangement group is now collapsed only
+     when it contains one unique same-source reverse pair, both complete model
+     loci coincide, and both endpoints satisfy the loop-closure bound.  Dense
+     Boolean polylines are pushed up directly only after quarter-, half-, and
+     three-quarter-segment lift checks.  Face provenance is preserved across
+     stitching and compaction so later source-edge repairs retain their exact
+     ancestry.
+
+     The remaining output consisted of one unique whole-edge pair and two
+     one-to-one seams with bounded endpoint spikes.  The whole pair is now
+     accepted only with matching endpoint topology, opposite face sense,
+     complete bidirectional projection, complete surface-lift coincidence,
+     and globally unique pairing.  Endpoint-spike collapse preserves an
+     endpoint already belonging to the canonical edge and validates the
+     before/after surface lift instead of relying on parameter-space distance,
+     which is not invariant across periodic parameterizations.  Isolated
+     two-edge hairpins use the corresponding two-sided model-repair bound.
+
+     Both parallel-cone replays now produce exact valid 18-face solids and pass
+     4,096 semantic rays with no partition mismatches.
+
+     Complete `rt_r.roc2` advances to a distinct earlier node at path
+     `r.L.L.L.L.L.L.L`, captured in a follow-up replay.  It fails with 13 naked
+     edges and `edge_repair/open_ssi_missing_mate`.  Three of
+     those edges are closed boundary curves opposite incomplete open chains.
+     The missing middle chain segments are not coincident: closest-point
+     errors grow from about 0.31 to multiple model units, while only the end
+     arcs lie on the closed loci.  This rules out additional stitching or
+     tolerance inflation.  The next repair must occur upstream by splitting
+     the closed boundaries at the recorded open-SSI endpoints and retaining
+     the missing face regions; downstream edge repair cannot safely invent
+     those absent mates.  Complete `lt_r.roc2` reached the repaired stage but
+     exceeded the 1,200-second isolated-process timeout before completion.
+
+ 11. COMPLETE (2026-10-28): resolve the post-parallel union's two residual
+     boundary defects without tolerance inflation or unconstrained stitching.
+
+     The upper four-edge opening was an endpoint-offset source-edge partition.
+     Its second source-face use lay just outside the one-sided repair tolerance,
+     but inside the established two-sided provenance bound.  Allowing the wider
+     retry when either source side is present exposes source edge 71; the
+     existing source-trim, projection, traversal, and transactional validity
+     proofs then remove the complete wedge.
+
+     The lower defect combined one closed naked edge with two certified mate
+     intervals covering only its first and last quarters.  A fail-closed partial
+     closed-edge partition transaction splits the reference edge and parameter
+     trim at the candidate endpoints, reuses the two proven mate edges, and
+     preserves the uncovered middle half as an explicit boundary.  That forms
+     one ordinary five-edge cycle.  The cycle maps uniquely and completely to
+     operand 1 source face 2, so source-surface cap recovery now also applies to
+     union with the source face's original orientation.  Full B-Rep validity,
+     topology counts, zero naked edges, and solidity are required before the
+     repair commits.
+
+     The follow-up replay now produces an exact valid 22-face solid and passes
+     all 4,096 semantic rays.  The earlier parallel-cone replays also retain
+     exact 4,096-ray success.

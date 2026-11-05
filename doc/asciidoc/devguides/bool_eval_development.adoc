@@ -28,10 +28,11 @@ By default, the evaluated B-Rep-type object is written to the database with its 
 There are a number of known limitations to the NURBS Boolean evaluator as currently implemented:
 
 
-* May produce incorrect output due to unhandled intersection cases.
-* Unoptimized performance resulting in potentially significant runtimes.
+* Some inputs still return an indeterminate result or fail semantic corpus validation because of unhandled intersection cases.
+* Unoptimized performance can result in significant runtimes; bounded work limits deliberately reject pathological cases.
 * Material properties of source objects are discarded.
-* Some primitive conversions to NURBS are undefined (e.g., an infinite halfspace).
+* An infinite halfspace has no standalone finite B-Rep representation. Halfspaces are supported only in a combination where a finite sibling supplies contextual bounds.
+* Implicit HRT and metaball solids are converted to tolerance-controlled faceted B-Reps rather than analytic NURBS surfaces.
 * Hollow objects are not built topologically continuous.
 
 
@@ -199,6 +200,187 @@ Subsurfaces that lie completely inside an overlap region identified in the first
 
 Solved points that reside inside an overlap region identified in the first stage are discarded. Of the remaining solved intersection points between _surfA_ and _surfB_, those which are near one another are stitched together into polyline curves. If a line or conic curve can be fit to the polyline curves in 2D, the fit curve replaces the original _surfA_ and/or _surfB_ polyline curve.
 
+
+
+=== Reliability, Tree Evaluation, and Validation
+
+==== Structured Results and Work Budgets
+
+`ON_Boolean()` does not terminate the process when it encounters invalid or indeterminate geometry. It destroys any incomplete output and returns a `boolean_result` value from `include/brep/boolean.h`. Callers should preserve the distinction between these results rather than treating every nonzero value as failure.
+
+[cols="1,3"]
+|===
+|Result |Meaning
+
+|`BREP_BOOLEAN_SUCCESS`
+|A nonempty, valid solid was produced.
+
+|`BREP_BOOLEAN_EMPTY`
+|The operation succeeded and its regularized result is empty.
+
+|`BREP_BOOLEAN_INVALID_INPUT`
+|An input pointer, operation, or B-Rep is invalid.
+
+|`BREP_BOOLEAN_INDETERMINATE`
+|The evaluator could not certify a valid result for otherwise supported input.
+
+|`BREP_BOOLEAN_BUDGET_EXCEEDED`
+|A bounded CCI, CSI, SSI, or related operation exhausted its work allowance.
+
+|`BREP_BOOLEAN_UNSUPPORTED`
+|The requested operation or geometry has no supported evaluation path.
+
+|`BREP_BOOLEAN_INTERNAL_ERROR`
+|An unexpected implementation error was caught at the public boundary.
+|===
+
+`ON_BooleanStatusDescription()` supplies a stable description for reports and user interfaces. The combination conversion entry point `rt_comb_brep_status()` propagates the same statuses through CSG tree evaluation. Legacy wrappers may collapse these values, so new code should use the status-returning interfaces.
+
+Intersection routines have finite local candidate-pair limits. A caller that wants one limit shared by nested CCI, CSI, and SSI work can install a thread-local `brlcad::IntersectionWorkBudgetHandle` with `CreateIntersectionWorkBudget()` and `SetIntersectionWorkBudget()`, then clear it with `ClearIntersectionWorkBudget()`. Exhaustion is a normal structured result; partial geometry must not be published as a successful output.
+
+==== Trim-Loop Arrangement
+
+`loop_boolean()` evaluates face parameter-space loops as a planar arrangement rather than by greedily splicing curve lists. It performs the following operations:
+
+. Split both input loops at intersections and certified overlap-span endpoints.
+. Cluster coincident endpoints into topology nodes and group coincident edge spans.
+. When a boundary arc has a successfully measured model-space extent below the intersection tolerance, omit the arc and merge its endpoint nodes. This prevents a discarded zero-length edge from leaving an artificial open boundary; malformed or unprojectable arcs are not eligible for this repair.
+. Preserve parameter-to-UV endpoint pairing when normalizing reversed overlap intervals. Closed-curve seam endpoints may share a topology node, but their full-period parameter difference must not widen the overlap span.
+. Select result-boundary edges according to union, intersection, difference, or symmetric-difference (`BOOLEAN_XOR`) material membership.
+. Orient the selected edges and require equal incoming and outgoing degree at every node.
+. At a multi-degree node, construct eligible material-bounding continuations and solve a deterministic, maximum-continuation-score one-to-one matching. Every selected outgoing edge must have exactly one predecessor.
+. Traverse the transition graph into closed loops, consuming edges only after a complete loop has been certified.
+
+Failures report unbalanced nodes, unmatched incidences, invalid successors, discontinuities, premature cycles, and unconsumed edges. These checks are intentionally strict: weakening them can turn an explicit indeterminate result into a valid-looking but topologically incorrect face. Coplanar/shared-face cases and coincident overlap spans use the same arrangement representation, so changes in this area should always run the shared-edge, shared-face, coplanar-overlap, and coplanar-sliver regressions.
+
+A full, unclipped closed SSI event supplies one model-space curve and two parameter-space curves as a matched triplet. Preserve that triplet through face splitting. Recomputing each parameter curve independently can select different representatives at a closed-surface seam or pole, opening an otherwise closed split and allowing an unsplit operand face to survive classification. Parameter-curve pullback repair remains appropriate for genuinely clipped SSI subcurves.
+
+When SSI returns multiple closed events for the same face pair, matching parameter-space loci identify duplicate descriptions of one intersection independently of model-curve parameterization. Retain the triplet whose two parameter curves have the smallest lift error against its model curve. Passing both descriptions into face splitting can manufacture tolerance-scale sliver loops and leave an otherwise valid result nonsolid.
+
+Two open SSI chains can jointly partition an annular face even though neither chain closes by itself.  The certified repair accepts this case only when exactly two unambiguous chains connect the outer boundary to the same sole inner loop.  Periodic pairs must describe opposite representatives of one closed-surface seam; planar pairs must come from distinct peer faces and have separated endpoints.  An endpoint at the seam vertex of a single closed trim has one canonical boundary representative and is therefore admissible, while vertices of multi-trim loops remain ambiguous.  The resulting loop is assembled only from the existing SSI triplets and source boundary subcurves and must be valid, closed, and nondegenerate before it replaces the two open chains.
+
+After face assembly, coincident naked edges are stitched and source-edge provenance is used to reconcile split edge partitions. A seam can also cross operand and source-edge boundaries, leaving one naked edge opposite a chain of two or more naked edges. That final `1`-to-`N` repair uses the single output edge as its reference and is committed only when all chain curves project monotonically within model repair tolerance, the chain is vertex-contiguous with complete interval coverage, the face traversals are opposite, the split trim curves lift to their replacement edges, and the copied result remains valid with exactly the expected reduction in naked edges. This permits tolerance-scale contact discrepancies without accepting an ambiguous or merely nearby seam.
+
+Tolerance-scale connector edges are not partition intervals. Before a certified `1`-to-`N` repair, a unique connector between two expected chain vertices may be collapsed on a copy when its complete curve locus lies inside the repair ball and no other edge uses the vertex pair. All interval, traversal, lift, topology-count, and B-Rep validity checks are then rerun against the normalized copy before publication. Postconditions count live topology rather than un-compacted array slots, since `ON_Brep::CollapseEdge()` deliberately leaves deleted entries for `Compact()`.
+
+A subtraction result with one remaining naked-edge cycle may recover a missing cap from a unique containing source face. Planar caps use a new plane surface. A cap on a nonplanar source surface instead duplicates that surface and preferentially reuses the retained SSI parameter curve for each boundary edge, falling back to a newly certified pullback only when no unique SSI curve applies. In both paths, the cap boundary uses the B-Rep's canonical topological vertices rather than averages of independently fitted curve endpoints; endpoint averaging can invert a narrow loop into a bow tie. Numerically resolvable sub-tolerance area is retained, but complete parameter-loop validity, source-face containment, opposite edge use, `IsValid()`, and `IsSolid()` are still required transactionally. Truly zero-area, self-intersecting, ambiguous-provenance, or off-surface cycles remain indeterminate.
+
+==== CSG Trees, Retries, and Halfspaces
+
+`src/librt/comb/comb_brep.cpp` converts primitive leaves and evaluates union, intersection, subtraction, and XOR nodes. XOR is evaluated directly when possible; its regularized retry is the union of the two bounded directional differences.
+
+Evaluation always attempts the exact tree first. A retryable failure involving nearly coplanar planar faces may then use adaptive regularization at 0.20, 0.50, and 0.90 times the modeling distance tolerance. A deterministic per-instance jitter distinguishes otherwise coincident operands while keeping each requested face-offset scale below one modeling tolerance in final model coordinates. Pending affine leaf transforms are included in that bound, so a scale applied after a nested Boolean cannot amplify the requested local offset beyond the declared limit. This deliberately changes geometry by a sub-tolerance amount to avoid a numerically degenerate configuration, in the same spirit as the optional facetize coplanarity retry. As with other conversion-fidelity values, this offset scale is validation guidance rather than a certified Hausdorff bound on the resulting solid.
+
+Primitive leaves are rebuilt with consistently directed inner or outer offsets. Retries are finite, run only after exact evaluation fails, and do not convert invalid input or unsupported geometry into success. A successful retry is reported with approximate fidelity and its model-relative regularization scale; it must still pass structural and semantic validation. If a bounded perturbation cannot be applied consistently across the tree, evaluation remains indeterminate or unsupported rather than silently exceeding tolerance.
+
+Legacy ARBs whose nominal planar faces were rounded into slight nonplanarity may be repaired before conversion.  The repair must produce a valid, non-twisted ARB, preserve the convex-hull volume within the repair routine's two-percent guard, move every vertex by no more than 0.5 percent of the ARB span, and remain below 200 modeling distance tolerances in final model coordinates.  A canonical reordering of the same convex point set is also accepted with zero geometric displacement.  The ordinary one-tolerance allowance is retained for very small ARBs.  Accepted repairs are reported as approximate and contribute their maximum model-space displacement to the declared relative tolerance; larger, twisted, or convexifying repairs remain invalid input.
+
+Loop classification treats a closure as the comparison of two independently uncertain endpoints in both parameter and model space. Consequently, surface-space normalization uses the same two-endpoint error bound as parameter-space normalization; this avoids rejecting a valid regularized retry merely because its combined endpoint gap is between one and two intersection tolerances.
+
+During exact subtraction, the converter first evaluates the minuend and then computes conservative loose bounds for the unevaluated subtractor tree. Union and XOR bounds enclose both children, intersection bounds use their overlap, subtraction bounds use the left child, and nested combination and leaf transforms are included. If the subtractor is separated from the trimmed minuend bounds by more than modeling tolerance, it is irrelevant and is not converted. Infinite or unavailable bounds never justify pruning, and the bounds walk still visits the complete tree so a missing member, malformed node, invalid transform, or combination cycle remains an error. This permits a distant nonconvertible primitive to be ignored without weakening the treatment of near, touching, or structurally invalid operands.
+
+BRL-CAD matrices encode uniform scale in their homogeneous divisor, so leaf conversion first normalizes that representation to an equivalent OpenNURBS affine transform. Some legacy databases contain a numerically nonzero projective row on an otherwise affine matrix. Such a row is discarded only after conversion has produced finite trimmed leaf bounds: over those bounds the converter conservatively bounds the displacement between the projective map stem:[A(p)/(1+q \cdot p)] and its affine replacement stem:[A(p)], includes amplification by pending downstream transforms, and requires the final bound to be no more than one half of modeling distance tolerance. An accepted normalization marks the result approximate and reports its bound through the conversion-fidelity metadata. A singular transform, a denominator that can approach zero, an error above the budget, or a transform without finite certifying bounds remains invalid.
+
+A halfspace is deliberately unsupported as a standalone B-Rep because it is infinite. During combination evaluation, the finite sibling subtree supplies a bounding box. The converter constructs a generously padded finite proxy for the halfspace, applies the plane and any leaf transform, and then evaluates the requested tree operation. This contextual path also participates in regularized retries. Because the unbounded halfspace itself cannot supply the finite source bounds required by near-affine certification, its leaf transform must be genuinely affine; projective transforms are rejected before proxy construction.
+
+HRT and metaball leaves now have conversion paths. Both sample their implicit functions into indexed, closed triangle meshes and convert the resulting topology to faceted B-Reps. HRT edge roots are refined against the implicit equation; metaballs share vertices by global marching-cubes grid edges and enforce a grid-size resource bound. Their semantic accuracy is covered by `rt_implicit_brep`.
+
+`rt_comb_brep_status_info()` supplements the Boolean result with conversion-fidelity metadata. Analytic, planar, and otherwise exact conversion paths report `RT_BREP_CONVERSION_FIDELITY_EXACT`. A tree containing an HRT or metaball leaf, including one inside a nested combination, reports `RT_BREP_CONVERSION_FIDELITY_APPROXIMATE` and the largest declared relative sampling tolerance among its leaves. That tolerance is validation guidance rather than a certified Hausdorff bound. Conversion failures report unknown fidelity; the compatibility entry point `rt_comb_brep_status()` retains its existing behavior.
+
+The same result structure records the first failed node from the exact tree evaluation.  The record uses stable stage and reason enums and includes the tree path, leaf name when applicable, Boolean operation, status, operand and discarded-output topology counts, and retry context.  Boolean-node failures also retain the operand face and edge identifiers, intersection candidate and event counts, projection failures, naked and nonmanifold output-edge counts, ambiguous edge matches, and the applicable tolerance reported by `ON_Boolean()`.  Arrangement failures distinguish excess incoming from excess outgoing incidence.  Before source-face tags are cleared, a read-only residual-edge ledger can identify an open or closed SSI with a missing mate, an SSI split into multiple edge candidates, or disagreement between its parameter and model curves.  These SSI classifications require the output face's source tag and matches to both members of the original SSI curve triplet; model-space proximity alone is insufficient.  If no SSI-specific cause applies, the final naked-edge partition pass also retains read-only evidence when one reference edge has two or more projected opposite-face candidates; it reports an unresolved `naked_edge_partition` only after all transactional repair attempts leave the output nonsolid.  A successful regularized retry preserves the exact-attempt failure record so corpus reports explain why the result is approximate.  The worker protocol, corpus CSV, and facetize output attributes preserve both levels of this record.  Set `LIBRT_BREP_BOOLEAN_FAILURE_DIR` to an output directory to capture the two evaluated operand B-Reps and a `failure.r` replay combination for the first failed Boolean node.  Capture is opt-in, occurs only for the exact attempt, and the generated database is independent of the original CSG tree.
+
+==== Crash-Isolated Evaluation Workers
+
+`rt_brep_worker_pool_*()` provides a nonblocking parent API for converting CSG database objects and evaluating Boolean operations between stored B-Reps. The isolation boundary is one complete tree or direct Boolean request, rather than one individual SSI call. Consequently, a fault in primitive conversion, NMG-to-B-Rep construction, exact intersection, retry logic, final assembly, or a future topology oracle terminates only the worker. The existing in-process APIs remain available for low-level callers and for execution inside the worker.
+
+Each worker opens one immutable file-backed database, processes requests strictly serially, and may serve multiple requests. Parallelism is obtained only by assigning requests to separate worker processes. Control messages contain object names and a private result path; potentially large B-Reps are serialized to that staging file and imported by the parent only after a complete, versioned success response. This avoids blocking the control pipe with NURBS archives and prevents a partial result from being published.
+
+The pool restarts a worker after a crash, request timeout, broken channel, malformed response, configured job count, or configured resident-memory threshold. A failed request is reported as a transport failure and is not automatically replayed, since a deterministic geometry crash should not be repeated without an explicit higher-level retry policy. Already queued requests continue on a replacement process. `brep ... brep` for a file-backed combination and `brep ... bool` use this path; in-memory databases retain the in-process path because there is no stable database snapshot for a child to open. Those command adapters currently create a one-worker pool and wait synchronously for their single request. Batch or interactive callers that want to amortize startup and evaluate requests concurrently should retain the public pool across requests and select an appropriate worker count. `rt_brep_boolean_worker` exercises process reuse, independent parallel workers, job-count and resident-memory retirement, malformed-protocol recovery, timeout recovery, and injected-crash recovery.
+
+`facetize --regions --brep-output` is the first batch integration of that API.  It reuses facetize's region discovery, hierarchy copying, collision-safe naming, cache workspace, progress reporting, and final import, but bypasses primitive tessellation, Manifold BoT evaluation, mesh fixup, and mesh-specific perturb validation.  Region conversions are queued asynchronously on the persistent B-Rep pool; only complete worker-validated solid results (or explicit empty Boolean results) are written into the copied hierarchy.  Conversion fidelity, declared tolerance, approximation flags, retry counts, repaired-ARB counts, and first-failure diagnostics are stored as attributes on each B-Rep and summarized at command completion.  Strict mode publishes no output hierarchy if any region fails.  With *--tolerate-failures*, failed regions retain their original CSG trees, receive explicit fallback and failure attributes, and are imported with successful B-Reps as a clearly reported hybrid hierarchy.  The *--jobs* and *--max-time* controls bound worker concurrency and per-region runtime respectively.
+
+==== Manifold Topology Oracle
+
+Manifold is a candidate topology and classification oracle, not a replacement geometry kernel. Exact surface/surface intersections, NURBS surfaces, parameter-space trims, and the final OpenNURBS assembly remain authoritative. The proxy Boolean may decide which exact split-face regions survive and which pairs of regions are adjacent, but its generated vertices and intersection segments must not be copied into the final B-Rep.
+
+Construct each operand proxy only after the exact SSI curves are available. Sample each SSI once in model space and impose the same ordered vertices and edges on both operand meshes. Tag every triangle with a unique operand `runOriginalID` and a `faceID` identifying the exact split-face region, rather than only its unsplit source face. Manifold preserves both fields through union, intersection, difference, and simplification; `brep_boolean_manifold_provenance` guards this required behavior.
+
+An oracle answer is usable only when all output triangles retain recognized provenance and every new boundary between operand tags lies within the certified approximation tube of a known SSI curve. The proxy must abstain when its error bound can cross a distinct feature, collapse a real thin volume, or introduce a cut that cannot be associated with exact intersection data. A missing or ambiguous tag, nonmanifold proxy, timeout, or worker failure likewise leaves the exact Boolean indeterminate rather than authorizing a guessed repair.
+
+The initial integration runs in shadow mode after face splitting and compares its keep/reverse decisions with `categorize_trimmed_faces()`; exact NURBS classification remains authoritative. Set `LIBBREP_BOOLEAN_MANIFOLD_SHADOW=1`, or pass `--manifold-shadow` to the corpus driver, to enable it. Per-thread counters record attempted, classified, and abstained operations; oracle, comparable, and unavailable decisions; region abstentions; selection and orientation agreements and disagreements; certified shared boundaries; and input and output triangle counts. The corpus parent propagates the option to every isolated child and writes those counters to each component's CSV row. Classification exceptions are reported before they propagate, so every attempted shadow operation is now accounted for and any available oracle answers are recorded as uncomparable rather than silently lost.
+
+The shadow proxies are assembled before coplanar face replacement, while each split region still has unambiguous operand provenance.  Every represented open SSI edge is oriented against its authoritative shared model-space curve, and its endpoint vertices are canonicalized to that curve in each proxy.  An SSI represented by only one proxy excludes both associated source faces from comparison.  Coplanar source faces are likewise excluded because replacement may merge geometry from both operands and because Manifold-generated coplanar cuts are not exact NURBS SSI geometry.  Unaffected regions may nevertheless be compared when both complete planar proxies pass closed-solid validation.  This permits useful shadow classification of coplanar operations without accepting a decision for any replaced or otherwise ambiguous region.  Source B-Reps are never modified.
+
+On the seven-operation planar box regression cohort, the shadow now classifies four operations instead of one.  It returns 72 oracle decisions, of which 24 are comparable unchanged regions and 48 are coplanar-region abstentions.  All 24 selections and all 20 applicable orientations agree with exact classification; no disagreement occurs.  The remaining three operations abstain because their split proxies are not closed solids.  This shadow-only work changes no conversion result.
+
+A face-wise `brep_cdt_fast()` plus `MeshGL64::Merge()` fallback was evaluated
+for open split proxies.  It did not produce manifold meshes for the
+representative `ktank.g` failures (the meshes retained unmatched and
+misoriented edges), and the full isolated corpus exposed access violations in
+the fast tessellator on other valid inputs.  That path remains excluded.  The
+newer watertight CDT implementation is used only for the bounded exact-planar
+subset described below; curved or otherwise approximate CDT construction is
+still excluded from the in-process shadow oracle.
+
+The direct certified subset consists of valid closed solids with two trims per
+edge and strictly convex, single-loop planar polygon faces.  It preserves the
+B-Rep's global vertex identities, verifies ordered trim/edge topology, rejects
+repeated or numerically indistinct vertices, collinearity, concavity,
+self-intersection, and uncertain winding, and fan-triangulates each accepted
+face directly with its surface normal and `m_bRev` orientation.  A bounded
+watertight-CDT fallback, updated from the `brepdraw` work, extends this subset
+to closed planar polyhedra with linear boundaries, including concave and
+collinear face topology, while preserving triangle-to-source-face provenance.
+It accepts only a complete CDT result that passed closed-solid validation; it
+does not invoke mesh repair or consume partial output.
+
+CDT closed-solid validation certifies mesh topology, not coverage of a curved
+source surface.  A diagnostic full-sphere case exposed this distinction: the
+surface sampler treated two collapsed polar boundary isocurves as evidence
+that a pole-to-pole patch was degenerate and produced a topologically solid
+proxy covering only one hemisphere.  The sampler now also checks the middle
+isocurve before discarding such a patch, and the polar-chart regression checks
+all six sphere extents.  That repair is not a general curved-surface fidelity
+certificate, so the oracle remains restricted to planar faces with linear
+boundaries.  Curved faces require common model-space SSI samples on both
+operands plus an approximation-tube certificate before their Manifold result
+can influence an exact NURBS classification.  Any future proxy expansion must
+likewise share edge sampling explicitly and run behind an additional
+crash-isolation boundary.
+
+After corpus validation, the oracle may be used as a fallback for indeterminate classifications and to disambiguate exact shared-edge pairings. It must not silently override a contradictory exact result. Risky proxy construction and Manifold evaluation should be added as a distinct request type in the B-Rep worker protocol above; a crashed, timed-out, or over-budget worker is then discarded and restarted without taking down the caller.
+
+==== Component Corpus and Semantic Validation
+
+Structural checks such as `ON_Brep::IsValid()` and `IsSolid()` are necessary but do not prove equivalence to the source CSG tree. `test_brep_corpus` enumerates every combination in one database or every `.g` file under a database directory. Each component runs in a separate subprocess with a timeout, so a crash, process abort, or hang is recorded without losing the rest of the matrix.
+
+A successful conversion is serialized into an in-memory database and compared with the original CSG component by `rt_crofton_compare()`. Deterministic rays measure partition-count disagreement, entry/exit endpoint error, total chord error, surface-area error, and volume error. Floating-point-zero entry/exit pairs are normalized separately from real partitions. Tolerance-scale surface/volume disagreements are retained and counted as sub-tolerance partition mismatches. If those are the only partition disagreements but the ordinary semantic gates do not pass, a topologically valid solid is retained as `thin_partition_divergence` with `retained_with_note` status. When the partition counts agree but tolerance-bounded endpoint displacement is amplified by very thin material into a larger relative chord error, the corresponding retained category is `thin_chord_divergence`. Neither category asserts exact ray-semantic agreement: both record a bounded ambiguity between the ray paths and a valid solid that may represent the literal source CSG volume more faithfully. The `--require-semantic-pass` acceptance gate includes both explicitly retained categories while still rejecting material partition mismatches and invalid or nonsolid B-Reps.
+
+Exact and unknown-fidelity conversions retain the strict endpoint gate. For a declared approximation, the endpoint-distance gate is enlarged to at least the declared relative tolerance times the source-model diagonal. Ordinary semantic passes retain the strict partition, chord, area, and volume gates; the explicitly noted thin-chord category additionally requires matching partition counts, bounded absolute chord disagreement, and the ordinary area and volume bounds. Passing approximations are recorded as `approximate_success`, not exact `success`. The CSV report records conversion status, fidelity and declared tolerance, validity/solidity, timings, semantic metrics, timeouts, and captured crash diagnostics. Focused tests can require the expected classification with `--require-fidelity exact` or `--require-fidelity approximate`; failure replay tests can require the stable detailed classification with `--require-failure-stage` and `--require-failure-reason`.
+
+Three standalone first-failing-node fixtures from the M35 hard set guard the repeated `open_ssi_missing_mate`, `naked_edge_partition`, and `arrangement_excess_outgoing` signatures.  They contain only the two evaluated operand B-Reps and the replay operation, so they do not depend on the original M35 database or on the outer CSG tree.
+
+For a full installed example database matrix, run:
+
+[source,sh]
+----
+test_brep_corpus --database-dir build/share/db \
+  --output brep_corpus_matrix.csv --rays 16384 --max-rays 262144 \
+  --timeout-ms 60000 \
+  --manifold-shadow
+----
+
+The `--max-rays` setting leaves the acceptance thresholds unchanged, but retries
+otherwise passing comparisons whose endpoint percentiles only narrowly miss a
+threshold.  Retries use successively denser deterministic samples and stop at
+the requested maximum or before they would consume the component timeout
+budget.  This avoids classifying sampling-quantile noise as a geometry failure
+without hiding material, topology, area, or volume disagreement.  Omitting
+`--max-rays` disables adaptive retry.
+
+The CMake target `brep-corpus-matrix` runs the same matrix, and the scheduled workflow uploads its CSV as an artifact. Focused development should also run the `brep_*`, `rt_crofton`, `rt_implicit_brep`, `rt_vshot`, and `rt_primitive_brep` tests. The scheduled sanitizer job runs this focused set under AddressSanitizer and UndefinedBehaviorSanitizer.
+
+Do not use STEP import/export as the next integration layer while the native `share/db` corpus still has process failures or unstable semantic buckets. First refresh and compare the component matrix, eliminate process failures, and make remaining conversion failures, invalid outputs, timeouts, and semantic mismatches explicit and reproducible.
 
 
 === The OpenNURBS API
