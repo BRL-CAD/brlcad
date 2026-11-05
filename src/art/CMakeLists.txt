@@ -64,7 +64,7 @@ set(
 add_definitions(-DBOOST_ALL_DYN_LINK)
 brlcad_addexec(art "${ART_SRCS}" "${ART_LIBS}" FOLDER Rt)
 target_include_directories(art BEFORE PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
-target_include_directories(art PRIVATE ${ART_INCLUDE_DIRS})
+target_include_directories(art SYSTEM PRIVATE ${ART_INCLUDE_DIRS})
 
 # copy precompiled appleseed.dll into same dir as art.exe
 
