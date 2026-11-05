@@ -12,6 +12,8 @@
 # test_qt_ipc     — Qt QSocketNotifier tests (QT_QPA_PLATFORM=offscreen)
 # test_qged_ert   — full qged+ert integration under Xvfb (requires display)
 
+set(ipc_runtime_path_modification "LD_LIBRARY_PATH=path_list_prepend:${CMAKE_BINARY_DIR}/lib")
+
 # -------------------------------------------------------------------
 # regress_ipc: headless tests (Phases 1, 2, 4, 7)
 # -------------------------------------------------------------------
@@ -29,7 +31,8 @@ if(TARGET libbu AND TARGET libdm AND TARGET libpkg AND TARGET libtclcad AND TARG
       COMMAND regress_ipc --verbose
     )
     set_tests_properties(regress-ipc PROPERTIES
-      ENVIRONMENT "FBSERV_BIN=$<TARGET_FILE:fbserv>;LD_LIBRARY_PATH=${CMAKE_BINARY_DIR}/lib"
+      ENVIRONMENT "FBSERV_BIN=$<TARGET_FILE:fbserv>"
+      ENVIRONMENT_MODIFICATION "${ipc_runtime_path_modification}"
       TIMEOUT 120
     )
     brlcad_regression_test(regress-ipc "regress_ipc;fbserv;libbu;libdm;libpkg;libtclcad" TEST_DEFINED)
@@ -74,7 +77,8 @@ if(HAVE_QT_IPC_DEPS)
       COMMAND test_qt_ipc --verbose
     )
     set_tests_properties(regress-qt-ipc PROPERTIES
-      ENVIRONMENT "QT_QPA_PLATFORM=offscreen;LD_LIBRARY_PATH=${CMAKE_BINARY_DIR}/lib"
+      ENVIRONMENT "QT_QPA_PLATFORM=offscreen"
+      ENVIRONMENT_MODIFICATION "${ipc_runtime_path_modification}"
       TIMEOUT 60
     )
     brlcad_regression_test(regress-qt-ipc "test_qt_ipc;libbu;libdm;libpkg" STAND_ALONE TEST_DEFINED)
@@ -108,7 +112,8 @@ if(TARGET qged AND XVFB_RUN AND XDOTOOL)
             ${CMAKE_CURRENT_BINARY_DIR}/test_qged_ert.sh
   )
   set_tests_properties(regress-qged-ert PROPERTIES
-    ENVIRONMENT "QGED_BIN=$<TARGET_FILE:qged>;RT_BIN=$<TARGET_FILE:rt>;TEST_DB=${CMAKE_BINARY_DIR}/share/db/boolean-ops.g;LD_LIBRARY_PATH=${CMAKE_BINARY_DIR}/lib;VERBOSE=1"
+    ENVIRONMENT "QGED_BIN=$<TARGET_FILE:qged>;RT_BIN=$<TARGET_FILE:rt>;TEST_DB=${CMAKE_BINARY_DIR}/share/db/boolean-ops.g;VERBOSE=1"
+    ENVIRONMENT_MODIFICATION "${ipc_runtime_path_modification}"
     TIMEOUT 120
   )
   brlcad_regression_test(regress-qged-ert "qged;rt" STAND_ALONE TEST_DEFINED)
