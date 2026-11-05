@@ -181,13 +181,27 @@ process_resident_tests(int memory_type)
     ssize_t page_size = bu_mem(BU_MEM_PAGE_SIZE, NULL);
     if (page_size <= 0)
 	page_size = BU_PAGE_SIZE;
-    for (size_t offset = 0; offset < allocation_size;
-	    offset += (size_t)page_size)
-	allocation[offset] = (unsigned char)(offset / (size_t)page_size);
-    allocation[allocation_size - 1] = 1;
-
+    const int64_t accounting_timeout_usec = BU_SEC2USEC(5);
+    const int64_t accounting_start = peak_query ? bu_gettime() : 0;
+    const int64_t accounting_deadline = accounting_start +
+	accounting_timeout_usec;
     size_t resident_output = 0;
-    const ssize_t after = bu_mem(memory_type, &resident_output);
+    ssize_t after;
+    do {
+	/* FreeBSD samples peak RSS on statistics-clock ticks while the
+	 * process is running.  Keep the pages active until that sample is
+	 * visible; sleeping can leave the reported peak unchanged. */
+	for (size_t offset = 0; offset < allocation_size;
+		offset += (size_t)page_size)
+	    allocation[offset] = (unsigned char)(offset / (size_t)page_size);
+	allocation[allocation_size - 1] = 1;
+
+	after = bu_mem(memory_type, &resident_output);
+	if (!peak_query || after < before ||
+		resident_output != (size_t)after ||
+		(size_t)after >= allocation_size)
+	    break;
+    } while (accounting_start >= 0 && bu_gettime() < accounting_deadline);
     bu_free((void *)allocation, "resident memory test allocation");
     if (after < 0 || resident_output != (size_t)after) {
 	bu_log("bu_mem %s test: query returned %zd and wrote %zu\n",
