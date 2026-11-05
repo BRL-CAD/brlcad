@@ -289,14 +289,7 @@ struct triangle_t {
 	m = NULL;
     }
 
-    triangle_t(const triangle_t &other)
-    {
-	v[0] = other.v[0];
-	v[1] = other.v[1];
-	v[2] = other.v[2];
-	ind = other.ind;
-	m = other.m;
-    }
+    triangle_t(const triangle_t &other) = default;
 
     triangle_t& operator=(const triangle_t &other) = default;
 
@@ -360,6 +353,22 @@ struct triangle_t {
     char*ppnt(int i);
     void plot(const char *fname);
     double opp_edge_dist(int vind);
+};
+
+
+struct chart_triangle_t : public triangle_t {
+    using triangle_t::triangle_t;
+
+    explicit chart_triangle_t(const triangle_t &triangle) : triangle_t(triangle) {}
+    chart_triangle_t() = default;
+
+    /* Native UV triangles retain the exact planar images returned by CDT.
+     * Model-space vertex welding must not determine their chart images. */
+    std::array<int, 3> chart_vertices = {{-1, -1, -1}};
+    size_t chart_index = 0;
+
+    std::vector<chart_triangle_t> split(uedge_t &edge, long split_point,
+	int chart_split_point) const;
 };
 
 
@@ -631,8 +640,8 @@ public:
     RTree<size_t, double, 3> tris_tree;
     std::vector<ON_3dPoint *> pnts;
 
-    void record_chart_triangle(const triangle_t &triangle,
-	const triangle_t &native_triangle, const cdt_face_chart &chart);
+    bool record_chart_triangle(const triangle_t &triangle,
+	const chart_triangle_t &native_triangle, const cdt_face_chart &chart);
 
     /* Setup / Repair */
     long add_point(ON_2dPoint &on_2dp);
@@ -660,7 +669,7 @@ public:
 
     /* Triangulation related functions and data. */
     bool cdt(bool allow_general_boundary_cleanup = false);
-    std::vector<triangle_t> tris_2d;
+    std::vector<chart_triangle_t> tris_2d;
     std::vector<std::pair<double, double> > m_pnts_2d;
     std::vector<cdt_face_chart> m_face_charts;
     std::map<long, long> p2d3d;
@@ -674,6 +683,9 @@ public:
     long native_vertex(long native_point) const;
     bool map_native_triangle(const triangle_t &native,
 	triangle_t &mapped) const;
+
+    const cdt_face_chart *triangle_chart(const chart_triangle_t &native) const;
+    const chart_triangle_t *native_triangle(const triangle_t &triangle) const;
 
     /* Mesh data set accessors */
     std::set<uedge_t> get_boundary_edges();
@@ -760,7 +772,7 @@ public:
 
     double tri_pnt_r(long tri_ind);
 
-    void tris_vect_plot_2d(std::vector<triangle_t> &tset, const char *filename);
+    void tris_vect_plot_2d(const std::vector<chart_triangle_t> &tset, const char *filename);
     void tris_plot_2d(const char *filename);
 
     void polygon_plot_2d(cpolygon_t *polygon, const char *filename);
@@ -855,10 +867,9 @@ private:
     std::map<long, long> p3d2d;
     std::set<long> ambiguous_p3d2d;
     std::set<long> periodic_ambiguous_p3d2d;
-    /* Only triangles spanning more than half a periodic domain need
-     * explicit chart samples; a nearest-copy reconstruction can choose their
-     * complementary region after seam vertices have been welded. */
-    std::map<std::array<long, 3>, std::array<ON_2dPoint, 4>> periodic_triangle_samples;
+    /* Samples retain the triangulator's planar image even for triangles
+     * whose native UV span does not reveal a seam or pole ambiguity. */
+    std::map<std::array<long, 3>, std::array<ON_2dPoint, 4>> chart_triangle_samples;
 
     // For situations where we need to process using Brep data
     std::set<ON_3dPoint *> *edge_pnts;

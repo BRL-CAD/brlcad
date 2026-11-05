@@ -10,6 +10,7 @@
 
 #include "common.h"
 
+#include <float.h>
 #include <math.h>
 
 #include "bu.h"
@@ -58,11 +59,40 @@ run_case(const point2d_t *points, size_t point_count, const int *outer,
     return 0;
 }
 
+static int
+check_orientation(void)
+{
+    /* The exact determinant is epsilon squared.  Evaluating the two
+     * products in double or extended precision can round it to zero. */
+    const double epsilon = DBL_EPSILON;
+    const int exponents[] = {-100, 0, 100};
+    for (size_t i = 0; i < sizeof(exponents) / sizeof(exponents[0]); ++i) {
+	const double scale = ldexp(1.0, exponents[i]);
+	const point2d_t points[3] = {
+	    {0.0, 0.0}, {scale, scale * (1.0 + epsilon)},
+	    {scale * (1.0 - epsilon), scale}
+	};
+	for (int corner = 0; corner < 3; ++corner) {
+	    const double *a = points[corner];
+	    const double *b = points[(corner + 1) % 3];
+	    const double *c = points[(corner + 2) % 3];
+	    if (bg_orient2d(a, b, c) != 1 || bg_orient2d(a, c, b) != -1 ||
+		    bg_orient2d(a, b, b) != 0) {
+		bu_log("adaptive orientation failed at scale 2^%d, corner %d\n",
+		    exponents[i], corner);
+		return 1;
+	    }
+	}
+    }
+    const point2d_t collinear[3] = {{-1.0, -1.0}, {0.0, 0.0}, {1.0, 1.0}};
+    return bg_orient2d(collinear[0], collinear[1], collinear[2]) != 0;
+}
+
 int
 main(int argc, const char **argv)
 {
     bu_setprogname(argv[0]);
-    if (argc != 1)
+    if (argc != 1 || check_orientation())
 	return 1;
 
     {

@@ -41,6 +41,15 @@
 
 __BEGIN_DECLS
 
+/**
+ * Return -1, 0, or 1 for clockwise, collinear, or counterclockwise
+ * orientation of three 2D points.  Adaptive arithmetic determines the sign
+ * for the supplied coordinates; no modeling tolerance is applied.  Inputs
+ * must be finite and scaled to avoid arithmetic overflow and underflow.
+ */
+BG_EXPORT extern int bg_orient2d(const point2d_t a, const point2d_t b,
+	const point2d_t c);
+
 
 #define MAXPTS 4			/**< All we need are 4 points */
 #define pl_A pl_points[0]		/**< Synonym for A point */

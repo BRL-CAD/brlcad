@@ -83,16 +83,25 @@
 #include <limits>
 #include <stack>
 
-/* Local topology repairs must restore both triangle identities and their
- * derived adjacency/index state.  Native chart state stays with the caller:
- * only the normal-edge repair modifies its 2-D triangles and samples. */
+static std::array<long, 3>
+chart_triangle_key(const triangle_t &triangle)
+{
+    std::array<long, 3> key = {{triangle.v[0], triangle.v[1], triangle.v[2]}};
+    std::sort(key.begin(), key.end());
+    return key;
+}
+
+/* Local topology repairs must restore triangle identities, their surface
+ * samples, and derived adjacency/index state.  Native chart triangles stay
+ * with the caller. */
 class cdt_mesh_t::triangle_state {
 public:
     explicit triangle_state(cdt_mesh_t &mesh) :
 	m_mesh(mesh), m_triangles(mesh.tris_vect),
 	m_v2edges(mesh.v2edges), m_v2tris(mesh.v2tris),
 	m_edges2tris(mesh.edges2tris), m_uedges2tris(mesh.uedges2tris),
-	m_boundary_edges(mesh.boundary_edges), m_problem_edges(mesh.problem_edges)
+	m_boundary_edges(mesh.boundary_edges), m_problem_edges(mesh.problem_edges),
+	m_chart_samples(mesh.chart_triangle_samples)
     {
 	RTree<size_t, double, 3>::Iterator active;
 	mesh.tris_tree.GetFirst(active);
@@ -111,6 +120,7 @@ public:
 	m_mesh.uedges2tris = m_uedges2tris;
 	m_mesh.boundary_edges = m_boundary_edges;
 	m_mesh.problem_edges = m_problem_edges;
+	m_mesh.chart_triangle_samples = m_chart_samples;
 	m_mesh.tris_tree.RemoveAll();
 	for (size_t triangle_index : m_active) {
 	    if (triangle_index >= m_mesh.tris_vect.size())
@@ -140,6 +150,7 @@ private:
     const decltype(cdt_mesh_t::uedges2tris) m_uedges2tris;
     const decltype(cdt_mesh_t::boundary_edges) m_boundary_edges;
     const decltype(cdt_mesh_t::problem_edges) m_problem_edges;
+    const decltype(cdt_mesh_t::chart_triangle_samples) m_chart_samples;
     std::vector<size_t> m_active;
 };
 
@@ -470,13 +481,35 @@ triangle_t::split(uedge_t &ue, long split_pnt, bool flip)
     t2.v[0] = B;
     t2.v[1] = C;
     t2.v[2] = E;
-    t1.m = m;
+    t2.m = m;
 
     std::set<triangle_t> stris;
     stris.insert(t1);
     stris.insert(t2);
 
     return stris;
+}
+
+std::vector<chart_triangle_t>
+chart_triangle_t::split(uedge_t &edge, long split_point, int chart_split_point) const
+{
+    triangle_t source(*this);
+    std::vector<chart_triangle_t> children;
+    for (const triangle_t &triangle : source.split(edge, split_point, false)) {
+	chart_triangle_t child(triangle);
+	child.chart_index = chart_index;
+	for (int corner = 0; corner < 3; ++corner) {
+	    if (child.v[corner] == split_point) {
+		child.chart_vertices[corner] = chart_split_point;
+		continue;
+	    }
+	    const auto parent = std::find(v, v + 3, child.v[corner]);
+	    if (parent != v + 3)
+		child.chart_vertices[corner] = chart_vertices[parent - v];
+	}
+	children.push_back(child);
+    }
+    return children;
 }
 
 double
@@ -2095,55 +2128,81 @@ cdt_test_local_defects(void)
 	    0.999)
 	return 10;
 
-    /* A valid chart region can cover more than half a period.  Welding its
-     * seam copies must not turn the orientation sample into its complement. */
-    const ON_2dPoint wide_uv[3] = {
-	ON_2dPoint(udom.ParameterAt(0.10), vdom.ParameterAt(0.20)),
-	ON_2dPoint(udom.ParameterAt(0.65), vdom.ParameterAt(0.20)),
-	ON_2dPoint(udom.ParameterAt(0.65), vdom.ParameterAt(0.80))
-    };
-    cdt_face_chart wide_chart;
-    periodic_mesh.m_pnts_2d.clear();
-    for (int vertex = 0; vertex < 3; ++vertex) {
-	periodic_mesh.m_pnts_2d.push_back(std::make_pair(wide_uv[vertex].x,
-	    wide_uv[vertex].y));
-	cdt_chart_vertex identity;
-	identity.id = vertex;
-	identity.native_point = vertex;
-	wide_chart.vertices.push_back(identity);
+    /* Keep the selected image for both wide and narrow cells, even when
+     * another copy of the first native vertex would make shorter edges. */
+    const double angular_ends[] = {0.65, 0.25};
+    for (double angular_end : angular_ends) {
+	const ON_2dPoint chart_uv[3] = {
+	    ON_2dPoint(udom.ParameterAt(0.10), vdom.ParameterAt(0.20)),
+	    ON_2dPoint(udom.ParameterAt(angular_end), vdom.ParameterAt(0.20)),
+	    ON_2dPoint(udom.ParameterAt(angular_end), vdom.ParameterAt(0.80))
+	};
+	cdt_face_chart chart;
+	periodic_mesh.m_pnts_2d.clear();
+	for (int vertex = 0; vertex < 3; ++vertex) {
+	    periodic_mesh.m_pnts_2d.push_back(std::make_pair(chart_uv[vertex].x,
+		chart_uv[vertex].y));
+	    cdt_chart_vertex identity;
+	    identity.id = vertex;
+	    identity.native_point = vertex;
+	    chart.vertices.push_back(identity);
+	    seam_points[vertex] = cdt_surface_point(surface, chart_uv[vertex]);
+	}
+	chart.points = periodic_mesh.m_pnts_2d;
+	cdt_chart_vertex alternate = chart.vertices.front();
+	alternate.id = (cdt_chart_vertex_id)chart.points.size();
+	chart.points.push_back(std::make_pair(udom.ParameterAt(angular_end - 0.01),
+	    chart_uv[0].y));
+	chart.vertices.push_back(alternate);
+	const ON_2dPoint center_uv = (chart_uv[0] + chart_uv[1] + chart_uv[2]) / 3.0;
+	if (!cdt_surface_normal(surface, center_uv, center_point,
+		expected_normal) || !expected_normal.Unitize())
+	    return 93;
+	chart_triangle_t chart_triangle(seam_triangle);
+	chart_triangle.chart_vertices = {{0, 1, 2}};
+	if (!periodic_mesh.record_chart_triangle(seam_triangle, chart_triangle, chart))
+	    return 97;
+	double expected_deviation = ((seam_points[0] + seam_points[1] +
+	    seam_points[2]) / 3.0).DistanceTo(center_point);
+	for (int edge = 0; edge < 3; ++edge) {
+	    const int next = (edge + 1) % 3;
+	    expected_deviation = std::max(expected_deviation,
+		((seam_points[edge] + seam_points[next]) / 2.0).DistanceTo(
+		cdt_surface_point(surface, (chart_uv[edge] + chart_uv[next]) / 2.0)));
+	}
+	for (int orientation = 0; orientation < 2; ++orientation) {
+	    double measured_deviation = 0.0;
+	    if (!periodic_mesh.surface_triangle_deviation(seam_triangle,
+		    &measured_deviation) || std::fabs(measured_deviation -
+		    expected_deviation) > ON_ZERO_TOLERANCE)
+		return 96;
+	    if (ON_DotProduct(periodic_mesh.bnorm(seam_triangle), expected_normal) < 0.999)
+		return 94;
+	    std::swap(seam_triangle.v[1], seam_triangle.v[2]);
+	    periodic_mesh.m_bRev = !periodic_mesh.m_bRev;
+	}
+	const int chart_edge[2] = {0, 1};
+	ON_2dPoint split_native, split_chart;
+	if (!chart.edge_midpoint_sample(chart_edge, split_native, split_chart))
+	    return 100;
+	const long split_native_point = 3;
+	const int split_chart_point = chart.add_refinement_point(split_native_point,
+	    split_native, split_chart, chart_edge);
+	uedge_t split_edge(0, 1);
+	const auto children = chart_triangle.split(split_edge, split_native_point,
+	    split_chart_point);
+	if (split_chart_point < 0 || children.size() != 2)
+	    return 101;
+	for (const chart_triangle_t &child : children) {
+	    for (int corner = 0; corner < 3; ++corner) {
+		if (chart.native_point(child.chart_vertices[corner]) != child.v[corner])
+		    return 102;
+	    }
+	}
+	periodic_mesh.reset();
+	if (!periodic_mesh.chart_triangle_samples.empty())
+	    return 95;
     }
-    wide_chart.points = periodic_mesh.m_pnts_2d;
-    for (int vertex = 0; vertex < 3; ++vertex)
-	seam_points[vertex] = cdt_surface_point(surface, wide_uv[vertex]);
-    const ON_2dPoint wide_center = (wide_uv[0] + wide_uv[1] + wide_uv[2]) / 3.0;
-    if (!cdt_surface_normal(surface, wide_center, center_point,
-	    expected_normal) || !expected_normal.Unitize())
-	return 93;
-    periodic_mesh.record_chart_triangle(seam_triangle, seam_triangle,
-	wide_chart);
-    double expected_deviation = ((seam_points[0] + seam_points[1] +
-	seam_points[2]) / 3.0).DistanceTo(center_point);
-    for (int edge = 0; edge < 3; ++edge) {
-	const int next = (edge + 1) % 3;
-	expected_deviation = std::max(expected_deviation,
-	    ((seam_points[edge] + seam_points[next]) / 2.0).DistanceTo(
-	    cdt_surface_point(surface, (wide_uv[edge] + wide_uv[next]) / 2.0)));
-    }
-    for (int orientation = 0; orientation < 2; ++orientation) {
-	double measured_deviation = 0.0;
-	if (!periodic_mesh.surface_triangle_deviation(seam_triangle,
-		&measured_deviation) || std::fabs(measured_deviation -
-		expected_deviation) > ON_ZERO_TOLERANCE)
-	    return 96;
-	if (ON_DotProduct(periodic_mesh.bnorm(seam_triangle),
-		expected_normal) < 0.999)
-	    return 94;
-	std::swap(seam_triangle.v[1], seam_triangle.v[2]);
-	periodic_mesh.m_bRev = !periodic_mesh.m_bRev;
-    }
-    periodic_mesh.reset();
-    if (!periodic_mesh.periodic_triangle_samples.empty())
-	return 95;
 
     const auto release_polygon_edges = [](cpolygon_t &polygon) {
 	for (cpolyedge_t *edge : polygon.poly)
@@ -2170,6 +2229,7 @@ cdt_test_local_defects(void)
 
 void cdt_mesh_t::tri_remove(triangle_t &tri)
 {
+    chart_triangle_samples.erase(chart_triangle_key(tri));
     // Update edge maps
     long i = tri.v[0];
     long j = tri.v[1];
@@ -2860,57 +2920,54 @@ cdt_mesh_t::map_native_triangle(const triangle_t &native,
     return true;
 }
 
-static std::array<long, 3>
-chart_triangle_key(const triangle_t &triangle)
+const cdt_face_chart *
+cdt_mesh_t::triangle_chart(const chart_triangle_t &native) const
 {
-    std::array<long, 3> key = {{triangle.v[0], triangle.v[1], triangle.v[2]}};
-    std::sort(key.begin(), key.end());
-    return key;
+    if (native.chart_index >= m_face_charts.size())
+	return NULL;
+    const cdt_face_chart &chart = m_face_charts[native.chart_index];
+    for (int corner = 0; corner < 3; ++corner) {
+	if (native.chart_vertices[corner] < 0 ||
+		chart.native_point(native.chart_vertices[corner]) != native.v[corner])
+	    return NULL;
+    }
+    return &chart;
 }
 
-void
-cdt_mesh_t::record_chart_triangle(const triangle_t &triangle,
-	const triangle_t &native_triangle, const cdt_face_chart &chart)
+const chart_triangle_t *
+cdt_mesh_t::native_triangle(const triangle_t &triangle) const
 {
-    if (!brep || f_id < 0 || f_id >= brep->m_F.Count())
-	return;
-    const ON_Surface *surface = brep->m_F[f_id].SurfaceOf();
-    if (!surface)
-	return;
-    for (int corner = 0; corner < 3; ++corner) {
-	if (native_triangle.v[corner] < 0 ||
-		(size_t)native_triangle.v[corner] >= m_pnts_2d.size())
-	    return;
-    }
-    bool wide = false;
-    for (int direction = 0; direction < 2; ++direction) {
-	if (!surface->IsClosed(direction))
-	    continue;
-	const double period = surface->Domain(direction).Length();
-	if (!(period > 0.0) || !std::isfinite(period))
-	    return;
-	double minimum = DBL_MAX;
-	double maximum = -DBL_MAX;
-	for (int corner = 0; corner < 3; ++corner) {
-	    const auto &uv = m_pnts_2d[(size_t)native_triangle.v[corner]];
-	    const double coordinate = direction ? uv.second : uv.first;
-	    minimum = std::min(minimum, coordinate);
-	    maximum = std::max(maximum, coordinate);
-	}
-	wide = wide || maximum - minimum > 0.5 * period;
-    }
     const auto key = chart_triangle_key(triangle);
-    periodic_triangle_samples.erase(key);
-    if (!wide)
-	return;
-    long native[3];
+    const chart_triangle_t *found = NULL;
+    for (const chart_triangle_t &native : tris_2d) {
+	triangle_t mapped;
+	if (!map_native_triangle(native, mapped) || chart_triangle_key(mapped) != key)
+	    continue;
+	/* Multiple chart cells may collapse onto one model triangle.  They
+	 * must be separated by refinement before choosing a surface image. */
+	if (found)
+	    return NULL;
+	found = &native;
+    }
+    return found;
+}
+
+bool
+cdt_mesh_t::record_chart_triangle(const triangle_t &triangle,
+	const chart_triangle_t &native_triangle, const cdt_face_chart &chart)
+{
+    const auto key = chart_triangle_key(triangle);
+    chart_triangle_samples.erase(key);
+    int chart_vertices[3];
     for (int corner = 0; corner < 3; ++corner) {
 	const auto found = std::find(triangle.v, triangle.v + 3, key[(size_t)corner]);
-	native[corner] = native_triangle.v[found - triangle.v];
+	chart_vertices[corner] = native_triangle.chart_vertices[found - triangle.v];
     }
     std::array<ON_2dPoint, 4> samples;
-    if (chart.triangle_surface_samples(native, samples.data()))
-	periodic_triangle_samples[key] = samples;
+    if (!chart.triangle_surface_samples(chart_vertices, samples.data()))
+	return false;
+    chart_triangle_samples[key] = samples;
+    return true;
 }
 
 ON_3dVector
@@ -2931,9 +2988,9 @@ cdt_mesh_t::bnorm(const triangle_t &t)
     if (brep && f_id >= 0 && f_id < brep->m_F.Count()) {
 	const ON_Surface *surface = brep->m_F[f_id].SurfaceOf();
 	if (surface) {
-	    const auto retained = periodic_triangle_samples.find(
+	    const auto retained = chart_triangle_samples.find(
 		chart_triangle_key(t));
-	    if (retained != periodic_triangle_samples.end()) {
+	    if (retained != chart_triangle_samples.end()) {
 		ON_3dPoint point;
 		ON_3dVector normal;
 		if (cdt_surface_normal(surface, retained->second[0], point,
@@ -3055,8 +3112,8 @@ cdt_mesh_t::surface_triangle_deviation(const triangle_t &triangle,
 	return false;
 
     const auto key = chart_triangle_key(triangle);
-    const auto retained = periodic_triangle_samples.find(key);
-    const bool have_chart_samples = retained != periodic_triangle_samples.end();
+    const auto retained = chart_triangle_samples.find(key);
+    const bool have_chart_samples = retained != chart_triangle_samples.end();
     ON_2dPoint uv[3];
     ON_3dPoint points[3];
     for (int corner = 0; corner < 3; ++corner) {
@@ -3274,45 +3331,36 @@ cdt_mesh_t::repair_incorrect_normal_edges()
 	return true;
 
     const triangle_state saved_triangles(*this);
-    const std::vector<triangle_t> saved_triangles_2d = tris_2d;
-    const auto saved_chart_samples = periodic_triangle_samples;
-    const auto native_triangle = [&](const triangle_t &triangle,
-	    long native[3]) {
+    const auto saved_triangles_2d = tris_2d;
+    const auto native_image = [&](const triangle_t &triangle,
+	    chart_triangle_t &native) {
+	const chart_triangle_t *source = native_triangle(triangle);
+	if (!source || !triangle_chart(*source))
+	    return false;
+	native = *source;
 	for (int corner = 0; corner < 3; ++corner) {
-	    const auto mapped = p3d2d.find(triangle.v[corner]);
-	    if (mapped == p3d2d.end() || mapped->second < 0 ||
-		    ambiguous_p3d2d.find(triangle.v[corner]) !=
-		    ambiguous_p3d2d.end())
+	    int source_corner = 0;
+	    while (source_corner < 3 &&
+		    native_vertex(source->v[source_corner]) != triangle.v[corner])
+		++source_corner;
+	    if (source_corner == 3)
 		return false;
-	    native[corner] = mapped->second;
+	    native.v[corner] = source->v[source_corner];
+	    native.chart_vertices[corner] = source->chart_vertices[source_corner];
 	}
 	return true;
     };
-    const auto chart_orientation = [&](const long native[3]) {
-	for (const cdt_face_chart &chart : m_face_charts) {
-	    const int orientation = chart.triangle_orientation(native);
-	    if (orientation)
-		return orientation;
-	}
-	return 0;
-    };
-    const auto acceptable_triangle = [&](triangle_t &triangle) {
-	triangle_t native;
-	if (!native_triangle(triangle, native.v))
+    const auto acceptable_triangle = [&](const triangle_t &triangle,
+	    const chart_triangle_t &native, const cdt_face_chart &chart) {
+	if (!record_chart_triangle(triangle, native, chart))
 	    return false;
-	for (const cdt_face_chart &chart : m_face_charts) {
-	    if (chart.triangle_orientation(native.v)) {
-		record_chart_triangle(triangle, native, chart);
-		break;
-	    }
-	}
 	const ON_3dVector triangle_normal = tnorm(triangle);
 	const ON_3dVector surface_normal = bnorm(triangle);
 	const bool acceptable = triangle_normal.Length() > 0.0 &&
 	    surface_normal.Length() > 0.0 &&
 	    ON_DotProduct(triangle_normal, surface_normal) >= 0.1;
 	if (!acceptable)
-	    periodic_triangle_samples.erase(chart_triangle_key(triangle));
+	    chart_triangle_samples.erase(chart_triangle_key(triangle));
 	return acceptable;
     };
     const auto erase_native_triangle = [&](const long native[3]) {
@@ -3376,49 +3424,65 @@ cdt_mesh_t::repair_incorrect_normal_edges()
 		if (d < 0 || d == c ||
 			uedges2tris.find(uedge_t(c, d)) != uedges2tris.end())
 		    continue;
-		long first_native[3];
-		long second_native[3];
-		if (!native_triangle(first, first_native) ||
-			!native_triangle(second, second_native))
+		chart_triangle_t first_native, second_native;
+		if (!native_image(first, first_native) ||
+			!native_image(second, second_native) ||
+			first_native.chart_index != second_native.chart_index)
 		    continue;
-		const int orientation = chart_orientation(first_native);
-		if (!orientation || chart_orientation(second_native) !=
-			orientation)
+		const cdt_face_chart &chart = *triangle_chart(first_native);
+		const int orientation = chart.triangle_orientation(
+		    first_native.chart_vertices.data());
+		if (!orientation || chart.triangle_orientation(
+			second_native.chart_vertices.data()) != orientation)
 		    continue;
-		triangle_t replacement_first;
-		replacement_first.v[0] = c;
-		replacement_first.v[1] = a;
-		replacement_first.v[2] = d;
-		triangle_t replacement_second;
-		replacement_second.v[0] = c;
-		replacement_second.v[1] = d;
-		replacement_second.v[2] = b;
-		long replacement_first_native[3];
-		long replacement_second_native[3];
-		if (!native_triangle(replacement_first,
-			replacement_first_native) ||
-			!native_triangle(replacement_second,
-			replacement_second_native) ||
-			chart_orientation(replacement_first_native) !=
-			orientation ||
-			chart_orientation(replacement_second_native) !=
-			orientation ||
-			!acceptable_triangle(replacement_first) ||
-			!acceptable_triangle(replacement_second))
+		const auto corner_for = [&](const triangle_t &image, long vertex) {
+		    for (int corner = 0; corner < 3; ++corner) {
+			if (native_vertex(image.v[corner]) == vertex)
+			    return corner;
+		    }
+		    return -1;
+		};
+		const int second_a = corner_for(second_native, a);
+		const int second_b = corner_for(second_native, b);
+		const int second_d = corner_for(second_native, d);
+		if (second_a < 0 || second_b < 0 || second_d < 0 ||
+			first_native.chart_vertices[edge] !=
+			second_native.chart_vertices[second_a] ||
+			first_native.chart_vertices[(edge + 1) % 3] !=
+			second_native.chart_vertices[second_b])
 		    continue;
+		triangle_t replacement_first(c, a, d);
+		triangle_t replacement_second(c, d, b);
+		chart_triangle_t native_first(first_native.v[(edge + 2) % 3],
+		    first_native.v[edge], second_native.v[second_d]);
+		chart_triangle_t native_second(first_native.v[(edge + 2) % 3],
+		    second_native.v[second_d], first_native.v[(edge + 1) % 3]);
+		native_first.chart_index = native_second.chart_index =
+		    first_native.chart_index;
+		native_first.chart_vertices = {{
+		    first_native.chart_vertices[(edge + 2) % 3],
+		    first_native.chart_vertices[edge],
+		    second_native.chart_vertices[second_d]}};
+		native_second.chart_vertices = {{
+		    first_native.chart_vertices[(edge + 2) % 3],
+		    second_native.chart_vertices[second_d],
+		    first_native.chart_vertices[(edge + 1) % 3]}};
+		if (chart.triangle_orientation(native_first.chart_vertices.data()) !=
+			orientation || chart.triangle_orientation(
+			    native_second.chart_vertices.data()) != orientation ||
+			!acceptable_triangle(replacement_first, native_first, chart) ||
+			!acceptable_triangle(replacement_second, native_second, chart)) {
+		    chart_triangle_samples.erase(chart_triangle_key(replacement_first));
+		    chart_triangle_samples.erase(chart_triangle_key(replacement_second));
+		    continue;
+		}
 
 		tri_remove(first);
 		tri_remove(second);
 		tri_add(replacement_first);
 		tri_add(replacement_second);
-		erase_native_triangle(first_native);
-		erase_native_triangle(second_native);
-		triangle_t native_first;
-		triangle_t native_second;
-		for (int corner = 0; corner < 3; ++corner) {
-		    native_first.v[corner] = replacement_first_native[corner];
-		    native_second.v[corner] = replacement_second_native[corner];
-		}
+		erase_native_triangle(first_native.v);
+		erase_native_triangle(second_native.v);
 		tris_2d.push_back(native_first);
 		tris_2d.push_back(native_second);
 		flip_count++;
@@ -3444,7 +3508,6 @@ cdt_mesh_t::repair_incorrect_normal_edges()
     }
     saved_triangles.restore();
     tris_2d = saved_triangles_2d;
-    periodic_triangle_samples = saved_chart_samples;
     return false;
 }
 
@@ -3661,7 +3724,7 @@ cdt_mesh_t::toleranced_boundary_triangle(const triangle_t &triangle)
 
 void cdt_mesh_t::reset()
 {
-    periodic_triangle_samples.clear();
+    chart_triangle_samples.clear();
     this->tris_vect.clear();
     this->tris_tree.RemoveAll();
     this->v2edges.clear();
@@ -5503,9 +5566,10 @@ topology_preserving_clean_triangulation(int **faces, int *face_count,
 	    source_points_3d.resize((size_t)native_point + 1, NULL);
 	source_points_3d[(size_t)native_point] = point_3d;
 	mesh->m_chart_refinement_pnts.insert(native_point);
-	chart.add_refinement_point(native_point,
-	    pending_points[pending].native_uv,
-	    pending_points[pending].chart_uv);
+	if (chart.add_refinement_point(native_point,
+		pending_points[pending].native_uv,
+		pending_points[pending].chart_uv) < 0)
+	    return false;
     }
     if (normalized_boundary_vertices) {
 	normalized_boundary_vertices->clear();
@@ -5608,7 +5672,7 @@ cdt_test_developable_clean(void)
  * component has succeeded. */
 static bool
 triangulate_chart_component(cdt_mesh_t *mesh, const ON_BrepFace &face,
-	const cdt_face_chart &chart, std::vector<triangle_t> &triangles)
+	const cdt_face_chart &chart, std::vector<chart_triangle_t> &triangles)
 {
     if (!mesh)
 	return false;
@@ -5812,9 +5876,11 @@ triangulate_chart_component(cdt_mesh_t *mesh, const ON_BrepFace &face,
     }
     const size_t original_count = triangles.size();
     for (int i = 0; i < face_count; ++i) {
-	triangle_t triangle;
-	for (int corner = 0; corner < 3; ++corner)
-	    triangle.v[corner] = chart.native_point(faces[3 * i + corner]);
+	chart_triangle_t triangle;
+	for (int corner = 0; corner < 3; ++corner) {
+	    triangle.chart_vertices[corner] = faces[3 * i + corner];
+	    triangle.v[corner] = chart.native_point(triangle.chart_vertices[corner]);
+	}
 	if (triangle.v[0] < 0 || triangle.v[1] < 0 ||
 		triangle.v[2] < 0) {
 	    triangles.resize(original_count);
@@ -5872,7 +5938,7 @@ atlas_conditioning_merge_contract(void)
 	mesh.p2d3d[(long)point] = (long)point;
 	mesh.p2ind[&point_storage[point]] = (long)point;
     }
-    std::vector<triangle_t> triangles;
+    std::vector<chart_triangle_t> triangles;
     if (!triangulate_chart_component(&mesh, *face, chart, triangles) ||
 	    triangles.empty())
 	return 3;
@@ -5951,7 +6017,7 @@ chart_singular_vertices(const cdt_mesh_t &mesh, const cdt_face_chart &chart,
 
 static bool
 install_chart_triangles(cdt_mesh_t &mesh,
-	const std::vector<triangle_t> &native_triangles,
+	const std::vector<chart_triangle_t> &native_triangles,
 	const cdt_face_chart *charts, const std::vector<size_t> &component_ends)
 {
     std::vector<triangle_t> mapped_triangles;
@@ -5973,8 +6039,9 @@ install_chart_triangles(cdt_mesh_t &mesh,
 	while (i >= component_ends[component])
 	    ++component;
 	const triangle_t &triangle = mapped_triangles[i];
-	mesh.record_chart_triangle(triangle, native_triangles[i],
-	    charts[component]);
+	if (!mesh.record_chart_triangle(triangle, native_triangles[i],
+		charts[component]))
+	    return false;
 	const ON_3dVector triangle_normal = mesh.tnorm(triangle);
 	const ON_3dVector surface_normal = mesh.bnorm(triangle);
 	if (triangle_normal.Length() > 0 && surface_normal.Length() > 0) {
@@ -6012,7 +6079,7 @@ install_face_chart_atlas(cdt_mesh_t *mesh, const ON_BrepFace &face,
 	}
     }
 
-    std::vector<triangle_t> atlas_triangles;
+    std::vector<chart_triangle_t> atlas_triangles;
     std::vector<size_t> component_ends;
     for (const cdt_face_chart &component : atlas) {
 	if (!triangulate_chart_component(mesh, face, component,
@@ -6020,6 +6087,9 @@ install_face_chart_atlas(cdt_mesh_t *mesh, const ON_BrepFace &face,
 	    failure.clear();
 	    return false;
 	}
+	const size_t begin = component_ends.empty() ? 0 : component_ends.back();
+	for (size_t i = begin; i < atlas_triangles.size(); ++i)
+	    atlas_triangles[i].chart_index = component_ends.size();
 	component_ends.push_back(atlas_triangles.size());
     }
     if (atlas_triangles.empty()) {
@@ -7128,7 +7198,7 @@ cdt_mesh_t::install_chart_result(cdt_face_chart &chart,
     bool refinable_collapsed_polar_cells = false;
     if (result && !complete_boundary && chart.type() ==
 	    CDT_FACE_CHART_POLAR) {
-	for (const triangle_t &native_triangle : tris_2d) {
+	for (const chart_triangle_t &native_triangle : tris_2d) {
 	    triangle_t mapped_triangle;
 	    if (!map_native_triangle(native_triangle, mapped_triangle))
 		continue;
@@ -7264,10 +7334,11 @@ cdt_mesh_t::triangulate_face_chart(cdt_face_chart &chart,
     tris_2d.clear();
     if (result) {
 	for (int i = 0; i < num_faces; i++) {
-	    triangle_t t;
-	    t.v[0] = chart.native_point(faces[3*i+0]);
-	    t.v[1] = chart.native_point(faces[3*i+1]);
-	    t.v[2] = chart.native_point(faces[3*i+2]);
+	    chart_triangle_t t;
+	    for (int corner = 0; corner < 3; ++corner) {
+		t.chart_vertices[corner] = faces[3 * i + corner];
+		t.v[corner] = chart.native_point(t.chart_vertices[corner]);
+	    }
 	    if (t.v[0] < 0 || t.v[1] < 0 || t.v[2] < 0) {
 		result = false;
 		tris_2d.clear();
@@ -7380,9 +7451,9 @@ cdt_mesh_t::refine_collapsed_chart_triangles(size_t max_points)
     /* Group nondegenerate chart triangles by their stitched model-space
      * image.  More than one chart cell in a group means a periodic quotient
      * has hidden the cells behind one coarse triangle. */
-    std::map<std::array<long, 3>, std::vector<triangle_t>> images;
-    std::vector<triangle_t> collapsed_cells;
-    for (const triangle_t &native_triangle : tris_2d) {
+    std::map<std::array<long, 3>, std::vector<chart_triangle_t>> images;
+    std::vector<chart_triangle_t> collapsed_cells;
+    for (const chart_triangle_t &native_triangle : tris_2d) {
 	triangle_t mapped_triangle;
 	if (!map_native_triangle(native_triangle, mapped_triangle))
 	    continue;
@@ -7396,7 +7467,7 @@ cdt_mesh_t::refine_collapsed_chart_triangles(size_t max_points)
 	images[image].push_back(native_triangle);
     }
 
-    std::vector<triangle_t> candidates(collapsed_cells);
+    std::vector<chart_triangle_t> candidates(collapsed_cells);
     for (const auto &image : images) {
 	if (image.second.size() < 2)
 	    continue;
@@ -7407,22 +7478,13 @@ cdt_mesh_t::refine_collapsed_chart_triangles(size_t max_points)
     std::set<std::pair<double, double>> existing(m_pnts_2d.begin(),
 	m_pnts_2d.end());
     size_t inserted = 0;
-    for (const triangle_t &native_triangle : candidates) {
+    for (const chart_triangle_t &native_triangle : candidates) {
 	    if (inserted >= max_points)
 		return inserted;
 	    ON_2dPoint sample = ON_2dPoint::UnsetPoint;
-	    bool chart_sample = false;
-	    const long native_vertices[3] = {
-		native_triangle.v[0], native_triangle.v[1],
-		native_triangle.v[2]
-	    };
-	    for (const cdt_face_chart &chart : m_face_charts) {
-		if (chart.triangle_interior_sample(native_vertices, sample)) {
-		    chart_sample = true;
-		    break;
-		}
-	    }
-	    if (!chart_sample)
+	    const cdt_face_chart *chart = triangle_chart(native_triangle);
+	    if (!chart || !chart->triangle_interior_sample(
+		    native_triangle.chart_vertices.data(), sample))
 		continue;
 	    if (!admit_refinement_sample(*surface, sample, existing))
 		continue;
@@ -7486,38 +7548,23 @@ cdt_mesh_t::split_problem_triangle_edges(
 	});
 	for (const auto &edge_entry : edges) {
 	    uedge_t edge = edge_entry.second;
+	    const chart_triangle_t *target_native = native_triangle(triangle);
+	    if (!target_native || !triangle_chart(*target_native))
+		continue;
+	    cdt_face_chart *active_chart = &m_face_charts[target_native->chart_index];
 	    long native_edge[2] = {-1, -1};
-	    std::vector<long> native_candidates[2];
+	    int chart_edge[2] = {-1, -1};
 	    for (int endpoint = 0; endpoint < 2; ++endpoint) {
-		for (const auto &mapping : p2d3d) {
-		    if (native_vertex(mapping.first) == edge.v[endpoint])
-			native_candidates[endpoint].push_back(mapping.first);
+		for (int corner = 0; corner < 3; ++corner) {
+		    if (native_vertex(target_native->v[corner]) != edge.v[endpoint])
+			continue;
+		    native_edge[endpoint] = target_native->v[corner];
+		    chart_edge[endpoint] = target_native->chart_vertices[corner];
 		}
 	    }
-	    if (native_candidates[0].empty() || native_candidates[1].empty())
-		continue;
 	    ON_2dPoint sample;
 	    ON_2dPoint chart_sample;
-	    cdt_face_chart *active_chart = NULL;
-	    for (cdt_face_chart &chart : m_face_charts) {
-		for (long first : native_candidates[0]) {
-		    for (long second : native_candidates[1]) {
-			long candidate[2] = {first, second};
-			if (!chart.edge_midpoint_sample(candidate, sample,
-				chart_sample))
-			    continue;
-			native_edge[0] = first;
-			native_edge[1] = second;
-			active_chart = &chart;
-			break;
-		    }
-		    if (active_chart)
-			break;
-		}
-		if (active_chart)
-		    break;
-	    }
-	    if (!active_chart)
+	    if (!active_chart->edge_midpoint_sample(chart_edge, sample, chart_sample))
 		continue;
 	    if (!admit_refinement_sample(*surface, sample, existing))
 		continue;
@@ -7526,7 +7573,7 @@ cdt_mesh_t::split_problem_triangle_edges(
 	    if (incident == uedges2tris.end() || incident->second.size() != 2)
 		continue;
 	    std::vector<triangle_t> old_triangles;
-	    std::vector<triangle_t> old_native_triangles;
+	    std::vector<chart_triangle_t> old_native_triangles;
 	    std::set<size_t> used_native_triangles;
 	    uedge_t native_split(native_edge[0], native_edge[1]);
 	    bool complete = true;
@@ -7545,7 +7592,20 @@ cdt_mesh_t::split_problem_triangle_edges(
 		    if (used_native_triangles.find(native_index) !=
 			    used_native_triangles.end())
 			continue;
-		    const triangle_t &native_triangle = tris_2d[native_index];
+		    const chart_triangle_t &native_triangle = tris_2d[native_index];
+		    if (native_triangle.chart_index != target_native->chart_index)
+			continue;
+		    bool same_image = true;
+		    for (int endpoint = 0; endpoint < 2; ++endpoint) {
+			const auto corner = std::find(native_triangle.v,
+			    native_triangle.v + 3, native_edge[endpoint]);
+			if (corner == native_triangle.v + 3 ||
+				native_triangle.chart_vertices[corner - native_triangle.v] !=
+				chart_edge[endpoint])
+			    same_image = false;
+		    }
+		    if (!same_image)
+			continue;
 		    const std::set<uedge_t> native_edges = {
 			uedge_t(native_triangle.v[0], native_triangle.v[1]),
 			uedge_t(native_triangle.v[1], native_triangle.v[2]),
@@ -7583,8 +7643,10 @@ cdt_mesh_t::split_problem_triangle_edges(
 	    if (point_2d < 0)
 		continue;
 	    p3d2d[p2d3d.at(point_2d)] = point_2d;
-	    active_chart->add_refinement_point(point_2d, sample,
-		chart_sample, native_edge);
+	    const int chart_point = active_chart->add_refinement_point(point_2d,
+		sample, chart_sample, chart_edge);
+	    if (chart_point < 0)
+		continue;
 
 	    const long mesh_point = native_vertex(point_2d);
 	    for (size_t i = 0; i < old_triangles.size(); ++i) {
@@ -7606,14 +7668,15 @@ cdt_mesh_t::split_problem_triangle_edges(
 			break;
 		    }
 		}
-		std::set<triangle_t> native_replacements =
-		    old_native_triangles[i].split(native_split, point_2d,
-			false);
-		for (const triangle_t &native : native_replacements) {
+		const auto native_replacements = old_native_triangles[i].split(
+		    native_split, point_2d, chart_point);
+		for (const chart_triangle_t &native : native_replacements) {
 		    triangle_t mapped;
 		    for (int corner = 0; corner < 3; ++corner)
 			mapped.v[corner] = native_vertex(native.v[corner]);
-		    record_chart_triangle(mapped, native, *active_chart);
+		    if (!record_chart_triangle(mapped, native, *active_chart))
+			bu_log("Face %d: could not retain split triangle surface samples\n",
+			    f_id);
 		}
 		tris_2d.insert(tris_2d.end(), native_replacements.begin(),
 		    native_replacements.end());
@@ -7660,26 +7723,13 @@ cdt_mesh_t::refine_problem_triangles(
 	    break;
 	ON_2dPoint uv[3];
 	bool mapped = true;
-	triangle_t native_triangle;
-	bool have_native_triangle = false;
-	long target_vertices[3] = {
-	    triangle.v[0], triangle.v[1], triangle.v[2]
-	};
-	std::sort(target_vertices, target_vertices + 3);
-	for (const triangle_t &candidate : tris_2d) {
-	    triangle_t mapped_triangle;
-	    if (!map_native_triangle(candidate, mapped_triangle))
-		continue;
-	    long candidate_vertices[3] = {mapped_triangle.v[0],
-		mapped_triangle.v[1], mapped_triangle.v[2]};
-	    std::sort(candidate_vertices, candidate_vertices + 3);
-	    if (std::equal(candidate_vertices, candidate_vertices + 3,
-		    target_vertices)) {
-		native_triangle = candidate;
-		have_native_triangle = true;
-		break;
-	    }
-	}
+	const chart_triangle_t *source_triangle = native_triangle(triangle);
+	const bool have_native_triangle = source_triangle != NULL;
+	if (!have_native_triangle && !m_face_charts.empty())
+	    continue;
+	chart_triangle_t native_triangle;
+	if (have_native_triangle)
+	    native_triangle = *source_triangle;
 	if (have_native_triangle) {
 	    for (int corner = 0; corner < 3; ++corner) {
 		const long native = native_triangle.v[corner];
@@ -7736,16 +7786,11 @@ cdt_mesh_t::refine_problem_triangles(
 	ON_2dPoint sample;
 	bool chart_sample = false;
 	if (have_native_triangle) {
-	    const long native_vertices[3] = {
-		native_triangle.v[0], native_triangle.v[1],
-		native_triangle.v[2]
-	    };
-	    for (const cdt_face_chart &chart : m_face_charts) {
-		if (chart.triangle_interior_sample(native_vertices, sample)) {
-		    chart_sample = true;
-		    break;
-		}
-	    }
+	    const cdt_face_chart *chart = triangle_chart(native_triangle);
+	    chart_sample = chart && chart->triangle_interior_sample(
+		native_triangle.chart_vertices.data(), sample);
+	    if (!chart_sample)
+		continue;
 	}
 	if (!chart_sample) {
 	    double opposite_length[3] = {0.0, 0.0, 0.0};
@@ -8782,7 +8827,7 @@ void cdt_mesh_t::plot_tri_2d(const triangle_t &t, struct bu_color *buc, FILE *pl
     pl_color_buc(plot, buc);
 }
 
-void cdt_mesh_t::tris_vect_plot_2d(std::vector<triangle_t> &tset, const char *filename)
+void cdt_mesh_t::tris_vect_plot_2d(const std::vector<chart_triangle_t> &tset, const char *filename)
 {
     FILE* plot_file = fopen(filename, "w");
 
@@ -8790,10 +8835,8 @@ void cdt_mesh_t::tris_vect_plot_2d(std::vector<triangle_t> &tset, const char *fi
     bu_color_rand(&c, BU_COLOR_RANDOM_LIGHTENED);
     pl_color_buc(plot_file, &c);
 
-    std::vector<triangle_t>::iterator s_it;
-
-    for (s_it = tset.begin(); s_it != tset.end(); s_it++) {
-	triangle_t tri = (*s_it);
+    for (const chart_triangle_t &triangle : tset) {
+	triangle_t tri(triangle);
 	this->plot_tri_2d(tri, &c, plot_file);
     }
     fclose(plot_file);

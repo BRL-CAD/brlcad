@@ -205,7 +205,7 @@ repair_surface_deviation_triangles(cdt_mesh_t *mesh, double allowed,
     }
     std::set<size_t> selected;
     bool evaluated = false;
-    for (const triangle_t &native : mesh->tris_2d) {
+    for (const chart_triangle_t &native : mesh->tris_2d) {
 	long mapped[3] = {-1, -1, -1};
 	bool have_mapping = true;
 	for (int corner = 0; corner < 3; ++corner) {
@@ -230,13 +230,11 @@ repair_surface_deviation_triangles(cdt_mesh_t *mesh, double allowed,
 	const auto triangle_entry = active.find(key);
 	if (triangle_entry == active.end())
 	    continue;
-	const long native_vertices[3] = {
-	    native.v[0], native.v[1], native.v[2]};
+	const cdt_face_chart *chart = mesh->triangle_chart(native);
 	ON_2dPoint sample = ON_2dPoint::UnsetPoint;
-	for (const cdt_face_chart &chart : mesh->m_face_charts) {
-	    if (chart.triangle_interior_sample(native_vertices, sample))
-		break;
-	}
+	if (!chart || !chart->triangle_interior_sample(
+		native.chart_vertices.data(), sample))
+	    continue;
 	if (!sample.IsValid())
 	    continue;
 	const ON_3dPoint surface_point = surface->PointAt(sample.x, sample.y);
@@ -259,15 +257,12 @@ repair_surface_deviation_triangles(cdt_mesh_t *mesh, double allowed,
 		ON_3dPoint(closest_point), distance);
 	int maximum_edge = -1;
 	for (int edge = 0; edge < 3; ++edge) {
-	    const long native_edge[2] = {
-		native.v[edge], native.v[(edge + 1) % 3]};
+	    const int chart_edge[2] = {
+		native.chart_vertices[edge], native.chart_vertices[(edge + 1) % 3]};
 	    ON_2dPoint edge_sample = ON_2dPoint::UnsetPoint;
 	    ON_2dPoint chart_sample = ON_2dPoint::UnsetPoint;
-	    for (const cdt_face_chart &chart : mesh->m_face_charts) {
-		if (chart.edge_midpoint_sample(native_edge, edge_sample,
-			chart_sample))
-		    break;
-	    }
+	    if (!chart->edge_midpoint_sample(chart_edge, edge_sample, chart_sample))
+		continue;
 	    if (!edge_sample.IsValid())
 		continue;
 	    for (int direction = 0; direction < 2; ++direction) {

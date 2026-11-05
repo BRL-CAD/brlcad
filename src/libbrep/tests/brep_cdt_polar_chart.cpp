@@ -334,12 +334,18 @@ exercise_sphere(const ON_3dPoint &center, double radius)
 	return false;
     }
 
-    const long sample_triangle[3] = {
-	steiner[0], steiner[4], steiner[8]
-    };
+    int sample_triangle[3] = {-1, -1, -1};
+    for (int corner = 0; corner < 3; ++corner) {
+	for (const cdt_chart_vertex &vertex : chart.vertices) {
+	    if (vertex.native_point == steiner[4 * corner]) {
+		sample_triangle[corner] = (int)vertex.id;
+		break;
+	    }
+	}
+    }
     const int sample_orientation =
 	chart.triangle_orientation(sample_triangle);
-    const long reversed_triangle[3] = {
+    const int reversed_triangle[3] = {
 	sample_triangle[0], sample_triangle[2], sample_triangle[1]
     };
     ON_2dPoint interior_native;
@@ -354,16 +360,12 @@ exercise_sphere(const ON_3dPoint &center, double radius)
     ON_2dPoint interior_chart;
     if (!chart.native_to_chart(interior_native, interior_chart))
 	return false;
-    const auto chart_coordinate = [&](long native, ON_2dPoint &point) {
-	for (const cdt_chart_vertex &vertex : chart.vertices) {
-	    if (vertex.native_point != native || vertex.id < 0 ||
-		    (size_t)vertex.id >= chart.points.size())
-		continue;
-	    point = ON_2dPoint(chart.points[(size_t)vertex.id].first,
-		chart.points[(size_t)vertex.id].second);
-	    return true;
-	}
-	return false;
+    const auto chart_coordinate = [&](int chart_point, ON_2dPoint &point) {
+	if (chart_point < 0 || (size_t)chart_point >= chart.points.size())
+	    return false;
+	point = ON_2dPoint(chart.points[(size_t)chart_point].first,
+	    chart.points[(size_t)chart_point].second);
+	return true;
     };
     ON_2dPoint sample_chart[3];
     for (int corner = 0; corner < 3; ++corner) {
@@ -389,10 +391,7 @@ exercise_sphere(const ON_3dPoint &center, double radius)
     }
 
     const std::pair<int, int> split_constraint = chart.constraints.front();
-    const long split_edge[2] = {
-	chart.native_point(split_constraint.first),
-	chart.native_point(split_constraint.second)
-    };
+    const int split_edge[2] = {split_constraint.first, split_constraint.second};
     ON_2dPoint edge_native;
     ON_2dPoint edge_chart;
     ON_2dPoint edge_chart_endpoints[2];
@@ -411,8 +410,9 @@ exercise_sphere(const ON_3dPoint &center, double radius)
 	0.5 * (edge_chart_endpoints[0].y + edge_chart_endpoints[1].y));
     if (edge_chart.DistanceTo(expected_edge_chart) > 1.0e-12)
 	return false;
-    chart.add_refinement_point((long)native_points.size(), edge_native,
-	edge_chart, split_edge);
+    if (chart.add_refinement_point((long)native_points.size(), edge_native,
+	    edge_chart, split_edge) != (int)old_point_count)
+	return false;
     bool retained_constraint = false;
     int replacement_constraints = 0;
     for (const auto &constraint : chart.constraints) {

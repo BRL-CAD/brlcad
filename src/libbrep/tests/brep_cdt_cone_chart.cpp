@@ -451,29 +451,39 @@ exercise_cone(const ON_3dPoint &origin, ON_3dVector axis, double height,
     long alias_pole_native = -1;
     long low_native = -1;
     long high_native = -1;
+    int pole_chart_point = -1;
+    int low_chart_point = -1;
+    int high_chart_point = -1;
     for (const cdt_chart_vertex &vertex : seam_chart.vertices) {
-	if (vertex.singular)
+	if (vertex.singular) {
 	    alias_pole_native = vertex.native_point;
+	    pole_chart_point = (int)vertex.id;
+	}
 	if (vertex.native_point != seam_samples[0] &&
 		vertex.native_point != seam_samples[1])
 	    continue;
-	if (vertex.seam_side < 0)
+	if (vertex.seam_side < 0) {
 	    low_native = vertex.native_point;
-	if (vertex.seam_side > 0)
+	    low_chart_point = (int)vertex.id;
+	}
+	if (vertex.seam_side > 0) {
 	    high_native = vertex.native_point;
+	    high_chart_point = (int)vertex.id;
+	}
     }
     long boundary_native = -1;
+    int boundary_chart_point = -1;
     for (const cdt_chart_vertex &chart_vertex : seam_chart.vertices) {
 	const long candidate = chart_vertex.native_point;
 	if (candidate < 0 || candidate == alias_pole_native ||
 		candidate == low_native || candidate == high_native ||
 		(size_t)candidate >= seam_native.size())
 	    continue;
-	const long low_triangle[3] = {
-	    alias_pole_native, candidate, low_native
+	const int low_triangle[3] = {
+	    pole_chart_point, (int)chart_vertex.id, low_chart_point
 	};
-	const long high_triangle[3] = {
-	    candidate, alias_pole_native, high_native
+	const int high_triangle[3] = {
+	    (int)chart_vertex.id, pole_chart_point, high_chart_point
 	};
 	ON_2dPoint low_interior;
 	ON_2dPoint high_interior;
@@ -482,6 +492,7 @@ exercise_cone(const ON_3dPoint &origin, ON_3dVector axis, double height,
 		seam_chart.triangle_interior_sample(high_triangle,
 		high_interior)) {
 	    boundary_native = candidate;
+	    boundary_chart_point = (int)chart_vertex.id;
 	    break;
 	}
     }
@@ -518,15 +529,19 @@ exercise_cone(const ON_3dPoint &origin, ON_3dVector axis, double height,
 	if (native == low_native || native == high_native)
 	    shared_seam_point = point;
     }
-    triangle_t low_triangle;
+    chart_triangle_t low_triangle;
     low_triangle.v[0] = alias_pole_native;
     low_triangle.v[1] = boundary_native;
     low_triangle.v[2] = low_native;
+    low_triangle.chart_vertices = {{pole_chart_point, boundary_chart_point,
+	low_chart_point}};
     quotient_mesh.tris_2d.push_back(low_triangle);
-    triangle_t high_triangle;
+    chart_triangle_t high_triangle;
     high_triangle.v[0] = boundary_native;
     high_triangle.v[1] = alias_pole_native;
     high_triangle.v[2] = high_native;
+    high_triangle.chart_vertices = {{boundary_chart_point, pole_chart_point,
+	high_chart_point}};
     quotient_mesh.tris_2d.push_back(high_triangle);
     const size_t quotient_samples =
 	quotient_mesh.refine_collapsed_chart_triangles(8);

@@ -70,6 +70,17 @@
 
 static constexpr ClipperLib::cInt CLIPPER_BOUNDARY_GRID_TOLERANCE = 2;
 
+int
+bg_orient2d(const point2d_t a, const point2d_t b, const point2d_t c)
+{
+    const detria::PointD first = {a[0], a[1]};
+    const detria::PointD second = {b[0], b[1]};
+    const detria::PointD third = {c[0], c[1]};
+    const auto orientation = detria::math::orient2d<true>(first, second, third);
+    return (orientation == detria::math::Orientation::CCW) -
+	(orientation == detria::math::Orientation::CW);
+}
+
 static bool
 clipper_contour_inside(const std::vector<int> &contour,
 	const ClipperLib::Path &outline,
@@ -121,11 +132,10 @@ static bool
 clipper_point_exactly_on_segment(const ClipperLib::IntPoint &p,
 	const ClipperLib::IntPoint &a, const ClipperLib::IntPoint &b)
 {
-    const detria::PointD point = {(double)p.X, (double)p.Y};
-    const detria::PointD first = {(double)a.X, (double)a.Y};
-    const detria::PointD second = {(double)b.X, (double)b.Y};
-    if (detria::math::orient2d<true>(first, second, point) !=
-	    detria::math::Orientation::Collinear)
+    const point2d_t point = {(double)p.X, (double)p.Y};
+    const point2d_t first = {(double)a.X, (double)a.Y};
+    const point2d_t second = {(double)b.X, (double)b.Y};
+    if (bg_orient2d(first, second, point))
 	return false;
     return p.X >= std::min(a.X, b.X) && p.X <= std::max(a.X, b.X) &&
 	p.Y >= std::min(a.Y, b.Y) && p.Y <= std::max(a.Y, b.Y);

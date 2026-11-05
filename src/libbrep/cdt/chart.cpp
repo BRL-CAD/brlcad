@@ -18,6 +18,7 @@
 #include <map>
 #include <set>
 
+#include "bg/plane.h"
 #include "bn/tol.h"
 #include "bu/str.h"
 #include "brep/util.h"
@@ -27,7 +28,17 @@
 
 static const double CDT_CONIC_TOLERANCE = 0.05;
 
-/* Chart constraints use sign tests in extended precision.  Keep these
+static int
+chart_orientation(const ON_2dPoint &a, const ON_2dPoint &b,
+	const ON_2dPoint &c)
+{
+    const point2d_t first = {a.x, a.y};
+    const point2d_t second = {b.x, b.y};
+    const point2d_t third = {c.x, c.y};
+    return bg_orient2d(first, second, third);
+}
+
+/* Chart constraints use adaptive exact sign tests.  Keep these
  * endpoint rules separate from tolerance-based sample coincidence and from
  * the even-odd containment rule used to partition filled components. */
 class chart_geometry {
@@ -37,14 +48,10 @@ public:
 
     int orient(int a, int b, double x, double y) const
     {
-	const long double abx = (long double)m_points[(size_t)b].first -
-	    m_points[(size_t)a].first;
-	const long double aby = (long double)m_points[(size_t)b].second -
-	    m_points[(size_t)a].second;
-	const long double acx = (long double)x - m_points[(size_t)a].first;
-	const long double acy = (long double)y - m_points[(size_t)a].second;
-	const long double cross = abx * acy - aby * acx;
-	return (cross > 0.0L) - (cross < 0.0L);
+	return chart_orientation(ON_2dPoint(m_points[(size_t)a].first,
+	    m_points[(size_t)a].second),
+	    ON_2dPoint(m_points[(size_t)b].first,
+		m_points[(size_t)b].second), ON_2dPoint(x, y));
     }
 
     int orient(int a, int b, int c) const
@@ -1061,141 +1068,29 @@ cdt_face_chart::chart_to_native(const ON_2dPoint &chart_uv,
 }
 
 bool
-cdt_face_chart::triangle_chart_image(const long native_triangle[3],
+cdt_face_chart::triangle_chart_image(const int chart_triangle[3],
 	ON_2dPoint triangle[3]) const
 {
-    if (!native_triangle || !triangle)
+    if (!chart_triangle || !triangle)
 	return false;
-
-    /* Periodic charts may contain several planar images of one native
-     * boundary sample.  The triangulation retains the native identity, so
-     * recover the locally coherent image instead of taking the first copy.
-     * A first-copy lookup can span most of a cylinder when a hole has been
-     * opened across its artificial cut, producing a wholly unrelated surface
-     * sample and an unproductive refinement cascade. */
-    std::vector<ON_2dPoint> images[3];
     for (int corner = 0; corner < 3; ++corner) {
-	for (const cdt_chart_vertex &vertex : vertices) {
-	    if (vertex.native_point != native_triangle[corner] ||
-		    vertex.id < 0 || (size_t)vertex.id >= points.size())
-		continue;
-	    const ON_2dPoint candidate(
-		points[(size_t)vertex.id].first,
-		points[(size_t)vertex.id].second);
-	    bool duplicate = false;
-	    for (const ON_2dPoint &existing : images[corner])
-		duplicate = duplicate || existing == candidate;
-	    if (!duplicate)
-		images[corner].push_back(candidate);
-	}
-	if (images[corner].empty())
+	const int point = chart_triangle[corner];
+	if (point < 0 || (size_t)point >= points.size())
+	    return false;
+	triangle[corner] = ON_2dPoint(points[(size_t)point].first,
+	    points[(size_t)point].second);
+	if (!triangle[corner].IsValid())
 	    return false;
     }
-    if (images[0].size() == 1 && images[1].size() == 1 &&
-	    images[2].size() == 1) {
-	for (int corner = 0; corner < 3; ++corner)
-	    triangle[corner] = images[corner][0];
-	return true;
-    }
-
-    double best_span = DBL_MAX;
-    double best_perimeter = DBL_MAX;
-    bool selected_image = false;
-    const size_t combination_limit = 65536;
-    const bool enumerate = images[0].size() <= combination_limit /
-	images[1].size() && images[0].size() * images[1].size() <=
-	combination_limit / images[2].size();
-    if (enumerate) {
-	for (const ON_2dPoint &first : images[0]) {
-	    for (const ON_2dPoint &second : images[1]) {
-		for (const ON_2dPoint &third : images[2]) {
-		    const long double abx = (long double)second.x - first.x;
-		    const long double aby = (long double)second.y - first.y;
-		    const long double acx = (long double)third.x - first.x;
-		    const long double acy = (long double)third.y - first.y;
-		    if (!(std::fabs(abx * acy - aby * acx) > 0.0L))
-			continue;
-		    const double lengths[3] = {
-			first.DistanceTo(second),
-			second.DistanceTo(third),
-			third.DistanceTo(first)
-		    };
-		    const double span = std::max(lengths[0],
-			std::max(lengths[1], lengths[2]));
-		    const double perimeter = lengths[0] + lengths[1] +
-			lengths[2];
-		    if (span < best_span ||
-			    (span <= best_span && perimeter < best_perimeter)) {
-			triangle[0] = first;
-			triangle[1] = second;
-			triangle[2] = third;
-			best_span = span;
-			best_perimeter = perimeter;
-			selected_image = true;
-		    }
-		}
-	    }
-	}
-    } else {
-	/* An imported loop should only have a handful of seam images.  Keep
-	 * malformed input bounded nevertheless: anchor each image in turn and
-	 * choose the nearest copies of the other two vertices. */
-	for (int anchor = 0; anchor < 3; ++anchor) {
-	    for (const ON_2dPoint &first : images[anchor]) {
-		ON_2dPoint selected[3];
-		selected[anchor] = first;
-		for (int corner = 0; corner < 3; ++corner) {
-		    if (corner == anchor)
-			continue;
-		    double nearest = DBL_MAX;
-		    for (const ON_2dPoint &candidate : images[corner]) {
-			const double distance = first.DistanceTo(candidate);
-			if (distance < nearest) {
-			    selected[corner] = candidate;
-			    nearest = distance;
-			}
-		    }
-		}
-		const long double abx = (long double)selected[1].x -
-		    selected[0].x;
-		const long double aby = (long double)selected[1].y -
-		    selected[0].y;
-		const long double acx = (long double)selected[2].x -
-		    selected[0].x;
-		const long double acy = (long double)selected[2].y -
-		    selected[0].y;
-		if (!(std::fabs(abx * acy - aby * acx) > 0.0L))
-		    continue;
-		const double lengths[3] = {
-		    selected[0].DistanceTo(selected[1]),
-		    selected[1].DistanceTo(selected[2]),
-		    selected[2].DistanceTo(selected[0])
-		};
-		const double span = std::max(lengths[0],
-		    std::max(lengths[1], lengths[2]));
-		const double perimeter = lengths[0] + lengths[1] + lengths[2];
-		if (span < best_span ||
-			(span <= best_span && perimeter < best_perimeter)) {
-		    for (int corner = 0; corner < 3; ++corner)
-			triangle[corner] = selected[corner];
-		    best_span = span;
-		    best_perimeter = perimeter;
-		    selected_image = true;
-		}
-	    }
-	}
-    }
-    if (!selected_image)
-	return false;
     return true;
 }
 
 bool
-cdt_face_chart::triangle_surface_samples(const long native_triangle[3],
+cdt_face_chart::triangle_surface_samples(const int chart_triangle[3],
 	ON_2dPoint native_uv[4]) const
 {
     ON_2dPoint triangle[3];
-    if (!native_uv || !triangle_chart_image(native_triangle, triangle))
+    if (!native_uv || !triangle_chart_image(chart_triangle, triangle))
 	return false;
     if (!chart_to_native((triangle[0] + triangle[1] + triangle[2]) / 3.0,
 	    native_uv[0]))
@@ -1209,18 +1104,14 @@ cdt_face_chart::triangle_surface_samples(const long native_triangle[3],
 }
 
 bool
-cdt_face_chart::triangle_interior_sample(const long native_triangle[3],
+cdt_face_chart::triangle_interior_sample(const int chart_triangle[3],
 	ON_2dPoint &native_uv) const
 {
     ON_2dPoint triangle[3];
-    if (!triangle_chart_image(native_triangle, triangle))
+    if (!triangle_chart_image(chart_triangle, triangle))
 	return false;
 
-    const long double abx = (long double)triangle[1].x - triangle[0].x;
-    const long double aby = (long double)triangle[1].y - triangle[0].y;
-    const long double acx = (long double)triangle[2].x - triangle[0].x;
-    const long double acy = (long double)triangle[2].y - triangle[0].y;
-    if (!(std::fabs(abx * acy - aby * acx) > 0.0L))
+    if (!chart_orientation(triangle[0], triangle[1], triangle[2]))
 	return false;
 
     double opposite_length[3];
@@ -1244,101 +1135,58 @@ cdt_face_chart::triangle_interior_sample(const long native_triangle[3],
 }
 
 int
-cdt_face_chart::triangle_orientation(const long native_triangle[3]) const
+cdt_face_chart::triangle_orientation(const int chart_triangle[3]) const
 {
     ON_2dPoint triangle[3];
-    if (!triangle_chart_image(native_triangle, triangle))
+    if (!triangle_chart_image(chart_triangle, triangle))
 	return 0;
-    const long double abx = (long double)triangle[1].x - triangle[0].x;
-    const long double aby = (long double)triangle[1].y - triangle[0].y;
-    const long double acx = (long double)triangle[2].x - triangle[0].x;
-    const long double acy = (long double)triangle[2].y - triangle[0].y;
-    const long double cross = abx * acy - aby * acx;
-    return (cross > 0.0L) - (cross < 0.0L);
+    return chart_orientation(triangle[0], triangle[1], triangle[2]);
 }
 
 bool
-cdt_face_chart::edge_midpoint_sample(const long native_edge[2],
+cdt_face_chart::edge_midpoint_sample(const int chart_edge[2],
 	ON_2dPoint &native_uv, ON_2dPoint &chart_uv) const
 {
-    if (!native_edge)
+    if (!chart_edge)
 	return false;
-    std::vector<ON_2dPoint> images[2];
+    ON_2dPoint edge[2];
     for (int endpoint = 0; endpoint < 2; ++endpoint) {
-	for (const cdt_chart_vertex &vertex : vertices) {
-	    if (vertex.native_point != native_edge[endpoint] ||
-		    vertex.id < 0 || (size_t)vertex.id >= points.size())
-		continue;
-	    const ON_2dPoint candidate(points[(size_t)vertex.id].first,
-		points[(size_t)vertex.id].second);
-	    bool duplicate = false;
-	    for (const ON_2dPoint &existing : images[endpoint])
-		duplicate = duplicate || existing == candidate;
-	    if (!duplicate)
-		images[endpoint].push_back(candidate);
-	}
-	if (images[endpoint].empty())
+	const int point = chart_edge[endpoint];
+	if (point < 0 || (size_t)point >= points.size())
 	    return false;
+	edge[endpoint] = ON_2dPoint(points[(size_t)point].first,
+	    points[(size_t)point].second);
     }
-    if (images[0].size() == 1 && images[1].size() == 1) {
-	chart_uv = ON_2dPoint(
-	    0.5 * (images[0][0].x + images[1][0].x),
-	    0.5 * (images[0][0].y + images[1][0].y));
-	return chart_to_native(chart_uv, native_uv);
-    }
-    ON_2dPoint edge[2] = {
-	ON_2dPoint::UnsetPoint, ON_2dPoint::UnsetPoint
-    };
-    double nearest = DBL_MAX;
-    for (const ON_2dPoint &first : images[0]) {
-	for (const ON_2dPoint &second : images[1]) {
-	    const double distance = first.DistanceTo(second);
-	    if (distance < nearest) {
-		edge[0] = first;
-		edge[1] = second;
-		nearest = distance;
-	    }
-	}
-    }
-    if (!edge[0].IsValid() || !edge[1].IsValid())
-	return false;
     chart_uv = ON_2dPoint(0.5 * (edge[0].x + edge[1].x),
 	0.5 * (edge[0].y + edge[1].y));
     return chart_to_native(chart_uv, native_uv);
 }
 
-void
+int
 cdt_face_chart::add_refinement_point(long source_point,
 	const ON_2dPoint &native_uv, const ON_2dPoint &chart_uv,
-	const long native_edge[2])
+	const int chart_edge[2])
 {
     if (source_point < 0 || !native_uv.IsValid() || !chart_uv.IsValid())
-	return;
-    int edge_vertices[2] = {-1, -1};
-    if (native_edge) {
-	for (int endpoint = 0; endpoint < 2; ++endpoint) {
-	    for (const cdt_chart_vertex &candidate : vertices) {
-		if (candidate.native_point == native_edge[endpoint]) {
-		    edge_vertices[endpoint] = (int)candidate.id;
-		    break;
-		}
-	    }
-	}
-    }
+	return -1;
+    if (chart_edge && (chart_edge[0] < 0 || chart_edge[1] < 0 ||
+	    (size_t)chart_edge[0] >= points.size() ||
+	    (size_t)chart_edge[1] >= points.size()))
+	return -1;
     cdt_chart_vertex vertex;
     vertex.id = (cdt_chart_vertex_id)points.size();
     vertex.native_point = source_point;
     points.push_back(std::make_pair(chart_uv.x, chart_uv.y));
     vertices.push_back(vertex);
     m_source_native_points.push_back(native_uv);
-    if (edge_vertices[0] < 0 || edge_vertices[1] < 0)
-	return;
+    if (!chart_edge)
+	return (int)vertex.id;
     for (auto constraint = constraints.begin();
 	    constraint != constraints.end(); ++constraint) {
-	const bool forward = constraint->first == edge_vertices[0] &&
-	    constraint->second == edge_vertices[1];
-	const bool reverse = constraint->first == edge_vertices[1] &&
-	    constraint->second == edge_vertices[0];
+	const bool forward = constraint->first == chart_edge[0] &&
+	    constraint->second == chart_edge[1];
+	const bool reverse = constraint->first == chart_edge[1] &&
+	    constraint->second == chart_edge[0];
 	if (!forward && !reverse)
 	    continue;
 	const int first = constraint->first;
@@ -1348,6 +1196,7 @@ cdt_face_chart::add_refinement_point(long source_point,
 	constraints.push_back(std::make_pair((int)vertex.id, second));
 	break;
     }
+    return (int)vertex.id;
 }
 
 size_t
@@ -4136,22 +3985,21 @@ chart_ring_contains(const std::vector<std::pair<double, double>> &points,
 {
     if (point < 0 || (size_t)point >= points.size())
 	return false;
-    const long double px = points[(size_t)point].first;
-    const long double py = points[(size_t)point].second;
+    const auto &query = points[(size_t)point];
+    const chart_geometry geometry(points);
     bool inside = false;
-    for (size_t i = 0, j = ring.size() - 1; i < ring.size();
-	    j = i++) {
-	const int ia = ring[i];
-	const int ib = ring[j];
-	if (ia < 0 || ib < 0 || (size_t)ia >= points.size() ||
-		(size_t)ib >= points.size())
+    for (size_t i = 0, j = ring.size() - 1; i < ring.size(); j = i++) {
+	const int a = ring[j];
+	const int b = ring[i];
+	if (a < 0 || b < 0 || (size_t)a >= points.size() ||
+		(size_t)b >= points.size())
 	    return false;
-	const long double ax = points[(size_t)ia].first;
-	const long double ay = points[(size_t)ia].second;
-	const long double bx = points[(size_t)ib].first;
-	const long double by = points[(size_t)ib].second;
-	if ((ay > py) != (by > py) && px < (bx - ax) *
-		(py - ay) / (by - ay) + ax)
+	const double ay = points[(size_t)a].second;
+	const double by = points[(size_t)b].second;
+	if ((ay > query.second) == (by > query.second))
+	    continue;
+	const int orientation = geometry.orient(a, b, point);
+	if ((by > ay && orientation > 0) || (by < ay && orientation < 0))
 	    inside = !inside;
     }
     return inside;

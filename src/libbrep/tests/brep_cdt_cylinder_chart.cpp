@@ -339,11 +339,19 @@ exercise_offset_full_cylinder_seam()
 	return false;
     }
 
-    /* Sampling and normal checks receive native point identities after CDT.
-     * Ensure they select the coherent local image when a periodic repair has
-     * cloned one of those identities at a distant chart coordinate. */
-    const long image_triangle[3] = {0, 1, 5};
-    const long image_edge[2] = {0, 1};
+    /* Retain the selected chart IDs even if another image of the same
+     * native point is inserted before it in the vertex list. */
+    const long image_native[3] = {0, 1, 5};
+    int image_triangle[3] = {-1, -1, -1};
+    for (int corner = 0; corner < 3; ++corner) {
+	for (const cdt_chart_vertex &vertex : chart.vertices) {
+	    if (vertex.native_point == image_native[corner]) {
+		image_triangle[corner] = (int)vertex.id;
+		break;
+	    }
+	}
+    }
+    const int image_edge[2] = {image_triangle[0], image_triangle[1]};
     ON_2dPoint expected_sample;
     ON_2dPoint expected_edge_sample;
     ON_2dPoint expected_edge_chart;

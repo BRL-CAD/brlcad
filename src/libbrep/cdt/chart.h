@@ -75,16 +75,16 @@ public:
 	ON_2dPoint &chart_uv) const;
     bool chart_to_native(const ON_2dPoint &chart_uv,
 	ON_2dPoint &native_uv) const;
-    bool triangle_interior_sample(const long native_triangle[3],
+    bool triangle_interior_sample(const int chart_triangle[3],
 	ON_2dPoint &native_uv) const;
-    bool triangle_surface_samples(const long native_triangle[3],
+    bool triangle_surface_samples(const int chart_triangle[3],
 	ON_2dPoint native_uv[4]) const;
-    int triangle_orientation(const long native_triangle[3]) const;
-    bool edge_midpoint_sample(const long native_edge[2],
+    int triangle_orientation(const int chart_triangle[3]) const;
+    bool edge_midpoint_sample(const int chart_edge[2],
 	ON_2dPoint &native_uv, ON_2dPoint &chart_uv) const;
-    void add_refinement_point(long native_point,
+    int add_refinement_point(long native_point,
 	const ON_2dPoint &native_uv, const ON_2dPoint &chart_uv,
-	const long native_edge[2] = NULL);
+	const int chart_edge[2] = NULL);
     /* Separate non-topological edge samples whose trim pullback has stalled
      * at or crossed an endpoint within the edge's modeling tolerance. */
     size_t repair_toleranced_edge_endpoint_samples(
@@ -115,7 +115,7 @@ public:
 private:
     bool surface_point_to_native(const ON_2dPoint &chart_uv,
 	const ON_3dPoint &target, double tolerance, ON_2dPoint &native_uv) const;
-    bool triangle_chart_image(const long native_triangle[3],
+    bool triangle_chart_image(const int chart_triangle[3],
 	ON_2dPoint triangle[3]) const;
     bool build_native(const ON_BrepFace &face,
 	const std::vector<std::pair<double, double>> &native_points,
