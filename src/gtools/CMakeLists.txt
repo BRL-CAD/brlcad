@@ -1,6 +1,6 @@
 brlcad_adddata(gtransfer.c sample_applications)
 
-brlcad_addexec(brep-audit brep-audit.cpp "libbrep;libbv;librt;libbu" NO_INSTALL)
+brlcad_addexec(brep-audit brep-audit.cpp "libbrep;libbv;librt;libbu")
 brlcad_addexec(ganalyze ganalyze.cpp "libanalyze;librt;libbu;libpkg;${LINENOISE_LIBRARIES}" NO_INSTALL)
 target_include_directories(ganalyze BEFORE PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../libtermio)
 
@@ -21,6 +21,8 @@ add_subdirectory(gsh)
 add_subdirectory(tests)
 
 cmakefiles(
+  brep-audit-corpus.py
+  brep-audit-compare.py
   brep-audit.cpp
   CMakeLists.txt
 )
