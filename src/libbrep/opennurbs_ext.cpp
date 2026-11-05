@@ -618,7 +618,17 @@ ON_Surface_Pushup(
 	    else
 		c = 0.5*(p0[1-dir] + p1[1-dir]);
 	    curve = s->IsoCurve( dir, c );
-	    if ( curve && curve->Domain() != c3_dom )
+	    ON_Interval surface_domain = s->Domain(dir);
+	    double domain_scale = fabs(surface_domain.Length());
+	    if (domain_scale < 1.0)
+		domain_scale = 1.0;
+	    const double domain_tolerance = ON_ZERO_TOLERANCE * domain_scale;
+	    const bool covers_surface_domain = surface_domain.IsIncreasing() &&
+		ON_NearZero(c3_dom.Min() - surface_domain.Min(),
+		    domain_tolerance) &&
+		ON_NearZero(c3_dom.Max() - surface_domain.Max(),
+		    domain_tolerance);
+	    if ( curve && !covers_surface_domain && curve->Domain() != c3_dom )
 	    {
 		if ( !curve->Trim( c3_dom ) )
 		{

@@ -839,6 +839,63 @@ face_GetBoundingBox(
 
 
 bool
+brep_GetTrimmedBoundingBox(
+    const ON_Brep &brep,
+    ON_BoundingBox &bbox,
+    bool bGrowBox
+    )
+{
+    ON_BoundingBox trimmed_bbox;
+    bool have_bounds = bGrowBox && bbox.IsValid();
+    if (have_bounds)
+	trimmed_bbox = bbox;
+
+    for (int face_index = 0; face_index < brep.m_F.Count(); ++face_index) {
+	ON_BoundingBox face_bbox;
+	if (!face_GetBoundingBox(brep.m_F[face_index], face_bbox, false) ||
+		!face_bbox.IsValid())
+	    return false;
+	if (have_bounds)
+	    trimmed_bbox.Union(face_bbox);
+	else {
+	    trimmed_bbox = face_bbox;
+	    have_bounds = true;
+	}
+    }
+
+    for (int edge_index = 0; edge_index < brep.m_E.Count(); ++edge_index) {
+	ON_3dPoint edge_min;
+	ON_3dPoint edge_max;
+	if (!brep.m_E[edge_index].GetBoundingBox(edge_min, edge_max, false))
+	    return false;
+	const ON_BoundingBox edge_bbox(edge_min, edge_max);
+	if (!edge_bbox.IsValid())
+	    return false;
+	if (have_bounds)
+	    trimmed_bbox.Union(edge_bbox);
+	else {
+	    trimmed_bbox = edge_bbox;
+	    have_bounds = true;
+	}
+    }
+
+    for (int vertex_index = 0; vertex_index < brep.m_V.Count(); ++vertex_index) {
+	const ON_3dPoint vertex_point = brep.m_V[vertex_index].point;
+	if (!vertex_point.IsValid())
+	    return false;
+	trimmed_bbox.Set(vertex_point, have_bounds);
+	have_bounds = true;
+    }
+
+    if (!have_bounds || !trimmed_bbox.IsValid())
+	return false;
+
+    bbox = trimmed_bbox;
+    return true;
+}
+
+
+bool
 surface_GetIntervalMinMaxDistance(
     const ON_3dPoint& p,
     const ON_BoundingBox &bbox,
