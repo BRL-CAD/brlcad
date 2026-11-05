@@ -127,6 +127,16 @@ set(
   xdr.c
 )
 
+# Fortified swprintf macros use wchar_t, which newer compilers diagnose as a
+# C++ keyword in C mode.  Keep the suppression local to bundled libfort.
+if(BRLCAD_WARNINGS OR BRLCAD_ENABLE_STRICT)
+  check_c_compiler_flag(-Wc++-keyword HAVE_CXX_KEYWORD_WARNING)
+  if(HAVE_CXX_KEYWORD_WARNING)
+    set_property(SOURCE fort.c APPEND PROPERTY COMPILE_OPTIONS
+      "$<$<COMPILE_LANGUAGE:C>:-Wno-c++-keyword>")
+  endif()
+endif()
+
 # bitv is C only - keep it that way even when we are compiling
 # the rest of the sources as C++
 set_source_files_properties(bitv.c PROPERTIES NO_CXX_COMPILE TRUE)
