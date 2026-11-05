@@ -47,17 +47,164 @@ single_conversion(struct rt_db_internal* intern, ON_Brep** brep, const struct db
 	RT_BREP_CK_MAGIC(intern->idb_ptr);
 	**brep = *((struct rt_brep_internal *)intern->idb_ptr)->brep;
     } else if (intern->idb_type == ID_COMBINATION) {
-	rt_comb_brep(brep, intern, &tol, dbip);
+	return rt_comb_brep_status(brep, intern, &tol, dbip);
     } else if (intern->idb_meth->ft_brep != NULL) {
 	intern->idb_meth->ft_brep(brep, intern, &tol);
     } else {
 	*brep = NULL;
-	return -1;
+	return BREP_BOOLEAN_UNSUPPORTED;
     }
     if (*brep == NULL) {
-	return -2;
+	return BREP_BOOLEAN_INDETERMINATE;
     }
     return 0;
+}
+
+
+static const char *
+worker_transport_description(enum rt_brep_worker_transport_status status)
+{
+    switch (status) {
+	case RT_BREP_WORKER_TRANSPORT_OK:
+	    return "completed";
+	case RT_BREP_WORKER_START_FAILED:
+	    return "could not start";
+	case RT_BREP_WORKER_WRITE_FAILED:
+	    return "request channel failed";
+	case RT_BREP_WORKER_CRASHED:
+	    return "crashed";
+	case RT_BREP_WORKER_TIMED_OUT:
+	    return "timed out";
+	case RT_BREP_WORKER_PROTOCOL_ERROR:
+	    return "returned an invalid protocol response";
+	case RT_BREP_WORKER_RESULT_ERROR:
+	    return "returned an unreadable result";
+	case RT_BREP_WORKER_CANCELLED:
+	    return "was cancelled";
+    }
+    return "failed";
+}
+
+
+static int
+isolated_result(struct rt_db_internal *out,
+	struct rt_brep_worker_result &result, struct bu_vls *diagnostic)
+{
+    if (diagnostic && result.diagnostic && result.diagnostic[0])
+	bu_vls_strcat(diagnostic, result.diagnostic);
+    if (result.transport_status != RT_BREP_WORKER_TRANSPORT_OK) {
+	if (diagnostic) {
+	    if (bu_vls_strlen(diagnostic))
+		bu_vls_strcat(diagnostic, "\n");
+	    bu_vls_printf(diagnostic, "B-Rep worker %s",
+		worker_transport_description(result.transport_status));
+	}
+	return BREP_BOOLEAN_INTERNAL_ERROR;
+    }
+    if (result.boolean_status != BREP_BOOLEAN_SUCCESS)
+	return result.boolean_status;
+    if (!result.brep)
+	return BREP_BOOLEAN_INTERNAL_ERROR;
+
+    struct rt_brep_internal *brep_internal;
+    BU_ALLOC(brep_internal, struct rt_brep_internal);
+    brep_internal->magic = RT_BREP_INTERNAL_MAGIC;
+    brep_internal->brep = result.brep;
+    result.brep = NULL;
+    RT_DB_INTERNAL_INIT(out);
+    out->idb_ptr = brep_internal;
+    out->idb_major_type = DB5_MAJORTYPE_BRLCAD;
+    out->idb_meth = &OBJ[ID_BREP];
+    out->idb_minor_type = ID_BREP;
+    return BREP_BOOLEAN_SUCCESS;
+}
+
+
+static int
+wait_for_isolated_result(struct rt_brep_worker_pool *pool,
+	uint64_t request_id, struct rt_db_internal *out,
+	struct bu_vls *diagnostic)
+{
+    if (!pool || !request_id || !out)
+	return BREP_BOOLEAN_INTERNAL_ERROR;
+
+    int status = BREP_BOOLEAN_INTERNAL_ERROR;
+    while (rt_brep_worker_pool_pending(pool)) {
+	struct rt_brep_worker_result result = RT_BREP_WORKER_RESULT_INIT;
+	const int poll_status = rt_brep_worker_pool_poll(pool, &result, 100);
+	if (poll_status < 0) {
+	    if (diagnostic)
+		bu_vls_strcat(diagnostic, "Unable to poll B-Rep worker pool");
+	    break;
+	}
+	if (!poll_status)
+	    continue;
+	const bool requested_result = result.request_id == request_id;
+	if (requested_result)
+	    status = isolated_result(out, result, diagnostic);
+	rt_brep_worker_result_destroy(&result);
+	if (requested_result)
+	    break;
+    }
+    return status;
+}
+
+
+int
+brep_conversion_isolated(const char *object_name, struct rt_db_internal *out,
+	const struct db_i *dbip, struct bu_vls *diagnostic)
+{
+    if (!object_name || !object_name[0] || !out || !dbip ||
+	!dbip->dbi_filename || !dbip->dbi_filename[0])
+    {
+	return BREP_BOOLEAN_INVALID_INPUT;
+    }
+    RT_DB_INTERNAL_INIT(out);
+    struct rt_brep_worker_options options = RT_BREP_WORKER_OPTIONS_INIT;
+    struct rt_brep_worker_pool *pool = rt_brep_worker_pool_create(
+	dbip->dbi_filename, &options);
+    if (!pool) {
+	if (diagnostic)
+	    bu_vls_strcat(diagnostic, "Unable to create B-Rep worker pool");
+	return BREP_BOOLEAN_INTERNAL_ERROR;
+    }
+
+    struct bn_tol tolerance = BN_TOL_INIT_TOL;
+    const uint64_t request_id = rt_brep_worker_pool_submit_conversion(pool,
+	object_name, &tolerance);
+    const int status = wait_for_isolated_result(pool, request_id, out,
+	diagnostic);
+    rt_brep_worker_pool_destroy(pool);
+    return status;
+}
+
+
+int
+brep_boolean_isolated(const char *left_name, const char *right_name,
+	enum op_type operation, struct rt_db_internal *out,
+	const struct db_i *dbip, struct bu_vls *diagnostic)
+{
+    if (!left_name || !left_name[0] || !right_name || !right_name[0] ||
+	!out || !dbip || !dbip->dbi_filename || !dbip->dbi_filename[0])
+    {
+	return BREP_BOOLEAN_INVALID_INPUT;
+    }
+    RT_DB_INTERNAL_INIT(out);
+    struct rt_brep_worker_options options = RT_BREP_WORKER_OPTIONS_INIT;
+    struct rt_brep_worker_pool *pool = rt_brep_worker_pool_create(
+	dbip->dbi_filename, &options);
+    if (!pool) {
+	if (diagnostic)
+	    bu_vls_strcat(diagnostic, "Unable to create B-Rep worker pool");
+	return BREP_BOOLEAN_INTERNAL_ERROR;
+    }
+
+    const uint64_t request_id = rt_brep_worker_pool_submit_boolean(pool,
+	left_name, right_name, operation);
+    const int status = wait_for_isolated_result(pool, request_id, out,
+	diagnostic);
+    rt_brep_worker_pool_destroy(pool);
+    return status;
 }
 
 
@@ -75,6 +222,11 @@ brep_conversion(struct rt_db_internal* in, struct rt_db_internal* out, const str
 	delete old;
 	return ret;
     }
+
+    if (brep->m_F.Count() == 0) {
+	delete brep;
+	return BREP_BOOLEAN_EMPTY;
+	}
 
     struct rt_brep_internal *bip_out;
     BU_ALLOC(bip_out, struct rt_brep_internal);

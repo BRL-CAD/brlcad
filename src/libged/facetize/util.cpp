@@ -255,10 +255,17 @@ facetize_summary(struct _ged_facetize_state *s)
 
     if (have_tolerated_failures) {
 	facetize_log(s, 0, "\n  Tolerated failures:\n");
-	facetize_log(s, 0, "    %-43s %8d\n", "Components omitted",
-		s->tolerated_failures);
-	facetize_log(s, 0,
-		"    WARNING: output is partial and does not completely represent the input.\n");
+	if (s->execution.writes_brep()) {
+	    facetize_log(s, 0, "    %-43s %8d\n",
+		    "Regions retained as original CSG", s->tolerated_failures);
+	    facetize_log(s, 0,
+		    "    WARNING: output is a hybrid hierarchy; failed regions remain CSG rather than B-Reps.\n");
+	} else {
+	    facetize_log(s, 0, "    %-43s %8d\n", "Components omitted",
+		    s->tolerated_failures);
+	    facetize_log(s, 0,
+		    "    WARNING: output is partial and does not completely represent the input.\n");
+	}
 	facetize_log(s, 0,
 		"    Re-run without --tolerate-failures to stop at the first failure.\n");
 	if (s->tolerated_failure_details > 0)

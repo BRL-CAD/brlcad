@@ -28,8 +28,8 @@ ged_plugin_library(ged-facetize
   PLUGIN_ONLY
 )
 
-# Plugin requires subprocess to work
-add_dependencies(ged-facetize ged_exec facetize_process)
+# Plugin requires subprocesses for mesh and B-Rep evaluation.
+add_dependencies(ged-facetize ged_exec facetize_process brep_boolean_worker)
 
 cmakefiles(
   CMakeLists.txt

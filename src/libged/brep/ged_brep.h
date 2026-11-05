@@ -35,6 +35,7 @@
 #include "bu/opt.h"
 #include "bv/plot3.h"
 #include "bu/color.h"
+#include "brep/boolean.h"
 #include "rt/db4.h"
 #include "raytrace.h"
 #include "rt/geom.h"
@@ -110,6 +111,13 @@ extern int brep_tikz(struct _ged_brep_info *gb, const char *outfile);
 extern int brep_valid(struct bu_vls *vls, struct rt_db_internal *intern, int argc, const char **argv);
 
 extern int brep_conversion(struct rt_db_internal* in, struct rt_db_internal* out, const struct db_i *dbip);
+extern int brep_conversion_isolated(const char *object_name,
+	struct rt_db_internal *out, const struct db_i *dbip,
+	struct bu_vls *diagnostic);
+extern int brep_boolean_isolated(const char *left_name,
+	const char *right_name, enum op_type operation,
+	struct rt_db_internal *out, const struct db_i *dbip,
+	struct bu_vls *diagnostic);
 extern int brep_conversion_comb(struct rt_db_internal *old_internal, const char *name, const char *suffix, struct rt_wdb *wdbp, fastf_t local2mm);
 
 extern int brep_intersect_point_point(struct rt_db_internal *intern1, struct rt_db_internal *intern2, int i, int j);

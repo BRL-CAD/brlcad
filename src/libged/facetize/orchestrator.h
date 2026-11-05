@@ -23,12 +23,14 @@ class method_options_t;
 
 enum class FacetizeOutputFormat {
     Bot,
-    Nmg
+    Nmg,
+    Brep
 };
 
 enum class FacetizeBooleanEngine {
     Manifold,
-    Nmg
+    Nmg,
+    Brep
 };
 
 enum class FacetizeScope {
@@ -54,8 +56,11 @@ struct FacetizeExecutionOptions {
     FacetizeCommitMode commit_mode = FacetizeCommitMode::NewObject;
     FacetizePerturbMode perturb_mode = FacetizePerturbMode::Disabled;
 
+    bool writes_bot() const { return output_format == FacetizeOutputFormat::Bot; }
     bool writes_nmg() const { return output_format == FacetizeOutputFormat::Nmg; }
+    bool writes_brep() const { return output_format == FacetizeOutputFormat::Brep; }
     bool uses_nmg_boolean() const { return boolean_engine == FacetizeBooleanEngine::Nmg; }
+    bool uses_brep_boolean() const { return boolean_engine == FacetizeBooleanEngine::Brep; }
     bool processes_regions() const { return scope == FacetizeScope::Regions; }
     bool processes_breps() const { return scope == FacetizeScope::NonOverlappingBrep; }
     bool writes_in_place() const { return commit_mode == FacetizeCommitMode::InPlace; }

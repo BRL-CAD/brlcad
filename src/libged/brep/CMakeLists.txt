@@ -65,6 +65,9 @@ ged_plugin_library(ged-brep
   LIBS ${BREP_LIBS}
   PLUGIN_ONLY
 )
+if(TARGET brep_boolean_worker)
+  add_dependencies(ged-brep brep_boolean_worker)
+endif()
 
 # Suppress warnings from the generated source code
 check_c_compiler_flag("-w"   HAVE_C_FLAG_W)

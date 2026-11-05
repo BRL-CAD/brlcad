@@ -31,6 +31,7 @@
 #include "common.h"
 
 #include <algorithm>
+#include <climits>
 #include <cmath>
 #include <map>
 #include <set>
@@ -46,6 +47,8 @@
 #include "bu/process.h"
 #include "bu/snooze.h"
 #include "bg/trimesh.h"
+#include "brep/boolean.h"
+#include "rt/comb.h"
 #include "rt/db_io.h"
 #include "rt/search.h"
 #include "raytrace.h"
@@ -171,9 +174,15 @@ struct RegionCsgWorker {
 
 struct RegionBoolevalResult {
     std::string object_name;
-    std::string bot_name;
+    std::string output_name;
+    std::string diagnostic;
     bool attempted = false;
     bool succeeded = false;
+    int boolean_status = BREP_BOOLEAN_INTERNAL_ERROR;
+    enum rt_brep_worker_transport_status transport_status =
+	RT_BREP_WORKER_TRANSPORT_OK;
+    struct rt_brep_conversion_info conversion_info =
+	RT_BREP_CONVERSION_INFO_INIT;
 };
 
 struct RegionBoolevalWorker {
@@ -594,7 +603,7 @@ _evaluate_regions_parallel(struct _ged_facetize_state *s,
 	    return false;
 	}
 	if (!writer.channel.send_commit(worker.result_file.c_str(),
-		result.bot_name.c_str(), worker.status.payload_size)) {
+		result.output_name.c_str(), worker.status.payload_size)) {
 	    _region_booleval_writer_stop(s, writer, true);
 	    return false;
 	}
@@ -906,6 +915,460 @@ _evaluate_regions_parallel(struct _ged_facetize_state *s,
 	    "FACETIZE: isolated region evaluation complete: %zu of %zu roots committed (%.1f seconds)\n",
 	    succeeded, results.size(), elapsed_seconds);
     return restore_status;
+}
+
+static const char *
+_brep_fidelity_name(enum rt_brep_conversion_fidelity fidelity)
+{
+    switch (fidelity) {
+	case RT_BREP_CONVERSION_FIDELITY_EXACT:
+	    return "exact";
+	case RT_BREP_CONVERSION_FIDELITY_APPROXIMATE:
+	    return "approximate";
+	default:
+	    return "unknown";
+    }
+}
+
+static const char *
+_brep_transport_name(enum rt_brep_worker_transport_status status)
+{
+    switch (status) {
+	case RT_BREP_WORKER_TRANSPORT_OK:
+	    return "ok";
+	case RT_BREP_WORKER_START_FAILED:
+	    return "worker start failed";
+	case RT_BREP_WORKER_WRITE_FAILED:
+	    return "request write failed";
+	case RT_BREP_WORKER_CRASHED:
+	    return "worker crashed";
+	case RT_BREP_WORKER_TIMED_OUT:
+	    return "worker timed out";
+	case RT_BREP_WORKER_PROTOCOL_ERROR:
+	    return "worker protocol error";
+	case RT_BREP_WORKER_RESULT_ERROR:
+	    return "worker result error";
+	case RT_BREP_WORKER_CANCELLED:
+	    return "worker request cancelled";
+	default:
+	    return "unknown worker error";
+    }
+}
+
+
+static void
+_add_brep_failure_attributes(struct bu_attribute_value_set *attributes,
+    const struct rt_brep_failure_info &failure)
+{
+    if (!attributes || failure.stage == RT_BREP_FAILURE_STAGE_NONE)
+	return;
+
+    (void)bu_avs_add(attributes, "brep_failure_stage",
+	rt_brep_failure_stage_description(failure.stage));
+    (void)bu_avs_add(attributes, "brep_failure_reason",
+	rt_brep_failure_reason_description(failure.reason));
+    (void)bu_avs_add(attributes, "brep_failure_tree_path",
+	failure.tree_path);
+    if (failure.object_name[0] != '\0')
+	(void)bu_avs_add(attributes, "brep_failure_object",
+	    failure.object_name);
+    if (failure.snapshot_name[0] != '\0')
+	(void)bu_avs_add(attributes, "brep_failure_snapshot",
+	    failure.snapshot_name);
+
+    char value[64] = {0};
+    snprintf(value, sizeof(value), "%d", failure.status);
+    (void)bu_avs_add(attributes, "brep_failure_status", value);
+    snprintf(value, sizeof(value), "%d", failure.operation);
+    (void)bu_avs_add(attributes, "brep_failure_operation", value);
+    snprintf(value, sizeof(value), "%d", failure.regularized);
+    (void)bu_avs_add(attributes, "brep_failure_regularized", value);
+    snprintf(value, sizeof(value), "%.17g", failure.regularization_scale);
+    (void)bu_avs_add(attributes, "brep_failure_regularization_scale", value);
+    snprintf(value, sizeof(value), "%zu", failure.left_faces);
+    (void)bu_avs_add(attributes, "brep_failure_left_faces", value);
+    snprintf(value, sizeof(value), "%zu", failure.left_edges);
+    (void)bu_avs_add(attributes, "brep_failure_left_edges", value);
+    snprintf(value, sizeof(value), "%zu", failure.right_faces);
+    (void)bu_avs_add(attributes, "brep_failure_right_faces", value);
+    snprintf(value, sizeof(value), "%zu", failure.right_edges);
+    (void)bu_avs_add(attributes, "brep_failure_right_edges", value);
+    snprintf(value, sizeof(value), "%zu", failure.output_faces);
+    (void)bu_avs_add(attributes, "brep_failure_output_faces", value);
+    snprintf(value, sizeof(value), "%zu", failure.output_edges);
+    (void)bu_avs_add(attributes, "brep_failure_output_edges", value);
+    snprintf(value, sizeof(value), "%zu", failure.output_naked_edges);
+    (void)bu_avs_add(attributes, "brep_failure_output_naked_edges", value);
+
+    const struct brep_boolean_failure_info &boolean_failure =
+	failure.boolean_failure;
+    if (boolean_failure.stage == BREP_BOOLEAN_FAILURE_STAGE_NONE)
+	return;
+    (void)bu_avs_add(attributes, "brep_boolean_failure_stage",
+	ON_BooleanFailureStageDescription(boolean_failure.stage));
+    (void)bu_avs_add(attributes, "brep_boolean_failure_reason",
+	ON_BooleanFailureReasonDescription(boolean_failure.reason));
+    snprintf(value, sizeof(value), "%d", boolean_failure.face_index);
+    (void)bu_avs_add(attributes, "brep_boolean_failure_face", value);
+    snprintf(value, sizeof(value), "%d", boolean_failure.peer_face_index);
+    (void)bu_avs_add(attributes, "brep_boolean_failure_peer_face", value);
+    snprintf(value, sizeof(value), "%d", boolean_failure.edge_index);
+    (void)bu_avs_add(attributes, "brep_boolean_failure_edge", value);
+    snprintf(value, sizeof(value), "%d", boolean_failure.peer_edge_index);
+    (void)bu_avs_add(attributes, "brep_boolean_failure_peer_edge", value);
+    snprintf(value, sizeof(value), "%zu",
+	boolean_failure.intersection_candidates);
+    (void)bu_avs_add(attributes,
+	"brep_boolean_failure_intersection_candidates", value);
+    snprintf(value, sizeof(value), "%zu", boolean_failure.intersection_events);
+    (void)bu_avs_add(attributes, "brep_boolean_failure_intersection_events",
+	value);
+    snprintf(value, sizeof(value), "%zu", boolean_failure.projection_failures);
+    (void)bu_avs_add(attributes, "brep_boolean_failure_projection_failures",
+	value);
+    snprintf(value, sizeof(value), "%zu", boolean_failure.output_naked_edges);
+    (void)bu_avs_add(attributes, "brep_boolean_failure_output_naked_edges",
+	value);
+    snprintf(value, sizeof(value), "%zu",
+	boolean_failure.output_nonmanifold_edges);
+    (void)bu_avs_add(attributes,
+	"brep_boolean_failure_output_nonmanifold_edges", value);
+    snprintf(value, sizeof(value), "%zu",
+	boolean_failure.ambiguous_edge_matches);
+    (void)bu_avs_add(attributes,
+	"brep_boolean_failure_ambiguous_edge_matches", value);
+    snprintf(value, sizeof(value), "%.17g", boolean_failure.tolerance);
+    (void)bu_avs_add(attributes, "brep_boolean_failure_tolerance", value);
+}
+
+
+/* Write a worker-owned B-Rep into the region working database.  Ownership is
+ * transferred before rt_db_put_internal, which consumes the internal on both
+ * success and failure. */
+static int
+_write_region_brep(struct db_i *dbip, const char *name,
+	const char *source_region, ON_Brep **brep, int boolean_status,
+	const struct rt_brep_conversion_info &info)
+{
+    if (!dbip || !name || !name[0] || !source_region ||
+	!source_region[0] || !brep)
+	return BRLCAD_ERROR;
+
+    ON_Brep *owned_brep = *brep;
+    if (!owned_brep && boolean_status == BREP_BOOLEAN_EMPTY)
+	owned_brep = ON_Brep::New();
+    if (!owned_brep)
+	return BRLCAD_ERROR;
+
+    struct rt_brep_internal *brep_internal;
+    BU_ALLOC(brep_internal, struct rt_brep_internal);
+    brep_internal->magic = RT_BREP_INTERNAL_MAGIC;
+    brep_internal->brep = owned_brep;
+    if (*brep == owned_brep)
+	*brep = NULL;
+
+    struct rt_db_internal internal;
+    RT_DB_INTERNAL_INIT(&internal);
+    internal.idb_major_type = DB5_MAJORTYPE_BRLCAD;
+    internal.idb_type = ID_BREP;
+    internal.idb_minor_type = ID_BREP;
+    internal.idb_meth = &OBJ[ID_BREP];
+    internal.idb_ptr = brep_internal;
+    bu_avs_init_empty(&internal.idb_avs);
+    (void)bu_avs_add(&internal.idb_avs, "facetized", "1");
+    (void)bu_avs_add(&internal.idb_avs, "facetize_output", "brep");
+    (void)bu_avs_add(&internal.idb_avs, "brep_source_region",
+	source_region);
+    (void)bu_avs_add(&internal.idb_avs, "brep_conversion_fidelity",
+	_brep_fidelity_name(info.fidelity));
+
+    char value[64] = {0};
+    snprintf(value, sizeof(value), "%.17g",
+	info.declared_relative_tolerance);
+    (void)bu_avs_add(&internal.idb_avs,
+	"brep_declared_relative_tolerance", value);
+    snprintf(value, sizeof(value), "%u", info.approximation_flags);
+    (void)bu_avs_add(&internal.idb_avs, "brep_approximation_flags", value);
+    snprintf(value, sizeof(value), "%u", info.regularization_attempts);
+    (void)bu_avs_add(&internal.idb_avs, "brep_regularization_attempts", value);
+    snprintf(value, sizeof(value), "%u",
+	info.whole_tree_regularization_attempts);
+    (void)bu_avs_add(&internal.idb_avs,
+	"brep_whole_tree_regularization_attempts", value);
+    snprintf(value, sizeof(value), "%u", info.repaired_arb_count);
+    (void)bu_avs_add(&internal.idb_avs, "brep_repaired_arb_count", value);
+    snprintf(value, sizeof(value), "%d", info.initial_status);
+    (void)bu_avs_add(&internal.idb_avs, "brep_initial_status", value);
+    snprintf(value, sizeof(value), "%d", boolean_status);
+    (void)bu_avs_add(&internal.idb_avs, "brep_conversion_status", value);
+    _add_brep_failure_attributes(&internal.idb_avs, info.failure);
+
+    struct directory *dp = db_diradd(dbip, name, RT_DIR_PHONY_ADDR, 0,
+	RT_DIR_SOLID, (void *)&internal.idb_type);
+    if (dp == RT_DIR_NULL) {
+	rt_db_free_internal(&internal);
+	return BRLCAD_ERROR;
+    }
+    return rt_db_put_internal(dp, dbip, &internal) < 0 ?
+	BRLCAD_ERROR : BRLCAD_OK;
+}
+
+/* Convert region roots with librt's persistent B-Rep worker pool.  Only the
+ * Boolean/conversion work runs in workers; completed, validated B-Reps are
+ * imported serially into facetize's existing working hierarchy. */
+static int
+_evaluate_regions_brep(struct _ged_facetize_state *s,
+	std::vector<RegionBoolevalResult> &results)
+{
+    if (!s || !s->dbip || !s->dbip->dbi_filename ||
+	!s->dbip->dbi_filename[0] || results.empty())
+	return BRLCAD_ERROR;
+
+    const size_t available_cpus = bu_avail_cpus();
+    const ssize_t total_memory_result = bu_mem(BU_MEM_ALL, NULL);
+    const ssize_t available_memory_result = bu_mem(BU_MEM_AVAIL, NULL);
+    const size_t total_memory = total_memory_result > 0 ?
+	(size_t)total_memory_result : 0;
+    const size_t available_memory = available_memory_result > 0 ?
+	(size_t)available_memory_result : 0;
+    FacetizeWorkerPolicy policy((size_t)s->max_workers, results.size(),
+	available_cpus, total_memory, available_memory);
+
+    struct rt_brep_worker_options options = RT_BREP_WORKER_OPTIONS_INIT;
+    options.worker_count = policy.worker_count();
+    if (s->max_time > 0) {
+	const uint64_t timeout_ms = (uint64_t)s->max_time * 1000u;
+	options.request_timeout_ms = timeout_ms > UINT_MAX ? UINT_MAX :
+	    (unsigned int)timeout_ms;
+    }
+    struct rt_brep_worker_pool *pool = rt_brep_worker_pool_create(
+	s->dbip->dbi_filename, &options);
+    if (!pool) {
+	facetize_failure(s, "unable to start the B-Rep region worker pool");
+	return BRLCAD_ERROR;
+    }
+
+    struct db_i *work_dbip = _open_working_db(s);
+    if (!work_dbip) {
+	rt_brep_worker_pool_destroy(pool);
+	return BRLCAD_ERROR;
+    }
+
+    struct bn_tol tolerance = BN_TOL_INIT_TOL;
+    std::map<uint64_t, size_t> requests;
+    for (size_t i = 0; i < results.size(); i++) {
+	const uint64_t request_id = rt_brep_worker_pool_submit_conversion(pool,
+	    results[i].object_name.c_str(), &tolerance);
+	if (!request_id) {
+	    results[i].attempted = true;
+	    facetize_log(s, 0,
+		    "FACETIZE: unable to queue B-Rep evaluation for %s\n",
+		    results[i].object_name.c_str());
+	    continue;
+	}
+	requests[request_id] = i;
+    }
+
+    facetize_log(s, 0,
+	    "FACETIZE: evaluating %zu region roots as B-Reps using %zu persistent isolated workers\n",
+	    requests.size(), options.worker_count);
+    const int64_t start = bu_gettime();
+    int64_t next_progress = start +
+	BU_SEC2USEC(FACETIZE_REGION_PROGRESS_INTERVAL_SEC);
+    size_t completed = 0;
+    int pool_status = BRLCAD_OK;
+    while (rt_brep_worker_pool_pending(pool) > 0) {
+	struct rt_brep_worker_result worker_result =
+	    RT_BREP_WORKER_RESULT_INIT;
+	const int poll_status = rt_brep_worker_pool_poll(pool,
+	    &worker_result, 100);
+	if (poll_status < 0) {
+	    facetize_failure(s, "B-Rep region worker pool failed");
+	    pool_status = BRLCAD_ERROR;
+	    break;
+	}
+	if (poll_status == 0) {
+	    const int64_t now = bu_gettime();
+	    if (now >= next_progress) {
+		facetize_log(s, 0,
+			"FACETIZE: evaluated %zu of %zu B-Rep region roots (%.1f seconds elapsed)\n",
+			completed, requests.size(),
+			(now - start) / FACETIZE_USEC_TO_SEC_DIVISOR);
+		next_progress = now +
+		    BU_SEC2USEC(FACETIZE_REGION_PROGRESS_INTERVAL_SEC);
+	    }
+	    continue;
+	}
+
+	auto request_it = requests.find(worker_result.request_id);
+	if (request_it == requests.end()) {
+	    rt_brep_worker_result_destroy(&worker_result);
+	    facetize_failure(s, "B-Rep worker returned an unknown request");
+	    pool_status = BRLCAD_ERROR;
+	    break;
+	}
+	RegionBoolevalResult &result = results[request_it->second];
+	result.attempted = true;
+	result.boolean_status = worker_result.boolean_status;
+	result.transport_status = worker_result.transport_status;
+	result.diagnostic = worker_result.diagnostic ?
+	    worker_result.diagnostic : "";
+	result.conversion_info = worker_result.conversion_info;
+	completed++;
+
+	if (worker_result.transport_status != RT_BREP_WORKER_TRANSPORT_OK) {
+	    facetize_log(s, 0,
+		    "FACETIZE: B-Rep worker failed for %s: %s%s%s\n",
+		    result.object_name.c_str(),
+		    _brep_transport_name(worker_result.transport_status),
+		    worker_result.diagnostic && worker_result.diagnostic[0] ?
+		    " - " : "",
+		    worker_result.diagnostic ? worker_result.diagnostic : "");
+	} else if (worker_result.boolean_status != BREP_BOOLEAN_SUCCESS &&
+		worker_result.boolean_status != BREP_BOOLEAN_EMPTY) {
+	    const struct rt_brep_failure_info &failure =
+		worker_result.conversion_info.failure;
+	    facetize_log(s, 0,
+		    "FACETIZE: B-Rep evaluation failed for %s: %s%s%s%s%s%s\n",
+		    result.object_name.c_str(), ON_BooleanStatusDescription(
+			worker_result.boolean_status),
+		    failure.stage != RT_BREP_FAILURE_STAGE_NONE ? " (" : "",
+		    failure.stage != RT_BREP_FAILURE_STAGE_NONE ?
+			rt_brep_failure_stage_description(failure.stage) : "",
+		    failure.stage != RT_BREP_FAILURE_STAGE_NONE ? "/" : "",
+		    failure.stage != RT_BREP_FAILURE_STAGE_NONE ?
+			rt_brep_failure_reason_description(failure.reason) : "",
+		    failure.stage != RT_BREP_FAILURE_STAGE_NONE ? ")" : "");
+	} else if (worker_result.boolean_status == BREP_BOOLEAN_EMPTY &&
+		s->no_empty) {
+	    facetize_log(s, 0,
+		    "FACETIZE: B-Rep evaluation for %s is empty and --no-empty was requested\n",
+		    result.object_name.c_str());
+	} else if (_write_region_brep(work_dbip, result.output_name.c_str(),
+		result.object_name.c_str(), &worker_result.brep,
+		worker_result.boolean_status,
+		worker_result.conversion_info) == BRLCAD_OK) {
+	    result.succeeded = true;
+	    if (worker_result.conversion_info.fidelity ==
+		    RT_BREP_CONVERSION_FIDELITY_APPROXIMATE) {
+		facetize_log(s, 0,
+			"FACETIZE NOTE: %s produced a tolerance-bounded approximate B-Rep (relative tolerance %.6g, flags 0x%x, whole-tree retries %u, repaired ARBs %u)\n",
+			result.object_name.c_str(),
+			worker_result.conversion_info.declared_relative_tolerance,
+			worker_result.conversion_info.approximation_flags,
+			worker_result.conversion_info.whole_tree_regularization_attempts,
+			worker_result.conversion_info.repaired_arb_count);
+	    }
+	} else {
+	    facetize_log(s, 0,
+		    "FACETIZE: unable to stage B-Rep output for %s\n",
+		    result.object_name.c_str());
+	}
+	rt_brep_worker_result_destroy(&worker_result);
+    }
+
+    rt_brep_worker_pool_destroy(pool);
+    db_close(work_dbip);
+    facetize_log(s, 0,
+	    "FACETIZE: isolated B-Rep region evaluation complete: %zu of %zu roots evaluated (%.1f seconds)\n",
+	    completed, requests.size(),
+	    (bu_gettime() - start) / FACETIZE_USEC_TO_SEC_DIVISOR);
+    return pool_status;
+}
+
+static void
+_summarize_brep_regions(struct _ged_facetize_state *s,
+	const std::vector<RegionBoolevalResult> &results,
+	double elapsed_seconds)
+{
+    if (!s || !s->region_summary)
+	return;
+
+    size_t succeeded = 0;
+    size_t exact = 0;
+    size_t approximate = 0;
+    size_t empty = 0;
+    unsigned int regularization_attempts = 0;
+    unsigned int whole_tree_attempts = 0;
+    unsigned int repaired_arbs = 0;
+    for (const RegionBoolevalResult &result : results) {
+	succeeded += result.succeeded ? 1u : 0u;
+	exact += result.succeeded && result.conversion_info.fidelity ==
+	    RT_BREP_CONVERSION_FIDELITY_EXACT ? 1u : 0u;
+	approximate += result.succeeded && result.conversion_info.fidelity ==
+	    RT_BREP_CONVERSION_FIDELITY_APPROXIMATE ? 1u : 0u;
+	empty += result.succeeded &&
+	    result.boolean_status == BREP_BOOLEAN_EMPTY ? 1u : 0u;
+	regularization_attempts +=
+	    result.conversion_info.regularization_attempts;
+	whole_tree_attempts +=
+	    result.conversion_info.whole_tree_regularization_attempts;
+	repaired_arbs += result.conversion_info.repaired_arb_count;
+    }
+
+    bu_vls_trunc(s->region_summary, 0);
+    bu_vls_printf(s->region_summary, "\n  B-Rep region conversion:\n");
+    bu_vls_printf(s->region_summary, "    %-43s %8zu\n",
+	"Total roots evaluated", results.size());
+    bu_vls_printf(s->region_summary, "    %-43s %8.2f\n", "Runtime (sec)",
+	elapsed_seconds);
+    bu_vls_printf(s->region_summary, "    %-43s %8zu\n",
+	"Successful B-Rep outputs", succeeded);
+    bu_vls_printf(s->region_summary, "    %-43s %8zu\n",
+	"Failed B-Rep conversions", results.size() - succeeded);
+    if (s->tolerate_failures)
+	bu_vls_printf(s->region_summary, "    %-43s %8zu\n",
+	    "Original CSG regions retained", results.size() - succeeded);
+    bu_vls_printf(s->region_summary, "    %-43s %8zu\n",
+	"Exact B-Reps", exact);
+    bu_vls_printf(s->region_summary, "    %-43s %8zu\n",
+	"Tolerance-bounded approximate B-Reps", approximate);
+    bu_vls_printf(s->region_summary, "    %-43s %8zu\n",
+	"Empty Boolean results", empty);
+    bu_vls_printf(s->region_summary, "    %-43s %8u\n",
+	"Regularization attempts", regularization_attempts);
+    bu_vls_printf(s->region_summary, "    %-43s %8u\n",
+	"Whole-tree regularization attempts", whole_tree_attempts);
+    bu_vls_printf(s->region_summary, "    %-43s %8u\n",
+	"Near-planar ARBs repaired", repaired_arbs);
+}
+
+/* A tolerated B-Rep conversion failure leaves the source region in the
+ * copied hierarchy.  Mark that object so callers can distinguish an
+ * intentionally hybrid result from a complete B-Rep conversion. */
+static int
+_mark_brep_csg_fallback(struct db_i *dbip,
+	const RegionBoolevalResult &result)
+{
+    if (!dbip || result.object_name.empty())
+	return BRLCAD_ERROR;
+
+    struct directory *dp = db_lookup(dbip, result.object_name.c_str(),
+	LOOKUP_QUIET);
+    if (!dp)
+	return BRLCAD_ERROR;
+
+    struct rt_db_internal internal;
+    RT_DB_INTERNAL_INIT(&internal);
+    if (rt_db_get_internal(&internal, dp, dbip, NULL) < 0)
+	return BRLCAD_ERROR;
+
+    (void)bu_avs_add(&internal.idb_avs, "facetize_output", "original_csg");
+    (void)bu_avs_add(&internal.idb_avs, "brep_source_region",
+	result.object_name.c_str());
+    (void)bu_avs_add(&internal.idb_avs, "brep_conversion_fidelity",
+	"unconverted");
+
+    char value[64] = {0};
+    snprintf(value, sizeof(value), "%d", result.boolean_status);
+    (void)bu_avs_add(&internal.idb_avs, "brep_conversion_status", value);
+    (void)bu_avs_add(&internal.idb_avs, "brep_worker_transport_status",
+	_brep_transport_name(result.transport_status));
+    _add_brep_failure_attributes(&internal.idb_avs,
+	result.conversion_info.failure);
+
+    return rt_db_put_internal(dp, dbip, &internal) < 0 ?
+	BRLCAD_ERROR : BRLCAD_OK;
 }
 
 static int
@@ -1381,7 +1844,7 @@ _ged_facetize_regions(struct _ged_facetize_state *s, const FacetizePlan &plan)
     // If we have none, use the normal object-mode implementation.  Keeping
     // one dispatch path prevents evaluator options from drifting between the
     // two modes.
-    if (!BU_PTBL_LEN(ar)) {
+    if (!BU_PTBL_LEN(ar) && !s->execution.writes_brep()) {
 	bu_ptbl_free(ar);
 	bu_free(ar, "ar table");
 	bu_free(dpa, "dpa");
@@ -1446,8 +1909,10 @@ _ged_facetize_regions(struct _ged_facetize_state *s, const FacetizePlan &plan)
 	return BRLCAD_ERROR;
     }
 
-    // We need all the solids converted
-    if (!s->execution.uses_nmg_boolean()) {
+    // Manifold BoT evaluation needs tessellated leaves.  NMG and B-Rep
+    // evaluators consume the source primitives directly.
+    if (s->execution.writes_bot() &&
+	    !s->execution.uses_nmg_boolean()) {
 	if (_ged_facetize_leaves_tri(s, dbip, as)) {
 	    if (s->verbosity >= 0) {
 		bu_log("regions.cpp:%d Failed to tessellate all solids - aborting.\n", __LINE__);
@@ -1519,7 +1984,7 @@ _ged_facetize_regions(struct _ged_facetize_state *s, const FacetizePlan &plan)
 	}
     }
 
-    /* Build the list of roots to evaluate to BoTs:
+    /* Build the list of roots to evaluate to output solids:
      *  - active regions
      *  - implicit non-region solids when not in NMG mode */
     struct bu_ptbl eval_roots = BU_PTBL_INIT_ZERO;
@@ -1542,7 +2007,9 @@ _ged_facetize_regions(struct _ged_facetize_state *s, const FacetizePlan &plan)
 
     /* Region mode starts with the baseline BoT path and only enables/tessellates
      * variants if Pass 1 validation says a perturb retry is needed. */
-    if (!s->execution.uses_nmg_boolean() && s->execution.uses_perturbation())
+    if (s->execution.writes_bot() &&
+	    !s->execution.uses_nmg_boolean() &&
+	    s->execution.uses_perturbation())
 	s->use_variant_plan = 0;
 
     /* The original-CSG side of Pass 1 validation is independent of generated
@@ -1550,7 +2017,9 @@ _ged_facetize_regions(struct _ged_facetize_state *s, const FacetizePlan &plan)
      * before entering the serial Boolean/write phase.  Perturb retries remain
      * serial because they create temporary variants in the working database. */
     std::vector<RegionCsgMetrics> csg_metrics(eval_total);
-    if (!s->execution.uses_nmg_boolean() && s->execution.uses_perturbation()) {
+    if (s->execution.writes_bot() &&
+	    !s->execution.uses_nmg_boolean() &&
+	    s->execution.uses_perturbation()) {
 	for (size_t i = 0; i < BU_PTBL_LEN(&eval_roots); i++) {
 	    struct directory *dp =
 		(struct directory *)BU_PTBL_GET(&eval_roots, i);
@@ -1562,7 +2031,7 @@ _ged_facetize_regions(struct _ged_facetize_state *s, const FacetizePlan &plan)
 	_collect_region_csg_metrics(s, csg_metrics);
     }
 
-    // For evaluated roots, reduce each CSG tree to a single BoT/NMG result and
+    // For evaluated roots, reduce each CSG tree to one output solid and
     // place that result back into the working hierarchy.
     struct bu_vls bname = BU_VLS_INIT_ZERO;
     std::vector<RegionBoolevalResult> region_boolevals(eval_total);
@@ -1575,21 +2044,30 @@ _ged_facetize_regions(struct _ged_facetize_state *s, const FacetizePlan &plan)
 		struct directory *root =
 		    (struct directory *)BU_PTBL_GET(&eval_roots, i);
 		region_boolevals[i].object_name = root->d_namep;
-		bu_vls_sprintf(&bname, "%s.bot", root->d_namep);
+		bu_vls_sprintf(&bname, "%s.%s", root->d_namep,
+			s->execution.writes_brep() ? "brep" : "bot");
 		if (db_lookup(name_dbip, bu_vls_cstr(&bname),
 			LOOKUP_QUIET) != RT_DIR_NULL)
 		    bu_vls_incr(&bname, NULL, NULL, &_db_uniq_test,
 			    (void *)name_dbip);
-		region_boolevals[i].bot_name = bu_vls_cstr(&bname);
+		region_boolevals[i].output_name = bu_vls_cstr(&bname);
 	    }
 	}
 	if (name_dbip)
 	    db_close(name_dbip);
 	if (!region_boolevals.empty() &&
-		!region_boolevals[0].bot_name.empty())
-	    parallel_eval_status =
+		!region_boolevals[0].output_name.empty()) {
+	    parallel_eval_status = s->execution.writes_brep() ?
+		_evaluate_regions_brep(s, region_boolevals) :
 		_evaluate_regions_parallel(s, region_boolevals);
+	} else if (s->execution.writes_brep()) {
+	    parallel_eval_status = BRLCAD_ERROR;
+	}
     }
+
+    if (s->execution.writes_brep())
+	_summarize_brep_regions(s, region_boolevals,
+	    (bu_gettime() - region_start) / FACETIZE_USEC_TO_SEC_DIVISOR);
 
     auto cleanup_eval_error = [&]() {
 	if (s->variant_plan) {
@@ -1620,25 +2098,27 @@ _ged_facetize_regions(struct _ged_facetize_state *s, const FacetizePlan &plan)
     int64_t finalization_start = bu_gettime();
     int64_t next_finalization_progress = finalization_start +
 	BU_SEC2USEC(FACETIZE_REGION_PROGRESS_INTERVAL_SEC);
-    facetize_log(s, 0,
+    facetize_log(s, 0, s->execution.writes_brep() ?
+	    "FACETIZE: finalizing %zu B-Rep region roots\n" :
 	    "FACETIZE: finalizing and validating %zu region roots\n",
 	    eval_total);
     for (size_t i = 0; i < BU_PTBL_LEN(&eval_roots); i++) {
 	struct directory *dpw[2] = {NULL};
 	dpw[0] = (struct directory *)BU_PTBL_GET(&eval_roots, i);
 
-	// Get a name for the region's output BoT
-	if (!s->execution.uses_nmg_boolean() &&
-		!region_boolevals[i].bot_name.empty()) {
+	// Get a name for the region's evaluated output solid.
+	if (!region_boolevals[i].output_name.empty()) {
 	    bu_vls_sprintf(&bname, "%s",
-		    region_boolevals[i].bot_name.c_str());
+		    region_boolevals[i].output_name.c_str());
 	} else if (s->execution.writes_nmg()) {
 	    bu_vls_sprintf(&bname, "%s.nmg", dpw[0]->d_namep);
+	} else if (s->execution.writes_brep()) {
+	    bu_vls_sprintf(&bname, "%s.brep", dpw[0]->d_namep);
 	} else {
 	    bu_vls_sprintf(&bname, "%s.bot", dpw[0]->d_namep);
 	}
 
-	if (region_boolevals[i].bot_name.empty()) {
+	if (region_boolevals[i].output_name.empty()) {
 	    struct directory *dcheck = db_lookup(wdbip,
 		    bu_vls_cstr(&bname), LOOKUP_QUIET);
 	    if (dcheck != RT_DIR_NULL)
@@ -1650,6 +2130,9 @@ _ged_facetize_regions(struct _ged_facetize_state *s, const FacetizePlan &plan)
 	    std::vector<std::string> object_input(1, dpw[0]->d_namep);
 	    bret = _nmg_eval_in_db(s, wdbip, object_input,
 		    bu_vls_cstr(&bname));
+	} else if (s->execution.writes_brep()) {
+	    bret = region_boolevals[i].attempted &&
+		region_boolevals[i].succeeded ? BRLCAD_OK : BRLCAD_ERROR;
 	} else {
 	    // Need wdbp in the next two stages for tolerances
 	    struct rt_wdb *wwdbp = wdb_dbopen(wdbip, RT_WDB_TYPE_DB_DEFAULT);
@@ -1860,6 +2343,33 @@ _ged_facetize_regions(struct _ged_facetize_state *s, const FacetizePlan &plan)
 	    }
 	}
 
+	if (bret != BRLCAD_OK && s->execution.writes_brep() &&
+		s->tolerate_failures) {
+	    const RegionBoolevalResult &failed = region_boolevals[i];
+	    const char *reason = "B-Rep result could not be staged";
+	    if (!failed.attempted) {
+		reason = "B-Rep evaluation was not attempted";
+	    } else if (failed.transport_status != RT_BREP_WORKER_TRANSPORT_OK) {
+		reason = _brep_transport_name(failed.transport_status);
+	    } else if (failed.boolean_status != BREP_BOOLEAN_SUCCESS &&
+		    failed.boolean_status != BREP_BOOLEAN_EMPTY) {
+		reason = ON_BooleanStatusDescription(failed.boolean_status);
+	    }
+	    if (_mark_brep_csg_fallback(wdbip, failed) != BRLCAD_OK) {
+		facetize_failure(s,
+			"unable to mark retained CSG region '%s' after B-Rep conversion failure",
+			failed.object_name.c_str());
+		break;
+	    }
+	    facetize_tolerated_failure(s,
+		    "region '%s' was retained as original CSG because its B-Rep conversion failed: %s%s%s",
+		    failed.object_name.c_str(), reason,
+		    failed.diagnostic.empty() ? "" : " - ",
+		    failed.diagnostic.c_str());
+	    bret = BRLCAD_OK;
+	    continue;
+	}
+
 	if (bret != BRLCAD_OK) {
 	    if (s->verbosity >= 0)
 		bu_log("regions.cpp:%d Failed to generate %s.\n", __LINE__, bu_vls_cstr(&bname));
@@ -1940,13 +2450,21 @@ _ged_facetize_regions(struct _ged_facetize_state *s, const FacetizePlan &plan)
 	int64_t progress_time = bu_gettime();
 	if (progress_time >= next_finalization_progress ||
 		i + 1 == eval_total) {
-	    facetize_log(s, 0,
-		    "FACETIZE: finalized %zu of %zu region roots "
-		    "(%d perturb %s, %.1f seconds elapsed)\n",
-		    i + 1, eval_total, vcnt_p1_trigger,
-		    vcnt_p1_trigger == 1 ? "retry" : "retries",
-		    (progress_time - finalization_start) /
-		    FACETIZE_USEC_TO_SEC_DIVISOR);
+	    if (s->execution.writes_brep()) {
+		facetize_log(s, 0,
+			"FACETIZE: finalized %zu of %zu B-Rep region roots (%.1f seconds elapsed)\n",
+			i + 1, eval_total,
+			(progress_time - finalization_start) /
+			FACETIZE_USEC_TO_SEC_DIVISOR);
+	    } else {
+		facetize_log(s, 0,
+			"FACETIZE: finalized %zu of %zu region roots "
+			"(%d perturb %s, %.1f seconds elapsed)\n",
+			i + 1, eval_total, vcnt_p1_trigger,
+			vcnt_p1_trigger == 1 ? "retry" : "retries",
+			(progress_time - finalization_start) /
+			FACETIZE_USEC_TO_SEC_DIVISOR);
+	    }
 	    next_finalization_progress = progress_time +
 		BU_SEC2USEC(FACETIZE_REGION_PROGRESS_INTERVAL_SEC);
 	}
@@ -1966,8 +2484,9 @@ _ged_facetize_regions(struct _ged_facetize_state *s, const FacetizePlan &plan)
     bu_free(ir, "ir table");
     s->use_variant_plan = 1;
 
-    /* Collect validation results for the unified end-of-command summary. */
-    if ((vcnt_total > 0 || vcnt_skip > 0) && !s->execution.uses_nmg_boolean() &&
+    /* Collect mesh validation results for the unified command summary. */
+    if ((vcnt_total > 0 || vcnt_skip > 0) && s->execution.writes_bot() &&
+	    !s->execution.uses_nmg_boolean() &&
 	    s->region_summary && s->inspection_log) {
 	double elapsed_s = (bu_gettime() - region_start) / FACETIZE_USEC_TO_SEC_DIVISOR;
 	bu_vls_trunc(s->region_summary, 0);
@@ -1998,7 +2517,8 @@ _ged_facetize_regions(struct _ged_facetize_state *s, const FacetizePlan &plan)
     }
 
     // Report on the primitive processing
-    if (!s->execution.uses_nmg_boolean())
+    if (s->execution.writes_bot() &&
+	    !s->execution.uses_nmg_boolean())
 	facetize_collect_primitive_summary(s);
 
     // keep active regions into .g copy

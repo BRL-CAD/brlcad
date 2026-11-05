@@ -204,12 +204,51 @@ _brep_cmd_boolean(void *bs, int argc, const char **argv)
     }
 
     struct rt_db_internal intern_res;
-    rt_brep_boolean(&intern_res, &gb->intern, &intern2, op);
+    int bool_ret = BREP_BOOLEAN_UNSUPPORTED;
+    op_type worker_operation = BOOLEAN_UNION;
+    if (op == DB_OP_UNION)
+	worker_operation = BOOLEAN_UNION;
+    else if (op == DB_OP_SUBTRACT)
+	worker_operation = BOOLEAN_DIFF;
+    else if (op == DB_OP_INTERSECT)
+	worker_operation = BOOLEAN_INTERSECT;
+
+    struct bu_vls worker_diagnostic = BU_VLS_INIT_ZERO;
+    if (gedp->dbip->dbi_filename && gedp->dbip->dbi_filename[0]) {
+	bool_ret = brep_boolean_isolated(gb->dp->d_namep, dp2->d_namep,
+	    worker_operation, &intern_res, gedp->dbip, &worker_diagnostic);
+    } else {
+	bool_ret = rt_brep_boolean(&intern_res, &gb->intern, &intern2, op);
+    }
+
+    if (bool_ret >= BREP_BOOLEAN_SUCCESS &&
+	bu_vls_strlen(&worker_diagnostic))
+    {
+	bu_log("%s", bu_vls_cstr(&worker_diagnostic));
+    }
+    if (bool_ret == BREP_BOOLEAN_EMPTY) {
+	bu_vls_printf(gedp->ged_result_str, ": Boolean result is empty; no output object was created");
+	bu_vls_free(&worker_diagnostic);
+	rt_db_free_internal(&intern2);
+	return BRLCAD_OK;
+    }
+
+    if (bool_ret != BREP_BOOLEAN_SUCCESS) {
+	bu_vls_printf(gedp->ged_result_str, ": %s",
+	    ON_BooleanStatusDescription(bool_ret));
+	if (bu_vls_strlen(&worker_diagnostic))
+	    bu_vls_printf(gedp->ged_result_str, " (%s)",
+		bu_vls_cstr(&worker_diagnostic));
+	bu_vls_free(&worker_diagnostic);
+	rt_db_free_internal(&intern2);
+	return BRLCAD_ERROR;
+    }
     struct rt_brep_internal *bip = (struct rt_brep_internal *)intern_res.idb_ptr;
     struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
     mk_brep(wdbp, argv[3], (void *)(bip->brep));
     rt_db_free_internal(&intern2);
     rt_db_free_internal(&intern_res);
+    bu_vls_free(&worker_diagnostic);
 
     return BRLCAD_OK;
 }
@@ -531,14 +570,23 @@ _brep_cmd_brep(void *bs, int argc, const char **argv)
 	bu_vls_free(&bname);
 	return BRLCAD_OK;
     }
-    int ret = brep_conversion(&gb->intern, &brep_db_internal, gedp->dbip);
-    if (ret == -1) {
-	bu_vls_printf(gedp->ged_result_str, "%s doesn't have a "
-		      "brep-conversion function yet. Type: %s", gb->solid_name.c_str(),
-		      gb->intern.idb_meth->ft_label);
-    } else if (ret == -2) {
-	bu_vls_printf(gedp->ged_result_str, "%s cannot be converted "
-		      "to brep correctly.", gb->solid_name.c_str());
+    struct bu_vls worker_diagnostic = BU_VLS_INIT_ZERO;
+    int ret = (gb->intern.idb_type == ID_COMBINATION &&
+	gedp->dbip->dbi_filename && gedp->dbip->dbi_filename[0]) ?
+	brep_conversion_isolated(gb->dp->d_namep, &brep_db_internal,
+	    gedp->dbip, &worker_diagnostic) :
+	brep_conversion(&gb->intern, &brep_db_internal, gedp->dbip);
+    if (ret >= BREP_BOOLEAN_SUCCESS && bu_vls_strlen(&worker_diagnostic))
+	bu_log("%s", bu_vls_cstr(&worker_diagnostic));
+    if (ret == BREP_BOOLEAN_EMPTY) {
+	bu_vls_printf(gedp->ged_result_str, ": Boolean result is empty; no output object was created");
+    } else if (ret < BREP_BOOLEAN_SUCCESS) {
+	bu_vls_printf(gedp->ged_result_str, "%s cannot be converted to a "
+		      "B-Rep: %s.", gb->solid_name.c_str(),
+		      ON_BooleanStatusDescription(ret));
+	if (bu_vls_strlen(&worker_diagnostic))
+	    bu_vls_printf(gedp->ged_result_str, " %s",
+		bu_vls_cstr(&worker_diagnostic));
     } else {
 	brep = ((struct rt_brep_internal *)brep_db_internal.idb_ptr)->brep;
 	struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
@@ -548,6 +596,7 @@ _brep_cmd_brep(void *bs, int argc, const char **argv)
 	}
 	rt_db_free_internal(&brep_db_internal);
     }
+    bu_vls_free(&worker_diagnostic);
     bu_vls_free(&bname);
     return BRLCAD_OK;
 }

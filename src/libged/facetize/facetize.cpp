@@ -260,6 +260,7 @@ ged_facetize_core(struct ged *gedp, int argc, const char *argv[])
     int force_perturb = 0;
     int disable_perturb = 0;
     int nmg_output = 0;
+    int brep_output = 0;
     int region_mode = 0;
     int in_place = 0;
     int nmg_boolean = 0;
@@ -276,7 +277,7 @@ ged_facetize_core(struct ged *gedp, int argc, const char *argv[])
     FacetizePlan plan;
 
     /* General options */
-    struct bu_opt_desc d[26];
+    struct bu_opt_desc d[27];
     BU_OPT(d[ 0], "h", "help",                                      "",                  NULL,           &print_help, "Print help and exit");
     BU_OPT(d[ 1], "v", "verbose",                                   "",  &bu_opt_incr_long,       &verbosity, "Verbose output (multiple flags increase verbosity)");
     BU_OPT(d[ 2], "q", "quiet",                                     "",                  NULL,                &quiet, "Suppress all output (overrides verbose flag)");
@@ -290,7 +291,7 @@ ged_facetize_core(struct ged *gedp, int argc, const char *argv[])
     BU_OPT(d[10],  "", "resume",                                    "",                  NULL,          &(s->resume), "Resume an interrupted conversion");
     BU_OPT(d[11],  "", "methods",                          "m1,m2,...", &_tess_active_methods,        method_options, "Specify methods to use when tessellating primitives into BoTs.");
     BU_OPT(d[12],  "", "method-opts",    "METHOD opt1=val opt2=val...",    &_tess_method_opts,        method_options, "For the specified method, set the specified options.");
-    BU_OPT(d[13],  "", "no-empty",                                  "",                  NULL,        &(s->no_empty), "Do not output empty BoT objects if the boolean evaluation results in an empty solid.");
+    BU_OPT(d[13],  "", "no-empty",                                  "",                  NULL,        &(s->no_empty), "Do not output empty BoT or B-Rep objects if the Boolean evaluation results in an empty solid.");
     BU_OPT(d[14],  "", "log-file",                        "<filename>",           &bu_opt_vls,           s->log_file, "Specify a location to use for the log file.");
     BU_OPT(d[15],  "", "nmg-booleval",                               "",                  NULL,           &nmg_boolean, "Use libnmg Boolean evaluation algorithm, even if we're producing a BoT.  Less robust, but if it succeeds it may produce cleaner output for coplanar inputs.");
     BU_OPT(d[16],  "", "disable-fixup",                             "",                  NULL,          &s->no_fixup, "Disable post-processing steps intended to improve generated meshes.");
@@ -300,9 +301,10 @@ ged_facetize_core(struct ged *gedp, int argc, const char *argv[])
     BU_OPT(d[20], "t", "threshold",                                "#",       &bu_opt_fastf_t, &s->nonovlp_threshold, "EXPERIMENTAL: max ovlp threshold length for -B mode.");
     BU_OPT(d[21],  "", "perturb-sa-tol",                           "#",       &bu_opt_fastf_t,   &s->perturb_sa_tol,  "Surface-area percentage threshold (0-100) that triggers the coplanarity-avoidance perturb retry when the CSG Crofton SA differs from the BoT SA by more than this amount. Default is 10.");
     BU_OPT(d[22],  "", "perturb-vol-tol",                          "#",       &bu_opt_fastf_t,   &s->perturb_vol_tol, "Volume percentage threshold (0-100) that triggers the coplanarity-avoidance perturb retry when the CSG Crofton volume differs from the BoT volume by more than this amount. Default is 10.");
-    BU_OPT(d[23],  "", "tolerate-failures",                         "",                  NULL, &s->tolerate_failures, "Continue after failed primitive or subtree evaluations and generate a partial result.  The output will not be a complete representation of the input if any failures are tolerated.");
+    BU_OPT(d[23],  "", "tolerate-failures",                         "",                  NULL, &s->tolerate_failures, "Continue after failures. Mesh output may omit failed components; per-region B-Rep output retains failed regions as marked original CSG in a hybrid hierarchy.");
     BU_OPT(d[24], "j", "jobs",                                     "#",           &bu_opt_int,     &s->max_workers, "Maximum number of facetize worker processes.  The default is selected conservatively from CPU and memory availability.");
-    BU_OPT_NULL(d[25]);
+    BU_OPT(d[25],  "", "brep-output",                               "",                  NULL,          &brep_output, "Create evaluated NURBS B-Rep solids for region roots.  Requires --regions; Boolean evaluation runs in persistent crash-isolated workers.");
+    BU_OPT_NULL(d[26]);
 
     /* skip command name argv[0] */
     argc-=(argc>0); argv+=(argc>0);
@@ -324,6 +326,30 @@ ged_facetize_core(struct ged *gedp, int argc, const char *argv[])
     // Sanity
     if (force_perturb && disable_perturb) {
     	bu_vls_printf(gedp->ged_result_str, "Can only specify one of --perturb or --no-perturb\n");
+	ret = BRLCAD_ERROR;
+	goto ged_facetize_done;
+    }
+    if (nmg_output && brep_output) {
+	bu_vls_printf(gedp->ged_result_str,
+		"--nmg-output and --brep-output select different output formats and cannot be combined\n");
+	ret = BRLCAD_ERROR;
+	goto ged_facetize_done;
+    }
+    if (brep_output && !region_mode) {
+	bu_vls_printf(gedp->ged_result_str,
+		"--brep-output currently requires --regions\n");
+	ret = BRLCAD_ERROR;
+	goto ged_facetize_done;
+    }
+    if (brep_output && nmg_boolean) {
+	bu_vls_printf(gedp->ged_result_str,
+		"--nmg-booleval cannot be used with --brep-output\n");
+	ret = BRLCAD_ERROR;
+	goto ged_facetize_done;
+    }
+    if (brep_output && (force_perturb || disable_perturb)) {
+	bu_vls_printf(gedp->ged_result_str,
+		"--perturb and --no-perturb apply to mesh evaluation; B-Rep output uses its own tolerance-bounded regularization\n");
 	ret = BRLCAD_ERROR;
 	goto ged_facetize_done;
     }
@@ -353,15 +379,16 @@ ged_facetize_core(struct ged *gedp, int argc, const char *argv[])
 	goto ged_facetize_done;
     }
 
-    s->execution.output_format = nmg_output ?
-	FacetizeOutputFormat::Nmg : FacetizeOutputFormat::Bot;
-    s->execution.boolean_engine = (nmg_output || nmg_boolean) ?
-	FacetizeBooleanEngine::Nmg : FacetizeBooleanEngine::Manifold;
+    s->execution.output_format = brep_output ? FacetizeOutputFormat::Brep :
+	(nmg_output ? FacetizeOutputFormat::Nmg : FacetizeOutputFormat::Bot);
+    s->execution.boolean_engine = brep_output ? FacetizeBooleanEngine::Brep :
+	((nmg_output || nmg_boolean) ? FacetizeBooleanEngine::Nmg :
+	 FacetizeBooleanEngine::Manifold);
     s->execution.scope = nonoverlap_brep ? FacetizeScope::NonOverlappingBrep :
 	(region_mode ? FacetizeScope::Regions : FacetizeScope::Objects);
     s->execution.commit_mode = in_place ?
 	FacetizeCommitMode::InPlace : FacetizeCommitMode::NewObject;
-    use_perturbation = region_mode;
+    use_perturbation = region_mode && !brep_output;
     if (disable_perturb)
 	use_perturbation = false;
     if (force_perturb)
@@ -392,10 +419,12 @@ ged_facetize_core(struct ged *gedp, int argc, const char *argv[])
 	s->verbosity = -1;
 
     /* Don't allow incorrect type suffixes */
-    if (s->execution.writes_nmg() && BU_STR_EQUAL(bu_vls_cstr(s->solid_suffix), ".bot")) {
+    if (s->execution.writes_brep()) {
+	bu_vls_sprintf(s->solid_suffix, ".brep");
+    } else if (s->execution.writes_nmg() && BU_STR_EQUAL(bu_vls_cstr(s->solid_suffix), ".bot")) {
 	bu_vls_sprintf(s->solid_suffix, ".nmg");
     }
-    if (!s->execution.writes_nmg() && BU_STR_EQUAL(bu_vls_cstr(s->solid_suffix), ".nmg")) {
+    if (s->execution.writes_bot() && BU_STR_EQUAL(bu_vls_cstr(s->solid_suffix), ".nmg")) {
 	bu_vls_sprintf(s->solid_suffix, ".bot");
     }
 

@@ -165,7 +165,13 @@ brep_intersect_curve_curve(struct rt_db_internal *intern1, struct rt_db_internal
     }
 
     ON_SimpleArray<ON_X_EVENT> events;
-    if (ON_Intersect(brep1->m_C3[i], brep2->m_C3[j], events)) {
+    const int event_count = ON_Intersect(brep1->m_C3[i], brep2->m_C3[j],
+	events);
+    if (event_count < 0) {
+	bu_log("Curve intersection work limit exceeded.\n");
+	return -1;
+    }
+    if (event_count) {
 	for (int k = 0; k < events.Count(); k++) {
 	    ON_wString wstr;
 	    ON_TextLog textlog(wstr);
@@ -203,7 +209,13 @@ brep_intersect_curve_surface(struct rt_db_internal *intern1, struct rt_db_intern
     }
 
     ON_SimpleArray<ON_X_EVENT> events;
-    if (ON_Intersect(brep1->m_C3[i], brep2->m_S[j], events)) {
+    const int event_count = ON_Intersect(brep1->m_C3[i], brep2->m_S[j],
+	events);
+    if (event_count < 0) {
+	bu_log("Curve-surface intersection work limit exceeded.\n");
+	return -1;
+    }
+    if (event_count) {
 	for (int k = 0; k < events.Count(); k++) {
 	    ON_wString wstr;
 	    ON_TextLog textlog(wstr);
