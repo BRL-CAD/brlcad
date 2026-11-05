@@ -6,7 +6,7 @@
 #   - A geometry object is drawn
 #   - The "ert" GED command is issued via xdotool
 #   - We confirm that rt was spawned and the IPC path was taken
-#     (no TCP port binding, PKG_ADDR visible in rt's /proc/environ)
+#     (the renderer launch wrapper records its inherited IPC address)
 #
 # Environment variables consumed:
 #   QGED_BIN      path to the qged binary (required)
@@ -122,6 +122,26 @@ XDG_CONFIG_HOME="$TMPDIR_TEST/config"
 export XDG_CONFIG_HOME
 mkdir -p "$XDG_CONFIG_HOME"
 
+# Capture the child environment before exec rather than sampling /proc after
+# a short render may already have exited.  Keep the real resource directories
+# available under the temporary root used to locate this rt wrapper.
+RT_TEST_ROOT="$TMPDIR_TEST/root"
+RT_IPC_ENV_FILE="$TMPDIR_TEST/rt-ipc-env"
+mkdir -p "$RT_TEST_ROOT/bin"
+for subdir in lib libexec share; do
+    if [ -d "$BDIR/$subdir" ]; then
+        ln -s "$BDIR/$subdir" "$RT_TEST_ROOT/$subdir"
+    fi
+done
+cat > "$RT_TEST_ROOT/bin/rt" <<'RT_WRAPPER'
+#!/bin/sh
+printf '%s\n' "${PKG_ADDR:-}" > "$RT_IPC_ENV_FILE"
+exec "$RT_BIN" "$@"
+RT_WRAPPER
+chmod +x "$RT_TEST_ROOT/bin/rt"
+BRLCAD_ROOT="$RT_TEST_ROOT"
+export BRLCAD_ROOT RT_BIN RT_IPC_ENV_FILE
+
 "$QGED_BIN" -s "$TEST_DB" >"$QGED_LOG" 2>"$QGED_ERRLOG" &
 QGED_PID=$!
 
@@ -180,32 +200,21 @@ if [ "$HAVE_XDOTOOL" -eq 1 ]; then
     xdotool key Return 2>/dev/null || true
     sleep 2
 
-    # Use one worker and modest hypersampling so the small test model remains
-    # alive long enough for the /proc environment check below to observe it.
+    # Use one worker and modest hypersampling to exercise framebuffer delivery.
     xdotool type --clearmodifiers "ert -P 1 -H 4" 2>/dev/null || true
     sleep 0.2
     xdotool key Return 2>/dev/null || true
 
-    # Wait for rt to start (up to 30 s)
+    # Wait for rt to start (up to 30 s).
     rt_appeared=0
     for i in $(seq 1 300); do
-        if pgrep -P "$QGED_PID" -x rt >/dev/null 2>&1; then
+        if [ -f "$RT_IPC_ENV_FILE" ] ||
+            pgrep -P "$QGED_PID" -x rt >/dev/null 2>&1; then
             rt_appeared=1; break
         fi
         sleep 0.1
     done
     check "rt process was spawned by ert" "$rt_appeared -eq 1"
-
-    # Check that PKG_ADDR_ENVVAR was passed to rt (IPC path taken).  Limit
-    # the search to this qged's child so unrelated rt jobs cannot produce a
-    # false result.
-    ipc_used=0
-    for pid in $(pgrep -P "$QGED_PID" -x rt 2>/dev/null); do
-        if cat /proc/"$pid"/environ 2>/dev/null | tr '\0' '\n' | grep -q "PKG_ADDR="; then
-            ipc_used=1; break
-        fi
-    done
-    check "rt received PKG_ADDR_ENVVAR (IPC path taken)" "$ipc_used -eq 1"
 
     # Wait for rt to finish (up to 60 s); treat zombie as completed
     rt_done=0
@@ -223,6 +232,12 @@ if [ "$HAVE_XDOTOOL" -eq 1 ]; then
         sleep 0.1
     done
     check "rt process completed" "$rt_done -eq 1"
+
+    ipc_used=0
+    if [ -s "$RT_IPC_ENV_FILE" ] && [ -n "$(cat "$RT_IPC_ENV_FILE")" ]; then
+        ipc_used=1
+    fi
+    check "rt received PKG_ADDR_ENVVAR (IPC path taken)" "$ipc_used -eq 1"
 
     # qged should still be alive
     check "qged process survived ert" "-d /proc/$QGED_PID"
