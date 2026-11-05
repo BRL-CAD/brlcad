@@ -502,15 +502,24 @@ function(_BRLCAD_RUN_FLAG_BATCH FLAG_LANG)
       endif()
 
       # A compiled probe still fails if its flag was reported unrecognized.
-      # Attribute a diagnostic line to this probe by the MSBuild project tag
-      # (<target>.vcxproj) or by the quoted flag the compiler echoes back.
+      # Attribute diagnostics by Ninja output block, MSBuild project tag,
+      # or the quoted flag the compiler echoes back.
       set(_brfb_success ${_brfb_built})
       if(_brfb_built)
         get_property(_brfb_flag GLOBAL PROPERTY "BRLCAD_CFLAG_${_brfb_var}_FLAG")
+        set(_brfb_probe_block FALSE)
         foreach(_brfb_line IN LISTS _brfb_lines)
+          # Ninja keeps each compile's multiline diagnostics in one block.
+          if(_brfb_line MATCHES "^\\[[0-9]+/[0-9]+\\]")
+            string(FIND "${_brfb_line}" "CMakeFiles/${_brfb_var}.dir" _brfb_object_pos)
+            set(_brfb_probe_block FALSE)
+            if(NOT _brfb_object_pos EQUAL -1)
+              set(_brfb_probe_block TRUE)
+            endif()
+          endif()
           string(FIND "${_brfb_line}" "${_brfb_var}.vcxproj" _brfb_tag_pos)
           string(FIND "${_brfb_line}" "'${_brfb_flag}'" _brfb_flag_pos)
-          if(NOT _brfb_tag_pos EQUAL -1 OR NOT _brfb_flag_pos EQUAL -1)
+          if(_brfb_probe_block OR NOT _brfb_tag_pos EQUAL -1 OR NOT _brfb_flag_pos EQUAL -1)
             foreach(_brfb_re IN LISTS _brfb_fail_regex)
               if("${_brfb_line}" MATCHES "${_brfb_re}")
                 set(_brfb_success FALSE)
