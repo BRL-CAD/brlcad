@@ -165,7 +165,7 @@ strsolbld(struct ascv4_rstate *s)
 
 #if defined(HAVE_WORKING_STRTOK_R_FUNCTION)
     /* this function is reentrant */
-    (void)strtok_r(bu_vls_cstr(&ibuf2), delim, &saveptr);  /* skip stringsolid_id */
+    (void)strtok_r(bu_vls_addr(&ibuf2), delim, &saveptr);  /* skip stringsolid_id */
     type = strtok_r(NULL, delim, &saveptr);
     name = strtok_r(NULL, delim, &saveptr);
     args = strtok_r(NULL, end_delim, &saveptr);

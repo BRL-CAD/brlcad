@@ -71,11 +71,17 @@ set(
 #ifdef HAVE_SYS_RESOURCE_H
 # include <sys/resource.h>
 #endif
+#ifdef HAVE_SYS_SELECT_H
+# include <sys/select.h>
+#endif
 #ifdef HAVE_SYS_SHM_H
 # include <sys/shm.h>
 #endif
 #ifdef HAVE_SYS_STAT_H
 # include <sys/stat.h>
+#endif
+#ifdef HAVE_SYS_SYSINFO_H
+# include <sys/sysinfo.h>
 #endif
 #ifdef HAVE_SYS_SYSCTL_H
 typedef unsigned char u_char;
@@ -409,7 +415,11 @@ function(_brlcad_run_probe_batch BATCH_NAME)
       endif()
       if(_defs OR _flags)
         set(_compile_opts "${_defs}")
-        list(APPEND _compile_opts ${_flags})
+        # Required flags are command-line strings, not individual options.
+        foreach(_flag_group IN LISTS _flags)
+          separate_arguments(_flag_opts NATIVE_COMMAND "${_flag_group}")
+          list(APPEND _compile_opts ${_flag_opts})
+        endforeach()
         set(_compile_opts_cmd "")
         foreach(_opt IN LISTS _compile_opts)
           string(APPEND _compile_opts_cmd " \"${_opt}\"")
@@ -611,12 +621,14 @@ endfunction()
 
 macro(_brlcad_include_probe HEADER VAR)
   if(NOT BRLCAD_ENABLE_PARALLEL_CONFIG_PROBES)
-    brlcad_include_file(${HEADER} ${VAR})
+    brlcad_include_file("${HEADER}" ${VAR})
   else()
     set(_bip_src_dir "${CMAKE_BINARY_DIR}/CMakeTmp/INCLUDE_PROBE_sources")
     file(MAKE_DIRECTORY "${_bip_src_dir}")
     if(NOT DEFINED ${VAR})
-      file(WRITE "${_bip_src_dir}/${VAR}.c" "#include <${HEADER}>\nint main(void) { return 0; }\n")
+      string(REPLACE ";" ">\n#include <" _bip_headers "${HEADER}")
+      file(WRITE "${_bip_src_dir}/${VAR}.c" "#include <${_bip_headers}>\nint main(void) { return 0; }\n")
+      unset(_bip_headers)
     endif()
     _brlcad_register_probe(
       BATCH INCLUDE_PROBE
@@ -898,7 +910,7 @@ endmacro(BRLCAD_CHECK_INCLUDE filelist var)
 
 # Do the above check and add HAVE_*_H define to config header.
 macro(BRLCAD_INCLUDE_FILE filelist var)
-  brlcad_check_include(${filelist} ${var})
+  brlcad_check_include("${filelist}" ${var} "${ARGV2}")
   if(CONFIG_H_FILE AND ${var})
     brlcad_deferred_define("${var} 1")
   endif(CONFIG_H_FILE AND ${var})

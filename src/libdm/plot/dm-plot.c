@@ -50,10 +50,10 @@
 
 #include "../include/private.h"
 
-#if defined(HAVE_POPEN) && !defined(HAVE_POPEN_DECL) && !defined(popen)
+#if defined(HAVE_POPEN) && !defined(HAVE_DECL_POPEN) && !defined(popen)
 extern FILE *popen(const char *command, const char *type);
 #endif
-#if defined(HAVE_POPEN) && !defined(HAVE_POPEN_DECL) && !defined(pclose)
+#if defined(HAVE_PCLOSE) && !defined(HAVE_DECL_PCLOSE) && !defined(pclose)
 extern int pclose(FILE *stream);
 #endif
 

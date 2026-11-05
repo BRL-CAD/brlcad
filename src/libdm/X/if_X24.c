@@ -57,7 +57,7 @@
 #  pragma clang diagnostic ignored "-Wdocumentation"
 #endif
 #include <X11/X.h>
-#ifdef HAVE_XOSDEFS_H
+#ifdef HAVE_X11_XOSDEFS_H
 #  include <X11/Xfuncproto.h>
 #  include <X11/Xosdefs.h>
 #endif

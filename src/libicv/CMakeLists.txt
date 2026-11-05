@@ -1,6 +1,10 @@
 brlcad_find_package(NETPBM REQUIRED)
 brlcad_find_package(PNG REQUIRED)
 brlcad_find_package(JPEG REQUIRED)
+cmake_push_check_state()
+set(CMAKE_REQUIRED_INCLUDES ${JPEG_INCLUDE_DIRS} ${JPEG_INCLUDE_DIR})
+brlcad_include_file("stddef.h;stdio.h;jpeglib.h" HAVE_JPEGLIB_H)
+cmake_pop_check_state()
 find_package_opencv()
 
 if(TARGET JPEG::JPEG)

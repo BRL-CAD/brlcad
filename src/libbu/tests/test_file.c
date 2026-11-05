@@ -74,6 +74,29 @@ cleanup(const char *dir, int file_cnt)
 }
 
 
+static void
+test_file_large_offsets(void)
+{
+    if (sizeof(b_off_t) < sizeof(int64_t))
+	return;
+
+    /* Cross the 32-bit boundary without allocating a large file. */
+    const b_off_t large_offset = (b_off_t)((uint64_t)UINT32_MAX + 1);
+    FILE *fp = bu_temp_file(NULL, 0);
+    if (!fp)
+	bu_exit(1, "[FAIL] unable to open temporary file for offset tests\n");
+
+    if (bu_fseek(fp, large_offset, SEEK_SET) != 0 ||
+	    bu_ftell(fp) != large_offset)
+	bu_exit(1, "[FAIL] stream positioning truncated a large offset\n");
+    if (bu_fseek(fp, 0, SEEK_SET) != 0 ||
+	    bu_lseek(fileno(fp), large_offset, SEEK_SET) != large_offset)
+	bu_exit(1, "[FAIL] descriptor positioning truncated a large offset\n");
+    if (fclose(fp) != 0)
+	bu_exit(1, "[FAIL] unable to close offset test file\n");
+}
+
+
 int
 main(int ac, char *av[])
 {
@@ -91,6 +114,8 @@ main(int ac, char *av[])
 
     if (ac != 1)
 	bu_exit(1, "Usage: %s \n", av[0]);
+
+    test_file_large_offsets();
 
     /* make sure output dir doesn't exist, previous interruption */
     cleanup(tdir, file_cnt);

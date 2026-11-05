@@ -837,6 +837,10 @@ _brlcad_srccompile_probe(HAVE_PRINTF23_ATTRIBUTE
   "int pf(void *o, const char *f, ...) __attribute__((format (__printf__, 2, 3))); int pf(void *o, const char *f, ...){return 1;} int main(int argc, char *argv[]) {return pf((void *)0, \"%c\",'a');}"
 )
 
+_brlcad_srccompile_probe(HAVE_PRINTF34_ATTRIBUTE
+  "int pf(void *o, int level, const char *f, ...) __attribute__((format (__printf__, 3, 4))); int pf(void *o, int level, const char *f, ...){return 1;} int main(void) {return pf((void *)0, 0, \"%c\",'a');}"
+)
+
 # Check whether the compiler supports __attribute__((format (__scanf__, 2, 3)))
 _brlcad_srccompile_probe(HAVE_SCANF23_ATTRIBUTE
   "int sf(void *o, const char *f, ...) __attribute__((format (__scanf__, 2, 3))); int sf(void *o, const char *f, ...){return 1;} int main(int argc, char *argv[]) {int i = 1; return sf((void *)0, \"%d\", &i);}"
@@ -1911,6 +1915,10 @@ brlcad_check_library(BSD c daemon)
 # Mark X11 as available if it is enabled and we find Xlib.h
 if(BRLCAD_ENABLE_X11)
   message("X11 provider ${BRLCAD_X11_PROVIDER_RESOLVED} detected and enabled")
+  cmake_push_check_state()
+  set(CMAKE_REQUIRED_INCLUDES ${BRLCAD_X11_INCLUDE_DIRS})
+  brlcad_include_file("X11/Xfuncproto.h;X11/Xosdefs.h" HAVE_X11_XOSDEFS_H)
+  cmake_pop_check_state()
   if(BRLCAD_X11_PROVIDER_RESOLVED STREQUAL "XMIN")
     set(HAVE_X11_XLIB_H 1)
     brlcad_deferred_define("HAVE_X11_XLIB_H 1")
@@ -2021,6 +2029,7 @@ _brlcad_include_probe(dirent.h HAVE_DIRENT_H)
 
 _brlcad_include_probe(arpa/inet.h HAVE_ARPA_INET_H)
 _brlcad_include_probe(conio.h HAVE_CONIO_H)
+_brlcad_include_probe("sys/types.h;dir.h" HAVE_DIR_H)
 _brlcad_include_probe(direct.h HAVE_DIRECT_H)
 _brlcad_include_probe(dlfcn.h HAVE_DLFCN_H)
 _brlcad_include_probe(dslib.h HAVE_DSLIB_H)
@@ -2038,6 +2047,7 @@ _brlcad_include_probe(mach/mach_host.h HAVE_MACH_MACH_HOST_H)
 _brlcad_include_probe(mach/thread_info.h HAVE_MACH_THREAD_INFO_H)
 _brlcad_include_probe(mach/thread_policy.h HAVE_MACH_THREAD_POLICY_H)
 _brlcad_include_probe(memory.h HAVE_MEMORY_H)
+_brlcad_include_probe("sys/types.h;ndir.h" HAVE_NDIR_H)
 _brlcad_include_probe(netdb.h HAVE_NETDB_H)
 _brlcad_include_probe(netinet/in.h HAVE_NETINET_IN_H)
 _brlcad_include_probe(poll.h HAVE_POLL_H)
@@ -2057,6 +2067,7 @@ _brlcad_include_probe(strsafe.h HAVE_STRSAFE_H)
 # FIXME: fails freebsd due to non-encapsulated header (__BEGIN_DECLS undecl)
 _brlcad_include_probe(sys/cpuset.h HAVE_SYS_CPUSET_H)
 
+_brlcad_include_probe("sys/types.h;sys/dir.h" HAVE_SYS_DIR_H)
 _brlcad_include_probe(sys/file.h HAVE_SYS_FILE_H)
 _brlcad_include_probe(sys/ioctl.h HAVE_SYS_IOCTL_H)
 _brlcad_include_probe(sys/ioctl_compat.h HAVE_SYS_IOCTL_COMPAT_H)
@@ -2065,6 +2076,7 @@ _brlcad_include_probe(sys/kinfo.h HAVE_SYS_KINFO_H)
 _brlcad_include_probe(sys/machd.h HAVE_SYS_MACHD_H)
 _brlcad_include_probe(sys/mman.h HAVE_SYS_MMAN_H)
 _brlcad_include_probe(sys/mount.h HAVE_SYS_MOUNT_H)
+_brlcad_include_probe("sys/types.h;sys/ndir.h" HAVE_SYS_NDIR_H)
 _brlcad_include_probe(sys/param.h HAVE_SYS_PARAM_H)
 _brlcad_include_probe(sys/prctl.h HAVE_SYS_PRCTL_H)
 _brlcad_include_probe(sys/resource.h HAVE_SYS_RESOURCE_H)
@@ -2167,6 +2179,7 @@ endif(NOT HAVE_SOCKLEN_T)
 brlcad_type_size("cpu_set_t" "sched.h")
 
 brlcad_type_size("int" "")
+brlcad_type_size("intptr_t" "stdint.h")
 brlcad_type_size("long" "")
 brlcad_type_size("long long" "")
 brlcad_type_size("off_t" "")
@@ -2175,6 +2188,7 @@ brlcad_type_size("size_t" "")
 brlcad_type_size("ssize_t" "")
 brlcad_type_size("uint64_t" "")
 brlcad_type_size("uintptr_t" "")
+brlcad_deferred_define("SIZEOF_VOID_P ${CMAKE_SIZEOF_VOID_P}")
 
 # see if compile settings disable historic unsigned bsd types.
 # typically disabled on posix conformant systems.
@@ -2258,6 +2272,7 @@ _brlcad_func_probe(FUNC fpclassify VAR HAVE_FPCLASSIFY LIBS ${M_LIBRARY})
 _brlcad_func_probe(FUNC fseeko VAR HAVE_FSEEKO) # implies ftello
 _brlcad_func_probe(FUNC fsync VAR HAVE_FSYNC)
 _brlcad_func_probe(FUNC funopen VAR HAVE_FUNOPEN)
+_brlcad_func_probe(FUNC get_nprocs VAR HAVE_GET_NPROCS)
 _brlcad_func_probe(FUNC getcwd VAR HAVE_GETCWD)
 _brlcad_func_probe(FUNC getegid VAR HAVE_GETEGID)
 _brlcad_func_probe(FUNC getenv_s VAR HAVE_GETENV_S)
@@ -2278,6 +2293,7 @@ _brlcad_func_probe(FUNC isnan VAR HAVE_ISNAN LIBS ${M_LIBRARY})
 _brlcad_func_probe(FUNC logb VAR HAVE_LOGB LIBS ${M_LIBRARY})
 _brlcad_func_probe(FUNC lrand48 VAR HAVE_LRAND48)
 _brlcad_func_probe(FUNC lseek VAR HAVE_LSEEK)
+_brlcad_func_probe(FUNC lstat VAR HAVE_LSTAT)
 _brlcad_func_probe(FUNC mkstemp VAR HAVE_MKSTEMP)
 _brlcad_func_probe(FUNC modff VAR HAVE_MODFF LIBS ${M_LIBRARY})
 _brlcad_func_probe(FUNC nextafter VAR HAVE_NEXTAFTER LIBS ${M_LIBRARY})
@@ -2285,13 +2301,15 @@ _brlcad_func_probe(FUNC nextafterf VAR HAVE_NEXTAFTERF LIBS ${M_LIBRARY})
 _brlcad_func_probe(FUNC ntohll VAR HAVE_NTOHLL)
 _brlcad_func_probe(FUNC pipe VAR HAVE_PIPE)
 _brlcad_func_probe(FUNC _pipe VAR HAVE__PIPE)
-_brlcad_func_probe(FUNC popen VAR HAVE_POPEN) # implies pclose
+_brlcad_func_probe(FUNC pclose VAR HAVE_PCLOSE)
+_brlcad_func_probe(FUNC popen VAR HAVE_POPEN)
 _brlcad_func_probe(FUNC posix_memalign VAR HAVE_POSIX_MEMALIGN) # IEEE Std 1003.1-2001
 _brlcad_func_probe(FUNC proc_pidpath VAR HAVE_PROC_PIDPATH) # Mac OS X
 _brlcad_func_probe(FUNC program_invocation_name VAR HAVE_PROGRAM_INVOCATION_NAME)
 _brlcad_func_probe(FUNC random VAR HAVE_RANDOM)
 _brlcad_func_probe(FUNC realpath VAR HAVE_REALPATH)
 _brlcad_func_probe(FUNC rint VAR HAVE_RINT LIBS ${M_LIBRARY})
+_brlcad_func_probe(FUNC select VAR HAVE_SELECT LIBS ${SOCKET_LIBRARY} ${WINSOCK_LIB})
 _brlcad_func_probe(FUNC setenv VAR HAVE_SETENV)
 _brlcad_func_probe(FUNC setpgid VAR HAVE_SETPGID)
 _brlcad_func_probe(FUNC setpriority VAR HAVE_SETPRIORITY)
@@ -2485,6 +2503,21 @@ endif(HAVE_REALPATH AND NOT HAVE_WORKING_REALPATH)
 if(HAVE_WORKING_REALPATH)
   brlcad_deferred_define("HAVE_WORKING_REALPATH 1")
 endif(HAVE_WORKING_REALPATH)
+
+cmake_push_check_state()
+set(CMAKE_REQUIRED_FLAGS "${CMAKE_REQUIRED_FLAGS} ${C_STANDARD_FLAGS}")
+_brlcad_srccompile_probe(HAVE_WORKING_STRTOK_R_FUNCTION
+  "#include <string.h>\nint main(void) { char text[] = \"a b\"; char *state = NULL; char *(*tokenize)(char *, const char *, char **) = strtok_r; return tokenize(text, \" \", &state) == NULL; }"
+  SRCCOMPILE_FUNC
+)
+_brlcad_run_probe_batch(SRCCOMPILE_FUNC)
+cmake_pop_check_state()
+
+# BSD's setmode() changes permission strings rather than descriptor modes.
+_brlcad_srccompile_probe(HAVE_SETMODE
+  "#include <io.h>\nint main(void) { int (*set_binary_mode)(int, int) = _setmode; return set_binary_mode(0, 0); }"
+  SRCCOMPILE_WIN
+)
 
 # GetFullPathName
 _brlcad_srccompile_probe(HAVE_GETFULLPATHNAME

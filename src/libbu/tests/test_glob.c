@@ -302,6 +302,39 @@ test_glob_append(void)
 
 
 static int
+_test_symlink_lstat(const char *path, struct bu_stat *sb, void *data)
+{
+    int ret = _test_lstat(path, sb, data);
+    /* Model directory symlinks: only gl_stat reports the target type. */
+    if (ret == 0)
+	sb->is_dir = 0;
+    return ret;
+}
+
+
+static int
+test_glob_symlink_dir(void)
+{
+    int errors = 0;
+    const char *patterns[] = {"sub1/*.s", "sub*/*.s"};
+    struct bu_glob_context *gp = _make_test_ctx();
+    gp->gl_lstat = _test_symlink_lstat;
+
+    for (size_t i = 0; i < sizeof(patterns)/sizeof(patterns[0]); i++) {
+	if (bu_glob(patterns[i], 0, gp) != 0 || gp->gl_pathc != 2 ||
+		!_in_results(gp, "sub1/part_a.s") ||
+		!_in_results(gp, "sub1/part_b.s")) {
+	    bu_log("FAIL: %s did not follow directory symlinks\n", patterns[i]);
+	    errors++;
+	}
+    }
+
+    bu_glob_ctx_destroy(gp);
+    return errors;
+}
+
+
+static int
 test_glob_question(void)
 {
     int errors = 0;
@@ -331,6 +364,7 @@ main(int UNUSED(argc), char **argv)
     total_errors += test_glob_subdir();
     total_errors += test_glob_wildcard_dir();
     total_errors += test_glob_append();
+    total_errors += test_glob_symlink_dir();
     total_errors += test_glob_question();
 
     return total_errors;

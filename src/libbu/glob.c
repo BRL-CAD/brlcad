@@ -174,12 +174,14 @@ _bu_glob_fs_closedir(void *handle)
 
 
 static int
-_bu_glob_fs_lstat(const char *path, struct bu_stat *sb, void *UNUSED(data))
+_bu_glob_fs_stat(const char *path, struct bu_stat *sb, int follow_links)
 {
     struct stat s;
 #ifdef HAVE_LSTAT
-    if (lstat(path, &s) < 0) return -1;
+    int ret = follow_links ? stat(path, &s) : lstat(path, &s);
+    if (ret < 0) return -1;
 #else
+    (void)follow_links;
     if (stat(path, &s) < 0) return -1;
 #endif
     sb->size = (b_off_t)s.st_size;
@@ -223,12 +225,14 @@ _glob_closedir(void *handle, struct bu_glob_context *ctx)
 
 /* Stat a path; zeroes *sb before calling the backend. */
 static int
-_glob_lstat(const char *path, struct bu_stat *sb, struct bu_glob_context *ctx)
+_glob_stat(const char *path, struct bu_stat *sb, struct bu_glob_context *ctx, int follow_links)
 {
     memset(sb, 0, sizeof(*sb));
+    if (follow_links && ctx->gl_stat)
+	return ctx->gl_stat(path, sb, ctx->data);
     if (ctx->gl_lstat)
 	return ctx->gl_lstat(path, sb, ctx->data);
-    return _bu_glob_fs_lstat(path, sb, NULL);
+    return _bu_glob_fs_stat(path, sb, follow_links);
 }
 
 
@@ -305,11 +309,11 @@ _glob_expand(struct bu_vls *pathbuf,
 
 	if (*rest == '\0') {
 	    /* End of pattern: check if path actually exists */
-	    if (_glob_lstat(bu_vls_cstr(pathbuf), &sb, ctx) == 0)
+	    if (_glob_stat(bu_vls_cstr(pathbuf), &sb, ctx, 0) == 0)
 		_bu_glob_add(ctx, bu_vls_cstr(pathbuf));
 	} else {
 	    /* More pattern segments remain: must be a container */
-	    if (_glob_lstat(bu_vls_cstr(pathbuf), &sb, ctx) == 0 && sb.is_dir)
+	    if (_glob_stat(bu_vls_cstr(pathbuf), &sb, ctx, 1) == 0 && sb.is_dir)
 		_glob_expand(pathbuf, rest, ctx, flags);
 	}
 
@@ -355,7 +359,7 @@ _glob_expand(struct bu_vls *pathbuf,
 		_bu_glob_add(ctx, bu_vls_cstr(pathbuf));
 	    } else {
 		struct bu_stat sb;
-		if (_glob_lstat(bu_vls_cstr(pathbuf), &sb, ctx) == 0 && sb.is_dir)
+		if (_glob_stat(bu_vls_cstr(pathbuf), &sb, ctx, 1) == 0 && sb.is_dir)
 		    _glob_expand(pathbuf, rest, ctx, flags);
 	    }
 
@@ -462,7 +466,7 @@ bu_glob(const char *pattern, int flags, struct bu_glob_context *gp)
     if (*pat == '\0') {
 	/* Pattern was just "/" - return root if it exists */
 	struct bu_stat sb;
-	if (_glob_lstat(bu_vls_cstr(&pathbuf), &sb, gp) == 0)
+	if (_glob_stat(bu_vls_cstr(&pathbuf), &sb, gp, 0) == 0)
 	    _bu_glob_add(gp, bu_vls_cstr(&pathbuf));
 	bu_vls_free(&pathbuf);
 	return 0;
