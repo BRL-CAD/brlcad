@@ -72,6 +72,11 @@ build/doc/changes/changes_apply_rules.sh --check path/to/source
 
 == Contributor Workflow
 
+For a new interface or backward-compatible addition that preserves existing
+behavior and requires no caller changes, document the addition and refresh
+the public API baseline with `changes-api-snapshot`. No migration rule or
+deprecation is required.
+
 For a minimally impacting public change:
 
 1. Add a rule to `minimally-impacting.rules`.

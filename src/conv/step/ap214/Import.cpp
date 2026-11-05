@@ -21,6 +21,7 @@
 
 #include "bu/app.h"
 #include "bu/datetime.h"
+#include "bu/env.h"
 #include "bu/file.h"
 #include "bu/interrupt.h"
 #include "bu/log.h"
@@ -42,10 +43,6 @@
 #include <sstream>
 #include <streambuf>
 #include <string>
-
-#ifndef _WIN32
-#  include <sys/resource.h>
-#endif
 
 namespace {
 
@@ -312,17 +309,8 @@ severity_name(brlcad::step::DiagnosticSeverity severity)
 size_t
 peak_rss_bytes()
 {
-#ifndef _WIN32
-    struct rusage usage_info;
-    if (getrusage(RUSAGE_SELF, &usage_info) != 0) return 0;
-#  ifdef __APPLE__
-    return static_cast<size_t>(usage_info.ru_maxrss);
-#  else
-    return static_cast<size_t>(usage_info.ru_maxrss) * 1024U;
-#  endif
-#else
-    return 0;
-#endif
+    const ssize_t peak = bu_mem(BU_MEM_PROCESS_PEAK_RESIDENT, NULL);
+    return peak < 0 ? 0 : static_cast<size_t>(peak);
 }
 
 void

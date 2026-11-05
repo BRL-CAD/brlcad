@@ -152,11 +152,21 @@ process_mem_tests(void)
 
 
 static int
-process_resident_tests(void)
+process_resident_tests(int memory_type)
 {
-    const ssize_t before = bu_mem(BU_MEM_PROCESS_RESIDENT, NULL);
+    const int peak_query = memory_type == BU_MEM_PROCESS_PEAK_RESIDENT;
+    const char *query_name = peak_query ? "peak resident" : "resident";
+    const ssize_t before = bu_mem(memory_type, NULL);
     if (before < 0) {
-	bu_log("MEM resident size is not available through a native API\n");
+	bu_log("MEM %s size is not available through a native API\n",
+	    query_name);
+	if (peak_query) {
+#if defined(HAVE_WINDOWS_H) || \
+    (defined(__APPLE__) && defined(HAVE_MACH_MACH_H) && defined(MACH_TASK_BASIC_INFO)) || \
+    (defined(HAVE_GETRUSAGE) && defined(HAVE_STRUCT_RUSAGE_RU_MAXRSS) && defined(RUSAGE_SELF))
+	    return -1;
+#endif
+	}
 	return 0;
     }
 
@@ -177,23 +187,33 @@ process_resident_tests(void)
     allocation[allocation_size - 1] = 1;
 
     size_t resident_output = 0;
-    const ssize_t after = bu_mem(BU_MEM_PROCESS_RESIDENT,
-	&resident_output);
+    const ssize_t after = bu_mem(memory_type, &resident_output);
     bu_free((void *)allocation, "resident memory test allocation");
     if (after < 0 || resident_output != (size_t)after) {
-	bu_log("bu_mem resident test: query returned %zd and wrote %zu\n",
-	    after, resident_output);
+	bu_log("bu_mem %s test: query returned %zd and wrote %zu\n",
+	    query_name, after, resident_output);
 	return -1;
     }
-    if (after <= before) {
+    if (!peak_query && after <= before) {
 	bu_log("bu_mem resident test: resident size did not increase after "
 	    "touching %zu bytes (before=%zd, after=%zd)\n",
 	    allocation_size, before, after);
 	return -2;
     }
+    if (peak_query) {
+	const ssize_t released = bu_mem(memory_type, NULL);
+	/* Earlier startup work may already have set a higher peak.  Freeing
+	 * the allocation must never lower the recorded high-water mark. */
+	if (after < before || (size_t)after < allocation_size || released < after) {
+	    bu_log("bu_mem peak resident test: invalid peak before allocation "
+		"(%zd), during (%zd), or after release (%zd) of %zu bytes\n",
+		before, after, released, allocation_size);
+	    return -3;
+	}
+    }
 
-    bu_log("MEM resident size increased from %zd to %zd after touching "
-	"%zu bytes\n", before, after, allocation_size);
+    bu_log("MEM %s size before=%zd, after=%zd after touching %zu bytes\n",
+	query_name, before, after, allocation_size);
     return 0;
 }
 
@@ -474,10 +494,12 @@ main(int ac, char *av[])
     if (ac > 1 && BU_STR_EQUAL(av[1], "-m"))
 	return process_mem_tests();
     if (ac > 1 && BU_STR_EQUAL(av[1], "-r"))
-	return process_resident_tests();
+	return process_resident_tests(BU_MEM_PROCESS_RESIDENT);
+    if (ac > 1 && BU_STR_EQUAL(av[1], "-p"))
+	return process_resident_tests(BU_MEM_PROCESS_PEAK_RESIDENT);
 
     if (bu_mem(-1, NULL) >= 0 ||
-	    bu_mem(BU_MEM_PROCESS_RESIDENT + 1, NULL) >= 0)
+	    bu_mem(BU_MEM_PROCESS_PEAK_RESIDENT + 1, NULL) >= 0)
 	return mem_test_failure("invalid query", 0, NULL, -1);
 
     ssize_t all_mem = bu_mem(BU_MEM_ALL, NULL);

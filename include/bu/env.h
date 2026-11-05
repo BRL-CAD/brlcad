@@ -47,6 +47,7 @@ BU_EXPORT extern int bu_setenv(const char *name, const char *value, int overwrit
 #define BU_MEM_PAGE_SIZE 2
 #define BU_MEM_PROCESS_AVAIL 3
 #define BU_MEM_PROCESS_RESIDENT 4
+#define BU_MEM_PROCESS_PEAK_RESIDENT 5
 
 /**
  * Report memory sizes in bytes.  BU_MEM_ALL and BU_MEM_AVAIL report physical
@@ -56,8 +57,10 @@ BU_EXPORT extern int bu_setenv(const char *name, const char *value, int overwrit
  * -1 when the platform does not expose that information or the process is
  * unlimited.  BU_MEM_PROCESS_RESIDENT reports the calling process's current
  * resident physical memory and returns -1 when that information is not
- * available.  Accounting of pages shared with other processes is platform
- * specific.
+ * available.  BU_MEM_PROCESS_PEAK_RESIDENT reports the calling process's
+ * peak resident physical memory over its lifetime, returning -1 when that
+ * information is unavailable.  Accounting of pages shared with other
+ * processes is platform specific.
  *
  * Returns -1 on error and the size of the requested memory type on
  * success.  Optionally if sz is non-NULL, the size of the requested

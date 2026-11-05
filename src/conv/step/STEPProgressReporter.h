@@ -14,6 +14,7 @@
 
 #include "STEPWrapper.h"
 
+#include "bu/env.h"
 #include "bu/log.h"
 
 #include <chrono>
@@ -23,10 +24,6 @@
 #include <mutex>
 #include <sstream>
 #include <thread>
-
-#ifndef _WIN32
-#  include <sys/resource.h>
-#endif
 
 /** Emit an alive/progress line independently of parser and geometry work.
  * A separate reporter is important for long individual pullback jobs, which
@@ -177,17 +174,8 @@ private:
 
     static size_t peakResidentBytes()
     {
-#ifndef _WIN32
-	struct rusage usage;
-	if (getrusage(RUSAGE_SELF, &usage) != 0) return 0;
-#  ifdef __APPLE__
-	return static_cast<size_t>(usage.ru_maxrss);
-#  else
-	return static_cast<size_t>(usage.ru_maxrss) * 1024U;
-#  endif
-#else
-	return 0;
-#endif
+	const ssize_t peak = bu_mem(BU_MEM_PROCESS_PEAK_RESIDENT, NULL);
+	return peak < 0 ? 0 : static_cast<size_t>(peak);
     }
 
     const STEPWrapper &wrapper;

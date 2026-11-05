@@ -296,6 +296,7 @@ brlcad_add_test(NAME bu_path_dirname_null COMMAND bu_test test_dirname)
 brlcad_add_test(NAME bu_mem COMMAND bu_test test_env)
 brlcad_add_test(NAME bu_mem_process_limit COMMAND bu_test test_env -m)
 brlcad_add_test(NAME bu_mem_process_resident COMMAND bu_test test_env -r)
+brlcad_add_test(NAME bu_mem_process_peak_resident COMMAND bu_test test_env -p)
 brlcad_add_test(NAME bu_editor COMMAND bu_test test_env -e)
 
 

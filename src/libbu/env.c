@@ -433,6 +433,22 @@ mem_sysctl(int type, size_t *memsz)
 }
 
 
+#if defined(HAVE_WINDOWS_H)
+static int
+mem_windows_resident(int type, size_t *memsz)
+{
+    PROCESS_MEMORY_COUNTERS process_memory = {0};
+    process_memory.cb = sizeof(process_memory);
+    if (!GetProcessMemoryInfo(GetCurrentProcess(), &process_memory,
+	    (DWORD)sizeof(process_memory)))
+	return -1;
+    const SIZE_T resident_bytes = type == BU_MEM_PROCESS_PEAK_RESIDENT ?
+	process_memory.PeakWorkingSetSize : process_memory.WorkingSetSize;
+    return mem_size_from_uint64((uint64_t)resident_bytes, memsz);
+}
+#endif
+
+
 static int
 mem_process_usage(size_t *virtual_bytes, size_t *resident_bytes)
 {
@@ -442,13 +458,7 @@ mem_process_usage(size_t *virtual_bytes, size_t *resident_bytes)
 #if defined(HAVE_WINDOWS_H)
     if (virtual_bytes)
 	return 1;
-    PROCESS_MEMORY_COUNTERS process_memory = {0};
-    process_memory.cb = sizeof(process_memory);
-    if (!GetProcessMemoryInfo(GetCurrentProcess(), &process_memory,
-	    (DWORD)sizeof(process_memory)))
-	return -1;
-    return mem_size_from_uint64((uint64_t)process_memory.WorkingSetSize,
-	    resident_bytes);
+    return mem_windows_resident(BU_MEM_PROCESS_RESIDENT, resident_bytes);
 #elif defined(__linux__)
     FILE *statm = fopen("/proc/self/statm", "r");
     unsigned long long virtual_pages = 0;
@@ -588,10 +598,49 @@ mem_process_resident(size_t *memsz)
 }
 
 
+static int
+mem_process_peak_resident(size_t *memsz)
+{
+    if (!memsz)
+	return -1;
+
+#if defined(HAVE_WINDOWS_H)
+    return mem_windows_resident(BU_MEM_PROCESS_PEAK_RESIDENT, memsz);
+#elif defined(__APPLE__) && defined(HAVE_MACH_MACH_H) && \
+    defined(MACH_TASK_BASIC_INFO)
+    /* The POSIX API profile hides Darwin's ru_maxrss field.  Mach exposes
+     * the same process high-water mark directly in bytes. */
+    struct mach_task_basic_info task_memory;
+    mach_msg_type_number_t task_count = MACH_TASK_BASIC_INFO_COUNT;
+    if (task_info(mach_task_self(), MACH_TASK_BASIC_INFO,
+	    (task_info_t)&task_memory, &task_count) != KERN_SUCCESS)
+	return -1;
+    return mem_size_from_uint64((uint64_t)task_memory.resident_size_max,
+	    memsz);
+#elif defined(HAVE_GETRUSAGE) && defined(HAVE_STRUCT_RUSAGE_RU_MAXRSS) && \
+    defined(RUSAGE_SELF)
+    struct rusage usage;
+    if (getrusage(RUSAGE_SELF, &usage) != 0 || usage.ru_maxrss < 0)
+	return -1;
+#  ifdef __APPLE__
+    return mem_size_from_uint64((uint64_t)usage.ru_maxrss, memsz);
+#  else
+    const uint64_t bytes_per_kibibyte = 1024;
+    if ((uint64_t)usage.ru_maxrss > UINT64_MAX / bytes_per_kibibyte)
+	return -1;
+    return mem_size_from_uint64((uint64_t)usage.ru_maxrss *
+	    bytes_per_kibibyte, memsz);
+#  endif
+#else
+    return 1;
+#endif
+}
+
+
 ssize_t
 bu_mem(int type, size_t *sz)
 {
-    if (type < BU_MEM_ALL || type > BU_MEM_PROCESS_RESIDENT)
+    if (type < BU_MEM_ALL || type > BU_MEM_PROCESS_PEAK_RESIDENT)
 	return (ssize_t)-1;
 
     size_t subsz = 0;
@@ -605,6 +654,12 @@ bu_mem(int type, size_t *sz)
     }
     if (type == BU_MEM_PROCESS_RESIDENT) {
 	ret = mem_process_resident(&subsz);
+	if (ret != 0)
+	    return (ssize_t)-1;
+	return mem_result(subsz, sz);
+    }
+    if (type == BU_MEM_PROCESS_PEAK_RESIDENT) {
+	ret = mem_process_peak_resident(&subsz);
 	if (ret != 0)
 	    return (ssize_t)-1;
 	return mem_result(subsz, sz);

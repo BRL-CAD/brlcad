@@ -555,10 +555,8 @@ if(BRLCAD_ENABLE_STEP)
       "STEP_PLUGIN_IMPORT_CLI=${import_cli}"
       "STEP_PLUGIN_EXPORT_CLI=${export_cli}"
     )
-    # BRL-CAD's POSIX API profile makes Darwin expose the non-standard
-    # rusage fields as opaque storage.  STEP's progress and budget reporting
-    # intentionally uses ru_maxrss, so request its public Darwin spelling for
-    # these schema modules.
+    # OpenNURBS needs Darwin extensions enabled before system headers are
+    # included (see brep/defines.h).
     target_compile_definitions(${_target} PRIVATE _DARWIN_C_SOURCE)
     if(schema STREQUAL "ap242e1")
       target_compile_definitions(${_target} PRIVATE AP242E1)

@@ -52,6 +52,7 @@
 #endif
 
 #include "bu/app.h"
+#include "bu/env.h"
 #include "bu/file.h"
 #include "bu/opt.h"
 #include "bu/datetime.h"
@@ -359,18 +360,8 @@ shaded_face_diagnostic(int face_index, int diagnostic_result,
 static size_t
 peak_rss_bytes()
 {
-#ifndef _WIN32
-    struct rusage usage_info;
-    if (getrusage(RUSAGE_SELF, &usage_info) != 0)
-	return 0;
-#  ifdef __APPLE__
-    return (size_t)usage_info.ru_maxrss;
-#  else
-    return (size_t)usage_info.ru_maxrss * 1024U;
-#  endif
-#else
-    return 0;
-#endif
+    const ssize_t peak = bu_mem(BU_MEM_PROCESS_PEAK_RESIDENT, NULL);
+    return peak < 0 ? 0 : (size_t)peak;
 }
 
 static bool

@@ -13,8 +13,14 @@ public types, and other behavior users reasonably rely on.
 Renaming an application is not minimally impacting: an application
 name is the primary way users find and run the tool.
 
-Every public interface change must be either minimally impacting or
-formally deprecated.
+New interfaces and backward-compatible additions to existing interfaces
+do not require migration rules or deprecation when existing callers
+need no changes and existing behavior is preserved. Document these
+additions and refresh the public API baseline with the
+`changes-api-snapshot` build target.
+
+Every other public interface change must be either minimally impacting
+or formally deprecated.
 
 == Minimally Impacting
 
