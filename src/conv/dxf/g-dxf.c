@@ -85,9 +85,7 @@ usage(const char *argv0)
  -o dxf	Output to the specified dxf filename\n\n---\n");
 }
 
-static int	NMG_debug;	/* saved arg of -X, for longjmp handling */
 static int	verbose;
-static int	ncpu = 1;	/* Number of processors */
 static int	polyface_mesh = 0;	/* flag for output type (default is 3DFACE) */
 static char	*output_file = NULL;	/* output filename */
 static FILE	*fp;		/* Output file pointer */
@@ -435,7 +433,7 @@ main(int argc, char *argv[])
 		verbose++;
 		break;
 	    case 'P':
-		ncpu = atoi(bu_optarg);
+		/* Accept the legacy option; output callbacks run serially. */
 		break;
 	    case 'x':
 		sscanf(bu_optarg, "%x", (unsigned int *)&rt_debug);
@@ -447,7 +445,6 @@ main(int argc, char *argv[])
 		break;
 	    case 'X':
 		sscanf(bu_optarg, "%x", (unsigned int *)&nmg_debug);
-		NMG_debug = nmg_debug;
 		break;
 	    case 'i':
 		inches = 1;

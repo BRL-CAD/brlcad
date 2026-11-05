@@ -52,7 +52,6 @@
 
 static int NMG_debug;	/* saved arg of -X, for longjmp handling */
 static int verbose;
-static int ncpu = 1;	/* Number of processors */
 static char *output_file = NULL;	/* output filename */
 static char *error_file = NULL;	/* error filename */
 static FILE *fp;		/* Output file pointer */
@@ -534,7 +533,7 @@ main(int argc, char **argv)
 		verbose++;
 		break;
 	    case 'P':
-		ncpu = atoi(bu_optarg);
+		/* Accept the legacy option; output callbacks run serially. */
 		break;
 	    case 'x':
 		bu_sscanf(bu_optarg, "%x", (unsigned int *)&rt_debug);

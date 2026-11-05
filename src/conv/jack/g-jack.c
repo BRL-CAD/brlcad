@@ -63,7 +63,6 @@ static int	NMG_debug;	/* saved arg of -X, for longjmp handling */
 static int	verbose;
 static int	no_file_output=0;	/* -f:  Don't bother writing output files */
 static int	debug_plots;	/* Make debugging plots */
-static int	ncpu = 1;	/* Number of processors */
 static char	*prefix = NULL;	/* output filename prefix. */
 static FILE	*fp_fig;	/* Jack Figure file. */
 static struct db_i		*dbip;
@@ -488,7 +487,7 @@ main(int argc, char **argv)
 		verbose++;
 		break;
 	    case 'P':
-		ncpu = atoi(bu_optarg);
+		/* Accept the legacy option; output callbacks run serially. */
 		break;
 	    case 'x':
 		sscanf(bu_optarg, "%x", (unsigned int *)&rt_debug);

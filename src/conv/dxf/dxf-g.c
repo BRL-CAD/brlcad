@@ -205,8 +205,6 @@ static point_t pts[4];
 #define UNKNOWN_ENTITY 0
 #define POLYLINE_VERTEX 1
 
-static int invisible = 0;
-
 #define ERROR_FLAG	-999
 #define EOF_FLAG	-998
 
@@ -987,9 +985,6 @@ process_entities_polyline_code(int code)
 	case 62:	/* color number */
 	    curr_color = atoi(line);
 	    break;
-	case 60:
-	    invisible = atoi(line);
-	    break;
 	case 8:		/* layer name */
 	    if (curr_layer_name) {
 		bu_free(curr_layer_name, "curr_layer_name");
@@ -1006,8 +1001,6 @@ static int
 process_entities_unknown_code(int code)
 {
     struct state_data *tmp_state;
-
-    invisible = 0;
 
     switch (code) {
 	case 999:	/* comment */

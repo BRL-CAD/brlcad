@@ -55,8 +55,6 @@ static char *framebuffer = NULL;
 static const char *file_name;
 static FILE *fp_in;
 
-static int fileinput = 0;		/* file of pipe on input? */
-
 static int scr_width = 0;		/* screen tracks file if not given */
 static int scr_height = 0;
 static int file_xoff=0, file_yoff=0;
@@ -179,7 +177,6 @@ get_args(int argc, char **argv)
 		    file_name);
 	    bu_exit(1, NULL);
 	}
-	fileinput++;
     }
 
     if (argc > ++bu_optind) {

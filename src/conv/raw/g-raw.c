@@ -65,7 +65,6 @@ print_usage(const char *progname)
 }
 
 static int verbose;
-static int NMG_debug;			/* saved arg of -X, for longjmp handling */
 static char *output_file = NULL;	/* output filename */
 static char *output_directory = NULL;	/* directory name to hold output files */
 static FILE *fp;			/* Output file pointer */
@@ -80,7 +79,6 @@ static int regions_tried = 0;
 static int regions_converted = 0;
 static int regions_written = 0;
 static int inches = 0;
-static size_t tot_polygons = 0;
 
 
 /* Byte swaps a four byte value */
@@ -165,14 +163,11 @@ nmg_to_raw(struct nmgregion *r, const struct db_full_path *pathp, struct db_tree
 	    {
 		struct edgeuse *eu;
 		int vert_count=0;
-		unsigned char vert_buffer[50];
 
 		NMG_CK_LOOPUSE(lu);
 
 		if (BU_LIST_FIRST_MAGIC(&lu->down_hd) != NMG_EDGEUSE_MAGIC)
 		    continue;
-
-		memset(vert_buffer, 0, sizeof(vert_buffer));
 
 		/* check vertex numbers for each triangle */
 		for (BU_LIST_FOR (eu, edgeuse, &lu->down_hd))
@@ -194,10 +189,6 @@ nmg_to_raw(struct nmgregion *r, const struct db_full_path *pathp, struct db_tree
 		    bu_log("lu %p has %d vertices!\n", (void *)lu, vert_count);
 		    bu_exit(1, "ERROR: LU is not a triangle");
 		}
-		else if (vert_count < 3)
-		    continue;
-
-		tot_polygons++;
 	    }
 	}
     }
@@ -287,7 +278,6 @@ main(int argc, char *argv[])
 		break;
 	    case 'X':
 		sscanf(bu_optarg, "%x", (unsigned int *)&nmg_debug);
-		NMG_debug = nmg_debug;
 		break;
 	    case 'i':
 		inches = 1;

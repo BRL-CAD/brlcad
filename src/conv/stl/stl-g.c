@@ -53,7 +53,6 @@ static struct wmember all_head;
 static char *input_file;	/* name of the input file */
 static char *brlcad_file;	/* name of output file */
 static char *forced_name=NULL;	/* name specified on command line */
-static int solid_count=0;	/* count of solids converted */
 static struct bn_tol tol;	/* Tolerance structure */
 static int id_no=1000;		/* Ident numbers */
 static int const_id=-1;		/* Constant ident number (assigned to all regions if non-negative) */
@@ -208,7 +207,6 @@ Convert_part_ascii(char line[MAX_LINE_SIZE])
     mk_unique_brlcad_name(&region_name);
     bu_log("Converting Part: %s\n", bu_vls_cstr(&region_name));
 
-    solid_count++;
     bu_path_component(&solid_name, bu_vls_cstr(&region_name), BU_PATH_BASENAME_EXTLESS);
     mk_unique_brlcad_name(&solid_name);
     bu_vls_printf(&solid_name, ".s");
@@ -384,7 +382,6 @@ Convert_part_binary(void)
     int degenerate_count=0;
     size_t ret;
 
-    solid_count++;
     if (forced_name) {
 	bu_vls_sprintf(&solid_name, "%s.s", forced_name);
 	bu_vls_strcpy(&region_name, forced_name);

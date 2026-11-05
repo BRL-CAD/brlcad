@@ -65,7 +65,6 @@ print_usage(const char *progname)
 }
 
 static int verbose;
-static int NMG_debug;			/* saved arg of -X, for longjmp handling */
 static int binary = 0;			/* Default output is ASCII */
 static char *output_file = NULL;	/* output filename */
 static char *output_directory = NULL;	/* directory name to hold output files */
@@ -383,7 +382,6 @@ main(int argc, char *argv[])
 		break;
 	    case 'X':
 		sscanf(bu_optarg, "%x", (unsigned int *)&nmg_debug);
-		NMG_debug = nmg_debug;
 		break;
 	    case 'i':
 		inches = 1;

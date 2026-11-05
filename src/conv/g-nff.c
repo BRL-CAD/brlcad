@@ -62,7 +62,6 @@ static struct db_tree_state tree_state;	/* includes tol & model */
 static int regions_tried = 0;
 static int regions_converted = 0;
 static int regions_written = 0;
-static int inches = 0;
 static long tot_polygons = 0;
 
 static point_t model_max;
@@ -427,7 +426,7 @@ main(int argc, char *argv[])
 		error_file = bu_optarg;
 		break;
 	    case 'i':
-		inches = 1;
+		/* Accept the legacy option; output retains model coordinates. */
 		break;
 	    default:
 		print_usage(argv[0]);
