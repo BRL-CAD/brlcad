@@ -7287,10 +7287,13 @@ cdt_test_repair_periodic_strip(void)
     high_uv[sphere_angular_direction] = sphere_seam;
     low_uv[sphere_open_direction] = sphere_open_domain.Min();
     high_uv[sphere_open_direction] = sphere_open_domain.Max();
-    ON_BrepVertex &low_vertex = closed_sphere_brep->NewVertex(
-	closed_sphere_surface->PointAt(low_uv.x, low_uv.y), 1.0e-8);
-    ON_BrepVertex &high_vertex = closed_sphere_brep->NewVertex(
-	closed_sphere_surface->PointAt(high_uv.x, high_uv.y), 1.0e-8);
+    /* Adding a vertex can relocate m_V, invalidating earlier references. */
+    const int low_vertex_index = closed_sphere_brep->NewVertex(
+	closed_sphere_surface->PointAt(low_uv.x, low_uv.y), 1.0e-8).m_vertex_index;
+    const int high_vertex_index = closed_sphere_brep->NewVertex(
+	closed_sphere_surface->PointAt(high_uv.x, high_uv.y), 1.0e-8).m_vertex_index;
+    ON_BrepVertex &low_vertex = closed_sphere_brep->m_V[low_vertex_index];
+    ON_BrepVertex &high_vertex = closed_sphere_brep->m_V[high_vertex_index];
     ON_Curve *sphere_seam_curve = closed_sphere_surface->IsoCurve(
 	sphere_open_direction, sphere_seam);
     if (!sphere_seam_curve)

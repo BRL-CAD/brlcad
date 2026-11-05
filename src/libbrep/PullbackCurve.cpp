@@ -3029,8 +3029,9 @@ brlcad::PullbackContext::SurfaceClosestPoint(
 cleanup:
 
     const auto valid_result = [&]() {
-	return p2d.IsValid() && p3d.IsValid() &&
-	    std::isfinite(current_distance) && current_distance < DBL_MAX;
+	/* A search without a candidate has not written the output points. */
+	return std::isfinite(current_distance) && current_distance < DBL_MAX &&
+	    p2d.IsValid() && p3d.IsValid();
     };
     if (rc && !valid_result())
 	rc = false;
