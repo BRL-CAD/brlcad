@@ -11,7 +11,7 @@
 /** @file brep/assembly.h
  *
  * Assemble independently constructed trimmed faces into shared OpenNURBS
- * topology.  These routines do not standardize or compact a B-Rep.
+ * topology.
  */
 
 #ifndef BREP_ASSEMBLY_H
@@ -37,7 +37,9 @@ enum brep_assembly_error {
     BREP_ASSEMBLY_CULL_FAILED,
     BREP_ASSEMBLY_ORIENTATION_FAILED,
     BREP_ASSEMBLY_VALIDATION_FAILED,
-    BREP_ASSEMBLY_TOLERANCE_FAILED
+    BREP_ASSEMBLY_TOLERANCE_FAILED,
+    BREP_ASSEMBLY_EDGE_COLLAPSE_FAILED,
+    BREP_ASSEMBLY_TRIM_GAP_FAILED
 };
 
 struct brep_assembly_result {
@@ -60,12 +62,22 @@ extern BREP_EXPORT bool
 brep_curves_coincident(const ON_Curve &first, const ON_Curve &second,
 	double tolerance, bool *reversed = NULL);
 
+/** Prove that every point on @p curve is in the closed ball centered at
+ * @p center with radius @p tolerance.  Positive-weight rational Bezier
+ * control hulls are subdivided adaptively; failure to complete the proof
+ * within the work limit returns false. */
+extern BREP_EXPORT bool
+brep_curve_locus_within_ball(const ON_Curve &curve,
+	const ON_3dPoint &center, double tolerance);
+
 /**
  * Merge unambiguous pairs of coincident naked edges in place.
  *
- * Each retained edge acquires the trims from its duplicate.  Face pcurves are
- * not changed.  Returns the number of merged edges, or -1 on an OpenNURBS
- * topology error.  Ambiguous matches are deliberately left naked.
+ * Each retained edge acquires the trims from its duplicate.  Short boundaries
+ * collapsed by the resulting vertex unification are removed, and affected
+ * face pcurves are closed.  Repair is transactional and may compact the B-Rep.
+ * Returns the number of merged edges, or -1 on an OpenNURBS topology error.
+ * Ambiguous matches are deliberately left naked.
  */
 extern BREP_EXPORT int
 brep_stitch_naked_edges(ON_Brep &brep, double tolerance,

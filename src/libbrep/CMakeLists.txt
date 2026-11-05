@@ -1,4 +1,5 @@
 brlcad_find_package(OPENNURBS REQUIRED SYSPATTERN openNURBS)
+brlcad_find_package(manifold REQUIRED)
 
 set(
   LIBBREP_SOURCES
@@ -9,6 +10,7 @@ set(
   Subcurve.cpp
   Subsurface.cpp
   boolean.cpp
+  boolean_manifold.cpp
   cdt/assembly.cpp
   cdt/chart.cpp
   cdt/cdt.cpp
@@ -61,6 +63,7 @@ set(BREP_LOCAL_INCLUDE_DIRS
 set(BREP_PUBLIC_LIBS ${libbrep_deps} OPENNURBS::OPENNURBS)
 set(
   BREP_PRIVATE_LIBS
+  manifold::manifold
   ${WINSOCK_LIB}
   ${RPCRT_LIB}
   ${STDCXX_LIBRARIES}
@@ -76,7 +79,11 @@ add_subdirectory(tests)
 
 cmakefiles(
   CMakeLists.txt
+  affine_surface.h
   PullbackCurve.h
+  boolean_endpoint_pair.h
+  boolean_loop.h
+  boolean_manifold.h
   brep_defines.h
   brep_except.h
   cdt/assembly.h
@@ -91,6 +98,7 @@ cmakefiles(
   cdt/owned.h
   cdt/test_api.h
   debug_plot.h
+  pullback_seam_endpoint.h
   quality.cpp
   shape_recognition/shape_recognition.h
   shape_recognition/torus.cpp
