@@ -40,11 +40,10 @@
  * 2GB/4GB limits, particularly relevant for verifying 32-bit and
  * 64-bit build behavior.
  *
- * NOTE: It currently creates a large database by writing out a
- * massive 'title', which is typically a short string.  As such, care
- * is not taken when making (4x) copies of large multi-GB title
- * strings.  That means a 4GB .g file may utilize 16GB of memory
- * briefly during construction, a 6GB file may use 24GB, etc.
+ * NOTE: It creates a large database by writing a massive 'title', which
+ * is typically a short string.  Several copies may be alive at once, so
+ * memory use can greatly exceed the database size.  The test skips when
+ * its estimated requirement exceeds available memory or a process limit.
  */
 
 #include "common.h"
@@ -62,6 +61,9 @@ int
 main(int ac, char *av[])
 {
     char filename[MAXPATHLEN] = {0};
+    const size_t title_copies = 5;
+    const size_t mebibyte = 1024 * 1024;
+    const int memory_skip_code = 123;
     size_t sz = 1024L * 1024L * 1024L;
     FILE *fp;
     struct rt_wdb *outfp;
@@ -83,29 +85,32 @@ main(int ac, char *av[])
     }
     sz += 2; /* nudge */
 
-    fp = bu_temp_file(filename, MAXPATHLEN);
-    outfp = wdb_fopen(filename);
-
-    /* bu_log("using %s temp file\n", filename); */
-
     /* make sure we don't overflow */
-    BU_ASSERT((uint64_t)sz < (uint64_t)(SIZE_MAX/2));
+    BU_ASSERT(sz <= SIZE_MAX/title_copies);
     BU_ASSERT(sz > strlen("123......321")+1);
 
-    /* intentionally using malloc so we can halt the test if this
-     * system will let us allocate enough memory.
-     *
-     * unfortunately, librt currently re-allocates a title 9 times in
-     * the process of writing it to disk, keeping what appears to be 5
-     * of them in memory at the same time.
-     */
-#define MULTIPLIER 5
-    title = (char *)malloc(sz * MULTIPLIER);
-    if (!title) {
-	bu_log("WARNING: unable to allocate %zu MB\n", (sz * MULTIPLIER) / (1024 * 1024));
-	bu_exit(123, "Aborting test.\n");
+    /* malloc may overcommit without reserving physical memory.  Account for
+     * the simultaneous title copies and any finite process limit first. */
+    const size_t required_memory = sz * title_copies;
+    const ssize_t available_memory = bu_mem(BU_MEM_AVAIL, NULL);
+    const ssize_t process_memory = bu_mem(BU_MEM_PROCESS_AVAIL, NULL);
+    if ((available_memory > 0 && required_memory > (size_t)available_memory) ||
+        (process_memory >= 0 && required_memory > (size_t)process_memory)) {
+        bu_exit(memory_skip_code,
+            "Skipping large-database test: %zu MB required for title copies.\n",
+            required_memory/mebibyte);
     }
-    free(title);
+
+    /* Keep the allocation probe observable so optimization cannot remove it. */
+    char * volatile allocation_probe = (char *)malloc(required_memory);
+    if (!allocation_probe) {
+        bu_log("WARNING: unable to allocate %zu MB\n", required_memory/mebibyte);
+        bu_exit(memory_skip_code, "Aborting test.\n");
+    }
+    free(allocation_probe);
+
+    fp = bu_temp_file(filename, MAXPATHLEN);
+    outfp = wdb_fopen(filename);
 
     title = (char *)bu_malloc(sz, "title");
     memset(title, ' ', sz);
