@@ -572,7 +572,7 @@ static const size_t BREP_DIRECTIONAL_CACHE_MAX_SUBPATCHES = 1u << 20;
  * retaining one large object table per worker.  Slots are allocated with the
  * prepared object and replaced only after all lock-free readers have left. */
 static const size_t BREP_DIRECTIONAL_OBJECT_CACHE_CAPACITY = 4;
-static const uint32_t BREP_DIRECTIONAL_OBJECT_CACHE_FORMAT_VERSION = 1;
+static const uint32_t BREP_DIRECTIONAL_OBJECT_CACHE_FORMAT_VERSION = 2;
 static const size_t BREP_DIRECTIONAL_OBJECT_GRID_SIZE = 256;
 static const size_t BREP_DIRECTIONAL_OBJECT_GRID_WORDS =
     BREP_DIRECTIONAL_OBJECT_GRID_SIZE * BREP_DIRECTIONAL_OBJECT_GRID_SIZE / 64;
@@ -4604,6 +4604,7 @@ brep_clear_routing_feature_cells(struct brep_specific *bs)
     bs->routing_domain_boundary_cells = 0;
     bs->routing_correction_cells = 0;
     bs->routing_feature_cells_complete = false;
+    bs->routing_hot_ranges_complete = false;
     for (std::vector<brep_face_record>::iterator record_it =
 	    bs->face_records.begin(); record_it != bs->face_records.end();
 	    ++record_it) {
@@ -6401,6 +6402,7 @@ struct brep_ray_coefficient_context {
     double direction[3];
     double plane[2][3];
     double direction_squared;
+    double normal_hull_grazing_scale;
     brep_interval direction_squared_interval;
     bool initialized = false;
     bool valid = false;
@@ -6413,6 +6415,7 @@ brep_ray_coefficient_context_init(brep_ray_coefficient_context &context,
 {
     context.initialized = true;
     context.valid = false;
+    context.normal_hull_grazing_scale = 0.0;
     for (int component = 0; component < 3; ++component) {
 	context.origin[component] = ray.m_origin[component];
 	context.direction[component] = ray.m_dir[component];
@@ -6438,6 +6441,13 @@ brep_ray_coefficient_context_init(brep_ray_coefficient_context &context,
     }
     if (!(context.direction_squared_interval.minimum > 0.0) ||
 	    !std::isfinite(context.direction_squared_interval.maximum))
+	return;
+    const double direction_upper = std::nextafter(sqrt(
+	context.direction_squared_interval.maximum), INFINITY);
+    context.normal_hull_grazing_scale = std::nextafter(
+	BREP_GRAZING_DOT_TOL * direction_upper, INFINITY);
+    if (!(context.normal_hull_grazing_scale > 0.0) ||
+	    !std::isfinite(context.normal_hull_grazing_scale))
 	return;
     context.valid = true;
 }
@@ -32894,7 +32904,7 @@ brep_route_span_hull_possible(const brep_surface_span &span,
 
 static bool
 brep_directional_normal_hull_transverse(const brep_interval_vector &normal,
-    double normal_magnitude_upper, const ON_Ray &ray,
+    double normal_magnitude_upper,
     const brep_ray_coefficient_context &coefficient_context)
 {
     if (!coefficient_context.valid || !(normal_magnitude_upper > 0.0) ||
@@ -32905,11 +32915,11 @@ brep_directional_normal_hull_transverse(const brep_interval_vector &normal,
 	if (!std::isfinite(normal.component[component].minimum) ||
 		!std::isfinite(normal.component[component].maximum) ||
 		normal.component[component].minimum >
-		    normal.component[component].maximum ||
-		!std::isfinite(ray.m_dir[component]))
+		    normal.component[component].maximum)
 	    return false;
 	dot = brep_interval_add(dot, brep_interval_scale(
-	    ray.m_dir[component], normal.component[component]));
+	    coefficient_context.direction[component],
+	    normal.component[component]));
     }
     double absolute_lower = 0.0;
     if (dot.minimum > 0.0)
@@ -32918,11 +32928,9 @@ brep_directional_normal_hull_transverse(const brep_interval_vector &normal,
 	absolute_lower = -dot.maximum;
     else
 	return false;
-    const double direction_upper = std::nextafter(sqrt(
-	coefficient_context.direction_squared_interval.maximum), INFINITY);
-    const double threshold = std::nextafter(std::nextafter(
-	BREP_GRAZING_DOT_TOL * direction_upper, INFINITY) *
-	normal_magnitude_upper, INFINITY);
+    const double threshold = std::nextafter(
+	coefficient_context.normal_hull_grazing_scale *
+	    normal_magnitude_upper, INFINITY);
     return std::isfinite(absolute_lower) && std::isfinite(threshold) &&
 	absolute_lower > threshold;
 }
@@ -32931,7 +32939,7 @@ brep_directional_normal_hull_transverse(const brep_interval_vector &normal,
 static bool
 brep_directional_cell_span_cached_transverse(
     const brep_directional_cell_span &binding,
-    const brep_surface_span &span, const ON_Ray &ray,
+    const brep_surface_span &span,
     const brep_ray_coefficient_context &coefficient_context)
 {
     (void)span;
@@ -32944,13 +32952,12 @@ brep_directional_cell_span_cached_transverse(
 	    binding.normal_hull_maximum[component]
 	};
     return brep_directional_normal_hull_transverse(normal,
-	binding.normal_hull_magnitude_upper, ray, coefficient_context);
+	binding.normal_hull_magnitude_upper, coefficient_context);
 }
 
 
 static bool
 brep_directional_span_cached_transverse(const brep_surface_span &span,
-    const ON_Ray &ray,
     const brep_ray_coefficient_context &coefficient_context)
 {
     if (!span.normal_hull_valid)
@@ -32962,13 +32969,12 @@ brep_directional_span_cached_transverse(const brep_surface_span &span,
 	    span.normal_hull_maximum[component]
 	};
     return brep_directional_normal_hull_transverse(normal,
-	span.normal_hull_magnitude_upper, ray, coefficient_context);
+	span.normal_hull_magnitude_upper, coefficient_context);
 }
 
 
 static bool
 brep_directional_face_cached_transverse(const brep_face_record &record,
-    const ON_Ray &ray,
     const brep_ray_coefficient_context &coefficient_context)
 {
     if (!record.normal_hull_valid)
@@ -32980,13 +32986,13 @@ brep_directional_face_cached_transverse(const brep_face_record &record,
 	    record.normal_hull_maximum[component]
 	};
     return brep_directional_normal_hull_transverse(normal,
-	record.normal_hull_magnitude_upper, ray, coefficient_context);
+	record.normal_hull_magnitude_upper, coefficient_context);
 }
 
 
 static bool
 brep_directional_subpatch_cached_transverse(
-    const brep_directional_subpatch &subpatch, const ON_Ray &ray,
+    const brep_directional_subpatch &subpatch,
     const brep_ray_coefficient_context &coefficient_context)
 {
     if (!subpatch.normal_hull_valid)
@@ -32998,13 +33004,13 @@ brep_directional_subpatch_cached_transverse(
 	    subpatch.normal_hull_maximum[component]
 	};
     return brep_directional_normal_hull_transverse(normal,
-	subpatch.normal_hull_magnitude_upper, ray, coefficient_context);
+	subpatch.normal_hull_magnitude_upper, coefficient_context);
 }
 
 
 static bool
 brep_routing_subpatch_cached_transverse(
-    const brep_routing_subpatch_bbox &subpatch, const ON_Ray &ray,
+    const brep_routing_subpatch_bbox &subpatch,
     const brep_ray_coefficient_context &coefficient_context)
 {
     if (!subpatch.normal_hull_valid)
@@ -33016,7 +33022,7 @@ brep_routing_subpatch_cached_transverse(
 	    subpatch.normal_hull_maximum[component]
 	};
     return brep_directional_normal_hull_transverse(normal,
-	subpatch.normal_hull_magnitude_upper, ray, coefficient_context);
+	subpatch.normal_hull_magnitude_upper, coefficient_context);
 }
 
 
@@ -33276,7 +33282,7 @@ brep_route_directional_span_transverse(
 		if (brep_interval_vector_magnitude_upper(normal,
 			normal_magnitude_upper) &&
 		    brep_directional_normal_hull_transverse(normal,
-			normal_magnitude_upper, ray, coefficient_context)) {
+			normal_magnitude_upper, coefficient_context)) {
 		    decision.directional_refined_transverse_boxes++;
 		    continue;
 		}
@@ -33356,15 +33362,36 @@ brep_directional_same_point(const double first[3], const ON_3dPoint &second)
 }
 
 
+struct brep_directional_object_grid_bounds {
+    uint8_t minimum[2] = {UINT8_MAX, UINT8_MAX};
+    uint8_t maximum[2] = {0, 0};
+};
+
+
 static const brep_routing_cell_span_pack *
 brep_directional_cell_span_pack(const struct brep_specific *bs,
     const brep_routing_feature_cell &cell,
-    const brep_directional_cell_span &binding)
+    const brep_directional_cell_span &binding, size_t binding_offset)
 {
+    if (bs && bs->routing_hot_ranges_complete) {
+	if (binding_offset >= cell.span_index_count)
+	    return NULL;
+	return &bs->routing_cell_span_packs[
+	    cell.span_index_begin + binding_offset];
+    }
     if (!bs || cell.span_index_begin > bs->routing_cell_span_packs.size() ||
 	    cell.span_index_count > bs->routing_cell_span_packs.size() -
 		cell.span_index_begin)
 	return NULL;
+    if (binding_offset < cell.span_index_count) {
+	const brep_routing_cell_span_pack &pack =
+	    bs->routing_cell_span_packs[cell.span_index_begin + binding_offset];
+	if (pack.span_index == binding.span_index)
+	    return &pack;
+    }
+    /* Old or independently reconstructed prep data may not retain a packed
+     * prefix.  A linear lookup preserves the checked fallback without
+     * charging validated current prep for it. */
     for (size_t pack_offset = 0; pack_offset < cell.span_index_count;
 	    ++pack_offset) {
 	const brep_routing_cell_span_pack &pack =
@@ -33387,6 +33414,8 @@ brep_route_directional_packed_span_transverse(
     const brep_directional_cell_span &binding,
     const brep_surface_span &span,
     const brep_routing_cell_span_pack *pack,
+    const uint64_t *cached_subpatch_transverse,
+    size_t cached_subpatch_transverse_words,
     const ON_Ray &ray,
     const brep_ray_coefficient_context &coefficient_context,
     const brep_surface_bbox_cull_context &cull_context,
@@ -33424,12 +33453,16 @@ brep_route_directional_packed_span_transverse(
 	const packed_work work = pending[--pending_count];
 	if (work.node_index >= pack->subpatch_count)
 	    return BREP_DIRECTIONAL_THREAD_CACHE_UNAVAILABLE;
+	const size_t subpatch_index = pack->subpatch_begin + work.node_index;
 	const brep_routing_subpatch_bbox &subpatch =
-	    bs->routing_cell_span_subpatches[
-		pack->subpatch_begin + work.node_index];
+	    bs->routing_cell_span_subpatches[subpatch_index];
 	decision.directional_cache_box_tests++;
-	if (brep_routing_subpatch_cached_transverse(subpatch, ray,
-		coefficient_context)) {
+	if ((cached_subpatch_transverse &&
+		subpatch_index / 64 < cached_subpatch_transverse_words &&
+		(cached_subpatch_transverse[subpatch_index / 64] &
+		    (UINT64_C(1) << (subpatch_index % 64)))) ||
+		brep_routing_subpatch_cached_transverse(subpatch,
+		    coefficient_context)) {
 	    decision.directional_refined_transverse_boxes++;
 	    continue;
 	}
@@ -33490,18 +33523,47 @@ struct brep_directional_object_cache_entry {
     double projection_minimum[2] = {0.0, 0.0};
     double projection_maximum[2] = {0.0, 0.0};
     double inverse_cell_width[2] = {0.0, 0.0};
+    double inverse_direction[3] = {0.0, 0.0, 0.0};
+    double direction_squared = 0.0;
+    double direction_squared_interval[2] = {0.0, 0.0};
+    double normal_hull_grazing_scale = 0.0;
     double coordinate_scale = 0.0;
+    bool parallel[3] = {false, false, false};
     uint8_t depth = 0;
     uint64_t occupied[BREP_DIRECTIONAL_OBJECT_GRID_WORDS] = {};
     uint64_t correction_occupied[BREP_DIRECTIONAL_OBJECT_GRID_WORDS] = {};
+    uint64_t *face_transverse = NULL;
+    uint64_t *binding_transverse = NULL;
+    uint64_t *directional_subpatch_transverse = NULL;
+    uint64_t *routing_subpatch_transverse = NULL;
+    brep_directional_object_grid_bounds *binding_projection_bounds = NULL;
+    brep_directional_object_grid_bounds *directional_subpatch_projection_bounds =
+	NULL;
+    brep_directional_object_grid_bounds *routing_subpatch_projection_bounds =
+	NULL;
+    size_t face_transverse_words = 0;
+    size_t binding_transverse_words = 0;
+    size_t directional_subpatch_transverse_words = 0;
+    size_t routing_subpatch_transverse_words = 0;
+    size_t binding_projection_count = 0;
+    size_t directional_subpatch_projection_count = 0;
+    size_t routing_subpatch_projection_count = 0;
 };
 
 
 struct brep_directional_object_shared_cache {
     std::atomic_flag builder = ATOMIC_FLAG_INIT;
     size_t next_victim = 0;
+    uint64_t *transverse_bits = NULL;
+    brep_directional_object_grid_bounds *projection_bounds = NULL;
     brep_directional_object_cache_entry
 	entries[BREP_DIRECTIONAL_OBJECT_CACHE_CAPACITY];
+
+    ~brep_directional_object_shared_cache()
+    {
+	delete[] transverse_bits;
+	delete[] projection_bounds;
+    }
 };
 
 
@@ -33511,6 +33573,93 @@ struct brep_directional_object_thread_observation {
     double direction[3] = {0.0, 0.0, 0.0};
     double origin[3] = {0.0, 0.0, 0.0};
 };
+
+
+class brep_directional_object_cache_read_guard {
+public:
+    brep_directional_object_cache_read_guard() = default;
+
+    ~brep_directional_object_cache_read_guard()
+    {
+	reset(NULL);
+    }
+
+    brep_directional_object_cache_read_guard(
+	const brep_directional_object_cache_read_guard &) = delete;
+    brep_directional_object_cache_read_guard &operator=(
+	const brep_directional_object_cache_read_guard &) = delete;
+
+    void reset(brep_directional_object_cache_entry *entry)
+    {
+	if (m_entry == entry)
+	    return;
+	if (m_entry)
+	    m_entry->readers.fetch_sub(1, std::memory_order_seq_cst);
+	m_entry = entry;
+    }
+
+    const brep_directional_object_cache_entry *get() const
+    {
+	return m_entry;
+    }
+
+private:
+    brep_directional_object_cache_entry *m_entry = NULL;
+};
+
+
+static void
+brep_ray_coefficient_context_init_from_cache(
+    brep_ray_coefficient_context &context, const ON_Ray &ray,
+    const brep_directional_object_cache_entry &entry)
+{
+    context.initialized = true;
+    context.valid = false;
+    for (int component = 0; component < 3; ++component) {
+	context.origin[component] = ray.m_origin[component];
+	context.direction[component] = entry.direction[component];
+	context.plane[0][component] = entry.axis[0][component];
+	context.plane[1][component] = entry.axis[1][component];
+	if (!std::isfinite(context.origin[component]))
+	    return;
+    }
+    context.direction_squared = entry.direction_squared;
+    context.direction_squared_interval = {
+	entry.direction_squared_interval[0],
+	entry.direction_squared_interval[1]
+    };
+    context.normal_hull_grazing_scale = entry.normal_hull_grazing_scale;
+    context.valid = context.direction_squared > DBL_MIN &&
+	std::isfinite(context.direction_squared) &&
+	context.direction_squared_interval.minimum > 0.0 &&
+	std::isfinite(context.direction_squared_interval.maximum) &&
+	context.normal_hull_grazing_scale > 0.0 &&
+	std::isfinite(context.normal_hull_grazing_scale);
+}
+
+
+static void
+brep_surface_bbox_cull_context_init_from_cache(
+    brep_surface_bbox_cull_context &context, const ON_Ray &ray,
+    const struct bn_tol *tol,
+    const brep_directional_object_cache_entry &entry)
+{
+    context.ray_coordinate_scale = 1.0;
+    context.tolerance_expansion = 0.0;
+    context.valid = false;
+    for (int axis = 0; axis < 3; ++axis) {
+	if (!std::isfinite(ray.m_origin[axis]))
+	    return;
+	context.ray_origin[axis] = ray.m_origin[axis];
+	context.inverse_direction[axis] = entry.inverse_direction[axis];
+	context.parallel[axis] = entry.parallel[axis];
+	context.ray_coordinate_scale = std::max(
+	    context.ray_coordinate_scale, fabs(ray.m_origin[axis]));
+    }
+    context.tolerance_expansion = tol && tol->dist > 0.0 &&
+	std::isfinite(tol->dist) ? tol->dist : 0.0;
+    context.valid = true;
+}
 
 
 static brep_directional_object_thread_observation &
@@ -33532,6 +33681,13 @@ brep_directional_object_cache_release(struct brep_specific *bs)
 }
 
 
+static size_t
+brep_directional_object_cache_bit_words(size_t bit_count)
+{
+    return bit_count / 64 + (bit_count % 64 ? 1 : 0);
+}
+
+
 static bool
 brep_directional_object_cache_allocate(struct brep_specific *bs)
 {
@@ -33540,10 +33696,241 @@ brep_directional_object_cache_allocate(struct brep_specific *bs)
     brep_directional_object_cache_release(bs);
     bs->directional_object_cache =
 	new (std::nothrow) brep_directional_object_shared_cache();
-    if (bs->directional_object_cache)
-	bs->directional_object_cache_bytes =
-	    sizeof(brep_directional_object_shared_cache);
+    if (!bs->directional_object_cache)
+	return false;
+    brep_directional_object_shared_cache &cache =
+	*bs->directional_object_cache;
+    bs->directional_object_cache_bytes =
+	sizeof(brep_directional_object_shared_cache);
+
+    const size_t face_words = brep_directional_object_cache_bit_words(
+	bs->face_records.size());
+    const size_t binding_words = brep_directional_object_cache_bit_words(
+	bs->directional_cell_spans.size());
+    const size_t directional_subpatch_words =
+	brep_directional_object_cache_bit_words(
+	    bs->directional_subpatches.size());
+    const size_t routing_subpatch_words =
+	brep_directional_object_cache_bit_words(
+	    bs->routing_cell_span_subpatches.size());
+    if (face_words > SIZE_MAX - binding_words ||
+	    face_words + binding_words > SIZE_MAX - directional_subpatch_words ||
+	    face_words + binding_words + directional_subpatch_words >
+		SIZE_MAX - routing_subpatch_words)
+	return true;
+    const size_t entry_words = face_words + binding_words +
+	directional_subpatch_words + routing_subpatch_words;
+    if (!entry_words || entry_words > SIZE_MAX /
+	    BREP_DIRECTIONAL_OBJECT_CACHE_CAPACITY)
+	return true;
+    const size_t total_words = entry_words *
+	BREP_DIRECTIONAL_OBJECT_CACHE_CAPACITY;
+    if (total_words > (SIZE_MAX -
+	    sizeof(brep_directional_object_shared_cache)) / sizeof(uint64_t))
+	return true;
+    cache.transverse_bits = new (std::nothrow) uint64_t[total_words];
+    if (!cache.transverse_bits)
+	return true;
+    memset(cache.transverse_bits, 0, total_words * sizeof(uint64_t));
+    for (size_t index = 0;
+	    index < BREP_DIRECTIONAL_OBJECT_CACHE_CAPACITY; ++index) {
+	brep_directional_object_cache_entry &entry = cache.entries[index];
+	uint64_t *bits = cache.transverse_bits + index * entry_words;
+	entry.face_transverse = bits;
+	entry.binding_transverse = bits + face_words;
+	entry.directional_subpatch_transverse = entry.binding_transverse +
+	    binding_words;
+	entry.routing_subpatch_transverse =
+	    entry.directional_subpatch_transverse + directional_subpatch_words;
+	entry.face_transverse_words = face_words;
+	entry.binding_transverse_words = binding_words;
+	entry.directional_subpatch_transverse_words =
+	    directional_subpatch_words;
+	entry.routing_subpatch_transverse_words = routing_subpatch_words;
+    }
+    bs->directional_object_cache_bytes += total_words * sizeof(uint64_t);
+
+    const size_t binding_count = bs->directional_cell_spans.size();
+    const size_t directional_subpatch_count =
+	bs->directional_subpatches.size();
+    const size_t routing_subpatch_count =
+	bs->routing_cell_span_subpatches.size();
+    if (binding_count <= SIZE_MAX - directional_subpatch_count &&
+	    binding_count + directional_subpatch_count <=
+		SIZE_MAX - routing_subpatch_count) {
+	const size_t entry_bound_count = binding_count +
+	    directional_subpatch_count + routing_subpatch_count;
+	if (entry_bound_count && entry_bound_count <= SIZE_MAX /
+		BREP_DIRECTIONAL_OBJECT_CACHE_CAPACITY) {
+	    const size_t total_bounds = entry_bound_count *
+		BREP_DIRECTIONAL_OBJECT_CACHE_CAPACITY;
+	    if (total_bounds <=
+		    (SIZE_MAX - bs->directional_object_cache_bytes) /
+			sizeof(brep_directional_object_grid_bounds)) {
+		cache.projection_bounds = new (std::nothrow)
+		    brep_directional_object_grid_bounds[total_bounds];
+		if (cache.projection_bounds) {
+		    for (size_t index = 0;
+			    index < BREP_DIRECTIONAL_OBJECT_CACHE_CAPACITY;
+			    ++index) {
+			brep_directional_object_cache_entry &entry =
+			    cache.entries[index];
+			brep_directional_object_grid_bounds *bounds =
+			    cache.projection_bounds + index * entry_bound_count;
+			entry.binding_projection_bounds = bounds;
+			entry.directional_subpatch_projection_bounds =
+			    bounds + binding_count;
+			entry.routing_subpatch_projection_bounds =
+			    entry.directional_subpatch_projection_bounds +
+				directional_subpatch_count;
+			entry.binding_projection_count = binding_count;
+			entry.directional_subpatch_projection_count =
+			    directional_subpatch_count;
+			entry.routing_subpatch_projection_count =
+			    routing_subpatch_count;
+		    }
+		    bs->directional_object_cache_bytes += total_bounds *
+			sizeof(brep_directional_object_grid_bounds);
+		}
+	    }
+	}
+    }
     return bs->directional_object_cache != NULL;
+}
+
+
+static bool
+brep_directional_object_cache_prepare(struct brep_specific *bs)
+{
+    if (!bs || !bs->routing_feature_cells_complete || !bs->is_solid ||
+	    bs->plate_mode) {
+	brep_directional_object_cache_release(bs);
+	return true;
+    }
+    return brep_directional_object_cache_allocate(bs);
+}
+
+
+static bool
+brep_directional_object_cache_transverse_bits_available(
+    const brep_directional_object_cache_entry &entry,
+    const struct brep_specific *bs)
+{
+    return bs && entry.face_transverse && entry.binding_transverse &&
+	entry.directional_subpatch_transverse &&
+	entry.routing_subpatch_transverse &&
+	entry.face_transverse_words == brep_directional_object_cache_bit_words(
+	    bs->face_records.size()) &&
+	entry.binding_transverse_words ==
+	    brep_directional_object_cache_bit_words(
+		bs->directional_cell_spans.size()) &&
+	entry.directional_subpatch_transverse_words ==
+	    brep_directional_object_cache_bit_words(
+		bs->directional_subpatches.size()) &&
+	entry.routing_subpatch_transverse_words ==
+	    brep_directional_object_cache_bit_words(
+		bs->routing_cell_span_subpatches.size());
+}
+
+
+static bool
+brep_directional_object_cache_binding_bounds_available(
+    const brep_directional_object_cache_entry &entry,
+    const struct brep_specific *bs)
+{
+    return bs && entry.binding_projection_bounds &&
+	entry.binding_projection_count == bs->directional_cell_spans.size();
+}
+
+
+static bool
+brep_directional_object_cache_directional_subpatch_bounds_available(
+    const brep_directional_object_cache_entry &entry,
+    const struct brep_specific *bs)
+{
+    return bs && entry.directional_subpatch_projection_bounds &&
+	entry.directional_subpatch_projection_count ==
+	    bs->directional_subpatches.size();
+}
+
+
+static bool
+brep_directional_object_cache_routing_subpatch_bounds_available(
+    const brep_directional_object_cache_entry &entry,
+    const struct brep_specific *bs)
+{
+    return bs && entry.routing_subpatch_projection_bounds &&
+	entry.routing_subpatch_projection_count ==
+	    bs->routing_cell_span_subpatches.size();
+}
+
+
+static void
+brep_directional_object_cache_set_transverse(uint64_t *bits,
+    size_t word_count, size_t index)
+{
+    if (bits && index / 64 < word_count)
+	bits[index / 64] |= UINT64_C(1) << (index % 64);
+}
+
+
+static bool
+brep_directional_object_cache_is_transverse(const uint64_t *bits,
+    size_t word_count, size_t index)
+{
+    return bits && index / 64 < word_count &&
+	(bits[index / 64] & (UINT64_C(1) << (index % 64)));
+}
+
+
+static void
+brep_directional_object_cache_promote_face_transverse(
+    brep_directional_object_cache_entry &entry,
+    const struct brep_specific *bs)
+{
+    if (!brep_directional_object_cache_transverse_bits_available(entry, bs))
+	return;
+    for (size_t face_index = 0; face_index < bs->face_records.size();
+	    ++face_index) {
+	if (brep_directional_object_cache_is_transverse(entry.face_transverse,
+		entry.face_transverse_words, face_index))
+	    continue;
+	const brep_face_record &record = bs->face_records[face_index];
+	if (!record.routing_cell_count ||
+		record.routing_cell_begin > bs->routing_feature_cells.size() ||
+		record.routing_cell_count > bs->routing_feature_cells.size() -
+		    record.routing_cell_begin)
+	    continue;
+	bool face_transverse = true;
+	for (size_t cell_offset = 0;
+		face_transverse && cell_offset < record.routing_cell_count;
+		++cell_offset) {
+	    const brep_routing_feature_cell &cell =
+		bs->routing_feature_cells[record.routing_cell_begin + cell_offset];
+	    if (!cell.directional_span_count ||
+		    cell.directional_span_begin >
+			bs->directional_cell_spans.size() ||
+		    cell.directional_span_count >
+			bs->directional_cell_spans.size() -
+			    cell.directional_span_begin) {
+		face_transverse = false;
+		break;
+	    }
+	    for (size_t binding_offset = 0;
+		    binding_offset < cell.directional_span_count;
+		    ++binding_offset)
+		if (!brep_directional_object_cache_is_transverse(
+			entry.binding_transverse,
+			entry.binding_transverse_words,
+			cell.directional_span_begin + binding_offset)) {
+		    face_transverse = false;
+		    break;
+		}
+	}
+	if (face_transverse)
+	    brep_directional_object_cache_set_transverse(entry.face_transverse,
+		entry.face_transverse_words, face_index);
+    }
 }
 
 
@@ -33583,15 +33970,11 @@ brep_directional_project_bbox(const ON_BoundingBox &bbox,
 
 
 static bool
-brep_directional_object_cache_mark_projection_mask(
-    brep_directional_object_cache_entry &entry,
-    uint64_t *occupied,
-    const brep_interval projected[2])
+brep_directional_object_cache_projection_bounds(
+    const brep_directional_object_cache_entry &entry,
+    const brep_interval projected[2],
+    brep_directional_object_grid_bounds &bounds)
 {
-    if (!occupied)
-	return false;
-    size_t minimum[2];
-    size_t maximum[2];
     for (int axis_index = 0; axis_index < 2; ++axis_index) {
 	if (!std::isfinite(projected[axis_index].minimum) ||
 		!std::isfinite(projected[axis_index].maximum) ||
@@ -33611,11 +33994,29 @@ brep_directional_object_cache_mark_projection_mask(
 	    (double)BREP_DIRECTIONAL_OBJECT_GRID_SIZE - 1.0));
 	upper = std::max(0.0, std::min(upper,
 	    (double)BREP_DIRECTIONAL_OBJECT_GRID_SIZE - 1.0));
-	minimum[axis_index] = (size_t)lower;
-	maximum[axis_index] = (size_t)upper;
+	bounds.minimum[axis_index] = (uint8_t)lower;
+	bounds.maximum[axis_index] = (uint8_t)upper;
     }
-    for (size_t second = minimum[1]; second <= maximum[1]; ++second) {
-	for (size_t first = minimum[0]; first <= maximum[0]; ++first) {
+    return true;
+}
+
+
+static bool
+brep_directional_object_cache_mark_projection_mask(
+    brep_directional_object_cache_entry &entry,
+    uint64_t *occupied,
+    const brep_interval projected[2])
+{
+    if (!occupied)
+	return false;
+    brep_directional_object_grid_bounds bounds;
+    if (!brep_directional_object_cache_projection_bounds(entry, projected,
+	    bounds))
+	return false;
+    for (size_t second = bounds.minimum[1]; second <= bounds.maximum[1];
+	    ++second) {
+	for (size_t first = bounds.minimum[0]; first <= bounds.maximum[0];
+		++first) {
 	    const size_t bit = second * BREP_DIRECTIONAL_OBJECT_GRID_SIZE + first;
 	    occupied[bit / 64] |= UINT64_C(1) << (bit % 64);
 	}
@@ -33631,6 +34032,63 @@ brep_directional_object_cache_mark_projection(
 {
     return brep_directional_object_cache_mark_projection_mask(entry,
 	entry.occupied, projected);
+}
+
+
+static void
+brep_directional_object_cache_add_projection(
+    brep_directional_object_cache_entry &entry,
+    brep_directional_object_grid_bounds *projection_bounds,
+    size_t projection_count, size_t projection_index,
+    const brep_interval projected[2])
+{
+    if (!projection_bounds || projection_index >= projection_count)
+	return;
+    brep_directional_object_grid_bounds addition;
+    if (!brep_directional_object_cache_projection_bounds(entry, projected,
+	    addition))
+	return;
+    brep_directional_object_grid_bounds &bounds =
+	projection_bounds[projection_index];
+    for (int axis_index = 0; axis_index < 2; ++axis_index) {
+	if (bounds.minimum[axis_index] > bounds.maximum[axis_index]) {
+	    bounds.minimum[axis_index] = addition.minimum[axis_index];
+	    bounds.maximum[axis_index] = addition.maximum[axis_index];
+	} else {
+	    bounds.minimum[axis_index] = std::min(bounds.minimum[axis_index],
+		addition.minimum[axis_index]);
+	    bounds.maximum[axis_index] = std::max(bounds.maximum[axis_index],
+		addition.maximum[axis_index]);
+	}
+    }
+}
+
+
+static void
+brep_directional_object_cache_add_binding_projection(
+    brep_directional_object_cache_entry &entry, size_t binding_index,
+    const brep_interval projected[2])
+{
+    brep_directional_object_cache_add_projection(entry,
+	entry.binding_projection_bounds, entry.binding_projection_count,
+	binding_index, projected);
+}
+
+
+static void
+brep_directional_object_cache_add_binding_bbox(
+    brep_directional_object_cache_entry &entry, size_t binding_index,
+    const ON_BoundingBox &bbox)
+{
+    brep_interval projected[2];
+    for (int axis_index = 0; axis_index < 2; ++axis_index) {
+	const ON_3dVector axis(entry.axis[axis_index][0],
+	    entry.axis[axis_index][1], entry.axis[axis_index][2]);
+	if (!brep_directional_project_bbox(bbox, axis, projected[axis_index]))
+	    return;
+    }
+    brep_directional_object_cache_add_binding_projection(entry,
+	binding_index, projected);
 }
 
 
@@ -33946,8 +34404,11 @@ brep_directional_object_cache_mark_control_hull(
 static enum brep_directional_thread_cache_result
 brep_directional_object_cache_query_mask(
     const brep_directional_object_cache_entry &entry, const ON_Ray &ray,
-    const struct bn_tol *tol, const uint64_t *occupied)
+    const struct bn_tol *tol, const uint64_t *occupied,
+    brep_directional_object_grid_bounds *query_bounds = NULL)
 {
+    if (query_bounds)
+	*query_bounds = brep_directional_object_grid_bounds();
     if (!occupied)
 	return BREP_DIRECTIONAL_THREAD_CACHE_UNAVAILABLE;
     double projected_origin[2] = {0.0, 0.0};
@@ -33987,6 +34448,13 @@ brep_directional_object_cache_query_mask(
 	minimum[axis_index] = (size_t)lower;
 	maximum[axis_index] = (size_t)upper;
     }
+    if (query_bounds)
+	for (int axis_index = 0; axis_index < 2; ++axis_index) {
+	    query_bounds->minimum[axis_index] =
+		(uint8_t)minimum[axis_index];
+	    query_bounds->maximum[axis_index] =
+		(uint8_t)maximum[axis_index];
+	}
     for (size_t second = minimum[1]; second <= maximum[1]; ++second) {
 	for (size_t first = minimum[0]; first <= maximum[0]; ++first) {
 	    const size_t bit = second * BREP_DIRECTIONAL_OBJECT_GRID_SIZE + first;
@@ -34001,10 +34469,38 @@ brep_directional_object_cache_query_mask(
 static enum brep_directional_thread_cache_result
 brep_directional_object_cache_query(
     const brep_directional_object_cache_entry &entry, const ON_Ray &ray,
-    const struct bn_tol *tol)
+    const struct bn_tol *tol,
+    brep_directional_object_grid_bounds *query_bounds = NULL)
 {
     return brep_directional_object_cache_query_mask(entry, ray, tol,
-	entry.occupied);
+	entry.occupied, query_bounds);
+}
+
+
+static bool
+brep_directional_object_cache_binding_excluded(
+    const brep_directional_object_cache_entry &entry,
+    const struct brep_specific *bs, size_t binding_index,
+    const brep_directional_object_grid_bounds &query_bounds)
+{
+    if (!brep_directional_object_cache_binding_bounds_available(entry, bs) ||
+	    binding_index >= entry.binding_projection_count)
+	return false;
+    const brep_directional_object_grid_bounds &binding_bounds =
+	entry.binding_projection_bounds[binding_index];
+    for (int axis_index = 0; axis_index < 2; ++axis_index) {
+	if (query_bounds.minimum[axis_index] >
+		query_bounds.maximum[axis_index] ||
+		binding_bounds.minimum[axis_index] >
+		    binding_bounds.maximum[axis_index])
+	    return false;
+	if (query_bounds.maximum[axis_index] <
+		binding_bounds.minimum[axis_index] ||
+		query_bounds.minimum[axis_index] >
+		    binding_bounds.maximum[axis_index])
+	    return true;
+    }
+    return false;
 }
 
 
@@ -34037,17 +34533,12 @@ brep_directional_object_cache_entry_matches(
 }
 
 
-/* A READY entry is immutable.  Pin it before examining its key or masks and
- * recheck the state before reading: a replacing writer first changes READY to
- * BUILDING and proceeds only with zero pinned readers. */
-static enum brep_directional_thread_cache_result
-brep_directional_object_cache_find(const struct brep_specific *bs,
-    const ON_Ray &ray, const struct bn_tol *tol, bool correction_mask,
-    bool &cache_hit)
+static brep_directional_object_cache_entry *
+brep_directional_object_cache_pin(const struct brep_specific *bs,
+    const ON_Ray &ray)
 {
-    cache_hit = false;
     if (!bs || !bs->directional_object_cache)
-	return BREP_DIRECTIONAL_THREAD_CACHE_UNAVAILABLE;
+	return NULL;
     brep_directional_object_shared_cache &cache =
 	*bs->directional_object_cache;
     const size_t start = (size_t)(brep_directional_object_cache_hash(bs, ray) %
@@ -34061,22 +34552,35 @@ brep_directional_object_cache_find(const struct brep_specific *bs,
 	    continue;
 	entry.readers.fetch_add(1, std::memory_order_seq_cst);
 	if (entry.state.load(std::memory_order_seq_cst) !=
-		BREP_DIRECTIONAL_OBJECT_CACHE_READY) {
+		BREP_DIRECTIONAL_OBJECT_CACHE_READY ||
+		!brep_directional_object_cache_entry_matches(entry, bs, ray)) {
 	    entry.readers.fetch_sub(1, std::memory_order_seq_cst);
 	    continue;
 	}
-	if (!brep_directional_object_cache_entry_matches(entry, bs, ray)) {
-	    entry.readers.fetch_sub(1, std::memory_order_seq_cst);
-	    continue;
-	}
-	const enum brep_directional_thread_cache_result result =
-	    brep_directional_object_cache_query_mask(entry, ray, tol,
-		correction_mask ? entry.correction_occupied : entry.occupied);
-	entry.readers.fetch_sub(1, std::memory_order_seq_cst);
-	cache_hit = true;
-	return result;
+	return &entry;
     }
-    return BREP_DIRECTIONAL_THREAD_CACHE_UNAVAILABLE;
+    return NULL;
+}
+
+
+/* A READY entry is immutable.  Pin it before examining its key or masks and
+ * recheck the state before reading: a replacing writer first changes READY to
+ * BUILDING and proceeds only with zero pinned readers. */
+static enum brep_directional_thread_cache_result
+brep_directional_object_cache_find(const struct brep_specific *bs,
+    const ON_Ray &ray, const struct bn_tol *tol, bool correction_mask,
+    bool &cache_hit)
+{
+    cache_hit = false;
+    brep_directional_object_cache_entry *entry =
+	brep_directional_object_cache_pin(bs, ray);
+    if (!entry)
+	return BREP_DIRECTIONAL_THREAD_CACHE_UNAVAILABLE;
+    brep_directional_object_cache_read_guard guard;
+    guard.reset(entry);
+    cache_hit = true;
+    return brep_directional_object_cache_query_mask(*entry, ray, tol,
+	correction_mask ? entry->correction_occupied : entry->occupied);
 }
 
 
@@ -34123,7 +34627,9 @@ static enum brep_directional_thread_cache_result
 brep_directional_object_cache_lookup(
     struct rt_brep_route_decision &decision,
     const struct brep_specific *bs, const ON_Ray &ray,
-    const struct bn_tol *tol, bool &cache_hit)
+    const struct bn_tol *tol, bool &cache_hit,
+    brep_directional_object_cache_read_guard &guard,
+    brep_directional_object_grid_bounds &query_bounds)
 {
     cache_hit = false;
     if (!bs || !bs->directional_cache_generation ||
@@ -34133,10 +34639,14 @@ brep_directional_object_cache_lookup(
 	    bs->directional_cell_spans.empty() || bs->routing_unsupported_cells)
 	return BREP_DIRECTIONAL_THREAD_CACHE_UNAVAILABLE;
 
-    const enum brep_directional_thread_cache_result result =
-	brep_directional_object_cache_find(bs, ray, tol, false, cache_hit);
-    if (!cache_hit)
+    brep_directional_object_cache_entry *entry =
+	brep_directional_object_cache_pin(bs, ray);
+    if (!entry)
 	return BREP_DIRECTIONAL_THREAD_CACHE_UNAVAILABLE;
+    guard.reset(entry);
+    cache_hit = true;
+    const enum brep_directional_thread_cache_result result =
+	brep_directional_object_cache_query(*entry, ray, tol, &query_bounds);
     decision.directional_cache_hits++;
     decision.directional_cache_box_tests++;
     if (result == BREP_DIRECTIONAL_THREAD_CACHE_TRANSVERSE)
@@ -34310,13 +34820,51 @@ brep_route_directional_object_cache(
     memset(entry.occupied, 0, sizeof(entry.occupied));
     memset(entry.correction_occupied, 0,
 	sizeof(entry.correction_occupied));
+    const bool transverse_bits_available =
+	brep_directional_object_cache_transverse_bits_available(entry, bs);
+    const bool binding_bounds_available =
+	brep_directional_object_cache_binding_bounds_available(entry, bs);
+    if (transverse_bits_available) {
+	memset(entry.face_transverse, 0,
+	    entry.face_transverse_words * sizeof(uint64_t));
+	memset(entry.binding_transverse, 0,
+	    entry.binding_transverse_words * sizeof(uint64_t));
+	memset(entry.directional_subpatch_transverse, 0,
+	    entry.directional_subpatch_transverse_words * sizeof(uint64_t));
+	memset(entry.routing_subpatch_transverse, 0,
+	    entry.routing_subpatch_transverse_words * sizeof(uint64_t));
+    }
+    if (binding_bounds_available)
+	for (size_t binding_index = 0;
+		binding_index < entry.binding_projection_count; ++binding_index)
+	    entry.binding_projection_bounds[binding_index] =
+		brep_directional_object_grid_bounds();
     for (int component = 0; component < 3; ++component) {
 	entry.direction[component] = ray.m_dir[component];
 	entry.axis[0][component] = first[component];
 	entry.axis[1][component] = second[component];
+	entry.parallel[component] = fabs(ray.m_dir[component]) <= DBL_MIN;
+	entry.inverse_direction[component] = entry.parallel[component] ? 0.0 :
+	    1.0 / ray.m_dir[component];
 	entry.coordinate_scale = std::max(entry.coordinate_scale,
 	    std::max(fabs(bs->bvh->m_node.m_min[component]),
 		fabs(bs->bvh->m_node.m_max[component])));
+    }
+    entry.direction_squared = coefficient_context.direction_squared;
+    entry.direction_squared_interval[0] =
+	coefficient_context.direction_squared_interval.minimum;
+    entry.direction_squared_interval[1] =
+	coefficient_context.direction_squared_interval.maximum;
+    entry.normal_hull_grazing_scale =
+	coefficient_context.normal_hull_grazing_scale;
+    if (transverse_bits_available) {
+	for (size_t face_index = 0; face_index < bs->face_records.size();
+		++face_index)
+	    if (brep_directional_face_cached_transverse(
+		    bs->face_records[face_index], coefficient_context))
+		brep_directional_object_cache_set_transverse(
+		    entry.face_transverse, entry.face_transverse_words,
+		    face_index);
     }
     for (int axis_index = 0; axis_index < 2; ++axis_index) {
 	const ON_3dVector axis(entry.axis[axis_index][0],
@@ -34382,9 +34930,10 @@ brep_route_directional_object_cache(
 	    for (size_t binding_offset = 0;
 		    binding_offset < cell.directional_span_count;
 		    ++binding_offset) {
+		const size_t binding_index = cell.directional_span_begin +
+		    binding_offset;
 		const brep_directional_cell_span &binding =
-		    bs->directional_cell_spans[cell.directional_span_begin +
-			binding_offset];
+		    bs->directional_cell_spans[binding_index];
 		if (binding.span_index >= bs->surface_spans.size()) {
 		    decision.directional_cache_build_failures++;
 		    return BREP_DIRECTIONAL_THREAD_CACHE_UNAVAILABLE;
@@ -34393,26 +34942,19 @@ brep_route_directional_object_cache(
 		    bs->surface_spans[binding.span_index];
 		/* Preserve the exact cell-local directional decision while building
 		 * the conservative object silhouette. */
-		if (!brep_directional_cell_span_cached_transverse(binding, span, ray,
-			coefficient_context)) {
-		    const brep_routing_cell_span_pack *pack = NULL;
-		    if (cell.span_index_begin <=
-			    bs->routing_cell_span_packs.size() &&
-			cell.span_index_count <=
-			    bs->routing_cell_span_packs.size() -
-				cell.span_index_begin) {
-			for (size_t pack_offset = 0;
-				pack_offset < cell.span_index_count; ++pack_offset) {
-			    const brep_routing_cell_span_pack &candidate =
-				bs->routing_cell_span_packs[
-				    cell.span_index_begin + pack_offset];
-			    if (candidate.span_index == binding.span_index) {
-				pack = &candidate;
-				break;
-			    }
-			}
-		    }
+		const bool binding_transverse =
+		    brep_directional_cell_span_cached_transverse(binding, span,
+			coefficient_context);
+		if (binding_transverse && transverse_bits_available)
+		    brep_directional_object_cache_set_transverse(
+			entry.binding_transverse,
+			entry.binding_transverse_words, binding_index);
+		if (!binding_transverse) {
+		    const brep_routing_cell_span_pack *pack =
+			brep_directional_cell_span_pack(bs, cell, binding,
+			    binding_offset);
 		    bool processed_pack = false;
+		    bool pack_transverse = true;
 		    if (pack && pack->controls_complete && pack->subpatch_count &&
 			    pack->subpatch_count <= BREP_FACE_BVH_STACK_CAPACITY &&
 			    pack->subpatch_begin <=
@@ -34440,14 +34982,22 @@ brep_route_directional_object_cache(
 				decision.directional_cache_build_failures++;
 				return BREP_DIRECTIONAL_THREAD_CACHE_UNAVAILABLE;
 			    }
+			    const size_t subpatch_index = pack->subpatch_begin +
+				work.node_index;
 			    const brep_routing_subpatch_bbox &subpatch =
-				bs->routing_cell_span_subpatches[
-				    pack->subpatch_begin + work.node_index];
+				bs->routing_cell_span_subpatches[subpatch_index];
 			    if (brep_routing_subpatch_cached_transverse(subpatch,
-				    ray, coefficient_context))
+				    coefficient_context)) {
+				if (transverse_bits_available)
+				    brep_directional_object_cache_set_transverse(
+					entry.routing_subpatch_transverse,
+					entry.routing_subpatch_transverse_words,
+					subpatch_index);
 				continue;
+			    }
 			    const size_t left_index = 2 * work.node_index + 1;
 			    if (left_index >= pack->subpatch_count) {
+				pack_transverse = false;
 				brep_interval projected[2];
 				brep_interval control_projection[
 				    BREP_DIRECT_BEZIER_MAX_CVS][2];
@@ -34459,6 +35009,9 @@ brep_route_directional_object_cache(
 					work.box.minimum, work.box.maximum, entry,
 					projected, control_projection,
 					projected_control_count);
+				if (projected_controls && binding_bounds_available)
+				    brep_directional_object_cache_add_binding_projection(
+					entry, binding_index, projected);
 				const bool hull_marked = projected_controls &&
 				    brep_directional_object_cache_mark_control_hull(
 					entry, control_projection,
@@ -34467,11 +35020,15 @@ brep_route_directional_object_cache(
 				    (projected_controls &&
 				     brep_directional_object_cache_mark_projection(
 					entry, projected));
-				if (!rectangle_marked &&
-					!brep_directional_object_cache_mark(entry,
+				if (!rectangle_marked) {
+				    if (!brep_directional_object_cache_mark(entry,
 					    subpatch.bbox)) {
-				    decision.directional_cache_build_failures++;
-				    return BREP_DIRECTIONAL_THREAD_CACHE_UNAVAILABLE;
+					decision.directional_cache_build_failures++;
+					return BREP_DIRECTIONAL_THREAD_CACHE_UNAVAILABLE;
+				    }
+				    if (binding_bounds_available)
+					brep_directional_object_cache_add_binding_bbox(
+					    entry, binding_index, subpatch.bbox);
 				}
 				continue;
 			    }
@@ -34503,6 +35060,10 @@ brep_route_directional_object_cache(
 			    pending[pending_count++] = lower;
 			}
 			processed_pack = true;
+			if (pack_transverse && transverse_bits_available)
+			    brep_directional_object_cache_set_transverse(
+				entry.binding_transverse,
+				entry.binding_transverse_words, binding_index);
 		    }
 		    if (!processed_pack) {
 			mark_complete_cell = true;
@@ -34516,6 +35077,7 @@ brep_route_directional_object_cache(
 		return BREP_DIRECTIONAL_THREAD_CACHE_UNAVAILABLE;
 	    }
 	}
+	brep_directional_object_cache_promote_face_transverse(entry, bs);
 	decision.directional_cache_box_tests++;
 	const enum brep_directional_thread_cache_result result =
 	    brep_directional_object_cache_query(entry, ray, tol);
@@ -34534,9 +35096,14 @@ brep_route_directional_object_cache(
 	    return BREP_DIRECTIONAL_THREAD_CACHE_UNAVAILABLE;
 	}
 	const brep_surface_span &span = bs->surface_spans[binding.span_index];
-	if (brep_directional_cell_span_cached_transverse(binding, span, ray,
-		coefficient_context))
+	if (brep_directional_cell_span_cached_transverse(binding, span,
+		coefficient_context)) {
+	    if (transverse_bits_available)
+		brep_directional_object_cache_set_transverse(
+		    entry.binding_transverse, entry.binding_transverse_words,
+		    binding_index);
 	    continue;
+	}
 	if (binding.subpatch_count) {
 	    if (binding.subpatch_begin > bs->directional_subpatches.size() ||
 		    binding.subpatch_count > bs->directional_subpatches.size() -
@@ -34544,15 +35111,24 @@ brep_route_directional_object_cache(
 		decision.directional_cache_build_failures++;
 		return BREP_DIRECTIONAL_THREAD_CACHE_UNAVAILABLE;
 	    }
+	    bool binding_subpatches_transverse = true;
 	    for (size_t subpatch_offset = 0;
 		    subpatch_offset < binding.subpatch_count;
 		    ++subpatch_offset) {
+		const size_t subpatch_index = binding.subpatch_begin +
+		    subpatch_offset;
 		const brep_directional_subpatch &subpatch =
-		    bs->directional_subpatches[binding.subpatch_begin +
-			subpatch_offset];
-		if (brep_directional_subpatch_cached_transverse(subpatch, ray,
-			coefficient_context))
+		    bs->directional_subpatches[subpatch_index];
+		if (brep_directional_subpatch_cached_transverse(subpatch,
+			coefficient_context)) {
+		    if (transverse_bits_available)
+			brep_directional_object_cache_set_transverse(
+			    entry.directional_subpatch_transverse,
+			    entry.directional_subpatch_transverse_words,
+			    subpatch_index);
 		    continue;
+		}
+		binding_subpatches_transverse = false;
 		brep_interval projected[2];
 		brep_interval control_projection[
 		    BREP_DIRECT_BEZIER_MAX_CVS][2];
@@ -34562,17 +35138,28 @@ brep_route_directional_object_cache(
 			subpatch.normalized_minimum,
 			subpatch.normalized_maximum, entry, projected,
 			control_projection, projected_control_count);
+		if (projected_controls && binding_bounds_available)
+		    brep_directional_object_cache_add_binding_projection(entry,
+			binding_index, projected);
 		const bool marked = projected_controls &&
 		    brep_directional_object_cache_mark_control_hull(entry,
 			control_projection, projected_control_count);
 		const bool rectangle_marked = marked || (projected_controls &&
 		    brep_directional_object_cache_mark_projection(entry, projected));
-		if (!rectangle_marked &&
-			!brep_directional_object_cache_mark(entry, subpatch.bbox)) {
-		    decision.directional_cache_build_failures++;
-		    return BREP_DIRECTIONAL_THREAD_CACHE_UNAVAILABLE;
+		if (!rectangle_marked) {
+		    if (!brep_directional_object_cache_mark(entry, subpatch.bbox)) {
+			decision.directional_cache_build_failures++;
+			return BREP_DIRECTIONAL_THREAD_CACHE_UNAVAILABLE;
+		    }
+		    if (binding_bounds_available)
+			brep_directional_object_cache_add_binding_bbox(entry,
+			    binding_index, subpatch.bbox);
 		}
 	    }
+	    if (binding_subpatches_transverse && transverse_bits_available)
+		brep_directional_object_cache_set_transverse(
+		    entry.binding_transverse, entry.binding_transverse_words,
+		    binding_index);
 	    continue;
 	}
 	double minimum[1u << BREP_DIRECTIONAL_CACHE_MAX_DEPTH][2];
@@ -34622,6 +35209,7 @@ brep_route_directional_object_cache(
 	    decision.directional_cache_build_failures++;
 	    return BREP_DIRECTIONAL_THREAD_CACHE_UNAVAILABLE;
 	}
+	bool binding_subpatches_transverse = true;
 	for (size_t box_index = 0; box_index < box_count; ++box_index) {
 	    brep_directional_subpatch subpatch;
 	    if (!brep_routing_build_directional_subpatch(span,
@@ -34629,15 +35217,24 @@ brep_route_directional_object_cache(
 		decision.directional_cache_build_failures++;
 		return BREP_DIRECTIONAL_THREAD_CACHE_UNAVAILABLE;
 	    }
-	    if (brep_directional_subpatch_cached_transverse(subpatch, ray,
+	    if (brep_directional_subpatch_cached_transverse(subpatch,
 		    coefficient_context))
 		continue;
+	    binding_subpatches_transverse = false;
 	    if (!brep_directional_object_cache_mark(entry, subpatch.bbox)) {
 		decision.directional_cache_build_failures++;
 		return BREP_DIRECTIONAL_THREAD_CACHE_UNAVAILABLE;
 	    }
+	    if (binding_bounds_available)
+		brep_directional_object_cache_add_binding_bbox(entry,
+		    binding_index, subpatch.bbox);
 	}
+	if (binding_subpatches_transverse && transverse_bits_available)
+	    brep_directional_object_cache_set_transverse(
+		entry.binding_transverse, entry.binding_transverse_words,
+		binding_index);
     }
+    brep_directional_object_cache_promote_face_transverse(entry, bs);
     decision.directional_cache_box_tests++;
     const enum brep_directional_thread_cache_result result =
 	brep_directional_object_cache_query(entry, ray, tol);
@@ -34689,12 +35286,15 @@ brep_route_probe_directional_grazing(struct rt_brep_route_decision &decision,
     }
 
     bool object_cache_hit = false;
+    brep_directional_object_cache_read_guard object_cache_guard;
+    brep_directional_object_grid_bounds object_cache_query_bounds;
     enum brep_directional_thread_cache_result early_object_cached;
     {
 	brep_route_phase_timer cache_timer(route_profile,
 	    RT_BREP_ROUTE_PHASE_DIRECTION_CACHE);
 	early_object_cached = brep_directional_object_cache_lookup(decision, bs,
-	    ray, tol, object_cache_hit);
+	    ray, tol, object_cache_hit, object_cache_guard,
+	    object_cache_query_bounds);
     }
     if (object_cache_hit &&
 	    early_object_cached == BREP_DIRECTIONAL_THREAD_CACHE_TRANSVERSE) {
@@ -34703,18 +35303,27 @@ brep_route_probe_directional_grazing(struct rt_brep_route_decision &decision,
 	return;
     }
 
-    ON_3dVector first;
-    ON_3dVector second;
-    if (!brep_ray_plane_frame(ray, first, second)) {
-	decision.directional_unsupported_spans++;
-	finish();
-	return;
-    }
+    ON_3dVector first(0.0, 0.0, 0.0);
+    ON_3dVector second(0.0, 0.0, 0.0);
     brep_ray_coefficient_context coefficient_context;
-    brep_ray_coefficient_context_init(coefficient_context, ray, first,
-	second);
     brep_surface_bbox_cull_context cull_context;
-    brep_surface_bbox_cull_context_init(ray, tol, cull_context);
+    const brep_directional_object_cache_entry *cached_context =
+	object_cache_guard.get();
+    if (cached_context) {
+	brep_ray_coefficient_context_init_from_cache(coefficient_context, ray,
+	    *cached_context);
+	brep_surface_bbox_cull_context_init_from_cache(cull_context, ray, tol,
+	    *cached_context);
+    } else {
+	if (!brep_ray_plane_frame(ray, first, second)) {
+	    decision.directional_unsupported_spans++;
+	    finish();
+	    return;
+	}
+	brep_ray_coefficient_context_init(coefficient_context, ray, first,
+	    second);
+	brep_surface_bbox_cull_context_init(ray, tol, cull_context);
+    }
     if (!coefficient_context.valid || !cull_context.valid) {
 	decision.directional_unsupported_spans++;
 	finish();
@@ -34734,16 +35343,31 @@ brep_route_probe_directional_grazing(struct rt_brep_route_decision &decision,
 	    finish();
 	    return;
 	}
+	/* A successful build publishes immutable direction-only face and binding
+	 * decisions.  Pin the entry across the remaining walk; if it was already
+	 * replaced, the scalar checks below remain authoritative. */
+	if (object_cached != BREP_DIRECTIONAL_THREAD_CACHE_UNAVAILABLE)
+	    object_cache_guard.reset(
+		brep_directional_object_cache_pin(bs, ray));
     }
 
+    const brep_directional_object_cache_entry *object_cache_entry =
+	object_cache_guard.get();
+    if (!object_cache_hit && object_cache_entry)
+	(void)brep_directional_object_cache_query(*object_cache_entry, ray, tol,
+	    &object_cache_query_bounds);
+    const bool transverse_bits_available = object_cache_entry &&
+	brep_directional_object_cache_transverse_bits_available(
+	    *object_cache_entry, bs);
+    const bool checked_ranges = !bs->routing_hot_ranges_complete;
     bool transverse = true;
     int previous_face = -1;
     bool face_cached_transverse = false;
     for (size_t cell_offset = 0; transverse && cell_offset < cell_count;
 	    ++cell_offset) {
 	const brep_routing_feature_cell *cell = cells[cell_offset];
-	if (!cell || cell->face_index < 0 ||
-		(size_t)cell->face_index >= bs->face_records.size()) {
+	if (!cell || (checked_ranges && (cell->face_index < 0 ||
+		(size_t)cell->face_index >= bs->face_records.size()))) {
 	    if (getenv("LIBRT_BREP_DIRECTIONAL_DETAIL"))
 		bu_log("BREP directional unsupported: reason=cell-input\n");
 	    decision.directional_unsupported_spans++;
@@ -34757,9 +35381,10 @@ brep_route_probe_directional_grazing(struct rt_brep_route_decision &decision,
 	}
 	const brep_face_record &record = bs->face_records[cell->face_index];
 	if (!record.supported || !record.span_count ||
-		record.span_begin > bs->surface_spans.size() ||
-		record.span_count > bs->surface_spans.size() -
-		    record.span_begin) {
+		(checked_ranges &&
+		 (record.span_begin > bs->surface_spans.size() ||
+		  record.span_count > bs->surface_spans.size() -
+		      record.span_begin))) {
 	    if (getenv("LIBRT_BREP_DIRECTIONAL_DETAIL"))
 		bu_log("BREP directional unsupported: reason=record face=%d\n",
 		    cell->face_index);
@@ -34768,18 +35393,26 @@ brep_route_probe_directional_grazing(struct rt_brep_route_decision &decision,
 	    break;
 	}
 	if (!cell->directional_span_count ||
-		cell->directional_span_begin >
-		    bs->directional_cell_spans.size() ||
-		cell->directional_span_count >
-		    bs->directional_cell_spans.size() -
-			cell->directional_span_begin) {
+		(checked_ranges &&
+		 (cell->directional_span_begin >
+		      bs->directional_cell_spans.size() ||
+		  cell->directional_span_count >
+		      bs->directional_cell_spans.size() -
+			  cell->directional_span_begin))) {
 	    decision.directional_unsupported_spans++;
 	    transverse = false;
 	    break;
 	}
-	if (new_face)
-	    face_cached_transverse = brep_directional_face_cached_transverse(
-		record, ray, coefficient_context);
+	if (new_face) {
+	    face_cached_transverse = transverse_bits_available &&
+		brep_directional_object_cache_is_transverse(
+		    object_cache_entry->face_transverse,
+		    object_cache_entry->face_transverse_words,
+		    (size_t)cell->face_index);
+	    if (!face_cached_transverse)
+		face_cached_transverse = brep_directional_face_cached_transverse(
+		    record, coefficient_context);
+	}
 	if (face_cached_transverse) {
 	    decision.directional_cached_transverse_spans +=
 		cell->directional_span_count;
@@ -34788,34 +35421,52 @@ brep_route_probe_directional_grazing(struct rt_brep_route_decision &decision,
 	for (size_t binding_offset = 0; transverse &&
 		binding_offset < cell->directional_span_count;
 		++binding_offset) {
+	    const size_t binding_index = cell->directional_span_begin +
+		binding_offset;
 	    const brep_directional_cell_span &binding =
-		bs->directional_cell_spans[cell->directional_span_begin +
-		    binding_offset];
-	    if (binding.span_index < record.span_begin ||
-		    binding.span_index >= record.span_begin + record.span_count ||
-		    binding.span_index >= bs->surface_spans.size()) {
+		bs->directional_cell_spans[binding_index];
+	    if (checked_ranges &&
+		    (binding.span_index < record.span_begin ||
+		     binding.span_index >= record.span_begin + record.span_count ||
+		     binding.span_index >= bs->surface_spans.size())) {
 		decision.directional_unsupported_spans++;
 		transverse = false;
 		break;
 	    }
 	    const brep_surface_span &span =
 		bs->surface_spans[binding.span_index];
-	    if (span.face_index != cell->face_index) {
+	    if (checked_ranges && span.face_index != cell->face_index) {
 		decision.directional_unsupported_spans++;
 		transverse = false;
 		break;
 	    }
 	    decision.directional_candidate_spans++;
-	    if (brep_directional_cell_span_cached_transverse(binding, span, ray,
-		    coefficient_context)) {
+	    const bool binding_cached_transverse =
+		(transverse_bits_available &&
+		 brep_directional_object_cache_is_transverse(
+		     object_cache_entry->binding_transverse,
+		     object_cache_entry->binding_transverse_words,
+		     binding_index)) ||
+		brep_directional_cell_span_cached_transverse(binding, span,
+		    coefficient_context);
+	    if (binding_cached_transverse) {
 		decision.directional_cached_transverse_spans++;
 		continue;
 	    }
+	    if (object_cache_entry &&
+		    brep_directional_object_cache_binding_excluded(
+			*object_cache_entry, bs, binding_index,
+			object_cache_query_bounds)) {
+		decision.directional_ray_excluded_boxes++;
+		continue;
+	    }
 	    if (binding.subpatch_count) {
-		if (binding.subpatch_begin > bs->directional_subpatches.size() ||
-			binding.subpatch_count >
-			    bs->directional_subpatches.size() -
-				binding.subpatch_begin) {
+		if (checked_ranges &&
+			(binding.subpatch_begin >
+			     bs->directional_subpatches.size() ||
+			 binding.subpatch_count >
+			     bs->directional_subpatches.size() -
+				 binding.subpatch_begin)) {
 		    decision.directional_unsupported_spans++;
 		    transverse = false;
 		    break;
@@ -34823,11 +35474,18 @@ brep_route_probe_directional_grazing(struct rt_brep_route_decision &decision,
 		for (size_t subpatch_offset = 0; transverse &&
 			subpatch_offset < binding.subpatch_count;
 			++subpatch_offset) {
+		    const size_t subpatch_index = binding.subpatch_begin +
+			subpatch_offset;
 		    const brep_directional_subpatch &subpatch =
-			bs->directional_subpatches[binding.subpatch_begin +
-			    subpatch_offset];
-		    if (brep_directional_subpatch_cached_transverse(subpatch,
-			    ray, coefficient_context))
+			bs->directional_subpatches[subpatch_index];
+		    if ((transverse_bits_available &&
+			    brep_directional_object_cache_is_transverse(
+				object_cache_entry->directional_subpatch_transverse,
+				object_cache_entry->
+				    directional_subpatch_transverse_words,
+				subpatch_index)) ||
+			    brep_directional_subpatch_cached_transverse(subpatch,
+				coefficient_context))
 			continue;
 		    double bbox_expansion = 0.0;
 		    if (brep_surface_bbox_cull_expansion(cull_context,
@@ -34854,10 +35512,16 @@ brep_route_probe_directional_grazing(struct rt_brep_route_decision &decision,
 	    }
 	    if (!bs->directional_cache_depth) {
 		const brep_routing_cell_span_pack *pack =
-		    brep_directional_cell_span_pack(bs, *cell, binding);
+		    brep_directional_cell_span_pack(bs, *cell, binding,
+			binding_offset);
 		const enum brep_directional_thread_cache_result packed =
 		    brep_route_directional_packed_span_transverse(decision, bs,
-			binding, span, pack, ray, coefficient_context,
+			binding, span, pack,
+			transverse_bits_available ?
+			    object_cache_entry->routing_subpatch_transverse : NULL,
+			transverse_bits_available ?
+			    object_cache_entry->routing_subpatch_transverse_words : 0,
+			ray, coefficient_context,
 			cull_context, route_profile);
 		if (packed == BREP_DIRECTIONAL_THREAD_CACHE_TRANSVERSE)
 		    continue;
@@ -35728,7 +36392,7 @@ brep_route_probe_cell_span_certificates(
 		bs->directional_cell_spans[association_index];
 	    const size_t span_index = binding.span_index;
 	    const brep_routing_cell_span_pack *pack =
-		brep_directional_cell_span_pack(bs, *cell, binding);
+		brep_directional_cell_span_pack(bs, *cell, binding, span_offset);
 	    const brep_route_cell_span_certificate result =
 		brep_route_cell_span_degree_certificate(bs, *cell, span_index,
 		    binding, pack, ray, cull_context, coefficient_context,
@@ -42930,6 +43594,89 @@ brep_bind_routing_correction_cells(struct brep_specific *bs)
 }
 
 
+/* Validate every identity and range consumed by the directional hot loop.
+ * Current prep can then use direct contiguous indexing, while reconstructed
+ * or damaged metadata retains the checked scalar path. */
+static bool
+brep_routing_hot_ranges_valid(const struct brep_specific *bs)
+{
+    if (!bs)
+	return false;
+    for (size_t face_index = 0; face_index < bs->face_records.size();
+	    ++face_index) {
+	const brep_face_record &record = bs->face_records[face_index];
+	if (face_index > INT_MAX || record.face_index != (int)face_index ||
+		record.span_begin > bs->surface_spans.size() ||
+		record.span_count > bs->surface_spans.size() -
+		    record.span_begin ||
+		record.routing_cell_begin > bs->routing_feature_cells.size() ||
+		record.routing_cell_count > bs->routing_feature_cells.size() -
+		    record.routing_cell_begin)
+	    return false;
+	for (size_t cell_offset = 0; cell_offset < record.routing_cell_count;
+		++cell_offset) {
+	    const brep_routing_feature_cell &cell =
+		bs->routing_feature_cells[record.routing_cell_begin + cell_offset];
+	    if (cell_offset > UINT32_MAX ||
+		    cell.face_index != record.face_index ||
+		    cell.leaf_ordinal != (uint32_t)cell_offset ||
+		    cell.directional_span_begin >
+			bs->directional_cell_spans.size() ||
+		    cell.directional_span_count >
+			bs->directional_cell_spans.size() -
+			    cell.directional_span_begin ||
+		    cell.span_index_begin >
+			bs->routing_cell_span_packs.size() ||
+		    cell.span_index_count >
+			bs->routing_cell_span_packs.size() -
+			    cell.span_index_begin ||
+		    cell.span_index_count > cell.directional_span_count)
+		return false;
+	    for (size_t binding_offset = 0;
+		    binding_offset < cell.directional_span_count;
+		    ++binding_offset) {
+		const brep_directional_cell_span &binding =
+		    bs->directional_cell_spans[cell.directional_span_begin +
+			binding_offset];
+		if (binding.span_index > INT_MAX ||
+			binding.span_index < record.span_begin ||
+			binding.span_index >= record.span_begin +
+			    record.span_count ||
+			binding.span_index >= bs->surface_spans.size() ||
+			binding.subpatch_begin > bs->directional_subpatches.size() ||
+			binding.subpatch_count >
+			    bs->directional_subpatches.size() -
+				binding.subpatch_begin)
+		    return false;
+		const brep_surface_span &span =
+		    bs->surface_spans[binding.span_index];
+		if (span.face_index != record.face_index ||
+			span.span_index != (int)binding.span_index)
+		    return false;
+		if (binding_offset >= cell.span_index_count)
+		    continue;
+		const brep_routing_cell_span_pack &pack =
+		    bs->routing_cell_span_packs[cell.span_index_begin +
+			binding_offset];
+		if (pack.span_index != binding.span_index ||
+			pack.control_begin >
+			    bs->routing_cell_span_controls.size() ||
+			pack.control_count >
+			    bs->routing_cell_span_controls.size() -
+				pack.control_begin ||
+			pack.subpatch_begin >
+			    bs->routing_cell_span_subpatches.size() ||
+			pack.subpatch_count >
+			    bs->routing_cell_span_subpatches.size() -
+				pack.subpatch_begin)
+		    return false;
+	    }
+	}
+    }
+    return true;
+}
+
+
 static bool
 brep_build_routing_correction_bvh(struct brep_specific *bs)
 {
@@ -43090,9 +43837,9 @@ brep_build_routing_feature_cells(struct brep_specific *bs)
 	brep_build_routing_correction_bvh(bs);
     bs->routing_feature_cells_complete = cell_count_complete &&
 	bindings_complete && correction_bvh_complete;
-    if (bs->routing_feature_cells_complete && bs->is_solid &&
-	    !bs->plate_mode &&
-	    !brep_directional_object_cache_allocate(bs) &&
+    bs->routing_hot_ranges_complete = bs->routing_feature_cells_complete &&
+	brep_routing_hot_ranges_valid(bs);
+    if (!brep_directional_object_cache_prepare(bs) &&
 	    getenv("LIBRT_BREP_DEBUG"))
 	bu_log("BREP shared direction cache unavailable; using scalar route\n");
     if (!bs->routing_feature_cells_complete && getenv("LIBRT_BREP_DEBUG"))
@@ -43204,6 +43951,13 @@ _rt_brep_routing_pack_cache_prepare(struct soltab *stp,
     bs->routing_cell_span_controls.clear();
     bs->routing_cell_span_subpatches.clear();
     bs->routing_pack_cache_budget_bytes = budget_bytes;
+    bs->routing_hot_ranges_complete = false;
+    for (std::vector<brep_routing_feature_cell>::iterator cell_it =
+	    bs->routing_feature_cells.begin();
+	    cell_it != bs->routing_feature_cells.end(); ++cell_it) {
+	cell_it->span_index_begin = 0;
+	cell_it->span_index_count = 0;
+    }
 
     const size_t minimum_pack_bytes =
 	sizeof(brep_routing_cell_span_pack) +
@@ -43224,6 +43978,12 @@ _rt_brep_routing_pack_cache_prepare(struct soltab *stp,
 	bs->routing_cell_span_packs.shrink_to_fit();
 	bs->routing_cell_span_controls.shrink_to_fit();
 	bs->routing_cell_span_subpatches.shrink_to_fit();
+	bs->routing_hot_ranges_complete = bs->routing_feature_cells_complete &&
+	    brep_routing_hot_ranges_valid(bs);
+	if (!brep_directional_object_cache_prepare(bs) &&
+		getenv("LIBRT_BREP_DEBUG"))
+	    bu_log("BREP shared direction cache unavailable after scene packing; "
+		"using scalar route\n");
 	return 0;
     }
 
@@ -43233,8 +43993,6 @@ _rt_brep_routing_pack_cache_prepare(struct soltab *stp,
 	    cell_index < bs->routing_feature_cells.size(); ++cell_index) {
 	brep_routing_feature_cell &cell =
 	    bs->routing_feature_cells[cell_index];
-	cell.span_index_begin = 0;
-	cell.span_index_count = 0;
 	if ((cell.risk_flags &
 		RT_BREP_ROUTE_RISK_BOUNDARY_CONTACT_CORRECTION) &&
 		cell.face_index >= 0 &&
@@ -43283,6 +44041,10 @@ _rt_brep_routing_pack_cache_prepare(struct soltab *stp,
 		if (bs->routing_cell_span_packs.size() >= UINT32_MAX)
 		    break;
 		bs->routing_cell_span_packs.push_back(pack);
+	    } else {
+		/* Retain a direct-indexable prefix.  Later bindings still have the
+		 * exact allocation-free reconstruction path. */
+		break;
 	    }
 	}
 	const size_t count = bs->routing_cell_span_packs.size() -
@@ -43294,6 +44056,12 @@ _rt_brep_routing_pack_cache_prepare(struct soltab *stp,
     bs->routing_cell_span_packs.shrink_to_fit();
     bs->routing_cell_span_controls.shrink_to_fit();
     bs->routing_cell_span_subpatches.shrink_to_fit();
+    bs->routing_hot_ranges_complete = bs->routing_feature_cells_complete &&
+	brep_routing_hot_ranges_valid(bs);
+    if (!brep_directional_object_cache_prepare(bs) &&
+	    getenv("LIBRT_BREP_DEBUG"))
+	bu_log("BREP shared direction cache unavailable after scene packing; "
+	    "using scalar route\n");
 
     const size_t used = bs->routing_cell_span_packs.size() *
 	sizeof(brep_routing_cell_span_pack) +

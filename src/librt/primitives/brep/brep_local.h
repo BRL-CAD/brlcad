@@ -410,6 +410,7 @@ struct brep_specific {
     size_t routing_correction_cells = 0;
     size_t routing_pack_cache_budget_bytes = 0;
     bool routing_feature_cells_complete = false;
+    bool routing_hot_ranges_complete = false;
     bool routing_correction_bvh_complete = false;
     size_t prepared_supported_faces = 0;
     size_t prepared_reparameterized_faces = 0;
