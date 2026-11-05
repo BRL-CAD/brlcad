@@ -69,6 +69,20 @@ jobs:
           cmake --build build_linux --config Release --target check
           cmake --build build_linux --config Release --target package
 
+      - name: B-Rep corpus matrix
+        run: |
+          export PATH=$GITHUB_WORKSPACE:$PATH
+          cmake --build build_linux --config Release --target brep-corpus-matrix
+        timeout-minutes: 300
+
+      - name: Upload B-Rep corpus matrix
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v6
+        with:
+          name: brep-corpus-matrix
+          path: build_linux/src/libbrep/tests/brep_corpus_matrix.csv
+          if-no-files-found: error
+
   windows_bext:
     name: MSVC - Ninja - BRL-CAD bext build
     needs: [linux_bext]
@@ -746,4 +760,64 @@ jobs:
         uses: codecov/codecov-action@v4
         with:
           files: ./coverage_cad.info
+
+
+  linux_brep_sanitizers:
+    name: B-Rep Address and Undefined Behavior Sanitizers
+    needs: [linux_bext]
+    runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: true
+    env:
+      ASAN_OPTIONS: detect_leaks=1:halt_on_error=1
+      UBSAN_OPTIONS: halt_on_error=1:print_stacktrace=1
+      DEBIAN_FRONTEND: noninteractive
+    if: ${{ !cancelled() && github.ref == 'refs/heads/main' }}
+    steps:
+      - name: Setup - CMake
+        uses: lukka/get-cmake@latest
+
+      - name: Setup - System
+        run: |
+          sudo apt-get update
+          sudo apt-get install ninja-build re2c xsltproc libxml2-utils
+
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          path: brlcad
+
+      - name: Prepare bext dependencies
+        uses: ./brlcad/.github/actions/prepare-bext
+        with:
+          platform-channel: ubuntu-24.04-${{ runner.arch }}-release
+          source-dir: ${{ github.workspace }}/brlcad
+          output-dir: ${{ runner.temp }}/bext_output
+          build-type: Release
+          artifact-token: ${{ secrets.BEXT_ARTIFACT_TOKEN }}
+
+      - name: Configure
+        run: |
+          cmake -S brlcad -B build_brep_sanitizers -G Ninja \
+            -DCMAKE_BUILD_TYPE=Debug \
+            -DBRLCAD_EXT_DIR=${{ runner.temp }}/bext_output \
+            -DBRLCAD_ENABLE_QT=OFF \
+            -DBRLCAD_ENABLE_ADDRESS_SANITIZER=ON \
+            -DBRLCAD_ENABLE_UNDEFINED_SANITIZER=ON
+
+      - name: Build
+        run: cmake --build build_brep_sanitizers -j2
+
+      - name: Run focused B-Rep tests
+        run: |
+          ctest --test-dir build_brep_sanitizers --output-on-failure -j2 \
+            -R '^(brep_|rt_crofton$|rt_implicit_brep$|rt_vshot$|rt_primitive_brep$)'
+
+      - name: Upload sanitizer test log
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v6
+        with:
+          name: brep-sanitizer-test-log
+          path: build_brep_sanitizers/Testing/Temporary/LastTest.log
+          if-no-files-found: warn
 
