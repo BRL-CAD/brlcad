@@ -77,7 +77,13 @@ QConsoleListener::QConsoleListener(int fd, struct ged_subprocess *p, bu_process_
 
 QConsoleListener::~QConsoleListener()
 {
-    m_notifier->disconnect();
+    disconnectNotifier();
+}
+
+void QConsoleListener::disconnectNotifier()
+{
+    if (m_notifier)
+	m_notifier->disconnect();
 }
 
 void QConsoleListener::on_finishedGetLine(const QString &strNewLine)

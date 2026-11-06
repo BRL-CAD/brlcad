@@ -54,6 +54,7 @@ class QTCAD_EXPORT QConsoleListener : public QObject
 		ged_io_func_t c = NULL,
 		void *d = NULL);
 	~QConsoleListener();
+	void disconnectNotifier();
 
 	// Called by client code when it is done with the process
 	void on_finished();
@@ -62,12 +63,6 @@ class QTCAD_EXPORT QConsoleListener : public QObject
 	ged_io_func_t callback;
 	bu_process_io_t type;
 	void *data;
-
-#ifdef Q_OS_WIN
-	QWinEventNotifier *m_notifier;
-#else
-	QSocketNotifier *m_notifier;
-#endif
 
 Q_SIGNALS:
 	// connect to "newLine" to receive console input
@@ -81,6 +76,13 @@ Q_SIGNALS:
 
     private Q_SLOTS:
 	void on_finishedGetLine(const QString &strNewLine);
+
+    private:
+#ifdef Q_OS_WIN
+	QWinEventNotifier *m_notifier = NULL;
+#else
+	QSocketNotifier *m_notifier = NULL;
+#endif
 };
 
 // Local Variables:

@@ -74,8 +74,11 @@ qged_pre_closedb_clbk(int UNUSED(ac), const char **UNUSED(av), void *UNUSED(gedp
 }
 
 int
-qged_post_closedb_clbk(int UNUSED(ac), const char **UNUSED(av), void *UNUSED(gedp), void *UNUSED(ctx))
+qged_post_closedb_clbk(int UNUSED(ac), const char **UNUSED(av), void *UNUSED(gedp), void *ctx)
 {
+    QgEdApp *a = (QgEdApp *)ctx;
+    if (a)
+	emit a->dbi_update(DBI_NULL);
     return BRLCAD_OK;
 }
 
@@ -109,41 +112,38 @@ qt_create_io_handler(struct ged_subprocess *p, bu_process_io_t t, ged_io_func_t 
 extern "C" void
 qt_delete_io_handler(struct ged_subprocess *p, bu_process_io_t t)
 {
-    if (!p) return;
+    if (!p || !p->gedp || !p->gedp->ged_io_data)
+	return;
 
     QgEdApp *ca = (QgEdApp *)p->gedp->ged_io_data;
-    QgConsole *c = ca->w->console;
+    if (!ca->w || !ca->w->console)
+	return;
 
-    // Since these callbacks are invoked from the listener, we can't call
-    // the listener destructors directly.  We instead call a routine that
-    // emits a single that will notify the console widget it's time to
-    // detach the listener.
+    QgConsole *c = ca->w->console;
+    int *active = NULL;
+
     switch (t) {
 	case BU_PROCESS_STDIN:
-	    bu_log("stdin\n");
-	    if (p->stdin_active && c->listeners.find(std::make_pair(p, t)) != c->listeners.end()) {
-		c->listeners[std::make_pair(p, t)]->m_notifier->disconnect();
-		c->listeners[std::make_pair(p, t)]->on_finished();
-	    }
-	    p->stdin_active = 0;
+	    active = &p->stdin_active;
 	    break;
 	case BU_PROCESS_STDOUT:
-	    if (p->stdout_active && c->listeners.find(std::make_pair(p, t)) != c->listeners.end()) {
-		c->listeners[std::make_pair(p, t)]->m_notifier->disconnect();
-		c->listeners[std::make_pair(p, t)]->on_finished();
-		bu_log("stdout: %d\n", p->stdout_active);
-	    }
-	    p->stdout_active = 0;
+	    active = &p->stdout_active;
 	    break;
 	case BU_PROCESS_STDERR:
-	    if (p->stderr_active && c->listeners.find(std::make_pair(p, t)) != c->listeners.end()) {
-		c->listeners[std::make_pair(p, t)]->m_notifier->disconnect();
-		c->listeners[std::make_pair(p, t)]->on_finished();
-		bu_log("stderr: %d\n", p->stderr_active);
-	    }
-	    p->stderr_active = 0;
+	    active = &p->stderr_active;
 	    break;
     }
+
+    std::map<std::pair<struct ged_subprocess *, int>, QConsoleListener *>::iterator listener_it;
+    listener_it = c->listeners.find(std::make_pair(p, t));
+    if (active && *active && listener_it != c->listeners.end()) {
+	/* Stop readiness immediately, but queue retirement so this callback
+	 * cannot delete the listener while its activation is still active. */
+	listener_it->second->disconnectNotifier();
+	listener_it->second->on_finished();
+    }
+    if (active)
+	*active = 0;
 
     emit ca->view_update(QG_VIEW_REFRESH);
 }
