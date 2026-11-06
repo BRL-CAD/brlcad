@@ -488,8 +488,8 @@ rt_edit_metaball_edit_desc(void)
 
 
 /* get_params: return current value(s) for the given cmd_id */
-C_DECL int
-rt_edit_metaball_get_params(struct rt_edit *s, int cmd_id, fastf_t *vals)
+static int
+metaball_current_numbers(struct rt_edit *s, int cmd_id, fastf_t *vals)
 {
     struct rt_metaball_internal *ball;
     struct rt_metaball_edit *m;
@@ -1087,6 +1087,14 @@ rt_edit_metaball_edit_xy(
     return 0;
 }
 
+
+C_DECL int
+rt_edit_metaball_get_values(struct rt_edit *s, int cmd_id,
+	struct rt_edit_cmd_values *result)
+{
+    return edit_current_values_from_numbers(s, cmd_id, result,
+	metaball_current_numbers);
+}
 
 /*
  * Local Variables:

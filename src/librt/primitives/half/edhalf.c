@@ -182,8 +182,8 @@ rt_edit_hlf_edit_xy(struct rt_edit *s, const vect_t mousevec)
     return edit_generic_xy(s, mousevec);
 }
 
-C_DECL int
-rt_edit_hlf_get_params(struct rt_edit *s, int cmd_id, fastf_t *vals)
+static int
+half_current_numbers(struct rt_edit *s, int cmd_id, fastf_t *vals)
 {
     struct rt_half_internal *haf;
     if (!s || !vals)
@@ -195,6 +195,14 @@ rt_edit_hlf_get_params(struct rt_edit *s, int cmd_id, fastf_t *vals)
 	return 1;
     }
     return 0;
+}
+
+C_DECL int
+rt_edit_hlf_get_values(struct rt_edit *s, int cmd_id,
+	struct rt_edit_cmd_values *result)
+{
+    return edit_current_values_from_numbers(s, cmd_id, result,
+	half_current_numbers);
 }
 
 /*

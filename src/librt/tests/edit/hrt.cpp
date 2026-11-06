@@ -51,6 +51,7 @@
 #include "bu/malloc.h"
 #include "bu/str.h"
 #include "raytrace.h"
+#include "test_utils.h"
 #include "rt/rt_ecmds.h"
 
 
@@ -396,7 +397,7 @@ rt_edit_test_hrt(void)
             VSCALE(expected, tc.local, inch);
             fastf_t values[3] = {0.0, 0.0, 0.0};
             if (!VNEAR_EQUAL(tc.field, expected, VUNITIZE_TOL) ||
-                EDOBJ[ID_HRT].ft_edit_get_params(s, tc.command_id, values) != 3 ||
+		edit_test_get_params(s, tc.command_id, values) != 3 ||
                 !VNEAR_EQUAL(values, tc.local, VUNITIZE_TOL))
                 bu_exit(1, "HRT vector command failed for ID %d\n", tc.command_id);
         }
@@ -407,7 +408,7 @@ rt_edit_test_hrt(void)
         rt_edit_process(s);
         fastf_t value = 0.0;
         if (!NEAR_EQUAL(edit_hrt->d, 0.75 * inch, VUNITIZE_TOL) ||
-            EDOBJ[ID_HRT].ft_edit_get_params(s, desc->cmds[4].cmd_id, &value) != 1 ||
+	    edit_test_get_params(s, desc->cmds[4].cmd_id, &value) != 1 ||
             !NEAR_EQUAL(value, 0.75, VUNITIZE_TOL))
             bu_exit(1, "HRT cusp-distance command did not convert local units\n");
 

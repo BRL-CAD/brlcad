@@ -33,6 +33,7 @@
 #include "bu/malloc.h"
 #include "bu/vls.h"
 #include "raytrace.h"
+#include "test_utils.h"
 #include "rt/functab.h"
 #include "rt/geom.h"
 #include "rt/rt_ecmds.h"
@@ -149,7 +150,7 @@ check_bot_params(struct rt_edit *edit, int command_id, int expected_count,
                  const fastf_t *expected, const char *unit)
 {
     fastf_t values[3] = {};
-    int count = EDOBJ[ID_BOT].ft_edit_get_params(edit, command_id, values);
+    int count = edit_test_get_params(edit, command_id, values);
     bool ok = count == expected_count;
     for (int i = 0; ok && i < expected_count; ++i)
         ok = NEAR_EQUAL(values[i], expected[i], VUNITIZE_TOL);

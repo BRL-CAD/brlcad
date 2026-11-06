@@ -712,7 +712,7 @@ bu_log("RT_MATRIX_EDIT_TRANS_MODEL_XYZ SUCCESS: "
     }
 
     /* ================================================================
-     * rt_edit_bot_get_params: check vertex index and mode
+     * rt_edit_bot_get_values: check vertex index and mode
      * ================================================================*/
     {
 	/* Re-select vertex 3 */
@@ -724,16 +724,14 @@ bu_log("RT_MATRIX_EDIT_TRANS_MODEL_XYZ SUCCESS: "
 	rt_edit_process(s);
 
 	fastf_t vals[4] = {0};
-	int nv = (*EDOBJ[dp->d_minor_type].ft_edit_get_params)(
-		s, ECMD_BOT_PICKV, vals);
+	int nv = edit_test_get_params(s, ECMD_BOT_PICKV, vals);
 	if (nv != 1 || (int)vals[0] != 3)
 	    bu_exit(1, "ERROR: get_params(PICKV): nv=%d vals[0]=%g expected vertex 3\n",
 		    nv, vals[0]);
 	bu_log("get_params(PICKV) SUCCESS: vertex_index=%g\n", vals[0]);
 
 	/* Check MODE */
-	nv = (*EDOBJ[dp->d_minor_type].ft_edit_get_params)(
-		s, ECMD_BOT_MODE, vals);
+	nv = edit_test_get_params(s, ECMD_BOT_MODE, vals);
 	if (nv != 1)
 	    bu_exit(1, "ERROR: get_params(MODE): nv=%d\n", nv);
 	bu_log("get_params(MODE) SUCCESS: mode=%g\n", vals[0]);
@@ -842,7 +840,7 @@ bu_log("RT_MATRIX_EDIT_TRANS_MODEL_XYZ SUCCESS: "
 	vect_t expected, actual;
 	VSET(expected, local2base, 2.0 * local2base, 3.0 * local2base);
 	if (!VNEAR_EQUAL(&bot->vertices[6], expected, VUNITIZE_TOL) ||
-	    EDOBJ[ID_BOT].ft_edit_get_params(s, ECMD_BOT_MOVEV, actual) != 3)
+	    edit_test_get_params(s, ECMD_BOT_MOVEV, actual) != 3)
 	    bu_exit(1, "ERROR: BOT vertex move did not use local units\n");
 	VSET(expected, 1.0, 2.0, 3.0);
 	if (!VNEAR_EQUAL(actual, expected, VUNITIZE_TOL))
@@ -910,7 +908,7 @@ bu_log("RT_MATRIX_EDIT_TRANS_MODEL_XYZ SUCCESS: "
 	fastf_t value[3] = {0};
 	if (!NEAR_EQUAL(bot->thickness[0], 3.0 * inch, VUNITIZE_TOL) ||
 	    !NEAR_EQUAL(bot->thickness[1], 2.0 * inch, VUNITIZE_TOL) ||
-	    EDOBJ[ID_BOT].ft_edit_get_params(s, ECMD_BOT_THICK, value) != 1 ||
+	    edit_test_get_params(s, ECMD_BOT_THICK, value) != 1 ||
 	    !NEAR_EQUAL(value[0], 3.0, VUNITIZE_TOL))
 	    bu_exit(1, "ERROR: BOT selected-face thickness or units failed\n");
 

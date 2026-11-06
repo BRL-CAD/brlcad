@@ -35,7 +35,7 @@
  *   - ECMD_REVOLVE_SET_R sets start vector
  *   - ECMD_REVOLVE_SET_ANG sets angle (degrees in, radians stored)
  *   - ECMD_REVOLVE_SET_SKT sets sketch name
- *   - rt_edit_revolve_get_params returns correct values
+ *   - rt_edit_revolve_get_values returns numeric and string values
  */
 
 #include "common.h"
@@ -240,14 +240,29 @@ rt_edit_test_revolve(void)
     bu_log("TEST 6 PASS: sketch_name = '%s'\n", bu_vls_cstr(&rip->sketch_name));
 
     /* ================================================================
-     * Test 7: rt_edit_revolve_get_params returns angle in degrees
+     * Test 7: rt_edit_revolve_get_values returns typed current values
      * ================================================================*/
     reset_s(s, rip);   /* ang = M_2PI */
+    struct rt_edit_cmd_values current;
+    int status = rt_edit_cmd_values_get(s, ECMD_REVOLVE_SET_ANG, &current);
+    if (status != RT_EDIT_VALUE_OK || current.value_count != 1 ||
+	!current.value_valid[0] ||
+	!NEAR_EQUAL(current.values[0], 360.0, 1e-9))
+	bu_exit(1, "ERROR: get_values(SET_ANG): status=%d value=%g\n",
+	    status, current.values[0]);
+
+    bu_vls_trunc(&rip->sketch_name, 0);
+    bu_vls_strcpy(&rip->sketch_name, "current_sketch");
+    status = rt_edit_cmd_values_get(s, ECMD_REVOLVE_SET_SKT, &current);
+    if (status != RT_EDIT_VALUE_OK || current.string_count != 1 ||
+	!current.string_valid[0] ||
+	bu_strcmp(current.strings[0], "current_sketch") != 0)
+	bu_exit(1, "ERROR: get_values(SET_SKT): status=%d value='%s'\n",
+	    status, current.strings[0]);
+    bu_log("TEST 7 PASS: typed numeric and string values\n");
+
     fastf_t vals[4] = {0};
-    int nv = (*EDOBJ[dp->d_minor_type].ft_edit_get_params)(s, ECMD_REVOLVE_SET_ANG, vals);
-    if (nv != 1 || !NEAR_EQUAL(vals[0], 360.0, 1e-9))
-	bu_exit(1, "ERROR: get_params(SET_ANG): nv=%d vals[0]=%g\n", nv, vals[0]);
-    bu_log("TEST 7 PASS: get_params(SET_ANG) = %g deg\n", vals[0]);
+    int nv;
 
     const fastf_t inch = 25.4;
     s->local2base = inch;
@@ -277,7 +292,7 @@ rt_edit_test_revolve(void)
 	!NEAR_EQUAL(rip->r[X], 3.0 * inch, SMALL_FASTF))
 	bu_exit(1, "ERROR: set_r did not convert local length\n");
 
-    nv = (*EDOBJ[dp->d_minor_type].ft_edit_get_params)(s, ECMD_REVOLVE_SET_R, vals);
+    nv = edit_test_get_params(s, ECMD_REVOLVE_SET_R, vals);
     if (nv != 3 || !NEAR_EQUAL(vals[X], 3.0, VUNITIZE_TOL))
 	bu_exit(1, "ERROR: get_params(SET_R) returned count %d, x %g, base x %g, factor %g\n",
 		nv, vals[X], rip->r[X], s->base2local);

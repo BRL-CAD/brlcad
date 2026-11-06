@@ -276,8 +276,8 @@ rt_edit_revolve_edit_desc(void)
 }
 
 
-C_DECL int
-rt_edit_revolve_get_params(struct rt_edit *s, int cmd_id, fastf_t *vals)
+static int
+revolve_current_numbers(struct rt_edit *s, int cmd_id, fastf_t *vals)
 {
     if (!s || !vals) return 0;
 
@@ -312,6 +312,23 @@ rt_edit_revolve_get_params(struct rt_edit *s, int cmd_id, fastf_t *vals)
     }
 }
 
+
+C_DECL int
+rt_edit_revolve_get_values(struct rt_edit *s, int cmd_id,
+	struct rt_edit_cmd_values *result)
+{
+    if (!s || !result)
+	return RT_EDIT_VALUE_ERROR;
+    if (cmd_id == ECMD_REVOLVE_SET_SKT) {
+	struct rt_revolve_internal *revolve =
+	    (struct rt_revolve_internal *)s->es_int.idb_ptr;
+	return rt_edit_cmd_values_set_string(result, 0,
+	    bu_vls_cstr(&revolve->sketch_name)) == BRLCAD_OK ?
+	    RT_EDIT_VALUE_OK : RT_EDIT_VALUE_ERROR;
+    }
+    return edit_current_values_from_numbers(s, cmd_id, result,
+	revolve_current_numbers);
+}
 
 /*
  * Local Variables:

@@ -50,6 +50,7 @@
 #include "bu/malloc.h"
 #include "bu/str.h"
 #include "raytrace.h"
+#include "test_utils.h"
 #include "rt/rt_ecmds.h"
 
 
@@ -695,10 +696,10 @@ bu_log("RT_MATRIX_EDIT_TRANS_MODEL_XYZ SUCCESS: "
     VSET(m->es_metaball_pnt->coord, inch, 0.0, 0.0);
     m->es_metaball_pnt->field_strength = 2.0 * inch;
     fastf_t point_values[3] = {0.0, 0.0, 0.0};
-    if (EDOBJ[dp->d_minor_type].ft_edit_get_params(s, ECMD_METABALL_PT_MOV, point_values) != 3 ||
+    if (edit_test_get_params(s, ECMD_METABALL_PT_MOV, point_values) != 3 ||
 	!NEAR_EQUAL(point_values[X], 1.0, VUNITIZE_TOL))
 	bu_exit(1, "ERROR: metaball point getter did not return local units\n");
-    if (EDOBJ[dp->d_minor_type].ft_edit_get_params(s, ECMD_METABALL_PT_FLDSTR, point_values) != 1 ||
+    if (edit_test_get_params(s, ECMD_METABALL_PT_FLDSTR, point_values) != 1 ||
 	!NEAR_EQUAL(point_values[0], 2.0, VUNITIZE_TOL))
 	bu_exit(1, "ERROR: metaball strength getter did not return local units\n");
 

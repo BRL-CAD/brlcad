@@ -212,8 +212,8 @@ rt_edit_ell_edit_desc(void)
     return &ell_prim_desc;
 }
 
-C_DECL int
-rt_edit_ell_get_params(struct rt_edit *s, int cmd_id, fastf_t *vals)
+static int
+ell_current_numbers(struct rt_edit *s, int cmd_id, fastf_t *vals)
 {
     struct rt_ell_internal *ell;
 
@@ -458,6 +458,14 @@ rt_edit_ell_repair(struct bu_vls *log_str, struct rt_db_internal *ip, const stru
     }
 
     return repaired > 0 ? 0 : -1;
+}
+
+C_DECL int
+rt_edit_ell_get_values(struct rt_edit *s, int cmd_id,
+	struct rt_edit_cmd_values *result)
+{
+    return edit_current_values_from_numbers(s, cmd_id, result,
+	ell_current_numbers);
 }
 
 /*

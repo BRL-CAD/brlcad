@@ -29,7 +29,7 @@
  *   - ECMD_BREP_SRF_SELECT stores face/i/j correctly
  *   - ECMD_BREP_SRF_CV_MOVE translates the CV by the given delta
  *   - ECMD_BREP_SRF_CV_SET places the CV at the given absolute position
- *   - rt_edit_brep_get_params returns sensible values
+ *   - rt_edit_brep_get_values returns sensible values
  *   - Invalid inputs are rejected gracefully (wrong e_inpara, bad face index)
  */
 
@@ -43,6 +43,7 @@
 #include "bu/malloc.h"
 #include "bu/vls.h"
 #include "raytrace.h"
+#include "test_utils.h"
 #include "rt/geom.h"
 #include "rt/rt_ecmds.h"
 #include "brep/util.h"
@@ -377,7 +378,7 @@ test_brep_stale_selection(struct rt_edit *s)
     /* Model a topology change that invalidates the selected face. */
     selection->face_index = bip->brep->m_F.Count();
     fastf_t vals[3] = {0.0, 0.0, 0.0};
-    if (EDOBJ[ID_BREP].ft_edit_get_params(s, ECMD_BREP_SRF_CV_SET, vals) != 0)
+    if (edit_test_get_params(s, ECMD_BREP_SRF_CV_SET, vals) != 0)
 	bu_exit(1, "ERROR: stale BREP selection returned CV parameters\n");
 
     const int modes[] = {ECMD_BREP_SRF_CV_MOVE, ECMD_BREP_SRF_CV_SET};
@@ -449,7 +450,7 @@ test_brep_get_params_select(struct rt_edit *s)
     rt_edit_process(s);
 
     fastf_t vals[3] = {0, 0, 0};
-    int n = EDOBJ[ID_BREP].ft_edit_get_params(s, ECMD_BREP_SRF_SELECT, vals);
+    int n = edit_test_get_params(s, ECMD_BREP_SRF_SELECT, vals);
 
     if (n != 3 || (int)vals[0] != 0 || (int)vals[1] != 1 || (int)vals[2] != 2)
 	bu_exit(1,
@@ -527,7 +528,7 @@ test_brep_rational_cv_local_units(struct rt_edit *s)
     double x, y, z;
     get_cv_pos(s, face_index, cv_i, cv_j, &x, &y, &z);
     fastf_t vals[3] = {0.0, 0.0, 0.0};
-    if (EDOBJ[ID_BREP].ft_edit_get_params(s, ECMD_BREP_SRF_CV_SET, vals) != 3 ||
+    if (edit_test_get_params(s, ECMD_BREP_SRF_CV_SET, vals) != 3 ||
 	!NEAR_EQUAL(vals[0], x / local2base, VUNITIZE_TOL) ||
 	!NEAR_EQUAL(vals[1], y / local2base, VUNITIZE_TOL) ||
 	!NEAR_EQUAL(vals[2], z / local2base, VUNITIZE_TOL))

@@ -31,6 +31,7 @@
 #include "bu/str.h"
 #include "bu/vls.h"
 #include "raytrace.h"
+#include "test_utils.h"
 #include "rt/rt_ecmds.h"
 
 struct directory *make_metaball(struct rt_wdb *);
@@ -136,7 +137,7 @@ param_queries_match(struct rt_edit *edit, const struct expected_state *expected,
 		    fastf_t base2local)
 {
     int (*get_params)(struct rt_edit *, int, fastf_t *) =
-	EDOBJ[ID_METABALL].ft_edit_get_params;
+	edit_test_get_params;
     if (!get_params)
 	return false;
 

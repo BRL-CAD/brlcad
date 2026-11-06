@@ -31,6 +31,26 @@
 #include "wdb.h"
 
 static inline int
+edit_test_get_params(struct rt_edit *edit, int command_id, fastf_t *values)
+{
+    if (!values)
+	return -1;
+
+    struct rt_edit_cmd_values current;
+    const enum rt_edit_value_status status =
+	rt_edit_cmd_values_get(edit, command_id, &current);
+    if (status == RT_EDIT_VALUE_ERROR)
+	return -1;
+    if (status == RT_EDIT_VALUE_UNAVAILABLE)
+	return 0;
+    for (size_t i = 0; i < current.value_count; i++) {
+	if (current.value_valid[i])
+	    values[i] = current.values[i];
+    }
+    return (int)current.value_count;
+}
+
+static inline int
 edit_test_make_sketch(struct rt_wdb *wdbp, const char *name, fastf_t marker)
 {
     struct rt_sketch_internal *skt;

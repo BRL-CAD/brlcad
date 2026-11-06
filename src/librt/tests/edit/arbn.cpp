@@ -30,7 +30,7 @@
  *   - ECMD_ARBN_PLANE_ROTATE rotates the normal
  *   - ECMD_ARBN_PLANE_ADD appends a new plane
  *   - ECMD_ARBN_PLANE_DEL removes a plane
- *   - rt_edit_arbn_get_params returns correct values
+ *   - rt_edit_arbn_get_values returns correct values
  *   - Descriptor is accessible and has the right number of commands
  */
 
@@ -44,6 +44,7 @@
 #include "bu/malloc.h"
 #include "bu/vls.h"
 #include "raytrace.h"
+#include "test_utils.h"
 #include "rt/geom.h"
 
 /* Mirror the private ECMD numbers from edarbn.c */
@@ -170,7 +171,7 @@ arbn_unit_matrix(struct db_i *dbip, struct db_full_path *path,
 	    same_planes(arbn, expected, ARBN_CUBE_PLANE_COUNT) &&
 	    NEAR_EQUAL(edit->e_para[0], inch_to_mm / scale, VUNITIZE_TOL);
 	fastf_t values[4] = {0};
-	passed = EDOBJ[ID_ARBN].ft_edit_get_params(edit,
+	passed = edit_test_get_params(edit,
 	    ECMD_ARBN_PLANE_SET_DIST, values) == 1 &&
 	    NEAR_EQUAL(values[0], inch_to_mm / scale, VUNITIZE_TOL) &&
 	    passed;
@@ -531,7 +532,7 @@ rt_edit_test_arbn(void)
     bu_log("TEST 7 PASS: neqn now %zu (was %zu)\n", aip->neqn, before_del);
 
     /* ================================================================
-     * Test 8: rt_edit_arbn_get_params returns plane index
+     * Test 8: rt_edit_arbn_get_values returns plane index
      * ================================================================*/
     /* Re-select plane 0 so we have something to query */
     (*EDOBJ[dp->d_minor_type].ft_set_edit_mode)(s, ECMD_ARBN_PLANE_SELECT);
@@ -540,7 +541,7 @@ rt_edit_test_arbn(void)
     rt_edit_process(s);
 
     fastf_t vals[4] = {0};
-    int nv = (*EDOBJ[dp->d_minor_type].ft_edit_get_params)(s, ECMD_ARBN_PLANE_SELECT, vals);
+    int nv = edit_test_get_params(s, ECMD_ARBN_PLANE_SELECT, vals);
     if (nv != 1 || (int)vals[0] != 0)
 	bu_exit(1, "ERROR: get_params(SELECT): nv=%d vals[0]=%g\n", nv, vals[0]);
     bu_log("TEST 8 PASS: get_params(SELECT) returns plane_index=%g\n", vals[0]);

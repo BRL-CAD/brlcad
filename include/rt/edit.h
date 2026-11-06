@@ -594,6 +594,51 @@ struct rt_edit_menu_item {
 /** Sentinel for "no range constraint" on a parameter. */
 #define RT_EDIT_PARAM_NO_LIMIT  (-DBL_MAX)
 
+/** Result of querying the current inputs for a descriptor command. */
+enum rt_edit_value_status {
+    RT_EDIT_VALUE_ERROR = -1,
+    RT_EDIT_VALUE_UNAVAILABLE = 0,
+    RT_EDIT_VALUE_OK = 1
+};
+
+/**
+ * Source-neutral current values for one descriptor command.
+ *
+ * Numeric and string slots use the same indices as rt_edit_param_desc and
+ * rt_edit's e_para/e_str input arrays.  A valid flag distinguishes a current
+ * zero or empty string from a parameter that has no meaningful current value.
+ */
+struct rt_edit_cmd_values {
+    fastf_t values[RT_EDIT_MAXPARA];
+    unsigned char value_valid[RT_EDIT_MAXPARA];
+    size_t value_count;
+    char strings[RT_EDIT_MAXSTR][RT_EDIT_MAXSTR_LEN];
+    unsigned char string_valid[RT_EDIT_MAXSTR];
+    size_t string_count;
+};
+
+/** Initialize or clear a caller-owned current-value result. */
+RT_EXPORT extern void
+rt_edit_cmd_values_init(struct rt_edit_cmd_values *result);
+
+/** Set one numeric slot and mark it valid. */
+RT_EXPORT extern int
+rt_edit_cmd_values_set_value(struct rt_edit_cmd_values *result, int index,
+	fastf_t value);
+
+/** Set one string slot and mark it valid. */
+RT_EXPORT extern int
+rt_edit_cmd_values_set_string(struct rt_edit_cmd_values *result, int index,
+	const char *value);
+
+/**
+ * Query the current values for a descriptor command from an active edit.
+ * The result is always initialized before returning.
+ */
+RT_EXPORT extern enum rt_edit_value_status
+rt_edit_cmd_values_get(struct rt_edit *s, int command_id,
+	struct rt_edit_cmd_values *result);
+
 /**
  * Describes a single input parameter for one edit command.
  *

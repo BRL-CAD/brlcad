@@ -327,8 +327,8 @@ rt_edit_datum_edit_desc(void)
 }
 
 
-C_DECL int
-rt_edit_datum_get_params(struct rt_edit *s, int cmd_id, fastf_t *vals)
+static int
+datum_current_numbers(struct rt_edit *s, int cmd_id, fastf_t *vals)
 {
     if (!s || !vals) return 0;
 
@@ -363,6 +363,14 @@ rt_edit_datum_get_params(struct rt_edit *s, int cmd_id, fastf_t *vals)
     }
 }
 
+
+C_DECL int
+rt_edit_datum_get_values(struct rt_edit *s, int cmd_id,
+	struct rt_edit_cmd_values *result)
+{
+    return edit_current_values_from_numbers(s, cmd_id, result,
+	datum_current_numbers);
+}
 
 /*
  * Local Variables:

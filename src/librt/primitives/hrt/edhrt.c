@@ -223,8 +223,8 @@ rt_edit_hrt_edit_desc(void)
     return &hrt_prim_desc;
 }
 
-C_DECL int
-rt_edit_hrt_get_params(struct rt_edit *s, int cmd_id, fastf_t *vals)
+static int
+hrt_current_numbers(struct rt_edit *s, int cmd_id, fastf_t *vals)
 {
     if (!s || !vals)
 	return 0;
@@ -250,4 +250,12 @@ rt_edit_hrt_get_params(struct rt_edit *s, int cmd_id, fastf_t *vals)
 	default:
 	    return 0;
     }
+}
+
+C_DECL int
+rt_edit_hrt_get_values(struct rt_edit *s, int cmd_id,
+	struct rt_edit_cmd_values *result)
+{
+    return edit_current_values_from_numbers(s, cmd_id, result,
+	hrt_current_numbers);
 }

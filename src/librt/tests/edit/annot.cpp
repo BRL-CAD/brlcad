@@ -30,7 +30,7 @@
  *   - ECMD_ANNOT_SET_POS sets the 3-D anchor V
  *   - ECMD_ANNOT_SET_TSEG_TXT_SIZE changes the text size
  *   - ECMD_ANNOT_VERT_MOVE moves a 2-D control vertex
- *   - rt_edit_annot_get_params returns correct values
+ *   - rt_edit_annot_get_values returns correct values
  */
 
 #include "common.h"
@@ -44,6 +44,7 @@
 #include "bu/malloc.h"
 #include "bu/vls.h"
 #include "raytrace.h"
+#include "test_utils.h"
 #include "rt/geom.h"
 #include "wdb.h"
 
@@ -221,11 +222,11 @@ rt_edit_test_annot(void)
     }
 
     /* ================================================================
-     * Test 6: rt_edit_annot_get_params returns anchor position
+     * Test 6: rt_edit_annot_get_values returns anchor position
      * ================================================================*/
     VSET(aip->V, 3, 4, 5);
     fastf_t vals[4] = {0};
-    int nv = (*EDOBJ[dp->d_minor_type].ft_edit_get_params)(s, ECMD_ANNOT_SET_POS, vals);
+    int nv = edit_test_get_params(s, ECMD_ANNOT_SET_POS, vals);
     if (nv != 3 || !NEAR_EQUAL(vals[0], 3.0, SMALL_FASTF) ||
 	!NEAR_EQUAL(vals[1], 4.0, SMALL_FASTF) ||
 	!NEAR_EQUAL(vals[2], 5.0, SMALL_FASTF))
@@ -266,7 +267,7 @@ rt_edit_test_annot(void)
     s->e_para[0] = 3.5;
     rt_edit_process(s);
     struct txt_seg *tsg = (struct txt_seg *)aip->ant.segments[0];
-    nv = (*EDOBJ[dp->d_minor_type].ft_edit_get_params)(s, ECMD_ANNOT_SET_TSEG_TXT_SIZE, vals);
+    nv = edit_test_get_params(s, ECMD_ANNOT_SET_TSEG_TXT_SIZE, vals);
     if (!NEAR_EQUAL(tsg->txt_size, 3.5, SMALL_FASTF) || nv != 1 ||
 	!NEAR_EQUAL(vals[0], 3.5, SMALL_FASTF))
 	bu_exit(1, "ERROR: non-mm text size: got %g\n", tsg->txt_size);

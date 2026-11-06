@@ -49,6 +49,7 @@ extern "C" {
 #include "rt/edit.h"
 #include "rt/func.h"
 #include "rt/functab.h"
+#include "./primitives/edit_private.h"
 }
 
 class RT_Edit_Map_Internal {
@@ -372,6 +373,80 @@ rt_edit_set_str(struct rt_edit *s, int index, const char *str)
     bu_strlcpy(s->e_str[index], str, RT_EDIT_MAXSTR_LEN);
     if (index >= s->e_nstr)
 	s->e_nstr = index + 1;
+}
+
+void
+rt_edit_cmd_values_init(struct rt_edit_cmd_values *result)
+{
+    if (!result)
+	return;
+    memset(result, 0, sizeof(*result));
+}
+
+int
+rt_edit_cmd_values_set_value(struct rt_edit_cmd_values *result, int index,
+	fastf_t value)
+{
+    if (!result || index < 0 || index >= RT_EDIT_MAXPARA)
+	return BRLCAD_ERROR;
+    result->values[index] = value;
+    result->value_valid[index] = 1;
+    if ((size_t)(index + 1) > result->value_count)
+	result->value_count = (size_t)(index + 1);
+    return BRLCAD_OK;
+}
+
+int
+rt_edit_cmd_values_set_string(struct rt_edit_cmd_values *result, int index,
+	const char *value)
+{
+    if (!result || index < 0 || index >= RT_EDIT_MAXSTR || !value)
+	return BRLCAD_ERROR;
+    bu_strlcpy(result->strings[index], value, RT_EDIT_MAXSTR_LEN);
+    result->string_valid[index] = 1;
+    if ((size_t)(index + 1) > result->string_count)
+	result->string_count = (size_t)(index + 1);
+    return BRLCAD_OK;
+}
+
+int
+edit_current_values_from_numbers(struct rt_edit *s, int command_id,
+	struct rt_edit_cmd_values *result, edit_current_numbers_t reader)
+{
+    if (!s || !result || !reader)
+	return RT_EDIT_VALUE_ERROR;
+
+    fastf_t values[RT_EDIT_MAXPARA] = {0.0};
+    const int count = reader(s, command_id, values);
+    if (count < 0 || count > RT_EDIT_MAXPARA)
+	return RT_EDIT_VALUE_ERROR;
+    if (!count)
+	return RT_EDIT_VALUE_UNAVAILABLE;
+    for (int i = 0; i < count; i++) {
+	if (rt_edit_cmd_values_set_value(result, i, values[i]) != BRLCAD_OK)
+	    return RT_EDIT_VALUE_ERROR;
+    }
+    return RT_EDIT_VALUE_OK;
+}
+
+enum rt_edit_value_status
+rt_edit_cmd_values_get(struct rt_edit *s, int command_id,
+	struct rt_edit_cmd_values *result)
+{
+    if (!result)
+	return RT_EDIT_VALUE_ERROR;
+    rt_edit_cmd_values_init(result);
+    if (!s || s->es_int.idb_type < 0 ||
+	EDOBJ[s->es_int.idb_type].magic != RT_FUNCTAB_MAGIC ||
+	!EDOBJ[s->es_int.idb_type].ft_edit_get_values)
+	return RT_EDIT_VALUE_UNAVAILABLE;
+    const int status = EDOBJ[s->es_int.idb_type].ft_edit_get_values(
+	s, command_id, result);
+    if (status != RT_EDIT_VALUE_OK)
+	rt_edit_cmd_values_init(result);
+    if (status < RT_EDIT_VALUE_ERROR || status > RT_EDIT_VALUE_OK)
+	return RT_EDIT_VALUE_ERROR;
+    return (enum rt_edit_value_status)status;
 }
 
 int

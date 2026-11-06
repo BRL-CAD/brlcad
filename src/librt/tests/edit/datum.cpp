@@ -29,7 +29,7 @@
  *   - ECMD_DATUM_SET_PNT sets the position
  *   - ECMD_DATUM_SET_DIR sets the direction
  *   - ECMD_DATUM_SET_W sets the scale factor
- *   - rt_edit_datum_get_params returns correct values
+ *   - rt_edit_datum_get_values returns correct values
  */
 
 #include "common.h"
@@ -42,6 +42,7 @@
 #include "bu/malloc.h"
 #include "bu/vls.h"
 #include "raytrace.h"
+#include "test_utils.h"
 #include "rt/geom.h"
 
 /* ECMD numbers from eddatum2.c */
@@ -217,7 +218,7 @@ rt_edit_test_datum(void)
     rt_edit_process(s);
 
     fastf_t w_vals[RT_EDIT_MAXPARA] = {0};
-    int w_nvals = (*EDOBJ[dir->d_minor_type].ft_edit_get_params)(s, ECMD_DATUM_SET_W, w_vals);
+    int w_nvals = edit_test_get_params(s, ECMD_DATUM_SET_W, w_vals);
     if (!NEAR_EQUAL(dp->w, 7.5, SMALL_FASTF) ||
 	w_nvals != 1 || !NEAR_EQUAL(w_vals[0], 7.5, SMALL_FASTF))
 	bu_exit(1, "ERROR: non-mm set/get w: stored=%g returned=%g\n",
@@ -227,13 +228,13 @@ rt_edit_test_datum(void)
     bu_log("TEST 6 PASS: non-mm w remains dimensionless\n");
 
     /* ================================================================
-     * Test 7: rt_edit_datum_get_params returns correct pnt
+     * Test 7: rt_edit_datum_get_values returns correct pnt
      * ================================================================*/
     reset_s(s, dp);
     VSET(dp->pnt, 5, 6, 7);
 
     fastf_t vals[4] = {0};
-    int nv = (*EDOBJ[dir->d_minor_type].ft_edit_get_params)(s, ECMD_DATUM_SET_PNT, vals);
+    int nv = edit_test_get_params(s, ECMD_DATUM_SET_PNT, vals);
     if (nv != 3 || !NEAR_EQUAL(vals[0], 5.0, SMALL_FASTF) ||
 	!NEAR_EQUAL(vals[1], 6.0, SMALL_FASTF) ||
 	!NEAR_EQUAL(vals[2], 7.0, SMALL_FASTF))

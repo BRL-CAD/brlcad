@@ -21,7 +21,7 @@
  *
  * Unit tests for:
  *   1. rt_edit_set_str()  / struct rt_edit e_str[] / e_nstr
- *   2. EDOBJ[type].ft_edit_get_params()  for TOR and ELL
+ *   2. EDOBJ[type].ft_edit_get_values()  for TOR and ELL
  */
 
 #include "common.h"
@@ -34,6 +34,7 @@
 #include "bu/magic.h"
 #include "bu/vls.h"
 #include "raytrace.h"
+#include "rt/edit.h"
 #include "rt/functab.h"   /* EDOBJ */
 #include "rt/geom.h"      /* rt_tor_internal, rt_ell_internal */
 
@@ -118,15 +119,15 @@ test_set_str(void)
 
 
 /* ======================================================================
- * Test 2: EDOBJ[TOR].ft_edit_get_params
+ * Test 2: EDOBJ[TOR].ft_edit_get_values
  * ====================================================================== */
 
 static void
 test_get_params_tor(void)
 {
-    CHECK(EDOBJ[ID_TOR].ft_edit_get_params != NULL,
-	  "TOR ft_edit_get_params: slot is non-NULL");
-    if (!EDOBJ[ID_TOR].ft_edit_get_params)
+    CHECK(EDOBJ[ID_TOR].ft_edit_get_values != NULL,
+	  "TOR ft_edit_get_values: slot is non-NULL");
+    if (!EDOBJ[ID_TOR].ft_edit_get_values)
 	return;
 
     /* Build a minimal rt_tor_internal directly (no database needed). */
@@ -158,32 +159,30 @@ test_get_params_tor(void)
     s->base2local = 1.0;
     s->local2base = 1.0;
 
-    fastf_t vals[RT_EDIT_MAXPARA];
-    memset(vals, 0, sizeof(vals));
+    struct rt_edit_cmd_values vals;
 
     /* Query R1 */
-    int n = EDOBJ[ID_TOR].ft_edit_get_params(s, ECMD_TOR_R1, vals);
-    CHECK(n == 1, "TOR get_params(ECMD_TOR_R1): returned 1");
-    CHECK(fabs(vals[0] - 100.0) < 1e-6,
-	  "TOR get_params(ECMD_TOR_R1): vals[0] == 100.0");
-    bu_log("  TOR R1 = %g (expected 100)\n", vals[0]);
+    int status = rt_edit_cmd_values_get(s, ECMD_TOR_R1, &vals);
+    CHECK(status == RT_EDIT_VALUE_OK && vals.value_count == 1 &&
+	vals.value_valid[0], "TOR current values: R1 is available");
+    CHECK(fabs(vals.values[0] - 100.0) < 1e-6,
+	  "TOR current values: R1 == 100.0");
+    bu_log("  TOR R1 = %g (expected 100)\n", vals.values[0]);
 
     /* Query R2 */
-    memset(vals, 0, sizeof(vals));
-    n = EDOBJ[ID_TOR].ft_edit_get_params(s, ECMD_TOR_R2, vals);
-    CHECK(n == 1, "TOR get_params(ECMD_TOR_R2): returned 1");
-    CHECK(fabs(vals[0] - 25.0) < 1e-6,
-	  "TOR get_params(ECMD_TOR_R2): vals[0] == 25.0");
-    bu_log("  TOR R2 = %g (expected 25)\n", vals[0]);
+    status = rt_edit_cmd_values_get(s, ECMD_TOR_R2, &vals);
+    CHECK(status == RT_EDIT_VALUE_OK && vals.value_count == 1 &&
+	vals.value_valid[0], "TOR current values: R2 is available");
+    CHECK(fabs(vals.values[0] - 25.0) < 1e-6,
+	  "TOR current values: R2 == 25.0");
+    bu_log("  TOR R2 = %g (expected 25)\n", vals.values[0]);
 
-    /* Unknown cmd_id should return 0 */
-    memset(vals, 0, sizeof(vals));
-    n = EDOBJ[ID_TOR].ft_edit_get_params(s, 99999, vals);
-    CHECK(n == 0, "TOR get_params(unknown cmd_id): returned 0");
+    status = rt_edit_cmd_values_get(s, 99999, &vals);
+    CHECK(status == RT_EDIT_VALUE_UNAVAILABLE && !vals.value_count,
+	"TOR current values: unknown command is unavailable and empty");
 
-    /* NULL vals should return -1 */
-    n = EDOBJ[ID_TOR].ft_edit_get_params(s, ECMD_TOR_R1, NULL);
-    CHECK(n == -1, "TOR get_params(NULL vals): returned -1");
+    CHECK(rt_edit_cmd_values_get(s, ECMD_TOR_R1, NULL) ==
+	RT_EDIT_VALUE_ERROR, "TOR current values: NULL result is an error");
 
     /* Detach internal before destroy so we free it ourselves. */
     RT_DB_INTERNAL_INIT(&s->es_int);
@@ -193,15 +192,15 @@ test_get_params_tor(void)
 
 
 /* ======================================================================
- * Test 3: EDOBJ[ELL].ft_edit_get_params
+ * Test 3: EDOBJ[ELL].ft_edit_get_values
  * ====================================================================== */
 
 static void
 test_get_params_ell(void)
 {
-    CHECK(EDOBJ[ID_ELL].ft_edit_get_params != NULL,
-	  "ELL ft_edit_get_params: slot is non-NULL");
-    if (!EDOBJ[ID_ELL].ft_edit_get_params)
+    CHECK(EDOBJ[ID_ELL].ft_edit_get_values != NULL,
+	  "ELL ft_edit_get_values: slot is non-NULL");
+    if (!EDOBJ[ID_ELL].ft_edit_get_values)
 	return;
 
     struct rt_ell_internal *ell =
@@ -227,26 +226,26 @@ test_get_params_ell(void)
     s->base2local = 1.0;
     s->local2base = 1.0;
 
-    fastf_t vals[RT_EDIT_MAXPARA];
-    memset(vals, 0, sizeof(vals));
+    struct rt_edit_cmd_values vals;
 
-    int n = EDOBJ[ID_ELL].ft_edit_get_params(s, ECMD_ELL_SCALE_A, vals);
-    CHECK(n == 1, "ELL get_params(ECMD_ELL_SCALE_A): returned 1");
-    CHECK(fabs(vals[0] - 50.0) < 1e-6,
-	  "ELL get_params(ECMD_ELL_SCALE_A): vals[0] == 50");
-    bu_log("  ELL |A| = %g (expected 50)\n", vals[0]);
+    int status = rt_edit_cmd_values_get(s, ECMD_ELL_SCALE_A, &vals);
+    CHECK(status == RT_EDIT_VALUE_OK && vals.value_count == 1 &&
+	vals.value_valid[0], "ELL current values: A is available");
+    CHECK(fabs(vals.values[0] - 50.0) < 1e-6,
+	  "ELL current values: A == 50");
+    bu_log("  ELL |A| = %g (expected 50)\n", vals.values[0]);
 
-    memset(vals, 0, sizeof(vals));
-    n = EDOBJ[ID_ELL].ft_edit_get_params(s, ECMD_ELL_SCALE_B, vals);
-    CHECK(n == 1, "ELL get_params(ECMD_ELL_SCALE_B): returned 1");
-    CHECK(fabs(vals[0] - 30.0) < 1e-6,
-	  "ELL get_params(ECMD_ELL_SCALE_B): vals[0] == 30");
+    status = rt_edit_cmd_values_get(s, ECMD_ELL_SCALE_B, &vals);
+    CHECK(status == RT_EDIT_VALUE_OK && vals.value_count == 1 &&
+	vals.value_valid[0], "ELL current values: B is available");
+    CHECK(fabs(vals.values[0] - 30.0) < 1e-6,
+	  "ELL current values: B == 30");
 
-    memset(vals, 0, sizeof(vals));
-    n = EDOBJ[ID_ELL].ft_edit_get_params(s, ECMD_ELL_SCALE_C, vals);
-    CHECK(n == 1, "ELL get_params(ECMD_ELL_SCALE_C): returned 1");
-    CHECK(fabs(vals[0] - 20.0) < 1e-6,
-	  "ELL get_params(ECMD_ELL_SCALE_C): vals[0] == 20");
+    status = rt_edit_cmd_values_get(s, ECMD_ELL_SCALE_C, &vals);
+    CHECK(status == RT_EDIT_VALUE_OK && vals.value_count == 1 &&
+	vals.value_valid[0], "ELL current values: C is available");
+    CHECK(fabs(vals.values[0] - 20.0) < 1e-6,
+	  "ELL current values: C == 20");
 
     RT_DB_INTERNAL_INIT(&s->es_int);
     rt_edit_destroy(s);
@@ -407,10 +406,10 @@ rt_edit_test_edit_str_get_params(void)
     bu_log("=== Test: rt_edit_set_str / e_str / e_nstr ===\n");
     test_set_str();
 
-    bu_log("=== Test: ft_edit_get_params (TOR) ===\n");
+    bu_log("=== Test: ft_edit_get_values (TOR) ===\n");
     test_get_params_tor();
 
-    bu_log("=== Test: ft_edit_get_params (ELL) ===\n");
+    bu_log("=== Test: ft_edit_get_values (ELL) ===\n");
     test_get_params_ell();
 
     bu_log("=== Test: non-mm primitive parameter text ===\n");

@@ -75,6 +75,13 @@ edit_validate_height(struct rt_edit *s, const vect_t height);
 int
 edit_parse_sample_count(uint32_t *count, fastf_t value);
 
+typedef int (*edit_current_numbers_t)(struct rt_edit *, int, fastf_t *);
+
+/* Adapt an existing numeric current-value reader to the typed result API. */
+int
+edit_current_values_from_numbers(struct rt_edit *s, int command_id,
+	struct rt_edit_cmd_values *result, edit_current_numbers_t reader);
+
 /* Check sample storage without multiplying possibly untrusted dimensions. */
 int
 edit_file_has_samples(intmax_t file_size, const uint32_t *dims,

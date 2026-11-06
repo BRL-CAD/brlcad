@@ -28,6 +28,7 @@
 #include "bu/log.h"
 #include "bu/vls.h"
 #include "raytrace.h"
+#include "test_utils.h"
 #include "rt/edit.h"
 #include "rt/geom.h"
 #include "wdb.h"
@@ -70,7 +71,7 @@ check_half_units(const fastf_t local2base)
     struct rt_half_internal *half = (struct rt_half_internal *)s->es_int.idb_ptr;
     RT_HALF_CK_MAGIC(half);
     fastf_t values[3] = {0.0, 0.0, 0.0};
-    if (EDOBJ[ID_HALF].ft_edit_get_params(s, ECMD_HALF_SET_D, values) != 1 ||
+    if (edit_test_get_params(s, ECMD_HALF_SET_D, values) != 1 ||
         !NEAR_EQUAL(values[0], initial_local, VUNITIZE_TOL))
         bu_exit(1, "Halfspace getter did not return local units\n");
 
@@ -80,7 +81,7 @@ check_half_units(const fastf_t local2base)
     rt_edit_process(s);
     if (!NEAR_EQUAL(half->eqn[W], edited_base, VUNITIZE_TOL))
         bu_exit(1, "Halfspace distance was not converted to base units\n");
-    if (EDOBJ[ID_HALF].ft_edit_get_params(s, ECMD_HALF_SET_D, values) != 1 ||
+    if (edit_test_get_params(s, ECMD_HALF_SET_D, values) != 1 ||
         !NEAR_EQUAL(values[0], edited_local, VUNITIZE_TOL))
         bu_exit(1, "Halfspace getter did not round-trip local units\n");
 
@@ -98,8 +99,8 @@ check_half_units(const fastf_t local2base)
         bu_exit(1, "Halfspace parameter text did not round-trip\n");
     bu_vls_free(&params);
 
-    if (EDOBJ[ID_HALF].ft_edit_get_params(s, -1, values) != 0 ||
-        EDOBJ[ID_HALF].ft_edit_get_params(s, ECMD_HALF_SET_D, NULL) >= 0)
+    if (edit_test_get_params(s, -1, values) != 0 ||
+	edit_test_get_params(s, ECMD_HALF_SET_D, NULL) >= 0)
         bu_exit(1, "Halfspace getter accepted invalid arguments\n");
 
     rt_edit_destroy(s);
