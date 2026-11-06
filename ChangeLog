@@ -1,3 +1,127 @@
+commit 93d216fdb82b6e796c0ebd5520e615ef0e9ed1e8
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Tue Nov 3 09:33:14 2026 -0500
+
+    Mention who cmd in NEWS file
+
+commit 5f2d35c76c52c6bd23b6e4d8d325860e10651bbf
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Mon Nov 2 12:45:15 2026 -0500
+
+    Correct the MGED who ordering regression
+    
+    The ordering test created order_first_sph1.s and order_second_sph2.s
+    but attempted to draw shorter names that did not exist.  Both who calls
+    therefore returned empty output, letting the comparison pass while path
+    lookup errors accumulated in the log.
+    
+    Run the script through Tcl source mode, isolate its display state, and
+    require an explicit pass marker.  Compare both draw orders with the
+    expected sorted list so missing geometry cannot silently pass the test.
+
+commit 148e11ff57becb834edbfbe104e138968d1ec2c0
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Mon Nov 2 10:13:19 2026 -0500
+
+    Correct NIRT overlap plot endpoints
+    
+    The overlap plotting rewrite in e9efe16166 compared librt ray
+    distances with NIRT view-depth values.  In 7.42.2 a redundant
+    full-overlap draw masked that mismatch.  Commit b9bc08134f removed the
+    redundant draw, exposing truncated or extended overlap lines beginning
+    with 7.44.0.
+    
+    Keep clipping calculations in ray-distance coordinates.  Handle
+    overlaps attached to an adjacent partition without reducing them to a
+    point, and select the next overlap by entry rather than exit distance.
+    
+    Add a generic enclosing-box regression that checks the plotted overlap
+    endpoints with both object preparation orders.
+
+commit 86b1d79d9be9f5de981f03b288ece5062de23460
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Mon Nov 2 10:13:04 2026 -0500
+
+    Make displayed object ordering deterministic
+    
+    Legacy display lists retain insertion order, so who and commands that
+    consume ged_who_argv could see different object sequences based on draw
+    order.  Since librt assigns region bits while preparing trees, that also
+    made overlap claimant selection vary between otherwise identical NIRT
+    shots.
+    
+    Sort displayed paths before reporting or returning them.  Add an MGED
+    regression that exercises both draw orders.
+
+commit ee97b29d2dfa86c9798de892ed54e536494d762b
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Thu Oct 29 14:50:11 2026 -0400
+
+    gcc pedantic fix
+
+commit f287e37a2a2f9d9e0e48665da07f1c9a9739a240
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Thu Oct 29 14:30:48 2026 -0400
+
+    Fix edit keypoint initialization and input validation
+    
+    Initialize default edit keypoints with a null selector and make
+    fallback behavior consistent across primitive types.
+    
+    Reject malformed, non-finite, fractional, and out-of-range edit
+    inputs before they can be truncated or partially mutate geometry.
+    
+    Use bu_opt parsers in command and primitive adjustment paths, and
+    add regression coverage for keypoint, lifecycle, and knob edge cases.
+
+commit 20f2708aef8ddcd7266c0917a0fce8d04db6b407
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Thu Oct 29 13:23:33 2026 -0400
+
+    Correct initializtion of keypoint selectors
+    
+    Some primitives interpreted "" as invalid rather than requesting the
+    default.
+    
+    Edit create, reinit, revert, reset, and object-edit apply now use NULL
+    for default selection in src/librt/edit.cpp:185 and
+    src/mged/edsol.c:1476.
+    
+    rt_get_solid_keypoint also normalizes empty selectors defensively in
+    src/librt/edit.cpp:514.
+
+commit 799f00615acafb1ab03865b68ce86545c95896dd
+Author: f4alt <christopherjmacgregor@gmail.com>
+Date:   Thu Oct 22 11:43:49 2026 -0400
+
+    search/exec interp still needs to init Bu + Bn
+    
+    Some of our procs (cycle_check, near, etc.) rely on those
+
+commit 4e8d81e273fdf00329ff4e5505b4626de98f8c83
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Wed Oct 21 19:50:37 2026 -0400
+
+    Fix Tcl autoloading in search -exec
+    
+    Preserve Tcl autoload semantics in the worker interpreter before
+    falling back to GED dispatch. Register non-conflicting GED command
+    shims so autoloaded MGED procedures can discover native dependencies.
+    
+    Add coverage for invoking remat through search -exec.
+
+commit ab22ecb2080791330c6ffa4ab9053b396912d5e0
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Wed Oct 14 11:51:04 2026 -0400
+
+    Work harder to keep git non-interactive
+
+commit 2dda6d3505b9558ec71c09ce0d297a4763d9097b
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Tue Oct 20 20:29:32 2026 +0000
+
+    Fix repair command option parsing
+
 commit 342d8a915272ed8b66d07d79fa8b89c870855905
 Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
 Date:   Sat Oct 10 20:03:02 2026 -0400
