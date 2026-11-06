@@ -16,7 +16,7 @@ changes made.  See document footer for additional details.
 * switched MGED to using a built-in HTML manual viewer - Cliff Yapp
 
 ----------------------------------------------------------------------
---- 2026-10-12  Release 7.46.0                                     ---
+--- 2026-11-03  Release 7.46.0                                     ---
 ----------------------------------------------------------------------
 
 This release expands geometry conversion and improves modeling
@@ -35,6 +35,8 @@ with mkbuilding, annotation editing, and primitive repair.  Geometry
 analysis, image utilities, Windows support, documentation, and bundled
 dependencies also receive substantial updates.
 
+* updated MGED who cmd output to provide sorted output - Cliff Yapp
+* fixed nirt plotting in MGED with overlaps - Cliff Yapp
 * corrected Archer logic for saving window size - Cliff Yapp
 * fixed inside BoT rays, DSP surface normals, PNTS bounds - Cliff Yapp
 * improved mged fallback HTML manual viewer - Cliff Yapp
@@ -44,7 +46,6 @@ dependencies also receive substantial updates.
 * fixed mged view panning, edit rotation, & ray queries - Cliff Yapp
 * preserved ARB, CLINE, TGC, & extrusion geometry edits - Cliff Yapp
 * restored mged command prompt focus at GUI startup - Cliff Yapp
-* new documentation on geometry representation schemes - Sean Morrison
 * improved pixscale & bwscale scaling and image piping - Sean Morrison
 * restored pixdiff behavior on .pix, added -b for .bw - Sean Morrison
 * improved facetize fallback methods and reliability - Cliff Yapp
