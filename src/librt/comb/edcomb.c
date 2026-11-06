@@ -21,17 +21,15 @@
  *
  * Editing operations for combination (boolean tree) primitives.
  *
- * These operations leverage the fact that rt_comb_internal now carries
- * src_dbip and src_objname (see commit d1dc6a4 in upstream BRL-CAD).
- * That lets librt-level code look up children, rebuild the tree, and
- * write the result back to the database without requiring a libged
- * dependency.
- *
  * Flatten-then-rebuild pattern (same as red.c / combmem.c):
  *   1. db_tree_nleaves() + db_flatten_tree() → rt_tree_array[]
  *   2. Mutate the array (add / delete / change op / change matrix)
  *   3. db_mkbool_tree() → new tree
- *   4. rt_db_put_internal() to persist
+ *
+ * Like all librt edit handlers, these operations mutate only s->es_int.
+ * The owning application decides when to checkpoint, commit, or cancel the
+ * shared intermediate.  A primitive handler must never write the database or
+ * invalidate the rt_edit it is operating on.
  *
  * ECMD constants
  * --------------
@@ -43,7 +41,7 @@
  * Parameter conventions (all values go in e_para[])
  * --------------------------------------------------
  *  ADD_MEMBER:
- *    ce->es_name    = name of the new member (bu_vls, caller must set)
+ *    s->e_str[0]    = name of the new member
  *    s->e_para[0]   = bool op (OP_UNION=2, OP_INTERSECT=3, OP_SUBTRACT=4)
  *    s->e_inpara    = 1
  *    ce->es_mat_valid / ce->es_mat = optional transform matrix (0 → identity)
@@ -92,8 +90,8 @@
 /* Material / region property ECMDs */
 #define ECMD_COMB_SET_REGION   12005  /* set region_flag (0/1) */
 #define ECMD_COMB_SET_COLOR    12006  /* set RGB color (e_para[0..2]=R,G,B 0-255; e_inpara=0 clears) */
-#define ECMD_COMB_SET_SHADER   12007  /* set shader string (ce->es_shader) */
-#define ECMD_COMB_SET_MATERIAL 12008  /* set material string (ce->es_material) */
+#define ECMD_COMB_SET_SHADER   12007  /* set shader string (e_str[0]) */
+#define ECMD_COMB_SET_MATERIAL 12008  /* set material string (e_str[0]) */
 #define ECMD_COMB_SET_REGION_ID 12009 /* set region_id (e_para[0]) */
 #define ECMD_COMB_SET_AIRCODE  12010  /* set aircode  (e_para[0]) */
 #define ECMD_COMB_SET_GIFTMATER 12011 /* set GIFTmater (e_para[0]) */
@@ -121,81 +119,34 @@ comb_integer_param(struct rt_edit *s, int parameter, fastf_t minimum,
 /* ------------------------------------------------------------------ */
 
 struct rt_comb_edit {
-    /* Name of the member to add (ECMD_COMB_ADD_MEMBER).
-     * Caller must set this before calling rt_edit_process(). */
-    struct bu_vls es_name;
     /* When non-zero, es_mat supplies the 4x4 xform for ADD_MEMBER */
     int es_mat_valid;
     mat_t es_mat;
-    /* Shader / material strings for ECMD_COMB_SET_SHADER / _SET_MATERIAL.
-     * Caller fills these in before calling rt_edit_process(). */
-    struct bu_vls es_shader;
-    struct bu_vls es_material;
 };
 
 /* ------------------------------------------------------------------ */
 /* Helpers                                                              */
 /* ------------------------------------------------------------------ */
 
-/* Validate that src_dbip and src_objname are set and reachable. */
+/* Validate the session internal before modifying it. */
 static int
 comb_edit_validate(struct rt_edit *s)
 {
+    if (!s || !s->es_int.idb_ptr)
+	return BRLCAD_ERROR;
     struct rt_comb_internal *comb = (struct rt_comb_internal *)s->es_int.idb_ptr;
     RT_CK_COMB(comb);
-
-    if (!comb->src_dbip) {
-	bu_vls_printf(s->log_str,
-		"ERROR: comb src_dbip not set — cannot edit members\n");
-	return BRLCAD_ERROR;
-    }
-    RT_CK_DBI(comb->src_dbip);
-
-    if (!comb->src_objname || !comb->src_objname[0]) {
-	bu_vls_printf(s->log_str,
-		"ERROR: comb src_objname not set — cannot write back changes\n");
-	return BRLCAD_ERROR;
-    }
-
     return BRLCAD_OK;
 }
 
-/* Write the modified es_int back to the database.  Returns BRLCAD_OK/ERROR. */
-static int
-comb_write_back(struct rt_edit *s)
+
+static void
+comb_edit_sync_attributes(struct rt_edit *s,
+	const struct rt_comb_internal *comb)
 {
-    struct rt_comb_internal *comb = (struct rt_comb_internal *)s->es_int.idb_ptr;
-
-    /* src_dbip may be const; we need a non-const pointer for db_lookup.
-     * This is safe because we're writing *to* the same database we read from. */
-    struct db_i *dbip = (struct db_i *)comb->src_dbip;
-
-    struct directory *dp = db_lookup(dbip, comb->src_objname, LOOKUP_QUIET);
-    if (dp == RT_DIR_NULL) {
-	bu_vls_printf(s->log_str,
-		"ERROR: comb_write_back: '%s' not found in database\n",
-		comb->src_objname);
-	return BRLCAD_ERROR;
-    }
-
-    int write_failed = (rt_db_put_internal(dp, dbip, &s->es_int) < 0);
-
-    /* rt_db_put_internal releases the internal even on failure.  Keep the
-     * edit session usable for the caller and for subsequent commands. */
-    if (rt_db_get_internal(&s->es_int, dp, dbip, NULL) < 0) {
-	bu_vls_printf(s->log_str,
-		"ERROR: comb_write_back: failed to reload '%s'\n", dp->d_namep);
-	return BRLCAD_ERROR;
-    }
-
-    if (write_failed) {
-	bu_vls_printf(s->log_str,
-		"ERROR: comb_write_back: rt_db_put_internal failed for '%s'\n",
-		dp->d_namep);
-	return BRLCAD_ERROR;
-    }
-
-    return BRLCAD_OK;
+    if (s->es_int.idb_avs.magic != BU_AVS_MAGIC)
+	bu_avs_init_empty(&s->es_int.idb_avs);
+    db5_sync_comb_to_attr(&s->es_int.idb_avs, comb);
 }
 
 /* Flatten comb->tree into a freshly allocated rt_tree_array.
@@ -265,10 +216,10 @@ ecmd_comb_add_member(struct rt_edit *s)
 	return BRLCAD_ERROR;
     }
 
-    const char *member_name = bu_vls_cstr(&ce->es_name);
+    const char *member_name = s->e_nstr > 0 ? s->e_str[0] : NULL;
     if (!member_name || !member_name[0]) {
 	bu_vls_printf(s->log_str,
-		"ERROR: ECMD_COMB_ADD_MEMBER: member name not set in es_name\n");
+		"ERROR: ECMD_COMB_ADD_MEMBER: member name required\n");
 	return BRLCAD_ERROR;
     }
 
@@ -284,11 +235,6 @@ ecmd_comb_add_member(struct rt_edit *s)
 		op, OP_UNION, OP_INTERSECT, OP_SUBTRACT);
 	return BRLCAD_ERROR;
     }
-
-    /* Save objname before write-back frees comb */
-    char saved_name[512];
-    bu_strlcpy(saved_name, comb->src_objname ? comb->src_objname : "?",
-	       sizeof(saved_name));
 
     /* Build a new OP_DB_LEAF node */
     union tree *leaf;
@@ -319,14 +265,10 @@ ecmd_comb_add_member(struct rt_edit *s)
 
     s->e_inpara = 0;
 
-    /* rt_db_put_internal(called inside comb_write_back) frees s->es_int.
-     * Use saved_name for logging AFTER the write-back. */
-    int ret = comb_write_back(s);
-    if (ret == BRLCAD_OK)
-	bu_vls_printf(s->log_str,
-		"ADD_MEMBER: '%s' added to '%s' (op=%d)\n",
-		member_name, saved_name, op);
-    return ret;
+    bu_vls_printf(s->log_str,
+	"ADD_MEMBER: '%s' added to intermediate combination (op=%d)\n",
+	member_name, op);
+    return BRLCAD_OK;
 }
 
 
@@ -349,11 +291,6 @@ ecmd_comb_del_member(struct rt_edit *s)
 	    &target_value) != BRLCAD_OK)
 	return BRLCAD_ERROR;
     int target = (int)target_value;
-
-    /* Save objname before write-back frees comb */
-    char saved_name[512];
-    bu_strlcpy(saved_name, comb->src_objname ? comb->src_objname : "?",
-	       sizeof(saved_name));
 
     /* Pre-validate the index before flattening (comb_flatten NULLs comb->tree) */
     size_t node_count = db_tree_nleaves(comb->tree);
@@ -386,12 +323,10 @@ ecmd_comb_del_member(struct rt_edit *s)
 
     s->e_inpara = 0;
 
-    int ret = comb_write_back(s);
-    if (ret == BRLCAD_OK)
-	bu_vls_printf(s->log_str,
-		"DEL_MEMBER: index %d deleted from '%s'\n",
-		target, saved_name);
-    return ret;
+    bu_vls_printf(s->log_str,
+	"DEL_MEMBER: index %d deleted from intermediate combination\n",
+	target);
+    return BRLCAD_OK;
 }
 
 
@@ -426,11 +361,6 @@ ecmd_comb_set_op(struct rt_edit *s)
 	return BRLCAD_ERROR;
     }
 
-    /* Save objname before write-back frees comb */
-    char saved_name[512];
-    bu_strlcpy(saved_name, comb->src_objname ? comb->src_objname : "?",
-	       sizeof(saved_name));
-
     /* Pre-validate index before flattening */
     size_t node_count_op = db_tree_nleaves(comb->tree);
     if (!node_count_op || (size_t)target >= node_count_op) {
@@ -456,12 +386,10 @@ ecmd_comb_set_op(struct rt_edit *s)
 
     s->e_inpara = 0;
 
-    int ret = comb_write_back(s);
-    if (ret == BRLCAD_OK)
-	bu_vls_printf(s->log_str,
-		"SET_OP: member %d op changed to %d in '%s'\n",
-		target, new_op, saved_name);
-    return ret;
+    bu_vls_printf(s->log_str,
+	"SET_OP: intermediate member %d op changed to %d\n",
+	target, new_op);
+    return BRLCAD_OK;
 }
 
 
@@ -486,11 +414,6 @@ ecmd_comb_set_matrix(struct rt_edit *s)
 	    &target_value) != BRLCAD_OK)
 	return BRLCAD_ERROR;
     int target = (int)target_value;
-
-    /* Save objname before write-back frees comb */
-    char saved_name[512];
-    bu_strlcpy(saved_name, comb->src_objname ? comb->src_objname : "?",
-	       sizeof(saved_name));
 
     /* Pre-validate index before flattening */
     size_t node_count_mat = db_tree_nleaves(comb->tree);
@@ -531,12 +454,9 @@ ecmd_comb_set_matrix(struct rt_edit *s)
 
     s->e_inpara = 0;
 
-    int ret = comb_write_back(s);
-    if (ret == BRLCAD_OK)
-	bu_vls_printf(s->log_str,
-		"SET_MATRIX: member %d matrix updated in '%s'\n",
-		target, saved_name);
-    return ret;
+    bu_vls_printf(s->log_str,
+	"SET_MATRIX: intermediate member %d matrix updated\n", target);
+    return BRLCAD_OK;
 }
 
 
@@ -558,23 +478,17 @@ ecmd_comb_set_region(struct rt_edit *s)
 	return BRLCAD_ERROR;
     }
 
-    char saved_name[512];
-    bu_strlcpy(saved_name, comb->src_objname ? comb->src_objname : "?",
-	       sizeof(saved_name));
-
     long flag_value;
     if (comb_integer_param(s, 0, 0.0, 1.0, "region flag",
 	    &flag_value) != BRLCAD_OK)
 	return BRLCAD_ERROR;
     char flag = (char)flag_value;
     comb->region_flag = flag;
+    comb_edit_sync_attributes(s, comb);
     s->e_inpara = 0;
-
-    int ret = comb_write_back(s);
-    if (ret == BRLCAD_OK)
-	bu_vls_printf(s->log_str,
-		"SET_REGION: region_flag=%d in '%s'\n", (int)flag, saved_name);
-    return ret;
+    bu_vls_printf(s->log_str,
+	"SET_REGION: intermediate region_flag=%d\n", (int)flag);
+    return BRLCAD_OK;
 }
 
 
@@ -585,10 +499,6 @@ ecmd_comb_set_color(struct rt_edit *s)
 
     if (comb_edit_validate(s) != BRLCAD_OK)
 	return BRLCAD_ERROR;
-
-    char saved_name[512];
-    bu_strlcpy(saved_name, comb->src_objname ? comb->src_objname : "?",
-	       sizeof(saved_name));
 
     if (s->e_inpara == 0) {
 	/* Clear the color: zero the struct field and also remove the
@@ -619,74 +529,64 @@ ecmd_comb_set_color(struct rt_edit *s)
 
     int rgb_r = comb->rgb[0], rgb_g = comb->rgb[1], rgb_b = comb->rgb[2];
     int rgb_v = comb->rgb_valid;
+    comb_edit_sync_attributes(s, comb);
     s->e_inpara = 0;
 
-    int ret = comb_write_back(s);
-    if (ret == BRLCAD_OK) {
-	if (rgb_v)
-	    bu_vls_printf(s->log_str,
-		    "SET_COLOR: rgb=(%d,%d,%d) in '%s'\n",
-		    rgb_r, rgb_g, rgb_b, saved_name);
-	else
-	    bu_vls_printf(s->log_str,
-		    "SET_COLOR: color cleared in '%s'\n", saved_name);
-    }
-    return ret;
+    if (rgb_v)
+	bu_vls_printf(s->log_str,
+	    "SET_COLOR: intermediate rgb=(%d,%d,%d)\n",
+	    rgb_r, rgb_g, rgb_b);
+    else
+	bu_vls_printf(s->log_str,
+	    "SET_COLOR: intermediate color cleared\n");
+    return BRLCAD_OK;
 }
 
 
 static int
 ecmd_comb_set_shader(struct rt_edit *s)
 {
-    struct rt_comb_edit *ce = (struct rt_comb_edit *)s->ipe_ptr;
     struct rt_comb_internal *comb = (struct rt_comb_internal *)s->es_int.idb_ptr;
 
     if (comb_edit_validate(s) != BRLCAD_OK)
 	return BRLCAD_ERROR;
 
-    char saved_name[512];
-    bu_strlcpy(saved_name, comb->src_objname ? comb->src_objname : "?",
-	       sizeof(saved_name));
-
-    bu_vls_sprintf(&comb->shader, "%s", bu_vls_cstr(&ce->es_shader));
+    if (s->e_nstr < 1) {
+	bu_vls_printf(s->log_str,
+	    "ERROR: ECMD_COMB_SET_SHADER: shader string required\n");
+	return BRLCAD_ERROR;
+    }
+    bu_vls_sprintf(&comb->shader, "%s", s->e_str[0]);
     s->e_inpara = 0;
 
-    int ret = comb_write_back(s);
-    if (ret == BRLCAD_OK)
-	bu_vls_printf(s->log_str,
-		"SET_SHADER: shader='%s' in '%s'\n",
-		bu_vls_cstr(&ce->es_shader), saved_name);
-    return ret;
+    bu_vls_printf(s->log_str,
+	"SET_SHADER: intermediate shader='%s'\n", s->e_str[0]);
+    return BRLCAD_OK;
 }
 
 
 static int
 ecmd_comb_set_material(struct rt_edit *s)
 {
-    struct rt_comb_edit *ce = (struct rt_comb_edit *)s->ipe_ptr;
     struct rt_comb_internal *comb = (struct rt_comb_internal *)s->es_int.idb_ptr;
 
     if (comb_edit_validate(s) != BRLCAD_OK)
 	return BRLCAD_ERROR;
 
-    char saved_name[512];
-    bu_strlcpy(saved_name, comb->src_objname ? comb->src_objname : "?",
-	       sizeof(saved_name));
-
-    bu_vls_sprintf(&comb->material, "%s", bu_vls_cstr(&ce->es_material));
+    if (s->e_nstr < 1) {
+	bu_vls_printf(s->log_str,
+	    "ERROR: ECMD_COMB_SET_MATERIAL: material string required\n");
+	return BRLCAD_ERROR;
+    }
+    bu_vls_sprintf(&comb->material, "%s", s->e_str[0]);
     /* Sync the material_name field to the avs so rt_comb_export5 will
      * persist it (the export function only reads the avs for material). */
-    if (s->es_int.idb_avs.magic != BU_AVS_MAGIC)
-	bu_avs_init_empty(&s->es_int.idb_avs);
-    db5_sync_comb_to_attr(&s->es_int.idb_avs, comb);
+    comb_edit_sync_attributes(s, comb);
     s->e_inpara = 0;
 
-    int ret = comb_write_back(s);
-    if (ret == BRLCAD_OK)
-	bu_vls_printf(s->log_str,
-		"SET_MATERIAL: material='%s' in '%s'\n",
-		bu_vls_cstr(&ce->es_material), saved_name);
-    return ret;
+    bu_vls_printf(s->log_str,
+	"SET_MATERIAL: intermediate material='%s'\n", s->e_str[0]);
+    return BRLCAD_OK;
 }
 
 
@@ -704,22 +604,16 @@ ecmd_comb_set_region_id(struct rt_edit *s)
 	return BRLCAD_ERROR;
     }
 
-    char saved_name[512];
-    bu_strlcpy(saved_name, comb->src_objname ? comb->src_objname : "?",
-	       sizeof(saved_name));
-
     long rid;
     if (comb_integer_param(s, 0, -(fastf_t)LONG_MAX, (fastf_t)LONG_MAX,
 	    "region_id", &rid) != BRLCAD_OK)
 	return BRLCAD_ERROR;
     comb->region_id = rid;
+    comb_edit_sync_attributes(s, comb);
     s->e_inpara = 0;
-
-    int ret = comb_write_back(s);
-    if (ret == BRLCAD_OK)
-	bu_vls_printf(s->log_str,
-		"SET_REGION_ID: region_id=%ld in '%s'\n", rid, saved_name);
-    return ret;
+    bu_vls_printf(s->log_str,
+	"SET_REGION_ID: intermediate region_id=%ld\n", rid);
+    return BRLCAD_OK;
 }
 
 
@@ -737,22 +631,16 @@ ecmd_comb_set_aircode(struct rt_edit *s)
 	return BRLCAD_ERROR;
     }
 
-    char saved_name[512];
-    bu_strlcpy(saved_name, comb->src_objname ? comb->src_objname : "?",
-	       sizeof(saved_name));
-
     long ac;
     if (comb_integer_param(s, 0, -(fastf_t)LONG_MAX, (fastf_t)LONG_MAX,
 	    "aircode", &ac) != BRLCAD_OK)
 	return BRLCAD_ERROR;
     comb->aircode = ac;
+    comb_edit_sync_attributes(s, comb);
     s->e_inpara = 0;
-
-    int ret = comb_write_back(s);
-    if (ret == BRLCAD_OK)
-	bu_vls_printf(s->log_str,
-		"SET_AIRCODE: aircode=%ld in '%s'\n", ac, saved_name);
-    return ret;
+    bu_vls_printf(s->log_str,
+	"SET_AIRCODE: intermediate aircode=%ld\n", ac);
+    return BRLCAD_OK;
 }
 
 
@@ -770,22 +658,16 @@ ecmd_comb_set_giftmater(struct rt_edit *s)
 	return BRLCAD_ERROR;
     }
 
-    char saved_name[512];
-    bu_strlcpy(saved_name, comb->src_objname ? comb->src_objname : "?",
-	       sizeof(saved_name));
-
     long gm;
     if (comb_integer_param(s, 0, -(fastf_t)LONG_MAX, (fastf_t)LONG_MAX,
 	    "GIFTmater", &gm) != BRLCAD_OK)
 	return BRLCAD_ERROR;
     comb->GIFTmater = gm;
+    comb_edit_sync_attributes(s, comb);
     s->e_inpara = 0;
-
-    int ret = comb_write_back(s);
-    if (ret == BRLCAD_OK)
-	bu_vls_printf(s->log_str,
-		"SET_GIFTMATER: GIFTmater=%ld in '%s'\n", gm, saved_name);
-    return ret;
+    bu_vls_printf(s->log_str,
+	"SET_GIFTMATER: intermediate GIFTmater=%ld\n", gm);
+    return BRLCAD_OK;
 }
 
 
@@ -803,22 +685,16 @@ ecmd_comb_set_los(struct rt_edit *s)
 	return BRLCAD_ERROR;
     }
 
-    char saved_name[512];
-    bu_strlcpy(saved_name, comb->src_objname ? comb->src_objname : "?",
-	       sizeof(saved_name));
-
     long los_val;
     if (comb_integer_param(s, 0, -(fastf_t)LONG_MAX, (fastf_t)LONG_MAX,
 	    "los", &los_val) != BRLCAD_OK)
 	return BRLCAD_ERROR;
     comb->los = los_val;
+    comb_edit_sync_attributes(s, comb);
     s->e_inpara = 0;
-
-    int ret = comb_write_back(s);
-    if (ret == BRLCAD_OK)
-	bu_vls_printf(s->log_str,
-		"SET_LOS: los=%ld in '%s'\n", los_val, saved_name);
-    return ret;
+    bu_vls_printf(s->log_str,
+	"SET_LOS: intermediate los=%ld\n", los_val);
+    return BRLCAD_OK;
 }
 
 
@@ -831,13 +707,10 @@ rt_edit_comb_prim_edit_create(struct rt_edit *s)
 {
     struct rt_comb_edit *ce;
     BU_GET(ce, struct rt_comb_edit);
-    BU_VLS_INIT(&ce->es_name);
-    BU_VLS_INIT(&ce->es_shader);
-    BU_VLS_INIT(&ce->es_material);
     ce->es_mat_valid = 0;
     MAT_IDN(ce->es_mat);
 
-    (void)s;  /* src_dbip/src_objname are set by rt_db_get_internal path */
+    (void)s;
 
     return (void *)ce;
 }
@@ -848,9 +721,6 @@ rt_edit_comb_prim_edit_destroy(void *ptr)
     struct rt_comb_edit *ce = (struct rt_comb_edit *)ptr;
     if (!ce)
 	return;
-    bu_vls_free(&ce->es_name);
-    bu_vls_free(&ce->es_shader);
-    bu_vls_free(&ce->es_material);
     BU_PUT(ce, struct rt_comb_edit);
 }
 
@@ -953,7 +823,7 @@ static const struct rt_edit_param_desc comb_add_member_params[] = {
 	RT_EDIT_PARAM_NO_LIMIT, /* range_max  */
 	NULL,                 /* units        */
 	0, NULL, NULL,        /* enum (unused) */
-	"es_name"             /* prim_field   */
+	"member_name"         /* prim_field   */
     },
     {
 	"op",                 /* name         */
@@ -1054,7 +924,7 @@ static const struct rt_edit_param_desc comb_set_shader_params[] = {
 	RT_EDIT_PARAM_NO_LIMIT, /* range_max  */
 	NULL,                 /* units        */
 	0, NULL, NULL,        /* enum (unused) */
-	"es_shader"           /* prim_field   */
+	"shader"              /* prim_field   */
     }
 };
 
@@ -1069,7 +939,7 @@ static const struct rt_edit_param_desc comb_set_material_params[] = {
 	RT_EDIT_PARAM_NO_LIMIT, /* range_max  */
 	NULL,                 /* units        */
 	0, NULL, NULL,        /* enum (unused) */
-	"es_material"         /* prim_field   */
+	"material"            /* prim_field   */
     }
 };
 
@@ -1259,6 +1129,56 @@ C_DECL const struct rt_edit_prim_desc *
 rt_edit_comb_edit_desc(void)
 {
     return &comb_prim_desc;
+}
+
+C_DECL int
+rt_edit_comb_get_values(struct rt_edit *s, int cmd_id,
+	struct rt_edit_cmd_values *result)
+{
+    if (!s || !result || !s->es_int.idb_ptr)
+	return RT_EDIT_VALUE_ERROR;
+    struct rt_comb_internal *comb =
+	(struct rt_comb_internal *)s->es_int.idb_ptr;
+    RT_CK_COMB(comb);
+
+    switch (cmd_id) {
+	case ECMD_COMB_SET_REGION:
+	    rt_edit_cmd_values_set_value(result, 0,
+		comb->region_flag ? 1.0 : 0.0);
+	    return RT_EDIT_VALUE_OK;
+	case ECMD_COMB_SET_COLOR:
+	    if (comb->rgb_valid) {
+		for (int i = 0; i < ELEMENTS_PER_VECT; ++i)
+		    rt_edit_cmd_values_set_value(result, i,
+			(fastf_t)comb->rgb[i]);
+	    }
+	    return RT_EDIT_VALUE_OK;
+	case ECMD_COMB_SET_SHADER:
+	    rt_edit_cmd_values_set_string(result, 0,
+		bu_vls_cstr(&comb->shader));
+	    return RT_EDIT_VALUE_OK;
+	case ECMD_COMB_SET_MATERIAL:
+	    rt_edit_cmd_values_set_string(result, 0,
+		bu_vls_cstr(&comb->material));
+	    return RT_EDIT_VALUE_OK;
+	case ECMD_COMB_SET_REGION_ID:
+	    rt_edit_cmd_values_set_value(result, 0,
+		(fastf_t)comb->region_id);
+	    return RT_EDIT_VALUE_OK;
+	case ECMD_COMB_SET_AIRCODE:
+	    rt_edit_cmd_values_set_value(result, 0,
+		(fastf_t)comb->aircode);
+	    return RT_EDIT_VALUE_OK;
+	case ECMD_COMB_SET_GIFTMATER:
+	    rt_edit_cmd_values_set_value(result, 0,
+		(fastf_t)comb->GIFTmater);
+	    return RT_EDIT_VALUE_OK;
+	case ECMD_COMB_SET_LOS:
+	    rt_edit_cmd_values_set_value(result, 0, (fastf_t)comb->los);
+	    return RT_EDIT_VALUE_OK;
+	default:
+	    return RT_EDIT_VALUE_UNAVAILABLE;
+    }
 }
 
 C_DECL int

@@ -66,6 +66,7 @@ extern const struct rt_edit_prim_desc *rt_edit_ebm_edit_desc(void);
 extern const struct rt_edit_prim_desc *rt_edit_vol_edit_desc(void);
 extern const struct rt_edit_prim_desc *rt_edit_pipe_edit_desc(void);
 extern const struct rt_edit_prim_desc *rt_edit_comb_edit_desc(void);
+extern int rt_edit_comb_get_values(struct rt_edit *s, int cmd_id, struct rt_edit_cmd_values *result);
 extern const struct rt_edit_prim_desc *rt_edit_extrude_edit_desc(void);
 extern const struct rt_edit_prim_desc *rt_edit_arb_edit_desc(void);
 
@@ -828,7 +829,7 @@ const struct rt_edit_functab EDOBJ[] = {
 	EDFUNCTAB_FUNC_SET_EDIT_MODE_CAST(rt_edit_comb_set_edit_mode), /* set edit mode */
 	EDFUNCTAB_FUNC_MENU_ITEM_CAST(rt_edit_comb_menu_item)     /* menu_item */,
 	EDFUNCTAB_FUNC_EDIT_DESC_CAST(rt_edit_comb_edit_desc)   /* edit_desc */,
-	NULL   /* edit_get_params */,
+	EDFUNCTAB_FUNC_GET_VALUES_CAST(rt_edit_comb_get_values) /* edit_get_values */,
 	NULL /* repair */
     },
 

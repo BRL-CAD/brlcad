@@ -645,8 +645,8 @@ rt_edit_cmd_values_get(struct rt_edit *s, int command_id,
  * For scalar/integer/boolean/enum parameters the value is stored in
  * s->e_para[index].  For POINT/VECTOR, three consecutive slots starting
  * at e_para[index] are used.  For MATRIX, e_para[0..15] are used.
- * For STRING the value is in the primitive-specific edit struct; prim_field
- * documents which field that is.
+ * For STRING the value is in s->e_str[index]; prim_field documents the
+ * corresponding primitive data field.
  * For COLOR three fastf_t integer values (0-255) are stored in
  * e_para[index], e_para[index+1], e_para[index+2].
  */
@@ -654,7 +654,7 @@ struct rt_edit_param_desc {
     const char  *name;         /**< machine-readable id, e.g. "r1"                  */
     const char  *label;        /**< human-readable widget label, e.g. "Major Radius" */
     int          type;         /**< RT_EDIT_PARAM_* type code                        */
-    int          index;        /**< offset into s->e_para[] (unused for STRING)      */
+    int          index;        /**< offset into s->e_para[] or s->e_str[]            */
     fastf_t      range_min;    /**< RT_EDIT_PARAM_NO_LIMIT = no lower bound          */
     fastf_t      range_max;    /**< RT_EDIT_PARAM_NO_LIMIT = no upper bound          */
     const char  *units;        /**< "length", "angle_deg", "angle_rad",
@@ -664,8 +664,8 @@ struct rt_edit_param_desc {
     const char * const *enum_labels;      /**< human-readable option strings         */
     const int   *enum_ids;                /**< integer value stored in e_para[index] */
     /* RT_EDIT_PARAM_STRING only */
-    const char  *prim_field;   /**< name of the primitive struct field, e.g.
-                                *   "es_shader" or "dsp_name"                        */
+    const char  *prim_field;   /**< corresponding primitive data field, e.g.
+                                *   "shader" or "dsp_name"                           */
 };
 
 /**

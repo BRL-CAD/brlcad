@@ -33,8 +33,8 @@
  *   ECMD_COMB_SET_OP       – change sphere3 op to OP_INTERSECT
  *   ECMD_COMB_SET_MATRIX   – set an identity matrix on the first member
  *
- * The src_dbip / src_objname fields introduced in the upstream commit
- * d1dc6a4 are what allow edcomb.c to write changes back to the database.
+ * All edits remain in the rt_edit intermediate until the owner explicitly
+ * commits it.  The database must remain unchanged while these operations run.
  */
 
 #include "common.h"
@@ -68,11 +68,8 @@
 
 /* rt_comb_edit struct (file-local in edcomb.c) */
 struct rt_comb_edit {
-    struct bu_vls es_name;
     int es_mat_valid;
     mat_t es_mat;
-    struct bu_vls es_shader;
-    struct bu_vls es_material;
 };
 
 /* ------------------------------------------------------------------ */
@@ -89,18 +86,12 @@ count_leaves(const union tree *tp)
 }
 
 
-/* Reload the comb's rt_db_internal from the database so we see the
- * changes written by comb_write_back(). */
 static void
-reload_comb(struct rt_edit *s, const char *comb_name, struct db_i *dbip)
+verify_comb_internal(struct rt_edit *s)
 {
-    struct directory *dp = db_lookup(dbip, comb_name, LOOKUP_QUIET);
-    if (!dp) bu_exit(1, "ERROR: reload_comb: '%s' not found\n", comb_name);
-
-    rt_db_free_internal(&s->es_int);
-    RT_DB_INTERNAL_INIT(&s->es_int);
-    if (rt_db_get_internal(&s->es_int, dp, dbip, NULL) < 0)
-	bu_exit(1, "ERROR: reload_comb: rt_db_get_internal failed\n");
+    if (!s || !s->es_int.idb_ptr || s->es_int.idb_type != ID_COMBINATION)
+	bu_exit(1, "ERROR: combination intermediate was invalidated\n");
+    RT_CK_COMB((struct rt_comb_internal *)s->es_int.idb_ptr);
 }
 
 
@@ -197,7 +188,7 @@ rt_edit_test_comb(void)
      * ECMD_COMB_ADD_MEMBER: add sphere3 with OP_SUBTRACT
      * ================================================================*/
     EDOBJ[dp->d_minor_type].ft_set_edit_mode(s, ECMD_COMB_ADD_MEMBER);
-    bu_vls_sprintf(&ce->es_name, "sphere3");
+    rt_edit_set_str(s, 0, "sphere3");
     ce->es_mat_valid = 0;
     s->e_inpara = 1;
     s->e_para[0] = (fastf_t)OP_SUBTRACT;
@@ -208,7 +199,7 @@ rt_edit_test_comb(void)
     bu_vls_trunc(s->log_str, 0);
 
     /* Reload and verify 4 leaves */
-    reload_comb(s, "mybox", g_dbip);
+    verify_comb_internal(s);
     {
 	struct rt_comb_internal *comb =
 	    (struct rt_comb_internal *)s->es_int.idb_ptr;
@@ -228,7 +219,7 @@ rt_edit_test_comb(void)
     rt_edit_process(s);
     bu_vls_trunc(s->log_str, 0);
 
-    reload_comb(s, "mybox", g_dbip);
+    verify_comb_internal(s);
     {
 	struct rt_comb_internal *comb =
 	    (struct rt_comb_internal *)s->es_int.idb_ptr;
@@ -274,7 +265,7 @@ rt_edit_test_comb(void)
     rt_edit_process(s);
     bu_vls_trunc(s->log_str, 0);
 
-    reload_comb(s, "mybox", g_dbip);
+    verify_comb_internal(s);
     {
 	struct rt_comb_internal *comb =
 	    (struct rt_comb_internal *)s->es_int.idb_ptr;
@@ -300,7 +291,7 @@ rt_edit_test_comb(void)
     rt_edit_process(s);
     bu_vls_trunc(s->log_str, 0);
 
-    reload_comb(s, "mybox", g_dbip);
+    verify_comb_internal(s);
     {
 	struct rt_comb_internal *comb =
 	    (struct rt_comb_internal *)s->es_int.idb_ptr;
@@ -319,14 +310,14 @@ rt_edit_test_comb(void)
 	int prev_leaves = count_leaves(comb->tree);
 
 	EDOBJ[dp->d_minor_type].ft_set_edit_mode(s, ECMD_COMB_ADD_MEMBER);
-	bu_vls_sprintf(&ce->es_name, "sphere0");
+	rt_edit_set_str(s, 0, "sphere0");
 	s->e_inpara = 1;
 	s->e_para[0] = 999.0;  /* invalid op */
 	bu_vls_trunc(s->log_str, 0);
 	rt_edit_process(s);
 	bu_log("ECMD_COMB_ADD_MEMBER invalid op correctly refused\n");
 
-	reload_comb(s, "mybox", g_dbip);
+	verify_comb_internal(s);
 	comb = (struct rt_comb_internal *)s->es_int.idb_ptr;
 	int n = count_leaves(comb->tree);
 	if (n != prev_leaves)
@@ -344,7 +335,7 @@ rt_edit_test_comb(void)
     rt_edit_process(s);
     bu_vls_trunc(s->log_str, 0);
 
-    reload_comb(s, "mybox", g_dbip);
+    verify_comb_internal(s);
     {
 	struct rt_comb_internal *comb =
 	    (struct rt_comb_internal *)s->es_int.idb_ptr;
@@ -363,7 +354,7 @@ rt_edit_test_comb(void)
     rt_edit_process(s);
     bu_vls_trunc(s->log_str, 0);
 
-    reload_comb(s, "mybox", g_dbip);
+    verify_comb_internal(s);
     {
 	struct rt_comb_internal *comb =
 	    (struct rt_comb_internal *)s->es_int.idb_ptr;
@@ -383,7 +374,7 @@ rt_edit_test_comb(void)
     rt_edit_process(s);
     bu_vls_trunc(s->log_str, 0);
 
-    reload_comb(s, "mybox", g_dbip);
+    verify_comb_internal(s);
     {
 	struct rt_comb_internal *comb =
 	    (struct rt_comb_internal *)s->es_int.idb_ptr;
@@ -403,7 +394,7 @@ rt_edit_test_comb(void)
     rt_edit_process(s);
     bu_vls_trunc(s->log_str, 0);
 
-    reload_comb(s, "mybox", g_dbip);
+    verify_comb_internal(s);
     {
 	struct rt_comb_internal *comb =
 	    (struct rt_comb_internal *)s->es_int.idb_ptr;
@@ -423,7 +414,7 @@ rt_edit_test_comb(void)
     rt_edit_process(s);
     bu_vls_trunc(s->log_str, 0);
 
-    reload_comb(s, "mybox", g_dbip);
+    verify_comb_internal(s);
     {
 	struct rt_comb_internal *comb =
 	    (struct rt_comb_internal *)s->es_int.idb_ptr;
@@ -442,7 +433,7 @@ rt_edit_test_comb(void)
     rt_edit_process(s);
     bu_vls_trunc(s->log_str, 0);
 
-    reload_comb(s, "mybox", g_dbip);
+    verify_comb_internal(s);
     {
 	struct rt_comb_internal *comb =
 	    (struct rt_comb_internal *)s->es_int.idb_ptr;
@@ -460,7 +451,7 @@ rt_edit_test_comb(void)
     rt_edit_process(s);
     bu_vls_trunc(s->log_str, 0);
 
-    reload_comb(s, "mybox", g_dbip);
+    verify_comb_internal(s);
     {
 	struct rt_comb_internal *comb =
 	    (struct rt_comb_internal *)s->es_int.idb_ptr;
@@ -473,12 +464,12 @@ rt_edit_test_comb(void)
      * ECMD_COMB_SET_SHADER: set shader string
      * ================================================================*/
     EDOBJ[dp->d_minor_type].ft_set_edit_mode(s, ECMD_COMB_SET_SHADER);
-    bu_vls_sprintf(&ce->es_shader, "plastic {sp 0.8 di 0.2}");
-    s->e_inpara = 0;   /* shader is passed through es_shader, not e_para */
+    rt_edit_set_str(s, 0, "plastic {sp 0.8 di 0.2}");
+    s->e_inpara = 0;
     rt_edit_process(s);
     bu_vls_trunc(s->log_str, 0);
 
-    reload_comb(s, "mybox", g_dbip);
+    verify_comb_internal(s);
     {
 	struct rt_comb_internal *comb =
 	    (struct rt_comb_internal *)s->es_int.idb_ptr;
@@ -493,12 +484,12 @@ rt_edit_test_comb(void)
      * ECMD_COMB_SET_MATERIAL: set material string
      * ================================================================*/
     EDOBJ[dp->d_minor_type].ft_set_edit_mode(s, ECMD_COMB_SET_MATERIAL);
-    bu_vls_sprintf(&ce->es_material, "air");
+    rt_edit_set_str(s, 0, "air");
     s->e_inpara = 0;
     rt_edit_process(s);
     bu_vls_trunc(s->log_str, 0);
 
-    reload_comb(s, "mybox", g_dbip);
+    verify_comb_internal(s);
     {
 	struct rt_comb_internal *comb =
 	    (struct rt_comb_internal *)s->es_int.idb_ptr;
@@ -518,13 +509,51 @@ rt_edit_test_comb(void)
     rt_edit_process(s);
     bu_vls_trunc(s->log_str, 0);
 
-    reload_comb(s, "mybox", g_dbip);
+    verify_comb_internal(s);
     {
 	struct rt_comb_internal *comb =
 	    (struct rt_comb_internal *)s->es_int.idb_ptr;
 	if (comb->region_flag)
 	    bu_exit(1, "ERROR: SET_REGION clear: region_flag should be 0\n");
 	bu_log("ECMD_COMB_SET_REGION clear SUCCESS: region_flag=0\n");
+    }
+
+    /* The librt handler must not have committed any of the above work. */
+    {
+	struct rt_db_internal disk = RT_DB_INTERNAL_INIT_ZERO;
+	if (rt_db_get_internal(&disk, dp, g_dbip, NULL) < 0)
+	    bu_exit(1, "ERROR: unable to inspect uncommitted database comb\n");
+	struct rt_comb_internal *comb =
+	    (struct rt_comb_internal *)disk.idb_ptr;
+	if (count_leaves(comb->tree) != 3 || comb->region_flag ||
+	    comb->los != 0 || bu_vls_strlen(&comb->shader) != 0)
+	    bu_exit(1, "ERROR: librt comb edit leaked into the database\n");
+	rt_db_free_internal(&disk);
+	bu_log("COMB intermediate isolation SUCCESS: database unchanged\n");
+    }
+
+    /* Simulate the owning session's explicit commit and verify persistence. */
+    if (rt_db_put_internal(dp, g_dbip, &s->es_int) < 0)
+	bu_exit(1, "ERROR: explicit combination commit failed\n");
+    {
+	struct rt_db_internal disk = RT_DB_INTERNAL_INIT_ZERO;
+	if (rt_db_get_internal(&disk, dp, g_dbip, NULL) < 0)
+	    bu_exit(1, "ERROR: unable to inspect committed database comb\n");
+	struct rt_comb_internal *comb =
+	    (struct rt_comb_internal *)disk.idb_ptr;
+	/* db_open_inmem uses the legacy external form, which does not preserve
+	 * all v5 combination attributes.  Tree and shader are sufficient here
+	 * to prove the explicit write boundary; GED's v5 session tests cover
+	 * region/material attribute commits. */
+	if (count_leaves(comb->tree) != 3 || comb->region_flag ||
+	    !BU_STR_EQUAL(bu_vls_cstr(&comb->shader),
+		"plastic {sp 0.8 di 0.2}"))
+	    bu_exit(1, "ERROR: explicit combination commit lost state: "
+		"leaves=%d region=%d los=%ld shader='%s' material='%s'\n",
+		count_leaves(comb->tree), (int)comb->region_flag, comb->los,
+		bu_vls_cstr(&comb->shader), bu_vls_cstr(&comb->material));
+	rt_db_free_internal(&disk);
+	bu_log("COMB explicit commit SUCCESS\n");
     }
 
     rt_edit_destroy(s);
