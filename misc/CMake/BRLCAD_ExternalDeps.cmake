@@ -1224,18 +1224,38 @@ function(brlcad_install_binary_postprocess stamp_dir strclear source install_fil
     )
   elseif("${mode}" STREQUAL "APPLE")
     execute_process(
-      COMMAND install_name_tool -delete_rpath "${build_lib_path}" "${_brlcad_physical_file}"
+      COMMAND otool -l "${_brlcad_physical_file}"
       RESULT_VARIABLE _brlcad_result
       OUTPUT_VARIABLE _brlcad_rpath_output
       ERROR_VARIABLE _brlcad_rpath_error
     )
     if(_brlcad_result EQUAL 0)
-      execute_process(
-        COMMAND install_name_tool -add_rpath "${rel_rpath}" "${_brlcad_physical_file}"
-        RESULT_VARIABLE _brlcad_result
-        OUTPUT_VARIABLE _brlcad_rpath_output
-        ERROR_VARIABLE _brlcad_rpath_error
+      # Dependencies may already carry the install RPATH alongside the
+      # build RPATH.  Only request edits that their load commands need.
+      string(REGEX MATCHALL
+        "cmd LC_RPATH\n[ \t]*cmdsize [0-9]+\n[ \t]*path [^\n]+"
+        _brlcad_rpath_commands "${_brlcad_rpath_output}"
       )
+      set(_brlcad_rpaths)
+      foreach(_brlcad_rpath_command IN LISTS _brlcad_rpath_commands)
+        string(REGEX MATCH "path (.*) \\(offset [0-9]+\\)" _brlcad_rpath_match "${_brlcad_rpath_command}")
+        list(APPEND _brlcad_rpaths "${CMAKE_MATCH_1}")
+      endforeach()
+      set(_brlcad_rpath_args)
+      if(build_lib_path IN_LIST _brlcad_rpaths)
+        list(APPEND _brlcad_rpath_args -delete_rpath "${build_lib_path}")
+      endif()
+      if(NOT rel_rpath IN_LIST _brlcad_rpaths)
+        list(APPEND _brlcad_rpath_args -add_rpath "${rel_rpath}")
+      endif()
+      if(_brlcad_rpath_args)
+        execute_process(
+          COMMAND install_name_tool ${_brlcad_rpath_args} "${_brlcad_physical_file}"
+          RESULT_VARIABLE _brlcad_result
+          OUTPUT_VARIABLE _brlcad_rpath_output
+          ERROR_VARIABLE _brlcad_rpath_error
+        )
+      endif()
     endif()
   endif()
 
