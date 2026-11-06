@@ -1241,11 +1241,19 @@ function(brlcad_install_binary_postprocess stamp_dir strclear source install_fil
         string(REGEX MATCH "path (.*) \\(offset [0-9]+\\)" _brlcad_rpath_match "${_brlcad_rpath_command}")
         list(APPEND _brlcad_rpaths "${CMAKE_MATCH_1}")
       endforeach()
+      # Stub-linked extensions may need no RPATH and lack header space
+      # for a new load command.  Add one only for @rpath imports or to
+      # replace an existing build search path, including transitive use.
+      set(_brlcad_needs_rpath FALSE)
+      if(build_lib_path IN_LIST _brlcad_rpaths OR
+          _brlcad_rpath_output MATCHES "cmd LC_(LOAD|LOAD_WEAK|REEXPORT|LOAD_UPWARD|LAZY_LOAD)_DYLIB\n[ \t]*cmdsize [0-9]+\n[ \t]*name @rpath/")
+        set(_brlcad_needs_rpath TRUE)
+      endif()
       set(_brlcad_rpath_args)
       if(build_lib_path IN_LIST _brlcad_rpaths)
         list(APPEND _brlcad_rpath_args -delete_rpath "${build_lib_path}")
       endif()
-      if(NOT rel_rpath IN_LIST _brlcad_rpaths)
+      if(_brlcad_needs_rpath AND NOT rel_rpath IN_LIST _brlcad_rpaths)
         list(APPEND _brlcad_rpath_args -add_rpath "${rel_rpath}")
       endif()
       if(_brlcad_rpath_args)
