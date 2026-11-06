@@ -33,7 +33,8 @@ enum cdt_face_chart_type {
     CDT_FACE_CHART_CONE_WEDGE = 1,
     CDT_FACE_CHART_POLAR = 2,
     CDT_FACE_CHART_SURFACE_METRIC = 3,
-    CDT_FACE_CHART_CYLINDER = 4
+    CDT_FACE_CHART_CYLINDER = 4,
+    CDT_FACE_CHART_SPHERE_CAP = 5
 };
 
 struct cdt_chart_vertex {
@@ -91,6 +92,11 @@ public:
 	const std::vector<int> &native_path,
 	const std::vector<const ON_3dPoint *> &points_3d,
 	double tolerance);
+
+    /* Empty cap charts are returned only when a complete analytic sphere
+     * can be cut through existing samples on both sides of its B-Rep seam. */
+    bool sphere_caps(ON_2dPoint &cut, std::vector<cdt_face_chart> &caps) const;
+    double sphere_radius() const { return m_sphere.radius; }
 
     long native_point(int chart_point) const;
     bool partition_components(std::vector<cdt_face_chart> &components,
@@ -185,6 +191,8 @@ private:
     double m_cone_seam_angle = 0.0;
     int m_cone_orientation = 1;
     bool m_authoritative_cone_points = false;
+    ON_Sphere m_sphere;
+    int m_cap_sign = 0;
     ON_Cylinder m_cylinder;
     double m_cylinder_cut = 0.0;
     int m_cylinder_orientation = 1;

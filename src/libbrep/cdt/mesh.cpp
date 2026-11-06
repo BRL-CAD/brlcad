@@ -5986,6 +5986,11 @@ struct chart_mesh_boundary {
 	bool mapped = add_ring(mesh, chart, chart.outer);
 	for (const auto &hole : chart.holes)
 	    mapped = add_ring(mesh, chart, hole) && mapped;
+	/* Cap meridians are original B-Rep edges inside the new disks. */
+	if (chart.type() == CDT_FACE_CHART_SPHERE_CAP) {
+	    for (const auto &edge : chart.constraints)
+		mapped = add_edge(mesh, chart, edge.first, edge.second) && mapped;
+	}
 	return mapped;
     }
 
@@ -6795,6 +6800,235 @@ cdt_mesh_t::condition_chart_radial_trims(cdt_face_chart &chart,
 }
 
 bool
+cdt_mesh_t::build_sphere_chart_atlas(const cdt_face_chart &source,
+	std::vector<cdt_face_chart> &atlas)
+{
+    ON_2dPoint cut;
+    if (!source.sphere_caps(cut, atlas))
+	return true;
+    const ON_Surface &surface = *brep->m_F[f_id].SurfaceOf();
+    const int angular_direction = source.closed_direction();
+    const int open_direction = 1 - angular_direction;
+    const ON_Interval angular_domain = surface.Domain(angular_direction);
+    const double angular_tolerance = cdt_surface_parameter_tolerance(angular_domain);
+    const double open_tolerance = cdt_surface_parameter_tolerance(surface.Domain(open_direction));
+    const auto fail = [&](const char *message) {
+	struct ON_Brep_CDT_State *state = (struct ON_Brep_CDT_State *)p_cdt;
+	if (state)
+	    cdt_diagnostic_set(state, BREP_CDT_RESULT_CHART_FAILED,
+		BREP_CDT_STAGE_CHART_CONSTRUCTION, f_id, 0, 1, message);
+	bu_log("Face %d: sphere cap construction failed: %s\n", f_id, message);
+	return false;
+    };
+
+    ON_2dPoint projected_cut;
+    if (!atlas.front().native_to_chart(cut, projected_cut))
+	return fail("cut sample could not be projected");
+    const double projected_radius = projected_cut.DistanceTo(ON_2dPoint::Origin);
+    const double radius = atlas.front().sphere_radius();
+    const double ring_radius = 2.0 * radius * projected_radius /
+	(1.0 + projected_radius * projected_radius);
+    const ON_3dPoint cut_point = cdt_surface_point(&surface, cut);
+    const double coordinate_scale = std::max(radius, std::max(std::fabs(cut_point.x),
+	std::max(std::fabs(cut_point.y), std::fabs(cut_point.z))));
+    const double projection_rounding_units = 4096.0;
+    const double projection_tolerance = projection_rounding_units *
+	std::numeric_limits<double>::epsilon() * std::max(1.0, coordinate_scale / radius);
+
+    /* Bound artificial-ring chord deviation and normal variation by the
+     * requested tolerances.  The minimum keeps coarse cap polygons shaped
+     * well enough for their constraints and interior surface samples. */
+    const size_t minimum_ring_segments = 16;
+    const auto *state = (const struct ON_Brep_CDT_State *)p_cdt;
+    const double allowed = state && state->absmax > 0.0 ? state->absmax :
+	ring_radius * (1.0 - std::cos(ON_PI / minimum_ring_segments));
+    double half_angle = 2.0 * std::asin(std::sqrt(
+	0.5 * std::min(1.0, allowed / ring_radius)));
+    if (state && state->tol.norm > 0.0)
+	half_angle = std::min(half_angle, (double)state->tol.norm);
+    const double requested_segments = std::ceil(ON_PI / half_angle);
+    if (!std::isfinite(requested_segments) ||
+	requested_segments > CDT_MAX_CHART_REFINEMENT_POINTS) {
+	// Keep the original chart when this split would exceed its point budget.
+	atlas.clear();
+	return true;
+    }
+    const size_t ring_segments = std::max(minimum_ring_segments,
+	(size_t)requested_segments);
+    const auto canonical_angle = [&](double angular) {
+	double result = cdt_surface_parameter(angular, angular_domain);
+	if (result >= angular_domain.Max() - angular_tolerance)
+	    result = angular_domain.Min();
+	return result;
+    };
+
+    std::set<int> active(source.outer.begin(), source.outer.end());
+    active.insert(source.steiner.begin(), source.steiner.end());
+    std::map<double, long> ring;
+    std::map<long, long> canonical_native;
+    for (const auto &mapping : p2d3d) {
+	const long vertex = native_vertex(mapping.first);
+	if (vertex >= 0)
+	    canonical_native.emplace(vertex, mapping.first);
+    }
+    const auto canonical = [&](long native) {
+	const auto found = canonical_native.find(native_vertex(native));
+	return found == canonical_native.end() ? -1L : found->second;
+    };
+    for (int point : active) {
+	const long native = source.native_point(point);
+	if (native < 0 || (size_t)native >= m_pnts_2d.size())
+	    return fail("source chart lost a native sample");
+	const auto &uv = m_pnts_2d[(size_t)native];
+	const double open = open_direction ? uv.second : uv.first;
+	if (std::fabs(open - cut[open_direction]) <= open_tolerance) {
+	    const long representative = canonical(native);
+	    if (representative < 0)
+		return fail("latitude sample has no model-space identity");
+	    ring.emplace(canonical_angle(angular_direction ? uv.second : uv.first),
+		representative);
+	}
+    }
+
+    /* Sample the geometric circle rather than its potentially nonuniform
+     * NURBS parameter.  Keep the existing isoparameter exactly after the
+     * pullback, and certify that it still gives the intended circle point.
+     * This also detects sphere parameterizations requiring a different cut
+     * before any points have been registered in the mesh. */
+    std::vector<ON_2dPoint> existing_ring_images;
+    for (const auto &sample : ring) {
+	const auto &uv = m_pnts_2d[(size_t)sample.second];
+	ON_2dPoint image;
+	if (!atlas.front().native_to_chart(ON_2dPoint(uv.first, uv.second), image))
+	    return fail("existing latitude sample could not be projected");
+	existing_ring_images.push_back(image);
+    }
+    cdt_face_chart sampler(atlas.front());
+    if (sampler.add_refinement_point(0, cut, projected_cut) < 0)
+	return fail("latitude sampler could not retain its pullback seed");
+    std::vector<ON_2dPoint> pending;
+    const double phase = std::atan2(projected_cut.y, projected_cut.x);
+    for (size_t i = 0; i < ring_segments; ++i) {
+	const double angle = phase + 2.0 * ON_PI * i / ring_segments;
+	const ON_2dPoint projected(projected_radius * std::cos(angle),
+	    projected_radius * std::sin(angle));
+	bool existing = false;
+	for (const ON_2dPoint &image : existing_ring_images)
+	    existing = existing || image.DistanceTo(projected) <= projection_tolerance;
+	if (existing)
+	    continue;
+	ON_2dPoint uv;
+	if (!sampler.chart_to_native(projected, uv))
+	    return fail("latitude ring sample could not be pulled back to the surface");
+	uv[open_direction] = cut[open_direction];
+	uv[angular_direction] = canonical_angle(uv[angular_direction]);
+	ON_2dPoint round_trip;
+	if (!sampler.native_to_chart(uv, round_trip))
+	    return fail("latitude ring pullback could not be projected");
+	if (round_trip.DistanceTo(projected) > projection_tolerance) {
+	    atlas.clear();
+	    return true;
+	}
+	pending.push_back(uv);
+    }
+    for (ON_2dPoint &uv : pending) {
+	const long native = register_refinement_sample(surface, uv);
+	if (native < 0)
+	    return fail("latitude ring sample could not be evaluated");
+	canonical_native.emplace(native_vertex(native), native);
+	ring.emplace(uv[angular_direction], native);
+    }
+    index_native_images();
+
+    for (size_t component = 0; component < atlas.size(); ++component) {
+	cdt_face_chart &cap = atlas[component];
+	std::map<long, int> cap_points;
+	const auto add_point = [&](long native) {
+	    native = canonical(native);
+	    if (native < 0 || (size_t)native >= m_pnts_2d.size())
+		return -1;
+	    const auto existing = cap_points.find(native);
+	    if (existing != cap_points.end())
+		return existing->second;
+	    const ON_2dPoint uv(m_pnts_2d[(size_t)native].first,
+		m_pnts_2d[(size_t)native].second);
+	    ON_2dPoint projected;
+	    if (!cap.native_to_chart(uv, projected))
+		return -1;
+	    const int point = cap.add_refinement_point(native, uv, projected);
+	    if (point >= 0)
+		cap_points.emplace(native, point);
+	    return point;
+	};
+	for (const auto &sample : ring) {
+	    const int point = add_point(sample.second);
+	    if (point < 0)
+		return fail("shared latitude ring lost a native identity");
+	    cap.outer.push_back(point);
+	}
+	const auto in_cap = [&](long native) {
+	    const auto &uv = m_pnts_2d[(size_t)native];
+	    const double open = open_direction ? uv.second : uv.first;
+	    return component ? open >= cut[open_direction] - open_tolerance :
+		open <= cut[open_direction] + open_tolerance;
+	};
+	const auto inside_polygon = [&](int point) {
+	    const point2d_t query = {cap.points[(size_t)point].first,
+		cap.points[(size_t)point].second};
+	    int orientation = 0;
+	    for (size_t i = 0; i < cap.outer.size(); ++i) {
+		const auto &a = cap.points[(size_t)cap.outer[i]];
+		const auto &b = cap.points[(size_t)cap.outer[(i + 1) % cap.outer.size()]];
+		const point2d_t first = {a.first, a.second};
+		const point2d_t second = {b.first, b.second};
+		const int side = bg_orient2d(first, second, query);
+		if (orientation && side && orientation != side)
+		    return false;
+		if (side)
+		    orientation = side;
+	    }
+	    return orientation != 0;
+	};
+	std::set<int> interior;
+	for (int source_point : active) {
+	    const long native = source.native_point(source_point);
+	    if (!in_cap(native))
+		continue;
+	    const int point = add_point(native);
+	    if (point < 0)
+		return fail("cap sample could not be projected");
+	    cdt_chart_vertex &vertex = cap.vertices[(size_t)point];
+	    const cdt_chart_vertex &original = source.vertices[(size_t)source_point];
+	    vertex.topo_vertex = original.topo_vertex;
+	    vertex.singular = original.singular;
+	    /* The inscribed ring polygon may exclude optional surface samples
+	     * just inside the exact latitude circle.  Mandatory seam vertices
+	     * are retained independently by their constraints below. */
+	    if (std::find(cap.outer.begin(), cap.outer.end(), point) == cap.outer.end() &&
+		inside_polygon(point))
+		interior.insert(point);
+	}
+	std::set<std::pair<int, int>> constraints;
+	for (size_t i = 0; i < source.outer.size(); ++i) {
+	    const long first = source.native_point(source.outer[i]);
+	    const long second = source.native_point(source.outer[(i + 1) % source.outer.size()]);
+	    if (!in_cap(first) || !in_cap(second))
+		continue;
+	    const int a = add_point(first);
+	    const int b = add_point(second);
+	    if (a < 0 || b < 0)
+		return fail("seam constraint lost a cap vertex");
+	    if (a != b && constraints.insert(std::minmax(a, b)).second)
+		cap.constraints.push_back(std::make_pair(a, b));
+	}
+	cap.steiner.assign(interior.begin(), interior.end());
+    }
+    bu_log("Face %d: split sphere into two regular caps sharing %zu ring samples\n",
+	f_id, ring.size());
+    return true;
+}
+
+bool
 cdt_mesh_t::build_face_charts(const chart_source &source,
 	std::vector<cdt_face_chart> &atlas, bool allow_general_boundary_cleanup)
 {
@@ -6846,6 +7080,11 @@ cdt_mesh_t::build_face_charts(const chart_source &source,
     }
     condition_chart_endpoints(chart, source);
     condition_chart_radial_trims(chart, source);
+
+    if (!build_sphere_chart_atlas(chart, atlas))
+	return false;
+    if (!atlas.empty())
+	return true;
 
     std::vector<cdt_face_chart> chart_components;
     std::string component_failure;

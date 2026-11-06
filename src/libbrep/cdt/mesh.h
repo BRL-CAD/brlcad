@@ -846,6 +846,8 @@ private:
 	const chart_source &source) const;
     void condition_chart_radial_trims(cdt_face_chart &chart,
 	const chart_source &source) const;
+    bool build_sphere_chart_atlas(const cdt_face_chart &source,
+	std::vector<cdt_face_chart> &atlas);
     bool build_face_charts(const chart_source &source,
 	std::vector<cdt_face_chart> &charts, bool allow_general_boundary_cleanup);
     std::vector<int> chart_steiner_points(const cdt_face_chart &chart,

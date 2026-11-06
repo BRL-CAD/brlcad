@@ -849,6 +849,21 @@ cdt_face_chart::native_to_chart(const ON_2dPoint &native_uv,
 {
     if (!native_uv.IsValid())
 	return false;
+    if (m_type == CDT_FACE_CHART_SPHERE_CAP) {
+	const ON_3dPoint point = cdt_surface_point(m_surface, native_uv);
+	if (!point.IsValid())
+	    return false;
+	const ON_3dVector offset = point - m_sphere.Center();
+	const double denominator = m_sphere.radius +
+	    m_cap_sign * (offset * m_sphere.plane.zaxis);
+	if (!(denominator > 0.0))
+	    return false;
+	/* Reflect the southern ordinate so both cap charts give outward
+	 * normals for counterclockwise planar triangles. */
+	chart_uv = ON_2dPoint((offset * m_sphere.plane.xaxis) / denominator,
+	    m_cap_sign * (offset * m_sphere.plane.yaxis) / denominator);
+	return chart_uv.IsValid();
+    }
     if (m_type == CDT_FACE_CHART_NATIVE_UV) {
 	chart_uv = native_uv;
 	return true;
@@ -979,6 +994,22 @@ cdt_face_chart::chart_to_native(const ON_2dPoint &chart_uv,
 {
     if (!chart_uv.IsValid())
 	return false;
+    if (m_type == CDT_FACE_CHART_SPHERE_CAP) {
+	const double radius_squared = chart_uv.x * chart_uv.x + chart_uv.y * chart_uv.y;
+	if (!std::isfinite(radius_squared))
+	    return false;
+	const double denominator = 1.0 + radius_squared;
+	const ON_3dVector direction = (2.0 * chart_uv.x * m_sphere.plane.xaxis +
+	    2.0 * m_cap_sign * chart_uv.y * m_sphere.plane.yaxis +
+	    m_cap_sign * (1.0 - radius_squared) * m_sphere.plane.zaxis) / denominator;
+	const ON_3dPoint target = m_sphere.Center() + m_sphere.radius * direction;
+	const double coordinate_scale = std::max(m_sphere.radius,
+	    std::max(std::fabs(target.x), std::max(std::fabs(target.y), std::fabs(target.z))));
+	const double rounding_units = 2048.0;
+	const double tolerance = rounding_units * std::numeric_limits<double>::epsilon() *
+	    coordinate_scale;
+	return surface_point_to_native(chart_uv, target, tolerance, native_uv);
+    }
     if (m_type == CDT_FACE_CHART_NATIVE_UV) {
 	native_uv = chart_uv;
 	return true;
@@ -3908,6 +3939,102 @@ cdt_face_chart::build_polar(const ON_BrepFace &face,
 }
 
 bool
+cdt_face_chart::sphere_caps(ON_2dPoint &cut,
+	std::vector<cdt_face_chart> &caps) const
+{
+    caps.clear();
+    if (m_type != CDT_FACE_CHART_POLAR || !m_periodic ||
+	m_second_singular_side < 0 || !holes.empty() || !m_surface)
+	return false;
+    /* Use the analytic recognizer.  General surface recognition can read
+     * beyond its span array and does not establish an exact sphere. */
+    const ON_RevSurface *revolution = ON_RevSurface::Cast(m_surface);
+    ON_Sphere sphere;
+    if (!revolution || !revolution->IsSpherical(&sphere, ON_ZERO_TOLERANCE))
+	return false;
+    const ON_3dPoint low = m_surface->PointAt(
+	m_open_dir ? m_polar_cut : m_open_domain.Min(),
+	m_open_dir ? m_open_domain.Min() : m_polar_cut);
+    const ON_3dPoint high = m_surface->PointAt(
+	m_open_dir ? m_polar_cut : m_open_domain.Max(),
+	m_open_dir ? m_open_domain.Max() : m_polar_cut);
+    ON_3dVector axis = high - low;
+    if (!low.IsValid() || !high.IsValid() || !axis.Unitize())
+	return false;
+    sphere.plane = ON_Plane(sphere.Center(), axis);
+
+    bool low_seam = false;
+    bool high_seam = false;
+    for (int point : outer) {
+	if (point < 0 || (size_t)point >= vertices.size())
+	    return false;
+	const cdt_chart_vertex &vertex = vertices[(size_t)point];
+	if (vertex.native_point < 0 ||
+	    (size_t)vertex.native_point >= m_source_native_points.size())
+	    return false;
+	if (vertex.singular)
+	    continue;
+	if (!vertex.seam_side)
+	    return false;
+	low_seam = low_seam || vertex.seam_side < 0;
+	high_seam = high_seam || vertex.seam_side > 0;
+    }
+    if (!low_seam || !high_seam)
+	return false;
+
+    /* Keep each cap away from its excluded projection pole.  A cut within
+     * half a radius of the equator bounds both projection denominators by
+     * half the radius, while allowing nonuniform seam sample spacing. */
+    const double maximum_cut_height = 0.5;
+    const double parameter_tolerance = cdt_surface_parameter_tolerance(m_open_domain);
+    double best_height = maximum_cut_height;
+    cut = ON_2dPoint::UnsetPoint;
+    for (int point : outer) {
+	const cdt_chart_vertex &vertex = vertices[(size_t)point];
+	if (vertex.singular || vertex.native_point < 0 ||
+	    (size_t)vertex.native_point >= m_source_native_points.size())
+	    continue;
+	const ON_2dPoint uv = m_source_native_points[(size_t)vertex.native_point];
+	const ON_3dPoint model_point = cdt_surface_point(m_surface, uv);
+	const double height = std::fabs((model_point - sphere.Center()) * axis) /
+	    sphere.radius;
+	if (!model_point.IsValid() || !(height < best_height))
+	    continue;
+	bool crosses_edge = false;
+	for (size_t i = 0; i < outer.size(); ++i) {
+	    const auto &first = vertices[(size_t)outer[i]];
+	    const auto &second = vertices[(size_t)outer[(i + 1) % outer.size()]];
+	    const double a = m_source_native_points[(size_t)first.native_point][m_open_dir];
+	    const double b = m_source_native_points[(size_t)second.native_point][m_open_dir];
+	    if (std::min(a, b) < uv[m_open_dir] - parameter_tolerance &&
+		std::max(a, b) > uv[m_open_dir] + parameter_tolerance) {
+		crosses_edge = true;
+		break;
+	    }
+	}
+	if (!crosses_edge) {
+	    cut = uv;
+	    best_height = height;
+	}
+    }
+    if (!cut.IsValid())
+	return false;
+
+    caps.resize(2);
+    for (size_t i = 0; i < caps.size(); ++i) {
+	cdt_face_chart &cap = caps[i];
+	cap.m_id = m_id;
+	cap.m_type = CDT_FACE_CHART_SPHERE_CAP;
+	cap.m_surface = m_surface;
+	cap.m_sphere = sphere;
+	cap.m_cap_sign = i ? 1 : -1;
+	cap.m_open_dir = m_open_dir;
+	cap.m_closed_dir = m_closed_dir;
+    }
+    return true;
+}
+
+bool
 cdt_face_chart::validate_boundary(const ON_BrepFace &face,
 	const std::vector<std::pair<double, double>> &native_points)
 {
@@ -4282,7 +4409,9 @@ cdt_face_chart::build(const ON_BrepFace &face,
     m_metric_plane = ON_Plane();
     m_pole_topology_vertex = CDT_TOPOLOGY_ID_NONE;
     m_second_pole_topology_vertex = CDT_TOPOLOGY_ID_NONE;
-    m_surface = NULL;
+    m_surface = face.SurfaceOf();
+    m_sphere = ON_Sphere();
+    m_cap_sign = 0;
     m_cone = ON_Cone();
     m_cone_seam_angle = 0.0;
     m_cone_orientation = 1;

@@ -13,6 +13,7 @@
 #include "bu/app.h"
 #include <cmath>
 #include <iostream>
+#include <limits>
 #include <memory>
 #include <set>
 #include <vector>
@@ -20,7 +21,141 @@
 #include "bg/trimesh.h"
 #include "brep/cdt.h"
 #include "cdt/test_api.h"
-#include "../cdt/chart.h"
+#include "../cdt/cdt.h"
+
+static bool
+check_cap_maps(const cdt_face_chart &source, const ON_Surface &surface)
+{
+    ON_2dPoint cut;
+    std::vector<cdt_face_chart> caps;
+    if (!source.sphere_caps(cut, caps) || caps.size() != 2) {
+	std::cerr << "complete sphere did not admit a cap partition" << std::endl;
+	return false;
+    }
+    const int open_direction = 1 - source.closed_direction();
+    const ON_Interval open_domain = surface.Domain(open_direction);
+    const ON_2dPoint samples[] = {
+	ON_2dPoint(0.0, 0.0), ON_2dPoint(1.0e-3, 0.0),
+	ON_2dPoint(0.0, 1.0e-3), ON_2dPoint(0.25, 0.125)
+    };
+    ON_Sphere sphere;
+    if (!surface.IsSphere(&sphere, ON_ZERO_TOLERANCE))
+	return false;
+    const ON_3dPoint center = sphere.Center();
+    const double coordinate_scale = std::max(sphere.radius, std::max(std::fabs(center.x),
+	std::max(std::fabs(center.y), std::fabs(center.z))));
+    const double roundoff = 4096.0 * std::numeric_limits<double>::epsilon() *
+	std::max(1.0, coordinate_scale / sphere.radius);
+    for (size_t component = 0; component < caps.size(); ++component) {
+	cdt_face_chart &cap = caps[component];
+	ON_2dPoint pole(cut);
+	pole[open_direction] = component ? open_domain.Max() : open_domain.Min();
+	ON_2dPoint projected_pole;
+	if (!cap.native_to_chart(pole, projected_pole) ||
+	    projected_pole.DistanceTo(ON_2dPoint::Origin) > roundoff ||
+	    cap.add_refinement_point(0, pole, projected_pole) < 0)
+	    return false;
+	ON_3dPoint model_samples[3];
+	for (size_t i = 0; i < sizeof(samples) / sizeof(samples[0]); ++i) {
+	    ON_2dPoint native, round_trip;
+	    if (!cap.chart_to_native(samples[i], native) ||
+		!cap.native_to_chart(native, round_trip) ||
+		round_trip.DistanceTo(samples[i]) > std::max(1.0e-10, roundoff)) {
+		std::cerr << "sphere cap mapping failed near its pole" << std::endl;
+		return false;
+	    }
+	    if (i < 3)
+		model_samples[i] = surface.PointAt(native.x, native.y);
+	}
+	const ON_3dVector normal = ON_CrossProduct(model_samples[1] - model_samples[0],
+	    model_samples[2] - model_samples[0]);
+	if (!(normal * (model_samples[0] - center) > 0.0)) {
+	    std::cerr << "sphere cap mapping changed orientation at its pole" << std::endl;
+	    return false;
+	}
+    }
+    return true;
+}
+
+static bool
+check_cap_atlas(const ON_Brep_CDT_State &state)
+{
+    if (state.fmeshes.size() != 1)
+	return false;
+    const cdt_mesh_t &mesh = state.fmeshes.begin()->second;
+    if (mesh.m_face_charts.size() != 2)
+	return false;
+    std::set<const ON_3dPoint *> rings[2];
+    for (size_t component = 0; component < mesh.m_face_charts.size(); ++component) {
+	const cdt_face_chart &cap = mesh.m_face_charts[component];
+	if (cap.type() != CDT_FACE_CHART_SPHERE_CAP)
+	    return false;
+	for (int point : cap.outer) {
+	    const auto mapped = mesh.p2d3d.find(cap.native_point(point));
+	    if (mapped == mesh.p2d3d.end() || mapped->second < 0 ||
+		(size_t)mapped->second >= mesh.pnts.size())
+		return false;
+	    rings[component].insert(mesh.pnts[(size_t)mapped->second]);
+	}
+    }
+    if (rings[0].size() < 3 || rings[0] != rings[1]) {
+	std::cerr << "sphere cap boundary samples were not shared" << std::endl;
+	return false;
+    }
+    const ON_Surface *surface = mesh.brep->m_F[mesh.f_id].SurfaceOf();
+    ON_Sphere sphere;
+    if (!surface || !surface->IsSphere(&sphere, ON_ZERO_TOLERANCE))
+	return false;
+    const cdt_face_chart &first_cap = mesh.m_face_charts.front();
+    const long first_native = first_cap.native_point(first_cap.outer.front());
+    const auto &first_uv = mesh.m_pnts_2d[(size_t)first_native];
+    ON_2dPoint pole(first_uv.first, first_uv.second);
+    const int open_direction = 1 - first_cap.closed_direction();
+    pole[open_direction] = surface->Domain(open_direction).Min();
+    ON_3dVector axis = sphere.Center() - surface->PointAt(pole.x, pole.y);
+    if (!axis.Unitize())
+	return false;
+    const ON_3dPoint center = sphere.Center();
+    const ON_3dPoint &first_point = *mesh.pnts[(size_t)mesh.p2d3d.at(first_native)];
+    const double height = (first_point - center) * axis;
+    const double ring_radius = std::sqrt(std::max(0.0,
+	sphere.radius * sphere.radius - height * height));
+    const double rounding_units = 4096.0;
+    const double roundoff = rounding_units * std::numeric_limits<double>::epsilon() *
+	std::max(sphere.radius, std::max(std::fabs(center.x),
+	    std::max(std::fabs(center.y), std::fabs(center.z))));
+    for (size_t i = 0; i < first_cap.outer.size(); ++i) {
+	const long a = first_cap.native_point(first_cap.outer[i]);
+	const long b = first_cap.native_point(
+	    first_cap.outer[(i + 1) % first_cap.outer.size()]);
+	const double length = mesh.pnts[(size_t)mesh.p2d3d.at(a)]->DistanceTo(
+	    *mesh.pnts[(size_t)mesh.p2d3d.at(b)]);
+	const double sine = std::min(1.0, length / (2.0 * ring_radius));
+	const double sagitta = ring_radius * sine * sine /
+	    (1.0 + std::sqrt(1.0 - sine * sine));
+	if (state.absmax > 0.0 && sagitta > state.absmax + roundoff) {
+	    std::cerr << "sphere cap ring exceeded chord tolerance" << std::endl;
+	    return false;
+	}
+	const double normal_half_angle = std::asin(std::min(1.0,
+	    length / (2.0 * sphere.radius)));
+	if (state.tol.norm > 0.0 && normal_half_angle > state.tol.norm +
+	    roundoff / sphere.radius) {
+	    std::cerr << "sphere cap ring exceeded normal tolerance" << std::endl;
+	    return false;
+	}
+    }
+    for (const chart_triangle_t &triangle : mesh.tris_2d) {
+	if (triangle.chart_index >= mesh.m_face_charts.size())
+	    return false;
+	const cdt_face_chart &cap = mesh.m_face_charts[triangle.chart_index];
+	for (int corner = 0; corner < 3; ++corner) {
+	    if (cap.native_point(triangle.chart_vertices[corner]) != triangle.v[corner])
+		return false;
+	}
+    }
+    return true;
+}
 
 static bool
 exercise_coincident_seams()
@@ -168,6 +303,17 @@ exercise_coincident_seams()
 	    "chart coordinates" << std::endl;
 	return false;
     }
+    ON_2dPoint unused_cut;
+    std::vector<cdt_face_chart> unused_caps;
+    if (holed_chart.sphere_caps(unused_cut, unused_caps)) {
+	std::cerr << "trimmed sphere incorrectly selected a full cap atlas" << std::endl;
+	return false;
+    }
+    cdt_face_chart full_chart;
+    if (!full_chart.build(face, native_points, outer,
+	    std::vector<std::vector<int>>(), std::vector<int>(), std::vector<int>(),
+	    points_3d, topology_vertices) || !check_cap_maps(full_chart, *surface))
+	return false;
     struct ON_Brep_CDT_State *state = ON_Brep_CDT_Create(brep.get(),
 	"coincident polar seam fixture");
     struct bg_tess_tol tolerance = BG_TESS_TOL_INIT_ZERO;
@@ -178,6 +324,11 @@ exercise_coincident_seams()
 	ON_Brep_CDT_Diagnostic(&diagnostic, state);
 	std::cerr << "coincident-seam sphere tessellation failed at stage "
 	    << diagnostic.stage << ": " << diagnostic.message << std::endl;
+	ON_Brep_CDT_Destroy(state);
+	return false;
+    }
+    if (!check_cap_atlas(*state)) {
+	std::cerr << "sphere tessellation did not retain its regular cap atlas" << std::endl;
 	ON_Brep_CDT_Destroy(state);
 	return false;
     }
@@ -200,13 +351,40 @@ exercise_coincident_seams()
     return solid;
 }
 
+enum class sphere_fixture {
+    regular,
+    reversed,
+    nurbs_fallback
+};
+
 static bool
-exercise_sphere(const ON_3dPoint &center, double radius)
+exercise_sphere(const ON_3dPoint &center, double radius,
+	const ON_3dVector &axis = ON_3dVector::ZAxis,
+	sphere_fixture fixture = sphere_fixture::regular)
 {
+    const bool reversed = fixture == sphere_fixture::reversed;
+    const bool nurbs = fixture == sphere_fixture::nurbs_fallback;
     ON_Sphere sphere(center, radius);
+    sphere.plane = ON_Plane(center, axis);
     if (!sphere.IsValid())
 	return false;
-    std::unique_ptr<ON_Brep> brep(ON_BrepSphere(sphere));
+    std::unique_ptr<ON_Brep> brep;
+    if (nurbs) {
+	ON_NurbsSurface *nurbs_surface = new ON_NurbsSurface;
+	if (!sphere.GetNurbForm(*nurbs_surface)) {
+	    delete nurbs_surface;
+	    return false;
+	}
+	brep.reset(new ON_Brep);
+	if (!brep->Create(nurbs_surface)) {
+	    delete nurbs_surface;
+	    return false;
+	}
+    } else {
+	brep.reset(ON_BrepSphere(sphere));
+    }
+    if (brep && reversed)
+	brep->Flip();
     if (!brep || !brep->IsValid() || !brep->IsSolid() ||
 	    brep->m_F.Count() != 1) {
 	std::cerr << "invalid sphere B-Rep" << std::endl;
@@ -290,6 +468,18 @@ exercise_sphere(const ON_3dPoint &center, double radius)
 	return false;
     }
 
+    if (nurbs) {
+	/* General sphere recognition has an unsafe span scan.  The cap
+	 * selector must leave this representation on its existing chart path. */
+	ON_2dPoint cut;
+	std::vector<cdt_face_chart> caps;
+	if (chart.sphere_caps(cut, caps)) {
+	    std::cerr << "general NURBS surface selected analytic sphere caps" << std::endl;
+	    return false;
+	}
+	return true;
+    }
+
     /* A physical spherical lune needs no interior meridian samples: its two
      * distinct sides already form a nonzero-area disk in the polar chart. */
     std::vector<std::pair<double, double>> lune_native;
@@ -323,6 +513,13 @@ exercise_sphere(const ON_3dPoint &center, double radius)
 	    lune_chart.type() != CDT_FACE_CHART_POLAR) {
 	std::cerr << "zero-interior-sample sphere lune failed: "
 	    << lune_chart.failure() << std::endl;
+	return false;
+    }
+
+    ON_2dPoint unused_cut;
+    std::vector<cdt_face_chart> unused_caps;
+    if (lune_chart.sphere_caps(unused_cut, unused_caps) || !check_cap_maps(chart, *surface)) {
+	std::cerr << "sphere cap partition eligibility failed" << std::endl;
 	return false;
     }
 
@@ -457,13 +654,20 @@ exercise_sphere(const ON_3dPoint &center, double radius)
     struct ON_Brep_CDT_State *state = ON_Brep_CDT_Create(brep.get(),
 	"polar chart fixture");
     struct bg_tess_tol tolerance = BG_TESS_TOL_INIT_ZERO;
-    tolerance.rel = 0.05;
+    // A tighter reversed case exercises distance and normal ring tolerances.
+    tolerance.rel = reversed ? 0.001 : 0.05;
+    tolerance.norm = reversed ? 0.04 : 0.0;
     ON_Brep_CDT_Tol_Set(state, &tolerance);
     if (ON_Brep_CDT_Tessellate(state, 0, NULL) != 0) {
 	struct brep_cdt_diagnostic diagnostic;
 	ON_Brep_CDT_Diagnostic(&diagnostic, state);
 	std::cerr << "sphere tessellation failed at stage "
 	    << diagnostic.stage << ": " << diagnostic.message << std::endl;
+	ON_Brep_CDT_Destroy(state);
+	return false;
+    }
+    if (!check_cap_atlas(*state)) {
+	std::cerr << "sphere tessellation did not retain its regular cap atlas" << std::endl;
 	ON_Brep_CDT_Destroy(state);
 	return false;
     }
@@ -513,6 +717,14 @@ main(int, const char **argv)
 	if (!exercise_sphere(centers[i], radii[i]))
 	    return i + 4;
     }
+    ON_3dVector tilted_axis(1.0, 2.0, 3.0);
+    if (!tilted_axis.Unitize() ||
+	!exercise_sphere(ON_3dPoint(4.0, -3.0, 2.0), 2.5, tilted_axis) ||
+	!exercise_sphere(ON_3dPoint(4.0, -3.0, 2.0), 2.5, tilted_axis,
+	    sphere_fixture::reversed) ||
+	!exercise_sphere(ON_3dPoint(4.0, -3.0, 2.0), 2.5, tilted_axis,
+	    sphere_fixture::nurbs_fallback))
+	return 10;
     return 0;
 }
 
