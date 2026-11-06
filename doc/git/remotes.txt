@@ -1,0 +1,32 @@
+If you wish to keep multiple git repositories up to date as
+you work, you can set up your remotes accordingly:
+
+git remote add all git@github.com:BRL-CAD/brlcad.git
+git remote set-url --add --push all git@github.com:BRL-CAD/brlcad.git
+git remote set-url --add --push all git@brlcad.org:BRL-CAD/brlcad.git
+git config --local remote.pushDefault all
+
+
+To inspect the remote URLs:
+
+git remote -v
+
+To check which remote is the default push target:
+
+git config --get remote.pushDefault
+
+
+If you need to use particular ssh keys for specific hosts, it can
+be convenient to set up aliases in your ssh config:
+
+Host gbz
+  HostName git.brlcad.org
+  User git
+  IdentityFile ~/.ssh/id_brlcadorg
+  IdentitiesOnly yes
+
+Then you can use a remote with that alias to have it use that
+particular identify file:
+
+git remote set-url --add --push all git@gbz:BRL-CAD/brlcad.git
+

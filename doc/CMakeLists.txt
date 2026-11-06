@@ -233,6 +233,7 @@ cmakefiles(
   git/history.txt
   git/merging.txt
   git/mime_types.txt
+  git/remotes.txt
   git/usability.txt
   inventory.adoc
   notes/bsd_semaphore_bug.txt
