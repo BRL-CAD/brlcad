@@ -132,6 +132,7 @@ static const struct rt_edit_param_desc epa_r2_params[] = {
 static const struct rt_edit_cmd_desc epa_cmds[] = {
     {
 	ECMD_EPA_H,           /* cmd_id       */
+	RT_EDIT_CMD_NAME(ECMD_EPA_H),           /* name       */
 	"Set H",              /* label        */
 	"geometry",           /* category     */
 	1,                    /* nparam       */
@@ -142,6 +143,7 @@ static const struct rt_edit_cmd_desc epa_cmds[] = {
     },
     {
 	ECMD_EPA_R1,          /* cmd_id       */
+	RT_EDIT_CMD_NAME(ECMD_EPA_R1),          /* name       */
 	"Set A",              /* label        */
 	"geometry",           /* category     */
 	1,                    /* nparam       */
@@ -152,6 +154,7 @@ static const struct rt_edit_cmd_desc epa_cmds[] = {
     },
     {
 	ECMD_EPA_R2,          /* cmd_id       */
+	RT_EDIT_CMD_NAME(ECMD_EPA_R2),          /* name       */
 	"Set B",              /* label        */
 	"geometry",           /* category     */
 	1,                    /* nparam       */

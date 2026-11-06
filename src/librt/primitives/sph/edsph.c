@@ -81,6 +81,7 @@ static const struct rt_edit_param_desc sph_r_params[] = {
 static const struct rt_edit_cmd_desc sph_cmds[] = {
     {
 	ECMD_SPH_SET_V,             /* cmd_id */
+	RT_EDIT_CMD_NAME(ECMD_SPH_SET_V),             /* name */
 	"Set V",                    /* label */
 	"geometry",                 /* category */
 	1,                          /* nparam */
@@ -91,6 +92,7 @@ static const struct rt_edit_cmd_desc sph_cmds[] = {
     },
     {
 	ECMD_SPH_SCALE_R,           /* cmd_id */
+	RT_EDIT_CMD_NAME(ECMD_SPH_SCALE_R),           /* name */
 	"Set Radius",               /* label */
 	"geometry",                 /* category */
 	1,                          /* nparam */

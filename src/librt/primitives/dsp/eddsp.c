@@ -225,6 +225,7 @@ static const struct rt_edit_param_desc dsp_fsize_params[] = {
 static const struct rt_edit_cmd_desc dsp_cmds[] = {
     {
 	ECMD_DSP_FNAME,       /* cmd_id       */
+	RT_EDIT_CMD_NAME(ECMD_DSP_FNAME),       /* name       */
 	"Name",               /* label        */
 	"data",               /* category     */
 	1,                    /* nparam       */
@@ -235,6 +236,7 @@ static const struct rt_edit_cmd_desc dsp_cmds[] = {
     },
     {
 	ECMD_DSP_SCALE_X,     /* cmd_id       */
+	RT_EDIT_CMD_NAME(ECMD_DSP_SCALE_X),     /* name       */
 	"Set X",              /* label        */
 	"geometry",           /* category     */
 	1,                    /* nparam       */
@@ -245,6 +247,7 @@ static const struct rt_edit_cmd_desc dsp_cmds[] = {
     },
     {
 	ECMD_DSP_SCALE_Y,     /* cmd_id       */
+	RT_EDIT_CMD_NAME(ECMD_DSP_SCALE_Y),     /* name       */
 	"Set Y",              /* label        */
 	"geometry",           /* category     */
 	1,                    /* nparam       */
@@ -255,6 +258,7 @@ static const struct rt_edit_cmd_desc dsp_cmds[] = {
     },
     {
 	ECMD_DSP_SCALE_ALT,   /* cmd_id       */
+	RT_EDIT_CMD_NAME(ECMD_DSP_SCALE_ALT),   /* name       */
 	"Set ALT",            /* label        */
 	"geometry",           /* category     */
 	1,                    /* nparam       */
@@ -265,6 +269,7 @@ static const struct rt_edit_cmd_desc dsp_cmds[] = {
     },
     {
 	ECMD_DSP_SET_SMOOTH,  /* cmd_id       */
+	RT_EDIT_CMD_NAME(ECMD_DSP_SET_SMOOTH),  /* name       */
 	"Toggle Smooth",      /* label        */
 	"geometry",           /* category     */
 	1,                    /* nparam       */
@@ -275,6 +280,7 @@ static const struct rt_edit_cmd_desc dsp_cmds[] = {
     },
     {
 	ECMD_DSP_FSIZE,       /* cmd_id       */
+	RT_EDIT_CMD_NAME(ECMD_DSP_FSIZE),       /* name       */
 	"Set File Size",      /* label        */
 	"data",               /* category     */
 	2,                    /* nparam       */
@@ -285,6 +291,7 @@ static const struct rt_edit_cmd_desc dsp_cmds[] = {
     },
     {
 	ECMD_DSP_SET_DATASRC, /* cmd_id       */
+	RT_EDIT_CMD_NAME(ECMD_DSP_SET_DATASRC), /* name       */
 	"Set Data Source",    /* label        */
 	"data",               /* category     */
 	1,                    /* nparam       */

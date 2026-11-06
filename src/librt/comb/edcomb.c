@@ -1071,6 +1071,7 @@ static const struct rt_edit_param_desc comb_set_los_params[] = {
 static const struct rt_edit_cmd_desc comb_cmds[] = {
     {
 	ECMD_COMB_ADD_MEMBER,     /* cmd_id       */
+	RT_EDIT_CMD_NAME(ECMD_COMB_ADD_MEMBER),     /* name       */
 	"Add Member",             /* label        */
 	"tree",                   /* category     */
 	2,                        /* nparam       */
@@ -1081,6 +1082,7 @@ static const struct rt_edit_cmd_desc comb_cmds[] = {
     },
     {
 	ECMD_COMB_DEL_MEMBER,     /* cmd_id       */
+	RT_EDIT_CMD_NAME(ECMD_COMB_DEL_MEMBER),     /* name       */
 	"Delete Member",          /* label        */
 	"tree",                   /* category     */
 	1,                        /* nparam       */
@@ -1091,6 +1093,7 @@ static const struct rt_edit_cmd_desc comb_cmds[] = {
     },
     {
 	ECMD_COMB_SET_OP,         /* cmd_id       */
+	RT_EDIT_CMD_NAME(ECMD_COMB_SET_OP),         /* name       */
 	"Set Boolean Op",         /* label        */
 	"tree",                   /* category     */
 	2,                        /* nparam       */
@@ -1101,6 +1104,7 @@ static const struct rt_edit_cmd_desc comb_cmds[] = {
     },
     {
 	ECMD_COMB_SET_REGION,     /* cmd_id       */
+	RT_EDIT_CMD_NAME(ECMD_COMB_SET_REGION),     /* name       */
 	"Set Region Flag",        /* label        */
 	"material",               /* category     */
 	1,                        /* nparam       */
@@ -1111,6 +1115,7 @@ static const struct rt_edit_cmd_desc comb_cmds[] = {
     },
     {
 	ECMD_COMB_SET_COLOR,      /* cmd_id       */
+	RT_EDIT_CMD_NAME(ECMD_COMB_SET_COLOR),      /* name       */
 	"Set Color",              /* label        */
 	"material",               /* category     */
 	1,                        /* nparam       */
@@ -1121,6 +1126,7 @@ static const struct rt_edit_cmd_desc comb_cmds[] = {
     },
     {
 	ECMD_COMB_SET_SHADER,     /* cmd_id       */
+	RT_EDIT_CMD_NAME(ECMD_COMB_SET_SHADER),     /* name       */
 	"Set Shader",             /* label        */
 	"material",               /* category     */
 	1,                        /* nparam       */
@@ -1131,6 +1137,7 @@ static const struct rt_edit_cmd_desc comb_cmds[] = {
     },
     {
 	ECMD_COMB_SET_MATERIAL,   /* cmd_id       */
+	RT_EDIT_CMD_NAME(ECMD_COMB_SET_MATERIAL),   /* name       */
 	"Set Material",           /* label        */
 	"material",               /* category     */
 	1,                        /* nparam       */
@@ -1141,6 +1148,7 @@ static const struct rt_edit_cmd_desc comb_cmds[] = {
     },
     {
 	ECMD_COMB_SET_REGION_ID,  /* cmd_id       */
+	RT_EDIT_CMD_NAME(ECMD_COMB_SET_REGION_ID),  /* name       */
 	"Set Region ID",          /* label        */
 	"material",               /* category     */
 	1,                        /* nparam       */
@@ -1151,6 +1159,7 @@ static const struct rt_edit_cmd_desc comb_cmds[] = {
     },
     {
 	ECMD_COMB_SET_AIRCODE,    /* cmd_id       */
+	RT_EDIT_CMD_NAME(ECMD_COMB_SET_AIRCODE),    /* name       */
 	"Set Aircode",            /* label        */
 	"material",               /* category     */
 	1,                        /* nparam       */
@@ -1161,6 +1170,7 @@ static const struct rt_edit_cmd_desc comb_cmds[] = {
     },
     {
 	ECMD_COMB_SET_GIFTMATER,  /* cmd_id       */
+	RT_EDIT_CMD_NAME(ECMD_COMB_SET_GIFTMATER),  /* name       */
 	"Set GIFTmater",          /* label        */
 	"material",               /* category     */
 	1,                        /* nparam       */
@@ -1171,6 +1181,7 @@ static const struct rt_edit_cmd_desc comb_cmds[] = {
     },
     {
 	ECMD_COMB_SET_LOS,        /* cmd_id       */
+	RT_EDIT_CMD_NAME(ECMD_COMB_SET_LOS),        /* name       */
 	"Set LOS",                /* label        */
 	"material",               /* category     */
 	1,                        /* nparam       */

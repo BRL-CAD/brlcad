@@ -214,21 +214,21 @@ static const struct rt_edit_param_desc ars_scale_param[] = {
 };
 
 static const struct rt_edit_cmd_desc ars_cmds[] = {
-    { ECMD_ARS_PICK,       "Pick Vertex",   "selection", 1, ars_point_param, 1, 10, NULL },
-    { ECMD_ARS_NEXT_PT,    "Next Vertex",   "selection", 0, NULL,            0, 20, NULL },
-    { ECMD_ARS_PREV_PT,    "Prev Vertex",   "selection", 0, NULL,            0, 30, NULL },
-    { ECMD_ARS_NEXT_CRV,   "Next Curve",    "selection", 0, NULL,            0, 40, NULL },
-    { ECMD_ARS_PREV_CRV,   "Prev Curve",    "selection", 0, NULL,            0, 50, NULL },
-    { ECMD_ARS_MOVE_PT,    "Move Point",    "movement",  1, ars_delta_param, 1, 60, NULL },
-    { ECMD_ARS_MOVE_CRV,   "Move Curve",    "movement",  1, ars_delta_param, 1, 70, NULL },
-    { ECMD_ARS_MOVE_COL,   "Move Column",   "movement",  1, ars_delta_param, 1, 80, NULL },
-    { ECMD_ARS_SCALE_CRV,  "Scale Curve",   "topology",  1, ars_scale_param, 1, 90, NULL },
-    { ECMD_ARS_SCALE_COL,  "Scale Column",  "topology",  1, ars_scale_param, 1, 100, NULL },
-    { ECMD_ARS_INSERT_CRV, "Insert Curve",  "topology",  0, NULL,            0, 110, NULL },
-    { ECMD_ARS_DEL_CRV,    "Delete Curve",  "topology",  0, NULL,            0, 120, NULL },
-    { ECMD_ARS_DEL_COL,    "Delete Column", "topology",  0, NULL,            0, 130, NULL },
-    { ECMD_ARS_DUP_CRV,    "Dup Curve",     "topology",  0, NULL,            0, 140, NULL },
-    { ECMD_ARS_DUP_COL,    "Dup Column",    "topology",  0, NULL,            0, 150, NULL }
+    { ECMD_ARS_PICK, RT_EDIT_CMD_NAME(ECMD_ARS_PICK),       "Pick Vertex",   "selection", 1, ars_point_param, 1, 10, NULL },
+    { ECMD_ARS_NEXT_PT, RT_EDIT_CMD_NAME(ECMD_ARS_NEXT_PT),    "Next Vertex",   "selection", 0, NULL,            0, 20, NULL },
+    { ECMD_ARS_PREV_PT, RT_EDIT_CMD_NAME(ECMD_ARS_PREV_PT),    "Prev Vertex",   "selection", 0, NULL,            0, 30, NULL },
+    { ECMD_ARS_NEXT_CRV, RT_EDIT_CMD_NAME(ECMD_ARS_NEXT_CRV),   "Next Curve",    "selection", 0, NULL,            0, 40, NULL },
+    { ECMD_ARS_PREV_CRV, RT_EDIT_CMD_NAME(ECMD_ARS_PREV_CRV),   "Prev Curve",    "selection", 0, NULL,            0, 50, NULL },
+    { ECMD_ARS_MOVE_PT, RT_EDIT_CMD_NAME(ECMD_ARS_MOVE_PT),    "Move Point",    "movement",  1, ars_delta_param, 1, 60, NULL },
+    { ECMD_ARS_MOVE_CRV, RT_EDIT_CMD_NAME(ECMD_ARS_MOVE_CRV),   "Move Curve",    "movement",  1, ars_delta_param, 1, 70, NULL },
+    { ECMD_ARS_MOVE_COL, RT_EDIT_CMD_NAME(ECMD_ARS_MOVE_COL),   "Move Column",   "movement",  1, ars_delta_param, 1, 80, NULL },
+    { ECMD_ARS_SCALE_CRV, RT_EDIT_CMD_NAME(ECMD_ARS_SCALE_CRV),  "Scale Curve",   "topology",  1, ars_scale_param, 1, 90, NULL },
+    { ECMD_ARS_SCALE_COL, RT_EDIT_CMD_NAME(ECMD_ARS_SCALE_COL),  "Scale Column",  "topology",  1, ars_scale_param, 1, 100, NULL },
+    { ECMD_ARS_INSERT_CRV, RT_EDIT_CMD_NAME(ECMD_ARS_INSERT_CRV), "Insert Curve",  "topology",  0, NULL,            0, 110, NULL },
+    { ECMD_ARS_DEL_CRV, RT_EDIT_CMD_NAME(ECMD_ARS_DEL_CRV),    "Delete Curve",  "topology",  0, NULL,            0, 120, NULL },
+    { ECMD_ARS_DEL_COL, RT_EDIT_CMD_NAME(ECMD_ARS_DEL_COL),    "Delete Column", "topology",  0, NULL,            0, 130, NULL },
+    { ECMD_ARS_DUP_CRV, RT_EDIT_CMD_NAME(ECMD_ARS_DUP_CRV),    "Dup Curve",     "topology",  0, NULL,            0, 140, NULL },
+    { ECMD_ARS_DUP_COL, RT_EDIT_CMD_NAME(ECMD_ARS_DUP_COL),    "Dup Column",    "topology",  0, NULL,            0, 150, NULL }
 };
 
 static const struct rt_edit_prim_desc ars_prim_desc = {

@@ -37,9 +37,12 @@
 
 #include "common.h"
 
+#include <cctype>
 #include <cmath>
-#include <map>
 #include <cstring>
+#include <map>
+#include <set>
+#include <string>
 
 extern "C" {
 #include "vmath.h"
@@ -1453,10 +1456,10 @@ edit_param_type_str(int type)
 }
 
 static std::string
-edit_cmd_slug(const char *label)
+edit_cmd_slug(const char *text)
 {
     std::string slug;
-    for (const char *p = label; p && *p; p++) {
+    for (const char *p = text; p && *p; p++) {
 	if (isalnum((unsigned char)*p))
 	    slug += (char)tolower((unsigned char)*p);
 	else if (!slug.empty() && slug.back() != '_')
@@ -1465,6 +1468,180 @@ edit_cmd_slug(const char *label)
     while (!slug.empty() && slug.back() == '_')
 	slug.pop_back();
     return slug;
+}
+
+static std::string
+edit_cmd_machine_name(const struct rt_edit_prim_desc *desc,
+	const struct rt_edit_cmd_desc *command)
+{
+    if (!desc || !command)
+	return std::string();
+    std::string name = edit_cmd_slug(command->name);
+    const std::string global_prefix("ecmd_");
+    if (name.compare(0, global_prefix.size(), global_prefix) == 0)
+	name.erase(0, global_prefix.size());
+    const std::string primitive_prefix = edit_cmd_slug(desc->prim_type) + "_";
+    if (name.compare(0, primitive_prefix.size(), primitive_prefix) == 0)
+	name.erase(0, primitive_prefix.size());
+    return name;
+}
+
+int
+rt_edit_cmd_name(struct bu_vls *out, const struct rt_edit_prim_desc *desc,
+	const struct rt_edit_cmd_desc *command)
+{
+    if (!out || !desc || !command)
+	return BRLCAD_ERROR;
+    const std::string name = edit_cmd_machine_name(desc, command);
+    if (name.empty())
+	return BRLCAD_ERROR;
+    bu_vls_strcat(out, name.c_str());
+    return BRLCAD_OK;
+}
+
+static bool
+edit_machine_name_valid(const char *name)
+{
+    if (!name || !name[0])
+	return false;
+    for (const unsigned char *character = (const unsigned char *)name;
+	*character; ++character) {
+	if (!(std::isalnum(*character) || *character == '_'))
+	    return false;
+    }
+    return true;
+}
+
+static bool
+edit_limit_is_set(fastf_t value)
+{
+    static_assert(sizeof(fastf_t) == sizeof(double),
+	"fastf_t must be double for RT_EDIT_PARAM_NO_LIMIT comparison");
+    static const double sentinel = RT_EDIT_PARAM_NO_LIMIT;
+    const double candidate = (double)value;
+    return memcmp(&candidate, &sentinel, sizeof(double)) != 0;
+}
+
+int
+rt_edit_prim_desc_validate(struct bu_vls *msg,
+	const struct rt_edit_prim_desc *desc)
+{
+#define DESC_FAIL(_fmt, ...) do { \
+    if (msg) bu_vls_printf(msg, (_fmt), __VA_ARGS__); \
+    return BRLCAD_ERROR; \
+} while (0)
+
+    if (!desc) {
+	if (msg) bu_vls_strcat(msg, "null primitive edit descriptor");
+	return BRLCAD_ERROR;
+    }
+    if (!edit_machine_name_valid(desc->prim_type))
+	DESC_FAIL("invalid primitive name '%s'",
+	    desc->prim_type ? desc->prim_type : "(null)");
+    if (!desc->prim_label || !desc->prim_label[0])
+	DESC_FAIL("%s: missing primitive label", desc->prim_type);
+    if (desc->ncmd < 0 || (desc->ncmd && !desc->cmds))
+	DESC_FAIL("%s: invalid command array", desc->prim_type);
+    if (desc->nopt < 0 || (desc->nopt && !desc->opts))
+	DESC_FAIL("%s: invalid option array", desc->prim_type);
+
+    std::set<int> command_ids;
+    std::set<std::string> command_names;
+    std::set<std::string> canonical_names;
+    for (int ci = 0; ci < desc->ncmd; ++ci) {
+	const struct rt_edit_cmd_desc *command = &desc->cmds[ci];
+	const std::string canonical = edit_cmd_machine_name(desc, command);
+	if (!command_ids.insert(command->cmd_id).second)
+	    DESC_FAIL("%s: duplicate command id %d", desc->prim_type,
+		command->cmd_id);
+	if (!edit_machine_name_valid(command->name) ||
+	    !command_names.insert(command->name).second || canonical.empty() ||
+	    !canonical_names.insert(canonical).second)
+	    DESC_FAIL("%s: invalid or duplicate command name '%s'",
+		desc->prim_type, command->name ? command->name : "(null)");
+	if (!command->label || !command->label[0] || !command->category ||
+	    !command->category[0])
+	    DESC_FAIL("%s/%s: incomplete command metadata", desc->prim_type,
+		command->name);
+	if ((command->interactive != 0 && command->interactive != 1) ||
+	    command->nparam < 0 || (command->nparam && !command->params))
+	    DESC_FAIL("%s/%s: invalid command layout", desc->prim_type,
+		command->name);
+
+	std::set<std::string> parameter_names;
+	for (int pi = 0; pi < command->nparam; ++pi) {
+	    const struct rt_edit_param_desc *parameter = &command->params[pi];
+	    if (!edit_machine_name_valid(parameter->name) ||
+		!parameter_names.insert(parameter->name).second ||
+		!parameter->label || !parameter->label[0])
+		DESC_FAIL("%s/%s: invalid parameter %d", desc->prim_type,
+		    command->name, pi);
+	    int width = 1;
+	    switch (parameter->type) {
+		case RT_EDIT_PARAM_POINT:
+		case RT_EDIT_PARAM_VECTOR:
+		case RT_EDIT_PARAM_COLOR: width = 3; break;
+		case RT_EDIT_PARAM_MATRIX: width = 16; break;
+		case RT_EDIT_PARAM_SCALAR:
+		case RT_EDIT_PARAM_INTEGER:
+		case RT_EDIT_PARAM_BOOLEAN:
+		case RT_EDIT_PARAM_STRING:
+		case RT_EDIT_PARAM_ENUM: break;
+		default:
+		    DESC_FAIL("%s/%s/%s: invalid parameter type %d",
+			desc->prim_type, command->name, parameter->name,
+			parameter->type);
+	    }
+	    const int limit = parameter->type == RT_EDIT_PARAM_STRING ?
+		RT_EDIT_MAXSTR : RT_EDIT_MAXPARA;
+	    if (parameter->index < 0 || parameter->index + width > limit)
+		DESC_FAIL("%s/%s/%s: parameter slots exceed %d", desc->prim_type,
+		    command->name, parameter->name, limit);
+	    if ((edit_limit_is_set(parameter->range_min) &&
+		    !std::isfinite((double)parameter->range_min)) ||
+		(edit_limit_is_set(parameter->range_max) &&
+		    !std::isfinite((double)parameter->range_max)) ||
+		(edit_limit_is_set(parameter->range_min) &&
+		 edit_limit_is_set(parameter->range_max) &&
+		 parameter->range_min > parameter->range_max))
+		DESC_FAIL("%s/%s/%s: invalid range", desc->prim_type,
+		    command->name, parameter->name);
+	    if (parameter->type == RT_EDIT_PARAM_ENUM) {
+		if (parameter->nenum <= 0 || !parameter->enum_labels ||
+		    !parameter->enum_ids)
+		    DESC_FAIL("%s/%s/%s: incomplete enum metadata",
+			desc->prim_type, command->name, parameter->name);
+		std::set<int> enum_ids;
+		for (int ei = 0; ei < parameter->nenum; ++ei) {
+		    if (!parameter->enum_labels[ei] || !parameter->enum_labels[ei][0] ||
+			!enum_ids.insert(parameter->enum_ids[ei]).second)
+			DESC_FAIL("%s/%s/%s: invalid enum entry %d",
+			    desc->prim_type, command->name, parameter->name, ei);
+		}
+	    } else if (parameter->nenum) {
+		DESC_FAIL("%s/%s/%s: enum count on non-enum parameter",
+		    desc->prim_type, command->name, parameter->name);
+	    }
+	    if (parameter->type == RT_EDIT_PARAM_STRING &&
+		(!parameter->prim_field || !parameter->prim_field[0]))
+		DESC_FAIL("%s/%s/%s: missing string field", desc->prim_type,
+		    command->name, parameter->name);
+	}
+    }
+
+    std::set<std::string> option_names;
+    for (int oi = 0; oi < desc->nopt; ++oi) {
+	const struct rt_edit_opt_desc *option = &desc->opts[oi];
+	if (!edit_machine_name_valid(option->name) ||
+	    !option_names.insert(option->name).second || !option->label ||
+	    !option->label[0] || !option->desc || !option->desc[0] ||
+	    option->type < RT_EDIT_PARAM_SCALAR ||
+	    option->type > RT_EDIT_PARAM_MATRIX)
+	    DESC_FAIL("%s: invalid option %d", desc->prim_type, oi);
+    }
+
+#undef DESC_FAIL
+    return BRLCAD_OK;
 }
 
 /* Emit a fastf_t value as JSON number or "null" for NO_LIMIT */
@@ -1505,7 +1682,7 @@ int
 rt_edit_prim_desc_to_json(struct bu_vls *out,
                           const struct rt_edit_prim_desc *desc)
 {
-    if (!out || !desc)
+    if (!out || rt_edit_prim_desc_validate(NULL, desc) != BRLCAD_OK)
 	return BRLCAD_ERROR;
 
     bu_vls_strcat(out, "{\n");
@@ -1523,7 +1700,13 @@ rt_edit_prim_desc_to_json(struct bu_vls *out,
 	const struct rt_edit_cmd_desc *cmd = &desc->cmds[ci];
 	bu_vls_strcat(out, "    {\n");
 	bu_vls_printf(out, "      \"cmd_id\": %d,\n", cmd->cmd_id);
+	std::string stable_name = edit_cmd_machine_name(desc, cmd);
 	std::string cname = edit_cmd_slug(cmd->label);
+	bu_vls_printf(out, "      %cname%c: ", '"', '"');
+	emit_json_str(out, stable_name.c_str());
+	bu_vls_printf(out, ",\n      %csymbol%c: ", '"', '"');
+	emit_json_str(out, cmd->name);
+	bu_vls_strcat(out, ",\n");
 	bu_vls_strcat(out, "      \"canonical_name\": ");
 	emit_json_str(out, cname.c_str());
 	bu_vls_strcat(out, ",\n");

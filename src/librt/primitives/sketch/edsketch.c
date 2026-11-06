@@ -387,26 +387,26 @@ static const struct rt_edit_param_desc sketch_tangency_params[] = {
 };
 
 static const struct rt_edit_cmd_desc sketch_cmds[] = {
-    { ECMD_SKETCH_PICK_VERTEX,           "Pick Vertex",          "selection", 1, sketch_idx_param,   1, 10, NULL },
-    { ECMD_SKETCH_MOVE_VERTEX,           "Move Vertex",          "movement",  2, sketch_uv_params, 1, 20, NULL },
-    { ECMD_SKETCH_PICK_SEGMENT,          "Pick Segment",         "selection", 1, sketch_idx_param,   1, 30, NULL },
-    { ECMD_SKETCH_MOVE_SEGMENT,          "Move Segment",         "movement",  2, sketch_uv_params, 1, 40, NULL },
-    { ECMD_SKETCH_APPEND_LINE,           "Append Line",          "topology",  2, sketch_line_params, 1, 50, NULL },
-    { ECMD_SKETCH_APPEND_ARC,            "Append Arc",           "topology",  0, NULL,               1, 60, NULL },
-    { ECMD_SKETCH_APPEND_BEZIER,         "Append Bezier",        "topology",  0, NULL,               1, 70, NULL },
-    { ECMD_SKETCH_DELETE_VERTEX,         "Delete Vertex",        "topology",  1, sketch_idx_param,   1, 80, NULL },
-    { ECMD_SKETCH_DELETE_SEGMENT,        "Delete Segment",       "topology",  1, sketch_idx_param,   1, 90, NULL },
-    { ECMD_SKETCH_MOVE_VERTEX_LIST,      "Move Vertex List",     "movement",  1, sketch_point_param, 1, 100, NULL },
-    { ECMD_SKETCH_SPLIT_SEGMENT,         "Split Segment",        "topology",  2, sketch_split_params, 1, 110, NULL },
-    { ECMD_SKETCH_APPEND_NURB,           "Append NURB",          "topology",  0, NULL,               1, 120, NULL },
-    { ECMD_SKETCH_NURB_EDIT_KV,          "NURB Edit KV",         "topology",  0, NULL,               1, 130, NULL },
-    { ECMD_SKETCH_NURB_EDIT_WEIGHTS,     "NURB Edit Weights",    "topology",  0, NULL,               1, 140, NULL },
-    { ECMD_SKETCH_ADD_VERTEX,            "Add Vertex",           "topology",  2, sketch_uv_params,    1, 150, NULL },
-    { ECMD_SKETCH_TOGGLE_ARC_ORIENT,     "Toggle Arc Orient",    "topology",  1, sketch_idx_param,   1, 160, NULL },
-    { ECMD_SKETCH_SET_ARC_RADIUS,        "Set Arc Radius",       "topology",  2, sketch_arc_radius_params, 1, 170, NULL },
-    { ECMD_SKETCH_SET_TANGENCY,          "Set Arc Tangency",     "topology",  3, sketch_tangency_params,   1, 180, NULL },
-    { ECMD_SKETCH_SET_PLANE,             "Set Sketch Plane",     "geometry",  0, NULL,               1, 190, NULL },
-    { ECMD_SKETCH_TOGGLE_SEGMENT_REVERSE,"Toggle Seg Reverse",   "topology",  1, sketch_idx_param,   1, 200, NULL }
+    { ECMD_SKETCH_PICK_VERTEX, RT_EDIT_CMD_NAME(ECMD_SKETCH_PICK_VERTEX),           "Pick Vertex",          "selection", 1, sketch_idx_param,   1, 10, NULL },
+    { ECMD_SKETCH_MOVE_VERTEX, RT_EDIT_CMD_NAME(ECMD_SKETCH_MOVE_VERTEX),           "Move Vertex",          "movement",  2, sketch_uv_params, 1, 20, NULL },
+    { ECMD_SKETCH_PICK_SEGMENT, RT_EDIT_CMD_NAME(ECMD_SKETCH_PICK_SEGMENT),          "Pick Segment",         "selection", 1, sketch_idx_param,   1, 30, NULL },
+    { ECMD_SKETCH_MOVE_SEGMENT, RT_EDIT_CMD_NAME(ECMD_SKETCH_MOVE_SEGMENT),          "Move Segment",         "movement",  2, sketch_uv_params, 1, 40, NULL },
+    { ECMD_SKETCH_APPEND_LINE, RT_EDIT_CMD_NAME(ECMD_SKETCH_APPEND_LINE),           "Append Line",          "topology",  2, sketch_line_params, 1, 50, NULL },
+    { ECMD_SKETCH_APPEND_ARC, RT_EDIT_CMD_NAME(ECMD_SKETCH_APPEND_ARC),            "Append Arc",           "topology",  0, NULL,               1, 60, NULL },
+    { ECMD_SKETCH_APPEND_BEZIER, RT_EDIT_CMD_NAME(ECMD_SKETCH_APPEND_BEZIER),         "Append Bezier",        "topology",  0, NULL,               1, 70, NULL },
+    { ECMD_SKETCH_DELETE_VERTEX, RT_EDIT_CMD_NAME(ECMD_SKETCH_DELETE_VERTEX),         "Delete Vertex",        "topology",  1, sketch_idx_param,   1, 80, NULL },
+    { ECMD_SKETCH_DELETE_SEGMENT, RT_EDIT_CMD_NAME(ECMD_SKETCH_DELETE_SEGMENT),        "Delete Segment",       "topology",  1, sketch_idx_param,   1, 90, NULL },
+    { ECMD_SKETCH_MOVE_VERTEX_LIST, RT_EDIT_CMD_NAME(ECMD_SKETCH_MOVE_VERTEX_LIST),      "Move Vertex List",     "movement",  1, sketch_point_param, 1, 100, NULL },
+    { ECMD_SKETCH_SPLIT_SEGMENT, RT_EDIT_CMD_NAME(ECMD_SKETCH_SPLIT_SEGMENT),         "Split Segment",        "topology",  2, sketch_split_params, 1, 110, NULL },
+    { ECMD_SKETCH_APPEND_NURB, RT_EDIT_CMD_NAME(ECMD_SKETCH_APPEND_NURB),           "Append NURB",          "topology",  0, NULL,               1, 120, NULL },
+    { ECMD_SKETCH_NURB_EDIT_KV, RT_EDIT_CMD_NAME(ECMD_SKETCH_NURB_EDIT_KV),          "NURB Edit KV",         "topology",  0, NULL,               1, 130, NULL },
+    { ECMD_SKETCH_NURB_EDIT_WEIGHTS, RT_EDIT_CMD_NAME(ECMD_SKETCH_NURB_EDIT_WEIGHTS),     "NURB Edit Weights",    "topology",  0, NULL,               1, 140, NULL },
+    { ECMD_SKETCH_ADD_VERTEX, RT_EDIT_CMD_NAME(ECMD_SKETCH_ADD_VERTEX),            "Add Vertex",           "topology",  2, sketch_uv_params,    1, 150, NULL },
+    { ECMD_SKETCH_TOGGLE_ARC_ORIENT, RT_EDIT_CMD_NAME(ECMD_SKETCH_TOGGLE_ARC_ORIENT),     "Toggle Arc Orient",    "topology",  1, sketch_idx_param,   1, 160, NULL },
+    { ECMD_SKETCH_SET_ARC_RADIUS, RT_EDIT_CMD_NAME(ECMD_SKETCH_SET_ARC_RADIUS),        "Set Arc Radius",       "topology",  2, sketch_arc_radius_params, 1, 170, NULL },
+    { ECMD_SKETCH_SET_TANGENCY, RT_EDIT_CMD_NAME(ECMD_SKETCH_SET_TANGENCY),          "Set Arc Tangency",     "topology",  3, sketch_tangency_params,   1, 180, NULL },
+    { ECMD_SKETCH_SET_PLANE, RT_EDIT_CMD_NAME(ECMD_SKETCH_SET_PLANE),             "Set Sketch Plane",     "geometry",  0, NULL,               1, 190, NULL },
+    { ECMD_SKETCH_TOGGLE_SEGMENT_REVERSE, RT_EDIT_CMD_NAME(ECMD_SKETCH_TOGGLE_SEGMENT_REVERSE),"Toggle Seg Reverse",   "topology",  1, sketch_idx_param,   1, 200, NULL }
 };
 
 static const struct rt_edit_prim_desc sketch_prim_desc = {

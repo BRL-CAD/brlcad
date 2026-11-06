@@ -38,6 +38,7 @@
 #include "bu/str.h"
 #include "bu/vls.h"
 #include "raytrace.h"
+#include "rt/edit.h"
 
 
 /* Check that the JSON output for prim_type_id:
@@ -99,10 +100,69 @@ check_prim(const char *name, int prim_type_id,
 }
 
 
+static int
+check_descriptor_audit(void)
+{
+    int failures = 0;
+    int descriptor_count = 0;
+    extern const struct rt_edit_functab EDOBJ[];
+
+    for (int type = 0; EDOBJ[type].magic == RT_FUNCTAB_MAGIC; ++type) {
+	if (!EDOBJ[type].ft_edit_desc)
+	    continue;
+	const struct rt_edit_prim_desc *desc = EDOBJ[type].ft_edit_desc();
+	struct bu_vls diagnostic = BU_VLS_INIT_ZERO;
+	if (rt_edit_prim_desc_validate(&diagnostic, desc) != BRLCAD_OK) {
+	    bu_log("FAIL [type %d]: descriptor invalid: %s\n", type,
+		bu_vls_cstr(&diagnostic));
+	    failures++;
+	} else {
+	    descriptor_count++;
+	    for (int ci = 0; ci < desc->ncmd; ++ci) {
+		struct bu_vls name = BU_VLS_INIT_ZERO;
+		if (rt_edit_cmd_name(&name, desc, &desc->cmds[ci]) !=
+			BRLCAD_OK || !bu_vls_strlen(&name)) {
+		    bu_log("FAIL [%s]: command %d has no canonical name\n",
+			desc->prim_type, ci);
+		    failures++;
+		}
+		bu_vls_free(&name);
+	    }
+	}
+	bu_vls_free(&diagnostic);
+    }
+
+    const struct rt_edit_prim_desc *ell = EDOBJ[ID_ELL].ft_edit_desc();
+    if (ell && ell->ncmd > 0) {
+	struct rt_edit_cmd_desc invalid_command = ell->cmds[0];
+	invalid_command.name = NULL;
+	struct rt_edit_prim_desc invalid_desc = *ell;
+	invalid_desc.ncmd = 1;
+	invalid_desc.cmds = &invalid_command;
+	struct bu_vls diagnostic = BU_VLS_INIT_ZERO;
+	if (rt_edit_prim_desc_validate(&diagnostic, &invalid_desc) !=
+		BRLCAD_ERROR || !bu_vls_strlen(&diagnostic)) {
+	    bu_log("FAIL: malformed descriptor was not rejected diagnostically\n");
+	    failures++;
+	}
+	bu_vls_free(&diagnostic);
+    } else {
+	bu_log("FAIL: ELL descriptor unavailable for validation test\n");
+	failures++;
+    }
+
+    bu_log("%s: validated %d registered edit descriptors\n",
+	failures ? "FAIL" : "PASS", descriptor_count);
+    return failures;
+}
+
+
 int
 rt_edit_test_edit_desc(void)
 {
     int fail = 0;
+
+    fail += check_descriptor_audit();
 
     /* ------------------------------------------------------------------
      * Primitives with ft_edit_desc() implementations.

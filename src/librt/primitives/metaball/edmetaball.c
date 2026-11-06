@@ -358,6 +358,7 @@ static const struct rt_edit_cmd_desc metaball_cmds[] = {
     /* --- global metaball parameters --------------------------------- */
     {
 	ECMD_METABALL_SET_THRESHOLD, /* cmd_id  */
+	RT_EDIT_CMD_NAME(ECMD_METABALL_SET_THRESHOLD), /* name  */
 	"Set Threshold",      /* label        */
 	"metaball",           /* category     */
 	1,                    /* nparam       */
@@ -368,6 +369,7 @@ static const struct rt_edit_cmd_desc metaball_cmds[] = {
     },
     {
 	ECMD_METABALL_SET_METHOD,    /* cmd_id  */
+	RT_EDIT_CMD_NAME(ECMD_METABALL_SET_METHOD),    /* name  */
 	"Set Render Method",  /* label        */
 	"metaball",           /* category     */
 	1,                    /* nparam       */
@@ -379,6 +381,7 @@ static const struct rt_edit_cmd_desc metaball_cmds[] = {
     /* --- point selection / navigation -------------------------------- */
     {
 	ECMD_METABALL_PT_PICK,       /* cmd_id  */
+	RT_EDIT_CMD_NAME(ECMD_METABALL_PT_PICK),       /* name  */
 	"Select Point",       /* label        */
 	"select",             /* category     */
 	1,                    /* nparam       */
@@ -389,6 +392,7 @@ static const struct rt_edit_cmd_desc metaball_cmds[] = {
     },
     {
 	ECMD_METABALL_PT_NEXT,       /* cmd_id  */
+	RT_EDIT_CMD_NAME(ECMD_METABALL_PT_NEXT),       /* name  */
 	"Next Point",         /* label        */
 	"select",             /* category     */
 	0,                    /* nparam       */
@@ -399,6 +403,7 @@ static const struct rt_edit_cmd_desc metaball_cmds[] = {
     },
     {
 	ECMD_METABALL_PT_PREV,       /* cmd_id  */
+	RT_EDIT_CMD_NAME(ECMD_METABALL_PT_PREV),       /* name  */
 	"Previous Point",     /* label        */
 	"select",             /* category     */
 	0,                    /* nparam       */
@@ -410,6 +415,7 @@ static const struct rt_edit_cmd_desc metaball_cmds[] = {
     /* --- point geometry manipulation --------------------------------- */
     {
 	ECMD_METABALL_PT_MOV,        /* cmd_id  */
+	RT_EDIT_CMD_NAME(ECMD_METABALL_PT_MOV),        /* name  */
 	"Move Point",         /* label        */
 	"point",              /* category     */
 	1,                    /* nparam       */
@@ -420,6 +426,7 @@ static const struct rt_edit_cmd_desc metaball_cmds[] = {
     },
     {
 	ECMD_METABALL_PT_ADD,        /* cmd_id  */
+	RT_EDIT_CMD_NAME(ECMD_METABALL_PT_ADD),        /* name  */
 	"Add Point",          /* label        */
 	"point",              /* category     */
 	1,                    /* nparam       */
@@ -430,6 +437,7 @@ static const struct rt_edit_cmd_desc metaball_cmds[] = {
     },
     {
 	ECMD_METABALL_PT_DEL,        /* cmd_id  */
+	RT_EDIT_CMD_NAME(ECMD_METABALL_PT_DEL),        /* name  */
 	"Delete Point",       /* label        */
 	"point",              /* category     */
 	0,                    /* nparam       */
@@ -441,6 +449,7 @@ static const struct rt_edit_cmd_desc metaball_cmds[] = {
     /* --- per-point scalar parameters --------------------------------- */
     {
 	ECMD_METABALL_PT_FLDSTR,     /* cmd_id  */
+	RT_EDIT_CMD_NAME(ECMD_METABALL_PT_FLDSTR),     /* name  */
 	"Scale Point Field Strength", /* label  */
 	"point",              /* category     */
 	1,                    /* nparam       */
@@ -451,6 +460,7 @@ static const struct rt_edit_cmd_desc metaball_cmds[] = {
     },
     {
 	ECMD_METABALL_PT_SCALE_BLOBBINESS, /* cmd_id */
+	RT_EDIT_CMD_NAME(ECMD_METABALL_PT_SCALE_BLOBBINESS), /* name */
 	"Scale Point Blobbiness", /* label    */
 	"point",              /* category     */
 	1,                    /* nparam       */
@@ -461,6 +471,7 @@ static const struct rt_edit_cmd_desc metaball_cmds[] = {
     },
     {
 	ECMD_METABALL_PT_SET_BLOBBINESS, /* cmd_id */
+	RT_EDIT_CMD_NAME(ECMD_METABALL_PT_SET_BLOBBINESS), /* name */
 	"Set Point Blobbiness", /* label      */
 	"point",              /* category     */
 	1,                    /* nparam       */

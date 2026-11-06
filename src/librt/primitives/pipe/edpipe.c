@@ -264,6 +264,7 @@ static const struct rt_edit_cmd_desc pipe_cmds[] = {
     /* --- point selection / navigation -------------------------------- */
     {
 	ECMD_PIPE_SELECT,     /* cmd_id       */
+	RT_EDIT_CMD_NAME(ECMD_PIPE_SELECT),     /* name       */
 	"Select Point",       /* label        */
 	"select",             /* category     */
 	1,                    /* nparam       */
@@ -274,6 +275,7 @@ static const struct rt_edit_cmd_desc pipe_cmds[] = {
     },
     {
 	ECMD_PIPE_NEXT_PT,    /* cmd_id       */
+	RT_EDIT_CMD_NAME(ECMD_PIPE_NEXT_PT),    /* name       */
 	"Next Point",         /* label        */
 	"select",             /* category     */
 	0,                    /* nparam       */
@@ -284,6 +286,7 @@ static const struct rt_edit_cmd_desc pipe_cmds[] = {
     },
     {
 	ECMD_PIPE_PREV_PT,    /* cmd_id       */
+	RT_EDIT_CMD_NAME(ECMD_PIPE_PREV_PT),    /* name       */
 	"Previous Point",     /* label        */
 	"select",             /* category     */
 	0,                    /* nparam       */
@@ -295,6 +298,7 @@ static const struct rt_edit_cmd_desc pipe_cmds[] = {
     /* --- point geometry manipulation --------------------------------- */
     {
 	ECMD_PIPE_PT_MOVE,    /* cmd_id       */
+	RT_EDIT_CMD_NAME(ECMD_PIPE_PT_MOVE),    /* name       */
 	"Move Point",         /* label        */
 	"point",              /* category     */
 	1,                    /* nparam       */
@@ -305,6 +309,7 @@ static const struct rt_edit_cmd_desc pipe_cmds[] = {
     },
     {
 	ECMD_PIPE_PT_DEL,     /* cmd_id       */
+	RT_EDIT_CMD_NAME(ECMD_PIPE_PT_DEL),     /* name       */
 	"Delete Point",       /* label        */
 	"point",              /* category     */
 	0,                    /* nparam       */
@@ -315,6 +320,7 @@ static const struct rt_edit_cmd_desc pipe_cmds[] = {
     },
     {
 	ECMD_PIPE_PT_ADD,     /* cmd_id       */
+	RT_EDIT_CMD_NAME(ECMD_PIPE_PT_ADD),     /* name       */
 	"Append Point",       /* label        */
 	"point",              /* category     */
 	1,                    /* nparam       */
@@ -325,6 +331,7 @@ static const struct rt_edit_cmd_desc pipe_cmds[] = {
     },
     {
 	ECMD_PIPE_PT_INS,     /* cmd_id       */
+	RT_EDIT_CMD_NAME(ECMD_PIPE_PT_INS),     /* name       */
 	"Prepend Point",      /* label        */
 	"point",              /* category     */
 	1,                    /* nparam       */
@@ -335,6 +342,7 @@ static const struct rt_edit_cmd_desc pipe_cmds[] = {
     },
     {
 	ECMD_PIPE_SPLIT,      /* cmd_id       */
+	RT_EDIT_CMD_NAME(ECMD_PIPE_SPLIT),      /* name       */
 	"Split Segment",      /* label        */
 	"point",              /* category     */
 	1,                    /* nparam       */
@@ -346,6 +354,7 @@ static const struct rt_edit_cmd_desc pipe_cmds[] = {
     /* --- per-point cross-section dimensions -------------------------- */
     {
 	ECMD_PIPE_PT_OD,      /* cmd_id       */
+	RT_EDIT_CMD_NAME(ECMD_PIPE_PT_OD),      /* name       */
 	"Set Point OD",       /* label        */
 	"point",              /* category     */
 	1,                    /* nparam       */
@@ -356,6 +365,7 @@ static const struct rt_edit_cmd_desc pipe_cmds[] = {
     },
     {
 	ECMD_PIPE_PT_ID,      /* cmd_id       */
+	RT_EDIT_CMD_NAME(ECMD_PIPE_PT_ID),      /* name       */
 	"Set Point ID",       /* label        */
 	"point",              /* category     */
 	1,                    /* nparam       */
@@ -366,6 +376,7 @@ static const struct rt_edit_cmd_desc pipe_cmds[] = {
     },
     {
 	ECMD_PIPE_PT_RADIUS,  /* cmd_id       */
+	RT_EDIT_CMD_NAME(ECMD_PIPE_PT_RADIUS),  /* name       */
 	"Set Point Bend",     /* label        */
 	"point",              /* category     */
 	1,                    /* nparam       */
@@ -377,6 +388,7 @@ static const struct rt_edit_cmd_desc pipe_cmds[] = {
     /* --- whole-pipe cross-section dimensions ------------------------- */
     {
 	ECMD_PIPE_SCALE_OD,   /* cmd_id       */
+	RT_EDIT_CMD_NAME(ECMD_PIPE_SCALE_OD),   /* name       */
 	"Set Pipe OD",        /* label        */
 	"pipe",               /* category     */
 	1,                    /* nparam       */
@@ -387,6 +399,7 @@ static const struct rt_edit_cmd_desc pipe_cmds[] = {
     },
     {
 	ECMD_PIPE_SCALE_ID,   /* cmd_id       */
+	RT_EDIT_CMD_NAME(ECMD_PIPE_SCALE_ID),   /* name       */
 	"Set Pipe ID",        /* label        */
 	"pipe",               /* category     */
 	1,                    /* nparam       */
@@ -397,6 +410,7 @@ static const struct rt_edit_cmd_desc pipe_cmds[] = {
     },
     {
 	ECMD_PIPE_SCALE_RADIUS, /* cmd_id     */
+	RT_EDIT_CMD_NAME(ECMD_PIPE_SCALE_RADIUS), /* name     */
 	"Set Pipe Bend",      /* label        */
 	"pipe",               /* category     */
 	1,                    /* nparam       */

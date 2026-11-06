@@ -282,7 +282,7 @@ static const int   datum_type_enum_vals[]  = { 0, 1, 2 };
 static const struct rt_edit_param_desc datum_type_param[] = {
     { "type",
       "Type (0=point 1=line 2=plane; lowering order zeroes removed fields)",
-      RT_EDIT_PARAM_SCALAR, 0,
+      RT_EDIT_PARAM_ENUM, 0,
       0.0, 2.0, "enum",
       3, datum_type_enum_names, datum_type_enum_vals,
       NULL }
@@ -308,10 +308,10 @@ static const struct rt_edit_param_desc datum_w_param[] = {
 };
 
 static const struct rt_edit_cmd_desc datum_cmds[] = {
-    { ECMD_DATUM_SET_TYPE, "Set Type",      "datum", 1, datum_type_param, 1, 10, NULL },
-    { ECMD_DATUM_SET_PNT,  "Set Point",     "datum", 1, datum_pnt_param,  1, 20, NULL },
-    { ECMD_DATUM_SET_DIR,  "Set Direction", "datum", 1, datum_dir_param,  1, 30, NULL },
-    { ECMD_DATUM_SET_W,    "Set W",         "datum", 1, datum_w_param,    1, 40, NULL }
+    { ECMD_DATUM_SET_TYPE, RT_EDIT_CMD_NAME(ECMD_DATUM_SET_TYPE), "Set Type",      "datum", 1, datum_type_param, 1, 10, NULL },
+    { ECMD_DATUM_SET_PNT, RT_EDIT_CMD_NAME(ECMD_DATUM_SET_PNT),  "Set Point",     "datum", 1, datum_pnt_param,  1, 20, NULL },
+    { ECMD_DATUM_SET_DIR, RT_EDIT_CMD_NAME(ECMD_DATUM_SET_DIR),  "Set Direction", "datum", 1, datum_dir_param,  1, 30, NULL },
+    { ECMD_DATUM_SET_W, RT_EDIT_CMD_NAME(ECMD_DATUM_SET_W),    "Set W",         "datum", 1, datum_w_param,    1, 40, NULL }
 };
 
 static const struct rt_edit_prim_desc datum_prim_desc = {

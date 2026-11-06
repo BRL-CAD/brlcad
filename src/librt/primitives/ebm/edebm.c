@@ -138,6 +138,7 @@ static const struct rt_edit_param_desc ebm_height_params[] = {
 static const struct rt_edit_cmd_desc ebm_cmds[] = {
     {
 	ECMD_EBM_FNAME,       /* cmd_id       */
+	RT_EDIT_CMD_NAME(ECMD_EBM_FNAME),       /* name       */
 	"File Name",          /* label        */
 	"data",               /* category     */
 	1,                    /* nparam       */
@@ -148,6 +149,7 @@ static const struct rt_edit_cmd_desc ebm_cmds[] = {
     },
     {
 	ECMD_EBM_FSIZE,       /* cmd_id       */
+	RT_EDIT_CMD_NAME(ECMD_EBM_FSIZE),       /* name       */
 	"File Size (W N)",    /* label        */
 	"geometry",           /* category     */
 	2,                    /* nparam       */
@@ -158,6 +160,7 @@ static const struct rt_edit_cmd_desc ebm_cmds[] = {
     },
     {
 	ECMD_EBM_HEIGHT,      /* cmd_id       */
+	RT_EDIT_CMD_NAME(ECMD_EBM_HEIGHT),      /* name       */
 	"Extrude Depth",      /* label        */
 	"geometry",           /* category     */
 	1,                    /* nparam       */

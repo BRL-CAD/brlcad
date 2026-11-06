@@ -515,6 +515,7 @@ static const struct rt_edit_param_desc brep_point_param[] = {
 static const struct rt_edit_cmd_desc brep_cmds[] = {
     {
 	ECMD_BREP_SRF_SELECT,           /* cmd_id        */
+	RT_EDIT_CMD_NAME(ECMD_BREP_SRF_SELECT),           /* name        */
 	"Select Surface CV",            /* label         */
 	"surface",                      /* category      */
 	3,                              /* nparam        */
@@ -525,6 +526,7 @@ static const struct rt_edit_cmd_desc brep_cmds[] = {
     },
     {
 	ECMD_BREP_SRF_CV_MOVE,
+	RT_EDIT_CMD_NAME(ECMD_BREP_SRF_CV_MOVE),
 	"Move Surface CV",
 	"surface",
 	1,
@@ -535,6 +537,7 @@ static const struct rt_edit_cmd_desc brep_cmds[] = {
     },
     {
 	ECMD_BREP_SRF_CV_SET,
+	RT_EDIT_CMD_NAME(ECMD_BREP_SRF_CV_SET),
 	"Set Surface CV Position",
 	"surface",
 	1,

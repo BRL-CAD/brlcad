@@ -130,6 +130,7 @@ static const struct rt_edit_param_desc rec_r_params[] = {
 static const struct rt_edit_cmd_desc rec_cmds[] = {
     {
 	ECMD_REC_SET_V,             /* cmd_id */
+	RT_EDIT_CMD_NAME(ECMD_REC_SET_V),             /* name */
 	"Set V",                    /* label */
 	"geometry",                 /* category */
 	1,                          /* nparam */
@@ -140,6 +141,7 @@ static const struct rt_edit_cmd_desc rec_cmds[] = {
     },
     {
 	ECMD_REC_SET_H,             /* cmd_id */
+	RT_EDIT_CMD_NAME(ECMD_REC_SET_H),             /* name */
 	"Set H",                    /* label */
 	"geometry",                 /* category */
 	1,                          /* nparam */
@@ -150,6 +152,7 @@ static const struct rt_edit_cmd_desc rec_cmds[] = {
     },
     {
 	ECMD_REC_SCALE_R1,          /* cmd_id */
+	RT_EDIT_CMD_NAME(ECMD_REC_SCALE_R1),          /* name */
 	"Set Radius 1",             /* label */
 	"geometry",                 /* category */
 	1,                          /* nparam */
@@ -160,6 +163,7 @@ static const struct rt_edit_cmd_desc rec_cmds[] = {
     },
     {
 	ECMD_REC_SCALE_R2,          /* cmd_id */
+	RT_EDIT_CMD_NAME(ECMD_REC_SCALE_R2),          /* name */
 	"Set Radius 2",             /* label */
 	"geometry",                 /* category */
 	1,                          /* nparam */
@@ -170,6 +174,7 @@ static const struct rt_edit_cmd_desc rec_cmds[] = {
     },
     {
 	ECMD_REC_SCALE_R,           /* cmd_id */
+	RT_EDIT_CMD_NAME(ECMD_REC_SCALE_R),           /* name */
 	"Set Radius",               /* label */
 	"geometry",                 /* category */
 	1,                          /* nparam */

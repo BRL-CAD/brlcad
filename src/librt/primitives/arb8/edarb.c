@@ -181,6 +181,7 @@ static const struct rt_edit_param_desc arb_rotate_face_params[] = {
 static const struct rt_edit_cmd_desc arb_cmds[] = {
     {
 	ECMD_ARB_MOVE_FACE,   /* cmd_id       */
+	RT_EDIT_CMD_NAME(ECMD_ARB_MOVE_FACE),   /* name       */
 	"Move Face",          /* label        */
 	"geometry",           /* category     */
 	2,                    /* nparam       */
@@ -191,6 +192,7 @@ static const struct rt_edit_cmd_desc arb_cmds[] = {
     },
     {
 	EARB,                 /* cmd_id       */
+	RT_EDIT_CMD_NAME(EARB),                 /* name       */
 	"Move Edge",          /* label        */
 	"geometry",           /* category     */
 	2,                    /* nparam       */
@@ -201,6 +203,7 @@ static const struct rt_edit_cmd_desc arb_cmds[] = {
     },
     {
 	PTARB,                /* cmd_id       */
+	RT_EDIT_CMD_NAME(PTARB),                /* name       */
 	"Move Vertex",        /* label        */
 	"geometry",           /* category     */
 	2,                    /* nparam       */
@@ -211,6 +214,7 @@ static const struct rt_edit_cmd_desc arb_cmds[] = {
     },
     {
 	ECMD_ARB_ROTATE_FACE, /* cmd_id       */
+	RT_EDIT_CMD_NAME(ECMD_ARB_ROTATE_FACE), /* name       */
 	"Rotate Face",        /* label        */
 	"geometry",           /* category     */
 	3,                    /* nparam       */

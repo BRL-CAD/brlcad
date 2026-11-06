@@ -148,6 +148,7 @@ static const struct rt_edit_param_desc ell_abc_params[] = {
 static const struct rt_edit_cmd_desc ell_cmds[] = {
     {
 	ECMD_ELL_SCALE_A,     /* cmd_id       */
+	RT_EDIT_CMD_NAME(ECMD_ELL_SCALE_A),     /* name       */
 	"Set A",              /* label        */
 	"geometry",           /* category     */
 	1,                    /* nparam       */
@@ -158,6 +159,7 @@ static const struct rt_edit_cmd_desc ell_cmds[] = {
     },
     {
 	ECMD_ELL_SCALE_B,     /* cmd_id       */
+	RT_EDIT_CMD_NAME(ECMD_ELL_SCALE_B),     /* name       */
 	"Set B",              /* label        */
 	"geometry",           /* category     */
 	1,                    /* nparam       */
@@ -168,6 +170,7 @@ static const struct rt_edit_cmd_desc ell_cmds[] = {
     },
     {
 	ECMD_ELL_SCALE_C,     /* cmd_id       */
+	RT_EDIT_CMD_NAME(ECMD_ELL_SCALE_C),     /* name       */
 	"Set C",              /* label        */
 	"geometry",           /* category     */
 	1,                    /* nparam       */
@@ -178,6 +181,7 @@ static const struct rt_edit_cmd_desc ell_cmds[] = {
     },
     {
 	ECMD_ELL_SCALE_ABC,   /* cmd_id       */
+	RT_EDIT_CMD_NAME(ECMD_ELL_SCALE_ABC),   /* name       */
 	"Set A,B,C",          /* label        */
 	"geometry",           /* category     */
 	1,                    /* nparam       */

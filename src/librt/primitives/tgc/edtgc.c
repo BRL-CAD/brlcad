@@ -266,6 +266,7 @@ static const struct rt_edit_param_desc tgc_rot_deg_params[] = {
 static const struct rt_edit_cmd_desc tgc_cmds[] = {
     {
 	ECMD_TGC_SCALE_H,     /* cmd_id       */
+	RT_EDIT_CMD_NAME(ECMD_TGC_SCALE_H),     /* name       */
 	"Set H",              /* label        */
 	"geometry",           /* category     */
 	1,                    /* nparam       */
@@ -275,6 +276,7 @@ static const struct rt_edit_cmd_desc tgc_cmds[] = {
     },
     {
 	ECMD_TGC_SCALE_H_V,   /* cmd_id       */
+	RT_EDIT_CMD_NAME(ECMD_TGC_SCALE_H_V),   /* name       */
 	"Set H (move V)",     /* label        */
 	"geometry",           /* category     */
 	1,                    /* nparam       */
@@ -284,6 +286,7 @@ static const struct rt_edit_cmd_desc tgc_cmds[] = {
     },
     {
 	ECMD_TGC_SCALE_H_CD,  /* cmd_id       */
+	RT_EDIT_CMD_NAME(ECMD_TGC_SCALE_H_CD),  /* name       */
 	"Set H (adj C,D)",    /* label        */
 	"geometry",           /* category     */
 	1,                    /* nparam       */
@@ -293,6 +296,7 @@ static const struct rt_edit_cmd_desc tgc_cmds[] = {
     },
     {
 	ECMD_TGC_SCALE_H_V_AB, /* cmd_id      */
+	RT_EDIT_CMD_NAME(ECMD_TGC_SCALE_H_V_AB), /* name      */
 	"Set H (move V, adj A,B)", /* label   */
 	"geometry",           /* category     */
 	1,                    /* nparam       */
@@ -302,6 +306,7 @@ static const struct rt_edit_cmd_desc tgc_cmds[] = {
     },
     {
 	ECMD_TGC_SCALE_A,     /* cmd_id       */
+	RT_EDIT_CMD_NAME(ECMD_TGC_SCALE_A),     /* name       */
 	"Set A",              /* label        */
 	"geometry",           /* category     */
 	1,                    /* nparam       */
@@ -311,6 +316,7 @@ static const struct rt_edit_cmd_desc tgc_cmds[] = {
     },
     {
 	ECMD_TGC_SCALE_B,     /* cmd_id       */
+	RT_EDIT_CMD_NAME(ECMD_TGC_SCALE_B),     /* name       */
 	"Set B",              /* label        */
 	"geometry",           /* category     */
 	1,                    /* nparam       */
@@ -320,6 +326,7 @@ static const struct rt_edit_cmd_desc tgc_cmds[] = {
     },
     {
 	ECMD_TGC_SCALE_C,     /* cmd_id       */
+	RT_EDIT_CMD_NAME(ECMD_TGC_SCALE_C),     /* name       */
 	"Set C",              /* label        */
 	"geometry",           /* category     */
 	1,                    /* nparam       */
@@ -329,6 +336,7 @@ static const struct rt_edit_cmd_desc tgc_cmds[] = {
     },
     {
 	ECMD_TGC_SCALE_D,     /* cmd_id       */
+	RT_EDIT_CMD_NAME(ECMD_TGC_SCALE_D),     /* name       */
 	"Set D",              /* label        */
 	"geometry",           /* category     */
 	1,                    /* nparam       */
@@ -338,6 +346,7 @@ static const struct rt_edit_cmd_desc tgc_cmds[] = {
     },
     {
 	ECMD_TGC_SCALE_AB,    /* cmd_id       */
+	RT_EDIT_CMD_NAME(ECMD_TGC_SCALE_AB),    /* name       */
 	"Set A,B",            /* label        */
 	"geometry",           /* category     */
 	1,                    /* nparam       */
@@ -347,6 +356,7 @@ static const struct rt_edit_cmd_desc tgc_cmds[] = {
     },
     {
 	ECMD_TGC_SCALE_CD,    /* cmd_id       */
+	RT_EDIT_CMD_NAME(ECMD_TGC_SCALE_CD),    /* name       */
 	"Set C,D",            /* label        */
 	"geometry",           /* category     */
 	1,                    /* nparam       */
@@ -356,6 +366,7 @@ static const struct rt_edit_cmd_desc tgc_cmds[] = {
     },
     {
 	ECMD_TGC_SCALE_ABCD,  /* cmd_id       */
+	RT_EDIT_CMD_NAME(ECMD_TGC_SCALE_ABCD),  /* name       */
 	"Set A,B,C,D",        /* label        */
 	"geometry",           /* category     */
 	1,                    /* nparam       */
@@ -365,6 +376,7 @@ static const struct rt_edit_cmd_desc tgc_cmds[] = {
     },
     {
 	ECMD_TGC_MV_H,        /* cmd_id       */
+	RT_EDIT_CMD_NAME(ECMD_TGC_MV_H),        /* name       */
 	"Move End H(rt)",     /* label        */
 	"move",               /* category     */
 	1,                    /* nparam       */
@@ -374,6 +386,7 @@ static const struct rt_edit_cmd_desc tgc_cmds[] = {
     },
     {
 	ECMD_TGC_MV_HH,       /* cmd_id       */
+	RT_EDIT_CMD_NAME(ECMD_TGC_MV_HH),       /* name       */
 	"Move End H",         /* label        */
 	"move",               /* category     */
 	1,                    /* nparam       */
@@ -383,6 +396,7 @@ static const struct rt_edit_cmd_desc tgc_cmds[] = {
     },
     {
 	ECMD_TGC_ROT_H,       /* cmd_id       */
+	RT_EDIT_CMD_NAME(ECMD_TGC_ROT_H),       /* name       */
 	"Rotate H",           /* label        */
 	"rotation",           /* category     */
 	1,                    /* nparam       */
@@ -392,6 +406,7 @@ static const struct rt_edit_cmd_desc tgc_cmds[] = {
     },
     {
 	ECMD_TGC_ROT_AB,      /* cmd_id       */
+	RT_EDIT_CMD_NAME(ECMD_TGC_ROT_AB),      /* name       */
 	"Rotate AxB",         /* label        */
 	"rotation",           /* category     */
 	1,                    /* nparam       */

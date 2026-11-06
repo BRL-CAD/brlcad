@@ -1677,14 +1677,22 @@ _find_desc_cmd(const struct rt_edit_prim_desc *desc, const char *name)
 	return NULL;
     for (int i = 0; i < desc->ncmd; i++) {
 	const struct rt_edit_cmd_desc *cmd = &desc->cmds[i];
-	/* 1. Label slug */
+	struct bu_vls canonical_name = BU_VLS_INIT_ZERO;
+	const int name_result = rt_edit_cmd_name(&canonical_name, desc, cmd);
+	const bool canonical_match = name_result == BRLCAD_OK &&
+	    BU_STR_EQUAL(bu_vls_cstr(&canonical_name), name);
+	bu_vls_free(&canonical_name);
+	/* 1. Stable canonical name */
+	if (canonical_match)
+	    return cmd;
+	/* 2. Established label-derived command name */
 	if (_prim_cmd_slug(cmd->label) == name)
 	    return cmd;
-	/* 2. First param name (single-param shorthand) */
+	/* 3. First param name (single-param shorthand) */
 	if (cmd->nparam == 1 && cmd->params && cmd->params[0].name &&
 	    BU_STR_EQUAL(cmd->params[0].name, name))
 	    return cmd;
-	/* 3. Label itself (case-insensitive) */
+	/* 4. Label itself (case-insensitive) */
 	if (bu_strcasecmp(cmd->label, name) == 0)
 	    return cmd;
     }

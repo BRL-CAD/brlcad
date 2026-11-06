@@ -117,11 +117,11 @@ static const struct rt_edit_param_desc hyp_rot_deg_params[] = {
 };
 
 static const struct rt_edit_cmd_desc hyp_cmds[] = {
-    { ECMD_HYP_H,       "Set H",    "geometry", 1, hyp_h_params,       1, 10, NULL },
-    { ECMD_HYP_SCALE_A, "Set A",    "geometry", 1, hyp_a_params,       1, 20, NULL },
-    { ECMD_HYP_SCALE_B, "Set B",    "geometry", 1, hyp_b_params,       1, 30, NULL },
-    { ECMD_HYP_C,       "Set c",    "geometry", 1, hyp_c_params,       1, 40, NULL },
-    { ECMD_HYP_ROT_H,   "Rotate H", "rotation", 1, hyp_rot_deg_params, 1, 50, NULL }
+    { ECMD_HYP_H, RT_EDIT_CMD_NAME(ECMD_HYP_H),       "Set H",    "geometry", 1, hyp_h_params,       1, 10, NULL },
+    { ECMD_HYP_SCALE_A, RT_EDIT_CMD_NAME(ECMD_HYP_SCALE_A), "Set A",    "geometry", 1, hyp_a_params,       1, 20, NULL },
+    { ECMD_HYP_SCALE_B, RT_EDIT_CMD_NAME(ECMD_HYP_SCALE_B), "Set B",    "geometry", 1, hyp_b_params,       1, 30, NULL },
+    { ECMD_HYP_C, RT_EDIT_CMD_NAME(ECMD_HYP_C),       "Set c",    "geometry", 1, hyp_c_params,       1, 40, NULL },
+    { ECMD_HYP_ROT_H, RT_EDIT_CMD_NAME(ECMD_HYP_ROT_H),   "Rotate H", "rotation", 1, hyp_rot_deg_params, 1, 50, NULL }
 };
 
 static const struct rt_edit_prim_desc hyp_prim_desc = {

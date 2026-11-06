@@ -204,11 +204,11 @@ static const struct rt_edit_param_desc hrt_d_param[] = {
 };
 
 static const struct rt_edit_cmd_desc hrt_cmds[] = {
-    { ECMD_HRT_SET_CENTER, "Set Center",        "geometry", 1, hrt_point_param, 1, 10, NULL },
-    { ECMD_HRT_SET_XDIR,   "Set X Direction",   "axes",     1, hrt_vec_param,   1, 20, NULL },
-    { ECMD_HRT_SET_YDIR,   "Set Y Direction",   "axes",     1, hrt_vec_param,   1, 30, NULL },
-    { ECMD_HRT_SET_ZDIR,   "Set Z Direction",   "axes",     1, hrt_vec_param,   1, 40, NULL },
-    { ECMD_HRT_SET_D,      "Set Cusp Distance", "shape",    1, hrt_d_param,     1, 50, NULL }
+    { ECMD_HRT_SET_CENTER, RT_EDIT_CMD_NAME(ECMD_HRT_SET_CENTER), "Set Center",        "geometry", 1, hrt_point_param, 1, 10, NULL },
+    { ECMD_HRT_SET_XDIR, RT_EDIT_CMD_NAME(ECMD_HRT_SET_XDIR),   "Set X Direction",   "axes",     1, hrt_vec_param,   1, 20, NULL },
+    { ECMD_HRT_SET_YDIR, RT_EDIT_CMD_NAME(ECMD_HRT_SET_YDIR),   "Set Y Direction",   "axes",     1, hrt_vec_param,   1, 30, NULL },
+    { ECMD_HRT_SET_ZDIR, RT_EDIT_CMD_NAME(ECMD_HRT_SET_ZDIR),   "Set Z Direction",   "axes",     1, hrt_vec_param,   1, 40, NULL },
+    { ECMD_HRT_SET_D, RT_EDIT_CMD_NAME(ECMD_HRT_SET_D),      "Set Cusp Distance", "shape",    1, hrt_d_param,     1, 50, NULL }
 };
 
 static const struct rt_edit_prim_desc hrt_prim_desc = {

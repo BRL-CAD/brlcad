@@ -128,6 +128,7 @@ static const struct rt_edit_param_desc half_d_params[] = {
 static const struct rt_edit_cmd_desc half_cmds[] = {
     {
 	ECMD_HALF_SET_D,        /* cmd_id */
+	RT_EDIT_CMD_NAME(ECMD_HALF_SET_D),        /* name */
 	"Set D",                /* label */
 	"geometry",             /* category */
 	1,                      /* nparam */

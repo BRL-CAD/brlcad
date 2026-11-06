@@ -682,6 +682,7 @@ struct rt_edit_param_desc {
  */
 struct rt_edit_cmd_desc {
     int          cmd_id;        /**< ECMD_* constant                                 */
+    const char  *name;          /**< stable symbolic identity                         */
     const char  *label;         /**< human-readable operation label                  */
     const char  *category;      /**< grouping hint: "radius", "geometry",
                                  *   "rotation", "material", "tree", "misc"          */
@@ -696,6 +697,9 @@ struct rt_edit_cmd_desc {
     /** Comma-separated list of types this cmd is valid for (e.g. "sph" or "arb4"). NULL means all. */
     const char  *req_types;
 };
+
+/** Preserve the symbolic ECMD token as the descriptor's stable identity. */
+#define RT_EDIT_CMD_NAME(_cmd) #_cmd
 
 /**
  * Describes a dynamically toggleable option for a primitive.
@@ -728,6 +732,16 @@ struct rt_edit_prim_desc {
 RT_EXPORT extern int
 rt_edit_prim_desc_to_json(struct bu_vls *out,
                           const struct rt_edit_prim_desc *desc);
+
+/** Validate descriptor identities, arrays, parameter layouts, and metadata. */
+RT_EXPORT extern int
+rt_edit_prim_desc_validate(struct bu_vls *msg,
+	const struct rt_edit_prim_desc *desc);
+
+/** Append the stable CLI name for a descriptor command to @p out. */
+RT_EXPORT extern int
+rt_edit_cmd_name(struct bu_vls *out, const struct rt_edit_prim_desc *desc,
+	const struct rt_edit_cmd_desc *command);
 
 /**
  * Convenience wrapper: look up the EDOBJ entry for @p prim_type_id and

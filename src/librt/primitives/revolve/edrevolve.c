@@ -252,15 +252,15 @@ static const struct rt_edit_param_desc revolve_ang_param[] = {
 
 static const struct rt_edit_param_desc revolve_skt_param[] = {
     { "sketch_name", "Sketch name", RT_EDIT_PARAM_STRING, 0,
-      0.0, 0.0, "", 0, NULL, NULL, NULL }
+      0.0, 0.0, "", 0, NULL, NULL, "sketch_name" }
 };
 
 static const struct rt_edit_cmd_desc revolve_cmds[] = {
-    { ECMD_REVOLVE_SET_V,    "Set Vertex",       "geometry", 1, revolve_v_param,    1, 10, NULL },
-    { ECMD_REVOLVE_SET_AXIS, "Set Axis",         "geometry", 1, revolve_axis_param, 1, 20, NULL },
-    { ECMD_REVOLVE_SET_R,    "Set Start Vector", "geometry", 1, revolve_r_param,    1, 30, NULL },
-    { ECMD_REVOLVE_SET_ANG,  "Set Sweep Angle",  "geometry", 1, revolve_ang_param,  1, 40, NULL },
-    { ECMD_REVOLVE_SET_SKT,  "Set Sketch Name",  "geometry", 1, revolve_skt_param,  1, 50, NULL }
+    { ECMD_REVOLVE_SET_V, RT_EDIT_CMD_NAME(ECMD_REVOLVE_SET_V),    "Set Vertex",       "geometry", 1, revolve_v_param,    1, 10, NULL },
+    { ECMD_REVOLVE_SET_AXIS, RT_EDIT_CMD_NAME(ECMD_REVOLVE_SET_AXIS), "Set Axis",         "geometry", 1, revolve_axis_param, 1, 20, NULL },
+    { ECMD_REVOLVE_SET_R, RT_EDIT_CMD_NAME(ECMD_REVOLVE_SET_R),    "Set Start Vector", "geometry", 1, revolve_r_param,    1, 30, NULL },
+    { ECMD_REVOLVE_SET_ANG, RT_EDIT_CMD_NAME(ECMD_REVOLVE_SET_ANG),  "Set Sweep Angle",  "geometry", 1, revolve_ang_param,  1, 40, NULL },
+    { ECMD_REVOLVE_SET_SKT, RT_EDIT_CMD_NAME(ECMD_REVOLVE_SET_SKT),  "Set Sketch Name",  "geometry", 1, revolve_skt_param,  1, 50, NULL }
 };
 
 static const struct rt_edit_prim_desc revolve_prim_desc = {

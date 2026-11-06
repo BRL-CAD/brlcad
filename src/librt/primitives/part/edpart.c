@@ -128,6 +128,7 @@ static const struct rt_edit_param_desc part_hrad_params[] = {
 static const struct rt_edit_cmd_desc part_cmds[] = {
     {
 	ECMD_PART_H,          /* cmd_id       */
+	RT_EDIT_CMD_NAME(ECMD_PART_H),          /* name       */
 	"Set H",              /* label        */
 	"geometry",           /* category     */
 	1,                    /* nparam       */
@@ -138,6 +139,7 @@ static const struct rt_edit_cmd_desc part_cmds[] = {
     },
     {
 	ECMD_PART_VRAD,       /* cmd_id       */
+	RT_EDIT_CMD_NAME(ECMD_PART_VRAD),       /* name       */
 	"Set v radius",       /* label        */
 	"geometry",           /* category     */
 	1,                    /* nparam       */
@@ -148,6 +150,7 @@ static const struct rt_edit_cmd_desc part_cmds[] = {
     },
     {
 	ECMD_PART_HRAD,       /* cmd_id       */
+	RT_EDIT_CMD_NAME(ECMD_PART_HRAD),       /* name       */
 	"Set h radius",       /* label        */
 	"geometry",           /* category     */
 	1,                    /* nparam       */

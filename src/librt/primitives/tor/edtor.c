@@ -119,6 +119,7 @@ static const struct rt_edit_param_desc tor_r2_params[] = {
 static const struct rt_edit_cmd_desc tor_cmds[] = {
     {
 	ECMD_TOR_R1,          /* cmd_id       */
+	RT_EDIT_CMD_NAME(ECMD_TOR_R1),          /* name       */
 	"Set Radius 1",       /* label        */
 	"radius",             /* category     */
 	1,                    /* nparam       */
@@ -129,6 +130,7 @@ static const struct rt_edit_cmd_desc tor_cmds[] = {
     },
     {
 	ECMD_TOR_R2,          /* cmd_id       */
+	RT_EDIT_CMD_NAME(ECMD_TOR_R2),          /* name       */
 	"Set Radius 2",       /* label        */
 	"radius",             /* category     */
 	1,                    /* nparam       */

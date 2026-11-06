@@ -239,6 +239,7 @@ static const struct rt_edit_param_desc vol_thresh_hi_params[] = {
 static const struct rt_edit_cmd_desc vol_cmds[] = {
     {
 	ECMD_VOL_FNAME,       /* cmd_id       */
+	RT_EDIT_CMD_NAME(ECMD_VOL_FNAME),       /* name       */
 	"File Name",          /* label        */
 	"data",               /* category     */
 	1,                    /* nparam       */
@@ -249,6 +250,7 @@ static const struct rt_edit_cmd_desc vol_cmds[] = {
     },
     {
 	ECMD_VOL_FSIZE,       /* cmd_id       */
+	RT_EDIT_CMD_NAME(ECMD_VOL_FSIZE),       /* name       */
 	"File Size (X Y Z)",  /* label        */
 	"geometry",           /* category     */
 	3,                    /* nparam       */
@@ -259,6 +261,7 @@ static const struct rt_edit_cmd_desc vol_cmds[] = {
     },
     {
 	ECMD_VOL_CSIZE,       /* cmd_id       */
+	RT_EDIT_CMD_NAME(ECMD_VOL_CSIZE),       /* name       */
 	"Voxel Size (X Y Z)", /* label        */
 	"geometry",           /* category     */
 	3,                    /* nparam       */
@@ -269,6 +272,7 @@ static const struct rt_edit_cmd_desc vol_cmds[] = {
     },
     {
 	ECMD_VOL_THRESH_LO,   /* cmd_id       */
+	RT_EDIT_CMD_NAME(ECMD_VOL_THRESH_LO),   /* name       */
 	"Threshold (low)",    /* label        */
 	"geometry",           /* category     */
 	1,                    /* nparam       */
@@ -279,6 +283,7 @@ static const struct rt_edit_cmd_desc vol_cmds[] = {
     },
     {
 	ECMD_VOL_THRESH_HI,   /* cmd_id       */
+	RT_EDIT_CMD_NAME(ECMD_VOL_THRESH_HI),   /* name       */
 	"Threshold (hi)",     /* label        */
 	"geometry",           /* category     */
 	1,                    /* nparam       */
