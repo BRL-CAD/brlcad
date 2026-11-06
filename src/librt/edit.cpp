@@ -67,6 +67,19 @@ struct rt_edit_map {
     RT_Edit_Map_Internal *i;
 };
 
+static void
+edit_tolerance_set(struct rt_edit *edit, const struct bn_tol *tolerance)
+{
+    if (!edit)
+	return;
+
+    edit->tol = NULL;
+    if (tolerance) {
+	edit->tol_storage = *tolerance;
+	edit->tol = &edit->tol_storage;
+    }
+}
+
 extern "C" struct rt_edit_map *
 rt_edit_map_create(void)
 {
@@ -141,7 +154,7 @@ rt_edit_create(struct db_full_path *dfp, struct db_i *dbip, struct bn_tol *tol, 
     s->snap.spacing = 1.0;
     BU_EXTERNAL_INIT(&s->es_ckpt);
     s->edit_mode = RT_EDIT_DEFAULT;
-    s->tol = tol;
+    edit_tolerance_set(s, tol);
     s->u_ptr = NULL;
     s->update_views = 0;
     s->vlfree = NULL;
@@ -294,7 +307,7 @@ rt_edit_reset(struct rt_edit *s)
     s->snap.enabled = 0;
     s->snap.spacing = 1.0;
     s->dbip = NULL;
-    s->tol = NULL;
+    edit_tolerance_set(s, NULL);
     s->u_ptr = NULL;
     s->update_views = 0;
     s->vlfree = NULL;
@@ -314,7 +327,7 @@ rt_edit_reinit(struct rt_edit *s, struct db_full_path *dfp, struct db_i *dbip,
     /* Reset to a clean idle state first */
     rt_edit_reset(s);
 
-    s->tol = tol;
+    edit_tolerance_set(s, tol);
     s->vp = v;
 
     if (!dfp || !dbip) {

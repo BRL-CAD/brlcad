@@ -130,6 +130,7 @@ check_unit(fastf_t local2base, const char *unit)
     struct rt_edit *edit = rt_edit_create(&path, dbip, &tol, NULL);
     int failures = 0;
     if (!edit || !same_ell(edit, 4) ||
+	edit->tol == &tol || !EQUAL(edit->tol->dist, tol.dist) ||
 	!NEAR_EQUAL(edit->local2base, local2base, VUNITIZE_TOL)) {
 	bu_log("lifecycle initial\t%s\tfail\n", unit);
 	++failures;
@@ -245,14 +246,23 @@ check_unit(fastf_t local2base, const char *unit)
 	    bu_log("lifecycle reset\t%s\tpass\n", unit);
 	}
 
+	const fastf_t expected_tolerance = tol.dist;
 	if (rt_edit_reinit(edit, &path, dbip, &tol, NULL) != BRLCAD_OK ||
-	    edit->dbip != dbip || edit->tol != &tol ||
+	    edit->dbip != dbip || edit->tol == &tol ||
+	    !EQUAL(edit->tol->dist, expected_tolerance) ||
 	    !NEAR_EQUAL(edit->local2base, local2base, VUNITIZE_TOL) ||
 	    !same_ell(edit, 4)) {
 	    bu_log("lifecycle reinit\t%s\tfail\n", unit);
 	    ++failures;
 	} else {
 	    bu_log("lifecycle reinit\t%s\tpass\n", unit);
+	}
+	tol.dist *= 2.0;
+	if (!EQUAL(edit->tol->dist, expected_tolerance)) {
+	    bu_log("lifecycle tolerance ownership\t%s\tfail\n", unit);
+	    ++failures;
+	} else {
+	    bu_log("lifecycle tolerance ownership\t%s\tpass\n", unit);
 	}
     }
     rt_edit_destroy(edit);

@@ -73,6 +73,7 @@
 #include <float.h>
 #include "vmath.h"
 #include "bn/mat.h"
+#include "bn/tol.h"
 #include "bu/parse.h"
 #include "bu/avs.h"
 #include "bv/defines.h"
@@ -220,7 +221,8 @@ struct rt_edit {
     // (e.g., "raw_mode" to bypass simplification).
     struct bu_attribute_value_set options;
 
-    // Tolerance for calculations
+    /* Edit sessions may outlive the tolerance supplied by their creator. */
+    struct bn_tol tol_storage;
     const struct bn_tol *tol;
     struct db_i *dbip;          /**< @brief database instance (for checkpoint/revert) */
 
