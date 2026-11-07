@@ -129,6 +129,35 @@ rt_edit_eto_edit_desc(void)
     return &eto_prim_desc;
 }
 
+
+C_DECL int
+rt_edit_eto_get_values(struct rt_edit *s, int cmd_id,
+	struct rt_edit_cmd_values *result)
+{
+    if (!s || !result)
+	return RT_EDIT_VALUE_ERROR;
+    struct rt_eto_internal *eto =
+	(struct rt_eto_internal *)s->es_int.idb_ptr;
+    RT_ETO_CK_MAGIC(eto);
+
+    switch (cmd_id) {
+	case ECMD_ETO_R:
+	    rt_edit_cmd_values_set_value(result, 0,
+		eto->eto_r * s->base2local);
+	    return RT_EDIT_VALUE_OK;
+	case ECMD_ETO_RD:
+	    rt_edit_cmd_values_set_value(result, 0,
+		eto->eto_rd * s->base2local);
+	    return RT_EDIT_VALUE_OK;
+	case ECMD_ETO_SCALE_C:
+	    rt_edit_cmd_values_set_value(result, 0,
+		MAGNITUDE(eto->eto_C) * s->base2local);
+	    return RT_EDIT_VALUE_OK;
+	default:
+	    return RT_EDIT_VALUE_UNAVAILABLE;
+    }
+}
+
 #define V3BASE2LOCAL(_pt) (_pt)[X]*base2local, (_pt)[Y]*base2local, (_pt)[Z]*base2local
 
 C_DECL void

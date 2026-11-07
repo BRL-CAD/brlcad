@@ -180,6 +180,35 @@ rt_edit_epa_edit_desc(void)
     return &epa_prim_desc;
 }
 
+
+C_DECL int
+rt_edit_epa_get_values(struct rt_edit *s, int cmd_id,
+	struct rt_edit_cmd_values *result)
+{
+    if (!s || !result)
+	return RT_EDIT_VALUE_ERROR;
+    struct rt_epa_internal *epa =
+	(struct rt_epa_internal *)s->es_int.idb_ptr;
+    RT_EPA_CK_MAGIC(epa);
+
+    switch (cmd_id) {
+	case ECMD_EPA_H:
+	    rt_edit_cmd_values_set_value(result, 0,
+		MAGNITUDE(epa->epa_H) * s->base2local);
+	    return RT_EDIT_VALUE_OK;
+	case ECMD_EPA_R1:
+	    rt_edit_cmd_values_set_value(result, 0,
+		epa->epa_r1 * s->base2local);
+	    return RT_EDIT_VALUE_OK;
+	case ECMD_EPA_R2:
+	    rt_edit_cmd_values_set_value(result, 0,
+		epa->epa_r2 * s->base2local);
+	    return RT_EDIT_VALUE_OK;
+	default:
+	    return RT_EDIT_VALUE_UNAVAILABLE;
+    }
+}
+
 #define V3BASE2LOCAL(_pt) (_pt)[X]*base2local, (_pt)[Y]*base2local, (_pt)[Z]*base2local
 
 C_DECL void

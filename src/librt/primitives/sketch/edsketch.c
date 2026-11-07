@@ -422,6 +422,76 @@ rt_edit_sketch_edit_desc(void)
 }
 
 
+C_DECL int
+rt_edit_sketch_get_values(struct rt_edit *s, int command_id,
+	struct rt_edit_cmd_values *result)
+{
+    if (!s || !result || s->es_int.idb_type != ID_SKETCH ||
+	!s->es_int.idb_ptr || !s->ipe_ptr)
+	return RT_EDIT_VALUE_ERROR;
+
+    struct rt_sketch_internal *skt =
+	(struct rt_sketch_internal *)s->es_int.idb_ptr;
+    struct rt_sketch_edit *se = (struct rt_sketch_edit *)s->ipe_ptr;
+    RT_SKETCH_CK_MAGIC(skt);
+    rt_edit_cmd_values_init(result);
+
+    switch (command_id) {
+	case ECMD_SKETCH_PICK_VERTEX:
+	    if (se->curr_vert < 0 || (size_t)se->curr_vert >= skt->vert_count)
+		return RT_EDIT_VALUE_UNAVAILABLE;
+	    return rt_edit_cmd_values_set_value(result, 0, se->curr_vert) ==
+		BRLCAD_OK ? RT_EDIT_VALUE_OK : RT_EDIT_VALUE_ERROR;
+	case ECMD_SKETCH_MOVE_VERTEX:
+	    if (se->curr_vert < 0 || (size_t)se->curr_vert >= skt->vert_count)
+		return RT_EDIT_VALUE_UNAVAILABLE;
+	    if (rt_edit_cmd_values_set_value(result, 0,
+		    skt->verts[se->curr_vert][0] * s->base2local) != BRLCAD_OK ||
+		rt_edit_cmd_values_set_value(result, 1,
+		    skt->verts[se->curr_vert][1] * s->base2local) != BRLCAD_OK)
+		return RT_EDIT_VALUE_ERROR;
+	    return RT_EDIT_VALUE_OK;
+	case ECMD_SKETCH_PICK_SEGMENT:
+	    if (se->curr_seg < 0 || (size_t)se->curr_seg >= skt->curve.count)
+		return RT_EDIT_VALUE_UNAVAILABLE;
+	    return rt_edit_cmd_values_set_value(result, 0, se->curr_seg) ==
+		BRLCAD_OK ? RT_EDIT_VALUE_OK : RT_EDIT_VALUE_ERROR;
+	case ECMD_SKETCH_SET_ARC_RADIUS:
+	    if (se->curr_seg < 0 || (size_t)se->curr_seg >= skt->curve.count ||
+		!skt->curve.segment[se->curr_seg] ||
+		*(uint32_t *)skt->curve.segment[se->curr_seg] != CURVE_CARC_MAGIC)
+		return RT_EDIT_VALUE_UNAVAILABLE;
+	    return rt_edit_cmd_values_set_value(result, 0,
+		((struct carc_seg *)skt->curve.segment[se->curr_seg])->radius *
+		s->base2local) == BRLCAD_OK ? RT_EDIT_VALUE_OK :
+		RT_EDIT_VALUE_ERROR;
+	case ECMD_SKETCH_SET_PLANE:
+	    if (rt_edit_cmd_values_set_value(result, 0,
+		    skt->V[0] * s->base2local) != BRLCAD_OK ||
+		rt_edit_cmd_values_set_value(result, 1,
+		    skt->V[1] * s->base2local) != BRLCAD_OK ||
+		rt_edit_cmd_values_set_value(result, 2,
+		    skt->V[2] * s->base2local) != BRLCAD_OK ||
+		rt_edit_cmd_values_set_value(result, 3,
+		    skt->u_vec[0]) != BRLCAD_OK ||
+		rt_edit_cmd_values_set_value(result, 4,
+		    skt->u_vec[1]) != BRLCAD_OK ||
+		rt_edit_cmd_values_set_value(result, 5,
+		    skt->u_vec[2]) != BRLCAD_OK ||
+		rt_edit_cmd_values_set_value(result, 6,
+		    skt->v_vec[0]) != BRLCAD_OK ||
+		rt_edit_cmd_values_set_value(result, 7,
+		    skt->v_vec[1]) != BRLCAD_OK ||
+		rt_edit_cmd_values_set_value(result, 8,
+		    skt->v_vec[2]) != BRLCAD_OK)
+		return RT_EDIT_VALUE_ERROR;
+	    return RT_EDIT_VALUE_OK;
+	default:
+	    return RT_EDIT_VALUE_UNAVAILABLE;
+    }
+}
+
+
 /* ------------------------------------------------------------------ */
 /* Helper: check if a vertex is referenced by any segment             */
 /* ------------------------------------------------------------------ */

@@ -186,6 +186,34 @@ rt_edit_ebm_edit_desc(void)
     return &ebm_prim_desc;
 }
 
+
+C_DECL int
+rt_edit_ebm_get_values(struct rt_edit *s, int cmd_id,
+	struct rt_edit_cmd_values *result)
+{
+    if (!s || !result)
+	return RT_EDIT_VALUE_ERROR;
+    struct rt_ebm_internal *ebm =
+	(struct rt_ebm_internal *)s->es_int.idb_ptr;
+    RT_EBM_CK_MAGIC(ebm);
+
+    switch (cmd_id) {
+	case ECMD_EBM_FNAME:
+	    rt_edit_cmd_values_set_string(result, 0, ebm->name);
+	    return RT_EDIT_VALUE_OK;
+	case ECMD_EBM_FSIZE:
+	    rt_edit_cmd_values_set_value(result, 0, (fastf_t)ebm->xdim);
+	    rt_edit_cmd_values_set_value(result, 1, (fastf_t)ebm->ydim);
+	    return RT_EDIT_VALUE_OK;
+	case ECMD_EBM_HEIGHT:
+	    rt_edit_cmd_values_set_value(result, 0,
+		ebm->tallness * s->base2local);
+	    return RT_EDIT_VALUE_OK;
+	default:
+	    return RT_EDIT_VALUE_UNAVAILABLE;
+    }
+}
+
 int
 ecmd_ebm_fsize(struct rt_edit *s)
 {

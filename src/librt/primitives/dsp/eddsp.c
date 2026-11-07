@@ -317,6 +317,53 @@ rt_edit_dsp_edit_desc(void)
     return &dsp_prim_desc;
 }
 
+
+C_DECL int
+rt_edit_dsp_get_values(struct rt_edit *s, int cmd_id,
+	struct rt_edit_cmd_values *result)
+{
+    if (!s || !result)
+	return RT_EDIT_VALUE_ERROR;
+    struct rt_dsp_internal *dsp =
+	(struct rt_dsp_internal *)s->es_int.idb_ptr;
+    RT_DSP_CK_MAGIC(dsp);
+
+    switch (cmd_id) {
+	case ECMD_DSP_FNAME:
+	    rt_edit_cmd_values_set_string(result, 0,
+		bu_vls_cstr(&dsp->dsp_name));
+	    return RT_EDIT_VALUE_OK;
+	case ECMD_DSP_SCALE_X:
+	    rt_edit_cmd_values_set_value(result, 0,
+		dsp->dsp_stom[MSX] * s->base2local);
+	    return RT_EDIT_VALUE_OK;
+	case ECMD_DSP_SCALE_Y:
+	    rt_edit_cmd_values_set_value(result, 0,
+		dsp->dsp_stom[MSY] * s->base2local);
+	    return RT_EDIT_VALUE_OK;
+	case ECMD_DSP_SCALE_ALT:
+	    rt_edit_cmd_values_set_value(result, 0,
+		dsp->dsp_stom[MSZ] * s->base2local);
+	    return RT_EDIT_VALUE_OK;
+	case ECMD_DSP_SET_SMOOTH:
+	    rt_edit_cmd_values_set_value(result, 0,
+		dsp->dsp_smooth ? 1.0 : 0.0);
+	    return RT_EDIT_VALUE_OK;
+	case ECMD_DSP_FSIZE:
+	    rt_edit_cmd_values_set_value(result, 0,
+		(fastf_t)dsp->dsp_xcnt);
+	    rt_edit_cmd_values_set_value(result, 1,
+		(fastf_t)dsp->dsp_ycnt);
+	    return RT_EDIT_VALUE_OK;
+	case ECMD_DSP_SET_DATASRC:
+	    rt_edit_cmd_values_set_value(result, 0,
+		dsp->dsp_datasrc == RT_DSP_SRC_OBJ ? 1.0 : 0.0);
+	    return RT_EDIT_VALUE_OK;
+	default:
+	    return RT_EDIT_VALUE_UNAVAILABLE;
+    }
+}
+
 static int
 dsp_scale(struct rt_edit *s, struct rt_dsp_internal *dsp, int axis)
 {

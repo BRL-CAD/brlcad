@@ -309,6 +309,42 @@ rt_edit_vol_edit_desc(void)
     return &vol_prim_desc;
 }
 
+
+C_DECL int
+rt_edit_vol_get_values(struct rt_edit *s, int cmd_id,
+	struct rt_edit_cmd_values *result)
+{
+    if (!s || !result)
+	return RT_EDIT_VALUE_ERROR;
+    struct rt_vol_internal *vol =
+	(struct rt_vol_internal *)s->es_int.idb_ptr;
+    RT_VOL_CK_MAGIC(vol);
+
+    switch (cmd_id) {
+	case ECMD_VOL_FNAME:
+	    rt_edit_cmd_values_set_string(result, 0, vol->name);
+	    return RT_EDIT_VALUE_OK;
+	case ECMD_VOL_FSIZE:
+	    rt_edit_cmd_values_set_value(result, 0, (fastf_t)vol->xdim);
+	    rt_edit_cmd_values_set_value(result, 1, (fastf_t)vol->ydim);
+	    rt_edit_cmd_values_set_value(result, 2, (fastf_t)vol->zdim);
+	    return RT_EDIT_VALUE_OK;
+	case ECMD_VOL_CSIZE:
+	    for (int i = 0; i < 3; i++)
+		rt_edit_cmd_values_set_value(result, i,
+		    vol->cellsize[i] * s->base2local);
+	    return RT_EDIT_VALUE_OK;
+	case ECMD_VOL_THRESH_LO:
+	    rt_edit_cmd_values_set_value(result, 0, (fastf_t)vol->lo);
+	    return RT_EDIT_VALUE_OK;
+	case ECMD_VOL_THRESH_HI:
+	    rt_edit_cmd_values_set_value(result, 0, (fastf_t)vol->hi);
+	    return RT_EDIT_VALUE_OK;
+	default:
+	    return RT_EDIT_VALUE_UNAVAILABLE;
+    }
+}
+
 /* set voxel size */
 static int
 ecmd_vol_csize(struct rt_edit *s)

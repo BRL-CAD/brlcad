@@ -121,6 +121,43 @@ rt_edit_cline_edit_desc(void)
 }
 
 
+C_DECL int
+rt_edit_cline_get_values(struct rt_edit *s, int cmd_id,
+	struct rt_edit_cmd_values *result)
+{
+    if (!s || !result)
+	return RT_EDIT_VALUE_ERROR;
+    struct rt_cline_internal *cline =
+	(struct rt_cline_internal *)s->es_int.idb_ptr;
+    RT_CLINE_CK_MAGIC(cline);
+
+    switch (cmd_id) {
+	case ECMD_CLINE_SCALE_H:
+	    rt_edit_cmd_values_set_value(result, 0,
+		MAGNITUDE(cline->h) * s->base2local);
+	    return RT_EDIT_VALUE_OK;
+	case ECMD_CLINE_SCALE_R:
+	    rt_edit_cmd_values_set_value(result, 0,
+		cline->radius * s->base2local);
+	    return RT_EDIT_VALUE_OK;
+	case ECMD_CLINE_SCALE_T:
+	    rt_edit_cmd_values_set_value(result, 0,
+		cline->thickness * s->base2local);
+	    return RT_EDIT_VALUE_OK;
+	case ECMD_CLINE_MOVE_H: {
+	    point_t endpoint;
+	    VADD2(endpoint, cline->v, cline->h);
+	    for (int i = 0; i < 3; i++)
+		rt_edit_cmd_values_set_value(result, i,
+		    endpoint[i] * s->base2local);
+	    return RT_EDIT_VALUE_OK;
+	}
+	default:
+	    return RT_EDIT_VALUE_UNAVAILABLE;
+    }
+}
+
+
 C_DECL void
 rt_edit_cline_e_axes_pos(
 	struct rt_edit *s,

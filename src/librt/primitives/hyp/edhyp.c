@@ -136,6 +136,38 @@ rt_edit_hyp_edit_desc(void)
     return &hyp_prim_desc;
 }
 
+
+C_DECL int
+rt_edit_hyp_get_values(struct rt_edit *s, int cmd_id,
+	struct rt_edit_cmd_values *result)
+{
+    if (!s || !result)
+	return RT_EDIT_VALUE_ERROR;
+    struct rt_hyp_internal *hyp =
+	(struct rt_hyp_internal *)s->es_int.idb_ptr;
+    RT_HYP_CK_MAGIC(hyp);
+
+    switch (cmd_id) {
+	case ECMD_HYP_H:
+	    rt_edit_cmd_values_set_value(result, 0,
+		MAGNITUDE(hyp->hyp_Hi) * s->base2local);
+	    return RT_EDIT_VALUE_OK;
+	case ECMD_HYP_SCALE_A:
+	    rt_edit_cmd_values_set_value(result, 0,
+		MAGNITUDE(hyp->hyp_A) * s->base2local);
+	    return RT_EDIT_VALUE_OK;
+	case ECMD_HYP_SCALE_B:
+	    rt_edit_cmd_values_set_value(result, 0,
+		hyp->hyp_b * s->base2local);
+	    return RT_EDIT_VALUE_OK;
+	case ECMD_HYP_C:
+	    rt_edit_cmd_values_set_value(result, 0, hyp->hyp_bnr);
+	    return RT_EDIT_VALUE_OK;
+	default:
+	    return RT_EDIT_VALUE_UNAVAILABLE;
+    }
+}
+
 #define V3BASE2LOCAL(_pt) (_pt)[X]*base2local, (_pt)[Y]*base2local, (_pt)[Z]*base2local
 
 C_DECL void

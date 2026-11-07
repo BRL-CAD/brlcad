@@ -435,6 +435,56 @@ rt_edit_tgc_edit_desc(void)
     return &tgc_prim_desc;
 }
 
+
+C_DECL int
+rt_edit_tgc_get_values(struct rt_edit *s, int cmd_id,
+	struct rt_edit_cmd_values *result)
+{
+    if (!s || !result)
+	return RT_EDIT_VALUE_ERROR;
+    struct rt_tgc_internal *tgc =
+	(struct rt_tgc_internal *)s->es_int.idb_ptr;
+    RT_TGC_CK_MAGIC(tgc);
+
+    fastf_t value = 0.0;
+    switch (cmd_id) {
+	case ECMD_TGC_SCALE_H:
+	case ECMD_TGC_SCALE_H_V:
+	case ECMD_TGC_SCALE_H_CD:
+	case ECMD_TGC_SCALE_H_V_AB:
+	    value = MAGNITUDE(tgc->h);
+	    break;
+	case ECMD_TGC_SCALE_A:
+	case ECMD_TGC_SCALE_AB:
+	case ECMD_TGC_SCALE_ABCD:
+	    value = MAGNITUDE(tgc->a);
+	    break;
+	case ECMD_TGC_SCALE_B:
+	    value = MAGNITUDE(tgc->b);
+	    break;
+	case ECMD_TGC_SCALE_C:
+	case ECMD_TGC_SCALE_CD:
+	    value = MAGNITUDE(tgc->c);
+	    break;
+	case ECMD_TGC_SCALE_D:
+	    value = MAGNITUDE(tgc->d);
+	    break;
+	case ECMD_TGC_MV_H:
+	case ECMD_TGC_MV_HH: {
+	    point_t endpoint;
+	    VADD2(endpoint, tgc->v, tgc->h);
+	    for (int i = 0; i < 3; i++)
+		rt_edit_cmd_values_set_value(result, i,
+		    endpoint[i] * s->base2local);
+	    return RT_EDIT_VALUE_OK;
+	}
+	default:
+	    return RT_EDIT_VALUE_UNAVAILABLE;
+    }
+    rt_edit_cmd_values_set_value(result, 0, value * s->base2local);
+    return RT_EDIT_VALUE_OK;
+}
+
 C_DECL void
 rt_edit_tgc_e_axes_pos(
 	struct rt_edit *s,
