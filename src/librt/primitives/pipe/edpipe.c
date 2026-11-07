@@ -427,7 +427,9 @@ static const struct rt_edit_prim_desc pipe_prim_desc = {
     14,                   /* ncmd         */
     pipe_cmds             /* cmds         */,
     0,                    /* nopt         */
-    NULL                  /* opts         */
+    NULL,                 /* opts         */
+    RT_EDIT_CONTROL_CUSTOM,
+    NULL
 };
 
 C_DECL const struct rt_edit_prim_desc *

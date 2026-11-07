@@ -1463,10 +1463,34 @@ static const struct rt_edit_cmd_desc bot_cmds[] = {
     { ECMD_BOT_FLAGS, RT_EDIT_CMD_NAME(ECMD_BOT_FLAGS),       "Set Flags",           "properties",1, bot_flags_params,  1, 170, NULL }
 };
 
+static const enum rt_edit_control_class bot_command_controls[] = {
+    RT_EDIT_CONTROL_CUSTOM,
+    RT_EDIT_CONTROL_CUSTOM,
+    RT_EDIT_CONTROL_CUSTOM,
+    RT_EDIT_CONTROL_CUSTOM,
+    RT_EDIT_CONTROL_CUSTOM,
+    RT_EDIT_CONTROL_CUSTOM,
+    RT_EDIT_CONTROL_CUSTOM,
+    RT_EDIT_CONTROL_CUSTOM,
+    RT_EDIT_CONTROL_CUSTOM,
+    RT_EDIT_CONTROL_CUSTOM,
+    RT_EDIT_CONTROL_CUSTOM,
+    RT_EDIT_CONTROL_CUSTOM,
+    RT_EDIT_CONTROL_INHERIT,
+    RT_EDIT_CONTROL_INHERIT,
+    RT_EDIT_CONTROL_CUSTOM,
+    RT_EDIT_CONTROL_CUSTOM,
+    RT_EDIT_CONTROL_INHERIT
+};
+_Static_assert(sizeof(bot_command_controls) / sizeof(bot_command_controls[0]) ==
+    sizeof(bot_cmds) / sizeof(bot_cmds[0]), "bot command controls");
+
 static const struct rt_edit_prim_desc bot_prim_desc = {
     "bot", "BOT", 17, bot_cmds,
     0,                    /* nopt         */
-    NULL                  /* opts         */
+    NULL,                 /* opts         */
+    RT_EDIT_CONTROL_GENERATED,
+    bot_command_controls
 };
 
 C_DECL const struct rt_edit_prim_desc *

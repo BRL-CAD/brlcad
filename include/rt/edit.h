@@ -602,6 +602,21 @@ struct rt_edit_menu_item {
 /** Sentinel for "no range constraint" on a parameter. */
 #define RT_EDIT_PARAM_NO_LIMIT  (-DBL_MAX)
 
+/**
+ * How an edit operation is presented by a client.
+ *
+ * A command may inherit its primitive descriptor's default.  The resolved
+ * class is never INHERIT: descriptor validation rejects a primitive without
+ * an explicit default, and rt_edit_cmd_control_class() resolves overrides.
+ */
+enum rt_edit_control_class {
+    RT_EDIT_CONTROL_INHERIT = 0,
+    RT_EDIT_CONTROL_GENERATED,   /**< ordinary form with authoritative readback */
+    RT_EDIT_CONTROL_ACTION,      /**< one-shot form; inputs are not current state */
+    RT_EDIT_CONTROL_CUSTOM,      /**< topology/view-aware adapter is required */
+    RT_EDIT_CONTROL_UNSUPPORTED  /**< documented operation not exposed to clients */
+};
+
 /** Result of querying the current inputs for a descriptor command. */
 enum rt_edit_value_status {
     RT_EDIT_VALUE_ERROR = -1,
@@ -722,7 +737,16 @@ struct rt_edit_prim_desc {
     const struct rt_edit_cmd_desc *cmds;       /**< array of ncmd entries             */
     int                            nopt;       /**< number of entries in opts[]       */
     const struct rt_edit_opt_desc *opts;       /**< array of nopt entries             */
+    /** Explicit default presentation for commands which inherit. */
+    enum rt_edit_control_class     control_class;
+    /** Optional ncmd-entry override array; INHERIT entries use the default. */
+    const enum rt_edit_control_class *command_controls;
 };
+
+/** Return the resolved presentation class for a command. */
+RT_EXPORT extern enum rt_edit_control_class
+rt_edit_cmd_control_class(const struct rt_edit_prim_desc *desc,
+	const struct rt_edit_cmd_desc *command);
 
 /**
  * Serialise a primitive edit descriptor to a JSON string appended to @p out.

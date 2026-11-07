@@ -420,13 +420,35 @@ static const struct rt_edit_opt_desc tgc_opts[] = {
     { "type", "Type Override", "Set primitive type override (e.g. type=rcc)", RT_EDIT_PARAM_STRING }
 };
 
+static const enum rt_edit_control_class tgc_command_controls[] = {
+    RT_EDIT_CONTROL_INHERIT,
+    RT_EDIT_CONTROL_INHERIT,
+    RT_EDIT_CONTROL_INHERIT,
+    RT_EDIT_CONTROL_INHERIT,
+    RT_EDIT_CONTROL_INHERIT,
+    RT_EDIT_CONTROL_INHERIT,
+    RT_EDIT_CONTROL_INHERIT,
+    RT_EDIT_CONTROL_INHERIT,
+    RT_EDIT_CONTROL_INHERIT,
+    RT_EDIT_CONTROL_INHERIT,
+    RT_EDIT_CONTROL_INHERIT,
+    RT_EDIT_CONTROL_INHERIT,
+    RT_EDIT_CONTROL_INHERIT,
+    RT_EDIT_CONTROL_ACTION,
+    RT_EDIT_CONTROL_ACTION
+};
+_Static_assert(sizeof(tgc_command_controls) / sizeof(tgc_command_controls[0]) ==
+    sizeof(tgc_cmds) / sizeof(tgc_cmds[0]), "tgc command controls");
+
 static const struct rt_edit_prim_desc tgc_prim_desc = {
     "tgc",                /* prim_type    */
     "Truncated General Cone", /* prim_label */
     15,                   /* ncmd         */
     tgc_cmds,             /* cmds         */
     1,                    /* nopt         */
-    tgc_opts              /* opts         */
+    tgc_opts,             /* opts         */
+    RT_EDIT_CONTROL_GENERATED,
+    tgc_command_controls
 };
 
 C_DECL const struct rt_edit_prim_desc *

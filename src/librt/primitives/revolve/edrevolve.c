@@ -266,7 +266,9 @@ static const struct rt_edit_cmd_desc revolve_cmds[] = {
 static const struct rt_edit_prim_desc revolve_prim_desc = {
     "revolve", "Revolve", 5, revolve_cmds,
     0,                    /* nopt         */
-    NULL                  /* opts         */
+    NULL,                 /* opts         */
+    RT_EDIT_CONTROL_GENERATED,
+    NULL
 };
 
 C_DECL const struct rt_edit_prim_desc *

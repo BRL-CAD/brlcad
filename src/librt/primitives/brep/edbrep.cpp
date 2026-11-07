@@ -554,7 +554,9 @@ static const struct rt_edit_prim_desc brep_prim_desc = {
     3,              /* ncmd       */
     brep_cmds       /* cmds       */,
     0,                    /* nopt         */
-    NULL                  /* opts         */
+    NULL,                 /* opts         */
+    RT_EDIT_CONTROL_CUSTOM,
+    NULL
 };
 
 extern "C" const struct rt_edit_prim_desc *

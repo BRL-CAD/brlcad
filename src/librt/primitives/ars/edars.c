@@ -234,7 +234,9 @@ static const struct rt_edit_cmd_desc ars_cmds[] = {
 static const struct rt_edit_prim_desc ars_prim_desc = {
     "ars", "ARS", 15, ars_cmds,
     0,                    /* nopt         */
-    NULL                  /* opts         */
+    NULL,                 /* opts         */
+    RT_EDIT_CONTROL_CUSTOM,
+    NULL
 };
 
 C_DECL const struct rt_edit_prim_desc *

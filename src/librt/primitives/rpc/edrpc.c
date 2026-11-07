@@ -170,7 +170,9 @@ static const struct rt_edit_prim_desc rpc_prim_desc = {
     3,                    /* ncmd         */
     rpc_cmds              /* cmds         */,
     0,                    /* nopt         */
-    NULL                  /* opts         */
+    NULL,                 /* opts         */
+    RT_EDIT_CONTROL_GENERATED,
+    NULL
 };
 
 C_DECL const struct rt_edit_prim_desc *

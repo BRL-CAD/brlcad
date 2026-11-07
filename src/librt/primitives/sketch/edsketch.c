@@ -409,10 +409,37 @@ static const struct rt_edit_cmd_desc sketch_cmds[] = {
     { ECMD_SKETCH_TOGGLE_SEGMENT_REVERSE, RT_EDIT_CMD_NAME(ECMD_SKETCH_TOGGLE_SEGMENT_REVERSE),"Toggle Seg Reverse",   "topology",  1, sketch_idx_param,   1, 200, NULL }
 };
 
+static const enum rt_edit_control_class sketch_command_controls[] = {
+    RT_EDIT_CONTROL_CUSTOM,
+    RT_EDIT_CONTROL_CUSTOM,
+    RT_EDIT_CONTROL_CUSTOM,
+    RT_EDIT_CONTROL_CUSTOM,
+    RT_EDIT_CONTROL_ACTION,
+    RT_EDIT_CONTROL_ACTION,
+    RT_EDIT_CONTROL_ACTION,
+    RT_EDIT_CONTROL_ACTION,
+    RT_EDIT_CONTROL_ACTION,
+    RT_EDIT_CONTROL_ACTION,
+    RT_EDIT_CONTROL_ACTION,
+    RT_EDIT_CONTROL_ACTION,
+    RT_EDIT_CONTROL_ACTION,
+    RT_EDIT_CONTROL_ACTION,
+    RT_EDIT_CONTROL_ACTION,
+    RT_EDIT_CONTROL_ACTION,
+    RT_EDIT_CONTROL_GENERATED,
+    RT_EDIT_CONTROL_ACTION,
+    RT_EDIT_CONTROL_GENERATED,
+    RT_EDIT_CONTROL_ACTION
+};
+_Static_assert(sizeof(sketch_command_controls) / sizeof(sketch_command_controls[0]) ==
+    sizeof(sketch_cmds) / sizeof(sketch_cmds[0]), "sketch command controls");
+
 static const struct rt_edit_prim_desc sketch_prim_desc = {
     "sketch", "Sketch", 20, sketch_cmds,
     0,                    /* nopt         */
-    NULL                  /* opts         */
+    NULL,                 /* opts         */
+    RT_EDIT_CONTROL_CUSTOM,
+    sketch_command_controls
 };
 
 C_DECL const struct rt_edit_prim_desc *

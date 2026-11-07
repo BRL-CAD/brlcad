@@ -214,7 +214,9 @@ static const struct rt_edit_cmd_desc hrt_cmds[] = {
 static const struct rt_edit_prim_desc hrt_prim_desc = {
     "hrt", "Heart", 5, hrt_cmds,
     0,                    /* nopt         */
-    NULL                  /* opts         */
+    NULL,                 /* opts         */
+    RT_EDIT_CONTROL_GENERATED,
+    NULL
 };
 
 C_DECL const struct rt_edit_prim_desc *

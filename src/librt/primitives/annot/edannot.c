@@ -324,10 +324,21 @@ static const struct rt_edit_cmd_desc annot_cmds[] = {
     { ECMD_ANNOT_VERT_MOVE, RT_EDIT_CMD_NAME(ECMD_ANNOT_VERT_MOVE),         "Move Vertex",         "layout", 2, annot_vert_move_params,   1, 40, NULL }
 };
 
+static const enum rt_edit_control_class annot_command_controls[] = {
+    RT_EDIT_CONTROL_INHERIT,
+    RT_EDIT_CONTROL_INHERIT,
+    RT_EDIT_CONTROL_INHERIT,
+    RT_EDIT_CONTROL_CUSTOM
+};
+_Static_assert(sizeof(annot_command_controls) / sizeof(annot_command_controls[0]) ==
+    sizeof(annot_cmds) / sizeof(annot_cmds[0]), "annot command controls");
+
 static const struct rt_edit_prim_desc annot_prim_desc = {
     "annot", "Annotation", 4, annot_cmds,
     0,                    /* nopt         */
-    NULL                  /* opts         */
+    NULL,                 /* opts         */
+    RT_EDIT_CONTROL_GENERATED,
+    annot_command_controls
 };
 
 C_DECL const struct rt_edit_prim_desc *

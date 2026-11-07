@@ -111,7 +111,9 @@ static const struct rt_edit_cmd_desc cline_cmds[] = {
 static const struct rt_edit_prim_desc cline_prim_desc = {
     "cline", "CLINE", 4, cline_cmds,
     0,                    /* nopt         */
-    NULL                  /* opts         */
+    NULL,                 /* opts         */
+    RT_EDIT_CONTROL_GENERATED,
+    NULL
 };
 
 C_DECL const struct rt_edit_prim_desc *

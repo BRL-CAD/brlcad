@@ -105,6 +105,7 @@ check_descriptor_audit(void)
 {
     int failures = 0;
     int descriptor_count = 0;
+    int controls[RT_EDIT_CONTROL_UNSUPPORTED + 1] = {0};
     extern const struct rt_edit_functab EDOBJ[];
 
     for (int type = 0; EDOBJ[type].magic == RT_FUNCTAB_MAGIC; ++type) {
@@ -119,6 +120,8 @@ check_descriptor_audit(void)
 	} else {
 	    descriptor_count++;
 	    for (int ci = 0; ci < desc->ncmd; ++ci) {
+		const enum rt_edit_control_class control =
+		    rt_edit_cmd_control_class(desc, &desc->cmds[ci]);
 		struct bu_vls name = BU_VLS_INIT_ZERO;
 		if (rt_edit_cmd_name(&name, desc, &desc->cmds[ci]) !=
 			BRLCAD_OK || !bu_vls_strlen(&name)) {
@@ -127,10 +130,37 @@ check_descriptor_audit(void)
 		    failures++;
 		}
 		bu_vls_free(&name);
+		if (control < RT_EDIT_CONTROL_GENERATED ||
+		    control > RT_EDIT_CONTROL_UNSUPPORTED) {
+		    bu_log("FAIL [%s]: command %d is not classified\n",
+			desc->prim_type, ci);
+		    failures++;
+		} else {
+		    controls[control]++;
+		}
+		if (control == RT_EDIT_CONTROL_GENERATED &&
+		    !EDOBJ[type].ft_edit_get_values) {
+		    bu_log("FAIL [%s]: generated command %d has no readback\n",
+			desc->prim_type, desc->cmds[ci].cmd_id);
+		    failures++;
+		}
 	    }
 	}
 	bu_vls_free(&diagnostic);
     }
+
+    for (int control = RT_EDIT_CONTROL_GENERATED;
+	control <= RT_EDIT_CONTROL_UNSUPPORTED; ++control) {
+	if (!controls[control]) {
+	    bu_log("FAIL: no commands use control class %d\n", control);
+	    failures++;
+	}
+    }
+
+    bu_log("%s: classified commands generated=%d action=%d custom=%d unsupported=%d\n",
+	failures ? "FAIL" : "PASS", controls[RT_EDIT_CONTROL_GENERATED],
+	controls[RT_EDIT_CONTROL_ACTION], controls[RT_EDIT_CONTROL_CUSTOM],
+	controls[RT_EDIT_CONTROL_UNSUPPORTED]);
 
     const struct rt_edit_prim_desc *ell = EDOBJ[ID_ELL].ft_edit_desc();
     if (ell && ell->ncmd > 0) {
@@ -143,6 +173,29 @@ check_descriptor_audit(void)
 	if (rt_edit_prim_desc_validate(&diagnostic, &invalid_desc) !=
 		BRLCAD_ERROR || !bu_vls_strlen(&diagnostic)) {
 	    bu_log("FAIL: malformed descriptor was not rejected diagnostically\n");
+	    failures++;
+	}
+	bu_vls_free(&diagnostic);
+
+	invalid_desc = *ell;
+	invalid_desc.control_class = RT_EDIT_CONTROL_INHERIT;
+	diagnostic = BU_VLS_INIT_ZERO;
+	if (rt_edit_prim_desc_validate(&diagnostic, &invalid_desc) !=
+		BRLCAD_ERROR || !bu_vls_strlen(&diagnostic)) {
+	    bu_log("FAIL: inherited descriptor default was not rejected\n");
+	    failures++;
+	}
+	bu_vls_free(&diagnostic);
+
+	const enum rt_edit_control_class invalid_control =
+	    (enum rt_edit_control_class)(RT_EDIT_CONTROL_UNSUPPORTED + 1);
+	invalid_desc = *ell;
+	invalid_desc.ncmd = 1;
+	invalid_desc.command_controls = &invalid_control;
+	diagnostic = BU_VLS_INIT_ZERO;
+	if (rt_edit_prim_desc_validate(&diagnostic, &invalid_desc) !=
+		BRLCAD_ERROR || !bu_vls_strlen(&diagnostic)) {
+	    bu_log("FAIL: invalid command control was not rejected\n");
 	    failures++;
 	}
 	bu_vls_free(&diagnostic);

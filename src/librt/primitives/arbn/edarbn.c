@@ -458,7 +458,9 @@ static const struct rt_edit_cmd_desc arbn_cmds[] = {
 static const struct rt_edit_prim_desc arbn_prim_desc = {
     "arbn", "ARBN", 6, arbn_cmds,
     0,                    /* nopt         */
-    NULL                  /* opts         */
+    NULL,                 /* opts         */
+    RT_EDIT_CONTROL_CUSTOM,
+    NULL
 };
 
 C_DECL const struct rt_edit_prim_desc *

@@ -476,7 +476,9 @@ static const struct rt_edit_cmd_desc nmg_cmds[] = {
 static const struct rt_edit_prim_desc nmg_prim_desc = {
     "nmg", "NMG", 14, nmg_cmds,
     0,                    /* nopt         */
-    NULL                  /* opts         */
+    NULL,                 /* opts         */
+    RT_EDIT_CONTROL_CUSTOM,
+    NULL
 };
 
 C_DECL const struct rt_edit_prim_desc *

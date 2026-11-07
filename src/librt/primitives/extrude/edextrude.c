@@ -137,10 +137,25 @@ static const struct rt_edit_cmd_desc extr_cmds[] = {
     { ECMD_EXTR_SKT_NAME, RT_EDIT_CMD_NAME(ECMD_EXTR_SKT_NAME), "Referenced Sketch", "reference",1, extr_skt_name_params, 1, 80, NULL },
 };
 
+static const enum rt_edit_control_class extr_command_controls[] = {
+    RT_EDIT_CONTROL_INHERIT,
+    RT_EDIT_CONTROL_INHERIT,
+    RT_EDIT_CONTROL_ACTION,
+    RT_EDIT_CONTROL_INHERIT,
+    RT_EDIT_CONTROL_ACTION,
+    RT_EDIT_CONTROL_INHERIT,
+    RT_EDIT_CONTROL_ACTION,
+    RT_EDIT_CONTROL_INHERIT
+};
+_Static_assert(sizeof(extr_command_controls) / sizeof(extr_command_controls[0]) ==
+    sizeof(extr_cmds) / sizeof(extr_cmds[0]), "extr command controls");
+
 static const struct rt_edit_prim_desc extr_prim_desc = {
     "extrude", "Extrusion", 8, extr_cmds,
     0,                    /* nopt         */
-    NULL                  /* opts         */
+    NULL,                 /* opts         */
+    RT_EDIT_CONTROL_GENERATED,
+    extr_command_controls
 };
 
 C_DECL const struct rt_edit_prim_desc *

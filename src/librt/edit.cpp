@@ -1455,6 +1455,19 @@ edit_param_type_str(int type)
     }
 }
 
+static const char *
+edit_control_class_str(enum rt_edit_control_class control_class)
+{
+    switch (control_class) {
+	case RT_EDIT_CONTROL_GENERATED:   return "generated";
+	case RT_EDIT_CONTROL_ACTION:      return "action";
+	case RT_EDIT_CONTROL_CUSTOM:      return "custom";
+	case RT_EDIT_CONTROL_UNSUPPORTED: return "unsupported";
+	case RT_EDIT_CONTROL_INHERIT:
+	default:                          return "unclassified";
+    }
+}
+
 static std::string
 edit_cmd_slug(const char *text)
 {
@@ -1497,6 +1510,24 @@ rt_edit_cmd_name(struct bu_vls *out, const struct rt_edit_prim_desc *desc,
 	return BRLCAD_ERROR;
     bu_vls_strcat(out, name.c_str());
     return BRLCAD_OK;
+}
+
+enum rt_edit_control_class
+rt_edit_cmd_control_class(const struct rt_edit_prim_desc *desc,
+	const struct rt_edit_cmd_desc *command)
+{
+    if (!desc || !command)
+	return RT_EDIT_CONTROL_UNSUPPORTED;
+    for (int ci = 0; ci < desc->ncmd; ++ci) {
+	if (&desc->cmds[ci] != command &&
+	    desc->cmds[ci].cmd_id != command->cmd_id)
+	    continue;
+	if (desc->command_controls &&
+	    desc->command_controls[ci] != RT_EDIT_CONTROL_INHERIT)
+	    return desc->command_controls[ci];
+	return desc->control_class;
+    }
+    return RT_EDIT_CONTROL_UNSUPPORTED;
 }
 
 static bool
@@ -1544,6 +1575,10 @@ rt_edit_prim_desc_validate(struct bu_vls *msg,
 	DESC_FAIL("%s: invalid command array", desc->prim_type);
     if (desc->nopt < 0 || (desc->nopt && !desc->opts))
 	DESC_FAIL("%s: invalid option array", desc->prim_type);
+    if (desc->control_class < RT_EDIT_CONTROL_GENERATED ||
+	desc->control_class > RT_EDIT_CONTROL_UNSUPPORTED)
+	DESC_FAIL("%s: invalid default control class %d", desc->prim_type,
+	    (int)desc->control_class);
 
     std::set<int> command_ids;
     std::set<std::string> command_names;
@@ -1567,6 +1602,11 @@ rt_edit_prim_desc_validate(struct bu_vls *msg,
 	    command->nparam < 0 || (command->nparam && !command->params))
 	    DESC_FAIL("%s/%s: invalid command layout", desc->prim_type,
 		command->name);
+	if (desc->command_controls &&
+	    (desc->command_controls[ci] < RT_EDIT_CONTROL_INHERIT ||
+	     desc->command_controls[ci] > RT_EDIT_CONTROL_UNSUPPORTED))
+	    DESC_FAIL("%s/%s: invalid control class %d", desc->prim_type,
+		command->name, (int)desc->command_controls[ci]);
 
 	std::set<std::string> parameter_names;
 	for (int pi = 0; pi < command->nparam; ++pi) {
@@ -1726,6 +1766,10 @@ rt_edit_prim_desc_to_json(struct bu_vls *out,
 	bu_vls_strcat(out, ",\n");
 	bu_vls_strcat(out, "      \"category\": ");
 	emit_json_str(out, cmd->category);
+	bu_vls_strcat(out, ",\n");
+	bu_vls_strcat(out, "      \"control\": ");
+	emit_json_str(out, edit_control_class_str(
+	    rt_edit_cmd_control_class(desc, cmd)));
 	bu_vls_strcat(out, ",\n");
 	bu_vls_printf(out, "      \"interactive\": %s,\n",
 		      cmd->interactive ? "true" : "false");

@@ -317,7 +317,9 @@ static const struct rt_edit_cmd_desc datum_cmds[] = {
 static const struct rt_edit_prim_desc datum_prim_desc = {
     "datum", "Datum", 4, datum_cmds,
     0,                    /* nopt         */
-    NULL                  /* opts         */
+    NULL,                 /* opts         */
+    RT_EDIT_CONTROL_GENERATED,
+    NULL
 };
 
 C_DECL const struct rt_edit_prim_desc *

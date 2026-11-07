@@ -488,7 +488,9 @@ static const struct rt_edit_prim_desc metaball_prim_desc = {
     11,                   /* ncmd         */
     metaball_cmds         /* cmds         */,
     0,                    /* nopt         */
-    NULL                  /* opts         */
+    NULL,                 /* opts         */
+    RT_EDIT_CONTROL_CUSTOM,
+    NULL
 };
 
 C_DECL const struct rt_edit_prim_desc *

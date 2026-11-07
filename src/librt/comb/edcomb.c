@@ -1192,13 +1192,31 @@ static const struct rt_edit_cmd_desc comb_cmds[] = {
     }
 };
 
+static const enum rt_edit_control_class comb_command_controls[] = {
+    RT_EDIT_CONTROL_ACTION,
+    RT_EDIT_CONTROL_ACTION,
+    RT_EDIT_CONTROL_ACTION,
+    RT_EDIT_CONTROL_INHERIT,
+    RT_EDIT_CONTROL_INHERIT,
+    RT_EDIT_CONTROL_INHERIT,
+    RT_EDIT_CONTROL_INHERIT,
+    RT_EDIT_CONTROL_INHERIT,
+    RT_EDIT_CONTROL_INHERIT,
+    RT_EDIT_CONTROL_INHERIT,
+    RT_EDIT_CONTROL_INHERIT
+};
+_Static_assert(sizeof(comb_command_controls) / sizeof(comb_command_controls[0]) ==
+    sizeof(comb_cmds) / sizeof(comb_cmds[0]), "comb command controls");
+
 static const struct rt_edit_prim_desc comb_prim_desc = {
     "comb",               /* prim_type    */
     "Combination / Region", /* prim_label */
     11,                   /* ncmd         */
     comb_cmds             /* cmds         */,
     0,                    /* nopt         */
-    NULL                  /* opts         */
+    NULL,                 /* opts         */
+    RT_EDIT_CONTROL_GENERATED,
+    comb_command_controls
 };
 
 C_DECL const struct rt_edit_prim_desc *

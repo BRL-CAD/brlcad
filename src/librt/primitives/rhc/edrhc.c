@@ -198,7 +198,9 @@ static const struct rt_edit_prim_desc rhc_prim_desc = {
     4,                    /* ncmd         */
     rhc_cmds              /* cmds         */,
     0,                    /* nopt         */
-    NULL                  /* opts         */
+    NULL,                 /* opts         */
+    RT_EDIT_CONTROL_GENERATED,
+    NULL
 };
 
 C_DECL const struct rt_edit_prim_desc *

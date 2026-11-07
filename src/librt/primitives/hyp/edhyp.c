@@ -124,10 +124,22 @@ static const struct rt_edit_cmd_desc hyp_cmds[] = {
     { ECMD_HYP_ROT_H, RT_EDIT_CMD_NAME(ECMD_HYP_ROT_H),   "Rotate H", "rotation", 1, hyp_rot_deg_params, 1, 50, NULL }
 };
 
+static const enum rt_edit_control_class hyp_command_controls[] = {
+    RT_EDIT_CONTROL_INHERIT,
+    RT_EDIT_CONTROL_INHERIT,
+    RT_EDIT_CONTROL_INHERIT,
+    RT_EDIT_CONTROL_INHERIT,
+    RT_EDIT_CONTROL_ACTION
+};
+_Static_assert(sizeof(hyp_command_controls) / sizeof(hyp_command_controls[0]) ==
+    sizeof(hyp_cmds) / sizeof(hyp_cmds[0]), "hyp command controls");
+
 static const struct rt_edit_prim_desc hyp_prim_desc = {
     "hyp", "Hyperboloid of One Sheet", 5, hyp_cmds,
     0,                    /* nopt         */
-    NULL                  /* opts         */
+    NULL,                 /* opts         */
+    RT_EDIT_CONTROL_GENERATED,
+    hyp_command_controls
 };
 
 C_DECL const struct rt_edit_prim_desc *

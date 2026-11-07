@@ -240,7 +240,9 @@ static const struct rt_edit_prim_desc arb_prim_desc = {
     4,                    /* ncmd         */
     arb_cmds,             /* cmds         */
     1,                    /* nopt         */
-    arb_opts              /* opts         */
+    arb_opts,             /* opts         */
+    RT_EDIT_CONTROL_CUSTOM,
+    NULL
 };
 
 C_DECL const struct rt_edit_prim_desc *

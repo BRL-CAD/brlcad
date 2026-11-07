@@ -237,7 +237,9 @@ static const struct rt_edit_cmd_desc bspline_cmds[] = {
 static const struct rt_edit_prim_desc bspline_prim_desc = {
     "bspline", "B-Spline", 5, bspline_cmds,
     0,                    /* nopt         */
-    NULL                  /* opts         */
+    NULL,                 /* opts         */
+    RT_EDIT_CONTROL_UNSUPPORTED,
+    NULL
 };
 
 C_DECL const struct rt_edit_prim_desc *

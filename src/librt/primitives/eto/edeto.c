@@ -117,10 +117,21 @@ static const struct rt_edit_cmd_desc eto_cmds[] = {
     { ECMD_ETO_ROT_C, RT_EDIT_CMD_NAME(ECMD_ETO_ROT_C),   "Rotate C",    "rotation", 1, eto_rot_deg_params, 1, 40, NULL },
 };
 
+static const enum rt_edit_control_class eto_command_controls[] = {
+    RT_EDIT_CONTROL_INHERIT,
+    RT_EDIT_CONTROL_INHERIT,
+    RT_EDIT_CONTROL_INHERIT,
+    RT_EDIT_CONTROL_ACTION
+};
+_Static_assert(sizeof(eto_command_controls) / sizeof(eto_command_controls[0]) ==
+    sizeof(eto_cmds) / sizeof(eto_cmds[0]), "eto command controls");
+
 static const struct rt_edit_prim_desc eto_prim_desc = {
     "eto", "Elliptical Torus", 4, eto_cmds,
     0,                    /* nopt         */
-    NULL                  /* opts         */
+    NULL,                 /* opts         */
+    RT_EDIT_CONTROL_GENERATED,
+    eto_command_controls
 };
 
 C_DECL const struct rt_edit_prim_desc *
