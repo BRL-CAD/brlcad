@@ -201,15 +201,19 @@ static const struct rt_edit_opt_desc ell_opts[] = {
     }
 };
 
+static const enum rt_edit_param_semantic ell_distance_semantics[] = {
+    RT_EDIT_SEMANTIC_DISTANCE
+};
+
 static const struct rt_edit_interaction_desc ell_interactions[] = {
     { RT_EDIT_SELECTION_PRIMITIVE, RT_EDIT_COORDINATE_SCALAR,
-      RT_EDIT_MANIPULATOR_AXIS },
+      RT_EDIT_MANIPULATOR_AXIS, ell_distance_semantics, 1 },
     { RT_EDIT_SELECTION_PRIMITIVE, RT_EDIT_COORDINATE_SCALAR,
-      RT_EDIT_MANIPULATOR_AXIS },
+      RT_EDIT_MANIPULATOR_AXIS, ell_distance_semantics, 1 },
     { RT_EDIT_SELECTION_PRIMITIVE, RT_EDIT_COORDINATE_SCALAR,
-      RT_EDIT_MANIPULATOR_AXIS },
+      RT_EDIT_MANIPULATOR_AXIS, ell_distance_semantics, 1 },
     { RT_EDIT_SELECTION_PRIMITIVE, RT_EDIT_COORDINATE_SCALAR,
-      RT_EDIT_MANIPULATOR_RADIUS }
+      RT_EDIT_MANIPULATOR_RADIUS, ell_distance_semantics, 1 }
 };
 _Static_assert(sizeof(ell_interactions) / sizeof(ell_interactions[0]) ==
     sizeof(ell_cmds) / sizeof(ell_cmds[0]), "ell command interactions");

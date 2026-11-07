@@ -234,15 +234,23 @@ static const struct rt_edit_opt_desc arb_opts[] = {
     }
 };
 
+static const enum rt_edit_param_semantic arb_move_semantics[] = {
+    RT_EDIT_SEMANTIC_INDEX, RT_EDIT_SEMANTIC_POSITION
+};
+static const enum rt_edit_param_semantic arb_rotate_semantics[] = {
+    RT_EDIT_SEMANTIC_INDEX, RT_EDIT_SEMANTIC_INDEX,
+    RT_EDIT_SEMANTIC_ANGLE
+};
+
 static const struct rt_edit_interaction_desc arb_interactions[] = {
     { RT_EDIT_SELECTION_FACE, RT_EDIT_COORDINATE_OBJECT,
-      RT_EDIT_MANIPULATOR_INDEXED_SET },
+      RT_EDIT_MANIPULATOR_INDEXED_SET, arb_move_semantics, 2 },
     { RT_EDIT_SELECTION_EDGE, RT_EDIT_COORDINATE_OBJECT,
-      RT_EDIT_MANIPULATOR_INDEXED_SET },
+      RT_EDIT_MANIPULATOR_INDEXED_SET, arb_move_semantics, 2 },
     { RT_EDIT_SELECTION_VERTEX, RT_EDIT_COORDINATE_OBJECT,
-      RT_EDIT_MANIPULATOR_INDEXED_SET },
+      RT_EDIT_MANIPULATOR_INDEXED_SET, arb_move_semantics, 2 },
     { RT_EDIT_SELECTION_FACE, RT_EDIT_COORDINATE_OBJECT,
-      RT_EDIT_MANIPULATOR_ROTATION_RING }
+      RT_EDIT_MANIPULATOR_ROTATION_RING, arb_rotate_semantics, 3 }
 };
 _Static_assert(sizeof(arb_interactions) / sizeof(arb_interactions[0]) ==
     sizeof(arb_cmds) / sizeof(arb_cmds[0]), "arb command interactions");

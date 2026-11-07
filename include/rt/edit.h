@@ -639,6 +639,21 @@ enum rt_edit_coordinate_space {
     RT_EDIT_COORDINATE_PARAMETRIC_2D
 };
 
+/** Source-neutral role of one command parameter. */
+enum rt_edit_param_semantic {
+    RT_EDIT_SEMANTIC_INFER = 0,
+    RT_EDIT_SEMANTIC_INDEX,
+    RT_EDIT_SEMANTIC_POSITION,
+    RT_EDIT_SEMANTIC_DELTA,
+    RT_EDIT_SEMANTIC_DIRECTION,
+    RT_EDIT_SEMANTIC_DISTANCE,
+    RT_EDIT_SEMANTIC_ANGLE,
+    RT_EDIT_SEMANTIC_SCALE,
+    RT_EDIT_SEMANTIC_FRACTION,
+    RT_EDIT_SEMANTIC_COUNT,
+    RT_EDIT_SEMANTIC_PROPERTY
+};
+
 /** Suggested retained interaction adapter for an edit command. */
 enum rt_edit_manipulator_hint {
     RT_EDIT_MANIPULATOR_NONE = 0,
@@ -656,6 +671,9 @@ struct rt_edit_interaction_desc {
     enum rt_edit_selection_domain selection_domain;
     enum rt_edit_coordinate_space coordinate_space;
     enum rt_edit_manipulator_hint manipulator;
+    /** Optional leading parameter roles; omitted entries mean INFER. */
+    const enum rt_edit_param_semantic *parameter_semantics;
+    int parameter_semantic_count;
 };
 
 /** Result of querying the current inputs for a descriptor command. */
@@ -795,6 +813,11 @@ rt_edit_cmd_control_class(const struct rt_edit_prim_desc *desc,
 RT_EXPORT extern struct rt_edit_interaction_desc
 rt_edit_cmd_interaction(const struct rt_edit_prim_desc *desc,
 	const struct rt_edit_cmd_desc *command);
+
+/** Return an explicit parameter role, or INFER when none is supplied. */
+RT_EXPORT extern enum rt_edit_param_semantic
+rt_edit_param_semantic_get(const struct rt_edit_prim_desc *desc,
+	const struct rt_edit_cmd_desc *command, int parameter_index);
 
 /**
  * Serialise a primitive edit descriptor to a JSON string appended to @p out.

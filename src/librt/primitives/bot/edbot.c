@@ -1485,41 +1485,64 @@ static const enum rt_edit_control_class bot_command_controls[] = {
 _Static_assert(sizeof(bot_command_controls) / sizeof(bot_command_controls[0]) ==
     sizeof(bot_cmds) / sizeof(bot_cmds[0]), "bot command controls");
 
+static const enum rt_edit_param_semantic bot_index1_semantics[] = {
+    RT_EDIT_SEMANTIC_INDEX
+};
+static const enum rt_edit_param_semantic bot_index2_semantics[] = {
+    RT_EDIT_SEMANTIC_INDEX, RT_EDIT_SEMANTIC_INDEX
+};
+static const enum rt_edit_param_semantic bot_index3_semantics[] = {
+    RT_EDIT_SEMANTIC_INDEX, RT_EDIT_SEMANTIC_INDEX,
+    RT_EDIT_SEMANTIC_INDEX
+};
+static const enum rt_edit_param_semantic bot_position_semantics[] = {
+    RT_EDIT_SEMANTIC_POSITION
+};
+static const enum rt_edit_param_semantic bot_delta_semantics[] = {
+    RT_EDIT_SEMANTIC_DELTA
+};
+static const enum rt_edit_param_semantic bot_property_semantics[] = {
+    RT_EDIT_SEMANTIC_PROPERTY
+};
+static const enum rt_edit_param_semantic bot_distance_semantics[] = {
+    RT_EDIT_SEMANTIC_DISTANCE
+};
+
 static const struct rt_edit_interaction_desc bot_interactions[] = {
     { RT_EDIT_SELECTION_VERTEX, RT_EDIT_COORDINATE_SCALAR,
-      RT_EDIT_MANIPULATOR_INDEXED_SET },
+      RT_EDIT_MANIPULATOR_INDEXED_SET, bot_index1_semantics, 1 },
     { RT_EDIT_SELECTION_EDGE, RT_EDIT_COORDINATE_SCALAR,
-      RT_EDIT_MANIPULATOR_INDEXED_SET },
+      RT_EDIT_MANIPULATOR_INDEXED_SET, bot_index2_semantics, 2 },
     { RT_EDIT_SELECTION_FACE, RT_EDIT_COORDINATE_SCALAR,
-      RT_EDIT_MANIPULATOR_INDEXED_SET },
+      RT_EDIT_MANIPULATOR_INDEXED_SET, bot_index3_semantics, 3 },
     { RT_EDIT_SELECTION_VERTEX, RT_EDIT_COORDINATE_OBJECT,
-      RT_EDIT_MANIPULATOR_INDEXED_SET },
+      RT_EDIT_MANIPULATOR_INDEXED_SET, bot_position_semantics, 1 },
     { RT_EDIT_SELECTION_EDGE, RT_EDIT_COORDINATE_OBJECT,
-      RT_EDIT_MANIPULATOR_INDEXED_SET },
+      RT_EDIT_MANIPULATOR_INDEXED_SET, bot_position_semantics, 1 },
     { RT_EDIT_SELECTION_FACE, RT_EDIT_COORDINATE_OBJECT,
-      RT_EDIT_MANIPULATOR_INDEXED_SET },
+      RT_EDIT_MANIPULATOR_INDEXED_SET, bot_position_semantics, 1 },
     { RT_EDIT_SELECTION_VERTEX, RT_EDIT_COORDINATE_OBJECT,
-      RT_EDIT_MANIPULATOR_INDEXED_SET },
+      RT_EDIT_MANIPULATOR_INDEXED_SET, bot_delta_semantics, 1 },
     { RT_EDIT_SELECTION_EDGE, RT_EDIT_COORDINATE_SCALAR,
-      RT_EDIT_MANIPULATOR_INDEXED_SET },
+      RT_EDIT_MANIPULATOR_INDEXED_SET, NULL, 0 },
     { RT_EDIT_SELECTION_FACE, RT_EDIT_COORDINATE_SCALAR,
-      RT_EDIT_MANIPULATOR_INDEXED_SET },
+      RT_EDIT_MANIPULATOR_INDEXED_SET, NULL, 0 },
     { RT_EDIT_SELECTION_FACE, RT_EDIT_COORDINATE_SCALAR,
-      RT_EDIT_MANIPULATOR_INDEXED_SET },
+      RT_EDIT_MANIPULATOR_INDEXED_SET, NULL, 0 },
     { RT_EDIT_SELECTION_VERTEX, RT_EDIT_COORDINATE_SCALAR,
-      RT_EDIT_MANIPULATOR_INDEXED_SET },
+      RT_EDIT_MANIPULATOR_INDEXED_SET, NULL, 0 },
     { RT_EDIT_SELECTION_FACE, RT_EDIT_COORDINATE_SCALAR,
-      RT_EDIT_MANIPULATOR_INDEXED_SET },
+      RT_EDIT_MANIPULATOR_INDEXED_SET, NULL, 0 },
     { RT_EDIT_SELECTION_PRIMITIVE, RT_EDIT_COORDINATE_SCALAR,
-      RT_EDIT_MANIPULATOR_NONE },
+      RT_EDIT_MANIPULATOR_NONE, bot_property_semantics, 1 },
     { RT_EDIT_SELECTION_PRIMITIVE, RT_EDIT_COORDINATE_SCALAR,
-      RT_EDIT_MANIPULATOR_NONE },
+      RT_EDIT_MANIPULATOR_NONE, bot_property_semantics, 1 },
     { RT_EDIT_SELECTION_FACE, RT_EDIT_COORDINATE_SCALAR,
-      RT_EDIT_MANIPULATOR_NONE },
+      RT_EDIT_MANIPULATOR_NONE, bot_distance_semantics, 1 },
     { RT_EDIT_SELECTION_FACE, RT_EDIT_COORDINATE_SCALAR,
-      RT_EDIT_MANIPULATOR_NONE },
+      RT_EDIT_MANIPULATOR_NONE, bot_property_semantics, 1 },
     { RT_EDIT_SELECTION_PRIMITIVE, RT_EDIT_COORDINATE_SCALAR,
-      RT_EDIT_MANIPULATOR_NONE }
+      RT_EDIT_MANIPULATOR_NONE, bot_property_semantics, 1 }
 };
 _Static_assert(sizeof(bot_interactions) / sizeof(bot_interactions[0]) ==
     sizeof(bot_cmds) / sizeof(bot_cmds[0]), "bot command interactions");

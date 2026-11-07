@@ -83,7 +83,8 @@ check_prim(const char *name, int prim_type_id,
 
     if (!strstr(js, "\"selection_domain\"") ||
 	!strstr(js, "\"coordinate_space\"") ||
-	!strstr(js, "\"manipulator\"")) {
+	!strstr(js, "\"manipulator\"") ||
+	!strstr(js, "\"semantic\"")) {
 	bu_log("FAIL [%s]: JSON missing interaction metadata\n", name);
 	bu_vls_free(&json);
 	return 1;
@@ -229,6 +230,22 @@ check_descriptor_audit(void)
 	    failures++;
 	}
 	bu_vls_free(&diagnostic);
+
+	const enum rt_edit_param_semantic invalid_semantic =
+	    (enum rt_edit_param_semantic)(RT_EDIT_SEMANTIC_PROPERTY + 1);
+	invalid_interaction = ell->command_interactions[0];
+	invalid_interaction.parameter_semantics = &invalid_semantic;
+	invalid_interaction.parameter_semantic_count = 1;
+	invalid_desc = *ell;
+	invalid_desc.ncmd = 1;
+	invalid_desc.command_interactions = &invalid_interaction;
+	diagnostic = BU_VLS_INIT_ZERO;
+	if (rt_edit_prim_desc_validate(&diagnostic, &invalid_desc) !=
+		BRLCAD_ERROR || !bu_vls_strlen(&diagnostic)) {
+	    bu_log("FAIL: invalid parameter semantic was not rejected\n");
+	    failures++;
+	}
+	bu_vls_free(&diagnostic);
     } else {
 	bu_log("FAIL: ELL descriptor unavailable for validation test\n");
 	failures++;
@@ -272,13 +289,23 @@ check_interactions(void)
 	default_interaction.selection_domain != RT_EDIT_SELECTION_NONE ||
 	default_interaction.coordinate_space != RT_EDIT_COORDINATE_INFER ||
 	default_interaction.manipulator != RT_EDIT_MANIPULATOR_NONE ||
+	rt_edit_param_semantic_get(ell, &ell->cmds[0], 0) !=
+	    RT_EDIT_SEMANTIC_DISTANCE ||
+	rt_edit_param_semantic_get(bot, &bot->cmds[6], 0) !=
+	    RT_EDIT_SEMANTIC_DELTA ||
+	rt_edit_param_semantic_get(sketch, &sketch->cmds[17], 2) !=
+	    RT_EDIT_SEMANTIC_ANGLE ||
+	rt_edit_param_semantic_get(tor, &tor->cmds[0], 0) !=
+	    RT_EDIT_SEMANTIC_INFER ||
 	json_status != BRLCAD_OK ||
 	!strstr(bu_vls_cstr(&sketch_json),
 	    "\"selection_domain\": \"segment\"") ||
 	!strstr(bu_vls_cstr(&sketch_json),
 	    "\"coordinate_space\": \"parametric_2d\"") ||
 	!strstr(bu_vls_cstr(&sketch_json),
-	    "\"manipulator\": \"indexed_set\"")) {
+	    "\"manipulator\": \"indexed_set\"") ||
+	!strstr(bu_vls_cstr(&sketch_json),
+	    "\"semantic\": \"angle\"")) {
 	bu_log("FAIL: representative interaction descriptors are incomplete\n");
 	bu_vls_free(&sketch_json);
 	return 1;

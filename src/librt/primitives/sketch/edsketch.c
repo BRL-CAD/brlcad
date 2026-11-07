@@ -434,47 +434,70 @@ static const enum rt_edit_control_class sketch_command_controls[] = {
 _Static_assert(sizeof(sketch_command_controls) / sizeof(sketch_command_controls[0]) ==
     sizeof(sketch_cmds) / sizeof(sketch_cmds[0]), "sketch command controls");
 
+static const enum rt_edit_param_semantic sketch_index_semantics[] = {
+    RT_EDIT_SEMANTIC_INDEX
+};
+static const enum rt_edit_param_semantic sketch_position_semantics[] = {
+    RT_EDIT_SEMANTIC_POSITION, RT_EDIT_SEMANTIC_POSITION
+};
+static const enum rt_edit_param_semantic sketch_delta_semantics[] = {
+    RT_EDIT_SEMANTIC_DELTA, RT_EDIT_SEMANTIC_DELTA
+};
+static const enum rt_edit_param_semantic sketch_index2_semantics[] = {
+    RT_EDIT_SEMANTIC_INDEX, RT_EDIT_SEMANTIC_INDEX
+};
+static const enum rt_edit_param_semantic sketch_split_semantics[] = {
+    RT_EDIT_SEMANTIC_INDEX, RT_EDIT_SEMANTIC_FRACTION
+};
+static const enum rt_edit_param_semantic sketch_radius_semantics[] = {
+    RT_EDIT_SEMANTIC_INDEX, RT_EDIT_SEMANTIC_DISTANCE
+};
+static const enum rt_edit_param_semantic sketch_tangency_semantics[] = {
+    RT_EDIT_SEMANTIC_INDEX, RT_EDIT_SEMANTIC_INDEX,
+    RT_EDIT_SEMANTIC_ANGLE
+};
+
 static const struct rt_edit_interaction_desc sketch_interactions[] = {
     { RT_EDIT_SELECTION_VERTEX, RT_EDIT_COORDINATE_SCALAR,
-      RT_EDIT_MANIPULATOR_INDEXED_SET },
+      RT_EDIT_MANIPULATOR_INDEXED_SET, sketch_index_semantics, 1 },
     { RT_EDIT_SELECTION_VERTEX, RT_EDIT_COORDINATE_PARAMETRIC_2D,
-      RT_EDIT_MANIPULATOR_INDEXED_SET },
+      RT_EDIT_MANIPULATOR_INDEXED_SET, sketch_position_semantics, 2 },
     { RT_EDIT_SELECTION_SEGMENT, RT_EDIT_COORDINATE_SCALAR,
-      RT_EDIT_MANIPULATOR_INDEXED_SET },
+      RT_EDIT_MANIPULATOR_INDEXED_SET, sketch_index_semantics, 1 },
     { RT_EDIT_SELECTION_SEGMENT, RT_EDIT_COORDINATE_PARAMETRIC_2D,
-      RT_EDIT_MANIPULATOR_INDEXED_SET },
+      RT_EDIT_MANIPULATOR_INDEXED_SET, sketch_delta_semantics, 2 },
     { RT_EDIT_SELECTION_VERTEX, RT_EDIT_COORDINATE_PARAMETRIC_2D,
-      RT_EDIT_MANIPULATOR_INDEXED_SET },
+      RT_EDIT_MANIPULATOR_INDEXED_SET, sketch_index2_semantics, 2 },
     { RT_EDIT_SELECTION_VERTEX, RT_EDIT_COORDINATE_PARAMETRIC_2D,
-      RT_EDIT_MANIPULATOR_CUSTOM },
+      RT_EDIT_MANIPULATOR_CUSTOM, NULL, 0 },
     { RT_EDIT_SELECTION_CONTROL_POINT, RT_EDIT_COORDINATE_PARAMETRIC_2D,
-      RT_EDIT_MANIPULATOR_INDEXED_SET },
+      RT_EDIT_MANIPULATOR_INDEXED_SET, NULL, 0 },
     { RT_EDIT_SELECTION_VERTEX, RT_EDIT_COORDINATE_SCALAR,
-      RT_EDIT_MANIPULATOR_INDEXED_SET },
+      RT_EDIT_MANIPULATOR_INDEXED_SET, sketch_index_semantics, 1 },
     { RT_EDIT_SELECTION_SEGMENT, RT_EDIT_COORDINATE_SCALAR,
-      RT_EDIT_MANIPULATOR_INDEXED_SET },
+      RT_EDIT_MANIPULATOR_INDEXED_SET, sketch_index_semantics, 1 },
     { RT_EDIT_SELECTION_VERTEX, RT_EDIT_COORDINATE_PARAMETRIC_2D,
-      RT_EDIT_MANIPULATOR_INDEXED_SET },
+      RT_EDIT_MANIPULATOR_INDEXED_SET, sketch_delta_semantics, 1 },
     { RT_EDIT_SELECTION_SEGMENT, RT_EDIT_COORDINATE_PARAMETRIC_2D,
-      RT_EDIT_MANIPULATOR_INDEXED_SET },
+      RT_EDIT_MANIPULATOR_INDEXED_SET, sketch_split_semantics, 2 },
     { RT_EDIT_SELECTION_CONTROL_POINT, RT_EDIT_COORDINATE_PARAMETRIC_2D,
-      RT_EDIT_MANIPULATOR_INDEXED_SET },
+      RT_EDIT_MANIPULATOR_INDEXED_SET, NULL, 0 },
     { RT_EDIT_SELECTION_SEGMENT, RT_EDIT_COORDINATE_SCALAR,
-      RT_EDIT_MANIPULATOR_CUSTOM },
+      RT_EDIT_MANIPULATOR_CUSTOM, NULL, 0 },
     { RT_EDIT_SELECTION_SEGMENT, RT_EDIT_COORDINATE_SCALAR,
-      RT_EDIT_MANIPULATOR_CUSTOM },
+      RT_EDIT_MANIPULATOR_CUSTOM, NULL, 0 },
     { RT_EDIT_SELECTION_PRIMITIVE, RT_EDIT_COORDINATE_PARAMETRIC_2D,
-      RT_EDIT_MANIPULATOR_POINT },
+      RT_EDIT_MANIPULATOR_POINT, sketch_position_semantics, 2 },
     { RT_EDIT_SELECTION_SEGMENT, RT_EDIT_COORDINATE_SCALAR,
-      RT_EDIT_MANIPULATOR_CUSTOM },
+      RT_EDIT_MANIPULATOR_CUSTOM, sketch_index_semantics, 1 },
     { RT_EDIT_SELECTION_SEGMENT, RT_EDIT_COORDINATE_SCALAR,
-      RT_EDIT_MANIPULATOR_RADIUS },
+      RT_EDIT_MANIPULATOR_RADIUS, sketch_radius_semantics, 2 },
     { RT_EDIT_SELECTION_SEGMENT, RT_EDIT_COORDINATE_SCALAR,
-      RT_EDIT_MANIPULATOR_ROTATION_RING },
+      RT_EDIT_MANIPULATOR_ROTATION_RING, sketch_tangency_semantics, 3 },
     { RT_EDIT_SELECTION_PRIMITIVE, RT_EDIT_COORDINATE_OBJECT,
-      RT_EDIT_MANIPULATOR_PLANE },
+      RT_EDIT_MANIPULATOR_PLANE, NULL, 0 },
     { RT_EDIT_SELECTION_SEGMENT, RT_EDIT_COORDINATE_SCALAR,
-      RT_EDIT_MANIPULATOR_CUSTOM }
+      RT_EDIT_MANIPULATOR_CUSTOM, sketch_index_semantics, 1 }
 };
 _Static_assert(sizeof(sketch_interactions) / sizeof(sketch_interactions[0]) ==
     sizeof(sketch_cmds) / sizeof(sketch_cmds[0]), "sketch command interactions");

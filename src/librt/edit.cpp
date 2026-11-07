@@ -1499,6 +1499,25 @@ edit_coordinate_space_str(enum rt_edit_coordinate_space space)
 }
 
 static const char *
+edit_param_semantic_str(enum rt_edit_param_semantic semantic)
+{
+    switch (semantic) {
+	case RT_EDIT_SEMANTIC_INDEX:     return "index";
+	case RT_EDIT_SEMANTIC_POSITION:  return "position";
+	case RT_EDIT_SEMANTIC_DELTA:     return "delta";
+	case RT_EDIT_SEMANTIC_DIRECTION: return "direction";
+	case RT_EDIT_SEMANTIC_DISTANCE:  return "distance";
+	case RT_EDIT_SEMANTIC_ANGLE:     return "angle";
+	case RT_EDIT_SEMANTIC_SCALE:     return "scale";
+	case RT_EDIT_SEMANTIC_FRACTION:  return "fraction";
+	case RT_EDIT_SEMANTIC_COUNT:     return "count";
+	case RT_EDIT_SEMANTIC_PROPERTY:  return "property";
+	case RT_EDIT_SEMANTIC_INFER:
+	default:                         return "infer";
+    }
+}
+
+static const char *
 edit_manipulator_hint_str(enum rt_edit_manipulator_hint hint)
 {
     switch (hint) {
@@ -1583,7 +1602,9 @@ rt_edit_cmd_interaction(const struct rt_edit_prim_desc *desc,
     const struct rt_edit_interaction_desc none = {
 	RT_EDIT_SELECTION_NONE,
 	RT_EDIT_COORDINATE_INFER,
-	RT_EDIT_MANIPULATOR_NONE
+	RT_EDIT_MANIPULATOR_NONE,
+	NULL,
+	0
     };
     if (!desc || !command || !desc->command_interactions)
 	return none;
@@ -1593,6 +1614,21 @@ rt_edit_cmd_interaction(const struct rt_edit_prim_desc *desc,
 	    return desc->command_interactions[ci];
     }
     return none;
+}
+
+enum rt_edit_param_semantic
+rt_edit_param_semantic_get(const struct rt_edit_prim_desc *desc,
+	const struct rt_edit_cmd_desc *command, int parameter_index)
+{
+    if (!desc || !command || parameter_index < 0 ||
+	parameter_index >= command->nparam)
+	return RT_EDIT_SEMANTIC_INFER;
+    const struct rt_edit_interaction_desc interaction =
+	rt_edit_cmd_interaction(desc, command);
+    if (!interaction.parameter_semantics ||
+	parameter_index >= interaction.parameter_semantic_count)
+	return RT_EDIT_SEMANTIC_INFER;
+    return interaction.parameter_semantics[parameter_index];
 }
 
 static bool
@@ -1693,6 +1729,19 @@ rt_edit_prim_desc_validate(struct bu_vls *msg,
 		DESC_FAIL("%s/%s: invalid manipulator hint %d",
 		    desc->prim_type, command->name,
 		    (int)interaction->manipulator);
+	    if (interaction->parameter_semantic_count < 0 ||
+		(interaction->parameter_semantic_count &&
+		 !interaction->parameter_semantics) ||
+		interaction->parameter_semantic_count > command->nparam)
+		DESC_FAIL("%s/%s: invalid parameter semantic array",
+		    desc->prim_type, command->name);
+	    for (int si = 0; si < interaction->parameter_semantic_count; ++si) {
+		if (interaction->parameter_semantics[si] < RT_EDIT_SEMANTIC_INFER ||
+		    interaction->parameter_semantics[si] > RT_EDIT_SEMANTIC_PROPERTY)
+		    DESC_FAIL("%s/%s: invalid parameter semantic %d",
+			desc->prim_type, command->name,
+			(int)interaction->parameter_semantics[si]);
+	    }
 	}
 
 	std::set<std::string> parameter_names;
@@ -1884,8 +1933,11 @@ rt_edit_prim_desc_to_json(struct bu_vls *out,
 	    bu_vls_strcat(out, "          \"label\": ");
 	    emit_json_str(out, p->label);
 	    bu_vls_strcat(out, ",\n");
-	    bu_vls_printf(out, "          \"type\": \"%s\"",
+	    bu_vls_printf(out, "          \"type\": \"%s\",\n",
 			 edit_param_type_str(p->type));
+	    bu_vls_strcat(out, "          \"semantic\": ");
+	    emit_json_str(out, edit_param_semantic_str(
+		rt_edit_param_semantic_get(desc, cmd, pi)));
 
 	    /* index — omitted for STRING */
 	    if (p->type != RT_EDIT_PARAM_STRING)
