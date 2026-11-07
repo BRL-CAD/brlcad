@@ -1655,6 +1655,51 @@ edit_limit_is_set(fastf_t value)
 }
 
 int
+rt_edit_param_bounds_get(const struct rt_edit *edit, int command_id,
+	int parameter_index, struct rt_edit_param_bounds *bounds)
+{
+    if (bounds)
+	memset(bounds, 0, sizeof(*bounds));
+    if (!edit || !bounds || parameter_index < 0 ||
+	edit->es_int.idb_type <= ID_NULL ||
+	edit->es_int.idb_type > ID_MAX_SOLID ||
+	EDOBJ[edit->es_int.idb_type].magic != RT_FUNCTAB_MAGIC ||
+	!EDOBJ[edit->es_int.idb_type].ft_edit_desc)
+	return BRLCAD_ERROR;
+
+    const struct rt_edit_prim_desc *desc =
+	EDOBJ[edit->es_int.idb_type].ft_edit_desc();
+    const struct rt_edit_cmd_desc *command = NULL;
+    for (int command_index = 0; desc && command_index < desc->ncmd;
+	++command_index) {
+	if (desc->cmds[command_index].cmd_id == command_id) {
+	    command = &desc->cmds[command_index];
+	    break;
+	}
+    }
+    if (!command || parameter_index >= command->nparam)
+	return BRLCAD_ERROR;
+
+    const struct rt_edit_param_desc *parameter =
+	&command->params[parameter_index];
+    if (edit_limit_is_set(parameter->range_min)) {
+	bounds->minimum = parameter->range_min;
+	bounds->has_minimum = 1;
+    }
+    if (edit_limit_is_set(parameter->range_max)) {
+	bounds->maximum = parameter->range_max;
+	bounds->has_maximum = 1;
+    }
+    if (desc->parameter_bounds && desc->parameter_bounds(bounds, edit,
+	    command_id, parameter_index) != BRLCAD_OK)
+	return BRLCAD_ERROR;
+    if (bounds->has_minimum && bounds->has_maximum &&
+	bounds->minimum > bounds->maximum)
+	return BRLCAD_ERROR;
+    return BRLCAD_OK;
+}
+
+int
 rt_edit_prim_desc_validate(struct bu_vls *msg,
 	const struct rt_edit_prim_desc *desc)
 {

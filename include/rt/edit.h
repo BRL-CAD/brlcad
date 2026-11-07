@@ -676,6 +676,14 @@ struct rt_edit_interaction_desc {
     int parameter_semantic_count;
 };
 
+/** Effective bounds for one parameter in the current edit state. */
+struct rt_edit_param_bounds {
+    fastf_t minimum;
+    fastf_t maximum;
+    int has_minimum;
+    int has_maximum;
+};
+
 /** Result of querying the current inputs for a descriptor command. */
 enum rt_edit_value_status {
     RT_EDIT_VALUE_ERROR = -1,
@@ -802,6 +810,9 @@ struct rt_edit_prim_desc {
     const enum rt_edit_control_class *command_controls;
     /** Optional ncmd-entry interaction metadata; NULL means no hint. */
     const struct rt_edit_interaction_desc *command_interactions;
+    /** Optional current-state refinement of a parameter's static bounds. */
+    int (*parameter_bounds)(struct rt_edit_param_bounds *bounds,
+	const struct rt_edit *edit, int command_id, int parameter_index);
 };
 
 /** Return the resolved presentation class for a command. */
@@ -818,6 +829,11 @@ rt_edit_cmd_interaction(const struct rt_edit_prim_desc *desc,
 RT_EXPORT extern enum rt_edit_param_semantic
 rt_edit_param_semantic_get(const struct rt_edit_prim_desc *desc,
 	const struct rt_edit_cmd_desc *command, int parameter_index);
+
+/** Query static and current-state parameter bounds for an active edit. */
+RT_EXPORT extern int
+rt_edit_param_bounds_get(const struct rt_edit *edit, int command_id,
+	int parameter_index, struct rt_edit_param_bounds *bounds);
 
 /**
  * Serialise a primitive edit descriptor to a JSON string appended to @p out.

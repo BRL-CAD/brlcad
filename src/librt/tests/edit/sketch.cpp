@@ -909,6 +909,25 @@ rt_edit_test_sketch(void)
     bu_log("SKETCH initial state SUCCESS: curr_vert=%d curr_seg=%d\n",
 	   se->curr_vert, se->curr_seg);
 
+    struct rt_edit_param_bounds vertex_bounds = {};
+    struct rt_edit_param_bounds segment_bounds = {};
+    struct rt_edit_param_bounds fraction_bounds = {};
+    if (rt_edit_param_bounds_get(s, ECMD_SKETCH_PICK_VERTEX, 0,
+	    &vertex_bounds) != BRLCAD_OK || !vertex_bounds.has_minimum ||
+	!vertex_bounds.has_maximum ||
+	!NEAR_EQUAL(vertex_bounds.minimum, 0.0, SMALL_FASTF) ||
+	!NEAR_EQUAL(vertex_bounds.maximum, 3.0, SMALL_FASTF) ||
+	rt_edit_param_bounds_get(s, ECMD_SKETCH_SPLIT_SEGMENT, 0,
+	    &segment_bounds) != BRLCAD_OK || !segment_bounds.has_maximum ||
+	!NEAR_EQUAL(segment_bounds.maximum, 0.0, SMALL_FASTF) ||
+	rt_edit_param_bounds_get(s, ECMD_SKETCH_SPLIT_SEGMENT, 1,
+	    &fraction_bounds) != BRLCAD_OK || !fraction_bounds.has_minimum ||
+	!fraction_bounds.has_maximum ||
+	!NEAR_EQUAL(fraction_bounds.minimum, 0.0, SMALL_FASTF) ||
+	!NEAR_EQUAL(fraction_bounds.maximum, 1.0, SMALL_FASTF))
+	bu_exit(1, "ERROR: sketch parameter bounds are incorrect\n");
+    bu_log("SKETCH current-topology parameter bounds SUCCESS\n");
+
     /* The plane origin is a local length; its axes are unitless directions. */
     const fastf_t local2base = 25.4;
     s->local2base = local2base;

@@ -1547,13 +1547,37 @@ static const struct rt_edit_interaction_desc bot_interactions[] = {
 _Static_assert(sizeof(bot_interactions) / sizeof(bot_interactions[0]) ==
     sizeof(bot_cmds) / sizeof(bot_cmds[0]), "bot command interactions");
 
+static int
+bot_parameter_bounds(struct rt_edit_param_bounds *bounds,
+	const struct rt_edit *edit, int command_id, int parameter_index)
+{
+    if (!bounds || !edit || !edit->es_int.idb_ptr)
+	return BRLCAD_ERROR;
+    const struct rt_bot_internal *bot =
+	(const struct rt_bot_internal *)edit->es_int.idb_ptr;
+    RT_BOT_CK_MAGIC(bot);
+
+    const int is_vertex_index =
+	(command_id == ECMD_BOT_PICKV && parameter_index == 0) ||
+	(command_id == ECMD_BOT_PICKE && parameter_index < 2) ||
+	(command_id == ECMD_BOT_PICKT && parameter_index < 3);
+    if (!is_vertex_index)
+	return BRLCAD_OK;
+    if (!bot->num_vertices)
+	return BRLCAD_ERROR;
+    bounds->maximum = (fastf_t)(bot->num_vertices - 1);
+    bounds->has_maximum = 1;
+    return BRLCAD_OK;
+}
+
 static const struct rt_edit_prim_desc bot_prim_desc = {
     "bot", "BOT", 17, bot_cmds,
     0,                    /* nopt         */
     NULL,                 /* opts         */
     RT_EDIT_CONTROL_GENERATED,
     bot_command_controls,
-    bot_interactions
+    bot_interactions,
+    bot_parameter_bounds
 };
 
 C_DECL const struct rt_edit_prim_desc *

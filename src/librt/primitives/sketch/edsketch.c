@@ -502,13 +502,50 @@ static const struct rt_edit_interaction_desc sketch_interactions[] = {
 _Static_assert(sizeof(sketch_interactions) / sizeof(sketch_interactions[0]) ==
     sizeof(sketch_cmds) / sizeof(sketch_cmds[0]), "sketch command interactions");
 
+static int
+sketch_parameter_bounds(struct rt_edit_param_bounds *bounds,
+	const struct rt_edit *edit, int command_id, int parameter_index)
+{
+    if (!bounds || !edit || !edit->es_int.idb_ptr)
+	return BRLCAD_ERROR;
+    const struct rt_sketch_internal *sketch =
+	(const struct rt_sketch_internal *)edit->es_int.idb_ptr;
+    RT_SKETCH_CK_MAGIC(sketch);
+
+    enum rt_edit_selection_domain domain = RT_EDIT_SELECTION_NONE;
+    if ((command_id == ECMD_SKETCH_PICK_VERTEX && parameter_index == 0) ||
+	(command_id == ECMD_SKETCH_APPEND_LINE && parameter_index < 2) ||
+	(command_id == ECMD_SKETCH_DELETE_VERTEX && parameter_index == 0))
+	domain = RT_EDIT_SELECTION_VERTEX;
+    else if ((command_id == ECMD_SKETCH_PICK_SEGMENT && parameter_index == 0) ||
+	(command_id == ECMD_SKETCH_DELETE_SEGMENT && parameter_index == 0) ||
+	(command_id == ECMD_SKETCH_SPLIT_SEGMENT && parameter_index == 0) ||
+	(command_id == ECMD_SKETCH_TOGGLE_ARC_ORIENT && parameter_index == 0) ||
+	(command_id == ECMD_SKETCH_SET_ARC_RADIUS && parameter_index == 0) ||
+	(command_id == ECMD_SKETCH_SET_TANGENCY && parameter_index < 2) ||
+	(command_id == ECMD_SKETCH_TOGGLE_SEGMENT_REVERSE &&
+	 parameter_index == 0))
+	domain = RT_EDIT_SELECTION_SEGMENT;
+    if (domain == RT_EDIT_SELECTION_NONE)
+	return BRLCAD_OK;
+
+    const size_t count = domain == RT_EDIT_SELECTION_VERTEX ?
+	sketch->vert_count : sketch->curve.count;
+    if (!count)
+	return BRLCAD_ERROR;
+    bounds->maximum = (fastf_t)(count - 1);
+    bounds->has_maximum = 1;
+    return BRLCAD_OK;
+}
+
 static const struct rt_edit_prim_desc sketch_prim_desc = {
     "sketch", "Sketch", 20, sketch_cmds,
     0,                    /* nopt         */
     NULL,                 /* opts         */
     RT_EDIT_CONTROL_CUSTOM,
     sketch_command_controls,
-    sketch_interactions
+    sketch_interactions,
+    sketch_parameter_bounds
 };
 
 C_DECL const struct rt_edit_prim_desc *

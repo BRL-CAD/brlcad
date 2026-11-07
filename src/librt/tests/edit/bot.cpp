@@ -234,6 +234,21 @@ rt_edit_test_bot(void)
 
     struct rt_bot_internal *bot =
 	(struct rt_bot_internal *)s->es_int.idb_ptr;
+    struct rt_edit_param_bounds vertex_bounds = {};
+    struct rt_edit_param_bounds face_vertex_bounds = {};
+    if (rt_edit_param_bounds_get(s, ECMD_BOT_PICKV, 0,
+	    &vertex_bounds) != BRLCAD_OK || !vertex_bounds.has_minimum ||
+	!vertex_bounds.has_maximum ||
+	!NEAR_EQUAL(vertex_bounds.minimum, 0.0, SMALL_FASTF) ||
+	!NEAR_EQUAL(vertex_bounds.maximum, 3.0, SMALL_FASTF) ||
+	rt_edit_param_bounds_get(s, ECMD_BOT_PICKT, 2,
+	    &face_vertex_bounds) != BRLCAD_OK ||
+	!face_vertex_bounds.has_maximum ||
+	!NEAR_EQUAL(face_vertex_bounds.maximum, 3.0, SMALL_FASTF) ||
+	rt_edit_param_bounds_get(s, ECMD_BOT_PICKT, 3,
+	    &face_vertex_bounds) != BRLCAD_ERROR)
+	bu_exit(1, "ERROR: BOT parameter bounds are incorrect\n");
+    bu_log("BOT current-topology parameter bounds SUCCESS\n");
     struct rt_bot_edit *b = (struct rt_bot_edit *)s->ipe_ptr;
 
     point_t default_keypoint = VINIT_ZERO;
