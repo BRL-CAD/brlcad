@@ -1468,6 +1468,52 @@ edit_control_class_str(enum rt_edit_control_class control_class)
     }
 }
 
+static const char *
+edit_selection_domain_str(enum rt_edit_selection_domain domain)
+{
+    switch (domain) {
+	case RT_EDIT_SELECTION_PRIMITIVE:     return "primitive";
+	case RT_EDIT_SELECTION_VERTEX:        return "vertex";
+	case RT_EDIT_SELECTION_EDGE:          return "edge";
+	case RT_EDIT_SELECTION_FACE:          return "face";
+	case RT_EDIT_SELECTION_SEGMENT:       return "segment";
+	case RT_EDIT_SELECTION_CONTROL_POINT: return "control_point";
+	case RT_EDIT_SELECTION_CUSTOM:        return "custom";
+	case RT_EDIT_SELECTION_NONE:
+	default:                              return "none";
+    }
+}
+
+static const char *
+edit_coordinate_space_str(enum rt_edit_coordinate_space space)
+{
+    switch (space) {
+	case RT_EDIT_COORDINATE_SCALAR:        return "scalar";
+	case RT_EDIT_COORDINATE_OBJECT:        return "object";
+	case RT_EDIT_COORDINATE_MODEL:         return "model";
+	case RT_EDIT_COORDINATE_VIEW:          return "view";
+	case RT_EDIT_COORDINATE_PARAMETRIC_2D: return "parametric_2d";
+	case RT_EDIT_COORDINATE_INFER:
+	default:                               return "infer";
+    }
+}
+
+static const char *
+edit_manipulator_hint_str(enum rt_edit_manipulator_hint hint)
+{
+    switch (hint) {
+	case RT_EDIT_MANIPULATOR_POINT:         return "point";
+	case RT_EDIT_MANIPULATOR_AXIS:          return "axis";
+	case RT_EDIT_MANIPULATOR_PLANE:         return "plane";
+	case RT_EDIT_MANIPULATOR_RADIUS:        return "radius";
+	case RT_EDIT_MANIPULATOR_ROTATION_RING: return "rotation_ring";
+	case RT_EDIT_MANIPULATOR_INDEXED_SET:   return "indexed_set";
+	case RT_EDIT_MANIPULATOR_CUSTOM:        return "custom";
+	case RT_EDIT_MANIPULATOR_NONE:
+	default:                                return "none";
+    }
+}
+
 static std::string
 edit_cmd_slug(const char *text)
 {
@@ -1528,6 +1574,25 @@ rt_edit_cmd_control_class(const struct rt_edit_prim_desc *desc,
 	return desc->control_class;
     }
     return RT_EDIT_CONTROL_UNSUPPORTED;
+}
+
+struct rt_edit_interaction_desc
+rt_edit_cmd_interaction(const struct rt_edit_prim_desc *desc,
+	const struct rt_edit_cmd_desc *command)
+{
+    const struct rt_edit_interaction_desc none = {
+	RT_EDIT_SELECTION_NONE,
+	RT_EDIT_COORDINATE_INFER,
+	RT_EDIT_MANIPULATOR_NONE
+    };
+    if (!desc || !command || !desc->command_interactions)
+	return none;
+    for (int ci = 0; ci < desc->ncmd; ++ci) {
+	if (&desc->cmds[ci] == command ||
+	    desc->cmds[ci].cmd_id == command->cmd_id)
+	    return desc->command_interactions[ci];
+    }
+    return none;
 }
 
 static bool
@@ -1607,6 +1672,28 @@ rt_edit_prim_desc_validate(struct bu_vls *msg,
 	     desc->command_controls[ci] > RT_EDIT_CONTROL_UNSUPPORTED))
 	    DESC_FAIL("%s/%s: invalid control class %d", desc->prim_type,
 		command->name, (int)desc->command_controls[ci]);
+	if (desc->command_interactions) {
+	    const struct rt_edit_interaction_desc *interaction =
+		&desc->command_interactions[ci];
+	    if (interaction->selection_domain < RT_EDIT_SELECTION_NONE ||
+		interaction->selection_domain > RT_EDIT_SELECTION_CUSTOM)
+		DESC_FAIL("%s/%s: invalid selection domain %d",
+		    desc->prim_type, command->name,
+		    (int)interaction->selection_domain);
+	    if (interaction->coordinate_space < RT_EDIT_COORDINATE_INFER ||
+		interaction->coordinate_space > RT_EDIT_COORDINATE_PARAMETRIC_2D)
+		DESC_FAIL("%s/%s: invalid coordinate space %d",
+		    desc->prim_type, command->name,
+		    (int)interaction->coordinate_space);
+	    if (interaction->coordinate_space == RT_EDIT_COORDINATE_INFER)
+		DESC_FAIL("%s/%s: interaction coordinate space must be explicit",
+		    desc->prim_type, command->name);
+	    if (interaction->manipulator < RT_EDIT_MANIPULATOR_NONE ||
+		interaction->manipulator > RT_EDIT_MANIPULATOR_CUSTOM)
+		DESC_FAIL("%s/%s: invalid manipulator hint %d",
+		    desc->prim_type, command->name,
+		    (int)interaction->manipulator);
+	}
 
 	std::set<std::string> parameter_names;
 	for (int pi = 0; pi < command->nparam; ++pi) {
@@ -1770,6 +1857,17 @@ rt_edit_prim_desc_to_json(struct bu_vls *out,
 	bu_vls_strcat(out, "      \"control\": ");
 	emit_json_str(out, edit_control_class_str(
 	    rt_edit_cmd_control_class(desc, cmd)));
+	bu_vls_strcat(out, ",\n");
+	const struct rt_edit_interaction_desc interaction =
+	    rt_edit_cmd_interaction(desc, cmd);
+	bu_vls_strcat(out, "      \"selection_domain\": ");
+	emit_json_str(out, edit_selection_domain_str(
+	    interaction.selection_domain));
+	bu_vls_strcat(out, ",\n      \"coordinate_space\": ");
+	emit_json_str(out, edit_coordinate_space_str(
+	    interaction.coordinate_space));
+	bu_vls_strcat(out, ",\n      \"manipulator\": ");
+	emit_json_str(out, edit_manipulator_hint_str(interaction.manipulator));
 	bu_vls_strcat(out, ",\n");
 	bu_vls_printf(out, "      \"interactive\": %s,\n",
 		      cmd->interactive ? "true" : "false");

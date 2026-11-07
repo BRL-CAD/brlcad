@@ -268,6 +268,7 @@ static const struct rt_edit_prim_desc revolve_prim_desc = {
     0,                    /* nopt         */
     NULL,                 /* opts         */
     RT_EDIT_CONTROL_GENERATED,
+    NULL,
     NULL
 };
 

@@ -201,6 +201,19 @@ static const struct rt_edit_opt_desc ell_opts[] = {
     }
 };
 
+static const struct rt_edit_interaction_desc ell_interactions[] = {
+    { RT_EDIT_SELECTION_PRIMITIVE, RT_EDIT_COORDINATE_SCALAR,
+      RT_EDIT_MANIPULATOR_AXIS },
+    { RT_EDIT_SELECTION_PRIMITIVE, RT_EDIT_COORDINATE_SCALAR,
+      RT_EDIT_MANIPULATOR_AXIS },
+    { RT_EDIT_SELECTION_PRIMITIVE, RT_EDIT_COORDINATE_SCALAR,
+      RT_EDIT_MANIPULATOR_AXIS },
+    { RT_EDIT_SELECTION_PRIMITIVE, RT_EDIT_COORDINATE_SCALAR,
+      RT_EDIT_MANIPULATOR_RADIUS }
+};
+_Static_assert(sizeof(ell_interactions) / sizeof(ell_interactions[0]) ==
+    sizeof(ell_cmds) / sizeof(ell_cmds[0]), "ell command interactions");
+
 static const struct rt_edit_prim_desc ell_prim_desc = {
     "ell",                /* prim_type    */
     "Ellipsoid",          /* prim_label   */
@@ -209,7 +222,8 @@ static const struct rt_edit_prim_desc ell_prim_desc = {
     1,                    /* nopt         */
     ell_opts,             /* opts         */
     RT_EDIT_CONTROL_GENERATED,
-    NULL
+    NULL,
+    ell_interactions
 };
 
 C_DECL const struct rt_edit_prim_desc *

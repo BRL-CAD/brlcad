@@ -1485,12 +1485,52 @@ static const enum rt_edit_control_class bot_command_controls[] = {
 _Static_assert(sizeof(bot_command_controls) / sizeof(bot_command_controls[0]) ==
     sizeof(bot_cmds) / sizeof(bot_cmds[0]), "bot command controls");
 
+static const struct rt_edit_interaction_desc bot_interactions[] = {
+    { RT_EDIT_SELECTION_VERTEX, RT_EDIT_COORDINATE_SCALAR,
+      RT_EDIT_MANIPULATOR_INDEXED_SET },
+    { RT_EDIT_SELECTION_EDGE, RT_EDIT_COORDINATE_SCALAR,
+      RT_EDIT_MANIPULATOR_INDEXED_SET },
+    { RT_EDIT_SELECTION_FACE, RT_EDIT_COORDINATE_SCALAR,
+      RT_EDIT_MANIPULATOR_INDEXED_SET },
+    { RT_EDIT_SELECTION_VERTEX, RT_EDIT_COORDINATE_OBJECT,
+      RT_EDIT_MANIPULATOR_INDEXED_SET },
+    { RT_EDIT_SELECTION_EDGE, RT_EDIT_COORDINATE_OBJECT,
+      RT_EDIT_MANIPULATOR_INDEXED_SET },
+    { RT_EDIT_SELECTION_FACE, RT_EDIT_COORDINATE_OBJECT,
+      RT_EDIT_MANIPULATOR_INDEXED_SET },
+    { RT_EDIT_SELECTION_VERTEX, RT_EDIT_COORDINATE_OBJECT,
+      RT_EDIT_MANIPULATOR_INDEXED_SET },
+    { RT_EDIT_SELECTION_EDGE, RT_EDIT_COORDINATE_SCALAR,
+      RT_EDIT_MANIPULATOR_INDEXED_SET },
+    { RT_EDIT_SELECTION_FACE, RT_EDIT_COORDINATE_SCALAR,
+      RT_EDIT_MANIPULATOR_INDEXED_SET },
+    { RT_EDIT_SELECTION_FACE, RT_EDIT_COORDINATE_SCALAR,
+      RT_EDIT_MANIPULATOR_INDEXED_SET },
+    { RT_EDIT_SELECTION_VERTEX, RT_EDIT_COORDINATE_SCALAR,
+      RT_EDIT_MANIPULATOR_INDEXED_SET },
+    { RT_EDIT_SELECTION_FACE, RT_EDIT_COORDINATE_SCALAR,
+      RT_EDIT_MANIPULATOR_INDEXED_SET },
+    { RT_EDIT_SELECTION_PRIMITIVE, RT_EDIT_COORDINATE_SCALAR,
+      RT_EDIT_MANIPULATOR_NONE },
+    { RT_EDIT_SELECTION_PRIMITIVE, RT_EDIT_COORDINATE_SCALAR,
+      RT_EDIT_MANIPULATOR_NONE },
+    { RT_EDIT_SELECTION_FACE, RT_EDIT_COORDINATE_SCALAR,
+      RT_EDIT_MANIPULATOR_NONE },
+    { RT_EDIT_SELECTION_FACE, RT_EDIT_COORDINATE_SCALAR,
+      RT_EDIT_MANIPULATOR_NONE },
+    { RT_EDIT_SELECTION_PRIMITIVE, RT_EDIT_COORDINATE_SCALAR,
+      RT_EDIT_MANIPULATOR_NONE }
+};
+_Static_assert(sizeof(bot_interactions) / sizeof(bot_interactions[0]) ==
+    sizeof(bot_cmds) / sizeof(bot_cmds[0]), "bot command interactions");
+
 static const struct rt_edit_prim_desc bot_prim_desc = {
     "bot", "BOT", 17, bot_cmds,
     0,                    /* nopt         */
     NULL,                 /* opts         */
     RT_EDIT_CONTROL_GENERATED,
-    bot_command_controls
+    bot_command_controls,
+    bot_interactions
 };
 
 C_DECL const struct rt_edit_prim_desc *

@@ -81,6 +81,14 @@ check_prim(const char *name, int prim_type_id,
 	return 1;
     }
 
+    if (!strstr(js, "\"selection_domain\"") ||
+	!strstr(js, "\"coordinate_space\"") ||
+	!strstr(js, "\"manipulator\"")) {
+	bu_log("FAIL [%s]: JSON missing interaction metadata\n", name);
+	bu_vls_free(&json);
+	return 1;
+    }
+
     /* Check expected first cmd_id as a numeric substring.
      * The serialiser emits  "cmd_id": N  so search for that. */
     char needle[64];
@@ -144,6 +152,14 @@ check_descriptor_audit(void)
 			desc->prim_type, desc->cmds[ci].cmd_id);
 		    failures++;
 		}
+		const struct rt_edit_interaction_desc interaction =
+		    rt_edit_cmd_interaction(desc, &desc->cmds[ci]);
+		if (desc->command_interactions &&
+		    interaction.coordinate_space == RT_EDIT_COORDINATE_INFER) {
+		    bu_log("FAIL [%s]: command %d has inferred coordinate space\n",
+			desc->prim_type, desc->cmds[ci].cmd_id);
+		    failures++;
+		}
 	    }
 	}
 	bu_vls_free(&diagnostic);
@@ -199,6 +215,20 @@ check_descriptor_audit(void)
 	    failures++;
 	}
 	bu_vls_free(&diagnostic);
+
+	struct rt_edit_interaction_desc invalid_interaction =
+	    ell->command_interactions[0];
+	invalid_interaction.coordinate_space = RT_EDIT_COORDINATE_INFER;
+	invalid_desc = *ell;
+	invalid_desc.ncmd = 1;
+	invalid_desc.command_interactions = &invalid_interaction;
+	diagnostic = BU_VLS_INIT_ZERO;
+	if (rt_edit_prim_desc_validate(&diagnostic, &invalid_desc) !=
+		BRLCAD_ERROR || !bu_vls_strlen(&diagnostic)) {
+	    bu_log("FAIL: inferred interaction coordinates were not rejected\n");
+	    failures++;
+	}
+	bu_vls_free(&diagnostic);
     } else {
 	bu_log("FAIL: ELL descriptor unavailable for validation test\n");
 	failures++;
@@ -210,12 +240,63 @@ check_descriptor_audit(void)
 }
 
 
+static int
+check_interactions(void)
+{
+    extern const struct rt_edit_functab EDOBJ[];
+    const struct rt_edit_prim_desc *ell = EDOBJ[ID_ELL].ft_edit_desc();
+    const struct rt_edit_prim_desc *arb = EDOBJ[ID_ARB8].ft_edit_desc();
+    const struct rt_edit_prim_desc *bot = EDOBJ[ID_BOT].ft_edit_desc();
+    const struct rt_edit_prim_desc *sketch = EDOBJ[ID_SKETCH].ft_edit_desc();
+    const struct rt_edit_prim_desc *tor = EDOBJ[ID_TOR].ft_edit_desc();
+    const struct rt_edit_interaction_desc ell_interaction =
+	rt_edit_cmd_interaction(ell, &ell->cmds[0]);
+    const struct rt_edit_interaction_desc arb_interaction =
+	rt_edit_cmd_interaction(arb, &arb->cmds[0]);
+    const struct rt_edit_interaction_desc bot_interaction =
+	rt_edit_cmd_interaction(bot, &bot->cmds[6]);
+    const struct rt_edit_interaction_desc sketch_interaction =
+	rt_edit_cmd_interaction(sketch, &sketch->cmds[18]);
+    const struct rt_edit_interaction_desc default_interaction =
+	rt_edit_cmd_interaction(tor, &tor->cmds[0]);
+    struct bu_vls sketch_json = BU_VLS_INIT_ZERO;
+    const int json_status = rt_edit_type_to_json(&sketch_json, ID_SKETCH);
+
+    if (ell_interaction.manipulator != RT_EDIT_MANIPULATOR_AXIS ||
+	ell_interaction.coordinate_space != RT_EDIT_COORDINATE_SCALAR ||
+	arb_interaction.selection_domain != RT_EDIT_SELECTION_FACE ||
+	arb_interaction.manipulator != RT_EDIT_MANIPULATOR_INDEXED_SET ||
+	bot_interaction.selection_domain != RT_EDIT_SELECTION_VERTEX ||
+	sketch_interaction.coordinate_space != RT_EDIT_COORDINATE_OBJECT ||
+	sketch_interaction.manipulator != RT_EDIT_MANIPULATOR_PLANE ||
+	default_interaction.selection_domain != RT_EDIT_SELECTION_NONE ||
+	default_interaction.coordinate_space != RT_EDIT_COORDINATE_INFER ||
+	default_interaction.manipulator != RT_EDIT_MANIPULATOR_NONE ||
+	json_status != BRLCAD_OK ||
+	!strstr(bu_vls_cstr(&sketch_json),
+	    "\"selection_domain\": \"segment\"") ||
+	!strstr(bu_vls_cstr(&sketch_json),
+	    "\"coordinate_space\": \"parametric_2d\"") ||
+	!strstr(bu_vls_cstr(&sketch_json),
+	    "\"manipulator\": \"indexed_set\"")) {
+	bu_log("FAIL: representative interaction descriptors are incomplete\n");
+	bu_vls_free(&sketch_json);
+	return 1;
+    }
+
+    bu_vls_free(&sketch_json);
+    bu_log("PASS: representative interaction descriptors are source-neutral\n");
+    return 0;
+}
+
+
 int
 rt_edit_test_edit_desc(void)
 {
     int fail = 0;
 
     fail += check_descriptor_audit();
+    fail += check_interactions();
 
     /* ------------------------------------------------------------------
      * Primitives with ft_edit_desc() implementations.

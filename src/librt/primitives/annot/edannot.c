@@ -338,7 +338,8 @@ static const struct rt_edit_prim_desc annot_prim_desc = {
     0,                    /* nopt         */
     NULL,                 /* opts         */
     RT_EDIT_CONTROL_GENERATED,
-    annot_command_controls
+    annot_command_controls,
+    NULL
 };
 
 C_DECL const struct rt_edit_prim_desc *

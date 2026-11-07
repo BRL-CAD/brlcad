@@ -490,6 +490,7 @@ static const struct rt_edit_prim_desc metaball_prim_desc = {
     0,                    /* nopt         */
     NULL,                 /* opts         */
     RT_EDIT_CONTROL_CUSTOM,
+    NULL,
     NULL
 };
 

@@ -617,6 +617,47 @@ enum rt_edit_control_class {
     RT_EDIT_CONTROL_UNSUPPORTED  /**< documented operation not exposed to clients */
 };
 
+/** Geometric feature domain selected or manipulated by an edit command. */
+enum rt_edit_selection_domain {
+    RT_EDIT_SELECTION_NONE = 0,
+    RT_EDIT_SELECTION_PRIMITIVE,
+    RT_EDIT_SELECTION_VERTEX,
+    RT_EDIT_SELECTION_EDGE,
+    RT_EDIT_SELECTION_FACE,
+    RT_EDIT_SELECTION_SEGMENT,
+    RT_EDIT_SELECTION_CONTROL_POINT,
+    RT_EDIT_SELECTION_CUSTOM
+};
+
+/** Coordinate frame in which a command's geometric inputs are interpreted. */
+enum rt_edit_coordinate_space {
+    RT_EDIT_COORDINATE_INFER = 0,
+    RT_EDIT_COORDINATE_SCALAR,
+    RT_EDIT_COORDINATE_OBJECT,
+    RT_EDIT_COORDINATE_MODEL,
+    RT_EDIT_COORDINATE_VIEW,
+    RT_EDIT_COORDINATE_PARAMETRIC_2D
+};
+
+/** Suggested retained interaction adapter for an edit command. */
+enum rt_edit_manipulator_hint {
+    RT_EDIT_MANIPULATOR_NONE = 0,
+    RT_EDIT_MANIPULATOR_POINT,
+    RT_EDIT_MANIPULATOR_AXIS,
+    RT_EDIT_MANIPULATOR_PLANE,
+    RT_EDIT_MANIPULATOR_RADIUS,
+    RT_EDIT_MANIPULATOR_ROTATION_RING,
+    RT_EDIT_MANIPULATOR_INDEXED_SET,
+    RT_EDIT_MANIPULATOR_CUSTOM
+};
+
+/** Optional source-neutral interaction metadata for one descriptor command. */
+struct rt_edit_interaction_desc {
+    enum rt_edit_selection_domain selection_domain;
+    enum rt_edit_coordinate_space coordinate_space;
+    enum rt_edit_manipulator_hint manipulator;
+};
+
 /** Result of querying the current inputs for a descriptor command. */
 enum rt_edit_value_status {
     RT_EDIT_VALUE_ERROR = -1,
@@ -741,11 +782,18 @@ struct rt_edit_prim_desc {
     enum rt_edit_control_class     control_class;
     /** Optional ncmd-entry override array; INHERIT entries use the default. */
     const enum rt_edit_control_class *command_controls;
+    /** Optional ncmd-entry interaction metadata; NULL means no hint. */
+    const struct rt_edit_interaction_desc *command_interactions;
 };
 
 /** Return the resolved presentation class for a command. */
 RT_EXPORT extern enum rt_edit_control_class
 rt_edit_cmd_control_class(const struct rt_edit_prim_desc *desc,
+	const struct rt_edit_cmd_desc *command);
+
+/** Return command metadata, or NONE/INFER/NONE when no hint is available. */
+RT_EXPORT extern struct rt_edit_interaction_desc
+rt_edit_cmd_interaction(const struct rt_edit_prim_desc *desc,
 	const struct rt_edit_cmd_desc *command);
 
 /**

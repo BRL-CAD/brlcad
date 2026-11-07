@@ -239,6 +239,7 @@ static const struct rt_edit_prim_desc bspline_prim_desc = {
     0,                    /* nopt         */
     NULL,                 /* opts         */
     RT_EDIT_CONTROL_UNSUPPORTED,
+    NULL,
     NULL
 };
 

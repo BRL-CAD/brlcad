@@ -139,7 +139,8 @@ static const struct rt_edit_prim_desc hyp_prim_desc = {
     0,                    /* nopt         */
     NULL,                 /* opts         */
     RT_EDIT_CONTROL_GENERATED,
-    hyp_command_controls
+    hyp_command_controls,
+    NULL
 };
 
 C_DECL const struct rt_edit_prim_desc *
