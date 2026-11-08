@@ -1180,11 +1180,33 @@ typedef enum vmath_matrix_component_ {
  * @brief Find the sum of two points, and scale the result.  Often
  * used to find the midpoint.
  */
-#define VADD2SCALE(o, a, b, s) do { \
+#define VADD2SCALE2(o, a, b, s) do { \
 			(o)[X] = ((a)[X] + (b)[X]) * (s); \
 			(o)[Y] = ((a)[Y] + (b)[Y]) * (s); \
 			(o)[Z] = ((a)[Z] + (b)[Z]) * (s); \
     } while (0)
+
+/**
+  * @brief Find the sum of three points, and scale the result.  Often
+  * used to find the midpoint.
+ */
+#define VADD3SCALE(o, a, b, c, s) do { \
+      (o)[X] = ((a)[X] + (b)[X] + (c)[X]) * (s); \
+      (o)[Y] = ((a)[Y] + (b)[Y] + (c)[Y]) * (s); \
+      (o)[Z] = ((a)[Z] + (b)[Z] + (c)[Z]) * (s); \
+    } while (0)
+    
+/**
+ * @brief Find the sum of 2 points across 4 dimensions, and scale the result.  Often
+ * used to find the midpoint.
+ */
+#define V4ADD2SCALE(o, a, b, s) do { \
+      (o)[X] = ((a)[X] + (b)[X]) * (s); \
+      (o)[Y] = ((a)[Y] + (b)[Y]) * (s); \
+      (o)[Z] = ((a)[Z] + (b)[Z]) * (s); \
+      (o)[W] = ((a)[W] + (b)[W]) * (s); \
+    } while (0)
+
 
 /**
  * @brief Find the sum of two vectors of length `n', and scale the
@@ -1267,6 +1289,28 @@ typedef enum vmath_matrix_component_ {
 	} \
     } while (0)
 
+/**
+ * @brief Combine together 2 homogeneous vectors, scaled by scalars.
+ */
+#define V4COMB2(o, sa, va, sb, vb) do { \
+  (o)[X] = (sa) * (va)[X] + (sb) * (vb)[X]; \
+	(o)[Y] = (sa) * (va)[Y] + (sb) * (vb)[Y]; \
+	(o)[Z] = (sa) * (va)[Z] + (sb) * (vb)[Z]; \
+  (o)[W] = (sa) * (va)[W] + (sb) * (vb)[W]; \
+    } while (0)
+
+/**
+ * @brief Combine together 4 vectors of length `n', both scaled by
+ * scalars.
+ */
+#define VCOMB4N(o, sa, va, sb, vb, sc, vc, sd, vd, n) do { \
+	int _vcomb4; \
+	for (_vcomb4 = 0; \
+	     _vcomb4 < (int)(n); \
+	     _vcomb4++) { \
+	    (o)[_vcomb4] = (sa) * (va)[_vcomb4] + (sb) * (vb)[_vcomb4] + (sc) * (vc)[_vcomb4] + (sd) * (vd)[_vcomb4]; \
+	} \
+    } while (0)
 
 /**
  * Compose 3D vector at `o' of:
