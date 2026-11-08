@@ -1,20 +1,5 @@
 find_package_zlib(REQUIRED)
 
-set(_zlib_location "")
-if(TARGET ZLIB::ZLIB)
-  get_target_property(_zlib_location ZLIB::ZLIB IMPORTED_LOCATION)
-  if(NOT _zlib_location)
-    get_target_property(_zlib_location ZLIB::ZLIB IMPORTED_LOCATION_RELEASE)
-  endif()
-  if(NOT _zlib_location)
-    get_target_property(_zlib_location ZLIB::ZLIB IMPORTED_LOCATION_DEBUG)
-  endif()
-endif()
-is_subpath("${CMAKE_BINARY_DIR}" "${_zlib_location}" LOCAL_TEST)
-if(LOCAL_TEST OR TARGET ZLIB_BLD)
-  add_definitions(-DZ_PREFIX)
-endif(LOCAL_TEST OR TARGET ZLIB_BLD)
-
 set(
   LIBRENDER_SRCS
   load.c
