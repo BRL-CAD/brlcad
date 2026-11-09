@@ -50,6 +50,7 @@
 #include <string>
 #include <unordered_map>
 
+#include "ged/edit.h"
 #include "rt/edit.h"
 #include "rt/db_fullpath.h"
 
@@ -103,7 +104,7 @@ class Ged_Internal {
     public:
 	~Ged_Internal();
 
-	struct ged *gedp;
+	struct ged *gedp = nullptr;
 	std::map<ged_func_ptr, std::pair<bu_clbk_t, void *>> cmd_prerun_clbk;
 	std::map<ged_func_ptr, std::pair<bu_clbk_t, void *>> cmd_during_clbk;
 	std::map<ged_func_ptr, std::pair<bu_clbk_t, void *>> cmd_postrun_clbk;
@@ -140,15 +141,48 @@ class Ged_Internal {
 	vect_t ged_eye_model = VINIT_ZERO;
 	mat_t ged_viewrot = MAT_INIT_ZERO;
 
-	// Temporary edit buffer: maps a path string to an in-progress rt_edit.
-	// Survives across command invocations within a session.
-	// Entries are promoted (written to disk) on explicit flush or abandoned
-	// on session close.
+	// Independently identified edit sessions.  edit_defaults records the
+	// command layer's selected session without making path uniqueness a
+	// transaction-layer policy.
 	struct ged_edit_buf_entry {
+	    std::string path;
 	    struct db_full_path dfp;
 	    struct rt_edit *s;
+	    struct directory *write_dp = RT_DIR_NULL;
+	    enum ged_edit_session_target target = GED_EDIT_TARGET_OBJECT;
+	    std::string occurrence_name;
+	    int occurrence_index = 0;
+	    std::vector<std::string> path_names;
+	    std::vector<int> path_instances;
+	    uint64_t id = 0;
+	    uint64_t generation = 1;
+	    uint64_t revision = 0;
+	    int last_cmd = 0;
+	    bool dirty = false;
+	    bool checkpoint_dirty = false;
+	    bool committing = false;
 	};
 	std::unordered_map<std::string, ged_edit_buf_entry> edit_buf;
+	std::unordered_map<std::string, std::string> edit_defaults;
+	struct ged_edit_pending_event {
+	    enum ged_edit_session_event_kind kind;
+	    ged_edit_session_ref session;
+	    std::string path;
+	    std::string replacement_path;
+	    enum ged_edit_session_invalidation_reason invalidation_reason =
+		GED_EDIT_INVALIDATION_NONE;
+	    uint64_t revision = 0;
+	    int command_id = 0;
+	};
+	uint64_t edit_owner = 0;
+	uint64_t edit_next_id = 1;
+	uint64_t edit_next_observer = 1;
+	int edit_dispatch_depth = 0;
+	std::map<ged_edit_observer_token,
+	    std::pair<ged_edit_observer_func_t, void *> > edit_observers;
+	std::vector<ged_edit_pending_event> edit_pending_events;
+	struct db_i *edit_dbip = nullptr;
+	bool edit_closing = false;
 };
 
 #else
@@ -561,9 +595,9 @@ _ged_subcmd2_help(struct ged *gedp, struct bu_opt_desc *gopts, std::map<std::str
 
 /* Temporary edit buffer API (defined in edit_buf.cpp).
  *
- * Maintains a per-gedp map of db_full_path → rt_edit * that survives across
- * command invocations within a session.  Use this for multi-step interactive
- * CLI edits that should not write to disk at each step.
+ * Maintains command-selected edit sessions that survive across invocations.
+ * Public clients use opaque session references and may create parallel
+ * variants for the same path.
  *
  * All functions are no-ops when gedp, dfp, or s is NULL.
  *
@@ -571,13 +605,22 @@ _ged_subcmd2_help(struct ged *gedp, struct bu_opt_desc *gopts, std::map<std::str
  * ged_edit_buf_set    - store/replace entry (takes ownership of s)
  * ged_edit_buf_promote- serialise es_int to disk, remove entry; returns OK/ERROR
  * ged_edit_buf_abandon- call rt_edit_destroy(), remove entry (no disk write)
- * ged_edit_buf_flush  - promote ALL entries to disk (call before db close)
+ * ged_edit_buf_flush  - promote command-selected entries to disk
  */
 GED_EXPORT extern struct rt_edit *ged_edit_buf_get(struct ged *gedp, const struct db_full_path *dfp);
 GED_EXPORT extern void            ged_edit_buf_set(struct ged *gedp, const struct db_full_path *dfp, struct rt_edit *s);
 GED_EXPORT extern int             ged_edit_buf_promote(struct ged *gedp, const struct db_full_path *dfp);
 GED_EXPORT extern void            ged_edit_buf_abandon(struct ged *gedp, const struct db_full_path *dfp);
 GED_EXPORT extern void            ged_edit_buf_flush(struct ged *gedp);
+GED_EXPORT extern void            ged_edit_buf_notify_update(struct ged *gedp, const struct db_full_path *dfp, int command_id);
+GED_EXPORT extern void            ged_edit_buf_notify_checkpoint(struct ged *gedp, const struct db_full_path *dfp);
+GED_EXPORT extern void            ged_edit_buf_notify_revert(struct ged *gedp, const struct db_full_path *dfp);
+GED_EXPORT extern enum ged_edit_status ged_edit_session_default_get(
+	struct ged *gedp, const char *path,
+	enum ged_edit_session_target target, int create,
+	struct ged_edit_session_ref *session);
+GED_EXPORT extern void            ged_edit_sessions_database_close_private(struct ged *gedp);
+GED_EXPORT extern void            ged_edit_sessions_close_private(struct ged *gedp);
 
 __END_DECLS
 

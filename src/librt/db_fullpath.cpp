@@ -418,7 +418,7 @@ _db_comb_instance(matp_t m, int *icnt, int *bval, int bool_val, const struct db_
     return 0;
 }
 
-static int
+int
 db_comb_has_instance(int *bval, const struct db_i *dbip, struct directory *cdp, struct directory *dp, int itarget)
 {
     RT_CK_DBI(dbip);

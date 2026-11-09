@@ -142,6 +142,17 @@ RT_EXPORT extern void db_fullpath_to_vls(struct bu_vls *vls,
 RT_EXPORT extern void db_pr_full_path(const char *msg,
 				      const struct db_full_path *pathp);
 
+/**
+ * Return non-zero if @p combination contains occurrence @p instance_index of
+ * @p object.  When non-NULL, @p bool_op receives that occurrence's boolean
+ * operation.
+ */
+RT_EXPORT extern int db_comb_has_instance(int *bool_op,
+				   const struct db_i *dbip,
+				   struct directory *combination,
+				   struct directory *object,
+				   int instance_index);
+
 
 /**
  * Reverse the effects of db_path_to_string().

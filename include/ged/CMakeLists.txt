@@ -4,6 +4,7 @@ set(
   database.h
   debug.h
   defines.h
+  edit.h
   objects.h
   version.h
   view.h
