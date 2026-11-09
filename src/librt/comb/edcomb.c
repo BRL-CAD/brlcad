@@ -460,6 +460,71 @@ ecmd_comb_set_matrix(struct rt_edit *s)
 }
 
 
+static union tree *
+comb_instance_leaf(union tree *tree, const char *name, int target, int *current)
+{
+    if (!tree || !name || !current)
+	return TREE_NULL;
+    switch (tree->tr_op) {
+	case OP_DB_LEAF:
+	    if (BU_STR_EQUAL(tree->tr_l.tl_name, name)) {
+		if (*current == target)
+		    return tree;
+		(*current)++;
+	    }
+	    return TREE_NULL;
+	case OP_UNION:
+	case OP_INTERSECT:
+	case OP_SUBTRACT: {
+	    union tree *leaf = comb_instance_leaf(tree->tr_b.tb_left, name,
+		target, current);
+	    return leaf ? leaf : comb_instance_leaf(tree->tr_b.tb_right, name,
+		target, current);
+	}
+	default:
+	    return TREE_NULL;
+    }
+}
+
+
+int
+rt_edit_comb_instance_matrix_get(struct rt_edit *s, const char *name,
+	int instance, mat_t matrix)
+{
+    if (!s || !name || !matrix || instance < 0 || !s->es_int.idb_ptr ||
+	s->es_int.idb_type != ID_COMBINATION)
+	return BRLCAD_ERROR;
+    struct rt_comb_internal *comb =
+	(struct rt_comb_internal *)s->es_int.idb_ptr;
+    int current = 0;
+    union tree *leaf = comb_instance_leaf(comb->tree, name, instance,
+	&current);
+    if (!leaf)
+	return BRLCAD_ERROR;
+    if (leaf->tr_l.tl_mat)
+	MAT_COPY(matrix, leaf->tr_l.tl_mat);
+    else
+	MAT_IDN(matrix);
+    return BRLCAD_OK;
+}
+
+int
+rt_edit_comb_instance_matrix_set(struct rt_edit *s, const char *name, int instance, const mat_t matrix)
+{
+    if (!s || !name || !matrix || instance < 0 || !s->es_int.idb_ptr || s->es_int.idb_type != ID_COMBINATION)
+	return BRLCAD_ERROR;
+    struct rt_comb_internal *comb = (struct rt_comb_internal *)s->es_int.idb_ptr;
+    int current = 0;
+    union tree *leaf = comb_instance_leaf(comb->tree, name, instance, &current);
+    if (!leaf)
+	return BRLCAD_ERROR;
+    if (!leaf->tr_l.tl_mat)
+	leaf->tr_l.tl_mat = (matp_t)bu_malloc(sizeof(mat_t), "comb instance matrix");
+    MAT_COPY(leaf->tr_l.tl_mat, matrix);
+    return BRLCAD_OK;
+}
+
+
 /* ------------------------------------------------------------------ */
 /* Material / region property ECMDs                                     */
 /* ------------------------------------------------------------------ */

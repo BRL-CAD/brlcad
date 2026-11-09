@@ -375,6 +375,14 @@ rt_edit_create(struct db_full_path *dfp, struct db_i *dbip, struct bn_tol *, str
 RT_EXPORT extern void
 rt_edit_destroy(struct rt_edit *s);
 
+RT_EXPORT extern int
+rt_edit_comb_instance_matrix_get(struct rt_edit *s, const char *name,
+	int instance, mat_t matrix);
+
+RT_EXPORT extern int
+rt_edit_comb_instance_matrix_set(struct rt_edit *s, const char *name,
+	int instance, const mat_t matrix);
+
 /**
  * Reset an rt_edit back to an idle/empty state without freeing the struct
  * itself.  This frees any loaded primitive data (es_int, ipe_ptr, es_ckpt,
