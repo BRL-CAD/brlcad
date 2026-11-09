@@ -325,19 +325,20 @@ mged> edit other.s scale -c other.s 2
 ----
 ====
 
-.Use the intermediate buffer: scale tentatively, then revert if unsatisfied
+.Use an intermediate session: scale tentatively, then finish explicitly
 ====
-[source,console]
-----
-mged> edit cube checkpoint
-----
 [source,console]
 ----
 mged> edit -i cube scale 2
 ----
 [source,console]
 ----
-mged> edit cube revert
+mged> edit cube commit
+----
+or discard it without changing the database:
+[source,console]
+----
+mged> edit cube cancel
 ----
 ====
 

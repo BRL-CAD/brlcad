@@ -455,19 +455,20 @@ mged> edit ell.s rotate 0 0 60
 ----
 ====
 
-.Use the intermediate buffer: rotate tentatively, then revert if unsatisfied
+.Use an intermediate session: rotate tentatively, then finish explicitly
 ====
-[source,console]
-----
-mged> edit cube checkpoint
-----
 [source,console]
 ----
 mged> edit -i cube rotate -z 45
 ----
 [source,console]
 ----
-mged> edit cube revert
+mged> edit cube commit
+----
+or discard it without changing the database:
+[source,console]
+----
+mged> edit cube cancel
 ----
 ====
 

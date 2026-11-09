@@ -17,26 +17,28 @@ edit [options] [geometry_specifier] subcommand [subcommand_args]
 [[description]]
 == DESCRIPTION
 
-The *edit* command transforms one or more objects in a BRL-CAD database.  It
+The *edit* command transforms an object in a BRL-CAD database.  It
 supports a composable set of subcommands (*translate*, *rotate*, *scale*, and
 others) and a flexible geometry specifier syntax that can name objects by bare
 name, slash-separated path, URI, or via the active selection state.
 
 All geometry-altering subcommands share the same lifecycle:
 
-. Identify the object(s) to edit via a geometry specifier or the active
+. Identify the object to edit via a geometry specifier or the active
 selection.
 
-. Load the object into a temporary edit buffer (or create a fresh buffer
-entry if none exists).
+. Load the object into the command-selected edit session (or create a session
+if none exists for that path).
 
 . Apply the requested transformation.
 
-. Commit the result to the database (unless *-i* is given, which leaves the
-buffer entry pending for further operations).
+. Commit the result to the database and close the session (unless *-i* is
+given, which leaves the session active for further operations).
 
-The *checkpoint*, *revert*, *reset*, and *mat* subcommands provide lifecycle
-management for the temporary buffer.
+The *checkpoint*, *revert*, *reset*, *status*, *get*, *commit*, and *cancel*
+subcommands manage and inspect the command-selected session.  Applications
+using the libged API may create other independent sessions for the same path;
+the command does not select or modify those sessions.
 
 
 [[geometry_specifiers]]
@@ -59,10 +61,6 @@ A geometry specifier identifies the object to act on.  Supported forms:
 *URI with query*::
   A name followed by `?` and a query string (e.g. `sph.s?face=top`) when
   DbiState is available.
-
-*`.` (batch marker)*::
-  Each object in the target list is used as its own reference point.
-  Useful for batch operations where each object moves independently.
 
 *selection fallback*::
   If no geometry specifier is given on the command line, the current default
@@ -87,13 +85,19 @@ A geometry specifier identifies the object to act on.  Supported forms:
   any pending conflict state.
 
 *-F*, *--abandon*::
-  Abandon the intermediate buffer state and revert to the on-disk geometry.
-  Equivalent to *revert* followed by discarding the buffer entry.
+  Cancel and close the command-selected intermediate session before applying
+  the requested operation.  The operation starts from the committed database
+  geometry.  Independent sessions created through the libged API are not
+  affected.
 
 *-i*, *--intermediate*::
-  Intermediate mode: apply the transformation to the temporary buffer only;
-  do not write to the database.  Use *checkpoint* / *revert* / *reset* to
-  manage the buffer lifecycle.
+  Intermediate mode: apply the operation to the command-selected session
+  only; do not write to the database or close the session.  Use the lifecycle
+  subcommands to inspect, commit, or discard the pending state.
+
+*-O key=value*, *--option key=value*::
+  Pass a dynamic option to the edit session.  The available options depend on
+  the selected primitive and operation.
 
 *Conflict arbiter*::
   When an explicit geometry specifier is given and the same object also
@@ -263,10 +267,9 @@ mged> edit sph.s scale -k 0 0 0 -a 2 2 2
 edit [options] geometry checkpoint
 ----
 
-Loads the named geometry into the temporary edit buffer (creating a new
-buffer entry if one does not already exist) without applying any
-transformation.  A subsequent *-i* operation will then modify only the
-buffer without touching the database, and a *revert* can undo those changes.
+Creates the command-selected session if necessary and records its current
+state as a restore point.  A subsequent *-i* operation modifies only that
+session, and *revert* restores the checkpoint.
 
 
 === revert
@@ -276,9 +279,10 @@ buffer without touching the database, and a *revert* can undo those changes.
 edit [options] geometry revert
 ----
 
-Reverts the in-buffer state of the named geometry to its most recent
-*checkpoint* state and writes that state back to the database.  Returns an
-error if no buffer entry exists for the object.
+Restores the command-selected session to its most recent checkpoint.  By
+default, the restored state is committed to the database and the session is
+closed.  With *-i*, the restored state remains intermediate and the session
+stays active.  Returns an error if no command-selected session exists.
 
 
 === reset
@@ -288,8 +292,55 @@ error if no buffer entry exists for the object.
 edit [options] geometry reset
 ----
 
-Discards the temporary buffer entry for the named geometry without writing
-anything to the database.  Equivalent to abandoning an in-progress edit.
+Discards and closes the command-selected session without writing anything to
+the database.  If no such session exists, the command succeeds without
+changing the database.  This is an alias for the lifecycle effect of
+*cancel*.
+
+
+=== status
+
+[source]
+----
+edit geometry status
+----
+
+Reports whether a command-selected session is active and, when active, its
+path, primitive type, revision, dirty state, and current operation identifier.
+
+
+=== get
+
+[source]
+----
+edit geometry get operation
+----
+
+Prints the current parameter values for a descriptor-defined primitive edit
+operation in the active command-selected session.  Not all operations provide
+value readback.
+
+
+=== commit
+
+[source]
+----
+edit geometry commit
+----
+
+Writes the command-selected intermediate state to the database and closes the
+session.
+
+
+=== cancel
+
+[source]
+----
+edit geometry cancel
+----
+
+Discards the command-selected intermediate state and closes the session
+without changing the database.
 
 
 === mat
@@ -364,35 +415,38 @@ mged> edit sph.s scale 2
 
 ====
 
-.Intermediate edit workflow: checkpoint, modify, revert if needed
+.Intermediate edit workflow: modify, inspect, and finish explicitly
 ====
 
-Create a checkpoint (snapshot to revert to):
-
-[source,console]
-----
-mged> edit tor.s checkpoint
-----
-
-Apply a tentative translation (stays in buffer):
+Apply a tentative translation:
 
 [source,console]
 ----
 mged> edit -i tor.s translate -r 5 0 0
 ----
 
-If satisfied, write to disk:
+Inspect the session, then commit it if satisfied:
 
 [source,console]
 ----
-mged> edit tor.s translate -r 0 0 0
+mged> edit tor.s status
+mged> edit tor.s commit
 ----
 
-If not satisfied, roll back to the checkpoint:
+Alternatively, discard the tentative edit:
 
 [source,console]
 ----
-mged> edit tor.s revert
+mged> edit tor.s cancel
+----
+
+To preserve a restore point while continuing an intermediate session, create
+a checkpoint and use *-i revert*:
+
+[source,console]
+----
+mged> edit tor.s checkpoint
+mged> edit -i tor.s revert
 ----
 
 ====

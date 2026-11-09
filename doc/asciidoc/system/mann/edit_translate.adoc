@@ -223,34 +223,27 @@ mged> edit assembly/subpart/sph.s translate -r 0 0 10
 ----
 ====
 
-.Use the intermediate buffer: translate tentatively, then revert if unsatisfied
+.Use an intermediate session: translate tentatively, then finish explicitly
 ====
-Create a checkpoint (snapshot to revert to):
-
-[source,console]
-----
-mged> edit tor.s checkpoint
-----
-
-Apply a tentative translation (stays in buffer only):
+Apply a tentative translation without changing the database:
 
 [source,console]
 ----
 mged> edit -i tor.s translate -r 5 0 0
 ----
 
-If satisfied, write to disk:
+Commit the pending result if satisfied:
 
 [source,console]
 ----
-mged> edit tor.s translate -r 0 0 0
+mged> edit tor.s commit
 ----
 
-If not satisfied, roll back to the checkpoint:
+If not satisfied, discard the session:
 
 [source,console]
 ----
-mged> edit tor.s revert
+mged> edit tor.s cancel
 ----
 ====
 
