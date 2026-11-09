@@ -284,6 +284,66 @@ test_arb_point_knob(struct rt_edit *s, struct rt_arb_internal *arb,
 
 
 static void
+check_arb_edit_topology(struct rt_db_internal *ip, struct rt_arb_internal *arb,
+	const struct bn_tol *tol)
+{
+    static const point_t shapes[5][8] = {
+	{{0, 0, 0}, {0, 10, 0}, {0, 10, 10}, {0, 0, 0},
+	 {10, 10, 0}, {10, 10, 0}, {10, 10, 0}, {10, 10, 0}},
+	{{0, 0, 0}, {0, 10, 0}, {0, 10, 10}, {0, 0, 10},
+	 {10, 5, 5}, {10, 5, 5}, {10, 5, 5}, {10, 5, 5}},
+	{{0, 0, 0}, {0, 10, 0}, {0, 10, 10}, {0, 0, 5},
+	 {10, 5, 0}, {10, 5, 0}, {10, 5, 10}, {10, 5, 10}},
+	{{0, 0, 0}, {0, 10, 0}, {0, 10, 10}, {0, 0, 5},
+	 {10, 0, 0}, {10, 10, 0}, {10, 10, 5}, {10, 0, 0}},
+	{{0, 0, 0}, {10, 0, 0}, {10, 10, 0}, {0, 10, 0},
+	 {0, 0, 10}, {10, 0, 10}, {10, 10, 10}, {0, 10, 10}}
+    };
+    static const int edge_counts[5] = {6, 8, 9, 11, 12};
+    static const int face_counts[5] = {4, 5, 5, 6, 6};
+    static const int editable_edge_counts[5] = {0, 8, 8, 11, 12};
+
+    for (int type_index = 0; type_index < 5; type_index++) {
+	memcpy(arb->pt, shapes[type_index], sizeof(shapes[type_index]));
+	struct rt_arb_edit_topology topology;
+	if (rt_arb_edit_topology_get(&topology, ip, tol) != BRLCAD_OK ||
+	    topology.arb_type != type_index + ARB4 ||
+	    topology.vertex_count != type_index + ARB4 ||
+	    topology.edge_count != edge_counts[type_index] ||
+	    topology.face_count != face_counts[type_index])
+	    bu_exit(1, "ERROR: ARB%d edit topology dimensions are invalid\n",
+		type_index + ARB4);
+	int editable_edges = 0;
+	for (int edge_index = 0; edge_index < topology.edge_count; edge_index++) {
+	    const struct rt_arb_edit_edge *edge = &topology.edges[edge_index];
+	    if (edge->vertices[0] < 0 ||
+		edge->vertices[0] >= topology.vertex_count ||
+		edge->vertices[1] < 0 ||
+		edge->vertices[1] >= topology.vertex_count ||
+		edge->vertices[0] == edge->vertices[1])
+		bu_exit(1, "ERROR: ARB%d edit topology has invalid edge\n",
+		    type_index + ARB4);
+	    if (edge->edit_index >= 0)
+		editable_edges++;
+	}
+	if (editable_edges != editable_edge_counts[type_index])
+	    bu_exit(1, "ERROR: ARB%d edit topology has %d editable edges, expected %d\n",
+		type_index + ARB4, editable_edges,
+		editable_edge_counts[type_index]);
+	for (int face_index = 0; face_index < topology.face_count; face_index++) {
+	    const struct rt_arb_edit_face *face = &topology.faces[face_index];
+	    if (face->vertex_count < 3 ||
+		face->vertex_count > RT_ARB_EDIT_MAX_FACE_VERTICES ||
+		face->edit_index < 0 || !face->rotatable)
+		bu_exit(1, "ERROR: ARB%d edit topology has invalid face\n",
+		    type_index + ARB4);
+	}
+    }
+    bu_log("ARB4-ARB8 edit topology SUCCESS\n");
+}
+
+
+static void
 test_arb_geometry_helpers(struct rt_edit *s, struct rt_arb_internal *arb,
 	struct rt_arb8_edit *a, const struct bn_tol *tol)
 {
@@ -455,6 +515,9 @@ rt_edit_test_arb8(void)
     if (rt_edit_map_clbk_set(s->m, ECMD_MENU_SET, BU_CLBK_DURING,
 		capture_menu, &captured_menu) != BRLCAD_OK)
 	bu_exit(1, "ERROR: Unable to register ARB menu capture callback\n");
+
+    check_arb_edit_topology(&s->es_int, arb, &tol);
+    arb8_reset(s, arb, a);
 
     vect_t mousevec;
 

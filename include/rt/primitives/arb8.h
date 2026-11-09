@@ -476,6 +476,56 @@ struct rt_edit;
 
 RT_EXPORT extern const short int rt_arb_vertices[5][24];
 
+/** Maximum topology sizes for the standard ARB4 through ARB8 family. */
+#define RT_ARB_EDIT_MAX_VERTICES 8
+#define RT_ARB_EDIT_MAX_EDGES 12
+#define RT_ARB_EDIT_MAX_FACES 6
+#define RT_ARB_EDIT_MAX_FACE_VERTICES 4
+
+/** One canonical, user-visible ARB vertex. */
+struct rt_arb_edit_vertex {
+    int topology_index; /**< Dense index used by edge and face records. */
+    int edit_index;     /**< Stored point index accepted by edit commands. */
+    int label;          /**< One-based user-visible vertex label. */
+};
+
+/** One geometric ARB edge and, when non-negative, its move-edge index. */
+struct rt_arb_edit_edge {
+    int vertices[2];
+    int edit_index;
+};
+
+/** One geometric ARB face and its primitive edit capabilities. */
+struct rt_arb_edit_face {
+    int vertices[RT_ARB_EDIT_MAX_FACE_VERTICES];
+    int vertex_count;
+    int edit_index;
+    int movable;
+    int rotatable;
+};
+
+/** Canonical edit topology for one ARB4 through ARB8 instance. */
+struct rt_arb_edit_topology {
+    int arb_type;
+    int vertex_count;
+    struct rt_arb_edit_vertex vertices[RT_ARB_EDIT_MAX_VERTICES];
+    int edge_count;
+    struct rt_arb_edit_edge edges[RT_ARB_EDIT_MAX_EDGES];
+    int face_count;
+    struct rt_arb_edit_face faces[RT_ARB_EDIT_MAX_FACES];
+};
+
+/**
+ * Query legal vertex, edge, and face presentation/edit topology.
+ *
+ * Edge and face vertex references are dense topology indices rather than raw
+ * storage slots, including for collapsed ARB encodings.
+ */
+RT_EXPORT extern int rt_arb_edit_topology_get(
+    struct rt_arb_edit_topology *topology,
+    const struct rt_db_internal *ip,
+    const struct bn_tol *tol);
+
 
 /* arb8.c */
 
