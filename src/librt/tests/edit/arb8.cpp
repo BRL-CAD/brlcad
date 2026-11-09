@@ -71,6 +71,9 @@
 #define ECMD_ARB_MOVE_FACE	4013
 #define ECMD_ARB_SETUP_ROTFACE	4014
 #define ECMD_ARB_ROTATE_FACE	4015
+#define ECMD_ARB_SELECT_VERTEX	4037
+#define ECMD_ARB_SELECT_EDGE	4038
+#define ECMD_ARB_SELECT_FACE	4039
 
 static const char move_edges_menu_label[] = "Move Edges";
 
@@ -373,6 +376,52 @@ check_arb_edit_topology(struct rt_edit *edit, struct rt_arb_internal *arb,
 
 
 static void
+check_arb_selection(struct rt_edit *edit, struct rt_arb_internal *arb,
+	struct rt_arb8_edit *arb_edit)
+{
+    point_t original_points[RT_ARB_EDIT_MAX_VERTICES];
+    memcpy(original_points, arb->pt, sizeof(original_points));
+
+    edit->e_para[0] = 6.0;
+    edit->e_inpara = 1;
+    rt_edit_set_edflag(edit, ECMD_ARB_SELECT_VERTEX);
+    if (rt_edit_process(edit) != BRLCAD_OK || arb_edit->edit_menu != 6)
+	bu_exit(1, "ERROR: ARB vertex selection failed\n");
+    struct rt_edit_cmd_values values;
+    if (rt_edit_cmd_values_get(edit, ECMD_ARB_SELECT_VERTEX, &values) !=
+	    RT_EDIT_VALUE_OK || values.value_count != 1 ||
+	!values.value_valid[0] || !NEAR_EQUAL(values.values[0], 6.0, SMALL_FASTF) ||
+	rt_edit_cmd_values_get(edit, ECMD_ARB_SELECT_EDGE, &values) !=
+	    RT_EDIT_VALUE_UNAVAILABLE)
+	bu_exit(1, "ERROR: ARB vertex selection readback failed\n");
+
+    edit->e_para[0] = 11.0;
+    edit->e_inpara = 1;
+    rt_edit_set_edflag(edit, ECMD_ARB_SELECT_EDGE);
+    if (rt_edit_process(edit) != BRLCAD_OK || arb_edit->edit_menu != 11 ||
+	rt_edit_cmd_values_get(edit, EARB, &values) != RT_EDIT_VALUE_OK ||
+	values.value_count != 4 || !values.value_valid[3])
+	bu_exit(1, "ERROR: ARB edge selection or readback failed\n");
+
+    edit->e_para[0] = 5.0;
+    edit->e_inpara = 1;
+    rt_edit_set_edflag(edit, ECMD_ARB_SELECT_FACE);
+    if (rt_edit_process(edit) != BRLCAD_OK || arb_edit->edit_menu != 5 ||
+	rt_edit_cmd_values_get(edit, ECMD_ARB_MOVE_FACE, &values) !=
+	    RT_EDIT_VALUE_OK || values.value_count != 4 || !values.value_valid[3])
+	bu_exit(1, "ERROR: ARB face selection or readback failed\n");
+
+    edit->e_para[0] = 0.5;
+    edit->e_inpara = 1;
+    rt_edit_set_edflag(edit, ECMD_ARB_SELECT_FACE);
+    if (rt_edit_process(edit) != BRLCAD_ERROR || arb_edit->edit_menu != 5 ||
+	memcmp(original_points, arb->pt, sizeof(original_points)))
+	bu_exit(1, "ERROR: invalid ARB selection changed edit state\n");
+    bu_log("ARB source-neutral selection and readback SUCCESS\n");
+}
+
+
+static void
 test_arb_geometry_helpers(struct rt_edit *s, struct rt_arb_internal *arb,
 	struct rt_arb8_edit *a, const struct bn_tol *tol)
 {
@@ -546,6 +595,8 @@ rt_edit_test_arb8(void)
 	bu_exit(1, "ERROR: Unable to register ARB menu capture callback\n");
 
     check_arb_edit_topology(s, arb, &tol);
+    arb8_reset(s, arb, a);
+    check_arb_selection(s, arb, a);
     arb8_reset(s, arb, a);
 
     vect_t mousevec;

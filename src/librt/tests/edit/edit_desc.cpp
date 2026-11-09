@@ -297,7 +297,7 @@ check_interactions(void)
 
     if (ell_interaction.manipulator != RT_EDIT_MANIPULATOR_AXIS ||
 	ell_interaction.coordinate_space != RT_EDIT_COORDINATE_SCALAR ||
-	arb_interaction.selection_domain != RT_EDIT_SELECTION_FACE ||
+	arb_interaction.selection_domain != RT_EDIT_SELECTION_VERTEX ||
 	arb_interaction.manipulator != RT_EDIT_MANIPULATOR_INDEXED_SET ||
 	bot_interaction.selection_domain != RT_EDIT_SELECTION_VERTEX ||
 	sketch_interaction.coordinate_space != RT_EDIT_COORDINATE_OBJECT ||
@@ -307,6 +307,8 @@ check_interactions(void)
 	default_interaction.manipulator != RT_EDIT_MANIPULATOR_NONE ||
 	rt_edit_param_semantic_get(ell, &ell->cmds[0], 0) !=
 	    RT_EDIT_SEMANTIC_DISTANCE ||
+	rt_edit_param_semantic_get(arb, &arb->cmds[0], 0) !=
+	    RT_EDIT_SEMANTIC_INDEX ||
 	rt_edit_param_semantic_get(bot, &bot->cmds[6], 0) !=
 	    RT_EDIT_SEMANTIC_DELTA ||
 	rt_edit_param_semantic_get(sketch, &sketch->cmds[17], 2) !=

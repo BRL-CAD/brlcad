@@ -89,6 +89,7 @@ extern const struct rt_edit_prim_desc *rt_edit_hrt_edit_desc(void);
 	    struct rt_edit_cmd_values *)
 EDIT_DECLARE_VALUES(annot);
 EDIT_DECLARE_VALUES(arbn);
+EDIT_DECLARE_VALUES(arb);
 EDIT_DECLARE_VALUES(bot);
 EDIT_DECLARE_VALUES(brep);
 EDIT_DECLARE_VALUES(cline);
@@ -277,7 +278,7 @@ const struct rt_edit_functab EDOBJ[] = {
 	EDFUNCTAB_FUNC_SET_EDIT_MODE_CAST(rt_edit_arb_set_edit_mode), /* set edit mode */
 	EDFUNCTAB_FUNC_MENU_ITEM_CAST(rt_edit_arb_menu_item)    /* menu_item */,
 	EDFUNCTAB_FUNC_EDIT_DESC_CAST(rt_edit_arb_edit_desc)   /* edit_desc */,
-	NULL   /* edit_get_params */,
+	EDFUNCTAB_FUNC_GET_VALUES_CAST(rt_edit_arb_get_values) /* edit_get_values */,
 	EDFUNCTAB_FUNC_REPAIR_CAST(rt_edit_arb_repair) /* repair */
     },
 
