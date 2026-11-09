@@ -284,7 +284,7 @@ test_arb_point_knob(struct rt_edit *s, struct rt_arb_internal *arb,
 
 
 static void
-check_arb_edit_topology(struct rt_db_internal *ip, struct rt_arb_internal *arb,
+check_arb_edit_topology(struct rt_edit *edit, struct rt_arb_internal *arb,
 	const struct bn_tol *tol)
 {
     static const point_t shapes[5][8] = {
@@ -302,11 +302,14 @@ check_arb_edit_topology(struct rt_db_internal *ip, struct rt_arb_internal *arb,
     static const int edge_counts[5] = {6, 8, 9, 11, 12};
     static const int face_counts[5] = {4, 5, 5, 6, 6};
     static const int editable_edge_counts[5] = {0, 8, 8, 11, 12};
+    static const int vertex_maximums[5] = {4, 4, 6, 6, 7};
+    static const int edge_maximums[5] = {-1, 7, 7, 10, 11};
+    static const int face_maximums[5] = {3, 4, 4, 5, 5};
 
     for (int type_index = 0; type_index < 5; type_index++) {
 	memcpy(arb->pt, shapes[type_index], sizeof(shapes[type_index]));
 	struct rt_arb_edit_topology topology;
-	if (rt_arb_edit_topology_get(&topology, ip, tol) != BRLCAD_OK ||
+	if (rt_arb_edit_topology_get(&topology, &edit->es_int, tol) != BRLCAD_OK ||
 	    topology.arb_type != type_index + ARB4 ||
 	    topology.vertex_count != type_index + ARB4 ||
 	    topology.edge_count != edge_counts[type_index] ||
@@ -338,8 +341,34 @@ check_arb_edit_topology(struct rt_db_internal *ip, struct rt_arb_internal *arb,
 		bu_exit(1, "ERROR: ARB%d edit topology has invalid face\n",
 		    type_index + ARB4);
 	}
+
+	struct rt_edit_param_bounds vertex_bounds = {};
+	struct rt_edit_param_bounds edge_bounds = {};
+	struct rt_edit_param_bounds face_bounds = {};
+	struct rt_edit_param_bounds point_bounds = {};
+	if (rt_edit_param_bounds_get(edit, PTARB, 0, &vertex_bounds) !=
+		BRLCAD_OK || !vertex_bounds.has_maximum ||
+	    !NEAR_EQUAL(vertex_bounds.maximum, vertex_maximums[type_index],
+		SMALL_FASTF) ||
+	    rt_edit_param_bounds_get(edit, ECMD_ARB_MOVE_FACE, 0,
+		&face_bounds) != BRLCAD_OK || !face_bounds.has_maximum ||
+	    !NEAR_EQUAL(face_bounds.maximum, face_maximums[type_index],
+		SMALL_FASTF) ||
+	    rt_edit_param_bounds_get(edit, EARB, 1, &point_bounds) !=
+		BRLCAD_OK || point_bounds.has_minimum || point_bounds.has_maximum)
+	    bu_exit(1, "ERROR: ARB%d parameter bounds are invalid\n",
+		type_index + ARB4);
+	const int edge_status = rt_edit_param_bounds_get(edit, EARB, 0,
+	    &edge_bounds);
+	if ((edge_maximums[type_index] < 0 && edge_status != BRLCAD_ERROR) ||
+	    (edge_maximums[type_index] >= 0 &&
+	    (edge_status != BRLCAD_OK || !edge_bounds.has_maximum ||
+	    !NEAR_EQUAL(edge_bounds.maximum, edge_maximums[type_index],
+		SMALL_FASTF))))
+	    bu_exit(1, "ERROR: ARB%d edge bounds are invalid\n",
+		type_index + ARB4);
     }
-    bu_log("ARB4-ARB8 edit topology SUCCESS\n");
+    bu_log("ARB4-ARB8 edit topology and bounds SUCCESS\n");
 }
 
 
@@ -516,7 +545,7 @@ rt_edit_test_arb8(void)
 		capture_menu, &captured_menu) != BRLCAD_OK)
 	bu_exit(1, "ERROR: Unable to register ARB menu capture callback\n");
 
-    check_arb_edit_topology(&s->es_int, arb, &tol);
+    check_arb_edit_topology(s, arb, &tol);
     arb8_reset(s, arb, a);
 
     vect_t mousevec;

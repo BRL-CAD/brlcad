@@ -255,6 +255,53 @@ static const struct rt_edit_interaction_desc arb_interactions[] = {
 _Static_assert(sizeof(arb_interactions) / sizeof(arb_interactions[0]) ==
     sizeof(arb_cmds) / sizeof(arb_cmds[0]), "arb command interactions");
 
+static int
+arb_parameter_bounds(struct rt_edit_param_bounds *bounds,
+	const struct rt_edit *edit, int command_id, int parameter_index)
+{
+    if (!bounds || !edit)
+	return BRLCAD_ERROR;
+    struct rt_arb_edit_topology topology;
+    if (rt_arb_edit_topology_get(&topology, &edit->es_int, edit->tol) !=
+	    BRLCAD_OK)
+	return BRLCAD_ERROR;
+
+    enum rt_edit_selection_domain domain = RT_EDIT_SELECTION_NONE;
+    if ((command_id == PTARB && parameter_index == 0) ||
+	(command_id == ECMD_ARB_ROTATE_FACE && parameter_index == 1))
+	domain = RT_EDIT_SELECTION_VERTEX;
+    else if (command_id == EARB && parameter_index == 0)
+	domain = RT_EDIT_SELECTION_EDGE;
+    else if ((command_id == ECMD_ARB_MOVE_FACE && parameter_index == 0) ||
+	(command_id == ECMD_ARB_ROTATE_FACE && parameter_index == 0))
+	domain = RT_EDIT_SELECTION_FACE;
+    if (domain == RT_EDIT_SELECTION_NONE)
+	return BRLCAD_OK;
+
+    int maximum = -1;
+    if (domain == RT_EDIT_SELECTION_VERTEX) {
+	for (int i = 0; i < topology.vertex_count; i++) {
+	    if (topology.vertices[i].edit_index > maximum)
+		maximum = topology.vertices[i].edit_index;
+	}
+    } else if (domain == RT_EDIT_SELECTION_EDGE) {
+	for (int i = 0; i < topology.edge_count; i++) {
+	    if (topology.edges[i].edit_index > maximum)
+		maximum = topology.edges[i].edit_index;
+	}
+    } else {
+	for (int i = 0; i < topology.face_count; i++) {
+	    if (topology.faces[i].edit_index > maximum)
+		maximum = topology.faces[i].edit_index;
+	}
+    }
+    if (maximum < 0)
+	return BRLCAD_ERROR;
+    bounds->maximum = maximum;
+    bounds->has_maximum = 1;
+    return BRLCAD_OK;
+}
+
 static const struct rt_edit_prim_desc arb_prim_desc = {
     "arb8",               /* prim_type    */
     "ARB",                /* prim_label   */
@@ -264,7 +311,8 @@ static const struct rt_edit_prim_desc arb_prim_desc = {
     arb_opts,             /* opts         */
     RT_EDIT_CONTROL_CUSTOM,
     NULL,
-    arb_interactions
+    arb_interactions,
+    arb_parameter_bounds
 };
 
 C_DECL const struct rt_edit_prim_desc *
