@@ -1258,7 +1258,7 @@ rt_sketch_import4(struct rt_db_internal *ip, const struct bu_external *ep, const
 		    bu_cv_ntohd((unsigned char *)scanp, ptr, nsg->c_size);
 
 		    /* convert double to fastf_t */
-		    for (i=0; i<(size_t)nsg->k.k_size; i++) {
+		    for (i=0; i<(size_t)nsg->c_size; i++) {
 			nsg->weights[i] = scanp[i];
 		    }
 		    bu_free(scanp, "scanp");
@@ -1654,7 +1654,7 @@ rt_sketch_import5(struct rt_db_internal *ip, const struct bu_external *ep, const
 		    bu_cv_ntohd((unsigned char *)scanp, ptr, nsg->c_size);
 
 		    /* convert double to fastf_t */
-		    for (i=0; i<(size_t)nsg->k.k_size; i++) {
+		    for (i=0; i<(size_t)nsg->c_size; i++) {
 			nsg->weights[i] = scanp[i];
 		    }
 		    bu_free(scanp, "scanp");
