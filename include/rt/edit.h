@@ -598,6 +598,10 @@ struct rt_edit_menu_item {
 #define RT_EDIT_PARAM_COLOR    8  /**< RGB triple as three fastf_t (0-255) in
                                    *   e_para[index..index+2]; QColorDialog button  */
 #define RT_EDIT_PARAM_MATRIX   9  /**< 4x4 row-major in e_para[0..15]; matrix widget*/
+#define RT_EDIT_PARAM_POINT2  10  /**< point2d_t (2 fastf_t); 2x QDoubleSpinBox     */
+#define RT_EDIT_PARAM_VECTOR2 11  /**< vect2d_t  (2 fastf_t); 2x QDoubleSpinBox     */
+#define RT_EDIT_PARAM_SCALAR_LIST  12 /**< variable fastf_t tail in e_para[]        */
+#define RT_EDIT_PARAM_INTEGER_LIST 13 /**< variable integer-valued tail in e_para[] */
 
 /** Sentinel for "no range constraint" on a parameter. */
 #define RT_EDIT_PARAM_NO_LIMIT  (-DBL_MAX)
@@ -733,12 +737,16 @@ rt_edit_cmd_values_get(struct rt_edit *s, int command_id,
  * Describes a single input parameter for one edit command.
  *
  * For scalar/integer/boolean/enum parameters the value is stored in
- * s->e_para[index].  For POINT/VECTOR, three consecutive slots starting
- * at e_para[index] are used.  For MATRIX, e_para[0..15] are used.
+ * s->e_para[index].  POINT2/VECTOR2 use two consecutive slots and
+ * POINT/VECTOR use three consecutive slots starting at e_para[index].
+ * For MATRIX, e_para[0..15] are used.
  * For STRING the value is in s->e_str[index]; prim_field documents the
  * corresponding primitive data field.
  * For COLOR three fastf_t integer values (0-255) are stored in
  * e_para[index], e_para[index+1], e_para[index+2].
+ * SCALAR_LIST and INTEGER_LIST consume a variable number of consecutive
+ * e_para slots beginning at index.  A list must be the final numeric
+ * parameter in a command; nenum states its minimum arity.
  */
 struct rt_edit_param_desc {
     const char  *name;         /**< machine-readable id, e.g. "r1"                  */
@@ -749,8 +757,8 @@ struct rt_edit_param_desc {
     fastf_t      range_max;    /**< RT_EDIT_PARAM_NO_LIMIT = no upper bound          */
     const char  *units;        /**< "length", "angle_deg", "angle_rad",
                                 *   "fraction", "count", "none", or NULL             */
-    /* RT_EDIT_PARAM_ENUM only */
-    int          nenum;                   /**< number of choices                     */
+    /* RT_EDIT_PARAM_ENUM / RT_EDIT_PARAM_*_LIST */
+    int          nenum; /**< enum choice count, or variable-list minimum count */
     const char * const *enum_labels;      /**< human-readable option strings         */
     const int   *enum_ids;                /**< integer value stored in e_para[index] */
     /* RT_EDIT_PARAM_STRING only */

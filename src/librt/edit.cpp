@@ -1451,6 +1451,10 @@ edit_param_type_str(int type)
 	case RT_EDIT_PARAM_ENUM:    return "enum";
 	case RT_EDIT_PARAM_COLOR:   return "color";
 	case RT_EDIT_PARAM_MATRIX:  return "matrix";
+	case RT_EDIT_PARAM_POINT2:  return "point2";
+	case RT_EDIT_PARAM_VECTOR2: return "vector2";
+	case RT_EDIT_PARAM_SCALAR_LIST:  return "scalar_list";
+	case RT_EDIT_PARAM_INTEGER_LIST: return "integer_list";
 	default:                    return "unknown";
     }
 }
@@ -1799,6 +1803,8 @@ rt_edit_prim_desc_validate(struct bu_vls *msg,
 		    command->name, pi);
 	    int width = 1;
 	    switch (parameter->type) {
+		case RT_EDIT_PARAM_POINT2:
+		case RT_EDIT_PARAM_VECTOR2: width = 2; break;
 		case RT_EDIT_PARAM_POINT:
 		case RT_EDIT_PARAM_VECTOR:
 		case RT_EDIT_PARAM_COLOR: width = 3; break;
@@ -1808,6 +1814,17 @@ rt_edit_prim_desc_validate(struct bu_vls *msg,
 		case RT_EDIT_PARAM_BOOLEAN:
 		case RT_EDIT_PARAM_STRING:
 		case RT_EDIT_PARAM_ENUM: break;
+		case RT_EDIT_PARAM_SCALAR_LIST:
+		case RT_EDIT_PARAM_INTEGER_LIST:
+		    if (pi != command->nparam - 1)
+			DESC_FAIL("%s/%s/%s: list parameter must be last",
+			    desc->prim_type, command->name, parameter->name);
+		    if (parameter->index < 0 || parameter->nenum <= 0 ||
+			parameter->index + parameter->nenum > RT_EDIT_MAXPARA)
+			DESC_FAIL("%s/%s/%s: invalid list layout",
+			    desc->prim_type, command->name, parameter->name);
+		    width = RT_EDIT_MAXPARA - parameter->index;
+		    break;
 		default:
 		    DESC_FAIL("%s/%s/%s: invalid parameter type %d",
 			desc->prim_type, command->name, parameter->name,
@@ -1839,7 +1856,9 @@ rt_edit_prim_desc_validate(struct bu_vls *msg,
 			DESC_FAIL("%s/%s/%s: invalid enum entry %d",
 			    desc->prim_type, command->name, parameter->name, ei);
 		}
-	    } else if (parameter->nenum) {
+	    } else if (parameter->type != RT_EDIT_PARAM_SCALAR_LIST &&
+		parameter->type != RT_EDIT_PARAM_INTEGER_LIST &&
+		parameter->nenum) {
 		DESC_FAIL("%s/%s/%s: enum count on non-enum parameter",
 		    desc->prim_type, command->name, parameter->name);
 	    }
@@ -1857,7 +1876,7 @@ rt_edit_prim_desc_validate(struct bu_vls *msg,
 	    !option_names.insert(option->name).second || !option->label ||
 	    !option->label[0] || !option->desc || !option->desc[0] ||
 	    option->type < RT_EDIT_PARAM_SCALAR ||
-	    option->type > RT_EDIT_PARAM_MATRIX)
+	    option->type > RT_EDIT_PARAM_INTEGER_LIST)
 	    DESC_FAIL("%s: invalid option %d", desc->prim_type, oi);
     }
 
@@ -1992,11 +2011,20 @@ rt_edit_prim_desc_to_json(struct bu_vls *out,
 	    if (p->type == RT_EDIT_PARAM_SCALAR ||
 		p->type == RT_EDIT_PARAM_INTEGER ||
 		p->type == RT_EDIT_PARAM_ENUM   ||
-		p->type == RT_EDIT_PARAM_COLOR) {
+		p->type == RT_EDIT_PARAM_COLOR  ||
+		p->type == RT_EDIT_PARAM_SCALAR_LIST ||
+		p->type == RT_EDIT_PARAM_INTEGER_LIST) {
 		bu_vls_strcat(out, ",\n          \"min\": ");
 		emit_limit(out, p->range_min);
 		bu_vls_strcat(out, ",\n          \"max\": ");
 		emit_limit(out, p->range_max);
+	    }
+
+	    if (p->type == RT_EDIT_PARAM_SCALAR_LIST ||
+		p->type == RT_EDIT_PARAM_INTEGER_LIST) {
+		bu_vls_printf(out,
+		    ",\n          \"min_count\": %d,\n          \"max_count\": %d",
+		    p->nenum, RT_EDIT_MAXPARA - p->index);
 	    }
 
 	    /* units */

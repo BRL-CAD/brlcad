@@ -409,17 +409,22 @@ sketch_check_descriptors(void)
     const struct {
 	int command;
 	int count;
+	int indices[2];
 	int types[2];
     } expected[] = {
-	{ECMD_SKETCH_MOVE_VERTEX, 2,
-	    {RT_EDIT_PARAM_SCALAR, RT_EDIT_PARAM_SCALAR}},
-	{ECMD_SKETCH_MOVE_SEGMENT, 2,
-	    {RT_EDIT_PARAM_SCALAR, RT_EDIT_PARAM_SCALAR}},
-	{ECMD_SKETCH_APPEND_LINE, 2,
+	{ECMD_SKETCH_MOVE_VERTEX, 1, {0, 0},
+	    {RT_EDIT_PARAM_POINT2, 0}},
+	{ECMD_SKETCH_MOVE_SEGMENT, 1, {0, 0},
+	    {RT_EDIT_PARAM_VECTOR2, 0}},
+	{ECMD_SKETCH_APPEND_LINE, 2, {0, 1},
 	    {RT_EDIT_PARAM_INTEGER, RT_EDIT_PARAM_INTEGER}},
-	{ECMD_SKETCH_DELETE_VERTEX, 1, {RT_EDIT_PARAM_INTEGER, 0}},
-	{ECMD_SKETCH_DELETE_SEGMENT, 1, {RT_EDIT_PARAM_INTEGER, 0}},
-	{ECMD_SKETCH_SPLIT_SEGMENT, 2,
+	{ECMD_SKETCH_DELETE_VERTEX, 1, {0, 0},
+	    {RT_EDIT_PARAM_INTEGER, 0}},
+	{ECMD_SKETCH_DELETE_SEGMENT, 1, {0, 0},
+	    {RT_EDIT_PARAM_INTEGER, 0}},
+	{ECMD_SKETCH_MOVE_VERTEX_LIST, 2, {0, 2},
+	    {RT_EDIT_PARAM_VECTOR2, RT_EDIT_PARAM_INTEGER_LIST}},
+	{ECMD_SKETCH_SPLIT_SEGMENT, 2, {0, 1},
 	    {RT_EDIT_PARAM_INTEGER, RT_EDIT_PARAM_SCALAR}}
     };
     if (!desc)
@@ -437,7 +442,7 @@ sketch_check_descriptors(void)
 	    return 1;
 	}
 	for (int i = 0; i < entry.count; ++i) {
-	    if (command->params[i].index != i ||
+	    if (command->params[i].index != entry.indices[i] ||
 		command->params[i].type != entry.types[i]) {
 		bu_log("sketch descriptor %d misstates parameter %d\n",
 		    entry.command, i);

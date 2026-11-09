@@ -246,6 +246,22 @@ check_descriptor_audit(void)
 	    failures++;
 	}
 	bu_vls_free(&diagnostic);
+
+	struct rt_edit_param_desc invalid_list = ell->cmds[0].params[0];
+	invalid_list.type = RT_EDIT_PARAM_INTEGER_LIST;
+	invalid_list.nenum = 0;
+	invalid_command = ell->cmds[0];
+	invalid_command.params = &invalid_list;
+	invalid_desc = *ell;
+	invalid_desc.ncmd = 1;
+	invalid_desc.cmds = &invalid_command;
+	diagnostic = BU_VLS_INIT_ZERO;
+	if (rt_edit_prim_desc_validate(&diagnostic, &invalid_desc) !=
+		BRLCAD_ERROR || !bu_vls_strlen(&diagnostic)) {
+	    bu_log("FAIL: invalid list parameter was not rejected\n");
+	    failures++;
+	}
+	bu_vls_free(&diagnostic);
     } else {
 	bu_log("FAIL: ELL descriptor unavailable for validation test\n");
 	failures++;
@@ -305,7 +321,11 @@ check_interactions(void)
 	!strstr(bu_vls_cstr(&sketch_json),
 	    "\"manipulator\": \"indexed_set\"") ||
 	!strstr(bu_vls_cstr(&sketch_json),
-	    "\"semantic\": \"angle\"")) {
+	    "\"semantic\": \"angle\"") ||
+	!strstr(bu_vls_cstr(&sketch_json), "\"type\": \"point2\"") ||
+	!strstr(bu_vls_cstr(&sketch_json), "\"type\": \"vector2\"") ||
+	!strstr(bu_vls_cstr(&sketch_json), "\"type\": \"integer_list\"") ||
+	!strstr(bu_vls_cstr(&sketch_json), "\"min_count\": 1")) {
 	bu_log("FAIL: representative interaction descriptors are incomplete\n");
 	bu_vls_free(&sketch_json);
 	return 1;

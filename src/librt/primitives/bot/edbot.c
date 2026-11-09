@@ -1411,9 +1411,11 @@ static const struct rt_edit_param_desc bot_point_params[] = {
 };
 
 static const struct rt_edit_param_desc bot_delta_params[] = {
-    { "delta", "Delta (dx dy dz + vertex indices)", RT_EDIT_PARAM_VECTOR, 0,
+    { "delta", "Delta", RT_EDIT_PARAM_VECTOR, 0,
       RT_EDIT_PARAM_NO_LIMIT, RT_EDIT_PARAM_NO_LIMIT, "length",
-      0, NULL, NULL, NULL }
+      0, NULL, NULL, NULL },
+    { "vertices", "Vertices", RT_EDIT_PARAM_INTEGER_LIST, 3,
+      0.0, RT_EDIT_PARAM_NO_LIMIT, "count", 1, NULL, NULL, NULL }
 };
 
 static const struct rt_edit_param_desc bot_mode_params[] = {
@@ -1450,7 +1452,7 @@ static const struct rt_edit_cmd_desc bot_cmds[] = {
     { ECMD_BOT_MOVEV, RT_EDIT_CMD_NAME(ECMD_BOT_MOVEV),       "Move Vertex",         "movement",  1, bot_point_params,  1, 40, NULL },
     { ECMD_BOT_MOVEE, RT_EDIT_CMD_NAME(ECMD_BOT_MOVEE),       "Move Edge",           "movement",  1, bot_point_params,  1, 50, NULL },
     { ECMD_BOT_MOVET, RT_EDIT_CMD_NAME(ECMD_BOT_MOVET),       "Move Face",           "movement",  1, bot_point_params,  1, 60, NULL },
-    { ECMD_BOT_MOVEV_LIST, RT_EDIT_CMD_NAME(ECMD_BOT_MOVEV_LIST),  "Move Vertex List",    "movement",  1, bot_delta_params,  1, 70, NULL },
+    { ECMD_BOT_MOVEV_LIST, RT_EDIT_CMD_NAME(ECMD_BOT_MOVEV_LIST),  "Move Vertex List",    "movement",  2, bot_delta_params,  1, 70, NULL },
     { ECMD_BOT_ESPLIT, RT_EDIT_CMD_NAME(ECMD_BOT_ESPLIT),      "Split Edge",          "topology",  0, NULL,              0, 80, NULL },
     { ECMD_BOT_FSPLIT, RT_EDIT_CMD_NAME(ECMD_BOT_FSPLIT),      "Split Face",          "topology",  0, NULL,              0, 90, NULL },
     { ECMD_BOT_FDEL, RT_EDIT_CMD_NAME(ECMD_BOT_FDEL),        "Delete Face",         "topology",  0, NULL,              0, 100, NULL },
@@ -1498,8 +1500,8 @@ static const enum rt_edit_param_semantic bot_index3_semantics[] = {
 static const enum rt_edit_param_semantic bot_position_semantics[] = {
     RT_EDIT_SEMANTIC_POSITION
 };
-static const enum rt_edit_param_semantic bot_delta_semantics[] = {
-    RT_EDIT_SEMANTIC_DELTA
+static const enum rt_edit_param_semantic bot_delta_list_semantics[] = {
+    RT_EDIT_SEMANTIC_DELTA, RT_EDIT_SEMANTIC_INDEX
 };
 static const enum rt_edit_param_semantic bot_property_semantics[] = {
     RT_EDIT_SEMANTIC_PROPERTY
@@ -1522,7 +1524,7 @@ static const struct rt_edit_interaction_desc bot_interactions[] = {
     { RT_EDIT_SELECTION_FACE, RT_EDIT_COORDINATE_OBJECT,
       RT_EDIT_MANIPULATOR_INDEXED_SET, bot_position_semantics, 1 },
     { RT_EDIT_SELECTION_VERTEX, RT_EDIT_COORDINATE_OBJECT,
-      RT_EDIT_MANIPULATOR_INDEXED_SET, bot_delta_semantics, 1 },
+      RT_EDIT_MANIPULATOR_INDEXED_SET, bot_delta_list_semantics, 2 },
     { RT_EDIT_SELECTION_EDGE, RT_EDIT_COORDINATE_SCALAR,
       RT_EDIT_MANIPULATOR_INDEXED_SET, NULL, 0 },
     { RT_EDIT_SELECTION_FACE, RT_EDIT_COORDINATE_SCALAR,
@@ -1560,7 +1562,8 @@ bot_parameter_bounds(struct rt_edit_param_bounds *bounds,
     const int is_vertex_index =
 	(command_id == ECMD_BOT_PICKV && parameter_index == 0) ||
 	(command_id == ECMD_BOT_PICKE && parameter_index < 2) ||
-	(command_id == ECMD_BOT_PICKT && parameter_index < 3);
+	(command_id == ECMD_BOT_PICKT && parameter_index < 3) ||
+	(command_id == ECMD_BOT_MOVEV_LIST && parameter_index == 1);
     if (!is_vertex_index)
 	return BRLCAD_OK;
     if (!bot->num_vertices)
