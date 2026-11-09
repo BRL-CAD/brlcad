@@ -375,11 +375,52 @@ static const struct rt_edit_param_desc sketch_line_params[] = {
       0.0, RT_EDIT_PARAM_NO_LIMIT, "count", 0, NULL, NULL, NULL }
 };
 
+static const struct rt_edit_param_desc sketch_arc_params[] = {
+    { "start", "Start Vertex", RT_EDIT_PARAM_INTEGER, 0,
+      0.0, RT_EDIT_PARAM_NO_LIMIT, "count", 0, NULL, NULL, NULL },
+    { "end", "End Vertex", RT_EDIT_PARAM_INTEGER, 1,
+      0.0, RT_EDIT_PARAM_NO_LIMIT, "count", 0, NULL, NULL, NULL },
+    { "radius", "Radius", RT_EDIT_PARAM_SCALAR, 2,
+      RT_EDIT_PARAM_NO_LIMIT, RT_EDIT_PARAM_NO_LIMIT, "length", 0, NULL, NULL, NULL },
+    { "center_left", "Center Is Left", RT_EDIT_PARAM_BOOLEAN, 3,
+      0.0, 1.0, "none", 0, NULL, NULL, NULL },
+    { "clockwise", "Clockwise", RT_EDIT_PARAM_BOOLEAN, 4,
+      0.0, 1.0, "none", 0, NULL, NULL, NULL }
+};
+
+static const struct rt_edit_param_desc sketch_bezier_params[] = {
+    { "vertices", "Control Vertices", RT_EDIT_PARAM_INTEGER_LIST, 0,
+      0.0, RT_EDIT_PARAM_NO_LIMIT, "count", 2, NULL, NULL, NULL }
+};
+
 static const struct rt_edit_param_desc sketch_arc_radius_params[] = {
     { "segment", "Arc Segment", RT_EDIT_PARAM_INTEGER, 0,
       0.0, RT_EDIT_PARAM_NO_LIMIT, "count", 0, NULL, NULL, NULL },
     { "radius", "Radius", RT_EDIT_PARAM_SCALAR, 1,
       RT_EDIT_PARAM_NO_LIMIT, RT_EDIT_PARAM_NO_LIMIT, "length", 0, NULL, NULL, NULL }
+};
+
+static const struct rt_edit_param_desc sketch_nurb_params[] = {
+    { "order", "Order", RT_EDIT_PARAM_INTEGER, 0,
+      2.0, RT_EDIT_PARAM_NO_LIMIT, "count", 0, NULL, NULL, NULL },
+    { "vertices", "Control Vertices", RT_EDIT_PARAM_INTEGER_LIST, 1,
+      0.0, RT_EDIT_PARAM_NO_LIMIT, "count", 2, NULL, NULL, NULL }
+};
+
+static const struct rt_edit_param_desc sketch_knot_params[] = {
+    { "count", "Knot Count", RT_EDIT_PARAM_INTEGER, 0,
+      1.0, RT_EDIT_PARAM_NO_LIMIT, "count", 0, NULL, NULL, NULL },
+    { "knots", "Knots", RT_EDIT_PARAM_SCALAR_LIST, 1,
+      RT_EDIT_PARAM_NO_LIMIT, RT_EDIT_PARAM_NO_LIMIT, "none", 1, NULL, NULL, NULL }
+};
+
+static const struct rt_edit_param_desc sketch_weight_params[] = {
+    { "segment", "Segment", RT_EDIT_PARAM_INTEGER, 0,
+      0.0, RT_EDIT_PARAM_NO_LIMIT, "count", 0, NULL, NULL, NULL },
+    { "count", "Weight Count", RT_EDIT_PARAM_INTEGER, 1,
+      1.0, RT_EDIT_PARAM_NO_LIMIT, "count", 0, NULL, NULL, NULL },
+    { "weights", "Weights", RT_EDIT_PARAM_SCALAR_LIST, 2,
+      0.0, RT_EDIT_PARAM_NO_LIMIT, "none", 1, NULL, NULL, NULL }
 };
 
 static const struct rt_edit_param_desc sketch_tangency_params[] = {
@@ -391,26 +432,35 @@ static const struct rt_edit_param_desc sketch_tangency_params[] = {
       RT_EDIT_PARAM_NO_LIMIT, RT_EDIT_PARAM_NO_LIMIT, "radians", 0, NULL, NULL, NULL }
 };
 
+static const struct rt_edit_param_desc sketch_plane_params[] = {
+    { "origin", "Origin", RT_EDIT_PARAM_POINT, 0,
+      RT_EDIT_PARAM_NO_LIMIT, RT_EDIT_PARAM_NO_LIMIT, "length", 0, NULL, NULL, NULL },
+    { "u_axis", "U Axis", RT_EDIT_PARAM_VECTOR, 3,
+      RT_EDIT_PARAM_NO_LIMIT, RT_EDIT_PARAM_NO_LIMIT, "none", 0, NULL, NULL, NULL },
+    { "v_axis", "V Axis", RT_EDIT_PARAM_VECTOR, 6,
+      RT_EDIT_PARAM_NO_LIMIT, RT_EDIT_PARAM_NO_LIMIT, "none", 0, NULL, NULL, NULL }
+};
+
 static const struct rt_edit_cmd_desc sketch_cmds[] = {
     { ECMD_SKETCH_PICK_VERTEX, RT_EDIT_CMD_NAME(ECMD_SKETCH_PICK_VERTEX),           "Pick Vertex",          "selection", 1, sketch_idx_param,   1, 10, NULL },
     { ECMD_SKETCH_MOVE_VERTEX, RT_EDIT_CMD_NAME(ECMD_SKETCH_MOVE_VERTEX),           "Move Vertex",          "movement",  1, sketch_uv_point_param, 1, 20, NULL },
     { ECMD_SKETCH_PICK_SEGMENT, RT_EDIT_CMD_NAME(ECMD_SKETCH_PICK_SEGMENT),          "Pick Segment",         "selection", 1, sketch_idx_param,   1, 30, NULL },
     { ECMD_SKETCH_MOVE_SEGMENT, RT_EDIT_CMD_NAME(ECMD_SKETCH_MOVE_SEGMENT),          "Move Segment",         "movement",  1, sketch_uv_delta_param, 1, 40, NULL },
     { ECMD_SKETCH_APPEND_LINE, RT_EDIT_CMD_NAME(ECMD_SKETCH_APPEND_LINE),           "Append Line",          "topology",  2, sketch_line_params, 1, 50, NULL },
-    { ECMD_SKETCH_APPEND_ARC, RT_EDIT_CMD_NAME(ECMD_SKETCH_APPEND_ARC),            "Append Arc",           "topology",  0, NULL,               1, 60, NULL },
-    { ECMD_SKETCH_APPEND_BEZIER, RT_EDIT_CMD_NAME(ECMD_SKETCH_APPEND_BEZIER),         "Append Bezier",        "topology",  0, NULL,               1, 70, NULL },
+    { ECMD_SKETCH_APPEND_ARC, RT_EDIT_CMD_NAME(ECMD_SKETCH_APPEND_ARC),            "Append Arc",           "topology",  5, sketch_arc_params,  1, 60, NULL },
+    { ECMD_SKETCH_APPEND_BEZIER, RT_EDIT_CMD_NAME(ECMD_SKETCH_APPEND_BEZIER),         "Append Bezier",        "topology",  1, sketch_bezier_params, 1, 70, NULL },
     { ECMD_SKETCH_DELETE_VERTEX, RT_EDIT_CMD_NAME(ECMD_SKETCH_DELETE_VERTEX),         "Delete Vertex",        "topology",  1, sketch_idx_param,   1, 80, NULL },
     { ECMD_SKETCH_DELETE_SEGMENT, RT_EDIT_CMD_NAME(ECMD_SKETCH_DELETE_SEGMENT),        "Delete Segment",       "topology",  1, sketch_idx_param,   1, 90, NULL },
     { ECMD_SKETCH_MOVE_VERTEX_LIST, RT_EDIT_CMD_NAME(ECMD_SKETCH_MOVE_VERTEX_LIST),      "Move Vertex List",     "movement",  2, sketch_move_vertex_list_params, 1, 100, NULL },
     { ECMD_SKETCH_SPLIT_SEGMENT, RT_EDIT_CMD_NAME(ECMD_SKETCH_SPLIT_SEGMENT),         "Split Segment",        "topology",  2, sketch_split_params, 1, 110, NULL },
-    { ECMD_SKETCH_APPEND_NURB, RT_EDIT_CMD_NAME(ECMD_SKETCH_APPEND_NURB),           "Append NURB",          "topology",  0, NULL,               1, 120, NULL },
-    { ECMD_SKETCH_NURB_EDIT_KV, RT_EDIT_CMD_NAME(ECMD_SKETCH_NURB_EDIT_KV),          "NURB Edit KV",         "topology",  0, NULL,               1, 130, NULL },
-    { ECMD_SKETCH_NURB_EDIT_WEIGHTS, RT_EDIT_CMD_NAME(ECMD_SKETCH_NURB_EDIT_WEIGHTS),     "NURB Edit Weights",    "topology",  0, NULL,               1, 140, NULL },
+    { ECMD_SKETCH_APPEND_NURB, RT_EDIT_CMD_NAME(ECMD_SKETCH_APPEND_NURB),           "Append NURB",          "topology",  2, sketch_nurb_params, 1, 120, NULL },
+    { ECMD_SKETCH_NURB_EDIT_KV, RT_EDIT_CMD_NAME(ECMD_SKETCH_NURB_EDIT_KV),          "NURB Edit KV",         "topology",  2, sketch_knot_params, 1, 130, NULL },
+    { ECMD_SKETCH_NURB_EDIT_WEIGHTS, RT_EDIT_CMD_NAME(ECMD_SKETCH_NURB_EDIT_WEIGHTS),     "NURB Edit Weights",    "topology",  3, sketch_weight_params, 1, 140, NULL },
     { ECMD_SKETCH_ADD_VERTEX, RT_EDIT_CMD_NAME(ECMD_SKETCH_ADD_VERTEX),            "Add Vertex",           "topology",  1, sketch_uv_point_param, 1, 150, NULL },
     { ECMD_SKETCH_TOGGLE_ARC_ORIENT, RT_EDIT_CMD_NAME(ECMD_SKETCH_TOGGLE_ARC_ORIENT),     "Toggle Arc Orient",    "topology",  1, sketch_idx_param,   1, 160, NULL },
     { ECMD_SKETCH_SET_ARC_RADIUS, RT_EDIT_CMD_NAME(ECMD_SKETCH_SET_ARC_RADIUS),        "Set Arc Radius",       "topology",  2, sketch_arc_radius_params, 1, 170, NULL },
     { ECMD_SKETCH_SET_TANGENCY, RT_EDIT_CMD_NAME(ECMD_SKETCH_SET_TANGENCY),          "Set Arc Tangency",     "topology",  3, sketch_tangency_params,   1, 180, NULL },
-    { ECMD_SKETCH_SET_PLANE, RT_EDIT_CMD_NAME(ECMD_SKETCH_SET_PLANE),             "Set Sketch Plane",     "geometry",  0, NULL,               1, 190, NULL },
+    { ECMD_SKETCH_SET_PLANE, RT_EDIT_CMD_NAME(ECMD_SKETCH_SET_PLANE),             "Set Sketch Plane",     "geometry",  3, sketch_plane_params, 1, 190, NULL },
     { ECMD_SKETCH_TOGGLE_SEGMENT_REVERSE, RT_EDIT_CMD_NAME(ECMD_SKETCH_TOGGLE_SEGMENT_REVERSE),"Toggle Seg Reverse",   "topology",  1, sketch_idx_param,   1, 200, NULL }
 };
 
@@ -464,6 +514,10 @@ static const enum rt_edit_param_semantic sketch_tangency_semantics[] = {
     RT_EDIT_SEMANTIC_INDEX, RT_EDIT_SEMANTIC_INDEX,
     RT_EDIT_SEMANTIC_ANGLE
 };
+static const enum rt_edit_param_semantic sketch_plane_semantics[] = {
+    RT_EDIT_SEMANTIC_POSITION, RT_EDIT_SEMANTIC_DIRECTION,
+    RT_EDIT_SEMANTIC_DIRECTION
+};
 
 static const struct rt_edit_interaction_desc sketch_interactions[] = {
     { RT_EDIT_SELECTION_VERTEX, RT_EDIT_COORDINATE_SCALAR,
@@ -503,7 +557,7 @@ static const struct rt_edit_interaction_desc sketch_interactions[] = {
     { RT_EDIT_SELECTION_SEGMENT, RT_EDIT_COORDINATE_SCALAR,
       RT_EDIT_MANIPULATOR_ROTATION_RING, sketch_tangency_semantics, 3 },
     { RT_EDIT_SELECTION_PRIMITIVE, RT_EDIT_COORDINATE_OBJECT,
-      RT_EDIT_MANIPULATOR_PLANE, NULL, 0 },
+	RT_EDIT_MANIPULATOR_PLANE, sketch_plane_semantics, 3 },
     { RT_EDIT_SELECTION_SEGMENT, RT_EDIT_COORDINATE_SCALAR,
       RT_EDIT_MANIPULATOR_CUSTOM, sketch_index_semantics, 1 }
 };
@@ -523,8 +577,11 @@ sketch_parameter_bounds(struct rt_edit_param_bounds *bounds,
     enum rt_edit_selection_domain domain = RT_EDIT_SELECTION_NONE;
     if ((command_id == ECMD_SKETCH_PICK_VERTEX && parameter_index == 0) ||
 	(command_id == ECMD_SKETCH_APPEND_LINE && parameter_index < 2) ||
+	(command_id == ECMD_SKETCH_APPEND_ARC && parameter_index < 2) ||
+	(command_id == ECMD_SKETCH_APPEND_BEZIER && parameter_index == 0) ||
 	(command_id == ECMD_SKETCH_DELETE_VERTEX && parameter_index == 0) ||
-	(command_id == ECMD_SKETCH_MOVE_VERTEX_LIST && parameter_index == 1))
+	(command_id == ECMD_SKETCH_MOVE_VERTEX_LIST && parameter_index == 1) ||
+	(command_id == ECMD_SKETCH_APPEND_NURB && parameter_index == 1))
 	domain = RT_EDIT_SELECTION_VERTEX;
     else if ((command_id == ECMD_SKETCH_PICK_SEGMENT && parameter_index == 0) ||
 	(command_id == ECMD_SKETCH_DELETE_SEGMENT && parameter_index == 0) ||
@@ -532,6 +589,7 @@ sketch_parameter_bounds(struct rt_edit_param_bounds *bounds,
 	(command_id == ECMD_SKETCH_TOGGLE_ARC_ORIENT && parameter_index == 0) ||
 	(command_id == ECMD_SKETCH_SET_ARC_RADIUS && parameter_index == 0) ||
 	(command_id == ECMD_SKETCH_SET_TANGENCY && parameter_index < 2) ||
+	(command_id == ECMD_SKETCH_NURB_EDIT_WEIGHTS && parameter_index == 0) ||
 	(command_id == ECMD_SKETCH_TOGGLE_SEGMENT_REVERSE &&
 	 parameter_index == 0))
 	domain = RT_EDIT_SELECTION_SEGMENT;
