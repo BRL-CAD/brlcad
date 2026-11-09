@@ -173,14 +173,17 @@ check_unit(fastf_t local2base, const char *unit)
 	edit->es_scale = 2.0;
 	edit->e_para[0] = 2.0;
 	edit->e_para[1] = 3.0;
+	rt_edit_set_str(edit, 0, "transient");
 	if (rt_edit_process(edit) != BRLCAD_ERROR ||
 	    edit->e_inpara || edit->e_mvalid || !ZERO(edit->es_scale) ||
+	    edit->e_nstr || edit->e_str[0][0] ||
 	    edit->update_views || !EQUAL(edit->e_para[0], 2.0) ||
 	    !same_ell(edit, 4))
 	    ++failures;
 	rt_edit_set_edflag(edit, ECMD_ELL_SCALE_A);
+	rt_edit_set_str(edit, 0, "transient");
 	if (rt_edit_process(edit) != BRLCAD_OK || !same_ell(edit, 4) ||
-	    edit->update_views != 1)
+	    edit->update_views != 1 || edit->e_nstr || edit->e_str[0][0])
 	    ++failures;
 	if (rt_edit_process(edit) != BRLCAD_OK || edit->update_views != 1)
 	    ++failures;

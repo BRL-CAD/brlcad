@@ -1207,6 +1207,8 @@ static void
 rt_edit_clear_input(struct rt_edit *s)
 {
     s->e_inpara = 0;
+    s->e_nstr = 0;
+    memset(s->e_str, 0, sizeof(s->e_str));
     s->e_mvalid = 0;
     s->es_scale = 0.0;
 }
@@ -1235,7 +1237,6 @@ rt_edit_process(struct rt_edit *s)
 		"rt_edit_process: invalid input count (numeric=%d, string=%d)\n",
 		s->e_inpara, s->e_nstr);
 	rt_edit_clear_input(s);
-	s->e_nstr = 0;
 	return BRLCAD_ERROR;
     }
     for (int i = 0; i < s->e_inpara; ++i) {

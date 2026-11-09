@@ -520,9 +520,10 @@ rt_knob_edit_sca(
 	int matrix_edit);
 
 /* Equivalent to sedit - run editing logic after input data is set in
- * rt_edit container.  Transient input flags are consumed whether the edit
- * succeeds or fails; parameter values remain available to the caller.
- * Returns BRLCAD_ERROR if the primitive edit fails. */
+ * rt_edit container.  Transient input flags and string storage are consumed
+ * whether the edit succeeds or fails; numeric parameter values remain
+ * available to the caller.  Returns BRLCAD_ERROR if the primitive edit
+ * fails. */
 RT_EXPORT extern int
 rt_edit_process(struct rt_edit *s);
 
