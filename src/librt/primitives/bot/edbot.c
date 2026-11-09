@@ -617,6 +617,25 @@ bot_vertex_index(struct rt_edit *s, int param, size_t vertex_count, int *vertex)
     return BRLCAD_OK;
 }
 
+
+static int
+bot_selection_index(struct rt_edit *s, int param, size_t vertex_count,
+	int *vertex)
+{
+    fastf_t index = s->e_para[param];
+    if (!isfinite(index) || index < -1.0 ||
+	index >= (fastf_t)vertex_count || index > (fastf_t)INT_MAX ||
+	!ZERO(index - floor(index))) {
+	bu_vls_printf(s->log_str,
+		"ERROR: invalid selection index %g (valid range [-1, %zu))\n",
+		index, vertex_count);
+	return BRLCAD_ERROR;
+    }
+    *vertex = (int)index;
+    return BRLCAD_OK;
+}
+
+
 static int
 ecmd_bot_movev_list(struct rt_edit *s)
 {
@@ -1261,18 +1280,31 @@ rt_edit_bot_edit(struct rt_edit *s)
 		    (struct rt_bot_internal *)s->es_int.idb_ptr;
 		int selected[3] = {-1, -1, -1};
 		for (int i = 0; i < n; ++i) {
-		    if (bot_vertex_index(s, i, bot->num_vertices,
+		    if (bot_selection_index(s, i, bot->num_vertices,
 				 &selected[i]) != BRLCAD_OK) {
 			s->e_inpara = 0;
 			return BRLCAD_ERROR;
 		    }
 		}
 		if (n > 1) {
+		    int clear_selection = 1;
+		    int has_unselected = 0;
+		    for (int i = 0; i < n; ++i) {
+			clear_selection = clear_selection && selected[i] == -1;
+			has_unselected = has_unselected || selected[i] == -1;
+		    }
+		    if (has_unselected && !clear_selection) {
+			bu_vls_printf(s->log_str,
+				"ERROR: BOT edge and face selections must be complete\n");
+			s->e_inpara = 0;
+			return BRLCAD_ERROR;
+		    }
 		    int found = 0;
 		    int distinct = selected[0] != selected[1] &&
 			(n == 2 || (selected[0] != selected[2] &&
 				    selected[1] != selected[2]));
-		    for (size_t fi = 0; distinct && fi < bot->num_faces; ++fi) {
+		    for (size_t fi = 0; !clear_selection && distinct &&
+			fi < bot->num_faces; ++fi) {
 			const int *face = &bot->faces[fi * 3];
 			if (n == 3) {
 			    found = face[0] == selected[0] &&
@@ -1290,7 +1322,7 @@ rt_edit_bot_edit(struct rt_edit *s)
 			if (found)
 			    break;
 		    }
-		    if (!found) {
+		    if (!clear_selection && !found) {
 			bu_vls_printf(s->log_str, "ERROR: selected BOT %s not found\n",
 				n == 2 ? "edge" : "face");
 			s->e_inpara = 0;
@@ -1385,23 +1417,23 @@ static const int bot_orient_ids[] = {
 
 static const struct rt_edit_param_desc bot_pickv_params[] = {
     { "vertex_index", "Vertex Index", RT_EDIT_PARAM_INTEGER, 0,
-      0.0, RT_EDIT_PARAM_NO_LIMIT, "count", 0, NULL, NULL, NULL }
+      -1.0, RT_EDIT_PARAM_NO_LIMIT, "count", 0, NULL, NULL, NULL }
 };
 
 static const struct rt_edit_param_desc bot_picke_params[] = {
     { "v1", "Vertex 1", RT_EDIT_PARAM_INTEGER, 0,
-      0.0, RT_EDIT_PARAM_NO_LIMIT, "count", 0, NULL, NULL, NULL },
+      -1.0, RT_EDIT_PARAM_NO_LIMIT, "count", 0, NULL, NULL, NULL },
     { "v2", "Vertex 2", RT_EDIT_PARAM_INTEGER, 1,
-      0.0, RT_EDIT_PARAM_NO_LIMIT, "count", 0, NULL, NULL, NULL }
+      -1.0, RT_EDIT_PARAM_NO_LIMIT, "count", 0, NULL, NULL, NULL }
 };
 
 static const struct rt_edit_param_desc bot_pickt_params[] = {
     { "v1", "Vertex 1", RT_EDIT_PARAM_INTEGER, 0,
-      0.0, RT_EDIT_PARAM_NO_LIMIT, "count", 0, NULL, NULL, NULL },
+      -1.0, RT_EDIT_PARAM_NO_LIMIT, "count", 0, NULL, NULL, NULL },
     { "v2", "Vertex 2", RT_EDIT_PARAM_INTEGER, 1,
-      0.0, RT_EDIT_PARAM_NO_LIMIT, "count", 0, NULL, NULL, NULL },
+      -1.0, RT_EDIT_PARAM_NO_LIMIT, "count", 0, NULL, NULL, NULL },
     { "v3", "Vertex 3", RT_EDIT_PARAM_INTEGER, 2,
-      0.0, RT_EDIT_PARAM_NO_LIMIT, "count", 0, NULL, NULL, NULL }
+      -1.0, RT_EDIT_PARAM_NO_LIMIT, "count", 0, NULL, NULL, NULL }
 };
 
 static const struct rt_edit_param_desc bot_point_params[] = {

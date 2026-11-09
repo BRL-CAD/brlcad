@@ -239,11 +239,12 @@ rt_edit_test_bot(void)
     if (rt_edit_param_bounds_get(s, ECMD_BOT_PICKV, 0,
 	    &vertex_bounds) != BRLCAD_OK || !vertex_bounds.has_minimum ||
 	!vertex_bounds.has_maximum ||
-	!NEAR_EQUAL(vertex_bounds.minimum, 0.0, SMALL_FASTF) ||
+	!NEAR_EQUAL(vertex_bounds.minimum, -1.0, SMALL_FASTF) ||
 	!NEAR_EQUAL(vertex_bounds.maximum, 3.0, SMALL_FASTF) ||
 	rt_edit_param_bounds_get(s, ECMD_BOT_PICKT, 2,
 	    &face_vertex_bounds) != BRLCAD_OK ||
-	!face_vertex_bounds.has_maximum ||
+	!face_vertex_bounds.has_minimum || !face_vertex_bounds.has_maximum ||
+	!NEAR_EQUAL(face_vertex_bounds.minimum, -1.0, SMALL_FASTF) ||
 	!NEAR_EQUAL(face_vertex_bounds.maximum, 3.0, SMALL_FASTF) ||
 	rt_edit_param_bounds_get(s, ECMD_BOT_PICKT, 3,
 	    &face_vertex_bounds) != BRLCAD_ERROR)
@@ -638,6 +639,13 @@ bu_log("RT_MATRIX_EDIT_TRANS_MODEL_XYZ SUCCESS: "
 		    be->bot_verts[0], be->bot_verts[1], be->bot_verts[2]);
 	bu_log("ECMD_BOT_PICKV(desc) SUCCESS: selected vertex %d\n", be->bot_verts[0]);
     }
+    EDOBJ[dp->d_minor_type].ft_set_edit_mode(s, ECMD_BOT_PICKV);
+    s->e_inpara = 1;
+    s->e_para[0] = -1.0;
+    if (rt_edit_process(s) != BRLCAD_OK || b->bot_verts[0] != -1 ||
+	b->bot_verts[1] != -1 || b->bot_verts[2] != -1)
+	bu_exit(1, "ERROR: ECMD_BOT_PICKV(desc) failed to clear selection\n");
+    bu_log("ECMD_BOT_PICKV(desc) deselection SUCCESS\n");
 
     /* ================================================================
      * ECMD_BOT_PICKE (descriptor path): select edge (0,2)

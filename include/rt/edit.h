@@ -519,11 +519,21 @@ rt_knob_edit_sca(
 	struct rt_edit *s,
 	int matrix_edit);
 
-/* Equivalent to sedit - run editing logic after input data is set in
- * rt_edit container.  Transient input flags and string storage are consumed
- * whether the edit succeeds or fails; numeric parameter values remain
- * available to the caller.  Returns BRLCAD_ERROR if the primitive edit
- * fails. */
+/**
+ * Process the current edit and report whether the primitive accepted it.
+ *
+ * Primitive handlers must validate proposed values before changing their
+ * rt_db_internal: BRLCAD_ERROR is a rejection and must leave the primitive
+ * unchanged.  This contract deliberately avoids cloning potentially large
+ * primitives on every interactive input event.
+ *
+ * Transient input flags and string storage are consumed whether the edit
+ * succeeds or fails; numeric parameter values remain available to the caller.
+ *
+ * @return BRLCAD_OK only after a recognized edit completed successfully;
+ * BRLCAD_ERROR for a null/invalid edit, a primitive-handler rejection, or an
+ * unknown edit flag.  Diagnostic text, when available, remains in s->log_str.
+ */
 RT_EXPORT extern int
 rt_edit_process(struct rt_edit *s);
 
