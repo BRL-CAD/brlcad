@@ -57,6 +57,7 @@
 #endif
 
 #include "bu/app.h"
+#include "bu/arg.h"
 #include "bu/exit.h"
 #include "bu/file.h"
 #include "bu/log.h"
@@ -1009,16 +1010,63 @@ qt_man_gui(const char *man_name, char man_section, const char *UNUSED(man_file))
 }
 #endif
 
+struct brlman_args {
+    int print_help;
+    int enable_gui;
+    int disable_gui;
+    struct bu_vls lang;
+    char man_section;
+    const char *short_search;
+    const char *full_search;
+    int dump;
+    int width;
+    int pager;
+};
+
 static int
-man_text_width(struct bu_vls *msg, size_t argc, const char **argv, void *value)
+man_text_width(struct bu_vls *msg, const char *arg, void *value)
 {
-    int count = bu_opt_int(msg, argc, argv, value);
-    if (count > 0 && *(int *)value <= 0) {
+    int width = 0;
+    if (!bu_arg_integer_from_str(&width, arg) || width <= 0) {
 	bu_vls_printf(msg, "Text width must be positive\n");
 	return -1;
     }
-    return count;
+    if (value)
+	*(int *)value = width;
+    return 0;
 }
+
+static const struct bu_arg_option brlman_options[] = {
+    BU_ARG_FLAG("h", "help", struct brlman_args, print_help, "Print help and exit"),
+    BU_ARG_FLAG("g", "gui", struct brlman_args, enable_gui, "Enable GUI"),
+    BU_ARG_FLAG(NULL, "no-gui", struct brlman_args, disable_gui, "Disable GUI"),
+    BU_ARG_VALUE_VALIDATE("L", "language", struct brlman_args, lang,
+	BU_ARG_VALUE_VLS, bu_arg_iso639_1_validate, "lg", "Set language"),
+    BU_ARG_VALUE_VALIDATE("S", "section", struct brlman_args, man_section,
+	BU_ARG_VALUE_CHAR, bu_arg_man_section_validate, "#", "Set section"),
+    BU_ARG_VALUE("k", "keyword", struct brlman_args, short_search,
+	BU_ARG_VALUE_STRING, BU_ARG_REQUIRED, "kw", "Search names, synopses, and brief descriptions"),
+    BU_ARG_VALUE("K", "full-text", struct brlman_args, full_search,
+	BU_ARG_VALUE_STRING, BU_ARG_REQUIRED, "kw", "Search full manual page text"),
+    BU_ARG_FLAG(NULL, "dump", struct brlman_args, dump,
+	"Write formatted HTML text to stdout without paging"),
+    BU_ARG_CUSTOM(NULL, "width", struct brlman_args, width, man_text_width,
+	"columns", "Set text width (default: terminal width or 80)"),
+    BU_ARG_FLAG(NULL, "pager", struct brlman_args, pager,
+	"Use the built-in HTML terminal viewer"),
+    BU_ARG_OPTION_NULL
+};
+
+static const struct bu_arg_operand brlman_operands[] = {
+    BU_ARG_OPERAND("arguments", BU_ARG_VALUE_RAW, 0, BU_ARG_COUNT_UNLIMITED,
+	"Manual page or search terms", NULL),
+    BU_ARG_OPERAND_NULL
+};
+
+static const struct bu_arg_schema brlman_schema = {
+    "brlman", "Display BRL-CAD manual pages", brlman_options, brlman_operands,
+    BU_ARG_PARSE_INTERSPERSED, BU_ARG_SCHEMA_CONSTRAINTS(NULL, NULL)
+};
 
 
 int
@@ -1031,53 +1079,42 @@ main(int argc, char **argv_input)
     int i = 0;
     int status = BRLCAD_ERROR;
     int uac = 0;
-    int enable_gui = 0;
-    int disable_gui = 0;
-    int print_help = 0;
+    struct brlman_args args = {};
+    bu_vls_init(&args.lang);
+    int &enable_gui = args.enable_gui;
+    int &disable_gui = args.disable_gui;
+    int &print_help = args.print_help;
     int search_mode = 0;
-    int dump = 0;
-    int pager = 0;
-    int width = 0;
-    const char *short_search = NULL;
-    const char *full_search = NULL;
+    int &dump = args.dump;
+    int &pager = args.pager;
+    int &width = args.width;
+    const char *&short_search = args.short_search;
+    const char *&full_search = args.full_search;
     const char *man_cmd = NULL;
     const char *man_name = NULL;
     const char *man_file = NULL;
-    char man_section = '\0';
+    char &man_section = args.man_section;
     struct bu_vls search_query = BU_VLS_INIT_ZERO;
-    struct bu_vls lang = BU_VLS_INIT_ZERO;
+    struct bu_vls &lang = args.lang;
     struct bu_vls optparse_msg = BU_VLS_INIT_ZERO;
-    struct bu_opt_desc d[11];
 
     /* initialize progname for run-time resource finding */
     bu_setprogname(argv[0]);
 
-    /* Handle options in C */
-    BU_OPT(d[0], "h", "help",        "",                NULL, &print_help,  "Print help and exit");
-    BU_OPT(d[1], "g", "gui",         "",                NULL, &enable_gui,  "Enable GUI");
-    BU_OPT(d[2], "",  "no-gui",      "",                NULL, &disable_gui, "Disable GUI");
-    BU_OPT(d[3], "L", "language",  "lg",        &bu_opt_lang, &lang,        "Set language");
-    BU_OPT(d[4], "S", "section",    "#", &bu_opt_man_section, &man_section, "Set section");
-    BU_OPT(d[5], "k", "keyword",    "kw",          &bu_opt_str, &short_search, "Search names, synopses, and brief descriptions");
-    BU_OPT(d[6], "K", "full-text",  "kw",          &bu_opt_str, &full_search,  "Search full manual page text");
-    BU_OPT(d[7], "", "dump", "", NULL, &dump, "Write formatted HTML text to stdout without paging");
-    BU_OPT(d[8], "", "width", "columns", &man_text_width, &width, "Set text width (default: terminal width or 80)");
-    BU_OPT(d[9], "", "pager", "", NULL, &pager, "Use the built-in HTML terminal viewer");
-    BU_OPT_NULL(d[10]);
-
     /* Skip first arg */
     argv++; argc--;
-    uac = bu_opt_parse_with_policy(&optparse_msg, argc, argv, d,
-	BU_OPT_PARSE_INTERSPERSED_END_MARKER);
-    if (uac == -1) {
+    int operand_index = bu_arg_schema_parse(&brlman_schema, &args,
+	&optparse_msg, argc, argv);
+    if (operand_index == -1) {
 	bu_exit(EXIT_FAILURE, "%s", bu_vls_addr(&optparse_msg));
     }
+    uac = argc - operand_index;
+    argv += operand_index;
     bu_vls_free(&optparse_msg);
 
     /* If we want help, print help */
     if (print_help) {
-	char *help = bu_opt_help(d, "brlman", "[man_page]",
-	    "Display BRL-CAD manual pages");
+	char *help = bu_arg_schema_help(&brlman_schema, "brlman");
 	if (help)
 	    bu_log("%s", help);
 	bu_free(help, "help str");

@@ -2047,11 +2047,7 @@ ged_native_analyze(struct ged *gedp, const struct bu_arg_schema *schema, const s
     size_t pending_count = 0;
     int pending_valid = 1;
     size_t operand_count = 0;
-    void *analysis_plan = schema->validation.custom_validate ?
-	_ged_schema_analysis_plan_create(schema, parsed.argc - 1,
-	    (const char **)parsed.argv + 1) : NULL;
-    bool custom_token_validate = schema->validation.custom_validate &&
-	!analysis_plan;
+    bool custom_token_validate = schema->validation.custom_validate;
 
     for (size_t i = 1; i < parsed.argc; i++) {
 	const char *arg = parsed.argv[i];
@@ -2154,11 +2150,6 @@ ged_native_analyze(struct ged *gedp, const struct bu_arg_schema *schema, const s
 	    parsed.argc - 1, (const char **)parsed.argv + 1, operand_count);
 	const char *provider = operand ? ged_native_semantic_provider(operand->value_type, operand->semantic_provider) : NULL;
 	struct bu_arg_validate_result result = BU_ARG_VALIDATE_RESULT_NULL;
-	bool dynamic_role = analysis_plan &&
-	    _ged_schema_analysis_plan_role(analysis_plan, operand, &result);
-	if (dynamic_role)
-	    provider = ged_native_semantic_provider(result.completion_type,
-		result.semantic_provider);
 	/* The scanner already knows the declarative operand role.  Revalidating
 	 * every growing argv prefix here made highlighting quadratic in command
 	 * length.  Only a schema-owned callback can override that role, so invoke
@@ -2179,7 +2170,7 @@ ged_native_analyze(struct ged *gedp, const struct bu_arg_schema *schema, const s
 	    (result.expected & BU_ARG_EXPECT_SUBCOMMAND)) ?
 	    GED_CMD_TOKEN_SUBCOMMAND : GED_CMD_TOKEN_OPERAND;
 	token->value_type = ged_native_value_type(
-	    custom_token_validate || dynamic_role ? result.completion_type :
+	    custom_token_validate ? result.completion_type :
 	    (operand ? operand->value_type : BU_ARG_VALUE_UNKNOWN), provider);
 	token->semantic_state = custom_token_validate ?
 	    ged_native_semantic_state(result.state) :
@@ -2191,14 +2182,13 @@ ged_native_analyze(struct ged *gedp, const struct bu_arg_schema *schema, const s
 	    if (state != GED_CMD_SEMANTIC_UNKNOWN)
 		token->semantic_state = state;
 	}
-	token->hint = ((custom_token_validate || dynamic_role) && result.hint) ? result.hint :
+	token->hint = (custom_token_validate && result.hint) ? result.hint :
 	    (operand ? operand->name : "unexpected operand");
 	bu_arg_validate_result_clear(&result);
 	operand_count++;
 	if (schema->parse_policy != BU_ARG_PARSE_INTERSPERSED)
 	    options_allowed = 0;
     }
-    _ged_schema_analysis_plan_destroy(analysis_plan);
 }
 
 extern "C" int

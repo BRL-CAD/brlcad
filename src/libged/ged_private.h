@@ -231,16 +231,6 @@ int _ged_registry_mutation_acquire(void);
 void _ged_registry_access_release(void);
 size_t _ged_registry_access_depth(void);
 
-/* Private bulk-analysis cache for registry-owned compact schemas.  It avoids
- * revalidating every growing argv prefix when only option-selected semantic
- * providers are dynamic. */
-void *_ged_schema_analysis_plan_create(const struct bu_arg_schema *schema,
-	size_t argc, const char **argv);
-int _ged_schema_analysis_plan_role(void *plan,
-	const struct bu_arg_operand *operand,
-	struct bu_arg_validate_result *result);
-void _ged_schema_analysis_plan_destroy(void *plan);
-
 #ifndef FALSE
 #  define FALSE 0
 #endif

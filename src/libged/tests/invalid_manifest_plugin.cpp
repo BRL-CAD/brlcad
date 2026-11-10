@@ -49,7 +49,7 @@ static const struct bu_arg_schema invalid_native_schema =
 	BU_ARG_SCHEMA_META(NULL, NULL, NULL, NULL));
 
 static const struct ged_cmd_schema invalid_schemas[] = {
-    {"registry_invalid_manifest_probe", &invalid_native_schema, NULL, NULL}
+    {"registry_invalid_manifest_probe", &invalid_native_schema, NULL}
 };
 
 static const struct ged_plugin_schema_manifest invalid_schema_manifest = {

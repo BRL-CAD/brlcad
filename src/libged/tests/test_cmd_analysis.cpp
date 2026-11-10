@@ -153,7 +153,7 @@ completion_probe_command_impl(struct ged *, int, const char *[])
 
 static struct ged_cmd_impl completion_probe_impl = {
     "completion_probe", completion_probe_command_impl, GED_CMD_DEFAULT,
-    &completion_probe_schema, NULL, NULL
+    &completion_probe_schema, NULL
 };
 
 static struct ged_cmd completion_probe_command = {&completion_probe_impl};
@@ -172,7 +172,7 @@ static const struct bu_arg_schema completion_merge_schema = {
 };
 static struct ged_cmd_impl completion_merge_impl = {
     "completion_merge_probe", completion_probe_command_impl, GED_CMD_DEFAULT,
-    &completion_merge_schema, NULL, NULL
+    &completion_merge_schema, NULL
 };
 static struct ged_cmd completion_merge_command = {&completion_merge_impl};
 
@@ -231,7 +231,7 @@ static const struct bu_arg_schema completion_malformed_schema = {
 };
 static struct ged_cmd_impl completion_malformed_impl = {
     "completion_malformed_probe", completion_probe_command_impl,
-    GED_CMD_DEFAULT, &completion_malformed_schema, NULL, NULL
+    GED_CMD_DEFAULT, &completion_malformed_schema, NULL
 };
 static struct ged_cmd completion_malformed_command = {&completion_malformed_impl};
 
@@ -304,7 +304,7 @@ static const struct ged_cmd_grammar completion_malformed_grammar = {
 };
 static struct ged_cmd_impl completion_malformed_grammar_impl = {
     "completion_malformed_grammar_probe", completion_probe_command_impl,
-    GED_CMD_DEFAULT, NULL, &completion_malformed_grammar, NULL
+    GED_CMD_DEFAULT, NULL, &completion_malformed_grammar
 };
 static struct ged_cmd completion_malformed_grammar_command = {
     &completion_malformed_grammar_impl
@@ -314,7 +314,7 @@ static struct ged_cmd completion_malformed_grammar_command = {
  * not yet published syntax metadata. */
 static struct ged_cmd_impl completion_fallback_probe_impl = {
     "completion_fallback_probe", completion_probe_command_impl,
-    GED_CMD_DEFAULT, NULL, NULL, NULL
+    GED_CMD_DEFAULT, NULL, NULL
 };
 
 static struct ged_cmd completion_fallback_probe_command = {
@@ -1256,86 +1256,6 @@ main(int ac, char *av[])
 	completion_result.replacement_start == 0 && completion_result.replacement_end == 1,
 	"an exact command token should retain its command prefix replacement span");
     ged_cmd_completion_result_clear(&completion_result);
-    {
-	static const ged_opt_spec invalid_opt_spec =
-	    GED_OPT("invalid_opt_lint", "Invalid compact schema proof",
-	    bu_opt_desc_empty_builder, "broken");
-	struct bu_vls opt_lint_msgs = BU_VLS_INIT_ZERO;
-	CHECK(ged_opt_lint(&invalid_opt_spec, &opt_lint_msgs) != 0 &&
-	    std::strstr(bu_vls_cstr(&opt_lint_msgs), "name:type"),
-	    "compact schema linter should report syntax errors without registration");
-	bu_vls_free(&opt_lint_msgs);
-    }
-    {
-	static const ged_opt_spec invalid_group_spec =
-	    GED_OPT("invalid_group_lint", "Invalid repeated group proof",
-	    bu_opt_desc_empty_builder,
-	    "optional:string? (attribute:string value:string)+");
-	struct bu_vls opt_lint_msgs = BU_VLS_INIT_ZERO;
-	CHECK(ged_opt_lint(&invalid_group_spec, &opt_lint_msgs) != 0 &&
-	    std::strstr(bu_vls_cstr(&opt_lint_msgs), "fixed cardinality"),
-	    "compact schema linter should reject variable operands before groups");
-	bu_vls_free(&opt_lint_msgs);
-    }
-    {
-	static const ged_opt_rule invalid_db_rules[] = {
-	    GED_RULE_DB_OBJECTS("value", GED_OPT_DB_GEOMETRY, NULL,
-		GED_OPT_DB_GEOMETRY),
-	    GED_RULE_NULL
-	};
-	static const ged_opt_spec invalid_db_spec =
-	    GED_OPT_WITH("invalid_db_lint", "Invalid database policy proof",
-	    bu_opt_desc_empty_builder, "value:string", invalid_db_rules);
-	struct bu_vls opt_lint_msgs = BU_VLS_INIT_ZERO;
-	CHECK(ged_opt_lint(&invalid_db_spec, &opt_lint_msgs) != 0 &&
-	    std::strstr(bu_vls_cstr(&opt_lint_msgs), "does not match operand"),
-	    "compact schema linter should reject mismatched database policies");
-	bu_vls_free(&opt_lint_msgs);
-    }
-    {
-	static const ged_opt_rule orphan_db_type_rules[] = {
-	    GED_RULE_DB_TYPE("value", "h", GED_OPT_DB_GEOMETRY),
-	    GED_RULE_NULL
-	};
-	static const ged_opt_spec orphan_db_type_spec =
-	    GED_OPT_WITH("orphan_db_type_lint", "Orphan database type rule proof",
-	    bu_opt_desc_empty_builder, "value:object", orphan_db_type_rules);
-	struct bu_vls opt_lint_msgs = BU_VLS_INIT_ZERO;
-	CHECK(ged_opt_lint(&orphan_db_type_spec, &opt_lint_msgs) != 0 &&
-	    std::strstr(bu_vls_cstr(&opt_lint_msgs), "rule 0") &&
-	    std::strstr(bu_vls_cstr(&opt_lint_msgs), "no matching completion policy"),
-	    "flat rule compiler should diagnose an orphan database type refinement");
-	bu_vls_free(&opt_lint_msgs);
-    }
-    {
-	static const ged_opt_rule counted_rules[] = {
-	    GED_RULE_DB_OBJECTS("value", GED_OPT_DB_GEOMETRY, NULL,
-		GED_OPT_DB_GEOMETRY)
-	};
-	static const ged_opt_spec counted_spec =
-	    GED_OPT_WITH("counted_rules_lint", "Counted flat rules proof",
-		bu_opt_desc_empty_builder, "value:object", counted_rules);
-	struct bu_vls opt_lint_msgs = BU_VLS_INIT_ZERO;
-	CHECK(ged_opt_lint(&counted_spec, &opt_lint_msgs) == 0,
-	    "counted flat rule arrays should not require an out-of-band terminator");
-	bu_vls_free(&opt_lint_msgs);
-    }
-    {
-	static const ged_opt_rule prematurely_terminated_rules[] = {
-	    GED_RULE_NULL,
-	    GED_RULE_DB_OBJECTS("value", GED_OPT_DB_GEOMETRY, NULL,
-		GED_OPT_DB_GEOMETRY)
-	};
-	static const ged_opt_spec prematurely_terminated_spec =
-	    GED_OPT_WITH("premature_rule_end_lint", "Premature rule end proof",
-		bu_opt_desc_empty_builder, "value:object",
-		prematurely_terminated_rules);
-	struct bu_vls opt_lint_msgs = BU_VLS_INIT_ZERO;
-	CHECK(ged_opt_lint(&prematurely_terminated_spec, &opt_lint_msgs) != 0 &&
-	    std::strstr(bu_vls_cstr(&opt_lint_msgs), "final counted rule"),
-	    "a visual rule terminator must not conceal later counted rows");
-	bu_vls_free(&opt_lint_msgs);
-    }
     CHECK(ged_cmd_schema_exists("draw"), "draw schema is unavailable");
     {
 	const char *wave1_schema_cmds[] = {
