@@ -2297,18 +2297,24 @@ struct joint_load_args {
     int no_apply;
     int no_mesh;
 };
-#define JOINT_LOAD_OPTIONS(a) \
-    BU_OPT_FLAG(a, "u", NULL, no_unload, "Keep currently loaded joints"), \
-    BU_OPT_FLAG(a, "a", NULL, no_apply, "Do not apply loaded joints"), \
-    BU_OPT_FLAG(a, "m", NULL, no_mesh, "Do not rebuild the grip mesh"),
-BU_OPT_DESC_BUILDER(joint_load_options, struct joint_load_args, JOINT_LOAD_OPTIONS);
+static const struct bu_arg_option joint_load_options[] = {
+    BU_ARG_FLAG("u", NULL, struct joint_load_args, no_unload,
+	"Keep currently loaded joints"),
+    BU_ARG_FLAG("a", NULL, struct joint_load_args, no_apply,
+	"Do not apply loaded joints"),
+    BU_ARG_FLAG("m", NULL, struct joint_load_args, no_mesh,
+	"Do not rebuild the grip mesh"),
+    BU_ARG_OPTION_NULL
+};
 
 struct joint_mesh_args {
     int no_mesh;
 };
-#define JOINT_MESH_OPTIONS(a) \
-    BU_OPT_FLAG(a, "m", NULL, no_mesh, "Do not rebuild the grip mesh"),
-BU_OPT_DESC_BUILDER(joint_mesh_options, struct joint_mesh_args, JOINT_MESH_OPTIONS);
+static const struct bu_arg_option joint_mesh_options[] = {
+    BU_ARG_FLAG("m", NULL, struct joint_mesh_args, no_mesh,
+	"Do not rebuild the grip mesh"),
+    BU_ARG_OPTION_NULL
+};
 
 struct joint_solve_args {
     int loops;
@@ -2316,12 +2322,25 @@ struct joint_solve_args {
     fastf_t delta;
     long mesh_toggles;
 };
-#define JOINT_SOLVE_OPTIONS(a) \
-    BU_OPT_INT(a, "l", NULL, loops, "count", "Set maximum iteration count"), \
-    BU_OPT_NUM(a, "e", NULL, epsilon, "distance", "Set convergence epsilon"), \
-    BU_OPT_NUM(a, "d", NULL, delta, "distance", "Set initial solve delta"), \
-    BU_OPT_INC(a, "m", NULL, mesh_toggles, "Toggle mesh rebuilding"),
-BU_OPT_DESC_BUILDER(joint_solve_options, struct joint_solve_args, JOINT_SOLVE_OPTIONS);
+static const struct bu_arg_option joint_solve_options[] = {
+    BU_ARG_VALUE("l", NULL, struct joint_solve_args, loops,
+	BU_ARG_VALUE_INTEGER, BU_ARG_REQUIRED, "count",
+	"Set maximum iteration count"),
+    BU_ARG_VALUE("e", NULL, struct joint_solve_args, epsilon,
+	BU_ARG_VALUE_NUMBER, BU_ARG_REQUIRED, "distance",
+	"Set convergence epsilon"),
+    BU_ARG_VALUE("d", NULL, struct joint_solve_args, delta,
+	BU_ARG_VALUE_NUMBER, BU_ARG_REQUIRED, "distance",
+	"Set initial solve delta"),
+    BU_ARG_COUNTING_FLAG("m", NULL, struct joint_solve_args, mesh_toggles,
+	BU_ARG_VALUE_LONG, "Toggle mesh rebuilding"),
+    BU_ARG_OPTION_NULL
+};
+
+static const struct bu_arg_schema joint_accept_schema;
+static const struct bu_arg_schema joint_load_schema;
+static const struct bu_arg_schema joint_reject_schema;
+static const struct bu_arg_schema joint_solve_schema;
 
 static int
 joint_load(struct ged *gedp, int argc, const char *argv[])
@@ -2342,14 +2361,15 @@ joint_load(struct ged *gedp, int argc, const char *argv[])
     }
 
     argc--; argv++;
-    file_count = bu_opt_parse_build_with_policy(gedp->ged_result_str,
-	(size_t)argc, argv, joint_load_options, &args, BU_OPT_PARSE_OPTIONS_FIRST);
-    if (file_count < 1) {
+    file_count = bu_arg_schema_parse_complete(&joint_load_schema, &args,
+	gedp->ged_result_str, argc, argv);
+    if (file_count < 0) {
 	const char *path[] = {"load"};
 	joint_tree_help_append(gedp, 1, path);
 	return BRLCAD_ERROR;
     }
-    argc = file_count;
+    argc -= file_count;
+    argv += file_count;
     if (!args.no_unload) joint_unload(gedp, 0, NULL);
 
     base2mm = gedp->dbip->dbi_base2local;
@@ -2549,13 +2569,15 @@ joint_accept(struct ged *gedp, int argc, const char *argv[])
     int i;
 
     argc--; argv++;
-    argc = bu_opt_parse_build_with_policy(gedp->ged_result_str,
-	(size_t)argc, argv, joint_mesh_options, &args, BU_OPT_PARSE_OPTIONS_FIRST);
-    if (argc < 0) {
+    i = bu_arg_schema_parse_complete(&joint_accept_schema, &args,
+	gedp->ged_result_str, argc, argv);
+    if (i < 0) {
 	const char *path[] = {"accept"};
 	joint_tree_help_append(gedp, 1, path);
 	return BRLCAD_ERROR;
     }
+    argc -= i;
+    argv += i;
 
     for (BU_LIST_FOR(jp, joint, &joint_head)) {
 	if (argc) {
@@ -2584,13 +2606,15 @@ joint_reject(struct ged *gedp, int argc, const char *argv[])
     int i;
 
     argc--; argv++;
-    argc = bu_opt_parse_build_with_policy(gedp->ged_result_str,
-	(size_t)argc, argv, joint_mesh_options, &args, BU_OPT_PARSE_OPTIONS_FIRST);
-    if (argc < 0) {
+    i = bu_arg_schema_parse_complete(&joint_reject_schema, &args,
+	gedp->ged_result_str, argc, argv);
+    if (i < 0) {
 	const char *path[] = {"reject"};
 	joint_tree_help_append(gedp, 1, path);
 	return BRLCAD_ERROR;
     }
+    argc -= i;
+    argv += i;
 
     for (BU_LIST_FOR(jp, joint, &joint_head)) {
 	if (argc) {
@@ -3225,15 +3249,16 @@ joint_solve(struct ged *gedp, int argc, const char *argv[])
      * time.
      */
     argc--; argv++;
-    argc = bu_opt_parse_build_with_policy(gedp->ged_result_str,
-	(size_t)argc, argv, joint_solve_options, &args,
-	BU_OPT_PARSE_OPTIONS_FIRST);
-    if (argc < 0) {
+    result = bu_arg_schema_parse_complete(&joint_solve_schema, &args,
+	gedp->ged_result_str, argc, argv);
+    if (result < 0) {
 	for (count = 0; count < myargc; count++)
 	    bu_free(myargv[count], "params");
 	bu_free((void *)myargv, "param pointers");
 	return BRLCAD_ERROR;
     }
+    argc -= result;
+    argv += result;
     loops = args.loops;
     epsilon = args.epsilon;
     delta = args.delta;
@@ -3628,44 +3653,23 @@ static const struct bu_arg_operand joint_files[] = {
 	"Joint definition files", "ged.file_path"),
     BU_ARG_OPERAND_NULL
 };
-static const struct bu_arg_option joint_load_schema_options[] = {
-    BU_ARG_UNBOUND("u", NULL, "u", BU_ARG_VALUE_FLAG, BU_ARG_NONE, NULL, "Keep currently loaded joints", NULL),
-    BU_ARG_UNBOUND("a", NULL, "a", BU_ARG_VALUE_FLAG, BU_ARG_NONE, NULL, "Do not apply loaded joints", NULL),
-    BU_ARG_UNBOUND("m", NULL, "m", BU_ARG_VALUE_FLAG, BU_ARG_NONE, NULL, "Do not rebuild the grip mesh", NULL),
-    BU_ARG_OPTION_NULL
-};
-static const struct bu_arg_option joint_mesh_schema_options[] = {
-    BU_ARG_UNBOUND("m", NULL, "m", BU_ARG_VALUE_FLAG, BU_ARG_NONE, NULL, "Do not rebuild the grip mesh", NULL),
-    BU_ARG_OPTION_NULL
-};
-static const struct bu_arg_option joint_solve_schema_options[] = {
-    BU_ARG_UNBOUND("l", NULL, "l", BU_ARG_VALUE_INTEGER, BU_ARG_REQUIRED, "count",
-	"Set maximum iteration count", NULL),
-    BU_ARG_UNBOUND("e", NULL, "e", BU_ARG_VALUE_NUMBER, BU_ARG_REQUIRED, "distance",
-	"Set convergence epsilon", NULL),
-    BU_ARG_UNBOUND("d", NULL, "d", BU_ARG_VALUE_NUMBER, BU_ARG_REQUIRED, "distance",
-	"Set initial solve delta", NULL),
-    BU_ARG_UNBOUND("m", NULL, "m", BU_ARG_VALUE_FLAG, BU_ARG_NONE, NULL, "Toggle mesh rebuilding", NULL),
-    BU_ARG_OPTION_NULL
-};
-
 #define JOINT_SCHEMA(_id, _name, _help, _opts, _ops) \
     static const struct bu_arg_schema _id##_schema = \
-	BU_ARG_SCHEMA_EXTERNAL(_name, _help, _opts, _ops, BU_ARG_PARSE_OPTIONS_FIRST, \
-	    NULL, NULL, NULL)
+	BU_ARG_SCHEMA(_name, _help, _opts, _ops, BU_ARG_PARSE_OPTIONS_FIRST, \
+	    BU_ARG_SCHEMA_META(NULL, NULL, NULL, NULL))
 JOINT_SCHEMA(joint_root, "joint", "Load, inspect, solve, and move articulated joints", NULL, NULL);
 JOINT_SCHEMA(joint_help, "?", "List joint commands", NULL, joint_args);
-JOINT_SCHEMA(joint_accept, "accept", "Accept joint moves", joint_mesh_schema_options, joint_args);
+JOINT_SCHEMA(joint_accept, "accept", "Accept joint moves", joint_mesh_options, joint_args);
 JOINT_SCHEMA(joint_debug, "debug", "Query or set joint debugging", NULL, joint_debug_args);
 JOINT_SCHEMA(joint_usage, "help", "Print joint command help", NULL, joint_args);
 JOINT_SCHEMA(joint_holds, "holds", "List constraints", NULL, joint_args);
 JOINT_SCHEMA(joint_list, "list", "List joints", NULL, joint_args);
-JOINT_SCHEMA(joint_load, "load", "Load joint definitions", joint_load_schema_options, joint_files);
+JOINT_SCHEMA(joint_load, "load", "Load joint definitions", joint_load_options, joint_files);
 JOINT_SCHEMA(joint_mesh, "mesh", "Build the grip mesh", NULL, NULL);
 JOINT_SCHEMA(joint_move, "move", "Adjust a joint", NULL, joint_move_args);
-JOINT_SCHEMA(joint_reject, "reject", "Reject joint motions", joint_mesh_schema_options, joint_args);
+JOINT_SCHEMA(joint_reject, "reject", "Reject joint motions", joint_mesh_options, joint_args);
 JOINT_SCHEMA(joint_save, "save", "Save joint definitions", NULL, joint_file);
-JOINT_SCHEMA(joint_solve, "solve", "Solve constraints", joint_solve_schema_options, joint_constraint_args);
+JOINT_SCHEMA(joint_solve, "solve", "Solve constraints", joint_solve_options, joint_constraint_args);
 JOINT_SCHEMA(joint_unload, "unload", "Unload joint definitions", NULL, NULL);
 #undef JOINT_SCHEMA
 

@@ -46,7 +46,6 @@ set(unbound_adapter_allowlist
   "src/libged/comb/comb.c|1"
   "src/libged/db/db.c|2"
   "src/libged/edit/edit.cpp|24"
-  "src/libged/joint/joint.c|8"
   "src/libged/mater/mater.cpp|4"
   "src/libged/material/material.c|2"
   "src/libged/pipe/pipe.c|1"
