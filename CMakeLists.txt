@@ -273,7 +273,13 @@ include(Path_Setup)
 # For cleaning files as part of the distclean command, CMake needs
 # to be aware of what various generators will (or might) write out
 # in each build directory.
-set(DISTCLEAN_OUTFILES CTestTestfile.cmake Testing/Temporary/CTestCostData.txt Testing/Temporary/LastTest.log Testing/Temporary/LastTestsFailed.log)
+set(DISTCLEAN_OUTFILES
+  CTestTestfile.cmake
+  Testing/Temporary/CTestCostData.txt
+  Testing/Temporary/LastTest.log
+  Testing/Temporary/LastTestsFailed.log
+  Testing/Temporary/LastTestsDisabled.log
+)
 if("${CMAKE_GENERATOR}" MATCHES "Make")
   set(DISTCLEAN_OUTFILES ${DISTCLEAN_OUTFILES} Makefile)
 endif("${CMAKE_GENERATOR}" MATCHES "Make")
