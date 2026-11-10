@@ -101,23 +101,20 @@ which_range_validate(struct bu_vls *msg, const char *arg)
 }
 
 
-#define WHICH_OPTIONS(args) \
-    BU_OPT_FLAG(args, "h", "help", print_help, "Print help and exit"), \
-    BU_OPT_FLAG(args, "?", NULL, print_help, ""), \
-    BU_OPT_FLAG(args, "s", "script", script, "Use script-oriented output"), \
-    BU_OPT_FLAG(args, "V", NULL, all_active, \
-	"List requested active IDs even without matching regions"), \
-    BU_OPT_FLAG(args, "U", "unused", unused, \
-	"Report unused IDs in the requested ranges"), \
-    BU_OPT_STR(args, NULL, "root", root, "object", \
+static const struct bu_arg_option which_options[] = {
+    BU_ARG_FLAG("h", "help", struct which_args, print_help,
+	"Print help and exit"),
+    BU_ARG_ALIAS("?", NULL, "help", 0),
+    BU_ARG_FLAG("s", "script", struct which_args, script,
+	"Use script-oriented output"),
+    BU_ARG_FLAG("V", NULL, struct which_args, all_active,
+	"List requested active IDs even without matching regions"),
+    BU_ARG_FLAG("U", "unused", struct which_args, unused,
+	"Report unused IDs in the requested ranges"),
+    BU_ARG_VALUE(NULL, "root", struct which_args, root,
+	BU_ARG_VALUE_DB_OBJECT, BU_ARG_REQUIRED, "object",
 	"Restrict the search below a database object"),
-
-BU_OPT_DESC_BUILDER(which_options, struct which_args, WHICH_OPTIONS);
-
-static const ged_opt_rule which_opt_rules[] = {
-    GED_RULE_ALIAS("?", "help"),
-    GED_RULE_SEMANTIC("root", BU_ARG_VALUE_DB_OBJECT, NULL, "database object"),
-    GED_RULE_NULL
+    BU_ARG_OPTION_NULL
 };
 static const struct bu_arg_shape which_range_shape =
     BU_ARG_SHAPE(BU_ARG_SHAPE_RANGE_PATTERN, 1, 1,
@@ -129,15 +126,18 @@ static const struct bu_arg_operand which_operands[] = {
 	&which_range_shape),
     BU_ARG_OPERAND_NULL
 };
-static const ged_opt_spec which_opt_spec =
-    GED_OPT_NATIVE("which", "Find regions with specified region IDs",
-	which_options, which_operands, BU_ARG_PARSE_INTERSPERSED, which_opt_rules);
-static const ged_opt_spec whichid_opt_spec =
-    GED_OPT_NATIVE("whichid", "Find regions with specified region IDs",
-	which_options, which_operands, BU_ARG_PARSE_INTERSPERSED, which_opt_rules);
-static const ged_opt_spec whichair_opt_spec =
-    GED_OPT_NATIVE("whichair", "Find regions with specified air codes",
-	which_options, which_operands, BU_ARG_PARSE_INTERSPERSED, which_opt_rules);
+static const struct bu_arg_schema which_cmd_schema =
+    BU_ARG_SCHEMA("which", "Find regions with specified region IDs",
+	which_options, which_operands, BU_ARG_PARSE_INTERSPERSED,
+	BU_ARG_SCHEMA_META_HELP(NULL, NULL, NULL, NULL, NULL));
+static const struct bu_arg_schema whichid_cmd_schema =
+    BU_ARG_SCHEMA("whichid", "Find regions with specified region IDs",
+	which_options, which_operands, BU_ARG_PARSE_INTERSPERSED,
+	BU_ARG_SCHEMA_META_HELP(NULL, NULL, NULL, NULL, NULL));
+static const struct bu_arg_schema whichair_cmd_schema =
+    BU_ARG_SCHEMA("whichair", "Find regions with specified air codes",
+	which_options, which_operands, BU_ARG_PARSE_INTERSPERSED,
+	BU_ARG_SCHEMA_META_HELP(NULL, NULL, NULL, NULL, NULL));
 
 
 static void
@@ -159,7 +159,9 @@ ged_which_core(struct ged *gedp, int argc, const char *argv[])
     struct rt_comb_internal *comb;
     int isAir;
     struct which_args options = {};
-    int operand_count = 0;
+    int operand_count;
+    int operand_index;
+    const struct bu_arg_schema *schema;
     std::map<int, std::set<std::string>> id2names;
 
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
@@ -180,13 +182,18 @@ ged_which_core(struct ged *gedp, int argc, const char *argv[])
     }
 
     const char *command = argv[0];
+    schema = BU_STR_EQUAL(command, "whichair") ? &whichair_cmd_schema :
+	(BU_STR_EQUAL(command, "whichid") ? &whichid_cmd_schema :
+	 &which_cmd_schema);
     argc--; argv++;
-    operand_count = bu_opt_parse_build(gedp->ged_result_str, argc, argv,
-	which_options, &options);
-    if (operand_count < 0) {
+    operand_index = bu_arg_schema_parse_complete(schema, &options,
+	gedp->ged_result_str, argc, argv);
+    if (operand_index < 0) {
 	which_show_help(gedp, command);
 	return BRLCAD_ERROR;
     }
+    operand_count = argc - operand_index;
+    argv += operand_index;
 
 
     if (options.print_help) {
@@ -195,10 +202,6 @@ ged_which_core(struct ged *gedp, int argc, const char *argv[])
     }
 
 
-    if (operand_count < 1) {
-	which_show_help(gedp, command);
-	return BRLCAD_ERROR;
-    }
     argc = operand_count;
 
     std::set<int> ids;
@@ -356,12 +359,12 @@ ged_which_core(struct ged *gedp, int argc, const char *argv[])
 #include "../include/plugin.h"
 
 #define GED_WHICH_COMMANDS(X, XID) \
-    X(which, ged_which_core, GED_CMD_DEFAULT, &which_opt_spec) \
-    X(whichair, ged_which_core, GED_CMD_DEFAULT, &whichair_opt_spec) \
-    X(whichid, ged_which_core, GED_CMD_DEFAULT, &whichid_opt_spec) \
+    X(which, ged_which_core, GED_CMD_DEFAULT, &which_cmd_schema) \
+    X(whichair, ged_which_core, GED_CMD_DEFAULT, &whichair_cmd_schema) \
+    X(whichid, ged_which_core, GED_CMD_DEFAULT, &whichid_cmd_schema) \
 
-GED_DECLARE_COMMAND_SET_WITH_OPT_SPEC(GED_WHICH_COMMANDS)
-GED_DECLARE_PLUGIN_MANIFEST_WITH_OPT_SPEC("libged_which", 1, GED_WHICH_COMMANDS)
+GED_DECLARE_COMMAND_SET_WITH_NATIVE_SCHEMA(GED_WHICH_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST_WITH_NATIVE_SCHEMA("libged_which", 1, GED_WHICH_COMMANDS)
 
 // Local Variables:
 // tab-width: 8
