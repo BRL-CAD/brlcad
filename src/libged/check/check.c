@@ -120,46 +120,46 @@ struct check_args {
 };
 
 static int
-check_opt_azimuth(struct bu_vls *msg, size_t argc, const char **argv, void *set_var)
+check_opt_azimuth(struct bu_vls *msg, const char *arg, void *set_var)
 {
     struct check_args *args = set_var ? *(struct check_args **)set_var : NULL;
     double azimuth;
 
-    if (!argc || !argv || bn_decode_angle(&azimuth, argv[0]) == 0) {
+    if (!arg || bn_decode_angle(&azimuth, arg) == 0) {
 	if (msg)
 	    bu_vls_printf(msg, "error parsing azimuth\n");
 	return -1;
     }
     if (!args)
-	return 1;
+	return 0;
     args->options->azimuth_deg = azimuth;
     analyze_set_azimuth(args->state, args->options->azimuth_deg);
     args->options->getfromview = 0;
-    return 1;
+    return 0;
 }
 
 static int
-check_opt_elevation(struct bu_vls *msg, size_t argc, const char **argv, void *set_var)
+check_opt_elevation(struct bu_vls *msg, const char *arg, void *set_var)
 {
     struct check_args *args = set_var ? *(struct check_args **)set_var : NULL;
     double elevation;
 
-    if (!argc || !argv || bn_decode_angle(&elevation, argv[0]) == 0) {
+    if (!arg || bn_decode_angle(&elevation, arg) == 0) {
 	if (msg)
 	    bu_vls_printf(msg, "error parsing elevation\n");
 	return -1;
     }
     if (!args)
-	return 1;
+	return 0;
     args->options->elevation_deg = elevation;
     analyze_set_elevation(args->state, args->options->elevation_deg);
     args->options->getfromview = 0;
-    return 1;
+    return 0;
 }
 
 static int
-check_opt_view(struct bu_vls *UNUSED(msg), size_t UNUSED(argc),
-	const char **UNUSED(argv), void *set_var)
+check_opt_view(struct bu_vls *UNUSED(msg), const char *UNUSED(arg),
+	void *set_var)
 {
     struct check_args *args = set_var ? *(struct check_args **)set_var : NULL;
     if (!args)
