@@ -93,6 +93,7 @@ read_units_double(struct ged *gedp, double *val, const char *buf, const struct c
 
 
 struct check_args {
+    struct check_args *self;
     struct check_parameters *options;
     struct current_state *state;
     int debug;
@@ -121,13 +122,17 @@ struct check_args {
 static int
 check_opt_azimuth(struct bu_vls *msg, size_t argc, const char **argv, void *set_var)
 {
-    struct check_args *args = (struct check_args *)set_var;
-    BU_OPT_CHECK_ARGV0(msg, argc, argv, "azimuth");
-    if (bn_decode_angle(&args->options->azimuth_deg, argv[0]) == 0) {
+    struct check_args *args = set_var ? *(struct check_args **)set_var : NULL;
+    double azimuth;
+
+    if (!argc || !argv || bn_decode_angle(&azimuth, argv[0]) == 0) {
 	if (msg)
-	    bu_vls_printf(msg, "error parsing azimuth \"%s\"\n", argv[0]);
+	    bu_vls_printf(msg, "error parsing azimuth\n");
 	return -1;
     }
+    if (!args)
+	return 1;
+    args->options->azimuth_deg = azimuth;
     analyze_set_azimuth(args->state, args->options->azimuth_deg);
     args->options->getfromview = 0;
     return 1;
@@ -136,13 +141,17 @@ check_opt_azimuth(struct bu_vls *msg, size_t argc, const char **argv, void *set_
 static int
 check_opt_elevation(struct bu_vls *msg, size_t argc, const char **argv, void *set_var)
 {
-    struct check_args *args = (struct check_args *)set_var;
-    BU_OPT_CHECK_ARGV0(msg, argc, argv, "elevation");
-    if (bn_decode_angle(&args->options->elevation_deg, argv[0]) == 0) {
+    struct check_args *args = set_var ? *(struct check_args **)set_var : NULL;
+    double elevation;
+
+    if (!argc || !argv || bn_decode_angle(&elevation, argv[0]) == 0) {
 	if (msg)
-	    bu_vls_printf(msg, "error parsing elevation \"%s\"\n", argv[0]);
+	    bu_vls_printf(msg, "error parsing elevation\n");
 	return -1;
     }
+    if (!args)
+	return 1;
+    args->options->elevation_deg = elevation;
     analyze_set_elevation(args->state, args->options->elevation_deg);
     args->options->getfromview = 0;
     return 1;
@@ -152,55 +161,68 @@ static int
 check_opt_view(struct bu_vls *UNUSED(msg), size_t UNUSED(argc),
 	const char **UNUSED(argv), void *set_var)
 {
-    struct check_args *args = (struct check_args *)set_var;
+    struct check_args *args = set_var ? *(struct check_args **)set_var : NULL;
+    if (!args)
+	return 0;
     args->options->getfromview = 1;
     return 0;
 }
 
-static int
-check_opt_nonnegative_int(struct bu_vls *msg, size_t argc,
-	const char **argv, void *set_var)
-{
-    int ret = bu_opt_int(msg, argc, argv, set_var);
-
-    if (ret < 0)
-	return ret;
-    if (*(int *)set_var < 0) {
-	if (msg)
-	    bu_vls_printf(msg, "num_hits must be an integer value >= 0, not \"%s\"\n",
-		argv[0]);
-	return -1;
-    }
-    return ret;
-}
-
-#define CHECK_OPTIONS(a) \
-    {"a", NULL, "angle", check_opt_azimuth, a, "Set azimuth angle"}, \
-    BU_OPT_FLAG(a, "d", NULL, debug, "Enable debug output"), \
-    {"e", NULL, "angle", check_opt_elevation, a, "Set elevation angle"}, \
-    BU_OPT_STR(a, "f", NULL, density_file, "file", "Read densities from file"), \
-    BU_OPT_STR(a, "g", NULL, grid_spacing, "spacing", "Set grid refinement spacing"), \
-    BU_OPT_STR(a, "G", NULL, grid_size, "size", "Set grid width and height"), \
-    {"i", NULL, NULL, check_opt_view, a, "Use the current view"}, \
-    BU_OPT_STR(a, "M", NULL, mass_tolerance, "tolerance", "Set mass tolerance"), \
-    BU_OPT_CUSTOM(a, "n", NULL, required_hits, "hits", check_opt_nonnegative_int, "Set required hits per region"), \
-    BU_OPT_INT(a, "N", NULL, views, "views", "Set number of views"), \
-    BU_OPT_FLAG(a, "o", NULL, overlaps_overlay, "Display overlaps as overlays"), \
-    BU_OPT_FLAG(a, "p", NULL, plot_files, "Produce plot files"), \
-    BU_OPT_INT(a, "P", NULL, cpus, "cpus", "Set processor count"), \
-    BU_OPT_FLAG(a, "q", NULL, quiet, "Suppress not-hit reporting"), \
-    BU_OPT_FLAG(a, "r", NULL, region_stats, "Print per-region statistics"), \
-    BU_OPT_FLAG(a, "R", NULL, report_overlaps, "Disable overlap reporting"), \
-    BU_OPT_NUM(a, "s", NULL, surf_area_tolerance, "tolerance", "Set surface-area tolerance"), \
-    BU_OPT_NUM(a, "S", NULL, samples, "samples", "Set minimum samples per model axis"), \
-    BU_OPT_STR(a, "t", NULL, overlap_tolerance, "tolerance", "Set overlap tolerance"), \
-    BU_OPT_BOOL(a, "U", NULL, use_air, "use_air", "Include air regions"), \
-    BU_OPT_STR(a, "u", NULL, report_units, "units", "Set reporting units"), \
-    BU_OPT_FLAG(a, "v", NULL, verbose, "Enable verbose output"), \
-    BU_OPT_STR(a, "V", NULL, volume_tolerance, "tolerance", "Set volume tolerance"), \
-    BU_OPT_FLAG(a, "h", NULL, help, "Print command help"), \
-    BU_OPT_FLAG(a, "?", NULL, help, "Print command help"),
-BU_OPT_DESC_BUILDER(check_options, struct check_args, CHECK_OPTIONS);
+static const struct bu_arg_option check_options[] = {
+    BU_ARG_CUSTOM("a", NULL, struct check_args, self, check_opt_azimuth,
+	"angle", "Set azimuth angle"),
+    BU_ARG_FLAG("d", NULL, struct check_args, debug, "Enable debug output"),
+    BU_ARG_CUSTOM("e", NULL, struct check_args, self, check_opt_elevation,
+	"angle", "Set elevation angle"),
+    BU_ARG_VALUE("f", NULL, struct check_args, density_file, BU_ARG_VALUE_FILE,
+	BU_ARG_REQUIRED, "file", "Read densities from file"),
+    BU_ARG_VALUE("g", NULL, struct check_args, grid_spacing, BU_ARG_VALUE_STRING,
+	BU_ARG_REQUIRED, "spacing", "Set grid refinement spacing"),
+    BU_ARG_VALUE("G", NULL, struct check_args, grid_size, BU_ARG_VALUE_STRING,
+	BU_ARG_REQUIRED, "size", "Set grid width and height"),
+    BU_ARG_CUSTOM_FLAG("i", NULL, "i", struct check_args, self,
+	check_opt_view, "Use the current view"),
+    BU_ARG_VALUE("M", NULL, struct check_args, mass_tolerance,
+	BU_ARG_VALUE_STRING, BU_ARG_REQUIRED, "tolerance", "Set mass tolerance"),
+    BU_ARG_INTEGER_RANGE("n", NULL, struct check_args, required_hits, 1, 0,
+	0, 0, "hits", "Set required hits per region"),
+    BU_ARG_VALUE("N", NULL, struct check_args, views, BU_ARG_VALUE_INTEGER,
+	BU_ARG_REQUIRED, "views", "Set number of views"),
+    BU_ARG_FLAG("o", NULL, struct check_args, overlaps_overlay,
+	"Display overlaps as overlays"),
+    BU_ARG_FLAG("p", NULL, struct check_args, plot_files, "Produce plot files"),
+    BU_ARG_VALUE("P", NULL, struct check_args, cpus, BU_ARG_VALUE_INTEGER,
+	BU_ARG_REQUIRED, "cpus", "Set processor count"),
+    BU_ARG_FLAG("q", NULL, struct check_args, quiet, "Suppress not-hit reporting"),
+    BU_ARG_FLAG("r", NULL, struct check_args, region_stats,
+	"Print per-region statistics"),
+    BU_ARG_FLAG("R", NULL, struct check_args, report_overlaps,
+	"Disable overlap reporting"),
+    BU_ARG_VALUE("s", NULL, struct check_args, surf_area_tolerance,
+	BU_ARG_VALUE_NUMBER, BU_ARG_REQUIRED, "tolerance", "Set surface-area tolerance"),
+    BU_ARG_VALUE("S", NULL, struct check_args, samples, BU_ARG_VALUE_NUMBER,
+	BU_ARG_REQUIRED, "samples", "Set minimum samples per model axis"),
+    BU_ARG_VALUE("t", NULL, struct check_args, overlap_tolerance,
+	BU_ARG_VALUE_STRING, BU_ARG_REQUIRED, "tolerance", "Set overlap tolerance"),
+    BU_ARG_VALUE("U", NULL, struct check_args, use_air, BU_ARG_VALUE_BOOL,
+	BU_ARG_REQUIRED, "use_air", "Include air regions"),
+    BU_ARG_VALUE("u", NULL, struct check_args, report_units, BU_ARG_VALUE_STRING,
+	BU_ARG_REQUIRED, "units", "Set reporting units"),
+    BU_ARG_FLAG("v", NULL, struct check_args, verbose, "Enable verbose output"),
+    BU_ARG_VALUE("V", NULL, struct check_args, volume_tolerance,
+	BU_ARG_VALUE_STRING, BU_ARG_REQUIRED, "tolerance", "Set volume tolerance"),
+    BU_ARG_FLAG("h", NULL, struct check_args, help, "Print command help"),
+    BU_ARG_ALIAS("?", NULL, "h", 1),
+    BU_ARG_OPTION_NULL
+};
+static const struct bu_arg_operand check_operands[] = {
+    BU_ARG_OPERAND("object", BU_ARG_VALUE_DB_PATH, 0, BU_ARG_COUNT_UNLIMITED,
+	"Objects to analyze (defaults to displayed objects)", "ged.db_path"),
+    BU_ARG_OPERAND_NULL
+};
+static const struct bu_arg_schema check_parse_schema =
+    BU_ARG_SCHEMA("check", "Analyze geometric and physical properties",
+	check_options, check_operands, BU_ARG_PARSE_OPTIONS_FIRST, NULL);
 
 static int
 parse_check_args(struct ged *gedp, int ac, const char **av,
@@ -208,7 +230,9 @@ parse_check_args(struct ged *gedp, int ac, const char **av,
 {
     struct check_args args = {0};
     int object_count;
+    int operand_index;
 
+    args.self = &args;
     args.options = options;
     args.state = state;
     args.required_hits = INT_MIN;
@@ -221,10 +245,11 @@ parse_check_args(struct ged *gedp, int ac, const char **av,
     if (ac < 1)
 	return -1;
     ac--; av++;
-    object_count = bu_opt_parse_build_with_policy(gedp->ged_result_str,
-	(size_t)ac, av, check_options, &args, BU_OPT_PARSE_OPTIONS_FIRST);
-    if (object_count < 0 || args.help)
+    operand_index = bu_arg_schema_parse_complete(&check_parse_schema, &args,
+	gedp->ged_result_str, ac, av);
+    if (operand_index < 0 || args.help)
 	return -1;
+    object_count = ac - operand_index;
 
     if (args.debug) {
 	options->debug = 1;
@@ -689,43 +714,10 @@ freemem:
 
 #include "../include/plugin.h"
 
-static const struct bu_arg_option check_schema_options[] = {
-    BU_ARG_UNBOUND("a", NULL, "a", BU_ARG_VALUE_STRING, BU_ARG_REQUIRED, "angle", "Azimuth angle", NULL),
-    BU_ARG_UNBOUND("d", NULL, "d", BU_ARG_VALUE_FLAG, BU_ARG_NONE, NULL, "Enable debug output", NULL),
-    BU_ARG_UNBOUND("e", NULL, "e", BU_ARG_VALUE_STRING, BU_ARG_REQUIRED, "angle", "Elevation angle", NULL),
-    BU_ARG_UNBOUND("f", NULL, "f", BU_ARG_VALUE_FILE, BU_ARG_REQUIRED, "file", "External density file", NULL),
-    BU_ARG_UNBOUND("g", NULL, "g", BU_ARG_VALUE_STRING, BU_ARG_REQUIRED, "spacing", "Grid refinement spacing", NULL),
-    BU_ARG_UNBOUND("G", NULL, "G", BU_ARG_VALUE_STRING, BU_ARG_REQUIRED, "size", "Grid width and height", NULL),
-    BU_ARG_UNBOUND("i", NULL, "i", BU_ARG_VALUE_FLAG, BU_ARG_NONE, NULL, "Use the current view", NULL),
-    BU_ARG_UNBOUND("M", NULL, "M", BU_ARG_VALUE_NUMBER, BU_ARG_REQUIRED, "number", "Mass tolerance", NULL),
-    BU_ARG_UNBOUND("n", NULL, "n", BU_ARG_VALUE_INTEGER, BU_ARG_REQUIRED, "count", "Minimum hits per region", NULL),
-    BU_ARG_UNBOUND("N", NULL, "N", BU_ARG_VALUE_INTEGER, BU_ARG_REQUIRED, "count", "Maximum views", NULL),
-    BU_ARG_UNBOUND("o", NULL, "o", BU_ARG_VALUE_FLAG, BU_ARG_NONE, NULL, "Display overlaps as overlays", NULL),
-    BU_ARG_UNBOUND("p", NULL, "p", BU_ARG_VALUE_FLAG, BU_ARG_NONE, NULL, "Produce plot files", NULL),
-    BU_ARG_UNBOUND("P", NULL, "P", BU_ARG_VALUE_INTEGER, BU_ARG_REQUIRED, "count", "CPU count", NULL),
-    BU_ARG_UNBOUND("q", NULL, "q", BU_ARG_VALUE_FLAG, BU_ARG_NONE, NULL, "Suppress not-hit reporting", NULL),
-    BU_ARG_UNBOUND("r", NULL, "r", BU_ARG_VALUE_FLAG, BU_ARG_NONE, NULL, "Print per-region statistics", NULL),
-    BU_ARG_UNBOUND("R", NULL, "R", BU_ARG_VALUE_FLAG, BU_ARG_NONE, NULL, "Disable overlap reporting", NULL),
-    BU_ARG_UNBOUND("s", NULL, "s", BU_ARG_VALUE_NUMBER, BU_ARG_REQUIRED, "number", "Surface-area tolerance", NULL),
-    BU_ARG_UNBOUND("S", NULL, "S", BU_ARG_VALUE_NUMBER, BU_ARG_REQUIRED, "count", "Minimum samples per axis", NULL),
-    BU_ARG_UNBOUND("t", NULL, "t", BU_ARG_VALUE_STRING, BU_ARG_REQUIRED, "number", "Overlap tolerance", NULL),
-    BU_ARG_UNBOUND("u", NULL, "u", BU_ARG_VALUE_STRING, BU_ARG_REQUIRED, "units", "Distance, volume, and mass units", NULL),
-    BU_ARG_UNBOUND("U", NULL, "U", BU_ARG_VALUE_BOOL, BU_ARG_REQUIRED, "0|1", "Include air regions", NULL),
-    BU_ARG_UNBOUND("v", NULL, "v", BU_ARG_VALUE_FLAG, BU_ARG_NONE, NULL, "Enable verbose output", NULL),
-    BU_ARG_UNBOUND("V", NULL, "V", BU_ARG_VALUE_NUMBER, BU_ARG_REQUIRED, "number", "Volume tolerance", NULL),
-    BU_ARG_UNBOUND("h", NULL, "h", BU_ARG_VALUE_FLAG, BU_ARG_NONE, NULL, "Print help", NULL),
-    BU_ARG_ALIAS("?", NULL, "h", 1),
-    BU_ARG_OPTION_NULL
-};
-static const struct bu_arg_operand check_schema_operands[] = {
-    BU_ARG_OPERAND("object", BU_ARG_VALUE_DB_PATH, 0, BU_ARG_COUNT_UNLIMITED,
-	"Objects to analyze (defaults to displayed objects)", "ged.db_path"),
-    BU_ARG_OPERAND_NULL
-};
 #define CHECK_SCHEMA(_id, _name, _help) \
     static const struct bu_arg_schema _id##_schema = \
-	BU_ARG_SCHEMA_EXTERNAL(_name, _help, check_schema_options, check_schema_operands, \
-	    BU_ARG_PARSE_OPTIONS_FIRST, NULL, NULL, NULL)
+	BU_ARG_SCHEMA(_name, _help, check_options, check_operands, \
+	    BU_ARG_PARSE_OPTIONS_FIRST, NULL)
 CHECK_SCHEMA(check_adj_air, "adj_air", "Find adjacent air regions with differing codes");
 CHECK_SCHEMA(check_centroid, "centroid", "Compute centroids");
 CHECK_SCHEMA(check_exp_air, "exp_air", "Find exposed air regions");
