@@ -24,7 +24,7 @@
  */
 
 #include "ged.h"
-#include "bu/cmdschema.h"
+#include "bu/arg.h"
 #include "bu/sort.h"
 
 #include "../ged_private.h"
@@ -32,7 +32,7 @@
 
 extern int ged_who2_core(struct ged *gedp, int argc, const char **argv);
 extern int ged_who_solids_core(struct ged *gedp, int argc, const char **argv);
-extern const struct bu_cmd_schema ged_who_new_schema;
+extern const struct bu_arg_schema ged_who_new_schema;
 
 struct who_legacy_args {
     int print_help;
@@ -41,95 +41,95 @@ struct who_legacy_args {
 static const char * const who_real_aliases[] = {"r", NULL};
 static const char * const who_phony_aliases[] = {"p", NULL};
 static const char * const who_both_aliases[] = {"b", NULL};
-static const struct bu_cmd_value_keyword who_display_kinds[] = {
+static const struct bu_arg_value_keyword who_display_kinds[] = {
     {"real", who_real_aliases, "List real database objects"},
     {"phony", who_phony_aliases, "List phony display objects"},
     {"both", who_both_aliases, "List real and phony objects"},
     {NULL, NULL, NULL}
 };
-static const struct bu_cmd_option who_legacy_options[] = {
-    BU_CMD_FLAG("h", "help", struct who_legacy_args, print_help,
+static const struct bu_arg_option who_legacy_options[] = {
+    BU_ARG_FLAG("h", "help", struct who_legacy_args, print_help,
 	"Print command help"),
-    BU_CMD_ALIAS_SHORT("?", "help", 1),
-    BU_CMD_OPTION_NULL
+    BU_ARG_ALIAS_SHORT("?", "help", 1),
+    BU_ARG_OPTION_NULL
 };
-static const struct bu_cmd_operand who_legacy_operands[] = {
-    BU_CMD_OPERAND_KEYWORD_VALUES("display_kind", BU_CMD_VALUE_KEYWORD, 0, 1,
+static const struct bu_arg_operand who_legacy_operands[] = {
+    BU_ARG_OPERAND_KEYWORD_VALUES("display_kind", BU_ARG_VALUE_KEYWORD, 0, 1,
 	"real, phony, or both", NULL, who_display_kinds),
-    BU_CMD_OPERAND_NULL
+    BU_ARG_OPERAND_NULL
 };
-static const struct bu_cmd_operand who_solids_operands[] = {
-    BU_CMD_OPERAND("detail_level", BU_CMD_VALUE_INTEGER, 0, 1,
+static const struct bu_arg_operand who_solids_operands[] = {
+    BU_ARG_OPERAND("detail_level", BU_ARG_VALUE_INTEGER, 0, 1,
 	"Report detail level", NULL),
-    BU_CMD_OPERAND_NULL
+    BU_ARG_OPERAND_NULL
 };
-static const struct bu_cmd_option who_legacy_solids_options[] = {
-    BU_CMD_FLAG("h", "help", struct ged_solid_report_args, print_help,
+static const struct bu_arg_option who_legacy_solids_options[] = {
+    BU_ARG_FLAG("h", "help", struct ged_solid_report_args, print_help,
 	"Print command help"),
-    BU_CMD_ALIAS_SHORT("?", "help", 1),
-    BU_CMD_OPTION_NULL
+    BU_ARG_ALIAS_SHORT("?", "help", 1),
+    BU_ARG_OPTION_NULL
 };
-static const struct bu_cmd_schema who_legacy_schema = {
+static const struct bu_arg_schema who_legacy_schema = {
     "who", "List top-level displayed objects", who_legacy_options,
-    who_legacy_operands, BU_CMD_PARSE_STOP_AT_FIRST_OPERAND,
-    BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+    who_legacy_operands, BU_ARG_PARSE_STOP_AT_FIRST_OPERAND,
+    BU_ARG_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
-static const struct bu_cmd_schema who_legacy_solids_schema = {
+static const struct bu_arg_schema who_legacy_solids_schema = {
     "solids", "Report displayed solid internals", who_legacy_solids_options,
-    who_solids_operands, BU_CMD_PARSE_INTERSPERSED,
-    BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+    who_solids_operands, BU_ARG_PARSE_INTERSPERSED,
+    BU_ARG_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
 GED_DEFINE_NO_ARG_SCHEMA_NAMED(who_tree_root_schema, "who",
-    "List objects currently displayed", BU_CMD_PARSE_OPTIONS_FIRST);
+    "List objects currently displayed", BU_ARG_PARSE_OPTIONS_FIRST);
 static const char * const who_report_aliases[] = {"report", NULL};
-static const struct bu_cmd_tree_node who_legacy_subcommands[] = {
-    BU_CMD_TREE_NODE(&who_legacy_solids_schema, who_report_aliases, NULL,
-	BU_CMD_TREE_CHILD_AFTER_OPTIONS, NULL),
-    BU_CMD_TREE_NODE_NULL
+static const struct bu_arg_tree_node who_legacy_subcommands[] = {
+    BU_ARG_TREE_NODE(&who_legacy_solids_schema, who_report_aliases, NULL,
+	BU_ARG_TREE_CHILD_AFTER_OPTIONS, NULL),
+    BU_ARG_TREE_NODE_NULL
 };
-static const struct bu_cmd_tree_node who_new_subcommands[] = {
-    BU_CMD_TREE_NODE(&ged_who_solids_schema, who_report_aliases, NULL,
-	BU_CMD_TREE_CHILD_AFTER_OPTIONS, NULL),
-    BU_CMD_TREE_NODE_NULL
+static const struct bu_arg_tree_node who_new_subcommands[] = {
+    BU_ARG_TREE_NODE(&ged_who_solids_schema, who_report_aliases, NULL,
+	BU_ARG_TREE_CHILD_AFTER_OPTIONS, NULL),
+    BU_ARG_TREE_NODE_NULL
 };
-static const struct bu_cmd_tree who_legacy_tree = {
-    &who_tree_root_schema, who_legacy_subcommands, BU_CMD_TREE_CHILD_AFTER_OPTIONS
+static const struct bu_arg_tree who_legacy_tree = {
+    &who_tree_root_schema, who_legacy_subcommands, BU_ARG_TREE_CHILD_AFTER_OPTIONS
 };
-static const struct bu_cmd_tree who_new_tree = {
-    &who_tree_root_schema, who_new_subcommands, BU_CMD_TREE_CHILD_AFTER_OPTIONS
+static const struct bu_arg_tree who_new_tree = {
+    &who_tree_root_schema, who_new_subcommands, BU_ARG_TREE_CHILD_AFTER_OPTIONS
 };
-static const struct bu_cmd_form ged_who_native_forms[] = {
-    BU_CMD_FORM_SCHEMA("legacy", "Legacy object listing", &who_legacy_schema),
-    BU_CMD_FORM_TREE("legacy_solids", "Legacy detailed solid report",
+static const struct bu_arg_form ged_who_native_forms[] = {
+    BU_ARG_FORM_SCHEMA("legacy", "Legacy object listing", &who_legacy_schema),
+    BU_ARG_FORM_TREE("legacy_solids", "Legacy detailed solid report",
 	&who_legacy_tree),
-    BU_CMD_FORM_SCHEMA("current", "Current object listing", &ged_who_new_schema),
-    BU_CMD_FORM_TREE("current_solids", "Current detailed solid report",
+    BU_ARG_FORM_SCHEMA("current", "Current object listing", &ged_who_new_schema),
+    BU_ARG_FORM_TREE("current_solids", "Current detailed solid report",
 	&who_new_tree),
-    BU_CMD_FORM_NULL
+    BU_ARG_FORM_NULL
 };
 
 char *
 ged_who_help_for_mode(int new_form, int solids, const char *invocation)
 {
     if (solids)
-	return bu_cmd_schema_help(new_form ? &ged_who_solids_schema :
+	return bu_arg_schema_help(new_form ? &ged_who_solids_schema :
 	    &who_legacy_solids_schema, invocation);
 
-    const struct bu_cmd_form legacy_form_rows[] = {
-	BU_CMD_FORM_SCHEMA("objects", "List displayed objects", &who_legacy_schema),
-	BU_CMD_FORM_TREE("solid details", "Report displayed solid details", &who_legacy_tree),
-	BU_CMD_FORM_NULL
+    const struct bu_arg_form legacy_form_rows[] = {
+	BU_ARG_FORM_SCHEMA("objects", "List displayed objects", &who_legacy_schema),
+	BU_ARG_FORM_TREE("solid details", "Report displayed solid details", &who_legacy_tree),
+	BU_ARG_FORM_NULL
     };
-    const struct bu_cmd_form new_form_rows[] = {
-	BU_CMD_FORM_SCHEMA("objects", "List displayed objects", &ged_who_new_schema),
-	BU_CMD_FORM_TREE("solid details", "Report displayed solid details", &who_new_tree),
-	BU_CMD_FORM_NULL
+    const struct bu_arg_form new_form_rows[] = {
+	BU_ARG_FORM_SCHEMA("objects", "List displayed objects", &ged_who_new_schema),
+	BU_ARG_FORM_TREE("solid details", "Report displayed solid details", &who_new_tree),
+	BU_ARG_FORM_NULL
     };
-    const struct bu_cmd_forms legacy_forms = BU_CMD_FORMS("who",
+    const struct bu_arg_forms legacy_forms = BU_ARG_FORMS("who",
 	"List objects currently displayed", legacy_form_rows, NULL);
-    const struct bu_cmd_forms new_forms = BU_CMD_FORMS("who",
+    const struct bu_arg_forms new_forms = BU_ARG_FORMS("who",
 	"List objects currently displayed", new_form_rows, NULL);
-    return bu_cmd_forms_help(new_form ? &new_forms : &legacy_forms, invocation);
+    return bu_arg_forms_help(new_form ? &new_forms : &legacy_forms, invocation);
 }
 
 static int
@@ -151,8 +151,8 @@ who_solids_input(size_t argc, const char * const *argv)
     return len > 1 && bu_strncmp("report", arg, len) == 0;
 }
 
-static const struct bu_cmd_form *
-ged_who_select_native_form(const struct bu_cmd_forms *forms, size_t argc,
+static const struct bu_arg_form *
+ged_who_select_native_form(const struct bu_arg_forms *forms, size_t argc,
 	const char * const *argv, void *context)
 {
     int solids = who_solids_input(argc, argv);
@@ -164,8 +164,8 @@ ged_who_select_native_form(const struct bu_cmd_forms *forms, size_t argc,
     return solids ? &forms->forms[1] : &forms->forms[0];
 }
 
-static const struct bu_cmd_forms ged_who_forms =
-    BU_CMD_FORMS("who", "List objects currently displayed",
+static const struct bu_arg_forms ged_who_forms =
+    BU_ARG_FORMS("who", "List objects currently displayed",
 	ged_who_native_forms, ged_who_select_native_form);
 
 static int
@@ -205,7 +205,7 @@ ged_who_core(struct ged *gedp, int argc, const char *argv[])
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
 
-    operand_index = bu_cmd_schema_parse_complete(&who_legacy_schema, &args,
+    operand_index = bu_arg_schema_parse_complete(&who_legacy_schema, &args,
 	gedp->ged_result_str, argc - 1, argv + 1);
     if (operand_index < 0) {
 	char *help = ged_who_help_for_mode(0, 0, argv[0]);

@@ -17,7 +17,7 @@
 
 #include <cstring>
 
-#include "bu/cmdschema.h"
+#include "bu/arg.h"
 
 #include "arrange_private.h"
 #include "../ged_private.h"
@@ -97,16 +97,16 @@ ged_arrange_core(struct ged *gedp, int argc, const char *argv[])
 
 #include "../include/plugin.h"
 
-static const struct bu_cmd_schema arrange_root_schema =
-    BU_CMD_SCHEMA_BOUND("arrange", "Arrange objects by style", NULL, NULL,
-        BU_CMD_PARSE_OPTIONS_FIRST, NULL, NULL, NULL, NULL);
-static const struct bu_cmd_tree_node arrange_nodes[] = {
-    BU_CMD_TREE_NODE(&arrange::ged_arrange_nest_schema, NULL, NULL,
-        BU_CMD_TREE_CHILD_AFTER_OPTIONS, NULL),
-    BU_CMD_TREE_NODE_NULL
+static const struct bu_arg_schema arrange_root_schema =
+    BU_ARG_SCHEMA_BOUND("arrange", "Arrange objects by style", NULL, NULL,
+        BU_ARG_PARSE_OPTIONS_FIRST, NULL, NULL, NULL, NULL);
+static const struct bu_arg_tree_node arrange_nodes[] = {
+    BU_ARG_TREE_NODE(&arrange::ged_arrange_nest_schema, NULL, NULL,
+        BU_ARG_TREE_CHILD_AFTER_OPTIONS, NULL),
+    BU_ARG_TREE_NODE_NULL
 };
-static const struct bu_cmd_tree arrange_tree =
-    BU_CMD_TREE(&arrange_root_schema, arrange_nodes, BU_CMD_TREE_CHILD_AFTER_OPTIONS);
+static const struct bu_arg_tree arrange_tree =
+    BU_ARG_TREE(&arrange_root_schema, arrange_nodes, BU_ARG_TREE_CHILD_AFTER_OPTIONS);
 
 static int
 arrange_grammar_validate(struct ged *gedp, const char *input, size_t cursor,
@@ -123,12 +123,12 @@ arrange_grammar_analyze(struct ged *gedp, const char *input,
 static char *
 arrange_grammar_json(void)
 {
-    return bu_cmd_tree_describe_json(&arrange_tree);
+    return bu_arg_tree_describe_json(&arrange_tree);
 }
 static int
 arrange_grammar_lint(struct bu_vls *msgs)
 {
-    return bu_cmd_tree_lint(&arrange_tree, msgs);
+    return bu_arg_tree_lint(&arrange_tree, msgs);
 }
 GED_CMD_TREE_HELP(arrange_grammar_help, arrange_tree)
 static const struct ged_cmd_grammar arrange_grammar = {

@@ -36,7 +36,7 @@ extern "C" {
 extern "C" {
 #include "bu/cmd.h"
 }
-#include "bu/cmdschema.h"
+#include "bu/arg.h"
 #include "./ged_analyze.h"
 #include "../ged_private.h"
 
@@ -198,76 +198,76 @@ struct analyze_boolean_args {
 };
 
 
-static const struct bu_cmd_option analyze_root_options[] = {
-    BU_CMD_FLAG("h", "help", struct analyze_root_args, print_help,
+static const struct bu_arg_option analyze_root_options[] = {
+    BU_ARG_FLAG("h", "help", struct analyze_root_args, print_help,
 	"Print command help"),
-    BU_CMD_FLAG("v", "verbose", struct analyze_root_args, verbosity,
+    BU_ARG_FLAG("v", "verbose", struct analyze_root_args, verbosity,
 	"Increase reporting detail"),
-    BU_CMD_OPTION_NULL
+    BU_ARG_OPTION_NULL
 };
-static const struct bu_cmd_option analyze_child_help_options[] = {
-    BU_CMD_FLAG("h", "help", struct analyze_child_args, print_help,
+static const struct bu_arg_option analyze_child_help_options[] = {
+    BU_ARG_FLAG("h", "help", struct analyze_child_args, print_help,
 	"Print subcommand help"),
-    BU_CMD_OPTION_NULL
+    BU_ARG_OPTION_NULL
 };
-static const struct bu_cmd_option analyze_boolean_options[] = {
-    BU_CMD_FLAG("h", "help", struct analyze_boolean_args, print_help,
+static const struct bu_arg_option analyze_boolean_options[] = {
+    BU_ARG_FLAG("h", "help", struct analyze_boolean_args, print_help,
 	"Print subcommand help"),
-    BU_CMD_VLS_APPEND("o", "output", struct analyze_boolean_args, output,
+    BU_ARG_VLS_APPEND("o", "output", struct analyze_boolean_args, output,
 	"name", "Specify output object"),
-    BU_CMD_OPTION_NULL
+    BU_ARG_OPTION_NULL
 };
-static const struct bu_cmd_operand analyze_object_operands[] = {
-    BU_CMD_OPERAND("object", BU_CMD_VALUE_DB_OBJECT, 1, BU_CMD_COUNT_UNLIMITED,
+static const struct bu_arg_operand analyze_object_operands[] = {
+    BU_ARG_OPERAND("object", BU_ARG_VALUE_DB_OBJECT, 1, BU_ARG_COUNT_UNLIMITED,
 	"Objects to analyze", "ged.db_object"),
-    BU_CMD_OPERAND_NULL
+    BU_ARG_OPERAND_NULL
 };
-static const struct bu_cmd_operand analyze_inside_operands[] = {
-    BU_CMD_OPERAND("object", BU_CMD_VALUE_DB_OBJECT, 1, 1,
+static const struct bu_arg_operand analyze_inside_operands[] = {
+    BU_ARG_OPERAND("object", BU_ARG_VALUE_DB_OBJECT, 1, 1,
 	"Object to test", "ged.db_object"),
-    BU_CMD_OPERAND_SHAPED("point", BU_CMD_VALUE_VECTOR, 1, 3, NULL,
+    BU_ARG_OPERAND_SHAPED("point", BU_ARG_VALUE_VECTOR, 1, 3, NULL,
 	"Packed XYZ point or three coordinates", "ged.vector_group",
-	&bu_cmd_vector3_arg_shape),
-    BU_CMD_OPERAND_NULL
+	&bu_arg_vector3_shape),
+    BU_ARG_OPERAND_NULL
 };
-static const struct bu_cmd_operand analyze_boolean_operands[] = {
-    BU_CMD_OPERAND("object", BU_CMD_VALUE_DB_OBJECT, 2, BU_CMD_COUNT_UNLIMITED,
+static const struct bu_arg_operand analyze_boolean_operands[] = {
+    BU_ARG_OPERAND("object", BU_ARG_VALUE_DB_OBJECT, 2, BU_ARG_COUNT_UNLIMITED,
 	"Objects to combine", "ged.db_object"),
-    BU_CMD_OPERAND_NULL
+    BU_ARG_OPERAND_NULL
 };
-static const struct bu_cmd_schema analyze_root_schema = {
+static const struct bu_arg_schema analyze_root_schema = {
     "analyze", "Analyze primitives and Boolean combinations", analyze_root_options,
-    NULL, BU_CMD_PARSE_OPTIONS_FIRST,
-    BU_CMD_SCHEMA_META_HELP(NULL, NULL, NULL, NULL, NULL)
+    NULL, BU_ARG_PARSE_OPTIONS_FIRST,
+    BU_ARG_SCHEMA_META_HELP(NULL, NULL, NULL, NULL, NULL)
 };
-static const struct bu_cmd_schema analyze_implicit_summary_schema = {
+static const struct bu_arg_schema analyze_implicit_summary_schema = {
     "analyze", "Summarize object properties", analyze_root_options,
-    analyze_object_operands, BU_CMD_PARSE_OPTIONS_FIRST,
-    BU_CMD_SCHEMA_META_HELP(NULL, NULL, NULL, NULL, NULL)
+    analyze_object_operands, BU_ARG_PARSE_OPTIONS_FIRST,
+    BU_ARG_SCHEMA_META_HELP(NULL, NULL, NULL, NULL, NULL)
 };
-static const struct bu_cmd_schema analyze_summarize_schema = {
+static const struct bu_arg_schema analyze_summarize_schema = {
     "summarize", "Summarize object properties", analyze_child_help_options,
-    analyze_object_operands, BU_CMD_PARSE_OPTIONS_FIRST,
-    BU_CMD_SCHEMA_META_HELP(NULL, NULL, NULL, NULL, NULL)
+    analyze_object_operands, BU_ARG_PARSE_OPTIONS_FIRST,
+    BU_ARG_SCHEMA_META_HELP(NULL, NULL, NULL, NULL, NULL)
 };
-static const struct bu_cmd_schema analyze_inside_schema = {
+static const struct bu_arg_schema analyze_inside_schema = {
     "inside", "Test whether a point is inside an object", analyze_child_help_options,
-    analyze_inside_operands, BU_CMD_PARSE_OPTIONS_FIRST,
-    BU_CMD_SCHEMA_META_HELP(NULL, NULL, NULL, NULL, NULL)
+    analyze_inside_operands, BU_ARG_PARSE_OPTIONS_FIRST,
+    BU_ARG_SCHEMA_META_HELP(NULL, NULL, NULL, NULL, NULL)
 };
-static const struct bu_cmd_schema analyze_intersect_schema = {
+static const struct bu_arg_schema analyze_intersect_schema = {
     "intersect", "Intersect objects", analyze_boolean_options,
-    analyze_boolean_operands, BU_CMD_PARSE_INTERSPERSED,
-    BU_CMD_SCHEMA_META_HELP(NULL, NULL, NULL, NULL, NULL)
+    analyze_boolean_operands, BU_ARG_PARSE_INTERSPERSED,
+    BU_ARG_SCHEMA_META_HELP(NULL, NULL, NULL, NULL, NULL)
 };
-static const struct bu_cmd_schema analyze_subtract_schema = {
+static const struct bu_arg_schema analyze_subtract_schema = {
     "subtract", "Subtract objects", analyze_boolean_options,
-    analyze_boolean_operands, BU_CMD_PARSE_INTERSPERSED,
-    BU_CMD_SCHEMA_META_HELP(NULL, NULL, NULL, NULL, NULL)
+    analyze_boolean_operands, BU_ARG_PARSE_INTERSPERSED,
+    BU_ARG_SCHEMA_META_HELP(NULL, NULL, NULL, NULL, NULL)
 };
 
 static void
-analyze_schema_help(struct ged *gedp, const struct bu_cmd_schema *schema)
+analyze_schema_help(struct ged *gedp, const struct bu_arg_schema *schema)
 {
     struct bu_vls invocation = BU_VLS_INIT_ZERO;
     char *help;
@@ -277,7 +277,7 @@ analyze_schema_help(struct ged *gedp, const struct bu_cmd_schema *schema)
     bu_vls_strcat(&invocation, "analyze");
     if (!BU_STR_EQUAL(schema->name, "analyze"))
 	bu_vls_printf(&invocation, " %s", schema->name);
-    help = bu_cmd_schema_help(schema, bu_vls_cstr(&invocation));
+    help = bu_arg_schema_help(schema, bu_vls_cstr(&invocation));
     if (help) {
 	bu_vls_strcat(gedp->ged_result_str, help);
 	bu_free(help, "analyze schema help");
@@ -287,7 +287,7 @@ analyze_schema_help(struct ged *gedp, const struct bu_cmd_schema *schema)
 
 static int
 analyze_cmd_msgs(void *context, int argc, const char **argv,
-	const struct bu_cmd_schema *schema)
+	const struct bu_arg_schema *schema)
 {
     struct _ged_analyze_info *gc = (struct _ged_analyze_info *)context;
 
@@ -421,7 +421,7 @@ _analyze_cmd_summarize(void *bs, int argc, const char **argv)
 	return BRLCAD_ERROR;
     }
 
-    operand_index = bu_cmd_schema_parse_complete(&analyze_summarize_schema,
+    operand_index = bu_arg_schema_parse_complete(&analyze_summarize_schema,
 	&args, gedp->ged_result_str, argc, argv);
     if (operand_index < 0) {
 	analyze_schema_help(gedp, &analyze_summarize_schema);
@@ -476,7 +476,7 @@ _analyze_cmd_inside(void *bs, int argc, const char **argv)
 	return BRLCAD_ERROR;
     }
 
-    operand_index = bu_cmd_schema_parse_complete(&analyze_inside_schema,
+    operand_index = bu_arg_schema_parse_complete(&analyze_inside_schema,
 	&args, gedp->ged_result_str, argc, argv);
     if (operand_index < 0) {
 	analyze_schema_help(gedp, &analyze_inside_schema);
@@ -507,7 +507,7 @@ _analyze_cmd_inside(void *bs, int argc, const char **argv)
     }
 
     point_t p;
-	if (!bu_cmd_vector3_from_argv(p, (size_t)(operand_count - 1), operands + 1)) {
+	if (!bu_arg_vector3_from_argv(p, (size_t)(operand_count - 1), operands + 1)) {
 	bu_vls_sprintf(gedp->ged_result_str, "invalid point specification\n");
 	return BRLCAD_ERROR;
     }
@@ -567,7 +567,7 @@ _analyze_cmd_intersect(void *bs, int argc, const char **argv)
 	return BRLCAD_ERROR;
     }
 
-    operand_index = bu_cmd_schema_parse_complete(&analyze_intersect_schema,
+    operand_index = bu_arg_schema_parse_complete(&analyze_intersect_schema,
 	&args, gedp->ged_result_str, argc, argv);
     if (operand_index < 0) {
 	bu_vls_free(&args.output);
@@ -686,7 +686,7 @@ _analyze_cmd_subtract(void *bs, int argc, const char **argv)
 	return BRLCAD_ERROR;
     }
 
-    operand_index = bu_cmd_schema_parse_complete(&analyze_subtract_schema,
+    operand_index = bu_arg_schema_parse_complete(&analyze_subtract_schema,
 	&args, gedp->ged_result_str, argc, argv);
     if (operand_index < 0) {
 	bu_vls_free(&args.output);
@@ -806,31 +806,31 @@ analyze_tree_execute(void *data, int argc, const char *argv[])
 }
 
 
-static const struct bu_cmd_tree_node analyze_subcommands[] = {
-    BU_CMD_TREE_NODE(&analyze_summarize_schema, NULL, NULL,
-	BU_CMD_TREE_CHILD_AFTER_OPTIONS, analyze_tree_execute),
-    BU_CMD_TREE_NODE(&analyze_inside_schema, NULL, NULL,
-	BU_CMD_TREE_CHILD_AFTER_OPTIONS, analyze_tree_execute),
-    BU_CMD_TREE_NODE(&analyze_intersect_schema, NULL, NULL,
-	BU_CMD_TREE_CHILD_AFTER_OPTIONS, analyze_tree_execute),
-    BU_CMD_TREE_NODE(&analyze_subtract_schema, NULL, NULL,
-	BU_CMD_TREE_CHILD_AFTER_OPTIONS, analyze_tree_execute),
-    BU_CMD_TREE_NODE_NULL
+static const struct bu_arg_tree_node analyze_subcommands[] = {
+    BU_ARG_TREE_NODE(&analyze_summarize_schema, NULL, NULL,
+	BU_ARG_TREE_CHILD_AFTER_OPTIONS, analyze_tree_execute),
+    BU_ARG_TREE_NODE(&analyze_inside_schema, NULL, NULL,
+	BU_ARG_TREE_CHILD_AFTER_OPTIONS, analyze_tree_execute),
+    BU_ARG_TREE_NODE(&analyze_intersect_schema, NULL, NULL,
+	BU_ARG_TREE_CHILD_AFTER_OPTIONS, analyze_tree_execute),
+    BU_ARG_TREE_NODE(&analyze_subtract_schema, NULL, NULL,
+	BU_ARG_TREE_CHILD_AFTER_OPTIONS, analyze_tree_execute),
+    BU_ARG_TREE_NODE_NULL
 };
-static const struct bu_cmd_tree ged_analyze_tree = {
-    &analyze_root_schema, analyze_subcommands, BU_CMD_TREE_CHILD_AFTER_OPTIONS
+static const struct bu_arg_tree ged_analyze_tree = {
+    &analyze_root_schema, analyze_subcommands, BU_ARG_TREE_CHILD_AFTER_OPTIONS
 };
-static const struct bu_cmd_form analyze_native_forms[] = {
-    BU_CMD_FORM_TREE("subcommands", "Explicit analysis subcommand",
+static const struct bu_arg_form analyze_native_forms[] = {
+    BU_ARG_FORM_TREE("subcommands", "Explicit analysis subcommand",
 	&ged_analyze_tree),
-    BU_CMD_FORM_SCHEMA("implicit_summary", "Summarize objects without a subcommand",
+    BU_ARG_FORM_SCHEMA("implicit_summary", "Summarize objects without a subcommand",
 	&analyze_implicit_summary_schema),
-    BU_CMD_FORM_NULL
+    BU_ARG_FORM_NULL
 };
 
 
-static const struct bu_cmd_form *
-analyze_select_native_form(const struct bu_cmd_forms *forms, size_t argc,
+static const struct bu_arg_form *
+analyze_select_native_form(const struct bu_arg_forms *forms, size_t argc,
 	const char * const *argv, void *UNUSED(context))
 {
     size_t i = 1;
@@ -838,7 +838,7 @@ analyze_select_native_form(const struct bu_cmd_forms *forms, size_t argc,
     size_t word_len;
 
     while (i < argc) {
-	int option_span = bu_cmd_schema_option_span(&analyze_root_schema, argc - i,
+	int option_span = bu_arg_schema_option_span(&analyze_root_schema, argc - i,
 	    (const char **)argv + i);
 	if (option_span > 0) {
 	    i += (size_t)option_span;
@@ -862,15 +862,15 @@ analyze_select_native_form(const struct bu_cmd_forms *forms, size_t argc,
     return &forms->forms[1];
 }
 
-static const struct bu_cmd_forms analyze_forms =
-    BU_CMD_FORMS("analyze", "Analyze primitives and Boolean combinations",
+static const struct bu_arg_forms analyze_forms =
+    BU_ARG_FORMS("analyze", "Analyze primitives and Boolean combinations",
 	analyze_native_forms, analyze_select_native_form);
 
 
 static void
 analyze_tree_show_help(struct ged *gedp)
 {
-    char *help = bu_cmd_tree_help(&ged_analyze_tree, "analyze");
+    char *help = bu_arg_tree_help(&ged_analyze_tree, "analyze");
 
     if (help) {
 	bu_vls_strcat(gedp->ged_result_str, help);
@@ -883,7 +883,7 @@ static int
 _analyze_cmd_help(void *bs, int argc, const char **argv)
 {
     struct _ged_analyze_info *gc = (struct _ged_analyze_info *)bs;
-    const struct bu_cmd_tree_node *node;
+    const struct bu_arg_tree_node *node;
     const char **help_argv;
     int result = BRLCAD_ERROR;
 
@@ -893,7 +893,7 @@ _analyze_cmd_help(void *bs, int argc, const char **argv)
 	analyze_tree_show_help(gc->gedp);
 	return BRLCAD_OK;
     }
-    node = bu_cmd_tree_find_subcommand(&ged_analyze_tree, argv[0]);
+    node = bu_arg_tree_find_subcommand(&ged_analyze_tree, argv[0]);
     if (!node)
 	return BRLCAD_ERROR;
     help_argv = (const char **)bu_calloc((size_t)argc + 1, sizeof(const char *),
@@ -936,7 +936,7 @@ ged_analyze_core(struct ged *gedp, int argc, const char *argv[])
 	return BRLCAD_OK;
     }
 
-    option_index = bu_cmd_schema_parse(&analyze_root_schema, &args,
+    option_index = bu_arg_schema_parse(&analyze_root_schema, &args,
 	gedp->ged_result_str, argc - 1, argv + 1);
     if (option_index < 0) {
 	_analyze_info_destroy(gc);
@@ -947,7 +947,7 @@ ged_analyze_core(struct ged *gedp, int argc, const char *argv[])
     rest = argv + 1 + option_index;
 
     if (args.print_help) {
-	if (remaining && bu_cmd_tree_find_subcommand(&ged_analyze_tree, rest[0]))
+	if (remaining && bu_arg_tree_find_subcommand(&ged_analyze_tree, rest[0]))
 	    ret = _analyze_cmd_help(gc, remaining, rest);
 	else {
 	    _analyze_cmd_help(gc, 0, NULL);
@@ -964,8 +964,8 @@ ged_analyze_core(struct ged *gedp, int argc, const char *argv[])
 
     // If no explicit subcommand is present, preserve analyze's established
     // shorthand: every remaining word is an object for summarize.
-    if (bu_cmd_tree_find_subcommand(&ged_analyze_tree, rest[0])) {
-	if (bu_cmd_tree_dispatch(&ged_analyze_tree, gc, remaining, rest, &ret) != 0)
+    if (bu_arg_tree_find_subcommand(&ged_analyze_tree, rest[0])) {
+	if (bu_arg_tree_dispatch(&ged_analyze_tree, gc, remaining, rest, &ret) != 0)
 	    ret = BRLCAD_ERROR;
     } else {
 	const char **summary_argv = (const char **)bu_calloc((size_t)remaining + 1,

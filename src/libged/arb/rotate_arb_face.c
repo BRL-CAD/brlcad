@@ -28,7 +28,7 @@
 #include <string.h>
 
 #include "bu/cmd.h"
-#include "bu/cmdschema.h"
+#include "bu/arg.h"
 #include "rt/geom.h"
 
 #include "../ged_private.h"
@@ -63,7 +63,7 @@ rotate_arb_face_index_validate(struct bu_vls *msg, const char *arg)
 {
     int value;
 
-    if (bu_cmd_integer_from_str(&value, arg) && value >= 1 && value <= 6)
+    if (bu_arg_integer_from_str(&value, arg) && value >= 1 && value <= 6)
 	return 0;
     if (msg)
 	bu_vls_printf(msg, "ARB face must be an integer from 1 through 6: %s\n", arg ? arg : "");
@@ -76,7 +76,7 @@ rotate_arb_vertex_index_validate(struct bu_vls *msg, const char *arg)
 {
     int value;
 
-    if (bu_cmd_integer_from_str(&value, arg) && value >= 1 && value <= 8)
+    if (bu_arg_integer_from_str(&value, arg) && value >= 1 && value <= 8)
 	return 0;
     if (msg)
 	bu_vls_printf(msg, "ARB vertex must be an integer from 1 through 8: %s\n", arg ? arg : "");
@@ -85,23 +85,23 @@ rotate_arb_vertex_index_validate(struct bu_vls *msg, const char *arg)
 
 
 static int
-rotate_arb_face_schema_validate(const struct bu_cmd_schema *schema, size_t argc,
-	const char **argv, size_t cursor_arg, struct bu_cmd_validate_result *result)
+rotate_arb_face_schema_validate(const struct bu_arg_schema *schema, size_t argc,
+	const char **argv, size_t cursor_arg, struct bu_arg_validate_result *result)
 {
-    struct bu_cmd_schema flat = *schema;
+    struct bu_arg_schema flat = *schema;
     fastf_t rotation[3] = {0.0, 0.0, 0.0};
     int ret;
 
-    ret = bu_cmd_schema_validate_syntax(&flat, argc, argv, cursor_arg, result);
-    if (ret || result->state == BU_CMD_VALIDATE_INVALID || argc < 4)
+    ret = bu_arg_schema_validate_syntax(&flat, argc, argv, cursor_arg, result);
+    if (ret || result->state == BU_ARG_VALIDATE_INVALID || argc < 4)
 	return ret;
-    if (bu_cmd_vector3_from_argv(rotation, 1, (const char * const *)argv + 3) != 1) {
-	bu_cmd_validate_result_clear(result);
-	result->state = BU_CMD_VALIDATE_INVALID;
+    if (bu_arg_vector3_from_argv(rotation, 1, (const char * const *)argv + 3) != 1) {
+	bu_arg_validate_result_clear(result);
+	result->state = BU_ARG_VALIDATE_INVALID;
 	result->token_start = 3;
 	result->token_end = 3;
-	result->expected = BU_CMD_EXPECT_OPERAND;
-	result->completion_type = BU_CMD_VALUE_VECTOR;
+	result->expected = BU_ARG_EXPECT_OPERAND;
+	result->completion_type = BU_ARG_VALUE_VECTOR;
 	result->semantic_provider = "ged.vector_group";
 	result->hint = "packed finite XYZ rotation required";
     } else {
@@ -112,21 +112,21 @@ rotate_arb_face_schema_validate(const struct bu_cmd_schema *schema, size_t argc,
 }
 
 
-static const struct bu_cmd_operand rotate_arb_face_operands[] = {
-    BU_CMD_OPERAND("arb", BU_CMD_VALUE_DB_PATH, 1, 1,
+static const struct bu_arg_operand rotate_arb_face_operands[] = {
+    BU_ARG_OPERAND("arb", BU_ARG_VALUE_DB_PATH, 1, 1,
 	"ARB object or path", "ged.db_path"),
-    BU_CMD_OPERAND_VALIDATE("face", BU_CMD_VALUE_INTEGER, 1, 1,
+    BU_ARG_OPERAND_VALIDATE("face", BU_ARG_VALUE_INTEGER, 1, 1,
 	rotate_arb_face_index_validate, "Face number (1 through 6)", NULL),
-    BU_CMD_OPERAND_VALIDATE("vertex", BU_CMD_VALUE_INTEGER, 1, 1,
+    BU_ARG_OPERAND_VALIDATE("vertex", BU_ARG_VALUE_INTEGER, 1, 1,
 	rotate_arb_vertex_index_validate, "Vertex number (1 through 8)", NULL),
-    BU_CMD_OPERAND("rotation", BU_CMD_VALUE_VECTOR, 1, 1,
+    BU_ARG_OPERAND("rotation", BU_ARG_VALUE_VECTOR, 1, 1,
 	"Packed XYZ rotation angles", "ged.vector_group"),
-    BU_CMD_OPERAND_NULL
+    BU_ARG_OPERAND_NULL
 };
-const struct bu_cmd_schema ged_rotate_arb_face_schema = {
+const struct bu_arg_schema ged_rotate_arb_face_schema = {
     "rotate_arb_face", "Rotate an ARB face about a vertex", NULL,
-    rotate_arb_face_operands, BU_CMD_PARSE_STOP_AT_FIRST_OPERAND,
-    BU_CMD_SCHEMA_CONSTRAINTS(rotate_arb_face_schema_validate, NULL)
+    rotate_arb_face_operands, BU_ARG_PARSE_STOP_AT_FIRST_OPERAND,
+    BU_ARG_SCHEMA_CONSTRAINTS(rotate_arb_face_schema_validate, NULL)
 };
 
 
@@ -160,7 +160,7 @@ ged_rotate_arb_face_core(struct ged *gedp, int argc, const char *argv[])
 	return GED_HELP;
     }
 
-    if (bu_cmd_schema_parse_complete(&ged_rotate_arb_face_schema, NULL,
+    if (bu_arg_schema_parse_complete(&ged_rotate_arb_face_schema, NULL,
 	gedp->ged_result_str, argc - 1, argv + 1) < 0) {
 	if (!bu_vls_strlen(gedp->ged_result_str))
 	    ged_cmd_help_append(gedp->ged_result_str, argv[0], argv[0]);
@@ -195,7 +195,7 @@ ged_rotate_arb_face_core(struct ged *gedp, int argc, const char *argv[])
 	return BRLCAD_ERROR;
     }
 
-    if (!bu_cmd_integer_from_str(&face, argv[2])) {
+    if (!bu_arg_integer_from_str(&face, argv[2])) {
 	bu_vls_printf(gedp->ged_result_str, "bad face - %s", argv[2]);
 	rt_db_free_internal(&intern);
 
@@ -210,7 +210,7 @@ ged_rotate_arb_face_core(struct ged *gedp, int argc, const char *argv[])
 	return BRLCAD_ERROR;
     }
 
-    if (!bu_cmd_integer_from_str(&vi, argv[3])) {
+    if (!bu_arg_integer_from_str(&vi, argv[3])) {
 	bu_vls_printf(gedp->ged_result_str, "bad vertex index - %s", argv[3]);
 	rt_db_free_internal(&intern);
 
@@ -226,7 +226,7 @@ ged_rotate_arb_face_core(struct ged *gedp, int argc, const char *argv[])
 	return BRLCAD_ERROR;
     }
 
-    if (bu_cmd_vector3_from_argv(pt, 1, (const char * const *)argv + 4) != 1) {
+    if (bu_arg_vector3_from_argv(pt, 1, (const char * const *)argv + 4) != 1) {
 	bu_vls_printf(gedp->ged_result_str, "bad rotation vector - %s", argv[4]);
 	rt_db_free_internal(&intern);
 

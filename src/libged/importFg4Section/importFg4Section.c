@@ -29,10 +29,10 @@
  */
 #include "common.h"
 
-#include "bu/cmdschema.h"
+#include "bu/arg.h"
 #include "../ged_private.h"
 
-static const struct bu_cmd_schema *importfg4_schema(void);
+static const struct bu_arg_schema *importfg4_schema(void);
 
 int
 ged_importFg4Section_core(struct ged *gedp, int argc, const char *argv[])
@@ -54,7 +54,7 @@ ged_importFg4Section_core(struct ged *gedp, int argc, const char *argv[])
     }
 
 
-    operand_index = bu_cmd_schema_parse_complete(importfg4_schema(),
+    operand_index = bu_arg_schema_parse_complete(importfg4_schema(),
 	&parse_dummy, gedp->ged_result_str, argc - 1, argv + 1);
     if (operand_index < 0) {
 	ged_cmd_help_append(gedp->ged_result_str, argv[0], argv[0]);
@@ -69,17 +69,17 @@ ged_importFg4Section_core(struct ged *gedp, int argc, const char *argv[])
 
 #include "../include/plugin.h"
 
-static const struct bu_cmd_operand importfg4_schema_operands[] = {
-    BU_CMD_OPERAND("object", BU_CMD_VALUE_STRING, 1, 1, "Imported object name", NULL),
-    BU_CMD_OPERAND("section", BU_CMD_VALUE_INTEGER, 1, 1, "FASTGEN4 section", NULL),
-    BU_CMD_OPERAND_NULL
+static const struct bu_arg_operand importfg4_schema_operands[] = {
+    BU_ARG_OPERAND("object", BU_ARG_VALUE_STRING, 1, 1, "Imported object name", NULL),
+    BU_ARG_OPERAND("section", BU_ARG_VALUE_INTEGER, 1, 1, "FASTGEN4 section", NULL),
+    BU_ARG_OPERAND_NULL
 };
-static const struct bu_cmd_schema importfg4_cmd_schema = {
+static const struct bu_arg_schema importfg4_cmd_schema = {
     "importFg4Section", "Import a FASTGEN4 section", NULL,
-    importfg4_schema_operands, BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+    importfg4_schema_operands, BU_ARG_PARSE_STOP_AT_FIRST_OPERAND, BU_ARG_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
 
-static const struct bu_cmd_schema *
+static const struct bu_arg_schema *
 importfg4_schema(void)
 {
     return &importfg4_cmd_schema;

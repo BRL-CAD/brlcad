@@ -39,7 +39,7 @@
 #include "bu/cmd.h"
 #include "bu/env.h"
 #include "bu/file.h"
-#include "bu/cmdschema.h"
+#include "bu/arg.h"
 #include "bu/process.h"
 
 #include "../ged_private.h"
@@ -61,7 +61,7 @@ man_width_validate(const struct bu_opt_desc *UNUSED(option), size_t argc,
 	void *UNUSED(data), struct bu_opt_validate_result *result)
 {
     if (argv && cursor_arg < argc &&
-	bu_cmd_positive_integer_validate(NULL, argv[cursor_arg]) != 0) {
+	bu_arg_positive_integer_validate(NULL, argv[cursor_arg]) != 0) {
 	result->state = BU_OPT_VALIDATE_INVALID;
 	result->hint = "width must be a positive integer";
     }
@@ -94,7 +94,7 @@ static const ged_opt_rule man_opt_rules[] = {
     GED_RULE_VALUE_VALIDATE("width", BU_OPT_VALUE_INTEGER, "positive integer",
 	man_width_validate, NULL),
     GED_RULE_CONFLICTS("gui no-gui", "GUI and command line modes conflict"),
-    GED_RULE_OPERANDS(BU_CMD_CONDITION_ANY_OPTION_PRESENT, "no-gui", 1, 2,
+    GED_RULE_OPERANDS(BU_ARG_CONDITION_ANY_OPTION_PRESENT, "no-gui", 1, 2,
 	"Command line mode requires a manual page"),
     GED_RULE_NULL
 };
@@ -158,7 +158,7 @@ ged_man_core(struct ged *gedp, int argc, const char *argv[])
     } else if (operand_count == 2) {
 	int section_index = -1;
 	for (int i = 0; i < operand_count; i++) {
-	    if (bu_cmd_man_section_validate(NULL, argv[i]) == 0) {
+	    if (bu_arg_man_section_validate(NULL, argv[i]) == 0) {
 		section_index = i;
 		args.section = argv[i][0];
 		break;
@@ -194,7 +194,7 @@ ged_man_core(struct ged *gedp, int argc, const char *argv[])
 	lang_flags = getenv("GED_MAN_LANG_MODE");
 	if (lang_flags) {
 	    struct bu_vls langparse_msg = BU_VLS_INIT_ZERO;
-	    if (bu_cmd_iso639_1_validate(&langparse_msg, lang_flags) != 0) {
+	    if (bu_arg_iso639_1_validate(&langparse_msg, lang_flags) != 0) {
 		bu_vls_printf(gedp->ged_result_str, "getenv(GED_MAN_LANG_MODE) failure: %s", bu_vls_cstr(&langparse_msg));
 		bu_vls_free(&langparse_msg);
 		ret = BRLCAD_ERROR;

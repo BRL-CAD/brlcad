@@ -28,15 +28,15 @@
 
 #include "dm.h" // For labelvert - see if we really need the dm_set_dirty call there...
 
-#include "bu/cmdschema.h"
+#include "bu/arg.h"
 
 #include "ged.h"
 #include "../ged_private.h"
 
-static const struct bu_cmd_schema *illum_schema(void);
+static const struct bu_arg_schema *illum_schema(void);
 GED_DEFINE_TYPED_OPERAND_SCHEMA_PROVIDER(labelvert, "labelvert",
-    "Label wireframe vertices", "objects", BU_CMD_VALUE_DB_OBJECT, 1,
-    BU_CMD_COUNT_UNLIMITED, "Objects whose vertices are labeled", "ged.db_object");
+    "Label wireframe vertices", "objects", BU_ARG_VALUE_DB_OBJECT, 1,
+    BU_ARG_COUNT_UNLIMITED, "Objects whose vertices are labeled", "ged.db_object");
 
 struct illum_args {
     int disable;
@@ -61,7 +61,7 @@ ged_labelvert_core(struct ged *gedp, int argc, const char *argv[])
 	return GED_HELP;
     }
 
-    if (bu_cmd_schema_parse_complete(&labelvert_cmd_schema, NULL,
+    if (bu_arg_schema_parse_complete(&labelvert_cmd_schema, NULL,
 	gedp->ged_result_str, argc - 1, argv + 1) < 0) {
 	ged_cmd_help_append(gedp->ged_result_str, argv[0], argv[0]);
 	return BRLCAD_ERROR;
@@ -162,7 +162,7 @@ ged_illum_core(struct ged *gedp, int argc, const char *argv[])
 	return GED_HELP;
     }
 
-    operand_index = bu_cmd_schema_parse_complete(illum_schema(), &args,
+    operand_index = bu_arg_schema_parse_complete(illum_schema(), &args,
 	gedp->ged_result_str, argc - 1, argv + 1);
     if (operand_index < 0)
 	goto bad;
@@ -194,24 +194,24 @@ bad:
 #include "../include/plugin.h"
 
 static int
-illum_schema_validate(const struct bu_cmd_schema *schema, size_t argc,
-	const char **argv, size_t cursor_arg, struct bu_cmd_validate_result *result)
+illum_schema_validate(const struct bu_arg_schema *schema, size_t argc,
+	const char **argv, size_t cursor_arg, struct bu_arg_validate_result *result)
 {
-    struct bu_cmd_schema flat = *schema;
+    struct bu_arg_schema flat = *schema;
     size_t disables = 0;
     int ret;
 
-    ret = bu_cmd_schema_validate_syntax(&flat, argc, argv, cursor_arg, result);
-    if (ret || result->state == BU_CMD_VALIDATE_INVALID)
+    ret = bu_arg_schema_validate_syntax(&flat, argc, argv, cursor_arg, result);
+    if (ret || result->state == BU_ARG_VALIDATE_INVALID)
 	return ret;
     for (size_t i = 0; i < argc; i++) {
 	if (BU_STR_EQUAL(argv[i], "--")) {
-	    bu_cmd_validate_result_clear(result);
-	    result->state = BU_CMD_VALIDATE_INVALID;
+	    bu_arg_validate_result_clear(result);
+	    result->state = BU_ARG_VALIDATE_INVALID;
 	    result->token_start = i;
 	    result->token_end = i;
-	    result->expected = BU_CMD_EXPECT_OPTION;
-	    result->completion_type = BU_CMD_VALUE_FLAG;
+	    result->expected = BU_ARG_EXPECT_OPTION;
+	    result->completion_type = BU_ARG_VALUE_FLAG;
 	    result->hint = "end-of-options marker is not supported";
 	    return 0;
 	}
@@ -219,32 +219,32 @@ illum_schema_validate(const struct bu_cmd_schema *schema, size_t argc,
 	    disables++;
     }
     if (disables > 1) {
-	bu_cmd_validate_result_clear(result);
-	result->state = BU_CMD_VALIDATE_INVALID;
+	bu_arg_validate_result_clear(result);
+	result->state = BU_ARG_VALIDATE_INVALID;
 	result->token_start = cursor_arg < argc ? cursor_arg : argc;
 	result->token_end = result->token_start;
-	result->expected = BU_CMD_EXPECT_OPTION;
-	result->completion_type = BU_CMD_VALUE_FLAG;
+	result->expected = BU_ARG_EXPECT_OPTION;
+	result->completion_type = BU_ARG_VALUE_FLAG;
 	result->hint = "-n may be specified only once";
     }
     return 0;
 }
 
-static const struct bu_cmd_option illum_schema_options[] = {
-    BU_CMD_FLAG("n", NULL, struct illum_args, disable, "Disable illumination"),
-    BU_CMD_OPTION_NULL
+static const struct bu_arg_option illum_schema_options[] = {
+    BU_ARG_FLAG("n", NULL, struct illum_args, disable, "Disable illumination"),
+    BU_ARG_OPTION_NULL
 };
-static const struct bu_cmd_operand illum_schema_operands[] = {
-    BU_CMD_OPERAND("object", BU_CMD_VALUE_DB_PATH, 1, 1,
+static const struct bu_arg_operand illum_schema_operands[] = {
+    BU_ARG_OPERAND("object", BU_ARG_VALUE_DB_PATH, 1, 1,
 	"Displayed object path", "ged.db_path"),
-    BU_CMD_OPERAND_NULL
+    BU_ARG_OPERAND_NULL
 };
-static const struct bu_cmd_schema illum_cmd_schema = {
+static const struct bu_arg_schema illum_cmd_schema = {
     "illum", "Set object illumination", illum_schema_options, illum_schema_operands,
-    BU_CMD_PARSE_OPTIONS_FIRST, BU_CMD_SCHEMA_CONSTRAINTS(illum_schema_validate, NULL)
+    BU_ARG_PARSE_OPTIONS_FIRST, BU_ARG_SCHEMA_CONSTRAINTS(illum_schema_validate, NULL)
 };
 
-static const struct bu_cmd_schema *
+static const struct bu_arg_schema *
 illum_schema(void)
 {
     return &illum_cmd_schema;

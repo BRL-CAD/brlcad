@@ -29,19 +29,19 @@
 #include <ctype.h>
 #include <string.h>
 
-#include "bu/cmdschema.h"
+#include "bu/arg.h"
 
 #include "../ged_private.h"
 
 static const char * const rot_about_keywords[] = {"e", "k", "m", "v", NULL};
-static const struct bu_cmd_operand rot_about_schema_operands[] = {
-    BU_CMD_OPERAND_KEYWORDS("pivot", BU_CMD_VALUE_KEYWORD, 0, 1,
+static const struct bu_arg_operand rot_about_schema_operands[] = {
+    BU_ARG_OPERAND_KEYWORDS("pivot", BU_ARG_VALUE_KEYWORD, 0, 1,
 	"Eye, keypoint, model origin, or view center", NULL, rot_about_keywords),
-    BU_CMD_OPERAND_NULL
+    BU_ARG_OPERAND_NULL
 };
-GED_EXPORT const struct bu_cmd_schema ged_rot_about_cmd_schema = {
+GED_EXPORT const struct bu_arg_schema ged_rot_about_cmd_schema = {
     "rot_about", "Query or set the rotation pivot", NULL,
-    rot_about_schema_operands, BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+    rot_about_schema_operands, BU_ARG_PARSE_STOP_AT_FIRST_OPERAND, BU_ARG_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
 
 
@@ -63,7 +63,7 @@ ged_rotate_about_core(struct ged *gedp, int argc, const char *argv[])
 	return BRLCAD_OK;
     }
 
-    if (bu_cmd_schema_parse_complete(&ged_rot_about_cmd_schema, &parse_dummy,
+    if (bu_arg_schema_parse_complete(&ged_rot_about_cmd_schema, &parse_dummy,
 	gedp->ged_result_str, argc - 1, argv + 1) < 0) {
 	ged_cmd_help_append(gedp->ged_result_str, argv[0], argv[0]);
 	return BRLCAD_ERROR;

@@ -25,14 +25,14 @@
 
 #include "common.h"
 
-#include "bu/cmdschema.h"
+#include "bu/arg.h"
 
 #include "../ged_private.h"
 
-static const struct bu_cmd_schema clear_cmd_schema = {
+static const struct bu_arg_schema clear_cmd_schema = {
     "clear", "Clear the command console", NULL, NULL,
-    BU_CMD_PARSE_INTERSPERSED,
-    BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+    BU_ARG_PARSE_INTERSPERSED,
+    BU_ARG_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
 
 // clear is a no-op at the libged level - its purpose is to support ged_exec

@@ -14,7 +14,7 @@ set(
   test_booleanize.c
   test_cache.cpp
   test_cmd.c
-  test_cmdschema.c
+  test_arg.c
   test_color.c
   test_convert.c
   test_datetime.c
@@ -128,7 +128,7 @@ validate_style("${bu_test_srcs}" bu_test)
 brlcad_addexec(bu_sscanf test_sscanf.c libbu TEST)
 brlcad_addexec(bu_gethostname test_gethostname.c libbu TEST)
 brlcad_add_test(NAME bu_argv COMMAND bu_test test_argv)
-brlcad_add_test(NAME bu_cmdschema COMMAND bu_test test_cmdschema)
+brlcad_add_test(NAME bu_arg COMMAND bu_test test_arg)
 brlcad_add_test(NAME bu_backtrace COMMAND bu_test test_backtrace)
 brlcad_add_test(NAME bu_bomb COMMAND bu_test test_bomb "$<TARGET_FILE:bu_test>")
 brlcad_add_test(NAME bu_dir COMMAND bu_test test_dir)

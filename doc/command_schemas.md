@@ -4,7 +4,7 @@ Libged commands publish one command description alongside their plugin entry.
 Most flat commands use a compact `ged_opt_spec`: familiar `bu_opt_desc`
 rows define options, while one short `ged_opt_rule` table declares positional
 forms and the uncommon relationships that option parsing alone cannot express.  More
-complex commands may publish a flat `bu_cmd_schema`, a nested `bu_cmd_tree`, a
+complex commands may publish a flat `bu_arg_schema`, a nested `bu_arg_tree`, a
 set of context-selected native forms, or a `ged_cmd_grammar` adapter for a
 parser-owned language such as `search`.
 Execution, help, validation, completion, linting, and machine-readable grammar
@@ -28,7 +28,7 @@ The native descriptions can express:
 
 Structural validation and declarative constraints always run before a
 command-owned validator.  The callback receives that result and may refine it;
-it does not copy the schema or recursively invoke `bu_cmd_schema_validate`.
+it does not copy the schema or recursively invoke `bu_arg_schema_validate`.
 Context-aware validation follows the same rule after context-free validation.
 
 Ordinary commands register an option specification with
@@ -69,7 +69,7 @@ flat rule table to its internal schema engine once at registration.  Parsing sti
 builder through `bu_opt_parse_build`, so execution and editor metadata share
 the option spellings and reader functions.
 
-Most commands need not initialize `bu_cmd_operand` rows directly.
+Most commands need not initialize `bu_arg_operand` rows directly.
 `GED_OPT` accepts a compact positional description that is parsed
 and linted once during registration.  Its first word may select
 `options-first`, `interspersed`, or `stop-at-first-operand`; following words
@@ -86,7 +86,7 @@ database roles, semantic refinements, and validators in one readable place:
 
 ```c
 static const ged_opt_rule bb_opt_rules[] = {
-    GED_RULE_OPERANDS(BU_CMD_CONDITION_ANY_OPTION_PRESENT, "o", 1, 1,
+    GED_RULE_OPERANDS(BU_ARG_CONDITION_ANY_OPTION_PRESENT, "o", 1, 1,
         "-o requires exactly one BoT object"),
     GED_RULE_NULL
 };
@@ -136,14 +136,14 @@ registry or a general-purpose parser language.
 ## Native-schema authoring
 
 Use a native schema only when the compact declaration cannot describe the
-command. `BU_CMD_SCHEMA_BOUND` is the preferred declaration: unlike the older
+command. `BU_ARG_SCHEMA_BOUND` is the preferred declaration: unlike the older
 tail macros, it presents every independent command-level property in one
 place and permits them to be combined.
 
 ```c
-static const struct bu_cmd_schema command_schema =
-    BU_CMD_SCHEMA_BOUND("command", "Command summary", command_options,
-        command_operands, BU_CMD_PARSE_OPTIONS_FIRST, command_groups,
+static const struct bu_arg_schema command_schema =
+    BU_ARG_SCHEMA_BOUND("command", "Command summary", command_options,
+        command_operands, BU_ARG_PARSE_OPTIONS_FIRST, command_groups,
         command_constraints, command_structure_validate,
         command_context_validate);
 ```
@@ -151,17 +151,17 @@ static const struct bu_cmd_schema command_schema =
 Pass `NULL` for a property that is not needed. The arguments after the parse
 policy are, in order: repeated groups, declarative constraints, a
 side-effect-free structural validator, and a context-aware validator. Use the
-ordinary short `BU_CMD_*` option and operand rows for scalar values. For a
-multi-token option, define a named `bu_cmd_arg_shape` and a named consumer;
+ordinary short `BU_ARG_*` option and operand rows for scalar values. For a
+multi-token option, define a named `bu_arg_shape` and a named consumer;
 this is clearer and more reusable than an inline custom parser. Use
-`BU_CMD_OPTION_CONSUME` for the common required shape; reserve the fully
-explicit `BU_CMD_OPTION_SHAPED` form for an optional argument or a canonical
+`BU_ARG_OPTION_CONSUME` for the common required shape; reserve the fully
+explicit `BU_ARG_OPTION_SHAPED` form for an optional argument or a canonical
 spelling different from the long option spelling.
 
-`BU_CMD_SCHEMA_EXTERNAL` is specifically for an established command whose
+`BU_ARG_SCHEMA_EXTERNAL` is specifically for an established command whose
 executor still owns option parsing. It makes the schema metadata-only and
-permits `BU_CMD_VALUE_UNBOUND` or `BU_CMD_FLAG_UNBOUND` rows for help,
-validation, and completion. New commands should use `BU_CMD_SCHEMA_BOUND`;
+permits `BU_ARG_VALUE_UNBOUND` or `BU_ARG_FLAG_UNBOUND` rows for help,
+validation, and completion. New commands should use `BU_ARG_SCHEMA_BOUND`;
 the native linter rejects unbound rows in a bound schema. An external schema
 has no context callback slot, since it must not become a second execution
 parser—use a `ged_cmd_grammar` adapter when live context is part of that
@@ -169,7 +169,7 @@ legacy language.
 
 Tables are non-owning and must have static lifetime. Terminate options,
 operands, groups, constraints, and tree-node lists with their corresponding
-`*_NULL` entry. `BU_CMD_ALIASES(...)` and `BU_CMD_TREE(...)` provide compact
+`*_NULL` entry. `BU_ARG_ALIASES(...)` and `BU_ARG_TREE(...)` provide compact
 child-alias and tree declarations. Choose either simple
 keyword strings or rich keyword rows with aliases and help; do not supply
 both for one option or operand.
@@ -212,7 +212,7 @@ depend on an open database.  Parser-owned adapters publish the static subset
 they can describe without executing a command.
 
 Applications that already own a native schema or tree can publish it directly
-with `bu_cmd_schema_describe_json` or `bu_cmd_tree_describe_json`.
+with `bu_arg_schema_describe_json` or `bu_arg_tree_describe_json`.
 
 The installed geometry shell provides a command-line publication interface:
 
@@ -232,7 +232,7 @@ and paths, search paths and types, views, command names, primitive types,
 attributes, units, colors, vectors, matrices, and files.  Schema lint rejects
 an unresolved provider.
 
-`BU_CMD_VALUE_FILE` requests common filesystem completion.  Libged delegates
+`BU_ARG_VALUE_FILE` requests common filesystem completion.  Libged delegates
 to `bu_file_complete`, keeping filtering, sorting, prefix preservation, and
 platform path handling consistent while allowing a GUI to substitute a native
 file dialog.
@@ -244,8 +244,8 @@ passing `NULL` as the command audits the full registry.  Native schema and tree
 linting detect malformed rows, duplicate names, invalid shapes and policies,
 unresolved providers, and inconsistent alias metadata.
 
-At the lower level, `bu_cmd_schema_lint` checks one flat schema and
-`bu_cmd_tree_lint` recursively checks the root and every child schema.
+At the lower level, `bu_arg_schema_lint` checks one flat schema and
+`bu_arg_tree_lint` recursively checks the root and every child schema.
 
 The libged command-analysis and completion-corpus tests audit published JSON,
 completion replacement ranges, candidate ordering, round-trip parsing, nested
@@ -254,11 +254,11 @@ databases and manual examples.  A static source audit ensures any libged
 command using `bu_opt` also registers a `ged_opt_spec`; an option-only
 parser is not sufficient command metadata.
 
-## Choosing between `bu_opt` and `bu_cmd_schema`
+## Choosing between `bu_opt` and `bu_arg_schema`
 
 `bu_opt` remains the concise public API for conventional option-only parsing.
 Its descriptor table and callback readers are translated to the same parser
-engine used by `bu_cmd_schema`, preserving the established API and argument
+engine used by `bu_arg_schema`, preserving the established API and argument
 behavior without maintaining a second parser.  It is a good fit when a caller
 only needs to consume options and retain the leftover arguments.
 
@@ -268,17 +268,17 @@ option completion and standard-reader type checking.  `bu_opt_desc_build`,
 project a reentrant builder into the corresponding operation.
 
 For ordinary libged commands, add a `ged_opt_spec` rather than replacing
-the option rows with a second API.  Use `bu_cmd_schema` directly only when a
+the option rows with a second API.  Use `bu_arg_schema` directly only when a
 command genuinely benefits from its advanced typed ranges, forms, or parser
 bindings.  For example, an inclusive integer bound is declared directly:
 
 ```c
-BU_CMD_INTEGER_RANGE("l", "level", struct args, level,
+BU_ARG_INTEGER_RANGE("l", "level", struct args, level,
     1, 5, "count", "Refinement level")
 ```
 
 The parser and validator both enforce the bound, the linter verifies that the
 range is compatible with the value type, and JSON consumers receive the same
-minimum and maximum.  `bu_cmd_schema_parse_known` supports layered parsers by
+minimum and maximum.  `bu_arg_schema_parse_known` supports layered parsers by
 consuming recognized options while leaving unknown words in the operand
 suffix.

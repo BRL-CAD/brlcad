@@ -25,7 +25,7 @@
 
 #include "common.h"
 
-#include "bu/cmdschema.h"
+#include "bu/arg.h"
 #include "bv/util.h"
 #include "ged.h"
 
@@ -42,7 +42,7 @@ static int
 mirror_direction_consume(struct bu_vls *msg, size_t argc, const char **argv, void *storage)
 {
     vect_t direction = VINIT_ZERO;
-    int consumed = bu_cmd_vector3_from_argv(direction, argc, (const char * const *)argv);
+    int consumed = bu_arg_vector3_from_argv(direction, argc, (const char * const *)argv);
 
     if (consumed == 0 || (size_t)consumed != argc) {
 	if (msg)
@@ -88,22 +88,22 @@ mirror_axis_z(struct bu_vls *UNUSED(msg), const char *UNUSED(arg), void *storage
 
 
 static int
-mirror_schema_validate(const struct bu_cmd_schema *schema, size_t argc,
-	const char **argv, size_t cursor_arg, struct bu_cmd_validate_result *result)
+mirror_schema_validate(const struct bu_arg_schema *schema, size_t argc,
+	const char **argv, size_t cursor_arg, struct bu_arg_validate_result *result)
 {
-    struct bu_cmd_schema flat = *schema;
+    struct bu_arg_schema flat = *schema;
     int ret;
 
-    ret = bu_cmd_schema_validate_syntax(&flat, argc, argv, cursor_arg, result);
-    if (ret || result->state == BU_CMD_VALIDATE_INVALID)
+    ret = bu_arg_schema_validate_syntax(&flat, argc, argv, cursor_arg, result);
+    if (ret || result->state == BU_ARG_VALIDATE_INVALID)
 	return ret;
-    if (bu_cmd_schema_option_present(schema, argc, argv, "h")) {
-	bu_cmd_validate_result_clear(result);
-	result->state = BU_CMD_VALIDATE_VALID;
+    if (bu_arg_schema_option_present(schema, argc, argv, "h")) {
+	bu_arg_validate_result_clear(result);
+	result->state = BU_ARG_VALIDATE_VALID;
 	result->token_start = cursor_arg < argc ? cursor_arg : argc;
 	result->token_end = result->token_start;
-	result->expected = BU_CMD_EXPECT_NONE;
-	result->completion_type = BU_CMD_VALUE_FLAG;
+	result->expected = BU_ARG_EXPECT_NONE;
+	result->completion_type = BU_ARG_VALUE_FLAG;
 	result->hint = "command help";
     }
     return 0;
@@ -113,58 +113,58 @@ mirror_schema_validate(const struct bu_cmd_schema *schema, size_t argc,
 static const char * const mirror_axis_x_aliases[] = {"X", NULL};
 static const char * const mirror_axis_y_aliases[] = {"Y", NULL};
 static const char * const mirror_axis_z_aliases[] = {"Z", NULL};
-static const struct bu_cmd_value_keyword mirror_axis_keywords[] = {
+static const struct bu_arg_value_keyword mirror_axis_keywords[] = {
     {"x", mirror_axis_x_aliases, "X mirror-plane normal"},
     {"y", mirror_axis_y_aliases, "Y mirror-plane normal"},
     {"z", mirror_axis_z_aliases, "Z mirror-plane normal"},
     {NULL, NULL, NULL}
 };
-static const struct bu_cmd_arg_shape mirror_vector3_arg_shape = {
-    BU_CMD_ARG_SHAPE_VECTOR3, 1, 3, "packed x/y/z or three coordinates", NULL, NULL
+static const struct bu_arg_shape mirror_vector3_arg_shape = {
+    BU_ARG_SHAPE_VECTOR3, 1, 3, "packed x/y/z or three coordinates", NULL, NULL
 };
-static const struct bu_cmd_option mirror_schema_options[] = {
-    BU_CMD_FLAG("h", NULL, struct mirror_args, help, "Print command usage"),
-    BU_CMD_ALIAS_SHORT("H", "h", 1),
-    BU_CMD_ALIAS_SHORT("?", "h", 1),
-    BU_CMD_VECTOR3("p", NULL, struct mirror_args, point, "x/y/z", "Point on mirror plane"),
-    BU_CMD_ALIAS_SHORT("P", "p", 1),
-    BU_CMD_OPTION_SHAPED("d", NULL, "d", struct mirror_args, direction,
-	BU_CMD_VALUE_VECTOR, "x/y/z", "Nonzero mirror-plane normal",
-	BU_CMD_ARG_REQUIRED, &mirror_vector3_arg_shape, mirror_direction_consume),
-    BU_CMD_ALIAS_SHORT("D", "d", 1),
-    BU_CMD_CUSTOM_FLAG("x", NULL, "x", struct mirror_args, direction,
+static const struct bu_arg_option mirror_schema_options[] = {
+    BU_ARG_FLAG("h", NULL, struct mirror_args, help, "Print command usage"),
+    BU_ARG_ALIAS_SHORT("H", "h", 1),
+    BU_ARG_ALIAS_SHORT("?", "h", 1),
+    BU_ARG_VECTOR3("p", NULL, struct mirror_args, point, "x/y/z", "Point on mirror plane"),
+    BU_ARG_ALIAS_SHORT("P", "p", 1),
+    BU_ARG_OPTION_SHAPED("d", NULL, "d", struct mirror_args, direction,
+	BU_ARG_VALUE_VECTOR, "x/y/z", "Nonzero mirror-plane normal",
+	BU_ARG_REQUIRED, &mirror_vector3_arg_shape, mirror_direction_consume),
+    BU_ARG_ALIAS_SHORT("D", "d", 1),
+    BU_ARG_CUSTOM_FLAG("x", NULL, "x", struct mirror_args, direction,
 	mirror_axis_x, "Mirror across the X plane"),
-    BU_CMD_ALIAS_SHORT("X", "x", 1),
-    BU_CMD_CUSTOM_FLAG("y", NULL, "y", struct mirror_args, direction,
+    BU_ARG_ALIAS_SHORT("X", "x", 1),
+    BU_ARG_CUSTOM_FLAG("y", NULL, "y", struct mirror_args, direction,
 	mirror_axis_y, "Mirror across the Y plane"),
-    BU_CMD_ALIAS_SHORT("Y", "y", 1),
-    BU_CMD_CUSTOM_FLAG("z", NULL, "z", struct mirror_args, direction,
+    BU_ARG_ALIAS_SHORT("Y", "y", 1),
+    BU_ARG_CUSTOM_FLAG("z", NULL, "z", struct mirror_args, direction,
 	mirror_axis_z, "Mirror across the Z plane"),
-    BU_CMD_ALIAS_SHORT("Z", "z", 1),
-    BU_CMD_NUMBER("o", NULL, struct mirror_args, offset, "offset", "Mirror-plane offset"),
-    BU_CMD_ALIAS_SHORT("O", "o", 1),
-    BU_CMD_OPTION_NULL
+    BU_ARG_ALIAS_SHORT("Z", "z", 1),
+    BU_ARG_NUMBER("o", NULL, struct mirror_args, offset, "offset", "Mirror-plane offset"),
+    BU_ARG_ALIAS_SHORT("O", "o", 1),
+    BU_ARG_OPTION_NULL
 };
-static const struct bu_cmd_operand mirror_schema_operands[] = {
-    BU_CMD_OPERAND("source_object", BU_CMD_VALUE_DB_OBJECT, 1, 1,
+static const struct bu_arg_operand mirror_schema_operands[] = {
+    BU_ARG_OPERAND("source_object", BU_ARG_VALUE_DB_OBJECT, 1, 1,
 	"Existing object to mirror", "ged.db_object"),
-    BU_CMD_OPERAND("output_object", BU_CMD_VALUE_STRING, 1, 1,
+    BU_ARG_OPERAND("output_object", BU_ARG_VALUE_STRING, 1, 1,
 	"Name for the mirrored object", NULL),
-    BU_CMD_OPERAND_KEYWORD_VALUES("axis", BU_CMD_VALUE_KEYWORD, 0, 1,
+    BU_ARG_OPERAND_KEYWORD_VALUES("axis", BU_ARG_VALUE_KEYWORD, 0, 1,
 	"Optional compatibility axis selector", NULL, mirror_axis_keywords),
-    BU_CMD_OPERAND_NULL
+    BU_ARG_OPERAND_NULL
 };
-static const struct bu_cmd_schema mirror_cmd_schema = {
+static const struct bu_arg_schema mirror_cmd_schema = {
     "mirror", "Mirror a geometry object", mirror_schema_options,
-    mirror_schema_operands, BU_CMD_PARSE_OPTIONS_FIRST,
-    BU_CMD_SCHEMA_CONSTRAINTS(mirror_schema_validate, NULL)
+    mirror_schema_operands, BU_ARG_PARSE_OPTIONS_FIRST,
+    BU_ARG_SCHEMA_CONSTRAINTS(mirror_schema_validate, NULL)
 };
 
 
 static void
 mirror_show_help(struct ged *gedp, const char *command)
 {
-    char *help = bu_cmd_schema_help(&mirror_cmd_schema, command);
+    char *help = bu_arg_schema_help(&mirror_cmd_schema, command);
 
     if (help) {
 	bu_vls_strcat(gedp->ged_result_str, help);
@@ -196,7 +196,7 @@ ged_mirror_core(struct ged *gedp, int argc, const char *argv[])
 	return GED_HELP;
     }
 
-    operand_index = bu_cmd_schema_parse_complete(&mirror_cmd_schema, &args,
+    operand_index = bu_arg_schema_parse_complete(&mirror_cmd_schema, &args,
 	gedp->ged_result_str, argc - 1, argv + 1);
     if (operand_index < 0) {
 	mirror_show_help(gedp, argv[0]);

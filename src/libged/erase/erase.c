@@ -28,7 +28,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "bu/cmdschema.h"
+#include "bu/arg.h"
 
 #include "../ged_private.h"
 
@@ -36,7 +36,7 @@
 static void
 erase_legacy_show_help(struct ged *gedp, const char *command)
 {
-    char *help = bu_cmd_schema_help(&ged_erase_legacy_schema, command);
+    char *help = bu_arg_schema_help(&ged_erase_legacy_schema, command);
     if (help) {
 	bu_vls_strcat(gedp->ged_result_str, help);
 	bu_free(help, "erase legacy native help");
@@ -73,7 +73,7 @@ ged_erase_core(struct ged *gedp, int argc, const char *argv[])
     }
 
 
-    operand_index = bu_cmd_schema_parse_complete(&ged_erase_legacy_schema, &args,
+    operand_index = bu_arg_schema_parse_complete(&ged_erase_legacy_schema, &args,
 	gedp->ged_result_str, argc - 1, argv + 1);
     if (operand_index < 0) {
 	erase_legacy_show_help(gedp, argv[0]);

@@ -28,12 +28,12 @@
 #include <string.h>
 
 #include "bu/cmd.h"
-#include "bu/cmdschema.h"
+#include "bu/arg.h"
 
 #include "../ged_private.h"
 
 GED_DEFINE_TYPED_OPERAND_SCHEMA_PROVIDER(get_type, "get_type",
-    "Report a database object's primitive type", "object", BU_CMD_VALUE_DB_PATH,
+    "Report a database object's primitive type", "object", BU_ARG_VALUE_DB_PATH,
     1, 1, "Database object or path", "ged.db_path");
 
 
@@ -58,7 +58,7 @@ ged_get_type_core(struct ged *gedp, int argc, const char *argv[])
 	return GED_HELP;
     }
 
-	operand_index = bu_cmd_schema_parse_complete(&get_type_cmd_schema, &parse_dummy,
+	operand_index = bu_arg_schema_parse_complete(&get_type_cmd_schema, &parse_dummy,
 	gedp->ged_result_str, argc - 1, argv + 1);
     if (operand_index < 0 || argc - 1 - operand_index != 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);

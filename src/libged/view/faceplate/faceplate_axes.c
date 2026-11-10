@@ -30,7 +30,7 @@
 #include <string.h>
 
 #include "bu/cmd.h"
-#include "bu/cmdschema.h"
+#include "bu/arg.h"
 #include "bu/color.h"
 #include "bu/vls.h"
 #include "bv.h"
@@ -70,7 +70,7 @@ _fp_axes_cmd_size(void *bs, int argc, const char **argv)
 	return BRLCAD_ERROR;
     }
     fastf_t val;
-    if (!bu_cmd_number_from_str(&val, argv[0])) {
+    if (!bu_arg_number_from_str(&val, argv[0])) {
 	bu_vls_printf(gedp->ged_result_str, "Invalid argument %s\n", argv[0]);
 	return BRLCAD_ERROR;
     }
@@ -106,7 +106,7 @@ _fp_axes_cmd_linewidth(void *bs, int argc, const char **argv)
 	return BRLCAD_ERROR;
     }
     int val;
-    if (!bu_cmd_integer_from_str(&val, argv[0])) {
+    if (!bu_arg_integer_from_str(&val, argv[0])) {
 	bu_vls_printf(gedp->ged_result_str, "Invalid argument %s\n", argv[0]);
 	return BRLCAD_ERROR;
     }
@@ -148,7 +148,7 @@ _fp_axes_cmd_pos_only(void *bs, int argc, const char **argv)
     }
 
     int val;
-    if (!bu_cmd_integer_from_str(&val, argv[0]) || (val != 0 && val != 1)) {
+    if (!bu_arg_integer_from_str(&val, argv[0]) || (val != 0 && val != 1)) {
 	bu_vls_printf(gedp->ged_result_str, "Invalid argument %s\n", argv[0]);
 	return BRLCAD_ERROR;
     }
@@ -186,7 +186,7 @@ _fp_axes_cmd_fp_axes_color(void *bs, int argc, const char **argv)
     }
 
     struct bu_color c;
-    int opt_ret = bu_cmd_color_from_argv(&c, (size_t)argc, (const char * const *)argv);
+    int opt_ret = bu_arg_color_from_argv(&c, (size_t)argc, (const char * const *)argv);
     if (opt_ret != 1 && opt_ret != 3) {
 	bu_vls_printf(gedp->ged_result_str, "Invalid color specifier\n");
 	return BRLCAD_ERROR;
@@ -223,7 +223,7 @@ _fp_axes_cmd_label(void *bs, int argc, const char **argv)
 	return BRLCAD_ERROR;
     }
     int val;
-    if (!bu_cmd_integer_from_str(&val, argv[0]) || (val != 0 && val != 1)) {
+    if (!bu_arg_integer_from_str(&val, argv[0]) || (val != 0 && val != 1)) {
 	bu_vls_printf(gedp->ged_result_str, "Invalid argument %s\n", argv[0]);
 	return BRLCAD_ERROR;
     }
@@ -261,7 +261,7 @@ _fp_axes_cmd_label_color(void *bs, int argc, const char **argv)
     }
 
     struct bu_color c;
-    int opt_ret = bu_cmd_color_from_argv(&c, (size_t)argc, (const char * const *)argv);
+    int opt_ret = bu_arg_color_from_argv(&c, (size_t)argc, (const char * const *)argv);
     if (opt_ret != 1 && opt_ret != 3) {
 	bu_vls_printf(gedp->ged_result_str, "Invalid color specifier\n");
 	return BRLCAD_ERROR;
@@ -299,7 +299,7 @@ _fp_axes_cmd_triple_color(void *bs, int argc, const char **argv)
 	return BRLCAD_ERROR;
     }
     int val;
-    if (!bu_cmd_integer_from_str(&val, argv[0]) || (val != 0 && val != 1)) {
+    if (!bu_arg_integer_from_str(&val, argv[0]) || (val != 0 && val != 1)) {
 	bu_vls_printf(gedp->ged_result_str, "Invalid argument %s\n", argv[0]);
 	return BRLCAD_ERROR;
     }
@@ -335,7 +335,7 @@ _fp_axes_cmd_tick(void *bs, int argc, const char **argv)
 	return BRLCAD_ERROR;
     }
     int val;
-    if (!bu_cmd_integer_from_str(&val, argv[0]) || (val != 0 && val != 1)) {
+    if (!bu_arg_integer_from_str(&val, argv[0]) || (val != 0 && val != 1)) {
 	bu_vls_printf(gedp->ged_result_str, "Invalid argument %s\n", argv[0]);
 	return BRLCAD_ERROR;
     }
@@ -371,7 +371,7 @@ _fp_axes_cmd_tick_length(void *bs, int argc, const char **argv)
 	return BRLCAD_ERROR;
     }
     int val;
-    if (!bu_cmd_integer_from_str(&val, argv[0])) {
+    if (!bu_arg_integer_from_str(&val, argv[0])) {
 	bu_vls_printf(gedp->ged_result_str, "Invalid argument %s\n", argv[0]);
 	return BRLCAD_ERROR;
     }
@@ -412,7 +412,7 @@ _fp_axes_cmd_tick_major_length(void *bs, int argc, const char **argv)
 	return BRLCAD_ERROR;
     }
     int val;
-    if (!bu_cmd_integer_from_str(&val, argv[0])) {
+    if (!bu_arg_integer_from_str(&val, argv[0])) {
 	bu_vls_printf(gedp->ged_result_str, "Invalid argument %s\n", argv[0]);
 	return BRLCAD_ERROR;
     }
@@ -453,7 +453,7 @@ _fp_axes_cmd_tick_interval(void *bs, int argc, const char **argv)
 	return BRLCAD_ERROR;
     }
     fastf_t val;
-    if (!bu_cmd_number_from_str(&val, argv[0])) {
+    if (!bu_arg_number_from_str(&val, argv[0])) {
 	bu_vls_printf(gedp->ged_result_str, "Invalid argument %s\n", argv[0]);
 	return BRLCAD_ERROR;
     }
@@ -489,7 +489,7 @@ _fp_axes_cmd_ticks_per_major(void *bs, int argc, const char **argv)
 	return BRLCAD_ERROR;
     }
     int val;
-    if (!bu_cmd_integer_from_str(&val, argv[0])) {
+    if (!bu_arg_integer_from_str(&val, argv[0])) {
 	bu_vls_printf(gedp->ged_result_str, "Invalid argument %s\n", argv[0]);
 	return BRLCAD_ERROR;
     }
@@ -530,7 +530,7 @@ _fp_axes_cmd_tick_threshold(void *bs, int argc, const char **argv)
 	return BRLCAD_ERROR;
     }
     int val;
-    if (!bu_cmd_integer_from_str(&val, argv[0])) {
+    if (!bu_arg_integer_from_str(&val, argv[0])) {
 	bu_vls_printf(gedp->ged_result_str, "Invalid argument %s\n", argv[0]);
 	return BRLCAD_ERROR;
     }
@@ -573,7 +573,7 @@ _fp_axes_cmd_tick_color(void *bs, int argc, const char **argv)
     }
 
     struct bu_color c;
-    int opt_ret = bu_cmd_color_from_argv(&c, (size_t)argc, (const char * const *)argv);
+    int opt_ret = bu_arg_color_from_argv(&c, (size_t)argc, (const char * const *)argv);
     if (opt_ret != 1 && opt_ret != 3) {
 	bu_vls_printf(gedp->ged_result_str, "Invalid color specifier\n");
 	return BRLCAD_ERROR;
@@ -613,7 +613,7 @@ _fp_axes_cmd_tick_major_color(void *bs, int argc, const char **argv)
     }
 
     struct bu_color c;
-    int opt_ret = bu_cmd_color_from_argv(&c, (size_t)argc, (const char * const *)argv);
+    int opt_ret = bu_arg_color_from_argv(&c, (size_t)argc, (const char * const *)argv);
     if (opt_ret != 1 && opt_ret != 3) {
 	bu_vls_printf(gedp->ged_result_str, "Invalid color specifier\n");
 	return BRLCAD_ERROR;
@@ -674,7 +674,7 @@ _fp_cmd_model_axes(void *bs, int argc, const char **argv)
     }
 
     struct bu_vls parse_msgs = BU_VLS_INIT_ZERO;
-    int subcommand_index = bu_cmd_schema_parse(&ged_faceplate_subcommand_schema,
+    int subcommand_index = bu_arg_schema_parse(&ged_faceplate_subcommand_schema,
 	&args, &parse_msgs, argc, argv);
     if (subcommand_index < 0) {
 	bu_vls_printf(gedp->ged_result_str, "%s", bu_vls_addr(&parse_msgs));
@@ -727,7 +727,7 @@ _fp_cmd_view_axes(void *bs, int argc, const char **argv)
     }
 
     struct bu_vls parse_msgs = BU_VLS_INIT_ZERO;
-    int subcommand_index = bu_cmd_schema_parse(&ged_faceplate_subcommand_schema,
+    int subcommand_index = bu_arg_schema_parse(&ged_faceplate_subcommand_schema,
 	&args, &parse_msgs, argc, argv);
     if (subcommand_index < 0) {
 	bu_vls_printf(gedp->ged_result_str, "%s", bu_vls_addr(&parse_msgs));

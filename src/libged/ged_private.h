@@ -234,11 +234,11 @@ size_t _ged_registry_access_depth(void);
 /* Private bulk-analysis cache for registry-owned compact schemas.  It avoids
  * revalidating every growing argv prefix when only option-selected semantic
  * providers are dynamic. */
-void *_ged_schema_analysis_plan_create(const struct bu_cmd_schema *schema,
+void *_ged_schema_analysis_plan_create(const struct bu_arg_schema *schema,
 	size_t argc, const char **argv);
 int _ged_schema_analysis_plan_role(void *plan,
-	const struct bu_cmd_operand *operand,
-	struct bu_cmd_validate_result *result);
+	const struct bu_arg_operand *operand,
+	struct bu_arg_validate_result *result);
 void _ged_schema_analysis_plan_destroy(void *plan);
 
 #ifndef FALSE
@@ -596,7 +596,7 @@ GED_EXPORT extern int ged_repair(struct ged *gedp, int argc, const char **argv);
 
 GED_EXPORT extern void ged_push_scene_obj(struct ged *gedp, struct bv_scene_obj *sp);
 GED_EXPORT extern struct bv_scene_obj *ged_pop_scene_obj(struct ged *gedp);
-GED_EXPORT extern const struct bu_cmd_schema *_ged_cmd_native_schema(const char *cmd);
+GED_EXPORT extern const struct bu_arg_schema *_ged_cmd_native_schema(const char *cmd);
 GED_EXPORT extern const struct ged_cmd_grammar *_ged_cmd_grammar(const char *cmd);
 GED_EXPORT extern const struct ged_cmd_grammar ged_search_grammar;
 GED_EXPORT extern const struct ged_cmd_grammar ged_erase_grammar;
@@ -604,37 +604,37 @@ GED_EXPORT extern const struct ged_cmd_grammar ged_select_grammar;
 GED_EXPORT extern const struct ged_cmd_grammar ged_rselect_grammar;
 GED_EXPORT extern const struct ged_cmd_grammar ged_view_grammar;
 GED_EXPORT extern const struct ged_cmd_grammar ged_view2_grammar;
-GED_EXPORT extern const struct bu_cmd_schema ged_select_legacy_schema;
-GED_EXPORT extern const struct bu_cmd_schema ged_rselect_legacy_schema;
-GED_EXPORT extern const struct bu_cmd_schema ged_select_new_schema;
-GED_EXPORT extern const struct bu_cmd_tree ged_select_new_tree;
-GED_EXPORT extern const struct bu_cmd_schema ged_view_native_schema;
-GED_EXPORT extern const struct bu_cmd_schema ged_view2_native_schema;
-GED_EXPORT extern const struct bu_cmd_schema ged_view_knob_schema;
-GED_EXPORT extern const struct bu_cmd_schema ged_view_lod_schema;
+GED_EXPORT extern const struct bu_arg_schema ged_select_legacy_schema;
+GED_EXPORT extern const struct bu_arg_schema ged_rselect_legacy_schema;
+GED_EXPORT extern const struct bu_arg_schema ged_select_new_schema;
+GED_EXPORT extern const struct bu_arg_tree ged_select_new_tree;
+GED_EXPORT extern const struct bu_arg_schema ged_view_native_schema;
+GED_EXPORT extern const struct bu_arg_schema ged_view2_native_schema;
+GED_EXPORT extern const struct bu_arg_schema ged_view_knob_schema;
+GED_EXPORT extern const struct bu_arg_schema ged_view_lod_schema;
 GED_EXPORT extern char *ged_view_lod_grammar_json(void);
 GED_EXPORT extern char *ged_view_lod_help(const char *invocation);
 GED_EXPORT extern int ged_view_lod_core(struct ged *gedp, struct bview *view,
 	int argc, const char **argv);
-GED_EXPORT extern const struct bu_cmd_tree ged_view_tree;
-GED_EXPORT extern const struct bu_cmd_tree ged_view2_tree;
-GED_EXPORT extern const struct bu_cmd_schema ged_erase_legacy_schema;
-GED_EXPORT extern const struct bu_cmd_schema ged_erase_new_schema;
+GED_EXPORT extern const struct bu_arg_tree ged_view_tree;
+GED_EXPORT extern const struct bu_arg_tree ged_view2_tree;
+GED_EXPORT extern const struct bu_arg_schema ged_erase_legacy_schema;
+GED_EXPORT extern const struct bu_arg_schema ged_erase_new_schema;
 
 /* GED adapters materialize database-aware completion candidates after libbu's
  * first-class command form set has selected a schema or tree. */
 GED_EXPORT extern int ged_cmd_native_forms_validate(struct ged *gedp,
-	const struct bu_cmd_forms *forms,
+	const struct bu_arg_forms *forms,
 	const char *input, size_t cursor_pos, struct ged_cmd_validate_result *result);
 GED_EXPORT extern int ged_cmd_native_forms_analyze(struct ged *gedp,
-	const struct bu_cmd_forms *forms,
+	const struct bu_arg_forms *forms,
 	const char *input, struct ged_cmd_analysis *analysis);
 GED_EXPORT extern char *ged_cmd_native_forms_describe_json(
-	const struct bu_cmd_forms *forms);
+	const struct bu_arg_forms *forms);
 GED_EXPORT extern char *ged_cmd_native_forms_help(
-	const struct bu_cmd_forms *forms, const char *invocation);
+	const struct bu_arg_forms *forms, const char *invocation);
 GED_EXPORT extern int ged_cmd_native_forms_lint(
-	const struct bu_cmd_forms *forms, struct bu_vls *msgs);
+	const struct bu_arg_forms *forms, struct bu_vls *msgs);
 
 /* The GED search command owns these leading options.  The expression grammar
  * itself is published by librt/search.h; keeping this small command prefix in

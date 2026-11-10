@@ -30,7 +30,7 @@
 #include <string.h>
 
 
-#include "bu/cmdschema.h"
+#include "bu/arg.h"
 #include "bn.h"
 
 #include "../ged_private.h"

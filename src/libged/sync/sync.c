@@ -29,12 +29,12 @@
 #include <ctype.h>
 #include <string.h>
 
-#include "bu/cmdschema.h"
+#include "bu/arg.h"
 
 #include "../ged_private.h"
 
 GED_DEFINE_NO_ARG_SCHEMA_POLICY(sync, "sync",
-    "Synchronize the current database to disk", BU_CMD_PARSE_INTERSPERSED);
+    "Synchronize the current database to disk", BU_ARG_PARSE_INTERSPERSED);
 
 
 int

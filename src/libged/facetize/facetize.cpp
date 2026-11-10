@@ -32,7 +32,7 @@
 #include <vector>
 
 #include "bu/app.h"
-#include "bu/cmdschema.h"
+#include "bu/arg.h"
 #include "bu/file.h"
 #include "bu/path.h"
 #include "wdb.h"
@@ -96,13 +96,13 @@ struct facetize_parse_args {
     int max_workers = 0;
 };
 
-static const struct bu_cmd_schema *facetize_schema(void);
+static const struct bu_arg_schema *facetize_schema(void);
 
 
 static void
 facetize_show_schema_help(struct ged *gedp)
 {
-    char *help = bu_cmd_schema_help(facetize_schema(), "facetize");
+    char *help = bu_arg_schema_help(facetize_schema(), "facetize");
 
     if (help) {
 	bu_vls_strcat(gedp->ged_result_str, help);
@@ -317,7 +317,7 @@ ged_facetize_core(struct ged *gedp, int argc, const char *argv[])
 
     /* Parse the canonical native option schema. */
     struct bu_vls omsg = BU_VLS_INIT_ZERO;
-    int operand_start = bu_cmd_schema_parse(facetize_schema(), &args, &omsg, argc, argv);
+    int operand_start = bu_arg_schema_parse(facetize_schema(), &args, &omsg, argc, argv);
     if (operand_start < 0) {
 	bu_vls_printf(gedp->ged_result_str, "option parsing failed: %s\n", bu_vls_cstr(&omsg));
 	ret = BRLCAD_ERROR;
@@ -459,63 +459,63 @@ static const char * const facetize_perturb_options[] = {
 static const char * const facetize_method_names[] = {
     "NMG", "MDC", "SPSR", NULL
 };
-static const struct bu_cmd_arg_shape facetize_methods_shape = {
-    BU_CMD_ARG_SHAPE_COMMA_LIST, 1, 1, "comma-separated tessellation methods", NULL, NULL
+static const struct bu_arg_shape facetize_methods_shape = {
+    BU_ARG_SHAPE_COMMA_LIST, 1, 1, "comma-separated tessellation methods", NULL, NULL
 };
 
-static const struct bu_cmd_constraint facetize_constraints[] = {
-    BU_CMD_CONSTRAINT_OPTIONS(facetize_perturb_options, 0, 1,
+static const struct bu_arg_constraint facetize_constraints[] = {
+    BU_ARG_CONSTRAINT_OPTIONS(facetize_perturb_options, 0, 1,
 	"--perturb and --no-perturb cannot be used together"),
-    BU_CMD_CONSTRAINT_NULL
+    BU_ARG_CONSTRAINT_NULL
 };
 
-static const struct bu_cmd_option facetize_options[] = {
-    BU_CMD_FLAG("h", "help", facetize_parse_args, print_help, "Print help and exit"),
-    BU_CMD_COUNTING_LONG_FLAG("v", "verbose", facetize_parse_args, verbosity, "Verbose output; repeat to increase detail"),
-    BU_CMD_FLAG("q", "quiet", facetize_parse_args, quiet, "Suppress all output"),
-    BU_CMD_FLAG("n", "nmg-output", facetize_parse_args, make_nmg, "Create N-Manifold Geometry output"),
-    BU_CMD_FLAG("r", "regions", facetize_parse_args, regions, "Facetize region trees"),
-    BU_CMD_INTEGER_RANGE("j", "jobs", facetize_parse_args, max_workers, 0, MAX_PSW,
+static const struct bu_arg_option facetize_options[] = {
+    BU_ARG_FLAG("h", "help", facetize_parse_args, print_help, "Print help and exit"),
+    BU_ARG_COUNTING_LONG_FLAG("v", "verbose", facetize_parse_args, verbosity, "Verbose output; repeat to increase detail"),
+    BU_ARG_FLAG("q", "quiet", facetize_parse_args, quiet, "Suppress all output"),
+    BU_ARG_FLAG("n", "nmg-output", facetize_parse_args, make_nmg, "Create N-Manifold Geometry output"),
+    BU_ARG_FLAG("r", "regions", facetize_parse_args, regions, "Facetize region trees"),
+    BU_ARG_INTEGER_RANGE("j", "jobs", facetize_parse_args, max_workers, 0, MAX_PSW,
 	"count", "Maximum facetize worker processes; zero selects an automatic limit"),
-    BU_CMD_STRING("s", "suffix", facetize_parse_args, suffix, "suffix", "Output suffix"),
-    BU_CMD_STRING("p", "prefix", facetize_parse_args, prefix, "prefix", "Output prefix"),
-    BU_CMD_FLAG(NULL, "in-place", facetize_parse_args, in_place, "Replace input objects"),
-    BU_CMD_INTEGER(NULL, "max-time", facetize_parse_args, max_time, "seconds", "Maximum seconds per object"),
-    BU_CMD_INTEGER(NULL, "max-pnts", facetize_parse_args, max_pnts, "count", "Maximum sample points"),
-    BU_CMD_FLAG(NULL, "resume", facetize_parse_args, resume, "Resume conversion"),
+    BU_ARG_STRING("s", "suffix", facetize_parse_args, suffix, "suffix", "Output suffix"),
+    BU_ARG_STRING("p", "prefix", facetize_parse_args, prefix, "prefix", "Output prefix"),
+    BU_ARG_FLAG(NULL, "in-place", facetize_parse_args, in_place, "Replace input objects"),
+    BU_ARG_INTEGER(NULL, "max-time", facetize_parse_args, max_time, "seconds", "Maximum seconds per object"),
+    BU_ARG_INTEGER(NULL, "max-pnts", facetize_parse_args, max_pnts, "count", "Maximum sample points"),
+    BU_ARG_FLAG(NULL, "resume", facetize_parse_args, resume, "Resume conversion"),
     {NULL, "methods", "methods", "method[,method...]", "Comma-separated tessellation methods",
-	BU_CMD_VALUE_CUSTOM, offsetof(facetize_parse_args, method_options), tess_active_methods_from_str,
-	NULL, NULL, NULL, 0, 0, facetize_method_names, BU_CMD_ARG_REQUIRED,
-	&facetize_methods_shape, NULL, NULL, BU_CMD_VALUE_RANGE_NONE, BU_CMD_ARG_SHAPE_SCALAR},
-    BU_CMD_CUSTOM(NULL, "method-opts", facetize_parse_args, method_options, tess_method_opts_from_str,
+	BU_ARG_VALUE_CUSTOM, offsetof(facetize_parse_args, method_options), tess_active_methods_from_str,
+	NULL, NULL, NULL, 0, 0, facetize_method_names, BU_ARG_REQUIRED,
+	&facetize_methods_shape, NULL, NULL, BU_ARG_VALUE_RANGE_NONE, BU_ARG_SHAPE_SCALAR},
+    BU_ARG_CUSTOM(NULL, "method-opts", facetize_parse_args, method_options, tess_method_opts_from_str,
 	"\"METHOD option=value ...\"", "Method-specific options"),
-    BU_CMD_FLAG(NULL, "no-empty", facetize_parse_args, no_empty, "Suppress empty outputs"),
-    BU_CMD_FILE(NULL, "log-file", facetize_parse_args, log_file, "file", "Log file"),
-    BU_CMD_FLAG(NULL, "nmg-booleval", facetize_parse_args, nmg_booleval, "Use NMG Boolean evaluation"),
-    BU_CMD_FLAG(NULL, "disable-fixup", facetize_parse_args, no_fixup, "Disable mesh fixups"),
-    BU_CMD_FLAG(NULL, "perturb", facetize_parse_args, force_perturb, "Enable perturbation"),
-    BU_CMD_FLAG(NULL, "no-perturb", facetize_parse_args, disable_perturb, "Disable perturbation"),
-    BU_CMD_FLAG("B", NULL, facetize_parse_args, nonovlp_brep, "Use experimental non-overlapping BREP mode"),
-    BU_CMD_NUMBER("t", "threshold", facetize_parse_args, nonovlp_threshold, "length", "Non-overlap threshold"),
-    BU_CMD_NUMBER(NULL, "perturb-sa-tol", facetize_parse_args, perturb_sa_tol, "percent", "Perturbation surface-area tolerance"),
-    BU_CMD_NUMBER(NULL, "perturb-vol-tol", facetize_parse_args, perturb_vol_tol, "percent", "Perturbation volume tolerance"),
-    BU_CMD_FLAG(NULL, "tolerate-failures", facetize_parse_args, tolerate_failures, "Generate partial output after failures"),
-    BU_CMD_OPTION_NULL
+    BU_ARG_FLAG(NULL, "no-empty", facetize_parse_args, no_empty, "Suppress empty outputs"),
+    BU_ARG_FILE(NULL, "log-file", facetize_parse_args, log_file, "file", "Log file"),
+    BU_ARG_FLAG(NULL, "nmg-booleval", facetize_parse_args, nmg_booleval, "Use NMG Boolean evaluation"),
+    BU_ARG_FLAG(NULL, "disable-fixup", facetize_parse_args, no_fixup, "Disable mesh fixups"),
+    BU_ARG_FLAG(NULL, "perturb", facetize_parse_args, force_perturb, "Enable perturbation"),
+    BU_ARG_FLAG(NULL, "no-perturb", facetize_parse_args, disable_perturb, "Disable perturbation"),
+    BU_ARG_FLAG("B", NULL, facetize_parse_args, nonovlp_brep, "Use experimental non-overlapping BREP mode"),
+    BU_ARG_NUMBER("t", "threshold", facetize_parse_args, nonovlp_threshold, "length", "Non-overlap threshold"),
+    BU_ARG_NUMBER(NULL, "perturb-sa-tol", facetize_parse_args, perturb_sa_tol, "percent", "Perturbation surface-area tolerance"),
+    BU_ARG_NUMBER(NULL, "perturb-vol-tol", facetize_parse_args, perturb_vol_tol, "percent", "Perturbation volume tolerance"),
+    BU_ARG_FLAG(NULL, "tolerate-failures", facetize_parse_args, tolerate_failures, "Generate partial output after failures"),
+    BU_ARG_OPTION_NULL
 };
 
-static const struct bu_cmd_operand facetize_operands[] = {
-    BU_CMD_OPERAND("object", BU_CMD_VALUE_RAW, 0, BU_CMD_COUNT_UNLIMITED,
+static const struct bu_arg_operand facetize_operands[] = {
+    BU_ARG_OPERAND("object", BU_ARG_VALUE_RAW, 0, BU_ARG_COUNT_UNLIMITED,
 	"Source database objects; in single-output mode the final name is the output object",
 	NULL),
-    BU_CMD_OPERAND_NULL
+    BU_ARG_OPERAND_NULL
 };
 
-static const struct bu_cmd_schema facetize_cmd_schema = {
+static const struct bu_arg_schema facetize_cmd_schema = {
     "facetize", "Convert geometry to BOT or NMG form", facetize_options, facetize_operands,
-    BU_CMD_PARSE_INTERSPERSED, BU_CMD_SCHEMA_CONSTRAINTS(NULL, facetize_constraints)
+    BU_ARG_PARSE_INTERSPERSED, BU_ARG_SCHEMA_CONSTRAINTS(NULL, facetize_constraints)
 };
 
-static const struct bu_cmd_schema *
+static const struct bu_arg_schema *
 facetize_schema(void)
 {
     return &facetize_cmd_schema;

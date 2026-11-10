@@ -21,43 +21,43 @@
  * Command-owned completion grammar for select and rselect.
  */
 #include "common.h"
-#include "bu/cmdschema.h"
+#include "bu/arg.h"
 #include "ged.h"
 #include "../ged_private.h"
 
-static const struct bu_cmd_form select_form_rows[] = {
-    BU_CMD_FORM_SCHEMA("legacy", "Legacy screen-rectangle selection",
+static const struct bu_arg_form select_form_rows[] = {
+    BU_ARG_FORM_SCHEMA("legacy", "Legacy screen-rectangle selection",
 	&ged_select_legacy_schema),
-    BU_CMD_FORM_TREE("current", "Selection-set subcommands", &ged_select_new_tree),
-    BU_CMD_FORM_NULL
+    BU_ARG_FORM_TREE("current", "Selection-set subcommands", &ged_select_new_tree),
+    BU_ARG_FORM_NULL
 };
 
-static const struct bu_cmd_form rselect_form_rows[] = {
-    BU_CMD_FORM_SCHEMA("legacy", "Select from the current rectangle",
+static const struct bu_arg_form rselect_form_rows[] = {
+    BU_ARG_FORM_SCHEMA("legacy", "Select from the current rectangle",
 	&ged_rselect_legacy_schema),
-    BU_CMD_FORM_NULL
+    BU_ARG_FORM_NULL
 };
 
-static const struct bu_cmd_form *
-ged_select_form_select(const struct bu_cmd_forms *forms, size_t UNUSED(argc),
+static const struct bu_arg_form *
+ged_select_form_select(const struct bu_arg_forms *forms, size_t UNUSED(argc),
 	const char * const *UNUSED(argv), void *context)
 {
     const struct ged *gedp = (const struct ged *)context;
     return gedp && gedp->new_cmd_forms ? &forms->forms[1] : &forms->forms[0];
 }
 
-static const struct bu_cmd_form *
-ged_rselect_form_select(const struct bu_cmd_forms *forms, size_t UNUSED(argc),
+static const struct bu_arg_form *
+ged_rselect_form_select(const struct bu_arg_forms *forms, size_t UNUSED(argc),
 	const char * const *UNUSED(argv), void *UNUSED(context))
 {
     return &forms->forms[0];
 }
 
-static const struct bu_cmd_forms select_forms =
-    BU_CMD_FORMS("select", "Manage display selection and selection sets",
+static const struct bu_arg_forms select_forms =
+    BU_ARG_FORMS("select", "Manage display selection and selection sets",
 	select_form_rows, ged_select_form_select);
-static const struct bu_cmd_forms rselect_forms =
-    BU_CMD_FORMS("rselect", "Select from the current screen rectangle",
+static const struct bu_arg_forms rselect_forms =
+    BU_ARG_FORMS("rselect", "Select from the current screen rectangle",
 	rselect_form_rows, ged_rselect_form_select);
 
 static int

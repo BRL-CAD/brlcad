@@ -47,7 +47,7 @@ option-selected forms, and context-sensitive refinements.  This is the
 preferred representation for an ordinary GED command.  It preserves the
 existing parser while making its full command language available to tools.
 
-Use a native `bu_cmd_schema` only for syntax the compact form cannot express:
+Use a native `bu_arg_schema` only for syntax the compact form cannot express:
 multi-token values, repeated heterogeneous groups, command trees, or unusually
 complex structural constraints.  Use a `ged_cmd_grammar` adapter when an
 established parser owns a real language that should not be duplicated in a
@@ -77,7 +77,7 @@ separately when they deliberately publish separate syntax.
 
 | Published description kind | Count | Commands or command families |
 | --- | ---: | --- |
-| Flat native | 313 | The conventional majority.  This is the common output for both compact `ged_opt_spec` declarations and direct flat `bu_cmd_schema` declarations. |
+| Flat native | 313 | The conventional majority.  This is the common output for both compact `ged_opt_spec` declarations and direct flat `bu_arg_schema` declarations. |
 | Native forms | 13 | `analyze`, `arb`, `comb`, `env`, `erase`, `mater`, `nmg`, `rselect`, `select`, `who`, and `zap`; some appear more than once because independently registered compatibility spellings select the same named form family. |
 | Native tree | 22 | `adc`, `attr`, `bot`, `brep`, `check`, `constraint`, `data_lines`, `dm`, `dsp`, `edarb`, `grid`, `joint`, `material`, `pnts`, `process`, `qray`, `rect`, `sdata_lines`, `vdraw`, `view`, `view2`, and `view_func`. |
 | Grammar adapter | 1 | `search`, whose parser owns its expression language. |
@@ -248,7 +248,7 @@ When adding or changing a command:
 6. For a frontend change, test preview acceptance/cancellation, transient-row
    cleanup, resize relayout, and constrained viewport scrolling.
 
-Useful test areas are `src/libbu/tests/test_cmdschema.c`,
+Useful test areas are `src/libbu/tests/test_arg.c`,
 `src/libbu/tests/test_opt.c`, and the libged command-analysis, completion
 corpus, lifecycle, and scale tests.  The scale tests exercise large database
 object sets and the bounded policy-view cache; treat a regression there as an

@@ -38,70 +38,70 @@
 #include "rt/geom.h"
 #include "ged.h"
 #include "wdb.h"
-#include "bu/cmdschema.h"
+#include "bu/arg.h"
 
 #include "../ged_private.h"
 
 
 static int
-pipe_packed_point_schema_validate(const struct bu_cmd_schema *cmd, size_t argc,
-	const char **argv, size_t cursor_arg, struct bu_cmd_validate_result *result);
+pipe_packed_point_schema_validate(const struct bu_arg_schema *cmd, size_t argc,
+	const char **argv, size_t cursor_arg, struct bu_arg_validate_result *result);
 static int
-pipe_find_schema_validate(const struct bu_cmd_schema *cmd, size_t argc,
-	const char **argv, size_t cursor_arg, struct bu_cmd_validate_result *result);
+pipe_find_schema_validate(const struct bu_arg_schema *cmd, size_t argc,
+	const char **argv, size_t cursor_arg, struct bu_arg_validate_result *result);
 
 
-static const struct bu_cmd_option pipe_move_schema_options[] = {
-    BU_CMD_FLAG_UNBOUND("r", NULL, "r", "Interpret the point relative to the pipe point"),
-    BU_CMD_OPTION_NULL
+static const struct bu_arg_option pipe_move_schema_options[] = {
+    BU_ARG_FLAG_UNBOUND("r", NULL, "r", "Interpret the point relative to the pipe point"),
+    BU_ARG_OPTION_NULL
 };
-static const struct bu_cmd_operand pipe_find_schema_operands[] = {
-    BU_CMD_OPERAND("pipe", BU_CMD_VALUE_DB_PATH, 1, 1, "Pipe object or path", NULL),
-    BU_CMD_OPERAND("point", BU_CMD_VALUE_VECTOR, 1, 3,
+static const struct bu_arg_operand pipe_find_schema_operands[] = {
+    BU_ARG_OPERAND("pipe", BU_ARG_VALUE_DB_PATH, 1, 1, "Pipe object or path", NULL),
+    BU_ARG_OPERAND("point", BU_ARG_VALUE_VECTOR, 1, 3,
 	"Packed XYZ point or three coordinates", NULL),
-    BU_CMD_OPERAND_NULL
+    BU_ARG_OPERAND_NULL
 };
-static const struct bu_cmd_operand pipe_index_schema_operands[] = {
-    BU_CMD_OPERAND("pipe", BU_CMD_VALUE_DB_PATH, 1, 1, "Pipe object or path", NULL),
-    BU_CMD_OPERAND("segment", BU_CMD_VALUE_INTEGER, 1, 1, "Pipe point index", NULL),
-    BU_CMD_OPERAND_NULL
+static const struct bu_arg_operand pipe_index_schema_operands[] = {
+    BU_ARG_OPERAND("pipe", BU_ARG_VALUE_DB_PATH, 1, 1, "Pipe object or path", NULL),
+    BU_ARG_OPERAND("segment", BU_ARG_VALUE_INTEGER, 1, 1, "Pipe point index", NULL),
+    BU_ARG_OPERAND_NULL
 };
-static const struct bu_cmd_operand pipe_insert_schema_operands[] = {
-    BU_CMD_OPERAND("pipe", BU_CMD_VALUE_DB_PATH, 1, 1, "Pipe object or path", NULL),
-    BU_CMD_OPERAND("point", BU_CMD_VALUE_VECTOR, 1, 1, "Packed XYZ point", NULL),
-    BU_CMD_OPERAND_NULL
+static const struct bu_arg_operand pipe_insert_schema_operands[] = {
+    BU_ARG_OPERAND("pipe", BU_ARG_VALUE_DB_PATH, 1, 1, "Pipe object or path", NULL),
+    BU_ARG_OPERAND("point", BU_ARG_VALUE_VECTOR, 1, 1, "Packed XYZ point", NULL),
+    BU_ARG_OPERAND_NULL
 };
-static const struct bu_cmd_operand pipe_move_schema_operands[] = {
-    BU_CMD_OPERAND("pipe", BU_CMD_VALUE_DB_PATH, 1, 1, "Pipe object or path", NULL),
-    BU_CMD_OPERAND("segment", BU_CMD_VALUE_INTEGER, 1, 1, "Pipe point index", NULL),
-    BU_CMD_OPERAND("point", BU_CMD_VALUE_VECTOR, 1, 1, "Packed XYZ point", NULL),
-    BU_CMD_OPERAND_NULL
+static const struct bu_arg_operand pipe_move_schema_operands[] = {
+    BU_ARG_OPERAND("pipe", BU_ARG_VALUE_DB_PATH, 1, 1, "Pipe object or path", NULL),
+    BU_ARG_OPERAND("segment", BU_ARG_VALUE_INTEGER, 1, 1, "Pipe point index", NULL),
+    BU_ARG_OPERAND("point", BU_ARG_VALUE_VECTOR, 1, 1, "Packed XYZ point", NULL),
+    BU_ARG_OPERAND_NULL
 };
 
 #define PIPE_SCHEMA(_id, _name, _help, _opts, _operands, _policy, _validate) \
-    static const struct bu_cmd_schema _id##_cmd_schema = \
-	BU_CMD_SCHEMA_EXTERNAL(_name, _help, _opts, _operands, _policy, \
+    static const struct bu_arg_schema _id##_cmd_schema = \
+	BU_ARG_SCHEMA_EXTERNAL(_name, _help, _opts, _operands, _policy, \
 	    NULL, NULL, _validate)
 PIPE_SCHEMA(find_pipe_pnt, "find_pipe_pnt", "Find the pipe point nearest a model point", NULL,
-	pipe_find_schema_operands, BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, pipe_find_schema_validate);
+	pipe_find_schema_operands, BU_ARG_PARSE_STOP_AT_FIRST_OPERAND, pipe_find_schema_validate);
 PIPE_SCHEMA(pipe_move_pnt, "pipe_move_pnt", "Move a pipe point", pipe_move_schema_options,
-	pipe_move_schema_operands, BU_CMD_PARSE_OPTIONS_FIRST, pipe_packed_point_schema_validate);
+	pipe_move_schema_operands, BU_ARG_PARSE_OPTIONS_FIRST, pipe_packed_point_schema_validate);
 PIPE_SCHEMA(pipe_append_pnt, "pipe_append_pnt", "Append a point to a pipe", NULL,
-	pipe_insert_schema_operands, BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, pipe_packed_point_schema_validate);
+	pipe_insert_schema_operands, BU_ARG_PARSE_STOP_AT_FIRST_OPERAND, pipe_packed_point_schema_validate);
 PIPE_SCHEMA(pipe_prepend_pnt, "pipe_prepend_pnt", "Prepend a point to a pipe", NULL,
-	pipe_insert_schema_operands, BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, pipe_packed_point_schema_validate);
+	pipe_insert_schema_operands, BU_ARG_PARSE_STOP_AT_FIRST_OPERAND, pipe_packed_point_schema_validate);
 PIPE_SCHEMA(pipe_delete_pnt, "pipe_delete_pnt", "Delete a pipe point", NULL,
-	pipe_index_schema_operands, BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, NULL);
+	pipe_index_schema_operands, BU_ARG_PARSE_STOP_AT_FIRST_OPERAND, NULL);
 PIPE_SCHEMA(mouse_move_pipe_pnt, "mouse_move_pipe_pnt", "Move a pipe point from mouse input", pipe_move_schema_options,
-	pipe_move_schema_operands, BU_CMD_PARSE_OPTIONS_FIRST, pipe_packed_point_schema_validate);
+	pipe_move_schema_operands, BU_ARG_PARSE_OPTIONS_FIRST, pipe_packed_point_schema_validate);
 PIPE_SCHEMA(mouse_append_pipe_pnt, "mouse_append_pipe_pnt", "Append a pipe point from mouse input", NULL,
-	pipe_insert_schema_operands, BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, pipe_packed_point_schema_validate);
+	pipe_insert_schema_operands, BU_ARG_PARSE_STOP_AT_FIRST_OPERAND, pipe_packed_point_schema_validate);
 PIPE_SCHEMA(mouse_prepend_pipe_pnt, "mouse_prepend_pipe_pnt", "Prepend a pipe point from mouse input", NULL,
-	pipe_insert_schema_operands, BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, pipe_packed_point_schema_validate);
+	pipe_insert_schema_operands, BU_ARG_PARSE_STOP_AT_FIRST_OPERAND, pipe_packed_point_schema_validate);
 #undef PIPE_SCHEMA
 
 
-static const struct bu_cmd_schema *
+static const struct bu_arg_schema *
 pipe_schema_for_command(const char *name)
 {
     if (BU_STR_EQUAL(name, "find_pipe_pnt"))
@@ -125,9 +125,9 @@ pipe_schema_for_command(const char *name)
 
 
 static void
-pipe_usage(struct ged *gedp, const struct bu_cmd_schema *schema)
+pipe_usage(struct ged *gedp, const struct bu_arg_schema *schema)
 {
-    char *help = bu_cmd_schema_help(schema, schema->name);
+    char *help = bu_arg_schema_help(schema, schema->name);
 
     if (help) {
 	bu_vls_strcat(gedp->ged_result_str, help);
@@ -137,13 +137,13 @@ pipe_usage(struct ged *gedp, const struct bu_cmd_schema *schema)
 
 
 static int
-pipe_schema_preflight(struct ged *gedp, const struct bu_cmd_schema *schema,
+pipe_schema_preflight(struct ged *gedp, const struct bu_arg_schema *schema,
 	int argc, const char *argv[])
 {
     struct bu_vls msg = BU_VLS_INIT_ZERO;
     int ret = BRLCAD_ERROR;
 
-    if (schema && bu_cmd_schema_parse_complete(schema, NULL, &msg,
+    if (schema && bu_arg_schema_parse_complete(schema, NULL, &msg,
 	argc - 1, argv + 1) >= 0) {
 	ret = BRLCAD_OK;
 	} else if (bu_vls_strlen(&msg)) {
@@ -155,10 +155,10 @@ pipe_schema_preflight(struct ged *gedp, const struct bu_cmd_schema *schema,
 
 
 static void
-pipe_vector_validation_result(struct bu_cmd_validate_result *result,
-	const struct bu_cmd_validate_result *vector_result, size_t offset)
+pipe_vector_validation_result(struct bu_arg_validate_result *result,
+	const struct bu_arg_validate_result *vector_result, size_t offset)
 {
-    bu_cmd_validate_result_clear(result);
+    bu_arg_validate_result_clear(result);
     *result = *vector_result;
     result->token_start += offset;
     result->token_end += offset;
@@ -168,28 +168,28 @@ pipe_vector_validation_result(struct bu_cmd_validate_result *result,
 
 
 static int
-pipe_packed_point_schema_validate(const struct bu_cmd_schema *cmd, size_t argc,
-	const char **argv, size_t cursor_arg, struct bu_cmd_validate_result *result)
+pipe_packed_point_schema_validate(const struct bu_arg_schema *cmd, size_t argc,
+	const char **argv, size_t cursor_arg, struct bu_arg_validate_result *result)
 {
-    struct bu_cmd_schema flat = *cmd;
+    struct bu_arg_schema flat = *cmd;
     fastf_t point[3] = {0.0, 0.0, 0.0};
     size_t point_index = BU_STR_EQUAL(cmd->name, "pipe_move_pnt") ||
 	BU_STR_EQUAL(cmd->name, "mouse_move_pipe_pnt") ? 2 : 1;
     int ret = 0;
 
-    ret = bu_cmd_schema_validate_syntax(&flat, argc, argv, cursor_arg, result);
-    if (point_index == 2 && bu_cmd_schema_option_present(cmd, argc, argv, "r"))
+    ret = bu_arg_schema_validate_syntax(&flat, argc, argv, cursor_arg, result);
+    if (point_index == 2 && bu_arg_schema_option_present(cmd, argc, argv, "r"))
 	point_index++;
-    if (ret || result->state == BU_CMD_VALIDATE_INVALID || argc <= point_index)
+    if (ret || result->state == BU_ARG_VALIDATE_INVALID || argc <= point_index)
 	return ret;
-    if (bu_cmd_vector3_from_argv(point, 1, (const char * const *)argv + point_index) != 1) {
-	bu_cmd_validate_result_clear(result);
-	result->state = BU_CMD_VALIDATE_INVALID;
+    if (bu_arg_vector3_from_argv(point, 1, (const char * const *)argv + point_index) != 1) {
+	bu_arg_validate_result_clear(result);
+	result->state = BU_ARG_VALIDATE_INVALID;
 	result->token_start = point_index;
 	result->token_end = point_index;
-	result->expected = BU_CMD_EXPECT_OPERAND;
+	result->expected = BU_ARG_EXPECT_OPERAND;
 	result->hint = "packed finite XYZ point required";
-	result->completion_type = BU_CMD_VALUE_VECTOR;
+	result->completion_type = BU_ARG_VALUE_VECTOR;
 	result->semantic_provider = "ged.vector_group";
     } else {
 	/* The command validator owns the whole packed point.  Suppress the
@@ -201,22 +201,22 @@ pipe_packed_point_schema_validate(const struct bu_cmd_schema *cmd, size_t argc,
 
 
 static int
-pipe_find_schema_validate(const struct bu_cmd_schema *cmd, size_t argc,
-	const char **argv, size_t cursor_arg, struct bu_cmd_validate_result *result)
+pipe_find_schema_validate(const struct bu_arg_schema *cmd, size_t argc,
+	const char **argv, size_t cursor_arg, struct bu_arg_validate_result *result)
 {
-    struct bu_cmd_schema flat = *cmd;
-    struct bu_cmd_validate_result vector_result = BU_CMD_VALIDATE_RESULT_NULL;
+    struct bu_arg_schema flat = *cmd;
+    struct bu_arg_validate_result vector_result = BU_ARG_VALIDATE_RESULT_NULL;
     int ret = 0;
 
-    ret = bu_cmd_schema_validate_syntax(&flat, argc, argv, cursor_arg, result);
-    if (ret || result->state == BU_CMD_VALIDATE_INVALID || argc <= 1)
+    ret = bu_arg_schema_validate_syntax(&flat, argc, argv, cursor_arg, result);
+    if (ret || result->state == BU_ARG_VALIDATE_INVALID || argc <= 1)
 	return ret;
-    if (bu_cmd_vector3_optional_validate(argc - 1, argv + 1,
+    if (bu_arg_vector3_optional_validate(argc - 1, argv + 1,
 	cursor_arg > 1 ? cursor_arg - 1 : 0, &vector_result) == 0) {
 	vector_result.semantic_provider = "ged.vector_group";
 	pipe_vector_validation_result(result, &vector_result, 1);
     }
-    bu_cmd_validate_result_clear(&vector_result);
+    bu_arg_validate_result_clear(&vector_result);
     return 0;
 }
 
@@ -224,7 +224,7 @@ int
 _ged_pipe_append_pnt_common(struct ged *gedp, int argc, const char *argv[], struct wdb_pipe_pnt *(*func)(struct rt_pipe_internal *, struct wdb_pipe_pnt *, const point_t))
 {
     struct directory *dp;
-    const struct bu_cmd_schema *schema = pipe_schema_for_command(argv[0]);
+    const struct bu_arg_schema *schema = pipe_schema_for_command(argv[0]);
     struct rt_db_internal intern;
     struct rt_pipe_internal *pipeip;
     mat_t mat;
@@ -268,7 +268,7 @@ _ged_pipe_append_pnt_common(struct ged *gedp, int argc, const char *argv[], stru
 	return BRLCAD_ERROR;
     }
 
-    if (bu_cmd_vector3_from_argv(view_ps_pt, 1, argv + 2) != 1) {
+    if (bu_arg_vector3_from_argv(view_ps_pt, 1, argv + 2) != 1) {
 	bu_vls_printf(gedp->ged_result_str, "%s: bad point - %s", argv[0], argv[2]);
 	return BRLCAD_ERROR;
     }
@@ -333,7 +333,7 @@ int
 ged_pipe_delete_pnt_core(struct ged *gedp, int argc, const char *argv[])
 {
     struct directory *dp;
-    const struct bu_cmd_schema *schema = pipe_schema_for_command(argv[0]);
+    const struct bu_arg_schema *schema = pipe_schema_for_command(argv[0]);
     struct rt_db_internal intern;
     struct wdb_pipe_pnt *ps;
     struct rt_pipe_internal *pipeip;
@@ -373,7 +373,7 @@ ged_pipe_delete_pnt_core(struct ged *gedp, int argc, const char *argv[])
 	return BRLCAD_ERROR;
     }
 
-    if (!bu_cmd_integer_from_str(&seg_i, argv[2])) {
+    if (!bu_arg_integer_from_str(&seg_i, argv[2])) {
 	bu_vls_printf(gedp->ged_result_str, "%s: bad pipe segment index - %s", argv[0], argv[2]);
 	return BRLCAD_ERROR;
     }
@@ -416,7 +416,7 @@ int
 ged_find_pipe_pnt_nearest_pnt_core(struct ged *gedp, int argc, const char *argv[])
 {
     struct directory *dp;
-    const struct bu_cmd_schema *schema = pipe_schema_for_command(argv[0]);
+    const struct bu_arg_schema *schema = pipe_schema_for_command(argv[0]);
     struct rt_db_internal intern;
     struct wdb_pipe_pnt *nearest;
     point_t model_pt;
@@ -458,7 +458,7 @@ ged_find_pipe_pnt_nearest_pnt_core(struct ged *gedp, int argc, const char *argv[
 	return BRLCAD_ERROR;
     }
 
-    if (bu_cmd_vector3_from_argv(model_pt, argc - 2, argv + 2) != argc - 2) {
+    if (bu_arg_vector3_from_argv(model_pt, argc - 2, argv + 2) != argc - 2) {
 	bu_vls_printf(gedp->ged_result_str, "%s: bad X, Y or Z", argv[0]);
 	return BRLCAD_ERROR;
     }
@@ -487,7 +487,7 @@ int
 ged_pipe_move_pnt_core(struct ged *gedp, int argc, const char *argv[])
 {
     struct directory *dp;
-    const struct bu_cmd_schema *schema = pipe_schema_for_command(argv[0]);
+    const struct bu_arg_schema *schema = pipe_schema_for_command(argv[0]);
     struct rt_db_internal intern;
     struct wdb_pipe_pnt *ps;
     struct rt_pipe_internal *pipeip;
@@ -536,12 +536,12 @@ ged_pipe_move_pnt_core(struct ged *gedp, int argc, const char *argv[])
 	return BRLCAD_ERROR;
     }
 
-    if (!bu_cmd_integer_from_str(&seg_i, argv[2])) {
+    if (!bu_arg_integer_from_str(&seg_i, argv[2])) {
 	bu_vls_printf(gedp->ged_result_str, "%s: bad pipe segment index - %s", argv[0], argv[2]);
 	return BRLCAD_ERROR;
     }
 
-    if (bu_cmd_vector3_from_argv(ps_pt, 1, argv + 3) != 1) {
+    if (bu_arg_vector3_from_argv(ps_pt, 1, argv + 3) != 1) {
 	bu_vls_printf(gedp->ged_result_str, "%s: bad point - %s", argv[0], argv[3]);
 	return BRLCAD_ERROR;
     }

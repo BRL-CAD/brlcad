@@ -53,7 +53,7 @@
 #include <string.h>
 
 #include "bu/cmd.h"
-#include "bu/cmdschema.h"
+#include "bu/arg.h"
 #include "bu/malloc.h"
 #include "rt/calc.h"
 #include "rt/db5.h"
@@ -62,7 +62,7 @@
 
 #include "../ged_private.h"
 
-static const struct bu_cmd_schema *exists_schema(void);
+static const struct bu_arg_schema *exists_schema(void);
 
 #ifndef __arraycount
 #  define __arraycount(__x)       (sizeof(__x) / sizeof(__x[0]))
@@ -643,7 +643,7 @@ ged_exists_core(struct ged *gedp, int argc, const char *argv_orig[])
 	return GED_HELP;
     }
 
-    if (bu_cmd_schema_parse_complete(exists_schema(), &parse_dummy,
+    if (bu_arg_schema_parse_complete(exists_schema(), &parse_dummy,
 		gedp->ged_result_str, argc - 1, argv_orig + 1) < 0)
 	return BRLCAD_ERROR;
 
@@ -693,7 +693,7 @@ exists_schema_operator(const char *s)
 }
 
 static void
-exists_schema_operator_candidates(struct bu_cmd_validate_result *result, const char *prefix)
+exists_schema_operator_candidates(struct bu_arg_validate_result *result, const char *prefix)
 {
     static const char * const ops[] = {
 	"!", "(", ")", "<", "=", ">", "!=", "-a", "-o",
@@ -716,50 +716,50 @@ exists_schema_operator_candidates(struct bu_cmd_validate_result *result, const c
 }
 
 static int
-exists_schema_validate(const struct bu_cmd_schema *UNUSED(cmd), size_t argc,
-	const char **argv, size_t cursor_arg, struct bu_cmd_validate_result *result)
+exists_schema_validate(const struct bu_arg_schema *UNUSED(cmd), size_t argc,
+	const char **argv, size_t cursor_arg, struct bu_arg_validate_result *result)
 {
-    bu_cmd_validate_result_clear(result);
+    bu_arg_validate_result_clear(result);
     if (cursor_arg >= argc) {
-	result->state = argc ? BU_CMD_VALIDATE_VALID : BU_CMD_VALIDATE_INCOMPLETE;
+	result->state = argc ? BU_ARG_VALIDATE_VALID : BU_ARG_VALIDATE_INCOMPLETE;
 	result->token_start = argc;
 	result->token_end = argc;
-	result->expected = BU_CMD_EXPECT_OPERAND;
-	result->completion_type = BU_CMD_VALUE_DB_OBJECT;
+	result->expected = BU_ARG_EXPECT_OPERAND;
+	result->completion_type = BU_ARG_VALUE_DB_OBJECT;
 	result->hint = argc ? "expression may continue" : "object or expression operator expected";
 	if (!argc)
 	    exists_schema_operator_candidates(result, "");
 	return 0;
     }
 
-    result->state = BU_CMD_VALIDATE_VALID;
+    result->state = BU_ARG_VALIDATE_VALID;
     result->token_start = cursor_arg;
     result->token_end = cursor_arg;
-	result->expected = BU_CMD_EXPECT_OPERAND;
+	result->expected = BU_ARG_EXPECT_OPERAND;
     if (exists_schema_operator(argv[cursor_arg])) {
-	result->completion_type = BU_CMD_VALUE_KEYWORD;
+	result->completion_type = BU_ARG_VALUE_KEYWORD;
 	result->hint = "expression operator";
 	exists_schema_operator_candidates(result, argv[cursor_arg]);
     } else {
-	result->completion_type = BU_CMD_VALUE_DB_OBJECT;
+	result->completion_type = BU_ARG_VALUE_DB_OBJECT;
 	result->hint = "database object";
 	result->semantic_provider = "ged.db_object_any";
     }
     return 0;
 }
 
-static const struct bu_cmd_operand exists_schema_operands[] = {
-    BU_CMD_OPERAND("expression", BU_CMD_VALUE_RAW, 1, BU_CMD_COUNT_UNLIMITED,
+static const struct bu_arg_operand exists_schema_operands[] = {
+    BU_ARG_OPERAND("expression", BU_ARG_VALUE_RAW, 1, BU_ARG_COUNT_UNLIMITED,
 	"Object-existence expression", NULL),
-    BU_CMD_OPERAND_NULL
+    BU_ARG_OPERAND_NULL
 };
-static const struct bu_cmd_schema exists_cmd_schema = {
+static const struct bu_arg_schema exists_cmd_schema = {
     "exists", "Evaluate an object-existence expression", NULL,
-    exists_schema_operands, BU_CMD_PARSE_STOP_AT_FIRST_OPERAND,
-    BU_CMD_SCHEMA_CONSTRAINTS(exists_schema_validate, NULL)
+    exists_schema_operands, BU_ARG_PARSE_STOP_AT_FIRST_OPERAND,
+    BU_ARG_SCHEMA_CONSTRAINTS(exists_schema_validate, NULL)
 };
 
-static const struct bu_cmd_schema *
+static const struct bu_arg_schema *
 exists_schema(void)
 {
     return &exists_cmd_schema;

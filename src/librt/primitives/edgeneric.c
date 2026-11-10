@@ -29,7 +29,7 @@
 #include <string.h>
 
 #include "vmath.h"
-#include "bu/cmdschema.h"
+#include "bu/arg.h"
 #include "bu/str.h"
 #include "nmg.h"
 #include "raytrace.h"
@@ -145,9 +145,9 @@ edit_param_read_fields(const char *input, const struct edit_param_field *fields,
 
 int
 edit_repair_parse_options(struct bu_vls *log_str, int argc, const char **argv,
-	const struct bu_cmd_schema *schema, void *data)
+	const struct bu_arg_schema *schema, void *data)
 {
-    if (bu_cmd_schema_parse_complete(schema, data, NULL, argc, argv) < 0) {
+    if (bu_arg_schema_parse_complete(schema, data, NULL, argc, argv) < 0) {
 	if (log_str)
 	    bu_vls_strcat(log_str,
 		"{\"status\":\"error\",\"message\":\"Invalid repair options\"}");

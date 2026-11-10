@@ -29,7 +29,7 @@
 #include <stdlib.h>
 
 #include "bio.h"
-#include "bu/cmdschema.h"
+#include "bu/arg.h"
 #include "dm.h"
 #include "ged.h"
 
@@ -53,39 +53,39 @@ struct png2fb_state {
     int help;
 };
 
-static const struct bu_cmd_option png2fb_schema_options[] = {
-    BU_CMD_FLAG("1", NULL, struct png2fb_state, one_line_only, "Use one-line writes"),
-    BU_CMD_INTEGER("m", NULL, struct png2fb_state, multiple_lines, "lines",
+static const struct bu_arg_option png2fb_schema_options[] = {
+    BU_ARG_FLAG("1", NULL, struct png2fb_state, one_line_only, "Use one-line writes"),
+    BU_ARG_INTEGER("m", NULL, struct png2fb_state, multiple_lines, "lines",
 	"Draw multiple lines per write"),
-    BU_CMD_POSITIVE_NUMBER("g", NULL, struct png2fb_state, def_screen_gamma, "gamma",
+    BU_ARG_POSITIVE_NUMBER("g", NULL, struct png2fb_state, def_screen_gamma, "gamma",
 	"Set screen gamma"),
-    BU_CMD_FLAG("H", NULL, struct png2fb_state, header_only, "Read the PNG header only"),
-    BU_CMD_FLAG("i", NULL, struct png2fb_state, inverse, "Draw upside-down"),
-    BU_CMD_FLAG("c", NULL, struct png2fb_state, clear, "Clear the framebuffer"),
-    BU_CMD_FLAG("v", NULL, struct png2fb_state, verbose, "Print verbose reporting"),
-    BU_CMD_FLAG("z", NULL, struct png2fb_state, zoom, "Zoom to fill the screen"),
-    BU_CMD_INTEGER("x", NULL, struct png2fb_state, file_xoff, "pixels", "Set input X offset"),
-    BU_CMD_INTEGER("y", NULL, struct png2fb_state, file_yoff, "pixels", "Set input Y offset"),
-    BU_CMD_INTEGER("X", NULL, struct png2fb_state, scr_xoff, "pixels", "Set framebuffer X offset"),
-    BU_CMD_INTEGER("Y", NULL, struct png2fb_state, scr_yoff, "pixels", "Set framebuffer Y offset"),
-    BU_CMD_FLAG("h", "help", struct png2fb_state, help, "Print command help"),
-    BU_CMD_ALIAS_SHORT("?", "help", 1),
-    BU_CMD_OPTION_NULL
+    BU_ARG_FLAG("H", NULL, struct png2fb_state, header_only, "Read the PNG header only"),
+    BU_ARG_FLAG("i", NULL, struct png2fb_state, inverse, "Draw upside-down"),
+    BU_ARG_FLAG("c", NULL, struct png2fb_state, clear, "Clear the framebuffer"),
+    BU_ARG_FLAG("v", NULL, struct png2fb_state, verbose, "Print verbose reporting"),
+    BU_ARG_FLAG("z", NULL, struct png2fb_state, zoom, "Zoom to fill the screen"),
+    BU_ARG_INTEGER("x", NULL, struct png2fb_state, file_xoff, "pixels", "Set input X offset"),
+    BU_ARG_INTEGER("y", NULL, struct png2fb_state, file_yoff, "pixels", "Set input Y offset"),
+    BU_ARG_INTEGER("X", NULL, struct png2fb_state, scr_xoff, "pixels", "Set framebuffer X offset"),
+    BU_ARG_INTEGER("Y", NULL, struct png2fb_state, scr_yoff, "pixels", "Set framebuffer Y offset"),
+    BU_ARG_FLAG("h", "help", struct png2fb_state, help, "Print command help"),
+    BU_ARG_ALIAS_SHORT("?", "help", 1),
+    BU_ARG_OPTION_NULL
 };
-static const struct bu_cmd_operand png2fb_schema_operands[] = {
-    BU_CMD_OPERAND("input_file", BU_CMD_VALUE_FILE, 0, 1,
+static const struct bu_arg_operand png2fb_schema_operands[] = {
+    BU_ARG_OPERAND("input_file", BU_ARG_VALUE_FILE, 0, 1,
 	"Optional PNG input file", NULL),
-    BU_CMD_OPERAND_NULL
+    BU_ARG_OPERAND_NULL
 };
-static const struct bu_cmd_schema png2fb_cmd_schema = {
+static const struct bu_arg_schema png2fb_cmd_schema = {
     "png2fb", "Display a PNG image in the framebuffer", png2fb_schema_options,
-    png2fb_schema_operands, BU_CMD_PARSE_OPTIONS_FIRST, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+    png2fb_schema_operands, BU_ARG_PARSE_OPTIONS_FIRST, BU_ARG_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
 
 static void
 png2fb_show_help(struct ged *gedp, const char *command)
 {
-    char *help = bu_cmd_schema_help(&png2fb_cmd_schema, command);
+    char *help = bu_arg_schema_help(&png2fb_cmd_schema, command);
 
     if (help) {
 	bu_vls_strcat(gedp->ged_result_str, help);
@@ -112,7 +112,7 @@ ged_png2fb_core(struct ged *gedp, int argc, const char *argv[])
 	return GED_HELP;
     }
 
-    operand_index = bu_cmd_schema_parse_complete(&png2fb_cmd_schema, &p2fbs,
+    operand_index = bu_arg_schema_parse_complete(&png2fb_cmd_schema, &p2fbs,
 	gedp->ged_result_str, argc - 1, argv + 1);
     if (operand_index < 0) {
 	png2fb_show_help(gedp, argv[0]);

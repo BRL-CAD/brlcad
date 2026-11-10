@@ -29,22 +29,22 @@
 #include <ctype.h>
 #include <string.h>
 
-#include "bu/cmdschema.h"
+#include "bu/arg.h"
 
 #include "../ged_private.h"
 
 
-static const struct bu_cmd_operand decompose_operands[] = {
-    BU_CMD_OPERAND("nmg", BU_CMD_VALUE_DB_OBJECT, 1, 1,
+static const struct bu_arg_operand decompose_operands[] = {
+    BU_ARG_OPERAND("nmg", BU_ARG_VALUE_DB_OBJECT, 1, 1,
 	"NMG object", "ged.db_object"),
-    BU_CMD_OPERAND("prefix", BU_CMD_VALUE_STRING, 0, 1,
+    BU_ARG_OPERAND("prefix", BU_ARG_VALUE_STRING, 0, 1,
 	"Output name prefix", NULL),
-    BU_CMD_OPERAND_NULL
+    BU_ARG_OPERAND_NULL
 };
 
-static const struct bu_cmd_schema decompose_cmd_schema = {
+static const struct bu_arg_schema decompose_cmd_schema = {
     "decompose", "Decompose an NMG object", NULL, decompose_operands,
-    BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+    BU_ARG_PARSE_STOP_AT_FIRST_OPERAND, BU_ARG_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
 
 int
@@ -80,7 +80,7 @@ ged_decompose_core(struct ged *gedp, int argc, const char *argv[])
 	return GED_HELP;
     }
 
-	operand_index = bu_cmd_schema_parse_complete(&decompose_cmd_schema, &parse_dummy,
+	operand_index = bu_arg_schema_parse_complete(&decompose_cmd_schema, &parse_dummy,
 	gedp->ged_result_str, argc - 1, argv + 1);
     if (operand_index < 0 || argc - 1 - operand_index < 1 || argc - 1 - operand_index > 2) {
 	ged_cmd_help_append(gedp->ged_result_str, argv[0], argv[0]);

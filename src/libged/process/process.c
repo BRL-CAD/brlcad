@@ -27,7 +27,7 @@
 
 #include <stdlib.h>
 
-#include "bu/cmdschema.h"
+#include "bu/arg.h"
 #include "bu/path.h"
 #include "bu/process.h"
 #include "../ged_private.h"
@@ -115,7 +115,7 @@ _ged_process_pabort(struct ged *gedp, int argc, const char **argv)
 	int ppid = bu_process_pid(rrp->p);
 	for (int j = 0; j < argc; j++) {
 	    int pid;
-	    if (!bu_cmd_integer_from_str(&pid, argv[j])) {
+	    if (!bu_arg_integer_from_str(&pid, argv[j])) {
 		bu_vls_printf(gedp->ged_result_str, "PID argument %s is not a valid process id.", argv[j]);
 		return BRLCAD_ERROR;
 	    }
@@ -161,38 +161,38 @@ _ged_process_gabort(struct ged *gedp, int argc, const char **argv)
 }
 
 
-static const struct bu_cmd_operand process_pid_operands[] = {
-    BU_CMD_OPERAND("process_ids", BU_CMD_VALUE_INTEGER, 1, BU_CMD_COUNT_UNLIMITED,
+static const struct bu_arg_operand process_pid_operands[] = {
+    BU_ARG_OPERAND("process_ids", BU_ARG_VALUE_INTEGER, 1, BU_ARG_COUNT_UNLIMITED,
 	"Process identifiers to abort", NULL),
-    BU_CMD_OPERAND_NULL
+    BU_ARG_OPERAND_NULL
 };
-static const struct bu_cmd_operand process_glob_operands[] = {
-    BU_CMD_OPERAND("command_patterns", BU_CMD_VALUE_STRING, 1, BU_CMD_COUNT_UNLIMITED,
+static const struct bu_arg_operand process_glob_operands[] = {
+    BU_ARG_OPERAND("command_patterns", BU_ARG_VALUE_STRING, 1, BU_ARG_COUNT_UNLIMITED,
 	"Command-name glob patterns", NULL),
-    BU_CMD_OPERAND_NULL
+    BU_ARG_OPERAND_NULL
 };
 GED_DEFINE_NO_ARG_SCHEMA_NAMED(process_root_schema, "process",
-    "Manage GED subprocesses", BU_CMD_PARSE_OPTIONS_FIRST);
+    "Manage GED subprocesses", BU_ARG_PARSE_OPTIONS_FIRST);
 GED_DEFINE_NO_ARG_SCHEMA_NAMED(process_list_schema, "list",
-    "List running GED subprocesses", BU_CMD_PARSE_STOP_AT_FIRST_OPERAND);
-static const struct bu_cmd_schema process_pabort_schema = {
+    "List running GED subprocesses", BU_ARG_PARSE_STOP_AT_FIRST_OPERAND);
+static const struct bu_arg_schema process_pabort_schema = {
     "pabort", "Abort subprocesses by PID", NULL, process_pid_operands,
-    BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+    BU_ARG_PARSE_STOP_AT_FIRST_OPERAND, BU_ARG_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
-static const struct bu_cmd_schema process_gabort_schema = {
+static const struct bu_arg_schema process_gabort_schema = {
     "gabort", "Abort subprocesses by command glob", NULL, process_glob_operands,
-    BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+    BU_ARG_PARSE_STOP_AT_FIRST_OPERAND, BU_ARG_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
 
 
 static int
-process_tree_parse(struct ged *gedp, const struct bu_cmd_schema *schema,
+process_tree_parse(struct ged *gedp, const struct bu_arg_schema *schema,
 	int argc, const char *argv[])
 {
     struct bu_vls msg = BU_VLS_INIT_ZERO;
     int ret = BRLCAD_ERROR;
 
-    if (bu_cmd_schema_parse_complete(schema, NULL, &msg, argc - 1, argv + 1) >= 0)
+    if (bu_arg_schema_parse_complete(schema, NULL, &msg, argc - 1, argv + 1) >= 0)
 	ret = BRLCAD_OK;
     else if (bu_vls_strlen(&msg))
 	bu_vls_vlscat(gedp->ged_result_str, &msg);
@@ -236,24 +236,24 @@ process_tree_gabort(void *data, int argc, const char *argv[])
 }
 
 
-static const struct bu_cmd_tree_node process_subcommands[] = {
-    BU_CMD_TREE_NODE(&process_list_schema, NULL, NULL,
-	BU_CMD_TREE_CHILD_AFTER_OPTIONS, process_tree_list),
-    BU_CMD_TREE_NODE(&process_pabort_schema, NULL, NULL,
-	BU_CMD_TREE_CHILD_AFTER_OPTIONS, process_tree_pabort),
-    BU_CMD_TREE_NODE(&process_gabort_schema, NULL, NULL,
-	BU_CMD_TREE_CHILD_AFTER_OPTIONS, process_tree_gabort),
-    BU_CMD_TREE_NODE_NULL
+static const struct bu_arg_tree_node process_subcommands[] = {
+    BU_ARG_TREE_NODE(&process_list_schema, NULL, NULL,
+	BU_ARG_TREE_CHILD_AFTER_OPTIONS, process_tree_list),
+    BU_ARG_TREE_NODE(&process_pabort_schema, NULL, NULL,
+	BU_ARG_TREE_CHILD_AFTER_OPTIONS, process_tree_pabort),
+    BU_ARG_TREE_NODE(&process_gabort_schema, NULL, NULL,
+	BU_ARG_TREE_CHILD_AFTER_OPTIONS, process_tree_gabort),
+    BU_ARG_TREE_NODE_NULL
 };
-static const struct bu_cmd_tree ged_process_tree = {
-    &process_root_schema, process_subcommands, BU_CMD_TREE_CHILD_AFTER_OPTIONS
+static const struct bu_arg_tree ged_process_tree = {
+    &process_root_schema, process_subcommands, BU_ARG_TREE_CHILD_AFTER_OPTIONS
 };
 
 
 static char *
 process_native_help(void)
 {
-    return bu_cmd_tree_help(&ged_process_tree, "process");
+    return bu_arg_tree_help(&ged_process_tree, "process");
 }
 
 
@@ -273,7 +273,7 @@ ged_process_core(struct ged *gedp, int argc, const char *argv[])
 	_process_show_help(gedp);
 	return BRLCAD_ERROR;
     }
-    if (bu_cmd_tree_dispatch(&ged_process_tree, gedp, argc - 1, argv + 1, &ret) == 0)
+    if (bu_arg_tree_dispatch(&ged_process_tree, gedp, argc - 1, argv + 1, &ret) == 0)
 	return ret;
 
     _process_show_help(gedp);
@@ -302,14 +302,14 @@ ged_process_grammar_analyze(struct ged *gedp, const char *input,
 static char *
 ged_process_grammar_json(void)
 {
-    return bu_cmd_tree_describe_json(&ged_process_tree);
+    return bu_arg_tree_describe_json(&ged_process_tree);
 }
 
 
 static int
 ged_process_grammar_lint(struct bu_vls *msgs)
 {
-    return bu_cmd_tree_lint(&ged_process_tree, msgs);
+    return bu_arg_tree_lint(&ged_process_tree, msgs);
 }
 GED_CMD_TREE_HELP(ged_process_grammar_help, ged_process_tree)
 

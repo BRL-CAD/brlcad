@@ -34,7 +34,7 @@
 #include <ctype.h>
 #include <string.h>
 
-#include "bu/cmdschema.h"
+#include "bu/arg.h"
 
 #include "../ged_private.h"
 #include "./ged_view.h"
@@ -109,13 +109,13 @@ ged_center_core(struct ged *gedp, int argc, const char *argv[])
 	    const char *xstrptr = bu_vls_cstr(&xvalstr);
 	    const char *ystrptr = bu_vls_cstr(&yvalstr);
 	    const char *zstrptr = bu_vls_cstr(&zvalstr);
-	    if (!bu_cmd_number_from_str(&xval, xstrptr)) {
+	    if (!bu_arg_number_from_str(&xval, xstrptr)) {
 		success = 0;
 	    }
-	    if (!bu_cmd_number_from_str(&yval, ystrptr)) {
+	    if (!bu_arg_number_from_str(&yval, ystrptr)) {
 		success = 0;
 	    }
-	    if (!bu_cmd_number_from_str(&zval, zstrptr)) {
+	    if (!bu_arg_number_from_str(&zval, zstrptr)) {
 		success = 0;
 	    }
 	    VSET(center, xval, yval, zval);

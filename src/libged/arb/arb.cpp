@@ -29,7 +29,7 @@
 #include <string.h>
 
 #include "rt/geom.h"
-#include "bu/cmdschema.h"
+#include "bu/arg.h"
 #include "../ged_private.h"
 #include "ged_arb.h"
 
@@ -55,13 +55,13 @@ _arb_cmd_create(void *bs, int argc, const char *argv[])
     GED_CHECK_EXISTS(gedp, argv[1], LOOKUP_QUIET, BRLCAD_ERROR);
 
     /* get rotation angle */
-    if (!bu_cmd_number_from_str(&rota, argv[2])) {
+    if (!bu_arg_number_from_str(&rota, argv[2])) {
 	bu_vls_printf(gedp->ged_result_str, "%s: bad rotation angle - %s", argv[0], argv[2]);
 	return BRLCAD_ERROR;
     }
 
     /* get fallback angle */
-    if (!bu_cmd_number_from_str(&fb_a, argv[3])) {
+    if (!bu_arg_number_from_str(&fb_a, argv[3])) {
 	bu_vls_printf(gedp->ged_result_str, "%s: bad fallback angle - %s", argv[0], argv[3]);
 	return BRLCAD_ERROR;
     }
@@ -111,39 +111,39 @@ _arb_cmd_create(void *bs, int argc, const char *argv[])
     return BRLCAD_OK;
 }
 
-static const struct bu_cmd_operand arb_create_operands[] = {
-    BU_CMD_OPERAND("name", BU_CMD_VALUE_STRING, 1, 1,
+static const struct bu_arg_operand arb_create_operands[] = {
+    BU_ARG_OPERAND("name", BU_ARG_VALUE_STRING, 1, 1,
 	"New ARB object name", NULL),
-    BU_CMD_OPERAND("rotation", BU_CMD_VALUE_NUMBER, 1, 1,
+    BU_ARG_OPERAND("rotation", BU_ARG_VALUE_NUMBER, 1, 1,
 	"Rotation angle in degrees", NULL),
-    BU_CMD_OPERAND("fallback", BU_CMD_VALUE_NUMBER, 1, 1,
+    BU_ARG_OPERAND("fallback", BU_ARG_VALUE_NUMBER, 1, 1,
 	"Fallback angle in degrees", NULL),
-    BU_CMD_OPERAND_NULL
+    BU_ARG_OPERAND_NULL
 };
-static const struct bu_cmd_schema arb_create_schema = {
+static const struct bu_arg_schema arb_create_schema = {
     "create", "Create an ARB from rotation and fallback angles", NULL,
-    arb_create_operands, BU_CMD_PARSE_STOP_AT_FIRST_OPERAND,
-    BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+    arb_create_operands, BU_ARG_PARSE_STOP_AT_FIRST_OPERAND,
+    BU_ARG_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
-static const struct bu_cmd_schema arb_legacy_schema = {
+static const struct bu_arg_schema arb_legacy_schema = {
     "arb", "Create an ARB using the deprecated positional syntax", NULL,
-    arb_create_operands, BU_CMD_PARSE_STOP_AT_FIRST_OPERAND,
-    BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+    arb_create_operands, BU_ARG_PARSE_STOP_AT_FIRST_OPERAND,
+    BU_ARG_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
-static const struct bu_cmd_schema arb_root_schema = {
+static const struct bu_arg_schema arb_root_schema = {
     "arb", "Create or repair ARB objects", NULL, NULL,
-    BU_CMD_PARSE_OPTIONS_FIRST, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+    BU_ARG_PARSE_OPTIONS_FIRST, BU_ARG_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
 
 
 static int
-arb_schema_preflight(struct ged *gedp, const struct bu_cmd_schema *schema,
+arb_schema_preflight(struct ged *gedp, const struct bu_arg_schema *schema,
 	int argc, const char *argv[])
 {
     struct bu_vls msg = BU_VLS_INIT_ZERO;
     int ret = BRLCAD_ERROR;
 
-    if (bu_cmd_schema_parse_complete(schema, NULL, &msg, argc, argv) >= 0) {
+    if (bu_arg_schema_parse_complete(schema, NULL, &msg, argc, argv) >= 0) {
 	ret = BRLCAD_OK;
     } else if (bu_vls_strlen(&msg)) {
 	bu_vls_vlscat(gedp->ged_result_str, &msg);
@@ -175,22 +175,22 @@ arb_tree_repair(void *data, int argc, const char *argv[])
 }
 
 
-static const struct bu_cmd_tree_node arb_subcommands[] = {
-    BU_CMD_TREE_NODE(&arb_create_schema, NULL, NULL,
-	BU_CMD_TREE_CHILD_AFTER_OPTIONS, arb_tree_create),
-    BU_CMD_TREE_NODE(&ged_arb_repair_schema, NULL, NULL,
-	BU_CMD_TREE_CHILD_AFTER_OPTIONS, arb_tree_repair),
-    BU_CMD_TREE_NODE_NULL
+static const struct bu_arg_tree_node arb_subcommands[] = {
+    BU_ARG_TREE_NODE(&arb_create_schema, NULL, NULL,
+	BU_ARG_TREE_CHILD_AFTER_OPTIONS, arb_tree_create),
+    BU_ARG_TREE_NODE(&ged_arb_repair_schema, NULL, NULL,
+	BU_ARG_TREE_CHILD_AFTER_OPTIONS, arb_tree_repair),
+    BU_ARG_TREE_NODE_NULL
 };
-static const struct bu_cmd_tree ged_arb_tree = {
-    &arb_root_schema, arb_subcommands, BU_CMD_TREE_CHILD_AFTER_OPTIONS
+static const struct bu_arg_tree ged_arb_tree = {
+    &arb_root_schema, arb_subcommands, BU_ARG_TREE_CHILD_AFTER_OPTIONS
 };
 
 static void
 arb_create_help(struct ged *gedp)
 {
     const char *path[] = {"create"};
-    char *help = bu_cmd_tree_help_path(&ged_arb_tree, "arb", 1, path);
+    char *help = bu_arg_tree_help_path(&ged_arb_tree, "arb", 1, path);
 
     if (help) {
 	bu_vls_strcat(gedp->ged_result_str, help);
@@ -202,7 +202,7 @@ arb_create_help(struct ged *gedp)
 static void
 arb_native_help(struct ged *gedp)
 {
-    char *help = bu_cmd_tree_help(&ged_arb_tree, "arb");
+    char *help = bu_arg_tree_help(&ged_arb_tree, "arb");
 
     if (help) {
 	bu_vls_strcat(gedp->ged_result_str, help);
@@ -228,7 +228,7 @@ ged_arb_core(struct ged *gedp, int argc, const char *argv[])
 	arb_native_help(gedp);
 	return GED_HELP;
     }
-    if (bu_cmd_tree_dispatch(&ged_arb_tree, gedp, argc - 1, argv + 1, &ret) == 0)
+    if (bu_arg_tree_dispatch(&ged_arb_tree, gedp, argc - 1, argv + 1, &ret) == 0)
 	return ret;
 
     if (arb_schema_preflight(gedp, &arb_legacy_schema, argc - 1, argv + 1) != BRLCAD_OK) {
@@ -244,17 +244,17 @@ ged_arb_core(struct ged *gedp, int argc, const char *argv[])
 
 extern "C" int ged_rotate_arb_face_core(struct ged *gedp, int argc, const char *argv[]);
 
-static const struct bu_cmd_form arb_native_forms[] = {
-    BU_CMD_FORM_TREE("subcommands", "Named ARB create and repair operations",
+static const struct bu_arg_form arb_native_forms[] = {
+    BU_ARG_FORM_TREE("subcommands", "Named ARB create and repair operations",
 	&ged_arb_tree),
-    BU_CMD_FORM_SCHEMA("deprecated_create", "Deprecated positional create syntax",
+    BU_ARG_FORM_SCHEMA("deprecated_create", "Deprecated positional create syntax",
 	&arb_legacy_schema),
-    BU_CMD_FORM_NULL
+    BU_ARG_FORM_NULL
 };
 
 
-static const struct bu_cmd_form *
-arb_select_native_form(const struct bu_cmd_forms *forms, size_t argc,
+static const struct bu_arg_form *
+arb_select_native_form(const struct bu_arg_forms *forms, size_t argc,
 	const char * const *argv, void *UNUSED(context))
 {
     const char *word = argc > 1 ? argv[1] : "";
@@ -265,8 +265,8 @@ arb_select_native_form(const struct bu_cmd_forms *forms, size_t argc,
     return &forms->forms[1];
 }
 
-static const struct bu_cmd_forms arb_forms =
-    BU_CMD_FORMS("arb", "Create or repair ARB objects", arb_native_forms,
+static const struct bu_arg_forms arb_forms =
+    BU_ARG_FORMS("arb", "Create or repair ARB objects", arb_native_forms,
 	arb_select_native_form);
 
 

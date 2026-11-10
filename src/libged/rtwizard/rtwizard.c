@@ -33,7 +33,7 @@
 #endif
 
 #include "bu/app.h"
-#include "bu/cmdschema.h"
+#include "bu/arg.h"
 #include "bu/process.h"
 #include "bu/str.h"
 
@@ -204,8 +204,8 @@ ged_rtwizard_core(struct ged *gedp, int argc, const char *argv[])
 
 #include "../include/plugin.h"
 GED_DEFINE_TYPED_OPERAND_SCHEMA(rtwizard, "rtwizard",
-    "Launch rtwizard for the current view", "arguments", BU_CMD_VALUE_RAW,
-    0, BU_CMD_COUNT_UNLIMITED, "Arguments passed to rtwizard");
+    "Launch rtwizard for the current view", "arguments", BU_ARG_VALUE_RAW,
+    0, BU_ARG_COUNT_UNLIMITED, "Arguments passed to rtwizard");
 
 #define GED_RTWIZARD_COMMANDS(X, XID) \
     X(rtwizard, ged_rtwizard_core, GED_CMD_DEFAULT, &rtwizard_cmd_schema) \

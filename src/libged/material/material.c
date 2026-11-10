@@ -28,7 +28,7 @@
 #include <string.h>
 
 #include "bu/cmd.h"
-#include "bu/cmdschema.h"
+#include "bu/arg.h"
 #include "rt/geom.h"
 #include "raytrace.h"
 
@@ -558,33 +558,33 @@ material_is_direct_property(const char *property)
 
 
 static void
-material_property_validation_result(struct bu_cmd_validate_result *result,
-	bu_cmd_validate_state_t state, size_t token, const char *hint)
+material_property_validation_result(struct bu_arg_validate_result *result,
+	bu_arg_validate_state_t state, size_t token, const char *hint)
 {
-    bu_cmd_validate_result_clear(result);
+    bu_arg_validate_result_clear(result);
     result->state = state;
     result->token_start = token;
     result->token_end = token;
-    result->expected = BU_CMD_EXPECT_OPERAND;
-    result->completion_type = BU_CMD_VALUE_STRING;
+    result->expected = BU_ARG_EXPECT_OPERAND;
+    result->completion_type = BU_ARG_VALUE_STRING;
     result->hint = hint;
 }
 
 
 static int
-material_property_schema_validate(const struct bu_cmd_schema *schema, size_t argc,
-	const char **argv, size_t cursor_arg, struct bu_cmd_validate_result *result)
+material_property_schema_validate(const struct bu_arg_schema *schema, size_t argc,
+	const char **argv, size_t cursor_arg, struct bu_arg_validate_result *result)
 {
-    struct bu_cmd_schema flat = *schema;
+    struct bu_arg_schema flat = *schema;
     size_t operand_count;
     size_t supplied_tail;
     size_t expected_tail;
     int ret;
 
-    ret = bu_cmd_schema_validate_syntax(&flat, argc, argv, cursor_arg, result);
-    if (ret || result->state == BU_CMD_VALIDATE_INVALID)
+    ret = bu_arg_schema_validate_syntax(&flat, argc, argv, cursor_arg, result);
+    if (ret || result->state == BU_ARG_VALIDATE_INVALID)
 	return ret;
-    operand_count = bu_cmd_schema_operand_count(schema, argc, argv);
+    operand_count = bu_arg_schema_operand_count(schema, argc, argv);
     if (operand_count < 2)
 	return ret;
 
@@ -596,7 +596,7 @@ material_property_schema_validate(const struct bu_cmd_schema *schema, size_t arg
     } else {
 	/* The keyword operand reports this case first, but retain a complete
 	 * result if a future schema changes that operand to a semantic provider. */
-	material_property_validation_result(result, BU_CMD_VALIDATE_INVALID,
+	material_property_validation_result(result, BU_ARG_VALIDATE_INVALID,
 	    cursor_arg < argc ? cursor_arg : argc,
 	    "material property must be name, parent, source, or a property group");
 	return 0;
@@ -605,7 +605,7 @@ material_property_schema_validate(const struct bu_cmd_schema *schema, size_t arg
 	return ret;
 
     material_property_validation_result(result,
-	supplied_tail < expected_tail ? BU_CMD_VALIDATE_INCOMPLETE : BU_CMD_VALIDATE_INVALID,
+	supplied_tail < expected_tail ? BU_ARG_VALIDATE_INCOMPLETE : BU_ARG_VALIDATE_INVALID,
 	cursor_arg < argc ? cursor_arg : argc,
 	supplied_tail < expected_tail ? "additional material property argument required" :
 	"too many material property arguments");
@@ -613,65 +613,65 @@ material_property_schema_validate(const struct bu_cmd_schema *schema, size_t arg
 }
 
 
-static const struct bu_cmd_operand material_create_operands[] = {
-    BU_CMD_OPERAND("material_object", BU_CMD_VALUE_STRING, 1, 1,
+static const struct bu_arg_operand material_create_operands[] = {
+    BU_ARG_OPERAND("material_object", BU_ARG_VALUE_STRING, 1, 1,
 	"New material database object name", NULL),
-    BU_CMD_OPERAND("material_name", BU_CMD_VALUE_STRING, 1, 1,
+    BU_ARG_OPERAND("material_name", BU_ARG_VALUE_STRING, 1, 1,
 	"Initial material name", NULL),
-    BU_CMD_OPERAND_NULL
+    BU_ARG_OPERAND_NULL
 };
-static const struct bu_cmd_operand material_assign_operands[] = {
-    BU_CMD_OPERAND("object", BU_CMD_VALUE_DB_OBJECT, 1, 1,
+static const struct bu_arg_operand material_assign_operands[] = {
+    BU_ARG_OPERAND("object", BU_ARG_VALUE_DB_OBJECT, 1, 1,
 	"Geometry object to receive the material", NULL),
-    BU_CMD_OPERAND("material_name", BU_CMD_VALUE_STRING, 1, 1,
+    BU_ARG_OPERAND("material_name", BU_ARG_VALUE_STRING, 1, 1,
 	"Assigned material name", NULL),
-    BU_CMD_OPERAND_NULL
+    BU_ARG_OPERAND_NULL
 };
-static const struct bu_cmd_operand material_object_operands[] = {
-    BU_CMD_OPERAND("material_object", BU_CMD_VALUE_DB_OBJECT, 1, 1,
+static const struct bu_arg_operand material_object_operands[] = {
+    BU_ARG_OPERAND("material_object", BU_ARG_VALUE_DB_OBJECT, 1, 1,
 	"Material database object", NULL),
-    BU_CMD_OPERAND_NULL
+    BU_ARG_OPERAND_NULL
 };
-static const struct bu_cmd_operand material_get_operands[] = {
-    BU_CMD_OPERAND("material_object", BU_CMD_VALUE_DB_OBJECT, 1, 1,
+static const struct bu_arg_operand material_get_operands[] = {
+    BU_ARG_OPERAND("material_object", BU_ARG_VALUE_DB_OBJECT, 1, 1,
 	"Material database object", NULL),
-    BU_CMD_OPERAND_KEYWORDS("property_or_group", BU_CMD_VALUE_KEYWORD, 1, 1,
+    BU_ARG_OPERAND_KEYWORDS("property_or_group", BU_ARG_VALUE_KEYWORD, 1, 1,
 	"Direct property or property group", NULL, material_property_or_group_values),
-    BU_CMD_OPERAND("group_property", BU_CMD_VALUE_STRING, 0, 1,
+    BU_ARG_OPERAND("group_property", BU_ARG_VALUE_STRING, 0, 1,
 	"Property key within a property group", NULL),
-    BU_CMD_OPERAND_NULL
+    BU_ARG_OPERAND_NULL
 };
-static const struct bu_cmd_operand material_set_operands[] = {
-    BU_CMD_OPERAND("material_object", BU_CMD_VALUE_DB_OBJECT, 1, 1,
+static const struct bu_arg_operand material_set_operands[] = {
+    BU_ARG_OPERAND("material_object", BU_ARG_VALUE_DB_OBJECT, 1, 1,
 	"Material database object", NULL),
-    BU_CMD_OPERAND_KEYWORDS("property_or_group", BU_CMD_VALUE_KEYWORD, 1, 1,
+    BU_ARG_OPERAND_KEYWORDS("property_or_group", BU_ARG_VALUE_KEYWORD, 1, 1,
 	"Direct property or property group", NULL, material_property_or_group_values),
-    BU_CMD_OPERAND("property_or_value", BU_CMD_VALUE_STRING, 1, 1,
+    BU_ARG_OPERAND("property_or_value", BU_ARG_VALUE_STRING, 1, 1,
 	"Direct-property value or property-group key", NULL),
-    BU_CMD_OPERAND("group_value", BU_CMD_VALUE_STRING, 0, 1,
+    BU_ARG_OPERAND("group_value", BU_ARG_VALUE_STRING, 0, 1,
 	"New value for a property-group key", NULL),
-    BU_CMD_OPERAND_NULL
+    BU_ARG_OPERAND_NULL
 };
-static const struct bu_cmd_operand material_import_operands[] = {
-    BU_CMD_OPERAND("density_table", BU_CMD_VALUE_FILE, 1, 1,
+static const struct bu_arg_operand material_import_operands[] = {
+    BU_ARG_OPERAND("density_table", BU_ARG_VALUE_FILE, 1, 1,
 	"Density table file", NULL),
-    BU_CMD_OPERAND_NULL
+    BU_ARG_OPERAND_NULL
 };
-static const struct bu_cmd_option material_import_options[] = {
-    BU_CMD_FLAG_UNBOUND(NULL, "id", "id", "Name imported material objects by density-table ID"),
-    BU_CMD_FLAG_UNBOUND(NULL, "name", "name", "Name imported material objects by density-table name"),
-    BU_CMD_OPTION_NULL
+static const struct bu_arg_option material_import_options[] = {
+    BU_ARG_FLAG_UNBOUND(NULL, "id", "id", "Name imported material objects by density-table ID"),
+    BU_ARG_FLAG_UNBOUND(NULL, "name", "name", "Name imported material objects by density-table name"),
+    BU_ARG_OPTION_NULL
 };
-static const struct bu_cmd_constraint material_import_constraints[] = {
-    BU_CMD_CONSTRAINT_OPTIONS(material_import_mode_options, 1, 1,
+static const struct bu_arg_constraint material_import_constraints[] = {
+    BU_ARG_CONSTRAINT_OPTIONS(material_import_mode_options, 1, 1,
 	"exactly one of --id or --name is required"),
-    BU_CMD_CONSTRAINT_NULL
+    BU_ARG_CONSTRAINT_NULL
 };
 
 #define MATERIAL_TREE_SCHEMA(_name, _help, _options, _operands, _validator) \
-    static const struct bu_cmd_schema material_##_name##_schema = { \
-	#_name, _help, _options, _operands, BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, \
-	BU_CMD_SCHEMA_CONSTRAINTS(_validator, NULL) \
+    static const struct bu_arg_schema material_##_name##_schema = { \
+	#_name, _help, _options, _operands, BU_ARG_PARSE_STOP_AT_FIRST_OPERAND, \
+	BU_ARG_SCHEMA_CONSTRAINTS(_validator, NULL) \
     }
 MATERIAL_TREE_SCHEMA(create, "Create a material object", NULL, material_create_operands, NULL);
 MATERIAL_TREE_SCHEMA(assign, "Assign a material name to geometry", NULL, material_assign_operands, NULL);
@@ -681,54 +681,54 @@ MATERIAL_TREE_SCHEMA(set, "Set a material property", NULL, material_set_operands
 MATERIAL_TREE_SCHEMA(remove, "Remove a material property", NULL, material_get_operands, material_property_schema_validate);
 MATERIAL_TREE_SCHEMA(help, "Print material command help", NULL, NULL, NULL);
 #undef MATERIAL_TREE_SCHEMA
-static const struct bu_cmd_schema material_import_schema =
-    BU_CMD_SCHEMA_EXTERNAL("import", "Import a density table", material_import_options,
-	material_import_operands, BU_CMD_PARSE_OPTIONS_FIRST, NULL,
+static const struct bu_arg_schema material_import_schema =
+    BU_ARG_SCHEMA_EXTERNAL("import", "Import a density table", material_import_options,
+	material_import_operands, BU_ARG_PARSE_OPTIONS_FIRST, NULL,
 	material_import_constraints, NULL);
 GED_DEFINE_NO_ARG_SCHEMA_NAMED(material_root_schema, "material",
-    "Manage material objects and assignments", BU_CMD_PARSE_OPTIONS_FIRST);
+    "Manage material objects and assignments", BU_ARG_PARSE_OPTIONS_FIRST);
 
 static int material_tree_execute(void *data, int argc, const char *argv[]);
-static const struct bu_cmd_tree_node material_subcommands[] = {
-    BU_CMD_TREE_NODE(&material_assign_schema, NULL, NULL,
-	BU_CMD_TREE_CHILD_AFTER_OPTIONS, material_tree_execute),
-    BU_CMD_TREE_NODE(&material_create_schema, NULL, NULL,
-	BU_CMD_TREE_CHILD_AFTER_OPTIONS, material_tree_execute),
-    BU_CMD_TREE_NODE(&material_destroy_schema, NULL, NULL,
-	BU_CMD_TREE_CHILD_AFTER_OPTIONS, material_tree_execute),
-    BU_CMD_TREE_NODE(&material_get_schema, NULL, NULL,
-	BU_CMD_TREE_CHILD_AFTER_OPTIONS, material_tree_execute),
-    BU_CMD_TREE_NODE(&material_import_schema, NULL, NULL,
-	BU_CMD_TREE_CHILD_AFTER_OPTIONS, material_tree_execute),
-    BU_CMD_TREE_NODE(&material_remove_schema, NULL, NULL,
-	BU_CMD_TREE_CHILD_AFTER_OPTIONS, material_tree_execute),
-    BU_CMD_TREE_NODE(&material_set_schema, NULL, NULL,
-	BU_CMD_TREE_CHILD_AFTER_OPTIONS, material_tree_execute),
-    BU_CMD_TREE_NODE(&material_help_schema, NULL, NULL,
-	BU_CMD_TREE_CHILD_AFTER_OPTIONS, material_tree_execute),
-    BU_CMD_TREE_NODE_NULL
+static const struct bu_arg_tree_node material_subcommands[] = {
+    BU_ARG_TREE_NODE(&material_assign_schema, NULL, NULL,
+	BU_ARG_TREE_CHILD_AFTER_OPTIONS, material_tree_execute),
+    BU_ARG_TREE_NODE(&material_create_schema, NULL, NULL,
+	BU_ARG_TREE_CHILD_AFTER_OPTIONS, material_tree_execute),
+    BU_ARG_TREE_NODE(&material_destroy_schema, NULL, NULL,
+	BU_ARG_TREE_CHILD_AFTER_OPTIONS, material_tree_execute),
+    BU_ARG_TREE_NODE(&material_get_schema, NULL, NULL,
+	BU_ARG_TREE_CHILD_AFTER_OPTIONS, material_tree_execute),
+    BU_ARG_TREE_NODE(&material_import_schema, NULL, NULL,
+	BU_ARG_TREE_CHILD_AFTER_OPTIONS, material_tree_execute),
+    BU_ARG_TREE_NODE(&material_remove_schema, NULL, NULL,
+	BU_ARG_TREE_CHILD_AFTER_OPTIONS, material_tree_execute),
+    BU_ARG_TREE_NODE(&material_set_schema, NULL, NULL,
+	BU_ARG_TREE_CHILD_AFTER_OPTIONS, material_tree_execute),
+    BU_ARG_TREE_NODE(&material_help_schema, NULL, NULL,
+	BU_ARG_TREE_CHILD_AFTER_OPTIONS, material_tree_execute),
+    BU_ARG_TREE_NODE_NULL
 };
-static const struct bu_cmd_tree ged_material_tree = {
-    &material_root_schema, material_subcommands, BU_CMD_TREE_CHILD_AFTER_OPTIONS
+static const struct bu_arg_tree ged_material_tree = {
+    &material_root_schema, material_subcommands, BU_ARG_TREE_CHILD_AFTER_OPTIONS
 };
 
 
-static const struct bu_cmd_schema *
+static const struct bu_arg_schema *
 material_schema_for_command(const char *command)
 {
-    const struct bu_cmd_tree_node *node = bu_cmd_tree_find_subcommand(&ged_material_tree, command);
+    const struct bu_arg_tree_node *node = bu_arg_tree_find_subcommand(&ged_material_tree, command);
     return node ? node->schema : NULL;
 }
 
 
 static int
-material_tree_parse(struct ged *gedp, const struct bu_cmd_schema *schema,
+material_tree_parse(struct ged *gedp, const struct bu_arg_schema *schema,
 	int argc, const char *argv[])
 {
     struct bu_vls msg = BU_VLS_INIT_ZERO;
     int ret = BRLCAD_ERROR;
 
-    if (bu_cmd_schema_parse_complete(schema, NULL, &msg, argc - 1, argv + 1) >= 0) {
+    if (bu_arg_schema_parse_complete(schema, NULL, &msg, argc - 1, argv + 1) >= 0) {
 	ret = BRLCAD_OK;
     } else if (bu_vls_strlen(&msg)) {
 	bu_vls_vlscat(gedp->ged_result_str, &msg);
@@ -743,7 +743,7 @@ material_tree_parse(struct ged *gedp, const struct bu_cmd_schema *schema,
 static void
 material_tree_show_help(struct ged *gedp)
 {
-    char *help = bu_cmd_tree_help(&ged_material_tree, "material");
+    char *help = bu_arg_tree_help(&ged_material_tree, "material");
 
     if (help) {
 	bu_vls_strcat(gedp->ged_result_str, help);
@@ -757,7 +757,7 @@ static int
 material_tree_execute(void *data, int argc, const char *argv[])
 {
     struct ged *gedp = (struct ged *)data;
-    const struct bu_cmd_schema *schema = material_schema_for_command(argv[0]);
+    const struct bu_arg_schema *schema = material_schema_for_command(argv[0]);
 
     if (!schema || material_tree_parse(gedp, schema, argc, argv) != BRLCAD_OK)
 	return BRLCAD_ERROR;
@@ -795,7 +795,7 @@ ged_material_core(struct ged *gedp, int argc, const char *argv[])
 	material_tree_show_help(gedp);
 	return GED_HELP;
     }
-    if (bu_cmd_tree_dispatch(&ged_material_tree, gedp, argc - 1, argv + 1, &ret) == 0)
+    if (bu_arg_tree_dispatch(&ged_material_tree, gedp, argc - 1, argv + 1, &ret) == 0)
 	return ret;
 
     bu_vls_printf(gedp->ged_result_str, "Error: %s is not a valid material subcommand.\n", argv[1]);
@@ -823,14 +823,14 @@ ged_material_grammar_analyze(struct ged *gedp, const char *input,
 static char *
 ged_material_grammar_json(void)
 {
-    return bu_cmd_tree_describe_json(&ged_material_tree);
+    return bu_arg_tree_describe_json(&ged_material_tree);
 }
 
 
 static int
 ged_material_grammar_lint(struct bu_vls *msgs)
 {
-    return bu_cmd_tree_lint(&ged_material_tree, msgs);
+    return bu_arg_tree_lint(&ged_material_tree, msgs);
 }
 GED_CMD_TREE_HELP(ged_material_grammar_help, ged_material_tree)
 

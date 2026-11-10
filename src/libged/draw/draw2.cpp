@@ -34,7 +34,7 @@
 #include "bsocket.h"
 
 #include "bu/cmd.h"
-#include "bu/cmdschema.h"
+#include "bu/arg.h"
 #include "bu/sort.h"
 #include "nmg.h"
 #include "rt/view.h"
@@ -62,70 +62,70 @@ struct draw2_args {
     const char *view;
 };
 
-static const struct bu_cmd_option draw2_schema_options[] = {
-    BU_CMD_FLAG("h", "help", struct draw2_args, help, "Print help and exit"),
-    BU_CMD_ALIAS_SHORT("?", "help", 0),
+static const struct bu_arg_option draw2_schema_options[] = {
+    BU_ARG_FLAG("h", "help", struct draw2_args, help, "Print help and exit"),
+    BU_ARG_ALIAS_SHORT("?", "help", 0),
     {"m", "mode", "mode", "0..5",
 	"0=wireframe; 1=shaded BoTs; 2=shaded; 3=evaluated; 4=hidden-line; 5=points",
-	BU_CMD_VALUE_INTEGER, offsetof(struct draw2_args, mode), NULL, NULL,
-	"ged.draw_mode", NULL, 0, 0, NULL, BU_CMD_ARG_REQUIRED, NULL, NULL, NULL,
-	BU_CMD_INTEGER_RANGE_INIT(0, 5), BU_CMD_ARG_SHAPE_SCALAR},
-    BU_CMD_FLAG(NULL, "wireframe", struct draw2_args, wireframe, "Draw using only wireframes (mode = 0)"),
-    BU_CMD_FLAG(NULL, "shaded", struct draw2_args, shaded, "Shade BoTs, B-reps, and polysolids (mode = 1)"),
-    BU_CMD_FLAG(NULL, "shaded-all", struct draw2_args, shaded_all, "Shade all solids, not evaluated (mode = 2)"),
-    BU_CMD_FLAG("E", "evaluate", struct draw2_args, evaluate, "Wireframe with evaluated booleans (mode = 3)"),
-    BU_CMD_FLAG(NULL, "hidden-line", struct draw2_args, hidden_line, "Draw hidden-line wireframes (mode = 4)"),
-    BU_CMD_FLAG("A", "add-mode", struct draw2_args, add_mode, "Do not erase other modes for the specified paths"),
-    BU_CMD_NUMBER("t", "transparency", struct draw2_args, transparency, "level", "Set transparency level (0=clear, 1=opaque)"),
-    BU_CMD_ALIAS_SHORT("x", "transparency", 1),
-    BU_CMD_INTEGER("L", NULL, struct draw2_args, bot_threshold, "count", "Draw BoT bounding boxes above this face count"),
-    BU_CMD_FLAG("S", "no-subtract", struct draw2_args, no_subtract, "Do not draw subtraction solids"),
-    BU_CMD_FLAG(NULL, "no-dash", struct draw2_args, no_dash, "Use solid lines for subtraction solids"),
-    BU_CMD_COLOR_COMPAT("C", "color", struct draw2_args, color, "color", "Override object colors"),
-    BU_CMD_INTEGER(NULL, "line-width", struct draw2_args, line_width, "pixels", "Override default line width"),
-    BU_CMD_FLAG("R", "no-autoview", struct draw2_args, no_autoview, "Do not automatically fit an empty scene"),
+	BU_ARG_VALUE_INTEGER, offsetof(struct draw2_args, mode), NULL, NULL,
+	"ged.draw_mode", NULL, 0, 0, NULL, BU_ARG_REQUIRED, NULL, NULL, NULL,
+	BU_ARG_INTEGER_RANGE_INIT(0, 5), BU_ARG_SHAPE_SCALAR},
+    BU_ARG_FLAG(NULL, "wireframe", struct draw2_args, wireframe, "Draw using only wireframes (mode = 0)"),
+    BU_ARG_FLAG(NULL, "shaded", struct draw2_args, shaded, "Shade BoTs, B-reps, and polysolids (mode = 1)"),
+    BU_ARG_FLAG(NULL, "shaded-all", struct draw2_args, shaded_all, "Shade all solids, not evaluated (mode = 2)"),
+    BU_ARG_FLAG("E", "evaluate", struct draw2_args, evaluate, "Wireframe with evaluated booleans (mode = 3)"),
+    BU_ARG_FLAG(NULL, "hidden-line", struct draw2_args, hidden_line, "Draw hidden-line wireframes (mode = 4)"),
+    BU_ARG_FLAG("A", "add-mode", struct draw2_args, add_mode, "Do not erase other modes for the specified paths"),
+    BU_ARG_NUMBER("t", "transparency", struct draw2_args, transparency, "level", "Set transparency level (0=clear, 1=opaque)"),
+    BU_ARG_ALIAS_SHORT("x", "transparency", 1),
+    BU_ARG_INTEGER("L", NULL, struct draw2_args, bot_threshold, "count", "Draw BoT bounding boxes above this face count"),
+    BU_ARG_FLAG("S", "no-subtract", struct draw2_args, no_subtract, "Do not draw subtraction solids"),
+    BU_ARG_FLAG(NULL, "no-dash", struct draw2_args, no_dash, "Use solid lines for subtraction solids"),
+    BU_ARG_COLOR_COMPAT("C", "color", struct draw2_args, color, "color", "Override object colors"),
+    BU_ARG_INTEGER(NULL, "line-width", struct draw2_args, line_width, "pixels", "Override default line width"),
+    BU_ARG_FLAG("R", "no-autoview", struct draw2_args, no_autoview, "Do not automatically fit an empty scene"),
     {"V", "view", "view", "name", "Draw on the named view",
-	BU_CMD_VALUE_STRING, offsetof(struct draw2_args, view), NULL, NULL,
-	"ged.view", NULL, 0, 0, NULL, BU_CMD_ARG_REQUIRED, NULL, NULL, NULL,
-	BU_CMD_VALUE_RANGE_NONE, BU_CMD_ARG_SHAPE_SCALAR},
-    BU_CMD_OPTION_NULL
+	BU_ARG_VALUE_STRING, offsetof(struct draw2_args, view), NULL, NULL,
+	"ged.view", NULL, 0, 0, NULL, BU_ARG_REQUIRED, NULL, NULL, NULL,
+	BU_ARG_VALUE_RANGE_NONE, BU_ARG_SHAPE_SCALAR},
+    BU_ARG_OPTION_NULL
 };
-static const struct bu_cmd_operand draw2_schema_operands[] = {
-    BU_CMD_OPERAND("paths", BU_CMD_VALUE_DB_PATH, 1, BU_CMD_COUNT_UNLIMITED,
+static const struct bu_arg_operand draw2_schema_operands[] = {
+    BU_ARG_OPERAND("paths", BU_ARG_VALUE_DB_PATH, 1, BU_ARG_COUNT_UNLIMITED,
 	"Database object paths to draw", "ged.db_path"),
-    BU_CMD_OPERAND_NULL
+    BU_ARG_OPERAND_NULL
 };
-extern "C" const struct bu_cmd_schema ged_draw_native_schema = {
+extern "C" const struct bu_arg_schema ged_draw_native_schema = {
     "draw", "Draw database objects", draw2_schema_options, draw2_schema_operands,
-    BU_CMD_PARSE_INTERSPERSED, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+    BU_ARG_PARSE_INTERSPERSED, BU_ARG_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
-extern "C" const struct bu_cmd_schema ged_draw_alias_native_schema = {
+extern "C" const struct bu_arg_schema ged_draw_alias_native_schema = {
     "e", "Draw database objects", draw2_schema_options, draw2_schema_operands,
-    BU_CMD_PARSE_INTERSPERSED, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+    BU_ARG_PARSE_INTERSPERSED, BU_ARG_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
 
 struct redraw2_args {
     const char *view;
 };
-static const struct bu_cmd_option redraw2_schema_options[] = {
-    BU_CMD_STRING("V", "view", struct redraw2_args, view, "name", "Redraw on the named view"),
-    BU_CMD_OPTION_NULL
+static const struct bu_arg_option redraw2_schema_options[] = {
+    BU_ARG_STRING("V", "view", struct redraw2_args, view, "name", "Redraw on the named view"),
+    BU_ARG_OPTION_NULL
 };
-static const struct bu_cmd_operand redraw2_schema_operands[] = {
-    BU_CMD_OPERAND("paths", BU_CMD_VALUE_DB_PATH, 0, BU_CMD_COUNT_UNLIMITED,
+static const struct bu_arg_operand redraw2_schema_operands[] = {
+    BU_ARG_OPERAND("paths", BU_ARG_VALUE_DB_PATH, 0, BU_ARG_COUNT_UNLIMITED,
 	"Displayed database object paths to redraw", "ged.db_path"),
-    BU_CMD_OPERAND_NULL
+    BU_ARG_OPERAND_NULL
 };
-extern "C" const struct bu_cmd_schema ged_redraw_native_schema = {
+extern "C" const struct bu_arg_schema ged_redraw_native_schema = {
     "redraw", "Redraw displayed database objects", redraw2_schema_options,
-    redraw2_schema_operands, BU_CMD_PARSE_INTERSPERSED,
-    BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+    redraw2_schema_operands, BU_ARG_PARSE_INTERSPERSED,
+    BU_ARG_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
 
 static void
 draw2_usage(struct ged *gedp, const char *cmd)
 {
-    char *help = bu_cmd_schema_help(&ged_draw_native_schema, cmd);
+    char *help = bu_arg_schema_help(&ged_draw_native_schema, cmd);
 
     if (help) {
 	bu_vls_strcat(gedp->ged_result_str, help);
@@ -161,14 +161,14 @@ ged_draw2_core(struct ged *gedp, int argc, const char *argv[])
 	return BRLCAD_OK;
     }
 
-    const int color_override = bu_cmd_schema_option_present(&ged_draw_native_schema,
+    const int color_override = bu_arg_schema_option_present(&ged_draw_native_schema,
 	(size_t)argc, argv, "color");
-    const int help_requested = bu_cmd_schema_option_present(&ged_draw_native_schema,
+    const int help_requested = bu_arg_schema_option_present(&ged_draw_native_schema,
 	(size_t)argc, argv, "help");
     struct bu_vls omsg = BU_VLS_INIT_ZERO;
     int operand_index = help_requested ?
-	bu_cmd_schema_parse(&ged_draw_native_schema, &args, &omsg, argc, argv) :
-	bu_cmd_schema_parse_complete(&ged_draw_native_schema, &args, &omsg, argc, argv);
+	bu_arg_schema_parse(&ged_draw_native_schema, &args, &omsg, argc, argv) :
+	bu_arg_schema_parse_complete(&ged_draw_native_schema, &args, &omsg, argc, argv);
     if (operand_index < 0) {
 	bu_vls_printf(gedp->ged_result_str, "option parsing error: %s\n", bu_vls_cstr(&omsg));
 	bu_vls_free(&omsg);
@@ -345,7 +345,7 @@ ged_redraw2_core(struct ged *gedp, int argc, const char *argv[])
     struct bview *cv = NULL;
     struct redraw2_args args = {};
     struct bu_vls omsg = BU_VLS_INIT_ZERO;
-    int operand_index = bu_cmd_schema_parse_complete(&ged_redraw_native_schema, &args,
+    int operand_index = bu_arg_schema_parse_complete(&ged_redraw_native_schema, &args,
 	&omsg, argc, argv);
     if (operand_index < 0) {
 	bu_vls_printf(gedp->ged_result_str, "option parsing error: %s\n", bu_vls_cstr(&omsg));

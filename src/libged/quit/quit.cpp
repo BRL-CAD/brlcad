@@ -25,26 +25,26 @@
 
 #include "common.h"
 
-#include "bu/cmdschema.h"
+#include "bu/arg.h"
 
 #include "../ged_private.h"
 
-static const struct bu_cmd_schema exit_cmd_schema = {
+static const struct bu_arg_schema exit_cmd_schema = {
     "exit", "Exit the command interpreter", NULL, NULL,
-    BU_CMD_PARSE_INTERSPERSED,
-    BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+    BU_ARG_PARSE_INTERSPERSED,
+    BU_ARG_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
 
-static const struct bu_cmd_schema q_cmd_schema = {
+static const struct bu_arg_schema q_cmd_schema = {
     "q", "Exit the command interpreter", NULL, NULL,
-    BU_CMD_PARSE_INTERSPERSED,
-    BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+    BU_ARG_PARSE_INTERSPERSED,
+    BU_ARG_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
 
-static const struct bu_cmd_schema quit_cmd_schema = {
+static const struct bu_arg_schema quit_cmd_schema = {
     "quit", "Exit the command interpreter", NULL, NULL,
-    BU_CMD_PARSE_INTERSPERSED,
-    BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+    BU_ARG_PARSE_INTERSPERSED,
+    BU_ARG_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
 
 // quit is a no-op at the libged level - its purpose is to support ged_exec

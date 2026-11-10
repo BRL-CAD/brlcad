@@ -33,7 +33,7 @@
 #include <vector>
 
 #include "bu/app.h"
-#include "bu/cmdschema.h"
+#include "bu/arg.h"
 #include "bu/path.h"
 #include "analyze.h"
 #include "ged.h"
@@ -459,7 +459,7 @@ mater_audit(struct ged *gedp, size_t argc, const char *argv[])
 	    mat_names.insert(std::string(oname));
 	}
 	if (mat_id) {
-	    if (!bu_cmd_long_from_str(&curr_id, mat_id) || curr_id < 0) {
+	    if (!bu_arg_long_from_str(&curr_id, mat_id) || curr_id < 0) {
 		bu_vls_printf(gedp->ged_result_str, "Object %s has an invalid value set for it's material_id attribute: %s\n", dp->d_namep, mat_id);
 		bu_avs_free(&avs);
 		continue;
@@ -572,7 +572,7 @@ mater_audit(struct ged *gedp, size_t argc, const char *argv[])
 
 		mat_id = bu_avs_get(&avs, "material_id");
 		if (mat_id) {
-		    if (!bu_cmd_long_from_str(&curr_id, mat_id) || curr_id < 0) {
+		    if (!bu_arg_long_from_str(&curr_id, mat_id) || curr_id < 0) {
 			bu_avs_free(&avs);
 			continue;
 		    }
@@ -610,7 +610,7 @@ mater_audit(struct ged *gedp, size_t argc, const char *argv[])
 	    }
 
 	    mat_id = bu_avs_get(&avs, "material_id");
-	    if (!mat_id || !bu_cmd_long_from_str(&curr_id, mat_id) || curr_id < 0) {
+	    if (!mat_id || !bu_arg_long_from_str(&curr_id, mat_id) || curr_id < 0) {
 		bu_avs_free(&avs);
 		continue;
 	    }
@@ -804,7 +804,7 @@ mater_get_id_from_str(struct bu_vls *msg, const char *arg, void *storage)
 	return -1;
     }
 
-    if (!bu_cmd_long_from_str(&id, value)) {
+    if (!bu_arg_long_from_str(&id, value)) {
 	if (storage) {
 	    mater_id_filter filter = {MATER_FILTER_EQUAL, 0, arg, 1};
 	    static_cast<std::vector<mater_id_filter> *>(storage)->push_back(filter);
@@ -828,7 +828,7 @@ mater_get_density_from_str(struct bu_vls *msg, const char *arg, void *storage)
     fastf_t density = 0.0;
 
     if (!arg || !arg[0] || !value || !value[0] ||
-	!bu_cmd_number_from_str(&density, value)) {
+	!bu_arg_number_from_str(&density, value)) {
 	if (msg)
 	    bu_vls_printf(msg, "invalid density filter: %s\n", arg ? arg : "");
 	return -1;
@@ -887,27 +887,27 @@ mater_filter_density_match(fastf_t candidate, const mater_density_filter &filter
 }
 
 
-static const struct bu_cmd_option mater_get_options[] = {
-    BU_CMD_CUSTOM(NULL, "id", struct mater_get_args, id_filters, mater_get_id_from_str,
+static const struct bu_arg_option mater_get_options[] = {
+    BU_ARG_CUSTOM(NULL, "id", struct mater_get_args, id_filters, mater_get_id_from_str,
 	"id-or-pattern", "Match a material id, range, or glob pattern"),
-    BU_CMD_CUSTOM(NULL, "density", struct mater_get_args, density_filters,
+    BU_ARG_CUSTOM(NULL, "density", struct mater_get_args, density_filters,
 	mater_get_density_from_str, "comparison", "Match a density value or range"),
-    BU_CMD_CUSTOM(NULL, "name", struct mater_get_args, name_patterns,
+    BU_ARG_CUSTOM(NULL, "name", struct mater_get_args, name_patterns,
 	mater_get_name_from_str, "pattern", "Match a material name glob pattern"),
-    BU_CMD_NUMBER(NULL, "tol", struct mater_get_args, tolerance, "tolerance",
+    BU_ARG_NUMBER(NULL, "tol", struct mater_get_args, tolerance, "tolerance",
 	"Density equality tolerance (default is BN_TOL_DIST)"),
-    BU_CMD_OPTION_NULL
+    BU_ARG_OPTION_NULL
 };
 
-static const struct bu_cmd_operand mater_get_operands[] = {
-    BU_CMD_OPERAND("pattern", BU_CMD_VALUE_RAW, 0, BU_CMD_COUNT_UNLIMITED,
+static const struct bu_arg_operand mater_get_operands[] = {
+    BU_ARG_OPERAND("pattern", BU_ARG_VALUE_RAW, 0, BU_ARG_COUNT_UNLIMITED,
 	"Material id or name glob pattern", NULL),
-    BU_CMD_OPERAND_NULL
+    BU_ARG_OPERAND_NULL
 };
 
-static const struct bu_cmd_schema mater_get_schema = {
+static const struct bu_arg_schema mater_get_schema = {
     "get", "Query density records", mater_get_options, mater_get_operands,
-    BU_CMD_PARSE_INTERSPERSED, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+    BU_ARG_PARSE_INTERSPERSED, BU_ARG_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
 
 
@@ -934,7 +934,7 @@ mater_get(struct ged *gedp, size_t argc, const char *argv[])
 	goto done;
     }
 
-    operand_start = bu_cmd_schema_parse(&mater_get_schema, &args,
+    operand_start = bu_arg_schema_parse(&mater_get_schema, &args,
 	gedp->ged_result_str, (int)argc, argv);
     if (operand_start < 0)
 	goto done;
@@ -1064,12 +1064,12 @@ mater_set(struct ged *gedp, size_t argc, const char *argv[])
 	    if (sm.size() == 4) {
 		int parse_error = 0;
 		std::string id_str = sm[1].str();
-		if (!bu_cmd_long_from_str(&id, id_str.c_str())) {
+		if (!bu_arg_long_from_str(&id, id_str.c_str())) {
 		    bu_vls_printf(gedp->ged_result_str, "Error parsing material id: %s\n", id_str.c_str());
 		    parse_error = 1;
 		}
 		std::string den_str = sm[2].str();
-		if (!bu_cmd_number_from_str(&density, den_str.c_str())) {
+		if (!bu_arg_number_from_str(&density, den_str.c_str())) {
 		    bu_vls_printf(gedp->ged_result_str, "Error parsing density: %s\n", den_str.c_str());
 		    parse_error = 1;
 		}
@@ -1313,34 +1313,34 @@ static const char * const mater_map_mode_options[] = {
     "ids-from-names", "names-from-ids", NULL
 };
 
-static const struct bu_cmd_constraint mater_map_constraints[] = {
-    BU_CMD_CONSTRAINT_OPTIONS(mater_map_mode_options, 1, 1,
+static const struct bu_arg_constraint mater_map_constraints[] = {
+    BU_ARG_CONSTRAINT_OPTIONS(mater_map_mode_options, 1, 1,
 	"exactly one mapping mode is required"),
-    BU_CMD_CONSTRAINT_NULL
+    BU_ARG_CONSTRAINT_NULL
 };
 
-static const struct bu_cmd_option mater_map_options[] = {
-    BU_CMD_FLAG(NULL, "ids-from-names", struct mater_map_args, ids_from_names,
+static const struct bu_arg_option mater_map_options[] = {
+    BU_ARG_FLAG(NULL, "ids-from-names", struct mater_map_args, ids_from_names,
 	"Assign material_id values from material_name attributes"),
-    BU_CMD_FLAG(NULL, "names-from-ids", struct mater_map_args, names_from_ids,
+    BU_ARG_FLAG(NULL, "names-from-ids", struct mater_map_args, names_from_ids,
 	"Assign material_name values from material_id attributes"),
-    BU_CMD_CUSTOM("d", "density-file", struct mater_map_args, density_file,
+    BU_ARG_CUSTOM("d", "density-file", struct mater_map_args, density_file,
 	mater_vls_replace_from_str, "file", "Use this density data file"),
-    BU_CMD_CUSTOM("m", "map-file", struct mater_map_args, map_file,
+    BU_ARG_CUSTOM("m", "map-file", struct mater_map_args, map_file,
 	mater_vls_replace_from_str, "file", "Use this material-name mapping file"),
-    BU_CMD_OPTION_NULL
+    BU_ARG_OPTION_NULL
 };
 
-static const struct bu_cmd_operand mater_map_operands[] = {
-    BU_CMD_OPERAND("file", BU_CMD_VALUE_FILE, 0, 2,
+static const struct bu_arg_operand mater_map_operands[] = {
+    BU_ARG_OPERAND("file", BU_ARG_VALUE_FILE, 0, 2,
 	"Optional density and mapping files", NULL),
-    BU_CMD_OPERAND_NULL
+    BU_ARG_OPERAND_NULL
 };
 
-static const struct bu_cmd_schema mater_map_schema = {
+static const struct bu_arg_schema mater_map_schema = {
     "map", "Synchronize material_id and material_name attributes", mater_map_options,
-    mater_map_operands, BU_CMD_PARSE_INTERSPERSED,
-    BU_CMD_SCHEMA_CONSTRAINTS(NULL, mater_map_constraints)
+    mater_map_operands, BU_ARG_PARSE_INTERSPERSED,
+    BU_ARG_SCHEMA_CONSTRAINTS(NULL, mater_map_constraints)
 };
 
 
@@ -1373,7 +1373,7 @@ mater_mat_id(struct ged *gedp, size_t argc, const char *argv[])
 
     argc--; argv++;
 
-    ac = bu_cmd_schema_parse(&mater_map_schema, &args, gedp->ged_result_str,
+    ac = bu_arg_schema_parse(&mater_map_schema, &args, gedp->ged_result_str,
 	(int)argc, argv);
     if (ac < 0) {
 	goto ged_mater_mat_id_fail;
@@ -1636,163 +1636,163 @@ struct mater_import_args {
     int validate_input;
 };
 
-static const struct bu_cmd_option mater_import_options[] = {
-    BU_CMD_FLAG("v", NULL, struct mater_import_args, validate_input,
+static const struct bu_arg_option mater_import_options[] = {
+    BU_ARG_FLAG("v", NULL, struct mater_import_args, validate_input,
 	"Validate the density file before importing it"),
-    BU_CMD_OPTION_NULL
+    BU_ARG_OPTION_NULL
 };
 
-static const struct bu_cmd_operand mater_file_operand[] = {
-    BU_CMD_OPERAND("density_file", BU_CMD_VALUE_FILE, 1, 1,
+static const struct bu_arg_operand mater_file_operand[] = {
+    BU_ARG_OPERAND("density_file", BU_ARG_VALUE_FILE, 1, 1,
 	"Density data file", NULL),
-    BU_CMD_OPERAND_NULL
+    BU_ARG_OPERAND_NULL
 };
 
-static const struct bu_cmd_operand mater_audit_operands[] = {
-    BU_CMD_OPERAND("density_file", BU_CMD_VALUE_FILE, 0, 1,
+static const struct bu_arg_operand mater_audit_operands[] = {
+    BU_ARG_OPERAND("density_file", BU_ARG_VALUE_FILE, 0, 1,
 	"Optional density data file", NULL),
-    BU_CMD_OPERAND_NULL
+    BU_ARG_OPERAND_NULL
 };
 
-static const struct bu_cmd_operand mater_set_operands[] = {
-    BU_CMD_OPERAND("record", BU_CMD_VALUE_RAW, 1, BU_CMD_COUNT_UNLIMITED,
+static const struct bu_arg_operand mater_set_operands[] = {
+    BU_ARG_OPERAND("record", BU_ARG_VALUE_RAW, 1, BU_ARG_COUNT_UNLIMITED,
 	"Quoted id, density, name record", NULL),
-    BU_CMD_OPERAND_NULL
+    BU_ARG_OPERAND_NULL
 };
 
-static const struct bu_cmd_schema mater_source_schema = {
+static const struct bu_arg_schema mater_source_schema = {
     "source", "Report the active density-data source", NULL, NULL,
-    BU_CMD_PARSE_OPTIONS_FIRST, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+    BU_ARG_PARSE_OPTIONS_FIRST, BU_ARG_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
-static const struct bu_cmd_schema mater_clear_schema = {
+static const struct bu_arg_schema mater_clear_schema = {
     "clear", "Remove the database density table", NULL, NULL,
-    BU_CMD_PARSE_OPTIONS_FIRST, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+    BU_ARG_PARSE_OPTIONS_FIRST, BU_ARG_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
-static const struct bu_cmd_schema mater_import_schema = {
+static const struct bu_arg_schema mater_import_schema = {
     "import", "Import a density table into the database", mater_import_options,
-    mater_file_operand, BU_CMD_PARSE_OPTIONS_FIRST, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+    mater_file_operand, BU_ARG_PARSE_OPTIONS_FIRST, BU_ARG_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
-static const struct bu_cmd_schema mater_export_schema = {
+static const struct bu_arg_schema mater_export_schema = {
     "export", "Export the database density table", NULL, mater_file_operand,
-    BU_CMD_PARSE_OPTIONS_FIRST, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+    BU_ARG_PARSE_OPTIONS_FIRST, BU_ARG_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
-static const struct bu_cmd_schema mater_audit_schema = {
+static const struct bu_arg_schema mater_audit_schema = {
     "audit", "Audit material attributes against density data", NULL, mater_audit_operands,
-    BU_CMD_PARSE_OPTIONS_FIRST, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+    BU_ARG_PARSE_OPTIONS_FIRST, BU_ARG_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
-static const struct bu_cmd_schema mater_validate_schema = {
+static const struct bu_arg_schema mater_validate_schema = {
     "validate", "Validate a density data file", NULL, mater_file_operand,
-    BU_CMD_PARSE_OPTIONS_FIRST, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+    BU_ARG_PARSE_OPTIONS_FIRST, BU_ARG_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
-static const struct bu_cmd_schema mater_set_schema = {
+static const struct bu_arg_schema mater_set_schema = {
     "set", "Add or replace density records", NULL, mater_set_operands,
-    BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+    BU_ARG_PARSE_STOP_AT_FIRST_OPERAND, BU_ARG_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
-static const struct bu_cmd_schema mater_density_schema = {
+static const struct bu_arg_schema mater_density_schema = {
     "density", "Manage the database density table", NULL, NULL,
-    BU_CMD_PARSE_OPTIONS_FIRST, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+    BU_ARG_PARSE_OPTIONS_FIRST, BU_ARG_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
 
-static const struct bu_cmd_tree_node mater_density_subcommands[] = {
-    BU_CMD_TREE_NODE(&mater_audit_schema, NULL, NULL,
-	BU_CMD_TREE_CHILD_AFTER_OPTIONS, NULL),
-    BU_CMD_TREE_NODE(&mater_clear_schema, NULL, NULL,
-	BU_CMD_TREE_CHILD_AFTER_OPTIONS, NULL),
-    BU_CMD_TREE_NODE(&mater_export_schema, NULL, NULL,
-	BU_CMD_TREE_CHILD_AFTER_OPTIONS, NULL),
-    BU_CMD_TREE_NODE(&mater_get_schema, NULL, NULL,
-	BU_CMD_TREE_CHILD_AFTER_OPTIONS, NULL),
-    BU_CMD_TREE_NODE(&mater_import_schema, NULL, NULL,
-	BU_CMD_TREE_CHILD_AFTER_OPTIONS, NULL),
-    BU_CMD_TREE_NODE(&mater_map_schema, NULL, NULL,
-	BU_CMD_TREE_CHILD_AFTER_OPTIONS, NULL),
-    BU_CMD_TREE_NODE(&mater_set_schema, NULL, NULL,
-	BU_CMD_TREE_CHILD_AFTER_OPTIONS, NULL),
-    BU_CMD_TREE_NODE(&mater_source_schema, NULL, NULL,
-	BU_CMD_TREE_CHILD_AFTER_OPTIONS, NULL),
-    BU_CMD_TREE_NODE(&mater_validate_schema, NULL, NULL,
-	BU_CMD_TREE_CHILD_AFTER_OPTIONS, NULL),
-    BU_CMD_TREE_NODE_NULL
+static const struct bu_arg_tree_node mater_density_subcommands[] = {
+    BU_ARG_TREE_NODE(&mater_audit_schema, NULL, NULL,
+	BU_ARG_TREE_CHILD_AFTER_OPTIONS, NULL),
+    BU_ARG_TREE_NODE(&mater_clear_schema, NULL, NULL,
+	BU_ARG_TREE_CHILD_AFTER_OPTIONS, NULL),
+    BU_ARG_TREE_NODE(&mater_export_schema, NULL, NULL,
+	BU_ARG_TREE_CHILD_AFTER_OPTIONS, NULL),
+    BU_ARG_TREE_NODE(&mater_get_schema, NULL, NULL,
+	BU_ARG_TREE_CHILD_AFTER_OPTIONS, NULL),
+    BU_ARG_TREE_NODE(&mater_import_schema, NULL, NULL,
+	BU_ARG_TREE_CHILD_AFTER_OPTIONS, NULL),
+    BU_ARG_TREE_NODE(&mater_map_schema, NULL, NULL,
+	BU_ARG_TREE_CHILD_AFTER_OPTIONS, NULL),
+    BU_ARG_TREE_NODE(&mater_set_schema, NULL, NULL,
+	BU_ARG_TREE_CHILD_AFTER_OPTIONS, NULL),
+    BU_ARG_TREE_NODE(&mater_source_schema, NULL, NULL,
+	BU_ARG_TREE_CHILD_AFTER_OPTIONS, NULL),
+    BU_ARG_TREE_NODE(&mater_validate_schema, NULL, NULL,
+	BU_ARG_TREE_CHILD_AFTER_OPTIONS, NULL),
+    BU_ARG_TREE_NODE_NULL
 };
 
-static const struct bu_cmd_option mater_short_density_options[] = {
-    BU_CMD_FLAG_UNBOUND("d", NULL, "density",
+static const struct bu_arg_option mater_short_density_options[] = {
+    BU_ARG_FLAG_UNBOUND("d", NULL, "density",
 	"Select density-table management mode"),
-    BU_CMD_OPTION_NULL
+    BU_ARG_OPTION_NULL
 };
-static const struct bu_cmd_schema mater_short_density_root_schema =
-    BU_CMD_SCHEMA_EXTERNAL("mater", "Manage legacy material properties",
-	mater_short_density_options, NULL, BU_CMD_PARSE_OPTIONS_FIRST, NULL, NULL, NULL);
-static const struct bu_cmd_schema mater_long_density_root_schema = {
+static const struct bu_arg_schema mater_short_density_root_schema =
+    BU_ARG_SCHEMA_EXTERNAL("mater", "Manage legacy material properties",
+	mater_short_density_options, NULL, BU_ARG_PARSE_OPTIONS_FIRST, NULL, NULL, NULL);
+static const struct bu_arg_schema mater_long_density_root_schema = {
     "mater", "Manage legacy material properties", NULL, NULL,
-    BU_CMD_PARSE_OPTIONS_FIRST, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+    BU_ARG_PARSE_OPTIONS_FIRST, BU_ARG_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
-static const struct bu_cmd_tree_node mater_long_density_subcommands[] = {
-    BU_CMD_TREE_NODE(&mater_density_schema, NULL, mater_density_subcommands,
-	BU_CMD_TREE_CHILD_AFTER_OPTIONS, NULL),
-    BU_CMD_TREE_NODE_NULL
+static const struct bu_arg_tree_node mater_long_density_subcommands[] = {
+    BU_ARG_TREE_NODE(&mater_density_schema, NULL, mater_density_subcommands,
+	BU_ARG_TREE_CHILD_AFTER_OPTIONS, NULL),
+    BU_ARG_TREE_NODE_NULL
 };
-static const struct bu_cmd_tree mater_short_density_tree = {
+static const struct bu_arg_tree mater_short_density_tree = {
     &mater_short_density_root_schema, mater_density_subcommands,
-    BU_CMD_TREE_CHILD_AFTER_OPTIONS
+    BU_ARG_TREE_CHILD_AFTER_OPTIONS
 };
-static const struct bu_cmd_tree mater_long_density_tree = {
+static const struct bu_arg_tree mater_long_density_tree = {
     &mater_long_density_root_schema, mater_long_density_subcommands,
-    BU_CMD_TREE_CHILD_AFTER_OPTIONS
+    BU_ARG_TREE_CHILD_AFTER_OPTIONS
 };
 
-static const struct bu_cmd_option mater_shader_options[] = {
-    BU_CMD_FLAG_UNBOUND("s", NULL, "shader",
+static const struct bu_arg_option mater_shader_options[] = {
+    BU_ARG_FLAG_UNBOUND("s", NULL, "shader",
 	"Force shader mode when the object name resembles a density subcommand"),
-    BU_CMD_OPTION_NULL
+    BU_ARG_OPTION_NULL
 };
-static const struct bu_cmd_operand mater_shader_operands[] = {
-    BU_CMD_OPERAND("shader_argument", BU_CMD_VALUE_RAW, 0, BU_CMD_COUNT_UNLIMITED,
+static const struct bu_arg_operand mater_shader_operands[] = {
+    BU_ARG_OPERAND("shader_argument", BU_ARG_VALUE_RAW, 0, BU_ARG_COUNT_UNLIMITED,
 	"Combination, shader, RGB, and inheritance arguments", NULL),
-    BU_CMD_OPERAND_NULL
+    BU_ARG_OPERAND_NULL
 };
-static const struct bu_cmd_schema mater_shader_schema =
-    BU_CMD_SCHEMA_EXTERNAL("mater", "Assign shader, RGB, and inheritance properties",
-	mater_shader_options, mater_shader_operands, BU_CMD_PARSE_STOP_AT_FIRST_OPERAND,
+static const struct bu_arg_schema mater_shader_schema =
+    BU_ARG_SCHEMA_EXTERNAL("mater", "Assign shader, RGB, and inheritance properties",
+	mater_shader_options, mater_shader_operands, BU_ARG_PARSE_STOP_AT_FIRST_OPERAND,
 	NULL, NULL, NULL);
 
 /* A short-option prefix has two possible command forms.  It is intentionally
  * separate so completion can offer both -d and -s before the choice is made. */
-static const struct bu_cmd_option mater_prefix_options[] = {
-    BU_CMD_FLAG_UNBOUND("d", NULL, "density", "Select density-table management mode"),
-    BU_CMD_FLAG_UNBOUND("s", NULL, "shader", "Force shader mode"),
-    BU_CMD_OPTION_NULL
+static const struct bu_arg_option mater_prefix_options[] = {
+    BU_ARG_FLAG_UNBOUND("d", NULL, "density", "Select density-table management mode"),
+    BU_ARG_FLAG_UNBOUND("s", NULL, "shader", "Force shader mode"),
+    BU_ARG_OPTION_NULL
 };
-static const struct bu_cmd_schema mater_prefix_schema =
-    BU_CMD_SCHEMA_EXTERNAL("mater", "Select a mater command form", mater_prefix_options,
-	mater_shader_operands, BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, NULL, NULL, NULL);
+static const struct bu_arg_schema mater_prefix_schema =
+    BU_ARG_SCHEMA_EXTERNAL("mater", "Select a mater command form", mater_prefix_options,
+	mater_shader_operands, BU_ARG_PARSE_STOP_AT_FIRST_OPERAND, NULL, NULL, NULL);
 
 
-static const struct bu_cmd_schema *
+static const struct bu_arg_schema *
 mater_density_schema_for_command(const char *command)
 {
-    const struct bu_cmd_tree_node *node = bu_cmd_tree_find_subcommand(
+    const struct bu_arg_tree_node *node = bu_arg_tree_find_subcommand(
 	&mater_short_density_tree, command);
     return node ? node->schema : NULL;
 }
 
 
 static int
-mater_density_preflight(struct ged *gedp, const struct bu_cmd_schema *schema,
+mater_density_preflight(struct ged *gedp, const struct bu_arg_schema *schema,
 	size_t argc, const char *argv[])
 {
-    struct bu_cmd_validate_result result = BU_CMD_VALIDATE_RESULT_NULL;
+    struct bu_arg_validate_result result = BU_ARG_VALIDATE_RESULT_NULL;
 
     if (!schema || argc < 2)
 	return BRLCAD_ERROR;
-    if (bu_cmd_schema_validate(schema, argc - 2, argv + 2, argc - 2, &result) != 0 ||
-	result.state != BU_CMD_VALIDATE_VALID) {
+    if (bu_arg_schema_validate(schema, argc - 2, argv + 2, argc - 2, &result) != 0 ||
+	result.state != BU_ARG_VALIDATE_VALID) {
 	if (result.hint)
 	    bu_vls_printf(gedp->ged_result_str, "%s\n", result.hint);
-	bu_cmd_validate_result_clear(&result);
+	bu_arg_validate_result_clear(&result);
 	return BRLCAD_ERROR;
     }
-    bu_cmd_validate_result_clear(&result);
+    bu_arg_validate_result_clear(&result);
     return BRLCAD_OK;
 }
 
@@ -1807,7 +1807,7 @@ mater_density(struct ged *gedp, size_t argc, const char *argv[])
 	return GED_HELP;
     }
 
-    const struct bu_cmd_schema *schema = mater_density_schema_for_command(argv[1]);
+    const struct bu_arg_schema *schema = mater_density_schema_for_command(argv[1]);
     if (!schema) {
 	bu_vls_printf(gedp->ged_result_str, "Unknown -d subcommand: %s\n", argv[1]);
 	mater_help_append(gedp);
@@ -1906,17 +1906,17 @@ ged_mater_core(struct ged *gedp, int argc, const char *argv[])
 
 #include "../include/plugin.h"
 
-static const struct bu_cmd_form mater_native_forms[] = {
-    BU_CMD_FORM_TREE("density", "Long density subcommand", &mater_long_density_tree),
-    BU_CMD_FORM_TREE("density_short", "Short -d density form", &mater_short_density_tree),
-    BU_CMD_FORM_SCHEMA("shader", "Legacy shader/property assignment", &mater_shader_schema),
-    BU_CMD_FORM_SCHEMA("option_prefix", "Incomplete option prefix", &mater_prefix_schema),
-    BU_CMD_FORM_NULL
+static const struct bu_arg_form mater_native_forms[] = {
+    BU_ARG_FORM_TREE("density", "Long density subcommand", &mater_long_density_tree),
+    BU_ARG_FORM_TREE("density_short", "Short -d density form", &mater_short_density_tree),
+    BU_ARG_FORM_SCHEMA("shader", "Legacy shader/property assignment", &mater_shader_schema),
+    BU_ARG_FORM_SCHEMA("option_prefix", "Incomplete option prefix", &mater_prefix_schema),
+    BU_ARG_FORM_NULL
 };
 
 
-static const struct bu_cmd_form *
-mater_select_native_form(const struct bu_cmd_forms *forms, size_t argc,
+static const struct bu_arg_form *
+mater_select_native_form(const struct bu_arg_forms *forms, size_t argc,
 	const char * const *argv, void *UNUSED(context))
 {
     const char *word = argc > 1 && argv[1] ? argv[1] : "";
@@ -1933,8 +1933,8 @@ mater_select_native_form(const struct bu_cmd_forms *forms, size_t argc,
     return &forms->forms[2];
 }
 
-static const struct bu_cmd_forms mater_forms =
-    BU_CMD_FORMS("mater", "Query and assign legacy material properties",
+static const struct bu_arg_forms mater_forms =
+    BU_ARG_FORMS("mater", "Query and assign legacy material properties",
 	mater_native_forms, mater_select_native_form);
 
 static void

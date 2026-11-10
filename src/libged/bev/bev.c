@@ -29,7 +29,7 @@
 #include <ctype.h>
 #include <string.h>
 
-#include "bu/cmdschema.h"
+#include "bu/arg.h"
 #include "bu/parallel.h"
 #include "rt/geom.h"
 
@@ -44,9 +44,9 @@ struct bev_args {
     int triangulate;
 };
 
-static const struct bu_cmd_option bev_schema_options[] = {
-    BU_CMD_FLAG("t", NULL, struct bev_args, triangulate, "Triangulate the result"),
-    BU_CMD_OPTION_NULL
+static const struct bu_arg_option bev_schema_options[] = {
+    BU_ARG_FLAG("t", NULL, struct bev_args, triangulate, "Triangulate the result"),
+    BU_ARG_OPTION_NULL
 };
 static const char * const bev_op_keywords[] = {"u", "-", "+", NULL};
 
@@ -60,30 +60,30 @@ bev_op_validate(struct bu_vls *msg, const char *arg)
     return -1;
 }
 
-static const struct bu_cmd_operand bev_schema_operands[] = {
-    BU_CMD_OPERAND("output_object", BU_CMD_VALUE_STRING, 1, 1,
+static const struct bu_arg_operand bev_schema_operands[] = {
+    BU_ARG_OPERAND("output_object", BU_ARG_VALUE_STRING, 1, 1,
 	"New evaluated object", NULL),
     GED_CMD_OPERAND_DB_OBJECT("input_object", 1, 1,
 	"First input object"),
-    BU_CMD_OPERAND_NULL
+    BU_ARG_OPERAND_NULL
 };
-static const struct bu_cmd_operand bev_expression_roles[] = {
-    BU_CMD_OPERAND_KEYWORDS_VALIDATE("operation", BU_CMD_VALUE_KEYWORD, 1, 1,
+static const struct bu_arg_operand bev_expression_roles[] = {
+    BU_ARG_OPERAND_KEYWORDS_VALIDATE("operation", BU_ARG_VALUE_KEYWORD, 1, 1,
 	bev_op_validate, "Boolean operation", NULL, bev_op_keywords),
     GED_CMD_OPERAND_DB_OBJECT("input_object", 1, 1,
 	"Additional input object"),
-    BU_CMD_OPERAND_NULL
+    BU_ARG_OPERAND_NULL
 };
-static const struct bu_cmd_operand_group bev_schema_groups[] = {
-    BU_CMD_OPERAND_GROUP("boolean_expression", bev_expression_roles, 0,
-	BU_CMD_COUNT_UNLIMITED, "Additional operation/object pairs"),
-    BU_CMD_OPERAND_GROUP_NULL
+static const struct bu_arg_operand_group bev_schema_groups[] = {
+    BU_ARG_OPERAND_GROUP("boolean_expression", bev_expression_roles, 0,
+	BU_ARG_COUNT_UNLIMITED, "Additional operation/object pairs"),
+    BU_ARG_OPERAND_GROUP_NULL
 };
 
-static const struct bu_cmd_schema bev_cmd_schema = {
+static const struct bu_arg_schema bev_cmd_schema = {
     "bev", "Evaluate a boolean expression into an NMG object", bev_schema_options,
-	bev_schema_operands, BU_CMD_PARSE_OPTIONS_FIRST,
-	BU_CMD_SCHEMA_GROUPS(NULL, NULL, bev_schema_groups)
+	bev_schema_operands, BU_ARG_PARSE_OPTIONS_FIRST,
+	BU_ARG_SCHEMA_GROUPS(NULL, NULL, bev_schema_groups)
 };
 
 
@@ -161,7 +161,7 @@ ged_bev_core(struct ged *gedp, int argc, const char *argv[])
 
     /* Initial values for options, must be reset each time */
     ncpu = 1;
-    operand_index = bu_cmd_schema_parse_complete(&bev_cmd_schema, &args,
+    operand_index = bu_arg_schema_parse_complete(&bev_cmd_schema, &args,
 	gedp->ged_result_str, argc - 1, argv + 1);
     if (operand_index < 0) {
 	ged_cmd_help_append(gedp->ged_result_str, cmdname, cmdname);

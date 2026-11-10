@@ -29,7 +29,7 @@
 #include <unordered_map>
 
 #include "vmath.h"
-#include "bu/cmdschema.h"
+#include "bu/arg.h"
 #include "bu/malloc.h"
 #include "bu/str.h"
 #include "bg/trimesh.h"
@@ -66,58 +66,58 @@ bot_decimate_subcommand_method_count(const struct bot_decimate_subcommand_args *
 }
 
 static int
-bot_decimate_subcommand_schema_validate(const struct bu_cmd_schema *schema,
+bot_decimate_subcommand_schema_validate(const struct bu_arg_schema *schema,
 	size_t argc, const char **argv, size_t cursor_arg,
-	struct bu_cmd_validate_result *result)
+	struct bu_arg_validate_result *result)
 {
     struct bot_decimate_subcommand_args args = {0, 1.0, -1.0, -1.0, -1.0, -FLT_MAX};
     std::vector<const char *> parse_argv(argv, argv + argc);
 
-    if (result->state != BU_CMD_VALIDATE_VALID)
+    if (result->state != BU_ARG_VALIDATE_VALID)
 	return 0;
 
-    if (bu_cmd_schema_parse(schema, &args, NULL, (int)argc,
+    if (bu_arg_schema_parse(schema, &args, NULL, (int)argc,
 		parse_argv.data()) < 0)
 	return BRLCAD_ERROR;
     if (bot_decimate_subcommand_method_count(&args) > 1) {
-	bu_cmd_validate_result_clear(result);
-	result->state = BU_CMD_VALIDATE_INVALID;
+	bu_arg_validate_result_clear(result);
+	result->state = BU_ARG_VALIDATE_INVALID;
 	result->token_start = cursor_arg < argc ? cursor_arg : argc;
 	result->token_end = result->token_start;
-	result->expected = BU_CMD_EXPECT_OPTION;
-	result->completion_type = BU_CMD_VALUE_NUMBER;
+	result->expected = BU_ARG_EXPECT_OPTION;
+	result->completion_type = BU_ARG_VALUE_NUMBER;
 	result->hint = "select one decimation method";
     }
 
     return 0;
 }
 
-static const struct bu_cmd_option bot_decimate_subcommand_options[] = {
-    BU_CMD_FLAG("h", "help", struct bot_decimate_subcommand_args, print_help,
+static const struct bu_arg_option bot_decimate_subcommand_options[] = {
+    BU_ARG_FLAG("h", "help", struct bot_decimate_subcommand_args, print_help,
 	"Print command help"),
-    BU_CMD_NUMBER("c", "max-cord-error", struct bot_decimate_subcommand_args,
+    BU_ARG_NUMBER("c", "max-cord-error", struct bot_decimate_subcommand_args,
 	max_chord_error, "error", "Maximum chord error length"),
-    BU_CMD_NUMBER("n", "max-normal-error", struct bot_decimate_subcommand_args,
+    BU_ARG_NUMBER("n", "max-normal-error", struct bot_decimate_subcommand_args,
 	max_normal_error, "error", "Maximum normal error"),
-    BU_CMD_NUMBER("e", "min-edge-length", struct bot_decimate_subcommand_args,
+    BU_ARG_NUMBER("e", "min-edge-length", struct bot_decimate_subcommand_args,
 	min_edge_length, "length", "Minimum edge length"),
-    BU_CMD_NUMBER("f", "feature-size", struct bot_decimate_subcommand_args,
+    BU_ARG_NUMBER("f", "feature-size", struct bot_decimate_subcommand_args,
 	feature_size, "size", "Feature size for the GCT decimator"),
-    BU_CMD_NUMBER("t", "merge-tol", struct bot_decimate_subcommand_args,
+    BU_ARG_NUMBER("t", "merge-tol", struct bot_decimate_subcommand_args,
 	merge_tol, "tolerance", "Tolerance for merging vertices"),
-    BU_CMD_OPTION_NULL
+    BU_ARG_OPTION_NULL
 };
-static const struct bu_cmd_operand bot_decimate_subcommand_operands[] = {
-    BU_CMD_OPERAND("input_bot", BU_CMD_VALUE_DB_OBJECT, 1, 1,
+static const struct bu_arg_operand bot_decimate_subcommand_operands[] = {
+    BU_ARG_OPERAND("input_bot", BU_ARG_VALUE_DB_OBJECT, 1, 1,
 	"Input BoT object", "ged.db_object"),
-    BU_CMD_OPERAND("output_name", BU_CMD_VALUE_STRING, 0, 1,
+    BU_ARG_OPERAND("output_name", BU_ARG_VALUE_STRING, 0, 1,
 	"Optional output BoT name", NULL),
-    BU_CMD_OPERAND_NULL
+    BU_ARG_OPERAND_NULL
 };
-extern "C" const struct bu_cmd_schema ged_bot_decimate_subcommand_schema = {
+extern "C" const struct bu_arg_schema ged_bot_decimate_subcommand_schema = {
     "decimate", "Reduce BoT triangle count", bot_decimate_subcommand_options,
-    bot_decimate_subcommand_operands, BU_CMD_PARSE_INTERSPERSED,
-    BU_CMD_SCHEMA_META_HELP(NULL, NULL,
+    bot_decimate_subcommand_operands, BU_ARG_PARSE_INTERSPERSED,
+    BU_ARG_SCHEMA_META_HELP(NULL, NULL,
 	bot_decimate_subcommand_schema_validate, NULL, NULL)
 };
 
@@ -125,7 +125,7 @@ static void
 decimate_usage(struct bu_vls *str, const char *cmd)
 {
     bu_vls_trunc(str, 0);
-    (void)bu_cmd_schema_help_append(str, &ged_bot_decimate_subcommand_schema, cmd);
+    (void)bu_arg_schema_help_append(str, &ged_bot_decimate_subcommand_schema, cmd);
     bu_vls_putc(str, '\n');
     bu_vls_printf(str, "Available decimation methods are:\n");
     bu_vls_printf(str, "   GCT (default) - method triggered by -f option\n");
@@ -159,7 +159,7 @@ _bot_cmd_decimate(void* bs, int argc, const char** argv)
 	return GED_HELP;
     }
 
-    operand_index = bu_cmd_schema_parse_complete(&ged_bot_decimate_subcommand_schema,
+    operand_index = bu_arg_schema_parse_complete(&ged_bot_decimate_subcommand_schema,
 	&args, gedp->ged_result_str, argc, argv);
     if (operand_index < 0)
 	return BRLCAD_ERROR;

@@ -25,7 +25,7 @@
 
 #include "common.h"
 
-#include "bu/cmdschema.h"
+#include "bu/arg.h"
 #include "dm.h"
 #include "../ged_private.h"
 
@@ -37,39 +37,39 @@ struct autoview2_args {
     struct bu_vls view;
 };
 
-static const struct bu_cmd_option autoview2_options[] = {
-    BU_CMD_FLAG("h", "help", struct autoview2_args, print_help, "Print help and exit"),
-    BU_CMD_FLAG(NULL, "all-objs", struct autoview2_args, all_view_objects,
+static const struct bu_arg_option autoview2_options[] = {
+    BU_ARG_FLAG("h", "help", struct autoview2_args, print_help, "Print help and exit"),
+    BU_ARG_FLAG(NULL, "all-objs", struct autoview2_args, all_view_objects,
 	"Bound all non-faceplate view objects"),
-    BU_CMD_NUMBER("s", "scale", struct autoview2_args, scale, "number",
+    BU_ARG_NUMBER("s", "scale", struct autoview2_args, scale, "number",
 	"Set view scale (model scale relative to view size)"),
-    BU_CMD_VLS_APPEND("V", "view", struct autoview2_args, view, "name",
+    BU_ARG_VLS_APPEND("V", "view", struct autoview2_args, view, "name",
 	"Specify view to adjust"),
-    BU_CMD_OPTION_NULL
+    BU_ARG_OPTION_NULL
 };
-static const struct bu_cmd_operand autoview2_operands[] = {
-    BU_CMD_OPERAND("object", BU_CMD_VALUE_DB_PATH, 0, BU_CMD_COUNT_UNLIMITED,
+static const struct bu_arg_operand autoview2_operands[] = {
+    BU_ARG_OPERAND("object", BU_ARG_VALUE_DB_PATH, 0, BU_ARG_COUNT_UNLIMITED,
 	"Object or full path to frame", "ged.db_path"),
-    BU_CMD_OPERAND_NULL
+    BU_ARG_OPERAND_NULL
 };
-static const struct bu_cmd_schema autoview2_schema = {
+static const struct bu_arg_schema autoview2_schema = {
     "autoview", "Frame displayed geometry or named objects", autoview2_options,
-    autoview2_operands, BU_CMD_PARSE_INTERSPERSED,
-    BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+    autoview2_operands, BU_ARG_PARSE_INTERSPERSED,
+    BU_ARG_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
 
 
 static int
 _autoview_arg_is_num(const char *s, fastf_t *v)
 {
-    return bu_cmd_number_from_str(v, s);
+    return bu_arg_number_from_str(v, s);
 }
 
 
 static void
 autoview2_usage(struct ged *gedp)
 {
-    char *help = bu_cmd_schema_help(&autoview2_schema, autoview2_schema.name);
+    char *help = bu_arg_schema_help(&autoview2_schema, autoview2_schema.name);
 
     if (help) {
 	bu_vls_strcat(gedp->ged_result_str, help);
@@ -111,7 +111,7 @@ ged_autoview2_core(struct ged *gedp, int argc, const char *argv[])
 
     pargv = (const char **)bu_calloc((size_t)argc, sizeof(*pargv), "autoview native argv");
     memcpy(pargv, argv, (size_t)argc * sizeof(*pargv));
-    operand_index = bu_cmd_schema_parse_complete(&autoview2_schema, &args,
+    operand_index = bu_arg_schema_parse_complete(&autoview2_schema, &args,
 	gedp->ged_result_str, argc - 1, pargv + 1);
     if (operand_index < 0) {
 	autoview2_usage(gedp);

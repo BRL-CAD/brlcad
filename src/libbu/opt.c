@@ -31,14 +31,14 @@
 #include "vmath.h"
 #include "bu/app.h"
 #include "bu/color.h"
-#include "bu/cmdschema.h"
+#include "bu/arg.h"
 #include "bu/log.h"
 #include "bu/malloc.h"
 #include "bu/opt.h"
 #include "bu/str.h"
 #include "bu/vls.h"
 
-#include "cmdschema_private.h"
+#include "arg_private.h"
 
 
 static void
@@ -235,26 +235,26 @@ opt_value_specs_valid(const struct bu_opt_desc *descs,
 }
 
 
-bu_cmd_value_t
+bu_arg_value_t
 bu_opt_cmd_type(bu_opt_value_t type)
 {
     switch (type) {
-	case BU_OPT_VALUE_FLAG: return BU_CMD_VALUE_FLAG;
-	case BU_OPT_VALUE_BOOL: return BU_CMD_VALUE_BOOL;
-	case BU_OPT_VALUE_INTEGER: return BU_CMD_VALUE_INTEGER;
-	case BU_OPT_VALUE_LONG: return BU_CMD_VALUE_LONG;
-	case BU_OPT_VALUE_HEX_LONG: return BU_CMD_VALUE_HEX_LONG;
-	case BU_OPT_VALUE_INCREMENT: return BU_CMD_VALUE_LONG;
-	case BU_OPT_VALUE_NUMBER: return BU_CMD_VALUE_NUMBER;
+	case BU_OPT_VALUE_FLAG: return BU_ARG_VALUE_FLAG;
+	case BU_OPT_VALUE_BOOL: return BU_ARG_VALUE_BOOL;
+	case BU_OPT_VALUE_INTEGER: return BU_ARG_VALUE_INTEGER;
+	case BU_OPT_VALUE_LONG: return BU_ARG_VALUE_LONG;
+	case BU_OPT_VALUE_HEX_LONG: return BU_ARG_VALUE_HEX_LONG;
+	case BU_OPT_VALUE_INCREMENT: return BU_ARG_VALUE_LONG;
+	case BU_OPT_VALUE_NUMBER: return BU_ARG_VALUE_NUMBER;
 	case BU_OPT_VALUE_CHAR:
-	case BU_OPT_VALUE_MAN_SECTION: return BU_CMD_VALUE_CHAR;
-	case BU_OPT_VALUE_COLOR: return BU_CMD_VALUE_COLOR;
-	case BU_OPT_VALUE_VECTOR: return BU_CMD_VALUE_VECTOR;
+	case BU_OPT_VALUE_MAN_SECTION: return BU_ARG_VALUE_CHAR;
+	case BU_OPT_VALUE_COLOR: return BU_ARG_VALUE_COLOR;
+	case BU_OPT_VALUE_VECTOR: return BU_ARG_VALUE_VECTOR;
 	case BU_OPT_VALUE_LANGUAGE:
-	case BU_OPT_VALUE_VLS: return BU_CMD_VALUE_VLS;
+	case BU_OPT_VALUE_VLS: return BU_ARG_VALUE_VLS;
 	case BU_OPT_VALUE_STRING:
 	case BU_OPT_VALUE_UNKNOWN:
-	default: return BU_CMD_VALUE_STRING;
+	default: return BU_ARG_VALUE_STRING;
     }
 }
 
@@ -276,24 +276,24 @@ bu_opt_desc_candidates(const struct bu_opt_desc *desc)
 }
 
 
-static struct bu_cmd_option *
+static struct bu_arg_option *
 opt_schema_options(const struct bu_opt_desc *descs,
 	const struct bu_opt_value_spec *specs,
 	struct bu_cmd_parse_binding **bindings_out,
-	struct bu_cmd_arg_shape **shapes_out)
+	struct bu_arg_shape **shapes_out)
 {
     size_t count = opt_desc_count(descs);
-    struct bu_cmd_option *options;
+    struct bu_arg_option *options;
     struct bu_cmd_parse_binding *bindings = NULL;
-    struct bu_cmd_arg_shape *shapes = NULL;
+    struct bu_arg_shape *shapes = NULL;
 
-    options = (struct bu_cmd_option *)bu_calloc(count + 1, sizeof(*options),
+    options = (struct bu_arg_option *)bu_calloc(count + 1, sizeof(*options),
 	"bu_opt schema adapter options");
     if (bindings_out)
 	bindings = (struct bu_cmd_parse_binding *)bu_calloc(count + 1,
 	    sizeof(*bindings), "bu_opt schema adapter bindings");
     if (shapes_out)
-	shapes = (struct bu_cmd_arg_shape *)bu_calloc(count + 1,
+	shapes = (struct bu_arg_shape *)bu_calloc(count + 1,
 	    sizeof(*shapes), "bu_opt schema adapter shapes");
 
     for (size_t i = 0; i < count; i++) {
@@ -315,39 +315,39 @@ opt_schema_options(const struct bu_opt_desc *descs,
 	options[i].argument = descs[i].arg_helpstr;
 	options[i].help = descs[i].help_string;
 	options[i].value_type = bu_opt_cmd_type(type);
-	options[i].storage_offset = BU_CMD_STORAGE_NONE;
+	options[i].storage_offset = BU_ARG_STORAGE_NONE;
 	options[i].value_keywords = spec ? spec->candidates : NULL;
 	if (!options[i].value_keywords)
 	    options[i].value_keywords = bu_opt_desc_candidates(&descs[i]);
-	options[i].arg_requirement = takes_argument ? BU_CMD_ARG_REQUIRED : BU_CMD_ARG_NONE;
+	options[i].arg_requirement = takes_argument ? BU_ARG_REQUIRED : BU_ARG_NONE;
 	if (takes_argument && descs[i].arg_helpstr && descs[i].arg_helpstr[0] == '[')
-	    options[i].arg_requirement = BU_CMD_ARG_OPTIONAL;
+	    options[i].arg_requirement = BU_ARG_OPTIONAL;
 	if (descs[i].arg_process == bu_opt_incr_long ||
 	    (spec && spec->value_type == BU_OPT_VALUE_INCREMENT))
 	    options[i].repeat = 1;
 	if (descs[i].arg_process == bu_opt_color) {
-	    options[i].arg_shape = &bu_cmd_color_arg_shape;
-	    options[i].consume = bu_cmd_color_consume;
+	    options[i].arg_shape = &bu_arg_color_shape;
+	    options[i].consume = bu_arg_color_consume;
 	}
 	if (descs[i].arg_process == bu_opt_vect_t) {
-	    options[i].arg_shape = &bu_cmd_vector3_arg_shape;
-	    options[i].consume = bu_cmd_vector3_consume;
+	    options[i].arg_shape = &bu_arg_vector3_shape;
+	    options[i].consume = bu_arg_vector3_consume;
 	}
 	if (descs[i].arg_process == bu_opt_lang)
-	    options[i].validate = bu_cmd_iso639_1_validate;
+	    options[i].validate = bu_arg_iso639_1_validate;
 	if (descs[i].arg_process == bu_opt_man_section)
-	    options[i].validate = bu_cmd_man_section_validate;
+	    options[i].validate = bu_arg_man_section_validate;
 	if (spec && (spec->min_args || spec->max_args)) {
 	    size_t maximum = spec->max_args ? spec->max_args : spec->min_args;
 	    if (maximum >= spec->min_args) {
-		shapes[i].kind = BU_CMD_ARG_SHAPE_CUSTOM;
+		shapes[i].kind = BU_ARG_SHAPE_CUSTOM;
 		shapes[i].min_tokens = spec->min_args;
 		shapes[i].max_tokens = maximum;
 		shapes[i].description = spec->hint ? spec->hint : descs[i].arg_helpstr;
 		shapes[i].token_count = spec->arg_count;
 		options[i].arg_shape = &shapes[i];
 		options[i].arg_requirement = spec->min_args ?
-		    BU_CMD_ARG_REQUIRED : BU_CMD_ARG_OPTIONAL;
+		    BU_ARG_REQUIRED : BU_ARG_OPTIONAL;
 	    }
 	}
 	if (bindings) {
@@ -368,14 +368,14 @@ static int
 opt_cmd_alias_target(const struct bu_opt_cmd *cmd, size_t alias_index,
 	size_t *target_index)
 {
-    const struct bu_cmd_option *alias = &cmd->options[alias_index];
+    const struct bu_arg_option *alias = &cmd->options[alias_index];
     size_t found = 0;
     size_t match = 0;
 
     if (BU_STR_EMPTY(alias->alias_of))
 	return -1;
     for (size_t i = 0; i < cmd->option_count; i++) {
-	const struct bu_cmd_option *candidate = &cmd->options[i];
+	const struct bu_arg_option *candidate = &cmd->options[i];
 	if ((!BU_STR_EMPTY(candidate->shortopt) &&
 		BU_STR_EQUAL(candidate->shortopt, alias->alias_of)) ||
 	    (!BU_STR_EMPTY(candidate->longopt) &&
@@ -395,8 +395,8 @@ static int
 opt_cmd_resolve_alias(struct bu_opt_cmd *cmd, size_t index,
 	unsigned char *state)
 {
-    struct bu_cmd_option *alias = &cmd->options[index];
-    struct bu_cmd_option *canonical;
+    struct bu_arg_option *alias = &cmd->options[index];
+    struct bu_arg_option *canonical;
     size_t target;
 
     if (BU_STR_EMPTY(alias->alias_of)) {
@@ -415,7 +415,7 @@ opt_cmd_resolve_alias(struct bu_opt_cmd *cmd, size_t index,
 
     /* An alias is a spelling, not a separate argument contract.  Preserve
      * only presentation/storage fields belonging to the spelling itself. */
-    alias->canonical = bu_cmd_option_canonical(canonical);
+    alias->canonical = bu_arg_option_canonical(canonical);
     alias->argument = canonical->argument;
     if (BU_STR_EMPTY(alias->help))
 	alias->help = canonical->help;
@@ -932,11 +932,11 @@ int
 bu_opt_parse_with_policy(struct bu_vls *msgs, size_t argc, const char **argv,
 	const struct bu_opt_desc *ds, bu_opt_parse_policy_t policy)
 {
-    struct bu_cmd_schema schema = {0};
+    struct bu_arg_schema schema = {0};
     struct bu_opt_cmd cmd = BU_OPT_CMD_INIT_ZERO;
     struct bu_cmd_parse_binding *bindings;
-    unsigned int parse_flags = BU_CMD_PARSE_INTERNAL_LEFTOVERS_FIRST |
-	BU_CMD_PARSE_INTERNAL_BU_OPT_SYNTAX;
+    unsigned int parse_flags = BU_ARG_PARSE_INTERNAL_LEFTOVERS_FIRST |
+	BU_ARG_PARSE_INTERNAL_BU_OPT_SYNTAX;
     int ret;
 
     if (!argv || !ds || argc > INT_MAX ||
@@ -959,21 +959,21 @@ bu_opt_parse_with_policy(struct bu_vls *msgs, size_t argc, const char **argv,
     schema.options = cmd.options;
     schema.operands = NULL;
     schema.parse_policy = policy == BU_OPT_PARSE_OPTIONS_FIRST ?
-	BU_CMD_PARSE_OPTIONS_FIRST : BU_CMD_PARSE_INTERSPERSED;
+	BU_ARG_PARSE_OPTIONS_FIRST : BU_ARG_PARSE_INTERSPERSED;
     schema.validation.custom_validate = NULL;
     schema.validation.constraints = NULL;
     schema.validation.context_validate = NULL;
     schema.operand_groups = NULL;
 
     if (policy != BU_OPT_PARSE_OPTIONS_FIRST)
-	parse_flags |= BU_CMD_PARSE_INTERNAL_PASS_UNKNOWN;
+	parse_flags |= BU_ARG_PARSE_INTERNAL_PASS_UNKNOWN;
     if (policy != BU_OPT_PARSE_INTERSPERSED)
-	parse_flags |= BU_CMD_PARSE_INTERNAL_END_MARKER;
+	parse_flags |= BU_ARG_PARSE_INTERNAL_END_MARKER;
 
     /* The native optionless scanner returns an index; the bu_opt facade
      * must still return and compact all unused arguments. */
     ret = cmd.option_count ?
-	_bu_cmd_schema_parse_bound(&schema, NULL, msgs, (int)argc, argv,
+	_bu_arg_schema_parse_bound(&schema, NULL, msgs, (int)argc, argv,
 	    bindings, parse_flags) : 0;
 
     if (ret >= 0 && (policy == BU_OPT_PARSE_OPTIONS_FIRST || !cmd.option_count)) {
@@ -1111,13 +1111,13 @@ opt_desc_attached_value(const struct bu_opt_desc *descs,
 
 
 static bu_opt_validate_state_t
-opt_validate_state(bu_cmd_validate_state_t state)
+opt_validate_state(bu_arg_validate_state_t state)
 {
     switch (state) {
-	case BU_CMD_VALIDATE_VALID: return BU_OPT_VALIDATE_VALID;
-	case BU_CMD_VALIDATE_INVALID: return BU_OPT_VALIDATE_INVALID;
-	case BU_CMD_VALIDATE_INCOMPLETE: return BU_OPT_VALIDATE_INCOMPLETE;
-	case BU_CMD_VALIDATE_UNKNOWN:
+	case BU_ARG_VALIDATE_VALID: return BU_OPT_VALIDATE_VALID;
+	case BU_ARG_VALIDATE_INVALID: return BU_OPT_VALIDATE_INVALID;
+	case BU_ARG_VALIDATE_INCOMPLETE: return BU_OPT_VALIDATE_INCOMPLETE;
+	case BU_ARG_VALIDATE_UNKNOWN:
 	default: return BU_OPT_VALIDATE_UNKNOWN;
     }
 }
@@ -1128,15 +1128,15 @@ bu_opt_desc_validate(const struct bu_opt_desc *descs,
 	const struct bu_opt_value_spec *specs, size_t argc, const char **argv,
 	size_t cursor_arg, void *context, struct bu_opt_validate_result *result)
 {
-    static const struct bu_cmd_operand passthrough_operands[] = {
-	BU_CMD_OPERAND("arguments", BU_CMD_VALUE_RAW, 0, BU_CMD_COUNT_UNLIMITED,
+    static const struct bu_arg_operand passthrough_operands[] = {
+	BU_ARG_OPERAND("arguments", BU_ARG_VALUE_RAW, 0, BU_ARG_COUNT_UNLIMITED,
 	    "command arguments", NULL),
-	BU_CMD_OPERAND_NULL
+	BU_ARG_OPERAND_NULL
     };
-    struct bu_cmd_validate_result native = BU_CMD_VALIDATE_RESULT_NULL;
-    struct bu_cmd_schema schema = {0};
+    struct bu_arg_validate_result native = BU_ARG_VALIDATE_RESULT_NULL;
+    struct bu_arg_schema schema = {0};
     struct bu_opt_cmd cmd = BU_OPT_CMD_INIT_ZERO;
-    const struct bu_cmd_option *active_option = NULL;
+    const struct bu_arg_option *active_option = NULL;
     const struct bu_opt_value_spec *spec = NULL;
     const struct bu_opt_desc *attached_option = NULL;
     const char *attached_value = NULL;
@@ -1156,20 +1156,20 @@ bu_opt_desc_validate(const struct bu_opt_desc *descs,
     schema.help = NULL;
     schema.options = cmd.options;
     schema.operands = passthrough_operands;
-    schema.parse_policy = BU_CMD_PARSE_INTERSPERSED;
+    schema.parse_policy = BU_ARG_PARSE_INTERSPERSED;
     schema.operand_groups = NULL;
     schema.validation.custom_validate = NULL;
     schema.validation.constraints = NULL;
     schema.validation.context_validate = NULL;
 
-    ret = _bu_cmd_schema_validate_structure(&schema, argc, argv, cursor_arg,
+    ret = _bu_arg_schema_validate_structure(&schema, argc, argv, cursor_arg,
 	&native, &active_option);
     result->state = opt_validate_state(native.state);
     result->token_start = native.token_start;
     result->token_end = native.token_end;
-    result->expected = ((native.expected & BU_CMD_EXPECT_OPTION) ?
+    result->expected = ((native.expected & BU_ARG_EXPECT_OPTION) ?
 	BU_OPT_EXPECT_OPTION : BU_OPT_EXPECT_NONE) |
-	((native.expected & BU_CMD_EXPECT_OPTION_ARG) ?
+	((native.expected & BU_ARG_EXPECT_OPTION_ARG) ?
 	 BU_OPT_EXPECT_OPTION_ARG : BU_OPT_EXPECT_NONE);
     result->hint = native.hint;
     result->option = active_option ?
@@ -1196,7 +1196,7 @@ bu_opt_desc_validate(const struct bu_opt_desc *descs,
     result->completion_candidates = native.completion_candidates;
     native.completion_count = 0;
     native.completion_candidates = NULL;
-    bu_cmd_validate_result_clear(&native);
+    bu_arg_validate_result_clear(&native);
     bu_opt_cmd_clear(&cmd);
 
     /* A complete option spelling which requires a following value is
@@ -1670,7 +1670,7 @@ bu_opt_vect_t(struct bu_vls *msg, size_t argc, const char **argv, void *vec)
     int consumed;
 
     BU_OPT_CHECK_ARGV0(msg, argc, argv, "bu_opt_vect_t");
-    consumed = bu_cmd_vector3_from_argv(parsed, argc,
+    consumed = bu_arg_vector3_from_argv(parsed, argc,
 	(const char * const *)argv);
     if (!consumed) {
 	if (msg)

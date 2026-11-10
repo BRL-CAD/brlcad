@@ -44,7 +44,7 @@
 #include <locale>
 
 #include "bu/cmd.h"
-#include "bu/cmdschema.h"
+#include "bu/arg.h"
 #include "bu/color.h"
 #include "raytrace.h"
 #include "rt/geom.h"
@@ -67,22 +67,22 @@ struct brep_convert_args {
     struct bu_vls suffix;
 };
 
-static const struct bu_cmd_option brep_convert_options[] = {
-    BU_CMD_FLAG(NULL, "no-evaluation", struct brep_convert_args, no_evaluation,
+static const struct bu_arg_option brep_convert_options[] = {
+    BU_ARG_FLAG(NULL, "no-evaluation", struct brep_convert_args, no_evaluation,
 	"For a combination, create a CSG BREP tree without evaluating booleans"),
-    BU_CMD_VLS_APPEND(NULL, "suffix", struct brep_convert_args, suffix, "suffix",
+    BU_ARG_VLS_APPEND(NULL, "suffix", struct brep_convert_args, suffix, "suffix",
 	"Suffix used for no-evaluation object names"),
-    BU_CMD_OPTION_NULL
+    BU_ARG_OPTION_NULL
 };
-static const struct bu_cmd_operand brep_convert_operands[] = {
-    BU_CMD_OPERAND("output_name", BU_CMD_VALUE_STRING, 0, 1,
+static const struct bu_arg_operand brep_convert_operands[] = {
+    BU_ARG_OPERAND("output_name", BU_ARG_VALUE_STRING, 0, 1,
 	"Output BREP object name", NULL),
-    BU_CMD_OPERAND_NULL
+    BU_ARG_OPERAND_NULL
 };
-static const struct bu_cmd_schema brep_convert_schema = {
+static const struct bu_arg_schema brep_convert_schema = {
     "brep", "Generate a BREP representation of the selected object",
-    brep_convert_options, brep_convert_operands, BU_CMD_PARSE_OPTIONS_FIRST,
-    BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+    brep_convert_options, brep_convert_operands, BU_ARG_PARSE_OPTIONS_FIRST,
+    BU_ARG_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
 
 
@@ -92,24 +92,24 @@ struct brep_split_args {
     int object_per_face;
 };
 
-static const struct bu_cmd_option brep_split_options[] = {
-    BU_CMD_NUMBER("t", "thickness", struct brep_split_args, thickness, "thickness",
+static const struct bu_arg_option brep_split_options[] = {
+    BU_ARG_NUMBER("t", "thickness", struct brep_split_args, thickness, "thickness",
 	"Default plate-mode thickness"),
-    BU_CMD_VLS_APPEND("o", "output-object", struct brep_split_args, output_object,
+    BU_ARG_VLS_APPEND("o", "output-object", struct brep_split_args, output_object,
 	"name", "Output-object root name"),
-    BU_CMD_FLAG("O", "object-per-face", struct brep_split_args, object_per_face,
+    BU_ARG_FLAG("O", "object-per-face", struct brep_split_args, object_per_face,
 	"Create one BREP object per face"),
-    BU_CMD_OPTION_NULL
+    BU_ARG_OPTION_NULL
 };
-static const struct bu_cmd_operand brep_split_operands[] = {
-    BU_CMD_OPERAND("face_indices", BU_CMD_VALUE_RAW, 0, BU_CMD_COUNT_UNLIMITED,
+static const struct bu_arg_operand brep_split_operands[] = {
+    BU_ARG_OPERAND("face_indices", BU_ARG_VALUE_RAW, 0, BU_ARG_COUNT_UNLIMITED,
 	"Face indices, ranges, or lists", NULL),
-    BU_CMD_OPERAND_NULL
+    BU_ARG_OPERAND_NULL
 };
-static const struct bu_cmd_schema brep_split_schema = {
+static const struct bu_arg_schema brep_split_schema = {
     "split", "Convert a BREP object into plate-mode BREP objects",
-    brep_split_options, brep_split_operands, BU_CMD_PARSE_OPTIONS_FIRST,
-    BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+    brep_split_options, brep_split_operands, BU_ARG_PARSE_OPTIONS_FIRST,
+    BU_ARG_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
 
 // Indices are specified for info and plot commands - parsing logic is common to both
@@ -125,11 +125,11 @@ _brep_indices(std::set<int> &elements, struct bu_vls *vls, int argc, const char 
 	    std::string s2 = s1.substr(0, pos_dash);
 	    s1.erase(0, pos_dash + 1);
 	    int val1, val2, vtmp;
-	    if (!bu_cmd_integer_from_str(&val1, s1.c_str())) {
+	    if (!bu_arg_integer_from_str(&val1, s1.c_str())) {
 		bu_vls_printf(vls, "Invalid index specification: %s\n", s1.c_str());
 		return BRLCAD_ERROR;
 	    } 
-	    if (!bu_cmd_integer_from_str(&val2, s2.c_str())) {
+	    if (!bu_arg_integer_from_str(&val2, s2.c_str())) {
 		bu_vls_printf(vls, "Invalid index specification: %s\n", s2.c_str());
 		return BRLCAD_ERROR;
 	    }
@@ -148,7 +148,7 @@ _brep_indices(std::set<int> &elements, struct bu_vls *vls, int argc, const char 
 	    while (pos_comma != std::string::npos) {
 		std::string ss = s1.substr(0, pos_comma);
 		int val1;
-		if (!bu_cmd_integer_from_str(&val1, ss.c_str())) {
+		if (!bu_arg_integer_from_str(&val1, ss.c_str())) {
 		    bu_vls_printf(vls, "Invalid index specification: %s\n", ss.c_str());
 		    return BRLCAD_ERROR;
 		} else {
@@ -159,7 +159,7 @@ _brep_indices(std::set<int> &elements, struct bu_vls *vls, int argc, const char 
 	    }
 	    if (s1.length()) {
 		int val1;
-		if (!bu_cmd_integer_from_str(&val1, s1.c_str())) {
+		if (!bu_arg_integer_from_str(&val1, s1.c_str())) {
 		    bu_vls_printf(vls, "Invalid index specification: %s\n", s1.c_str());
 		    return BRLCAD_ERROR;
 		} 
@@ -170,7 +170,7 @@ _brep_indices(std::set<int> &elements, struct bu_vls *vls, int argc, const char 
 
 	// Nothing fancy looking - see if its a number
 	int val = 0;
-	if (bu_cmd_integer_from_str(&val, argv[i])) {
+	if (bu_arg_integer_from_str(&val, argv[i])) {
 	    elements.insert(val);
 	} else {
 	    bu_vls_printf(vls, "Invalid index specification: %s\n", argv[i]);
@@ -518,7 +518,7 @@ _brep_cmd_brep(void *bs, int argc, const char **argv)
 	return BRLCAD_ERROR;
     }
 
-    int operand_index = bu_cmd_schema_parse_complete(&brep_convert_schema, &args,
+    int operand_index = bu_arg_schema_parse_complete(&brep_convert_schema, &args,
 	gedp->ged_result_str, argc, argv);
     if (operand_index < 0) {
 	bu_vls_free(&args.suffix);
@@ -819,11 +819,11 @@ _brep_cmd_intersect(void *bs, int argc, const char **argv)
     }
 
     int i, j;
-    if (!bu_cmd_integer_from_str(&i, argv[2])) {
+    if (!bu_arg_integer_from_str(&i, argv[2])) {
 	bu_vls_printf(gedp->ged_result_str, "invalid integer: %s\n", argv[2]);
 	return BRLCAD_ERROR;
     }
-    if (!bu_cmd_integer_from_str(&j, argv[3])) {
+    if (!bu_arg_integer_from_str(&j, argv[3])) {
 	bu_vls_printf(gedp->ged_result_str, "invalid integer: %s\n", argv[3]);
 	return BRLCAD_ERROR;
     }
@@ -1262,7 +1262,7 @@ _brep_cmd_split(void *bs, int argc, const char **argv)
     argc--; argv++;
 
     struct brep_split_args args = {0.0, BU_VLS_INIT_ZERO, 0};
-    int operand_index = bu_cmd_schema_parse_complete(&brep_split_schema, &args,
+    int operand_index = bu_arg_schema_parse_complete(&brep_split_schema, &args,
 	gedp->ged_result_str, argc, argv);
     if (operand_index < 0) {
 	bu_vls_free(&args.output_object);
@@ -1540,35 +1540,35 @@ struct brep_root_args {
     int plotres;
 };
 
-static const struct bu_cmd_option brep_root_options[] = {
-    BU_CMD_FLAG("h", "help", struct brep_root_args, help, "Print command help"),
-    BU_CMD_COLOR_COMPAT("C", "color", struct brep_root_args, color, "color",
+static const struct bu_arg_option brep_root_options[] = {
+    BU_ARG_FLAG("h", "help", struct brep_root_args, help, "Print command help"),
+    BU_ARG_COLOR_COMPAT("C", "color", struct brep_root_args, color, "color",
 	"Color used by plotted or highlighted output"),
-    BU_CMD_FLAG("v", "verbose", struct brep_root_args, verbosity,
+    BU_ARG_FLAG("v", "verbose", struct brep_root_args, verbosity,
 	"Enable additional diagnostic output"),
-    BU_CMD_POSITIVE_INTEGER(NULL, "plotres", struct brep_root_args, plotres,
+    BU_ARG_POSITIVE_INTEGER(NULL, "plotres", struct brep_root_args, plotres,
 	"resolution", "Plot sampling resolution"),
-    BU_CMD_OPTION_NULL
+    BU_ARG_OPTION_NULL
 };
-static const struct bu_cmd_operand brep_root_operands[] = {
-    BU_CMD_OPERAND("object", BU_CMD_VALUE_DB_OBJECT, 1, 1,
+static const struct bu_arg_operand brep_root_operands[] = {
+    BU_ARG_OPERAND("object", BU_ARG_VALUE_DB_OBJECT, 1, 1,
 	"BREP or convertible database object", "ged.db_object"),
-    BU_CMD_OPERAND_NULL
+    BU_ARG_OPERAND_NULL
 };
-static const struct bu_cmd_schema brep_root_schema = {
+static const struct bu_arg_schema brep_root_schema = {
     "brep", "Inspect, convert, plot, and repair BREP objects", brep_root_options,
-    brep_root_operands, BU_CMD_PARSE_OPTIONS_FIRST, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+    brep_root_operands, BU_ARG_PARSE_OPTIONS_FIRST, BU_ARG_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
 
-static const struct bu_cmd_operand brep_raw_operands[] = {
-    BU_CMD_OPERAND("arguments", BU_CMD_VALUE_RAW, 0, BU_CMD_COUNT_UNLIMITED,
+static const struct bu_arg_operand brep_raw_operands[] = {
+    BU_ARG_OPERAND("arguments", BU_ARG_VALUE_RAW, 0, BU_ARG_COUNT_UNLIMITED,
 	"Operation-specific arguments", NULL),
-    BU_CMD_OPERAND_NULL
+    BU_ARG_OPERAND_NULL
 };
 #define BREP_RAW_SCHEMA(_id, _name, _help) \
-    static const struct bu_cmd_schema _id = { \
-	_name, _help, NULL, brep_raw_operands, BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, \
-	BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL) \
+    static const struct bu_arg_schema _id = { \
+	_name, _help, NULL, brep_raw_operands, BU_ARG_PARSE_STOP_AT_FIRST_OPERAND, \
+	BU_ARG_SCHEMA_CONSTRAINTS(NULL, NULL) \
     }
 BREP_RAW_SCHEMA(brep_boolean_schema, "bool", "Evaluate a BREP boolean");
 BREP_RAW_SCHEMA(brep_bots_schema, "bots", "Convert BREP faces to BOTs");
@@ -1585,16 +1585,16 @@ static const char * const brep_plot_modes[] = {
     "SUVP", "T", "T2d", "V", "CDT", "CDT2d", "CDTm2d", "CDTp2d", "CDTw",
     "CDTn", "CDTn2d", "CDTnw", NULL
 };
-static const struct bu_cmd_operand brep_plot_operands[] = {
-    BU_CMD_OPERAND_KEYWORDS("operation", BU_CMD_VALUE_KEYWORD, 1, 1,
+static const struct bu_arg_operand brep_plot_operands[] = {
+    BU_ARG_OPERAND_KEYWORDS("operation", BU_ARG_VALUE_KEYWORD, 1, 1,
 	"Plot operation", NULL, brep_plot_modes),
-    BU_CMD_OPERAND("indices", BU_CMD_VALUE_RAW, 0, BU_CMD_COUNT_UNLIMITED,
+    BU_ARG_OPERAND("indices", BU_ARG_VALUE_RAW, 0, BU_ARG_COUNT_UNLIMITED,
 	"Optional component indices or ranges", NULL),
-    BU_CMD_OPERAND_NULL
+    BU_ARG_OPERAND_NULL
 };
-static const struct bu_cmd_schema brep_plot_schema = {
+static const struct bu_arg_schema brep_plot_schema = {
     "plot", "Plot BREP diagnostics", NULL, brep_plot_operands,
-    BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+    BU_ARG_PARSE_STOP_AT_FIRST_OPERAND, BU_ARG_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
 BREP_RAW_SCHEMA(brep_repair_schema, "repair", "Repair BREP topology");
 BREP_RAW_SCHEMA(brep_selection_schema, "selection", "Manage BREP selections");
@@ -1604,71 +1604,71 @@ BREP_RAW_SCHEMA(brep_valid_schema, "valid", "Validate BREP topology");
 BREP_RAW_SCHEMA(brep_topo_schema, "topo", "Inspect or edit BREP topology");
 #undef BREP_RAW_SCHEMA
 
-static const struct bu_cmd_operand brep_bot_operands[] = {
-    BU_CMD_OPERAND("output_name", BU_CMD_VALUE_STRING, 0, 1,
+static const struct bu_arg_operand brep_bot_operands[] = {
+    BU_ARG_OPERAND("output_name", BU_ARG_VALUE_STRING, 0, 1,
 	"Output BOT object name", NULL),
-    BU_CMD_OPERAND_NULL
+    BU_ARG_OPERAND_NULL
 };
-static const struct bu_cmd_schema brep_bot_schema = {
+static const struct bu_arg_schema brep_bot_schema = {
     "bot", "Generate a triangle mesh from a BREP object", NULL, brep_bot_operands,
-    BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+    BU_ARG_PARSE_STOP_AT_FIRST_OPERAND, BU_ARG_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
 static const char * const brep_intersect_modes[] = {
     "PP", "PC", "PS", "CC", "CS", "SS", NULL
 };
-static const struct bu_cmd_operand brep_intersect_operands[] = {
-    BU_CMD_OPERAND("other_object", BU_CMD_VALUE_DB_OBJECT, 1, 1,
+static const struct bu_arg_operand brep_intersect_operands[] = {
+    BU_ARG_OPERAND("other_object", BU_ARG_VALUE_DB_OBJECT, 1, 1,
 	"Second BREP object", "ged.db_object"),
-    BU_CMD_OPERAND("first_index", BU_CMD_VALUE_INTEGER, 1, 1,
+    BU_ARG_OPERAND("first_index", BU_ARG_VALUE_INTEGER, 1, 1,
 	"Component index in the selected object", NULL),
-    BU_CMD_OPERAND("second_index", BU_CMD_VALUE_INTEGER, 1, 1,
+    BU_ARG_OPERAND("second_index", BU_ARG_VALUE_INTEGER, 1, 1,
 	"Component index in the second object", NULL),
-    BU_CMD_OPERAND_KEYWORDS("mode", BU_CMD_VALUE_KEYWORD, 0, 1,
+    BU_ARG_OPERAND_KEYWORDS("mode", BU_ARG_VALUE_KEYWORD, 0, 1,
 	"Intersection mode (default SS)", NULL, brep_intersect_modes),
-    BU_CMD_OPERAND_NULL
+    BU_ARG_OPERAND_NULL
 };
-static const struct bu_cmd_schema brep_intersect_schema = {
+static const struct bu_arg_schema brep_intersect_schema = {
     "intersect", "Calculate BREP component intersections", NULL,
-    brep_intersect_operands, BU_CMD_PARSE_STOP_AT_FIRST_OPERAND,
-    BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+    brep_intersect_operands, BU_ARG_PARSE_STOP_AT_FIRST_OPERAND,
+    BU_ARG_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
-static const struct bu_cmd_operand brep_tikz_operands[] = {
-    BU_CMD_OPERAND("output_file", BU_CMD_VALUE_FILE, 1, 1,
+static const struct bu_arg_operand brep_tikz_operands[] = {
+    BU_ARG_OPERAND("output_file", BU_ARG_VALUE_FILE, 1, 1,
 	"TikZ output file", "ged.file_path"),
-    BU_CMD_OPERAND_NULL
+    BU_ARG_OPERAND_NULL
 };
-static const struct bu_cmd_schema brep_tikz_schema = {
+static const struct bu_arg_schema brep_tikz_schema = {
     "tikz", "Export a BREP plot as TikZ", NULL, brep_tikz_operands,
-    BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+    BU_ARG_PARSE_STOP_AT_FIRST_OPERAND, BU_ARG_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
 
 static int brep_tree_execute(void *context, int argc, const char *argv[]);
-static const struct bu_cmd_tree_node brep_subcommands[] = {
-    BU_CMD_TREE_NODE(&brep_boolean_schema, NULL, NULL, BU_CMD_TREE_CHILD_AFTER_OPTIONS, brep_tree_execute),
-    BU_CMD_TREE_NODE(&brep_bot_schema, NULL, NULL, BU_CMD_TREE_CHILD_AFTER_OPTIONS, brep_tree_execute),
-    BU_CMD_TREE_NODE(&brep_bots_schema, NULL, NULL, BU_CMD_TREE_CHILD_AFTER_OPTIONS, brep_tree_execute),
-    BU_CMD_TREE_NODE(&brep_convert_schema, NULL, NULL, BU_CMD_TREE_CHILD_AFTER_OPTIONS, brep_tree_execute),
-    BU_CMD_TREE_NODE(&brep_csg_schema, NULL, NULL, BU_CMD_TREE_CHILD_AFTER_OPTIONS, brep_tree_execute),
-    BU_CMD_TREE_NODE(&brep_dump_schema, NULL, NULL, BU_CMD_TREE_CHILD_AFTER_OPTIONS, brep_tree_execute),
-    BU_CMD_TREE_NODE(&brep_flip_schema, NULL, NULL, BU_CMD_TREE_CHILD_AFTER_OPTIONS, brep_tree_execute),
-    BU_CMD_TREE_NODE(&brep_geo_schema, NULL, NULL, BU_CMD_TREE_CHILD_AFTER_OPTIONS, brep_tree_execute),
-    BU_CMD_TREE_NODE(&brep_info_schema, NULL, NULL, BU_CMD_TREE_CHILD_AFTER_OPTIONS, brep_tree_execute),
-    BU_CMD_TREE_NODE(&brep_intersect_schema, NULL, NULL, BU_CMD_TREE_CHILD_AFTER_OPTIONS, brep_tree_execute),
-    BU_CMD_TREE_NODE(&brep_pick_schema, NULL, NULL, BU_CMD_TREE_CHILD_AFTER_OPTIONS, brep_tree_execute),
-    BU_CMD_TREE_NODE(&brep_plate_mode_schema, NULL, NULL, BU_CMD_TREE_CHILD_AFTER_OPTIONS, brep_tree_execute),
-    BU_CMD_TREE_NODE(&brep_plot_schema, NULL, NULL, BU_CMD_TREE_CHILD_AFTER_OPTIONS, brep_tree_execute),
-    BU_CMD_TREE_NODE(&brep_repair_schema, NULL, NULL, BU_CMD_TREE_CHILD_AFTER_OPTIONS, brep_tree_execute),
-    BU_CMD_TREE_NODE(&brep_selection_schema, NULL, NULL, BU_CMD_TREE_CHILD_AFTER_OPTIONS, brep_tree_execute),
-    BU_CMD_TREE_NODE(&brep_solid_schema, NULL, NULL, BU_CMD_TREE_CHILD_AFTER_OPTIONS, brep_tree_execute),
-    BU_CMD_TREE_NODE(&brep_split_schema, NULL, NULL, BU_CMD_TREE_CHILD_AFTER_OPTIONS, brep_tree_execute),
-    BU_CMD_TREE_NODE(&brep_shrink_schema, NULL, NULL, BU_CMD_TREE_CHILD_AFTER_OPTIONS, brep_tree_execute),
-    BU_CMD_TREE_NODE(&brep_tikz_schema, NULL, NULL, BU_CMD_TREE_CHILD_AFTER_OPTIONS, brep_tree_execute),
-    BU_CMD_TREE_NODE(&brep_valid_schema, NULL, NULL, BU_CMD_TREE_CHILD_AFTER_OPTIONS, brep_tree_execute),
-    BU_CMD_TREE_NODE(&brep_topo_schema, NULL, NULL, BU_CMD_TREE_CHILD_AFTER_OPTIONS, brep_tree_execute),
-    BU_CMD_TREE_NODE_NULL
+static const struct bu_arg_tree_node brep_subcommands[] = {
+    BU_ARG_TREE_NODE(&brep_boolean_schema, NULL, NULL, BU_ARG_TREE_CHILD_AFTER_OPTIONS, brep_tree_execute),
+    BU_ARG_TREE_NODE(&brep_bot_schema, NULL, NULL, BU_ARG_TREE_CHILD_AFTER_OPTIONS, brep_tree_execute),
+    BU_ARG_TREE_NODE(&brep_bots_schema, NULL, NULL, BU_ARG_TREE_CHILD_AFTER_OPTIONS, brep_tree_execute),
+    BU_ARG_TREE_NODE(&brep_convert_schema, NULL, NULL, BU_ARG_TREE_CHILD_AFTER_OPTIONS, brep_tree_execute),
+    BU_ARG_TREE_NODE(&brep_csg_schema, NULL, NULL, BU_ARG_TREE_CHILD_AFTER_OPTIONS, brep_tree_execute),
+    BU_ARG_TREE_NODE(&brep_dump_schema, NULL, NULL, BU_ARG_TREE_CHILD_AFTER_OPTIONS, brep_tree_execute),
+    BU_ARG_TREE_NODE(&brep_flip_schema, NULL, NULL, BU_ARG_TREE_CHILD_AFTER_OPTIONS, brep_tree_execute),
+    BU_ARG_TREE_NODE(&brep_geo_schema, NULL, NULL, BU_ARG_TREE_CHILD_AFTER_OPTIONS, brep_tree_execute),
+    BU_ARG_TREE_NODE(&brep_info_schema, NULL, NULL, BU_ARG_TREE_CHILD_AFTER_OPTIONS, brep_tree_execute),
+    BU_ARG_TREE_NODE(&brep_intersect_schema, NULL, NULL, BU_ARG_TREE_CHILD_AFTER_OPTIONS, brep_tree_execute),
+    BU_ARG_TREE_NODE(&brep_pick_schema, NULL, NULL, BU_ARG_TREE_CHILD_AFTER_OPTIONS, brep_tree_execute),
+    BU_ARG_TREE_NODE(&brep_plate_mode_schema, NULL, NULL, BU_ARG_TREE_CHILD_AFTER_OPTIONS, brep_tree_execute),
+    BU_ARG_TREE_NODE(&brep_plot_schema, NULL, NULL, BU_ARG_TREE_CHILD_AFTER_OPTIONS, brep_tree_execute),
+    BU_ARG_TREE_NODE(&brep_repair_schema, NULL, NULL, BU_ARG_TREE_CHILD_AFTER_OPTIONS, brep_tree_execute),
+    BU_ARG_TREE_NODE(&brep_selection_schema, NULL, NULL, BU_ARG_TREE_CHILD_AFTER_OPTIONS, brep_tree_execute),
+    BU_ARG_TREE_NODE(&brep_solid_schema, NULL, NULL, BU_ARG_TREE_CHILD_AFTER_OPTIONS, brep_tree_execute),
+    BU_ARG_TREE_NODE(&brep_split_schema, NULL, NULL, BU_ARG_TREE_CHILD_AFTER_OPTIONS, brep_tree_execute),
+    BU_ARG_TREE_NODE(&brep_shrink_schema, NULL, NULL, BU_ARG_TREE_CHILD_AFTER_OPTIONS, brep_tree_execute),
+    BU_ARG_TREE_NODE(&brep_tikz_schema, NULL, NULL, BU_ARG_TREE_CHILD_AFTER_OPTIONS, brep_tree_execute),
+    BU_ARG_TREE_NODE(&brep_valid_schema, NULL, NULL, BU_ARG_TREE_CHILD_AFTER_OPTIONS, brep_tree_execute),
+    BU_ARG_TREE_NODE(&brep_topo_schema, NULL, NULL, BU_ARG_TREE_CHILD_AFTER_OPTIONS, brep_tree_execute),
+    BU_ARG_TREE_NODE_NULL
 };
-static const struct bu_cmd_tree brep_tree = {
-    &brep_root_schema, brep_subcommands, BU_CMD_TREE_CHILD_AFTER_FIXED_OPERANDS
+static const struct bu_arg_tree brep_tree = {
+    &brep_root_schema, brep_subcommands, BU_ARG_TREE_CHILD_AFTER_FIXED_OPERANDS
 };
 
 struct brep_completion_line {
@@ -1775,7 +1775,7 @@ static int
 brep_plot_index_value(int *value, const char *text, int limit)
 {
     if (!value || !text || !text[0] || limit <= 0 ||
-	!bu_cmd_integer_from_str(value, text) || *value < 0 || *value >= limit)
+	!bu_arg_integer_from_str(value, text) || *value < 0 || *value >= limit)
 	return 0;
     return 1;
 }
@@ -1909,7 +1909,7 @@ brep_plot_context_complete(struct ged *gedp, const char *input, size_t cursor_po
 		strspn(line.argv[i], "0123456789") == strlen(line.argv[i]);
 	    if (!current || numeric || !brep_plot_index_token_prefix(line.argv[i]) ||
 		line.cursor_arg >= line.argc) {
-		result->state = BU_CMD_VALIDATE_INVALID;
+		result->state = BU_ARG_VALIDATE_INVALID;
 		result->hint = "BREP plot component index is out of range or malformed";
 		if (result->completion_candidates) {
 		    bu_argv_free(result->completion_count,
@@ -1971,7 +1971,7 @@ brep_plot_context_complete(struct ged *gedp, const char *input, size_t cursor_po
 	    }
 	    if (total)
 		result->completion_common_prefix = bu_strdup(common.c_str());
-	    result->completion_type = BU_CMD_VALUE_INTEGER;
+	    result->completion_type = BU_ARG_VALUE_INTEGER;
 	}
     }
 
@@ -1982,7 +1982,7 @@ brep_plot_context_complete(struct ged *gedp, const char *input, size_t cursor_po
 static void
 brep_show_help(struct ged *gedp)
 {
-    char *help = bu_cmd_tree_help(&brep_tree, "brep");
+    char *help = bu_arg_tree_help(&brep_tree, "brep");
 
     if (help) {
 	bu_vls_strcat(gedp->ged_result_str, help);
@@ -1994,23 +1994,23 @@ static int
 brep_tree_execute(void *context, int argc, const char *argv[])
 {
     struct _ged_brep_info *gb = (struct _ged_brep_info *)context;
-    const struct bu_cmd_tree_node *node = bu_cmd_tree_find_subcommand(&brep_tree, argv[0]);
-    struct bu_cmd_validate_result validation = BU_CMD_VALIDATE_RESULT_NULL;
+    const struct bu_arg_tree_node *node = bu_arg_tree_find_subcommand(&brep_tree, argv[0]);
+    struct bu_arg_validate_result validation = BU_ARG_VALIDATE_RESULT_NULL;
     int ret = BRLCAD_ERROR;
 
     if (!node)
 	return BRLCAD_ERROR;
     /* Existing operation handlers own their concise purpose/usage responses. */
     if (!(argc == 2 && BU_STR_EQUAL(argv[1], HELPFLAG))) {
-	if (bu_cmd_schema_validate(node->schema, (size_t)(argc - 1), argv + 1,
+	if (bu_arg_schema_validate(node->schema, (size_t)(argc - 1), argv + 1,
 		(size_t)(argc - 1), &validation) != 0 ||
-		validation.state != BU_CMD_VALIDATE_VALID) {
+		validation.state != BU_ARG_VALIDATE_VALID) {
 	    if (validation.hint)
 		bu_vls_printf(gb->gedp->ged_result_str, "%s\n", validation.hint);
-	    bu_cmd_validate_result_clear(&validation);
+	    bu_arg_validate_result_clear(&validation);
 	    return BRLCAD_ERROR;
 	}
-	bu_cmd_validate_result_clear(&validation);
+	bu_arg_validate_result_clear(&validation);
     }
 
 	if (node->schema == &brep_plot_schema && argc > 1 &&
@@ -2052,7 +2052,7 @@ ged_brep_core(struct ged *gedp, int argc, const char *argv[])
 	return BRLCAD_OK;
     }
 
-    object_index = bu_cmd_schema_parse(&brep_root_schema, &args,
+    object_index = bu_arg_schema_parse(&brep_root_schema, &args,
 	gedp->ged_result_str, argc, argv);
     if (object_index < 0) {
 	brep_show_help(gedp);
@@ -2061,7 +2061,7 @@ ged_brep_core(struct ged *gedp, int argc, const char *argv[])
 
     if (args.help) {
 	command_index = object_index + 1;
-	if (command_index < argc && bu_cmd_tree_find_subcommand(&brep_tree, argv[command_index])) {
+	if (command_index < argc && bu_arg_tree_find_subcommand(&brep_tree, argv[command_index])) {
 	    const char *child_help[] = {argv[command_index], HELPFLAG};
 	    gb.gedp = gedp;
 	    (void)brep_tree_execute(&gb, 2, child_help);
@@ -2077,22 +2077,22 @@ ged_brep_core(struct ged *gedp, int argc, const char *argv[])
 	return BRLCAD_ERROR;
     }
     command_index = object_index + 1;
-    if (command_index >= argc || !bu_cmd_tree_find_subcommand(&brep_tree, argv[command_index])) {
+    if (command_index >= argc || !bu_arg_tree_find_subcommand(&brep_tree, argv[command_index])) {
 	bu_vls_printf(gedp->ged_result_str, "no valid subcommand specified\n");
 	brep_show_help(gedp);
 	return BRLCAD_ERROR;
     }
 
-    struct bu_cmd_validate_result root_validation = BU_CMD_VALIDATE_RESULT_NULL;
-    if (bu_cmd_schema_validate(&brep_root_schema, (size_t)(object_index + 1), argv,
+    struct bu_arg_validate_result root_validation = BU_ARG_VALIDATE_RESULT_NULL;
+    if (bu_arg_schema_validate(&brep_root_schema, (size_t)(object_index + 1), argv,
 	    (size_t)(object_index + 1), &root_validation) != 0 ||
-	root_validation.state != BU_CMD_VALIDATE_VALID) {
+	root_validation.state != BU_ARG_VALIDATE_VALID) {
 	if (root_validation.hint)
 	    bu_vls_printf(gedp->ged_result_str, "%s\n", root_validation.hint);
-	bu_cmd_validate_result_clear(&root_validation);
+	bu_arg_validate_result_clear(&root_validation);
 	return BRLCAD_ERROR;
     }
-    bu_cmd_validate_result_clear(&root_validation);
+    bu_arg_validate_result_clear(&root_validation);
 
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
     GED_CHECK_DRAWABLE(gedp, BRLCAD_ERROR);
@@ -2116,14 +2116,14 @@ ged_brep_core(struct ged *gedp, int argc, const char *argv[])
     GED_DB_GET_INTERN(gedp, &gb.intern, gb.dp, bn_mat_identity, BRLCAD_ERROR);
     RT_CK_DB_INTERNAL(&gb.intern);
     gb.vbp = bv_vlblock_init(vlfree, 32);
-    if (bu_cmd_schema_option_present(&brep_root_schema, (size_t)(object_index + 1),
+    if (bu_arg_schema_option_present(&brep_root_schema, (size_t)(object_index + 1),
 	argv, "color")) {
 	BU_GET(color, struct bu_color);
 	*color = args.color;
     }
     gb.color = color;
 
-    if (bu_cmd_tree_dispatch(&brep_tree, &gb, argc, argv, &ret) != 0)
+    if (bu_arg_tree_dispatch(&brep_tree, &gb, argc, argv, &ret) != 0)
 	ret = BRLCAD_ERROR;
     bv_vlblock_free(gb.vbp);
     rt_db_free_internal(&gb.intern);
@@ -2135,18 +2135,18 @@ ged_brep_core(struct ged *gedp, int argc, const char *argv[])
 #include "../include/plugin.h"
 
 static const char * const dplot_modes[] = {"ssx", "isocsx", "fcurves", "lcurves", "faces", NULL};
-static const struct bu_cmd_operand dplot_operands[] = {
-    BU_CMD_OPERAND("logfile", BU_CMD_VALUE_FILE, 1, 1,
+static const struct bu_arg_operand dplot_operands[] = {
+    BU_ARG_OPERAND("logfile", BU_ARG_VALUE_FILE, 1, 1,
 	"BREP diagnostic log", "ged.file_path"),
-    BU_CMD_OPERAND_KEYWORDS("operation", BU_CMD_VALUE_KEYWORD, 1, 1,
+    BU_ARG_OPERAND_KEYWORDS("operation", BU_ARG_VALUE_KEYWORD, 1, 1,
 	"Diagnostic plot operation", NULL, dplot_modes),
-    BU_CMD_OPERAND("indices", BU_CMD_VALUE_INTEGER, 0, 2,
+    BU_ARG_OPERAND("indices", BU_ARG_VALUE_INTEGER, 0, 2,
 	"Optional surface and isocurve pair indices", NULL),
-    BU_CMD_OPERAND_NULL
+    BU_ARG_OPERAND_NULL
 };
-static const struct bu_cmd_schema dplot_cmd_schema = {
+static const struct bu_arg_schema dplot_cmd_schema = {
     "dplot", "Display BREP diagnostic plot data", NULL, dplot_operands,
-    BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+    BU_ARG_PARSE_STOP_AT_FIRST_OPERAND, BU_ARG_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
 
 static int
@@ -2178,13 +2178,13 @@ ged_brep_grammar_analyze(struct ged *gedp, const char *input,
 static char *
 ged_brep_grammar_json(void)
 {
-    return bu_cmd_tree_describe_json(&brep_tree);
+    return bu_arg_tree_describe_json(&brep_tree);
 }
 
 static int
 ged_brep_grammar_lint(struct bu_vls *msgs)
 {
-    return bu_cmd_tree_lint(&brep_tree, msgs);
+    return bu_arg_tree_lint(&brep_tree, msgs);
 }
 GED_CMD_TREE_HELP(ged_brep_grammar_help, brep_tree)
 

@@ -21,7 +21,7 @@
 #include "common.h"
 
 
-#include "bu/cmdschema.h"
+#include "bu/arg.h"
 #include "ged.h"
 
 
@@ -300,7 +300,7 @@ constraint_help(void *datap, int argc, const char *argv[])
  * local ABI only at the execution boundary. */
 static int
 constraint_tree_call_legacy(void *data, int argc, const char *argv[],
-	const struct bu_cmd_schema *schema, bu_cmd_tree_execute_t execute)
+	const struct bu_arg_schema *schema, bu_arg_tree_execute_t execute)
 {
     const char **full_argv = NULL;
     struct bu_vls msg = BU_VLS_INIT_ZERO;
@@ -308,7 +308,7 @@ constraint_tree_call_legacy(void *data, int argc, const char *argv[],
 
     if (!schema || !execute || argc < 1 || !argv)
 	return BRLCAD_ERROR;
-    if (bu_cmd_schema_parse_complete(schema, NULL, &msg, argc - 1, argv + 1) < 0) {
+    if (bu_arg_schema_parse_complete(schema, NULL, &msg, argc - 1, argv + 1) < 0) {
 	if (bu_vls_strlen(&msg))
 	    bu_vls_vlscat(((struct ged *)data)->ged_result_str, &msg);
 	bu_vls_free(&msg);
@@ -326,47 +326,47 @@ constraint_tree_call_legacy(void *data, int argc, const char *argv[],
 }
 
 
-static const struct bu_cmd_operand constraint_set_operands[] = {
-    BU_CMD_OPERAND("object", BU_CMD_VALUE_DB_OBJECT, 1, 1,
+static const struct bu_arg_operand constraint_set_operands[] = {
+    BU_ARG_OPERAND("object", BU_ARG_VALUE_DB_OBJECT, 1, 1,
 	"Object receiving the constraint", "ged.db_object"),
-    BU_CMD_OPERAND("constraint_name", BU_CMD_VALUE_STRING, 1, 1,
+    BU_ARG_OPERAND("constraint_name", BU_ARG_VALUE_STRING, 1, 1,
 	"Constraint attribute name", NULL),
-    BU_CMD_OPERAND("expression", BU_CMD_VALUE_RAW, 0, BU_CMD_COUNT_UNLIMITED,
+    BU_ARG_OPERAND("expression", BU_ARG_VALUE_RAW, 0, BU_ARG_COUNT_UNLIMITED,
 	"Constraint expression", NULL),
-    BU_CMD_OPERAND_NULL
+    BU_ARG_OPERAND_NULL
 };
-static const struct bu_cmd_operand constraint_objects_operands[] = {
-    BU_CMD_OPERAND("objects", BU_CMD_VALUE_DB_OBJECT, 1, BU_CMD_COUNT_UNLIMITED,
+static const struct bu_arg_operand constraint_objects_operands[] = {
+    BU_ARG_OPERAND("objects", BU_ARG_VALUE_DB_OBJECT, 1, BU_ARG_COUNT_UNLIMITED,
 	"Objects whose constraints are processed", "ged.db_object"),
-    BU_CMD_OPERAND_NULL
+    BU_ARG_OPERAND_NULL
 };
 static const char * const constraint_help_keywords[] = {"set", "get", "show", "eval", "help", NULL};
-static const struct bu_cmd_operand constraint_help_operands[] = {
-    BU_CMD_OPERAND_KEYWORDS("command", BU_CMD_VALUE_KEYWORD, 0, 1,
+static const struct bu_arg_operand constraint_help_operands[] = {
+    BU_ARG_OPERAND_KEYWORDS("command", BU_ARG_VALUE_KEYWORD, 0, 1,
 	"Command to describe", NULL, constraint_help_keywords),
-    BU_CMD_OPERAND_NULL
+    BU_ARG_OPERAND_NULL
 };
 GED_DEFINE_NO_ARG_SCHEMA_NAMED(constraint_root_schema, "constraint",
-    "Manage object constraints", BU_CMD_PARSE_OPTIONS_FIRST);
-static const struct bu_cmd_schema constraint_set_schema = {
+    "Manage object constraints", BU_ARG_PARSE_OPTIONS_FIRST);
+static const struct bu_arg_schema constraint_set_schema = {
     "set", "Set a constraint expression", NULL, constraint_set_operands,
-    BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+    BU_ARG_PARSE_STOP_AT_FIRST_OPERAND, BU_ARG_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
-static const struct bu_cmd_schema constraint_get_schema = {
+static const struct bu_arg_schema constraint_get_schema = {
     "get", "Get constraint attributes", NULL, constraint_objects_operands,
-    BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+    BU_ARG_PARSE_STOP_AT_FIRST_OPERAND, BU_ARG_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
-static const struct bu_cmd_schema constraint_show_schema = {
+static const struct bu_arg_schema constraint_show_schema = {
     "show", "Show constraint attributes", NULL, constraint_objects_operands,
-    BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+    BU_ARG_PARSE_STOP_AT_FIRST_OPERAND, BU_ARG_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
-static const struct bu_cmd_schema constraint_eval_schema = {
+static const struct bu_arg_schema constraint_eval_schema = {
     "eval", "Evaluate constraints", NULL, constraint_objects_operands,
-    BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+    BU_ARG_PARSE_STOP_AT_FIRST_OPERAND, BU_ARG_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
-static const struct bu_cmd_schema constraint_help_schema = {
+static const struct bu_arg_schema constraint_help_schema = {
     "help", "Show constraint help", NULL, constraint_help_operands,
-    BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+    BU_ARG_PARSE_STOP_AT_FIRST_OPERAND, BU_ARG_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
 
 #define CONSTRAINT_TREE_EXEC(_name, _schema, _func) \
@@ -379,28 +379,28 @@ CONSTRAINT_TREE_EXEC(eval, &constraint_eval_schema, constraint_eval)
 CONSTRAINT_TREE_EXEC(help, &constraint_help_schema, constraint_help)
 #undef CONSTRAINT_TREE_EXEC
 
-static const struct bu_cmd_tree_node constraint_subcommands[] = {
-    BU_CMD_TREE_NODE(&constraint_set_schema, NULL, NULL,
-	BU_CMD_TREE_CHILD_AFTER_OPTIONS, constraint_tree_set),
-    BU_CMD_TREE_NODE(&constraint_get_schema, NULL, NULL,
-	BU_CMD_TREE_CHILD_AFTER_OPTIONS, constraint_tree_get),
-    BU_CMD_TREE_NODE(&constraint_show_schema, NULL, NULL,
-	BU_CMD_TREE_CHILD_AFTER_OPTIONS, constraint_tree_show),
-    BU_CMD_TREE_NODE(&constraint_eval_schema, NULL, NULL,
-	BU_CMD_TREE_CHILD_AFTER_OPTIONS, constraint_tree_eval),
-    BU_CMD_TREE_NODE(&constraint_help_schema, NULL, NULL,
-	BU_CMD_TREE_CHILD_AFTER_OPTIONS, constraint_tree_help),
-    BU_CMD_TREE_NODE_NULL
+static const struct bu_arg_tree_node constraint_subcommands[] = {
+    BU_ARG_TREE_NODE(&constraint_set_schema, NULL, NULL,
+	BU_ARG_TREE_CHILD_AFTER_OPTIONS, constraint_tree_set),
+    BU_ARG_TREE_NODE(&constraint_get_schema, NULL, NULL,
+	BU_ARG_TREE_CHILD_AFTER_OPTIONS, constraint_tree_get),
+    BU_ARG_TREE_NODE(&constraint_show_schema, NULL, NULL,
+	BU_ARG_TREE_CHILD_AFTER_OPTIONS, constraint_tree_show),
+    BU_ARG_TREE_NODE(&constraint_eval_schema, NULL, NULL,
+	BU_ARG_TREE_CHILD_AFTER_OPTIONS, constraint_tree_eval),
+    BU_ARG_TREE_NODE(&constraint_help_schema, NULL, NULL,
+	BU_ARG_TREE_CHILD_AFTER_OPTIONS, constraint_tree_help),
+    BU_ARG_TREE_NODE_NULL
 };
-static const struct bu_cmd_tree ged_constraint_tree = {
-    &constraint_root_schema, constraint_subcommands, BU_CMD_TREE_CHILD_AFTER_OPTIONS
+static const struct bu_arg_tree ged_constraint_tree = {
+    &constraint_root_schema, constraint_subcommands, BU_ARG_TREE_CHILD_AFTER_OPTIONS
 };
 
 
 static char *
 constraint_native_help(void)
 {
-    return bu_cmd_tree_help(&ged_constraint_tree, "constraint");
+    return bu_arg_tree_help(&ged_constraint_tree, "constraint");
 }
 
 
@@ -429,7 +429,7 @@ ged_constraint_core(struct ged *gedp, int argc, const char *argv[])
 	return GED_HELP;
     }
     if (BU_STR_EQUIV(argv[1], "help")) {
-	if (bu_cmd_tree_dispatch(&ged_constraint_tree, gedp, argc - 1, argv + 1, &cmdret) == 0)
+	if (bu_arg_tree_dispatch(&ged_constraint_tree, gedp, argc - 1, argv + 1, &cmdret) == 0)
 	    return cmdret;
 	constraint_usage(gedp->ged_result_str, argv[0]);
 	return BRLCAD_ERROR;
@@ -452,7 +452,7 @@ ged_constraint_core(struct ged *gedp, int argc, const char *argv[])
 
     /* Native dispatch selects a canonical child and validates its published
      * operand schema before the historical operation callback runs. */
-    if (bu_cmd_tree_dispatch(&ged_constraint_tree, gedp, argc - 1, argv + 1, &cmdret) != 0) {
+    if (bu_arg_tree_dispatch(&ged_constraint_tree, gedp, argc - 1, argv + 1, &cmdret) != 0) {
 	constraint_usage(gedp->ged_result_str, argv[0]);
 	return BRLCAD_ERROR;
     }
@@ -484,14 +484,14 @@ ged_constraint_grammar_analyze(struct ged *gedp, const char *input,
 static char *
 ged_constraint_grammar_json(void)
 {
-    return bu_cmd_tree_describe_json(&ged_constraint_tree);
+    return bu_arg_tree_describe_json(&ged_constraint_tree);
 }
 
 
 static int
 ged_constraint_grammar_lint(struct bu_vls *msgs)
 {
-    return bu_cmd_tree_lint(&ged_constraint_tree, msgs);
+    return bu_arg_tree_lint(&ged_constraint_tree, msgs);
 }
 GED_CMD_TREE_HELP(ged_constraint_grammar_help, ged_constraint_tree)
 

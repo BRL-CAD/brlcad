@@ -66,7 +66,7 @@ ged_pmat_core(struct ged *gedp, int argc, const char *argv[])
 
 #include "../include/plugin.h"
 
-GED_DEFINE_TYPED_OPERAND_SCHEMA(pmat, "pmat", "Query or set the perspective matrix", "matrix", BU_CMD_VALUE_MATRIX, 0, 1, "Optional packed 4x4 matrix");
+GED_DEFINE_TYPED_OPERAND_SCHEMA(pmat, "pmat", "Query or set the perspective matrix", "matrix", BU_ARG_VALUE_MATRIX, 0, 1, "Optional packed 4x4 matrix");
 
 #define GED_PMAT_COMMANDS(X, XID) \
     X(pmat, ged_pmat_core, GED_CMD_DEFAULT, &pmat_cmd_schema) \

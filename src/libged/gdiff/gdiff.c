@@ -28,7 +28,7 @@
 #include <string.h>
 
 #include "bu/cmd.h"
-#include "bu/cmdschema.h"
+#include "bu/arg.h"
 #include "rt/db_fullpath.h"
 #include "rt/db_diff.h"
 #include "analyze.h"

@@ -77,7 +77,7 @@ bad:
 
 #include "../include/plugin.h"
 
-GED_DEFINE_TYPED_OPERAND_SCHEMA(view2grid_lu, "view2grid_lu", "Convert a view point to grid coordinates", "point", BU_CMD_VALUE_NUMBER, 3, 3, "X Y Z point");
+GED_DEFINE_TYPED_OPERAND_SCHEMA(view2grid_lu, "view2grid_lu", "Convert a view point to grid coordinates", "point", BU_ARG_VALUE_NUMBER, 3, 3, "X Y Z point");
 
 #define GED_VIEW2GRID_LU_COMMANDS(X, XID) \
     X(view2grid_lu, ged_view2grid_lu_core, GED_CMD_DEFAULT, &view2grid_lu_cmd_schema) \

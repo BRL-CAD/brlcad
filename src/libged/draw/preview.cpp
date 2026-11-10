@@ -32,7 +32,7 @@
 #include "bsocket.h"
 
 #include "bu/cmd.h"
-#include "bu/cmdschema.h"
+#include "bu/arg.h"
 
 #include "../ged_private.h"
 extern "C" {
@@ -60,37 +60,37 @@ struct preview_args {
 };
 
 
-static const struct bu_cmd_option preview_schema_options[] = {
-    BU_CMD_NUMBER("d", NULL, struct preview_args, delay, "seconds",
+static const struct bu_arg_option preview_schema_options[] = {
+    BU_ARG_NUMBER("d", NULL, struct preview_args, delay, "seconds",
 	"Set inter-frame delay"),
-    BU_CMD_FLAG("e", NULL, struct preview_args, eye_path,
+    BU_ARG_FLAG("e", NULL, struct preview_args, eye_path,
 	"Overlay a plot of the eye path"),
-    BU_CMD_FLAG("v", NULL, struct preview_args, visual,
+    BU_ARG_FLAG("v", NULL, struct preview_args, visual,
 	"Use evaluated polygon rendering"),
-    BU_CMD_INTEGER("D", NULL, struct preview_args, start_frame, "frame",
+    BU_ARG_INTEGER("D", NULL, struct preview_args, start_frame, "frame",
 	"Set the desired starting frame"),
-    BU_CMD_INTEGER("K", NULL, struct preview_args, last_frame, "frame",
+    BU_ARG_INTEGER("K", NULL, struct preview_args, last_frame, "frame",
 	"Set the final frame"),
-    BU_CMD_FILE("o", NULL, struct preview_args, output, "image_name.ext",
+    BU_ARG_FILE("o", NULL, struct preview_args, output, "image_name.ext",
 	"Write each frame using the output name and extension"),
-    BU_CMD_OPTION_NULL
+    BU_ARG_OPTION_NULL
 };
-static const struct bu_cmd_operand preview_schema_operands[] = {
-    BU_CMD_OPERAND("rt_script_file", BU_CMD_VALUE_FILE, 1, 1,
+static const struct bu_arg_operand preview_schema_operands[] = {
+    BU_ARG_OPERAND("rt_script_file", BU_ARG_VALUE_FILE, 1, 1,
 	"RT animation script file", "ged.file_path"),
-    BU_CMD_OPERAND_NULL
+    BU_ARG_OPERAND_NULL
 };
-extern "C" const struct bu_cmd_schema ged_preview_native_schema = {
+extern "C" const struct bu_arg_schema ged_preview_native_schema = {
     "preview", "Preview an RT animation script", preview_schema_options,
-    preview_schema_operands, BU_CMD_PARSE_INTERSPERSED,
-    BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+    preview_schema_operands, BU_ARG_PARSE_INTERSPERSED,
+    BU_ARG_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
 
 
 static void
 preview_usage(struct ged *gedp, const char *cmd)
 {
-    char *help = bu_cmd_schema_help(&ged_preview_native_schema, cmd);
+    char *help = bu_arg_schema_help(&ged_preview_native_schema, cmd);
 
     if (help) {
 	bu_vls_strcat(gedp->ged_result_str, help);
@@ -368,7 +368,7 @@ ged_preview_core(struct ged *gedp, int argc, const char *argv[])
     }
 
     struct preview_args pargs = {0.0, 0, 0, 0, 0, NULL};
-    int operand_index = bu_cmd_schema_parse_complete(&ged_preview_native_schema, &pargs,
+    int operand_index = bu_arg_schema_parse_complete(&ged_preview_native_schema, &pargs,
 	gedp->ged_result_str, argc - 1, argv + 1);
     if (operand_index < 0) {
 	preview_usage(gedp, argv[0]);

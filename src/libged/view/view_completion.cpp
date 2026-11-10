@@ -21,7 +21,7 @@
  * Command-owned completion grammar for view and view2.
  */
 #include "common.h"
-#include "bu/cmdschema.h"
+#include "bu/arg.h"
 #include "ged.h"
 #include "../ged_private.h"
 
@@ -53,10 +53,10 @@ ged_view2_grammar_analyze(struct ged *gedp, const char *input,
     return ged_cmd_tree_analyze(gedp, &ged_view2_tree, input, analysis);
 }
 
-static char *ged_view_grammar_json(void) { return bu_cmd_tree_describe_json(&ged_view_tree); }
-static char *ged_view2_grammar_json(void) { return bu_cmd_tree_describe_json(&ged_view2_tree); }
-static int ged_view_grammar_lint(struct bu_vls *msgs) { return bu_cmd_tree_lint(&ged_view_tree, msgs); }
-static int ged_view2_grammar_lint(struct bu_vls *msgs) { return bu_cmd_tree_lint(&ged_view2_tree, msgs); }
+static char *ged_view_grammar_json(void) { return bu_arg_tree_describe_json(&ged_view_tree); }
+static char *ged_view2_grammar_json(void) { return bu_arg_tree_describe_json(&ged_view2_tree); }
+static int ged_view_grammar_lint(struct bu_vls *msgs) { return bu_arg_tree_lint(&ged_view_tree, msgs); }
+static int ged_view2_grammar_lint(struct bu_vls *msgs) { return bu_arg_tree_lint(&ged_view2_tree, msgs); }
 GED_CMD_TREE_HELP(ged_view_grammar_help, ged_view_tree)
 GED_CMD_TREE_HELP(ged_view2_grammar_help, ged_view2_tree)
 

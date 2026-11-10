@@ -28,13 +28,13 @@
 #include <string.h>
 
 #include "bu/cmd.h"
-#include "bu/cmdschema.h"
+#include "bu/arg.h"
 
 #include "../ged_private.h"
 
 GED_DEFINE_TYPED_OPERAND_SCHEMA_PROVIDER(unhide, "unhide",
-    "Reveal hidden database objects", "objects", BU_CMD_VALUE_STRING, 1,
-    BU_CMD_COUNT_UNLIMITED, "Hidden database objects to reveal",
+    "Reveal hidden database objects", "objects", BU_ARG_VALUE_STRING, 1,
+    BU_ARG_COUNT_UNLIMITED, "Hidden database objects to reveal",
     "ged.db_object_hidden");
 
 
@@ -64,7 +64,7 @@ ged_unhide_core(struct ged *gedp, int argc, const char *argv[])
 	return GED_HELP;
     }
 
-    operand_index = bu_cmd_schema_parse_complete(&unhide_cmd_schema, &parse_dummy,
+    operand_index = bu_arg_schema_parse_complete(&unhide_cmd_schema, &parse_dummy,
 	gedp->ged_result_str, argc - 1, argv + 1);
     if (operand_index < 0) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);

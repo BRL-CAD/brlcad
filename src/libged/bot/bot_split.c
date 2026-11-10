@@ -23,7 +23,7 @@
 #include <stdlib.h>
 
 #include "bu/malloc.h"
-#include "bu/cmdschema.h"
+#include "bu/arg.h"
 #include "bu/path.h"
 #include "rt/geom.h"
 #include "rt/primitives/bot.h"
@@ -34,26 +34,26 @@ struct bot_split_args {
     int print_help;
 };
 
-static const struct bu_cmd_option bot_split_options[] = {
-    BU_CMD_FLAG("h", "help", struct bot_split_args, print_help,
+static const struct bu_arg_option bot_split_options[] = {
+    BU_ARG_FLAG("h", "help", struct bot_split_args, print_help,
 	"Print command help"),
-    BU_CMD_OPTION_NULL
+    BU_ARG_OPTION_NULL
 };
-static const struct bu_cmd_operand bot_split_operands[] = {
-    BU_CMD_OPERAND("bot", BU_CMD_VALUE_DB_OBJECT, 1, BU_CMD_COUNT_UNLIMITED,
+static const struct bu_arg_operand bot_split_operands[] = {
+    BU_ARG_OPERAND("bot", BU_ARG_VALUE_DB_OBJECT, 1, BU_ARG_COUNT_UNLIMITED,
 	"BoT object to split", "ged.db_object"),
-    BU_CMD_OPERAND_NULL
+    BU_ARG_OPERAND_NULL
 };
-const struct bu_cmd_schema ged_bot_split_schema = {
+const struct bu_arg_schema ged_bot_split_schema = {
     "bot_split", "Split disconnected BoT components", bot_split_options,
-    bot_split_operands, BU_CMD_PARSE_INTERSPERSED,
-    BU_CMD_SCHEMA_META_HELP(NULL, NULL, NULL, NULL, NULL)
+    bot_split_operands, BU_ARG_PARSE_INTERSPERSED,
+    BU_ARG_SCHEMA_META_HELP(NULL, NULL, NULL, NULL, NULL)
 };
 
 static void
 bot_split_usage(struct bu_vls *result, const char *cmd)
 {
-    char *help = bu_cmd_schema_help(&ged_bot_split_schema, cmd);
+    char *help = bu_arg_schema_help(&ged_bot_split_schema, cmd);
 
     if (help) {
 	bu_vls_sprintf(result, "%s", help);
@@ -267,7 +267,7 @@ ged_bot_split_core(struct ged *gedp, int argc, const char *argv[])
         bot_split_usage(gedp->ged_result_str, argv[0]);
         return GED_HELP;
     }
-    operand_index = bu_cmd_schema_parse_complete(&ged_bot_split_schema, &args,
+    operand_index = bu_arg_schema_parse_complete(&ged_bot_split_schema, &args,
         gedp->ged_result_str, argc - 1, argv + 1);
     if (operand_index < 0) {
         bot_split_usage(gedp->ged_result_str, argv[0]);

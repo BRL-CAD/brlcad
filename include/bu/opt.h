@@ -23,7 +23,7 @@
 
 #include "common.h"
 #include "bu/defines.h"
-#include "bu/cmdschema.h"
+#include "bu/arg.h"
 #include "bu/ptbl.h"
 #include "bu/vls.h"
 
@@ -53,7 +53,7 @@ __BEGIN_DECLS
  * It can infer basic validation and completion from its standard readers.
  * Commands that also need typed operands, declarative constraints or ranges,
  * linting, or JSON publication can combine these rows with higher-level
- * command metadata or use the full bu_cmd_schema API in bu/cmdschema.h.
+ * command metadata or use the full bu_arg_schema API in bu/arg.h.
  *
  * When defining a bu_opt_desc entry, the type of the set_var
  * assignment variable needed is determined by the arg_process
@@ -460,7 +460,7 @@ BU_EXPORT extern bu_opt_value_t bu_opt_desc_value_type(const struct bu_opt_desc 
 BU_EXPORT extern const char * const *bu_opt_desc_candidates(const struct bu_opt_desc *desc);
 
 /** Map a compact bu_opt value class to its command-schema representation. */
-BU_EXPORT extern bu_cmd_value_t bu_opt_cmd_type(bu_opt_value_t type);
+BU_EXPORT extern bu_arg_value_t bu_opt_cmd_type(bu_opt_value_t type);
 
 /**
  * Owned command-schema option metadata derived from a bu_opt declaration.
@@ -472,8 +472,8 @@ BU_EXPORT extern bu_cmd_value_t bu_opt_cmd_type(bu_opt_value_t type);
  */
 struct bu_opt_cmd {
     size_t option_count;
-    struct bu_cmd_option *options;
-    struct bu_cmd_arg_shape *shapes;
+    struct bu_arg_option *options;
+    struct bu_arg_shape *shapes;
 };
 
 #define BU_OPT_CMD_INIT_ZERO {0, NULL, NULL}

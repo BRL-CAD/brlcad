@@ -25,7 +25,7 @@
 #ifndef LIBGED_ZAP_H
 #define LIBGED_ZAP_H
 
-#include "bu/cmdschema.h"
+#include "bu/arg.h"
 
 
 struct zap_args {
@@ -40,8 +40,8 @@ struct zap_args {
 
 __BEGIN_DECLS
 
-extern const struct bu_cmd_schema ged_zap_cmd_schema;
-extern const struct bu_cmd_schema ged_Z_cmd_schema;
+extern const struct bu_arg_schema ged_zap_cmd_schema;
+extern const struct bu_arg_schema ged_Z_cmd_schema;
 
 __END_DECLS
 

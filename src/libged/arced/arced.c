@@ -27,7 +27,7 @@
 
 #include <string.h>
 
-#include "bu/cmdschema.h"
+#include "bu/arg.h"
 
 #include "ged.h"
 
@@ -44,16 +44,16 @@ arced_path_validate(struct bu_vls *msg, const char *arg)
 }
 
 
-static const struct bu_cmd_operand arced_schema_operands[] = {
-    BU_CMD_OPERAND_VALIDATE("arc_path", BU_CMD_VALUE_DB_PATH, 1, 1,
+static const struct bu_arg_operand arced_schema_operands[] = {
+    BU_ARG_OPERAND_VALIDATE("arc_path", BU_ARG_VALUE_DB_PATH, 1, 1,
 	arced_path_validate, "Arc path to animate", "ged.db_path"),
-    BU_CMD_OPERAND("animation_command", BU_CMD_VALUE_RAW, 1,
-	BU_CMD_COUNT_UNLIMITED, "Animation command and arguments", NULL),
-    BU_CMD_OPERAND_NULL
+    BU_ARG_OPERAND("animation_command", BU_ARG_VALUE_RAW, 1,
+	BU_ARG_COUNT_UNLIMITED, "Animation command and arguments", NULL),
+    BU_ARG_OPERAND_NULL
 };
-static const struct bu_cmd_schema arced_cmd_schema = {
+static const struct bu_arg_schema arced_cmd_schema = {
     "arced", "Apply an animation command to an arc", NULL,
-    arced_schema_operands, BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+    arced_schema_operands, BU_ARG_PARSE_STOP_AT_FIRST_OPERAND, BU_ARG_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
 
 
@@ -81,7 +81,7 @@ ged_arced_core(struct ged *gedp, int argc, const char *argv[])
 	return GED_HELP;
     }
 
-    if (bu_cmd_schema_parse_complete(&arced_cmd_schema, &parse_dummy,
+    if (bu_arg_schema_parse_complete(&arced_cmd_schema, &parse_dummy,
 	gedp->ged_result_str, argc - 1, argv + 1) < 0) {
 	ged_cmd_help_append(gedp->ged_result_str, argv[0], argv[0]);
 	return BRLCAD_ERROR;

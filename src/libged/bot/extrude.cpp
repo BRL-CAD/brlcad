@@ -50,7 +50,7 @@
 extern "C" {
 #include "vmath.h"
 #include "bu/datetime.h"
-#include "bu/cmdschema.h"
+#include "bu/arg.h"
 #include "bg/trimesh.h"
 #include "brep.h"
 #include "rt/primitives/bot.h"
@@ -100,71 +100,71 @@ struct bot_extrude_args {
     fastf_t min_tri_delta;
 };
 
-static const struct bu_cmd_option bot_extrude_options[] = {
-    BU_CMD_FLAG("h", "help", struct bot_extrude_args, print_help,
+static const struct bu_arg_option bot_extrude_options[] = {
+    BU_ARG_FLAG("h", "help", struct bot_extrude_args, print_help,
 	"Print command help"),
-    BU_CMD_FLAG("q", "quiet", struct bot_extrude_args, quiet_mode,
+    BU_ARG_FLAG("q", "quiet", struct bot_extrude_args, quiet_mode,
 	"Suppress output messages"),
-    BU_CMD_FLAG("i", "in-place", struct bot_extrude_args, in_place,
+    BU_ARG_FLAG("i", "in-place", struct bot_extrude_args, in_place,
 	"Overwrite the input BoT"),
-    BU_CMD_FLAG("R", "round-edges", struct bot_extrude_args, round_edges,
+    BU_ARG_FLAG("R", "round-edges", struct bot_extrude_args, round_edges,
 	"Apply rounding to outer BoT edges"),
-    BU_CMD_FLAG("C", "comb", struct bot_extrude_args, comb_tree,
+    BU_ARG_FLAG("C", "comb", struct bot_extrude_args, comb_tree,
 	"Write a CSG tree rather than a volumetric BoT"),
-    BU_CMD_FLAG("F", "force", struct bot_extrude_args, force_mode,
+    BU_ARG_FLAG("F", "force", struct bot_extrude_args, force_mode,
 	"Allow conversion of view-dependent source geometry"),
-    BU_CMD_NUMBER_RANGE(NULL, "max-area-delta", struct bot_extrude_args,
+    BU_ARG_NUMBER_RANGE(NULL, "max-area-delta", struct bot_extrude_args,
 	max_area_delta, 0.0, 1.0, "ratio",
 	"Maximum surface-area change while simplifying"),
-    BU_CMD_NUMBER_RANGE(NULL, "min-tri-delta", struct bot_extrude_args,
+    BU_ARG_NUMBER_RANGE(NULL, "min-tri-delta", struct bot_extrude_args,
 	min_tri_delta, 0.0, 1.0, "ratio",
 	"Minimum triangle-count reduction while simplifying"),
-    BU_CMD_OPTION_NULL
+    BU_ARG_OPTION_NULL
 };
-static const struct bu_cmd_operand bot_extrude_operands[] = {
-    BU_CMD_OPERAND("input_bot", BU_CMD_VALUE_DB_OBJECT, 1, 1,
+static const struct bu_arg_operand bot_extrude_operands[] = {
+    BU_ARG_OPERAND("input_bot", BU_ARG_VALUE_DB_OBJECT, 1, 1,
 	"Input plate-mode BoT", "ged.db_object"),
-    BU_CMD_OPERAND("output_name", BU_CMD_VALUE_STRING, 0, 1,
+    BU_ARG_OPERAND("output_name", BU_ARG_VALUE_STRING, 0, 1,
 	"Optional output BoT or combination name", NULL),
-    BU_CMD_OPERAND_NULL
+    BU_ARG_OPERAND_NULL
 };
-static const struct bu_cmd_operand bot_extrude_normal_operands[] = {
-    BU_CMD_OPERAND("input_bot", BU_CMD_VALUE_DB_OBJECT, 1, 1,
+static const struct bu_arg_operand bot_extrude_normal_operands[] = {
+    BU_ARG_OPERAND("input_bot", BU_ARG_VALUE_DB_OBJECT, 1, 1,
 	"Input plate-mode BoT", "ged.db_object"),
-    BU_CMD_OPERAND("output_name", BU_CMD_VALUE_STRING, 1, 1,
+    BU_ARG_OPERAND("output_name", BU_ARG_VALUE_STRING, 1, 1,
 	"Output volumetric BoT name", NULL),
-    BU_CMD_OPERAND_NULL
+    BU_ARG_OPERAND_NULL
 };
-static const struct bu_cmd_operand bot_extrude_in_place_operands[] = {
-    BU_CMD_OPERAND("input_bot", BU_CMD_VALUE_DB_OBJECT, 1, 1,
+static const struct bu_arg_operand bot_extrude_in_place_operands[] = {
+    BU_ARG_OPERAND("input_bot", BU_ARG_VALUE_DB_OBJECT, 1, 1,
 	"Input plate-mode BoT to overwrite", "ged.db_object"),
-    BU_CMD_OPERAND_NULL
+    BU_ARG_OPERAND_NULL
 };
 static const char * const bot_extrude_in_place_option[] = {"in-place", NULL};
 static const char * const bot_extrude_comb_option[] = {"comb", NULL};
 static const char * const bot_extrude_conflicting_options[] = {
     "in-place", "comb", NULL
 };
-static const struct bu_cmd_schema_case bot_extrude_cases[] = {
-    BU_CMD_SCHEMA_CASE("in-place", "Overwrite the input BoT",
-	BU_CMD_CONDITION_ALL_OPTIONS_PRESENT, bot_extrude_in_place_option,
+static const struct bu_arg_schema_case bot_extrude_cases[] = {
+    BU_ARG_SCHEMA_CASE("in-place", "Overwrite the input BoT",
+	BU_ARG_CONDITION_ALL_OPTIONS_PRESENT, bot_extrude_in_place_option,
 	bot_extrude_in_place_operands, NULL),
-    BU_CMD_SCHEMA_CASE("combination", "Write a CSG tree",
-	BU_CMD_CONDITION_ALL_OPTIONS_PRESENT, bot_extrude_comb_option,
+    BU_ARG_SCHEMA_CASE("combination", "Write a CSG tree",
+	BU_ARG_CONDITION_ALL_OPTIONS_PRESENT, bot_extrude_comb_option,
 	bot_extrude_operands, NULL),
-    BU_CMD_SCHEMA_CASE_DEFAULT("volumetric", "Write a volumetric BoT",
+    BU_ARG_SCHEMA_CASE_DEFAULT("volumetric", "Write a volumetric BoT",
 	bot_extrude_normal_operands, NULL),
-    BU_CMD_SCHEMA_CASE_NULL
+    BU_ARG_SCHEMA_CASE_NULL
 };
-static const struct bu_cmd_constraint bot_extrude_constraints[] = {
-    BU_CMD_CONSTRAINT_CONFLICTS(bot_extrude_conflicting_options,
+static const struct bu_arg_constraint bot_extrude_constraints[] = {
+    BU_ARG_CONSTRAINT_CONFLICTS(bot_extrude_conflicting_options,
 	"--in-place cannot be used with --comb"),
-    BU_CMD_CONSTRAINT_NULL
+    BU_ARG_CONSTRAINT_NULL
 };
-extern "C" const struct bu_cmd_schema ged_bot_extrude_subcommand_schema = {
+extern "C" const struct bu_arg_schema ged_bot_extrude_subcommand_schema = {
     "extrude", "Extrude a plate-mode BoT", bot_extrude_options,
-    NULL, BU_CMD_PARSE_INTERSPERSED,
-    BU_CMD_SCHEMA_META_HELP(NULL, bot_extrude_constraints, NULL, NULL,
+    NULL, BU_ARG_PARSE_INTERSPERSED,
+    BU_ARG_SCHEMA_META_HELP(NULL, bot_extrude_constraints, NULL, NULL,
 	bot_extrude_cases)
 };
 
@@ -172,7 +172,7 @@ static void
 extrude_usage(struct bu_vls *str, const char *cmd)
 {
     bu_vls_trunc(str, 0);
-    (void)bu_cmd_schema_help_append(str, &ged_bot_extrude_subcommand_schema, cmd);
+    (void)bu_arg_schema_help_append(str, &ged_bot_extrude_subcommand_schema, cmd);
 }
 
 extern "C" int
@@ -198,7 +198,7 @@ _bot_cmd_extrude(void *bs, int argc, const char **argv)
 	return GED_HELP;
     }
 
-    operand_index = bu_cmd_schema_parse_complete(&ged_bot_extrude_subcommand_schema, &args,
+    operand_index = bu_arg_schema_parse_complete(&ged_bot_extrude_subcommand_schema, &args,
 	gb->gedp->ged_result_str, argc, argv);
     if (operand_index < 0)
 	return BRLCAD_ERROR;

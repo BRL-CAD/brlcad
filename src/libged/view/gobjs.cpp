@@ -36,7 +36,7 @@
 #include <map>
 
 #include "bu/color.h"
-#include "bu/cmdschema.h"
+#include "bu/arg.h"
 #include "bu/vls.h"
 #include "bv.h"
 
@@ -191,51 +191,51 @@ struct gobjs_root_args {
     int help = 0;
 };
 
-static const struct bu_cmd_option gobjs_root_options[] = {
-    BU_CMD_FLAG("h", "help", gobjs_root_args, help, "Print help"),
-    BU_CMD_OPTION_NULL
+static const struct bu_arg_option gobjs_root_options[] = {
+    BU_ARG_FLAG("h", "help", gobjs_root_args, help, "Print help"),
+    BU_ARG_OPTION_NULL
 };
-static const struct bu_cmd_schema gobjs_root_schema = {
+static const struct bu_arg_schema gobjs_root_schema = {
     "gobjs", "Manage graphical view objects", gobjs_root_options, NULL,
-    BU_CMD_PARSE_OPTIONS_FIRST, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+    BU_ARG_PARSE_OPTIONS_FIRST, BU_ARG_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
-static const struct bu_cmd_operand gobjs_create_operands[] = {
-    BU_CMD_OPERAND("database_object", BU_CMD_VALUE_DB_PATH, 1, 1,
+static const struct bu_arg_operand gobjs_create_operands[] = {
+    BU_ARG_OPERAND("database_object", BU_ARG_VALUE_DB_PATH, 1, 1,
 	"Database object path", "ged.db_path"),
-    BU_CMD_OPERAND("view_object", BU_CMD_VALUE_STRING, 1, 1,
+    BU_ARG_OPERAND("view_object", BU_ARG_VALUE_STRING, 1, 1,
 	"New graphical view-object name", NULL),
-    BU_CMD_OPERAND_NULL
+    BU_ARG_OPERAND_NULL
 };
-static const struct bu_cmd_schema gobjs_create_schema = {
+static const struct bu_arg_schema gobjs_create_schema = {
     "create", "Create an editable view object from a database object", NULL,
-    gobjs_create_operands, BU_CMD_PARSE_STOP_AT_FIRST_OPERAND,
-    BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+    gobjs_create_operands, BU_ARG_PARSE_STOP_AT_FIRST_OPERAND,
+    BU_ARG_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
-static const struct bu_cmd_operand gobjs_delete_operands[] = {
-    BU_CMD_OPERAND("view_object", BU_CMD_VALUE_STRING, 0, 1,
+static const struct bu_arg_operand gobjs_delete_operands[] = {
+    BU_ARG_OPERAND("view_object", BU_ARG_VALUE_STRING, 0, 1,
 	"Graphical view-object name", NULL),
-    BU_CMD_OPERAND_NULL
+    BU_ARG_OPERAND_NULL
 };
-static const struct bu_cmd_schema gobjs_delete_schema = {
+static const struct bu_arg_schema gobjs_delete_schema = {
     "del", "Delete a graphical view object", NULL, gobjs_delete_operands,
-    BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+    BU_ARG_PARSE_STOP_AT_FIRST_OPERAND, BU_ARG_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
 static const char * const gobjs_delete_aliases[] = {"delete", NULL};
-static const struct bu_cmd_tree_node gobjs_subcommands[] = {
-    BU_CMD_TREE_NODE(&gobjs_create_schema, NULL, NULL,
-	BU_CMD_TREE_CHILD_AFTER_OPTIONS, _gobjs_cmd_create),
-    BU_CMD_TREE_NODE(&gobjs_delete_schema, gobjs_delete_aliases, NULL,
-	BU_CMD_TREE_CHILD_AFTER_OPTIONS, _gobjs_cmd_delete),
-    BU_CMD_TREE_NODE_NULL
+static const struct bu_arg_tree_node gobjs_subcommands[] = {
+    BU_ARG_TREE_NODE(&gobjs_create_schema, NULL, NULL,
+	BU_ARG_TREE_CHILD_AFTER_OPTIONS, _gobjs_cmd_create),
+    BU_ARG_TREE_NODE(&gobjs_delete_schema, gobjs_delete_aliases, NULL,
+	BU_ARG_TREE_CHILD_AFTER_OPTIONS, _gobjs_cmd_delete),
+    BU_ARG_TREE_NODE_NULL
 };
-static const struct bu_cmd_tree gobjs_tree = {
-    &gobjs_root_schema, gobjs_subcommands, BU_CMD_TREE_CHILD_AFTER_OPTIONS
+static const struct bu_arg_tree gobjs_tree = {
+    &gobjs_root_schema, gobjs_subcommands, BU_ARG_TREE_CHILD_AFTER_OPTIONS
 };
 
 static void
 gobjs_show_help(struct ged *gedp)
 {
-    char *help = bu_cmd_tree_help(&gobjs_tree, "view gobjs");
+    char *help = bu_arg_tree_help(&gobjs_tree, "view gobjs");
 
     if (help) {
 	bu_vls_strcat(gedp->ged_result_str, help);
@@ -268,7 +268,7 @@ _view_cmd_gobjs(void *bs, int argc, const char **argv)
     // Root options are accepted only before the subcommand.
     int cmd_pos = -1;
     for (int i = 0; i < argc; i++) {
-	int option_span = bu_cmd_schema_option_span(&gobjs_root_schema,
+	int option_span = bu_arg_schema_option_span(&gobjs_root_schema,
 	    (size_t)(argc - i), argv + i);
 	if (option_span > 0) {
 	    i += option_span - 1;
@@ -276,7 +276,7 @@ _view_cmd_gobjs(void *bs, int argc, const char **argv)
 	}
 	if (option_span < 0 || (argv[i][0] == '-' && argv[i][1]))
 	    break;
-	if (bu_cmd_tree_find_subcommand(&gobjs_tree, argv[i])) {
+	if (bu_arg_tree_find_subcommand(&gobjs_tree, argv[i])) {
 	    cmd_pos = i;
 	    break;
 	}
@@ -285,7 +285,7 @@ _view_cmd_gobjs(void *bs, int argc, const char **argv)
     }
 
     int acnt = (cmd_pos >= 0) ? cmd_pos : argc;
-    int ac = bu_cmd_schema_parse(&gobjs_root_schema, &args,
+    int ac = bu_arg_schema_parse(&gobjs_root_schema, &args,
 	gedp->ged_result_str, acnt, argv);
     if (ac < 0 || ac != acnt)
 	return BRLCAD_ERROR;
@@ -311,10 +311,10 @@ _view_cmd_gobjs(void *bs, int argc, const char **argv)
     }
 
     if (args.help) {
-	if (cmd_pos >= 0 && bu_cmd_tree_find_subcommand(&gobjs_tree, argv[cmd_pos])) {
+	if (cmd_pos >= 0 && bu_arg_tree_find_subcommand(&gobjs_tree, argv[cmd_pos])) {
 	    const char *child_help[] = {argv[cmd_pos], HELPFLAG};
 	    int ignored = BRLCAD_OK;
-	    (void)bu_cmd_tree_dispatch(&gobjs_tree, gd, 2, child_help, &ignored);
+	    (void)bu_arg_tree_dispatch(&gobjs_tree, gd, 2, child_help, &ignored);
 	} else {
 	    gobjs_show_help(gedp);
 	}
@@ -326,9 +326,9 @@ _view_cmd_gobjs(void *bs, int argc, const char **argv)
 	return BRLCAD_ERROR;
     }
 
-    const struct bu_cmd_tree_node *node = bu_cmd_tree_find_subcommand(&gobjs_tree,
+    const struct bu_arg_tree_node *node = bu_arg_tree_find_subcommand(&gobjs_tree,
 	argv[cmd_pos]);
-    if (!node || bu_cmd_schema_parse_complete(node->schema, NULL,
+    if (!node || bu_arg_schema_parse_complete(node->schema, NULL,
 	gedp->ged_result_str, argc - cmd_pos - 1, argv + cmd_pos + 1) < 0)
 	return BRLCAD_ERROR;
 
@@ -339,7 +339,7 @@ _view_cmd_gobjs(void *bs, int argc, const char **argv)
 	// or handle the error case
     }
     int ret;
-    if (bu_cmd_tree_dispatch(&gobjs_tree, gd, argc - cmd_pos, argv + cmd_pos, &ret) == 0)
+    if (bu_arg_tree_dispatch(&gobjs_tree, gd, argc - cmd_pos, argv + cmd_pos, &ret) == 0)
 	return ret;
     bu_vls_printf(gedp->ged_result_str, "unknown graphical view-object subcommand: %s\n",
 	argv[cmd_pos]);

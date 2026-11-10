@@ -95,7 +95,7 @@ ged_eye_pos_core(struct ged *gedp, int argc, const char *argv[])
 
 #include "../include/plugin.h"
 
-GED_DEFINE_TYPED_OPERAND_SCHEMA(eye_pos, "eye_pos", "Set the model-space eye point", "coordinates", BU_CMD_VALUE_NUMBER, 3, 3, "X Y Z coordinates");
+GED_DEFINE_TYPED_OPERAND_SCHEMA(eye_pos, "eye_pos", "Set the model-space eye point", "coordinates", BU_ARG_VALUE_NUMBER, 3, 3, "X Y Z coordinates");
 
 #define GED_EYE_POS_COMMANDS(X, XID) \
     X(eye_pos, ged_eye_pos_core, GED_CMD_DEFAULT, &eye_pos_cmd_schema) \

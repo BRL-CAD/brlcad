@@ -27,7 +27,7 @@
 
 #include <set>
 
-#include "bu/cmdschema.h"
+#include "bu/arg.h"
 #include "bu/malloc.h"
 #include "bu/str.h"
 #include "ged.h"
@@ -47,20 +47,20 @@ struct who2_args {
 };
 
 
-static const struct bu_cmd_option who2_schema_options[] = {
-    BU_CMD_FLAG("h", "help", struct who2_args, print_help, "Print help and exit"),
-    BU_CMD_ALIAS_SHORT("?", "help", 1),
-    BU_CMD_VLS_APPEND("V", "view", struct who2_args, view, "name",
+static const struct bu_arg_option who2_schema_options[] = {
+    BU_ARG_FLAG("h", "help", struct who2_args, print_help, "Print help and exit"),
+    BU_ARG_ALIAS_SHORT("?", "help", 1),
+    BU_ARG_VLS_APPEND("V", "view", struct who2_args, view, "name",
 	"Specify the view"),
-    BU_CMD_INTEGER("m", "mode", struct who2_args, mode, "number",
+    BU_ARG_INTEGER("m", "mode", struct who2_args, mode, "number",
 	"Restrict the drawing mode"),
-    BU_CMD_FLAG("E", "expand", struct who2_args, expand,
+    BU_ARG_FLAG("E", "expand", struct who2_args, expand,
 	"Report individual drawn objects"),
-    BU_CMD_OPTION_NULL
+    BU_ARG_OPTION_NULL
 };
-extern "C" const struct bu_cmd_schema ged_who_new_schema = {
+extern "C" const struct bu_arg_schema ged_who_new_schema = {
     "who", "List individually drawn objects", who2_schema_options,
-    NULL, BU_CMD_PARSE_INTERSPERSED, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+    NULL, BU_ARG_PARSE_INTERSPERSED, BU_ARG_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
 
 
@@ -97,7 +97,7 @@ ged_who2_core(struct ged *gedp, int argc, const char *argv[])
     bu_vls_trunc(gedp->ged_result_str, 0);
 
     struct who2_args args = {0, BU_VLS_INIT_ZERO, -1, 0};
-    int opt_ret = bu_cmd_schema_parse_complete(&ged_who_new_schema, &args,
+    int opt_ret = bu_arg_schema_parse_complete(&ged_who_new_schema, &args,
 	gedp->ged_result_str, argc - 1, argv + 1);
     if (opt_ret < 0 || opt_ret != argc - 1) {
 	who2_usage(gedp);

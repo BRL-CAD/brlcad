@@ -39,7 +39,7 @@
 
 #include "./alphanum.h"
 #include "./completion_index.h"
-#include "bu/cmdschema.h"
+#include "bu/arg.h"
 #include "bu/path.h"
 #include "bu/sort.h"
 #include "bu/datetime.h"
@@ -59,95 +59,95 @@ ged_search_is_type_keyword(const char *token)
 }
 
 static const char *
-ged_native_semantic_provider(bu_cmd_value_t value_type, const char *semantic_provider)
+ged_native_semantic_provider(bu_arg_value_t value_type, const char *semantic_provider)
 {
     if (!BU_STR_EMPTY(semantic_provider))
 	return semantic_provider;
 
     switch (value_type) {
-	case BU_CMD_VALUE_DB_OBJECT: return "ged.db_object";
-	case BU_CMD_VALUE_DB_PATH: return "ged.db_path";
-	case BU_CMD_VALUE_FILE: return "ged.file_path";
-	case BU_CMD_VALUE_COLOR: return "ged.color";
-	case BU_CMD_VALUE_MATRIX: return "ged.matrix";
-	case BU_CMD_VALUE_VECTOR: return "ged.vector";
+	case BU_ARG_VALUE_DB_OBJECT: return "ged.db_object";
+	case BU_ARG_VALUE_DB_PATH: return "ged.db_path";
+	case BU_ARG_VALUE_FILE: return "ged.file_path";
+	case BU_ARG_VALUE_COLOR: return "ged.color";
+	case BU_ARG_VALUE_MATRIX: return "ged.matrix";
+	case BU_ARG_VALUE_VECTOR: return "ged.vector";
 	default: break;
     }
     return NULL;
 }
 
-static bu_cmd_value_t ged_semantic_provider_type(const char *name);
+static bu_arg_value_t ged_semantic_provider_type(const char *name);
 
-static bu_cmd_value_t
-ged_native_value_type(bu_cmd_value_t value_type, const char *semantic_provider)
+static bu_arg_value_t
+ged_native_value_type(bu_arg_value_t value_type, const char *semantic_provider)
 {
-    bu_cmd_value_t provider_type = ged_semantic_provider_type(semantic_provider);
+    bu_arg_value_t provider_type = ged_semantic_provider_type(semantic_provider);
     /* A provider enriches a schema role whose scalar spelling is otherwise
      * generic.  It must not erase a more precise declared representation
      * (for example, draw's integer-valued mode provider). */
-    if (provider_type != BU_CMD_VALUE_UNKNOWN &&
-	(value_type == BU_CMD_VALUE_UNKNOWN || value_type == BU_CMD_VALUE_STRING ||
-	 value_type == BU_CMD_VALUE_CUSTOM))
+    if (provider_type != BU_ARG_VALUE_UNKNOWN &&
+	(value_type == BU_ARG_VALUE_UNKNOWN || value_type == BU_ARG_VALUE_STRING ||
+	 value_type == BU_ARG_VALUE_CUSTOM))
 	return provider_type;
 
     switch (value_type) {
-	case BU_CMD_VALUE_FLAG:
-	case BU_CMD_VALUE_BOOL:
-	    return BU_CMD_VALUE_BOOL;
-	case BU_CMD_VALUE_INTEGER:
-	case BU_CMD_VALUE_HEX_INTEGER:
-	case BU_CMD_VALUE_LONG:
-	case BU_CMD_VALUE_HEX_LONG:
-	    return BU_CMD_VALUE_INTEGER;
-	case BU_CMD_VALUE_NUMBER:
-	    return BU_CMD_VALUE_NUMBER;
-	case BU_CMD_VALUE_CHAR:
-	    return BU_CMD_VALUE_CHAR;
-	case BU_CMD_VALUE_VECTOR:
-	    return BU_CMD_VALUE_VECTOR;
-	case BU_CMD_VALUE_MATRIX:
-	    return BU_CMD_VALUE_MATRIX;
-	case BU_CMD_VALUE_COLOR:
-	    return BU_CMD_VALUE_COLOR;
-	case BU_CMD_VALUE_KEYWORD:
-	    return BU_CMD_VALUE_KEYWORD;
-	case BU_CMD_VALUE_DB_OBJECT:
-	    return BU_CMD_VALUE_DB_OBJECT;
-	case BU_CMD_VALUE_DB_PATH:
-	    return BU_CMD_VALUE_DB_PATH;
-	case BU_CMD_VALUE_FILE:
-	    return BU_CMD_VALUE_FILE;
-	case BU_CMD_VALUE_RAW:
-	    return BU_CMD_VALUE_RAW;
-	case BU_CMD_VALUE_VLS:
-	    return BU_CMD_VALUE_VLS;
-	case BU_CMD_VALUE_CUSTOM:
-	case BU_CMD_VALUE_STRING:
+	case BU_ARG_VALUE_FLAG:
+	case BU_ARG_VALUE_BOOL:
+	    return BU_ARG_VALUE_BOOL;
+	case BU_ARG_VALUE_INTEGER:
+	case BU_ARG_VALUE_HEX_INTEGER:
+	case BU_ARG_VALUE_LONG:
+	case BU_ARG_VALUE_HEX_LONG:
+	    return BU_ARG_VALUE_INTEGER;
+	case BU_ARG_VALUE_NUMBER:
+	    return BU_ARG_VALUE_NUMBER;
+	case BU_ARG_VALUE_CHAR:
+	    return BU_ARG_VALUE_CHAR;
+	case BU_ARG_VALUE_VECTOR:
+	    return BU_ARG_VALUE_VECTOR;
+	case BU_ARG_VALUE_MATRIX:
+	    return BU_ARG_VALUE_MATRIX;
+	case BU_ARG_VALUE_COLOR:
+	    return BU_ARG_VALUE_COLOR;
+	case BU_ARG_VALUE_KEYWORD:
+	    return BU_ARG_VALUE_KEYWORD;
+	case BU_ARG_VALUE_DB_OBJECT:
+	    return BU_ARG_VALUE_DB_OBJECT;
+	case BU_ARG_VALUE_DB_PATH:
+	    return BU_ARG_VALUE_DB_PATH;
+	case BU_ARG_VALUE_FILE:
+	    return BU_ARG_VALUE_FILE;
+	case BU_ARG_VALUE_RAW:
+	    return BU_ARG_VALUE_RAW;
+	case BU_ARG_VALUE_VLS:
+	    return BU_ARG_VALUE_VLS;
+	case BU_ARG_VALUE_CUSTOM:
+	case BU_ARG_VALUE_STRING:
 	default:
-	    return BU_CMD_VALUE_STRING;
+	    return BU_ARG_VALUE_STRING;
     }
 }
 
-static bu_cmd_validate_state_t
-ged_native_state(bu_cmd_validate_state_t state)
+static bu_arg_validate_state_t
+ged_native_state(bu_arg_validate_state_t state)
 {
     switch (state) {
-	case BU_CMD_VALIDATE_VALID: return BU_CMD_VALIDATE_VALID;
-	case BU_CMD_VALIDATE_INCOMPLETE: return BU_CMD_VALIDATE_INCOMPLETE;
-	case BU_CMD_VALIDATE_INVALID: return BU_CMD_VALIDATE_INVALID;
-	case BU_CMD_VALIDATE_UNKNOWN:
-	default: return BU_CMD_VALIDATE_UNKNOWN;
+	case BU_ARG_VALIDATE_VALID: return BU_ARG_VALIDATE_VALID;
+	case BU_ARG_VALIDATE_INCOMPLETE: return BU_ARG_VALIDATE_INCOMPLETE;
+	case BU_ARG_VALIDATE_INVALID: return BU_ARG_VALIDATE_INVALID;
+	case BU_ARG_VALIDATE_UNKNOWN:
+	default: return BU_ARG_VALIDATE_UNKNOWN;
     }
 }
 
 static unsigned int
 ged_native_expected(unsigned int expected)
 {
-    unsigned int mapped = BU_CMD_EXPECT_NONE;
-    if (expected & BU_CMD_EXPECT_OPTION) mapped |= BU_CMD_EXPECT_OPTION;
-    if (expected & BU_CMD_EXPECT_OPTION_ARG) mapped |= BU_CMD_EXPECT_OPTION_ARG;
-    if (expected & BU_CMD_EXPECT_OPERAND) mapped |= BU_CMD_EXPECT_OPERAND;
-    if (expected & BU_CMD_EXPECT_SUBCOMMAND) mapped |= BU_CMD_EXPECT_SUBCOMMAND;
+    unsigned int mapped = BU_ARG_EXPECT_NONE;
+    if (expected & BU_ARG_EXPECT_OPTION) mapped |= BU_ARG_EXPECT_OPTION;
+    if (expected & BU_ARG_EXPECT_OPTION_ARG) mapped |= BU_ARG_EXPECT_OPTION_ARG;
+    if (expected & BU_ARG_EXPECT_OPERAND) mapped |= BU_ARG_EXPECT_OPERAND;
+    if (expected & BU_ARG_EXPECT_SUBCOMMAND) mapped |= BU_ARG_EXPECT_SUBCOMMAND;
     return mapped;
 }
 
@@ -195,14 +195,14 @@ ged_cmd_validate_result_init(struct ged_cmd_validate_result *result)
 {
     if (!result)
 	return;
-    result->state = BU_CMD_VALIDATE_UNKNOWN;
+    result->state = BU_ARG_VALIDATE_UNKNOWN;
     result->token_start = 0;
     result->token_end = 0;
-    result->expected = BU_CMD_EXPECT_NONE;
+    result->expected = BU_ARG_EXPECT_NONE;
     result->hint = NULL;
     result->completion_count = 0;
     result->completion_candidates = NULL;
-    result->completion_type = BU_CMD_VALUE_UNKNOWN;
+    result->completion_type = BU_ARG_VALUE_UNKNOWN;
     result->semantic_provider = NULL;
     result->char_start = 0;
     result->char_end = 0;
@@ -255,8 +255,8 @@ ged_cmd_semantic_provider_register(const struct ged_cmd_semantic_provider *provi
 {
     if (!provider || BU_STR_EMPTY(provider->name))
 	return -1;
-    if (provider->value_type < BU_CMD_VALUE_FLAG ||
-	provider->value_type > BU_CMD_VALUE_UNKNOWN ||
+    if (provider->value_type < BU_ARG_VALUE_FLAG ||
+	provider->value_type > BU_ARG_VALUE_UNKNOWN ||
 	(provider->flags & ~GED_CMD_PROVIDER_BOUNDED_QUERY) ||
 	!!provider->complete_query != !!(provider->flags & GED_CMD_PROVIDER_BOUNDED_QUERY))
 	return -1;
@@ -367,7 +367,7 @@ ged_completion_add_candidate(std::vector<std::string> &candidates, const char *c
 
 static void
 ged_completion_set_candidates(struct ged_cmd_validate_result *result,
-	std::vector<std::string> &candidates, bu_cmd_value_t type)
+	std::vector<std::string> &candidates, bu_arg_value_t type)
 {
     if (!result || candidates.empty()) return;
     std::sort(candidates.begin(), candidates.end(), [](const std::string &a, const std::string &b) {
@@ -586,7 +586,7 @@ ged_completion_merge(struct ged_cmd_validate_result *target,
     target->completion_truncated = target->completion_total > target->completion_count ||
 	target->completion_truncated || source->completion_truncated;
     target->completion_common_prefix = common_initialized ? bu_strdup(common.c_str()) : NULL;
-    if (source->completion_type != BU_CMD_VALUE_UNKNOWN)
+    if (source->completion_type != BU_ARG_VALUE_UNKNOWN)
 	target->completion_type = source->completion_type;
 }
 
@@ -767,7 +767,7 @@ ged_cursor_seed(const struct ged_input_parse &parsed)
 
 static void
 ged_set_validate_result(struct ged_cmd_validate_result *result,
-			bu_cmd_validate_state_t state,
+			bu_arg_validate_state_t state,
 			size_t token_start,
 			size_t token_end,
 			unsigned int expected,
@@ -779,7 +779,7 @@ ged_set_validate_result(struct ged_cmd_validate_result *result,
     result->token_end = token_end;
     result->expected = expected;
     result->hint = hint;
-    result->completion_type = BU_CMD_VALUE_UNKNOWN;
+    result->completion_type = BU_ARG_VALUE_UNKNOWN;
 }
 
 static void
@@ -805,7 +805,7 @@ static void
 ged_replace_candidates(struct ged_cmd_validate_result *result,
 		       const char ***completions,
 		       int cnt,
-		       bu_cmd_value_t ctype)
+		       bu_arg_value_t ctype)
 {
     if (!result)
 	return;
@@ -824,7 +824,7 @@ ged_fill_command_candidates(struct ged_cmd_validate_result *result, const std::s
     const char **completions = NULL;
     int cnt = ged_cmd_completions(&completions, seed.c_str());
     if (cnt > 0)
-	ged_replace_candidates(result, &completions, cnt, BU_CMD_VALUE_UNKNOWN);
+	ged_replace_candidates(result, &completions, cnt, BU_ARG_VALUE_UNKNOWN);
     else if (completions)
 	bu_argv_free(0, (char **)completions);
 }
@@ -866,9 +866,9 @@ ged_fill_geometry_candidates(struct ged *gedp,
 	    seed.c_str(), filters, request, &total, &common);
     }
     if (cnt > 0 && completions) {
-	bu_cmd_value_t ctype = result->completion_type;
-	if (ctype != BU_CMD_VALUE_DB_OBJECT && ctype != BU_CMD_VALUE_DB_PATH)
-	    ctype = (ged_last_unescaped_path_separator(seed) != std::string::npos) ? BU_CMD_VALUE_DB_PATH : BU_CMD_VALUE_DB_OBJECT;
+	bu_arg_value_t ctype = result->completion_type;
+	if (ctype != BU_ARG_VALUE_DB_OBJECT && ctype != BU_ARG_VALUE_DB_PATH)
+	    ctype = (ged_last_unescaped_path_separator(seed) != std::string::npos) ? BU_ARG_VALUE_DB_PATH : BU_ARG_VALUE_DB_OBJECT;
 	ged_replace_candidates(result, &completions, cnt,
 		ctype);
     } else if (completions) {
@@ -929,7 +929,7 @@ ged_quiet_db_path_validate(struct ged *gedp, const char *token)
 }
 
 static ged_cmd_semantic_state_t
-ged_builtin_db_object_validate(struct ged *gedp, bu_cmd_value_t UNUSED(type), const char *token, const void *data)
+ged_builtin_db_object_validate(struct ged *gedp, bu_arg_value_t UNUSED(type), const char *token, const void *data)
 {
     if (BU_STR_EMPTY(token))
 	return GED_CMD_SEMANTIC_INCOMPLETE;
@@ -943,7 +943,7 @@ ged_builtin_db_object_validate(struct ged *gedp, bu_cmd_value_t UNUSED(type), co
 
 static ged_cmd_semantic_state_t
 ged_builtin_summary_object_or_legacy_type_validate(struct ged *gedp,
-	bu_cmd_value_t type, const char *token, const void *data)
+	bu_arg_value_t type, const char *token, const void *data)
 {
     const char *p = token;
 
@@ -958,7 +958,7 @@ ged_builtin_summary_object_or_legacy_type_validate(struct ged *gedp,
 }
 
 static ged_cmd_semantic_state_t
-ged_builtin_db_path_validate(struct ged *gedp, bu_cmd_value_t type, const char *token, const void *data)
+ged_builtin_db_path_validate(struct ged *gedp, bu_arg_value_t type, const char *token, const void *data)
 {
     if (BU_STR_EMPTY(token))
 	return GED_CMD_SEMANTIC_INCOMPLETE;
@@ -968,7 +968,7 @@ ged_builtin_db_path_validate(struct ged *gedp, bu_cmd_value_t type, const char *
     if (token[0] == '/' && token[1] != '\0')
 	token++;
 
-    if (type == BU_CMD_VALUE_DB_OBJECT) {
+    if (type == BU_ARG_VALUE_DB_OBJECT) {
 	struct directory *dp = ged_lookup_exact_quiet(gedp->dbip, token);
 	if (dp)
 	    return ged_db_completion_allowed(dp, (const struct ged_db_completion_policy *)data) ?
@@ -1005,7 +1005,7 @@ ged_builtin_db_complete_query(struct ged *gedp, const char *seed,
 
 static ged_cmd_semantic_state_t
 ged_builtin_db_components_validate(struct ged *UNUSED(gedp),
-	bu_cmd_value_t UNUSED(type), const char *UNUSED(token),
+	bu_arg_value_t UNUSED(type), const char *UNUSED(token),
 	const void *UNUSED(data))
 {
     /* The command-level context validator owns the combined path. */
@@ -1066,7 +1066,7 @@ ged_builtin_db_components_complete(struct ged *gedp, const char *seed,
 
 
 static ged_cmd_semantic_state_t
-ged_builtin_view_validate(struct ged *gedp, bu_cmd_value_t UNUSED(type), const char *token, const void *UNUSED(data))
+ged_builtin_view_validate(struct ged *gedp, bu_arg_value_t UNUSED(type), const char *token, const void *UNUSED(data))
 {
     if (BU_STR_EMPTY(token))
 	return GED_CMD_SEMANTIC_INCOMPLETE;
@@ -1105,7 +1105,7 @@ ged_builtin_view_complete(struct ged *gedp, const char *seed, struct ged_cmd_val
 }
 
 static ged_cmd_semantic_state_t
-ged_builtin_command_validate(struct ged *UNUSED(gedp), bu_cmd_value_t UNUSED(type), const char *token, const void *UNUSED(data))
+ged_builtin_command_validate(struct ged *UNUSED(gedp), bu_arg_value_t UNUSED(type), const char *token, const void *UNUSED(data))
 {
     if (BU_STR_EMPTY(token))
 	return GED_CMD_SEMANTIC_INCOMPLETE;
@@ -1131,7 +1131,7 @@ ged_builtin_command_complete(struct ged *UNUSED(gedp), const char *seed, struct 
 }
 
 static ged_cmd_semantic_state_t
-ged_builtin_primitive_type_validate(struct ged *UNUSED(gedp), bu_cmd_value_t UNUSED(type), const char *token, const void *UNUSED(data))
+ged_builtin_primitive_type_validate(struct ged *UNUSED(gedp), bu_arg_value_t UNUSED(type), const char *token, const void *UNUSED(data))
 {
     if (BU_STR_EMPTY(token))
 	return GED_CMD_SEMANTIC_INCOMPLETE;
@@ -1161,12 +1161,12 @@ ged_builtin_primitive_type_complete(struct ged *UNUSED(gedp), const char *seed, 
     size_t oi = 0;
     for (const std::string &match : matches)
 	result->completion_candidates[oi++] = bu_strdup(match.c_str());
-    result->completion_type = BU_CMD_VALUE_KEYWORD;
+    result->completion_type = BU_ARG_VALUE_KEYWORD;
     return (int)matches.size();
 }
 
 static ged_cmd_semantic_state_t
-ged_builtin_geometry_or_primitive_validate(struct ged *gedp, bu_cmd_value_t type, const char *token, const void *data)
+ged_builtin_geometry_or_primitive_validate(struct ged *gedp, bu_arg_value_t type, const char *token, const void *data)
 {
     ged_cmd_semantic_state_t pstate = ged_builtin_primitive_type_validate(gedp, type, token, data);
     if (pstate == GED_CMD_SEMANTIC_VALID)
@@ -1239,7 +1239,7 @@ ged_builtin_geometry_or_primitive_complete_query(struct ged *gedp, const char *s
 
     for (const std::string &match : matches.values)
 	result->completion_candidates[oi++] = bu_strdup(match.c_str());
-    result->completion_type = BU_CMD_VALUE_RAW;
+    result->completion_type = BU_ARG_VALUE_RAW;
     result->completion_total = object_total + primitive_count - duplicate_count;
     result->completion_truncated = result->completion_total > result->completion_count;
 
@@ -1274,7 +1274,7 @@ ged_builtin_geometry_or_primitive_complete(struct ged *gedp, const char *seed,
 }
 
 static ged_cmd_semantic_state_t
-ged_builtin_search_path_validate(struct ged *gedp, bu_cmd_value_t UNUSED(type), const char *token, const void *UNUSED(data))
+ged_builtin_search_path_validate(struct ged *gedp, bu_arg_value_t UNUSED(type), const char *token, const void *UNUSED(data))
 {
     if (!token || BU_STR_EMPTY(token))
 	return GED_CMD_SEMANTIC_INCOMPLETE;
@@ -1289,13 +1289,13 @@ ged_builtin_search_path_validate(struct ged *gedp, bu_cmd_value_t UNUSED(type), 
 }
 
 static ged_cmd_semantic_state_t
-ged_builtin_search_type_validate(struct ged *UNUSED(gedp), bu_cmd_value_t UNUSED(type), const char *token, const void *UNUSED(data))
+ged_builtin_search_type_validate(struct ged *UNUSED(gedp), bu_arg_value_t UNUSED(type), const char *token, const void *UNUSED(data))
 {
     return ged_search_is_type_keyword(token) ? GED_CMD_SEMANTIC_VALID : GED_CMD_SEMANTIC_INVALID;
 }
 
 static ged_cmd_semantic_state_t
-ged_builtin_path_or_pattern_validate(struct ged *gedp, bu_cmd_value_t type, const char *token, const void *data)
+ged_builtin_path_or_pattern_validate(struct ged *gedp, bu_arg_value_t type, const char *token, const void *data)
 {
     if (BU_STR_EMPTY(token))
 	return GED_CMD_SEMANTIC_INCOMPLETE;
@@ -1313,13 +1313,13 @@ ged_builtin_path_complete(struct ged *gedp, const char *seed, struct ged_cmd_val
 }
 
 static ged_cmd_semantic_state_t
-ged_builtin_nonempty_unknown(struct ged *UNUSED(gedp), bu_cmd_value_t UNUSED(type), const char *token, const void *UNUSED(data))
+ged_builtin_nonempty_unknown(struct ged *UNUSED(gedp), bu_arg_value_t UNUSED(type), const char *token, const void *UNUSED(data))
 {
     return BU_STR_EMPTY(token) ? GED_CMD_SEMANTIC_INCOMPLETE : GED_CMD_SEMANTIC_UNKNOWN;
 }
 
 static ged_cmd_semantic_state_t
-ged_builtin_nonnegative_integer(struct ged *UNUSED(gedp), bu_cmd_value_t UNUSED(type), const char *token, const void *UNUSED(data))
+ged_builtin_nonnegative_integer(struct ged *UNUSED(gedp), bu_arg_value_t UNUSED(type), const char *token, const void *UNUSED(data))
 {
     if (BU_STR_EMPTY(token)) return GED_CMD_SEMANTIC_INCOMPLETE;
     char *end = NULL;
@@ -1328,7 +1328,7 @@ ged_builtin_nonnegative_integer(struct ged *UNUSED(gedp), bu_cmd_value_t UNUSED(
 }
 
 static ged_cmd_semantic_state_t
-ged_builtin_display_mode_validate(struct ged *UNUSED(gedp), bu_cmd_value_t UNUSED(type), const char *token, const void *UNUSED(data))
+ged_builtin_display_mode_validate(struct ged *UNUSED(gedp), bu_arg_value_t UNUSED(type), const char *token, const void *UNUSED(data))
 {
     static const char * const modes[] = {"0", "1", "2", "3", "wireframe", "shaded", "shaded_all", "evaluated", NULL};
     if (BU_STR_EMPTY(token)) return GED_CMD_SEMANTIC_INCOMPLETE;
@@ -1337,7 +1337,7 @@ ged_builtin_display_mode_validate(struct ged *UNUSED(gedp), bu_cmd_value_t UNUSE
 }
 
 static ged_cmd_semantic_state_t
-ged_builtin_draw_mode_validate(struct ged *UNUSED(gedp), bu_cmd_value_t UNUSED(type), const char *token, const void *UNUSED(data))
+ged_builtin_draw_mode_validate(struct ged *UNUSED(gedp), bu_arg_value_t UNUSED(type), const char *token, const void *UNUSED(data))
 {
     if (BU_STR_EMPTY(token))
 	return GED_CMD_SEMANTIC_INCOMPLETE;
@@ -1346,14 +1346,14 @@ ged_builtin_draw_mode_validate(struct ged *UNUSED(gedp), bu_cmd_value_t UNUSED(t
 }
 
 static ged_cmd_semantic_state_t
-ged_builtin_unit_validate(struct ged *UNUSED(gedp), bu_cmd_value_t UNUSED(type), const char *token, const void *UNUSED(data))
+ged_builtin_unit_validate(struct ged *UNUSED(gedp), bu_arg_value_t UNUSED(type), const char *token, const void *UNUSED(data))
 {
     if (BU_STR_EMPTY(token)) return GED_CMD_SEMANTIC_INCOMPLETE;
     return (bu_mm_value(token) >= 0.0) ? GED_CMD_SEMANTIC_VALID : GED_CMD_SEMANTIC_INVALID;
 }
 
 static ged_cmd_semantic_state_t
-ged_builtin_color_validate(struct ged *UNUSED(gedp), bu_cmd_value_t UNUSED(type), const char *token, const void *UNUSED(data))
+ged_builtin_color_validate(struct ged *UNUSED(gedp), bu_arg_value_t UNUSED(type), const char *token, const void *UNUSED(data))
 {
     if (BU_STR_EMPTY(token)) return GED_CMD_SEMANTIC_INCOMPLETE;
     struct bu_color color = BU_COLOR_INIT_ZERO;
@@ -1365,7 +1365,7 @@ ged_builtin_color_validate(struct ged *UNUSED(gedp), bu_cmd_value_t UNUSED(type)
 }
 
 static ged_cmd_semantic_state_t
-ged_builtin_matrix_validate(struct ged *UNUSED(gedp), bu_cmd_value_t UNUSED(type), const char *token, const void *UNUSED(data))
+ged_builtin_matrix_validate(struct ged *UNUSED(gedp), bu_arg_value_t UNUSED(type), const char *token, const void *UNUSED(data))
 {
     if (BU_STR_EMPTY(token)) return GED_CMD_SEMANTIC_INCOMPLETE;
     mat_t matrix;
@@ -1373,12 +1373,12 @@ ged_builtin_matrix_validate(struct ged *UNUSED(gedp), bu_cmd_value_t UNUSED(type
 }
 
 static ged_cmd_semantic_state_t
-ged_builtin_vector_validate(struct ged *UNUSED(gedp), bu_cmd_value_t UNUSED(type), const char *token, const void *UNUSED(data))
+ged_builtin_vector_validate(struct ged *UNUSED(gedp), bu_arg_value_t UNUSED(type), const char *token, const void *UNUSED(data))
 {
     if (BU_STR_EMPTY(token)) return GED_CMD_SEMANTIC_INCOMPLETE;
     vect_t vector = VINIT_ZERO;
     const char *argv[1] = {token};
-    return bu_cmd_vector3_from_argv(vector, 1, argv) == 1 ?
+    return bu_arg_vector3_from_argv(vector, 1, argv) == 1 ?
 	GED_CMD_SEMANTIC_VALID : GED_CMD_SEMANTIC_INVALID;
 }
 
@@ -1410,7 +1410,7 @@ ged_builtin_file_complete(struct ged *UNUSED(gedp), const char *seed,
 	extensions, &files);
     result->completion_candidates = (const char **)files;
     result->completion_count = cnt;
-    result->completion_type = BU_CMD_VALUE_FILE;
+    result->completion_type = BU_ARG_VALUE_FILE;
     return (int)cnt;
 }
 
@@ -1437,7 +1437,7 @@ ged_builtin_file_complete_query(struct ged *UNUSED(gedp), const char *seed,
     result->completion_truncated = total > cnt;
     if (total)
 	result->completion_common_prefix = bu_vls_strdup(&common);
-    result->completion_type = BU_CMD_VALUE_FILE;
+    result->completion_type = BU_ARG_VALUE_FILE;
     bu_vls_free(&common);
     return (int)cnt;
 }
@@ -1499,61 +1499,61 @@ ged_register_builtin_semantic_providers(void)
     };
 
     const struct ged_cmd_semantic_provider db_object_provider = GED_BUILTIN_PROVIDER(
-	"ged.db_object", BU_CMD_VALUE_DB_OBJECT, ged_builtin_db_object_validate,
+	"ged.db_object", BU_ARG_VALUE_DB_OBJECT, ged_builtin_db_object_validate,
 	ged_builtin_db_complete, &ged_db_geometry_policy, ged_builtin_db_complete_query);
     const struct ged_cmd_semantic_provider db_object_any_provider = GED_BUILTIN_PROVIDER(
-	"ged.db_object_any", BU_CMD_VALUE_DB_OBJECT, ged_builtin_db_object_validate,
+	"ged.db_object_any", BU_ARG_VALUE_DB_OBJECT, ged_builtin_db_object_validate,
 	ged_builtin_db_complete, &ged_db_any_policy, ged_builtin_db_complete_query);
     const struct ged_cmd_semantic_provider db_object_hidden_provider = GED_BUILTIN_PROVIDER(
-	"ged.db_object_hidden", BU_CMD_VALUE_DB_OBJECT, ged_builtin_db_object_validate,
+	"ged.db_object_hidden", BU_ARG_VALUE_DB_OBJECT, ged_builtin_db_object_validate,
 	ged_builtin_db_complete, &ged_db_hidden_only_policy, ged_builtin_db_complete_query);
     const struct ged_cmd_semantic_provider db_object_all_provider = GED_BUILTIN_PROVIDER(
-	"ged.db_object_all", BU_CMD_VALUE_DB_OBJECT, ged_builtin_db_object_validate,
+	"ged.db_object_all", BU_ARG_VALUE_DB_OBJECT, ged_builtin_db_object_validate,
 	ged_builtin_db_complete, &ged_db_all_policy, ged_builtin_db_complete_query);
     const struct ged_cmd_semantic_provider db_object_binary_provider = GED_BUILTIN_PROVIDER(
-	"ged.db_object_binary", BU_CMD_VALUE_DB_OBJECT, ged_builtin_db_object_validate,
+	"ged.db_object_binary", BU_ARG_VALUE_DB_OBJECT, ged_builtin_db_object_validate,
 	ged_builtin_db_complete, &ged_db_binary_policy, ged_builtin_db_complete_query);
     const struct ged_cmd_semantic_provider summary_object_or_legacy_type_provider = GED_BUILTIN_PROVIDER(
-	"ged.summary_object_or_legacy_type", BU_CMD_VALUE_UNKNOWN,
+	"ged.summary_object_or_legacy_type", BU_ARG_VALUE_UNKNOWN,
 	ged_builtin_summary_object_or_legacy_type_validate, NULL, NULL, NULL);
     const struct ged_cmd_semantic_provider db_path_provider = GED_BUILTIN_PROVIDER(
-	"ged.db_path", BU_CMD_VALUE_DB_PATH, ged_builtin_db_path_validate,
+	"ged.db_path", BU_ARG_VALUE_DB_PATH, ged_builtin_db_path_validate,
 	ged_builtin_db_complete, &ged_db_geometry_policy, ged_builtin_db_complete_query);
     const struct ged_cmd_semantic_provider db_path_components_provider = GED_BUILTIN_PROVIDER(
-	"ged.db_path_components", BU_CMD_VALUE_DB_PATH, ged_builtin_db_components_validate,
+	"ged.db_path_components", BU_ARG_VALUE_DB_PATH, ged_builtin_db_components_validate,
 	ged_builtin_db_components_complete, &ged_db_geometry_policy,
 	ged_builtin_db_components_complete_query);
     const struct ged_cmd_semantic_provider db_path_any_provider = GED_BUILTIN_PROVIDER(
-	"ged.db_path_any", BU_CMD_VALUE_DB_PATH, ged_builtin_db_path_validate,
+	"ged.db_path_any", BU_ARG_VALUE_DB_PATH, ged_builtin_db_path_validate,
 	ged_builtin_db_complete, &ged_db_any_policy, ged_builtin_db_complete_query);
     const struct ged_cmd_semantic_provider db_path_all_provider = GED_BUILTIN_PROVIDER(
-	"ged.db_path_all", BU_CMD_VALUE_DB_PATH, ged_builtin_db_path_validate,
+	"ged.db_path_all", BU_ARG_VALUE_DB_PATH, ged_builtin_db_path_validate,
 	ged_builtin_db_complete, &ged_db_all_policy, ged_builtin_db_complete_query);
     const struct ged_cmd_semantic_provider db_path_geometry_hidden_provider = GED_BUILTIN_PROVIDER(
-	"ged.db_path_geometry_hidden", BU_CMD_VALUE_DB_PATH, ged_builtin_db_path_validate,
+	"ged.db_path_geometry_hidden", BU_ARG_VALUE_DB_PATH, ged_builtin_db_path_validate,
 	ged_builtin_db_complete, &ged_db_geometry_hidden_policy, ged_builtin_db_complete_query);
     const struct ged_cmd_semantic_provider db_path_any_hidden_provider = GED_BUILTIN_PROVIDER(
-	"ged.db_path_any_hidden", BU_CMD_VALUE_DB_PATH, ged_builtin_db_path_validate,
+	"ged.db_path_any_hidden", BU_ARG_VALUE_DB_PATH, ged_builtin_db_path_validate,
 	ged_builtin_db_complete, &ged_db_any_hidden_policy, ged_builtin_db_complete_query);
     const struct ged_cmd_semantic_provider search_path_provider = GED_BUILTIN_PROVIDER(
-	"ged.search.path", BU_CMD_VALUE_DB_PATH, ged_builtin_search_path_validate,
+	"ged.search.path", BU_ARG_VALUE_DB_PATH, ged_builtin_search_path_validate,
 	NULL, NULL, NULL);
     const struct ged_cmd_semantic_provider search_type_provider = GED_BUILTIN_PROVIDER(
-	"ged.search.type", BU_CMD_VALUE_KEYWORD, ged_builtin_search_type_validate,
+	"ged.search.type", BU_ARG_VALUE_KEYWORD, ged_builtin_search_type_validate,
 	NULL, NULL, NULL);
     const struct ged_cmd_semantic_provider search_parser_provider = GED_BUILTIN_PROVIDER(
-	"ged.search", BU_CMD_VALUE_UNKNOWN, NULL, NULL, NULL, NULL);
+	"ged.search", BU_ARG_VALUE_UNKNOWN, NULL, NULL, NULL, NULL);
     const struct ged_cmd_semantic_provider view_provider = GED_BUILTIN_PROVIDER(
-	"ged.view", BU_CMD_VALUE_KEYWORD, ged_builtin_view_validate,
+	"ged.view", BU_ARG_VALUE_KEYWORD, ged_builtin_view_validate,
 	ged_builtin_view_complete, NULL, NULL);
     const struct ged_cmd_semantic_provider command_provider = GED_BUILTIN_PROVIDER(
-	"ged.command_name", BU_CMD_VALUE_KEYWORD, ged_builtin_command_validate,
+	"ged.command_name", BU_ARG_VALUE_KEYWORD, ged_builtin_command_validate,
 	ged_builtin_command_complete, NULL, NULL);
     const struct ged_cmd_semantic_provider primitive_type_provider = GED_BUILTIN_PROVIDER(
-	"ged.primitive_type", BU_CMD_VALUE_KEYWORD, ged_builtin_primitive_type_validate,
+	"ged.primitive_type", BU_ARG_VALUE_KEYWORD, ged_builtin_primitive_type_validate,
 	ged_builtin_primitive_type_complete, NULL, NULL);
     const struct ged_cmd_semantic_provider geometry_or_primitive_provider = GED_BUILTIN_PROVIDER(
-	"ged.geometry_or_primitive", BU_CMD_VALUE_UNKNOWN,
+	"ged.geometry_or_primitive", BU_ARG_VALUE_UNKNOWN,
 	ged_builtin_geometry_or_primitive_validate,
 	ged_builtin_geometry_or_primitive_complete, NULL,
 	ged_builtin_geometry_or_primitive_complete_query);
@@ -1563,75 +1563,75 @@ ged_register_builtin_semantic_providers(void)
     static const char * const unit_names[] = {"um", "mm", "cm", "m", "km", "in", "ft", "yd", "mi", NULL};
     static const char * const svg_extensions[] = {"svg", NULL};
     const struct ged_cmd_semantic_provider path_pattern_provider = GED_BUILTIN_PROVIDER(
-	"ged.db_path_or_pattern", BU_CMD_VALUE_DB_PATH, ged_builtin_path_or_pattern_validate,
+	"ged.db_path_or_pattern", BU_ARG_VALUE_DB_PATH, ged_builtin_path_or_pattern_validate,
 	ged_builtin_path_complete, &ged_db_geometry_policy, ged_builtin_db_complete_query);
     const struct ged_cmd_semantic_provider path_all_pattern_provider = GED_BUILTIN_PROVIDER(
-	"ged.db_path_all_or_pattern", BU_CMD_VALUE_DB_PATH, ged_builtin_path_or_pattern_validate,
+	"ged.db_path_all_or_pattern", BU_ARG_VALUE_DB_PATH, ged_builtin_path_or_pattern_validate,
 	ged_builtin_path_complete, &ged_db_all_policy, ged_builtin_db_complete_query);
     const struct ged_cmd_semantic_provider force_all_path_pattern_provider = GED_BUILTIN_PROVIDER(
-	"ged.db_path_or_pattern.force_all", BU_CMD_VALUE_DB_PATH, ged_builtin_nonempty_unknown,
+	"ged.db_path_or_pattern.force_all", BU_ARG_VALUE_DB_PATH, ged_builtin_nonempty_unknown,
 	ged_builtin_path_complete, &ged_db_geometry_policy,
 	ged_builtin_force_all_path_complete_query);
     const struct ged_cmd_semantic_provider path_any_hidden_pattern_provider = GED_BUILTIN_PROVIDER(
-	"ged.db_path_any_hidden_or_pattern", BU_CMD_VALUE_DB_PATH,
+	"ged.db_path_any_hidden_or_pattern", BU_ARG_VALUE_DB_PATH,
 	ged_builtin_path_or_pattern_validate, ged_builtin_path_complete,
 	&ged_db_any_hidden_policy, ged_builtin_db_complete_query);
     const struct ged_cmd_semantic_provider path_primitives_pattern_provider = GED_BUILTIN_PROVIDER(
-	"ged.db_path_primitives_or_pattern", BU_CMD_VALUE_DB_PATH,
+	"ged.db_path_primitives_or_pattern", BU_ARG_VALUE_DB_PATH,
 	ged_builtin_path_or_pattern_validate, ged_builtin_path_complete,
 	&ged_db_primitives_policy, ged_builtin_db_complete_query);
     const struct ged_cmd_semantic_provider path_primitives_hidden_pattern_provider = GED_BUILTIN_PROVIDER(
-	"ged.db_path_primitives_hidden_or_pattern", BU_CMD_VALUE_DB_PATH,
+	"ged.db_path_primitives_hidden_or_pattern", BU_ARG_VALUE_DB_PATH,
 	ged_builtin_path_or_pattern_validate, ged_builtin_path_complete,
 	&ged_db_primitives_hidden_policy, ged_builtin_db_complete_query);
     const struct ged_cmd_semantic_provider path_combinations_pattern_provider = GED_BUILTIN_PROVIDER(
-	"ged.db_path_combinations_or_pattern", BU_CMD_VALUE_DB_PATH,
+	"ged.db_path_combinations_or_pattern", BU_ARG_VALUE_DB_PATH,
 	ged_builtin_path_or_pattern_validate, ged_builtin_path_complete,
 	&ged_db_combinations_policy, ged_builtin_db_complete_query);
     const struct ged_cmd_semantic_provider path_combinations_hidden_pattern_provider = GED_BUILTIN_PROVIDER(
-	"ged.db_path_combinations_hidden_or_pattern", BU_CMD_VALUE_DB_PATH,
+	"ged.db_path_combinations_hidden_or_pattern", BU_ARG_VALUE_DB_PATH,
 	ged_builtin_path_or_pattern_validate, ged_builtin_path_complete,
 	&ged_db_combinations_hidden_policy, ged_builtin_db_complete_query);
     const struct ged_cmd_semantic_provider path_regions_pattern_provider = GED_BUILTIN_PROVIDER(
-	"ged.db_path_regions_or_pattern", BU_CMD_VALUE_DB_PATH,
+	"ged.db_path_regions_or_pattern", BU_ARG_VALUE_DB_PATH,
 	ged_builtin_path_or_pattern_validate, ged_builtin_path_complete,
 	&ged_db_regions_policy, ged_builtin_db_complete_query);
     const struct ged_cmd_semantic_provider path_regions_hidden_pattern_provider = GED_BUILTIN_PROVIDER(
-	"ged.db_path_regions_hidden_or_pattern", BU_CMD_VALUE_DB_PATH,
+	"ged.db_path_regions_hidden_or_pattern", BU_ARG_VALUE_DB_PATH,
 	ged_builtin_path_or_pattern_validate, ged_builtin_path_complete,
 	&ged_db_regions_hidden_policy, ged_builtin_db_complete_query);
     const struct ged_cmd_semantic_provider attribute_provider = GED_BUILTIN_PROVIDER(
-	"ged.db_attribute", BU_CMD_VALUE_KEYWORD, ged_builtin_nonempty_unknown,
+	"ged.db_attribute", BU_ARG_VALUE_KEYWORD, ged_builtin_nonempty_unknown,
 	ged_builtin_keyword_complete, attribute_names, NULL);
     const struct ged_cmd_semantic_provider region_id_provider = GED_BUILTIN_PROVIDER(
-	"ged.db_region_id", BU_CMD_VALUE_INTEGER, ged_builtin_nonnegative_integer,
+	"ged.db_region_id", BU_ARG_VALUE_INTEGER, ged_builtin_nonnegative_integer,
 	NULL, NULL, NULL);
     const struct ged_cmd_semantic_provider display_mode_provider = GED_BUILTIN_PROVIDER(
-	"ged.display_mode", BU_CMD_VALUE_KEYWORD, ged_builtin_display_mode_validate,
+	"ged.display_mode", BU_ARG_VALUE_KEYWORD, ged_builtin_display_mode_validate,
 	ged_builtin_keyword_complete, display_modes, NULL);
     const struct ged_cmd_semantic_provider draw_mode_provider = GED_BUILTIN_PROVIDER(
-	"ged.draw_mode", BU_CMD_VALUE_KEYWORD, ged_builtin_draw_mode_validate,
+	"ged.draw_mode", BU_ARG_VALUE_KEYWORD, ged_builtin_draw_mode_validate,
 	ged_builtin_keyword_complete, draw_modes, NULL);
     const struct ged_cmd_semantic_provider file_path_provider = GED_BUILTIN_PROVIDER(
-	"ged.file_path", BU_CMD_VALUE_FILE, ged_builtin_nonempty_unknown,
+	"ged.file_path", BU_ARG_VALUE_FILE, ged_builtin_nonempty_unknown,
 	ged_builtin_file_complete, NULL, ged_builtin_file_complete_query);
     const struct ged_cmd_semantic_provider svg_file_path_provider = GED_BUILTIN_PROVIDER(
-	"ged.file_path.svg", BU_CMD_VALUE_FILE, ged_builtin_nonempty_unknown,
+	"ged.file_path.svg", BU_ARG_VALUE_FILE, ged_builtin_nonempty_unknown,
 	ged_builtin_file_complete, svg_extensions, ged_builtin_file_complete_query);
     const struct ged_cmd_semantic_provider unit_provider = GED_BUILTIN_PROVIDER(
-	"ged.unit", BU_CMD_VALUE_KEYWORD, ged_builtin_unit_validate,
+	"ged.unit", BU_ARG_VALUE_KEYWORD, ged_builtin_unit_validate,
 	ged_builtin_keyword_complete, unit_names, NULL);
     const struct ged_cmd_semantic_provider color_provider = GED_BUILTIN_PROVIDER(
-	"ged.color", BU_CMD_VALUE_COLOR, ged_builtin_color_validate, NULL, NULL, NULL);
+	"ged.color", BU_ARG_VALUE_COLOR, ged_builtin_color_validate, NULL, NULL, NULL);
     const struct ged_cmd_semantic_provider matrix_provider = GED_BUILTIN_PROVIDER(
-	"ged.matrix", BU_CMD_VALUE_MATRIX, ged_builtin_matrix_validate, NULL, NULL, NULL);
+	"ged.matrix", BU_ARG_VALUE_MATRIX, ged_builtin_matrix_validate, NULL, NULL, NULL);
     const struct ged_cmd_semantic_provider vector_provider = GED_BUILTIN_PROVIDER(
-	"ged.vector", BU_CMD_VALUE_VECTOR, ged_builtin_vector_validate, NULL, NULL, NULL);
+	"ged.vector", BU_ARG_VALUE_VECTOR, ged_builtin_vector_validate, NULL, NULL, NULL);
     /* A schema-owned multi-token vector validator has already checked the
      * complete group.  Do not revalidate one component as a standalone packed
      * vector while completion is focused on that component. */
     const struct ged_cmd_semantic_provider vector_group_provider = GED_BUILTIN_PROVIDER(
-	"ged.vector_group", BU_CMD_VALUE_VECTOR, NULL, NULL, NULL, NULL);
+	"ged.vector_group", BU_ARG_VALUE_VECTOR, NULL, NULL, NULL, NULL);
 
     install(db_object_provider);
     install(db_object_any_provider);
@@ -1679,17 +1679,17 @@ ged_register_builtin_semantic_providers(void)
 #undef GED_BUILTIN_PROVIDER
 
 
-static bu_cmd_value_t
+static bu_arg_value_t
 ged_semantic_provider_type(const char *name)
 {
     if (BU_STR_EMPTY(name))
-	return BU_CMD_VALUE_UNKNOWN;
+	return BU_ARG_VALUE_UNKNOWN;
 
     ged_register_builtin_semantic_providers();
     struct ged_semantic_provider_registry &registry = ged_semantic_providers();
     std::lock_guard<std::mutex> guard(registry.mutex);
     auto it = registry.providers.find(std::string(name));
-    return (it == registry.providers.end()) ? BU_CMD_VALUE_UNKNOWN : it->second.value_type;
+    return (it == registry.providers.end()) ? BU_ARG_VALUE_UNKNOWN : it->second.value_type;
 }
 
 
@@ -1703,7 +1703,7 @@ _ged_cmd_semantic_provider_registry_reset(void)
 }
 
 static ged_cmd_semantic_state_t
-ged_semantic_validate(struct ged *gedp, bu_cmd_value_t type, const char *validator, const char *token)
+ged_semantic_validate(struct ged *gedp, bu_arg_value_t type, const char *validator, const char *token)
 {
     if (!validator || !validator[0])
 	return GED_CMD_SEMANTIC_UNKNOWN;
@@ -1871,7 +1871,7 @@ ged_semantic_complete(struct ged *gedp, const char *provider, const char *seed,
     else
 	return 0;
     std::string candidate_seed = seed ? seed : "";
-    if (selected.value_type == BU_CMD_VALUE_DB_PATH) {
+    if (selected.value_type == BU_ARG_VALUE_DB_PATH) {
 	size_t separator = ged_last_unescaped_path_separator(candidate_seed);
 	if (separator != std::string::npos)
 	    candidate_seed.erase(0, separator + 1);
@@ -1992,19 +1992,19 @@ ged_cmd_analysis_publish(struct ged_cmd_analysis *analysis)
 }
 
 static ged_cmd_semantic_state_t
-ged_native_semantic_state(bu_cmd_validate_state_t state)
+ged_native_semantic_state(bu_arg_validate_state_t state)
 {
     switch (state) {
-	case BU_CMD_VALIDATE_VALID: return GED_CMD_SEMANTIC_VALID;
-	case BU_CMD_VALIDATE_INCOMPLETE: return GED_CMD_SEMANTIC_INCOMPLETE;
-	case BU_CMD_VALIDATE_INVALID: return GED_CMD_SEMANTIC_INVALID;
-	case BU_CMD_VALIDATE_UNKNOWN:
+	case BU_ARG_VALIDATE_VALID: return GED_CMD_SEMANTIC_VALID;
+	case BU_ARG_VALIDATE_INCOMPLETE: return GED_CMD_SEMANTIC_INCOMPLETE;
+	case BU_ARG_VALIDATE_INVALID: return GED_CMD_SEMANTIC_INVALID;
+	case BU_ARG_VALIDATE_UNKNOWN:
 	default: return GED_CMD_SEMANTIC_UNKNOWN;
     }
 }
 
-static const struct bu_cmd_option *
-ged_native_find_option(const struct bu_cmd_schema *schema, const char *arg)
+static const struct bu_arg_option *
+ged_native_find_option(const struct bu_arg_schema *schema, const char *arg)
 {
     int longopt = 0;
     const char *name = NULL;
@@ -2019,8 +2019,8 @@ ged_native_find_option(const struct bu_cmd_schema *schema, const char *arg)
     if (equal != std::string::npos)
 	name_storage.resize(equal);
     name = name_storage.c_str();
-    for (size_t i = 0; bu_cmd_option_is_valid(&schema->options[i]); i++) {
-	const struct bu_cmd_option *option = &schema->options[i];
+    for (size_t i = 0; bu_arg_option_is_valid(&schema->options[i]); i++) {
+	const struct bu_arg_option *option = &schema->options[i];
 	const char *spelling = longopt ? option->longopt : option->shortopt;
 	size_t spelling_len = spelling ? strlen(spelling) : 0;
 	if (!spelling || bu_strncmp(name, spelling, spelling_len) ||
@@ -2028,9 +2028,9 @@ ged_native_find_option(const struct bu_cmd_schema *schema, const char *arg)
 	    continue;
 	if (!option->alias_of)
 	    return option;
-	for (size_t ci = 0; bu_cmd_option_is_valid(&schema->options[ci]); ci++) {
-	    const struct bu_cmd_option *canonical = &schema->options[ci];
-	    if (!canonical->alias_of && BU_STR_EQUAL(bu_cmd_option_canonical(canonical), option->alias_of))
+	for (size_t ci = 0; bu_arg_option_is_valid(&schema->options[ci]); ci++) {
+	    const struct bu_arg_option *canonical = &schema->options[ci];
+	    if (!canonical->alias_of && BU_STR_EQUAL(bu_arg_option_canonical(canonical), option->alias_of))
 		return canonical;
 	}
 	return NULL;
@@ -2039,11 +2039,11 @@ ged_native_find_option(const struct bu_cmd_schema *schema, const char *arg)
 }
 
 static void
-ged_native_analyze(struct ged *gedp, const struct bu_cmd_schema *schema, const struct ged_input_parse &parsed,
+ged_native_analyze(struct ged *gedp, const struct bu_arg_schema *schema, const struct ged_input_parse &parsed,
 	struct ged_cmd_analysis *analysis)
 {
     int options_allowed = 1;
-    const struct bu_cmd_option *pending = NULL;
+    const struct bu_arg_option *pending = NULL;
     size_t pending_count = 0;
     int pending_valid = 1;
     size_t operand_count = 0;
@@ -2057,10 +2057,10 @@ ged_native_analyze(struct ged *gedp, const struct bu_cmd_schema *schema, const s
 	const char *arg = parsed.argv[i];
 	struct ged_cmd_analysis_token *token = &analysis->tokens[i];
 	if (pending) {
-	    struct bu_cmd_validate_result result = BU_CMD_VALIDATE_RESULT_NULL;
+	    struct bu_arg_validate_result result = BU_ARG_VALIDATE_RESULT_NULL;
 	    const char *provider = ged_native_semantic_provider(pending->value_type, pending->semantic_provider);
 	    if (custom_token_validate) {
-		(void)bu_cmd_schema_validate(schema, i, (const char **)parsed.argv + 1,
+		(void)bu_arg_schema_validate(schema, i, (const char **)parsed.argv + 1,
 		    i - 1, &result);
 		const char *dynamic_provider = ged_native_semantic_provider(
 		    result.completion_type, result.semantic_provider);
@@ -2082,7 +2082,7 @@ ged_native_analyze(struct ged *gedp, const struct bu_cmd_schema *schema, const s
 	    }
 	    token->hint = (custom_token_validate && result.hint) ?
 		result.hint : "option argument";
-	    bu_cmd_validate_result_clear(&result);
+	    bu_arg_validate_result_clear(&result);
 	if (--pending_count == 0)
 	    pending = NULL;
 	continue;
@@ -2095,18 +2095,18 @@ ged_native_analyze(struct ged *gedp, const struct bu_cmd_schema *schema, const s
 	    continue;
 	}
 	if (options_allowed && arg[0] == '-' && arg[1]) {
-	    const struct bu_cmd_option *option = ged_native_find_option(schema, arg);
+	    const struct bu_arg_option *option = ged_native_find_option(schema, arg);
 	    const char *eq = strchr(arg, '=');
 	    token->role = GED_CMD_TOKEN_OPTION;
 	    token->semantic_state = option ? GED_CMD_SEMANTIC_VALID : GED_CMD_SEMANTIC_INVALID;
 	    token->hint = option ? "option" : "unknown option";
 	    if (!option)
 		continue;
-	if (eq && option->value_type != BU_CMD_VALUE_FLAG) {
-		struct bu_cmd_validate_result result = BU_CMD_VALIDATE_RESULT_NULL;
+	if (eq && option->value_type != BU_ARG_VALUE_FLAG) {
+		struct bu_arg_validate_result result = BU_ARG_VALIDATE_RESULT_NULL;
 		const char *provider = ged_native_semantic_provider(option->value_type, option->semantic_provider);
 		if (custom_token_validate) {
-		    (void)bu_cmd_schema_validate(schema, i,
+		    (void)bu_arg_schema_validate(schema, i,
 			(const char **)parsed.argv + 1, i - 1, &result);
 		    const char *dynamic_provider = ged_native_semantic_provider(
 			result.completion_type, result.semantic_provider);
@@ -2119,7 +2119,7 @@ ged_native_analyze(struct ged *gedp, const struct bu_cmd_schema *schema, const s
 		    option->value_type, provider);
 		token->semantic_state = custom_token_validate ?
 		    ged_native_semantic_state(result.state) :
-		    (bu_cmd_schema_option_span(schema, 1, &arg) > 0 ? GED_CMD_SEMANTIC_VALID :
+		    (bu_arg_schema_option_span(schema, 1, &arg) > 0 ? GED_CMD_SEMANTIC_VALID :
 			GED_CMD_SEMANTIC_INVALID);
 		token->validator = provider;
 		if (token->semantic_state == GED_CMD_SEMANTIC_VALID && token->validator) {
@@ -2129,12 +2129,12 @@ ged_native_analyze(struct ged *gedp, const struct bu_cmd_schema *schema, const s
 		}
 		token->hint = (custom_token_validate && result.hint) ?
 		    result.hint : "option with argument";
-		bu_cmd_validate_result_clear(&result);
+		bu_arg_validate_result_clear(&result);
 	    } else if (eq) {
 		token->semantic_state = GED_CMD_SEMANTIC_INVALID;
 		token->hint = "option does not take an argument";
-	    } else if (option->value_type != BU_CMD_VALUE_FLAG) {
-		int option_span = bu_cmd_schema_option_span(schema, parsed.argc - i,
+	    } else if (option->value_type != BU_ARG_VALUE_FLAG) {
+		int option_span = bu_arg_schema_option_span(schema, parsed.argc - i,
 		    (const char **)parsed.argv + i);
 		if (option_span > 1) {
 		    pending = option;
@@ -2150,10 +2150,10 @@ ged_native_analyze(struct ged *gedp, const struct bu_cmd_schema *schema, const s
 	    }
 	    continue;
 	}
-	const struct bu_cmd_operand *operand = bu_cmd_schema_active_operand(schema,
+	const struct bu_arg_operand *operand = bu_arg_schema_active_operand(schema,
 	    parsed.argc - 1, (const char **)parsed.argv + 1, operand_count);
 	const char *provider = operand ? ged_native_semantic_provider(operand->value_type, operand->semantic_provider) : NULL;
-	struct bu_cmd_validate_result result = BU_CMD_VALIDATE_RESULT_NULL;
+	struct bu_arg_validate_result result = BU_ARG_VALIDATE_RESULT_NULL;
 	bool dynamic_role = analysis_plan &&
 	    _ged_schema_analysis_plan_role(analysis_plan, operand, &result);
 	if (dynamic_role)
@@ -2164,7 +2164,7 @@ ged_native_analyze(struct ged *gedp, const struct bu_cmd_schema *schema, const s
 	 * length.  Only a schema-owned callback can override that role, so invoke
 	 * validation solely for those uncommon dynamic schemas. */
 	if (custom_token_validate) {
-	    (void)bu_cmd_schema_validate(schema, i, (const char **)parsed.argv + 1,
+	    (void)bu_arg_schema_validate(schema, i, (const char **)parsed.argv + 1,
 		i - 1, &result);
 	    const char *dynamic_provider = ged_native_semantic_provider(
 		result.completion_type, result.semantic_provider);
@@ -2176,14 +2176,14 @@ ged_native_analyze(struct ged *gedp, const struct bu_cmd_schema *schema, const s
 	 * authoritative about that phase, so preserve the subcommand role rather
 	 * than flattening every non-root word into an operand. */
 	token->role = (custom_token_validate &&
-	    (result.expected & BU_CMD_EXPECT_SUBCOMMAND)) ?
+	    (result.expected & BU_ARG_EXPECT_SUBCOMMAND)) ?
 	    GED_CMD_TOKEN_SUBCOMMAND : GED_CMD_TOKEN_OPERAND;
 	token->value_type = ged_native_value_type(
 	    custom_token_validate || dynamic_role ? result.completion_type :
-	    (operand ? operand->value_type : BU_CMD_VALUE_UNKNOWN), provider);
+	    (operand ? operand->value_type : BU_ARG_VALUE_UNKNOWN), provider);
 	token->semantic_state = custom_token_validate ?
 	    ged_native_semantic_state(result.state) :
-	    (operand && bu_cmd_operand_validate(operand, arg) ?
+	    (operand && bu_arg_operand_validate(operand, arg) ?
 		GED_CMD_SEMANTIC_VALID : GED_CMD_SEMANTIC_INVALID);
 	token->validator = provider;
 	if (token->semantic_state == GED_CMD_SEMANTIC_VALID && token->validator) {
@@ -2193,9 +2193,9 @@ ged_native_analyze(struct ged *gedp, const struct bu_cmd_schema *schema, const s
 	}
 	token->hint = ((custom_token_validate || dynamic_role) && result.hint) ? result.hint :
 	    (operand ? operand->name : "unexpected operand");
-	bu_cmd_validate_result_clear(&result);
+	bu_arg_validate_result_clear(&result);
 	operand_count++;
-	if (schema->parse_policy != BU_CMD_PARSE_INTERSPERSED)
+	if (schema->parse_policy != BU_ARG_PARSE_INTERSPERSED)
 	    options_allowed = 0;
     }
     _ged_schema_analysis_plan_destroy(analysis_plan);
@@ -2231,7 +2231,7 @@ ged_cmd_analyze(struct ged *gedp, const char *input, struct ged_cmd_analysis *an
     for (size_t i = 0; i < parsed.argc; i++) {
 	ged_analysis_set_span(&analysis->tokens[i], parsed, i);
 	analysis->tokens[i].role = GED_CMD_TOKEN_UNKNOWN;
-	analysis->tokens[i].value_type = BU_CMD_VALUE_UNKNOWN;
+	analysis->tokens[i].value_type = BU_ARG_VALUE_UNKNOWN;
 	analysis->tokens[i].semantic_state = GED_CMD_SEMANTIC_UNKNOWN;
 	analysis->tokens[i].validator = NULL;
 	analysis->tokens[i].hint = NULL;
@@ -2252,7 +2252,7 @@ ged_cmd_analyze(struct ged *gedp, const char *input, struct ged_cmd_analysis *an
 	return ret;
     }
 
-    const struct bu_cmd_schema *native_schema = _ged_cmd_native_schema(parsed.argv[0]);
+    const struct bu_arg_schema *native_schema = _ged_cmd_native_schema(parsed.argv[0]);
     if (native_schema) {
 	ged_native_analyze(gedp, native_schema, parsed, analysis);
 	ged_input_parse_free(&parsed);
@@ -2269,16 +2269,16 @@ ged_cmd_analyze(struct ged *gedp, const char *input, struct ged_cmd_analysis *an
  * adapters with context-selected flat forms use this same path, rather than
  * reimplementing completion or token-state rules. */
 static int
-ged_native_validate(struct ged *gedp, const struct bu_cmd_schema *native_schema,
+ged_native_validate(struct ged *gedp, const struct bu_arg_schema *native_schema,
 	const struct ged_input_parse &parsed, const char *input, size_t cursor_pos,
 	struct ged_cmd_validate_result *result)
 {
-    struct bu_cmd_validate_result native_result = BU_CMD_VALIDATE_RESULT_NULL;
+    struct bu_arg_validate_result native_result = BU_ARG_VALIDATE_RESULT_NULL;
     size_t native_argc = (parsed.cursor_arg < parsed.argc) ?
 	parsed.cursor_arg : parsed.argc - 1;
     size_t native_cursor = (parsed.cursor_arg < parsed.argc) ?
 	parsed.cursor_arg - 1 : native_argc;
-    int ret = bu_cmd_schema_validate_ctx(native_schema, native_argc,
+    int ret = bu_arg_schema_validate_ctx(native_schema, native_argc,
 	(const char **)parsed.argv + 1, native_cursor, gedp, &native_result);
 
     if (ret == 0) {
@@ -2301,21 +2301,21 @@ ged_native_validate(struct ged *gedp, const struct bu_cmd_schema *native_schema,
 	/* The cursor-local result describes the token being edited.  At end of
 	 * input, retain that role but report a missing later operand or violated
 	 * relationship from the fully accepted prefix. */
-	if (result->state == BU_CMD_VALIDATE_VALID && cursor_pos == strlen(input) &&
+	if (result->state == BU_ARG_VALIDATE_VALID && cursor_pos == strlen(input) &&
 	    parsed.cursor_arg < parsed.argc && native_cursor < native_argc) {
-	    struct bu_cmd_validate_result full_result = BU_CMD_VALIDATE_RESULT_NULL;
-	    if (bu_cmd_schema_validate_ctx(native_schema, native_argc,
+	    struct bu_arg_validate_result full_result = BU_ARG_VALIDATE_RESULT_NULL;
+	    if (bu_arg_schema_validate_ctx(native_schema, native_argc,
 		(const char **)parsed.argv + 1, native_argc, gedp, &full_result) == 0 &&
-		full_result.state != BU_CMD_VALIDATE_VALID &&
-		full_result.state != BU_CMD_VALIDATE_UNKNOWN) {
+		full_result.state != BU_ARG_VALIDATE_VALID &&
+		full_result.state != BU_ARG_VALIDATE_UNKNOWN) {
 		result->state = ged_native_state(full_result.state);
 	    }
-	    bu_cmd_validate_result_clear(&full_result);
+	    bu_arg_validate_result_clear(&full_result);
 	}
-	if (result->state == BU_CMD_VALIDATE_VALID && provider &&
+	if (result->state == BU_ARG_VALIDATE_VALID && provider &&
 	    parsed.cursor_arg < parsed.argc && parsed.argv[parsed.cursor_arg]) {
 	    const char *semantic_arg = parsed.argv[parsed.cursor_arg];
-	    if (result->expected & BU_CMD_EXPECT_OPTION_ARG) {
+	    if (result->expected & BU_ARG_EXPECT_OPTION_ARG) {
 		const char *equal = strrchr(semantic_arg, '=');
 		if (equal)
 		    semantic_arg = equal + 1;
@@ -2323,12 +2323,12 @@ ged_native_validate(struct ged *gedp, const struct bu_cmd_schema *native_schema,
 	    ged_cmd_semantic_state_t semantic_state = ged_semantic_validate(gedp,
 		result->completion_type, provider, semantic_arg);
 	    if (semantic_state == GED_CMD_SEMANTIC_INVALID)
-		result->state = BU_CMD_VALIDATE_INVALID;
+		result->state = BU_ARG_VALIDATE_INVALID;
 	    else if (semantic_state == GED_CMD_SEMANTIC_INCOMPLETE)
-		result->state = BU_CMD_VALIDATE_INCOMPLETE;
+		result->state = BU_ARG_VALIDATE_INCOMPLETE;
 	}
     }
-    bu_cmd_validate_result_clear(&native_result);
+    bu_arg_validate_result_clear(&native_result);
     return ret;
 }
 
@@ -2350,11 +2350,11 @@ ged_cmd_validate_parsed(struct ged *gedp, const char *input, size_t cursor_pos,
     cmd_exists = (cmd) ? ged_cmd_exists(cmd) : 0;
 
     if (!parsed.argc || parsed.cursor_arg == 0 || !cmd_exists) {
-	bu_cmd_validate_state_t state = (!parsed.argc) ? BU_CMD_VALIDATE_INCOMPLETE :
-	    (cmd_exists ? BU_CMD_VALIDATE_VALID : BU_CMD_VALIDATE_UNKNOWN);
+	bu_arg_validate_state_t state = (!parsed.argc) ? BU_ARG_VALIDATE_INCOMPLETE :
+	    (cmd_exists ? BU_ARG_VALIDATE_VALID : BU_ARG_VALIDATE_UNKNOWN);
 	const char *hint = (!parsed.argc) ? "command expected" :
 	    (cmd_exists ? "valid command" : "unknown command");
-	ged_set_validate_result(result, state, 0, 0, BU_CMD_EXPECT_SUBCOMMAND, hint);
+	ged_set_validate_result(result, state, 0, 0, BU_ARG_EXPECT_SUBCOMMAND, hint);
 	ged_set_result_chars(result, parsed, 0, 0);
 	ged_fill_command_candidates(result, seed);
 	return 0;
@@ -2370,19 +2370,19 @@ ged_cmd_validate_parsed(struct ged *gedp, const char *input, size_t cursor_pos,
     if (grammar && grammar->validate)
 	return grammar->validate(gedp, input, cursor_pos, result);
 
-    const struct bu_cmd_schema *native_schema = _ged_cmd_native_schema(cmd);
+    const struct bu_arg_schema *native_schema = _ged_cmd_native_schema(cmd);
     if (native_schema)
 	return ged_native_validate(gedp, native_schema, parsed, input, cursor_pos,
 	    result);
 
 
     size_t token_index = (parsed.cursor_arg < parsed.argc) ? parsed.cursor_arg : parsed.argc;
-    ged_set_validate_result(result, BU_CMD_VALIDATE_UNKNOWN, token_index, token_index,
-	BU_CMD_EXPECT_NONE, "syntax metadata unavailable");
+    ged_set_validate_result(result, BU_ARG_VALIDATE_UNKNOWN, token_index, token_index,
+	BU_ARG_EXPECT_NONE, "syntax metadata unavailable");
     ged_set_result_chars(result, parsed, token_index, token_index);
     if (parsed.cursor_arg > 0 && gedp && gedp->dbip) {
 	result->completion_type = (seed.find('/') != std::string::npos) ?
-	    BU_CMD_VALUE_DB_PATH : BU_CMD_VALUE_DB_OBJECT;
+	    BU_ARG_VALUE_DB_PATH : BU_ARG_VALUE_DB_OBJECT;
     }
     return 0;
 }
@@ -2434,7 +2434,7 @@ ged_cmd_validate(struct ged *gedp, const char *input, size_t cursor_pos,
  * Each node publishes an executable schema, allowing an adapter to delegate
  * cursor validation and analysis without rebuilding a command-specific table. */
 static size_t
-ged_native_tree_subcommand_index(const struct bu_cmd_tree *tree,
+ged_native_tree_subcommand_index(const struct bu_arg_tree *tree,
 	const struct ged_input_parse &parsed)
 {
     size_t required_operands = 0;
@@ -2442,15 +2442,15 @@ ged_native_tree_subcommand_index(const struct bu_cmd_tree *tree,
 
     if (!tree || !tree->root_schema)
 	return parsed.argc;
-    if (tree->child_phase == BU_CMD_TREE_CHILD_FIRST)
+    if (tree->child_phase == BU_ARG_TREE_CHILD_FIRST)
 	return parsed.argc > 1 ? 1 : parsed.argc;
-    if (tree->child_phase == BU_CMD_TREE_CHILD_AFTER_FIXED_OPERANDS) {
+    if (tree->child_phase == BU_ARG_TREE_CHILD_AFTER_FIXED_OPERANDS) {
 	if (!tree->root_schema->operands)
 	    return parsed.argc;
 	for (size_t oi = 0; tree->root_schema->operands[oi].name; oi++) {
-	    const struct bu_cmd_operand *operand = &tree->root_schema->operands[oi];
+	    const struct bu_arg_operand *operand = &tree->root_schema->operands[oi];
 	    if (operand->min_count != operand->max_count ||
-		operand->max_count == BU_CMD_COUNT_UNLIMITED ||
+		operand->max_count == BU_ARG_COUNT_UNLIMITED ||
 		(operand->shape && (operand->shape->min_tokens != 1 ||
 		    operand->shape->max_tokens != 1 || operand->shape->token_count)))
 		return parsed.argc;
@@ -2463,7 +2463,7 @@ ged_native_tree_subcommand_index(const struct bu_cmd_tree *tree,
 	    int option_span;
 	    if (operand_count >= required_operands)
 		return i;
-	    option_span = bu_cmd_schema_option_span(tree->root_schema,
+	    option_span = bu_arg_schema_option_span(tree->root_schema,
 		parsed.argc - i, (const char **)parsed.argv + i);
 	    if (option_span > 0) {
 		i += (size_t)option_span - 1;
@@ -2477,7 +2477,7 @@ ged_native_tree_subcommand_index(const struct bu_cmd_tree *tree,
     }
     for (size_t i = 1; i < parsed.argc; i++) {
 	const char *arg = parsed.argv[i];
-	int option_span = bu_cmd_schema_option_span(tree->root_schema,
+	int option_span = bu_arg_schema_option_span(tree->root_schema,
 	    parsed.argc - i, (const char **)parsed.argv + i);
 	if (option_span > 0) {
 	    i += (size_t)option_span - 1;
@@ -2495,7 +2495,7 @@ ged_native_tree_subcommand_index(const struct bu_cmd_tree *tree,
 
 
 static void
-ged_native_tree_subcommand_candidates(const struct bu_cmd_tree *tree,
+ged_native_tree_subcommand_candidates(const struct bu_arg_tree *tree,
 	struct ged_cmd_validate_result *result, const std::string &seed)
 {
 	std::vector<std::string> candidates;
@@ -2504,7 +2504,7 @@ ged_native_tree_subcommand_candidates(const struct bu_cmd_tree *tree,
 	ged_completion_add_candidate(candidates,
 	    tree->subcommands[i].schema->name, seed);
 	}
-	ged_completion_set_candidates(result, candidates, BU_CMD_VALUE_KEYWORD);
+	ged_completion_set_candidates(result, candidates, BU_ARG_VALUE_KEYWORD);
 }
 
 
@@ -2537,12 +2537,12 @@ ged_native_tree_subcommand_parse(const struct ged_input_parse &parsed,
 
 
 static int
-ged_native_tree_validate_level(struct ged *gedp, const struct bu_cmd_tree *tree,
+ged_native_tree_validate_level(struct ged *gedp, const struct bu_arg_tree *tree,
 	const struct ged_input_parse &parsed, const char *input, size_t cursor_pos,
 	struct ged_cmd_validate_result *result, size_t token_offset)
 {
     struct ged_input_parse root;
-    struct bu_cmd_validate_result root_result = BU_CMD_VALIDATE_RESULT_NULL;
+    struct bu_arg_validate_result root_result = BU_ARG_VALIDATE_RESULT_NULL;
     std::string seed;
     size_t subcommand_index;
     size_t root_argc;
@@ -2567,29 +2567,29 @@ ged_native_tree_validate_level(struct ged *gedp, const struct bu_cmd_tree *tree,
 	return ret;
     }
 
-    if (bu_cmd_schema_validate(tree->root_schema, root_argc - 1,
+    if (bu_arg_schema_validate(tree->root_schema, root_argc - 1,
 	(const char **)parsed.argv + 1, root_argc - 1, &root_result) != 0 ||
-	(root_result.state == BU_CMD_VALIDATE_INVALID ||
-	 root_result.state == BU_CMD_VALIDATE_INCOMPLETE)) {
+	(root_result.state == BU_ARG_VALIDATE_INVALID ||
+	 root_result.state == BU_ARG_VALIDATE_INCOMPLETE)) {
 	root = parsed;
 	root.argc = root_argc;
 	ret = ged_native_validate(gedp, tree->root_schema, root, input,
 	    cursor_pos, result);
-	bu_cmd_validate_result_clear(&root_result);
+	bu_arg_validate_result_clear(&root_result);
 	result->token_start += token_offset;
 	result->token_end += token_offset;
 	return ret;
     }
-    bu_cmd_validate_result_clear(&root_result);
+    bu_arg_validate_result_clear(&root_result);
 
     if (subcommand_index >= parsed.argc) {
-	ged_set_validate_result(result, BU_CMD_VALIDATE_INCOMPLETE,
-	    parsed.cursor_arg, parsed.cursor_arg, BU_CMD_EXPECT_SUBCOMMAND,
+	ged_set_validate_result(result, BU_ARG_VALIDATE_INCOMPLETE,
+	    parsed.cursor_arg, parsed.cursor_arg, BU_ARG_EXPECT_SUBCOMMAND,
 	    "subcommand expected");
-	result->completion_type = BU_CMD_VALUE_KEYWORD;
+	result->completion_type = BU_ARG_VALUE_KEYWORD;
 	ged_native_tree_subcommand_candidates(tree, result, seed);
 	if (!seed.empty() && !result->completion_count) {
-	    result->state = BU_CMD_VALIDATE_INVALID;
+	    result->state = BU_ARG_VALIDATE_INVALID;
 	    result->hint = "unknown subcommand";
 	}
 	ged_set_result_chars(result, parsed, result->token_start, result->token_end);
@@ -2599,15 +2599,15 @@ ged_native_tree_validate_level(struct ged *gedp, const struct bu_cmd_tree *tree,
     }
 
     if (parsed.cursor_arg == subcommand_index) {
-	int exact = bu_cmd_tree_find_subcommand(tree,
+	int exact = bu_arg_tree_find_subcommand(tree,
 	    parsed.argv[subcommand_index]) != NULL;
-	ged_set_validate_result(result, exact ? BU_CMD_VALIDATE_VALID : BU_CMD_VALIDATE_INCOMPLETE,
-	    subcommand_index, subcommand_index, BU_CMD_EXPECT_SUBCOMMAND,
+	ged_set_validate_result(result, exact ? BU_ARG_VALIDATE_VALID : BU_ARG_VALIDATE_INCOMPLETE,
+	    subcommand_index, subcommand_index, BU_ARG_EXPECT_SUBCOMMAND,
 	    exact ? "subcommand" : "subcommand expected");
-	result->completion_type = BU_CMD_VALUE_KEYWORD;
+	result->completion_type = BU_ARG_VALUE_KEYWORD;
 	ged_native_tree_subcommand_candidates(tree, result, seed);
 	if (!exact && !result->completion_count) {
-	    result->state = BU_CMD_VALIDATE_INVALID;
+	    result->state = BU_ARG_VALIDATE_INVALID;
 	    result->hint = "unknown subcommand";
 	}
 	ged_set_result_chars(result, parsed, result->token_start, result->token_end);
@@ -2616,12 +2616,12 @@ ged_native_tree_validate_level(struct ged *gedp, const struct bu_cmd_tree *tree,
 	return 0;
     }
 
-    const struct bu_cmd_tree_node *child_node = bu_cmd_tree_find_subcommand(
+    const struct bu_arg_tree_node *child_node = bu_arg_tree_find_subcommand(
 	tree, parsed.argv[subcommand_index]);
-    const struct bu_cmd_schema *child_schema = child_node ? child_node->schema : NULL;
+    const struct bu_arg_schema *child_schema = child_node ? child_node->schema : NULL;
     if (!child_schema) {
-	ged_set_validate_result(result, BU_CMD_VALIDATE_INVALID, subcommand_index,
-	    subcommand_index, BU_CMD_EXPECT_SUBCOMMAND, "unknown subcommand");
+	ged_set_validate_result(result, BU_ARG_VALIDATE_INVALID, subcommand_index,
+	    subcommand_index, BU_ARG_EXPECT_SUBCOMMAND, "unknown subcommand");
 	ged_set_result_chars(result, parsed, result->token_start, result->token_end);
 	result->token_start += token_offset;
 	result->token_end += token_offset;
@@ -2629,7 +2629,7 @@ ged_native_tree_validate_level(struct ged *gedp, const struct bu_cmd_tree *tree,
     }
     struct ged_input_parse child = ged_native_tree_subcommand_parse(parsed, subcommand_index);
 	if (child_node->subcommands) {
-	    const struct bu_cmd_tree child_tree = {
+	    const struct bu_arg_tree child_tree = {
 		child_schema, child_node->subcommands, child_node->child_phase
 	    };
 	    return ged_native_tree_validate_level(gedp, &child_tree, child, input,
@@ -2644,27 +2644,27 @@ ged_native_tree_validate_level(struct ged *gedp, const struct bu_cmd_tree *tree,
 
 
 static void
-ged_native_tree_apply_full_state(const struct bu_cmd_tree *tree,
+ged_native_tree_apply_full_state(const struct bu_arg_tree *tree,
 	const struct ged_input_parse &parsed, const char *input, size_t cursor_pos,
 	struct ged_cmd_validate_result *result)
 {
-    struct bu_cmd_validate_result full_result = BU_CMD_VALIDATE_RESULT_NULL;
+    struct bu_arg_validate_result full_result = BU_ARG_VALIDATE_RESULT_NULL;
 
-    if (!tree || !input || !result || result->state != BU_CMD_VALIDATE_VALID ||
+    if (!tree || !input || !result || result->state != BU_ARG_VALIDATE_VALID ||
 	cursor_pos != strlen(input) || parsed.cursor_arg >= parsed.argc ||
 	parsed.argc < 1)
 	return;
-    if (bu_cmd_tree_validate_argv(tree, parsed.argc - 1,
+    if (bu_arg_tree_validate_argv(tree, parsed.argc - 1,
 	(const char **)parsed.argv + 1, parsed.argc - 1, &full_result) == 0 &&
-	full_result.state != BU_CMD_VALIDATE_VALID &&
-	full_result.state != BU_CMD_VALIDATE_UNKNOWN)
+	full_result.state != BU_ARG_VALIDATE_VALID &&
+	full_result.state != BU_ARG_VALIDATE_UNKNOWN)
 	result->state = ged_native_state(full_result.state);
-    bu_cmd_validate_result_clear(&full_result);
+    bu_arg_validate_result_clear(&full_result);
 }
 
 
 extern "C" GED_EXPORT int
-ged_cmd_native_validate(struct ged *gedp, const struct bu_cmd_schema *schema,
+ged_cmd_native_validate(struct ged *gedp, const struct bu_arg_schema *schema,
 	const char *input, size_t cursor_pos, struct ged_cmd_validate_result *result)
 {
     struct ged_input_parse parsed;
@@ -2700,7 +2700,7 @@ ged_cmd_native_validate(struct ged *gedp, const struct bu_cmd_schema *schema,
 
 
 extern "C" GED_EXPORT int
-ged_cmd_tree_validate(struct ged *gedp, const struct bu_cmd_tree *tree,
+ged_cmd_tree_validate(struct ged *gedp, const struct bu_arg_tree *tree,
 	const char *input, size_t cursor_pos, struct ged_cmd_validate_result *result)
 {
     struct ged_input_parse parsed;
@@ -2750,7 +2750,7 @@ ged_native_tree_analysis_initialize(struct ged_cmd_analysis *analysis,
     for (size_t i = 0; i < parsed.argc; i++) {
 	ged_analysis_set_span(&analysis->tokens[i], parsed, i);
 	analysis->tokens[i].role = GED_CMD_TOKEN_UNKNOWN;
-	analysis->tokens[i].value_type = BU_CMD_VALUE_UNKNOWN;
+	analysis->tokens[i].value_type = BU_ARG_VALUE_UNKNOWN;
 	analysis->tokens[i].semantic_state = GED_CMD_SEMANTIC_UNKNOWN;
 	analysis->tokens[i].validator = NULL;
 	analysis->tokens[i].hint = NULL;
@@ -2764,7 +2764,7 @@ ged_native_tree_analysis_initialize(struct ged_cmd_analysis *analysis,
 
 
 extern "C" GED_EXPORT int
-ged_cmd_native_analyze(struct ged *gedp, const struct bu_cmd_schema *schema,
+ged_cmd_native_analyze(struct ged *gedp, const struct bu_arg_schema *schema,
 	const char *input, struct ged_cmd_analysis *analysis)
 {
     struct ged_input_parse parsed;
@@ -2793,7 +2793,7 @@ ged_cmd_native_analyze(struct ged *gedp, const struct bu_cmd_schema *schema,
 
 
 static int
-ged_native_tree_analyze_level(struct ged *gedp, const struct bu_cmd_tree *tree,
+ged_native_tree_analyze_level(struct ged *gedp, const struct bu_arg_tree *tree,
 	const struct ged_input_parse &parsed, struct ged_cmd_analysis *analysis)
 {
     if (!tree || !tree->root_schema || !analysis || !parsed.argc)
@@ -2805,11 +2805,11 @@ ged_native_tree_analyze_level(struct ged *gedp, const struct bu_cmd_tree *tree,
     ged_native_analyze(gedp, tree->root_schema, root, analysis);
     if (subcommand_index < parsed.argc) {
 	struct ged_cmd_analysis_token *subcommand = &analysis->tokens[subcommand_index];
-	const struct bu_cmd_tree_node *child_node = bu_cmd_tree_find_subcommand(
+	const struct bu_arg_tree_node *child_node = bu_arg_tree_find_subcommand(
 	    tree, parsed.argv[subcommand_index]);
-	const struct bu_cmd_schema *child_schema = child_node ? child_node->schema : NULL;
+	const struct bu_arg_schema *child_schema = child_node ? child_node->schema : NULL;
 	subcommand->role = GED_CMD_TOKEN_SUBCOMMAND;
-	subcommand->value_type = BU_CMD_VALUE_KEYWORD;
+	subcommand->value_type = BU_ARG_VALUE_KEYWORD;
 	subcommand->semantic_state = child_schema ? GED_CMD_SEMANTIC_VALID : GED_CMD_SEMANTIC_INVALID;
 	subcommand->hint = child_schema ? "subcommand" : "unknown subcommand";
 	if (child_schema) {
@@ -2818,7 +2818,7 @@ ged_native_tree_analyze_level(struct ged *gedp, const struct bu_cmd_tree *tree,
 	    child_analysis.tokens = analysis->tokens + subcommand_index;
 	    child_analysis.token_count = child.argc;
 	    if (child_node->subcommands) {
-		const struct bu_cmd_tree child_tree = {
+		const struct bu_arg_tree child_tree = {
 		    child_schema, child_node->subcommands, child_node->child_phase
 		};
 		(void)ged_native_tree_analyze_level(gedp, &child_tree, child,
@@ -2833,7 +2833,7 @@ ged_native_tree_analyze_level(struct ged *gedp, const struct bu_cmd_tree *tree,
 
 
 extern "C" GED_EXPORT int
-ged_cmd_tree_analyze(struct ged *gedp, const struct bu_cmd_tree *tree,
+ged_cmd_tree_analyze(struct ged *gedp, const struct bu_arg_tree *tree,
 	const char *input, struct ged_cmd_analysis *analysis)
 {
     struct ged_input_parse parsed;
@@ -2866,12 +2866,12 @@ ged_cmd_tree_analyze(struct ged *gedp, const struct bu_cmd_tree *tree,
 
 
 extern "C" GED_EXPORT int
-ged_cmd_native_forms_validate(struct ged *gedp, const struct bu_cmd_forms *forms,
+ged_cmd_native_forms_validate(struct ged *gedp, const struct bu_arg_forms *forms,
 	const char *input, size_t cursor_pos,
 	struct ged_cmd_validate_result *result)
 {
     struct ged_input_parse parsed;
-    const struct bu_cmd_form *form;
+    const struct bu_arg_form *form;
     int ret = 0;
 
     if (!result)
@@ -2893,11 +2893,11 @@ ged_cmd_native_forms_validate(struct ged *gedp, const struct bu_cmd_forms *forms
     }
     if (parsed.cursor_arg < parsed.argc)
 	parsed.argv[parsed.cursor_arg] = (char *)parsed.cursor_seed.c_str();
-    form = bu_cmd_forms_select(forms, parsed.argc,
+    form = bu_arg_forms_select(forms, parsed.argc,
 	(const char * const *)parsed.argv, gedp);
     if (!form) {
-	ged_set_validate_result(result, BU_CMD_VALIDATE_INVALID, parsed.cursor_arg,
-	    parsed.cursor_arg, BU_CMD_EXPECT_NONE, "no matching native command form");
+	ged_set_validate_result(result, BU_ARG_VALIDATE_INVALID, parsed.cursor_arg,
+	    parsed.cursor_arg, BU_ARG_EXPECT_NONE, "no matching native command form");
 	ged_set_result_chars(result, parsed, result->token_start, result->token_end);
 	ged_input_parse_free(&parsed);
 	ged_cmd_validate_result_publish(result);
@@ -2923,11 +2923,11 @@ ged_cmd_native_forms_validate(struct ged *gedp, const struct bu_cmd_forms *forms
 
 
 extern "C" GED_EXPORT int
-ged_cmd_native_forms_analyze(struct ged *gedp, const struct bu_cmd_forms *forms,
+ged_cmd_native_forms_analyze(struct ged *gedp, const struct bu_arg_forms *forms,
 	const char *input, struct ged_cmd_analysis *analysis)
 {
     struct ged_input_parse parsed;
-    const struct bu_cmd_form *form;
+    const struct bu_arg_form *form;
     int ret = 0;
 
     if (!analysis)
@@ -2946,7 +2946,7 @@ ged_cmd_native_forms_analyze(struct ged *gedp, const struct bu_cmd_forms *forms,
 	return 0;
     }
     ged_native_tree_analysis_initialize(analysis, parsed);
-    form = bu_cmd_forms_select(forms, parsed.argc,
+    form = bu_arg_forms_select(forms, parsed.argc,
 	(const char * const *)parsed.argv, gedp);
     if (!form) {
 	ged_input_parse_free(&parsed);
@@ -2967,34 +2967,34 @@ ged_cmd_native_forms_analyze(struct ged *gedp, const struct bu_cmd_forms *forms,
 
 
 extern "C" GED_EXPORT char *
-ged_cmd_native_forms_describe_json(const struct bu_cmd_forms *forms)
+ged_cmd_native_forms_describe_json(const struct bu_arg_forms *forms)
 {
-    return bu_cmd_forms_describe_json(forms);
+    return bu_arg_forms_describe_json(forms);
 }
 
 
 extern "C" GED_EXPORT char *
-ged_cmd_native_forms_help(const struct bu_cmd_forms *forms,
+ged_cmd_native_forms_help(const struct bu_arg_forms *forms,
 	const char *invocation)
 {
-    return bu_cmd_forms_help(forms, invocation);
+    return bu_arg_forms_help(forms, invocation);
 }
 
 
 extern "C" GED_EXPORT int
-ged_cmd_native_forms_lint(const struct bu_cmd_forms *forms,
+ged_cmd_native_forms_lint(const struct bu_arg_forms *forms,
 	struct bu_vls *msgs)
 {
-    return bu_cmd_forms_lint(forms, msgs);
+    return bu_arg_forms_lint(forms, msgs);
 }
 
 
 struct ged_completion_filter_context {
-    bu_cmd_value_validate_t validate = NULL;
+    bu_arg_value_validate_t validate = NULL;
     std::string cursor_token;
     std::string seed;
-    bu_cmd_value_t type = BU_CMD_VALUE_UNKNOWN;
-    unsigned int expected = BU_CMD_EXPECT_NONE;
+    bu_arg_value_t type = BU_ARG_VALUE_UNKNOWN;
+    unsigned int expected = BU_ARG_EXPECT_NONE;
 };
 
 
@@ -3006,7 +3006,7 @@ ged_completion_candidate_filter(const char *candidate, const void *data)
     if (!context || !context->validate || !candidate)
 	return -1;
 
-    if (context->type == BU_CMD_VALUE_FILE && candidate[0]) {
+    if (context->type == BU_ARG_VALUE_FILE && candidate[0]) {
 	size_t length = strlen(candidate);
 	if (candidate[length - 1] == '/' || candidate[length - 1] == '\\')
 	    return 0;
@@ -3015,12 +3015,12 @@ ged_completion_candidate_filter(const char *candidate, const void *data)
     std::string proposed = context->cursor_token;
     size_t decoded_start = 0;
     size_t decoded_length = context->seed.size();
-    if (context->type == BU_CMD_VALUE_DB_OBJECT ||
-	context->type == BU_CMD_VALUE_DB_PATH) {
+    if (context->type == BU_ARG_VALUE_DB_OBJECT ||
+	context->type == BU_ARG_VALUE_DB_PATH) {
 	size_t separator = context->seed.rfind('/');
 	if (separator != std::string::npos)
 	    decoded_start = separator + 1;
-    } else if (context->expected & BU_CMD_EXPECT_OPTION_ARG) {
+    } else if (context->expected & BU_ARG_EXPECT_OPTION_ARG) {
 	size_t equal = context->seed.rfind('=');
 	if (equal != std::string::npos)
 	    decoded_start = equal + 1;
@@ -3030,7 +3030,7 @@ ged_completion_candidate_filter(const char *candidate, const void *data)
 	proposed.replace(decoded_start, decoded_length, candidate);
     else
 	proposed = candidate;
-    if (context->expected & BU_CMD_EXPECT_OPTION_ARG) {
+    if (context->expected & BU_ARG_EXPECT_OPTION_ARG) {
 	size_t equal = proposed.rfind('=');
 	if (equal != std::string::npos)
 	    proposed.erase(0, equal + 1);
@@ -3100,11 +3100,11 @@ ged_cmd_complete_result_internal(struct ged *gedp, const char *input, size_t cur
 	    return -1;
 	}
 	std::string grammar_seed = seed;
-	if (vr.completion_type == BU_CMD_VALUE_DB_PATH) {
+	if (vr.completion_type == BU_ARG_VALUE_DB_PATH) {
 	    size_t separator = ged_last_unescaped_path_separator(grammar_seed);
 	    if (separator != std::string::npos)
 		grammar_seed.erase(0, separator + 1);
-	} else if ((vr.expected & BU_CMD_EXPECT_OPTION_ARG) &&
+	} else if ((vr.expected & BU_ARG_EXPECT_OPTION_ARG) &&
 		parsed.cursor_value_start > parsed.cursor_content_start) {
 	    size_t equal = grammar_seed.rfind('=');
 	    if (equal != std::string::npos)
@@ -3127,9 +3127,9 @@ ged_cmd_complete_result_internal(struct ged *gedp, const char *input, size_t cur
      * options only after a '-' seed; do not mix those spellings into a large
      * object listing or context-validate every object because options happened
      * to be legal at the same position. */
-    if (seed.empty() && (vr.expected & BU_CMD_EXPECT_OPERAND) &&
-	(vr.completion_type == BU_CMD_VALUE_DB_OBJECT ||
-	 vr.completion_type == BU_CMD_VALUE_DB_PATH) &&
+    if (seed.empty() && (vr.expected & BU_ARG_EXPECT_OPERAND) &&
+	(vr.completion_type == BU_ARG_VALUE_DB_OBJECT ||
+	 vr.completion_type == BU_ARG_VALUE_DB_PATH) &&
 	vr.completion_candidates && vr.completion_count) {
 	size_t kept = 0;
 	for (size_t i = 0; i < vr.completion_count; i++) {
@@ -3150,7 +3150,7 @@ ged_cmd_complete_result_internal(struct ged *gedp, const char *input, size_t cur
      * to semantic candidates: database-sized candidate sets made the former
      * generic version of this check quadratic. */
     if (!seed.empty() && seed[0] == '-' && vr.completion_candidates &&
-	    (vr.expected & BU_CMD_EXPECT_OPTION) &&
+	    (vr.expected & BU_ARG_EXPECT_OPTION) &&
 	    parsed.cursor_arg < parsed.argc && cursor_pos == parsed.char_ends[parsed.cursor_arg]) {
 	size_t write_idx = 0;
 	for (size_t i = 0; i < vr.completion_count; i++) {
@@ -3163,7 +3163,7 @@ ged_cmd_complete_result_internal(struct ged *gedp, const char *input, size_t cur
 		struct ged_cmd_validate_result candidate_vr = GED_CMD_VALIDATE_RESULT_NULL;
 		(void)ged_cmd_validate_internal(gedp, probe.c_str(),
 		    parsed.cursor_content_start + strlen(candidate), &candidate_vr);
-		keep = candidate_vr.state != BU_CMD_VALIDATE_INVALID;
+		keep = candidate_vr.state != BU_ARG_VALIDATE_INVALID;
 		ged_cmd_validate_result_clear(&candidate_vr);
 	    }
 	    if (keep) {
@@ -3185,7 +3185,7 @@ ged_cmd_complete_result_internal(struct ged *gedp, const char *input, size_t cur
     if (parsed.cursor_arg < parsed.argc && cursor_pos == parsed.char_ends[parsed.cursor_arg] &&
 	    cursor_pos > parsed.char_starts[parsed.cursor_arg] && !seed.empty() &&
 	    seed[0] == '-' && seed.find('=') == std::string::npos &&
-	    (vr.expected & BU_CMD_EXPECT_OPTION_ARG) &&
+	    (vr.expected & BU_ARG_EXPECT_OPTION_ARG) &&
 	    (parsed.cursor_arg == 0 || parsed.argv[parsed.cursor_arg - 1][0] != '-') &&
 	    vr.char_start == parsed.char_starts[parsed.cursor_arg] &&
 	    vr.char_end == parsed.char_ends[parsed.cursor_arg]) {
@@ -3240,9 +3240,9 @@ ged_cmd_complete_result_internal(struct ged *gedp, const char *input, size_t cur
     ged_cmd_analysis_clear(&active_analysis);
 
     bool schema_option_candidates = (vr.completion_count && !seed.empty() && seed[0] == '-' &&
-	(vr.expected & BU_CMD_EXPECT_OPTION));
+	(vr.expected & BU_ARG_EXPECT_OPTION));
     if (!schema_option_candidates && vr.semantic_provider &&
-	    (vr.expected & (BU_CMD_EXPECT_OPERAND | BU_CMD_EXPECT_OPTION_ARG))) {
+	    (vr.expected & (BU_ARG_EXPECT_OPERAND | BU_ARG_EXPECT_OPTION_ARG))) {
 	struct ged_cmd_validate_result semantic = GED_CMD_VALIDATE_RESULT_NULL;
 	struct ged_cmd_completion_request provider_request =
 	    GED_CMD_COMPLETION_REQUEST_NULL;
@@ -3250,8 +3250,8 @@ ged_cmd_complete_result_internal(struct ged *gedp, const char *input, size_t cur
 	struct ged_completion_merge_filter_context merge_filter_context;
 	std::set<std::string> static_candidates;
 	std::string semantic_seed =
-	    (vr.completion_type == BU_CMD_VALUE_DB_OBJECT ||
-	     vr.completion_type == BU_CMD_VALUE_DB_PATH) ? path_seed : seed;
+	    (vr.completion_type == BU_ARG_VALUE_DB_OBJECT ||
+	     vr.completion_type == BU_ARG_VALUE_DB_PATH) ? path_seed : seed;
 	if (request)
 	    provider_request = *request;
 	provider_request.cursor_pos = cursor_pos;
@@ -3280,7 +3280,7 @@ ged_cmd_complete_result_internal(struct ged *gedp, const char *input, size_t cur
 	    provider_request.candidate_filter = ged_completion_merge_filter;
 	    provider_request.candidate_filter_data = &merge_filter_context;
 	}
-	if ((vr.expected & BU_CMD_EXPECT_OPTION_ARG) &&
+	if ((vr.expected & BU_ARG_EXPECT_OPTION_ARG) &&
 		parsed.cursor_value_start > parsed.cursor_content_start) {
 	    size_t equal = semantic_seed.rfind('=');
 	    if (equal != std::string::npos)
@@ -3314,9 +3314,9 @@ ged_cmd_complete_result_internal(struct ged *gedp, const char *input, size_t cur
      * geometry here would discard command-specific filters (for example,
      * binary-only or hidden-object modes).  Only synthesize candidates when
      * a grammar supplied a geometry role without a provider or candidates. */
-    if (!vr.completion_count && vr.state != BU_CMD_VALIDATE_INVALID && !vr.semantic_provider &&
+    if (!vr.completion_count && vr.state != BU_ARG_VALIDATE_INVALID && !vr.semantic_provider &&
 	!schema_option_candidates &&
-	(vr.completion_type == BU_CMD_VALUE_DB_OBJECT || vr.completion_type == BU_CMD_VALUE_DB_PATH) &&
+	(vr.completion_type == BU_ARG_VALUE_DB_OBJECT || vr.completion_type == BU_ARG_VALUE_DB_PATH) &&
 	gedp && gedp->dbip) {
 	struct bu_vls gprefix = BU_VLS_INIT_ZERO;
 	struct ged_cmd_validate_result gvr = GED_CMD_VALIDATE_RESULT_NULL;
@@ -3344,14 +3344,14 @@ ged_cmd_complete_result_internal(struct ged *gedp, const char *input, size_t cur
 	vr.completion_common_prefix = NULL;
 	vr.completion_candidates = NULL;
 	vr.completion_count = 0;
-	completion_prefix = (result->completion_type == BU_CMD_VALUE_DB_OBJECT ||
-	    result->completion_type == BU_CMD_VALUE_DB_PATH) ? path_seed : seed;
+	completion_prefix = (result->completion_type == BU_ARG_VALUE_DB_OBJECT ||
+	    result->completion_type == BU_ARG_VALUE_DB_PATH) ? path_seed : seed;
 	size_t separator = ged_last_unescaped_path_separator(completion_prefix);
-	if ((result->completion_type == BU_CMD_VALUE_DB_OBJECT ||
-		result->completion_type == BU_CMD_VALUE_DB_PATH) &&
+	if ((result->completion_type == BU_ARG_VALUE_DB_OBJECT ||
+		result->completion_type == BU_ARG_VALUE_DB_PATH) &&
 		separator != std::string::npos) {
 	    completion_prefix = completion_prefix.substr(separator + 1);
-	} else if ((result->expected & BU_CMD_EXPECT_OPTION_ARG) &&
+	} else if ((result->expected & BU_ARG_EXPECT_OPTION_ARG) &&
 		parsed.cursor_value_start > parsed.cursor_content_start) {
 	    size_t equal = completion_prefix.rfind('=');
 	    if (equal != std::string::npos) {
@@ -3365,11 +3365,11 @@ ged_cmd_complete_result_internal(struct ged *gedp, const char *input, size_t cur
      * the suffix after the cursor intact and replace only the path component
      * or attached option value represented by a completion candidate. */
     size_t separator = ged_last_unescaped_path_separator(path_seed);
-    if ((result->completion_type == BU_CMD_VALUE_DB_OBJECT ||
-	    result->completion_type == BU_CMD_VALUE_DB_PATH) &&
+    if ((result->completion_type == BU_ARG_VALUE_DB_OBJECT ||
+	    result->completion_type == BU_ARG_VALUE_DB_PATH) &&
 	    separator != std::string::npos) {
 	result->replacement_start = parsed.cursor_component_start;
-    } else if ((result->expected & BU_CMD_EXPECT_OPTION_ARG) &&
+    } else if ((result->expected & BU_ARG_EXPECT_OPTION_ARG) &&
 	    parsed.cursor_value_start > parsed.cursor_content_start &&
 	    seed.rfind('=') != std::string::npos) {
 	result->replacement_start = parsed.cursor_value_start;
@@ -3379,7 +3379,7 @@ ged_cmd_complete_result_internal(struct ged *gedp, const char *input, size_t cur
      * limit.  Retain a final pass for legacy providers without a query hook;
      * they enumerate an unbounded set, so this pass is still exact. */
     if (vr.candidate_validate && result->completion_candidates &&
-	    (result->expected & (BU_CMD_EXPECT_OPERAND | BU_CMD_EXPECT_OPTION_ARG))) {
+	    (result->expected & (BU_ARG_EXPECT_OPERAND | BU_ARG_EXPECT_OPTION_ARG))) {
 	size_t kept = 0;
 	size_t original_count = result->completion_count;
 	struct ged_completion_filter_context final_context;
@@ -3487,8 +3487,8 @@ ged_cmd_completion_result_init(struct ged_cmd_completion_result *result)
     result->replacement_start = 0;
     result->replacement_end = 0;
     result->prefix = NULL;
-    result->completion_type = BU_CMD_VALUE_UNKNOWN;
-    result->expected = BU_CMD_EXPECT_NONE;
+    result->completion_type = BU_ARG_VALUE_UNKNOWN;
+    result->expected = BU_ARG_EXPECT_NONE;
     result->hint = NULL;
     result->active_command_path = NULL;
     result->total_count = 0;

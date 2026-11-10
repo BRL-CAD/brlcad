@@ -72,7 +72,7 @@ bad:
 
 #include "../include/plugin.h"
 
-GED_DEFINE_TYPED_OPERAND_SCHEMA(model2view_lu, "model2view_lu", "Convert a model point to local view coordinates", "point", BU_CMD_VALUE_NUMBER, 3, 3, "X Y Z point");
+GED_DEFINE_TYPED_OPERAND_SCHEMA(model2view_lu, "model2view_lu", "Convert a model point to local view coordinates", "point", BU_ARG_VALUE_NUMBER, 3, 3, "X Y Z point");
 
 #define GED_MODEL2VIEW_LU_COMMANDS(X, XID) \
     X(model2view_lu, ged_model2view_lu_core, GED_CMD_DEFAULT, &model2view_lu_cmd_schema) \

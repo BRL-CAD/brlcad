@@ -31,7 +31,7 @@
 #include <math.h>
 
 
-#include "bu/cmdschema.h"
+#include "bu/arg.h"
 #include "bu/opt.h"
 
 #include "raytrace.h"
@@ -3596,62 +3596,62 @@ struct funtab joint_tab[] = {
 };
 
 #include "../include/plugin.h"
-static const struct bu_cmd_operand joint_args[] = {
-    BU_CMD_OPERAND("arguments", BU_CMD_VALUE_RAW, 0, BU_CMD_COUNT_UNLIMITED,
+static const struct bu_arg_operand joint_args[] = {
+    BU_ARG_OPERAND("arguments", BU_ARG_VALUE_RAW, 0, BU_ARG_COUNT_UNLIMITED,
 	"Joint-specific arguments", NULL),
-    BU_CMD_OPERAND_NULL
+    BU_ARG_OPERAND_NULL
 };
-static const struct bu_cmd_operand joint_debug_args[] = {
-    BU_CMD_OPERAND("flags", BU_CMD_VALUE_HEX_INTEGER, 0, 1,
+static const struct bu_arg_operand joint_debug_args[] = {
+    BU_ARG_OPERAND("flags", BU_ARG_VALUE_HEX_INTEGER, 0, 1,
 	"Debugging bit vector", NULL),
-    BU_CMD_OPERAND_NULL
+    BU_ARG_OPERAND_NULL
 };
-static const struct bu_cmd_operand joint_move_args[] = {
-    BU_CMD_OPERAND("joint", BU_CMD_VALUE_STRING, 1, 1,
+static const struct bu_arg_operand joint_move_args[] = {
+    BU_ARG_OPERAND("joint", BU_ARG_VALUE_STRING, 1, 1,
 	"Joint name", NULL),
-    BU_CMD_OPERAND("parameter", BU_CMD_VALUE_NUMBER, 1, 6,
+    BU_ARG_OPERAND("parameter", BU_ARG_VALUE_NUMBER, 1, 6,
 	"One through six joint parameter values", NULL),
-    BU_CMD_OPERAND_NULL
+    BU_ARG_OPERAND_NULL
 };
-static const struct bu_cmd_operand joint_constraint_args[] = {
-    BU_CMD_OPERAND("constraint", BU_CMD_VALUE_STRING, 0,
-	BU_CMD_COUNT_UNLIMITED, "Constraint names; omit to select all", NULL),
-    BU_CMD_OPERAND_NULL
+static const struct bu_arg_operand joint_constraint_args[] = {
+    BU_ARG_OPERAND("constraint", BU_ARG_VALUE_STRING, 0,
+	BU_ARG_COUNT_UNLIMITED, "Constraint names; omit to select all", NULL),
+    BU_ARG_OPERAND_NULL
 };
-static const struct bu_cmd_operand joint_file[] = {
-    BU_CMD_OPERAND("file", BU_CMD_VALUE_FILE, 1, 1,
+static const struct bu_arg_operand joint_file[] = {
+    BU_ARG_OPERAND("file", BU_ARG_VALUE_FILE, 1, 1,
 	"Joint definition file", "ged.file_path"),
-    BU_CMD_OPERAND_NULL
+    BU_ARG_OPERAND_NULL
 };
-static const struct bu_cmd_operand joint_files[] = {
-    BU_CMD_OPERAND("files", BU_CMD_VALUE_FILE, 1, BU_CMD_COUNT_UNLIMITED,
+static const struct bu_arg_operand joint_files[] = {
+    BU_ARG_OPERAND("files", BU_ARG_VALUE_FILE, 1, BU_ARG_COUNT_UNLIMITED,
 	"Joint definition files", "ged.file_path"),
-    BU_CMD_OPERAND_NULL
+    BU_ARG_OPERAND_NULL
 };
-static const struct bu_cmd_option joint_load_schema_options[] = {
-    BU_CMD_FLAG_UNBOUND("u", NULL, "u", "Keep currently loaded joints"),
-    BU_CMD_FLAG_UNBOUND("a", NULL, "a", "Do not apply loaded joints"),
-    BU_CMD_FLAG_UNBOUND("m", NULL, "m", "Do not rebuild the grip mesh"),
-    BU_CMD_OPTION_NULL
+static const struct bu_arg_option joint_load_schema_options[] = {
+    BU_ARG_FLAG_UNBOUND("u", NULL, "u", "Keep currently loaded joints"),
+    BU_ARG_FLAG_UNBOUND("a", NULL, "a", "Do not apply loaded joints"),
+    BU_ARG_FLAG_UNBOUND("m", NULL, "m", "Do not rebuild the grip mesh"),
+    BU_ARG_OPTION_NULL
 };
-static const struct bu_cmd_option joint_mesh_schema_options[] = {
-    BU_CMD_FLAG_UNBOUND("m", NULL, "m", "Do not rebuild the grip mesh"),
-    BU_CMD_OPTION_NULL
+static const struct bu_arg_option joint_mesh_schema_options[] = {
+    BU_ARG_FLAG_UNBOUND("m", NULL, "m", "Do not rebuild the grip mesh"),
+    BU_ARG_OPTION_NULL
 };
-static const struct bu_cmd_option joint_solve_schema_options[] = {
-    BU_CMD_VALUE_UNBOUND("l", NULL, "l", BU_CMD_VALUE_INTEGER, "count",
+static const struct bu_arg_option joint_solve_schema_options[] = {
+    BU_ARG_VALUE_UNBOUND("l", NULL, "l", BU_ARG_VALUE_INTEGER, "count",
 	"Set maximum iteration count"),
-    BU_CMD_VALUE_UNBOUND("e", NULL, "e", BU_CMD_VALUE_NUMBER, "distance",
+    BU_ARG_VALUE_UNBOUND("e", NULL, "e", BU_ARG_VALUE_NUMBER, "distance",
 	"Set convergence epsilon"),
-    BU_CMD_VALUE_UNBOUND("d", NULL, "d", BU_CMD_VALUE_NUMBER, "distance",
+    BU_ARG_VALUE_UNBOUND("d", NULL, "d", BU_ARG_VALUE_NUMBER, "distance",
 	"Set initial solve delta"),
-    BU_CMD_FLAG_UNBOUND("m", NULL, "m", "Toggle mesh rebuilding"),
-    BU_CMD_OPTION_NULL
+    BU_ARG_FLAG_UNBOUND("m", NULL, "m", "Toggle mesh rebuilding"),
+    BU_ARG_OPTION_NULL
 };
 
 #define JOINT_SCHEMA(_id, _name, _help, _opts, _ops) \
-    static const struct bu_cmd_schema _id##_schema = \
-	BU_CMD_SCHEMA_EXTERNAL(_name, _help, _opts, _ops, BU_CMD_PARSE_OPTIONS_FIRST, \
+    static const struct bu_arg_schema _id##_schema = \
+	BU_ARG_SCHEMA_EXTERNAL(_name, _help, _opts, _ops, BU_ARG_PARSE_OPTIONS_FIRST, \
 	    NULL, NULL, NULL)
 JOINT_SCHEMA(joint_root, "joint", "Load, inspect, solve, and move articulated joints", NULL, NULL);
 JOINT_SCHEMA(joint_help, "?", "List joint commands", NULL, joint_args);
@@ -3669,31 +3669,31 @@ JOINT_SCHEMA(joint_solve, "solve", "Solve constraints", joint_solve_schema_optio
 JOINT_SCHEMA(joint_unload, "unload", "Unload joint definitions", NULL, NULL);
 #undef JOINT_SCHEMA
 
-static const struct bu_cmd_tree_node joint_subcommands[] = {
-    BU_CMD_TREE_NODE(&joint_help_schema, NULL, NULL, BU_CMD_TREE_CHILD_AFTER_OPTIONS, NULL),
-    BU_CMD_TREE_NODE(&joint_accept_schema, NULL, NULL, BU_CMD_TREE_CHILD_AFTER_OPTIONS, NULL),
-    BU_CMD_TREE_NODE(&joint_debug_schema, NULL, NULL, BU_CMD_TREE_CHILD_AFTER_OPTIONS, NULL),
-    BU_CMD_TREE_NODE(&joint_usage_schema, NULL, NULL, BU_CMD_TREE_CHILD_AFTER_OPTIONS, NULL),
-    BU_CMD_TREE_NODE(&joint_holds_schema, NULL, NULL, BU_CMD_TREE_CHILD_AFTER_OPTIONS, NULL),
-    BU_CMD_TREE_NODE(&joint_list_schema, NULL, NULL, BU_CMD_TREE_CHILD_AFTER_OPTIONS, NULL),
-    BU_CMD_TREE_NODE(&joint_load_schema, NULL, NULL, BU_CMD_TREE_CHILD_AFTER_OPTIONS, NULL),
-    BU_CMD_TREE_NODE(&joint_mesh_schema, NULL, NULL, BU_CMD_TREE_CHILD_AFTER_OPTIONS, NULL),
-    BU_CMD_TREE_NODE(&joint_move_schema, NULL, NULL, BU_CMD_TREE_CHILD_AFTER_OPTIONS, NULL),
-    BU_CMD_TREE_NODE(&joint_reject_schema, NULL, NULL, BU_CMD_TREE_CHILD_AFTER_OPTIONS, NULL),
-    BU_CMD_TREE_NODE(&joint_save_schema, NULL, NULL, BU_CMD_TREE_CHILD_AFTER_OPTIONS, NULL),
-    BU_CMD_TREE_NODE(&joint_solve_schema, NULL, NULL, BU_CMD_TREE_CHILD_AFTER_OPTIONS, NULL),
-    BU_CMD_TREE_NODE(&joint_unload_schema, NULL, NULL, BU_CMD_TREE_CHILD_AFTER_OPTIONS, NULL),
-    BU_CMD_TREE_NODE_NULL
+static const struct bu_arg_tree_node joint_subcommands[] = {
+    BU_ARG_TREE_NODE(&joint_help_schema, NULL, NULL, BU_ARG_TREE_CHILD_AFTER_OPTIONS, NULL),
+    BU_ARG_TREE_NODE(&joint_accept_schema, NULL, NULL, BU_ARG_TREE_CHILD_AFTER_OPTIONS, NULL),
+    BU_ARG_TREE_NODE(&joint_debug_schema, NULL, NULL, BU_ARG_TREE_CHILD_AFTER_OPTIONS, NULL),
+    BU_ARG_TREE_NODE(&joint_usage_schema, NULL, NULL, BU_ARG_TREE_CHILD_AFTER_OPTIONS, NULL),
+    BU_ARG_TREE_NODE(&joint_holds_schema, NULL, NULL, BU_ARG_TREE_CHILD_AFTER_OPTIONS, NULL),
+    BU_ARG_TREE_NODE(&joint_list_schema, NULL, NULL, BU_ARG_TREE_CHILD_AFTER_OPTIONS, NULL),
+    BU_ARG_TREE_NODE(&joint_load_schema, NULL, NULL, BU_ARG_TREE_CHILD_AFTER_OPTIONS, NULL),
+    BU_ARG_TREE_NODE(&joint_mesh_schema, NULL, NULL, BU_ARG_TREE_CHILD_AFTER_OPTIONS, NULL),
+    BU_ARG_TREE_NODE(&joint_move_schema, NULL, NULL, BU_ARG_TREE_CHILD_AFTER_OPTIONS, NULL),
+    BU_ARG_TREE_NODE(&joint_reject_schema, NULL, NULL, BU_ARG_TREE_CHILD_AFTER_OPTIONS, NULL),
+    BU_ARG_TREE_NODE(&joint_save_schema, NULL, NULL, BU_ARG_TREE_CHILD_AFTER_OPTIONS, NULL),
+    BU_ARG_TREE_NODE(&joint_solve_schema, NULL, NULL, BU_ARG_TREE_CHILD_AFTER_OPTIONS, NULL),
+    BU_ARG_TREE_NODE(&joint_unload_schema, NULL, NULL, BU_ARG_TREE_CHILD_AFTER_OPTIONS, NULL),
+    BU_ARG_TREE_NODE_NULL
 };
-static const struct bu_cmd_tree joint_tree = {
-    &joint_root_schema, joint_subcommands, BU_CMD_TREE_CHILD_FIRST
+static const struct bu_arg_tree joint_tree = {
+    &joint_root_schema, joint_subcommands, BU_ARG_TREE_CHILD_FIRST
 };
 
 static int
 joint_tree_help_append(struct ged *gedp, size_t path_argc,
 	const char * const *path_argv)
 {
-    char *help = bu_cmd_tree_help_path(&joint_tree, "joint", path_argc,
+    char *help = bu_arg_tree_help_path(&joint_tree, "joint", path_argc,
 	path_argv);
 
     if (!help)
@@ -3720,13 +3720,13 @@ joint_grammar_analyze(struct ged *gedp, const char *input,
 static char *
 joint_grammar_json(void)
 {
-    return bu_cmd_tree_describe_json(&joint_tree);
+    return bu_arg_tree_describe_json(&joint_tree);
 }
 
 static int
 joint_grammar_lint(struct bu_vls *msgs)
 {
-    return bu_cmd_tree_lint(&joint_tree, msgs);
+    return bu_arg_tree_lint(&joint_tree, msgs);
 }
 GED_CMD_TREE_HELP(joint_grammar_help, joint_tree)
 

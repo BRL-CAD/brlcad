@@ -158,7 +158,7 @@ ged_rcodes_core(struct ged *gedp, int argc, const char *argv[])
 
 #include "../include/plugin.h"
 
-GED_DEFINE_TYPED_OPERAND_SCHEMA(rcodes, "rcodes", "Apply region codes from a file", "input_file", BU_CMD_VALUE_FILE, 1, 1, "Region-code input file");
+GED_DEFINE_TYPED_OPERAND_SCHEMA(rcodes, "rcodes", "Apply region codes from a file", "input_file", BU_ARG_VALUE_FILE, 1, 1, "Region-code input file");
 
 #define GED_RCODES_COMMANDS(X, XID) \
     X(rcodes, ged_rcodes_core, GED_CMD_DEFAULT, &rcodes_cmd_schema) \

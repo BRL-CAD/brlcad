@@ -73,7 +73,7 @@ who_solids_level(const char *arg, int *lvl)
     if (!arg || !lvl)
 	return 0;
 
-    if (!bu_cmd_integer_from_str(lvl, arg))
+    if (!bu_arg_integer_from_str(lvl, arg))
 	return 0;
 
     if (*lvl > 3)
@@ -356,9 +356,9 @@ who_solids_impl(struct ged *gedp, int argc, const char *argv[], int subcmd_usage
 	argv++;
     }
 
-    const struct bu_cmd_schema *schema = subcmd_usage ? &ged_who_solids_schema :
+    const struct bu_arg_schema *schema = subcmd_usage ? &ged_who_solids_schema :
 	ged_solid_report_native_schema();
-    int opt_ret = bu_cmd_schema_parse(schema, &args,
+    int opt_ret = bu_arg_schema_parse(schema, &args,
 	gedp->ged_result_str, argc, argv);
     if (opt_ret < 0) {
 	who_solids_usage(gedp, cmd_name, subcmd_usage);

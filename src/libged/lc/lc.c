@@ -33,7 +33,7 @@
 #include "bu/str.h"
 #include "bu/vls.h"
 #include "bu/file.h"
-#include "bu/cmdschema.h"
+#include "bu/arg.h"
 #include "bu/sort.h"
 #include "bu/ptbl.h"
 
@@ -88,74 +88,74 @@ lc_file_parse(struct bu_vls *msg, const char *arg, void *storage)
 }
 
 
-static const struct bu_cmd_option lc_schema_options[] = {
-    BU_CMD_COUNTING_FLAG("d", NULL, struct lc_args, duplicates,
+static const struct bu_arg_option lc_schema_options[] = {
+    BU_ARG_COUNTING_FLAG("d", NULL, struct lc_args, duplicates,
 	"List duplicate region codes"),
-    BU_CMD_COUNTING_FLAG("m", NULL, struct lc_args, mismatched,
+    BU_ARG_COUNTING_FLAG("m", NULL, struct lc_args, mismatched,
 	"List duplicate region IDs with mismatched codes"),
-    BU_CMD_COUNTING_FLAG("s", NULL, struct lc_args, unique_codes,
+    BU_ARG_COUNTING_FLAG("s", NULL, struct lc_args, unique_codes,
 	"List duplicate region IDs with distinct code records"),
-    BU_CMD_COUNTING_FLAG("r", NULL, struct lc_args, skip_subtracted,
+    BU_ARG_COUNTING_FLAG("r", NULL, struct lc_args, skip_subtracted,
 	"Skip regions subtracted from a parent region"),
-    BU_CMD_COUNTING_FLAG("z", NULL, struct lc_args, descending,
+    BU_ARG_COUNTING_FLAG("z", NULL, struct lc_args, descending,
 	"Sort descending"),
-    BU_CMD_COUNTING_FLAG("0", NULL, struct lc_args, sort0,
+    BU_ARG_COUNTING_FLAG("0", NULL, struct lc_args, sort0,
 	"Keep stored order"),
-    BU_CMD_COUNTING_FLAG("1", NULL, struct lc_args, sort1,
+    BU_ARG_COUNTING_FLAG("1", NULL, struct lc_args, sort1,
 	"Sort by region ID"),
-    BU_CMD_COUNTING_FLAG("2", NULL, struct lc_args, sort2,
+    BU_ARG_COUNTING_FLAG("2", NULL, struct lc_args, sort2,
 	"Sort by material ID"),
-    BU_CMD_COUNTING_FLAG("3", NULL, struct lc_args, sort3,
+    BU_ARG_COUNTING_FLAG("3", NULL, struct lc_args, sort3,
 	"Sort by LOS"),
-    BU_CMD_COUNTING_FLAG("4", NULL, struct lc_args, sort4,
+    BU_ARG_COUNTING_FLAG("4", NULL, struct lc_args, sort4,
 	"Sort by air code"),
-    BU_CMD_COUNTING_FLAG("5", NULL, struct lc_args, sort5,
+    BU_ARG_COUNTING_FLAG("5", NULL, struct lc_args, sort5,
 	"Sort by region name"),
-    BU_CMD_CUSTOM("f", NULL, struct lc_args, output_file, lc_file_parse,
+    BU_ARG_CUSTOM("f", NULL, struct lc_args, output_file, lc_file_parse,
 	"file", "Write output to a new file"),
-    BU_CMD_OPTION_NULL
+    BU_ARG_OPTION_NULL
 };
-static const struct bu_cmd_operand lc_schema_operands[] = {
-    BU_CMD_OPERAND("group", BU_CMD_VALUE_DB_OBJECT, 1, 1,
+static const struct bu_arg_operand lc_schema_operands[] = {
+    BU_ARG_OPERAND("group", BU_ARG_VALUE_DB_OBJECT, 1, 1,
 	"Group or combination to list", "ged.db_object"),
-    BU_CMD_OPERAND_NULL
+    BU_ARG_OPERAND_NULL
 };
-static int lc_schema_validate(const struct bu_cmd_schema *schema, size_t argc,
-	const char **argv, size_t cursor_arg, struct bu_cmd_validate_result *result);
-static const struct bu_cmd_schema lc_cmd_schema = {
+static int lc_schema_validate(const struct bu_arg_schema *schema, size_t argc,
+	const char **argv, size_t cursor_arg, struct bu_arg_validate_result *result);
+static const struct bu_arg_schema lc_cmd_schema = {
     "lc", "List region codes in a group", lc_schema_options, lc_schema_operands,
-    BU_CMD_PARSE_OPTIONS_FIRST, BU_CMD_SCHEMA_CONSTRAINTS(lc_schema_validate, NULL)
+    BU_ARG_PARSE_OPTIONS_FIRST, BU_ARG_SCHEMA_CONSTRAINTS(lc_schema_validate, NULL)
 };
 
 
 static int
-lc_schema_validate(const struct bu_cmd_schema *schema, size_t argc,
-	const char **argv, size_t cursor_arg, struct bu_cmd_validate_result *result)
+lc_schema_validate(const struct bu_arg_schema *schema, size_t argc,
+	const char **argv, size_t cursor_arg, struct bu_arg_validate_result *result)
 {
-    struct bu_cmd_schema flat = *schema;
+    struct bu_arg_schema flat = *schema;
     struct lc_args args = {0};
     int sort_count;
     int ret;
 
-    ret = bu_cmd_schema_validate_syntax(&flat, argc, argv, cursor_arg, result);
-    if (ret || result->state == BU_CMD_VALIDATE_INVALID)
+    ret = bu_arg_schema_validate_syntax(&flat, argc, argv, cursor_arg, result);
+    if (ret || result->state == BU_ARG_VALIDATE_INVALID)
 	return ret;
     /* A generic incomplete result can legitimately be caused by a missing
      * option argument.  Keep that result intact rather than turning it into
      * a validator failure just because there is not enough argv to populate
      * the temporary record. */
-    if (bu_cmd_schema_parse(&flat, &args, NULL, (int)argc, argv) < 0)
+    if (bu_arg_schema_parse(&flat, &args, NULL, (int)argc, argv) < 0)
 	return 0;
 
     sort_count = args.sort0 + args.sort1 + args.sort2 + args.sort3 +
 	args.sort4 + args.sort5;
     if (args.output_file.count > 1 || sort_count > 1) {
-	bu_cmd_validate_result_clear(result);
-	result->state = BU_CMD_VALIDATE_INVALID;
+	bu_arg_validate_result_clear(result);
+	result->state = BU_ARG_VALIDATE_INVALID;
 	result->token_start = cursor_arg < argc ? cursor_arg : argc;
 	result->token_end = result->token_start;
-	result->expected = BU_CMD_EXPECT_NONE;
-	result->completion_type = BU_CMD_VALUE_FLAG;
+	result->expected = BU_ARG_EXPECT_NONE;
+	result->completion_type = BU_ARG_VALUE_FLAG;
 	result->hint = args.output_file.count > 1 ?
 	    "-f may be specified only once" : "only one sort-column option may be specified";
     }
@@ -166,7 +166,7 @@ lc_schema_validate(const struct bu_cmd_schema *schema, size_t argc,
 static void
 lc_usage(struct ged *gedp)
 {
-    char *help = bu_cmd_schema_help(&lc_cmd_schema, "lc");
+    char *help = bu_arg_schema_help(&lc_cmd_schema, "lc");
 
     if (help) {
 	bu_vls_strcat(gedp->ged_result_str, help);
@@ -326,7 +326,7 @@ ged_lc_core(struct ged *gedp, int argc, const char *argv[])
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
     GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
 
-    operand_index = bu_cmd_schema_parse(&lc_cmd_schema, &args,
+    operand_index = bu_arg_schema_parse(&lc_cmd_schema, &args,
 	gedp->ged_result_str, argc - 1, argv + 1);
     if (operand_index < 0) {
 	lc_usage(gedp);

@@ -28,7 +28,7 @@
 #include <stdlib.h>
 #include <ctype.h>
 #include <string.h>
-#include "bu/cmdschema.h"
+#include "bu/arg.h"
 #include "bu/log.h"
 #include "bu/malloc.h"
 #include "bu/vls.h"
@@ -61,103 +61,103 @@ struct dm_attach_args {
     struct bu_vls view_name;
 };
 
-static int dm_bg_schema_validate(const struct bu_cmd_schema *schema,
+static int dm_bg_schema_validate(const struct bu_arg_schema *schema,
     size_t argc, const char **argv, size_t cursor_arg,
-    struct bu_cmd_validate_result *result);
+    struct bu_arg_validate_result *result);
 
-static const struct bu_cmd_option dm_root_options[] = {
-    BU_CMD_FLAG("h", "help", struct dm_root_args, print_help,
+static const struct bu_arg_option dm_root_options[] = {
+    BU_ARG_FLAG("h", "help", struct dm_root_args, print_help,
 	"Print command help"),
-    BU_CMD_ALIAS_SHORT("?", "help", 1),
-    BU_CMD_COUNTING_LONG_FLAG("v", "verbose", struct dm_root_args, verbosity,
+    BU_ARG_ALIAS_SHORT("?", "help", 1),
+    BU_ARG_COUNTING_LONG_FLAG("v", "verbose", struct dm_root_args, verbosity,
 	"Increase output detail"),
-    BU_CMD_OPTION_NULL
+    BU_ARG_OPTION_NULL
 };
-static const struct bu_cmd_option dm_target_options[] = {
-    BU_CMD_VLS_APPEND("d", "dm", struct dm_target_args, dm_name, "name",
+static const struct bu_arg_option dm_target_options[] = {
+    BU_ARG_VLS_APPEND("d", "dm", struct dm_target_args, dm_name, "name",
 	"Display manager instance"),
-    BU_CMD_OPTION_NULL
+    BU_ARG_OPTION_NULL
 };
-static const struct bu_cmd_option dm_attach_options[] = {
-    BU_CMD_VLS_APPEND("d", "dm", struct dm_attach_args, dm_name, "name",
+static const struct bu_arg_option dm_attach_options[] = {
+    BU_ARG_VLS_APPEND("d", "dm", struct dm_attach_args, dm_name, "name",
 	"New display manager name"),
-    BU_CMD_VLS_APPEND("V", "view", struct dm_attach_args, view_name, "name",
+    BU_ARG_VLS_APPEND("V", "view", struct dm_attach_args, view_name, "name",
 	"View to associate with the display manager"),
-    BU_CMD_OPTION_NULL
+    BU_ARG_OPTION_NULL
 };
-static const struct bu_cmd_operand dm_bg_operands[] = {
-    BU_CMD_OPERAND("color", BU_CMD_VALUE_RAW, 0, 6,
+static const struct bu_arg_operand dm_bg_operands[] = {
+    BU_ARG_OPERAND("color", BU_ARG_VALUE_RAW, 0, 6,
 	"One color, or two colors for a gradient", NULL),
-    BU_CMD_OPERAND_NULL
+    BU_ARG_OPERAND_NULL
 };
-static const struct bu_cmd_operand dm_debug_operands[] = {
-    BU_CMD_OPERAND("level", BU_CMD_VALUE_INTEGER, 0, 1,
+static const struct bu_arg_operand dm_debug_operands[] = {
+    BU_ARG_OPERAND("level", BU_ARG_VALUE_INTEGER, 0, 1,
 	"Optional debug level", NULL),
-    BU_CMD_OPERAND_NULL
+    BU_ARG_OPERAND_NULL
 };
-static const struct bu_cmd_operand dm_name_operands[] = {
-    BU_CMD_OPERAND("name", BU_CMD_VALUE_STRING, 0, 1,
+static const struct bu_arg_operand dm_name_operands[] = {
+    BU_ARG_OPERAND("name", BU_ARG_VALUE_STRING, 0, 1,
 	"Optional display manager name", NULL),
-    BU_CMD_OPERAND_NULL
+    BU_ARG_OPERAND_NULL
 };
-static const struct bu_cmd_operand dm_vars_operands[] = {
-    BU_CMD_OPERAND("variable", BU_CMD_VALUE_STRING, 0, BU_CMD_COUNT_UNLIMITED,
+static const struct bu_arg_operand dm_vars_operands[] = {
+    BU_ARG_OPERAND("variable", BU_ARG_VALUE_STRING, 0, BU_ARG_COUNT_UNLIMITED,
 	"Display manager variable name", NULL),
-    BU_CMD_OPERAND_NULL
+    BU_ARG_OPERAND_NULL
 };
-static const struct bu_cmd_operand dm_set_operands[] = {
-    BU_CMD_OPERAND("key_value", BU_CMD_VALUE_STRING, 0, 2,
+static const struct bu_arg_operand dm_set_operands[] = {
+    BU_ARG_OPERAND("key_value", BU_ARG_VALUE_STRING, 0, 2,
 	"Optional variable name and value", NULL),
-    BU_CMD_OPERAND_NULL
+    BU_ARG_OPERAND_NULL
 };
-static const struct bu_cmd_operand dm_attach_operands[] = {
-    BU_CMD_OPERAND("type", BU_CMD_VALUE_STRING, 1, 1,
+static const struct bu_arg_operand dm_attach_operands[] = {
+    BU_ARG_OPERAND("type", BU_ARG_VALUE_STRING, 1, 1,
 	"Display manager type", NULL),
-    BU_CMD_OPERAND("name", BU_CMD_VALUE_STRING, 0, 1,
+    BU_ARG_OPERAND("name", BU_ARG_VALUE_STRING, 0, 1,
 	"Optional display manager name", NULL),
-    BU_CMD_OPERAND_NULL
+    BU_ARG_OPERAND_NULL
 };
-static const struct bu_cmd_schema dm_root_schema = {
+static const struct bu_arg_schema dm_root_schema = {
     "dm", "Manage display manager instances", dm_root_options, NULL,
-    BU_CMD_PARSE_OPTIONS_FIRST, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+    BU_ARG_PARSE_OPTIONS_FIRST, BU_ARG_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
-static const struct bu_cmd_schema dm_attach_schema = {
+static const struct bu_arg_schema dm_attach_schema = {
     "attach", "Create a display manager", dm_attach_options, dm_attach_operands,
-    BU_CMD_PARSE_INTERSPERSED, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+    BU_ARG_PARSE_INTERSPERSED, BU_ARG_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
-static const struct bu_cmd_schema dm_bg_schema = {
+static const struct bu_arg_schema dm_bg_schema = {
     "bg", "Query or set the background color", NULL, dm_bg_operands,
-    BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, BU_CMD_SCHEMA_CONSTRAINTS(dm_bg_schema_validate, NULL)
+    BU_ARG_PARSE_STOP_AT_FIRST_OPERAND, BU_ARG_SCHEMA_CONSTRAINTS(dm_bg_schema_validate, NULL)
 };
-static const struct bu_cmd_schema dm_debug_schema = {
+static const struct bu_arg_schema dm_debug_schema = {
     "debug", "Query or set the debug level", NULL, dm_debug_operands,
-    BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+    BU_ARG_PARSE_STOP_AT_FIRST_OPERAND, BU_ARG_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
-static const struct bu_cmd_schema dm_get_schema = {
+static const struct bu_arg_schema dm_get_schema = {
     "get", "Query display manager variables", dm_target_options, dm_vars_operands,
-    BU_CMD_PARSE_INTERSPERSED, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+    BU_ARG_PARSE_INTERSPERSED, BU_ARG_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
-static const struct bu_cmd_schema dm_height_schema = {
+static const struct bu_arg_schema dm_height_schema = {
     "height", "Report display manager height", NULL, dm_name_operands,
-    BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+    BU_ARG_PARSE_STOP_AT_FIRST_OPERAND, BU_ARG_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
 GED_DEFINE_NO_ARG_SCHEMA_NAMED(dm_initmsg_schema, "initmsg",
-    "Report display manager initialization messages", BU_CMD_PARSE_STOP_AT_FIRST_OPERAND);
+    "Report display manager initialization messages", BU_ARG_PARSE_STOP_AT_FIRST_OPERAND);
 GED_DEFINE_NO_ARG_SCHEMA_NAMED(dm_list_schema, "list",
-    "List display manager instances", BU_CMD_PARSE_STOP_AT_FIRST_OPERAND);
-static const struct bu_cmd_schema dm_set_schema = {
+    "List display manager instances", BU_ARG_PARSE_STOP_AT_FIRST_OPERAND);
+static const struct bu_arg_schema dm_set_schema = {
     "set", "Query or set display manager variables", dm_target_options, dm_set_operands,
-    BU_CMD_PARSE_INTERSPERSED, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+    BU_ARG_PARSE_INTERSPERSED, BU_ARG_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
-static const struct bu_cmd_schema dm_type_schema = {
+static const struct bu_arg_schema dm_type_schema = {
     "type", "Report a display manager type", NULL, dm_name_operands,
-    BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+    BU_ARG_PARSE_STOP_AT_FIRST_OPERAND, BU_ARG_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
 GED_DEFINE_NO_ARG_SCHEMA_NAMED(dm_types_schema, "types",
-    "List available display manager types", BU_CMD_PARSE_STOP_AT_FIRST_OPERAND);
-static const struct bu_cmd_schema dm_width_schema = {
+    "List available display manager types", BU_ARG_PARSE_STOP_AT_FIRST_OPERAND);
+static const struct bu_arg_schema dm_width_schema = {
     "width", "Report display manager width", NULL, dm_name_operands,
-    BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+    BU_ARG_PARSE_STOP_AT_FIRST_OPERAND, BU_ARG_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
 
 static void
@@ -204,7 +204,7 @@ dm_bg_colors_from_argv(int argc, const char **argv, struct bu_color *first,
 
     if (!argc)
 	return 0;
-    first_count = bu_cmd_color_from_argv(first, (size_t)argc,
+    first_count = bu_arg_color_from_argv(first, (size_t)argc,
 	(const char * const *)argv);
     if (first_count <= 0)
 	return -1;
@@ -213,7 +213,7 @@ dm_bg_colors_from_argv(int argc, const char **argv, struct bu_color *first,
 	    *second = *first;
 	return 1;
     }
-    second_count = bu_cmd_color_from_argv(second, (size_t)(argc - first_count),
+    second_count = bu_arg_color_from_argv(second, (size_t)(argc - first_count),
 	(const char * const *)(argv + first_count));
     if (second_count <= 0 || first_count + second_count != argc)
 	return -1;
@@ -221,48 +221,48 @@ dm_bg_colors_from_argv(int argc, const char **argv, struct bu_color *first,
 }
 
 static void
-dm_bg_validation_set(struct bu_cmd_validate_result *result,
-	bu_cmd_validate_state_t state, size_t token, const char *hint)
+dm_bg_validation_set(struct bu_arg_validate_result *result,
+	bu_arg_validate_state_t state, size_t token, const char *hint)
 {
-    bu_cmd_validate_result_clear(result);
+    bu_arg_validate_result_clear(result);
     result->state = state;
     result->token_start = token;
     result->token_end = token;
-    result->expected = BU_CMD_EXPECT_OPERAND;
-    result->completion_type = BU_CMD_VALUE_COLOR;
+    result->expected = BU_ARG_EXPECT_OPERAND;
+    result->completion_type = BU_ARG_VALUE_COLOR;
     result->hint = hint;
 }
 
 static int
-dm_bg_schema_validate(const struct bu_cmd_schema *schema, size_t argc,
-	const char **argv, size_t cursor_arg, struct bu_cmd_validate_result *result)
+dm_bg_schema_validate(const struct bu_arg_schema *schema, size_t argc,
+	const char **argv, size_t cursor_arg, struct bu_arg_validate_result *result)
 {
-    struct bu_cmd_schema flat = *schema;
+    struct bu_arg_schema flat = *schema;
     struct bu_color first = BU_COLOR_INIT_ZERO;
     struct bu_color second = BU_COLOR_INIT_ZERO;
     int first_count;
     int second_count;
     int ret;
 
-    ret = bu_cmd_schema_validate_syntax(&flat, argc, argv, cursor_arg, result);
-    if (ret || result->state == BU_CMD_VALIDATE_INVALID || !argc)
+    ret = bu_arg_schema_validate_syntax(&flat, argc, argv, cursor_arg, result);
+    if (ret || result->state == BU_ARG_VALIDATE_INVALID || !argc)
 	return ret;
 
-    first_count = bu_cmd_color_from_argv(&first, argc,
+    first_count = bu_arg_color_from_argv(&first, argc,
 	(const char * const *)argv);
     if (first_count <= 0) {
-	ret = bu_cmd_color_optional_validate(argc, argv, cursor_arg, result);
+	ret = bu_arg_color_optional_validate(argc, argv, cursor_arg, result);
 	return ret;
     }
     if ((size_t)first_count == argc) {
-	dm_bg_validation_set(result, BU_CMD_VALIDATE_VALID, cursor_arg,
+	dm_bg_validation_set(result, BU_ARG_VALIDATE_VALID, cursor_arg,
 	    "background color");
 	return 0;
     }
-    second_count = bu_cmd_color_from_argv(&second, argc - (size_t)first_count,
+    second_count = bu_arg_color_from_argv(&second, argc - (size_t)first_count,
 	(const char * const *)(argv + first_count));
     if (second_count <= 0) {
-	ret = bu_cmd_color_optional_validate(argc - (size_t)first_count,
+	ret = bu_arg_color_optional_validate(argc - (size_t)first_count,
 	    argv + first_count, cursor_arg >= (size_t)first_count ?
 	    cursor_arg - (size_t)first_count : 0, result);
 	if (!ret) {
@@ -272,11 +272,11 @@ dm_bg_schema_validate(const struct bu_cmd_schema *schema, size_t argc,
 	return ret;
     }
     if ((size_t)(first_count + second_count) != argc) {
-	dm_bg_validation_set(result, BU_CMD_VALIDATE_INVALID,
+	dm_bg_validation_set(result, BU_ARG_VALIDATE_INVALID,
 	    (size_t)(first_count + second_count), "at most two background colors");
 	return 0;
     }
-    dm_bg_validation_set(result, BU_CMD_VALIDATE_VALID, cursor_arg,
+    dm_bg_validation_set(result, BU_ARG_VALIDATE_VALID, cursor_arg,
 	"background color");
     return 0;
 }
@@ -366,7 +366,7 @@ _dm_cmd_bg(void *ds, int argc, const char **argv)
     struct bu_color second = BU_COLOR_INIT_ZERO;
     int color_count;
 
-    if (bu_cmd_schema_parse_complete(&dm_bg_schema, NULL,
+    if (bu_arg_schema_parse_complete(&dm_bg_schema, NULL,
 	gedp->ged_result_str, argc - 1, argv + 1) < 0) {
 	return BRLCAD_ERROR;
     }
@@ -412,7 +412,7 @@ _dm_cmd_debug(void *ds, int argc, const char **argv)
     struct ged *gedp = gd->gedp;
     struct dm *cdmp = _dm_find(gd, NULL);
 
-    if (bu_cmd_schema_parse_complete(&dm_debug_schema, NULL,
+    if (bu_arg_schema_parse_complete(&dm_debug_schema, NULL,
 	gedp->ged_result_str, argc - 1, argv + 1) < 0) {
 	return BRLCAD_ERROR;
     }
@@ -428,7 +428,7 @@ _dm_cmd_debug(void *ds, int argc, const char **argv)
     }
 
     int lvl;
-    if (!bu_cmd_integer_from_str(&lvl, argv[0]))
+    if (!bu_arg_integer_from_str(&lvl, argv[0]))
 	return BRLCAD_ERROR;
     dm_set_debug(cdmp, lvl);
     return BRLCAD_OK;
@@ -441,7 +441,7 @@ _dm_cmd_type(void *ds, int argc, const char **argv)
     struct bu_vls dm_name = BU_VLS_INIT_ZERO;
     struct dm *cdmp;
 
-    if (bu_cmd_schema_parse_complete(&dm_type_schema, NULL,
+    if (bu_arg_schema_parse_complete(&dm_type_schema, NULL,
 	gd->gedp->ged_result_str, argc - 1, argv + 1) < 0) {
 	return BRLCAD_ERROR;
     }
@@ -462,7 +462,7 @@ _dm_cmd_types(void *ds, int argc, const char **argv)
 {
     struct _ged_dm_info *gd = (struct _ged_dm_info *)ds;
 
-    if (bu_cmd_schema_parse_complete(&dm_types_schema, NULL,
+    if (bu_arg_schema_parse_complete(&dm_types_schema, NULL,
 	gd->gedp->ged_result_str, argc - 1, argv + 1) < 0)
 	return BRLCAD_ERROR;
 
@@ -479,7 +479,7 @@ _dm_cmd_initmsg(void *ds, int argc, const char **argv)
 {
     struct _ged_dm_info *gd = (struct _ged_dm_info *)ds;
 
-    if (bu_cmd_schema_parse_complete(&dm_initmsg_schema, NULL,
+    if (bu_arg_schema_parse_complete(&dm_initmsg_schema, NULL,
 	gd->gedp->ged_result_str, argc - 1, argv + 1) < 0)
 	return BRLCAD_ERROR;
 
@@ -493,7 +493,7 @@ _dm_cmd_list(void *ds, int argc, const char **argv)
     struct _ged_dm_info *gd = (struct _ged_dm_info *)ds;
     struct ged *gedp = gd->gedp;
 
-    if (bu_cmd_schema_parse_complete(&dm_list_schema, NULL,
+    if (bu_arg_schema_parse_complete(&dm_list_schema, NULL,
 	gedp->ged_result_str, argc - 1, argv + 1) < 0)
 	return BRLCAD_ERROR;
 
@@ -550,7 +550,7 @@ _dm_cmd_get(void *ds, int argc, const char **argv)
     const char **operands;
     struct dm *cdmp;
 
-    operand_index = bu_cmd_schema_parse_complete(&dm_get_schema, &args,
+    operand_index = bu_arg_schema_parse_complete(&dm_get_schema, &args,
 	gd->gedp->ged_result_str, argc - 1, argv + 1);
     if (operand_index < 0) {
 	bu_vls_free(&args.dm_name);
@@ -612,7 +612,7 @@ _dm_cmd_set(void *ds, int argc, const char **argv)
     const char **operands;
     struct dm *cdmp;
 
-    operand_index = bu_cmd_schema_parse_complete(&dm_set_schema, &args,
+    operand_index = bu_arg_schema_parse_complete(&dm_set_schema, &args,
 	gd->gedp->ged_result_str, argc - 1, argv + 1);
     if (operand_index < 0) {
 	bu_vls_free(&args.dm_name);
@@ -718,7 +718,7 @@ _dm_cmd_attach(void *ds, int argc, const char **argv)
     int operand_count;
     int ret = BRLCAD_ERROR;
 
-    operand_index = bu_cmd_schema_parse_complete(&dm_attach_schema, &args,
+    operand_index = bu_arg_schema_parse_complete(&dm_attach_schema, &args,
 	gedp->ged_result_str, argc - 1, argv + 1);
     if (operand_index < 0)
 	goto done;
@@ -848,7 +848,7 @@ _dm_cmd_width(void *ds, int argc, const char **argv)
     struct _ged_dm_info *gd = (struct _ged_dm_info *)ds;
     struct dm *cdmp;
 
-    if (bu_cmd_schema_parse_complete(&dm_width_schema, NULL,
+    if (bu_arg_schema_parse_complete(&dm_width_schema, NULL,
 	gd->gedp->ged_result_str, argc - 1, argv + 1) < 0) {
 	return BRLCAD_ERROR;
     }
@@ -870,7 +870,7 @@ _dm_cmd_height(void *ds, int argc, const char **argv)
     struct _ged_dm_info *gd = (struct _ged_dm_info *)ds;
     struct dm *cdmp;
 
-    if (bu_cmd_schema_parse_complete(&dm_height_schema, NULL,
+    if (bu_arg_schema_parse_complete(&dm_height_schema, NULL,
 	gd->gedp->ged_result_str, argc - 1, argv + 1) < 0) {
 	return BRLCAD_ERROR;
     }
@@ -886,44 +886,44 @@ _dm_cmd_height(void *ds, int argc, const char **argv)
     return BRLCAD_OK;
 }
 
-static const struct bu_cmd_tree_node dm_subcommands[] = {
-    BU_CMD_TREE_NODE(&dm_attach_schema, NULL, NULL,
-	BU_CMD_TREE_CHILD_AFTER_OPTIONS, _dm_cmd_attach),
-    BU_CMD_TREE_NODE(&dm_bg_schema, NULL, NULL,
-	BU_CMD_TREE_CHILD_AFTER_OPTIONS, _dm_cmd_bg),
-    BU_CMD_TREE_NODE(&dm_debug_schema, NULL, NULL,
-	BU_CMD_TREE_CHILD_AFTER_OPTIONS, _dm_cmd_debug),
-    BU_CMD_TREE_NODE(&dm_get_schema, NULL, NULL,
-	BU_CMD_TREE_CHILD_AFTER_OPTIONS, _dm_cmd_get),
-    BU_CMD_TREE_NODE(&dm_height_schema, NULL, NULL,
-	BU_CMD_TREE_CHILD_AFTER_OPTIONS, _dm_cmd_height),
-    BU_CMD_TREE_NODE(&dm_initmsg_schema, NULL, NULL,
-	BU_CMD_TREE_CHILD_AFTER_OPTIONS, _dm_cmd_initmsg),
-    BU_CMD_TREE_NODE(&dm_list_schema, NULL, NULL,
-	BU_CMD_TREE_CHILD_AFTER_OPTIONS, _dm_cmd_list),
-    BU_CMD_TREE_NODE(&dm_set_schema, NULL, NULL,
-	BU_CMD_TREE_CHILD_AFTER_OPTIONS, _dm_cmd_set),
-    BU_CMD_TREE_NODE(&dm_type_schema, NULL, NULL,
-	BU_CMD_TREE_CHILD_AFTER_OPTIONS, _dm_cmd_type),
-    BU_CMD_TREE_NODE(&dm_types_schema, NULL, NULL,
-	BU_CMD_TREE_CHILD_AFTER_OPTIONS, _dm_cmd_types),
-    BU_CMD_TREE_NODE(&dm_width_schema, NULL, NULL,
-	BU_CMD_TREE_CHILD_AFTER_OPTIONS, _dm_cmd_width),
-    BU_CMD_TREE_NODE_NULL
+static const struct bu_arg_tree_node dm_subcommands[] = {
+    BU_ARG_TREE_NODE(&dm_attach_schema, NULL, NULL,
+	BU_ARG_TREE_CHILD_AFTER_OPTIONS, _dm_cmd_attach),
+    BU_ARG_TREE_NODE(&dm_bg_schema, NULL, NULL,
+	BU_ARG_TREE_CHILD_AFTER_OPTIONS, _dm_cmd_bg),
+    BU_ARG_TREE_NODE(&dm_debug_schema, NULL, NULL,
+	BU_ARG_TREE_CHILD_AFTER_OPTIONS, _dm_cmd_debug),
+    BU_ARG_TREE_NODE(&dm_get_schema, NULL, NULL,
+	BU_ARG_TREE_CHILD_AFTER_OPTIONS, _dm_cmd_get),
+    BU_ARG_TREE_NODE(&dm_height_schema, NULL, NULL,
+	BU_ARG_TREE_CHILD_AFTER_OPTIONS, _dm_cmd_height),
+    BU_ARG_TREE_NODE(&dm_initmsg_schema, NULL, NULL,
+	BU_ARG_TREE_CHILD_AFTER_OPTIONS, _dm_cmd_initmsg),
+    BU_ARG_TREE_NODE(&dm_list_schema, NULL, NULL,
+	BU_ARG_TREE_CHILD_AFTER_OPTIONS, _dm_cmd_list),
+    BU_ARG_TREE_NODE(&dm_set_schema, NULL, NULL,
+	BU_ARG_TREE_CHILD_AFTER_OPTIONS, _dm_cmd_set),
+    BU_ARG_TREE_NODE(&dm_type_schema, NULL, NULL,
+	BU_ARG_TREE_CHILD_AFTER_OPTIONS, _dm_cmd_type),
+    BU_ARG_TREE_NODE(&dm_types_schema, NULL, NULL,
+	BU_ARG_TREE_CHILD_AFTER_OPTIONS, _dm_cmd_types),
+    BU_ARG_TREE_NODE(&dm_width_schema, NULL, NULL,
+	BU_ARG_TREE_CHILD_AFTER_OPTIONS, _dm_cmd_width),
+    BU_ARG_TREE_NODE_NULL
 };
-static const struct bu_cmd_tree dm_tree = {
-    &dm_root_schema, dm_subcommands, BU_CMD_TREE_CHILD_AFTER_OPTIONS
+static const struct bu_arg_tree dm_tree = {
+    &dm_root_schema, dm_subcommands, BU_ARG_TREE_CHILD_AFTER_OPTIONS
 };
 
 static void
-dm_tree_show_help(struct ged *gedp, const struct bu_cmd_schema *child)
+dm_tree_show_help(struct ged *gedp, const struct bu_arg_schema *child)
 {
     char *help;
 
     if (!gedp)
 	return;
     if (!child) {
-	help = bu_cmd_tree_help(&dm_tree, "dm");
+	help = bu_arg_tree_help(&dm_tree, "dm");
 	if (help) {
 	    bu_vls_printf(gedp->ged_result_str, "%s", help);
 	    bu_free(help, "native dm tree help");
@@ -932,7 +932,7 @@ dm_tree_show_help(struct ged *gedp, const struct bu_cmd_schema *child)
     }
     struct bu_vls invocation = BU_VLS_INIT_ZERO;
     bu_vls_printf(&invocation, "dm %s", child->name);
-    help = bu_cmd_schema_help(child, bu_vls_cstr(&invocation));
+    help = bu_arg_schema_help(child, bu_vls_cstr(&invocation));
     if (help) {
 	bu_vls_strcat(gedp->ged_result_str, help);
 	bu_free(help, "native dm child help");
@@ -945,7 +945,7 @@ ged_dm_core(struct ged *gedp, int argc, const char *argv[])
 {
     struct _ged_dm_info gd = {0};
     struct dm_root_args args = {0, 0};
-    const struct bu_cmd_tree_node *node = NULL;
+    const struct bu_arg_tree_node *node = NULL;
     int cmd_pos = -1;
     int root_argc;
     int ret;
@@ -962,7 +962,7 @@ ged_dm_core(struct ged *gedp, int argc, const char *argv[])
     argc--; argv++;
 
     for (int i = 0; i < argc; i++) {
-	int option_span = bu_cmd_schema_option_span(&dm_root_schema,
+	int option_span = bu_arg_schema_option_span(&dm_root_schema,
 	    (size_t)(argc - i), argv + i);
 	if (option_span > 0) {
 	    i += option_span - 1;
@@ -976,7 +976,7 @@ ged_dm_core(struct ged *gedp, int argc, const char *argv[])
 
 
     root_argc = (cmd_pos >= 0) ? cmd_pos : argc;
-    if (bu_cmd_schema_parse_complete(&dm_root_schema, &args,
+    if (bu_arg_schema_parse_complete(&dm_root_schema, &args,
 	gedp->ged_result_str, root_argc, argv) < 0) {
 	dm_tree_show_help(gedp, NULL);
 	return BRLCAD_ERROR;
@@ -988,7 +988,7 @@ ged_dm_core(struct ged *gedp, int argc, const char *argv[])
 
     if (args.print_help) {
 	if (argc)
-	    node = bu_cmd_tree_find_subcommand(&dm_tree, argv[0]);
+	    node = bu_arg_tree_find_subcommand(&dm_tree, argv[0]);
 	dm_tree_show_help(gedp, node ? node->schema : NULL);
 	return GED_HELP;
     }
@@ -997,7 +997,7 @@ ged_dm_core(struct ged *gedp, int argc, const char *argv[])
 	return GED_HELP;
     }
 
-    if (bu_cmd_tree_dispatch(&dm_tree, &gd, argc, argv, &ret) == 0) {
+    if (bu_arg_tree_dispatch(&dm_tree, &gd, argc, argv, &ret) == 0) {
 	return ret;
     }
 
@@ -1011,18 +1011,18 @@ ged_dm_core(struct ged *gedp, int argc, const char *argv[])
 
 extern int ged_ert_core(struct ged *gedp, int argc, const char *argv[]);
 extern int ged_screen_grab_core(struct ged *gedp, int argc, const char *argv[]);
-extern const struct bu_cmd_schema ged_screengrab_schema;
-extern const struct bu_cmd_schema ged_screen_grab_schema;
+extern const struct bu_arg_schema ged_screengrab_schema;
+extern const struct bu_arg_schema ged_screen_grab_schema;
 
-static const struct bu_cmd_operand ert_operands[] = {
-    BU_CMD_OPERAND("rt_arguments", BU_CMD_VALUE_RAW, 0, BU_CMD_COUNT_UNLIMITED,
+static const struct bu_arg_operand ert_operands[] = {
+    BU_ARG_OPERAND("rt_arguments", BU_ARG_VALUE_RAW, 0, BU_ARG_COUNT_UNLIMITED,
 	"Arguments forwarded to rt; use -- before process arguments", NULL),
-    BU_CMD_OPERAND_NULL
+    BU_ARG_OPERAND_NULL
 };
-static const struct bu_cmd_schema ert_cmd_schema = {
+static const struct bu_arg_schema ert_cmd_schema = {
     "ert", "Raytrace the current view into its embedded framebuffer", NULL,
-    ert_operands, BU_CMD_PARSE_STOP_AT_FIRST_OPERAND,
-    BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+    ert_operands, BU_ARG_PARSE_STOP_AT_FIRST_OPERAND,
+    BU_ARG_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
 
 static int
@@ -1042,13 +1042,13 @@ ged_dm_grammar_analyze(struct ged *gedp, const char *input,
 static char *
 ged_dm_grammar_json(void)
 {
-    return bu_cmd_tree_describe_json(&dm_tree);
+    return bu_arg_tree_describe_json(&dm_tree);
 }
 
 static int
 ged_dm_grammar_lint(struct bu_vls *msgs)
 {
-    return bu_cmd_tree_lint(&dm_tree, msgs);
+    return bu_arg_tree_lint(&dm_tree, msgs);
 }
 GED_CMD_TREE_HELP(ged_dm_grammar_help, dm_tree)
 

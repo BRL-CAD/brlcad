@@ -28,7 +28,7 @@
 #include <string.h>
 
 #include "bu/cmd.h"
-#include "bu/cmdschema.h"
+#include "bu/arg.h"
 
 #include "../ged_private.h"
 
@@ -180,10 +180,10 @@ BU_OPT_DESC_BUILDER(summary_options, struct summary_args, SUMMARY_OPTIONS);
 
 static const ged_opt_rule summary_opt_rules[] = {
     GED_RULE_ALIAS("?", "help"),
-    GED_RULE_SEMANTIC("obj", BU_CMD_VALUE_DB_OBJECT, NULL, "database object"),
-    GED_RULE_OPERANDS(BU_CMD_CONDITION_ANY_OPTION_PRESENT, "obj", 0, 0,
+    GED_RULE_SEMANTIC("obj", BU_ARG_VALUE_DB_OBJECT, NULL, "database object"),
+    GED_RULE_OPERANDS(BU_ARG_CONDITION_ANY_OPTION_PRESENT, "obj", 0, 0,
 	"object specified both by --obj and as an operand"),
-    GED_RULE_OPERANDS(BU_CMD_CONDITION_NO_OPTION_PRESENT, "obj", 0, 1,
+    GED_RULE_OPERANDS(BU_ARG_CONDITION_NO_OPTION_PRESENT, "obj", 0, 1,
 	"at most one object may be specified"),
     GED_RULE_NULL
 };

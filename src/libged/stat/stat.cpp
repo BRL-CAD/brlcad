@@ -35,7 +35,7 @@ extern "C" {
 #include "../alphanum.h"
 }
 
-#include "bu/cmdschema.h"
+#include "bu/arg.h"
 #include "bu/ptbl.h"
 #include "bu/sort.h"
 #include "bu/tbl.h"
@@ -442,58 +442,58 @@ struct stat_args {
 };
 
 
-static const struct bu_cmd_arg_shape stat_filter_shape =
-    BU_CMD_ARG_SHAPE(BU_CMD_ARG_SHAPE_CUSTOM, 1, 1, "Search expression language");
-static const struct bu_cmd_arg_shape stat_columns_shape =
-    BU_CMD_ARG_SHAPE(BU_CMD_ARG_SHAPE_COMMA_LIST, 1, 1, "Comma-separated column names");
-static const struct bu_cmd_arg_shape stat_pattern_shape =
-    BU_CMD_ARG_SHAPE(BU_CMD_ARG_SHAPE_RANGE_PATTERN, 1, 1, "Database name or glob pattern");
+static const struct bu_arg_shape stat_filter_shape =
+    BU_ARG_SHAPE(BU_ARG_SHAPE_CUSTOM, 1, 1, "Search expression language");
+static const struct bu_arg_shape stat_columns_shape =
+    BU_ARG_SHAPE(BU_ARG_SHAPE_COMMA_LIST, 1, 1, "Comma-separated column names");
+static const struct bu_arg_shape stat_pattern_shape =
+    BU_ARG_SHAPE(BU_ARG_SHAPE_RANGE_PATTERN, 1, 1, "Database name or glob pattern");
 static const char * const stat_column_keywords[] = {
     "name", "uses", "refs", "flags", "major_type", "minor_type", "type", "size", NULL
 };
-static const struct bu_cmd_option stat_schema_options[] = {
-    BU_CMD_FLAG("h", "help", struct stat_args, print_help, "Print help and exit"),
-    BU_CMD_ALIAS_SHORT("?", "help", 1),
-    BU_CMD_COUNTING_LONG_FLAG("v", "verbosity", struct stat_args, verbosity,
+static const struct bu_arg_option stat_schema_options[] = {
+    BU_ARG_FLAG("h", "help", struct stat_args, print_help, "Print help and exit"),
+    BU_ARG_ALIAS_SHORT("?", "help", 1),
+    BU_ARG_COUNTING_LONG_FLAG("v", "verbosity", struct stat_args, verbosity,
 	"Increase output verbosity"),
-    BU_CMD_COUNTING_LONG_FLAG("q", "quiet", struct stat_args, quiet,
+    BU_ARG_COUNTING_LONG_FLAG("q", "quiet", struct stat_args, quiet,
 	"Decrease output verbosity"),
-    BU_CMD_FLAG("r", "raw", struct stat_args, raw, "Print raw values"),
+    BU_ARG_FLAG("r", "raw", struct stat_args, raw, "Print raw values"),
     {"F", "filter", "filter", "expression", "Filter using a search expression",
-	BU_CMD_VALUE_VLS, offsetof(struct stat_args, search_filter), NULL, NULL,
-	"ged.search", NULL, 0, 0, NULL, BU_CMD_ARG_REQUIRED, &stat_filter_shape, NULL, NULL,
-	BU_CMD_VALUE_RANGE_NONE, BU_CMD_ARG_SHAPE_SCALAR},
+	BU_ARG_VALUE_VLS, offsetof(struct stat_args, search_filter), NULL, NULL,
+	"ged.search", NULL, 0, 0, NULL, BU_ARG_REQUIRED, &stat_filter_shape, NULL, NULL,
+	BU_ARG_VALUE_RANGE_NONE, BU_ARG_SHAPE_SCALAR},
     {"C", "columns", "columns", "columns", "Comma-separated output columns",
-	BU_CMD_VALUE_VLS, offsetof(struct stat_args, keys_str), NULL, NULL, NULL,
-	NULL, 0, 0, stat_column_keywords, BU_CMD_ARG_REQUIRED, &stat_columns_shape, NULL, NULL,
-	BU_CMD_VALUE_RANGE_NONE, BU_CMD_ARG_SHAPE_SCALAR},
+	BU_ARG_VALUE_VLS, offsetof(struct stat_args, keys_str), NULL, NULL, NULL,
+	NULL, 0, 0, stat_column_keywords, BU_ARG_REQUIRED, &stat_columns_shape, NULL, NULL,
+	BU_ARG_VALUE_RANGE_NONE, BU_ARG_SHAPE_SCALAR},
     {"S", "sort-order", "sort-order", "columns", "Comma-separated sort columns",
-	BU_CMD_VALUE_VLS, offsetof(struct stat_args, sort_str), NULL, NULL, NULL,
-	NULL, 0, 0, stat_column_keywords, BU_CMD_ARG_REQUIRED, &stat_columns_shape, NULL, NULL,
-	BU_CMD_VALUE_RANGE_NONE, BU_CMD_ARG_SHAPE_SCALAR},
-    BU_CMD_FILE("o", "output-file", struct stat_args, output_file, "file",
+	BU_ARG_VALUE_VLS, offsetof(struct stat_args, sort_str), NULL, NULL, NULL,
+	NULL, 0, 0, stat_column_keywords, BU_ARG_REQUIRED, &stat_columns_shape, NULL, NULL,
+	BU_ARG_VALUE_RANGE_NONE, BU_ARG_SHAPE_SCALAR},
+    BU_ARG_FILE("o", "output-file", struct stat_args, output_file, "file",
 	"Write output to a new file"),
-    BU_CMD_OPTION_NULL
+    BU_ARG_OPTION_NULL
 };
-static const struct bu_cmd_operand stat_schema_operands[] = {
-    BU_CMD_OPERAND_SHAPED("patterns", BU_CMD_VALUE_DB_PATH, 1,
-	BU_CMD_COUNT_UNLIMITED, NULL, "Database names, paths, or glob patterns",
+static const struct bu_arg_operand stat_schema_operands[] = {
+    BU_ARG_OPERAND_SHAPED("patterns", BU_ARG_VALUE_DB_PATH, 1,
+	BU_ARG_COUNT_UNLIMITED, NULL, "Database names, paths, or glob patterns",
 	"ged.db_path", &stat_pattern_shape),
-    BU_CMD_OPERAND_NULL
+    BU_ARG_OPERAND_NULL
 };
 
 
-static const struct bu_cmd_schema stat_cmd_schema = {
+static const struct bu_arg_schema stat_cmd_schema = {
     "stat", "Report tabular database object statistics", stat_schema_options,
-    stat_schema_operands, BU_CMD_PARSE_INTERSPERSED,
-    BU_CMD_SCHEMA_META_HELP(NULL, NULL, NULL, NULL, NULL)
+    stat_schema_operands, BU_ARG_PARSE_INTERSPERSED,
+    BU_ARG_SCHEMA_META_HELP(NULL, NULL, NULL, NULL, NULL)
 };
 
 
 static void
 stat_usage(struct bu_vls *str, const char *cmd) {
     bu_vls_trunc(str, 0);
-    (void)bu_cmd_schema_help_append(str, &stat_cmd_schema, cmd);
+    (void)bu_arg_schema_help_append(str, &stat_cmd_schema, cmd);
     bu_vls_putc(str, '\n');
     bu_vls_printf(str, "Available column types are:\n");
     bu_vls_printf(str, "    name\n");
@@ -525,7 +525,7 @@ ged_stat_core(struct ged *gedp, int argc, const char *argv[])
     // Clear result string
     bu_vls_trunc(gedp->ged_result_str, 0);
 
-    int operand_index = bu_cmd_schema_parse_complete(&stat_cmd_schema, &args,
+    int operand_index = bu_arg_schema_parse_complete(&stat_cmd_schema, &args,
 	gedp->ged_result_str, argc - 1, argv + 1);
     if (operand_index < 0) {
 	bu_vls_free(&args.search_filter);

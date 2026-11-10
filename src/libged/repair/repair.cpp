@@ -13,7 +13,7 @@
 
 #include <vector>
 
-#include "bu/cmdschema.h"
+#include "bu/arg.h"
 #include "bu/vls.h"
 #include "rt/geom.h"
 #include "wdb.h"
@@ -30,37 +30,37 @@ struct repair_args {
     fastf_t max_hole_area;
 };
 
-static const struct bu_cmd_option repair_options[] = {
-    BU_CMD_FLAG("h", "help", struct repair_args, print_help,
+static const struct bu_arg_option repair_options[] = {
+    BU_ARG_FLAG("h", "help", struct repair_args, print_help,
 	"Print command help"),
-    BU_CMD_VLS_APPEND("o", "output-name", struct repair_args, out_name, "name",
+    BU_ARG_VLS_APPEND("o", "output-name", struct repair_args, out_name, "name",
 	"Write the repaired object to a new object"),
-    BU_CMD_FLAG(NULL, "options-json", struct repair_args, options_json,
+    BU_ARG_FLAG(NULL, "options-json", struct repair_args, options_json,
 	"Return the primitive-specific repair options as JSON"),
-    BU_CMD_NUMBER("t", "tol", struct repair_args, tolerance, "distance",
+    BU_ARG_NUMBER("t", "tol", struct repair_args, tolerance, "distance",
 	"Distance tolerance for primitives that support vertex snapping"),
-    BU_CMD_NUMBER_RANGE("p", "max-hole-percent", struct repair_args,
+    BU_ARG_NUMBER_RANGE("p", "max-hole-percent", struct repair_args,
 	max_hole_area_percent, 0.0, 100.0, "percent",
 	"Maximum hole area as a percentage of mesh area"),
-    BU_CMD_NONNEGATIVE_NUMBER("a", "max-hole-area", struct repair_args, max_hole_area,
+    BU_ARG_NONNEGATIVE_NUMBER("a", "max-hole-area", struct repair_args, max_hole_area,
 	"area", "Maximum hole area in mm"),
-    BU_CMD_OPTION_NULL
+    BU_ARG_OPTION_NULL
 };
-static const struct bu_cmd_operand repair_operands[] = {
-    BU_CMD_OPERAND("object", BU_CMD_VALUE_DB_OBJECT, 1, 1,
+static const struct bu_arg_operand repair_operands[] = {
+    BU_ARG_OPERAND("object", BU_ARG_VALUE_DB_OBJECT, 1, 1,
 	"Object to repair", "ged.db_object"),
-    BU_CMD_OPERAND_NULL
+    BU_ARG_OPERAND_NULL
 };
-static const struct bu_cmd_schema ged_repair_schema = {
+static const struct bu_arg_schema ged_repair_schema = {
     "repair", "Repair an object using its primitive-specific repair routine",
-    repair_options, repair_operands, BU_CMD_PARSE_INTERSPERSED,
-    BU_CMD_SCHEMA_META_HELP(NULL, NULL, NULL, NULL, NULL)
+    repair_options, repair_operands, BU_ARG_PARSE_INTERSPERSED,
+    BU_ARG_SCHEMA_META_HELP(NULL, NULL, NULL, NULL, NULL)
 };
 
 static void
 repair_usage(struct bu_vls *log_str, const char *cmd)
 {
-    (void)bu_cmd_schema_help_append(log_str, &ged_repair_schema, cmd);
+    (void)bu_arg_schema_help_append(log_str, &ged_repair_schema, cmd);
 }
 
 extern "C" int
@@ -86,7 +86,7 @@ ged_repair(struct ged *gedp, int argc, const char *argv[])
 
     /* Schema parsing reorders argv; callers retain their original argument vector. */
     std::vector<const char *> parsed_argv(argv + 1, argv + argc);
-    operand_index = bu_cmd_schema_parse_complete(&ged_repair_schema, &args,
+    operand_index = bu_arg_schema_parse_complete(&ged_repair_schema, &args,
 	&parse_msg, (int)parsed_argv.size(), parsed_argv.data());
 
     if (operand_index < 0) {
@@ -110,7 +110,7 @@ ged_repair(struct ged *gedp, int argc, const char *argv[])
      * scanner so attached values follow the same rules as execution. */
     std::vector<const char *> primitive_argv;
     for (int i = 0; i < operand_index;) {
-	int span = bu_cmd_schema_option_span(&ged_repair_schema,
+	int span = bu_arg_schema_option_span(&ged_repair_schema,
 	    (size_t)(operand_index - i), parsed_argv.data() + i);
 	if (span <= 0) {
 	    bu_vls_strcat(gedp->ged_result_str, "Invalid repair options\n");
@@ -118,7 +118,7 @@ ged_repair(struct ged *gedp, int argc, const char *argv[])
 	    return BRLCAD_ERROR;
 	}
 	if (!BU_STR_EQUAL(parsed_argv[i], "--") &&
-	    !bu_cmd_schema_option_present(&ged_repair_schema, (size_t)span,
+	    !bu_arg_schema_option_present(&ged_repair_schema, (size_t)span,
 		parsed_argv.data() + i, "output-name"))
 	    primitive_argv.insert(primitive_argv.end(), parsed_argv.begin() + i,
 		parsed_argv.begin() + i + span);

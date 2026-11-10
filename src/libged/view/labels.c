@@ -25,7 +25,7 @@
 
 #include "common.h"
 
-#include "bu/cmdschema.h"
+#include "bu/arg.h"
 #include "bu/vls.h"
 #include "bv.h"
 
@@ -40,81 +40,81 @@ struct ged_view_label_args {
 static int labels_tree_create(void *bs, int argc, const char **argv);
 
 static int
-label_create_validate(const struct bu_cmd_schema *UNUSED(schema), size_t argc,
-    const char **argv, size_t cursor_arg, struct bu_cmd_validate_result *result)
+label_create_validate(const struct bu_arg_schema *UNUSED(schema), size_t argc,
+    const char **argv, size_t cursor_arg, struct bu_arg_validate_result *result)
 {
-    bu_cmd_validate_state_t state = BU_CMD_VALIDATE_VALID;
+    bu_arg_validate_state_t state = BU_ARG_VALIDATE_VALID;
     const char *hint = "label arguments";
-    bu_cmd_value_t type = cursor_arg == 0 ? BU_CMD_VALUE_STRING : BU_CMD_VALUE_NUMBER;
+    bu_arg_value_t type = cursor_arg == 0 ? BU_ARG_VALUE_STRING : BU_ARG_VALUE_NUMBER;
 
     if (!result || cursor_arg > argc)
 	return -1;
     if (argc > 7) {
-	state = BU_CMD_VALIDATE_INVALID;
+	state = BU_ARG_VALIDATE_INVALID;
 	hint = "label accepts text, X/Y[/Z], and an optional target XYZ";
     } else {
 	for (size_t i = 1; i < argc; i++) {
 	    fastf_t value = 0.0;
-	    if (!bu_cmd_number_from_str(&value, argv[i])) {
-		state = BU_CMD_VALIDATE_INVALID;
+	    if (!bu_arg_number_from_str(&value, argv[i])) {
+		state = BU_ARG_VALIDATE_INVALID;
 		hint = "invalid label coordinate";
 		break;
 	    }
 	}
-	if (state == BU_CMD_VALIDATE_VALID && argc < 3) {
-	    state = BU_CMD_VALIDATE_INCOMPLETE;
+	if (state == BU_ARG_VALIDATE_VALID && argc < 3) {
+	    state = BU_ARG_VALIDATE_INCOMPLETE;
 	    hint = argc ? "label X and Y coordinates required" : "label text required";
-	} else if (state == BU_CMD_VALIDATE_VALID && argc == 5) {
-	    state = BU_CMD_VALIDATE_INCOMPLETE;
+	} else if (state == BU_ARG_VALIDATE_VALID && argc == 5) {
+	    state = BU_ARG_VALIDATE_INCOMPLETE;
 	    hint = "label target requires three coordinates";
 	}
     }
-    bu_cmd_validate_result_clear(result);
+    bu_arg_validate_result_clear(result);
     result->state = state;
     result->token_start = cursor_arg;
     result->token_end = cursor_arg;
-    result->expected = BU_CMD_EXPECT_OPERAND;
+    result->expected = BU_ARG_EXPECT_OPERAND;
     result->completion_type = type;
     result->hint = hint;
     result->semantic_provider = NULL;
     return 0;
 }
 
-static const struct bu_cmd_option label_root_options[] = {
-    BU_CMD_FLAG("h", "help", struct ged_view_label_args, print_help,
+static const struct bu_arg_option label_root_options[] = {
+    BU_ARG_FLAG("h", "help", struct ged_view_label_args, print_help,
 	"Print help and exit"),
-    BU_CMD_ALIAS_SHORT("?", "help", 1),
-    BU_CMD_FLAG("s", NULL, struct ged_view_label_args, s_version,
+    BU_ARG_ALIAS_SHORT("?", "help", 1),
+    BU_ARG_FLAG("s", NULL, struct ged_view_label_args, s_version,
 	"Work with the S version of label data"),
-    BU_CMD_OPTION_NULL
+    BU_ARG_OPTION_NULL
 };
-static const struct bu_cmd_operand label_create_operands[] = {
-    BU_CMD_OPERAND("arguments", BU_CMD_VALUE_RAW, 0, 7,
+static const struct bu_arg_operand label_create_operands[] = {
+    BU_ARG_OPERAND("arguments", BU_ARG_VALUE_RAW, 0, 7,
 	"Text, position, and optional target", NULL),
-    BU_CMD_OPERAND_NULL
+    BU_ARG_OPERAND_NULL
 };
-static const struct bu_cmd_schema label_create_schema = {
+static const struct bu_arg_schema label_create_schema = {
     "create", "Create a label at a position, optionally with a target", NULL,
-    label_create_operands, BU_CMD_PARSE_STOP_AT_FIRST_OPERAND,
-    BU_CMD_SCHEMA_CONSTRAINTS(label_create_validate, NULL)
+    label_create_operands, BU_ARG_PARSE_STOP_AT_FIRST_OPERAND,
+    BU_ARG_SCHEMA_CONSTRAINTS(label_create_validate, NULL)
 };
-GED_EXPORT const struct bu_cmd_schema ged_view_label_schema = {
+GED_EXPORT const struct bu_arg_schema ged_view_label_schema = {
     "label", "Manage object labels", label_root_options, NULL,
-    BU_CMD_PARSE_OPTIONS_FIRST, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+    BU_ARG_PARSE_OPTIONS_FIRST, BU_ARG_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
-GED_EXPORT const struct bu_cmd_tree_node ged_view_label_subcommands[] = {
-    BU_CMD_TREE_NODE(&label_create_schema, NULL, NULL,
-	BU_CMD_TREE_CHILD_AFTER_OPTIONS, labels_tree_create),
-    BU_CMD_TREE_NODE_NULL
+GED_EXPORT const struct bu_arg_tree_node ged_view_label_subcommands[] = {
+    BU_ARG_TREE_NODE(&label_create_schema, NULL, NULL,
+	BU_ARG_TREE_CHILD_AFTER_OPTIONS, labels_tree_create),
+    BU_ARG_TREE_NODE_NULL
 };
-GED_EXPORT const struct bu_cmd_tree ged_view_label_tree = {
-    &ged_view_label_schema, ged_view_label_subcommands, BU_CMD_TREE_CHILD_AFTER_OPTIONS
+GED_EXPORT const struct bu_arg_tree ged_view_label_tree = {
+    &ged_view_label_schema, ged_view_label_subcommands, BU_ARG_TREE_CHILD_AFTER_OPTIONS
 };
 
 static int
 label_preflight(struct ged *gedp, int argc, const char **argv)
 {
-    return bu_cmd_schema_parse_complete(&label_create_schema, NULL,
+    return bu_arg_schema_parse_complete(&label_create_schema, NULL,
 	gedp->ged_result_str, argc - 1, argv + 1) < 0 ? BRLCAD_ERROR : BRLCAD_OK;
 }
 
@@ -143,17 +143,17 @@ labels_tree_create(void *bs, int argc, const char **argv)
     }
 
     point_t p;
-    if (!bu_cmd_number_from_str(&p[0], argv[1])) {
+    if (!bu_arg_number_from_str(&p[0], argv[1])) {
 	bu_vls_printf(gedp->ged_result_str, "Invalid argument %s\n", argv[1]);
 	return BRLCAD_ERROR;
     }
-    if (!bu_cmd_number_from_str(&p[1], argv[2])) {
+    if (!bu_arg_number_from_str(&p[1], argv[2])) {
 	bu_vls_printf(gedp->ged_result_str, "Invalid argument %s\n", argv[2]);
 	return BRLCAD_ERROR;
     }
 
     if (argc == 4 || argc == 7) {
-	if (!bu_cmd_number_from_str(&p[2], argv[3])) {
+	if (!bu_arg_number_from_str(&p[2], argv[3])) {
 	    bu_vls_printf(gedp->ged_result_str, "Invalid argument %s\n", argv[3]);
 	    return BRLCAD_ERROR;
 	}
@@ -171,30 +171,30 @@ labels_tree_create(void *bs, int argc, const char **argv)
     }
     point_t target;
     if (argc == 6) {
-	if (!bu_cmd_number_from_str(&target[0], argv[3])) {
+	if (!bu_arg_number_from_str(&target[0], argv[3])) {
 	    bu_vls_printf(gedp->ged_result_str, "Invalid argument %s\n", argv[3]);
 	    return BRLCAD_ERROR;
 	}
-	if (!bu_cmd_number_from_str(&target[1], argv[4])) {
+	if (!bu_arg_number_from_str(&target[1], argv[4])) {
 	    bu_vls_printf(gedp->ged_result_str, "Invalid argument %s\n", argv[4]);
 	    return BRLCAD_ERROR;
 	}
-	if (!bu_cmd_number_from_str(&target[2], argv[5])) {
+	if (!bu_arg_number_from_str(&target[2], argv[5])) {
 	    bu_vls_printf(gedp->ged_result_str, "Invalid argument %s\n", argv[5]);
 	    return BRLCAD_ERROR;
 	}
     }
 
     if (argc == 7) {
-	if (!bu_cmd_number_from_str(&target[0], argv[4])) {
+	if (!bu_arg_number_from_str(&target[0], argv[4])) {
 	    bu_vls_printf(gedp->ged_result_str, "Invalid argument %s\n", argv[4]);
 	    return BRLCAD_ERROR;
 	}
-	if (!bu_cmd_number_from_str(&target[1], argv[5])) {
+	if (!bu_arg_number_from_str(&target[1], argv[5])) {
 	    bu_vls_printf(gedp->ged_result_str, "Invalid argument %s\n", argv[5]);
 	    return BRLCAD_ERROR;
 	}
-	if (!bu_cmd_number_from_str(&target[2], argv[6])) {
+	if (!bu_arg_number_from_str(&target[2], argv[6])) {
 	    bu_vls_printf(gedp->ged_result_str, "Invalid argument %s\n", argv[6]);
 	    return BRLCAD_ERROR;
 	}
@@ -250,10 +250,10 @@ _view_cmd_labels(void *bs, int argc, const char **argv)
 
 
     argc--; argv++;
-    child_start = bu_cmd_schema_parse(&ged_view_label_schema, &args,
+    child_start = bu_arg_schema_parse(&ged_view_label_schema, &args,
 	gedp->ged_result_str, argc, argv);
     if (child_start < 0) {
-	char *help = bu_cmd_tree_help(&ged_view_label_tree,
+	char *help = bu_arg_tree_help(&ged_view_label_tree,
 	    "view obj <object> label");
 	if (help) {
 	    bu_vls_strcat(gedp->ged_result_str, help);
@@ -263,7 +263,7 @@ _view_cmd_labels(void *bs, int argc, const char **argv)
     }
     gd->gopts = NULL;
     if (args.print_help) {
-	char *help = bu_cmd_tree_help(&ged_view_label_tree,
+	char *help = bu_arg_tree_help(&ged_view_label_tree,
 	    "view obj <object> label");
 	if (help) {
 	    bu_vls_strcat(gedp->ged_result_str, help);
@@ -275,7 +275,7 @@ _view_cmd_labels(void *bs, int argc, const char **argv)
 	bu_vls_strcat(gedp->ged_result_str, "label subcommand required\n");
 	return BRLCAD_ERROR;
     }
-    if (bu_cmd_tree_dispatch(&ged_view_label_tree, gd, argc - child_start,
+    if (bu_arg_tree_dispatch(&ged_view_label_tree, gd, argc - child_start,
 	argv + child_start, &ret) == 0)
 	return ret;
     bu_vls_printf(gedp->ged_result_str, "unknown label subcommand: %s\n",

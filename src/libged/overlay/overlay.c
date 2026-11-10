@@ -26,7 +26,7 @@
 #include "common.h"
 #include <sys/stat.h>
 
-#include "bu/cmdschema.h"
+#include "bu/arg.h"
 #include "bu/path.h"
 #include "bu/mime.h"
 #include "bv/vlist.h"
@@ -128,7 +128,7 @@ BU_OPT_DESC_BUILDER(overlay_options, struct overlay_args, OVERLAY_OPTIONS);
 static const ged_opt_rule overlay_opt_rules[] = {
     GED_RULE_VALUE_VALIDATE("format", BU_OPT_VALUE_STRING, "image format",
 	overlay_format_validate, NULL),
-    GED_RULE_SEMANTIC("view-obj", BU_CMD_VALUE_STRING, "ged.view", "view name"),
+    GED_RULE_SEMANTIC("view-obj", BU_ARG_VALUE_STRING, "ged.view", "view name"),
     GED_RULE_WHEN_HELP("help", "Display command help", "raw_arguments:raw*"),
     GED_RULE_OTHERWISE_HELP("Read an input file and optional view object",
 	"input_file:file view_object:string?"),

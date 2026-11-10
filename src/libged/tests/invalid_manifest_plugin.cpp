@@ -43,10 +43,10 @@ static bu_plugin_manifest invalid_manifest = {
 BU_PLUGIN_DECLARE_MANIFEST(invalid_manifest)
 
 
-static const struct bu_cmd_schema invalid_native_schema =
-    BU_CMD_SCHEMA("registry_invalid_manifest_probe", "Must never be published",
-	NULL, NULL, BU_CMD_PARSE_INTERSPERSED,
-	BU_CMD_SCHEMA_META(NULL, NULL, NULL, NULL));
+static const struct bu_arg_schema invalid_native_schema =
+    BU_ARG_SCHEMA("registry_invalid_manifest_probe", "Must never be published",
+	NULL, NULL, BU_ARG_PARSE_INTERSPERSED,
+	BU_ARG_SCHEMA_META(NULL, NULL, NULL, NULL));
 
 static const struct ged_cmd_schema invalid_schemas[] = {
     {"registry_invalid_manifest_probe", &invalid_native_schema, NULL, NULL}

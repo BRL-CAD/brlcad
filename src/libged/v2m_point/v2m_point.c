@@ -93,7 +93,7 @@ ged_v2m_point_core(struct ged *gedp, int argc, const char *argv[])
 
 #include "../include/plugin.h"
 
-GED_DEFINE_TYPED_OPERAND_SCHEMA(v2m_point, "v2m_point", "Convert a view point to model coordinates", "point", BU_CMD_VALUE_NUMBER, 3, 3, "X Y Z point");
+GED_DEFINE_TYPED_OPERAND_SCHEMA(v2m_point, "v2m_point", "Convert a view point to model coordinates", "point", BU_ARG_VALUE_NUMBER, 3, 3, "X Y Z point");
 
 #define GED_V2M_POINT_COMMANDS(X, XID) \
     X(v2m_point, ged_v2m_point_core, GED_CMD_DEFAULT, &v2m_point_cmd_schema) \

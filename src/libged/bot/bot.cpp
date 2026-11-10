@@ -41,7 +41,7 @@
 #include <vector>
 
 #include "bu/cmd.h"
-#include "bu/cmdschema.h"
+#include "bu/arg.h"
 #include "bu/color.h"
 #include "bu/tbl.h"
 #include "bg/chull.h"
@@ -67,11 +67,11 @@ _bot_face_specifiers(std::set<int> &elements, struct bu_vls *vls, int argc,
 	    std::string s2 = s1.substr(0, pos_dash);
 	    s1.erase(0, pos_dash + 1);
 	    int val1, val2, vtmp;
-	    if (!bu_cmd_integer_from_str(&val1, s1.c_str())) {
+	    if (!bu_arg_integer_from_str(&val1, s1.c_str())) {
 		bu_vls_printf(vls, "Invalid index specification: %s\n", s1.c_str());
 		return BRLCAD_ERROR;
 	    }
-	    if (!bu_cmd_integer_from_str(&val2, s2.c_str())) {
+	    if (!bu_arg_integer_from_str(&val2, s2.c_str())) {
 		bu_vls_printf(vls, "Invalid index specification: %s\n", s2.c_str());
 		return BRLCAD_ERROR;
 	    }
@@ -90,7 +90,7 @@ _bot_face_specifiers(std::set<int> &elements, struct bu_vls *vls, int argc,
 	while (pos_comma != std::string::npos) {
 	    std::string ss = s1.substr(0, pos_comma);
 	    int val1;
-	    if (!bu_cmd_integer_from_str(&val1, ss.c_str())) {
+	    if (!bu_arg_integer_from_str(&val1, ss.c_str())) {
 		bu_vls_printf(vls, "Invalid index specification: %s\n", ss.c_str());
 		return BRLCAD_ERROR;
 	    } else {
@@ -101,7 +101,7 @@ _bot_face_specifiers(std::set<int> &elements, struct bu_vls *vls, int argc,
 	}
 	if (s1.length()) {
 	    int val1;
-	    if (!bu_cmd_integer_from_str(&val1, s1.c_str())) {
+	    if (!bu_arg_integer_from_str(&val1, s1.c_str())) {
 		bu_vls_printf(vls, "Invalid index specification: %s\n", s1.c_str());
 		return BRLCAD_ERROR;
 	    }
@@ -112,7 +112,7 @@ _bot_face_specifiers(std::set<int> &elements, struct bu_vls *vls, int argc,
 
 	// Nothing fancy looking - see if its a number
 	int val = 0;
-	if (bu_cmd_integer_from_str(&val, argv[i])) {
+	if (bu_arg_integer_from_str(&val, argv[i])) {
 	    elements.insert(val);
 	} else {
 	    bu_vls_printf(vls, "Invalid index specification: %s\n", argv[i]);
@@ -205,28 +205,28 @@ invalid:
     return -1;
 }
 
-static const struct bu_cmd_option bot_help_options[] = {
-    BU_CMD_FLAG("h", "help", struct bot_help_args, print_help, "Print command help"),
-    BU_CMD_OPTION_NULL
+static const struct bu_arg_option bot_help_options[] = {
+    BU_ARG_FLAG("h", "help", struct bot_help_args, print_help, "Print command help"),
+    BU_ARG_OPTION_NULL
 };
-static const struct bu_cmd_operand bot_get_operands[] = {
-    {"property", 1, 1, "BoT property to query", BU_CMD_VALUE_STRING,
+static const struct bu_arg_operand bot_get_operands[] = {
+    {"property", 1, 1, "BoT property to query", BU_ARG_VALUE_STRING,
 	bot_get_property_validate, NULL, bot_get_properties, NULL, NULL,
-	BU_CMD_VALUE_RANGE_NONE},
-    BU_CMD_OPERAND("bot", BU_CMD_VALUE_DB_OBJECT, 1, 1,
+	BU_ARG_VALUE_RANGE_NONE},
+    BU_ARG_OPERAND("bot", BU_ARG_VALUE_DB_OBJECT, 1, 1,
 	"BoT object", "ged.db_object"),
-    BU_CMD_OPERAND_NULL
+    BU_ARG_OPERAND_NULL
 };
-static const struct bu_cmd_schema bot_get_subcommand_schema = {
+static const struct bu_arg_schema bot_get_subcommand_schema = {
     "get", "Query BoT properties", bot_help_options, bot_get_operands,
-    BU_CMD_PARSE_INTERSPERSED,
-    BU_CMD_SCHEMA_META_HELP(NULL, NULL, NULL, NULL, NULL)
+    BU_ARG_PARSE_INTERSPERSED,
+    BU_ARG_SCHEMA_META_HELP(NULL, NULL, NULL, NULL, NULL)
 };
 
 static void
 bot_get_usage(struct bu_vls *result)
 {
-    char *help = bu_cmd_schema_help(&bot_get_subcommand_schema, "bot get");
+    char *help = bu_arg_schema_help(&bot_get_subcommand_schema, "bot get");
 
     if (help) {
 	bu_vls_sprintf(result, "%s", help);
@@ -257,7 +257,7 @@ _bot_cmd_get(void *bs, int argc, const char **argv)
 	bot_get_usage(gedp->ged_result_str);
 	return GED_HELP;
     }
-    operand_index = bu_cmd_schema_parse_complete(&bot_get_subcommand_schema, &args,
+    operand_index = bu_arg_schema_parse_complete(&bot_get_subcommand_schema, &args,
 	gedp->ged_result_str, argc, argv);
     if (operand_index < 0) {
 	bu_vls_printf(gedp->ged_result_str, "%s", usage_string);
@@ -432,28 +432,28 @@ bot_set_thickness_valid(const char *value)
 	return 0;
     colon = strchr(value, ':');
     if (!colon)
-	return bu_cmd_number_from_str(&thickness, value);
+	return bu_arg_number_from_str(&thickness, value);
     if (strchr(colon + 1, ':'))
 	return 0;
     std::string face(value, (size_t)(colon - value));
     int face_index = 0;
-    if (!bu_cmd_integer_from_str(&face_index, face.c_str()) || face_index < 0 ||
-	!bu_cmd_number_from_str(&thickness, colon + 1))
+    if (!bu_arg_integer_from_str(&face_index, face.c_str()) || face_index < 0 ||
+	!bu_arg_number_from_str(&thickness, colon + 1))
 	return 0;
     return 1;
 }
 
 
 static void
-bot_set_validation_result(struct bu_cmd_validate_result *result,
-	bu_cmd_validate_state_t state, size_t token, bu_cmd_value_t value_type,
+bot_set_validation_result(struct bu_arg_validate_result *result,
+	bu_arg_validate_state_t state, size_t token, bu_arg_value_t value_type,
 	const char *hint, const char *semantic_provider)
 {
-    bu_cmd_validate_result_clear(result);
+    bu_arg_validate_result_clear(result);
     result->state = state;
     result->token_start = token;
     result->token_end = token;
-    result->expected = BU_CMD_EXPECT_OPERAND;
+    result->expected = BU_ARG_EXPECT_OPERAND;
     result->completion_type = value_type;
     result->hint = hint;
     result->semantic_provider = semantic_provider;
@@ -461,7 +461,7 @@ bot_set_validation_result(struct bu_cmd_validate_result *result,
 
 
 static void
-bot_set_property_result(struct bu_cmd_validate_result *result, const char *value,
+bot_set_property_result(struct bu_arg_validate_result *result, const char *value,
 	size_t token)
 {
     int exact = bot_set_property_known(value);
@@ -482,30 +482,30 @@ bot_set_property_result(struct bu_cmd_validate_result *result, const char *value
     if (BU_STR_EQUAL(value ? value : "", "mode"))
 	exact = 1;
 
-    bot_set_validation_result(result, exact ? BU_CMD_VALIDATE_VALID :
-	(prefix ? BU_CMD_VALIDATE_INCOMPLETE : BU_CMD_VALIDATE_INVALID), token,
-	BU_CMD_VALUE_KEYWORD, "BoT property", NULL);
-    bu_cmd_keyword_candidates(result, bot_set_properties, value ? value : "");
+    bot_set_validation_result(result, exact ? BU_ARG_VALIDATE_VALID :
+	(prefix ? BU_ARG_VALIDATE_INCOMPLETE : BU_ARG_VALIDATE_INVALID), token,
+	BU_ARG_VALUE_KEYWORD, "BoT property", NULL);
+    bu_arg_keyword_candidates(result, bot_set_properties, value ? value : "");
 }
 
 
 static void
-bot_set_keyword_result(struct bu_cmd_validate_result *result,
+bot_set_keyword_result(struct bu_arg_validate_result *result,
 	const char * const *canonical, const char * const *accepted,
 	const char *value, size_t token, const char *hint)
 {
     int exact = 0;
     int prefix = bot_set_keyword_match(accepted, value, &exact);
 
-    bot_set_validation_result(result, exact ? BU_CMD_VALIDATE_VALID :
-	(prefix ? BU_CMD_VALIDATE_INCOMPLETE : BU_CMD_VALIDATE_INVALID), token,
-	BU_CMD_VALUE_KEYWORD, hint, NULL);
-    bu_cmd_keyword_candidates(result, canonical, value ? value : "");
+    bot_set_validation_result(result, exact ? BU_ARG_VALIDATE_VALID :
+	(prefix ? BU_ARG_VALIDATE_INCOMPLETE : BU_ARG_VALIDATE_INVALID), token,
+	BU_ARG_VALUE_KEYWORD, hint, NULL);
+    bu_arg_keyword_candidates(result, canonical, value ? value : "");
 }
 
 
 static void
-bot_set_value_result(struct bu_cmd_validate_result *result, const char *property,
+bot_set_value_result(struct bu_arg_validate_result *result, const char *property,
 	const char *value, size_t token)
 {
     if (BU_STR_EQUAL(property, "orientation")) {
@@ -520,22 +520,22 @@ bot_set_value_result(struct bu_cmd_validate_result *result, const char *property
 	return;
     }
     bot_set_validation_result(result, bot_set_thickness_valid(value) ?
-	BU_CMD_VALIDATE_VALID : BU_CMD_VALIDATE_INVALID, token, BU_CMD_VALUE_STRING,
+	BU_ARG_VALIDATE_VALID : BU_ARG_VALIDATE_INVALID, token, BU_ARG_VALUE_STRING,
 	"thickness must be a finite number or face_index:number", "bot.thickness");
 }
 
 
 static int
-bot_set_schema_validate(const struct bu_cmd_schema *schema, size_t argc,
-	const char **argv, size_t cursor_arg, struct bu_cmd_validate_result *result)
+bot_set_schema_validate(const struct bu_arg_schema *schema, size_t argc,
+	const char **argv, size_t cursor_arg, struct bu_arg_validate_result *result)
 {
     const char *operands[4] = {NULL, NULL, NULL, NULL};
     size_t count = 0;
     size_t i = 0;
     int option_phase = 1;
 
-    if ((result->expected & BU_CMD_EXPECT_OPTION_ARG) ||
-	(cursor_arg < argc && (result->expected & BU_CMD_EXPECT_OPTION)))
+    if ((result->expected & BU_ARG_EXPECT_OPTION_ARG) ||
+	(cursor_arg < argc && (result->expected & BU_ARG_EXPECT_OPTION)))
 	return 0;
 
     while (i < cursor_arg) {
@@ -546,7 +546,7 @@ bot_set_schema_validate(const struct bu_cmd_schema *schema, size_t argc,
 	    continue;
 	}
 	if (option_phase)
-	    span = bu_cmd_schema_option_span(schema, argc - i, argv + i);
+	    span = bu_arg_schema_option_span(schema, argc - i, argv + i);
 	if (span > 0) {
 	    i += (size_t)span;
 	    continue;
@@ -568,23 +568,23 @@ bot_set_schema_validate(const struct bu_cmd_schema *schema, size_t argc,
 	    return 0;
 	}
 	if (count == 1) {
-	    bot_set_validation_result(result, BU_CMD_VALIDATE_VALID, cursor_arg,
-		BU_CMD_VALUE_DB_OBJECT, "BoT object", "ged.db_object");
+	    bot_set_validation_result(result, BU_ARG_VALIDATE_VALID, cursor_arg,
+		BU_ARG_VALUE_DB_OBJECT, "BoT object", "ged.db_object");
 	    return 0;
 	}
 	if (count == 2) {
 	    bot_set_value_result(result, operands[0], current, cursor_arg);
 	    return 0;
 	}
-	bot_set_validation_result(result, BU_CMD_VALIDATE_INVALID, cursor_arg,
-	    BU_CMD_VALUE_STRING, "bot set accepts exactly three operands", NULL);
+	bot_set_validation_result(result, BU_ARG_VALIDATE_INVALID, cursor_arg,
+	    BU_ARG_VALUE_STRING, "bot set accepts exactly three operands", NULL);
 	return 0;
     }
 
     if (!count) {
-	bot_set_validation_result(result, BU_CMD_VALIDATE_INCOMPLETE, cursor_arg,
-	    BU_CMD_VALUE_KEYWORD, "BoT property required", NULL);
-	bu_cmd_keyword_candidates(result, bot_set_properties, "");
+	bot_set_validation_result(result, BU_ARG_VALIDATE_INCOMPLETE, cursor_arg,
+	    BU_ARG_VALUE_KEYWORD, "BoT property required", NULL);
+	bu_arg_keyword_candidates(result, bot_set_properties, "");
 	return 0;
     }
 	if (!bot_set_property_known(operands[0])) {
@@ -592,22 +592,22 @@ bot_set_schema_validate(const struct bu_cmd_schema *schema, size_t argc,
 	return 0;
     }
 	if (count == 1) {
-	bot_set_validation_result(result, BU_CMD_VALIDATE_INCOMPLETE, cursor_arg,
-	    BU_CMD_VALUE_DB_OBJECT, "BoT object required", "ged.db_object");
+	bot_set_validation_result(result, BU_ARG_VALIDATE_INCOMPLETE, cursor_arg,
+	    BU_ARG_VALUE_DB_OBJECT, "BoT object required", "ged.db_object");
 	return 0;
     }
 	if (count == 2) {
 	if (BU_STR_EQUAL(operands[0], "orientation")) {
-	    bot_set_validation_result(result, BU_CMD_VALIDATE_INCOMPLETE, cursor_arg,
-		BU_CMD_VALUE_KEYWORD, "orientation value required", NULL);
-	    bu_cmd_keyword_candidates(result, bot_set_orientation_values, "");
+	    bot_set_validation_result(result, BU_ARG_VALIDATE_INCOMPLETE, cursor_arg,
+		BU_ARG_VALUE_KEYWORD, "orientation value required", NULL);
+	    bu_arg_keyword_candidates(result, bot_set_orientation_values, "");
 	} else if (BU_STR_EQUAL(operands[0], "type") || BU_STR_EQUAL(operands[0], "mode")) {
-	    bot_set_validation_result(result, BU_CMD_VALIDATE_INCOMPLETE, cursor_arg,
-		BU_CMD_VALUE_KEYWORD, "type value required", NULL);
-	    bu_cmd_keyword_candidates(result, bot_set_type_values, "");
+	    bot_set_validation_result(result, BU_ARG_VALIDATE_INCOMPLETE, cursor_arg,
+		BU_ARG_VALUE_KEYWORD, "type value required", NULL);
+	    bu_arg_keyword_candidates(result, bot_set_type_values, "");
 	} else {
-	    bot_set_validation_result(result, BU_CMD_VALIDATE_INCOMPLETE, cursor_arg,
-		BU_CMD_VALUE_STRING, "thickness value required", "bot.thickness");
+	    bot_set_validation_result(result, BU_ARG_VALIDATE_INCOMPLETE, cursor_arg,
+		BU_ARG_VALUE_STRING, "thickness value required", "bot.thickness");
 	}
 	return 0;
     }
@@ -615,33 +615,33 @@ bot_set_schema_validate(const struct bu_cmd_schema *schema, size_t argc,
 	bot_set_value_result(result, operands[0], operands[2], 2);
 	return 0;
     }
-	bot_set_validation_result(result, BU_CMD_VALIDATE_INVALID, cursor_arg,
-	    BU_CMD_VALUE_STRING, "bot set accepts exactly three operands", NULL);
+	bot_set_validation_result(result, BU_ARG_VALIDATE_INVALID, cursor_arg,
+	    BU_ARG_VALUE_STRING, "bot set accepts exactly three operands", NULL);
 	return 0;
 }
 
 
-static const struct bu_cmd_operand bot_set_operands[] = {
-    BU_CMD_OPERAND_KEYWORDS("property", BU_CMD_VALUE_STRING, 1, 1,
+static const struct bu_arg_operand bot_set_operands[] = {
+    BU_ARG_OPERAND_KEYWORDS("property", BU_ARG_VALUE_STRING, 1, 1,
 	"BoT property (mode is a compatibility alias for type)", NULL,
 	bot_set_properties),
-    BU_CMD_OPERAND("bot", BU_CMD_VALUE_DB_OBJECT, 1, 1,
+    BU_ARG_OPERAND("bot", BU_ARG_VALUE_DB_OBJECT, 1, 1,
 	"BoT object", "ged.db_object"),
-    BU_CMD_OPERAND("value", BU_CMD_VALUE_STRING, 1, 1,
+    BU_ARG_OPERAND("value", BU_ARG_VALUE_STRING, 1, 1,
 	"Property value", "bot.set_value"),
-    BU_CMD_OPERAND_NULL
+    BU_ARG_OPERAND_NULL
 };
-static const struct bu_cmd_schema bot_set_subcommand_schema = {
+static const struct bu_arg_schema bot_set_subcommand_schema = {
     "set", "Set BoT properties", bot_help_options, bot_set_operands,
-    BU_CMD_PARSE_INTERSPERSED,
-    BU_CMD_SCHEMA_META_HELP(NULL, NULL, bot_set_schema_validate, NULL, NULL)
+    BU_ARG_PARSE_INTERSPERSED,
+    BU_ARG_SCHEMA_META_HELP(NULL, NULL, bot_set_schema_validate, NULL, NULL)
 };
 
 
 static void
 bot_set_usage(struct bu_vls *result)
 {
-    char *help = bu_cmd_schema_help(&bot_set_subcommand_schema, "bot set");
+    char *help = bu_arg_schema_help(&bot_set_subcommand_schema, "bot set");
 
     bu_vls_sprintf(result, "%s", help ? help : "");
     if (help)
@@ -676,7 +676,7 @@ _bot_cmd_set(void *bs, int argc, const char **argv)
 	bot_set_usage(gedp->ged_result_str);
 	return GED_HELP;
     }
-    operand_index = bu_cmd_schema_parse_complete(&bot_set_subcommand_schema,
+    operand_index = bu_arg_schema_parse_complete(&bot_set_subcommand_schema,
 	&args, gedp->ged_result_str, argc, argv);
     if (operand_index < 0) {
 	bu_vls_printf(gedp->ged_result_str, "%s", usage_string);
@@ -784,12 +784,12 @@ _bot_cmd_set(void *bs, int argc, const char **argv)
 	    c++;
 	    char *thickness_str = c;
 
-	    if (!bu_cmd_integer_from_str(&face_id, face_id_str)) {
+	    if (!bu_arg_integer_from_str(&face_id, face_id_str)) {
 		bu_vls_printf(gedp->ged_result_str, "Invalid face index specification: %s\n", face_id_str);
 		bu_free(targ, "targ");
 		return BRLCAD_ERROR;
 	    }
-	    if (!bu_cmd_number_from_str(&thickness, thickness_str)) {
+	    if (!bu_arg_number_from_str(&thickness, thickness_str)) {
 		bu_vls_printf(gedp->ged_result_str, "Invalid index specification: %s\n", thickness_str);
 		bu_free(targ, "targ");
 		return BRLCAD_ERROR;
@@ -801,7 +801,7 @@ _bot_cmd_set(void *bs, int argc, const char **argv)
 	    }
 	    bot->thickness[face_id] = thickness;
 	} else {
-	    if (!bu_cmd_number_from_str(&thickness, targ)) {
+	    if (!bu_arg_number_from_str(&thickness, targ)) {
 		bu_vls_printf(gedp->ged_result_str, "Invalid thickness specification: %s\n", targ);
 		bu_free(targ, "targ");
 		return BRLCAD_ERROR;
@@ -826,23 +826,23 @@ _bot_cmd_set(void *bs, int argc, const char **argv)
     return BRLCAD_OK;
 }
 
-static const struct bu_cmd_operand bot_chull_operands[] = {
-    BU_CMD_OPERAND("input_bot", BU_CMD_VALUE_DB_OBJECT, 1, 1,
+static const struct bu_arg_operand bot_chull_operands[] = {
+    BU_ARG_OPERAND("input_bot", BU_ARG_VALUE_DB_OBJECT, 1, 1,
 	"Input BoT object", "ged.db_object"),
-    BU_CMD_OPERAND("output_name", BU_CMD_VALUE_STRING, 0, 1,
+    BU_ARG_OPERAND("output_name", BU_ARG_VALUE_STRING, 0, 1,
 	"Optional output BoT name", NULL),
-    BU_CMD_OPERAND_NULL
+    BU_ARG_OPERAND_NULL
 };
-static const struct bu_cmd_schema bot_chull_subcommand_schema = {
+static const struct bu_arg_schema bot_chull_subcommand_schema = {
     "chull", "Generate a convex hull", bot_help_options, bot_chull_operands,
-    BU_CMD_PARSE_INTERSPERSED,
-    BU_CMD_SCHEMA_META_HELP(NULL, NULL, NULL, NULL, NULL)
+    BU_ARG_PARSE_INTERSPERSED,
+    BU_ARG_SCHEMA_META_HELP(NULL, NULL, NULL, NULL, NULL)
 };
 
 static void
 bot_chull_usage(struct bu_vls *result)
 {
-    char *help = bu_cmd_schema_help(&bot_chull_subcommand_schema, "bot chull");
+    char *help = bu_arg_schema_help(&bot_chull_subcommand_schema, "bot chull");
 
     if (help) {
 	bu_vls_sprintf(result, "%s", help);
@@ -872,7 +872,7 @@ _bot_cmd_chull(void *bs, int argc, const char **argv)
 	bot_chull_usage(gb->gedp->ged_result_str);
 	return GED_HELP;
     }
-    operand_index = bu_cmd_schema_parse_complete(&bot_chull_subcommand_schema,
+    operand_index = bu_arg_schema_parse_complete(&bot_chull_subcommand_schema,
 	&args, gb->gedp->ged_result_str, argc, argv);
     if (operand_index < 0) {
 	bu_vls_printf(gb->gedp->ged_result_str, "%s", usage_string);
@@ -935,19 +935,19 @@ struct bot_flip_args {
     int test_flipped;
 };
 
-static const struct bu_cmd_option bot_flip_options[] = {
-    BU_CMD_FLAG("t", "test", struct bot_flip_args, test_flipped,
+static const struct bu_arg_option bot_flip_options[] = {
+    BU_ARG_FLAG("t", "test", struct bot_flip_args, test_flipped,
 	"Test whether the specified BoT is inside out"),
-    BU_CMD_OPTION_NULL
+    BU_ARG_OPTION_NULL
 };
-static const struct bu_cmd_operand bot_flip_operands[] = {
-    BU_CMD_OPERAND("input_bot", BU_CMD_VALUE_DB_OBJECT, 1, 1,
+static const struct bu_arg_operand bot_flip_operands[] = {
+    BU_ARG_OPERAND("input_bot", BU_ARG_VALUE_DB_OBJECT, 1, 1,
 	"Input BoT object", "ged.db_object"),
-    BU_CMD_OPERAND_NULL
+    BU_ARG_OPERAND_NULL
 };
-static const struct bu_cmd_schema bot_flip_schema = {
+static const struct bu_arg_schema bot_flip_schema = {
     "flip", "Reverse BoT orientation", bot_flip_options, bot_flip_operands,
-    BU_CMD_PARSE_INTERSPERSED, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+    BU_ARG_PARSE_INTERSPERSED, BU_ARG_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
 
 extern "C" int
@@ -966,7 +966,7 @@ _bot_cmd_flip(void *bs, int argc, const char **argv)
 
     argc--; argv++;
 
-	operand_index = bu_cmd_schema_parse_complete(&bot_flip_schema, &args,
+	operand_index = bu_arg_schema_parse_complete(&bot_flip_schema, &args,
 	gb->gedp->ged_result_str, argc, argv);
     if (operand_index < 0) {
 	bu_vls_printf(gb->gedp->ged_result_str, "%s", usage_string);
@@ -1003,23 +1003,23 @@ _bot_cmd_flip(void *bs, int argc, const char **argv)
     return BRLCAD_OK;
 }
 
-static const struct bu_cmd_operand bot_isect_operands[] = {
-    BU_CMD_OPERAND("first_bot", BU_CMD_VALUE_DB_OBJECT, 1, 1,
+static const struct bu_arg_operand bot_isect_operands[] = {
+    BU_ARG_OPERAND("first_bot", BU_ARG_VALUE_DB_OBJECT, 1, 1,
 	"First BoT object", "ged.db_object"),
-    BU_CMD_OPERAND("second_bot", BU_CMD_VALUE_DB_OBJECT, 1, 1,
+    BU_ARG_OPERAND("second_bot", BU_ARG_VALUE_DB_OBJECT, 1, 1,
 	"Second BoT object", "ged.db_object"),
-    BU_CMD_OPERAND_NULL
+    BU_ARG_OPERAND_NULL
 };
-static const struct bu_cmd_schema bot_isect_subcommand_schema = {
+static const struct bu_arg_schema bot_isect_subcommand_schema = {
     "isect", "Intersect BoT geometry", bot_help_options, bot_isect_operands,
-    BU_CMD_PARSE_INTERSPERSED,
-    BU_CMD_SCHEMA_META_HELP(NULL, NULL, NULL, NULL, NULL)
+    BU_ARG_PARSE_INTERSPERSED,
+    BU_ARG_SCHEMA_META_HELP(NULL, NULL, NULL, NULL, NULL)
 };
 
 static void
 bot_isect_usage(struct bu_vls *result)
 {
-    char *help = bu_cmd_schema_help(&bot_isect_subcommand_schema, "bot isect");
+    char *help = bu_arg_schema_help(&bot_isect_subcommand_schema, "bot isect");
 
     if (help) {
 	bu_vls_sprintf(result, "%s", help);
@@ -1047,7 +1047,7 @@ _bot_cmd_isect(void *bs, int argc, const char **argv)
 	bot_isect_usage(gb->gedp->ged_result_str);
 	return GED_HELP;
     }
-    operand_index = bu_cmd_schema_parse_complete(&bot_isect_subcommand_schema,
+    operand_index = bu_arg_schema_parse_complete(&bot_isect_subcommand_schema,
 	&args, gb->gedp->ged_result_str, argc, argv);
     if (operand_index < 0) {
 	bu_vls_printf(gb->gedp->ged_result_str, "%s", usage_string);
@@ -1093,38 +1093,38 @@ _bot_cmd_isect(void *bs, int argc, const char **argv)
     return BRLCAD_OK;
 }
 
-static const struct bu_cmd_operand bot_single_object_operands[] = {
-    BU_CMD_OPERAND("bot", BU_CMD_VALUE_DB_OBJECT, 1, 1,
+static const struct bu_arg_operand bot_single_object_operands[] = {
+    BU_ARG_OPERAND("bot", BU_ARG_VALUE_DB_OBJECT, 1, 1,
 	"BoT object", "ged.db_object"),
-    BU_CMD_OPERAND_NULL
+    BU_ARG_OPERAND_NULL
 };
-static const struct bu_cmd_schema bot_sync_subcommand_schema = {
+static const struct bu_arg_schema bot_sync_subcommand_schema = {
     "sync", "Synchronize BoT orientation", bot_help_options,
-    bot_single_object_operands, BU_CMD_PARSE_INTERSPERSED,
-    BU_CMD_SCHEMA_META_HELP(NULL, NULL, NULL, NULL, NULL)
+    bot_single_object_operands, BU_ARG_PARSE_INTERSPERSED,
+    BU_ARG_SCHEMA_META_HELP(NULL, NULL, NULL, NULL, NULL)
 };
 struct bot_split_subcommand_args {
     int print_help;
     const char *group_name;
 };
-static const struct bu_cmd_option bot_split_subcommand_options[] = {
-    BU_CMD_FLAG("h", "help", struct bot_split_subcommand_args, print_help,
+static const struct bu_arg_option bot_split_subcommand_options[] = {
+    BU_ARG_FLAG("h", "help", struct bot_split_subcommand_args, print_help,
         "Print command help"),
-    BU_CMD_STRING("", "grp", struct bot_split_subcommand_args, group_name,
+    BU_ARG_STRING("", "grp", struct bot_split_subcommand_args, group_name,
         "name", "Name the combination containing split BoTs"),
-    BU_CMD_OPTION_NULL
+    BU_ARG_OPTION_NULL
 };
-static const struct bu_cmd_schema bot_split_subcommand_schema = {
+static const struct bu_arg_schema bot_split_subcommand_schema = {
     "split", "Split disconnected BoT components", bot_split_subcommand_options,
-    bot_single_object_operands, BU_CMD_PARSE_INTERSPERSED,
-    BU_CMD_SCHEMA_META_HELP(NULL, NULL, NULL, NULL, NULL)
+    bot_single_object_operands, BU_ARG_PARSE_INTERSPERSED,
+    BU_ARG_SCHEMA_META_HELP(NULL, NULL, NULL, NULL, NULL)
 };
 
 static void
-bot_single_object_usage(struct bu_vls *result, const struct bu_cmd_schema *schema,
+bot_single_object_usage(struct bu_vls *result, const struct bu_arg_schema *schema,
 	const char *command, const char *UNUSED(operand))
 {
-    char *help = bu_cmd_schema_help(schema, command);
+    char *help = bu_arg_schema_help(schema, command);
 
     if (help) {
 	bu_vls_sprintf(result, "%s", help);
@@ -1153,7 +1153,7 @@ _bot_cmd_sync(void *bs, int argc, const char **argv)
 	    "bot sync", "objname");
 	return GED_HELP;
     }
-    operand_index = bu_cmd_schema_parse_complete(&bot_sync_subcommand_schema, &args,
+    operand_index = bu_arg_schema_parse_complete(&bot_sync_subcommand_schema, &args,
 	gb->gedp->ged_result_str, argc, argv);
     if (operand_index < 0) {
 	bu_vls_printf(gb->gedp->ged_result_str, "%s", usage_string);
@@ -1200,29 +1200,29 @@ _bot_vlblock_plot(struct ged *gedp, struct bv_vlblock *vbp, const char *sname)
     }
 }
 
-static const struct bu_cmd_operand bot_index_list_operands[] = {
-    BU_CMD_OPERAND("input_bot", BU_CMD_VALUE_DB_OBJECT, 1, 1,
+static const struct bu_arg_operand bot_index_list_operands[] = {
+    BU_ARG_OPERAND("input_bot", BU_ARG_VALUE_DB_OBJECT, 1, 1,
 	"Input BoT object", "ged.db_object"),
-    BU_CMD_OPERAND("indices", BU_CMD_VALUE_RAW, 0, BU_CMD_COUNT_UNLIMITED,
+    BU_ARG_OPERAND("indices", BU_ARG_VALUE_RAW, 0, BU_ARG_COUNT_UNLIMITED,
 	"Index or index-list/range specification", NULL),
-    BU_CMD_OPERAND_NULL
+    BU_ARG_OPERAND_NULL
 };
-static const struct bu_cmd_schema bot_plot_subcommand_schema = {
+static const struct bu_arg_schema bot_plot_subcommand_schema = {
     "plot", "Plot BoT diagnostic faces", bot_help_options, bot_index_list_operands,
-    BU_CMD_PARSE_INTERSPERSED,
-    BU_CMD_SCHEMA_META_HELP(NULL, NULL, NULL, NULL, NULL)
+    BU_ARG_PARSE_INTERSPERSED,
+    BU_ARG_SCHEMA_META_HELP(NULL, NULL, NULL, NULL, NULL)
 };
-static const struct bu_cmd_schema bot_vertex_subcommand_schema = {
+static const struct bu_arg_schema bot_vertex_subcommand_schema = {
     "vertex", "Report BoT vertex coordinates", bot_help_options, bot_index_list_operands,
-    BU_CMD_PARSE_INTERSPERSED,
-    BU_CMD_SCHEMA_META_HELP(NULL, NULL, NULL, NULL, NULL)
+    BU_ARG_PARSE_INTERSPERSED,
+    BU_ARG_SCHEMA_META_HELP(NULL, NULL, NULL, NULL, NULL)
 };
 
 static void
-bot_index_list_usage(struct bu_vls *result, const struct bu_cmd_schema *schema,
+bot_index_list_usage(struct bu_vls *result, const struct bu_arg_schema *schema,
 	const char *command, const char *UNUSED(tail))
 {
-    char *help = bu_cmd_schema_help(schema, command);
+    char *help = bu_arg_schema_help(schema, command);
 
     if (help) {
 	bu_vls_sprintf(result, "%s", help);
@@ -1254,7 +1254,7 @@ _bot_cmd_plot(void *bs, int argc, const char **argv)
 	    "bot plot", " [face_index ...]");
 	return GED_HELP;
     }
-    operand_index = bu_cmd_schema_parse_complete(&bot_plot_subcommand_schema,
+    operand_index = bu_arg_schema_parse_complete(&bot_plot_subcommand_schema,
 	&args, gb->gedp->ged_result_str, argc, argv);
     if (operand_index < 0) {
 	bu_vls_printf(gb->gedp->ged_result_str, "%s", usage_string);
@@ -1308,23 +1308,23 @@ _bot_cmd_plot(void *bs, int argc, const char **argv)
 //
 // Probably this could (and should) be a libbg function that isn't specific to
 // BoTs, but doing it here for testing purposes.
-static const struct bu_cmd_operand bot_pca_operands[] = {
-    BU_CMD_OPERAND("input_bot", BU_CMD_VALUE_DB_OBJECT, 1, 1,
+static const struct bu_arg_operand bot_pca_operands[] = {
+    BU_ARG_OPERAND("input_bot", BU_ARG_VALUE_DB_OBJECT, 1, 1,
 	"Input BoT object", "ged.db_object"),
-    BU_CMD_OPERAND("output_name", BU_CMD_VALUE_STRING, 0, 1,
+    BU_ARG_OPERAND("output_name", BU_ARG_VALUE_STRING, 0, 1,
 	"Optional transformed-copy name", NULL),
-    BU_CMD_OPERAND_NULL
+    BU_ARG_OPERAND_NULL
 };
-static const struct bu_cmd_schema bot_pca_subcommand_schema = {
+static const struct bu_arg_schema bot_pca_subcommand_schema = {
     "pca", "Analyze BoT principal components", bot_help_options, bot_pca_operands,
-    BU_CMD_PARSE_INTERSPERSED,
-    BU_CMD_SCHEMA_META_HELP(NULL, NULL, NULL, NULL, NULL)
+    BU_ARG_PARSE_INTERSPERSED,
+    BU_ARG_SCHEMA_META_HELP(NULL, NULL, NULL, NULL, NULL)
 };
 
 static void
 bot_pca_usage(struct bu_vls *result)
 {
-    char *help = bu_cmd_schema_help(&bot_pca_subcommand_schema, "bot pca");
+    char *help = bu_arg_schema_help(&bot_pca_subcommand_schema, "bot pca");
 
     if (help) {
 	bu_vls_sprintf(result, "%s", help);
@@ -1353,7 +1353,7 @@ _bot_cmd_pca(void *bs, int argc, const char **argv)
 	bot_pca_usage(gb->gedp->ged_result_str);
 	return GED_HELP;
     }
-    operand_index = bu_cmd_schema_parse_complete(&bot_pca_subcommand_schema,
+    operand_index = bu_arg_schema_parse_complete(&bot_pca_subcommand_schema,
 	&args, gb->gedp->ged_result_str, argc, argv);
     if (operand_index < 0) {
 	bu_vls_printf(gb->gedp->ged_result_str, "%s", usage_string);
@@ -1474,7 +1474,7 @@ _bot_cmd_split(void *bs, int argc, const char **argv)
             &bot_split_subcommand_schema, "bot split", "objname");
         return GED_HELP;
     }
-    int operand_index = bu_cmd_schema_parse_complete(&bot_split_subcommand_schema,
+    int operand_index = bu_arg_schema_parse_complete(&bot_split_subcommand_schema,
         &args, gb->gedp->ged_result_str, argc, argv);
     if (operand_index < 0) {
         bot_single_object_usage(gb->gedp->ged_result_str,
@@ -1542,23 +1542,23 @@ _bot_cmd_split(void *bs, int argc, const char **argv)
     return BRLCAD_OK;
 }
 
-static const struct bu_cmd_operand bot_strip_operands[] = {
-    BU_CMD_OPERAND("input_bot", BU_CMD_VALUE_DB_OBJECT, 1, 1,
+static const struct bu_arg_operand bot_strip_operands[] = {
+    BU_ARG_OPERAND("input_bot", BU_ARG_VALUE_DB_OBJECT, 1, 1,
 	"Input BoT object", "ged.db_object"),
-    BU_CMD_OPERAND("output_name", BU_CMD_VALUE_STRING, 1, 1,
+    BU_ARG_OPERAND("output_name", BU_ARG_VALUE_STRING, 1, 1,
 	"Output BoT name", NULL),
-    BU_CMD_OPERAND_NULL
+    BU_ARG_OPERAND_NULL
 };
-static const struct bu_cmd_schema bot_strip_subcommand_schema = {
+static const struct bu_arg_schema bot_strip_subcommand_schema = {
     "strip", "Remove degenerate-volume triangles from a BoT", bot_help_options,
-    bot_strip_operands, BU_CMD_PARSE_INTERSPERSED,
-    BU_CMD_SCHEMA_META_HELP(NULL, NULL, NULL, NULL, NULL)
+    bot_strip_operands, BU_ARG_PARSE_INTERSPERSED,
+    BU_ARG_SCHEMA_META_HELP(NULL, NULL, NULL, NULL, NULL)
 };
 
 static void
 bot_strip_usage(struct bu_vls *result)
 {
-    char *help = bu_cmd_schema_help(&bot_strip_subcommand_schema, "bot strip");
+    char *help = bu_arg_schema_help(&bot_strip_subcommand_schema, "bot strip");
 
     if (help) {
 	bu_vls_sprintf(result, "%s", help);
@@ -1586,7 +1586,7 @@ _bot_cmd_strip(void *bs, int argc, const char **argv)
 	bot_strip_usage(gb->gedp->ged_result_str);
 	return GED_HELP;
     }
-    operand_index = bu_cmd_schema_parse_complete(&bot_strip_subcommand_schema,
+    operand_index = bu_arg_schema_parse_complete(&bot_strip_subcommand_schema,
 	&args, gb->gedp->ged_result_str, argc, argv);
     if (operand_index < 0) {
 	bu_vls_printf(gb->gedp->ged_result_str, "%s", usage_string);
@@ -1747,21 +1747,21 @@ bot_output(struct bu_tbl *table, struct db_i *dbip, struct directory *dp)
     bu_free_external(&ext);
 }
 
-static const struct bu_cmd_operand bot_stat_operands[] = {
-    BU_CMD_OPERAND("pattern", BU_CMD_VALUE_STRING, 1, 1,
+static const struct bu_arg_operand bot_stat_operands[] = {
+    BU_ARG_OPERAND("pattern", BU_ARG_VALUE_STRING, 1, 1,
 	"Database-object search pattern", NULL),
-    BU_CMD_OPERAND_NULL
+    BU_ARG_OPERAND_NULL
 };
-static const struct bu_cmd_schema bot_stat_subcommand_schema = {
+static const struct bu_arg_schema bot_stat_subcommand_schema = {
     "stat", "Report BoT statistics", bot_help_options, bot_stat_operands,
-    BU_CMD_PARSE_INTERSPERSED,
-    BU_CMD_SCHEMA_META_HELP(NULL, NULL, NULL, NULL, NULL)
+    BU_ARG_PARSE_INTERSPERSED,
+    BU_ARG_SCHEMA_META_HELP(NULL, NULL, NULL, NULL, NULL)
 };
 
 static void
 bot_stat_usage(struct bu_vls *result)
 {
-    char *help = bu_cmd_schema_help(&bot_stat_subcommand_schema, "bot stat");
+    char *help = bu_arg_schema_help(&bot_stat_subcommand_schema, "bot stat");
 
     if (help) {
 	bu_vls_sprintf(result, "%s", help);
@@ -1790,7 +1790,7 @@ _bot_cmd_stat(void *bs, int argc, const char **argv)
 	bot_stat_usage(gb->gedp->ged_result_str);
 	return GED_HELP;
     }
-    operand_index = bu_cmd_schema_parse_complete(&bot_stat_subcommand_schema,
+    operand_index = bu_arg_schema_parse_complete(&bot_stat_subcommand_schema,
 	&args, gb->gedp->ged_result_str, argc, argv);
     if (operand_index < 0) {
 	bu_vls_printf(gb->gedp->ged_result_str, "%s", usage_string);
@@ -1842,15 +1842,15 @@ static const char * const bot_pick_first_values[] = {"--first", NULL};
 
 
 static void
-bot_pick_validation_result(struct bu_cmd_validate_result *result,
-	bu_cmd_validate_state_t state, size_t token, bu_cmd_value_t value_type,
+bot_pick_validation_result(struct bu_arg_validate_result *result,
+	bu_arg_validate_state_t state, size_t token, bu_arg_value_t value_type,
 	const char *hint, const char *semantic_provider)
 {
-    bu_cmd_validate_result_clear(result);
+    bu_arg_validate_result_clear(result);
     result->state = state;
     result->token_start = token;
     result->token_end = token;
-    result->expected = BU_CMD_EXPECT_OPERAND;
+    result->expected = BU_ARG_EXPECT_OPERAND;
     result->completion_type = value_type;
     result->hint = hint;
     result->semantic_provider = semantic_provider;
@@ -1858,7 +1858,7 @@ bot_pick_validation_result(struct bu_cmd_validate_result *result,
 
 
 static void
-bot_pick_kind_result(struct bu_cmd_validate_result *result, const char *kind,
+bot_pick_kind_result(struct bu_arg_validate_result *result, const char *kind,
 	size_t token)
 {
     int exact = kind && (BU_STR_EQUAL(kind, "E") || BU_STR_EQUAL(kind, "F") ||
@@ -1866,15 +1866,15 @@ bot_pick_kind_result(struct bu_cmd_validate_result *result, const char *kind,
     int prefix = kind && (BU_STR_EQUAL(kind, "E") || BU_STR_EQUAL(kind, "F") ||
 	BU_STR_EQUAL(kind, "V") || BU_STR_EQUAL(kind, ""));
 
-    bot_pick_validation_result(result, exact ? BU_CMD_VALIDATE_VALID :
-	(prefix ? BU_CMD_VALIDATE_INCOMPLETE : BU_CMD_VALIDATE_INVALID), token,
-	BU_CMD_VALUE_KEYWORD, "edge (E), face (F), or vertex (V) pick", NULL);
-    bu_cmd_keyword_candidates(result, bot_pick_kinds, kind ? kind : "");
+    bot_pick_validation_result(result, exact ? BU_ARG_VALIDATE_VALID :
+	(prefix ? BU_ARG_VALIDATE_INCOMPLETE : BU_ARG_VALIDATE_INVALID), token,
+	BU_ARG_VALUE_KEYWORD, "edge (E), face (F), or vertex (V) pick", NULL);
+    bu_arg_keyword_candidates(result, bot_pick_kinds, kind ? kind : "");
 }
 
 
 static void
-bot_pick_ray_result(struct bu_cmd_validate_result *result,
+bot_pick_ray_result(struct bu_arg_validate_result *result,
 	const std::vector<const char *> &tail, const char *kind, size_t token)
 {
     size_t start = 0;
@@ -1882,47 +1882,47 @@ bot_pick_ray_result(struct bu_cmd_validate_result *result,
 
     if (!tail.empty() && BU_STR_EQUAL(tail[0], "--first")) {
 	if (BU_STR_EQUAL(kind, "F")) {
-	    bot_pick_validation_result(result, BU_CMD_VALIDATE_INVALID, token,
-		BU_CMD_VALUE_KEYWORD, "--first is valid only for E and V picks", NULL);
+	    bot_pick_validation_result(result, BU_ARG_VALIDATE_INVALID, token,
+		BU_ARG_VALUE_KEYWORD, "--first is valid only for E and V picks", NULL);
 	    return;
 	}
 	start = 1;
     }
     count = tail.size() - start;
     if (!count) {
-	bot_pick_validation_result(result, BU_CMD_VALIDATE_VALID, token,
-	    BU_CMD_VALUE_NUMBER, "optional six-coordinate ray", "bot.ray");
+	bot_pick_validation_result(result, BU_ARG_VALIDATE_VALID, token,
+	    BU_ARG_VALUE_NUMBER, "optional six-coordinate ray", "bot.ray");
 	return;
     }
     if (count != 6) {
-	bot_pick_validation_result(result, count < 6 ? BU_CMD_VALIDATE_INCOMPLETE :
-	    BU_CMD_VALIDATE_INVALID, token, BU_CMD_VALUE_NUMBER,
+	bot_pick_validation_result(result, count < 6 ? BU_ARG_VALIDATE_INCOMPLETE :
+	    BU_ARG_VALIDATE_INVALID, token, BU_ARG_VALUE_NUMBER,
 	    "ray requires exactly six finite coordinates", "bot.ray");
 	return;
     }
     for (size_t i = start; i < tail.size(); i++) {
 	fastf_t coordinate = 0.0;
-	if (!bu_cmd_number_from_str(&coordinate, tail[i])) {
-	    bot_pick_validation_result(result, BU_CMD_VALIDATE_INVALID, token,
-		BU_CMD_VALUE_NUMBER, "ray requires finite coordinates", "bot.ray");
+	if (!bu_arg_number_from_str(&coordinate, tail[i])) {
+	    bot_pick_validation_result(result, BU_ARG_VALIDATE_INVALID, token,
+		BU_ARG_VALUE_NUMBER, "ray requires finite coordinates", "bot.ray");
 	    return;
 	}
     }
-    bot_pick_validation_result(result, BU_CMD_VALIDATE_VALID, token,
-	BU_CMD_VALUE_NUMBER, "six-coordinate ray", "bot.ray");
+    bot_pick_validation_result(result, BU_ARG_VALIDATE_VALID, token,
+	BU_ARG_VALUE_NUMBER, "six-coordinate ray", "bot.ray");
 }
 
 
 static int
-bot_pick_schema_validate(const struct bu_cmd_schema *schema, size_t argc,
-	const char **argv, size_t cursor_arg, struct bu_cmd_validate_result *result)
+bot_pick_schema_validate(const struct bu_arg_schema *schema, size_t argc,
+	const char **argv, size_t cursor_arg, struct bu_arg_validate_result *result)
 {
     std::vector<const char *> operands;
     size_t i = 0;
     int option_phase = 1;
 
-    if ((result->expected & BU_CMD_EXPECT_OPTION_ARG) ||
-	(cursor_arg < argc && (result->expected & BU_CMD_EXPECT_OPTION)))
+    if ((result->expected & BU_ARG_EXPECT_OPTION_ARG) ||
+	(cursor_arg < argc && (result->expected & BU_ARG_EXPECT_OPTION)))
 	return 0;
 
     while (i < cursor_arg) {
@@ -1933,7 +1933,7 @@ bot_pick_schema_validate(const struct bu_cmd_schema *schema, size_t argc,
 	    continue;
 	}
 	if (option_phase)
-	    span = bu_cmd_schema_option_span(schema, argc - i, argv + i);
+	    span = bu_arg_schema_option_span(schema, argc - i, argv + i);
 	if (span > 0) {
 	    i += (size_t)span;
 	    continue;
@@ -1948,8 +1948,8 @@ bot_pick_schema_validate(const struct bu_cmd_schema *schema, size_t argc,
     if (cursor_arg < argc) {
 	const char *current = argv[cursor_arg];
 	if (operands.empty()) {
-	    bot_pick_validation_result(result, BU_CMD_VALIDATE_VALID, cursor_arg,
-		BU_CMD_VALUE_DB_OBJECT, "BoT object", "ged.db_object");
+	    bot_pick_validation_result(result, BU_ARG_VALIDATE_VALID, cursor_arg,
+		BU_ARG_VALUE_DB_OBJECT, "BoT object", "ged.db_object");
 	    return 0;
 	}
 	if (operands.size() == 1) {
@@ -1966,10 +1966,10 @@ bot_pick_schema_validate(const struct bu_cmd_schema *schema, size_t argc,
 	    strlen(current) <= strlen("--first") &&
 	    bu_strncmp("--first", current, strlen(current)) == 0) {
 	    int exact = BU_STR_EQUAL(current, "--first");
-	    bot_pick_validation_result(result, exact ? BU_CMD_VALIDATE_VALID :
-		BU_CMD_VALIDATE_INCOMPLETE, cursor_arg, BU_CMD_VALUE_KEYWORD,
+	    bot_pick_validation_result(result, exact ? BU_ARG_VALIDATE_VALID :
+		BU_ARG_VALIDATE_INCOMPLETE, cursor_arg, BU_ARG_VALUE_KEYWORD,
 		"optional first-along-ray selector", NULL);
-	    bu_cmd_keyword_candidates(result, bot_pick_first_values, current ? current : "");
+	    bu_arg_keyword_candidates(result, bot_pick_first_values, current ? current : "");
 	    return 0;
 	}
 	tail.push_back(current);
@@ -1978,14 +1978,14 @@ bot_pick_schema_validate(const struct bu_cmd_schema *schema, size_t argc,
     }
 
     if (operands.empty()) {
-	bot_pick_validation_result(result, BU_CMD_VALIDATE_INCOMPLETE, cursor_arg,
-	    BU_CMD_VALUE_DB_OBJECT, "BoT object required", "ged.db_object");
+	bot_pick_validation_result(result, BU_ARG_VALIDATE_INCOMPLETE, cursor_arg,
+	    BU_ARG_VALUE_DB_OBJECT, "BoT object required", "ged.db_object");
 	return 0;
     }
 	if (operands.size() == 1) {
-	bot_pick_validation_result(result, BU_CMD_VALIDATE_INCOMPLETE, cursor_arg,
-	    BU_CMD_VALUE_KEYWORD, "pick kind required", NULL);
-	bu_cmd_keyword_candidates(result, bot_pick_kinds, "");
+	bot_pick_validation_result(result, BU_ARG_VALIDATE_INCOMPLETE, cursor_arg,
+	    BU_ARG_VALUE_KEYWORD, "pick kind required", NULL);
+	bu_arg_keyword_candidates(result, bot_pick_kinds, "");
 	return 0;
     }
 	if (!BU_STR_EQUAL(operands[1], "E") && !BU_STR_EQUAL(operands[1], "F") &&
@@ -1995,9 +1995,9 @@ bot_pick_schema_validate(const struct bu_cmd_schema *schema, size_t argc,
     }
 	std::vector<const char *> tail(operands.begin() + 2, operands.end());
 	if (tail.empty() && !BU_STR_EQUAL(operands[1], "F")) {
-	bot_pick_validation_result(result, BU_CMD_VALIDATE_VALID, cursor_arg,
-	    BU_CMD_VALUE_KEYWORD, "optional first-along-ray selector or ray", NULL);
-	bu_cmd_keyword_candidates(result, bot_pick_first_values, "");
+	bot_pick_validation_result(result, BU_ARG_VALIDATE_VALID, cursor_arg,
+	    BU_ARG_VALUE_KEYWORD, "optional first-along-ray selector or ray", NULL);
+	bu_arg_keyword_candidates(result, bot_pick_first_values, "");
 	return 0;
     }
 	bot_pick_ray_result(result, tail, operands[1], cursor_arg);
@@ -2005,26 +2005,26 @@ bot_pick_schema_validate(const struct bu_cmd_schema *schema, size_t argc,
 }
 
 
-static const struct bu_cmd_operand bot_pick_operands[] = {
-    BU_CMD_OPERAND("bot", BU_CMD_VALUE_DB_OBJECT, 1, 1,
+static const struct bu_arg_operand bot_pick_operands[] = {
+    BU_ARG_OPERAND("bot", BU_ARG_VALUE_DB_OBJECT, 1, 1,
 	"BoT object", "ged.db_object"),
-    BU_CMD_OPERAND_KEYWORDS("kind", BU_CMD_VALUE_STRING, 1, 1,
+    BU_ARG_OPERAND_KEYWORDS("kind", BU_ARG_VALUE_STRING, 1, 1,
 	"Edge (E), face (F), or vertex (V) pick", NULL, bot_pick_kinds),
-    BU_CMD_OPERAND("ray_argument", BU_CMD_VALUE_RAW, 0, BU_CMD_COUNT_UNLIMITED,
+    BU_ARG_OPERAND("ray_argument", BU_ARG_VALUE_RAW, 0, BU_ARG_COUNT_UNLIMITED,
 	"Optional --first and six-coordinate ray", "bot.ray"),
-    BU_CMD_OPERAND_NULL
+    BU_ARG_OPERAND_NULL
 };
-static const struct bu_cmd_schema bot_pick_subcommand_schema = {
+static const struct bu_arg_schema bot_pick_subcommand_schema = {
     "pick", "Pick BoT elements", bot_help_options, bot_pick_operands,
-    BU_CMD_PARSE_STOP_AT_FIRST_OPERAND,
-    BU_CMD_SCHEMA_META_HELP(NULL, NULL, bot_pick_schema_validate, NULL, NULL)
+    BU_ARG_PARSE_STOP_AT_FIRST_OPERAND,
+    BU_ARG_SCHEMA_META_HELP(NULL, NULL, bot_pick_schema_validate, NULL, NULL)
 };
 
 
 static void
 bot_pick_usage(struct bu_vls *result)
 {
-    char *help = bu_cmd_schema_help(&bot_pick_subcommand_schema, "bot pick");
+    char *help = bu_arg_schema_help(&bot_pick_subcommand_schema, "bot pick");
 
     bu_vls_sprintf(result, "%s", help ? help : "");
     if (help)
@@ -2058,7 +2058,7 @@ _bot_cmd_pick(void *bs, int argc, const char **argv)
 	return GED_HELP;
     }
 
-    operand_index = bu_cmd_schema_parse_complete(&bot_pick_subcommand_schema,
+    operand_index = bu_arg_schema_parse_complete(&bot_pick_subcommand_schema,
 	&args, gb->gedp->ged_result_str, argc, argv);
     if (operand_index < 0) {
 	bu_vls_printf(gb->gedp->ged_result_str, "%s", usage_string);
@@ -2105,7 +2105,7 @@ _bot_cmd_vertex(void *bs, int argc, const char **argv)
 	    "bot vertex", " [vertex_index ...]");
 	return GED_HELP;
     }
-    operand_index = bu_cmd_schema_parse_complete(&bot_vertex_subcommand_schema,
+    operand_index = bu_arg_schema_parse_complete(&bot_vertex_subcommand_schema,
 	&args, gedp->ged_result_str, argc, argv);
     if (operand_index < 0) {
 	bu_vls_printf(gedp->ged_result_str, "%s", usage_string);
@@ -2139,7 +2139,7 @@ _bot_cmd_vertex(void *bs, int argc, const char **argv)
     /* Print coordinates for the specified vertex indices */
     for (int i = 1; i < operand_count; i++) {
 	int idx = 0;
-	if (!bu_cmd_integer_from_str(&idx, operands[i])
+	if (!bu_arg_integer_from_str(&idx, operands[i])
 	    || idx < 0
 	    || (size_t)idx >= bot->num_vertices)
 	{
@@ -2162,15 +2162,15 @@ static const char * const bot_info_kinds[] = {"F", "V", NULL};
 
 
 static void
-bot_info_validation_result(struct bu_cmd_validate_result *result,
-	bu_cmd_validate_state_t state, size_t token, bu_cmd_value_t value_type,
+bot_info_validation_result(struct bu_arg_validate_result *result,
+	bu_arg_validate_state_t state, size_t token, bu_arg_value_t value_type,
 	const char *hint, const char *semantic_provider)
 {
-    bu_cmd_validate_result_clear(result);
+    bu_arg_validate_result_clear(result);
     result->state = state;
     result->token_start = token;
     result->token_end = token;
-    result->expected = BU_CMD_EXPECT_OPERAND;
+    result->expected = BU_ARG_EXPECT_OPERAND;
     result->completion_type = value_type;
     result->hint = hint;
     result->semantic_provider = semantic_provider;
@@ -2178,17 +2178,17 @@ bot_info_validation_result(struct bu_cmd_validate_result *result,
 
 
 static void
-bot_info_kind_result(struct bu_cmd_validate_result *result, const char *kind,
+bot_info_kind_result(struct bu_arg_validate_result *result, const char *kind,
 	size_t token)
 {
     int exact = kind && (BU_STR_EQUAL(kind, "F") || BU_STR_EQUAL(kind, "V"));
     int prefix = kind && (BU_STR_EQUAL(kind, "F") || BU_STR_EQUAL(kind, "V") ||
 	BU_STR_EQUAL(kind, ""));
 
-    bot_info_validation_result(result, exact ? BU_CMD_VALIDATE_VALID :
-	(prefix ? BU_CMD_VALIDATE_INCOMPLETE : BU_CMD_VALIDATE_INVALID), token,
-	BU_CMD_VALUE_KEYWORD, "face (F) or vertex (V) information", NULL);
-    bu_cmd_keyword_candidates(result, bot_info_kinds, kind ? kind : "");
+    bot_info_validation_result(result, exact ? BU_ARG_VALIDATE_VALID :
+	(prefix ? BU_ARG_VALIDATE_INCOMPLETE : BU_ARG_VALIDATE_INVALID), token,
+	BU_ARG_VALUE_KEYWORD, "face (F) or vertex (V) information", NULL);
+    bu_arg_keyword_candidates(result, bot_info_kinds, kind ? kind : "");
 }
 
 
@@ -2206,15 +2206,15 @@ bot_info_indices_valid(const std::vector<const char *> &indices)
 
 
 static int
-bot_info_schema_validate(const struct bu_cmd_schema *schema, size_t argc,
-	const char **argv, size_t cursor_arg, struct bu_cmd_validate_result *result)
+bot_info_schema_validate(const struct bu_arg_schema *schema, size_t argc,
+	const char **argv, size_t cursor_arg, struct bu_arg_validate_result *result)
 {
     std::vector<const char *> operands;
     size_t i = 0;
     int option_phase = 1;
 
-    if ((result->expected & BU_CMD_EXPECT_OPTION_ARG) ||
-	(cursor_arg < argc && (result->expected & BU_CMD_EXPECT_OPTION)))
+    if ((result->expected & BU_ARG_EXPECT_OPTION_ARG) ||
+	(cursor_arg < argc && (result->expected & BU_ARG_EXPECT_OPTION)))
 	return 0;
 
     while (i < cursor_arg) {
@@ -2225,7 +2225,7 @@ bot_info_schema_validate(const struct bu_cmd_schema *schema, size_t argc,
 	    continue;
 	}
 	if (option_phase)
-	    span = bu_cmd_schema_option_span(schema, argc - i, argv + i);
+	    span = bu_arg_schema_option_span(schema, argc - i, argv + i);
 	if (span > 0) {
 	    i += (size_t)span;
 	    continue;
@@ -2237,8 +2237,8 @@ bot_info_schema_validate(const struct bu_cmd_schema *schema, size_t argc,
     if (cursor_arg < argc) {
 	const char *current = argv[cursor_arg];
 	if (operands.empty()) {
-	    bot_info_validation_result(result, BU_CMD_VALIDATE_VALID, cursor_arg,
-		BU_CMD_VALUE_DB_OBJECT, "BoT object", "ged.db_object");
+	    bot_info_validation_result(result, BU_ARG_VALIDATE_VALID, cursor_arg,
+		BU_ARG_VALUE_DB_OBJECT, "BoT object", "ged.db_object");
 	    return 0;
 	}
 	if (operands.size() == 1) {
@@ -2252,20 +2252,20 @@ bot_info_schema_validate(const struct bu_cmd_schema *schema, size_t argc,
 	std::vector<const char *> indices(operands.begin() + 2, operands.end());
 	indices.push_back(current);
 	bot_info_validation_result(result, bot_info_indices_valid(indices) ?
-	    BU_CMD_VALIDATE_VALID : BU_CMD_VALIDATE_INVALID, cursor_arg,
-	    BU_CMD_VALUE_RAW, "integer index, range, or index list", "bot.index_list");
+	    BU_ARG_VALIDATE_VALID : BU_ARG_VALIDATE_INVALID, cursor_arg,
+	    BU_ARG_VALUE_RAW, "integer index, range, or index list", "bot.index_list");
 	return 0;
     }
 
     if (operands.empty()) {
-	bot_info_validation_result(result, BU_CMD_VALIDATE_INCOMPLETE, cursor_arg,
-	    BU_CMD_VALUE_DB_OBJECT, "BoT object required", "ged.db_object");
+	bot_info_validation_result(result, BU_ARG_VALIDATE_INCOMPLETE, cursor_arg,
+	    BU_ARG_VALUE_DB_OBJECT, "BoT object required", "ged.db_object");
 	return 0;
     }
 	if (operands.size() == 1) {
-	bot_info_validation_result(result, BU_CMD_VALIDATE_VALID, cursor_arg,
-	    BU_CMD_VALUE_KEYWORD, "optional face (F) or vertex (V) information", NULL);
-	bu_cmd_keyword_candidates(result, bot_info_kinds, "");
+	bot_info_validation_result(result, BU_ARG_VALIDATE_VALID, cursor_arg,
+	    BU_ARG_VALUE_KEYWORD, "optional face (F) or vertex (V) information", NULL);
+	bu_arg_keyword_candidates(result, bot_info_kinds, "");
 	return 0;
     }
 	if (!BU_STR_EQUAL(operands[1], "F") && !BU_STR_EQUAL(operands[1], "V")) {
@@ -2273,39 +2273,39 @@ bot_info_schema_validate(const struct bu_cmd_schema *schema, size_t argc,
 	return 0;
     }
 	if (operands.size() == 2) {
-	bot_info_validation_result(result, BU_CMD_VALIDATE_VALID, cursor_arg,
-	    BU_CMD_VALUE_RAW, "optional integer index, range, or index list",
+	bot_info_validation_result(result, BU_ARG_VALIDATE_VALID, cursor_arg,
+	    BU_ARG_VALUE_RAW, "optional integer index, range, or index list",
 	    "bot.index_list");
 	return 0;
     }
 	std::vector<const char *> indices(operands.begin() + 2, operands.end());
 	bot_info_validation_result(result, bot_info_indices_valid(indices) ?
-	    BU_CMD_VALIDATE_VALID : BU_CMD_VALIDATE_INVALID, cursor_arg,
-	    BU_CMD_VALUE_RAW, "integer index, range, or index list", "bot.index_list");
+	    BU_ARG_VALIDATE_VALID : BU_ARG_VALIDATE_INVALID, cursor_arg,
+	    BU_ARG_VALUE_RAW, "integer index, range, or index list", "bot.index_list");
 	return 0;
 }
 
 
-static const struct bu_cmd_operand bot_info_operands[] = {
-    BU_CMD_OPERAND("bot", BU_CMD_VALUE_DB_OBJECT, 1, 1,
+static const struct bu_arg_operand bot_info_operands[] = {
+    BU_ARG_OPERAND("bot", BU_ARG_VALUE_DB_OBJECT, 1, 1,
 	"BoT object", "ged.db_object"),
-    BU_CMD_OPERAND_KEYWORDS("kind", BU_CMD_VALUE_STRING, 0, 1,
+    BU_ARG_OPERAND_KEYWORDS("kind", BU_ARG_VALUE_STRING, 0, 1,
 	"Optional face (F) or vertex (V) information", NULL, bot_info_kinds),
-    BU_CMD_OPERAND("index", BU_CMD_VALUE_RAW, 0, BU_CMD_COUNT_UNLIMITED,
+    BU_ARG_OPERAND("index", BU_ARG_VALUE_RAW, 0, BU_ARG_COUNT_UNLIMITED,
 	"Optional integer index, range, or index list", "bot.index_list"),
-    BU_CMD_OPERAND_NULL
+    BU_ARG_OPERAND_NULL
 };
-static const struct bu_cmd_schema bot_info_subcommand_schema = {
+static const struct bu_arg_schema bot_info_subcommand_schema = {
     "info", "Report BoT vertex and face information", bot_help_options,
-    bot_info_operands, BU_CMD_PARSE_INTERSPERSED,
-    BU_CMD_SCHEMA_META_HELP(NULL, NULL, bot_info_schema_validate, NULL, NULL)
+    bot_info_operands, BU_ARG_PARSE_INTERSPERSED,
+    BU_ARG_SCHEMA_META_HELP(NULL, NULL, bot_info_schema_validate, NULL, NULL)
 };
 
 
 static void
 bot_info_usage(struct bu_vls *result)
 {
-    char *help = bu_cmd_schema_help(&bot_info_subcommand_schema, "bot info");
+    char *help = bu_arg_schema_help(&bot_info_subcommand_schema, "bot info");
 
     bu_vls_sprintf(result, "%s", help ? help : "");
     if (help)
@@ -2339,7 +2339,7 @@ _bot_cmd_info(void *bs, int argc, const char **argv)
 	return GED_HELP;
     }
 
-    operand_index = bu_cmd_schema_parse_complete(&bot_info_subcommand_schema,
+    operand_index = bu_arg_schema_parse_complete(&bot_info_subcommand_schema,
 	&args, gb->gedp->ged_result_str, argc, argv);
     if (operand_index < 0) {
 	bu_vls_printf(gb->gedp->ged_result_str, "%s", usage_string);
@@ -2398,80 +2398,80 @@ struct bot_root_args {
     struct bu_color color;
 };
 
-static const struct bu_cmd_option bot_root_options[] = {
-    BU_CMD_FLAG("h", "help", struct bot_root_args, print_help,
+static const struct bu_arg_option bot_root_options[] = {
+    BU_ARG_FLAG("h", "help", struct bot_root_args, print_help,
 	"Print command help"),
-    BU_CMD_COUNTING_LONG_FLAG("v", "verbose", struct bot_root_args, verbosity,
+    BU_ARG_COUNTING_LONG_FLAG("v", "verbose", struct bot_root_args, verbosity,
 	"Increase output detail"),
-    BU_CMD_FLAG("V", "visualize", struct bot_root_args, visualize,
+    BU_ARG_FLAG("V", "visualize", struct bot_root_args, visualize,
 	"Visualize results when supported"),
-    BU_CMD_COLOR_COMPAT("C", "color", struct bot_root_args, color, "r/g/b",
+    BU_ARG_COLOR_COMPAT("C", "color", struct bot_root_args, color, "r/g/b",
 	"Plotting color"),
-    BU_CMD_OPTION_NULL
+    BU_ARG_OPTION_NULL
 };
-static const struct bu_cmd_schema bot_root_schema = {
+static const struct bu_arg_schema bot_root_schema = {
     "bot", "Inspect and edit BoT objects", bot_root_options, NULL,
-    BU_CMD_PARSE_OPTIONS_FIRST, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+    BU_ARG_PARSE_OPTIONS_FIRST, BU_ARG_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
 
 static int bot_tree_execute(void *data, int argc, const char *argv[]);
-static const struct bu_cmd_tree_node bot_subcommands[] = {
-    BU_CMD_TREE_NODE(&ged_bot_check_subcommand_schema, NULL, NULL,
-	BU_CMD_TREE_CHILD_AFTER_OPTIONS, bot_tree_execute),
-    BU_CMD_TREE_NODE(&bot_chull_subcommand_schema, NULL, NULL,
-	BU_CMD_TREE_CHILD_AFTER_OPTIONS, bot_tree_execute),
-    BU_CMD_TREE_NODE(&ged_bot_decimate_subcommand_schema, NULL, NULL,
-	BU_CMD_TREE_CHILD_AFTER_OPTIONS, bot_tree_execute),
-    BU_CMD_TREE_NODE(&ged_bot_dump_subcommand_schema, NULL, NULL,
-	BU_CMD_TREE_CHILD_AFTER_OPTIONS, bot_tree_execute),
-    BU_CMD_TREE_NODE(&ged_bot_exterior_subcommand_schema, NULL, NULL,
-	BU_CMD_TREE_CHILD_AFTER_OPTIONS, bot_tree_execute),
-    BU_CMD_TREE_NODE(&ged_bot_extrude_subcommand_schema, NULL, NULL,
-	BU_CMD_TREE_CHILD_AFTER_OPTIONS, bot_tree_execute),
-    BU_CMD_TREE_NODE(&bot_flip_schema, NULL, NULL,
-	BU_CMD_TREE_CHILD_AFTER_OPTIONS, bot_tree_execute),
-    BU_CMD_TREE_NODE(&bot_get_subcommand_schema, NULL, NULL,
-	BU_CMD_TREE_CHILD_AFTER_OPTIONS, bot_tree_execute),
-    BU_CMD_TREE_NODE(&bot_info_subcommand_schema, NULL, NULL,
-	BU_CMD_TREE_CHILD_AFTER_OPTIONS, bot_tree_execute),
-    BU_CMD_TREE_NODE(&bot_isect_subcommand_schema, NULL, NULL,
-	BU_CMD_TREE_CHILD_AFTER_OPTIONS, bot_tree_execute),
-    BU_CMD_TREE_NODE(&bot_pca_subcommand_schema, NULL, NULL,
-	BU_CMD_TREE_CHILD_AFTER_OPTIONS, bot_tree_execute),
-    BU_CMD_TREE_NODE(&bot_pick_subcommand_schema, NULL, NULL,
-	BU_CMD_TREE_CHILD_AFTER_OPTIONS, bot_tree_execute),
-    BU_CMD_TREE_NODE(&bot_plot_subcommand_schema, NULL, NULL,
-	BU_CMD_TREE_CHILD_AFTER_OPTIONS, bot_tree_execute),
-    BU_CMD_TREE_NODE(&ged_bot_remesh_subcommand_schema, NULL, NULL,
-	BU_CMD_TREE_CHILD_AFTER_OPTIONS, bot_tree_execute),
-    BU_CMD_TREE_NODE(&ged_bot_repair_subcommand_schema, NULL, NULL,
-	BU_CMD_TREE_CHILD_AFTER_OPTIONS, bot_tree_execute),
-    BU_CMD_TREE_NODE(&bot_set_subcommand_schema, NULL, NULL,
-	BU_CMD_TREE_CHILD_AFTER_OPTIONS, bot_tree_execute),
-    BU_CMD_TREE_NODE(&ged_bot_smooth_subcommand_schema, NULL, NULL,
-	BU_CMD_TREE_CHILD_AFTER_OPTIONS, bot_tree_execute),
-    BU_CMD_TREE_NODE(&bot_split_subcommand_schema, NULL, NULL,
-	BU_CMD_TREE_CHILD_AFTER_OPTIONS, bot_tree_execute),
-    BU_CMD_TREE_NODE(&bot_stat_subcommand_schema, NULL, NULL,
-	BU_CMD_TREE_CHILD_AFTER_OPTIONS, bot_tree_execute),
-    BU_CMD_TREE_NODE(&bot_strip_subcommand_schema, NULL, NULL,
-	BU_CMD_TREE_CHILD_AFTER_OPTIONS, bot_tree_execute),
-    BU_CMD_TREE_NODE(&ged_bot_subd_subcommand_schema, NULL, NULL,
-	BU_CMD_TREE_CHILD_AFTER_OPTIONS, bot_tree_execute),
-    BU_CMD_TREE_NODE(&bot_sync_subcommand_schema, NULL, NULL,
-	BU_CMD_TREE_CHILD_AFTER_OPTIONS, bot_tree_execute),
-    BU_CMD_TREE_NODE(&bot_vertex_subcommand_schema, NULL, NULL,
-	BU_CMD_TREE_CHILD_AFTER_OPTIONS, bot_tree_execute),
-    BU_CMD_TREE_NODE_NULL
+static const struct bu_arg_tree_node bot_subcommands[] = {
+    BU_ARG_TREE_NODE(&ged_bot_check_subcommand_schema, NULL, NULL,
+	BU_ARG_TREE_CHILD_AFTER_OPTIONS, bot_tree_execute),
+    BU_ARG_TREE_NODE(&bot_chull_subcommand_schema, NULL, NULL,
+	BU_ARG_TREE_CHILD_AFTER_OPTIONS, bot_tree_execute),
+    BU_ARG_TREE_NODE(&ged_bot_decimate_subcommand_schema, NULL, NULL,
+	BU_ARG_TREE_CHILD_AFTER_OPTIONS, bot_tree_execute),
+    BU_ARG_TREE_NODE(&ged_bot_dump_subcommand_schema, NULL, NULL,
+	BU_ARG_TREE_CHILD_AFTER_OPTIONS, bot_tree_execute),
+    BU_ARG_TREE_NODE(&ged_bot_exterior_subcommand_schema, NULL, NULL,
+	BU_ARG_TREE_CHILD_AFTER_OPTIONS, bot_tree_execute),
+    BU_ARG_TREE_NODE(&ged_bot_extrude_subcommand_schema, NULL, NULL,
+	BU_ARG_TREE_CHILD_AFTER_OPTIONS, bot_tree_execute),
+    BU_ARG_TREE_NODE(&bot_flip_schema, NULL, NULL,
+	BU_ARG_TREE_CHILD_AFTER_OPTIONS, bot_tree_execute),
+    BU_ARG_TREE_NODE(&bot_get_subcommand_schema, NULL, NULL,
+	BU_ARG_TREE_CHILD_AFTER_OPTIONS, bot_tree_execute),
+    BU_ARG_TREE_NODE(&bot_info_subcommand_schema, NULL, NULL,
+	BU_ARG_TREE_CHILD_AFTER_OPTIONS, bot_tree_execute),
+    BU_ARG_TREE_NODE(&bot_isect_subcommand_schema, NULL, NULL,
+	BU_ARG_TREE_CHILD_AFTER_OPTIONS, bot_tree_execute),
+    BU_ARG_TREE_NODE(&bot_pca_subcommand_schema, NULL, NULL,
+	BU_ARG_TREE_CHILD_AFTER_OPTIONS, bot_tree_execute),
+    BU_ARG_TREE_NODE(&bot_pick_subcommand_schema, NULL, NULL,
+	BU_ARG_TREE_CHILD_AFTER_OPTIONS, bot_tree_execute),
+    BU_ARG_TREE_NODE(&bot_plot_subcommand_schema, NULL, NULL,
+	BU_ARG_TREE_CHILD_AFTER_OPTIONS, bot_tree_execute),
+    BU_ARG_TREE_NODE(&ged_bot_remesh_subcommand_schema, NULL, NULL,
+	BU_ARG_TREE_CHILD_AFTER_OPTIONS, bot_tree_execute),
+    BU_ARG_TREE_NODE(&ged_bot_repair_subcommand_schema, NULL, NULL,
+	BU_ARG_TREE_CHILD_AFTER_OPTIONS, bot_tree_execute),
+    BU_ARG_TREE_NODE(&bot_set_subcommand_schema, NULL, NULL,
+	BU_ARG_TREE_CHILD_AFTER_OPTIONS, bot_tree_execute),
+    BU_ARG_TREE_NODE(&ged_bot_smooth_subcommand_schema, NULL, NULL,
+	BU_ARG_TREE_CHILD_AFTER_OPTIONS, bot_tree_execute),
+    BU_ARG_TREE_NODE(&bot_split_subcommand_schema, NULL, NULL,
+	BU_ARG_TREE_CHILD_AFTER_OPTIONS, bot_tree_execute),
+    BU_ARG_TREE_NODE(&bot_stat_subcommand_schema, NULL, NULL,
+	BU_ARG_TREE_CHILD_AFTER_OPTIONS, bot_tree_execute),
+    BU_ARG_TREE_NODE(&bot_strip_subcommand_schema, NULL, NULL,
+	BU_ARG_TREE_CHILD_AFTER_OPTIONS, bot_tree_execute),
+    BU_ARG_TREE_NODE(&ged_bot_subd_subcommand_schema, NULL, NULL,
+	BU_ARG_TREE_CHILD_AFTER_OPTIONS, bot_tree_execute),
+    BU_ARG_TREE_NODE(&bot_sync_subcommand_schema, NULL, NULL,
+	BU_ARG_TREE_CHILD_AFTER_OPTIONS, bot_tree_execute),
+    BU_ARG_TREE_NODE(&bot_vertex_subcommand_schema, NULL, NULL,
+	BU_ARG_TREE_CHILD_AFTER_OPTIONS, bot_tree_execute),
+    BU_ARG_TREE_NODE_NULL
 };
-static const struct bu_cmd_tree ged_bot_tree = {
-    &bot_root_schema, bot_subcommands, BU_CMD_TREE_CHILD_AFTER_OPTIONS
+static const struct bu_arg_tree ged_bot_tree = {
+    &bot_root_schema, bot_subcommands, BU_ARG_TREE_CHILD_AFTER_OPTIONS
 };
 
 static void
 bot_tree_show_help(struct ged *gedp)
 {
-    char *help = bu_cmd_tree_help(&ged_bot_tree, "bot");
+    char *help = bu_arg_tree_help(&ged_bot_tree, "bot");
 
     if (help) {
 	bu_vls_strcat(gedp->ged_result_str, help);
@@ -2496,13 +2496,13 @@ bot_tree_execute(void *data, int argc, const char *argv[])
 static int
 bot_tree_show_subcommand_help(struct _ged_bot_info *gb, int argc, const char *argv[])
 {
-    const struct bu_cmd_tree_node *node;
+    const struct bu_arg_tree_node *node;
     const char **help_argv;
     int result = BRLCAD_ERROR;
 
     if (!gb || argc < 1 || !argv || !argv[0])
 	return BRLCAD_ERROR;
-    node = bu_cmd_tree_find_subcommand(&ged_bot_tree, argv[0]);
+    node = bu_arg_tree_find_subcommand(&ged_bot_tree, argv[0]);
     if (!node)
 	return BRLCAD_ERROR;
     help_argv = (const char **)bu_calloc((size_t)argc + 1, sizeof(const char *),
@@ -2533,13 +2533,13 @@ ged_bot_grammar_analyze(struct ged *gedp, const char *input,
 static char *
 ged_bot_grammar_json(void)
 {
-    return bu_cmd_tree_describe_json(&ged_bot_tree);
+    return bu_arg_tree_describe_json(&ged_bot_tree);
 }
 
 static int
 ged_bot_grammar_lint(struct bu_vls *msgs)
 {
-    return bu_cmd_tree_lint(&ged_bot_tree, msgs);
+    return bu_arg_tree_lint(&ged_bot_tree, msgs);
 }
 GED_CMD_TREE_HELP(ged_bot_grammar_help, ged_bot_tree)
 
@@ -2580,13 +2580,13 @@ ged_bot_core(struct ged *gedp, int argc, const char *argv[])
 	return BRLCAD_OK;
     }
 
-    child_index = bu_cmd_schema_parse(&bot_root_schema, &args,
+    child_index = bu_arg_schema_parse(&bot_root_schema, &args,
 	gedp->ged_result_str, argc, argv);
     if (child_index < 0) {
 	bot_tree_show_help(gedp);
 	return BRLCAD_ERROR;
 	}
-    color_set = bu_cmd_schema_option_present(&bot_root_schema, (size_t)child_index,
+    color_set = bu_arg_schema_option_present(&bot_root_schema, (size_t)child_index,
 	argv, "color");
     gb.verbosity = args.verbosity;
     gb.visualize = args.visualize;

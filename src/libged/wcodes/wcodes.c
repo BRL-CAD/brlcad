@@ -29,7 +29,7 @@
 #include <ctype.h>
 #include <string.h>
 
-#include "bu/cmdschema.h"
+#include "bu/arg.h"
 
 #include "../ged_private.h"
 
@@ -47,17 +47,17 @@ static struct directory **path = NULL;
 static size_t path_capacity = 0;
 
 
-static const struct bu_cmd_operand wcodes_operands[] = {
-    BU_CMD_OPERAND("output_file", BU_CMD_VALUE_FILE, 1, 1,
+static const struct bu_arg_operand wcodes_operands[] = {
+    BU_ARG_OPERAND("output_file", BU_ARG_VALUE_FILE, 1, 1,
 	"Region-code output file", "ged.file_path"),
-    BU_CMD_OPERAND("objects", BU_CMD_VALUE_DB_OBJECT, 1, BU_CMD_COUNT_UNLIMITED,
+    BU_ARG_OPERAND("objects", BU_ARG_VALUE_DB_OBJECT, 1, BU_ARG_COUNT_UNLIMITED,
 	"Objects to write", "ged.db_object"),
-    BU_CMD_OPERAND_NULL
+    BU_ARG_OPERAND_NULL
 };
 
-static const struct bu_cmd_schema wcodes_cmd_schema = {
+static const struct bu_arg_schema wcodes_cmd_schema = {
     "wcodes", "Write region codes", NULL, wcodes_operands,
-    BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+    BU_ARG_PARSE_STOP_AT_FIRST_OPERAND, BU_ARG_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
 
 
@@ -164,7 +164,7 @@ ged_wcodes_core(struct ged *gedp, int argc, const char *argv[])
 	return GED_HELP;
     }
 
-    operand_index = bu_cmd_schema_parse_complete(&wcodes_cmd_schema, &parse_dummy,
+    operand_index = bu_arg_schema_parse_complete(&wcodes_cmd_schema, &parse_dummy,
 	gedp->ged_result_str, argc - 1, argv + 1);
     if (operand_index < 0) {
 	ged_cmd_help_append(gedp->ged_result_str, argv[0], argv[0]);

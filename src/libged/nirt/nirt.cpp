@@ -46,7 +46,7 @@
 
 #include "bn.h"
 #include "bu/app.h"
-#include "bu/cmdschema.h"
+#include "bu/arg.h"
 #include "bu/file.h"
 #include "bu/interrupt.h"
 #include "bu/snooze.h"
@@ -282,7 +282,7 @@ ged_nirt_core(struct ged *gedp, int argc, const char *argv[])
 	// First, see if they are all numbers
 	for (int i = 0; i < 3; i++) {
 	    fastf_t value;
-	    if (!bu_cmd_number_from_str(&value, argv[i])) {
+	    if (!bu_arg_number_from_str(&value, argv[i])) {
 		have_xyz = 0;
 		break;
 	    }
@@ -293,7 +293,7 @@ ged_nirt_core(struct ged *gedp, int argc, const char *argv[])
 	    bu_log("WARNING: Specifying center with 'x y z' at the end of the nirt command is deprecated - use the --xyz option instead\n");
 	    for (int i = 0; i < 3; i++) {
 		fastf_t val;
-		bu_cmd_number_from_str(&val, argv[i]);
+		bu_arg_number_from_str(&val, argv[i]);
 		nv.center_model[i] = val;
 	    }
 
@@ -331,7 +331,7 @@ ged_nirt_core(struct ged *gedp, int argc, const char *argv[])
      * validation, help, and GED completion metadata. */
     if (argc > 0) {
 	struct bu_vls optparse_msg = BU_VLS_INIT_ZERO;
-	int operand_start = bu_cmd_schema_parse(nirt_opt_schema(), &nv, &optparse_msg, argc, argv);
+	int operand_start = bu_arg_schema_parse(nirt_opt_schema(), &nv, &optparse_msg, argc, argv);
 	if (operand_start < 0) {
 	    nirt_opt_vals_free(&nv);
 	    bu_vls_printf(gedp->ged_result_str, "ERROR: option parsing failed: %s.\n", bu_vls_cstr(&optparse_msg));

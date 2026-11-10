@@ -72,7 +72,7 @@ bad:
 
 #include "../include/plugin.h"
 
-GED_DEFINE_TYPED_OPERAND_SCHEMA(view2model_vec, "view2model_vec", "Convert a view vector to model coordinates", "vector", BU_CMD_VALUE_VECTOR, 3, 3, "X Y Z vector");
+GED_DEFINE_TYPED_OPERAND_SCHEMA(view2model_vec, "view2model_vec", "Convert a view vector to model coordinates", "vector", BU_ARG_VALUE_VECTOR, 3, 3, "X Y Z vector");
 
 #define GED_VIEW2MODEL_VEC_COMMANDS(X, XID) \
     X(view2model_vec, ged_view2model_vec_core, GED_CMD_DEFAULT, &view2model_vec_cmd_schema) \

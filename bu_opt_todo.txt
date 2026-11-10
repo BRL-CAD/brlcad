@@ -26,7 +26,7 @@ tests are both in place.
 [x] Define and enforce safe initialization/lifetime contracts for public
     completion and validation result objects.
 [x] Allow qged/libqtcad command completion at an empty prompt.
-[x] Reject negative argc in bu_cmd_schema_parse_complete before size_t casts.
+[x] Reject negative argc in bu_arg_schema_parse_complete before size_t casts.
 [x] Audit and either eliminate or explicitly constrain libged unbound schema
     rows so execution and completion grammars cannot silently drift.
 [x] Pass BRL-CAD's repository regression: portable string/file APIs,
@@ -122,7 +122,7 @@ Deep tab-completion API and scaling review (2026-08-13)
 [x] Reuse the cursor parse throughout one completion request, avoid growing-
     prefix revalidation in native schema analysis, and replace recursive
     "copy schema and clear custom_validate" patterns with the explicit
-    bu_cmd_schema_validate_syntax API.
+    bu_arg_schema_validate_syntax API.
 [x] Improve experimental API ownership and clarity: const provider data,
     status separate from count, explicit byte-offset terminology, documented
     token-grammar candidate ownership, and removal of result fields duplicated
@@ -297,10 +297,10 @@ would be a substantially larger API change without a demonstrated caller need.
 Deep post-rebase review follow-up (2026-08-14)
 ----------------------------------------------
 
-[x] Make every BU_CMD_VALUE_CUSTOM parser honor NULL storage as a
+[x] Make every BU_ARG_VALUE_CUSTOM parser honor NULL storage as a
     side-effect-free validation request.  Correct the pnts radius, radii, and
     thread-count consumers and test all three through schema validation.
-[x] Fully initialize transient bu_cmd_schema records built by the bu_opt
+[x] Fully initialize transient bu_arg_schema records built by the bu_opt
     adapters, including cases and terminal-action metadata.  Exercise them
     with poisoned stack storage in parsing and validation tests.
 [x] Release ged_cmd_analysis storage on every completion path, including the

@@ -44,7 +44,7 @@ extern "C" b_off_t ftello(FILE *);
 #include "vmath.h"
 #include "brlcad_ident.h"
 #include "bu/app.h"
-#include "bu/cmdschema.h"
+#include "bu/arg.h"
 #include "bu/env.h"
 #include "bu/path.h"
 #include "bu/process.h"
@@ -479,7 +479,7 @@ main(int argc, const char **argv)
 
     argv++; argc--;
 
-    int operand_start = bu_cmd_schema_parse(nirt_opt_schema(), &optv, &optparse_msg, argc, argv);
+    int operand_start = bu_arg_schema_parse(nirt_opt_schema(), &optv, &optparse_msg, argc, argv);
     if (operand_start < 0) {
 	nirt_opt_vals_free(&optv);
 	bu_exit(EXIT_FAILURE, "ERROR: option parsing failed\n%s", bu_vls_cstr(&optparse_msg));
@@ -509,7 +509,7 @@ main(int argc, const char **argv)
     /* If we've been asked to print help or don't know what to do, print help
      * and exit */
     if (optv.print_help || (optv.silent_mode == NIRT_SILENT_YES && optv.verbose_mode)) {
-	char *help = bu_cmd_schema_help(nirt_opt_schema(), "nirt");
+	char *help = bu_arg_schema_help(nirt_opt_schema(), "nirt");
 	ret = (optv.print_help) ? EXIT_SUCCESS : EXIT_FAILURE;
 	bu_vls_sprintf(&msg, "%s", help ? help : "");
 	nirt_out(&io_data, bu_vls_cstr(&msg));

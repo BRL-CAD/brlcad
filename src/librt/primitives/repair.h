@@ -12,7 +12,7 @@
 #ifndef LIBRT_PRIMITIVES_REPAIR_H
 #define LIBRT_PRIMITIVES_REPAIR_H
 
-#include "bu/cmdschema.h"
+#include "bu/arg.h"
 #include "bu/malloc.h"
 
 #include "edit_private.h"
@@ -25,15 +25,15 @@ struct rt_repair_common_args {
 static int
 rt_repair_common_options(struct bu_vls *log_str, int argc, const char **argv)
 {
-    static const struct bu_cmd_option options[] = {
-	BU_CMD_FLAG("h", "help", struct rt_repair_common_args, print_help, "Print help"),
-	BU_CMD_FLAG("", "options-json", struct rt_repair_common_args, options_json,
+    static const struct bu_arg_option options[] = {
+	BU_ARG_FLAG("h", "help", struct rt_repair_common_args, print_help, "Print help"),
+	BU_ARG_FLAG("", "options-json", struct rt_repair_common_args, options_json,
 	    "Return JSON of supported options"),
-	BU_CMD_OPTION_NULL
+	BU_ARG_OPTION_NULL
     };
-    static const struct bu_cmd_schema schema = {
+    static const struct bu_arg_schema schema = {
 	"repair", "Primitive repair options", options, NULL,
-	BU_CMD_PARSE_INTERSPERSED, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+	BU_ARG_PARSE_INTERSPERSED, BU_ARG_SCHEMA_CONSTRAINTS(NULL, NULL)
     };
 
     struct rt_repair_common_args args = {0, 0};
@@ -48,9 +48,9 @@ rt_repair_common_options(struct bu_vls *log_str, int argc, const char **argv)
     }
     if (args.print_help) {
 	if (log_str) {
-	    char *help = bu_cmd_schema_help(&schema, NULL);
+	    char *help = bu_arg_schema_help(&schema, NULL);
 	    bu_vls_strcat(log_str, "{\"status\":\"help\",\"message\":");
-	    bu_cmd_json_string(log_str, help);
+	    bu_arg_json_string(log_str, help);
 	    bu_vls_putc(log_str, '}');
 	    if (help)
 		bu_free(help, "repair help");

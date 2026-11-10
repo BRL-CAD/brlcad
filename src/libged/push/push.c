@@ -29,7 +29,7 @@
 #include <string.h>
 
 
-#include "bu/cmdschema.h"
+#include "bu/arg.h"
 
 #include "../ged_private.h"
 

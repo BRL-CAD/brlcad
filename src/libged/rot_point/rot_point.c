@@ -95,7 +95,7 @@ ged_rot_point_core(struct ged *gedp, int argc, const char *argv[])
 
 #include "../include/plugin.h"
 
-GED_DEFINE_TYPED_OPERAND_SCHEMA(rot_point, "rot_point", "Set the view rotation point", "point", BU_CMD_VALUE_NUMBER, 3, 3, "X Y Z point");
+GED_DEFINE_TYPED_OPERAND_SCHEMA(rot_point, "rot_point", "Set the view rotation point", "point", BU_ARG_VALUE_NUMBER, 3, 3, "X Y Z point");
 
 #define GED_ROT_POINT_COMMANDS(X, XID) \
     X(rot_point, ged_rot_point_core, GED_CMD_DEFAULT, &rot_point_cmd_schema) \

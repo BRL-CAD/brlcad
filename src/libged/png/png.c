@@ -31,7 +31,7 @@
 #include "png.h"
 
 
-#include "bu/cmdschema.h"
+#include "bu/arg.h"
 #include "bu/color.h"
 #include "vmath.h"
 #include "bn.h"
@@ -51,36 +51,36 @@ png_size_validate(struct bu_vls *msg, const char *arg)
 {
     int size = 0;
 
-    if (bu_cmd_integer_from_str(&size, arg) && size >= 50)
+    if (bu_arg_integer_from_str(&size, arg) && size >= 50)
 	return 0;
     if (msg)
 	bu_vls_printf(msg, "PNG size must be an integer of at least 50 pixels: %s\n", arg ? arg : "");
     return -1;
 }
 
-static const struct bu_cmd_option png_schema_options[] = {
-    BU_CMD_RGB("c", NULL, struct png_args, background, "r/g/b", "Set background color"),
-    BU_CMD_INTEGER_VALIDATE("s", NULL, struct png_args, size, png_size_validate, "pixels",
+static const struct bu_arg_option png_schema_options[] = {
+    BU_ARG_RGB("c", NULL, struct png_args, background, "r/g/b", "Set background color"),
+    BU_ARG_INTEGER_VALIDATE("s", NULL, struct png_args, size, png_size_validate, "pixels",
 	"Set square image size (at least 50)"),
-    BU_CMD_OPTION_NULL
+    BU_ARG_OPTION_NULL
 };
-static const struct bu_cmd_operand png_schema_operands[] = {
-    BU_CMD_OPERAND("output_file", BU_CMD_VALUE_FILE, 1, 1, "PNG output file", NULL),
-    BU_CMD_OPERAND_NULL
+static const struct bu_arg_operand png_schema_operands[] = {
+    BU_ARG_OPERAND("output_file", BU_ARG_VALUE_FILE, 1, 1, "PNG output file", NULL),
+    BU_ARG_OPERAND_NULL
 };
-static const struct bu_cmd_schema png_cmd_schema = {
+static const struct bu_arg_schema png_cmd_schema = {
     "png", "Render the current view to PNG", png_schema_options,
-    png_schema_operands, BU_CMD_PARSE_OPTIONS_FIRST, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+    png_schema_operands, BU_ARG_PARSE_OPTIONS_FIRST, BU_ARG_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
-static const struct bu_cmd_schema pngwf_cmd_schema = {
+static const struct bu_arg_schema pngwf_cmd_schema = {
     "pngwf", "Render the current view to PNG", png_schema_options,
-    png_schema_operands, BU_CMD_PARSE_OPTIONS_FIRST, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+    png_schema_operands, BU_ARG_PARSE_OPTIONS_FIRST, BU_ARG_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
 
 static void
 png_show_help(struct ged *gedp, const char *command)
 {
-    char *help = bu_cmd_schema_help(&png_cmd_schema, command);
+    char *help = bu_arg_schema_help(&png_cmd_schema, command);
 
     if (help) {
 	bu_vls_strcat(gedp->ged_result_str, help);
@@ -449,7 +449,7 @@ ged_png_core(struct ged *gedp, int argc, const char *argv[])
     }
 
 	bu_color_from_rgb_chars(&args.background, background);
-    operand_index = bu_cmd_schema_parse_complete(&png_cmd_schema, &args,
+    operand_index = bu_arg_schema_parse_complete(&png_cmd_schema, &args,
 	gedp->ged_result_str, argc - 1, argv + 1);
     if (operand_index < 0) {
 	png_show_help(gedp, argv[0]);

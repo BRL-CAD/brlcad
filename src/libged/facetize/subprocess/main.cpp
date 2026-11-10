@@ -37,7 +37,7 @@
 #include <stdlib.h>
 
 #include "bu/app.h"
-#include "bu/cmdschema.h"
+#include "bu/arg.h"
 #include "bu/env.h"
 #include "bu/file.h"
 #include "bg/trimesh.h"
@@ -112,12 +112,12 @@ struct facetize_process_args {
     int nmg_server_mode = 0;
 };
 
-static const struct bu_cmd_schema *facetize_process_schema(void);
+static const struct bu_arg_schema *facetize_process_schema(void);
 
 static void
 facetize_process_print_help(void)
 {
-    char *help = bu_cmd_schema_help(facetize_process_schema(),
+    char *help = bu_arg_schema_help(facetize_process_schema(),
 	"ged_exec facetize_process");
     if (!help)
 	return;
@@ -856,7 +856,7 @@ facetize_process(int argc, const char **argv)
 
     /* parse options */
     struct bu_vls omsg = BU_VLS_INIT_ZERO;
-    int operand_start = bu_cmd_schema_parse(facetize_process_schema(), &args, &omsg, argc, argv);
+    int operand_start = bu_arg_schema_parse(facetize_process_schema(), &args, &omsg, argc, argv);
     if (operand_start < 0) {
 	bu_log("Option parsing error: %s\n", bu_vls_cstr(&omsg));
 	bu_vls_free(&omsg);
@@ -1045,64 +1045,64 @@ facetize_process(int argc, const char **argv)
     return process_ret;
 }
 
-static const struct bu_cmd_option facetize_process_options[] = {
-    BU_CMD_FLAG("h", "help", facetize_process_args, print_help, "Print help and exit"),
-    BU_CMD_FLAG(NULL, "list-methods", facetize_process_args, list_methods,
+static const struct bu_arg_option facetize_process_options[] = {
+    BU_ARG_FLAG("h", "help", facetize_process_args, print_help, "Print help and exit"),
+    BU_ARG_FLAG(NULL, "list-methods", facetize_process_args, list_methods,
 	"List available tessellation methods"),
-    BU_CMD_FLAG("O", "overwrite", facetize_process_args, overwrite,
+    BU_ARG_FLAG("O", "overwrite", facetize_process_args, overwrite,
 	"Replace the original object with a BoT"),
-    BU_CMD_CUSTOM(NULL, "methods", facetize_process_args, method_options,
+    BU_ARG_CUSTOM(NULL, "methods", facetize_process_args, method_options,
 	tess_active_methods_from_str, "method[,method...]", "Active tessellation methods"),
-    BU_CMD_CUSTOM(NULL, "method-opts", facetize_process_args, method_options,
+    BU_ARG_CUSTOM(NULL, "method-opts", facetize_process_args, method_options,
 	tess_method_opts_from_str, "\"METHOD option=value ...\"", "Method-specific options"),
-    BU_CMD_INTEGER(NULL, "max-time", facetize_process_args, max_time, "seconds",
+    BU_ARG_INTEGER(NULL, "max-time", facetize_process_args, max_time, "seconds",
 	"Maximum process runtime"),
-    BU_CMD_INTEGER(NULL, "max-pnts", facetize_process_args, max_pnts, "count",
+    BU_ARG_INTEGER(NULL, "max-pnts", facetize_process_args, max_pnts, "count",
 	"Maximum sampling points"),
-    BU_CMD_FILE(NULL, "cache-dir", facetize_process_args, cache_dir, "directory",
+    BU_ARG_FILE(NULL, "cache-dir", facetize_process_args, cache_dir, "directory",
 	"Cache directory"),
-    BU_CMD_FLAG(NULL, "server", facetize_process_args, server_mode,
+    BU_ARG_FLAG(NULL, "server", facetize_process_args, server_mode,
 	"Run as a persistent tessellation worker"),
-    BU_CMD_INTEGER_RANGE(NULL, "threads", facetize_process_args, worker_threads,
+    BU_ARG_INTEGER_RANGE(NULL, "threads", facetize_process_args, worker_threads,
 	0, MAX_PSW, "count", "Maximum CPU threads available to this process"),
-    BU_CMD_FILE(NULL, "result-file", facetize_process_args, result_file, "file.g",
+    BU_ARG_FILE(NULL, "result-file", facetize_process_args, result_file, "file.g",
 	"Write worker results to a staging database"),
-    BU_CMD_FLAG(NULL, "writer", facetize_process_args, writer_mode,
+    BU_ARG_FLAG(NULL, "writer", facetize_process_args, writer_mode,
 	"Run as a persistent staged-result writer"),
-    BU_CMD_FLAG(NULL, "validation-server", facetize_process_args,
+    BU_ARG_FLAG(NULL, "validation-server", facetize_process_args,
 	validation_server_mode, "Run as a persistent CSG validation worker"),
-    BU_CMD_FLAG(NULL, "region-server", facetize_process_args, region_server_mode,
+    BU_ARG_FLAG(NULL, "region-server", facetize_process_args, region_server_mode,
 	"Run as a persistent region Boolean worker"),
-    BU_CMD_FLAG(NULL, "nmg-server", facetize_process_args, nmg_server_mode,
+    BU_ARG_FLAG(NULL, "nmg-server", facetize_process_args, nmg_server_mode,
 	"Run one isolated NMG Boolean request"),
-    BU_CMD_OPTION_NULL
+    BU_ARG_OPTION_NULL
 };
 
 static const char * const facetize_process_mode_options[] = {
     "server", "writer", "validation-server", "region-server", "nmg-server", NULL
 };
 
-static const struct bu_cmd_constraint facetize_process_constraints[] = {
-    BU_CMD_CONSTRAINT_OPTIONS(facetize_process_mode_options, 0, 1,
+static const struct bu_arg_constraint facetize_process_constraints[] = {
+    BU_ARG_CONSTRAINT_OPTIONS(facetize_process_mode_options, 0, 1,
 	"worker process modes are mutually exclusive"),
-    BU_CMD_CONSTRAINT_NULL
+    BU_ARG_CONSTRAINT_NULL
 };
 
-static const struct bu_cmd_operand facetize_process_operands[] = {
-    BU_CMD_OPERAND("database", BU_CMD_VALUE_FILE, 1, 1, "Input .g database", "ged.file_path"),
-    BU_CMD_OPERAND("object", BU_CMD_VALUE_DB_OBJECT, 0, BU_CMD_COUNT_UNLIMITED,
+static const struct bu_arg_operand facetize_process_operands[] = {
+    BU_ARG_OPERAND("database", BU_ARG_VALUE_FILE, 1, 1, "Input .g database", "ged.file_path"),
+    BU_ARG_OPERAND("object", BU_ARG_VALUE_DB_OBJECT, 0, BU_ARG_COUNT_UNLIMITED,
 	"Objects to tessellate", "ged.db_object"),
-    BU_CMD_OPERAND_NULL
+    BU_ARG_OPERAND_NULL
 };
 
-static const struct bu_cmd_schema facetize_process_cmd_schema = {
+static const struct bu_arg_schema facetize_process_cmd_schema = {
     "facetize_process", "Tessellate geometry in a worker process",
     facetize_process_options, facetize_process_operands,
-    BU_CMD_PARSE_INTERSPERSED,
-    BU_CMD_SCHEMA_CONSTRAINTS(NULL, facetize_process_constraints)
+    BU_ARG_PARSE_INTERSPERSED,
+    BU_ARG_SCHEMA_CONSTRAINTS(NULL, facetize_process_constraints)
 };
 
-static const struct bu_cmd_schema *
+static const struct bu_arg_schema *
 facetize_process_schema(void)
 {
     return &facetize_process_cmd_schema;

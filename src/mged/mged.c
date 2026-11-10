@@ -58,7 +58,7 @@
 
 #include "bu/app.h"
 #include "bu/color.h"
-#include "bu/cmdschema.h"
+#include "bu/arg.h"
 #include "bu/debug.h"
 #include "bu/units.h"
 #include "bu/version.h"
@@ -715,7 +715,7 @@ static int
 mged_color_consume(struct bu_vls *msg, size_t argc, const char **argv, void *storage)
 {
     struct mged_color_opt *color_opt = (struct mged_color_opt *)storage;
-    int ret = bu_cmd_color_consume(msg, argc, argv,
+    int ret = bu_arg_color_consume(msg, argc, argv,
 	storage ? (void *)&color_opt->color : NULL);
 
     if (!ret && color_opt)
@@ -778,70 +778,70 @@ mgedrc_has_legacy_set(const char *line)
     return 0;
 }
 /* Keep this local: an imported-data address is not a constant initializer on MSVC. */
-static const struct bu_cmd_arg_shape mged_color_arg_shape = {
-    BU_CMD_ARG_SHAPE_COLOR, 1, 3, "packed color or three RGB components", NULL, NULL
+static const struct bu_arg_shape mged_color_arg_shape = {
+    BU_ARG_SHAPE_COLOR, 1, 3, "packed color or three RGB components", NULL, NULL
 };
-static const struct bu_cmd_option mged_cli_options[] = {
-    BU_CMD_STRING("a", "attach", struct mged_cli_overrides, attach, "type", "display manager attach target"),
-    BU_CMD_STRING("d", "display", struct mged_cli_overrides, dpy_string, "screen", "Tk display and screen name"),
-    BU_CMD_FLAG("r", "read-only", struct mged_cli_overrides, read_only, "open database read-only"),
-    BU_CMD_FLAG("p", "pipe", struct mged_cli_overrides, pipe_mode, "pipe mode (emit CMD_DONE sentinels)"),
-    BU_CMD_FLAG("c", "classic", struct mged_cli_overrides, classic_mode, "classic text-only mode"),
-    BU_CMD_FLAG("C", "gui", struct mged_cli_overrides, gui_mode, "GUI (non-classic) mode"),
-    BU_CMD_FLAG("b", "background", struct mged_cli_overrides, background, "run in background (fork)"),
-    BU_CMD_HEX_INTEGER("x", "rt-debug", struct mged_cli_overrides, rt_debug_val, "hex", "set librt debug flags (hex)"),
-    BU_CMD_HEX_INTEGER("X", "bu-debug", struct mged_cli_overrides, bu_debug_val, "hex", "set libbu debug flags (hex)"),
-    BU_CMD_FLAG("v", "version", struct mged_cli_overrides, print_version, "print version info and exit"),
-    BU_CMD_FLAG("h", "help", struct mged_cli_overrides, print_help, "print help and exit"),
-    BU_CMD_FLAG("?", NULL, struct mged_cli_overrides, print_help, "print help and exit"),
-    BU_CMD_FLAG("o", NULL, struct mged_cli_overrides, old_gui_flag, "[developer] use old GUI"),
-    BU_CMD_STRING(NULL, "rcfile", struct mged_cli_overrides, rcfile, "file", "use FILE instead of .mgedrc"),
-    BU_CMD_FLAG(NULL, "no-rc", struct mged_cli_overrides, skip_rc, "skip loading any .mgedrc file"),
-    BU_CMD_CUSTOM(NULL, "set", struct mged_cli_overrides, set_pairs, mged_set_parse, "VAR=VALUE", "set an mged variable (e.g. --set use_air=1); applied after .mgedrc"),
-    BU_CMD_CUSTOM(NULL, "rset", struct mged_cli_overrides, rset_pairs, mged_rset_parse, "ARGS", "set an rset resource (e.g. --rset \"g snap 1\"); applied after .mgedrc"),
-    BU_CMD_FLAG(NULL, "use-air", struct mged_cli_overrides, use_air, "enable use_air"),
-    BU_CMD_CUSTOM_FLAG(NULL, "no-use-air", "no-use-air", struct mged_cli_overrides, use_air, mged_flag_set_zero, "disable use_air"),
-    BU_CMD_FLAG(NULL, "dlist", struct mged_cli_overrides, dlist, "enable display lists"),
-    BU_CMD_CUSTOM_FLAG(NULL, "no-dlist", "no-dlist", struct mged_cli_overrides, dlist, mged_flag_set_zero, "disable display lists"),
-    BU_CMD_FLAG(NULL, "faceplate", struct mged_cli_overrides, faceplate, "show faceplate overlay"),
-    BU_CMD_CUSTOM_FLAG(NULL, "no-faceplate", "no-faceplate", struct mged_cli_overrides, faceplate, mged_flag_set_zero, "hide faceplate overlay"),
-    BU_CMD_FLAG(NULL, "predictor", struct mged_cli_overrides, predictor, "enable view predictor"),
-    BU_CMD_CUSTOM_FLAG(NULL, "no-predictor", "no-predictor", struct mged_cli_overrides, predictor, mged_flag_set_zero, "disable view predictor"),
-    BU_CMD_INTEGER(NULL, "linewidth", struct mged_cli_overrides, linewidth, "#", "wireframe line width (pixels, >=1)"),
-    BU_CMD_CHAR(NULL, "linestyle", struct mged_cli_overrides, linestyle, "s|d", "line style: s=solid, d=dashed"),
-    BU_CMD_NUMBER(NULL, "perspective", struct mged_cli_overrides, perspective, "#", "perspective angle in degrees (-1=off)"),
-    BU_CMD_NUMBER(NULL, "eye-sep-dist", struct mged_cli_overrides, eye_sep_dist, "#", "stereo eye separation (mm, 0=mono)"),
-    BU_CMD_INTEGER(NULL, "port", struct mged_cli_overrides, port, "#", "framebuffer server listen port (0-65535)"),
-    BU_CMD_CHAR(NULL, "coords", struct mged_cli_overrides, coords, "m|v", "constraint coords: m=model v=view"),
-    BU_CMD_CHAR(NULL, "rotate-about", struct mged_cli_overrides, rotate_about, "m|v|e", "rotate center: m=model v=view e=eye"),
-    BU_CMD_CHAR(NULL, "transform", struct mged_cli_overrides, transform, "v|a|e", "mouse transform: v=view a=adc e=edit"),
-    BU_CMD_NUMBER(NULL, "nmg-eu-dist", struct mged_cli_overrides, nmg_eu_dist, "#", "NMG edge-use distance tolerance"),
-    BU_CMD_CHAR(NULL, "mouse-behavior", struct mged_cli_overrides, mouse_behavior, "v|a|e", "mouse behavior mode"),
-    BU_CMD_NUMBER(NULL, "predictor-advance", struct mged_cli_overrides, predictor_advance, "#", "predictor advance time (s)"),
-    BU_CMD_NUMBER(NULL, "predictor-length", struct mged_cli_overrides, predictor_length, "#", "predictor trail length (s)"),
-    BU_CMD_INTEGER(NULL, "perspective-mode", struct mged_cli_overrides, perspective_mode, "0|1", "enable/disable perspective mode"),
-    BU_CMD_INTEGER(NULL, "context", struct mged_cli_overrides, context, "0|1", "context mode (0=off)"),
-    BU_CMD_INTEGER(NULL, "sliders", struct mged_cli_overrides, sliders, "0|1", "show sliders"),
-    BU_CMD_INTEGER(NULL, "hot-key", struct mged_cli_overrides, hot_key, "#", "hot key character code"),
-    BU_CMD_INTEGER(NULL, "fb-overlay", struct mged_cli_overrides, fb_overlay, "0|1|2", "framebuffer overlay: 0=under 1=inter 2=over"),
-    BU_CMD_STRING(NULL, "dm-type", struct mged_cli_overrides, dm_type, "type", "display manager type (e.g. ogl, swrast)"),
-    BU_CMD_STRING(NULL, "geom", struct mged_cli_overrides, geom, "WxH+X+Y", "command window geometry"),
-    BU_CMD_STRING(NULL, "ggeom", struct mged_cli_overrides, ggeom, "WxH+X+Y", "graphics window geometry"),
-    BU_CMD_INTEGER(NULL, "grid-draw", struct mged_cli_overrides, grid_draw, "0|1", "show/hide grid"),
-    BU_CMD_INTEGER(NULL, "grid-snap", struct mged_cli_overrides, grid_snap, "0|1", "enable/disable grid snap"),
-    BU_CMD_NUMBER(NULL, "grid-rh", struct mged_cli_overrides, grid_rh, "#", "horizontal grid resolution"),
-    BU_CMD_NUMBER(NULL, "grid-rv", struct mged_cli_overrides, grid_rv, "#", "vertical grid resolution"),
-    BU_CMD_INTEGER(NULL, "grid-mrh", struct mged_cli_overrides, grid_mrh, "#", "horizontal major grid interval"),
-    BU_CMD_INTEGER(NULL, "grid-mrv", struct mged_cli_overrides, grid_mrv, "#", "vertical major grid interval"),
-    BU_CMD_OPTION_SHAPED(NULL, "bg", "bg", struct mged_cli_overrides, bg_color, BU_CMD_VALUE_COLOR, "R G B", "background colour (0-255 per component, or #RRGGBB)", BU_CMD_ARG_REQUIRED, &mged_color_arg_shape, mged_color_consume),
-    BU_CMD_OPTION_SHAPED(NULL, "geo-color", "geo-color", struct mged_cli_overrides, geo_def_color, BU_CMD_VALUE_COLOR, "R G B", "default geometry wireframe colour", BU_CMD_ARG_REQUIRED, &mged_color_arg_shape, mged_color_consume),
-    BU_CMD_OPTION_NULL
+static const struct bu_arg_option mged_cli_options[] = {
+    BU_ARG_STRING("a", "attach", struct mged_cli_overrides, attach, "type", "display manager attach target"),
+    BU_ARG_STRING("d", "display", struct mged_cli_overrides, dpy_string, "screen", "Tk display and screen name"),
+    BU_ARG_FLAG("r", "read-only", struct mged_cli_overrides, read_only, "open database read-only"),
+    BU_ARG_FLAG("p", "pipe", struct mged_cli_overrides, pipe_mode, "pipe mode (emit CMD_DONE sentinels)"),
+    BU_ARG_FLAG("c", "classic", struct mged_cli_overrides, classic_mode, "classic text-only mode"),
+    BU_ARG_FLAG("C", "gui", struct mged_cli_overrides, gui_mode, "GUI (non-classic) mode"),
+    BU_ARG_FLAG("b", "background", struct mged_cli_overrides, background, "run in background (fork)"),
+    BU_ARG_HEX_INTEGER("x", "rt-debug", struct mged_cli_overrides, rt_debug_val, "hex", "set librt debug flags (hex)"),
+    BU_ARG_HEX_INTEGER("X", "bu-debug", struct mged_cli_overrides, bu_debug_val, "hex", "set libbu debug flags (hex)"),
+    BU_ARG_FLAG("v", "version", struct mged_cli_overrides, print_version, "print version info and exit"),
+    BU_ARG_FLAG("h", "help", struct mged_cli_overrides, print_help, "print help and exit"),
+    BU_ARG_FLAG("?", NULL, struct mged_cli_overrides, print_help, "print help and exit"),
+    BU_ARG_FLAG("o", NULL, struct mged_cli_overrides, old_gui_flag, "[developer] use old GUI"),
+    BU_ARG_STRING(NULL, "rcfile", struct mged_cli_overrides, rcfile, "file", "use FILE instead of .mgedrc"),
+    BU_ARG_FLAG(NULL, "no-rc", struct mged_cli_overrides, skip_rc, "skip loading any .mgedrc file"),
+    BU_ARG_CUSTOM(NULL, "set", struct mged_cli_overrides, set_pairs, mged_set_parse, "VAR=VALUE", "set an mged variable (e.g. --set use_air=1); applied after .mgedrc"),
+    BU_ARG_CUSTOM(NULL, "rset", struct mged_cli_overrides, rset_pairs, mged_rset_parse, "ARGS", "set an rset resource (e.g. --rset \"g snap 1\"); applied after .mgedrc"),
+    BU_ARG_FLAG(NULL, "use-air", struct mged_cli_overrides, use_air, "enable use_air"),
+    BU_ARG_CUSTOM_FLAG(NULL, "no-use-air", "no-use-air", struct mged_cli_overrides, use_air, mged_flag_set_zero, "disable use_air"),
+    BU_ARG_FLAG(NULL, "dlist", struct mged_cli_overrides, dlist, "enable display lists"),
+    BU_ARG_CUSTOM_FLAG(NULL, "no-dlist", "no-dlist", struct mged_cli_overrides, dlist, mged_flag_set_zero, "disable display lists"),
+    BU_ARG_FLAG(NULL, "faceplate", struct mged_cli_overrides, faceplate, "show faceplate overlay"),
+    BU_ARG_CUSTOM_FLAG(NULL, "no-faceplate", "no-faceplate", struct mged_cli_overrides, faceplate, mged_flag_set_zero, "hide faceplate overlay"),
+    BU_ARG_FLAG(NULL, "predictor", struct mged_cli_overrides, predictor, "enable view predictor"),
+    BU_ARG_CUSTOM_FLAG(NULL, "no-predictor", "no-predictor", struct mged_cli_overrides, predictor, mged_flag_set_zero, "disable view predictor"),
+    BU_ARG_INTEGER(NULL, "linewidth", struct mged_cli_overrides, linewidth, "#", "wireframe line width (pixels, >=1)"),
+    BU_ARG_CHAR(NULL, "linestyle", struct mged_cli_overrides, linestyle, "s|d", "line style: s=solid, d=dashed"),
+    BU_ARG_NUMBER(NULL, "perspective", struct mged_cli_overrides, perspective, "#", "perspective angle in degrees (-1=off)"),
+    BU_ARG_NUMBER(NULL, "eye-sep-dist", struct mged_cli_overrides, eye_sep_dist, "#", "stereo eye separation (mm, 0=mono)"),
+    BU_ARG_INTEGER(NULL, "port", struct mged_cli_overrides, port, "#", "framebuffer server listen port (0-65535)"),
+    BU_ARG_CHAR(NULL, "coords", struct mged_cli_overrides, coords, "m|v", "constraint coords: m=model v=view"),
+    BU_ARG_CHAR(NULL, "rotate-about", struct mged_cli_overrides, rotate_about, "m|v|e", "rotate center: m=model v=view e=eye"),
+    BU_ARG_CHAR(NULL, "transform", struct mged_cli_overrides, transform, "v|a|e", "mouse transform: v=view a=adc e=edit"),
+    BU_ARG_NUMBER(NULL, "nmg-eu-dist", struct mged_cli_overrides, nmg_eu_dist, "#", "NMG edge-use distance tolerance"),
+    BU_ARG_CHAR(NULL, "mouse-behavior", struct mged_cli_overrides, mouse_behavior, "v|a|e", "mouse behavior mode"),
+    BU_ARG_NUMBER(NULL, "predictor-advance", struct mged_cli_overrides, predictor_advance, "#", "predictor advance time (s)"),
+    BU_ARG_NUMBER(NULL, "predictor-length", struct mged_cli_overrides, predictor_length, "#", "predictor trail length (s)"),
+    BU_ARG_INTEGER(NULL, "perspective-mode", struct mged_cli_overrides, perspective_mode, "0|1", "enable/disable perspective mode"),
+    BU_ARG_INTEGER(NULL, "context", struct mged_cli_overrides, context, "0|1", "context mode (0=off)"),
+    BU_ARG_INTEGER(NULL, "sliders", struct mged_cli_overrides, sliders, "0|1", "show sliders"),
+    BU_ARG_INTEGER(NULL, "hot-key", struct mged_cli_overrides, hot_key, "#", "hot key character code"),
+    BU_ARG_INTEGER(NULL, "fb-overlay", struct mged_cli_overrides, fb_overlay, "0|1|2", "framebuffer overlay: 0=under 1=inter 2=over"),
+    BU_ARG_STRING(NULL, "dm-type", struct mged_cli_overrides, dm_type, "type", "display manager type (e.g. ogl, swrast)"),
+    BU_ARG_STRING(NULL, "geom", struct mged_cli_overrides, geom, "WxH+X+Y", "command window geometry"),
+    BU_ARG_STRING(NULL, "ggeom", struct mged_cli_overrides, ggeom, "WxH+X+Y", "graphics window geometry"),
+    BU_ARG_INTEGER(NULL, "grid-draw", struct mged_cli_overrides, grid_draw, "0|1", "show/hide grid"),
+    BU_ARG_INTEGER(NULL, "grid-snap", struct mged_cli_overrides, grid_snap, "0|1", "enable/disable grid snap"),
+    BU_ARG_NUMBER(NULL, "grid-rh", struct mged_cli_overrides, grid_rh, "#", "horizontal grid resolution"),
+    BU_ARG_NUMBER(NULL, "grid-rv", struct mged_cli_overrides, grid_rv, "#", "vertical grid resolution"),
+    BU_ARG_INTEGER(NULL, "grid-mrh", struct mged_cli_overrides, grid_mrh, "#", "horizontal major grid interval"),
+    BU_ARG_INTEGER(NULL, "grid-mrv", struct mged_cli_overrides, grid_mrv, "#", "vertical major grid interval"),
+    BU_ARG_OPTION_SHAPED(NULL, "bg", "bg", struct mged_cli_overrides, bg_color, BU_ARG_VALUE_COLOR, "R G B", "background colour (0-255 per component, or #RRGGBB)", BU_ARG_REQUIRED, &mged_color_arg_shape, mged_color_consume),
+    BU_ARG_OPTION_SHAPED(NULL, "geo-color", "geo-color", struct mged_cli_overrides, geo_def_color, BU_ARG_VALUE_COLOR, "R G B", "default geometry wireframe colour", BU_ARG_REQUIRED, &mged_color_arg_shape, mged_color_consume),
+    BU_ARG_OPTION_NULL
 };
 
-static const struct bu_cmd_schema mged_cli_schema = {
+static const struct bu_arg_schema mged_cli_schema = {
     "mged", "Multi-display interactive combinatorial solid geometry editor",
-    mged_cli_options, NULL, BU_CMD_PARSE_INTERSPERSED,
-    BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+    mged_cli_options, NULL, BU_ARG_PARSE_INTERSPERSED,
+    BU_ARG_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
 
 
@@ -3331,7 +3331,7 @@ main(int argc, char *argv[])
      * the native schema owns every recognized launcher option.  This matches
      * the historic launcher's interspersed, pass-through option behavior. */
     for (int i = 0; i < argc;) {
-	int span = bu_cmd_schema_option_span(&mged_cli_schema, (size_t)(argc - i), (const char **)(argv + i));
+	int span = bu_arg_schema_option_span(&mged_cli_schema, (size_t)(argc - i), (const char **)(argv + i));
 	if (span > 0) {
 	    if (BU_STR_EQUAL(argv[i], "--")) {
 		for (i++; i < argc; i++)
@@ -3344,7 +3344,7 @@ main(int argc, char *argv[])
 	    continue;
 	}
 	if (span < 0) {
-	    (void)bu_cmd_schema_parse(&mged_cli_schema, &cl, &parse_msgs,
+	    (void)bu_arg_schema_parse(&mged_cli_schema, &cl, &parse_msgs,
 		argc - i, (const char **)(argv + i));
 	    break;
 	}
@@ -3352,7 +3352,7 @@ main(int argc, char *argv[])
     }
 
     if (bu_vls_strlen(&parse_msgs) == 0 &&
-	bu_cmd_schema_parse(&mged_cli_schema, &cl, &parse_msgs, option_argc, option_argv) >= 0) {
+	bu_arg_schema_parse(&mged_cli_schema, &cl, &parse_msgs, option_argc, option_argv) >= 0) {
 	for (int i = 0; i < command_argc; i++)
 	    argv[i] = (char *)command_argv[i];
 	argc = command_argc;
@@ -3390,7 +3390,7 @@ main(int argc, char *argv[])
 
     /* -h / --help / -? */
     if (cl.print_help) {
-	char *help_str = bu_cmd_schema_help(&mged_cli_schema, "mged");
+	char *help_str = bu_arg_schema_help(&mged_cli_schema, "mged");
 	bu_exit(0, "%s", help_str ? help_str : "");
     }
 

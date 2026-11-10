@@ -29,7 +29,7 @@
 #include <ctype.h>
 #include <string.h>
 
-#include "bu/cmdschema.h"
+#include "bu/arg.h"
 #include "rt/geom.h"
 #include "ged/objects.h"
 
@@ -258,23 +258,23 @@ ged_3ptarb_core(struct ged *gedp, int argc, const char *argv[])
 #include "../include/plugin.h"
 
 static const char * const threeptarb_coord_keywords[] = {"x", "y", "z", NULL};
-static const struct bu_cmd_operand threeptarb_schema_operands[] = {
-    BU_CMD_OPERAND("name", BU_CMD_VALUE_STRING, 1, 1,
+static const struct bu_arg_operand threeptarb_schema_operands[] = {
+    BU_ARG_OPERAND("name", BU_ARG_VALUE_STRING, 1, 1,
 	"New ARB name", NULL),
-    BU_CMD_OPERAND("face_points", BU_CMD_VALUE_NUMBER, 9, 9,
+    BU_ARG_OPERAND("face_points", BU_ARG_VALUE_NUMBER, 9, 9,
 	"Three X Y Z face points", NULL),
-    BU_CMD_OPERAND_KEYWORDS("solved_coordinate", BU_CMD_VALUE_KEYWORD, 1, 1,
+    BU_ARG_OPERAND_KEYWORDS("solved_coordinate", BU_ARG_VALUE_KEYWORD, 1, 1,
 	"Coordinate to solve", NULL, threeptarb_coord_keywords),
-    BU_CMD_OPERAND("fourth_point_coordinates", BU_CMD_VALUE_NUMBER, 2, 2,
+    BU_ARG_OPERAND("fourth_point_coordinates", BU_ARG_VALUE_NUMBER, 2, 2,
 	"Known coordinates of the fourth point", NULL),
-    BU_CMD_OPERAND("thickness", BU_CMD_VALUE_NUMBER, 1, 1,
+    BU_ARG_OPERAND("thickness", BU_ARG_VALUE_NUMBER, 1, 1,
 	"ARB thickness", NULL),
-    BU_CMD_OPERAND_NULL
+    BU_ARG_OPERAND_NULL
 };
-static const struct bu_cmd_schema threeptarb_cmd_schema = {
+static const struct bu_arg_schema threeptarb_cmd_schema = {
     "3ptarb", "Create an ARB from three points", NULL,
-    threeptarb_schema_operands, BU_CMD_PARSE_STOP_AT_FIRST_OPERAND,
-    BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+    threeptarb_schema_operands, BU_ARG_PARSE_STOP_AT_FIRST_OPERAND,
+    BU_ARG_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
 
 #define GED_3PTARB_COMMANDS(X, XID) \

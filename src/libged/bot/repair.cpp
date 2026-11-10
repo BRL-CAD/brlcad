@@ -13,7 +13,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "bu/cmdschema.h"
+#include "bu/arg.h"
 #include "rt/geom.h"
 #include "rt/db_internal.h"
 #include "wdb.h"
@@ -28,34 +28,34 @@ struct bot_repair_args {
     struct bu_vls output_name;
 };
 
-static const struct bu_cmd_option bot_repair_options[] = {
-    BU_CMD_FLAG("h", "help", struct bot_repair_args, print_help,
+static const struct bu_arg_option bot_repair_options[] = {
+    BU_ARG_FLAG("h", "help", struct bot_repair_args, print_help,
 	"Print command help"),
-    BU_CMD_NUMBER_RANGE("p", "max-hole-percent", struct bot_repair_args,
+    BU_ARG_NUMBER_RANGE("p", "max-hole-percent", struct bot_repair_args,
 	max_hole_area_percent, 0.0, 100.0, "percent",
 	"Maximum hole area as a percentage of mesh area"),
-    BU_CMD_NONNEGATIVE_NUMBER("a", "max-hole-area", struct bot_repair_args,
+    BU_ARG_NONNEGATIVE_NUMBER("a", "max-hole-area", struct bot_repair_args,
 	max_hole_area, "area", "Maximum hole area in mm"),
-    BU_CMD_VLS_APPEND("o", "output-name", struct bot_repair_args, output_name,
+    BU_ARG_VLS_APPEND("o", "output-name", struct bot_repair_args, output_name,
 	"name", "Output object name instead of overwriting the input"),
-    BU_CMD_OPTION_NULL
+    BU_ARG_OPTION_NULL
 };
 static const char * const bot_repair_output_option[] = {"output-name", NULL};
-static const struct bu_cmd_constraint bot_repair_constraints[] = {
-    BU_CMD_CONSTRAINT_OPERANDS(BU_CMD_CONDITION_ANY_OPTION_PRESENT,
+static const struct bu_arg_constraint bot_repair_constraints[] = {
+    BU_ARG_CONSTRAINT_OPERANDS(BU_ARG_CONDITION_ANY_OPTION_PRESENT,
 	bot_repair_output_option, 1, 1,
 	"--output-name requires exactly one input BoT"),
-    BU_CMD_CONSTRAINT_NULL
+    BU_ARG_CONSTRAINT_NULL
 };
-static const struct bu_cmd_operand bot_repair_operands[] = {
-    BU_CMD_OPERAND("input_bot", BU_CMD_VALUE_DB_OBJECT, 1, BU_CMD_COUNT_UNLIMITED,
+static const struct bu_arg_operand bot_repair_operands[] = {
+    BU_ARG_OPERAND("input_bot", BU_ARG_VALUE_DB_OBJECT, 1, BU_ARG_COUNT_UNLIMITED,
 	"Input BoT object", "ged.db_object"),
-    BU_CMD_OPERAND_NULL
+    BU_ARG_OPERAND_NULL
 };
-extern "C" const struct bu_cmd_schema ged_bot_repair_subcommand_schema = {
+extern "C" const struct bu_arg_schema ged_bot_repair_subcommand_schema = {
     "repair", "Repair manifold BoT geometry", bot_repair_options,
-    bot_repair_operands, BU_CMD_PARSE_INTERSPERSED,
-	BU_CMD_SCHEMA_META_HELP(NULL, bot_repair_constraints, NULL, NULL, NULL)
+    bot_repair_operands, BU_ARG_PARSE_INTERSPERSED,
+	BU_ARG_SCHEMA_META_HELP(NULL, bot_repair_constraints, NULL, NULL, NULL)
 };
 
 extern "C" int

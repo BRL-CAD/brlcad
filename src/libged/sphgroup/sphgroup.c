@@ -28,22 +28,22 @@
 #include <string.h>
 
 #include "bu/cmd.h"
-#include "bu/cmdschema.h"
+#include "bu/arg.h"
 #include "wdb.h"
 
 #include "../ged_private.h"
 
 
-static const struct bu_cmd_operand sphgroup_schema_operands[] = {
-    BU_CMD_OPERAND("group_name", BU_CMD_VALUE_STRING, 1, 1,
+static const struct bu_arg_operand sphgroup_schema_operands[] = {
+    BU_ARG_OPERAND("group_name", BU_ARG_VALUE_STRING, 1, 1,
 	"Output group name", NULL),
-    BU_CMD_OPERAND("target_sphere", BU_CMD_VALUE_DB_OBJECT, 1, 1,
+    BU_ARG_OPERAND("target_sphere", BU_ARG_VALUE_DB_OBJECT, 1, 1,
 	"Existing bounding sphere", "ged.db_object"),
-    BU_CMD_OPERAND_NULL
+    BU_ARG_OPERAND_NULL
 };
-static const struct bu_cmd_schema sphgroup_cmd_schema = {
+static const struct bu_arg_schema sphgroup_cmd_schema = {
     "sphgroup", "Create a group around a target sphere", NULL,
-    sphgroup_schema_operands, BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+    sphgroup_schema_operands, BU_ARG_PARSE_STOP_AT_FIRST_OPERAND, BU_ARG_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
 
 
@@ -75,7 +75,7 @@ ged_sphgroup_core(struct ged *gedp, int argc, const char *argv[])
     }
 
 
-    operand_index = bu_cmd_schema_parse_complete(&sphgroup_cmd_schema,
+    operand_index = bu_arg_schema_parse_complete(&sphgroup_cmd_schema,
 	&parse_dummy, gedp->ged_result_str, argc - 1, argv + 1);
     if (operand_index < 0) {
 	ged_cmd_help_append(gedp->ged_result_str, argv[0], argv[0]);

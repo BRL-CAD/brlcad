@@ -36,7 +36,7 @@
 #include "bresource.h"
 
 #include "bu/app.h"
-#include "bu/cmdschema.h"
+#include "bu/arg.h"
 #include "bu/file.h"
 #include "bu/path.h"
 #include "ged.h"
@@ -59,7 +59,7 @@ BU_OPT_DESC_BUILDER(editit_options, struct editit_args, EDITIT_OPTIONS);
 
 static const ged_opt_rule editit_opt_rules[] = {
     GED_RULE_ALIAS("?", "help"),
-    GED_RULE_SEMANTIC("f", BU_CMD_VALUE_FILE, "ged.file_path", "file"),
+    GED_RULE_SEMANTIC("f", BU_ARG_VALUE_FILE, "ged.file_path", "file"),
     GED_RULE_WHEN_HELP("help", "Display command help", "file:file?"),
     GED_RULE_WHEN_HELP("f", "Take the file from the -f option", ""),
     GED_RULE_OTHERWISE_HELP("Take the file from the positional operand", "file:file"),

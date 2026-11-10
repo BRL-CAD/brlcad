@@ -22,7 +22,7 @@
 #ifndef GED_DRAW_TEST_OPTS_H
 #define GED_DRAW_TEST_OPTS_H
 
-#include "bu/cmdschema.h"
+#include "bu/arg.h"
 
 struct ged_draw_test_args {
     int help;
@@ -31,10 +31,10 @@ struct ged_draw_test_args {
     int keep_images;
 };
 
-static const struct bu_cmd_operand ged_draw_test_operands[] = {
-    BU_CMD_OPERAND("control_directory", BU_CMD_VALUE_FILE, 1, 1,
+static const struct bu_arg_operand ged_draw_test_operands[] = {
+    BU_ARG_OPERAND("control_directory", BU_ARG_VALUE_FILE, 1, 1,
 	"Directory containing control images", NULL),
-    BU_CMD_OPERAND_NULL
+    BU_ARG_OPERAND_NULL
 };
 
 #endif /* GED_DRAW_TEST_OPTS_H */

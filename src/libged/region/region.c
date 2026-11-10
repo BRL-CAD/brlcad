@@ -28,13 +28,13 @@
 #include <string.h>
 
 #include "bu/cmd.h"
-#include "bu/cmdschema.h"
+#include "bu/arg.h"
 #include "ged/commands.h"
 #include "wdb.h"
 
 #include "../ged_private.h"
 
-static const struct bu_cmd_schema *region_schema_for_command(const char *command);
+static const struct bu_arg_schema *region_schema_for_command(const char *command);
 
 int
 ged_region_core(struct ged *gedp, int argc, const char *argv[])
@@ -60,7 +60,7 @@ ged_region_core(struct ged *gedp, int argc, const char *argv[])
     }
 
 
-    operand_index = bu_cmd_schema_parse_complete(region_schema_for_command(argv[0]),
+    operand_index = bu_arg_schema_parse_complete(region_schema_for_command(argv[0]),
 	&parse_dummy, gedp->ged_result_str, argc - 1, argv + 1);
     if (operand_index < 0) {
 	ged_cmd_help_append(gedp->ged_result_str, argv[0], argv[0]);
@@ -132,35 +132,35 @@ region_op_validate(struct bu_vls *msg, const char *arg)
     return -1;
 }
 
-static const struct bu_cmd_operand region_schema_operands[] = {
-    BU_CMD_OPERAND("output_region", BU_CMD_VALUE_STRING, 1, 1,
+static const struct bu_arg_operand region_schema_operands[] = {
+    BU_ARG_OPERAND("output_region", BU_ARG_VALUE_STRING, 1, 1,
 	"Region to create or extend", NULL),
-    BU_CMD_OPERAND_NULL
+    BU_ARG_OPERAND_NULL
 };
-static const struct bu_cmd_operand region_member_roles[] = {
-    BU_CMD_OPERAND_KEYWORDS_VALIDATE("operation", BU_CMD_VALUE_KEYWORD, 1, 1,
+static const struct bu_arg_operand region_member_roles[] = {
+    BU_ARG_OPERAND_KEYWORDS_VALIDATE("operation", BU_ARG_VALUE_KEYWORD, 1, 1,
 	region_op_validate, "Boolean operation", NULL, region_op_keywords),
     GED_CMD_OPERAND_DB_OBJECT("member", 1, 1, "Member object"),
-    BU_CMD_OPERAND_NULL
+    BU_ARG_OPERAND_NULL
 };
-static const struct bu_cmd_operand_group region_schema_groups[] = {
-    BU_CMD_OPERAND_GROUP("member", region_member_roles, 1,
-	BU_CMD_COUNT_UNLIMITED, "Repeated Boolean operation/object pairs"),
-    BU_CMD_OPERAND_GROUP_NULL
+static const struct bu_arg_operand_group region_schema_groups[] = {
+    BU_ARG_OPERAND_GROUP("member", region_member_roles, 1,
+	BU_ARG_COUNT_UNLIMITED, "Repeated Boolean operation/object pairs"),
+    BU_ARG_OPERAND_GROUP_NULL
 };
 
-static const struct bu_cmd_schema region_cmd_schema = {
+static const struct bu_arg_schema region_cmd_schema = {
     "region", "Create or extend a region from boolean-operation/object pairs",
-    NULL, region_schema_operands, BU_CMD_PARSE_STOP_AT_FIRST_OPERAND,
-	BU_CMD_SCHEMA_GROUPS(NULL, NULL, region_schema_groups)
+    NULL, region_schema_operands, BU_ARG_PARSE_STOP_AT_FIRST_OPERAND,
+	BU_ARG_SCHEMA_GROUPS(NULL, NULL, region_schema_groups)
 };
-static const struct bu_cmd_schema r_cmd_schema = {
+static const struct bu_arg_schema r_cmd_schema = {
     "r", "Create or extend a region from boolean-operation/object pairs",
-    NULL, region_schema_operands, BU_CMD_PARSE_STOP_AT_FIRST_OPERAND,
-	BU_CMD_SCHEMA_GROUPS(NULL, NULL, region_schema_groups)
+    NULL, region_schema_operands, BU_ARG_PARSE_STOP_AT_FIRST_OPERAND,
+	BU_ARG_SCHEMA_GROUPS(NULL, NULL, region_schema_groups)
 };
 
-static const struct bu_cmd_schema *
+static const struct bu_arg_schema *
 region_schema_for_command(const char *command)
 {
     return BU_STR_EQUAL(command, "r") ? &r_cmd_schema : &region_cmd_schema;

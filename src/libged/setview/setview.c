@@ -93,7 +93,7 @@ ged_setview_core(struct ged *gedp, int argc, const char *argv[])
 
 #include "../include/plugin.h"
 
-GED_DEFINE_TYPED_OPERAND_SCHEMA(setview, "setview", "Set view rotation angles", "angles", BU_CMD_VALUE_NUMBER, 3, 3, "X Y Z angles in degrees");
+GED_DEFINE_TYPED_OPERAND_SCHEMA(setview, "setview", "Set view rotation angles", "angles", BU_ARG_VALUE_NUMBER, 3, 3, "X Y Z angles in degrees");
 
 #define GED_SETVIEW_COMMANDS(X, XID) \
     X(setview, ged_setview_core, GED_CMD_DEFAULT, &setview_cmd_schema) \

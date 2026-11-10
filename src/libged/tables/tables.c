@@ -38,7 +38,7 @@
 #include "bio.h"
 
 #include "bu/app.h"
-#include "bu/cmdschema.h"
+#include "bu/arg.h"
 #include "bu/sort.h"
 #include "bu/units.h"
 #include "../ged_private.h"
@@ -651,14 +651,14 @@ end:
 
 #include "../include/plugin.h"
 
-static const struct bu_cmd_operand tables_schema_operands[] = {
-    BU_CMD_OPERAND("output_file", BU_CMD_VALUE_FILE, 1, 1,
+static const struct bu_arg_operand tables_schema_operands[] = {
+    BU_ARG_OPERAND("output_file", BU_ARG_VALUE_FILE, 1, 1,
 	"Table output file", NULL),
-    BU_CMD_OPERAND("objects", BU_CMD_VALUE_DB_OBJECT, 1,
-	BU_CMD_COUNT_UNLIMITED, "Objects to tabulate", "ged.db_object"),
-    BU_CMD_OPERAND_NULL
+    BU_ARG_OPERAND("objects", BU_ARG_VALUE_DB_OBJECT, 1,
+	BU_ARG_COUNT_UNLIMITED, "Objects to tabulate", "ged.db_object"),
+    BU_ARG_OPERAND_NULL
 };
-#define TABLES_SCHEMA(id, name) static const struct bu_cmd_schema id##_cmd_schema = {name, "Write geometry tables", NULL, tables_schema_operands, BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)}
+#define TABLES_SCHEMA(id, name) static const struct bu_arg_schema id##_cmd_schema = {name, "Write geometry tables", NULL, tables_schema_operands, BU_ARG_PARSE_STOP_AT_FIRST_OPERAND, BU_ARG_SCHEMA_CONSTRAINTS(NULL, NULL)}
 TABLES_SCHEMA(idents, "idents");
 TABLES_SCHEMA(regions, "regions");
 TABLES_SCHEMA(solids, "solids");

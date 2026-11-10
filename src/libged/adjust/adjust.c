@@ -29,30 +29,30 @@
 #include <ctype.h>
 #include <string.h>
 
-#include "bu/cmdschema.h"
+#include "bu/arg.h"
 #include "ged.h"
 #include "ged/commands.h"
 
-static const struct bu_cmd_operand adjust_schema_operands[] = {
+static const struct bu_arg_operand adjust_schema_operands[] = {
     GED_CMD_OPERAND_DB_OBJECT("object", 1, 1, "Primitive object"),
-    BU_CMD_OPERAND_NULL
+    BU_ARG_OPERAND_NULL
 };
-static const struct bu_cmd_operand adjust_attribute_roles[] = {
-    BU_CMD_OPERAND("attribute", BU_CMD_VALUE_STRING, 1, 1,
+static const struct bu_arg_operand adjust_attribute_roles[] = {
+    BU_ARG_OPERAND("attribute", BU_ARG_VALUE_STRING, 1, 1,
 	"Primitive attribute", NULL),
-    BU_CMD_OPERAND("value", BU_CMD_VALUE_STRING, 1, 1,
+    BU_ARG_OPERAND("value", BU_ARG_VALUE_STRING, 1, 1,
 	"Attribute value", NULL),
-    BU_CMD_OPERAND_NULL
+    BU_ARG_OPERAND_NULL
 };
-static const struct bu_cmd_operand_group adjust_schema_groups[] = {
-    BU_CMD_OPERAND_GROUP("attribute_value", adjust_attribute_roles, 1,
-	BU_CMD_COUNT_UNLIMITED, "Repeated attribute/value pairs"),
-    BU_CMD_OPERAND_GROUP_NULL
+static const struct bu_arg_operand_group adjust_schema_groups[] = {
+    BU_ARG_OPERAND_GROUP("attribute_value", adjust_attribute_roles, 1,
+	BU_ARG_COUNT_UNLIMITED, "Repeated attribute/value pairs"),
+    BU_ARG_OPERAND_GROUP_NULL
 };
-static const struct bu_cmd_schema adjust_cmd_schema = {
+static const struct bu_arg_schema adjust_cmd_schema = {
     "adjust", "Adjust primitive attributes", NULL, adjust_schema_operands,
-	BU_CMD_PARSE_STOP_AT_FIRST_OPERAND,
-	BU_CMD_SCHEMA_GROUPS(NULL, NULL, adjust_schema_groups)
+	BU_ARG_PARSE_STOP_AT_FIRST_OPERAND,
+	BU_ARG_SCHEMA_GROUPS(NULL, NULL, adjust_schema_groups)
 };
 
 
@@ -80,7 +80,7 @@ ged_adjust_core(struct ged *gedp, int argc, const char *argv[])
     }
 
 
-    operand_index = bu_cmd_schema_parse_complete(&adjust_cmd_schema,
+    operand_index = bu_arg_schema_parse_complete(&adjust_cmd_schema,
 	&parse_dummy, gedp->ged_result_str, argc - 1, argv + 1);
     if (operand_index < 0) {
 	ged_cmd_help_append(gedp->ged_result_str, argv[0], argv[0]);

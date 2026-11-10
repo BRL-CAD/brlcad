@@ -28,27 +28,27 @@
 #include <string.h>
 
 #include "bu/cmd.h"
-#include "bu/cmdschema.h"
+#include "bu/arg.h"
 #include "bu/str.h"
 #include "wdb.h"
 
 #include "../ged_private.h"
 
 
-static const struct bu_cmd_operand group_schema_operands[] = {
-    BU_CMD_OPERAND("output_group", BU_CMD_VALUE_STRING, 1, 1,
+static const struct bu_arg_operand group_schema_operands[] = {
+    BU_ARG_OPERAND("output_group", BU_ARG_VALUE_STRING, 1, 1,
 	"Group to create or extend", NULL),
-    BU_CMD_OPERAND("objects", BU_CMD_VALUE_DB_OBJECT, 1, BU_CMD_COUNT_UNLIMITED,
+    BU_ARG_OPERAND("objects", BU_ARG_VALUE_DB_OBJECT, 1, BU_ARG_COUNT_UNLIMITED,
 	"Database objects to add", "ged.db_object"),
-    BU_CMD_OPERAND_NULL
+    BU_ARG_OPERAND_NULL
 };
-static const struct bu_cmd_schema group_cmd_schema = {
+static const struct bu_arg_schema group_cmd_schema = {
     "group", "Create or extend a union group", NULL, group_schema_operands,
-    BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+    BU_ARG_PARSE_STOP_AT_FIRST_OPERAND, BU_ARG_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
-static const struct bu_cmd_schema g_cmd_schema = {
+static const struct bu_arg_schema g_cmd_schema = {
     "g", "Create or extend a union group", NULL, group_schema_operands,
-    BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+    BU_ARG_PARSE_STOP_AT_FIRST_OPERAND, BU_ARG_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
 
 
@@ -64,7 +64,7 @@ ged_group_core(struct ged *gedp, int argc, const char *argv[])
 {
     int operand_index;
     int parse_dummy = 0;
-    const struct bu_cmd_schema *schema;
+    const struct bu_arg_schema *schema;
 
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
     GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
@@ -80,7 +80,7 @@ ged_group_core(struct ged *gedp, int argc, const char *argv[])
     }
 
     schema = BU_STR_EQUAL(argv[0], "g") ? &g_cmd_schema : &group_cmd_schema;
-    operand_index = bu_cmd_schema_parse_complete(schema, &parse_dummy,
+    operand_index = bu_arg_schema_parse_complete(schema, &parse_dummy,
 	gedp->ged_result_str, argc - 1, argv + 1);
     if (operand_index < 0 || argc - 1 - operand_index < 2) {
 	group_show_help(gedp, argv[0]);

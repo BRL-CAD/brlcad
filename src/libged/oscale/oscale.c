@@ -131,14 +131,14 @@ ged_oscale_core(struct ged *gedp, int argc, const char *argv[])
 
 #include "../include/plugin.h"
 
-static const struct bu_cmd_operand oscale_schema_operands[] = {
-    BU_CMD_OPERAND("object", BU_CMD_VALUE_DB_PATH, 1, 1, "Object path", NULL),
-    BU_CMD_OPERAND("scale_factor", BU_CMD_VALUE_NUMBER, 1, 1, "Scale factor", NULL),
-    BU_CMD_OPERAND("keypoint", BU_CMD_VALUE_NUMBER, 0, 3, "Optional X Y Z keypoint", NULL),
-    BU_CMD_OPERAND_NULL
+static const struct bu_arg_operand oscale_schema_operands[] = {
+    BU_ARG_OPERAND("object", BU_ARG_VALUE_DB_PATH, 1, 1, "Object path", NULL),
+    BU_ARG_OPERAND("scale_factor", BU_ARG_VALUE_NUMBER, 1, 1, "Scale factor", NULL),
+    BU_ARG_OPERAND("keypoint", BU_ARG_VALUE_NUMBER, 0, 3, "Optional X Y Z keypoint", NULL),
+    BU_ARG_OPERAND_NULL
 };
 GED_DEFINE_NATIVE_DISCRETE_COUNT_VALIDATOR(oscale, 2, 5, GED_SCHEMA_COUNT_NONE)
-static const struct bu_cmd_schema oscale_cmd_schema = {"oscale", "Scale an object about a keypoint", NULL, oscale_schema_operands, BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, BU_CMD_SCHEMA_CONSTRAINTS(oscale_schema_validate, NULL)};
+static const struct bu_arg_schema oscale_cmd_schema = {"oscale", "Scale an object about a keypoint", NULL, oscale_schema_operands, BU_ARG_PARSE_STOP_AT_FIRST_OPERAND, BU_ARG_SCHEMA_CONSTRAINTS(oscale_schema_validate, NULL)};
 
 #define GED_OSCALE_COMMANDS(X, XID) \
     X(oscale, ged_oscale_core, GED_CMD_DEFAULT, &oscale_cmd_schema) \

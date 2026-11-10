@@ -30,7 +30,7 @@
 #include <string.h>
 #include "bio.h"
 
-#include "bu/cmdschema.h"
+#include "bu/arg.h"
 #include "bu/glob.h"
 #include "bu/path.h"
 #include "bu/vls.h"
@@ -43,22 +43,22 @@
 #define _GED_GLOB_SKIP_FIRST   0x4    /**< @brief do not expand the first item */
 
 
-static const struct bu_cmd_arg_shape glob_command_shape =
-    BU_CMD_ARG_SHAPE(BU_CMD_ARG_SHAPE_CUSTOM, 1, 1,
+static const struct bu_arg_shape glob_command_shape =
+    BU_ARG_SHAPE(BU_ARG_SHAPE_CUSTOM, 1, 1,
 	"Quoted command string containing database glob patterns");
-static const struct bu_cmd_operand glob_schema_operands[] = {
-    BU_CMD_OPERAND_SHAPED("command_string", BU_CMD_VALUE_STRING, 1, 1, NULL,
+static const struct bu_arg_operand glob_schema_operands[] = {
+    BU_ARG_OPERAND_SHAPED("command_string", BU_ARG_VALUE_STRING, 1, 1, NULL,
 	"Command string whose arguments may contain database glob patterns", NULL,
 	&glob_command_shape),
-    BU_CMD_OPERAND_NULL
+    BU_ARG_OPERAND_NULL
 };
-static const struct bu_cmd_schema glob_cmd_schema = {
+static const struct bu_arg_schema glob_cmd_schema = {
     "glob", "Expand a database glob expression", NULL, glob_schema_operands,
-    BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+    BU_ARG_PARSE_STOP_AT_FIRST_OPERAND, BU_ARG_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
-static const struct bu_cmd_schema db_glob_cmd_schema = {
+static const struct bu_arg_schema db_glob_cmd_schema = {
     "db_glob", "Expand a database glob expression", NULL, glob_schema_operands,
-    BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+    BU_ARG_PARSE_STOP_AT_FIRST_OPERAND, BU_ARG_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
 
 
@@ -230,7 +230,7 @@ ged_glob_core(struct ged *gedp, int argc, const char *argv[])
     int flags = 0;
     int operand_index = 0;
     int parse_dummy = 0;
-    const struct bu_cmd_schema *schema = NULL;
+    const struct bu_arg_schema *schema = NULL;
     const char *expression = NULL;
     flags |= _GED_GLOB_HIDDEN;
     flags |= _GED_GLOB_NON_GEOM;
@@ -260,7 +260,7 @@ ged_glob_core(struct ged *gedp, int argc, const char *argv[])
 	return GED_HELP;
     }
 
-	operand_index = bu_cmd_schema_parse_complete(schema, &parse_dummy,
+	operand_index = bu_arg_schema_parse_complete(schema, &parse_dummy,
 	gedp->ged_result_str, argc - 1, argv + 1);
     if (operand_index < 0 || argc - 1 - operand_index != 1) {
 	glob_show_help(gedp, argv[0]);

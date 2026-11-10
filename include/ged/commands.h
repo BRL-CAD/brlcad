@@ -30,7 +30,7 @@
 #define GED_COMMANDS_H
 
 #include "common.h"
-#include "bu/cmdschema.h"
+#include "bu/arg.h"
 #include "bu/opt.h"
 #include "ged/defines.h"
 
@@ -60,7 +60,7 @@ struct ged_cmd_analysis_token {
     size_t char_start;
     size_t char_end;
     ged_cmd_token_role_t role;
-    bu_cmd_value_t value_type;
+    bu_arg_value_t value_type;
     ged_cmd_semantic_state_t semantic_state;
     /** Strings owned by the enclosing analysis result after a successful
      * public analysis call; do not release them individually. */
@@ -90,7 +90,7 @@ struct ged_cmd_completion_result {
     size_t replacement_end;
     /** Decoded prefix used to select completion_candidates. */
     char *prefix;
-    bu_cmd_value_t completion_type;
+    bu_arg_value_t completion_type;
     unsigned int expected;
     /** Owned explanatory text; release with ged_cmd_completion_result_clear. */
     char *hint;
@@ -102,7 +102,7 @@ struct ged_cmd_completion_result {
     char *common_prefix;
 };
 
-#define GED_CMD_COMPLETION_RESULT_NULL {0, NULL, 0, 0, NULL, BU_CMD_VALUE_UNKNOWN, BU_CMD_EXPECT_NONE, NULL, NULL, 0, 0, NULL}
+#define GED_CMD_COMPLETION_RESULT_NULL {0, NULL, 0, 0, NULL, BU_ARG_VALUE_UNKNOWN, BU_ARG_EXPECT_NONE, NULL, NULL, 0, 0, NULL}
 
 /** Optional provider-side filter for one candidate.  Return zero to accept
  * the candidate.  Query providers must apply this before max_candidates so
@@ -136,7 +136,7 @@ struct ged_cmd_completion_request {
  * work in argv indexes; editors need the precise byte range to redraw.
  */
 struct ged_cmd_validate_result {
-    bu_cmd_validate_state_t state;
+    bu_arg_validate_state_t state;
     size_t token_start;
     size_t token_end;
     unsigned int expected;
@@ -145,7 +145,7 @@ struct ged_cmd_validate_result {
     const char *hint;
     size_t completion_count;
     const char **completion_candidates;
-    bu_cmd_value_t completion_type;
+    bu_arg_value_t completion_type;
     /** Owned after a successful public validation call and released by
      * ged_cmd_validate_result_clear. */
     const char *semantic_provider;
@@ -155,12 +155,12 @@ struct ged_cmd_validate_result {
     int completion_truncated;
     char *completion_common_prefix;
     /** Predicate inherited from the active native option or operand. */
-    bu_cmd_value_validate_t candidate_validate;
+    bu_arg_value_validate_t candidate_validate;
     /** Internal ownership bits for outward-facing borrowed metadata. */
     unsigned int owned_strings;
 };
 
-#define GED_CMD_VALIDATE_RESULT_NULL {BU_CMD_VALIDATE_UNKNOWN, 0, 0, BU_CMD_EXPECT_NONE, NULL, 0, NULL, BU_CMD_VALUE_UNKNOWN, NULL, 0, 0, 0, 0, NULL, NULL, 0}
+#define GED_CMD_VALIDATE_RESULT_NULL {BU_ARG_VALIDATE_UNKNOWN, 0, 0, BU_ARG_EXPECT_NONE, NULL, 0, NULL, BU_ARG_VALUE_UNKNOWN, NULL, 0, 0, 0, 0, NULL, NULL, 0}
 
 /** Initialize a validation result before first use. */
 GED_EXPORT extern void ged_cmd_validate_result_init(struct ged_cmd_validate_result *result);
@@ -168,7 +168,7 @@ GED_EXPORT extern void ged_cmd_validate_result_init(struct ged_cmd_validate_resu
 /** Clear an initialized result; repeated calls are safe. */
 GED_EXPORT extern void ged_cmd_validate_result_clear(struct ged_cmd_validate_result *result);
 
-typedef ged_cmd_semantic_state_t (*ged_cmd_semantic_validate_func_t)(struct ged *gedp, bu_cmd_value_t type, const char *token, const void *data);
+typedef ged_cmd_semantic_state_t (*ged_cmd_semantic_validate_func_t)(struct ged *gedp, bu_arg_value_t type, const char *token, const void *data);
 typedef int (*ged_cmd_semantic_complete_func_t)(struct ged *gedp, const char *seed, struct ged_cmd_validate_result *result, const void *data);
 typedef int (*ged_cmd_semantic_complete_query_func_t)(struct ged *gedp, const char *seed,
 	const struct ged_cmd_completion_request *request, struct ged_cmd_validate_result *result, const void *data);
@@ -199,7 +199,7 @@ struct ged_cmd_semantic_provider {
     const void *data;
     ged_cmd_semantic_complete_query_func_t complete_query;
     /** Semantic type produced by validation/completion. */
-    bu_cmd_value_t value_type;
+    bu_arg_value_t value_type;
     /** Provider capability/contract flags. */
     unsigned int flags;
 };
@@ -207,7 +207,7 @@ struct ged_cmd_semantic_provider {
 /** complete_query honors the bounded-query contract documented above. */
 #define GED_CMD_PROVIDER_BOUNDED_QUERY 0x01u
 #define GED_CMD_SEMANTIC_PROVIDER_NULL \
-    {NULL, NULL, NULL, NULL, NULL, BU_CMD_VALUE_UNKNOWN, 0}
+    {NULL, NULL, NULL, NULL, NULL, BU_ARG_VALUE_UNKNOWN, 0}
 
 /* Stable names for GED's common built-in semantic providers.  Command schemas
  * should use these symbols rather than duplicating the registry's string
@@ -226,20 +226,20 @@ struct ged_cmd_semantic_provider {
 #define GED_CMD_PROVIDER_UNIT "ged.unit"
 
 #define GED_CMD_OPERAND_DB_OBJECT(_name, _min, _max, _help) \
-    BU_CMD_OPERAND(_name, BU_CMD_VALUE_DB_OBJECT, _min, _max, _help, \
+    BU_ARG_OPERAND(_name, BU_ARG_VALUE_DB_OBJECT, _min, _max, _help, \
 	GED_CMD_PROVIDER_DB_OBJECT)
 #define GED_CMD_OPERAND_DB_PATH(_name, _min, _max, _help) \
-    BU_CMD_OPERAND(_name, BU_CMD_VALUE_DB_PATH, _min, _max, _help, \
+    BU_ARG_OPERAND(_name, BU_ARG_VALUE_DB_PATH, _min, _max, _help, \
 	GED_CMD_PROVIDER_DB_PATH)
 #define GED_CMD_OPERAND_FILE(_name, _min, _max, _help) \
-    BU_CMD_OPERAND(_name, BU_CMD_VALUE_FILE, _min, _max, _help, \
+    BU_ARG_OPERAND(_name, BU_ARG_VALUE_FILE, _min, _max, _help, \
 	GED_CMD_PROVIDER_FILE_PATH)
 
 
 /**
  * Parser-owned command grammar adapter.
  *
- * Flat commands publish a bu_cmd_schema.  Commands such as search have a
+ * Flat commands publish a bu_arg_schema.  Commands such as search have a
  * non-flat language whose parser is owned elsewhere, so they register this
  * adapter instead.  The execution callback remains the ordinary ged command
  * implementation; these hooks supply the same cursor-aware validation,
@@ -280,24 +280,24 @@ struct ged_cmd_grammar {
 };
 
 /** Define the standard help callback for a grammar backed by one native
- * bu_cmd_tree. */
+ * bu_arg_tree. */
 #define GED_CMD_TREE_HELP(_func, _tree) \
     static char *_func(const char *invocation) \
-    { return bu_cmd_tree_help(&(_tree), invocation); }
+    { return bu_arg_tree_help(&(_tree), invocation); }
 
 
 /** Libged-specific completion semantics for an otherwise ordinary bu_opt
  * value.  This keeps database, view, and application concepts out of libbu. */
 struct ged_opt_semantic {
     const char *option;
-    bu_cmd_value_t value_type;
+    bu_arg_value_t value_type;
     const char *semantic_provider;
     const char *hint;
 };
 
 typedef struct ged_opt_semantic ged_opt_semantic;
 
-#define GED_OPT_SEMANTIC_NULL {NULL, BU_CMD_VALUE_UNKNOWN, NULL, NULL}
+#define GED_OPT_SEMANTIC_NULL {NULL, BU_ARG_VALUE_UNKNOWN, NULL, NULL}
 #define GED_OPT_SEMANTIC(_option, _type, _provider, _hint) \
     {_option, _type, _provider, _hint}
 
@@ -312,7 +312,7 @@ typedef struct ged_opt_semantic ged_opt_semantic;
 struct ged_opt_form {
     const char *name;
     const char *help;
-    bu_cmd_constraint_condition_t condition;
+    bu_arg_constraint_condition_t condition;
     const char *option_names;
     const char *syntax;
 };
@@ -322,20 +322,20 @@ typedef struct ged_opt_form ged_opt_form;
 #define GED_OPT_FORM(_name, _help, _condition, _options, _syntax) \
     {_name, _help, _condition, _options, _syntax}
 #define GED_OPT_WHEN(_option, _syntax) \
-    GED_OPT_FORM(_option, NULL, BU_CMD_CONDITION_ALL_OPTIONS_PRESENT, _option, _syntax)
+    GED_OPT_FORM(_option, NULL, BU_ARG_CONDITION_ALL_OPTIONS_PRESENT, _option, _syntax)
 #define GED_OPT_WHEN_HELP(_option, _help, _syntax) \
-    GED_OPT_FORM(_option, _help, BU_CMD_CONDITION_ALL_OPTIONS_PRESENT, _option, _syntax)
+    GED_OPT_FORM(_option, _help, BU_ARG_CONDITION_ALL_OPTIONS_PRESENT, _option, _syntax)
 #define GED_OPT_WHEN_ALL(_name, _options, _syntax) \
-    GED_OPT_FORM(_name, NULL, BU_CMD_CONDITION_ALL_OPTIONS_PRESENT, _options, _syntax)
+    GED_OPT_FORM(_name, NULL, BU_ARG_CONDITION_ALL_OPTIONS_PRESENT, _options, _syntax)
 #define GED_OPT_WHEN_ANY(_name, _options, _syntax) \
-    GED_OPT_FORM(_name, NULL, BU_CMD_CONDITION_ANY_OPTION_PRESENT, _options, _syntax)
+    GED_OPT_FORM(_name, NULL, BU_ARG_CONDITION_ANY_OPTION_PRESENT, _options, _syntax)
 #define GED_OPT_UNLESS(_name, _options, _syntax) \
-    GED_OPT_FORM(_name, NULL, BU_CMD_CONDITION_NO_OPTION_PRESENT, _options, _syntax)
+    GED_OPT_FORM(_name, NULL, BU_ARG_CONDITION_NO_OPTION_PRESENT, _options, _syntax)
 #define GED_OPT_OTHERWISE(_syntax) \
-    GED_OPT_FORM("default", NULL, BU_CMD_CONDITION_ALWAYS, NULL, _syntax)
+    GED_OPT_FORM("default", NULL, BU_ARG_CONDITION_ALWAYS, NULL, _syntax)
 #define GED_OPT_OTHERWISE_HELP(_help, _syntax) \
-    GED_OPT_FORM("default", _help, BU_CMD_CONDITION_ALWAYS, NULL, _syntax)
-#define GED_OPT_FORM_NULL {NULL, NULL, BU_CMD_CONDITION_ALWAYS, NULL, NULL}
+    GED_OPT_FORM("default", _help, BU_ARG_CONDITION_ALWAYS, NULL, _syntax)
+#define GED_OPT_FORM_NULL {NULL, NULL, BU_ARG_CONDITION_ALWAYS, NULL, NULL}
 
 
 /** Database completion vocabulary used by compact GED operand policies. */
@@ -398,9 +398,9 @@ typedef struct ged_opt_db_completion ged_opt_db_completion;
 struct ged_opt_meta {
     const struct bu_opt_value_spec *option_values;
     const ged_opt_semantic *option_semantics;
-    const struct bu_cmd_constraint *constraints;
-    bu_cmd_schema_validate_t validate;
-    bu_cmd_schema_context_validate_t context_validate;
+    const struct bu_arg_constraint *constraints;
+    bu_arg_schema_validate_t validate;
+    bu_arg_schema_context_validate_t context_validate;
     const struct ged_opt_db_completion *db_completions;
 };
 
@@ -446,8 +446,8 @@ typedef enum {
 } ged_opt_rule_kind_t;
 
 struct ged_opt_constraint_rule {
-    bu_cmd_constraint_kind_t kind;
-    bu_cmd_constraint_condition_t condition;
+    bu_arg_constraint_kind_t kind;
+    bu_arg_constraint_condition_t condition;
     const char *option_names;
     size_t min_count;
     size_t max_count;
@@ -472,14 +472,14 @@ struct ged_opt_rule {
     ged_opt_constraint_rule constraint;
     ged_opt_db_completion db_completion;
     ged_opt_db_type_rule db_type;
-    bu_cmd_schema_validate_t validate;
-    bu_cmd_schema_context_validate_t context_validate;
+    bu_arg_schema_validate_t validate;
+    bu_arg_schema_context_validate_t context_validate;
 };
 
 typedef struct ged_opt_rule ged_opt_rule;
 
 #define GED_OPT_CONSTRAINT_RULE_NULL \
-    {BU_CMD_CONSTRAINT_OPTION_COUNT, BU_CMD_CONDITION_ALWAYS, NULL, 0, 0, NULL}
+    {BU_ARG_CONSTRAINT_OPTION_COUNT, BU_ARG_CONDITION_ALWAYS, NULL, 0, 0, NULL}
 #define GED_OPT_DB_TYPE_RULE_NULL {NULL, NULL, GED_OPT_DB_GEOMETRY}
 #define GED_OPT_RULE_EMPTY(_kind) \
     {_kind, BU_OPT_VALUE_SPEC_NULL, GED_OPT_SEMANTIC_NULL, \
@@ -515,19 +515,19 @@ typedef struct ged_opt_rule ged_opt_rule;
 	GED_OPT_CONSTRAINT_RULE_NULL, GED_OPT_DB_COMPLETION_NULL, \
 	GED_OPT_DB_TYPE_RULE_NULL, NULL, NULL}
 #define GED_RULE_WHEN(_option, _syntax) \
-    GED_RULE_FORM(_option, NULL, BU_CMD_CONDITION_ALL_OPTIONS_PRESENT, _option, _syntax)
+    GED_RULE_FORM(_option, NULL, BU_ARG_CONDITION_ALL_OPTIONS_PRESENT, _option, _syntax)
 #define GED_RULE_WHEN_HELP(_option, _help, _syntax) \
-    GED_RULE_FORM(_option, _help, BU_CMD_CONDITION_ALL_OPTIONS_PRESENT, _option, _syntax)
+    GED_RULE_FORM(_option, _help, BU_ARG_CONDITION_ALL_OPTIONS_PRESENT, _option, _syntax)
 #define GED_RULE_WHEN_ALL(_name, _options, _syntax) \
-    GED_RULE_FORM(_name, NULL, BU_CMD_CONDITION_ALL_OPTIONS_PRESENT, _options, _syntax)
+    GED_RULE_FORM(_name, NULL, BU_ARG_CONDITION_ALL_OPTIONS_PRESENT, _options, _syntax)
 #define GED_RULE_WHEN_ANY(_name, _options, _syntax) \
-    GED_RULE_FORM(_name, NULL, BU_CMD_CONDITION_ANY_OPTION_PRESENT, _options, _syntax)
+    GED_RULE_FORM(_name, NULL, BU_ARG_CONDITION_ANY_OPTION_PRESENT, _options, _syntax)
 #define GED_RULE_UNLESS(_name, _options, _syntax) \
-    GED_RULE_FORM(_name, NULL, BU_CMD_CONDITION_NO_OPTION_PRESENT, _options, _syntax)
+    GED_RULE_FORM(_name, NULL, BU_ARG_CONDITION_NO_OPTION_PRESENT, _options, _syntax)
 #define GED_RULE_OTHERWISE(_syntax) \
-    GED_RULE_FORM("default", NULL, BU_CMD_CONDITION_ALWAYS, NULL, _syntax)
+    GED_RULE_FORM("default", NULL, BU_ARG_CONDITION_ALWAYS, NULL, _syntax)
 #define GED_RULE_OTHERWISE_HELP(_help, _syntax) \
-    GED_RULE_FORM("default", _help, BU_CMD_CONDITION_ALWAYS, NULL, _syntax)
+    GED_RULE_FORM("default", _help, BU_ARG_CONDITION_ALWAYS, NULL, _syntax)
 
 #define GED_OPT_CONSTRAINT_RULE(_kind, _condition, _options, _min, _max, _hint) \
     {_kind, _condition, _options, _min, _max, _hint}
@@ -537,21 +537,21 @@ typedef struct ged_opt_rule ged_opt_rule;
 	GED_OPT_CONSTRAINT_RULE(_kind, _condition, _options, _min, _max, _hint), \
 	GED_OPT_DB_COMPLETION_NULL, GED_OPT_DB_TYPE_RULE_NULL, NULL, NULL}
 #define GED_RULE_OPTIONS_IF(_condition, _options, _min, _max, _hint) \
-    GED_RULE_CONSTRAINT(BU_CMD_CONSTRAINT_OPTION_COUNT, _condition, _options, _min, _max, _hint)
+    GED_RULE_CONSTRAINT(BU_ARG_CONSTRAINT_OPTION_COUNT, _condition, _options, _min, _max, _hint)
 #define GED_RULE_OPTIONS(_options, _min, _max, _hint) \
-    GED_RULE_OPTIONS_IF(BU_CMD_CONDITION_ALWAYS, _options, _min, _max, _hint)
+    GED_RULE_OPTIONS_IF(BU_ARG_CONDITION_ALWAYS, _options, _min, _max, _hint)
 #define GED_RULE_OPTION_OCCURRENCES(_options, _min, _max, _hint) \
-    GED_RULE_CONSTRAINT(BU_CMD_CONSTRAINT_OPTION_OCCURRENCE_COUNT, \
-	BU_CMD_CONDITION_ALWAYS, _options, _min, _max, _hint)
+    GED_RULE_CONSTRAINT(BU_ARG_CONSTRAINT_OPTION_OCCURRENCE_COUNT, \
+	BU_ARG_CONDITION_ALWAYS, _options, _min, _max, _hint)
 #define GED_RULE_OPERANDS(_condition, _options, _min, _max, _hint) \
-    GED_RULE_CONSTRAINT(BU_CMD_CONSTRAINT_OPERAND_COUNT, _condition, \
+    GED_RULE_CONSTRAINT(BU_ARG_CONSTRAINT_OPERAND_COUNT, _condition, \
 	_options, _min, _max, _hint)
 #define GED_RULE_REQUIRES(_options, _hint) \
-    GED_RULE_CONSTRAINT(BU_CMD_CONSTRAINT_OPTION_REQUIRES, \
-	BU_CMD_CONDITION_ALWAYS, _options, 0, 0, _hint)
+    GED_RULE_CONSTRAINT(BU_ARG_CONSTRAINT_OPTION_REQUIRES, \
+	BU_ARG_CONDITION_ALWAYS, _options, 0, 0, _hint)
 #define GED_RULE_CONFLICTS(_options, _hint) \
-    GED_RULE_CONSTRAINT(BU_CMD_CONSTRAINT_OPTION_CONFLICTS, \
-	BU_CMD_CONDITION_ALWAYS, _options, 0, 0, _hint)
+    GED_RULE_CONSTRAINT(BU_ARG_CONSTRAINT_OPTION_CONFLICTS, \
+	BU_ARG_CONDITION_ALWAYS, _options, 0, 0, _hint)
 
 #define GED_RULE_DB_COMPLETION(_operand, _kind, _default, _modifier, _modified, _hint) \
     {GED_OPT_RULE_DB_COMPLETION, BU_OPT_VALUE_SPEC_NULL, \
@@ -598,9 +598,9 @@ struct ged_opt_spec {
     /** Optional first-match operand forms.  Forms are mutually exclusive with
      * syntax and operands and share this declaration's options and policy. */
     const struct ged_opt_form *forms;
-    const struct bu_cmd_operand *operands;
-    bu_cmd_parse_policy_t parse_policy;
-    const struct bu_cmd_operand_group *operand_groups;
+    const struct bu_arg_operand *operands;
+    bu_arg_parse_policy_t parse_policy;
+    const struct bu_arg_operand_group *operand_groups;
     const struct ged_opt_meta *metadata;
     /** Optional flat authoring rules.  These are mutually exclusive with
      * forms and metadata and are normalized during registration.  The public
@@ -616,17 +616,17 @@ typedef struct ged_opt_spec ged_opt_spec;
 
 #define GED_OPT_RULE_COUNT(_rules) (sizeof(_rules) / sizeof((_rules)[0]))
 #define GED_OPT_RULE_TEXT(_name, _help, _builder, _syntax, _rules, _count) \
-    {_name, _help, _builder, _syntax, NULL, NULL, BU_CMD_PARSE_INTERSPERSED, NULL, NULL, _rules, _count, __FILE__, __LINE__}
+    {_name, _help, _builder, _syntax, NULL, NULL, BU_ARG_PARSE_INTERSPERSED, NULL, NULL, _rules, _count, __FILE__, __LINE__}
 #define GED_OPT_NATIVE(_name, _help, _builder, _operands, _policy, _rules) \
     {_name, _help, _builder, NULL, NULL, _operands, _policy, NULL, NULL, _rules, GED_OPT_RULE_COUNT(_rules), __FILE__, __LINE__}
 #define GED_OPT_FORMS(_name, _help, _builder, _rules) \
-    {_name, _help, _builder, NULL, NULL, NULL, BU_CMD_PARSE_INTERSPERSED, NULL, NULL, _rules, GED_OPT_RULE_COUNT(_rules), __FILE__, __LINE__}
+    {_name, _help, _builder, NULL, NULL, NULL, BU_ARG_PARSE_INTERSPERSED, NULL, NULL, _rules, GED_OPT_RULE_COUNT(_rules), __FILE__, __LINE__}
 #define GED_OPT(_name, _help, _builder, _syntax) \
     GED_OPT_RULE_TEXT(_name, _help, _builder, _syntax, NULL, 0)
 #define GED_OPT_WITH(_name, _help, _builder, _syntax, _rules) \
     GED_OPT_RULE_TEXT(_name, _help, _builder, _syntax, _rules, GED_OPT_RULE_COUNT(_rules))
 
-struct bu_cmd_tree;
+struct bu_arg_tree;
 
 /**
  * Validate or analyze a native flat schema or command tree from a grammar
@@ -638,16 +638,16 @@ struct bu_cmd_tree;
  * editor-facing parser.
  */
 GED_EXPORT int ged_cmd_native_validate(struct ged *gedp,
-	const struct bu_cmd_schema *schema, const char *input, size_t cursor_pos,
+	const struct bu_arg_schema *schema, const char *input, size_t cursor_pos,
 	struct ged_cmd_validate_result *result);
 GED_EXPORT int ged_cmd_native_analyze(struct ged *gedp,
-	const struct bu_cmd_schema *schema, const char *input,
+	const struct bu_arg_schema *schema, const char *input,
 	struct ged_cmd_analysis *analysis);
 GED_EXPORT int ged_cmd_tree_validate(struct ged *gedp,
-	const struct bu_cmd_tree *tree, const char *input, size_t cursor_pos,
+	const struct bu_arg_tree *tree, const char *input, size_t cursor_pos,
 	struct ged_cmd_validate_result *result);
 GED_EXPORT int ged_cmd_tree_analyze(struct ged *gedp,
-	const struct bu_cmd_tree *tree, const char *input,
+	const struct bu_arg_tree *tree, const char *input,
 	struct ged_cmd_analysis *analysis);
 
 /** Check a compact option declaration without registering it.  Diagnostics

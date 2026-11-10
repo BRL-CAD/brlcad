@@ -25,19 +25,19 @@
 
 #include "ged.h"
 
-#include "bu/cmdschema.h"
+#include "bu/arg.h"
 
 
-static const struct bu_cmd_operand wmater_schema_operands[] = {
-    BU_CMD_OPERAND("output_file", BU_CMD_VALUE_FILE, 1, 1,
+static const struct bu_arg_operand wmater_schema_operands[] = {
+    BU_ARG_OPERAND("output_file", BU_ARG_VALUE_FILE, 1, 1,
 	"Material output file", "ged.file_path"),
-    BU_CMD_OPERAND("combinations", BU_CMD_VALUE_DB_OBJECT, 1,
-	BU_CMD_COUNT_UNLIMITED, "Combinations to write", "ged.db_object"),
-    BU_CMD_OPERAND_NULL
+    BU_ARG_OPERAND("combinations", BU_ARG_VALUE_DB_OBJECT, 1,
+	BU_ARG_COUNT_UNLIMITED, "Combinations to write", "ged.db_object"),
+    BU_ARG_OPERAND_NULL
 };
-static const struct bu_cmd_schema wmater_cmd_schema = {
+static const struct bu_arg_schema wmater_cmd_schema = {
     "wmater", "Write combination material properties", NULL,
-    wmater_schema_operands, BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+    wmater_schema_operands, BU_ARG_PARSE_STOP_AT_FIRST_OPERAND, BU_ARG_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
 
 
@@ -70,7 +70,7 @@ ged_wmater_core(struct ged *gedp, int argc, const char *argv[])
     }
 
 
-    operand_index = bu_cmd_schema_parse_complete(&wmater_cmd_schema,
+    operand_index = bu_arg_schema_parse_complete(&wmater_cmd_schema,
 	&parse_dummy, gedp->ged_result_str, argc - 1, argv + 1);
     if (operand_index < 0) {
 	ged_cmd_help_append(gedp->ged_result_str, argv[0], argv[0]);

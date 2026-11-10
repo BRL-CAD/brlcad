@@ -163,7 +163,7 @@ ged_rmater_core(struct ged *gedp, int argc, const char *argv[])
 
 #include "../include/plugin.h"
 
-GED_DEFINE_TYPED_OPERAND_SCHEMA(rmater, "rmater", "Read combination material properties", "input_file", BU_CMD_VALUE_FILE, 1, 1, "Material input file");
+GED_DEFINE_TYPED_OPERAND_SCHEMA(rmater, "rmater", "Read combination material properties", "input_file", BU_ARG_VALUE_FILE, 1, 1, "Material input file");
 
 #define GED_RMATER_COMMANDS(X, XID) \
     X(rmater, ged_rmater_core, GED_CMD_DEFAULT, &rmater_cmd_schema) \

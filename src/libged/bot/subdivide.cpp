@@ -28,7 +28,7 @@
 #include <vector>
 
 #include "vmath.h"
-#include "bu/cmdschema.h"
+#include "bu/arg.h"
 #include "bu/malloc.h"
 #include "bu/str.h"
 #include "rt/db5.h"
@@ -116,33 +116,33 @@ struct bot_subd_args {
     int level;
 };
 
-static const struct bu_cmd_option bot_subd_options[] = {
-    BU_CMD_FLAG("h", "help", struct bot_subd_args, print_help,
+static const struct bu_arg_option bot_subd_options[] = {
+    BU_ARG_FLAG("h", "help", struct bot_subd_args, print_help,
 	"Print command help"),
-    BU_CMD_INTEGER_RANGE("A", "algorithm", struct bot_subd_args, algorithm,
+    BU_ARG_INTEGER_RANGE("A", "algorithm", struct bot_subd_args, algorithm,
 	1, 5, "number", "Subdivision algorithm (1 through 5)"),
-    BU_CMD_INTEGER_MIN("l", "level", struct bot_subd_args, level, 1,
+    BU_ARG_INTEGER_MIN("l", "level", struct bot_subd_args, level, 1,
 	"count", "Subdivision refinement iterations"),
-    BU_CMD_OPTION_NULL
+    BU_ARG_OPTION_NULL
 };
-static const struct bu_cmd_operand bot_subd_operands[] = {
-    BU_CMD_OPERAND("input_bot", BU_CMD_VALUE_DB_OBJECT, 1, 1,
+static const struct bu_arg_operand bot_subd_operands[] = {
+    BU_ARG_OPERAND("input_bot", BU_ARG_VALUE_DB_OBJECT, 1, 1,
 	"Input BoT object", "ged.db_object"),
-    BU_CMD_OPERAND("output_name", BU_CMD_VALUE_STRING, 0, 1,
+    BU_ARG_OPERAND("output_name", BU_ARG_VALUE_STRING, 0, 1,
 	"Optional output BoT name", NULL),
-    BU_CMD_OPERAND_NULL
+    BU_ARG_OPERAND_NULL
 };
-extern "C" const struct bu_cmd_schema ged_bot_subd_subcommand_schema = {
+extern "C" const struct bu_arg_schema ged_bot_subd_subcommand_schema = {
     "subd", "Subdivide a BoT", bot_subd_options, bot_subd_operands,
-    BU_CMD_PARSE_INTERSPERSED,
-    BU_CMD_SCHEMA_META_HELP(NULL, NULL, NULL, NULL, NULL)
+    BU_ARG_PARSE_INTERSPERSED,
+    BU_ARG_SCHEMA_META_HELP(NULL, NULL, NULL, NULL, NULL)
 };
 
 static void
 subd_usage(struct bu_vls *str, const char *cmd)
 {
     bu_vls_trunc(str, 0);
-    (void)bu_cmd_schema_help_append(str, &ged_bot_subd_subcommand_schema, cmd);
+    (void)bu_arg_schema_help_append(str, &ged_bot_subd_subcommand_schema, cmd);
     bu_vls_putc(str, '\n');
     bu_vls_printf(str, "Available subdivision algorithm types are:\n");
     bu_vls_printf(str, "    1 (Loop - default)\n");
@@ -179,7 +179,7 @@ _bot_cmd_subd(void* bs, int argc, const char** argv)
 	return GED_HELP;
     }
 
-    operand_index = bu_cmd_schema_parse_complete(&ged_bot_subd_subcommand_schema, &args,
+    operand_index = bu_arg_schema_parse_complete(&ged_bot_subd_subcommand_schema, &args,
 	gedp->ged_result_str, argc, argv);
     if (operand_index < 0)
 	return BRLCAD_ERROR;

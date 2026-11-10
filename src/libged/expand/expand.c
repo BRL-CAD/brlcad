@@ -28,7 +28,7 @@
 #include <string.h>
 
 #include "bu/cmd.h"
-#include "bu/cmdschema.h"
+#include "bu/arg.h"
 #include "bu/path.h"
 
 #include "../ged_private.h"
@@ -55,18 +55,18 @@ expand_scrape_escapes(struct bu_vls *result, const char *str)
 }
 
 
-static const struct bu_cmd_arg_shape expand_pattern_shape = {
-    BU_CMD_ARG_SHAPE_RANGE_PATTERN, 1, 1, "Database name glob pattern", NULL, NULL
+static const struct bu_arg_shape expand_pattern_shape = {
+    BU_ARG_SHAPE_RANGE_PATTERN, 1, 1, "Database name glob pattern", NULL, NULL
 };
-static const struct bu_cmd_operand expand_schema_operands[] = {
-    BU_CMD_OPERAND_SHAPED("expressions", BU_CMD_VALUE_STRING, 1,
-	BU_CMD_COUNT_UNLIMITED, NULL, "Database names or glob expressions",
+static const struct bu_arg_operand expand_schema_operands[] = {
+    BU_ARG_OPERAND_SHAPED("expressions", BU_ARG_VALUE_STRING, 1,
+	BU_ARG_COUNT_UNLIMITED, NULL, "Database names or glob expressions",
 	"ged.db_path_or_pattern", &expand_pattern_shape),
-    BU_CMD_OPERAND_NULL
+    BU_ARG_OPERAND_NULL
 };
-static const struct bu_cmd_schema expand_cmd_schema = {
+static const struct bu_arg_schema expand_cmd_schema = {
     "expand", "Expand database object glob expressions", NULL,
-    expand_schema_operands, BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+    expand_schema_operands, BU_ARG_PARSE_STOP_AT_FIRST_OPERAND, BU_ARG_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
 
 
@@ -92,7 +92,7 @@ ged_expand_core(struct ged *gedp, int argc, const char *argv[])
 	return GED_HELP;
     }
 
-    operand_index = bu_cmd_schema_parse_complete(&expand_cmd_schema,
+    operand_index = bu_arg_schema_parse_complete(&expand_cmd_schema,
 	&parse_dummy, gedp->ged_result_str, argc - 1, argv + 1);
     if (operand_index < 0) {
 	ged_cmd_help_append(gedp->ged_result_str, argv[0], argv[0]);

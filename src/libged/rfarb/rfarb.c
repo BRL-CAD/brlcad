@@ -29,11 +29,11 @@
 #include <ctype.h>
 #include <string.h>
 
-#include "bu/cmdschema.h"
+#include "bu/arg.h"
 #include "rt/geom.h"
 #include "../ged_private.h"
 
-static const struct bu_cmd_schema *rfarb_schema(void);
+static const struct bu_arg_schema *rfarb_schema(void);
 
 static int
 rfarb_thickness_validate(struct bu_vls *msg, const char *arg)
@@ -91,7 +91,7 @@ ged_rfarb_core(struct ged *gedp, int argc, const char *argv[])
     }
 
 
-    operand_index = bu_cmd_schema_parse_complete(rfarb_schema(),
+    operand_index = bu_arg_schema_parse_complete(rfarb_schema(),
 	&parse_dummy, gedp->ged_result_str, argc - 1, argv + 1);
     if (operand_index < 0) {
 	ged_cmd_help_append(gedp->ged_result_str, argv[0], argv[0]);
@@ -269,29 +269,29 @@ ged_rfarb_core(struct ged *gedp, int argc, const char *argv[])
 #include "../include/plugin.h"
 
 static const char * const rfarb_coord_keywords[] = {"x", "y", "z", NULL};
-static const struct bu_cmd_operand rfarb_schema_operands[] = {
-    BU_CMD_OPERAND("name", BU_CMD_VALUE_STRING, 1, 1, "New ARB name", NULL),
-    BU_CMD_OPERAND("known_point", BU_CMD_VALUE_NUMBER, 3, 3, "Known X Y Z point", NULL),
-    BU_CMD_OPERAND("angles", BU_CMD_VALUE_NUMBER, 2, 2, "Rotation and fallback angles", NULL),
-    BU_CMD_OPERAND_KEYWORDS("coordinate_1", BU_CMD_VALUE_KEYWORD, 1, 1,
+static const struct bu_arg_operand rfarb_schema_operands[] = {
+    BU_ARG_OPERAND("name", BU_ARG_VALUE_STRING, 1, 1, "New ARB name", NULL),
+    BU_ARG_OPERAND("known_point", BU_ARG_VALUE_NUMBER, 3, 3, "Known X Y Z point", NULL),
+    BU_ARG_OPERAND("angles", BU_ARG_VALUE_NUMBER, 2, 2, "Rotation and fallback angles", NULL),
+    BU_ARG_OPERAND_KEYWORDS("coordinate_1", BU_ARG_VALUE_KEYWORD, 1, 1,
 	"First coordinate to solve", NULL, rfarb_coord_keywords),
-    BU_CMD_OPERAND("point_1", BU_CMD_VALUE_NUMBER, 2, 2, "First pair of known coordinates", NULL),
-    BU_CMD_OPERAND_KEYWORDS("coordinate_2", BU_CMD_VALUE_KEYWORD, 1, 1,
+    BU_ARG_OPERAND("point_1", BU_ARG_VALUE_NUMBER, 2, 2, "First pair of known coordinates", NULL),
+    BU_ARG_OPERAND_KEYWORDS("coordinate_2", BU_ARG_VALUE_KEYWORD, 1, 1,
 	"Second coordinate to solve", NULL, rfarb_coord_keywords),
-    BU_CMD_OPERAND("point_2", BU_CMD_VALUE_NUMBER, 2, 2, "Second pair of known coordinates", NULL),
-    BU_CMD_OPERAND_KEYWORDS("coordinate_3", BU_CMD_VALUE_KEYWORD, 1, 1,
+    BU_ARG_OPERAND("point_2", BU_ARG_VALUE_NUMBER, 2, 2, "Second pair of known coordinates", NULL),
+    BU_ARG_OPERAND_KEYWORDS("coordinate_3", BU_ARG_VALUE_KEYWORD, 1, 1,
 	"Third coordinate to solve", NULL, rfarb_coord_keywords),
-    BU_CMD_OPERAND("point_3", BU_CMD_VALUE_NUMBER, 2, 2, "Third pair of known coordinates", NULL),
-    BU_CMD_OPERAND_VALIDATE("thickness", BU_CMD_VALUE_NUMBER, 1, 1,
+    BU_ARG_OPERAND("point_3", BU_ARG_VALUE_NUMBER, 2, 2, "Third pair of known coordinates", NULL),
+    BU_ARG_OPERAND_VALIDATE("thickness", BU_ARG_VALUE_NUMBER, 1, 1,
 	rfarb_thickness_validate, "Nonzero ARB thickness", NULL),
-    BU_CMD_OPERAND_NULL
+    BU_ARG_OPERAND_NULL
 };
-static const struct bu_cmd_schema rfarb_cmd_schema = {
+static const struct bu_arg_schema rfarb_cmd_schema = {
     "rfarb", "Create an ARB from a point and plane angles", NULL,
-    rfarb_schema_operands, BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+    rfarb_schema_operands, BU_ARG_PARSE_STOP_AT_FIRST_OPERAND, BU_ARG_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
 
-static const struct bu_cmd_schema *
+static const struct bu_arg_schema *
 rfarb_schema(void)
 {
     return &rfarb_cmd_schema;

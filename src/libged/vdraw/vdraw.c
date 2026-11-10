@@ -100,7 +100,7 @@
 #include <string.h>
 #include <math.h>
 
-#include "bu/cmdschema.h"
+#include "bu/arg.h"
 #include "bu/interrupt.h"
 #include "bn.h"
 #include "vmath.h"
@@ -728,7 +728,7 @@ vdraw_vlist(void *data, int argc, const char *argv[])
  * published command vocabulary and dispatch decision. */
 static int
 vdraw_tree_call_legacy(void *data, int argc, const char *argv[],
-	bu_cmd_tree_execute_t execute)
+	bu_arg_tree_execute_t execute)
 {
     const char **full_argv = NULL;
     int ret = BRLCAD_ERROR;
@@ -758,48 +758,48 @@ VDRAW_TREE_EXEC(open, vdraw_open)
 VDRAW_TREE_EXEC(vlist, vdraw_vlist)
 #undef VDRAW_TREE_EXEC
 
-static const struct bu_cmd_arg_shape vdraw_vector3_shape =
-    BU_CMD_ARG_SHAPE(BU_CMD_ARG_SHAPE_VECTOR3, 1, 3,
+static const struct bu_arg_shape vdraw_vector3_shape =
+    BU_ARG_SHAPE(BU_ARG_SHAPE_VECTOR3, 1, 3,
 	"packed or three-component XYZ point");
-static const struct bu_cmd_operand vdraw_write_operands[] = {
-    BU_CMD_OPERAND("index", BU_CMD_VALUE_STRING, 1, 1, "Point index or next", NULL),
-    BU_CMD_OPERAND("command", BU_CMD_VALUE_INTEGER, 1, 1, "VList drawing command", NULL),
-    BU_CMD_OPERAND_SHAPED("point", BU_CMD_VALUE_VECTOR, 1, 3, NULL,
+static const struct bu_arg_operand vdraw_write_operands[] = {
+    BU_ARG_OPERAND("index", BU_ARG_VALUE_STRING, 1, 1, "Point index or next", NULL),
+    BU_ARG_OPERAND("command", BU_ARG_VALUE_INTEGER, 1, 1, "VList drawing command", NULL),
+    BU_ARG_OPERAND_SHAPED("point", BU_ARG_VALUE_VECTOR, 1, 3, NULL,
 	"Point coordinates", NULL, &vdraw_vector3_shape),
-    BU_CMD_OPERAND_NULL
+    BU_ARG_OPERAND_NULL
 };
-static const struct bu_cmd_operand vdraw_insert_operands[] = {
-    BU_CMD_OPERAND("index", BU_CMD_VALUE_INTEGER, 1, 1, "Insertion index", NULL),
-    BU_CMD_OPERAND("command", BU_CMD_VALUE_INTEGER, 1, 1, "VList drawing command", NULL),
-    BU_CMD_OPERAND("point", BU_CMD_VALUE_NUMBER, 3, 3, "X Y Z point", NULL),
-    BU_CMD_OPERAND_NULL
+static const struct bu_arg_operand vdraw_insert_operands[] = {
+    BU_ARG_OPERAND("index", BU_ARG_VALUE_INTEGER, 1, 1, "Insertion index", NULL),
+    BU_ARG_OPERAND("command", BU_ARG_VALUE_INTEGER, 1, 1, "VList drawing command", NULL),
+    BU_ARG_OPERAND("point", BU_ARG_VALUE_NUMBER, 3, 3, "X Y Z point", NULL),
+    BU_ARG_OPERAND_NULL
 };
-static const struct bu_cmd_operand vdraw_delete_operands[] = {
-    BU_CMD_OPERAND("index", BU_CMD_VALUE_STRING, 1, 1, "Point index, last, or all", NULL),
-    BU_CMD_OPERAND_NULL
+static const struct bu_arg_operand vdraw_delete_operands[] = {
+    BU_ARG_OPERAND("index", BU_ARG_VALUE_STRING, 1, 1, "Point index, last, or all", NULL),
+    BU_ARG_OPERAND_NULL
 };
-static const struct bu_cmd_operand vdraw_read_operands[] = {
-    BU_CMD_OPERAND("field", BU_CMD_VALUE_STRING, 1, 1, "Point index or curve field", NULL),
-    BU_CMD_OPERAND_NULL
+static const struct bu_arg_operand vdraw_read_operands[] = {
+    BU_ARG_OPERAND("field", BU_ARG_VALUE_STRING, 1, 1, "Point index or curve field", NULL),
+    BU_ARG_OPERAND_NULL
 };
-static const struct bu_cmd_operand vdraw_params_operands[] = {
-    BU_CMD_OPERAND("parameter", BU_CMD_VALUE_STRING, 1, 1, "Curve parameter", NULL),
-    BU_CMD_OPERAND("value", BU_CMD_VALUE_STRING, 1, 1, "Parameter value", NULL),
-    BU_CMD_OPERAND_NULL
+static const struct bu_arg_operand vdraw_params_operands[] = {
+    BU_ARG_OPERAND("parameter", BU_ARG_VALUE_STRING, 1, 1, "Curve parameter", NULL),
+    BU_ARG_OPERAND("value", BU_ARG_VALUE_STRING, 1, 1, "Parameter value", NULL),
+    BU_ARG_OPERAND_NULL
 };
-static const struct bu_cmd_operand vdraw_open_operands[] = {
-    BU_CMD_OPERAND("name", BU_CMD_VALUE_STRING, 0, 1, "VList name", NULL),
-    BU_CMD_OPERAND_NULL
+static const struct bu_arg_operand vdraw_open_operands[] = {
+    BU_ARG_OPERAND("name", BU_ARG_VALUE_STRING, 0, 1, "VList name", NULL),
+    BU_ARG_OPERAND_NULL
 };
-static const struct bu_cmd_operand vdraw_vlist_delete_operands[] = {
-    BU_CMD_OPERAND("name", BU_CMD_VALUE_STRING, 1, 1, "VList name", NULL),
-    BU_CMD_OPERAND_NULL
+static const struct bu_arg_operand vdraw_vlist_delete_operands[] = {
+    BU_ARG_OPERAND("name", BU_ARG_VALUE_STRING, 1, 1, "VList name", NULL),
+    BU_ARG_OPERAND_NULL
 };
 
 #define VDRAW_TREE_SCHEMA(_name, _help, _operands) \
-    static const struct bu_cmd_schema vdraw_##_name##_schema = { \
-	#_name, _help, NULL, _operands, BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, \
-	BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL) \
+    static const struct bu_arg_schema vdraw_##_name##_schema = { \
+	#_name, _help, NULL, _operands, BU_ARG_PARSE_STOP_AT_FIRST_OPERAND, \
+	BU_ARG_SCHEMA_CONSTRAINTS(NULL, NULL) \
     }
 VDRAW_TREE_SCHEMA(write, "Write a VList point", vdraw_write_operands);
 VDRAW_TREE_SCHEMA(insert, "Insert a VList point", vdraw_insert_operands);
@@ -811,9 +811,9 @@ VDRAW_TREE_SCHEMA(open, "Query or open a VList", vdraw_open_operands);
 VDRAW_TREE_SCHEMA(vlist, "Manage named VLists", NULL);
 VDRAW_TREE_SCHEMA(list, "List VLists", NULL);
 #undef VDRAW_TREE_SCHEMA
-static const struct bu_cmd_schema vdraw_vlist_delete_schema = {
+static const struct bu_arg_schema vdraw_vlist_delete_schema = {
     "delete", "Delete a VList", NULL, vdraw_vlist_delete_operands,
-    BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+    BU_ARG_PARSE_STOP_AT_FIRST_OPERAND, BU_ARG_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
 
 static const char *vdraw_write_aliases[] = {"w", NULL};
@@ -827,43 +827,43 @@ static const char *vdraw_vlist_aliases[] = {"v", NULL};
 static const char *vdraw_list_aliases[] = {"l", NULL};
 static const char *vdraw_vlist_delete_aliases[] = {"d", NULL};
 
-static const struct bu_cmd_tree_node vdraw_vlist_subcommands[] = {
-    BU_CMD_TREE_NODE(&vdraw_list_schema, vdraw_list_aliases, NULL,
-	BU_CMD_TREE_CHILD_AFTER_OPTIONS, NULL),
-    BU_CMD_TREE_NODE(&vdraw_vlist_delete_schema, vdraw_vlist_delete_aliases, NULL,
-	BU_CMD_TREE_CHILD_AFTER_OPTIONS, NULL),
-    BU_CMD_TREE_NODE_NULL
+static const struct bu_arg_tree_node vdraw_vlist_subcommands[] = {
+    BU_ARG_TREE_NODE(&vdraw_list_schema, vdraw_list_aliases, NULL,
+	BU_ARG_TREE_CHILD_AFTER_OPTIONS, NULL),
+    BU_ARG_TREE_NODE(&vdraw_vlist_delete_schema, vdraw_vlist_delete_aliases, NULL,
+	BU_ARG_TREE_CHILD_AFTER_OPTIONS, NULL),
+    BU_ARG_TREE_NODE_NULL
 };
-static const struct bu_cmd_tree_node vdraw_subcommands[] = {
-    BU_CMD_TREE_NODE(&vdraw_write_schema, vdraw_write_aliases, NULL,
-	BU_CMD_TREE_CHILD_AFTER_OPTIONS, vdraw_tree_write),
-    BU_CMD_TREE_NODE(&vdraw_insert_schema, vdraw_insert_aliases, NULL,
-	BU_CMD_TREE_CHILD_AFTER_OPTIONS, vdraw_tree_insert),
-    BU_CMD_TREE_NODE(&vdraw_delete_schema, vdraw_delete_aliases, NULL,
-	BU_CMD_TREE_CHILD_AFTER_OPTIONS, vdraw_tree_delete),
-    BU_CMD_TREE_NODE(&vdraw_read_schema, vdraw_read_aliases, NULL,
-	BU_CMD_TREE_CHILD_AFTER_OPTIONS, vdraw_tree_read),
-    BU_CMD_TREE_NODE(&vdraw_send_schema, vdraw_send_aliases, NULL,
-	BU_CMD_TREE_CHILD_AFTER_OPTIONS, vdraw_tree_send),
-    BU_CMD_TREE_NODE(&vdraw_params_schema, vdraw_params_aliases, NULL,
-	BU_CMD_TREE_CHILD_AFTER_OPTIONS, vdraw_tree_params),
-    BU_CMD_TREE_NODE(&vdraw_open_schema, vdraw_open_aliases, NULL,
-	BU_CMD_TREE_CHILD_AFTER_OPTIONS, vdraw_tree_open),
-    BU_CMD_TREE_NODE(&vdraw_vlist_schema, vdraw_vlist_aliases, vdraw_vlist_subcommands,
-	BU_CMD_TREE_CHILD_AFTER_OPTIONS, vdraw_tree_vlist),
-    BU_CMD_TREE_NODE_NULL
+static const struct bu_arg_tree_node vdraw_subcommands[] = {
+    BU_ARG_TREE_NODE(&vdraw_write_schema, vdraw_write_aliases, NULL,
+	BU_ARG_TREE_CHILD_AFTER_OPTIONS, vdraw_tree_write),
+    BU_ARG_TREE_NODE(&vdraw_insert_schema, vdraw_insert_aliases, NULL,
+	BU_ARG_TREE_CHILD_AFTER_OPTIONS, vdraw_tree_insert),
+    BU_ARG_TREE_NODE(&vdraw_delete_schema, vdraw_delete_aliases, NULL,
+	BU_ARG_TREE_CHILD_AFTER_OPTIONS, vdraw_tree_delete),
+    BU_ARG_TREE_NODE(&vdraw_read_schema, vdraw_read_aliases, NULL,
+	BU_ARG_TREE_CHILD_AFTER_OPTIONS, vdraw_tree_read),
+    BU_ARG_TREE_NODE(&vdraw_send_schema, vdraw_send_aliases, NULL,
+	BU_ARG_TREE_CHILD_AFTER_OPTIONS, vdraw_tree_send),
+    BU_ARG_TREE_NODE(&vdraw_params_schema, vdraw_params_aliases, NULL,
+	BU_ARG_TREE_CHILD_AFTER_OPTIONS, vdraw_tree_params),
+    BU_ARG_TREE_NODE(&vdraw_open_schema, vdraw_open_aliases, NULL,
+	BU_ARG_TREE_CHILD_AFTER_OPTIONS, vdraw_tree_open),
+    BU_ARG_TREE_NODE(&vdraw_vlist_schema, vdraw_vlist_aliases, vdraw_vlist_subcommands,
+	BU_ARG_TREE_CHILD_AFTER_OPTIONS, vdraw_tree_vlist),
+    BU_ARG_TREE_NODE_NULL
 };
 GED_DEFINE_NO_ARG_SCHEMA_NAMED(vdraw_root_schema, "vdraw",
-    "Manage vector drawing lists", BU_CMD_PARSE_OPTIONS_FIRST);
-static const struct bu_cmd_tree ged_vdraw_tree = {
-    &vdraw_root_schema, vdraw_subcommands, BU_CMD_TREE_CHILD_AFTER_OPTIONS
+    "Manage vector drawing lists", BU_ARG_PARSE_OPTIONS_FIRST);
+static const struct bu_arg_tree ged_vdraw_tree = {
+    &vdraw_root_schema, vdraw_subcommands, BU_ARG_TREE_CHILD_AFTER_OPTIONS
 };
 
 static void
 vdraw_tree_path_help(struct ged *gedp, size_t path_argc,
 	const char * const *path_argv)
 {
-    char *help = bu_cmd_tree_help_path(&ged_vdraw_tree, "vdraw",
+    char *help = bu_arg_tree_help_path(&ged_vdraw_tree, "vdraw",
 	path_argc, path_argv);
 
     if (help) {
@@ -875,7 +875,7 @@ vdraw_tree_path_help(struct ged *gedp, size_t path_argc,
 static void
 vdraw_tree_show_help(struct ged *gedp)
 {
-    char *help = bu_cmd_tree_help(&ged_vdraw_tree, "vdraw");
+    char *help = bu_arg_tree_help(&ged_vdraw_tree, "vdraw");
 
     if (help) {
 	bu_vls_strcat(gedp->ged_result_str, help);
@@ -902,7 +902,7 @@ vdraw_cmd(struct ged *gedp, int argc, const char *argv[])
     }
 
 
-    if (bu_cmd_tree_dispatch(&ged_vdraw_tree, gedp, argc - 1, argv + 1, &ret) == 0)
+    if (bu_arg_tree_dispatch(&ged_vdraw_tree, gedp, argc - 1, argv + 1, &ret) == 0)
 	return ret;
 
     vdraw_tree_show_help(gedp);
@@ -939,14 +939,14 @@ ged_vdraw_grammar_analyze(struct ged *gedp, const char *input,
 static char *
 ged_vdraw_grammar_json(void)
 {
-    return bu_cmd_tree_describe_json(&ged_vdraw_tree);
+    return bu_arg_tree_describe_json(&ged_vdraw_tree);
 }
 
 
 static int
 ged_vdraw_grammar_lint(struct bu_vls *msgs)
 {
-    return bu_cmd_tree_lint(&ged_vdraw_tree, msgs);
+    return bu_arg_tree_lint(&ged_vdraw_tree, msgs);
 }
 GED_CMD_TREE_HELP(ged_vdraw_grammar_help, ged_vdraw_tree)
 

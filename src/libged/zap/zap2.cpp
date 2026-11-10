@@ -31,16 +31,16 @@
 #include "../dbi.h"
 #include "zap.h"
 
-static const struct bu_cmd_schema *
+static const struct bu_arg_schema *
 zap_schema_for_command(const char *command)
 {
     return BU_STR_EQUAL(command, "Z") ? &ged_Z_cmd_schema : &ged_zap_cmd_schema;
 }
 
 static void
-zap_show_help(struct ged *gedp, const char *command, const struct bu_cmd_schema *schema)
+zap_show_help(struct ged *gedp, const char *command, const struct bu_arg_schema *schema)
 {
-    char *help = bu_cmd_schema_help(schema, command);
+    char *help = bu_arg_schema_help(schema, command);
 
     if (help) {
 	bu_vls_strcat(gedp->ged_result_str, help);
@@ -59,7 +59,7 @@ extern "C" int
 ged_zap2_core(struct ged *gedp, int argc, const char *argv[])
 {
     struct zap_args args = {0, NULL, 0, 0, 0, 0};
-    const struct bu_cmd_schema *schema;
+    const struct bu_arg_schema *schema;
     GED_CHECK_DRAWABLE(gedp, BRLCAD_ERROR);
     GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
     struct bview *v = NULL;
@@ -68,7 +68,7 @@ ged_zap2_core(struct ged *gedp, int argc, const char *argv[])
     bu_vls_trunc(gedp->ged_result_str, 0);
 
     schema = zap_schema_for_command(argv[0]);
-    if (bu_cmd_schema_parse_complete(schema, &args, gedp->ged_result_str,
+    if (bu_arg_schema_parse_complete(schema, &args, gedp->ged_result_str,
 	argc - 1, argv + 1) < 0) {
 	zap_show_help(gedp, argv[0], schema);
 	return BRLCAD_ERROR;

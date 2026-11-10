@@ -28,14 +28,14 @@
 #include <string.h>
 
 #include "bu/cmd.h"
-#include "bu/cmdschema.h"
+#include "bu/arg.h"
 
 #include "../ged_private.h"
 
 GED_DEFINE_NO_ARG_SCHEMA_POLICY(dbip, "dbip",
-    "Report the current database instance pointer", BU_CMD_PARSE_INTERSPERSED);
+    "Report the current database instance pointer", BU_ARG_PARSE_INTERSPERSED);
 GED_DEFINE_NO_ARG_SCHEMA_POLICY(get_dbip, "get_dbip",
-    "Report the current database instance pointer", BU_CMD_PARSE_INTERSPERSED);
+    "Report the current database instance pointer", BU_ARG_PARSE_INTERSPERSED);
 
 
 int

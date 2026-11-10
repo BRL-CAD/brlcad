@@ -31,7 +31,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "bu/cmdschema.h"
+#include "bu/arg.h"
 #include "bsocket.h"
 
 #include "../ged_private.h"
@@ -69,7 +69,7 @@ delay_useconds_validate(struct bu_vls *msg, const char *arg)
 
 
 static int
-delay_value(const char *arg, bu_cmd_value_validate_t validate, int *value)
+delay_value(const char *arg, bu_arg_value_validate_t validate, int *value)
 {
     char *end = NULL;
     long parsed = 0;
@@ -85,18 +85,18 @@ delay_value(const char *arg, bu_cmd_value_validate_t validate, int *value)
 }
 
 
-static const struct bu_cmd_operand delay_operands[] = {
-    BU_CMD_OPERAND_VALIDATE("sec", BU_CMD_VALUE_INTEGER, 1, 1, delay_seconds_validate,
+static const struct bu_arg_operand delay_operands[] = {
+    BU_ARG_OPERAND_VALIDATE("sec", BU_ARG_VALUE_INTEGER, 1, 1, delay_seconds_validate,
 	"Nonnegative seconds to delay", NULL),
-    BU_CMD_OPERAND_VALIDATE("usec", BU_CMD_VALUE_INTEGER, 1, 1, delay_useconds_validate,
+    BU_ARG_OPERAND_VALIDATE("usec", BU_ARG_VALUE_INTEGER, 1, 1, delay_useconds_validate,
 	"Microseconds to delay (0 through 999999)", NULL),
-    BU_CMD_OPERAND_NULL
+    BU_ARG_OPERAND_NULL
 };
 
-static const struct bu_cmd_schema delay_cmd_schema = {
+static const struct bu_arg_schema delay_cmd_schema = {
     "delay", "Pause command processing", NULL, delay_operands,
-    BU_CMD_PARSE_STOP_AT_FIRST_OPERAND,
-    BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+    BU_ARG_PARSE_STOP_AT_FIRST_OPERAND,
+    BU_ARG_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
 
 

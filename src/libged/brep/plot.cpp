@@ -28,7 +28,7 @@
 #include <set>
 
 #include "bu/cmd.h"
-#include "bu/cmdschema.h"
+#include "bu/arg.h"
 #include "brep/defines.h"
 #include "../ged_private.h"
 #include "./ged_brep.h"
@@ -2227,7 +2227,7 @@ _brep_cmd_surface_uv_point_plot(void *bs, int argc, const char **argv)
     ON_wString wstr;
     ON_TextLog tl(wstr);
 
-    if (!bu_cmd_integer_from_str(&si, argv[0])) {
+    if (!bu_arg_integer_from_str(&si, argv[0])) {
 	bu_vls_printf(gib->vls, "invalid surface specifier: %s", argv[0]);
 	return BRLCAD_ERROR;
     }
@@ -2237,12 +2237,12 @@ _brep_cmd_surface_uv_point_plot(void *bs, int argc, const char **argv)
 	return BRLCAD_ERROR;
     }
 
-    if (!bu_cmd_number_from_str(&u, argv[1])) {
+    if (!bu_arg_number_from_str(&u, argv[1])) {
 	bu_vls_printf(gib->vls, "invalid u coordinate specifier: %s", argv[1]);
 	return BRLCAD_ERROR;
     }
 
-    if (!bu_cmd_number_from_str(&v, argv[2])) {
+    if (!bu_arg_number_from_str(&v, argv[2])) {
 	bu_vls_printf(gib->vls, "invalid u coordinate specifier: %s", argv[2]);
 	return BRLCAD_ERROR;
     }

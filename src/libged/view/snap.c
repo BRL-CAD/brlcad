@@ -27,7 +27,7 @@
 
 #include <string.h>
 
-#include "bu/cmdschema.h"
+#include "bu/arg.h"
 #include "bu/vls.h"
 #include "bv/snap.h"
 #include "dm.h"
@@ -44,55 +44,55 @@ struct ged_view_snap_args {
 };
 
 static int
-ged_view_snap_validate(const struct bu_cmd_schema *schema, size_t argc,
-	const char **argv, size_t cursor_arg, struct bu_cmd_validate_result *result)
+ged_view_snap_validate(const struct bu_arg_schema *schema, size_t argc,
+	const char **argv, size_t cursor_arg, struct bu_arg_validate_result *result)
 {
     size_t operands;
 
-    operands = bu_cmd_schema_operand_count(schema, argc, argv);
-    if ((bu_cmd_schema_option_present(schema, argc, argv, "tol") && !operands) ||
+    operands = bu_arg_schema_operand_count(schema, argc, argv);
+    if ((bu_arg_schema_option_present(schema, argc, argv, "tol") && !operands) ||
 	operands == 2 || operands == 3)
 	return 0;
-    bu_cmd_validate_result_clear(result);
-    result->state = operands < 2 ? BU_CMD_VALIDATE_INCOMPLETE : BU_CMD_VALIDATE_INVALID;
+    bu_arg_validate_result_clear(result);
+    result->state = operands < 2 ? BU_ARG_VALIDATE_INCOMPLETE : BU_ARG_VALIDATE_INVALID;
     result->token_start = cursor_arg < argc ? cursor_arg : argc;
     result->token_end = result->token_start;
-    result->expected = BU_CMD_EXPECT_OPERAND;
-    result->completion_type = BU_CMD_VALUE_NUMBER;
+    result->expected = BU_ARG_EXPECT_OPERAND;
+    result->completion_type = BU_ARG_VALUE_NUMBER;
     result->hint = "two screen coordinates or three model coordinates required";
     return 0;
 }
 
-static const struct bu_cmd_option ged_view_snap_options[] = {
-    BU_CMD_FLAG("h", "help", struct ged_view_snap_args, print_help, "Print help and exit"),
+static const struct bu_arg_option ged_view_snap_options[] = {
+    BU_ARG_FLAG("h", "help", struct ged_view_snap_args, print_help, "Print help and exit"),
     {"t", "tol", "tol", "number", "Set or report snapping tolerance scale factor",
-	BU_CMD_VALUE_NUMBER, offsetof(struct ged_view_snap_args, tolerance), NULL, NULL,
-	NULL, NULL, 0, 0, NULL, BU_CMD_ARG_OPTIONAL, NULL, NULL, NULL,
-	BU_CMD_VALUE_RANGE_NONE, BU_CMD_ARG_SHAPE_SCALAR},
-    BU_CMD_FLAG("g", "grid", struct ged_view_snap_args, use_grid, "Snap to the view grid"),
-    BU_CMD_FLAG("l", "lines", struct ged_view_snap_args, use_lines, "Snap to view lines"),
-    BU_CMD_FLAG("o", "obj-keypt", struct ged_view_snap_args, use_object_keypoints,
+	BU_ARG_VALUE_NUMBER, offsetof(struct ged_view_snap_args, tolerance), NULL, NULL,
+	NULL, NULL, 0, 0, NULL, BU_ARG_OPTIONAL, NULL, NULL, NULL,
+	BU_ARG_VALUE_RANGE_NONE, BU_ARG_SHAPE_SCALAR},
+    BU_ARG_FLAG("g", "grid", struct ged_view_snap_args, use_grid, "Snap to the view grid"),
+    BU_ARG_FLAG("l", "lines", struct ged_view_snap_args, use_lines, "Snap to view lines"),
+    BU_ARG_FLAG("o", "obj-keypt", struct ged_view_snap_args, use_object_keypoints,
 	"Snap to drawn object keypoints"),
-    BU_CMD_FLAG("w", "obj-lines", struct ged_view_snap_args, use_object_lines,
+    BU_ARG_FLAG("w", "obj-lines", struct ged_view_snap_args, use_object_lines,
 	"Snap to drawn object lines"),
-    BU_CMD_OPTION_NULL
+    BU_ARG_OPTION_NULL
 };
-static const struct bu_cmd_operand ged_view_snap_operands[] = {
-    BU_CMD_OPERAND("coordinate", BU_CMD_VALUE_NUMBER, 0, 3,
+static const struct bu_arg_operand ged_view_snap_operands[] = {
+    BU_ARG_OPERAND("coordinate", BU_ARG_VALUE_NUMBER, 0, 3,
 	"Two screen or three model coordinates", NULL),
-    BU_CMD_OPERAND_NULL
+    BU_ARG_OPERAND_NULL
 };
-static const struct bu_cmd_schema ged_view_snap_schema = {
+static const struct bu_arg_schema ged_view_snap_schema = {
     "snap", "Snap a point to view elements", ged_view_snap_options,
-    ged_view_snap_operands, BU_CMD_PARSE_INTERSPERSED,
-    BU_CMD_SCHEMA_META_HELP(NULL, NULL, ged_view_snap_validate, NULL, NULL)
+    ged_view_snap_operands, BU_ARG_PARSE_INTERSPERSED,
+    BU_ARG_SCHEMA_META_HELP(NULL, NULL, ged_view_snap_validate, NULL, NULL)
 };
 
 
 static void
 ged_view_snap_usage(struct ged *gedp)
 {
-    (void)bu_cmd_schema_help_append(gedp->ged_result_str,
+    (void)bu_arg_schema_help_append(gedp->ged_result_str,
 	&ged_view_snap_schema, "snap");
 }
 
@@ -115,7 +115,7 @@ ged_view_snap(struct ged *gedp, int argc, const char *argv[])
     }
 
     for (int i = 1; i < argc;) {
-	int span = bu_cmd_schema_option_span(&ged_view_snap_schema,
+	int span = bu_arg_schema_option_span(&ged_view_snap_schema,
 	    (size_t)(argc - i), argv + i);
 	if (span < 0)
 	    break;
@@ -129,7 +129,7 @@ ged_view_snap(struct ged *gedp, int argc, const char *argv[])
     }
     pargv = (const char **)bu_calloc((size_t)argc, sizeof(*pargv), "view snap native argv");
     memcpy(pargv, argv, (size_t)argc * sizeof(*pargv));
-    operand_index = bu_cmd_schema_parse_complete(&ged_view_snap_schema, &args,
+    operand_index = bu_arg_schema_parse_complete(&ged_view_snap_schema, &args,
 	gedp->ged_result_str, argc - 1, pargv + 1);
     if (operand_index < 0) {
 	ged_view_snap_usage(gedp);
@@ -147,7 +147,7 @@ ged_view_snap(struct ged *gedp, int argc, const char *argv[])
     }
 
     /* Handle tolerance */
-    if (bu_cmd_schema_option_present(&ged_view_snap_schema, (size_t)(argc + operand_index),
+    if (bu_arg_schema_option_present(&ged_view_snap_schema, (size_t)(argc + operand_index),
 	pargv + 1, "tol")) {
 	if (tolerance_has_value) {
 	    gedp->ged_gvp->gv_s->gv_snap_tol_factor = args.tolerance;
@@ -170,12 +170,12 @@ ged_view_snap(struct ged *gedp, int argc, const char *argv[])
 	point2d_t p2d = {0.0, 0.0};
 	point_t p = VINIT_ZERO;
 	point_t vp = VINIT_ZERO;
-	if (!bu_cmd_number_from_str(&p2d[X], argv[0])) {
+	if (!bu_arg_number_from_str(&p2d[X], argv[0])) {
 	    bu_vls_printf(gedp->ged_result_str, "problem reading X value %s\n", argv[0]);
 	    bu_free((void *)pargv, "view snap native argv");
 	    return BRLCAD_ERROR;
 	}
-	if (!bu_cmd_number_from_str(&p2d[Y], argv[1])) {
+	if (!bu_arg_number_from_str(&p2d[Y], argv[1])) {
 	    bu_vls_printf(gedp->ged_result_str, "problem reading Y value %s\n", argv[1]);
 	    bu_free((void *)pargv, "view snap native argv");
 	    return BRLCAD_ERROR;
@@ -189,7 +189,7 @@ ged_view_snap(struct ged *gedp, int argc, const char *argv[])
     if (argc == 3) {
 	point_t p = VINIT_ZERO;
 	point_t vp = VINIT_ZERO;
-	if (bu_cmd_vector3_from_argv(p, (size_t)argc, argv) != argc) {
+	if (bu_arg_vector3_from_argv(p, (size_t)argc, argv) != argc) {
 	    bu_vls_sprintf(gedp->ged_result_str, "three finite model coordinates required");
 	    bu_free((void *)pargv, "view snap native argv");
 	    return BRLCAD_ERROR;

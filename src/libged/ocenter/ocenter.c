@@ -122,13 +122,13 @@ ged_ocenter_core(struct ged *gedp, int argc, const char *argv[])
 
 #include "../include/plugin.h"
 
-static const struct bu_cmd_operand ocenter_schema_operands[] = {
-    BU_CMD_OPERAND("object", BU_CMD_VALUE_DB_PATH, 1, 1, "Object path", NULL),
-    BU_CMD_OPERAND("center", BU_CMD_VALUE_NUMBER, 0, 3, "Optional X Y Z center", NULL),
-    BU_CMD_OPERAND_NULL
+static const struct bu_arg_operand ocenter_schema_operands[] = {
+    BU_ARG_OPERAND("object", BU_ARG_VALUE_DB_PATH, 1, 1, "Object path", NULL),
+    BU_ARG_OPERAND("center", BU_ARG_VALUE_NUMBER, 0, 3, "Optional X Y Z center", NULL),
+    BU_ARG_OPERAND_NULL
 };
 GED_DEFINE_NATIVE_DISCRETE_COUNT_VALIDATOR(ocenter, 1, 4, GED_SCHEMA_COUNT_NONE)
-static const struct bu_cmd_schema ocenter_cmd_schema = {"ocenter", "Query or set an object center", NULL, ocenter_schema_operands, BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, BU_CMD_SCHEMA_CONSTRAINTS(ocenter_schema_validate, NULL)};
+static const struct bu_arg_schema ocenter_cmd_schema = {"ocenter", "Query or set an object center", NULL, ocenter_schema_operands, BU_ARG_PARSE_STOP_AT_FIRST_OPERAND, BU_ARG_SCHEMA_CONSTRAINTS(ocenter_schema_validate, NULL)};
 
 #define GED_OCENTER_COMMANDS(X, XID) \
     X(ocenter, ged_ocenter_core, GED_CMD_DEFAULT, &ocenter_cmd_schema) \

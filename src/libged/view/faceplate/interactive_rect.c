@@ -30,7 +30,7 @@
 #include <string.h>
 
 #include "bu/cmd.h"
-#include "bu/cmdschema.h"
+#include "bu/arg.h"
 #include "bu/color.h"
 #include "bu/vls.h"
 #include "bv.h"
@@ -70,7 +70,7 @@ _fp_irect_cmd_draw(void *bs, int argc, const char **argv)
 	return BRLCAD_ERROR;
     }
     int val;
-    if (!bu_cmd_integer_from_str(&val, argv[0]) || (val != 0 && val != 1)) {
+    if (!bu_arg_integer_from_str(&val, argv[0]) || (val != 0 && val != 1)) {
 	bu_vls_printf(gedp->ged_result_str, "Invalid argument %s\n", argv[0]);
 	return BRLCAD_ERROR;
     }
@@ -106,7 +106,7 @@ _fp_irect_cmd_line_width(void *bs, int argc, const char **argv)
 	return BRLCAD_ERROR;
     }
     int val;
-    if (!bu_cmd_integer_from_str(&val, argv[0]) || val < 1) {
+    if (!bu_arg_integer_from_str(&val, argv[0]) || val < 1) {
 	bu_vls_printf(gedp->ged_result_str, "Invalid argument %s\n", argv[0]);
 	return BRLCAD_ERROR;
     }
@@ -142,7 +142,7 @@ _fp_irect_cmd_line_style(void *bs, int argc, const char **argv)
 	return BRLCAD_ERROR;
     }
     int val;
-    if (!bu_cmd_integer_from_str(&val, argv[0]) || val < 1) {
+    if (!bu_arg_integer_from_str(&val, argv[0]) || val < 1) {
 	bu_vls_printf(gedp->ged_result_str, "Invalid argument %s\n", argv[0]);
 	return BRLCAD_ERROR;
     }
@@ -178,11 +178,11 @@ _fp_irect_cmd_pos(void *bs, int argc, const char **argv)
     }
 
     int pos[2];
-    if (!bu_cmd_integer_from_str(&pos[0], argv[0])) {
+    if (!bu_arg_integer_from_str(&pos[0], argv[0])) {
 	bu_vls_printf(gedp->ged_result_str, "Invalid argument %s\n", argv[0]);
 	return BRLCAD_ERROR;
     }
-    if (!bu_cmd_integer_from_str(&pos[1], argv[1])) {
+    if (!bu_arg_integer_from_str(&pos[1], argv[1])) {
 	bu_vls_printf(gedp->ged_result_str, "Invalid argument %s\n", argv[1]);
 	return BRLCAD_ERROR;
     }
@@ -218,11 +218,11 @@ _fp_irect_cmd_dim(void *bs, int argc, const char **argv)
     }
 
     int dim[2];
-    if (!bu_cmd_integer_from_str(&dim[0], argv[0])) {
+    if (!bu_arg_integer_from_str(&dim[0], argv[0])) {
 	bu_vls_printf(gedp->ged_result_str, "Invalid argument %s\n", argv[0]);
 	return BRLCAD_ERROR;
     }
-    if (!bu_cmd_integer_from_str(&dim[1], argv[1])) {
+    if (!bu_arg_integer_from_str(&dim[1], argv[1])) {
 	bu_vls_printf(gedp->ged_result_str, "Invalid argument %s\n", argv[1]);
 	return BRLCAD_ERROR;
     }
@@ -340,7 +340,7 @@ _fp_irect_cmd_bg(void *bs, int argc, const char **argv)
     }
 
     struct bu_color c;
-    int opt_ret = bu_cmd_color_from_argv(&c, (size_t)argc, (const char * const *)argv);
+    int opt_ret = bu_arg_color_from_argv(&c, (size_t)argc, (const char * const *)argv);
     if (opt_ret != 1 && opt_ret != 3) {
 	bu_vls_printf(gedp->ged_result_str, "Invalid color specifier\n");
 	return BRLCAD_ERROR;
@@ -379,7 +379,7 @@ _fp_irect_cmd_color(void *bs, int argc, const char **argv)
     }
 
     struct bu_color c;
-    int opt_ret = bu_cmd_color_from_argv(&c, (size_t)argc, (const char * const *)argv);
+    int opt_ret = bu_arg_color_from_argv(&c, (size_t)argc, (const char * const *)argv);
     if (opt_ret != 1 && opt_ret != 3) {
 	bu_vls_printf(gedp->ged_result_str, "Invalid color specifier\n");
 	return BRLCAD_ERROR;
@@ -417,11 +417,11 @@ _fp_irect_cmd_cdim(void *bs, int argc, const char **argv)
     }
 
     int cdim[2];
-    if (!bu_cmd_integer_from_str(&cdim[0], argv[0])) {
+    if (!bu_arg_integer_from_str(&cdim[0], argv[0])) {
 	bu_vls_printf(gedp->ged_result_str, "Invalid argument %s\n", argv[0]);
 	return BRLCAD_ERROR;
     }
-    if (!bu_cmd_integer_from_str(&cdim[1], argv[1])) {
+    if (!bu_arg_integer_from_str(&cdim[1], argv[1])) {
 	bu_vls_printf(gedp->ged_result_str, "Invalid argument %s\n", argv[1]);
 	return BRLCAD_ERROR;
     }
@@ -480,7 +480,7 @@ _fp_cmd_irect(void *bs, int argc, const char **argv)
     }
 
     struct bu_vls parse_msgs = BU_VLS_INIT_ZERO;
-    int subcommand_index = bu_cmd_schema_parse(&ged_faceplate_subcommand_schema,
+    int subcommand_index = bu_arg_schema_parse(&ged_faceplate_subcommand_schema,
 	&args, &parse_msgs, argc, argv);
     if (subcommand_index < 0) {
 	bu_vls_printf(gedp->ged_result_str, "%s", bu_vls_addr(&parse_msgs));

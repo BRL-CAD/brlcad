@@ -25,7 +25,7 @@
 
 #include "common.h"
 #include <string.h>
-#include "bu/cmdschema.h"
+#include "bu/arg.h"
 #include "ged.h"
 
 struct make_name_args {
@@ -33,7 +33,7 @@ struct make_name_args {
 };
 
 static int make_name_counter = 0;
-static const struct bu_cmd_schema *make_name_schema(void);
+static const struct bu_arg_schema *make_name_schema(void);
 
 int
 ged_make_name_core(struct ged *gedp, int argc, const char *argv[])
@@ -58,9 +58,9 @@ ged_make_name_core(struct ged *gedp, int argc, const char *argv[])
 	return GED_HELP;
     }
 
-    reset_requested = bu_cmd_schema_option_present(make_name_schema(), argc - 1,
+    reset_requested = bu_arg_schema_option_present(make_name_schema(), argc - 1,
 	argv + 1, "s");
-    option_end = bu_cmd_schema_parse(make_name_schema(), &args,
+    option_end = bu_arg_schema_parse(make_name_schema(), &args,
 	gedp->ged_result_str, argc - 1, argv + 1);
     if (option_end < 0) {
 	bu_vls_trunc(gedp->ged_result_str, 0);
@@ -107,31 +107,31 @@ ged_make_name_core(struct ged *gedp, int argc, const char *argv[])
 
 #include "../include/plugin.h"
 
-static const struct bu_cmd_option make_name_schema_options[] = {
-    BU_CMD_OPTIONAL_INTEGER("s", NULL, struct make_name_args, reset_start, "[num]",
+static const struct bu_arg_option make_name_schema_options[] = {
+    BU_ARG_OPTIONAL_INTEGER("s", NULL, struct make_name_args, reset_start, "[num]",
 	"Reset the generated-name counter"),
-    BU_CMD_OPTION_NULL
+    BU_ARG_OPTION_NULL
 };
-static const struct bu_cmd_operand make_name_schema_operands[] = {
-    BU_CMD_OPERAND("template", BU_CMD_VALUE_STRING, 1, 1,
+static const struct bu_arg_operand make_name_schema_operands[] = {
+    BU_ARG_OPERAND("template", BU_ARG_VALUE_STRING, 1, 1,
 	"Name template containing @", NULL),
-    BU_CMD_OPERAND_NULL
+    BU_ARG_OPERAND_NULL
 };
 static const char * const make_name_reset_option[] = {"s", NULL};
-static const struct bu_cmd_schema_case make_name_schema_cases[] = {
-    BU_CMD_SCHEMA_CASE("reset", "Reset the generated-name counter",
-	BU_CMD_CONDITION_ALL_OPTIONS_PRESENT, make_name_reset_option, NULL, NULL),
-    BU_CMD_SCHEMA_CASE_DEFAULT("template", "Generate a name from a template",
+static const struct bu_arg_schema_case make_name_schema_cases[] = {
+    BU_ARG_SCHEMA_CASE("reset", "Reset the generated-name counter",
+	BU_ARG_CONDITION_ALL_OPTIONS_PRESENT, make_name_reset_option, NULL, NULL),
+    BU_ARG_SCHEMA_CASE_DEFAULT("template", "Generate a name from a template",
 	make_name_schema_operands, NULL),
-    BU_CMD_SCHEMA_CASE_NULL
+    BU_ARG_SCHEMA_CASE_NULL
 };
-static const struct bu_cmd_schema make_name_cmd_schema = {
+static const struct bu_arg_schema make_name_cmd_schema = {
     "make_name", "Generate a unique object name", make_name_schema_options,
-	NULL, BU_CMD_PARSE_OPTIONS_FIRST,
-	BU_CMD_SCHEMA_META_CASES(NULL, NULL, NULL, NULL, make_name_schema_cases)
+	NULL, BU_ARG_PARSE_OPTIONS_FIRST,
+	BU_ARG_SCHEMA_META_CASES(NULL, NULL, NULL, NULL, make_name_schema_cases)
 };
 
-static const struct bu_cmd_schema *
+static const struct bu_arg_schema *
 make_name_schema(void)
 {
     return &make_name_cmd_schema;

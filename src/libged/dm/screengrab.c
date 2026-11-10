@@ -28,7 +28,7 @@
 #include <stdlib.h>
 #include <ctype.h>
 #include <string.h>
-#include "bu/cmdschema.h"
+#include "bu/arg.h"
 #include "icv.h"
 #include "dm.h"
 
@@ -68,37 +68,37 @@ screengrab_image_mime_parse(struct bu_vls *msg, const char *arg, void *set_mime)
     return 0;
 }
 
-static const struct bu_cmd_option screengrab_schema_options[] = {
-    BU_CMD_FLAG("h", "help", struct screengrab_args, print_help,
+static const struct bu_arg_option screengrab_schema_options[] = {
+    BU_ARG_FLAG("h", "help", struct screengrab_args, print_help,
 	"Print command help"),
-    BU_CMD_FLAG("F", "fb", struct screengrab_args, grab_fb,
+    BU_ARG_FLAG("F", "fb", struct screengrab_args, grab_fb,
 	"Capture the framebuffer instead of the scene display"),
-    BU_CMD_VLS_APPEND("D", "dm", struct screengrab_args, dm_name, "name",
+    BU_ARG_VLS_APPEND("D", "dm", struct screengrab_args, dm_name, "name",
 	"Display manager to capture"),
-    BU_CMD_CUSTOM(NULL, "format", struct screengrab_args, type,
+    BU_ARG_CUSTOM(NULL, "format", struct screengrab_args, type,
 	screengrab_image_mime_parse, "format", "Output image format"),
-    BU_CMD_OPTION_NULL
+    BU_ARG_OPTION_NULL
 };
-static const struct bu_cmd_operand screengrab_schema_operands[] = {
-    BU_CMD_OPERAND("output_file", BU_CMD_VALUE_FILE, 0, 1,
+static const struct bu_arg_operand screengrab_schema_operands[] = {
+    BU_ARG_OPERAND("output_file", BU_ARG_VALUE_FILE, 0, 1,
 	"Optional image output file", "ged.file_path"),
-    BU_CMD_OPERAND_NULL
+    BU_ARG_OPERAND_NULL
 };
-const struct bu_cmd_schema ged_screengrab_schema = {
+const struct bu_arg_schema ged_screengrab_schema = {
     "screengrab", "Capture a display manager image", screengrab_schema_options,
-    screengrab_schema_operands, BU_CMD_PARSE_INTERSPERSED,
-    BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+    screengrab_schema_operands, BU_ARG_PARSE_INTERSPERSED,
+    BU_ARG_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
-const struct bu_cmd_schema ged_screen_grab_schema = {
+const struct bu_arg_schema ged_screen_grab_schema = {
     "screen_grab", "Capture a display manager image", screengrab_schema_options,
-    screengrab_schema_operands, BU_CMD_PARSE_INTERSPERSED,
-    BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+    screengrab_schema_operands, BU_ARG_PARSE_INTERSPERSED,
+    BU_ARG_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
 
 static void
 screengrab_show_help(struct ged *gedp, const char *command)
 {
-    char *help = bu_cmd_schema_help(&ged_screengrab_schema, command);
+    char *help = bu_arg_schema_help(&ged_screengrab_schema, command);
 
     if (help) {
 	bu_vls_strcat(gedp->ged_result_str, help);
@@ -128,7 +128,7 @@ ged_screen_grab_core(struct ged *gedp, int argc, const char *argv[])
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
 
-    operand_index = bu_cmd_schema_parse_complete(&ged_screengrab_schema, &args,
+    operand_index = bu_arg_schema_parse_complete(&ged_screengrab_schema, &args,
 	gedp->ged_result_str, argc - 1, argv + 1);
     if (operand_index < 0) {
 	screengrab_show_help(gedp, argv[0]);

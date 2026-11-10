@@ -33,7 +33,7 @@
 #include "raytrace.h"
 #include "rt/geom.h"
 #include "rt/primitives/bot.h"
-#include "bu/cmdschema.h"
+#include "bu/arg.h"
 #include "wdb.h"
 
 #include "../edit_private.h"
@@ -1756,20 +1756,20 @@ rt_edit_bot_repair(struct bu_vls *log_str, struct rt_db_internal *ip, const stru
 	int options_json;
 	struct rt_bot_repair_info settings;
     } args = {0, 0, settings};
-    static const struct bu_cmd_option options[] = {
-	BU_CMD_FLAG("h", "help", struct bot_repair_args, print_help, "Print help"),
-	BU_CMD_NUMBER_RANGE("p", "max-hole-percent", struct bot_repair_args,
+    static const struct bu_arg_option options[] = {
+	BU_ARG_FLAG("h", "help", struct bot_repair_args, print_help, "Print help"),
+	BU_ARG_NUMBER_RANGE("p", "max-hole-percent", struct bot_repair_args,
 	    settings.max_hole_area_percent, 0.0, 100.0, "percent",
 	    "Maximum hole area as a percentage of mesh area"),
-	BU_CMD_NONNEGATIVE_NUMBER("a", "max-hole-area", struct bot_repair_args,
+	BU_ARG_NONNEGATIVE_NUMBER("a", "max-hole-area", struct bot_repair_args,
 	    settings.max_hole_area, "area", "Maximum hole area in mm"),
-	BU_CMD_FLAG(NULL, "options-json", struct bot_repair_args, options_json,
+	BU_ARG_FLAG(NULL, "options-json", struct bot_repair_args, options_json,
 	    "Return JSON of supported options"),
-	BU_CMD_OPTION_NULL
+	BU_ARG_OPTION_NULL
     };
-    static const struct bu_cmd_schema schema = {
+    static const struct bu_arg_schema schema = {
 	"bot repair", "Repair manifold BoT geometry", options, NULL,
-	BU_CMD_PARSE_INTERSPERSED, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+	BU_ARG_PARSE_INTERSPERSED, BU_ARG_SCHEMA_CONSTRAINTS(NULL, NULL)
     };
 
     if (edit_repair_parse_options(log_str, argc, argv, &schema, &args) != BRLCAD_OK)
@@ -1788,9 +1788,9 @@ rt_edit_bot_repair(struct bu_vls *log_str, struct rt_db_internal *ip, const stru
 
     if (args.print_help) {
         if (log_str) {
-	    char *help = bu_cmd_schema_help(&schema, NULL);
+	    char *help = bu_arg_schema_help(&schema, NULL);
 	    bu_vls_strcat(log_str, "{\"status\":\"help\",\"message\":");
-	    bu_cmd_json_string(log_str, help);
+	    bu_arg_json_string(log_str, help);
 	    bu_vls_putc(log_str, '}');
 	    if (help) bu_free(help, "BoT repair help");
         }

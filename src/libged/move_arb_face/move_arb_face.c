@@ -29,7 +29,7 @@
 #include <string.h>
 
 #include "bu/cmd.h"
-#include "bu/cmdschema.h"
+#include "bu/arg.h"
 #include "rt/geom.h"
 #include "raytrace.h"
 
@@ -40,22 +40,22 @@ struct move_arb_face_args {
     int relative;
 };
 
-static const struct bu_cmd_option move_arb_face_schema_options[] = {
-    BU_CMD_FLAG("r", NULL, struct move_arb_face_args, relative,
+static const struct bu_arg_option move_arb_face_schema_options[] = {
+    BU_ARG_FLAG("r", NULL, struct move_arb_face_args, relative,
 	"Interpret point relative to current face"),
-    BU_CMD_OPTION_NULL
+    BU_ARG_OPTION_NULL
 };
-static const struct bu_cmd_operand move_arb_face_schema_operands[] = {
-    BU_CMD_OPERAND("arb", BU_CMD_VALUE_DB_PATH, 1, 1, "ARB object or path", "ged.db_path"),
-    BU_CMD_OPERAND_VALIDATE("face", BU_CMD_VALUE_INTEGER, 1, 1,
+static const struct bu_arg_operand move_arb_face_schema_operands[] = {
+    BU_ARG_OPERAND("arb", BU_ARG_VALUE_DB_PATH, 1, 1, "ARB object or path", "ged.db_path"),
+    BU_ARG_OPERAND_VALIDATE("face", BU_ARG_VALUE_INTEGER, 1, 1,
 	ged_arb_positive_integer_validate, "One-based face index", NULL),
-    BU_CMD_OPERAND_VALIDATE("point", BU_CMD_VALUE_VECTOR, 1, 1,
+    BU_ARG_OPERAND_VALIDATE("point", BU_ARG_VALUE_VECTOR, 1, 1,
 	ged_arb_vector3_validate, "Packed XYZ point", NULL),
-    BU_CMD_OPERAND_NULL
+    BU_ARG_OPERAND_NULL
 };
-static const struct bu_cmd_schema move_arb_face_cmd_schema = {
+static const struct bu_arg_schema move_arb_face_cmd_schema = {
     "move_arb_face", "Move an ARB face", move_arb_face_schema_options,
-    move_arb_face_schema_operands, BU_CMD_PARSE_OPTIONS_FIRST, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+    move_arb_face_schema_operands, BU_ARG_PARSE_OPTIONS_FIRST, BU_ARG_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
 
 
@@ -123,7 +123,7 @@ ged_move_arb_face_core(struct ged *gedp, int argc, const char *argv[])
 	return GED_HELP;
     }
 
-    operand_index = bu_cmd_schema_parse_complete(&move_arb_face_cmd_schema, &args,
+    operand_index = bu_arg_schema_parse_complete(&move_arb_face_cmd_schema, &args,
 	gedp->ged_result_str, argc - 1, argv + 1);
     if (operand_index < 0) {
 	ged_cmd_help_append(gedp->ged_result_str, argv[0], argv[0]);

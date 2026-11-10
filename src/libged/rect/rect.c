@@ -30,7 +30,7 @@
 
 
 #include "vmath.h"
-#include "bu/cmdschema.h"
+#include "bu/arg.h"
 #include "bu/color.h"
 
 #include "../ged_private.h"
@@ -317,7 +317,7 @@ rect_execute(struct ged *gedp,
 	    return BRLCAD_OK;
 	} else if (argc == 1) {
 	    int enabled = 0;
-	    if (!bu_cmd_integer_from_str(&enabled, argp[0]) || (enabled != 0 && enabled != 1))
+	    if (!bu_arg_integer_from_str(&enabled, argp[0]) || (enabled != 0 && enabled != 1))
 		goto usage;
 	    gedp->ged_gvp->gv_s->gv_rect.draw = enabled;
 
@@ -336,7 +336,7 @@ rect_execute(struct ged *gedp,
 	    return BRLCAD_OK;
 	} else if (argc == 2) {
 	    int value[2] = {0, 0};
-	    if (bu_cmd_integer_pair_from_argv(value, 2, (const char * const *)argp) != 2 ||
+	    if (bu_arg_integer_pair_from_argv(value, 2, (const char * const *)argp) != 2 ||
 		value[X] <= 0 || value[Y] <= 0)
 		goto usage;
 	    gedp->ged_gvp->gv_s->gv_rect.cdim[X] = value[X];
@@ -360,7 +360,7 @@ rect_execute(struct ged *gedp,
 	    return BRLCAD_OK;
 	} else if (argc == 2) {
 	    int value[2] = {0, 0};
-	    if (bu_cmd_integer_pair_from_argv(value, 2, (const char * const *)argp) != 2)
+	    if (bu_arg_integer_pair_from_argv(value, 2, (const char * const *)argp) != 2)
 		goto usage;
 	    gedp->ged_gvp->gv_s->gv_rect.dim[X] = value[X];
 	    gedp->ged_gvp->gv_s->gv_rect.dim[Y] = value[Y];
@@ -382,7 +382,7 @@ rect_execute(struct ged *gedp,
 	    return BRLCAD_OK;
 	} else if (argc == 2) {
 	    int value[2] = {0, 0};
-	    if (bu_cmd_integer_pair_from_argv(value, 2, (const char * const *)argp) != 2)
+	    if (bu_arg_integer_pair_from_argv(value, 2, (const char * const *)argp) != 2)
 		goto usage;
 	    gedp->ged_gvp->gv_s->gv_rect.pos[X] = value[X];
 	    gedp->ged_gvp->gv_s->gv_rect.pos[Y] = value[Y];
@@ -446,7 +446,7 @@ rect_execute(struct ged *gedp,
 	    return BRLCAD_OK;
 	} else if (argc == 1) {
 	    int value = 0;
-	    if (!bu_cmd_integer_from_str(&value, argp[0]))
+	    if (!bu_arg_integer_from_str(&value, argp[0]))
 		goto usage;
 
 	    if (value <= 0)
@@ -467,7 +467,7 @@ rect_execute(struct ged *gedp,
 	    return BRLCAD_OK;
 	} else if (argc == 1) {
 	    int value = 0;
-	    if (!bu_cmd_integer_from_str(&value, argp[0]))
+	    if (!bu_arg_integer_from_str(&value, argp[0]))
 		goto usage;
 
 	    if (value <= 0)
@@ -485,7 +485,7 @@ rect_execute(struct ged *gedp,
     if (BU_STR_EQUAL(parameter, "rt")) {
 	if (argc == 1) {
 	    int port = 0;
-	    if (bu_cmd_integer_from_str(&port, argp[0]))
+	    if (bu_arg_integer_from_str(&port, argp[0]))
 		return rect_rt(gedp, port);
 	    goto usage;
 	}
@@ -528,85 +528,85 @@ usage:
 #include "../include/plugin.h"
 
 static const char * const rect_bool_keywords[] = {"0", "1", NULL};
-static const struct bu_cmd_operand rect_bool_operands[] = {
-    BU_CMD_OPERAND_KEYWORDS("enabled", BU_CMD_VALUE_KEYWORD, 0, 1,
+static const struct bu_arg_operand rect_bool_operands[] = {
+    BU_ARG_OPERAND_KEYWORDS("enabled", BU_ARG_VALUE_KEYWORD, 0, 1,
 	"Zero to disable or one to enable", NULL, rect_bool_keywords),
-    BU_CMD_OPERAND_NULL
+    BU_ARG_OPERAND_NULL
 };
-static const struct bu_cmd_operand rect_integer_operands[] = {
-    BU_CMD_OPERAND("value", BU_CMD_VALUE_INTEGER, 0, 1,
+static const struct bu_arg_operand rect_integer_operands[] = {
+    BU_ARG_OPERAND("value", BU_ARG_VALUE_INTEGER, 0, 1,
 	"Optional base-zero integer", NULL),
-    BU_CMD_OPERAND_NULL
+    BU_ARG_OPERAND_NULL
 };
-static const struct bu_cmd_operand rect_integer_pair_roles[] = {
-    BU_CMD_OPERAND("x", BU_CMD_VALUE_INTEGER, 1, 1, "X component", NULL),
-    BU_CMD_OPERAND("y", BU_CMD_VALUE_INTEGER, 1, 1, "Y component", NULL),
-    BU_CMD_OPERAND_NULL
+static const struct bu_arg_operand rect_integer_pair_roles[] = {
+    BU_ARG_OPERAND("x", BU_ARG_VALUE_INTEGER, 1, 1, "X component", NULL),
+    BU_ARG_OPERAND("y", BU_ARG_VALUE_INTEGER, 1, 1, "Y component", NULL),
+    BU_ARG_OPERAND_NULL
 };
-static const struct bu_cmd_operand_group rect_integer_pair_groups[] = {
-    BU_CMD_OPERAND_GROUP("coordinates", rect_integer_pair_roles, 0, 1,
+static const struct bu_arg_operand_group rect_integer_pair_groups[] = {
+    BU_ARG_OPERAND_GROUP("coordinates", rect_integer_pair_roles, 0, 1,
 	"Optional pair of integer components"),
-    BU_CMD_OPERAND_GROUP_NULL
+    BU_ARG_OPERAND_GROUP_NULL
 };
-static const struct bu_cmd_operand rect_positive_pair_roles[] = {
-    BU_CMD_OPERAND_INTEGER_MIN("width", 1, 1, 1, "Positive canvas width", NULL),
-    BU_CMD_OPERAND_INTEGER_MIN("height", 1, 1, 1, "Positive canvas height", NULL),
-    BU_CMD_OPERAND_NULL
+static const struct bu_arg_operand rect_positive_pair_roles[] = {
+    BU_ARG_OPERAND_INTEGER_MIN("width", 1, 1, 1, "Positive canvas width", NULL),
+    BU_ARG_OPERAND_INTEGER_MIN("height", 1, 1, 1, "Positive canvas height", NULL),
+    BU_ARG_OPERAND_NULL
 };
-static const struct bu_cmd_operand_group rect_positive_pair_groups[] = {
-    BU_CMD_OPERAND_GROUP("dimensions", rect_positive_pair_roles, 0, 1,
+static const struct bu_arg_operand_group rect_positive_pair_groups[] = {
+    BU_ARG_OPERAND_GROUP("dimensions", rect_positive_pair_roles, 0, 1,
 	"Optional positive canvas width and height"),
-    BU_CMD_OPERAND_GROUP_NULL
+    BU_ARG_OPERAND_GROUP_NULL
 };
-static const struct bu_cmd_arg_shape rect_rgb_arg_shape = {
-    BU_CMD_ARG_SHAPE_RGB, 1, 3, "packed r/g/b or three RGB channels", NULL, NULL
+static const struct bu_arg_shape rect_rgb_arg_shape = {
+    BU_ARG_SHAPE_RGB, 1, 3, "packed r/g/b or three RGB channels", NULL, NULL
 };
-static const struct bu_cmd_operand rect_color_operands[] = {
-    BU_CMD_OPERAND_SHAPED("color", BU_CMD_VALUE_RAW, 0, 3, NULL,
+static const struct bu_arg_operand rect_color_operands[] = {
+    BU_ARG_OPERAND_SHAPED("color", BU_ARG_VALUE_RAW, 0, 3, NULL,
 	"Optional packed r/g/b or three RGB channels", NULL, &rect_rgb_arg_shape),
-    BU_CMD_OPERAND_NULL
+    BU_ARG_OPERAND_NULL
 };
-static const struct bu_cmd_operand rect_port_operands[] = {
-    BU_CMD_OPERAND_VALIDATE("port", BU_CMD_VALUE_INTEGER, 1, 1,
-	bu_cmd_nonnegative_integer_validate, "Nonnegative framebuffer port", NULL),
-    BU_CMD_OPERAND_NULL
+static const struct bu_arg_operand rect_port_operands[] = {
+    BU_ARG_OPERAND_VALIDATE("port", BU_ARG_VALUE_INTEGER, 1, 1,
+	bu_arg_nonnegative_integer_validate, "Nonnegative framebuffer port", NULL),
+    BU_ARG_OPERAND_NULL
 };
 static int
-rect_color_schema_validate(const struct bu_cmd_schema *UNUSED(schema), size_t argc,
-	const char **argv, size_t cursor_arg, struct bu_cmd_validate_result *result)
+rect_color_schema_validate(const struct bu_arg_schema *UNUSED(schema), size_t argc,
+	const char **argv, size_t cursor_arg, struct bu_arg_validate_result *result)
 {
-    return bu_cmd_rgb_optional_validate(argc, argv, cursor_arg, result);
+    return bu_arg_rgb_optional_validate(argc, argv, cursor_arg, result);
 }
 #define RECT_SCHEMA(_id, _name, _help, _operands, _validation) \
-    static const struct bu_cmd_schema _id##_schema = { \
-	_name, _help, NULL, _operands, BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, _validation \
+    static const struct bu_arg_schema _id##_schema = { \
+	_name, _help, NULL, _operands, BU_ARG_PARSE_STOP_AT_FIRST_OPERAND, _validation \
     }
 RECT_SCHEMA(rect_root, "rect", "Query or configure the current view rectangle", NULL,
-    BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL));
+    BU_ARG_SCHEMA_CONSTRAINTS(NULL, NULL));
 RECT_SCHEMA(rect_bg, "bg", "Query or set the background color", rect_color_operands,
-    BU_CMD_SCHEMA_CONSTRAINTS(rect_color_schema_validate, NULL));
+    BU_ARG_SCHEMA_CONSTRAINTS(rect_color_schema_validate, NULL));
 RECT_SCHEMA(rect_color, "color", "Query or set the border color", rect_color_operands,
-    BU_CMD_SCHEMA_CONSTRAINTS(rect_color_schema_validate, NULL));
+    BU_ARG_SCHEMA_CONSTRAINTS(rect_color_schema_validate, NULL));
 RECT_SCHEMA(rect_cdim, "cdim", "Query or set positive canvas dimensions", NULL,
-    BU_CMD_SCHEMA_GROUPS(NULL, NULL, rect_positive_pair_groups));
+    BU_ARG_SCHEMA_GROUPS(NULL, NULL, rect_positive_pair_groups));
 RECT_SCHEMA(rect_dim, "dim", "Query or set rectangle dimensions", NULL,
-    BU_CMD_SCHEMA_GROUPS(NULL, NULL, rect_integer_pair_groups));
+    BU_ARG_SCHEMA_GROUPS(NULL, NULL, rect_integer_pair_groups));
 RECT_SCHEMA(rect_draw, "draw", "Query or set rectangle display (0 or 1)", rect_bool_operands,
-    BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL));
+    BU_ARG_SCHEMA_CONSTRAINTS(NULL, NULL));
 RECT_SCHEMA(rect_lstyle, "lstyle", "Query or set line style", rect_integer_operands,
-    BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL));
+    BU_ARG_SCHEMA_CONSTRAINTS(NULL, NULL));
 RECT_SCHEMA(rect_lwidth, "lwidth", "Query or set line width", rect_integer_operands,
-    BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL));
+    BU_ARG_SCHEMA_CONSTRAINTS(NULL, NULL));
 RECT_SCHEMA(rect_pos, "pos", "Query or set rectangle position", NULL,
-    BU_CMD_SCHEMA_GROUPS(NULL, NULL, rect_integer_pair_groups));
+    BU_ARG_SCHEMA_GROUPS(NULL, NULL, rect_integer_pair_groups));
 RECT_SCHEMA(rect_rt, "rt", "Raytrace the rectangle to a framebuffer port", rect_port_operands,
-    BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL));
+    BU_ARG_SCHEMA_CONSTRAINTS(NULL, NULL));
 RECT_SCHEMA(rect_vars, "vars", "Print all rectangle values", NULL,
-    BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL));
+    BU_ARG_SCHEMA_CONSTRAINTS(NULL, NULL));
 RECT_SCHEMA(rect_zoom, "zoom", "Zoom the view to the rectangle", NULL,
-    BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL));
+    BU_ARG_SCHEMA_CONSTRAINTS(NULL, NULL));
 RECT_SCHEMA(rect_help, "help", "Show rectangle syntax", NULL,
-    BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL));
+    BU_ARG_SCHEMA_CONSTRAINTS(NULL, NULL));
 #undef RECT_SCHEMA
 
 
@@ -629,37 +629,37 @@ rect_tree_execute(void *data, int argc, const char *argv[])
 }
 
 
-static const struct bu_cmd_tree_node rect_subcommands[] = {
-    BU_CMD_TREE_NODE(&rect_bg_schema, NULL, NULL, BU_CMD_TREE_CHILD_AFTER_OPTIONS, rect_tree_execute),
-    BU_CMD_TREE_NODE(&rect_color_schema, NULL, NULL, BU_CMD_TREE_CHILD_AFTER_OPTIONS, rect_tree_execute),
-    BU_CMD_TREE_NODE(&rect_cdim_schema, NULL, NULL, BU_CMD_TREE_CHILD_AFTER_OPTIONS, rect_tree_execute),
-    BU_CMD_TREE_NODE(&rect_dim_schema, NULL, NULL, BU_CMD_TREE_CHILD_AFTER_OPTIONS, rect_tree_execute),
-    BU_CMD_TREE_NODE(&rect_draw_schema, NULL, NULL, BU_CMD_TREE_CHILD_AFTER_OPTIONS, rect_tree_execute),
-    BU_CMD_TREE_NODE(&rect_help_schema, NULL, NULL, BU_CMD_TREE_CHILD_AFTER_OPTIONS, rect_tree_execute),
-    BU_CMD_TREE_NODE(&rect_lstyle_schema, NULL, NULL, BU_CMD_TREE_CHILD_AFTER_OPTIONS, rect_tree_execute),
-    BU_CMD_TREE_NODE(&rect_lwidth_schema, NULL, NULL, BU_CMD_TREE_CHILD_AFTER_OPTIONS, rect_tree_execute),
-    BU_CMD_TREE_NODE(&rect_pos_schema, NULL, NULL, BU_CMD_TREE_CHILD_AFTER_OPTIONS, rect_tree_execute),
-    BU_CMD_TREE_NODE(&rect_rt_schema, NULL, NULL, BU_CMD_TREE_CHILD_AFTER_OPTIONS, rect_tree_execute),
-    BU_CMD_TREE_NODE(&rect_vars_schema, NULL, NULL, BU_CMD_TREE_CHILD_AFTER_OPTIONS, rect_tree_execute),
-    BU_CMD_TREE_NODE(&rect_zoom_schema, NULL, NULL, BU_CMD_TREE_CHILD_AFTER_OPTIONS, rect_tree_execute),
-    BU_CMD_TREE_NODE_NULL
+static const struct bu_arg_tree_node rect_subcommands[] = {
+    BU_ARG_TREE_NODE(&rect_bg_schema, NULL, NULL, BU_ARG_TREE_CHILD_AFTER_OPTIONS, rect_tree_execute),
+    BU_ARG_TREE_NODE(&rect_color_schema, NULL, NULL, BU_ARG_TREE_CHILD_AFTER_OPTIONS, rect_tree_execute),
+    BU_ARG_TREE_NODE(&rect_cdim_schema, NULL, NULL, BU_ARG_TREE_CHILD_AFTER_OPTIONS, rect_tree_execute),
+    BU_ARG_TREE_NODE(&rect_dim_schema, NULL, NULL, BU_ARG_TREE_CHILD_AFTER_OPTIONS, rect_tree_execute),
+    BU_ARG_TREE_NODE(&rect_draw_schema, NULL, NULL, BU_ARG_TREE_CHILD_AFTER_OPTIONS, rect_tree_execute),
+    BU_ARG_TREE_NODE(&rect_help_schema, NULL, NULL, BU_ARG_TREE_CHILD_AFTER_OPTIONS, rect_tree_execute),
+    BU_ARG_TREE_NODE(&rect_lstyle_schema, NULL, NULL, BU_ARG_TREE_CHILD_AFTER_OPTIONS, rect_tree_execute),
+    BU_ARG_TREE_NODE(&rect_lwidth_schema, NULL, NULL, BU_ARG_TREE_CHILD_AFTER_OPTIONS, rect_tree_execute),
+    BU_ARG_TREE_NODE(&rect_pos_schema, NULL, NULL, BU_ARG_TREE_CHILD_AFTER_OPTIONS, rect_tree_execute),
+    BU_ARG_TREE_NODE(&rect_rt_schema, NULL, NULL, BU_ARG_TREE_CHILD_AFTER_OPTIONS, rect_tree_execute),
+    BU_ARG_TREE_NODE(&rect_vars_schema, NULL, NULL, BU_ARG_TREE_CHILD_AFTER_OPTIONS, rect_tree_execute),
+    BU_ARG_TREE_NODE(&rect_zoom_schema, NULL, NULL, BU_ARG_TREE_CHILD_AFTER_OPTIONS, rect_tree_execute),
+    BU_ARG_TREE_NODE_NULL
 };
-static const struct bu_cmd_tree ged_rect_tree = {
-    &rect_root_schema, rect_subcommands, BU_CMD_TREE_CHILD_AFTER_OPTIONS
+static const struct bu_arg_tree ged_rect_tree = {
+    &rect_root_schema, rect_subcommands, BU_ARG_TREE_CHILD_AFTER_OPTIONS
 };
 
 
 static char *
 rect_native_help(void)
 {
-    return bu_cmd_tree_help(&ged_rect_tree, "rect");
+    return bu_arg_tree_help(&ged_rect_tree, "rect");
 }
 
 
 int
 ged_rect_core(struct ged *gedp, int argc, const char *argv[])
 {
-    const struct bu_cmd_tree_node *node = NULL;
+    const struct bu_arg_tree_node *node = NULL;
     struct bu_vls msg = BU_VLS_INIT_ZERO;
     int ret = BRLCAD_ERROR;
 
@@ -667,11 +667,11 @@ ged_rect_core(struct ged *gedp, int argc, const char *argv[])
     GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
     if (argc < 2)
 	return rect_execute(gedp, argc, argv);
-    node = bu_cmd_tree_find_subcommand(&ged_rect_tree, argv[1]);
+    node = bu_arg_tree_find_subcommand(&ged_rect_tree, argv[1]);
     if (!node)
 	return rect_execute(gedp, argc, argv);
     bu_vls_trunc(gedp->ged_result_str, 0);
-    if (bu_cmd_schema_parse_complete(node->schema, NULL, &msg, argc - 2, argv + 2) < 0) {
+    if (bu_arg_schema_parse_complete(node->schema, NULL, &msg, argc - 2, argv + 2) < 0) {
 	if (bu_vls_strlen(&msg))
 	    bu_vls_vlscat(gedp->ged_result_str, &msg);
 	rect_usage(gedp, argv[0]);
@@ -679,7 +679,7 @@ ged_rect_core(struct ged *gedp, int argc, const char *argv[])
 	return BRLCAD_ERROR;
     }
     bu_vls_free(&msg);
-    if (bu_cmd_tree_dispatch(&ged_rect_tree, gedp, argc - 1, argv + 1, &ret) == 0)
+    if (bu_arg_tree_dispatch(&ged_rect_tree, gedp, argc - 1, argv + 1, &ret) == 0)
 	return ret;
     return BRLCAD_ERROR;
 }
@@ -704,14 +704,14 @@ ged_rect_grammar_analyze(struct ged *gedp, const char *input,
 static char *
 ged_rect_grammar_json(void)
 {
-    return bu_cmd_tree_describe_json(&ged_rect_tree);
+    return bu_arg_tree_describe_json(&ged_rect_tree);
 }
 
 
 static int
 ged_rect_grammar_lint(struct bu_vls *msgs)
 {
-    return bu_cmd_tree_lint(&ged_rect_tree, msgs);
+    return bu_arg_tree_lint(&ged_rect_tree, msgs);
 }
 GED_CMD_TREE_HELP(ged_rect_grammar_help, ged_rect_tree)
 

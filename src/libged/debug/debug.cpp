@@ -29,7 +29,7 @@
 #include <ctype.h>
 #include <string.h>
 
-#include "bu/cmdschema.h"
+#include "bu/arg.h"
 #include "bu/debug.h"
 #include "rt/debug.h"
 #include "nmg/debug.h"
@@ -57,14 +57,14 @@ ged_debug_core(struct ged *gedp, int argc, const char **argv)
 }
 
 #include "../include/plugin.h"
-static const struct bu_cmd_operand debug_operands[] = {
-    BU_CMD_OPERAND("arguments", BU_CMD_VALUE_RAW, 0, BU_CMD_COUNT_UNLIMITED,
+static const struct bu_arg_operand debug_operands[] = {
+    BU_ARG_OPERAND("arguments", BU_ARG_VALUE_RAW, 0, BU_ARG_COUNT_UNLIMITED,
 	"Debug subsystem and operation arguments", NULL),
-    BU_CMD_OPERAND_NULL
+    BU_ARG_OPERAND_NULL
 };
-static const struct bu_cmd_schema debug_schema = {
+static const struct bu_arg_schema debug_schema = {
     "debug", "Inspect and configure debugging state", NULL, debug_operands,
-    BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+    BU_ARG_PARSE_STOP_AT_FIRST_OPERAND, BU_ARG_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
 
 #define GED_DEBUG_COMMANDS(X, XID) \

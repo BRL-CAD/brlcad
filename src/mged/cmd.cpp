@@ -2006,7 +2006,7 @@ mged_append_analysis_token(Tcl_Interp *interp, Tcl_Obj *tokens,
 {
     ged_cmd_token_role_t role = GED_CMD_TOKEN_UNKNOWN;
     ged_cmd_semantic_state_t state = GED_CMD_SEMANTIC_UNKNOWN;
-    bu_cmd_value_t value_type = BU_CMD_VALUE_UNKNOWN;
+    bu_arg_value_t value_type = BU_ARG_VALUE_UNKNOWN;
     const char *hint = "Tcl word requires runtime evaluation";
 
     if (analysis_token) {
@@ -2044,7 +2044,7 @@ mged_append_analysis_token(Tcl_Interp *interp, Tcl_Obj *tokens,
     else if (state == GED_CMD_SEMANTIC_VALID && role == GED_CMD_TOKEN_OPTION)
 	style = "option";
     else if (state == GED_CMD_SEMANTIC_VALID &&
-	    (value_type == BU_CMD_VALUE_DB_OBJECT || value_type == BU_CMD_VALUE_DB_PATH))
+	    (value_type == BU_ARG_VALUE_DB_OBJECT || value_type == BU_ARG_VALUE_DB_PATH))
 	style = "valid";
     Tcl_ListObjAppendElement(interp, entry, Tcl_NewStringObj(style, -1));
     Tcl_ListObjAppendElement(interp, tokens, entry);
