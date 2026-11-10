@@ -1585,19 +1585,18 @@ human_args_from_storage(void *storage)
 }
 
 static int
-human_parse_number(struct bu_vls *msg, size_t argc, const char **argv,
-	fastf_t *value)
+human_parse_number(struct bu_vls *msg, const char *arg, fastf_t *value)
 {
-    if (argc && argv && bu_arg_number_from_str(value, argv[0]))
-	return 1;
+    if (bu_arg_number_from_str(value, arg))
+	return 0;
     if (msg)
 	bu_vls_printf(msg, "expected a finite number\n");
     return -1;
 }
 
 static int
-human_opt_auto(struct bu_vls *UNUSED(msg), size_t UNUSED(argc),
-	const char **UNUSED(argv), void *set_var)
+human_opt_auto(struct bu_vls *UNUSED(msg), const char *UNUSED(arg),
+	void *set_var)
 {
     struct human_args *args = human_args_from_storage(set_var);
     if (!args)
@@ -1609,8 +1608,8 @@ human_opt_auto(struct bu_vls *UNUSED(msg), size_t UNUSED(argc),
 }
 
 static int
-human_opt_boxes(struct bu_vls *UNUSED(msg), size_t UNUSED(argc),
-	const char **UNUSED(argv), void *set_var)
+human_opt_boxes(struct bu_vls *UNUSED(msg), const char *UNUSED(arg),
+	void *set_var)
 {
     struct human_args *args = human_args_from_storage(set_var);
     if (!args)
@@ -1621,12 +1620,11 @@ human_opt_boxes(struct bu_vls *UNUSED(msg), size_t UNUSED(argc),
 }
 
 static int
-human_opt_height(struct bu_vls *msg, size_t argc, const char **argv,
-	void *set_var)
+human_opt_height(struct bu_vls *msg, const char *arg, void *set_var)
 {
     struct human_args *args = human_args_from_storage(set_var);
     fastf_t height = 0.0;
-    int ret = human_parse_number(msg, argc, argv, &height);
+    int ret = human_parse_number(msg, arg, &height);
     if (ret < 0 || !args)
 	return ret;
     if (height < 1.0) {
@@ -1640,8 +1638,8 @@ human_opt_height(struct bu_vls *msg, size_t argc, const char **argv,
 }
 
 static int
-human_opt_location(struct bu_vls *UNUSED(msg), size_t UNUSED(argc),
-	const char **UNUSED(argv), void *set_var)
+human_opt_location(struct bu_vls *UNUSED(msg), const char *UNUSED(arg),
+	void *set_var)
 {
     struct human_args *args = human_args_from_storage(set_var);
     if (!args)
@@ -1652,8 +1650,8 @@ human_opt_location(struct bu_vls *UNUSED(msg), size_t UNUSED(argc),
 }
 
 static int
-human_opt_manual(struct bu_vls *UNUSED(msg), size_t UNUSED(argc),
-	const char **UNUSED(argv), void *set_var)
+human_opt_manual(struct bu_vls *UNUSED(msg), const char *UNUSED(arg),
+	void *set_var)
 {
     struct human_args *args = human_args_from_storage(set_var);
     if (!args)
@@ -1664,24 +1662,22 @@ human_opt_manual(struct bu_vls *UNUSED(msg), size_t UNUSED(argc),
 }
 
 static int
-human_opt_inches(struct bu_vls *msg, size_t argc, const char **argv,
-	void *set_var)
+human_opt_inches(struct bu_vls *msg, const char *arg, void *set_var)
 {
     fastf_t **target = (fastf_t **)set_var;
     fastf_t value = 0.0;
-    int ret = human_parse_number(msg, argc, argv, &value);
-    if (ret > 0 && target && *target)
+    int ret = human_parse_number(msg, arg, &value);
+    if (ret == 0 && target && *target)
 	**target = value * IN2MM;
     return ret;
 }
 
 static int
-human_opt_low_torso(struct bu_vls *msg, size_t argc, const char **argv,
-	void *set_var)
+human_opt_low_torso(struct bu_vls *msg, const char *arg, void *set_var)
 {
     struct human_args *args = human_args_from_storage(set_var);
     fastf_t value = 0.0;
-    int ret = human_parse_number(msg, argc, argv, &value);
+    int ret = human_parse_number(msg, arg, &value);
     if (ret < 0 || !args)
 	return ret;
     args->dude->torso.lowTorsoLength = value * IN2MM;
@@ -1691,12 +1687,11 @@ human_opt_low_torso(struct bu_vls *msg, size_t argc, const char **argv,
 }
 
 static int
-human_opt_hand_length(struct bu_vls *msg, size_t argc, const char **argv,
-	void *set_var)
+human_opt_hand_length(struct bu_vls *msg, const char *arg, void *set_var)
 {
     struct human_args *args = human_args_from_storage(set_var);
     fastf_t value = 0.0;
-    int ret = human_parse_number(msg, argc, argv, &value);
+    int ret = human_parse_number(msg, arg, &value);
     if (ret < 0 || !args)
 	return ret;
     args->dude->arms.handLength = value * IN2MM;
@@ -1706,12 +1701,11 @@ human_opt_hand_length(struct bu_vls *msg, size_t argc, const char **argv,
 }
 
 static int
-human_opt_calf_length(struct bu_vls *msg, size_t argc, const char **argv,
-	void *set_var)
+human_opt_calf_length(struct bu_vls *msg, const char *arg, void *set_var)
 {
     struct human_args *args = human_args_from_storage(set_var);
     fastf_t value = 0.0;
-    int ret = human_parse_number(msg, argc, argv, &value);
+    int ret = human_parse_number(msg, arg, &value);
     if (ret < 0 || !args)
 	return ret;
     args->dude->legs.calfLength = value * IN2MM;
