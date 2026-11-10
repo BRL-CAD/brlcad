@@ -18,6 +18,7 @@ set(
   QgQuadView.h
   QgSW.h
   QgSelectFilter.h
+  QgSession.h
   QgSignalFlags.h
   QgSketchFilter.h
   QgToolPalette.h

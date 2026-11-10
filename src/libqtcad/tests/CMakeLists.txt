@@ -3,6 +3,20 @@ include_directories(${CMAKE_CURRENT_BINARY_DIR} ${CMAKE_CURRENT_SOURCE_DIR})
 set(QGMODEL_SRCS qgmodel.cpp)
 set(QGVIEW_SRCS qgview.cpp)
 set(QSKETCH_SRCS qsketch.cpp)
+set(TEST_QTCAD_SESSION_SRCS test_qtcad_session.cpp)
+
+if(TARGET Qt6::Test)
+  add_executable(test_qtcad_session ${TEST_QTCAD_SESSION_SRCS})
+  target_link_libraries(test_qtcad_session libqtcad Qt6::Test)
+elseif(TARGET Qt5::Test)
+  add_executable(test_qtcad_session ${TEST_QTCAD_SESSION_SRCS})
+  target_link_libraries(test_qtcad_session libqtcad Qt5::Test)
+endif()
+if(TARGET test_qtcad_session)
+  set_target_properties(test_qtcad_session PROPERTIES AUTOMOC ON)
+  target_compile_definitions(test_qtcad_session PRIVATE BRLCADBUILD HAVE_CONFIG_H)
+  brlcad_add_test(NAME test_qtcad_session COMMAND test_qtcad_session)
+endif()
 
 if(TARGET Qt6::Test)
   add_executable(qgmodel qgmodel.cpp)
@@ -109,6 +123,7 @@ cmakefiles(
   ${QGMODEL_SRCS}
   ${QGVIEW_SRCS}
   ${QSKETCH_SRCS}
+  ${TEST_QTCAD_SESSION_SRCS}
 )
 
 # Local Variables:

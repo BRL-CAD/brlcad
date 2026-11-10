@@ -77,6 +77,8 @@
 
 #include "qtcad/defines.h"
 
+class QgSession;
+
 #ifndef Q_MOC_RUN
 #include "raytrace.h"
 #include "ged.h"
@@ -213,6 +215,7 @@ class QTCAD_EXPORT QgModel : public QAbstractItemModel
     public:
 	explicit QgModel(QObject *p = NULL, const char *npath = NULL);
 	~QgModel();
+	QgSession *session() const;
 
 	// .g Db interface and containers
 	int run_cmd(struct bu_vls *msg, int argc, const char **argv);
@@ -338,7 +341,7 @@ class QTCAD_EXPORT QgModel : public QAbstractItemModel
 	void item_rebuild(QgItem *item);
 
 	QgItem *rootItem;
-	struct bview *empty_gvp = NULL;
+	QgSession *m_session = NULL;
 	struct db_i *model_dbip = NULL;
 	uint64_t model_revision = 0;
 };

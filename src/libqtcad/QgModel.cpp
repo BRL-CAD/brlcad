@@ -67,6 +67,7 @@
 
 
 #include "qtcad/QgModel.h"
+#include "qtcad/QgSession.h"
 #include "qtcad/QgUtil.h"
 #include "qtcad/QgSignalFlags.h"
 
@@ -243,22 +244,9 @@ QgModel::QgModel(QObject *p, const char *npath)
     // a database instance opened - rather than using ged_open to create
     // a gedp, be sure one is always available - callers should use the
     // libged "open" command to open a .g file.
-    BU_GET(gedp, struct ged);
-    ged_init(gedp);
-
-    gedp->new_cmd_forms = 1;
+    m_session = new QgSession(this);
+    gedp = m_session->ged();
     bu_setenv("DM_SWRAST", "1", 1);
-
-    // By default we will use this built-in view, to guarantee that ged_gvp is
-    // always valid.  It will usually be overridden by application provided views,
-    // but this is our hard guarantee that a QgModel will always be able to work
-    // with commands needing a view.
-    BU_GET(empty_gvp, struct bview);
-    bv_init(empty_gvp, &gedp->ged_views);
-    bv_set_add_view(&gedp->ged_views, empty_gvp);
-    gedp->ged_gvp = empty_gvp;
-    bu_vls_sprintf(&gedp->ged_gvp->gv_name, "default");
-    gedp->ged_gvp->independent = 0;
 
     // Set up the root item
     rootItem = new QgItem(0, this);
@@ -287,11 +275,13 @@ QgModel::QgModel(QObject *p, const char *npath)
 QgModel::~QgModel()
 {
     delete items;
-
-    bv_free(empty_gvp);
-    BU_PUT(empty_gvp, struct bview);
-    ged_close(gedp);
     delete rootItem;
+}
+
+QgSession *
+QgModel::session() const
+{
+    return m_session;
 }
 
 // Note - this is a private method and must be run from within g_update's
@@ -392,6 +382,7 @@ QgModel::g_update(struct db_i *n_dbip)
 	items->clear();
 	tops_items.clear();
 	emit mdl_changed_db((void *)gedp);
+	m_session->notifyDbChanged(nullptr);
 	emit view_change(QG_VIEW_DRAWN);
 	emit layoutChanged();
 	changed_db_flag = 0;
@@ -508,6 +499,7 @@ QgModel::g_update(struct db_i *n_dbip)
     // If we did change something, we need to let the application know
     if (changed_db_flag) {
 	emit mdl_changed_db((void *)gedp);
+	m_session->notifyDbChanged(n_dbip);
 	emit layoutChanged();
 	emit check_highlights();
     }
