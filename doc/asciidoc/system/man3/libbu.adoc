@@ -75,42 +75,13 @@ The `bu_arg_schema` API in `bu/arg.h` is the full-description face of the
 command engine, adding typed operands, validation, completion metadata,
 constraints, declarative numeric ranges, and machine-readable publication.
 
-The established `bu_opt` API remains the succinct option-only face of the same
-engine.  Its descriptor table and `bu_opt_*` reader callbacks are appropriate
-when a caller only needs conventional option parsing and a leftover argument
-list.  It also supplies lightweight completion and validation without forcing
-the caller to rewrite those option rows as a second table.
-
-`bu_opt_desc_value_type` recognizes every standard reader in `bu/opt.h`:
-`bu_opt_bool`, `bu_opt_int`, `bu_opt_long`, `bu_opt_long_hex`,
-`bu_opt_incr_long`, `bu_opt_fastf_t`, `bu_opt_char`, `bu_opt_str`,
-`bu_opt_vls`, `bu_opt_color`, `bu_opt_vect_t`, `bu_opt_lang`, and
-`bu_opt_man_section`; a null reader is a flag.  `bu_opt_desc_validate` uses
-that information to complete option spellings, validate supplied values, and
-report incomplete multi-token colors and vectors without invoking a custom
-reader or modifying caller state.
-
-Opaque readers may be described by a `bu_opt_value_spec` sidecar.  A row may
-override the inferred value class, publish fixed candidates, specify a hint or
-variable token cardinality, identify a separate spelling as an alias, and
-install a side-effect-free validation callback.
-The callback receives the full argv, cursor index, caller context, and row data
-for context-dependent value rules.  Standard readers need no sidecar.
-
-For reentrant use, define one ordinary initializer-row macro and pass it to
-`BU_OPT_DESC_BUILDER`.  The generated file-local builder binds fields in a
-caller-owned argument record during parsing and leaves them unbound for help
-or validation.  `bu_opt_parse_build`, `bu_opt_describe_build`, and
-`bu_opt_validate_build` perform those projections.  The generated row count is
-derived from the local array rather than repeated by the command author.
-
-`bu_opt_parse_with_policy` and `bu_opt_parse_build_with_policy` select the
-option scanning policy. `BU_OPT_PARSE_INTERSPERSED` retains the legacy
-handling of unknown words, including `--`. Use
-`BU_OPT_PARSE_INTERSPERSED_END_MARKER` to allow interspersed options while
-consuming `--` and preserving every subsequent word as an operand.
-`BU_OPT_PARSE_OPTIONS_FIRST` stops at the first operand or `--`.
-All policies return unused arguments at the beginning of the argv array.
+The established `bu_opt` API remains a succinct option-only parser. Its
+descriptor table and `bu_opt_*` reader callbacks are appropriate when a caller
+only needs conventional option parsing and a leftover argument list.
+`bu_opt_usage` and `bu_opt_help` format standard user-facing documentation.
+Callers needing typed operands, alternate scanning policies, validation,
+completion, constraints, or machine-readable publication should use
+`bu_arg_schema` directly.
 
 The API provides three views of the same schema:
 
@@ -451,24 +422,10 @@ so a value such as `--view list` cannot be mistaken for a `list` subcommand.
 
 === GED registration
 
-An ordinary GED command combines a `bu_opt` builder with positional and
-constraint metadata in `ged_opt_spec`, then uses
-`GED_DECLARE_COMMAND_SET_WITH_OPT_SPEC` and
-`GED_DECLARE_PLUGIN_MANIFEST_WITH_OPT_SPEC`.  Libged translates that compact
-facade to its internal schema engine at registration.  Commands with genuinely
-advanced grammars use `GED_DECLARE_COMMAND_SET_WITH_NATIVE_SCHEMA` or
-`GED_DECLARE_COMMAND_SET_WITH_GRAMMAR`.  Plugin schema metadata is an internal
-interface under active development, so a plugin must be rebuilt with matching
-libged headers rather than relying on a compatibility adapter.
-
-`GED_OPT` is the normal positional facade.  For example,
-`options-first file:file objects:object+` declares an output file followed by
-one or more database objects.  `?`, `*`, `+`, `{n}`, and `{min,max}` express
-cardinality; `keyword(a|b)`, `int(min:max)`, and the positive/nonnegative
-integer and number types cover common value domains.  A semantic provider may
-follow a type as `@provider.name`.  This text is parsed once at command
-registration and the resulting native schema is retained for all subsequent
-validation and completion operations.
+GED commands publish `bu_arg_schema`, `bu_arg_tree`, or `ged_cmd_grammar`
+metadata and register it with the corresponding native-schema or grammar
+command-set macros. Plugin schema metadata is an internal interface under
+active development, so a plugin must be rebuilt with matching libged headers.
 
 Once registered, native schemas participate in `ged_cmd_schema_json`,
 `ged_cmd_validate`, `ged_cmd_complete_result`, `ged_cmd_analyze`, and

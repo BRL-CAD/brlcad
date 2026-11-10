@@ -758,10 +758,6 @@ brlcad_add_test(NAME bu_opt_3_vect_02  COMMAND bu_test test_opt 3 V 2)
 brlcad_add_test(NAME bu_opt_3_vect_03  COMMAND bu_test test_opt 3 V 3)
 brlcad_add_test(NAME bu_opt_3_vect_04  COMMAND bu_test test_opt 3 V 4)
 
-# bu_opt descriptor-only validation and completion
-foreach(test_num RANGE 0 36)
-  brlcad_add_test(NAME bu_opt_desc_validation_${test_num} COMMAND bu_test test_opt 4 v ${test_num})
-endforeach()
 brlcad_add_test(NAME bu_opt_standard_help COMMAND bu_test test_opt 5 h 0)
 
 # Strict floating point scanner testing

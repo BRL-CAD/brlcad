@@ -8,11 +8,10 @@
 # under the terms of the GNU Lesser General Public License version 2.1 as
 # published by the Free Software Foundation.
 
-# Libged commands publish either a compact bu_opt-backed specification, a full
-# native schema, or a parser-owned grammar adapter for validation, completion,
-# and grammar introspection.  This source-level test supplements the runtime
-# schema audit by flagging an option-only bu_opt parser that does not publish
-# its higher-level command structure.
+# Libged commands publish a native schema or parser-owned grammar adapter for
+# validation, completion, and grammar introspection.  This source-level test
+# supplements the runtime schema audit by pinning the reviewed set of unbound
+# native-schema adapters.
 if(NOT DEFINED SOURCE_DIR OR "${SOURCE_DIR}" STREQUAL "")
   message(FATAL_ERROR "check_native_schema_sources.cmake requires -DSOURCE_DIR=...")
 endif()
@@ -54,17 +53,15 @@ set(unbound_adapter_allowlist
 set(violations)
 foreach(source_file IN LISTS source_files)
   file(RELATIVE_PATH relative_file "${SOURCE_DIR}" "${source_file}")
-  # Unit-test fixtures intentionally exercise bu_opt and malformed/unbound
-  # schemas without registering production commands.  They are consumers of
-  # the command API, not command definitions subject to this source audit.
+  # Unit-test fixtures intentionally exercise malformed or unbound schemas.
+  # They are consumers of the command API, not production definitions subject
+  # to this source audit.
   if(relative_file MATCHES "^src/libged/tests/")
     continue()
   endif()
-  # These sources have no command parsing role.  Documentation-audit code
-  # recognizes historical BU_OPT examples, and dbi_state uses scalar readers
-  # for database attributes.  Standalone tools and non-libged libraries
-  # intentionally remain free to use the supported bu_opt facade; only
-  # interactive libged command definitions require native schemas.
+  # These sources have no command parsing role.  dbi_state uses scalar readers
+  # for database attributes; the registry and declaration header implement the
+  # command infrastructure being audited.
   set(compatibility_sources
     "src/libged/dbi_state.cpp"
     "src/libged/ged_init.cpp"
@@ -75,38 +72,6 @@ foreach(source_file IN LISTS source_files)
     continue()
   endif()
   file(READ "${source_file}" contents)
-
-  # Reentrant bu_opt builders should use the typed field-binding rows.  A raw
-  # row remains appropriate when a custom callback intentionally receives the
-  # whole argument record, but spelling out the common conditional field
-  # address defeats the concise builder API and invites copy/paste mistakes.
-  if(contents MATCHES
-      "\\{[^\n]*[?][ \t]*&[A-Za-z_][A-Za-z0-9_]*->[A-Za-z_][A-Za-z0-9_.>-]*[ \t]*:[ \t]*NULL")
-    list(APPEND violations
-      "${relative_file} (raw conditional bu_opt field binding; use BU_OPT_* row helpers)"
-    )
-  endif()
-
-  # Compact GED declarations normalize one flat typed rule table.  Do not
-  # regress to the former forest of per-kind sidecar arrays or out-of-line
-  # alias metadata in production command sources.
-  if(contents MATCHES
-      "static[ \t\r\n]+const[ \t]+(struct[ \t]+)?ged_opt_meta")
-    list(APPEND violations
-      "${relative_file} (legacy compact-option metadata sidecar)"
-    )
-  endif()
-  if(contents MATCHES
-      "static[ \t\r\n]+const[ \t]+(struct[ \t]+)?(bu_opt_value_spec|ged_opt_semantic|ged_opt_form|ged_opt_db_completion|ged_opt_db_type_case)[ \t\r\n]+[A-Za-z_]")
-    list(APPEND violations
-      "${relative_file} (legacy compact-option per-kind sidecar; use one ged_opt_rule table)"
-    )
-  endif()
-  if(contents MATCHES "BU_OPT_VALUE_ALIAS")
-    list(APPEND violations
-      "${relative_file} (out-of-line option alias; use GED_RULE_ALIAS)"
-    )
-  endif()
 
   string(REGEX MATCHALL "BU_ARG_UNBOUND" unbound_rows "${contents}")
   list(LENGTH unbound_rows unbound_count)
@@ -131,26 +96,11 @@ foreach(source_file IN LISTS source_files)
     )
   endif()
 
-  # Scalar readers also validate primitive attributes in helper files whose
-  # commands register schemas in another translation unit.  Only descriptor
-  # and parser use requires a local registration; reader calls alone do not.
-  # bu_getopt state variables belong to a separate API.
-  string(REGEX MATCH
-    "(bu_opt_(parse|describe|validate_[A-Za-z0-9_]+)|bu_opt_(desc|cmd_desc|operand_desc|validate_result|value_type_t)|BU_OPT_[A-Za-z0-9_]+)"
-    legacy_reference
-    "${contents}"
-  )
-  if(legacy_reference)
-    string(FIND "${contents}" "GED_DECLARE_COMMAND_SET_WITH_OPT_SPEC" opt_spec_registration)
-    if(opt_spec_registration EQUAL -1)
-      list(APPEND violations "${relative_file} (bu_opt use without a registered command specification)")
-    endif()
-  endif()
 endforeach()
 
 if(violations)
   list(JOIN violations "\n  " listed)
   message(FATAL_ERROR
-    "Unregistered bu_opt or unreviewed schema adapter found:\n  ${listed}\n"
-    "Libged commands must publish a GED option specification, native schema, or grammar adapter.")
+    "Unreviewed native schema adapter found:\n  ${listed}\n"
+    "Libged commands must publish a native schema or grammar adapter.")
 endif()

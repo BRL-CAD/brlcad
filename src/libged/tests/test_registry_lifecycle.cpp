@@ -52,11 +52,11 @@ static const struct bu_arg_schema metadata_collision_schema =
 
 static struct ged_cmd_impl transaction_impl_a = {
     "registry_transaction_probe", transaction_probe_a, GED_CMD_DEFAULT,
-    &transaction_schema_a, NULL, NULL
+    &transaction_schema_a, NULL
 };
 static struct ged_cmd_impl transaction_impl_b = {
     "registry_transaction_probe", transaction_probe_b, GED_CMD_DEFAULT,
-    &transaction_schema_b, NULL, NULL
+    &transaction_schema_b, NULL
 };
 static struct ged_cmd transaction_command_a = {&transaction_impl_a};
 static struct ged_cmd transaction_command_b = {&transaction_impl_b};
@@ -121,32 +121,32 @@ static const struct ged_cmd_grammar missing_help_grammar = {
 
 static struct ged_cmd_impl blocking_impl = {
     "registry_shutdown_probe", transaction_probe_a, GED_CMD_DEFAULT,
-    NULL, &blocking_grammar, NULL
+    NULL, &blocking_grammar
 };
 static struct ged_cmd blocking_command = {&blocking_impl};
 static struct ged_cmd_impl malformed_grammar_impl = {
     "registry_malformed_grammar_probe", transaction_probe_a, GED_CMD_DEFAULT,
-    NULL, &malformed_grammar, NULL
+    NULL, &malformed_grammar
 };
 static struct ged_cmd malformed_grammar_command = {&malformed_grammar_impl};
 static struct ged_cmd_impl missing_help_impl = {
     "registry_missing_help_probe", transaction_probe_a, GED_CMD_DEFAULT,
-    NULL, &missing_help_grammar, NULL
+    NULL, &missing_help_grammar
 };
 static struct ged_cmd missing_help_command = {&missing_help_impl};
 static struct ged_cmd_impl metadata_collision_impl = {
     "registry_metadata_collision_probe", transaction_probe_a, GED_CMD_DEFAULT,
-    NULL, &blocking_grammar, NULL
+    NULL, &blocking_grammar
 };
 static struct ged_cmd metadata_collision_command = {&metadata_collision_impl};
 static struct ged_cmd_impl whitespace_impl = {
     " registry_bad_name", transaction_probe_a, GED_CMD_DEFAULT,
-    NULL, NULL, NULL
+    NULL, NULL
 };
 static struct ged_cmd whitespace_command = {&whitespace_impl};
 static struct ged_cmd_impl reserved_alias_impl = {
     "_mged_registry_bad_name", transaction_probe_a, GED_CMD_DEFAULT,
-    NULL, NULL, NULL
+    NULL, NULL
 };
 static struct ged_cmd reserved_alias_command = {&reserved_alias_impl};
 
