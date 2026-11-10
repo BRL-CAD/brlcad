@@ -52,22 +52,36 @@ struct edcodes_args {
 
 #include "../include/plugin.h"
 
-#define EDCODES_OPTIONS(a) \
-    BU_OPT_STR(a, "E", NULL, editor, "editor", "Editor command"), \
-    BU_OPT_FLAG(a, "i", NULL, sort_by_ident, "Sort by identifier"), \
-    BU_OPT_FLAG(a, "n", NULL, name_mode, "List region names without editing"), \
-    BU_OPT_FLAG(a, "r", NULL, sort_by_region, "Sort by region"),
-BU_OPT_DESC_BUILDER(edcodes_options, struct edcodes_args, EDCODES_OPTIONS);
-
-static const ged_opt_rule edcodes_opt_rules[] = {
-    GED_RULE_OPTIONS("i n r", 0, 1, "-i, -n, and -r are mutually exclusive"),
-    GED_RULE_OPERANDS(BU_ARG_CONDITION_NO_OPTION_PRESENT, "n", 1,
-	BU_ARG_COUNT_UNLIMITED, "object required for region-code editing"),
-    GED_RULE_NULL
+static const struct bu_arg_option edcodes_options[] = {
+    BU_ARG_VALUE("E", NULL, struct edcodes_args, editor, BU_ARG_VALUE_STRING,
+	BU_ARG_REQUIRED, "editor", "Editor command"),
+    BU_ARG_FLAG("i", NULL, struct edcodes_args, sort_by_ident,
+	"Sort by identifier"),
+    BU_ARG_FLAG("n", NULL, struct edcodes_args, name_mode,
+	"List region names without editing"),
+    BU_ARG_FLAG("r", NULL, struct edcodes_args, sort_by_region,
+	"Sort by region"),
+    BU_ARG_OPTION_NULL
 };
-static const ged_opt_spec edcodes_opt_spec =
-    GED_OPT_WITH("edcodes", "Edit region codes", edcodes_options,
-	"options-first objects:object*", edcodes_opt_rules);
+static const struct bu_arg_operand edcodes_operands[] = {
+    BU_ARG_OPERAND("objects", BU_ARG_VALUE_DB_OBJECT, 0,
+	BU_ARG_COUNT_UNLIMITED, "Objects containing regions", "ged.db_object"),
+    BU_ARG_OPERAND_NULL
+};
+static const char * const edcodes_modes[] = {"i", "n", "r", NULL};
+static const char * const edcodes_name_mode[] = {"n", NULL};
+static const struct bu_arg_constraint edcodes_constraints[] = {
+    BU_ARG_CONSTRAINT(BU_ARG_CONSTRAINT_OPTION_COUNT, BU_ARG_CONDITION_ALWAYS,
+	edcodes_modes, 0, 1, "-i, -n, and -r are mutually exclusive"),
+    BU_ARG_CONSTRAINT(BU_ARG_CONSTRAINT_OPERAND_COUNT,
+	BU_ARG_CONDITION_NO_OPTION_PRESENT, edcodes_name_mode, 1,
+	BU_ARG_COUNT_UNLIMITED, "object required for region-code editing"),
+    BU_ARG_CONSTRAINT_NULL
+};
+static const struct bu_arg_schema edcodes_cmd_schema =
+    BU_ARG_SCHEMA_BOUND("edcodes", "Edit region codes", edcodes_options,
+	edcodes_operands, BU_ARG_PARSE_OPTIONS_FIRST, NULL, edcodes_constraints,
+	NULL, NULL);
 
 
 static int
@@ -177,7 +191,8 @@ ged_edcodes_core(struct ged *gedp, int argc, const char *argv[])
     FILE *fp = NULL;
     char tmpfil[MAXPATHLEN] = {0};
     struct edcodes_args args = {NULL, 0, 0, 0};
-    int object_count = 0;
+    int object_count;
+    int operand_index;
     const char **objects = NULL;
     const char *command = argv[0];
 
@@ -195,14 +210,14 @@ ged_edcodes_core(struct ged *gedp, int argc, const char *argv[])
     }
 
     argc--; argv++;
-    object_count = bu_opt_parse_build_with_policy(gedp->ged_result_str,
-	argc, argv, edcodes_options, &args, BU_OPT_PARSE_OPTIONS_FIRST);
-    if (object_count < 0 ||
-	(args.sort_by_ident + args.name_mode + args.sort_by_region) > 1 ||
-	(!args.name_mode && object_count < 1)) {
+    operand_index = bu_arg_schema_parse_complete(&edcodes_cmd_schema, &args,
+	gedp->ged_result_str, argc, argv);
+    if (operand_index < 0) {
 	ged_cmd_help_append(gedp->ged_result_str, command, command);
 	return BRLCAD_ERROR;
     }
+    object_count = argc - operand_index;
+    argv += operand_index;
 
     objects = argv;
 
@@ -306,10 +321,10 @@ ged_edcodes_core(struct ged *gedp, int argc, const char *argv[])
 
 
 #define GED_EDCODES_COMMANDS(X, XID) \
-    X(edcodes, ged_edcodes_core, GED_CMD_DEFAULT, &edcodes_opt_spec) \
+    X(edcodes, ged_edcodes_core, GED_CMD_DEFAULT, &edcodes_cmd_schema) \
 
-GED_DECLARE_COMMAND_SET_WITH_OPT_SPEC(GED_EDCODES_COMMANDS)
-GED_DECLARE_PLUGIN_MANIFEST_WITH_OPT_SPEC("libged_edcodes", 1, GED_EDCODES_COMMANDS)
+GED_DECLARE_COMMAND_SET_WITH_NATIVE_SCHEMA(GED_EDCODES_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST_WITH_NATIVE_SCHEMA("libged_edcodes", 1, GED_EDCODES_COMMANDS)
 
 /*
  * Local Variables:
