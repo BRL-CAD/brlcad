@@ -2647,7 +2647,7 @@ bot_cleanup:
 
 #include "../include/plugin.h"
 
-#define GED_BOT_COMMANDS(X, XID, N, NID, G, GID) \
+#define GED_BOT_COMMANDS(N, NID, G, GID) \
     G(bot,              ged_bot_core,                      GED_CMD_DEFAULT, &ged_bot_grammar) \
     N(bot_condense,     ged_bot_condense_core,             GED_CMD_DEFAULT, &ged_bot_condense_schema) \
     N(bot_decimate,     ged_bot_decimate_core,             GED_CMD_DEFAULT, &ged_bot_decimate_schema) \
@@ -2667,8 +2667,8 @@ bot_cleanup:
     N(find_bot_pnt,     ged_find_bot_pnt_nearest_pnt_core,  GED_CMD_DEFAULT, &ged_find_bot_pnt_schema) \
     N(get_bot_edges,    ged_get_bot_edges_core,             GED_CMD_DEFAULT, &ged_get_bot_edges_schema)
 
-GED_DECLARE_COMMAND_SET_WITH_MIXED_SCHEMA(GED_BOT_COMMANDS)
-GED_DECLARE_PLUGIN_MANIFEST_WITH_MIXED_SCHEMA("libged_bot", 1, GED_BOT_COMMANDS)
+GED_DECLARE_COMMAND_SET_WITH_NATIVE_SCHEMA_AND_GRAMMAR(GED_BOT_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST_WITH_NATIVE_SCHEMA_AND_GRAMMAR("libged_bot", 1, GED_BOT_COMMANDS)
 
 // Local Variables:
 // tab-width: 8

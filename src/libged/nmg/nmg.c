@@ -462,7 +462,7 @@ static const struct ged_cmd_grammar nmg_grammar = {
     nmg_grammar_help
 };
 
-#define GED_NMG_COMMANDS(X, XID, N, NID, G, GID) \
+#define GED_NMG_COMMANDS(N, NID, G, GID) \
     G(nmg, ged_nmg_core, GED_CMD_DEFAULT, &nmg_grammar) \
     N(labelface, ged_labelface_core, GED_CMD_DEFAULT, &labelface_cmd_schema) \
     N(nmg_cmface, nmg_cmface_alias, GED_CMD_DEFAULT, &nmg_cmface_cmd_schema) \
@@ -475,8 +475,8 @@ static const struct ged_cmd_grammar nmg_grammar = {
     N(nmg_move_v, nmg_move_v_alias, GED_CMD_DEFAULT, &nmg_move_v_cmd_schema) \
     N(nmg_simplify, ged_nmg_simplify_core, GED_CMD_DEFAULT, &nmg_simplify_cmd_schema) \
 
-GED_DECLARE_COMMAND_SET_WITH_MIXED_SCHEMA(GED_NMG_COMMANDS)
-GED_DECLARE_PLUGIN_MANIFEST_WITH_MIXED_SCHEMA("libged_nmg", 1, GED_NMG_COMMANDS)
+GED_DECLARE_COMMAND_SET_WITH_NATIVE_SCHEMA_AND_GRAMMAR(GED_NMG_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST_WITH_NATIVE_SCHEMA_AND_GRAMMAR("libged_nmg", 1, GED_NMG_COMMANDS)
 
 /*
  * Local Variables:

@@ -1751,11 +1751,11 @@ ged_npush_core(struct ged *gedp, int argc, const char *argv[])
 
 #include "../include/plugin.h"
 
-#define GED_NPUSH_COMMANDS(X, XID, N, NID, G, GID) \
+#define GED_NPUSH_COMMANDS(N, NID, G, GID) \
     N(npush, ged_npush_core, GED_CMD_DEFAULT, &npush_cmd_schema) \
 
-GED_DECLARE_COMMAND_SET_WITH_MIXED_SCHEMA(GED_NPUSH_COMMANDS)
-GED_DECLARE_PLUGIN_MANIFEST_WITH_MIXED_SCHEMA("libged_npush", 1, GED_NPUSH_COMMANDS)
+GED_DECLARE_COMMAND_SET_WITH_NATIVE_SCHEMA_AND_GRAMMAR(GED_NPUSH_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST_WITH_NATIVE_SCHEMA_AND_GRAMMAR("libged_npush", 1, GED_NPUSH_COMMANDS)
 
 // Local Variables:
 // tab-width: 8

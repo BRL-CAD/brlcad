@@ -1105,11 +1105,11 @@ ged_graph(struct ged *gedp, int argc, const char *argv[])
 
 #include "../include/plugin.h"
 
-#define GED_GRAPH_COMMANDS(X, XID, N, NID, G, GID) \
+#define GED_GRAPH_COMMANDS(N, NID, G, GID) \
     N(graph, ged_graph, GED_CMD_DEFAULT, &graph_cmd_schema)
 
-GED_DECLARE_COMMAND_SET_WITH_MIXED_SCHEMA(GED_GRAPH_COMMANDS)
-GED_DECLARE_PLUGIN_MANIFEST_WITH_MIXED_SCHEMA("libged_graph", 1, GED_GRAPH_COMMANDS)
+GED_DECLARE_COMMAND_SET_WITH_NATIVE_SCHEMA_AND_GRAMMAR(GED_GRAPH_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST_WITH_NATIVE_SCHEMA_AND_GRAMMAR("libged_graph", 1, GED_GRAPH_COMMANDS)
 
 // Local Variables:
 // tab-width: 8

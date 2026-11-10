@@ -1134,7 +1134,7 @@ VIEW_TREE_GRAMMAR(sdata_lines, sdata_lines_tree, "sdata_lines", "Manage shared t
 VIEW_TREE_GRAMMAR(view_func, view_func_tree, "view_func", "Legacy view operation dispatcher");
 #undef VIEW_TREE_GRAMMAR
 
-#define GED_VIEW_COMMANDS(X, XID, N, NID, G, GID) \
+#define GED_VIEW_COMMANDS(N, NID, G, GID) \
     N(ae, ged_aet_core, GED_CMD_DEFAULT, &ae_cmd_schema) \
     N(aet, ged_aet_core, GED_CMD_DEFAULT, &aet_cmd_schema) \
     N(autoview, ged_autoview_core, GED_CMD_DEFAULT, &autoview_cmd_schema) \
@@ -1155,8 +1155,8 @@ VIEW_TREE_GRAMMAR(view_func, view_func_tree, "view_func", "Legacy view operation
     N(viewdir, ged_viewdir_core, GED_CMD_DEFAULT, &viewdir_cmd_schema) \
     N(ypr, ged_ypr_core, GED_CMD_DEFAULT, &ypr_cmd_schema) \
 
-GED_DECLARE_COMMAND_SET_WITH_MIXED_SCHEMA(GED_VIEW_COMMANDS)
-GED_DECLARE_PLUGIN_MANIFEST_WITH_MIXED_SCHEMA("libged_view", 1, GED_VIEW_COMMANDS)
+GED_DECLARE_COMMAND_SET_WITH_NATIVE_SCHEMA_AND_GRAMMAR(GED_VIEW_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST_WITH_NATIVE_SCHEMA_AND_GRAMMAR("libged_view", 1, GED_VIEW_COMMANDS)
 
 /*
  * Local Variables:

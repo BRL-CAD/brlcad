@@ -313,12 +313,12 @@ static const struct ged_cmd_grammar ged_arb_grammar = {
     ged_arb_grammar_help
 };
 
-#define GED_ARB_COMMANDS(X, XID, N, NID, G, GID) \
+#define GED_ARB_COMMANDS(N, NID, G, GID) \
     G(arb, ged_arb_core, GED_CMD_DEFAULT, &ged_arb_grammar) \
     N(rotate_arb_face, ged_rotate_arb_face_core, GED_CMD_DEFAULT, &ged_rotate_arb_face_schema)
 
-GED_DECLARE_COMMAND_SET_WITH_MIXED_SCHEMA(GED_ARB_COMMANDS)
-GED_DECLARE_PLUGIN_MANIFEST_WITH_MIXED_SCHEMA("libged_arb", 1, GED_ARB_COMMANDS)
+GED_DECLARE_COMMAND_SET_WITH_NATIVE_SCHEMA_AND_GRAMMAR(GED_ARB_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST_WITH_NATIVE_SCHEMA_AND_GRAMMAR("libged_arb", 1, GED_ARB_COMMANDS)
 
 // Local Variables:
 // tab-width: 8

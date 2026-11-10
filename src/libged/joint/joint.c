@@ -3740,11 +3740,11 @@ static const struct ged_cmd_grammar joint_grammar = {
     joint_grammar_lint, NULL, joint_grammar_help
 };
 
-#define GED_JOINT_COMMANDS(X, XID, NX, NXID, GX, GXID) \
+#define GED_JOINT_COMMANDS(NX, NXID, GX, GXID) \
     GX(joint, ged_joint_core, GED_CMD_DEFAULT, &joint_grammar) \
 
-GED_DECLARE_COMMAND_SET_WITH_MIXED_SCHEMA(GED_JOINT_COMMANDS)
-GED_DECLARE_PLUGIN_MANIFEST_WITH_MIXED_SCHEMA("libged_joint", 1, GED_JOINT_COMMANDS)
+GED_DECLARE_COMMAND_SET_WITH_NATIVE_SCHEMA_AND_GRAMMAR(GED_JOINT_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST_WITH_NATIVE_SCHEMA_AND_GRAMMAR("libged_joint", 1, GED_JOINT_COMMANDS)
 
 /*
  * Local Variables:

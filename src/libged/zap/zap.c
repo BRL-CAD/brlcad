@@ -213,12 +213,12 @@ static const struct ged_cmd_grammar ged_zap_grammar = {
     ged_zap_grammar_help
 };
 
-#define GED_ZAP_COMMANDS(X, XID, N, NID, G, GID) \
+#define GED_ZAP_COMMANDS(N, NID, G, GID) \
     G(Z, ged_zap_core, GED_CMD_DEFAULT, &ged_zap_grammar) \
     G(zap, ged_zap_core, GED_CMD_DEFAULT, &ged_zap_grammar) \
 
-GED_DECLARE_COMMAND_SET_WITH_MIXED_SCHEMA(GED_ZAP_COMMANDS)
-GED_DECLARE_PLUGIN_MANIFEST_WITH_MIXED_SCHEMA("libged_zap", 1, GED_ZAP_COMMANDS)
+GED_DECLARE_COMMAND_SET_WITH_NATIVE_SCHEMA_AND_GRAMMAR(GED_ZAP_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST_WITH_NATIVE_SCHEMA_AND_GRAMMAR("libged_zap", 1, GED_ZAP_COMMANDS)
 
 /*
  * Local Variables:

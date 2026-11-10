@@ -95,11 +95,11 @@ static const struct ged_cmd_grammar ged_lod_grammar = {
 
 #include "../include/plugin.h"
 
-#define GED_LOD_COMMANDS(X, XID, N, NID, G, GID) \
+#define GED_LOD_COMMANDS(N, NID, G, GID) \
     G(lod, ged_lod_core, GED_CMD_DEFAULT, &ged_lod_grammar) \
 
-GED_DECLARE_COMMAND_SET_WITH_MIXED_SCHEMA(GED_LOD_COMMANDS)
-GED_DECLARE_PLUGIN_MANIFEST_WITH_MIXED_SCHEMA("libged_lod", 1, GED_LOD_COMMANDS)
+GED_DECLARE_COMMAND_SET_WITH_NATIVE_SCHEMA_AND_GRAMMAR(GED_LOD_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST_WITH_NATIVE_SCHEMA_AND_GRAMMAR("libged_lod", 1, GED_LOD_COMMANDS)
 
 /*
  * Local Variables:
