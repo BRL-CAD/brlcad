@@ -27,10 +27,8 @@
 
 #include "common.h"
 
-#include <string.h>
-
+#include "bu/arg.h"
 #include "bu/cmd.h"
-#include "bu/opt.h"
 #include "bu/units.h"
 #include "rt/geom.h"
 
@@ -49,22 +47,29 @@ struct bb_args {
     int tight;
 };
 
-#define BB_OPTIONS(args) \
-    BU_OPT_STR(args, "c", NULL, bb_name, "name", "Create a bounding-box object with this name"), \
-    BU_OPT_FLAG(args, "d", NULL, print_dim, "Print dimensions"), \
-    BU_OPT_FLAG(args, "m", NULL, print_midpt, "Print midpoint"), \
-    BU_OPT_FLAG(args, "e", NULL, print_rpp, "Print extents"), \
-    BU_OPT_FLAG(args, "q", NULL, quiet, "Suppress the header"), \
-    BU_OPT_FLAG(args, "u", NULL, exclude_air, "Exclude air regions"), \
-    BU_OPT_FLAG(args, "v", NULL, print_vol, "Print volume"), \
-    BU_OPT_FLAG(args, "o", NULL, oriented, "Compute an oriented bounding box"), \
-    BU_OPT_FLAG(args, "t", NULL, tight, "Use evaluated geometry bounds"),
+static const struct bu_arg_option bb_options[] = {
+    BU_ARG_VALUE("c", NULL, struct bb_args, bb_name, BU_ARG_VALUE_STRING,
+	BU_ARG_REQUIRED, "name", "Create a bounding-box object with this name"),
+    BU_ARG_FLAG("d", NULL, struct bb_args, print_dim, "Print dimensions"),
+    BU_ARG_FLAG("m", NULL, struct bb_args, print_midpt, "Print midpoint"),
+    BU_ARG_FLAG("e", NULL, struct bb_args, print_rpp, "Print extents"),
+    BU_ARG_FLAG("q", NULL, struct bb_args, quiet, "Suppress the header"),
+    BU_ARG_FLAG("u", NULL, struct bb_args, exclude_air, "Exclude air regions"),
+    BU_ARG_FLAG("v", NULL, struct bb_args, print_vol, "Print volume"),
+    BU_ARG_FLAG("o", NULL, struct bb_args, oriented, "Compute an oriented bounding box"),
+    BU_ARG_FLAG("t", NULL, struct bb_args, tight, "Use evaluated geometry bounds"),
+    BU_ARG_OPTION_NULL
+};
 
-BU_OPT_DESC_BUILDER(bb_options, struct bb_args, BB_OPTIONS);
+static const struct bu_arg_operand bb_operands[] = {
+    BU_ARG_OPERAND("objects", BU_ARG_VALUE_DB_OBJECT, 1,
+	BU_ARG_COUNT_UNLIMITED, "Objects to bound", "ged.db_object"),
+    BU_ARG_OPERAND_NULL
+};
 
-static const ged_opt_spec bb_opt_spec =
-    GED_OPT("bb", "Report or create object bounds", bb_options,
-        "interspersed objects:object+");
+static const struct bu_arg_schema bb_cmd_schema =
+    BU_ARG_SCHEMA_BOUND("bb", "Report or create object bounds", bb_options,
+	bb_operands, BU_ARG_PARSE_INTERSPERSED, NULL, NULL, NULL, NULL);
 
 static void
 bb_show_help(struct ged *gedp, const char *command)
@@ -99,7 +104,7 @@ ged_bb_core(struct ged *gedp, int argc, const char *argv[])
     double vol;
     const char *bbname = NULL;
     struct bb_args args = {0};
-    int object_count;
+    int object_index;
 
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
     GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
@@ -113,9 +118,9 @@ ged_bb_core(struct ged *gedp, int argc, const char *argv[])
 	return GED_HELP;
     }
 
-    object_count = bu_opt_parse_build(gedp->ged_result_str, argc - 1,
-        argv + 1, bb_options, &args);
-    if (object_count < 0) {
+    object_index = bu_arg_schema_parse(&bb_cmd_schema, &args,
+	gedp->ged_result_str, argc - 1, argv + 1);
+    if (object_index < 0) {
         bb_show_help(gedp, argv[0]);
         return BRLCAD_ERROR;
     }
@@ -136,12 +141,12 @@ ged_bb_core(struct ged *gedp, int argc, const char *argv[])
 	print_vol = 1;
     }
 
-    if (!object_count) {
+    argc -= object_index + 1;
+    if (!argc) {
 	bb_show_help(gedp, argv[0]);
 	return GED_HELP;
     }
-    argc = object_count;
-    argv += 1;
+    argv += object_index + 1;
 
     if (!oriented_bb) {
 	const int bounds_ret = tight_bb ?
@@ -320,10 +325,10 @@ ged_bb_core(struct ged *gedp, int argc, const char *argv[])
 #include "../include/plugin.h"
 
 #define GED_BB_COMMANDS(X, XID) \
-    X(bb, ged_bb_core, GED_CMD_DEFAULT, &bb_opt_spec) \
+    X(bb, ged_bb_core, GED_CMD_DEFAULT, &bb_cmd_schema) \
 
-GED_DECLARE_COMMAND_SET_WITH_OPT_SPEC(GED_BB_COMMANDS)
-GED_DECLARE_PLUGIN_MANIFEST_WITH_OPT_SPEC("libged_bb", 1, GED_BB_COMMANDS)
+GED_DECLARE_COMMAND_SET_WITH_NATIVE_SCHEMA(GED_BB_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST_WITH_NATIVE_SCHEMA("libged_bb", 1, GED_BB_COMMANDS)
 
 /*
  * Local Variables:

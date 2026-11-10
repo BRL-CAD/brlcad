@@ -124,7 +124,7 @@ foreach(source_file IN LISTS source_files)
     )
   endif()
 
-  string(REGEX MATCHALL "BU_CMD_(FLAG|VALUE|SHAPED)_UNBOUND" unbound_rows "${contents}")
+  string(REGEX MATCHALL "BU_ARG_UNBOUND" unbound_rows "${contents}")
   list(LENGTH unbound_rows unbound_count)
   set(expected_unbound_count -1)
   foreach(adapter IN LISTS unbound_adapter_allowlist)
