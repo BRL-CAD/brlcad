@@ -43,7 +43,6 @@ list(SORT source_files)
 set(unbound_adapter_allowlist
   "src/libged/annotate/annotate.cpp|4"
   "src/libged/attr/attr.cpp|1"
-  "src/libged/check/check.c|24"
   "src/libged/comb/comb.c|1"
   "src/libged/db/db.c|2"
   "src/libged/edit/edit.cpp|24"
