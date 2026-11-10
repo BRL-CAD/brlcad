@@ -55,52 +55,51 @@ struct man_args {
     int width;
 };
 
-static int
-man_width_validate(const struct bu_opt_desc *UNUSED(option), size_t argc,
-	const char **argv, size_t cursor_arg, void *UNUSED(context),
-	void *UNUSED(data), struct bu_opt_validate_result *result)
-{
-    if (argv && cursor_arg < argc &&
-	bu_arg_positive_integer_validate(NULL, argv[cursor_arg]) != 0) {
-	result->state = BU_OPT_VALIDATE_INVALID;
-	result->hint = "width must be a positive integer";
-    }
-    return 0;
-}
-
-
-#define MAN_OPTIONS(args) \
-    BU_OPT_FLAG(args, "h", "help", help, "Print help and exit"), \
-    BU_OPT_FLAG(args, "H", NULL, help, ""), \
-    BU_OPT_FLAG(args, "?", NULL, help, ""), \
-    BU_OPT_FLAG(args, "g", "gui", enable_gui, \
-	"Force use of the graphical manual-page viewer"), \
-    BU_OPT_FLAG(args, NULL, "no-gui", disable_gui, \
-	"Force use of the command-line manual-page viewer"), \
-    BU_OPT_FLAG(args, NULL, "dump", disable_gui, \
-	"Return formatted text in the command result"), \
-    BU_OPT_INT(args, NULL, "width", width, "columns", \
-	"Set formatted text width (default: 80)"), \
-    BU_OPT_LANG(args, "L", "language", language, "code", \
-	"Select a lower-case ISO 639-1 manual language"), \
-    BU_OPT_SECTION(args, "S", "section", section, "section", \
+static const struct bu_arg_option man_options[] = {
+    BU_ARG_FLAG("h", "help", struct man_args, help, "Print help and exit"),
+    BU_ARG_ALIAS("H", NULL, "help", 0),
+    BU_ARG_ALIAS("?", NULL, "help", 0),
+    BU_ARG_FLAG("g", "gui", struct man_args, enable_gui,
+	"Force use of the graphical manual-page viewer"),
+    BU_ARG_FLAG(NULL, "no-gui", struct man_args, disable_gui,
+	"Force use of the command-line manual-page viewer"),
+    BU_ARG_ALIAS(NULL, "dump", "no-gui", 0),
+    BU_ARG_VALUE_VALIDATE(NULL, "width", struct man_args, width,
+	BU_ARG_VALUE_INTEGER, bu_arg_positive_integer_validate, "columns",
+	"Set formatted text width (default: 80)"),
+    BU_ARG_VALUE_VALIDATE("L", "language", struct man_args, language,
+	BU_ARG_VALUE_VLS, bu_arg_iso639_1_validate, "code",
+	"Select a lower-case ISO 639-1 manual language"),
+    BU_ARG_VALUE_VALIDATE("S", "section", struct man_args, section,
+	BU_ARG_VALUE_CHAR, bu_arg_man_section_validate, "section",
 	"Select manual section 1, 3, 5, or n"),
-
-BU_OPT_DESC_BUILDER(man_options, struct man_args, MAN_OPTIONS);
-
-static const ged_opt_rule man_opt_rules[] = {
-    GED_RULE_ALIAS("H ?", "help"),
-    GED_RULE_ALIAS("dump", "no-gui"),
-    GED_RULE_VALUE_VALIDATE("width", BU_OPT_VALUE_INTEGER, "positive integer",
-	man_width_validate, NULL),
-    GED_RULE_CONFLICTS("gui no-gui", "GUI and command line modes conflict"),
-    GED_RULE_OPERANDS(BU_ARG_CONDITION_ANY_OPTION_PRESENT, "no-gui", 1, 2,
-	"Command line mode requires a manual page"),
-    GED_RULE_NULL
+    BU_ARG_OPTION_NULL
 };
-static const ged_opt_spec man_opt_spec =
-    GED_OPT_WITH("man", "Open a BRL-CAD manual page", man_options,
-	"interspersed manual_page:string? trailing_section:string?", man_opt_rules);
+
+static const struct bu_arg_operand man_operands[] = {
+    BU_ARG_OPERAND("manual_page", BU_ARG_VALUE_STRING, 0, 1,
+	"Manual page to open", NULL),
+    BU_ARG_OPERAND("trailing_section", BU_ARG_VALUE_STRING, 0, 1,
+	"Optional manual section", NULL),
+    BU_ARG_OPERAND_NULL
+};
+
+static const char * const man_gui_conflicts[] = {"gui", "no-gui", NULL};
+static const char * const man_no_gui_options[] = {"no-gui", NULL};
+static const struct bu_arg_constraint man_constraints[] = {
+    BU_ARG_CONSTRAINT(BU_ARG_CONSTRAINT_OPTION_CONFLICTS,
+	BU_ARG_CONDITION_ALWAYS, man_gui_conflicts, 0, 0,
+	"GUI and command line modes conflict"),
+    BU_ARG_CONSTRAINT(BU_ARG_CONSTRAINT_OPERAND_COUNT,
+	BU_ARG_CONDITION_ANY_OPTION_PRESENT, man_no_gui_options, 1, 2,
+	"Command line mode requires a manual page"),
+    BU_ARG_CONSTRAINT_NULL
+};
+
+static const struct bu_arg_schema man_cmd_schema =
+    BU_ARG_SCHEMA_BOUND("man", "Open a BRL-CAD manual page", man_options,
+	man_operands, BU_ARG_PARSE_INTERSPERSED, NULL, man_constraints, NULL,
+	NULL);
 
 
 static void
@@ -124,6 +123,7 @@ ged_man_core(struct ged *gedp, int argc, const char *argv[])
 {
     int ret = BRLCAD_OK;
     int operand_count;
+    int operand_index;
     int next_arg = 6;
     int process_options = BU_PROCESS_HIDE_WINDOW;
     struct bu_process *process = NULL;
@@ -140,13 +140,15 @@ ged_man_core(struct ged *gedp, int argc, const char *argv[])
     bu_vls_trunc(gedp->ged_result_str, 0);
 
     argc--; argv++;
-    operand_count = bu_opt_parse_build_with_policy(gedp->ged_result_str, argc, argv,
-	man_options, &args, BU_OPT_PARSE_INTERSPERSED_END_MARKER);
-    if (operand_count < 0) {
+    operand_index = bu_arg_schema_parse_complete(&man_cmd_schema, &args,
+	gedp->ged_result_str, argc, argv);
+    if (operand_index < 0) {
 	man_show_help(gedp, command);
 	ret = BRLCAD_ERROR;
 	goto cleanup;
     }
+    operand_count = argc - operand_index;
+    argv += operand_index;
     if (args.help) {
 	man_show_help(gedp, command);
 	ret = GED_HELP;
@@ -279,10 +281,10 @@ cleanup:
 #include "../include/plugin.h"
 
 #define GED_MAN_COMMANDS(X, XID) \
-    X(man, ged_man_core, GED_CMD_DEFAULT, &man_opt_spec) \
+    X(man, ged_man_core, GED_CMD_DEFAULT, &man_cmd_schema) \
 
-GED_DECLARE_COMMAND_SET_WITH_OPT_SPEC(GED_MAN_COMMANDS)
-GED_DECLARE_PLUGIN_MANIFEST_WITH_OPT_SPEC("libged_man", 1, GED_MAN_COMMANDS)
+GED_DECLARE_COMMAND_SET_WITH_NATIVE_SCHEMA(GED_MAN_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST_WITH_NATIVE_SCHEMA("libged_man", 1, GED_MAN_COMMANDS)
 
 /*
  * Local Variables:

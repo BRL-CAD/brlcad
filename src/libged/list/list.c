@@ -28,7 +28,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "bu/opt.h"
+#include "bu/arg.h"
 #include "bu/units.h"
 
 #include "../ged_private.h"
@@ -40,33 +40,36 @@ struct list_args {
 };
 
 static int
-list_terse_parse(struct bu_vls *UNUSED(msg), size_t UNUSED(argc),
-	const char **UNUSED(argv), void *storage)
+list_terse_parse(struct bu_vls *UNUSED(msg), const char *UNUSED(arg),
+	void *storage)
 {
     if (storage)
 	*((long *)storage) = 0;
     return 0;
 }
 
-#define LIST_OPTIONS(args) \
-    BU_OPT_FLAG(args, "r", NULL, recurse, \
-	"Recursively list evaluated contents"), \
-    BU_OPT_CUSTOM(args, "t", NULL, verbosity, "", list_terse_parse, \
-	"Use terse output"), \
-    BU_OPT_INC(args, "v", NULL, verbosity, \
-	"Increase output verbosity"),
-
-BU_OPT_DESC_BUILDER(list_options, struct list_args, LIST_OPTIONS);
-static const ged_opt_rule list_opt_rules[] = {
-    GED_RULE_TYPE("t", BU_OPT_VALUE_FLAG, "terse output"),
-    GED_RULE_NULL
+static const struct bu_arg_option list_options[] = {
+    BU_ARG_FLAG("r", NULL, struct list_args, recurse,
+	"Recursively list evaluated contents"),
+    BU_ARG_CUSTOM_FLAG("t", NULL, "t", struct list_args, verbosity,
+	list_terse_parse, "Use terse output"),
+    BU_ARG_COUNTING_FLAG("v", NULL, struct list_args, verbosity,
+	BU_ARG_VALUE_LONG, "Increase output verbosity"),
+    BU_ARG_OPTION_NULL
 };
-static const ged_opt_spec list_opt_spec =
-    GED_OPT_WITH("list", "Describe database objects", list_options,
-	"options-first objects:path+", list_opt_rules);
-static const ged_opt_spec l_opt_spec =
-    GED_OPT_WITH("l", "Describe database objects", list_options,
-	"options-first objects:path+", list_opt_rules);
+
+static const struct bu_arg_operand list_operands[] = {
+    BU_ARG_OPERAND("objects", BU_ARG_VALUE_DB_PATH, 1,
+	BU_ARG_COUNT_UNLIMITED, "Objects to describe", "ged.db_path"),
+    BU_ARG_OPERAND_NULL
+};
+
+static const struct bu_arg_schema list_cmd_schema =
+    BU_ARG_SCHEMA_BOUND("list", "Describe database objects", list_options,
+	list_operands, BU_ARG_PARSE_OPTIONS_FIRST, NULL, NULL, NULL, NULL);
+static const struct bu_arg_schema l_cmd_schema =
+    BU_ARG_SCHEMA_BOUND("l", "Describe database objects", list_options,
+	list_operands, BU_ARG_PARSE_OPTIONS_FIRST, NULL, NULL, NULL, NULL);
 
 
 static void
@@ -87,7 +90,7 @@ ged_list_core(struct ged *gedp, int argc, const char *argv[])
     int arg;
     int id;
     struct list_args args = {0, 99};
-    int operand_count = 0;
+    int operand_index;
     const char *command = argv[0];
     char *terse_parm = "-t";
     struct rt_db_internal intern;
@@ -105,13 +108,15 @@ ged_list_core(struct ged *gedp, int argc, const char *argv[])
     }
 
     argc--; argv++;
-    operand_count = bu_opt_parse_build_with_policy(gedp->ged_result_str,
-	argc, argv, list_options, &args, BU_OPT_PARSE_OPTIONS_FIRST);
-    if (operand_count < 1) {
+    operand_index = bu_arg_schema_parse_complete(
+	BU_STR_EQUAL(command, "l") ? &l_cmd_schema : &list_cmd_schema,
+	&args, gedp->ged_result_str, argc, argv);
+    if (operand_index < 0) {
 	list_show_help(gedp, command);
 	return BRLCAD_ERROR;
     }
-    argc = operand_count;
+    argc -= operand_index;
+    argv += operand_index;
 
     for (arg = 0; arg < argc; arg++) {
 	if (args.recurse) {
@@ -180,11 +185,11 @@ ged_list_core(struct ged *gedp, int argc, const char *argv[])
 #include "../include/plugin.h"
 
 #define GED_LIST_COMMANDS(X, XID) \
-    X(list, ged_list_core, GED_CMD_DEFAULT, &list_opt_spec) \
-    X(l, ged_list_core, GED_CMD_DEFAULT, &l_opt_spec) \
+    X(list, ged_list_core, GED_CMD_DEFAULT, &list_cmd_schema) \
+    X(l, ged_list_core, GED_CMD_DEFAULT, &l_cmd_schema) \
 
-GED_DECLARE_COMMAND_SET_WITH_OPT_SPEC(GED_LIST_COMMANDS)
-GED_DECLARE_PLUGIN_MANIFEST_WITH_OPT_SPEC("libged_list", 1, GED_LIST_COMMANDS)
+GED_DECLARE_COMMAND_SET_WITH_NATIVE_SCHEMA(GED_LIST_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST_WITH_NATIVE_SCHEMA("libged_list", 1, GED_LIST_COMMANDS)
 
 /*
  * Local Variables:
