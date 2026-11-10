@@ -27,7 +27,7 @@
 
 #include <string.h>
 
-#include "bu/opt.h"
+#include "bu/arg.h"
 
 #include "../ged_private.h"
 
@@ -38,24 +38,46 @@ struct kill_args {
     int quiet;
 };
 
-#define KILL_OPTIONS(args) \
-    BU_OPT_FLAG(args, "f", NULL, force, \
-	"Permit deletion of protected global data"), \
-    BU_OPT_FLAG(args, "n", NULL, no_delete, \
-	"Report objects without deleting them"), \
-    BU_OPT_FLAG(args, "q", NULL, quiet, \
+static const struct bu_arg_option kill_options[] = {
+    BU_ARG_FLAG("f", NULL, struct kill_args, force,
+	"Permit deletion of protected global data"),
+    BU_ARG_FLAG("n", NULL, struct kill_args, no_delete,
+	"Report objects without deleting them"),
+    BU_ARG_FLAG("q", NULL, struct kill_args, quiet,
 	"Suppress lookup messages"),
-
-BU_OPT_DESC_BUILDER(kill_options, struct kill_args, KILL_OPTIONS);
-
-static const ged_opt_rule kill_opt_rules[] = {
-    GED_RULE_OPTIONS("f n", 0, 1, "-f and -n are mutually exclusive"),
-    GED_RULE_DB_OBJECTS("objects", GED_OPT_DB_ANY, "f", GED_OPT_DB_ALL),
-    GED_RULE_NULL
+    BU_ARG_OPTION_NULL
 };
-static const ged_opt_spec kill_opt_spec =
-    GED_OPT_WITH("kill", "Delete database objects", kill_options,
-	"interspersed objects:object@ged.db_object_any+", kill_opt_rules);
+static const struct bu_arg_operand kill_operands[] = {
+    BU_ARG_OPERAND("objects", BU_ARG_VALUE_DB_OBJECT, 1,
+	BU_ARG_COUNT_UNLIMITED, "Database objects to delete",
+	"ged.db_object_any"),
+    BU_ARG_OPERAND_NULL
+};
+static const struct bu_arg_operand kill_force_operands[] = {
+    BU_ARG_OPERAND("objects", BU_ARG_VALUE_DB_OBJECT, 1,
+	BU_ARG_COUNT_UNLIMITED, "Database objects to delete",
+	"ged.db_object_all"),
+    BU_ARG_OPERAND_NULL
+};
+static const char * const kill_force_option[] = {"f", NULL};
+static const char * const kill_modes[] = {"f", "n", NULL};
+static const struct bu_arg_schema_case kill_cases[] = {
+    BU_ARG_SCHEMA_CASE("force", "Permit protected global data",
+	BU_ARG_CONDITION_ANY_OPTION_PRESENT, kill_force_option,
+	kill_force_operands, NULL),
+    BU_ARG_SCHEMA_CASE_DEFAULT("objects", "Delete ordinary database objects",
+	kill_operands, NULL),
+    BU_ARG_SCHEMA_CASE_NULL
+};
+static const struct bu_arg_constraint kill_constraints[] = {
+    BU_ARG_CONSTRAINT(BU_ARG_CONSTRAINT_OPTION_COUNT, BU_ARG_CONDITION_ALWAYS,
+	kill_modes, 0, 1, "-f and -n are mutually exclusive"),
+    BU_ARG_CONSTRAINT_NULL
+};
+static const struct bu_arg_schema kill_cmd_schema =
+    BU_ARG_SCHEMA("kill", "Delete database objects", kill_options, NULL,
+	BU_ARG_PARSE_INTERSPERSED,
+	BU_ARG_SCHEMA_META_CASES(NULL, kill_constraints, NULL, NULL, kill_cases));
 
 
 int
@@ -66,7 +88,8 @@ ged_kill_core(struct ged *gedp, int argc, const char *argv[])
     int is_phony;
     int verbose = LOOKUP_NOISY;
     struct kill_args args = {0, 0, 0};
-    int object_count = 0;
+    int object_count;
+    int operand_index;
     const char **objects = NULL;
     const char *command = argv[0];
 
@@ -84,18 +107,15 @@ ged_kill_core(struct ged *gedp, int argc, const char *argv[])
 	return GED_HELP;
     }
 
-	object_count = bu_opt_parse_build(gedp->ged_result_str, argc - 1,
-	argv + 1, kill_options, &args);
-    if (object_count < 0 || (args.force && args.no_delete)) {
+    argc--; argv++;
+    operand_index = bu_arg_schema_parse_complete(&kill_cmd_schema, &args,
+	gedp->ged_result_str, argc, argv);
+    if (operand_index < 0) {
 	ged_cmd_help_append(gedp->ged_result_str, command, command);
 	return BRLCAD_ERROR;
     }
-    if (!object_count) {
-	ged_cmd_help_append(gedp->ged_result_str, command, command);
-	return GED_HELP;
-    }
-
-    objects = argv + 1;
+    object_count = argc - operand_index;
+    objects = argv + operand_index;
     if (args.quiet) {
 	verbose = LOOKUP_QUIET;
     }
@@ -144,10 +164,10 @@ ged_kill_core(struct ged *gedp, int argc, const char *argv[])
 #include "../include/plugin.h"
 
 #define GED_KILL_COMMANDS(X, XID) \
-    X(kill, ged_kill_core, GED_CMD_DEFAULT, &kill_opt_spec) \
+    X(kill, ged_kill_core, GED_CMD_DEFAULT, &kill_cmd_schema) \
 
-GED_DECLARE_COMMAND_SET_WITH_OPT_SPEC(GED_KILL_COMMANDS)
-GED_DECLARE_PLUGIN_MANIFEST_WITH_OPT_SPEC("libged_kill", 1, GED_KILL_COMMANDS)
+GED_DECLARE_COMMAND_SET_WITH_NATIVE_SCHEMA(GED_KILL_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST_WITH_NATIVE_SCHEMA("libged_kill", 1, GED_KILL_COMMANDS)
 
 /*
  * Local Variables:
