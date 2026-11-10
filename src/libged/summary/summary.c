@@ -170,28 +170,35 @@ summary_dir(struct ged *gedp, int flag, struct bu_vls* specific)
 }
 
 
-#define SUMMARY_OPTIONS(args) \
-    BU_OPT_FLAG(args, "h", "help", print_help, "Print help and exit"), \
-    BU_OPT_FLAG(args, "?", NULL, print_help, ""), \
-    BU_OPT_STR(args, "o", "obj", object, "object", \
+static const struct bu_arg_option summary_options[] = {
+    BU_ARG_FLAG("h", "help", struct summary_args, print_help,
+	"Print help and exit"),
+    BU_ARG_ALIAS("?", NULL, "help", 0),
+    BU_ARG_VALUE("o", "obj", struct summary_args, object,
+	BU_ARG_VALUE_DB_OBJECT, BU_ARG_REQUIRED, "object",
 	"Summarize one database object"),
-
-BU_OPT_DESC_BUILDER(summary_options, struct summary_args, SUMMARY_OPTIONS);
-
-static const ged_opt_rule summary_opt_rules[] = {
-    GED_RULE_ALIAS("?", "help"),
-    GED_RULE_SEMANTIC("obj", BU_ARG_VALUE_DB_OBJECT, NULL, "database object"),
-    GED_RULE_OPERANDS(BU_ARG_CONDITION_ANY_OPTION_PRESENT, "obj", 0, 0,
-	"object specified both by --obj and as an operand"),
-    GED_RULE_OPERANDS(BU_ARG_CONDITION_NO_OPTION_PRESENT, "obj", 0, 1,
-	"at most one object may be specified"),
-    GED_RULE_NULL
+    BU_ARG_OPTION_NULL
 };
-static const ged_opt_spec summary_opt_spec =
-    GED_OPT_WITH("summary", "Summarize database contents or one object",
-	summary_options,
-	"interspersed object_or_legacy_type:object@ged.summary_object_or_legacy_type?",
-	summary_opt_rules);
+static const struct bu_arg_operand summary_operands[] = {
+    BU_ARG_OPERAND("object_or_legacy_type", BU_ARG_VALUE_DB_OBJECT, 0, 1,
+	"Database object or legacy p/r/g selector",
+	"ged.summary_object_or_legacy_type"),
+    BU_ARG_OPERAND_NULL
+};
+static const char * const summary_object_option[] = {"obj", NULL};
+static const struct bu_arg_constraint summary_constraints[] = {
+    BU_ARG_CONSTRAINT(BU_ARG_CONSTRAINT_OPERAND_COUNT,
+	BU_ARG_CONDITION_ANY_OPTION_PRESENT, summary_object_option, 0, 0,
+	"object specified both by --obj and as an operand"),
+    BU_ARG_CONSTRAINT(BU_ARG_CONSTRAINT_OPERAND_COUNT,
+	BU_ARG_CONDITION_NO_OPTION_PRESENT, summary_object_option, 0, 1,
+	"at most one object may be specified"),
+    BU_ARG_CONSTRAINT_NULL
+};
+static const struct bu_arg_schema summary_cmd_schema =
+    BU_ARG_SCHEMA("summary", "Summarize database contents or one object",
+	summary_options, summary_operands, BU_ARG_PARSE_INTERSPERSED,
+	BU_ARG_SCHEMA_META_HELP(NULL, summary_constraints, NULL, NULL, NULL));
 
 
 static void
@@ -211,7 +218,8 @@ ged_summary_core(struct ged *gedp, int argc, const char *argv[])
 {
     struct summary_args args = {0, NULL};
     struct bu_vls obj_name = BU_VLS_INIT_ZERO;
-    int operand_count = 0;
+    int operand_count;
+    int operand_index;
     const char *command = argv[0];
 
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
@@ -221,13 +229,15 @@ ged_summary_core(struct ged *gedp, int argc, const char *argv[])
     bu_vls_trunc(gedp->ged_result_str, 0);
 
     argc--; argv++;
-    operand_count = bu_opt_parse_build(gedp->ged_result_str, argc, argv,
-	summary_options, &args);
-    if (operand_count < 0) {
+    operand_index = bu_arg_schema_parse_complete(&summary_cmd_schema, &args,
+	gedp->ged_result_str, argc, argv);
+    if (operand_index < 0) {
 	summary_show_help(gedp, command);
 	bu_vls_free(&obj_name);
 	return BRLCAD_ERROR;
     }
+    operand_count = argc - operand_index;
+    argv += operand_index;
 
     if (args.print_help) {
 	summary_show_help(gedp, command);
@@ -235,14 +245,6 @@ ged_summary_core(struct ged *gedp, int argc, const char *argv[])
 	return BRLCAD_OK;
     }
 
-    if (operand_count > 1 || (args.object && operand_count)) {
-	if (args.object && operand_count)
-	    bu_vls_printf(gedp->ged_result_str,
-		"object specified both by --obj and as an operand\n");
-	summary_show_help(gedp, command);
-	bu_vls_free(&obj_name);
-	return BRLCAD_ERROR;
-    }
     argc = operand_count;
 
     /* must be wanting database summary */
@@ -310,10 +312,10 @@ ged_summary_core(struct ged *gedp, int argc, const char *argv[])
 #include "../include/plugin.h"
 
 #define GED_SUMMARY_COMMANDS(X, XID) \
-    X(summary, ged_summary_core, GED_CMD_DEFAULT, &summary_opt_spec) \
+    X(summary, ged_summary_core, GED_CMD_DEFAULT, &summary_cmd_schema) \
 
-GED_DECLARE_COMMAND_SET_WITH_OPT_SPEC(GED_SUMMARY_COMMANDS)
-GED_DECLARE_PLUGIN_MANIFEST_WITH_OPT_SPEC("libged_summary", 1, GED_SUMMARY_COMMANDS)
+GED_DECLARE_COMMAND_SET_WITH_NATIVE_SCHEMA(GED_SUMMARY_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST_WITH_NATIVE_SCHEMA("libged_summary", 1, GED_SUMMARY_COMMANDS)
 
 /*
  * Local Variables:
