@@ -4959,7 +4959,7 @@ main(int ac, char *av[])
 	const char *region_missing_member_av[] = {"region", "native_region_for_schema.r", "u"};
 	const char *sphgroup_missing_sphere_av[] = {"sphgroup", "native_sphgroup_for_schema.g"};
 	const char *track_bad_dimension_av[] = {"track", "native_track_for_schema", "1", "1", "1", "1", "1", "1", "1", "1", "1", "1", "1", "1", "not-a-number"};
-	const char *annotate_valid_av[] = {"annotate", "text", "-D", "--at", "0", "0", "0", "native_annotate_label", "text"};
+	const char *annotate_valid_av[] = {"annotate", "text", "-D", "--at", "0", "0", "0", "--plane", "xz", "--font", "osifont", "--line-style", "dashed", "-C", "10", "20", "30", "native_annotate_label", "text"};
 	const char *annotate_bad_point_av[] = {"annotate", "text", "-D", "--at", "0", "nope", "0", "bad_annotate", "text"};
 	const char *bo_bad_minor_type_av[] = {"bo", "-i", "u", "nope", "native_bo_for_schema.bin", "/tmp/ged_test_cmd_analysis_missing.bin"};
 	const char *bo_missing_output_source_av[] = {"bo", "-o", "/tmp/ged_test_cmd_analysis_bo.out"};
@@ -5488,8 +5488,8 @@ main(int ac, char *av[])
 		"sphgroup should reject a native group form without a target sphere before traversal");
 	CHECK(ged_exec_track(gedp, 15, track_bad_dimension_av) == BRLCAD_ERROR,
 		"track should reject an invalid native geometry dimension before creating objects");
-	CHECK(ged_exec_annotate(gedp, 9, annotate_valid_av) == BRLCAD_OK,
-		"annotate text should create an annotation with a parsed anchor point");
+	CHECK(ged_exec_annotate(gedp, 19, annotate_valid_av) == BRLCAD_OK,
+		"annotate text should create an annotation with native styled options");
 	CHECK(ged_exec_annotate(gedp, 9, annotate_bad_point_av) == BRLCAD_ERROR,
 		"annotate text should reject an invalid anchor point before creating an object");
 	CHECK(ged_exec_bo(gedp, 6, bo_bad_minor_type_av) == BRLCAD_ERROR,
