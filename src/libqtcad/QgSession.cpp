@@ -22,7 +22,6 @@
 QgSession::QgSession(QObject *parent)
     : QObject(parent), m_gedp(ged_create())
 {
-    m_gedp->dbi_state = new DbiState(m_gedp);
     m_gedp->new_cmd_forms = 1;
 }
 

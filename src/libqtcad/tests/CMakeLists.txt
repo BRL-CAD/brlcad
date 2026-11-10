@@ -15,6 +15,7 @@ endif()
 if(TARGET test_qtcad_session)
   set_target_properties(test_qtcad_session PROPERTIES AUTOMOC ON)
   target_compile_definitions(test_qtcad_session PRIVATE BRLCADBUILD HAVE_CONFIG_H)
+  add_dependencies(test_qtcad_session ged_plugins)
   brlcad_add_test(NAME test_qtcad_session COMMAND test_qtcad_session)
 endif()
 

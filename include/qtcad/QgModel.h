@@ -67,6 +67,7 @@
 #ifndef QGMODEL_H
 #define QGMODEL_H
 
+#include <cstdint>
 #include <string>
 #include <vector>
 #include <unordered_map>
@@ -344,6 +345,7 @@ class QTCAD_EXPORT QgModel : public QAbstractItemModel
 	QgSession *m_session = NULL;
 	struct db_i *model_dbip = NULL;
 	uint64_t model_revision = 0;
+	uintptr_t event_observer = 0;
 };
 
 #endif //QGMODEL_H

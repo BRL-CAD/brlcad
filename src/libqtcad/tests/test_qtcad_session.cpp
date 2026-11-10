@@ -11,11 +11,17 @@
 
 #include "common.h"
 
+#include <QAbstractItemModelTester>
+#include <QFile>
+#include <QSignalSpy>
+#include <QTemporaryDir>
 #include <QtTest/QTest>
 
 #include "ged.h"
 #include "qtcad/QgModel.h"
 #include "qtcad/QgSession.h"
+
+#include "../../libged/dbi.h"
 
 class QgSessionTest : public QObject
 {
@@ -25,6 +31,7 @@ private slots:
     void ownsGedContext();
     void publishesChanges();
     void suppliesModelContext();
+    void reconcilesModelEvents();
 };
 
 void
@@ -36,7 +43,7 @@ QgSessionTest::ownsGedContext()
     QVERIFY(session.dbip() == nullptr);
     QVERIFY(session.activeView() != nullptr);
     QCOMPARE(session.activeView(), session.ged()->ged_gvp);
-    QVERIFY(session.ged()->dbi_state != nullptr);
+    QVERIFY(session.ged()->dbi_state == nullptr);
     QCOMPARE(session.ged()->new_cmd_forms, 1);
 }
 
@@ -67,6 +74,51 @@ QgSessionTest::suppliesModelContext()
     QVERIFY(model.session() != nullptr);
     QCOMPARE(model.gedp, model.session()->ged());
     QVERIFY(model.gedp->ged_gvp != nullptr);
+}
+
+void
+QgSessionTest::reconcilesModelEvents()
+{
+    qRegisterMetaType<struct db_i *>("db_i*");
+    QTemporaryDir temporaryDirectory;
+    QVERIFY(temporaryDirectory.isValid());
+    QByteArray databasePath = QFile::encodeName(
+	temporaryDirectory.filePath("events.g"));
+    constexpr int databaseVersion = 5;
+    struct db_i *created = db_create(databasePath.constData(),
+	databaseVersion);
+    QVERIFY(created != DBI_NULL);
+    db_close(created);
+
+    QgModel model;
+    QAbstractItemModelTester tester(&model,
+	QAbstractItemModelTester::FailureReportingMode::QtTest);
+    const char *openArguments[] = {"open", databasePath.constData()};
+    QCOMPARE(model.run_cmd(model.gedp->ged_result_str, 2, openArguments),
+	BRLCAD_OK);
+    QVERIFY(model.gedp->dbi_state != nullptr);
+    QCOMPARE(model.rowCount(), 0);
+
+    QSignalSpy changes(model.session(), &QgSession::db_changed);
+    const char *makeArguments[] = {"make", "event.s", "sph"};
+    QCOMPARE(model.run_cmd(model.gedp->ged_result_str, 3, makeArguments),
+	BRLCAD_OK);
+    QCOMPARE(model.rowCount(), 1);
+    QCOMPARE(changes.count(), 1);
+
+    DbiState *state = static_cast<DbiState *>(model.gedp->dbi_state);
+    QVERIFY(state->change_snapshots().empty());
+    QVERIFY(db_lookup(model.gedp->dbip, "event.s", LOOKUP_QUIET) !=
+	RT_DIR_NULL);
+
+    const char *killArguments[] = {"kill", "event.s"};
+    QCOMPARE(model.run_cmd(model.gedp->ged_result_str, 2, killArguments),
+	BRLCAD_OK);
+    QCOMPARE(model.rowCount(), 0);
+    QCOMPARE(changes.count(), 2);
+    QVERIFY(state->change_snapshots().empty());
+    QVERIFY(db_lookup(model.gedp->dbip, "event.s", LOOKUP_QUIET) ==
+	RT_DIR_NULL);
 }
 
 QTEST_APPLESS_MAIN(QgSessionTest)

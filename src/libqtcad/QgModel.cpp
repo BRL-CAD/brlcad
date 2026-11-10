@@ -47,7 +47,6 @@
 #include <QFileInfo>
 
 #include "bu/env.h"
-#include "bu/hash.h"
 #include "bu/sort.h"
 #include "raytrace.h"
 #define ALPHANUM_IMPL
@@ -237,6 +236,16 @@ QgItem::path_hash()
     return phash;
 }
 
+extern "C" void
+qgmodel_event_callback(struct ged *UNUSED(gedp),
+	const struct ged_event *UNUSED(events), size_t UNUSED(event_count),
+	const struct ged_event_result *UNUSED(result), void *client_data)
+{
+    QgModel *mdl = static_cast<QgModel *>(client_data);
+    mdl->changed_db_flag = 1;
+}
+
+
 QgModel::QgModel(QObject *p, const char *npath)
 : QAbstractItemModel(p)
 {
@@ -246,6 +255,8 @@ QgModel::QgModel(QObject *p, const char *npath)
     // libged "open" command to open a .g file.
     m_session = new QgSession(this);
     gedp = m_session->ged();
+    event_observer = ged_event_observer_add(gedp,
+	GED_EVENT_OBSERVER_POST_RECONCILE, qgmodel_event_callback, this);
     bu_setenv("DM_SWRAST", "1", 1);
 
     // Set up the root item
@@ -274,6 +285,8 @@ QgModel::QgModel(QObject *p, const char *npath)
 
 QgModel::~QgModel()
 {
+    if (event_observer)
+	ged_event_observer_remove(gedp, event_observer);
     delete items;
     delete rootItem;
 }
@@ -362,10 +375,8 @@ QgModel::item_rebuild(QgItem *item)
 void
 QgModel::g_update(struct db_i *n_dbip)
 {
-
     const bool new_database = model_dbip != n_dbip;
     model_dbip = n_dbip;
-
     if (!n_dbip) {
 	// if we have no dbip, clear out everything
 	beginResetModel();
@@ -384,7 +395,6 @@ QgModel::g_update(struct db_i *n_dbip)
 	emit mdl_changed_db((void *)gedp);
 	m_session->notifyDbChanged(nullptr);
 	emit view_change(QG_VIEW_DRAWN);
-	emit layoutChanged();
 	changed_db_flag = 0;
 	model_revision = 0;
 	endResetModel();
@@ -500,7 +510,6 @@ QgModel::g_update(struct db_i *n_dbip)
     if (changed_db_flag) {
 	emit mdl_changed_db((void *)gedp);
 	m_session->notifyDbChanged(n_dbip);
-	emit layoutChanged();
 	emit check_highlights();
     }
 
