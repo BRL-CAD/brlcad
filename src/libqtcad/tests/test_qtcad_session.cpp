@@ -72,8 +72,9 @@ QgSessionTest::suppliesModelContext()
     QgModel model;
 
     QVERIFY(model.session() != nullptr);
-    QCOMPARE(model.gedp, model.session()->ged());
-    QVERIFY(model.gedp->ged_gvp != nullptr);
+    QCOMPARE(model.ged(), model.session()->ged());
+    QCOMPARE(model.gedp, model.ged());
+    QVERIFY(model.ged()->ged_gvp != nullptr);
 }
 
 void
@@ -94,30 +95,39 @@ QgSessionTest::reconcilesModelEvents()
     QAbstractItemModelTester tester(&model,
 	QAbstractItemModelTester::FailureReportingMode::QtTest);
     const char *openArguments[] = {"open", databasePath.constData()};
-    QCOMPARE(model.run_cmd(model.gedp->ged_result_str, 2, openArguments),
+    QCOMPARE(model.run_cmd(model.ged()->ged_result_str, 2, openArguments),
 	BRLCAD_OK);
-    QVERIFY(model.gedp->dbi_state != nullptr);
+    QVERIFY(model.ged()->dbi_state != nullptr);
     QCOMPARE(model.rowCount(), 0);
 
     QSignalSpy changes(model.session(), &QgSession::db_changed);
+    QSignalSpy viewChanges(model.session(), &QgSession::view_changed);
+    QSignalSpy compatibilityViewChanges(&model, &QgModel::view_change);
     const char *makeArguments[] = {"make", "event.s", "sph"};
-    QCOMPARE(model.run_cmd(model.gedp->ged_result_str, 3, makeArguments),
+    QCOMPARE(model.run_cmd(model.ged()->ged_result_str, 3, makeArguments),
 	BRLCAD_OK);
     QCOMPARE(model.rowCount(), 1);
     QCOMPARE(changes.count(), 1);
 
-    DbiState *state = static_cast<DbiState *>(model.gedp->dbi_state);
+    DbiState *state = static_cast<DbiState *>(model.ged()->dbi_state);
     QVERIFY(state->change_snapshots().empty());
-    QVERIFY(db_lookup(model.gedp->dbip, "event.s", LOOKUP_QUIET) !=
+    QVERIFY(db_lookup(model.ged()->dbip, "event.s", LOOKUP_QUIET) !=
 	RT_DIR_NULL);
 
+    QCOMPARE(model.draw("event.s"), BRLCAD_OK);
+    QCOMPARE(viewChanges.count(), 1);
+    QCOMPARE(compatibilityViewChanges.count(), 1);
+    QCOMPARE(model.erase("event.s"), BRLCAD_OK);
+    QCOMPARE(viewChanges.count(), 2);
+    QCOMPARE(compatibilityViewChanges.count(), 2);
+
     const char *killArguments[] = {"kill", "event.s"};
-    QCOMPARE(model.run_cmd(model.gedp->ged_result_str, 2, killArguments),
+    QCOMPARE(model.run_cmd(model.ged()->ged_result_str, 2, killArguments),
 	BRLCAD_OK);
     QCOMPARE(model.rowCount(), 0);
     QCOMPARE(changes.count(), 2);
     QVERIFY(state->change_snapshots().empty());
-    QVERIFY(db_lookup(model.gedp->dbip, "event.s", LOOKUP_QUIET) ==
+    QVERIFY(db_lookup(model.ged()->dbip, "event.s", LOOKUP_QUIET) ==
 	RT_DIR_NULL);
 }
 

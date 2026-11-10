@@ -88,8 +88,8 @@ struct QgItem_cmp {
 
 	struct directory *inst1 = NULL;
 	struct directory *inst2 = NULL;
-	DbiState *ctx1 = (DbiState *)i1->mdl->gedp->dbi_state;
-	DbiState *ctx2 = (DbiState *)i2->mdl->gedp->dbi_state;
+	DbiState *ctx1 = (DbiState *)i1->mdl->ged()->dbi_state;
+	DbiState *ctx2 = (DbiState *)i2->mdl->ged()->dbi_state;
 	if (ctx1->d_map.find(i1->ihash) != ctx1->d_map.end()) {
 	    inst1 = ctx1->d_map[i1->ihash];
 	}
@@ -116,7 +116,7 @@ struct QgItem_cmp {
 QgItem::QgItem(unsigned long long hash, QgModel *ictx)
 {
     mdl = ictx;
-    DbiState *ctx = (DbiState *)mdl->gedp->dbi_state;
+    DbiState *ctx = (DbiState *)mdl->ged()->dbi_state;
     ihash = hash;
     parentItem = NULL;
     if (!ctx)
@@ -134,7 +134,7 @@ QgItem::QgItem(unsigned long long hash, QgModel *ictx)
     // Local item information
     ctx->print_hash(&name, ihash);
     dp = ctx->get_hdp(ihash);
-    icon = QgIcon(dp, ictx->gedp->dbip);
+    icon = QgIcon(dp, ictx->ged()->dbip);
 }
 
 QgItem::~QgItem()
@@ -231,7 +231,7 @@ unsigned long long
 QgItem::path_hash()
 {
     std::vector<unsigned long long> pitems = path_items();
-    DbiState *dbis = (DbiState *)mdl->gedp->dbi_state;
+    DbiState *dbis = (DbiState *)mdl->ged()->dbi_state;
     unsigned long long phash = dbis->path_hash(pitems, 0);
     return phash;
 }
@@ -255,7 +255,9 @@ QgModel::QgModel(QObject *p, const char *npath)
     // libged "open" command to open a .g file.
     m_session = new QgSession(this);
     gedp = m_session->ged();
-    event_observer = ged_event_observer_add(gedp,
+    QObject::connect(this, &QgModel::view_change,
+	m_session, &QgSession::notifyViewChanged);
+    event_observer = ged_event_observer_add(ged(),
 	GED_EVENT_OBSERVER_POST_RECONCILE, qgmodel_event_callback, this);
     bu_setenv("DM_SWRAST", "1", 1);
 
@@ -279,14 +281,14 @@ QgModel::QgModel(QObject *p, const char *npath)
 	av[0] = "open";
 	av[1] = npath;
 	av[2] = NULL;
-	run_cmd(gedp->ged_result_str, ac, (const char **)av);
+	run_cmd(ged()->ged_result_str, ac, (const char **)av);
     }
 }
 
 QgModel::~QgModel()
 {
     if (event_observer)
-	ged_event_observer_remove(gedp, event_observer);
+	ged_event_observer_remove(ged(), event_observer);
     delete items;
     delete rootItem;
 }
@@ -295,6 +297,12 @@ QgSession *
 QgModel::session() const
 {
     return m_session;
+}
+
+struct ged *
+QgModel::ged() const
+{
+    return m_session ? m_session->ged() : NULL;
 }
 
 // Note - this is a private method and must be run from within g_update's
@@ -311,7 +319,7 @@ QgModel::item_rebuild(QgItem *item)
     }
 
     unsigned long long chash = item->ihash;
-    DbiState *dbis = (DbiState *)gedp->dbi_state;
+    DbiState *dbis = (DbiState *)ged()->dbi_state;
     if (dbis->p_v.find(chash) == dbis->p_v.end()) {
 	// TODO - invalid hash
 	return;
@@ -392,7 +400,7 @@ QgModel::g_update(struct db_i *n_dbip)
 
 	items->clear();
 	tops_items.clear();
-	emit mdl_changed_db((void *)gedp);
+	emit mdl_changed_db((void *)ged());
 	m_session->notifyDbChanged(nullptr);
 	emit view_change(QG_VIEW_DRAWN);
 	changed_db_flag = 0;
@@ -401,7 +409,7 @@ QgModel::g_update(struct db_i *n_dbip)
 	return;
     }
 
-    DbiState *dbis = static_cast<DbiState *>(gedp->dbi_state);
+    DbiState *dbis = static_cast<DbiState *>(ged()->dbi_state);
     dbis->update();
     const uint64_t revision = dbis->change_revision();
 
@@ -508,7 +516,7 @@ QgModel::g_update(struct db_i *n_dbip)
 
     // If we did change something, we need to let the application know
     if (changed_db_flag) {
-	emit mdl_changed_db((void *)gedp);
+	emit mdl_changed_db((void *)ged());
 	m_session->notifyDbChanged(n_dbip);
 	emit check_highlights();
     }
@@ -552,7 +560,7 @@ QgModel::canFetchMore(const QModelIndex &idx) const
        	return false;
 
     // If there are children to be fetched, we can fetch them
-    DbiState *dbis = (DbiState *)gedp->dbi_state;
+    DbiState *dbis = (DbiState *)ged()->dbi_state;
     if (dbis->p_v.find(item->ihash) != dbis->p_v.end()) {
 	if (dbis->p_v[item->ihash].size())
 	    return true;
@@ -577,7 +585,7 @@ QgModel::fetchMore(const QModelIndex &idx)
     if (item->children.size())
 	return;
 
-    DbiState *dbis = (DbiState *)gedp->dbi_state;
+    DbiState *dbis = (DbiState *)ged()->dbi_state;
     unsigned long long chash = item->ihash;
     if (dbis->p_v.find(chash) == dbis->p_v.end()) {
 	// TODO - invalid hash
@@ -681,7 +689,7 @@ QgModel::data(const QModelIndex &index, int role) const
     if (!index.isValid())
 	return QVariant();
     QgItem *qi= getItem(index);
-    DbiState *dbis = (DbiState *)qi->mdl->gedp->dbi_state;
+    DbiState *dbis = (DbiState *)qi->mdl->ged()->dbi_state;
     if (role == Qt::DisplayRole)
 	return QVariant(bu_vls_cstr(&qi->name));
     if (role == BoolInternalRole)
@@ -689,7 +697,7 @@ QgModel::data(const QModelIndex &index, int role) const
     if (role == DirectoryInternalRole)
 	return QVariant::fromValue((void *)(qi->dp));
     if (role == DrawnDisplayRole) {
-	BViewState *vs = dbis->get_view_state(gedp->ged_gvp);
+	BViewState *vs = dbis->get_view_state(ged()->ged_gvp);
 	return QVariant(vs->is_hdrawn(-1, qi->path_hash()));
     }
     if (role == SelectDisplayRole) {
@@ -768,6 +776,7 @@ QgModel::columnCount(const QModelIndex &p) const
 int
 QgModel::run_cmd(struct bu_vls *msg, int argc, const char **argv)
 {
+    struct ged *gedp = ged();
     model_dbip = gedp->dbip;
 
     changed_dp.clear();
@@ -814,7 +823,7 @@ QgModel::draw_action()
 	return BRLCAD_ERROR;
     std::vector<unsigned long long> path_hashes = cnode->path_items();
     struct bu_vls path_str = BU_VLS_INIT_ZERO;
-    DbiState *dbis = (DbiState *)gedp->dbi_state;
+    DbiState *dbis = (DbiState *)ged()->dbi_state;
     dbis->print_path(&path_str, path_hashes);
     int ret = draw(bu_vls_cstr(&path_str));
     bu_vls_free(&path_str);
@@ -829,7 +838,7 @@ QgModel::draw(const char *inst_path)
     argv[0] = "draw";
     argv[1] = inst_path;
 
-    int ret = ged_exec_draw(gedp, 2, argv);
+    int ret = ged_exec_draw(ged(), 2, argv);
 
     emit view_change(QG_VIEW_DRAWN);
     return ret;
@@ -847,7 +856,7 @@ QgModel::erase_action()
 	return BRLCAD_ERROR;
     std::vector<unsigned long long> path_hashes = cnode->path_items();
     struct bu_vls path_str = BU_VLS_INIT_ZERO;
-    DbiState *dbis = (DbiState *)gedp->dbi_state;
+    DbiState *dbis = (DbiState *)ged()->dbi_state;
     dbis->print_path(&path_str, path_hashes);
     int ret = erase(bu_vls_cstr(&path_str));
     bu_vls_free(&path_str);
@@ -862,7 +871,7 @@ QgModel::erase(const char *inst_path)
     argv[0] = "erase";
     argv[1] = inst_path;
 
-    int ret = ged_exec_erase(gedp, 2, argv);
+    int ret = ged_exec_erase(ged(), 2, argv);
 
     emit view_change(QG_VIEW_DRAWN);
     return ret;
@@ -872,6 +881,7 @@ void
 QgModel::toggle_hierarchy()
 {
     QTCAD_SLOT("QgModel::toggle_hierarchy", 1);
+    struct ged *gedp = ged();
     if (!gedp || !gedp->dbip)
 	return;
 

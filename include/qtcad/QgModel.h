@@ -217,9 +217,12 @@ class QTCAD_EXPORT QgModel : public QAbstractItemModel
 	explicit QgModel(QObject *p = NULL, const char *npath = NULL);
 	~QgModel();
 	QgSession *session() const;
+	struct ged *ged() const;
 
 	// .g Db interface and containers
 	int run_cmd(struct bu_vls *msg, int argc, const char **argv);
+	/* Compatibility alias for code written before QgSession owned the GED
+	 * context.  New code should use ged() or session(). */
 	struct ged *gedp = NULL;
 
 	// Updates to .g models are potentially far-reaching - in principle, a

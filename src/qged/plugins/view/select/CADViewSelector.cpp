@@ -358,7 +358,7 @@ CADViewSelector::eventFilter(QObject *o, QEvent *e)
     QgModel *m = ((QgEdApp *)qApp)->mdl;
     if (!m)
 	return false;
-    gedp = m->gedp;
+    gedp = m->ged();
     if (!gedp || !gedp->ged_gvp)
 	return false;
     struct bview *v = gedp->ged_gvp;

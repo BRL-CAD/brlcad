@@ -90,7 +90,7 @@ print_children(QgItem *itm, QgModel *s, int depth)
 
     struct bu_vls path_str = BU_VLS_INIT_ZERO;
     std::vector<unsigned long long> path_hashes = itm->path_items();
-    DbiState *dbis = (DbiState *)itm->mdl->gedp->dbi_state;
+    DbiState *dbis = (DbiState *)itm->mdl->ged()->dbi_state;
     dbis->print_hash(&path_str, path_hashes[path_hashes.size()-1]);
     std::cout << bu_vls_cstr(&path_str) << "\n";
     bu_vls_free(&path_str);

@@ -184,7 +184,7 @@ QPolyMod::mod_names_reset()
     QgModel *m = ((QgEdApp *)qApp)->mdl;
     if (!m)
 	return;
-    struct ged *gedp = m->gedp;
+    struct ged *gedp = m->ged();
     if (!gedp)
 	return;
 
@@ -255,7 +255,7 @@ QPolyMod::polygon_update_props()
     QgModel *m = ((QgEdApp *)qApp)->mdl;
     if (!m)
 	return;
-    struct ged *gedp = m->gedp;
+    struct ged *gedp = m->ged();
     if (!gedp)
 	return;
 
@@ -290,7 +290,7 @@ QPolyMod::toplevel_config(bool)
     QgModel *m = ((QgEdApp *)qApp)->mdl;
     if (!m)
 	return;
-    struct ged *gedp = m->gedp;
+    struct ged *gedp = m->ged();
     bool draw_change = false;
 
     // This function is called when a top level mode change was initiated
@@ -358,7 +358,7 @@ QPolyMod::clear_pnt_selection(bool checked)
     QgModel *m = ((QgEdApp *)qApp)->mdl;
     if (!m)
 	return;
-    struct ged *gedp = m->gedp;
+    struct ged *gedp = m->ged();
     if (!gedp)
 	return;
 
@@ -371,7 +371,7 @@ QPolyMod::select(const QString &poly)
     QgModel *m = ((QgEdApp *)qApp)->mdl;
     if (!m)
 	return;
-    struct ged *gedp = m->gedp;
+    struct ged *gedp = m->ged();
     if (!gedp)
 	return;
 
@@ -467,7 +467,7 @@ QPolyMod::toggle_closed_poly(bool checked)
     QgModel *m = ((QgEdApp *)qApp)->mdl;
     if (!m)
 	return;
-    struct ged *gedp = m->gedp;
+    struct ged *gedp = m->ged();
     if (!gedp)
 	return;
 
@@ -530,7 +530,7 @@ QPolyMod::apply_bool_op()
     QgModel *m = ((QgEdApp *)qApp)->mdl;
     if (!m || !p)
 	return;
-    struct ged *gedp = m->gedp;
+    struct ged *gedp = m->ged();
     if (!gedp)
 	return;
 
@@ -586,7 +586,7 @@ QPolyMod::align_to_poly()
     QgModel *m = ((QgEdApp *)qApp)->mdl;
     if (!m || !p)
 	return;
-    struct ged *gedp = m->gedp;
+    struct ged *gedp = m->ged();
     if (!gedp)
 	return;
 
@@ -612,7 +612,7 @@ QPolyMod::delete_poly()
     QgModel *m = ((QgEdApp *)qApp)->mdl;
     if (!m || !p)
 	return;
-    struct ged *gedp = m->gedp;
+    struct ged *gedp = m->ged();
     if (!gedp)
 	return;
 
@@ -649,7 +649,7 @@ QPolyMod::sketch_name_edit()
     QgModel *m = ((QgEdApp *)qApp)->mdl;
     if (!m)
 	return;
-    struct ged *gedp = m->gedp;
+    struct ged *gedp = m->ged();
     if (!gedp) {
 	ps->sketch_name->setPlaceholderText("No .g file open");
 	ps->sketch_name->setStyleSheet("color: rgb(200,200,200)");
@@ -726,7 +726,7 @@ QPolyMod::sketch_name_update()
     QgModel *m = ((QgEdApp *)qApp)->mdl;
     if (!m)
 	return;
-    struct ged *gedp = m->gedp;
+    struct ged *gedp = m->ged();
     if (!gedp)
 	return;
 
@@ -802,7 +802,7 @@ QPolyMod::view_name_edit()
     QgModel *m = ((QgEdApp *)qApp)->mdl;
     if (!m)
 	return;
-    struct ged *gedp = m->gedp;
+    struct ged *gedp = m->ged();
     if (!gedp)
 	return;
 
@@ -819,7 +819,7 @@ QPolyMod::view_name_update()
     QgModel *m = ((QgEdApp *)qApp)->mdl;
     if (!m || !p)
 	return;
-    struct ged *gedp = m->gedp;
+    struct ged *gedp = m->ged();
     if (!gedp)
 	return;
 
@@ -924,7 +924,7 @@ QPolyMod::eventFilter(QObject *, QEvent *e)
     QgModel *m = ((QgEdApp *)qApp)->mdl;
     if (!m)
 	return false;
-    struct ged *gedp = m->gedp;
+    struct ged *gedp = m->ged();
     if (!gedp)
 	return false;
 

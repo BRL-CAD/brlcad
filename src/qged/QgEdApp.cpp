@@ -52,17 +52,17 @@ qged_post_opendb_clbk(int UNUSED(ac), const char **UNUSED(av), void *UNUSED(gedp
 
     // If the command didn't succeed, don't do anything.  Return OK for our execution
     // so the ged_exec return code is the command's ret, not ours.
-    if (ged_results_ret(a->mdl->gedp->ged_results) != BRLCAD_OK)
+    if (ged_results_ret(a->mdl->ged()->ged_results) != BRLCAD_OK)
 	return BRLCAD_OK;
 
-    emit a->dbi_update(a->mdl->gedp->dbip);
+    emit a->dbi_update(a->mdl->ged()->dbip);
     if (!a->w)
 	return BRLCAD_OK;
-    if (!a->mdl->gedp->dbip) {
+    if (!a->mdl->ged()->dbip) {
 	a->w->statusBar()->showMessage("open failed");
 	return BRLCAD_OK;
     }
-    QString fileName(a->mdl->gedp->dbip->dbi_filename);
+    QString fileName(a->mdl->ged()->dbip->dbi_filename);
     a->w->statusBar()->showMessage(fileName);
     return BRLCAD_OK;
 }
@@ -182,7 +182,7 @@ QgEdApp::QgEdApp(int &argc, char *argv[], const char *g_file, int swrast_mode, i
 
     /* GED needs some information and methods from QGED - make
      * those assignment */
-    struct ged *gedp = mdl->gedp;
+    struct ged *gedp = mdl->ged();
 
     // Let GED know to use the QgQuadView view as its current view
     gedp->ged_gvp = w->CurrentView();
@@ -248,15 +248,15 @@ QgEdApp::QgEdApp(int &argc, char *argv[], const char *g_file, int swrast_mode, i
     }
 
     // Assign QGED specific open/close db handlers to the gedp
-    ged_clbk_set(mdl->gedp, "opendb", BU_CLBK_PRE, &qged_pre_opendb_clbk, (void *)qApp);
-    ged_clbk_set(mdl->gedp, "opendb", BU_CLBK_POST, &qged_post_opendb_clbk, (void *)qApp);
-    ged_clbk_set(mdl->gedp, "closedb", BU_CLBK_PRE, &qged_pre_closedb_clbk, (void *)qApp);
-    ged_clbk_set(mdl->gedp, "closedb", BU_CLBK_POST, &qged_post_closedb_clbk, (void *)qApp);
+    ged_clbk_set(mdl->ged(), "opendb", BU_CLBK_PRE, &qged_pre_opendb_clbk, (void *)qApp);
+    ged_clbk_set(mdl->ged(), "opendb", BU_CLBK_POST, &qged_post_opendb_clbk, (void *)qApp);
+    ged_clbk_set(mdl->ged(), "closedb", BU_CLBK_PRE, &qged_pre_closedb_clbk, (void *)qApp);
+    ged_clbk_set(mdl->ged(), "closedb", BU_CLBK_POST, &qged_post_closedb_clbk, (void *)qApp);
 
     // Assign QGED specific I/O handlers to the gedp
-    mdl->gedp->ged_create_io_handler = &qt_create_io_handler;
-    mdl->gedp->ged_delete_io_handler = &qt_delete_io_handler;
-    mdl->gedp->ged_io_data = (void *)qApp;
+    mdl->ged()->ged_create_io_handler = &qt_create_io_handler;
+    mdl->ged()->ged_delete_io_handler = &qt_delete_io_handler;
+    mdl->ged()->ged_io_data = (void *)qApp;
 
     // If we have a default filename supplied, open it.  We've delayed doing so
     // until now in order to have the display related containers from graphical
@@ -276,7 +276,7 @@ QgEdApp::QgEdApp(int &argc, char *argv[], const char *g_file, int swrast_mode, i
 	    bu_exit(EXIT_FAILURE, "Error opening file %s\n", fname);
 	}
 	bu_free(fname, "path");
-	emit dbi_update(mdl->gedp->dbip);
+	emit dbi_update(mdl->ged()->dbip);
     }
 
     // Send a view_change signal so widgets depending on view information
@@ -310,8 +310,8 @@ QgEdApp::QgEdApp(int &argc, char *argv[], const char *g_file, int swrast_mode, i
 }
 
 QgEdApp::~QgEdApp() {
-    if (mdl && mdl->gedp)
-	ged_subprocesses_terminate(mdl->gedp);
+    if (mdl && mdl->ged())
+	ged_subprocesses_terminate(mdl->ged());
     delete mdl;
     // TODO - free rt_vlfree?
 }
@@ -320,7 +320,7 @@ void
 QgEdApp::do_quad_view_change(QgView *cv)
 {
     QTCAD_SLOT("QgEdApp::do_quad_view_change", 1);
-    mdl->gedp->ged_gvp = cv->view();
+    mdl->ged()->ged_gvp = cv->view();
     emit view_update(QG_VIEW_REFRESH);
 }
 
@@ -334,9 +334,9 @@ QgEdApp::do_view_changed(unsigned long long flags)
 	// For all associated view states, execute any necessary changes to
 	// view objects and lists
 	std::unordered_map<BViewState *, std::unordered_set<struct bview *>> vmap;
-	struct bu_ptbl *views = bv_set_views(&mdl->gedp->ged_views);
-	if (mdl->gedp->dbi_state) {
-	    DbiState *dbis = (DbiState *)mdl->gedp->dbi_state;
+	struct bu_ptbl *views = bv_set_views(&mdl->ged()->ged_views);
+	if (mdl->ged()->dbi_state) {
+	    DbiState *dbis = (DbiState *)mdl->ged()->dbi_state;
 	    for (size_t i = 0; i < BU_PTBL_LEN(views); i++) {
 		struct bview *v = (struct bview *)BU_PTBL_GET(views, i);
 		BViewState *bvs = dbis->get_view_state(v);
@@ -381,7 +381,7 @@ QgEdApp::load_g_file(const char *gfile, bool do_conversion)
     av[0] = "opendb";
     av[1] = bu_strdup(fileName.toLocal8Bit().data());
     av[2] = NULL;
-    int ret = mdl->run_cmd(mdl->gedp->ged_result_str, ac, (const char **)av);
+    int ret = mdl->run_cmd(mdl->ged()->ged_result_str, ac, (const char **)av);
     bu_free((void *)av[1], "filename cpy");
     return ret;
 }
@@ -430,7 +430,7 @@ QgEdApp::run_cmd(struct bu_vls *msg, int argc, const char **argv)
     if (!mdl || !argc || !argv)
 	return BRLCAD_ERROR;
 
-    struct ged *gedp = mdl->gedp;
+    struct ged *gedp = mdl->ged();
 
     BSelectState *ss = (gedp->dbi_state) ? ((DbiState *)gedp->dbi_state)->find_selected_state(NULL) : NULL;
     select_hash = (ss) ? ss->state_hash() : 0;
@@ -567,7 +567,7 @@ QgEdApp::run_qcmd(const QString &command)
 	return;
     }
 
-    ged_set_terminal_columns(mdl->gedp, console ? console->columns() : 0);
+    ged_set_terminal_columns(mdl->ged(), console ? console->columns() : 0);
 
     // make an argv array
     struct bu_vls ged_prefixed = BU_VLS_INIT_ZERO;
@@ -587,7 +587,7 @@ QgEdApp::run_qcmd(const QString &command)
 
     if (console) {
 	if (ret & GED_MORE) {
-	    console->prompt(bu_vls_cstr(mdl->gedp->ged_result_str));
+	    console->prompt(bu_vls_cstr(mdl->ged()->ged_result_str));
 	} else {
 	    console->prompt("$ ");
 	    if (history_mark_start >= 0 && history_mark_end >= 0) {
@@ -598,8 +598,8 @@ QgEdApp::run_qcmd(const QString &command)
 	}
     }
 
-    if (mdl && mdl->gedp) {
-	bu_vls_trunc(mdl->gedp->ged_result_str, 0);
+    if (mdl && mdl->ged()) {
+	bu_vls_trunc(mdl->ged()->ged_result_str, 0);
     }
 
     bu_free((void *)cmd, "cmd");

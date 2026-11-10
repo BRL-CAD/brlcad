@@ -184,7 +184,7 @@ CADViewSettings::checkbox_refresh(unsigned long long)
     QgModel *m = ((QgEdApp *)qApp)->mdl;
     if (!m)
 	return;
-    struct ged *gedp = m->gedp;
+    struct ged *gedp = m->ged();
     if (!gedp)
 	return;
     struct bview *v = gedp->ged_gvp;
@@ -229,7 +229,7 @@ CADViewSettings::view_refresh(unsigned long long)
     QgModel *m = ((QgEdApp *)qApp)->mdl;
     if (!m)
 	return;
-    struct ged *gedp = m->gedp;
+    struct ged *gedp = m->ged();
     if (!gedp)
 	return;
     struct bview *v = gedp->ged_gvp;

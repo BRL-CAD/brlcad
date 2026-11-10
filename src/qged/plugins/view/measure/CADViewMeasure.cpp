@@ -117,7 +117,7 @@ CADViewMeasure::adjust_text()
     QgModel *m = ((QgEdApp *)qApp)->mdl;
     if (!m)
 	return;
-    struct ged *gedp = m->gedp;
+    struct ged *gedp = m->ged();
     if (!gedp || !gedp->ged_gvp)
 	return;
 
@@ -158,7 +158,7 @@ CADViewMeasure::eventFilter(QObject *, QEvent *e)
     QgModel *m = ((QgEdApp *)qApp)->mdl;
     if (!m)
 	return false;
-    struct ged *gedp = m->gedp;
+    struct ged *gedp = m->ged();
     if (!gedp || !gedp->ged_gvp)
 	return false;
     struct bview *v = gedp->ged_gvp;

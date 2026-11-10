@@ -301,14 +301,15 @@ QgTreeView::do_draw_toggle(const QModelIndex &index)
     QTCAD_SLOT("QgTreeView::do_draw_toggle", 1);
     QgItem *cnode = static_cast<QgItem *>(index.internalPointer());
 
-    if (!m->gedp)
+    struct ged *gedp = m->ged();
+    if (!gedp)
 	return;
 
-    struct bview *v = m->gedp->ged_gvp;
+    struct bview *v = gedp->ged_gvp;
     if (!v)
 	return;
 
-    DbiState *dbis = (DbiState *)m->gedp->dbi_state;
+    DbiState *dbis = (DbiState *)gedp->dbi_state;
     BViewState *sv =  dbis->get_view_state(v);
     if (!sv)
 	return;
