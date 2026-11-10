@@ -64,32 +64,15 @@ overlay_image_mime(struct bu_vls *msg, const char *arg, void *set_mime)
 
 
 static int
-overlay_opt_image_mime(struct bu_vls *msg, size_t argc, const char **argv,
-	void *set_mime)
+overlay_format_validate(struct bu_vls *msg, const char *arg)
 {
-    if (!argc || !argv || overlay_image_mime(msg, argv[0], set_mime) != 0)
-	return -1;
-    return 1;
-}
-
-
-static int
-overlay_format_validate(const struct bu_opt_desc *UNUSED(option), size_t argc,
-	const char **argv, size_t cursor_arg, void *UNUSED(context),
-	void *UNUSED(data), struct bu_opt_validate_result *result)
-{
-    if (!argv || cursor_arg >= argc || !argv[cursor_arg] || !argv[cursor_arg][0])
-	return 0;
-    if (overlay_image_mime(NULL, argv[cursor_arg], NULL) != 0) {
-	result->state = BU_OPT_VALIDATE_INVALID;
-	result->hint = "recognized image format";
-    }
-    return 0;
+    return overlay_image_mime(msg, arg, NULL);
 }
 
 
 struct overlay_args {
     bu_mime_image_t type;
+    const char *format;
     fastf_t size;
     const char *view_name;
     int clear;
@@ -106,37 +89,61 @@ struct overlay_args {
 };
 
 
-#define OVERLAY_OPTIONS(args) \
-    BU_OPT_FLAG(args, "h", "help", print_help, "Print help and exit"), \
-    BU_OPT_FLAG(args, "F", "fb", write_fb, "Overlay image on framebuffer"), \
-    BU_OPT_NUM(args, "s", "size", size, "size", "Plot character size"), \
-    BU_OPT_STR(args, "N", "view-obj", view_name, "name", "View object name"), \
-    BU_OPT_FLAG(args, "i", "inverse", inverse, "Draw upside-down"), \
-    BU_OPT_FLAG(args, "c", "clear", clear, "Clear framebuffer before drawing"), \
-    BU_OPT_FLAG(args, "v", "verbose", verbose, "Verbose reporting"), \
-    BU_OPT_FLAG(args, "z", "zoom", zoom, "Zoom to fill the screen"), \
-    BU_OPT_INT(args, "X", "scr_xoff", scr_xoff, "offset", "Framebuffer X offset"), \
-    BU_OPT_INT(args, "Y", "scr_yoff", scr_yoff, "offset", "Framebuffer Y offset"), \
-    BU_OPT_INT(args, "w", "width", width, "pixels", "Image width"), \
-    BU_OPT_INT(args, "n", "height", height, "pixels", "Image height"), \
-    BU_OPT_INT(args, "S", "square", square, "pixels", "Square image size"), \
-    BU_OPT_CUSTOM(args, NULL, "format", type, "fmt", overlay_opt_image_mime, \
+static const struct bu_arg_option overlay_options[] = {
+    BU_ARG_FLAG("h", "help", struct overlay_args, print_help,
+	"Print help and exit"),
+    BU_ARG_FLAG("F", "fb", struct overlay_args, write_fb,
+	"Overlay image on framebuffer"),
+    BU_ARG_VALUE("s", "size", struct overlay_args, size, BU_ARG_VALUE_NUMBER,
+	BU_ARG_REQUIRED, "size", "Plot character size"),
+    {"N", "view-obj", "view-obj", "name", "View object name",
+	BU_ARG_VALUE_STRING, BU_ARG_STORAGE_OFFSET(struct overlay_args, view_name),
+	NULL, NULL, "ged.view", NULL, 0, 0, NULL, BU_ARG_REQUIRED, NULL, NULL,
+	NULL, BU_ARG_VALUE_RANGE_NONE, BU_ARG_SHAPE_SCALAR},
+    BU_ARG_FLAG("i", "inverse", struct overlay_args, inverse, "Draw upside-down"),
+    BU_ARG_FLAG("c", "clear", struct overlay_args, clear,
+	"Clear framebuffer before drawing"),
+    BU_ARG_FLAG("v", "verbose", struct overlay_args, verbose, "Verbose reporting"),
+    BU_ARG_FLAG("z", "zoom", struct overlay_args, zoom, "Zoom to fill the screen"),
+    BU_ARG_VALUE("X", "scr_xoff", struct overlay_args, scr_xoff,
+	BU_ARG_VALUE_INTEGER, BU_ARG_REQUIRED, "offset", "Framebuffer X offset"),
+    BU_ARG_VALUE("Y", "scr_yoff", struct overlay_args, scr_yoff,
+	BU_ARG_VALUE_INTEGER, BU_ARG_REQUIRED, "offset", "Framebuffer Y offset"),
+    BU_ARG_VALUE("w", "width", struct overlay_args, width,
+	BU_ARG_VALUE_INTEGER, BU_ARG_REQUIRED, "pixels", "Image width"),
+    BU_ARG_VALUE("n", "height", struct overlay_args, height,
+	BU_ARG_VALUE_INTEGER, BU_ARG_REQUIRED, "pixels", "Image height"),
+    BU_ARG_VALUE("S", "square", struct overlay_args, square,
+	BU_ARG_VALUE_INTEGER, BU_ARG_REQUIRED, "pixels", "Square image size"),
+    BU_ARG_VALUE_VALIDATE(NULL, "format", struct overlay_args, format,
+	BU_ARG_VALUE_STRING, overlay_format_validate, "fmt",
 	"Framebuffer image format"),
-
-BU_OPT_DESC_BUILDER(overlay_options, struct overlay_args, OVERLAY_OPTIONS);
-
-static const ged_opt_rule overlay_opt_rules[] = {
-    GED_RULE_VALUE_VALIDATE("format", BU_OPT_VALUE_STRING, "image format",
-	overlay_format_validate, NULL),
-    GED_RULE_SEMANTIC("view-obj", BU_ARG_VALUE_STRING, "ged.view", "view name"),
-    GED_RULE_WHEN_HELP("help", "Display command help", "raw_arguments:raw*"),
-    GED_RULE_OTHERWISE_HELP("Read an input file and optional view object",
-	"input_file:file view_object:string?"),
-    GED_RULE_NULL
+    BU_ARG_OPTION_NULL
 };
-static const ged_opt_spec overlay_opt_spec =
-    GED_OPT_FORMS("overlay", "Overlay plot or image data", overlay_options,
-	overlay_opt_rules);
+static const struct bu_arg_operand overlay_help_operands[] = {
+    BU_ARG_OPERAND("raw_arguments", BU_ARG_VALUE_RAW, 0,
+	BU_ARG_COUNT_UNLIMITED, "Arguments ignored when requesting help", NULL),
+    BU_ARG_OPERAND_NULL
+};
+static const struct bu_arg_operand overlay_operands[] = {
+    BU_ARG_OPERAND("input_file", BU_ARG_VALUE_FILE, 1, 1,
+	"Input plot or image file", "ged.file_path"),
+    BU_ARG_OPERAND("view_object", BU_ARG_VALUE_STRING, 0, 1,
+	"Optional view object name", "ged.view"),
+    BU_ARG_OPERAND_NULL
+};
+static const char * const overlay_help_option[] = {"help", NULL};
+static const struct bu_arg_schema_case overlay_cases[] = {
+    BU_ARG_SCHEMA_CASE("help", "Display command help",
+	BU_ARG_CONDITION_ANY_OPTION_PRESENT, overlay_help_option,
+	overlay_help_operands, NULL),
+    BU_ARG_SCHEMA_CASE_DEFAULT("input",
+	"Read an input file and optional view object", overlay_operands, NULL),
+    BU_ARG_SCHEMA_CASE_NULL
+};
+static const struct bu_arg_schema overlay_cmd_schema =
+    BU_ARG_SCHEMA_CASED("overlay", "Overlay plot or image data",
+	overlay_options, BU_ARG_PARSE_INTERSPERSED, overlay_cases);
 
 
 static void
@@ -153,9 +160,10 @@ overlay_show_help(struct ged *gedp)
 int
 ged_overlay_core(struct ged *gedp, int argc, const char *argv[])
 {
-    struct overlay_args args = {BU_MIME_IMAGE_UNKNOWN, 0.0, NULL, 0, 0, 0, 0,
-	0, 0, 0, 0, 0, 0, 0};
+    struct overlay_args args = {BU_MIME_IMAGE_UNKNOWN, NULL, 0.0, NULL, 0, 0,
+	0, 0, 0, 0, 0, 0, 0, 0, 0};
     int operand_count;
+    int operand_index;
     const char **operands;
     int ret = BRLCAD_OK;
     struct dm *dmp = NULL;
@@ -191,31 +199,24 @@ ged_overlay_core(struct ged *gedp, int argc, const char *argv[])
     }
 
     argc--; argv++;
-    operand_count = bu_opt_parse_build(gedp->ged_result_str, argc, argv,
-	overlay_options, &args);
-    if (operand_count < 0) {
+    operand_index = bu_arg_schema_parse_complete(&overlay_cmd_schema, &args,
+	gedp->ged_result_str, argc, argv);
+    if (operand_index < 0) {
 	overlay_show_help(gedp);
 	bu_vls_free(&vname);
 	return BRLCAD_ERROR;
     }
-    operands = argv;
+    operand_count = argc - operand_index;
+    operands = argv + operand_index;
 
     if (args.print_help) {
-	if (operand_count > 2) {
-	    overlay_show_help(gedp);
-	    bu_vls_free(&vname);
-	    return BRLCAD_ERROR;
-	}
 	overlay_show_help(gedp);
 	bu_vls_free(&vname);
 	return GED_HELP;
     }
 
-    if (operand_count < 1 || operand_count > 2) {
-	overlay_show_help(gedp);
-	bu_vls_free(&vname);
-	return BRLCAD_ERROR;
-    }
+    if (args.format)
+	(void)overlay_image_mime(NULL, args.format, &args.type);
 
     if (!args.write_fb && NEAR_ZERO(args.size, VUNITIZE_TOL)) {
 	if (!gedp->ged_gvp) {
@@ -397,10 +398,10 @@ ged_overlay_core(struct ged *gedp, int argc, const char *argv[])
 #include "../include/plugin.h"
 
 #define GED_OVERLAY_COMMANDS(X, XID) \
-    X(overlay, ged_overlay_core, GED_CMD_DEFAULT, &overlay_opt_spec) \
+    X(overlay, ged_overlay_core, GED_CMD_DEFAULT, &overlay_cmd_schema) \
 
-GED_DECLARE_COMMAND_SET_WITH_OPT_SPEC(GED_OVERLAY_COMMANDS)
-GED_DECLARE_PLUGIN_MANIFEST_WITH_OPT_SPEC("libged_overlay", 1, GED_OVERLAY_COMMANDS)
+GED_DECLARE_COMMAND_SET_WITH_NATIVE_SCHEMA(GED_OVERLAY_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST_WITH_NATIVE_SCHEMA("libged_overlay", 1, GED_OVERLAY_COMMANDS)
 
 /*
  * Local Variables:
