@@ -14,7 +14,8 @@
  *
  * Publishers describe completed changes.  The GED context copies event
  * payloads, coalesces exact duplicates, and delivers each batch first to
- * internal reconcilers and then to application observers.
+ * internal reconcilers and then to application observers.  Publication and
+ * observer registration are serialized per GED context.
  */
 
 #ifndef GED_EVENT_H
@@ -158,7 +159,13 @@ GED_EXPORT extern enum ged_event_status ged_event_batch_begin(struct ged *gedp);
 GED_EXPORT extern enum ged_event_status
 ged_event_batch_end(struct ged *gedp, struct ged_event_result *result);
 
-/** Publish and copy a sequence of semantic database events. */
+/**
+ * Publish and copy a sequence of semantic database events.
+ *
+ * Reentrant or concurrent publications join the active dispatch queue.  In
+ * that case @p result is not populated because another publishing call owns
+ * the eventual dispatch result.
+ */
 GED_EXPORT extern enum ged_event_status
 ged_event_publish(struct ged *gedp, const struct ged_event *events,
 		  size_t event_count, struct ged_event_result *result);

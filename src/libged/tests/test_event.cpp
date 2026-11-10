@@ -11,8 +11,10 @@
 
 #include "common.h"
 
+#include <atomic>
 #include <cstring>
 #include <string>
+#include <thread>
 #include <vector>
 
 #include "bu/app.h"
@@ -107,6 +109,48 @@ publish_followup(struct ged *gedp, const struct ged_event *events,
     CHECK(ged_event_publish(gedp, &event, 1, nullptr) == GED_EVENT_OK,
 	"reentrant publication is accepted");
 }
+
+static void
+publish_in_batch(struct ged *gedp, const struct ged_event *events,
+	size_t count, const struct ged_event_result *UNUSED(result),
+	void *UNUSED(client_data))
+{
+    if (count != 1 || !BU_STR_EQUAL(events[0].name, "start"))
+	return;
+
+    CHECK(ged_event_batch_begin(gedp) == GED_EVENT_OK,
+	"event observer can open a batch");
+    struct ged_event event = {};
+    event.kind = GED_EVENT_OBJECT_MODIFIED;
+    event.name = "batched";
+    CHECK(ged_event_publish(gedp, &event, 1, nullptr) == GED_EVENT_OK,
+	"observer can publish into an open batch");
+}
+
+
+static void
+test_reentrant_batch(struct ged *gedp)
+{
+    observation state;
+    const auto publisher = ged_event_observer_add(gedp, GED_EVENT_OBSERVER_INTERNAL,
+	publish_in_batch, nullptr);
+    const auto recorder = ged_event_observer_add(gedp, GED_EVENT_OBSERVER_POST_RECONCILE,
+	record_events, &state);
+
+    struct ged_event event = {};
+    event.kind = GED_EVENT_OBJECT_MODIFIED;
+    event.name = "start";
+    CHECK(ged_event_publish(gedp, &event, 1, nullptr) == GED_EVENT_OK &&
+	state.names.size() == 1 && state.names.front() == "start",
+	"a batch opened during dispatch defers its events");
+    CHECK(ged_event_batch_end(gedp, nullptr) == GED_EVENT_OK &&
+	state.names.size() == 2 && state.names.back() == "batched",
+	"deferred events dispatch when the outer batch closes");
+
+    ged_event_observer_remove(gedp, recorder);
+    ged_event_observer_remove(gedp, publisher);
+}
+
 
 struct dispatch_state {
     int calls = 0;
@@ -317,6 +361,43 @@ test_librt_bridge(void)
     ged_close(gedp);
 }
 
+static void
+test_concurrent_publication(struct ged *gedp)
+{
+    constexpr size_t thread_count = 4;
+    static constexpr size_t events_per_thread = 25;
+    std::atomic<size_t> publish_failures(0);
+    observation state;
+    ged_event_observer_token observer = ged_event_observer_add(gedp,
+	GED_EVENT_OBSERVER_POST_RECONCILE, record_events, &state);
+
+    std::vector<std::thread> publishers;
+    for (size_t thread_index = 0; thread_index < thread_count;
+	 thread_index++) {
+	publishers.emplace_back([gedp, thread_index, &publish_failures]() {
+	    for (size_t event_index = 0; event_index < events_per_thread;
+		 event_index++) {
+		std::string name = "parallel_" +
+		    std::to_string(thread_index) + "_" +
+		    std::to_string(event_index);
+		struct ged_event event;
+		ged_event_init(&event);
+		event.kind = GED_EVENT_OBJECT_MODIFIED;
+		event.name = name.c_str();
+		if (ged_event_publish(gedp, &event, 1, nullptr) != GED_EVENT_OK)
+		    publish_failures++;
+	    }
+	});
+    }
+    for (std::thread &publisher : publishers)
+	publisher.join();
+
+    CHECK(publish_failures == 0, "concurrent events publish successfully");
+    CHECK(state.kinds.size() == thread_count * events_per_thread,
+	"concurrent publications are serialized without loss");
+    ged_event_observer_remove(gedp, observer);
+}
+
 int
 main(int argc, char **argv)
 {
@@ -328,6 +409,8 @@ main(int argc, char **argv)
     test_batching_and_payloads(&context);
     test_phase_order_and_removal(&context);
     test_reentrancy_and_owner_dispatch(&context);
+    test_concurrent_publication(&context);
+    test_reentrant_batch(&context);
     test_librt_bridge();
 
     CHECK(ged_event_batch_end(&context, nullptr) == GED_EVENT_INVALID,

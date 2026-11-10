@@ -13,7 +13,9 @@
 
 #include <algorithm>
 #include <cstring>
+#include <mutex>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include "ged/event.h"
@@ -49,6 +51,8 @@ struct ged_event_result {
 struct ged_event_service {
     struct ged *gedp = nullptr;
     struct db_i *callback_dbip = nullptr;
+    std::mutex state_mutex;
+    bool processing = false;
     ged_event_observer_token next_token = 1;
     int batch_depth = 0;
     int dispatch_depth = 0;
@@ -204,17 +208,28 @@ ged_event_dispatch_phase(struct ged_event_service *service,
 			 const struct ged_event_result *result)
 {
     std::vector<ged_event_observer_token> tokens;
-    for (const ged_event_observer_entry &entry : service->observers) {
-	if (!entry.removed && entry.phase == phase)
-	    tokens.push_back(entry.token);
+    {
+	std::lock_guard<std::mutex> guard(service->state_mutex);
+	for (const ged_event_observer_entry &entry : service->observers) {
+	    if (!entry.removed && entry.phase == phase)
+		tokens.push_back(entry.token);
+	}
     }
 
     for (ged_event_observer_token token : tokens) {
-	ged_event_observer_entry *entry = ged_event_observer_find(service, token);
-	if (!entry || entry->removed)
+	ged_event_observer_func_t func = nullptr;
+	void *client_data = nullptr;
+	{
+	    std::lock_guard<std::mutex> guard(service->state_mutex);
+	    ged_event_observer_entry *entry =
+		ged_event_observer_find(service, token);
+	    if (entry && !entry->removed) {
+		func = entry->func;
+		client_data = entry->client_data;
+	    }
+	}
+	if (!func)
 	    continue;
-	ged_event_observer_func_t func = entry->func;
-	void *client_data = entry->client_data;
 	func(service->gedp, events.data(), events.size(), result, client_data);
     }
 }
@@ -242,14 +257,20 @@ ged_event_process_work(void *work_data)
     for (const ged_event_owned &event : coalesced)
 	views.push_back(ged_event_view(event));
 
-    service->dispatch_depth++;
+    {
+	std::lock_guard<std::mutex> guard(service->state_mutex);
+	service->dispatch_depth++;
+    }
     ged_event_dispatch_phase(service, GED_EVENT_OBSERVER_INTERNAL, views,
 	context->result);
     ged_event_dispatch_phase(service, GED_EVENT_OBSERVER_POST_RECONCILE, views,
 	context->result);
-    service->dispatch_depth--;
-    if (!service->dispatch_depth)
-	ged_event_prune_observers(service);
+    {
+	std::lock_guard<std::mutex> guard(service->state_mutex);
+	service->dispatch_depth--;
+	if (!service->dispatch_depth)
+	    ged_event_prune_observers(service);
+    }
     context->completed = true;
 }
 
@@ -263,17 +284,24 @@ ged_event_process(struct ged_event_service *service,
     ged_event_process_context context = {
 	service, &events, input_count, dispatch_result, false
     };
+    ged_event_dispatch_func_t dispatch = nullptr;
+    void *dispatch_data = nullptr;
+    {
+	std::lock_guard<std::mutex> guard(service->state_mutex);
+	dispatch = service->dispatch;
+	dispatch_data = service->dispatch_data;
+    }
     int dispatch_status = 0;
-    if (service->dispatch)
-	dispatch_status = service->dispatch(service->gedp,
-	    ged_event_process_work, &context, service->dispatch_data);
-    if (service->dispatch && (dispatch_status != 0 || !context.completed)) {
+    if (dispatch)
+	dispatch_status = dispatch(service->gedp, ged_event_process_work,
+	    &context, dispatch_data);
+    if (dispatch && (dispatch_status != 0 || !context.completed)) {
 	ged_event_result_clear(dispatch_result);
 	dispatch_result->status = GED_EVENT_ERROR;
 	dispatch_result->diagnostic = "owner-context event dispatch failed";
 	return GED_EVENT_ERROR;
     }
-    if (!service->dispatch)
+    if (!dispatch)
 	ged_event_process_work(&context);
     return GED_EVENT_OK;
 }
@@ -285,10 +313,22 @@ ged_event_drain(struct ged_event_service *service,
 {
     enum ged_event_status status =
 	ged_event_process(service, events, input_count, result);
-    while (status == GED_EVENT_OK && !service->followup_events.empty()) {
+    while (status == GED_EVENT_OK) {
 	std::vector<ged_event_owned> followups;
-	followups.swap(service->followup_events);
+	{
+	    std::lock_guard<std::mutex> guard(service->state_mutex);
+	    followups.swap(service->followup_events);
+	    if (followups.empty()) {
+		service->processing = false;
+		break;
+	    }
+	}
 	status = ged_event_process(service, followups, followups.size(), nullptr);
+    }
+    if (status != GED_EVENT_OK) {
+	std::lock_guard<std::mutex> guard(service->state_mutex);
+	service->followup_events.clear();
+	service->processing = false;
     }
     return status;
 }
@@ -340,11 +380,18 @@ void
 ged_event_database_set_private(struct ged *gedp, struct db_i *dbip)
 {
     struct ged_event_service *service = ged_event_service_get(gedp);
-    if (!service || service->callback_dbip == dbip)
+    if (!service)
+	return;
+    std::lock_guard<std::mutex> guard(service->state_mutex);
+    if (service->callback_dbip == dbip)
 	return;
     if (service->callback_dbip)
 	db_rm_changed_clbk(service->callback_dbip, ged_event_librt_changed, gedp);
     service->callback_dbip = nullptr;
+    // Queued mutations belong to the database that produced them.
+    service->queued_events.clear();
+    service->queued_count = 0;
+    service->followup_events.clear();
     if (dbip && db_add_changed_clbk(dbip, ged_event_librt_changed, gedp) == 0)
 	service->callback_dbip = dbip;
 }
@@ -438,7 +485,8 @@ ged_event_dispatch_set(struct ged *gedp, ged_event_dispatch_func_t dispatch,
     struct ged_event_service *service = ged_event_service_get(gedp);
     if (!service)
 	return GED_EVENT_UNAVAILABLE;
-    if (service->dispatch_depth || service->batch_depth)
+    std::lock_guard<std::mutex> guard(service->state_mutex);
+    if (service->processing || service->batch_depth)
 	return GED_EVENT_INVALID;
     service->dispatch = dispatch;
     service->dispatch_data = client_data;
@@ -451,6 +499,7 @@ ged_event_batch_begin(struct ged *gedp)
     struct ged_event_service *service = ged_event_service_get(gedp);
     if (!service)
 	return GED_EVENT_UNAVAILABLE;
+    std::lock_guard<std::mutex> guard(service->state_mutex);
     service->batch_depth++;
     return GED_EVENT_OK;
 }
@@ -461,20 +510,35 @@ ged_event_batch_end(struct ged *gedp, struct ged_event_result *result)
     struct ged_event_service *service = ged_event_service_get(gedp);
     if (!service)
 	return GED_EVENT_UNAVAILABLE;
-    if (service->batch_depth <= 0)
-	return GED_EVENT_INVALID;
-    service->batch_depth--;
-    if (service->batch_depth)
-	return GED_EVENT_OK;
-
     std::vector<ged_event_owned> events;
-    events.swap(service->queued_events);
-    size_t input_count = service->queued_count;
-    service->queued_count = 0;
+    size_t input_count = 0;
+    bool queued = false;
+    {
+	std::lock_guard<std::mutex> guard(service->state_mutex);
+	if (service->batch_depth <= 0)
+	    return GED_EVENT_INVALID;
+	service->batch_depth--;
+	if (service->batch_depth)
+	    return GED_EVENT_OK;
+	events.swap(service->queued_events);
+	input_count = service->queued_count;
+	service->queued_count = 0;
+	if (!events.empty() && service->processing) {
+	    service->followup_events.reserve(
+		service->followup_events.size() + events.size());
+	    for (ged_event_owned &event : events)
+		service->followup_events.push_back(std::move(event));
+	    queued = true;
+	} else if (!events.empty()) {
+	    service->processing = true;
+	}
+    }
     if (events.empty()) {
 	ged_event_result_clear(result);
 	return GED_EVENT_OK;
     }
+    if (queued)
+	return GED_EVENT_OK;
     return ged_event_drain(service, events, input_count, result);
 }
 
@@ -488,18 +552,23 @@ ged_event_publish(struct ged *gedp, const struct ged_event *events,
     if (!events || !event_count)
 	return GED_EVENT_INVALID;
 
-    if (service->dispatch_depth) {
-	ged_event_queue(service->followup_events, events, event_count);
-	return GED_EVENT_OK;
-    }
-    if (service->batch_depth) {
-	service->queued_count +=
-	    ged_event_queue(service->queued_events, events, event_count);
-	return GED_EVENT_OK;
-    }
-
     std::vector<ged_event_owned> owned;
-    size_t input_count = ged_event_queue(owned, events, event_count);
+    {
+	std::lock_guard<std::mutex> guard(service->state_mutex);
+	if (service->batch_depth) {
+	    service->queued_count +=
+		ged_event_queue(service->queued_events, events, event_count);
+	    return GED_EVENT_OK;
+	}
+	if (service->processing) {
+	    ged_event_queue(service->followup_events, events, event_count);
+	    return GED_EVENT_OK;
+	}
+	ged_event_queue(owned, events, event_count);
+	if (!owned.empty())
+	    service->processing = true;
+    }
+    size_t input_count = owned.size();
     if (owned.empty()) {
 	ged_event_result_clear(result);
 	return GED_EVENT_OK;
@@ -519,6 +588,8 @@ ged_event_observer_add(struct ged *gedp,
 	 phase != GED_EVENT_OBSERVER_POST_RECONCILE))
 	return 0;
 
+    std::lock_guard<std::mutex> guard(service->state_mutex);
+
     ged_event_observer_entry entry;
     entry.token = service->next_token++;
     if (!entry.token)
@@ -536,6 +607,7 @@ ged_event_observer_remove(struct ged *gedp, ged_event_observer_token token)
     struct ged_event_service *service = ged_event_service_get(gedp);
     if (!service || !token)
 	return 0;
+    std::lock_guard<std::mutex> guard(service->state_mutex);
     ged_event_observer_entry *entry = ged_event_observer_find(service, token);
     if (!entry || entry->removed)
 	return 0;
