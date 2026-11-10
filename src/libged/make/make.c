@@ -41,34 +41,48 @@ struct make_args {
 };
 
 
-#define MAKE_OPTIONS(args) \
-    BU_OPT_FLAG(args, "h", "help", help, "Print command usage"), \
-    BU_OPT_FLAG(args, "H", NULL, help, ""), \
-    BU_OPT_FLAG(args, "?", NULL, help, ""), \
-    BU_OPT_FLAG(args, "t", "types", list_types, "List supported primitive types"), \
-    BU_OPT_FLAG(args, "T", NULL, list_types, ""), \
-    BU_OPT_VEC(args, "o", "origin", origin, "x/y/z", "Primitive origin"), \
-    BU_OPT_VEC(args, "O", NULL, origin, "x/y/z", ""), \
-    BU_OPT_NUM(args, "s", "scale", scale, "scale", "Initial size scale"), \
-    BU_OPT_NUM(args, "S", NULL, scale, "scale", ""),
-
-BU_OPT_DESC_BUILDER(make_options, struct make_args, MAKE_OPTIONS);
-
-static const ged_opt_rule make_opt_rules[] = {
-    GED_RULE_ALIAS("H ?", "help"),
-    GED_RULE_ALIAS("T", "types"),
-    GED_RULE_ALIAS("O", "origin"),
-    GED_RULE_ALIAS("S", "scale"),
-    GED_RULE_WHEN_HELP("help", "Display command help", "raw_arguments:raw*"),
-    GED_RULE_WHEN_HELP("types", "List primitive types without creating an object", ""),
-    GED_RULE_OTHERWISE_HELP("Create a named primitive",
-	"name:string primitive_type:keyword@ged.primitive_type"),
-    GED_RULE_NULL
+static const struct bu_arg_option make_options[] = {
+    BU_ARG_FLAG("h", "help", struct make_args, help, "Print command usage"),
+    BU_ARG_ALIAS("H", NULL, "help", 0),
+    BU_ARG_ALIAS("?", NULL, "help", 0),
+    BU_ARG_FLAG("t", "types", struct make_args, list_types,
+	"List supported primitive types"),
+    BU_ARG_ALIAS("T", NULL, "types", 0),
+    BU_ARG_VECTOR3("o", "origin", struct make_args, origin, "x/y/z",
+	"Primitive origin"),
+    BU_ARG_ALIAS("O", NULL, "origin", 0),
+    BU_ARG_VALUE("s", "scale", struct make_args, scale, BU_ARG_VALUE_NUMBER,
+	BU_ARG_REQUIRED, "scale", "Initial size scale"),
+    BU_ARG_ALIAS("S", NULL, "scale", 0),
+    BU_ARG_OPTION_NULL
 };
-
-static const ged_opt_spec make_opt_spec =
-    GED_OPT_FORMS("make", "Create a default primitive", make_options,
-	make_opt_rules);
+static const struct bu_arg_operand make_help_operands[] = {
+    BU_ARG_OPERAND("raw_arguments", BU_ARG_VALUE_RAW, 0,
+	BU_ARG_COUNT_UNLIMITED, "Arguments ignored when requesting help", NULL),
+    BU_ARG_OPERAND_NULL
+};
+static const struct bu_arg_operand make_operands[] = {
+    BU_ARG_OPERAND("name", BU_ARG_VALUE_STRING, 1, 1,
+	"Name for the new primitive", NULL),
+    BU_ARG_OPERAND("primitive_type", BU_ARG_VALUE_KEYWORD, 1, 1,
+	"Primitive type to create", "ged.primitive_type"),
+    BU_ARG_OPERAND_NULL
+};
+static const char * const make_help_options[] = {"help", NULL};
+static const char * const make_types_options[] = {"types", NULL};
+static const struct bu_arg_schema_case make_cases[] = {
+    BU_ARG_SCHEMA_CASE("help", "Display command help",
+	BU_ARG_CONDITION_ANY_OPTION_PRESENT, make_help_options,
+	make_help_operands, NULL),
+    BU_ARG_SCHEMA_CASE("types", "List primitive types without creating an object",
+	BU_ARG_CONDITION_ANY_OPTION_PRESENT, make_types_options, NULL, NULL),
+    BU_ARG_SCHEMA_CASE_DEFAULT("create", "Create a named primitive",
+	make_operands, NULL),
+    BU_ARG_SCHEMA_CASE_NULL
+};
+static const struct bu_arg_schema make_cmd_schema =
+    BU_ARG_SCHEMA_CASED("make", "Create a default primitive", make_options,
+	BU_ARG_PARSE_INTERSPERSED, make_cases);
 
 
 static void
@@ -96,7 +110,7 @@ ged_make_core(struct ged *gedp, int argc, const char *argv[])
     const char *cmd = argv[0];
     const char *name;
     const char *type;
-    int operand_count;
+    int operand_index;
     struct make_args args = {{0.0, 0.0, 0.0}, 1.0, 0, 0};
     fastf_t scale;
     point_t origin;
@@ -117,12 +131,13 @@ ged_make_core(struct ged *gedp, int argc, const char *argv[])
     }
 
     argc--; argv++;
-    operand_count = bu_opt_parse_build(gedp->ged_result_str, argc, argv,
-	make_options, &args);
-    if (operand_count < 0) {
+    operand_index = bu_arg_schema_parse_complete(&make_cmd_schema, &args,
+	gedp->ged_result_str, argc, argv);
+    if (operand_index < 0) {
 	print_usage(gedp, cmd);
 	return BRLCAD_ERROR;
     }
+    argv += operand_index;
 
     if (args.help) {
 	print_usage(gedp, cmd);
@@ -130,19 +145,10 @@ ged_make_core(struct ged *gedp, int argc, const char *argv[])
     }
 
     if (args.list_types) {
-	if (operand_count) {
-	    bu_vls_printf(gedp->ged_result_str, "-t does not accept object or primitive operands\n");
-	    print_usage(gedp, cmd);
-	    return BRLCAD_ERROR;
-	}
 	rt_obj_make_labels(gedp->ged_result_str, " ");
 	return GED_HELP;
     }
 
-    if (operand_count != 2) {
-	print_usage(gedp, cmd);
-	return BRLCAD_ERROR;
-    }
     name = argv[0];
     type = argv[1];
     VMOVE(origin, args.origin);
@@ -218,10 +224,10 @@ ged_make_core(struct ged *gedp, int argc, const char *argv[])
 #include "../include/plugin.h"
 
 #define GED_MAKE_COMMANDS(X, XID) \
-    X(make, ged_make_core, GED_CMD_DEFAULT, &make_opt_spec) \
+    X(make, ged_make_core, GED_CMD_DEFAULT, &make_cmd_schema) \
 
-GED_DECLARE_COMMAND_SET_WITH_OPT_SPEC(GED_MAKE_COMMANDS)
-GED_DECLARE_PLUGIN_MANIFEST_WITH_OPT_SPEC("libged_make", 1, GED_MAKE_COMMANDS)
+GED_DECLARE_COMMAND_SET_WITH_NATIVE_SCHEMA(GED_MAKE_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST_WITH_NATIVE_SCHEMA("libged_make", 1, GED_MAKE_COMMANDS)
 
 /*
  * Local Variables:
