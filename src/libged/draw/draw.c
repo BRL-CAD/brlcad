@@ -44,6 +44,7 @@ GED_DEFINE_TYPED_OPERAND_SCHEMA_POLICY_PROVIDER(ev_native, "ev",
     BU_ARG_PARSE_INTERSPERSED, "ged.db_path");
 
 struct legacy_draw_args {
+    struct legacy_draw_args *self;
     int *shaded_mode_override;
     int draw_nmg_only;
     int fastpath;
@@ -66,10 +67,10 @@ struct legacy_draw_args {
 };
 
 static int
-legacy_draw_hidden(struct bu_vls *UNUSED(msg), size_t UNUSED(argc),
-	const char **UNUSED(argv), void *set_var)
+legacy_draw_hidden(struct bu_vls *UNUSED(msg), const char *UNUSED(arg),
+	void *set_var)
 {
-    struct legacy_draw_args *args = (struct legacy_draw_args *)set_var;
+    struct legacy_draw_args *args = set_var ? *(struct legacy_draw_args **)set_var : NULL;
     if (!args)
 	return 0;
     *args->shaded_mode_override = _GED_HIDDEN_LINE;
@@ -77,14 +78,15 @@ legacy_draw_hidden(struct bu_vls *UNUSED(msg), size_t UNUSED(argc),
 }
 
 static int
-legacy_draw_mode(struct bu_vls *msg, size_t argc, const char **argv,
-	void *set_var)
+legacy_draw_mode(struct bu_vls *msg, const char *arg, void *set_var)
 {
-    struct legacy_draw_args *args = (struct legacy_draw_args *)set_var;
+    struct legacy_draw_args *args = set_var ? *(struct legacy_draw_args **)set_var : NULL;
     int mode = -1;
-    int ret = bu_opt_int(msg, argc, argv, &mode);
-    if (ret < 0)
-	return ret;
+    if (!bu_arg_integer_from_str(&mode, arg)) {
+	if (msg)
+	    bu_vls_printf(msg, "expected an integer draw mode\n");
+	return -1;
+    }
     if (mode < 0 || mode > 5) {
 	if (msg)
 	    bu_vls_printf(msg,
@@ -93,7 +95,7 @@ legacy_draw_mode(struct bu_vls *msg, size_t argc, const char **argv,
 	return -1;
     }
     if (!args)
-	return ret;
+	return 0;
     switch (mode) {
 	case 0: *args->shaded_mode_override = _GED_WIREFRAME; break;
 	case 1: *args->shaded_mode_override = _GED_SHADED_MODE_BOTS; break;
@@ -102,31 +104,58 @@ legacy_draw_mode(struct bu_vls *msg, size_t argc, const char **argv,
 	case 4: *args->shaded_mode_override = _GED_HIDDEN_LINE; break;
 	case 5: *args->shaded_mode_override = _GED_WIREFRAME_EVAL; break;
     }
-    return ret;
+    return 0;
 }
 
-#define LEGACY_DRAW_OPTIONS(a) \
-    BU_OPT_FLAG(a, "d", NULL, draw_nmg_only, "Draw NMG objects only"), \
-    BU_OPT_FLAG(a, "f", NULL, fastpath, "Enable the fast path"), \
-    {"h", NULL, NULL, legacy_draw_hidden, a, "Use hidden-line drawing"}, \
-    {"m", NULL, "mode", legacy_draw_mode, a, "Set drawing mode (0 through 5)"}, \
-    BU_OPT_FLAG(a, "n", NULL, draw_normals, "Draw surface normals"), \
-    BU_OPT_FLAG(a, "q", NULL, quiet, "Do not draw NMG solids while debugging"), \
-    BU_OPT_FLAG(a, "s", NULL, solid_lines, "Draw solid lines only"), \
-    BU_OPT_FLAG(a, "t", NULL, tnurbs, "Use trimmed NURBS"), \
-    BU_OPT_FLAG(a, "u", NULL, edge_uses, "Draw edge uses"), \
-    BU_OPT_FLAG(a, "v", NULL, vertex_normals, "Shade per-vertex normals"), \
-    BU_OPT_FLAG(a, "w", NULL, fast_wireframe, "Use fast NMG wireframes"), \
-    BU_OPT_NUM(a, "x", NULL, transparency, "level", "Set transparency"), \
-    BU_OPT_STR(a, "C", NULL, color, "r/g/b", "Override object color"), \
-    BU_OPT_FLAG(a, "S", NULL, no_surfaces, "Do not draw surfaces or subtraction solids"), \
-    BU_OPT_FLAG(a, "T", NULL, no_triangulate, "Do not triangulate NMGs"), \
-    BU_OPT_INT(a, "P", NULL, cpus, "cpus", "Set processor count"), \
-    BU_OPT_FLAG(a, "A", NULL, add_mode, "Use add mode"), \
-    BU_OPT_FLAG(a, "o", NULL, overlay_mode, "Use overlay mode"), \
-    BU_OPT_FLAG(a, "R", NULL, no_autoview, "Disable autoview"), \
-    BU_OPT_INT(a, "L", NULL, bot_threshold, "count", "Set BoT threshold"),
-BU_OPT_DESC_BUILDER(legacy_draw_options, struct legacy_draw_args, LEGACY_DRAW_OPTIONS);
+static const struct bu_arg_option legacy_draw_options[] = {
+    BU_ARG_FLAG("d", NULL, struct legacy_draw_args, draw_nmg_only,
+	"Draw NMG objects only"),
+    BU_ARG_FLAG("f", NULL, struct legacy_draw_args, fastpath,
+	"Enable the fast path"),
+    BU_ARG_CUSTOM_FLAG("h", NULL, "h", struct legacy_draw_args, self,
+	legacy_draw_hidden, "Use hidden-line drawing"),
+    BU_ARG_CUSTOM("m", "mode", struct legacy_draw_args, self,
+	legacy_draw_mode, "mode", "Set drawing mode (0 through 5)"),
+    BU_ARG_FLAG("n", NULL, struct legacy_draw_args, draw_normals,
+	"Draw surface normals"),
+    BU_ARG_FLAG("q", NULL, struct legacy_draw_args, quiet,
+	"Do not draw NMG solids while debugging"),
+    BU_ARG_FLAG("s", NULL, struct legacy_draw_args, solid_lines,
+	"Draw solid lines only"),
+    BU_ARG_FLAG("t", NULL, struct legacy_draw_args, tnurbs,
+	"Use trimmed NURBS"),
+    BU_ARG_FLAG("u", NULL, struct legacy_draw_args, edge_uses, "Draw edge uses"),
+    BU_ARG_FLAG("v", NULL, struct legacy_draw_args, vertex_normals,
+	"Shade per-vertex normals"),
+    BU_ARG_FLAG("w", NULL, struct legacy_draw_args, fast_wireframe,
+	"Use fast NMG wireframes"),
+    BU_ARG_VALUE("x", NULL, struct legacy_draw_args, transparency,
+	BU_ARG_VALUE_NUMBER, BU_ARG_REQUIRED, "level", "Set transparency"),
+    BU_ARG_VALUE("C", NULL, struct legacy_draw_args, color,
+	BU_ARG_VALUE_STRING, BU_ARG_REQUIRED, "r/g/b", "Override object color"),
+    BU_ARG_FLAG("S", NULL, struct legacy_draw_args, no_surfaces,
+	"Do not draw surfaces or subtraction solids"),
+    BU_ARG_FLAG("T", NULL, struct legacy_draw_args, no_triangulate,
+	"Do not triangulate NMGs"),
+    BU_ARG_VALUE("P", NULL, struct legacy_draw_args, cpus,
+	BU_ARG_VALUE_INTEGER, BU_ARG_REQUIRED, "cpus", "Set processor count"),
+    BU_ARG_FLAG("A", NULL, struct legacy_draw_args, add_mode, "Use add mode"),
+    BU_ARG_FLAG("o", NULL, struct legacy_draw_args, overlay_mode,
+	"Use overlay mode"),
+    BU_ARG_FLAG("R", NULL, struct legacy_draw_args, no_autoview,
+	"Disable autoview"),
+    BU_ARG_VALUE("L", NULL, struct legacy_draw_args, bot_threshold,
+	BU_ARG_VALUE_INTEGER, BU_ARG_REQUIRED, "count", "Set BoT threshold"),
+    BU_ARG_OPTION_NULL
+};
+static const struct bu_arg_operand legacy_draw_operands[] = {
+    BU_ARG_OPERAND("objects", BU_ARG_VALUE_RAW, 0, BU_ARG_COUNT_UNLIMITED,
+	"Objects or patterns to draw", NULL),
+    BU_ARG_OPERAND_NULL
+};
+static const struct bu_arg_schema legacy_draw_schema =
+    BU_ARG_SCHEMA("draw", "Draw database objects", legacy_draw_options,
+	legacy_draw_operands, BU_ARG_PARSE_OPTIONS_FIRST, NULL);
 
 /* declare our callbacks used by _ged_drawtrees() */
 static int drawtrees_depth = 0;
@@ -1147,17 +1176,21 @@ _ged_drawtrees(struct ged *gedp, int argc, const char *argv[], int kind, struct 
 	/* ged_draw_guts has already removed the command name. */
 	{
 	    struct legacy_draw_args args = {0};
+	    int operand_index;
+
+	    args.self = &args;
 	    args.shaded_mode_override = &shaded_mode_override;
 	    args.transparency = 1.0;
 	    args.cpus = 1;
 
-	    argc = bu_opt_parse_build_with_policy(gedp->ged_result_str,
-		(size_t)argc, argv, legacy_draw_options, &args,
-		BU_OPT_PARSE_OPTIONS_FIRST);
-	    if (argc < 0) {
+	    operand_index = bu_arg_schema_parse_complete(&legacy_draw_schema, &args,
+		gedp->ged_result_str, argc, argv);
+	    if (operand_index < 0) {
 		--drawtrees_depth;
 		return BRLCAD_ERROR;
 	    }
+	    argc -= operand_index;
+	    argv += operand_index;
 
 	    dgcdp.draw_edge_uses = args.edge_uses;
 	    dgcdp.vs.draw_solid_lines_only = args.solid_lines;

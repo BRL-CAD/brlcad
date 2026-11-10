@@ -53,15 +53,12 @@ set(unbound_adapter_allowlist
   "src/libged/view/view.c|8"
 )
 
-# draw has a reviewed legacy bu_opt execution adapter alongside the canonical
-# native schema used by command analysis and the new command form.  Keep this
-# exception explicit: another split execution/metadata parser must trigger a
-# source-audit decision rather than being accepted merely because a native
-# schema is registered somewhere in the file.
+# Keep reviewed split execution/metadata parsers explicit: another adapter
+# must trigger a source-audit decision rather than being accepted merely
+# because a native schema is registered somewhere in the file.
 set(bu_opt_native_adapter_allowlist
   "src/libged/annotate/annotate.cpp"
   "src/libged/bot/dump/bot_dump.cpp"
-  "src/libged/draw/draw.c"
   "src/libged/edit/edarb.c"
   "src/libged/facetize/subprocess/main.cpp"
 )
