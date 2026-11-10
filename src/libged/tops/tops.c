@@ -27,7 +27,7 @@
 
 #include <string.h>
 
-#include "bu/opt.h"
+#include "bu/arg.h"
 
 #include "../ged_private.h"
 
@@ -38,16 +38,20 @@ struct tops_args {
     int phony;
 };
 
-#define TOPS_OPTIONS(args) \
-    BU_OPT_FLAG(args, "a", NULL, all, "Include all top-level objects"), \
-    BU_OPT_FLAG(args, "h", NULL, hidden, "Include hidden top-level objects"), \
-    BU_OPT_FLAG(args, "n", NULL, no_decorate, "Do not decorate object names"), \
-    BU_OPT_FLAG(args, "p", NULL, phony, "Include phony top-level objects"),
-
-BU_OPT_DESC_BUILDER(tops_options, struct tops_args, TOPS_OPTIONS);
-static const ged_opt_spec tops_opt_spec =
-    GED_OPT("tops", "List top-level database objects", tops_options,
-	"options-first");
+static const struct bu_arg_option tops_options[] = {
+    BU_ARG_FLAG("a", NULL, struct tops_args, all,
+	"Include all top-level objects"),
+    BU_ARG_FLAG("h", NULL, struct tops_args, hidden,
+	"Include hidden top-level objects"),
+    BU_ARG_FLAG("n", NULL, struct tops_args, no_decorate,
+	"Do not decorate object names"),
+    BU_ARG_FLAG("p", NULL, struct tops_args, phony,
+	"Include phony top-level objects"),
+    BU_ARG_OPTION_NULL
+};
+static const struct bu_arg_schema tops_cmd_schema =
+    BU_ARG_SCHEMA_BOUND("tops", "List top-level database objects",
+	tops_options, NULL, BU_ARG_PARSE_OPTIONS_FIRST, NULL, NULL, NULL, NULL);
 
 
 int
@@ -57,7 +61,7 @@ ged_tops_core(struct ged *gedp, int argc, const char *argv[])
     struct directory **dirp;
     struct directory **dirp0 = (struct directory **)NULL;
     struct tops_args args = {0, 0, 0, 0};
-    int operand_count = 0;
+    int operand_index;
 
     /* static const char *usage = "[-a|-h|-n|-p]"; */
 
@@ -67,10 +71,9 @@ ged_tops_core(struct ged *gedp, int argc, const char *argv[])
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
 
-    operand_count = bu_opt_parse_build_with_policy(gedp->ged_result_str,
-	argc - 1, argv + 1, tops_options, &args,
-	BU_OPT_PARSE_OPTIONS_FIRST);
-    if (operand_count != 0) {
+    operand_index = bu_arg_schema_parse_complete(&tops_cmd_schema, &args,
+	gedp->ged_result_str, argc - 1, argv + 1);
+    if (operand_index < 0) {
 	ged_cmd_help_append(gedp->ged_result_str, argv[0], argv[0]);
 	return BRLCAD_ERROR;
     }
@@ -125,10 +128,10 @@ ged_tops_core(struct ged *gedp, int argc, const char *argv[])
 #include "../include/plugin.h"
 
 #define GED_TOPS_COMMANDS(X, XID) \
-    X(tops, ged_tops_core, GED_CMD_DEFAULT, &tops_opt_spec) \
+    X(tops, ged_tops_core, GED_CMD_DEFAULT, &tops_cmd_schema) \
 
-GED_DECLARE_COMMAND_SET_WITH_OPT_SPEC(GED_TOPS_COMMANDS)
-GED_DECLARE_PLUGIN_MANIFEST_WITH_OPT_SPEC("libged_tops", 1, GED_TOPS_COMMANDS)
+GED_DECLARE_COMMAND_SET_WITH_NATIVE_SCHEMA(GED_TOPS_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST_WITH_NATIVE_SCHEMA("libged_tops", 1, GED_TOPS_COMMANDS)
 
 /*
  * Local Variables:

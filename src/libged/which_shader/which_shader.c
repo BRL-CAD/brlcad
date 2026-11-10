@@ -27,7 +27,7 @@
 
 #include <string.h>
 
-#include "bu/opt.h"
+#include "bu/arg.h"
 
 #include "../ged_private.h"
 
@@ -36,16 +36,20 @@ struct which_shader_args {
     int script_output;
 };
 
-#define WHICH_SHADER_OPTIONS(args) \
-    BU_OPT_FLAG(args, "s", NULL, script_output, \
+static const struct bu_arg_option which_shader_options[] = {
+    BU_ARG_FLAG("s", NULL, struct which_shader_args, script_output,
 	"Use script-oriented output"),
-
-BU_OPT_DESC_BUILDER(which_shader_options, struct which_shader_args,
-    WHICH_SHADER_OPTIONS);
-static const ged_opt_spec which_shader_opt_spec =
-    GED_OPT("which_shader",
+    BU_ARG_OPTION_NULL
+};
+static const struct bu_arg_operand which_shader_operands[] = {
+    BU_ARG_OPERAND("shader_patterns", BU_ARG_VALUE_STRING, 1,
+	BU_ARG_COUNT_UNLIMITED, "Shader name patterns", NULL),
+    BU_ARG_OPERAND_NULL
+};
+static const struct bu_arg_schema which_shader_cmd_schema =
+    BU_ARG_SCHEMA_BOUND("which_shader",
 	"Find combinations using matching shaders", which_shader_options,
-	"options-first shader_patterns:string+");
+	which_shader_operands, BU_ARG_PARSE_OPTIONS_FIRST, NULL, NULL, NULL, NULL);
 
 
 int
@@ -55,7 +59,7 @@ ged_which_shader_core(struct ged *gedp, int argc, const char *argv[])
     struct directory *dp;
     struct rt_db_internal intern;
     struct rt_comb_internal *comb;
-    int operand_count;
+    int operand_index;
     struct which_shader_args args = {0};
     const char *command = argv[0];
 
@@ -72,13 +76,14 @@ ged_which_shader_core(struct ged *gedp, int argc, const char *argv[])
 
 
     argc--; argv++;
-    operand_count = bu_opt_parse_build_with_policy(gedp->ged_result_str,
-	argc, argv, which_shader_options, &args, BU_OPT_PARSE_OPTIONS_FIRST);
-    if (operand_count < 1) {
+    operand_index = bu_arg_schema_parse_complete(&which_shader_cmd_schema,
+	&args, gedp->ged_result_str, argc, argv);
+    if (operand_index < 0) {
 	ged_cmd_help_append(gedp->ged_result_str, command, command);
 	return BRLCAD_ERROR;
     }
-    argc = operand_count;
+    argc -= operand_index;
+    argv += operand_index;
 
     for (j = 0; j < argc; j++) {
 
@@ -114,10 +119,10 @@ ged_which_shader_core(struct ged *gedp, int argc, const char *argv[])
 #include "../include/plugin.h"
 
 #define GED_WHICH_SHADER_COMMANDS(X, XID) \
-    X(which_shader, ged_which_shader_core, GED_CMD_DEFAULT, &which_shader_opt_spec) \
+    X(which_shader, ged_which_shader_core, GED_CMD_DEFAULT, &which_shader_cmd_schema) \
 
-GED_DECLARE_COMMAND_SET_WITH_OPT_SPEC(GED_WHICH_SHADER_COMMANDS)
-GED_DECLARE_PLUGIN_MANIFEST_WITH_OPT_SPEC("libged_which_shader", 1, GED_WHICH_SHADER_COMMANDS)
+GED_DECLARE_COMMAND_SET_WITH_NATIVE_SCHEMA(GED_WHICH_SHADER_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST_WITH_NATIVE_SCHEMA("libged_which_shader", 1, GED_WHICH_SHADER_COMMANDS)
 
 /*
  * Local Variables:

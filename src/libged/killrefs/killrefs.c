@@ -27,7 +27,7 @@
 
 #include <string.h>
 
-#include "bu/opt.h"
+#include "bu/arg.h"
 
 #include "../ged_private.h"
 
@@ -35,14 +35,21 @@ struct killrefs_args {
     int print;
 };
 
-#define KILLREFS_OPTIONS(args) \
-    BU_OPT_FLAG(args, "n", NULL, print, \
+static const struct bu_arg_option killrefs_options[] = {
+    BU_ARG_FLAG("n", NULL, struct killrefs_args, print,
 	"Report references without removing them"),
-
-BU_OPT_DESC_BUILDER(killrefs_options, struct killrefs_args, KILLREFS_OPTIONS);
-static const ged_opt_spec killrefs_opt_spec =
-    GED_OPT("killrefs", "Remove references to database objects",
-	killrefs_options, "options-first objects:object+");
+    BU_ARG_OPTION_NULL
+};
+static const struct bu_arg_operand killrefs_operands[] = {
+    BU_ARG_OPERAND("objects", BU_ARG_VALUE_DB_OBJECT, 1,
+	BU_ARG_COUNT_UNLIMITED, "Objects whose references should be removed",
+	"ged.db_object"),
+    BU_ARG_OPERAND_NULL
+};
+static const struct bu_arg_schema killrefs_cmd_schema =
+    BU_ARG_SCHEMA_BOUND("killrefs", "Remove references to database objects",
+	killrefs_options, killrefs_operands, BU_ARG_PARSE_OPTIONS_FIRST, NULL,
+	NULL, NULL, NULL);
 
 
 int
@@ -53,6 +60,7 @@ ged_killrefs_core(struct ged *gedp, int argc, const char *argv[])
     struct rt_db_internal intern;
     struct rt_comb_internal *comb;
     struct killrefs_args args = {0};
+    int operand_index;
     int object_count;
     int ret;
     const char *command = argv[0];
@@ -74,12 +82,14 @@ ged_killrefs_core(struct ged *gedp, int argc, const char *argv[])
     }
 
     argc--; argv++;
-    object_count = bu_opt_parse_build_with_policy(gedp->ged_result_str,
-	argc, argv, killrefs_options, &args, BU_OPT_PARSE_OPTIONS_FIRST);
-    if (object_count < 1) {
+    operand_index = bu_arg_schema_parse_complete(&killrefs_cmd_schema, &args,
+	gedp->ged_result_str, argc, argv);
+    if (operand_index < 0) {
 	ged_cmd_help_append(gedp->ged_result_str, command, command);
 	return BRLCAD_ERROR;
     }
+    object_count = argc - operand_index;
+    argv += operand_index;
 
 
     if (!args.print && !gedp->ged_internal_call) {
@@ -136,10 +146,10 @@ ged_killrefs_core(struct ged *gedp, int argc, const char *argv[])
 #include "../include/plugin.h"
 
 #define GED_KILLREFS_COMMANDS(X, XID) \
-    X(killrefs, ged_killrefs_core, GED_CMD_DEFAULT, &killrefs_opt_spec) \
+    X(killrefs, ged_killrefs_core, GED_CMD_DEFAULT, &killrefs_cmd_schema) \
 
-GED_DECLARE_COMMAND_SET_WITH_OPT_SPEC(GED_KILLREFS_COMMANDS)
-GED_DECLARE_PLUGIN_MANIFEST_WITH_OPT_SPEC("libged_killrefs", 1, GED_KILLREFS_COMMANDS)
+GED_DECLARE_COMMAND_SET_WITH_NATIVE_SCHEMA(GED_KILLREFS_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST_WITH_NATIVE_SCHEMA("libged_killrefs", 1, GED_KILLREFS_COMMANDS)
 
 /*
  * Local Variables:

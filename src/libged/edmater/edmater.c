@@ -32,7 +32,7 @@
 #endif
 
 #include "bu/app.h"
-#include "bu/opt.h"
+#include "bu/arg.h"
 #include "bu/file.h"
 #include "../ged_private.h"
 
@@ -40,13 +40,20 @@ struct edmater_args {
     const char *editor;
 };
 
-#define EDMATER_OPTIONS(args) \
-    BU_OPT_STR(args, "E", NULL, editor, "editor", "Editor command"),
-
-BU_OPT_DESC_BUILDER(edmater_options, struct edmater_args, EDMATER_OPTIONS);
-static const ged_opt_spec edmater_opt_spec =
-    GED_OPT("edmater", "Edit combination material properties",
-	edmater_options, "options-first combinations:object+");
+static const struct bu_arg_option edmater_options[] = {
+    BU_ARG_VALUE("E", NULL, struct edmater_args, editor,
+	BU_ARG_VALUE_STRING, BU_ARG_REQUIRED, "editor", "Editor command"),
+    BU_ARG_OPTION_NULL
+};
+static const struct bu_arg_operand edmater_operands[] = {
+    BU_ARG_OPERAND("combinations", BU_ARG_VALUE_DB_OBJECT, 1,
+	BU_ARG_COUNT_UNLIMITED, "Combinations to edit", "ged.db_object"),
+    BU_ARG_OPERAND_NULL
+};
+static const struct bu_arg_schema edmater_cmd_schema =
+    BU_ARG_SCHEMA_BOUND("edmater", "Edit combination material properties",
+	edmater_options, edmater_operands, BU_ARG_PARSE_OPTIONS_FIRST, NULL,
+	NULL, NULL, NULL);
 
 
 int
@@ -58,7 +65,7 @@ ged_edmater_core(struct ged *gedp, int argc, const char *argv[])
     const char **av;
     char tmpfil[MAXPATHLEN];
     struct edmater_args args = {0};
-    int operand_count;
+    int operand_index;
     const char *command = argv[0];
 
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
@@ -75,13 +82,14 @@ ged_edmater_core(struct ged *gedp, int argc, const char *argv[])
     }
 
     argc--; argv++;
-    operand_count = bu_opt_parse_build_with_policy(gedp->ged_result_str,
-	argc, argv, edmater_options, &args, BU_OPT_PARSE_OPTIONS_FIRST);
-    if (operand_count < 1) {
+    operand_index = bu_arg_schema_parse_complete(&edmater_cmd_schema, &args,
+	gedp->ged_result_str, argc, argv);
+    if (operand_index < 0) {
 	ged_cmd_help_append(gedp->ged_result_str, command, command);
 	return BRLCAD_ERROR;
     }
-    argc = operand_count;
+    argc -= operand_index;
+    argv += operand_index;
 
     fp = bu_temp_file(tmpfil, MAXPATHLEN);
     if (!fp)
@@ -121,10 +129,10 @@ ged_edmater_core(struct ged *gedp, int argc, const char *argv[])
 #include "../include/plugin.h"
 
 #define GED_EDMATER_COMMANDS(X, XID) \
-    X(edmater, ged_edmater_core, GED_CMD_DEFAULT, &edmater_opt_spec) \
+    X(edmater, ged_edmater_core, GED_CMD_DEFAULT, &edmater_cmd_schema) \
 
-GED_DECLARE_COMMAND_SET_WITH_OPT_SPEC(GED_EDMATER_COMMANDS)
-GED_DECLARE_PLUGIN_MANIFEST_WITH_OPT_SPEC("libged_edmater", 1, GED_EDMATER_COMMANDS)
+GED_DECLARE_COMMAND_SET_WITH_NATIVE_SCHEMA(GED_EDMATER_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST_WITH_NATIVE_SCHEMA("libged_edmater", 1, GED_EDMATER_COMMANDS)
 
 /*
  * Local Variables:

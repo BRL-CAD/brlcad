@@ -27,7 +27,7 @@
 
 #include <string.h>
 
-#include "bu/opt.h"
+#include "bu/arg.h"
 
 #include "../ged_private.h"
 
@@ -70,20 +70,27 @@ pathlist_leaf_func(struct db_tree_state *UNUSED(tsp), const struct db_full_path 
 }
 
 
-#define PATHLIST_OPTIONS(args) \
-    BU_OPT_FLAG(args, "n", "noleaf", no_leaf, \
+static const struct bu_arg_option pathlist_options[] = {
+    BU_ARG_FLAG("n", "noleaf", struct pathlist_args, no_leaf,
 	"Omit leaf names from reported paths"),
-
-BU_OPT_DESC_BUILDER(pathlist_options, struct pathlist_args, PATHLIST_OPTIONS);
-static const ged_opt_spec pathlist_opt_spec =
-    GED_OPT("pathlist", "List leaf paths below a database object",
-	pathlist_options, "options-first object:object");
+    BU_ARG_ALIAS("noleaf", NULL, "noleaf", 1),
+    BU_ARG_OPTION_NULL
+};
+static const struct bu_arg_operand pathlist_operands[] = {
+    BU_ARG_OPERAND("object", BU_ARG_VALUE_DB_OBJECT, 1, 1,
+	"Database object to traverse", "ged.db_object"),
+    BU_ARG_OPERAND_NULL
+};
+static const struct bu_arg_schema pathlist_cmd_schema =
+    BU_ARG_SCHEMA_BOUND("pathlist", "List leaf paths below a database object",
+	pathlist_options, pathlist_operands, BU_ARG_PARSE_OPTIONS_FIRST, NULL,
+	NULL, NULL, NULL);
 
 
 int
 ged_pathlist_core(struct ged *gedp, int argc, const char *argv[])
 {
-    int operand_count;
+    int operand_index;
     struct pathlist_args args = {0};
     struct pathlist_walk_state state = {gedp, 0};
     const char *command = argv[0];
@@ -101,13 +108,14 @@ ged_pathlist_core(struct ged *gedp, int argc, const char *argv[])
     }
 
     argc--; argv++;
-    operand_count = bu_opt_parse_build_with_policy(gedp->ged_result_str,
-	argc, argv, pathlist_options, &args, BU_OPT_PARSE_OPTIONS_FIRST);
-    if (operand_count != 1) {
+    operand_index = bu_arg_schema_parse_complete(&pathlist_cmd_schema, &args,
+	gedp->ged_result_str, argc, argv);
+    if (operand_index < 0) {
 	ged_cmd_help_append(gedp->ged_result_str, command, command);
 	return BRLCAD_ERROR;
     }
-    argc = operand_count;
+    argv += operand_index;
+    argc = 1;
     state.no_leaf = args.no_leaf;
 
     struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
@@ -126,10 +134,10 @@ ged_pathlist_core(struct ged *gedp, int argc, const char *argv[])
 #include "../include/plugin.h"
 
 #define GED_PATHLIST_COMMANDS(X, XID) \
-    X(pathlist, ged_pathlist_core, GED_CMD_DEFAULT, &pathlist_opt_spec) \
+    X(pathlist, ged_pathlist_core, GED_CMD_DEFAULT, &pathlist_cmd_schema) \
 
-GED_DECLARE_COMMAND_SET_WITH_OPT_SPEC(GED_PATHLIST_COMMANDS)
-GED_DECLARE_PLUGIN_MANIFEST_WITH_OPT_SPEC("libged_pathlist", 1, GED_PATHLIST_COMMANDS)
+GED_DECLARE_COMMAND_SET_WITH_NATIVE_SCHEMA(GED_PATHLIST_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST_WITH_NATIVE_SCHEMA("libged_pathlist", 1, GED_PATHLIST_COMMANDS)
 
 /*
  * Local Variables:

@@ -28,7 +28,7 @@
 #include <string.h>
 
 #include "bu/hash.h"
-#include "bu/opt.h"
+#include "bu/arg.h"
 
 #include "../ged_private.h"
 
@@ -62,18 +62,24 @@ struct killtree_args {
 
 #include "../include/plugin.h"
 
-#define KILLTREE_OPTIONS(args) \
-    BU_OPT_FLAG(args, "a", NULL, killrefs, \
-	"Remove references from outside the deleted trees"), \
-    BU_OPT_FLAG(args, "f", NULL, force, \
-	"Force deletion of protected global data"), \
-    BU_OPT_FLAG(args, "n", NULL, print, \
+static const struct bu_arg_option killtree_options[] = {
+    BU_ARG_FLAG("a", NULL, struct killtree_args, killrefs,
+	"Remove references from outside the deleted trees"),
+    BU_ARG_FLAG("f", NULL, struct killtree_args, force,
+	"Force deletion of protected global data"),
+    BU_ARG_FLAG("n", NULL, struct killtree_args, print,
 	"Report changes without modifying the database"),
-
-BU_OPT_DESC_BUILDER(killtree_options, struct killtree_args, KILLTREE_OPTIONS);
-static const ged_opt_spec killtree_opt_spec =
-    GED_OPT("killtree", "Delete database object trees",
-	killtree_options, "options-first objects:object+");
+    BU_ARG_OPTION_NULL
+};
+static const struct bu_arg_operand killtree_operands[] = {
+    BU_ARG_OPERAND("objects", BU_ARG_VALUE_DB_OBJECT, 1,
+	BU_ARG_COUNT_UNLIMITED, "Object trees to delete", "ged.db_object"),
+    BU_ARG_OPERAND_NULL
+};
+static const struct bu_arg_schema killtree_cmd_schema =
+    BU_ARG_SCHEMA_BOUND("killtree", "Delete database object trees",
+	killtree_options, killtree_operands, BU_ARG_PARSE_OPTIONS_FIRST, NULL,
+	NULL, NULL, NULL);
 
 
 /* this finds references to 'obj' that are not within the 'topobj'
@@ -216,7 +222,8 @@ ged_killtree_core(struct ged *gedp, int argc, const char *argv[])
     int i;
     struct killtree_data gktd;
     struct killtree_args args = {0, 0, 0};
-    int object_count = 0;
+    int object_count;
+    int operand_index;
     const char **objects = NULL;
     const char *command = argv[0];
 
@@ -234,12 +241,14 @@ ged_killtree_core(struct ged *gedp, int argc, const char *argv[])
     }
 
     argc--; argv++;
-    object_count = bu_opt_parse_build_with_policy(gedp->ged_result_str,
-	argc, argv, killtree_options, &args, BU_OPT_PARSE_OPTIONS_FIRST);
-    if (object_count < 1) {
+    operand_index = bu_arg_schema_parse_complete(&killtree_cmd_schema, &args,
+	gedp->ged_result_str, argc, argv);
+    if (operand_index < 0) {
 	ged_cmd_help_append(gedp->ged_result_str, command, command);
 	return BRLCAD_ERROR;
     }
+    object_count = argc - operand_index;
+    argv += operand_index;
 
     objects = argv;
 
@@ -342,10 +351,10 @@ ged_killtree_core(struct ged *gedp, int argc, const char *argv[])
 }
 
 #define GED_KILLTREE_COMMANDS(X, XID) \
-    X(killtree, ged_killtree_core, GED_CMD_DEFAULT, &killtree_opt_spec) \
+    X(killtree, ged_killtree_core, GED_CMD_DEFAULT, &killtree_cmd_schema) \
 
-GED_DECLARE_COMMAND_SET_WITH_OPT_SPEC(GED_KILLTREE_COMMANDS)
-GED_DECLARE_PLUGIN_MANIFEST_WITH_OPT_SPEC("libged_killtree", 1, GED_KILLTREE_COMMANDS)
+GED_DECLARE_COMMAND_SET_WITH_NATIVE_SCHEMA(GED_KILLTREE_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST_WITH_NATIVE_SCHEMA("libged_killtree", 1, GED_KILLTREE_COMMANDS)
 
 /*
  * Local Variables:

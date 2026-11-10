@@ -46,25 +46,34 @@ struct gdiff_args {
     int structure_diff;
 };
 
-#define GDIFF_OPTIONS(args) \
-    BU_OPT_FLAG(args, "h", "help", print_help, "Print help"), \
-    BU_OPT_NUM(args, "g", "grid-spacing", grid_spacing, "distance", \
-	"Controls spacing of test ray grids (units are mm)"), \
-    BU_OPT_FLAG(args, "l", "view-left", view_left, \
-	"Visualize volumes occurring only in the left object"), \
-    BU_OPT_FLAG(args, "b", "view-both", view_overlap, \
-	"Visualize volumes common to both objects"), \
-    BU_OPT_FLAG(args, "r", "view-right", view_right, \
-	"Visualize volumes occurring only in the right object"), \
-    BU_OPT_FLAG(args, "G", "grazing", grazing_report, \
-	"Report differences in grazing hits"), \
-    BU_OPT_FLAG(args, "S", "structure", structure_diff, \
+static const struct bu_arg_option gdiff_options[] = {
+    BU_ARG_FLAG("h", "help", struct gdiff_args, print_help, "Print help"),
+    BU_ARG_VALUE("g", "grid-spacing", struct gdiff_args, grid_spacing,
+	BU_ARG_VALUE_NUMBER, BU_ARG_REQUIRED, "distance",
+	"Controls spacing of test ray grids (units are mm)"),
+    BU_ARG_FLAG("l", "view-left", struct gdiff_args, view_left,
+	"Visualize volumes occurring only in the left object"),
+    BU_ARG_FLAG("b", "view-both", struct gdiff_args, view_overlap,
+	"Visualize volumes common to both objects"),
+    BU_ARG_FLAG("r", "view-right", struct gdiff_args, view_right,
+	"Visualize volumes occurring only in the right object"),
+    BU_ARG_FLAG("G", "grazing", struct gdiff_args, grazing_report,
+	"Report differences in grazing hits"),
+    BU_ARG_FLAG("S", "structure", struct gdiff_args, structure_diff,
 	"Compare tree structures instead of raytrace results"),
-
-BU_OPT_DESC_BUILDER(gdiff_options, struct gdiff_args, GDIFF_OPTIONS);
-static const ged_opt_spec gdiff_opt_spec =
-    GED_OPT("gdiff", "Compare two geometry objects", gdiff_options,
-	"interspersed left_object:object right_object:object");
+    BU_ARG_OPTION_NULL
+};
+static const struct bu_arg_operand gdiff_operands[] = {
+    BU_ARG_OPERAND("left_object", BU_ARG_VALUE_DB_OBJECT, 1, 1,
+	"Left object to compare", "ged.db_object"),
+    BU_ARG_OPERAND("right_object", BU_ARG_VALUE_DB_OBJECT, 1, 1,
+	"Right object to compare", "ged.db_object"),
+    BU_ARG_OPERAND_NULL
+};
+static const struct bu_arg_schema gdiff_cmd_schema =
+    BU_ARG_SCHEMA("gdiff", "Compare two geometry objects", gdiff_options,
+	gdiff_operands, BU_ARG_PARSE_INTERSPERSED,
+	BU_ARG_SCHEMA_META_HELP(NULL, NULL, NULL, NULL, NULL));
 
 static void check_walk(
 	int *diff,
@@ -231,7 +240,8 @@ ged_gdiff_core(struct ged *gedp, int argc, const char *argv[])
     struct gdiff_args args = {0, 0.0, 0, 0, 0, 0, 0};
     const char *left_obj;
     const char *right_obj;
-    int ret_ac = 0;
+    int operand_index;
+    int ret_ac;
     /* Skip command name */
     int ac = argc - 1;
     const char **av = argv+1;
@@ -242,9 +252,9 @@ ged_gdiff_core(struct ged *gedp, int argc, const char *argv[])
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
 
-    ret_ac = bu_opt_parse_build(gedp->ged_result_str, ac, av,
-	gdiff_options, &args);
-    if (ret_ac < 0) {
+    operand_index = bu_arg_schema_parse_complete(&gdiff_cmd_schema, &args,
+	gedp->ged_result_str, ac, av);
+    if (operand_index < 0) {
 	bu_vls_trunc(gedp->ged_result_str, 0);
 	bu_vls_printf(gedp->ged_result_str, "Usage: gdiff [opts] left_obj right_obj\n");
 	return BRLCAD_ERROR;
@@ -259,6 +269,8 @@ ged_gdiff_core(struct ged *gedp, int argc, const char *argv[])
 	    bu_free(help, "help str");
 	return BRLCAD_OK;
     }
+    ret_ac = ac - operand_index;
+    av += operand_index;
 
     if (ret_ac != 2) {
 	char *help = ged_cmd_help("gdiff", "gdiff");
@@ -453,10 +465,10 @@ ged_gdiff_core(struct ged *gedp, int argc, const char *argv[])
 #include "../include/plugin.h"
 
 #define GED_GDIFF_COMMANDS(X, XID) \
-    X(gdiff, ged_gdiff_core, GED_CMD_DEFAULT, &gdiff_opt_spec) \
+    X(gdiff, ged_gdiff_core, GED_CMD_DEFAULT, &gdiff_cmd_schema) \
 
-GED_DECLARE_COMMAND_SET_WITH_OPT_SPEC(GED_GDIFF_COMMANDS)
-GED_DECLARE_PLUGIN_MANIFEST_WITH_OPT_SPEC("libged_gdiff", 1, GED_GDIFF_COMMANDS)
+GED_DECLARE_COMMAND_SET_WITH_NATIVE_SCHEMA(GED_GDIFF_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST_WITH_NATIVE_SCHEMA("libged_gdiff", 1, GED_GDIFF_COMMANDS)
 
 /*
  * Local Variables:

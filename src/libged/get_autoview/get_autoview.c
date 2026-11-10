@@ -23,7 +23,7 @@
  *
  */
 
-#include "bu/opt.h"
+#include "bu/arg.h"
 #include "dm.h"
 #include "ged.h"
 
@@ -34,16 +34,15 @@ struct get_autoview_args {
     int include_pseudo_solids;
 };
 
-#define GET_AUTOVIEW_OPTIONS(args) \
-    BU_OPT_FLAG(args, "p", NULL, include_pseudo_solids, \
+static const struct bu_arg_option get_autoview_options[] = {
+    BU_ARG_FLAG("p", NULL, struct get_autoview_args, include_pseudo_solids,
 	"Include pseudo-solids in the displayed bounds"),
-
-BU_OPT_DESC_BUILDER(get_autoview_options, struct get_autoview_args,
-    GET_AUTOVIEW_OPTIONS);
-static const ged_opt_spec get_autoview_opt_spec =
-    GED_OPT("get_autoview",
+    BU_ARG_OPTION_NULL
+};
+static const struct bu_arg_schema get_autoview_cmd_schema =
+    BU_ARG_SCHEMA_BOUND("get_autoview",
 	"Report a view enclosing displayed geometry", get_autoview_options,
-	"options-first");
+	NULL, BU_ARG_PARSE_OPTIONS_FIRST, NULL, NULL, NULL, NULL);
 
 /*
  * Get the view size and center such that all displayed solids would be in view
@@ -61,7 +60,7 @@ ged_get_autoview_core(struct ged *gedp, int argc, const char *argv[])
     vect_t radial;
     fastf_t size;
     struct get_autoview_args args = {0};
-    int operand_count = 0;
+    int operand_index;
     double sval = (gedp->dbip) ? gedp->dbip->dbi_base2local : 1.0;
 
     GED_CHECK_DRAWABLE(gedp, BRLCAD_ERROR);
@@ -70,10 +69,9 @@ ged_get_autoview_core(struct ged *gedp, int argc, const char *argv[])
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
 
-    operand_count = bu_opt_parse_build_with_policy(gedp->ged_result_str,
-	argc - 1, argv + 1, get_autoview_options, &args,
-	BU_OPT_PARSE_OPTIONS_FIRST);
-    if (operand_count != 0) {
+    operand_index = bu_arg_schema_parse_complete(&get_autoview_cmd_schema,
+	&args, gedp->ged_result_str, argc - 1, argv + 1);
+    if (operand_index < 0) {
 	ged_cmd_help_append(gedp->ged_result_str, argv[0], argv[0]);
 	return BRLCAD_ERROR;
     }
@@ -105,10 +103,10 @@ ged_get_autoview_core(struct ged *gedp, int argc, const char *argv[])
 #include "../include/plugin.h"
 
 #define GED_GET_AUTOVIEW_COMMANDS(X, XID) \
-    X(get_autoview, ged_get_autoview_core, GED_CMD_DEFAULT, &get_autoview_opt_spec) \
+    X(get_autoview, ged_get_autoview_core, GED_CMD_DEFAULT, &get_autoview_cmd_schema) \
 
-GED_DECLARE_COMMAND_SET_WITH_OPT_SPEC(GED_GET_AUTOVIEW_COMMANDS)
-GED_DECLARE_PLUGIN_MANIFEST_WITH_OPT_SPEC("libged_get_autoview", 1, GED_GET_AUTOVIEW_COMMANDS)
+GED_DECLARE_COMMAND_SET_WITH_NATIVE_SCHEMA(GED_GET_AUTOVIEW_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST_WITH_NATIVE_SCHEMA("libged_get_autoview", 1, GED_GET_AUTOVIEW_COMMANDS)
 
 /*
  * Local Variables:

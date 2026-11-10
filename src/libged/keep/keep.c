@@ -27,7 +27,7 @@
 
 #include <string.h>
 
-#include "bu/opt.h"
+#include "bu/arg.h"
 #include "rt/geom.h"
 
 #include "../ged_private.h"
@@ -46,14 +46,22 @@ struct keep_args {
 
 #include "../include/plugin.h"
 
-#define KEEP_OPTIONS(args) \
-    BU_OPT_FLAG(args, "R", NULL, named_objects_only, \
+static const struct bu_arg_option keep_options[] = {
+    BU_ARG_FLAG("R", NULL, struct keep_args, named_objects_only,
 	"Keep only named objects, without descendants"),
-
-BU_OPT_DESC_BUILDER(keep_options, struct keep_args, KEEP_OPTIONS);
-static const ged_opt_spec keep_opt_spec =
-    GED_OPT("keep", "Copy selected objects into another database",
-	keep_options, "options-first file:file objects:object+");
+    BU_ARG_OPTION_NULL
+};
+static const struct bu_arg_operand keep_operands[] = {
+    BU_ARG_OPERAND("file", BU_ARG_VALUE_FILE, 1, 1,
+	"Destination database file", "ged.file_path"),
+    BU_ARG_OPERAND("objects", BU_ARG_VALUE_DB_OBJECT, 1,
+	BU_ARG_COUNT_UNLIMITED, "Objects to copy", "ged.db_object"),
+    BU_ARG_OPERAND_NULL
+};
+static const struct bu_arg_schema keep_cmd_schema =
+    BU_ARG_SCHEMA_BOUND("keep", "Copy selected objects into another database",
+	keep_options, keep_operands, BU_ARG_PARSE_OPTIONS_FIRST, NULL, NULL, NULL,
+	NULL);
 
 
 /*
@@ -132,7 +140,8 @@ ged_keep_core(struct ged *gedp, int argc, const char *argv[])
     struct db_i *new_dbip;
     const char *cmd = argv[0];
     struct keep_args args = {0};
-    int operand_count = 0;
+    int operand_count;
+    int operand_index;
     const char *file = NULL;
     const char **objects = NULL;
 
@@ -149,13 +158,15 @@ ged_keep_core(struct ged *gedp, int argc, const char *argv[])
     }
 
     argc--; argv++;
-    operand_count = bu_opt_parse_build_with_policy(gedp->ged_result_str,
-	argc, argv, keep_options, &args, BU_OPT_PARSE_OPTIONS_FIRST);
-    if (operand_count < 2) {
+    operand_index = bu_arg_schema_parse_complete(&keep_cmd_schema, &args,
+	gedp->ged_result_str, argc, argv);
+    if (operand_index < 0) {
 	bu_vls_printf(gedp->ged_result_str, "ERROR: missing file or object names\n");
 	ged_cmd_help_append(gedp->ged_result_str, cmd, cmd);
 	return BRLCAD_ERROR;
     }
+    operand_count = argc - operand_index;
+    argv += operand_index;
 
     file = argv[0];
     objects = argv + 1;
@@ -238,10 +249,10 @@ ged_keep_core(struct ged *gedp, int argc, const char *argv[])
 }
 
 #define GED_KEEP_COMMANDS(X, XID) \
-    X(keep, ged_keep_core, GED_CMD_DEFAULT, &keep_opt_spec) \
+    X(keep, ged_keep_core, GED_CMD_DEFAULT, &keep_cmd_schema) \
 
-GED_DECLARE_COMMAND_SET_WITH_OPT_SPEC(GED_KEEP_COMMANDS)
-GED_DECLARE_PLUGIN_MANIFEST_WITH_OPT_SPEC("libged_keep", 1, GED_KEEP_COMMANDS)
+GED_DECLARE_COMMAND_SET_WITH_NATIVE_SCHEMA(GED_KEEP_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST_WITH_NATIVE_SCHEMA("libged_keep", 1, GED_KEEP_COMMANDS)
 
 /*
  * Local Variables:

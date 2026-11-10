@@ -27,7 +27,7 @@
 
 #include <string.h>
 
-#include "bu/opt.h"
+#include "bu/arg.h"
 
 #include "../ged_private.h"
 
@@ -35,14 +35,20 @@ struct killall_args {
     int print;
 };
 
-#define KILLALL_OPTIONS(args) \
-    BU_OPT_FLAG(args, "n", NULL, print, \
+static const struct bu_arg_option killall_options[] = {
+    BU_ARG_FLAG("n", NULL, struct killall_args, print,
 	"Report affected objects without changing the database"),
-
-BU_OPT_DESC_BUILDER(killall_options, struct killall_args, KILLALL_OPTIONS);
-static const ged_opt_spec killall_opt_spec =
-    GED_OPT("killall", "Delete objects and all references to them",
-	killall_options, "options-first objects:object+");
+    BU_ARG_OPTION_NULL
+};
+static const struct bu_arg_operand killall_operands[] = {
+    BU_ARG_OPERAND("objects", BU_ARG_VALUE_DB_OBJECT, 1,
+	BU_ARG_COUNT_UNLIMITED, "Objects to delete", "ged.db_object"),
+    BU_ARG_OPERAND_NULL
+};
+static const struct bu_arg_schema killall_cmd_schema =
+    BU_ARG_SCHEMA_BOUND("killall", "Delete objects and all references to them",
+	killall_options, killall_operands, BU_ARG_PARSE_OPTIONS_FIRST, NULL, NULL,
+	NULL, NULL);
 
 
 int
@@ -51,6 +57,7 @@ ged_killall_core(struct ged *gedp, int argc, const char *argv[])
     struct killall_args args = {0};
     const char *command = argv[0];
     const char **refs_argv = NULL;
+    int operand_index;
     int object_count;
     int ret;
 
@@ -69,12 +76,14 @@ ged_killall_core(struct ged *gedp, int argc, const char *argv[])
     }
 
     argc--; argv++;
-    object_count = bu_opt_parse_build_with_policy(gedp->ged_result_str,
-	argc, argv, killall_options, &args, BU_OPT_PARSE_OPTIONS_FIRST);
-    if (object_count < 1) {
+    operand_index = bu_arg_schema_parse_complete(&killall_cmd_schema, &args,
+	gedp->ged_result_str, argc, argv);
+    if (operand_index < 0) {
 	ged_cmd_help_append(gedp->ged_result_str, command, command);
 	return BRLCAD_ERROR;
     }
+    object_count = argc - operand_index;
+    argv += operand_index;
 
 
     if (args.print) {
@@ -136,10 +145,10 @@ ged_killall_core(struct ged *gedp, int argc, const char *argv[])
 #include "../include/plugin.h"
 
 #define GED_KILLALL_COMMANDS(X, XID) \
-    X(killall, ged_killall_core, GED_CMD_DEFAULT, &killall_opt_spec) \
+    X(killall, ged_killall_core, GED_CMD_DEFAULT, &killall_cmd_schema) \
 
-GED_DECLARE_COMMAND_SET_WITH_OPT_SPEC(GED_KILLALL_COMMANDS)
-GED_DECLARE_PLUGIN_MANIFEST_WITH_OPT_SPEC("libged_killall", 1, GED_KILLALL_COMMANDS)
+GED_DECLARE_COMMAND_SET_WITH_NATIVE_SCHEMA(GED_KILLALL_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST_WITH_NATIVE_SCHEMA("libged_killall", 1, GED_KILLALL_COMMANDS)
 
 /*
  * Local Variables:
