@@ -196,9 +196,13 @@ struct ged_impl {
     Ged_Internal *i;
 
     struct ged_drawable *ged_gdp;
+    struct ged_event_service *ged_event_servicep;
 };
 
 __BEGIN_DECLS
+
+struct ged_event_service *ged_event_service_create(struct ged *gedp);
+void ged_event_service_destroy(struct ged_event_service *service);
 
 #ifndef FALSE
 #  define FALSE 0

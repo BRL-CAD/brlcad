@@ -18,6 +18,7 @@ changes made.  See document footer for additional details.
 * fixed Windows terminal interactivity detection - Cliff Yapp
 * fixed MGED -a display attachment with piped input - Cliff Yapp
 * added bot_* operations to bot command as subcommands -  Cliff Yapp
+* added renderer-neutral libged database change events - Cliff Yapp
 * generalized librt and libged editing APIs and sessions - Cliff Yapp
 * switched MGED to using a built-in HTML manual viewer - Cliff Yapp
 

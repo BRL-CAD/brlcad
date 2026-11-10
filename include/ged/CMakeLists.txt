@@ -5,6 +5,7 @@ set(
   debug.h
   defines.h
   edit.h
+  event.h
   objects.h
   version.h
   view.h

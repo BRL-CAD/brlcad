@@ -56,6 +56,7 @@
 #include "ged/objects.h"
 #include "ged/view.h"
 #include "ged/debug.h"
+#include "ged/event.h"
 
 // At least for the moment these wrappers are not public API - include them
 // only for the BRL-CAD build itself.

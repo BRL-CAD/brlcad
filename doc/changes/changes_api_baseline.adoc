@@ -2799,6 +2799,24 @@ include/ged/edit.h: GED_EXPORT extern enum ged_edit_status ged_edit_session_canc
 include/ged/edit.h: GED_EXPORT extern enum ged_edit_status ged_edit_session_internal_copy(struct ged *gedp, ged_edit_session_ref session, struct rt_db_internal *intern);
 include/ged/edit.h: GED_EXPORT extern ged_edit_observer_token ged_edit_observer_add(struct ged *gedp, ged_edit_observer_func_t callback, void *client_data);
 include/ged/edit.h: GED_EXPORT extern int ged_edit_observer_remove(struct ged *gedp, ged_edit_observer_token token);
+include/ged/event.h: GED_EXPORT extern void ged_event_init(struct ged_event *event);
+include/ged/event.h: GED_EXPORT extern struct ged_event_result *ged_event_result_create(void);
+include/ged/event.h: GED_EXPORT extern void ged_event_result_clear(struct ged_event_result *result);
+include/ged/event.h: GED_EXPORT extern void ged_event_result_destroy(struct ged_event_result *result);
+include/ged/event.h: GED_EXPORT extern enum ged_event_status ged_event_result_status(const struct ged_event_result *result);
+include/ged/event.h: GED_EXPORT extern size_t ged_event_result_event_count(const struct ged_event_result *result);
+include/ged/event.h: GED_EXPORT extern size_t ged_event_result_coalesced_count(const struct ged_event_result *result);
+include/ged/event.h: GED_EXPORT extern size_t ged_event_result_name_count(const struct ged_event_result *result);
+include/ged/event.h: GED_EXPORT extern const char * ged_event_result_name_at(const struct ged_event_result *result, size_t index);
+include/ged/event.h: GED_EXPORT extern size_t ged_event_result_path_count(const struct ged_event_result *result);
+include/ged/event.h: GED_EXPORT extern const char * ged_event_result_path_at(const struct ged_event_result *result, size_t index);
+include/ged/event.h: GED_EXPORT extern const char * ged_event_result_diagnostic(const struct ged_event_result *result);
+include/ged/event.h: GED_EXPORT extern enum ged_event_status ged_event_dispatch_set(struct ged *gedp, ged_event_dispatch_func_t dispatch, void *client_data);
+include/ged/event.h: GED_EXPORT extern enum ged_event_status ged_event_batch_begin(struct ged *gedp);
+include/ged/event.h: GED_EXPORT extern enum ged_event_status ged_event_batch_end(struct ged *gedp, struct ged_event_result *result);
+include/ged/event.h: GED_EXPORT extern enum ged_event_status ged_event_publish(struct ged *gedp, const struct ged_event *events, size_t event_count, struct ged_event_result *result);
+include/ged/event.h: GED_EXPORT extern ged_event_observer_token ged_event_observer_add(struct ged *gedp, enum ged_event_observer_phase phase, ged_event_observer_func_t func, void *client_data);
+include/ged/event.h: GED_EXPORT extern int ged_event_observer_remove(struct ged *gedp, ged_event_observer_token token);
 include/ged/objects.h: #define	GED_CHECK_COMB(_gedp, _dp, _flags) \
 include/ged/objects.h: #define GED_CHECK_EXISTS(_gedp, _name, _noisy, _flags) \
 include/ged/objects.h: #define	GED_CHECK_READ_ONLY(_gedp, _flags) \
