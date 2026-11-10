@@ -240,34 +240,48 @@ struct edcolor_args {
     int help;
 };
 
-#define COLOR_OPTIONS(args) \
-    BU_OPT_FLAG(args, "e", NULL, edit, "Edit the color table interactively"),
-
-BU_OPT_DESC_BUILDER(color_options, struct color_args, COLOR_OPTIONS);
-static const ged_opt_rule color_opt_rules[] = {
-    GED_RULE_WHEN_HELP("e", "Edit the color table instead of adding a record",
-	"options-first"),
-    GED_RULE_OTHERWISE_HELP("Add a numeric color-table record",
-	"options-first low:int high:int red:int(0:255) green:int(0:255) blue:int(0:255)"),
-    GED_RULE_NULL
+static const struct bu_arg_option color_options[] = {
+    BU_ARG_FLAG("e", NULL, struct color_args, edit,
+	"Edit the color table interactively"),
+    BU_ARG_OPTION_NULL
 };
-static const ged_opt_spec color_opt_spec =
-    GED_OPT_FORMS("color", "Set or edit region color records", color_options,
-	color_opt_rules);
-#define EDCOLOR_OPTIONS(args) \
-    BU_OPT_STR(args, "E", NULL, editor, "editor", "Editor command"), \
-    BU_OPT_FLAG(args, "h", "help", help, "Print command help"), \
-    BU_OPT_FLAG(args, "?", NULL, help, ""),
-
-BU_OPT_DESC_BUILDER(edcolor_options, struct edcolor_args, EDCOLOR_OPTIONS);
-
-static const ged_opt_rule edcolor_opt_rules[] = {
-    GED_RULE_ALIAS("?", "help"),
-    GED_RULE_NULL
+static const struct bu_arg_operand color_record_operands[] = {
+    BU_ARG_OPERAND("low", BU_ARG_VALUE_INTEGER, 1, 1,
+	"Lowest region identifier", NULL),
+    BU_ARG_OPERAND("high", BU_ARG_VALUE_INTEGER, 1, 1,
+	"Highest region identifier", NULL),
+    BU_ARG_OPERAND_INTEGER_RANGE("red", 1, 1, 1, 0, 1, 255,
+	"Red channel", NULL),
+    BU_ARG_OPERAND_INTEGER_RANGE("green", 1, 1, 1, 0, 1, 255,
+	"Green channel", NULL),
+    BU_ARG_OPERAND_INTEGER_RANGE("blue", 1, 1, 1, 0, 1, 255,
+	"Blue channel", NULL),
+    BU_ARG_OPERAND_NULL
 };
-static const ged_opt_spec edcolor_opt_spec =
-    GED_OPT_WITH("edcolor", "Edit the region color table", edcolor_options,
-	"options-first", edcolor_opt_rules);
+static const char * const color_edit_option[] = {"e", NULL};
+static const struct bu_arg_schema_case color_cases[] = {
+    BU_ARG_SCHEMA_CASE("edit", "Edit the color table instead of adding a record",
+	BU_ARG_CONDITION_ANY_OPTION_PRESENT, color_edit_option, NULL, NULL),
+    BU_ARG_SCHEMA_CASE_DEFAULT("record", "Add a numeric color-table record",
+	color_record_operands, NULL),
+    BU_ARG_SCHEMA_CASE_NULL
+};
+static const struct bu_arg_schema color_cmd_schema =
+    BU_ARG_SCHEMA_CASED("color", "Set or edit region color records",
+	color_options, BU_ARG_PARSE_OPTIONS_FIRST, color_cases);
+
+static const struct bu_arg_option edcolor_options[] = {
+    BU_ARG_VALUE("E", NULL, struct edcolor_args, editor, BU_ARG_VALUE_STRING,
+	BU_ARG_REQUIRED, "editor", "Editor command"),
+    BU_ARG_FLAG("h", "help", struct edcolor_args, help,
+	"Print command help"),
+    BU_ARG_ALIAS("?", NULL, "help", 0),
+    BU_ARG_OPTION_NULL
+};
+static const struct bu_arg_schema edcolor_cmd_schema =
+    BU_ARG_SCHEMA("edcolor", "Edit the region color table", edcolor_options,
+	NULL, BU_ARG_PARSE_OPTIONS_FIRST,
+	BU_ARG_SCHEMA_META_HELP(NULL, NULL, NULL, NULL, NULL));
 
 static void
 color_show_help(struct ged *gedp, const char *command)
@@ -297,15 +311,15 @@ ged_edcolor_core(struct ged *gedp, int argc, const char *argv[])
 {
     struct edcolor_args args = {NULL, 0};
     const char *command = argv[0];
-    int operand_count;
+    int operand_index;
 
     GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
 
     bu_vls_trunc(gedp->ged_result_str, 0);
     argc--; argv++;
-    operand_count = bu_opt_parse_build(gedp->ged_result_str, argc, argv,
-	edcolor_options, &args);
-    if (operand_count < 0 || operand_count) {
+    operand_index = bu_arg_schema_parse_complete(&edcolor_cmd_schema, &args,
+	gedp->ged_result_str, argc, argv);
+    if (operand_index < 0) {
 	edcolor_show_help(gedp, command);
 	return BRLCAD_ERROR;
     }
@@ -327,7 +341,7 @@ ged_color_core(struct ged *gedp, int argc, const char *argv[])
     unsigned char rgb[3] = {0, 0, 0};
     int low = 0;
     int high = 0;
-    int operand_count;
+    int operand_index;
     const char *command = argv[0];
 
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
@@ -341,23 +355,15 @@ ged_color_core(struct ged *gedp, int argc, const char *argv[])
     }
 
     argc--; argv++;
-    operand_count = bu_opt_parse_build(gedp->ged_result_str, argc, argv,
-	color_options, &args);
-    if (operand_count < 0) {
+    operand_index = bu_arg_schema_parse_complete(&color_cmd_schema, &args,
+	gedp->ged_result_str, argc, argv);
+    if (operand_index < 0) {
 	color_show_help(gedp, command);
 	return BRLCAD_ERROR;
     }
+    argv += operand_index;
     if (args.edit) {
-	if (operand_count) {
-	    color_show_help(gedp, command);
-	    return BRLCAD_ERROR;
-	}
 	return _edcolor(gedp, command, NULL);
-    }
-
-    if (operand_count != 5) {
-	color_show_help(gedp, command);
-	return BRLCAD_ERROR;
     }
 
     if (!bu_arg_integer_from_str(&low, argv[0]) ||
@@ -415,11 +421,11 @@ ged_color_core(struct ged *gedp, int argc, const char *argv[])
 #include "../include/plugin.h"
 
 #define GED_COLOR_COMMANDS(X, XID) \
-    X(color, ged_color_core, GED_CMD_DEFAULT, &color_opt_spec) \
-    X(edcolor, ged_edcolor_core, GED_CMD_DEFAULT, &edcolor_opt_spec) \
+    X(color, ged_color_core, GED_CMD_DEFAULT, &color_cmd_schema) \
+    X(edcolor, ged_edcolor_core, GED_CMD_DEFAULT, &edcolor_cmd_schema) \
 
-GED_DECLARE_COMMAND_SET_WITH_OPT_SPEC(GED_COLOR_COMMANDS)
-GED_DECLARE_PLUGIN_MANIFEST_WITH_OPT_SPEC("libged_color", 1, GED_COLOR_COMMANDS)
+GED_DECLARE_COMMAND_SET_WITH_NATIVE_SCHEMA(GED_COLOR_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST_WITH_NATIVE_SCHEMA("libged_color", 1, GED_COLOR_COMMANDS)
 
 /*
  * Local Variables:
