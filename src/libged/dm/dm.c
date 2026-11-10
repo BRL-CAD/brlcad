@@ -68,20 +68,20 @@ static int dm_bg_schema_validate(const struct bu_arg_schema *schema,
 static const struct bu_arg_option dm_root_options[] = {
     BU_ARG_FLAG("h", "help", struct dm_root_args, print_help,
 	"Print command help"),
-    BU_ARG_ALIAS_SHORT("?", "help", 1),
-    BU_ARG_COUNTING_LONG_FLAG("v", "verbose", struct dm_root_args, verbosity,
+    BU_ARG_ALIAS("?", NULL, "help", 1),
+    BU_ARG_COUNTING_FLAG("v", "verbose", struct dm_root_args, verbosity, BU_ARG_VALUE_LONG,
 	"Increase output detail"),
     BU_ARG_OPTION_NULL
 };
 static const struct bu_arg_option dm_target_options[] = {
-    BU_ARG_VLS_APPEND("d", "dm", struct dm_target_args, dm_name, "name",
+    BU_ARG_VALUE("d", "dm", struct dm_target_args, dm_name, BU_ARG_VALUE_VLS, BU_ARG_REQUIRED, "name",
 	"Display manager instance"),
     BU_ARG_OPTION_NULL
 };
 static const struct bu_arg_option dm_attach_options[] = {
-    BU_ARG_VLS_APPEND("d", "dm", struct dm_attach_args, dm_name, "name",
+    BU_ARG_VALUE("d", "dm", struct dm_attach_args, dm_name, BU_ARG_VALUE_VLS, BU_ARG_REQUIRED, "name",
 	"New display manager name"),
-    BU_ARG_VLS_APPEND("V", "view", struct dm_attach_args, view_name, "name",
+    BU_ARG_VALUE("V", "view", struct dm_attach_args, view_name, BU_ARG_VALUE_VLS, BU_ARG_REQUIRED, "name",
 	"View to associate with the display manager"),
     BU_ARG_OPTION_NULL
 };

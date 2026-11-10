@@ -93,7 +93,7 @@ ged_keypoint_core(struct ged *gedp, int argc, const char *argv[])
 
 static const struct bu_arg_shape keypoint_vector3_shape =
     BU_ARG_SHAPE(BU_ARG_SHAPE_VECTOR3, 1, 3,
-	"packed or three-component XYZ point");
+	"packed or three-component XYZ point", NULL, NULL);
 static const struct bu_arg_operand keypoint_schema_operands[] = {
     BU_ARG_OPERAND_SHAPED("point", BU_ARG_VALUE_VECTOR, 0, 3, NULL,
 	"Packed point or three XYZ coordinates", "ged.vector_group",

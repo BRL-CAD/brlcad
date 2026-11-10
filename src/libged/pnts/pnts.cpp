@@ -199,7 +199,7 @@ static const struct bu_arg_operand pnts_pair_operands[] = {
 };
 static const struct bu_arg_option pnts_tri_unit_options[] = {
     BU_ARG_FLAG("h", "help", pnts_tri_unit_args, help, "Print help"),
-    BU_ARG_NUMBER("s", "scale", pnts_tri_unit_args, scale, "scale",
+    BU_ARG_VALUE("s", "scale", pnts_tri_unit_args, scale, BU_ARG_VALUE_NUMBER, BU_ARG_REQUIRED, "scale",
 	"Triangle scale factor"),
     BU_ARG_OPTION_NULL
 };
@@ -228,26 +228,26 @@ static const struct bu_arg_schema pnts_tri_ballpivot_schema = {
 };
 static const struct bu_arg_option pnts_tri_spsr_options[] = {
     BU_ARG_FLAG("h", "help", pnts_tri_spsr_args, help, "Print help"),
-    BU_ARG_INTEGER(NULL, "degree", pnts_tri_spsr_args, opts.degree, "number", "Finite element degree"),
-    BU_ARG_INTEGER(NULL, "btype", pnts_tri_spsr_args, opts.btype, "number", "Boundary type"),
-    BU_ARG_INTEGER(NULL, "depth", pnts_tri_spsr_args, opts.depth, "number", "Maximum reconstruction depth"),
-    BU_ARG_INTEGER(NULL, "kerneldepth", pnts_tri_spsr_args, opts.kerneldepth, "number", "Kernel depth"),
-    BU_ARG_INTEGER(NULL, "iterations", pnts_tri_spsr_args, opts.iterations, "number", "Solver iterations"),
-    BU_ARG_INTEGER(NULL, "full-depth", pnts_tri_spsr_args, opts.full_depth, "number", "Full depth"),
-    BU_ARG_INTEGER(NULL, "base-depth", pnts_tri_spsr_args, opts.base_depth, "number", "Coarse multigrid depth"),
-    BU_ARG_INTEGER(NULL, "base-vcycles", pnts_tri_spsr_args, opts.baseVcycles, "number", "Coarse multigrid cycles"),
-    BU_ARG_INTEGER(NULL, "max-mem", pnts_tri_spsr_args, opts.max_memory_GB, "number", "Maximum memory in GB"),
+    BU_ARG_VALUE(NULL, "degree", pnts_tri_spsr_args, opts.degree, BU_ARG_VALUE_INTEGER, BU_ARG_REQUIRED, "number", "Finite element degree"),
+    BU_ARG_VALUE(NULL, "btype", pnts_tri_spsr_args, opts.btype, BU_ARG_VALUE_INTEGER, BU_ARG_REQUIRED, "number", "Boundary type"),
+    BU_ARG_VALUE(NULL, "depth", pnts_tri_spsr_args, opts.depth, BU_ARG_VALUE_INTEGER, BU_ARG_REQUIRED, "number", "Maximum reconstruction depth"),
+    BU_ARG_VALUE(NULL, "kerneldepth", pnts_tri_spsr_args, opts.kerneldepth, BU_ARG_VALUE_INTEGER, BU_ARG_REQUIRED, "number", "Kernel depth"),
+    BU_ARG_VALUE(NULL, "iterations", pnts_tri_spsr_args, opts.iterations, BU_ARG_VALUE_INTEGER, BU_ARG_REQUIRED, "number", "Solver iterations"),
+    BU_ARG_VALUE(NULL, "full-depth", pnts_tri_spsr_args, opts.full_depth, BU_ARG_VALUE_INTEGER, BU_ARG_REQUIRED, "number", "Full depth"),
+    BU_ARG_VALUE(NULL, "base-depth", pnts_tri_spsr_args, opts.base_depth, BU_ARG_VALUE_INTEGER, BU_ARG_REQUIRED, "number", "Coarse multigrid depth"),
+    BU_ARG_VALUE(NULL, "base-vcycles", pnts_tri_spsr_args, opts.baseVcycles, BU_ARG_VALUE_INTEGER, BU_ARG_REQUIRED, "number", "Coarse multigrid cycles"),
+    BU_ARG_VALUE(NULL, "max-mem", pnts_tri_spsr_args, opts.max_memory_GB, BU_ARG_VALUE_INTEGER, BU_ARG_REQUIRED, "number", "Maximum memory in GB"),
     BU_ARG_CUSTOM(NULL, "threads", pnts_tri_spsr_args, opts.threads, _pnts_opt_size_t, "number", "Thread count"),
-    BU_ARG_NUMBER(NULL, "samples-per-node", pnts_tri_spsr_args, opts.samples_per_node, "number", "Minimum samples per node"),
-    BU_ARG_NUMBER(NULL, "scale", pnts_tri_spsr_args, opts.scale, "number", "Scale factor"),
-    BU_ARG_NUMBER(NULL, "width", pnts_tri_spsr_args, opts.width, "number", "Voxel width"),
-    BU_ARG_NUMBER(NULL, "confidence", pnts_tri_spsr_args, opts.confidence, "number", "Normal confidence exponent"),
-    BU_ARG_NUMBER(NULL, "confidence-bias", pnts_tri_spsr_args, opts.confidence_bias, "number", "Normal confidence bias exponent"),
-    BU_ARG_NUMBER(NULL, "cg-accuracy", pnts_tri_spsr_args, opts.cgsolver_accuracy, "number", "CG solver accuracy"),
-    BU_ARG_NUMBER(NULL, "point-weight", pnts_tri_spsr_args, opts.point_weight, "number", "Interpolation weight"),
-    BU_ARG_INTEGER(NULL, "nonmanifold", pnts_tri_spsr_args, opts.nonManifold, "number", "Permit non-manifold output"),
-    BU_ARG_INTEGER(NULL, "linearfit", pnts_tri_spsr_args, opts.linearFit, "number", "Use linear fitting"),
-    BU_ARG_INTEGER(NULL, "exact", pnts_tri_spsr_args, opts.exact, "number", "Use exact interpolation"),
+    BU_ARG_VALUE(NULL, "samples-per-node", pnts_tri_spsr_args, opts.samples_per_node, BU_ARG_VALUE_NUMBER, BU_ARG_REQUIRED, "number", "Minimum samples per node"),
+    BU_ARG_VALUE(NULL, "scale", pnts_tri_spsr_args, opts.scale, BU_ARG_VALUE_NUMBER, BU_ARG_REQUIRED, "number", "Scale factor"),
+    BU_ARG_VALUE(NULL, "width", pnts_tri_spsr_args, opts.width, BU_ARG_VALUE_NUMBER, BU_ARG_REQUIRED, "number", "Voxel width"),
+    BU_ARG_VALUE(NULL, "confidence", pnts_tri_spsr_args, opts.confidence, BU_ARG_VALUE_NUMBER, BU_ARG_REQUIRED, "number", "Normal confidence exponent"),
+    BU_ARG_VALUE(NULL, "confidence-bias", pnts_tri_spsr_args, opts.confidence_bias, BU_ARG_VALUE_NUMBER, BU_ARG_REQUIRED, "number", "Normal confidence bias exponent"),
+    BU_ARG_VALUE(NULL, "cg-accuracy", pnts_tri_spsr_args, opts.cgsolver_accuracy, BU_ARG_VALUE_NUMBER, BU_ARG_REQUIRED, "number", "CG solver accuracy"),
+    BU_ARG_VALUE(NULL, "point-weight", pnts_tri_spsr_args, opts.point_weight, BU_ARG_VALUE_NUMBER, BU_ARG_REQUIRED, "number", "Interpolation weight"),
+    BU_ARG_VALUE(NULL, "nonmanifold", pnts_tri_spsr_args, opts.nonManifold, BU_ARG_VALUE_INTEGER, BU_ARG_REQUIRED, "number", "Permit non-manifold output"),
+    BU_ARG_VALUE(NULL, "linearfit", pnts_tri_spsr_args, opts.linearFit, BU_ARG_VALUE_INTEGER, BU_ARG_REQUIRED, "number", "Use linear fitting"),
+    BU_ARG_VALUE(NULL, "exact", pnts_tri_spsr_args, opts.exact, BU_ARG_VALUE_INTEGER, BU_ARG_REQUIRED, "number", "Use exact interpolation"),
     BU_ARG_OPTION_NULL
 };
 static const struct bu_arg_schema pnts_tri_spsr_schema = {
@@ -276,13 +276,13 @@ static const struct bu_arg_tree pnts_tri_tree = {
 };
 static const struct bu_arg_option pnts_gen_options[] = {
     BU_ARG_FLAG("h", "help", pnts_gen_args, help, "Print help"),
-    BU_ARG_NUMBER("t", "tolerance", pnts_gen_args, tolerance, "distance", "Sampling grid spacing"),
+    BU_ARG_VALUE("t", "tolerance", pnts_gen_args, tolerance, BU_ARG_VALUE_NUMBER, BU_ARG_REQUIRED, "distance", "Sampling grid spacing"),
     BU_ARG_FLAG(NULL, "surface", pnts_gen_args, surface, "Save only first and last ray points"),
     BU_ARG_FLAG(NULL, "grid", pnts_gen_args, grid, "Use gridded sampling"),
     BU_ARG_FLAG(NULL, "rand", pnts_gen_args, rand, "Use random sampling"),
     BU_ARG_FLAG(NULL, "sobol", pnts_gen_args, sobol, "Use Sobol sampling"),
-    BU_ARG_INTEGER(NULL, "max-pnts", pnts_gen_args, max_pnts, "number", "Maximum points"),
-    BU_ARG_INTEGER(NULL, "max-time", pnts_gen_args, max_time, "seconds", "Maximum sampling time"),
+    BU_ARG_VALUE(NULL, "max-pnts", pnts_gen_args, max_pnts, BU_ARG_VALUE_INTEGER, BU_ARG_REQUIRED, "number", "Maximum points"),
+    BU_ARG_VALUE(NULL, "max-time", pnts_gen_args, max_time, BU_ARG_VALUE_INTEGER, BU_ARG_REQUIRED, "seconds", "Maximum sampling time"),
     BU_ARG_OPTION_NULL
 };
 static const struct bu_arg_operand pnts_gen_operands[] = {
@@ -296,9 +296,9 @@ static const struct bu_arg_schema pnts_gen_schema = {
 };
 static const struct bu_arg_option pnts_read_options[] = {
     BU_ARG_FLAG("h", "help", pnts_read_args, help, "Print help"),
-    BU_ARG_VLS_APPEND("f", "format", pnts_read_args, format, "format", "Input column format"),
-    BU_ARG_VLS_APPEND("u", "units", pnts_read_args, units, "unit", "Input units"),
-    BU_ARG_NUMBER(NULL, "size", pnts_read_args, size, "size", "Default point size"),
+    BU_ARG_VALUE("f", "format", pnts_read_args, format, BU_ARG_VALUE_VLS, BU_ARG_REQUIRED, "format", "Input column format"),
+    BU_ARG_VALUE("u", "units", pnts_read_args, units, BU_ARG_VALUE_VLS, BU_ARG_REQUIRED, "unit", "Input units"),
+    BU_ARG_VALUE(NULL, "size", pnts_read_args, size, BU_ARG_VALUE_NUMBER, BU_ARG_REQUIRED, "size", "Default point size"),
     BU_ARG_OPTION_NULL
 };
 static const struct bu_arg_operand pnts_read_operands[] = {
@@ -312,9 +312,9 @@ static const struct bu_arg_schema pnts_read_schema = {
 };
 static const struct bu_arg_option pnts_write_options[] = {
     BU_ARG_FLAG("h", "help", pnts_write_args, help, "Print help"),
-    BU_ARG_INTEGER("p", "precision", pnts_write_args, precision, "digits", "Digits after the decimal point"),
+    BU_ARG_VALUE("p", "precision", pnts_write_args, precision, BU_ARG_VALUE_INTEGER, BU_ARG_REQUIRED, "digits", "Digits after the decimal point"),
     BU_ARG_FLAG(NULL, "ply", pnts_write_args, ply, "Write ASCII PLY format"),
-    BU_ARG_STRING("f", "format", pnts_write_args, format, "fields", "Output fields (currently xyz)"),
+    BU_ARG_VALUE("f", "format", pnts_write_args, format, BU_ARG_VALUE_STRING, BU_ARG_REQUIRED, "fields", "Output fields (currently xyz)"),
     BU_ARG_OPTION_NULL
 };
 static const struct bu_arg_operand pnts_write_operands[] = {

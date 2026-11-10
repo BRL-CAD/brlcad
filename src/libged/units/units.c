@@ -162,9 +162,9 @@ static const struct bu_arg_operand units_operands[] = {
 
 static const char * const units_mode_options[] = {"s", "t", NULL};
 static const struct bu_arg_constraint units_constraints[] = {
-    BU_ARG_CONSTRAINT_OPTION_OCCURRENCES(units_mode_options, 0, 1,
+    BU_ARG_CONSTRAINT(BU_ARG_CONSTRAINT_OPTION_OCCURRENCE_COUNT, BU_ARG_CONDITION_ALWAYS, units_mode_options, 0, 1,
 	"-s and -t are mutually exclusive and may be specified only once"),
-    BU_ARG_CONSTRAINT_OPERANDS(BU_ARG_CONDITION_ANY_OPTION_PRESENT,
+    BU_ARG_CONSTRAINT(BU_ARG_CONSTRAINT_OPERAND_COUNT, BU_ARG_CONDITION_ANY_OPTION_PRESENT,
 	units_mode_options, 0, 0,
 	"-s and -t cannot be combined with a unit expression"),
     BU_ARG_CONSTRAINT_NULL

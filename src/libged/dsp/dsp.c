@@ -49,9 +49,9 @@ static const struct bu_arg_schema dsp_root_schema = {
     BU_ARG_PARSE_STOP_AT_FIRST_OPERAND, BU_ARG_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
 static const struct bu_arg_operand dsp_xy_operands[] = {
-    BU_ARG_OPERAND_INTEGER_RANGE("x", 1, 1, 0, INT_MAX,
+    BU_ARG_OPERAND_INTEGER_RANGE("x", 1, 1, 1, 0, 1, INT_MAX,
 	"Nonnegative DSP grid X coordinate", NULL),
-    BU_ARG_OPERAND_INTEGER_RANGE("y", 1, 1, 0, INT_MAX,
+    BU_ARG_OPERAND_INTEGER_RANGE("y", 1, 1, 1, 0, 1, INT_MAX,
 	"Nonnegative DSP grid Y coordinate", NULL),
     BU_ARG_OPERAND_NULL
 };
@@ -113,7 +113,7 @@ ged_dsp_core(struct ged *gedp, int argc, const char *argv[])
 
 
     if (bu_arg_tree_validate_argv(&dsp_tree, argc - 1, argv + 1,
-	argc - 1, &validation) != 0 || validation.state != BU_ARG_VALIDATE_VALID) {
+	argc - 1, NULL, &validation) != 0 || validation.state != BU_ARG_VALIDATE_VALID) {
 	if (validation.hint)
 	    bu_vls_printf(gedp->ged_result_str,
 		validation.state == BU_ARG_VALIDATE_INCOMPLETE ? "%s expected\n" : "%s\n",

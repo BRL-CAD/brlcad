@@ -49,7 +49,7 @@ static int axes_tree_color(void *bs, int argc, const char **argv);
 static const struct bu_arg_option axes_root_options[] = {
     BU_ARG_FLAG("h", "help", struct ged_view_axes_args, print_help,
 	"Print help and exit"),
-    BU_ARG_ALIAS_SHORT("?", "help", 1),
+    BU_ARG_ALIAS("?", NULL, "help", 1),
     BU_ARG_FLAG("s", NULL, struct ged_view_axes_args, s_version,
 	"Work with the S version of axes data"),
     BU_ARG_OPTION_NULL
@@ -82,7 +82,7 @@ static const struct bu_arg_operand axes_linewidth_operands[] = {
 };
 static const struct bu_arg_shape axes_color_arg_shape =
     BU_ARG_SHAPE(BU_ARG_SHAPE_COLOR, 1, 3,
-	"packed color or three RGB components");
+	"packed color or three RGB components", NULL, NULL);
 static const struct bu_arg_operand axes_color_operands[] = {
     BU_ARG_OPERAND_SHAPED("color", BU_ARG_VALUE_RAW, 0, 3, NULL,
 	"Packed color or three RGB components", "ged.color", &axes_color_arg_shape),

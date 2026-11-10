@@ -26,8 +26,8 @@
 #include "../ged_private.h"
 
 static const struct bu_arg_form erase_form_rows[] = {
-    BU_ARG_FORM_SCHEMA("legacy", "Legacy erase behavior", &ged_erase_legacy_schema),
-    BU_ARG_FORM_SCHEMA("current", "Current erase behavior", &ged_erase_new_schema),
+    BU_ARG_FORM("legacy", "Legacy erase behavior", &ged_erase_legacy_schema, NULL),
+    BU_ARG_FORM("current", "Current erase behavior", &ged_erase_new_schema, NULL),
     BU_ARG_FORM_NULL
 };
 

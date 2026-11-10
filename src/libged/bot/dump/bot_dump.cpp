@@ -442,9 +442,9 @@ static const char * const bot_dump_output_options[] = {
     "output-file", "output-directory", NULL
 };
 static const struct bu_arg_constraint bot_dump_constraints[] = {
-    BU_ARG_CONSTRAINT_OPTIONS(bot_dump_material_options, 0, 1,
+    BU_ARG_CONSTRAINT(BU_ARG_CONSTRAINT_OPTION_COUNT, BU_ARG_CONDITION_ALWAYS, bot_dump_material_options, 0, 1,
 	"--materials and --no-materials are mutually exclusive"),
-    BU_ARG_CONSTRAINT_OPTIONS(bot_dump_output_options, 0, 1,
+    BU_ARG_CONSTRAINT(BU_ARG_CONSTRAINT_OPTION_COUNT, BU_ARG_CONDITION_ALWAYS, bot_dump_output_options, 0, 1,
 	"--output-file and --output-directory are mutually exclusive"),
     BU_ARG_CONSTRAINT_NULL
 };
@@ -461,20 +461,20 @@ bot_dump_disable_materials(struct bu_vls *UNUSED(msg), const char *UNUSED(arg),
 static const struct bu_arg_option bot_dump_options[] = {
     BU_ARG_FLAG("h", "help", struct bot_dump_args, print_help,
 	"Print command help"),
-    BU_ARG_ALIAS_SHORT("?", "help", 1),
+    BU_ARG_ALIAS("?", NULL, "help", 1),
     BU_ARG_FLAG("b", NULL, struct bot_dump_args, binary,
 	"Use binary output when the selected format supports it"),
     BU_ARG_FLAG("n", "normals", struct bot_dump_args, normals,
 	"Write normals when the selected format supports them"),
-    BU_ARG_VLS_APPEND("m", "output-directory", struct bot_dump_args,
-	output_directory, "directory", "Write one file per BoT into this directory"),
-    BU_ARG_VLS_APPEND("o", "output-file", struct bot_dump_args,
-	output_file, "file", "Write to this output file"),
+    BU_ARG_VALUE("m", "output-directory", struct bot_dump_args,
+	output_directory, BU_ARG_VALUE_VLS, BU_ARG_REQUIRED, "directory", "Write one file per BoT into this directory"),
+    BU_ARG_VALUE("o", "output-file", struct bot_dump_args,
+	output_file, BU_ARG_VALUE_VLS, BU_ARG_REQUIRED, "file", "Write to this output file"),
     {"t", NULL, "format", "format", "Select dxf, glb, gltf, obj, sat, or stl output",
 	BU_ARG_VALUE_KEYWORD, offsetof(struct bot_dump_args, format), NULL, NULL,
 	NULL, NULL, 0, 0, NULL, BU_ARG_REQUIRED, NULL, NULL, bot_dump_formats,
 	BU_ARG_VALUE_RANGE_NONE, BU_ARG_SHAPE_SCALAR},
-    BU_ARG_UNITS("u", NULL, struct bot_dump_args, units, "units",
+    BU_ARG_VALUE_VALIDATE("u", NULL, struct bot_dump_args, units, BU_ARG_VALUE_STRING, bu_arg_units_validate, "units",
 	"Scale exported coordinates to these units"),
     BU_ARG_FLAG("F", "full-precision", struct bot_dump_args, full_precision,
 	"Write full floating-point precision (nonstandard for glTF)"),

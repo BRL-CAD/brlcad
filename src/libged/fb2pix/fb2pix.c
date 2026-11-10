@@ -54,14 +54,14 @@ struct fb2pix_state {
 static const struct bu_arg_option fb2pix_schema_options[] = {
     BU_ARG_FLAG("c", NULL, struct fb2pix_state, crunch, "Crunch the color map"),
     BU_ARG_FLAG("i", NULL, struct fb2pix_state, inverse, "Write upside-down"),
-	BU_ARG_POSITIVE_INTEGER("s", NULL, struct fb2pix_state, square_size, "pixels",
+	BU_ARG_VALUE_VALIDATE("s", NULL, struct fb2pix_state, square_size, BU_ARG_VALUE_INTEGER, bu_arg_positive_integer_validate, "pixels",
 	"Set both image dimensions"),
-	BU_ARG_POSITIVE_INTEGER("w", NULL, struct fb2pix_state, requested_width, "pixels",
+	BU_ARG_VALUE_VALIDATE("w", NULL, struct fb2pix_state, requested_width, BU_ARG_VALUE_INTEGER, bu_arg_positive_integer_validate, "pixels",
 	"Set image width"),
-	BU_ARG_POSITIVE_INTEGER("n", NULL, struct fb2pix_state, requested_height, "pixels",
+	BU_ARG_VALUE_VALIDATE("n", NULL, struct fb2pix_state, requested_height, BU_ARG_VALUE_INTEGER, bu_arg_positive_integer_validate, "pixels",
 	"Set image height"),
     BU_ARG_FLAG("h", "help", struct fb2pix_state, help, "Print command help"),
-    BU_ARG_ALIAS_SHORT("?", "help", 1),
+    BU_ARG_ALIAS("?", NULL, "help", 1),
     BU_ARG_OPTION_NULL
 };
 static const struct bu_arg_operand fb2pix_schema_operands[] = {

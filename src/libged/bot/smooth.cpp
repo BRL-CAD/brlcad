@@ -121,15 +121,15 @@ static const struct bu_arg_option bot_smooth_options[] = {
     BU_ARG_FLAG("h", "help", struct bot_smooth_args, print_help,
 	"Print command help"),
     BU_ARG_INTEGER_RANGE("c", "continuity", struct bot_smooth_args,
-	continuity, 0, 2, "mode", "Continuity mode (0, 1, or 2)"),
+	continuity, 1, 0, 1, 2, "mode", "Continuity mode (0, 1, or 2)"),
     BU_ARG_INTEGER_RANGE("d", "direction", struct bot_smooth_args,
-	direction, 0, 2, "mode", "Smoothing direction (0, 1, or 2)"),
-    BU_ARG_NUMBER("e", "max-local-error", struct bot_smooth_args,
-	max_lerror, "error", "Maximum local error"),
-    BU_ARG_NUMBER("E", "max-abs-error", struct bot_smooth_args,
-	max_aerror, "error", "Maximum absolute error"),
-    BU_ARG_POSITIVE_INTEGER("I", "iterations", struct bot_smooth_args,
-	iterations, "count", "Number of smoothing iterations"),
+	direction, 1, 0, 1, 2, "mode", "Smoothing direction (0, 1, or 2)"),
+    BU_ARG_VALUE("e", "max-local-error", struct bot_smooth_args,
+	max_lerror, BU_ARG_VALUE_NUMBER, BU_ARG_REQUIRED, "error", "Maximum local error"),
+    BU_ARG_VALUE("E", "max-abs-error", struct bot_smooth_args,
+	max_aerror, BU_ARG_VALUE_NUMBER, BU_ARG_REQUIRED, "error", "Maximum absolute error"),
+    BU_ARG_VALUE_VALIDATE("I", "iterations", struct bot_smooth_args,
+	iterations, BU_ARG_VALUE_INTEGER, bu_arg_positive_integer_validate, "count", "Number of smoothing iterations"),
     BU_ARG_OPTION_NULL
 };
 static const struct bu_arg_operand bot_smooth_operands[] = {

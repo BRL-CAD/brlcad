@@ -894,7 +894,7 @@ static const struct bu_arg_option mater_get_options[] = {
 	mater_get_density_from_str, "comparison", "Match a density value or range"),
     BU_ARG_CUSTOM(NULL, "name", struct mater_get_args, name_patterns,
 	mater_get_name_from_str, "pattern", "Match a material name glob pattern"),
-    BU_ARG_NUMBER(NULL, "tol", struct mater_get_args, tolerance, "tolerance",
+    BU_ARG_VALUE(NULL, "tol", struct mater_get_args, tolerance, BU_ARG_VALUE_NUMBER, BU_ARG_REQUIRED, "tolerance",
 	"Density equality tolerance (default is BN_TOL_DIST)"),
     BU_ARG_OPTION_NULL
 };
@@ -1314,7 +1314,7 @@ static const char * const mater_map_mode_options[] = {
 };
 
 static const struct bu_arg_constraint mater_map_constraints[] = {
-    BU_ARG_CONSTRAINT_OPTIONS(mater_map_mode_options, 1, 1,
+    BU_ARG_CONSTRAINT(BU_ARG_CONSTRAINT_OPTION_COUNT, BU_ARG_CONDITION_ALWAYS, mater_map_mode_options, 1, 1,
 	"exactly one mapping mode is required"),
     BU_ARG_CONSTRAINT_NULL
 };
@@ -1716,8 +1716,8 @@ static const struct bu_arg_tree_node mater_density_subcommands[] = {
 };
 
 static const struct bu_arg_option mater_short_density_options[] = {
-    BU_ARG_FLAG_UNBOUND("d", NULL, "density",
-	"Select density-table management mode"),
+    BU_ARG_UNBOUND("d", NULL, "density", BU_ARG_VALUE_FLAG, BU_ARG_NONE, NULL,
+	"Select density-table management mode", NULL),
     BU_ARG_OPTION_NULL
 };
 static const struct bu_arg_schema mater_short_density_root_schema =
@@ -1742,8 +1742,8 @@ static const struct bu_arg_tree mater_long_density_tree = {
 };
 
 static const struct bu_arg_option mater_shader_options[] = {
-    BU_ARG_FLAG_UNBOUND("s", NULL, "shader",
-	"Force shader mode when the object name resembles a density subcommand"),
+    BU_ARG_UNBOUND("s", NULL, "shader", BU_ARG_VALUE_FLAG, BU_ARG_NONE, NULL,
+	"Force shader mode when the object name resembles a density subcommand", NULL),
     BU_ARG_OPTION_NULL
 };
 static const struct bu_arg_operand mater_shader_operands[] = {
@@ -1759,8 +1759,8 @@ static const struct bu_arg_schema mater_shader_schema =
 /* A short-option prefix has two possible command forms.  It is intentionally
  * separate so completion can offer both -d and -s before the choice is made. */
 static const struct bu_arg_option mater_prefix_options[] = {
-    BU_ARG_FLAG_UNBOUND("d", NULL, "density", "Select density-table management mode"),
-    BU_ARG_FLAG_UNBOUND("s", NULL, "shader", "Force shader mode"),
+    BU_ARG_UNBOUND("d", NULL, "density", BU_ARG_VALUE_FLAG, BU_ARG_NONE, NULL, "Select density-table management mode", NULL),
+    BU_ARG_UNBOUND("s", NULL, "shader", BU_ARG_VALUE_FLAG, BU_ARG_NONE, NULL, "Force shader mode", NULL),
     BU_ARG_OPTION_NULL
 };
 static const struct bu_arg_schema mater_prefix_schema =
@@ -1907,10 +1907,10 @@ ged_mater_core(struct ged *gedp, int argc, const char *argv[])
 #include "../include/plugin.h"
 
 static const struct bu_arg_form mater_native_forms[] = {
-    BU_ARG_FORM_TREE("density", "Long density subcommand", &mater_long_density_tree),
-    BU_ARG_FORM_TREE("density_short", "Short -d density form", &mater_short_density_tree),
-    BU_ARG_FORM_SCHEMA("shader", "Legacy shader/property assignment", &mater_shader_schema),
-    BU_ARG_FORM_SCHEMA("option_prefix", "Incomplete option prefix", &mater_prefix_schema),
+    BU_ARG_FORM("density", "Long density subcommand", NULL, &mater_long_density_tree),
+    BU_ARG_FORM("density_short", "Short -d density form", NULL, &mater_short_density_tree),
+    BU_ARG_FORM("shader", "Legacy shader/property assignment", &mater_shader_schema, NULL),
+    BU_ARG_FORM("option_prefix", "Incomplete option prefix", &mater_prefix_schema, NULL),
     BU_ARG_FORM_NULL
 };
 

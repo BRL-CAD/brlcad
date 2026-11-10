@@ -123,7 +123,7 @@ struct _ged_select_info {
 static const struct bu_arg_option select2_root_options[] = {
     BU_ARG_FLAG("h", "help", struct _ged_select_info, help,
 	"Print help and exit"),
-    BU_ARG_VLS_APPEND("S", "set", struct _ged_select_info, curr_set, "name",
+    BU_ARG_VALUE("S", "set", struct _ged_select_info, curr_set, BU_ARG_VALUE_VLS, BU_ARG_REQUIRED, "name",
 	"Specify the selection set to operate on"),
     BU_ARG_OPTION_NULL
 };

@@ -117,7 +117,7 @@ static const struct bu_arg_option graph_options[] = {
 	"Collapse layout to a spanning tree"),
     BU_ARG_FLAG(NULL, "skip-routing", struct graph_args, skip_routing,
 	"Skip connector routing"),
-    BU_ARG_NONNEGATIVE_INTEGER(NULL, "depth", struct graph_args, depth_limit,
+    BU_ARG_VALUE_VALIDATE(NULL, "depth", struct graph_args, depth_limit, BU_ARG_VALUE_INTEGER, bu_arg_nonnegative_integer_validate,
 	"depth", "Limit traversal depth"),
     {NULL, "root-obj", "root-obj", "object", "Specify a traversal root",
 	BU_ARG_VALUE_CUSTOM, offsetof(struct graph_args, roots), graph_root_object_parse,

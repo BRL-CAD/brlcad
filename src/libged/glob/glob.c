@@ -45,7 +45,7 @@
 
 static const struct bu_arg_shape glob_command_shape =
     BU_ARG_SHAPE(BU_ARG_SHAPE_CUSTOM, 1, 1,
-	"Quoted command string containing database glob patterns");
+	"Quoted command string containing database glob patterns", NULL, NULL);
 static const struct bu_arg_operand glob_schema_operands[] = {
     BU_ARG_OPERAND_SHAPED("command_string", BU_ARG_VALUE_STRING, 1, 1, NULL,
 	"Command string whose arguments may contain database glob patterns", NULL,

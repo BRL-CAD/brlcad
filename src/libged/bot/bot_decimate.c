@@ -46,14 +46,14 @@ struct bot_decimate_args {
 static const struct bu_arg_option bot_decimate_schema_options[] = {
     BU_ARG_FLAG("h", "help", struct bot_decimate_args, print_help,
 	"Print command help"),
-    BU_ARG_NONNEGATIVE_NUMBER("c", NULL, struct bot_decimate_args,
-	max_chord_error, "error", "Maximum chord error"),
-    BU_ARG_NONNEGATIVE_NUMBER("n", NULL, struct bot_decimate_args,
-	max_normal_error, "error", "Maximum normal error"),
-    BU_ARG_NONNEGATIVE_NUMBER("e", NULL, struct bot_decimate_args,
-	min_edge_length, "length", "Minimum edge length"),
-    BU_ARG_NONNEGATIVE_NUMBER("f", NULL, struct bot_decimate_args,
-	feature_size, "size", "Feature size for the GCT decimator"),
+    BU_ARG_VALUE_VALIDATE("c", NULL, struct bot_decimate_args,
+	max_chord_error, BU_ARG_VALUE_NUMBER, bu_arg_nonnegative_number_validate, "error", "Maximum chord error"),
+    BU_ARG_VALUE_VALIDATE("n", NULL, struct bot_decimate_args,
+	max_normal_error, BU_ARG_VALUE_NUMBER, bu_arg_nonnegative_number_validate, "error", "Maximum normal error"),
+    BU_ARG_VALUE_VALIDATE("e", NULL, struct bot_decimate_args,
+	min_edge_length, BU_ARG_VALUE_NUMBER, bu_arg_nonnegative_number_validate, "length", "Minimum edge length"),
+    BU_ARG_VALUE_VALIDATE("f", NULL, struct bot_decimate_args,
+	feature_size, BU_ARG_VALUE_NUMBER, bu_arg_nonnegative_number_validate, "size", "Feature size for the GCT decimator"),
     BU_ARG_OPTION_NULL
 };
 static const struct bu_arg_operand bot_decimate_schema_operands[] = {
@@ -72,9 +72,9 @@ static const char * const bot_decimate_feature_conflicts[] = {
     "f", "c", "n", "e", NULL
 };
 static const struct bu_arg_constraint bot_decimate_constraints[] = {
-    BU_ARG_CONSTRAINT_OPTIONS(bot_decimate_method_options, 1, 4,
+    BU_ARG_CONSTRAINT(BU_ARG_CONSTRAINT_OPTION_COUNT, BU_ARG_CONDITION_ALWAYS, bot_decimate_method_options, 1, 4,
 	"select -f or one of -c, -n, and -e"),
-    BU_ARG_CONSTRAINT_CONFLICTS(bot_decimate_feature_conflicts,
+    BU_ARG_CONSTRAINT(BU_ARG_CONSTRAINT_OPTION_CONFLICTS, BU_ARG_CONDITION_ALWAYS, bot_decimate_feature_conflicts, 0, 0,
 	"-f may not be used with -c, -n, or -e"),
     BU_ARG_CONSTRAINT_NULL
 };

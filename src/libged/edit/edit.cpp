@@ -454,7 +454,7 @@ static const struct bu_arg_variant edit_reference_variants[] = {
     BU_ARG_VARIANT_NULL
 };
 static const struct bu_arg_shape edit_reference_shape =
-    BU_ARG_SHAPE_FORMS(BU_ARG_SHAPE_CUSTOM, 1, 3,
+    BU_ARG_SHAPE(BU_ARG_SHAPE_CUSTOM, 1, 3,
 	"one object reference or one through three finite coordinates",
 	edit_reference_token_count, edit_reference_variants);
 static const struct bu_arg_variant edit_self_reference_variants[] = {
@@ -467,7 +467,7 @@ static const struct bu_arg_variant edit_self_reference_variants[] = {
     BU_ARG_VARIANT_NULL
 };
 static const struct bu_arg_shape edit_self_reference_shape =
-    BU_ARG_SHAPE_FORMS(BU_ARG_SHAPE_CUSTOM, 1, 3,
+    BU_ARG_SHAPE(BU_ARG_SHAPE_CUSTOM, 1, 3,
 	"one object/self reference or one through three finite coordinates",
 	edit_reference_token_count, edit_self_reference_variants);
 static const struct bu_arg_variant edit_angle_variants[] = {
@@ -477,7 +477,7 @@ static const struct bu_arg_variant edit_angle_variants[] = {
     BU_ARG_VARIANT_NULL
 };
 static const struct bu_arg_shape edit_angle_shape =
-    BU_ARG_SHAPE_FORMS(BU_ARG_SHAPE_TOKEN_SEQUENCE, 1, 3,
+    BU_ARG_SHAPE(BU_ARG_SHAPE_TOKEN_SEQUENCE, 1, 3,
 	"one through three finite angle components", NULL,
 	edit_angle_variants);
 static const struct bu_arg_variant edit_factor_variants[] = {
@@ -487,18 +487,18 @@ static const struct bu_arg_variant edit_factor_variants[] = {
     BU_ARG_VARIANT_NULL
 };
 static const struct bu_arg_shape edit_factor_shape =
-    BU_ARG_SHAPE_FORMS(BU_ARG_SHAPE_TOKEN_SEQUENCE, 1, 3,
+    BU_ARG_SHAPE(BU_ARG_SHAPE_TOKEN_SEQUENCE, 1, 3,
 	"one uniform or three per-axis factors", NULL,
 	edit_factor_variants);
 
 static const struct bu_arg_option edit_translate_options[] = {
-    BU_ARG_FLAG_UNBOUND("a", NULL, "absolute", "Use absolute coordinates"),
-    BU_ARG_FLAG_UNBOUND("r", NULL, "relative", "Use relative coordinates (default)"),
-    BU_ARG_FLAG_UNBOUND("x", NULL, "x", "Constrain translation to X"),
-    BU_ARG_FLAG_UNBOUND("y", NULL, "y", "Constrain translation to Y"),
-    BU_ARG_FLAG_UNBOUND("z", NULL, "z", "Constrain translation to Z"),
-    BU_ARG_FLAG_UNBOUND("n", NULL, "natural-origin", "Use the natural origin"),
-    BU_ARG_SHAPED_UNBOUND("k", NULL, "keypoint", BU_ARG_VALUE_RAW,
+    BU_ARG_UNBOUND("a", NULL, "absolute", BU_ARG_VALUE_FLAG, BU_ARG_NONE, NULL, "Use absolute coordinates", NULL),
+    BU_ARG_UNBOUND("r", NULL, "relative", BU_ARG_VALUE_FLAG, BU_ARG_NONE, NULL, "Use relative coordinates (default)", NULL),
+    BU_ARG_UNBOUND("x", NULL, "x", BU_ARG_VALUE_FLAG, BU_ARG_NONE, NULL, "Constrain translation to X", NULL),
+    BU_ARG_UNBOUND("y", NULL, "y", BU_ARG_VALUE_FLAG, BU_ARG_NONE, NULL, "Constrain translation to Y", NULL),
+    BU_ARG_UNBOUND("z", NULL, "z", BU_ARG_VALUE_FLAG, BU_ARG_NONE, NULL, "Constrain translation to Z", NULL),
+    BU_ARG_UNBOUND("n", NULL, "natural-origin", BU_ARG_VALUE_FLAG, BU_ARG_NONE, NULL, "Use the natural origin", NULL),
+    BU_ARG_UNBOUND("k", NULL, "keypoint", BU_ARG_VALUE_RAW, BU_ARG_REQUIRED,
 	"FROM", "Set the source reference", &edit_self_reference_shape),
     BU_ARG_OPTION_NULL
 };
@@ -512,7 +512,7 @@ static const char * const edit_translate_mode_options[] = {
     "absolute", "relative", NULL
 };
 static const struct bu_arg_constraint edit_translate_constraints[] = {
-    BU_ARG_CONSTRAINT_OPTIONS(edit_translate_mode_options, 0, 1,
+    BU_ARG_CONSTRAINT(BU_ARG_CONSTRAINT_OPTION_COUNT, BU_ARG_CONDITION_ALWAYS, edit_translate_mode_options, 0, 1,
 	"choose at most one translation mode"),
     BU_ARG_CONSTRAINT_NULL
 };
@@ -532,24 +532,24 @@ static const struct bu_arg_schema edit_tra_schema =
 	BU_ARG_SCHEMA_META(NULL, NULL, NULL, NULL));
 
 static const struct bu_arg_option edit_rotate_options[] = {
-    BU_ARG_FLAG_UNBOUND("R", NULL, "radians", "Interpret angles as radians"),
-    BU_ARG_FLAG_UNBOUND("x", NULL, "x", "Constrain rotation to X"),
-    BU_ARG_FLAG_UNBOUND("y", NULL, "y", "Constrain rotation to Y"),
-    BU_ARG_FLAG_UNBOUND("z", NULL, "z", "Constrain rotation to Z"),
-    BU_ARG_FLAG_UNBOUND("o", NULL, "override", "Override the axis constraint"),
-    BU_ARG_FLAG_UNBOUND("n", NULL, "natural-origin", "Use the natural origin"),
-    BU_ARG_SHAPED_UNBOUND("k", NULL, "axis-from", BU_ARG_VALUE_RAW,
+    BU_ARG_UNBOUND("R", NULL, "radians", BU_ARG_VALUE_FLAG, BU_ARG_NONE, NULL, "Interpret angles as radians", NULL),
+    BU_ARG_UNBOUND("x", NULL, "x", BU_ARG_VALUE_FLAG, BU_ARG_NONE, NULL, "Constrain rotation to X", NULL),
+    BU_ARG_UNBOUND("y", NULL, "y", BU_ARG_VALUE_FLAG, BU_ARG_NONE, NULL, "Constrain rotation to Y", NULL),
+    BU_ARG_UNBOUND("z", NULL, "z", BU_ARG_VALUE_FLAG, BU_ARG_NONE, NULL, "Constrain rotation to Z", NULL),
+    BU_ARG_UNBOUND("o", NULL, "override", BU_ARG_VALUE_FLAG, BU_ARG_NONE, NULL, "Override the axis constraint", NULL),
+    BU_ARG_UNBOUND("n", NULL, "natural-origin", BU_ARG_VALUE_FLAG, BU_ARG_NONE, NULL, "Use the natural origin", NULL),
+    BU_ARG_UNBOUND("k", NULL, "axis-from", BU_ARG_VALUE_RAW, BU_ARG_REQUIRED,
 	"FROM", "Set an axis or angle source reference", &edit_reference_shape),
-    BU_ARG_SHAPED_UNBOUND("a", NULL, "axis-to", BU_ARG_VALUE_RAW,
+    BU_ARG_UNBOUND("a", NULL, "axis-to", BU_ARG_VALUE_RAW, BU_ARG_REQUIRED,
 	"TO", "Set an absolute axis or angle destination", &edit_reference_shape),
-    BU_ARG_SHAPED_UNBOUND("r", NULL, "axis-relative", BU_ARG_VALUE_RAW,
+    BU_ARG_UNBOUND("r", NULL, "axis-relative", BU_ARG_VALUE_RAW, BU_ARG_REQUIRED,
 	"TO", "Set a relative axis or angle destination", &edit_reference_shape),
-    BU_ARG_SHAPED_UNBOUND("c", NULL, "center", BU_ARG_VALUE_RAW,
+    BU_ARG_UNBOUND("c", NULL, "center", BU_ARG_VALUE_RAW, BU_ARG_REQUIRED,
 	"CENTER", "Set the rotation center", &edit_self_reference_shape),
-    BU_ARG_SHAPED_UNBOUND("O", NULL, "angle-origin", BU_ARG_VALUE_RAW,
+    BU_ARG_UNBOUND("O", NULL, "angle-origin", BU_ARG_VALUE_RAW, BU_ARG_REQUIRED,
 	"ORIGIN", "Set the angle origin", &edit_reference_shape),
-    BU_ARG_VALUE_UNBOUND("d", NULL, "degrees", BU_ARG_VALUE_NUMBER,
-	"ANGLE", "Set an explicit rotation angle"),
+    BU_ARG_UNBOUND("d", NULL, "degrees", BU_ARG_VALUE_NUMBER, BU_ARG_REQUIRED,
+	"ANGLE", "Set an explicit rotation angle", NULL),
     BU_ARG_OPTION_NULL
 };
 static const struct bu_arg_operand edit_rotate_operands[] = {
@@ -564,15 +564,15 @@ static const struct bu_arg_schema edit_rotate_schema =
 	NULL, NULL, NULL);
 
 static const struct bu_arg_option edit_scale_options[] = {
-    BU_ARG_SHAPED_UNBOUND("k", NULL, "scale-from", BU_ARG_VALUE_RAW,
+    BU_ARG_UNBOUND("k", NULL, "scale-from", BU_ARG_VALUE_RAW, BU_ARG_REQUIRED,
 	"FROM", "Set the source scale reference", &edit_reference_shape),
-    BU_ARG_SHAPED_UNBOUND("a", NULL, "scale-to", BU_ARG_VALUE_RAW,
+    BU_ARG_UNBOUND("a", NULL, "scale-to", BU_ARG_VALUE_RAW, BU_ARG_REQUIRED,
 	"TO", "Set the absolute destination reference", &edit_reference_shape),
-    BU_ARG_SHAPED_UNBOUND("r", NULL, "scale-relative", BU_ARG_VALUE_RAW,
+    BU_ARG_UNBOUND("r", NULL, "scale-relative", BU_ARG_VALUE_RAW, BU_ARG_REQUIRED,
 	"TO", "Set the relative destination or factor", &edit_reference_shape),
-    BU_ARG_SHAPED_UNBOUND("c", NULL, "center", BU_ARG_VALUE_RAW,
+    BU_ARG_UNBOUND("c", NULL, "center", BU_ARG_VALUE_RAW, BU_ARG_REQUIRED,
 	"CENTER", "Set the scale center", &edit_self_reference_shape),
-    BU_ARG_FLAG_UNBOUND("n", NULL, "natural-origin", "Use the natural origin"),
+    BU_ARG_UNBOUND("n", NULL, "natural-origin", BU_ARG_VALUE_FLAG, BU_ARG_NONE, NULL, "Use the natural origin", NULL),
     BU_ARG_OPTION_NULL
 };
 static const struct bu_arg_operand edit_scale_operands[] = {

@@ -114,10 +114,10 @@ static const struct bu_arg_option bot_extrude_options[] = {
     BU_ARG_FLAG("F", "force", struct bot_extrude_args, force_mode,
 	"Allow conversion of view-dependent source geometry"),
     BU_ARG_NUMBER_RANGE(NULL, "max-area-delta", struct bot_extrude_args,
-	max_area_delta, 0.0, 1.0, "ratio",
+	max_area_delta, 1, 0.0, 1, 1.0, "ratio",
 	"Maximum surface-area change while simplifying"),
     BU_ARG_NUMBER_RANGE(NULL, "min-tri-delta", struct bot_extrude_args,
-	min_tri_delta, 0.0, 1.0, "ratio",
+	min_tri_delta, 1, 0.0, 1, 1.0, "ratio",
 	"Minimum triangle-count reduction while simplifying"),
     BU_ARG_OPTION_NULL
 };
@@ -157,7 +157,7 @@ static const struct bu_arg_schema_case bot_extrude_cases[] = {
     BU_ARG_SCHEMA_CASE_NULL
 };
 static const struct bu_arg_constraint bot_extrude_constraints[] = {
-    BU_ARG_CONSTRAINT_CONFLICTS(bot_extrude_conflicting_options,
+    BU_ARG_CONSTRAINT(BU_ARG_CONSTRAINT_OPTION_CONFLICTS, BU_ARG_CONDITION_ALWAYS, bot_extrude_conflicting_options, 0, 0,
 	"--in-place cannot be used with --comb"),
     BU_ARG_CONSTRAINT_NULL
 };

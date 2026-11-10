@@ -50,7 +50,7 @@ static const struct bu_arg_option open_schema_options[] = {
 	"Open a binary-incompatible v4 geometry database"),
     BU_ARG_FLAG("h", "help", struct open_args, help,
 	"Print command usage"),
-    BU_ARG_ALIAS_SHORT("?", "help", 1),
+    BU_ARG_ALIAS("?", NULL, "help", 1),
     BU_ARG_FLAG("o", "open", struct open_args, open_only,
 	"Require an existing database file unless --create is supplied"),
     BU_ARG_OPTION_NULL

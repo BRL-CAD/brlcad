@@ -189,14 +189,14 @@ static const char * const ged_view_knob_coord_options[] = {
     "view-coords", "model-coords", NULL
 };
 static const struct bu_arg_constraint ged_view_knob_constraints[] = {
-    BU_ARG_CONSTRAINT_OPTIONS(ged_view_knob_coord_options, 0, 1,
+    BU_ARG_CONSTRAINT(BU_ARG_CONSTRAINT_OPTION_COUNT, BU_ARG_CONDITION_ALWAYS, ged_view_knob_coord_options, 0, 1,
 	"--view-coords and --model-coords cannot be used together"),
     BU_ARG_CONSTRAINT_NULL
 };
 static const struct bu_arg_option ged_view_knob_options[] = {
     BU_ARG_FLAG("h", "help", struct ged_view_knob_args, print_help,
 	"Print help and exit"),
-    BU_ARG_ALIAS_SHORT("?", "help", 1),
+    BU_ARG_ALIAS("?", NULL, "help", 1),
     BU_ARG_FLAG("i", "incr", struct ged_view_knob_args, incr_flag,
 	"Interpret values as increments"),
     BU_ARG_FLAG("v", "view-coords", struct ged_view_knob_args, view_flag,

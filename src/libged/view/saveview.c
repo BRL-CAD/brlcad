@@ -46,13 +46,13 @@ struct saveview_args {
 
 
 static const struct bu_arg_option saveview_schema_options[] = {
-    BU_ARG_STRING("e", NULL, struct saveview_args, rt_command, "command",
+    BU_ARG_VALUE("e", NULL, struct saveview_args, rt_command, BU_ARG_VALUE_STRING, BU_ARG_REQUIRED, "command",
 	"Raytrace command to invoke"),
-    BU_ARG_FILE("i", NULL, struct saveview_args, input_geometry, "file",
+    BU_ARG_VALUE("i", NULL, struct saveview_args, input_geometry, BU_ARG_VALUE_FILE, BU_ARG_REQUIRED, "file",
 	"Input geometry file"),
-    BU_ARG_FILE("l", NULL, struct saveview_args, log_file, "file",
+    BU_ARG_VALUE("l", NULL, struct saveview_args, log_file, BU_ARG_VALUE_FILE, BU_ARG_REQUIRED, "file",
 	"Write diagnostics to file"),
-    BU_ARG_FILE("o", NULL, struct saveview_args, pix_file, "file",
+    BU_ARG_VALUE("o", NULL, struct saveview_args, pix_file, BU_ARG_VALUE_FILE, BU_ARG_REQUIRED, "file",
 	"Write pixels to file"),
     BU_ARG_OPTION_NULL
 };

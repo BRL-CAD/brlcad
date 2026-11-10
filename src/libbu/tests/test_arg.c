@@ -195,7 +195,7 @@ static const struct bu_arg_schema failing_context_schema =
 	BU_ARG_SCHEMA_META(NULL, NULL, NULL, failing_context_validate));
 
 static const struct bu_arg_option ranged_options[] = {
-    BU_ARG_INTEGER_RANGE("l", "level", struct test_args, level, 1, 5,
+    BU_ARG_INTEGER_RANGE("l", "level", struct test_args, level, 1, 1, 1, 5,
 	"level", "Level from one through five"),
     BU_ARG_OPTION_NULL
 };
@@ -204,9 +204,9 @@ static const struct bu_arg_schema ranged_schema = {
     BU_ARG_PARSE_INTERSPERSED, BU_ARG_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
 static const struct bu_arg_operand one_sided_operands[] = {
-    BU_ARG_OPERAND_INTEGER_MIN("positive", 1, 1, 1,
+    BU_ARG_OPERAND_INTEGER_RANGE("positive", 1, 1, 1, 1, 0, 0,
 	"Positive integer", NULL),
-    BU_ARG_OPERAND_NUMBER_MAX("ceiling", 1, 1, 5.0,
+    BU_ARG_OPERAND_NUMBER_RANGE("ceiling", 1, 1, 0, 0, 1, 5.0,
 	"Number no greater than five", NULL),
     BU_ARG_OPERAND_NULL
 };
@@ -309,9 +309,9 @@ static const char * const relation_conflicts[] = {
     "conflict", "required", NULL
 };
 static const struct bu_arg_constraint relation_constraints[] = {
-    BU_ARG_CONSTRAINT_REQUIRES(relation_requires,
+    BU_ARG_CONSTRAINT(BU_ARG_CONSTRAINT_OPTION_REQUIRES, BU_ARG_CONDITION_ALWAYS, relation_requires, 0, 0,
 	"--dependent requires --required"),
-    BU_ARG_CONSTRAINT_CONFLICTS(relation_conflicts,
+    BU_ARG_CONSTRAINT(BU_ARG_CONSTRAINT_OPTION_CONFLICTS, BU_ARG_CONDITION_ALWAYS, relation_conflicts, 0, 0,
 	"--conflict cannot be combined with --required"),
     BU_ARG_CONSTRAINT_NULL
 };
@@ -324,7 +324,7 @@ static const char * const duplicate_relation_options[] = {
     "dependent", "required", "required", NULL
 };
 static const struct bu_arg_constraint duplicate_relation_constraints[] = {
-    BU_ARG_CONSTRAINT_REQUIRES(duplicate_relation_options,
+    BU_ARG_CONSTRAINT(BU_ARG_CONSTRAINT_OPTION_REQUIRES, BU_ARG_CONDITION_ALWAYS, duplicate_relation_options, 0, 0,
 	"Malformed repeated relationship target"),
     BU_ARG_CONSTRAINT_NULL
 };
@@ -335,7 +335,7 @@ static const struct bu_arg_schema duplicate_relation_schema = {
 };
 static const char * const occurrence_options[] = {"dependent", NULL};
 static const struct bu_arg_constraint occurrence_constraints[] = {
-    BU_ARG_CONSTRAINT_OPTION_OCCURRENCES(occurrence_options, 0, 1,
+    BU_ARG_CONSTRAINT(BU_ARG_CONSTRAINT_OPTION_OCCURRENCE_COUNT, BU_ARG_CONDITION_ALWAYS, occurrence_options, 0, 1,
 	"--dependent may be specified only once"),
     BU_ARG_CONSTRAINT_NULL
 };
@@ -367,7 +367,7 @@ static const struct bu_arg_variant incomplete_arg_variants[] = {
     BU_ARG_VARIANT_NULL
 };
 static const struct bu_arg_shape incomplete_arg_shape =
-    BU_ARG_SHAPE_FORMS(BU_ARG_SHAPE_VECTOR3, 1, 3,
+    BU_ARG_SHAPE(BU_ARG_SHAPE_VECTOR3, 1, 3,
 	"Malformed lint fixture", NULL, incomplete_arg_variants);
 static const struct bu_arg_operand incomplete_arg_operands[] = {
     BU_ARG_OPERAND_SHAPED("point", BU_ARG_VALUE_VECTOR, 1, 3, NULL,
@@ -391,7 +391,7 @@ cannot_bypass_structure(const struct bu_arg_schema *UNUSED(schema),
 }
 
 static const struct bu_arg_option guarded_options[] = {
-    BU_ARG_FLAG_UNBOUND("v", "verbose", "verbose", "Enable verbose output"),
+    BU_ARG_UNBOUND("v", "verbose", "verbose", BU_ARG_VALUE_FLAG, BU_ARG_NONE, NULL, "Enable verbose output", NULL),
     BU_ARG_OPTION_NULL
 };
 static const struct bu_arg_schema guarded_schema =
@@ -439,7 +439,7 @@ static const struct bu_arg_schema grouped_schema =
 
 static const char * const combined_constraint_options[] = {"s", NULL};
 static const struct bu_arg_constraint combined_constraints[] = {
-    BU_ARG_CONSTRAINT_OPTIONS(combined_constraint_options, 0, 1,
+    BU_ARG_CONSTRAINT(BU_ARG_CONSTRAINT_OPTION_COUNT, BU_ARG_CONDITION_ALWAYS, combined_constraint_options, 0, 1,
 	"The short option may appear once"),
     BU_ARG_CONSTRAINT_NULL
 };
@@ -475,10 +475,10 @@ static const struct bu_arg_schema split_quaternion_schema =
 	split_quaternion_operands, BU_ARG_PARSE_STOP_AT_FIRST_OPERAND,
 	NULL, NULL, NULL, NULL);
 static const struct bu_arg_form quaternion_form_rows[] = {
-    BU_ARG_FORM_SCHEMA("packed", "Use one packed x/y/z/w value",
-	&packed_quaternion_schema),
-    BU_ARG_FORM_SCHEMA("components", "Use four numeric component words",
-	&split_quaternion_schema),
+    BU_ARG_FORM("packed", "Use one packed x/y/z/w value",
+	&packed_quaternion_schema, NULL),
+    BU_ARG_FORM("components", "Use four numeric component words",
+	&split_quaternion_schema, NULL),
     BU_ARG_FORM_NULL
 };
 
@@ -511,8 +511,8 @@ static const struct bu_arg_schema extension_long_schema =
     BU_ARG_SCHEMA_BOUND("extend", "Longer form", NULL, extension_operands,
 	BU_ARG_PARSE_OPTIONS_FIRST, NULL, NULL, NULL, NULL);
 static const struct bu_arg_form extension_form_rows[] = {
-    BU_ARG_FORM_SCHEMA("short", "Short form", &extension_short_schema),
-    BU_ARG_FORM_SCHEMA("long", "Long form", &extension_long_schema),
+    BU_ARG_FORM("short", "Short form", &extension_short_schema, NULL),
+    BU_ARG_FORM("long", "Long form", &extension_long_schema, NULL),
     BU_ARG_FORM_NULL
 };
 static const struct bu_arg_forms extension_forms =
@@ -630,7 +630,7 @@ main(int UNUSED(argc), char **argv)
 		0, NULL, 0, &args, &result));
 	EXPECT_FAILURE_EMPTY(bu_arg_schema_validate_syntax(NULL, 0, NULL, 0,
 		&result));
-	EXPECT_FAILURE_EMPTY(bu_arg_tree_validate_argv(NULL, 0, NULL, 0,
+	EXPECT_FAILURE_EMPTY(bu_arg_tree_validate_argv(NULL, 0, NULL, 0, NULL,
 		&result));
 	EXPECT_FAILURE_EMPTY(bu_arg_forms_validate(NULL, 0, NULL, 0, NULL,
 		&result));

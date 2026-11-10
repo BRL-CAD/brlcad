@@ -41,9 +41,9 @@ static const struct bu_arg_option autoview2_options[] = {
     BU_ARG_FLAG("h", "help", struct autoview2_args, print_help, "Print help and exit"),
     BU_ARG_FLAG(NULL, "all-objs", struct autoview2_args, all_view_objects,
 	"Bound all non-faceplate view objects"),
-    BU_ARG_NUMBER("s", "scale", struct autoview2_args, scale, "number",
+    BU_ARG_VALUE("s", "scale", struct autoview2_args, scale, BU_ARG_VALUE_NUMBER, BU_ARG_REQUIRED, "number",
 	"Set view scale (model scale relative to view size)"),
-    BU_ARG_VLS_APPEND("V", "view", struct autoview2_args, view, "name",
+    BU_ARG_VALUE("V", "view", struct autoview2_args, view, BU_ARG_VALUE_VLS, BU_ARG_REQUIRED, "name",
 	"Specify view to adjust"),
     BU_ARG_OPTION_NULL
 };

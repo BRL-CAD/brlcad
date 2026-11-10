@@ -70,13 +70,13 @@ static const struct bu_arg_option tree_schema_options[] = {
 	"Include object attributes"),
     BU_ARG_FLAG("c", NULL, struct tree_args, combinations_only,
 	"Print combinations only"),
-    BU_ARG_FILE("o", NULL, struct tree_args, output_file, "file",
+    BU_ARG_VALUE("o", NULL, struct tree_args, output_file, BU_ARG_VALUE_FILE, BU_ARG_REQUIRED, "file",
 	"Write output to a file"),
-    BU_ARG_INTEGER("i", NULL, struct tree_args, indent_size, "spaces",
+    BU_ARG_VALUE("i", NULL, struct tree_args, indent_size, BU_ARG_VALUE_INTEGER, BU_ARG_REQUIRED, "spaces",
 	"Set indentation size"),
-    BU_ARG_INTEGER_VALIDATE("d", NULL, struct tree_args, display_depth,
+    BU_ARG_VALUE_VALIDATE("d", NULL, struct tree_args, display_depth, BU_ARG_VALUE_INTEGER,
 	tree_nonnegative_integer, "depth", "Set maximum display depth"),
-    BU_ARG_COUNTING_FLAG("v", NULL, struct tree_args, verbosity,
+    BU_ARG_COUNTING_FLAG("v", NULL, struct tree_args, verbosity, BU_ARG_VALUE_FLAG,
 	"Increase output verbosity"),
     BU_ARG_OPTION_NULL
 };

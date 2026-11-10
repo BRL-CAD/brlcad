@@ -760,7 +760,7 @@ VDRAW_TREE_EXEC(vlist, vdraw_vlist)
 
 static const struct bu_arg_shape vdraw_vector3_shape =
     BU_ARG_SHAPE(BU_ARG_SHAPE_VECTOR3, 1, 3,
-	"packed or three-component XYZ point");
+	"packed or three-component XYZ point", NULL, NULL);
 static const struct bu_arg_operand vdraw_write_operands[] = {
     BU_ARG_OPERAND("index", BU_ARG_VALUE_STRING, 1, 1, "Point index or next", NULL),
     BU_ARG_OPERAND("command", BU_ARG_VALUE_INTEGER, 1, 1, "VList drawing command", NULL),

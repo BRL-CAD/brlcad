@@ -41,7 +41,7 @@ struct bot_smooth_args {
 static const struct bu_arg_option bot_smooth_options[] = {
     BU_ARG_FLAG("h", "help", struct bot_smooth_args, print_help,
 	"Print command help"),
-    BU_ARG_NUMBER("t", NULL, struct bot_smooth_args, tolerance_angle, "degrees",
+    BU_ARG_VALUE("t", NULL, struct bot_smooth_args, tolerance_angle, BU_ARG_VALUE_NUMBER, BU_ARG_REQUIRED, "degrees",
 	"Maximum angle between faces to smooth"),
     BU_ARG_OPTION_NULL
 };

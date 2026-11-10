@@ -443,20 +443,20 @@ struct stat_args {
 
 
 static const struct bu_arg_shape stat_filter_shape =
-    BU_ARG_SHAPE(BU_ARG_SHAPE_CUSTOM, 1, 1, "Search expression language");
+    BU_ARG_SHAPE(BU_ARG_SHAPE_CUSTOM, 1, 1, "Search expression language", NULL, NULL);
 static const struct bu_arg_shape stat_columns_shape =
-    BU_ARG_SHAPE(BU_ARG_SHAPE_COMMA_LIST, 1, 1, "Comma-separated column names");
+    BU_ARG_SHAPE(BU_ARG_SHAPE_COMMA_LIST, 1, 1, "Comma-separated column names", NULL, NULL);
 static const struct bu_arg_shape stat_pattern_shape =
-    BU_ARG_SHAPE(BU_ARG_SHAPE_RANGE_PATTERN, 1, 1, "Database name or glob pattern");
+    BU_ARG_SHAPE(BU_ARG_SHAPE_RANGE_PATTERN, 1, 1, "Database name or glob pattern", NULL, NULL);
 static const char * const stat_column_keywords[] = {
     "name", "uses", "refs", "flags", "major_type", "minor_type", "type", "size", NULL
 };
 static const struct bu_arg_option stat_schema_options[] = {
     BU_ARG_FLAG("h", "help", struct stat_args, print_help, "Print help and exit"),
-    BU_ARG_ALIAS_SHORT("?", "help", 1),
-    BU_ARG_COUNTING_LONG_FLAG("v", "verbosity", struct stat_args, verbosity,
+    BU_ARG_ALIAS("?", NULL, "help", 1),
+    BU_ARG_COUNTING_FLAG("v", "verbosity", struct stat_args, verbosity, BU_ARG_VALUE_LONG,
 	"Increase output verbosity"),
-    BU_ARG_COUNTING_LONG_FLAG("q", "quiet", struct stat_args, quiet,
+    BU_ARG_COUNTING_FLAG("q", "quiet", struct stat_args, quiet, BU_ARG_VALUE_LONG,
 	"Decrease output verbosity"),
     BU_ARG_FLAG("r", "raw", struct stat_args, raw, "Print raw values"),
     {"F", "filter", "filter", "expression", "Filter using a search expression",
@@ -471,7 +471,7 @@ static const struct bu_arg_option stat_schema_options[] = {
 	BU_ARG_VALUE_VLS, offsetof(struct stat_args, sort_str), NULL, NULL, NULL,
 	NULL, 0, 0, stat_column_keywords, BU_ARG_REQUIRED, &stat_columns_shape, NULL, NULL,
 	BU_ARG_VALUE_RANGE_NONE, BU_ARG_SHAPE_SCALAR},
-    BU_ARG_FILE("o", "output-file", struct stat_args, output_file, "file",
+    BU_ARG_VALUE("o", "output-file", struct stat_args, output_file, BU_ARG_VALUE_FILE, BU_ARG_REQUIRED, "file",
 	"Write output to a new file"),
     BU_ARG_OPTION_NULL
 };

@@ -49,10 +49,10 @@ struct who2_args {
 
 static const struct bu_arg_option who2_schema_options[] = {
     BU_ARG_FLAG("h", "help", struct who2_args, print_help, "Print help and exit"),
-    BU_ARG_ALIAS_SHORT("?", "help", 1),
-    BU_ARG_VLS_APPEND("V", "view", struct who2_args, view, "name",
+    BU_ARG_ALIAS("?", NULL, "help", 1),
+    BU_ARG_VALUE("V", "view", struct who2_args, view, BU_ARG_VALUE_VLS, BU_ARG_REQUIRED, "name",
 	"Specify the view"),
-    BU_ARG_INTEGER("m", "mode", struct who2_args, mode, "number",
+    BU_ARG_VALUE("m", "mode", struct who2_args, mode, BU_ARG_VALUE_INTEGER, BU_ARG_REQUIRED, "number",
 	"Restrict the drawing mode"),
     BU_ARG_FLAG("E", "expand", struct who2_args, expand,
 	"Report individual drawn objects"),

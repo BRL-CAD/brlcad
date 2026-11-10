@@ -658,12 +658,12 @@ static const struct bu_arg_operand material_import_operands[] = {
     BU_ARG_OPERAND_NULL
 };
 static const struct bu_arg_option material_import_options[] = {
-    BU_ARG_FLAG_UNBOUND(NULL, "id", "id", "Name imported material objects by density-table ID"),
-    BU_ARG_FLAG_UNBOUND(NULL, "name", "name", "Name imported material objects by density-table name"),
+    BU_ARG_UNBOUND(NULL, "id", "id", BU_ARG_VALUE_FLAG, BU_ARG_NONE, NULL, "Name imported material objects by density-table ID", NULL),
+    BU_ARG_UNBOUND(NULL, "name", "name", BU_ARG_VALUE_FLAG, BU_ARG_NONE, NULL, "Name imported material objects by density-table name", NULL),
     BU_ARG_OPTION_NULL
 };
 static const struct bu_arg_constraint material_import_constraints[] = {
-    BU_ARG_CONSTRAINT_OPTIONS(material_import_mode_options, 1, 1,
+    BU_ARG_CONSTRAINT(BU_ARG_CONSTRAINT_OPTION_COUNT, BU_ARG_CONDITION_ALWAYS, material_import_mode_options, 1, 1,
 	"exactly one of --id or --name is required"),
     BU_ARG_CONSTRAINT_NULL
 };

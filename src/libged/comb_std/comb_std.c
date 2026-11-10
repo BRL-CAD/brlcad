@@ -801,7 +801,7 @@ comb_std_schema_validate(const struct bu_arg_schema *cmd, size_t argc, const cha
 static const struct bu_arg_option comb_std_schema_options[] = {
     BU_ARG_CUSTOM_FLAG("c", NULL, "c", struct comb_std_args, region_flag,
 	comb_std_set_non_region, "Create or mark a non-region combination"),
-    BU_ARG_ALIAS_SHORT("g", "c", 1),
+    BU_ARG_ALIAS("g", NULL, "c", 1),
     BU_ARG_CUSTOM_FLAG("r", NULL, "r", struct comb_std_args, region_flag,
 	comb_std_set_region, "Create or mark a region"),
     BU_ARG_FLAG("?", NULL, struct comb_std_args, help, "Print command usage"),

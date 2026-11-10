@@ -348,7 +348,7 @@ native_sequence_consume(struct bu_vls *msg, size_t argc, const char **argv, void
 }
 
 static const struct bu_arg_shape native_sequence_shape =
-    BU_ARG_SHAPE(BU_ARG_SHAPE_TOKEN_SEQUENCE, 2, 3, "two or three integer components");
+    BU_ARG_SHAPE(BU_ARG_SHAPE_TOKEN_SEQUENCE, 2, 3, "two or three integer components", NULL, NULL);
 
 static const struct bu_arg_option native_sequence_options[] = {
     BU_ARG_OPTION_SHAPED("v", "values", "values", struct native_sequence_args, values,
@@ -434,15 +434,15 @@ struct native_scalar_args {
 };
 
 static const struct bu_arg_option native_scalar_options[] = {
-    BU_ARG_COUNTING_LONG_FLAG("v", "verbose", struct native_scalar_args, verbosity,
+    BU_ARG_COUNTING_FLAG("v", "verbose", struct native_scalar_args, verbosity, BU_ARG_VALUE_LONG,
 	"Increase output detail"),
-    BU_ARG_LONG("l", "long", struct native_scalar_args, value, "number",
+    BU_ARG_VALUE("l", "long", struct native_scalar_args, value, BU_ARG_VALUE_LONG, BU_ARG_REQUIRED, "number",
 	"Set a base-zero long integer"),
-    BU_ARG_HEX_LONG(NULL, "hex", struct native_scalar_args, hex_value, "number",
+    BU_ARG_VALUE(NULL, "hex", struct native_scalar_args, hex_value, BU_ARG_VALUE_HEX_LONG, BU_ARG_REQUIRED, "number",
 	"Set a hexadecimal long integer"),
-    BU_ARG_CHAR(NULL, "selector", struct native_scalar_args, selector, "character",
+    BU_ARG_VALUE(NULL, "selector", struct native_scalar_args, selector, BU_ARG_VALUE_CHAR, BU_ARG_REQUIRED, "character",
 	"Set a selector character"),
-    BU_ARG_VLS_APPEND("w", "word", struct native_scalar_args, words, "text",
+    BU_ARG_VALUE("w", "word", struct native_scalar_args, words, BU_ARG_VALUE_VLS, BU_ARG_REQUIRED, "text",
 	"Append text"),
     BU_ARG_OPTION_NULL
 };
@@ -459,9 +459,9 @@ struct native_vocabulary_args {
 };
 
 static const struct bu_arg_option native_vocabulary_options[] = {
-    BU_ARG_ISO639_1("L", "language", struct native_vocabulary_args, language, "code",
+    BU_ARG_VALUE_VALIDATE("L", "language", struct native_vocabulary_args, language, BU_ARG_VALUE_VLS, bu_arg_iso639_1_validate, "code",
 	"Set the manual language"),
-    BU_ARG_MAN_SECTION("S", "section", struct native_vocabulary_args, section, "section",
+    BU_ARG_VALUE_VALIDATE("S", "section", struct native_vocabulary_args, section, BU_ARG_VALUE_CHAR, bu_arg_man_section_validate, "section",
 	"Set the manual section"),
     BU_ARG_OPTION_NULL
 };
@@ -501,7 +501,7 @@ struct native_interspersed_args {
 
 static const struct bu_arg_option native_interspersed_options[] = {
     BU_ARG_FLAG("a", "alpha", struct native_interspersed_args, alpha, "Set alpha mode"),
-    BU_ARG_INTEGER("n", "number", struct native_interspersed_args, number, "number", "Set numeric mode"),
+    BU_ARG_VALUE("n", "number", struct native_interspersed_args, number, BU_ARG_VALUE_INTEGER, BU_ARG_REQUIRED, "number", "Set numeric mode"),
     BU_ARG_OPTION_NULL
 };
 
@@ -560,7 +560,7 @@ struct native_constraint_args {
 };
 
 static const struct bu_arg_option native_constraint_options[] = {
-    BU_ARG_FILE("f", NULL, struct native_constraint_args, file, "file", "Read a mapping file"),
+    BU_ARG_VALUE("f", NULL, struct native_constraint_args, file, BU_ARG_VALUE_FILE, BU_ARG_REQUIRED, "file", "Read a mapping file"),
     BU_ARG_FLAG("i", NULL, struct native_constraint_args, indexed, "Indexed mode"),
     BU_ARG_FLAG("n", NULL, struct native_constraint_args, named, "Named mode"),
     BU_ARG_OPTION_NULL
@@ -573,10 +573,10 @@ static const struct bu_arg_operand native_constraint_operands[] = {
 static const char *native_constraint_modes[] = {"i", "n", NULL};
 static const char *native_constraint_file[] = {"f", NULL};
 static const struct bu_arg_constraint native_constraint_rules[] = {
-    BU_ARG_CONSTRAINT_OPTIONS(native_constraint_modes, 0, 1, "-i and -n are mutually exclusive"),
-    BU_ARG_CONSTRAINT_OPERANDS(BU_ARG_CONDITION_ANY_OPTION_PRESENT, native_constraint_file, 0, 0,
+    BU_ARG_CONSTRAINT(BU_ARG_CONSTRAINT_OPTION_COUNT, BU_ARG_CONDITION_ALWAYS, native_constraint_modes, 0, 1, "-i and -n are mutually exclusive"),
+    BU_ARG_CONSTRAINT(BU_ARG_CONSTRAINT_OPERAND_COUNT, BU_ARG_CONDITION_ANY_OPTION_PRESENT, native_constraint_file, 0, 0,
 	"-f cannot be combined with source/destination operands"),
-    BU_ARG_CONSTRAINT_OPERANDS(BU_ARG_CONDITION_NO_OPTION_PRESENT, native_constraint_file, 2, 2,
+    BU_ARG_CONSTRAINT(BU_ARG_CONSTRAINT_OPERAND_COUNT, BU_ARG_CONDITION_NO_OPTION_PRESENT, native_constraint_file, 2, 2,
 	"source and destination are required without -f"),
     BU_ARG_CONSTRAINT_NULL
 };
@@ -1010,14 +1010,14 @@ main(int ac, char *av[])
 	CHECK(bu_arg_tree_dispatch(&native_tree, &tree_calls, 1, tree_argv,
 	    &tree_result) == 0 && tree_result == 17 && tree_calls == 1,
 	    "native command tree should dispatch its schema-owned executor");
-	CHECK(bu_arg_tree_validate_argv(&native_tree, 0, NULL, 0, &tree_validation) == 0 &&
+	CHECK(bu_arg_tree_validate_argv(&native_tree, 0, NULL, 0, NULL, &tree_validation) == 0 &&
 	    tree_validation.state == BU_ARG_VALIDATE_INCOMPLETE &&
 	    (tree_validation.expected & BU_ARG_EXPECT_SUBCOMMAND) &&
 	    find_completion(tree_validation.completion_candidates,
 	    (int)tree_validation.completion_count, "alpha") != NULL,
 	    "native command tree should offer canonical children from its argv validator");
 	bu_arg_validate_result_clear(&tree_validation);
-	CHECK(bu_arg_tree_validate_argv(&native_tree, 1, tree_alias_argv, 0, &tree_validation) == 0 &&
+	CHECK(bu_arg_tree_validate_argv(&native_tree, 1, tree_alias_argv, 0, NULL, &tree_validation) == 0 &&
 	    tree_validation.state == BU_ARG_VALIDATE_VALID &&
 	    (tree_validation.expected & BU_ARG_EXPECT_SUBCOMMAND) &&
 	    find_completion(tree_validation.completion_candidates,
@@ -1033,21 +1033,21 @@ main(int ac, char *av[])
 		fixed_tree_child_argv, &tree_result) == 0 && tree_result == 23 &&
 	    tree_calls == 3,
 	    "native command tree dispatch should honor fixed root operands");
-	CHECK(bu_arg_tree_validate_argv(&native_tree, 2, nested_tree_alias_argv, 1,
+	CHECK(bu_arg_tree_validate_argv(&native_tree, 2, nested_tree_alias_argv, 1, NULL,
 	    &tree_validation) == 0 && tree_validation.state == BU_ARG_VALIDATE_VALID &&
 	    tree_validation.token_start == 1 &&
 	    find_completion(tree_validation.completion_candidates,
 	    (int)tree_validation.completion_count, "beta") != NULL,
 	    "native command tree argv validation should descend through nested children");
 	bu_arg_validate_result_clear(&tree_validation);
-	CHECK(bu_arg_tree_validate_argv(&native_fixed_tree, 1, fixed_tree_prefix_argv, 1,
+	CHECK(bu_arg_tree_validate_argv(&native_fixed_tree, 1, fixed_tree_prefix_argv, 1, NULL,
 	    &tree_validation) == 0 && tree_validation.state == BU_ARG_VALIDATE_INCOMPLETE &&
 	    (tree_validation.expected & BU_ARG_EXPECT_SUBCOMMAND) &&
 	    find_completion(tree_validation.completion_candidates,
 	    (int)tree_validation.completion_count, "alpha") != NULL,
 	    "fixed-operand native tree should request a child after its parent operand");
 	bu_arg_validate_result_clear(&tree_validation);
-	CHECK(bu_arg_tree_validate_argv(&native_fixed_tree, 2, fixed_tree_child_argv, 1,
+	CHECK(bu_arg_tree_validate_argv(&native_fixed_tree, 2, fixed_tree_child_argv, 1, NULL,
 	    &tree_validation) == 0 && tree_validation.state == BU_ARG_VALIDATE_VALID &&
 	    find_completion(tree_validation.completion_candidates,
 	    (int)tree_validation.completion_count, "beta") != NULL,

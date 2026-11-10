@@ -70,7 +70,7 @@ static int ged_view_obj_update_validate(const struct bu_arg_schema *schema, size
 static const struct bu_arg_option ged_view_obj_options[] = {
     BU_ARG_FLAG("h", "help", struct ged_view_obj_args, print_help,
 	"Print help and exit"),
-    BU_ARG_ALIAS_SHORT("?", "help", 1),
+    BU_ARG_ALIAS("?", NULL, "help", 1),
     BU_ARG_FLAG("L", "local", struct ged_view_obj_args, local_only,
 	"Restrict lookup or creation to the current view"),
     BU_ARG_FLAG("G", "geom_only", struct ged_view_obj_args, geom_only,
@@ -379,7 +379,7 @@ ged_view_obj_validate(const struct bu_arg_schema *schema, size_t argc,
 	return 0;
     child_start = name_index + 1;
     ret = bu_arg_tree_validate_argv(&ged_view_obj_child_tree, argc - child_start,
-	argv + child_start, cursor_arg - child_start, result);
+	argv + child_start, cursor_arg - child_start, NULL, result);
     if (!ret) {
 	result->token_start += child_start;
 	result->token_end += child_start;

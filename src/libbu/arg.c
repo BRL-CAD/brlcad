@@ -34,6 +34,8 @@ cmd_schema_keyword_canonical(const char * const *keywords,
 	const struct bu_arg_value_keyword *keyword_values, const char *arg);
 static int cmd_schema_range_valid(const struct bu_arg_value_range *range,
 	bu_arg_value_t type, const char *arg);
+static const struct bu_arg_operand *cmd_schema_operand(
+	const struct bu_arg_schema *schema, size_t operand_index);
 
 
 const char *
@@ -1511,7 +1513,7 @@ cmd_schema_dash_numeric_operand_valid(const struct bu_arg_schema *schema,
 
     if (!schema || !arg || arg[0] != '-' || !arg[1])
 	return 0;
-    operand = bu_arg_schema_operand(schema, operand_index);
+    operand = cmd_schema_operand(schema, operand_index);
     if (!operand)
 	return 0;
     switch (operand->value_type) {
@@ -2138,17 +2140,9 @@ cmd_schema_describe_selected(const struct bu_arg_schema *schema,
 
 
 char *
-bu_arg_schema_describe_selected(const struct bu_arg_schema *schema,
-	const char * const *selected)
-{
-    return cmd_schema_describe_selected(schema, selected, 1);
-}
-
-
-char *
 bu_arg_schema_describe(const struct bu_arg_schema *schema)
 {
-    return bu_arg_schema_describe_selected(schema, NULL);
+    return cmd_schema_describe_selected(schema, NULL, 1);
 }
 
 
@@ -3133,21 +3127,12 @@ cmd_schema_clear_completion_candidates(struct bu_arg_validate_result *result)
 
 
 void
-bu_arg_validate_result_init(struct bu_arg_validate_result *result)
-{
-    if (!result)
-	return;
-    *result = (struct bu_arg_validate_result)BU_ARG_VALIDATE_RESULT_NULL;
-}
-
-
-void
 bu_arg_validate_result_clear(struct bu_arg_validate_result *result)
 {
     if (!result)
 	return;
     cmd_schema_clear_completion_candidates(result);
-    bu_arg_validate_result_init(result);
+    *result = (struct bu_arg_validate_result)BU_ARG_VALIDATE_RESULT_NULL;
 }
 
 
@@ -3421,8 +3406,8 @@ cmd_schema_add_keyword_candidates(const char * const *keywords,
 }
 
 
-const struct bu_arg_operand *
-bu_arg_schema_operand(const struct bu_arg_schema *schema, size_t operand_index)
+static const struct bu_arg_operand *
+cmd_schema_operand(const struct bu_arg_schema *schema, size_t operand_index)
 {
     size_t index = 0;
 
@@ -3925,7 +3910,7 @@ bu_arg_schema_active_operand(const struct bu_arg_schema *schema, size_t argc,
     const struct bu_arg_schema *active = cmd_schema_case_view(schema, argc,
 	argv, &view);
 
-    return bu_arg_schema_operand(active, operand_index);
+    return cmd_schema_operand(active, operand_index);
 }
 
 
@@ -4045,7 +4030,7 @@ cmd_schema_apply_constraints(const struct bu_arg_schema *schema, size_t argc,
 	    value_type = BU_ARG_VALUE_FLAG;
 	} else {
 	    expected = BU_ARG_EXPECT_OPERAND;
-	    operand = bu_arg_schema_operand(schema, actual_count);
+	    operand = cmd_schema_operand(schema, actual_count);
 	    if (operand) {
 		value_type = operand->value_type;
 		provider = operand->semantic_provider;
@@ -4297,7 +4282,7 @@ _bu_arg_schema_validate_structure(const struct bu_arg_schema *schema, size_t arg
 	}
 validate_operand:
 	;
-	const struct bu_arg_operand *operand = bu_arg_schema_operand(schema, operand_count);
+	const struct bu_arg_operand *operand = cmd_schema_operand(schema, operand_count);
 	if (!operand) {
 	    cmd_schema_set_result(result, BU_ARG_VALIDATE_INVALID, i, BU_ARG_EXPECT_NONE,
 		BU_ARG_VALUE_STRING, "too many operands", NULL);
@@ -4317,7 +4302,7 @@ validate_operand:
     if (cursor_arg < argc && argv && argv[cursor_arg] &&
 	cmd_schema_is_end_marker(schema, argv[cursor_arg], options_allowed,
 	    operand_count) && !cmd_schema_has_long_options(schema)) {
-	const struct bu_arg_operand *operand = bu_arg_schema_operand(schema, operand_count);
+	const struct bu_arg_operand *operand = cmd_schema_operand(schema, operand_count);
 	bu_arg_validate_state_t state = !cmd_schema_operand_sequence_complete(schema, operand_count) ?
 	    BU_ARG_VALIDATE_INCOMPLETE : BU_ARG_VALIDATE_VALID;
 	cmd_schema_set_result(result, state, cursor_arg,
@@ -4380,7 +4365,7 @@ validate_operand:
 	return 0;
     }
 
-    const struct bu_arg_operand *operand = bu_arg_schema_operand(schema, operand_count);
+    const struct bu_arg_operand *operand = cmd_schema_operand(schema, operand_count);
     if (cursor_arg < argc && argv && argv[cursor_arg]) {
 	if (!operand) {
 	    cmd_schema_set_result(result, BU_ARG_VALIDATE_INVALID, cursor_arg, BU_ARG_EXPECT_NONE,
@@ -4493,13 +4478,13 @@ cmd_schema_validate_operand_shapes(const struct bu_arg_schema *schema,
     count = cmd_schema_collect_operands(schema, argc, argv, &values, &indexes,
 	NULL);
     while (start < count) {
-	const struct bu_arg_operand *operand = bu_arg_schema_operand(schema, start);
+	const struct bu_arg_operand *operand = cmd_schema_operand(schema, start);
 	size_t end = start + 1;
 	size_t shape_cursor = end - start;
 	int cursor_relevant = 0;
 	struct bu_arg_validate_result shaped = BU_ARG_VALIDATE_RESULT_NULL;
 
-	while (end < count && bu_arg_schema_operand(schema, end) == operand)
+	while (end < count && cmd_schema_operand(schema, end) == operand)
 	    end++;
 	if (!operand || !operand->shape) {
 	    start = end;
@@ -4961,7 +4946,7 @@ cmd_tree_validate_argv_ctx(const struct bu_arg_tree *tree, size_t argc,
 
 
 int
-bu_arg_tree_validate_argv_ctx(const struct bu_arg_tree *tree, size_t argc,
+bu_arg_tree_validate_argv(const struct bu_arg_tree *tree, size_t argc,
 	const char **argv, size_t cursor_arg, void *context,
 	struct bu_arg_validate_result *result)
 {
@@ -4977,15 +4962,6 @@ bu_arg_tree_validate_argv_ctx(const struct bu_arg_tree *tree, size_t argc,
     if (ret)
 	bu_arg_validate_result_clear(result);
     return ret;
-}
-
-
-int
-bu_arg_tree_validate_argv(const struct bu_arg_tree *tree, size_t argc,
-	const char **argv, size_t cursor_arg, struct bu_arg_validate_result *result)
-{
-    return bu_arg_tree_validate_argv_ctx(tree, argc, argv, cursor_arg, NULL,
-	result);
 }
 
 
@@ -6056,7 +6032,7 @@ cmd_form_validate(const struct bu_arg_form *form, size_t argc,
     if (!cmd_form_valid(form) || !result || cursor_arg > argc)
 	return -1;
     if (form->tree)
-	return bu_arg_tree_validate_argv_ctx(form->tree, argc, argv, cursor_arg,
+	return bu_arg_tree_validate_argv(form->tree, argc, argv, cursor_arg,
 	    context, result);
     return bu_arg_schema_validate_ctx(form->schema, argc, argv, cursor_arg,
 	context, result);
@@ -6322,30 +6298,6 @@ bu_arg_forms_parse(const struct bu_arg_forms *forms, void *data,
     bu_arg_validate_result_clear(&validation);
     ret = bu_arg_schema_parse(form->schema, data, msg, argc - 1, argv + 1);
     if (ret >= 0 && selected)
-	*selected = form;
-    return ret;
-}
-
-
-int
-bu_arg_forms_dispatch(const struct bu_arg_forms *forms, void *context,
-	int argc, const char *argv[], int *result,
-	const struct bu_arg_form **selected)
-{
-    const struct bu_arg_form *form;
-    int ret;
-
-    if (selected)
-	*selected = NULL;
-    if (!forms || argc < 1 || !argv)
-	return -1;
-    form = bu_arg_forms_select(forms, (size_t)argc,
-	(const char * const *)argv, context);
-    if (!form || !form->tree)
-	return -1;
-    ret = bu_arg_tree_dispatch(form->tree, context, argc - 1, argv + 1,
-	result);
-    if (!ret && selected)
 	*selected = form;
     return ret;
 }

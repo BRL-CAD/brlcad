@@ -119,9 +119,9 @@ struct bot_subd_args {
 static const struct bu_arg_option bot_subd_options[] = {
     BU_ARG_FLAG("h", "help", struct bot_subd_args, print_help,
 	"Print command help"),
-    BU_ARG_INTEGER_RANGE("A", "algorithm", struct bot_subd_args, algorithm,
-	1, 5, "number", "Subdivision algorithm (1 through 5)"),
-    BU_ARG_INTEGER_MIN("l", "level", struct bot_subd_args, level, 1,
+    BU_ARG_INTEGER_RANGE("A", "algorithm", struct bot_subd_args, algorithm, 1,
+	1, 1, 5, "number", "Subdivision algorithm (1 through 5)"),
+    BU_ARG_INTEGER_RANGE("l", "level", struct bot_subd_args, level, 1, 1, 0, 0,
 	"count", "Subdivision refinement iterations"),
     BU_ARG_OPTION_NULL
 };

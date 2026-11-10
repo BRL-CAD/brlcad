@@ -154,16 +154,17 @@ storage field must count occurrences (for example, `-vv`).  Ordinary
 no-argument state transition; its parser receives a NULL argument and the
 selected storage-field address.
 
-Use `BU_ARG_OPTIONAL_STRING` for a conventional `--option [text]` form.  It
-binds the next non-option word when present, but leaves a following option for
-the regular option scanner; pass a literal text value beginning with `-` using
-the attached `--option=value` spelling.
+Use `BU_ARG_VALUE` with `BU_ARG_VALUE_STRING` and `BU_ARG_OPTIONAL` for a
+conventional `--option [text]` form.  It binds the next non-option word when
+present, but leaves a following option for the regular option scanner; pass a
+literal text value beginning with `-` using the attached `--option=value`
+spelling.
 
-`BU_ARG_DB_OBJECT` and `BU_ARG_DB_PATH` are compact typed-option forms for
-database object and path values.  They keep libbu application-neutral: an
-application such as GED may infer its default semantic provider from the value
-type, while a specialized role may name an explicit provider in its full
-`bu_arg_option` or `bu_arg_operand` row.
+`BU_ARG_VALUE` accepts `BU_ARG_VALUE_DB_OBJECT` and `BU_ARG_VALUE_DB_PATH` for
+database object and path values.  These types keep libbu application-neutral:
+an application such as GED may infer its default semantic provider from the
+value type, while a specialized role may name an explicit provider in its
+full `bu_arg_option` or `bu_arg_operand` row.
 
 [source,c]
 ----
@@ -176,17 +177,17 @@ struct example_args {
 static const struct bu_arg_option example_options[] = {
     BU_ARG_FLAG("v", "verbose", struct example_args, verbose,
                 "Enable diagnostic output"),
-    BU_ARG_NUMBER("s", "scale", struct example_args, scale, "factor",
+    BU_ARG_VALUE("s", "scale", struct example_args, scale, BU_ARG_VALUE_NUMBER, BU_ARG_REQUIRED, "factor",
                   "Scale the result"),
-    BU_ARG_FILE("o", "output", struct example_args, output, "file",
+    BU_ARG_VALUE("o", "output", struct example_args, output, BU_ARG_VALUE_FILE, BU_ARG_REQUIRED, "file",
                 "Write the result to a file"),
     BU_ARG_OPTION_NULL
 };
 ----
 
-Aliases use `BU_ARG_ALIAS_SHORT` or `BU_ARG_ALIAS_LONG` and name the canonical
-option.  Hidden aliases remain accepted by the parser but are omitted from
-help and completion.  Custom values use `BU_ARG_CUSTOM`; their parser receives
+Aliases use `BU_ARG_ALIAS`, pass NULL for the unused spelling, and name the
+canonical option.  Hidden aliases remain accepted by the parser but are
+omitted from help and completion.  Custom values use `BU_ARG_CUSTOM`; their parser receives
 a pointer to that option's storage during execution and a null storage pointer
 during validation, so custom parsers must treat a null pointer as a
 side-effect-free syntax check.
@@ -198,13 +199,10 @@ binding execution storage, and a command's positional parser can reuse the
 same function.  This publishes constraints such as an integer range without
 reducing the value to an opaque custom value.
 
-For common scalar ranges, use `BU_ARG_POSITIVE_INTEGER`,
-`BU_ARG_NONNEGATIVE_INTEGER`, `BU_ARG_POSITIVE_NUMBER`, or
-`BU_ARG_NONNEGATIVE_NUMBER`.  Their libbu validators use the same strict
-base-zero integer or finite floating-point spelling accepted by the matching
-typed option and produce a shared range diagnostic.  Use a command-specific
-validator only when its range or error explanation is genuinely
-domain-specific.
+For common scalar ranges, use `BU_ARG_INTEGER_RANGE` or `BU_ARG_NUMBER_RANGE`.
+Their explicit bound-presence flags support one- and two-sided inclusive
+ranges without additional API symbols.  Use a command-specific validator only
+when its range or error explanation is genuinely domain-specific.
 
 When a typed positional role must be stored after schema validation, use
 `bu_arg_bool_from_str`, `bu_arg_integer_from_str`, `bu_arg_hex_integer_from_str`,
@@ -212,26 +210,27 @@ When a typed positional role must be stored after schema validation, use
 `bu_arg_char_from_str` instead of adding another `strtol`, `strtod`, or
 first-character reader to the command.  They return nonzero on success and
 leave the destination unchanged on failure, using exactly the native scalar
-grammar.  `BU_ARG_HEX_INTEGER`, `BU_ARG_LONG`, `BU_ARG_HEX_LONG`, and
-`BU_ARG_CHAR` bind the same types to option storage.  `BU_ARG_COUNTING_LONG_FLAG` is the long-counter
-form for repeated flags, and `BU_ARG_VLS_APPEND` appends repeated text values
-to a `bu_vls`, separating nonempty existing content with a space.  These are
-also the appropriate common readers and bindings for a command-owned record
-assembled from several positional roles.
+grammar.  `BU_ARG_VALUE` binds these types to option storage by selecting the
+corresponding `BU_ARG_VALUE_*` type.  `BU_ARG_COUNTING_FLAG` takes an explicit
+integer value type for repeated flags.  `BU_ARG_VALUE` with
+`BU_ARG_VALUE_VLS` appends repeated text values to a `bu_vls`, separating
+nonempty existing content with a space.  These are also the appropriate
+common readers and bindings for a command-owned record assembled from several
+positional roles.
 
-`BU_ARG_CHAR_VALIDATE` and `BU_ARG_VLS_APPEND_VALIDATE` attach a normal
-side-effect-free validator to those storage forms.  `BU_ARG_ISO639_1` uses the
-latter with `bu_arg_iso639_1_validate` to accept a lower-case ISO 639-1 code;
-`BU_ARG_MAN_SECTION` uses `bu_arg_man_section_validate` to accept one of the
-BRL-CAD manual-page sections.  Both validators reject input before altering
-the command's storage, unlike the historical callback layering.
+`BU_ARG_VALUE_VALIDATE` attaches a normal side-effect-free validator to any
+scalar storage form.  Use `bu_arg_iso639_1_validate` with `BU_ARG_VALUE_VLS`
+to accept lower-case ISO 639-1 codes and `bu_arg_man_section_validate` with
+`BU_ARG_VALUE_CHAR` to accept BRL-CAD manual-page sections.  Both validators
+reject input before altering the command's storage, unlike the historical
+callback layering.
 
 Use `bu_arg_units_from_str` when execution needs the positive conversion
 factor represented by a BRL-CAD unit expression such as `cm`, `in`, or
-`25cm`; it leaves its destination unchanged on failure.  `BU_ARG_UNITS`
-binds a string-valued option with the corresponding
-`bu_arg_units_validate` preflight, so invalid units are rejected consistently
-by completion, validation, and execution before a command applies its own
+`25cm`; it leaves its destination unchanged on failure.  Use
+`BU_ARG_VALUE_VALIDATE` with `BU_ARG_VALUE_STRING` and
+`bu_arg_units_validate` so invalid units are rejected consistently by
+completion, validation, and execution before a command applies its own
 direction of conversion.
 
 === Canonical keyword values
@@ -302,9 +301,9 @@ Use a `bu_arg_constraint` table for relationships that cannot be represented
 by an individual option or positional role alone.  The compact rows support
 distinct-option counts (such as mutually exclusive modes) and conditional
 operand counts (such as either `-f file` or exactly two object-name operands).
-Options in a row are canonical names without dashes.  `BU_ARG_CONSTRAINT_OPTIONS`
-limits the number of selected options; `BU_ARG_CONSTRAINT_OPERANDS` applies an
-operand range when any, none, or all of its named options are selected.
+Options in a row are canonical names without dashes.  `BU_ARG_CONSTRAINT`
+selects the constraint kind and condition explicitly, covering both selected
+option counts and conditional operand ranges with one initializer.
 
 For new native schemas, attach all command-level properties with
 `BU_ARG_SCHEMA_BOUND`.  Its final four arguments are repeated groups,
@@ -315,9 +314,9 @@ independent properties can be used together without positional tail macros:
 ----
 static const char *mapping_file_option[] = {"f", NULL};
 static const struct bu_arg_constraint rename_constraints[] = {
-    BU_ARG_CONSTRAINT_OPERANDS(BU_ARG_CONDITION_ANY_OPTION_PRESENT,
+    BU_ARG_CONSTRAINT( BU_ARG_CONSTRAINT_OPERAND_COUNT,BU_ARG_CONDITION_ANY_OPTION_PRESENT,
         mapping_file_option, 0, 0, "-f cannot be combined with object names"),
-    BU_ARG_CONSTRAINT_OPERANDS(BU_ARG_CONDITION_NO_OPTION_PRESENT,
+    BU_ARG_CONSTRAINT( BU_ARG_CONSTRAINT_OPERAND_COUNT,BU_ARG_CONDITION_NO_OPTION_PRESENT,
         mapping_file_option, 2, 2, "source and destination are required"),
     BU_ARG_CONSTRAINT_NULL
 };
@@ -381,7 +380,7 @@ front of the caller-owned argv pointer array, preserving positional operand
 order in the remaining suffix; execution can therefore consume the same
 native rows without a second option scanner.  A schema-only option for such a
 command uses
-`BU_ARG_FLAG_UNBOUND`; it participates in help, validation, and completion but
+`BU_ARG_UNBOUND` with `BU_ARG_VALUE_FLAG`; it participates in help, validation, and completion but
 deliberately refuses `bu_arg_schema_parse`, which prevents a metadata table
 from silently writing through an invented storage offset.
 
@@ -497,9 +496,9 @@ For a native command option bound to a `struct bu_color` field, use
 `BU_ARG_RGB`.  It publishes the standard `rgb` argument shape and accepts both
 the one-token and three-token forms.  Its parser determines the actual token
 boundary: a packed color consumes one token and leaves the following operand
-alone, while three separate channels are consumed together.  `BU_ARG_COLOR`
-is the scalar packed-color form when a command intentionally accepts the
-broader `bu_color_from_str` syntax instead.
+alone, while three separate channels are consumed together.  `BU_ARG_VALUE`
+with `BU_ARG_VALUE_COLOR` is the scalar packed-color form when a command
+intentionally accepts the broader `bu_color_from_str` syntax instead.
 
 `BU_ARG_COLOR_COMPAT` is the one-or-three-token native replacement for the
 full `bu_opt_color` value grammar.  It accepts every one-token

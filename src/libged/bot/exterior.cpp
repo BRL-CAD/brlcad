@@ -116,23 +116,23 @@ static const struct bu_arg_option bot_exterior_options[] = {
     BU_ARG_FLAG("i", "in-place", struct bot_exterior_args, in_place,
 	"Overwrite the input BoT"),
     BU_ARG_NUMBER_RANGE(NULL, "visibility-threshold", struct bot_exterior_args,
-	visibility_threshold, 0.0, 1.0, "ratio",
+	visibility_threshold, 1, 0.0, 1, 1.0, "ratio",
 	"Minimum visible-ray fraction"),
-    BU_ARG_POSITIVE_NUMBER("c", "convergence-threshold", struct bot_exterior_args,
-	convergence_threshold, "percent", "Cauchy-Crofton convergence threshold"),
-    BU_ARG_NONNEGATIVE_NUMBER(NULL, "per-face-budget", struct bot_exterior_args,
-	per_face_budget, "seconds", "Per-face sampling time limit"),
+    BU_ARG_VALUE_VALIDATE("c", "convergence-threshold", struct bot_exterior_args,
+	convergence_threshold, BU_ARG_VALUE_NUMBER, bu_arg_positive_number_validate, "percent", "Cauchy-Crofton convergence threshold"),
+    BU_ARG_VALUE_VALIDATE(NULL, "per-face-budget", struct bot_exterior_args,
+	per_face_budget, BU_ARG_VALUE_NUMBER, bu_arg_nonnegative_number_validate, "seconds", "Per-face sampling time limit"),
     BU_ARG_FLAG("v", "verbose", struct bot_exterior_args, verbose,
 	"Print extra metrics"),
     BU_ARG_FLAG("f", "flood-fill", struct bot_exterior_args, flood_fill,
 	"Use voxel flood-fill when available"),
-    BU_ARG_NUMBER(NULL, "voxel-size", struct bot_exterior_args, voxel_size,
+    BU_ARG_VALUE(NULL, "voxel-size", struct bot_exterior_args, voxel_size, BU_ARG_VALUE_NUMBER, BU_ARG_REQUIRED,
 	"size", "Flood-fill voxel edge length"),
     BU_ARG_OPTION_NULL
 };
 static const char * const bot_exterior_in_place_option[] = {"in-place", NULL};
 static const struct bu_arg_constraint bot_exterior_constraints[] = {
-    BU_ARG_CONSTRAINT_OPERANDS(BU_ARG_CONDITION_ANY_OPTION_PRESENT,
+    BU_ARG_CONSTRAINT(BU_ARG_CONSTRAINT_OPERAND_COUNT, BU_ARG_CONDITION_ANY_OPTION_PRESENT,
 	bot_exterior_in_place_option, 1, 1,
 	"--in-place requires exactly one input BoT"),
     BU_ARG_CONSTRAINT_NULL

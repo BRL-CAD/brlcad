@@ -97,9 +97,9 @@ static const struct bu_arg_option voxelize_schema_options[] = {
     BU_ARG_OPTION_SHAPED("s", NULL, "s", struct voxelize_args, size,
 	BU_ARG_VALUE_VECTOR, "dx/dy/dz", "Positive voxel dimensions",
 	BU_ARG_REQUIRED, &voxelize_vector3_arg_shape, voxelize_size_consume),
-    BU_ARG_POSITIVE_INTEGER("d", NULL, struct voxelize_args, detail, "level",
+    BU_ARG_VALUE_VALIDATE("d", NULL, struct voxelize_args, detail, BU_ARG_VALUE_INTEGER, bu_arg_positive_integer_validate, "level",
 	"Positive ray-sampling detail level"),
-    BU_ARG_NUMBER_VALIDATE("t", NULL, struct voxelize_args, threshold,
+    BU_ARG_VALUE_VALIDATE("t", NULL, struct voxelize_args, threshold, BU_ARG_VALUE_NUMBER,
 	voxelize_threshold_validate, "fraction", "Fill threshold from 0 through 1"),
     BU_ARG_OPTION_NULL
 };

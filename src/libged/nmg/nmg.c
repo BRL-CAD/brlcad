@@ -401,9 +401,9 @@ static const struct bu_arg_tree nmg_tree = {
     &nmg_root_schema, nmg_subcommands, BU_ARG_TREE_CHILD_FIRST
 };
 static const struct bu_arg_form nmg_native_forms[] = {
-    BU_ARG_FORM_TREE("subcommands", "Named NMG operations", &nmg_tree),
-    BU_ARG_FORM_SCHEMA("legacy_topology", "Legacy object/operation syntax",
-	&nmg_root_schema),
+    BU_ARG_FORM("subcommands", "Named NMG operations", NULL, &nmg_tree),
+    BU_ARG_FORM("legacy_topology", "Legacy object/operation syntax",
+	&nmg_root_schema, NULL),
     BU_ARG_FORM_NULL
 };
 

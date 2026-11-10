@@ -108,7 +108,7 @@ ged_make_name_core(struct ged *gedp, int argc, const char *argv[])
 #include "../include/plugin.h"
 
 static const struct bu_arg_option make_name_schema_options[] = {
-    BU_ARG_OPTIONAL_INTEGER("s", NULL, struct make_name_args, reset_start, "[num]",
+    BU_ARG_VALUE("s", NULL, struct make_name_args, reset_start, BU_ARG_VALUE_INTEGER, BU_ARG_OPTIONAL, "[num]",
 	"Reset the generated-name counter"),
     BU_ARG_OPTION_NULL
 };

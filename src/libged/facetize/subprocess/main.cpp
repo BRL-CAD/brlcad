@@ -1055,17 +1055,17 @@ static const struct bu_arg_option facetize_process_options[] = {
 	tess_active_methods_from_str, "method[,method...]", "Active tessellation methods"),
     BU_ARG_CUSTOM(NULL, "method-opts", facetize_process_args, method_options,
 	tess_method_opts_from_str, "\"METHOD option=value ...\"", "Method-specific options"),
-    BU_ARG_INTEGER(NULL, "max-time", facetize_process_args, max_time, "seconds",
+    BU_ARG_VALUE(NULL, "max-time", facetize_process_args, max_time, BU_ARG_VALUE_INTEGER, BU_ARG_REQUIRED, "seconds",
 	"Maximum process runtime"),
-    BU_ARG_INTEGER(NULL, "max-pnts", facetize_process_args, max_pnts, "count",
+    BU_ARG_VALUE(NULL, "max-pnts", facetize_process_args, max_pnts, BU_ARG_VALUE_INTEGER, BU_ARG_REQUIRED, "count",
 	"Maximum sampling points"),
-    BU_ARG_FILE(NULL, "cache-dir", facetize_process_args, cache_dir, "directory",
+    BU_ARG_VALUE(NULL, "cache-dir", facetize_process_args, cache_dir, BU_ARG_VALUE_FILE, BU_ARG_REQUIRED, "directory",
 	"Cache directory"),
     BU_ARG_FLAG(NULL, "server", facetize_process_args, server_mode,
 	"Run as a persistent tessellation worker"),
-    BU_ARG_INTEGER_RANGE(NULL, "threads", facetize_process_args, worker_threads,
-	0, MAX_PSW, "count", "Maximum CPU threads available to this process"),
-    BU_ARG_FILE(NULL, "result-file", facetize_process_args, result_file, "file.g",
+    BU_ARG_INTEGER_RANGE(NULL, "threads", facetize_process_args, worker_threads, 1,
+	0, 1, MAX_PSW, "count", "Maximum CPU threads available to this process"),
+    BU_ARG_VALUE(NULL, "result-file", facetize_process_args, result_file, BU_ARG_VALUE_FILE, BU_ARG_REQUIRED, "file.g",
 	"Write worker results to a staging database"),
     BU_ARG_FLAG(NULL, "writer", facetize_process_args, writer_mode,
 	"Run as a persistent staged-result writer"),
@@ -1083,7 +1083,7 @@ static const char * const facetize_process_mode_options[] = {
 };
 
 static const struct bu_arg_constraint facetize_process_constraints[] = {
-    BU_ARG_CONSTRAINT_OPTIONS(facetize_process_mode_options, 0, 1,
+    BU_ARG_CONSTRAINT(BU_ARG_CONSTRAINT_OPTION_COUNT, BU_ARG_CONDITION_ALWAYS, facetize_process_mode_options, 0, 1,
 	"worker process modes are mutually exclusive"),
     BU_ARG_CONSTRAINT_NULL
 };

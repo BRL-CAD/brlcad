@@ -351,9 +351,9 @@ struct view_vZ_args {
 
 static const struct bu_arg_option view_vZ_options[] = {
     BU_ARG_FLAG("h", "help", struct view_vZ_args, help, "Print help"),
-    BU_ARG_OPTIONAL_STRING("N", "near", struct view_vZ_args, nearp, "obj",
+    BU_ARG_VALUE("N", "near", struct view_vZ_args, nearp, BU_ARG_VALUE_STRING, BU_ARG_OPTIONAL, "obj",
 	"Find the closest view-object vertex"),
-    BU_ARG_OPTIONAL_STRING("F", "far", struct view_vZ_args, farp, "obj",
+    BU_ARG_VALUE("F", "far", struct view_vZ_args, farp, BU_ARG_VALUE_STRING, BU_ARG_OPTIONAL, "obj",
 	"Find the furthest view-object vertex"),
     BU_ARG_OPTION_NULL
 };
@@ -682,7 +682,7 @@ struct view_root_args {
 
 static const struct bu_arg_option view_root_options[] = {
     BU_ARG_FLAG("h", "help", struct view_root_args, help, "Print help"),
-    BU_ARG_COUNTING_LONG_FLAG("v", "verbose", struct view_root_args, verbosity,
+    BU_ARG_COUNTING_FLAG("v", "verbose", struct view_root_args, verbosity, BU_ARG_VALUE_LONG,
 	"Increase output detail"),
     {"V", "view", "view", "name", "Target view name", BU_ARG_VALUE_VLS,
 	offsetof(struct view_root_args, vname), NULL, NULL, "ged.view", NULL, 0,
@@ -986,7 +986,7 @@ static const struct bu_arg_operand view_child_args[] = {
     BU_ARG_OPERAND_NULL
 };
 static const struct bu_arg_option view_increment_options[] = {
-    BU_ARG_FLAG_UNBOUND("i", NULL, "i", "Apply an incremental change"),
+    BU_ARG_UNBOUND("i", NULL, "i", BU_ARG_VALUE_FLAG, BU_ARG_NONE, NULL, "Apply an incremental change", NULL),
     BU_ARG_OPTION_NULL
 };
 static const struct bu_arg_operand view_aet_operands[] = {
@@ -1021,9 +1021,9 @@ static const struct bu_arg_operand view_qvrot_operands[] = {
     BU_ARG_OPERAND_NULL
 };
 static const struct bu_arg_option autoview_schema_options[] = {
-    BU_ARG_FLAG_UNBOUND("h", "help", "help", "Print help"),
-    BU_ARG_FLAG_UNBOUND(NULL, "all-objs", "all-objs", "Bound all non-faceplate view objects"),
-    BU_ARG_VALUE_UNBOUND("s", "scale", "scale", BU_ARG_VALUE_NUMBER, "number", "View scale"),
+    BU_ARG_UNBOUND("h", "help", "help", BU_ARG_VALUE_FLAG, BU_ARG_NONE, NULL, "Print help", NULL),
+    BU_ARG_UNBOUND(NULL, "all-objs", "all-objs", BU_ARG_VALUE_FLAG, BU_ARG_NONE, NULL, "Bound all non-faceplate view objects", NULL),
+    BU_ARG_UNBOUND("s", "scale", "scale", BU_ARG_VALUE_NUMBER, BU_ARG_REQUIRED, "number", "View scale", NULL),
     {"V", "view", "view", "name", "Target view", BU_ARG_VALUE_STRING,
 	BU_ARG_STORAGE_NONE, NULL, NULL, "ged.view", NULL, 0, 0, NULL,
 	BU_ARG_REQUIRED, NULL, NULL, NULL, BU_ARG_VALUE_RANGE_NONE, BU_ARG_SHAPE_SCALAR},
@@ -1035,10 +1035,10 @@ static const struct bu_arg_operand autoview_operands[] = {
     BU_ARG_OPERAND_NULL
 };
 static const struct bu_arg_option saveview_options[] = {
-    BU_ARG_VALUE_UNBOUND("e", NULL, "e", BU_ARG_VALUE_FILE, "program", "Raytrace executable"),
-    BU_ARG_VALUE_UNBOUND("i", NULL, "i", BU_ARG_VALUE_FILE, "file", "Input database file"),
-    BU_ARG_VALUE_UNBOUND("l", NULL, "l", BU_ARG_VALUE_FILE, "file", "Log output file"),
-    BU_ARG_VALUE_UNBOUND("o", NULL, "o", BU_ARG_VALUE_FILE, "file", "Pixel output file"),
+    BU_ARG_UNBOUND("e", NULL, "e", BU_ARG_VALUE_FILE, BU_ARG_REQUIRED, "program", "Raytrace executable", NULL),
+    BU_ARG_UNBOUND("i", NULL, "i", BU_ARG_VALUE_FILE, BU_ARG_REQUIRED, "file", "Input database file", NULL),
+    BU_ARG_UNBOUND("l", NULL, "l", BU_ARG_VALUE_FILE, BU_ARG_REQUIRED, "file", "Log output file", NULL),
+    BU_ARG_UNBOUND("o", NULL, "o", BU_ARG_VALUE_FILE, BU_ARG_REQUIRED, "file", "Pixel output file", NULL),
     BU_ARG_OPTION_NULL
 };
 static const struct bu_arg_operand saveview_operands[] = {

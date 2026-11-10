@@ -240,7 +240,7 @@ struct bot_remesh_args {
 static const struct bu_arg_option bot_remesh_options[] = {
     BU_ARG_FLAG("h", "help", struct bot_remesh_args, print_help,
 	"Print command help"),
-    BU_ARG_VLS_APPEND("o", "output", struct bot_remesh_args, output_bot_name,
+    BU_ARG_VALUE("o", "output", struct bot_remesh_args, output_bot_name, BU_ARG_VALUE_VLS, BU_ARG_REQUIRED,
 	"name", "Name for the output BoT"),
     BU_ARG_FLAG(NULL, "vdb", struct bot_remesh_args, use_vdb,
 	"Use OpenVDB based remeshing"),

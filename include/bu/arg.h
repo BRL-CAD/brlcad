@@ -285,8 +285,8 @@ BU_EXPORT extern int bu_arg_man_section_validate(struct bu_vls *msg,
 
 /**
  * Standard scalar range validators for native command schemas.  They accept
- * the same base-0 integer and finite floating-point syntax as the matching
- * BU_ARG_INTEGER and BU_ARG_NUMBER option types.  They are supplied as
+ * the same base-0 integer and finite floating-point syntax as
+ * BU_ARG_VALUE_INTEGER and BU_ARG_VALUE_NUMBER options.  They are supplied as
  * reusable building blocks for the common command-line cases; commands with
  * a domain-specific range may still provide their own validator.
  */
@@ -708,12 +708,8 @@ BU_EXPORT extern int bu_arg_integer_pair_optional_validate(size_t argc,
 
 /** Initializers for no range and inclusive one- or two-sided ranges. */
 #define BU_ARG_VALUE_RANGE_NONE {BU_ARG_RANGE_NONE, 0, 0, 1, 1, 0, 0, 0.0, 0.0}
-#define BU_ARG_INTEGER_RANGE_INIT(_min, _max) {BU_ARG_RANGE_INTEGER, 1, 1, 1, 1, _min, _max, 0.0, 0.0}
-#define BU_ARG_INTEGER_MIN_INIT(_min) {BU_ARG_RANGE_INTEGER, 1, 0, 1, 1, _min, 0, 0.0, 0.0}
-#define BU_ARG_INTEGER_MAX_INIT(_max) {BU_ARG_RANGE_INTEGER, 0, 1, 1, 1, 0, _max, 0.0, 0.0}
-#define BU_ARG_NUMBER_RANGE_INIT(_min, _max) {BU_ARG_RANGE_NUMBER, 1, 1, 1, 1, 0, 0, _min, _max}
-#define BU_ARG_NUMBER_MIN_INIT(_min) {BU_ARG_RANGE_NUMBER, 1, 0, 1, 1, 0, 0, _min, 0.0}
-#define BU_ARG_NUMBER_MAX_INIT(_max) {BU_ARG_RANGE_NUMBER, 0, 1, 1, 1, 0, 0, 0.0, _max}
+#define BU_ARG_INTEGER_RANGE_INIT(_has_min, _min, _has_max, _max) {BU_ARG_RANGE_INTEGER, _has_min, _has_max, 1, 1, _min, _max, 0.0, 0.0}
+#define BU_ARG_NUMBER_RANGE_INIT(_has_min, _min, _has_max, _max) {BU_ARG_RANGE_NUMBER, _has_min, _has_max, 1, 1, 0, 0, _min, _max}
 #define BU_ARG_OPTION_NULL {NULL, NULL, NULL, NULL, NULL, BU_ARG_VALUE_FLAG, 0, NULL, NULL, NULL, NULL, 0, 0, NULL, BU_ARG_NONE, NULL, NULL, NULL, BU_ARG_VALUE_RANGE_NONE, BU_ARG_SHAPE_SCALAR}
 #define BU_ARG_OPERAND(_name, _type, _min, _max, _help, _provider) {_name, _min, _max, _help, _type, NULL, _provider, NULL, NULL, NULL, BU_ARG_VALUE_RANGE_NONE}
 #define BU_ARG_OPERAND_KEYWORDS(_name, _type, _min, _max, _help, _provider, _keywords) {_name, _min, _max, _help, _type, NULL, _provider, _keywords, NULL, NULL, BU_ARG_VALUE_RANGE_NONE}
@@ -725,12 +721,8 @@ BU_EXPORT extern int bu_arg_integer_pair_optional_validate(size_t argc,
 #define BU_ARG_OPERAND_KEYWORD_VALUES(_name, _type, _min, _max, _help, _provider, _keywords) {_name, _min, _max, _help, _type, NULL, _provider, NULL, _keywords, NULL, BU_ARG_VALUE_RANGE_NONE}
 #define BU_ARG_OPERAND_VALIDATE(_name, _type, _min, _max, _validator, _help, _provider) {_name, _min, _max, _help, _type, _validator, _provider, NULL, NULL, NULL, BU_ARG_VALUE_RANGE_NONE}
 #define BU_ARG_OPERAND_SHAPED(_name, _type, _min, _max, _validator, _help, _provider, _shape) {_name, _min, _max, _help, _type, _validator, _provider, NULL, NULL, _shape, BU_ARG_VALUE_RANGE_NONE}
-#define BU_ARG_OPERAND_INTEGER_RANGE(_name, _min_count, _max_count, _minimum, _maximum, _help, _provider) {_name, _min_count, _max_count, _help, BU_ARG_VALUE_INTEGER, NULL, _provider, NULL, NULL, NULL, BU_ARG_INTEGER_RANGE_INIT(_minimum, _maximum)}
-#define BU_ARG_OPERAND_INTEGER_MIN(_name, _min_count, _max_count, _minimum, _help, _provider) {_name, _min_count, _max_count, _help, BU_ARG_VALUE_INTEGER, NULL, _provider, NULL, NULL, NULL, BU_ARG_INTEGER_MIN_INIT(_minimum)}
-#define BU_ARG_OPERAND_INTEGER_MAX(_name, _min_count, _max_count, _maximum, _help, _provider) {_name, _min_count, _max_count, _help, BU_ARG_VALUE_INTEGER, NULL, _provider, NULL, NULL, NULL, BU_ARG_INTEGER_MAX_INIT(_maximum)}
-#define BU_ARG_OPERAND_NUMBER_RANGE(_name, _min_count, _max_count, _minimum, _maximum, _help, _provider) {_name, _min_count, _max_count, _help, BU_ARG_VALUE_NUMBER, NULL, _provider, NULL, NULL, NULL, BU_ARG_NUMBER_RANGE_INIT(_minimum, _maximum)}
-#define BU_ARG_OPERAND_NUMBER_MIN(_name, _min_count, _max_count, _minimum, _help, _provider) {_name, _min_count, _max_count, _help, BU_ARG_VALUE_NUMBER, NULL, _provider, NULL, NULL, NULL, BU_ARG_NUMBER_MIN_INIT(_minimum)}
-#define BU_ARG_OPERAND_NUMBER_MAX(_name, _min_count, _max_count, _maximum, _help, _provider) {_name, _min_count, _max_count, _help, BU_ARG_VALUE_NUMBER, NULL, _provider, NULL, NULL, NULL, BU_ARG_NUMBER_MAX_INIT(_maximum)}
+#define BU_ARG_OPERAND_INTEGER_RANGE(_name, _min_count, _max_count, _has_min, _minimum, _has_max, _maximum, _help, _provider) {_name, _min_count, _max_count, _help, BU_ARG_VALUE_INTEGER, NULL, _provider, NULL, NULL, NULL, BU_ARG_INTEGER_RANGE_INIT(_has_min, _minimum, _has_max, _maximum)}
+#define BU_ARG_OPERAND_NUMBER_RANGE(_name, _min_count, _max_count, _has_min, _minimum, _has_max, _maximum, _help, _provider) {_name, _min_count, _max_count, _help, BU_ARG_VALUE_NUMBER, NULL, _provider, NULL, NULL, NULL, BU_ARG_NUMBER_RANGE_INIT(_has_min, _minimum, _has_max, _maximum)}
 #define BU_ARG_OPERAND_NULL {NULL, 0, 0, NULL, BU_ARG_VALUE_STRING, NULL, NULL, NULL, NULL, NULL, BU_ARG_VALUE_RANGE_NONE}
 #define BU_ARG_OPERAND_GROUP(_name, _roles, _min, _max, _help) {_name, _roles, _min, _max, _help}
 #define BU_ARG_OPERAND_GROUP_NULL {NULL, NULL, 0, 0, NULL}
@@ -739,16 +731,8 @@ BU_EXPORT extern int bu_arg_integer_pair_optional_validate(size_t argc,
 #define BU_ARG_SCHEMA_CASE_DEFAULT(_name, _help, _operands, _groups) \
     BU_ARG_SCHEMA_CASE(_name, _help, BU_ARG_CONDITION_ALWAYS, NULL, _operands, _groups)
 #define BU_ARG_SCHEMA_CASE_NULL {NULL, NULL, BU_ARG_CONDITION_ALWAYS, NULL, NULL, NULL}
-#define BU_ARG_CONSTRAINT_OPTIONS_IF(_condition, _options, _min, _max, _hint) {BU_ARG_CONSTRAINT_OPTION_COUNT, _condition, _options, _min, _max, _hint}
-#define BU_ARG_CONSTRAINT_OPTIONS(_options, _min, _max, _hint) BU_ARG_CONSTRAINT_OPTIONS_IF(BU_ARG_CONDITION_ALWAYS, _options, _min, _max, _hint)
-#define BU_ARG_CONSTRAINT_OPTION_OCCURRENCES(_options, _min, _max, _hint) \
-    {BU_ARG_CONSTRAINT_OPTION_OCCURRENCE_COUNT, BU_ARG_CONDITION_ALWAYS, \
-	_options, _min, _max, _hint}
-#define BU_ARG_CONSTRAINT_OPERANDS(_condition, _options, _min, _max, _hint) {BU_ARG_CONSTRAINT_OPERAND_COUNT, _condition, _options, _min, _max, _hint}
-#define BU_ARG_CONSTRAINT_REQUIRES(_options, _hint) \
-    {BU_ARG_CONSTRAINT_OPTION_REQUIRES, BU_ARG_CONDITION_ALWAYS, _options, 0, 0, _hint}
-#define BU_ARG_CONSTRAINT_CONFLICTS(_options, _hint) \
-    {BU_ARG_CONSTRAINT_OPTION_CONFLICTS, BU_ARG_CONDITION_ALWAYS, _options, 0, 0, _hint}
+#define BU_ARG_CONSTRAINT(_kind, _condition, _options, _min, _max, _hint) \
+    {_kind, _condition, _options, _min, _max, _hint}
 #define BU_ARG_CONSTRAINT_NULL {BU_ARG_CONSTRAINT_OPTION_COUNT, BU_ARG_CONDITION_ALWAYS, NULL, 0, 0, NULL}
 /**
  * Compatibility initializers for a schema's operand-group and validation tail.
@@ -762,8 +746,6 @@ BU_EXPORT extern int bu_arg_integer_pair_optional_validate(size_t argc,
     _groups, {_validator, _constraints, _context, NULL, 0, NULL, 0}
 #define BU_ARG_SCHEMA_META_CASES(_groups, _constraints, _validator, _context, _cases) \
     _groups, {_validator, _constraints, _context, _cases, 0, NULL, 0}
-#define BU_ARG_SCHEMA_META_TERMINALS(_groups, _constraints, _validator, _context, _cases, _terminals) \
-    _groups, {_validator, _constraints, _context, _cases, 0, _terminals, 0}
 #define BU_ARG_SCHEMA_META_HELP(_groups, _constraints, _validator, _context, _cases) \
     _groups, {_validator, _constraints, _context, _cases, BU_ARG_TERMINAL_HELP, NULL, 0}
 #define BU_ARG_SCHEMA_META_HELP_VERSION(_groups, _constraints, _validator, _context, _cases) \
@@ -792,27 +774,15 @@ BU_EXPORT extern int bu_arg_integer_pair_optional_validate(size_t argc,
 	BU_ARG_SCHEMA_META_EXTERNAL(_groups, _constraints, _validator))
 #define BU_ARG_COUNT_UNLIMITED ((size_t)-1)
 #define BU_ARG_STORAGE_NONE ((size_t)-1)
-#if defined(__cplusplus) && (defined(__clang__) || defined(__GNUC__) || defined(_MSC_VER))
-/** Optional declaration-site assertion.  Bound option macros enforce this
- * automatically; this form is useful when documenting a shared record. */
-#  define BU_ARG_RECORD_ASSERT(_record) \
-    static_assert(__is_standard_layout(_record), \
-	"bu_arg_schema offset bindings require a standard-layout record; " \
-	"use an unbound option in a BU_ARG_SCHEMA_EXTERNAL schema otherwise")
-#else
-#  define BU_ARG_RECORD_ASSERT(_record)
-#endif
 #define BU_ARG_VARIANT(_name, _syntax, _count, _help) {_name, _syntax, _count, _help}
 #define BU_ARG_VARIANT_NULL {NULL, NULL, 0, NULL}
-#define BU_ARG_SHAPE(_kind, _min, _max, _description) {_kind, _min, _max, _description, NULL, NULL}
-#define BU_ARG_SHAPE_FORMS(_kind, _min, _max, _description, _count, _variants) \
+#define BU_ARG_SHAPE(_kind, _min, _max, _description, _count, _variants) \
     {_kind, _min, _max, _description, _count, _variants}
 #define BU_ARG_VALIDATE_RESULT_NULL {BU_ARG_VALIDATE_UNKNOWN, 0, 0, BU_ARG_EXPECT_NONE, NULL, 0, NULL, BU_ARG_VALUE_UNKNOWN, NULL, NULL}
 #define BU_ARG_TREE_NODE(_schema, _aliases, _children, _phase, _execute) {_schema, _aliases, _children, _phase, _execute}
 #define BU_ARG_TREE_NODE_NULL {NULL, NULL, NULL, BU_ARG_TREE_CHILD_AFTER_OPTIONS, NULL}
 #define BU_ARG_TREE(_root, _children, _phase) {_root, _children, _phase}
-#define BU_ARG_FORM_SCHEMA(_name, _help, _schema) {_name, _help, _schema, NULL}
-#define BU_ARG_FORM_TREE(_name, _help, _tree) {_name, _help, NULL, _tree}
+#define BU_ARG_FORM(_name, _help, _schema, _tree) {_name, _help, _schema, _tree}
 #define BU_ARG_FORM_NULL {NULL, NULL, NULL, NULL}
 #define BU_ARG_FORMS(_name, _help, _forms, _select) {_name, _help, _forms, _select}
 #define BU_ARG_ALIASES(...) ((const char * const[]){__VA_ARGS__, NULL})
@@ -822,64 +792,23 @@ BU_EXPORT extern int bu_arg_integer_pair_optional_validate(size_t argc,
 #define BU_ARG_FLAG(_short, _long, _record, _field, _help) \
     {_short, _long, _long, NULL, _help, BU_ARG_VALUE_FLAG, BU_ARG_STORAGE_OFFSET(_record, _field), NULL, NULL, NULL, NULL, 0, 0, NULL, BU_ARG_NONE, NULL, NULL, NULL, BU_ARG_VALUE_RANGE_NONE, BU_ARG_SHAPE_SCALAR}
 /** A no-argument flag whose int storage field counts occurrences. */
-#define BU_ARG_COUNTING_FLAG(_short, _long, _record, _field, _help) \
-    {_short, _long, _long, NULL, _help, BU_ARG_VALUE_FLAG, BU_ARG_STORAGE_OFFSET(_record, _field), NULL, NULL, NULL, NULL, 1, 0, NULL, BU_ARG_NONE, NULL, NULL, NULL, BU_ARG_VALUE_RANGE_NONE, BU_ARG_SHAPE_SCALAR}
-/** A no-argument flag whose long storage field counts occurrences. */
-#define BU_ARG_COUNTING_LONG_FLAG(_short, _long, _record, _field, _help) \
-    {_short, _long, _long, NULL, _help, BU_ARG_VALUE_LONG, BU_ARG_STORAGE_OFFSET(_record, _field), NULL, NULL, NULL, NULL, 1, 0, NULL, BU_ARG_NONE, NULL, NULL, NULL, BU_ARG_VALUE_RANGE_NONE, BU_ARG_SHAPE_SCALAR}
+#define BU_ARG_COUNTING_FLAG(_short, _long, _record, _field, _type, _help) \
+    {_short, _long, _long, NULL, _help, _type, BU_ARG_STORAGE_OFFSET(_record, _field), NULL, NULL, NULL, NULL, 1, 0, NULL, BU_ARG_NONE, NULL, NULL, NULL, BU_ARG_VALUE_RANGE_NONE, BU_ARG_SHAPE_SCALAR}
 /**
  * A no-argument option that invokes a command-specific state transition.
  * The parser receives a NULL argument and the address of the selected field.
  */
 #define BU_ARG_CUSTOM_FLAG(_short, _long, _canonical, _record, _field, _parser, _help) \
     {_short, _long, _canonical, NULL, _help, BU_ARG_VALUE_CUSTOM, BU_ARG_STORAGE_OFFSET(_record, _field), _parser, NULL, NULL, NULL, 0, 0, NULL, BU_ARG_NONE, NULL, NULL, NULL, BU_ARG_VALUE_RANGE_NONE, BU_ARG_SHAPE_SCALAR}
-/** A syntax-only flag for commands whose execution parser owns its state. */
-#define BU_ARG_FLAG_UNBOUND(_short, _long, _canonical, _help) \
-    {_short, _long, _canonical, NULL, _help, BU_ARG_VALUE_FLAG, BU_ARG_STORAGE_NONE, NULL, NULL, NULL, NULL, 0, 0, NULL, BU_ARG_NONE, NULL, NULL, NULL, BU_ARG_VALUE_RANGE_NONE, BU_ARG_SHAPE_SCALAR}
-/**
- * A syntax-only typed option for a command whose execution parser owns its
- * state.  It participates in native help, validation, and completion but
- * bu_arg_schema_parse deliberately rejects it because it has no storage
- * binding.  Use this only while a command's independently owned executor is
- * being migrated; new parsers should bind an argument record directly.
- */
-#define BU_ARG_VALUE_UNBOUND(_short, _long, _canonical, _type, _arg, _help) \
-    {_short, _long, _canonical, _arg, _help, _type, BU_ARG_STORAGE_NONE, NULL, NULL, NULL, NULL, 0, 0, NULL, BU_ARG_REQUIRED, NULL, NULL, NULL, BU_ARG_VALUE_RANGE_NONE, BU_ARG_SHAPE_SCALAR}
-/** A syntax-only variable-width option for an independently owned parser. */
-#define BU_ARG_SHAPED_UNBOUND(_short, _long, _canonical, _type, _arg, _help, _shape) \
-    {_short, _long, _canonical, _arg, _help, _type, BU_ARG_STORAGE_NONE, NULL, NULL, NULL, NULL, 0, 0, NULL, BU_ARG_REQUIRED, _shape, NULL, NULL, BU_ARG_VALUE_RANGE_NONE, BU_ARG_SHAPE_SCALAR}
-#define BU_ARG_BOOL(_short, _long, _record, _field, _arg, _help) \
-    {_short, _long, _long, _arg, _help, BU_ARG_VALUE_BOOL, BU_ARG_STORAGE_OFFSET(_record, _field), NULL, NULL, NULL, NULL, 0, 0, NULL, BU_ARG_REQUIRED, NULL, NULL, NULL, BU_ARG_VALUE_RANGE_NONE, BU_ARG_SHAPE_SCALAR}
-#define BU_ARG_INTEGER(_short, _long, _record, _field, _arg, _help) \
-    {_short, _long, _long, _arg, _help, BU_ARG_VALUE_INTEGER, BU_ARG_STORAGE_OFFSET(_record, _field), NULL, NULL, NULL, NULL, 0, 0, NULL, BU_ARG_REQUIRED, NULL, NULL, NULL, BU_ARG_VALUE_RANGE_NONE, BU_ARG_SHAPE_SCALAR}
-/** An integer option constrained to the inclusive [_minimum, _maximum] range. */
-#define BU_ARG_INTEGER_RANGE(_short, _long, _record, _field, _minimum, _maximum, _arg, _help) \
-    {_short, _long, _long, _arg, _help, BU_ARG_VALUE_INTEGER, BU_ARG_STORAGE_OFFSET(_record, _field), NULL, NULL, NULL, NULL, 0, 0, NULL, BU_ARG_REQUIRED, NULL, NULL, NULL, BU_ARG_INTEGER_RANGE_INIT(_minimum, _maximum), BU_ARG_SHAPE_SCALAR}
-#define BU_ARG_INTEGER_MIN(_short, _long, _record, _field, _minimum, _arg, _help) \
-    {_short, _long, _long, _arg, _help, BU_ARG_VALUE_INTEGER, BU_ARG_STORAGE_OFFSET(_record, _field), NULL, NULL, NULL, NULL, 0, 0, NULL, BU_ARG_REQUIRED, NULL, NULL, NULL, BU_ARG_INTEGER_MIN_INIT(_minimum), BU_ARG_SHAPE_SCALAR}
-#define BU_ARG_INTEGER_MAX(_short, _long, _record, _field, _maximum, _arg, _help) \
-    {_short, _long, _long, _arg, _help, BU_ARG_VALUE_INTEGER, BU_ARG_STORAGE_OFFSET(_record, _field), NULL, NULL, NULL, NULL, 0, 0, NULL, BU_ARG_REQUIRED, NULL, NULL, NULL, BU_ARG_INTEGER_MAX_INIT(_maximum), BU_ARG_SHAPE_SCALAR}
-#define BU_ARG_HEX_INTEGER(_short, _long, _record, _field, _arg, _help) \
-    {_short, _long, _long, _arg, _help, BU_ARG_VALUE_HEX_INTEGER, BU_ARG_STORAGE_OFFSET(_record, _field), NULL, NULL, NULL, NULL, 0, 0, NULL, BU_ARG_REQUIRED, NULL, NULL, NULL, BU_ARG_VALUE_RANGE_NONE, BU_ARG_SHAPE_SCALAR}
-#define BU_ARG_LONG(_short, _long, _record, _field, _arg, _help) \
-    {_short, _long, _long, _arg, _help, BU_ARG_VALUE_LONG, BU_ARG_STORAGE_OFFSET(_record, _field), NULL, NULL, NULL, NULL, 0, 0, NULL, BU_ARG_REQUIRED, NULL, NULL, NULL, BU_ARG_VALUE_RANGE_NONE, BU_ARG_SHAPE_SCALAR}
-#define BU_ARG_HEX_LONG(_short, _long, _record, _field, _arg, _help) \
-    {_short, _long, _long, _arg, _help, BU_ARG_VALUE_HEX_LONG, BU_ARG_STORAGE_OFFSET(_record, _field), NULL, NULL, NULL, NULL, 0, 0, NULL, BU_ARG_REQUIRED, NULL, NULL, NULL, BU_ARG_VALUE_RANGE_NONE, BU_ARG_SHAPE_SCALAR}
-#define BU_ARG_CHAR(_short, _long, _record, _field, _arg, _help) \
-    {_short, _long, _long, _arg, _help, BU_ARG_VALUE_CHAR, BU_ARG_STORAGE_OFFSET(_record, _field), NULL, NULL, NULL, NULL, 0, 0, NULL, BU_ARG_REQUIRED, NULL, NULL, NULL, BU_ARG_VALUE_RANGE_NONE, BU_ARG_SHAPE_SCALAR}
-#define BU_ARG_OPTIONAL_INTEGER(_short, _long, _record, _field, _arg, _help) \
-    {_short, _long, _long, _arg, _help, BU_ARG_VALUE_INTEGER, BU_ARG_STORAGE_OFFSET(_record, _field), NULL, NULL, NULL, NULL, 0, 0, NULL, BU_ARG_OPTIONAL, NULL, NULL, NULL, BU_ARG_VALUE_RANGE_NONE, BU_ARG_SHAPE_SCALAR}
-#define BU_ARG_NUMBER(_short, _long, _record, _field, _arg, _help) \
-    {_short, _long, _long, _arg, _help, BU_ARG_VALUE_NUMBER, BU_ARG_STORAGE_OFFSET(_record, _field), NULL, NULL, NULL, NULL, 0, 0, NULL, BU_ARG_REQUIRED, NULL, NULL, NULL, BU_ARG_VALUE_RANGE_NONE, BU_ARG_SHAPE_SCALAR}
-/** A number option constrained to the inclusive [_minimum, _maximum] range. */
-#define BU_ARG_NUMBER_RANGE(_short, _long, _record, _field, _minimum, _maximum, _arg, _help) \
-    {_short, _long, _long, _arg, _help, BU_ARG_VALUE_NUMBER, BU_ARG_STORAGE_OFFSET(_record, _field), NULL, NULL, NULL, NULL, 0, 0, NULL, BU_ARG_REQUIRED, NULL, NULL, NULL, BU_ARG_NUMBER_RANGE_INIT(_minimum, _maximum), BU_ARG_SHAPE_SCALAR}
-#define BU_ARG_NUMBER_MIN(_short, _long, _record, _field, _minimum, _arg, _help) \
-    {_short, _long, _long, _arg, _help, BU_ARG_VALUE_NUMBER, BU_ARG_STORAGE_OFFSET(_record, _field), NULL, NULL, NULL, NULL, 0, 0, NULL, BU_ARG_REQUIRED, NULL, NULL, NULL, BU_ARG_NUMBER_MIN_INIT(_minimum), BU_ARG_SHAPE_SCALAR}
-#define BU_ARG_NUMBER_MAX(_short, _long, _record, _field, _maximum, _arg, _help) \
-    {_short, _long, _long, _arg, _help, BU_ARG_VALUE_NUMBER, BU_ARG_STORAGE_OFFSET(_record, _field), NULL, NULL, NULL, NULL, 0, 0, NULL, BU_ARG_REQUIRED, NULL, NULL, NULL, BU_ARG_NUMBER_MAX_INIT(_maximum), BU_ARG_SHAPE_SCALAR}
-#define BU_ARG_COLOR(_short, _long, _record, _field, _arg, _help) \
-    {_short, _long, _long, _arg, _help, BU_ARG_VALUE_COLOR, BU_ARG_STORAGE_OFFSET(_record, _field), NULL, NULL, NULL, NULL, 0, 0, NULL, BU_ARG_REQUIRED, NULL, NULL, NULL, BU_ARG_VALUE_RANGE_NONE, BU_ARG_SHAPE_SCALAR}
+/** A syntax-only option for a command whose execution parser owns its state. */
+#define BU_ARG_UNBOUND(_short, _long, _canonical, _type, _requirement, _arg, _help, _shape) \
+    {_short, _long, _canonical, _arg, _help, _type, BU_ARG_STORAGE_NONE, NULL, NULL, NULL, NULL, 0, 0, NULL, _requirement, _shape, NULL, NULL, BU_ARG_VALUE_RANGE_NONE, BU_ARG_SHAPE_SCALAR}
+#define BU_ARG_VALUE(_short, _long, _record, _field, _type, _requirement, _arg, _help) \
+    {_short, _long, _long, _arg, _help, _type, BU_ARG_STORAGE_OFFSET(_record, _field), NULL, NULL, NULL, NULL, 0, 0, NULL, _requirement, NULL, NULL, NULL, BU_ARG_VALUE_RANGE_NONE, BU_ARG_SHAPE_SCALAR}
+#define BU_ARG_INTEGER_RANGE(_short, _long, _record, _field, _has_min, _minimum, _has_max, _maximum, _arg, _help) \
+    {_short, _long, _long, _arg, _help, BU_ARG_VALUE_INTEGER, BU_ARG_STORAGE_OFFSET(_record, _field), NULL, NULL, NULL, NULL, 0, 0, NULL, BU_ARG_REQUIRED, NULL, NULL, NULL, BU_ARG_INTEGER_RANGE_INIT(_has_min, _minimum, _has_max, _maximum), BU_ARG_SHAPE_SCALAR}
+#define BU_ARG_NUMBER_RANGE(_short, _long, _record, _field, _has_min, _minimum, _has_max, _maximum, _arg, _help) \
+    {_short, _long, _long, _arg, _help, BU_ARG_VALUE_NUMBER, BU_ARG_STORAGE_OFFSET(_record, _field), NULL, NULL, NULL, NULL, 0, 0, NULL, BU_ARG_REQUIRED, NULL, NULL, NULL, BU_ARG_NUMBER_RANGE_INIT(_has_min, _minimum, _has_max, _maximum), BU_ARG_SHAPE_SCALAR}
 /**
  * A one-or-three-token color option with bu_opt_color-compatible value
  * grammar.  It accepts any scalar bu_color_from_str spelling or three
@@ -900,65 +829,16 @@ BU_EXPORT extern int bu_arg_integer_pair_optional_validate(size_t argc,
  */
 #define BU_ARG_VECTOR3(_short, _long, _record, _field, _arg, _help) \
     {_short, _long, _long, _arg, _help, BU_ARG_VALUE_VECTOR, BU_ARG_STORAGE_OFFSET(_record, _field), NULL, NULL, NULL, NULL, 0, 0, NULL, BU_ARG_REQUIRED, NULL, bu_arg_vector3_consume, NULL, BU_ARG_VALUE_RANGE_NONE, BU_ARG_SHAPE_VECTOR3}
-#define BU_ARG_STRING(_short, _long, _record, _field, _arg, _help) \
-    {_short, _long, _long, _arg, _help, BU_ARG_VALUE_STRING, BU_ARG_STORAGE_OFFSET(_record, _field), NULL, NULL, NULL, NULL, 0, 0, NULL, BU_ARG_REQUIRED, NULL, NULL, NULL, BU_ARG_VALUE_RANGE_NONE, BU_ARG_SHAPE_SCALAR}
-#define BU_ARG_OPTIONAL_STRING(_short, _long, _record, _field, _arg, _help) \
-    {_short, _long, _long, _arg, _help, BU_ARG_VALUE_STRING, BU_ARG_STORAGE_OFFSET(_record, _field), NULL, NULL, NULL, NULL, 0, 0, NULL, BU_ARG_OPTIONAL, NULL, NULL, NULL, BU_ARG_VALUE_RANGE_NONE, BU_ARG_SHAPE_SCALAR}
-#define BU_ARG_VLS_APPEND(_short, _long, _record, _field, _arg, _help) \
-    {_short, _long, _long, _arg, _help, BU_ARG_VALUE_VLS, BU_ARG_STORAGE_OFFSET(_record, _field), NULL, NULL, NULL, NULL, 0, 0, NULL, BU_ARG_REQUIRED, NULL, NULL, NULL, BU_ARG_VALUE_RANGE_NONE, BU_ARG_SHAPE_SCALAR}
-#define BU_ARG_FILE(_short, _long, _record, _field, _arg, _help) \
-    {_short, _long, _long, _arg, _help, BU_ARG_VALUE_FILE, BU_ARG_STORAGE_OFFSET(_record, _field), NULL, NULL, NULL, NULL, 0, 0, NULL, BU_ARG_REQUIRED, NULL, NULL, NULL, BU_ARG_VALUE_RANGE_NONE, BU_ARG_SHAPE_SCALAR}
-#define BU_ARG_DB_OBJECT(_short, _long, _record, _field, _arg, _help) \
-    {_short, _long, _long, _arg, _help, BU_ARG_VALUE_DB_OBJECT, BU_ARG_STORAGE_OFFSET(_record, _field), NULL, NULL, NULL, NULL, 0, 0, NULL, BU_ARG_REQUIRED, NULL, NULL, NULL, BU_ARG_VALUE_RANGE_NONE, BU_ARG_SHAPE_SCALAR}
-#define BU_ARG_DB_PATH(_short, _long, _record, _field, _arg, _help) \
-    {_short, _long, _long, _arg, _help, BU_ARG_VALUE_DB_PATH, BU_ARG_STORAGE_OFFSET(_record, _field), NULL, NULL, NULL, NULL, 0, 0, NULL, BU_ARG_REQUIRED, NULL, NULL, NULL, BU_ARG_VALUE_RANGE_NONE, BU_ARG_SHAPE_SCALAR}
 #define BU_ARG_CUSTOM(_short, _long, _record, _field, _parser, _arg, _help) \
     {_short, _long, _long, _arg, _help, BU_ARG_VALUE_CUSTOM, BU_ARG_STORAGE_OFFSET(_record, _field), _parser, NULL, NULL, NULL, 0, 0, NULL, BU_ARG_REQUIRED, NULL, NULL, NULL, BU_ARG_VALUE_RANGE_NONE, BU_ARG_SHAPE_SCALAR}
-#define BU_ARG_INTEGER_VALIDATE(_short, _long, _record, _field, _validator, _arg, _help) \
-    {_short, _long, _long, _arg, _help, BU_ARG_VALUE_INTEGER, BU_ARG_STORAGE_OFFSET(_record, _field), NULL, _validator, NULL, NULL, 0, 0, NULL, BU_ARG_REQUIRED, NULL, NULL, NULL, BU_ARG_VALUE_RANGE_NONE, BU_ARG_SHAPE_SCALAR}
-#define BU_ARG_NUMBER_VALIDATE(_short, _long, _record, _field, _validator, _arg, _help) \
-    {_short, _long, _long, _arg, _help, BU_ARG_VALUE_NUMBER, BU_ARG_STORAGE_OFFSET(_record, _field), NULL, _validator, NULL, NULL, 0, 0, NULL, BU_ARG_REQUIRED, NULL, NULL, NULL, BU_ARG_VALUE_RANGE_NONE, BU_ARG_SHAPE_SCALAR}
-#define BU_ARG_POSITIVE_INTEGER(_short, _long, _record, _field, _arg, _help) \
-    BU_ARG_INTEGER_VALIDATE(_short, _long, _record, _field, bu_arg_positive_integer_validate, _arg, _help)
-#define BU_ARG_NONNEGATIVE_INTEGER(_short, _long, _record, _field, _arg, _help) \
-    BU_ARG_INTEGER_VALIDATE(_short, _long, _record, _field, bu_arg_nonnegative_integer_validate, _arg, _help)
-#define BU_ARG_POSITIVE_NUMBER(_short, _long, _record, _field, _arg, _help) \
-    BU_ARG_NUMBER_VALIDATE(_short, _long, _record, _field, bu_arg_positive_number_validate, _arg, _help)
-#define BU_ARG_NONNEGATIVE_NUMBER(_short, _long, _record, _field, _arg, _help) \
-    BU_ARG_NUMBER_VALIDATE(_short, _long, _record, _field, bu_arg_nonnegative_number_validate, _arg, _help)
-#define BU_ARG_UNITS(_short, _long, _record, _field, _arg, _help) \
-    BU_ARG_STRING_VALIDATE(_short, _long, _record, _field, bu_arg_units_validate, _arg, _help)
-#define BU_ARG_STRING_VALIDATE(_short, _long, _record, _field, _validator, _arg, _help) \
-    {_short, _long, _long, _arg, _help, BU_ARG_VALUE_STRING, BU_ARG_STORAGE_OFFSET(_record, _field), NULL, _validator, NULL, NULL, 0, 0, NULL, BU_ARG_REQUIRED, NULL, NULL, NULL, BU_ARG_VALUE_RANGE_NONE, BU_ARG_SHAPE_SCALAR}
-#define BU_ARG_CHAR_VALIDATE(_short, _long, _record, _field, _validator, _arg, _help) \
-    {_short, _long, _long, _arg, _help, BU_ARG_VALUE_CHAR, BU_ARG_STORAGE_OFFSET(_record, _field), NULL, _validator, NULL, NULL, 0, 0, NULL, BU_ARG_REQUIRED, NULL, NULL, NULL, BU_ARG_VALUE_RANGE_NONE, BU_ARG_SHAPE_SCALAR}
-#define BU_ARG_VLS_APPEND_VALIDATE(_short, _long, _record, _field, _validator, _arg, _help) \
-    {_short, _long, _long, _arg, _help, BU_ARG_VALUE_VLS, BU_ARG_STORAGE_OFFSET(_record, _field), NULL, _validator, NULL, NULL, 0, 0, NULL, BU_ARG_REQUIRED, NULL, NULL, NULL, BU_ARG_VALUE_RANGE_NONE, BU_ARG_SHAPE_SCALAR}
-/** Append one validated ISO 639-1 language code to a bu_vls field. */
-#define BU_ARG_ISO639_1(_short, _long, _record, _field, _arg, _help) \
-    BU_ARG_VLS_APPEND_VALIDATE(_short, _long, _record, _field, bu_arg_iso639_1_validate, _arg, _help)
-/** Bind a validated BRL-CAD manual-page section identifier to a char field. */
-#define BU_ARG_MAN_SECTION(_short, _long, _record, _field, _arg, _help) \
-    BU_ARG_CHAR_VALIDATE(_short, _long, _record, _field, bu_arg_man_section_validate, _arg, _help)
+#define BU_ARG_VALUE_VALIDATE(_short, _long, _record, _field, _type, _validator, _arg, _help) \
+    {_short, _long, _long, _arg, _help, _type, BU_ARG_STORAGE_OFFSET(_record, _field), NULL, _validator, NULL, NULL, 0, 0, NULL, BU_ARG_REQUIRED, NULL, NULL, NULL, BU_ARG_VALUE_RANGE_NONE, BU_ARG_SHAPE_SCALAR}
 #define BU_ARG_KEYWORD_VALUES(_short, _long, _record, _field, _arg, _help, _values) \
     {_short, _long, _long, _arg, _help, BU_ARG_VALUE_KEYWORD, BU_ARG_STORAGE_OFFSET(_record, _field), NULL, NULL, NULL, NULL, 0, 0, NULL, BU_ARG_REQUIRED, NULL, NULL, _values, BU_ARG_VALUE_RANGE_NONE, BU_ARG_SHAPE_SCALAR}
 #define BU_ARG_OPTION_SHAPED(_short, _long, _canonical, _record, _field, _type, _arg, _help, _requirement, _shape, _consume) \
     {_short, _long, _canonical, _arg, _help, _type, BU_ARG_STORAGE_OFFSET(_record, _field), NULL, NULL, NULL, NULL, 0, 0, NULL, _requirement, _shape, _consume, NULL, BU_ARG_VALUE_RANGE_NONE, BU_ARG_SHAPE_SCALAR}
-/**
- * The common required multi-token binding.  Use the fully explicit
- * BU_ARG_OPTION_SHAPED only for an optional shape or a canonical spelling
- * different from its long spelling.
- */
-#define BU_ARG_OPTION_CONSUME(_short, _long, _record, _field, _type, _arg, _help, _shape, _consume) \
-    BU_ARG_OPTION_SHAPED(_short, _long, _long, _record, _field, _type, _arg, _help, \
-	BU_ARG_REQUIRED, _shape, _consume)
-#define BU_ARG_OPTIONAL_CONSUME(_short, _long, _record, _field, _type, _arg, _help, _shape, _consume) \
-    BU_ARG_OPTION_SHAPED(_short, _long, _long, _record, _field, _type, _arg, _help, \
-	BU_ARG_OPTIONAL, _shape, _consume)
-#define BU_ARG_ALIAS_SHORT(_short, _canonical, _hidden) \
-    {_short, NULL, _canonical, NULL, NULL, BU_ARG_VALUE_FLAG, 0, NULL, NULL, NULL, _canonical, 0, _hidden, NULL, BU_ARG_NONE, NULL, NULL, NULL, BU_ARG_VALUE_RANGE_NONE, BU_ARG_SHAPE_SCALAR}
-#define BU_ARG_ALIAS_LONG(_long, _canonical, _hidden) \
-    {NULL, _long, _canonical, NULL, NULL, BU_ARG_VALUE_FLAG, 0, NULL, NULL, NULL, _canonical, 0, _hidden, NULL, BU_ARG_NONE, NULL, NULL, NULL, BU_ARG_VALUE_RANGE_NONE, BU_ARG_SHAPE_SCALAR}
+#define BU_ARG_ALIAS(_short, _long, _canonical, _hidden) \
+    {_short, _long, _canonical, NULL, NULL, BU_ARG_VALUE_FLAG, 0, NULL, NULL, NULL, _canonical, 0, _hidden, NULL, BU_ARG_NONE, NULL, NULL, NULL, BU_ARG_VALUE_RANGE_NONE, BU_ARG_SHAPE_SCALAR}
 
 /**
  * Parse command arguments using a compact schema.
@@ -1024,16 +904,6 @@ BU_EXPORT extern char *bu_arg_schema_help(const struct bu_arg_schema *schema,
 BU_EXPORT extern int bu_arg_schema_help_append(struct bu_vls *output,
 	const struct bu_arg_schema *schema, const char *invocation);
 
-/**
- * Build a human-readable listing for only the named canonical options.  A
- * NULL selected list includes every public option, matching
- * bu_arg_schema_describe.  Commands can therefore organize one native schema
- * into topic-specific help without duplicating parser rows or help metadata.
- * The caller owns the result.
- */
-BU_EXPORT extern char *bu_arg_schema_describe_selected(const struct bu_arg_schema *schema,
-	const char * const *selected);
-
 /** Build machine-readable schema metadata from a compact command schema. */
 BU_EXPORT extern char *bu_arg_schema_describe_json(const struct bu_arg_schema *schema);
 
@@ -1064,12 +934,6 @@ BU_EXPORT extern int bu_arg_tree_dispatch(const struct bu_arg_tree *tree,
  * parser-owned prefix before they delegate to a reusable child tree.
  */
 BU_EXPORT extern int bu_arg_tree_validate_argv(const struct bu_arg_tree *tree,
-	size_t argc, const char **argv, size_t cursor_arg,
-	struct bu_arg_validate_result *result);
-
-/** Context-aware form of bu_arg_tree_validate_argv.  Schema context hooks at
- * every visited tree level receive @p context. */
-BU_EXPORT extern int bu_arg_tree_validate_argv_ctx(const struct bu_arg_tree *tree,
 	size_t argc, const char **argv, size_t cursor_arg, void *context,
 	struct bu_arg_validate_result *result);
 
@@ -1111,18 +975,11 @@ BU_EXPORT extern int bu_arg_forms_validate(const struct bu_arg_forms *forms,
 	size_t argc, const char **argv, size_t cursor_arg, void *context,
 	struct bu_arg_validate_result *result);
 
-/** Parse a selected flat-schema form.  Tree forms are dispatched with
- * bu_arg_forms_dispatch instead.  The return value matches
+/** Parse a selected flat-schema form.  The return value matches
  * bu_arg_schema_parse_complete and excludes argv[0]. */
 BU_EXPORT extern int bu_arg_forms_parse(const struct bu_arg_forms *forms,
 	void *data, struct bu_vls *msg, int argc, const char *argv[],
 	void *context, const struct bu_arg_form **selected);
-
-/** Dispatch a selected tree form.  Flat-schema forms are parsed with
- * bu_arg_forms_parse instead. */
-BU_EXPORT extern int bu_arg_forms_dispatch(const struct bu_arg_forms *forms,
-	void *context, int argc, const char *argv[], int *result,
-	const struct bu_arg_form **selected);
 
 /** Generate standardized help, JSON metadata, and structural diagnostics for
  * every alternative in a command form set. */
@@ -1139,10 +996,10 @@ BU_EXPORT extern int bu_arg_forms_lint(const struct bu_arg_forms *forms,
 /**
  * Validate a cursor position and collect static completion candidates.
  *
- * @p result must be initialized with BU_ARG_VALIDATE_RESULT_NULL or
- * bu_arg_validate_result_init().  This and the tree/form validation APIs
- * replace its previous contents on every call.  Success supplies the new
- * result; failure leaves the result initialized and empty.
+ * @p result must be initialized with BU_ARG_VALIDATE_RESULT_NULL.  This and
+ * the tree/form validation APIs replace its previous contents on every call.
+ * Success supplies the new result; failure leaves the result initialized and
+ * empty.
  */
 BU_EXPORT extern int bu_arg_schema_validate(const struct bu_arg_schema *schema,
 	size_t argc, const char **argv, size_t cursor_arg,
@@ -1181,14 +1038,8 @@ BU_EXPORT extern int bu_arg_schema_option_present(const struct bu_arg_schema *sc
 BU_EXPORT extern size_t bu_arg_schema_operand_count(const struct bu_arg_schema *schema,
 	size_t argc, const char **argv);
 
-/** Resolve the declarative role for one zero-based positional index,
- * including repeated heterogeneous operand groups. */
-BU_EXPORT extern const struct bu_arg_operand *bu_arg_schema_operand(
-	const struct bu_arg_schema *schema, size_t operand_index);
-
 /** Resolve a positional role after applying the first option-selected operand
- * case matching argv.  Schemas without cases behave exactly like
- * bu_arg_schema_operand. */
+ * case matching argv. */
 BU_EXPORT extern const struct bu_arg_operand *bu_arg_schema_active_operand(
 	const struct bu_arg_schema *schema, size_t argc, const char **argv,
 	size_t operand_index);
@@ -1211,9 +1062,6 @@ BU_EXPORT extern int bu_arg_operand_validate(const struct bu_arg_operand *operan
  */
 BU_EXPORT extern int bu_arg_schema_option_span(const struct bu_arg_schema *schema,
 	size_t argc, const char **argv);
-
-/** Initialize @p result before its first validation or clear operation. */
-BU_EXPORT extern void bu_arg_validate_result_init(struct bu_arg_validate_result *result);
 
 /**
  * Release candidate data owned by an initialized result.  Validation APIs

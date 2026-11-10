@@ -2655,7 +2655,7 @@ ged_native_tree_apply_full_state(const struct bu_arg_tree *tree,
 	parsed.argc < 1)
 	return;
     if (bu_arg_tree_validate_argv(tree, parsed.argc - 1,
-	(const char **)parsed.argv + 1, parsed.argc - 1, &full_result) == 0 &&
+	(const char **)parsed.argv + 1, parsed.argc - 1, NULL, &full_result) == 0 &&
 	full_result.state != BU_ARG_VALIDATE_VALID &&
 	full_result.state != BU_ARG_VALIDATE_UNKNOWN)
 	result->state = ged_native_state(full_result.state);

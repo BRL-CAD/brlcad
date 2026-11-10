@@ -64,25 +64,25 @@ struct draw2_args {
 
 static const struct bu_arg_option draw2_schema_options[] = {
     BU_ARG_FLAG("h", "help", struct draw2_args, help, "Print help and exit"),
-    BU_ARG_ALIAS_SHORT("?", "help", 0),
+    BU_ARG_ALIAS("?", NULL, "help", 0),
     {"m", "mode", "mode", "0..5",
 	"0=wireframe; 1=shaded BoTs; 2=shaded; 3=evaluated; 4=hidden-line; 5=points",
 	BU_ARG_VALUE_INTEGER, offsetof(struct draw2_args, mode), NULL, NULL,
 	"ged.draw_mode", NULL, 0, 0, NULL, BU_ARG_REQUIRED, NULL, NULL, NULL,
-	BU_ARG_INTEGER_RANGE_INIT(0, 5), BU_ARG_SHAPE_SCALAR},
+	BU_ARG_INTEGER_RANGE_INIT(1, 0, 1, 5), BU_ARG_SHAPE_SCALAR},
     BU_ARG_FLAG(NULL, "wireframe", struct draw2_args, wireframe, "Draw using only wireframes (mode = 0)"),
     BU_ARG_FLAG(NULL, "shaded", struct draw2_args, shaded, "Shade BoTs, B-reps, and polysolids (mode = 1)"),
     BU_ARG_FLAG(NULL, "shaded-all", struct draw2_args, shaded_all, "Shade all solids, not evaluated (mode = 2)"),
     BU_ARG_FLAG("E", "evaluate", struct draw2_args, evaluate, "Wireframe with evaluated booleans (mode = 3)"),
     BU_ARG_FLAG(NULL, "hidden-line", struct draw2_args, hidden_line, "Draw hidden-line wireframes (mode = 4)"),
     BU_ARG_FLAG("A", "add-mode", struct draw2_args, add_mode, "Do not erase other modes for the specified paths"),
-    BU_ARG_NUMBER("t", "transparency", struct draw2_args, transparency, "level", "Set transparency level (0=clear, 1=opaque)"),
-    BU_ARG_ALIAS_SHORT("x", "transparency", 1),
-    BU_ARG_INTEGER("L", NULL, struct draw2_args, bot_threshold, "count", "Draw BoT bounding boxes above this face count"),
+    BU_ARG_VALUE("t", "transparency", struct draw2_args, transparency, BU_ARG_VALUE_NUMBER, BU_ARG_REQUIRED, "level", "Set transparency level (0=clear, 1=opaque)"),
+    BU_ARG_ALIAS("x", NULL, "transparency", 1),
+    BU_ARG_VALUE("L", NULL, struct draw2_args, bot_threshold, BU_ARG_VALUE_INTEGER, BU_ARG_REQUIRED, "count", "Draw BoT bounding boxes above this face count"),
     BU_ARG_FLAG("S", "no-subtract", struct draw2_args, no_subtract, "Do not draw subtraction solids"),
     BU_ARG_FLAG(NULL, "no-dash", struct draw2_args, no_dash, "Use solid lines for subtraction solids"),
     BU_ARG_COLOR_COMPAT("C", "color", struct draw2_args, color, "color", "Override object colors"),
-    BU_ARG_INTEGER(NULL, "line-width", struct draw2_args, line_width, "pixels", "Override default line width"),
+    BU_ARG_VALUE(NULL, "line-width", struct draw2_args, line_width, BU_ARG_VALUE_INTEGER, BU_ARG_REQUIRED, "pixels", "Override default line width"),
     BU_ARG_FLAG("R", "no-autoview", struct draw2_args, no_autoview, "Do not automatically fit an empty scene"),
     {"V", "view", "view", "name", "Draw on the named view",
 	BU_ARG_VALUE_STRING, offsetof(struct draw2_args, view), NULL, NULL,
@@ -108,7 +108,7 @@ struct redraw2_args {
     const char *view;
 };
 static const struct bu_arg_option redraw2_schema_options[] = {
-    BU_ARG_STRING("V", "view", struct redraw2_args, view, "name", "Redraw on the named view"),
+    BU_ARG_VALUE("V", "view", struct redraw2_args, view, BU_ARG_VALUE_STRING, BU_ARG_REQUIRED, "name", "Redraw on the named view"),
     BU_ARG_OPTION_NULL
 };
 static const struct bu_arg_operand redraw2_schema_operands[] = {

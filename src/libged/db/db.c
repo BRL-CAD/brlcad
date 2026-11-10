@@ -52,7 +52,7 @@ static const struct bu_arg_option db_find_options[] = {
 	"Include hidden combinations"),
     BU_ARG_FLAG("h", "help", struct db_find_args, help,
 	"Print help"),
-    BU_ARG_ALIAS_SHORT("?", "help", 1),
+    BU_ARG_ALIAS("?", NULL, "help", 1),
     BU_ARG_OPTION_NULL
 };
 static const struct bu_arg_operand db_find_operands[] = {
@@ -65,9 +65,9 @@ static const struct bu_arg_schema db_find_schema = {
     db_find_options, db_find_operands, BU_ARG_PARSE_OPTIONS_FIRST, BU_ARG_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
 static const struct bu_arg_option db_find_dispatch_options[] = {
-    BU_ARG_FLAG_UNBOUND("a", NULL, "a", "Include hidden combinations"),
-    BU_ARG_FLAG_UNBOUND("h", "help", "help", "Print help"),
-    BU_ARG_ALIAS_SHORT("?", "help", 1),
+    BU_ARG_UNBOUND("a", NULL, "a", BU_ARG_VALUE_FLAG, BU_ARG_NONE, NULL, "Include hidden combinations", NULL),
+    BU_ARG_UNBOUND("h", "help", "help", BU_ARG_VALUE_FLAG, BU_ARG_NONE, NULL, "Print help", NULL),
+    BU_ARG_ALIAS("?", NULL, "help", 1),
     BU_ARG_OPTION_NULL
 };
 static const struct bu_arg_schema db_find_dispatch_schema =
@@ -78,7 +78,7 @@ GED_DEFINE_NO_ARG_SCHEMA_NAMED(db_version_schema, "version",
     "Report the open database format version", BU_ARG_PARSE_OPTIONS_FIRST);
 static const struct bu_arg_option db_root_options[] = {
     BU_ARG_FLAG("h", "help", struct _ged_db_info, help, "Print help"),
-    BU_ARG_ALIAS_SHORT("?", "help", 1),
+    BU_ARG_ALIAS("?", NULL, "help", 1),
     BU_ARG_OPTION_NULL
 };
 static const struct bu_arg_schema db_root_schema = {

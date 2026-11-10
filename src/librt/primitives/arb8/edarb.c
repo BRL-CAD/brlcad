@@ -3005,7 +3005,7 @@ rt_edit_arb_repair(struct bu_vls *log_str, struct rt_db_internal *ip, const stru
     } args = {0, 0, -1.0};
     static const struct bu_arg_option options[] = {
 	BU_ARG_FLAG("h", "help", struct arb_repair_args, print_help, "Print help"),
-	BU_ARG_NUMBER("t", "tol", struct arb_repair_args, tolerance, "distance",
+	BU_ARG_VALUE("t", "tol", struct arb_repair_args, tolerance, BU_ARG_VALUE_NUMBER, BU_ARG_REQUIRED, "distance",
 	    "Distance tolerance for snapping vertices"),
 	BU_ARG_FLAG(NULL, "options-json", struct arb_repair_args, options_json,
 	    "Return JSON of supported options"),
