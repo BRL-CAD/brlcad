@@ -179,6 +179,9 @@ rt_edit_test_comb(void)
     s->mv_context = 0;
     s->local2base = 1.0;
 
+    if (rt_edit_checkpoint(s) != BRLCAD_OK)
+	bu_exit(1, "ERROR: failed to checkpoint combination\n");
+
     struct rt_comb_edit *ce = (struct rt_comb_edit *)s->ipe_ptr;
     if (!ce)
 	bu_exit(1, "ERROR: ipe_ptr not allocated\n");
@@ -218,6 +221,21 @@ rt_edit_test_comb(void)
 	    bu_exit(1, "ERROR: ADD_MEMBER: expected 4 leaves, got %d\n", n);
 	bu_log("ECMD_COMB_ADD_MEMBER SUCCESS: %d members\n", n);
     }
+
+    if (rt_edit_revert(s) != BRLCAD_OK)
+	bu_exit(1, "ERROR: failed to revert combination checkpoint\n");
+    verify_comb_internal(s);
+    if (count_leaves(((struct rt_comb_internal *)s->es_int.idb_ptr)->tree) != 3)
+	bu_exit(1, "ERROR: combination checkpoint did not restore members\n");
+
+    EDOBJ[dp->d_minor_type].ft_set_edit_mode(s, ECMD_COMB_ADD_MEMBER);
+    rt_edit_set_str(s, 0, "sphere3");
+    ce = (struct rt_comb_edit *)s->ipe_ptr;
+    ce->es_mat_valid = 0;
+    s->e_inpara = 1;
+    s->e_para[0] = (fastf_t)OP_SUBTRACT;
+    if (rt_edit_process(s) != BRLCAD_OK)
+	bu_exit(1, "ERROR: failed to repeat ADD_MEMBER after revert\n");
 
     /* ================================================================
      * ECMD_COMB_DEL_MEMBER: delete index 1 (sphere1)
