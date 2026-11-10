@@ -29,12 +29,19 @@
 #include <ctype.h>
 #include <string.h>
 
+#include "bu/arg.h"
+
 #include "../ged_private.h"
 
-static const ged_opt_spec shaded_mode_opt_spec =
-    GED_OPT("shaded_mode", "Query or set display shading mode",
-	bu_opt_desc_empty_builder,
-	"stop-at-first-operand mode:keyword(0|1|2)?");
+static const char * const shaded_mode_keywords[] = {"0", "1", "2", NULL};
+static const struct bu_arg_operand shaded_mode_operands[] = {
+    BU_ARG_OPERAND_KEYWORDS("mode", BU_ARG_VALUE_KEYWORD, 0, 1,
+	"Display shading mode", NULL, shaded_mode_keywords),
+    BU_ARG_OPERAND_NULL
+};
+static const struct bu_arg_schema shaded_mode_cmd_schema =
+    BU_ARG_SCHEMA("shaded_mode", "Query or set display shading mode", NULL,
+	shaded_mode_operands, BU_ARG_PARSE_OPTIONS_FIRST, NULL);
 
 /*
  * Set/get the shaded mode.
@@ -46,40 +53,41 @@ static const ged_opt_spec shaded_mode_opt_spec =
 int
 ged_shaded_mode_core(struct ged *gedp, int argc, const char *argv[])
 {
-    static const char *usage = "[0|1|2]";
+    int operand_index;
+    const char *command = argv[0];
+
     GED_CHECK_DRAWABLE(gedp, BRLCAD_ERROR);
     GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
 
-    if (argc > 2) {
-	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+    argc--; argv++;
+    operand_index = bu_arg_schema_parse_complete(&shaded_mode_cmd_schema, NULL,
+	gedp->ged_result_str, argc, argv);
+    if (operand_index < 0) {
+	ged_cmd_help_append(gedp->ged_result_str, command, command);
 	return BRLCAD_ERROR;
     }
+    argv += operand_index;
 
     /* get shaded mode */
-	if (argc == 1) {
+	if (!argc) {
 	bu_vls_printf(gedp->ged_result_str, "%d", gedp->i->ged_gdp->gd_shaded_mode);
 	return BRLCAD_OK;
     }
 
     /* set shaded mode */
-	if (argc == 2) {
+	if (argc == 1) {
 	int shaded_mode;
 
-	if (sscanf(argv[1], "%d", &shaded_mode) != 1)
-	    goto bad;
-
-	if (shaded_mode < 0 || 2 < shaded_mode)
-	    goto bad;
+	if (sscanf(argv[0], "%d", &shaded_mode) != 1)
+	    return BRLCAD_ERROR;
 
 	gedp->i->ged_gdp->gd_shaded_mode = shaded_mode;
 	return BRLCAD_OK;
     }
 
-bad:
-    bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
     return BRLCAD_ERROR;
 }
 
@@ -87,10 +95,10 @@ bad:
 #include "../include/plugin.h"
 
 #define GED_SHADED_MODE_COMMANDS(X, XID) \
-    X(shaded_mode, ged_shaded_mode_core, GED_CMD_DEFAULT, &shaded_mode_opt_spec) \
+    X(shaded_mode, ged_shaded_mode_core, GED_CMD_DEFAULT, &shaded_mode_cmd_schema) \
 
-GED_DECLARE_COMMAND_SET_WITH_OPT_SPEC(GED_SHADED_MODE_COMMANDS)
-GED_DECLARE_PLUGIN_MANIFEST_WITH_OPT_SPEC("libged_shaded_mode", 1, GED_SHADED_MODE_COMMANDS)
+GED_DECLARE_COMMAND_SET_WITH_NATIVE_SCHEMA(GED_SHADED_MODE_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST_WITH_NATIVE_SCHEMA("libged_shaded_mode", 1, GED_SHADED_MODE_COMMANDS)
 
 /*
  * Local Variables:
