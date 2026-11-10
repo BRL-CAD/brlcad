@@ -228,9 +228,9 @@ combmem_schema_validate(const struct bu_arg_schema *cmd, size_t argc,
 }
 
 static const struct bu_arg_option combmem_schema_options[] = {
-    BU_ARG_INTEGER_VALIDATE("i", NULL, struct combmem_args, input_type,
+    BU_ARG_VALUE_VALIDATE("i", NULL, struct combmem_args, input_type, BU_ARG_VALUE_INTEGER,
 	combmem_type_validate, "type", "Input matrix representation type"),
-    BU_ARG_INTEGER_VALIDATE("r", NULL, struct combmem_args, replacement_type,
+    BU_ARG_VALUE_VALIDATE("r", NULL, struct combmem_args, replacement_type, BU_ARG_VALUE_INTEGER,
 	combmem_type_validate, "type", "Replacement matrix representation type"),
     BU_ARG_OPTION_NULL
 };

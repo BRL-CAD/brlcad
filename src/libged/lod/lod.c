@@ -36,8 +36,8 @@ ged_lod_core(struct ged *gedp, int argc, const char *argv[])
 
 
 static const struct bu_arg_form ged_lod_native_forms[] = {
-    BU_ARG_FORM_SCHEMA("action_grammar", "Level-of-detail action grammar",
-	&ged_view_lod_schema),
+    BU_ARG_FORM("action_grammar", "Level-of-detail action grammar",
+	&ged_view_lod_schema, NULL),
     BU_ARG_FORM_NULL
 };
 

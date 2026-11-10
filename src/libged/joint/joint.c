@@ -3629,23 +3629,23 @@ static const struct bu_arg_operand joint_files[] = {
     BU_ARG_OPERAND_NULL
 };
 static const struct bu_arg_option joint_load_schema_options[] = {
-    BU_ARG_FLAG_UNBOUND("u", NULL, "u", "Keep currently loaded joints"),
-    BU_ARG_FLAG_UNBOUND("a", NULL, "a", "Do not apply loaded joints"),
-    BU_ARG_FLAG_UNBOUND("m", NULL, "m", "Do not rebuild the grip mesh"),
+    BU_ARG_UNBOUND("u", NULL, "u", BU_ARG_VALUE_FLAG, BU_ARG_NONE, NULL, "Keep currently loaded joints", NULL),
+    BU_ARG_UNBOUND("a", NULL, "a", BU_ARG_VALUE_FLAG, BU_ARG_NONE, NULL, "Do not apply loaded joints", NULL),
+    BU_ARG_UNBOUND("m", NULL, "m", BU_ARG_VALUE_FLAG, BU_ARG_NONE, NULL, "Do not rebuild the grip mesh", NULL),
     BU_ARG_OPTION_NULL
 };
 static const struct bu_arg_option joint_mesh_schema_options[] = {
-    BU_ARG_FLAG_UNBOUND("m", NULL, "m", "Do not rebuild the grip mesh"),
+    BU_ARG_UNBOUND("m", NULL, "m", BU_ARG_VALUE_FLAG, BU_ARG_NONE, NULL, "Do not rebuild the grip mesh", NULL),
     BU_ARG_OPTION_NULL
 };
 static const struct bu_arg_option joint_solve_schema_options[] = {
-    BU_ARG_VALUE_UNBOUND("l", NULL, "l", BU_ARG_VALUE_INTEGER, "count",
-	"Set maximum iteration count"),
-    BU_ARG_VALUE_UNBOUND("e", NULL, "e", BU_ARG_VALUE_NUMBER, "distance",
-	"Set convergence epsilon"),
-    BU_ARG_VALUE_UNBOUND("d", NULL, "d", BU_ARG_VALUE_NUMBER, "distance",
-	"Set initial solve delta"),
-    BU_ARG_FLAG_UNBOUND("m", NULL, "m", "Toggle mesh rebuilding"),
+    BU_ARG_UNBOUND("l", NULL, "l", BU_ARG_VALUE_INTEGER, BU_ARG_REQUIRED, "count",
+	"Set maximum iteration count", NULL),
+    BU_ARG_UNBOUND("e", NULL, "e", BU_ARG_VALUE_NUMBER, BU_ARG_REQUIRED, "distance",
+	"Set convergence epsilon", NULL),
+    BU_ARG_UNBOUND("d", NULL, "d", BU_ARG_VALUE_NUMBER, BU_ARG_REQUIRED, "distance",
+	"Set initial solve delta", NULL),
+    BU_ARG_UNBOUND("m", NULL, "m", BU_ARG_VALUE_FLAG, BU_ARG_NONE, NULL, "Toggle mesh rebuilding", NULL),
     BU_ARG_OPTION_NULL
 };
 

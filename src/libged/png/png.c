@@ -60,7 +60,7 @@ png_size_validate(struct bu_vls *msg, const char *arg)
 
 static const struct bu_arg_option png_schema_options[] = {
     BU_ARG_RGB("c", NULL, struct png_args, background, "r/g/b", "Set background color"),
-    BU_ARG_INTEGER_VALIDATE("s", NULL, struct png_args, size, png_size_validate, "pixels",
+    BU_ARG_VALUE_VALIDATE("s", NULL, struct png_args, size, BU_ARG_VALUE_INTEGER, png_size_validate, "pixels",
 	"Set square image size (at least 50)"),
     BU_ARG_OPTION_NULL
 };

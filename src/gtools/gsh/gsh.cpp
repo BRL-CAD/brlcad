@@ -75,14 +75,14 @@ static const struct bu_arg_value_keyword gsh_completion_modes[] = {
 };
 static const struct bu_arg_option gsh_options[] = {
     BU_ARG_FLAG("h", "help", struct gsh_args, help, "Print help and exit"),
-    BU_ARG_ALIAS_SHORT("?", "help", 1),
+    BU_ARG_ALIAS("?", NULL, "help", 1),
     BU_ARG_FLAG("v", "version", struct gsh_args, version,
 	"Report BRL-CAD and library versions, then exit"),
     BU_ARG_FLAG(NULL, "new-cmds", struct gsh_args, new_cmd_forms,
 	"Use the new QGED-style command forms"),
     BU_ARG_KEYWORD_VALUES(NULL, "completion-mode", struct gsh_args, completion_mode,
 	"mode", "Interactive completion mode", gsh_completion_modes),
-    BU_ARG_STRING(NULL, "command-schema", struct gsh_args, command_schema,
+    BU_ARG_VALUE(NULL, "command-schema", struct gsh_args, command_schema, BU_ARG_VALUE_STRING, BU_ARG_REQUIRED,
 	"command|all", "Print static command grammar JSON and exit"),
     BU_ARG_OPTION_NULL
 };

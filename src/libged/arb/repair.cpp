@@ -32,15 +32,15 @@ struct arb_repair_args {
 static const struct bu_arg_option arb_repair_options[] = {
     BU_ARG_FLAG("h", "help", struct arb_repair_args, print_help,
 	"Print help and exit"),
-    BU_ARG_VLS_APPEND("o", "output-name", struct arb_repair_args, out_name, "name",
+    BU_ARG_VALUE("o", "output-name", struct arb_repair_args, out_name, BU_ARG_VALUE_VLS, BU_ARG_REQUIRED, "name",
 	"Write the repaired ARB to a new object"),
-    BU_ARG_NUMBER("t", "tol", struct arb_repair_args, tolerance, "distance",
+    BU_ARG_VALUE("t", "tol", struct arb_repair_args, tolerance, BU_ARG_VALUE_NUMBER, BU_ARG_REQUIRED, "distance",
 	"Distance tolerance for snapping vertices"),
     BU_ARG_OPTION_NULL
 };
 static const char * const arb_repair_output_option[] = {"output-name", NULL};
 static const struct bu_arg_constraint arb_repair_constraints[] = {
-    BU_ARG_CONSTRAINT_OPERANDS(BU_ARG_CONDITION_ANY_OPTION_PRESENT,
+    BU_ARG_CONSTRAINT(BU_ARG_CONSTRAINT_OPERAND_COUNT, BU_ARG_CONDITION_ANY_OPTION_PRESENT,
 	arb_repair_output_option, 1, 1,
 	"--output-name permits only one input ARB"),
     BU_ARG_CONSTRAINT_NULL

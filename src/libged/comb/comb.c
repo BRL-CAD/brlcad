@@ -1070,11 +1070,11 @@ static const char * const comb_region_options[] = {"c", "r", NULL};
 static const char * const comb_tree_options[] = {"w", "f", "l", NULL};
 static const char * const comb_decimate_options[] = {"d", NULL};
 static const struct bu_arg_constraint comb_schema_constraints[] = {
-    BU_ARG_CONSTRAINT_OPTIONS(comb_region_options, 0, 1, "-c and -r are mutually exclusive"),
-    BU_ARG_CONSTRAINT_OPTIONS(comb_tree_options, 0, 1, "-w, -f, and -l are mutually exclusive"),
-    BU_ARG_CONSTRAINT_OPERANDS(BU_ARG_CONDITION_ANY_OPTION_PRESENT, comb_tree_options, 1, 1,
+    BU_ARG_CONSTRAINT(BU_ARG_CONSTRAINT_OPTION_COUNT, BU_ARG_CONDITION_ALWAYS, comb_region_options, 0, 1, "-c and -r are mutually exclusive"),
+    BU_ARG_CONSTRAINT(BU_ARG_CONSTRAINT_OPTION_COUNT, BU_ARG_CONDITION_ALWAYS, comb_tree_options, 0, 1, "-w, -f, and -l are mutually exclusive"),
+    BU_ARG_CONSTRAINT(BU_ARG_CONSTRAINT_OPERAND_COUNT, BU_ARG_CONDITION_ANY_OPTION_PRESENT, comb_tree_options, 1, 1,
 	"tree-action options accept only a combination name"),
-    BU_ARG_CONSTRAINT_OPERANDS(BU_ARG_CONDITION_ANY_OPTION_PRESENT, comb_decimate_options, 1, 1,
+    BU_ARG_CONSTRAINT(BU_ARG_CONSTRAINT_OPERAND_COUNT, BU_ARG_CONDITION_ANY_OPTION_PRESENT, comb_decimate_options, 1, 1,
 	"-d accepts only an existing combination name"),
     BU_ARG_CONSTRAINT_NULL
 };
@@ -1084,8 +1084,8 @@ static const struct bu_arg_schema comb_cmd_schema =
 	comb_schema_constraints, comb_schema_validate, NULL);
 
 static const struct bu_arg_option comb_tree_root_options[] = {
-    BU_ARG_FLAG_UNBOUND("h", "help", "help", "Print command help"),
-    BU_ARG_ALIAS_SHORT("?", "help", 1),
+    BU_ARG_UNBOUND("h", "help", "help", BU_ARG_VALUE_FLAG, BU_ARG_NONE, NULL, "Print command help", NULL),
+    BU_ARG_ALIAS("?", NULL, "help", 1),
     BU_ARG_OPTION_NULL
 };
 static const struct bu_arg_operand comb_tree_root_operands[] = {
@@ -1150,7 +1150,7 @@ static const struct bu_arg_option comb_selector_options[] = {
 };
 static const char * const comb_selector_required[] = {"comb", NULL};
 static const struct bu_arg_constraint comb_selector_constraints[] = {
-    BU_ARG_CONSTRAINT_OPTIONS(comb_selector_required, 1, 1,
+    BU_ARG_CONSTRAINT(BU_ARG_CONSTRAINT_OPTION_COUNT, BU_ARG_CONDITION_ALWAYS, comb_selector_required, 1, 1,
 	"-C or --comb is required in selector-first form"),
     BU_ARG_CONSTRAINT_NULL
 };
@@ -1242,11 +1242,11 @@ comb_dispatch_modern(struct ged *gedp, int argc, const char **argv)
 }
 
 static const struct bu_arg_form comb_native_forms[] = {
-    BU_ARG_FORM_SCHEMA("legacy", "Legacy combination expression",
-	&comb_cmd_schema),
-    BU_ARG_FORM_TREE("object_first", "Combination name before subcommand",
+    BU_ARG_FORM("legacy", "Legacy combination expression",
+	&comb_cmd_schema, NULL),
+    BU_ARG_FORM("object_first", "Combination name before subcommand", NULL,
 	&comb_tree),
-    BU_ARG_FORM_TREE("selector_first", "Operation before combination selector",
+    BU_ARG_FORM("selector_first", "Operation before combination selector", NULL,
 	&comb_selector_tree),
     BU_ARG_FORM_NULL
 };

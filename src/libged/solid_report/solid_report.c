@@ -43,10 +43,10 @@ ged_solid_report_core(struct ged *gedp, int argc, const char *argv[])
 static const struct bu_arg_option solid_report_schema_options[] = {
     BU_ARG_FLAG("h", "help", struct ged_solid_report_args, print_help,
 	"Print help"),
-    BU_ARG_ALIAS_SHORT("?", "help", 1),
-    BU_ARG_VLS_APPEND("V", "view", struct ged_solid_report_args, view,
+    BU_ARG_ALIAS("?", NULL, "help", 1),
+    BU_ARG_VALUE("V", "view", struct ged_solid_report_args, view, BU_ARG_VALUE_VLS, BU_ARG_REQUIRED,
 	"name", "Specify the view"),
-    BU_ARG_INTEGER("m", "mode", struct ged_solid_report_args, mode,
+    BU_ARG_VALUE("m", "mode", struct ged_solid_report_args, mode, BU_ARG_VALUE_INTEGER, BU_ARG_REQUIRED,
 	"number", "Restrict the drawing mode"),
     BU_ARG_OPTION_NULL
 };

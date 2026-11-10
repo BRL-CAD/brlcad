@@ -32,17 +32,17 @@ static const struct bu_arg_option bot_repair_options[] = {
     BU_ARG_FLAG("h", "help", struct bot_repair_args, print_help,
 	"Print command help"),
     BU_ARG_NUMBER_RANGE("p", "max-hole-percent", struct bot_repair_args,
-	max_hole_area_percent, 0.0, 100.0, "percent",
+	max_hole_area_percent, 1, 0.0, 1, 100.0, "percent",
 	"Maximum hole area as a percentage of mesh area"),
-    BU_ARG_NONNEGATIVE_NUMBER("a", "max-hole-area", struct bot_repair_args,
-	max_hole_area, "area", "Maximum hole area in mm"),
-    BU_ARG_VLS_APPEND("o", "output-name", struct bot_repair_args, output_name,
+    BU_ARG_VALUE_VALIDATE("a", "max-hole-area", struct bot_repair_args,
+	max_hole_area, BU_ARG_VALUE_NUMBER, bu_arg_nonnegative_number_validate, "area", "Maximum hole area in mm"),
+    BU_ARG_VALUE("o", "output-name", struct bot_repair_args, output_name, BU_ARG_VALUE_VLS, BU_ARG_REQUIRED,
 	"name", "Output object name instead of overwriting the input"),
     BU_ARG_OPTION_NULL
 };
 static const char * const bot_repair_output_option[] = {"output-name", NULL};
 static const struct bu_arg_constraint bot_repair_constraints[] = {
-    BU_ARG_CONSTRAINT_OPERANDS(BU_ARG_CONDITION_ANY_OPTION_PRESENT,
+    BU_ARG_CONSTRAINT(BU_ARG_CONSTRAINT_OPERAND_COUNT, BU_ARG_CONDITION_ANY_OPTION_PRESENT,
 	bot_repair_output_option, 1, 1,
 	"--output-name requires exactly one input BoT"),
     BU_ARG_CONSTRAINT_NULL

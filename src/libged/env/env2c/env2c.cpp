@@ -474,7 +474,7 @@ main(int argc, const char *argv[])
 	ofile << "static const char * const env_get_keyword[] = {\"get\", NULL};\n";
 	ofile << "static const char * const env_set_keyword[] = {\"set\", NULL};\n";
 	ofile << "static const struct bu_arg_shape env_pattern_arg_shape =\n";
-	ofile << "    BU_ARG_SHAPE(BU_ARG_SHAPE_RANGE_PATTERN, 1, 1, \"Environment-variable name pattern\");\n";
+	ofile << "    BU_ARG_SHAPE(BU_ARG_SHAPE_RANGE_PATTERN, 1, 1, \"Environment-variable name pattern\", NULL, NULL);\n";
 	ofile << "static const struct bu_arg_operand env_list_operands[] = {\n";
 	ofile << "\tBU_ARG_OPERAND_SHAPED(\"pattern\", BU_ARG_VALUE_STRING, 0, BU_ARG_COUNT_UNLIMITED, NULL, \"Environment-variable name pattern\", NULL, &env_pattern_arg_shape),\n";
 	ofile << "\tBU_ARG_OPERAND_NULL\n";
@@ -503,9 +503,9 @@ main(int argc, const char *argv[])
 	ofile << "\tBU_ARG_PARSE_INTERSPERSED, BU_ARG_SCHEMA_CONSTRAINTS(NULL, NULL)\n";
 	ofile << "};\n";
 	ofile << "static const struct bu_arg_form env_cmd_form_rows[] = {\n";
-	ofile << "\tBU_ARG_FORM_SCHEMA(\"list\", \"List variables matching zero or more patterns\", &env_list_schema),\n";
-	ofile << "\tBU_ARG_FORM_SCHEMA(\"get\", \"Read one known variable\", &env_get_schema),\n";
-	ofile << "\tBU_ARG_FORM_SCHEMA(\"set\", \"Assign one known variable\", &env_set_schema),\n";
+	ofile << "\tBU_ARG_FORM(\"list\", \"List variables matching zero or more patterns\", &env_list_schema, NULL),\n";
+	ofile << "\tBU_ARG_FORM(\"get\", \"Read one known variable\", &env_get_schema, NULL),\n";
+	ofile << "\tBU_ARG_FORM(\"set\", \"Assign one known variable\", &env_set_schema, NULL),\n";
 	ofile << "\tBU_ARG_FORM_NULL\n";
 	ofile << "};\n";
 	ofile << "static const struct bu_arg_form *\n";

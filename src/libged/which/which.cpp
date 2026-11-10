@@ -121,7 +121,7 @@ static const ged_opt_rule which_opt_rules[] = {
 };
 static const struct bu_arg_shape which_range_shape =
     BU_ARG_SHAPE(BU_ARG_SHAPE_RANGE_PATTERN, 1, 1,
-	"Integer or inclusive integer range (start-end or start:end)");
+	"Integer or inclusive integer range (start-end or start:end)", NULL, NULL);
 static const struct bu_arg_operand which_operands[] = {
     BU_ARG_OPERAND_SHAPED("id_range", BU_ARG_VALUE_STRING, 1,
 	BU_ARG_COUNT_UNLIMITED, which_range_validate,

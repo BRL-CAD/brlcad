@@ -52,7 +52,7 @@ pipe_find_schema_validate(const struct bu_arg_schema *cmd, size_t argc,
 
 
 static const struct bu_arg_option pipe_move_schema_options[] = {
-    BU_ARG_FLAG_UNBOUND("r", NULL, "r", "Interpret the point relative to the pipe point"),
+    BU_ARG_UNBOUND("r", NULL, "r", BU_ARG_VALUE_FLAG, BU_ARG_NONE, NULL, "Interpret the point relative to the pipe point", NULL),
     BU_ARG_OPTION_NULL
 };
 static const struct bu_arg_operand pipe_find_schema_operands[] = {

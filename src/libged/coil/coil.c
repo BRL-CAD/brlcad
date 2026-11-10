@@ -130,27 +130,27 @@ coil_sections_free(struct bu_list *sections)
 
 
 static const struct bu_arg_option coil_schema_options[] = {
-    BU_ARG_NONNEGATIVE_NUMBER("d", NULL, struct coil_args, mean_outer_diameter,
+    BU_ARG_VALUE_VALIDATE("d", NULL, struct coil_args, mean_outer_diameter, BU_ARG_VALUE_NUMBER, bu_arg_nonnegative_number_validate,
 	"diameter", "Mean outer diameter"),
-    BU_ARG_NONNEGATIVE_NUMBER("w", NULL, struct coil_args, wire_diameter,
+    BU_ARG_VALUE_VALIDATE("w", NULL, struct coil_args, wire_diameter, BU_ARG_VALUE_NUMBER, bu_arg_nonnegative_number_validate,
 	"diameter", "Wire diameter"),
-    BU_ARG_NONNEGATIVE_NUMBER("H", NULL, struct coil_args, helix_angle,
+    BU_ARG_VALUE_VALIDATE("H", NULL, struct coil_args, helix_angle, BU_ARG_VALUE_NUMBER, bu_arg_nonnegative_number_validate,
 	"angle", "Helix angle"),
-    BU_ARG_NONNEGATIVE_NUMBER("p", NULL, struct coil_args, pitch,
+    BU_ARG_VALUE_VALIDATE("p", NULL, struct coil_args, pitch, BU_ARG_VALUE_NUMBER, bu_arg_nonnegative_number_validate,
 	"pitch", "Pitch"),
-    BU_ARG_NONNEGATIVE_INTEGER("n", NULL, struct coil_args, number_of_turns,
+    BU_ARG_VALUE_VALIDATE("n", NULL, struct coil_args, number_of_turns, BU_ARG_VALUE_INTEGER, bu_arg_nonnegative_integer_validate,
 	"turns", "Number of turns"),
-    BU_ARG_INTEGER_VALIDATE("s", NULL, struct coil_args, start_cap_type,
+    BU_ARG_VALUE_VALIDATE("s", NULL, struct coil_args, start_cap_type, BU_ARG_VALUE_INTEGER,
 	coil_cap_type_validate, "type", "Start cap type (0 through 3)"),
-    BU_ARG_INTEGER_VALIDATE("e", NULL, struct coil_args, end_cap_type,
+    BU_ARG_VALUE_VALIDATE("e", NULL, struct coil_args, end_cap_type, BU_ARG_VALUE_INTEGER,
 	coil_cap_type_validate, "type", "End cap type (0 through 3)"),
     BU_ARG_CUSTOM("S", NULL, struct coil_args, sections, coil_section_consume,
 	"section", "Section: turns,diameter,wire,angle,pitch,handedness"),
-    BU_ARG_NONNEGATIVE_NUMBER("l", NULL, struct coil_args, overall_length,
+    BU_ARG_VALUE_VALIDATE("l", NULL, struct coil_args, overall_length, BU_ARG_VALUE_NUMBER, bu_arg_nonnegative_number_validate,
 	"length", "Overall length"),
     BU_ARG_FLAG("L", NULL, struct coil_args, left_handed, "Use left-handed winding"),
     BU_ARG_FLAG("h", NULL, struct coil_args, help, "Print command usage"),
-    BU_ARG_ALIAS_SHORT("?", "h", 1),
+    BU_ARG_ALIAS("?", NULL, "h", 1),
     BU_ARG_OPTION_NULL
 };
 static const struct bu_arg_operand coil_schema_operands[] = {

@@ -154,14 +154,14 @@ side-effect-free structural validator, and a context-aware validator. Use the
 ordinary short `BU_ARG_*` option and operand rows for scalar values. For a
 multi-token option, define a named `bu_arg_shape` and a named consumer;
 this is clearer and more reusable than an inline custom parser. Use
-`BU_ARG_OPTION_CONSUME` for the common required shape; reserve the fully
-explicit `BU_ARG_OPTION_SHAPED` form for an optional argument or a canonical
-spelling different from the long option spelling.
+`BU_ARG_OPTION_SHAPED`, passing the long spelling as the canonical spelling
+for the common required shape.  The explicit requirement and canonical
+arguments also cover optional values and alternate canonical spellings.
 
 `BU_ARG_SCHEMA_EXTERNAL` is specifically for an established command whose
 executor still owns option parsing. It makes the schema metadata-only and
-permits `BU_ARG_VALUE_UNBOUND` or `BU_ARG_FLAG_UNBOUND` rows for help,
-validation, and completion. New commands should use `BU_ARG_SCHEMA_BOUND`;
+permits `BU_ARG_UNBOUND` rows for help, validation, and completion. New
+commands should use `BU_ARG_SCHEMA_BOUND`;
 the native linter rejects unbound rows in a bound schema. An external schema
 has no context callback slot, since it must not become a second execution
 parser—use a `ged_cmd_grammar` adapter when live context is part of that
@@ -273,8 +273,8 @@ command genuinely benefits from its advanced typed ranges, forms, or parser
 bindings.  For example, an inclusive integer bound is declared directly:
 
 ```c
-BU_ARG_INTEGER_RANGE("l", "level", struct args, level,
-    1, 5, "count", "Refinement level")
+BU_ARG_INTEGER_RANGE("l", "level", struct args, level, 1,
+    1, 1, 5, "count", "Refinement level")
 ```
 
 The parser and validator both enforce the bound, the linter verifies that the

@@ -59,9 +59,9 @@ static const struct bu_arg_schema_case erase_legacy_cases[] = {
     BU_ARG_SCHEMA_CASE_NULL
 };
 static const struct bu_arg_constraint erase_legacy_constraints[] = {
-    BU_ARG_CONSTRAINT_REQUIRES(erase_match_any_requires,
+    BU_ARG_CONSTRAINT(BU_ARG_CONSTRAINT_OPTION_REQUIRES, BU_ARG_CONDITION_ALWAYS, erase_match_any_requires, 0, 0,
 	"-o requires -A attribute selection"),
-    BU_ARG_CONSTRAINT_CONFLICTS(erase_recursive_conflicts,
+    BU_ARG_CONSTRAINT(BU_ARG_CONSTRAINT_OPTION_CONFLICTS, BU_ARG_CONDITION_ALWAYS, erase_recursive_conflicts, 0, 0,
 	"-r cannot be combined with -A or -o"),
     BU_ARG_CONSTRAINT_NULL
 };
@@ -78,7 +78,7 @@ static const struct bu_arg_option erase_new_options[] = {
 	BU_ARG_VALUE_STRING, offsetof(struct ged_erase_new_args, view), NULL, NULL,
 	"ged.view", NULL, 0, 0, NULL, BU_ARG_REQUIRED, NULL, NULL, NULL,
 	BU_ARG_VALUE_RANGE_NONE, BU_ARG_SHAPE_SCALAR},
-    BU_ARG_INTEGER("m", "mode", struct ged_erase_new_args, mode, "number",
+    BU_ARG_VALUE("m", "mode", struct ged_erase_new_args, mode, BU_ARG_VALUE_INTEGER, BU_ARG_REQUIRED, "number",
 	"Erase objects drawn in the specified drawing mode"),
     BU_ARG_OPTION_NULL
 };

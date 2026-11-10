@@ -83,7 +83,7 @@ label_create_validate(const struct bu_arg_schema *UNUSED(schema), size_t argc,
 static const struct bu_arg_option label_root_options[] = {
     BU_ARG_FLAG("h", "help", struct ged_view_label_args, print_help,
 	"Print help and exit"),
-    BU_ARG_ALIAS_SHORT("?", "help", 1),
+    BU_ARG_ALIAS("?", NULL, "help", 1),
     BU_ARG_FLAG("s", NULL, struct ged_view_label_args, s_version,
 	"Work with the S version of label data"),
     BU_ARG_OPTION_NULL

@@ -43,7 +43,7 @@ static int lines_tree_append(void *bs, int argc, const char **argv);
 static const struct bu_arg_option line_root_options[] = {
     BU_ARG_FLAG("h", "help", struct ged_view_line_args, print_help,
 	"Print help and exit"),
-    BU_ARG_ALIAS_SHORT("?", "help", 1),
+    BU_ARG_ALIAS("?", NULL, "help", 1),
     BU_ARG_FLAG("s", NULL, struct ged_view_line_args, s_version,
 	"Work with the S version of line data"),
     BU_ARG_OPTION_NULL

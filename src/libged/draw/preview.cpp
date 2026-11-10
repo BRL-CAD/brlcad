@@ -61,17 +61,17 @@ struct preview_args {
 
 
 static const struct bu_arg_option preview_schema_options[] = {
-    BU_ARG_NUMBER("d", NULL, struct preview_args, delay, "seconds",
+    BU_ARG_VALUE("d", NULL, struct preview_args, delay, BU_ARG_VALUE_NUMBER, BU_ARG_REQUIRED, "seconds",
 	"Set inter-frame delay"),
     BU_ARG_FLAG("e", NULL, struct preview_args, eye_path,
 	"Overlay a plot of the eye path"),
     BU_ARG_FLAG("v", NULL, struct preview_args, visual,
 	"Use evaluated polygon rendering"),
-    BU_ARG_INTEGER("D", NULL, struct preview_args, start_frame, "frame",
+    BU_ARG_VALUE("D", NULL, struct preview_args, start_frame, BU_ARG_VALUE_INTEGER, BU_ARG_REQUIRED, "frame",
 	"Set the desired starting frame"),
-    BU_ARG_INTEGER("K", NULL, struct preview_args, last_frame, "frame",
+    BU_ARG_VALUE("K", NULL, struct preview_args, last_frame, BU_ARG_VALUE_INTEGER, BU_ARG_REQUIRED, "frame",
 	"Set the final frame"),
-    BU_ARG_FILE("o", NULL, struct preview_args, output, "image_name.ext",
+    BU_ARG_VALUE("o", NULL, struct preview_args, output, BU_ARG_VALUE_FILE, BU_ARG_REQUIRED, "image_name.ext",
 	"Write each frame using the output name and extension"),
     BU_ARG_OPTION_NULL
 };

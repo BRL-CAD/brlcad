@@ -464,24 +464,24 @@ static const struct bu_arg_shape facetize_methods_shape = {
 };
 
 static const struct bu_arg_constraint facetize_constraints[] = {
-    BU_ARG_CONSTRAINT_OPTIONS(facetize_perturb_options, 0, 1,
+    BU_ARG_CONSTRAINT(BU_ARG_CONSTRAINT_OPTION_COUNT, BU_ARG_CONDITION_ALWAYS, facetize_perturb_options, 0, 1,
 	"--perturb and --no-perturb cannot be used together"),
     BU_ARG_CONSTRAINT_NULL
 };
 
 static const struct bu_arg_option facetize_options[] = {
     BU_ARG_FLAG("h", "help", facetize_parse_args, print_help, "Print help and exit"),
-    BU_ARG_COUNTING_LONG_FLAG("v", "verbose", facetize_parse_args, verbosity, "Verbose output; repeat to increase detail"),
+    BU_ARG_COUNTING_FLAG("v", "verbose", facetize_parse_args, verbosity, BU_ARG_VALUE_LONG, "Verbose output; repeat to increase detail"),
     BU_ARG_FLAG("q", "quiet", facetize_parse_args, quiet, "Suppress all output"),
     BU_ARG_FLAG("n", "nmg-output", facetize_parse_args, make_nmg, "Create N-Manifold Geometry output"),
     BU_ARG_FLAG("r", "regions", facetize_parse_args, regions, "Facetize region trees"),
-    BU_ARG_INTEGER_RANGE("j", "jobs", facetize_parse_args, max_workers, 0, MAX_PSW,
+    BU_ARG_INTEGER_RANGE("j", "jobs", facetize_parse_args, max_workers, 1, 0, 1, MAX_PSW,
 	"count", "Maximum facetize worker processes; zero selects an automatic limit"),
-    BU_ARG_STRING("s", "suffix", facetize_parse_args, suffix, "suffix", "Output suffix"),
-    BU_ARG_STRING("p", "prefix", facetize_parse_args, prefix, "prefix", "Output prefix"),
+    BU_ARG_VALUE("s", "suffix", facetize_parse_args, suffix, BU_ARG_VALUE_STRING, BU_ARG_REQUIRED, "suffix", "Output suffix"),
+    BU_ARG_VALUE("p", "prefix", facetize_parse_args, prefix, BU_ARG_VALUE_STRING, BU_ARG_REQUIRED, "prefix", "Output prefix"),
     BU_ARG_FLAG(NULL, "in-place", facetize_parse_args, in_place, "Replace input objects"),
-    BU_ARG_INTEGER(NULL, "max-time", facetize_parse_args, max_time, "seconds", "Maximum seconds per object"),
-    BU_ARG_INTEGER(NULL, "max-pnts", facetize_parse_args, max_pnts, "count", "Maximum sample points"),
+    BU_ARG_VALUE(NULL, "max-time", facetize_parse_args, max_time, BU_ARG_VALUE_INTEGER, BU_ARG_REQUIRED, "seconds", "Maximum seconds per object"),
+    BU_ARG_VALUE(NULL, "max-pnts", facetize_parse_args, max_pnts, BU_ARG_VALUE_INTEGER, BU_ARG_REQUIRED, "count", "Maximum sample points"),
     BU_ARG_FLAG(NULL, "resume", facetize_parse_args, resume, "Resume conversion"),
     {NULL, "methods", "methods", "method[,method...]", "Comma-separated tessellation methods",
 	BU_ARG_VALUE_CUSTOM, offsetof(facetize_parse_args, method_options), tess_active_methods_from_str,
@@ -490,15 +490,15 @@ static const struct bu_arg_option facetize_options[] = {
     BU_ARG_CUSTOM(NULL, "method-opts", facetize_parse_args, method_options, tess_method_opts_from_str,
 	"\"METHOD option=value ...\"", "Method-specific options"),
     BU_ARG_FLAG(NULL, "no-empty", facetize_parse_args, no_empty, "Suppress empty outputs"),
-    BU_ARG_FILE(NULL, "log-file", facetize_parse_args, log_file, "file", "Log file"),
+    BU_ARG_VALUE(NULL, "log-file", facetize_parse_args, log_file, BU_ARG_VALUE_FILE, BU_ARG_REQUIRED, "file", "Log file"),
     BU_ARG_FLAG(NULL, "nmg-booleval", facetize_parse_args, nmg_booleval, "Use NMG Boolean evaluation"),
     BU_ARG_FLAG(NULL, "disable-fixup", facetize_parse_args, no_fixup, "Disable mesh fixups"),
     BU_ARG_FLAG(NULL, "perturb", facetize_parse_args, force_perturb, "Enable perturbation"),
     BU_ARG_FLAG(NULL, "no-perturb", facetize_parse_args, disable_perturb, "Disable perturbation"),
     BU_ARG_FLAG("B", NULL, facetize_parse_args, nonovlp_brep, "Use experimental non-overlapping BREP mode"),
-    BU_ARG_NUMBER("t", "threshold", facetize_parse_args, nonovlp_threshold, "length", "Non-overlap threshold"),
-    BU_ARG_NUMBER(NULL, "perturb-sa-tol", facetize_parse_args, perturb_sa_tol, "percent", "Perturbation surface-area tolerance"),
-    BU_ARG_NUMBER(NULL, "perturb-vol-tol", facetize_parse_args, perturb_vol_tol, "percent", "Perturbation volume tolerance"),
+    BU_ARG_VALUE("t", "threshold", facetize_parse_args, nonovlp_threshold, BU_ARG_VALUE_NUMBER, BU_ARG_REQUIRED, "length", "Non-overlap threshold"),
+    BU_ARG_VALUE(NULL, "perturb-sa-tol", facetize_parse_args, perturb_sa_tol, BU_ARG_VALUE_NUMBER, BU_ARG_REQUIRED, "percent", "Perturbation surface-area tolerance"),
+    BU_ARG_VALUE(NULL, "perturb-vol-tol", facetize_parse_args, perturb_vol_tol, BU_ARG_VALUE_NUMBER, BU_ARG_REQUIRED, "percent", "Perturbation volume tolerance"),
     BU_ARG_FLAG(NULL, "tolerate-failures", facetize_parse_args, tolerate_failures, "Generate partial output after failures"),
     BU_ARG_OPTION_NULL
 };

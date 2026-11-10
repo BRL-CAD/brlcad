@@ -50,7 +50,7 @@ static const struct bu_arg_value_keyword who_display_kinds[] = {
 static const struct bu_arg_option who_legacy_options[] = {
     BU_ARG_FLAG("h", "help", struct who_legacy_args, print_help,
 	"Print command help"),
-    BU_ARG_ALIAS_SHORT("?", "help", 1),
+    BU_ARG_ALIAS("?", NULL, "help", 1),
     BU_ARG_OPTION_NULL
 };
 static const struct bu_arg_operand who_legacy_operands[] = {
@@ -66,7 +66,7 @@ static const struct bu_arg_operand who_solids_operands[] = {
 static const struct bu_arg_option who_legacy_solids_options[] = {
     BU_ARG_FLAG("h", "help", struct ged_solid_report_args, print_help,
 	"Print command help"),
-    BU_ARG_ALIAS_SHORT("?", "help", 1),
+    BU_ARG_ALIAS("?", NULL, "help", 1),
     BU_ARG_OPTION_NULL
 };
 static const struct bu_arg_schema who_legacy_schema = {
@@ -99,11 +99,11 @@ static const struct bu_arg_tree who_new_tree = {
     &who_tree_root_schema, who_new_subcommands, BU_ARG_TREE_CHILD_AFTER_OPTIONS
 };
 static const struct bu_arg_form ged_who_native_forms[] = {
-    BU_ARG_FORM_SCHEMA("legacy", "Legacy object listing", &who_legacy_schema),
-    BU_ARG_FORM_TREE("legacy_solids", "Legacy detailed solid report",
+    BU_ARG_FORM("legacy", "Legacy object listing", &who_legacy_schema, NULL),
+    BU_ARG_FORM("legacy_solids", "Legacy detailed solid report", NULL,
 	&who_legacy_tree),
-    BU_ARG_FORM_SCHEMA("current", "Current object listing", &ged_who_new_schema),
-    BU_ARG_FORM_TREE("current_solids", "Current detailed solid report",
+    BU_ARG_FORM("current", "Current object listing", &ged_who_new_schema, NULL),
+    BU_ARG_FORM("current_solids", "Current detailed solid report", NULL,
 	&who_new_tree),
     BU_ARG_FORM_NULL
 };
@@ -116,13 +116,13 @@ ged_who_help_for_mode(int new_form, int solids, const char *invocation)
 	    &who_legacy_solids_schema, invocation);
 
     const struct bu_arg_form legacy_form_rows[] = {
-	BU_ARG_FORM_SCHEMA("objects", "List displayed objects", &who_legacy_schema),
-	BU_ARG_FORM_TREE("solid details", "Report displayed solid details", &who_legacy_tree),
+	BU_ARG_FORM("objects", "List displayed objects", &who_legacy_schema, NULL),
+	BU_ARG_FORM("solid details", "Report displayed solid details", NULL, &who_legacy_tree),
 	BU_ARG_FORM_NULL
     };
     const struct bu_arg_form new_form_rows[] = {
-	BU_ARG_FORM_SCHEMA("objects", "List displayed objects", &ged_who_new_schema),
-	BU_ARG_FORM_TREE("solid details", "Report displayed solid details", &who_new_tree),
+	BU_ARG_FORM("objects", "List displayed objects", &ged_who_new_schema, NULL),
+	BU_ARG_FORM("solid details", "Report displayed solid details", NULL, &who_new_tree),
 	BU_ARG_FORM_NULL
     };
     const struct bu_arg_forms legacy_forms = BU_ARG_FORMS("who",

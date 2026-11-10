@@ -33,16 +33,16 @@ struct repair_args {
 static const struct bu_arg_option repair_options[] = {
     BU_ARG_FLAG("h", "help", struct repair_args, print_help,
 	"Print command help"),
-    BU_ARG_VLS_APPEND("o", "output-name", struct repair_args, out_name, "name",
+    BU_ARG_VALUE("o", "output-name", struct repair_args, out_name, BU_ARG_VALUE_VLS, BU_ARG_REQUIRED, "name",
 	"Write the repaired object to a new object"),
     BU_ARG_FLAG(NULL, "options-json", struct repair_args, options_json,
 	"Return the primitive-specific repair options as JSON"),
-    BU_ARG_NUMBER("t", "tol", struct repair_args, tolerance, "distance",
+    BU_ARG_VALUE("t", "tol", struct repair_args, tolerance, BU_ARG_VALUE_NUMBER, BU_ARG_REQUIRED, "distance",
 	"Distance tolerance for primitives that support vertex snapping"),
     BU_ARG_NUMBER_RANGE("p", "max-hole-percent", struct repair_args,
-	max_hole_area_percent, 0.0, 100.0, "percent",
+	max_hole_area_percent, 1, 0.0, 1, 100.0, "percent",
 	"Maximum hole area as a percentage of mesh area"),
-    BU_ARG_NONNEGATIVE_NUMBER("a", "max-hole-area", struct repair_args, max_hole_area,
+    BU_ARG_VALUE_VALIDATE("a", "max-hole-area", struct repair_args, max_hole_area, BU_ARG_VALUE_NUMBER, bu_arg_nonnegative_number_validate,
 	"area", "Maximum hole area in mm"),
     BU_ARG_OPTION_NULL
 };

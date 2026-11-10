@@ -48,7 +48,7 @@ struct red_args {
 };
 
 static const struct bu_arg_option red_schema_options[] = {
-    BU_ARG_STRING("E", NULL, struct red_args, editor, "editor", "Editor command"),
+    BU_ARG_VALUE("E", NULL, struct red_args, editor, BU_ARG_VALUE_STRING, BU_ARG_REQUIRED, "editor", "Editor command"),
     BU_ARG_FLAG("f", "force", struct red_args, force,
 	"Replace an existing renamed combination"),
     BU_ARG_OPTION_NULL

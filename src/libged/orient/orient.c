@@ -102,7 +102,7 @@ static const struct bu_arg_variant orient_quaternion_forms[] = {
     BU_ARG_VARIANT_NULL
 };
 static const struct bu_arg_shape orient_quaternion_shape =
-    BU_ARG_SHAPE_FORMS(BU_ARG_SHAPE_CUSTOM, 1, 4,
+    BU_ARG_SHAPE(BU_ARG_SHAPE_CUSTOM, 1, 4,
 	"one packed quaternion or four component words", NULL,
 	orient_quaternion_forms);
 static const struct bu_arg_operand orient_schema_operands[] = {

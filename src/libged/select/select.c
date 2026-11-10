@@ -40,11 +40,11 @@ struct select_args {
 
 
 static const struct bu_arg_option select_native_options[] = {
-    BU_ARG_STRING("b", NULL, struct select_args, bot_path, "bot",
+    BU_ARG_VALUE("b", NULL, struct select_args, bot_path, BU_ARG_VALUE_STRING, BU_ARG_REQUIRED, "bot",
 	"Select points from a BOT object or path"),
     BU_ARG_FLAG("p", NULL, struct select_args, partial,
 	"Select partial display paths"),
-    BU_ARG_NUMBER("z", NULL, struct select_args, vminz, "vminz",
+    BU_ARG_VALUE("z", NULL, struct select_args, vminz, BU_ARG_VALUE_NUMBER, BU_ARG_REQUIRED, "vminz",
 	"Minimum view-space Z coordinate"),
     BU_ARG_OPTION_NULL
 };

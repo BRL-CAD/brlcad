@@ -26,15 +26,15 @@
 #include "../ged_private.h"
 
 static const struct bu_arg_form select_form_rows[] = {
-    BU_ARG_FORM_SCHEMA("legacy", "Legacy screen-rectangle selection",
-	&ged_select_legacy_schema),
-    BU_ARG_FORM_TREE("current", "Selection-set subcommands", &ged_select_new_tree),
+    BU_ARG_FORM("legacy", "Legacy screen-rectangle selection",
+	&ged_select_legacy_schema, NULL),
+    BU_ARG_FORM("current", "Selection-set subcommands", NULL, &ged_select_new_tree),
     BU_ARG_FORM_NULL
 };
 
 static const struct bu_arg_form rselect_form_rows[] = {
-    BU_ARG_FORM_SCHEMA("legacy", "Select from the current rectangle",
-	&ged_rselect_legacy_schema),
+    BU_ARG_FORM("legacy", "Select from the current rectangle",
+	&ged_rselect_legacy_schema, NULL),
     BU_ARG_FORM_NULL
 };
 

@@ -549,8 +549,8 @@ static const struct bu_arg_operand_group rect_integer_pair_groups[] = {
     BU_ARG_OPERAND_GROUP_NULL
 };
 static const struct bu_arg_operand rect_positive_pair_roles[] = {
-    BU_ARG_OPERAND_INTEGER_MIN("width", 1, 1, 1, "Positive canvas width", NULL),
-    BU_ARG_OPERAND_INTEGER_MIN("height", 1, 1, 1, "Positive canvas height", NULL),
+    BU_ARG_OPERAND_INTEGER_RANGE("width", 1, 1, 1, 1, 0, 0, "Positive canvas width", NULL),
+    BU_ARG_OPERAND_INTEGER_RANGE("height", 1, 1, 1, 1, 0, 0, "Positive canvas height", NULL),
     BU_ARG_OPERAND_NULL
 };
 static const struct bu_arg_operand_group rect_positive_pair_groups[] = {

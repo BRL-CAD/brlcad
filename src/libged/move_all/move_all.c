@@ -46,7 +46,7 @@ struct move_all_args {
 static const struct bu_arg_option move_all_schema_options[] = {
     BU_ARG_FLAG("n", NULL, struct move_all_args, no_change,
 	"Report changes without modifying the database"),
-    BU_ARG_FILE("f", NULL, struct move_all_args, mapping_file, "file",
+    BU_ARG_VALUE("f", NULL, struct move_all_args, mapping_file, BU_ARG_VALUE_FILE, BU_ARG_REQUIRED, "file",
 	"Read old/new name mappings from a file"),
     BU_ARG_OPTION_NULL
 };
@@ -59,10 +59,10 @@ static const struct bu_arg_operand move_all_schema_operands[] = {
 };
 static const char *move_all_schema_file_option[] = {"f", NULL};
 static const struct bu_arg_constraint move_all_schema_constraints[] = {
-    BU_ARG_CONSTRAINT_OPERANDS(BU_ARG_CONDITION_ANY_OPTION_PRESENT,
+    BU_ARG_CONSTRAINT(BU_ARG_CONSTRAINT_OPERAND_COUNT, BU_ARG_CONDITION_ANY_OPTION_PRESENT,
 	move_all_schema_file_option, 0, 0,
 	"-f cannot be combined with old/new operands"),
-    BU_ARG_CONSTRAINT_OPERANDS(BU_ARG_CONDITION_NO_OPTION_PRESENT,
+    BU_ARG_CONSTRAINT(BU_ARG_CONSTRAINT_OPERAND_COUNT, BU_ARG_CONDITION_NO_OPTION_PRESENT,
 	move_all_schema_file_option, 2, 2,
 	"source and destination object names are required without -f"),
     BU_ARG_CONSTRAINT_NULL

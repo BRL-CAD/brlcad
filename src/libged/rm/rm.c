@@ -1137,20 +1137,20 @@ struct rm_args {
 
 static const struct bu_arg_option rm_options[] = {
     BU_ARG_FLAG("f", "force", struct rm_args, force, "Force deletion"),
-    BU_ARG_ALIAS_SHORT("F", "force", 1),
+    BU_ARG_ALIAS("F", NULL, "force", 1),
     BU_ARG_FLAG("r", "recursive", struct rm_args, recursive,
 	"Recursively delete unshared descendants"),
-    BU_ARG_ALIAS_SHORT("R", "recursive", 1),
+    BU_ARG_ALIAS("R", NULL, "recursive", 1),
     BU_ARG_FLAG("n", "dry-run", struct rm_args, dry_run,
 	"Report what would be deleted without modifying the database"),
-    BU_ARG_ALIAS_SHORT("N", "dry-run", 1),
+    BU_ARG_ALIAS("N", NULL, "dry-run", 1),
     BU_ARG_FLAG("h", "help", struct rm_args, print_help, "Print help and exit"),
-    BU_ARG_ALIAS_SHORT("?", "help", 1),
+    BU_ARG_ALIAS("?", NULL, "help", 1),
     BU_ARG_OPTION_NULL
 };
 static const struct bu_arg_shape rm_pattern_shape =
     BU_ARG_SHAPE(BU_ARG_SHAPE_CUSTOM, 1, 1,
-	"Database object, path, or glob pattern");
+	"Database object, path, or glob pattern", NULL, NULL);
 static const struct bu_arg_operand rm_operands[] = {
     BU_ARG_OPERAND_SHAPED("objects", BU_ARG_VALUE_DB_PATH, 1,
 	BU_ARG_COUNT_UNLIMITED, NULL, "Database objects, paths, or glob patterns",

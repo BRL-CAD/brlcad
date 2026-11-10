@@ -70,7 +70,7 @@ struct brep_convert_args {
 static const struct bu_arg_option brep_convert_options[] = {
     BU_ARG_FLAG(NULL, "no-evaluation", struct brep_convert_args, no_evaluation,
 	"For a combination, create a CSG BREP tree without evaluating booleans"),
-    BU_ARG_VLS_APPEND(NULL, "suffix", struct brep_convert_args, suffix, "suffix",
+    BU_ARG_VALUE(NULL, "suffix", struct brep_convert_args, suffix, BU_ARG_VALUE_VLS, BU_ARG_REQUIRED, "suffix",
 	"Suffix used for no-evaluation object names"),
     BU_ARG_OPTION_NULL
 };
@@ -93,9 +93,9 @@ struct brep_split_args {
 };
 
 static const struct bu_arg_option brep_split_options[] = {
-    BU_ARG_NUMBER("t", "thickness", struct brep_split_args, thickness, "thickness",
+    BU_ARG_VALUE("t", "thickness", struct brep_split_args, thickness, BU_ARG_VALUE_NUMBER, BU_ARG_REQUIRED, "thickness",
 	"Default plate-mode thickness"),
-    BU_ARG_VLS_APPEND("o", "output-object", struct brep_split_args, output_object,
+    BU_ARG_VALUE("o", "output-object", struct brep_split_args, output_object, BU_ARG_VALUE_VLS, BU_ARG_REQUIRED,
 	"name", "Output-object root name"),
     BU_ARG_FLAG("O", "object-per-face", struct brep_split_args, object_per_face,
 	"Create one BREP object per face"),
@@ -1546,7 +1546,7 @@ static const struct bu_arg_option brep_root_options[] = {
 	"Color used by plotted or highlighted output"),
     BU_ARG_FLAG("v", "verbose", struct brep_root_args, verbosity,
 	"Enable additional diagnostic output"),
-    BU_ARG_POSITIVE_INTEGER(NULL, "plotres", struct brep_root_args, plotres,
+    BU_ARG_VALUE_VALIDATE(NULL, "plotres", struct brep_root_args, plotres, BU_ARG_VALUE_INTEGER, bu_arg_positive_integer_validate,
 	"resolution", "Plot sampling resolution"),
     BU_ARG_OPTION_NULL
 };

@@ -105,7 +105,7 @@ static const struct bu_arg_operand metaball_delete_operands[] = {
 };
 static const struct bu_arg_shape metaball_vector3_shape =
     BU_ARG_SHAPE(BU_ARG_SHAPE_VECTOR3, 1, 3,
-	"packed or three-component XYZ point");
+	"packed or three-component XYZ point", NULL, NULL);
 static const struct bu_arg_operand metaball_move_operands[] = {
     BU_ARG_OPERAND("metaball", BU_ARG_VALUE_DB_PATH, 1, 1,
 	"Metaball object or path", "ged.db_path"),

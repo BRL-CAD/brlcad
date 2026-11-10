@@ -1759,10 +1759,10 @@ rt_edit_bot_repair(struct bu_vls *log_str, struct rt_db_internal *ip, const stru
     static const struct bu_arg_option options[] = {
 	BU_ARG_FLAG("h", "help", struct bot_repair_args, print_help, "Print help"),
 	BU_ARG_NUMBER_RANGE("p", "max-hole-percent", struct bot_repair_args,
-	    settings.max_hole_area_percent, 0.0, 100.0, "percent",
+	    settings.max_hole_area_percent, 1, 0.0, 1, 100.0, "percent",
 	    "Maximum hole area as a percentage of mesh area"),
-	BU_ARG_NONNEGATIVE_NUMBER("a", "max-hole-area", struct bot_repair_args,
-	    settings.max_hole_area, "area", "Maximum hole area in mm"),
+	BU_ARG_VALUE_VALIDATE("a", "max-hole-area", struct bot_repair_args,
+	    settings.max_hole_area, BU_ARG_VALUE_NUMBER, bu_arg_nonnegative_number_validate, "area", "Maximum hole area in mm"),
 	BU_ARG_FLAG(NULL, "options-json", struct bot_repair_args, options_json,
 	    "Return JSON of supported options"),
 	BU_ARG_OPTION_NULL

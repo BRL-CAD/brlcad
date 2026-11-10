@@ -161,16 +161,16 @@ struct TireArgs {
     A(LONG,  "ISO", "dimensions")
 
 #define TIRE_NATIVE_FLAG(s, l, f, a, h) BU_ARG_FLAG(s, l, TireArgs, f, h),
-#define TIRE_NATIVE_BOOL(s, l, f, a, h) BU_ARG_BOOL(s, l, TireArgs, f, a, h),
-#define TIRE_NATIVE_INTEGER(s, l, f, a, h) BU_ARG_INTEGER(s, l, TireArgs, f, a, h),
-#define TIRE_NATIVE_INTEGER_RANGE(s, l, f, a, h) BU_ARG_INTEGER_VALIDATE(s, l, TireArgs, f, tire_tread_shape_validate, a, h),
-#define TIRE_NATIVE_NUMBER(s, l, f, a, h) BU_ARG_NUMBER(s, l, TireArgs, f, a, h),
-#define TIRE_NATIVE_STRING(s, l, f, a, h) BU_ARG_STRING(s, l, TireArgs, f, a, h),
-#define TIRE_NATIVE_FILE(s, l, f, a, h) BU_ARG_FILE(s, l, TireArgs, f, a, h),
+#define TIRE_NATIVE_BOOL(s, l, f, a, h) BU_ARG_VALUE(s, l, TireArgs, f, BU_ARG_VALUE_BOOL, BU_ARG_REQUIRED, a, h),
+#define TIRE_NATIVE_INTEGER(s, l, f, a, h) BU_ARG_VALUE(s, l, TireArgs, f, BU_ARG_VALUE_INTEGER, BU_ARG_REQUIRED, a, h),
+#define TIRE_NATIVE_INTEGER_RANGE(s, l, f, a, h) BU_ARG_VALUE_VALIDATE(s, l, TireArgs, f, BU_ARG_VALUE_INTEGER, tire_tread_shape_validate, a, h),
+#define TIRE_NATIVE_NUMBER(s, l, f, a, h) BU_ARG_VALUE(s, l, TireArgs, f, BU_ARG_VALUE_NUMBER, BU_ARG_REQUIRED, a, h),
+#define TIRE_NATIVE_STRING(s, l, f, a, h) BU_ARG_VALUE(s, l, TireArgs, f, BU_ARG_VALUE_STRING, BU_ARG_REQUIRED, a, h),
+#define TIRE_NATIVE_FILE(s, l, f, a, h) BU_ARG_VALUE(s, l, TireArgs, f, BU_ARG_VALUE_FILE, BU_ARG_REQUIRED, a, h),
 #define TIRE_NATIVE_CUSTOM(s, l, f, a, h) BU_ARG_CUSTOM(s, l, TireArgs, f, tire_iso_parse, a, h),
 #define TIRE_NATIVE_OPTION(kind, s, l, f, a, h) TIRE_NATIVE_##kind(s, l, f, a, h)
-#define TIRE_NATIVE_ALIAS_SHORT(spelling, canonical) BU_ARG_ALIAS_SHORT(spelling, canonical, 1),
-#define TIRE_NATIVE_ALIAS_LONG(spelling, canonical) BU_ARG_ALIAS_LONG(spelling, canonical, 1),
+#define TIRE_NATIVE_ALIAS_SHORT(spelling, canonical) BU_ARG_ALIAS(spelling, NULL, canonical, 1),
+#define TIRE_NATIVE_ALIAS_LONG(spelling, canonical) BU_ARG_ALIAS( NULL,spelling, canonical, 1),
 #define TIRE_NATIVE_ALIAS(kind, spelling, canonical) TIRE_NATIVE_ALIAS_##kind(spelling, canonical)
 static const struct bu_arg_option tire_options[] = {
     TIRE_OPTION_ROWS(TIRE_NATIVE_OPTION, TIRE_NATIVE_ALIAS)

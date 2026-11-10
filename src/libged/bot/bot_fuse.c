@@ -61,7 +61,7 @@ static const struct bu_arg_operand bot_fuse_schema_operands[] = {
 };
 static const char * const bot_fuse_output_options[] = {"s", "p", NULL};
 static const struct bu_arg_constraint bot_fuse_schema_constraints[] = {
-    BU_ARG_CONSTRAINT_OPTIONS(bot_fuse_output_options, 0, 1,
+    BU_ARG_CONSTRAINT(BU_ARG_CONSTRAINT_OPTION_COUNT, BU_ARG_CONDITION_ALWAYS, bot_fuse_output_options, 0, 1,
 	"-s and -p are mutually exclusive"),
     BU_ARG_CONSTRAINT_NULL
 };

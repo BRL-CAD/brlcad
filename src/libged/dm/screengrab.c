@@ -73,7 +73,7 @@ static const struct bu_arg_option screengrab_schema_options[] = {
 	"Print command help"),
     BU_ARG_FLAG("F", "fb", struct screengrab_args, grab_fb,
 	"Capture the framebuffer instead of the scene display"),
-    BU_ARG_VLS_APPEND("D", "dm", struct screengrab_args, dm_name, "name",
+    BU_ARG_VALUE("D", "dm", struct screengrab_args, dm_name, BU_ARG_VALUE_VLS, BU_ARG_REQUIRED, "name",
 	"Display manager to capture"),
     BU_ARG_CUSTOM(NULL, "format", struct screengrab_args, type,
 	screengrab_image_mime_parse, "format", "Output image format"),

@@ -2982,17 +2982,17 @@ static const struct bu_arg_value_keyword annotate_bounds[] = {
         BU_ARG_STORAGE_NONE, NULL, NULL, NULL, NULL, 0, 0, NULL, \
         BU_ARG_REQUIRED, NULL, NULL, values, BU_ARG_VALUE_RANGE_NONE, BU_ARG_SHAPE_SCALAR}
 #define ANN_FLAG(short_name, long_name, description) \
-    BU_ARG_FLAG_UNBOUND(short_name, long_name, long_name, description)
+    BU_ARG_UNBOUND(short_name, long_name, long_name, BU_ARG_VALUE_FLAG, BU_ARG_NONE, NULL, description, NULL)
 #define ANN_VALUE(short_name, long_name, type, argument, description) \
-    BU_ARG_VALUE_UNBOUND(short_name, long_name, long_name, type, argument, description)
+    BU_ARG_UNBOUND(short_name, long_name, long_name, type, BU_ARG_REQUIRED, argument, description, NULL)
 #define ANN_VECTOR(long_name, description) \
-    BU_ARG_SHAPED_UNBOUND("", long_name, long_name, BU_ARG_VALUE_VECTOR, \
+    BU_ARG_UNBOUND("", long_name, long_name, BU_ARG_VALUE_VECTOR, BU_ARG_REQUIRED, \
         "x y z", description, &bu_arg_vector3_shape)
 #define ANN_COMMON_OPTIONS \
     ANN_FLAG("h", "help", "Print help"), \
     ANN_VALUE("", "text-height", BU_ARG_VALUE_NUMBER, "size", "Text height in current units"), \
     ANN_VALUE("", "font", BU_ARG_VALUE_STRING, "name", "TrueType font name or path"), \
-    BU_ARG_SHAPED_UNBOUND("C", "color", "color", BU_ARG_VALUE_COLOR, "r/g/b", \
+    BU_ARG_UNBOUND("C", "color", "color", BU_ARG_VALUE_COLOR, BU_ARG_REQUIRED, "r/g/b", \
         "Annotation color", &bu_arg_color_shape), \
     ANN_VALUE("", "line-width", BU_ARG_VALUE_NUMBER, "width", "Line width"), \
     ANN_KEYWORDS("line-style", "style", "Line pattern", annotate_line_styles), \

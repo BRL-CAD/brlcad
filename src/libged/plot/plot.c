@@ -207,7 +207,7 @@ static const struct bu_arg_option plot_schema_options[] = {
 	"Use floating-point plot output"),
     BU_ARG_FLAG("g", NULL, struct plot_args, grid, "Include a grid"),
     BU_ARG_FLAG("z", NULL, struct plot_args, z_clip, "Enable Z clipping"),
-    BU_ARG_ALIAS_SHORT("Z", "z", 1),
+    BU_ARG_ALIAS("Z", NULL, "z", 1),
     BU_ARG_OPTION_NULL
 };
 static const struct bu_arg_operand plot_schema_operands[] = {
@@ -219,7 +219,7 @@ static const struct bu_arg_operand plot_schema_operands[] = {
 };
 static const char *plot_dimension_options[] = {"2", "3", NULL};
 static const struct bu_arg_constraint plot_schema_constraints[] = {
-    BU_ARG_CONSTRAINT_OPTIONS(plot_dimension_options, 0, 1,
+    BU_ARG_CONSTRAINT(BU_ARG_CONSTRAINT_OPTION_COUNT, BU_ARG_CONDITION_ALWAYS, plot_dimension_options, 0, 1,
 	"-2 and -3 are mutually exclusive"),
     BU_ARG_CONSTRAINT_NULL
 };

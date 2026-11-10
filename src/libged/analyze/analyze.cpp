@@ -213,7 +213,7 @@ static const struct bu_arg_option analyze_child_help_options[] = {
 static const struct bu_arg_option analyze_boolean_options[] = {
     BU_ARG_FLAG("h", "help", struct analyze_boolean_args, print_help,
 	"Print subcommand help"),
-    BU_ARG_VLS_APPEND("o", "output", struct analyze_boolean_args, output,
+    BU_ARG_VALUE("o", "output", struct analyze_boolean_args, output, BU_ARG_VALUE_VLS, BU_ARG_REQUIRED,
 	"name", "Specify output object"),
     BU_ARG_OPTION_NULL
 };
@@ -821,10 +821,10 @@ static const struct bu_arg_tree ged_analyze_tree = {
     &analyze_root_schema, analyze_subcommands, BU_ARG_TREE_CHILD_AFTER_OPTIONS
 };
 static const struct bu_arg_form analyze_native_forms[] = {
-    BU_ARG_FORM_TREE("subcommands", "Explicit analysis subcommand",
+    BU_ARG_FORM("subcommands", "Explicit analysis subcommand", NULL,
 	&ged_analyze_tree),
-    BU_ARG_FORM_SCHEMA("implicit_summary", "Summarize objects without a subcommand",
-	&analyze_implicit_summary_schema),
+    BU_ARG_FORM("implicit_summary", "Summarize objects without a subcommand",
+	&analyze_implicit_summary_schema, NULL),
     BU_ARG_FORM_NULL
 };
 

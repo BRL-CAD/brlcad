@@ -93,7 +93,7 @@ static const struct bu_arg_schema_case bo_schema_cases[] = {
     BU_ARG_SCHEMA_CASE_NULL
 };
 static const struct bu_arg_constraint bo_schema_constraints[] = {
-    BU_ARG_CONSTRAINT_OPTIONS(bo_mode_options, 1, 1,
+    BU_ARG_CONSTRAINT(BU_ARG_CONSTRAINT_OPTION_COUNT, BU_ARG_CONDITION_ALWAYS, bo_mode_options, 1, 1,
 	"exactly one of -i or -o is required"),
     BU_ARG_CONSTRAINT_NULL
 };

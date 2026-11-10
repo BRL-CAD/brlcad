@@ -63,7 +63,7 @@ struct fp_root_args {
 
 static const struct bu_arg_option fp_root_options[] = {
     BU_ARG_FLAG("h", "help", struct fp_root_args, help, "Print help"),
-    BU_ARG_COUNTING_LONG_FLAG("v", "verbose", struct fp_root_args, verbosity,
+    BU_ARG_COUNTING_FLAG("v", "verbose", struct fp_root_args, verbosity, BU_ARG_VALUE_LONG,
 	"Increase output detail"),
     BU_ARG_OPTION_NULL
 };
@@ -514,12 +514,12 @@ const struct bu_cmdtab _fp_cmds[] = {
 };
 
 static const struct bu_arg_operand fp_optional_bool_operands[] = {
-    BU_ARG_OPERAND_INTEGER_RANGE("state", 0, 1, 0, 1,
+    BU_ARG_OPERAND_INTEGER_RANGE("state", 0, 1, 1, 0, 1, 1,
 	"New state; omit to query", NULL),
     BU_ARG_OPERAND_NULL
 };
 static const struct bu_arg_operand fp_optional_fb_operands[] = {
-    BU_ARG_OPERAND_INTEGER_RANGE("mode", 0, 1, 0, 2,
+    BU_ARG_OPERAND_INTEGER_RANGE("mode", 0, 1, 1, 0, 1, 2,
 	"Framebuffer mode; omit to query", NULL),
     BU_ARG_OPERAND_NULL
 };
@@ -534,23 +534,23 @@ static const struct bu_arg_operand fp_optional_integer_operands[] = {
     BU_ARG_OPERAND_NULL
 };
 static const struct bu_arg_operand fp_optional_positive_integer_operands[] = {
-    BU_ARG_OPERAND_INTEGER_MIN("value", 0, 1, 1,
+    BU_ARG_OPERAND_INTEGER_RANGE("value", 0, 1, 1, 1, 0, 0,
 	"New positive integer; omit to query", NULL),
     BU_ARG_OPERAND_NULL
 };
 static const struct bu_arg_operand fp_optional_nonnegative_integer_operands[] = {
-    BU_ARG_OPERAND_INTEGER_MIN("value", 0, 1, 0,
+    BU_ARG_OPERAND_INTEGER_RANGE("value", 0, 1, 1, 0, 0, 0,
 	"New nonnegative integer; omit to query", NULL),
     BU_ARG_OPERAND_NULL
 };
 static const struct bu_arg_operand fp_optional_resolution_operands[] = {
-    BU_ARG_OPERAND_NUMBER_MIN("value", 0, 1, BN_TOL_DIST,
+    BU_ARG_OPERAND_NUMBER_RANGE("value", 0, 1, 1, BN_TOL_DIST, 0, 0,
 	"New positive resolution; omit to query", NULL),
     BU_ARG_OPERAND_NULL
 };
 static const struct bu_arg_shape fp_vector3_shape =
     BU_ARG_SHAPE(BU_ARG_SHAPE_VECTOR3, 1, 3,
-	"packed or three-component XYZ point");
+	"packed or three-component XYZ point", NULL, NULL);
 static const struct bu_arg_operand fp_optional_vector3_operands[] = {
     BU_ARG_OPERAND_SHAPED("point", BU_ARG_VALUE_VECTOR, 0, 3, NULL,
 	"New XYZ point; omit to query", NULL, &fp_vector3_shape),
@@ -563,7 +563,7 @@ static const struct bu_arg_variant fp_vector2_forms[] = {
     BU_ARG_VARIANT_NULL
 };
 static const struct bu_arg_shape fp_vector2_shape =
-    BU_ARG_SHAPE_FORMS(BU_ARG_SHAPE_TOKEN_SEQUENCE, 0, 2,
+    BU_ARG_SHAPE(BU_ARG_SHAPE_TOKEN_SEQUENCE, 0, 2,
 	"omitted query or two integer components", NULL, fp_vector2_forms);
 static const struct bu_arg_operand fp_optional_vector2_operands[] = {
     BU_ARG_OPERAND_SHAPED("position", BU_ARG_VALUE_INTEGER, 0, 2, NULL,
@@ -572,7 +572,7 @@ static const struct bu_arg_operand fp_optional_vector2_operands[] = {
 };
 static const struct bu_arg_shape fp_color_shape =
     BU_ARG_SHAPE(BU_ARG_SHAPE_COLOR, 1, 3,
-	"packed color or three RGB components");
+	"packed color or three RGB components", NULL, NULL);
 static const struct bu_arg_operand fp_optional_color_operands[] = {
     BU_ARG_OPERAND_SHAPED("color", BU_ARG_VALUE_RAW, 0, 3, NULL,
 	"New color; omit to query", NULL, &fp_color_shape),
@@ -588,7 +588,7 @@ static const struct bu_arg_variant fp_overlay_forms[] = {
     BU_ARG_VARIANT_NULL
 };
 static const struct bu_arg_shape fp_overlay_shape =
-    BU_ARG_SHAPE_FORMS(BU_ARG_SHAPE_CUSTOM, 0, 4,
+    BU_ARG_SHAPE(BU_ARG_SHAPE_CUSTOM, 0, 4,
 	"query, state, or color operation", NULL, fp_overlay_forms);
 static const struct bu_arg_operand fp_overlay_operands[] = {
     BU_ARG_OPERAND_SHAPED("operation", BU_ARG_VALUE_RAW, 0, 4, NULL,

@@ -55,21 +55,21 @@ struct png2fb_state {
 
 static const struct bu_arg_option png2fb_schema_options[] = {
     BU_ARG_FLAG("1", NULL, struct png2fb_state, one_line_only, "Use one-line writes"),
-    BU_ARG_INTEGER("m", NULL, struct png2fb_state, multiple_lines, "lines",
+    BU_ARG_VALUE("m", NULL, struct png2fb_state, multiple_lines, BU_ARG_VALUE_INTEGER, BU_ARG_REQUIRED, "lines",
 	"Draw multiple lines per write"),
-    BU_ARG_POSITIVE_NUMBER("g", NULL, struct png2fb_state, def_screen_gamma, "gamma",
+    BU_ARG_VALUE_VALIDATE("g", NULL, struct png2fb_state, def_screen_gamma, BU_ARG_VALUE_NUMBER, bu_arg_positive_number_validate, "gamma",
 	"Set screen gamma"),
     BU_ARG_FLAG("H", NULL, struct png2fb_state, header_only, "Read the PNG header only"),
     BU_ARG_FLAG("i", NULL, struct png2fb_state, inverse, "Draw upside-down"),
     BU_ARG_FLAG("c", NULL, struct png2fb_state, clear, "Clear the framebuffer"),
     BU_ARG_FLAG("v", NULL, struct png2fb_state, verbose, "Print verbose reporting"),
     BU_ARG_FLAG("z", NULL, struct png2fb_state, zoom, "Zoom to fill the screen"),
-    BU_ARG_INTEGER("x", NULL, struct png2fb_state, file_xoff, "pixels", "Set input X offset"),
-    BU_ARG_INTEGER("y", NULL, struct png2fb_state, file_yoff, "pixels", "Set input Y offset"),
-    BU_ARG_INTEGER("X", NULL, struct png2fb_state, scr_xoff, "pixels", "Set framebuffer X offset"),
-    BU_ARG_INTEGER("Y", NULL, struct png2fb_state, scr_yoff, "pixels", "Set framebuffer Y offset"),
+    BU_ARG_VALUE("x", NULL, struct png2fb_state, file_xoff, BU_ARG_VALUE_INTEGER, BU_ARG_REQUIRED, "pixels", "Set input X offset"),
+    BU_ARG_VALUE("y", NULL, struct png2fb_state, file_yoff, BU_ARG_VALUE_INTEGER, BU_ARG_REQUIRED, "pixels", "Set input Y offset"),
+    BU_ARG_VALUE("X", NULL, struct png2fb_state, scr_xoff, BU_ARG_VALUE_INTEGER, BU_ARG_REQUIRED, "pixels", "Set framebuffer X offset"),
+    BU_ARG_VALUE("Y", NULL, struct png2fb_state, scr_yoff, BU_ARG_VALUE_INTEGER, BU_ARG_REQUIRED, "pixels", "Set framebuffer Y offset"),
     BU_ARG_FLAG("h", "help", struct png2fb_state, help, "Print command help"),
-    BU_ARG_ALIAS_SHORT("?", "help", 1),
+    BU_ARG_ALIAS("?", NULL, "help", 1),
     BU_ARG_OPTION_NULL
 };
 static const struct bu_arg_operand png2fb_schema_operands[] = {

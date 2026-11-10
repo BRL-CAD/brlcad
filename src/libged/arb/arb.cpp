@@ -245,10 +245,10 @@ ged_arb_core(struct ged *gedp, int argc, const char *argv[])
 extern "C" int ged_rotate_arb_face_core(struct ged *gedp, int argc, const char *argv[]);
 
 static const struct bu_arg_form arb_native_forms[] = {
-    BU_ARG_FORM_TREE("subcommands", "Named ARB create and repair operations",
+    BU_ARG_FORM("subcommands", "Named ARB create and repair operations", NULL,
 	&ged_arb_tree),
-    BU_ARG_FORM_SCHEMA("deprecated_create", "Deprecated positional create syntax",
-	&arb_legacy_schema),
+    BU_ARG_FORM("deprecated_create", "Deprecated positional create syntax",
+	&arb_legacy_schema, NULL),
     BU_ARG_FORM_NULL
 };
 

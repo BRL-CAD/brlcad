@@ -34,7 +34,7 @@ extern int ged_zap2_core(struct ged *gedp, int argc, const char *argv[]);
 
 static const struct bu_arg_option zap_schema_options[] = {
     BU_ARG_FLAG("h", "help", struct zap_args, print_help, "Print help and exit"),
-    BU_ARG_ALIAS_SHORT("?", "help", 1),
+    BU_ARG_ALIAS("?", NULL, "help", 1),
     {"V", "view", "view", "name", "Specify view to clear", BU_ARG_VALUE_STRING,
 	offsetof(struct zap_args, view), NULL, NULL, "ged.view", NULL, 0, 0, NULL,
 	BU_ARG_REQUIRED, NULL, NULL, NULL, BU_ARG_VALUE_RANGE_NONE, BU_ARG_SHAPE_SCALAR},
@@ -58,10 +58,10 @@ const struct bu_arg_schema ged_zap_cmd_schema = {
 GED_DEFINE_NO_ARG_SCHEMA_NAMED(zap_compatibility_schema, "zap",
     "Clear all displayed geometry", BU_ARG_PARSE_OPTIONS_FIRST);
 static const struct bu_arg_form ged_zap_native_forms[] = {
-    BU_ARG_FORM_SCHEMA("compatibility", "Legacy no-argument behavior",
-	&zap_compatibility_schema),
-    BU_ARG_FORM_SCHEMA("current", "Selective scene clearing options",
-	&ged_zap_cmd_schema),
+    BU_ARG_FORM("compatibility", "Legacy no-argument behavior",
+	&zap_compatibility_schema, NULL),
+    BU_ARG_FORM("current", "Selective scene clearing options",
+	&ged_zap_cmd_schema, NULL),
     BU_ARG_FORM_NULL
 };
 

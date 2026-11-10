@@ -206,7 +206,7 @@ static const char * const polygon_csg_values[] = {"u", "-", "+", NULL};
 static const struct bu_arg_option polygon_root_options[] = {
     BU_ARG_FLAG("h", "help", struct ged_view_polygon_args, print_help,
 	"Print help and exit"),
-    BU_ARG_ALIAS_SHORT("?", "help", 1),
+    BU_ARG_ALIAS("?", NULL, "help", 1),
     BU_ARG_FLAG("s", NULL, struct ged_view_polygon_args, s_version,
 	"Work with the S version of polygon data"),
     BU_ARG_OPTION_NULL

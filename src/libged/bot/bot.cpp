@@ -1110,7 +1110,7 @@ struct bot_split_subcommand_args {
 static const struct bu_arg_option bot_split_subcommand_options[] = {
     BU_ARG_FLAG("h", "help", struct bot_split_subcommand_args, print_help,
         "Print command help"),
-    BU_ARG_STRING("", "grp", struct bot_split_subcommand_args, group_name,
+    BU_ARG_VALUE("", "grp", struct bot_split_subcommand_args, group_name, BU_ARG_VALUE_STRING, BU_ARG_REQUIRED,
         "name", "Name the combination containing split BoTs"),
     BU_ARG_OPTION_NULL
 };
@@ -2401,7 +2401,7 @@ struct bot_root_args {
 static const struct bu_arg_option bot_root_options[] = {
     BU_ARG_FLAG("h", "help", struct bot_root_args, print_help,
 	"Print command help"),
-    BU_ARG_COUNTING_LONG_FLAG("v", "verbose", struct bot_root_args, verbosity,
+    BU_ARG_COUNTING_FLAG("v", "verbose", struct bot_root_args, verbosity, BU_ARG_VALUE_LONG,
 	"Increase output detail"),
     BU_ARG_FLAG("V", "visualize", struct bot_root_args, visualize,
 	"Visualize results when supported"),
