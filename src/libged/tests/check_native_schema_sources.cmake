@@ -41,7 +41,6 @@ list(SORT source_files)
 # one in another command, must be an explicit audit update rather than silent
 # grammar drift.
 set(unbound_adapter_allowlist
-  "src/libged/annotate/annotate.cpp|4"
   "src/libged/attr/attr.cpp|1"
   "src/libged/comb/comb.c|1"
   "src/libged/db/db.c|2"
@@ -50,16 +49,6 @@ set(unbound_adapter_allowlist
   "src/libged/material/material.c|2"
   "src/libged/pipe/pipe.c|1"
   "src/libged/view/view.c|8"
-)
-
-# Keep reviewed split execution/metadata parsers explicit: another adapter
-# must trigger a source-audit decision rather than being accepted merely
-# because a native schema is registered somewhere in the file.
-set(bu_opt_native_adapter_allowlist
-  "src/libged/annotate/annotate.cpp"
-  "src/libged/bot/dump/bot_dump.cpp"
-  "src/libged/edit/edarb.c"
-  "src/libged/facetize/subprocess/main.cpp"
 )
 
 set(violations)
@@ -154,9 +143,7 @@ foreach(source_file IN LISTS source_files)
   if(legacy_reference)
     string(FIND "${contents}" "GED_DECLARE_COMMAND_SET_WITH_OPT_SPEC" opt_spec_registration)
     string(FIND "${contents}" "GED_DECLARE_COMMAND_SET_WITH_MIXED_SCHEMA" mixed_spec_registration)
-    list(FIND bu_opt_native_adapter_allowlist "${relative_file}" native_adapter_index)
-    if(opt_spec_registration EQUAL -1 AND mixed_spec_registration EQUAL -1 AND
-        native_adapter_index EQUAL -1)
+    if(opt_spec_registration EQUAL -1 AND mixed_spec_registration EQUAL -1)
       list(APPEND violations "${relative_file} (bu_opt use without a registered command specification)")
     endif()
   endif()

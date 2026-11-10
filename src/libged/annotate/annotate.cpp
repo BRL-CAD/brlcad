@@ -39,7 +39,6 @@
 #include "bu/cmd.h"
 #include "bu/arg.h"
 #include "bu/malloc.h"
-#include "bu/opt.h"
 #include "bu/path.h"
 #include "bu/str.h"
 #include "bu/units.h"
@@ -113,12 +112,6 @@ const char *ATTR_LEADER_AT_AUTO = "annotate:leader-at-auto";
 const char *ATTR_LEADER_SCREEN_SPACE = "annotate:leader-screen-space";
 const char *ATTR_LEADER_DPI = "annotate:leader-dpi";
 
-#define ANNOT_OPT(_descs, _index, _so, _lo, _ahelp, _aprocess, _var, _help) do { \
-    BU_OPT((_descs)[(_index)], _so, _lo, _ahelp, _aprocess, _var, _help); \
-    (_index)++; \
-} while (0)
-
-
 struct color_option {
     struct bu_color value = BU_COLOR_INIT_ZERO;
     bool set = false;
@@ -126,27 +119,28 @@ struct color_option {
 
 
 static int
-parse_color(struct bu_vls *msg, size_t argc, const char **argv, void *set_var)
+parse_color(struct bu_vls *msg, size_t argc, const char **argv, void *storage)
 {
-    color_option *color = static_cast<color_option *>(set_var);
-    int consumed = bu_opt_color(msg, argc, argv, &color->value);
-    if (consumed > 0)
+    color_option *color = static_cast<color_option *>(storage);
+    int ret = bu_arg_color_consume(msg, argc, argv,
+	color ? static_cast<void *>(&color->value) : NULL);
+    if (!ret && color)
 	color->set = true;
-    return consumed;
+    return ret;
 }
 
 
 static int
-parse_vls_value(struct bu_vls *msg, size_t argc, const char **argv, void *set_var)
+parse_vls_value(struct bu_vls *msg, size_t argc, const char **argv, void *storage)
 {
-    if (!argc || !argv || !argv[0]) {
+    if (argc != 1 || !argv || !argv[0]) {
 	bu_vls_printf(msg, "Option requires a value");
 	return -1;
     }
-    struct bu_vls *value = static_cast<struct bu_vls *>(set_var);
+    struct bu_vls *value = static_cast<struct bu_vls *>(storage);
     if (value)
 	bu_vls_strcpy(value, argv[0]);
-    return 1;
+    return 0;
 }
 
 
@@ -211,6 +205,30 @@ struct create_options {
 	bu_vls_free(&associated_object);
     }
 };
+
+
+struct update_options {
+    int help = 0;
+    int view_only = 0;
+};
+
+
+struct visibility_options {
+    int help = 0;
+    int all = 0;
+};
+
+
+struct inspect_options {
+    int help = 0;
+};
+
+
+static const struct bu_arg_schema *annotate_text_parse_schema();
+static const struct bu_arg_schema *annotate_leader_parse_schema();
+static const struct bu_arg_schema *annotate_dimension_parse_schema(const std::string &type);
+static const struct bu_arg_schema *annotate_autodim_parse_schema();
+static const struct bu_arg_schema *annotate_update_parse_schema();
 
 
 static bool
@@ -400,41 +418,14 @@ private:
 };
 
 
-static int
-add_common_options(struct bu_opt_desc *descs, int index, create_options &opts)
-{
-    ANNOT_OPT(descs, index, "h", "help", "", NULL, &opts.help, "Print help");
-    ANNOT_OPT(descs, index, "", "text-height", "size", &bu_opt_fastf_t,
-	&opts.text_height, "Text height in current units");
-    ANNOT_OPT(descs, index, "", "font", "name", &parse_vls_value, &opts.font,
-	"TrueType font name or path");
-    ANNOT_OPT(descs, index, "C", "color", "r/g/b", &parse_color, &opts.color,
-	"Annotation color");
-    ANNOT_OPT(descs, index, "", "line-width", "width", &bu_opt_fastf_t,
-	&opts.line_width, "Line width");
-    ANNOT_OPT(descs, index, "", "line-style", "style", &parse_vls_value,
-	&opts.line_style, "continuous, dashed, dotted, center, or phantom");
-    ANNOT_OPT(descs, index, "", "bold", "", NULL, &opts.bold, "Use bold text");
-    ANNOT_OPT(descs, index, "", "italic", "", NULL, &opts.italic, "Use italic text");
-    ANNOT_OPT(descs, index, "", "for", "object", &parse_vls_value,
-	&opts.associated_object, "Associate the annotation with a geometry object");
-    ANNOT_OPT(descs, index, "D", "no-draw", "", NULL, &opts.no_draw,
-	"Do not draw the created annotation");
-    return index;
-}
-
-
 static void
-print_option_help(struct bu_vls *result, const char *usage,
-		  const struct bu_opt_desc *descs, const char *description = NULL)
+print_option_help(struct bu_vls *result, const char *invocation,
+		  const struct bu_arg_schema *schema)
 {
-    bu_vls_printf(result, "%s", usage);
-    if (description)
-	bu_vls_printf(result, "\n\n%s", description);
-    char *option_help = bu_opt_describe(descs, NULL);
-    if (option_help) {
-	bu_vls_printf(result, "\n\nOptions:\n%s", option_help);
-	bu_free(option_help, "annotate option help");
+    char *help = bu_arg_schema_help(schema, invocation);
+    if (help) {
+	bu_vls_strcat(result, help);
+	bu_free(help, "annotate option help");
     }
 }
 
@@ -457,16 +448,15 @@ annotate_command_messages(struct ged *gedp, int argc, const char **argv,
 
 static int
 parse_options(struct ged *gedp, int argc, const char **argv,
-	      struct bu_opt_desc *descs, create_options &opts)
+	      const struct bu_arg_schema *schema, create_options &opts)
 {
-    struct bu_vls message = BU_VLS_INIT_ZERO;
-    int remaining = bu_opt_parse(&message, argc, argv, descs);
-    if (remaining < 0) {
-	bu_vls_printf(gedp->ged_result_str, "%s", bu_vls_cstr(&message));
-	bu_vls_free(&message);
+    int operand_index = bu_arg_schema_parse_complete(schema, &opts,
+	gedp->ged_result_str, argc, argv);
+    if (operand_index < 0)
 	return -1;
-    }
-    bu_vls_free(&message);
+    int remaining = argc - operand_index;
+    for (int i = 0; i < remaining; ++i)
+	argv[i] = argv[operand_index + i];
     if (!valid_line_pattern(opts)) {
 	bu_vls_printf(gedp->ged_result_str,
 	    "Unknown line style '%s'", bu_vls_cstr(&opts.line_style));
@@ -902,23 +892,14 @@ cmd_text(void *data, int argc, const char **argv)
 	"annotate text [options] name text", "Create styled model-space text"))
 	return BRLCAD_OK;
     create_options opts;
-    struct bu_opt_desc descs[20];
-    int dcnt = add_common_options(descs, 0, opts);
-    ANNOT_OPT(descs, dcnt, "", "at", "x y z", &bu_opt_vect_t, &opts.at,
-	"Text anchor point");
-    ANNOT_OPT(descs, dcnt, "", "plane", "xy|xz|yz", &parse_vls_value, &opts.plane,
-	"Model-space text plane");
-    ANNOT_OPT(descs, dcnt, "", "frame", "", NULL, &opts.frame,
-	"Draw a rectangular frame around the text");
-    BU_OPT_NULL(descs[dcnt]);
+    const struct bu_arg_schema *schema = annotate_text_parse_schema();
     argc--; argv++;
-    int remaining = parse_options(gedp, argc, argv, descs, opts);
+    int remaining = parse_options(gedp, argc, argv, schema, opts);
     if (remaining < 0)
 	return BRLCAD_ERROR;
     if (opts.help || remaining != 2) {
 	print_option_help(gedp->ged_result_str,
-	    "Usage: annotate text [options] name text", descs,
-	    "Creates styled text in a model plane.");
+	    "annotate text", schema);
 	return opts.help ? GED_HELP : BRLCAD_ERROR;
     }
     if (prepare_name(gedp, argv[0]) != BRLCAD_OK)
@@ -1072,25 +1053,14 @@ cmd_leader(void *data, int argc, const char **argv)
 	"annotate leader [options] name text", "Create a text callout with a leader"))
 	return BRLCAD_OK;
     create_options opts;
-    struct bu_opt_desc descs[20];
-    int dcnt = add_common_options(descs, 0, opts);
-    ANNOT_OPT(descs, dcnt, "", "target", "x y z", &bu_opt_vect_t, &opts.target,
-	"Leader target point");
-    ANNOT_OPT(descs, dcnt, "", "at", "x y z", &bu_opt_vect_t, &opts.at,
-	"Text anchor point");
-    ANNOT_OPT(descs, dcnt, "", "screen-space", "", NULL, &opts.screen_space,
-	"Keep leader and text in the display plane");
-    ANNOT_OPT(descs, dcnt, "", "dpi", "value", &bu_opt_fastf_t, &opts.dpi,
-	"Physical display density for --screen-space text (default: 96)");
-    BU_OPT_NULL(descs[dcnt]);
+    const struct bu_arg_schema *schema = annotate_leader_parse_schema();
     argc--; argv++;
-    int remaining = parse_options(gedp, argc, argv, descs, opts);
+    int remaining = parse_options(gedp, argc, argv, schema, opts);
     if (remaining < 0)
 	return BRLCAD_ERROR;
     if (opts.help || remaining != 2) {
 	print_option_help(gedp->ged_result_str,
-	    "Usage: annotate leader [options] name text", descs,
-	    "Creates a callout with an arrowhead at --target or an associated object.");
+	    "annotate leader", schema);
 	return opts.help ? GED_HELP : BRLCAD_ERROR;
     }
     if (prepare_name(gedp, argv[0]) != BRLCAD_OK)
@@ -1250,59 +1220,6 @@ cmd_leader(void *data, int argc, const char **argv)
 }
 
 
-static int
-add_dimension_options(struct bu_opt_desc *descs, int index, create_options &opts)
-{
-    ANNOT_OPT(descs, index, "", "from", "x y z", &bu_opt_vect_t, &opts.from,
-	"First measured point");
-    ANNOT_OPT(descs, index, "", "to", "x y z", &bu_opt_vect_t, &opts.to,
-	"Second measured point");
-    ANNOT_OPT(descs, index, "", "vertex", "x y z", &bu_opt_vect_t, &opts.vertex,
-	"Angular dimension vertex");
-    ANNOT_OPT(descs, index, "", "center", "x y z", &bu_opt_vect_t, &opts.center,
-	"Circle center");
-    ANNOT_OPT(descs, index, "", "origin", "x y z", &bu_opt_vect_t, &opts.origin,
-	"Ordinate origin");
-    ANNOT_OPT(descs, index, "", "axis", "x|y|z", &parse_vls_value, &opts.axis,
-	"Ordinate measurement axis");
-    ANNOT_OPT(descs, index, "", "offset", "distance", &bu_opt_fastf_t, &opts.offset,
-	"Dimension-line offset in current units");
-    ANNOT_OPT(descs, index, "", "units", "unit", &parse_vls_value, &opts.units,
-	"Display units");
-    ANNOT_OPT(descs, index, "", "precision", "digits", &bu_opt_int, &opts.precision,
-	"Digits after the decimal point");
-    ANNOT_OPT(descs, index, "", "prefix", "text", &parse_vls_value, &opts.prefix,
-	"Text before the measured value");
-    ANNOT_OPT(descs, index, "", "suffix", "text", &parse_vls_value, &opts.suffix,
-	"Text after the measured value and units");
-    ANNOT_OPT(descs, index, "", "no-extension-lines", "", NULL,
-	&opts.no_extension_lines, "Suppress extension lines");
-    return index;
-}
-
-
-static int
-parse_dimension_options(struct ged *gedp, int argc, const char **argv,
-			create_options &opts, const char *usage)
-{
-    struct bu_opt_desc descs[32];
-    const int dcnt = add_dimension_options(descs, add_common_options(descs, 0, opts), opts);
-    BU_OPT_NULL(descs[dcnt]);
-    int remaining = parse_options(gedp, argc, argv, descs, opts);
-    if (remaining < 0)
-	return -1;
-    if (opts.help) {
-	bu_vls_printf(gedp->ged_result_str, "%s", usage);
-	return -2;
-    }
-    if (bu_vls_strlen(&opts.units) && bu_units_conversion(bu_vls_cstr(&opts.units)) <= 0.0) {
-	bu_vls_printf(gedp->ged_result_str, "Unknown unit '%s'", bu_vls_cstr(&opts.units));
-	return -1;
-    }
-    return remaining;
-}
-
-
 static const char *
 dimension_help_description(const std::string &type)
 {
@@ -1323,13 +1240,9 @@ dimension_help_description(const std::string &type)
 static void
 print_dimension_help(struct ged *gedp, const std::string &type)
 {
-    create_options opts;
-    struct bu_opt_desc descs[32];
-    const int dcnt = add_dimension_options(descs, add_common_options(descs, 0, opts), opts);
-    BU_OPT_NULL(descs[dcnt]);
-    const std::string usage = "Usage: annotate dimension " + type + " [options] name";
-    print_option_help(gedp->ged_result_str, usage.c_str(), descs,
-	dimension_help_description(type));
+    const std::string invocation = "annotate dimension " + type;
+    print_option_help(gedp->ged_result_str, invocation.c_str(),
+	annotate_dimension_parse_schema(type));
 }
 
 
@@ -1351,10 +1264,17 @@ cmd_dimension_type(void *data, int argc, const char **argv)
     argc--; argv++;
     create_options opts;
     const std::string usage = "Usage: " + type_usage;
-    int remaining = parse_dimension_options(gedp, argc, argv, opts, usage.c_str());
-    if (remaining == -2) {
+    const struct bu_arg_schema *schema = annotate_dimension_parse_schema(type);
+    int remaining = parse_options(gedp, argc, argv, schema, opts);
+    if (opts.help) {
 	print_dimension_help(gedp, type);
 	return GED_HELP;
+    }
+    if (remaining >= 0 && bu_vls_strlen(&opts.units) &&
+	bu_units_conversion(bu_vls_cstr(&opts.units)) <= 0.0) {
+	bu_vls_printf(gedp->ged_result_str, "Unknown unit '%s'",
+	    bu_vls_cstr(&opts.units));
+	return BRLCAD_ERROR;
     }
     if (remaining < 0 || remaining != 1) {
 	if (remaining >= 0)
@@ -1893,35 +1813,14 @@ cmd_autodim_impl(void *data, int argc, const char **argv,
 	"Create dimensions on selected bounding-box edges"))
 	return BRLCAD_OK;
     create_options opts;
-    struct bu_opt_desc descs[29];
-    int dcnt = add_common_options(descs, 0, opts);
-    ANNOT_OPT(descs, dcnt, "", "axes", "x,y,z", &parse_vls_value, &opts.axes,
-	"Axes to dimension");
-    ANNOT_OPT(descs, dcnt, "", "corner", "xmin,ymin,zmin", &parse_vls_value,
-	&opts.corner, "Bounding-box corner carrying the dimensions");
-    ANNOT_OPT(descs, dcnt, "", "bounds", "aabb|obb", &parse_vls_value, &opts.bounds,
-	"Use axis-aligned or oriented bounds");
-    ANNOT_OPT(descs, dcnt, "", "offset", "distance", &bu_opt_fastf_t, &opts.offset,
-	"Dimension-line offset in current units");
-    ANNOT_OPT(descs, dcnt, "", "units", "unit", &parse_vls_value, &opts.units,
-	"Display units");
-    ANNOT_OPT(descs, dcnt, "", "precision", "digits", &bu_opt_int, &opts.precision,
-	"Digits after the decimal point");
-    ANNOT_OPT(descs, dcnt, "", "no-axis-labels", "", NULL, &opts.no_axis_labels,
-	"Do not prefix values with X, Y, and Z");
-    ANNOT_OPT(descs, dcnt, "u", "no-air", "", NULL, &opts.no_air,
-	"Ignore air regions");
-    ANNOT_OPT(descs, dcnt, "t", "tight", "", NULL, &opts.tight,
-	"Use evaluated geometry bounds");
-    BU_OPT_NULL(descs[dcnt]);
+    const struct bu_arg_schema *schema = annotate_autodim_parse_schema();
     argc--; argv++;
-    int remaining = parse_options(gedp, argc, argv, descs, opts);
+    int remaining = parse_options(gedp, argc, argv, schema, opts);
     if (remaining < 0)
 	return BRLCAD_ERROR;
     if (opts.help || remaining < 1) {
 	print_option_help(gedp->ged_result_str,
-	    "Usage: annotate autodim [options] name [object ...]", descs,
-	    "Creates persistent dimensions on AABB or OBB edges.");
+	    "annotate autodim", schema);
 	return opts.help ? GED_HELP : BRLCAD_ERROR;
     }
     const char *name = argv[0];
@@ -2602,27 +2501,18 @@ cmd_update(void *data, int argc, const char **argv)
 	"Refresh autodim and leader annotations"))
 	return BRLCAD_OK;
     argc--; argv++;
-    int help = 0;
-    int view_only = 0;
-    struct bu_opt_desc desc[] = {
-	{"h", "help", "", NULL, &help, "Print help"},
-	{"", "view-only", "", NULL, &view_only,
-	    "Reuse stored bounds and update view-dependent presentation"},
-	BU_OPT_DESC_NULL
-    };
-    struct bu_vls message = BU_VLS_INIT_ZERO;
-    const int remaining = bu_opt_parse(&message, argc, argv, desc);
-    if (remaining < 0) {
-	bu_vls_printf(gedp->ged_result_str, "%s", bu_vls_cstr(&message));
-	bu_vls_free(&message);
+    update_options opts;
+    const struct bu_arg_schema *schema = annotate_update_parse_schema();
+    const int operand_index = bu_arg_schema_parse_complete(schema, &opts,
+	gedp->ged_result_str, argc, argv);
+    if (operand_index < 0)
 	return BRLCAD_ERROR;
-    }
-    bu_vls_free(&message);
-    if (help || remaining < 1) {
+    const int remaining = argc - operand_index;
+    argv += operand_index;
+    if (opts.help || remaining < 1) {
 	print_option_help(gedp->ged_result_str,
-	    "Usage: annotate update [--view-only] name ...", desc,
-	    "Refreshes autodim and leader annotations from stored creation settings.");
-	return help ? GED_HELP : BRLCAD_ERROR;
+	    "annotate update", schema);
+	return opts.help ? GED_HELP : BRLCAD_ERROR;
     }
     for (int i = 0; i < remaining; ++i) {
 	struct directory *dp = db_lookup(gedp->dbip, argv[i], LOOKUP_QUIET);
@@ -2634,8 +2524,8 @@ cmd_update(void *data, int argc, const char **argv)
 	const bool is_leader = kind && BU_STR_EQUAL(kind, "leader");
 	bu_avs_free(&avs);
 	if ((!is_autodim && !is_leader) ||
-	    (is_autodim && update_autodim(gedp, argv[i], view_only) != BRLCAD_OK) ||
-	    (is_leader && update_leader(gedp, argv[i], view_only) != BRLCAD_OK)) {
+	    (is_autodim && update_autodim(gedp, argv[i], opts.view_only) != BRLCAD_OK) ||
+	    (is_leader && update_leader(gedp, argv[i], opts.view_only) != BRLCAD_OK)) {
 	    if (!is_autodim && !is_leader)
 		bu_vls_printf(gedp->ged_result_str,
 		    "Annotation '%s' is not an updatable autodim group or leader", argv[i]);
@@ -2959,8 +2849,6 @@ ged_annotate_core(struct ged *gedp, int argc, const char *argv[])
 
 #include "../include/plugin.h"
 
-/* The executor still owns the annotation builders; these native descriptions
- * make every public subcommand visible to command analysis and completion. */
 static const struct bu_arg_value_keyword annotate_line_styles[] = {
     {"continuous", NULL, NULL}, {"dashed", NULL, NULL},
     {"dotted", NULL, NULL}, {"center", NULL, NULL},
@@ -2977,60 +2865,71 @@ static const struct bu_arg_value_keyword annotate_axes[] = {
 static const struct bu_arg_value_keyword annotate_bounds[] = {
     {"aabb", NULL, NULL}, {"obb", NULL, NULL}, {NULL, NULL, NULL}
 };
-#define ANN_KEYWORDS(long_name, argument, description, values) \
-    {"", long_name, long_name, argument, description, BU_ARG_VALUE_KEYWORD, \
-        BU_ARG_STORAGE_NONE, NULL, NULL, NULL, NULL, 0, 0, NULL, \
-        BU_ARG_REQUIRED, NULL, NULL, values, BU_ARG_VALUE_RANGE_NONE, BU_ARG_SHAPE_SCALAR}
-#define ANN_FLAG(short_name, long_name, description) \
-    BU_ARG_UNBOUND(short_name, long_name, long_name, BU_ARG_VALUE_FLAG, BU_ARG_NONE, NULL, description, NULL)
-#define ANN_VALUE(short_name, long_name, type, argument, description) \
-    BU_ARG_UNBOUND(short_name, long_name, long_name, type, BU_ARG_REQUIRED, argument, description, NULL)
-#define ANN_VECTOR(long_name, description) \
-    BU_ARG_UNBOUND("", long_name, long_name, BU_ARG_VALUE_VECTOR, BU_ARG_REQUIRED, \
-        "x y z", description, &bu_arg_vector3_shape)
+#define ANN_VLS(long_name, field, type, argument, description) \
+    {NULL, long_name, long_name, argument, description, type, \
+	BU_ARG_STORAGE_OFFSET(create_options, field), NULL, NULL, NULL, NULL, 0, 0, \
+	NULL, BU_ARG_REQUIRED, NULL, parse_vls_value, NULL, \
+	BU_ARG_VALUE_RANGE_NONE, BU_ARG_SHAPE_SCALAR}
+#define ANN_KEYWORDS(long_name, field, argument, description, values) \
+    {NULL, long_name, long_name, argument, description, BU_ARG_VALUE_KEYWORD, \
+	BU_ARG_STORAGE_OFFSET(create_options, field), NULL, NULL, NULL, NULL, 0, 0, \
+	NULL, BU_ARG_REQUIRED, NULL, parse_vls_value, values, \
+	BU_ARG_VALUE_RANGE_NONE, BU_ARG_SHAPE_SCALAR}
+#define ANN_FLAG(short_name, long_name, field, description) \
+    BU_ARG_FLAG(short_name, long_name, create_options, field, description)
+#define ANN_VALUE(short_name, long_name, field, type, argument, description) \
+    BU_ARG_VALUE(short_name, long_name, create_options, field, type, \
+	BU_ARG_REQUIRED, argument, description)
+#define ANN_VECTOR(long_name, field, description) \
+    BU_ARG_VECTOR3(NULL, long_name, create_options, field, "x y z", description)
+#define ANN_COLOR \
+    {"C", "color", "color", "r/g/b", "Annotation color", \
+	BU_ARG_VALUE_COLOR, BU_ARG_STORAGE_OFFSET(create_options, color), NULL, \
+	NULL, NULL, NULL, 0, 0, NULL, BU_ARG_REQUIRED, NULL, parse_color, NULL, \
+	BU_ARG_VALUE_RANGE_NONE, BU_ARG_SHAPE_COLOR}
 #define ANN_COMMON_OPTIONS \
-    ANN_FLAG("h", "help", "Print help"), \
-    ANN_VALUE("", "text-height", BU_ARG_VALUE_NUMBER, "size", "Text height in current units"), \
-    ANN_VALUE("", "font", BU_ARG_VALUE_STRING, "name", "TrueType font name or path"), \
-    BU_ARG_UNBOUND("C", "color", "color", BU_ARG_VALUE_COLOR, BU_ARG_REQUIRED, "r/g/b", \
-        "Annotation color", &bu_arg_color_shape), \
-    ANN_VALUE("", "line-width", BU_ARG_VALUE_NUMBER, "width", "Line width"), \
-    ANN_KEYWORDS("line-style", "style", "Line pattern", annotate_line_styles), \
-    ANN_FLAG("", "bold", "Use bold text"), \
-    ANN_FLAG("", "italic", "Use italic text"), \
-    ANN_VALUE("", "for", BU_ARG_VALUE_DB_OBJECT, "object", "Associated geometry object"), \
-    ANN_FLAG("D", "no-draw", "Create without drawing")
+    ANN_FLAG("h", "help", help, "Print help"), \
+    ANN_VALUE(NULL, "text-height", text_height, BU_ARG_VALUE_NUMBER, "size", "Text height in current units"), \
+    ANN_VLS("font", font, BU_ARG_VALUE_STRING, "name", "TrueType font name or path"), \
+    ANN_COLOR, \
+    ANN_VALUE(NULL, "line-width", line_width, BU_ARG_VALUE_NUMBER, "width", "Line width"), \
+    ANN_KEYWORDS("line-style", line_style, "style", "Line pattern", annotate_line_styles), \
+    ANN_FLAG(NULL, "bold", bold, "Use bold text"), \
+    ANN_FLAG(NULL, "italic", italic, "Use italic text"), \
+    ANN_VLS("for", associated_object, BU_ARG_VALUE_DB_OBJECT, "object", "Associated geometry object"), \
+    ANN_FLAG("D", "no-draw", no_draw, "Create without drawing")
 #define ANN_DIMENSION_OPTIONS \
     ANN_COMMON_OPTIONS, \
-    ANN_VECTOR("from", "First measured point"), \
-    ANN_VECTOR("to", "Second measured point"), \
-    ANN_VECTOR("vertex", "Angular dimension vertex"), \
-    ANN_VECTOR("center", "Circle center"), \
-    ANN_VECTOR("origin", "Ordinate origin"), \
-    ANN_KEYWORDS("axis", "x|y|z", "Ordinate axis", annotate_axes), \
-    ANN_VALUE("", "offset", BU_ARG_VALUE_NUMBER, "distance", "Dimension line offset"), \
-    ANN_VALUE("", "units", BU_ARG_VALUE_STRING, "unit", "Display units"), \
-    ANN_VALUE("", "precision", BU_ARG_VALUE_INTEGER, "digits", "Decimal places"), \
-    ANN_VALUE("", "prefix", BU_ARG_VALUE_STRING, "text", "Text before value"), \
-    ANN_VALUE("", "suffix", BU_ARG_VALUE_STRING, "text", "Text after value"), \
-    ANN_FLAG("", "no-extension-lines", "Suppress extension lines")
+    ANN_VECTOR("from", from, "First measured point"), \
+    ANN_VECTOR("to", to, "Second measured point"), \
+    ANN_VECTOR("vertex", vertex, "Angular dimension vertex"), \
+    ANN_VECTOR("center", center, "Circle center"), \
+    ANN_VECTOR("origin", origin, "Ordinate origin"), \
+    ANN_KEYWORDS("axis", axis, "x|y|z", "Ordinate axis", annotate_axes), \
+    ANN_VALUE(NULL, "offset", offset, BU_ARG_VALUE_NUMBER, "distance", "Dimension line offset"), \
+    ANN_VLS("units", units, BU_ARG_VALUE_STRING, "unit", "Display units"), \
+    ANN_VALUE(NULL, "precision", precision, BU_ARG_VALUE_INTEGER, "digits", "Decimal places"), \
+    ANN_VLS("prefix", prefix, BU_ARG_VALUE_STRING, "text", "Text before value"), \
+    ANN_VLS("suffix", suffix, BU_ARG_VALUE_STRING, "text", "Text after value"), \
+    ANN_FLAG(NULL, "no-extension-lines", no_extension_lines, "Suppress extension lines")
 
 static const struct bu_arg_option annotate_root_options[] = {
-    ANN_FLAG("h", "help", "Print help"), BU_ARG_OPTION_NULL
+    BU_ARG_FLAG("h", "help", inspect_options, help, "Print help"),
+    BU_ARG_OPTION_NULL
 };
 static const struct bu_arg_option annotate_text_options[] = {
     ANN_COMMON_OPTIONS,
-    ANN_VECTOR("at", "Text anchor point"),
-    ANN_KEYWORDS("plane", "xy|xz|yz", "Model text plane", annotate_planes),
-    ANN_FLAG("", "frame", "Draw a frame around text"),
+    ANN_VECTOR("at", at, "Text anchor point"),
+    ANN_KEYWORDS("plane", plane, "xy|xz|yz", "Model text plane", annotate_planes),
+    ANN_FLAG(NULL, "frame", frame, "Draw a frame around text"),
     BU_ARG_OPTION_NULL
 };
 static const struct bu_arg_option annotate_leader_options[] = {
     ANN_COMMON_OPTIONS,
-    ANN_VECTOR("target", "Leader target point"),
-    ANN_VECTOR("at", "Text anchor point"),
-    ANN_FLAG("", "screen-space", "Keep leader in display plane"),
-    ANN_VALUE("", "dpi", BU_ARG_VALUE_NUMBER, "value", "Display density"),
+    ANN_VECTOR("target", target, "Leader target point"),
+    ANN_VECTOR("at", at, "Text anchor point"),
+    ANN_FLAG(NULL, "screen-space", screen_space, "Keep leader in display plane"),
+    ANN_VALUE(NULL, "dpi", dpi, BU_ARG_VALUE_NUMBER, "value", "Display density"),
     BU_ARG_OPTION_NULL
 };
 static const struct bu_arg_option annotate_dimension_options[] = {
@@ -3038,30 +2937,32 @@ static const struct bu_arg_option annotate_dimension_options[] = {
 };
 static const struct bu_arg_option annotate_autodim_options[] = {
     ANN_COMMON_OPTIONS,
-    ANN_VALUE("", "axes", BU_ARG_VALUE_STRING, "x,y,z", "Axes to dimension"),
-    ANN_VALUE("", "corner", BU_ARG_VALUE_STRING, "corner", "Box corner or auto"),
-    ANN_KEYWORDS("bounds", "aabb|obb", "Bounds type", annotate_bounds),
-    ANN_VALUE("", "offset", BU_ARG_VALUE_NUMBER, "distance", "Dimension line offset"),
-    ANN_VALUE("", "units", BU_ARG_VALUE_STRING, "unit", "Display units"),
-    ANN_VALUE("", "precision", BU_ARG_VALUE_INTEGER, "digits", "Decimal places"),
-    ANN_FLAG("", "no-axis-labels", "Omit axis labels"),
-    ANN_FLAG("u", "no-air", "Ignore air regions"),
-    ANN_FLAG("t", "tight", "Use evaluated geometry bounds"),
+    ANN_VLS("axes", axes, BU_ARG_VALUE_STRING, "x,y,z", "Axes to dimension"),
+    ANN_VLS("corner", corner, BU_ARG_VALUE_STRING, "corner", "Box corner or auto"),
+    ANN_KEYWORDS("bounds", bounds, "aabb|obb", "Bounds type", annotate_bounds),
+    ANN_VALUE(NULL, "offset", offset, BU_ARG_VALUE_NUMBER, "distance", "Dimension line offset"),
+    ANN_VLS("units", units, BU_ARG_VALUE_STRING, "unit", "Display units"),
+    ANN_VALUE(NULL, "precision", precision, BU_ARG_VALUE_INTEGER, "digits", "Decimal places"),
+    ANN_FLAG(NULL, "no-axis-labels", no_axis_labels, "Omit axis labels"),
+    ANN_FLAG("u", "no-air", no_air, "Ignore air regions"),
+    ANN_FLAG("t", "tight", tight, "Use evaluated geometry bounds"),
     BU_ARG_OPTION_NULL
 };
 static const struct bu_arg_option annotate_update_options[] = {
-    ANN_FLAG("h", "help", "Print help"),
-    ANN_FLAG("", "view-only", "Reuse stored bounds"),
+    BU_ARG_FLAG("h", "help", update_options, help, "Print help"),
+    BU_ARG_FLAG(NULL, "view-only", update_options, view_only, "Reuse stored bounds"),
     BU_ARG_OPTION_NULL
 };
 static const struct bu_arg_option annotate_visibility_options[] = {
-    ANN_FLAG("h", "help", "Print help"),
-    ANN_FLAG("", "all", "Select all top-level annotations"),
+    BU_ARG_FLAG("h", "help", visibility_options, help, "Print help"),
+    BU_ARG_FLAG(NULL, "all", visibility_options, all, "Select all top-level annotations"),
     BU_ARG_OPTION_NULL
 };
 static const struct bu_arg_option annotate_inspect_options[] = {
-    ANN_FLAG("h", "help", "Print help"), BU_ARG_OPTION_NULL
+    BU_ARG_FLAG("h", "help", inspect_options, help, "Print help"),
+    BU_ARG_OPTION_NULL
 };
+#undef ANN_COLOR
 #undef ANN_KEYWORDS
 #undef ANN_DIMENSION_OPTIONS
 #undef ANN_COMMON_OPTIONS
@@ -3106,8 +3007,9 @@ static const struct bu_arg_operand annotate_info_operands[] = {
 };
 #define ANN_SCHEMA(identifier, command_name, description, options, operands) \
     static const struct bu_arg_schema identifier = \
-        BU_ARG_SCHEMA_EXTERNAL(command_name, description, options, operands, \
-            BU_ARG_PARSE_INTERSPERSED, NULL, NULL, NULL)
+	BU_ARG_SCHEMA(command_name, description, options, operands, \
+	    BU_ARG_PARSE_INTERSPERSED, \
+	    BU_ARG_SCHEMA_META_HELP(NULL, NULL, NULL, NULL, NULL))
 ANN_SCHEMA(annotate_root_schema, "annotate", "Create and inspect annotations",
     annotate_root_options, NULL);
 ANN_SCHEMA(annotate_text_schema, "text", "Create model-space text",
@@ -3139,6 +3041,55 @@ ANN_SCHEMA(annotate_list_schema, "list", "List persistent annotations",
 ANN_SCHEMA(annotate_info_schema, "info", "Describe an annotation",
     annotate_inspect_options, annotate_info_operands);
 #undef ANN_SCHEMA
+
+namespace {
+
+static const struct bu_arg_schema *
+annotate_text_parse_schema()
+{
+    return &annotate_text_schema;
+}
+
+
+static const struct bu_arg_schema *
+annotate_leader_parse_schema()
+{
+    return &annotate_leader_schema;
+}
+
+
+static const struct bu_arg_schema *
+annotate_dimension_parse_schema(const std::string &type)
+{
+    if (type == "linear")
+	return &annotate_linear_schema;
+    if (type == "angular")
+	return &annotate_angular_schema;
+    if (type == "radius")
+	return &annotate_radius_schema;
+    if (type == "diameter")
+	return &annotate_diameter_schema;
+    if (type == "ordinate")
+	return &annotate_ordinate_schema;
+    return NULL;
+}
+
+
+static const struct bu_arg_schema *
+annotate_autodim_parse_schema()
+{
+    return &annotate_autodim_schema;
+}
+
+
+static const struct bu_arg_schema *
+annotate_update_parse_schema()
+{
+    return &annotate_update_schema;
+}
+
+} // namespace
+
 static const struct bu_arg_tree_node annotate_dimension_nodes[] = {
     BU_ARG_TREE_NODE(&annotate_linear_schema, NULL, NULL, BU_ARG_TREE_CHILD_AFTER_OPTIONS, NULL),
     BU_ARG_TREE_NODE(&annotate_angular_schema, NULL, NULL, BU_ARG_TREE_CHILD_AFTER_OPTIONS, NULL),
