@@ -298,7 +298,7 @@ class GED_EXPORT DbiState {
 	DbiState(struct ged *);
 	~DbiState();
 
-	/** Reconcile and consume pending events and legacy callback state. */
+	/** Reconcile and consume pending events. */
 	unsigned long long update();
 	/** Reconcile each recorded event revision once, without discarding it. */
 	unsigned long long reconcile_changes();
@@ -334,8 +334,6 @@ class GED_EXPORT DbiState {
 	std::vector<unsigned long long> digest_path(const char *path);
 
 	unsigned long long path_hash(std::vector<unsigned long long> &path, size_t max_len);
-
-	void clear_cache(struct directory *dp);
 
 	BViewState *get_view_state(struct bview *);
 
@@ -396,13 +394,6 @@ class GED_EXPORT DbiState {
 	std::unordered_map<unsigned long long, int> region_id; // region_id
 
 
-	// Data to be used by callbacks
-	std::unordered_set<struct directory *> added;
-	std::unordered_set<struct directory *> changed;
-	std::unordered_set<unsigned long long> changed_hashes;
-	std::unordered_set<unsigned long long> removed;
-	std::unordered_map<unsigned long long, std::string> old_names;
-
 	// The shared view is common to multiple views, so we always update it.
 	// For other associated views (if any), we track their drawn states
 	// separately, but they too need to update in response to database
@@ -419,8 +410,6 @@ class GED_EXPORT DbiState {
 	struct ged *gedp = NULL;
 	struct db_i *dbip = NULL;
 
-	bool need_update_nref = true;
-
 	// Debugging methods for printing out current states - the use of hashes
 	// means direct inspection of most data isn't informative, so we provide
 	// convenience methods that decode it to user-comprehensible info.
@@ -431,7 +420,14 @@ class GED_EXPORT DbiState {
 		size_t, const struct ged_event_result *, void *);
 	uint64_t record_changes(const struct ged_event *, size_t);
 	unsigned long long reconcile(const DbiStateChange &);
-	bool legacy_changes_reconciled() const;
+
+	// Change markers used while rebuilding the hierarchy and views.
+	std::unordered_set<unsigned long long> changed_hashes;
+	std::unordered_set<unsigned long long> removed;
+	std::unordered_map<unsigned long long, std::string> old_names;
+	bool need_update_nref = true;
+
+	friend class BViewState;
 	void gather_cyclic(
 		std::unordered_set<unsigned long long> &cyclic,
 		unsigned long long c_hash,
@@ -445,6 +441,8 @@ class GED_EXPORT DbiState {
 
 	void populate_maps(struct directory *dp, unsigned long long phash, int reset);
 	void clear_cache(unsigned long long);
+	void clear_lod_cache(const std::string &);
+	unsigned long long invalidate_caches(const std::string &);
 	unsigned long long update_dp(struct directory *dp, int reset);
 	unsigned int color_int(struct bu_color *);
 	int int_color(struct bu_color *c, unsigned int);

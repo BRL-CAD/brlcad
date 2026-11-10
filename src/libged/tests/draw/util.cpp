@@ -38,49 +38,6 @@
 
 #include "../../dbi.h"
 
-// In order to handle changes to .g geometry contents, we need to defined
-// callbacks for the librt hooks that will update the working data structures.
-// In Qt we have libqtcad handle this, but as we are not using a QgModel we
-// need to do it ourselves.
-extern "C" void
-ged_changed_callback(struct db_i *UNUSED(dbip), struct directory *dp, int mode, void *u_data)
-{
-    unsigned long long hash;
-    struct ged *gedp = (struct ged *)u_data;
-    DbiState *ctx = (DbiState *)gedp->dbi_state;
-
-    // Clear cached GED drawing data and update
-    ctx->clear_cache(dp);
-
-    // Need to invalidate any LoD caches associated with this dp
-    if (dp->d_minor_type == DB5_MINORTYPE_BRLCAD_BOT && ctx->gedp) {
-	unsigned long long key = bv_mesh_lod_key_get(ctx->gedp->ged_lod, dp->d_namep);
-	if (key) {
-	    bv_mesh_lod_clear_cache(ctx->gedp->ged_lod, key);
-	    bv_mesh_lod_key_put(ctx->gedp->ged_lod, dp->d_namep, 0);
-	}
-    }
-
-    switch(mode) {
-	case 0:
-	    ctx->changed.insert(dp);
-	    break;
-	case 1:
-	    ctx->added.insert(dp);
-	    break;
-	case 2:
-	    // When this callback is made, dp is still valid, but in subsequent
-	    // processing it will not be.  We need to capture everything we
-	    // will need from this dp now, for later use when updating state
-	    hash = bu_data_hash(dp->d_namep, strlen(dp->d_namep)*sizeof(char));
-	    ctx->removed.insert(hash);
-	    ctx->old_names[hash] = std::string(dp->d_namep);
-	    break;
-	default:
-	    bu_log("changed callback mode error: %d\n", mode);
-    }
-}
-
 extern "C" void
 dm_refresh(struct ged *gedp)
 {

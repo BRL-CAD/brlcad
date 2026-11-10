@@ -57,10 +57,21 @@ main(int argc, char **argv)
     if (!check_command(model, 2, open_first, 0) ||
 	!check_command(model, 3, make, 1) ||
 	!check_command(model, 2, kill, 0) ||
+	!check_command(model, 3, make, 1) ||
 	!check_command(model, 1, close, 0) ||
 	!check_command(model, 2, open_second, 0) ||
-	!check_command(model, 3, make, 1))
+	!check_command(model, 3, make, 1) ||
+	!check_command(model, 2, open_first, 1))
 	return 1;
+
+    const QAbstractItemModel &tree = model;
+    const QModelIndex root_child = tree.index(0, 0);
+    const QVariant directory_entry = tree.data(root_child, QgModel::DirectoryInternalRole);
+    if (directory_entry.value<void *>() != db_lookup(model.gedp->dbip,
+	    make[1], LOOKUP_QUIET)) {
+	bu_log("A hierarchy row retained a directory entry from the old database\n");
+	return 1;
+    }
 
     return 0;
 }

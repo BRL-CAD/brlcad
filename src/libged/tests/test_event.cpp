@@ -18,6 +18,7 @@
 #include <vector>
 
 #include "bu/app.h"
+#include "bv/lod.h"
 #include "ged.h"
 
 #include "../dbi.h"
@@ -381,6 +382,12 @@ test_librt_bridge(void)
     CHECK(dbis->change_snapshots().empty(),
 	"acknowledging the latest reconciled revision clears history");
 
+    struct ged_event rebuild = {};
+    rebuild.kind = GED_EVENT_BATCH_REBUILD;
+    CHECK(ged_event_publish(gedp, &rebuild, 1, nullptr) == GED_EVENT_OK &&
+	dbis->reconcile_changes() == GED_DBISTATE_DB_CHANGE,
+	"an inventory rebuild reconciles without individual object events");
+
     ged_event_observer_remove(gedp, observer);
     gedp->dbi_state = nullptr;
     delete dbis;
@@ -407,8 +414,21 @@ test_dbi_change_inventory(void)
 
     DbiState *dbis = new DbiState(gedp);
     gedp->dbi_state = dbis;
-    struct ged_event events[4];
-    for (size_t i = 0; i < 4; i++)
+    gedp->ged_lod = bv_mesh_lod_context_create("event_inventory.g");
+    CHECK(gedp->ged_lod != nullptr, "inventory LoD context opens");
+    constexpr unsigned long long added_lod_key = 1001;
+    constexpr unsigned long long changed_lod_key = 1002;
+    constexpr unsigned long long removed_lod_key = 1003;
+    constexpr unsigned long long renamed_lod_key = 1004;
+    if (gedp->ged_lod) {
+	bv_mesh_lod_key_put(gedp->ged_lod, "added.s", added_lod_key);
+	bv_mesh_lod_key_put(gedp->ged_lod, "changed.s", changed_lod_key);
+	bv_mesh_lod_key_put(gedp->ged_lod, "removed.s", removed_lod_key);
+	bv_mesh_lod_key_put(gedp->ged_lod, "old.s", renamed_lod_key);
+    }
+
+    struct ged_event events[5];
+    for (size_t i = 0; i < 5; i++)
 	ged_event_init(&events[i]);
     events[0].kind = GED_EVENT_OBJECT_ADDED;
     events[0].name = "added.s";
@@ -420,8 +440,11 @@ test_dbi_change_inventory(void)
     events[3].parent_name = "parent.c";
     events[3].child_name = "child.s";
     events[3].path = "parent.c/child.s";
+    events[4].kind = GED_EVENT_OBJECT_RENAMED;
+    events[4].name = "old.s";
+    events[4].new_name = "new.s";
 
-    CHECK(ged_event_publish(gedp, events, 4, nullptr) == GED_EVENT_OK,
+    CHECK(ged_event_publish(gedp, events, 5, nullptr) == GED_EVENT_OK,
 	"mixed mutation batch publishes");
     std::vector<DbiStateChange> changes = dbis->change_snapshots();
     CHECK(changes.size() == 1, "one event batch creates one revision");
@@ -430,7 +453,8 @@ test_dbi_change_inventory(void)
 	CHECK(change.added.count("added.s") == 1 &&
 	    change.modified.count("changed.s") == 1 &&
 	    change.modified.count("parent.c") == 1 &&
-	    change.removed.count("removed.s") == 1,
+	    change.removed.count("removed.s") == 1 &&
+	    change.renamed.at("old.s") == "new.s",
 	    "snapshot classifies object mutations");
 	CHECK(change.paths.count("parent.c/child.s") == 1 &&
 	    change.structural && change.nref_dirty,
@@ -440,7 +464,20 @@ test_dbi_change_inventory(void)
 	    "unreconciled revisions cannot be acknowledged");
     }
 
+    if (gedp->ged_lod) {
+	CHECK(bv_mesh_lod_key_get(gedp->ged_lod, "changed.s") ==
+	    changed_lod_key,
+	    "recording changes does not invalidate LoD data prematurely");
+    }
+
     dbis->reconcile_changes();
+    if (gedp->ged_lod) {
+	CHECK(bv_mesh_lod_key_get(gedp->ged_lod, "added.s") == 0 &&
+	    bv_mesh_lod_key_get(gedp->ged_lod, "changed.s") == 0 &&
+	    bv_mesh_lod_key_get(gedp->ged_lod, "removed.s") == 0 &&
+	    bv_mesh_lod_key_get(gedp->ged_lod, "old.s") == 0,
+	    "reconciliation invalidates LoD names for every mutation class");
+    }
     changes = dbis->change_snapshots();
     if (!changes.empty())
 	dbis->acknowledge_changes(changes.back().revision);

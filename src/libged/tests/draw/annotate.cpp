@@ -51,7 +51,6 @@ static constexpr const char *PRIMITIVE_TEXT_HEIGHT = "40";
 static constexpr fastf_t PRIMITIVE_DIMENSION_OFFSET_SCALE = 1.5;
 static constexpr fastf_t PRIMITIVE_ANGULAR_OFFSET_SCALE = 3.0;
 
-extern "C" void ged_changed_callback(struct db_i *, struct directory *, int, void *);
 extern "C" void dm_refresh(struct ged *);
 extern "C" int img_cmp(int, struct ged *, const char *, bool, bool, int, fastf_t,
 	const char *, const char *);
@@ -432,7 +431,6 @@ main(int argc, const char **argv)
     verify_legacy_annotation_coloring(gedp);
     gedp->dbi_state = new DbiState(gedp);
     gedp->new_cmd_forms = 1;
-    db_add_changed_clbk(gedp->dbip, &ged_changed_callback, gedp);
 
     verify_help_output(gedp);
 
@@ -705,7 +703,6 @@ main(int argc, const char **argv)
 
     verify_geometry_update(gedp);
 
-    db_rm_changed_clbk(gedp->dbip, &ged_changed_callback, gedp);
     delete static_cast<DbiState *>(gedp->dbi_state);
     gedp->dbi_state = NULL;
     ged_close(gedp);

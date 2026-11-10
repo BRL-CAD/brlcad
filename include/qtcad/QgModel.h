@@ -275,17 +275,11 @@ class QTCAD_EXPORT QgModel : public QAbstractItemModel
 	bool canFetchMore(const QModelIndex &idx) const override;
 	void fetchMore(const QModelIndex &idx) override;
 
-	// A flag for callbacks to set if they alter the database in some way.
+	// Requests a refresh when the hierarchy presentation changes.
 	// Used to determine whether to emit the mdl_changed_db signal once
 	// after a GED command processing call is complete. If emitted, the
 	// interface will know to take certain steps when updating views.
 	int changed_db_flag = 0;
-
-	// It's unclear if we need this, but allow callbacks to insist on a
-	// post-command running of update_nref - in principle this should be
-	// already handled by command and/or librt logic, but not sure if we
-	// can count on that...
-	bool need_update_nref = false;
 
 	/* Used by callers to identify which objects need to be redrawn when
 	 * scene views are updated. */
@@ -346,7 +340,7 @@ class QTCAD_EXPORT QgModel : public QAbstractItemModel
 	QgItem *rootItem;
 	struct bview *empty_gvp = NULL;
 	struct db_i *model_dbip = NULL;
-	struct db_i *callback_dbip = NULL;
+	uint64_t model_revision = 0;
 };
 
 #endif //QGMODEL_H

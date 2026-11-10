@@ -210,7 +210,7 @@ bu_cache_close(struct bu_cache *c)
     mdb_env_close(c->i->env);
     bu_vls_free(c->i->fname);
     BU_PUT(c->i->fname, struct bu_vls);
-    BU_PUT(c->i, struct bu_cache_impl);
+    delete c->i;
     BU_PUT(c, struct bu_cache);
 
     return BRLCAD_OK;

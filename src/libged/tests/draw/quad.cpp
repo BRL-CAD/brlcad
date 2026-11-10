@@ -39,11 +39,6 @@
 #include "../../dbi.h"
 
 extern "C" int unpack_apng(const char *src_dir, const char *apng_name, const char *out_dir, const char *prefix);
-// In order to handle changes to .g geometry contents, we need to defined
-// callbacks for the librt hooks that will update the working data structures.
-// In Qt we have libqtcad handle this, but as we are not using a QgModel we
-// need to do it ourselves.
-extern "C" void ged_changed_callback(struct db_i *dbip, struct directory *dp, int mode, void *u_data);
 
 
 void
@@ -422,9 +417,6 @@ main(int ac, char *av[]) {
 
     // We don't want the default GED views for this test
     bv_set_rm_view(&gedp->ged_views, NULL);
-
-    // Set callback so database changes will update dbi_state
-    db_add_changed_clbk(gedp->dbip, &ged_changed_callback, (void *)gedp);
 
     // Set up the views.  Unlike the other drawing tests, we are explicitly
     // out to test the behavior of multiple views and dms, so we need to

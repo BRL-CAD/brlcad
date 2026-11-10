@@ -36,7 +36,6 @@
 
 #define ADIFF_THRES 0.99
 
-extern "C" void ged_changed_callback(struct db_i *UNUSED(dbip), struct directory *dp, int mode, void *u_data);
 extern "C" int img_cmp(int id, struct ged *gedp, const char *cdir, bool clear_scene, bool clear_image, int soft_fail, fastf_t approximate_check, const char *clear_root, const char *img_root);
 extern "C" int unpack_apng(const char *src_dir, const char *apng_name, const char *out_dir, const char *prefix);
 
@@ -114,9 +113,6 @@ main(int ac, char *av[]) {
     gedp->new_cmd_forms = 1;
     gedp->ged_lod = bv_mesh_lod_context_create(gedp->dbip->dbi_filename);
     bu_setenv("DM_SWRAST", "1", 1);
-
-    // Set callback so database changes will update dbi_state
-    db_add_changed_clbk(gedp->dbip, &ged_changed_callback, (void *)gedp);
 
     /* To generate images that will allow us to check if the drawing
      * is proceeding as expected, we use the swrast off-screen dm. */

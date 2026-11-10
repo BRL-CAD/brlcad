@@ -809,16 +809,6 @@ DbiState::int_color(struct bu_color *c, unsigned int cval)
 }
 
 void
-DbiState::clear_cache(struct directory *dp)
-{
-    if (!dp)
-	return;
-
-    unsigned long long hash = bu_data_hash(dp->d_namep, strlen(dp->d_namep)*sizeof(char));
-    clear_cache(hash);
-}
-
-void
 DbiState::clear_cache(unsigned long long hash)
 {
     if (!hash || !dcache)
@@ -834,6 +824,27 @@ DbiState::clear_cache(unsigned long long hash)
     region_id.erase(hash);
     c_inherit.erase(hash);
     rgb.erase(hash);
+}
+
+void
+DbiState::clear_lod_cache(const std::string &name)
+{
+    if (!gedp || !gedp->ged_lod || name.empty())
+	return;
+
+    unsigned long long key = bv_mesh_lod_key_get(gedp->ged_lod,
+	name.c_str());
+    if (key)
+	bv_mesh_lod_clear_cache(gedp->ged_lod, key);
+}
+
+unsigned long long
+DbiState::invalidate_caches(const std::string &name)
+{
+    unsigned long long hash = bu_data_hash(name.c_str(), name.size());
+    clear_cache(hash);
+    clear_lod_cache(name);
+    return hash;
 }
 
 unsigned long long
@@ -1542,7 +1553,7 @@ DbiState::reconcile(const DbiStateChange &change)
 {
     unsigned long long ret = 0;
 
-    if (change.added.empty() && change.modified.empty() &&
+    if (!change.rebuild && change.added.empty() && change.modified.empty() &&
 	change.removed.empty() && change.renamed.empty())
 	return ret;
 
@@ -1560,21 +1571,36 @@ DbiState::reconcile(const DbiStateChange &change)
     changed_hashes.clear();
     old_names.clear();
     for (const std::string &name : change.removed) {
-	unsigned long long hash = bu_data_hash(name.c_str(), name.size());
-	clear_cache(hash);
+	unsigned long long hash = invalidate_caches(name);
 	removed.insert(hash);
 	old_names[hash] = name;
     }
     for (const auto &rename : change.renamed) {
-	unsigned long long hash = bu_data_hash(rename.first.c_str(),
-	    rename.first.size());
-	clear_cache(hash);
+	unsigned long long hash = invalidate_caches(rename.first);
 	removed.insert(hash);
 	old_names[hash] = rename.first;
     }
-    for (const std::string &name : change.modified) {
-	unsigned long long hash = bu_data_hash(name.c_str(), name.size());
-	clear_cache(hash);
+    std::set<std::string> rebuild_names;
+    if (change.rebuild) {
+	std::unordered_set<unsigned long long> live;
+	struct directory *dp;
+	FOR_ALL_DIRECTORY_START(dp, dbip)
+	    if (dp->d_flags & DB_LS_HIDDEN)
+		continue;
+	    rebuild_names.insert(dp->d_namep);
+	    live.insert(bu_data_hash(dp->d_namep, strlen(dp->d_namep)));
+	FOR_ALL_DIRECTORY_END;
+	for (const auto &entry : d_map) {
+	    if (!live.count(entry.first)) {
+		removed.insert(entry.first);
+		clear_cache(entry.first);
+	    }
+	}
+	invalid_entry_map.clear();
+    }
+    const auto &modified_names = change.rebuild ? rebuild_names : change.modified;
+    for (const std::string &name : modified_names) {
+	unsigned long long hash = invalidate_caches(name);
 	changed_hashes.insert(hash);
     }
 
@@ -1584,13 +1610,16 @@ DbiState::reconcile(const DbiStateChange &change)
 
 	// Only references to this object become invalid.  Numbered
 	// occurrences refer back to the same canonical directory hash.
-	for (const auto &children : p_v) {
-	    for (unsigned long long child : children.second) {
-		auto occurrence = i_map.find(child);
-		if (occurrence != i_map.end())
-		    child = occurrence->second;
-		if (child == *s_it)
-		    invalid_entry_map[child] = old_names.at(child);
+	auto old_name = old_names.find(*s_it);
+	if (old_name != old_names.end()) {
+	    for (const auto &children : p_v) {
+		for (unsigned long long child : children.second) {
+		    auto occurrence = i_map.find(child);
+		    if (occurrence != i_map.end())
+			child = occurrence->second;
+		    if (child == *s_it)
+			invalid_entry_map[child] = old_name->second;
+		}
 	    }
 	}
 
@@ -1616,8 +1645,7 @@ DbiState::reconcile(const DbiStateChange &change)
     for (const auto &rename : change.renamed)
 	added_names.insert(rename.second);
     for (const std::string &name : added_names) {
-	unsigned long long name_hash = bu_data_hash(name.c_str(), name.size());
-	clear_cache(name_hash);
+	invalidate_caches(name);
 	struct directory *dp = db_lookup(dbip, name.c_str(), LOOKUP_QUIET);
 	if (dp == RT_DIR_NULL)
 	    continue;
@@ -1629,7 +1657,7 @@ DbiState::reconcile(const DbiStateChange &change)
 	invalid_entry_map.erase(hash);
     }
 
-    for (const std::string &name : change.modified) {
+    for (const std::string &name : modified_names) {
 	struct directory *dp = db_lookup(dbip, name.c_str(), LOOKUP_QUIET);
 	if (dp == RT_DIR_NULL)
 	    continue;
@@ -1805,77 +1833,12 @@ DbiState::reconcile_changes()
     return ret;
 }
 
-bool
-DbiState::legacy_changes_reconciled() const
-{
-    std::lock_guard<std::mutex> guard(change_mutex);
-    if (change_history.empty())
-	return false;
-
-    for (struct directory *dp : added) {
-	bool found = false;
-	for (const DbiStateChange &change : change_history)
-	    found = found || change.added.count(dp->d_namep);
-	if (!found)
-	    return false;
-    }
-    for (struct directory *dp : changed) {
-	bool found = false;
-	for (const DbiStateChange &change : change_history)
-	    found = found || change.modified.count(dp->d_namep);
-	if (!found)
-	    return false;
-    }
-    for (unsigned long long hash : removed) {
-	auto old_name = old_names.find(hash);
-	if (old_name == old_names.end())
-	    return false;
-	bool found = false;
-	for (const DbiStateChange &change : change_history)
-	    found = found || change.removed.count(old_name->second) ||
-		change.renamed.count(old_name->second);
-	if (!found)
-	    return false;
-    }
-    return true;
-}
-
 unsigned long long
 DbiState::update()
 {
-    unsigned long long ret = reconcile_changes();
-    if (!added.size() && !changed.size() && !removed.size()) {
-	acknowledge_changes(change_revision());
-	return ret;
-    }
-
-    if (legacy_changes_reconciled()) {
-	added.clear();
-	changed.clear();
-	removed.clear();
-	old_names.clear();
-	acknowledge_changes(change_revision());
-	return ret | GED_DBISTATE_DB_CHANGE;
-    }
-
-    DbiStateChange change;
-    change.nref_dirty = need_update_nref;
-    for (struct directory *dp : added)
-	change.added.insert(dp->d_namep);
-    for (struct directory *dp : changed)
-	change.modified.insert(dp->d_namep);
-    for (unsigned long long hash : removed) {
-	auto old_name = old_names.find(hash);
-	if (old_name != old_names.end())
-	    change.removed.insert(old_name->second);
-    }
-    ret |= reconcile(change);
-    added.clear();
-    changed.clear();
-    removed.clear();
-    old_names.clear();
+    const unsigned long long effects = reconcile_changes();
     acknowledge_changes(change_revision());
-    return ret;
+    return effects;
 }
 
 void
