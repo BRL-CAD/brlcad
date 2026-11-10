@@ -41,10 +41,13 @@
 #include "common.h"
 #include "vmath.h"
 #include "bu/vls.h"
+#include "ged/event.h"
 
 #ifdef __cplusplus
 #include <set>
 #include <map>
+#include <deque>
+#include <mutex>
 #include <unordered_map>
 #include <unordered_set>
 #include <string>
@@ -277,12 +280,35 @@ class GED_EXPORT BViewState {
 
 struct ged_draw_cache;
 
+/** Value-owned description of one delivered database-change batch. */
+struct GED_EXPORT DbiStateChange {
+    uint64_t revision = 0;
+    std::set<std::string> added;
+    std::set<std::string> modified;
+    std::set<std::string> removed;
+    std::map<std::string, std::string> renamed;
+    std::set<std::string> paths;
+    bool structural = false;
+    bool nref_dirty = false;
+    bool rebuild = false;
+};
+
 class GED_EXPORT DbiState {
     public:
 	DbiState(struct ged *);
 	~DbiState();
 
+	/** Reconcile and consume pending events and legacy callback state. */
 	unsigned long long update();
+	/** Reconcile each recorded event revision once, without discarding it. */
+	unsigned long long reconcile_changes();
+	/** Return the most recently assigned change revision. */
+	uint64_t change_revision() const;
+	/** Copy all retained snapshots newer than @p after_revision. */
+	std::vector<DbiStateChange> change_snapshots(
+		uint64_t after_revision = 0) const;
+	/** Discard reconciled snapshots through @p revision. */
+	void acknowledge_changes(uint64_t revision);
 
 	std::vector<unsigned long long> tops(bool show_cyclic);
 
@@ -401,6 +427,11 @@ class GED_EXPORT DbiState {
 	void print_dbi_state(struct bu_vls *o = NULL, bool report_view_states = false);
 
     private:
+	static void event_callback(struct ged *, const struct ged_event *,
+		size_t, const struct ged_event_result *, void *);
+	uint64_t record_changes(const struct ged_event *, size_t);
+	unsigned long long reconcile(const DbiStateChange &);
+	bool legacy_changes_reconciled() const;
 	void gather_cyclic(
 		std::unordered_set<unsigned long long> &cyclic,
 		unsigned long long c_hash,
@@ -413,11 +444,17 @@ class GED_EXPORT DbiState {
 		);
 
 	void populate_maps(struct directory *dp, unsigned long long phash, int reset);
+	void clear_cache(unsigned long long);
 	unsigned long long update_dp(struct directory *dp, int reset);
 	unsigned int color_int(struct bu_color *);
 	int int_color(struct bu_color *c, unsigned int);
 	struct resource *res = NULL;
 	struct ged_draw_cache *dcache = NULL;
+	ged_event_observer_token event_observer = 0;
+	mutable std::mutex change_mutex;
+	std::deque<DbiStateChange> change_history;
+	uint64_t next_change_revision = 1;
+	uint64_t reconciled_change_revision = 0;
 	struct bu_vls hash_string = BU_VLS_INIT_ZERO;
 	struct bu_vls path_string = BU_VLS_INIT_ZERO;
 };

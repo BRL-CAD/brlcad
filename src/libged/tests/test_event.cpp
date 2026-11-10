@@ -20,6 +20,8 @@
 #include "bu/app.h"
 #include "ged.h"
 
+#include "../dbi.h"
+
 static int failures = 0;
 
 #define CHECK(expression, message) do { \
@@ -337,6 +339,9 @@ test_librt_bridge(void)
 	return;
     }
 
+    DbiState *dbis = new DbiState(gedp);
+    gedp->dbi_state = dbis;
+
     observation state;
     ged_event_observer_token observer = ged_event_observer_add(gedp,
 	GED_EVENT_OBSERVER_POST_RECONCILE, check_directory_removal, &state);
@@ -357,7 +362,113 @@ test_librt_bridge(void)
 	state.names[1] == "direct.s",
 	"direct librt removal publishes a GED event");
 
+    std::vector<DbiStateChange> changes = dbis->change_snapshots();
+    CHECK(changes.size() == 2 &&
+	changes[0].added.count("direct.s") == 1 &&
+	changes[1].removed.count("direct.s") == 1,
+	"DbiState retains value-based add and removal snapshots");
+    CHECK(dbis->reconcile_changes() == GED_DBISTATE_DB_CHANGE,
+	"pending DbiState snapshots reconcile explicitly");
+    CHECK(dbis->reconcile_changes() == 0,
+	"each DbiState revision reconciles only once");
+
+    dbis->acknowledge_changes(changes[0].revision);
+    changes = dbis->change_snapshots();
+    CHECK(changes.size() == 1 &&
+	changes[0].removed.count("direct.s") == 1,
+	"acknowledging one revision preserves later snapshots");
+    dbis->acknowledge_changes(changes[0].revision);
+    CHECK(dbis->change_snapshots().empty(),
+	"acknowledging the latest reconciled revision clears history");
+
     ged_event_observer_remove(gedp, observer);
+    gedp->dbi_state = nullptr;
+    delete dbis;
+    ged_close(gedp);
+}
+
+static void
+test_dbi_change_inventory(void)
+{
+    struct db_i *dbip = db_open_inmem();
+    CHECK(dbip != DBI_NULL, "inventory database opens");
+    if (dbip == DBI_NULL)
+	return;
+
+    struct bu_vls address = BU_VLS_INIT_ZERO;
+    bu_vls_sprintf(&address, "%p", (void *)dbip);
+    struct ged *gedp = ged_open("inmem", bu_vls_cstr(&address), 0);
+    bu_vls_free(&address);
+    CHECK(gedp != GED_NULL, "inventory GED context opens");
+    if (gedp == GED_NULL) {
+	db_close(dbip);
+	return;
+    }
+
+    DbiState *dbis = new DbiState(gedp);
+    gedp->dbi_state = dbis;
+    struct ged_event events[4];
+    for (size_t i = 0; i < 4; i++)
+	ged_event_init(&events[i]);
+    events[0].kind = GED_EVENT_OBJECT_ADDED;
+    events[0].name = "added.s";
+    events[1].kind = GED_EVENT_OBJECT_MODIFIED;
+    events[1].name = "changed.s";
+    events[2].kind = GED_EVENT_OBJECT_REMOVED;
+    events[2].name = "removed.s";
+    events[3].kind = GED_EVENT_COMB_INSTANCE_REMOVED;
+    events[3].parent_name = "parent.c";
+    events[3].child_name = "child.s";
+    events[3].path = "parent.c/child.s";
+
+    CHECK(ged_event_publish(gedp, events, 4, nullptr) == GED_EVENT_OK,
+	"mixed mutation batch publishes");
+    std::vector<DbiStateChange> changes = dbis->change_snapshots();
+    CHECK(changes.size() == 1, "one event batch creates one revision");
+    if (changes.size() == 1) {
+	const DbiStateChange &change = changes[0];
+	CHECK(change.added.count("added.s") == 1 &&
+	    change.modified.count("changed.s") == 1 &&
+	    change.modified.count("parent.c") == 1 &&
+	    change.removed.count("removed.s") == 1,
+	    "snapshot classifies object mutations");
+	CHECK(change.paths.count("parent.c/child.s") == 1 &&
+	    change.structural && change.nref_dirty,
+	    "snapshot preserves paths and structural state");
+	dbis->acknowledge_changes(change.revision);
+	CHECK(dbis->change_snapshots().size() == 1,
+	    "unreconciled revisions cannot be acknowledged");
+    }
+
+    dbis->reconcile_changes();
+    changes = dbis->change_snapshots();
+    if (!changes.empty())
+	dbis->acknowledge_changes(changes.back().revision);
+    CHECK(dbis->change_snapshots().empty(),
+	"reconciled inventory can be acknowledged");
+
+    observation followup;
+    followup.publish_followup = true;
+    ged_event_observer_token observer = ged_event_observer_add(gedp,
+	GED_EVENT_OBSERVER_INTERNAL, publish_followup, &followup);
+    struct ged_event first;
+    ged_event_init(&first);
+    first.kind = GED_EVENT_OBJECT_MODIFIED;
+    first.name = "first";
+    CHECK(ged_event_publish(gedp, &first, 1, nullptr) == GED_EVENT_OK,
+	"followup inventory events publish");
+    changes = dbis->change_snapshots();
+    CHECK(changes.size() == 2 &&
+	changes[0].modified.count("first") == 1 &&
+	changes[1].modified.count("second") == 1,
+	"changes during dispatch become a later revision");
+    dbis->update();
+    CHECK(dbis->change_snapshots().empty(),
+	"legacy update consumes reconciled snapshot history");
+    ged_event_observer_remove(gedp, observer);
+
+    gedp->dbi_state = nullptr;
+    delete dbis;
     ged_close(gedp);
 }
 
@@ -412,6 +523,7 @@ main(int argc, char **argv)
     test_concurrent_publication(&context);
     test_reentrant_batch(&context);
     test_librt_bridge();
+    test_dbi_change_inventory();
 
     CHECK(ged_event_batch_end(&context, nullptr) == GED_EVENT_INVALID,
 	"ending a nonexistent batch is rejected");

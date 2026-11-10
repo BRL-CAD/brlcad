@@ -436,6 +436,8 @@ DbiState::DbiState(struct ged *ged_p)
     dbip = gedp->dbip;
     if (!dbip)
 	return;
+    event_observer = ged_event_observer_add(gedp, GED_EVENT_OBSERVER_INTERNAL,
+	DbiState::event_callback, this);
 
     // Set up cache
     dcache = dbi_cache_open(dbip->dbi_filename);
@@ -449,6 +451,8 @@ DbiState::DbiState(struct ged *ged_p)
 
 DbiState::~DbiState()
 {
+    if (gedp && event_observer)
+	ged_event_observer_remove(gedp, event_observer);
     bu_vls_free(&path_string);
     bu_vls_free(&hash_string);
     std::unordered_map<std::string, BSelectState *>::iterator ss_it;
@@ -807,10 +811,18 @@ DbiState::int_color(struct bu_color *c, unsigned int cval)
 void
 DbiState::clear_cache(struct directory *dp)
 {
-    if (!dp || !dcache)
+    if (!dp)
 	return;
 
     unsigned long long hash = bu_data_hash(dp->d_namep, strlen(dp->d_namep)*sizeof(char));
+    clear_cache(hash);
+}
+
+void
+DbiState::clear_cache(unsigned long long hash)
+{
+    if (!hash || !dcache)
+	return;
 
     cache_del(dcache, hash, CACHE_OBJ_BOUNDS);
     cache_del(dcache, hash, CACHE_REGION_ID);
@@ -1526,32 +1538,43 @@ DbiState::tops(bool show_cyclic)
 }
 
 unsigned long long
-DbiState::update()
+DbiState::reconcile(const DbiStateChange &change)
 {
     unsigned long long ret = 0;
 
-    if (!added.size() && !changed.size() && !removed.size()) {
-	changed_hashes.clear();
-	old_names.clear();
+    if (change.added.empty() && change.modified.empty() &&
+	change.removed.empty() && change.renamed.empty())
 	return ret;
-    }
 
     // If we got this far, SOMETHING changed
     ret |= GED_DBISTATE_DB_CHANGE;
 
     std::unordered_set<unsigned long long>::iterator s_it;
-    std::unordered_set<struct directory *>::iterator g_it;
 
-    if (need_update_nref) {
+    if (change.nref_dirty || need_update_nref) {
 	db_update_nref(dbip);
 	need_update_nref = false;
     }
 
-    // dps -> hashes
+    removed.clear();
     changed_hashes.clear();
-    for(g_it = changed.begin(); g_it != changed.end(); g_it++) {
-	struct directory *dp = *g_it;
-	unsigned long long hash = bu_data_hash(dp->d_namep, strlen(dp->d_namep)*sizeof(char));
+    old_names.clear();
+    for (const std::string &name : change.removed) {
+	unsigned long long hash = bu_data_hash(name.c_str(), name.size());
+	clear_cache(hash);
+	removed.insert(hash);
+	old_names[hash] = name;
+    }
+    for (const auto &rename : change.renamed) {
+	unsigned long long hash = bu_data_hash(rename.first.c_str(),
+	    rename.first.size());
+	clear_cache(hash);
+	removed.insert(hash);
+	old_names[hash] = rename.first;
+    }
+    for (const std::string &name : change.modified) {
+	unsigned long long hash = bu_data_hash(name.c_str(), name.size());
+	clear_cache(hash);
 	changed_hashes.insert(hash);
     }
 
@@ -1559,16 +1582,15 @@ DbiState::update()
     for(s_it = removed.begin(); s_it != removed.end(); s_it++) {
 	bu_log("removed: %llu\n", *s_it);
 
-	// Combs with this key in their child set need to be updated to refer
-	// to it as an invalid entry.
-	std::unordered_map<unsigned long long, std::vector<unsigned long long>>::iterator pv_it;
-	for (pv_it = p_v.begin(); pv_it != p_v.end(); pv_it++) {
-	    for (size_t i = 0; i < pv_it->second.size(); i++) {
-		if (i_map.find(pv_it->second[i]) != i_map.end()) {
-		    invalid_entry_map[i_map[pv_it->second[i]]] = i_str[i_map[pv_it->second[i]]];
-		} else {
-		    invalid_entry_map[pv_it->second[i]] = old_names[*s_it];
-		}
+	// Only references to this object become invalid.  Numbered
+	// occurrences refer back to the same canonical directory hash.
+	for (const auto &children : p_v) {
+	    for (unsigned long long child : children.second) {
+		auto occurrence = i_map.find(child);
+		if (occurrence != i_map.end())
+		    child = occurrence->second;
+		if (child == *s_it)
+		    invalid_entry_map[child] = old_names.at(child);
 	    }
 	}
 
@@ -1590,8 +1612,15 @@ DbiState::update()
 	p_v.erase(*s_it);
     }
 
-    for(g_it = added.begin(); g_it != added.end(); g_it++) {
-	struct directory *dp = *g_it;
+    std::set<std::string> added_names = change.added;
+    for (const auto &rename : change.renamed)
+	added_names.insert(rename.second);
+    for (const std::string &name : added_names) {
+	unsigned long long name_hash = bu_data_hash(name.c_str(), name.size());
+	clear_cache(name_hash);
+	struct directory *dp = db_lookup(dbip, name.c_str(), LOOKUP_QUIET);
+	if (dp == RT_DIR_NULL)
+	    continue;
 	bu_log("added: %s\n", dp->d_namep);
 	unsigned long long hash = update_dp(dp, 0);
 
@@ -1600,8 +1629,10 @@ DbiState::update()
 	invalid_entry_map.erase(hash);
     }
 
-    for(g_it = changed.begin(); g_it != changed.end(); g_it++) {
-	struct directory *dp = *g_it;
+    for (const std::string &name : change.modified) {
+	struct directory *dp = db_lookup(dbip, name.c_str(), LOOKUP_QUIET);
+	if (dp == RT_DIR_NULL)
+	    continue;
 	bu_log("changed: %s\n", dp->d_namep);
 	// Properties need to be updated - comb children, colors, matrices,
 	// bounding box for solids, etc.
@@ -1639,16 +1670,211 @@ DbiState::update()
     }
     std::unordered_map<BViewState *, std::unordered_set<struct bview *>>::iterator bv_it;
     for (bv_it = vmap.begin(); bv_it != vmap.end(); bv_it++) {
-	bv_it->first->redraw(NULL, bv_it->second, 1);
+	ret |= bv_it->first->redraw(NULL, bv_it->second, 1);
     }
 
-    // Updates done, clear items stored by callbacks
-    added.clear();
-    changed.clear();
+    // Reconciliation-only state is no longer needed once views are current.
     changed_hashes.clear();
     removed.clear();
     old_names.clear();
 
+    return ret;
+}
+
+void
+DbiState::event_callback(struct ged *UNUSED(gedp),
+	const struct ged_event *events, size_t event_count,
+	const struct ged_event_result *UNUSED(result), void *client_data)
+{
+    DbiState *state = static_cast<DbiState *>(client_data);
+    state->record_changes(events, event_count);
+}
+
+uint64_t
+DbiState::record_changes(const struct ged_event *events, size_t event_count)
+{
+    DbiStateChange change;
+    for (size_t i = 0; i < event_count; i++) {
+	const struct ged_event &event = events[i];
+	if (event.path)
+	    change.paths.insert(event.path);
+	switch (event.kind) {
+	    case GED_EVENT_OBJECT_ADDED:
+		if (event.name)
+		    change.added.insert(event.name);
+		change.structural = true;
+		change.nref_dirty = true;
+		break;
+	    case GED_EVENT_OBJECT_REMOVED:
+		if (event.name)
+		    change.removed.insert(event.name);
+		change.structural = true;
+		change.nref_dirty = true;
+		break;
+	    case GED_EVENT_OBJECT_RENAMED:
+		if (event.name && event.new_name)
+		    change.renamed[event.name] = event.new_name;
+		change.structural = true;
+		change.nref_dirty = true;
+		break;
+	    case GED_EVENT_COMB_TREE_CHANGED:
+		if (event.name)
+		    change.modified.insert(event.name);
+		change.structural = true;
+		change.nref_dirty = true;
+		break;
+	    case GED_EVENT_COMB_INSTANCE_REMOVED:
+	    case GED_EVENT_OBJECT_REFERENCES_REMOVED:
+		if (event.parent_name)
+		    change.modified.insert(event.parent_name);
+		change.structural = true;
+		change.nref_dirty = true;
+		break;
+	    case GED_EVENT_BATCH_REBUILD:
+		change.structural = true;
+		change.nref_dirty = true;
+		change.rebuild = true;
+		break;
+	    case GED_EVENT_OBJECT_MODIFIED:
+	    case GED_EVENT_OBJECT_VISIBILITY_CHANGED:
+	    case GED_EVENT_ATTRIBUTE_CHANGED:
+	    case GED_EVENT_MATERIAL_CHANGED:
+		if (event.name)
+		    change.modified.insert(event.name);
+		break;
+	    case GED_EVENT_DATABASE_METADATA_CHANGED:
+	    case GED_EVENT_NONE:
+		break;
+	}
+    }
+
+    std::lock_guard<std::mutex> guard(change_mutex);
+    change.revision = next_change_revision++;
+    change_history.push_back(change);
+    return change.revision;
+}
+
+uint64_t
+DbiState::change_revision() const
+{
+    std::lock_guard<std::mutex> guard(change_mutex);
+    return next_change_revision - 1;
+}
+
+std::vector<DbiStateChange>
+DbiState::change_snapshots(uint64_t after_revision) const
+{
+    std::vector<DbiStateChange> snapshots;
+    std::lock_guard<std::mutex> guard(change_mutex);
+    for (const DbiStateChange &change : change_history) {
+	if (change.revision > after_revision)
+	    snapshots.push_back(change);
+    }
+    return snapshots;
+}
+
+void
+DbiState::acknowledge_changes(uint64_t revision)
+{
+    std::lock_guard<std::mutex> guard(change_mutex);
+    revision = std::min(revision, reconciled_change_revision);
+    while (!change_history.empty() &&
+	change_history.front().revision <= revision)
+	change_history.pop_front();
+}
+
+unsigned long long
+DbiState::reconcile_changes()
+{
+    std::vector<DbiStateChange> snapshots;
+    {
+	std::lock_guard<std::mutex> guard(change_mutex);
+	for (const DbiStateChange &change : change_history) {
+	    if (change.revision > reconciled_change_revision)
+		snapshots.push_back(change);
+	}
+    }
+
+    unsigned long long ret = 0;
+    for (const DbiStateChange &change : snapshots) {
+	ret |= reconcile(change);
+	std::lock_guard<std::mutex> guard(change_mutex);
+	reconciled_change_revision = std::max(reconciled_change_revision,
+	    change.revision);
+    }
+    return ret;
+}
+
+bool
+DbiState::legacy_changes_reconciled() const
+{
+    std::lock_guard<std::mutex> guard(change_mutex);
+    if (change_history.empty())
+	return false;
+
+    for (struct directory *dp : added) {
+	bool found = false;
+	for (const DbiStateChange &change : change_history)
+	    found = found || change.added.count(dp->d_namep);
+	if (!found)
+	    return false;
+    }
+    for (struct directory *dp : changed) {
+	bool found = false;
+	for (const DbiStateChange &change : change_history)
+	    found = found || change.modified.count(dp->d_namep);
+	if (!found)
+	    return false;
+    }
+    for (unsigned long long hash : removed) {
+	auto old_name = old_names.find(hash);
+	if (old_name == old_names.end())
+	    return false;
+	bool found = false;
+	for (const DbiStateChange &change : change_history)
+	    found = found || change.removed.count(old_name->second) ||
+		change.renamed.count(old_name->second);
+	if (!found)
+	    return false;
+    }
+    return true;
+}
+
+unsigned long long
+DbiState::update()
+{
+    unsigned long long ret = reconcile_changes();
+    if (!added.size() && !changed.size() && !removed.size()) {
+	acknowledge_changes(change_revision());
+	return ret;
+    }
+
+    if (legacy_changes_reconciled()) {
+	added.clear();
+	changed.clear();
+	removed.clear();
+	old_names.clear();
+	acknowledge_changes(change_revision());
+	return ret | GED_DBISTATE_DB_CHANGE;
+    }
+
+    DbiStateChange change;
+    change.nref_dirty = need_update_nref;
+    for (struct directory *dp : added)
+	change.added.insert(dp->d_namep);
+    for (struct directory *dp : changed)
+	change.modified.insert(dp->d_namep);
+    for (unsigned long long hash : removed) {
+	auto old_name = old_names.find(hash);
+	if (old_name != old_names.end())
+	    change.removed.insert(old_name->second);
+    }
+    ret |= reconcile(change);
+    added.clear();
+    changed.clear();
+    removed.clear();
+    old_names.clear();
+    acknowledge_changes(change_revision());
     return ret;
 }
 
@@ -1806,7 +2032,7 @@ BViewState::check_status(
 {
     // If nothing was removed or changed, there's nothing to tell us anything
     // is invalid - just return
-    if (dbis->removed.size() && !dbis->changed_hashes.size())
+    if (dbis->removed.empty() && dbis->changed_hashes.empty())
 	return 0;
 
     bool parent_changed = false;
@@ -1833,8 +2059,10 @@ BViewState::check_status(
 	    // If it's still in the comb tree, proceed with the evaluation.
 	}
 
-	bool is_removed = (dbis->removed.find(hash) != dbis->removed.end());
-	bool is_changed = (dbis->changed_hashes.find(hash) != dbis->changed_hashes.end());
+	const auto instance = dbis->i_map.find(hash);
+	const auto object_hash = instance != dbis->i_map.end() ? instance->second : hash;
+	bool is_removed = dbis->removed.count(object_hash) != 0;
+	bool is_changed = dbis->changed_hashes.count(object_hash) != 0;
 	if (is_removed) {
 	    if (is_removed && !j) {
 		// Top level removed - everything else is gone
@@ -2765,12 +2993,13 @@ BViewState::redraw(struct bv_obj_settings *vs, std::unordered_set<struct bview *
     // Invalid path objects we remove completely
     std::unordered_set<unsigned long long>::iterator iv_it;
     for (iv_it = invalid_paths.begin(); iv_it != invalid_paths.end(); iv_it++) {
-	std::vector<unsigned long long> &phashes = s_keys[*iv_it];
+	std::vector<unsigned long long> phashes = s_keys[*iv_it];
 	if (!phashes.size())
 	    continue;
 	unsigned long long c_hash = phashes[phashes.size() - 1];
 	phashes.pop_back();
 	erase_hpath(-1, c_hash, phashes, false);
+	ret |= GED_DBISTATE_VIEW_CHANGE;
     }
 
     // Objects may be "drawn" in different ways - wireframes, shaded, evaluated.
@@ -2867,23 +3096,19 @@ BViewState::redraw(struct bv_obj_settings *vs, std::unordered_set<struct bview *
 	    gather_paths(objs, ihash, ms_it->first, v, NULL, m, NULL, cpath, views, &ret);
 	}
 	for (sz_it = draw_invalid_collapsed.begin(); sz_it != draw_invalid_collapsed.end(); sz_it++) {
-	    std::vector<unsigned long long> &cpath = ms_it->second[*sz_it];
-	    unsigned long long phash = dbis->path_hash(cpath, 0);
-	    struct bv_scene_obj *&entry = s_map[phash][ms_it->first];
+	    std::vector<unsigned long long> &path = ms_it->second[*sz_it];
+	    const auto hash = dbis->path_hash(path, 0);
+	    struct bv_scene_obj *&entry = s_map[hash][ms_it->first];
 	    if (entry)
 		continue;
+
 	    struct bv_scene_obj *s = bv_obj_get(v, BV_DB_OBJS);
-	    // print path name, set view - otherwise empty
-	    dbis->print_path(&s->s_name, cpath);
+	    dbis->print_path(&s->s_name, path);
 	    s->s_v = v;
 	    s->s_os->s_dmode = ms_it->first;
 	    entry = s;
-	    s_keys[phash] = cpath;
-	    ret = GED_DBISTATE_VIEW_CHANGE;
-
-	    // NOTE: Because there is no geometry to update, these scene objs
-	    // are not added to objs
-	    bu_log("invalid expand\n");
+	    s_keys[hash] = path;
+	    ret |= GED_DBISTATE_VIEW_CHANGE;
 	}
     }
 
@@ -2950,8 +3175,8 @@ BViewState::redraw(struct bv_obj_settings *vs, std::unordered_set<struct bview *
 	    ss->refresh();
 	    ss->collapse();
 	}
-	ss->draw_sync();
-	ret = GED_DBISTATE_VIEW_CHANGE;
+	if (ss->draw_sync())
+	    ret |= GED_DBISTATE_VIEW_CHANGE;
     }
     // Now that we have the finalized geometry, do a finishing autoview,
     // unless suppressed
