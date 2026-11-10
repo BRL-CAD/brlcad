@@ -237,6 +237,7 @@ static const struct rt_edit_prim_desc ars_prim_desc = {
     NULL,                 /* opts         */
     RT_EDIT_CONTROL_CUSTOM,
     NULL,
+    NULL,
     NULL
 };
 

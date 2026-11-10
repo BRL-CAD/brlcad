@@ -132,6 +132,7 @@ static const struct rt_edit_prim_desc eto_prim_desc = {
     NULL,                 /* opts         */
     RT_EDIT_CONTROL_GENERATED,
     eto_command_controls,
+    NULL,
     NULL
 };
 

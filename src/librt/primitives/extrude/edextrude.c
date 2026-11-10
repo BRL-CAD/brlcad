@@ -156,6 +156,7 @@ static const struct rt_edit_prim_desc extr_prim_desc = {
     NULL,                 /* opts         */
     RT_EDIT_CONTROL_GENERATED,
     extr_command_controls,
+    NULL,
     NULL
 };
 

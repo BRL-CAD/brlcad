@@ -140,6 +140,7 @@ static const struct rt_edit_prim_desc hyp_prim_desc = {
     NULL,                 /* opts         */
     RT_EDIT_CONTROL_GENERATED,
     hyp_command_controls,
+    NULL,
     NULL
 };
 

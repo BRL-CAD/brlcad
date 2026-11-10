@@ -449,6 +449,7 @@ static const struct rt_edit_prim_desc tgc_prim_desc = {
     tgc_opts,             /* opts         */
     RT_EDIT_CONTROL_GENERATED,
     tgc_command_controls,
+    NULL,
     NULL
 };
 

@@ -170,6 +170,7 @@ static const struct rt_edit_prim_desc part_prim_desc = {
     NULL,                 /* opts         */
     RT_EDIT_CONTROL_GENERATED,
     NULL,
+    NULL,
     NULL
 };
 

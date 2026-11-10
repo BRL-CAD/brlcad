@@ -227,7 +227,8 @@ static const struct rt_edit_prim_desc ell_prim_desc = {
     ell_opts,             /* opts         */
     RT_EDIT_CONTROL_GENERATED,
     NULL,
-    ell_interactions
+    ell_interactions,
+    NULL
 };
 
 C_DECL const struct rt_edit_prim_desc *
