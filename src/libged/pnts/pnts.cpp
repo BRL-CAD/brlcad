@@ -1859,12 +1859,12 @@ static const struct ged_cmd_grammar ged_pnts_grammar = {
     ged_pnts_grammar_help
 };
 
-#define GED_PNTS_COMMANDS(X, XID, N, NID, G, GID) \
+#define GED_PNTS_COMMANDS(N, NID, G, GID) \
     N(make_pnts, ged_make_pnts_core, GED_CMD_DEFAULT, &make_pnts_schema) \
     G(pnts, ged_pnts_core, GED_CMD_DEFAULT, &ged_pnts_grammar) \
 
-GED_DECLARE_COMMAND_SET_WITH_MIXED_SCHEMA(GED_PNTS_COMMANDS)
-GED_DECLARE_PLUGIN_MANIFEST_WITH_MIXED_SCHEMA("libged_pnts", 1, GED_PNTS_COMMANDS)
+GED_DECLARE_COMMAND_SET_WITH_NATIVE_SCHEMA_AND_GRAMMAR(GED_PNTS_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST_WITH_NATIVE_SCHEMA_AND_GRAMMAR("libged_pnts", 1, GED_PNTS_COMMANDS)
 
 // Local Variables:
 // tab-width: 8

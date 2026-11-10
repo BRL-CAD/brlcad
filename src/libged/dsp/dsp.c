@@ -244,11 +244,11 @@ static const struct ged_cmd_grammar ged_dsp_grammar = {
     ged_dsp_grammar_help
 };
 
-#define GED_DSP_COMMANDS(X, XID, N, NID, G, GID) \
+#define GED_DSP_COMMANDS(N, NID, G, GID) \
     G(dsp, ged_dsp_core, GED_CMD_DEFAULT, &ged_dsp_grammar) \
 
-GED_DECLARE_COMMAND_SET_WITH_MIXED_SCHEMA(GED_DSP_COMMANDS)
-GED_DECLARE_PLUGIN_MANIFEST_WITH_MIXED_SCHEMA("libged_dsp", 1, GED_DSP_COMMANDS)
+GED_DECLARE_COMMAND_SET_WITH_NATIVE_SCHEMA_AND_GRAMMAR(GED_DSP_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST_WITH_NATIVE_SCHEMA_AND_GRAMMAR("libged_dsp", 1, GED_DSP_COMMANDS)
 
 /*
  * Local Variables:

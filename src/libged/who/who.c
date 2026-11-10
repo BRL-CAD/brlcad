@@ -329,11 +329,11 @@ static const struct ged_cmd_grammar ged_who_grammar = {
     ged_who_grammar_help
 };
 
-#define GED_WHO_COMMANDS(X, XID, N, NID, G, GID) \
+#define GED_WHO_COMMANDS(N, NID, G, GID) \
     G(who, ged_who_core, GED_CMD_DEFAULT, &ged_who_grammar) \
 
-GED_DECLARE_COMMAND_SET_WITH_MIXED_SCHEMA(GED_WHO_COMMANDS)
-GED_DECLARE_PLUGIN_MANIFEST_WITH_MIXED_SCHEMA("libged_who", 1, GED_WHO_COMMANDS)
+GED_DECLARE_COMMAND_SET_WITH_NATIVE_SCHEMA_AND_GRAMMAR(GED_WHO_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST_WITH_NATIVE_SCHEMA_AND_GRAMMAR("libged_who", 1, GED_WHO_COMMANDS)
 
 /*
  * Local Variables:

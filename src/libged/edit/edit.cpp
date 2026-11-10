@@ -3767,15 +3767,15 @@ static const struct bu_arg_schema ptranslate_cmd_schema = {
     ptranslate_operands, BU_ARG_PARSE_OPTIONS_FIRST, BU_ARG_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
 
-#define GED_EDIT_COMMANDS(X, XID, NX, NXID, GX, GXID) \
+#define GED_EDIT_COMMANDS(NX, NXID, GX, GXID) \
     GX(edit, ged_edit_core, GED_CMD_DEFAULT, &edit_grammar) \
     GX(edarb, ged_edarb_core, GED_CMD_DEFAULT, &edarb_grammar) \
     NX(protate, ged_protate_core, GED_CMD_DEFAULT, &protate_cmd_schema) \
     NX(pscale, ged_pscale_core, GED_CMD_DEFAULT, &pscale_cmd_schema) \
     NX(ptranslate, ged_ptranslate_core, GED_CMD_DEFAULT, &ptranslate_cmd_schema) \
 
-GED_DECLARE_COMMAND_SET_WITH_MIXED_SCHEMA(GED_EDIT_COMMANDS)
-GED_DECLARE_PLUGIN_MANIFEST_WITH_MIXED_SCHEMA("libged_edit", 1, GED_EDIT_COMMANDS)
+GED_DECLARE_COMMAND_SET_WITH_NATIVE_SCHEMA_AND_GRAMMAR(GED_EDIT_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST_WITH_NATIVE_SCHEMA_AND_GRAMMAR("libged_edit", 1, GED_EDIT_COMMANDS)
 
 // Local Variables:
 // tab-width: 8

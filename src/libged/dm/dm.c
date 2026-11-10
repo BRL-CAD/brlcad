@@ -1058,14 +1058,14 @@ static const struct ged_cmd_grammar ged_dm_grammar = {
     ged_dm_grammar_help
 };
 
-#define GED_DM_COMMANDS(X, XID, N, NID, G, GID) \
+#define GED_DM_COMMANDS(N, NID, G, GID) \
     N(ert, ged_ert_core, GED_CMD_DEFAULT, &ert_cmd_schema) \
     G(dm, ged_dm_core, GED_CMD_DEFAULT, &ged_dm_grammar) \
     N(screen_grab, ged_screen_grab_core, GED_CMD_DEFAULT, &ged_screen_grab_schema) \
     N(screengrab, ged_screen_grab_core, GED_CMD_DEFAULT, &ged_screengrab_schema) \
 
-GED_DECLARE_COMMAND_SET_WITH_MIXED_SCHEMA(GED_DM_COMMANDS)
-GED_DECLARE_PLUGIN_MANIFEST_WITH_MIXED_SCHEMA("libged_dm", 1, GED_DM_COMMANDS)
+GED_DECLARE_COMMAND_SET_WITH_NATIVE_SCHEMA_AND_GRAMMAR(GED_DM_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST_WITH_NATIVE_SCHEMA_AND_GRAMMAR("libged_dm", 1, GED_DM_COMMANDS)
 
 /*
  * Local Variables:

@@ -2194,12 +2194,12 @@ static const struct ged_cmd_grammar ged_brep_grammar = {
     ged_brep_grammar_complete, ged_brep_grammar_help
 };
 
-#define GED_BREP_COMMANDS(X, XID, N, NID, G, GID) \
+#define GED_BREP_COMMANDS(N, NID, G, GID) \
     G(brep, ged_brep_core, GED_CMD_DEFAULT, &ged_brep_grammar) \
     N(dplot, ged_dplot_core, GED_CMD_DEFAULT, &dplot_cmd_schema)
 
-GED_DECLARE_COMMAND_SET_WITH_MIXED_SCHEMA(GED_BREP_COMMANDS)
-GED_DECLARE_PLUGIN_MANIFEST_WITH_MIXED_SCHEMA("libged_brep", 1, GED_BREP_COMMANDS)
+GED_DECLARE_COMMAND_SET_WITH_NATIVE_SCHEMA_AND_GRAMMAR(GED_BREP_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST_WITH_NATIVE_SCHEMA_AND_GRAMMAR("libged_brep", 1, GED_BREP_COMMANDS)
 
 // Local Variables:
 // tab-width: 8
