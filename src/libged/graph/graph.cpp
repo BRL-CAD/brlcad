@@ -68,7 +68,7 @@
 #include <limits>
 
 #include "bu/vls.h"
-#include "bu/cmdschema.h"
+#include "bu/arg.h"
 #include "bu/malloc.h"
 #include "bu/hash.h"
 #include "ged.h"
@@ -110,72 +110,72 @@ graph_svg_output_validate(struct bu_vls *msg, const char *arg)
     return 0;
 }
 
-static const struct bu_cmd_option graph_options[] = {
-    BU_CMD_FLAG("h", "help", struct graph_args, print_help,
+static const struct bu_arg_option graph_options[] = {
+    BU_ARG_FLAG("h", "help", struct graph_args, print_help,
 	"Show help and exit"),
-    BU_CMD_FLAG(NULL, "tree", struct graph_args, tree_mode,
+    BU_ARG_FLAG(NULL, "tree", struct graph_args, tree_mode,
 	"Collapse layout to a spanning tree"),
-    BU_CMD_FLAG(NULL, "skip-routing", struct graph_args, skip_routing,
+    BU_ARG_FLAG(NULL, "skip-routing", struct graph_args, skip_routing,
 	"Skip connector routing"),
-    BU_CMD_NONNEGATIVE_INTEGER(NULL, "depth", struct graph_args, depth_limit,
+    BU_ARG_NONNEGATIVE_INTEGER(NULL, "depth", struct graph_args, depth_limit,
 	"depth", "Limit traversal depth"),
     {NULL, "root-obj", "root-obj", "object", "Specify a traversal root",
-	BU_CMD_VALUE_CUSTOM, offsetof(struct graph_args, roots), graph_root_object_parse,
-	NULL, GED_CMD_PROVIDER_DB_OBJECT, NULL, 1, 0, NULL, BU_CMD_ARG_REQUIRED, NULL, NULL, NULL,
-	BU_CMD_VALUE_RANGE_NONE, BU_CMD_ARG_SHAPE_SCALAR},
-    BU_CMD_FLAG(NULL, "igraph", struct graph_args, igraph_mode,
+	BU_ARG_VALUE_CUSTOM, offsetof(struct graph_args, roots), graph_root_object_parse,
+	NULL, GED_CMD_PROVIDER_DB_OBJECT, NULL, 1, 0, NULL, BU_ARG_REQUIRED, NULL, NULL, NULL,
+	BU_ARG_VALUE_RANGE_NONE, BU_ARG_SHAPE_SCALAR},
+    BU_ARG_FLAG(NULL, "igraph", struct graph_args, igraph_mode,
 	"Use legacy textual graph mode"),
-    BU_CMD_OPTION_NULL
+    BU_ARG_OPTION_NULL
 };
-static const struct bu_cmd_operand graph_svg_operands[] = {
-    BU_CMD_OPERAND_VALIDATE("output_svg", BU_CMD_VALUE_FILE, 1, 1,
+static const struct bu_arg_operand graph_svg_operands[] = {
+    BU_ARG_OPERAND_VALIDATE("output_svg", BU_ARG_VALUE_FILE, 1, 1,
 	graph_svg_output_validate, "SVG output file", GED_CMD_PROVIDER_FILE_PATH_SVG),
-    BU_CMD_OPERAND_NULL
+    BU_ARG_OPERAND_NULL
 };
 static const char * const graph_igraph_keywords[] = {"show", "positions", NULL};
-static const struct bu_cmd_operand graph_igraph_operands[] = {
-    BU_CMD_OPERAND_KEYWORDS("igraph_command", BU_CMD_VALUE_KEYWORD, 1, 1,
+static const struct bu_arg_operand graph_igraph_operands[] = {
+    BU_ARG_OPERAND_KEYWORDS("igraph_command", BU_ARG_VALUE_KEYWORD, 1, 1,
 	"Legacy graph operation", NULL, graph_igraph_keywords),
-    BU_CMD_OPERAND_NULL
+    BU_ARG_OPERAND_NULL
 };
-static const struct bu_cmd_operand graph_native_operands[] = {
-    BU_CMD_OPERAND("output_or_operation", BU_CMD_VALUE_RAW, 1, 1,
+static const struct bu_arg_operand graph_native_operands[] = {
+    BU_ARG_OPERAND("output_or_operation", BU_ARG_VALUE_RAW, 1, 1,
 	"SVG output file or legacy graph operation", NULL),
-    BU_CMD_OPERAND_NULL
+    BU_ARG_OPERAND_NULL
 };
 
 static int
-graph_schema_validate(const struct bu_cmd_schema *schema, size_t argc,
-	const char **argv, size_t cursor_arg, struct bu_cmd_validate_result *result)
+graph_schema_validate(const struct bu_arg_schema *schema, size_t argc,
+	const char **argv, size_t cursor_arg, struct bu_arg_validate_result *result)
 {
-    struct bu_cmd_schema mode = *schema;
+    struct bu_arg_schema mode = *schema;
     int igraph;
     int ret;
 
-    igraph = bu_cmd_schema_option_present(schema, argc, argv, "igraph");
+    igraph = bu_arg_schema_option_present(schema, argc, argv, "igraph");
     mode.operands = igraph ? graph_igraph_operands : graph_svg_operands;
-    ret = bu_cmd_schema_validate_syntax(&mode, argc, argv, cursor_arg, result);
-    if (ret || !igraph || bu_cmd_schema_operand_count(schema, argc, argv) ||
+    ret = bu_arg_schema_validate_syntax(&mode, argc, argv, cursor_arg, result);
+    if (ret || !igraph || bu_arg_schema_operand_count(schema, argc, argv) ||
 	cursor_arg < argc)
 	return ret;
 
     /* Once legacy mode is selected, the next meaningful word is its
      * operation.  Prefer that vocabulary over interspersed root options. */
-    bu_cmd_validate_result_clear(result);
-    result->state = BU_CMD_VALIDATE_INCOMPLETE;
+    bu_arg_validate_result_clear(result);
+    result->state = BU_ARG_VALIDATE_INCOMPLETE;
     result->token_start = cursor_arg;
     result->token_end = cursor_arg;
-    result->expected = BU_CMD_EXPECT_OPERAND;
-    result->completion_type = BU_CMD_VALUE_KEYWORD;
+    result->expected = BU_ARG_EXPECT_OPERAND;
+    result->completion_type = BU_ARG_VALUE_KEYWORD;
     result->hint = "legacy graph operation";
-    bu_cmd_keyword_candidates(result, graph_igraph_keywords, "");
+    bu_arg_keyword_candidates(result, graph_igraph_keywords, "");
     return 0;
 }
 
-static const struct bu_cmd_schema graph_cmd_schema = {
+static const struct bu_arg_schema graph_cmd_schema = {
     "graph", "Generate an SVG hierarchy graph or legacy graph data",
-    graph_options, graph_native_operands, BU_CMD_PARSE_INTERSPERSED,
-    BU_CMD_SCHEMA_META_HELP(NULL, NULL, graph_schema_validate, NULL, NULL)
+    graph_options, graph_native_operands, BU_ARG_PARSE_INTERSPERSED,
+    BU_ARG_SCHEMA_META_HELP(NULL, NULL, graph_schema_validate, NULL, NULL)
 };
 
 #ifdef HAVE_ADAPTAGRAMS
@@ -1006,7 +1006,7 @@ hl_layout_and_output(struct ged *gedp, const graph_opts &opts)
 static void
 graph_usage(struct ged *gedp)
 {
-    char *help = bu_cmd_schema_help(&graph_cmd_schema, "graph");
+    char *help = bu_arg_schema_help(&graph_cmd_schema, "graph");
     if (help) {
 	bu_vls_strcat(gedp->ged_result_str, help);
 	bu_free(help, "native graph help");
@@ -1036,7 +1036,7 @@ ged_graph(struct ged *gedp, int argc, const char *argv[])
 
     argc-=(argc>0); argv+=(argc>0); /* skip command name argv[0] */
 
-    operand_index = bu_cmd_schema_parse(&graph_cmd_schema, &args,
+    operand_index = bu_arg_schema_parse(&graph_cmd_schema, &args,
 	gedp->ged_result_str, argc, argv);
     if (operand_index < 0)
 	return BRLCAD_ERROR;

@@ -32,7 +32,7 @@
 #include "raytrace.h"
 #include "rt/geom.h"
 #include "wdb.h"
-#include "bu/cmdschema.h"
+#include "bu/arg.h"
 
 #include "../ged_private.h"
 
@@ -243,18 +243,18 @@ ged_joint2_core(struct ged *gedp, int argc, const char *argv[])
 
 #include "../include/plugin.h"
 static const char * const joint2_operations[] = {"selection", NULL};
-static const struct bu_cmd_operand joint2_operands[] = {
-    BU_CMD_OPERAND("object", BU_CMD_VALUE_DB_OBJECT, 1, 1,
+static const struct bu_arg_operand joint2_operands[] = {
+    BU_ARG_OPERAND("object", BU_ARG_VALUE_DB_OBJECT, 1, 1,
 	"Joint solid", "ged.db_object"),
-    BU_CMD_OPERAND_KEYWORDS("operation", BU_CMD_VALUE_KEYWORD, 1, 1,
+    BU_ARG_OPERAND_KEYWORDS("operation", BU_ARG_VALUE_KEYWORD, 1, 1,
 	"Joint operation", NULL, joint2_operations),
-    BU_CMD_OPERAND("arguments", BU_CMD_VALUE_RAW, 0, BU_CMD_COUNT_UNLIMITED,
+    BU_ARG_OPERAND("arguments", BU_ARG_VALUE_RAW, 0, BU_ARG_COUNT_UNLIMITED,
 	"Selection operation arguments", NULL),
-    BU_CMD_OPERAND_NULL
+    BU_ARG_OPERAND_NULL
 };
-static const struct bu_cmd_schema joint2_schema = {
+static const struct bu_arg_schema joint2_schema = {
     "joint2", "Operate on joint primitive selections", NULL, joint2_operands,
-    BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+    BU_ARG_PARSE_STOP_AT_FIRST_OPERAND, BU_ARG_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
 
 #define GED_JOINT2_COMMANDS(X, XID) \

@@ -575,7 +575,7 @@ ged_xpush_core(struct ged *gedp, int argc, const char *argv[])
 
 #include "../include/plugin.h"
 
-GED_DEFINE_TYPED_OPERAND_SCHEMA(xpush, "xpush", "Object hierarchy to push", "object", BU_CMD_VALUE_DB_OBJECT, 1, 1, "Object hierarchy to push");
+GED_DEFINE_TYPED_OPERAND_SCHEMA(xpush, "xpush", "Object hierarchy to push", "object", BU_ARG_VALUE_DB_OBJECT, 1, 1, "Object hierarchy to push");
 
 #define GED_XPUSH_COMMANDS(X, XID) \
     X(xpush, ged_xpush_core, GED_CMD_DEFAULT, &xpush_cmd_schema) \

@@ -29,21 +29,21 @@
 #include <ctype.h>
 #include <string.h>
 
-#include "bu/cmdschema.h"
+#include "bu/arg.h"
 #include "ged.h"
 
 
-static const struct bu_cmd_operand get_schema_operands[] = {
-    BU_CMD_OPERAND("object", BU_CMD_VALUE_DB_PATH, 1, 1,
+static const struct bu_arg_operand get_schema_operands[] = {
+    BU_ARG_OPERAND("object", BU_ARG_VALUE_DB_PATH, 1, 1,
 	"Database object or path to query", "ged.db_path"),
-    BU_CMD_OPERAND("attribute", BU_CMD_VALUE_STRING, 0, 1,
+    BU_ARG_OPERAND("attribute", BU_ARG_VALUE_STRING, 0, 1,
 	"Optional primitive property name", NULL),
-    BU_CMD_OPERAND_NULL
+    BU_ARG_OPERAND_NULL
 };
 
-static const struct bu_cmd_schema get_cmd_schema = {
+static const struct bu_arg_schema get_cmd_schema = {
     "get", "Query a database object's primitive properties", NULL,
-    get_schema_operands, BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+    get_schema_operands, BU_ARG_PARSE_STOP_AT_FIRST_OPERAND, BU_ARG_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
 
 
@@ -76,7 +76,7 @@ ged_get_core(struct ged *gedp, int argc, const char *argv[])
 	return GED_HELP;
     }
 
-	operand_index = bu_cmd_schema_parse_complete(&get_cmd_schema, &parse_dummy,
+	operand_index = bu_arg_schema_parse_complete(&get_cmd_schema, &parse_dummy,
 	gedp->ged_result_str, argc - 1, argv + 1);
     if (operand_index < 0 || argc - 1 - operand_index < 1 ||
 	argc - 1 - operand_index > 2) {

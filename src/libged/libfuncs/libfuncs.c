@@ -26,7 +26,7 @@
 
 #include "common.h"
 
-#include "bu/cmdschema.h"
+#include "bu/arg.h"
 #include "ged.h"
 
 
@@ -56,34 +56,34 @@ libfuncs_vector_validate(struct bu_vls *msg, const char *arg)
 }
 
 
-static const struct bu_cmd_operand mat_ae_operands[] = {
-    BU_CMD_OPERAND("angles", BU_CMD_VALUE_NUMBER, 2, 2,
+static const struct bu_arg_operand mat_ae_operands[] = {
+    BU_ARG_OPERAND("angles", BU_ARG_VALUE_NUMBER, 2, 2,
 	"Azimuth and elevation", NULL),
-    BU_CMD_OPERAND_NULL
+    BU_ARG_OPERAND_NULL
 };
-static const struct bu_cmd_operand mat_mul_operands[] = {
-    BU_CMD_OPERAND_VALIDATE("matrices", BU_CMD_VALUE_MATRIX, 2, 2,
+static const struct bu_arg_operand mat_mul_operands[] = {
+    BU_ARG_OPERAND_VALIDATE("matrices", BU_ARG_VALUE_MATRIX, 2, 2,
 	libfuncs_matrix_validate, "Two packed 4x4 matrices", NULL),
-    BU_CMD_OPERAND_NULL
+    BU_ARG_OPERAND_NULL
 };
-static const struct bu_cmd_operand mat_point_operands[] = {
-    BU_CMD_OPERAND_VALIDATE("matrix", BU_CMD_VALUE_MATRIX, 1, 1,
+static const struct bu_arg_operand mat_point_operands[] = {
+    BU_ARG_OPERAND_VALIDATE("matrix", BU_ARG_VALUE_MATRIX, 1, 1,
 	libfuncs_matrix_validate, "Packed 4x4 matrix", NULL),
-    BU_CMD_OPERAND_VALIDATE("point", BU_CMD_VALUE_VECTOR, 1, 1,
+    BU_ARG_OPERAND_VALIDATE("point", BU_ARG_VALUE_VECTOR, 1, 1,
 	libfuncs_vector_validate, "Packed XYZ point", NULL),
-    BU_CMD_OPERAND_NULL
+    BU_ARG_OPERAND_NULL
 };
-static const struct bu_cmd_operand point_scale_operands[] = {
-    BU_CMD_OPERAND_VALIDATE("point", BU_CMD_VALUE_VECTOR, 1, 1,
+static const struct bu_arg_operand point_scale_operands[] = {
+    BU_ARG_OPERAND_VALIDATE("point", BU_ARG_VALUE_VECTOR, 1, 1,
 	libfuncs_vector_validate, "Packed XYZ point", NULL),
-    BU_CMD_OPERAND("scale", BU_CMD_VALUE_NUMBER, 1, 1,
+    BU_ARG_OPERAND("scale", BU_ARG_VALUE_NUMBER, 1, 1,
 	"Scale factor", NULL),
-    BU_CMD_OPERAND_NULL
+    BU_ARG_OPERAND_NULL
 };
 #define LIB_SCHEMA(_id, _name, _help, _ops) \
-    static const struct bu_cmd_schema _id##_cmd_schema = { \
-	_name, _help, NULL, _ops, BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, \
-	BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)}
+    static const struct bu_arg_schema _id##_cmd_schema = { \
+	_name, _help, NULL, _ops, BU_ARG_PARSE_STOP_AT_FIRST_OPERAND, \
+	BU_ARG_SCHEMA_CONSTRAINTS(NULL, NULL)}
 LIB_SCHEMA(mat4x3pnt, "mat4x3pnt", "Transform a point by a matrix", mat_point_operands);
 LIB_SCHEMA(mat_ae, "mat_ae", "Create a matrix from azimuth and elevation", mat_ae_operands);
 LIB_SCHEMA(mat_mul, "mat_mul", "Multiply two matrices", mat_mul_operands);
@@ -104,10 +104,10 @@ ged_mat_ae_core(struct ged *gedp,
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
 
-    if (bu_cmd_schema_parse_complete(&mat_ae_cmd_schema, NULL, NULL,
+    if (bu_arg_schema_parse_complete(&mat_ae_cmd_schema, NULL, NULL,
 	argc - 1, argv + 1) < 0 ||
-	!bu_cmd_number_from_str(&az, argv[1]) ||
-	!bu_cmd_number_from_str(&el, argv[2])) {
+	!bu_arg_number_from_str(&az, argv[1]) ||
+	!bu_arg_number_from_str(&el, argv[2])) {
 	ged_cmd_help_append(gedp->ged_result_str, argv[0], argv[0]);
 	return BRLCAD_ERROR;
     }
@@ -132,7 +132,7 @@ ged_mat_mul_core(struct ged *gedp,
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
 
-    if (bu_cmd_schema_parse_complete(&mat_mul_cmd_schema, NULL, NULL,
+    if (bu_arg_schema_parse_complete(&mat_mul_cmd_schema, NULL, NULL,
 	argc - 1, argv + 1) < 0 ||
 	bn_decode_mat(a, argv[1]) < 16 || bn_decode_mat(b, argv[2]) < 16) {
 	ged_cmd_help_append(gedp->ged_result_str, argv[0], argv[0]);
@@ -160,7 +160,7 @@ ged_mat4x3pnt_core(struct ged *gedp,
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
 
-	if (bu_cmd_schema_parse_complete(&mat4x3pnt_cmd_schema, NULL, NULL,
+	if (bu_arg_schema_parse_complete(&mat4x3pnt_cmd_schema, NULL, NULL,
 	argc - 1, argv + 1) < 0 || bn_decode_mat(m, argv[1]) < 16 ||
 	bn_decode_vect(i, argv[2]) < 3) {
 	ged_cmd_help_append(gedp->ged_result_str, argv[0], argv[0]);
@@ -189,9 +189,9 @@ ged_mat_scale_about_pnt_core(struct ged *gedp,
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
 
-	if (bu_cmd_schema_parse_complete(&mat_scale_about_pnt_cmd_schema, NULL, NULL,
+	if (bu_arg_schema_parse_complete(&mat_scale_about_pnt_cmd_schema, NULL, NULL,
 	argc - 1, argv + 1) < 0 || bn_decode_vect(v, argv[1]) < 3 ||
-	!bu_cmd_number_from_str(&scale, argv[2])) {
+	!bu_arg_number_from_str(&scale, argv[2])) {
 	ged_cmd_help_append(gedp->ged_result_str, argv[0], argv[0]);
 	return BRLCAD_ERROR;
     }

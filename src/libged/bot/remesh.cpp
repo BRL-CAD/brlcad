@@ -32,7 +32,7 @@
 #endif /* OPENVDB_ABI_VERSION_NUMBER */
 
 #include "vmath.h"
-#include "bu/cmdschema.h"
+#include "bu/arg.h"
 #include "bu/malloc.h"
 #include "bu/str.h"
 #include "bg/trimesh.h"
@@ -237,48 +237,48 @@ struct bot_remesh_args {
     struct bu_vls output_bot_name;
 };
 
-static const struct bu_cmd_option bot_remesh_options[] = {
-    BU_CMD_FLAG("h", "help", struct bot_remesh_args, print_help,
+static const struct bu_arg_option bot_remesh_options[] = {
+    BU_ARG_FLAG("h", "help", struct bot_remesh_args, print_help,
 	"Print command help"),
-    BU_CMD_VLS_APPEND("o", "output", struct bot_remesh_args, output_bot_name,
+    BU_ARG_VLS_APPEND("o", "output", struct bot_remesh_args, output_bot_name,
 	"name", "Name for the output BoT"),
-    BU_CMD_FLAG(NULL, "vdb", struct bot_remesh_args, use_vdb,
+    BU_ARG_FLAG(NULL, "vdb", struct bot_remesh_args, use_vdb,
 	"Use OpenVDB based remeshing"),
-    BU_CMD_OPTION_NULL
+    BU_ARG_OPTION_NULL
 };
 static const char * const bot_remesh_output_option[] = {"output", NULL};
-static const struct bu_cmd_operand bot_remesh_operands[] = {
-    BU_CMD_OPERAND("input_bot", BU_CMD_VALUE_DB_OBJECT, 1, 1,
+static const struct bu_arg_operand bot_remesh_operands[] = {
+    BU_ARG_OPERAND("input_bot", BU_ARG_VALUE_DB_OBJECT, 1, 1,
 	"Input BoT object", "ged.db_object"),
-    BU_CMD_OPERAND("output_name", BU_CMD_VALUE_STRING, 0, 1,
+    BU_ARG_OPERAND("output_name", BU_ARG_VALUE_STRING, 0, 1,
 	"Optional output BoT name", NULL),
-    BU_CMD_OPERAND_NULL
+    BU_ARG_OPERAND_NULL
 };
-static const struct bu_cmd_operand bot_remesh_named_operands[] = {
-    BU_CMD_OPERAND("input_bot", BU_CMD_VALUE_DB_OBJECT, 1, 1,
+static const struct bu_arg_operand bot_remesh_named_operands[] = {
+    BU_ARG_OPERAND("input_bot", BU_ARG_VALUE_DB_OBJECT, 1, 1,
 	"Input BoT object", "ged.db_object"),
-    BU_CMD_OPERAND_NULL
+    BU_ARG_OPERAND_NULL
 };
-static const struct bu_cmd_schema_case bot_remesh_cases[] = {
-    BU_CMD_SCHEMA_CASE("named-output", "Take the output name from --output",
-	BU_CMD_CONDITION_ALL_OPTIONS_PRESENT, bot_remesh_output_option,
+static const struct bu_arg_schema_case bot_remesh_cases[] = {
+    BU_ARG_SCHEMA_CASE("named-output", "Take the output name from --output",
+	BU_ARG_CONDITION_ALL_OPTIONS_PRESENT, bot_remesh_output_option,
 	bot_remesh_named_operands, NULL),
-    BU_CMD_SCHEMA_CASE_DEFAULT("positional-output",
+    BU_ARG_SCHEMA_CASE_DEFAULT("positional-output",
 	"Take an optional output name from the positional operand",
 	bot_remesh_operands, NULL),
-    BU_CMD_SCHEMA_CASE_NULL
+    BU_ARG_SCHEMA_CASE_NULL
 };
-extern "C" const struct bu_cmd_schema ged_bot_remesh_subcommand_schema = {
+extern "C" const struct bu_arg_schema ged_bot_remesh_subcommand_schema = {
     "remesh", "Create a remeshed version of a BoT", bot_remesh_options,
-    NULL, BU_CMD_PARSE_INTERSPERSED,
-    BU_CMD_SCHEMA_META_HELP(NULL, NULL, NULL, NULL, bot_remesh_cases)
+    NULL, BU_ARG_PARSE_INTERSPERSED,
+    BU_ARG_SCHEMA_META_HELP(NULL, NULL, NULL, NULL, bot_remesh_cases)
 };
 
 static void
 bot_remesh_usage(struct bu_vls *str, const char *cmd)
 {
     bu_vls_trunc(str, 0);
-    (void)bu_cmd_schema_help_append(str, &ged_bot_remesh_subcommand_schema, cmd);
+    (void)bu_arg_schema_help_append(str, &ged_bot_remesh_subcommand_schema, cmd);
 }
 
 
@@ -318,7 +318,7 @@ _bot_cmd_remesh(void *bs, int argc, const char **argv)
 	return GED_HELP;
     }
 
-    operand_index = bu_cmd_schema_parse_complete(&ged_bot_remesh_subcommand_schema, &args,
+    operand_index = bu_arg_schema_parse_complete(&ged_bot_remesh_subcommand_schema, &args,
 	gedp->ged_result_str, argc, argv);
     if (operand_index < 0) {
 	bu_vls_free(&args.output_bot_name);

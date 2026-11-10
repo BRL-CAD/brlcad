@@ -25,21 +25,21 @@
 
 #include "common.h"
 
-#include "bu/cmdschema.h"
+#include "bu/arg.h"
 
 #include "../ged_private.h"
 
 
-static const struct bu_cmd_operand set_transparency_operands[] = {
-    BU_CMD_OPERAND("node", BU_CMD_VALUE_DB_PATH, 1, 1,
+static const struct bu_arg_operand set_transparency_operands[] = {
+    BU_ARG_OPERAND("node", BU_ARG_VALUE_DB_PATH, 1, 1,
 	"Displayed database path", "ged.db_path"),
-    BU_CMD_OPERAND("transparency", BU_CMD_VALUE_NUMBER, 1, 1,
+    BU_ARG_OPERAND("transparency", BU_ARG_VALUE_NUMBER, 1, 1,
 	"Transparency value", NULL),
-    BU_CMD_OPERAND_NULL
+    BU_ARG_OPERAND_NULL
 };
-static const struct bu_cmd_schema set_transparency_cmd_schema = {
+static const struct bu_arg_schema set_transparency_cmd_schema = {
     "set_transparency", "Set displayed-object transparency", NULL,
-    set_transparency_operands, BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+    set_transparency_operands, BU_ARG_PARSE_STOP_AT_FIRST_OPERAND, BU_ARG_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
 
 void
@@ -116,7 +116,7 @@ ged_set_transparency_core(struct ged *gedp, int argc, const char *argv[])
     }
 
 
-	operand_index = bu_cmd_schema_parse_complete(&set_transparency_cmd_schema, &parse_dummy,
+	operand_index = bu_arg_schema_parse_complete(&set_transparency_cmd_schema, &parse_dummy,
 	gedp->ged_result_str, argc - 1, argv + 1);
     if (operand_index < 0 || argc - 1 - operand_index != 2) {
 	ged_cmd_help_append(gedp->ged_result_str, argv[0], argv[0]);

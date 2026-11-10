@@ -84,7 +84,7 @@
 #include <time.h>
 #include <limits.h>
 
-#include "bu/cmdschema.h"
+#include "bu/arg.h"
 #include "bu/opt.h"
 #include "vmath.h"
 #include "bn.h"

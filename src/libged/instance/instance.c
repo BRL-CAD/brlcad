@@ -28,7 +28,7 @@
 #include <string.h>
 
 #include "bu/cmd.h"
-#include "bu/cmdschema.h"
+#include "bu/arg.h"
 #include "wdb.h"
 
 #include "../ged_private.h"
@@ -36,29 +36,29 @@
 
 static const char * const instance_subtract_aliases[] = {"\\", NULL};
 static const char * const instance_intersect_aliases[] = {"n", "x", NULL};
-static const struct bu_cmd_value_keyword instance_operation_values[] = {
+static const struct bu_arg_value_keyword instance_operation_values[] = {
     {"u", NULL, "Union (the default)"},
     {"-", instance_subtract_aliases, "Subtraction"},
     {"+", instance_intersect_aliases, "Intersection"},
     {NULL, NULL, NULL}
 };
-static const struct bu_cmd_operand instance_schema_operands[] = {
-    BU_CMD_OPERAND("object", BU_CMD_VALUE_DB_OBJECT, 1, 1,
+static const struct bu_arg_operand instance_schema_operands[] = {
+    BU_ARG_OPERAND("object", BU_ARG_VALUE_DB_OBJECT, 1, 1,
 	"Existing object to instance", "ged.db_object"),
-    BU_CMD_OPERAND("combination", BU_CMD_VALUE_STRING, 1, 1,
+    BU_ARG_OPERAND("combination", BU_ARG_VALUE_STRING, 1, 1,
 	"Combination to create or extend", NULL),
-    BU_CMD_OPERAND_KEYWORD_VALUES("operation", BU_CMD_VALUE_KEYWORD, 0, 1,
+    BU_ARG_OPERAND_KEYWORD_VALUES("operation", BU_ARG_VALUE_KEYWORD, 0, 1,
 	"Boolean operation (union, subtraction, or intersection)", NULL,
 	instance_operation_values),
-    BU_CMD_OPERAND_NULL
+    BU_ARG_OPERAND_NULL
 };
-static const struct bu_cmd_schema instance_cmd_schema = {
+static const struct bu_arg_schema instance_cmd_schema = {
     "instance", "Add an object instance to a combination", NULL,
-    instance_schema_operands, BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+    instance_schema_operands, BU_ARG_PARSE_STOP_AT_FIRST_OPERAND, BU_ARG_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
-static const struct bu_cmd_schema i_cmd_schema = {
+static const struct bu_arg_schema i_cmd_schema = {
     "i", "Add an object instance to a combination", NULL,
-    instance_schema_operands, BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+    instance_schema_operands, BU_ARG_PARSE_STOP_AT_FIRST_OPERAND, BU_ARG_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
 
 
@@ -67,7 +67,7 @@ ged_instance_core(struct ged *gedp, int argc, const char *argv[])
 {
     struct directory *dp;
     db_op_t oper;
-    const struct bu_cmd_schema *schema;
+    const struct bu_arg_schema *schema;
     int operand_index;
     int parse_dummy = 0;
 
@@ -86,7 +86,7 @@ ged_instance_core(struct ged *gedp, int argc, const char *argv[])
 
 
     schema = BU_STR_EQUAL(argv[0], "i") ? &i_cmd_schema : &instance_cmd_schema;
-    operand_index = bu_cmd_schema_parse_complete(schema, &parse_dummy,
+    operand_index = bu_arg_schema_parse_complete(schema, &parse_dummy,
 	gedp->ged_result_str, argc - 1, argv + 1);
     if (operand_index < 0) {
 	ged_cmd_help_append(gedp->ged_result_str, argv[0], argv[0]);

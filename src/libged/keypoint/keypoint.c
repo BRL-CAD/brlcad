@@ -91,17 +91,17 @@ ged_keypoint_core(struct ged *gedp, int argc, const char *argv[])
 
 #include "../include/plugin.h"
 
-static const struct bu_cmd_arg_shape keypoint_vector3_shape =
-    BU_CMD_ARG_SHAPE(BU_CMD_ARG_SHAPE_VECTOR3, 1, 3,
+static const struct bu_arg_shape keypoint_vector3_shape =
+    BU_ARG_SHAPE(BU_ARG_SHAPE_VECTOR3, 1, 3,
 	"packed or three-component XYZ point");
-static const struct bu_cmd_operand keypoint_schema_operands[] = {
-    BU_CMD_OPERAND_SHAPED("point", BU_CMD_VALUE_VECTOR, 0, 3, NULL,
+static const struct bu_arg_operand keypoint_schema_operands[] = {
+    BU_ARG_OPERAND_SHAPED("point", BU_ARG_VALUE_VECTOR, 0, 3, NULL,
 	"Packed point or three XYZ coordinates", "ged.vector_group",
 	&keypoint_vector3_shape),
-    BU_CMD_OPERAND_NULL
+    BU_ARG_OPERAND_NULL
 };
 GED_DEFINE_NATIVE_DISCRETE_COUNT_VALIDATOR(keypoint, 0, 1, 3)
-static const struct bu_cmd_schema keypoint_cmd_schema = {"keypoint", "Query or set the view keypoint", NULL, keypoint_schema_operands, BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, BU_CMD_SCHEMA_CONSTRAINTS(keypoint_schema_validate, NULL)};
+static const struct bu_arg_schema keypoint_cmd_schema = {"keypoint", "Query or set the view keypoint", NULL, keypoint_schema_operands, BU_ARG_PARSE_STOP_AT_FIRST_OPERAND, BU_ARG_SCHEMA_CONSTRAINTS(keypoint_schema_validate, NULL)};
 
 #define GED_KEYPOINT_COMMANDS(X, XID) \
     X(keypoint, ged_keypoint_core, GED_CMD_DEFAULT, &keypoint_cmd_schema) \

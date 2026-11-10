@@ -75,7 +75,7 @@ ged_dump_core(struct ged *gedp, int argc, const char *argv[])
 
 #include "../include/plugin.h"
 
-GED_DEFINE_TYPED_OPERAND_SCHEMA(dump, "dump", "Write the database to a file", "output_file", BU_CMD_VALUE_FILE, 1, 1, "Output database file");
+GED_DEFINE_TYPED_OPERAND_SCHEMA(dump, "dump", "Write the database to a file", "output_file", BU_ARG_VALUE_FILE, 1, 1, "Output database file");
 
 #define GED_DUMP_COMMANDS(X, XID) \
     X(dump, ged_dump_core, GED_CMD_DEFAULT, &dump_cmd_schema) \

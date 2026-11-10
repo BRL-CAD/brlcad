@@ -26,7 +26,7 @@
 #include <limits.h>
 
 #include "bu/log.h"
-#include "bu/cmdschema.h"
+#include "bu/arg.h"
 #include "bu/opt.h"
 
 #include "../ged_private.h"
@@ -689,43 +689,43 @@ freemem:
 
 #include "../include/plugin.h"
 
-static const struct bu_cmd_option check_schema_options[] = {
-    BU_CMD_VALUE_UNBOUND("a", NULL, "a", BU_CMD_VALUE_STRING, "angle", "Azimuth angle"),
-    BU_CMD_FLAG_UNBOUND("d", NULL, "d", "Enable debug output"),
-    BU_CMD_VALUE_UNBOUND("e", NULL, "e", BU_CMD_VALUE_STRING, "angle", "Elevation angle"),
-    BU_CMD_VALUE_UNBOUND("f", NULL, "f", BU_CMD_VALUE_FILE, "file", "External density file"),
-    BU_CMD_VALUE_UNBOUND("g", NULL, "g", BU_CMD_VALUE_STRING, "spacing", "Grid refinement spacing"),
-    BU_CMD_VALUE_UNBOUND("G", NULL, "G", BU_CMD_VALUE_STRING, "size", "Grid width and height"),
-    BU_CMD_FLAG_UNBOUND("i", NULL, "i", "Use the current view"),
-    BU_CMD_VALUE_UNBOUND("M", NULL, "M", BU_CMD_VALUE_NUMBER, "number", "Mass tolerance"),
-    BU_CMD_VALUE_UNBOUND("n", NULL, "n", BU_CMD_VALUE_INTEGER, "count", "Minimum hits per region"),
-    BU_CMD_VALUE_UNBOUND("N", NULL, "N", BU_CMD_VALUE_INTEGER, "count", "Maximum views"),
-    BU_CMD_FLAG_UNBOUND("o", NULL, "o", "Display overlaps as overlays"),
-    BU_CMD_FLAG_UNBOUND("p", NULL, "p", "Produce plot files"),
-    BU_CMD_VALUE_UNBOUND("P", NULL, "P", BU_CMD_VALUE_INTEGER, "count", "CPU count"),
-    BU_CMD_FLAG_UNBOUND("q", NULL, "q", "Suppress not-hit reporting"),
-    BU_CMD_FLAG_UNBOUND("r", NULL, "r", "Print per-region statistics"),
-    BU_CMD_FLAG_UNBOUND("R", NULL, "R", "Disable overlap reporting"),
-    BU_CMD_VALUE_UNBOUND("s", NULL, "s", BU_CMD_VALUE_NUMBER, "number", "Surface-area tolerance"),
-    BU_CMD_VALUE_UNBOUND("S", NULL, "S", BU_CMD_VALUE_NUMBER, "count", "Minimum samples per axis"),
-    BU_CMD_VALUE_UNBOUND("t", NULL, "t", BU_CMD_VALUE_STRING, "number", "Overlap tolerance"),
-    BU_CMD_VALUE_UNBOUND("u", NULL, "u", BU_CMD_VALUE_STRING, "units", "Distance, volume, and mass units"),
-    BU_CMD_VALUE_UNBOUND("U", NULL, "U", BU_CMD_VALUE_BOOL, "0|1", "Include air regions"),
-    BU_CMD_FLAG_UNBOUND("v", NULL, "v", "Enable verbose output"),
-    BU_CMD_VALUE_UNBOUND("V", NULL, "V", BU_CMD_VALUE_NUMBER, "number", "Volume tolerance"),
-    BU_CMD_FLAG_UNBOUND("h", NULL, "h", "Print help"),
-    BU_CMD_ALIAS_SHORT("?", "h", 1),
-    BU_CMD_OPTION_NULL
+static const struct bu_arg_option check_schema_options[] = {
+    BU_ARG_VALUE_UNBOUND("a", NULL, "a", BU_ARG_VALUE_STRING, "angle", "Azimuth angle"),
+    BU_ARG_FLAG_UNBOUND("d", NULL, "d", "Enable debug output"),
+    BU_ARG_VALUE_UNBOUND("e", NULL, "e", BU_ARG_VALUE_STRING, "angle", "Elevation angle"),
+    BU_ARG_VALUE_UNBOUND("f", NULL, "f", BU_ARG_VALUE_FILE, "file", "External density file"),
+    BU_ARG_VALUE_UNBOUND("g", NULL, "g", BU_ARG_VALUE_STRING, "spacing", "Grid refinement spacing"),
+    BU_ARG_VALUE_UNBOUND("G", NULL, "G", BU_ARG_VALUE_STRING, "size", "Grid width and height"),
+    BU_ARG_FLAG_UNBOUND("i", NULL, "i", "Use the current view"),
+    BU_ARG_VALUE_UNBOUND("M", NULL, "M", BU_ARG_VALUE_NUMBER, "number", "Mass tolerance"),
+    BU_ARG_VALUE_UNBOUND("n", NULL, "n", BU_ARG_VALUE_INTEGER, "count", "Minimum hits per region"),
+    BU_ARG_VALUE_UNBOUND("N", NULL, "N", BU_ARG_VALUE_INTEGER, "count", "Maximum views"),
+    BU_ARG_FLAG_UNBOUND("o", NULL, "o", "Display overlaps as overlays"),
+    BU_ARG_FLAG_UNBOUND("p", NULL, "p", "Produce plot files"),
+    BU_ARG_VALUE_UNBOUND("P", NULL, "P", BU_ARG_VALUE_INTEGER, "count", "CPU count"),
+    BU_ARG_FLAG_UNBOUND("q", NULL, "q", "Suppress not-hit reporting"),
+    BU_ARG_FLAG_UNBOUND("r", NULL, "r", "Print per-region statistics"),
+    BU_ARG_FLAG_UNBOUND("R", NULL, "R", "Disable overlap reporting"),
+    BU_ARG_VALUE_UNBOUND("s", NULL, "s", BU_ARG_VALUE_NUMBER, "number", "Surface-area tolerance"),
+    BU_ARG_VALUE_UNBOUND("S", NULL, "S", BU_ARG_VALUE_NUMBER, "count", "Minimum samples per axis"),
+    BU_ARG_VALUE_UNBOUND("t", NULL, "t", BU_ARG_VALUE_STRING, "number", "Overlap tolerance"),
+    BU_ARG_VALUE_UNBOUND("u", NULL, "u", BU_ARG_VALUE_STRING, "units", "Distance, volume, and mass units"),
+    BU_ARG_VALUE_UNBOUND("U", NULL, "U", BU_ARG_VALUE_BOOL, "0|1", "Include air regions"),
+    BU_ARG_FLAG_UNBOUND("v", NULL, "v", "Enable verbose output"),
+    BU_ARG_VALUE_UNBOUND("V", NULL, "V", BU_ARG_VALUE_NUMBER, "number", "Volume tolerance"),
+    BU_ARG_FLAG_UNBOUND("h", NULL, "h", "Print help"),
+    BU_ARG_ALIAS_SHORT("?", "h", 1),
+    BU_ARG_OPTION_NULL
 };
-static const struct bu_cmd_operand check_schema_operands[] = {
-    BU_CMD_OPERAND("object", BU_CMD_VALUE_DB_PATH, 0, BU_CMD_COUNT_UNLIMITED,
+static const struct bu_arg_operand check_schema_operands[] = {
+    BU_ARG_OPERAND("object", BU_ARG_VALUE_DB_PATH, 0, BU_ARG_COUNT_UNLIMITED,
 	"Objects to analyze (defaults to displayed objects)", "ged.db_path"),
-    BU_CMD_OPERAND_NULL
+    BU_ARG_OPERAND_NULL
 };
 #define CHECK_SCHEMA(_id, _name, _help) \
-    static const struct bu_cmd_schema _id##_schema = \
-	BU_CMD_SCHEMA_EXTERNAL(_name, _help, check_schema_options, check_schema_operands, \
-	    BU_CMD_PARSE_OPTIONS_FIRST, NULL, NULL, NULL)
+    static const struct bu_arg_schema _id##_schema = \
+	BU_ARG_SCHEMA_EXTERNAL(_name, _help, check_schema_options, check_schema_operands, \
+	    BU_ARG_PARSE_OPTIONS_FIRST, NULL, NULL, NULL)
 CHECK_SCHEMA(check_adj_air, "adj_air", "Find adjacent air regions with differing codes");
 CHECK_SCHEMA(check_centroid, "centroid", "Compute centroids");
 CHECK_SCHEMA(check_exp_air, "exp_air", "Find exposed air regions");
@@ -738,22 +738,22 @@ CHECK_SCHEMA(check_unconf_air, "unconf_air", "Report unconfined air regions");
 CHECK_SCHEMA(check_volume, "volume", "Compute volume");
 #undef CHECK_SCHEMA
 GED_DEFINE_NO_ARG_SCHEMA_NAMED(check_root_schema, "check",
-    "Analyze geometric and physical properties", BU_CMD_PARSE_OPTIONS_FIRST);
-static const struct bu_cmd_tree_node check_subcommands[] = {
-    BU_CMD_TREE_NODE(&check_adj_air_schema, NULL, NULL, BU_CMD_TREE_CHILD_AFTER_OPTIONS, NULL),
-    BU_CMD_TREE_NODE(&check_centroid_schema, NULL, NULL, BU_CMD_TREE_CHILD_AFTER_OPTIONS, NULL),
-    BU_CMD_TREE_NODE(&check_exp_air_schema, NULL, NULL, BU_CMD_TREE_CHILD_AFTER_OPTIONS, NULL),
-    BU_CMD_TREE_NODE(&check_gap_schema, NULL, NULL, BU_CMD_TREE_CHILD_AFTER_OPTIONS, NULL),
-    BU_CMD_TREE_NODE(&check_mass_schema, NULL, NULL, BU_CMD_TREE_CHILD_AFTER_OPTIONS, NULL),
-    BU_CMD_TREE_NODE(&check_moments_schema, NULL, NULL, BU_CMD_TREE_CHILD_AFTER_OPTIONS, NULL),
-    BU_CMD_TREE_NODE(&check_overlaps_schema, NULL, NULL, BU_CMD_TREE_CHILD_AFTER_OPTIONS, NULL),
-    BU_CMD_TREE_NODE(&check_surf_area_schema, NULL, NULL, BU_CMD_TREE_CHILD_AFTER_OPTIONS, NULL),
-    BU_CMD_TREE_NODE(&check_unconf_air_schema, NULL, NULL, BU_CMD_TREE_CHILD_AFTER_OPTIONS, NULL),
-    BU_CMD_TREE_NODE(&check_volume_schema, NULL, NULL, BU_CMD_TREE_CHILD_AFTER_OPTIONS, NULL),
-    BU_CMD_TREE_NODE_NULL
+    "Analyze geometric and physical properties", BU_ARG_PARSE_OPTIONS_FIRST);
+static const struct bu_arg_tree_node check_subcommands[] = {
+    BU_ARG_TREE_NODE(&check_adj_air_schema, NULL, NULL, BU_ARG_TREE_CHILD_AFTER_OPTIONS, NULL),
+    BU_ARG_TREE_NODE(&check_centroid_schema, NULL, NULL, BU_ARG_TREE_CHILD_AFTER_OPTIONS, NULL),
+    BU_ARG_TREE_NODE(&check_exp_air_schema, NULL, NULL, BU_ARG_TREE_CHILD_AFTER_OPTIONS, NULL),
+    BU_ARG_TREE_NODE(&check_gap_schema, NULL, NULL, BU_ARG_TREE_CHILD_AFTER_OPTIONS, NULL),
+    BU_ARG_TREE_NODE(&check_mass_schema, NULL, NULL, BU_ARG_TREE_CHILD_AFTER_OPTIONS, NULL),
+    BU_ARG_TREE_NODE(&check_moments_schema, NULL, NULL, BU_ARG_TREE_CHILD_AFTER_OPTIONS, NULL),
+    BU_ARG_TREE_NODE(&check_overlaps_schema, NULL, NULL, BU_ARG_TREE_CHILD_AFTER_OPTIONS, NULL),
+    BU_ARG_TREE_NODE(&check_surf_area_schema, NULL, NULL, BU_ARG_TREE_CHILD_AFTER_OPTIONS, NULL),
+    BU_ARG_TREE_NODE(&check_unconf_air_schema, NULL, NULL, BU_ARG_TREE_CHILD_AFTER_OPTIONS, NULL),
+    BU_ARG_TREE_NODE(&check_volume_schema, NULL, NULL, BU_ARG_TREE_CHILD_AFTER_OPTIONS, NULL),
+    BU_ARG_TREE_NODE_NULL
 };
-static const struct bu_cmd_tree check_tree = {
-    &check_root_schema, check_subcommands, BU_CMD_TREE_CHILD_AFTER_OPTIONS
+static const struct bu_arg_tree check_tree = {
+    &check_root_schema, check_subcommands, BU_ARG_TREE_CHILD_AFTER_OPTIONS
 };
 
 static int
@@ -773,19 +773,19 @@ check_grammar_analyze(struct ged *gedp, const char *input,
 static char *
 check_grammar_json(void)
 {
-    return bu_cmd_tree_describe_json(&check_tree);
+    return bu_arg_tree_describe_json(&check_tree);
 }
 
 static char *
 check_grammar_help(const char *invocation)
 {
-    return bu_cmd_tree_help(&check_tree, invocation);
+    return bu_arg_tree_help(&check_tree, invocation);
 }
 
 static int
 check_grammar_lint(struct bu_vls *msgs)
 {
-    return bu_cmd_tree_lint(&check_tree, msgs);
+    return bu_arg_tree_lint(&check_tree, msgs);
 }
 
 static const struct ged_cmd_grammar check_grammar = {

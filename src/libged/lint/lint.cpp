@@ -34,7 +34,7 @@
 extern "C" {
 #include "wdb.h"
 }
-#include "bu/cmdschema.h"
+#include "bu/arg.h"
 #include "./ged_lint.h"
 
 lint_data::lint_data()
@@ -358,8 +358,8 @@ invalid_opt_token_count(size_t available, const char **argv)
     return 1;
 }
 
-static const struct bu_cmd_arg_shape invalid_opt_shape = {
-    BU_CMD_ARG_SHAPE_CUSTOM, 0, 1,
+static const struct bu_arg_shape invalid_opt_shape = {
+    BU_ARG_SHAPE_CUSTOM, 0, 1,
     "optional primitive:technique selector", invalid_opt_token_count, NULL
 };
 
@@ -381,52 +381,52 @@ struct lint_args {
     int do_rt_perturb;
 };
 
-static const struct bu_cmd_option lint_schema_options[] = {
-    BU_CMD_FLAG("h", "help", lint_args, print_help, "Print help and exit"),
-    BU_CMD_COUNTING_LONG_FLAG("v", "verbose", lint_args, verbosity,
+static const struct bu_arg_option lint_schema_options[] = {
+    BU_ARG_FLAG("h", "help", lint_args, print_help, "Print help and exit"),
+    BU_ARG_COUNTING_LONG_FLAG("v", "verbose", lint_args, verbosity,
 	"Increase reporting verbosity"),
-    BU_CMD_FLAG("C", "cyclic", lint_args, cyclic_check, "Check cyclic paths"),
-    BU_CMD_FLAG("M", "missing", lint_args, missing_check, "Check missing references"),
-    BU_CMD_OPTION_SHAPED("I", "invalid-shape", "invalid-shape", lint_args, invalid,
-	BU_CMD_VALUE_CUSTOM, "check", "Check invalid shapes, optionally selecting techniques",
-	BU_CMD_ARG_OPTIONAL, &invalid_opt_shape, invalid_opt_consume),
-    BU_CMD_VLS_APPEND("F", "filter", lint_args, filter, "pattern",
+    BU_ARG_FLAG("C", "cyclic", lint_args, cyclic_check, "Check cyclic paths"),
+    BU_ARG_FLAG("M", "missing", lint_args, missing_check, "Check missing references"),
+    BU_ARG_OPTION_SHAPED("I", "invalid-shape", "invalid-shape", lint_args, invalid,
+	BU_ARG_VALUE_CUSTOM, "check", "Check invalid shapes, optionally selecting techniques",
+	BU_ARG_OPTIONAL, &invalid_opt_shape, invalid_opt_consume),
+    BU_ARG_VLS_APPEND("F", "filter", lint_args, filter, "pattern",
 	"Apply search-style object filters"),
-    BU_CMD_VLS_APPEND("j", "json-file", lint_args, ofile, "file",
+    BU_ARG_VLS_APPEND("j", "json-file", lint_args, ofile, "file",
 	"Write full results as JSON"),
-    BU_CMD_FLAG("V", "visualize", lint_args, visualize,
+    BU_ARG_FLAG("V", "visualize", lint_args, visualize,
 	"Visualize reported problems"),
-    BU_CMD_NUMBER("t", "tol", lint_args, ftol, "number", "Numerical tolerance"),
-    BU_CMD_VLS_APPEND("g", "group", lint_args, gname, "name",
+    BU_ARG_NUMBER("t", "tol", lint_args, ftol, "number", "Numerical tolerance"),
+    BU_ARG_VLS_APPEND("g", "group", lint_args, gname, "name",
 	"Group problematic shapes"),
-    BU_CMD_NUMBER(NULL, "min-tri-area", lint_args, min_tri_area, "number",
+    BU_ARG_NUMBER(NULL, "min-tri-area", lint_args, min_tri_area, "number",
 	"Minimum triangle area to report"),
-    BU_CMD_FLAG(NULL, "raytrace", lint_args, do_raytrace,
+    BU_ARG_FLAG(NULL, "raytrace", lint_args, do_raytrace,
 	"Use raytrace validation mode"),
-    BU_CMD_NUMBER(NULL, "raytrace-tol", lint_args, rt_tol_pct, "fraction",
+    BU_ARG_NUMBER(NULL, "raytrace-tol", lint_args, rt_tol_pct, "fraction",
 	"Raytrace comparison tolerance"),
-    BU_CMD_FLAG(NULL, "perturb", lint_args, do_rt_perturb,
+    BU_ARG_FLAG(NULL, "perturb", lint_args, do_rt_perturb,
 	"Use perturbation during raytrace facetization"),
-    BU_CMD_OPTION_NULL
+    BU_ARG_OPTION_NULL
 };
 
-static const struct bu_cmd_operand lint_schema_operands[] = {
-    BU_CMD_OPERAND("object", BU_CMD_VALUE_DB_PATH, 0, BU_CMD_COUNT_UNLIMITED,
+static const struct bu_arg_operand lint_schema_operands[] = {
+    BU_ARG_OPERAND("object", BU_ARG_VALUE_DB_PATH, 0, BU_ARG_COUNT_UNLIMITED,
 	"Objects to inspect (defaults to all objects)", "ged.db_path"),
-    BU_CMD_OPERAND_NULL
+    BU_ARG_OPERAND_NULL
 };
 
-static const struct bu_cmd_schema lint_cmd_schema = {
+static const struct bu_arg_schema lint_cmd_schema = {
     "lint", "Check database structure and geometry validity", lint_schema_options,
-    lint_schema_operands, BU_CMD_PARSE_INTERSPERSED,
-    BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+    lint_schema_operands, BU_ARG_PARSE_INTERSPERSED,
+    BU_ARG_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
 
 
 static void
 lint_help(struct ged *gedp)
 {
-    char *help = bu_cmd_schema_help(&lint_cmd_schema, "lint");
+    char *help = bu_arg_schema_help(&lint_cmd_schema, "lint");
 
     if (help) {
 	bu_vls_strcat(gedp->ged_result_str, help);
@@ -464,7 +464,7 @@ ged_lint_core(struct ged *gedp, int argc, const char *argv[])
     bu_vls_trunc(gedp->ged_result_str, 0);
 
     /* Parse the same native schema completion and validation use. */
-    int operand_index = bu_cmd_schema_parse(&lint_cmd_schema, &args,
+    int operand_index = bu_arg_schema_parse(&lint_cmd_schema, &args,
 	gedp->ged_result_str, argc, argv);
     if (operand_index >= 0) {
 	argc -= operand_index;

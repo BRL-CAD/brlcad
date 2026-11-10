@@ -26,21 +26,21 @@
 #include "common.h"
 #include <string.h>
 #include "bv/plot3.h"
-#include "bu/cmdschema.h"
+#include "bu/arg.h"
 #include "ged.h"
 #include "../ged_private.h"
 
 static const char *set_uplotOutputMode_keywords[] = {"binary", "text", NULL};
 
-static const struct bu_cmd_operand set_uplotOutputMode_operands[] = {
-    BU_CMD_OPERAND_KEYWORDS("mode", BU_CMD_VALUE_KEYWORD, 0, 1,
+static const struct bu_arg_operand set_uplotOutputMode_operands[] = {
+    BU_ARG_OPERAND_KEYWORDS("mode", BU_ARG_VALUE_KEYWORD, 0, 1,
 	"Plot output mode", NULL, set_uplotOutputMode_keywords),
-    BU_CMD_OPERAND_NULL
+    BU_ARG_OPERAND_NULL
 };
 
-static const struct bu_cmd_schema set_uplotOutputMode_cmd_schema = {
+static const struct bu_arg_schema set_uplotOutputMode_cmd_schema = {
     "set_uplotOutputMode", "Get or set the plot output mode", NULL,
-    set_uplotOutputMode_operands, BU_CMD_PARSE_OPTIONS_FIRST, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+    set_uplotOutputMode_operands, BU_ARG_PARSE_OPTIONS_FIRST, BU_ARG_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
 
 /*
@@ -63,7 +63,7 @@ ged_set_uplotOutputMode_core(struct ged *gedp, int argc, const char *argv[])
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
 
-	operand_index = bu_cmd_schema_parse_complete(&set_uplotOutputMode_cmd_schema,
+	operand_index = bu_arg_schema_parse_complete(&set_uplotOutputMode_cmd_schema,
 	&parse_dummy, gedp->ged_result_str, argc - 1, argv + 1);
     if (operand_index < 0 || argc - 1 - operand_index > 1) {
 	ged_cmd_help_append(gedp->ged_result_str, argv[0], argv[0]);

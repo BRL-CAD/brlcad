@@ -29,7 +29,7 @@
 #include <ctype.h>
 #include <string.h>
 
-#include "bu/cmdschema.h"
+#include "bu/arg.h"
 #include "bu/color.h"
 
 #include "../ged_private.h"
@@ -447,7 +447,7 @@ put_rgb_into_comb(struct rt_comb_internal *comb, const char *str)
 
     if (!comb)
 	return 0;
-    if (!bu_cmd_color_from_argv(&color, 1, argv) ||
+    if (!bu_arg_color_from_argv(&color, 1, argv) ||
 	!bu_color_to_rgb_chars(&color, rgb)) {
 	comb->rgb_valid = 0;
 	return 0;
@@ -461,45 +461,45 @@ put_rgb_into_comb(struct rt_comb_internal *comb, const char *str)
 }
 
 
-static const struct bu_cmd_operand put_comb_schema_operands[] = {
-    BU_CMD_OPERAND("combination", BU_CMD_VALUE_STRING, 1, 1,
+static const struct bu_arg_operand put_comb_schema_operands[] = {
+    BU_ARG_OPERAND("combination", BU_ARG_VALUE_STRING, 1, 1,
 	"Combination name", NULL),
-    BU_CMD_OPERAND("color", BU_CMD_VALUE_COLOR, 1, 1,
+    BU_ARG_OPERAND("color", BU_ARG_VALUE_COLOR, 1, 1,
 	"Combination color", NULL),
-    BU_CMD_OPERAND("shader", BU_CMD_VALUE_STRING, 1, 1,
+    BU_ARG_OPERAND("shader", BU_ARG_VALUE_STRING, 1, 1,
 	"Shader string", NULL),
-    BU_CMD_OPERAND("inherit", BU_CMD_VALUE_BOOL, 1, 1,
+    BU_ARG_OPERAND("inherit", BU_ARG_VALUE_BOOL, 1, 1,
 	"Shader inheritance flag", NULL),
-    BU_CMD_OPERAND("boolean_expression", BU_CMD_VALUE_RAW, 1, 1,
+    BU_ARG_OPERAND("boolean_expression", BU_ARG_VALUE_RAW, 1, 1,
 	"Quoted Boolean tree expression", NULL),
-    BU_CMD_OPERAND("is_region", BU_CMD_VALUE_BOOL, 1, 1,
+    BU_ARG_OPERAND("is_region", BU_ARG_VALUE_BOOL, 1, 1,
 	"Region flag", NULL),
-    BU_CMD_OPERAND("region_fields", BU_CMD_VALUE_INTEGER, 0, 4,
+    BU_ARG_OPERAND("region_fields", BU_ARG_VALUE_INTEGER, 0, 4,
 	"Region ID, air, material ID, and LOS", NULL),
-    BU_CMD_OPERAND_NULL
+    BU_ARG_OPERAND_NULL
 };
 
 
 static int
-put_comb_schema_validate(const struct bu_cmd_schema *cmd, size_t argc,
-	const char **argv, size_t cursor_arg, struct bu_cmd_validate_result *result)
+put_comb_schema_validate(const struct bu_arg_schema *cmd, size_t argc,
+	const char **argv, size_t cursor_arg, struct bu_arg_validate_result *result)
 {
-    struct bu_cmd_schema flat = *cmd;
+    struct bu_arg_schema flat = *cmd;
     int ret = 0;
 
-    ret = bu_cmd_schema_validate_syntax(&flat, argc, argv, cursor_arg, result);
-    if (ret || result->state == BU_CMD_VALIDATE_INVALID || argc < 6)
+    ret = bu_arg_schema_validate_syntax(&flat, argc, argv, cursor_arg, result);
+    if (ret || result->state == BU_ARG_VALIDATE_INVALID || argc < 6)
 	return ret;
 
     if (cursor_arg >= argc) {
 	int is_region = bu_str_true(argv[5]);
 	size_t fields = argc - 6;
 	if ((is_region && fields < 4)) {
-	    result->state = BU_CMD_VALIDATE_INCOMPLETE;
+	    result->state = BU_ARG_VALIDATE_INCOMPLETE;
 	    result->hint = "region ID, air, material ID, and LOS required";
 	}
 	if ((!is_region && fields) || fields > 4) {
-	    result->state = BU_CMD_VALIDATE_INVALID;
+	    result->state = BU_ARG_VALIDATE_INVALID;
 	    result->hint = is_region ? "too many region fields" :
 		"non-region combinations do not take region fields";
 	}
@@ -509,16 +509,16 @@ put_comb_schema_validate(const struct bu_cmd_schema *cmd, size_t argc,
 }
 
 
-static const struct bu_cmd_schema put_comb_cmd_schema = {
+static const struct bu_arg_schema put_comb_cmd_schema = {
     "put_comb", "Create or replace a combination", NULL, put_comb_schema_operands,
-    BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, BU_CMD_SCHEMA_CONSTRAINTS(put_comb_schema_validate, NULL)
+    BU_ARG_PARSE_STOP_AT_FIRST_OPERAND, BU_ARG_SCHEMA_CONSTRAINTS(put_comb_schema_validate, NULL)
 };
 
 
 static void
 put_comb_usage(struct ged *gedp)
 {
-    char *help = bu_cmd_schema_help(&put_comb_cmd_schema, "put_comb");
+    char *help = bu_arg_schema_help(&put_comb_cmd_schema, "put_comb");
 
     if (help) {
 	bu_vls_strcat(gedp->ged_result_str, help);
@@ -565,7 +565,7 @@ ged_put_comb_core(struct ged *gedp, int argc, const char *argv[])
 
     {
 	struct bu_vls msg = BU_VLS_INIT_ZERO;
-	if (bu_cmd_schema_parse_complete(&put_comb_cmd_schema, NULL, &msg,
+	if (bu_arg_schema_parse_complete(&put_comb_cmd_schema, NULL, &msg,
 		argc - 1, argv + 1) < 0) {
 	    if (bu_vls_strlen(&msg))
 		bu_vls_vlscat(gedp->ged_result_str, &msg);
@@ -626,10 +626,10 @@ ged_put_comb_core(struct ged *gedp, int argc, const char *argv[])
 	    put_comb_usage(gedp);
 	    return BRLCAD_ERROR;
 	}
-	if (!bu_cmd_integer_from_str(&region_id, argv[7]) ||
-	    !bu_cmd_integer_from_str(&air_id, argv[8]) ||
-	    !bu_cmd_integer_from_str(&material_id, argv[9]) ||
-	    !bu_cmd_integer_from_str(&los, argv[10])) {
+	if (!bu_arg_integer_from_str(&region_id, argv[7]) ||
+	    !bu_arg_integer_from_str(&air_id, argv[8]) ||
+	    !bu_arg_integer_from_str(&material_id, argv[9]) ||
+	    !bu_arg_integer_from_str(&los, argv[10])) {
 	    bu_vls_printf(gedp->ged_result_str, "%s: invalid region fields\n", cmd_name);
 	    return BRLCAD_ERROR;
 	}

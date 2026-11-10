@@ -25,22 +25,22 @@
 
 #include "common.h"
 #include <stdlib.h>
-#include "bu/cmdschema.h"
+#include "bu/arg.h"
 #include "ged.h"
 
 
-static const struct bu_cmd_operand item_schema_operands[] = {
-    BU_CMD_OPERAND("region", BU_CMD_VALUE_DB_OBJECT, 1, 1,
+static const struct bu_arg_operand item_schema_operands[] = {
+    BU_ARG_OPERAND("region", BU_ARG_VALUE_DB_OBJECT, 1, 1,
 	"Region object", "ged.db_object"),
-    BU_CMD_OPERAND("ident", BU_CMD_VALUE_INTEGER, 1, 1,
+    BU_ARG_OPERAND("ident", BU_ARG_VALUE_INTEGER, 1, 1,
 	"Region identifier", NULL),
-    BU_CMD_OPERAND("air_material_los", BU_CMD_VALUE_INTEGER, 0, 3,
+    BU_ARG_OPERAND("air_material_los", BU_ARG_VALUE_INTEGER, 0, 3,
 	"Optional air, material, and LOS values", NULL),
-    BU_CMD_OPERAND_NULL
+    BU_ARG_OPERAND_NULL
 };
-static const struct bu_cmd_schema item_cmd_schema = {
+static const struct bu_arg_schema item_cmd_schema = {
     "item", "Set region item attributes", NULL,
-    item_schema_operands, BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+    item_schema_operands, BU_ARG_PARSE_STOP_AT_FIRST_OPERAND, BU_ARG_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
 
 
@@ -74,7 +74,7 @@ ged_item_core(struct ged *gedp, int argc, const char *argv[])
     }
 
 
-    operand_index = bu_cmd_schema_parse_complete(&item_cmd_schema,
+    operand_index = bu_arg_schema_parse_complete(&item_cmd_schema,
 	&parse_dummy, gedp->ged_result_str, argc - 1, argv + 1);
     if (operand_index < 0) {
 	ged_cmd_help_append(gedp->ged_result_str, argv[0], argv[0]);

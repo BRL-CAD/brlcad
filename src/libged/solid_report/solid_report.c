@@ -40,39 +40,39 @@ ged_solid_report_core(struct ged *gedp, int argc, const char *argv[])
 
 #include "../include/plugin.h"
 
-static const struct bu_cmd_option solid_report_schema_options[] = {
-    BU_CMD_FLAG("h", "help", struct ged_solid_report_args, print_help,
+static const struct bu_arg_option solid_report_schema_options[] = {
+    BU_ARG_FLAG("h", "help", struct ged_solid_report_args, print_help,
 	"Print help"),
-    BU_CMD_ALIAS_SHORT("?", "help", 1),
-    BU_CMD_VLS_APPEND("V", "view", struct ged_solid_report_args, view,
+    BU_ARG_ALIAS_SHORT("?", "help", 1),
+    BU_ARG_VLS_APPEND("V", "view", struct ged_solid_report_args, view,
 	"name", "Specify the view"),
-    BU_CMD_INTEGER("m", "mode", struct ged_solid_report_args, mode,
+    BU_ARG_INTEGER("m", "mode", struct ged_solid_report_args, mode,
 	"number", "Restrict the drawing mode"),
-    BU_CMD_OPTION_NULL
+    BU_ARG_OPTION_NULL
 };
-static const struct bu_cmd_operand solid_report_schema_operands[] = {
-    BU_CMD_OPERAND("detail_level", BU_CMD_VALUE_INTEGER, 0, 1,
+static const struct bu_arg_operand solid_report_schema_operands[] = {
+    BU_ARG_OPERAND("detail_level", BU_ARG_VALUE_INTEGER, 0, 1,
 	"Report detail level", NULL),
-    BU_CMD_OPERAND_NULL
+    BU_ARG_OPERAND_NULL
 };
-static const struct bu_cmd_schema solid_report_cmd_schema = {
+static const struct bu_arg_schema solid_report_cmd_schema = {
     "solid_report", "Report displayed solid internals", solid_report_schema_options,
-    solid_report_schema_operands, BU_CMD_PARSE_INTERSPERSED,
-    BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+    solid_report_schema_operands, BU_ARG_PARSE_INTERSPERSED,
+    BU_ARG_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
-static const struct bu_cmd_schema x_cmd_schema = {
+static const struct bu_arg_schema x_cmd_schema = {
     "x", "Report displayed solid internals", solid_report_schema_options,
-    solid_report_schema_operands, BU_CMD_PARSE_INTERSPERSED,
-    BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+    solid_report_schema_operands, BU_ARG_PARSE_INTERSPERSED,
+    BU_ARG_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
-const struct bu_cmd_schema ged_who_solids_schema = {
+const struct bu_arg_schema ged_who_solids_schema = {
     "solids", "Report displayed solid internals", solid_report_schema_options,
-    solid_report_schema_operands, BU_CMD_PARSE_INTERSPERSED,
-    BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+    solid_report_schema_operands, BU_ARG_PARSE_INTERSPERSED,
+    BU_ARG_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
 
 
-const struct bu_cmd_schema *
+const struct bu_arg_schema *
 ged_solid_report_native_schema(void)
 {
     return &solid_report_cmd_schema;

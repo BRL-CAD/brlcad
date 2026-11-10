@@ -33,7 +33,7 @@
 
 #include "bu/app.h"
 #include "bu/cmd.h"
-#include "bu/cmdschema.h"
+#include "bu/arg.h"
 #include "bu/path.h"
 #include "raytrace.h"
 #include "ged.h"

@@ -32,7 +32,7 @@
 #include <string.h>
 #include <time.h>
 
-#include "bu/cmdschema.h"
+#include "bu/arg.h"
 #include "bu/debug.h"
 #include "vmath.h"
 #include "nmg.h"
@@ -54,21 +54,21 @@ struct bigE_args {
 };
 
 
-static const struct bu_cmd_option bigE_schema_options[] = {
-    BU_CMD_RGB("C", NULL, struct bigE_args, color, "r/g/b",
+static const struct bu_arg_option bigE_schema_options[] = {
+    BU_ARG_RGB("C", NULL, struct bigE_args, color, "r/g/b",
 	"Override object colors"),
-    BU_CMD_FLAG("s", NULL, struct bigE_args, polysolids, "Draw polysolids"),
-    BU_CMD_OPTION_NULL
+    BU_ARG_FLAG("s", NULL, struct bigE_args, polysolids, "Draw polysolids"),
+    BU_ARG_OPTION_NULL
 };
-static const struct bu_cmd_operand bigE_schema_operands[] = {
-    BU_CMD_OPERAND("objects", BU_CMD_VALUE_DB_PATH, 1, BU_CMD_COUNT_UNLIMITED,
+static const struct bu_arg_operand bigE_schema_operands[] = {
+    BU_ARG_OPERAND("objects", BU_ARG_VALUE_DB_PATH, 1, BU_ARG_COUNT_UNLIMITED,
 	"Database objects or paths to evaluate", "ged.db_path"),
-    BU_CMD_OPERAND_NULL
+    BU_ARG_OPERAND_NULL
 };
-const struct bu_cmd_schema ged_bigE_native_schema = {
+const struct bu_arg_schema ged_bigE_native_schema = {
     "E", "Draw evaluated database objects", bigE_schema_options,
-    bigE_schema_operands, BU_CMD_PARSE_INTERSPERSED,
-    BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+    bigE_schema_operands, BU_ARG_PARSE_INTERSPERSED,
+    BU_ARG_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
 
 /* segment types (stored in the "seg_stp" field of the (struct seg) */
@@ -2027,13 +2027,13 @@ ged_E_core(struct ged *gedp, int argc, const char *argv[])
 	return GED_HELP;
     }
 
-    operand_index = bu_cmd_schema_parse_complete(&ged_bigE_native_schema, &args,
+    operand_index = bu_arg_schema_parse_complete(&ged_bigE_native_schema, &args,
 	gedp->ged_result_str, argc - 1, argv + 1);
     if (operand_index < 0) {
 	ged_cmd_help_append(gedp->ged_result_str, argv[0], argv[0]);
 	return BRLCAD_ERROR;
     }
-    color_override = bu_cmd_schema_option_present(&ged_bigE_native_schema,
+    color_override = bu_arg_schema_option_present(&ged_bigE_native_schema,
 	(size_t)(argc - 1), argv + 1, "C");
 
     argc -= operand_index + 1;

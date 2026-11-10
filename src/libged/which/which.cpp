@@ -35,7 +35,7 @@
 #include <iterator>
 
 #include "bu/cmd.h"
-#include "bu/cmdschema.h"
+#include "bu/arg.h"
 #include "bu/vls.h"
 
 #include "../alphanum.h"
@@ -116,28 +116,28 @@ BU_OPT_DESC_BUILDER(which_options, struct which_args, WHICH_OPTIONS);
 
 static const ged_opt_rule which_opt_rules[] = {
     GED_RULE_ALIAS("?", "help"),
-    GED_RULE_SEMANTIC("root", BU_CMD_VALUE_DB_OBJECT, NULL, "database object"),
+    GED_RULE_SEMANTIC("root", BU_ARG_VALUE_DB_OBJECT, NULL, "database object"),
     GED_RULE_NULL
 };
-static const struct bu_cmd_arg_shape which_range_shape =
-    BU_CMD_ARG_SHAPE(BU_CMD_ARG_SHAPE_RANGE_PATTERN, 1, 1,
+static const struct bu_arg_shape which_range_shape =
+    BU_ARG_SHAPE(BU_ARG_SHAPE_RANGE_PATTERN, 1, 1,
 	"Integer or inclusive integer range (start-end or start:end)");
-static const struct bu_cmd_operand which_operands[] = {
-    BU_CMD_OPERAND_SHAPED("id_range", BU_CMD_VALUE_STRING, 1,
-	BU_CMD_COUNT_UNLIMITED, which_range_validate,
+static const struct bu_arg_operand which_operands[] = {
+    BU_ARG_OPERAND_SHAPED("id_range", BU_ARG_VALUE_STRING, 1,
+	BU_ARG_COUNT_UNLIMITED, which_range_validate,
 	"Region ID or air-code, or inclusive start-end/start:end range", NULL,
 	&which_range_shape),
-    BU_CMD_OPERAND_NULL
+    BU_ARG_OPERAND_NULL
 };
 static const ged_opt_spec which_opt_spec =
     GED_OPT_NATIVE("which", "Find regions with specified region IDs",
-	which_options, which_operands, BU_CMD_PARSE_INTERSPERSED, which_opt_rules);
+	which_options, which_operands, BU_ARG_PARSE_INTERSPERSED, which_opt_rules);
 static const ged_opt_spec whichid_opt_spec =
     GED_OPT_NATIVE("whichid", "Find regions with specified region IDs",
-	which_options, which_operands, BU_CMD_PARSE_INTERSPERSED, which_opt_rules);
+	which_options, which_operands, BU_ARG_PARSE_INTERSPERSED, which_opt_rules);
 static const ged_opt_spec whichair_opt_spec =
     GED_OPT_NATIVE("whichair", "Find regions with specified air codes",
-	which_options, which_operands, BU_CMD_PARSE_INTERSPERSED, which_opt_rules);
+	which_options, which_operands, BU_ARG_PARSE_INTERSPERSED, which_opt_rules);
 
 
 static void

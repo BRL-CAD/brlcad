@@ -39,7 +39,7 @@ extern "C" {
 
 extern "C" {
 #include "bu/color.h"
-#include "bu/cmdschema.h"
+#include "bu/arg.h"
 #include "bu/sort.h"
 #include "bu/units.h"
 #include "bg/ballpivot.h"
@@ -65,10 +65,10 @@ void _pnts_fastf_t_to_vls(struct bu_vls *o, fastf_t d, int p)
 
 static int
 _ged_pnts_cmd_msgs(struct ged *gedp, int argc, const char **argv,
-	const struct bu_cmd_schema *schema, const char *invocation)
+	const struct bu_arg_schema *schema, const char *invocation)
 {
     if (argc == 2 && BU_STR_EQUAL(argv[1], HELPFLAG)) {
-	char *help = bu_cmd_schema_help(schema, invocation);
+	char *help = bu_arg_schema_help(schema, invocation);
 	if (help) {
 	    bu_vls_strcat(gedp->ged_result_str, help);
 	    bu_free(help, "pnts operation help");
@@ -190,172 +190,172 @@ static int _ged_pnts_cmd_read(void *, int, const char *[]);
 static int _ged_pnts_cmd_write(void *, int, const char *[]);
 static void _pnts_show_help(struct ged *);
 
-static const struct bu_cmd_operand pnts_pair_operands[] = {
-    BU_CMD_OPERAND("input_pnts", BU_CMD_VALUE_DB_OBJECT, 1, 1,
+static const struct bu_arg_operand pnts_pair_operands[] = {
+    BU_ARG_OPERAND("input_pnts", BU_ARG_VALUE_DB_OBJECT, 1, 1,
 	"Input point-cloud object", "ged.db_object"),
-    BU_CMD_OPERAND("output_bot", BU_CMD_VALUE_STRING, 1, 1,
+    BU_ARG_OPERAND("output_bot", BU_ARG_VALUE_STRING, 1, 1,
 	"New BOT object name", NULL),
-    BU_CMD_OPERAND_NULL
+    BU_ARG_OPERAND_NULL
 };
-static const struct bu_cmd_option pnts_tri_unit_options[] = {
-    BU_CMD_FLAG("h", "help", pnts_tri_unit_args, help, "Print help"),
-    BU_CMD_NUMBER("s", "scale", pnts_tri_unit_args, scale, "scale",
+static const struct bu_arg_option pnts_tri_unit_options[] = {
+    BU_ARG_FLAG("h", "help", pnts_tri_unit_args, help, "Print help"),
+    BU_ARG_NUMBER("s", "scale", pnts_tri_unit_args, scale, "scale",
 	"Triangle scale factor"),
-    BU_CMD_OPTION_NULL
+    BU_ARG_OPTION_NULL
 };
-static const struct bu_cmd_schema pnts_tri_unit_schema = {
+static const struct bu_arg_schema pnts_tri_unit_schema = {
     "unit", "Generate a triangle for each oriented point", pnts_tri_unit_options,
-    pnts_pair_operands, BU_CMD_PARSE_INTERSPERSED, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+    pnts_pair_operands, BU_ARG_PARSE_INTERSPERSED, BU_ARG_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
 /* The optional historical spelling `pnts tri <pnts> <bot>` is the unit
  * operation.  It has its own node name but deliberately reuses the same
  * rows, instead of retaining a second legacy option description. */
-static const struct bu_cmd_schema pnts_tri_legacy_schema = {
+static const struct bu_arg_schema pnts_tri_legacy_schema = {
     "tri", "Generate a triangle for each oriented point", pnts_tri_unit_options,
-    pnts_pair_operands, BU_CMD_PARSE_INTERSPERSED, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+    pnts_pair_operands, BU_ARG_PARSE_INTERSPERSED, BU_ARG_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
-static const struct bu_cmd_option pnts_tri_ballpivot_options[] = {
-    BU_CMD_FLAG("h", "help", pnts_tri_ballpivot_args, help, "Print help"),
-    BU_CMD_CUSTOM("r", "radius", pnts_tri_ballpivot_args, radii, _pnts_opt_radius,
+static const struct bu_arg_option pnts_tri_ballpivot_options[] = {
+    BU_ARG_FLAG("h", "help", pnts_tri_ballpivot_args, help, "Print help"),
+    BU_ARG_CUSTOM("r", "radius", pnts_tri_ballpivot_args, radii, _pnts_opt_radius,
 	"radius", "Ball radius (repeatable)"),
-    BU_CMD_CUSTOM(NULL, "radii", pnts_tri_ballpivot_args, radii, _pnts_opt_radii,
+    BU_ARG_CUSTOM(NULL, "radii", pnts_tri_ballpivot_args, radii, _pnts_opt_radii,
 	"r1,r2,...", "Comma-separated ball radii"),
-    BU_CMD_OPTION_NULL
+    BU_ARG_OPTION_NULL
 };
-static const struct bu_cmd_schema pnts_tri_ballpivot_schema = {
+static const struct bu_arg_schema pnts_tri_ballpivot_schema = {
     "ballpivot", "Reconstruct a surface using ball pivoting", pnts_tri_ballpivot_options,
-    pnts_pair_operands, BU_CMD_PARSE_INTERSPERSED, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+    pnts_pair_operands, BU_ARG_PARSE_INTERSPERSED, BU_ARG_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
-static const struct bu_cmd_option pnts_tri_spsr_options[] = {
-    BU_CMD_FLAG("h", "help", pnts_tri_spsr_args, help, "Print help"),
-    BU_CMD_INTEGER(NULL, "degree", pnts_tri_spsr_args, opts.degree, "number", "Finite element degree"),
-    BU_CMD_INTEGER(NULL, "btype", pnts_tri_spsr_args, opts.btype, "number", "Boundary type"),
-    BU_CMD_INTEGER(NULL, "depth", pnts_tri_spsr_args, opts.depth, "number", "Maximum reconstruction depth"),
-    BU_CMD_INTEGER(NULL, "kerneldepth", pnts_tri_spsr_args, opts.kerneldepth, "number", "Kernel depth"),
-    BU_CMD_INTEGER(NULL, "iterations", pnts_tri_spsr_args, opts.iterations, "number", "Solver iterations"),
-    BU_CMD_INTEGER(NULL, "full-depth", pnts_tri_spsr_args, opts.full_depth, "number", "Full depth"),
-    BU_CMD_INTEGER(NULL, "base-depth", pnts_tri_spsr_args, opts.base_depth, "number", "Coarse multigrid depth"),
-    BU_CMD_INTEGER(NULL, "base-vcycles", pnts_tri_spsr_args, opts.baseVcycles, "number", "Coarse multigrid cycles"),
-    BU_CMD_INTEGER(NULL, "max-mem", pnts_tri_spsr_args, opts.max_memory_GB, "number", "Maximum memory in GB"),
-    BU_CMD_CUSTOM(NULL, "threads", pnts_tri_spsr_args, opts.threads, _pnts_opt_size_t, "number", "Thread count"),
-    BU_CMD_NUMBER(NULL, "samples-per-node", pnts_tri_spsr_args, opts.samples_per_node, "number", "Minimum samples per node"),
-    BU_CMD_NUMBER(NULL, "scale", pnts_tri_spsr_args, opts.scale, "number", "Scale factor"),
-    BU_CMD_NUMBER(NULL, "width", pnts_tri_spsr_args, opts.width, "number", "Voxel width"),
-    BU_CMD_NUMBER(NULL, "confidence", pnts_tri_spsr_args, opts.confidence, "number", "Normal confidence exponent"),
-    BU_CMD_NUMBER(NULL, "confidence-bias", pnts_tri_spsr_args, opts.confidence_bias, "number", "Normal confidence bias exponent"),
-    BU_CMD_NUMBER(NULL, "cg-accuracy", pnts_tri_spsr_args, opts.cgsolver_accuracy, "number", "CG solver accuracy"),
-    BU_CMD_NUMBER(NULL, "point-weight", pnts_tri_spsr_args, opts.point_weight, "number", "Interpolation weight"),
-    BU_CMD_INTEGER(NULL, "nonmanifold", pnts_tri_spsr_args, opts.nonManifold, "number", "Permit non-manifold output"),
-    BU_CMD_INTEGER(NULL, "linearfit", pnts_tri_spsr_args, opts.linearFit, "number", "Use linear fitting"),
-    BU_CMD_INTEGER(NULL, "exact", pnts_tri_spsr_args, opts.exact, "number", "Use exact interpolation"),
-    BU_CMD_OPTION_NULL
+static const struct bu_arg_option pnts_tri_spsr_options[] = {
+    BU_ARG_FLAG("h", "help", pnts_tri_spsr_args, help, "Print help"),
+    BU_ARG_INTEGER(NULL, "degree", pnts_tri_spsr_args, opts.degree, "number", "Finite element degree"),
+    BU_ARG_INTEGER(NULL, "btype", pnts_tri_spsr_args, opts.btype, "number", "Boundary type"),
+    BU_ARG_INTEGER(NULL, "depth", pnts_tri_spsr_args, opts.depth, "number", "Maximum reconstruction depth"),
+    BU_ARG_INTEGER(NULL, "kerneldepth", pnts_tri_spsr_args, opts.kerneldepth, "number", "Kernel depth"),
+    BU_ARG_INTEGER(NULL, "iterations", pnts_tri_spsr_args, opts.iterations, "number", "Solver iterations"),
+    BU_ARG_INTEGER(NULL, "full-depth", pnts_tri_spsr_args, opts.full_depth, "number", "Full depth"),
+    BU_ARG_INTEGER(NULL, "base-depth", pnts_tri_spsr_args, opts.base_depth, "number", "Coarse multigrid depth"),
+    BU_ARG_INTEGER(NULL, "base-vcycles", pnts_tri_spsr_args, opts.baseVcycles, "number", "Coarse multigrid cycles"),
+    BU_ARG_INTEGER(NULL, "max-mem", pnts_tri_spsr_args, opts.max_memory_GB, "number", "Maximum memory in GB"),
+    BU_ARG_CUSTOM(NULL, "threads", pnts_tri_spsr_args, opts.threads, _pnts_opt_size_t, "number", "Thread count"),
+    BU_ARG_NUMBER(NULL, "samples-per-node", pnts_tri_spsr_args, opts.samples_per_node, "number", "Minimum samples per node"),
+    BU_ARG_NUMBER(NULL, "scale", pnts_tri_spsr_args, opts.scale, "number", "Scale factor"),
+    BU_ARG_NUMBER(NULL, "width", pnts_tri_spsr_args, opts.width, "number", "Voxel width"),
+    BU_ARG_NUMBER(NULL, "confidence", pnts_tri_spsr_args, opts.confidence, "number", "Normal confidence exponent"),
+    BU_ARG_NUMBER(NULL, "confidence-bias", pnts_tri_spsr_args, opts.confidence_bias, "number", "Normal confidence bias exponent"),
+    BU_ARG_NUMBER(NULL, "cg-accuracy", pnts_tri_spsr_args, opts.cgsolver_accuracy, "number", "CG solver accuracy"),
+    BU_ARG_NUMBER(NULL, "point-weight", pnts_tri_spsr_args, opts.point_weight, "number", "Interpolation weight"),
+    BU_ARG_INTEGER(NULL, "nonmanifold", pnts_tri_spsr_args, opts.nonManifold, "number", "Permit non-manifold output"),
+    BU_ARG_INTEGER(NULL, "linearfit", pnts_tri_spsr_args, opts.linearFit, "number", "Use linear fitting"),
+    BU_ARG_INTEGER(NULL, "exact", pnts_tri_spsr_args, opts.exact, "number", "Use exact interpolation"),
+    BU_ARG_OPTION_NULL
 };
-static const struct bu_cmd_schema pnts_tri_spsr_schema = {
+static const struct bu_arg_schema pnts_tri_spsr_schema = {
     "spsr", "Reconstruct a surface using screened Poisson reconstruction", pnts_tri_spsr_options,
-    pnts_pair_operands, BU_CMD_PARSE_INTERSPERSED, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+    pnts_pair_operands, BU_ARG_PARSE_INTERSPERSED, BU_ARG_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
-static const struct bu_cmd_option pnts_tri_options[] = {
-    BU_CMD_FLAG("h", "help", pnts_root_args, help, "Print help"),
-    BU_CMD_OPTION_NULL
+static const struct bu_arg_option pnts_tri_options[] = {
+    BU_ARG_FLAG("h", "help", pnts_root_args, help, "Print help"),
+    BU_ARG_OPTION_NULL
 };
-static const struct bu_cmd_schema pnts_tri_schema = {
+static const struct bu_arg_schema pnts_tri_schema = {
     "tri", "Generate BOT geometry from a point cloud", pnts_tri_options, NULL,
-    BU_CMD_PARSE_OPTIONS_FIRST, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+    BU_ARG_PARSE_OPTIONS_FIRST, BU_ARG_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
-static const struct bu_cmd_tree_node pnts_tri_subcommands[] = {
-    BU_CMD_TREE_NODE(&pnts_tri_unit_schema, NULL, NULL,
-	BU_CMD_TREE_CHILD_AFTER_OPTIONS, _ged_pnts_tri_cmd_unit),
-    BU_CMD_TREE_NODE(&pnts_tri_ballpivot_schema, NULL, NULL,
-	BU_CMD_TREE_CHILD_AFTER_OPTIONS, _ged_pnts_tri_cmd_ballpivot),
-    BU_CMD_TREE_NODE(&pnts_tri_spsr_schema, NULL, NULL,
-	BU_CMD_TREE_CHILD_AFTER_OPTIONS, _ged_pnts_tri_cmd_spsr),
-    BU_CMD_TREE_NODE_NULL
+static const struct bu_arg_tree_node pnts_tri_subcommands[] = {
+    BU_ARG_TREE_NODE(&pnts_tri_unit_schema, NULL, NULL,
+	BU_ARG_TREE_CHILD_AFTER_OPTIONS, _ged_pnts_tri_cmd_unit),
+    BU_ARG_TREE_NODE(&pnts_tri_ballpivot_schema, NULL, NULL,
+	BU_ARG_TREE_CHILD_AFTER_OPTIONS, _ged_pnts_tri_cmd_ballpivot),
+    BU_ARG_TREE_NODE(&pnts_tri_spsr_schema, NULL, NULL,
+	BU_ARG_TREE_CHILD_AFTER_OPTIONS, _ged_pnts_tri_cmd_spsr),
+    BU_ARG_TREE_NODE_NULL
 };
-static const struct bu_cmd_tree pnts_tri_tree = {
-    &pnts_tri_schema, pnts_tri_subcommands, BU_CMD_TREE_CHILD_AFTER_OPTIONS
+static const struct bu_arg_tree pnts_tri_tree = {
+    &pnts_tri_schema, pnts_tri_subcommands, BU_ARG_TREE_CHILD_AFTER_OPTIONS
 };
-static const struct bu_cmd_option pnts_gen_options[] = {
-    BU_CMD_FLAG("h", "help", pnts_gen_args, help, "Print help"),
-    BU_CMD_NUMBER("t", "tolerance", pnts_gen_args, tolerance, "distance", "Sampling grid spacing"),
-    BU_CMD_FLAG(NULL, "surface", pnts_gen_args, surface, "Save only first and last ray points"),
-    BU_CMD_FLAG(NULL, "grid", pnts_gen_args, grid, "Use gridded sampling"),
-    BU_CMD_FLAG(NULL, "rand", pnts_gen_args, rand, "Use random sampling"),
-    BU_CMD_FLAG(NULL, "sobol", pnts_gen_args, sobol, "Use Sobol sampling"),
-    BU_CMD_INTEGER(NULL, "max-pnts", pnts_gen_args, max_pnts, "number", "Maximum points"),
-    BU_CMD_INTEGER(NULL, "max-time", pnts_gen_args, max_time, "seconds", "Maximum sampling time"),
-    BU_CMD_OPTION_NULL
+static const struct bu_arg_option pnts_gen_options[] = {
+    BU_ARG_FLAG("h", "help", pnts_gen_args, help, "Print help"),
+    BU_ARG_NUMBER("t", "tolerance", pnts_gen_args, tolerance, "distance", "Sampling grid spacing"),
+    BU_ARG_FLAG(NULL, "surface", pnts_gen_args, surface, "Save only first and last ray points"),
+    BU_ARG_FLAG(NULL, "grid", pnts_gen_args, grid, "Use gridded sampling"),
+    BU_ARG_FLAG(NULL, "rand", pnts_gen_args, rand, "Use random sampling"),
+    BU_ARG_FLAG(NULL, "sobol", pnts_gen_args, sobol, "Use Sobol sampling"),
+    BU_ARG_INTEGER(NULL, "max-pnts", pnts_gen_args, max_pnts, "number", "Maximum points"),
+    BU_ARG_INTEGER(NULL, "max-time", pnts_gen_args, max_time, "seconds", "Maximum sampling time"),
+    BU_ARG_OPTION_NULL
 };
-static const struct bu_cmd_operand pnts_gen_operands[] = {
-    BU_CMD_OPERAND("object", BU_CMD_VALUE_DB_PATH, 1, 1, "Object to sample", "ged.db_path"),
-    BU_CMD_OPERAND("output_pnts", BU_CMD_VALUE_STRING, 1, 1, "New point-cloud object name", NULL),
-    BU_CMD_OPERAND_NULL
+static const struct bu_arg_operand pnts_gen_operands[] = {
+    BU_ARG_OPERAND("object", BU_ARG_VALUE_DB_PATH, 1, 1, "Object to sample", "ged.db_path"),
+    BU_ARG_OPERAND("output_pnts", BU_ARG_VALUE_STRING, 1, 1, "New point-cloud object name", NULL),
+    BU_ARG_OPERAND_NULL
 };
-static const struct bu_cmd_schema pnts_gen_schema = {
+static const struct bu_arg_schema pnts_gen_schema = {
     "gen", "Generate a point cloud from geometry", pnts_gen_options, pnts_gen_operands,
-    BU_CMD_PARSE_INTERSPERSED, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+    BU_ARG_PARSE_INTERSPERSED, BU_ARG_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
-static const struct bu_cmd_option pnts_read_options[] = {
-    BU_CMD_FLAG("h", "help", pnts_read_args, help, "Print help"),
-    BU_CMD_VLS_APPEND("f", "format", pnts_read_args, format, "format", "Input column format"),
-    BU_CMD_VLS_APPEND("u", "units", pnts_read_args, units, "unit", "Input units"),
-    BU_CMD_NUMBER(NULL, "size", pnts_read_args, size, "size", "Default point size"),
-    BU_CMD_OPTION_NULL
+static const struct bu_arg_option pnts_read_options[] = {
+    BU_ARG_FLAG("h", "help", pnts_read_args, help, "Print help"),
+    BU_ARG_VLS_APPEND("f", "format", pnts_read_args, format, "format", "Input column format"),
+    BU_ARG_VLS_APPEND("u", "units", pnts_read_args, units, "unit", "Input units"),
+    BU_ARG_NUMBER(NULL, "size", pnts_read_args, size, "size", "Default point size"),
+    BU_ARG_OPTION_NULL
 };
-static const struct bu_cmd_operand pnts_read_operands[] = {
-    BU_CMD_OPERAND("input_file", BU_CMD_VALUE_FILE, 1, 1, "Point data file", "ged.file_path"),
-    BU_CMD_OPERAND("output_pnts", BU_CMD_VALUE_STRING, 1, 1, "New point-cloud object name", NULL),
-    BU_CMD_OPERAND_NULL
+static const struct bu_arg_operand pnts_read_operands[] = {
+    BU_ARG_OPERAND("input_file", BU_ARG_VALUE_FILE, 1, 1, "Point data file", "ged.file_path"),
+    BU_ARG_OPERAND("output_pnts", BU_ARG_VALUE_STRING, 1, 1, "New point-cloud object name", NULL),
+    BU_ARG_OPERAND_NULL
 };
-static const struct bu_cmd_schema pnts_read_schema = {
+static const struct bu_arg_schema pnts_read_schema = {
     "read", "Read point data from a file", pnts_read_options, pnts_read_operands,
-    BU_CMD_PARSE_INTERSPERSED, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+    BU_ARG_PARSE_INTERSPERSED, BU_ARG_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
-static const struct bu_cmd_option pnts_write_options[] = {
-    BU_CMD_FLAG("h", "help", pnts_write_args, help, "Print help"),
-    BU_CMD_INTEGER("p", "precision", pnts_write_args, precision, "digits", "Digits after the decimal point"),
-    BU_CMD_FLAG(NULL, "ply", pnts_write_args, ply, "Write ASCII PLY format"),
-    BU_CMD_STRING("f", "format", pnts_write_args, format, "fields", "Output fields (currently xyz)"),
-    BU_CMD_OPTION_NULL
+static const struct bu_arg_option pnts_write_options[] = {
+    BU_ARG_FLAG("h", "help", pnts_write_args, help, "Print help"),
+    BU_ARG_INTEGER("p", "precision", pnts_write_args, precision, "digits", "Digits after the decimal point"),
+    BU_ARG_FLAG(NULL, "ply", pnts_write_args, ply, "Write ASCII PLY format"),
+    BU_ARG_STRING("f", "format", pnts_write_args, format, "fields", "Output fields (currently xyz)"),
+    BU_ARG_OPTION_NULL
 };
-static const struct bu_cmd_operand pnts_write_operands[] = {
-    BU_CMD_OPERAND("input_pnts", BU_CMD_VALUE_DB_OBJECT, 1, 1, "Point-cloud object", "ged.db_object"),
-    BU_CMD_OPERAND("output_file", BU_CMD_VALUE_FILE, 1, 1, "New output file", "ged.file_path"),
-    BU_CMD_OPERAND_NULL
+static const struct bu_arg_operand pnts_write_operands[] = {
+    BU_ARG_OPERAND("input_pnts", BU_ARG_VALUE_DB_OBJECT, 1, 1, "Point-cloud object", "ged.db_object"),
+    BU_ARG_OPERAND("output_file", BU_ARG_VALUE_FILE, 1, 1, "New output file", "ged.file_path"),
+    BU_ARG_OPERAND_NULL
 };
-static const struct bu_cmd_schema pnts_write_schema = {
+static const struct bu_arg_schema pnts_write_schema = {
     "write", "Write point data to a file", pnts_write_options, pnts_write_operands,
-    BU_CMD_PARSE_INTERSPERSED, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+    BU_ARG_PARSE_INTERSPERSED, BU_ARG_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
-static const struct bu_cmd_option pnts_root_options[] = {
-    BU_CMD_FLAG("h", "help", pnts_root_args, help, "Print help"),
-    BU_CMD_OPTION_NULL
+static const struct bu_arg_option pnts_root_options[] = {
+    BU_ARG_FLAG("h", "help", pnts_root_args, help, "Print help"),
+    BU_ARG_OPTION_NULL
 };
-static const struct bu_cmd_schema pnts_root_schema = {
+static const struct bu_arg_schema pnts_root_schema = {
     "pnts", "Read, write, generate, and triangulate point clouds", pnts_root_options, NULL,
-    BU_CMD_PARSE_OPTIONS_FIRST, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+    BU_ARG_PARSE_OPTIONS_FIRST, BU_ARG_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
-static const struct bu_cmd_tree_node pnts_subcommands[] = {
-    BU_CMD_TREE_NODE(&pnts_gen_schema, NULL, NULL,
-	BU_CMD_TREE_CHILD_AFTER_OPTIONS, _ged_pnts_cmd_gen),
-    BU_CMD_TREE_NODE(&pnts_read_schema, NULL, NULL,
-	BU_CMD_TREE_CHILD_AFTER_OPTIONS, _ged_pnts_cmd_read),
+static const struct bu_arg_tree_node pnts_subcommands[] = {
+    BU_ARG_TREE_NODE(&pnts_gen_schema, NULL, NULL,
+	BU_ARG_TREE_CHILD_AFTER_OPTIONS, _ged_pnts_cmd_gen),
+    BU_ARG_TREE_NODE(&pnts_read_schema, NULL, NULL,
+	BU_ARG_TREE_CHILD_AFTER_OPTIONS, _ged_pnts_cmd_read),
     /* tri keeps an executor to preserve the documented implicit-unit form;
      * its nested children are still exposed to grammar consumers. */
-    BU_CMD_TREE_NODE(&pnts_tri_schema, NULL, pnts_tri_subcommands,
-	BU_CMD_TREE_CHILD_AFTER_OPTIONS, _ged_pnts_cmd_tri),
-    BU_CMD_TREE_NODE(&pnts_write_schema, NULL, NULL,
-	BU_CMD_TREE_CHILD_AFTER_OPTIONS, _ged_pnts_cmd_write),
-    BU_CMD_TREE_NODE_NULL
+    BU_ARG_TREE_NODE(&pnts_tri_schema, NULL, pnts_tri_subcommands,
+	BU_ARG_TREE_CHILD_AFTER_OPTIONS, _ged_pnts_cmd_tri),
+    BU_ARG_TREE_NODE(&pnts_write_schema, NULL, NULL,
+	BU_ARG_TREE_CHILD_AFTER_OPTIONS, _ged_pnts_cmd_write),
+    BU_ARG_TREE_NODE_NULL
 };
-static const struct bu_cmd_tree ged_pnts_tree = {
-    &pnts_root_schema, pnts_subcommands, BU_CMD_TREE_CHILD_AFTER_OPTIONS
+static const struct bu_arg_tree ged_pnts_tree = {
+    &pnts_root_schema, pnts_subcommands, BU_ARG_TREE_CHILD_AFTER_OPTIONS
 };
 
 static void
 pnts_show_schema_help(struct ged *gedp, const char *invocation,
-	const struct bu_cmd_schema *schema)
+	const struct bu_arg_schema *schema)
 {
-    char *help = bu_cmd_schema_help(schema, invocation);
+    char *help = bu_arg_schema_help(schema, invocation);
 
     if (help) {
 	bu_vls_strcat(gedp->ged_result_str, help);
@@ -426,7 +426,7 @@ _ged_pnts_tri_cmd_unit(void *bs, int argc, const char **argv)
 	return BRLCAD_OK;
     }
 
-    int opt_ret = bu_cmd_schema_parse(&pnts_tri_unit_schema, &args,
+    int opt_ret = bu_arg_schema_parse(&pnts_tri_unit_schema, &args,
 	gedp->ged_result_str, argc, argv);
 
 	if (args.help) {
@@ -568,7 +568,7 @@ static int
 _pnts_opt_radius(struct bu_vls *msg, const char *arg, void *set_c)
 {
     fastf_t rv = 0.0;
-    if (!arg || !bu_cmd_number_from_str(&rv, arg)) {
+    if (!arg || !bu_arg_number_from_str(&rv, arg)) {
 	if (msg)
 	    bu_vls_printf(msg, "invalid ball radius: %s\n", arg ? arg : "");
 	return -1;
@@ -589,7 +589,7 @@ _pnts_opt_radii(struct bu_vls *msg, const char *arg, void *set_c)
     while (std::getline(ss, item, ',')) {
 	if (item.empty()) continue;
 	fastf_t rv = 0.0;
-	if (!bu_cmd_number_from_str(&rv, item.c_str())) {
+	if (!bu_arg_number_from_str(&rv, item.c_str())) {
 	    if (msg)
 		bu_vls_printf(msg, "invalid ball radius: %s\n", item.c_str());
 	    return -1;
@@ -617,7 +617,7 @@ _ged_pnts_tri_cmd_ballpivot(void *bs, int argc, const char **argv)
 	pnts_show_schema_help(gedp, "pnts tri ballpivot", &pnts_tri_ballpivot_schema);
 	return BRLCAD_OK;
     }
-    int opt_ret = bu_cmd_schema_parse(&pnts_tri_ballpivot_schema, &args,
+    int opt_ret = bu_arg_schema_parse(&pnts_tri_ballpivot_schema, &args,
 	gedp->ged_result_str, argc, argv);
     if (args.help) {
 	pnts_show_schema_help(gedp, "pnts tri ballpivot", &pnts_tri_ballpivot_schema);
@@ -709,7 +709,7 @@ static int
 _pnts_opt_size_t(struct bu_vls *msg, const char *arg, void *set_c)
 {
     int tmp = 0;
-    if (!arg || !bu_cmd_integer_from_str(&tmp, arg) || tmp < 0) {
+    if (!arg || !bu_arg_integer_from_str(&tmp, arg) || tmp < 0) {
 	if (msg)
 	    bu_vls_printf(msg, "non-negative thread count required: %s\n", arg ? arg : "");
 	return -1;
@@ -734,7 +734,7 @@ _ged_pnts_tri_cmd_spsr(void *bs, int argc, const char **argv)
 	pnts_show_schema_help(gedp, "pnts tri spsr", &pnts_tri_spsr_schema);
 	return BRLCAD_OK;
     }
-    int opt_ret = bu_cmd_schema_parse(&pnts_tri_spsr_schema, &args,
+    int opt_ret = bu_arg_schema_parse(&pnts_tri_spsr_schema, &args,
 	gedp->ged_result_str, argc, argv);
     if (args.help) {
 	pnts_show_schema_help(gedp, "pnts tri spsr", &pnts_tri_spsr_schema);
@@ -830,7 +830,7 @@ _ged_pnts_tri_cmd_spsr(void *bs, int argc, const char **argv)
 static void
 _pnts_tri_show_help(struct ged *gedp)
 {
-    char *help = bu_cmd_tree_help(&pnts_tri_tree, "pnts tri");
+    char *help = bu_arg_tree_help(&pnts_tri_tree, "pnts tri");
     if (help) {
 	bu_vls_strcat(gedp->ged_result_str, help);
 	bu_free(help, "pnts tri native tree help");
@@ -851,7 +851,7 @@ _ged_pnts_cmd_tri(void *bs, int argc, const char **argv)
 	return BRLCAD_OK;
     }
 
-    int opt_ret = bu_cmd_schema_parse(&pnts_tri_schema, &args,
+    int opt_ret = bu_arg_schema_parse(&pnts_tri_schema, &args,
 	gedp->ged_result_str, argc, argv);
 
     if (args.help) {
@@ -865,7 +865,7 @@ _ged_pnts_cmd_tri(void *bs, int argc, const char **argv)
     argc -= opt_ret;
     argv += opt_ret;
 
-	const struct bu_cmd_tree_node *node = bu_cmd_tree_find_subcommand(&pnts_tri_tree,
+	const struct bu_arg_tree_node *node = bu_arg_tree_find_subcommand(&pnts_tri_tree,
 	argc ? argv[0] : NULL);
     if (!node) {
 	/* The historical spelling defaults to unit when the first word is not
@@ -877,7 +877,7 @@ _ged_pnts_cmd_tri(void *bs, int argc, const char **argv)
     }
 
     int ret = BRLCAD_ERROR;
-    if (bu_cmd_tree_dispatch(&pnts_tri_tree, bs, argc, argv, &ret) == 0)
+    if (bu_arg_tree_dispatch(&pnts_tri_tree, bs, argc, argv, &ret) == 0)
 	return ret;
     _pnts_tri_show_help(gedp);
     return BRLCAD_ERROR;
@@ -906,7 +906,7 @@ _ged_pnts_cmd_gen(void *bs, int argc, const char **argv)
 	return BRLCAD_OK;
     }
 
-    int opt_ret = bu_cmd_schema_parse(&pnts_gen_schema, &args,
+    int opt_ret = bu_arg_schema_parse(&pnts_gen_schema, &args,
 	gedp->ged_result_str, argc, argv);
 
 	if (args.help) {
@@ -1010,7 +1010,7 @@ _pnt_read(struct rt_pnts_internal *pnts, int numcnt, const char **nums, const ch
 	    }
 	}
 
-	if (!bu_cmd_number_from_str(&val, num)) {
+	if (!bu_arg_number_from_str(&val, num)) {
 	    bu_log("Error - failed to read number %s\n", nums[i]);
 	    return BRLCAD_ERROR;
 	}
@@ -1064,7 +1064,7 @@ _ged_pnts_cmd_read(void *bs, int argc, const char **argv)
 	return BRLCAD_OK;
     }
 
-    int opt_ret = bu_cmd_schema_parse(&pnts_read_schema, &args,
+    int opt_ret = bu_arg_schema_parse(&pnts_read_schema, &args,
 	gedp->ged_result_str, argc, argv);
 
 	if (args.help) {
@@ -1093,7 +1093,7 @@ _ged_pnts_cmd_read(void *bs, int argc, const char **argv)
     /* got a unit, see if we can do something with it */
 	if (bu_vls_strlen(&args.units)) {
 	const char *cunit = bu_vls_addr(&args.units);
-	if (!bu_cmd_number_from_str(&conv_factor, cunit)) {
+	if (!bu_arg_number_from_str(&conv_factor, cunit)) {
 	    conv_factor = bu_mm_value(bu_vls_addr(&args.units));
 	}
 	if (conv_factor < 0) {
@@ -1230,7 +1230,7 @@ _ged_pnts_cmd_write(void *bs, int argc, const char **argv)
         pnts_show_schema_help(gedp, "pnts write", &pnts_write_schema);
         return BRLCAD_OK;
     }
-    int opt_ret = bu_cmd_schema_parse(&pnts_write_schema, &args,
+    int opt_ret = bu_arg_schema_parse(&pnts_write_schema, &args,
         gedp->ged_result_str, argc, argv);
     if (opt_ret < 0) {
         pnts_show_schema_help(gedp, "pnts write", &pnts_write_schema);
@@ -1598,7 +1598,7 @@ _ged_pnts_cmd_write(void *bs, int argc, const char **argv)
 static void
 _pnts_show_help(struct ged *gedp)
 {
-    char *help = bu_cmd_tree_help(&ged_pnts_tree, "pnts");
+    char *help = bu_arg_tree_help(&ged_pnts_tree, "pnts");
     if (help) {
 	bu_vls_strcat(gedp->ged_result_str, help);
 	bu_free(help, "pnts native tree help");
@@ -1625,7 +1625,7 @@ ged_pnts_core(struct ged *gedp, int argc, const char *argv[])
 	return BRLCAD_OK;
     }
 
-    int opt_ret = bu_cmd_schema_parse(&pnts_root_schema, &args,
+    int opt_ret = bu_arg_schema_parse(&pnts_root_schema, &args,
 	gedp->ged_result_str, argc, argv);
 
 	if (args.help) {
@@ -1641,7 +1641,7 @@ ged_pnts_core(struct ged *gedp, int argc, const char *argv[])
     argv += opt_ret;
 
     int ret = BRLCAD_ERROR;
-    if (bu_cmd_tree_dispatch(&ged_pnts_tree, gedp, argc, argv, &ret) == 0) {
+    if (bu_arg_tree_dispatch(&ged_pnts_tree, gedp, argc, argv, &ret) == 0) {
 	return ret;
     }
 
@@ -1720,7 +1720,7 @@ ged_make_pnts_core(struct ged *gedp, int argc, const char *argv[])
     }
 
     /* Validate unit */
-	if (!bu_cmd_number_from_str(&conv_factor, argv[4])) {
+	if (!bu_arg_number_from_str(&conv_factor, argv[4])) {
 	conv_factor = bu_mm_value(argv[4]);
     }
     if (conv_factor < 0) {
@@ -1762,37 +1762,37 @@ ged_make_pnts_core(struct ged *gedp, int argc, const char *argv[])
 
 #include "../include/plugin.h"
 
-static const struct bu_cmd_operand make_pnts_operands[] = {
-    BU_CMD_OPERAND("point_cloud_name", BU_CMD_VALUE_STRING, 1, 1,
+static const struct bu_arg_operand make_pnts_operands[] = {
+    BU_ARG_OPERAND("point_cloud_name", BU_ARG_VALUE_STRING, 1, 1,
 	"New point-cloud object name", NULL),
-    BU_CMD_OPERAND("input_file", BU_CMD_VALUE_FILE, 1, 1,
+    BU_ARG_OPERAND("input_file", BU_ARG_VALUE_FILE, 1, 1,
 	"Point data file", "ged.file_path"),
-    BU_CMD_OPERAND("format", BU_CMD_VALUE_STRING, 1, 1,
+    BU_ARG_OPERAND("format", BU_ARG_VALUE_STRING, 1, 1,
 	"Point data column format", NULL),
-    BU_CMD_OPERAND("units", BU_CMD_VALUE_STRING, 1, 1,
+    BU_ARG_OPERAND("units", BU_ARG_VALUE_STRING, 1, 1,
 	"Point data units", NULL),
-    BU_CMD_OPERAND("default_size", BU_CMD_VALUE_NUMBER, 1, 1,
+    BU_ARG_OPERAND("default_size", BU_ARG_VALUE_NUMBER, 1, 1,
 	"Default point size", NULL),
-    BU_CMD_OPERAND_NULL
+    BU_ARG_OPERAND_NULL
 };
-static const struct bu_cmd_schema make_pnts_schema = {
+static const struct bu_arg_schema make_pnts_schema = {
     "make_pnts", "Read point data using the legacy argument order", NULL,
-    make_pnts_operands, BU_CMD_PARSE_STOP_AT_FIRST_OPERAND,
-    BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+    make_pnts_operands, BU_ARG_PARSE_STOP_AT_FIRST_OPERAND,
+    BU_ARG_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
-static const struct bu_cmd_tree_node pnts_legacy_subcommands[] = {
-    BU_CMD_TREE_NODE(&pnts_gen_schema, NULL, NULL,
-	BU_CMD_TREE_CHILD_AFTER_OPTIONS, NULL),
-    BU_CMD_TREE_NODE(&pnts_read_schema, NULL, NULL,
-	BU_CMD_TREE_CHILD_AFTER_OPTIONS, NULL),
-    BU_CMD_TREE_NODE(&pnts_tri_legacy_schema, NULL, NULL,
-	BU_CMD_TREE_CHILD_AFTER_OPTIONS, NULL),
-    BU_CMD_TREE_NODE(&pnts_write_schema, NULL, NULL,
-	BU_CMD_TREE_CHILD_AFTER_OPTIONS, NULL),
-    BU_CMD_TREE_NODE_NULL
+static const struct bu_arg_tree_node pnts_legacy_subcommands[] = {
+    BU_ARG_TREE_NODE(&pnts_gen_schema, NULL, NULL,
+	BU_ARG_TREE_CHILD_AFTER_OPTIONS, NULL),
+    BU_ARG_TREE_NODE(&pnts_read_schema, NULL, NULL,
+	BU_ARG_TREE_CHILD_AFTER_OPTIONS, NULL),
+    BU_ARG_TREE_NODE(&pnts_tri_legacy_schema, NULL, NULL,
+	BU_ARG_TREE_CHILD_AFTER_OPTIONS, NULL),
+    BU_ARG_TREE_NODE(&pnts_write_schema, NULL, NULL,
+	BU_ARG_TREE_CHILD_AFTER_OPTIONS, NULL),
+    BU_ARG_TREE_NODE_NULL
 };
-static const struct bu_cmd_tree pnts_legacy_tree = {
-    &pnts_root_schema, pnts_legacy_subcommands, BU_CMD_TREE_CHILD_AFTER_OPTIONS
+static const struct bu_arg_tree pnts_legacy_tree = {
+    &pnts_root_schema, pnts_legacy_subcommands, BU_ARG_TREE_CHILD_AFTER_OPTIONS
 };
 
 static int
@@ -1803,11 +1803,11 @@ ged_pnts_grammar_validate(struct ged *gedp, const char *input, size_t cursor_pos
 
     /* The long-standing implicit-unit form takes effect only when the word
      * after `tri` is not a recognized tri subcommand or its prefix. */
-    if (ret == 0 && result->state == BU_CMD_VALIDATE_INVALID && result->hint &&
+    if (ret == 0 && result->state == BU_ARG_VALIDATE_INVALID && result->hint &&
 	BU_STR_EQUAL(result->hint, "unknown subcommand")) {
 	struct ged_cmd_validate_result legacy = GED_CMD_VALIDATE_RESULT_NULL;
 	if (ged_cmd_tree_validate(gedp, &pnts_legacy_tree, input, cursor_pos, &legacy) == 0 &&
-	    legacy.state != BU_CMD_VALIDATE_INVALID) {
+	    legacy.state != BU_ARG_VALIDATE_INVALID) {
 	    ged_cmd_validate_result_clear(result);
 	    *result = legacy;
 	    return 0;
@@ -1836,20 +1836,20 @@ ged_pnts_grammar_analyze(struct ged *gedp, const char *input,
 static char *
 ged_pnts_grammar_json(void)
 {
-    return bu_cmd_tree_describe_json(&ged_pnts_tree);
+    return bu_arg_tree_describe_json(&ged_pnts_tree);
 }
 
 static int
 ged_pnts_grammar_lint(struct bu_vls *msgs)
 {
-    return bu_cmd_tree_lint(&ged_pnts_tree, msgs) +
-	bu_cmd_tree_lint(&pnts_legacy_tree, msgs);
+    return bu_arg_tree_lint(&ged_pnts_tree, msgs) +
+	bu_arg_tree_lint(&pnts_legacy_tree, msgs);
 }
 
 static char *
 ged_pnts_grammar_help(const char *invocation)
 {
-    return bu_cmd_tree_help(&ged_pnts_tree, invocation);
+    return bu_arg_tree_help(&ged_pnts_tree, invocation);
 }
 
 static const struct ged_cmd_grammar ged_pnts_grammar = {

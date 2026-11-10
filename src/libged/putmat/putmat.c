@@ -32,11 +32,11 @@
 #include <ctype.h>
 #include <string.h>
 
-#include "bu/cmdschema.h"
+#include "bu/arg.h"
 
 #include "../ged_private.h"
 
-static const struct bu_cmd_schema *putmat_schema(void);
+static const struct bu_arg_schema *putmat_schema(void);
 
 
 static int
@@ -203,7 +203,7 @@ ged_putmat_core(struct ged *gedp, int argc, const char *argv[])
     }
 
 
-    operand_index = bu_cmd_schema_parse_complete(putmat_schema(),
+    operand_index = bu_arg_schema_parse_complete(putmat_schema(),
 	&parse_dummy, gedp->ged_result_str, argc - 1, argv + 1);
     if (operand_index < 0) {
 	ged_cmd_help_append(gedp->ged_result_str, argv[0], argv[0]);
@@ -321,11 +321,11 @@ done:
 }
 
 static int
-putmat_validation_result(struct bu_cmd_validate_result *result,
-	bu_cmd_validate_state_t state, size_t token, unsigned int expected,
-	bu_cmd_value_t type, const char *hint, const char *provider)
+putmat_validation_result(struct bu_arg_validate_result *result,
+	bu_arg_validate_state_t state, size_t token, unsigned int expected,
+	bu_arg_value_t type, const char *hint, const char *provider)
 {
-    bu_cmd_validate_result_clear(result);
+    bu_arg_validate_result_clear(result);
     result->state = state;
     result->token_start = token;
     result->token_end = token;
@@ -337,7 +337,7 @@ putmat_validation_result(struct bu_cmd_validate_result *result,
 }
 
 static void
-putmat_identity_candidate(struct bu_cmd_validate_result *result, const char *prefix)
+putmat_identity_candidate(struct bu_arg_validate_result *result, const char *prefix)
 {
     if (!result || (prefix && prefix[0] && bu_strncmp("I", prefix, strlen(prefix))))
 	return;
@@ -348,23 +348,23 @@ putmat_identity_candidate(struct bu_cmd_validate_result *result, const char *pre
 }
 
 static int
-putmat_schema_validate(const struct bu_cmd_schema *cmd, size_t argc, const char **argv,
-	size_t cursor_arg, struct bu_cmd_validate_result *result)
+putmat_schema_validate(const struct bu_arg_schema *cmd, size_t argc, const char **argv,
+	size_t cursor_arg, struct bu_arg_validate_result *result)
 {
-    struct bu_cmd_schema flat = *cmd;
+    struct bu_arg_schema flat = *cmd;
     size_t matrix_count;
     size_t token;
     int ret;
 
-    ret = bu_cmd_schema_validate_syntax(&flat, argc, argv, cursor_arg, result);
-    if (ret || result->state == BU_CMD_VALIDATE_INVALID || argc == 0 || cursor_arg == 0)
+    ret = bu_arg_schema_validate_syntax(&flat, argc, argv, cursor_arg, result);
+    if (ret || result->state == BU_ARG_VALIDATE_INVALID || argc == 0 || cursor_arg == 0)
 	return ret;
 
     matrix_count = argc - 1;
     token = cursor_arg < argc ? cursor_arg : argc;
     if (matrix_count == 0) {
-	putmat_validation_result(result, BU_CMD_VALIDATE_VALID, token,
-	    BU_CMD_EXPECT_OPERAND, BU_CMD_VALUE_MATRIX,
+	putmat_validation_result(result, BU_ARG_VALIDATE_VALID, token,
+	    BU_ARG_EXPECT_OPERAND, BU_ARG_VALUE_MATRIX,
 	    "optional replacement matrix", "ged.matrix");
 	putmat_identity_candidate(result, "");
 	return 0;
@@ -373,52 +373,52 @@ putmat_schema_validate(const struct bu_cmd_schema *cmd, size_t argc, const char 
     if (matrix_count == 1) {
 	const char *matrix = argv[1];
 	if (BU_STR_EQUAL(matrix, "I") || putmat_packed_matrix_valid(matrix))
-	    return putmat_validation_result(result, BU_CMD_VALIDATE_VALID, token,
-		BU_CMD_EXPECT_NONE, BU_CMD_VALUE_MATRIX, "replacement matrix", "ged.matrix");
+	    return putmat_validation_result(result, BU_ARG_VALIDATE_VALID, token,
+		BU_ARG_EXPECT_NONE, BU_ARG_VALUE_MATRIX, "replacement matrix", "ged.matrix");
 	if (putmat_number_valid(matrix))
-	    return putmat_validation_result(result, BU_CMD_VALIDATE_INCOMPLETE, token,
-		BU_CMD_EXPECT_OPERAND, BU_CMD_VALUE_NUMBER,
+	    return putmat_validation_result(result, BU_ARG_VALIDATE_INCOMPLETE, token,
+		BU_ARG_EXPECT_OPERAND, BU_ARG_VALUE_NUMBER,
 		"matrix requires 16 finite numeric elements", NULL);
 	if (cursor_arg < argc && !bu_strncmp("I", matrix, strlen(matrix))) {
-	    putmat_validation_result(result, BU_CMD_VALIDATE_INCOMPLETE, token,
-		BU_CMD_EXPECT_OPERAND, BU_CMD_VALUE_MATRIX,
+	    putmat_validation_result(result, BU_ARG_VALIDATE_INCOMPLETE, token,
+		BU_ARG_EXPECT_OPERAND, BU_ARG_VALUE_MATRIX,
 		"identity marker I or 16-number matrix expected", "ged.matrix");
 	    putmat_identity_candidate(result, matrix);
 	    return 0;
 	}
-	return putmat_validation_result(result, BU_CMD_VALIDATE_INVALID, token,
-	    BU_CMD_EXPECT_OPERAND, BU_CMD_VALUE_MATRIX,
+	return putmat_validation_result(result, BU_ARG_VALIDATE_INVALID, token,
+	    BU_ARG_EXPECT_OPERAND, BU_ARG_VALUE_MATRIX,
 	    "identity marker I or 16-number matrix expected", "ged.matrix");
     }
 
     for (size_t i = 1; i < argc; i++) {
 	if (!putmat_number_valid(argv[i]))
-	    return putmat_validation_result(result, BU_CMD_VALIDATE_INVALID, i,
-		BU_CMD_EXPECT_OPERAND, BU_CMD_VALUE_NUMBER,
+	    return putmat_validation_result(result, BU_ARG_VALIDATE_INVALID, i,
+		BU_ARG_EXPECT_OPERAND, BU_ARG_VALUE_NUMBER,
 		"matrix elements must be finite numbers", NULL);
     }
     if (matrix_count < 16)
-	return putmat_validation_result(result, BU_CMD_VALIDATE_INCOMPLETE, token,
-	    BU_CMD_EXPECT_OPERAND, BU_CMD_VALUE_NUMBER,
+	return putmat_validation_result(result, BU_ARG_VALIDATE_INCOMPLETE, token,
+	    BU_ARG_EXPECT_OPERAND, BU_ARG_VALUE_NUMBER,
 	    "matrix requires 16 finite numeric elements", NULL);
-    return putmat_validation_result(result, BU_CMD_VALIDATE_VALID, token,
-	BU_CMD_EXPECT_NONE, BU_CMD_VALUE_MATRIX, "replacement matrix", "ged.matrix");
+    return putmat_validation_result(result, BU_ARG_VALIDATE_VALID, token,
+	BU_ARG_EXPECT_NONE, BU_ARG_VALUE_MATRIX, "replacement matrix", "ged.matrix");
 }
 
-static const struct bu_cmd_operand putmat_schema_operands[] = {
-    BU_CMD_OPERAND_VALIDATE("arc", BU_CMD_VALUE_DB_PATH, 1, 1,
+static const struct bu_arg_operand putmat_schema_operands[] = {
+    BU_ARG_OPERAND_VALIDATE("arc", BU_ARG_VALUE_DB_PATH, 1, 1,
 	putmat_arc_validate, "Combination parent/child arc", "ged.db_path"),
-    BU_CMD_OPERAND("matrix", BU_CMD_VALUE_RAW, 0, 16,
+    BU_ARG_OPERAND("matrix", BU_ARG_VALUE_RAW, 0, 16,
 	"Optional I, packed 16-number matrix, or 16 finite number tokens", NULL),
-    BU_CMD_OPERAND_NULL
+    BU_ARG_OPERAND_NULL
 };
-static const struct bu_cmd_schema putmat_cmd_schema = {
+static const struct bu_arg_schema putmat_cmd_schema = {
     "putmat", "Get or replace a combination arc matrix", NULL,
-    putmat_schema_operands, BU_CMD_PARSE_STOP_AT_FIRST_OPERAND,
-    BU_CMD_SCHEMA_CONSTRAINTS(putmat_schema_validate, NULL)
+    putmat_schema_operands, BU_ARG_PARSE_STOP_AT_FIRST_OPERAND,
+    BU_ARG_SCHEMA_CONSTRAINTS(putmat_schema_validate, NULL)
 };
 
-static const struct bu_cmd_schema *
+static const struct bu_arg_schema *
 putmat_schema(void)
 {
     return &putmat_cmd_schema;

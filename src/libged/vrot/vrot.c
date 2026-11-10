@@ -77,7 +77,7 @@ ged_vrot_core(struct ged *gedp, int argc, const char *argv[])
 
 #include "../include/plugin.h"
 
-GED_DEFINE_TYPED_OPERAND_SCHEMA(vrot, "vrot", "Rotate the view", "angles", BU_CMD_VALUE_NUMBER, 3, 3, "X Y Z rotation angles");
+GED_DEFINE_TYPED_OPERAND_SCHEMA(vrot, "vrot", "Rotate the view", "angles", BU_ARG_VALUE_NUMBER, 3, 3, "X Y Z rotation angles");
 
 #define GED_VROT_COMMANDS(X, XID) \
     X(vrot, ged_vrot_core, GED_CMD_DEFAULT, &vrot_cmd_schema) \

@@ -35,7 +35,7 @@
 #include <string>
 
 #include "bu/malloc.h"
-#include "bu/cmdschema.h"
+#include "bu/arg.h"
 #include "bu/opt.h"
 #include "bu/ptbl.h"
 #include "bu/str.h"
@@ -199,7 +199,7 @@ nirt_librt_debug_from_str(struct bu_vls *msg, const char *arg, void *storage)
 {
     int value;
 
-    if (!bu_cmd_integer_from_str(&value, arg)) {
+    if (!bu_arg_integer_from_str(&value, arg)) {
 	if (msg)
 	    bu_vls_printf(msg, "invalid librt debug value: %s\n", arg ? arg : "");
 	return -1;
@@ -403,58 +403,58 @@ nirt_opt_desc(struct nirt_opt_vals *v)
 #endif
 
 
-static const struct bu_cmd_option nirt_options[] = {
-    BU_CMD_FLAG("h", "help", nirt_opt_vals, print_help, "Print help and exit"),
-    BU_CMD_ALIAS_SHORT("?", "help", 0),
-    {"A", NULL, "A", "name", "Add an attribute to report", BU_CMD_VALUE_CUSTOM,
+static const struct bu_arg_option nirt_options[] = {
+    BU_ARG_FLAG("h", "help", nirt_opt_vals, print_help, "Print help and exit"),
+    BU_ARG_ALIAS_SHORT("?", "help", 0),
+    {"A", NULL, "A", "name", "Add an attribute to report", BU_ARG_VALUE_CUSTOM,
 	offsetof(nirt_opt_vals, attrs), nirt_attrs_from_str, NULL, NULL, NULL, 0, 0, NULL,
-	BU_CMD_ARG_REQUIRED, NULL, NULL, NULL, BU_CMD_VALUE_RANGE_NONE, BU_CMD_ARG_SHAPE_SCALAR},
-    BU_CMD_FLAG("M", NULL, nirt_opt_vals, read_matrix, "Read a view matrix from standard input"),
-    BU_CMD_FLAG("b", NULL, nirt_opt_vals, deprecated_backout,
+	BU_ARG_REQUIRED, NULL, NULL, NULL, BU_ARG_VALUE_RANGE_NONE, BU_ARG_SHAPE_SCALAR},
+    BU_ARG_FLAG("M", NULL, nirt_opt_vals, read_matrix, "Read a view matrix from standard input"),
+    BU_ARG_FLAG("b", NULL, nirt_opt_vals, deprecated_backout,
 	"Deprecated no-op; backing out is now the default"),
-    BU_CMD_FLAG("c", NULL, nirt_opt_vals, current_center, "Shoot from the current center"),
-    {"e", NULL, "e", "script", "Run a script before interacting", BU_CMD_VALUE_CUSTOM,
-	0, nirt_script_from_str, NULL, NULL, NULL, 0, 0, NULL, BU_CMD_ARG_REQUIRED, NULL, NULL, NULL,
-	BU_CMD_VALUE_RANGE_NONE, BU_CMD_ARG_SHAPE_SCALAR},
-    {"f", NULL, "f", "format", "Load a predefined format or script file", BU_CMD_VALUE_CUSTOM,
-	0, nirt_format_from_str, NULL, NULL, NULL, 0, 0, NULL, BU_CMD_ARG_REQUIRED, NULL, NULL, NULL,
-	BU_CMD_VALUE_RANGE_NONE, BU_CMD_ARG_SHAPE_SCALAR},
-    {"E", NULL, "E", NULL, "Ignore earlier -e and -f options", BU_CMD_VALUE_CUSTOM,
-	0, nirt_clear_scripts, NULL, NULL, NULL, 0, 0, NULL, BU_CMD_ARG_NONE, NULL, NULL, NULL,
-	BU_CMD_VALUE_RANGE_NONE, BU_CMD_ARG_SHAPE_SCALAR},
-    BU_CMD_FLAG("L", NULL, nirt_opt_vals, show_formats, "List output formatting options"),
-    BU_CMD_FLAG("s", NULL, nirt_opt_vals, silent_mode, "Run in silent mode"),
-    BU_CMD_FLAG("v", NULL, nirt_opt_vals, verbose_mode, "Run in verbose mode"),
-    BU_CMD_INTEGER("H", NULL, nirt_opt_vals, header_mode, "n", "Enable or disable the informational header"),
-    BU_CMD_INTEGER("u", NULL, nirt_opt_vals, use_air, "n", "Set use_air"),
-    BU_CMD_CUSTOM("O", NULL, nirt_opt_vals, overlap_claims, nirt_overlap_from_str,
+    BU_ARG_FLAG("c", NULL, nirt_opt_vals, current_center, "Shoot from the current center"),
+    {"e", NULL, "e", "script", "Run a script before interacting", BU_ARG_VALUE_CUSTOM,
+	0, nirt_script_from_str, NULL, NULL, NULL, 0, 0, NULL, BU_ARG_REQUIRED, NULL, NULL, NULL,
+	BU_ARG_VALUE_RANGE_NONE, BU_ARG_SHAPE_SCALAR},
+    {"f", NULL, "f", "format", "Load a predefined format or script file", BU_ARG_VALUE_CUSTOM,
+	0, nirt_format_from_str, NULL, NULL, NULL, 0, 0, NULL, BU_ARG_REQUIRED, NULL, NULL, NULL,
+	BU_ARG_VALUE_RANGE_NONE, BU_ARG_SHAPE_SCALAR},
+    {"E", NULL, "E", NULL, "Ignore earlier -e and -f options", BU_ARG_VALUE_CUSTOM,
+	0, nirt_clear_scripts, NULL, NULL, NULL, 0, 0, NULL, BU_ARG_NONE, NULL, NULL, NULL,
+	BU_ARG_VALUE_RANGE_NONE, BU_ARG_SHAPE_SCALAR},
+    BU_ARG_FLAG("L", NULL, nirt_opt_vals, show_formats, "List output formatting options"),
+    BU_ARG_FLAG("s", NULL, nirt_opt_vals, silent_mode, "Run in silent mode"),
+    BU_ARG_FLAG("v", NULL, nirt_opt_vals, verbose_mode, "Run in verbose mode"),
+    BU_ARG_INTEGER("H", NULL, nirt_opt_vals, header_mode, "n", "Enable or disable the informational header"),
+    BU_ARG_INTEGER("u", NULL, nirt_opt_vals, use_air, "n", "Set use_air"),
+    BU_ARG_CUSTOM("O", NULL, nirt_opt_vals, overlap_claims, nirt_overlap_from_str,
 	"action", "Set overlap handling"),
-    BU_CMD_CUSTOM("x", NULL, nirt_opt_vals, librt_debug, nirt_librt_debug_from_str,
+    BU_ARG_CUSTOM("x", NULL, nirt_opt_vals, librt_debug, nirt_librt_debug_from_str,
 	"value", "Set librt diagnostic flags"),
-    BU_CMD_VLS_APPEND("X", NULL, nirt_opt_vals, nirt_debug, "value", "Set nirt diagnostic flags"),
-    BU_CMD_VECTOR3(NULL, "center", nirt_opt_vals, center_model, "x,y,z", "Set the ray center"),
-    BU_CMD_ALIAS_LONG("xyz", "center", 0),
-    BU_CMD_VLS_APPEND(NULL, "plotfile", nirt_opt_vals, plotfile, "filename", "Write graphical plot output"),
-    BU_CMD_COLOR_COMPAT(NULL, "color_odd", nirt_opt_vals, color_odd, "r/g/b", "Color for odd segments"),
-    BU_CMD_COLOR_COMPAT(NULL, "color_even", nirt_opt_vals, color_even, "r/g/b", "Color for even segments"),
-    BU_CMD_COLOR_COMPAT(NULL, "color_gap", nirt_opt_vals, color_gap, "r/g/b", "Color for gaps"),
-    BU_CMD_COLOR_COMPAT(NULL, "color_ovlp", nirt_opt_vals, color_ovlp, "r/g/b", "Color for overlap segments"),
-    BU_CMD_FLAG("B", NULL, nirt_opt_vals, deprecated_backout, "Deprecated no-op"),
-    BU_CMD_OPTION_NULL
+    BU_ARG_VLS_APPEND("X", NULL, nirt_opt_vals, nirt_debug, "value", "Set nirt diagnostic flags"),
+    BU_ARG_VECTOR3(NULL, "center", nirt_opt_vals, center_model, "x,y,z", "Set the ray center"),
+    BU_ARG_ALIAS_LONG("xyz", "center", 0),
+    BU_ARG_VLS_APPEND(NULL, "plotfile", nirt_opt_vals, plotfile, "filename", "Write graphical plot output"),
+    BU_ARG_COLOR_COMPAT(NULL, "color_odd", nirt_opt_vals, color_odd, "r/g/b", "Color for odd segments"),
+    BU_ARG_COLOR_COMPAT(NULL, "color_even", nirt_opt_vals, color_even, "r/g/b", "Color for even segments"),
+    BU_ARG_COLOR_COMPAT(NULL, "color_gap", nirt_opt_vals, color_gap, "r/g/b", "Color for gaps"),
+    BU_ARG_COLOR_COMPAT(NULL, "color_ovlp", nirt_opt_vals, color_ovlp, "r/g/b", "Color for overlap segments"),
+    BU_ARG_FLAG("B", NULL, nirt_opt_vals, deprecated_backout, "Deprecated no-op"),
+    BU_ARG_OPTION_NULL
 };
 
-static const struct bu_cmd_operand nirt_operands[] = {
-    BU_CMD_OPERAND("arguments", BU_CMD_VALUE_RAW, 0, BU_CMD_COUNT_UNLIMITED,
+static const struct bu_arg_operand nirt_operands[] = {
+    BU_ARG_OPERAND("arguments", BU_ARG_VALUE_RAW, 0, BU_ARG_COUNT_UNLIMITED,
 	"Database, objects, and deprecated x y z coordinates", NULL),
-    BU_CMD_OPERAND_NULL
+    BU_ARG_OPERAND_NULL
 };
 
-const struct bu_cmd_schema nirt_command_schema = {
+const struct bu_arg_schema nirt_command_schema = {
     "nirt", "Query geometry along a ray", nirt_options, nirt_operands,
-    BU_CMD_PARSE_INTERSPERSED, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+    BU_ARG_PARSE_INTERSPERSED, BU_ARG_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
 
-const struct bu_cmd_schema *
+const struct bu_arg_schema *
 nirt_opt_schema(void)
 {
     return &nirt_command_schema;

@@ -32,7 +32,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "bu/cmdschema.h"
+#include "bu/arg.h"
 
 #include "../ged_private.h"
 
@@ -41,7 +41,7 @@ struct rot_args {
     int view;
 };
 
-static const struct bu_cmd_schema *rot_schema(void);
+static const struct bu_arg_schema *rot_schema(void);
 
 
 static int
@@ -78,15 +78,15 @@ rot_vector_count(const char *arg)
 
 
 static int
-rot_validation_result(struct bu_cmd_validate_result *result,
-	bu_cmd_validate_state_t state, size_t token, bu_cmd_value_t type,
+rot_validation_result(struct bu_arg_validate_result *result,
+	bu_arg_validate_state_t state, size_t token, bu_arg_value_t type,
 	const char *hint, const char *provider)
 {
-    bu_cmd_validate_result_clear(result);
+    bu_arg_validate_result_clear(result);
     result->state = state;
     result->token_start = token;
     result->token_end = token;
-    result->expected = BU_CMD_EXPECT_OPERAND;
+    result->expected = BU_ARG_EXPECT_OPERAND;
     result->completion_type = type;
     result->hint = hint;
     result->semantic_provider = provider;
@@ -113,12 +113,12 @@ ged_rot_core(struct ged *gedp, int argc, const char *argv[])
 	ged_cmd_help_append(gedp->ged_result_str, "rot", argv[0]);
 	return GED_HELP;
     }
-    operand_index = bu_cmd_schema_parse_complete(rot_schema(), &args,
+    operand_index = bu_arg_schema_parse_complete(rot_schema(), &args,
 	gedp->ged_result_str, argc - 1, argv + 1);
     if (operand_index < 0)
 	return BRLCAD_ERROR;
     operand_count = argc - 1 - operand_index;
-    if (bu_cmd_vector3_from_argv(rotation, (size_t)operand_count,
+    if (bu_arg_vector3_from_argv(rotation, (size_t)operand_count,
 	    argv + 1 + operand_index) != operand_count) {
 	bu_vls_strcat(gedp->ged_result_str, "Invalid rotation vector\n");
 	return BRLCAD_ERROR;
@@ -135,13 +135,13 @@ ged_rot_core(struct ged *gedp, int argc, const char *argv[])
 #include "../include/plugin.h"
 
 extern int ged_rotate_about_core(struct ged *gedp, int argc, const char *argv[]);
-extern GED_EXPORT const struct bu_cmd_schema ged_rot_about_cmd_schema;
+extern GED_EXPORT const struct bu_arg_schema ged_rot_about_cmd_schema;
 
 static int
-rot_schema_validate(const struct bu_cmd_schema *schema, size_t argc, const char **argv,
-	size_t cursor_arg, struct bu_cmd_validate_result *result)
+rot_schema_validate(const struct bu_arg_schema *schema, size_t argc, const char **argv,
+	size_t cursor_arg, struct bu_arg_validate_result *result)
 {
-    struct bu_cmd_schema flat = *schema;
+    struct bu_arg_schema flat = *schema;
     size_t token = cursor_arg < argc ? cursor_arg : argc;
     size_t first = 0;
     size_t count;
@@ -149,68 +149,68 @@ rot_schema_validate(const struct bu_cmd_schema *schema, size_t argc, const char 
     int view;
     int ret;
 
-    ret = bu_cmd_schema_validate_syntax(&flat, argc, argv, cursor_arg, result);
-    if (ret || result->state == BU_CMD_VALIDATE_INVALID)
+    ret = bu_arg_schema_validate_syntax(&flat, argc, argv, cursor_arg, result);
+    if (ret || result->state == BU_ARG_VALIDATE_INVALID)
 	return ret;
 
-    model = bu_cmd_schema_option_present(schema, argc, argv, "m");
-    view = bu_cmd_schema_option_present(schema, argc, argv, "v");
+    model = bu_arg_schema_option_present(schema, argc, argv, "m");
+    view = bu_arg_schema_option_present(schema, argc, argv, "v");
     if (model && view)
-	return rot_validation_result(result, BU_CMD_VALIDATE_INVALID, token,
-	    BU_CMD_VALUE_FLAG, "-m and -v are mutually exclusive", NULL);
+	return rot_validation_result(result, BU_ARG_VALIDATE_INVALID, token,
+	    BU_ARG_VALUE_FLAG, "-m and -v are mutually exclusive", NULL);
 
-    if (cursor_arg < argc && (result->expected & BU_CMD_EXPECT_OPTION))
+    if (cursor_arg < argc && (result->expected & BU_ARG_EXPECT_OPTION))
 	return 0;
 
     while (first < argc && (BU_STR_EQUAL(argv[first], "-m") ||
 		BU_STR_EQUAL(argv[first], "-v")))
 	first++;
     if (first < argc && BU_STR_EQUAL(argv[first], "--"))
-	return rot_validation_result(result, BU_CMD_VALIDATE_INVALID, first,
-	    BU_CMD_VALUE_RAW, "end-of-options marker is not supported", NULL);
+	return rot_validation_result(result, BU_ARG_VALIDATE_INVALID, first,
+	    BU_ARG_VALUE_RAW, "end-of-options marker is not supported", NULL);
     count = argc - first;
     if (count == 0)
-	return rot_validation_result(result, BU_CMD_VALIDATE_INCOMPLETE, token,
-	    BU_CMD_VALUE_VECTOR, "rotation vector expected", "ged.vector_group");
+	return rot_validation_result(result, BU_ARG_VALIDATE_INCOMPLETE, token,
+	    BU_ARG_VALUE_VECTOR, "rotation vector expected", "ged.vector_group");
 
     if (count == 1) {
 	int vector_count = rot_vector_count(argv[first]);
 	if (vector_count == 3)
-	    return rot_validation_result(result, BU_CMD_VALIDATE_VALID, token,
-		BU_CMD_VALUE_VECTOR, "packed rotation vector", "ged.vector_group");
+	    return rot_validation_result(result, BU_ARG_VALIDATE_VALID, token,
+		BU_ARG_VALUE_VECTOR, "packed rotation vector", "ged.vector_group");
 	if (vector_count > 0 || rot_number_valid(argv[first]))
-	    return rot_validation_result(result, BU_CMD_VALIDATE_INCOMPLETE, token,
-		BU_CMD_VALUE_NUMBER, "two more rotation angles expected", NULL);
-	return rot_validation_result(result, BU_CMD_VALIDATE_INVALID, first,
-	    BU_CMD_VALUE_VECTOR, "packed vector or numeric angle expected", "ged.vector_group");
+	    return rot_validation_result(result, BU_ARG_VALIDATE_INCOMPLETE, token,
+		BU_ARG_VALUE_NUMBER, "two more rotation angles expected", NULL);
+	return rot_validation_result(result, BU_ARG_VALIDATE_INVALID, first,
+	    BU_ARG_VALUE_VECTOR, "packed vector or numeric angle expected", "ged.vector_group");
     }
 
     for (size_t i = first; i < argc; i++)
 	if (!rot_number_valid(argv[i]))
-	    return rot_validation_result(result, BU_CMD_VALIDATE_INVALID, i,
-		BU_CMD_VALUE_NUMBER, "rotation angles must be finite numbers", NULL);
+	    return rot_validation_result(result, BU_ARG_VALIDATE_INVALID, i,
+		BU_ARG_VALUE_NUMBER, "rotation angles must be finite numbers", NULL);
     if (count < 3)
-	return rot_validation_result(result, BU_CMD_VALIDATE_INCOMPLETE, token,
-	    BU_CMD_VALUE_NUMBER, "one more rotation angle expected", NULL);
-    return rot_validation_result(result, BU_CMD_VALIDATE_VALID, token,
-	BU_CMD_VALUE_VECTOR, "rotation vector", "ged.vector_group");
+	return rot_validation_result(result, BU_ARG_VALIDATE_INCOMPLETE, token,
+	    BU_ARG_VALUE_NUMBER, "one more rotation angle expected", NULL);
+    return rot_validation_result(result, BU_ARG_VALIDATE_VALID, token,
+	BU_ARG_VALUE_VECTOR, "rotation vector", "ged.vector_group");
 }
 
-static const struct bu_cmd_option rot_schema_options[] = {
-    BU_CMD_FLAG("m", NULL, struct rot_args, model, "Rotate in model coordinates"),
-    BU_CMD_FLAG("v", NULL, struct rot_args, view, "Rotate in view coordinates"),
-    BU_CMD_OPTION_NULL
+static const struct bu_arg_option rot_schema_options[] = {
+    BU_ARG_FLAG("m", NULL, struct rot_args, model, "Rotate in model coordinates"),
+    BU_ARG_FLAG("v", NULL, struct rot_args, view, "Rotate in view coordinates"),
+    BU_ARG_OPTION_NULL
 };
-static const struct bu_cmd_operand rot_schema_operands[] = {
-    BU_CMD_OPERAND("rotation", BU_CMD_VALUE_VECTOR, 1, 3,
+static const struct bu_arg_operand rot_schema_operands[] = {
+    BU_ARG_OPERAND("rotation", BU_ARG_VALUE_VECTOR, 1, 3,
 	"Packed vector or X Y Z angles", "ged.vector_group"),
-    BU_CMD_OPERAND_NULL
+    BU_ARG_OPERAND_NULL
 };
-static const struct bu_cmd_schema rot_cmd_schema =
-    BU_CMD_SCHEMA_BOUND("rot", "Rotate the current view", rot_schema_options,
-	rot_schema_operands, BU_CMD_PARSE_OPTIONS_FIRST, NULL, NULL, rot_schema_validate, NULL);
+static const struct bu_arg_schema rot_cmd_schema =
+    BU_ARG_SCHEMA_BOUND("rot", "Rotate the current view", rot_schema_options,
+	rot_schema_operands, BU_ARG_PARSE_OPTIONS_FIRST, NULL, NULL, rot_schema_validate, NULL);
 
-static const struct bu_cmd_schema *
+static const struct bu_arg_schema *
 rot_schema(void)
 {
     return &rot_cmd_schema;

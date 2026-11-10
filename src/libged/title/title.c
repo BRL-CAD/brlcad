@@ -28,13 +28,13 @@
 #include <string.h>
 
 #include "bu/cmd.h"
-#include "bu/cmdschema.h"
+#include "bu/arg.h"
 
 #include "../ged_private.h"
 
 GED_DEFINE_TYPED_OPERAND_SCHEMA_POLICY_PROVIDER(title, "title",
-    "Get or set the database title", "title", BU_CMD_VALUE_RAW, 0,
-    BU_CMD_COUNT_UNLIMITED, "Database title words", BU_CMD_PARSE_OPTIONS_FIRST,
+    "Get or set the database title", "title", BU_ARG_VALUE_RAW, 0,
+    BU_ARG_COUNT_UNLIMITED, "Database title words", BU_ARG_PARSE_OPTIONS_FIRST,
     NULL);
 
 
@@ -51,7 +51,7 @@ ged_title_core(struct ged *gedp, int argc, const char *argv[])
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
 
-    operand_index = bu_cmd_schema_parse_complete(&title_cmd_schema, &parse_dummy,
+    operand_index = bu_arg_schema_parse_complete(&title_cmd_schema, &parse_dummy,
 	gedp->ged_result_str, argc - 1, argv + 1);
     if (operand_index < 0) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s [title words...]", argv[0]);

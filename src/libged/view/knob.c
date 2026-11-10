@@ -27,7 +27,7 @@
 
 #include <string.h>
 
-#include "bu/cmdschema.h"
+#include "bu/arg.h"
 #include "../ged_private.h"
 #include "./ged_view.h"
 
@@ -40,7 +40,7 @@ struct ged_view_knob_args {
     const char *origin;
 };
 
-static const struct bu_cmd_value_keyword ged_view_knob_origins[] = {
+static const struct bu_arg_value_keyword ged_view_knob_origins[] = {
     {"v", NULL, "View origin (default)"},
     {"m", NULL, "Model origin"},
     {"e", NULL, "Eye point"},
@@ -74,15 +74,15 @@ ged_view_knob_action_is_value(const char *action)
 
 
 static void
-ged_view_knob_validation_result(struct bu_cmd_validate_result *result,
-	bu_cmd_validate_state_t state, size_t token, bu_cmd_value_t type,
+ged_view_knob_validation_result(struct bu_arg_validate_result *result,
+	bu_arg_validate_state_t state, size_t token, bu_arg_value_t type,
 	const char *hint)
 {
-    bu_cmd_validate_result_clear(result);
+    bu_arg_validate_result_clear(result);
     result->state = state;
     result->token_start = token;
     result->token_end = token;
-    result->expected = BU_CMD_EXPECT_OPERAND;
+    result->expected = BU_ARG_EXPECT_OPERAND;
     result->completion_type = type;
     result->hint = hint;
 }
@@ -92,16 +92,16 @@ ged_view_knob_validation_result(struct bu_cmd_validate_result *result,
  * bv_knobs_cmd_process: this makes completion, highlighting, help, and the
  * execution preflight agree on the same alternating action/value grammar. */
 static int
-ged_view_knob_validate(const struct bu_cmd_schema *schema, size_t argc,
-	const char **argv, size_t cursor_arg, struct bu_cmd_validate_result *result)
+ged_view_knob_validate(const struct bu_arg_schema *schema, size_t argc,
+	const char **argv, size_t cursor_arg, struct bu_arg_validate_result *result)
 {
     size_t i = 0;
     int option_phase = 1;
     int want_value = 0;
 
     /* The ordinary schema owns option prefixes and option arguments. */
-    if ((result->expected & BU_CMD_EXPECT_OPTION_ARG) ||
-	(cursor_arg < argc && (result->expected & BU_CMD_EXPECT_OPTION)))
+    if ((result->expected & BU_ARG_EXPECT_OPTION_ARG) ||
+	(cursor_arg < argc && (result->expected & BU_ARG_EXPECT_OPTION)))
 	return 0;
 
     /* Parse every committed positional word up to the cursor.  This mirrors
@@ -114,16 +114,16 @@ ged_view_knob_validate(const struct bu_cmd_schema *schema, size_t argc,
 	    continue;
 	}
 	if (option_phase)
-	    span = bu_cmd_schema_option_span(schema, argc - i, argv + i);
+	    span = bu_arg_schema_option_span(schema, argc - i, argv + i);
 	if (span > 0) {
 	    i += (size_t)span;
 	    continue;
 	}
 	if (want_value) {
 	    fastf_t value;
-	    if (!bu_cmd_number_from_str(&value, argv[i])) {
-		ged_view_knob_validation_result(result, BU_CMD_VALIDATE_INVALID, i,
-		    BU_CMD_VALUE_NUMBER, "finite numeric knob value required");
+	    if (!bu_arg_number_from_str(&value, argv[i])) {
+		ged_view_knob_validation_result(result, BU_ARG_VALIDATE_INVALID, i,
+		    BU_ARG_VALUE_NUMBER, "finite numeric knob value required");
 		return 0;
 	    }
 	    want_value = 0;
@@ -136,9 +136,9 @@ ged_view_knob_validate(const struct bu_cmd_schema *schema, size_t argc,
 	    continue;
 	}
 	if (!ged_view_knob_action_is_value(argv[i])) {
-	    ged_view_knob_validation_result(result, BU_CMD_VALIDATE_INVALID, i,
-		BU_CMD_VALUE_STRING, "known knob action required");
-	    bu_cmd_keyword_candidates(result, ged_view_knob_actions, argv[i]);
+	    ged_view_knob_validation_result(result, BU_ARG_VALIDATE_INVALID, i,
+		BU_ARG_VALUE_STRING, "known knob action required");
+	    bu_arg_keyword_candidates(result, ged_view_knob_actions, argv[i]);
 	    return 0;
 	}
 	want_value = 1;
@@ -150,37 +150,37 @@ ged_view_knob_validate(const struct bu_cmd_schema *schema, size_t argc,
 	if (want_value) {
 	    fastf_t value;
 	    ged_view_knob_validation_result(result,
-		bu_cmd_number_from_str(&value, current) ? BU_CMD_VALIDATE_VALID :
-		BU_CMD_VALIDATE_INVALID, cursor_arg, BU_CMD_VALUE_NUMBER,
+		bu_arg_number_from_str(&value, current) ? BU_ARG_VALIDATE_VALID :
+		BU_ARG_VALIDATE_INVALID, cursor_arg, BU_ARG_VALUE_NUMBER,
 		"finite numeric knob value required");
 	    return 0;
 	}
 	if (ged_view_knob_action_is_reset(current) ||
 	    BU_STR_EQUAL(current, "calibrate")) {
-	    ged_view_knob_validation_result(result, BU_CMD_VALIDATE_VALID,
-		cursor_arg, BU_CMD_VALUE_STRING, "knob action");
-	    bu_cmd_keyword_candidates(result, ged_view_knob_actions, current);
+	    ged_view_knob_validation_result(result, BU_ARG_VALIDATE_VALID,
+		cursor_arg, BU_ARG_VALUE_STRING, "knob action");
+	    bu_arg_keyword_candidates(result, ged_view_knob_actions, current);
 	    return 0;
 	}
 	if (ged_view_knob_action_is_value(current)) {
-	    ged_view_knob_validation_result(result, BU_CMD_VALIDATE_INCOMPLETE,
-		cursor_arg, BU_CMD_VALUE_NUMBER, "numeric knob value required");
+	    ged_view_knob_validation_result(result, BU_ARG_VALIDATE_INCOMPLETE,
+		cursor_arg, BU_ARG_VALUE_NUMBER, "numeric knob value required");
 	    return 0;
 	}
-	ged_view_knob_validation_result(result, BU_CMD_VALIDATE_INVALID,
-	    cursor_arg, BU_CMD_VALUE_STRING, "known knob action required");
-	bu_cmd_keyword_candidates(result, ged_view_knob_actions, current);
+	ged_view_knob_validation_result(result, BU_ARG_VALIDATE_INVALID,
+	    cursor_arg, BU_ARG_VALUE_STRING, "known knob action required");
+	bu_arg_keyword_candidates(result, ged_view_knob_actions, current);
 	return 0;
     }
 
     if (want_value) {
-	ged_view_knob_validation_result(result, BU_CMD_VALIDATE_INCOMPLETE,
-	    cursor_arg, BU_CMD_VALUE_NUMBER, "numeric knob value required");
+	ged_view_knob_validation_result(result, BU_ARG_VALIDATE_INCOMPLETE,
+	    cursor_arg, BU_ARG_VALUE_NUMBER, "numeric knob value required");
 	return 0;
     }
-    ged_view_knob_validation_result(result, BU_CMD_VALIDATE_VALID, cursor_arg,
-	BU_CMD_VALUE_STRING, "knob action may follow");
-    bu_cmd_keyword_candidates(result, ged_view_knob_actions, "");
+    ged_view_knob_validation_result(result, BU_ARG_VALIDATE_VALID, cursor_arg,
+	BU_ARG_VALUE_STRING, "knob action may follow");
+    bu_arg_keyword_candidates(result, ged_view_knob_actions, "");
     return 0;
 }
 
@@ -188,34 +188,34 @@ ged_view_knob_validate(const struct bu_cmd_schema *schema, size_t argc,
 static const char * const ged_view_knob_coord_options[] = {
     "view-coords", "model-coords", NULL
 };
-static const struct bu_cmd_constraint ged_view_knob_constraints[] = {
-    BU_CMD_CONSTRAINT_OPTIONS(ged_view_knob_coord_options, 0, 1,
+static const struct bu_arg_constraint ged_view_knob_constraints[] = {
+    BU_ARG_CONSTRAINT_OPTIONS(ged_view_knob_coord_options, 0, 1,
 	"--view-coords and --model-coords cannot be used together"),
-    BU_CMD_CONSTRAINT_NULL
+    BU_ARG_CONSTRAINT_NULL
 };
-static const struct bu_cmd_option ged_view_knob_options[] = {
-    BU_CMD_FLAG("h", "help", struct ged_view_knob_args, print_help,
+static const struct bu_arg_option ged_view_knob_options[] = {
+    BU_ARG_FLAG("h", "help", struct ged_view_knob_args, print_help,
 	"Print help and exit"),
-    BU_CMD_ALIAS_SHORT("?", "help", 1),
-    BU_CMD_FLAG("i", "incr", struct ged_view_knob_args, incr_flag,
+    BU_ARG_ALIAS_SHORT("?", "help", 1),
+    BU_ARG_FLAG("i", "incr", struct ged_view_knob_args, incr_flag,
 	"Interpret values as increments"),
-    BU_CMD_FLAG("v", "view-coords", struct ged_view_knob_args, view_flag,
+    BU_ARG_FLAG("v", "view-coords", struct ged_view_knob_args, view_flag,
 	"Manipulate the view using view coordinates"),
-    BU_CMD_FLAG("m", "model-coords", struct ged_view_knob_args, model_flag,
+    BU_ARG_FLAG("m", "model-coords", struct ged_view_knob_args, model_flag,
 	"Manipulate the view using model coordinates"),
-    BU_CMD_KEYWORD_VALUES("o", "origin", struct ged_view_knob_args, origin,
+    BU_ARG_KEYWORD_VALUES("o", "origin", struct ged_view_knob_args, origin,
 	"v|m|e|k", "Set rotation origin", ged_view_knob_origins),
-    BU_CMD_OPTION_NULL
+    BU_ARG_OPTION_NULL
 };
-static const struct bu_cmd_operand ged_view_knob_operands[] = {
-    BU_CMD_OPERAND("action", BU_CMD_VALUE_RAW, 0, BU_CMD_COUNT_UNLIMITED,
+static const struct bu_arg_operand ged_view_knob_operands[] = {
+    BU_ARG_OPERAND("action", BU_ARG_VALUE_RAW, 0, BU_ARG_COUNT_UNLIMITED,
 	"Knob action/value stream", NULL),
-    BU_CMD_OPERAND_NULL
+    BU_ARG_OPERAND_NULL
 };
-GED_EXPORT const struct bu_cmd_schema ged_view_knob_schema = {
+GED_EXPORT const struct bu_arg_schema ged_view_knob_schema = {
     "knob", "Apply low-level view controls", ged_view_knob_options,
-    ged_view_knob_operands, BU_CMD_PARSE_INTERSPERSED,
-    BU_CMD_SCHEMA_META_HELP(NULL, ged_view_knob_constraints,
+    ged_view_knob_operands, BU_ARG_PARSE_INTERSPERSED,
+    BU_ARG_SCHEMA_META_HELP(NULL, ged_view_knob_constraints,
 	ged_view_knob_validate, NULL, NULL)
 };
 
@@ -223,7 +223,7 @@ GED_EXPORT const struct bu_cmd_schema ged_view_knob_schema = {
 static void
 ged_view_knob_usage(struct ged *gedp)
 {
-    char *help = bu_cmd_schema_help(&ged_view_knob_schema, "knob");
+    char *help = bu_arg_schema_help(&ged_view_knob_schema, "knob");
 
     if (help) {
 	bu_vls_strcat(gedp->ged_result_str, help);
@@ -285,7 +285,7 @@ ged_knob_core(struct ged *gedp, int argc, const char *argv[])
     pargv = (const char **)bu_calloc((size_t)argc, sizeof(*pargv),
 	"view knob native argv");
     memcpy(pargv, argv, (size_t)argc * sizeof(*pargv));
-    operand_index = bu_cmd_schema_parse_complete(&ged_view_knob_schema, &args,
+    operand_index = bu_arg_schema_parse_complete(&ged_view_knob_schema, &args,
 	gedp->ged_result_str, argc - 1, pargv + 1);
     if (operand_index < 0) {
 	ged_view_knob_usage(gedp);
@@ -344,7 +344,7 @@ ged_knob_core(struct ged *gedp, int argc, const char *argv[])
 	 * this defensive check so direct callers cannot reach libbv with bad data
 	 * if the schema is changed in the future. */
 	fastf_t f = 0.0;
-	if (++ai >= action_argc || !bu_cmd_number_from_str(&f, action_argv[ai])) {
+	if (++ai >= action_argc || !bu_arg_number_from_str(&f, action_argv[ai])) {
 	    bu_vls_printf(gedp->ged_result_str, "finite numeric knob value required\n");
 	    bu_free((void *)pargv, "view knob native argv");
 	    return BRLCAD_ERROR;

@@ -69,7 +69,7 @@ ged_form_core(struct ged *gedp, int argc, const char *argv[])
 
 #include "../include/plugin.h"
 
-GED_DEFINE_TYPED_OPERAND_SCHEMA(form, "form", "Primitive type", "primitive_type", BU_CMD_VALUE_STRING, 1, 1, "Primitive type");
+GED_DEFINE_TYPED_OPERAND_SCHEMA(form, "form", "Primitive type", "primitive_type", BU_ARG_VALUE_STRING, 1, 1, "Primitive type");
 
 #define GED_FORM_COMMANDS(X, XID) \
     X(form, ged_form_core, GED_CMD_DEFAULT, &form_cmd_schema) \

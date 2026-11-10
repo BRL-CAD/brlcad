@@ -136,7 +136,7 @@ ged_shells_core(struct ged *gedp, int argc, const char *argv[])
 
 #include "../include/plugin.h"
 
-GED_DEFINE_TYPED_OPERAND_SCHEMA(shells, "shells", "NMG model", "nmg_model", BU_CMD_VALUE_DB_OBJECT, 1, 1, "NMG model");
+GED_DEFINE_TYPED_OPERAND_SCHEMA(shells, "shells", "NMG model", "nmg_model", BU_ARG_VALUE_DB_OBJECT, 1, 1, "NMG model");
 
 #define GED_SHELLS_COMMANDS(X, XID) \
     X(shells, ged_shells_core, GED_CMD_DEFAULT, &shells_cmd_schema) \

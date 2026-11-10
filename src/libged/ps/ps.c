@@ -25,7 +25,7 @@
 
 #include "common.h"
 
-#include "bu/cmdschema.h"
+#include "bu/arg.h"
 #include "bu/color.h"
 #include "vmath.h"
 #include "bn.h"

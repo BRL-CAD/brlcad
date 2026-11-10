@@ -32,7 +32,7 @@
 #include "common.h"
 #include "analyze/defines.h"
 
-#include "bu/cmdschema.h"
+#include "bu/arg.h"
 #include "bu/opt.h"
 #include "bu/vls.h"
 #include "raytrace.h"
@@ -85,11 +85,11 @@ struct nirt_opt_vals {
 
 /**
  * Return NIRT's canonical command-line schema.  The caller supplies a
- * nirt_opt_vals record to bu_cmd_schema_parse; the schema is shared by the
+ * nirt_opt_vals record to bu_arg_schema_parse; the schema is shared by the
  * stand-alone nirt program and the GED command adapter.
  */
-ANALYZE_EXPORT extern const struct bu_cmd_schema nirt_command_schema;
-ANALYZE_EXPORT const struct bu_cmd_schema *nirt_opt_schema(void);
+ANALYZE_EXPORT extern const struct bu_arg_schema nirt_command_schema;
+ANALYZE_EXPORT const struct bu_arg_schema *nirt_opt_schema(void);
 
 /**
  * Given a nirt_opt_vals container, set up and return a bu_opt_desc that can
@@ -97,7 +97,7 @@ ANALYZE_EXPORT const struct bu_cmd_schema *nirt_opt_schema(void);
  * resulting bu_opt_desc array.
  *
  * Compatibility API: new in-tree code uses nirt_opt_schema with
- * bu_cmd_schema_parse.  This parallel NIRT descriptor adapter remains for
+ * bu_arg_schema_parse.  This parallel NIRT descriptor adapter remains for
  * external callers; the underlying bu_opt API itself is supported. */
 DEPRECATED ANALYZE_EXPORT struct bu_opt_desc *nirt_opt_desc(struct nirt_opt_vals *o);
 

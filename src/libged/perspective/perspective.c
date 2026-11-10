@@ -79,7 +79,7 @@ ged_perspective_core(struct ged *gedp, int argc, const char *argv[])
 
 #include "../include/plugin.h"
 
-GED_DEFINE_TYPED_OPERAND_SCHEMA(perspective, "perspective", "Query or set the perspective angle", "angle", BU_CMD_VALUE_NUMBER, 0, 1, "Perspective angle");
+GED_DEFINE_TYPED_OPERAND_SCHEMA(perspective, "perspective", "Query or set the perspective angle", "angle", BU_ARG_VALUE_NUMBER, 0, 1, "Perspective angle");
 
 #define GED_PERSPECTIVE_COMMANDS(X, XID) \
     X(perspective, ged_perspective_core, GED_CMD_DEFAULT, &perspective_cmd_schema) \

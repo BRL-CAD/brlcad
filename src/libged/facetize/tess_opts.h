@@ -153,7 +153,7 @@ class spsr_opts : public sample_opts {
 
 #if defined(TESS_OPTS_IMPLEMENTATION)
 
-#include "bu/cmdschema.h"
+#include "bu/arg.h"
 
 method_options_t::method_options_t()
 {
@@ -284,12 +284,12 @@ tess_method_opts_from_str(struct bu_vls *msg, const char *arg, void *storage)
 	    m->options_map[words[0]][setting.first] = setting.second;
 	    if (setting.first == "max_time") {
 		int max_time = 0;
-		if (bu_cmd_integer_from_str(&max_time, setting.second.c_str()))
+		if (bu_arg_integer_from_str(&max_time, setting.second.c_str()))
 		    m->max_time[words[0]] = max_time;
 	    }
 	    if (setting.first == "plate_max_time") {
 		int max_time = 0;
-		if (bu_cmd_integer_from_str(&max_time, setting.second.c_str()))
+		if (bu_arg_integer_from_str(&max_time, setting.second.c_str()))
 		    m->plate_max_time = max_time;
 	    }
 	}
@@ -324,7 +324,7 @@ sample_opts::set_var(const std::string &key, const std::string &val)
 	key == "d_feature_size") {
 	fastf_t parsed = 0.0;
 	if ((!val.empty() &&
-		!bu_cmd_number_from_str(&parsed, val.c_str())) ||
+		!bu_arg_number_from_str(&parsed, val.c_str())) ||
 		parsed < 0.0)
 	    return BRLCAD_ERROR;
 	if (key == "feature_scale")
@@ -339,7 +339,7 @@ sample_opts::set_var(const std::string &key, const std::string &val)
     if (key == "max_sample_time" || key == "max_pnts") {
 	int parsed = 0;
 	if ((!val.empty() &&
-		!bu_cmd_integer_from_str(&parsed, val.c_str())) ||
+		!bu_arg_integer_from_str(&parsed, val.c_str())) ||
 		parsed < 0)
 	    return BRLCAD_ERROR;
 	if (key == "max_sample_time")
@@ -415,7 +415,7 @@ mdc_opts::set_var(const std::string &key, const std::string &val)
     if (key == "feature_size") {
 	fastf_t parsed = 0.0;
 	if ((!val.empty() &&
-		!bu_cmd_number_from_str(&parsed, val.c_str())) ||
+		!bu_arg_number_from_str(&parsed, val.c_str())) ||
 		parsed < 0.0)
 	    return BRLCAD_ERROR;
 	feature_size = parsed;
@@ -425,7 +425,7 @@ mdc_opts::set_var(const std::string &key, const std::string &val)
     if (key == "max_rays" || key == "minimum_free_mem") {
 	long parsed = 0;
 	if ((!val.empty() &&
-		!bu_cmd_long_from_str(&parsed, val.c_str())) ||
+		!bu_arg_long_from_str(&parsed, val.c_str())) ||
 		parsed < 0)
 	    return BRLCAD_ERROR;
 	if (key == "max_rays")
@@ -436,7 +436,7 @@ mdc_opts::set_var(const std::string &key, const std::string &val)
     }
 
     int parsed = 0;
-    if (!val.empty() && !bu_cmd_integer_from_str(&parsed, val.c_str()))
+    if (!val.empty() && !bu_arg_integer_from_str(&parsed, val.c_str()))
 	return BRLCAD_ERROR;
     if (key == "min_depth") {
 	if (parsed < 1 || parsed > ANALYZE_MDC_MAX_DEPTH)
@@ -515,7 +515,7 @@ nmg_opts::set_var(const std::string &key, const std::string &val)
 	    ttol.rel = 0.0;
 	    return BRLCAD_OK;
 	}
-	if (!bu_cmd_number_from_str(&ttol.rel, val.c_str()))
+	if (!bu_arg_number_from_str(&ttol.rel, val.c_str()))
 	    return BRLCAD_ERROR;
     }
     if (key == std::string("tol_abs")) {
@@ -523,7 +523,7 @@ nmg_opts::set_var(const std::string &key, const std::string &val)
 	    ttol.abs = 0.0;
 	    return BRLCAD_OK;
 	}
-	if (!bu_cmd_number_from_str(&ttol.abs, val.c_str()))
+	if (!bu_arg_number_from_str(&ttol.abs, val.c_str()))
 	    return BRLCAD_ERROR;
     }
     if (key == std::string("tol_norm")) {
@@ -531,7 +531,7 @@ nmg_opts::set_var(const std::string &key, const std::string &val)
 	    ttol.norm = 0.0;
 	    return BRLCAD_OK;
 	}
-	if (!bu_cmd_number_from_str(&ttol.norm, val.c_str()))
+	if (!bu_arg_number_from_str(&ttol.norm, val.c_str()))
 	    return BRLCAD_ERROR;
     }
     if (key == std::string("nmg_debug")) {
@@ -540,7 +540,7 @@ nmg_opts::set_var(const std::string &key, const std::string &val)
 	    return BRLCAD_OK;
 	}
 	long ndebug = 0;
-	if (!bu_cmd_long_from_str(&ndebug, val.c_str()))
+	if (!bu_arg_long_from_str(&ndebug, val.c_str()))
 	    return BRLCAD_ERROR;
 	nmg_debug = ndebug;
     }
@@ -550,7 +550,7 @@ nmg_opts::set_var(const std::string &key, const std::string &val)
 	    max_time = 0;
 	    return BRLCAD_OK;
 	}
-	if (!bu_cmd_integer_from_str(&max_time, val.c_str()))
+	if (!bu_arg_integer_from_str(&max_time, val.c_str()))
 	    return BRLCAD_ERROR;
     }
 
@@ -559,7 +559,7 @@ nmg_opts::set_var(const std::string &key, const std::string &val)
 	    plate_max_time = 0;
 	    return BRLCAD_OK;
 	}
-	if (!bu_cmd_integer_from_str(&plate_max_time, val.c_str()))
+	if (!bu_arg_integer_from_str(&plate_max_time, val.c_str()))
 	    return BRLCAD_ERROR;
     }
 
@@ -613,7 +613,7 @@ spsr_opts::set_var(const std::string &key, const std::string &val)
     if (key == "depth") {
 	int parsed = BG_3D_SPSR_DEFAULT_DEPTH;
 	if ((!val.empty() &&
-		!bu_cmd_integer_from_str(&parsed, val.c_str())) ||
+		!bu_arg_integer_from_str(&parsed, val.c_str())) ||
 		parsed < 1)
 	    return BRLCAD_ERROR;
 	s_opts.depth = parsed;
@@ -622,7 +622,7 @@ spsr_opts::set_var(const std::string &key, const std::string &val)
     if (key == "interpolate") {
 	fastf_t parsed = BG_3D_SPSR_DEFAULT_POINT_WEIGHT;
 	if ((!val.empty() &&
-		!bu_cmd_number_from_str(&parsed, val.c_str())) ||
+		!bu_arg_number_from_str(&parsed, val.c_str())) ||
 		parsed < 0.0)
 	    return BRLCAD_ERROR;
 	s_opts.point_weight = parsed;
@@ -631,7 +631,7 @@ spsr_opts::set_var(const std::string &key, const std::string &val)
     if (key == "samples_per_node") {
 	fastf_t parsed = BG_3D_SPSR_DEFAULT_SAMPLES_PER_NODE;
 	if ((!val.empty() &&
-		!bu_cmd_number_from_str(&parsed, val.c_str())) ||
+		!bu_arg_number_from_str(&parsed, val.c_str())) ||
 		parsed <= 0.0)
 	    return BRLCAD_ERROR;
 	s_opts.samples_per_node = parsed;
@@ -640,7 +640,7 @@ spsr_opts::set_var(const std::string &key, const std::string &val)
     if (key == "refinement_passes") {
 	int parsed = BG_3D_SPSR_DEFAULT_REFINEMENT_PASSES;
 	if ((!val.empty() &&
-		!bu_cmd_integer_from_str(&parsed, val.c_str())) ||
+		!bu_arg_integer_from_str(&parsed, val.c_str())) ||
 		parsed < 0)
 	    return BRLCAD_ERROR;
 	refinement_passes = parsed;
@@ -649,7 +649,7 @@ spsr_opts::set_var(const std::string &key, const std::string &val)
     if (key == "max_time") {
 	int parsed = 600;
 	if ((!val.empty() &&
-		!bu_cmd_integer_from_str(&parsed, val.c_str())) ||
+		!bu_arg_integer_from_str(&parsed, val.c_str())) ||
 		parsed < 0)
 	    return BRLCAD_ERROR;
 	max_time = parsed;

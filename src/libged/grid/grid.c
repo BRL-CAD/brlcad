@@ -32,7 +32,7 @@
 #include "vmath.h"
 #include "bv.h"
 #include "bv/snap.h"
-#include "bu/cmdschema.h"
+#include "bu/arg.h"
 #include "bu/color.h"
 
 #include "../ged_private.h"
@@ -135,7 +135,7 @@ grid_execute(struct ged *gedp, int argc, const char *argv[])
 	    return BRLCAD_OK;
 	} else if (argc == 1) {
 	    int enabled = 0;
-	    if (!bu_cmd_integer_from_str(&enabled, argp[0]) || (enabled != 0 && enabled != 1))
+	    if (!bu_arg_integer_from_str(&enabled, argp[0]) || (enabled != 0 && enabled != 1))
 		goto usage;
 	    gedp->ged_gvp->gv_s->gv_grid.draw = enabled;
 
@@ -162,7 +162,7 @@ grid_execute(struct ged *gedp, int argc, const char *argv[])
 	    return BRLCAD_OK;
 	} else if (argc == 1) {
 	    int enabled = 0;
-	    if (!bu_cmd_integer_from_str(&enabled, argp[0]) || (enabled != 0 && enabled != 1))
+	    if (!bu_arg_integer_from_str(&enabled, argp[0]) || (enabled != 0 && enabled != 1))
 		goto usage;
 	    gedp->ged_gvp->gv_s->gv_grid.snap = enabled;
 
@@ -180,7 +180,7 @@ grid_execute(struct ged *gedp, int argc, const char *argv[])
 	    return BRLCAD_OK;
 	} else if (argc == 1) {
 	    fastf_t value = 0.0;
-	    if (!bu_cmd_number_from_str(&value, argp[0]))
+	    if (!bu_arg_number_from_str(&value, argp[0]))
 		goto usage;
 	    gedp->ged_gvp->gv_s->gv_grid.res_h = value * lbval;
 
@@ -198,7 +198,7 @@ grid_execute(struct ged *gedp, int argc, const char *argv[])
 	    return BRLCAD_OK;
 	} else if (argc == 1) {
 	    fastf_t value = 0.0;
-	    if (!bu_cmd_number_from_str(&value, argp[0]))
+	    if (!bu_arg_number_from_str(&value, argp[0]))
 		goto usage;
 	    gedp->ged_gvp->gv_s->gv_grid.res_v = value * lbval;
 
@@ -215,7 +215,7 @@ grid_execute(struct ged *gedp, int argc, const char *argv[])
 	    return BRLCAD_OK;
 	} else if (argc == 1) {
 	    int value = 0;
-	    if (!bu_cmd_integer_from_str(&value, argp[0]))
+	    if (!bu_arg_integer_from_str(&value, argp[0]))
 		goto usage;
 	    gedp->ged_gvp->gv_s->gv_grid.res_major_h = value;
 
@@ -232,7 +232,7 @@ grid_execute(struct ged *gedp, int argc, const char *argv[])
 	    return BRLCAD_OK;
 	} else if (argc == 1) {
 	    int value = 0;
-	    if (!bu_cmd_integer_from_str(&value, argp[0]))
+	    if (!bu_arg_integer_from_str(&value, argp[0]))
 		goto usage;
 	    gedp->ged_gvp->gv_s->gv_grid.res_major_v = value;
 
@@ -252,7 +252,7 @@ grid_execute(struct ged *gedp, int argc, const char *argv[])
 	    return BRLCAD_OK;
 	} else if (argc == 3) {
 	    fastf_t value[3] = {0.0, 0.0, 0.0};
-	    if (bu_cmd_vector3_from_argv(value, 3, (const char * const *)argp) != 3)
+	    if (bu_arg_vector3_from_argv(value, 3, (const char * const *)argp) != 3)
 		goto usage;
 	    gedp->ged_gvp->gv_s->gv_grid.anchor[0] = value[X] * lbval;
 	    gedp->ged_gvp->gv_s->gv_grid.anchor[1] = value[Y] * lbval;
@@ -312,80 +312,80 @@ usage:
 #include "../include/plugin.h"
 
 static const char * const grid_bool_keywords[] = {"0", "1", NULL};
-static const struct bu_cmd_operand grid_bool_operands[] = {
-    BU_CMD_OPERAND_KEYWORDS("enabled", BU_CMD_VALUE_KEYWORD, 0, 1,
+static const struct bu_arg_operand grid_bool_operands[] = {
+    BU_ARG_OPERAND_KEYWORDS("enabled", BU_ARG_VALUE_KEYWORD, 0, 1,
 	"Zero to disable or one to enable", NULL, grid_bool_keywords),
-    BU_CMD_OPERAND_NULL
+    BU_ARG_OPERAND_NULL
 };
-static const struct bu_cmd_operand grid_number_operands[] = {
-    BU_CMD_OPERAND("value", BU_CMD_VALUE_NUMBER, 0, 1,
+static const struct bu_arg_operand grid_number_operands[] = {
+    BU_ARG_OPERAND("value", BU_ARG_VALUE_NUMBER, 0, 1,
 	"Optional finite number", NULL),
-    BU_CMD_OPERAND_NULL
+    BU_ARG_OPERAND_NULL
 };
-static const struct bu_cmd_operand grid_integer_operands[] = {
-    BU_CMD_OPERAND("value", BU_CMD_VALUE_INTEGER, 0, 1,
+static const struct bu_arg_operand grid_integer_operands[] = {
+    BU_ARG_OPERAND("value", BU_ARG_VALUE_INTEGER, 0, 1,
 	"Optional base-zero integer", NULL),
-    BU_CMD_OPERAND_NULL
+    BU_ARG_OPERAND_NULL
 };
 
 /* These shapes are used by static command schemas.  Do not take the address
  * of libbu's exported shape data here: on Windows it is an imported-data
  * address and is not a valid C static initializer (MSVC C2099). */
-static const struct bu_cmd_arg_shape grid_anchor_arg_shape = {
-    BU_CMD_ARG_SHAPE_VECTOR3, 1, 3,
+static const struct bu_arg_shape grid_anchor_arg_shape = {
+    BU_ARG_SHAPE_VECTOR3, 1, 3,
     "packed x/y/z, x,y,z, or x;y;z; quoted x y z; or three numeric components", NULL, NULL
 };
-static const struct bu_cmd_arg_shape grid_color_arg_shape = {
-    BU_CMD_ARG_SHAPE_RGB, 1, 3,
+static const struct bu_arg_shape grid_color_arg_shape = {
+    BU_ARG_SHAPE_RGB, 1, 3,
     "packed r/g/b, r,g,b, or r;g;b; or three RGB channels", NULL, NULL
 };
 
 static int
-grid_color_schema_validate(const struct bu_cmd_schema *UNUSED(schema), size_t argc,
-	const char **argv, size_t cursor_arg, struct bu_cmd_validate_result *result)
+grid_color_schema_validate(const struct bu_arg_schema *UNUSED(schema), size_t argc,
+	const char **argv, size_t cursor_arg, struct bu_arg_validate_result *result)
 {
-    return bu_cmd_rgb_optional_validate(argc, argv, cursor_arg, result);
+    return bu_arg_rgb_optional_validate(argc, argv, cursor_arg, result);
 }
 
-static const struct bu_cmd_operand grid_anchor_operands[] = {
-    BU_CMD_OPERAND_SHAPED("anchor", BU_CMD_VALUE_VECTOR, 0, 3, NULL,
+static const struct bu_arg_operand grid_anchor_operands[] = {
+    BU_ARG_OPERAND_SHAPED("anchor", BU_ARG_VALUE_VECTOR, 0, 3, NULL,
 	"Optional packed x/y/z or three finite coordinates", "ged.vector_group",
 	&grid_anchor_arg_shape),
-    BU_CMD_OPERAND_NULL
+    BU_ARG_OPERAND_NULL
 };
-static const struct bu_cmd_operand grid_color_operands[] = {
-    BU_CMD_OPERAND_SHAPED("color", BU_CMD_VALUE_RAW, 0, 3, NULL,
+static const struct bu_arg_operand grid_color_operands[] = {
+    BU_ARG_OPERAND_SHAPED("color", BU_ARG_VALUE_RAW, 0, 3, NULL,
 	"Optional packed r/g/b or three RGB channels", NULL, &grid_color_arg_shape),
-    BU_CMD_OPERAND_NULL
+    BU_ARG_OPERAND_NULL
 };
 #define GRID_SCHEMA(_id, _name, _help, _operands, _validation) \
-    static const struct bu_cmd_schema _id##_schema = { \
-	_name, _help, NULL, _operands, BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, _validation \
+    static const struct bu_arg_schema _id##_schema = { \
+	_name, _help, NULL, _operands, BU_ARG_PARSE_STOP_AT_FIRST_OPERAND, _validation \
     }
 GRID_SCHEMA(grid_root, "grid", "Query or configure the current view grid", NULL,
-    BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL));
+    BU_ARG_SCHEMA_CONSTRAINTS(NULL, NULL));
 GRID_SCHEMA(grid_anchor, "anchor", "Query or set the grid anchor", grid_anchor_operands,
-    BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL));
+    BU_ARG_SCHEMA_CONSTRAINTS(NULL, NULL));
 GRID_SCHEMA(grid_color, "color", "Query or set the grid color", grid_color_operands,
-    BU_CMD_SCHEMA_CONSTRAINTS(grid_color_schema_validate, NULL));
+    BU_ARG_SCHEMA_CONSTRAINTS(grid_color_schema_validate, NULL));
 GRID_SCHEMA(grid_draw, "draw", "Query or set grid display (0 or 1)", grid_bool_operands,
-    BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL));
+    BU_ARG_SCHEMA_CONSTRAINTS(NULL, NULL));
 GRID_SCHEMA(grid_snap, "snap", "Query or set grid snapping (0 or 1)", grid_bool_operands,
-    BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL));
+    BU_ARG_SCHEMA_CONSTRAINTS(NULL, NULL));
 GRID_SCHEMA(grid_mrh, "mrh", "Query or set horizontal major interval", grid_integer_operands,
-    BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL));
+    BU_ARG_SCHEMA_CONSTRAINTS(NULL, NULL));
 GRID_SCHEMA(grid_mrv, "mrv", "Query or set vertical major interval", grid_integer_operands,
-    BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL));
+    BU_ARG_SCHEMA_CONSTRAINTS(NULL, NULL));
 GRID_SCHEMA(grid_rh, "rh", "Query or set horizontal resolution", grid_number_operands,
-    BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL));
+    BU_ARG_SCHEMA_CONSTRAINTS(NULL, NULL));
 GRID_SCHEMA(grid_rv, "rv", "Query or set vertical resolution", grid_number_operands,
-    BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL));
+    BU_ARG_SCHEMA_CONSTRAINTS(NULL, NULL));
 GRID_SCHEMA(grid_vars, "vars", "Print all grid values", NULL,
-    BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL));
+    BU_ARG_SCHEMA_CONSTRAINTS(NULL, NULL));
 GRID_SCHEMA(grid_vsnap, "vsnap", "Snap the view center to the grid", NULL,
-    BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL));
+    BU_ARG_SCHEMA_CONSTRAINTS(NULL, NULL));
 GRID_SCHEMA(grid_help, "help", "Show grid syntax", NULL,
-    BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL));
+    BU_ARG_SCHEMA_CONSTRAINTS(NULL, NULL));
 #undef GRID_SCHEMA
 
 
@@ -408,36 +408,36 @@ grid_tree_execute(void *data, int argc, const char *argv[])
 }
 
 
-static const struct bu_cmd_tree_node grid_subcommands[] = {
-    BU_CMD_TREE_NODE(&grid_anchor_schema, NULL, NULL, BU_CMD_TREE_CHILD_AFTER_OPTIONS, grid_tree_execute),
-    BU_CMD_TREE_NODE(&grid_color_schema, NULL, NULL, BU_CMD_TREE_CHILD_AFTER_OPTIONS, grid_tree_execute),
-    BU_CMD_TREE_NODE(&grid_draw_schema, NULL, NULL, BU_CMD_TREE_CHILD_AFTER_OPTIONS, grid_tree_execute),
-    BU_CMD_TREE_NODE(&grid_help_schema, NULL, NULL, BU_CMD_TREE_CHILD_AFTER_OPTIONS, grid_tree_execute),
-    BU_CMD_TREE_NODE(&grid_mrh_schema, NULL, NULL, BU_CMD_TREE_CHILD_AFTER_OPTIONS, grid_tree_execute),
-    BU_CMD_TREE_NODE(&grid_mrv_schema, NULL, NULL, BU_CMD_TREE_CHILD_AFTER_OPTIONS, grid_tree_execute),
-    BU_CMD_TREE_NODE(&grid_rh_schema, NULL, NULL, BU_CMD_TREE_CHILD_AFTER_OPTIONS, grid_tree_execute),
-    BU_CMD_TREE_NODE(&grid_rv_schema, NULL, NULL, BU_CMD_TREE_CHILD_AFTER_OPTIONS, grid_tree_execute),
-    BU_CMD_TREE_NODE(&grid_snap_schema, NULL, NULL, BU_CMD_TREE_CHILD_AFTER_OPTIONS, grid_tree_execute),
-    BU_CMD_TREE_NODE(&grid_vars_schema, NULL, NULL, BU_CMD_TREE_CHILD_AFTER_OPTIONS, grid_tree_execute),
-    BU_CMD_TREE_NODE(&grid_vsnap_schema, NULL, NULL, BU_CMD_TREE_CHILD_AFTER_OPTIONS, grid_tree_execute),
-    BU_CMD_TREE_NODE_NULL
+static const struct bu_arg_tree_node grid_subcommands[] = {
+    BU_ARG_TREE_NODE(&grid_anchor_schema, NULL, NULL, BU_ARG_TREE_CHILD_AFTER_OPTIONS, grid_tree_execute),
+    BU_ARG_TREE_NODE(&grid_color_schema, NULL, NULL, BU_ARG_TREE_CHILD_AFTER_OPTIONS, grid_tree_execute),
+    BU_ARG_TREE_NODE(&grid_draw_schema, NULL, NULL, BU_ARG_TREE_CHILD_AFTER_OPTIONS, grid_tree_execute),
+    BU_ARG_TREE_NODE(&grid_help_schema, NULL, NULL, BU_ARG_TREE_CHILD_AFTER_OPTIONS, grid_tree_execute),
+    BU_ARG_TREE_NODE(&grid_mrh_schema, NULL, NULL, BU_ARG_TREE_CHILD_AFTER_OPTIONS, grid_tree_execute),
+    BU_ARG_TREE_NODE(&grid_mrv_schema, NULL, NULL, BU_ARG_TREE_CHILD_AFTER_OPTIONS, grid_tree_execute),
+    BU_ARG_TREE_NODE(&grid_rh_schema, NULL, NULL, BU_ARG_TREE_CHILD_AFTER_OPTIONS, grid_tree_execute),
+    BU_ARG_TREE_NODE(&grid_rv_schema, NULL, NULL, BU_ARG_TREE_CHILD_AFTER_OPTIONS, grid_tree_execute),
+    BU_ARG_TREE_NODE(&grid_snap_schema, NULL, NULL, BU_ARG_TREE_CHILD_AFTER_OPTIONS, grid_tree_execute),
+    BU_ARG_TREE_NODE(&grid_vars_schema, NULL, NULL, BU_ARG_TREE_CHILD_AFTER_OPTIONS, grid_tree_execute),
+    BU_ARG_TREE_NODE(&grid_vsnap_schema, NULL, NULL, BU_ARG_TREE_CHILD_AFTER_OPTIONS, grid_tree_execute),
+    BU_ARG_TREE_NODE_NULL
 };
-static const struct bu_cmd_tree ged_grid_tree = {
-    &grid_root_schema, grid_subcommands, BU_CMD_TREE_CHILD_AFTER_OPTIONS
+static const struct bu_arg_tree ged_grid_tree = {
+    &grid_root_schema, grid_subcommands, BU_ARG_TREE_CHILD_AFTER_OPTIONS
 };
 
 
 static char *
 grid_native_help(void)
 {
-    return bu_cmd_tree_help(&ged_grid_tree, "grid");
+    return bu_arg_tree_help(&ged_grid_tree, "grid");
 }
 
 
 int
 ged_grid_core(struct ged *gedp, int argc, const char *argv[])
 {
-    const struct bu_cmd_tree_node *node = NULL;
+    const struct bu_arg_tree_node *node = NULL;
     struct bu_vls msg = BU_VLS_INIT_ZERO;
     int ret = BRLCAD_ERROR;
 
@@ -448,10 +448,10 @@ ged_grid_core(struct ged *gedp, int argc, const char *argv[])
 	grid_usage(gedp);
 	return BRLCAD_OK;
     }
-    node = bu_cmd_tree_find_subcommand(&ged_grid_tree, argv[1]);
+    node = bu_arg_tree_find_subcommand(&ged_grid_tree, argv[1]);
     if (!node)
 	return grid_execute(gedp, argc, argv);
-    if (bu_cmd_schema_parse_complete(node->schema, NULL, &msg, argc - 2, argv + 2) < 0) {
+    if (bu_arg_schema_parse_complete(node->schema, NULL, &msg, argc - 2, argv + 2) < 0) {
 	if (bu_vls_strlen(&msg))
 	    bu_vls_vlscat(gedp->ged_result_str, &msg);
 	grid_usage(gedp);
@@ -459,7 +459,7 @@ ged_grid_core(struct ged *gedp, int argc, const char *argv[])
 	return BRLCAD_ERROR;
     }
     bu_vls_free(&msg);
-    if (bu_cmd_tree_dispatch(&ged_grid_tree, gedp, argc - 1, argv + 1, &ret) == 0)
+    if (bu_arg_tree_dispatch(&ged_grid_tree, gedp, argc - 1, argv + 1, &ret) == 0)
 	return ret;
     return BRLCAD_ERROR;
 }
@@ -484,14 +484,14 @@ ged_grid_grammar_analyze(struct ged *gedp, const char *input,
 static char *
 ged_grid_grammar_json(void)
 {
-    return bu_cmd_tree_describe_json(&ged_grid_tree);
+    return bu_arg_tree_describe_json(&ged_grid_tree);
 }
 
 
 static int
 ged_grid_grammar_lint(struct bu_vls *msgs)
 {
-    return bu_cmd_tree_lint(&ged_grid_tree, msgs);
+    return bu_arg_tree_lint(&ged_grid_tree, msgs);
 }
 GED_CMD_TREE_HELP(ged_grid_grammar_help, ged_grid_tree)
 

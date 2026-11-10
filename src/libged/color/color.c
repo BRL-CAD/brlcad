@@ -30,7 +30,7 @@
 #include <string.h>
 
 #include "bu/app.h"
-#include "bu/cmdschema.h"
+#include "bu/arg.h"
 #include "bu/color.h"
 #include "bu/file.h"
 #include "ged.h"
@@ -360,8 +360,8 @@ ged_color_core(struct ged *gedp, int argc, const char *argv[])
 	return BRLCAD_ERROR;
     }
 
-    if (!bu_cmd_integer_from_str(&low, argv[0]) ||
-	!bu_cmd_integer_from_str(&high, argv[1]) ||
+    if (!bu_arg_integer_from_str(&low, argv[0]) ||
+	!bu_arg_integer_from_str(&high, argv[1]) ||
 	!bu_rgb_from_argv(rgb, 3, argv + 2)) {
 	color_show_help(gedp, command);
 	return BRLCAD_ERROR;

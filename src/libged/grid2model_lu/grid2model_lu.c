@@ -75,7 +75,7 @@ bad:
 
 #include "../include/plugin.h"
 
-GED_DEFINE_TYPED_OPERAND_SCHEMA(grid2model_lu, "grid2model_lu", "Convert grid coordinates to model coordinates", "grid_coordinates", BU_CMD_VALUE_NUMBER, 2, 2, "U V coordinates");
+GED_DEFINE_TYPED_OPERAND_SCHEMA(grid2model_lu, "grid2model_lu", "Convert grid coordinates to model coordinates", "grid_coordinates", BU_ARG_VALUE_NUMBER, 2, 2, "U V coordinates");
 
 #define GED_GRID2MODEL_LU_COMMANDS(X, XID) \
     X(grid2model_lu, ged_grid2model_lu_core, GED_CMD_DEFAULT, &grid2model_lu_cmd_schema) \

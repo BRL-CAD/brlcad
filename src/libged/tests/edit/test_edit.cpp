@@ -33,7 +33,7 @@
 #include <vector>
 
 #include "bu.h"
-#include "bu/cmdschema.h"
+#include "bu/arg.h"
 #include "vmath.h"
 #include "raytrace.h"
 #include "rt/db_fullpath.h"
@@ -5589,16 +5589,16 @@ main(int ac, char *av[])
 
     bu_setprogname(av[0]);
 
-    static const struct bu_cmd_option options[] = {
-	BU_CMD_FLAG("h", "help", struct test_edit_args, need_help, "Print help and exit"),
-	BU_CMD_OPTION_NULL
+    static const struct bu_arg_option options[] = {
+	BU_ARG_FLAG("h", "help", struct test_edit_args, need_help, "Print help and exit"),
+	BU_ARG_OPTION_NULL
     };
-    static const struct bu_cmd_schema schema = {
+    static const struct bu_arg_schema schema = {
 	"test_edit", "Run edit command regression tests", options, NULL,
-	BU_CMD_PARSE_INTERSPERSED, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+	BU_ARG_PARSE_INTERSPERSED, BU_ARG_SCHEMA_CONSTRAINTS(NULL, NULL)
     };
 
-    int opt_index = bu_cmd_schema_parse(&schema, &args, NULL, ac - 1,
+    int opt_index = bu_arg_schema_parse(&schema, &args, NULL, ac - 1,
 	(const char **)(av + 1));
     if (args.need_help || opt_index < 0 || opt_index != ac - 1) {
         bu_log("Usage: %s [-h]\n", av[0]);

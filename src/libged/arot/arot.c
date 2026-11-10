@@ -47,7 +47,7 @@ ged_arot_core(struct ged *gedp, int argc, const char *argv[])
 
 #include "../include/plugin.h"
 
-GED_DEFINE_TYPED_OPERAND_SCHEMA(arot, "arot", "Rotate about an arbitrary axis", "axis_and_angle", BU_CMD_VALUE_NUMBER, 4, 4, "Axis X Y Z and angle");
+GED_DEFINE_TYPED_OPERAND_SCHEMA(arot, "arot", "Rotate about an arbitrary axis", "axis_and_angle", BU_ARG_VALUE_NUMBER, 4, 4, "Axis X Y Z and angle");
 
 #define GED_AROT_COMMANDS(X, XID) \
     X(arot, ged_arot_core, GED_CMD_DEFAULT, &arot_cmd_schema) \

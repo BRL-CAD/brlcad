@@ -40,7 +40,7 @@
 #include "./uri.hh"
 
 #include "bu/cmd.h"
-#include "bu/cmdschema.h"
+#include "bu/arg.h"
 #include "bu/opt.h"
 #include "bn/rand.h"
 #include "rt/db4.h"
@@ -435,228 +435,228 @@ edit_reference_token_count(size_t available, const char **argv)
     if (!available || !argv || !argv[0])
 	return 0;
     if (BU_STR_EQUAL(argv[0], ".") ||
-	!bu_cmd_number_from_str(&value, argv[0]))
+	!bu_arg_number_from_str(&value, argv[0]))
 	return 1;
     while (count < available && count < 3 && argv[count] &&
-	bu_cmd_number_from_str(&value, argv[count]))
+	bu_arg_number_from_str(&value, argv[count]))
 	count++;
     return count;
 }
 
 
-static const struct bu_cmd_arg_variant edit_reference_variants[] = {
-    BU_CMD_ARG_VARIANT("reference", "number|object", 1,
+static const struct bu_arg_variant edit_reference_variants[] = {
+    BU_ARG_VARIANT("reference", "number|object", 1,
 	"One scalar or database-object keypoint reference"),
-    BU_CMD_ARG_VARIANT("plane", "x y", 2,
+    BU_ARG_VARIANT("plane", "x y", 2,
 	"Two separate numeric components"),
-    BU_CMD_ARG_VARIANT("point", "x y z", 3,
+    BU_ARG_VARIANT("point", "x y z", 3,
 	"Three separate numeric components"),
-    BU_CMD_ARG_VARIANT_NULL
+    BU_ARG_VARIANT_NULL
 };
-static const struct bu_cmd_arg_shape edit_reference_shape =
-    BU_CMD_ARG_SHAPE_FORMS(BU_CMD_ARG_SHAPE_CUSTOM, 1, 3,
+static const struct bu_arg_shape edit_reference_shape =
+    BU_ARG_SHAPE_FORMS(BU_ARG_SHAPE_CUSTOM, 1, 3,
 	"one object reference or one through three finite coordinates",
 	edit_reference_token_count, edit_reference_variants);
-static const struct bu_cmd_arg_variant edit_self_reference_variants[] = {
-    BU_CMD_ARG_VARIANT("reference", "number|object|.", 1,
+static const struct bu_arg_variant edit_self_reference_variants[] = {
+    BU_ARG_VARIANT("reference", "number|object|.", 1,
 	"One scalar, database-object keypoint, or current-object reference"),
-    BU_CMD_ARG_VARIANT("plane", "x y", 2,
+    BU_ARG_VARIANT("plane", "x y", 2,
 	"Two separate numeric components"),
-    BU_CMD_ARG_VARIANT("point", "x y z", 3,
+    BU_ARG_VARIANT("point", "x y z", 3,
 	"Three separate numeric components"),
-    BU_CMD_ARG_VARIANT_NULL
+    BU_ARG_VARIANT_NULL
 };
-static const struct bu_cmd_arg_shape edit_self_reference_shape =
-    BU_CMD_ARG_SHAPE_FORMS(BU_CMD_ARG_SHAPE_CUSTOM, 1, 3,
+static const struct bu_arg_shape edit_self_reference_shape =
+    BU_ARG_SHAPE_FORMS(BU_ARG_SHAPE_CUSTOM, 1, 3,
 	"one object/self reference or one through three finite coordinates",
 	edit_reference_token_count, edit_self_reference_variants);
-static const struct bu_cmd_arg_variant edit_angle_variants[] = {
-    BU_CMD_ARG_VARIANT("single", "angle", 1, "One axis or default-Z angle"),
-    BU_CMD_ARG_VARIANT("pair", "x y", 2, "Two Euler angle components"),
-    BU_CMD_ARG_VARIANT("triple", "x y z", 3, "Three Euler angle components"),
-    BU_CMD_ARG_VARIANT_NULL
+static const struct bu_arg_variant edit_angle_variants[] = {
+    BU_ARG_VARIANT("single", "angle", 1, "One axis or default-Z angle"),
+    BU_ARG_VARIANT("pair", "x y", 2, "Two Euler angle components"),
+    BU_ARG_VARIANT("triple", "x y z", 3, "Three Euler angle components"),
+    BU_ARG_VARIANT_NULL
 };
-static const struct bu_cmd_arg_shape edit_angle_shape =
-    BU_CMD_ARG_SHAPE_FORMS(BU_CMD_ARG_SHAPE_TOKEN_SEQUENCE, 1, 3,
+static const struct bu_arg_shape edit_angle_shape =
+    BU_ARG_SHAPE_FORMS(BU_ARG_SHAPE_TOKEN_SEQUENCE, 1, 3,
 	"one through three finite angle components", NULL,
 	edit_angle_variants);
-static const struct bu_cmd_arg_variant edit_factor_variants[] = {
-    BU_CMD_ARG_VARIANT("uniform", "factor", 1, "One uniform scale factor"),
-    BU_CMD_ARG_VARIANT("per-axis", "x y z", 3,
+static const struct bu_arg_variant edit_factor_variants[] = {
+    BU_ARG_VARIANT("uniform", "factor", 1, "One uniform scale factor"),
+    BU_ARG_VARIANT("per-axis", "x y z", 3,
 	"Three separate per-axis scale factors"),
-    BU_CMD_ARG_VARIANT_NULL
+    BU_ARG_VARIANT_NULL
 };
-static const struct bu_cmd_arg_shape edit_factor_shape =
-    BU_CMD_ARG_SHAPE_FORMS(BU_CMD_ARG_SHAPE_TOKEN_SEQUENCE, 1, 3,
+static const struct bu_arg_shape edit_factor_shape =
+    BU_ARG_SHAPE_FORMS(BU_ARG_SHAPE_TOKEN_SEQUENCE, 1, 3,
 	"one uniform or three per-axis factors", NULL,
 	edit_factor_variants);
 
-static const struct bu_cmd_option edit_translate_options[] = {
-    BU_CMD_FLAG_UNBOUND("a", NULL, "absolute", "Use absolute coordinates"),
-    BU_CMD_FLAG_UNBOUND("r", NULL, "relative", "Use relative coordinates (default)"),
-    BU_CMD_FLAG_UNBOUND("x", NULL, "x", "Constrain translation to X"),
-    BU_CMD_FLAG_UNBOUND("y", NULL, "y", "Constrain translation to Y"),
-    BU_CMD_FLAG_UNBOUND("z", NULL, "z", "Constrain translation to Z"),
-    BU_CMD_FLAG_UNBOUND("n", NULL, "natural-origin", "Use the natural origin"),
-    BU_CMD_SHAPED_UNBOUND("k", NULL, "keypoint", BU_CMD_VALUE_RAW,
+static const struct bu_arg_option edit_translate_options[] = {
+    BU_ARG_FLAG_UNBOUND("a", NULL, "absolute", "Use absolute coordinates"),
+    BU_ARG_FLAG_UNBOUND("r", NULL, "relative", "Use relative coordinates (default)"),
+    BU_ARG_FLAG_UNBOUND("x", NULL, "x", "Constrain translation to X"),
+    BU_ARG_FLAG_UNBOUND("y", NULL, "y", "Constrain translation to Y"),
+    BU_ARG_FLAG_UNBOUND("z", NULL, "z", "Constrain translation to Z"),
+    BU_ARG_FLAG_UNBOUND("n", NULL, "natural-origin", "Use the natural origin"),
+    BU_ARG_SHAPED_UNBOUND("k", NULL, "keypoint", BU_ARG_VALUE_RAW,
 	"FROM", "Set the source reference", &edit_self_reference_shape),
-    BU_CMD_OPTION_NULL
+    BU_ARG_OPTION_NULL
 };
-static const struct bu_cmd_operand edit_translate_operands[] = {
-    BU_CMD_OPERAND_SHAPED("destination", BU_CMD_VALUE_RAW, 1, 3, NULL,
+static const struct bu_arg_operand edit_translate_operands[] = {
+    BU_ARG_OPERAND_SHAPED("destination", BU_ARG_VALUE_RAW, 1, 3, NULL,
 	"Destination coordinates, object keypoint, or current object", NULL,
 	&edit_self_reference_shape),
-    BU_CMD_OPERAND_NULL
+    BU_ARG_OPERAND_NULL
 };
 static const char * const edit_translate_mode_options[] = {
     "absolute", "relative", NULL
 };
-static const struct bu_cmd_constraint edit_translate_constraints[] = {
-    BU_CMD_CONSTRAINT_OPTIONS(edit_translate_mode_options, 0, 1,
+static const struct bu_arg_constraint edit_translate_constraints[] = {
+    BU_ARG_CONSTRAINT_OPTIONS(edit_translate_mode_options, 0, 1,
 	"choose at most one translation mode"),
-    BU_CMD_CONSTRAINT_NULL
+    BU_ARG_CONSTRAINT_NULL
 };
-static const struct bu_cmd_schema edit_translate_schema =
-    BU_CMD_SCHEMA_EXTERNAL("translate", "Translate a primitive or combination instance",
-	edit_translate_options, edit_translate_operands, BU_CMD_PARSE_INTERSPERSED,
+static const struct bu_arg_schema edit_translate_schema =
+    BU_ARG_SCHEMA_EXTERNAL("translate", "Translate a primitive or combination instance",
+	edit_translate_options, edit_translate_operands, BU_ARG_PARSE_INTERSPERSED,
 	NULL, edit_translate_constraints, NULL);
 
-static const struct bu_cmd_operand edit_tra_operands[] = {
-    BU_CMD_OPERAND_SHAPED("translation", BU_CMD_VALUE_RAW, 1, 3, NULL,
-	"Relative XYZ translation", "ged.vector_group", &bu_cmd_vector3_arg_shape),
-    BU_CMD_OPERAND_NULL
+static const struct bu_arg_operand edit_tra_operands[] = {
+    BU_ARG_OPERAND_SHAPED("translation", BU_ARG_VALUE_RAW, 1, 3, NULL,
+	"Relative XYZ translation", "ged.vector_group", &bu_arg_vector3_shape),
+    BU_ARG_OPERAND_NULL
 };
-static const struct bu_cmd_schema edit_tra_schema =
-    BU_CMD_SCHEMA("tra", "Apply a relative XYZ translation", NULL,
-	edit_tra_operands, BU_CMD_PARSE_STOP_AT_FIRST_OPERAND,
-	BU_CMD_SCHEMA_META(NULL, NULL, NULL, NULL));
+static const struct bu_arg_schema edit_tra_schema =
+    BU_ARG_SCHEMA("tra", "Apply a relative XYZ translation", NULL,
+	edit_tra_operands, BU_ARG_PARSE_STOP_AT_FIRST_OPERAND,
+	BU_ARG_SCHEMA_META(NULL, NULL, NULL, NULL));
 
-static const struct bu_cmd_option edit_rotate_options[] = {
-    BU_CMD_FLAG_UNBOUND("R", NULL, "radians", "Interpret angles as radians"),
-    BU_CMD_FLAG_UNBOUND("x", NULL, "x", "Constrain rotation to X"),
-    BU_CMD_FLAG_UNBOUND("y", NULL, "y", "Constrain rotation to Y"),
-    BU_CMD_FLAG_UNBOUND("z", NULL, "z", "Constrain rotation to Z"),
-    BU_CMD_FLAG_UNBOUND("o", NULL, "override", "Override the axis constraint"),
-    BU_CMD_FLAG_UNBOUND("n", NULL, "natural-origin", "Use the natural origin"),
-    BU_CMD_SHAPED_UNBOUND("k", NULL, "axis-from", BU_CMD_VALUE_RAW,
+static const struct bu_arg_option edit_rotate_options[] = {
+    BU_ARG_FLAG_UNBOUND("R", NULL, "radians", "Interpret angles as radians"),
+    BU_ARG_FLAG_UNBOUND("x", NULL, "x", "Constrain rotation to X"),
+    BU_ARG_FLAG_UNBOUND("y", NULL, "y", "Constrain rotation to Y"),
+    BU_ARG_FLAG_UNBOUND("z", NULL, "z", "Constrain rotation to Z"),
+    BU_ARG_FLAG_UNBOUND("o", NULL, "override", "Override the axis constraint"),
+    BU_ARG_FLAG_UNBOUND("n", NULL, "natural-origin", "Use the natural origin"),
+    BU_ARG_SHAPED_UNBOUND("k", NULL, "axis-from", BU_ARG_VALUE_RAW,
 	"FROM", "Set an axis or angle source reference", &edit_reference_shape),
-    BU_CMD_SHAPED_UNBOUND("a", NULL, "axis-to", BU_CMD_VALUE_RAW,
+    BU_ARG_SHAPED_UNBOUND("a", NULL, "axis-to", BU_ARG_VALUE_RAW,
 	"TO", "Set an absolute axis or angle destination", &edit_reference_shape),
-    BU_CMD_SHAPED_UNBOUND("r", NULL, "axis-relative", BU_CMD_VALUE_RAW,
+    BU_ARG_SHAPED_UNBOUND("r", NULL, "axis-relative", BU_ARG_VALUE_RAW,
 	"TO", "Set a relative axis or angle destination", &edit_reference_shape),
-    BU_CMD_SHAPED_UNBOUND("c", NULL, "center", BU_CMD_VALUE_RAW,
+    BU_ARG_SHAPED_UNBOUND("c", NULL, "center", BU_ARG_VALUE_RAW,
 	"CENTER", "Set the rotation center", &edit_self_reference_shape),
-    BU_CMD_SHAPED_UNBOUND("O", NULL, "angle-origin", BU_CMD_VALUE_RAW,
+    BU_ARG_SHAPED_UNBOUND("O", NULL, "angle-origin", BU_ARG_VALUE_RAW,
 	"ORIGIN", "Set the angle origin", &edit_reference_shape),
-    BU_CMD_VALUE_UNBOUND("d", NULL, "degrees", BU_CMD_VALUE_NUMBER,
+    BU_ARG_VALUE_UNBOUND("d", NULL, "degrees", BU_ARG_VALUE_NUMBER,
 	"ANGLE", "Set an explicit rotation angle"),
-    BU_CMD_OPTION_NULL
+    BU_ARG_OPTION_NULL
 };
-static const struct bu_cmd_operand edit_rotate_operands[] = {
-    BU_CMD_OPERAND_SHAPED("angle", BU_CMD_VALUE_NUMBER, 0, 3, NULL,
+static const struct bu_arg_operand edit_rotate_operands[] = {
+    BU_ARG_OPERAND_SHAPED("angle", BU_ARG_VALUE_NUMBER, 0, 3, NULL,
 	"Zero through three Euler or axis-angle values", NULL,
 	&edit_angle_shape),
-    BU_CMD_OPERAND_NULL
+    BU_ARG_OPERAND_NULL
 };
-static const struct bu_cmd_schema edit_rotate_schema =
-    BU_CMD_SCHEMA_EXTERNAL("rotate", "Rotate a primitive or combination instance",
-	edit_rotate_options, edit_rotate_operands, BU_CMD_PARSE_INTERSPERSED,
+static const struct bu_arg_schema edit_rotate_schema =
+    BU_ARG_SCHEMA_EXTERNAL("rotate", "Rotate a primitive or combination instance",
+	edit_rotate_options, edit_rotate_operands, BU_ARG_PARSE_INTERSPERSED,
 	NULL, NULL, NULL);
 
-static const struct bu_cmd_option edit_scale_options[] = {
-    BU_CMD_SHAPED_UNBOUND("k", NULL, "scale-from", BU_CMD_VALUE_RAW,
+static const struct bu_arg_option edit_scale_options[] = {
+    BU_ARG_SHAPED_UNBOUND("k", NULL, "scale-from", BU_ARG_VALUE_RAW,
 	"FROM", "Set the source scale reference", &edit_reference_shape),
-    BU_CMD_SHAPED_UNBOUND("a", NULL, "scale-to", BU_CMD_VALUE_RAW,
+    BU_ARG_SHAPED_UNBOUND("a", NULL, "scale-to", BU_ARG_VALUE_RAW,
 	"TO", "Set the absolute destination reference", &edit_reference_shape),
-    BU_CMD_SHAPED_UNBOUND("r", NULL, "scale-relative", BU_CMD_VALUE_RAW,
+    BU_ARG_SHAPED_UNBOUND("r", NULL, "scale-relative", BU_ARG_VALUE_RAW,
 	"TO", "Set the relative destination or factor", &edit_reference_shape),
-    BU_CMD_SHAPED_UNBOUND("c", NULL, "center", BU_CMD_VALUE_RAW,
+    BU_ARG_SHAPED_UNBOUND("c", NULL, "center", BU_ARG_VALUE_RAW,
 	"CENTER", "Set the scale center", &edit_self_reference_shape),
-    BU_CMD_FLAG_UNBOUND("n", NULL, "natural-origin", "Use the natural origin"),
-    BU_CMD_OPTION_NULL
+    BU_ARG_FLAG_UNBOUND("n", NULL, "natural-origin", "Use the natural origin"),
+    BU_ARG_OPTION_NULL
 };
-static const struct bu_cmd_operand edit_scale_operands[] = {
-    BU_CMD_OPERAND_SHAPED("factor", BU_CMD_VALUE_NUMBER, 0, 3, NULL,
+static const struct bu_arg_operand edit_scale_operands[] = {
+    BU_ARG_OPERAND_SHAPED("factor", BU_ARG_VALUE_NUMBER, 0, 3, NULL,
 	"One uniform or three per-axis scale factors", NULL,
 	&edit_factor_shape),
-    BU_CMD_OPERAND_NULL
+    BU_ARG_OPERAND_NULL
 };
-static const struct bu_cmd_schema edit_scale_schema =
-    BU_CMD_SCHEMA_EXTERNAL("scale", "Scale a primitive or combination instance",
-	edit_scale_options, edit_scale_operands, BU_CMD_PARSE_INTERSPERSED,
+static const struct bu_arg_schema edit_scale_schema =
+    BU_ARG_SCHEMA_EXTERNAL("scale", "Scale a primitive or combination instance",
+	edit_scale_options, edit_scale_operands, BU_ARG_PARSE_INTERSPERSED,
 	NULL, NULL, NULL);
 
-static const struct bu_cmd_schema edit_checkpoint_schema =
-    BU_CMD_SCHEMA("checkpoint", "Save a restore point for the current edit session",
-	NULL, NULL, BU_CMD_PARSE_STOP_AT_FIRST_OPERAND,
-	BU_CMD_SCHEMA_META(NULL, NULL, NULL, NULL));
-static const struct bu_cmd_schema edit_revert_schema =
-    BU_CMD_SCHEMA("revert", "Restore the edit session to its last checkpoint",
-	NULL, NULL, BU_CMD_PARSE_STOP_AT_FIRST_OPERAND,
-	BU_CMD_SCHEMA_META(NULL, NULL, NULL, NULL));
-static const struct bu_cmd_schema edit_reset_schema =
-    BU_CMD_SCHEMA("reset", "Abandon buffered edits and restore on-disk geometry",
-	NULL, NULL, BU_CMD_PARSE_STOP_AT_FIRST_OPERAND,
-	BU_CMD_SCHEMA_META(NULL, NULL, NULL, NULL));
+static const struct bu_arg_schema edit_checkpoint_schema =
+    BU_ARG_SCHEMA("checkpoint", "Save a restore point for the current edit session",
+	NULL, NULL, BU_ARG_PARSE_STOP_AT_FIRST_OPERAND,
+	BU_ARG_SCHEMA_META(NULL, NULL, NULL, NULL));
+static const struct bu_arg_schema edit_revert_schema =
+    BU_ARG_SCHEMA("revert", "Restore the edit session to its last checkpoint",
+	NULL, NULL, BU_ARG_PARSE_STOP_AT_FIRST_OPERAND,
+	BU_ARG_SCHEMA_META(NULL, NULL, NULL, NULL));
+static const struct bu_arg_schema edit_reset_schema =
+    BU_ARG_SCHEMA("reset", "Abandon buffered edits and restore on-disk geometry",
+	NULL, NULL, BU_ARG_PARSE_STOP_AT_FIRST_OPERAND,
+	BU_ARG_SCHEMA_META(NULL, NULL, NULL, NULL));
 
-static const struct bu_cmd_operand edit_mat_operands[] = {
-    BU_CMD_OPERAND("element", BU_CMD_VALUE_NUMBER, 16, 16,
+static const struct bu_arg_operand edit_mat_operands[] = {
+    BU_ARG_OPERAND("element", BU_ARG_VALUE_NUMBER, 16, 16,
 	"Row-major 4x4 matrix element", NULL),
-    BU_CMD_OPERAND_NULL
+    BU_ARG_OPERAND_NULL
 };
-static const struct bu_cmd_schema edit_mat_schema =
-    BU_CMD_SCHEMA("mat", "Apply a row-major 4x4 matrix", NULL,
-	edit_mat_operands, BU_CMD_PARSE_STOP_AT_FIRST_OPERAND,
-	BU_CMD_SCHEMA_META(NULL, NULL, NULL, NULL));
+static const struct bu_arg_schema edit_mat_schema =
+    BU_ARG_SCHEMA("mat", "Apply a row-major 4x4 matrix", NULL,
+	edit_mat_operands, BU_ARG_PARSE_STOP_AT_FIRST_OPERAND,
+	BU_ARG_SCHEMA_META(NULL, NULL, NULL, NULL));
 
-static const struct bu_cmd_operand edit_perturb_operands[] = {
-    BU_CMD_OPERAND_VALIDATE("factor", BU_CMD_VALUE_NUMBER, 1, 1,
-	bu_cmd_nonnegative_number_validate, "Nonnegative perturbation factor", NULL),
-    BU_CMD_OPERAND_NULL
+static const struct bu_arg_operand edit_perturb_operands[] = {
+    BU_ARG_OPERAND_VALIDATE("factor", BU_ARG_VALUE_NUMBER, 1, 1,
+	bu_arg_nonnegative_number_validate, "Nonnegative perturbation factor", NULL),
+    BU_ARG_OPERAND_NULL
 };
-static const struct bu_cmd_schema edit_perturb_schema =
-    BU_CMD_SCHEMA("perturb", "Perturb primitives by a nonnegative factor", NULL,
-	edit_perturb_operands, BU_CMD_PARSE_STOP_AT_FIRST_OPERAND,
-	BU_CMD_SCHEMA_META(NULL, NULL, NULL, NULL));
+static const struct bu_arg_schema edit_perturb_schema =
+    BU_ARG_SCHEMA("perturb", "Perturb primitives by a nonnegative factor", NULL,
+	edit_perturb_operands, BU_ARG_PARSE_STOP_AT_FIRST_OPERAND,
+	BU_ARG_SCHEMA_META(NULL, NULL, NULL, NULL));
 
 static const char * const edit_rotate_aliases[] = {"rot", NULL};
 static const char * const edit_scale_aliases[] = {"sca", NULL};
-static const struct bu_cmd_tree_node edit_generic_nodes[] = {
-    BU_CMD_TREE_NODE(&edit_translate_schema, NULL, NULL,
-	BU_CMD_TREE_CHILD_AFTER_OPTIONS, NULL),
-    BU_CMD_TREE_NODE(&edit_tra_schema, NULL, NULL,
-	BU_CMD_TREE_CHILD_AFTER_OPTIONS, NULL),
-    BU_CMD_TREE_NODE(&edit_rotate_schema, edit_rotate_aliases, NULL,
-	BU_CMD_TREE_CHILD_AFTER_OPTIONS, NULL),
-    BU_CMD_TREE_NODE(&edit_scale_schema, edit_scale_aliases, NULL,
-	BU_CMD_TREE_CHILD_AFTER_OPTIONS, NULL),
-    BU_CMD_TREE_NODE(&edit_checkpoint_schema, NULL, NULL,
-	BU_CMD_TREE_CHILD_AFTER_OPTIONS, NULL),
-    BU_CMD_TREE_NODE(&edit_revert_schema, NULL, NULL,
-	BU_CMD_TREE_CHILD_AFTER_OPTIONS, NULL),
-    BU_CMD_TREE_NODE(&edit_reset_schema, NULL, NULL,
-	BU_CMD_TREE_CHILD_AFTER_OPTIONS, NULL),
-    BU_CMD_TREE_NODE(&edit_mat_schema, NULL, NULL,
-	BU_CMD_TREE_CHILD_AFTER_OPTIONS, NULL),
-    BU_CMD_TREE_NODE(&edit_perturb_schema, NULL, NULL,
-	BU_CMD_TREE_CHILD_AFTER_OPTIONS, NULL),
-    BU_CMD_TREE_NODE_NULL
+static const struct bu_arg_tree_node edit_generic_nodes[] = {
+    BU_ARG_TREE_NODE(&edit_translate_schema, NULL, NULL,
+	BU_ARG_TREE_CHILD_AFTER_OPTIONS, NULL),
+    BU_ARG_TREE_NODE(&edit_tra_schema, NULL, NULL,
+	BU_ARG_TREE_CHILD_AFTER_OPTIONS, NULL),
+    BU_ARG_TREE_NODE(&edit_rotate_schema, edit_rotate_aliases, NULL,
+	BU_ARG_TREE_CHILD_AFTER_OPTIONS, NULL),
+    BU_ARG_TREE_NODE(&edit_scale_schema, edit_scale_aliases, NULL,
+	BU_ARG_TREE_CHILD_AFTER_OPTIONS, NULL),
+    BU_ARG_TREE_NODE(&edit_checkpoint_schema, NULL, NULL,
+	BU_ARG_TREE_CHILD_AFTER_OPTIONS, NULL),
+    BU_ARG_TREE_NODE(&edit_revert_schema, NULL, NULL,
+	BU_ARG_TREE_CHILD_AFTER_OPTIONS, NULL),
+    BU_ARG_TREE_NODE(&edit_reset_schema, NULL, NULL,
+	BU_ARG_TREE_CHILD_AFTER_OPTIONS, NULL),
+    BU_ARG_TREE_NODE(&edit_mat_schema, NULL, NULL,
+	BU_ARG_TREE_CHILD_AFTER_OPTIONS, NULL),
+    BU_ARG_TREE_NODE(&edit_perturb_schema, NULL, NULL,
+	BU_ARG_TREE_CHILD_AFTER_OPTIONS, NULL),
+    BU_ARG_TREE_NODE_NULL
 };
-static const struct bu_cmd_schema edit_generic_root_schema =
-    BU_CMD_SCHEMA("edit", "Generic edit operations", NULL, NULL,
-	BU_CMD_PARSE_STOP_AT_FIRST_OPERAND,
-	BU_CMD_SCHEMA_META(NULL, NULL, NULL, NULL));
-static const struct bu_cmd_tree edit_generic_tree =
-    BU_CMD_TREE(&edit_generic_root_schema, edit_generic_nodes,
-	BU_CMD_TREE_CHILD_FIRST);
+static const struct bu_arg_schema edit_generic_root_schema =
+    BU_ARG_SCHEMA("edit", "Generic edit operations", NULL, NULL,
+	BU_ARG_PARSE_STOP_AT_FIRST_OPERAND,
+	BU_ARG_SCHEMA_META(NULL, NULL, NULL, NULL));
+static const struct bu_arg_tree edit_generic_tree =
+    BU_ARG_TREE(&edit_generic_root_schema, edit_generic_nodes,
+	BU_ARG_TREE_CHILD_FIRST);
 
 static int
 edit_generic_help_append(struct ged *gedp, const char *operation)
 {
     const char *path[2] = {operation, NULL};
-    char *help = operation ? bu_cmd_tree_help_path(&edit_generic_tree,
+    char *help = operation ? bu_arg_tree_help_path(&edit_generic_tree,
 	"edit [options] [geometry]", 1, path) :
-	bu_cmd_tree_help(&edit_generic_tree, "edit [options] [geometry]");
+	bu_arg_tree_help(&edit_generic_tree, "edit [options] [geometry]");
     if (!gedp || !help)
 	return BRLCAD_ERROR;
     bu_vls_strcat(gedp->ged_result_str, help);
@@ -752,14 +752,14 @@ cmd_translate::exec(struct ged *gedp, void *u_data, int argc, const char **argv)
 		    int n_coord_flags_l = x_only + y_only + z_only;
 		    if (n_coord_flags_l == 0) {
 			/* Try 3-vector, then 1-scalar, then object name */
-			int vret = bu_cmd_vector3_from_argv(to_vec, (size_t)(argc - i),
+			int vret = bu_arg_vector3_from_argv(to_vec, (size_t)(argc - i),
 				(const char * const *)(argv + i));
 			if (vret > 0) {
 			    have_to = true;
 			    i += vret;
 			} else {
 			    fastf_t f;
-			    if (bu_cmd_number_from_str(&f, argv[i])) {
+			    if (bu_arg_number_from_str(&f, argv[i])) {
 				to_vec[X] = to_vec[Y] = to_vec[Z] = f;
 				have_to = true;
 				i++;
@@ -772,7 +772,7 @@ cmd_translate::exec(struct ged *gedp, void *u_data, int argc, const char **argv)
 		    } else {
 			/* Per-axis mode: each axis flag consumes one value or object name */
 			if (x_only) {
-			if (bu_cmd_number_from_str(&to_vec[X], argv[i])) {
+			if (bu_arg_number_from_str(&to_vec[X], argv[i])) {
 				i++;
 			    } else {
 				to_name = argv[i];
@@ -780,7 +780,7 @@ cmd_translate::exec(struct ged *gedp, void *u_data, int argc, const char **argv)
 			    }
 			}
 			if (y_only && i < argc) {
-			if (bu_cmd_number_from_str(&to_vec[Y], argv[i])) {
+			if (bu_arg_number_from_str(&to_vec[Y], argv[i])) {
 				i++;
 			    } else if (!to_name) {
 				to_name = argv[i];
@@ -788,7 +788,7 @@ cmd_translate::exec(struct ged *gedp, void *u_data, int argc, const char **argv)
 			    }
 			}
 			if (z_only && i < argc) {
-			if (bu_cmd_number_from_str(&to_vec[Z], argv[i])) {
+			if (bu_arg_number_from_str(&to_vec[Z], argv[i])) {
 				i++;
 			    } else if (!to_name) {
 				to_name = argv[i];
@@ -987,7 +987,7 @@ cmd_tra::exec(struct ged *gedp, void *u_data, int argc, const char **argv)
     argc--; argv++;   /* skip "tra" */
 
     vect_t delta = VINIT_ZERO;
-	int vret = bu_cmd_vector3_from_argv(delta, (size_t)argc,
+	int vret = bu_arg_vector3_from_argv(delta, (size_t)argc,
 		(const char * const *)argv);
     if (vret <= 0 || vret != argc) {
 	edit_generic_help_append(gedp, "tra");
@@ -1032,15 +1032,15 @@ _parse_pos_or_obj(point_t *pos, const char **argv, int argc, struct ged *gedp)
 	return -1;
 
     fastf_t f0;
-	if (bu_cmd_number_from_str(&f0, argv[0])) {
+	if (bu_arg_number_from_str(&f0, argv[0])) {
 	/* Numeric — consume 1–3 floats */
 	(*pos)[X] = (*pos)[Y] = (*pos)[Z] = f0;
 	int n = 1;
 	fastf_t f1, f2;
-	if (n < argc && bu_cmd_number_from_str(&f1, argv[n])) {
+	if (n < argc && bu_arg_number_from_str(&f1, argv[n])) {
 	    (*pos)[Y] = f1;
 	    n++;
-	    if (n < argc && bu_cmd_number_from_str(&f2, argv[n])) {
+	    if (n < argc && bu_arg_number_from_str(&f2, argv[n])) {
 		(*pos)[Z] = f2;
 		n++;
 	    }
@@ -1147,7 +1147,7 @@ cmd_rotate::exec(struct ged *gedp, void *u_data, int argc, const char **argv)
 	/* ---- Two-token options ------------------------------------ */
 	if (BU_STR_EQUAL(argv[i], "-d") && i + 1 < argc) {
 	    i++;
-	    if (!bu_cmd_number_from_str(&d_angle, argv[i])) {
+	    if (!bu_arg_number_from_str(&d_angle, argv[i])) {
 		bu_vls_printf(gedp->ged_result_str,
 		    "rotate: bad -d angle '%s'\n", argv[i]);
 		return BRLCAD_ERROR;
@@ -1249,7 +1249,7 @@ cmd_rotate::exec(struct ged *gedp, void *u_data, int argc, const char **argv)
 	/* ---- Positional angle values ------------------------------- */
 	{
 	    vect_t packed = VINIT_ZERO;
-	    int vret = bu_cmd_vector3_from_argv(packed,
+	    int vret = bu_arg_vector3_from_argv(packed,
 		(size_t)(argc - i), (const char * const *)(argv + i));
 	    if (vret > 0) {
 		if (n_angle_vals) {
@@ -1263,7 +1263,7 @@ cmd_rotate::exec(struct ged *gedp, void *u_data, int argc, const char **argv)
 		continue;
 	    }
 	    fastf_t angle;
-	    if (bu_cmd_number_from_str(&angle, argv[i])) {
+	    if (bu_arg_number_from_str(&angle, argv[i])) {
 		if (n_angle_vals >= 3) {
 		    bu_vls_printf(gedp->ged_result_str,
 			"rotate: too many angle values\n");
@@ -1609,7 +1609,7 @@ cmd_scale::exec(struct ged *gedp, void *u_data, int argc, const char **argv)
 		i += nr;
 	    } else {
 		fastf_t f = 0.0;
-		if (!bu_cmd_number_from_str(&f, argv[i])) {
+		if (!bu_arg_number_from_str(&f, argv[i])) {
 		    bu_vls_printf(gedp->ged_result_str,
 			"scale: bad -r value '%s'\n", argv[i]);
 		    return BRLCAD_ERROR;
@@ -1644,14 +1644,14 @@ cmd_scale::exec(struct ged *gedp, void *u_data, int argc, const char **argv)
 		    "scale: too many factor values\n");
 		return BRLCAD_ERROR;
 	    }
-	    int vret = bu_cmd_vector3_from_argv(pos_vals, (size_t)(argc - i),
+	    int vret = bu_arg_vector3_from_argv(pos_vals, (size_t)(argc - i),
 		(const char * const *)(argv + i));
 	    if (vret > 0) {
 		n_pos = vret;
 		i += vret;
 	    } else {
 		fastf_t f = 0.0;
-		if (!bu_cmd_number_from_str(&f, argv[i])) {
+		if (!bu_arg_number_from_str(&f, argv[i])) {
 		    bu_vls_printf(gedp->ged_result_str,
 			"scale: bad factor value '%s'\n", argv[i]);
 		    return BRLCAD_ERROR;
@@ -2187,7 +2187,7 @@ cmd_mat::exec(struct ged *gedp, void *u_data, int argc, const char **argv)
 
     mat_t mat;
     for (int mi = 0; mi < 16; mi++) {
-	if (!bu_cmd_number_from_str(&mat[mi], argv[mi])) {
+	if (!bu_arg_number_from_str(&mat[mi], argv[mi])) {
 	    bu_vls_printf(gedp->ged_result_str,
 		"mat: bad matrix element [%d]: '%s'\n", mi, argv[mi]);
 	    return BRLCAD_ERROR;
@@ -2293,7 +2293,7 @@ cmd_perturb::exec(struct ged *gedp, void *u_data, int argc, const char **argv)
 	return BRLCAD_ERROR;
     }
 
-	if (!bu_cmd_number_from_str(&factor, argv[0])) {
+	if (!bu_arg_number_from_str(&factor, argv[0])) {
 	edit_generic_help_append(gedp, "perturb");
 	return BRLCAD_ERROR;
     }
@@ -2632,7 +2632,7 @@ _parse_desc_cmd_on_edit(struct rt_edit *s, struct ged *gedp,
 		    return BRLCAD_ERROR;
 		}
 		fastf_t val;
-		if (!bu_cmd_number_from_str(&val, argv[argi])) {
+		if (!bu_arg_number_from_str(&val, argv[argi])) {
 		    if (gedp)
 			bu_vls_printf(gedp->ged_result_str,
 			    "edit: cannot parse '%s' as a number for '%s'\n",
@@ -2685,7 +2685,7 @@ _parse_desc_cmd_on_edit(struct rt_edit *s, struct ged *gedp,
 		}
 		for (int ci = 0; ci < 3; ci++) {
 		    fastf_t val;
-		    if (!bu_cmd_number_from_str(&val, argv[argi])) {
+		    if (!bu_arg_number_from_str(&val, argv[argi])) {
 			if (gedp)
 			    bu_vls_printf(gedp->ged_result_str,
 				"edit: cannot parse '%s' as a number\n",
@@ -2712,7 +2712,7 @@ _parse_desc_cmd_on_edit(struct rt_edit *s, struct ged *gedp,
 		}
 		for (int ci = 0; ci < 3; ci++) {
 		    fastf_t val;
-		    if (!bu_cmd_number_from_str(&val, argv[argi])) {
+		    if (!bu_arg_number_from_str(&val, argv[argi])) {
 			if (gedp)
 			    bu_vls_printf(gedp->ged_result_str,
 				"edit: cannot parse color component '%s'\n",
@@ -2738,7 +2738,7 @@ _parse_desc_cmd_on_edit(struct rt_edit *s, struct ged *gedp,
 		}
 		for (int ci = 0; ci < 16; ci++) {
 		    fastf_t val;
-		    if (!bu_cmd_number_from_str(&val, argv[argi])) {
+		    if (!bu_arg_number_from_str(&val, argv[argi])) {
 			if (gedp)
 			    bu_vls_printf(gedp->ged_result_str,
 				"edit: cannot parse matrix element '%s'\n",
@@ -2928,8 +2928,8 @@ _edit_attached_only_arg(size_t UNUSED(available), const char **UNUSED(argv))
 }
 
 
-static const struct bu_cmd_arg_shape edit_attached_only_arg_shape = {
-    BU_CMD_ARG_SHAPE_CUSTOM, 0, 1, "[=json]", _edit_attached_only_arg, NULL
+static const struct bu_arg_shape edit_attached_only_arg_shape = {
+    BU_ARG_SHAPE_CUSTOM, 0, 1, "[=json]", _edit_attached_only_arg, NULL
 };
 
 
@@ -2960,36 +2960,36 @@ static const char * const edit_global_ops[] = {
 };
 
 
-static const struct bu_cmd_option edit_options[] = {
-    BU_CMD_FLAG("h", "help", struct ged_edit_ctx, help, "Print help"),
-    BU_CMD_FLAG("v", "verbose", struct ged_edit_ctx, verbosity, "Verbose output"),
-    BU_CMD_FLAG("S", "selection", struct ged_edit_ctx, flag_S, "Operate on selection (ignore cmd-line specifier)"),
-    BU_CMD_FLAG("f", "force", struct ged_edit_ctx, flag_f, "Force: apply op, write to disk, clear conflict"),
-    BU_CMD_FLAG("F", "abandon", struct ged_edit_ctx, flag_F, "Abandon: discard intermediate state, use on-disk"),
-    BU_CMD_FLAG("i", "intermediate", struct ged_edit_ctx, flag_i, "Intermediate: apply to temp buffer only (no disk write)"),
-    BU_CMD_FLAG(NULL, "occurrence", struct ged_edit_ctx, occurrence, "Edit the final combination arc"),
+static const struct bu_arg_option edit_options[] = {
+    BU_ARG_FLAG("h", "help", struct ged_edit_ctx, help, "Print help"),
+    BU_ARG_FLAG("v", "verbose", struct ged_edit_ctx, verbosity, "Verbose output"),
+    BU_ARG_FLAG("S", "selection", struct ged_edit_ctx, flag_S, "Operate on selection (ignore cmd-line specifier)"),
+    BU_ARG_FLAG("f", "force", struct ged_edit_ctx, flag_f, "Force: apply op, write to disk, clear conflict"),
+    BU_ARG_FLAG("F", "abandon", struct ged_edit_ctx, flag_F, "Abandon: discard intermediate state, use on-disk"),
+    BU_ARG_FLAG("i", "intermediate", struct ged_edit_ctx, flag_i, "Intermediate: apply to temp buffer only (no disk write)"),
+    BU_ARG_FLAG(NULL, "occurrence", struct ged_edit_ctx, occurrence, "Edit the final combination arc"),
     {NULL, "list-all-prim-ops", "list-all-prim-ops", "[=json]", "List all available primitive edit operations (use =json for JSON)",
-	BU_CMD_VALUE_CUSTOM, offsetof(struct ged_edit_ctx, list_all_prim_ops), _parse_edit_list_all, NULL, NULL, NULL,
-	0, 0, NULL, BU_CMD_ARG_OPTIONAL, &edit_attached_only_arg_shape, NULL, NULL,
-	BU_CMD_VALUE_RANGE_NONE, BU_CMD_ARG_SHAPE_SCALAR},
-    BU_CMD_CUSTOM("O", "option", struct ged_edit_ctx, options, _parse_ged_edit_opt, "key=value", "Pass dynamic option to edit session"),
-    BU_CMD_OPTION_NULL
+	BU_ARG_VALUE_CUSTOM, offsetof(struct ged_edit_ctx, list_all_prim_ops), _parse_edit_list_all, NULL, NULL, NULL,
+	0, 0, NULL, BU_ARG_OPTIONAL, &edit_attached_only_arg_shape, NULL, NULL,
+	BU_ARG_VALUE_RANGE_NONE, BU_ARG_SHAPE_SCALAR},
+    BU_ARG_CUSTOM("O", "option", struct ged_edit_ctx, options, _parse_ged_edit_opt, "key=value", "Pass dynamic option to edit session"),
+    BU_ARG_OPTION_NULL
 };
 
 
-static const struct bu_cmd_operand edit_native_operands[] = {
-    BU_CMD_OPERAND("geometry", BU_CMD_VALUE_RAW, 0, 1, "Database object or primitive type", "ged.geometry_or_primitive"),
-    BU_CMD_OPERAND("operation", BU_CMD_VALUE_KEYWORD, 0, 1,
+static const struct bu_arg_operand edit_native_operands[] = {
+    BU_ARG_OPERAND("geometry", BU_ARG_VALUE_RAW, 0, 1, "Database object or primitive type", "ged.geometry_or_primitive"),
+    BU_ARG_OPERAND("operation", BU_ARG_VALUE_KEYWORD, 0, 1,
 	"Generic or primitive-specific edit operation", NULL),
-    BU_CMD_OPERAND("arguments", BU_CMD_VALUE_RAW, 0, BU_CMD_COUNT_UNLIMITED, "Operation-specific arguments", NULL),
-    BU_CMD_OPERAND_NULL
+    BU_ARG_OPERAND("arguments", BU_ARG_VALUE_RAW, 0, BU_ARG_COUNT_UNLIMITED, "Operation-specific arguments", NULL),
+    BU_ARG_OPERAND_NULL
 };
 
 
 static int
-edit_schema_context_validate(const struct bu_cmd_schema *schema, size_t argc,
+edit_schema_context_validate(const struct bu_arg_schema *schema, size_t argc,
 	const char **argv, size_t cursor_arg, void *context,
-	struct bu_cmd_validate_result *result)
+	struct bu_arg_validate_result *result)
 {
     struct ged *gedp = (struct ged *)context;
     int type_id = -1;
@@ -3040,9 +3040,9 @@ edit_schema_context_validate(const struct bu_cmd_schema *schema, size_t argc,
 }
 
 
-static const struct bu_cmd_schema edit_option_schema =
-    BU_CMD_SCHEMA_BOUND("edit", "Descriptor-driven primitive editing", edit_options,
-	edit_native_operands, BU_CMD_PARSE_OPTIONS_FIRST, NULL, NULL, NULL,
+static const struct bu_arg_schema edit_option_schema =
+    BU_ARG_SCHEMA_BOUND("edit", "Descriptor-driven primitive editing", edit_options,
+	edit_native_operands, BU_ARG_PARSE_OPTIONS_FIRST, NULL, NULL, NULL,
 	edit_schema_context_validate);
 
 
@@ -3055,7 +3055,7 @@ _edit_help(struct ged *gedp, std::map<std::string, ged_subcmd *> &subcmds,
     (void)cmdargs;
 
     if (BU_STR_EQUAL(cmdname, "edit") || BU_STR_EQUAL(cmdname, "help")) {
-	char *help = bu_cmd_schema_help(&edit_option_schema, "edit");
+	char *help = bu_arg_schema_help(&edit_option_schema, "edit");
 	if (help) {
 	    bu_vls_strcat(gedp->ged_result_str, help);
 	    bu_free(help, "edit native help");
@@ -3286,7 +3286,7 @@ ged_edit_core(struct ged *gedp, int argc, const char *argv[])
 	}
 	if (maybe_opts) {
 	    struct bu_vls opterrs = BU_VLS_INIT_ZERO;
-	    int opt_ret = bu_cmd_schema_parse(&edit_option_schema, &ctx, &opterrs,
+	    int opt_ret = bu_arg_schema_parse(&edit_option_schema, &ctx, &opterrs,
 		argc, argv);
 	    if (opt_ret < 0) {
 		bu_vls_printf(gedp->ged_result_str, "%s", bu_vls_cstr(&opterrs));
@@ -3316,7 +3316,7 @@ ged_edit_core(struct ged *gedp, int argc, const char *argv[])
     /* Parse global options from the prefix */
     if (opt_prefix_len > 0) {
 	struct bu_vls opterrs = BU_VLS_INIT_ZERO;
-	int opt_ret = bu_cmd_schema_parse(&edit_option_schema, &ctx, &opterrs,
+	int opt_ret = bu_arg_schema_parse(&edit_option_schema, &ctx, &opterrs,
 	    opt_prefix_len, argv);
 	if (opt_ret < 0) {
 	    bu_vls_printf(gedp->ged_result_str, "%s", bu_vls_cstr(&opterrs));
@@ -3603,8 +3603,8 @@ edit_grammar_analyze(struct ged *gedp, const char *input,
 static char *
 edit_grammar_json(void)
 {
-    char *root = bu_cmd_schema_describe_json(&edit_option_schema);
-    char *operations = bu_cmd_tree_describe_json(&edit_generic_tree);
+    char *root = bu_arg_schema_describe_json(&edit_option_schema);
+    char *operations = bu_arg_tree_describe_json(&edit_generic_tree);
     struct bu_vls json = BU_VLS_INIT_ZERO;
 
     if (!root || !operations) {
@@ -3625,16 +3625,16 @@ edit_grammar_json(void)
 static int
 edit_grammar_lint(struct bu_vls *msgs)
 {
-    return bu_cmd_schema_lint(&edit_option_schema, msgs) +
-	bu_cmd_tree_lint(&edit_generic_tree, msgs);
+    return bu_arg_schema_lint(&edit_option_schema, msgs) +
+	bu_arg_tree_lint(&edit_generic_tree, msgs);
 }
 
 
 static char *
 edit_grammar_help(const char *invocation)
 {
-    char *root = bu_cmd_schema_help(&edit_option_schema, invocation);
-    char *operations = bu_cmd_tree_help(&edit_generic_tree,
+    char *root = bu_arg_schema_help(&edit_option_schema, invocation);
+    char *operations = bu_arg_tree_help(&edit_generic_tree,
 	"edit [options] [geometry]");
     struct bu_vls help = BU_VLS_INIT_ZERO;
 
@@ -3656,40 +3656,40 @@ static const struct ged_cmd_grammar edit_grammar = {
     edit_grammar_help
 };
 
-static const struct bu_cmd_operand edarb_args[] = {
-    BU_CMD_OPERAND("arguments", BU_CMD_VALUE_RAW, 1, BU_CMD_COUNT_UNLIMITED,
+static const struct bu_arg_operand edarb_args[] = {
+    BU_ARG_OPERAND("arguments", BU_ARG_VALUE_RAW, 1, BU_ARG_COUNT_UNLIMITED,
 	"ARB and operation-specific arguments", NULL),
-    BU_CMD_OPERAND_NULL
+    BU_ARG_OPERAND_NULL
 };
-static const struct bu_cmd_schema edarb_root_schema = {
+static const struct bu_arg_schema edarb_root_schema = {
     "edarb", "Apply legacy ARB edit operations", NULL, NULL,
-    BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+    BU_ARG_PARSE_STOP_AT_FIRST_OPERAND, BU_ARG_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
-static const struct bu_cmd_schema edarb_edgedir_schema = {
+static const struct bu_arg_schema edarb_edgedir_schema = {
     "edgedir", "Set an ARB edge direction", NULL, edarb_args,
-    BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+    BU_ARG_PARSE_STOP_AT_FIRST_OPERAND, BU_ARG_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
-static const struct bu_cmd_schema edarb_extrude_schema = {
+static const struct bu_arg_schema edarb_extrude_schema = {
     "extrude", "Extrude an ARB face", NULL, edarb_args,
-    BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+    BU_ARG_PARSE_STOP_AT_FIRST_OPERAND, BU_ARG_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
-static const struct bu_cmd_schema edarb_mirror_schema = {
+static const struct bu_arg_schema edarb_mirror_schema = {
     "mirror", "Mirror an ARB", NULL, edarb_args,
-    BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+    BU_ARG_PARSE_STOP_AT_FIRST_OPERAND, BU_ARG_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
-static const struct bu_cmd_schema edarb_permute_schema = {
+static const struct bu_arg_schema edarb_permute_schema = {
     "permute", "Permute ARB vertices", NULL, edarb_args,
-    BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+    BU_ARG_PARSE_STOP_AT_FIRST_OPERAND, BU_ARG_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
-static const struct bu_cmd_tree_node edarb_subcommands[] = {
-    BU_CMD_TREE_NODE(&edarb_edgedir_schema, NULL, NULL, BU_CMD_TREE_CHILD_AFTER_OPTIONS, NULL),
-    BU_CMD_TREE_NODE(&edarb_extrude_schema, NULL, NULL, BU_CMD_TREE_CHILD_AFTER_OPTIONS, NULL),
-    BU_CMD_TREE_NODE(&edarb_mirror_schema, NULL, NULL, BU_CMD_TREE_CHILD_AFTER_OPTIONS, NULL),
-    BU_CMD_TREE_NODE(&edarb_permute_schema, NULL, NULL, BU_CMD_TREE_CHILD_AFTER_OPTIONS, NULL),
-    BU_CMD_TREE_NODE_NULL
+static const struct bu_arg_tree_node edarb_subcommands[] = {
+    BU_ARG_TREE_NODE(&edarb_edgedir_schema, NULL, NULL, BU_ARG_TREE_CHILD_AFTER_OPTIONS, NULL),
+    BU_ARG_TREE_NODE(&edarb_extrude_schema, NULL, NULL, BU_ARG_TREE_CHILD_AFTER_OPTIONS, NULL),
+    BU_ARG_TREE_NODE(&edarb_mirror_schema, NULL, NULL, BU_ARG_TREE_CHILD_AFTER_OPTIONS, NULL),
+    BU_ARG_TREE_NODE(&edarb_permute_schema, NULL, NULL, BU_ARG_TREE_CHILD_AFTER_OPTIONS, NULL),
+    BU_ARG_TREE_NODE_NULL
 };
-static const struct bu_cmd_tree edarb_tree = {
-    &edarb_root_schema, edarb_subcommands, BU_CMD_TREE_CHILD_FIRST
+static const struct bu_arg_tree edarb_tree = {
+    &edarb_root_schema, edarb_subcommands, BU_ARG_TREE_CHILD_FIRST
 };
 static int
 edarb_grammar_validate(struct ged *gedp, const char *input, size_t cursor_pos,
@@ -3706,12 +3706,12 @@ edarb_grammar_analyze(struct ged *gedp, const char *input,
 static char *
 edarb_grammar_json(void)
 {
-    return bu_cmd_tree_describe_json(&edarb_tree);
+    return bu_arg_tree_describe_json(&edarb_tree);
 }
 static int
 edarb_grammar_lint(struct bu_vls *msgs)
 {
-    return bu_cmd_tree_lint(&edarb_tree, msgs);
+    return bu_arg_tree_lint(&edarb_tree, msgs);
 }
 GED_CMD_TREE_HELP(edarb_grammar_help, edarb_tree)
 static const struct ged_cmd_grammar edarb_grammar = {
@@ -3723,15 +3723,15 @@ static const struct ged_cmd_grammar edarb_grammar = {
 struct pedit_schema_args {
     int relative;
 };
-static const struct bu_cmd_option pedit_options[] = {
-    BU_CMD_FLAG("r", NULL, struct pedit_schema_args, relative, "Apply a relative edit"),
-    BU_CMD_OPTION_NULL
+static const struct bu_arg_option pedit_options[] = {
+    BU_ARG_FLAG("r", NULL, struct pedit_schema_args, relative, "Apply a relative edit"),
+    BU_ARG_OPTION_NULL
 };
-static const struct bu_cmd_operand protate_operands[] = {
-    BU_CMD_OPERAND("object", BU_CMD_VALUE_DB_OBJECT, 1, 1, "Primitive object", "ged.db_object"),
-    BU_CMD_OPERAND("attribute", BU_CMD_VALUE_STRING, 1, 1, "Primitive attribute", NULL),
-    BU_CMD_OPERAND("rotation", BU_CMD_VALUE_VECTOR, 1, 1, "Packed rotation vector", "ged.vector"),
-    BU_CMD_OPERAND_NULL
+static const struct bu_arg_operand protate_operands[] = {
+    BU_ARG_OPERAND("object", BU_ARG_VALUE_DB_OBJECT, 1, 1, "Primitive object", "ged.db_object"),
+    BU_ARG_OPERAND("attribute", BU_ARG_VALUE_STRING, 1, 1, "Primitive attribute", NULL),
+    BU_ARG_OPERAND("rotation", BU_ARG_VALUE_VECTOR, 1, 1, "Packed rotation vector", "ged.vector"),
+    BU_ARG_OPERAND_NULL
 };
 
 static int
@@ -3741,30 +3741,30 @@ pscale_factor_validate(struct bu_vls *UNUSED(msg), const char *arg)
     return _ged_pscale_factor_parse(&factor, arg) ? 0 : -1;
 }
 
-static const struct bu_cmd_operand pscale_operands[] = {
-    BU_CMD_OPERAND("object", BU_CMD_VALUE_DB_OBJECT, 1, 1, "Primitive object", "ged.db_object"),
-    BU_CMD_OPERAND("attribute", BU_CMD_VALUE_STRING, 1, 1, "Primitive attribute", NULL),
-    BU_CMD_OPERAND_VALIDATE("scale", BU_CMD_VALUE_NUMBER, 1, 1,
+static const struct bu_arg_operand pscale_operands[] = {
+    BU_ARG_OPERAND("object", BU_ARG_VALUE_DB_OBJECT, 1, 1, "Primitive object", "ged.db_object"),
+    BU_ARG_OPERAND("attribute", BU_ARG_VALUE_STRING, 1, 1, "Primitive attribute", NULL),
+    BU_ARG_OPERAND_VALIDATE("scale", BU_ARG_VALUE_NUMBER, 1, 1,
 	pscale_factor_validate, "Positive scale factor", NULL),
-    BU_CMD_OPERAND_NULL
+    BU_ARG_OPERAND_NULL
 };
-static const struct bu_cmd_operand ptranslate_operands[] = {
-    BU_CMD_OPERAND("object", BU_CMD_VALUE_DB_OBJECT, 1, 1, "Primitive object", "ged.db_object"),
-    BU_CMD_OPERAND("attribute", BU_CMD_VALUE_STRING, 1, 1, "Primitive attribute", NULL),
-    BU_CMD_OPERAND("translation", BU_CMD_VALUE_VECTOR, 1, 1, "Packed translation vector", "ged.vector"),
-    BU_CMD_OPERAND_NULL
+static const struct bu_arg_operand ptranslate_operands[] = {
+    BU_ARG_OPERAND("object", BU_ARG_VALUE_DB_OBJECT, 1, 1, "Primitive object", "ged.db_object"),
+    BU_ARG_OPERAND("attribute", BU_ARG_VALUE_STRING, 1, 1, "Primitive attribute", NULL),
+    BU_ARG_OPERAND("translation", BU_ARG_VALUE_VECTOR, 1, 1, "Packed translation vector", "ged.vector"),
+    BU_ARG_OPERAND_NULL
 };
-static const struct bu_cmd_schema protate_cmd_schema = {
+static const struct bu_arg_schema protate_cmd_schema = {
     "protate", "Rotate a primitive attribute", NULL, protate_operands,
-    BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+    BU_ARG_PARSE_STOP_AT_FIRST_OPERAND, BU_ARG_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
-static const struct bu_cmd_schema pscale_cmd_schema = {
+static const struct bu_arg_schema pscale_cmd_schema = {
     "pscale", "Scale a primitive attribute", pedit_options, pscale_operands,
-    BU_CMD_PARSE_OPTIONS_FIRST, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+    BU_ARG_PARSE_OPTIONS_FIRST, BU_ARG_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
-static const struct bu_cmd_schema ptranslate_cmd_schema = {
+static const struct bu_arg_schema ptranslate_cmd_schema = {
     "ptranslate", "Translate a primitive attribute", pedit_options,
-    ptranslate_operands, BU_CMD_PARSE_OPTIONS_FIRST, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+    ptranslate_operands, BU_ARG_PARSE_OPTIONS_FIRST, BU_ARG_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
 
 #define GED_EDIT_COMMANDS(X, XID, NX, NXID, GX, GXID) \

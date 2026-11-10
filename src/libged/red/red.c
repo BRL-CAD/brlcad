@@ -32,7 +32,7 @@
 #include "regex.h"
 
 #include "bu/app.h"
-#include "bu/cmdschema.h"
+#include "bu/arg.h"
 #include "bu/file.h"
 #include "rt/db4.h"
 #include "raytrace.h"
@@ -47,20 +47,20 @@ struct red_args {
     int force;
 };
 
-static const struct bu_cmd_option red_schema_options[] = {
-    BU_CMD_STRING("E", NULL, struct red_args, editor, "editor", "Editor command"),
-    BU_CMD_FLAG("f", "force", struct red_args, force,
+static const struct bu_arg_option red_schema_options[] = {
+    BU_ARG_STRING("E", NULL, struct red_args, editor, "editor", "Editor command"),
+    BU_ARG_FLAG("f", "force", struct red_args, force,
 	"Replace an existing renamed combination"),
-    BU_CMD_OPTION_NULL
+    BU_ARG_OPTION_NULL
 };
-static const struct bu_cmd_operand red_schema_operands[] = {
-    BU_CMD_OPERAND("combination", BU_CMD_VALUE_STRING, 1, 1,
+static const struct bu_arg_operand red_schema_operands[] = {
+    BU_ARG_OPERAND("combination", BU_ARG_VALUE_STRING, 1, 1,
 	"Combination to edit or create", NULL),
-    BU_CMD_OPERAND_NULL
+    BU_ARG_OPERAND_NULL
 };
-static const struct bu_cmd_schema red_cmd_schema = {
+static const struct bu_arg_schema red_cmd_schema = {
     "red", "Edit a combination as text", red_schema_options,
-    red_schema_operands, BU_CMD_PARSE_OPTIONS_FIRST, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+    red_schema_operands, BU_ARG_PARSE_OPTIONS_FIRST, BU_ARG_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
 
 static const char combseparator[] = "---------- Combination Tree ----------\n";
@@ -779,7 +779,7 @@ ged_red_core(struct ged *gedp, int argc, const char **argv)
 	return GED_HELP;
     }
 
-    operand_index = bu_cmd_schema_parse_complete(&red_cmd_schema, &args,
+    operand_index = bu_arg_schema_parse_complete(&red_cmd_schema, &args,
 	gedp->ged_result_str, argc - 1, argv + 1);
     if (operand_index < 0) {
 	ged_cmd_help_append(gedp->ged_result_str, "red", "red");

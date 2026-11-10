@@ -26,7 +26,7 @@
 
 #include "common.h"
 
-#include "bu/cmdschema.h"
+#include "bu/arg.h"
 
 
 struct simulate_args {
@@ -45,45 +45,45 @@ struct simulate_args {
     fastf_t view_size;
 };
 
-static const struct bu_cmd_option simulate_options[] = {
-    BU_CMD_STRING(NULL, "debug", simulate_args, debug_mode, "mode",
+static const struct bu_arg_option simulate_options[] = {
+    BU_ARG_STRING(NULL, "debug", simulate_args, debug_mode, "mode",
 	"Set debug mode (for example: aabb,contact,ray)"),
-    BU_CMD_POSITIVE_INTEGER(NULL, "steps", simulate_args, steps, "count",
+    BU_ARG_POSITIVE_INTEGER(NULL, "steps", simulate_args, steps, "count",
 	"Run this many incremental steps"),
-    BU_CMD_STRING(NULL, "plot", simulate_args, plot_prefix, "prefix",
+    BU_ARG_STRING(NULL, "plot", simulate_args, plot_prefix, "prefix",
 	"Write wireframe plot files with this prefix"),
-    BU_CMD_COUNTING_LONG_FLAG(NULL, "resume", simulate_args, resume,
+    BU_ARG_COUNTING_LONG_FLAG(NULL, "resume", simulate_args, resume,
 	"Resume from previously saved simulation state"),
-    BU_CMD_FILE("o", "output", simulate_args, output_file, "file",
+    BU_ARG_FILE("o", "output", simulate_args, output_file, "file",
 	"Write an MJPEG AVI animation"),
-    BU_CMD_POSITIVE_INTEGER(NULL, "width", simulate_args, width, "pixels",
+    BU_ARG_POSITIVE_INTEGER(NULL, "width", simulate_args, width, "pixels",
 	"Animation frame width"),
-    BU_CMD_POSITIVE_INTEGER(NULL, "height", simulate_args, height, "pixels",
+    BU_ARG_POSITIVE_INTEGER(NULL, "height", simulate_args, height, "pixels",
 	"Animation frame height"),
-    BU_CMD_POSITIVE_INTEGER(NULL, "fps", simulate_args, fps, "count",
+    BU_ARG_POSITIVE_INTEGER(NULL, "fps", simulate_args, fps, "count",
 	"Animation frames per second"),
-    BU_CMD_STRING(NULL, "view-quat", simulate_args, view_quat, "x,y,z,w",
+    BU_ARG_STRING(NULL, "view-quat", simulate_args, view_quat, "x,y,z,w",
 	"Fixed camera quaternion"),
-    BU_CMD_STRING(NULL, "view-ae", simulate_args, view_ae, "az,el",
+    BU_ARG_STRING(NULL, "view-ae", simulate_args, view_ae, "az,el",
 	"Fixed camera azimuth and elevation"),
-    BU_CMD_STRING(NULL, "view-eye", simulate_args, view_eye, "x,y,z",
+    BU_ARG_STRING(NULL, "view-eye", simulate_args, view_eye, "x,y,z",
 	"Fixed eye position in model coordinates"),
-    BU_CMD_STRING(NULL, "view-center", simulate_args, view_center, "x,y,z",
+    BU_ARG_STRING(NULL, "view-center", simulate_args, view_center, "x,y,z",
 	"Override view center in model coordinates"),
-    BU_CMD_NONNEGATIVE_NUMBER(NULL, "view-size", simulate_args, view_size, "size",
+    BU_ARG_NONNEGATIVE_NUMBER(NULL, "view-size", simulate_args, view_size, "size",
 	"View size in mm"),
-    BU_CMD_OPTION_NULL
+    BU_ARG_OPTION_NULL
 };
-static const struct bu_cmd_operand simulate_operands[] = {
-    BU_CMD_OPERAND("path", BU_CMD_VALUE_DB_PATH, 1, 1,
+static const struct bu_arg_operand simulate_operands[] = {
+    BU_ARG_OPERAND("path", BU_ARG_VALUE_DB_PATH, 1, 1,
 	"Root object path for the simulation", "ged.db_path"),
-    BU_CMD_OPERAND_VALIDATE("duration", BU_CMD_VALUE_NUMBER, 1, 1,
-	bu_cmd_nonnegative_number_validate, "Simulation duration in seconds", NULL),
-    BU_CMD_OPERAND_NULL
+    BU_ARG_OPERAND_VALIDATE("duration", BU_ARG_VALUE_NUMBER, 1, 1,
+	bu_arg_nonnegative_number_validate, "Simulation duration in seconds", NULL),
+    BU_ARG_OPERAND_NULL
 };
-static const struct bu_cmd_schema simulate_schema = {
+static const struct bu_arg_schema simulate_schema = {
     "simulate", "Run a rigid-body simulation", simulate_options, simulate_operands,
-    BU_CMD_PARSE_INTERSPERSED, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+    BU_ARG_PARSE_INTERSPERSED, BU_ARG_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
 
 
@@ -188,10 +188,10 @@ ged_simulate_core(ged * const gedp, const int argc, const char ** const argv)
 	"", 1, "", 0, "", 1280, 720, 24, "", "", "", "", 0.0
     };
     std::vector<const char *> av(argv + 1, argv + argc);
-    int opt_ret = bu_cmd_schema_parse(&simulate_schema, &args,
+    int opt_ret = bu_arg_schema_parse(&simulate_schema, &args,
 	gedp->ged_result_str, (int)av.size(), av.data());
     if (opt_ret < 0 || av.size() - (size_t)opt_ret != 2) {
-	char *help = bu_cmd_schema_help(&simulate_schema, argv[0]);
+	char *help = bu_arg_schema_help(&simulate_schema, argv[0]);
 	if (help) {
 	    bu_vls_strcat(gedp->ged_result_str, help);
 	    bu_free(help, "simulate native schema help");
@@ -276,7 +276,7 @@ ged_simulate_core(ged * const gedp, const int argc, const char ** const argv)
 	get_debug_mode(args.debug_mode);
 
 	fastf_t seconds = 0.0;
-	if (!bu_cmd_number_from_str(&seconds, duration_arg))
+	if (!bu_arg_number_from_str(&seconds, duration_arg))
 	    throw simulate::InvalidSimulationError("invalid value for 'seconds'");
 
 	db_full_path path;

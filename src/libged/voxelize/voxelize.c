@@ -28,7 +28,7 @@
 #include <string.h>
 
 #include "bu/cmd.h"
-#include "bu/cmdschema.h"
+#include "bu/arg.h"
 #include "rt/geom.h"
 #include "raytrace.h"
 
@@ -59,7 +59,7 @@ static int
 voxelize_size_consume(struct bu_vls *msg, size_t argc, const char **argv, void *storage)
 {
     vect_t size = VINIT_ZERO;
-    int consumed = bu_cmd_vector3_from_argv(size, argc, (const char * const *)argv);
+    int consumed = bu_arg_vector3_from_argv(size, argc, (const char * const *)argv);
 
     if (consumed == 0 || (size_t)consumed != argc) {
 	if (msg)
@@ -82,7 +82,7 @@ voxelize_threshold_validate(struct bu_vls *msg, const char *arg)
 {
     fastf_t threshold;
 
-    if (bu_cmd_number_from_str(&threshold, arg) && threshold >= 0.0 && threshold <= 1.0)
+    if (bu_arg_number_from_str(&threshold, arg) && threshold >= 0.0 && threshold <= 1.0)
 	return 0;
     if (msg)
 	bu_vls_printf(msg, "fill threshold must be a finite number from 0 through 1\n");
@@ -90,36 +90,36 @@ voxelize_threshold_validate(struct bu_vls *msg, const char *arg)
 }
 
 
-static const struct bu_cmd_arg_shape voxelize_vector3_arg_shape = {
-    BU_CMD_ARG_SHAPE_VECTOR3, 1, 3, "packed x/y/z or three coordinates", NULL, NULL
+static const struct bu_arg_shape voxelize_vector3_arg_shape = {
+    BU_ARG_SHAPE_VECTOR3, 1, 3, "packed x/y/z or three coordinates", NULL, NULL
 };
-static const struct bu_cmd_option voxelize_schema_options[] = {
-    BU_CMD_OPTION_SHAPED("s", NULL, "s", struct voxelize_args, size,
-	BU_CMD_VALUE_VECTOR, "dx/dy/dz", "Positive voxel dimensions",
-	BU_CMD_ARG_REQUIRED, &voxelize_vector3_arg_shape, voxelize_size_consume),
-    BU_CMD_POSITIVE_INTEGER("d", NULL, struct voxelize_args, detail, "level",
+static const struct bu_arg_option voxelize_schema_options[] = {
+    BU_ARG_OPTION_SHAPED("s", NULL, "s", struct voxelize_args, size,
+	BU_ARG_VALUE_VECTOR, "dx/dy/dz", "Positive voxel dimensions",
+	BU_ARG_REQUIRED, &voxelize_vector3_arg_shape, voxelize_size_consume),
+    BU_ARG_POSITIVE_INTEGER("d", NULL, struct voxelize_args, detail, "level",
 	"Positive ray-sampling detail level"),
-    BU_CMD_NUMBER_VALIDATE("t", NULL, struct voxelize_args, threshold,
+    BU_ARG_NUMBER_VALIDATE("t", NULL, struct voxelize_args, threshold,
 	voxelize_threshold_validate, "fraction", "Fill threshold from 0 through 1"),
-    BU_CMD_OPTION_NULL
+    BU_ARG_OPTION_NULL
 };
-static const struct bu_cmd_operand voxelize_schema_operands[] = {
-    BU_CMD_OPERAND("output_object", BU_CMD_VALUE_STRING, 1, 1,
+static const struct bu_arg_operand voxelize_schema_operands[] = {
+    BU_ARG_OPERAND("output_object", BU_ARG_VALUE_STRING, 1, 1,
 	"Name for the output voxel group", NULL),
-    BU_CMD_OPERAND("input_objects", BU_CMD_VALUE_DB_OBJECT, 1, BU_CMD_COUNT_UNLIMITED,
+    BU_ARG_OPERAND("input_objects", BU_ARG_VALUE_DB_OBJECT, 1, BU_ARG_COUNT_UNLIMITED,
 	"Existing geometry objects", "ged.db_object"),
-    BU_CMD_OPERAND_NULL
+    BU_ARG_OPERAND_NULL
 };
-static const struct bu_cmd_schema voxelize_cmd_schema = {
+static const struct bu_arg_schema voxelize_cmd_schema = {
     "voxelize", "Voxelize geometry objects", voxelize_schema_options,
-    voxelize_schema_operands, BU_CMD_PARSE_OPTIONS_FIRST, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+    voxelize_schema_operands, BU_ARG_PARSE_OPTIONS_FIRST, BU_ARG_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
 
 
 static void
 voxelize_show_help(struct ged *gedp, const char *command)
 {
-    char *help = bu_cmd_schema_help(&voxelize_cmd_schema, command);
+    char *help = bu_arg_schema_help(&voxelize_cmd_schema, command);
 
     if (help) {
 	bu_vls_strcat(gedp->ged_result_str, help);
@@ -202,7 +202,7 @@ ged_voxelize_core(struct ged *gedp, int argc, const char *argv[])
 	return GED_HELP;
     }
 
-	operand_index = bu_cmd_schema_parse_complete(&voxelize_cmd_schema, &args,
+	operand_index = bu_arg_schema_parse_complete(&voxelize_cmd_schema, &args,
 	gedp->ged_result_str, argc - 1, argv + 1);
     if (operand_index < 0) {
 	voxelize_show_help(gedp, argv[0]);

@@ -28,7 +28,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "bu/cmdschema.h"
+#include "bu/arg.h"
 #include "bu/str.h"
 #include "rt/geom.h"
 
@@ -43,39 +43,39 @@ struct move_all_args {
 
 #include "../include/plugin.h"
 
-static const struct bu_cmd_option move_all_schema_options[] = {
-    BU_CMD_FLAG("n", NULL, struct move_all_args, no_change,
+static const struct bu_arg_option move_all_schema_options[] = {
+    BU_ARG_FLAG("n", NULL, struct move_all_args, no_change,
 	"Report changes without modifying the database"),
-    BU_CMD_FILE("f", NULL, struct move_all_args, mapping_file, "file",
+    BU_ARG_FILE("f", NULL, struct move_all_args, mapping_file, "file",
 	"Read old/new name mappings from a file"),
-    BU_CMD_OPTION_NULL
+    BU_ARG_OPTION_NULL
 };
-static const struct bu_cmd_operand move_all_schema_operands[] = {
-    BU_CMD_OPERAND("source_object", BU_CMD_VALUE_DB_OBJECT, 0, 1,
+static const struct bu_arg_operand move_all_schema_operands[] = {
+    BU_ARG_OPERAND("source_object", BU_ARG_VALUE_DB_OBJECT, 0, 1,
 	"Existing object to rename", "ged.db_object"),
-    BU_CMD_OPERAND("output_object", BU_CMD_VALUE_STRING, 0, 1,
+    BU_ARG_OPERAND("output_object", BU_ARG_VALUE_STRING, 0, 1,
 	"New object name", NULL),
-    BU_CMD_OPERAND_NULL
+    BU_ARG_OPERAND_NULL
 };
 static const char *move_all_schema_file_option[] = {"f", NULL};
-static const struct bu_cmd_constraint move_all_schema_constraints[] = {
-    BU_CMD_CONSTRAINT_OPERANDS(BU_CMD_CONDITION_ANY_OPTION_PRESENT,
+static const struct bu_arg_constraint move_all_schema_constraints[] = {
+    BU_ARG_CONSTRAINT_OPERANDS(BU_ARG_CONDITION_ANY_OPTION_PRESENT,
 	move_all_schema_file_option, 0, 0,
 	"-f cannot be combined with old/new operands"),
-    BU_CMD_CONSTRAINT_OPERANDS(BU_CMD_CONDITION_NO_OPTION_PRESENT,
+    BU_ARG_CONSTRAINT_OPERANDS(BU_ARG_CONDITION_NO_OPTION_PRESENT,
 	move_all_schema_file_option, 2, 2,
 	"source and destination object names are required without -f"),
-    BU_CMD_CONSTRAINT_NULL
+    BU_ARG_CONSTRAINT_NULL
 };
-static const struct bu_cmd_schema move_all_cmd_schema = {
+static const struct bu_arg_schema move_all_cmd_schema = {
     "move_all", "Rename an object and all references", move_all_schema_options,
-    move_all_schema_operands, BU_CMD_PARSE_OPTIONS_FIRST,
-    BU_CMD_SCHEMA_CONSTRAINTS(NULL, move_all_schema_constraints)
+    move_all_schema_operands, BU_ARG_PARSE_OPTIONS_FIRST,
+    BU_ARG_SCHEMA_CONSTRAINTS(NULL, move_all_schema_constraints)
 };
-static const struct bu_cmd_schema mvall_cmd_schema = {
+static const struct bu_arg_schema mvall_cmd_schema = {
     "mvall", "Rename an object and all references", move_all_schema_options,
-    move_all_schema_operands, BU_CMD_PARSE_OPTIONS_FIRST,
-    BU_CMD_SCHEMA_CONSTRAINTS(NULL, move_all_schema_constraints)
+    move_all_schema_operands, BU_ARG_PARSE_OPTIONS_FIRST,
+    BU_ARG_SCHEMA_CONSTRAINTS(NULL, move_all_schema_constraints)
 };
 
 static int
@@ -316,7 +316,7 @@ move_all_file(struct ged *gedp, int nflag, const char *file)
 int
 ged_move_all_core(struct ged *gedp, int argc, const char *argv[])
 {
-    const struct bu_cmd_schema *schema = NULL;
+    const struct bu_arg_schema *schema = NULL;
     struct move_all_args args = {0, NULL};
     int operand_index = 0;
     int object_count = 0;
@@ -336,7 +336,7 @@ ged_move_all_core(struct ged *gedp, int argc, const char *argv[])
     }
 
     schema = BU_STR_EQUAL(argv[0], "mvall") ? &mvall_cmd_schema : &move_all_cmd_schema;
-    operand_index = bu_cmd_schema_parse_complete(schema, &args,
+    operand_index = bu_arg_schema_parse_complete(schema, &args,
 	gedp->ged_result_str, argc - 1, argv + 1);
     if (operand_index < 0) {
 	ged_cmd_help_append(gedp->ged_result_str, argv[0], argv[0]);

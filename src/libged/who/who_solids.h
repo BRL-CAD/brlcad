@@ -20,7 +20,7 @@
 #ifndef LIBGED_WHO_SOLIDS_H
 #define LIBGED_WHO_SOLIDS_H
 
-#include "bu/cmdschema.h"
+#include "bu/arg.h"
 
 struct ged_solid_report_args {
     int print_help;
@@ -30,8 +30,8 @@ struct ged_solid_report_args {
 
 __BEGIN_DECLS
 
-extern const struct bu_cmd_schema *ged_solid_report_native_schema(void);
-extern const struct bu_cmd_schema ged_who_solids_schema;
+extern const struct bu_arg_schema *ged_solid_report_native_schema(void);
+extern const struct bu_arg_schema ged_who_solids_schema;
 extern char *ged_who_help_for_mode(int new_form, int solids,
 	const char *invocation);
 

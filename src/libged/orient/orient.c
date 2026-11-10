@@ -66,7 +66,7 @@ ged_orient_core(struct ged *gedp, int argc, const char *argv[])
 
 	for (i = 1; i < 5; ++i) {
 	    fastf_t scan;
-	    if (!bu_cmd_number_from_str(&scan, argv[i])) {
+	    if (!bu_arg_number_from_str(&scan, argv[i])) {
 		bu_vls_printf(gedp->ged_result_str,
 		    "orient: invalid quaternion component: %s\n", argv[i]);
 		return BRLCAD_ERROR;
@@ -89,31 +89,31 @@ orient_quaternion_token_validate(struct bu_vls *UNUSED(msg), const char *arg)
     quat_t quat;
     fastf_t component;
 
-    if (bu_cmd_number_from_str(&component, arg))
+    if (bu_arg_number_from_str(&component, arg))
 	return 0;
     return bn_decode_quat(quat, arg) == 4 ? 0 : -1;
 }
 
-static const struct bu_cmd_arg_variant orient_quaternion_forms[] = {
-    BU_CMD_ARG_VARIANT("packed", "\"qx qy qz qw\"", 1,
+static const struct bu_arg_variant orient_quaternion_forms[] = {
+    BU_ARG_VARIANT("packed", "\"qx qy qz qw\"", 1,
 	"Four components in one quoted argument"),
-    BU_CMD_ARG_VARIANT("components", "qx qy qz qw", 4,
+    BU_ARG_VARIANT("components", "qx qy qz qw", 4,
 	"Four separate numeric arguments"),
-    BU_CMD_ARG_VARIANT_NULL
+    BU_ARG_VARIANT_NULL
 };
-static const struct bu_cmd_arg_shape orient_quaternion_shape =
-    BU_CMD_ARG_SHAPE_FORMS(BU_CMD_ARG_SHAPE_CUSTOM, 1, 4,
+static const struct bu_arg_shape orient_quaternion_shape =
+    BU_ARG_SHAPE_FORMS(BU_ARG_SHAPE_CUSTOM, 1, 4,
 	"one packed quaternion or four component words", NULL,
 	orient_quaternion_forms);
-static const struct bu_cmd_operand orient_schema_operands[] = {
-    BU_CMD_OPERAND_SHAPED("quaternion", BU_CMD_VALUE_VECTOR, 1, 4,
+static const struct bu_arg_operand orient_schema_operands[] = {
+    BU_ARG_OPERAND_SHAPED("quaternion", BU_ARG_VALUE_VECTOR, 1, 4,
 	orient_quaternion_token_validate, "View rotation quaternion",
 	"ged.vector_group", &orient_quaternion_shape),
-    BU_CMD_OPERAND_NULL
+    BU_ARG_OPERAND_NULL
 };
 GED_DEFINE_NATIVE_DISCRETE_COUNT_VALIDATOR(orient, 1, 4, GED_SCHEMA_COUNT_NONE)
-static const struct bu_cmd_schema orient_cmd_schema = {"orient", "Set view orientation from a quaternion", NULL, orient_schema_operands, BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, BU_CMD_SCHEMA_CONSTRAINTS(orient_schema_validate, NULL)};
-static const struct bu_cmd_schema orientation_cmd_schema = {"orientation", "Set view orientation from a quaternion", NULL, orient_schema_operands, BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, BU_CMD_SCHEMA_CONSTRAINTS(orient_schema_validate, NULL)};
+static const struct bu_arg_schema orient_cmd_schema = {"orient", "Set view orientation from a quaternion", NULL, orient_schema_operands, BU_ARG_PARSE_STOP_AT_FIRST_OPERAND, BU_ARG_SCHEMA_CONSTRAINTS(orient_schema_validate, NULL)};
+static const struct bu_arg_schema orientation_cmd_schema = {"orientation", "Set view orientation from a quaternion", NULL, orient_schema_operands, BU_ARG_PARSE_STOP_AT_FIRST_OPERAND, BU_ARG_SCHEMA_CONSTRAINTS(orient_schema_validate, NULL)};
 
 #define GED_ORIENT_COMMANDS(X, XID) \
     X(orient, ged_orient_core, GED_CMD_DEFAULT, &orient_cmd_schema) \

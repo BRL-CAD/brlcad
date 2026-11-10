@@ -45,7 +45,7 @@ set(
   bu_init.cpp
   cache.cpp
   cmd.c
-  cmdschema.c
+  arg.c
   color.cpp
   convert.c
   crashreport.c

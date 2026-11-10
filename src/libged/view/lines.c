@@ -25,7 +25,7 @@
 
 #include "common.h"
 
-#include "bu/cmdschema.h"
+#include "bu/arg.h"
 #include "bu/vls.h"
 #include "bv.h"
 
@@ -40,51 +40,51 @@ struct ged_view_line_args {
 static int lines_tree_create(void *bs, int argc, const char **argv);
 static int lines_tree_append(void *bs, int argc, const char **argv);
 
-static const struct bu_cmd_option line_root_options[] = {
-    BU_CMD_FLAG("h", "help", struct ged_view_line_args, print_help,
+static const struct bu_arg_option line_root_options[] = {
+    BU_ARG_FLAG("h", "help", struct ged_view_line_args, print_help,
 	"Print help and exit"),
-    BU_CMD_ALIAS_SHORT("?", "help", 1),
-    BU_CMD_FLAG("s", NULL, struct ged_view_line_args, s_version,
+    BU_ARG_ALIAS_SHORT("?", "help", 1),
+    BU_ARG_FLAG("s", NULL, struct ged_view_line_args, s_version,
 	"Work with the S version of line data"),
-    BU_CMD_OPTION_NULL
+    BU_ARG_OPTION_NULL
 };
-static const struct bu_cmd_arg_shape line_vector3_arg_shape = {
-    BU_CMD_ARG_SHAPE_VECTOR3, 1, 3, "packed x/y/z or three coordinates", NULL, NULL
+static const struct bu_arg_shape line_vector3_arg_shape = {
+    BU_ARG_SHAPE_VECTOR3, 1, 3, "packed x/y/z or three coordinates", NULL, NULL
 };
-static const struct bu_cmd_operand line_xyz_operands[] = {
-    BU_CMD_OPERAND_SHAPED("point", BU_CMD_VALUE_VECTOR, 1, 3, NULL,
+static const struct bu_arg_operand line_xyz_operands[] = {
+    BU_ARG_OPERAND_SHAPED("point", BU_ARG_VALUE_VECTOR, 1, 3, NULL,
 	"Packed XYZ point or three finite coordinates", "ged.vector_group",
 	&line_vector3_arg_shape),
-    BU_CMD_OPERAND_NULL
+    BU_ARG_OPERAND_NULL
 };
-static const struct bu_cmd_schema line_create_schema = {
+static const struct bu_arg_schema line_create_schema = {
     "create", "Start a polyline at a model-space point", NULL, line_xyz_operands,
-    BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+    BU_ARG_PARSE_STOP_AT_FIRST_OPERAND, BU_ARG_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
-static const struct bu_cmd_schema line_append_schema = {
+static const struct bu_arg_schema line_append_schema = {
     "append", "Append a model-space point to a polyline", NULL, line_xyz_operands,
-    BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+    BU_ARG_PARSE_STOP_AT_FIRST_OPERAND, BU_ARG_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
-GED_EXPORT const struct bu_cmd_schema ged_view_line_schema = {
+GED_EXPORT const struct bu_arg_schema ged_view_line_schema = {
     "line", "Manage object polylines", line_root_options, NULL,
-    BU_CMD_PARSE_OPTIONS_FIRST, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+    BU_ARG_PARSE_OPTIONS_FIRST, BU_ARG_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
-GED_EXPORT const struct bu_cmd_tree_node ged_view_line_subcommands[] = {
-    BU_CMD_TREE_NODE(&line_create_schema, NULL, NULL,
-	BU_CMD_TREE_CHILD_AFTER_OPTIONS, lines_tree_create),
-    BU_CMD_TREE_NODE(&line_append_schema, NULL, NULL,
-	BU_CMD_TREE_CHILD_AFTER_OPTIONS, lines_tree_append),
-    BU_CMD_TREE_NODE_NULL
+GED_EXPORT const struct bu_arg_tree_node ged_view_line_subcommands[] = {
+    BU_ARG_TREE_NODE(&line_create_schema, NULL, NULL,
+	BU_ARG_TREE_CHILD_AFTER_OPTIONS, lines_tree_create),
+    BU_ARG_TREE_NODE(&line_append_schema, NULL, NULL,
+	BU_ARG_TREE_CHILD_AFTER_OPTIONS, lines_tree_append),
+    BU_ARG_TREE_NODE_NULL
 };
-GED_EXPORT const struct bu_cmd_tree ged_view_line_tree = {
-    &ged_view_line_schema, ged_view_line_subcommands, BU_CMD_TREE_CHILD_AFTER_OPTIONS
+GED_EXPORT const struct bu_arg_tree ged_view_line_tree = {
+    &ged_view_line_schema, ged_view_line_subcommands, BU_ARG_TREE_CHILD_AFTER_OPTIONS
 };
 
 static int
-line_preflight(struct ged *gedp, const struct bu_cmd_schema *schema,
+line_preflight(struct ged *gedp, const struct bu_arg_schema *schema,
     int argc, const char **argv)
 {
-    return bu_cmd_schema_parse_complete(schema, NULL, gedp->ged_result_str,
+    return bu_arg_schema_parse_complete(schema, NULL, gedp->ged_result_str,
 	argc - 1, argv + 1) < 0 ? BRLCAD_ERROR : BRLCAD_OK;
 }
 
@@ -113,7 +113,7 @@ lines_tree_create(void *bs, int argc, const char **argv)
     }
 
     point_t p;
-    if (bu_cmd_vector3_from_argv(p, (size_t)argc,
+    if (bu_arg_vector3_from_argv(p, (size_t)argc,
 	(const char * const *)argv) != argc) {
 	bu_vls_printf(gedp->ged_result_str, "Invalid XYZ point\n");
 	return BRLCAD_ERROR;
@@ -159,7 +159,7 @@ lines_tree_append(void *bs, int argc, const char **argv)
     }
 
     point_t p;
-    if (bu_cmd_vector3_from_argv(p, (size_t)argc,
+    if (bu_arg_vector3_from_argv(p, (size_t)argc,
 	(const char * const *)argv) != argc) {
 	bu_vls_printf(gedp->ged_result_str, "Invalid XYZ point\n");
 	return BRLCAD_ERROR;
@@ -191,10 +191,10 @@ _view_cmd_lines(void *bs, int argc, const char **argv)
 
 
     argc--; argv++;
-    child_start = bu_cmd_schema_parse(&ged_view_line_schema, &args,
+    child_start = bu_arg_schema_parse(&ged_view_line_schema, &args,
 	gedp->ged_result_str, argc, argv);
     if (child_start < 0) {
-	char *help = bu_cmd_tree_help(&ged_view_line_tree,
+	char *help = bu_arg_tree_help(&ged_view_line_tree,
 	    "view obj <object> line");
 	if (help) {
 	    bu_vls_strcat(gedp->ged_result_str, help);
@@ -204,7 +204,7 @@ _view_cmd_lines(void *bs, int argc, const char **argv)
     }
     gd->gopts = NULL;
     if (args.print_help) {
-	char *help = bu_cmd_tree_help(&ged_view_line_tree,
+	char *help = bu_arg_tree_help(&ged_view_line_tree,
 	    "view obj <object> line");
 	if (help) {
 	    bu_vls_strcat(gedp->ged_result_str, help);
@@ -216,7 +216,7 @@ _view_cmd_lines(void *bs, int argc, const char **argv)
 	bu_vls_strcat(gedp->ged_result_str, "line subcommand required\n");
 	return BRLCAD_ERROR;
     }
-    if (bu_cmd_tree_dispatch(&ged_view_line_tree, gd, argc - child_start,
+    if (bu_arg_tree_dispatch(&ged_view_line_tree, gd, argc - child_start,
 	argv + child_start, &ret) == 0)
 	return ret;
     bu_vls_printf(gedp->ged_result_str, "unknown line subcommand: %s\n",

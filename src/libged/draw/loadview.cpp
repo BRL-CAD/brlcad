@@ -29,22 +29,22 @@
 #include <ctype.h>
 #include <string.h>
 
-#include "bu/cmdschema.h"
+#include "bu/arg.h"
 
 #include "../ged_private.h"
 extern "C" {
 #include "./ged_draw.h"
 }
 
-static const struct bu_cmd_operand loadview_schema_operands[] = {
-    BU_CMD_OPERAND("filename", BU_CMD_VALUE_FILE, 1, 1,
+static const struct bu_arg_operand loadview_schema_operands[] = {
+    BU_ARG_OPERAND("filename", BU_ARG_VALUE_FILE, 1, 1,
 	"View script file", "ged.file_path"),
-    BU_CMD_OPERAND_NULL
+    BU_ARG_OPERAND_NULL
 };
 
-extern "C" const struct bu_cmd_schema ged_loadview_native_schema = {
+extern "C" const struct bu_arg_schema ged_loadview_native_schema = {
     "loadview", "Load a view script", NULL, loadview_schema_operands,
-    BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+    BU_ARG_PARSE_STOP_AT_FIRST_OPERAND, BU_ARG_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
 
 /**
@@ -335,7 +335,7 @@ ged_loadview_core(struct ged *gedp, int argc, const char *argv[])
 	return GED_HELP;
     }
 
-    operand_index = bu_cmd_schema_parse_complete(&ged_loadview_native_schema,
+    operand_index = bu_arg_schema_parse_complete(&ged_loadview_native_schema,
 	NULL, gedp->ged_result_str, argc - 1, argv + 1);
     if (operand_index < 0) {
 	ged_cmd_help_append(gedp->ged_result_str, argv[0], argv[0]);

@@ -29,22 +29,22 @@
 
 #include "ged.h"
 
-static const struct bu_cmd_value_keyword log_action_keywords[] = {
+static const struct bu_arg_value_keyword log_action_keywords[] = {
     {"get", NULL, "Copy the current log buffer to the command result"},
     {"start", NULL, "Begin collecting bu_log output"},
     {"stop", NULL, "Stop collecting bu_log output"},
     {NULL, NULL, NULL}
 };
 
-static const struct bu_cmd_operand log_operands[] = {
-	BU_CMD_OPERAND_KEYWORD_VALUES("action", BU_CMD_VALUE_KEYWORD, 1, 1,
+static const struct bu_arg_operand log_operands[] = {
+	BU_ARG_OPERAND_KEYWORD_VALUES("action", BU_ARG_VALUE_KEYWORD, 1, 1,
 	"Log action", NULL, log_action_keywords),
-    BU_CMD_OPERAND_NULL
+    BU_ARG_OPERAND_NULL
 };
 
-static const struct bu_cmd_schema log_cmd_schema = {
+static const struct bu_arg_schema log_cmd_schema = {
     "log", "Manage the libged log buffer", NULL, log_operands,
-    BU_CMD_PARSE_INTERSPERSED, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+    BU_ARG_PARSE_INTERSPERSED, BU_ARG_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
 
 

@@ -32,7 +32,7 @@
 #include "bio.h"
 
 #include "bu/app.h"
-#include "bu/cmdschema.h"
+#include "bu/arg.h"
 #include "dm.h"
 
 #include "pkg.h"
@@ -51,33 +51,33 @@ struct fb2pix_state {
     const char *file_name;
 };
 
-static const struct bu_cmd_option fb2pix_schema_options[] = {
-    BU_CMD_FLAG("c", NULL, struct fb2pix_state, crunch, "Crunch the color map"),
-    BU_CMD_FLAG("i", NULL, struct fb2pix_state, inverse, "Write upside-down"),
-	BU_CMD_POSITIVE_INTEGER("s", NULL, struct fb2pix_state, square_size, "pixels",
+static const struct bu_arg_option fb2pix_schema_options[] = {
+    BU_ARG_FLAG("c", NULL, struct fb2pix_state, crunch, "Crunch the color map"),
+    BU_ARG_FLAG("i", NULL, struct fb2pix_state, inverse, "Write upside-down"),
+	BU_ARG_POSITIVE_INTEGER("s", NULL, struct fb2pix_state, square_size, "pixels",
 	"Set both image dimensions"),
-	BU_CMD_POSITIVE_INTEGER("w", NULL, struct fb2pix_state, requested_width, "pixels",
+	BU_ARG_POSITIVE_INTEGER("w", NULL, struct fb2pix_state, requested_width, "pixels",
 	"Set image width"),
-	BU_CMD_POSITIVE_INTEGER("n", NULL, struct fb2pix_state, requested_height, "pixels",
+	BU_ARG_POSITIVE_INTEGER("n", NULL, struct fb2pix_state, requested_height, "pixels",
 	"Set image height"),
-    BU_CMD_FLAG("h", "help", struct fb2pix_state, help, "Print command help"),
-    BU_CMD_ALIAS_SHORT("?", "help", 1),
-    BU_CMD_OPTION_NULL
+    BU_ARG_FLAG("h", "help", struct fb2pix_state, help, "Print command help"),
+    BU_ARG_ALIAS_SHORT("?", "help", 1),
+    BU_ARG_OPTION_NULL
 };
-static const struct bu_cmd_operand fb2pix_schema_operands[] = {
-    BU_CMD_OPERAND("output_file", BU_CMD_VALUE_FILE, 0, 1,
+static const struct bu_arg_operand fb2pix_schema_operands[] = {
+    BU_ARG_OPERAND("output_file", BU_ARG_VALUE_FILE, 0, 1,
 	"Optional PIX output file", NULL),
-    BU_CMD_OPERAND_NULL
+    BU_ARG_OPERAND_NULL
 };
-static const struct bu_cmd_schema fb2pix_cmd_schema = {
+static const struct bu_arg_schema fb2pix_cmd_schema = {
     "fb2pix", "Write the framebuffer to a PIX file", fb2pix_schema_options,
-    fb2pix_schema_operands, BU_CMD_PARSE_OPTIONS_FIRST, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+    fb2pix_schema_operands, BU_ARG_PARSE_OPTIONS_FIRST, BU_ARG_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
 
 static void
 fb2pix_show_help(struct ged *gedp, const char *command)
 {
-    char *help = bu_cmd_schema_help(&fb2pix_cmd_schema, command);
+    char *help = bu_arg_schema_help(&fb2pix_cmd_schema, command);
 
     if (help) {
 	bu_vls_strcat(gedp->ged_result_str, help);
@@ -104,7 +104,7 @@ ged_fb2pix_core(struct ged *gedp, int argc, const char *argv[])
 	return GED_HELP;
     }
 
-    operand_index = bu_cmd_schema_parse_complete(&fb2pix_cmd_schema, &f2ps,
+    operand_index = bu_arg_schema_parse_complete(&fb2pix_cmd_schema, &f2ps,
 	gedp->ged_result_str, argc - 1, argv + 1);
     if (operand_index < 0) {
 	fb2pix_show_help(gedp, argv[0]);

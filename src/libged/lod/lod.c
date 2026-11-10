@@ -35,23 +35,23 @@ ged_lod_core(struct ged *gedp, int argc, const char *argv[])
 }
 
 
-static const struct bu_cmd_form ged_lod_native_forms[] = {
-    BU_CMD_FORM_SCHEMA("action_grammar", "Level-of-detail action grammar",
+static const struct bu_arg_form ged_lod_native_forms[] = {
+    BU_ARG_FORM_SCHEMA("action_grammar", "Level-of-detail action grammar",
 	&ged_view_lod_schema),
-    BU_CMD_FORM_NULL
+    BU_ARG_FORM_NULL
 };
 
 
-static const struct bu_cmd_form *
-ged_lod_select_native_form(const struct bu_cmd_forms *forms,
+static const struct bu_arg_form *
+ged_lod_select_native_form(const struct bu_arg_forms *forms,
 	size_t UNUSED(argc), const char * const *UNUSED(argv),
 	void *UNUSED(context))
 {
     return &forms->forms[0];
 }
 
-static const struct bu_cmd_forms ged_lod_forms =
-    BU_CMD_FORMS("lod", "Manage level-of-detail drawing settings",
+static const struct bu_arg_forms ged_lod_forms =
+    BU_ARG_FORMS("lod", "Manage level-of-detail drawing settings",
 	ged_lod_native_forms, ged_lod_select_native_form);
 
 

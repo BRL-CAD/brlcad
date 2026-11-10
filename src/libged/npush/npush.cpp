@@ -34,7 +34,7 @@
 #include <iterator>
 #include <limits>
 
-#include "bu/cmdschema.h"
+#include "bu/arg.h"
 #include "bu/malloc.h"
 
 #include "../ged_private.h"
@@ -228,35 +228,35 @@ struct npush_args {
     int dry_run;
 };
 
-static const struct bu_cmd_option npush_options[] = {
-    BU_CMD_FLAG("h", "help", struct npush_args, print_help, "Print help and exit"),
-    BU_CMD_ALIAS_SHORT("?", "help", 1),
-    BU_CMD_COUNTING_FLAG("v", "verbosity", struct npush_args, verbosity,
+static const struct bu_arg_option npush_options[] = {
+    BU_ARG_FLAG("h", "help", struct npush_args, print_help, "Print help and exit"),
+    BU_ARG_ALIAS_SHORT("?", "help", 1),
+    BU_ARG_COUNTING_FLAG("v", "verbosity", struct npush_args, verbosity,
 	"Increase output verbosity"),
-    BU_CMD_FLAG("x", "xpush", struct npush_args, xpush,
+    BU_ARG_FLAG("x", "xpush", struct npush_args, xpush,
 	"Create new objects if needed to push matrices"),
-    BU_CMD_ALIAS_SHORT("f", "xpush", 1),
-    BU_CMD_ALIAS_LONG("force", "xpush", 1),
-    BU_CMD_FLAG("r", "regions", struct npush_args, to_regions,
+    BU_ARG_ALIAS_SHORT("f", "xpush", 1),
+    BU_ARG_ALIAS_LONG("force", "xpush", 1),
+    BU_ARG_FLAG("r", "regions", struct npush_args, to_regions,
 	"Halt push at regions"),
-    BU_CMD_FLAG("s", "solids", struct npush_args, to_solids,
+    BU_ARG_FLAG("s", "solids", struct npush_args, to_solids,
 	"Halt push at solids"),
-    BU_CMD_INTEGER("d", "max-depth", struct npush_args, max_depth, "depth",
+    BU_ARG_INTEGER("d", "max-depth", struct npush_args, max_depth, "depth",
 	"Halt at depth from tree root"),
-    BU_CMD_FLAG("L", "local", struct npush_args, local_changes_only,
+    BU_ARG_FLAG("L", "local", struct npush_args, local_changes_only,
 	"Restrict changes to selected trees"),
-    BU_CMD_FLAG("D", "dry-run", struct npush_args, dry_run,
+    BU_ARG_FLAG("D", "dry-run", struct npush_args, dry_run,
 	"Calculate changes without applying them"),
-    BU_CMD_OPTION_NULL
+    BU_ARG_OPTION_NULL
 };
-static const struct bu_cmd_operand npush_operands[] = {
-    BU_CMD_OPERAND("objects", BU_CMD_VALUE_DB_OBJECT, 1, BU_CMD_COUNT_UNLIMITED,
+static const struct bu_arg_operand npush_operands[] = {
+    BU_ARG_OPERAND("objects", BU_ARG_VALUE_DB_OBJECT, 1, BU_ARG_COUNT_UNLIMITED,
 	"Root objects whose matrices are pushed", "ged.db_object"),
-    BU_CMD_OPERAND_NULL
+    BU_ARG_OPERAND_NULL
 };
-static const struct bu_cmd_schema npush_cmd_schema = {
+static const struct bu_arg_schema npush_cmd_schema = {
     "npush", "Push position and rotation matrices down object trees, altering existing geometry as needed; by default all matrices are cleared unless pushing requires new geometry", npush_options, npush_operands,
-    BU_CMD_PARSE_INTERSPERSED, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+    BU_ARG_PARSE_INTERSPERSED, BU_ARG_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
 
 /* Tree walks terminate at leaves.  However, what constitutes a leaf is not always
@@ -1178,7 +1178,7 @@ tree_update_walk(
 static void
 npush_usage(struct bu_vls *str)
 {
-    char *help = bu_cmd_schema_help(&npush_cmd_schema, "npush");
+    char *help = bu_arg_schema_help(&npush_cmd_schema, "npush");
     if (help) {
 	bu_vls_sprintf(str, "%s", help);
 	bu_free(help, "help str");
@@ -1190,7 +1190,7 @@ extern "C" int
 ged_npush_core(struct ged *gedp, int argc, const char *argv[])
 {
     struct npush_args args = {0, 0, 0, 0, 0, 0, 0, 0};
-    struct bu_cmd_validate_result validation = BU_CMD_VALIDATE_RESULT_NULL;
+    struct bu_arg_validate_result validation = BU_ARG_VALIDATE_RESULT_NULL;
     int opt_ret;
 
     /* Skip command name */
@@ -1206,7 +1206,7 @@ ged_npush_core(struct ged *gedp, int argc, const char *argv[])
 	return BRLCAD_OK;
     }
 
-    opt_ret = bu_cmd_schema_parse(&npush_cmd_schema, &args,
+    opt_ret = bu_arg_schema_parse(&npush_cmd_schema, &args,
 	gedp->ged_result_str, argc, argv);
     if (opt_ret < 0)
 	return BRLCAD_ERROR;
@@ -1217,15 +1217,15 @@ ged_npush_core(struct ged *gedp, int argc, const char *argv[])
 	bu_vls_free(&npush_help);
 	return BRLCAD_OK;
     }
-    if (bu_cmd_schema_validate(&npush_cmd_schema, (size_t)argc, argv,
+    if (bu_arg_schema_validate(&npush_cmd_schema, (size_t)argc, argv,
 	    (size_t)argc, &validation) != 0 ||
-	validation.state != BU_CMD_VALIDATE_VALID) {
+	validation.state != BU_ARG_VALIDATE_VALID) {
 	if (validation.hint)
 	    bu_vls_printf(gedp->ged_result_str, "%s\n", validation.hint);
-	bu_cmd_validate_result_clear(&validation);
+	bu_arg_validate_result_clear(&validation);
 	return BRLCAD_ERROR;
     }
-    bu_cmd_validate_result_clear(&validation);
+    bu_arg_validate_result_clear(&validation);
 
     /* adjust argc to match the leftovers of the options parsing */
     argc = opt_ret;

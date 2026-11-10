@@ -49,7 +49,7 @@ ged_label_core(struct ged *gedp, int argc, const char *argv[])
 
 #include "../include/plugin.h"
 
-GED_DEFINE_TYPED_OPERAND_SCHEMA(label, "label", "Objects to label", "objects", BU_CMD_VALUE_DB_OBJECT, 1, BU_CMD_COUNT_UNLIMITED, "Objects to label");
+GED_DEFINE_TYPED_OPERAND_SCHEMA(label, "label", "Objects to label", "objects", BU_ARG_VALUE_DB_OBJECT, 1, BU_ARG_COUNT_UNLIMITED, "Objects to label");
 
 #define GED_LABEL_COMMANDS(X, XID) \
     X(label, ged_label_core, GED_CMD_DEFAULT, &label_cmd_schema) \

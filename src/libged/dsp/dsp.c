@@ -30,7 +30,7 @@
 #include <ctype.h>
 #include <string.h>
 
-#include "bu/cmdschema.h"
+#include "bu/arg.h"
 #include "rt/geom.h"
 #include "wdb.h"
 #include "../ged_private.h"
@@ -39,48 +39,48 @@
 #include "../librt/primitives/dsp/dsp.h"
 
 
-static const struct bu_cmd_operand dsp_root_operands[] = {
-    BU_CMD_OPERAND("dsp_object", BU_CMD_VALUE_DB_OBJECT, 1, 1,
+static const struct bu_arg_operand dsp_root_operands[] = {
+    BU_ARG_OPERAND("dsp_object", BU_ARG_VALUE_DB_OBJECT, 1, 1,
 	"DSP object", "ged.db_object"),
-    BU_CMD_OPERAND_NULL
+    BU_ARG_OPERAND_NULL
 };
-static const struct bu_cmd_schema dsp_root_schema = {
+static const struct bu_arg_schema dsp_root_schema = {
     "dsp", "Inspect DSP height data", NULL, dsp_root_operands,
-    BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+    BU_ARG_PARSE_STOP_AT_FIRST_OPERAND, BU_ARG_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
-static const struct bu_cmd_operand dsp_xy_operands[] = {
-    BU_CMD_OPERAND_INTEGER_RANGE("x", 1, 1, 0, INT_MAX,
+static const struct bu_arg_operand dsp_xy_operands[] = {
+    BU_ARG_OPERAND_INTEGER_RANGE("x", 1, 1, 0, INT_MAX,
 	"Nonnegative DSP grid X coordinate", NULL),
-    BU_CMD_OPERAND_INTEGER_RANGE("y", 1, 1, 0, INT_MAX,
+    BU_ARG_OPERAND_INTEGER_RANGE("y", 1, 1, 0, INT_MAX,
 	"Nonnegative DSP grid Y coordinate", NULL),
-    BU_CMD_OPERAND_NULL
+    BU_ARG_OPERAND_NULL
 };
-static const struct bu_cmd_schema dsp_xy_schema = {
+static const struct bu_arg_schema dsp_xy_schema = {
     "xy", "Report the height value at an X,Y grid coordinate", NULL,
-    dsp_xy_operands, BU_CMD_PARSE_STOP_AT_FIRST_OPERAND,
-    BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+    dsp_xy_operands, BU_ARG_PARSE_STOP_AT_FIRST_OPERAND,
+    BU_ARG_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
-static const struct bu_cmd_operand dsp_diff_operands[] = {
-    BU_CMD_OPERAND("comparison_dsp", BU_CMD_VALUE_DB_OBJECT, 1, 1,
+static const struct bu_arg_operand dsp_diff_operands[] = {
+    BU_ARG_OPERAND("comparison_dsp", BU_ARG_VALUE_DB_OBJECT, 1, 1,
 	"DSP object to compare", "ged.db_object"),
-    BU_CMD_OPERAND("minimum_difference", BU_CMD_VALUE_NUMBER, 0, 1,
+    BU_ARG_OPERAND("minimum_difference", BU_ARG_VALUE_NUMBER, 0, 1,
 	"Minimum height difference to report", NULL),
-    BU_CMD_OPERAND_NULL
+    BU_ARG_OPERAND_NULL
 };
-static const struct bu_cmd_schema dsp_diff_schema = {
+static const struct bu_arg_schema dsp_diff_schema = {
     "diff", "Report height differences between two DSP objects", NULL,
-    dsp_diff_operands, BU_CMD_PARSE_STOP_AT_FIRST_OPERAND,
-    BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+    dsp_diff_operands, BU_ARG_PARSE_STOP_AT_FIRST_OPERAND,
+    BU_ARG_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
-static const struct bu_cmd_tree_node dsp_subcommands[] = {
-    BU_CMD_TREE_NODE(&dsp_xy_schema, NULL, NULL,
-	BU_CMD_TREE_CHILD_AFTER_OPTIONS, NULL),
-    BU_CMD_TREE_NODE(&dsp_diff_schema, NULL, NULL,
-	BU_CMD_TREE_CHILD_AFTER_OPTIONS, NULL),
-    BU_CMD_TREE_NODE_NULL
+static const struct bu_arg_tree_node dsp_subcommands[] = {
+    BU_ARG_TREE_NODE(&dsp_xy_schema, NULL, NULL,
+	BU_ARG_TREE_CHILD_AFTER_OPTIONS, NULL),
+    BU_ARG_TREE_NODE(&dsp_diff_schema, NULL, NULL,
+	BU_ARG_TREE_CHILD_AFTER_OPTIONS, NULL),
+    BU_ARG_TREE_NODE_NULL
 };
-static const struct bu_cmd_tree dsp_tree = {
-    &dsp_root_schema, dsp_subcommands, BU_CMD_TREE_CHILD_AFTER_FIXED_OPERANDS
+static const struct bu_arg_tree dsp_tree = {
+    &dsp_root_schema, dsp_subcommands, BU_ARG_TREE_CHILD_AFTER_FIXED_OPERANDS
 };
 
 int
@@ -92,7 +92,7 @@ ged_dsp_core(struct ged *gedp, int argc, const char *argv[])
     const char *cmd = argv[0];
     const char *sub = NULL;
     const char *primitive = NULL;
-    struct bu_cmd_validate_result validation = BU_CMD_VALIDATE_RESULT_NULL;
+    struct bu_arg_validate_result validation = BU_ARG_VALIDATE_RESULT_NULL;
 
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
     GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
@@ -103,7 +103,7 @@ ged_dsp_core(struct ged *gedp, int argc, const char *argv[])
 
     /* must be wanting help */
     if (argc < 3) {
-	char *help = bu_cmd_tree_help(&dsp_tree, cmd);
+	char *help = bu_arg_tree_help(&dsp_tree, cmd);
 	if (help) {
 	    bu_vls_strcat(gedp->ged_result_str, help);
 	    bu_free(help, "dsp native help");
@@ -112,16 +112,16 @@ ged_dsp_core(struct ged *gedp, int argc, const char *argv[])
     }
 
 
-    if (bu_cmd_tree_validate_argv(&dsp_tree, argc - 1, argv + 1,
-	argc - 1, &validation) != 0 || validation.state != BU_CMD_VALIDATE_VALID) {
+    if (bu_arg_tree_validate_argv(&dsp_tree, argc - 1, argv + 1,
+	argc - 1, &validation) != 0 || validation.state != BU_ARG_VALIDATE_VALID) {
 	if (validation.hint)
 	    bu_vls_printf(gedp->ged_result_str,
-		validation.state == BU_CMD_VALIDATE_INCOMPLETE ? "%s expected\n" : "%s\n",
+		validation.state == BU_ARG_VALIDATE_INCOMPLETE ? "%s expected\n" : "%s\n",
 		validation.hint);
-	bu_cmd_validate_result_clear(&validation);
+	bu_arg_validate_result_clear(&validation);
 	return BRLCAD_ERROR;
     }
-    bu_cmd_validate_result_clear(&validation);
+    bu_arg_validate_result_clear(&validation);
 
     /* get dsp */
     primitive = argv[1];
@@ -143,8 +143,8 @@ ged_dsp_core(struct ged *gedp, int argc, const char *argv[])
 	unsigned short elev;
 	int gx = 0;
 	int gy = 0;
-	if (!bu_cmd_integer_from_str(&gx, argv[3]) || gx < 0 ||
-		!bu_cmd_integer_from_str(&gy, argv[4]) || gy < 0 ||
+	if (!bu_arg_integer_from_str(&gx, argv[3]) || gx < 0 ||
+		!bu_arg_integer_from_str(&gy, argv[4]) || gy < 0 ||
 		(unsigned int)gx >= dsp->dsp_xcnt || (unsigned int)gy >= dsp->dsp_ycnt) {
 	    bu_vls_printf(gedp->ged_result_str, "Error - xy coordinate (%d,%d) is outside max data bounds of dsp: (%d,%d)", gx, gy, dsp->dsp_xcnt, dsp->dsp_ycnt);
 	    rt_db_free_internal(&intern);
@@ -161,7 +161,7 @@ ged_dsp_core(struct ged *gedp, int argc, const char *argv[])
 	struct rt_db_internal intern2;
 	struct rt_dsp_internal *dsp2;
 	fastf_t min_diff = 0.0;
-	if (argc == 5 && !bu_cmd_number_from_str(&min_diff, argv[4])) {
+	if (argc == 5 && !bu_arg_number_from_str(&min_diff, argv[4])) {
 	    bu_vls_printf(gedp->ged_result_str, "Error - invalid minimum difference: %s", argv[4]);
 	    rt_db_free_internal(&intern);
 	    return BRLCAD_ERROR;
@@ -228,13 +228,13 @@ ged_dsp_grammar_analyze(struct ged *gedp, const char *input,
 static char *
 ged_dsp_grammar_json(void)
 {
-    return bu_cmd_tree_describe_json(&dsp_tree);
+    return bu_arg_tree_describe_json(&dsp_tree);
 }
 
 static int
 ged_dsp_grammar_lint(struct bu_vls *msgs)
 {
-    return bu_cmd_tree_lint(&dsp_tree, msgs);
+    return bu_arg_tree_lint(&dsp_tree, msgs);
 }
 GED_CMD_TREE_HELP(ged_dsp_grammar_help, dsp_tree)
 

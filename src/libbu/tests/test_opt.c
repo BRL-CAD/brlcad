@@ -1492,7 +1492,7 @@ desc_validation(int test_num)
 		cmd.options[1].value_type != cmd.options[0].value_type ||
 		cmd.options[1].arg_requirement != cmd.options[0].arg_requirement ||
 		cmd.options[1].value_keywords != cmd.options[0].value_keywords ||
-		!BU_STR_EQUAL(bu_cmd_option_canonical(&cmd.options[1]), "mode");
+		!BU_STR_EQUAL(bu_arg_option_canonical(&cmd.options[1]), "mode");
 	    if (!ret) {
 		cmd.options[0].semantic_provider = "test.mode";
 		cmd.options[0].argument = "canonical mode";

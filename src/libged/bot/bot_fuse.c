@@ -29,7 +29,7 @@
 #include <ctype.h>
 #include <string.h>
 
-#include "bu/cmdschema.h"
+#include "bu/arg.h"
 #include "bu/parallel.h"
 #include "rt/geom.h"
 #include "bv/plot3.h"
@@ -43,38 +43,38 @@ struct bot_fuse_args {
     int plot_open_edges;
 };
 
-static const struct bu_cmd_option bot_fuse_schema_options[] = {
-    BU_CMD_FLAG("h", "help", struct bot_fuse_args, print_help,
+static const struct bu_arg_option bot_fuse_schema_options[] = {
+    BU_ARG_FLAG("h", "help", struct bot_fuse_args, print_help,
 	"Print command help"),
-    BU_CMD_FLAG("s", NULL, struct bot_fuse_args, show_open_edges,
+    BU_ARG_FLAG("s", NULL, struct bot_fuse_args, show_open_edges,
 	"Show open edges in the display"),
-    BU_CMD_FLAG("p", NULL, struct bot_fuse_args, plot_open_edges,
+    BU_ARG_FLAG("p", NULL, struct bot_fuse_args, plot_open_edges,
 	"Plot open edges to a temporary file"),
-    BU_CMD_OPTION_NULL
+    BU_ARG_OPTION_NULL
 };
-static const struct bu_cmd_operand bot_fuse_schema_operands[] = {
-    BU_CMD_OPERAND("new_bot", BU_CMD_VALUE_STRING, 1, 1,
+static const struct bu_arg_operand bot_fuse_schema_operands[] = {
+    BU_ARG_OPERAND("new_bot", BU_ARG_VALUE_STRING, 1, 1,
 	"Name for the fused BOT", NULL),
-    BU_CMD_OPERAND("old_bot", BU_CMD_VALUE_DB_OBJECT, 1, 1,
+    BU_ARG_OPERAND("old_bot", BU_ARG_VALUE_DB_OBJECT, 1, 1,
 	"Source BOT object", "ged.db_object"),
-    BU_CMD_OPERAND_NULL
+    BU_ARG_OPERAND_NULL
 };
 static const char * const bot_fuse_output_options[] = {"s", "p", NULL};
-static const struct bu_cmd_constraint bot_fuse_schema_constraints[] = {
-    BU_CMD_CONSTRAINT_OPTIONS(bot_fuse_output_options, 0, 1,
+static const struct bu_arg_constraint bot_fuse_schema_constraints[] = {
+    BU_ARG_CONSTRAINT_OPTIONS(bot_fuse_output_options, 0, 1,
 	"-s and -p are mutually exclusive"),
-    BU_CMD_CONSTRAINT_NULL
+    BU_ARG_CONSTRAINT_NULL
 };
-const struct bu_cmd_schema ged_bot_fuse_schema = {
+const struct bu_arg_schema ged_bot_fuse_schema = {
     "bot_fuse", "Fuse BOT vertices and faces", bot_fuse_schema_options,
-    bot_fuse_schema_operands, BU_CMD_PARSE_INTERSPERSED,
-    BU_CMD_SCHEMA_META_HELP(NULL, bot_fuse_schema_constraints, NULL, NULL, NULL)
+    bot_fuse_schema_operands, BU_ARG_PARSE_INTERSPERSED,
+    BU_ARG_SCHEMA_META_HELP(NULL, bot_fuse_schema_constraints, NULL, NULL, NULL)
 };
 
 static void
 bot_fuse_usage(struct bu_vls *result, const char *cmd)
 {
-    char *help = bu_cmd_schema_help(&ged_bot_fuse_schema, cmd);
+    char *help = bu_arg_schema_help(&ged_bot_fuse_schema, cmd);
 
     if (help) {
 	bu_vls_sprintf(result, "%s", help);
@@ -230,7 +230,7 @@ ged_bot_fuse_core(struct ged *gedp, int argc, const char **argv)
 	return GED_HELP;
     }
 
-    operand_index = bu_cmd_schema_parse_complete(&ged_bot_fuse_schema, &args,
+    operand_index = bu_arg_schema_parse_complete(&ged_bot_fuse_schema, &args,
 	gedp->ged_result_str, argc, argv);
     if (operand_index < 0) {
 	bot_fuse_usage(gedp->ged_result_str, cmdname);

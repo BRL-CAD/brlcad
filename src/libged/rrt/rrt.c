@@ -28,12 +28,12 @@
 #include <stdlib.h>
 
 #include "bu/cmd.h"
-#include "bu/cmdschema.h"
+#include "bu/arg.h"
 
 
 #include "../ged_private.h"
 
-static const struct bu_cmd_schema *rrt_schema(void);
+static const struct bu_arg_schema *rrt_schema(void);
 
 
 int
@@ -55,7 +55,7 @@ ged_rrt_core(struct ged *gedp, int argc, const char *argv[])
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
 
-    operand_index = bu_cmd_schema_parse_complete(rrt_schema(), &parse_dummy,
+    operand_index = bu_arg_schema_parse_complete(rrt_schema(), &parse_dummy,
 	gedp->ged_result_str, argc - 1, argv + 1);
     if (operand_index < 0)
 	return BRLCAD_ERROR;
@@ -80,36 +80,36 @@ ged_rrt_core(struct ged *gedp, int argc, const char *argv[])
 
 #include "../include/plugin.h"
 
-static const struct bu_cmd_operand rrt_schema_operands[] = {
-    BU_CMD_OPERAND("raytrace_arguments", BU_CMD_VALUE_RAW, 0,
-	BU_CMD_COUNT_UNLIMITED, "Arguments passed through to the raytracer", NULL),
-    BU_CMD_OPERAND_NULL
+static const struct bu_arg_operand rrt_schema_operands[] = {
+    BU_ARG_OPERAND("raytrace_arguments", BU_ARG_VALUE_RAW, 0,
+	BU_ARG_COUNT_UNLIMITED, "Arguments passed through to the raytracer", NULL),
+    BU_ARG_OPERAND_NULL
 };
 static int
-rrt_schema_validate(const struct bu_cmd_schema *schema, size_t argc,
-	const char **argv, size_t cursor_arg, struct bu_cmd_validate_result *result)
+rrt_schema_validate(const struct bu_arg_schema *schema, size_t argc,
+	const char **argv, size_t cursor_arg, struct bu_arg_validate_result *result)
 {
-    struct bu_cmd_schema flat = *schema;
+    struct bu_arg_schema flat = *schema;
     int ret;
 
-    ret = bu_cmd_schema_validate_syntax(&flat, argc, argv, cursor_arg, result);
-    if (ret || result->state == BU_CMD_VALIDATE_INVALID)
+    ret = bu_arg_schema_validate_syntax(&flat, argc, argv, cursor_arg, result);
+    if (ret || result->state == BU_ARG_VALIDATE_INVALID)
 	return ret;
-    bu_cmd_validate_result_clear(result);
-    result->state = BU_CMD_VALIDATE_VALID;
+    bu_arg_validate_result_clear(result);
+    result->state = BU_ARG_VALIDATE_VALID;
     result->token_start = cursor_arg < argc ? cursor_arg : argc;
     result->token_end = result->token_start;
-    result->expected = BU_CMD_EXPECT_OPERAND;
-    result->completion_type = BU_CMD_VALUE_RAW;
+    result->expected = BU_ARG_EXPECT_OPERAND;
+    result->completion_type = BU_ARG_VALUE_RAW;
     result->hint = "raytracer pass-through argument";
     return 0;
 }
-static const struct bu_cmd_schema rrt_cmd_schema = {
+static const struct bu_arg_schema rrt_cmd_schema = {
     "rrt", "Run the raytracer on displayed objects", NULL, rrt_schema_operands,
-    BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, BU_CMD_SCHEMA_CONSTRAINTS(rrt_schema_validate, NULL)
+    BU_ARG_PARSE_STOP_AT_FIRST_OPERAND, BU_ARG_SCHEMA_CONSTRAINTS(rrt_schema_validate, NULL)
 };
 
-static const struct bu_cmd_schema *
+static const struct bu_arg_schema *
 rrt_schema(void)
 {
     return &rrt_cmd_schema;

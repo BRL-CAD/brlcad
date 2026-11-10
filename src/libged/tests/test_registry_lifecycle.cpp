@@ -37,18 +37,18 @@ transaction_probe_b(struct ged *, int, const char *[])
     return 22;
 }
 
-static const struct bu_cmd_schema transaction_schema_a =
-    BU_CMD_SCHEMA("registry_transaction_probe", "transaction declaration A",
-	NULL, NULL, BU_CMD_PARSE_INTERSPERSED,
-	BU_CMD_SCHEMA_META_EXTERNAL(NULL, NULL, NULL));
-static const struct bu_cmd_schema transaction_schema_b =
-    BU_CMD_SCHEMA("registry_transaction_probe", "transaction declaration B",
-	NULL, NULL, BU_CMD_PARSE_INTERSPERSED,
-	BU_CMD_SCHEMA_META_EXTERNAL(NULL, NULL, NULL));
-static const struct bu_cmd_schema metadata_collision_schema =
-    BU_CMD_SCHEMA("registry_metadata_collision_probe", "metadata collision declaration",
-	NULL, NULL, BU_CMD_PARSE_INTERSPERSED,
-	BU_CMD_SCHEMA_META_EXTERNAL(NULL, NULL, NULL));
+static const struct bu_arg_schema transaction_schema_a =
+    BU_ARG_SCHEMA("registry_transaction_probe", "transaction declaration A",
+	NULL, NULL, BU_ARG_PARSE_INTERSPERSED,
+	BU_ARG_SCHEMA_META_EXTERNAL(NULL, NULL, NULL));
+static const struct bu_arg_schema transaction_schema_b =
+    BU_ARG_SCHEMA("registry_transaction_probe", "transaction declaration B",
+	NULL, NULL, BU_ARG_PARSE_INTERSPERSED,
+	BU_ARG_SCHEMA_META_EXTERNAL(NULL, NULL, NULL));
+static const struct bu_arg_schema metadata_collision_schema =
+    BU_ARG_SCHEMA("registry_metadata_collision_probe", "metadata collision declaration",
+	NULL, NULL, BU_ARG_PARSE_INTERSPERSED,
+	BU_ARG_SCHEMA_META_EXTERNAL(NULL, NULL, NULL));
 
 static struct ged_cmd_impl transaction_impl_a = {
     "registry_transaction_probe", transaction_probe_a, GED_CMD_DEFAULT,
@@ -158,7 +158,7 @@ main(int argc, char **argv)
 	return 1;
     const struct ged_cmd_semantic_provider reserved_provider = {
 	GED_CMD_PROVIDER_DB_PATH, NULL, NULL, NULL, NULL,
-	BU_CMD_VALUE_DB_PATH, 0
+	BU_ARG_VALUE_DB_PATH, 0
     };
     if (ged_cmd_semantic_provider_register(&reserved_provider) != -1) {
 	std::fprintf(stderr, "reserved provider was shadowed before first lookup\n");
@@ -275,7 +275,7 @@ main(int argc, char **argv)
     }
     const struct ged_cmd_semantic_provider transient_provider = {
 	"registry.lifecycle_provider", NULL, NULL, NULL, NULL,
-	BU_CMD_VALUE_UNKNOWN, 0
+	BU_ARG_VALUE_UNKNOWN, 0
     };
     if (ged_cmd_semantic_provider_register(&transient_provider) != 0 ||
 	    !ged_cmd_semantic_provider_exists(transient_provider.name)) {
@@ -343,7 +343,7 @@ main(int argc, char **argv)
     }
     const struct ged_cmd_semantic_provider shutdown_provider = {
 	"registry.shutdown_provider", NULL, NULL, NULL, NULL,
-	BU_CMD_VALUE_UNKNOWN, 0
+	BU_ARG_VALUE_UNKNOWN, 0
     };
     bool provider_rejected = shutdown_rejected_mutation &&
 	ged_cmd_semantic_provider_register(&shutdown_provider) == -1;

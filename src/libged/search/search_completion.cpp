@@ -25,7 +25,7 @@
 #include <set>
 #include <string>
 #include <vector>
-#include "bu/cmdschema.h"
+#include "bu/arg.h"
 #include "bu/path.h"
 #include "bu/vls.h"
 #include "ged.h"
@@ -61,7 +61,7 @@ static void ged_set_result_chars_local(struct ged_cmd_validate_result *result, c
     }
 }
 
-static void ged_set_validate_result_local(struct ged_cmd_validate_result *result, bu_cmd_validate_state_t state, size_t token_start, size_t token_end, unsigned int expected, const char *hint)
+static void ged_set_validate_result_local(struct ged_cmd_validate_result *result, bu_arg_validate_state_t state, size_t token_start, size_t token_end, unsigned int expected, const char *hint)
 {
     ged_cmd_validate_result_clear(result);
     result->state = state;
@@ -69,7 +69,7 @@ static void ged_set_validate_result_local(struct ged_cmd_validate_result *result
     result->token_end = token_end;
     result->expected = expected;
     result->hint = hint;
-    result->completion_type = BU_CMD_VALUE_UNKNOWN;
+    result->completion_type = BU_ARG_VALUE_UNKNOWN;
 }
 
 static void ged_fill_command_candidates_local(struct ged_cmd_validate_result *result, const std::string &seed)
@@ -115,18 +115,18 @@ ged_search_plan_op_takes_arg(const struct db_search_syntax_term *term)
     return term && term->argument != DB_SEARCH_SYNTAX_NO_ARGUMENT;
 }
 
-static bu_cmd_value_t
+static bu_arg_value_t
 ged_search_plan_arg_type(const struct db_search_syntax_term *term)
 {
     if (!term)
-	return BU_CMD_VALUE_UNKNOWN;
+	return BU_ARG_VALUE_UNKNOWN;
     switch (term->argument) {
-	case DB_SEARCH_SYNTAX_INTEGER_ARGUMENT: return BU_CMD_VALUE_INTEGER;
-	case DB_SEARCH_SYNTAX_TYPE_ARGUMENT: return BU_CMD_VALUE_KEYWORD;
-	case DB_SEARCH_SYNTAX_EXEC_ARGUMENTS: return BU_CMD_VALUE_RAW;
-	case DB_SEARCH_SYNTAX_STRING_ARGUMENT: return BU_CMD_VALUE_STRING;
+	case DB_SEARCH_SYNTAX_INTEGER_ARGUMENT: return BU_ARG_VALUE_INTEGER;
+	case DB_SEARCH_SYNTAX_TYPE_ARGUMENT: return BU_ARG_VALUE_KEYWORD;
+	case DB_SEARCH_SYNTAX_EXEC_ARGUMENTS: return BU_ARG_VALUE_RAW;
+	case DB_SEARCH_SYNTAX_STRING_ARGUMENT: return BU_ARG_VALUE_STRING;
 	case DB_SEARCH_SYNTAX_NO_ARGUMENT:
-	default: return BU_CMD_VALUE_UNKNOWN;
+	default: return BU_ARG_VALUE_UNKNOWN;
     }
 }
 
@@ -161,7 +161,7 @@ ged_search_add_candidate(std::vector<std::string> &candidates, const char *candi
 static void
 ged_search_set_candidates(struct ged_cmd_validate_result *result,
 			  std::vector<std::string> &candidates,
-			  bu_cmd_value_t completion_type)
+			  bu_arg_value_t completion_type)
 {
     if (!result || candidates.empty())
 	return;
@@ -351,17 +351,17 @@ ged_search_validate(struct ged *gedp, const struct ged_input_parse &parsed, cons
 	ged_search_state_consume(&state, parsed.argv[i], i);
 
     if (state.pending_arg) {
-	ged_set_validate_result_local(result, BU_CMD_VALIDATE_INCOMPLETE, token_index, token_index,
-		BU_CMD_EXPECT_OPTION_ARG, "search expression argument expected");
+	ged_set_validate_result_local(result, BU_ARG_VALIDATE_INCOMPLETE, token_index, token_index,
+		BU_ARG_EXPECT_OPTION_ARG, "search expression argument expected");
 	result->completion_type = ged_search_plan_arg_type(state.pending_arg);
 	if (BU_STR_EQUAL(state.pending_arg->name, "-exec")) {
 	    ged_fill_command_candidates_local(result, seed);
-	    result->expected = BU_CMD_EXPECT_SUBCOMMAND;
+	    result->expected = BU_ARG_EXPECT_SUBCOMMAND;
 	    result->hint = "search -exec GED command expected";
 	    if (arg && ged_cmd_exists(arg))
-		result->state = BU_CMD_VALIDATE_VALID;
+		result->state = BU_ARG_VALIDATE_VALID;
 	    else if (arg && !result->completion_count)
-		result->state = BU_CMD_VALIDATE_INVALID;
+		result->state = BU_ARG_VALIDATE_INVALID;
 	    ged_set_result_chars_local(result, parsed, token_index, token_index);
 	    return 1;
 	}
@@ -369,19 +369,19 @@ ged_search_validate(struct ged *gedp, const struct ged_input_parse &parsed, cons
 	    result->hint = ged_search_plan_validator(state.pending_arg);
 	if (BU_STR_EQUAL(state.pending_arg->name, "-type")) {
 	    ged_search_completion_collect_type_candidates(candidates, seed);
-	    ged_search_set_candidates(result, candidates, BU_CMD_VALUE_KEYWORD);
+	    ged_search_set_candidates(result, candidates, BU_ARG_VALUE_KEYWORD);
 	    if (arg && ged_search_completion_is_type_keyword(arg))
-		result->state = BU_CMD_VALIDATE_VALID;
+		result->state = BU_ARG_VALIDATE_VALID;
 	    else if (arg && !ged_search_completion_type_has_prefix(arg))
-		result->state = BU_CMD_VALIDATE_INVALID;
+		result->state = BU_ARG_VALIDATE_INVALID;
 	} else if (BU_STR_EQUAL(state.pending_arg->name, "-bool")) {
 	    ged_search_collect_bool_candidates(candidates, seed);
-	    ged_search_set_candidates(result, candidates, BU_CMD_VALUE_KEYWORD);
-	    result->completion_type = BU_CMD_VALUE_KEYWORD;
+	    ged_search_set_candidates(result, candidates, BU_ARG_VALUE_KEYWORD);
+	    result->completion_type = BU_ARG_VALUE_KEYWORD;
 	    if (arg && ged_search_is_bool_keyword(arg))
-		result->state = BU_CMD_VALIDATE_VALID;
+		result->state = BU_ARG_VALIDATE_VALID;
 	    else if (arg && candidates.empty())
-		result->state = BU_CMD_VALIDATE_INVALID;
+		result->state = BU_ARG_VALIDATE_INVALID;
 	}
 	ged_set_result_chars_local(result, parsed, token_index, token_index);
 	return 1;
@@ -389,9 +389,9 @@ ged_search_validate(struct ged *gedp, const struct ged_input_parse &parsed, cons
 
     if (state.in_exec) {
 	if (arg && BU_STR_EQUAL(arg, ";")) {
-	    ged_set_validate_result_local(result, BU_CMD_VALIDATE_VALID, token_index, token_index,
-		    BU_CMD_EXPECT_OPTION, "search -exec terminator");
-	    result->completion_type = BU_CMD_VALUE_RAW;
+	    ged_set_validate_result_local(result, BU_ARG_VALIDATE_VALID, token_index, token_index,
+		    BU_ARG_EXPECT_OPTION, "search -exec terminator");
+	    result->completion_type = BU_ARG_VALUE_RAW;
 	    ged_set_result_chars_local(result, parsed, token_index, token_index);
 	    return 1;
 	}
@@ -413,11 +413,11 @@ ged_search_validate(struct ged *gedp, const struct ged_input_parse &parsed, cons
 	nested.completion_count = 0;
 	nested.completion_candidates = NULL;
 	if (arg && db_search_syntax_exec_substitution(arg) &&
-		(result->completion_type == BU_CMD_VALUE_DB_OBJECT || result->completion_type == BU_CMD_VALUE_DB_PATH))
-	    result->state = BU_CMD_VALIDATE_VALID;
-	if (trailing_space && result->state == BU_CMD_VALIDATE_VALID) {
-	    result->state = BU_CMD_VALIDATE_INCOMPLETE;
-	    result->expected = BU_CMD_EXPECT_OPERAND;
+		(result->completion_type == BU_ARG_VALUE_DB_OBJECT || result->completion_type == BU_ARG_VALUE_DB_PATH))
+	    result->state = BU_ARG_VALIDATE_VALID;
+	if (trailing_space && result->state == BU_ARG_VALIDATE_VALID) {
+	    result->state = BU_ARG_VALIDATE_INCOMPLETE;
+	    result->expected = BU_ARG_EXPECT_OPERAND;
 	    result->hint = "search -exec requires a standalone ; terminator";
 	}
 	ged_set_result_chars_local(result, parsed, token_index, token_index);
@@ -427,16 +427,16 @@ ged_search_validate(struct ged *gedp, const struct ged_input_parse &parsed, cons
 
     if (!state.in_plan) {
 	if (seed.empty() || ged_search_is_plan_start(seed.c_str())) {
-	    ged_set_validate_result_local(result, BU_CMD_VALIDATE_VALID, token_index, token_index,
-		    BU_CMD_EXPECT_OPTION | BU_CMD_EXPECT_OPERAND, "search path or expression expected");
+	    ged_set_validate_result_local(result, BU_ARG_VALIDATE_VALID, token_index, token_index,
+		    BU_ARG_EXPECT_OPTION | BU_ARG_EXPECT_OPERAND, "search path or expression expected");
 	    if (!state.path_seen)
 		ged_search_collect_top_options(candidates, seed);
 	    ged_search_collect_plan_ops(candidates, seed);
 	    if (!seed.empty() && candidates.empty()) {
-		result->state = BU_CMD_VALIDATE_INVALID;
+		result->state = BU_ARG_VALIDATE_INVALID;
 		result->hint = "unknown search expression operator";
 	    }
-	    ged_search_set_candidates(result, candidates, BU_CMD_VALUE_UNKNOWN);
+	    ged_search_set_candidates(result, candidates, BU_ARG_VALUE_UNKNOWN);
 	    /* At the initial empty slot both a path and an expression operator are
 	     * legal.  Keep the compact static grammar candidates and ask the shared
 	     * database provider for the other half of that union. */
@@ -448,31 +448,31 @@ ged_search_validate(struct ged *gedp, const struct ged_input_parse &parsed, cons
 	    return 1;
 	}
 
-	ged_set_validate_result_local(result, BU_CMD_VALIDATE_VALID, token_index, token_index,
-		BU_CMD_EXPECT_OPERAND, "search path expected");
-	result->completion_type = BU_CMD_VALUE_DB_PATH;
+	ged_set_validate_result_local(result, BU_ARG_VALIDATE_VALID, token_index, token_index,
+		BU_ARG_EXPECT_OPERAND, "search path expected");
+	result->completion_type = BU_ARG_VALUE_DB_PATH;
 	result->semantic_provider = state.include_hidden ?
 	    "ged.db_path_geometry_hidden" : "ged.db_path";
 	if (arg && ged_search_path_state(gedp, arg) == GED_CMD_SEMANTIC_INVALID)
-	    result->state = BU_CMD_VALIDATE_INVALID;
+	    result->state = BU_ARG_VALIDATE_INVALID;
 	ged_set_result_chars_local(result, parsed, token_index, token_index);
 	return 1;
     }
 
     current_op = arg ? ged_search_find_plan_op(arg) : NULL;
     if (arg && ged_search_is_plan_start(arg) && !current_op && !candidates.size()) {
-	ged_set_validate_result_local(result, BU_CMD_VALIDATE_INVALID, token_index, token_index,
-		BU_CMD_EXPECT_OPTION, "unknown search expression operator");
+	ged_set_validate_result_local(result, BU_ARG_VALIDATE_INVALID, token_index, token_index,
+		BU_ARG_EXPECT_OPTION, "unknown search expression operator");
 	ged_search_collect_plan_ops(candidates, seed);
-	ged_search_set_candidates(result, candidates, BU_CMD_VALUE_UNKNOWN);
+	ged_search_set_candidates(result, candidates, BU_ARG_VALUE_UNKNOWN);
 	ged_set_result_chars_local(result, parsed, token_index, token_index);
 	return 1;
     }
 
-    ged_set_validate_result_local(result, current_op ? BU_CMD_VALIDATE_VALID : BU_CMD_VALIDATE_INCOMPLETE,
-	    token_index, token_index, BU_CMD_EXPECT_OPTION, "search expression operator expected");
+    ged_set_validate_result_local(result, current_op ? BU_ARG_VALIDATE_VALID : BU_ARG_VALIDATE_INCOMPLETE,
+	    token_index, token_index, BU_ARG_EXPECT_OPTION, "search expression operator expected");
     ged_search_collect_plan_ops(candidates, seed);
-    ged_search_set_candidates(result, candidates, BU_CMD_VALUE_UNKNOWN);
+    ged_search_set_candidates(result, candidates, BU_ARG_VALUE_UNKNOWN);
     ged_set_result_chars_local(result, parsed, token_index, token_index);
     return 1;
 }
@@ -517,7 +517,7 @@ ged_search_analyze(struct ged *gedp, const struct ged_input_parse &parsed, struc
 			struct ged_cmd_validate_result nested_validation = GED_CMD_VALIDATE_RESULT_NULL;
 			std::string completed_line = nested_line + " ";
 			(void)ged_cmd_validate(gedp, completed_line.c_str(), completed_line.size(), &nested_validation);
-			if (nested_validation.state == BU_CMD_VALIDATE_INCOMPLETE) {
+			if (nested_validation.state == BU_ARG_VALIDATE_INCOMPLETE) {
 			    struct ged_cmd_analysis_token *last = &analysis->tokens[exec_end - 1];
 			    if (last->semantic_state != GED_CMD_SEMANTIC_INVALID) {
 				last->semantic_state = GED_CMD_SEMANTIC_INCOMPLETE;
@@ -537,7 +537,7 @@ ged_search_analyze(struct ged *gedp, const struct ged_input_parse &parsed, struc
 		if (exec_end < parsed.argc) {
 		    struct ged_cmd_analysis_token *terminator = &analysis->tokens[exec_end];
 		    terminator->role = GED_CMD_TOKEN_OPERAND;
-		    terminator->value_type = BU_CMD_VALUE_RAW;
+		    terminator->value_type = BU_ARG_VALUE_RAW;
 		    terminator->semantic_state = (exec_end == i) ? GED_CMD_SEMANTIC_INCOMPLETE : GED_CMD_SEMANTIC_VALID;
 		    terminator->hint = (exec_end == i) ? "search -exec GED command expected" : "search -exec terminator";
 		}
@@ -562,14 +562,14 @@ ged_search_analyze(struct ged *gedp, const struct ged_input_parse &parsed, struc
 	if (!state.in_plan) {
 	    if (!state.path_seen && ged_search_is_top_option(arg)) {
 		token->role = GED_CMD_TOKEN_OPTION;
-		token->value_type = BU_CMD_VALUE_BOOL;
+		token->value_type = BU_ARG_VALUE_BOOL;
 		token->semantic_state = GED_CMD_SEMANTIC_VALID;
 		token->hint = "search option";
 		continue;
 	    }
 	    if (!ged_search_is_plan_start(arg)) {
 		token->role = GED_CMD_TOKEN_OPERAND;
-		token->value_type = BU_CMD_VALUE_DB_PATH;
+		token->value_type = BU_ARG_VALUE_DB_PATH;
 		token->validator = "ged.search.path";
 		token->semantic_state = ged_search_path_state(gedp, arg);
 		token->hint = "search path";
@@ -581,7 +581,7 @@ ged_search_analyze(struct ged *gedp, const struct ged_input_parse &parsed, struc
 
 	const struct db_search_syntax_term *op = ged_search_find_plan_op(arg);
 	token->role = GED_CMD_TOKEN_OPTION;
-	token->value_type = BU_CMD_VALUE_UNKNOWN;
+	token->value_type = BU_ARG_VALUE_UNKNOWN;
 	token->semantic_state = op ? GED_CMD_SEMANTIC_VALID : GED_CMD_SEMANTIC_INVALID;
 	token->hint = op ? "search expression operator" : "unknown search expression operator";
 	if (ged_search_plan_op_takes_arg(op))
@@ -635,7 +635,7 @@ ged_search_grammar_analyze(struct ged *gedp, const char *input, struct ged_cmd_a
     for (size_t i = 0; i < parsed.argc; i++) {
 	ged_analysis_set_span_local(&analysis->tokens[i], parsed, i);
 	analysis->tokens[i].role = GED_CMD_TOKEN_UNKNOWN;
-	analysis->tokens[i].value_type = BU_CMD_VALUE_UNKNOWN;
+	analysis->tokens[i].value_type = BU_ARG_VALUE_UNKNOWN;
 	analysis->tokens[i].semantic_state = GED_CMD_SEMANTIC_UNKNOWN;
 	analysis->tokens[i].validator = NULL;
 	analysis->tokens[i].hint = NULL;
@@ -682,7 +682,7 @@ ged_search_grammar_json(void)
 	    bu_vls_putc(&out, ',');
 	bu_vls_printf(&out, "{\"name\":\"%s\",\"argument\":\"none\",\"repeatable\":%s,\"help\":",
 		options[i].name, options[i].kind == GED_SEARCH_TOP_OPTION_VERBOSE ? "true" : "false");
-	bu_cmd_json_string(&out, options[i].help);
+	bu_arg_json_string(&out, options[i].help);
 	bu_vls_putc(&out, '}');
     }
     bu_vls_strcat(&out, "],\"terms\":[");
@@ -691,7 +691,7 @@ ged_search_grammar_json(void)
 	    bu_vls_putc(&out, ',');
 	bu_vls_printf(&out, "{\"name\":\"%s\",\"argument\":\"%s\",\"help\":",
 		terms[i].name, ged_search_syntax_argument_name(terms[i].argument));
-	bu_cmd_json_string(&out, terms[i].help);
+	bu_arg_json_string(&out, terms[i].help);
 	bu_vls_putc(&out, '}');
     }
     bu_vls_strcat(&out, "]}");

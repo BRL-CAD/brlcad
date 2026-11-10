@@ -28,7 +28,7 @@
 #include <string.h>
 
 #include "bu/cmd.h"
-#include "bu/cmdschema.h"
+#include "bu/arg.h"
 #include "bu/units.h"
 
 #include "../ged_private.h"
@@ -38,7 +38,7 @@ struct units_args {
     int list_names;
 };
 
-static const struct bu_cmd_schema *units_schema(void);
+static const struct bu_arg_schema *units_schema(void);
 
 
 int
@@ -57,7 +57,7 @@ ged_units_core(struct ged *gedp, int argc, const char *argv[])
     bu_vls_trunc(gedp->ged_result_str, 0);
 
 
-    option_end = bu_cmd_schema_parse(units_schema(), &args, gedp->ged_result_str,
+    option_end = bu_arg_schema_parse(units_schema(), &args, gedp->ged_result_str,
 	argc - 1, argv + 1);
     if (option_end < 0) {
 	bu_vls_trunc(gedp->ged_result_str, 0);
@@ -134,7 +134,7 @@ static const char *units_ft_aliases[] = {"foot", "feet", NULL};
 static const char *units_yd_aliases[] = {"yard", NULL};
 static const char *units_mi_aliases[] = {"mile", NULL};
 
-static const struct bu_cmd_value_keyword units_keyword_values[] = {
+static const struct bu_arg_value_keyword units_keyword_values[] = {
     {"um", units_um_aliases, "Micrometre"},
     {"mm", units_mm_aliases, "Millimetre"},
     {"cm", units_cm_aliases, "Centimetre"},
@@ -147,35 +147,35 @@ static const struct bu_cmd_value_keyword units_keyword_values[] = {
     {NULL, NULL, NULL}
 };
 
-static const struct bu_cmd_option units_options[] = {
-    BU_CMD_FLAG("s", NULL, struct units_args, short_name, "Print only the current unit name"),
-    BU_CMD_FLAG("t", NULL, struct units_args, list_names, "List valid unit names"),
-    BU_CMD_OPTION_NULL
+static const struct bu_arg_option units_options[] = {
+    BU_ARG_FLAG("s", NULL, struct units_args, short_name, "Print only the current unit name"),
+    BU_ARG_FLAG("t", NULL, struct units_args, list_names, "List valid unit names"),
+    BU_ARG_OPTION_NULL
 };
 
-static const struct bu_cmd_operand units_operands[] = {
-    {"unit", 0, 1, "Unit name or unit expression", BU_CMD_VALUE_STRING,
-	bu_cmd_units_validate, "ged.unit", NULL, units_keyword_values, NULL,
-	BU_CMD_VALUE_RANGE_NONE},
-    BU_CMD_OPERAND_NULL
+static const struct bu_arg_operand units_operands[] = {
+    {"unit", 0, 1, "Unit name or unit expression", BU_ARG_VALUE_STRING,
+	bu_arg_units_validate, "ged.unit", NULL, units_keyword_values, NULL,
+	BU_ARG_VALUE_RANGE_NONE},
+    BU_ARG_OPERAND_NULL
 };
 
 static const char * const units_mode_options[] = {"s", "t", NULL};
-static const struct bu_cmd_constraint units_constraints[] = {
-    BU_CMD_CONSTRAINT_OPTION_OCCURRENCES(units_mode_options, 0, 1,
+static const struct bu_arg_constraint units_constraints[] = {
+    BU_ARG_CONSTRAINT_OPTION_OCCURRENCES(units_mode_options, 0, 1,
 	"-s and -t are mutually exclusive and may be specified only once"),
-    BU_CMD_CONSTRAINT_OPERANDS(BU_CMD_CONDITION_ANY_OPTION_PRESENT,
+    BU_ARG_CONSTRAINT_OPERANDS(BU_ARG_CONDITION_ANY_OPTION_PRESENT,
 	units_mode_options, 0, 0,
 	"-s and -t cannot be combined with a unit expression"),
-    BU_CMD_CONSTRAINT_NULL
+    BU_ARG_CONSTRAINT_NULL
 };
 
-static const struct bu_cmd_schema units_cmd_schema = {
+static const struct bu_arg_schema units_cmd_schema = {
     "units", "Get or set database units", units_options, units_operands,
-	BU_CMD_PARSE_OPTIONS_FIRST, BU_CMD_SCHEMA_CONSTRAINTS(NULL, units_constraints)
+	BU_ARG_PARSE_OPTIONS_FIRST, BU_ARG_SCHEMA_CONSTRAINTS(NULL, units_constraints)
 };
 
-static const struct bu_cmd_schema *
+static const struct bu_arg_schema *
 units_schema(void)
 {
     return &units_cmd_schema;

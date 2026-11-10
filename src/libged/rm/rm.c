@@ -48,7 +48,7 @@
 #include <string.h>
 
 #include "bu/cmd.h"
-#include "bu/cmdschema.h"
+#include "bu/arg.h"
 #include "bu/glob.h"
 #include "bu/hash.h"
 #include "bu/malloc.h"
@@ -1135,40 +1135,40 @@ struct rm_args {
     int print_help;
 };
 
-static const struct bu_cmd_option rm_options[] = {
-    BU_CMD_FLAG("f", "force", struct rm_args, force, "Force deletion"),
-    BU_CMD_ALIAS_SHORT("F", "force", 1),
-    BU_CMD_FLAG("r", "recursive", struct rm_args, recursive,
+static const struct bu_arg_option rm_options[] = {
+    BU_ARG_FLAG("f", "force", struct rm_args, force, "Force deletion"),
+    BU_ARG_ALIAS_SHORT("F", "force", 1),
+    BU_ARG_FLAG("r", "recursive", struct rm_args, recursive,
 	"Recursively delete unshared descendants"),
-    BU_CMD_ALIAS_SHORT("R", "recursive", 1),
-    BU_CMD_FLAG("n", "dry-run", struct rm_args, dry_run,
+    BU_ARG_ALIAS_SHORT("R", "recursive", 1),
+    BU_ARG_FLAG("n", "dry-run", struct rm_args, dry_run,
 	"Report what would be deleted without modifying the database"),
-    BU_CMD_ALIAS_SHORT("N", "dry-run", 1),
-    BU_CMD_FLAG("h", "help", struct rm_args, print_help, "Print help and exit"),
-    BU_CMD_ALIAS_SHORT("?", "help", 1),
-    BU_CMD_OPTION_NULL
+    BU_ARG_ALIAS_SHORT("N", "dry-run", 1),
+    BU_ARG_FLAG("h", "help", struct rm_args, print_help, "Print help and exit"),
+    BU_ARG_ALIAS_SHORT("?", "help", 1),
+    BU_ARG_OPTION_NULL
 };
-static const struct bu_cmd_arg_shape rm_pattern_shape =
-    BU_CMD_ARG_SHAPE(BU_CMD_ARG_SHAPE_CUSTOM, 1, 1,
+static const struct bu_arg_shape rm_pattern_shape =
+    BU_ARG_SHAPE(BU_ARG_SHAPE_CUSTOM, 1, 1,
 	"Database object, path, or glob pattern");
-static const struct bu_cmd_operand rm_operands[] = {
-    BU_CMD_OPERAND_SHAPED("objects", BU_CMD_VALUE_DB_PATH, 1,
-	BU_CMD_COUNT_UNLIMITED, NULL, "Database objects, paths, or glob patterns",
+static const struct bu_arg_operand rm_operands[] = {
+    BU_ARG_OPERAND_SHAPED("objects", BU_ARG_VALUE_DB_PATH, 1,
+	BU_ARG_COUNT_UNLIMITED, NULL, "Database objects, paths, or glob patterns",
 	"ged.db_path_or_pattern.force_all", &rm_pattern_shape),
-    BU_CMD_OPERAND_NULL
+    BU_ARG_OPERAND_NULL
 };
 
-static const struct bu_cmd_schema rm_cmd_schema = {
+static const struct bu_arg_schema rm_cmd_schema = {
     "rm", "Remove database objects, paths, or matching patterns", rm_options,
-    rm_operands, BU_CMD_PARSE_INTERSPERSED,
-    BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+    rm_operands, BU_ARG_PARSE_INTERSPERSED,
+    BU_ARG_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
 
 
 static void
 rm_show_help(struct ged *gedp)
 {
-    char *help = bu_cmd_schema_help(&rm_cmd_schema, "rm");
+    char *help = bu_arg_schema_help(&rm_cmd_schema, "rm");
 
     if (help) {
 	bu_vls_sprintf(gedp->ged_result_str, "%s", help);
@@ -1188,7 +1188,7 @@ ged_rm_core(struct ged *gedp, int argc, const char *argv[])
     struct bu_ptbl operands = BU_PTBL_INIT_ZERO;
     struct rm_ref_graph graph;
     struct rm_obj_set delete_set;
-    struct bu_cmd_validate_result validation = BU_CMD_VALIDATE_RESULT_NULL;
+    struct bu_arg_validate_result validation = BU_ARG_VALIDATE_RESULT_NULL;
 
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
     GED_CHECK_DRAWABLE(gedp, BRLCAD_ERROR);
@@ -1202,7 +1202,7 @@ ged_rm_core(struct ged *gedp, int argc, const char *argv[])
 	return GED_HELP;
     }
 
-    operand_index = bu_cmd_schema_parse(&rm_cmd_schema, &options,
+    operand_index = bu_arg_schema_parse(&rm_cmd_schema, &options,
 	gedp->ged_result_str, argc - 1, argv + 1);
     if (operand_index < 0) {
 	rm_show_help(gedp);
@@ -1214,16 +1214,16 @@ ged_rm_core(struct ged *gedp, int argc, const char *argv[])
 	return GED_HELP;
     }
 
-    if (bu_cmd_schema_validate(&rm_cmd_schema, (size_t)(argc - 1), argv + 1,
+    if (bu_arg_schema_validate(&rm_cmd_schema, (size_t)(argc - 1), argv + 1,
 	    (size_t)(argc - 1), &validation) != 0 ||
-	validation.state != BU_CMD_VALIDATE_VALID) {
+	validation.state != BU_ARG_VALIDATE_VALID) {
 	if (validation.hint && validation.hint[0])
 	    bu_vls_printf(gedp->ged_result_str, "%s\n", validation.hint);
-	bu_cmd_validate_result_clear(&validation);
+	bu_arg_validate_result_clear(&validation);
 	rm_show_help(gedp);
 	return BRLCAD_ERROR;
     }
-    bu_cmd_validate_result_clear(&validation);
+    bu_arg_validate_result_clear(&validation);
     argv += operand_index + 1;
     argc = operand_count;
 

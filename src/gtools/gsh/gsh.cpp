@@ -42,7 +42,7 @@
 
 #include "brlcad_ident.h"
 #include "bu.h"
-#include "bu/cmdschema.h"
+#include "bu/arg.h"
 #include "bv.h"
 
 #define USE_DM 1
@@ -65,7 +65,7 @@ struct gsh_args {
     const char *command_schema;
 };
 
-static const struct bu_cmd_value_keyword gsh_completion_modes[] = {
+static const struct bu_arg_value_keyword gsh_completion_modes[] = {
     {"filter", NULL, "Filter candidate lists as input changes"},
     {"cycle", NULL, "Cycle through complete candidates"},
     {"prefix", NULL, "Complete the common prefix before listing candidates"},
@@ -73,29 +73,29 @@ static const struct bu_cmd_value_keyword gsh_completion_modes[] = {
     {"off", NULL, "Disable command completion"},
     {NULL, NULL, NULL}
 };
-static const struct bu_cmd_option gsh_options[] = {
-    BU_CMD_FLAG("h", "help", struct gsh_args, help, "Print help and exit"),
-    BU_CMD_ALIAS_SHORT("?", "help", 1),
-    BU_CMD_FLAG("v", "version", struct gsh_args, version,
+static const struct bu_arg_option gsh_options[] = {
+    BU_ARG_FLAG("h", "help", struct gsh_args, help, "Print help and exit"),
+    BU_ARG_ALIAS_SHORT("?", "help", 1),
+    BU_ARG_FLAG("v", "version", struct gsh_args, version,
 	"Report BRL-CAD and library versions, then exit"),
-    BU_CMD_FLAG(NULL, "new-cmds", struct gsh_args, new_cmd_forms,
+    BU_ARG_FLAG(NULL, "new-cmds", struct gsh_args, new_cmd_forms,
 	"Use the new QGED-style command forms"),
-    BU_CMD_KEYWORD_VALUES(NULL, "completion-mode", struct gsh_args, completion_mode,
+    BU_ARG_KEYWORD_VALUES(NULL, "completion-mode", struct gsh_args, completion_mode,
 	"mode", "Interactive completion mode", gsh_completion_modes),
-    BU_CMD_STRING(NULL, "command-schema", struct gsh_args, command_schema,
+    BU_ARG_STRING(NULL, "command-schema", struct gsh_args, command_schema,
 	"command|all", "Print static command grammar JSON and exit"),
-    BU_CMD_OPTION_NULL
+    BU_ARG_OPTION_NULL
 };
-static const struct bu_cmd_schema gsh_schema = {
+static const struct bu_arg_schema gsh_schema = {
     "gsh", "BRL-CAD geometry shell", gsh_options, NULL,
-    BU_CMD_PARSE_OPTIONS_FIRST, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+    BU_ARG_PARSE_OPTIONS_FIRST, BU_ARG_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
 
 static void
 gsh_usage(void)
 {
     struct bu_vls msg = BU_VLS_INIT_ZERO;
-    char *help = bu_cmd_schema_help(&gsh_schema, "gsh");
+    char *help = bu_arg_schema_help(&gsh_schema, "gsh");
 
     bu_vls_sprintf(&msg, "%s", help ? help : "");
     if (help)
@@ -937,7 +937,7 @@ main(int argc, const char **argv)
     struct bu_vls opt_msg = BU_VLS_INIT_ZERO;
 
     for (int i = 0; i < argc;) {
-	int span = bu_cmd_schema_option_span(&gsh_schema, (size_t)(argc - i), argv + i);
+	int span = bu_arg_schema_option_span(&gsh_schema, (size_t)(argc - i), argv + i);
 	if (span > 0) {
 	    if (BU_STR_EQUAL(argv[i], "--")) {
 		for (i++; i < argc; i++)
@@ -950,8 +950,8 @@ main(int argc, const char **argv)
 	    continue;
 	}
 	if (span < 0 || (argv[i][0] == '-' && argv[i][1] &&
-	    bu_cmd_schema_option_span(&gsh_schema, 1, argv + i) < 0)) {
-	    (void)bu_cmd_schema_parse(&gsh_schema, &args, &opt_msg, argc - i, argv + i);
+	    bu_arg_schema_option_span(&gsh_schema, 1, argv + i) < 0)) {
+	    (void)bu_arg_schema_parse(&gsh_schema, &args, &opt_msg, argc - i, argv + i);
 	    fputs(bu_vls_addr(&opt_msg), stderr);
 	    bu_vls_free(&opt_msg);
 	    bu_exit(EXIT_FAILURE, NULL);
@@ -960,7 +960,7 @@ main(int argc, const char **argv)
 	i++;
     }
 
-    if (bu_cmd_schema_parse(&gsh_schema, &args, &opt_msg,
+    if (bu_arg_schema_parse(&gsh_schema, &args, &opt_msg,
 	(int)option_argv.size(), option_argv.data()) < 0) {
 	fputs(bu_vls_addr(&opt_msg), stderr);
 	bu_vls_free(&opt_msg);
@@ -1246,7 +1246,7 @@ main(int argc, const char **argv)
 		} else if (token->role == GED_CMD_TOKEN_OPTION) {
 		    span.style = linenoise::HIGHLIGHT_OPTION;
 		} else if (token->semantic_state == GED_CMD_SEMANTIC_VALID &&
-			(token->value_type == BU_CMD_VALUE_DB_OBJECT || token->value_type == BU_CMD_VALUE_DB_PATH)) {
+			(token->value_type == BU_ARG_VALUE_DB_OBJECT || token->value_type == BU_ARG_VALUE_DB_PATH)) {
 		    span.style = linenoise::HIGHLIGHT_VALID;
 		}
 

@@ -30,7 +30,7 @@
 #include <string.h>
 
 #include "bu/app.h"
-#include "bu/cmdschema.h"
+#include "bu/arg.h"
 #include "bu/file.h"
 #include "bu/sort.h"
 #include "bu/str.h"
@@ -61,8 +61,8 @@ BU_OPT_DESC_BUILDER(edcodes_options, struct edcodes_args, EDCODES_OPTIONS);
 
 static const ged_opt_rule edcodes_opt_rules[] = {
     GED_RULE_OPTIONS("i n r", 0, 1, "-i, -n, and -r are mutually exclusive"),
-    GED_RULE_OPERANDS(BU_CMD_CONDITION_NO_OPTION_PRESENT, "n", 1,
-	BU_CMD_COUNT_UNLIMITED, "object required for region-code editing"),
+    GED_RULE_OPERANDS(BU_ARG_CONDITION_NO_OPTION_PRESENT, "n", 1,
+	BU_ARG_COUNT_UNLIMITED, "object required for region-code editing"),
     GED_RULE_NULL
 };
 static const ged_opt_spec edcodes_opt_spec =

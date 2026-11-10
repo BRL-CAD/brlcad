@@ -28,7 +28,7 @@
 #include <vector>
 
 #include "vmath.h"
-#include "bu/cmdschema.h"
+#include "bu/arg.h"
 #include "bu/malloc.h"
 #include "bu/str.h"
 
@@ -117,39 +117,39 @@ struct bot_smooth_args {
     int iterations;
 };
 
-static const struct bu_cmd_option bot_smooth_options[] = {
-    BU_CMD_FLAG("h", "help", struct bot_smooth_args, print_help,
+static const struct bu_arg_option bot_smooth_options[] = {
+    BU_ARG_FLAG("h", "help", struct bot_smooth_args, print_help,
 	"Print command help"),
-    BU_CMD_INTEGER_RANGE("c", "continuity", struct bot_smooth_args,
+    BU_ARG_INTEGER_RANGE("c", "continuity", struct bot_smooth_args,
 	continuity, 0, 2, "mode", "Continuity mode (0, 1, or 2)"),
-    BU_CMD_INTEGER_RANGE("d", "direction", struct bot_smooth_args,
+    BU_ARG_INTEGER_RANGE("d", "direction", struct bot_smooth_args,
 	direction, 0, 2, "mode", "Smoothing direction (0, 1, or 2)"),
-    BU_CMD_NUMBER("e", "max-local-error", struct bot_smooth_args,
+    BU_ARG_NUMBER("e", "max-local-error", struct bot_smooth_args,
 	max_lerror, "error", "Maximum local error"),
-    BU_CMD_NUMBER("E", "max-abs-error", struct bot_smooth_args,
+    BU_ARG_NUMBER("E", "max-abs-error", struct bot_smooth_args,
 	max_aerror, "error", "Maximum absolute error"),
-    BU_CMD_POSITIVE_INTEGER("I", "iterations", struct bot_smooth_args,
+    BU_ARG_POSITIVE_INTEGER("I", "iterations", struct bot_smooth_args,
 	iterations, "count", "Number of smoothing iterations"),
-    BU_CMD_OPTION_NULL
+    BU_ARG_OPTION_NULL
 };
-static const struct bu_cmd_operand bot_smooth_operands[] = {
-    BU_CMD_OPERAND("input_bot", BU_CMD_VALUE_DB_OBJECT, 1, 1,
+static const struct bu_arg_operand bot_smooth_operands[] = {
+    BU_ARG_OPERAND("input_bot", BU_ARG_VALUE_DB_OBJECT, 1, 1,
 	"Input BoT object", "ged.db_object"),
-    BU_CMD_OPERAND("output_name", BU_CMD_VALUE_STRING, 0, 1,
+    BU_ARG_OPERAND("output_name", BU_ARG_VALUE_STRING, 0, 1,
 	"Optional output BoT name", NULL),
-    BU_CMD_OPERAND_NULL
+    BU_ARG_OPERAND_NULL
 };
-extern "C" const struct bu_cmd_schema ged_bot_smooth_subcommand_schema = {
+extern "C" const struct bu_arg_schema ged_bot_smooth_subcommand_schema = {
     "smooth", "Smooth a BoT", bot_smooth_options, bot_smooth_operands,
-    BU_CMD_PARSE_INTERSPERSED,
-    BU_CMD_SCHEMA_META_HELP(NULL, NULL, NULL, NULL, NULL)
+    BU_ARG_PARSE_INTERSPERSED,
+    BU_ARG_SCHEMA_META_HELP(NULL, NULL, NULL, NULL, NULL)
 };
 
 static void
 smooth_usage(struct bu_vls *str, const char *cmd)
 {
     bu_vls_trunc(str, 0);
-    (void)bu_cmd_schema_help_append(str, &ged_bot_smooth_subcommand_schema, cmd);
+    (void)bu_arg_schema_help_append(str, &ged_bot_smooth_subcommand_schema, cmd);
     bu_vls_putc(str, '\n');
 
     bu_vls_printf(str, "Available continuity options are:\n");
@@ -188,7 +188,7 @@ _bot_cmd_smooth(void* bs, int argc, const char** argv)
 	return GED_HELP;
     }
 
-    operand_index = bu_cmd_schema_parse_complete(&ged_bot_smooth_subcommand_schema, &args,
+    operand_index = bu_arg_schema_parse_complete(&ged_bot_smooth_subcommand_schema, &args,
 	gedp->ged_result_str, argc, argv);
     if (operand_index < 0)
 	return BRLCAD_ERROR;

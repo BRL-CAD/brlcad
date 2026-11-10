@@ -28,7 +28,7 @@
 #include <string.h>
 
 #include "bu/cmd.h"
-#include "bu/cmdschema.h"
+#include "bu/arg.h"
 
 #include "../ged_private.h"
 
@@ -39,9 +39,9 @@ struct listeval_args {
 
 
 static int
-path_components_context_validate(const struct bu_cmd_schema *schema,
+path_components_context_validate(const struct bu_arg_schema *schema,
 	size_t argc, const char **argv, size_t cursor_arg, void *UNUSED(context),
-	struct bu_cmd_validate_result *result)
+	struct bu_arg_validate_result *result)
 {
     size_t first_operand = 0;
 
@@ -65,45 +65,45 @@ path_components_context_validate(const struct bu_cmd_schema *schema,
     if (cursor_arg < argc && argv[cursor_arg] && strchr(argv[cursor_arg], '/'))
 	return 0;
 
-    result->completion_type = BU_CMD_VALUE_DB_PATH;
+    result->completion_type = BU_ARG_VALUE_DB_PATH;
     result->semantic_provider = "ged.db_path_components";
     return 0;
 }
 
-static const struct bu_cmd_option listeval_schema_options[] = {
-    BU_CMD_FLAG("t", NULL, struct listeval_args, terse,
+static const struct bu_arg_option listeval_schema_options[] = {
+    BU_ARG_FLAG("t", NULL, struct listeval_args, terse,
 	"Use terse evaluated-object output"),
-    BU_CMD_OPTION_NULL
+    BU_ARG_OPTION_NULL
 };
-static const struct bu_cmd_operand listeval_schema_operands[] = {
-    BU_CMD_OPERAND("path", BU_CMD_VALUE_DB_PATH, 1, BU_CMD_COUNT_UNLIMITED,
+static const struct bu_arg_operand listeval_schema_operands[] = {
+    BU_ARG_OPERAND("path", BU_ARG_VALUE_DB_PATH, 1, BU_ARG_COUNT_UNLIMITED,
 	"Slash-separated path or space-separated path components", "ged.db_path"),
-    BU_CMD_OPERAND_NULL
+    BU_ARG_OPERAND_NULL
 };
-static const struct bu_cmd_schema listeval_cmd_schema = {
+static const struct bu_arg_schema listeval_cmd_schema = {
     "listeval", "List evaluated objects along a database path",
     listeval_schema_options, listeval_schema_operands,
-    BU_CMD_PARSE_OPTIONS_FIRST,
-    BU_CMD_SCHEMA_CONTEXT_VALIDATOR(path_components_context_validate)
+    BU_ARG_PARSE_OPTIONS_FIRST,
+    BU_ARG_SCHEMA_CONTEXT_VALIDATOR(path_components_context_validate)
 };
-static const struct bu_cmd_operand paths_schema_operands[] = {
-    BU_CMD_OPERAND("path", BU_CMD_VALUE_DB_PATH, 1, BU_CMD_COUNT_UNLIMITED,
+static const struct bu_arg_operand paths_schema_operands[] = {
+    BU_ARG_OPERAND("path", BU_ARG_VALUE_DB_PATH, 1, BU_ARG_COUNT_UNLIMITED,
 	"Slash-separated path or space-separated path components", "ged.db_path"),
-    BU_CMD_OPERAND_NULL
+    BU_ARG_OPERAND_NULL
 };
-static const struct bu_cmd_schema paths_cmd_schema = {
+static const struct bu_arg_schema paths_cmd_schema = {
     "paths", "List paths matching a database path prefix", NULL,
-    paths_schema_operands, BU_CMD_PARSE_OPTIONS_FIRST,
-    BU_CMD_SCHEMA_CONTEXT_VALIDATOR(path_components_context_validate)
+    paths_schema_operands, BU_ARG_PARSE_OPTIONS_FIRST,
+    BU_ARG_SCHEMA_CONTEXT_VALIDATOR(path_components_context_validate)
 };
-static const struct bu_cmd_schema pathsum_cmd_schema = {
+static const struct bu_arg_schema pathsum_cmd_schema = {
     "pathsum", "Report the accumulated transform along a database path", NULL,
-    paths_schema_operands, BU_CMD_PARSE_OPTIONS_FIRST,
-    BU_CMD_SCHEMA_CONTEXT_VALIDATOR(path_components_context_validate)
+    paths_schema_operands, BU_ARG_PARSE_OPTIONS_FIRST,
+    BU_ARG_SCHEMA_CONTEXT_VALIDATOR(path_components_context_validate)
 };
 
 
-static const struct bu_cmd_schema *
+static const struct bu_arg_schema *
 pathsum_schema(const char *command)
 {
     if (BU_STR_EQUAL(command, "listeval"))
@@ -167,7 +167,7 @@ ged_pathsum_core(struct ged *gedp, int argc, const char *argv[])
 	return GED_HELP;
     }
 
-    operand_index = bu_cmd_schema_parse_complete(pathsum_schema(command), &args,
+    operand_index = bu_arg_schema_parse_complete(pathsum_schema(command), &args,
 	gedp->ged_result_str, argc - 1, argv + 1);
     if (operand_index < 0) {
 	pathsum_show_help(gedp, command);

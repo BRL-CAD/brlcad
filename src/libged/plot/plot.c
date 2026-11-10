@@ -31,7 +31,7 @@
 #include <string.h>
 
 #include "bn.h"
-#include "bu/cmdschema.h"
+#include "bu/arg.h"
 #include "bv/plot3.h"
 #include "bg/clip.h"
 
@@ -200,33 +200,33 @@ struct plot_args {
     int z_clip;
 };
 
-static const struct bu_cmd_option plot_schema_options[] = {
-    BU_CMD_FLAG("2", NULL, struct plot_args, two_d, "Write a 2D plot"),
-    BU_CMD_FLAG("3", NULL, struct plot_args, three_d, "Write a 3D plot"),
-    BU_CMD_FLAG("f", NULL, struct plot_args, floating,
+static const struct bu_arg_option plot_schema_options[] = {
+    BU_ARG_FLAG("2", NULL, struct plot_args, two_d, "Write a 2D plot"),
+    BU_ARG_FLAG("3", NULL, struct plot_args, three_d, "Write a 3D plot"),
+    BU_ARG_FLAG("f", NULL, struct plot_args, floating,
 	"Use floating-point plot output"),
-    BU_CMD_FLAG("g", NULL, struct plot_args, grid, "Include a grid"),
-    BU_CMD_FLAG("z", NULL, struct plot_args, z_clip, "Enable Z clipping"),
-    BU_CMD_ALIAS_SHORT("Z", "z", 1),
-    BU_CMD_OPTION_NULL
+    BU_ARG_FLAG("g", NULL, struct plot_args, grid, "Include a grid"),
+    BU_ARG_FLAG("z", NULL, struct plot_args, z_clip, "Enable Z clipping"),
+    BU_ARG_ALIAS_SHORT("Z", "z", 1),
+    BU_ARG_OPTION_NULL
 };
-static const struct bu_cmd_operand plot_schema_operands[] = {
-    BU_CMD_OPERAND("output", BU_CMD_VALUE_FILE, 1, 1,
+static const struct bu_arg_operand plot_schema_operands[] = {
+    BU_ARG_OPERAND("output", BU_ARG_VALUE_FILE, 1, 1,
 	"Output file or |filter command", "ged.file_path"),
-    BU_CMD_OPERAND("filter_arguments", BU_CMD_VALUE_RAW, 0,
-	BU_CMD_COUNT_UNLIMITED, "Arguments to a pipe filter", NULL),
-    BU_CMD_OPERAND_NULL
+    BU_ARG_OPERAND("filter_arguments", BU_ARG_VALUE_RAW, 0,
+	BU_ARG_COUNT_UNLIMITED, "Arguments to a pipe filter", NULL),
+    BU_ARG_OPERAND_NULL
 };
 static const char *plot_dimension_options[] = {"2", "3", NULL};
-static const struct bu_cmd_constraint plot_schema_constraints[] = {
-    BU_CMD_CONSTRAINT_OPTIONS(plot_dimension_options, 0, 1,
+static const struct bu_arg_constraint plot_schema_constraints[] = {
+    BU_ARG_CONSTRAINT_OPTIONS(plot_dimension_options, 0, 1,
 	"-2 and -3 are mutually exclusive"),
-    BU_CMD_CONSTRAINT_NULL
+    BU_ARG_CONSTRAINT_NULL
 };
-static const struct bu_cmd_schema plot_cmd_schema = {
+static const struct bu_arg_schema plot_cmd_schema = {
     "plot", "Write the current display as a UNIX plot", plot_schema_options,
-    plot_schema_operands, BU_CMD_PARSE_OPTIONS_FIRST,
-    BU_CMD_SCHEMA_CONSTRAINTS(NULL, plot_schema_constraints)
+    plot_schema_operands, BU_ARG_PARSE_OPTIONS_FIRST,
+    BU_ARG_SCHEMA_CONSTRAINTS(NULL, plot_schema_constraints)
 };
 
 
@@ -262,7 +262,7 @@ ged_plot_core(struct ged *gedp, int argc, const char *argv[])
     }
 
 
-    operand_index = bu_cmd_schema_parse_complete(&plot_cmd_schema, &args,
+    operand_index = bu_arg_schema_parse_complete(&plot_cmd_schema, &args,
 	gedp->ged_result_str, argc - 1, argv + 1);
     if (operand_index < 0)
 	return BRLCAD_ERROR;

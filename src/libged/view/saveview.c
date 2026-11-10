@@ -30,7 +30,7 @@
 #include <string.h>
 
 #include "bu/app.h"
-#include "bu/cmdschema.h"
+#include "bu/arg.h"
 #include "bu/file.h"
 
 
@@ -45,30 +45,30 @@ struct saveview_args {
 };
 
 
-static const struct bu_cmd_option saveview_schema_options[] = {
-    BU_CMD_STRING("e", NULL, struct saveview_args, rt_command, "command",
+static const struct bu_arg_option saveview_schema_options[] = {
+    BU_ARG_STRING("e", NULL, struct saveview_args, rt_command, "command",
 	"Raytrace command to invoke"),
-    BU_CMD_FILE("i", NULL, struct saveview_args, input_geometry, "file",
+    BU_ARG_FILE("i", NULL, struct saveview_args, input_geometry, "file",
 	"Input geometry file"),
-    BU_CMD_FILE("l", NULL, struct saveview_args, log_file, "file",
+    BU_ARG_FILE("l", NULL, struct saveview_args, log_file, "file",
 	"Write diagnostics to file"),
-    BU_CMD_FILE("o", NULL, struct saveview_args, pix_file, "file",
+    BU_ARG_FILE("o", NULL, struct saveview_args, pix_file, "file",
 	"Write pixels to file"),
-    BU_CMD_OPTION_NULL
+    BU_ARG_OPTION_NULL
 };
-static const struct bu_cmd_operand saveview_schema_operands[] = {
-    BU_CMD_OPERAND("filename", BU_CMD_VALUE_FILE, 1, 1,
+static const struct bu_arg_operand saveview_schema_operands[] = {
+    BU_ARG_OPERAND("filename", BU_ARG_VALUE_FILE, 1, 1,
 	"Shell script to create", NULL),
     /* Everything following the script name is passed through to the selected
      * raytrace program.  Options must therefore precede filename. */
-    BU_CMD_OPERAND("args", BU_CMD_VALUE_STRING, 0, BU_CMD_COUNT_UNLIMITED,
+    BU_ARG_OPERAND("args", BU_ARG_VALUE_STRING, 0, BU_ARG_COUNT_UNLIMITED,
 	"Additional raytrace arguments", NULL),
-    BU_CMD_OPERAND_NULL
+    BU_ARG_OPERAND_NULL
 };
-static const struct bu_cmd_schema saveview_native_schema = {
+static const struct bu_arg_schema saveview_native_schema = {
     "saveview", "Write a raytrace shell script for the view",
     saveview_schema_options, saveview_schema_operands,
-    BU_CMD_PARSE_OPTIONS_FIRST, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+    BU_ARG_PARSE_OPTIONS_FIRST, BU_ARG_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
 
 
@@ -133,7 +133,7 @@ ged_saveview_core(struct ged *gedp, int argc, const char *argv[])
 	return GED_HELP;
     }
 
-    operand_index = bu_cmd_schema_parse_complete(&saveview_native_schema, &args,
+    operand_index = bu_arg_schema_parse_complete(&saveview_native_schema, &args,
 	gedp->ged_result_str, argc - 1, argv + 1);
     if (operand_index < 0) {
 	ged_cmd_help_append(gedp->ged_result_str, cmdname, cmdname);

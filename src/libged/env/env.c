@@ -32,7 +32,7 @@
 #include <string.h>
 
 #include "bu/env.h"
-#include "bu/cmdschema.h"
+#include "bu/arg.h"
 #include "bu/path.h"
 #include "../ged_private.h"
 

@@ -29,7 +29,7 @@
 #include <string.h>
 
 
-#include "bu/cmdschema.h"
+#include "bu/arg.h"
 #include "bu/opt.h"
 #include "bu/parallel.h"
 #include "bu/datetime.h"
@@ -39,9 +39,9 @@
 #include "./ged_draw.h"
 
 GED_DEFINE_TYPED_OPERAND_SCHEMA_POLICY_PROVIDER(ev_native, "ev",
-    "Draw evaluated NMG polygon database objects", "paths", BU_CMD_VALUE_DB_PATH,
-    1, BU_CMD_COUNT_UNLIMITED, "Database object paths to draw as NMG polygons",
-    BU_CMD_PARSE_INTERSPERSED, "ged.db_path");
+    "Draw evaluated NMG polygon database objects", "paths", BU_ARG_VALUE_DB_PATH,
+    1, BU_ARG_COUNT_UNLIMITED, "Database object paths to draw as NMG polygons",
+    BU_ARG_PARSE_INTERSPERSED, "ged.db_path");
 
 struct legacy_draw_args {
     int *shaded_mode_override;

@@ -154,21 +154,21 @@ main(int ac, char *av[]) {
 
     bu_setprogname(av[0]);
 
-    static const struct bu_cmd_option options[] = {
-	BU_CMD_FLAG("h", "help", struct ged_draw_test_args, help, "Print help and exit"),
-	BU_CMD_FLAG("U", "enable-unstable", struct ged_draw_test_args, enable_unstable,
+    static const struct bu_arg_option options[] = {
+	BU_ARG_FLAG("h", "help", struct ged_draw_test_args, help, "Print help and exit"),
+	BU_ARG_FLAG("U", "enable-unstable", struct ged_draw_test_args, enable_unstable,
 	    "Test drawing routines known to differ between build configurations"),
-	BU_CMD_FLAG("c", "continue", struct ged_draw_test_args, continue_on_failure,
+	BU_ARG_FLAG("c", "continue", struct ged_draw_test_args, continue_on_failure,
 	    "Continue testing if a failure is encountered"),
-	BU_CMD_OPTION_NULL
+	BU_ARG_OPTION_NULL
     };
-    static const struct bu_cmd_schema schema = {
+    static const struct bu_arg_schema schema = {
 	"ged_test_aet", "Run azimuth/elevation/twist drawing tests", options,
-	ged_draw_test_operands, BU_CMD_PARSE_INTERSPERSED, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+	ged_draw_test_operands, BU_ARG_PARSE_INTERSPERSED, BU_ARG_SCHEMA_CONSTRAINTS(NULL, NULL)
     };
     int user_ac = ac - 1;
     const char **user_av = (const char **)(av + 1);
-    int operand_index = bu_cmd_schema_parse(&schema, &args, NULL, user_ac, user_av);
+    int operand_index = bu_arg_schema_parse(&schema, &args, NULL, user_ac, user_av);
     if (args.help || operand_index < 0 || user_ac - operand_index != 1) {
 	bu_log("Usage: %s [-h] [-U] [-c] <directory>\n", av[0]);
 	return args.help ? 0 : 1;

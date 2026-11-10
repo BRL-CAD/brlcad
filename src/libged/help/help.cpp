@@ -24,34 +24,34 @@
 #include <string>
 
 #include "bu/app.h"
-#include "bu/cmdschema.h"
+#include "bu/arg.h"
 #include "bu/file.h"
 #include "ged.h"
 
-static const struct bu_cmd_operand help_operands[] = {
-    BU_CMD_OPERAND("topic", BU_CMD_VALUE_STRING, 0, BU_CMD_COUNT_UNLIMITED,
+static const struct bu_arg_operand help_operands[] = {
+    BU_ARG_OPERAND("topic", BU_ARG_VALUE_STRING, 0, BU_ARG_COUNT_UNLIMITED,
 	"Help topic", NULL),
-    BU_CMD_OPERAND_NULL
+    BU_ARG_OPERAND_NULL
 };
 
-static const struct bu_cmd_schema questionmark_cmd_schema = {
+static const struct bu_arg_schema questionmark_cmd_schema = {
     "?", "Search command help", NULL, help_operands,
-    BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+    BU_ARG_PARSE_STOP_AT_FIRST_OPERAND, BU_ARG_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
 
-static const struct bu_cmd_schema apropos_cmd_schema = {
+static const struct bu_arg_schema apropos_cmd_schema = {
     "apropos", "Search command help", NULL, help_operands,
-    BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+    BU_ARG_PARSE_STOP_AT_FIRST_OPERAND, BU_ARG_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
 
-static const struct bu_cmd_schema help_cmd_schema = {
+static const struct bu_arg_schema help_cmd_schema = {
     "help", "Search command help", NULL, help_operands,
-    BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+    BU_ARG_PARSE_STOP_AT_FIRST_OPERAND, BU_ARG_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
 
-static const struct bu_cmd_schema info_cmd_schema = {
+static const struct bu_arg_schema info_cmd_schema = {
     "info", "Search command help", NULL, help_operands,
-    BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+    BU_ARG_PARSE_STOP_AT_FIRST_OPERAND, BU_ARG_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
 
 

@@ -6,7 +6,7 @@ set(
   bitv.h
   cache.h
   cmd.h
-  cmdschema.h
+  arg.h
   color.h
   cv.h
   datetime.h

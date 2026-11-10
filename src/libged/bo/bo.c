@@ -29,7 +29,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "bu/cmdschema.h"
+#include "bu/arg.h"
 #include "ged.h"
 #include "ged/commands.h"
 
@@ -60,47 +60,47 @@ bo_input_type_validate(struct bu_vls *msg, const char *value)
     return -1;
 }
 
-static const struct bu_cmd_option bo_schema_options[] = {
-    BU_CMD_FLAG("i", NULL, struct bo_args, input_mode, "Import a file as a binary object"),
-    BU_CMD_FLAG("o", NULL, struct bo_args, output_mode, "Export a binary object to a file"),
-    BU_CMD_OPTION_NULL
+static const struct bu_arg_option bo_schema_options[] = {
+    BU_ARG_FLAG("i", NULL, struct bo_args, input_mode, "Import a file as a binary object"),
+    BU_ARG_FLAG("o", NULL, struct bo_args, output_mode, "Export a binary object to a file"),
+    BU_ARG_OPTION_NULL
 };
-static const struct bu_cmd_operand bo_input_operands[] = {
-    BU_CMD_OPERAND_KEYWORDS("major_type", BU_CMD_VALUE_KEYWORD, 1, 1,
+static const struct bu_arg_operand bo_input_operands[] = {
+    BU_ARG_OPERAND_KEYWORDS("major_type", BU_ARG_VALUE_KEYWORD, 1, 1,
 	"Uniform binary major type", NULL, bo_major_types),
-    BU_CMD_OPERAND_KEYWORDS_VALIDATE("minor_type", BU_CMD_VALUE_KEYWORD, 1, 1,
+    BU_ARG_OPERAND_KEYWORDS_VALIDATE("minor_type", BU_ARG_VALUE_KEYWORD, 1, 1,
         bo_input_type_validate, "Uniform binary element type", NULL, bo_minor_types),
-    BU_CMD_OPERAND("output_object", BU_CMD_VALUE_STRING, 1, 1,
+    BU_ARG_OPERAND("output_object", BU_ARG_VALUE_STRING, 1, 1,
 	"Destination object name", NULL),
     GED_CMD_OPERAND_FILE("input_file", 1, 1, "Source binary file"),
-    BU_CMD_OPERAND_NULL
+    BU_ARG_OPERAND_NULL
 };
-static const struct bu_cmd_operand bo_output_operands[] = {
+static const struct bu_arg_operand bo_output_operands[] = {
     GED_CMD_OPERAND_FILE("output_file", 1, 1, "Destination binary file"),
-    BU_CMD_OPERAND("input_object", BU_CMD_VALUE_DB_OBJECT, 1, 1,
+    BU_ARG_OPERAND("input_object", BU_ARG_VALUE_DB_OBJECT, 1, 1,
 	"Source uniform binary object", GED_CMD_PROVIDER_DB_OBJECT_BINARY),
-    BU_CMD_OPERAND_NULL
+    BU_ARG_OPERAND_NULL
 };
 static const char * const bo_input_case[] = {"i", NULL};
 static const char * const bo_output_case[] = {"o", NULL};
 static const char * const bo_mode_options[] = {"i", "o", NULL};
-static const struct bu_cmd_schema_case bo_schema_cases[] = {
-    BU_CMD_SCHEMA_CASE("input", "Import a file as a binary object",
-	BU_CMD_CONDITION_ALL_OPTIONS_PRESENT, bo_input_case, bo_input_operands, NULL),
-    BU_CMD_SCHEMA_CASE("output", "Export a binary object to a file",
-	BU_CMD_CONDITION_ALL_OPTIONS_PRESENT, bo_output_case, bo_output_operands, NULL),
-    BU_CMD_SCHEMA_CASE_DEFAULT("mode", "Select -i or -o", NULL, NULL),
-    BU_CMD_SCHEMA_CASE_NULL
+static const struct bu_arg_schema_case bo_schema_cases[] = {
+    BU_ARG_SCHEMA_CASE("input", "Import a file as a binary object",
+	BU_ARG_CONDITION_ALL_OPTIONS_PRESENT, bo_input_case, bo_input_operands, NULL),
+    BU_ARG_SCHEMA_CASE("output", "Export a binary object to a file",
+	BU_ARG_CONDITION_ALL_OPTIONS_PRESENT, bo_output_case, bo_output_operands, NULL),
+    BU_ARG_SCHEMA_CASE_DEFAULT("mode", "Select -i or -o", NULL, NULL),
+    BU_ARG_SCHEMA_CASE_NULL
 };
-static const struct bu_cmd_constraint bo_schema_constraints[] = {
-    BU_CMD_CONSTRAINT_OPTIONS(bo_mode_options, 1, 1,
+static const struct bu_arg_constraint bo_schema_constraints[] = {
+    BU_ARG_CONSTRAINT_OPTIONS(bo_mode_options, 1, 1,
 	"exactly one of -i or -o is required"),
-    BU_CMD_CONSTRAINT_NULL
+    BU_ARG_CONSTRAINT_NULL
 };
-static const struct bu_cmd_schema bo_cmd_schema = {
+static const struct bu_arg_schema bo_cmd_schema = {
     "bo", "Import or export uniform binary objects", bo_schema_options,
-	NULL, BU_CMD_PARSE_OPTIONS_FIRST,
-	BU_CMD_SCHEMA_META_CASES(NULL, bo_schema_constraints, NULL, NULL,
+	NULL, BU_ARG_PARSE_OPTIONS_FIRST,
+	BU_ARG_SCHEMA_META_CASES(NULL, bo_schema_constraints, NULL, NULL,
 	    bo_schema_cases)
 };
 
@@ -198,7 +198,7 @@ ged_bo_core(struct ged *gedp, int argc, const char *argv[])
 	return BRLCAD_ERROR;
     }
 
-    operand_index = bu_cmd_schema_parse_complete(&bo_cmd_schema, &args,
+    operand_index = bu_arg_schema_parse_complete(&bo_cmd_schema, &args,
 	gedp->ged_result_str, argc - 1, argv + 1);
     if (operand_index < 0) {
 	ged_cmd_help_append(gedp->ged_result_str, argv0, argv0);

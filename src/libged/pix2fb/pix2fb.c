@@ -39,7 +39,7 @@
 
 #include "bio.h"
 
-#include "bu/cmdschema.h"
+#include "bu/arg.h"
 #include "bu/snooze.h"
 #include "dm.h"
 
@@ -92,50 +92,50 @@ struct pix2fb_args {
     const char *file_name;
 };
 
-static const struct bu_cmd_option pix2fb_schema_options[] = {
-    BU_CMD_FLAG("1", NULL, struct pix2fb_args, one_line_only, "Use one-line writes"),
-    BU_CMD_INTEGER("m", NULL, struct pix2fb_args, multiple_lines, "lines",
+static const struct bu_arg_option pix2fb_schema_options[] = {
+    BU_ARG_FLAG("1", NULL, struct pix2fb_args, one_line_only, "Use one-line writes"),
+    BU_ARG_INTEGER("m", NULL, struct pix2fb_args, multiple_lines, "lines",
 	"Set multiple-line write count"),
-    BU_CMD_FLAG("a", NULL, struct pix2fb_args, autosize, "Autosize the input"),
-    BU_CMD_FLAG("i", NULL, struct pix2fb_args, inverse, "Draw upside-down"),
-    BU_CMD_FLAG("c", NULL, struct pix2fb_args, clear, "Clear the framebuffer"),
-    BU_CMD_FLAG("z", NULL, struct pix2fb_args, zoom, "Zoom to fill the screen"),
-    BU_CMD_POSITIVE_INTEGER("s", NULL, struct pix2fb_args, file_square_size, "pixels",
+    BU_ARG_FLAG("a", NULL, struct pix2fb_args, autosize, "Autosize the input"),
+    BU_ARG_FLAG("i", NULL, struct pix2fb_args, inverse, "Draw upside-down"),
+    BU_ARG_FLAG("c", NULL, struct pix2fb_args, clear, "Clear the framebuffer"),
+    BU_ARG_FLAG("z", NULL, struct pix2fb_args, zoom, "Zoom to fill the screen"),
+    BU_ARG_POSITIVE_INTEGER("s", NULL, struct pix2fb_args, file_square_size, "pixels",
 	"Set both input dimensions"),
-    BU_CMD_POSITIVE_INTEGER("w", NULL, struct pix2fb_args, file_width, "pixels",
+    BU_ARG_POSITIVE_INTEGER("w", NULL, struct pix2fb_args, file_width, "pixels",
 	"Set input width"),
-    BU_CMD_POSITIVE_INTEGER("n", NULL, struct pix2fb_args, file_height, "pixels",
+    BU_ARG_POSITIVE_INTEGER("n", NULL, struct pix2fb_args, file_height, "pixels",
 	"Set input height"),
-    BU_CMD_INTEGER("x", NULL, struct pix2fb_args, file_xoff, "pixels", "Set input X offset"),
-    BU_CMD_INTEGER("y", NULL, struct pix2fb_args, file_yoff, "pixels", "Set input Y offset"),
-    BU_CMD_INTEGER("X", NULL, struct pix2fb_args, screen_xoff, "pixels", "Set framebuffer X offset"),
-    BU_CMD_INTEGER("Y", NULL, struct pix2fb_args, screen_yoff, "pixels", "Set framebuffer Y offset"),
-    BU_CMD_POSITIVE_INTEGER("S", NULL, struct pix2fb_args, screen_square_size, "pixels",
+    BU_ARG_INTEGER("x", NULL, struct pix2fb_args, file_xoff, "pixels", "Set input X offset"),
+    BU_ARG_INTEGER("y", NULL, struct pix2fb_args, file_yoff, "pixels", "Set input Y offset"),
+    BU_ARG_INTEGER("X", NULL, struct pix2fb_args, screen_xoff, "pixels", "Set framebuffer X offset"),
+    BU_ARG_INTEGER("Y", NULL, struct pix2fb_args, screen_yoff, "pixels", "Set framebuffer Y offset"),
+    BU_ARG_POSITIVE_INTEGER("S", NULL, struct pix2fb_args, screen_square_size, "pixels",
 	"Set both framebuffer dimensions"),
-    BU_CMD_POSITIVE_INTEGER("W", NULL, struct pix2fb_args, screen_width, "pixels",
+    BU_ARG_POSITIVE_INTEGER("W", NULL, struct pix2fb_args, screen_width, "pixels",
 	"Set framebuffer width"),
-    BU_CMD_POSITIVE_INTEGER("N", NULL, struct pix2fb_args, screen_height, "pixels",
+    BU_ARG_POSITIVE_INTEGER("N", NULL, struct pix2fb_args, screen_height, "pixels",
 	"Set framebuffer height"),
-    BU_CMD_NONNEGATIVE_INTEGER("p", NULL, struct pix2fb_args, pause_sec, "seconds",
+    BU_ARG_NONNEGATIVE_INTEGER("p", NULL, struct pix2fb_args, pause_sec, "seconds",
 	"Pause before returning"),
-    BU_CMD_FLAG("h", "help", struct pix2fb_args, help, "Print command help"),
-    BU_CMD_ALIAS_SHORT("?", "help", 1),
-    BU_CMD_OPTION_NULL
+    BU_ARG_FLAG("h", "help", struct pix2fb_args, help, "Print command help"),
+    BU_ARG_ALIAS_SHORT("?", "help", 1),
+    BU_ARG_OPTION_NULL
 };
-static const struct bu_cmd_operand pix2fb_schema_operands[] = {
-    BU_CMD_OPERAND("input_file", BU_CMD_VALUE_FILE, 0, 1,
+static const struct bu_arg_operand pix2fb_schema_operands[] = {
+    BU_ARG_OPERAND("input_file", BU_ARG_VALUE_FILE, 0, 1,
 	"Optional PIX input file", NULL),
-    BU_CMD_OPERAND_NULL
+    BU_ARG_OPERAND_NULL
 };
-static const struct bu_cmd_schema pix2fb_cmd_schema = {
+static const struct bu_arg_schema pix2fb_cmd_schema = {
     "pix2fb", "Display a PIX image in the framebuffer", pix2fb_schema_options,
-    pix2fb_schema_operands, BU_CMD_PARSE_OPTIONS_FIRST, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+    pix2fb_schema_operands, BU_ARG_PARSE_OPTIONS_FIRST, BU_ARG_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
 
 static void
 pix2fb_show_help(struct ged *gedp, const char *command)
 {
-    char *help = bu_cmd_schema_help(&pix2fb_cmd_schema, command);
+    char *help = bu_arg_schema_help(&pix2fb_cmd_schema, command);
 
     if (help) {
 	bu_vls_strcat(gedp->ged_result_str, help);
@@ -163,7 +163,7 @@ ged_pix2fb_core(struct ged *gedp, int argc, const char *argv[])
 	return GED_HELP;
     }
 
-    operand_index = bu_cmd_schema_parse_complete(&pix2fb_cmd_schema, &args,
+    operand_index = bu_arg_schema_parse_complete(&pix2fb_cmd_schema, &args,
 	gedp->ged_result_str, argc - 1, argv + 1);
     if (operand_index < 0) {
 	pix2fb_show_help(gedp, argv[0]);

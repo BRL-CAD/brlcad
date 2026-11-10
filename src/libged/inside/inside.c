@@ -37,11 +37,11 @@
 #include "rt/geom.h"
 #include "raytrace.h"
 #include "rt/db4.h"
-#include "bu/cmdschema.h"
+#include "bu/arg.h"
 
 #include "../ged_private.h"
 
-static const struct bu_cmd_schema *inside_schema(void);
+static const struct bu_arg_schema *inside_schema(void);
 
 int
 ged_inside_core(struct ged *gedp, int argc, const char *argv[])
@@ -64,7 +64,7 @@ ged_inside_core(struct ged *gedp, int argc, const char *argv[])
 	return GED_MORE;
     }
 
-    if (bu_cmd_schema_parse_complete(inside_schema(), NULL,
+    if (bu_arg_schema_parse_complete(inside_schema(), NULL,
 	gedp->ged_result_str, argc - 1, argv + 1) < 0)
 	return BRLCAD_ERROR;
 
@@ -84,19 +84,19 @@ ged_inside_core(struct ged *gedp, int argc, const char *argv[])
 
 #include "../include/plugin.h"
 
-static const struct bu_cmd_operand inside_schema_operands[] = {
-    BU_CMD_OPERAND("outside_object", BU_CMD_VALUE_DB_OBJECT, 1, 1,
+static const struct bu_arg_operand inside_schema_operands[] = {
+    BU_ARG_OPERAND("outside_object", BU_ARG_VALUE_DB_OBJECT, 1, 1,
 	"Primitive to hollow", "ged.db_object"),
-    BU_CMD_OPERAND("inside_arguments", BU_CMD_VALUE_RAW, 0,
-	BU_CMD_COUNT_UNLIMITED, "Primitive-specific inside object arguments", NULL),
-    BU_CMD_OPERAND_NULL
+    BU_ARG_OPERAND("inside_arguments", BU_ARG_VALUE_RAW, 0,
+	BU_ARG_COUNT_UNLIMITED, "Primitive-specific inside object arguments", NULL),
+    BU_ARG_OPERAND_NULL
 };
-static const struct bu_cmd_schema inside_cmd_schema = {
+static const struct bu_arg_schema inside_cmd_schema = {
     "inside", "Create an inside primitive", NULL, inside_schema_operands,
-    BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+    BU_ARG_PARSE_STOP_AT_FIRST_OPERAND, BU_ARG_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
 
-static const struct bu_cmd_schema *
+static const struct bu_arg_schema *
 inside_schema(void)
 {
     return &inside_cmd_schema;

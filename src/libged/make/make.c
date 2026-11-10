@@ -25,7 +25,7 @@
 
 #include "common.h"
 
-#include "bu/cmdschema.h"
+#include "bu/arg.h"
 #include "bu/interrupt.h"
 #include "rt/func.h"
 #include "rt/geom.h"

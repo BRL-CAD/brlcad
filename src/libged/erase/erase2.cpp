@@ -31,7 +31,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "bu/cmdschema.h"
+#include "bu/arg.h"
 #include "bu/sort.h"
 #include "bv/view_sets.h"
 #include "ged/database.h"
@@ -62,10 +62,10 @@ ged_erase2_core(struct ged *gedp, int argc, const char *argv[])
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
 
-    operand_index = bu_cmd_schema_parse(&ged_erase_new_schema, &args,
+    operand_index = bu_arg_schema_parse(&ged_erase_new_schema, &args,
 	gedp->ged_result_str, argc - 1, argv + 1);
     if (operand_index < 0) {
-	char *help = bu_cmd_schema_help(&ged_erase_new_schema, cmdName);
+	char *help = bu_arg_schema_help(&ged_erase_new_schema, cmdName);
 	if (help) {
 	    bu_vls_strcat(gedp->ged_result_str, help);
 	    bu_free(help, "erase native help");

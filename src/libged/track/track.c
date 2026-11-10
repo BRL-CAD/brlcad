@@ -44,20 +44,20 @@
 #include "rt/geom.h"
 #include "raytrace.h"
 #include "wdb.h"
-#include "bu/cmdschema.h"
+#include "bu/arg.h"
 #include "ged.h"
 
 
-static const struct bu_cmd_operand track_schema_operands[] = {
-    BU_CMD_OPERAND("basename", BU_CMD_VALUE_STRING, 1, 1,
+static const struct bu_arg_operand track_schema_operands[] = {
+    BU_ARG_OPERAND("basename", BU_ARG_VALUE_STRING, 1, 1,
 	"Track object basename", NULL),
-    BU_CMD_OPERAND("dimensions", BU_CMD_VALUE_NUMBER, 13, 13,
+    BU_ARG_OPERAND("dimensions", BU_ARG_VALUE_NUMBER, 13, 13,
 	"Track geometry dimensions", NULL),
-    BU_CMD_OPERAND_NULL
+    BU_ARG_OPERAND_NULL
 };
-static const struct bu_cmd_schema track_cmd_schema = {
+static const struct bu_arg_schema track_cmd_schema = {
     "track", "Create track geometry", NULL,
-    track_schema_operands, BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+    track_schema_operands, BU_ARG_PARSE_STOP_AT_FIRST_OPERAND, BU_ARG_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
 
 /*
@@ -85,7 +85,7 @@ ged_track_core(struct ged *gedp, int argc, const char *argv[])
 
     /* ged_track2 receives argv including the command name, so validate the
      * positional suffix without shifting its legacy calling convention. */
-    if (bu_cmd_schema_parse_complete(&track_cmd_schema, &parse_dummy,
+    if (bu_arg_schema_parse_complete(&track_cmd_schema, &parse_dummy,
 		gedp->ged_result_str, argc - 1, argv + 1) < 0) {
 	ged_cmd_help_append(gedp->ged_result_str, argv[0], argv[0]);
 	return BRLCAD_ERROR;

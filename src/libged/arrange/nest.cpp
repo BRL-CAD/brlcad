@@ -31,7 +31,7 @@
 
 extern "C" {
 #include "bu/units.h"
-#include "bu/cmdschema.h"
+#include "bu/arg.h"
 #include "rt/calc.h"
 #include "wdb.h"
 }
@@ -53,7 +53,7 @@ const char *usage =
 void
 print_help(struct ged *gedp)
 {
-    char *schema_help = bu_cmd_schema_help(&ged_arrange_nest_schema, "arrange nest");
+    char *schema_help = bu_arg_schema_help(&ged_arrange_nest_schema, "arrange nest");
     if (schema_help) {
         bu_vls_strcat(gedp->ged_result_str, schema_help);
         bu_free(schema_help, "arrange nest schema help");
@@ -119,53 +119,53 @@ parse_value_option(struct bu_vls *msg, const char *arg, void *storage)
     return -1;
 }
 
-static const struct bu_cmd_value_keyword nest_axes[] = {
+static const struct bu_arg_value_keyword nest_axes[] = {
     {"x", NULL, "X axis"}, {"y", NULL, "Y axis"}, {"z", NULL, "Z axis"},
     {NULL, NULL, NULL}
 };
-static const struct bu_cmd_value_keyword nest_orientations[] = {
+static const struct bu_arg_value_keyword nest_orientations[] = {
     {"fixed", NULL, "Do not rotate objects"},
     {"upright", NULL, "Rotate around the upright axis"},
     {"orthogonal", NULL, "Use orthogonal rotations"},
     {NULL, NULL, NULL}
 };
-static const struct bu_cmd_value_keyword nest_qualities[] = {
+static const struct bu_arg_value_keyword nest_qualities[] = {
     {"fast", NULL, "Smaller search budget"},
     {"balanced", NULL, "Default search budget"},
     {"thorough", NULL, "Larger search budget"},
     {NULL, NULL, NULL}
 };
-static const struct bu_cmd_option nest_options[] = {
-    BU_CMD_FLAG("h", "help", struct nest_cli_args, help, "Print help"),
-    BU_CMD_FLAG("n", "dry-run", struct nest_cli_args, dry_run, "Report without writing"),
-    BU_CMD_FLAG("C", "conservative", struct nest_cli_args, conservative,
+static const struct bu_arg_option nest_options[] = {
+    BU_ARG_FLAG("h", "help", struct nest_cli_args, help, "Print help"),
+    BU_ARG_FLAG("n", "dry-run", struct nest_cli_args, dry_run, "Report without writing"),
+    BU_ARG_FLAG("C", "conservative", struct nest_cli_args, conservative,
         "Use full bounds for collision"),
-    BU_CMD_INTEGER_RANGE("d", "dimension", struct nest_cli_args, dimension,
+    BU_ARG_INTEGER_RANGE("d", "dimension", struct nest_cli_args, dimension,
         2, 3, "2|3", "Planar or spatial nesting"),
-    BU_CMD_KEYWORD_VALUES("a", "axis", struct nest_cli_args, axis, "x|y|z",
+    BU_ARG_KEYWORD_VALUES("a", "axis", struct nest_cli_args, axis, "x|y|z",
         "Projection and upright axis", nest_axes),
-    BU_CMD_POSITIVE_NUMBER("s", "cell-size", struct nest_cli_args, cell_size,
+    BU_ARG_POSITIVE_NUMBER("s", "cell-size", struct nest_cli_args, cell_size,
         "size", "Raster cell size in local units"),
-    BU_CMD_NONNEGATIVE_NUMBER("c", "clearance", struct nest_cli_args, clearance,
+    BU_ARG_NONNEGATIVE_NUMBER("c", "clearance", struct nest_cli_args, clearance,
         "distance", "Minimum raster clearance"),
-    BU_CMD_KEYWORD_VALUES("o", "orientation", struct nest_cli_args, orientation,
+    BU_ARG_KEYWORD_VALUES("o", "orientation", struct nest_cli_args, orientation,
         "mode", "Allowed orientation set", nest_orientations),
-    BU_CMD_KEYWORD_VALUES("q", "quality", struct nest_cli_args, quality,
+    BU_ARG_KEYWORD_VALUES("q", "quality", struct nest_cli_args, quality,
         "level", "Search work budget", nest_qualities),
-    BU_CMD_VECTOR3("g", "gravity", struct nest_cli_args, gravity,
+    BU_ARG_VECTOR3("g", "gravity", struct nest_cli_args, gravity,
         "x,y,z", "Gravity direction"),
-    BU_CMD_CUSTOM("", "value", struct nest_cli_args, values, parse_value_option,
+    BU_ARG_CUSTOM("", "value", struct nest_cli_args, values, parse_value_option,
         "name=value", "Geometric-knapsack value override"),
-    BU_CMD_OPTION_NULL
+    BU_ARG_OPTION_NULL
 };
-static const struct bu_cmd_operand nest_operands[] = {
-    BU_CMD_OPERAND("output", BU_CMD_VALUE_STRING, 1, 1,
+static const struct bu_arg_operand nest_operands[] = {
+    BU_ARG_OPERAND("output", BU_ARG_VALUE_STRING, 1, 1,
         "New combination name", NULL),
-    BU_CMD_OPERAND("container", BU_CMD_VALUE_DB_OBJECT, 1, 1,
+    BU_ARG_OPERAND("container", BU_ARG_VALUE_DB_OBJECT, 1, 1,
         "Permitted volume", "ged.db_object"),
-    BU_CMD_OPERAND("objects", BU_CMD_VALUE_DB_OBJECT, 1, BU_CMD_COUNT_UNLIMITED,
+    BU_ARG_OPERAND("objects", BU_ARG_VALUE_DB_OBJECT, 1, BU_ARG_COUNT_UNLIMITED,
         "Objects to pack", "ged.db_object"),
-    BU_CMD_OPERAND_NULL
+    BU_ARG_OPERAND_NULL
 };
 
 bool
@@ -184,7 +184,7 @@ parse_options(struct ged *gedp, int argc, const char *argv[], NestOptions &optio
     }
 
     nest_cli_args args;
-    int operand_index = bu_cmd_schema_parse_complete(&ged_arrange_nest_schema,
+    int operand_index = bu_arg_schema_parse_complete(&ged_arrange_nest_schema,
         &args, gedp->ged_result_str, argc - 1, argv + 1);
     if (operand_index < 0)
         return false;
@@ -203,7 +203,7 @@ parse_options(struct ged *gedp, int argc, const char *argv[], NestOptions &optio
     options.quality = BU_STR_EQUAL(args.quality, "fast") ? Quality::FAST :
         BU_STR_EQUAL(args.quality, "thorough") ? Quality::THOROUGH : Quality::BALANCED;
     VMOVE(options.gravity.data(), args.gravity);
-    options.gravity_enabled = bu_cmd_schema_option_present(&ged_arrange_nest_schema,
+    options.gravity_enabled = bu_arg_schema_option_present(&ged_arrange_nest_schema,
         (size_t)operand_index, argv + 1, "gravity") != 0;
     if (options.gravity_enabled && ZERO(MAGNITUDE(args.gravity))) {
         bu_vls_printf(gedp->ged_result_str, "arrange nest: gravity must be nonzero\n");
@@ -282,9 +282,9 @@ build_orientations(const Raster &source, const NestOptions &options,
 
 } // namespace
 
-const struct bu_cmd_schema ged_arrange_nest_schema =
-    BU_CMD_SCHEMA_BOUND("nest", "Pack objects into a permitted volume",
-        nest_options, nest_operands, BU_CMD_PARSE_STOP_AT_FIRST_OPERAND,
+const struct bu_arg_schema ged_arrange_nest_schema =
+    BU_ARG_SCHEMA_BOUND("nest", "Pack objects into a permitted volume",
+        nest_options, nest_operands, BU_ARG_PARSE_STOP_AT_FIRST_OPERAND,
         NULL, NULL, NULL, NULL);
 
 int

@@ -28,7 +28,7 @@
 #include <string.h>
 
 
-#include "bu/cmdschema.h"
+#include "bu/arg.h"
 #include "../ged_private.h"
 
 
@@ -39,36 +39,36 @@ struct select_args {
 };
 
 
-static const struct bu_cmd_option select_native_options[] = {
-    BU_CMD_STRING("b", NULL, struct select_args, bot_path, "bot",
+static const struct bu_arg_option select_native_options[] = {
+    BU_ARG_STRING("b", NULL, struct select_args, bot_path, "bot",
 	"Select points from a BOT object or path"),
-    BU_CMD_FLAG("p", NULL, struct select_args, partial,
+    BU_ARG_FLAG("p", NULL, struct select_args, partial,
 	"Select partial display paths"),
-    BU_CMD_NUMBER("z", NULL, struct select_args, vminz, "vminz",
+    BU_ARG_NUMBER("z", NULL, struct select_args, vminz, "vminz",
 	"Minimum view-space Z coordinate"),
-    BU_CMD_OPTION_NULL
+    BU_ARG_OPTION_NULL
 };
-static const struct bu_cmd_operand select_native_operands[] = {
-    BU_CMD_OPERAND("coordinates", BU_CMD_VALUE_NUMBER, 3, 4,
+static const struct bu_arg_operand select_native_operands[] = {
+    BU_ARG_OPERAND("coordinates", BU_ARG_VALUE_NUMBER, 3, 4,
 	"View X, Y, and radius or width/height", NULL),
-    BU_CMD_OPERAND_NULL
+    BU_ARG_OPERAND_NULL
 };
-GED_EXPORT const struct bu_cmd_schema ged_select_legacy_schema = {
+GED_EXPORT const struct bu_arg_schema ged_select_legacy_schema = {
     "select", "Select displayed objects within a view region",
-    select_native_options, select_native_operands, BU_CMD_PARSE_OPTIONS_FIRST,
-    BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+    select_native_options, select_native_operands, BU_ARG_PARSE_OPTIONS_FIRST,
+    BU_ARG_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
-GED_EXPORT const struct bu_cmd_schema ged_rselect_legacy_schema = {
+GED_EXPORT const struct bu_arg_schema ged_rselect_legacy_schema = {
     "rselect", "Select displayed objects within the current rubber-band region",
-    select_native_options, NULL, BU_CMD_PARSE_OPTIONS_FIRST,
-    BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+    select_native_options, NULL, BU_ARG_PARSE_OPTIONS_FIRST,
+    BU_ARG_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
 
 static void
-select_schema_help(struct ged *gedp, const struct bu_cmd_schema *schema,
+select_schema_help(struct ged *gedp, const struct bu_arg_schema *schema,
 	const char *invocation)
 {
-    char *help = bu_cmd_schema_help(schema, invocation);
+    char *help = bu_arg_schema_help(schema, invocation);
     if (help) {
 	bu_vls_strcat(gedp->ged_result_str, help);
 	bu_free(help, "select native help");
@@ -444,7 +444,7 @@ ged_select_core(struct ged *gedp, int argc, const char *argv[])
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
 
-    operand_index = bu_cmd_schema_parse_complete(&ged_select_legacy_schema, &args,
+    operand_index = bu_arg_schema_parse_complete(&ged_select_legacy_schema, &args,
 	gedp->ged_result_str, argc - 1, argv + 1);
     if (operand_index < 0) {
 	select_schema_help(gedp, &ged_select_legacy_schema, cmd);
@@ -529,7 +529,7 @@ ged_rselect_core(struct ged *gedp, int argc, const char *argv[])
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
 
-    operand_index = bu_cmd_schema_parse_complete(&ged_rselect_legacy_schema, &args,
+    operand_index = bu_arg_schema_parse_complete(&ged_rselect_legacy_schema, &args,
 	gedp->ged_result_str, argc - 1, argv + 1);
     if (operand_index < 0) {
 	select_schema_help(gedp, &ged_rselect_legacy_schema, cmd);

@@ -26,7 +26,7 @@
 #include "common.h"
 
 #include "bu/color.h"
-#include "bu/cmdschema.h"
+#include "bu/arg.h"
 #include "bu/vls.h"
 #include "bv.h"
 #include "bg/polygon.h"
@@ -57,134 +57,134 @@ int _poly_cmd_overlap(void *bs, int argc, const char **argv);
 int _poly_cmd_select(void *bs, int argc, const char **argv);
 
 static void
-polygon_set_validation(struct bu_cmd_validate_result *result,
-    bu_cmd_validate_state_t state, size_t token, bu_cmd_value_t value_type,
+polygon_set_validation(struct bu_arg_validate_result *result,
+    bu_arg_validate_state_t state, size_t token, bu_arg_value_t value_type,
     const char *hint)
 {
-    bu_cmd_validate_result_set(result, state, token, BU_CMD_EXPECT_OPERAND,
+    bu_arg_validate_result_set(result, state, token, BU_ARG_EXPECT_OPERAND,
 	value_type, hint, NULL);
 }
 
 static int
-polygon_nonnegative_pair_validate(const struct bu_cmd_schema *UNUSED(schema),
+polygon_nonnegative_pair_validate(const struct bu_arg_schema *UNUSED(schema),
     size_t argc, const char **argv, size_t cursor_arg,
-    struct bu_cmd_validate_result *result)
+    struct bu_arg_validate_result *result)
 {
-    bu_cmd_validate_state_t state = BU_CMD_VALIDATE_VALID;
+    bu_arg_validate_state_t state = BU_ARG_VALIDATE_VALID;
     const char *hint = "two nonnegative screen coordinates required";
 
     if (!result || cursor_arg > argc)
 	return -1;
     if (argc < 2) {
-	state = BU_CMD_VALIDATE_INCOMPLETE;
+	state = BU_ARG_VALIDATE_INCOMPLETE;
     } else if (argc > 2) {
-	state = BU_CMD_VALIDATE_INVALID;
+	state = BU_ARG_VALIDATE_INVALID;
 	hint = "exactly two screen coordinates required";
     } else {
 	for (size_t i = 0; i < argc; i++) {
-	    if (bu_cmd_nonnegative_integer_validate(NULL, argv[i]) != 0) {
-		state = BU_CMD_VALIDATE_INVALID;
+	    if (bu_arg_nonnegative_integer_validate(NULL, argv[i]) != 0) {
+		state = BU_ARG_VALIDATE_INVALID;
 		hint = "screen coordinates must be nonnegative integers";
 		break;
 	    }
 	}
     }
-    polygon_set_validation(result, state, cursor_arg, BU_CMD_VALUE_INTEGER, hint);
+    polygon_set_validation(result, state, cursor_arg, BU_ARG_VALUE_INTEGER, hint);
     return 0;
 }
 
 static int
-polygon_contour_pair_validate(const struct bu_cmd_schema *UNUSED(schema),
+polygon_contour_pair_validate(const struct bu_arg_schema *UNUSED(schema),
     size_t argc, const char **argv, size_t cursor_arg,
-    struct bu_cmd_validate_result *result)
+    struct bu_arg_validate_result *result)
 {
-    bu_cmd_validate_state_t state = BU_CMD_VALIDATE_VALID;
+    bu_arg_validate_state_t state = BU_ARG_VALIDATE_VALID;
     const char *hint = "screen coordinates, optionally preceded by a contour index";
 
     if (!result || cursor_arg > argc)
 	return -1;
     if (argc < 2) {
-	state = BU_CMD_VALIDATE_INCOMPLETE;
+	state = BU_ARG_VALIDATE_INCOMPLETE;
     } else if (argc > 3) {
-	state = BU_CMD_VALIDATE_INVALID;
+	state = BU_ARG_VALIDATE_INVALID;
 	hint = "accepts X Y or contour X Y";
     } else {
 	for (size_t i = 0; i < argc; i++) {
-	    if (bu_cmd_nonnegative_integer_validate(NULL, argv[i]) != 0) {
-		state = BU_CMD_VALIDATE_INVALID;
+	    if (bu_arg_nonnegative_integer_validate(NULL, argv[i]) != 0) {
+		state = BU_ARG_VALIDATE_INVALID;
 		hint = "contour and screen coordinates must be nonnegative integers";
 		break;
 	    }
 	}
     }
-    polygon_set_validation(result, state, cursor_arg, BU_CMD_VALUE_INTEGER, hint);
+    polygon_set_validation(result, state, cursor_arg, BU_ARG_VALUE_INTEGER, hint);
     return 0;
 }
 
 static int
-polygon_open_close_validate(const struct bu_cmd_schema *UNUSED(schema), size_t argc,
-    const char **argv, size_t cursor_arg, struct bu_cmd_validate_result *result)
+polygon_open_close_validate(const struct bu_arg_schema *UNUSED(schema), size_t argc,
+    const char **argv, size_t cursor_arg, struct bu_arg_validate_result *result)
 {
     int index = 0;
 
     if (!result || cursor_arg > argc)
 	return -1;
     if (argc > 1) {
-	polygon_set_validation(result, BU_CMD_VALIDATE_INVALID, 1, BU_CMD_VALUE_INTEGER,
+	polygon_set_validation(result, BU_ARG_VALIDATE_INVALID, 1, BU_ARG_VALUE_INTEGER,
 	    "at most one contour index is accepted");
 	return 0;
     }
-	if (argc && (!bu_cmd_integer_from_str(&index, argv[0]) || index < 0)) {
-	polygon_set_validation(result, BU_CMD_VALIDATE_INVALID, 0, BU_CMD_VALUE_INTEGER,
+	if (argc && (!bu_arg_integer_from_str(&index, argv[0]) || index < 0)) {
+	polygon_set_validation(result, BU_ARG_VALIDATE_INVALID, 0, BU_ARG_VALUE_INTEGER,
 	    "contour index must be a nonnegative integer");
 	return 0;
     }
-    polygon_set_validation(result, BU_CMD_VALIDATE_VALID, cursor_arg,
-	BU_CMD_VALUE_INTEGER, "optional contour index");
+    polygon_set_validation(result, BU_ARG_VALIDATE_VALID, cursor_arg,
+	BU_ARG_VALUE_INTEGER, "optional contour index");
     return 0;
 }
 
 static const char * const polygon_fill_disable[] = {"0", NULL};
 
 static int
-polygon_fill_validate(const struct bu_cmd_schema *UNUSED(schema), size_t argc,
-    const char **argv, size_t cursor_arg, struct bu_cmd_validate_result *result)
+polygon_fill_validate(const struct bu_arg_schema *UNUSED(schema), size_t argc,
+    const char **argv, size_t cursor_arg, struct bu_arg_validate_result *result)
 {
-    bu_cmd_validate_state_t state = BU_CMD_VALIDATE_VALID;
+    bu_arg_validate_state_t state = BU_ARG_VALIDATE_VALID;
     const char *hint = "0 or three finite fill parameters required";
-    bu_cmd_value_t type = BU_CMD_VALUE_NUMBER;
+    bu_arg_value_t type = BU_ARG_VALUE_NUMBER;
 
     if (!result || cursor_arg > argc)
 	return -1;
     if (argc == 1 && BU_STR_EQUAL(argv[0], "0")) {
-	type = BU_CMD_VALUE_KEYWORD;
+	type = BU_ARG_VALUE_KEYWORD;
     } else if (argc > 3) {
-	state = BU_CMD_VALIDATE_INVALID;
+	state = BU_ARG_VALIDATE_INVALID;
     } else {
 	for (size_t i = 0; i < argc; i++) {
 	    fastf_t value = 0.0;
-	    if (!bu_cmd_number_from_str(&value, argv[i])) {
-		state = BU_CMD_VALIDATE_INVALID;
+	    if (!bu_arg_number_from_str(&value, argv[i])) {
+		state = BU_ARG_VALIDATE_INVALID;
 		hint = "invalid fill parameter";
 		break;
 	    }
 	}
-	if (state == BU_CMD_VALIDATE_VALID && argc < 3) {
-	    state = BU_CMD_VALIDATE_INCOMPLETE;
+	if (state == BU_ARG_VALIDATE_VALID && argc < 3) {
+	    state = BU_ARG_VALIDATE_INCOMPLETE;
 	    hint = "three fill parameters required";
 	}
     }
     polygon_set_validation(result, state, cursor_arg, type, hint);
     if (cursor_arg == 0 && (argc == 0 || (argc && !BU_STR_EQUAL(argv[0], "0"))))
-	bu_cmd_keyword_candidates(result, polygon_fill_disable, argc ? argv[0] : "");
+	bu_arg_keyword_candidates(result, polygon_fill_disable, argc ? argv[0] : "");
     return 0;
 }
 
 static int
-polygon_fill_color_validate(const struct bu_cmd_schema *UNUSED(schema), size_t argc,
-    const char **argv, size_t cursor_arg, struct bu_cmd_validate_result *result)
+polygon_fill_color_validate(const struct bu_arg_schema *UNUSED(schema), size_t argc,
+    const char **argv, size_t cursor_arg, struct bu_arg_validate_result *result)
 {
-    int ret = bu_cmd_color_optional_validate(argc, argv, cursor_arg, result);
+    int ret = bu_arg_color_optional_validate(argc, argv, cursor_arg, result);
     if (!ret && result)
 	result->semantic_provider = "ged.color";
     return ret;
@@ -194,7 +194,7 @@ static const char * const polygon_circle_aliases[] = {"circle", NULL};
 static const char * const polygon_ellipse_aliases[] = {"ellipse", NULL};
 static const char * const polygon_rectangle_aliases[] = {"rectangle", NULL};
 static const char * const polygon_square_aliases[] = {"square", NULL};
-static const struct bu_cmd_value_keyword polygon_shape_values[] = {
+static const struct bu_arg_value_keyword polygon_shape_values[] = {
     {"circ", polygon_circle_aliases, "Circle"},
     {"ell", polygon_ellipse_aliases, "Ellipse"},
     {"rect", polygon_rectangle_aliases, "Rectangle"},
@@ -203,130 +203,130 @@ static const struct bu_cmd_value_keyword polygon_shape_values[] = {
 };
 static const char * const polygon_csg_values[] = {"u", "-", "+", NULL};
 
-static const struct bu_cmd_option polygon_root_options[] = {
-    BU_CMD_FLAG("h", "help", struct ged_view_polygon_args, print_help,
+static const struct bu_arg_option polygon_root_options[] = {
+    BU_ARG_FLAG("h", "help", struct ged_view_polygon_args, print_help,
 	"Print help and exit"),
-    BU_CMD_ALIAS_SHORT("?", "help", 1),
-    BU_CMD_FLAG("s", NULL, struct ged_view_polygon_args, s_version,
+    BU_ARG_ALIAS_SHORT("?", "help", 1),
+    BU_ARG_FLAG("s", NULL, struct ged_view_polygon_args, s_version,
 	"Work with the S version of polygon data"),
-    BU_CMD_OPTION_NULL
+    BU_ARG_OPTION_NULL
 };
-static const struct bu_cmd_operand polygon_create_operands[] = {
-    BU_CMD_OPERAND_VALIDATE("x", BU_CMD_VALUE_INTEGER, 1, 1,
-	bu_cmd_nonnegative_integer_validate, "Nonnegative screen X coordinate", NULL),
-    BU_CMD_OPERAND_VALIDATE("y", BU_CMD_VALUE_INTEGER, 1, 1,
-	bu_cmd_nonnegative_integer_validate, "Nonnegative screen Y coordinate", NULL),
-    BU_CMD_OPERAND_KEYWORD_VALUES("shape", BU_CMD_VALUE_KEYWORD, 0, 1,
+static const struct bu_arg_operand polygon_create_operands[] = {
+    BU_ARG_OPERAND_VALIDATE("x", BU_ARG_VALUE_INTEGER, 1, 1,
+	bu_arg_nonnegative_integer_validate, "Nonnegative screen X coordinate", NULL),
+    BU_ARG_OPERAND_VALIDATE("y", BU_ARG_VALUE_INTEGER, 1, 1,
+	bu_arg_nonnegative_integer_validate, "Nonnegative screen Y coordinate", NULL),
+    BU_ARG_OPERAND_KEYWORD_VALUES("shape", BU_ARG_VALUE_KEYWORD, 0, 1,
 	"Optional constrained polygon shape", NULL, polygon_shape_values),
-    BU_CMD_OPERAND_NULL
+    BU_ARG_OPERAND_NULL
 };
-static const struct bu_cmd_operand polygon_raw_three_operands[] = {
-    BU_CMD_OPERAND("arguments", BU_CMD_VALUE_RAW, 0, 3, "Polygon arguments", NULL),
-    BU_CMD_OPERAND_NULL
+static const struct bu_arg_operand polygon_raw_three_operands[] = {
+    BU_ARG_OPERAND("arguments", BU_ARG_VALUE_RAW, 0, 3, "Polygon arguments", NULL),
+    BU_ARG_OPERAND_NULL
 };
-static const struct bu_cmd_operand polygon_optional_index_operands[] = {
-    BU_CMD_OPERAND("index", BU_CMD_VALUE_RAW, 0, 1, "Optional contour index", NULL),
-    BU_CMD_OPERAND_NULL
+static const struct bu_arg_operand polygon_optional_index_operands[] = {
+    BU_ARG_OPERAND("index", BU_ARG_VALUE_RAW, 0, 1, "Optional contour index", NULL),
+    BU_ARG_OPERAND_NULL
 };
-static const struct bu_cmd_operand polygon_one_string_operands[] = {
-    BU_CMD_OPERAND("name", BU_CMD_VALUE_STRING, 1, 1, "Name", NULL),
-    BU_CMD_OPERAND_NULL
+static const struct bu_arg_operand polygon_one_string_operands[] = {
+    BU_ARG_OPERAND("name", BU_ARG_VALUE_STRING, 1, 1, "Name", NULL),
+    BU_ARG_OPERAND_NULL
 };
-static const struct bu_cmd_operand polygon_csg_operands[] = {
-    BU_CMD_OPERAND_KEYWORDS("operation", BU_CMD_VALUE_KEYWORD, 1, 1,
+static const struct bu_arg_operand polygon_csg_operands[] = {
+    BU_ARG_OPERAND_KEYWORDS("operation", BU_ARG_VALUE_KEYWORD, 1, 1,
 	"u, -, or +", NULL, polygon_csg_values),
-    BU_CMD_OPERAND("object", BU_CMD_VALUE_STRING, 1, 1, "Other polygon name", NULL),
-    BU_CMD_OPERAND_NULL
+    BU_ARG_OPERAND("object", BU_ARG_VALUE_STRING, 1, 1, "Other polygon name", NULL),
+    BU_ARG_OPERAND_NULL
 };
-static const struct bu_cmd_schema polygon_create_schema = {
+static const struct bu_arg_schema polygon_create_schema = {
     "create", "Create a general or constrained polygon", NULL, polygon_create_operands,
-    BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+    BU_ARG_PARSE_STOP_AT_FIRST_OPERAND, BU_ARG_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
-static const struct bu_cmd_schema polygon_select_schema = {
+static const struct bu_arg_schema polygon_select_schema = {
     "select", "Select the nearest general-polygon point", NULL, polygon_raw_three_operands,
-    BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, BU_CMD_SCHEMA_CONSTRAINTS(polygon_contour_pair_validate, NULL)
+    BU_ARG_PARSE_STOP_AT_FIRST_OPERAND, BU_ARG_SCHEMA_CONSTRAINTS(polygon_contour_pair_validate, NULL)
 };
-static const struct bu_cmd_schema polygon_append_schema = {
+static const struct bu_arg_schema polygon_append_schema = {
     "append", "Append a point to a general polygon", NULL, polygon_raw_three_operands,
-    BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, BU_CMD_SCHEMA_CONSTRAINTS(polygon_contour_pair_validate, NULL)
+    BU_ARG_PARSE_STOP_AT_FIRST_OPERAND, BU_ARG_SCHEMA_CONSTRAINTS(polygon_contour_pair_validate, NULL)
 };
-static const struct bu_cmd_schema polygon_move_schema = {
+static const struct bu_arg_schema polygon_move_schema = {
     "move", "Move the selected general-polygon point", NULL, polygon_raw_three_operands,
-    BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, BU_CMD_SCHEMA_CONSTRAINTS(polygon_nonnegative_pair_validate, NULL)
+    BU_ARG_PARSE_STOP_AT_FIRST_OPERAND, BU_ARG_SCHEMA_CONSTRAINTS(polygon_nonnegative_pair_validate, NULL)
 };
 GED_DEFINE_NO_ARG_SCHEMA_NAMED(polygon_clear_schema, "clear",
-    "Clear polygon selection state", BU_CMD_PARSE_STOP_AT_FIRST_OPERAND);
-static const struct bu_cmd_schema polygon_close_schema = {
+    "Clear polygon selection state", BU_ARG_PARSE_STOP_AT_FIRST_OPERAND);
+static const struct bu_arg_schema polygon_close_schema = {
     "close", "Close all or one contour", NULL, polygon_optional_index_operands,
-    BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, BU_CMD_SCHEMA_CONSTRAINTS(polygon_open_close_validate, NULL)
+    BU_ARG_PARSE_STOP_AT_FIRST_OPERAND, BU_ARG_SCHEMA_CONSTRAINTS(polygon_open_close_validate, NULL)
 };
-static const struct bu_cmd_schema polygon_open_schema = {
+static const struct bu_arg_schema polygon_open_schema = {
     "open", "Open all or one contour", NULL, polygon_optional_index_operands,
-    BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, BU_CMD_SCHEMA_CONSTRAINTS(polygon_open_close_validate, NULL)
+    BU_ARG_PARSE_STOP_AT_FIRST_OPERAND, BU_ARG_SCHEMA_CONSTRAINTS(polygon_open_close_validate, NULL)
 };
 GED_DEFINE_NO_ARG_SCHEMA_NAMED(polygon_area_schema, "area", "Report polygon area",
-    BU_CMD_PARSE_STOP_AT_FIRST_OPERAND);
-static const struct bu_cmd_schema polygon_overlap_schema = {
+    BU_ARG_PARSE_STOP_AT_FIRST_OPERAND);
+static const struct bu_arg_schema polygon_overlap_schema = {
     "overlap", "Report overlap with another polygon", NULL, polygon_one_string_operands,
-    BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+    BU_ARG_PARSE_STOP_AT_FIRST_OPERAND, BU_ARG_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
-static const struct bu_cmd_schema polygon_import_schema = {
+static const struct bu_arg_schema polygon_import_schema = {
     "import", "Import a polygon from a sketch", NULL, polygon_one_string_operands,
-    BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+    BU_ARG_PARSE_STOP_AT_FIRST_OPERAND, BU_ARG_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
-static const struct bu_cmd_schema polygon_export_schema = {
+static const struct bu_arg_schema polygon_export_schema = {
     "export", "Export a polygon to a sketch", NULL, polygon_one_string_operands,
-    BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+    BU_ARG_PARSE_STOP_AT_FIRST_OPERAND, BU_ARG_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
-static const struct bu_cmd_schema polygon_fill_schema = {
+static const struct bu_arg_schema polygon_fill_schema = {
     "fill", "Disable fill or set fill direction and spacing", NULL, polygon_raw_three_operands,
-    BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, BU_CMD_SCHEMA_CONSTRAINTS(polygon_fill_validate, NULL)
+    BU_ARG_PARSE_STOP_AT_FIRST_OPERAND, BU_ARG_SCHEMA_CONSTRAINTS(polygon_fill_validate, NULL)
 };
-static const struct bu_cmd_schema polygon_fill_color_schema = {
+static const struct bu_arg_schema polygon_fill_color_schema = {
     "fill_color", "Query or set fill-line color", NULL, polygon_raw_three_operands,
-    BU_CMD_PARSE_STOP_AT_FIRST_OPERAND,
-    BU_CMD_SCHEMA_CONSTRAINTS(polygon_fill_color_validate, NULL)
+    BU_ARG_PARSE_STOP_AT_FIRST_OPERAND,
+    BU_ARG_SCHEMA_CONSTRAINTS(polygon_fill_color_validate, NULL)
 };
-static const struct bu_cmd_schema polygon_csg_schema = {
+static const struct bu_arg_schema polygon_csg_schema = {
     "csg", "Replace this polygon with a boolean result", NULL, polygon_csg_operands,
-    BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+    BU_ARG_PARSE_STOP_AT_FIRST_OPERAND, BU_ARG_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
-GED_EXPORT const struct bu_cmd_schema ged_view_polygon_schema = {
+GED_EXPORT const struct bu_arg_schema ged_view_polygon_schema = {
     "polygon", "Manage object polygons", polygon_root_options, NULL,
-    BU_CMD_PARSE_OPTIONS_FIRST, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+    BU_ARG_PARSE_OPTIONS_FIRST, BU_ARG_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
-GED_EXPORT const struct bu_cmd_tree_node ged_view_polygon_subcommands[] = {
-    BU_CMD_TREE_NODE(&polygon_append_schema, NULL, NULL, BU_CMD_TREE_CHILD_AFTER_OPTIONS, _poly_cmd_append),
-    BU_CMD_TREE_NODE(&polygon_area_schema, NULL, NULL, BU_CMD_TREE_CHILD_AFTER_OPTIONS, _poly_cmd_area),
-    BU_CMD_TREE_NODE(&polygon_clear_schema, NULL, NULL, BU_CMD_TREE_CHILD_AFTER_OPTIONS, _poly_cmd_clear),
-    BU_CMD_TREE_NODE(&polygon_close_schema, NULL, NULL, BU_CMD_TREE_CHILD_AFTER_OPTIONS, _poly_cmd_close),
-    BU_CMD_TREE_NODE(&polygon_create_schema, NULL, NULL, BU_CMD_TREE_CHILD_AFTER_OPTIONS, _poly_cmd_create),
-    BU_CMD_TREE_NODE(&polygon_csg_schema, NULL, NULL, BU_CMD_TREE_CHILD_AFTER_OPTIONS, _poly_cmd_csg),
-    BU_CMD_TREE_NODE(&polygon_export_schema, NULL, NULL, BU_CMD_TREE_CHILD_AFTER_OPTIONS, _poly_cmd_export),
-    BU_CMD_TREE_NODE(&polygon_fill_schema, NULL, NULL, BU_CMD_TREE_CHILD_AFTER_OPTIONS, _poly_cmd_fill),
-    BU_CMD_TREE_NODE(&polygon_fill_color_schema, NULL, NULL, BU_CMD_TREE_CHILD_AFTER_OPTIONS, _poly_cmd_fill_color),
-    BU_CMD_TREE_NODE(&polygon_import_schema, NULL, NULL, BU_CMD_TREE_CHILD_AFTER_OPTIONS, _poly_cmd_import),
-    BU_CMD_TREE_NODE(&polygon_move_schema, NULL, NULL, BU_CMD_TREE_CHILD_AFTER_OPTIONS, _poly_cmd_move),
-    BU_CMD_TREE_NODE(&polygon_open_schema, NULL, NULL, BU_CMD_TREE_CHILD_AFTER_OPTIONS, _poly_cmd_open),
-    BU_CMD_TREE_NODE(&polygon_overlap_schema, NULL, NULL, BU_CMD_TREE_CHILD_AFTER_OPTIONS, _poly_cmd_overlap),
-    BU_CMD_TREE_NODE(&polygon_select_schema, NULL, NULL, BU_CMD_TREE_CHILD_AFTER_OPTIONS, _poly_cmd_select),
-    BU_CMD_TREE_NODE_NULL
+GED_EXPORT const struct bu_arg_tree_node ged_view_polygon_subcommands[] = {
+    BU_ARG_TREE_NODE(&polygon_append_schema, NULL, NULL, BU_ARG_TREE_CHILD_AFTER_OPTIONS, _poly_cmd_append),
+    BU_ARG_TREE_NODE(&polygon_area_schema, NULL, NULL, BU_ARG_TREE_CHILD_AFTER_OPTIONS, _poly_cmd_area),
+    BU_ARG_TREE_NODE(&polygon_clear_schema, NULL, NULL, BU_ARG_TREE_CHILD_AFTER_OPTIONS, _poly_cmd_clear),
+    BU_ARG_TREE_NODE(&polygon_close_schema, NULL, NULL, BU_ARG_TREE_CHILD_AFTER_OPTIONS, _poly_cmd_close),
+    BU_ARG_TREE_NODE(&polygon_create_schema, NULL, NULL, BU_ARG_TREE_CHILD_AFTER_OPTIONS, _poly_cmd_create),
+    BU_ARG_TREE_NODE(&polygon_csg_schema, NULL, NULL, BU_ARG_TREE_CHILD_AFTER_OPTIONS, _poly_cmd_csg),
+    BU_ARG_TREE_NODE(&polygon_export_schema, NULL, NULL, BU_ARG_TREE_CHILD_AFTER_OPTIONS, _poly_cmd_export),
+    BU_ARG_TREE_NODE(&polygon_fill_schema, NULL, NULL, BU_ARG_TREE_CHILD_AFTER_OPTIONS, _poly_cmd_fill),
+    BU_ARG_TREE_NODE(&polygon_fill_color_schema, NULL, NULL, BU_ARG_TREE_CHILD_AFTER_OPTIONS, _poly_cmd_fill_color),
+    BU_ARG_TREE_NODE(&polygon_import_schema, NULL, NULL, BU_ARG_TREE_CHILD_AFTER_OPTIONS, _poly_cmd_import),
+    BU_ARG_TREE_NODE(&polygon_move_schema, NULL, NULL, BU_ARG_TREE_CHILD_AFTER_OPTIONS, _poly_cmd_move),
+    BU_ARG_TREE_NODE(&polygon_open_schema, NULL, NULL, BU_ARG_TREE_CHILD_AFTER_OPTIONS, _poly_cmd_open),
+    BU_ARG_TREE_NODE(&polygon_overlap_schema, NULL, NULL, BU_ARG_TREE_CHILD_AFTER_OPTIONS, _poly_cmd_overlap),
+    BU_ARG_TREE_NODE(&polygon_select_schema, NULL, NULL, BU_ARG_TREE_CHILD_AFTER_OPTIONS, _poly_cmd_select),
+    BU_ARG_TREE_NODE_NULL
 };
-GED_EXPORT const struct bu_cmd_tree ged_view_polygon_tree = {
-    &ged_view_polygon_schema, ged_view_polygon_subcommands, BU_CMD_TREE_CHILD_AFTER_OPTIONS
+GED_EXPORT const struct bu_arg_tree ged_view_polygon_tree = {
+    &ged_view_polygon_schema, ged_view_polygon_subcommands, BU_ARG_TREE_CHILD_AFTER_OPTIONS
 };
 
 static int
-polygon_preflight(struct ged *gedp, const struct bu_cmd_schema *schema,
+polygon_preflight(struct ged *gedp, const struct bu_arg_schema *schema,
     int argc, const char **argv)
 {
-    return bu_cmd_schema_parse_complete(schema, NULL, gedp->ged_result_str,
+    return bu_arg_schema_parse_complete(schema, NULL, gedp->ged_result_str,
 	argc - 1, argv + 1) < 0 ? BRLCAD_ERROR : BRLCAD_OK;
 }
 
 static int
 polygon_msgs(void *bs, int argc, const char **argv,
-	const struct bu_cmd_schema *schema)
+	const struct bu_arg_schema *schema)
 {
     struct _ged_view_info *gd = (struct _ged_view_info *)bs;
 
@@ -336,7 +336,7 @@ polygon_msgs(void *bs, int argc, const char **argv,
 	struct bu_vls invocation = BU_VLS_INIT_ZERO;
 	char *help;
 	bu_vls_printf(&invocation, "view obj <object> polygon %s", schema->name);
-	help = bu_cmd_schema_help(schema, bu_vls_cstr(&invocation));
+	help = bu_arg_schema_help(schema, bu_vls_cstr(&invocation));
 	if (help) {
 	    bu_vls_strcat(gd->gedp->ged_result_str, help);
 	    bu_free(help, "view polygon operation help");
@@ -375,11 +375,11 @@ _poly_cmd_create(void *bs, int argc, const char **argv)
     }
 
     int x,y;
-	if (!bu_cmd_integer_from_str(&x, argv[0]) || x < 0) {
+	if (!bu_arg_integer_from_str(&x, argv[0]) || x < 0) {
 	bu_vls_printf(gedp->ged_result_str, "Invalid argument %s\n", argv[0]);
 	return BRLCAD_ERROR;
     }
-	if (!bu_cmd_integer_from_str(&y, argv[1]) || y < 0) {
+	if (!bu_arg_integer_from_str(&y, argv[1]) || y < 0) {
 	bu_vls_printf(gedp->ged_result_str, "Invalid argument %s\n", argv[1]);
 	return BRLCAD_ERROR;
     }
@@ -454,7 +454,7 @@ _poly_cmd_select(void *bs, int argc, const char **argv)
     int contour_ind = -1;
     if (argc == 3) {
 	ioffset++;
-	if (!bu_cmd_integer_from_str(&contour_ind, argv[0]) || contour_ind < 0) {
+	if (!bu_arg_integer_from_str(&contour_ind, argv[0]) || contour_ind < 0) {
 	    bu_vls_printf(gedp->ged_result_str, "Invalid argument %s\n", argv[0]);
 	    return BRLCAD_ERROR;
 	}
@@ -464,11 +464,11 @@ _poly_cmd_select(void *bs, int argc, const char **argv)
 	p->curr_contour_i = contour_ind;
     }
     int x,y;
-	if (!bu_cmd_integer_from_str(&x, argv[ioffset]) || x < 0) {
+	if (!bu_arg_integer_from_str(&x, argv[ioffset]) || x < 0) {
 	bu_vls_printf(gedp->ged_result_str, "Invalid argument %s\n", argv[ioffset]);
 	return BRLCAD_ERROR;
     }
-	if (!bu_cmd_integer_from_str(&y, argv[ioffset+1]) || y < 0) {
+	if (!bu_arg_integer_from_str(&y, argv[ioffset+1]) || y < 0) {
 	bu_vls_printf(gedp->ged_result_str, "Invalid argument %s\n", argv[ioffset+1]);
 	return BRLCAD_ERROR;
     }
@@ -520,7 +520,7 @@ _poly_cmd_append(void *bs, int argc, const char **argv)
     int contour_ind = -1;
     if (argc == 3) {
 	ioffset++;
-	if (!bu_cmd_integer_from_str(&contour_ind, argv[0]) || contour_ind < 0) {
+	if (!bu_arg_integer_from_str(&contour_ind, argv[0]) || contour_ind < 0) {
 	    bu_vls_printf(gedp->ged_result_str, "Invalid argument %s\n", argv[0]);
 	    return BRLCAD_ERROR;
 	}
@@ -529,11 +529,11 @@ _poly_cmd_append(void *bs, int argc, const char **argv)
 	p->curr_contour_i = 0;
     }
     int x,y;
-	if (!bu_cmd_integer_from_str(&x, argv[ioffset]) || x < 0) {
+	if (!bu_arg_integer_from_str(&x, argv[ioffset]) || x < 0) {
 	bu_vls_printf(gedp->ged_result_str, "Invalid argument %s\n", argv[ioffset]);
 	return BRLCAD_ERROR;
     }
-	if (!bu_cmd_integer_from_str(&y, argv[ioffset+1]) || y < 0) {
+	if (!bu_arg_integer_from_str(&y, argv[ioffset+1]) || y < 0) {
 	bu_vls_printf(gedp->ged_result_str, "Invalid argument %s\n", argv[ioffset+1]);
 	return BRLCAD_ERROR;
     }
@@ -579,11 +579,11 @@ _poly_cmd_move(void *bs, int argc, const char **argv)
     }
 
     int x,y;
-	if (!bu_cmd_integer_from_str(&x, argv[0]) || x < 0) {
+	if (!bu_arg_integer_from_str(&x, argv[0]) || x < 0) {
 	bu_vls_printf(gedp->ged_result_str, "Invalid argument %s\n", argv[0]);
 	return BRLCAD_ERROR;
     }
-	if (!bu_cmd_integer_from_str(&y, argv[1]) || y < 0) {
+	if (!bu_arg_integer_from_str(&y, argv[1]) || y < 0) {
 	bu_vls_printf(gedp->ged_result_str, "Invalid argument %s\n", argv[1]);
 	return BRLCAD_ERROR;
     }
@@ -662,7 +662,7 @@ _poly_cmd_close(void *bs, int argc, const char **argv)
     }
 
     int ind = -1;
-    if (argc && !bu_cmd_integer_from_str(&ind, argv[0]))
+    if (argc && !bu_arg_integer_from_str(&ind, argv[0]))
 	return BRLCAD_ERROR;
     if (ind >= 0 && (size_t)ind >= p->polygon.num_contours) {
 	bu_vls_printf(gedp->ged_result_str, "Invalid contour index %d\n", ind);
@@ -716,7 +716,7 @@ _poly_cmd_open(void *bs, int argc, const char **argv)
     }
 
     int ind = -1;
-    if (argc && !bu_cmd_integer_from_str(&ind, argv[0]))
+    if (argc && !bu_arg_integer_from_str(&ind, argv[0]))
 	return BRLCAD_ERROR;
     if (ind >= 0 && (size_t)ind >= p->polygon.num_contours) {
 	bu_vls_printf(gedp->ged_result_str, "Invalid contour index %d\n", ind);
@@ -991,15 +991,15 @@ _poly_cmd_fill(void *bs, int argc, const char **argv)
 
     vect2d_t vdir;
     fastf_t vdelta;
-	if (!bu_cmd_number_from_str(&vdir[0], argv[0])) {
+	if (!bu_arg_number_from_str(&vdir[0], argv[0])) {
 	bu_vls_printf(gedp->ged_result_str, "Invalid argument %s\n", argv[0]);
 	return BRLCAD_ERROR;
     }
-	if (!bu_cmd_number_from_str(&vdir[1], argv[1])) {
+	if (!bu_arg_number_from_str(&vdir[1], argv[1])) {
 	bu_vls_printf(gedp->ged_result_str, "Invalid argument %s\n", argv[1]);
 	return BRLCAD_ERROR;
     }
-	if (!bu_cmd_number_from_str(&vdelta, argv[2])) {
+	if (!bu_arg_number_from_str(&vdelta, argv[2])) {
 	bu_vls_printf(gedp->ged_result_str, "Invalid argument %s\n", argv[2]);
 	return BRLCAD_ERROR;
     }
@@ -1050,7 +1050,7 @@ _poly_cmd_fill_color(void *bs, int argc, const char **argv)
 	return BRLCAD_OK;
     }
 
-	if (bu_cmd_color_from_argv(&p->fill_color, (size_t)argc,
+	if (bu_arg_color_from_argv(&p->fill_color, (size_t)argc,
 	(const char * const *)argv) != argc) {
 	bu_vls_printf(gedp->ged_result_str, "Invalid fill color\n");
 	return BRLCAD_ERROR;
@@ -1175,7 +1175,7 @@ _view_cmd_polygons(void *bs, int argc, const char **argv)
     int ret = BRLCAD_ERROR;
 
     if (argc == 2 && BU_STR_EQUAL(argv[1], HELPFLAG)) {
-	char *help = bu_cmd_tree_help(&ged_view_polygon_tree,
+	char *help = bu_arg_tree_help(&ged_view_polygon_tree,
 	    "view obj <object> polygon");
 	if (help) {
 	    bu_vls_strcat(gedp->ged_result_str, help);
@@ -1196,10 +1196,10 @@ _view_cmd_polygons(void *bs, int argc, const char **argv)
 
 
     argc--; argv++;
-    child_start = bu_cmd_schema_parse(&ged_view_polygon_schema, &args,
+    child_start = bu_arg_schema_parse(&ged_view_polygon_schema, &args,
 	gedp->ged_result_str, argc, argv);
     if (child_start < 0) {
-	char *help = bu_cmd_tree_help(&ged_view_polygon_tree,
+	char *help = bu_arg_tree_help(&ged_view_polygon_tree,
 	    "view obj <object> polygon");
 	if (help) {
 	    bu_vls_strcat(gedp->ged_result_str, help);
@@ -1209,7 +1209,7 @@ _view_cmd_polygons(void *bs, int argc, const char **argv)
     }
     gd->gopts = NULL;
     if (args.print_help) {
-	char *help = bu_cmd_tree_help(&ged_view_polygon_tree,
+	char *help = bu_arg_tree_help(&ged_view_polygon_tree,
 	    "view obj <object> polygon");
 	if (help) {
 	    bu_vls_strcat(gedp->ged_result_str, help);
@@ -1221,7 +1221,7 @@ _view_cmd_polygons(void *bs, int argc, const char **argv)
 	bu_vls_strcat(gedp->ged_result_str, "polygon subcommand required\n");
 	return BRLCAD_ERROR;
     }
-    if (bu_cmd_tree_dispatch(&ged_view_polygon_tree, gd, argc - child_start,
+    if (bu_arg_tree_dispatch(&ged_view_polygon_tree, gd, argc - child_start,
 	argv + child_start, &ret) == 0)
 	return ret;
     bu_vls_printf(gedp->ged_result_str, "unknown polygon subcommand: %s\n",

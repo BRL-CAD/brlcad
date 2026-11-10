@@ -60,7 +60,7 @@
 #include <unordered_set>
 #include <vector>
 
-#include "bu/cmdschema.h"
+#include "bu/arg.h"
 #include "bu/str.h"
 #include "bu/vls.h"
 #include "bn/mat.h"
@@ -1431,7 +1431,7 @@ static int
 clone_vec3_consume(struct bu_vls *msg, size_t argc, const char **argv, void *storage)
 {
     vect_t value = VINIT_ZERO;
-    int consumed = bu_cmd_vector3_from_argv(value, argc, (const char * const *)argv);
+    int consumed = bu_arg_vector3_from_argv(value, argc, (const char * const *)argv);
 
     if (consumed == (int)argc) {
 	if (storage) {
@@ -1475,7 +1475,7 @@ clone_nvec_consume(struct bu_vls *msg, size_t argc, const char **argv, void *sto
     int consumed;
 
 
-    consumed = bu_cmd_counted_vector3_from_argv(&count, value, argc,
+    consumed = bu_arg_counted_vector3_from_argv(&count, value, argc,
 	(const char * const *)argv);
     if (consumed <= 0 || (size_t)consumed != argc) {
 	if (msg)
@@ -1521,7 +1521,7 @@ clone_mirror_consume(struct bu_vls *msg, size_t argc, const char **argv, void *s
 	    bu_vls_printf(msg, "mirror axis must be x, y, or z\n");
 	return -1;
     }
-    if (!bu_cmd_number_from_str(&distance, argv[1])) {
+    if (!bu_arg_number_from_str(&distance, argv[1])) {
 	if (msg)
 	    bu_vls_printf(msg, "mirror distance must be a number\n");
 	return -1;
@@ -1671,7 +1671,7 @@ clone_axis_int_consume(struct bu_vls *msg, size_t argc, const char **argv, void 
     }
     split_axis_kv(argv[0], kv.axis, rest);
 
-    if (!bu_cmd_integer_from_str(&value, rest.c_str())) {
+    if (!bu_arg_integer_from_str(&value, rest.c_str())) {
 	if (msg)
 	    bu_vls_printf(msg, "expected integer (or AXIS=integer), got '%s'\n",
 			  argv[0]);
@@ -1698,7 +1698,7 @@ clone_axis_number_consume(struct bu_vls *msg, size_t argc, const char **argv, vo
     }
     split_axis_kv(argv[0], kv.axis, rest);
 
-    if (!bu_cmd_number_from_str(&value, rest.c_str())) {
+    if (!bu_arg_number_from_str(&value, rest.c_str())) {
 	if (msg)
 	    bu_vls_printf(msg, "expected number (or AXIS=number), got '%s'\n",
 			  argv[0]);
@@ -1748,7 +1748,7 @@ clone_axis_dir_token_count(size_t available, const char **argv)
 	return 0;
     if (available == 1)
 	return 1;
-    consumed = bu_cmd_vector3_from_argv(value, available - 1,
+    consumed = bu_arg_vector3_from_argv(value, available - 1,
 	(const char * const *)(argv + 1));
     return consumed > 0 ? (size_t)consumed + 1 : 1;
 }
@@ -1771,7 +1771,7 @@ clone_axis_dir_consume(struct bu_vls *msg, size_t argc, const char **argv, void 
 	    bu_vls_printf(msg, "--dir AXIS must not be empty\n");
 	return -1;
     }
-    consumed = bu_cmd_vector3_from_argv(kv.dir, argc - 1,
+    consumed = bu_arg_vector3_from_argv(kv.dir, argc - 1,
 	(const char * const *)(argv + 1));
     if (consumed <= 0 || (size_t)consumed + 1 != argc) {
 	if (msg)
@@ -1805,7 +1805,7 @@ struct CloneParseArgs {
 };
 
 
-static const struct bu_cmd_schema *clone_schema(void);
+static const struct bu_arg_schema *clone_schema(void);
 
 
 /* -----------------------------------------------------------------------
@@ -1815,7 +1815,7 @@ static const struct bu_cmd_schema *clone_schema(void);
 static void
 print_usage(struct bu_vls *str, const char *invocation)
 {
-    char *help = bu_cmd_schema_help(clone_schema(), invocation);
+    char *help = bu_arg_schema_help(clone_schema(), invocation);
 
     if (help) {
 	bu_vls_strcat(str, help);
@@ -1987,7 +1987,7 @@ clone_parse_args(struct ged *gedp, int argc, const char **argv,
     std::vector<const char *> argv_local(argv, argv + argc);
     const char **av = argv_local.data();
 
-    int operand_start = bu_cmd_schema_parse_complete(clone_schema(), &args,
+    int operand_start = bu_arg_schema_parse_complete(clone_schema(), &args,
 	gedp->ged_result_str, argc, av);
 
     if (args.help) {
@@ -2523,20 +2523,20 @@ ged_clone_core(struct ged *gedp, int argc, const char *argv[])
 
 #include "../include/plugin.h"
 
-static const struct bu_cmd_arg_shape clone_pair_shape = {
-    BU_CMD_ARG_SHAPE_TOKEN_SEQUENCE, 2, 2, "two tokens", clone_pair_token_count, NULL
+static const struct bu_arg_shape clone_pair_shape = {
+    BU_ARG_SHAPE_TOKEN_SEQUENCE, 2, 2, "two tokens", clone_pair_token_count, NULL
 };
-static const struct bu_cmd_arg_shape clone_dir_shape = {
-    BU_CMD_ARG_SHAPE_AXIS_KEYED, 2, 4,
+static const struct bu_arg_shape clone_dir_shape = {
+    BU_ARG_SHAPE_AXIS_KEYED, 2, 4,
     "axis plus packed or three-component XYZ vector", clone_axis_dir_token_count, NULL
 };
-static const struct bu_cmd_arg_shape clone_axis_shape = {
-    BU_CMD_ARG_SHAPE_AXIS_KEYED, 1, 1, "value or AXIS=value", NULL, NULL
+static const struct bu_arg_shape clone_axis_shape = {
+    BU_ARG_SHAPE_AXIS_KEYED, 1, 1, "value or AXIS=value", NULL, NULL
 };
 
 static const char * const clone_regions_aliases[] = {"reg", NULL};
 static const char * const clone_primitives_aliases[] = {"prim", NULL};
-static const struct bu_cmd_value_keyword clone_depth_values[] = {
+static const struct bu_arg_value_keyword clone_depth_values[] = {
     {"top", NULL, "Create top-level wrappers"},
     {"regions", clone_regions_aliases, "Copy combinations down to regions"},
     {"primitives", clone_primitives_aliases, "Deep-copy primitive geometry"},
@@ -2544,71 +2544,71 @@ static const struct bu_cmd_value_keyword clone_depth_values[] = {
 };
 static const char * const clone_patterns[] = {"lin", "rect", "sph", "cyl", NULL};
 
-static const struct bu_cmd_option clone_options[] = {
-    BU_CMD_FLAG("h", "help", CloneParseArgs, help, "Print help"),
-    BU_CMD_INTEGER("i", "increment", CloneParseArgs, increment, "number", "Name increment"),
-    BU_CMD_COUNTING_LONG_FLAG("c", "second-number", CloneParseArgs, second_number,
+static const struct bu_arg_option clone_options[] = {
+    BU_ARG_FLAG("h", "help", CloneParseArgs, help, "Print help"),
+    BU_ARG_INTEGER("i", "increment", CloneParseArgs, increment, "number", "Name increment"),
+    BU_ARG_COUNTING_LONG_FLAG("c", "second-number", CloneParseArgs, second_number,
 	"Increment the next embedded number"),
-    {NULL, "depth", "depth", "mode", "Copy depth", BU_CMD_VALUE_KEYWORD,
+    {NULL, "depth", "depth", "mode", "Copy depth", BU_ARG_VALUE_KEYWORD,
 	offsetof(CloneParseArgs, depth), NULL, NULL, NULL, NULL, 0, 0, NULL,
-	BU_CMD_ARG_REQUIRED, NULL, NULL, clone_depth_values, BU_CMD_VALUE_RANGE_NONE, BU_CMD_ARG_SHAPE_SCALAR},
-    BU_CMD_FLAG(NULL, "xpush", CloneParseArgs, xpush, "Flatten instance matrices first"),
-    BU_CMD_STRING("g", "group", CloneParseArgs, group, "name", "Collect clones in a combination"),
-    BU_CMD_OPTION_CONSUME("s", "subs", CloneParseArgs, subs, BU_CMD_VALUE_STRING,
+	BU_ARG_REQUIRED, NULL, NULL, clone_depth_values, BU_ARG_VALUE_RANGE_NONE, BU_ARG_SHAPE_SCALAR},
+    BU_ARG_FLAG(NULL, "xpush", CloneParseArgs, xpush, "Flatten instance matrices first"),
+    BU_ARG_STRING("g", "group", CloneParseArgs, group, "name", "Collect clones in a combination"),
+    BU_ARG_OPTION_CONSUME("s", "subs", CloneParseArgs, subs, BU_ARG_VALUE_STRING,
 	"search replacement", "Substitute a name fragment",
 	&clone_pair_shape, clone_subs_consume),
-    BU_CMD_OPTION_CONSUME("n", "copies", CloneParseArgs, axes.n_kv, BU_CMD_VALUE_INTEGER,
+    BU_ARG_OPTION_CONSUME("n", "copies", CloneParseArgs, axes.n_kv, BU_ARG_VALUE_INTEGER,
 	"N|AXIS=N", "Per-axis copy count",
 	&clone_axis_shape, clone_axis_int_consume),
-    BU_CMD_OPTION_CONSUME("d", "delta", CloneParseArgs, axes.d_kv, BU_CMD_VALUE_NUMBER,
+    BU_ARG_OPTION_CONSUME("d", "delta", CloneParseArgs, axes.d_kv, BU_ARG_VALUE_NUMBER,
 	"D|AXIS=D", "Per-axis step (degrees or model units)",
 	&clone_axis_shape, clone_axis_number_consume),
-    BU_CMD_OPTION_CONSUME(NULL, "start", CloneParseArgs, axes.start_kv, BU_CMD_VALUE_NUMBER,
+    BU_ARG_OPTION_CONSUME(NULL, "start", CloneParseArgs, axes.start_kv, BU_ARG_VALUE_NUMBER,
 	"V|AXIS=V", "Per-axis start value",
 	&clone_axis_shape, clone_axis_number_consume),
-    BU_CMD_OPTION_CONSUME(NULL, "list", CloneParseArgs, axes.list_kv, BU_CMD_VALUE_NUMBER,
+    BU_ARG_OPTION_CONSUME(NULL, "list", CloneParseArgs, axes.list_kv, BU_ARG_VALUE_NUMBER,
 	"AXIS=v1,v2,...", "Per-axis explicit value list",
 	&clone_axis_shape, clone_axis_list_consume),
-    BU_CMD_OPTION_CONSUME("O", "origin", CloneParseArgs, origin, BU_CMD_VALUE_VECTOR,
+    BU_ARG_OPTION_CONSUME("O", "origin", CloneParseArgs, origin, BU_ARG_VALUE_VECTOR,
 	"x y z", "Pattern origin",
-	&bu_cmd_vector3_arg_shape, clone_vec3_consume),
-    BU_CMD_OPTION_CONSUME("p", "pivot", CloneParseArgs, pivot, BU_CMD_VALUE_VECTOR,
+	&bu_arg_vector3_shape, clone_vec3_consume),
+    BU_ARG_OPTION_CONSUME("p", "pivot", CloneParseArgs, pivot, BU_ARG_VALUE_VECTOR,
 	"x y z", "Rotation pivot",
-	&bu_cmd_vector3_arg_shape, clone_vec3_consume),
-    BU_CMD_STRING(NULL, "align", CloneParseArgs, align, "keys", "Orientation keys"),
-    BU_CMD_OPTION_CONSUME(NULL, "dir", CloneParseArgs, axes.dir_kv, BU_CMD_VALUE_VECTOR,
+	&bu_arg_vector3_shape, clone_vec3_consume),
+    BU_ARG_STRING(NULL, "align", CloneParseArgs, align, "keys", "Orientation keys"),
+    BU_ARG_OPTION_CONSUME(NULL, "dir", CloneParseArgs, axes.dir_kv, BU_ARG_VALUE_VECTOR,
 	"axis x y z", "Per-axis direction",
 	&clone_dir_shape, clone_axis_dir_consume),
-    BU_CMD_OPTION_CONSUME("t", "translate", CloneParseArgs, translate, BU_CMD_VALUE_VECTOR,
+    BU_ARG_OPTION_CONSUME("t", "translate", CloneParseArgs, translate, BU_ARG_VALUE_VECTOR,
 	"x y z", "Per-copy translation",
-	&bu_cmd_vector3_arg_shape, clone_vec3_consume),
-    BU_CMD_OPTION_CONSUME("r", "rotate", CloneParseArgs, rotate, BU_CMD_VALUE_VECTOR,
+	&bu_arg_vector3_shape, clone_vec3_consume),
+    BU_ARG_OPTION_CONSUME("r", "rotate", CloneParseArgs, rotate, BU_ARG_VALUE_VECTOR,
 	"x y z", "Per-copy rotation in degrees",
-	&bu_cmd_vector3_arg_shape, clone_vec3_consume),
-    BU_CMD_OPTION_CONSUME("a", "atrans", CloneParseArgs, atrans, BU_CMD_VALUE_VECTOR,
+	&bu_arg_vector3_shape, clone_vec3_consume),
+    BU_ARG_OPTION_CONSUME("a", "atrans", CloneParseArgs, atrans, BU_ARG_VALUE_VECTOR,
 	"count x y z", "Total translation split across copies",
-	&bu_cmd_counted_vector3_arg_shape, clone_nvec_consume),
-    BU_CMD_OPTION_CONSUME("b", "arot", CloneParseArgs, arot, BU_CMD_VALUE_VECTOR,
+	&bu_arg_counted_vector3_shape, clone_nvec_consume),
+    BU_ARG_OPTION_CONSUME("b", "arot", CloneParseArgs, arot, BU_ARG_VALUE_VECTOR,
 	"count x y z", "Total rotation split across copies",
-	&bu_cmd_counted_vector3_arg_shape, clone_nvec_consume),
-    BU_CMD_OPTION_CONSUME("m", "mirror", CloneParseArgs, mirror, BU_CMD_VALUE_NUMBER,
+	&bu_arg_counted_vector3_shape, clone_nvec_consume),
+    BU_ARG_OPTION_CONSUME("m", "mirror", CloneParseArgs, mirror, BU_ARG_VALUE_NUMBER,
 	"axis distance", "Mirror about an X, Y, or Z plane",
 	&clone_pair_shape, clone_mirror_consume),
-    BU_CMD_OPTION_NULL
+    BU_ARG_OPTION_NULL
 };
-static const struct bu_cmd_operand clone_operands[] = {
-    BU_CMD_OPERAND_KEYWORDS("objects_or_pattern", BU_CMD_VALUE_DB_OBJECT, 0,
-	BU_CMD_COUNT_UNLIMITED,
+static const struct bu_arg_operand clone_operands[] = {
+    BU_ARG_OPERAND_KEYWORDS("objects_or_pattern", BU_ARG_VALUE_DB_OBJECT, 0,
+	BU_ARG_COUNT_UNLIMITED,
 	"Source objects with at most one optional pattern keyword", "ged.db_object",
 	clone_patterns),
-    BU_CMD_OPERAND_NULL
+    BU_ARG_OPERAND_NULL
 };
-static const struct bu_cmd_schema clone_cmd_schema =
-    BU_CMD_SCHEMA_BOUND("clone",
+static const struct bu_arg_schema clone_cmd_schema =
+    BU_ARG_SCHEMA_BOUND("clone",
 	"Clone objects using linear, rectangular, spherical, or cylindrical patterns",
-	clone_options, clone_operands, BU_CMD_PARSE_INTERSPERSED, NULL, NULL, NULL, NULL);
+	clone_options, clone_operands, BU_ARG_PARSE_INTERSPERSED, NULL, NULL, NULL, NULL);
 
-static const struct bu_cmd_schema *
+static const struct bu_arg_schema *
 clone_schema(void)
 {
     return &clone_cmd_schema;

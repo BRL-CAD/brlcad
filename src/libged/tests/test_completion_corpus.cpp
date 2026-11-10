@@ -291,8 +291,8 @@ main(int argc, char **argv)
 		continue;
 	    std::string token = example.text.substr(at->char_start, at->char_end - at->char_start);
 
-	    if (at->value_type == BU_CMD_VALUE_DB_OBJECT || at->value_type == BU_CMD_VALUE_DB_PATH) {
-		std::string seed = (at->value_type == BU_CMD_VALUE_DB_PATH && token.find('/') != std::string::npos) ? "/a" : "a";
+	    if (at->value_type == BU_ARG_VALUE_DB_OBJECT || at->value_type == BU_ARG_VALUE_DB_PATH) {
+		std::string seed = (at->value_type == BU_ARG_VALUE_DB_PATH && token.find('/') != std::string::npos) ? "/a" : "a";
 		std::string input = example.text.substr(0, at->char_start) + seed;
 		struct ged_cmd_completion_result result = GED_CMD_COMPLETION_RESULT_NULL;
 		(void)ged_cmd_complete_result(gedp, input.c_str(), input.size(), &result);
@@ -336,7 +336,7 @@ main(int argc, char **argv)
 		}
 		ged_cmd_completion_result_clear(&result);
 
-		if (at->value_type == BU_CMD_VALUE_DB_PATH) {
+		if (at->value_type == BU_ARG_VALUE_DB_PATH) {
 		    std::string nested_input = example.text.substr(0, at->char_start) + "all.g/t";
 		    struct ged_cmd_completion_result nested = GED_CMD_COMPLETION_RESULT_NULL;
 		    (void)ged_cmd_complete_result(gedp, nested_input.c_str(), nested_input.size(), &nested);

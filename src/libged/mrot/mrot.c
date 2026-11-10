@@ -32,11 +32,11 @@
 #include <ctype.h>
 #include <string.h>
 
-#include "bu/cmdschema.h"
+#include "bu/arg.h"
 
 #include "../ged_private.h"
 
-static const struct bu_cmd_schema *mrot_schema(void);
+static const struct bu_arg_schema *mrot_schema(void);
 
 static int
 mrot_number_valid(const char *arg)
@@ -60,15 +60,15 @@ mrot_vector_valid(const char *arg)
 }
 
 static int
-mrot_validation_result(struct bu_cmd_validate_result *result,
-	bu_cmd_validate_state_t state, size_t token, bu_cmd_value_t type,
+mrot_validation_result(struct bu_arg_validate_result *result,
+	bu_arg_validate_state_t state, size_t token, bu_arg_value_t type,
 	const char *hint, const char *provider)
 {
-    bu_cmd_validate_result_clear(result);
+    bu_arg_validate_result_clear(result);
     result->state = state;
     result->token_start = token;
     result->token_end = token;
-    result->expected = BU_CMD_EXPECT_OPERAND;
+    result->expected = BU_ARG_EXPECT_OPERAND;
     result->completion_type = type;
     result->hint = hint;
     result->semantic_provider = provider;
@@ -102,7 +102,7 @@ ged_mrot_core(struct ged *gedp, int argc, const char *argv[])
     }
 
 
-    operand_index = bu_cmd_schema_parse_complete(mrot_schema(),
+    operand_index = bu_arg_schema_parse_complete(mrot_schema(),
 	&parse_dummy, gedp->ged_result_str, argc - 1, argv + 1);
     if (operand_index < 0) {
 	ged_cmd_help_append(gedp->ged_result_str, argv[0], argv[0]);
@@ -126,51 +126,51 @@ ged_mrot_core(struct ged *gedp, int argc, const char *argv[])
 #include "../include/plugin.h"
 
 static int
-mrot_schema_validate(const struct bu_cmd_schema *schema, size_t argc,
-	const char **argv, size_t cursor_arg, struct bu_cmd_validate_result *result)
+mrot_schema_validate(const struct bu_arg_schema *schema, size_t argc,
+	const char **argv, size_t cursor_arg, struct bu_arg_validate_result *result)
 {
-    struct bu_cmd_schema flat = *schema;
+    struct bu_arg_schema flat = *schema;
     size_t token = cursor_arg < argc ? cursor_arg : argc;
     int ret;
 
-    ret = bu_cmd_schema_validate_syntax(&flat, argc, argv, cursor_arg, result);
-    if (ret || result->state == BU_CMD_VALIDATE_INVALID || argc == 0)
+    ret = bu_arg_schema_validate_syntax(&flat, argc, argv, cursor_arg, result);
+    if (ret || result->state == BU_ARG_VALIDATE_INVALID || argc == 0)
 	return ret;
 
     if (argc == 1) {
 	if (mrot_vector_valid(argv[0]))
-	    return mrot_validation_result(result, BU_CMD_VALIDATE_VALID, token,
-		BU_CMD_VALUE_VECTOR, "packed model rotation vector", "ged.vector");
+	    return mrot_validation_result(result, BU_ARG_VALIDATE_VALID, token,
+		BU_ARG_VALUE_VECTOR, "packed model rotation vector", "ged.vector");
 	if (mrot_number_valid(argv[0]))
-	    return mrot_validation_result(result, BU_CMD_VALIDATE_INCOMPLETE, token,
-		BU_CMD_VALUE_NUMBER, "two more model rotation angles expected", NULL);
-	return mrot_validation_result(result, BU_CMD_VALIDATE_INVALID, token,
-	    BU_CMD_VALUE_VECTOR, "packed vector or numeric angle expected", "ged.vector");
+	    return mrot_validation_result(result, BU_ARG_VALIDATE_INCOMPLETE, token,
+		BU_ARG_VALUE_NUMBER, "two more model rotation angles expected", NULL);
+	return mrot_validation_result(result, BU_ARG_VALIDATE_INVALID, token,
+	    BU_ARG_VALUE_VECTOR, "packed vector or numeric angle expected", "ged.vector");
     }
 
     for (size_t i = 0; i < argc; i++) {
 	if (!mrot_number_valid(argv[i]))
-	    return mrot_validation_result(result, BU_CMD_VALIDATE_INVALID, i,
-		BU_CMD_VALUE_NUMBER, "model rotation angles must be finite numbers", NULL);
+	    return mrot_validation_result(result, BU_ARG_VALIDATE_INVALID, i,
+		BU_ARG_VALUE_NUMBER, "model rotation angles must be finite numbers", NULL);
     }
     if (argc < 3)
-	return mrot_validation_result(result, BU_CMD_VALIDATE_INCOMPLETE, token,
-	    BU_CMD_VALUE_NUMBER, "one more model rotation angle expected", NULL);
-    return mrot_validation_result(result, BU_CMD_VALIDATE_VALID, token,
-	BU_CMD_VALUE_VECTOR, "model rotation vector", "ged.vector");
+	return mrot_validation_result(result, BU_ARG_VALIDATE_INCOMPLETE, token,
+	    BU_ARG_VALUE_NUMBER, "one more model rotation angle expected", NULL);
+    return mrot_validation_result(result, BU_ARG_VALIDATE_VALID, token,
+	BU_ARG_VALUE_VECTOR, "model rotation vector", "ged.vector");
 }
 
-static const struct bu_cmd_operand mrot_schema_operands[] = {
-    BU_CMD_OPERAND("angles", BU_CMD_VALUE_RAW, 1, 3,
+static const struct bu_arg_operand mrot_schema_operands[] = {
+    BU_ARG_OPERAND("angles", BU_ARG_VALUE_RAW, 1, 3,
 	"Packed vector or X Y Z model rotation angles", NULL),
-    BU_CMD_OPERAND_NULL
+    BU_ARG_OPERAND_NULL
 };
-static const struct bu_cmd_schema mrot_cmd_schema = {
+static const struct bu_arg_schema mrot_cmd_schema = {
     "mrot", "Rotate the model view", NULL, mrot_schema_operands,
-    BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, BU_CMD_SCHEMA_CONSTRAINTS(mrot_schema_validate, NULL)
+    BU_ARG_PARSE_STOP_AT_FIRST_OPERAND, BU_ARG_SCHEMA_CONSTRAINTS(mrot_schema_validate, NULL)
 };
 
-static const struct bu_cmd_schema *
+static const struct bu_arg_schema *
 mrot_schema(void)
 {
     return &mrot_cmd_schema;

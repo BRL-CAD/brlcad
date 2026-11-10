@@ -32,41 +32,41 @@
 
 extern int ged_zap2_core(struct ged *gedp, int argc, const char *argv[]);
 
-static const struct bu_cmd_option zap_schema_options[] = {
-    BU_CMD_FLAG("h", "help", struct zap_args, print_help, "Print help and exit"),
-    BU_CMD_ALIAS_SHORT("?", "help", 1),
-    {"V", "view", "view", "name", "Specify view to clear", BU_CMD_VALUE_STRING,
+static const struct bu_arg_option zap_schema_options[] = {
+    BU_ARG_FLAG("h", "help", struct zap_args, print_help, "Print help and exit"),
+    BU_ARG_ALIAS_SHORT("?", "help", 1),
+    {"V", "view", "view", "name", "Specify view to clear", BU_ARG_VALUE_STRING,
 	offsetof(struct zap_args, view), NULL, NULL, "ged.view", NULL, 0, 0, NULL,
-	BU_CMD_ARG_REQUIRED, NULL, NULL, NULL, BU_CMD_VALUE_RANGE_NONE, BU_CMD_ARG_SHAPE_SCALAR},
-    BU_CMD_FLAG("S", "shared", struct zap_args, shared_only, "Clear shared view objects"),
-    BU_CMD_FLAG("v", "view-objs", struct zap_args, clear_view_objs,
+	BU_ARG_REQUIRED, NULL, NULL, NULL, BU_ARG_VALUE_RANGE_NONE, BU_ARG_SHAPE_SCALAR},
+    BU_ARG_FLAG("S", "shared", struct zap_args, shared_only, "Clear shared view objects"),
+    BU_ARG_FLAG("v", "view-objs", struct zap_args, clear_view_objs,
 	"Clear view-local objects"),
-    BU_CMD_FLAG("g", "solid-objs", struct zap_args, clear_solid_objs,
+    BU_ARG_FLAG("g", "solid-objs", struct zap_args, clear_solid_objs,
 	"Clear database solid objects"),
-    BU_CMD_FLAG(NULL, "all", struct zap_args, clear_all_views, "Clear all scene objects"),
-    BU_CMD_OPTION_NULL
+    BU_ARG_FLAG(NULL, "all", struct zap_args, clear_all_views, "Clear all scene objects"),
+    BU_ARG_OPTION_NULL
 };
 
-const struct bu_cmd_schema ged_Z_cmd_schema = {
+const struct bu_arg_schema ged_Z_cmd_schema = {
     "Z", "Clear displayed geometry", zap_schema_options, NULL,
-    BU_CMD_PARSE_INTERSPERSED, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+    BU_ARG_PARSE_INTERSPERSED, BU_ARG_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
-const struct bu_cmd_schema ged_zap_cmd_schema = {
+const struct bu_arg_schema ged_zap_cmd_schema = {
     "zap", "Clear displayed geometry", zap_schema_options, NULL,
-    BU_CMD_PARSE_INTERSPERSED, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+    BU_ARG_PARSE_INTERSPERSED, BU_ARG_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
 GED_DEFINE_NO_ARG_SCHEMA_NAMED(zap_compatibility_schema, "zap",
-    "Clear all displayed geometry", BU_CMD_PARSE_OPTIONS_FIRST);
-static const struct bu_cmd_form ged_zap_native_forms[] = {
-    BU_CMD_FORM_SCHEMA("compatibility", "Legacy no-argument behavior",
+    "Clear all displayed geometry", BU_ARG_PARSE_OPTIONS_FIRST);
+static const struct bu_arg_form ged_zap_native_forms[] = {
+    BU_ARG_FORM_SCHEMA("compatibility", "Legacy no-argument behavior",
 	&zap_compatibility_schema),
-    BU_CMD_FORM_SCHEMA("current", "Selective scene clearing options",
+    BU_ARG_FORM_SCHEMA("current", "Selective scene clearing options",
 	&ged_zap_cmd_schema),
-    BU_CMD_FORM_NULL
+    BU_ARG_FORM_NULL
 };
 
-static const struct bu_cmd_form *
-ged_zap_select_native_form(const struct bu_cmd_forms *forms,
+static const struct bu_arg_form *
+ged_zap_select_native_form(const struct bu_arg_forms *forms,
 	size_t UNUSED(argc), const char * const *UNUSED(argv), void *context)
 {
     const struct ged *gedp = (const struct ged *)context;
@@ -74,8 +74,8 @@ ged_zap_select_native_form(const struct bu_cmd_forms *forms,
 	&forms->forms[0];
 }
 
-static const struct bu_cmd_forms ged_zap_forms =
-    BU_CMD_FORMS("zap", "Clear displayed geometry", ged_zap_native_forms,
+static const struct bu_arg_forms ged_zap_forms =
+    BU_ARG_FORMS("zap", "Clear displayed geometry", ged_zap_native_forms,
 	ged_zap_select_native_form);
 
 #define FIRST_SOLID(_sp)      ((_sp)->s_fullpath.fp_names[0])
@@ -157,7 +157,7 @@ ged_zap_core(struct ged *gedp, int argc, const char *argv[])
     bu_vls_trunc(gedp->ged_result_str, 0);
 
     if (argc != 1) {
-	char *help = bu_cmd_schema_help(&zap_compatibility_schema, argv[0]);
+	char *help = bu_arg_schema_help(&zap_compatibility_schema, argv[0]);
 	if (help) {
 	    bu_vls_strcat(gedp->ged_result_str, help);
 	    bu_free(help, "zap compatibility help");

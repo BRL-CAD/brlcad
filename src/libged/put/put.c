@@ -29,10 +29,10 @@
 #include <ctype.h>
 #include <string.h>
 
-#include "bu/cmdschema.h"
+#include "bu/arg.h"
 #include "ged.h"
 
-static const struct bu_cmd_schema *put_schema(void);
+static const struct bu_arg_schema *put_schema(void);
 
 static const struct rt_functab *
 put_functab_by_label(const char *label, char normalized[16])
@@ -73,7 +73,7 @@ ged_put_core(struct ged *gedp, int argc, const char *argv[])
     }
 
 
-    operand_index = bu_cmd_schema_parse_complete(put_schema(),
+    operand_index = bu_arg_schema_parse_complete(put_schema(),
 	&parse_dummy, gedp->ged_result_str, argc - 1, argv + 1);
     if (operand_index < 0) {
 	ged_cmd_help_append(gedp->ged_result_str, argv[0], argv[0]);
@@ -136,14 +136,14 @@ put_primitive_type_validate(struct bu_vls *msg, const char *arg)
 }
 
 static int
-put_schema_validate(const struct bu_cmd_schema *schema, size_t argc,
-	const char **argv, size_t cursor_arg, struct bu_cmd_validate_result *result)
+put_schema_validate(const struct bu_arg_schema *schema, size_t argc,
+	const char **argv, size_t cursor_arg, struct bu_arg_validate_result *result)
 {
-    struct bu_cmd_schema flat = *schema;
+    struct bu_arg_schema flat = *schema;
     int ret;
 
-    ret = bu_cmd_schema_validate_syntax(&flat, argc, argv, cursor_arg, result);
-    if (ret || result->state == BU_CMD_VALIDATE_INVALID || argc < 2)
+    ret = bu_arg_schema_validate_syntax(&flat, argc, argv, cursor_arg, result);
+    if (ret || result->state == BU_ARG_VALIDATE_INVALID || argc < 2)
 	return ret;
 
     /* While editing the primitive-type token, retain the semantic provider's
@@ -154,31 +154,31 @@ put_schema_validate(const struct bu_cmd_schema *schema, size_t argc,
     if (put_primitive_type_validate(NULL, argv[1]) == 0)
 	return 0;
 
-    bu_cmd_validate_result_clear(result);
-    result->state = BU_CMD_VALIDATE_INVALID;
+    bu_arg_validate_result_clear(result);
+    result->state = BU_ARG_VALIDATE_INVALID;
     result->token_start = 1;
     result->token_end = 1;
-    result->expected = BU_CMD_EXPECT_OPERAND;
-    result->completion_type = BU_CMD_VALUE_KEYWORD;
+    result->expected = BU_ARG_EXPECT_OPERAND;
+    result->completion_type = BU_ARG_VALUE_KEYWORD;
     result->hint = "unknown primitive type";
     result->semantic_provider = "ged.primitive_type";
     return 0;
 }
 
-static const struct bu_cmd_operand put_schema_operands[] = {
-    BU_CMD_OPERAND("object", BU_CMD_VALUE_STRING, 1, 1, "New object name", NULL),
-    BU_CMD_OPERAND("primitive_type", BU_CMD_VALUE_STRING, 1, 1,
+static const struct bu_arg_operand put_schema_operands[] = {
+    BU_ARG_OPERAND("object", BU_ARG_VALUE_STRING, 1, 1, "New object name", NULL),
+    BU_ARG_OPERAND("primitive_type", BU_ARG_VALUE_STRING, 1, 1,
 	"Primitive type", "ged.primitive_type"),
-    BU_CMD_OPERAND("attributes", BU_CMD_VALUE_RAW, 0, BU_CMD_COUNT_UNLIMITED,
+    BU_ARG_OPERAND("attributes", BU_ARG_VALUE_RAW, 0, BU_ARG_COUNT_UNLIMITED,
 	"Primitive-specific attribute/value arguments", NULL),
-    BU_CMD_OPERAND_NULL
+    BU_ARG_OPERAND_NULL
 };
-static const struct bu_cmd_schema put_cmd_schema = {
+static const struct bu_arg_schema put_cmd_schema = {
     "put", "Create a database primitive", NULL, put_schema_operands,
-    BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, BU_CMD_SCHEMA_CONSTRAINTS(put_schema_validate, NULL)
+    BU_ARG_PARSE_STOP_AT_FIRST_OPERAND, BU_ARG_SCHEMA_CONSTRAINTS(put_schema_validate, NULL)
 };
 
-static const struct bu_cmd_schema *
+static const struct bu_arg_schema *
 put_schema(void)
 {
     return &put_cmd_schema;

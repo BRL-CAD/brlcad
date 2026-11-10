@@ -26,7 +26,7 @@
 #include <math.h>
 #include <string.h>
 
-#include "bu/cmdschema.h"
+#include "bu/arg.h"
 #include "vmath.h"
 #include "nmg.h"
 #include "rt/geom.h"
@@ -40,104 +40,104 @@ struct edbot_help_args {
     int print_help;
 };
 
-static const struct bu_cmd_option edbot_help_options[] = {
-    BU_CMD_FLAG("h", "help", struct edbot_help_args, print_help,
+static const struct bu_arg_option edbot_help_options[] = {
+    BU_ARG_FLAG("h", "help", struct edbot_help_args, print_help,
 	"Print command help"),
-    BU_CMD_OPTION_NULL
+    BU_ARG_OPTION_NULL
 };
-static const struct bu_cmd_operand get_bot_edges_operands[] = {
-    BU_CMD_OPERAND("bot", BU_CMD_VALUE_DB_PATH, 1, 1,
+static const struct bu_arg_operand get_bot_edges_operands[] = {
+    BU_ARG_OPERAND("bot", BU_ARG_VALUE_DB_PATH, 1, 1,
 	"BoT object or path", "ged.db_path"),
-    BU_CMD_OPERAND_NULL
+    BU_ARG_OPERAND_NULL
 };
-static const struct bu_cmd_operand find_bot_operands[] = {
-    BU_CMD_OPERAND("bot", BU_CMD_VALUE_DB_PATH, 1, 1,
+static const struct bu_arg_operand find_bot_operands[] = {
+    BU_ARG_OPERAND("bot", BU_ARG_VALUE_DB_PATH, 1, 1,
 	"BoT object or path", "ged.db_path"),
-    BU_CMD_OPERAND("view_xyz", BU_CMD_VALUE_VECTOR, 1, 1,
+    BU_ARG_OPERAND("view_xyz", BU_ARG_VALUE_VECTOR, 1, 1,
 	"Packed view-space XYZ coordinate", "ged.vector"),
-    BU_CMD_OPERAND_NULL
+    BU_ARG_OPERAND_NULL
 };
-const struct bu_cmd_schema ged_get_bot_edges_schema = {
+const struct bu_arg_schema ged_get_bot_edges_schema = {
     "get_bot_edges", "List BoT edges", edbot_help_options,
-    get_bot_edges_operands, BU_CMD_PARSE_INTERSPERSED,
-    BU_CMD_SCHEMA_META_HELP(NULL, NULL, NULL, NULL, NULL)
+    get_bot_edges_operands, BU_ARG_PARSE_INTERSPERSED,
+    BU_ARG_SCHEMA_META_HELP(NULL, NULL, NULL, NULL, NULL)
 };
-const struct bu_cmd_schema ged_find_bot_edge_schema = {
+const struct bu_arg_schema ged_find_bot_edge_schema = {
     "find_bot_edge", "Find the nearest BoT edge", edbot_help_options,
-    find_bot_operands, BU_CMD_PARSE_INTERSPERSED,
-    BU_CMD_SCHEMA_META_HELP(NULL, NULL, NULL, NULL, NULL)
+    find_bot_operands, BU_ARG_PARSE_INTERSPERSED,
+    BU_ARG_SCHEMA_META_HELP(NULL, NULL, NULL, NULL, NULL)
 };
-const struct bu_cmd_schema ged_find_bot_pnt_schema = {
+const struct bu_arg_schema ged_find_bot_pnt_schema = {
     "find_bot_pnt", "Find the nearest BoT vertex", edbot_help_options,
-    find_bot_operands, BU_CMD_PARSE_INTERSPERSED,
-    BU_CMD_SCHEMA_META_HELP(NULL, NULL, NULL, NULL, NULL)
+    find_bot_operands, BU_ARG_PARSE_INTERSPERSED,
+    BU_ARG_SCHEMA_META_HELP(NULL, NULL, NULL, NULL, NULL)
 };
 
 struct edbot_move_args {
     int relative;
 };
 
-static const struct bu_cmd_option edbot_move_options[] = {
-    BU_CMD_FLAG("r", NULL, struct edbot_move_args, relative,
+static const struct bu_arg_option edbot_move_options[] = {
+    BU_ARG_FLAG("r", NULL, struct edbot_move_args, relative,
 	"Interpret the point as a relative displacement"),
-    BU_CMD_OPTION_NULL
+    BU_ARG_OPTION_NULL
 };
-static const struct bu_cmd_operand bot_edge_split_operands[] = {
-    BU_CMD_OPERAND("bot", BU_CMD_VALUE_DB_PATH, 1, 1,
+static const struct bu_arg_operand bot_edge_split_operands[] = {
+    BU_ARG_OPERAND("bot", BU_ARG_VALUE_DB_PATH, 1, 1,
 	"BoT object or path", "ged.db_path"),
-    BU_CMD_OPERAND("edge", BU_CMD_VALUE_STRING, 1, 1,
+    BU_ARG_OPERAND("edge", BU_ARG_VALUE_STRING, 1, 1,
 	"Packed pair of vertex indices", NULL),
-    BU_CMD_OPERAND_NULL
+    BU_ARG_OPERAND_NULL
 };
-static const struct bu_cmd_operand bot_face_split_operands[] = {
-    BU_CMD_OPERAND("bot", BU_CMD_VALUE_DB_PATH, 1, 1,
+static const struct bu_arg_operand bot_face_split_operands[] = {
+    BU_ARG_OPERAND("bot", BU_ARG_VALUE_DB_PATH, 1, 1,
 	"BoT object or path", "ged.db_path"),
-    BU_CMD_OPERAND("face", BU_CMD_VALUE_INTEGER, 1, 1,
+    BU_ARG_OPERAND("face", BU_ARG_VALUE_INTEGER, 1, 1,
 	"Face index", NULL),
-    BU_CMD_OPERAND_NULL
+    BU_ARG_OPERAND_NULL
 };
-static const struct bu_cmd_operand bot_move_pnt_operands[] = {
-    BU_CMD_OPERAND("bot", BU_CMD_VALUE_DB_PATH, 1, 1,
+static const struct bu_arg_operand bot_move_pnt_operands[] = {
+    BU_ARG_OPERAND("bot", BU_ARG_VALUE_DB_PATH, 1, 1,
 	"BoT object or path", "ged.db_path"),
-    BU_CMD_OPERAND("vertex", BU_CMD_VALUE_INTEGER, 1, 1,
+    BU_ARG_OPERAND("vertex", BU_ARG_VALUE_INTEGER, 1, 1,
 	"Vertex index", NULL),
-    BU_CMD_OPERAND("point", BU_CMD_VALUE_VECTOR, 1, 1,
+    BU_ARG_OPERAND("point", BU_ARG_VALUE_VECTOR, 1, 1,
 	"Packed XYZ point", "ged.vector"),
-    BU_CMD_OPERAND_NULL
+    BU_ARG_OPERAND_NULL
 };
-static const struct bu_cmd_operand bot_move_pnts_operands[] = {
-    BU_CMD_OPERAND("bot", BU_CMD_VALUE_DB_PATH, 1, 1,
+static const struct bu_arg_operand bot_move_pnts_operands[] = {
+    BU_ARG_OPERAND("bot", BU_ARG_VALUE_DB_PATH, 1, 1,
 	"BoT object or path", "ged.db_path"),
-    BU_CMD_OPERAND("vector", BU_CMD_VALUE_VECTOR, 1, 1,
+    BU_ARG_OPERAND("vector", BU_ARG_VALUE_VECTOR, 1, 1,
 	"Packed XYZ displacement", "ged.vector"),
-    BU_CMD_OPERAND("vertices", BU_CMD_VALUE_INTEGER, 1, BU_CMD_COUNT_UNLIMITED,
+    BU_ARG_OPERAND("vertices", BU_ARG_VALUE_INTEGER, 1, BU_ARG_COUNT_UNLIMITED,
 	"Vertex indices", NULL),
-    BU_CMD_OPERAND_NULL
+    BU_ARG_OPERAND_NULL
 };
-static const struct bu_cmd_schema bot_edge_split_schema = {
+static const struct bu_arg_schema bot_edge_split_schema = {
     "bot_edge_split", "Split a BoT edge", NULL, bot_edge_split_operands,
-    BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+    BU_ARG_PARSE_STOP_AT_FIRST_OPERAND, BU_ARG_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
-static const struct bu_cmd_schema bot_face_split_schema = {
+static const struct bu_arg_schema bot_face_split_schema = {
     "bot_face_split", "Split a BoT face", NULL, bot_face_split_operands,
-    BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+    BU_ARG_PARSE_STOP_AT_FIRST_OPERAND, BU_ARG_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
-static const struct bu_cmd_schema bot_move_pnt_schema = {
+static const struct bu_arg_schema bot_move_pnt_schema = {
     "bot_move_pnt", "Move one BoT vertex", edbot_move_options,
-    bot_move_pnt_operands, BU_CMD_PARSE_STOP_AT_FIRST_OPERAND,
-    BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+    bot_move_pnt_operands, BU_ARG_PARSE_STOP_AT_FIRST_OPERAND,
+    BU_ARG_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
-static const struct bu_cmd_schema bot_move_pnts_schema = {
+static const struct bu_arg_schema bot_move_pnts_schema = {
     "bot_move_pnts", "Move one or more BoT vertices", NULL,
-    bot_move_pnts_operands, BU_CMD_PARSE_STOP_AT_FIRST_OPERAND,
-    BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+    bot_move_pnts_operands, BU_ARG_PARSE_STOP_AT_FIRST_OPERAND,
+    BU_ARG_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
 
 static void
-edbot_schema_usage(struct bu_vls *result, const struct bu_cmd_schema *schema,
+edbot_schema_usage(struct bu_vls *result, const struct bu_arg_schema *schema,
 	const char *cmd, const char *UNUSED(syntax))
 {
-    char *help = bu_cmd_schema_help(schema, cmd);
+    char *help = bu_arg_schema_help(schema, cmd);
 
     if (help) {
 	bu_vls_sprintf(result, "%s", help);
@@ -428,7 +428,7 @@ ged_get_bot_edges_core(struct ged *gedp, int argc, const char *argv[])
 	return GED_HELP;
     }
 
-    operand_index = bu_cmd_schema_parse_complete(&ged_get_bot_edges_schema,
+    operand_index = bu_arg_schema_parse_complete(&ged_get_bot_edges_schema,
 	&args, gedp->ged_result_str, argc, argv);
     if (operand_index < 0) {
 	edbot_schema_usage(gedp->ged_result_str, &ged_get_bot_edges_schema, cmd, "bot");
@@ -722,7 +722,7 @@ ged_find_bot_edge_nearest_pnt_core(struct ged *gedp, int argc, const char *argv[
 	return GED_HELP;
     }
 
-    operand_index = bu_cmd_schema_parse_complete(&ged_find_bot_edge_schema,
+    operand_index = bu_arg_schema_parse_complete(&ged_find_bot_edge_schema,
 	&args, gedp->ged_result_str, argc, argv);
     if (operand_index < 0) {
 	edbot_schema_usage(gedp->ged_result_str, &ged_find_bot_edge_schema, cmd,
@@ -740,7 +740,7 @@ ged_find_bot_edge_nearest_pnt_core(struct ged *gedp, int argc, const char *argv[
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
     GED_CHECK_VIEW(gedp, BRLCAD_ERROR);
 
-    bu_cmd_vector3_from_argv(view, 1, argv + 1);
+    bu_arg_vector3_from_argv(view, 1, argv + 1);
 
     struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
     if (wdb_import_from_path2(gedp->ged_result_str, &intern, argv[0], wdbp, mat) == BRLCAD_ERROR) {
@@ -789,7 +789,7 @@ ged_find_bot_pnt_nearest_pnt_core(struct ged *gedp, int argc, const char *argv[]
 	return GED_HELP;
     }
 
-    operand_index = bu_cmd_schema_parse_complete(&ged_find_bot_pnt_schema,
+    operand_index = bu_arg_schema_parse_complete(&ged_find_bot_pnt_schema,
 	&args, gedp->ged_result_str, argc, argv);
     if (operand_index < 0) {
 	edbot_schema_usage(gedp->ged_result_str, &ged_find_bot_pnt_schema, cmd,
@@ -822,7 +822,7 @@ ged_find_bot_pnt_nearest_pnt_core(struct ged *gedp, int argc, const char *argv[]
     }
 
     botip = (struct rt_bot_internal *)intern.idb_ptr;
-    bu_cmd_vector3_from_argv(view, 1, argv + 1);
+    bu_arg_vector3_from_argv(view, 1, argv + 1);
 
     nearest_pt = rt_bot_find_v_nearest_pt2(botip, view, gedp->ged_gvp->gv_model2view);
     bu_vls_printf(gedp->ged_result_str, "%d", nearest_pt);

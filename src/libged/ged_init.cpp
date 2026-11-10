@@ -109,7 +109,7 @@ ged_opt_rule_words(const char *words)
 /** Owned normalization of one flat ged_opt_rule declaration. */
 struct ged_compiled_opt_rules {
     struct owned_constraint {
-	struct bu_cmd_constraint value = {};
+	struct bu_arg_constraint value = {};
 	std::vector<std::string> names;
 	std::vector<const char *> options;
     };
@@ -127,7 +127,7 @@ struct ged_compiled_opt_rules {
     std::vector<ged_opt_semantic> semantics;
     std::vector<ged_opt_form> forms;
     std::vector<std::unique_ptr<owned_constraint>> owned_constraints;
-    std::vector<struct bu_cmd_constraint> constraints;
+    std::vector<struct bu_arg_constraint> constraints;
     std::vector<std::unique_ptr<owned_db_completion>> owned_db_completions;
     std::vector<struct ged_opt_db_completion> db_completions;
 
@@ -138,8 +138,8 @@ struct ged_compiled_opt_rules {
 	    size_t index;
 	};
 	std::vector<pending_db_type> pending_db_types;
-	bu_cmd_schema_validate_t schema_validate = NULL;
-	bu_cmd_schema_context_validate_t context_validate = NULL;
+	bu_arg_schema_validate_t schema_validate = NULL;
+	bu_arg_schema_context_validate_t context_validate = NULL;
 
 	if (!decl || !decl->rules || !decl->rule_count)
 	    return -1;
@@ -289,7 +289,7 @@ struct ged_compiled_opt_rules {
 	    constraints.reserve(owned_constraints.size() + 1);
 	    for (const std::unique_ptr<owned_constraint> &constraint : owned_constraints)
 		constraints.push_back(constraint->value);
-	    const struct bu_cmd_constraint terminal = BU_CMD_CONSTRAINT_NULL;
+	    const struct bu_arg_constraint terminal = BU_ARG_CONSTRAINT_NULL;
 	    constraints.push_back(terminal);
 	    metadata.constraints = constraints.data();
 	}
@@ -320,7 +320,7 @@ struct ged_metadata_registry {
     struct owned_operand_group {
 	std::string name;
 	std::string help;
-	std::vector<struct bu_cmd_operand> roles;
+	std::vector<struct bu_arg_operand> roles;
 	std::vector<std::string> role_names;
 	std::vector<std::string> role_help;
 	std::vector<std::string> role_providers;
@@ -328,14 +328,14 @@ struct ged_metadata_registry {
 	std::vector<std::vector<const char *>> role_keywords;
     };
     struct owned_operand_layout {
-	std::vector<struct bu_cmd_operand> operands;
+	std::vector<struct bu_arg_operand> operands;
 	std::vector<std::string> operand_names;
 	std::vector<std::string> operand_help;
 	std::vector<std::string> operand_providers;
 	std::vector<std::vector<std::string>> operand_keyword_strings;
 	std::vector<std::vector<const char *>> operand_keywords;
 	std::vector<std::unique_ptr<owned_operand_group>> owned_groups;
-	std::vector<struct bu_cmd_operand_group> groups;
+	std::vector<struct bu_arg_operand_group> groups;
     };
     struct owned_opt_form {
 	std::string name;
@@ -345,11 +345,11 @@ struct ged_metadata_registry {
 	owned_operand_layout layout;
     };
     struct owned_opt_schema {
-	struct bu_cmd_schema schema = {};
+	struct bu_arg_schema schema = {};
 	owned_operand_layout layout;
 	struct bu_opt_cmd options = BU_OPT_CMD_INIT_ZERO;
 	std::vector<std::unique_ptr<owned_opt_form>> owned_forms;
-	std::vector<struct bu_cmd_schema_case> cases;
+	std::vector<struct bu_arg_schema_case> cases;
 	std::string schema_name;
 	ged_opt_spec spec = {};
 	ged_opt_meta metadata = {};
@@ -364,11 +364,11 @@ struct ged_metadata_registry {
 	}
     };
     std::mutex mutex;
-    std::map<std::string, const struct bu_cmd_schema *> native_schemas;
+    std::map<std::string, const struct bu_arg_schema *> native_schemas;
     std::map<std::string, const struct ged_cmd_grammar *> grammars;
     std::map<std::string, std::unique_ptr<owned_opt_schema>> opt_schemas;
-    std::unordered_map<const struct bu_cmd_schema *, const ged_opt_spec *> opt_schema_specs;
-    std::unordered_map<const struct bu_cmd_schema *, const struct bu_opt_desc *> opt_schema_descs;
+    std::unordered_map<const struct bu_arg_schema *, const ged_opt_spec *> opt_schema_specs;
+    std::unordered_map<const struct bu_arg_schema *, const struct bu_opt_desc *> opt_schema_descs;
 };
 
 
@@ -531,7 +531,7 @@ ged_opt_db_completions(const ged_opt_spec *spec)
 }
 
 
-static const struct bu_cmd_constraint *
+static const struct bu_arg_constraint *
 ged_opt_constraints(const ged_opt_spec *spec)
 {
     if (!spec)
@@ -540,7 +540,7 @@ ged_opt_constraints(const ged_opt_spec *spec)
 }
 
 
-static bu_cmd_schema_validate_t
+static bu_arg_schema_validate_t
 ged_opt_validate(const ged_opt_spec *spec)
 {
     if (!spec)
@@ -549,7 +549,7 @@ ged_opt_validate(const ged_opt_spec *spec)
 }
 
 
-static bu_cmd_schema_context_validate_t
+static bu_arg_schema_context_validate_t
 ged_opt_context_validate(const ged_opt_spec *spec)
 {
     if (!spec)
@@ -577,21 +577,21 @@ ged_opt_desc_match_count(const struct bu_opt_desc *descs, const char *name)
 }
 
 
-static bu_cmd_validate_state_t
+static bu_arg_validate_state_t
 ged_opt_native_state(bu_opt_validate_state_t state)
 {
     switch (state) {
-	case BU_OPT_VALIDATE_VALID: return BU_CMD_VALIDATE_VALID;
-	case BU_OPT_VALIDATE_INVALID: return BU_CMD_VALIDATE_INVALID;
-	case BU_OPT_VALIDATE_INCOMPLETE: return BU_CMD_VALIDATE_INCOMPLETE;
+	case BU_OPT_VALIDATE_VALID: return BU_ARG_VALIDATE_VALID;
+	case BU_OPT_VALIDATE_INVALID: return BU_ARG_VALIDATE_INVALID;
+	case BU_OPT_VALIDATE_INCOMPLETE: return BU_ARG_VALIDATE_INCOMPLETE;
 	case BU_OPT_VALIDATE_UNKNOWN:
-	default: return BU_CMD_VALIDATE_UNKNOWN;
+	default: return BU_ARG_VALIDATE_UNKNOWN;
     }
 }
 
 
-static const struct bu_cmd_arg_shape ged_text_pattern_shape = {
-    BU_CMD_ARG_SHAPE_RANGE_PATTERN, 1, 1, "pattern", NULL, NULL
+static const struct bu_arg_shape ged_text_pattern_shape = {
+    BU_ARG_SHAPE_RANGE_PATTERN, 1, 1, "pattern", NULL, NULL
 };
 
 
@@ -599,12 +599,12 @@ struct ged_text_operand {
     std::string name;
     std::string provider;
     std::vector<std::string> keywords;
-    bu_cmd_value_t type = BU_CMD_VALUE_UNKNOWN;
-    bu_cmd_value_validate_t validate = NULL;
-    const struct bu_cmd_arg_shape *shape = NULL;
+    bu_arg_value_t type = BU_ARG_VALUE_UNKNOWN;
+    bu_arg_value_validate_t validate = NULL;
+    const struct bu_arg_shape *shape = NULL;
     size_t min_count = 1;
     size_t max_count = 1;
-    struct bu_cmd_value_range range = BU_CMD_VALUE_RANGE_NONE;
+    struct bu_arg_value_range range = BU_ARG_VALUE_RANGE_NONE;
 };
 
 
@@ -652,55 +652,55 @@ ged_opt_syntax_uint(const std::string &text, size_t *value)
 }
 
 
-static bu_cmd_value_t
+static bu_arg_value_t
 ged_opt_syntax_type(const std::string &name, const char **default_provider)
 {
     if (default_provider)
 	*default_provider = NULL;
-    if (name == "bool") return BU_CMD_VALUE_BOOL;
+    if (name == "bool") return BU_ARG_VALUE_BOOL;
     if (name == "int" || name == "integer" || name == "positive-int" ||
-	name == "nonnegative-int") return BU_CMD_VALUE_INTEGER;
-    if (name == "hex-int") return BU_CMD_VALUE_HEX_INTEGER;
-    if (name == "long") return BU_CMD_VALUE_LONG;
-    if (name == "hex-long") return BU_CMD_VALUE_HEX_LONG;
+	name == "nonnegative-int") return BU_ARG_VALUE_INTEGER;
+    if (name == "hex-int") return BU_ARG_VALUE_HEX_INTEGER;
+    if (name == "long") return BU_ARG_VALUE_LONG;
+    if (name == "hex-long") return BU_ARG_VALUE_HEX_LONG;
     if (name == "number" || name == "positive-number" ||
-	name == "nonnegative-number") return BU_CMD_VALUE_NUMBER;
-    if (name == "char") return BU_CMD_VALUE_CHAR;
-    if (name == "vector" || name == "vector3") return BU_CMD_VALUE_VECTOR;
-    if (name == "matrix") return BU_CMD_VALUE_MATRIX;
-    if (name == "color" || name == "rgb") return BU_CMD_VALUE_COLOR;
-    if (name == "keyword") return BU_CMD_VALUE_KEYWORD;
-    if (name == "string" || name == "pattern") return BU_CMD_VALUE_STRING;
-    if (name == "vls") return BU_CMD_VALUE_VLS;
-    if (name == "raw") return BU_CMD_VALUE_RAW;
-    if (name == "custom") return BU_CMD_VALUE_CUSTOM;
+	name == "nonnegative-number") return BU_ARG_VALUE_NUMBER;
+    if (name == "char") return BU_ARG_VALUE_CHAR;
+    if (name == "vector" || name == "vector3") return BU_ARG_VALUE_VECTOR;
+    if (name == "matrix") return BU_ARG_VALUE_MATRIX;
+    if (name == "color" || name == "rgb") return BU_ARG_VALUE_COLOR;
+    if (name == "keyword") return BU_ARG_VALUE_KEYWORD;
+    if (name == "string" || name == "pattern") return BU_ARG_VALUE_STRING;
+    if (name == "vls") return BU_ARG_VALUE_VLS;
+    if (name == "raw") return BU_ARG_VALUE_RAW;
+    if (name == "custom") return BU_ARG_VALUE_CUSTOM;
     if (name == "object") {
 	if (default_provider) *default_provider = "ged.db_object";
-	return BU_CMD_VALUE_DB_OBJECT;
+	return BU_ARG_VALUE_DB_OBJECT;
     }
     if (name == "path") {
 	if (default_provider) *default_provider = "ged.db_path";
-	return BU_CMD_VALUE_DB_PATH;
+	return BU_ARG_VALUE_DB_PATH;
     }
     if (name == "file") {
 	if (default_provider) *default_provider = "ged.file_path";
-	return BU_CMD_VALUE_FILE;
+	return BU_ARG_VALUE_FILE;
     }
-    return BU_CMD_VALUE_UNKNOWN;
+    return BU_ARG_VALUE_UNKNOWN;
 }
 
 
 static int
 ged_opt_syntax_parse_flat(struct bu_vls *msgs, const ged_opt_spec *spec, const char *command,
 	const char *syntax,
-	std::vector<ged_text_operand> &operands, bu_cmd_parse_policy_t *policy)
+	std::vector<ged_text_operand> &operands, bu_arg_parse_policy_t *policy)
 {
     size_t pos = 0;
     int saw_operand = 0;
 
     if (!syntax || !policy)
 	return ged_opt_syntax_error(msgs, spec, command, syntax, 0, "missing syntax or result storage");
-    *policy = BU_CMD_PARSE_INTERSPERSED;
+    *policy = BU_ARG_PARSE_INTERSPERSED;
     while (syntax[pos]) {
 	while (syntax[pos] && std::isspace((unsigned char)syntax[pos]))
 	    pos++;
@@ -714,13 +714,13 @@ ged_opt_syntax_parse_flat(struct bu_vls *msgs, const ged_opt_spec *spec, const c
 	if (!saw_operand && (token == "interspersed" || token == "options-first" ||
 		token == "stop-at-first-operand")) {
 	    if (token == "options-first")
-		*policy = BU_CMD_PARSE_OPTIONS_FIRST;
+		*policy = BU_ARG_PARSE_OPTIONS_FIRST;
 	    else if (token == "stop-at-first-operand")
-		*policy = BU_CMD_PARSE_STOP_AT_FIRST_OPERAND;
+		*policy = BU_ARG_PARSE_STOP_AT_FIRST_OPERAND;
 	    continue;
 	}
 	saw_operand = 1;
-	if (!operands.empty() && operands.back().max_count == BU_CMD_COUNT_UNLIMITED)
+	if (!operands.empty() && operands.back().max_count == BU_ARG_COUNT_UNLIMITED)
 	    return ged_opt_syntax_error(msgs, spec, command, syntax, start,
 		"an unlimited operand must be last");
 
@@ -732,10 +732,10 @@ ged_opt_syntax_parse_flat(struct bu_vls *msgs, const ged_opt_spec *spec, const c
 	    if (cardinality == '?') operand.min_count = 0;
 	    if (cardinality == '*') {
 		operand.min_count = 0;
-		operand.max_count = BU_CMD_COUNT_UNLIMITED;
+		operand.max_count = BU_ARG_COUNT_UNLIMITED;
 	    }
 	    if (cardinality == '+')
-		operand.max_count = BU_CMD_COUNT_UNLIMITED;
+		operand.max_count = BU_ARG_COUNT_UNLIMITED;
 	} else if (!token.empty() && token.back() == '}') {
 	    size_t open = token.rfind('{');
 	    if (open == std::string::npos)
@@ -756,7 +756,7 @@ ged_opt_syntax_parse_flat(struct bu_vls *msgs, const ged_opt_spec *spec, const c
 			"invalid minimum cardinality");
 		std::string maximum = range.substr(comma + 1);
 		if (maximum.empty()) {
-		    operand.max_count = BU_CMD_COUNT_UNLIMITED;
+		    operand.max_count = BU_ARG_COUNT_UNLIMITED;
 		} else if (ged_opt_syntax_uint(maximum, &operand.max_count) ||
 			operand.max_count < operand.min_count) {
 		    return ged_opt_syntax_error(msgs, spec, command, syntax, start,
@@ -811,22 +811,22 @@ ged_opt_syntax_parse_flat(struct bu_vls *msgs, const ged_opt_spec *spec, const c
 	}
 	const char *default_provider = NULL;
 	operand.type = ged_opt_syntax_type(type_name, &default_provider);
-	if (operand.type == BU_CMD_VALUE_UNKNOWN)
+	if (operand.type == BU_ARG_VALUE_UNKNOWN)
 	    return ged_opt_syntax_error(msgs, spec, command, syntax, start, "unknown operand type");
 	if (type_name == "positive-int")
-	    operand.validate = bu_cmd_positive_integer_validate;
+	    operand.validate = bu_arg_positive_integer_validate;
 	if (type_name == "nonnegative-int")
-	    operand.validate = bu_cmd_nonnegative_integer_validate;
+	    operand.validate = bu_arg_nonnegative_integer_validate;
 	if (type_name == "positive-number")
-	    operand.validate = bu_cmd_positive_number_validate;
+	    operand.validate = bu_arg_positive_number_validate;
 	if (type_name == "nonnegative-number")
-	    operand.validate = bu_cmd_nonnegative_number_validate;
+	    operand.validate = bu_arg_nonnegative_number_validate;
 	if (type_name == "rgb")
-	    operand.shape = &bu_cmd_rgb_arg_shape;
+	    operand.shape = &bu_arg_rgb_shape;
 	if (type_name == "color")
-	    operand.shape = &bu_cmd_color_arg_shape;
+	    operand.shape = &bu_arg_color_shape;
 	if (type_name == "vector3")
-	    operand.shape = &bu_cmd_vector3_arg_shape;
+	    operand.shape = &bu_arg_vector3_shape;
 	if (type_name == "pattern")
 	    operand.shape = &ged_text_pattern_shape;
 
@@ -863,16 +863,16 @@ ged_opt_syntax_parse_flat(struct bu_vls *msgs, const ged_opt_spec *spec, const c
 	    std::string maximum = type_parameters.substr(separator + 1);
 	    operand.range.minimum_inclusive = 1;
 	    operand.range.maximum_inclusive = 1;
-	    if (operand.type == BU_CMD_VALUE_INTEGER) {
-		operand.range.kind = BU_CMD_RANGE_INTEGER;
+	    if (operand.type == BU_ARG_VALUE_INTEGER) {
+		operand.range.kind = BU_ARG_RANGE_INTEGER;
 		if (!minimum.empty()) {
-		    if (!bu_cmd_long_from_str(&operand.range.integer_minimum, minimum.c_str()))
+		    if (!bu_arg_long_from_str(&operand.range.integer_minimum, minimum.c_str()))
 			return ged_opt_syntax_error(msgs, spec, command, syntax, start,
 			    "invalid integer minimum");
 		    operand.range.has_minimum = 1;
 		}
 		if (!maximum.empty()) {
-		    if (!bu_cmd_long_from_str(&operand.range.integer_maximum, maximum.c_str()))
+		    if (!bu_arg_long_from_str(&operand.range.integer_maximum, maximum.c_str()))
 			return ged_opt_syntax_error(msgs, spec, command, syntax, start,
 			    "invalid integer maximum");
 		    operand.range.has_maximum = 1;
@@ -882,15 +882,15 @@ ged_opt_syntax_parse_flat(struct bu_vls *msgs, const ged_opt_spec *spec, const c
 		    return ged_opt_syntax_error(msgs, spec, command, syntax, start,
 			"integer domain maximum is below its minimum");
 	    } else {
-		operand.range.kind = BU_CMD_RANGE_NUMBER;
+		operand.range.kind = BU_ARG_RANGE_NUMBER;
 		if (!minimum.empty()) {
-		    if (!bu_cmd_number_from_str(&operand.range.number_minimum, minimum.c_str()))
+		    if (!bu_arg_number_from_str(&operand.range.number_minimum, minimum.c_str()))
 			return ged_opt_syntax_error(msgs, spec, command, syntax, start,
 			    "invalid number minimum");
 		    operand.range.has_minimum = 1;
 		}
 		if (!maximum.empty()) {
-		    if (!bu_cmd_number_from_str(&operand.range.number_maximum, maximum.c_str()))
+		    if (!bu_arg_number_from_str(&operand.range.number_maximum, maximum.c_str()))
 			return ged_opt_syntax_error(msgs, spec, command, syntax, start,
 			    "invalid number maximum");
 		    operand.range.has_maximum = 1;
@@ -929,11 +929,11 @@ ged_opt_group_cardinality(struct bu_vls *msgs, const ged_opt_spec *spec,
     }
     if (suffix == "*") {
 	*minimum = 0;
-	*maximum = BU_CMD_COUNT_UNLIMITED;
+	*maximum = BU_ARG_COUNT_UNLIMITED;
 	return 0;
     }
     if (suffix == "+") {
-	*maximum = BU_CMD_COUNT_UNLIMITED;
+	*maximum = BU_ARG_COUNT_UNLIMITED;
 	return 0;
     }
     if (suffix.size() < 3 || suffix.front() != '{' || suffix.back() != '}')
@@ -955,7 +955,7 @@ ged_opt_group_cardinality(struct bu_vls *msgs, const ged_opt_spec *spec,
 		"invalid group minimum cardinality");
 	std::string maximum_text = range.substr(comma + 1);
 	if (maximum_text.empty()) {
-	    *maximum = BU_CMD_COUNT_UNLIMITED;
+	    *maximum = BU_ARG_COUNT_UNLIMITED;
 	} else if (ged_opt_syntax_uint(maximum_text, maximum) ||
 		*maximum < *minimum) {
 	    return ged_opt_syntax_error(msgs, spec, command, syntax, offset,
@@ -970,7 +970,7 @@ static int
 ged_opt_syntax_parse(struct bu_vls *msgs, const ged_opt_spec *spec,
 	const char *command, const char *syntax,
 	std::vector<ged_text_operand> &operands,
-	std::vector<ged_text_group> &groups, bu_cmd_parse_policy_t *policy)
+	std::vector<ged_text_group> &groups, bu_arg_parse_policy_t *policy)
 {
     size_t group_start = std::string::npos;
 
@@ -994,7 +994,7 @@ ged_opt_syntax_parse(struct bu_vls *msgs, const ged_opt_spec *spec,
 	    return -1;
 	for (const ged_text_operand &operand : operands) {
 	    if (operand.min_count != operand.max_count ||
-		operand.max_count == BU_CMD_COUNT_UNLIMITED)
+		operand.max_count == BU_ARG_COUNT_UNLIMITED)
 		return ged_opt_syntax_error(msgs, spec, command, syntax, group_start,
 		    "operands before repeated groups must have fixed cardinality");
 	}
@@ -1010,7 +1010,7 @@ ged_opt_syntax_parse(struct bu_vls *msgs, const ged_opt_spec *spec,
 	    return ged_opt_syntax_error(msgs, spec, command, syntax, pos,
 		"ordinary operands cannot follow a repeated group");
 	if (!groups.empty() &&
-	    groups.back().max_count == BU_CMD_COUNT_UNLIMITED)
+	    groups.back().max_count == BU_ARG_COUNT_UNLIMITED)
 	    return ged_opt_syntax_error(msgs, spec, command, syntax, pos,
 		"an unlimited repeated group must be last");
 	size_t open = pos++;
@@ -1032,7 +1032,7 @@ ged_opt_syntax_parse(struct bu_vls *msgs, const ged_opt_spec *spec,
 	    pos++;
 	std::string suffix(syntax + suffix_start, pos - suffix_start);
 	ged_text_group group;
-	bu_cmd_parse_policy_t role_policy = BU_CMD_PARSE_INTERSPERSED;
+	bu_arg_parse_policy_t role_policy = BU_ARG_PARSE_INTERSPERSED;
 	if (ged_opt_group_cardinality(msgs, spec, command, syntax, suffix_start,
 		suffix, &group.min_count, &group.max_count) ||
 	    ged_opt_syntax_parse_flat(msgs, spec, command, body.c_str(),
@@ -1089,7 +1089,7 @@ ged_opt_build_layout(ged_metadata_registry::owned_operand_layout &layout,
     }
     layout.operands.resize(parsed_operands.size() + 1);
     for (size_t i = 0; i < parsed_operands.size(); i++) {
-	struct bu_cmd_operand &operand = layout.operands[i];
+	struct bu_arg_operand &operand = layout.operands[i];
 	operand.name = layout.operand_names[i].c_str();
 	operand.min_count = parsed_operands[i].min_count;
 	operand.max_count = parsed_operands[i].max_count;
@@ -1135,7 +1135,7 @@ ged_opt_build_layout(ged_metadata_registry::owned_operand_layout &layout,
 	group->roles.resize(parsed_group.roles.size() + 1);
 	for (size_t ri = 0; ri < parsed_group.roles.size(); ri++) {
 	    const ged_text_operand &parsed_role = parsed_group.roles[ri];
-	    struct bu_cmd_operand &role = group->roles[ri];
+	    struct bu_arg_operand &role = group->roles[ri];
 	    role.name = group->role_names[ri].c_str();
 	    role.min_count = 1;
 	    role.max_count = 1;
@@ -1166,7 +1166,7 @@ ged_opt_build_layout(ged_metadata_registry::owned_operand_layout &layout,
 
 
 static const ged_opt_spec *
-ged_opt_schema_spec(const struct bu_cmd_schema *schema,
+ged_opt_schema_spec(const struct bu_arg_schema *schema,
 	const struct bu_opt_desc **descs)
 {
     struct ged_metadata_registry &registry = ged_metadata();
@@ -1183,28 +1183,28 @@ ged_opt_schema_spec(const struct bu_cmd_schema *schema,
 
 
 static const char *
-ged_opt_schema_canonical(const struct bu_cmd_schema *schema, const char *name)
+ged_opt_schema_canonical(const struct bu_arg_schema *schema, const char *name)
 {
     if (!schema || BU_STR_EMPTY(name))
 	return NULL;
     for (size_t i = 0; schema->options &&
-	    bu_cmd_option_is_valid(&schema->options[i]); i++) {
-	const struct bu_cmd_option *option = &schema->options[i];
-	if (BU_STR_EQUAL(bu_cmd_option_canonical(option), name) ||
+	    bu_arg_option_is_valid(&schema->options[i]); i++) {
+	const struct bu_arg_option *option = &schema->options[i];
+	if (BU_STR_EQUAL(bu_arg_option_canonical(option), name) ||
 	    (!BU_STR_EMPTY(option->shortopt) && BU_STR_EQUAL(option->shortopt, name)) ||
 	    (!BU_STR_EMPTY(option->longopt) && BU_STR_EQUAL(option->longopt, name)))
-	    return bu_cmd_option_canonical(option);
+	    return bu_arg_option_canonical(option);
     }
     return NULL;
 }
 
 
 static int
-ged_opt_schema_option_present(const struct bu_cmd_schema *schema, size_t argc,
+ged_opt_schema_option_present(const struct bu_arg_schema *schema, size_t argc,
 	const char **argv, const char *name)
 {
     const char *canonical = ged_opt_schema_canonical(schema, name);
-    return canonical ? bu_cmd_schema_option_present(schema, argc, argv,
+    return canonical ? bu_arg_schema_option_present(schema, argc, argv,
 	canonical) : 0;
 }
 
@@ -1250,9 +1250,9 @@ ged_opt_db_provider(ged_opt_db_kind_t kind, ged_opt_db_scope_t scope,
 
 
 static int
-ged_opt_declarative_validate(const struct bu_cmd_schema *schema, size_t argc,
+ged_opt_declarative_validate(const struct bu_arg_schema *schema, size_t argc,
 	const char **argv, size_t cursor_arg,
-	struct bu_cmd_validate_result *result)
+	struct bu_arg_validate_result *result)
 {
     const ged_opt_spec *spec = ged_opt_schema_spec(schema, NULL);
     const struct ged_opt_db_completion *db_completions =
@@ -1260,11 +1260,11 @@ ged_opt_declarative_validate(const struct bu_cmd_schema *schema, size_t argc,
 
     if (!spec)
 	return -1;
-    if (result && result->state != BU_CMD_VALIDATE_INVALID &&
-	(result->expected & BU_CMD_EXPECT_OPERAND) && db_completions) {
+    if (result && result->state != BU_ARG_VALIDATE_INVALID &&
+	(result->expected & BU_ARG_EXPECT_OPERAND) && db_completions) {
 	size_t prefix_arg = result->token_start < argc ? result->token_start : argc;
-	size_t operand_index = bu_cmd_schema_operand_count(schema, prefix_arg, argv);
-	const struct bu_cmd_operand *operand = bu_cmd_schema_active_operand(schema,
+	size_t operand_index = bu_arg_schema_operand_count(schema, prefix_arg, argv);
+	const struct bu_arg_operand *operand = bu_arg_schema_active_operand(schema,
 	    argc, argv, operand_index);
 	for (size_t pi = 0; operand && db_completions[pi].operand; pi++) {
 	    const struct ged_opt_db_completion *policy = &db_completions[pi];
@@ -1291,7 +1291,7 @@ ged_opt_declarative_validate(const struct bu_cmd_schema *schema, size_t argc,
 	    result->semantic_provider = ged_opt_db_provider(policy->kind, scope,
 		modified);
 	    result->completion_type = policy->kind == GED_OPT_DB_OBJECT ?
-		BU_CMD_VALUE_DB_OBJECT : BU_CMD_VALUE_DB_PATH;
+		BU_ARG_VALUE_DB_OBJECT : BU_ARG_VALUE_DB_PATH;
 	    result->hint = !BU_STR_EMPTY(policy->hint) ? policy->hint :
 		(policy->kind == GED_OPT_DB_OBJECT ? "database object" :
 		 "database object or path pattern");
@@ -1299,7 +1299,7 @@ ged_opt_declarative_validate(const struct bu_cmd_schema *schema, size_t argc,
 	}
     }
     {
-	bu_cmd_schema_validate_t validate = ged_opt_validate(spec);
+	bu_arg_schema_validate_t validate = ged_opt_validate(spec);
 	return validate ? validate(schema, argc, argv, cursor_arg, result) : 0;
     }
 }
@@ -1308,7 +1308,7 @@ ged_opt_declarative_validate(const struct bu_cmd_schema *schema, size_t argc,
 struct ged_schema_analysis_role {
     const char *provider = NULL;
     const char *hint = NULL;
-    bu_cmd_value_t type = BU_CMD_VALUE_UNKNOWN;
+    bu_arg_value_t type = BU_ARG_VALUE_UNKNOWN;
 };
 
 
@@ -1318,7 +1318,7 @@ struct ged_schema_analysis_plan {
 
 
 extern "C" void *
-_ged_schema_analysis_plan_create(const struct bu_cmd_schema *schema,
+_ged_schema_analysis_plan_create(const struct bu_arg_schema *schema,
 	size_t argc, const char **argv)
 {
     const ged_opt_spec *spec = ged_opt_schema_spec(schema, NULL);
@@ -1352,8 +1352,8 @@ _ged_schema_analysis_plan_create(const struct bu_cmd_schema *schema,
 	}
 	struct ged_schema_analysis_role role;
 	role.provider = ged_opt_db_provider(policy->kind, scope, modified);
-	role.type = policy->kind == GED_OPT_DB_OBJECT ? BU_CMD_VALUE_DB_OBJECT :
-	    BU_CMD_VALUE_DB_PATH;
+	role.type = policy->kind == GED_OPT_DB_OBJECT ? BU_ARG_VALUE_DB_OBJECT :
+	    BU_ARG_VALUE_DB_PATH;
 	role.hint = !BU_STR_EMPTY(policy->hint) ? policy->hint :
 	    (policy->kind == GED_OPT_DB_OBJECT ? "database object" :
 	     "database object or path pattern");
@@ -1365,8 +1365,8 @@ _ged_schema_analysis_plan_create(const struct bu_cmd_schema *schema,
 
 extern "C" int
 _ged_schema_analysis_plan_role(void *data,
-	const struct bu_cmd_operand *operand,
-	struct bu_cmd_validate_result *result)
+	const struct bu_arg_operand *operand,
+	struct bu_arg_validate_result *result)
 {
     struct ged_schema_analysis_plan *plan =
 	(struct ged_schema_analysis_plan *)data;
@@ -1390,7 +1390,7 @@ _ged_schema_analysis_plan_destroy(void *data)
 
 
 static const struct bu_opt_value_spec *
-ged_opt_value_for_name(const struct bu_cmd_schema *schema,
+ged_opt_value_for_name(const struct bu_arg_schema *schema,
 	const struct bu_opt_value_spec *values, const char *name)
 {
     if (!schema || !values || BU_STR_EMPTY(name))
@@ -1399,9 +1399,9 @@ ged_opt_value_for_name(const struct bu_cmd_schema *schema,
 	if (BU_STR_EQUAL(values[i].option, name))
 	    return &values[i];
 	for (size_t oi = 0; schema->options &&
-		bu_cmd_option_is_valid(&schema->options[oi]); oi++) {
-	    const struct bu_cmd_option *option = &schema->options[oi];
-	    if (BU_STR_EQUAL(bu_cmd_option_canonical(option), name) &&
+		bu_arg_option_is_valid(&schema->options[oi]); oi++) {
+	    const struct bu_arg_option *option = &schema->options[oi];
+	    if (BU_STR_EQUAL(bu_arg_option_canonical(option), name) &&
 		((!BU_STR_EMPTY(option->shortopt) &&
 		  BU_STR_EQUAL(values[i].option, option->shortopt)) ||
 		 (!BU_STR_EMPTY(option->longopt) &&
@@ -1414,10 +1414,10 @@ ged_opt_value_for_name(const struct bu_cmd_schema *schema,
 
 
 static int
-ged_opt_copy_validation(const struct bu_cmd_schema *schema,
+ged_opt_copy_validation(const struct bu_arg_schema *schema,
 	const ged_opt_spec *spec,
 	struct bu_opt_validate_result *option_result,
-	struct bu_cmd_validate_result *result)
+	struct bu_arg_validate_result *result)
 {
     const struct bu_opt_value_spec *value;
 
@@ -1429,13 +1429,13 @@ ged_opt_copy_validation(const struct bu_cmd_schema *schema,
     value = ged_opt_value_for_name(schema, ged_opt_values(spec),
 	option_result->option_name);
     if (value && value->validate) {
-	bu_cmd_validate_result_clear(result);
+	bu_arg_validate_result_clear(result);
 	result->state = ged_opt_native_state(option_result->state);
 	result->token_start = option_result->token_start;
 	result->token_end = option_result->token_end;
 	result->expected =
-	    ((option_result->expected & BU_OPT_EXPECT_OPTION) ? BU_CMD_EXPECT_OPTION : BU_CMD_EXPECT_NONE) |
-	    ((option_result->expected & BU_OPT_EXPECT_OPTION_ARG) ? BU_CMD_EXPECT_OPTION_ARG : BU_CMD_EXPECT_NONE);
+	    ((option_result->expected & BU_OPT_EXPECT_OPTION) ? BU_ARG_EXPECT_OPTION : BU_ARG_EXPECT_NONE) |
+	    ((option_result->expected & BU_OPT_EXPECT_OPTION_ARG) ? BU_ARG_EXPECT_OPTION_ARG : BU_ARG_EXPECT_NONE);
 	result->hint = option_result->hint;
 	result->completion_type = bu_opt_cmd_type(option_result->value_type);
 	result->completion_count = option_result->completion_count;
@@ -1449,16 +1449,16 @@ ged_opt_copy_validation(const struct bu_cmd_schema *schema,
 
 
 static int
-ged_opt_schema_context_validate(const struct bu_cmd_schema *schema,
+ged_opt_schema_context_validate(const struct bu_arg_schema *schema,
 	size_t argc, const char **argv, size_t cursor_arg, void *context,
-	struct bu_cmd_validate_result *result)
+	struct bu_arg_validate_result *result)
 {
     const struct bu_opt_desc *descs = NULL;
     const ged_opt_spec *spec = ged_opt_schema_spec(schema, &descs);
     struct bu_opt_validate_result option_result = BU_OPT_VALIDATE_RESULT_NULL;
     int ret = 0;
     const struct bu_opt_value_spec *values;
-    bu_cmd_schema_context_validate_t context_validate;
+    bu_arg_schema_context_validate_t context_validate;
 
     if (!spec || !descs)
 	return -1;
@@ -1480,7 +1480,7 @@ ged_opt_schema_context_validate(const struct bu_cmd_schema *schema,
 	const char *canonical = NULL;
 	const char *attached_arg = NULL;
 	bool attached_value = false;
-	int span = bu_cmd_schema_option_span(schema, argc - i, argv + i);
+	int span = bu_arg_schema_option_span(schema, argc - i, argv + i);
 	if (span <= 0) {
 	    i++;
 	    continue;
@@ -1490,7 +1490,7 @@ ged_opt_schema_context_validate(const struct bu_cmd_schema *schema,
 	if (is_long) {
 	    const char *name = token + 2;
 	    size_t name_len = strcspn(name, "=");
-	    for (size_t di = 0; bu_cmd_option_is_valid(&schema->options[di]); di++) {
+	    for (size_t di = 0; bu_arg_option_is_valid(&schema->options[di]); di++) {
 		if (!BU_STR_EMPTY(descs[di].longopt) &&
 			strlen(descs[di].longopt) == name_len &&
 			!bu_strncmp(descs[di].longopt, name, name_len)) {
@@ -1504,10 +1504,10 @@ ged_opt_schema_context_validate(const struct bu_cmd_schema *schema,
 	} else if (token && token[0] == '-') {
 	    /* bu_opt historically permits a multi-character short spelling.
 	     * Resolve an exact spelling before interpreting a word as a cluster. */
-	    for (size_t di = 0; bu_cmd_option_is_valid(&schema->options[di]); di++) {
+	    for (size_t di = 0; bu_arg_option_is_valid(&schema->options[di]); di++) {
 		if (!BU_STR_EMPTY(descs[di].shortopt) &&
 			BU_STR_EQUAL(descs[di].shortopt, token + 1)) {
-		    if (schema->options[di].arg_requirement != BU_CMD_ARG_NONE)
+		    if (schema->options[di].arg_requirement != BU_ARG_NONE)
 			desc = &descs[di];
 		    break;
 		}
@@ -1515,11 +1515,11 @@ ged_opt_schema_context_validate(const struct bu_cmd_schema *schema,
 	    /* Otherwise a short cluster belongs to the first member which
 	     * consumes a value; remaining bytes are its attached value. */
 	    for (size_t ti = 1; token[ti] && !desc; ti++) {
-		for (size_t di = 0; bu_cmd_option_is_valid(&schema->options[di]); di++) {
+		for (size_t di = 0; bu_arg_option_is_valid(&schema->options[di]); di++) {
 		    if (BU_STR_EMPTY(descs[di].shortopt) ||
 			    descs[di].shortopt[1] || descs[di].shortopt[0] != token[ti])
 			continue;
-		    if (schema->options[di].arg_requirement != BU_CMD_ARG_NONE) {
+		    if (schema->options[di].arg_requirement != BU_ARG_NONE) {
 			desc = &descs[di];
 			attached_value = token[ti + 1] != '\0';
 			if (attached_value)
@@ -1564,7 +1564,7 @@ ged_opt_schema_context_validate(const struct bu_cmd_schema *schema,
 	i += (size_t)span;
     }
 
-    if (result->state == BU_CMD_VALIDATE_INVALID)
+    if (result->state == BU_ARG_VALIDATE_INVALID)
 	goto done;
     if (context_validate)
 	ret = context_validate(schema, argc, argv, cursor_arg, context,
@@ -1584,8 +1584,8 @@ ged_opt_lint(const ged_opt_spec *spec, struct bu_vls *msgs)
     std::vector<ged_text_operand> operands;
     std::vector<ged_text_group> groups;
     std::set<std::string> operand_names;
-    std::map<std::string, std::set<bu_cmd_value_t>> operand_types;
-    bu_cmd_parse_policy_t policy;
+    std::map<std::string, std::set<bu_arg_value_t>> operand_types;
+    bu_arg_parse_policy_t policy;
     const struct bu_opt_value_spec *values;
     const ged_opt_semantic *semantics;
     int ret = -1;
@@ -1648,12 +1648,12 @@ ged_opt_lint(const ged_opt_spec *spec, struct bu_vls *msgs)
 	    const ged_opt_form *cmd_case = &spec->forms[ci];
 	    std::vector<ged_text_operand> case_operands;
 	    std::vector<ged_text_group> case_groups;
-	    bu_cmd_parse_policy_t case_policy = spec->parse_policy;
+	    bu_arg_parse_policy_t case_policy = spec->parse_policy;
 	    std::set<std::string> layout_names;
 
 	    if (BU_STR_EMPTY(cmd_case->name) ||
-		cmd_case->condition < BU_CMD_CONDITION_ALWAYS ||
-		cmd_case->condition > BU_CMD_CONDITION_ALL_OPTIONS_PRESENT) {
+		cmd_case->condition < BU_ARG_CONDITION_ALWAYS ||
+		cmd_case->condition > BU_ARG_CONDITION_ALL_OPTIONS_PRESENT) {
 		if (msgs)
 		    bu_vls_printf(msgs, "command '%s': malformed operand case\n",
 			spec->name ? spec->name : "(unknown)");
@@ -1704,7 +1704,7 @@ ged_opt_lint(const ged_opt_spec *spec, struct bu_vls *msgs)
 		goto done;
 	    }
 	    policy = case_policy;
-	    if (cmd_case->condition == BU_CMD_CONDITION_ALWAYS) {
+	    if (cmd_case->condition == BU_ARG_CONDITION_ALWAYS) {
 		if (saw_default || spec->forms[ci + 1].name) {
 		    if (msgs)
 			bu_vls_printf(msgs,
@@ -1809,8 +1809,8 @@ ged_opt_lint(const ged_opt_spec *spec, struct bu_vls *msgs)
 	for (size_t pi = 0; db_completions && db_completions[pi].operand; pi++) {
 	    const struct ged_opt_db_completion *db_policy = &db_completions[pi];
 	    int have_modifier = !BU_STR_EMPTY(db_policy->modifier_option);
-	    bu_cmd_value_t expected_type = db_policy->kind == GED_OPT_DB_OBJECT ?
-		BU_CMD_VALUE_DB_OBJECT : BU_CMD_VALUE_DB_PATH;
+	    bu_arg_value_t expected_type = db_policy->kind == GED_OPT_DB_OBJECT ?
+		BU_ARG_VALUE_DB_OBJECT : BU_ARG_VALUE_DB_PATH;
 
 	    if (operand_names.find(db_policy->operand) == operand_names.end()) {
 		if (msgs)
@@ -1899,7 +1899,7 @@ done:
 }
 
 
-static int ged_native_schema_lint_node(const char *, const struct bu_cmd_schema *,
+static int ged_native_schema_lint_node(const char *, const struct bu_arg_schema *,
 	struct bu_vls *);
 static int ged_grammar_lint_declaration(const char *, const struct ged_cmd_grammar *,
 	struct bu_vls *);
@@ -1911,7 +1911,7 @@ ged_opt_register(const char *name, const ged_opt_spec *spec)
     size_t option_count = 0;
     std::vector<ged_text_operand> parsed_operands;
     std::vector<ged_text_group> parsed_groups;
-    bu_cmd_parse_policy_t parsed_policy;
+    bu_arg_parse_policy_t parsed_policy;
     const struct bu_opt_value_spec *values;
     const ged_opt_semantic *semantics;
     std::unique_ptr<ged_compiled_opt_rules> compiled_rules;
@@ -2001,10 +2001,10 @@ ged_opt_register(const char *name, const ged_opt_spec *spec)
 		}
 	    }
 	}
-	struct bu_cmd_option &option = owned->options.options[i];
+	struct bu_arg_option &option = owned->options.options[i];
 	if (semantic && semantic->hint)
 	    option.argument = semantic->hint;
-	if (semantic && semantic->value_type != BU_CMD_VALUE_UNKNOWN)
+	if (semantic && semantic->value_type != BU_ARG_VALUE_UNKNOWN)
 	    option.value_type = semantic->value_type;
 	if (semantic)
 	    option.semantic_provider = semantic->semantic_provider;
@@ -2023,7 +2023,7 @@ ged_opt_register(const char *name, const ged_opt_spec *spec)
 	    const ged_opt_form *decl = &spec->forms[ci];
 	    std::vector<ged_text_operand> case_operands;
 	    std::vector<ged_text_group> case_groups;
-	    bu_cmd_parse_policy_t case_policy = spec->parse_policy;
+	    bu_arg_parse_policy_t case_policy = spec->parse_policy;
 	    std::unique_ptr<ged_metadata_registry::owned_opt_form> cmd_case(
 		new ged_metadata_registry::owned_opt_form());
 
@@ -2051,13 +2051,13 @@ ged_opt_register(const char *name, const ged_opt_spec *spec)
 		    std::string requested = names.substr(start, pos - start);
 		    const char *canonical = NULL;
 		    for (size_t oi = 0; oi < option_count; oi++) {
-			const struct bu_cmd_option *option = &owned->options.options[oi];
+			const struct bu_arg_option *option = &owned->options.options[oi];
 			if ((!BU_STR_EMPTY(option->shortopt) &&
 				BU_STR_EQUAL(option->shortopt, requested.c_str())) ||
 			    (!BU_STR_EMPTY(option->longopt) &&
 				BU_STR_EQUAL(option->longopt, requested.c_str())) ||
-			    BU_STR_EQUAL(bu_cmd_option_canonical(option), requested.c_str())) {
-			    canonical = bu_cmd_option_canonical(option);
+			    BU_STR_EQUAL(bu_arg_option_canonical(option), requested.c_str())) {
+			    canonical = bu_arg_option_canonical(option);
 			    break;
 			}
 		    }
@@ -2122,7 +2122,7 @@ ged_opt_register(const char *name, const ged_opt_spec *spec)
 }
 
 extern "C" GED_EXPORT int
-ged_register_command_native_schema(const char *name, const struct bu_cmd_schema *schema)
+ged_register_command_native_schema(const char *name, const struct bu_arg_schema *schema)
 {
     struct bu_vls lint_msgs = BU_VLS_INIT_ZERO;
     int lint_failures;
@@ -2622,9 +2622,9 @@ ged_cmd_schema_json(const char *cmd)
     const struct ged_cmd_grammar *grammar = _ged_cmd_grammar(cmd);
     if (grammar && grammar->describe_json)
 	return grammar->describe_json();
-    const struct bu_cmd_schema *native_schema = _ged_cmd_native_schema(cmd);
+    const struct bu_arg_schema *native_schema = _ged_cmd_native_schema(cmd);
     if (native_schema)
-	return bu_cmd_schema_describe_json(native_schema);
+	return bu_arg_schema_describe_json(native_schema);
     return NULL;
 }
 
@@ -2641,8 +2641,8 @@ ged_cmd_help(const char *cmd, const char *invocation)
     const struct ged_cmd_grammar *grammar = _ged_cmd_grammar(cmd);
     if (grammar && grammar->describe_help)
 	return grammar->describe_help(invocation);
-    const struct bu_cmd_schema *native_schema = _ged_cmd_native_schema(cmd);
-    return native_schema ? bu_cmd_schema_help(native_schema, invocation) : NULL;
+    const struct bu_arg_schema *native_schema = _ged_cmd_native_schema(cmd);
+    return native_schema ? bu_arg_schema_help(native_schema, invocation) : NULL;
 }
 
 extern "C" int
@@ -2660,7 +2660,7 @@ ged_cmd_help_append(struct bu_vls *output, const char *cmd, const char *invocati
     return 0;
 }
 
-extern "C" const struct bu_cmd_schema *
+extern "C" const struct bu_arg_schema *
 _ged_cmd_native_schema(const char *cmd)
 {
     if (!cmd)
@@ -2714,23 +2714,23 @@ ged_schema_lint_provider(const char *path, const char *role, const char *provide
 
 
 static int
-ged_native_schema_lint_node(const char *path, const struct bu_cmd_schema *schema, struct bu_vls *msgs)
+ged_native_schema_lint_node(const char *path, const struct bu_arg_schema *schema, struct bu_vls *msgs)
 {
     int failures;
 
     if (!schema) {
-	return bu_cmd_schema_lint(schema, msgs);
+	return bu_arg_schema_lint(schema, msgs);
     }
-    failures = bu_cmd_schema_lint(schema, msgs);
+    failures = bu_arg_schema_lint(schema, msgs);
     if (schema->options) {
-	for (size_t i = 0; bu_cmd_option_is_valid(&schema->options[i]); i++) {
-	    const struct bu_cmd_option *option = &schema->options[i];
+	for (size_t i = 0; bu_arg_option_is_valid(&schema->options[i]); i++) {
+	    const struct bu_arg_option *option = &schema->options[i];
 	    failures += ged_schema_lint_provider(path, "native option", option->semantic_provider, msgs);
 	}
     }
     if (schema->operands) {
 	for (size_t i = 0; schema->operands[i].name; i++) {
-	    const struct bu_cmd_operand *operand = &schema->operands[i];
+	    const struct bu_arg_operand *operand = &schema->operands[i];
 	    failures += ged_schema_lint_provider(path, "native operand", operand->semantic_provider, msgs);
 	}
     }
@@ -2792,7 +2792,7 @@ ged_cmd_schema_lint(const char *cmd, struct bu_vls *msgs)
 	return -1;
 
     if (cmd) {
-	const struct bu_cmd_schema *native_schema = _ged_cmd_native_schema(cmd);
+	const struct bu_arg_schema *native_schema = _ged_cmd_native_schema(cmd);
 	const struct ged_cmd_grammar *grammar = _ged_cmd_grammar(cmd);
 	if (!native_schema && !grammar) {
 	    if (msgs)
@@ -2806,7 +2806,7 @@ ged_cmd_schema_lint(const char *cmd, struct bu_vls *msgs)
 	return failures;
     }
 
-    std::map<std::string, const struct bu_cmd_schema *> native_schemas;
+    std::map<std::string, const struct bu_arg_schema *> native_schemas;
     std::map<std::string, const struct ged_cmd_grammar *> grammars;
     {
 	struct ged_metadata_registry &registry = ged_metadata();

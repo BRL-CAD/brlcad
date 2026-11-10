@@ -25,14 +25,14 @@
 
 #include "common.h"
 #include <string.h>
-#include "bu/cmdschema.h"
+#include "bu/arg.h"
 #include "ged.h"
 #include "../include/plugin.h"
 
 GED_DEFINE_TYPED_OPERAND_SCHEMA_POLICY_PROVIDER(set_output_script,
     "set_output_script", "Get or set the output handler script", "script",
-    BU_CMD_VALUE_STRING, 0, 1, "Output handler script",
-    BU_CMD_PARSE_OPTIONS_FIRST, NULL);
+    BU_ARG_VALUE_STRING, 0, 1, "Output handler script",
+    BU_ARG_PARSE_OPTIONS_FIRST, NULL);
 
 /*
  * Get/set the output handler script
@@ -54,7 +54,7 @@ ged_set_output_script_core(struct ged *gedp, int argc, const char *argv[])
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
 
-    operand_index = bu_cmd_schema_parse_complete(&set_output_script_cmd_schema, &parse_dummy,
+    operand_index = bu_arg_schema_parse_complete(&set_output_script_cmd_schema, &parse_dummy,
 	gedp->ged_result_str, argc - 1, argv + 1);
     if (operand_index < 0) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);

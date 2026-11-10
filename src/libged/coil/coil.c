@@ -30,7 +30,7 @@
 #include <string.h>
 #include <math.h>
 
-#include "bu/cmdschema.h"
+#include "bu/arg.h"
 #include "vmath.h"
 #include "bn.h"
 #include "raytrace.h"
@@ -73,7 +73,7 @@ coil_cap_type_validate(struct bu_vls *msg, const char *arg)
 {
     int value = 0;
 
-    if (!bu_cmd_integer_from_str(&value, arg) || value < 0 || value > 3) {
+    if (!bu_arg_integer_from_str(&value, arg) || value < 0 || value > 3) {
 	if (msg)
 	    bu_vls_printf(msg, "coil cap type must be an integer from 0 through 3: %s", arg ? arg : "");
 	return -1;
@@ -129,38 +129,38 @@ coil_sections_free(struct bu_list *sections)
 }
 
 
-static const struct bu_cmd_option coil_schema_options[] = {
-    BU_CMD_NONNEGATIVE_NUMBER("d", NULL, struct coil_args, mean_outer_diameter,
+static const struct bu_arg_option coil_schema_options[] = {
+    BU_ARG_NONNEGATIVE_NUMBER("d", NULL, struct coil_args, mean_outer_diameter,
 	"diameter", "Mean outer diameter"),
-    BU_CMD_NONNEGATIVE_NUMBER("w", NULL, struct coil_args, wire_diameter,
+    BU_ARG_NONNEGATIVE_NUMBER("w", NULL, struct coil_args, wire_diameter,
 	"diameter", "Wire diameter"),
-    BU_CMD_NONNEGATIVE_NUMBER("H", NULL, struct coil_args, helix_angle,
+    BU_ARG_NONNEGATIVE_NUMBER("H", NULL, struct coil_args, helix_angle,
 	"angle", "Helix angle"),
-    BU_CMD_NONNEGATIVE_NUMBER("p", NULL, struct coil_args, pitch,
+    BU_ARG_NONNEGATIVE_NUMBER("p", NULL, struct coil_args, pitch,
 	"pitch", "Pitch"),
-    BU_CMD_NONNEGATIVE_INTEGER("n", NULL, struct coil_args, number_of_turns,
+    BU_ARG_NONNEGATIVE_INTEGER("n", NULL, struct coil_args, number_of_turns,
 	"turns", "Number of turns"),
-    BU_CMD_INTEGER_VALIDATE("s", NULL, struct coil_args, start_cap_type,
+    BU_ARG_INTEGER_VALIDATE("s", NULL, struct coil_args, start_cap_type,
 	coil_cap_type_validate, "type", "Start cap type (0 through 3)"),
-    BU_CMD_INTEGER_VALIDATE("e", NULL, struct coil_args, end_cap_type,
+    BU_ARG_INTEGER_VALIDATE("e", NULL, struct coil_args, end_cap_type,
 	coil_cap_type_validate, "type", "End cap type (0 through 3)"),
-    BU_CMD_CUSTOM("S", NULL, struct coil_args, sections, coil_section_consume,
+    BU_ARG_CUSTOM("S", NULL, struct coil_args, sections, coil_section_consume,
 	"section", "Section: turns,diameter,wire,angle,pitch,handedness"),
-    BU_CMD_NONNEGATIVE_NUMBER("l", NULL, struct coil_args, overall_length,
+    BU_ARG_NONNEGATIVE_NUMBER("l", NULL, struct coil_args, overall_length,
 	"length", "Overall length"),
-    BU_CMD_FLAG("L", NULL, struct coil_args, left_handed, "Use left-handed winding"),
-    BU_CMD_FLAG("h", NULL, struct coil_args, help, "Print command usage"),
-    BU_CMD_ALIAS_SHORT("?", "h", 1),
-    BU_CMD_OPTION_NULL
+    BU_ARG_FLAG("L", NULL, struct coil_args, left_handed, "Use left-handed winding"),
+    BU_ARG_FLAG("h", NULL, struct coil_args, help, "Print command usage"),
+    BU_ARG_ALIAS_SHORT("?", "h", 1),
+    BU_ARG_OPTION_NULL
 };
-static const struct bu_cmd_operand coil_schema_operands[] = {
-    BU_CMD_OPERAND("output_object", BU_CMD_VALUE_STRING, 0, 1,
+static const struct bu_arg_operand coil_schema_operands[] = {
+    BU_ARG_OPERAND("output_object", BU_ARG_VALUE_STRING, 0, 1,
 	"Optional new coil object name", NULL),
-    BU_CMD_OPERAND_NULL
+    BU_ARG_OPERAND_NULL
 };
-static const struct bu_cmd_schema coil_cmd_schema = {
+static const struct bu_arg_schema coil_cmd_schema = {
     "coil", "Create coil geometry", coil_schema_options, coil_schema_operands,
-    BU_CMD_PARSE_OPTIONS_FIRST, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+    BU_ARG_PARSE_OPTIONS_FIRST, BU_ARG_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
 
 
@@ -424,7 +424,7 @@ make_coil(struct rt_wdb (*file), char *prefix, struct bu_list *sections, int sta
 static void
 coil_usage(struct ged *gedp)
 {
-    char *help = bu_cmd_schema_help(&coil_cmd_schema, "coil");
+    char *help = bu_arg_schema_help(&coil_cmd_schema, "coil");
 
     if (help) {
 	bu_vls_strcat(gedp->ged_result_str, help);
@@ -443,7 +443,7 @@ ged_coil_core(struct ged *gedp, int argc, const char *argv[])
 
     struct bu_vls name = BU_VLS_INIT_ZERO;
     struct coil_args args = {0};
-    struct bu_cmd_validate_result validation = BU_CMD_VALIDATE_RESULT_NULL;
+    struct bu_arg_validate_result validation = BU_ARG_VALIDATE_RESULT_NULL;
     const char **operands = NULL;
     int operand_index;
     int operand_count;
@@ -460,7 +460,7 @@ ged_coil_core(struct ged *gedp, int argc, const char *argv[])
     /* initialize result */
     BU_LIST_INIT(&args.sections);
     usedefaults = argc == 1;
-    operand_index = bu_cmd_schema_parse(&coil_cmd_schema, &args,
+    operand_index = bu_arg_schema_parse(&coil_cmd_schema, &args,
 	gedp->ged_result_str, argc - 1, argv + 1);
     if (operand_index < 0) {
 	coil_usage(gedp);
@@ -474,18 +474,18 @@ ged_coil_core(struct ged *gedp, int argc, const char *argv[])
 	bu_vls_free(&name);
 	return GED_HELP;
     }
-    if (bu_cmd_schema_validate(&coil_cmd_schema, (size_t)(argc - 1), argv + 1,
+    if (bu_arg_schema_validate(&coil_cmd_schema, (size_t)(argc - 1), argv + 1,
 		(size_t)(argc - 1), &validation) != 0 ||
-	validation.state != BU_CMD_VALIDATE_VALID) {
+	validation.state != BU_ARG_VALIDATE_VALID) {
 	if (validation.hint)
 	    bu_vls_printf(gedp->ged_result_str, "%s\n", validation.hint);
-	bu_cmd_validate_result_clear(&validation);
+	bu_arg_validate_result_clear(&validation);
 	coil_usage(gedp);
 	coil_sections_free(&args.sections);
 	bu_vls_free(&name);
 	return BRLCAD_ERROR;
     }
-    bu_cmd_validate_result_clear(&validation);
+    bu_arg_validate_result_clear(&validation);
 
     operand_count = argc - 1 - operand_index;
     operands = argv + 1 + operand_index;

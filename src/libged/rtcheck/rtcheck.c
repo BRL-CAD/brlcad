@@ -34,7 +34,7 @@
 #include "bresource.h"
 
 #include "bu/app.h"
-#include "bu/cmdschema.h"
+#include "bu/arg.h"
 
 #include "../ged_private.h"
 
@@ -326,8 +326,8 @@ ged_rtcheck_core(struct ged *gedp, int argc, const char *argv[])
 
 #include "../include/plugin.h"
 GED_DEFINE_TYPED_OPERAND_SCHEMA(rtcheck, "rtcheck",
-    "Check displayed geometry for overlaps", "arguments", BU_CMD_VALUE_RAW,
-    0, BU_CMD_COUNT_UNLIMITED, "Overlap-check options and objects");
+    "Check displayed geometry for overlaps", "arguments", BU_ARG_VALUE_RAW,
+    0, BU_ARG_COUNT_UNLIMITED, "Overlap-check options and objects");
 
 #define GED_RTCHECK_COMMANDS(X, XID) \
     X(rtcheck, ged_rtcheck_core, GED_CMD_DEFAULT, &rtcheck_cmd_schema) \

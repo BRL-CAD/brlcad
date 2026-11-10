@@ -25,7 +25,7 @@
 
 #include "common.h"
 
-#include "bu/cmdschema.h"
+#include "bu/arg.h"
 
 #include <utility>
 #include <string>
@@ -72,38 +72,38 @@ ged_attr_core(struct ged *gedp, int argc, const char *argv[])
 
 #include "../include/plugin.h"
 
-static const struct bu_cmd_option attr_schema_options[] = {
-    BU_CMD_VALUE_UNBOUND("c", NULL, "c", BU_CMD_VALUE_INTEGER, "sep_char",
+static const struct bu_arg_option attr_schema_options[] = {
+    BU_ARG_VALUE_UNBOUND("c", NULL, "c", BU_ARG_VALUE_INTEGER, "sep_char",
 	"Separate output fields with this character"),
-    BU_CMD_OPTION_NULL
+    BU_ARG_OPTION_NULL
 };
-static const struct bu_cmd_operand attr_object_operands[] = {
-    BU_CMD_OPERAND("object_pattern", BU_CMD_VALUE_DB_OBJECT, 1, 1,
+static const struct bu_arg_operand attr_object_operands[] = {
+    BU_ARG_OPERAND("object_pattern", BU_ARG_VALUE_DB_OBJECT, 1, 1,
 	"Object name or pattern", "ged.db_object_all"),
-    BU_CMD_OPERAND("attributes", BU_CMD_VALUE_STRING, 0, BU_CMD_COUNT_UNLIMITED,
+    BU_ARG_OPERAND("attributes", BU_ARG_VALUE_STRING, 0, BU_ARG_COUNT_UNLIMITED,
 	"Attribute names or name/value pairs", NULL),
-    BU_CMD_OPERAND_NULL
+    BU_ARG_OPERAND_NULL
 };
-static const struct bu_cmd_operand attr_copy_operands[] = {
-    BU_CMD_OPERAND("object_pattern", BU_CMD_VALUE_DB_OBJECT, 1, 1,
+static const struct bu_arg_operand attr_copy_operands[] = {
+    BU_ARG_OPERAND("object_pattern", BU_ARG_VALUE_DB_OBJECT, 1, 1,
 	"Object name or pattern", "ged.db_object_all"),
-    BU_CMD_OPERAND("source_attribute", BU_CMD_VALUE_STRING, 1, 1,
+    BU_ARG_OPERAND("source_attribute", BU_ARG_VALUE_STRING, 1, 1,
 	"Attribute to copy", NULL),
-    BU_CMD_OPERAND("destination_attribute", BU_CMD_VALUE_STRING, 1, 1,
+    BU_ARG_OPERAND("destination_attribute", BU_ARG_VALUE_STRING, 1, 1,
 	"New attribute name", NULL),
-    BU_CMD_OPERAND_NULL
+    BU_ARG_OPERAND_NULL
 };
 static const char * const attr_sort_keywords[] = {"case", "nocase", "value", "value-nocase", NULL};
-static const struct bu_cmd_operand attr_sort_operands[] = {
-    BU_CMD_OPERAND("object_pattern", BU_CMD_VALUE_DB_OBJECT, 1, 1,
+static const struct bu_arg_operand attr_sort_operands[] = {
+    BU_ARG_OPERAND("object_pattern", BU_ARG_VALUE_DB_OBJECT, 1, 1,
 	"Object name or pattern", "ged.db_object_all"),
-    BU_CMD_OPERAND_KEYWORDS("sort_order", BU_CMD_VALUE_KEYWORD, 0, 1,
+    BU_ARG_OPERAND_KEYWORDS("sort_order", BU_ARG_VALUE_KEYWORD, 0, 1,
 	"Sort order", NULL, attr_sort_keywords),
-    BU_CMD_OPERAND_NULL
+    BU_ARG_OPERAND_NULL
 };
 #define ATTR_SCHEMA(_id, _name, _help, _ops) \
-    static const struct bu_cmd_schema _id##_schema = { \
-	_name, _help, NULL, _ops, BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL) \
+    static const struct bu_arg_schema _id##_schema = { \
+	_name, _help, NULL, _ops, BU_ARG_PARSE_STOP_AT_FIRST_OPERAND, BU_ARG_SCHEMA_CONSTRAINTS(NULL, NULL) \
     }
 ATTR_SCHEMA(attr_set, "set", "Set attribute/value pairs", attr_object_operands);
 ATTR_SCHEMA(attr_get, "get", "Get attribute values", attr_object_operands);
@@ -115,28 +115,28 @@ ATTR_SCHEMA(attr_list, "list", "List standard attributes", attr_object_operands)
 ATTR_SCHEMA(attr_copy, "copy", "Copy an attribute", attr_copy_operands);
 ATTR_SCHEMA(attr_standardize, "standardize", "Standardize attribute names", attr_object_operands);
 #undef ATTR_SCHEMA
-static const struct bu_cmd_schema attr_root_schema =
-    BU_CMD_SCHEMA_EXTERNAL("attr", "Inspect or modify database attributes",
-	attr_schema_options, NULL, BU_CMD_PARSE_OPTIONS_FIRST, NULL, NULL, NULL);
-static const struct bu_cmd_tree_node attr_subcommands[] = {
-    BU_CMD_TREE_NODE(&attr_set_schema, NULL, NULL, BU_CMD_TREE_CHILD_AFTER_OPTIONS, NULL),
-    BU_CMD_TREE_NODE(&attr_get_schema, NULL, NULL, BU_CMD_TREE_CHILD_AFTER_OPTIONS, NULL),
-    BU_CMD_TREE_NODE(&attr_show_schema, NULL, NULL, BU_CMD_TREE_CHILD_AFTER_OPTIONS, NULL),
-    BU_CMD_TREE_NODE(&attr_rm_schema, NULL, NULL, BU_CMD_TREE_CHILD_AFTER_OPTIONS, NULL),
-    BU_CMD_TREE_NODE(&attr_append_schema, NULL, NULL, BU_CMD_TREE_CHILD_AFTER_OPTIONS, NULL),
-    BU_CMD_TREE_NODE(&attr_sort_schema, NULL, NULL, BU_CMD_TREE_CHILD_AFTER_OPTIONS, NULL),
-    BU_CMD_TREE_NODE(&attr_list_schema, NULL, NULL, BU_CMD_TREE_CHILD_AFTER_OPTIONS, NULL),
-    BU_CMD_TREE_NODE(&attr_copy_schema, NULL, NULL, BU_CMD_TREE_CHILD_AFTER_OPTIONS, NULL),
-    BU_CMD_TREE_NODE(&attr_standardize_schema, NULL, NULL, BU_CMD_TREE_CHILD_AFTER_OPTIONS, NULL),
-    BU_CMD_TREE_NODE_NULL
+static const struct bu_arg_schema attr_root_schema =
+    BU_ARG_SCHEMA_EXTERNAL("attr", "Inspect or modify database attributes",
+	attr_schema_options, NULL, BU_ARG_PARSE_OPTIONS_FIRST, NULL, NULL, NULL);
+static const struct bu_arg_tree_node attr_subcommands[] = {
+    BU_ARG_TREE_NODE(&attr_set_schema, NULL, NULL, BU_ARG_TREE_CHILD_AFTER_OPTIONS, NULL),
+    BU_ARG_TREE_NODE(&attr_get_schema, NULL, NULL, BU_ARG_TREE_CHILD_AFTER_OPTIONS, NULL),
+    BU_ARG_TREE_NODE(&attr_show_schema, NULL, NULL, BU_ARG_TREE_CHILD_AFTER_OPTIONS, NULL),
+    BU_ARG_TREE_NODE(&attr_rm_schema, NULL, NULL, BU_ARG_TREE_CHILD_AFTER_OPTIONS, NULL),
+    BU_ARG_TREE_NODE(&attr_append_schema, NULL, NULL, BU_ARG_TREE_CHILD_AFTER_OPTIONS, NULL),
+    BU_ARG_TREE_NODE(&attr_sort_schema, NULL, NULL, BU_ARG_TREE_CHILD_AFTER_OPTIONS, NULL),
+    BU_ARG_TREE_NODE(&attr_list_schema, NULL, NULL, BU_ARG_TREE_CHILD_AFTER_OPTIONS, NULL),
+    BU_ARG_TREE_NODE(&attr_copy_schema, NULL, NULL, BU_ARG_TREE_CHILD_AFTER_OPTIONS, NULL),
+    BU_ARG_TREE_NODE(&attr_standardize_schema, NULL, NULL, BU_ARG_TREE_CHILD_AFTER_OPTIONS, NULL),
+    BU_ARG_TREE_NODE_NULL
 };
-static const struct bu_cmd_tree attr_tree =
-    BU_CMD_TREE(&attr_root_schema, attr_subcommands, BU_CMD_TREE_CHILD_AFTER_OPTIONS);
+static const struct bu_arg_tree attr_tree =
+    BU_ARG_TREE(&attr_root_schema, attr_subcommands, BU_ARG_TREE_CHILD_AFTER_OPTIONS);
 
 static void
 attr_help_append(struct ged *gedp, const char *invocation)
 {
-    char *help = bu_cmd_tree_help(&attr_tree, invocation);
+    char *help = bu_arg_tree_help(&attr_tree, invocation);
 
     if (help) {
 	bu_vls_strcat(gedp->ged_result_str, help);
@@ -161,13 +161,13 @@ attr_grammar_analyze(struct ged *gedp, const char *input,
 static char *
 attr_grammar_json(void)
 {
-    return bu_cmd_tree_describe_json(&attr_tree);
+    return bu_arg_tree_describe_json(&attr_tree);
 }
 
 static int
 attr_grammar_lint(struct bu_vls *msgs)
 {
-    return bu_cmd_tree_lint(&attr_tree, msgs);
+    return bu_arg_tree_lint(&attr_tree, msgs);
 }
 GED_CMD_TREE_HELP(attr_grammar_help, attr_tree)
 

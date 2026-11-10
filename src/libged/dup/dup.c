@@ -28,12 +28,12 @@
 #include <string.h>
 
 #include "bu/cmd.h"
-#include "bu/cmdschema.h"
+#include "bu/arg.h"
 #include "../../librt/librt_private.h"
 
 #include "../ged_private.h"
 
-static const struct bu_cmd_schema *dup_schema(void);
+static const struct bu_arg_schema *dup_schema(void);
 
 static struct directory **
 _ged_getspace(struct db_i *dbip,
@@ -184,7 +184,7 @@ ged_dup_core(struct ged *gedp, int argc, const char *argv[])
     }
 
 
-    operand_index = bu_cmd_schema_parse_complete(dup_schema(),
+    operand_index = bu_arg_schema_parse_complete(dup_schema(),
 	&parse_dummy, gedp->ged_result_str, argc - 1, argv + 1);
     if (operand_index < 0) {
 	ged_cmd_help_append(gedp->ged_result_str, argv[0], argv[0]);
@@ -261,18 +261,18 @@ ged_dup_core(struct ged *gedp, int argc, const char *argv[])
 
 #include "../include/plugin.h"
 
-static const struct bu_cmd_operand dup_schema_operands[] = {
-    BU_CMD_OPERAND("database_file", BU_CMD_VALUE_FILE, 1, 1,
+static const struct bu_arg_operand dup_schema_operands[] = {
+    BU_ARG_OPERAND("database_file", BU_ARG_VALUE_FILE, 1, 1,
 	"Database file to inspect", "ged.file_path"),
-    BU_CMD_OPERAND("prefix", BU_CMD_VALUE_STRING, 0, 1, "Optional name prefix", NULL),
-    BU_CMD_OPERAND_NULL
+    BU_ARG_OPERAND("prefix", BU_ARG_VALUE_STRING, 0, 1, "Optional name prefix", NULL),
+    BU_ARG_OPERAND_NULL
 };
-static const struct bu_cmd_schema dup_cmd_schema = {
+static const struct bu_arg_schema dup_cmd_schema = {
     "dup", "Report duplicate names", NULL, dup_schema_operands,
-    BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+    BU_ARG_PARSE_STOP_AT_FIRST_OPERAND, BU_ARG_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
 
-static const struct bu_cmd_schema *
+static const struct bu_arg_schema *
 dup_schema(void)
 {
     return &dup_cmd_schema;

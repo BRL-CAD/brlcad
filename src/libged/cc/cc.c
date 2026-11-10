@@ -29,22 +29,22 @@
 
 #include "raytrace.h"
 #include "wdb.h"
-#include "bu/cmdschema.h"
+#include "bu/arg.h"
 
 #include "../ged_private.h"
 
 
-static const struct bu_cmd_operand cc_operands[] = {
-    BU_CMD_OPERAND("name", BU_CMD_VALUE_STRING, 1, 1,
+static const struct bu_arg_operand cc_operands[] = {
+    BU_ARG_OPERAND("name", BU_ARG_VALUE_STRING, 1, 1,
 	"New constraint name", NULL),
-    BU_CMD_OPERAND("expression", BU_CMD_VALUE_RAW, 1, 1,
+    BU_ARG_OPERAND("expression", BU_ARG_VALUE_RAW, 1, 1,
 	"Constraint expression", NULL),
-    BU_CMD_OPERAND_NULL
+    BU_ARG_OPERAND_NULL
 };
 
-static const struct bu_cmd_schema cc_cmd_schema = {
+static const struct bu_arg_schema cc_cmd_schema = {
     "cc", "Create a constraint", NULL, cc_operands,
-    BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+    BU_ARG_PARSE_STOP_AT_FIRST_OPERAND, BU_ARG_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
 
 /*
@@ -73,7 +73,7 @@ ged_cc_core(struct ged *gedp, int argc, const char *argv[])
 	return GED_HELP;
     }
 
-    operand_index = bu_cmd_schema_parse_complete(&cc_cmd_schema, &parse_dummy,
+    operand_index = bu_arg_schema_parse_complete(&cc_cmd_schema, &parse_dummy,
 	gedp->ged_result_str, argc - 1, argv + 1);
     if (operand_index < 0 || argc - 1 - operand_index != 2) {
 	ged_cmd_help_append(gedp->ged_result_str, argv[0], argv[0]);

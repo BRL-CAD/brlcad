@@ -28,13 +28,13 @@
 #include <string.h>
 
 #include "bu/cmd.h"
-#include "bu/cmdschema.h"
+#include "bu/arg.h"
 
 #include "../ged_private.h"
 
 
 GED_DEFINE_TYPED_OPERAND_SCHEMA_PROVIDER(cat, "cat", "Tersely describe database objects",
-    "objects", BU_CMD_VALUE_DB_OBJECT, 1, BU_CMD_COUNT_UNLIMITED,
+    "objects", BU_ARG_VALUE_DB_OBJECT, 1, BU_ARG_COUNT_UNLIMITED,
     "Database objects to describe", "ged.db_object");
 
 
@@ -65,7 +65,7 @@ ged_cat_core(struct ged *gedp, int argc, const char *argv[])
 	return GED_HELP;
     }
 
-    operand_index = bu_cmd_schema_parse_complete(&cat_cmd_schema, &parse_dummy,
+    operand_index = bu_arg_schema_parse_complete(&cat_cmd_schema, &parse_dummy,
 	gedp->ged_result_str, argc - 1, argv + 1);
     if (operand_index < 0 || argc - 1 - operand_index < 1) {
 	cat_show_help(gedp, argv[0]);

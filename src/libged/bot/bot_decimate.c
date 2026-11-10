@@ -29,7 +29,7 @@
 #include <ctype.h>
 #include <string.h>
 
-#include "bu/cmdschema.h"
+#include "bu/arg.h"
 #include "rt/geom.h"
 #include "ged.h"
 
@@ -43,25 +43,25 @@ struct bot_decimate_args {
 };
 
 
-static const struct bu_cmd_option bot_decimate_schema_options[] = {
-    BU_CMD_FLAG("h", "help", struct bot_decimate_args, print_help,
+static const struct bu_arg_option bot_decimate_schema_options[] = {
+    BU_ARG_FLAG("h", "help", struct bot_decimate_args, print_help,
 	"Print command help"),
-    BU_CMD_NONNEGATIVE_NUMBER("c", NULL, struct bot_decimate_args,
+    BU_ARG_NONNEGATIVE_NUMBER("c", NULL, struct bot_decimate_args,
 	max_chord_error, "error", "Maximum chord error"),
-    BU_CMD_NONNEGATIVE_NUMBER("n", NULL, struct bot_decimate_args,
+    BU_ARG_NONNEGATIVE_NUMBER("n", NULL, struct bot_decimate_args,
 	max_normal_error, "error", "Maximum normal error"),
-    BU_CMD_NONNEGATIVE_NUMBER("e", NULL, struct bot_decimate_args,
+    BU_ARG_NONNEGATIVE_NUMBER("e", NULL, struct bot_decimate_args,
 	min_edge_length, "length", "Minimum edge length"),
-    BU_CMD_NONNEGATIVE_NUMBER("f", NULL, struct bot_decimate_args,
+    BU_ARG_NONNEGATIVE_NUMBER("f", NULL, struct bot_decimate_args,
 	feature_size, "size", "Feature size for the GCT decimator"),
-    BU_CMD_OPTION_NULL
+    BU_ARG_OPTION_NULL
 };
-static const struct bu_cmd_operand bot_decimate_schema_operands[] = {
-    BU_CMD_OPERAND("new_bot", BU_CMD_VALUE_STRING, 1, 1,
+static const struct bu_arg_operand bot_decimate_schema_operands[] = {
+    BU_ARG_OPERAND("new_bot", BU_ARG_VALUE_STRING, 1, 1,
 	"Name for the decimated BOT", NULL),
-    BU_CMD_OPERAND("current_bot", BU_CMD_VALUE_DB_OBJECT, 1, 1,
+    BU_ARG_OPERAND("current_bot", BU_ARG_VALUE_DB_OBJECT, 1, 1,
 	"Source BOT object", "ged.db_object"),
-    BU_CMD_OPERAND_NULL
+    BU_ARG_OPERAND_NULL
 };
 
 
@@ -71,17 +71,17 @@ static const char * const bot_decimate_method_options[] = {
 static const char * const bot_decimate_feature_conflicts[] = {
     "f", "c", "n", "e", NULL
 };
-static const struct bu_cmd_constraint bot_decimate_constraints[] = {
-    BU_CMD_CONSTRAINT_OPTIONS(bot_decimate_method_options, 1, 4,
+static const struct bu_arg_constraint bot_decimate_constraints[] = {
+    BU_ARG_CONSTRAINT_OPTIONS(bot_decimate_method_options, 1, 4,
 	"select -f or one of -c, -n, and -e"),
-    BU_CMD_CONSTRAINT_CONFLICTS(bot_decimate_feature_conflicts,
+    BU_ARG_CONSTRAINT_CONFLICTS(bot_decimate_feature_conflicts,
 	"-f may not be used with -c, -n, or -e"),
-    BU_CMD_CONSTRAINT_NULL
+    BU_ARG_CONSTRAINT_NULL
 };
-const struct bu_cmd_schema ged_bot_decimate_schema = {
+const struct bu_arg_schema ged_bot_decimate_schema = {
     "bot_decimate", "Reduce BOT triangle count", bot_decimate_schema_options,
-    bot_decimate_schema_operands, BU_CMD_PARSE_OPTIONS_FIRST,
-    BU_CMD_SCHEMA_META_HELP(NULL, bot_decimate_constraints, NULL, NULL, NULL)
+    bot_decimate_schema_operands, BU_ARG_PARSE_OPTIONS_FIRST,
+    BU_ARG_SCHEMA_META_HELP(NULL, bot_decimate_constraints, NULL, NULL, NULL)
 };
 
 
@@ -110,7 +110,7 @@ ged_bot_decimate_core(struct ged *gedp, int argc, const char *argv[])
 
     cmdname = argv[0];
 
-    operand_index = bu_cmd_schema_parse_complete(&ged_bot_decimate_schema,
+    operand_index = bu_arg_schema_parse_complete(&ged_bot_decimate_schema,
 	&args, gedp->ged_result_str, argc - 1, argv + 1);
     if (operand_index < 0) {
 	ged_cmd_help_append(gedp->ged_result_str, "bot_decimate", argv[0]);

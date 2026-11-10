@@ -29,7 +29,7 @@
 #include <ctype.h>
 #include <string.h>
 
-#include "bu/cmdschema.h"
+#include "bu/arg.h"
 #include "bu/path.h"
 #include "raytrace.h"
 
@@ -39,26 +39,26 @@ struct bot_sync_args {
     int print_help;
 };
 
-static const struct bu_cmd_option bot_sync_options[] = {
-    BU_CMD_FLAG("h", "help", struct bot_sync_args, print_help,
+static const struct bu_arg_option bot_sync_options[] = {
+    BU_ARG_FLAG("h", "help", struct bot_sync_args, print_help,
 	"Print command help"),
-    BU_CMD_OPTION_NULL
+    BU_ARG_OPTION_NULL
 };
-static const struct bu_cmd_operand bot_sync_operands[] = {
-    BU_CMD_OPERAND("bot", BU_CMD_VALUE_DB_OBJECT, 1, BU_CMD_COUNT_UNLIMITED,
+static const struct bu_arg_operand bot_sync_operands[] = {
+    BU_ARG_OPERAND("bot", BU_ARG_VALUE_DB_OBJECT, 1, BU_ARG_COUNT_UNLIMITED,
 	"BoT object to synchronize", "ged.db_object"),
-    BU_CMD_OPERAND_NULL
+    BU_ARG_OPERAND_NULL
 };
-const struct bu_cmd_schema ged_bot_sync_schema = {
+const struct bu_arg_schema ged_bot_sync_schema = {
     "bot_sync", "Synchronize BoT orientation", bot_sync_options,
-    bot_sync_operands, BU_CMD_PARSE_INTERSPERSED,
-    BU_CMD_SCHEMA_META_HELP(NULL, NULL, NULL, NULL, NULL)
+    bot_sync_operands, BU_ARG_PARSE_INTERSPERSED,
+    BU_ARG_SCHEMA_META_HELP(NULL, NULL, NULL, NULL, NULL)
 };
 
 static void
 bot_sync_usage(struct bu_vls *result, const char *cmd)
 {
-    char *help = bu_cmd_schema_help(&ged_bot_sync_schema, cmd);
+    char *help = bu_arg_schema_help(&ged_bot_sync_schema, cmd);
 
     if (help) {
 	bu_vls_sprintf(result, "%s", help);
@@ -90,7 +90,7 @@ ged_bot_sync_core(struct ged *gedp, int argc, const char *argv[])
 	return GED_HELP;
     }
 
-    operand_index = bu_cmd_schema_parse_complete(&ged_bot_sync_schema, &args,
+    operand_index = bu_arg_schema_parse_complete(&ged_bot_sync_schema, &args,
 	gedp->ged_result_str, argc, argv);
     if (operand_index < 0) {
 	bot_sync_usage(gedp->ged_result_str, cmd);

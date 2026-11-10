@@ -31,7 +31,7 @@
 #include <string.h>
 
 #include "bu/cmd.h"
-#include "bu/cmdschema.h"
+#include "bu/arg.h"
 #include "bu/color.h"
 #include "bu/malloc.h"
 #include "bu/vls.h"
@@ -61,26 +61,26 @@ struct fp_root_args {
     long verbosity;
 };
 
-static const struct bu_cmd_option fp_root_options[] = {
-    BU_CMD_FLAG("h", "help", struct fp_root_args, help, "Print help"),
-    BU_CMD_COUNTING_LONG_FLAG("v", "verbose", struct fp_root_args, verbosity,
+static const struct bu_arg_option fp_root_options[] = {
+    BU_ARG_FLAG("h", "help", struct fp_root_args, help, "Print help"),
+    BU_ARG_COUNTING_LONG_FLAG("v", "verbose", struct fp_root_args, verbosity,
 	"Increase output detail"),
-    BU_CMD_OPTION_NULL
+    BU_ARG_OPTION_NULL
 };
 
-const struct bu_cmd_schema ged_faceplate_native_schema = {
+const struct bu_arg_schema ged_faceplate_native_schema = {
     "faceplate", "Manage faceplate view elements", fp_root_options, NULL,
-    BU_CMD_PARSE_OPTIONS_FIRST, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+    BU_ARG_PARSE_OPTIONS_FIRST, BU_ARG_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
 
-static const struct bu_cmd_option fp_subcommand_options[] = {
-    BU_CMD_FLAG("h", "help", struct ged_faceplate_subcommand_args, help, "Print help"),
-    BU_CMD_OPTION_NULL
+static const struct bu_arg_option fp_subcommand_options[] = {
+    BU_ARG_FLAG("h", "help", struct ged_faceplate_subcommand_args, help, "Print help"),
+    BU_ARG_OPTION_NULL
 };
 
-const struct bu_cmd_schema ged_faceplate_subcommand_schema = {
+const struct bu_arg_schema ged_faceplate_subcommand_schema = {
     "subcommand", "Faceplate subcommand options", fp_subcommand_options, NULL,
-    BU_CMD_PARSE_OPTIONS_FIRST, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+    BU_ARG_PARSE_OPTIONS_FIRST, BU_ARG_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
 
 static int
@@ -90,7 +90,7 @@ _fp_cmd_msgs(void *bs, int argc, const char **argv, const char *UNUSED(us),
     struct _ged_fp_info *gd = (struct _ged_fp_info *)bs;
     if (argc == 2 && BU_STR_EQUAL(argv[1], HELPFLAG)) {
 	const char *path[] = {argv[0]};
-	char *help = bu_cmd_tree_help_path(&ged_faceplate_tree,
+	char *help = bu_arg_tree_help_path(&ged_faceplate_tree,
 	    "view faceplate", 1, path);
 	if (help) {
 	    bu_vls_strcat(gd->gedp->ged_result_str, help);
@@ -99,7 +99,7 @@ _fp_cmd_msgs(void *bs, int argc, const char **argv, const char *UNUSED(us),
 	return 1;
     }
     if (argc == 2 && BU_STR_EQUAL(argv[1], PURPOSEFLAG)) {
-	const struct bu_cmd_tree_node *node = bu_cmd_tree_find_subcommand(
+	const struct bu_arg_tree_node *node = bu_arg_tree_find_subcommand(
 	    &ged_faceplate_tree, argv[0]);
 	bu_vls_printf(gd->gedp->ged_result_str, "%s\n",
 	    (node && node->schema && node->schema->help) ?
@@ -111,7 +111,7 @@ _fp_cmd_msgs(void *bs, int argc, const char **argv, const char *UNUSED(us),
 
 
 static int
-_fp_subcmd_help(struct ged *gedp, const struct bu_cmd_schema *schema,
+_fp_subcmd_help(struct ged *gedp, const struct bu_arg_schema *schema,
 	const struct bu_cmdtab *cmds, const char *cmdname, const char *cmdargs,
 	void *context, int argc, const char **argv)
 {
@@ -134,7 +134,7 @@ _fp_subcmd_help(struct ged *gedp, const struct bu_cmd_schema *schema,
     if (argc && argv && !BU_STR_EQUAL(argv[0], "help"))
 	path[path_argc++] = argv[0];
 
-    help = bu_cmd_tree_help_path(&ged_faceplate_tree, "view faceplate",
+    help = bu_arg_tree_help_path(&ged_faceplate_tree, "view faceplate",
 	path_argc, path);
     if (!help)
 	return BRLCAD_ERROR;
@@ -145,7 +145,7 @@ _fp_subcmd_help(struct ged *gedp, const struct bu_cmd_schema *schema,
 
 
 int
-_fp_subcmd_exec(struct ged *gedp, const struct bu_cmd_schema *schema,
+_fp_subcmd_exec(struct ged *gedp, const struct bu_arg_schema *schema,
 	const struct bu_cmdtab *cmds, const char *cmdname, const char *cmdargs,
 	void *context, int argc, const char **argv, int help)
 {
@@ -211,7 +211,7 @@ _fp_cmd_center_dot(void *ds, int argc, const char **argv)
 	}
 	argc--; argv++;
 	struct bu_color c;
-	if (bu_cmd_color_from_argv(&c, (size_t)argc,
+	if (bu_arg_color_from_argv(&c, (size_t)argc,
 		(const char * const *)argv) != argc) {
 	    bu_vls_printf(gedp->ged_result_str, "invalid color specification\n");
 	    return BRLCAD_ERROR;
@@ -310,7 +310,7 @@ _fp_cmd_scale(void *ds, int argc, const char **argv)
 	}
 	argc--; argv++;
 	struct bu_color c;
-	if (bu_cmd_color_from_argv(&c, (size_t)argc,
+	if (bu_arg_color_from_argv(&c, (size_t)argc,
 		(const char * const *)argv) != argc) {
 	    bu_vls_printf(gedp->ged_result_str, "invalid color specification\n");
 	    return BRLCAD_ERROR;
@@ -402,7 +402,7 @@ _fp_cmd_params(void *ds, int argc, const char **argv)
 	if (BU_STR_EQUAL("color", argv[0])) {
 	    argc--; argv++;
 	    struct bu_color c;
-	    if (bu_cmd_color_from_argv(&c, (size_t)argc,
+	    if (bu_arg_color_from_argv(&c, (size_t)argc,
 		    (const char * const *)argv) != argc) {
 		bu_vls_printf(gedp->ged_result_str, "invalid color specification\n");
 		return BRLCAD_ERROR;
@@ -485,7 +485,7 @@ _fp_cmd_params(void *ds, int argc, const char **argv)
 	}
 	if (argc == 2 && BU_STR_EQUAL("font_size", argv[0])) {
 	    int fsize;
-	    if (!bu_cmd_integer_from_str(&fsize, argv[1])) {
+	    if (!bu_arg_integer_from_str(&fsize, argv[1])) {
 		bu_vls_printf(gedp->ged_result_str, "invalid font size specification\n");
 		return BRLCAD_ERROR;
 	    }
@@ -513,139 +513,139 @@ const struct bu_cmdtab _fp_cmds[] = {
     { (char *)NULL,      NULL}
 };
 
-static const struct bu_cmd_operand fp_optional_bool_operands[] = {
-    BU_CMD_OPERAND_INTEGER_RANGE("state", 0, 1, 0, 1,
+static const struct bu_arg_operand fp_optional_bool_operands[] = {
+    BU_ARG_OPERAND_INTEGER_RANGE("state", 0, 1, 0, 1,
 	"New state; omit to query", NULL),
-    BU_CMD_OPERAND_NULL
+    BU_ARG_OPERAND_NULL
 };
-static const struct bu_cmd_operand fp_optional_fb_operands[] = {
-    BU_CMD_OPERAND_INTEGER_RANGE("mode", 0, 1, 0, 2,
+static const struct bu_arg_operand fp_optional_fb_operands[] = {
+    BU_ARG_OPERAND_INTEGER_RANGE("mode", 0, 1, 0, 2,
 	"Framebuffer mode; omit to query", NULL),
-    BU_CMD_OPERAND_NULL
+    BU_ARG_OPERAND_NULL
 };
-static const struct bu_cmd_operand fp_optional_number_operands[] = {
-    BU_CMD_OPERAND("value", BU_CMD_VALUE_NUMBER, 0, 1,
+static const struct bu_arg_operand fp_optional_number_operands[] = {
+    BU_ARG_OPERAND("value", BU_ARG_VALUE_NUMBER, 0, 1,
 	"New numeric value; omit to query", NULL),
-    BU_CMD_OPERAND_NULL
+    BU_ARG_OPERAND_NULL
 };
-static const struct bu_cmd_operand fp_optional_integer_operands[] = {
-    BU_CMD_OPERAND("value", BU_CMD_VALUE_INTEGER, 0, 1,
+static const struct bu_arg_operand fp_optional_integer_operands[] = {
+    BU_ARG_OPERAND("value", BU_ARG_VALUE_INTEGER, 0, 1,
 	"New integer value; omit to query", NULL),
-    BU_CMD_OPERAND_NULL
+    BU_ARG_OPERAND_NULL
 };
-static const struct bu_cmd_operand fp_optional_positive_integer_operands[] = {
-    BU_CMD_OPERAND_INTEGER_MIN("value", 0, 1, 1,
+static const struct bu_arg_operand fp_optional_positive_integer_operands[] = {
+    BU_ARG_OPERAND_INTEGER_MIN("value", 0, 1, 1,
 	"New positive integer; omit to query", NULL),
-    BU_CMD_OPERAND_NULL
+    BU_ARG_OPERAND_NULL
 };
-static const struct bu_cmd_operand fp_optional_nonnegative_integer_operands[] = {
-    BU_CMD_OPERAND_INTEGER_MIN("value", 0, 1, 0,
+static const struct bu_arg_operand fp_optional_nonnegative_integer_operands[] = {
+    BU_ARG_OPERAND_INTEGER_MIN("value", 0, 1, 0,
 	"New nonnegative integer; omit to query", NULL),
-    BU_CMD_OPERAND_NULL
+    BU_ARG_OPERAND_NULL
 };
-static const struct bu_cmd_operand fp_optional_resolution_operands[] = {
-    BU_CMD_OPERAND_NUMBER_MIN("value", 0, 1, BN_TOL_DIST,
+static const struct bu_arg_operand fp_optional_resolution_operands[] = {
+    BU_ARG_OPERAND_NUMBER_MIN("value", 0, 1, BN_TOL_DIST,
 	"New positive resolution; omit to query", NULL),
-    BU_CMD_OPERAND_NULL
+    BU_ARG_OPERAND_NULL
 };
-static const struct bu_cmd_arg_shape fp_vector3_shape =
-    BU_CMD_ARG_SHAPE(BU_CMD_ARG_SHAPE_VECTOR3, 1, 3,
+static const struct bu_arg_shape fp_vector3_shape =
+    BU_ARG_SHAPE(BU_ARG_SHAPE_VECTOR3, 1, 3,
 	"packed or three-component XYZ point");
-static const struct bu_cmd_operand fp_optional_vector3_operands[] = {
-    BU_CMD_OPERAND_SHAPED("point", BU_CMD_VALUE_VECTOR, 0, 3, NULL,
+static const struct bu_arg_operand fp_optional_vector3_operands[] = {
+    BU_ARG_OPERAND_SHAPED("point", BU_ARG_VALUE_VECTOR, 0, 3, NULL,
 	"New XYZ point; omit to query", NULL, &fp_vector3_shape),
-    BU_CMD_OPERAND_NULL
+    BU_ARG_OPERAND_NULL
 };
-static const struct bu_cmd_arg_variant fp_vector2_forms[] = {
-    BU_CMD_ARG_VARIANT("query", "", 0, "Omit coordinates to query"),
-    BU_CMD_ARG_VARIANT("components", "x y", 2,
+static const struct bu_arg_variant fp_vector2_forms[] = {
+    BU_ARG_VARIANT("query", "", 0, "Omit coordinates to query"),
+    BU_ARG_VARIANT("components", "x y", 2,
 	"Two separate integer components"),
-    BU_CMD_ARG_VARIANT_NULL
+    BU_ARG_VARIANT_NULL
 };
-static const struct bu_cmd_arg_shape fp_vector2_shape =
-    BU_CMD_ARG_SHAPE_FORMS(BU_CMD_ARG_SHAPE_TOKEN_SEQUENCE, 0, 2,
+static const struct bu_arg_shape fp_vector2_shape =
+    BU_ARG_SHAPE_FORMS(BU_ARG_SHAPE_TOKEN_SEQUENCE, 0, 2,
 	"omitted query or two integer components", NULL, fp_vector2_forms);
-static const struct bu_cmd_operand fp_optional_vector2_operands[] = {
-    BU_CMD_OPERAND_SHAPED("position", BU_CMD_VALUE_INTEGER, 0, 2, NULL,
+static const struct bu_arg_operand fp_optional_vector2_operands[] = {
+    BU_ARG_OPERAND_SHAPED("position", BU_ARG_VALUE_INTEGER, 0, 2, NULL,
 	"New two-dimensional value; omit to query", NULL, &fp_vector2_shape),
-    BU_CMD_OPERAND_NULL
+    BU_ARG_OPERAND_NULL
 };
-static const struct bu_cmd_arg_shape fp_color_shape =
-    BU_CMD_ARG_SHAPE(BU_CMD_ARG_SHAPE_COLOR, 1, 3,
+static const struct bu_arg_shape fp_color_shape =
+    BU_ARG_SHAPE(BU_ARG_SHAPE_COLOR, 1, 3,
 	"packed color or three RGB components");
-static const struct bu_cmd_operand fp_optional_color_operands[] = {
-    BU_CMD_OPERAND_SHAPED("color", BU_CMD_VALUE_RAW, 0, 3, NULL,
+static const struct bu_arg_operand fp_optional_color_operands[] = {
+    BU_ARG_OPERAND_SHAPED("color", BU_ARG_VALUE_RAW, 0, 3, NULL,
 	"New color; omit to query", NULL, &fp_color_shape),
-    BU_CMD_OPERAND_NULL
+    BU_ARG_OPERAND_NULL
 };
-static const struct bu_cmd_arg_variant fp_overlay_forms[] = {
-    BU_CMD_ARG_VARIANT("query", "", 0, "Report the current state"),
-    BU_CMD_ARG_VARIANT("state", "0|1", 1, "Disable or enable the overlay"),
-    BU_CMD_ARG_VARIANT("packed-color", "color color", 2,
+static const struct bu_arg_variant fp_overlay_forms[] = {
+    BU_ARG_VARIANT("query", "", 0, "Report the current state"),
+    BU_ARG_VARIANT("state", "0|1", 1, "Disable or enable the overlay"),
+    BU_ARG_VARIANT("packed-color", "color color", 2,
 	"Set a named, hexadecimal, or packed RGB color"),
-    BU_CMD_ARG_VARIANT("component-color", "color r g b", 4,
+    BU_ARG_VARIANT("component-color", "color r g b", 4,
 	"Set three separate RGB components"),
-    BU_CMD_ARG_VARIANT_NULL
+    BU_ARG_VARIANT_NULL
 };
-static const struct bu_cmd_arg_shape fp_overlay_shape =
-    BU_CMD_ARG_SHAPE_FORMS(BU_CMD_ARG_SHAPE_CUSTOM, 0, 4,
+static const struct bu_arg_shape fp_overlay_shape =
+    BU_ARG_SHAPE_FORMS(BU_ARG_SHAPE_CUSTOM, 0, 4,
 	"query, state, or color operation", NULL, fp_overlay_forms);
-static const struct bu_cmd_operand fp_overlay_operands[] = {
-    BU_CMD_OPERAND_SHAPED("operation", BU_CMD_VALUE_RAW, 0, 4, NULL,
+static const struct bu_arg_operand fp_overlay_operands[] = {
+    BU_ARG_OPERAND_SHAPED("operation", BU_ARG_VALUE_RAW, 0, 4, NULL,
 	"Overlay query or update", NULL, &fp_overlay_shape),
-    BU_CMD_OPERAND_NULL
+    BU_ARG_OPERAND_NULL
 };
 
 static int
-fp_discrete_count_validate(const struct bu_cmd_schema *schema, size_t argc,
-	const char **argv, size_t cursor_arg, struct bu_cmd_validate_result *result,
+fp_discrete_count_validate(const struct bu_arg_schema *schema, size_t argc,
+	const char **argv, size_t cursor_arg, struct bu_arg_validate_result *result,
 	size_t count1, size_t count2, size_t count3)
 {
-    struct bu_cmd_schema flat = *schema;
+    struct bu_arg_schema flat = *schema;
     int ret;
 
     flat.validation.custom_validate = NULL;
-    ret = bu_cmd_schema_validate_syntax(&flat, argc, argv, cursor_arg, result);
-    if (ret || result->state == BU_CMD_VALIDATE_INVALID || cursor_arg < argc)
+    ret = bu_arg_schema_validate_syntax(&flat, argc, argv, cursor_arg, result);
+    if (ret || result->state == BU_ARG_VALIDATE_INVALID || cursor_arg < argc)
 	return ret;
     if (argc != count1 && argc != count2 && argc != count3) {
-	bu_cmd_validate_result_clear(result);
-	result->state = BU_CMD_VALIDATE_INCOMPLETE;
+	bu_arg_validate_result_clear(result);
+	result->state = BU_ARG_VALIDATE_INCOMPLETE;
 	result->token_start = argc;
 	result->token_end = argc;
-	result->expected = BU_CMD_EXPECT_OPERAND;
-	result->completion_type = BU_CMD_VALUE_UNKNOWN;
+	result->expected = BU_ARG_EXPECT_OPERAND;
+	result->completion_type = BU_ARG_VALUE_UNKNOWN;
 	result->hint = "additional operands required";
     }
     return 0;
 }
 
 static int
-fp_vector2_validate(const struct bu_cmd_schema *schema, size_t argc,
-	const char **argv, size_t cursor_arg, struct bu_cmd_validate_result *result)
+fp_vector2_validate(const struct bu_arg_schema *schema, size_t argc,
+	const char **argv, size_t cursor_arg, struct bu_arg_validate_result *result)
 {
     return fp_discrete_count_validate(schema, argc, argv, cursor_arg, result,
-	0, 2, BU_CMD_COUNT_UNLIMITED);
+	0, 2, BU_ARG_COUNT_UNLIMITED);
 }
 
 static int
-fp_vector3_validate(const struct bu_cmd_schema *schema, size_t argc,
-	const char **argv, size_t cursor_arg, struct bu_cmd_validate_result *result)
+fp_vector3_validate(const struct bu_arg_schema *schema, size_t argc,
+	const char **argv, size_t cursor_arg, struct bu_arg_validate_result *result)
 {
     int ret = fp_discrete_count_validate(schema, argc, argv, cursor_arg, result,
 	0, 1, 3);
 
-    if (!ret && cursor_arg == argc && result->state == BU_CMD_VALIDATE_VALID &&
+    if (!ret && cursor_arg == argc && result->state == BU_ARG_VALIDATE_VALID &&
 	argc) {
 	vect_t value;
-	if (bu_cmd_vector3_from_argv(value, argc,
+	if (bu_arg_vector3_from_argv(value, argc,
 		(const char * const *)argv) != (int)argc) {
-	    bu_cmd_validate_result_clear(result);
-	    result->state = BU_CMD_VALIDATE_INVALID;
+	    bu_arg_validate_result_clear(result);
+	    result->state = BU_ARG_VALIDATE_INVALID;
 	    result->token_start = argc - 1;
 	    result->token_end = argc - 1;
-	    result->expected = BU_CMD_EXPECT_OPERAND;
-	    result->completion_type = BU_CMD_VALUE_VECTOR;
+	    result->expected = BU_ARG_EXPECT_OPERAND;
+	    result->completion_type = BU_ARG_VALUE_VECTOR;
 	    result->hint = "invalid vector";
 	}
     }
@@ -653,23 +653,23 @@ fp_vector3_validate(const struct bu_cmd_schema *schema, size_t argc,
 }
 
 static int
-fp_color_validate(const struct bu_cmd_schema *schema, size_t argc,
-	const char **argv, size_t cursor_arg, struct bu_cmd_validate_result *result)
+fp_color_validate(const struct bu_arg_schema *schema, size_t argc,
+	const char **argv, size_t cursor_arg, struct bu_arg_validate_result *result)
 {
     int ret = fp_discrete_count_validate(schema, argc, argv, cursor_arg, result,
 	0, 1, 3);
 
-    if (!ret && cursor_arg == argc && result->state == BU_CMD_VALIDATE_VALID &&
+    if (!ret && cursor_arg == argc && result->state == BU_ARG_VALIDATE_VALID &&
 	argc) {
 	struct bu_color color;
-	if (bu_cmd_color_from_argv(&color, argc,
+	if (bu_arg_color_from_argv(&color, argc,
 		(const char * const *)argv) != (int)argc) {
-	    bu_cmd_validate_result_clear(result);
-	    result->state = BU_CMD_VALIDATE_INVALID;
+	    bu_arg_validate_result_clear(result);
+	    result->state = BU_ARG_VALIDATE_INVALID;
 	    result->token_start = argc - 1;
 	    result->token_end = argc - 1;
-	    result->expected = BU_CMD_EXPECT_OPERAND;
-	    result->completion_type = BU_CMD_VALUE_COLOR;
+	    result->expected = BU_ARG_EXPECT_OPERAND;
+	    result->completion_type = BU_ARG_VALUE_COLOR;
 	    result->hint = "invalid color";
 	}
     }
@@ -677,16 +677,16 @@ fp_color_validate(const struct bu_cmd_schema *schema, size_t argc,
 }
 
 static int
-fp_overlay_validate(const struct bu_cmd_schema *schema, size_t argc,
-	const char **argv, size_t cursor_arg, struct bu_cmd_validate_result *result)
+fp_overlay_validate(const struct bu_arg_schema *schema, size_t argc,
+	const char **argv, size_t cursor_arg, struct bu_arg_validate_result *result)
 {
-    struct bu_cmd_schema flat = *schema;
+    struct bu_arg_schema flat = *schema;
     int valid = 0;
     int ret;
 
     flat.validation.custom_validate = NULL;
-    ret = bu_cmd_schema_validate_syntax(&flat, argc, argv, cursor_arg, result);
-    if (ret || result->state == BU_CMD_VALIDATE_INVALID || cursor_arg < argc)
+    ret = bu_arg_schema_validate_syntax(&flat, argc, argv, cursor_arg, result);
+    if (ret || result->state == BU_ARG_VALIDATE_INVALID || cursor_arg < argc)
 	return ret;
     if (!argc)
 	return 0;
@@ -694,17 +694,17 @@ fp_overlay_validate(const struct bu_cmd_schema *schema, size_t argc,
 	valid = BU_STR_EQUAL(argv[0], "0") || BU_STR_EQUAL(argv[0], "1");
     if ((argc == 2 || argc == 4) && BU_STR_EQUAL(argv[0], "color")) {
 	struct bu_color color;
-	valid = bu_cmd_color_from_argv(&color, argc - 1,
+	valid = bu_arg_color_from_argv(&color, argc - 1,
 	    (const char * const *)(argv + 1)) == (int)argc - 1;
     }
     if (!valid) {
-	bu_cmd_validate_result_clear(result);
-	result->state = (argc == 3) ? BU_CMD_VALIDATE_INCOMPLETE :
-	    BU_CMD_VALIDATE_INVALID;
+	bu_arg_validate_result_clear(result);
+	result->state = (argc == 3) ? BU_ARG_VALIDATE_INCOMPLETE :
+	    BU_ARG_VALIDATE_INVALID;
 	result->token_start = argc ? argc - 1 : 0;
 	result->token_end = result->token_start;
-	result->expected = BU_CMD_EXPECT_OPERAND;
-	result->completion_type = BU_CMD_VALUE_UNKNOWN;
+	result->expected = BU_ARG_EXPECT_OPERAND;
+	result->completion_type = BU_ARG_VALUE_UNKNOWN;
 	result->hint = (argc == 3) ? "one additional color component required" :
 	    "expected 0, 1, or color followed by a valid color";
     }
@@ -712,15 +712,15 @@ fp_overlay_validate(const struct bu_cmd_schema *schema, size_t argc,
 }
 
 #define FP_SCHEMA(_id, _name, _help, _operands, _validator) \
-    static const struct bu_cmd_schema fp_##_id##_schema = { \
-	_name, _help, NULL, _operands, BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, \
-	BU_CMD_SCHEMA_CONSTRAINTS(_validator, NULL) \
+    static const struct bu_arg_schema fp_##_id##_schema = { \
+	_name, _help, NULL, _operands, BU_ARG_PARSE_STOP_AT_FIRST_OPERAND, \
+	BU_ARG_SCHEMA_CONSTRAINTS(_validator, NULL) \
     }
 
 #define FP_BRANCH_SCHEMA(_id, _name, _help) \
-    static const struct bu_cmd_schema fp_##_id##_schema = { \
-	_name, _help, fp_subcommand_options, NULL, BU_CMD_PARSE_OPTIONS_FIRST, \
-	BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL) \
+    static const struct bu_arg_schema fp_##_id##_schema = { \
+	_name, _help, fp_subcommand_options, NULL, BU_ARG_PARSE_OPTIONS_FIRST, \
+	BU_ARG_SCHEMA_CONSTRAINTS(NULL, NULL) \
     }
 
 FP_SCHEMA(center_dot, "center_dot", "Query or set the center dot",
@@ -803,71 +803,71 @@ FP_SCHEMA(params_font_size, "font_size", "Query or set parameter font size", fp_
 #undef FP_BRANCH_SCHEMA
 
 #define FP_TREE_LEAF(_id) \
-    BU_CMD_TREE_NODE(&fp_##_id##_schema, NULL, NULL, \
-	BU_CMD_TREE_CHILD_AFTER_OPTIONS, NULL)
+    BU_ARG_TREE_NODE(&fp_##_id##_schema, NULL, NULL, \
+	BU_ARG_TREE_CHILD_AFTER_OPTIONS, NULL)
 
-static const struct bu_cmd_tree_node fp_grid_subcommands[] = {
+static const struct bu_arg_tree_node fp_grid_subcommands[] = {
     FP_TREE_LEAF(grid_draw), FP_TREE_LEAF(grid_snap), FP_TREE_LEAF(grid_anchor),
     FP_TREE_LEAF(grid_res_h), FP_TREE_LEAF(grid_res_v), FP_TREE_LEAF(grid_res_major_h),
-    FP_TREE_LEAF(grid_res_major_v), FP_TREE_LEAF(grid_color), BU_CMD_TREE_NODE_NULL
+    FP_TREE_LEAF(grid_res_major_v), FP_TREE_LEAF(grid_color), BU_ARG_TREE_NODE_NULL
 };
-static const struct bu_cmd_tree_node fp_irect_subcommands[] = {
+static const struct bu_arg_tree_node fp_irect_subcommands[] = {
     FP_TREE_LEAF(irect_draw), FP_TREE_LEAF(irect_line_width), FP_TREE_LEAF(irect_line_style),
     FP_TREE_LEAF(irect_pos), FP_TREE_LEAF(irect_dim), FP_TREE_LEAF(irect_x),
     FP_TREE_LEAF(irect_y), FP_TREE_LEAF(irect_width), FP_TREE_LEAF(irect_height),
     FP_TREE_LEAF(irect_bg), FP_TREE_LEAF(irect_color), FP_TREE_LEAF(irect_cdim),
-    BU_CMD_TREE_NODE_NULL
+    BU_ARG_TREE_NODE_NULL
 };
-static const struct bu_cmd_tree_node fp_axes_subcommands[] = {
+static const struct bu_arg_tree_node fp_axes_subcommands[] = {
     FP_TREE_LEAF(axes_size), FP_TREE_LEAF(axes_line_width), FP_TREE_LEAF(axes_pos_only),
     FP_TREE_LEAF(axes_color), FP_TREE_LEAF(axes_label), FP_TREE_LEAF(axes_label_color),
     FP_TREE_LEAF(axes_triple_color), FP_TREE_LEAF(axes_tick), FP_TREE_LEAF(axes_tick_length),
     FP_TREE_LEAF(axes_tick_major_length), FP_TREE_LEAF(axes_tick_interval),
     FP_TREE_LEAF(axes_ticks_per_major), FP_TREE_LEAF(axes_tick_threshold),
-    FP_TREE_LEAF(axes_tick_color), FP_TREE_LEAF(axes_tick_major_color), BU_CMD_TREE_NODE_NULL
+    FP_TREE_LEAF(axes_tick_color), FP_TREE_LEAF(axes_tick_major_color), BU_ARG_TREE_NODE_NULL
 };
-static const struct bu_cmd_tree_node fp_params_subcommands[] = {
+static const struct bu_arg_tree_node fp_params_subcommands[] = {
     FP_TREE_LEAF(params_color), FP_TREE_LEAF(params_size), FP_TREE_LEAF(params_center),
     FP_TREE_LEAF(params_az), FP_TREE_LEAF(params_el), FP_TREE_LEAF(params_tw),
-    FP_TREE_LEAF(params_fps), FP_TREE_LEAF(params_font_size), BU_CMD_TREE_NODE_NULL
+    FP_TREE_LEAF(params_fps), FP_TREE_LEAF(params_font_size), BU_ARG_TREE_NODE_NULL
 };
 
-const struct bu_cmd_tree_node ged_faceplate_subcommands[] = {
+const struct bu_arg_tree_node ged_faceplate_subcommands[] = {
     FP_TREE_LEAF(center_dot), FP_TREE_LEAF(fb),
-    BU_CMD_TREE_NODE(&fp_grid_schema, NULL, fp_grid_subcommands,
-	BU_CMD_TREE_CHILD_AFTER_OPTIONS, NULL),
-    BU_CMD_TREE_NODE(&fp_irect_schema, NULL, fp_irect_subcommands,
-	BU_CMD_TREE_CHILD_AFTER_OPTIONS, NULL),
-    BU_CMD_TREE_NODE(&fp_model_axes_schema, NULL, fp_axes_subcommands,
-	BU_CMD_TREE_CHILD_AFTER_OPTIONS, NULL),
-    BU_CMD_TREE_NODE(&fp_params_schema, NULL, fp_params_subcommands,
-	BU_CMD_TREE_CHILD_AFTER_OPTIONS, NULL),
+    BU_ARG_TREE_NODE(&fp_grid_schema, NULL, fp_grid_subcommands,
+	BU_ARG_TREE_CHILD_AFTER_OPTIONS, NULL),
+    BU_ARG_TREE_NODE(&fp_irect_schema, NULL, fp_irect_subcommands,
+	BU_ARG_TREE_CHILD_AFTER_OPTIONS, NULL),
+    BU_ARG_TREE_NODE(&fp_model_axes_schema, NULL, fp_axes_subcommands,
+	BU_ARG_TREE_CHILD_AFTER_OPTIONS, NULL),
+    BU_ARG_TREE_NODE(&fp_params_schema, NULL, fp_params_subcommands,
+	BU_ARG_TREE_CHILD_AFTER_OPTIONS, NULL),
     FP_TREE_LEAF(scale),
-    BU_CMD_TREE_NODE(&fp_view_axes_schema, NULL, fp_axes_subcommands,
-	BU_CMD_TREE_CHILD_AFTER_OPTIONS, NULL),
-    BU_CMD_TREE_NODE_NULL
+    BU_ARG_TREE_NODE(&fp_view_axes_schema, NULL, fp_axes_subcommands,
+	BU_ARG_TREE_CHILD_AFTER_OPTIONS, NULL),
+    BU_ARG_TREE_NODE_NULL
 };
 
-const struct bu_cmd_tree ged_faceplate_tree = {
+const struct bu_arg_tree ged_faceplate_tree = {
     &ged_faceplate_native_schema, ged_faceplate_subcommands,
-    BU_CMD_TREE_CHILD_AFTER_OPTIONS
+    BU_ARG_TREE_CHILD_AFTER_OPTIONS
 };
 
 #undef FP_TREE_LEAF
 
-static const struct bu_cmd_tree_node *
+static const struct bu_arg_tree_node *
 fp_cmd_schema_node(const char *branch, const char *leaf)
 {
-    const struct bu_cmd_tree_node *node = NULL;
+    const struct bu_arg_tree_node *node = NULL;
 
     if (branch)
-	node = bu_cmd_tree_find_subcommand(&ged_faceplate_tree, branch);
+	node = bu_arg_tree_find_subcommand(&ged_faceplate_tree, branch);
     else if (leaf)
-	node = bu_cmd_tree_find_subcommand(&ged_faceplate_tree, leaf);
+	node = bu_arg_tree_find_subcommand(&ged_faceplate_tree, leaf);
     if (!node || !branch || !leaf)
 	return node;
 
-    for (const struct bu_cmd_tree_node *child = node->subcommands;
+    for (const struct bu_arg_tree_node *child = node->subcommands;
 	    child && child->schema; child++) {
 	if (BU_STR_EQUAL(child->schema->name, leaf))
 	    return child;
@@ -887,7 +887,7 @@ _fp_cmd_schema_help(struct ged *gedp, const char *branch, const char *leaf)
 
     if (!gedp || !leaf)
 	return;
-    help = bu_cmd_tree_help_path(&ged_faceplate_tree, "view faceplate",
+    help = bu_arg_tree_help_path(&ged_faceplate_tree, "view faceplate",
 	path_argc, path);
     if (!help)
 	return;
@@ -899,7 +899,7 @@ int
 _fp_cmd_schema_msgs(struct ged *gedp, int argc, const char **argv,
 	const char *branch)
 {
-    const struct bu_cmd_tree_node *node;
+    const struct bu_arg_tree_node *node;
 
     if (!gedp || argc != 2 || !argv)
 	return 0;
@@ -939,7 +939,7 @@ ged_faceplate_core(struct ged *gedp, int argc, const char *argv[])
     argc--; argv++;
 
     struct bu_vls parse_msgs = BU_VLS_INIT_ZERO;
-    int subcommand_index = bu_cmd_schema_parse(&ged_faceplate_native_schema, &args,
+    int subcommand_index = bu_arg_schema_parse(&ged_faceplate_native_schema, &args,
 	&parse_msgs, argc, argv);
     if (subcommand_index < 0) {
 	bu_vls_printf(gedp->ged_result_str, "%s", bu_vls_addr(&parse_msgs));

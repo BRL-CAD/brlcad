@@ -217,7 +217,7 @@ GEDShellCompleter::analyze(const QString& console_txt, std::vector<QgConsoleHigh
 	else if (token->role == GED_CMD_TOKEN_OPTION)
 	    h.style = QG_CONSOLE_OPTION;
 	else if (token->semantic_state == GED_CMD_SEMANTIC_VALID &&
-		(token->value_type == BU_CMD_VALUE_DB_OBJECT || token->value_type == BU_CMD_VALUE_DB_PATH))
+		(token->value_type == BU_ARG_VALUE_DB_OBJECT || token->value_type == BU_ARG_VALUE_DB_PATH))
 	    h.style = QG_CONSOLE_VALID;
 	else
 	    continue;

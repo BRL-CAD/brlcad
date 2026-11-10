@@ -25,21 +25,21 @@
 
 #include "common.h"
 
-#include "bu/cmdschema.h"
+#include "bu/arg.h"
 
 #include "../ged_private.h"
 
 
-static const struct bu_cmd_operand otranslate_operands[] = {
-    BU_CMD_OPERAND("object", BU_CMD_VALUE_DB_PATH, 1, 1,
+static const struct bu_arg_operand otranslate_operands[] = {
+    BU_ARG_OPERAND("object", BU_ARG_VALUE_DB_PATH, 1, 1,
 	"Object path to translate", "ged.db_path"),
-    BU_CMD_OPERAND("translation", BU_CMD_VALUE_NUMBER, 3, 3,
+    BU_ARG_OPERAND("translation", BU_ARG_VALUE_NUMBER, 3, 3,
 	"X Y Z translation", NULL),
-    BU_CMD_OPERAND_NULL
+    BU_ARG_OPERAND_NULL
 };
-static const struct bu_cmd_schema otranslate_cmd_schema = {
+static const struct bu_arg_schema otranslate_cmd_schema = {
     "otranslate", "Translate an object", NULL, otranslate_operands,
-    BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+    BU_ARG_PARSE_STOP_AT_FIRST_OPERAND, BU_ARG_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
 
 
@@ -76,7 +76,7 @@ ged_otranslate_core(struct ged *gedp, int argc, const char *argv[])
 	return GED_HELP;
     }
 
-	operand_index = bu_cmd_schema_parse_complete(&otranslate_cmd_schema, &parse_dummy,
+	operand_index = bu_arg_schema_parse_complete(&otranslate_cmd_schema, &parse_dummy,
 	gedp->ged_result_str, argc - 1, argv + 1);
     if (operand_index < 0 || argc - 1 - operand_index != 4) {
 	ged_cmd_help_append(gedp->ged_result_str, argv[0], argv[0]);

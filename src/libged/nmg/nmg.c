@@ -30,7 +30,7 @@
 
 
 #include "raytrace.h"
-#include "bu/cmdschema.h"
+#include "bu/arg.h"
 #include "rt/geom.h"
 #include "wdb.h"
 
@@ -314,101 +314,101 @@ static int nmg_move_v_alias(struct ged *g, int ac, const char *av[]) { return nm
 
 #include "../include/plugin.h"
 
-static const struct bu_cmd_operand labelface_schema_operands[] = {
-    BU_CMD_OPERAND("object", BU_CMD_VALUE_DB_OBJECT, 1, BU_CMD_COUNT_UNLIMITED,
+static const struct bu_arg_operand labelface_schema_operands[] = {
+    BU_ARG_OPERAND("object", BU_ARG_VALUE_DB_OBJECT, 1, BU_ARG_COUNT_UNLIMITED,
 	"Displayed NMG objects whose faces will be labeled", "ged.db_object"),
-    BU_CMD_OPERAND_NULL
+    BU_ARG_OPERAND_NULL
 };
-static const struct bu_cmd_operand nmg_mm_schema_operands[] = {
-    BU_CMD_OPERAND("name", BU_CMD_VALUE_STRING, 1, 1, "New NMG object name", NULL),
-    BU_CMD_OPERAND_NULL
+static const struct bu_arg_operand nmg_mm_schema_operands[] = {
+    BU_ARG_OPERAND("name", BU_ARG_VALUE_STRING, 1, 1, "New NMG object name", NULL),
+    BU_ARG_OPERAND_NULL
 };
-static const struct bu_cmd_operand nmg_cmface_schema_operands[] = {
-    BU_CMD_OPERAND("nmg", BU_CMD_VALUE_DB_OBJECT, 1, 1, "NMG object", "ged.db_object"),
-    BU_CMD_OPERAND("vertices", BU_CMD_VALUE_NUMBER, 9, BU_CMD_COUNT_UNLIMITED,
+static const struct bu_arg_operand nmg_cmface_schema_operands[] = {
+    BU_ARG_OPERAND("nmg", BU_ARG_VALUE_DB_OBJECT, 1, 1, "NMG object", "ged.db_object"),
+    BU_ARG_OPERAND("vertices", BU_ARG_VALUE_NUMBER, 9, BU_ARG_COUNT_UNLIMITED,
 	"Three or more XYZ vertices", NULL),
-    BU_CMD_OPERAND_NULL
+    BU_ARG_OPERAND_NULL
 };
-static const struct bu_cmd_operand nmg_kill_f_schema_operands[] = {
-    BU_CMD_OPERAND("nmg", BU_CMD_VALUE_DB_OBJECT, 1, 1, "NMG object", "ged.db_object"),
-    BU_CMD_OPERAND("face", BU_CMD_VALUE_INTEGER, 1, 1, "Face index", NULL),
-    BU_CMD_OPERAND_NULL
+static const struct bu_arg_operand nmg_kill_f_schema_operands[] = {
+    BU_ARG_OPERAND("nmg", BU_ARG_VALUE_DB_OBJECT, 1, 1, "NMG object", "ged.db_object"),
+    BU_ARG_OPERAND("face", BU_ARG_VALUE_INTEGER, 1, 1, "Face index", NULL),
+    BU_ARG_OPERAND_NULL
 };
-static const struct bu_cmd_operand nmg_kill_v_schema_operands[] = {
-    BU_CMD_OPERAND("nmg", BU_CMD_VALUE_DB_OBJECT, 1, 1, "NMG object", "ged.db_object"),
-    BU_CMD_OPERAND("vertex", BU_CMD_VALUE_NUMBER, 3, 3, "XYZ vertex coordinates", NULL),
-    BU_CMD_OPERAND_NULL
+static const struct bu_arg_operand nmg_kill_v_schema_operands[] = {
+    BU_ARG_OPERAND("nmg", BU_ARG_VALUE_DB_OBJECT, 1, 1, "NMG object", "ged.db_object"),
+    BU_ARG_OPERAND("vertex", BU_ARG_VALUE_NUMBER, 3, 3, "XYZ vertex coordinates", NULL),
+    BU_ARG_OPERAND_NULL
 };
-static const struct bu_cmd_operand nmg_make_v_schema_operands[] = {
-    BU_CMD_OPERAND("nmg", BU_CMD_VALUE_DB_OBJECT, 1, 1, "NMG object", "ged.db_object"),
-    BU_CMD_OPERAND("vertices", BU_CMD_VALUE_NUMBER, 3, BU_CMD_COUNT_UNLIMITED,
+static const struct bu_arg_operand nmg_make_v_schema_operands[] = {
+    BU_ARG_OPERAND("nmg", BU_ARG_VALUE_DB_OBJECT, 1, 1, "NMG object", "ged.db_object"),
+    BU_ARG_OPERAND("vertices", BU_ARG_VALUE_NUMBER, 3, BU_ARG_COUNT_UNLIMITED,
 	"One or more XYZ vertices", NULL),
-    BU_CMD_OPERAND_NULL
+    BU_ARG_OPERAND_NULL
 };
-static const struct bu_cmd_operand nmg_move_v_schema_operands[] = {
-    BU_CMD_OPERAND("nmg", BU_CMD_VALUE_DB_OBJECT, 1, 1, "NMG object", "ged.db_object"),
-    BU_CMD_OPERAND("coordinates", BU_CMD_VALUE_NUMBER, 6, 6,
+static const struct bu_arg_operand nmg_move_v_schema_operands[] = {
+    BU_ARG_OPERAND("nmg", BU_ARG_VALUE_DB_OBJECT, 1, 1, "NMG object", "ged.db_object"),
+    BU_ARG_OPERAND("coordinates", BU_ARG_VALUE_NUMBER, 6, 6,
 	"Old XYZ followed by new XYZ", NULL),
-    BU_CMD_OPERAND_NULL
+    BU_ARG_OPERAND_NULL
 };
-static const struct bu_cmd_operand nmg_collapse_schema_operands[] = {
-    BU_CMD_OPERAND("nmg", BU_CMD_VALUE_DB_OBJECT, 1, 1, "Input NMG object", "ged.db_object"),
-    BU_CMD_OPERAND("new_name", BU_CMD_VALUE_STRING, 1, 1, "New object name", NULL),
-    BU_CMD_OPERAND("max_error", BU_CMD_VALUE_NUMBER, 1, 1, "Maximum collapse error", NULL),
-    BU_CMD_OPERAND("min_angle", BU_CMD_VALUE_NUMBER, 0, 1, "Optional minimum angle", NULL),
-    BU_CMD_OPERAND_NULL
+static const struct bu_arg_operand nmg_collapse_schema_operands[] = {
+    BU_ARG_OPERAND("nmg", BU_ARG_VALUE_DB_OBJECT, 1, 1, "Input NMG object", "ged.db_object"),
+    BU_ARG_OPERAND("new_name", BU_ARG_VALUE_STRING, 1, 1, "New object name", NULL),
+    BU_ARG_OPERAND("max_error", BU_ARG_VALUE_NUMBER, 1, 1, "Maximum collapse error", NULL),
+    BU_ARG_OPERAND("min_angle", BU_ARG_VALUE_NUMBER, 0, 1, "Optional minimum angle", NULL),
+    BU_ARG_OPERAND_NULL
 };
 static const char * const nmg_simplify_modes[] = {"arb", "tgc", "poly", NULL};
-static const struct bu_cmd_operand nmg_simplify_schema_operands[] = {
-    BU_CMD_OPERAND_KEYWORDS("mode", BU_CMD_VALUE_KEYWORD, 0, 1,
+static const struct bu_arg_operand nmg_simplify_schema_operands[] = {
+    BU_ARG_OPERAND_KEYWORDS("mode", BU_ARG_VALUE_KEYWORD, 0, 1,
 	"Optional output primitive type", NULL, nmg_simplify_modes),
-    BU_CMD_OPERAND("new_name", BU_CMD_VALUE_STRING, 1, 1, "New object name", NULL),
-    BU_CMD_OPERAND("nmg", BU_CMD_VALUE_DB_OBJECT, 1, 1, "Input NMG object", "ged.db_object"),
-    BU_CMD_OPERAND_NULL
+    BU_ARG_OPERAND("new_name", BU_ARG_VALUE_STRING, 1, 1, "New object name", NULL),
+    BU_ARG_OPERAND("nmg", BU_ARG_VALUE_DB_OBJECT, 1, 1, "Input NMG object", "ged.db_object"),
+    BU_ARG_OPERAND_NULL
 };
 GED_DEFINE_NATIVE_DISCRETE_COUNT_VALIDATOR(nmg_simplify, 2, 3, GED_SCHEMA_COUNT_NONE)
 static const char * const nmg_actions[] = {"cmface", "kill", "move", "make", NULL};
-static const struct bu_cmd_operand nmg_schema_operands[] = {
-    BU_CMD_OPERAND("nmg", BU_CMD_VALUE_DB_OBJECT, 1, 1, "NMG object", "ged.db_object"),
-    BU_CMD_OPERAND_KEYWORDS("operation", BU_CMD_VALUE_KEYWORD, 1, 1,
+static const struct bu_arg_operand nmg_schema_operands[] = {
+    BU_ARG_OPERAND("nmg", BU_ARG_VALUE_DB_OBJECT, 1, 1, "NMG object", "ged.db_object"),
+    BU_ARG_OPERAND_KEYWORDS("operation", BU_ARG_VALUE_KEYWORD, 1, 1,
 	"NMG edit operation", NULL, nmg_actions),
-    BU_CMD_OPERAND("arguments", BU_CMD_VALUE_RAW, 0, BU_CMD_COUNT_UNLIMITED,
+    BU_ARG_OPERAND("arguments", BU_ARG_VALUE_RAW, 0, BU_ARG_COUNT_UNLIMITED,
 	"Operation-specific arguments", NULL),
-    BU_CMD_OPERAND_NULL
+    BU_ARG_OPERAND_NULL
 };
 #define NMG_SCHEMA(_id, _name, _help, _operands, _policy, _validator) \
-    static const struct bu_cmd_schema _id##_cmd_schema = {_name, _help, NULL, _operands, _policy, BU_CMD_SCHEMA_CONSTRAINTS(_validator, NULL)}
-NMG_SCHEMA(labelface, "labelface", "Label faces of displayed NMG objects", labelface_schema_operands, BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, NULL);
-NMG_SCHEMA(nmg_cmface, "nmg_cmface", "Create a manifold NMG face", nmg_cmface_schema_operands, BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, NULL);
-NMG_SCHEMA(nmg_collapse, "nmg_collapse", "Collapse short NMG edges", nmg_collapse_schema_operands, BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, NULL);
-NMG_SCHEMA(nmg_fix_normals, "nmg_fix_normals", "Repair NMG face normals", labelface_schema_operands, BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, NULL);
-NMG_SCHEMA(nmg_kill_f, "nmg_kill_f", "Delete an NMG face", nmg_kill_f_schema_operands, BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, NULL);
-NMG_SCHEMA(nmg_kill_v, "nmg_kill_v", "Delete an NMG vertex", nmg_kill_v_schema_operands, BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, NULL);
-NMG_SCHEMA(nmg_make_v, "nmg_make_v", "Create NMG vertices", nmg_make_v_schema_operands, BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, NULL);
-NMG_SCHEMA(nmg_mm, "nmg_mm", "Create an empty NMG model", nmg_mm_schema_operands, BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, NULL);
-NMG_SCHEMA(nmg_move_v, "nmg_move_v", "Move an NMG vertex", nmg_move_v_schema_operands, BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, NULL);
-NMG_SCHEMA(nmg_simplify, "nmg_simplify", "Simplify an NMG to another primitive", nmg_simplify_schema_operands, BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, nmg_simplify_schema_validate);
+    static const struct bu_arg_schema _id##_cmd_schema = {_name, _help, NULL, _operands, _policy, BU_ARG_SCHEMA_CONSTRAINTS(_validator, NULL)}
+NMG_SCHEMA(labelface, "labelface", "Label faces of displayed NMG objects", labelface_schema_operands, BU_ARG_PARSE_STOP_AT_FIRST_OPERAND, NULL);
+NMG_SCHEMA(nmg_cmface, "nmg_cmface", "Create a manifold NMG face", nmg_cmface_schema_operands, BU_ARG_PARSE_STOP_AT_FIRST_OPERAND, NULL);
+NMG_SCHEMA(nmg_collapse, "nmg_collapse", "Collapse short NMG edges", nmg_collapse_schema_operands, BU_ARG_PARSE_STOP_AT_FIRST_OPERAND, NULL);
+NMG_SCHEMA(nmg_fix_normals, "nmg_fix_normals", "Repair NMG face normals", labelface_schema_operands, BU_ARG_PARSE_STOP_AT_FIRST_OPERAND, NULL);
+NMG_SCHEMA(nmg_kill_f, "nmg_kill_f", "Delete an NMG face", nmg_kill_f_schema_operands, BU_ARG_PARSE_STOP_AT_FIRST_OPERAND, NULL);
+NMG_SCHEMA(nmg_kill_v, "nmg_kill_v", "Delete an NMG vertex", nmg_kill_v_schema_operands, BU_ARG_PARSE_STOP_AT_FIRST_OPERAND, NULL);
+NMG_SCHEMA(nmg_make_v, "nmg_make_v", "Create NMG vertices", nmg_make_v_schema_operands, BU_ARG_PARSE_STOP_AT_FIRST_OPERAND, NULL);
+NMG_SCHEMA(nmg_mm, "nmg_mm", "Create an empty NMG model", nmg_mm_schema_operands, BU_ARG_PARSE_STOP_AT_FIRST_OPERAND, NULL);
+NMG_SCHEMA(nmg_move_v, "nmg_move_v", "Move an NMG vertex", nmg_move_v_schema_operands, BU_ARG_PARSE_STOP_AT_FIRST_OPERAND, NULL);
+NMG_SCHEMA(nmg_simplify, "nmg_simplify", "Simplify an NMG to another primitive", nmg_simplify_schema_operands, BU_ARG_PARSE_STOP_AT_FIRST_OPERAND, nmg_simplify_schema_validate);
 #undef NMG_SCHEMA
-static const struct bu_cmd_schema nmg_root_schema = {
+static const struct bu_arg_schema nmg_root_schema = {
     "nmg", "Edit NMG topology or create an empty NMG", NULL,
-    nmg_schema_operands, BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+    nmg_schema_operands, BU_ARG_PARSE_STOP_AT_FIRST_OPERAND, BU_ARG_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
-static const struct bu_cmd_tree_node nmg_subcommands[] = {
-    BU_CMD_TREE_NODE(&nmg_mm_cmd_schema, NULL, NULL, BU_CMD_TREE_CHILD_AFTER_OPTIONS, NULL),
-    BU_CMD_TREE_NODE_NULL
+static const struct bu_arg_tree_node nmg_subcommands[] = {
+    BU_ARG_TREE_NODE(&nmg_mm_cmd_schema, NULL, NULL, BU_ARG_TREE_CHILD_AFTER_OPTIONS, NULL),
+    BU_ARG_TREE_NODE_NULL
 };
-static const struct bu_cmd_tree nmg_tree = {
-    &nmg_root_schema, nmg_subcommands, BU_CMD_TREE_CHILD_FIRST
+static const struct bu_arg_tree nmg_tree = {
+    &nmg_root_schema, nmg_subcommands, BU_ARG_TREE_CHILD_FIRST
 };
-static const struct bu_cmd_form nmg_native_forms[] = {
-    BU_CMD_FORM_TREE("subcommands", "Named NMG operations", &nmg_tree),
-    BU_CMD_FORM_SCHEMA("legacy_topology", "Legacy object/operation syntax",
+static const struct bu_arg_form nmg_native_forms[] = {
+    BU_ARG_FORM_TREE("subcommands", "Named NMG operations", &nmg_tree),
+    BU_ARG_FORM_SCHEMA("legacy_topology", "Legacy object/operation syntax",
 	&nmg_root_schema),
-    BU_CMD_FORM_NULL
+    BU_ARG_FORM_NULL
 };
 
-static const struct bu_cmd_form *
-nmg_select_native_form(const struct bu_cmd_forms *forms, size_t argc,
+static const struct bu_arg_form *
+nmg_select_native_form(const struct bu_arg_forms *forms, size_t argc,
 	const char * const *argv, void *UNUSED(context))
 {
     const char *word = argc > 1 ? argv[1] : "";
@@ -419,8 +419,8 @@ nmg_select_native_form(const struct bu_cmd_forms *forms, size_t argc,
     return &forms->forms[1];
 }
 
-static const struct bu_cmd_forms nmg_forms =
-    BU_CMD_FORMS("nmg", "Edit NMG topology or create an empty NMG",
+static const struct bu_arg_forms nmg_forms =
+    BU_ARG_FORMS("nmg", "Edit NMG topology or create an empty NMG",
 	nmg_native_forms, nmg_select_native_form);
 
 static int

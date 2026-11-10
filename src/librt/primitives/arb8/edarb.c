@@ -33,7 +33,7 @@
 #include "bg.h"
 #include "rt/geom.h"
 #include "rt/primitives/arb8.h"
-#include "bu/cmdschema.h"
+#include "bu/arg.h"
 #include "bu/opt.h"
 #include "rt/db4.h"
 #include "rt/edit.h"
@@ -3003,17 +3003,17 @@ rt_edit_arb_repair(struct bu_vls *log_str, struct rt_db_internal *ip, const stru
 	int options_json;
 	fastf_t tolerance;
     } args = {0, 0, -1.0};
-    static const struct bu_cmd_option options[] = {
-	BU_CMD_FLAG("h", "help", struct arb_repair_args, print_help, "Print help"),
-	BU_CMD_NUMBER("t", "tol", struct arb_repair_args, tolerance, "distance",
+    static const struct bu_arg_option options[] = {
+	BU_ARG_FLAG("h", "help", struct arb_repair_args, print_help, "Print help"),
+	BU_ARG_NUMBER("t", "tol", struct arb_repair_args, tolerance, "distance",
 	    "Distance tolerance for snapping vertices"),
-	BU_CMD_FLAG(NULL, "options-json", struct arb_repair_args, options_json,
+	BU_ARG_FLAG(NULL, "options-json", struct arb_repair_args, options_json,
 	    "Return JSON of supported options"),
-	BU_CMD_OPTION_NULL
+	BU_ARG_OPTION_NULL
     };
-    static const struct bu_cmd_schema schema = {
+    static const struct bu_arg_schema schema = {
 	"arb repair", "Repair and canonicalize ARB objects", options, NULL,
-	BU_CMD_PARSE_INTERSPERSED, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+	BU_ARG_PARSE_INTERSPERSED, BU_ARG_SCHEMA_CONSTRAINTS(NULL, NULL)
     };
 
     if (edit_repair_parse_options(log_str, argc, argv, &schema, &args) != BRLCAD_OK)
@@ -3030,9 +3030,9 @@ rt_edit_arb_repair(struct bu_vls *log_str, struct rt_db_internal *ip, const stru
 
     if (args.print_help) {
         if (log_str) {
-	    char *help = bu_cmd_schema_help(&schema, NULL);
+	    char *help = bu_arg_schema_help(&schema, NULL);
 	    bu_vls_strcat(log_str, "{\"status\":\"help\",\"message\":");
-	    bu_cmd_json_string(log_str, help);
+	    bu_arg_json_string(log_str, help);
 	    bu_vls_putc(log_str, '}');
 	    if (help) bu_free(help, "ARB repair help");
         }

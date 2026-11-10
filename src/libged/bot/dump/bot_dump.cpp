@@ -34,7 +34,7 @@
 #include "bnetwork.h"
 
 #include "bu/app.h" // bu_mkdir
-#include "bu/cmdschema.h"
+#include "bu/arg.h"
 #include "bu/color.h"
 #include "bu/cv.h"
 #include "bu/path.h"
@@ -70,7 +70,7 @@ bot_path_color(struct bu_color *c, const struct db_full_path *pathp, struct db_i
 
 	    const char *region_id_val = bu_avs_get(&c_avs, "region_id");
 	    if (region_id_val) {
-		(void)bu_cmd_integer_from_str(&region_id, region_id_val);
+		(void)bu_arg_integer_from_str(&region_id, region_id_val);
 	    } else if (pathp->fp_names[i]->d_flags & RT_DIR_REGION) {
 		region_id = 0;
 	    }
@@ -100,7 +100,7 @@ bot_path_color(struct bu_color *c, const struct db_full_path *pathp, struct db_i
 	if (!color_val)
 	    color_val = bu_avs_get(&c_avs, "rgb");
 	if (inherit && color_val &&
-	    bu_cmd_color_from_argv(c, 1, &color_val) > 0) {
+	    bu_arg_color_from_argv(c, 1, &color_val) > 0) {
 	    bu_avs_free(&c_avs);
 	    return 1;
 	}
@@ -113,7 +113,7 @@ bot_path_color(struct bu_color *c, const struct db_full_path *pathp, struct db_i
 	const char *color_val = bu_avs_get(&c_avs, "color");
 	if (!color_val)
 	    color_val = bu_avs_get(&c_avs, "rgb");
-	if (color_val && bu_cmd_color_from_argv(c, 1, &color_val) > 0) {
+	if (color_val && bu_arg_color_from_argv(c, 1, &color_val) > 0) {
 	    bu_avs_free(&c_avs);
 	    return 1;
 	}
@@ -426,7 +426,7 @@ struct bot_dump_args {
     struct bu_vls output_directory;
 };
 
-static const struct bu_cmd_value_keyword bot_dump_formats[] = {
+static const struct bu_arg_value_keyword bot_dump_formats[] = {
     {"dxf", NULL, "Drawing Interchange Format"},
     {"glb", NULL, "Binary glTF"},
     {"gltf", NULL, "glTF"},
@@ -441,12 +441,12 @@ static const char * const bot_dump_material_options[] = {
 static const char * const bot_dump_output_options[] = {
     "output-file", "output-directory", NULL
 };
-static const struct bu_cmd_constraint bot_dump_constraints[] = {
-    BU_CMD_CONSTRAINT_OPTIONS(bot_dump_material_options, 0, 1,
+static const struct bu_arg_constraint bot_dump_constraints[] = {
+    BU_ARG_CONSTRAINT_OPTIONS(bot_dump_material_options, 0, 1,
 	"--materials and --no-materials are mutually exclusive"),
-    BU_CMD_CONSTRAINT_OPTIONS(bot_dump_output_options, 0, 1,
+    BU_ARG_CONSTRAINT_OPTIONS(bot_dump_output_options, 0, 1,
 	"--output-file and --output-directory are mutually exclusive"),
-    BU_CMD_CONSTRAINT_NULL
+    BU_ARG_CONSTRAINT_NULL
 };
 
 static int
@@ -458,67 +458,67 @@ bot_dump_disable_materials(struct bu_vls *UNUSED(msg), const char *UNUSED(arg),
     return 0;
 }
 
-static const struct bu_cmd_option bot_dump_options[] = {
-    BU_CMD_FLAG("h", "help", struct bot_dump_args, print_help,
+static const struct bu_arg_option bot_dump_options[] = {
+    BU_ARG_FLAG("h", "help", struct bot_dump_args, print_help,
 	"Print command help"),
-    BU_CMD_ALIAS_SHORT("?", "help", 1),
-    BU_CMD_FLAG("b", NULL, struct bot_dump_args, binary,
+    BU_ARG_ALIAS_SHORT("?", "help", 1),
+    BU_ARG_FLAG("b", NULL, struct bot_dump_args, binary,
 	"Use binary output when the selected format supports it"),
-    BU_CMD_FLAG("n", "normals", struct bot_dump_args, normals,
+    BU_ARG_FLAG("n", "normals", struct bot_dump_args, normals,
 	"Write normals when the selected format supports them"),
-    BU_CMD_VLS_APPEND("m", "output-directory", struct bot_dump_args,
+    BU_ARG_VLS_APPEND("m", "output-directory", struct bot_dump_args,
 	output_directory, "directory", "Write one file per BoT into this directory"),
-    BU_CMD_VLS_APPEND("o", "output-file", struct bot_dump_args,
+    BU_ARG_VLS_APPEND("o", "output-file", struct bot_dump_args,
 	output_file, "file", "Write to this output file"),
     {"t", NULL, "format", "format", "Select dxf, glb, gltf, obj, sat, or stl output",
-	BU_CMD_VALUE_KEYWORD, offsetof(struct bot_dump_args, format), NULL, NULL,
-	NULL, NULL, 0, 0, NULL, BU_CMD_ARG_REQUIRED, NULL, NULL, bot_dump_formats,
-	BU_CMD_VALUE_RANGE_NONE, BU_CMD_ARG_SHAPE_SCALAR},
-    BU_CMD_UNITS("u", NULL, struct bot_dump_args, units, "units",
+	BU_ARG_VALUE_KEYWORD, offsetof(struct bot_dump_args, format), NULL, NULL,
+	NULL, NULL, 0, 0, NULL, BU_ARG_REQUIRED, NULL, NULL, bot_dump_formats,
+	BU_ARG_VALUE_RANGE_NONE, BU_ARG_SHAPE_SCALAR},
+    BU_ARG_UNITS("u", NULL, struct bot_dump_args, units, "units",
 	"Scale exported coordinates to these units"),
-    BU_CMD_FLAG("F", "full-precision", struct bot_dump_args, full_precision,
+    BU_ARG_FLAG("F", "full-precision", struct bot_dump_args, full_precision,
 	"Write full floating-point precision (nonstandard for glTF)"),
-    BU_CMD_FLAG(NULL, "displayed", struct bot_dump_args, write_displayed,
+    BU_ARG_FLAG(NULL, "displayed", struct bot_dump_args, write_displayed,
 	"Write displayed geometry"),
-    BU_CMD_FLAG(NULL, "viewdata", struct bot_dump_args, view_data,
+    BU_ARG_FLAG(NULL, "viewdata", struct bot_dump_args, view_data,
 	"Write non-geometry view data"),
-    BU_CMD_FLAG(NULL, "materials", struct bot_dump_args, material_info,
+    BU_ARG_FLAG(NULL, "materials", struct bot_dump_args, material_info,
 	"Write material and color information"),
     {NULL, "no-materials", "no-materials", NULL,
-	"Do not write material or color information", BU_CMD_VALUE_CUSTOM,
+	"Do not write material or color information", BU_ARG_VALUE_CUSTOM,
 	offsetof(struct bot_dump_args, material_info), bot_dump_disable_materials,
-	NULL, NULL, NULL, 0, 0, NULL, BU_CMD_ARG_NONE, NULL, NULL, NULL,
-	BU_CMD_VALUE_RANGE_NONE, BU_CMD_ARG_SHAPE_SCALAR},
-    BU_CMD_OPTION_NULL
+	NULL, NULL, NULL, 0, 0, NULL, BU_ARG_NONE, NULL, NULL, NULL,
+	BU_ARG_VALUE_RANGE_NONE, BU_ARG_SHAPE_SCALAR},
+    BU_ARG_OPTION_NULL
 };
-static const struct bu_cmd_operand bot_dump_operands[] = {
-    BU_CMD_OPERAND("bot", BU_CMD_VALUE_DB_PATH, 0, BU_CMD_COUNT_UNLIMITED,
+static const struct bu_arg_operand bot_dump_operands[] = {
+    BU_ARG_OPERAND("bot", BU_ARG_VALUE_DB_PATH, 0, BU_ARG_COUNT_UNLIMITED,
 	"BoT object or path (defaults to all BoTs)", "ged.db_path"),
-    BU_CMD_OPERAND_NULL
+    BU_ARG_OPERAND_NULL
 };
-extern "C" const struct bu_cmd_schema ged_bot_dump_schema = {
+extern "C" const struct bu_arg_schema ged_bot_dump_schema = {
     "bot_dump", "Export BoT geometry", bot_dump_options, bot_dump_operands,
-    BU_CMD_PARSE_INTERSPERSED,
-    BU_CMD_SCHEMA_META_HELP(NULL, bot_dump_constraints, NULL, NULL, NULL)
+    BU_ARG_PARSE_INTERSPERSED,
+    BU_ARG_SCHEMA_META_HELP(NULL, bot_dump_constraints, NULL, NULL, NULL)
 };
 /* The direct command keeps its public bot_dump spelling.  The parent tree
  * reuses these executable rows through the canonical child-name view. */
-extern "C" const struct bu_cmd_schema ged_bot_dump_subcommand_schema = {
+extern "C" const struct bu_arg_schema ged_bot_dump_subcommand_schema = {
     "dump", "Export BoT geometry", bot_dump_options, bot_dump_operands,
-    BU_CMD_PARSE_INTERSPERSED,
-    BU_CMD_SCHEMA_META_HELP(NULL, bot_dump_constraints, NULL, NULL, NULL)
+    BU_ARG_PARSE_INTERSPERSED,
+    BU_ARG_SCHEMA_META_HELP(NULL, bot_dump_constraints, NULL, NULL, NULL)
 };
-extern "C" const struct bu_cmd_schema ged_dbot_dump_schema = {
+extern "C" const struct bu_arg_schema ged_dbot_dump_schema = {
     "dbot_dump", "Export displayed BoT geometry", bot_dump_options,
-    bot_dump_operands, BU_CMD_PARSE_INTERSPERSED,
-    BU_CMD_SCHEMA_META_HELP(NULL, bot_dump_constraints, NULL, NULL, NULL)
+    bot_dump_operands, BU_ARG_PARSE_INTERSPERSED,
+    BU_ARG_SCHEMA_META_HELP(NULL, bot_dump_constraints, NULL, NULL, NULL)
 };
 
 static void
 bot_dump_usage(struct bu_vls *str, const char *cmd)
 {
     bu_vls_trunc(str, 0);
-    (void)bu_cmd_schema_help_append(str, &ged_bot_dump_schema, cmd);
+    (void)bu_arg_schema_help_append(str, &ged_bot_dump_schema, cmd);
 }
 
 // TODO - right now this is not at all general, and in fact will only write out a few
@@ -710,7 +710,7 @@ ged_bot_dump_core(struct ged *gedp, int argc, const char *argv[])
 	return GED_HELP;
     }
 
-	operand_index = bu_cmd_schema_parse_complete(&ged_bot_dump_schema, &args,
+	operand_index = bu_arg_schema_parse_complete(&ged_bot_dump_schema, &args,
 	gedp->ged_result_str, argc, argv);
     if (operand_index < 0) {
 	bu_vls_free(&args.output_file);
@@ -735,7 +735,7 @@ ged_bot_dump_core(struct ged *gedp, int argc, const char *argv[])
 	d->output_type = bot_fmt_type(args.format);
     if (args.units) {
 	double unit_factor;
-	if (!bu_cmd_units_from_str(&unit_factor, args.units)) {
+	if (!bu_arg_units_from_str(&unit_factor, args.units)) {
 	    bu_vls_free(&args.output_file);
 	    bu_vls_free(&args.output_directory);
 	    bot_client_data_cleanup(d);

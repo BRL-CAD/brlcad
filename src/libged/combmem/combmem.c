@@ -32,7 +32,7 @@
 #include <ctype.h>
 #include <string.h>
 
-#include "bu/cmdschema.h"
+#include "bu/arg.h"
 #include "../ged_private.h"
 
 enum etypes {
@@ -84,7 +84,7 @@ combmem_number_valid(const char *arg)
 }
 
 static void
-combmem_operation_candidates(struct bu_cmd_validate_result *result, const char *prefix)
+combmem_operation_candidates(struct bu_arg_validate_result *result, const char *prefix)
 {
     size_t count = 0;
 
@@ -102,15 +102,15 @@ combmem_operation_candidates(struct bu_cmd_validate_result *result, const char *
 }
 
 static int
-combmem_validation_result(struct bu_cmd_validate_result *result,
-	bu_cmd_validate_state_t state, size_t token, bu_cmd_value_t type,
+combmem_validation_result(struct bu_arg_validate_result *result,
+	bu_arg_validate_state_t state, size_t token, bu_arg_value_t type,
 	const char *hint, const char *provider)
 {
-    bu_cmd_validate_result_clear(result);
+    bu_arg_validate_result_clear(result);
     result->state = state;
     result->token_start = token;
     result->token_end = token;
-    result->expected = BU_CMD_EXPECT_OPERAND;
+    result->expected = BU_ARG_EXPECT_OPERAND;
     result->completion_type = type;
     result->hint = hint;
     result->semantic_provider = provider;
@@ -147,10 +147,10 @@ combmem_first_operand(size_t argc, const char **argv, int *replacement_type,
 }
 
 static int
-combmem_schema_validate(const struct bu_cmd_schema *cmd, size_t argc,
-	const char **argv, size_t cursor_arg, struct bu_cmd_validate_result *result)
+combmem_schema_validate(const struct bu_arg_schema *cmd, size_t argc,
+	const char **argv, size_t cursor_arg, struct bu_arg_validate_result *result)
 {
-    struct bu_cmd_schema flat = *cmd;
+    struct bu_arg_schema flat = *cmd;
     size_t first;
     size_t members;
     size_t width = 15;
@@ -158,11 +158,11 @@ combmem_schema_validate(const struct bu_cmd_schema *cmd, size_t argc,
     int have_replacement;
     int ret;
 
-    ret = bu_cmd_schema_validate_syntax(&flat, argc, argv, cursor_arg, result);
-    if (ret || result->state == BU_CMD_VALIDATE_INVALID)
+    ret = bu_arg_schema_validate_syntax(&flat, argc, argv, cursor_arg, result);
+    if (ret || result->state == BU_ARG_VALIDATE_INVALID)
 	return ret;
     if (cursor_arg < argc && argv[cursor_arg] && argv[cursor_arg][0] == '-' &&
-	argv[cursor_arg][1] && (result->expected & BU_CMD_EXPECT_OPTION))
+	argv[cursor_arg][1] && (result->expected & BU_ARG_EXPECT_OPTION))
 	return 0;
 
     first = combmem_first_operand(argc, argv, &replacement_type, &have_replacement);
@@ -183,67 +183,67 @@ combmem_schema_validate(const struct bu_cmd_schema *cmd, size_t argc,
 	ri = (i - first - 1) % width;
 	if (ri == 0 && !BU_STR_EQUAL(argv[i], "u") &&
 	    !BU_STR_EQUAL(argv[i], "-") && !BU_STR_EQUAL(argv[i], "+"))
-	    return combmem_validation_result(result, BU_CMD_VALIDATE_INVALID, i,
-		BU_CMD_VALUE_KEYWORD, "invalid boolean operation", NULL);
+	    return combmem_validation_result(result, BU_ARG_VALIDATE_INVALID, i,
+		BU_ARG_VALUE_KEYWORD, "invalid boolean operation", NULL);
 	if (ri > 1 && !combmem_number_valid(argv[i]))
-	    return combmem_validation_result(result, BU_CMD_VALIDATE_INVALID, i,
-		BU_CMD_VALUE_NUMBER, "invalid transform value", NULL);
+	    return combmem_validation_result(result, BU_ARG_VALIDATE_INVALID, i,
+		BU_ARG_VALUE_NUMBER, "invalid transform value", NULL);
     }
 
     if (cursor_arg > first && cursor_arg < argc) {
 	size_t ri = (cursor_arg - first - 1) % width;
 	if (ri == 0) {
-	    bu_cmd_validate_state_t state =
+	    bu_arg_validate_state_t state =
 		(BU_STR_EQUAL(argv[cursor_arg], "u") || BU_STR_EQUAL(argv[cursor_arg], "-") ||
-		 BU_STR_EQUAL(argv[cursor_arg], "+")) ? BU_CMD_VALIDATE_VALID : BU_CMD_VALIDATE_INCOMPLETE;
-	    combmem_validation_result(result, state, cursor_arg, BU_CMD_VALUE_KEYWORD,
-		state == BU_CMD_VALIDATE_VALID ? "boolean operation" : "boolean operation expected", NULL);
+		 BU_STR_EQUAL(argv[cursor_arg], "+")) ? BU_ARG_VALIDATE_VALID : BU_ARG_VALIDATE_INCOMPLETE;
+	    combmem_validation_result(result, state, cursor_arg, BU_ARG_VALUE_KEYWORD,
+		state == BU_ARG_VALIDATE_VALID ? "boolean operation" : "boolean operation expected", NULL);
 	    combmem_operation_candidates(result, argv[cursor_arg]);
 	} else if (ri == 1) {
-	    combmem_validation_result(result, BU_CMD_VALIDATE_VALID, cursor_arg,
-		BU_CMD_VALUE_DB_OBJECT, "member object", "ged.db_object");
+	    combmem_validation_result(result, BU_ARG_VALIDATE_VALID, cursor_arg,
+		BU_ARG_VALUE_DB_OBJECT, "member object", "ged.db_object");
 	} else {
-	    bu_cmd_validate_state_t state = combmem_number_valid(argv[cursor_arg]) ?
-		BU_CMD_VALIDATE_VALID : BU_CMD_VALIDATE_INVALID;
-	    combmem_validation_result(result, state, cursor_arg, BU_CMD_VALUE_NUMBER,
-		state == BU_CMD_VALIDATE_VALID ? "transform value" : "invalid transform value", NULL);
+	    bu_arg_validate_state_t state = combmem_number_valid(argv[cursor_arg]) ?
+		BU_ARG_VALIDATE_VALID : BU_ARG_VALIDATE_INVALID;
+	    combmem_validation_result(result, state, cursor_arg, BU_ARG_VALUE_NUMBER,
+		state == BU_ARG_VALIDATE_VALID ? "transform value" : "invalid transform value", NULL);
 	}
 	return 0;
     }
 
     if (cursor_arg >= argc && members && (members % width)) {
 	size_t ri = members % width;
-	bu_cmd_value_t type = ri == 1 ? BU_CMD_VALUE_DB_OBJECT :
-	    (ri == 0 ? BU_CMD_VALUE_KEYWORD : BU_CMD_VALUE_NUMBER);
+	bu_arg_value_t type = ri == 1 ? BU_ARG_VALUE_DB_OBJECT :
+	    (ri == 0 ? BU_ARG_VALUE_KEYWORD : BU_ARG_VALUE_NUMBER);
 	const char *hint = ri == 1 ? "member object expected" :
 	    (ri == 0 ? "boolean operation expected" : "transform value expected");
-	combmem_validation_result(result, BU_CMD_VALIDATE_INCOMPLETE, argc, type, hint,
+	combmem_validation_result(result, BU_ARG_VALIDATE_INCOMPLETE, argc, type, hint,
 	    ri == 1 ? "ged.db_object" : NULL);
 	if (ri == 0)
 	    combmem_operation_candidates(result, "");
     }
     if (!have_replacement && members && members < width)
-	result->state = BU_CMD_VALIDATE_INCOMPLETE;
+	result->state = BU_ARG_VALIDATE_INCOMPLETE;
     return 0;
 }
 
-static const struct bu_cmd_option combmem_schema_options[] = {
-    BU_CMD_INTEGER_VALIDATE("i", NULL, struct combmem_args, input_type,
+static const struct bu_arg_option combmem_schema_options[] = {
+    BU_ARG_INTEGER_VALIDATE("i", NULL, struct combmem_args, input_type,
 	combmem_type_validate, "type", "Input matrix representation type"),
-    BU_CMD_INTEGER_VALIDATE("r", NULL, struct combmem_args, replacement_type,
+    BU_ARG_INTEGER_VALIDATE("r", NULL, struct combmem_args, replacement_type,
 	combmem_type_validate, "type", "Replacement matrix representation type"),
-    BU_CMD_OPTION_NULL
+    BU_ARG_OPTION_NULL
 };
-static const struct bu_cmd_operand combmem_schema_operands[] = {
-    BU_CMD_OPERAND("combination", BU_CMD_VALUE_DB_OBJECT, 1, 1,
+static const struct bu_arg_operand combmem_schema_operands[] = {
+    BU_ARG_OPERAND("combination", BU_ARG_VALUE_DB_OBJECT, 1, 1,
 	"Combination to inspect or replace", "ged.db_object"),
-    BU_CMD_OPERAND("member_records", BU_CMD_VALUE_RAW, 0,
-	BU_CMD_COUNT_UNLIMITED, "Operation, member, and transform records", NULL),
-    BU_CMD_OPERAND_NULL
+    BU_ARG_OPERAND("member_records", BU_ARG_VALUE_RAW, 0,
+	BU_ARG_COUNT_UNLIMITED, "Operation, member, and transform records", NULL),
+    BU_ARG_OPERAND_NULL
 };
-static const struct bu_cmd_schema combmem_cmd_schema = {
+static const struct bu_arg_schema combmem_cmd_schema = {
     "combmem", "Inspect or replace combination members", combmem_schema_options,
-    combmem_schema_operands, BU_CMD_PARSE_OPTIONS_FIRST, BU_CMD_SCHEMA_CONSTRAINTS(combmem_schema_validate, NULL)
+    combmem_schema_operands, BU_ARG_PARSE_OPTIONS_FIRST, BU_ARG_SCHEMA_CONSTRAINTS(combmem_schema_validate, NULL)
 };
 
 
@@ -1204,7 +1204,7 @@ ged_combmem_core(struct ged *gedp, int argc, const char *argv[])
 	return GED_HELP;
     }
 
-    operand_index = bu_cmd_schema_parse_complete(&combmem_cmd_schema, &args,
+    operand_index = bu_arg_schema_parse_complete(&combmem_cmd_schema, &args,
 	gedp->ged_result_str, argc - 1, argv + 1);
     if (operand_index < 0)
 	goto bad;

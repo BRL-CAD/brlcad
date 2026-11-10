@@ -29,7 +29,7 @@
 
 
 #include "vmath.h"
-#include "bu/cmdschema.h"
+#include "bu/arg.h"
 #include "ged.h"
 
 #include "../ged_private.h"
@@ -127,7 +127,7 @@ ged_adc_core(struct ged *gedp,
     argp += parameter_index + 1;
 
     for (i = 0; i < argc; ++i) {
-	if (!bu_cmd_number_from_str(&user_pt[i], argp[i])) {
+	if (!bu_arg_number_from_str(&user_pt[i], argp[i])) {
 	    adc_usage(gedp->ged_result_str, command);
 	    return BRLCAD_ERROR;
 	}
@@ -682,194 +682,194 @@ ged_calc_adc_dst(struct bview *gvp)
 static const char * const adc_binary_values[] = {"0", "1", NULL};
 static const char * const adc_anchor_position_values[] = {"0", "1", "2", NULL};
 
-static const struct bu_cmd_operand adc_optional_number_operands[] = {
-    BU_CMD_OPERAND("value", BU_CMD_VALUE_NUMBER, 0, 1, "New value", NULL),
-    BU_CMD_OPERAND_NULL
+static const struct bu_arg_operand adc_optional_number_operands[] = {
+    BU_ARG_OPERAND("value", BU_ARG_VALUE_NUMBER, 0, 1, "New value", NULL),
+    BU_ARG_OPERAND_NULL
 };
-static const struct bu_cmd_operand adc_required_number_operands[] = {
-    BU_CMD_OPERAND("delta", BU_CMD_VALUE_NUMBER, 1, 1, "Increment value", NULL),
-    BU_CMD_OPERAND_NULL
+static const struct bu_arg_operand adc_required_number_operands[] = {
+    BU_ARG_OPERAND("delta", BU_ARG_VALUE_NUMBER, 1, 1, "Increment value", NULL),
+    BU_ARG_OPERAND_NULL
 };
-static const struct bu_cmd_operand adc_optional_binary_operands[] = {
-    BU_CMD_OPERAND_KEYWORDS("enabled", BU_CMD_VALUE_KEYWORD, 0, 1,
+static const struct bu_arg_operand adc_optional_binary_operands[] = {
+    BU_ARG_OPERAND_KEYWORDS("enabled", BU_ARG_VALUE_KEYWORD, 0, 1,
 	"0 (off) or 1 (on)", NULL, adc_binary_values),
-    BU_CMD_OPERAND_NULL
+    BU_ARG_OPERAND_NULL
 };
-static const struct bu_cmd_operand adc_optional_anchor_position_operands[] = {
-    BU_CMD_OPERAND_KEYWORDS("mode", BU_CMD_VALUE_KEYWORD, 0, 1,
+static const struct bu_arg_operand adc_optional_anchor_position_operands[] = {
+    BU_ARG_OPERAND_KEYWORDS("mode", BU_ARG_VALUE_KEYWORD, 0, 1,
 	"0 (free), 1 (model), or 2 (grid)", NULL, adc_anchor_position_values),
-    BU_CMD_OPERAND_NULL
+    BU_ARG_OPERAND_NULL
 };
-static const struct bu_cmd_operand adc_optional_pair_roles[] = {
-    BU_CMD_OPERAND("horizontal", BU_CMD_VALUE_NUMBER, 1, 1,
+static const struct bu_arg_operand adc_optional_pair_roles[] = {
+    BU_ARG_OPERAND("horizontal", BU_ARG_VALUE_NUMBER, 1, 1,
 	"Horizontal grid position", NULL),
-    BU_CMD_OPERAND("vertical", BU_CMD_VALUE_NUMBER, 1, 1,
+    BU_ARG_OPERAND("vertical", BU_ARG_VALUE_NUMBER, 1, 1,
 	"Vertical grid position", NULL),
-    BU_CMD_OPERAND_NULL
+    BU_ARG_OPERAND_NULL
 };
-static const struct bu_cmd_operand_group adc_optional_pair_groups[] = {
-    BU_CMD_OPERAND_GROUP("position", adc_optional_pair_roles, 0, 1,
+static const struct bu_arg_operand_group adc_optional_pair_groups[] = {
+    BU_ARG_OPERAND_GROUP("position", adc_optional_pair_roles, 0, 1,
 	"Optional horizontal and vertical grid position"),
-    BU_CMD_OPERAND_GROUP_NULL
+    BU_ARG_OPERAND_GROUP_NULL
 };
-static const struct bu_cmd_operand adc_optional_point_roles[] = {
-    BU_CMD_OPERAND("x", BU_CMD_VALUE_NUMBER, 1, 1,
+static const struct bu_arg_operand adc_optional_point_roles[] = {
+    BU_ARG_OPERAND("x", BU_ARG_VALUE_NUMBER, 1, 1,
 	"Model X coordinate", NULL),
-    BU_CMD_OPERAND("y", BU_CMD_VALUE_NUMBER, 1, 1,
+    BU_ARG_OPERAND("y", BU_ARG_VALUE_NUMBER, 1, 1,
 	"Model Y coordinate", NULL),
-    BU_CMD_OPERAND("z", BU_CMD_VALUE_NUMBER, 1, 1,
+    BU_ARG_OPERAND("z", BU_ARG_VALUE_NUMBER, 1, 1,
 	"Model Z coordinate", NULL),
-    BU_CMD_OPERAND_NULL
+    BU_ARG_OPERAND_NULL
 };
-static const struct bu_cmd_operand_group adc_optional_point_groups[] = {
-    BU_CMD_OPERAND_GROUP("point", adc_optional_point_roles, 0, 1,
+static const struct bu_arg_operand_group adc_optional_point_groups[] = {
+    BU_ARG_OPERAND_GROUP("point", adc_optional_point_roles, 0, 1,
 	"Optional model-coordinate XYZ point"),
-    BU_CMD_OPERAND_GROUP_NULL
+    BU_ARG_OPERAND_GROUP_NULL
 };
 
 
-static const struct bu_cmd_option adc_root_options[] = {
-    BU_CMD_FLAG("i", NULL, struct adc_native_args, increment,
+static const struct bu_arg_option adc_root_options[] = {
+    BU_ARG_FLAG("i", NULL, struct adc_native_args, increment,
 	"Interpret applicable values as increments"),
-    BU_CMD_OPTION_NULL
+    BU_ARG_OPTION_NULL
 };
-static const struct bu_cmd_schema adc_root_schema = {
+static const struct bu_arg_schema adc_root_schema = {
     "adc", "Inspect and configure the angle-distance cursor", adc_root_options,
-    NULL, BU_CMD_PARSE_OPTIONS_FIRST, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+    NULL, BU_ARG_PARSE_OPTIONS_FIRST, BU_ARG_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
 GED_DEFINE_NO_ARG_SCHEMA_NAMED(adc_vars_schema, "vars", "Print all ADC variables",
-    BU_CMD_PARSE_STOP_AT_FIRST_OPERAND);
-static const struct bu_cmd_schema adc_draw_schema = {
+    BU_ARG_PARSE_STOP_AT_FIRST_OPERAND);
+static const struct bu_arg_schema adc_draw_schema = {
     "draw", "Query or set ADC drawing", NULL, adc_optional_binary_operands,
-    BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+    BU_ARG_PARSE_STOP_AT_FIRST_OPERAND, BU_ARG_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
-static const struct bu_cmd_schema adc_a1_schema = {
+static const struct bu_arg_schema adc_a1_schema = {
     "a1", "Query or set angle 1", NULL, adc_optional_number_operands,
-    BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+    BU_ARG_PARSE_STOP_AT_FIRST_OPERAND, BU_ARG_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
-static const struct bu_cmd_schema adc_a2_schema = {
+static const struct bu_arg_schema adc_a2_schema = {
     "a2", "Query or set angle 2", NULL, adc_optional_number_operands,
-    BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+    BU_ARG_PARSE_STOP_AT_FIRST_OPERAND, BU_ARG_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
-static const struct bu_cmd_schema adc_dst_schema = {
+static const struct bu_arg_schema adc_dst_schema = {
     "dst", "Query or set tick distance", NULL, adc_optional_number_operands,
-    BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+    BU_ARG_PARSE_STOP_AT_FIRST_OPERAND, BU_ARG_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
-static const struct bu_cmd_schema adc_odst_schema = {
+static const struct bu_arg_schema adc_odst_schema = {
     "odst", "Query or set view tick distance", NULL, adc_optional_number_operands,
-    BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+    BU_ARG_PARSE_STOP_AT_FIRST_OPERAND, BU_ARG_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
-static const struct bu_cmd_schema adc_hv_schema = {
+static const struct bu_arg_schema adc_hv_schema = {
     "hv", "Query or set grid position", NULL, NULL,
-    BU_CMD_PARSE_STOP_AT_FIRST_OPERAND,
-    BU_CMD_SCHEMA_GROUPS(NULL, NULL, adc_optional_pair_groups)
+    BU_ARG_PARSE_STOP_AT_FIRST_OPERAND,
+    BU_ARG_SCHEMA_GROUPS(NULL, NULL, adc_optional_pair_groups)
 };
-static const struct bu_cmd_schema adc_xyz_schema = {
+static const struct bu_arg_schema adc_xyz_schema = {
     "xyz", "Query or set model position", NULL, NULL,
-    BU_CMD_PARSE_STOP_AT_FIRST_OPERAND,
-    BU_CMD_SCHEMA_GROUPS(NULL, NULL, adc_optional_point_groups)
+    BU_ARG_PARSE_STOP_AT_FIRST_OPERAND,
+    BU_ARG_SCHEMA_GROUPS(NULL, NULL, adc_optional_point_groups)
 };
-static const struct bu_cmd_schema adc_x_schema = {
+static const struct bu_arg_schema adc_x_schema = {
     "x", "Query or set horizontal position", NULL, adc_optional_number_operands,
-    BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+    BU_ARG_PARSE_STOP_AT_FIRST_OPERAND, BU_ARG_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
-static const struct bu_cmd_schema adc_y_schema = {
+static const struct bu_arg_schema adc_y_schema = {
     "y", "Query or set vertical position", NULL, adc_optional_number_operands,
-    BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+    BU_ARG_PARSE_STOP_AT_FIRST_OPERAND, BU_ARG_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
-static const struct bu_cmd_schema adc_dh_schema = {
+static const struct bu_arg_schema adc_dh_schema = {
     "dh", "Increment horizontal grid position", NULL, adc_required_number_operands,
-    BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+    BU_ARG_PARSE_STOP_AT_FIRST_OPERAND, BU_ARG_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
-static const struct bu_cmd_schema adc_dv_schema = {
+static const struct bu_arg_schema adc_dv_schema = {
     "dv", "Increment vertical grid position", NULL, adc_required_number_operands,
-    BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+    BU_ARG_PARSE_STOP_AT_FIRST_OPERAND, BU_ARG_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
-static const struct bu_cmd_schema adc_dx_schema = {
+static const struct bu_arg_schema adc_dx_schema = {
     "dx", "Increment model X position", NULL, adc_required_number_operands,
-    BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+    BU_ARG_PARSE_STOP_AT_FIRST_OPERAND, BU_ARG_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
-static const struct bu_cmd_schema adc_dy_schema = {
+static const struct bu_arg_schema adc_dy_schema = {
     "dy", "Increment model Y position", NULL, adc_required_number_operands,
-    BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+    BU_ARG_PARSE_STOP_AT_FIRST_OPERAND, BU_ARG_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
-static const struct bu_cmd_schema adc_dz_schema = {
+static const struct bu_arg_schema adc_dz_schema = {
     "dz", "Increment model Z position", NULL, adc_required_number_operands,
-    BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+    BU_ARG_PARSE_STOP_AT_FIRST_OPERAND, BU_ARG_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
-static const struct bu_cmd_schema adc_anchor_pos_schema = {
+static const struct bu_arg_schema adc_anchor_pos_schema = {
     "anchor_pos", "Query or set position anchoring", NULL,
-    adc_optional_anchor_position_operands, BU_CMD_PARSE_STOP_AT_FIRST_OPERAND,
-    BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+    adc_optional_anchor_position_operands, BU_ARG_PARSE_STOP_AT_FIRST_OPERAND,
+    BU_ARG_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
-static const struct bu_cmd_schema adc_anchor_a1_schema = {
+static const struct bu_arg_schema adc_anchor_a1_schema = {
     "anchor_a1", "Query or set angle 1 anchoring", NULL, adc_optional_binary_operands,
-    BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+    BU_ARG_PARSE_STOP_AT_FIRST_OPERAND, BU_ARG_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
-static const struct bu_cmd_schema adc_anchor_a2_schema = {
+static const struct bu_arg_schema adc_anchor_a2_schema = {
     "anchor_a2", "Query or set angle 2 anchoring", NULL, adc_optional_binary_operands,
-    BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+    BU_ARG_PARSE_STOP_AT_FIRST_OPERAND, BU_ARG_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
-static const struct bu_cmd_schema adc_anchor_dst_schema = {
+static const struct bu_arg_schema adc_anchor_dst_schema = {
     "anchor_dst", "Query or set distance anchoring", NULL, adc_optional_binary_operands,
-    BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+    BU_ARG_PARSE_STOP_AT_FIRST_OPERAND, BU_ARG_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
-static const struct bu_cmd_schema adc_anchorpoint_a1_schema = {
+static const struct bu_arg_schema adc_anchorpoint_a1_schema = {
     "anchorpoint_a1", "Query or set angle 1 anchor point", NULL, NULL,
-    BU_CMD_PARSE_STOP_AT_FIRST_OPERAND,
-    BU_CMD_SCHEMA_GROUPS(NULL, NULL, adc_optional_point_groups)
+    BU_ARG_PARSE_STOP_AT_FIRST_OPERAND,
+    BU_ARG_SCHEMA_GROUPS(NULL, NULL, adc_optional_point_groups)
 };
-static const struct bu_cmd_schema adc_anchorpoint_a2_schema = {
+static const struct bu_arg_schema adc_anchorpoint_a2_schema = {
     "anchorpoint_a2", "Query or set angle 2 anchor point", NULL, NULL,
-    BU_CMD_PARSE_STOP_AT_FIRST_OPERAND,
-    BU_CMD_SCHEMA_GROUPS(NULL, NULL, adc_optional_point_groups)
+    BU_ARG_PARSE_STOP_AT_FIRST_OPERAND,
+    BU_ARG_SCHEMA_GROUPS(NULL, NULL, adc_optional_point_groups)
 };
-static const struct bu_cmd_schema adc_anchorpoint_dst_schema = {
+static const struct bu_arg_schema adc_anchorpoint_dst_schema = {
     "anchorpoint_dst", "Query or set distance anchor point", NULL, NULL,
-    BU_CMD_PARSE_STOP_AT_FIRST_OPERAND,
-    BU_CMD_SCHEMA_GROUPS(NULL, NULL, adc_optional_point_groups)
+    BU_ARG_PARSE_STOP_AT_FIRST_OPERAND,
+    BU_ARG_SCHEMA_GROUPS(NULL, NULL, adc_optional_point_groups)
 };
 GED_DEFINE_NO_ARG_SCHEMA_NAMED(adc_reset_schema, "reset", "Reset ADC state",
-    BU_CMD_PARSE_STOP_AT_FIRST_OPERAND);
+    BU_ARG_PARSE_STOP_AT_FIRST_OPERAND);
 GED_DEFINE_NO_ARG_SCHEMA_NAMED(adc_help_schema, "help", "Print ADC help",
-    BU_CMD_PARSE_STOP_AT_FIRST_OPERAND);
+    BU_ARG_PARSE_STOP_AT_FIRST_OPERAND);
 
-static const struct bu_cmd_tree_node adc_subcommands[] = {
-    BU_CMD_TREE_NODE(&adc_vars_schema, NULL, NULL, BU_CMD_TREE_CHILD_AFTER_OPTIONS, NULL),
-    BU_CMD_TREE_NODE(&adc_draw_schema, NULL, NULL, BU_CMD_TREE_CHILD_AFTER_OPTIONS, NULL),
-    BU_CMD_TREE_NODE(&adc_a1_schema, NULL, NULL, BU_CMD_TREE_CHILD_AFTER_OPTIONS, NULL),
-    BU_CMD_TREE_NODE(&adc_a2_schema, NULL, NULL, BU_CMD_TREE_CHILD_AFTER_OPTIONS, NULL),
-    BU_CMD_TREE_NODE(&adc_dst_schema, NULL, NULL, BU_CMD_TREE_CHILD_AFTER_OPTIONS, NULL),
-    BU_CMD_TREE_NODE(&adc_odst_schema, NULL, NULL, BU_CMD_TREE_CHILD_AFTER_OPTIONS, NULL),
-    BU_CMD_TREE_NODE(&adc_hv_schema, NULL, NULL, BU_CMD_TREE_CHILD_AFTER_OPTIONS, NULL),
-    BU_CMD_TREE_NODE(&adc_xyz_schema, NULL, NULL, BU_CMD_TREE_CHILD_AFTER_OPTIONS, NULL),
-    BU_CMD_TREE_NODE(&adc_x_schema, NULL, NULL, BU_CMD_TREE_CHILD_AFTER_OPTIONS, NULL),
-    BU_CMD_TREE_NODE(&adc_y_schema, NULL, NULL, BU_CMD_TREE_CHILD_AFTER_OPTIONS, NULL),
-    BU_CMD_TREE_NODE(&adc_dh_schema, NULL, NULL, BU_CMD_TREE_CHILD_AFTER_OPTIONS, NULL),
-    BU_CMD_TREE_NODE(&adc_dv_schema, NULL, NULL, BU_CMD_TREE_CHILD_AFTER_OPTIONS, NULL),
-    BU_CMD_TREE_NODE(&adc_dx_schema, NULL, NULL, BU_CMD_TREE_CHILD_AFTER_OPTIONS, NULL),
-    BU_CMD_TREE_NODE(&adc_dy_schema, NULL, NULL, BU_CMD_TREE_CHILD_AFTER_OPTIONS, NULL),
-    BU_CMD_TREE_NODE(&adc_dz_schema, NULL, NULL, BU_CMD_TREE_CHILD_AFTER_OPTIONS, NULL),
-    BU_CMD_TREE_NODE(&adc_anchor_pos_schema, NULL, NULL, BU_CMD_TREE_CHILD_AFTER_OPTIONS, NULL),
-    BU_CMD_TREE_NODE(&adc_anchor_a1_schema, NULL, NULL, BU_CMD_TREE_CHILD_AFTER_OPTIONS, NULL),
-    BU_CMD_TREE_NODE(&adc_anchor_a2_schema, NULL, NULL, BU_CMD_TREE_CHILD_AFTER_OPTIONS, NULL),
-    BU_CMD_TREE_NODE(&adc_anchor_dst_schema, NULL, NULL, BU_CMD_TREE_CHILD_AFTER_OPTIONS, NULL),
-    BU_CMD_TREE_NODE(&adc_anchorpoint_a1_schema, NULL, NULL, BU_CMD_TREE_CHILD_AFTER_OPTIONS, NULL),
-    BU_CMD_TREE_NODE(&adc_anchorpoint_a2_schema, NULL, NULL, BU_CMD_TREE_CHILD_AFTER_OPTIONS, NULL),
-    BU_CMD_TREE_NODE(&adc_anchorpoint_dst_schema, NULL, NULL, BU_CMD_TREE_CHILD_AFTER_OPTIONS, NULL),
-    BU_CMD_TREE_NODE(&adc_reset_schema, NULL, NULL, BU_CMD_TREE_CHILD_AFTER_OPTIONS, NULL),
-    BU_CMD_TREE_NODE(&adc_help_schema, NULL, NULL, BU_CMD_TREE_CHILD_AFTER_OPTIONS, NULL),
-    BU_CMD_TREE_NODE_NULL
+static const struct bu_arg_tree_node adc_subcommands[] = {
+    BU_ARG_TREE_NODE(&adc_vars_schema, NULL, NULL, BU_ARG_TREE_CHILD_AFTER_OPTIONS, NULL),
+    BU_ARG_TREE_NODE(&adc_draw_schema, NULL, NULL, BU_ARG_TREE_CHILD_AFTER_OPTIONS, NULL),
+    BU_ARG_TREE_NODE(&adc_a1_schema, NULL, NULL, BU_ARG_TREE_CHILD_AFTER_OPTIONS, NULL),
+    BU_ARG_TREE_NODE(&adc_a2_schema, NULL, NULL, BU_ARG_TREE_CHILD_AFTER_OPTIONS, NULL),
+    BU_ARG_TREE_NODE(&adc_dst_schema, NULL, NULL, BU_ARG_TREE_CHILD_AFTER_OPTIONS, NULL),
+    BU_ARG_TREE_NODE(&adc_odst_schema, NULL, NULL, BU_ARG_TREE_CHILD_AFTER_OPTIONS, NULL),
+    BU_ARG_TREE_NODE(&adc_hv_schema, NULL, NULL, BU_ARG_TREE_CHILD_AFTER_OPTIONS, NULL),
+    BU_ARG_TREE_NODE(&adc_xyz_schema, NULL, NULL, BU_ARG_TREE_CHILD_AFTER_OPTIONS, NULL),
+    BU_ARG_TREE_NODE(&adc_x_schema, NULL, NULL, BU_ARG_TREE_CHILD_AFTER_OPTIONS, NULL),
+    BU_ARG_TREE_NODE(&adc_y_schema, NULL, NULL, BU_ARG_TREE_CHILD_AFTER_OPTIONS, NULL),
+    BU_ARG_TREE_NODE(&adc_dh_schema, NULL, NULL, BU_ARG_TREE_CHILD_AFTER_OPTIONS, NULL),
+    BU_ARG_TREE_NODE(&adc_dv_schema, NULL, NULL, BU_ARG_TREE_CHILD_AFTER_OPTIONS, NULL),
+    BU_ARG_TREE_NODE(&adc_dx_schema, NULL, NULL, BU_ARG_TREE_CHILD_AFTER_OPTIONS, NULL),
+    BU_ARG_TREE_NODE(&adc_dy_schema, NULL, NULL, BU_ARG_TREE_CHILD_AFTER_OPTIONS, NULL),
+    BU_ARG_TREE_NODE(&adc_dz_schema, NULL, NULL, BU_ARG_TREE_CHILD_AFTER_OPTIONS, NULL),
+    BU_ARG_TREE_NODE(&adc_anchor_pos_schema, NULL, NULL, BU_ARG_TREE_CHILD_AFTER_OPTIONS, NULL),
+    BU_ARG_TREE_NODE(&adc_anchor_a1_schema, NULL, NULL, BU_ARG_TREE_CHILD_AFTER_OPTIONS, NULL),
+    BU_ARG_TREE_NODE(&adc_anchor_a2_schema, NULL, NULL, BU_ARG_TREE_CHILD_AFTER_OPTIONS, NULL),
+    BU_ARG_TREE_NODE(&adc_anchor_dst_schema, NULL, NULL, BU_ARG_TREE_CHILD_AFTER_OPTIONS, NULL),
+    BU_ARG_TREE_NODE(&adc_anchorpoint_a1_schema, NULL, NULL, BU_ARG_TREE_CHILD_AFTER_OPTIONS, NULL),
+    BU_ARG_TREE_NODE(&adc_anchorpoint_a2_schema, NULL, NULL, BU_ARG_TREE_CHILD_AFTER_OPTIONS, NULL),
+    BU_ARG_TREE_NODE(&adc_anchorpoint_dst_schema, NULL, NULL, BU_ARG_TREE_CHILD_AFTER_OPTIONS, NULL),
+    BU_ARG_TREE_NODE(&adc_reset_schema, NULL, NULL, BU_ARG_TREE_CHILD_AFTER_OPTIONS, NULL),
+    BU_ARG_TREE_NODE(&adc_help_schema, NULL, NULL, BU_ARG_TREE_CHILD_AFTER_OPTIONS, NULL),
+    BU_ARG_TREE_NODE_NULL
 };
-static const struct bu_cmd_tree adc_tree = {
-    &adc_root_schema, adc_subcommands, BU_CMD_TREE_CHILD_AFTER_OPTIONS
+static const struct bu_arg_tree adc_tree = {
+    &adc_root_schema, adc_subcommands, BU_ARG_TREE_CHILD_AFTER_OPTIONS
 };
 
 
 static void
 adc_usage(struct bu_vls *vp, const char *name)
 {
-    char *help = bu_cmd_tree_help(&adc_tree, name);
+    char *help = bu_arg_tree_help(&adc_tree, name);
 
     if (help) {
 	bu_vls_strcat(vp, help);
@@ -883,13 +883,13 @@ adc_native_preflight(struct ged *gedp, int argc, const char *argv[],
 	struct adc_native_args *args, int *parameter_index)
 {
     struct bu_vls msg = BU_VLS_INIT_ZERO;
-    const struct bu_cmd_tree_node *node;
+    const struct bu_arg_tree_node *node;
     int child_offset;
     int ret = BRLCAD_ERROR;
 
     if (!gedp || !argv || !args || !parameter_index || argc < 1)
 	return BRLCAD_ERROR;
-    child_offset = bu_cmd_schema_parse(&adc_root_schema, args, &msg,
+    child_offset = bu_arg_schema_parse(&adc_root_schema, args, &msg,
 	argc - 1, argv + 1);
     if (child_offset < 0) {
 	if (bu_vls_strlen(&msg))
@@ -900,13 +900,13 @@ adc_native_preflight(struct ged *gedp, int argc, const char *argv[],
 	bu_vls_printf(gedp->ged_result_str, "%s: subcommand required\n", argv[0]);
 	goto done;
     }
-    node = bu_cmd_tree_find_subcommand(&adc_tree, argv[child_offset + 1]);
+    node = bu_arg_tree_find_subcommand(&adc_tree, argv[child_offset + 1]);
     if (!node) {
 	bu_vls_printf(gedp->ged_result_str, "%s: unrecognized command '%s'\n",
 	    argv[0], argv[child_offset + 1]);
 	goto done;
     }
-    if (bu_cmd_schema_parse_complete(node->schema, NULL, &msg,
+    if (bu_arg_schema_parse_complete(node->schema, NULL, &msg,
 	argc - child_offset - 2, argv + child_offset + 2) < 0) {
 	if (bu_vls_strlen(&msg))
 	    bu_vls_vlscat(gedp->ged_result_str, &msg);
@@ -939,14 +939,14 @@ adc_grammar_analyze(struct ged *gedp, const char *input, struct ged_cmd_analysis
 static char *
 adc_grammar_json(void)
 {
-    return bu_cmd_tree_describe_json(&adc_tree);
+    return bu_arg_tree_describe_json(&adc_tree);
 }
 
 
 static int
 adc_grammar_lint(struct bu_vls *msgs)
 {
-    return bu_cmd_tree_lint(&adc_tree, msgs);
+    return bu_arg_tree_lint(&adc_tree, msgs);
 }
 GED_CMD_TREE_HELP(adc_grammar_help, adc_tree)
 

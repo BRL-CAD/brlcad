@@ -38,7 +38,7 @@
 #include <vector>
 
 #include "bu/avs.h"
-#include "bu/cmdschema.h"
+#include "bu/arg.h"
 #include "bu/units.h"
 #include "vmath.h"
 #include "bn.h"
@@ -160,21 +160,21 @@ struct TireArgs {
     A(SHORT, "?", "help") \
     A(LONG,  "ISO", "dimensions")
 
-#define TIRE_NATIVE_FLAG(s, l, f, a, h) BU_CMD_FLAG(s, l, TireArgs, f, h),
-#define TIRE_NATIVE_BOOL(s, l, f, a, h) BU_CMD_BOOL(s, l, TireArgs, f, a, h),
-#define TIRE_NATIVE_INTEGER(s, l, f, a, h) BU_CMD_INTEGER(s, l, TireArgs, f, a, h),
-#define TIRE_NATIVE_INTEGER_RANGE(s, l, f, a, h) BU_CMD_INTEGER_VALIDATE(s, l, TireArgs, f, tire_tread_shape_validate, a, h),
-#define TIRE_NATIVE_NUMBER(s, l, f, a, h) BU_CMD_NUMBER(s, l, TireArgs, f, a, h),
-#define TIRE_NATIVE_STRING(s, l, f, a, h) BU_CMD_STRING(s, l, TireArgs, f, a, h),
-#define TIRE_NATIVE_FILE(s, l, f, a, h) BU_CMD_FILE(s, l, TireArgs, f, a, h),
-#define TIRE_NATIVE_CUSTOM(s, l, f, a, h) BU_CMD_CUSTOM(s, l, TireArgs, f, tire_iso_parse, a, h),
+#define TIRE_NATIVE_FLAG(s, l, f, a, h) BU_ARG_FLAG(s, l, TireArgs, f, h),
+#define TIRE_NATIVE_BOOL(s, l, f, a, h) BU_ARG_BOOL(s, l, TireArgs, f, a, h),
+#define TIRE_NATIVE_INTEGER(s, l, f, a, h) BU_ARG_INTEGER(s, l, TireArgs, f, a, h),
+#define TIRE_NATIVE_INTEGER_RANGE(s, l, f, a, h) BU_ARG_INTEGER_VALIDATE(s, l, TireArgs, f, tire_tread_shape_validate, a, h),
+#define TIRE_NATIVE_NUMBER(s, l, f, a, h) BU_ARG_NUMBER(s, l, TireArgs, f, a, h),
+#define TIRE_NATIVE_STRING(s, l, f, a, h) BU_ARG_STRING(s, l, TireArgs, f, a, h),
+#define TIRE_NATIVE_FILE(s, l, f, a, h) BU_ARG_FILE(s, l, TireArgs, f, a, h),
+#define TIRE_NATIVE_CUSTOM(s, l, f, a, h) BU_ARG_CUSTOM(s, l, TireArgs, f, tire_iso_parse, a, h),
 #define TIRE_NATIVE_OPTION(kind, s, l, f, a, h) TIRE_NATIVE_##kind(s, l, f, a, h)
-#define TIRE_NATIVE_ALIAS_SHORT(spelling, canonical) BU_CMD_ALIAS_SHORT(spelling, canonical, 1),
-#define TIRE_NATIVE_ALIAS_LONG(spelling, canonical) BU_CMD_ALIAS_LONG(spelling, canonical, 1),
+#define TIRE_NATIVE_ALIAS_SHORT(spelling, canonical) BU_ARG_ALIAS_SHORT(spelling, canonical, 1),
+#define TIRE_NATIVE_ALIAS_LONG(spelling, canonical) BU_ARG_ALIAS_LONG(spelling, canonical, 1),
 #define TIRE_NATIVE_ALIAS(kind, spelling, canonical) TIRE_NATIVE_ALIAS_##kind(spelling, canonical)
-static const struct bu_cmd_option tire_options[] = {
+static const struct bu_arg_option tire_options[] = {
     TIRE_OPTION_ROWS(TIRE_NATIVE_OPTION, TIRE_NATIVE_ALIAS)
-    BU_CMD_OPTION_NULL
+    BU_ARG_OPTION_NULL
 };
 #undef TIRE_NATIVE_FLAG
 #undef TIRE_NATIVE_BOOL
@@ -189,24 +189,24 @@ static const struct bu_cmd_option tire_options[] = {
 #undef TIRE_NATIVE_ALIAS_LONG
 #undef TIRE_NATIVE_ALIAS
 
-static const struct bu_cmd_operand tire_operands[] = {
-    BU_CMD_OPERAND("obj-name", BU_CMD_VALUE_STRING, 0, 1, "Optional top-level object name", NULL),
-    BU_CMD_OPERAND_NULL
+static const struct bu_arg_operand tire_operands[] = {
+    BU_ARG_OPERAND("obj-name", BU_ARG_VALUE_STRING, 0, 1, "Optional top-level object name", NULL),
+    BU_ARG_OPERAND_NULL
 };
-static const struct bu_cmd_schema tire_cmd_schema_native = {
+static const struct bu_arg_schema tire_cmd_schema_native = {
     "tire", "Generate tire and wheel geometry", tire_options, tire_operands,
-    BU_CMD_PARSE_STOP_AT_FIRST_OPERAND,
-    BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+    BU_ARG_PARSE_STOP_AT_FIRST_OPERAND,
+    BU_ARG_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
 
 #undef TIRE_OPTION_ROWS
 
 /* Help message printed when -h option is supplied */
 static void
-_tire_show_help(struct ged *gedp, const char *cmd, const struct bu_cmd_schema *schema)
+_tire_show_help(struct ged *gedp, const char *cmd, const struct bu_arg_schema *schema)
 {
     struct bu_vls str = BU_VLS_INIT_ZERO;
-    char *help = bu_cmd_schema_help(schema, cmd);
+    char *help = bu_arg_schema_help(schema, cmd);
     if (help) {
 	bu_vls_sprintf(&str, "%s", help);
 	bu_free(help, "help str");
@@ -771,7 +771,7 @@ ged_tire_core(struct ged *gedp, int argc, const char *argv[])
     /* Skip first arg */
     argv++; argc--;
 
-    operand_index = bu_cmd_schema_parse(&tire_cmd_schema_native, &options, &parse_msg, argc, argv);
+    operand_index = bu_arg_schema_parse(&tire_cmd_schema_native, &options, &parse_msg, argc, argv);
     if (operand_index < 0) {
 	bu_vls_printf(gedp->ged_result_str, "%s\n", bu_vls_addr(&parse_msg));
 	bu_vls_free(&parse_msg);

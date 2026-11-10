@@ -42,7 +42,7 @@
 
 
 #include "bu/parallel.h"
-#include "bu/cmdschema.h"
+#include "bu/arg.h"
 #include "bu/opt.h"
 #include "vmath.h"
 #include "bn/mat.h"
@@ -2938,7 +2938,7 @@ static const ged_opt_rule gqa_opt_rules[] = {
     GED_RULE_ALIAS("?", "h"),
     GED_RULE_CANDIDATES("A", BU_OPT_VALUE_STRING, "analysis types",
 	gqa_analysis_candidates),
-    GED_RULE_SEMANTIC("f", BU_CMD_VALUE_FILE, "ged.file_path", "density file"),
+    GED_RULE_SEMANTIC("f", BU_ARG_VALUE_FILE, "ged.file_path", "density file"),
     GED_RULE_NULL
 };
 static const ged_opt_spec gqa_opt_spec =

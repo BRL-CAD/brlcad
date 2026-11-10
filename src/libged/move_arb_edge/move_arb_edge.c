@@ -29,7 +29,7 @@
 #include <string.h>
 
 #include "bu/cmd.h"
-#include "bu/cmdschema.h"
+#include "bu/arg.h"
 #include "rt/geom.h"
 #include "rt/primitives/arb8.h"
 #include "raytrace.h"
@@ -41,33 +41,33 @@ struct move_arb_edge_args {
     int relative;
 };
 
-static const struct bu_cmd_option move_arb_edge_schema_options[] = {
-    BU_CMD_FLAG("r", NULL, struct move_arb_edge_args, relative,
+static const struct bu_arg_option move_arb_edge_schema_options[] = {
+    BU_ARG_FLAG("r", NULL, struct move_arb_edge_args, relative,
 	"Interpret point relative to current edge"),
-    BU_CMD_OPTION_NULL
+    BU_ARG_OPTION_NULL
 };
-static const struct bu_cmd_operand move_arb_edge_schema_operands[] = {
-    BU_CMD_OPERAND("arb", BU_CMD_VALUE_DB_PATH, 1, 1, "ARB object or path", "ged.db_path"),
-    BU_CMD_OPERAND_VALIDATE("edge", BU_CMD_VALUE_INTEGER, 1, 1,
+static const struct bu_arg_operand move_arb_edge_schema_operands[] = {
+    BU_ARG_OPERAND("arb", BU_ARG_VALUE_DB_PATH, 1, 1, "ARB object or path", "ged.db_path"),
+    BU_ARG_OPERAND_VALIDATE("edge", BU_ARG_VALUE_INTEGER, 1, 1,
 	ged_arb_positive_integer_validate, "One-based edge index", NULL),
-    BU_CMD_OPERAND_VALIDATE("point", BU_CMD_VALUE_VECTOR, 1, 1,
+    BU_ARG_OPERAND_VALIDATE("point", BU_ARG_VALUE_VECTOR, 1, 1,
 	ged_arb_vector3_validate, "Packed XYZ point", NULL),
-    BU_CMD_OPERAND_NULL
+    BU_ARG_OPERAND_NULL
 };
-static const struct bu_cmd_schema move_arb_edge_cmd_schema = {
+static const struct bu_arg_schema move_arb_edge_cmd_schema = {
     "move_arb_edge", "Move an ARB edge", move_arb_edge_schema_options,
-    move_arb_edge_schema_operands, BU_CMD_PARSE_OPTIONS_FIRST, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+    move_arb_edge_schema_operands, BU_ARG_PARSE_OPTIONS_FIRST, BU_ARG_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
-static const struct bu_cmd_operand find_arb_edge_schema_operands[] = {
-    BU_CMD_OPERAND("arb", BU_CMD_VALUE_DB_PATH, 1, 1, "ARB object or path", "ged.db_path"),
-    BU_CMD_OPERAND_VALIDATE("view_point", BU_CMD_VALUE_VECTOR, 1, 1,
+static const struct bu_arg_operand find_arb_edge_schema_operands[] = {
+    BU_ARG_OPERAND("arb", BU_ARG_VALUE_DB_PATH, 1, 1, "ARB object or path", "ged.db_path"),
+    BU_ARG_OPERAND_VALIDATE("view_point", BU_ARG_VALUE_VECTOR, 1, 1,
 	ged_arb_vector3_validate, "Packed view XYZ point", NULL),
-    BU_CMD_OPERAND("tolerance", BU_CMD_VALUE_NUMBER, 1, 1, "Point tolerance", NULL),
-    BU_CMD_OPERAND_NULL
+    BU_ARG_OPERAND("tolerance", BU_ARG_VALUE_NUMBER, 1, 1, "Point tolerance", NULL),
+    BU_ARG_OPERAND_NULL
 };
-static const struct bu_cmd_schema find_arb_edge_cmd_schema = {
+static const struct bu_arg_schema find_arb_edge_cmd_schema = {
     "find_arb_edge", "Find the ARB edge nearest a view point", NULL,
-    find_arb_edge_schema_operands, BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+    find_arb_edge_schema_operands, BU_ARG_PARSE_STOP_AT_FIRST_OPERAND, BU_ARG_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
 
 
@@ -110,7 +110,7 @@ ged_move_arb_edge_core(struct ged *gedp, int argc, const char *argv[])
 	return GED_HELP;
     }
 
-    operand_index = bu_cmd_schema_parse_complete(&move_arb_edge_cmd_schema, &args,
+    operand_index = bu_arg_schema_parse_complete(&move_arb_edge_cmd_schema, &args,
 	gedp->ged_result_str, argc - 1, argv + 1);
     if (operand_index < 0) {
 	ged_cmd_help_append(gedp->ged_result_str, argv[0], argv[0]);
@@ -285,7 +285,7 @@ ged_find_arb_edge_nearest_pnt_core(struct ged *gedp, int argc, const char *argv[
 	return GED_HELP;
     }
 
-    operand_index = bu_cmd_schema_parse_complete(&find_arb_edge_cmd_schema, NULL,
+    operand_index = bu_arg_schema_parse_complete(&find_arb_edge_cmd_schema, NULL,
 	gedp->ged_result_str, argc - 1, argv + 1);
     if (operand_index < 0) {
 	ged_cmd_help_append(gedp->ged_result_str, argv[0], argv[0]);

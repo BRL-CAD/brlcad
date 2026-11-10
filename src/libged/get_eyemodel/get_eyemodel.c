@@ -25,12 +25,12 @@
 
 #include "common.h"
 
-#include "bu/cmdschema.h"
+#include "bu/arg.h"
 
 #include "../ged_private.h"
 
 GED_DEFINE_NO_ARG_SCHEMA_POLICY(get_eyemodel, "get_eyemodel",
-    "Report the current view eye point and orientation", BU_CMD_PARSE_OPTIONS_FIRST);
+    "Report the current view eye point and orientation", BU_ARG_PARSE_OPTIONS_FIRST);
 
 
 /*
@@ -54,7 +54,7 @@ ged_get_eyemodel_core(struct ged *gedp, int argc, const char *argv[])
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
 
-    if (bu_cmd_schema_parse_complete(&get_eyemodel_cmd_schema, &parse_dummy,
+    if (bu_arg_schema_parse_complete(&get_eyemodel_cmd_schema, &parse_dummy,
 	gedp->ged_result_str, argc - 1, argv + 1) != argc - 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s", argv[0]);
 	return BRLCAD_ERROR;

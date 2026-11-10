@@ -31,7 +31,7 @@
 #include <limits.h>
 
 #include "bu/cmd.h"
-#include "bu/cmdschema.h"
+#include "bu/arg.h"
 #include "bu/sort.h"
 
 #include "../ged_private.h"
@@ -65,36 +65,36 @@ tree_nonnegative_integer(struct bu_vls *msg, const char *arg)
 }
 
 
-static const struct bu_cmd_option tree_schema_options[] = {
-    BU_CMD_FLAG("a", NULL, struct tree_args, include_attributes,
+static const struct bu_arg_option tree_schema_options[] = {
+    BU_ARG_FLAG("a", NULL, struct tree_args, include_attributes,
 	"Include object attributes"),
-    BU_CMD_FLAG("c", NULL, struct tree_args, combinations_only,
+    BU_ARG_FLAG("c", NULL, struct tree_args, combinations_only,
 	"Print combinations only"),
-    BU_CMD_FILE("o", NULL, struct tree_args, output_file, "file",
+    BU_ARG_FILE("o", NULL, struct tree_args, output_file, "file",
 	"Write output to a file"),
-    BU_CMD_INTEGER("i", NULL, struct tree_args, indent_size, "spaces",
+    BU_ARG_INTEGER("i", NULL, struct tree_args, indent_size, "spaces",
 	"Set indentation size"),
-    BU_CMD_INTEGER_VALIDATE("d", NULL, struct tree_args, display_depth,
+    BU_ARG_INTEGER_VALIDATE("d", NULL, struct tree_args, display_depth,
 	tree_nonnegative_integer, "depth", "Set maximum display depth"),
-    BU_CMD_COUNTING_FLAG("v", NULL, struct tree_args, verbosity,
+    BU_ARG_COUNTING_FLAG("v", NULL, struct tree_args, verbosity,
 	"Increase output verbosity"),
-    BU_CMD_OPTION_NULL
+    BU_ARG_OPTION_NULL
 };
-static const struct bu_cmd_operand tree_schema_operands[] = {
-    BU_CMD_OPERAND("objects", BU_CMD_VALUE_DB_OBJECT, 0, BU_CMD_COUNT_UNLIMITED,
+static const struct bu_arg_operand tree_schema_operands[] = {
+    BU_ARG_OPERAND("objects", BU_ARG_VALUE_DB_OBJECT, 0, BU_ARG_COUNT_UNLIMITED,
 	"Database objects whose trees should be printed", "ged.db_object"),
-    BU_CMD_OPERAND_NULL
+    BU_ARG_OPERAND_NULL
 };
-static const struct bu_cmd_schema tree_cmd_schema = {
+static const struct bu_arg_schema tree_cmd_schema = {
     "tree", "Print database combination trees", tree_schema_options,
-    tree_schema_operands, BU_CMD_PARSE_OPTIONS_FIRST, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL)
+    tree_schema_operands, BU_ARG_PARSE_OPTIONS_FIRST, BU_ARG_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
 
 
 static void
 tree_show_help(struct ged *gedp, const char *command)
 {
-    char *help = bu_cmd_schema_help(&tree_cmd_schema, command);
+    char *help = bu_arg_schema_help(&tree_cmd_schema, command);
 
     if (help) {
 	bu_vls_strcat(gedp->ged_result_str, help);
@@ -326,7 +326,7 @@ ged_tree_core(struct ged *gedp, int argc, const char *argv[])
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
 
-    operand_index = bu_cmd_schema_parse_complete(&tree_cmd_schema, &args,
+    operand_index = bu_arg_schema_parse_complete(&tree_cmd_schema, &args,
 	gedp->ged_result_str, argc - 1, argv + 1);
     if (operand_index < 0) {
 	tree_show_help(gedp, argv[0]);

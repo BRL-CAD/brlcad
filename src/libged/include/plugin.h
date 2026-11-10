@@ -26,7 +26,7 @@
 
 #include "../ged_private.h"
 #include "brlcad_version.h"
-#include "bu/cmdschema.h"
+#include "bu/arg.h"
 
 #define BU_PLUGIN_NAME ged
 #define BU_PLUGIN_CMD_RET int
@@ -47,7 +47,7 @@ struct ged_cmd_impl {
     const char *cname;
     ged_func_ptr cmd;
     unsigned long long opts;
-    const struct bu_cmd_schema *native_schema;
+    const struct bu_arg_schema *native_schema;
     const struct ged_cmd_grammar *grammar;
     const ged_opt_spec *opt_spec;
 };
@@ -58,7 +58,7 @@ struct ged_cmd_process_impl {
 
 struct ged_cmd_schema {
     const char *cname;
-    const struct bu_cmd_schema *native_schema;
+    const struct bu_arg_schema *native_schema;
     const struct ged_cmd_grammar *grammar;
     const ged_opt_spec *opt_spec;
 };
@@ -76,20 +76,20 @@ struct ged_plugin_schema_manifest {
 
 /* Compact declaration for commands whose syntax is one repeated typed
  * positional role and no options.  This emits the native schema directly;
- * callers supply BU_CMD_VALUE_* and BU_CMD_COUNT_UNLIMITED values rather
+ * callers supply BU_ARG_VALUE_* and BU_ARG_COUNT_UNLIMITED values rather
  * than retired descriptor-metadata types. */
 #define GED_DEFINE_TYPED_OPERAND_SCHEMA_POLICY_PROVIDER(id, cmdstr, helpstr, role, valtype, mincnt, maxcnt, rolehelp, policy, provider) \
-    static const struct bu_cmd_operand id##_schema_operands[] = { \
-	BU_CMD_OPERAND(role, valtype, mincnt, maxcnt, rolehelp, provider), \
-	BU_CMD_OPERAND_NULL \
+    static const struct bu_arg_operand id##_schema_operands[] = { \
+	BU_ARG_OPERAND(role, valtype, mincnt, maxcnt, rolehelp, provider), \
+	BU_ARG_OPERAND_NULL \
     }; \
-    static const struct bu_cmd_schema id##_cmd_schema = { \
+    static const struct bu_arg_schema id##_cmd_schema = { \
 	cmdstr, helpstr, NULL, id##_schema_operands, \
-	policy, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL) \
+	policy, BU_ARG_SCHEMA_CONSTRAINTS(NULL, NULL) \
     }
 
 #define GED_DEFINE_TYPED_OPERAND_SCHEMA_PROVIDER(id, cmdstr, helpstr, role, valtype, mincnt, maxcnt, rolehelp, provider) \
-    GED_DEFINE_TYPED_OPERAND_SCHEMA_POLICY_PROVIDER(id, cmdstr, helpstr, role, valtype, mincnt, maxcnt, rolehelp, BU_CMD_PARSE_STOP_AT_FIRST_OPERAND, provider)
+    GED_DEFINE_TYPED_OPERAND_SCHEMA_POLICY_PROVIDER(id, cmdstr, helpstr, role, valtype, mincnt, maxcnt, rolehelp, BU_ARG_PARSE_STOP_AT_FIRST_OPERAND, provider)
 
 #define GED_DEFINE_TYPED_OPERAND_SCHEMA(id, cmdstr, helpstr, role, valtype, mincnt, maxcnt, rolehelp) \
     GED_DEFINE_TYPED_OPERAND_SCHEMA_PROVIDER(id, cmdstr, helpstr, role, valtype, mincnt, maxcnt, rolehelp, NULL)
@@ -97,35 +97,35 @@ struct ged_plugin_schema_manifest {
 /* Compact no-option, no-operand schemas.  The named form is useful for tree
  * nodes whose symbols do not follow the top-level id##_cmd_schema convention. */
 #define GED_DEFINE_NO_ARG_SCHEMA_NAMED(symbol, cmdstr, helpstr, policy) \
-    static const struct bu_cmd_schema symbol = { \
-	cmdstr, helpstr, NULL, NULL, policy, BU_CMD_SCHEMA_CONSTRAINTS(NULL, NULL) \
+    static const struct bu_arg_schema symbol = { \
+	cmdstr, helpstr, NULL, NULL, policy, BU_ARG_SCHEMA_CONSTRAINTS(NULL, NULL) \
     }
 
 #define GED_DEFINE_NO_ARG_SCHEMA_POLICY(id, cmdstr, helpstr, policy) \
     GED_DEFINE_NO_ARG_SCHEMA_NAMED(id##_cmd_schema, cmdstr, helpstr, policy)
 
 #define GED_DEFINE_NO_ARG_SCHEMA(id, cmdstr, helpstr) \
-    GED_DEFINE_NO_ARG_SCHEMA_POLICY(id, cmdstr, helpstr, BU_CMD_PARSE_STOP_AT_FIRST_OPERAND)
+    GED_DEFINE_NO_ARG_SCHEMA_POLICY(id, cmdstr, helpstr, BU_ARG_PARSE_STOP_AT_FIRST_OPERAND)
 
 /* Validator helper for parsers accepting a small set of exact positional
  * counts (for example, query with one object or set with object + XYZ). */
 #define GED_SCHEMA_COUNT_NONE ((size_t)-2)
 #define GED_DEFINE_NATIVE_DISCRETE_COUNT_VALIDATOR(id, count1, count2, count3) \
-    static int id##_schema_validate(const struct bu_cmd_schema *cmd, size_t argc, \
-	const char **argv, size_t cursor_arg, struct bu_cmd_validate_result *result) \
+    static int id##_schema_validate(const struct bu_arg_schema *cmd, size_t argc, \
+	const char **argv, size_t cursor_arg, struct bu_arg_validate_result *result) \
     { \
-	struct bu_cmd_schema flat = *cmd; \
-	flat.parse_policy = BU_CMD_PARSE_STOP_AT_FIRST_OPERAND; \
-	int ret = bu_cmd_schema_validate_syntax(&flat, argc, argv, cursor_arg, result); \
-	if (ret || result->state == BU_CMD_VALIDATE_INVALID || cursor_arg < argc) \
+	struct bu_arg_schema flat = *cmd; \
+	flat.parse_policy = BU_ARG_PARSE_STOP_AT_FIRST_OPERAND; \
+	int ret = bu_arg_schema_validate_syntax(&flat, argc, argv, cursor_arg, result); \
+	if (ret || result->state == BU_ARG_VALIDATE_INVALID || cursor_arg < argc) \
 	    return ret; \
 	if (argc != (size_t)(count1) && argc != (size_t)(count2) && argc != (size_t)(count3)) { \
-	    bu_cmd_value_t ctype = result->completion_type; \
-	    bu_cmd_validate_result_clear(result); \
-	    result->state = BU_CMD_VALIDATE_INCOMPLETE; \
+	    bu_arg_value_t ctype = result->completion_type; \
+	    bu_arg_validate_result_clear(result); \
+	    result->state = BU_ARG_VALIDATE_INCOMPLETE; \
 	    result->token_start = argc; \
 	    result->token_end = argc; \
-	    result->expected = BU_CMD_EXPECT_OPERAND; \
+	    result->expected = BU_ARG_EXPECT_OPERAND; \
 	    result->completion_type = ctype; \
 	    result->hint = "additional operands required"; \
 	} \
@@ -148,7 +148,7 @@ extern "C" {
     /** Register borrowed native metadata.  The schema and every table,
      * string, and callback reachable from it must remain valid until
      * libged_shutdown() has finished. */
-    GED_EXPORT int ged_register_command_native_schema(const char *name, const struct bu_cmd_schema *schema);
+    GED_EXPORT int ged_register_command_native_schema(const char *name, const struct bu_arg_schema *schema);
     /** Parser-owned counterpart to native-schema registration, with the same
      * borrowed-storage lifetime. */
     int ged_register_command_grammar(const char *name, const struct ged_cmd_grammar *grammar);

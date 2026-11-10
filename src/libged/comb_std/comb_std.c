@@ -28,12 +28,12 @@
 
 #include <string.h>
 
-#include "bu/cmdschema.h"
+#include "bu/arg.h"
 #include "vmath.h"
 #include "rt/geom.h"
 #include "ged.h"
 
-static const struct bu_cmd_schema *comb_std_schema_for_command(const char *command);
+static const struct bu_arg_schema *comb_std_schema_for_command(const char *command);
 
 struct comb_std_args {
     int region_flag;
@@ -465,7 +465,7 @@ ged_comb_std_core(struct ged *gedp, int argc, const char *argv[])
 	return GED_HELP;
     }
 
-    operand_index = bu_cmd_schema_parse_complete(comb_std_schema_for_command(argv[0]), &args,
+    operand_index = bu_arg_schema_parse_complete(comb_std_schema_for_command(argv[0]), &args,
 	gedp->ged_result_str, argc - 1, argv + 1);
     if (operand_index < 0) {
 	ged_cmd_help_append(gedp->ged_result_str, argv[0], argv[0]);
@@ -681,7 +681,7 @@ comb_std_expr_keyword(const char *s)
 }
 
 static void
-comb_std_expr_candidates(struct bu_cmd_validate_result *result, const char *prefix)
+comb_std_expr_candidates(struct bu_arg_validate_result *result, const char *prefix)
 {
     size_t count = 0;
 
@@ -699,15 +699,15 @@ comb_std_expr_candidates(struct bu_cmd_validate_result *result, const char *pref
 }
 
 static int
-comb_std_validation_result(struct bu_cmd_validate_result *result,
-	bu_cmd_validate_state_t state, size_t token, bu_cmd_value_t type,
+comb_std_validation_result(struct bu_arg_validate_result *result,
+	bu_arg_validate_state_t state, size_t token, bu_arg_value_t type,
 	const char *hint, const char *provider)
 {
-    bu_cmd_validate_result_clear(result);
+    bu_arg_validate_result_clear(result);
     result->state = state;
     result->token_start = token;
     result->token_end = token;
-    result->expected = BU_CMD_EXPECT_OPERAND;
+    result->expected = BU_ARG_EXPECT_OPERAND;
     result->completion_type = type;
     result->hint = hint;
     result->semantic_provider = provider;
@@ -738,10 +738,10 @@ comb_std_first_operand(size_t argc, const char **argv)
 }
 
 static int
-comb_std_schema_validate(const struct bu_cmd_schema *cmd, size_t argc, const char **argv,
-	size_t cursor_arg, struct bu_cmd_validate_result *result)
+comb_std_schema_validate(const struct bu_arg_schema *cmd, size_t argc, const char **argv,
+	size_t cursor_arg, struct bu_arg_validate_result *result)
 {
-    struct bu_cmd_schema flat = *cmd;
+    struct bu_arg_schema flat = *cmd;
     size_t operands;
     size_t first;
     int set_comb;
@@ -749,27 +749,27 @@ comb_std_schema_validate(const struct bu_cmd_schema *cmd, size_t argc, const cha
     int help;
     int ret;
 
-    ret = bu_cmd_schema_validate_syntax(&flat, argc, argv, cursor_arg, result);
-    if (ret || result->state == BU_CMD_VALIDATE_INVALID)
+    ret = bu_arg_schema_validate_syntax(&flat, argc, argv, cursor_arg, result);
+    if (ret || result->state == BU_ARG_VALIDATE_INVALID)
 	return ret;
 
 
-    set_comb = bu_cmd_schema_option_present(cmd, argc, argv, "c");
-    set_region = bu_cmd_schema_option_present(cmd, argc, argv, "r");
-    help = bu_cmd_schema_option_present(cmd, argc, argv, "?");
+    set_comb = bu_arg_schema_option_present(cmd, argc, argv, "c");
+    set_region = bu_arg_schema_option_present(cmd, argc, argv, "r");
+    help = bu_arg_schema_option_present(cmd, argc, argv, "?");
     if (cursor_arg < argc && argv[cursor_arg] && argv[cursor_arg][0] == '-' &&
-	argv[cursor_arg][1] && (result->expected & BU_CMD_EXPECT_OPTION))
+	argv[cursor_arg][1] && (result->expected & BU_ARG_EXPECT_OPTION))
 	return 0;
 
-    operands = bu_cmd_schema_operand_count(cmd, argc, argv);
+    operands = bu_arg_schema_operand_count(cmd, argc, argv);
     first = comb_std_first_operand(argc, argv);
     if (help) {
 	if (operands)
-	    return comb_std_validation_result(result, BU_CMD_VALIDATE_INVALID,
-		cursor_arg < argc ? cursor_arg : argc, BU_CMD_VALUE_STRING,
+	    return comb_std_validation_result(result, BU_ARG_VALIDATE_INVALID,
+		cursor_arg < argc ? cursor_arg : argc, BU_ARG_VALUE_STRING,
 		"-? does not accept operands", NULL);
-	return comb_std_validation_result(result, BU_CMD_VALIDATE_VALID, argc,
-	    BU_CMD_VALUE_FLAG, "command help", NULL);
+	return comb_std_validation_result(result, BU_ARG_VALIDATE_VALID, argc,
+	    BU_ARG_VALUE_FLAG, "command help", NULL);
     }
 
     if (!operands)
@@ -777,8 +777,8 @@ comb_std_schema_validate(const struct bu_cmd_schema *cmd, size_t argc, const cha
 
     if (operands == 1) {
 	if (!set_comb && !set_region && cursor_arg >= argc) {
-	    comb_std_validation_result(result, BU_CMD_VALIDATE_INCOMPLETE, argc,
-		BU_CMD_VALUE_RAW, "boolean expression expected", NULL);
+	    comb_std_validation_result(result, BU_ARG_VALIDATE_INCOMPLETE, argc,
+		BU_ARG_VALUE_RAW, "boolean expression expected", NULL);
 	    comb_std_expr_candidates(result, "");
 	}
 	return 0;
@@ -788,42 +788,42 @@ comb_std_schema_validate(const struct bu_cmd_schema *cmd, size_t argc, const cha
 	return 0;
 
     if (comb_std_expr_keyword(argv[cursor_arg])) {
-	comb_std_validation_result(result, BU_CMD_VALIDATE_VALID, cursor_arg,
-	    BU_CMD_VALUE_KEYWORD, "boolean operator or parenthesis", NULL);
+	comb_std_validation_result(result, BU_ARG_VALIDATE_VALID, cursor_arg,
+	    BU_ARG_VALUE_KEYWORD, "boolean operator or parenthesis", NULL);
 	comb_std_expr_candidates(result, argv[cursor_arg]);
     } else {
-	comb_std_validation_result(result, BU_CMD_VALIDATE_VALID, cursor_arg,
-	    BU_CMD_VALUE_DB_OBJECT, "boolean expression object", "ged.db_object");
+	comb_std_validation_result(result, BU_ARG_VALIDATE_VALID, cursor_arg,
+	    BU_ARG_VALUE_DB_OBJECT, "boolean expression object", "ged.db_object");
     }
     return 0;
 }
 
-static const struct bu_cmd_option comb_std_schema_options[] = {
-    BU_CMD_CUSTOM_FLAG("c", NULL, "c", struct comb_std_args, region_flag,
+static const struct bu_arg_option comb_std_schema_options[] = {
+    BU_ARG_CUSTOM_FLAG("c", NULL, "c", struct comb_std_args, region_flag,
 	comb_std_set_non_region, "Create or mark a non-region combination"),
-    BU_CMD_ALIAS_SHORT("g", "c", 1),
-    BU_CMD_CUSTOM_FLAG("r", NULL, "r", struct comb_std_args, region_flag,
+    BU_ARG_ALIAS_SHORT("g", "c", 1),
+    BU_ARG_CUSTOM_FLAG("r", NULL, "r", struct comb_std_args, region_flag,
 	comb_std_set_region, "Create or mark a region"),
-    BU_CMD_FLAG("?", NULL, struct comb_std_args, help, "Print command usage"),
-    BU_CMD_OPTION_NULL
+    BU_ARG_FLAG("?", NULL, struct comb_std_args, help, "Print command usage"),
+    BU_ARG_OPTION_NULL
 };
-static const struct bu_cmd_operand comb_std_schema_operands[] = {
-    BU_CMD_OPERAND("combination", BU_CMD_VALUE_STRING, 1, 1,
+static const struct bu_arg_operand comb_std_schema_operands[] = {
+    BU_ARG_OPERAND("combination", BU_ARG_VALUE_STRING, 1, 1,
 	"Combination to create or modify", NULL),
-    BU_CMD_OPERAND("boolean_expression", BU_CMD_VALUE_RAW, 0,
-	BU_CMD_COUNT_UNLIMITED, "Parenthesized object boolean expression", NULL),
-    BU_CMD_OPERAND_NULL
+    BU_ARG_OPERAND("boolean_expression", BU_ARG_VALUE_RAW, 0,
+	BU_ARG_COUNT_UNLIMITED, "Parenthesized object boolean expression", NULL),
+    BU_ARG_OPERAND_NULL
 };
-static const struct bu_cmd_schema comb_std_cmd_schema = {
+static const struct bu_arg_schema comb_std_cmd_schema = {
     "comb_std", "Create a combination from a boolean expression", comb_std_schema_options,
-    comb_std_schema_operands, BU_CMD_PARSE_OPTIONS_FIRST, BU_CMD_SCHEMA_CONSTRAINTS(comb_std_schema_validate, NULL)
+    comb_std_schema_operands, BU_ARG_PARSE_OPTIONS_FIRST, BU_ARG_SCHEMA_CONSTRAINTS(comb_std_schema_validate, NULL)
 };
-static const struct bu_cmd_schema c_cmd_schema = {
+static const struct bu_arg_schema c_cmd_schema = {
     "c", "Create a combination from a boolean expression", comb_std_schema_options,
-    comb_std_schema_operands, BU_CMD_PARSE_OPTIONS_FIRST, BU_CMD_SCHEMA_CONSTRAINTS(comb_std_schema_validate, NULL)
+    comb_std_schema_operands, BU_ARG_PARSE_OPTIONS_FIRST, BU_ARG_SCHEMA_CONSTRAINTS(comb_std_schema_validate, NULL)
 };
 
-static const struct bu_cmd_schema *
+static const struct bu_arg_schema *
 comb_std_schema_for_command(const char *command)
 {
     return BU_STR_EQUAL(command, "c") ? &c_cmd_schema : &comb_std_cmd_schema;
