@@ -27,7 +27,7 @@
 
 #include <string.h>
 
-#include "bu/opt.h"
+#include "bu/arg.h"
 #include "../ged_private.h"
 
 
@@ -36,47 +36,29 @@ struct lt_args {
 };
 
 static int
-lt_separator_parse(struct bu_vls *msg, size_t argc, const char **argv,
-	void *storage)
+lt_separator_validate(struct bu_vls *msg, const char *arg)
 {
-    char *separator = (char *)storage;
-
-    if (argc && argv && argv[0] && argv[0][0] && !argv[0][1]) {
-	if (separator)
-	    *separator = argv[0][0];
-	return 1;
-    }
+    if (arg && arg[0] && !arg[1])
+	return 0;
     if (msg)
 	bu_vls_printf(msg, "separator must be one character\n");
     return -1;
 }
 
-static int
-lt_separator_validate(const struct bu_opt_desc *UNUSED(option), size_t argc,
-	const char **argv, size_t cursor_arg, void *UNUSED(context),
-	void *UNUSED(data), struct bu_opt_validate_result *result)
-{
-    if (!argv || cursor_arg >= argc || !argv[cursor_arg] ||
-	!argv[cursor_arg][0] || argv[cursor_arg][1]) {
-	result->state = BU_OPT_VALIDATE_INVALID;
-	result->hint = "one-character separator";
-    }
-    return 0;
-}
-
-#define LT_OPTIONS(args) \
-    BU_OPT_CUSTOM(args, "c", NULL, separator, "separator", lt_separator_parse, \
+static const struct bu_arg_option lt_options[] = {
+    BU_ARG_VALUE_VALIDATE("c", NULL, struct lt_args, separator,
+	BU_ARG_VALUE_CHAR, lt_separator_validate, "separator",
 	"Output separator character"),
-
-BU_OPT_DESC_BUILDER(lt_options, struct lt_args, LT_OPTIONS);
-static const ged_opt_rule lt_opt_rules[] = {
-    GED_RULE_VALUE_VALIDATE("c", BU_OPT_VALUE_CHAR, "one-character separator",
-	lt_separator_validate, NULL),
-    GED_RULE_NULL
+    BU_ARG_OPTION_NULL
 };
-static const ged_opt_spec lt_opt_spec =
-    GED_OPT_WITH("lt", "List combination children", lt_options,
-	"options-first object:object", lt_opt_rules);
+static const struct bu_arg_operand lt_operands[] = {
+    BU_ARG_OPERAND("object", BU_ARG_VALUE_DB_OBJECT, 1, 1,
+	"Combination to list", "ged.db_object"),
+    BU_ARG_OPERAND_NULL
+};
+static const struct bu_arg_schema lt_cmd_schema =
+    BU_ARG_SCHEMA("lt", "List combination children", lt_options, lt_operands,
+	BU_ARG_PARSE_OPTIONS_FIRST, NULL);
 
 
 static int
@@ -168,7 +150,7 @@ ged_lt_core(struct ged *gedp, int argc, const char *argv[])
     struct lt_args args = {0};
     int c_sep = -1;
     const char *cmd_name = argv[0];
-    int operand_count = 0;
+    int operand_index;
 
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
     GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
@@ -183,12 +165,13 @@ ged_lt_core(struct ged *gedp, int argc, const char *argv[])
     }
 
     argc--; argv++;
-    operand_count = bu_opt_parse_build_with_policy(gedp->ged_result_str,
-	argc, argv, lt_options, &args, BU_OPT_PARSE_OPTIONS_FIRST);
-    if (operand_count != 1) {
+    operand_index = bu_arg_schema_parse_complete(&lt_cmd_schema, &args,
+	gedp->ged_result_str, argc, argv);
+    if (operand_index < 0) {
 	ged_cmd_help_append(gedp->ged_result_str, cmd_name, cmd_name);
 	return BRLCAD_ERROR;
     }
+    argv += operand_index;
 
     if (args.separator)
 	c_sep = (int)args.separator;
@@ -204,10 +187,10 @@ ged_lt_core(struct ged *gedp, int argc, const char *argv[])
 #include "../include/plugin.h"
 
 #define GED_LT_COMMANDS(X, XID) \
-    X(lt, ged_lt_core, GED_CMD_DEFAULT, &lt_opt_spec) \
+    X(lt, ged_lt_core, GED_CMD_DEFAULT, &lt_cmd_schema) \
 
-GED_DECLARE_COMMAND_SET_WITH_OPT_SPEC(GED_LT_COMMANDS)
-GED_DECLARE_PLUGIN_MANIFEST_WITH_OPT_SPEC("libged_lt", 1, GED_LT_COMMANDS)
+GED_DECLARE_COMMAND_SET_WITH_NATIVE_SCHEMA(GED_LT_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST_WITH_NATIVE_SCHEMA("libged_lt", 1, GED_LT_COMMANDS)
 
 /*
  * Local Variables:
