@@ -41,6 +41,7 @@
 #include "bv/defines.h"
 #include "bv/util.h"
 #include "ged.h"
+#include "ged/edit.h"
 #include "include/plugin.h"
 
 #ifdef __cplusplus
@@ -50,7 +51,6 @@
 #include <string>
 #include <unordered_map>
 
-#include "ged/edit.h"
 #include "rt/edit.h"
 #include "rt/db_fullpath.h"
 
