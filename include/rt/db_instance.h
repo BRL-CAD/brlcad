@@ -174,6 +174,18 @@ db_open(const char *name, const char *mode);
  */
 RT_EXPORT extern struct db_i * db_open_inmem(void);
 
+#define DB_OPEN_INMEM_DEFAULT 0x0u
+#define DB_OPEN_INMEM_COMB_INSTANCES 0x1u
+
+/**
+ * Create an in-memory database with explicit setup flags.
+ *
+ * Unlike db_open_inmem(), this function does not consult the process
+ * environment.  The requested mode is fixed for the lifetime of the returned
+ * database instance.  Returns DBI_NULL if @p flags contains unknown bits.
+ */
+RT_EXPORT extern struct db_i *db_open_inmem_ex(unsigned int flags);
+
 
 /**
  * Create a new database containing just a header record, regardless
@@ -196,6 +208,16 @@ db_create(const char *name, int version);
  * default _GLOBAL object.
  */
 RT_EXPORT extern struct db_i * db_create_inmem(void);
+
+/**
+ * Report whether combination instance specifiers were enabled when @p dbip
+ * was opened.
+ *
+ * This state is initialized from LIBRT_USE_COMB_INSTANCE_SPECIFIERS and is
+ * fixed for the lifetime of the database instance.  Changing the environment
+ * after opening a database does not change its path interpretation.
+ */
+RT_EXPORT extern int db_uses_instance_specifiers(const struct db_i *dbip);
 
 
 /**

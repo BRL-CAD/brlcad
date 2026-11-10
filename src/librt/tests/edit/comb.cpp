@@ -140,6 +140,16 @@ make_test_comb(struct rt_wdb *wdbp)
 int
 rt_edit_test_comb(void)
 {
+    struct db_i *disabled = db_open_inmem_ex(DB_OPEN_INMEM_DEFAULT);
+    struct db_i *enabled = db_open_inmem_ex(DB_OPEN_INMEM_COMB_INSTANCES);
+    if (!disabled || !enabled ||
+	db_uses_instance_specifiers(disabled) ||
+	!db_uses_instance_specifiers(enabled) ||
+	db_open_inmem_ex(DB_OPEN_INMEM_COMB_INSTANCES << 1) != DBI_NULL)
+	bu_exit(1, "ERROR: explicit in-memory instance mode was not honored\n");
+    db_close(disabled);
+    db_close(enabled);
+
     g_dbip = db_open_inmem();
     if (g_dbip == DBI_NULL)
 	bu_exit(1, "ERROR: Unable to create in-memory database\n");

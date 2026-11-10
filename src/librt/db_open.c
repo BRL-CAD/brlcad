@@ -128,12 +128,6 @@ db_open(const char *name, const char *mode)
 	    return DBI_NULL;
 	}
 
-	dbip->i->dbi_use_comb_instance_ids = 0;
-	const char *need_comb_inst = getenv("LIBRT_USE_COMB_INSTANCE_SPECIFIERS");
-	if (BU_STR_EQUAL(need_comb_inst, "1")) {
-	    dbip->i->dbi_use_comb_instance_ids = 1;
-	}
-
 	dbip->dbi_read_only = 1;
     } else {
 	/* Read-write mode */
@@ -149,12 +143,6 @@ db_open(const char *name, const char *mode)
 	    db_i_internal_destroy(dbip->i);
 	    bu_free((char *)dbip, "struct db_i");
 	    return DBI_NULL;
-	}
-
-	dbip->i->dbi_use_comb_instance_ids = 0;
-	const char *need_comb_inst = getenv("LIBRT_USE_COMB_INSTANCE_SPECIFIERS");
-	if (BU_STR_EQUAL(need_comb_inst, "1")) {
-	    dbip->i->dbi_use_comb_instance_ids = 1;
 	}
 
 	dbip->dbi_read_only = 0;
@@ -265,6 +253,15 @@ db_open(const char *name, const char *mode)
     wdb_init(dbip->i->dbi_wdbp_inmem_a, dbip, RT_WDB_TYPE_DB_INMEM_APPEND_ONLY);
 
     return dbip;
+}
+
+
+int
+db_uses_instance_specifiers(const struct db_i *dbip)
+{
+    if (!dbip || !dbip->i)
+	return 0;
+    return dbip->i->dbi_use_comb_instance_ids != 0;
 }
 
 struct db_i *
@@ -598,6 +595,8 @@ db_i_internal_create(void)
     struct db_i_internal *i;
     BU_GET(i, struct db_i_internal);
     i->dbi_magic = DBI_MAGIC;
+    i->dbi_use_comb_instance_ids = BU_STR_EQUAL(
+	getenv("LIBRT_USE_COMB_INSTANCE_SPECIFIERS"), "1");
     i->material_head = MATER_NULL;
     i->dbi_directory_hd = NULL;
     bu_ptbl_init(&i->dbi_directory_blocks, 8, "dbi_directory_blocks");

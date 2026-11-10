@@ -46,14 +46,16 @@
 
 #define DEFAULT_DB_TITLE "Untitled BRL-CAD Database"
 
-struct db_i *
-db_open_inmem(void)
+static struct db_i *
+db_open_inmem_internal(int instance_specifiers)
 {
     register struct db_i *dbip = DBI_NULL;
     register int i;
 
     BU_ALLOC(dbip, struct db_i);
     dbip->i = db_i_internal_create();
+    if (instance_specifiers >= 0)
+	dbip->i->dbi_use_comb_instance_ids = instance_specifiers != 0;
     dbip->i->dbi_eof = (b_off_t)-1L;
     dbip->i->dbi_fp = NULL;
     dbip->i->dbi_mf = NULL;
@@ -86,12 +88,6 @@ db_open_inmem(void)
     bu_ptbl_init(&dbip->i->dbi_changed_clbks , 8, "dbi_changed_clbks]");
     bu_ptbl_init(&dbip->i->dbi_update_nref_clbks, 8, "dbi_update_nref_clbks");
 
-    dbip->i->dbi_use_comb_instance_ids = 0;
-    const char *need_comb_inst = getenv("LIBRT_USE_COMB_INSTANCE_SPECIFIERS");
-    if (BU_STR_EQUAL(need_comb_inst, "1")) {
-	dbip->i->dbi_use_comb_instance_ids = 1;
-    }
-
     dbip->dbi_magic = DBI_MAGIC;		/* Now it's valid */
 
     /* These wdb modes aren't valid for an in-mem db */
@@ -106,6 +102,20 @@ db_open_inmem(void)
     wdb_init(dbip->i->dbi_wdbp_inmem_a, dbip, RT_WDB_TYPE_DB_INMEM_APPEND_ONLY);
 
     return dbip;
+}
+
+struct db_i *
+db_open_inmem(void)
+{
+    return db_open_inmem_internal(-1);
+}
+
+struct db_i *
+db_open_inmem_ex(unsigned int flags)
+{
+    if (flags & ~DB_OPEN_INMEM_COMB_INSTANCES)
+	return DBI_NULL;
+    return db_open_inmem_internal(flags & DB_OPEN_INMEM_COMB_INSTANCES);
 }
 
 struct db_i *
