@@ -27,7 +27,7 @@
 
 #include <string.h>
 
-#include "bu/opt.h"
+#include "bu/arg.h"
 
 #include "../ged_private.h"
 
@@ -45,16 +45,20 @@ struct showmats_args {
 };
 
 
-#define SHOWMATS_OPTIONS(args) \
-    BU_OPT_FLAG(args, "a", NULL, all_occurrences, \
+static const struct bu_arg_option showmats_options[] = {
+    BU_ARG_FLAG("a", NULL, struct showmats_args, all_occurrences,
 	"Show matrices for every arc in the path"),
-
-BU_OPT_DESC_BUILDER(showmats_options, struct showmats_args, SHOWMATS_OPTIONS);
-
-static const ged_opt_spec showmats_opt_spec =
-    GED_OPT("showmats",
+    BU_ARG_OPTION_NULL
+};
+static const struct bu_arg_operand showmats_operands[] = {
+    BU_ARG_OPERAND("path", BU_ARG_VALUE_DB_PATH, 1, 1,
+	"Database path to inspect", "ged.db_path"),
+    BU_ARG_OPERAND_NULL
+};
+static const struct bu_arg_schema showmats_cmd_schema =
+    BU_ARG_SCHEMA_BOUND("showmats",
 	"Show accumulated matrices along a database path", showmats_options,
-	"options-first path:path");
+	showmats_operands, BU_ARG_PARSE_OPTIONS_FIRST, NULL, NULL, NULL, NULL);
 
 
 static void
@@ -172,7 +176,7 @@ ged_showmats_core(struct ged *gedp, int argc, const char *argv[])
 {
     struct showmats_args args = {0};
     char *path = NULL;
-    int operand_count = 0;
+    int operand_index;
     int ret = BRLCAD_ERROR;
     const char *command = argv[0];
 
@@ -189,12 +193,13 @@ ged_showmats_core(struct ged *gedp, int argc, const char *argv[])
     }
 
     argc--; argv++;
-    operand_count = bu_opt_parse_build_with_policy(gedp->ged_result_str,
-	argc, argv, showmats_options, &args, BU_OPT_PARSE_OPTIONS_FIRST);
-    if (operand_count != 1) {
+    operand_index = bu_arg_schema_parse_complete(&showmats_cmd_schema, &args,
+	gedp->ged_result_str, argc, argv);
+    if (operand_index < 0) {
 	ged_cmd_help_append(gedp->ged_result_str, command, command);
 	return BRLCAD_ERROR;
     }
+    argv += operand_index;
 
     /* Run_showmats tokenizes the path, so preserve the caller's argv storage. */
     path = bu_strdup(argv[0]);
@@ -208,10 +213,10 @@ ged_showmats_core(struct ged *gedp, int argc, const char *argv[])
 #include "../include/plugin.h"
 
 #define GED_SHOWMATS_COMMANDS(X, XID) \
-    X(showmats, ged_showmats_core, GED_CMD_DEFAULT, &showmats_opt_spec) \
+    X(showmats, ged_showmats_core, GED_CMD_DEFAULT, &showmats_cmd_schema) \
 
-GED_DECLARE_COMMAND_SET_WITH_OPT_SPEC(GED_SHOWMATS_COMMANDS)
-GED_DECLARE_PLUGIN_MANIFEST_WITH_OPT_SPEC("libged_showmats", 1, GED_SHOWMATS_COMMANDS)
+GED_DECLARE_COMMAND_SET_WITH_NATIVE_SCHEMA(GED_SHOWMATS_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST_WITH_NATIVE_SCHEMA("libged_showmats", 1, GED_SHOWMATS_COMMANDS)
 
 /*
  * Local Variables:

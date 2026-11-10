@@ -59,15 +59,23 @@ struct push_args {
     int debug;
 };
 
-#define PUSH_OPTIONS(a) \
-    BU_OPT_INT(a, "P", NULL, processors, "processors", \
-	"Number of processors"), \
-    BU_OPT_FLAG(a, "d", NULL, debug, "Enable tree-walk debugging"),
-BU_OPT_DESC_BUILDER(push_options, struct push_args, PUSH_OPTIONS);
-
-static const ged_opt_spec push_opt_spec =
-    GED_OPT("push", "Push transformations down object trees",
-	push_options, "options-first objects:object+");
+static const struct bu_arg_option push_options[] = {
+    BU_ARG_VALUE("P", NULL, struct push_args, processors,
+	BU_ARG_VALUE_INTEGER, BU_ARG_REQUIRED, "processors",
+	"Number of processors"),
+    BU_ARG_FLAG("d", NULL, struct push_args, debug,
+	"Enable tree-walk debugging"),
+    BU_ARG_OPTION_NULL
+};
+static const struct bu_arg_operand push_operands[] = {
+    BU_ARG_OPERAND("objects", BU_ARG_VALUE_DB_OBJECT, 1,
+	BU_ARG_COUNT_UNLIMITED, "Object trees to transform", "ged.db_object"),
+    BU_ARG_OPERAND_NULL
+};
+static const struct bu_arg_schema push_cmd_schema =
+    BU_ARG_SCHEMA_BOUND("push", "Push transformations down object trees",
+	push_options, push_operands, BU_ARG_PARSE_OPTIONS_FIRST, NULL, NULL, NULL,
+	NULL);
 
 
 static void
@@ -204,7 +212,8 @@ ged_push_core(struct ged *gedp, int argc, const char *argv[])
     int old_debug;
     int push_error;
     struct push_args args = {1, 0};
-    int object_argc = 0;
+    int object_argc;
+    int operand_index;
     const char **object_argv = NULL;
     const char *command = argv[0];
 
@@ -224,12 +233,14 @@ ged_push_core(struct ged *gedp, int argc, const char *argv[])
     old_debug = RT_G_DEBUG;
 
     argc--; argv++;
-    object_argc = bu_opt_parse_build_with_policy(gedp->ged_result_str,
-	argc, argv, push_options, &args, BU_OPT_PARSE_OPTIONS_FIRST);
-    if (object_argc < 1) {
+    operand_index = bu_arg_schema_parse_complete(&push_cmd_schema, &args,
+	gedp->ged_result_str, argc, argv);
+    if (operand_index < 0) {
 	ged_cmd_help_append(gedp->ged_result_str, command, command);
 	return BRLCAD_ERROR;
     }
+    object_argc = argc - operand_index;
+    argv += operand_index;
     object_argv = argv;
     ncpu = args.processors < 1 ? 1 : args.processors;
     if (args.debug)
@@ -349,10 +360,10 @@ do_identitize(struct db_i *dbip, struct rt_comb_internal *UNUSED(comb), union tr
 #include "../include/plugin.h"
 
 #define GED_PUSH_COMMANDS(X, XID) \
-    X(push, ged_push_core, GED_CMD_DEFAULT, &push_opt_spec) \
+    X(push, ged_push_core, GED_CMD_DEFAULT, &push_cmd_schema) \
 
-GED_DECLARE_COMMAND_SET_WITH_OPT_SPEC(GED_PUSH_COMMANDS)
-GED_DECLARE_PLUGIN_MANIFEST_WITH_OPT_SPEC("libged_push", 1, GED_PUSH_COMMANDS)
+GED_DECLARE_COMMAND_SET_WITH_NATIVE_SCHEMA(GED_PUSH_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST_WITH_NATIVE_SCHEMA("libged_push", 1, GED_PUSH_COMMANDS)
 
 /*
  * Local Variables:

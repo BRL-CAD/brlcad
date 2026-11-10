@@ -28,7 +28,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "bu/opt.h"
+#include "bu/arg.h"
 #include "bu/str.h"
 #include "dm.h"
 #include "../ged_private.h"
@@ -37,15 +37,20 @@ struct how_args {
     int both;
 };
 
-#define HOW_OPTIONS(args) \
-    BU_OPT_FLAG(args, "b", NULL, both, \
+static const struct bu_arg_option how_options[] = {
+    BU_ARG_FLAG("b", NULL, struct how_args, both,
 	"Report both display mode and transparency"),
-
-BU_OPT_DESC_BUILDER(how_options, struct how_args, HOW_OPTIONS);
-
-static const ged_opt_spec how_opt_spec =
-    GED_OPT("how", "Report how a database object is displayed",
-	how_options, "options-first object:path");
+    BU_ARG_OPTION_NULL
+};
+static const struct bu_arg_operand how_operands[] = {
+    BU_ARG_OPERAND("object", BU_ARG_VALUE_DB_PATH, 1, 1,
+	"Displayed object path", "ged.db_path"),
+    BU_ARG_OPERAND_NULL
+};
+static const struct bu_arg_schema how_cmd_schema =
+    BU_ARG_SCHEMA_BOUND("how", "Report how a database object is displayed",
+	how_options, how_operands, BU_ARG_PARSE_OPTIONS_FIRST, NULL, NULL, NULL,
+	NULL);
 
 static int
 dl_how(struct bu_list *hdlp, struct bu_vls *vls, struct directory **dpp, int both)
@@ -112,7 +117,7 @@ ged_how_core(struct ged *gedp, int argc, const char *argv[])
     int good;
     struct directory **dpp = NULL;
     struct how_args args = {0};
-    int operand_count = 0;
+    int operand_index;
     const char *command = argv[0];
 
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
@@ -129,12 +134,13 @@ ged_how_core(struct ged *gedp, int argc, const char *argv[])
     }
 
     argc--; argv++;
-    operand_count = bu_opt_parse_build_with_policy(gedp->ged_result_str,
-	argc, argv, how_options, &args, BU_OPT_PARSE_OPTIONS_FIRST);
-    if (operand_count != 1) {
+    operand_index = bu_arg_schema_parse_complete(&how_cmd_schema, &args,
+	gedp->ged_result_str, argc, argv);
+    if (operand_index < 0) {
 	ged_cmd_help_append(gedp->ged_result_str, command, command);
 	return BRLCAD_ERROR;
     }
+    argv += operand_index;
 
     if ((dpp = _ged_build_dpp(gedp, argv[0])) == NULL)
 	goto good_label;
@@ -154,10 +160,10 @@ good_label:
 #include "../include/plugin.h"
 
 #define GED_HOW_COMMANDS(X, XID) \
-    X(how, ged_how_core, GED_CMD_DEFAULT, &how_opt_spec) \
+    X(how, ged_how_core, GED_CMD_DEFAULT, &how_cmd_schema) \
 
-GED_DECLARE_COMMAND_SET_WITH_OPT_SPEC(GED_HOW_COMMANDS)
-GED_DECLARE_PLUGIN_MANIFEST_WITH_OPT_SPEC("libged_how", 1, GED_HOW_COMMANDS)
+GED_DECLARE_COMMAND_SET_WITH_NATIVE_SCHEMA(GED_HOW_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST_WITH_NATIVE_SCHEMA("libged_how", 1, GED_HOW_COMMANDS)
 
 /*
  * Local Variables:

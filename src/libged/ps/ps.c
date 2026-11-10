@@ -304,23 +304,37 @@ struct ps_args {
     fastf_t yoffset;
 };
 
-#define PS_OPTIONS(a) \
-    BU_OPT_STR(a, "a", NULL, author, "author", "Document author"), \
-    BU_OPT_FLAG(a, "b", NULL, border, "Draw a border"), \
-    BU_OPT_COLOR(a, "c", NULL, border_color, "r/g/b", "Border color"), \
-    BU_OPT_STR(a, "f", NULL, font, "font", "PostScript font"), \
-    BU_OPT_NUM(a, "s", NULL, size, "size", "Image size in inches"), \
-    BU_OPT_STR(a, "t", NULL, title, "title", "Document title"), \
-    BU_OPT_NUM(a, "x", NULL, xoffset, "offset", "Horizontal offset in inches"), \
-    BU_OPT_NUM(a, "y", NULL, yoffset, "offset", "Vertical offset in inches"),
-BU_OPT_DESC_BUILDER(ps_options, struct ps_args, PS_OPTIONS);
-
-static const ged_opt_spec postscript_opt_spec =
-    GED_OPT("postscript", "Write the current view as PostScript",
-	ps_options, "options-first output_file:file");
-static const ged_opt_spec ps_opt_spec =
-    GED_OPT("ps", "Write the current view as PostScript",
-	ps_options, "options-first output_file:file");
+static const struct bu_arg_option ps_options[] = {
+    BU_ARG_VALUE("a", NULL, struct ps_args, author, BU_ARG_VALUE_STRING,
+	BU_ARG_REQUIRED, "author", "Document author"),
+    BU_ARG_FLAG("b", NULL, struct ps_args, border, "Draw a border"),
+    BU_ARG_COLOR_COMPAT("c", NULL, struct ps_args, border_color, "r/g/b",
+	"Border color"),
+    BU_ARG_VALUE("f", NULL, struct ps_args, font, BU_ARG_VALUE_STRING,
+	BU_ARG_REQUIRED, "font", "PostScript font"),
+    BU_ARG_VALUE("s", NULL, struct ps_args, size, BU_ARG_VALUE_NUMBER,
+	BU_ARG_REQUIRED, "size", "Image size in inches"),
+    BU_ARG_VALUE("t", NULL, struct ps_args, title, BU_ARG_VALUE_STRING,
+	BU_ARG_REQUIRED, "title", "Document title"),
+    BU_ARG_VALUE("x", NULL, struct ps_args, xoffset, BU_ARG_VALUE_NUMBER,
+	BU_ARG_REQUIRED, "offset", "Horizontal offset in inches"),
+    BU_ARG_VALUE("y", NULL, struct ps_args, yoffset, BU_ARG_VALUE_NUMBER,
+	BU_ARG_REQUIRED, "offset", "Vertical offset in inches"),
+    BU_ARG_OPTION_NULL
+};
+static const struct bu_arg_operand ps_operands[] = {
+    BU_ARG_OPERAND("output_file", BU_ARG_VALUE_FILE, 1, 1,
+	"PostScript output file", "ged.file_path"),
+    BU_ARG_OPERAND_NULL
+};
+static const struct bu_arg_schema postscript_cmd_schema =
+    BU_ARG_SCHEMA_BOUND("postscript", "Write the current view as PostScript",
+	ps_options, ps_operands, BU_ARG_PARSE_OPTIONS_FIRST, NULL, NULL, NULL,
+	NULL);
+static const struct bu_arg_schema ps_cmd_schema =
+    BU_ARG_SCHEMA_BOUND("ps", "Write the current view as PostScript",
+	ps_options, ps_operands, BU_ARG_PARSE_OPTIONS_FIRST, NULL, NULL, NULL,
+	NULL);
 
 int
 ged_ps_core(struct ged *gedp, int argc, const char *argv[])
@@ -329,7 +343,7 @@ ged_ps_core(struct ged *gedp, int argc, const char *argv[])
     struct ps_args args = {0};
     fastf_t scale;
     int linewidth = 4;
-    int operand_count;
+    int operand_index;
     unsigned char border_rgb[3] = {0, 0, 0};
 
     float border_red = 0.0;
@@ -358,12 +372,14 @@ ged_ps_core(struct ged *gedp, int argc, const char *argv[])
     args.size = 4.5;
     const char *command = argv[0];
     argc--; argv++;
-    operand_count = bu_opt_parse_build_with_policy(gedp->ged_result_str,
-	argc, argv, ps_options, &args, BU_OPT_PARSE_OPTIONS_FIRST);
-    if (operand_count != 1) {
+    operand_index = bu_arg_schema_parse_complete(
+	BU_STR_EQUAL(command, "postscript") ? &postscript_cmd_schema : &ps_cmd_schema,
+	&args, gedp->ged_result_str, argc, argv);
+    if (operand_index < 0) {
 	ged_cmd_help_append(gedp->ged_result_str, command, command);
 	return BRLCAD_ERROR;
     }
+    argv += operand_index;
 
     if (args.size < 0.0 || NEAR_ZERO(args.size, 0.1)) {
 	bu_vls_printf(gedp->ged_result_str, "%s: bad size, must be greater than 0.1 inches\n", command);
@@ -397,11 +413,11 @@ ged_ps_core(struct ged *gedp, int argc, const char *argv[])
 #include "../include/plugin.h"
 
 #define GED_PS_COMMANDS(X, XID) \
-    X(postscript, ged_ps_core, GED_CMD_DEFAULT, &postscript_opt_spec) \
-    X(ps, ged_ps_core, GED_CMD_DEFAULT, &ps_opt_spec) \
+    X(postscript, ged_ps_core, GED_CMD_DEFAULT, &postscript_cmd_schema) \
+    X(ps, ged_ps_core, GED_CMD_DEFAULT, &ps_cmd_schema) \
 
-GED_DECLARE_COMMAND_SET_WITH_OPT_SPEC(GED_PS_COMMANDS)
-GED_DECLARE_PLUGIN_MANIFEST_WITH_OPT_SPEC("libged_ps", 1, GED_PS_COMMANDS)
+GED_DECLARE_COMMAND_SET_WITH_NATIVE_SCHEMA(GED_PS_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST_WITH_NATIVE_SCHEMA("libged_ps", 1, GED_PS_COMMANDS)
 
 /*
  * Local Variables:

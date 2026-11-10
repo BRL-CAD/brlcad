@@ -40,13 +40,20 @@ struct pull_args {
     int debug;
 };
 
-#define PULL_OPTIONS(a) \
-    BU_OPT_FLAG(a, "d", NULL, debug, "Enable tree-walk debugging"),
-BU_OPT_DESC_BUILDER(pull_options, struct pull_args, PULL_OPTIONS);
-
-static const ged_opt_spec pull_opt_spec =
-    GED_OPT("pull", "Pull transformations up an object tree",
-	pull_options, "options-first object:object");
+static const struct bu_arg_option pull_options[] = {
+    BU_ARG_FLAG("d", NULL, struct pull_args, debug,
+	"Enable tree-walk debugging"),
+    BU_ARG_OPTION_NULL
+};
+static const struct bu_arg_operand pull_operands[] = {
+    BU_ARG_OPERAND("object", BU_ARG_VALUE_DB_OBJECT, 1, 1,
+	"Object tree to transform", "ged.db_object"),
+    BU_ARG_OPERAND_NULL
+};
+static const struct bu_arg_schema pull_cmd_schema =
+    BU_ARG_SCHEMA_BOUND("pull", "Pull transformations up an object tree",
+	pull_options, pull_operands, BU_ARG_PARSE_OPTIONS_FIRST, NULL, NULL, NULL,
+	NULL);
 
 
 void
@@ -225,7 +232,7 @@ ged_pull_core(struct ged *gedp, int argc, const char *argv[])
     struct directory *dp;
     mat_t mat;
     struct pull_args args = {0};
-    int operand_count = 0;
+    int operand_index;
     const char *object = NULL;
     const char *command = argv[0];
 
@@ -243,16 +250,16 @@ ged_pull_core(struct ged *gedp, int argc, const char *argv[])
     }
 
     argc--; argv++;
-    operand_count = bu_opt_parse_build_with_policy(gedp->ged_result_str,
-	argc, argv, pull_options, &args, BU_OPT_PARSE_OPTIONS_FIRST);
-    if (operand_count != 1) {
+    operand_index = bu_arg_schema_parse_complete(&pull_cmd_schema, &args,
+	gedp->ged_result_str, argc, argv);
+    if (operand_index < 0) {
 	ged_cmd_help_append(gedp->ged_result_str, command, command);
 	return BRLCAD_ERROR;
     }
 
     if (args.debug)
 	rt_debug |= RT_DEBUG_TREEWALK;
-    object = argv[0];
+    object = argv[operand_index];
 
     /* get directory pointer for arg */
 	if ((dp = db_lookup(gedp->dbip, object, LOOKUP_NOISY)) == RT_DIR_NULL)
@@ -282,10 +289,10 @@ ged_pull_core(struct ged *gedp, int argc, const char *argv[])
 #include "../include/plugin.h"
 
 #define GED_PULL_COMMANDS(X, XID) \
-    X(pull, ged_pull_core, GED_CMD_DEFAULT, &pull_opt_spec) \
+    X(pull, ged_pull_core, GED_CMD_DEFAULT, &pull_cmd_schema) \
 
-GED_DECLARE_COMMAND_SET_WITH_OPT_SPEC(GED_PULL_COMMANDS)
-GED_DECLARE_PLUGIN_MANIFEST_WITH_OPT_SPEC("libged_pull", 1, GED_PULL_COMMANDS)
+GED_DECLARE_COMMAND_SET_WITH_NATIVE_SCHEMA(GED_PULL_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST_WITH_NATIVE_SCHEMA("libged_pull", 1, GED_PULL_COMMANDS)
 
 /*
  * Local Variables:
