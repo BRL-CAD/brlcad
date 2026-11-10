@@ -383,7 +383,7 @@ jobs:
 
       - name: Build baseline
         run: |
-          cmake --build build_pgo_baseline --target $PGO_BUILD_TARGETS
+          python3 brlcad/.github/scripts/pgo-build.py build_pgo_baseline $PGO_BUILD_TARGETS
           ctest --test-dir build_pgo_baseline -R '^bu_dylib(_exit_unload)?$' --output-on-failure
 
       - name: Configure profile-generation build
@@ -401,7 +401,7 @@ jobs:
 
       - name: Build profile-generation binaries
         run: |
-          cmake --build build_pgo --target $PGO_BUILD_TARGETS $PGO_TRAINING_TARGETS
+          python3 brlcad/.github/scripts/pgo-build.py build_pgo $PGO_BUILD_TARGETS $PGO_TRAINING_TARGETS
           ctest --test-dir build_pgo -R '^bu_dylib(_exit_unload)?$' --output-on-failure
 
       - name: Generate profile data
@@ -438,7 +438,7 @@ jobs:
 
       - name: Build profile-guided binaries
         run: |
-          cmake --build build_pgo --target $PGO_BUILD_TARGETS
+          python3 brlcad/.github/scripts/pgo-build.py build_pgo $PGO_BUILD_TARGETS
           ctest --test-dir build_pgo -R '^bu_dylib(_exit_unload)?$' --output-on-failure
 
       - name: Benchmark and compare profile-guided build
