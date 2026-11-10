@@ -65,13 +65,23 @@ function(brlcad_configure_path_privacy)
   brlcad_producer_paths(producer_paths)
   check_c_compiler_flag("-ffile-prefix-map=${CMAKE_SOURCE_DIR}=." BRLCAD_C_FILE_PREFIX_MAP)
   check_cxx_compiler_flag("-ffile-prefix-map=${CMAKE_SOURCE_DIR}=." BRLCAD_CXX_FILE_PREFIX_MAP)
+  set(coverage_profile_maps)
   foreach(path IN LISTS producer_paths)
     foreach(language C CXX)
       if(BRLCAD_${language}_FILE_PREFIX_MAP)
         add_compile_options("$<$<COMPILE_LANGUAGE:${language}>:-ffile-prefix-map=${path}=.>")
+        if(BRLCAD_ENABLE_COVERAGE AND CMAKE_${language}_COMPILER_ID STREQUAL "GNU")
+          list(APPEND coverage_profile_maps
+            "$<$<COMPILE_LANGUAGE:${language}>:-fprofile-prefix-map=${path}=${path}>")
+        endif()
       endif()
     endforeach()
   endforeach()
+
+  # Coverage readers need to distinguish source and build roots.  Override
+  # only profiling maps after the file maps so debug and macro paths stay
+  # private while gcov can locate the original sources and copied headers.
+  add_compile_options(${coverage_profile_maps})
 
   if(NOT UNIX OR NOT CMAKE_C_COMPILER_ID MATCHES "Clang" OR
       NOT CMAKE_CXX_COMPILER_ID MATCHES "Clang")
