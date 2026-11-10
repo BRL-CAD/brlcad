@@ -129,34 +129,78 @@ struct gqa_args {
     int help;
 };
 
-#define GQA_OPTIONS(a) \
-    BU_OPT_STR(a, "A", NULL, analyses, "types", "Select analyses"), \
-    BU_OPT_STR(a, "a", NULL, azimuth, "azimuth", "Set azimuth angle"), \
-    BU_OPT_FLAG(a, "d", NULL, debug, "Enable debug output"), \
-    BU_OPT_STR(a, "e", NULL, elevation, "elevation", "Set elevation angle"), \
-    BU_OPT_STR(a, "f", NULL, density_file, "file", "Read densities from file"), \
-    BU_OPT_STR(a, "g", NULL, grid_spacing, "spacing", "Set grid spacing or range"), \
-    BU_OPT_FLAG(a, "G", NULL, overlap_assemblies, "Create overlap assemblies (not implemented)"), \
-    BU_OPT_INT(a, "n", NULL, required_hits, "hits", "Set required hits per region"), \
-    BU_OPT_INT(a, "N", NULL, views, "views", "Set number of views"), \
-    BU_OPT_STR(a, "p", NULL, plot_prefix, "prefix", "Set plot file prefix"), \
-    BU_OPT_INT(a, "P", NULL, cpus, "cpus", "Set processor count"), \
-    BU_OPT_FLAG(a, "q", NULL, quiet, "Suppress not-hit reporting"), \
-    BU_OPT_FLAG(a, "r", NULL, region_stats, "Print per-region statistics"), \
-    BU_OPT_NUM(a, "S", NULL, samples, "samples", "Set minimum samples per model axis"), \
-    BU_OPT_STR(a, "t", NULL, overlap_tolerance, "tolerance", "Set overlap tolerance"), \
-    BU_OPT_BOOL(a, "U", NULL, use_air, "use_air", "Include air regions"), \
-    BU_OPT_STR(a, "u", NULL, report_units, "units", "Set reporting units"), \
-    BU_OPT_FLAG(a, "v", NULL, verbose, "Enable verbose output"), \
-    BU_OPT_STR(a, "V", NULL, volume_tolerance, "tolerance", "Set volume tolerance"), \
-    BU_OPT_STR(a, "W", NULL, weight_tolerance, "tolerance", "Set weight tolerance"), \
-    BU_OPT_FLAG(a, "h", NULL, help, "Print command help"), \
-    BU_OPT_FLAG(a, "?", NULL, help, "Print command help"),
-BU_OPT_DESC_BUILDER(gqa_options, struct gqa_args, GQA_OPTIONS);
-
 static const char * const gqa_analysis_candidates[] = {
     "A", "a", "b", "c", "e", "g", "m", "o", "p", "v", "w", NULL
 };
+static const struct bu_arg_option gqa_options[] = {
+    {"A", NULL, "A", "types", "Select analyses", BU_ARG_VALUE_STRING,
+	BU_ARG_STORAGE_OFFSET(struct gqa_args, analyses), NULL, NULL, NULL, NULL,
+	0, 0, gqa_analysis_candidates, BU_ARG_REQUIRED, NULL, NULL, NULL,
+	BU_ARG_VALUE_RANGE_NONE, BU_ARG_SHAPE_SCALAR},
+    BU_ARG_VALUE("a", NULL, struct gqa_args, azimuth, BU_ARG_VALUE_STRING,
+	BU_ARG_REQUIRED, "azimuth", "Set azimuth angle"),
+    BU_ARG_FLAG("d", NULL, struct gqa_args, debug, "Enable debug output"),
+    BU_ARG_VALUE("e", NULL, struct gqa_args, elevation, BU_ARG_VALUE_STRING,
+	BU_ARG_REQUIRED, "elevation", "Set elevation angle"),
+    {"f", NULL, "f", "file", "Read densities from file", BU_ARG_VALUE_FILE,
+	BU_ARG_STORAGE_OFFSET(struct gqa_args, density_file), NULL, NULL,
+	"ged.file_path", NULL, 0, 0, NULL, BU_ARG_REQUIRED, NULL, NULL, NULL,
+	BU_ARG_VALUE_RANGE_NONE, BU_ARG_SHAPE_SCALAR},
+    BU_ARG_VALUE("g", NULL, struct gqa_args, grid_spacing, BU_ARG_VALUE_STRING,
+	BU_ARG_REQUIRED, "spacing", "Set grid spacing or range"),
+    BU_ARG_FLAG("G", NULL, struct gqa_args, overlap_assemblies,
+	"Create overlap assemblies (not implemented)"),
+    BU_ARG_VALUE("n", NULL, struct gqa_args, required_hits,
+	BU_ARG_VALUE_INTEGER, BU_ARG_REQUIRED, "hits", "Set required hits per region"),
+    BU_ARG_VALUE("N", NULL, struct gqa_args, views, BU_ARG_VALUE_INTEGER,
+	BU_ARG_REQUIRED, "views", "Set number of views"),
+    BU_ARG_VALUE("p", NULL, struct gqa_args, plot_prefix, BU_ARG_VALUE_STRING,
+	BU_ARG_REQUIRED, "prefix", "Set plot file prefix"),
+    BU_ARG_VALUE("P", NULL, struct gqa_args, cpus, BU_ARG_VALUE_INTEGER,
+	BU_ARG_REQUIRED, "cpus", "Set processor count"),
+    BU_ARG_FLAG("q", NULL, struct gqa_args, quiet, "Suppress not-hit reporting"),
+    BU_ARG_FLAG("r", NULL, struct gqa_args, region_stats,
+	"Print per-region statistics"),
+    BU_ARG_VALUE("S", NULL, struct gqa_args, samples, BU_ARG_VALUE_NUMBER,
+	BU_ARG_REQUIRED, "samples", "Set minimum samples per model axis"),
+    BU_ARG_VALUE("t", NULL, struct gqa_args, overlap_tolerance,
+	BU_ARG_VALUE_STRING, BU_ARG_REQUIRED, "tolerance", "Set overlap tolerance"),
+    BU_ARG_VALUE("U", NULL, struct gqa_args, use_air, BU_ARG_VALUE_BOOL,
+	BU_ARG_REQUIRED, "use_air", "Include air regions"),
+    BU_ARG_VALUE("u", NULL, struct gqa_args, report_units, BU_ARG_VALUE_STRING,
+	BU_ARG_REQUIRED, "units", "Set reporting units"),
+    BU_ARG_FLAG("v", NULL, struct gqa_args, verbose, "Enable verbose output"),
+    BU_ARG_VALUE("V", NULL, struct gqa_args, volume_tolerance,
+	BU_ARG_VALUE_STRING, BU_ARG_REQUIRED, "tolerance", "Set volume tolerance"),
+    BU_ARG_VALUE("W", NULL, struct gqa_args, weight_tolerance,
+	BU_ARG_VALUE_STRING, BU_ARG_REQUIRED, "tolerance", "Set weight tolerance"),
+    BU_ARG_FLAG("h", NULL, struct gqa_args, help, "Print command help"),
+    BU_ARG_ALIAS("?", NULL, "h", 0),
+    BU_ARG_OPTION_NULL
+};
+static const struct bu_arg_operand gqa_operands[] = {
+    BU_ARG_OPERAND("objects", BU_ARG_VALUE_DB_PATH, 1,
+	BU_ARG_COUNT_UNLIMITED, "Objects or paths to analyze", "ged.db_path"),
+    BU_ARG_OPERAND_NULL
+};
+static const struct bu_arg_operand gqa_help_operands[] = {
+    BU_ARG_OPERAND("raw_arguments", BU_ARG_VALUE_RAW, 0,
+	BU_ARG_COUNT_UNLIMITED, "Arguments ignored when requesting help", NULL),
+    BU_ARG_OPERAND_NULL
+};
+static const char * const gqa_help_option[] = {"h", NULL};
+static const struct bu_arg_schema_case gqa_cases[] = {
+    BU_ARG_SCHEMA_CASE("help", "Display command help",
+	BU_ARG_CONDITION_ANY_OPTION_PRESENT, gqa_help_option,
+	gqa_help_operands, NULL),
+    BU_ARG_SCHEMA_CASE_DEFAULT("objects", "Analyze database paths",
+	gqa_operands, NULL),
+    BU_ARG_SCHEMA_CASE_NULL
+};
+static const struct bu_arg_schema gqa_cmd_schema =
+    BU_ARG_SCHEMA_CASED("gqa",
+	"Analyze geometric overlaps, gaps, volume, and mass", gqa_options,
+	BU_ARG_PARSE_OPTIONS_FIRST, gqa_cases);
 static const char *plot_prefix = NULL; /* non-NULL means produce plot files */
 static FILE *plot_weight;
 static FILE *plot_volume;
@@ -530,6 +574,7 @@ parse_args(struct ged *gedp, int ac, const char **av)
     struct gqa_args args = {};
     int i;
     int object_count;
+    int operand_index;
 
     args.required_hits = (int)require_num_hits;
     args.views = INT_MIN;
@@ -537,10 +582,11 @@ parse_args(struct ged *gedp, int ac, const char **av)
     args.samples = NAN;
     args.use_air = use_air;
 
-    object_count = bu_opt_parse_build_with_policy(gedp->ged_result_str,
-	(size_t)ac, av, gqa_options, &args, BU_OPT_PARSE_OPTIONS_FIRST);
-    if (object_count < 0 || args.help)
+    operand_index = bu_arg_schema_parse_complete(&gqa_cmd_schema, &args,
+	gedp->ged_result_str, ac, av);
+    if (operand_index < 0 || args.help)
 	return -1;
+    object_count = ac - operand_index;
 
     if (args.analyses) {
 	const char *p;
@@ -2934,22 +2980,11 @@ aborted:
 
 #include "../include/plugin.h"
 
-static const ged_opt_rule gqa_opt_rules[] = {
-    GED_RULE_ALIAS("?", "h"),
-    GED_RULE_CANDIDATES("A", BU_OPT_VALUE_STRING, "analysis types",
-	gqa_analysis_candidates),
-    GED_RULE_SEMANTIC("f", BU_ARG_VALUE_FILE, "ged.file_path", "density file"),
-    GED_RULE_NULL
-};
-static const ged_opt_spec gqa_opt_spec =
-    GED_OPT_WITH("gqa", "Analyze geometric overlaps, gaps, volume, and mass",
-	gqa_options, "options-first objects:path+", gqa_opt_rules);
-
 #define GED_GQA_COMMANDS(X, XID) \
-    X(gqa, ged_gqa_core, GED_CMD_DEFAULT, &gqa_opt_spec) \
+    X(gqa, ged_gqa_core, GED_CMD_DEFAULT, &gqa_cmd_schema) \
 
-GED_DECLARE_COMMAND_SET_WITH_OPT_SPEC(GED_GQA_COMMANDS)
-GED_DECLARE_PLUGIN_MANIFEST_WITH_OPT_SPEC("libged_gqa", 1, GED_GQA_COMMANDS)
+GED_DECLARE_COMMAND_SET_WITH_NATIVE_SCHEMA(GED_GQA_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST_WITH_NATIVE_SCHEMA("libged_gqa", 1, GED_GQA_COMMANDS)
 
 // Local Variables:
 // tab-width: 8
