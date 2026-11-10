@@ -5,6 +5,18 @@ toc::[]
 
 The interfaces listed here have completed their deprecation or minimally impacting transition and are now obsolete.
 
+== 7.48.0
+include/rt/edit.h and include/rt/functab.h
+	The recently introduced primitive edit descriptor API now assigns
+	stable command names and presentation metadata directly in its
+	descriptors.  Descriptor initializers must supply the new fields.
+
+	The ft_edit_get_params callback is replaced by ft_edit_get_values,
+	which reports typed numeric and string values using
+	struct rt_edit_cmd_values.  The corresponding cast macro is now
+	EDFUNCTAB_FUNC_GET_VALUES_CAST.  These interfaces first appeared in
+	7.44 and had not remained unchanged for two subsequent releases.
+
 == 7.46.0
 tclscripts/lib
 	Mged, Database, Db, Dm, Drawable, Display, QuadDisplay, View ->

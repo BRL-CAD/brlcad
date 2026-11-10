@@ -837,3 +837,7 @@ RENAME FORM "tp_plot" TO "plot3_xy_plot" SINCE 7.44 # remove tig.h/vectfont.h, c
 
 # 7.46
 RENAME HEADER bu\/time.h TO bu\/datetime.h SINCE 7.46 # renamed time.h header to match source datetime [7.46]
+
+# 7.48
+RENAME TOKEN ft_edit_get_params TO ft_edit_get_values SINCE 7.48 # return typed primitive edit values [7.48]
+RENAME MACRO EDFUNCTAB_FUNC_GET_PARAMS_CAST TO EDFUNCTAB_FUNC_GET_VALUES_CAST SINCE 7.48 # match edit value callback rename [7.48]

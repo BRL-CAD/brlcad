@@ -159,6 +159,7 @@ include/bg/obr.h: BG_EXPORT extern int bg_2d_obr(point2d_t *center,
 include/bg/obr.h: BG_EXPORT extern int bg_3d_coplanar_obr(point_t *center,
 include/bg/obr.h: BG_EXPORT extern int bg_3d_obb(point_t **pnts,
 include/bg/pca.h: BG_EXPORT extern int bg_pca(point_t *c, vect_t *xaxis, vect_t *yaxis, vect_t *zaxis, size_t npnts, const point_t *pnts);
+include/bg/plane.h: BG_EXPORT extern int bg_orient2d(const point2d_t a, const point2d_t b,
 include/bg/plane.h: #define MAXPTS 4			/**< All we need are 4 points */
 include/bg/plane.h: #define pl_A pl_points[0]		/**< Synonym for A point */
 include/bg/plane.h: BG_EXPORT extern int bg_distsq_line3_line3(fastf_t dist[3],
@@ -2540,6 +2541,27 @@ include/ged/defines.h: GED_EXPORT extern struct ged *ged_open(const char *dbtype
 include/ged/defines.h: GED_EXPORT extern void ged_close(struct ged *gedp);
 include/ged/defines.h: GED_EXPORT extern void ged_subprocesses_terminate(struct ged *gedp);
 include/ged/defines.h: #define GED_CHECK_ARGC_GT_0(_gedp, _argc, _flags) ;GED_EXPORT const char * ged_init_msgs(void);
+include/ged/edit.h: #define GED_EDIT_SESSION_REF_NULL_INIT {0, 0, 0}
+include/ged/edit.h: #  define GED_EDIT_SESSION_REF_NULL ged_edit_session_ref{0, 0, 0}
+include/ged/edit.h: #  define GED_EDIT_SESSION_REF_NULL ((ged_edit_session_ref){0, 0, 0})
+include/ged/edit.h: GED_EXPORT extern int
+include/ged/edit.h: GED_EXPORT extern enum ged_edit_status
+include/ged/edit.h: GED_EXPORT extern enum ged_edit_status
+include/ged/edit.h: GED_EXPORT extern enum ged_edit_status
+include/ged/edit.h: GED_EXPORT extern enum ged_edit_status
+include/ged/edit.h: GED_EXPORT extern enum ged_edit_status
+include/ged/edit.h: GED_EXPORT extern enum ged_edit_status
+include/ged/edit.h: GED_EXPORT extern enum ged_edit_status
+include/ged/edit.h: GED_EXPORT extern enum ged_edit_status
+include/ged/edit.h: GED_EXPORT extern enum ged_edit_status
+include/ged/edit.h: GED_EXPORT extern enum ged_edit_status
+include/ged/edit.h: GED_EXPORT extern enum ged_edit_status
+include/ged/edit.h: GED_EXPORT extern enum ged_edit_status
+include/ged/edit.h: GED_EXPORT extern enum ged_edit_status
+include/ged/edit.h: GED_EXPORT extern enum ged_edit_status
+include/ged/edit.h: GED_EXPORT extern enum ged_edit_status
+include/ged/edit.h: GED_EXPORT extern ged_edit_observer_token
+include/ged/edit.h: GED_EXPORT extern int
 include/ged/objects.h: #define	GED_CHECK_COMB(_gedp, _dp, _flags) ;#define GED_CHECK_EXISTS(_gedp, _name, _noisy, _flags) ;#define	GED_CHECK_READ_ONLY(_gedp, _flags) ;#define	GED_CHECK_REGION(_gedp, _dp, _flags) ;#define GED_DB_DIRADD(_gedp, _dp, _name, _laddr, _len, _dirflags, _ptr, _flags) ;#define GED_DB_LOOKUP(_gedp, _dp, _name, _noisy, _flags) ;#define GED_DB_GET_INTERNAL(_gedp, _intern, _dp, _mat, _resource, _flags) ;#define GED_DB_PUT_INTERNAL(_gedp, _dp, _intern, _resource, _flags) ;#define GED_DB_GET_INTERN(_gedp, _intern, _dp, _mat, _flags) ;#define GED_DB_PUT_INTERN(_gedp, _dp, _intern, _flags) \
 include/ged/version.h: GED_EXPORT extern const char *ged_version(void);
 include/ged/view.h: #define GED_CHECK_DRAWABLE(_gedp, _flags) ;#define GED_CHECK_VIEW(_gedp, _flags) ;GED_EXPORT void dl_set_iflag(struct bu_list *hdlp, int iflag);
@@ -4312,6 +4334,7 @@ include/rt/db_fullpath.h: #define DB_FP_PRINT_MATRIX       0x4    /* print notic
 include/rt/db_fullpath.h: #define DB_FP_PRINT_COMB_INDEX   0x8    /* print non-zero comb tree instance specifiers */
 include/rt/db_fullpath.h: RT_EXPORT extern void db_fullpath_to_vls(struct bu_vls *vls,
 include/rt/db_fullpath.h: RT_EXPORT extern void db_pr_full_path(const char *msg,
+include/rt/db_fullpath.h: RT_EXPORT extern int db_comb_has_instance(int *bool_op,
 include/rt/db_fullpath.h: RT_EXPORT extern int db_string_to_path(struct db_full_path *pp,
 include/rt/db_fullpath.h: RT_EXPORT extern int db_argv_to_path(struct db_full_path	*pp,
 include/rt/db_fullpath.h: RT_EXPORT extern void db_free_full_path(struct db_full_path *pp);
@@ -4330,8 +4353,12 @@ include/rt/db_instance.h: #define DB_OPEN_READONLY "r"
 include/rt/db_instance.h: #define DB_OPEN_READWRITE "rw"
 include/rt/db_instance.h: RT_EXPORT extern struct db_i *
 include/rt/db_instance.h: RT_EXPORT extern struct db_i * db_open_inmem(void);
+include/rt/db_instance.h: #define DB_OPEN_INMEM_DEFAULT 0x0u
+include/rt/db_instance.h: #define DB_OPEN_INMEM_COMB_INSTANCES 0x1u
+include/rt/db_instance.h: RT_EXPORT extern struct db_i *db_open_inmem_ex(unsigned int flags);
 include/rt/db_instance.h: RT_EXPORT extern struct db_i *
 include/rt/db_instance.h: RT_EXPORT extern struct db_i * db_create_inmem(void);
+include/rt/db_instance.h: RT_EXPORT extern int db_uses_instance_specifiers(const struct db_i *dbip);
 include/rt/db_instance.h: RT_EXPORT extern void db_close(struct db_i *dbip);
 include/rt/db_instance.h: RT_EXPORT extern struct directory *db_dirptr(const struct db_i *dbip, int index);
 include/rt/db_instance.h: #define FOR_ALL_DIRECTORY_START(_dp, _dbip) { int _i; ;#define FOR_ALL_DIRECTORY_END   }}}
@@ -4577,6 +4604,8 @@ include/rt/edit.h: #define RT_MATRIX_EDIT_SCALE_Y  12
 include/rt/edit.h: #define RT_MATRIX_EDIT_SCALE_Z  13
 include/rt/edit.h: RT_EXPORT extern struct rt_edit *
 include/rt/edit.h: RT_EXPORT extern void
+include/rt/edit.h: RT_EXPORT extern int
+include/rt/edit.h: RT_EXPORT extern int
 include/rt/edit.h: RT_EXPORT extern void
 include/rt/edit.h: RT_EXPORT extern int
 include/rt/edit.h: RT_EXPORT extern int
@@ -4618,7 +4647,22 @@ include/rt/edit.h: #define RT_EDIT_PARAM_STRING   6  /**< NUL-terminated; QLineE
 include/rt/edit.h: #define RT_EDIT_PARAM_ENUM     7  /**< integer choice; QComboBox                    */
 include/rt/edit.h: #define RT_EDIT_PARAM_COLOR    8  /**< RGB triple as three fastf_t (0-255) in
 include/rt/edit.h: #define RT_EDIT_PARAM_MATRIX   9  /**< 4x4 row-major in e_para[0..15]; matrix widget*/
+include/rt/edit.h: #define RT_EDIT_PARAM_POINT2  10  /**< point2d_t (2 fastf_t); 2x QDoubleSpinBox     */
+include/rt/edit.h: #define RT_EDIT_PARAM_VECTOR2 11  /**< vect2d_t  (2 fastf_t); 2x QDoubleSpinBox     */
+include/rt/edit.h: #define RT_EDIT_PARAM_SCALAR_LIST  12 /**< variable fastf_t tail in e_para[]        */
+include/rt/edit.h: #define RT_EDIT_PARAM_INTEGER_LIST 13 /**< variable integer-valued tail in e_para[] */
 include/rt/edit.h: #define RT_EDIT_PARAM_NO_LIMIT  (-DBL_MAX)
+include/rt/edit.h: RT_EXPORT extern void
+include/rt/edit.h: RT_EXPORT extern int
+include/rt/edit.h: RT_EXPORT extern int
+include/rt/edit.h: RT_EXPORT extern enum rt_edit_value_status
+include/rt/edit.h: #define RT_EDIT_CMD_NAME(_cmd) #_cmd
+include/rt/edit.h: RT_EXPORT extern enum rt_edit_control_class
+include/rt/edit.h: RT_EXPORT extern struct rt_edit_interaction_desc
+include/rt/edit.h: RT_EXPORT extern enum rt_edit_param_semantic
+include/rt/edit.h: RT_EXPORT extern int
+include/rt/edit.h: RT_EXPORT extern int
+include/rt/edit.h: RT_EXPORT extern int
 include/rt/edit.h: RT_EXPORT extern int
 include/rt/edit.h: RT_EXPORT extern int
 include/rt/edit.h: RT_EXPORT extern void rt_constraint_edit_violation_init(struct rt_constraint_edit_violation *v);
@@ -4717,7 +4761,7 @@ include/rt/functab.h: #define EDFUNCTAB_FUNC_MENU_STR_CAST(_func) ((int(*)(struc
 include/rt/functab.h: #define EDFUNCTAB_FUNC_SET_EDIT_MODE_CAST(_func) ((void(*)(struct rt_edit *, int))((void (*)(void))_func))
 include/rt/functab.h: #define EDFUNCTAB_FUNC_MENU_ITEM_CAST(_func) ((struct rt_edit_menu_item *(*)(const struct bn_tol *))((void (*)(void))_func))
 include/rt/functab.h: #define EDFUNCTAB_FUNC_EDIT_DESC_CAST(_func) ((const struct rt_edit_prim_desc *(*)(void))((void (*)(void))_func))
-include/rt/functab.h: #define EDFUNCTAB_FUNC_GET_PARAMS_CAST(_func) ((int(*)(struct rt_edit *, int, fastf_t *))((void (*)(void))_func))
+include/rt/functab.h: #define EDFUNCTAB_FUNC_GET_VALUES_CAST(_func) ((int(*)(struct rt_edit *, int, struct rt_edit_cmd_values *))((void (*)(void))_func))
 include/rt/functab.h: #define EDFUNCTAB_FUNC_REPAIR_CAST(_func) ((int (*)(struct bu_vls *, struct rt_db_internal *, const struct bn_tol *, int, const char **))((void (*)(void))_func))
 include/rt/functab.h: RT_EXPORT extern const struct rt_edit_functab EDOBJ[];
 include/rt/geom.h: #define NAMELEN 16	/* NAMESIZE from db.h (can't call it NAMESIZE!!!!!) */
@@ -4860,6 +4904,11 @@ include/rt/primitives/arb8.h: RT_EXPORT extern int
 include/rt/primitives/arb8.h: RT_EXPORT extern int
 include/rt/primitives/arb8.h: RT_EXPORT extern int
 include/rt/primitives/arb8.h: RT_EXPORT extern const short int rt_arb_vertices[5][24];
+include/rt/primitives/arb8.h: #define RT_ARB_EDIT_MAX_VERTICES 8
+include/rt/primitives/arb8.h: #define RT_ARB_EDIT_MAX_EDGES 12
+include/rt/primitives/arb8.h: #define RT_ARB_EDIT_MAX_FACES 6
+include/rt/primitives/arb8.h: #define RT_ARB_EDIT_MAX_FACE_VERTICES 4
+include/rt/primitives/arb8.h: RT_EXPORT extern int rt_arb_edit_topology_get(
 include/rt/primitives/arb8.h: RT_EXPORT extern int rt_arb_get_cgtype(
 include/rt/primitives/arb8.h: RT_EXPORT extern int rt_arb_std_type(const struct rt_db_internal *ip,
 include/rt/primitives/arb8.h: RT_EXPORT extern void rt_arb_centroid(point_t                       *cent,
