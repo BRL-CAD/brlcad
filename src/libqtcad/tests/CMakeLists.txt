@@ -90,6 +90,14 @@ if(TARGET qsketch)
   install(TARGETS qsketch RUNTIME DESTINATION ${BIN_DIR} LIBRARY DESTINATION ${LIB_DIR} ARCHIVE DESTINATION ${LIB_DIR})
 endif(TARGET qsketch)
 
+if(TARGET libqtcad)
+  brlcad_addexec(qgmodel_db_update qgmodel_db_update.cpp "libqtcad" TEST)
+  if(TARGET qgmodel_db_update)
+    add_dependencies(qgmodel_db_update ged_plugins)
+  endif()
+  brlcad_add_test(NAME qgmodel_db_update COMMAND qgmodel_db_update)
+endif()
+
 # On some platforms distclean has additional cleanup to do
 distclean("${CMAKE_BINARY_DIR}/${BIN_DIR}/qgmodel.pdb")
 distclean("${CMAKE_BINARY_DIR}/${BIN_DIR}/qgview.pdb")
@@ -97,6 +105,7 @@ distclean("${CMAKE_BINARY_DIR}/${BIN_DIR}/qsketch.pdb")
 
 cmakefiles(
   CMakeLists.txt
+  qgmodel_db_update.cpp
   ${QGMODEL_SRCS}
   ${QGVIEW_SRCS}
   ${QSKETCH_SRCS}

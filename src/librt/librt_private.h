@@ -108,6 +108,7 @@ struct db_i_internal {
 
 struct db_i_internal * db_i_internal_create(void);
 void db_i_internal_destroy(struct db_i_internal *i);
+void db_notify_changed(struct db_i *dbip, struct directory *dp, int mode);
 
 
 /**

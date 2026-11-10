@@ -346,6 +346,7 @@ class QTCAD_EXPORT QgModel : public QAbstractItemModel
 	QgItem *rootItem;
 	struct bview *empty_gvp = NULL;
 	struct db_i *model_dbip = NULL;
+	struct db_i *callback_dbip = NULL;
 };
 
 #endif //QGMODEL_H

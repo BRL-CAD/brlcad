@@ -784,21 +784,11 @@ db_put_external5(struct bu_external *ep, struct directory *dp, struct db_i *dbip
 
     if (dp->d_flags & RT_DIR_INMEM) {
 	memcpy(dp->d_un.ptr, (char *)ep->ext_buf, ep->ext_nbytes);
-	return 0;
-    }
-
-    if (db_write(dbip, (char *)ep->ext_buf, ep->ext_nbytes, dp->d_addr) < 0) {
+    } else if (db_write(dbip, (char *)ep->ext_buf, ep->ext_nbytes, dp->d_addr) < 0) {
 	return -1;
     }
 
-    /* Made a change for real - do callback */
-    if (BU_PTBL_IS_INITIALIZED(&dbip->i->dbi_changed_clbks)) {
-	for (size_t i = 0; i < BU_PTBL_LEN(&dbip->i->dbi_changed_clbks); i++) {
-	    struct dbi_changed_clbk *cb = (struct dbi_changed_clbk *)BU_PTBL_GET(&dbip->i->dbi_changed_clbks, i);
-	    (*cb->f)(dbip, dp, 0, cb->u_data);
-	}
-    }
-
+    db_notify_changed(dbip, dp, 0);
     return 0;
 }
 
@@ -835,22 +825,11 @@ rt_db_put_internal_v5(
 
     if (dp->d_flags & RT_DIR_INMEM) {
 	memcpy(dp->d_un.ptr, ext.ext_buf, ext.ext_nbytes);
-	goto ok;
-    }
-
-    if (db_write(dbip, (char *)ext.ext_buf, ext.ext_nbytes, dp->d_addr) < 0) {
+    } else if (db_write(dbip, (char *)ext.ext_buf, ext.ext_nbytes, dp->d_addr) < 0) {
 	goto fail;
     }
 
-    /* Made a change for real - do callback */
-    if (BU_PTBL_IS_INITIALIZED(&dbip->i->dbi_changed_clbks)) {
-	for (size_t i = 0; i < BU_PTBL_LEN(&dbip->i->dbi_changed_clbks); i++) {
-	    struct dbi_changed_clbk *cb = (struct dbi_changed_clbk *)BU_PTBL_GET(&dbip->i->dbi_changed_clbks, i);
-	    (*cb->f)(dbip, dp, 0, cb->u_data);
-	}
-    }
-
-ok:
+    db_notify_changed(dbip, dp, 0);
     bu_free_external(&ext);
     rt_db_free_internal(ip);
     return 0;			/* OK */

@@ -48,6 +48,7 @@ struct ged_event_result {
 
 struct ged_event_service {
     struct ged *gedp = nullptr;
+    struct db_i *callback_dbip = nullptr;
     ged_event_observer_token next_token = 1;
     int batch_depth = 0;
     int dispatch_depth = 0;
@@ -292,6 +293,32 @@ ged_event_drain(struct ged_event_service *service,
     return status;
 }
 
+static void
+ged_event_librt_changed(struct db_i *UNUSED(dbip), struct directory *dp,
+		       int mode, void *client_data)
+{
+    struct ged *gedp = static_cast<struct ged *>(client_data);
+    if (!gedp || !dp || !dp->d_namep)
+	return;
+
+    struct ged_event event;
+    ged_event_init(&event);
+    event.name = dp->d_namep;
+    if (BU_STR_EQUAL(event.name, DB5_GLOBAL_OBJECT_NAME)) {
+	event.kind = GED_EVENT_DATABASE_METADATA_CHANGED;
+    } else if (mode == 0) {
+	event.kind = (dp->d_flags & RT_DIR_COMB) ?
+	    GED_EVENT_COMB_TREE_CHANGED : GED_EVENT_OBJECT_MODIFIED;
+    } else if (mode == 1) {
+	event.kind = GED_EVENT_OBJECT_ADDED;
+    } else if (mode == 2) {
+	event.kind = GED_EVENT_OBJECT_REMOVED;
+    } else {
+	return;
+    }
+    (void)ged_event_publish(gedp, &event, 1, nullptr);
+}
+
 struct ged_event_service *
 ged_event_service_create(struct ged *gedp)
 {
@@ -303,7 +330,23 @@ ged_event_service_create(struct ged *gedp)
 void
 ged_event_service_destroy(struct ged_event_service *service)
 {
+    if (service && service->callback_dbip)
+	db_rm_changed_clbk(service->callback_dbip, ged_event_librt_changed,
+	    service->gedp);
     delete service;
+}
+
+void
+ged_event_database_set_private(struct ged *gedp, struct db_i *dbip)
+{
+    struct ged_event_service *service = ged_event_service_get(gedp);
+    if (!service || service->callback_dbip == dbip)
+	return;
+    if (service->callback_dbip)
+	db_rm_changed_clbk(service->callback_dbip, ged_event_librt_changed, gedp);
+    service->callback_dbip = nullptr;
+    if (dbip && db_add_changed_clbk(dbip, ged_event_librt_changed, gedp) == 0)
+	service->callback_dbip = dbip;
 }
 
 void

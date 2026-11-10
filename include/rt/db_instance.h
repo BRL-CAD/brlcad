@@ -48,7 +48,10 @@ struct rt_wdb; /* forward declaration */
 
 /* Callback called when database objects are changed.  The int indicates
  * the change type (0 = mod, 1 = add, 2 = rm). ctx is a user
- * supplied context and is passed back as the last argument to db_change.
+ * supplied context and is passed back as the last argument. For removal,
+ * the name is already unlinked.  A rename reports removal of a borrowed
+ * snapshot of the old entry and addition of the live entry, after the
+ * new name is linked.  Removal entries expire when the callback returns.
  */
 typedef void (*dbi_changed_t)(struct db_i *, struct directory *, int, void *);
 

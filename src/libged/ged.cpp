@@ -481,6 +481,7 @@ ged_close(struct ged *gedp)
     ged_edit_sessions_close_private(gedp);
 
     if (gedp->dbip) {
+	ged_event_database_set_private(gedp, NULL);
 	db_close(gedp->dbip);
 	gedp->dbip = NULL;
     }
@@ -755,6 +756,7 @@ ged_open(const char *dbtype, const char *filename, int existing_only)
 
     gedp = ged_create();
     gedp->dbip = wdbp->dbip;
+    ged_event_database_set_private(gedp, gedp->dbip);
 
     db_update_nref(gedp->dbip);
 

@@ -311,14 +311,6 @@ db_put_external(struct bu_external *ep, struct directory *dp, struct db_i *dbip)
     if (db_version(dbip) < 5) {
 	size_t ngran;
 
-	// db_put_external5 can't do it, so do the callbacks here
-	if (BU_PTBL_IS_INITIALIZED(&dbip->i->dbi_changed_clbks)) {
-	    for (size_t i = 0; i < BU_PTBL_LEN(&dbip->i->dbi_changed_clbks); i++) {
-		struct dbi_changed_clbk *cb = (struct dbi_changed_clbk *)BU_PTBL_GET(&dbip->i->dbi_changed_clbks, i);
-		(*cb->f)(dbip, dp, 0, cb->u_data);
-	    }
-	}
-
 	ngran = (ep->ext_nbytes+sizeof(union record)-1)/sizeof(union record);
 	if (ngran != dp->d_len) {
 	    if (dp->d_addr != RT_DIR_PHONY_ADDR) {
@@ -342,13 +334,26 @@ db_put_external(struct bu_external *ep, struct directory *dp, struct db_i *dbip)
 
     if (dp->d_flags & RT_DIR_INMEM) {
 	memcpy(dp->d_un.ptr, (char *)ep->ext_buf, ep->ext_nbytes);
-	return 0;
-    }
-
-    if (db_write(dbip, (char *)ep->ext_buf, ep->ext_nbytes, dp->d_addr) < 0) {
+    } else if (db_write(dbip, (char *)ep->ext_buf, ep->ext_nbytes, dp->d_addr) < 0) {
 	return -1;
     }
+
+    db_notify_changed(dbip, dp, 0);
     return 0;
+}
+
+
+void
+db_notify_changed(struct db_i *dbip, struct directory *dp, int mode)
+{
+    struct bu_ptbl *callbacks = &dbip->i->dbi_changed_clbks;
+    if (!BU_PTBL_IS_INITIALIZED(callbacks))
+	return;
+    for (size_t i = 0; i < BU_PTBL_LEN(callbacks); i++) {
+	struct dbi_changed_clbk *callback =
+	    (struct dbi_changed_clbk *)BU_PTBL_GET(callbacks, i);
+	callback->f(dbip, dp, mode, callback->u_data);
+    }
 }
 
 

@@ -203,6 +203,7 @@ __BEGIN_DECLS
 
 struct ged_event_service *ged_event_service_create(struct ged *gedp);
 void ged_event_service_destroy(struct ged_event_service *service);
+void ged_event_database_set_private(struct ged *gedp, struct db_i *dbip);
 
 #ifndef FALSE
 #  define FALSE 0

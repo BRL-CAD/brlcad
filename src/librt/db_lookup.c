@@ -310,12 +310,7 @@ db_diradd(struct db_i *dbip, const char *name, b_off_t laddr, size_t len, int fl
 
     bu_vls_free(&local);
 
-    if (BU_PTBL_IS_INITIALIZED(&dbip->i->dbi_changed_clbks)) {
-	for (size_t i = 0; i < BU_PTBL_LEN(&dbip->i->dbi_changed_clbks); i++) {
-	    struct dbi_changed_clbk *cb = (struct dbi_changed_clbk *)BU_PTBL_GET(&dbip->i->dbi_changed_clbks, i);
-	    (*cb->f)(dbip, dp, 1, cb->u_data);
-	}
-    }
+    db_notify_changed(dbip, dp, 1);
 
     return dp;
 }
@@ -324,62 +319,26 @@ db_diradd(struct db_i *dbip, const char *name, b_off_t laddr, size_t len, int fl
 int
 db_dirdelete(struct db_i *dbip, struct directory *dp)
 {
-    struct directory *findp;
-    struct directory **headp;
-
     RT_CK_DBI(dbip);
     RT_CK_DIR(dp);
 
-    headp = &(dbip->i->dbi_Head[db_dirhash(dp->d_namep)]);
+    struct directory **link = &dbip->i->dbi_Head[db_dirhash(dp->d_namep)];
+    while (*link && *link != dp)
+	link = &(*link)->d_forw;
+    if (!*link)
+	return -1;
 
-    if (dp->d_flags & RT_DIR_INMEM) {
-	if (dp->d_un.ptr != NULL)
-	    bu_free(dp->d_un.ptr, "db_dirdelete() inmem ptr");
-    }
+    /* Observers must see the updated directory while the removed entry is
+     * still available to identify the change. */
+    *link = dp->d_forw;
+    db_notify_changed(dbip, dp, 2);
 
-    if (*headp == dp) {
-
-	// If we've gotten this far, the dp is on its way out - call the change
-	// callback first if defined, so the app can get information from the
-	// dp before it is cleared.
-	if (BU_PTBL_IS_INITIALIZED(&dbip->i->dbi_changed_clbks)) {
-	    for (size_t i = 0; i < BU_PTBL_LEN(&dbip->i->dbi_changed_clbks); i++) {
-		struct dbi_changed_clbk *cb = (struct dbi_changed_clbk *)BU_PTBL_GET(&dbip->i->dbi_changed_clbks, i);
-		(*cb->f)(dbip, dp, 2, cb->u_data);
-	    }
-	}
-
-	RT_DIR_FREE_NAMEP(dp);	/* frees d_namep */
-	*headp = dp->d_forw;
-
-	/* Put 'dp' back on the freelist */
-	dp->d_forw = dbip->i->dbi_directory_hd;
-	dbip->i->dbi_directory_hd = dp;
-	return 0;
-    }
-    for (findp = *headp; findp != RT_DIR_NULL; findp = findp->d_forw) {
-	if (findp->d_forw != dp)
-	    continue;
-
-	// If we've gotten this far, the dp is on its way out - call the change
-	// callback first if defined, so the app can get information from the
-	// dp before it is cleared.
-	if (BU_PTBL_IS_INITIALIZED(&dbip->i->dbi_changed_clbks)) {
-	    for (size_t i = 0; i < BU_PTBL_LEN(&dbip->i->dbi_changed_clbks); i++) {
-		struct dbi_changed_clbk *cb = (struct dbi_changed_clbk *)BU_PTBL_GET(&dbip->i->dbi_changed_clbks, i);
-		(*cb->f)(dbip, dp, 2, cb->u_data);
-	    }
-	}
-
-	RT_DIR_FREE_NAMEP(dp);	/* frees d_namep */
-	findp->d_forw = dp->d_forw;
-
-	/* Put 'dp' back on the freelist */
-	dp->d_forw = dbip->i->dbi_directory_hd;
-	dbip->i->dbi_directory_hd = dp;
-	return 0;
-    }
-    return -1;
+    if ((dp->d_flags & RT_DIR_INMEM) && dp->d_un.ptr)
+	bu_free(dp->d_un.ptr, "db_dirdelete() inmem ptr");
+    RT_DIR_FREE_NAMEP(dp);
+    dp->d_forw = dbip->i->dbi_directory_hd;
+    dbip->i->dbi_directory_hd = dp;
+    return 0;
 }
 
 
@@ -388,6 +347,8 @@ db_rename(struct db_i *dbip, struct directory *dp, const char *newname)
 {
     struct directory *findp;
     struct directory **headp;
+    struct directory old_entry;
+    int notify;
 
     RT_CK_DBI(dbip);
     RT_CK_DIR(dp);
@@ -409,6 +370,13 @@ db_rename(struct db_i *dbip, struct directory *dp, const char *newname)
     }
 
 out:
+    /* Present the old name as a detached entry once the new name is live. */
+    old_entry = *dp;
+    notify = BU_PTBL_IS_INITIALIZED(&dbip->i->dbi_changed_clbks) &&
+	BU_PTBL_LEN(&dbip->i->dbi_changed_clbks);
+    if (notify)
+	RT_DIR_SET_NAMEP(&old_entry, dp->d_namep);
+
     /* Effect new name */
     RT_DIR_FREE_NAMEP(dp);			/* frees d_namep */
     RT_DIR_SET_NAMEP(dp, newname);	/* sets d_namep */
@@ -417,6 +385,12 @@ out:
     headp = &(dbip->i->dbi_Head[db_dirhash(newname)]);
     dp->d_forw = *headp;
     *headp = dp;
+
+    if (notify) {
+	db_notify_changed(dbip, &old_entry, 2);
+	db_notify_changed(dbip, dp, 1);
+	RT_DIR_FREE_NAMEP(&old_entry);
+    }
     return 0;
 }
 

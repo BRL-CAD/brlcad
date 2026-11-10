@@ -56,8 +56,10 @@ ged_close_core(struct ged *gedp, int UNUSED(argc), const char **UNUSED(argv))
     ged_edit_sessions_database_close_private(gedp);
 
     /* close current database */
-    if (gedp->dbip)
+    if (gedp->dbip) {
+	ged_event_database_set_private(gedp, NULL);
 	db_close(gedp->dbip);
+    }
     gedp->dbip = NULL;
 
     /* Clean up any old acceleration states, if present */

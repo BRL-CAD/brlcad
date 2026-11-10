@@ -70,7 +70,6 @@
 #include "qtcad/QgModel.h"
 #include "qtcad/QgUtil.h"
 #include "qtcad/QgSignalFlags.h"
-#include "../librt/librt_private.h"
 
 struct QgItem_cmp {
     inline bool operator() (const QgItem *i1, const QgItem *i2)
@@ -356,6 +355,11 @@ QgModel::~QgModel()
 {
     delete items;
 
+    if (callback_dbip && callback_dbip == gedp->dbip) {
+	db_rm_changed_clbk(callback_dbip, qgmodel_changed_callback, this);
+	db_rm_update_nref_clbk(callback_dbip, qgmodel_update_nref_callback, this);
+    }
+
     bv_free(empty_gvp);
     BU_PUT(empty_gvp, struct bview);
     ged_close(gedp);
@@ -441,8 +445,8 @@ void
 QgModel::g_update(struct db_i *n_dbip)
 {
 
-    // In case we have opened a completely new .g file, set the callbacks
-    if (n_dbip && !BU_PTBL_LEN(&n_dbip->i->dbi_changed_clbks)) {
+    // Other GED clients can already have callbacks on this database.
+    if (n_dbip && n_dbip != callback_dbip) {
 	// Primary driver of model updates is when individual objects are changed
 	db_add_changed_clbk(n_dbip, &qgmodel_changed_callback, (void *)this);
 
@@ -451,6 +455,7 @@ QgModel::g_update(struct db_i *n_dbip)
 	// update_nref pass is complete.
 	db_add_update_nref_clbk(n_dbip, &qgmodel_update_nref_callback, (void *)this);
     }
+    callback_dbip = n_dbip;
 
     if (!n_dbip) {
 	// if we have no dbip, clear out everything
