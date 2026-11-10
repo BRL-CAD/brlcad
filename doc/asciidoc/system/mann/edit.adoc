@@ -54,6 +54,13 @@ A geometry specifier identifies the object to act on.  Supported forms:
   the preceding components supply the transformation matrix context (e.g.
   `assembly/subpart/sph.s`).
 
+*instance-qualified path*::
+  When combination instance specifiers were enabled before the database was
+  opened, `@N` selects a duplicate child occurrence by its zero-based index
+  (e.g. `assembly/part.s@1`).  Instance qualification identifies path context
+  during ordinary object editing.  Use *--occurrence* to edit the selected
+  parent-to-child matrix rather than the shared object geometry.
+
 *URI with fragment*::
   A name followed by `#` and a feature key (e.g. `sph.s#vertex0`) when
   DbiState is available.
@@ -98,6 +105,17 @@ A geometry specifier identifies the object to act on.  Supported forms:
 *-O key=value*, *--option key=value*::
   Pass a dynamic option to the edit session.  The available options depend on
   the selected primitive and operation.
+
+*--occurrence*::
+  Edit only the final parent-to-child combination matrix selected by the path.
+  The target must have a parent combination.  This mode supports *translate*,
+  *rotate*, *scale*, *mat*, and the session lifecycle commands.  Primitive
+  descriptor operations are rejected because they alter shared object
+  geometry rather than one occurrence.
+
+  Occurrence mode requires `LIBRT_USE_COMB_INSTANCE_SPECIFIERS=1` to have been
+  set before the current database was opened.  Setting it after opening the
+  database does not change that database's path interpretation.
 
 *Conflict arbiter*::
   When an explicit geometry specifier is given and the same object also
@@ -350,8 +368,10 @@ without changing the database.
 edit [options] geometry mat M00 M01 ... M33
 ----
 
-Applies an arbitrary 4×4 matrix (16 row-major values) to the geometry.  The
-matrix is passed directly to the underlying librt edit layer.
+Applies an arbitrary 4×4 model-space matrix (16 row-major values).  In object
+mode, the matrix is applied to the geometry through the librt edit layer.  In
+occurrence mode, it is converted through the parent path and applied to the
+selected final arc matrix.
 
 .Example: Apply a 90° Z-rotation matrix to `ell.s`
 ====
@@ -466,6 +486,39 @@ Force the command-line specifier to override the selection:
 [source,console]
 ----
 mged> edit -f sph.s translate -a 10 0 0
+----
+
+====
+
+.Edit one duplicate combination occurrence
+====
+
+Enable instance-qualified paths before starting the application or opening
+the database:
+
+[source,console]
+----
+$ LIBRT_USE_COMB_INSTANCE_SPECIFIERS=1 mged model.g
+----
+
+Translate only the second `part.s` leaf in `assembly`:
+
+[source,console]
+----
+mged> edit --occurrence assembly/part.s@1 translate -r 5 0 0
+----
+
+The unqualified path selects occurrence zero.  A later duplicate must use its
+explicit zero-based qualifier; an invalid index is an error and does not fall
+back to occurrence zero.
+
+Occurrence edits support the same intermediate lifecycle:
+
+[source,console]
+----
+mged> edit --occurrence -i assembly/part.s@1 rotate 0 0 15
+mged> edit --occurrence assembly/part.s@1 status
+mged> edit --occurrence assembly/part.s@1 commit
 ----
 
 ====

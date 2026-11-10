@@ -229,6 +229,7 @@ struct ged_edit_ctx {
     int flag_f;  /**< @brief -f: force: apply op, write to disk, clear conflict     */
     int flag_F;  /**< @brief -F: abandon: discard intermediate state, use on-disk   */
     int flag_i;  /**< @brief -i: intermediate: apply to temp buf only (no disk write)*/
+    int occurrence; /**< @brief edit the final combination arc rather than the object */
 
     /* Options passed to rt_edit */
     std::vector<std::pair<std::string, std::string>> options;

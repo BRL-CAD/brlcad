@@ -102,6 +102,20 @@ find_object_session(struct ged *gedp, const char *path,
     return count == 1 ? GED_EDIT_OK : GED_EDIT_CONFLICT;
 }
 
+static enum ged_edit_status
+find_occurrence_session(struct ged *gedp, const char *path,
+	ged_edit_session_ref *session)
+{
+    size_t count = 0;
+    enum ged_edit_status status = ged_edit_sessions_get(gedp, path,
+	GED_EDIT_TARGET_OCCURRENCE, session, 1, &count);
+    if (status != GED_EDIT_OK)
+	return status;
+    if (!count)
+	return GED_EDIT_NOT_FOUND;
+    return count == 1 ? GED_EDIT_OK : GED_EDIT_CONFLICT;
+}
+
 static void
 edit_session_cb(struct ged *gedp,
 	const struct ged_edit_session_event *event, void *client_data)
@@ -820,6 +834,15 @@ create_p1_fixture(const char *path)
 	return BRLCAD_ERROR;
     }
 
+    mat_t outer_matrix;
+    bn_mat_angles(outer_matrix, 0.0, 0.0, 90.0);
+    BU_LIST_INIT(&wm.l);
+    mk_addmember("duplicates.c", &wm.l, outer_matrix, WMOP_UNION);
+    if (mk_lcomb(wdbp, "outer.c", &wm, 0, NULL, NULL, NULL, 0) != 0) {
+	wdb_close(wdbp);
+	return BRLCAD_ERROR;
+    }
+
     wdb_close(wdbp);
     return BRLCAD_OK;
 }
@@ -1323,10 +1346,33 @@ path_x_translation(struct ged *gedp, const char *path)
     mat_t matrix = MAT_INIT_IDN;
     if (db_string_to_path(&full_path, gedp->dbip, path) != 0 ||
 	!db_path_to_mat(gedp->dbip, &full_path, matrix,
-	    (int)full_path.fp_len - 1))
-	matrix[MDX] = INFINITY;
+	    (int)full_path.fp_len - 1)) {
+	db_free_full_path(&full_path);
+	return INFINITY;
+    }
     db_free_full_path(&full_path);
-    return matrix[MDX];
+    point_t origin = VINIT_ZERO;
+    point_t transformed = VINIT_ZERO;
+    MAT4X3PNT(transformed, matrix, origin);
+    return transformed[X];
+}
+
+static void
+test_p1_occurrence_capability_latch(struct ged *gedp)
+{
+    CHECK(!db_uses_instance_specifiers(gedp->dbip),
+	"database records disabled combination instance specifiers");
+    const char *disabled[] = {
+	"edit", "--occurrence", "duplicates.c/tor.s@1", "translate",
+	"-r", "1", "0", "0", NULL
+    };
+    CHECK(ged_exec(gedp, 8, disabled) == BRLCAD_ERROR &&
+	strstr(bu_vls_cstr(gedp->ged_result_str), "before opening") != NULL,
+	"occurrence mode explains that support must precede database open");
+    bu_setenv("LIBRT_USE_COMB_INSTANCE_SPECIFIERS", "1", 1);
+    CHECK(!db_uses_instance_specifiers(gedp->dbip) &&
+	ged_exec(gedp, 8, disabled) == BRLCAD_ERROR,
+	"changing the environment does not alter an open database mode");
 }
 
 static void
@@ -1371,6 +1417,151 @@ test_p1_occurrence_sessions(struct ged *gedp)
 	NEAR_EQUAL(path_x_translation(gedp, paths[2]), 10.0,
 	    NEAR_ENOUGH),
 	"commit updates only the selected duplicate occurrence matrix");
+}
+
+static void
+test_p1_occurrence_command(struct ged *gedp)
+{
+    CHECK(db_uses_instance_specifiers(gedp->dbip),
+	"database records enabled combination instance specifiers");
+
+    const char *intermediate[] = {
+	"edit", "--occurrence", "-i", "duplicates.c/tor.s@1",
+	"translate", "-r", "5", "0", "0", NULL
+    };
+    ged_edit_session_ref intermediate_session = GED_EDIT_SESSION_REF_NULL;
+    mat_t matrix;
+    CHECK(ged_exec(gedp, 9, intermediate) == BRLCAD_OK &&
+	find_occurrence_session(gedp, "duplicates.c/tor.s@1",
+	    &intermediate_session) == GED_EDIT_OK &&
+	ged_edit_session_occurrence_matrix_get(gedp, intermediate_session,
+	    matrix) == GED_EDIT_OK && NEAR_EQUAL(matrix[MDX], 27.0, NEAR_ENOUGH) &&
+	NEAR_EQUAL(path_x_translation(gedp, "duplicates.c/tor.s@1"), 22.0,
+	    NEAR_ENOUGH),
+	"occurrence -i updates only the selected intermediate arc matrix");
+
+    const char *abandon[] = {
+	"edit", "--occurrence", "-F", "duplicates.c/tor.s@1",
+	"translate", "-r", "2", "0", "0", NULL
+    };
+    struct ged_edit_session_info info = {};
+    CHECK(ged_exec(gedp, 9, abandon) == BRLCAD_OK &&
+	ged_edit_session_info_get(gedp, intermediate_session, &info) ==
+	    GED_EDIT_STALE &&
+	NEAR_EQUAL(path_x_translation(gedp, "duplicates.c/tor.s@1"), 24.0,
+	    NEAR_ENOUGH),
+	"occurrence -F abandons intermediate state before applying the edit");
+
+    const char *rotate[] = {
+	"edit", "--occurrence", "duplicates.c/tor.s@2", "rotate",
+	"0", "0", "90", NULL
+    };
+    struct db_full_path rotated_path;
+    db_full_path_init(&rotated_path);
+    mat_t rotated = MAT_INIT_IDN;
+    CHECK(ged_exec(gedp, 7, rotate) == BRLCAD_OK &&
+	db_string_to_path(&rotated_path, gedp->dbip,
+	    "duplicates.c/tor.s@2") == 0 &&
+	db_path_to_mat(gedp->dbip, &rotated_path, rotated, 1) &&
+	NEAR_ZERO(rotated[0], NEAR_ENOUGH) &&
+	NEAR_EQUAL(rotated[1], -1.0, NEAR_ENOUGH) &&
+	NEAR_EQUAL(rotated[MDX], 10.0, NEAR_ENOUGH),
+	"occurrence rotation preserves its pivot and changes only the exact arc");
+    db_free_full_path(&rotated_path);
+
+    const char *nested_translate[] = {
+	"edit", "--occurrence", "outer.c/duplicates.c/tor.s@2",
+	"translate", "-r", "1", "0", "0", NULL
+    };
+    fastf_t nested_before = path_x_translation(gedp,
+	"outer.c/duplicates.c/tor.s@2");
+    CHECK(ged_exec(gedp, 8, nested_translate) == BRLCAD_OK &&
+	NEAR_EQUAL(path_x_translation(gedp,
+	    "outer.c/duplicates.c/tor.s@2"), nested_before + 1.0,
+	    NEAR_ENOUGH),
+	"occurrence translation remains model-space under a rotated parent");
+
+    const char *scale[] = {
+	"edit", "--occurrence", "duplicates.c/tor.s", "scale", "2", NULL
+    };
+    struct db_full_path scaled_path;
+    db_full_path_init(&scaled_path);
+    mat_t scaled = MAT_INIT_IDN;
+    point_t scaled_origin = VINIT_ZERO;
+    point_t origin = VINIT_ZERO;
+    int scale_result = ged_exec(gedp, 5, scale);
+    int scale_path_result = db_string_to_path(&scaled_path, gedp->dbip,
+	"duplicates.c/tor.s");
+    int scale_matrix_result = scale_path_result == 0 ?
+	db_path_to_mat(gedp->dbip, &scaled_path, scaled, 1) : 0;
+    MAT4X3PNT(scaled_origin, scaled, origin);
+    CHECK(scale_result == BRLCAD_OK && scale_path_result == 0 &&
+	scale_matrix_result &&
+	NEAR_EQUAL(scaled[15], 0.5, NEAR_ENOUGH) &&
+	NEAR_EQUAL(scaled_origin[X], 10.0, NEAR_ENOUGH),
+	"occurrence scale changes only the selected arc about its origin");
+    db_free_full_path(&scaled_path);
+
+    const char *tentative[] = {
+	"edit", "--occurrence", "-i", "duplicates.c/tor.s", "translate",
+	"-r", "1", "0", "0", NULL
+    };
+    const char *checkpoint[] = {
+	"edit", "--occurrence", "duplicates.c/tor.s", "checkpoint", NULL
+    };
+    const char *second_edit[] = {
+	"edit", "--occurrence", "-i", "duplicates.c/tor.s", "translate",
+	"-r", "2", "0", "0", NULL
+    };
+    const char *revert[] = {
+	"edit", "--occurrence", "-i", "duplicates.c/tor.s", "revert", NULL
+    };
+    const char *cancel[] = {
+	"edit", "--occurrence", "duplicates.c/tor.s", "cancel", NULL
+    };
+    ged_edit_session_ref lifecycle_session = GED_EDIT_SESSION_REF_NULL;
+    point_t lifecycle_origin = VINIT_ZERO;
+    CHECK(ged_exec(gedp, 9, tentative) == BRLCAD_OK &&
+	ged_exec(gedp, 4, checkpoint) == BRLCAD_OK &&
+	ged_exec(gedp, 9, second_edit) == BRLCAD_OK &&
+	ged_exec(gedp, 5, revert) == BRLCAD_OK &&
+	find_occurrence_session(gedp, "duplicates.c/tor.s",
+	    &lifecycle_session) == GED_EDIT_OK &&
+	ged_edit_session_occurrence_matrix_get(gedp, lifecycle_session,
+	    matrix) == GED_EDIT_OK,
+	"occurrence lifecycle restores its checkpoint and remains active");
+    MAT4X3PNT(lifecycle_origin, matrix, origin);
+    CHECK(NEAR_EQUAL(lifecycle_origin[X], 11.0, NEAR_ENOUGH) &&
+	ged_exec(gedp, 4, cancel) == BRLCAD_OK &&
+	NEAR_EQUAL(path_x_translation(gedp, "duplicates.c/tor.s"), 10.0,
+	    NEAR_ENOUGH),
+	"occurrence cancel leaves the committed arc unchanged");
+
+    const char *matrix_edit[] = {
+	"edit", "--occurrence", "duplicates.c/tor.s@1", "mat",
+	"1", "0", "0", "3", "0", "1", "0", "0",
+	"0", "0", "1", "0", "0", "0", "0", "1", NULL
+    };
+    CHECK(ged_exec(gedp, 20, matrix_edit) == BRLCAD_OK &&
+	NEAR_EQUAL(path_x_translation(gedp, "duplicates.c/tor.s@1"), 27.0,
+	    NEAR_ENOUGH),
+	"occurrence mat applies a model-space matrix to the selected arc");
+
+    const char *invalid_index[] = {
+	"edit", "--occurrence", "duplicates.c/tor.s@99", "translate",
+	"-r", "1", "0", "0", NULL
+    };
+    const char *top_level[] = {
+	"edit", "--occurrence", "tor.s", "translate", "-r", "1", "0",
+	"0", NULL
+    };
+    const char *primitive[] = {
+	"edit", "--occurrence", "duplicates.c/tor.s", "r1", "9", NULL
+    };
+    CHECK(ged_exec(gedp, 8, invalid_index) == BRLCAD_ERROR &&
+	ged_exec(gedp, 8, top_level) == BRLCAD_ERROR &&
+	ged_exec(gedp, 5, primitive) == BRLCAD_ERROR,
+	"occurrence mode rejects missing arcs, top-level targets, and primitive operations");
 }
 
 static void
@@ -5527,6 +5718,17 @@ main(int ac, char *av[])
         bu_log("ERROR: section 1 fixture creation failed\n");
         bu_vls_free(&p1_path); return 1;
     }
+    bu_setenv("LIBRT_USE_COMB_INSTANCE_SPECIFIERS", "0", 1);
+    {
+	struct ged *disabled = open_fixture(bu_vls_cstr(&p1_path));
+	if (!disabled) {
+	    bu_log("ERROR: ged_open failed (disabled occurrence mode)\n");
+	    bu_vls_free(&p1_path);
+	    return 1;
+	}
+	test_p1_occurrence_capability_latch(disabled);
+	ged_close(disabled);
+    }
     bu_setenv("LIBRT_USE_COMB_INSTANCE_SPECIFIERS", "1", 1);
     {
         struct ged *gedp = open_fixture(bu_vls_cstr(&p1_path));
@@ -5551,6 +5753,7 @@ main(int ac, char *av[])
         test_p1_buf_flush(gedp);
         test_p1_edit_session_api(gedp);
         test_p1_occurrence_sessions(gedp);
+	test_p1_occurrence_command(gedp);
         test_p1_descriptor_session_dispatch(gedp);
         test_p1_independent_ged_context_sessions(gedp, bu_vls_cstr(&p1_path));
         test_p1_reentrant_session_observer(gedp);

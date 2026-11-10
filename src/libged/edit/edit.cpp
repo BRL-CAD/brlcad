@@ -311,6 +311,101 @@ _edit_xform_apply(struct ged_edit_ctx *ctx,
 }
 
 
+static enum ged_edit_session_target
+_edit_ctx_target(const struct ged_edit_ctx *ctx)
+{
+    return ctx && ctx->occurrence ? GED_EDIT_TARGET_OCCURRENCE :
+	GED_EDIT_TARGET_OBJECT;
+}
+
+
+static int
+_edit_occurrence_xform_apply(struct ged_edit_ctx *ctx,
+	std::function<int(const point_t, mat_t)> build_world_change)
+{
+    if (!ctx || !ctx->gedp || ctx->geom_specs.empty() ||
+	ctx->geom_specs[0].path.empty() || !build_world_change)
+	return BRLCAD_ERROR;
+
+    struct ged *gedp = ctx->gedp;
+    const char *path = ctx->geom_specs[0].path.c_str();
+    ged_edit_session_ref session = GED_EDIT_SESSION_REF_NULL;
+    const enum ged_edit_status found = ged_edit_session_default_get(gedp,
+	path, GED_EDIT_TARGET_OCCURRENCE, 0, &session);
+    const bool created = found == GED_EDIT_NOT_FOUND;
+    if (found != GED_EDIT_OK && !created)
+	return BRLCAD_ERROR;
+    if (created && ged_edit_session_default_get(gedp, path,
+	    GED_EDIT_TARGET_OCCURRENCE, 1, &session) != GED_EDIT_OK)
+	return BRLCAD_ERROR;
+
+    struct db_full_path full_path;
+    db_full_path_init(&full_path);
+    if (db_string_to_path(&full_path, gedp->dbip, path) != 0 ||
+	full_path.fp_len < 2) {
+	if (created)
+	    (void)ged_edit_session_cancel(gedp, session);
+	db_free_full_path(&full_path);
+	return BRLCAD_ERROR;
+    }
+
+    mat_t parent = MAT_INIT_IDN;
+    if (full_path.fp_len > 2 && !db_path_to_mat(gedp->dbip, &full_path,
+	    parent, (int)full_path.fp_len - 2)) {
+	if (created)
+	    (void)ged_edit_session_cancel(gedp, session);
+	db_free_full_path(&full_path);
+	return BRLCAD_ERROR;
+    }
+    db_free_full_path(&full_path);
+
+    mat_t arc;
+    if (ged_edit_session_occurrence_matrix_get(gedp, session, arc) !=
+	GED_EDIT_OK) {
+	if (created)
+	    (void)ged_edit_session_cancel(gedp, session);
+	return BRLCAD_ERROR;
+    }
+
+    mat_t model;
+    bn_mat_mul(model, parent, arc);
+    point_t origin = VINIT_ZERO;
+    point_t model_origin = VINIT_ZERO;
+    MAT4X3PNT(model_origin, model, origin);
+
+    mat_t world_change = MAT_INIT_IDN;
+    if (build_world_change(model_origin, world_change) != BRLCAD_OK) {
+	if (created)
+	    (void)ged_edit_session_cancel(gedp, session);
+	return BRLCAD_ERROR;
+    }
+
+    mat_t parent_inverse;
+    if (!bn_mat_inverse(parent_inverse, parent)) {
+	if (created)
+	    (void)ged_edit_session_cancel(gedp, session);
+	return BRLCAD_ERROR;
+    }
+    mat_t parent_local_change;
+    mat_t temporary;
+    bn_mat_mul(temporary, world_change, parent);
+    bn_mat_mul(parent_local_change, parent_inverse, temporary);
+    mat_t updated_arc;
+    bn_mat_mul(updated_arc, parent_local_change, arc);
+
+    if (ged_edit_session_occurrence_matrix_set(gedp, session, updated_arc) !=
+	GED_EDIT_OK) {
+	if (created)
+	    (void)ged_edit_session_cancel(gedp, session);
+	return BRLCAD_ERROR;
+    }
+    if (ctx->flag_i)
+	return BRLCAD_OK;
+    return ged_edit_session_commit(gedp, session) == GED_EDIT_OK ?
+	BRLCAD_OK : BRLCAD_ERROR;
+}
+
+
 /* ================================================================== *
  * Subcommand implementations
  * ================================================================== */
@@ -467,6 +562,58 @@ cmd_translate::exec(struct ged *gedp, void *u_data, int argc, const char **argv)
     int  n_coord_flags = x_only + y_only + z_only;
     bool do_abs    = (abs_flag && !rel_flag);
 
+    if (ctx->occurrence) {
+	return _edit_occurrence_xform_apply(ctx,
+	    [&](const point_t current, mat_t change) -> int
+	    {
+		point_t from;
+		VMOVE(from, k_is_self ? current : k_pos);
+		point_t target;
+		VMOVE(target, current);
+		if (to_name) {
+		    point_t destination;
+		    if (_edit_get_obj_keypoint(&destination, to_name, gedp) !=
+			BRLCAD_OK)
+			return BRLCAD_ERROR;
+		    if (n_coord_flags) {
+			if (x_only) target[X] = destination[X];
+			if (y_only) target[Y] = destination[Y];
+			if (z_only) target[Z] = destination[Z];
+		    } else {
+			VMOVE(target, destination);
+		    }
+		} else if (!to_is_self) {
+		    vect_t value;
+		    VSCALE(value, to_vec, gedp->dbip->dbi_local2base);
+		    if (do_abs) {
+			VMOVE(target, value);
+			if (n_coord_flags) {
+			    if (!x_only) target[X] = current[X];
+			    if (!y_only) target[Y] = current[Y];
+			    if (!z_only) target[Z] = current[Z];
+			}
+		    } else if (n_coord_flags) {
+			if (x_only) target[X] += value[X];
+			if (y_only) target[Y] += value[Y];
+			if (z_only) target[Z] += value[Z];
+		    } else {
+			VADD2(target, current, value);
+		    }
+		}
+		if (have_k && (to_is_self || (to_name && !n_coord_flags) ||
+			do_abs)) {
+		    vect_t offset;
+		    VSUB2(offset, target, from);
+		    VADD2(target, current, offset);
+		}
+		vect_t delta;
+		VSUB2(delta, target, current);
+		MAT_IDN(change);
+		MAT_DELTAS_VEC(change, delta);
+		return BRLCAD_OK;
+	    });
+    }
+
     return _edit_xform_apply(ctx,
 	[&](struct rt_edit *s) -> int
 	{
@@ -587,6 +734,18 @@ cmd_tra::exec(struct ged *gedp, void *u_data, int argc, const char **argv)
     if (vret < 0) {
 	bu_vls_printf(gedp->ged_result_str, "%s\n", usage().c_str());
 	return BRLCAD_ERROR;
+    }
+
+    if (ctx->occurrence) {
+	return _edit_occurrence_xform_apply(ctx,
+	    [&](const point_t UNUSED(current), mat_t change) -> int
+	    {
+		vect_t delta_base;
+		VSCALE(delta_base, delta, gedp->dbip->dbi_local2base);
+		MAT_IDN(change);
+		MAT_DELTAS_VEC(change, delta_base);
+		return BRLCAD_OK;
+	    });
     }
 
     return _edit_xform_apply(ctx,
@@ -906,6 +1065,37 @@ cmd_rotate::exec(struct ged *gedp, void *u_data, int argc, const char **argv)
 	else if (have_angle_origin) VMOVE(rot_center, angle_origin);
 	/* center_is_self: resolved inside lambda from s->e_keypoint */
 
+    if (ctx->occurrence) {
+	return _edit_occurrence_xform_apply(ctx,
+	    [&](const point_t current, mat_t change) -> int
+	    {
+		point_t actual_center;
+		if (center_is_self || (!use_custom_center && !have_angle_origin))
+		    VMOVE(actual_center, current);
+		else
+		    VMOVE(actual_center, rot_center);
+		fastf_t angle_rad = explicit_angle_rad;
+		if (!have_explicit_angle) {
+		    vect_t from_vector, to_vector;
+		    VSUB2(from_vector, af_ref, actual_center);
+		    VSUB2(to_vector, at_ref, actual_center);
+		    VJOIN1(from_vector, from_vector,
+			-VDOT(from_vector, axis_dir), axis_dir);
+		    VJOIN1(to_vector, to_vector,
+			-VDOT(to_vector, axis_dir), axis_dir);
+		    if (MAGNITUDE(from_vector) < SMALL_FASTF ||
+			MAGNITUDE(to_vector) < SMALL_FASTF)
+			return BRLCAD_ERROR;
+		    vect_t cross;
+		    VCROSS(cross, from_vector, to_vector);
+		    angle_rad = atan2(VDOT(axis_dir, cross),
+			VDOT(from_vector, to_vector));
+		}
+		bn_mat_arb_rot(change, actual_center, axis_dir, angle_rad);
+		return BRLCAD_OK;
+	    });
+    }
+
 	return _edit_xform_apply(ctx,
 	    [&](struct rt_edit *s) -> int
 	    {
@@ -1035,6 +1225,22 @@ cmd_rotate::exec(struct ged *gedp, void *u_data, int argc, const char **argv)
 	VMOVE(euler_center, angle_origin);
     }
     /* center_is_self: resolved inside lambda */
+
+    if (ctx->occurrence) {
+	return _edit_occurrence_xform_apply(ctx,
+	    [&](const point_t current, mat_t change) -> int
+	    {
+		point_t center_point;
+		if (center_is_self || !use_euler_center)
+		    VMOVE(center_point, current);
+		else
+		    VMOVE(center_point, euler_center);
+		mat_t rotation;
+		bn_mat_angles(rotation, angles[X], angles[Y], angles[Z]);
+		bn_mat_xform_about_pnt(change, rotation, center_point);
+		return BRLCAD_OK;
+	    });
+    }
 
     return _edit_xform_apply(ctx,
 	[&](struct rt_edit *s) -> int
@@ -1251,6 +1457,26 @@ cmd_scale::exec(struct ged *gedp, void *u_data, int argc, const char **argv)
     /* Decide: uniform scale or per-axis scale? */
     bool is_uniform = vec_is_uniform(factors);
 
+    if (ctx->occurrence) {
+	if (factors[X] <= 0.0 || factors[Y] <= 0.0 || factors[Z] <= 0.0)
+	    return BRLCAD_ERROR;
+	return _edit_occurrence_xform_apply(ctx,
+	    [&](const point_t current, mat_t change) -> int
+	    {
+		point_t center;
+		VMOVE(center, have_center ? center_pos : current);
+		if (is_uniform)
+		    return bn_mat_scale_about_pnt(change, center, factors[X]) ?
+			BRLCAD_ERROR : BRLCAD_OK;
+		mat_t scale = MAT_INIT_IDN;
+		scale[0] = factors[X];
+		scale[5] = factors[Y];
+		scale[10] = factors[Z];
+		bn_mat_xform_about_pnt(change, scale, center);
+		return BRLCAD_OK;
+	    });
+    }
+
     if (is_uniform) {
 	/* ---- Uniform scale path ----------------------------------- */
 	fastf_t factor = factors[X];
@@ -1360,7 +1586,7 @@ _edit_ctx_session(struct ged_edit_ctx *ctx, ged_edit_session_ref *session)
 	ctx->geom_specs[0].path.empty())
 	return GED_EDIT_INVALID;
     return ged_edit_session_default_get(ctx->gedp,
-	ctx->geom_specs[0].path.c_str(), GED_EDIT_TARGET_OBJECT, 0, session);
+	ctx->geom_specs[0].path.c_str(), _edit_ctx_target(ctx), 0, session);
 }
 
 
@@ -1386,7 +1612,7 @@ cmd_checkpoint::exec(struct ged *gedp, void *u_data, int argc, const char **argv
 	return BRLCAD_ERROR;
     ged_edit_session_ref session = GED_EDIT_SESSION_REF_NULL;
     if (ged_edit_session_default_get(gedp,
-	    ctx->geom_specs[0].path.c_str(), GED_EDIT_TARGET_OBJECT, 1,
+	    ctx->geom_specs[0].path.c_str(), _edit_ctx_target(ctx), 1,
 	    &session) != GED_EDIT_OK)
 	return BRLCAD_ERROR;
     return ged_edit_session_checkpoint(gedp, session) == GED_EDIT_OK ?
@@ -1677,6 +1903,15 @@ cmd_mat::exec(struct ged *gedp, void *u_data, int argc, const char **argv)
 		"mat: bad matrix element [%d]: '%s'\n", mi, argv[mi]);
 	    return BRLCAD_ERROR;
 	}
+    }
+
+    if (ctx->occurrence) {
+	return _edit_occurrence_xform_apply(ctx,
+	    [&](const point_t UNUSED(current), mat_t change) -> int
+	    {
+		MAT_COPY(change, mat);
+		return BRLCAD_OK;
+	    });
     }
 
     return _edit_xform_apply(ctx,
@@ -2298,6 +2533,8 @@ _exec_desc_cmd(struct ged *gedp, struct ged_edit_ctx *ctx,
     if (!gedp || !ctx || !cmd_desc || ctx->dp == RT_DIR_NULL ||
 	ctx->geom_specs.empty() || ctx->geom_specs[0].path.empty())
 	return BRLCAD_ERROR;
+    if (ctx->occurrence)
+	return BRLCAD_ERROR;
 
     const char *path = ctx->geom_specs[0].path.c_str();
     ged_edit_session_ref session = GED_EDIT_SESSION_REF_NULL;
@@ -2407,6 +2644,7 @@ ged_edit_core(struct ged *gedp, int argc, const char *argv[])
     ctx.flag_f       = 0;
     ctx.flag_F       = 0;
     ctx.flag_i       = 0;
+    ctx.occurrence   = 0;
     ctx.from_selection = false;
     ctx.has_conflict = false;
     ctx.dp           = RT_DIR_NULL;
@@ -2419,6 +2657,22 @@ ged_edit_core(struct ged *gedp, int argc, const char *argv[])
 
     /* Skip past the "edit" command name */
     argc--; argv++;
+
+    bool occurrence_requested = false;
+    for (int i = 0; i < argc; ++i) {
+	if (BU_STR_EQUAL(argv[i], "--occurrence")) {
+	    occurrence_requested = true;
+	    break;
+	}
+    }
+    if (occurrence_requested &&
+	!db_uses_instance_specifiers(gedp->dbip)) {
+	bu_vls_printf(gedp->ged_result_str,
+	    "edit: --occurrence requires combination instance specifiers; "
+	    "set LIBRT_USE_COMB_INSTANCE_SPECIFIERS=1 before opening the "
+	    "database\n");
+	return BRLCAD_ERROR;
+    }
 
     /* ---- Build subcommand map --------------------------------------- */
     std::map<std::string, ged_subcmd *> edit_cmds;
@@ -2439,7 +2693,7 @@ ged_edit_core(struct ged *gedp, int argc, const char *argv[])
     edit_cmds["mat"]        = &edit_mat_cmd;
 
     /* ---- Global option descriptors --------------------------------- */
-    struct bu_opt_desc d[10];
+    struct bu_opt_desc d[11];
     BU_OPT(d[0], "h", "help",         "",  NULL, &help,        "Print help");
     BU_OPT(d[1], "v", "verbose",      "",  NULL, &ctx.verbosity,"Verbose output");
     BU_OPT(d[2], "S", "selection",    "",  NULL, &ctx.flag_S,  "Operate on selection (ignore cmd-line specifier)");
@@ -2449,7 +2703,8 @@ ged_edit_core(struct ged *gedp, int argc, const char *argv[])
     BU_OPT(d[6], "", "list-all-prim-ops", "", NULL, &list_all_prim_ops, "List all available primitive edit operations");
     BU_OPT(d[7], "", "list-all-prim-ops=json", "", NULL, &list_all_prim_ops_json, "List all primitive edit operations as JSON");
     BU_OPT(d[8], "O", "option",       "key=value", &_parse_ged_edit_opt, &ctx.options, "Pass dynamic option to edit session");
-    BU_OPT_NULL(d[9]);
+    BU_OPT(d[9], "", "occurrence", "", NULL, &ctx.occurrence, "Edit the final combination arc");
+    BU_OPT_NULL(d[10]);
 
     const char *bargs_help = "[options] <geometry_specifier> subcommand [args]";
 
@@ -2758,7 +3013,7 @@ ged_edit_core(struct ged *gedp, int argc, const char *argv[])
 	for (const auto &spec : ctx.geom_specs) {
 	    ged_edit_session_ref session = GED_EDIT_SESSION_REF_NULL;
 	    const enum ged_edit_status found = ged_edit_session_default_get(gedp,
-		spec.path.c_str(), GED_EDIT_TARGET_OBJECT, 0, &session);
+		spec.path.c_str(), _edit_ctx_target(&ctx), 0, &session);
 	    if (found == GED_EDIT_NOT_FOUND)
 		continue;
 	    if (found != GED_EDIT_OK ||
@@ -2827,6 +3082,18 @@ ged_edit_core(struct ged *gedp, int argc, const char *argv[])
     const char *resolved_type = res_t.empty() ? NULL : res_t.c_str();
 
     std::string cmd_str(argv[0]);
+    if (ctx.occurrence) {
+	static const std::set<std::string> occurrence_commands = {
+	    "cancel", "checkpoint", "commit", "mat", "reset", "revert",
+	    "rot", "rotate", "sca", "scale", "status", "tra", "translate"
+	};
+	if (!occurrence_commands.count(cmd_str)) {
+	    bu_vls_printf(gedp->ged_result_str,
+		"edit: '%s' is not available in occurrence mode\n",
+		cmd_str.c_str());
+	    return BRLCAD_ERROR;
+	}
+    }
     auto e_it = edit_cmds.find(cmd_str);
     if (e_it == edit_cmds.end()) {
 	if (ctx.dp != RT_DIR_NULL &&
