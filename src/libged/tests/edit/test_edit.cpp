@@ -43,6 +43,7 @@
 #include "wdb.h"
 #include "ged.h"
 #include "ged/edit.h"
+#include "ged/selection.h"
 #include "brep/util.h"
 
 #include "../../dbi.h"
@@ -930,25 +931,23 @@ test_p1_batch_marker(struct ged *gedp)
 static void
 test_p1_selection_fallback(struct ged *gedp)
 {
-    DbiState *dbis = (DbiState *)gedp->dbi_state;
-    std::vector<BSelectState *> ss = dbis->get_selected_states("default");
-    if (ss.empty()) { CHECK(0, "Could not get default selection state"); return; }
-    ss[0]->select_path("tor.s", false);
+    if (!ged_selection_select_path(gedp, NULL, "tor.s", 0)) {
+	CHECK(0, "Could not select tor.s in the default selection set");
+	return;
+    }
 
     const char *av[] = { "edit", "perturb", "0.0", NULL };
     bu_vls_trunc(gedp->ged_result_str, 0);
     int ret = ged_exec(gedp, 3, av);
     CHECK(ret == BRLCAD_OK,
           "edit perturb 0.0 (via selection fallback) returns OK");
-    ss[0]->deselect_path("tor.s", false);
+    (void)ged_selection_deselect_path(gedp, NULL, "tor.s", 0);
 }
 
 static void
 test_p1_no_geom_no_sel(struct ged *gedp)
 {
-    DbiState *dbis = (DbiState *)gedp->dbi_state;
-    std::vector<BSelectState *> ss = dbis->get_selected_states("default");
-    if (!ss.empty()) ss[0]->deselect_path("tor.s", false);
+    (void)ged_selection_clear(gedp, NULL);
 
     const char *av[] = { "edit", "perturb", "0.1", NULL };
     bu_vls_trunc(gedp->ged_result_str, 0);
@@ -960,10 +959,10 @@ test_p1_no_geom_no_sel(struct ged *gedp)
 static void
 test_p1_conflict_arbiter(struct ged *gedp)
 {
-    DbiState *dbis = (DbiState *)gedp->dbi_state;
-    std::vector<BSelectState *> ss = dbis->get_selected_states("default");
-    if (ss.empty()) { CHECK(0, "Could not get default selection state"); return; }
-    ss[0]->select_path("tor.s", false);
+    if (!ged_selection_select_path(gedp, NULL, "tor.s", 0)) {
+	CHECK(0, "Could not select tor.s in the default selection set");
+	return;
+    }
 
     const char *av[] = { "edit", "tor.s", "perturb", "0.1", NULL };
     bu_vls_trunc(gedp->ged_result_str, 0);
@@ -976,44 +975,69 @@ test_p1_conflict_arbiter(struct ged *gedp)
          strstr(bu_vls_cstr(gedp->ged_result_str), "conflict") != NULL);
     CHECK(has_conflict_msg,
           "edit tor.s perturb (selection conflict) prints conflict message");
-    ss[0]->deselect_path("tor.s", false);
+    (void)ged_selection_deselect_path(gedp, NULL, "tor.s", 0);
 }
 
 static void
 test_p1_flag_S(struct ged *gedp)
 {
-    DbiState *dbis = (DbiState *)gedp->dbi_state;
-    std::vector<BSelectState *> ss = dbis->get_selected_states("default");
-    if (ss.empty()) { CHECK(0, "Could not get default selection state"); return; }
-    ss[0]->select_path("tor.s", false);
+    if (!ged_selection_select_path(gedp, NULL, "tor.s", 0)) {
+	CHECK(0, "Could not select tor.s in the default selection set");
+	return;
+    }
 
     const char *av[] = { "edit", "-S", "sph.s", "perturb", "0.0", NULL };
     bu_vls_trunc(gedp->ged_result_str, 0);
     int ret = ged_exec(gedp, 5, av);
     CHECK(ret == BRLCAD_OK,
           "edit -S sph.s perturb 0.0 (uses selection tor.s, not sph.s) returns OK");
-    ss[0]->deselect_path("tor.s", false);
+    (void)ged_selection_deselect_path(gedp, NULL, "tor.s", 0);
 }
 
 static void
 test_p1_flag_f(struct ged *gedp)
 {
-    DbiState *dbis = (DbiState *)gedp->dbi_state;
-    std::vector<BSelectState *> ss = dbis->get_selected_states("default");
-    if (ss.empty()) { CHECK(0, "Could not get default selection state"); return; }
-    ss[0]->select_path("tor.s", false);
+    if (!ged_selection_select_path(gedp, NULL, "tor.s", 0)) {
+	CHECK(0, "Could not select tor.s in the default selection set");
+	return;
+    }
 
     const char *av[] = { "edit", "-f", "tor.s", "perturb", "0.0", NULL };
     bu_vls_trunc(gedp->ged_result_str, 0);
     int ret = ged_exec(gedp, 5, av);
     CHECK(ret == BRLCAD_OK,
           "edit -f tor.s perturb 0.0 (force, bypasses conflict) returns OK");
-    ss[0]->deselect_path("tor.s", false);
+    (void)ged_selection_deselect_path(gedp, NULL, "tor.s", 0);
 }
 
 
 static int
 read_tor(struct ged *gedp, const char *name, struct rt_tor_internal *out);
+
+
+static void
+test_p1_option_named_object(struct ged *gedp)
+{
+    const char *name = "-i";
+    int type = ID_SPH;
+    struct directory *option_name = db_diradd(gedp->dbip, name,
+	RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, &type);
+    CHECK(option_name != RT_DIR_NULL, "create a directory entry named -i");
+    if (option_name == RT_DIR_NULL)
+	return;
+
+    const char *edit[] = {"edit", "-i", "tor.s", "translate", "-r", "1", "0", "0"};
+    CHECK(ged_exec(gedp, 8, edit) == BRLCAD_OK,
+	"edit parses -i as an option even when it names an object");
+    ged_edit_session_ref session = GED_EDIT_SESSION_REF_NULL;
+    if (find_object_session(gedp, "tor.s", &session) == GED_EDIT_OK)
+	CHECK(ged_edit_session_cancel(gedp, session) == GED_EDIT_OK,
+	    "cancel the intermediate edit");
+    else
+	CHECK(0, "edit -i opens an intermediate session for the torus");
+    CHECK(db_dirdelete(gedp->dbip, option_name) == 0,
+	"remove the option-named directory entry");
+}
 
 
 static void
@@ -5747,6 +5771,7 @@ main(int ac, char *av[])
         test_p1_flag_S(gedp);
         test_p1_flag_f(gedp);
         test_p1_flag_F(gedp);
+        test_p1_option_named_object(gedp);
         test_p1_buf_get_missing(gedp);
         test_p1_buf_set_get(gedp);
         test_p1_buf_abandon(gedp);

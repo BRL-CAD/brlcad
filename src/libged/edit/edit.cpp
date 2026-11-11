@@ -47,6 +47,8 @@
 #include "rt/primitives/arb8.h"
 #include "rt/primitives/tgc.h"
 
+#include "ged/db_index.h"
+#include "ged/selection.h"
 #include "../ged_private.h"
 #include "../dbi.h"
 #include "./ged_edit.h"
@@ -57,7 +59,7 @@
  * ------------------------------------------------------------------ */
 
 /**
- * Attempt to resolve argv[i] as a geometry specifier via DbiState.
+ * Attempt to resolve argv[i] as a geometry specifier via the database index.
  * Fills *spec and returns true on success, false if the token does not
  * resolve to any known database object.
  *
@@ -69,7 +71,7 @@
  */
 static bool
 _resolve_geom_spec(ged_edit_geom_spec &spec, const char *token,
-		   struct ged *gedp, DbiState *dbis)
+		   struct ged *gedp)
 {
     spec.raw = token;
     spec.is_batch = false;
@@ -102,24 +104,27 @@ _resolve_geom_spec(ged_edit_geom_spec &spec, const char *token,
 
     spec.path = path_str;
 
-    /* When DbiState is available, use its richer path resolution.
-     * When it is absent (older code paths that have not initialised
-     * DbiState), fall back to a plain db_lookup so the command still
-     * functions in non-GUI contexts.  URI fragments/queries are
-     * silently ignored in the no-DbiState path. */
-    if (dbis) {
-	spec.hashes = dbis->digest_path(path_str.c_str());
-
-	if (spec.hashes.empty())
+    /* Use indexed resolution when available so combination instances resolve
+     * precisely.  Otherwise retain the plain directory lookup fallback for
+     * contexts without an index service. */
+    if (ged_db_index_available(gedp)) {
+	size_t path_len = ged_db_index_path_resolve(gedp, path_str.c_str(),
+	    NULL, 0);
+	if (!path_len)
 	    return false;
 
-	/* Descriptor dispatch uses the terminal object while spec.path retains
-	 * the complete occurrence path for transaction identity. */
-	spec.dp = dbis->get_hdp(spec.hashes.back());
+	spec.hashes.resize(path_len);
+	(void)ged_db_index_path_resolve(gedp, path_str.c_str(),
+	    spec.hashes.data(), spec.hashes.size());
+
+	struct ged_db_index_record record;
+	if (ged_db_index_record_get(gedp, spec.hashes.back(), &record))
+	    spec.dp = record.dp;
+
 	return spec.dp != RT_DIR_NULL;
     }
 
-    /* No DbiState: plain directory lookup against gedp->dbip.
+    /* No index backend: plain directory lookup against gedp->dbip.
      * Only bare names are reliably resolvable; for slash-paths we use
      * the last component as a best-effort lookup. */
     {
@@ -137,6 +142,31 @@ _resolve_geom_spec(ged_edit_geom_spec &spec, const char *token,
 	spec.hashes.push_back((unsigned long long)(uintptr_t)dp);
 	return true;
     }
+}
+
+
+static std::vector<std::string>
+_edit_selected_paths(struct ged *gedp)
+{
+    std::vector<std::string> paths;
+    struct bu_vls selected = BU_VLS_INIT_ZERO;
+
+    (void)ged_selection_list_paths(gedp, NULL, &selected);
+    const char *selected_str = bu_vls_cstr(&selected);
+    const char *start = selected_str;
+    for (const char *current = selected_str; ; current++) {
+	if (*current == '\n' || *current == '\r' || *current == '\0') {
+	    if (current > start)
+		paths.push_back(std::string(start,
+			(size_t)(current - start)));
+	    if (*current == '\0')
+		break;
+	    start = current + 1;
+	}
+    }
+
+    bu_vls_free(&selected);
+    return paths;
 }
 
 
@@ -2633,7 +2663,6 @@ ged_edit_core(struct ged *gedp, int argc, const char *argv[])
 {
     int help = 0;
     int list_all_prim_ops = 0;
-    int list_all_prim_ops_json = 0;
 
     /* ---- Initialise context ---------------------------------------- */
     struct ged_edit_ctx ctx;
@@ -2657,22 +2686,6 @@ ged_edit_core(struct ged *gedp, int argc, const char *argv[])
 
     /* Skip past the "edit" command name */
     argc--; argv++;
-
-    bool occurrence_requested = false;
-    for (int i = 0; i < argc; ++i) {
-	if (BU_STR_EQUAL(argv[i], "--occurrence")) {
-	    occurrence_requested = true;
-	    break;
-	}
-    }
-    if (occurrence_requested &&
-	!db_uses_instance_specifiers(gedp->dbip)) {
-	bu_vls_printf(gedp->ged_result_str,
-	    "edit: --occurrence requires combination instance specifiers; "
-	    "set LIBRT_USE_COMB_INSTANCE_SPECIFIERS=1 before opening the "
-	    "database\n");
-	return BRLCAD_ERROR;
-    }
 
     /* ---- Build subcommand map --------------------------------------- */
     std::map<std::string, ged_subcmd *> edit_cmds;
@@ -2701,304 +2714,132 @@ ged_edit_core(struct ged *gedp, int argc, const char *argv[])
     BU_OPT(d[4], "F", "abandon",      "",  NULL, &ctx.flag_F,  "Abandon: discard intermediate state, use on-disk");
     BU_OPT(d[5], "i", "intermediate", "",  NULL, &ctx.flag_i,  "Intermediate: apply to temp buffer only (no disk write)");
     BU_OPT(d[6], "", "list-all-prim-ops", "", NULL, &list_all_prim_ops, "List all available primitive edit operations");
-    BU_OPT(d[7], "", "list-all-prim-ops=json", "", NULL, &list_all_prim_ops_json, "List all primitive edit operations as JSON");
+    BU_OPT(d[7], "", "list-all-prim-ops=json", "", NULL, NULL, "List all primitive edit operations as JSON");
     BU_OPT(d[8], "O", "option",       "key=value", &_parse_ged_edit_opt, &ctx.options, "Pass dynamic option to edit session");
     BU_OPT(d[9], "", "occurrence", "", NULL, &ctx.occurrence, "Edit the final combination arc");
     BU_OPT_NULL(d[10]);
 
     const char *bargs_help = "[options] <geometry_specifier> subcommand [args]";
+    // The general parser treats "=" as an option argument separator.
+    if (argc && BU_STR_EQUAL(argv[0], "--list-all-prim-ops=json"))
+	return _print_all_prim_ops(gedp, 1);
 
-    if (!argc) {
-	_ged_subcmd2_help(gedp, (struct bu_opt_desc *)d, edit_cmds, "edit", bargs_help, 0, NULL);
-	return BRLCAD_OK;
-    }
-
-    /* Bare primitive type query: show type help even if a DB object has the
-     * same name (e.g., object named "tor"). */
-    if (argc == 1) {
-	int type_id = _prim_type_id_from_str(argv[0]);
-	if (type_id >= 0) {
-	    extern const struct rt_edit_functab EDOBJ[];
-	    if (!EDOBJ[type_id].ft_edit_desc) {
-		bu_vls_printf(gedp->ged_result_str,
-		    "edit: no descriptor available for primitive type '%s'\n", argv[0]);
-		return BRLCAD_ERROR;
-	    }
-	    const struct rt_edit_prim_desc *desc = (*EDOBJ[type_id].ft_edit_desc)();
-	    _print_prim_help(gedp, desc);
-	    return BRLCAD_OK;
-	}
-    }
-
-    /* Type-help/list queries take precedence over object-name resolution,
-     * so names like "tor" in a database don't shadow primitive-type queries. */
-    if (argc >= 2) {
-	bool type_query = BU_STR_EQUAL(argv[1], "--list-ops") ||
-	    BU_STR_EQUAL(argv[1], "--list-ops=json") ||
-	    BU_STR_EQUAL(argv[1], "-h") ||
-	    BU_STR_EQUAL(argv[1], "--help") ||
-	    BU_STR_EQUAL(argv[1], "?");
-	if (type_query) {
-	    int type_id = _prim_type_id_from_str(argv[0]);
-	    if (type_id >= 0) {
-		extern const struct rt_edit_functab EDOBJ[];
-		if (!EDOBJ[type_id].ft_edit_desc) {
-		    bu_vls_printf(gedp->ged_result_str,
-			"edit: no descriptor available for primitive type '%s'\n", argv[0]);
-		    return BRLCAD_ERROR;
-		}
-		const struct rt_edit_prim_desc *desc = (*EDOBJ[type_id].ft_edit_desc)();
-		if (BU_STR_EQUAL(argv[1], "--list-ops=json")) {
-		    struct bu_vls json = BU_VLS_INIT_ZERO;
-		    if (rt_edit_type_to_json(&json, type_id) == BRLCAD_OK) {
-			bu_vls_printf(gedp->ged_result_str, "%s", bu_vls_cstr(&json));
-			bu_vls_free(&json);
-			return BRLCAD_OK;
-		    }
-		    bu_vls_free(&json);
-		    bu_vls_printf(gedp->ged_result_str,
-			"edit: no JSON descriptor for type '%s'\n", argv[0]);
-		    return BRLCAD_ERROR;
-		}
-		_print_prim_help(gedp, desc);
-		return BRLCAD_OK;
-	    }
-	}
-    }
-
-    /* Note whether the first token looks like an option.  If so we
-     * can't reliably distinguish option errors from bad geometry specs. */
-    bool maybe_opts = (argv[0][0] == '-');
-
-    /* ---- Pass 1: find positions of first geometry spec and subcommand
-     *              so we know how many leading tokens to feed to
-     *              bu_opt_parse as global options.                      */
-    DbiState *dbis = (DbiState *)gedp->dbi_state;
-
-    int geom_pos = INT_MAX;
-    int cmd_pos  = INT_MAX;
-    std::vector<unsigned long long> gs;
-
-    for (int i = 0; i < argc; i++) {
-	/* Check if this token matches a known subcommand name */
-	if (edit_cmds.find(std::string(argv[i])) != edit_cmds.end()) {
-	    if (cmd_pos == INT_MAX)
-		cmd_pos = i;
-	    break;
-	}
-
-	/* Try to resolve as a geometry specifier */
-	ged_edit_geom_spec spec;
-	if (_resolve_geom_spec(spec, argv[i], gedp, dbis)) {
-	    if (geom_pos == INT_MAX) {
-		geom_pos = i;
-		gs = spec.hashes;
-	    }
-	    break;
-	}
-    }
-
-    /* With no geometry or command found yet — all remaining tokens are
-     * candidates for options.  Parse them all: if -h is among them, print
-     * help and return OK; otherwise report the first token as invalid.
-     *
-     * Phase 3 intercepts:
-     *   edit <type>              → human-readable per-type help
-     *   edit <type> --list-ops   → human-readable per-type help (same as above)
-     *   edit <type> --list-ops=json → full JSON descriptor
-     *   edit --list-all-prim-ops      → human-readable listing for all types
-     *   edit --list-all-prim-ops=json → JSON array for all types
-     */
-    if (geom_pos == INT_MAX && cmd_pos == INT_MAX) {
-	if (!maybe_opts && argc >= 1) {
-	    int type_id = _prim_type_id_from_str(argv[0]);
-	    if (type_id >= 0) {
-		extern const struct rt_edit_functab EDOBJ[];
-		if (!EDOBJ[type_id].ft_edit_desc) {
-		    bu_vls_printf(gedp->ged_result_str,
-			"edit: no descriptor available for primitive type '%s'\n", argv[0]);
-		    return BRLCAD_ERROR;
-		}
-		const struct rt_edit_prim_desc *desc =
-		    (*EDOBJ[type_id].ft_edit_desc)();
-
-		/* Determine whether a --list-ops[=json] flag was given */
-		bool list_ops      = false;
-		bool list_ops_json = false;
-		if (argc >= 2) {
-		    if (BU_STR_EQUAL(argv[1], "--list-ops"))
-			list_ops = true;
-		    else if (BU_STR_EQUAL(argv[1], "--list-ops=json"))
-			list_ops = list_ops_json = true;
-		    else if (BU_STR_EQUAL(argv[1], "-h") || BU_STR_EQUAL(argv[1], "--help") || BU_STR_EQUAL(argv[1], "?"))
-			list_ops = true;
-		}
-
-		if (list_ops && list_ops_json) {
-		    /* --list-ops=json → emit full JSON descriptor */
-		    struct bu_vls json = BU_VLS_INIT_ZERO;
-		    if (rt_edit_type_to_json(&json, type_id) == BRLCAD_OK) {
-			bu_vls_printf(gedp->ged_result_str,
-			    "%s", bu_vls_cstr(&json));
-			bu_vls_free(&json);
-			return BRLCAD_OK;
-		    }
-		    bu_vls_free(&json);
-		    bu_vls_printf(gedp->ged_result_str,
-			"edit: no JSON descriptor for type '%s'\n", argv[0]);
-		    return BRLCAD_ERROR;
-		}
-
-		/* --list-ops (human-readable) or bare type name → same output */
-		_print_prim_help(gedp, desc);
-		return BRLCAD_OK;
-	    }
-	}
-	if (maybe_opts) {
-	    /* --list-all-prim-ops[=json]: handled before regular opt parse */
-	    if (argc >= 1) {
-		bool lap      = BU_STR_EQUAL(argv[0], "--list-all-prim-ops");
-		bool lap_json = BU_STR_EQUAL(argv[0], "--list-all-prim-ops=json");
-		if (lap || lap_json) {
-		    return _print_all_prim_ops(gedp, lap_json ? 1 : 0);
-		}
-	    }
-	    struct bu_vls opterrs = BU_VLS_INIT_ZERO;
-	    bu_opt_parse(&opterrs, argc, argv, d);
-	    bu_vls_free(&opterrs);
-	    if (help) {
-		_ged_subcmd2_help(gedp, (struct bu_opt_desc *)d, edit_cmds,
-		    "edit", bargs_help, 0, NULL);
-		return BRLCAD_OK;
-	    }
-	    if (list_all_prim_ops || list_all_prim_ops_json) {
-		return _print_all_prim_ops(gedp, list_all_prim_ops_json ? 1 : 0);
-	    }
-	    _ged_subcmd2_help(gedp, (struct bu_opt_desc *)d, edit_cmds,
-		"edit", bargs_help, 0, NULL);
-	} else {
-	    bu_vls_printf(gedp->ged_result_str,
-		"Invalid geometry specifier: %s\n", argv[0]);
-	}
+    const bool no_arguments = argc == 0;
+    struct bu_vls opterrs = BU_VLS_INIT_ZERO;
+    argc = bu_opt_parse_leading(&opterrs, argc, argv, d);
+    if (argc < 0) {
+	bu_vls_printf(gedp->ged_result_str, "%s", bu_vls_cstr(&opterrs));
+	bu_vls_free(&opterrs);
+	_ged_subcmd2_help(gedp, d, edit_cmds, "edit", bargs_help, 0, NULL);
 	return BRLCAD_ERROR;
     }
+    bu_vls_free(&opterrs);
 
-    /* The option prefix is everything before the first geom or cmd token */
-    int opt_prefix_len = (geom_pos < cmd_pos) ? geom_pos : cmd_pos;
+    if (ctx.occurrence && !db_uses_instance_specifiers(gedp->dbip)) {
+	bu_vls_printf(gedp->ged_result_str,
+	    "edit: --occurrence requires combination instance specifiers; "
+	    "set LIBRT_USE_COMB_INSTANCE_SPECIFIERS=1 before opening the "
+	    "database\n");
+	return BRLCAD_ERROR;
+    }
+    if (help) {
+	const char *subcmd = argc && edit_cmds.count(argv[0]) ? argv[0] : "edit";
+	_ged_subcmd2_help(gedp, d, edit_cmds, subcmd, bargs_help, 0, NULL);
+	return BRLCAD_OK;
+    }
+    if (list_all_prim_ops)
+	return _print_all_prim_ops(gedp, 0);
+    if (!argc) {
+	_ged_subcmd2_help(gedp, d, edit_cmds, "edit", bargs_help, 0, NULL);
+	return no_arguments ? BRLCAD_OK : BRLCAD_ERROR;
+    }
 
-    /* Parse global options from the prefix */
-    if (opt_prefix_len > 0) {
-	struct bu_vls opterrs = BU_VLS_INIT_ZERO;
-	int opt_ret = bu_opt_parse(&opterrs, opt_prefix_len, argv, d);
-	if (opt_ret < 0) {
-	    bu_vls_printf(gedp->ged_result_str, "%s", bu_vls_cstr(&opterrs));
-	    _ged_subcmd2_help(gedp, (struct bu_opt_desc *)d, edit_cmds,
-		"edit", bargs_help, 0, NULL);
-	    bu_vls_free(&opterrs);
+    const bool type_json = argc >= 2 && BU_STR_EQUAL(argv[1], "--list-ops=json");
+    const bool type_query = argc == 1 || type_json ||
+	BU_STR_EQUAL(argv[1], "--list-ops") || BU_STR_EQUAL(argv[1], "-h") ||
+	BU_STR_EQUAL(argv[1], "--help") || BU_STR_EQUAL(argv[1], "?");
+    const bool known_subcommand = edit_cmds.count(argv[0]) != 0;
+    ged_edit_geom_spec positional_spec;
+    const bool has_geometry = !known_subcommand &&
+	_resolve_geom_spec(positional_spec, argv[0], gedp);
+    const int requested_type = _prim_type_id_from_str(argv[0]);
+    if (requested_type >= 0 && (type_query || (!has_geometry && !known_subcommand))) {
+	extern const struct rt_edit_functab EDOBJ[];
+	if (!EDOBJ[requested_type].ft_edit_desc) {
+	    bu_vls_printf(gedp->ged_result_str,
+		"edit: no descriptor available for primitive type '%s'\n", argv[0]);
 	    return BRLCAD_ERROR;
 	}
-	bu_vls_free(&opterrs);
-
-	/* Shift remaining tokens to front */
-	int remaining = argc - opt_prefix_len;
-	for (int i = 0; i < remaining; i++)
-	    argv[i] = argv[opt_prefix_len + i];
-	argc -= opt_prefix_len;
-
-	/* Adjust positions after shift */
-	if (geom_pos != INT_MAX) geom_pos -= opt_prefix_len;
-	if (cmd_pos  != INT_MAX) cmd_pos  -= opt_prefix_len;
-    }
-
-    /* Handle -h after option processing */
-    if (help) {
-	const char *cmd_name_for_help = (cmd_pos != INT_MAX) ? argv[cmd_pos] : "edit";
-	_ged_subcmd2_help(gedp, (struct bu_opt_desc *)d, edit_cmds,
-	    cmd_name_for_help, bargs_help, 0, NULL);
-	return BRLCAD_OK;
-    }
-
-    if (list_all_prim_ops || list_all_prim_ops_json) {
-	return _print_all_prim_ops(gedp, list_all_prim_ops_json ? 1 : 0);
-    }
-
-    /* Sanity: geometry must come before command if both present */
-    if (geom_pos != INT_MAX && cmd_pos != INT_MAX &&
-	    (geom_pos > cmd_pos || cmd_pos != geom_pos + 1)) {
-	_ged_subcmd2_help(gedp, (struct bu_opt_desc *)d, edit_cmds,
-	    "edit", bargs_help, 0, NULL);
-	return BRLCAD_ERROR;
-    }
-
-    /* ---- Pass 2: collect geometry specifiers ----------------------- */
-
-    /* Re-resolve the geometry specifier(s) into ged_edit_geom_spec entries.
-     * The current implementation collects a single specifier (the one at
-     * geom_pos).  Multi-object editing (dot batch, multiple paths) is
-     * supported structurally but dispatched one-at-a-time. */
-    const char *geom_str = NULL;
-    if (geom_pos != INT_MAX) {
-	geom_str = argv[geom_pos];
-	ged_edit_geom_spec spec;
-	if (_resolve_geom_spec(spec, geom_str, gedp, dbis)) {
-	    ctx.geom_specs.push_back(spec);
+	if (!type_json) {
+	    _print_prim_help(gedp, EDOBJ[requested_type].ft_edit_desc());
+	    return BRLCAD_OK;
 	}
+	struct bu_vls json = BU_VLS_INIT_ZERO;
+	const int status = rt_edit_type_to_json(&json, requested_type);
+	if (status == BRLCAD_OK)
+	    bu_vls_printf(gedp->ged_result_str, "%s", bu_vls_cstr(&json));
+	else
+	    bu_vls_printf(gedp->ged_result_str,
+		"edit: no JSON descriptor for type '%s'\n", argv[0]);
+	bu_vls_free(&json);
+	return status;
+    }
+
+    const char *geom_str = NULL;
+    if (has_geometry) {
+	geom_str = argv[0];
+	ctx.geom_specs.push_back(positional_spec);
+    } else if (!known_subcommand && !ctx.flag_S) {
+	bu_vls_printf(gedp->ged_result_str,
+	    "Invalid geometry specifier: %s\n", argv[0]);
+	return BRLCAD_ERROR;
     }
 
     /* Selection fallback: if no explicit specifier was given, use the
      * active "default" selection state. */
-    if (ctx.geom_specs.empty() && !ctx.flag_F && dbis) {
-	std::vector<BSelectState *> ss = dbis->get_selected_states("default");
-	if (!ss.empty()) {
-	    std::vector<std::string> sel_paths = ss[0]->list_selected_paths();
-	    for (const std::string &spath : sel_paths) {
-		ged_edit_geom_spec spec;
-		if (_resolve_geom_spec(spec, spath.c_str(), gedp, dbis))
-		    ctx.geom_specs.push_back(spec);
-	    }
-	    if (!ctx.geom_specs.empty())
-		ctx.from_selection = true;
+    if (ctx.geom_specs.empty() && !ctx.flag_F) {
+	std::vector<std::string> sel_paths = _edit_selected_paths(gedp);
+	for (const std::string &spath : sel_paths) {
+	    ged_edit_geom_spec spec;
+	    if (_resolve_geom_spec(spec, spath.c_str(), gedp))
+		ctx.geom_specs.push_back(spec);
 	}
+	if (!ctx.geom_specs.empty())
+	    ctx.from_selection = true;
     }
 
     /* Selection conflict arbiter: explicit specifier present AND the same
      * object is also in the active selection → require an arbiter flag. */
-    if (dbis && !ctx.geom_specs.empty() && !ctx.from_selection && !ctx.flag_S &&
+    if (!ctx.geom_specs.empty() && !ctx.from_selection && !ctx.flag_S &&
 	    !ctx.flag_f && !ctx.flag_F && !ctx.flag_i) {
-	std::vector<BSelectState *> ss = dbis->get_selected_states("default");
-	if (!ss.empty()) {
-	    std::vector<std::string> sel_paths = ss[0]->list_selected_paths();
-	    for (const auto &gspec : ctx.geom_specs) {
-		for (const std::string &spath : sel_paths) {
-		    if (gspec.path == spath) {
-			ctx.has_conflict = true;
-			bu_vls_printf(gedp->ged_result_str,
-			    "Conflict: \"%s\" has both an explicit command-line "
-			    "specifier and an active selection.\n"
-			    "Use -S to operate on the selection, -f to force "
-			    "a disk write, -F to abandon the intermediate "
-			    "state, or -i to edit the temp buffer.\n",
-			    gspec.path.c_str());
-			return BRLCAD_ERROR;
-		    }
+	std::vector<std::string> sel_paths = _edit_selected_paths(gedp);
+	for (const auto &gspec : ctx.geom_specs) {
+	    for (const std::string &spath : sel_paths) {
+		if (gspec.path == spath) {
+		    ctx.has_conflict = true;
+		    bu_vls_printf(gedp->ged_result_str,
+			"Conflict: \"%s\" has both an explicit command-line "
+			"specifier and an active selection.\n"
+			"Use -S to operate on the selection, -f to force "
+			"a disk write, -F to abandon the intermediate "
+			"state, or -i to edit the temp buffer.\n",
+			gspec.path.c_str());
+		    return BRLCAD_ERROR;
 		}
 	    }
 	}
     }
 
     /* If -S flag is set, discard explicit specifiers and use selection */
-    if (ctx.flag_S && dbis) {
+    if (ctx.flag_S) {
 	ctx.geom_specs.clear();
-	std::vector<BSelectState *> ss = dbis->get_selected_states("default");
-	if (!ss.empty()) {
-	    std::vector<std::string> sel_paths = ss[0]->list_selected_paths();
-	    for (const std::string &spath : sel_paths) {
-		ged_edit_geom_spec spec;
-		if (_resolve_geom_spec(spec, spath.c_str(), gedp, dbis))
-		    ctx.geom_specs.push_back(spec);
-	    }
-	    ctx.from_selection = true;
+	std::vector<std::string> sel_paths = _edit_selected_paths(gedp);
+	for (const std::string &spath : sel_paths) {
+	    ged_edit_geom_spec spec;
+	    if (_resolve_geom_spec(spec, spath.c_str(), gedp))
+		ctx.geom_specs.push_back(spec);
 	}
+	ctx.from_selection = true;
     }
 
     /* Set convenience dp from first resolved specifier */
