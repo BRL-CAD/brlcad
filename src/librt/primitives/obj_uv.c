@@ -51,6 +51,35 @@ rt_obj_uv(struct application *ap, struct soltab *stp, struct hit *hitp, struct u
 }
 
 
+int
+rt_obj_surface_derivatives(struct application *ap, struct soltab *stp,
+    const struct hit *hitp, struct rt_surface_derivatives *derivatives)
+{
+    if (!ap || !stp || !hitp || !derivatives)
+	return RT_DERIVATIVES_ERROR;
+    RT_CK_APPLICATION(ap);
+    RT_CK_SOLTAB(stp);
+    RT_CK_HIT(hitp);
+    RT_CK_FUNCTAB(stp->st_meth);
+    if (!stp->st_meth->ft_surface_derivatives)
+	return RT_DERIVATIVES_UNAVAILABLE;
+
+    struct hit local = *hitp;
+    const struct xray *ray = hitp->hit_rayp ? hitp->hit_rayp : &ap->a_ray;
+    RT_CK_RAY(ray);
+    VJOIN1(local.hit_point, ray->r_pt, local.hit_dist, ray->r_dir);
+    struct rt_surface_derivatives result = RT_SURFACE_DERIVATIVES_INIT_ZERO;
+    const int status = stp->st_meth->ft_surface_derivatives(ap, stp, &local, &result);
+    if (status != RT_DERIVATIVES_OK)
+	return status == RT_DERIVATIVES_UNAVAILABLE ? status : RT_DERIVATIVES_ERROR;
+    if (VINVALID(result.dpdu) || VINVALID(result.dpdv) ||
+	VINVALID(result.dndu) || VINVALID(result.dndv))
+	return RT_DERIVATIVES_ERROR;
+    *derivatives = result;
+    return RT_DERIVATIVES_OK;
+}
+
+
 /*
  * Local Variables:
  * mode: C

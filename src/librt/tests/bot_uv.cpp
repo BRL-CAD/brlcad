@@ -93,6 +93,19 @@ bool
 check_uv(struct application &application, struct soltab *solid, struct xray &ray,
     struct hit &hit, size_t face, bool textured, const char *path)
 {
+    struct rt_surface_derivatives derivatives = RT_SURFACE_DERIVATIVES_INIT_ZERO;
+    const int derivative_status = rt_obj_surface_derivatives(&application, solid, &hit, &derivatives);
+    struct rt_surface_derivatives expected_derivatives = RT_SURFACE_DERIVATIVES_INIT_ZERO;
+    VSET(expected_derivatives.dpdu, EdgeX, 0, 0);
+    VSET(expected_derivatives.dpdv, 0, EdgeY, 0);
+    const bool derivative_ok = textured
+	? derivative_status == RT_DERIVATIVES_OK &&
+	    bot_test::same_derivatives(derivatives, expected_derivatives, UVTolerance)
+	: derivative_status == RT_DERIVATIVES_UNAVAILABLE;
+    if (!derivative_ok) {
+	bu_log("%s face %zu has incorrect BOT mapping derivatives (status=%d)\n", path, face, derivative_status);
+	return false;
+    }
     OBJ[ID_BOT].ft_norm(&hit, solid, &ray);
     struct uvcoord uv = {NAN, NAN, NAN, NAN};
     const int status = rt_obj_uv(&application, solid, &hit, &uv);
@@ -144,21 +157,15 @@ check_mesh(struct rt_i *rtip, struct resource *resource, unsigned char orientati
 	VSET(rays[i].r_dir, 0, 0, -side);
 	solids[i] = &prepared.solid;
 	ray_ptrs[i] = &rays[i];
-	struct seg head;
-	BU_LIST_INIT(&head.l);
-	const int hits = OBJ[ID_BOT].ft_shot(&prepared.solid, &rays[i], &application, &head);
-	if (hits <= 0 || BU_LIST_IS_EMPTY(&head.l)) {
+	bot_test::Shot shot(application, &prepared.solid, rays[i]);
+	struct seg *segment = shot.first();
+	if (!segment) {
 	    bu_log("Scalar BOT UV fixture missed face %zu\n", face);
 	    ok = false;
 	} else {
-	    auto *segment = BU_LIST_FIRST(seg, &head.l);
 	    ok = check_uv(application, &prepared.solid, rays[i], segment->seg_in, face, textured, "scalar") && ok;
 	}
-	struct seg *segment;
-	while (BU_LIST_WHILE(segment, seg, &head.l)) {
-	    BU_LIST_DEQUEUE(&segment->l);
-	    RT_FREE_SEG(segment, resource);
-	}
+
     }
     OBJ[ID_BOT].ft_vshot(solids.data(), ray_ptrs.data(), segments.data(), RayCount, &application);
     for (size_t i = 0; i < RayCount; ++i) {
@@ -211,6 +218,42 @@ check_transform(bool in_place)
 }
 
 bool
+check_singular_derivatives(struct rt_i *rtip, struct resource *resource)
+{
+    bool ok = true;
+    for (bool constant : {false, true}) {
+	Mesh mesh(RT_BOT_CCW, true);
+	for (size_t uv = 0; uv < mesh.bot.num_uvs; ++uv) {
+	    if (constant) mesh.uvs[uv * 3] = 0;
+	    mesh.uvs[uv * 3 + 1] = mesh.uvs[uv * 3];
+	}
+	PreparedBot prepared(mesh.bot, rtip);
+	if (prepared.status != 0) return false;
+	struct application application;
+	RT_APPLICATION_INIT(&application);
+	application.a_rt_i = rtip;
+	application.a_resource = resource;
+	application.a_ray.magic = RT_RAY_MAGIC;
+	VSET(application.a_ray.r_pt, TriangleSpacing * Positions[0] + 0.3 * EdgeX, 0.5 * EdgeY, 1);
+	VSET(application.a_ray.r_dir, 0, 0, -1);
+	bot_test::Shot shot(application, &prepared.solid, application.a_ray);
+	const struct seg *segment = shot.first();
+	bool passed = segment != nullptr;
+	if (passed) {
+	    const auto marker = bot_test::derivative_marker();
+	    struct rt_surface_derivatives derivatives = marker;
+	    passed = rt_obj_surface_derivatives(&application, &prepared.solid,
+		&segment->seg_in, &derivatives) == RT_DERIVATIVES_UNAVAILABLE &&
+		bot_test::same_derivatives(derivatives, marker, UVTolerance);
+	}
+
+	if (!passed) bu_log("Singular BOT mapping changed derivative outputs (constant=%d)\n", constant);
+	ok = passed && ok;
+    }
+    return ok;
+}
+
+bool
 check_invalid_uvs(struct rt_i *rtip)
 {
     bool ok = true;
@@ -250,6 +293,7 @@ main(int argc, char **argv)
 	for (bool textured : {false, true})
 	    ok = check_mesh(rtip, &resource, orientation, textured) && ok;
     ok = check_invalid_uvs(rtip) && ok;
+    ok = check_singular_derivatives(rtip, &resource) && ok;
     ok = check_transform(false) && check_transform(true) && ok;
     rt_i_destroy(rtip);
     rt_clean_resource_basic(nullptr, &resource);

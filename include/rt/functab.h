@@ -342,6 +342,15 @@ struct rt_functab {
 	struct xray *rp, vect_t geometric, vect_t shading);
 #define RTFUNCTAB_FUNC_NORMALS_CAST(_func) ((int (*)(const struct hit *, struct soltab *, struct xray *, vect_t, vect_t))((void (*)(void))_func))
 
+    /**
+     * Optional native-UV derivatives.  The hit has a computed point but
+     * retains original intersection data.  Return an rt_derivative_status.
+     * The hit and prepared geometry must not be changed.
+     */
+    int (*ft_surface_derivatives)(struct application *ap, struct soltab *stp,
+	const struct hit *hitp, struct rt_surface_derivatives *derivatives);
+#define RTFUNCTAB_FUNC_SURFACE_DERIVATIVES_CAST(_func) ((int (*)(struct application *, struct soltab *, const struct hit *, struct rt_surface_derivatives *))((void (*)(void))_func))
+
 };
 
 /**

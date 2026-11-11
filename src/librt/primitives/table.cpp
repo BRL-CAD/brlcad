@@ -133,6 +133,7 @@ RT_DECLARE_INTERFACE(script);
 extern "C" {
 
 extern int rt_bot_normals(const struct hit *, struct soltab *, struct xray *, vect_t, vect_t);
+extern int rt_bot_surface_derivatives(struct application *, struct soltab *, const struct hit *, struct rt_surface_derivatives *);
 extern int rt_dsp_normals(const struct hit *, struct soltab *, struct xray *, vect_t, vect_t);
 
 /* generics for object manipulation, in generic.c */
@@ -250,7 +251,8 @@ const struct rt_functab OBJ[] = {
 	NULL,
 	NULL,
 	NULL, /* validate */
-	NULL /* normals */
+	NULL /* normals */,
+	NULL /* surface_derivatives */
     },
 
     {
@@ -303,7 +305,8 @@ const struct rt_functab OBJ[] = {
 	RTFUNCTAB_FUNC_PERTURB_CAST(rt_tor_perturb), /* perturb */
 	RTFUNCTAB_FUNC_SCENE_OBJ_CAST(rt_generic_scene_obj),
 	NULL, /* validate */
-	NULL /* normals */
+	NULL /* normals */,
+	NULL /* surface_derivatives */
     },
 
     {
@@ -356,7 +359,8 @@ const struct rt_functab OBJ[] = {
 	RTFUNCTAB_FUNC_PERTURB_CAST(rt_tgc_perturb), /* perturb */
 	RTFUNCTAB_FUNC_SCENE_OBJ_CAST(rt_generic_scene_obj),
 	RTFUNCTAB_FUNC_VALIDATE_CAST(rt_tgc_functab_validate), /* validate */
-	NULL /* normals */
+	NULL /* normals */,
+	NULL /* surface_derivatives */
     },
 
     {
@@ -409,7 +413,8 @@ const struct rt_functab OBJ[] = {
 	RTFUNCTAB_FUNC_PERTURB_CAST(rt_ell_perturb), /* perturb */
 	RTFUNCTAB_FUNC_SCENE_OBJ_CAST(rt_generic_scene_obj),
 	RTFUNCTAB_FUNC_VALIDATE_CAST(rt_ell_functab_validate), /* validate */
-	NULL /* normals */
+	NULL /* normals */,
+	NULL /* surface_derivatives */
     },
 
     {
@@ -462,7 +467,8 @@ const struct rt_functab OBJ[] = {
 	RTFUNCTAB_FUNC_PERTURB_CAST(rt_arb_perturb), /* perturb */
 	RTFUNCTAB_FUNC_SCENE_OBJ_CAST(rt_generic_scene_obj),
 	RTFUNCTAB_FUNC_VALIDATE_CAST(rt_arb_functab_validate), /* validate */
-	NULL /* normals */
+	NULL /* normals */,
+	NULL /* surface_derivatives */
     },
 
     {
@@ -515,7 +521,8 @@ const struct rt_functab OBJ[] = {
 	NULL, /* perturb */
 	RTFUNCTAB_FUNC_SCENE_OBJ_CAST(rt_generic_scene_obj),
 	NULL, /* validate */
-	NULL /* normals */
+	NULL /* normals */,
+	NULL /* surface_derivatives */
     },
 
     {
@@ -568,7 +575,8 @@ const struct rt_functab OBJ[] = {
 	RTFUNCTAB_FUNC_PERTURB_CAST(rt_hlf_perturb), /* perturb */
 	RTFUNCTAB_FUNC_SCENE_OBJ_CAST(rt_generic_scene_obj),
 	NULL, /* validate */
-	NULL /* normals */
+	NULL /* normals */,
+	NULL /* surface_derivatives */
     },
 
     {
@@ -621,7 +629,8 @@ const struct rt_functab OBJ[] = {
 	RTFUNCTAB_FUNC_PERTURB_CAST(rt_tgc_perturb), /* perturb - REC shares rt_tgc_internal */
 	RTFUNCTAB_FUNC_SCENE_OBJ_CAST(rt_generic_scene_obj),
 	NULL, /* validate */
-	NULL /* normals */
+	NULL /* normals */,
+	NULL /* surface_derivatives */
     },
 
     {
@@ -674,7 +683,8 @@ const struct rt_functab OBJ[] = {
 	NULL, /* perturb */
 	NULL  /* scene_obj */,
 	NULL, /* validate */
-	NULL /* normals */
+	NULL /* normals */,
+	NULL /* surface_derivatives */
     },
 
     {
@@ -727,7 +737,8 @@ const struct rt_functab OBJ[] = {
 	NULL, /* perturb */
 	RTFUNCTAB_FUNC_SCENE_OBJ_CAST(rt_generic_scene_obj),
 	NULL, /* validate */
-	NULL /* normals */
+	NULL /* normals */,
+	NULL /* surface_derivatives */
     },
 
     {
@@ -780,7 +791,8 @@ const struct rt_functab OBJ[] = {
 	RTFUNCTAB_FUNC_PERTURB_CAST(rt_ell_perturb), /* perturb - SPH shares rt_ell_internal */
 	RTFUNCTAB_FUNC_SCENE_OBJ_CAST(rt_generic_scene_obj),
 	NULL, /* validate */
-	NULL /* normals */
+	NULL /* normals */,
+	NULL /* surface_derivatives */
     },
 
     {
@@ -833,7 +845,8 @@ const struct rt_functab OBJ[] = {
 	NULL, /* perturb */
 	RTFUNCTAB_FUNC_SCENE_OBJ_CAST(rt_generic_scene_obj),
 	NULL, /* validate */
-	NULL /* normals */
+	NULL /* normals */,
+	NULL /* surface_derivatives */
     },
 
     {
@@ -886,7 +899,8 @@ const struct rt_functab OBJ[] = {
 	NULL, /* perturb */
 	RTFUNCTAB_FUNC_SCENE_OBJ_CAST(rt_generic_scene_obj),
 	NULL, /* validate */
-	NULL /* normals */
+	NULL /* normals */,
+	NULL /* surface_derivatives */
     },
 
     {
@@ -939,7 +953,8 @@ const struct rt_functab OBJ[] = {
 	NULL, /* perturb */
 	RTFUNCTAB_FUNC_SCENE_OBJ_CAST(rt_generic_scene_obj),
 	NULL, /* validate */
-	NULL /* normals */
+	NULL /* normals */,
+	NULL /* surface_derivatives */
     },
 
     {
@@ -992,7 +1007,8 @@ const struct rt_functab OBJ[] = {
 	RTFUNCTAB_FUNC_PERTURB_CAST(rt_arbn_perturb), /* perturb */
 	RTFUNCTAB_FUNC_SCENE_OBJ_CAST(rt_generic_scene_obj),
 	NULL, /* validate */
-	NULL /* normals */
+	NULL /* normals */,
+	NULL /* surface_derivatives */
     },
 
     {
@@ -1045,7 +1061,8 @@ const struct rt_functab OBJ[] = {
 	NULL, /* perturb */
 	RTFUNCTAB_FUNC_SCENE_OBJ_CAST(rt_generic_scene_obj),
 	NULL, /* validate */
-	NULL /* normals */
+	NULL /* normals */,
+	NULL /* surface_derivatives */
     },
 
     {
@@ -1098,7 +1115,8 @@ const struct rt_functab OBJ[] = {
 	RTFUNCTAB_FUNC_PERTURB_CAST(rt_part_perturb), /* perturb */
 	RTFUNCTAB_FUNC_SCENE_OBJ_CAST(rt_generic_scene_obj),
 	NULL, /* validate */
-	NULL /* normals */
+	NULL /* normals */,
+	NULL /* surface_derivatives */
     },
 
     {
@@ -1151,7 +1169,8 @@ const struct rt_functab OBJ[] = {
 	RTFUNCTAB_FUNC_PERTURB_CAST(rt_rpc_perturb), /* perturb */
 	RTFUNCTAB_FUNC_SCENE_OBJ_CAST(rt_generic_scene_obj),
 	RTFUNCTAB_FUNC_VALIDATE_CAST(rt_rpc_functab_validate), /* validate */
-	NULL /* normals */
+	NULL /* normals */,
+	NULL /* surface_derivatives */
     },
 
     {
@@ -1204,7 +1223,8 @@ const struct rt_functab OBJ[] = {
 	RTFUNCTAB_FUNC_PERTURB_CAST(rt_rhc_perturb), /* perturb */
 	RTFUNCTAB_FUNC_SCENE_OBJ_CAST(rt_generic_scene_obj),
 	RTFUNCTAB_FUNC_VALIDATE_CAST(rt_rhc_functab_validate), /* validate */
-	NULL /* normals */
+	NULL /* normals */,
+	NULL /* surface_derivatives */
     },
 
     {
@@ -1257,7 +1277,8 @@ const struct rt_functab OBJ[] = {
 	RTFUNCTAB_FUNC_PERTURB_CAST(rt_epa_perturb), /* perturb */
 	RTFUNCTAB_FUNC_SCENE_OBJ_CAST(rt_generic_scene_obj),
 	RTFUNCTAB_FUNC_VALIDATE_CAST(rt_epa_functab_validate), /* validate */
-	NULL /* normals */
+	NULL /* normals */,
+	NULL /* surface_derivatives */
     },
 
     {
@@ -1310,7 +1331,8 @@ const struct rt_functab OBJ[] = {
 	RTFUNCTAB_FUNC_PERTURB_CAST(rt_ehy_perturb), /* perturb */
 	RTFUNCTAB_FUNC_SCENE_OBJ_CAST(rt_generic_scene_obj),
 	RTFUNCTAB_FUNC_VALIDATE_CAST(rt_ehy_functab_validate), /* validate */
-	NULL /* normals */
+	NULL /* normals */,
+	NULL /* surface_derivatives */
     },
 
     {
@@ -1363,7 +1385,8 @@ const struct rt_functab OBJ[] = {
 	RTFUNCTAB_FUNC_PERTURB_CAST(rt_eto_perturb), /* perturb */
 	RTFUNCTAB_FUNC_SCENE_OBJ_CAST(rt_generic_scene_obj),
 	RTFUNCTAB_FUNC_VALIDATE_CAST(rt_eto_functab_validate), /* validate */
-	NULL /* normals */
+	NULL /* normals */,
+	NULL /* surface_derivatives */
     },
 
     {
@@ -1416,7 +1439,8 @@ const struct rt_functab OBJ[] = {
 	NULL, /* perturb */
 	RTFUNCTAB_FUNC_SCENE_OBJ_CAST(rt_generic_scene_obj),
 	NULL, /* validate */
-	NULL /* normals */
+	NULL /* normals */,
+	NULL /* surface_derivatives */
     },
 
     {
@@ -1469,7 +1493,8 @@ const struct rt_functab OBJ[] = {
 	NULL, /* perturb */
 	RTFUNCTAB_FUNC_SCENE_OBJ_CAST(rt_generic_scene_obj),
 	NULL, /* validate */
-	NULL /* normals */
+	NULL /* normals */,
+	NULL /* surface_derivatives */
     },
 
     {
@@ -1522,7 +1547,8 @@ const struct rt_functab OBJ[] = {
 	NULL, /* perturb */
 	RTFUNCTAB_FUNC_SCENE_OBJ_CAST(rt_generic_scene_obj),
 	NULL, /* validate */
-	NULL /* normals */
+	NULL /* normals */,
+	NULL /* surface_derivatives */
     },
 
     {
@@ -1575,7 +1601,8 @@ const struct rt_functab OBJ[] = {
 	NULL, /* perturb */
 	RTFUNCTAB_FUNC_SCENE_OBJ_CAST(rt_generic_scene_obj),
 	NULL, /* validate */
-	RTFUNCTAB_FUNC_NORMALS_CAST(rt_dsp_normals)
+	RTFUNCTAB_FUNC_NORMALS_CAST(rt_dsp_normals),
+	NULL /* surface_derivatives */
     },
 
     {
@@ -1628,7 +1655,8 @@ const struct rt_functab OBJ[] = {
 	NULL, /* perturb */
 	RTFUNCTAB_FUNC_SCENE_OBJ_CAST(rt_generic_scene_obj),
 	NULL, /* validate */
-	NULL /* normals */
+	NULL /* normals */,
+	NULL /* surface_derivatives */
     },
 
     {
@@ -1681,7 +1709,8 @@ const struct rt_functab OBJ[] = {
 	NULL, /* perturb */
 	RTFUNCTAB_FUNC_SCENE_OBJ_CAST(rt_generic_scene_obj),
 	NULL, /* validate */
-	NULL /* normals */
+	NULL /* normals */,
+	NULL /* surface_derivatives */
     },
 
     {
@@ -1734,7 +1763,8 @@ const struct rt_functab OBJ[] = {
 	NULL, /* perturb */
 	RTFUNCTAB_FUNC_SCENE_OBJ_CAST(rt_generic_scene_obj),
 	NULL, /* validate */
-	NULL /* normals */
+	NULL /* normals */,
+	NULL /* surface_derivatives */
     },
 
     {
@@ -1787,7 +1817,8 @@ const struct rt_functab OBJ[] = {
 	NULL, /* perturb */
 	RTFUNCTAB_FUNC_SCENE_OBJ_CAST(rt_generic_scene_obj),
 	NULL, /* validate */
-	NULL /* normals */
+	NULL /* normals */,
+	NULL /* surface_derivatives */
     },
 
     {
@@ -1840,7 +1871,8 @@ const struct rt_functab OBJ[] = {
 	NULL, /* perturb */
 	NULL   /* scene_obj */,
 	RTFUNCTAB_FUNC_VALIDATE_CAST(rt_bot_functab_validate), /* validate */
-	RTFUNCTAB_FUNC_NORMALS_CAST(rt_bot_normals)
+	RTFUNCTAB_FUNC_NORMALS_CAST(rt_bot_normals),
+	RTFUNCTAB_FUNC_SURFACE_DERIVATIVES_CAST(rt_bot_surface_derivatives)
     },
 
     {
@@ -1893,7 +1925,8 @@ const struct rt_functab OBJ[] = {
 	NULL, /* perturb */
 	NULL   /* scene_obj */,
 	NULL, /* validate */
-	NULL /* normals */
+	NULL /* normals */,
+	NULL /* surface_derivatives */
     },
 
     {
@@ -1948,7 +1981,8 @@ const struct rt_functab OBJ[] = {
 	NULL, /* perturb */
 	NULL  /* scene_obj */,
 	NULL, /* validate */
-	NULL /* normals */
+	NULL /* normals */,
+	NULL /* surface_derivatives */
     },
 
     {
@@ -2001,7 +2035,8 @@ const struct rt_functab OBJ[] = {
 	NULL, /* perturb */
 	NULL  /* scene_obj */,
 	NULL, /* validate */
-	NULL /* normals */
+	NULL /* normals */,
+	NULL /* surface_derivatives */
     },
 
     {
@@ -2056,7 +2091,8 @@ const struct rt_functab OBJ[] = {
 	NULL, /* perturb */
 	NULL  /* scene_obj */,
 	NULL, /* validate */
-	NULL /* normals */
+	NULL /* normals */,
+	NULL /* surface_derivatives */
     },
 
     {
@@ -2109,7 +2145,8 @@ const struct rt_functab OBJ[] = {
 	RTFUNCTAB_FUNC_PERTURB_CAST(rt_superell_perturb), /* perturb */
 	RTFUNCTAB_FUNC_SCENE_OBJ_CAST(rt_generic_scene_obj),
 	NULL, /* validate */
-	NULL /* normals */
+	NULL /* normals */,
+	NULL /* surface_derivatives */
     },
 
     {
@@ -2162,7 +2199,8 @@ const struct rt_functab OBJ[] = {
 	NULL, /* perturb */
 	RTFUNCTAB_FUNC_SCENE_OBJ_CAST(rt_generic_scene_obj),
 	NULL, /* validate */
-	NULL /* normals */
+	NULL /* normals */,
+	NULL /* surface_derivatives */
     },
 
     {
@@ -2215,7 +2253,8 @@ const struct rt_functab OBJ[] = {
 	NULL, /* perturb */
 	NULL   /* scene_obj */,
 	NULL, /* validate */
-	NULL /* normals */
+	NULL /* normals */,
+	NULL /* surface_derivatives */
     },
 
     {
@@ -2268,7 +2307,8 @@ const struct rt_functab OBJ[] = {
 	RTFUNCTAB_FUNC_PERTURB_CAST(rt_hyp_perturb), /* perturb */
 	RTFUNCTAB_FUNC_SCENE_OBJ_CAST(rt_generic_scene_obj),
 	NULL, /* validate */
-	NULL /* normals */
+	NULL /* normals */,
+	NULL /* surface_derivatives */
     },
 
     {
@@ -2321,7 +2361,8 @@ const struct rt_functab OBJ[] = {
 	NULL, /* perturb */
 	RTFUNCTAB_FUNC_SCENE_OBJ_CAST(rt_generic_scene_obj),
 	NULL, /* validate */
-	NULL /* normals */
+	NULL /* normals */,
+	NULL /* surface_derivatives */
     },
 
     {
@@ -2374,7 +2415,8 @@ const struct rt_functab OBJ[] = {
 	NULL, /* perturb */
 	RTFUNCTAB_FUNC_SCENE_OBJ_CAST(rt_generic_scene_obj),
 	NULL, /* validate */
-	NULL /* normals */
+	NULL /* normals */,
+	NULL /* surface_derivatives */
     },
 
     {
@@ -2427,7 +2469,8 @@ const struct rt_functab OBJ[] = {
 	NULL, /* perturb */
 	RTFUNCTAB_FUNC_SCENE_OBJ_CAST(rt_generic_scene_obj),
 	NULL, /* validate */
-	NULL /* normals */
+	NULL /* normals */,
+	NULL /* surface_derivatives */
     },
 
     {
@@ -2480,7 +2523,8 @@ const struct rt_functab OBJ[] = {
 	NULL, /* perturb */
 	RTFUNCTAB_FUNC_SCENE_OBJ_CAST(rt_generic_scene_obj),
 	NULL, /* validate */
-	NULL /* normals */
+	NULL /* normals */,
+	NULL /* surface_derivatives */
     },
 
     {
@@ -2533,7 +2577,8 @@ const struct rt_functab OBJ[] = {
 	RTFUNCTAB_FUNC_PERTURB_CAST(rt_hrt_perturb), /* perturb */
 	RTFUNCTAB_FUNC_SCENE_OBJ_CAST(rt_generic_scene_obj),
 	NULL, /* validate */
-	NULL /* normals */
+	NULL /* normals */,
+	NULL /* surface_derivatives */
     },
 
 
@@ -2587,7 +2632,8 @@ const struct rt_functab OBJ[] = {
 	NULL, /* perturb */
 	RTFUNCTAB_FUNC_SCENE_OBJ_CAST(rt_generic_scene_obj),
 	NULL, /* validate */
-	NULL /* normals */
+	NULL /* normals */,
+	NULL /* surface_derivatives */
     },
 
 
@@ -2641,7 +2687,8 @@ const struct rt_functab OBJ[] = {
 	NULL, /* perturb */
 	NULL  /* scene_obj */,
 	NULL, /* validate */
-	NULL /* normals */
+	NULL /* normals */,
+	NULL /* surface_derivatives */
     },
 
     {
@@ -2694,7 +2741,8 @@ const struct rt_functab OBJ[] = {
 	NULL, /* perturb */
 	NULL  /* scene_obj */,
 	NULL, /* validate */
-	NULL /* normals */
+	NULL /* normals */,
+	NULL /* surface_derivatives */
     },
 
     {
@@ -2747,7 +2795,8 @@ const struct rt_functab OBJ[] = {
 	NULL, /* perturb */
 	NULL  /* scene_obj */,
 	NULL, /* validate */
-	NULL /* normals */
+	NULL /* normals */,
+	NULL /* surface_derivatives */
     }
 };
 

@@ -24,6 +24,8 @@
  * librt_private.h.
  */
 
+#include "common.h"
+
 #include <stdlib.h>
 
 #include "bu/log.h"
@@ -1263,6 +1265,23 @@ clt_frame(void *pixels, uint8_t o[2], int cur_pixel, int last_pixel,
 }
 #endif
 
+
+
+
+int
+rt_normalize_derivative(vect_t result, const vect_t normal,
+    const vect_t derivative)
+{
+    const fastf_t length = MAGNITUDE(normal);
+    if (!isfinite(length) || !(length > SMALL_FASTF) || VINVALID(derivative))
+	return RT_DERIVATIVES_ERROR;
+    vect_t unit;
+    VSCALE(unit, normal, 1.0 / length);
+    const fastf_t projection = VDOT(unit, derivative);
+    VJOIN1(result, derivative, -projection, unit);
+    VSCALE(result, result, 1.0 / length);
+    return VINVALID(result) ? RT_DERIVATIVES_ERROR : RT_DERIVATIVES_OK;
+}
 
 /*
  * Local Variables:

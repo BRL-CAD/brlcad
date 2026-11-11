@@ -31,11 +31,13 @@
 
 namespace {
 constexpr double NormalTolerance = 1.0e-9;
+constexpr double DerivativeStep = 1.0e-5;
 constexpr size_t RayCount = 65; // exercises a full packet and its tail
 
 struct Mesh {
     std::array<fastf_t, 12> vertices = {0,0,0, 2,0,0, 0,3,0, 2,3,0};
     std::array<fastf_t, 12> normals = {0,0,1, 0.6,0,0.8, 0,0.8,0.6, 0,0,1};
+    std::array<fastf_t, 9> uvs = {0,0,0, 1,0,0, 0,1,0};
     std::array<int, 3> faces = {0,1,2};
     std::array<int, 3> face_normals = {0,1,2};
     struct rt_bot_internal bot = {};
@@ -49,7 +51,7 @@ struct Mesh {
 	bot.magic = RT_BOT_INTERNAL_MAGIC;
 	bot.mode = RT_BOT_SURFACE;
 	bot.orientation = orientation;
-	bot.bot_flags = RT_BOT_HAS_SURFACE_NORMALS | RT_BOT_USE_NORMALS;
+	bot.bot_flags = RT_BOT_HAS_SURFACE_NORMALS | RT_BOT_USE_NORMALS | RT_BOT_HAS_TEXTURE_UVS;
 	bot.num_vertices = vertices.size() / ELEMENTS_PER_POINT;
 	bot.vertices = vertices.data();
 	bot.num_faces = 1;
@@ -58,6 +60,10 @@ struct Mesh {
 	bot.normals = normals.data();
 	bot.num_face_normals = 1;
 	bot.face_normals = face_normals.data();
+	bot.num_uvs = uvs.size() / ELEMENTS_PER_VECT;
+	bot.num_face_uvs = bot.num_faces;
+	bot.uvs = uvs.data();
+	bot.face_uvs = faces.data();
     }
     Mesh(const Mesh &) = delete;
     Mesh &operator=(const Mesh &) = delete;
@@ -67,6 +73,45 @@ bool
 same_vector(const fastf_t *actual, const fastf_t *expected)
 {
     return !VINVALID(actual) && VNEAR_EQUAL(actual, expected, NormalTolerance);
+}
+
+std::array<fastf_t, 3>
+normal_at(const std::array<fastf_t, 12> &normals, double u, double v)
+{
+    std::array<fastf_t, 3> result;
+    VCOMB3(result.data(), 1.0 - u - v, &normals[0], u, &normals[3], v, &normals[6]);
+    VUNITIZE(result.data());
+    return result;
+}
+
+struct rt_surface_derivatives
+expected_derivatives(const std::array<fastf_t, 12> &normals, const vect_t dpdu, const vect_t dpdv)
+{
+    struct rt_surface_derivatives result = RT_SURFACE_DERIVATIVES_INIT_ZERO;
+    VMOVE(result.dpdu, dpdu); VMOVE(result.dpdv, dpdv);
+    const auto left = normal_at(normals, 0.3 - DerivativeStep, 0.5);
+    const auto right = normal_at(normals, 0.3 + DerivativeStep, 0.5);
+    const auto down = normal_at(normals, 0.3, 0.5 - DerivativeStep);
+    const auto up = normal_at(normals, 0.3, 0.5 + DerivativeStep);
+    VSUB2SCALE(result.dndu, right.data(), left.data(), 0.5 / DerivativeStep);
+    VSUB2SCALE(result.dndv, up.data(), down.data(), 0.5 / DerivativeStep);
+    return result;
+}
+
+bool
+check_hit_derivatives(struct application &application, struct soltab *solid,
+    const struct hit &hit, const struct rt_surface_derivatives &expected)
+{
+    const struct hit original = hit;
+    for (size_t repeat = 0; repeat < 2; ++repeat) {
+	struct rt_surface_derivatives derivatives;
+	if (rt_obj_surface_derivatives(&application, solid, &hit, &derivatives) != RT_DERIVATIVES_OK ||
+	    !bot_test::same_derivatives(derivatives, expected, NormalTolerance) ||
+	    !same_vector(hit.hit_normal, original.hit_normal) ||
+	    !same_vector(hit.hit_vpriv, original.hit_vpriv))
+	    return false;
+    }
+    return true;
 }
 
 bool
@@ -91,6 +136,8 @@ check_interpolation(struct rt_i *rtip, struct resource *resource, unsigned char 
     Mesh mesh(orientation);
     bot_test::PreparedBot prepared(mesh.bot, rtip);
     if (prepared.status != 0) return false;
+    const vect_t dpdu = {2, 0, 0}, dpdv = {0, 3, 0};
+    const auto derivatives = expected_derivatives(mesh.normals, dpdu, dpdv);
     // Prepared normals must survive destruction of the database internal.
     std::fill(mesh.normals.begin(), mesh.normals.end(), NAN);
     struct application application;
@@ -110,19 +157,16 @@ check_interpolation(struct rt_i *rtip, struct resource *resource, unsigned char 
 	VSET(rays[i].r_dir, 0, 0, -1);
 	ray_ptrs[i] = &rays[i];
 	solids[i] = &prepared.solid;
-	struct seg head;
-	BU_LIST_INIT(&head.l);
-	if (rt_obj_shot(&prepared.solid, &rays[i], &application, &head) <= 0 || BU_LIST_IS_EMPTY(&head.l)) {
+	bot_test::Shot shot(application, &prepared.solid, rays[i]);
+	const struct seg *segment = shot.first();
+	if (!segment) {
 	    ok = false;
 	} else {
-	    struct hit hit = BU_LIST_FIRST(seg, &head.l)->seg_in;
+	    struct hit hit = segment->seg_in;
+	    ok = check_hit_derivatives(application, &prepared.solid, hit, derivatives) && ok;
 	    ok = check_hit_normals(hit, &prepared.solid, &rays[i], expected) && ok;
 	}
-	struct seg *segment;
-	while (BU_LIST_WHILE(segment, seg, &head.l)) {
-	    BU_LIST_DEQUEUE(&segment->l);
-	    RT_FREE_SEG(segment, resource);
-	}
+
     }
     OBJ[ID_BOT].ft_vshot(solids.data(), ray_ptrs.data(), segments.data(), RayCount, &application);
     for (size_t i = 0; i < RayCount; ++i) {
@@ -130,6 +174,7 @@ check_interpolation(struct rt_i *rtip, struct resource *resource, unsigned char 
 	    ok = false;
 	} else {
 	    auto hit = segments[i].seg_in;
+	    ok = check_hit_derivatives(application, &prepared.solid, hit, derivatives) && ok;
 	    ok = check_hit_normals(hit, &prepared.solid, &rays[i], expected) && ok;
 	}
     }
@@ -138,7 +183,7 @@ check_interpolation(struct rt_i *rtip, struct resource *resource, unsigned char 
 }
 
 bool
-check_transform(bool in_place, bool independent_count, bool shear)
+check_transform(struct rt_i *rtip, struct resource *resource, bool in_place, bool independent_count, bool shear)
 {
     Mesh source, destination;
     if (independent_count)
@@ -161,7 +206,7 @@ check_transform(bool in_place, bool independent_count, bool shear)
     }
     MAT_DELTAS(matrix, 17, 23, -5);
     bool ok = OBJ[ID_BOT].ft_mat(in_place ? &input : &output, matrix, &input) == BRLCAD_OK;
-    const auto &result = in_place ? source : destination;
+    auto &result = in_place ? source : destination;
     for (size_t i = 0; i < source.bot.num_normals; ++i) {
 	const fastf_t *normal = &original_normals[i * ELEMENTS_PER_VECT];
 	vect_t expected = {-normal[Y] / 3, normal[X] / 2, normal[Z] / 4};
@@ -171,9 +216,29 @@ check_transform(bool in_place, bool independent_count, bool shear)
 	ok = same_vector(&result.normals[i * ELEMENTS_PER_VECT], expected) && ok;
     }
     if (!in_place) ok = source.normals == original_normals && ok;
+    bot_test::PreparedBot prepared(result.bot, rtip);
+    if (prepared.status != 0) return false;
+    struct application application;
+    RT_APPLICATION_INIT(&application);
+    application.a_rt_i = rtip;
+    application.a_resource = resource;
+    application.a_ray.magic = RT_RAY_MAGIC;
+    const point_t target = {0.6, 1.5, 0};
+    MAT4X3PNT(application.a_ray.r_pt, matrix, target);
+    application.a_ray.r_pt[Z] += 2;
+    VSET(application.a_ray.r_dir, 0, 0, -1);
+    const vect_t du = {2, 0, 0}, dv = {0, 3, 0};
+    vect_t dpdu, dpdv;
+    MAT4X3VEC(dpdu, matrix, du);
+    MAT4X3VEC(dpdv, matrix, dv);
+    const auto derivatives = expected_derivatives(result.normals, dpdu, dpdv);
+    bot_test::Shot shot(application, &prepared.solid, application.a_ray);
+    const struct seg *segment = shot.first();
+    ok = segment && check_hit_derivatives(application, &prepared.solid, segment->seg_in, derivatives) && ok;
     if (!ok) bu_log("BOT normal transform failed (in_place=%d, independent_count=%d, shear=%d)\n", in_place, independent_count, shear);
     return ok;
 }
+
 bool
 check_view_independent_normals(struct rt_i *rtip, struct resource *resource)
 {
@@ -192,24 +257,26 @@ check_view_independent_normals(struct rt_i *rtip, struct resource *resource)
 	VMOVE(application.a_ray.r_dir, direction);
 	VUNITIZE(application.a_ray.r_dir);
 	VJOIN1(application.a_ray.r_pt, target, -2, application.a_ray.r_dir);
-	struct seg head;
-	BU_LIST_INIT(&head.l);
-	bool passed = rt_obj_shot(&prepared.solid, &application.a_ray, &application, &head) > 0 && !BU_LIST_IS_EMPTY(&head.l);
+	bot_test::Shot shot(application, &prepared.solid, application.a_ray);
+	const struct seg *segment = shot.first();
+	bool passed = segment != nullptr;
 	if (passed) {
 	    const double side = direction[Z] < 0 ? 1.0 : -1.0;
 	    vect_t expected = {0.18 * side, 0.4 * side, 0.74 * side};
 	    const vect_t expected_geometric = {0, 0, side};
 	    VUNITIZE(expected);
 	    vect_t geometric, shading;
-	    passed = rt_obj_normals(&BU_LIST_FIRST(seg, &head.l)->seg_in, &prepared.solid,
+	    passed = rt_obj_normals(&segment->seg_in, &prepared.solid,
 		&application.a_ray, geometric, shading) == 0 &&
 		same_vector(geometric, expected_geometric) && same_vector(shading, expected);
+	    const vect_t dpdu = {2, 0, 0}, dpdv = {0, 3, 0};
+	    auto derivatives = expected_derivatives(mesh.normals, dpdu, dpdv);
+	    VSCALE(derivatives.dndu, derivatives.dndu, side);
+	    VSCALE(derivatives.dndv, derivatives.dndv, side);
+	    passed = check_hit_derivatives(application, &prepared.solid,
+		segment->seg_in, derivatives) && passed;
 	}
-	struct seg *segment;
-	while (BU_LIST_WHILE(segment, seg, &head.l)) {
-	    BU_LIST_DEQUEUE(&segment->l);
-	    RT_FREE_SEG(segment, resource);
-	}
+
 	if (!passed) bu_log("BOT shading normal changed with view direction (%g %g %g)\n", V3ARGS(direction));
 	ok = passed && ok;
     }
@@ -232,23 +299,23 @@ check_invalid_normals(struct rt_i *rtip, struct resource *resource)
 	application.a_ray.magic = RT_RAY_MAGIC;
 	VSET(application.a_ray.r_pt, 0.6, 1.5, 2);
 	VSET(application.a_ray.r_dir, 0, 0, -1);
-	struct seg head;
-	BU_LIST_INIT(&head.l);
-	const bool hit = rt_obj_shot(&prepared.solid, &application.a_ray, &application, &head) > 0 && !BU_LIST_IS_EMPTY(&head.l);
+	bot_test::Shot shot(application, &prepared.solid, application.a_ray);
+	const struct seg *segment = shot.first();
 	bool rejected = false;
-	if (hit) {
+	if (segment) {
 	    const vect_t sentinel = {2, 3, 4};
 	    vect_t geometric, shading;
 	    VMOVE(geometric, sentinel); VMOVE(shading, sentinel);
-	    rejected = rt_obj_normals(&BU_LIST_FIRST(seg, &head.l)->seg_in, &prepared.solid,
+	    rejected = rt_obj_normals(&segment->seg_in, &prepared.solid,
 		&application.a_ray, geometric, shading) < 0 &&
 		same_vector(geometric, sentinel) && same_vector(shading, sentinel);
+	    const auto marker = bot_test::derivative_marker();
+	    struct rt_surface_derivatives derivatives = marker;
+	    rejected = rt_obj_surface_derivatives(&application, &prepared.solid,
+		&segment->seg_in, &derivatives) == RT_DERIVATIVES_ERROR &&
+		bot_test::same_derivatives(derivatives, marker, NormalTolerance) && rejected;
 	}
-	struct seg *segment;
-	while (BU_LIST_WHILE(segment, seg, &head.l)) {
-	    BU_LIST_DEQUEUE(&segment->l);
-	    RT_FREE_SEG(segment, resource);
-	}
+
 	ok = rejected && ok;
     }
     if (!ok) bu_log("Invalid BOT normals were not rejected with unchanged outputs\n");
@@ -302,7 +369,7 @@ main(int argc, char **argv)
     for (bool in_place : {false, true})
 	for (bool independent_count : {false, true})
 	    for (bool shear : {false, true})
-		ok = check_transform(in_place, independent_count, shear) && ok;
+		ok = check_transform(rtip, &resource, in_place, independent_count, shear) && ok;
     ok = check_rejected_transforms() && ok;
     ok = check_invalid_normals(rtip, &resource) && ok;
     ok = check_view_independent_normals(rtip, &resource) && ok;

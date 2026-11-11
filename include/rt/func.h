@@ -112,6 +112,26 @@ RT_EXPORT extern int rt_obj_normals(const struct hit *hitp, struct soltab *stp,
 RT_EXPORT extern int rt_obj_uv(struct application *ap, struct soltab *stp, struct hit *hitp, struct uvcoord *uvp);
 
 /**
+ * Query derivatives of position and the unit shading normal with respect
+ * to a primitive's native UV mapping.  Position derivatives use prepared
+ * geometry coordinates and database length units.  Derivatives of the unit
+ * shading normal are dimensionless in that frame and follow the same
+ * hemisphere convention as rt_obj_normals(), before Boolean evaluation.
+ * Apply a partition's flip flag to normal derivatives only; position
+ * derivatives are independent of boundary orientation.
+ *
+ * Supply an original, unmodified ray intersection.  Neither it nor the
+ * prepared geometry is changed.  All pointers are required.  Output must
+ * not overlap inputs.  Returns RT_DERIVATIVES_OK, UNAVAILABLE for missing
+ * or singular mappings, or ERROR for invalid data or query failures.
+ * Output is unchanged unless the query succeeds.  Nonfinite derivatives
+ * are errors.  There is no invented tangent basis for an absent mapping.
+ */
+RT_EXPORT extern int rt_obj_surface_derivatives(struct application *ap,
+    struct soltab *stp, const struct hit *hitp,
+    struct rt_surface_derivatives *derivatives);
+
+/**
  * calculate object curvature for a given hit point
  */
 RT_EXPORT extern int rt_obj_curve(struct curvature *cvp, struct hit *hitp, struct soltab *stp);

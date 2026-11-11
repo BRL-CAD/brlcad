@@ -1317,7 +1317,6 @@ bot_interpolate_normal(vect_t normal, const struct hit *hitp, const struct bot_s
     if (u < 0.0) u = 0.0;
     for (size_t i = X; i <= Z; ++i)
 	normal[i] = u * trip->norms[i] + v * trip->norms[i + 3] + w * trip->norms[i + 6];
-    VUNITIZE(normal);
     return 1;
 }
 
@@ -1336,6 +1335,7 @@ rt_bot_norm(struct hit *hitp, struct soltab *stp, struct xray *rp)
     VMOVE(old_norm, hitp->hit_normal);
 
     if (bot_interpolate_normal(hitp->hit_normal, hitp, bot)) {
+	VUNITIZE(hitp->hit_normal);
 	fastf_t old_ray_dot_norm = VDOT(old_norm, rp->r_dir);
 	fastf_t new_ray_dot_norm;
 
@@ -1373,7 +1373,8 @@ rt_bot_normals(const struct hit *hitp, struct soltab *stp, struct xray *UNUSED(r
     // Segment construction has already oriented the facet for solid/plate mode.
     VMOVE(geometric, hitp->hit_normal);
     VMOVE(shading, geometric);
-    bot_interpolate_normal(shading, hitp, bot);
+    if (bot_interpolate_normal(shading, hitp, bot))
+	VUNITIZE(shading);
     return 0;
 }
 
@@ -1394,6 +1395,22 @@ rt_bot_curve(struct curvature *cvp, struct hit *hitp, struct soltab *stp)
 }
 
 
+static const fastf_t *
+bot_triangle_uvs(const struct bot_specific *bot, const struct hit *hitp,
+    const triangle_s **triangle)
+{
+    if (!bot || !(bot->bot_flags & RT_BOT_HAS_TEXTURE_UVS) || !bot->tie || !hitp->hit_private)
+	return NULL;
+    const struct spatial_partition_s *sps = (const struct spatial_partition_s *)bot->tie;
+    const triangle_s *candidate = (const triangle_s *)hitp->hit_private;
+    const size_t index = (size_t)(candidate - sps->tris);
+    if (!sps->vertex_uvs || index >= bot->bot_ntri)
+	return NULL;
+    *triangle = candidate;
+    return &sps->vertex_uvs[index * BOT_FACE_UV_SIZE];
+}
+
+
 /**
  * Interpolate authored per-corner BOT texture coordinates. Untextured
  * faces have a zero mapping. Values outside [0,1] are retained for tiling.
@@ -1410,14 +1427,10 @@ rt_bot_uv(struct application *ap, struct soltab *stp, struct hit *hitp, struct u
     RT_CK_HIT(hitp);
     if (ap) RT_CK_APPLICATION(ap);
     const struct bot_specific *bot = (const struct bot_specific *)stp->st_specific;
-    if (!bot || !(bot->bot_flags & RT_BOT_HAS_TEXTURE_UVS) || !bot->tie || !hitp->hit_private)
+    const triangle_s *triangle;
+    const fastf_t *uv_a = bot_triangle_uvs(bot, hitp, &triangle);
+    if (!uv_a)
 	return;
-    const struct spatial_partition_s *sps = (const struct spatial_partition_s *)bot->tie;
-    const triangle_s *triangle = (const triangle_s *)hitp->hit_private;
-    const size_t index = (size_t)(triangle - sps->tris);
-    if (!sps->vertex_uvs || index >= bot->bot_ntri)
-	return;
-    const fastf_t *uv_a = &sps->vertex_uvs[index * BOT_FACE_UV_SIZE];
     const fastf_t *uv_b = uv_a + ELEMENTS_PER_VECT2D;
     const fastf_t *uv_c = uv_b + ELEMENTS_PER_VECT2D;
     const fastf_t weight_b = hitp->hit_vpriv[Y];
@@ -1440,6 +1453,60 @@ rt_bot_uv(struct application *ap, struct soltab *stp, struct hit *hitp, struct u
 	    uvp->uv_dv = radius * scale * MAGNITUDE(gradient);
 	}
     }
+}
+
+
+C_DECL int
+rt_bot_surface_derivatives(struct application *UNUSED(ap), struct soltab *stp,
+    const struct hit *hitp, struct rt_surface_derivatives *derivatives)
+{
+    const struct bot_specific *bot = (const struct bot_specific *)stp->st_specific;
+    const triangle_s *triangle;
+    const fastf_t *uv = bot_triangle_uvs(bot, hitp, &triangle);
+    if (!uv)
+	return RT_DERIVATIVES_UNAVAILABLE;
+
+    const fastf_t *uv_b = uv + ELEMENTS_PER_VECT2D;
+    const fastf_t *uv_c = uv_b + ELEMENTS_PER_VECT2D;
+    fastf_t du_b = uv_b[X] - uv[X], dv_b = uv_b[Y] - uv[Y];
+    fastf_t du_c = uv_c[X] - uv[X], dv_c = uv_c[Y] - uv[Y];
+    const fastf_t scale = fmax(fmax(fabs(du_b), fabs(dv_b)), fmax(fabs(du_c), fabs(dv_c)));
+    if (!isfinite(scale))
+	return RT_DERIVATIVES_ERROR;
+    if (!(scale > 0.0))
+	return RT_DERIVATIVES_UNAVAILABLE;
+    // Scale the UV solve so tiling magnitude does not square into the determinant.
+    du_b /= scale; dv_b /= scale;
+    du_c /= scale; dv_c /= scale;
+    const fastf_t determinant = du_b * dv_c - dv_b * du_c;
+    if (ZERO(determinant))
+	return RT_DERIVATIVES_UNAVAILABLE;
+    const fastf_t inverse = (1.0 / determinant) / scale;
+    const fastf_t weight_b_du = dv_c * inverse, weight_c_du = -dv_b * inverse;
+    const fastf_t weight_b_dv = -du_c * inverse, weight_c_dv = du_b * inverse;
+    VCOMB2(derivatives->dpdu, weight_b_du, triangle->AB, weight_c_du, triangle->AC);
+    VCOMB2(derivatives->dpdv, weight_b_dv, triangle->AB, weight_c_dv, triangle->AC);
+    VSETALL(derivatives->dndu, 0.0);
+    VSETALL(derivatives->dndv, 0.0);
+
+    vect_t normal;
+    if (bot_interpolate_normal(normal, hitp, bot)) {
+	vect_t dn_b, dn_c, du, dv;
+	const fastf_t *normal_b = triangle->norms + ELEMENTS_PER_VECT;
+	const fastf_t *normal_c = normal_b + ELEMENTS_PER_VECT;
+	VSUB2(dn_b, normal_b, triangle->norms);
+	VSUB2(dn_c, normal_c, triangle->norms);
+	VCOMB2(du, weight_b_du, dn_b, weight_c_du, dn_c);
+	VCOMB2(dv, weight_b_dv, dn_b, weight_c_dv, dn_c);
+	if (rt_normalize_derivative(derivatives->dndu, normal, du) != RT_DERIVATIVES_OK ||
+	    rt_normalize_derivative(derivatives->dndv, normal, dv) != RT_DERIVATIVES_OK)
+	    return RT_DERIVATIVES_ERROR;
+	if (VDOT(normal, hitp->hit_normal) < 0.0) {
+	    VREVERSE(derivatives->dndu, derivatives->dndu);
+	    VREVERSE(derivatives->dndv, derivatives->dndv);
+	}
+    }
+    return RT_DERIVATIVES_OK;
 }
 
 
