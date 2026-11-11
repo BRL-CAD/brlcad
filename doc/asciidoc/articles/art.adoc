@@ -75,13 +75,14 @@ that have libxml2 enabled.
 |OSL plastic on librt geometry
 |`regress-art` checks a colored sphere, a Boolean box with inherited color,
 and a solid BOT.  Coverage includes multiple aspect ratios and projections,
-PNG/PIX output, single/multiple workers, and error exits.  UV mapping,
-custom material assignments, and advanced closures remain unqualified.
+PNG/PIX output, single/multiple workers, and error exits.  Basic
+material-object shader selection is also covered.  UV mapping, networks,
+parameter authoring, and advanced closures remain unqualified.
 
 |OSL execution and native Appleseed mesh scenes
 |The development validation includes a native JIT probe, material and
-texture renders, and selected Appleseed unit suites.  Those mesh scenes do
-not establish support for BRL-CAD BOT geometry through the librt adapter.
+texture renders, and selected Appleseed unit suites.  These provide
+independent renderer references; librt BOT coverage comes from `regress-art`.
 
 |Installed builds across platforms
 |The current renderer validation was performed on FreeBSD.  Linux, Windows,
@@ -112,6 +113,33 @@ that terminal connection was absent; adding it restored shading on both.
 The `art` regression now exercises the connected graph on librt CSG and
 BOT geometry.  This identifies a wiring failure independently of any
 remaining renderer compatibility or geometric-shading issues.
+
+== Selecting an OSL material
+
+The existing `material` command can select a compiled OSL shader for a
+region.  For example, in MGED:
+
+----
+material create paint.material Paint
+material set paint.material optical OSL as_plastic
+material set paint.material optical OSL.output out_outColor
+material assign ball.r paint.material
+material get paint.material optical OSL
+----
+
+The optical `OSL` property names the shader.  For a library shader node,
+`OSL.output` selects a scalar closure-color output and defaults to
+`out_outColor`.  `art` connects it to `as_closure2surface`.  A shader declared
+as `surface` writes `Ci` itself and must not specify `OSL.output`.
+
+Shaders are queried through Appleseed's public metadata interface before
+rendering.  Missing shaders, invalid outputs, and invalid material-object
+references stop the render with an error.  The region's resolved sRGB color
+is converted to linear RGB and supplied to a compatible scalar `in_color`
+input, when present.  Other shader parameters currently retain their
+shader defaults; a complete typed parameter/network interface remains a
+planned milestone.  Material-object parent inheritance and per-instance
+material overrides also require further qualification.
 
 == Development milestones
 

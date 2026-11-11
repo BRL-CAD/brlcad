@@ -109,18 +109,14 @@
 #include "renderer/api/frame.h"
 #include "renderer/api/light.h"
 #include "renderer/api/log.h"
-#include "renderer/api/material.h"
 #include "renderer/api/object.h"
 #include "renderer/api/project.h"
 #include "renderer/api/rendering.h"
 #include "renderer/api/scene.h"
-#include "renderer/api/surfaceshader.h"
 #include "renderer/api/utility.h"
-#include "renderer/api/shadergroup.h"
 
 // appleseed.foundation headers.
 #include "foundation/core/appleseed.h"
-#include "foundation/image/colorspace.h"
 #include "foundation/math/matrix.h"
 #include "foundation/math/scalar.h"
 #include "foundation/math/transform.h"
@@ -143,6 +139,7 @@
 
 #include "vmath.h"	/* vector math macros */
 #include "raytrace.h"	/* librt interface definitions */
+#include "materials.h"
 #include "bu/app.h"
 #include "bu/getopt.h"
 #include "bu/vls.h"
@@ -512,6 +509,13 @@ art_parse_light_intensity(const struct bu_vls* shader, double* bright, double* f
 }
 
 
+struct ArtSceneBuilder {
+    asr::Scene &scene;
+    const asf::SearchPaths &search_paths;
+    bool valid = true;
+};
+
+
 /* db_walk_tree() callback to register all regions within the scene
  * using an OSL plastic material with the resolved region color.
  */
@@ -609,8 +613,7 @@ register_region(struct db_tree_state* tsp,
 	    geometry_parameters,
 	    &APP, resources});
 
-    // typecast our scene using the callback function 'data'
-    asr::Scene* scene = static_cast<asr::Scene*>(data);
+    auto &builder = *static_cast<ArtSceneBuilder *>(data);
 
     // create assembly for current object
     std::string assembly_name = std::string(name) + "_object_assembly";
@@ -642,49 +645,11 @@ register_region(struct db_tree_state* tsp,
     } else {
 	diffuse_rgb[0] = diffuse_rgb[1] = diffuse_rgb[2] = 1.0f;
     }
-    const asf::Color3f linear_rgb = asf::srgb_to_linear_rgb(
-	asf::Color3f(diffuse_rgb[0], diffuse_rgb[1], diffuse_rgb[2]));
-    struct bu_vls color_parameter = BU_VLS_INIT_ZERO;
-    bu_vls_printf(&color_parameter, "color %g %g %g",
-	linear_rgb[0], linear_rgb[1], linear_rgb[2]);
-
-    const std::string shader_name = material_name + "_shader";
-    asf::auto_release_ptr<asr::ShaderGroup> shader_group(
-	asr::ShaderGroupFactory().create(shader_name.c_str(), asr::ParamArray()));
-    shader_group->add_shader(
-	"shader", "as_plastic", "material",
-	asr::ParamArray()
-	.insert("in_color", bu_vls_cstr(&color_parameter))
-	.insert("in_specular_weight", "float 0.06")
-	.insert("in_specular_roughness", "float 0.08")
-	.insert("in_ior", "float 1.5"));
-    bu_vls_free(&color_parameter);
-
-    // Library material nodes return closures; the terminal surface must set Ci.
-    shader_group->add_shader(
-	"surface", "as_closure2surface", "surface", asr::ParamArray());
-    shader_group->add_connection(
-	"material", "out_outColor", "surface", "in_input");
-    assembly->shader_groups().insert(shader_group);
-
-    // Create a physical surface shader and insert it into the assembly.
-    assembly->surface_shaders().insert(
-	asr::PhysicalSurfaceShaderFactory().create(
-	    "Material_mat_surface_shader",
-	    asr::ParamArray()
-	    .insert("lighting_samples", "1")
-	    )
-	);
-
-    // Bind the OSL surface group to the region.
-    assembly->materials().insert(
-	asr::OSLMaterialFactory().create(
-	    material_name.c_str(),
-	    asr::ParamArray()
-	    .insert("osl_surface", shader_name.c_str())
-	    .insert("surface_shader", "Material_mat_surface_shader")
-	    )
-	);
+    if (!art_add_material(assembly.ref(), material_name.c_str(), diffuse_rgb,
+	    tsp->ts_dbip, combp, builder.search_paths)) {
+	builder.valid = false;
+	return 0;
+    }
 
     // insert object into object array in assembly
     assembly->objects().insert(brlcad_object);
@@ -702,7 +667,7 @@ register_region(struct db_tree_state* tsp,
 	    ));
 
     // add assembly to assemblies array in scene
-    scene->assemblies().insert(assembly);
+    builder.scene.assemblies().insert(assembly);
 
     // finally, we add an instance to use the assembly in the render
     std::string assembly_inst_name = assembly_name + "_inst";
@@ -717,7 +682,7 @@ register_region(struct db_tree_state* tsp,
 	.set_transform(
 	    0.0f,
 	    asf::Transformd::identity());
-    scene->assembly_instances().insert(assembly_instance);
+    builder.scene.assembly_instances().insert(assembly_instance);
 
     return 0;
 }
@@ -799,7 +764,7 @@ do_ae(double azim, double elev)
 
 
 static asf::auto_release_ptr<asr::Project>
-build_project(const char* file)
+build_project()
 {
     /* If user gave no sizing info at all, use 512 as default */
     struct bu_vls dimensions = BU_VLS_INIT_ZERO;
@@ -850,27 +815,31 @@ build_project(const char* file)
     // Materials
     //------------------------------------------------------------------------
 
+    ArtSceneBuilder builder{scene.ref(), project->search_paths()};
+
     // walk the db to register all regions
     struct db_tree_state state;
     RT_DBTS_INIT(&state);
-    struct db_i* dbip = db_open(file, DB_OPEN_READONLY);
-    state.ts_dbip = dbip;
+    state.ts_dbip = APP.a_rt_i->rti_dbip;
 
     /* discovered lights are collected by register_region() during the walk */
     art_lights.clear();
     art_seen_regions.clear();
 
     if (objc) {
-	db_walk_tree(APP.a_rt_i->rti_dbip, objc, (const char**)objv, 1, &state, register_region, NULL, NULL, reinterpret_cast<void*>(scene.get()));
+	db_walk_tree(APP.a_rt_i->rti_dbip, objc, (const char**)objv, 1, &state, register_region, NULL, NULL, &builder);
     }
     if (cmd_objs) {
 
 	size_t cmdobjc = BU_PTBL_LEN(cmd_objs);
 	const char** cmdobjv = (const char**)cmd_objs->buffer;
 	if (cmdobjc) {
-	    db_walk_tree(APP.a_rt_i->rti_dbip, (int)cmdobjc, cmdobjv, 1, &state, register_region, NULL, NULL, reinterpret_cast<void*>(scene.get()));
+	    db_walk_tree(APP.a_rt_i->rti_dbip, (int)cmdobjc, cmdobjv, 1, &state, register_region, NULL, NULL, &builder);
 	}
     }
+
+    if (!builder.valid)
+	return asf::auto_release_ptr<asr::Project>();
 
     //------------------------------------------------------------------------
     // Light
@@ -1302,7 +1271,9 @@ art_cm_end(const int UNUSED(argc), const char** UNUSED(argv))
 	def_tree(APP.a_rt_i);
 
     do_ae(azimuth, elevation);
-    asf::auto_release_ptr<asr::Project> project(build_project(global_title_file));
+    asf::auto_release_ptr<asr::Project> project(build_project());
+    if (!project.get())
+	return -1;
 
     return art_render_image(project.ref()) ? 0 : -1;
 }
@@ -1450,7 +1421,11 @@ main(int argc, char **argv)
     // RENDERER_LOG_INFO("View model: (%f, %f, %f)", eye_model[0], eye_model[2], -eye_model[1]);
 
     // Build the project.
-    asf::auto_release_ptr<asr::Project> project(build_project(title_file));
+    asf::auto_release_ptr<asr::Project> project(build_project());
+    if (!project.get()) {
+	bu_free(resources, "appleseed");
+	return BRLCAD_ERROR;
+    }
 
     if (framebuffer && !fbp) {
 	RENDERER_LOG_INFO("FRAMEBUFFER IS ON\n");

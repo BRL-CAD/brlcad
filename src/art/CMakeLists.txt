@@ -4,6 +4,8 @@ set(
   CMakeLists.txt
   art.h
   art.cpp
+  materials.h
+  materials.cpp
   brlcadplugin.h
   brlcadplugin.cpp
   tile.h
@@ -61,12 +63,15 @@ set(
   ../rt/grid.c
   ../rt/usage.cpp
   art.cpp
+  materials.cpp
   brlcadplugin.cpp
   tile.cpp
 )
 
 add_definitions(-DBOOST_ALL_DYN_LINK)
 brlcad_addexec(art "${ART_SRCS}" "${ART_LIBS}" FOLDER Rt)
+# The shared rt sources rely on translation-unit isolation for C globals.
+set_target_properties(art PROPERTIES UNITY_BUILD OFF)
 target_include_directories(art BEFORE PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 target_include_directories(art SYSTEM PRIVATE ${ART_INCLUDE_DIRS})
 

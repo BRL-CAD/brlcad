@@ -32,7 +32,7 @@
 #include "wdb.h"
 
 static int
-create_scene(const char *path)
+create_scene(const char *path, const char *shader, const char *output)
 {
     struct rt_wdb *db = wdb_fopen(path);
     if (!db)
@@ -80,6 +80,20 @@ create_scene(const char *path)
     BU_LIST_INIT(&members.l);
     success = success && mk_addmember("mesh.s", &members.l, NULL, WMOP_UNION) &&
 	mk_lcomb(db, "mesh.r", &members, 1, "plastic", "", green, 0) == 0;
+    if (shader) {
+	struct bu_attribute_value_set empty, optical;
+	bu_avs_init_empty(&empty);
+	bu_avs_init_empty(&optical);
+	bu_avs_add(&optical, "OSL", shader);
+	if (output)
+	    bu_avs_add(&optical, "OSL.output", output);
+	success = success && mk_material(db, "osl.material", "OSL test material", "", "",
+	    &empty, &empty, &optical, &empty) == 0;
+	success = success && db5_update_attribute("ball.r", "material_name", "osl.material", db->dbip) == 0 &&
+	    db5_update_attribute("mesh.r", "material_name", "osl.material", db->dbip) == 0;
+	bu_avs_free(&optical);
+	bu_avs_free(&empty);
+    }
     wdb_close(db);
     return success ? 0 : 1;
 }
@@ -147,7 +161,9 @@ main(int argc, char **argv)
 {
     bu_setprogname(argv[0]);
     if (argc == 3 && BU_STR_EQUAL(argv[1], "create"))
-	return create_scene(argv[2]);
+	return create_scene(argv[2], nullptr, nullptr);
+    if ((argc == 4 || argc == 5) && BU_STR_EQUAL(argv[1], "create-material"))
+	return create_scene(argv[2], argv[3], argc == 5 ? argv[4] : nullptr);
     if (argc == 5 && (BU_STR_EQUAL(argv[1], "check") || BU_STR_EQUAL(argv[1], "check-mesh"))) {
 	try {
 	    return check_image(argv[2], std::stoul(argv[3]), std::stoul(argv[4]),
