@@ -333,6 +333,17 @@ tclcad_init(Tcl_Interp *interp, int init_gui, struct bu_vls *tlog)
 	return TCL_ERROR;
     }
 
+#ifdef HAVE_TK
+    /* btclsh can load Tk after core initialization, so register the embedded
+     * widget for lazy loading as well as initializing it with the GUI. */
+    Tcl_StaticPackage(NULL, "Tklitehtml", Tklitehtml_Init, NULL);
+    if (Tcl_Eval(interp,
+	    "package ifneeded tklitehtml 0.1.0 {load {} Tklitehtml}") != TCL_OK) {
+	if (tlog)
+	    bu_vls_printf(tlog, "TkLiteHtml registration ERROR:\n%s\n", Tcl_GetStringResult(interp));
+	return TCL_ERROR;
+    }
+#endif
     state->initialized |= TCLCAD_CORE_INITIALIZED;
     if (init_gui && tclcad_init_gui(interp, tlog) != TCL_OK)
 	return TCL_ERROR;

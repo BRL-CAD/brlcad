@@ -108,14 +108,13 @@ proc ::archer::xmin::exercise_dialog {root labels {expected_title ""}} {
 proc ::archer::xmin::exercise_html_help {application} {
     # The browser panes remain useful for reporting missing optional
     # documentation, so they must always exist.
-    if {[catch {$application component archerHelpToC} toc_frame] ||
-	[catch {$application component archerHelpF} help_frame]} {
+    if {[catch {$application component archerHelpViewer} viewer]} {
 	::gui::test::require {false} \
 	    "Archer help did not create its browser panes"
     }
 
-    set toc $toc_frame.htmlview
-    set help $help_frame.htmlview
+    set toc [$viewer contentsbrowser]
+    set help [$viewer browser]
     set help_toplevel [winfo toplevel $help]
     wm deiconify $help_toplevel
     update
@@ -156,7 +155,7 @@ proc ::archer::xmin::exercise_html_help {application} {
     } "Archer help back navigation did not restore the tutorial"
 
     set missing_path [file join $::env(GUI_TEST_DIR) missing-help.html]
-    Archer::html_help_display $toc $missing_path {}
+    catch {$help goto $missing_path}
     ::gui::test::require {
 	[$help location] eq $initial_location && [$help error] ne ""
     } "Archer help did not preserve a failed navigation"

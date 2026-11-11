@@ -23,6 +23,10 @@ if(BRLCAD_ENABLE_TCL)
     endif()
     if(TEST tclcad_test_tklitehtml)
       set_tests_properties(tclcad_test_tklitehtml PROPERTIES SKIP_RETURN_CODE 77 TIMEOUT 120)
+      if(BRLCAD_X11_PROVIDER_RESOLVED STREQUAL "XMIN")
+        set_property(TEST tclcad_test_tklitehtml APPEND PROPERTY ENVIRONMENT_MODIFICATION
+          "LD_LIBRARY_PATH=path_list_prepend:$<TARGET_FILE_DIR:Xmin::ClientX11>")
+      endif()
     endif()
   endif()
 
