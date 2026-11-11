@@ -7437,41 +7437,49 @@ main(int ac, char *av[])
 	double unit_value = 25.4;
 	char char_value = 'x';
 
-	CHECK(bu_arg_integer_from_str(&integer_value, "0x20") && integer_value == 32,
+	CHECK(bu_arg_integer_from_str(NULL, &integer_value, "0x20", 0) && integer_value == 32,
 	    "native integer reader should accept the schema's base-zero integer grammar");
-	CHECK(!bu_arg_integer_from_str(&integer_value, "12oops") && integer_value == 32,
+	CHECK(!bu_arg_integer_from_str(NULL, &integer_value, "12oops", 0) && integer_value == 32,
 	    "native integer reader should reject partial text without changing storage");
-	CHECK(bu_arg_hex_integer_from_str(&hex_integer_value, "ff") && hex_integer_value == 255,
+	CHECK(bu_arg_unsigned_integer_from_str(NULL, &hex_integer_value, "ff", 16) &&
+	    hex_integer_value == 255,
 	    "native hexadecimal integer reader should accept hexadecimal input");
-	CHECK(!bu_arg_hex_integer_from_str(&hex_integer_value, "-1") && hex_integer_value == 255,
+	CHECK(!bu_arg_unsigned_integer_from_str(NULL, &hex_integer_value, "-1", 16) &&
+	    hex_integer_value == 255,
 	    "native hexadecimal integer reader should reject a negative value without changing storage");
-	CHECK(bu_arg_long_from_str(&long_value, "0x20") && long_value == 32,
+	CHECK(bu_arg_long_from_str(NULL, &long_value, "0x20", 0) && long_value == 32,
 	    "native long reader should accept the schema's base-zero integer grammar");
-	CHECK(!bu_arg_long_from_str(&long_value, "12oops") && long_value == 32,
+	CHECK(!bu_arg_long_from_str(NULL, &long_value, "12oops", 0) && long_value == 32,
 	    "native long reader should reject partial text without changing storage");
-	CHECK(bu_arg_hex_long_from_str(&hex_long_value, "ff") && hex_long_value == 255,
+	CHECK(bu_arg_long_from_str(NULL, &hex_long_value, "ff", 16) && hex_long_value == 255,
 	    "native hexadecimal long reader should accept hexadecimal input");
-	CHECK(!bu_arg_hex_long_from_str(&hex_long_value, "0xgg") && hex_long_value == 255,
+	CHECK(!bu_arg_long_from_str(NULL, &hex_long_value, "0xgg", 16) && hex_long_value == 255,
 	    "native hexadecimal long reader should reject malformed text without changing storage");
-	CHECK(bu_arg_number_from_str(&number_value, "2.5") && number_value > 2.49 && number_value < 2.51,
+	CHECK(bu_arg_number_from_str(NULL, &number_value, "2.5") &&
+	    number_value > 2.49 && number_value < 2.51,
 	    "native number reader should accept a finite scalar");
-	CHECK(!bu_arg_number_from_str(&number_value, "nan") && number_value > 2.49 && number_value < 2.51,
+	CHECK(!bu_arg_number_from_str(NULL, &number_value, "nan") &&
+	    number_value > 2.49 && number_value < 2.51,
 	    "native number reader should reject a nonfinite scalar without changing storage");
-	CHECK(bu_arg_units_from_str(&unit_value, "in") && unit_value > 25.39 && unit_value < 25.41,
+	CHECK(bu_arg_units_from_str(NULL, &unit_value, "in") && unit_value > 25.39 && unit_value < 25.41,
 	    "native units reader should accept a named unit expression");
-	CHECK(bu_arg_units_from_str(&unit_value, "25cm") && unit_value > 249.99 && unit_value < 250.01,
+	CHECK(bu_arg_units_from_str(NULL, &unit_value, "25cm") &&
+	    unit_value > 249.99 && unit_value < 250.01,
 	    "native units reader should accept a quantity expression");
-	CHECK(!bu_arg_units_from_str(&unit_value, "not-a-unit") && unit_value > 249.99 && unit_value < 250.01,
+	CHECK(!bu_arg_units_from_str(NULL, &unit_value, "not-a-unit") &&
+	    unit_value > 249.99 && unit_value < 250.01,
 	    "native units reader should reject an invalid expression without changing storage");
-	CHECK(bu_arg_char_from_str(&char_value, "test") && char_value == 't',
-	    "native character reader should retain the first character");
-	CHECK(!bu_arg_char_from_str(&char_value, "") && char_value == 't',
+	CHECK(bu_arg_char_from_str(NULL, &char_value, "t") && char_value == 't',
+	    "native character reader should accept one character");
+	CHECK(!bu_arg_char_from_str(NULL, &char_value, "test") && char_value == 't',
+	    "native character reader should reject multiple characters without changing storage");
+	CHECK(!bu_arg_char_from_str(NULL, &char_value, "") && char_value == 't',
 	    "native character reader should reject an empty string without changing storage");
     }
 
     {
 	const char *scalar_argv[] = {"-vv", "--long", "0x20", "--hex", "ff",
-	    "--selector", "test", "--word", "first", "--word", "second"};
+	    "--selector", "t", "--word", "first", "--word", "second"};
 	struct native_scalar_args scalar_args = {0, 0, 0, '\0', BU_VLS_INIT_ZERO};
 	struct bu_vls scalar_msg = BU_VLS_INIT_ZERO;
 	char *scalar_json = NULL;

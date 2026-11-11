@@ -11,6 +11,7 @@
 
 #include "common.h"
 
+#include <limits.h>
 #include <stddef.h>
 #include <string.h>
 
@@ -31,6 +32,102 @@ static int custom_calls = 0;
 
 static int cannot_bypass_structure(const struct bu_arg_schema *, size_t,
 	const char **, size_t, struct bu_arg_validate_result *);
+
+
+static int
+test_scalar_readers(void)
+{
+    struct bu_vls msg = BU_VLS_INIT_ZERO;
+    int integer = 41;
+    unsigned int unsigned_integer = 41;
+    long long_integer = 41;
+    unsigned char byte = 41;
+    size_t size = 41;
+    fastf_t number = 4.5;
+    double double_number = 4.5;
+    int boolean = 1;
+    char character = 'x';
+
+#define CHECK_READER(_expression, _description) do { \
+	if (!(_expression)) { \
+	    bu_log("scalar reader test failed: %s\n", (_description)); \
+	    bu_vls_free(&msg); \
+	    return 1; \
+	} \
+    } while (0)
+
+    CHECK_READER(bu_arg_integer_from_str(NULL, &integer, "010", 10) &&
+	integer == 10, "explicit decimal integer base");
+    CHECK_READER(bu_arg_integer_from_str(NULL, &integer, "010", 0) &&
+	integer == 8, "base-zero integer grammar");
+    CHECK_READER(!bu_arg_integer_from_str(NULL, &integer, "12tail", 10) &&
+	integer == 8, "integer trailing-text transaction");
+    CHECK_READER(!bu_arg_integer_from_str(NULL, &integer,
+	"999999999999999999999999", 10) && integer == 8,
+	"integer overflow transaction");
+    CHECK_READER(!bu_arg_integer_range_from_str(&msg, &integer, "11", 10,
+	1, 10) && integer == 8 && bu_vls_strlen(&msg) > 0,
+	"integer range diagnostic and transaction");
+    bu_vls_trunc(&msg, 0);
+    CHECK_READER(!bu_arg_integer_from_str(&msg, &integer, "1", 1) &&
+	integer == 8 && bu_vls_strlen(&msg) > 0,
+	"invalid integer base diagnostic");
+
+    CHECK_READER(bu_arg_unsigned_integer_from_str(NULL, &unsigned_integer,
+	"ff", 16) && unsigned_integer == 255,
+	"unsigned hexadecimal integer");
+    CHECK_READER(!bu_arg_unsigned_integer_from_str(NULL, &unsigned_integer,
+	" -1", 10) && unsigned_integer == 255,
+	"whitespace-prefixed negative unsigned integer");
+    CHECK_READER(bu_arg_long_range_from_str(NULL, &long_integer, "12", 10,
+	10, 20) && long_integer == 12, "long integer range");
+    CHECK_READER(!bu_arg_long_range_from_str(NULL, &long_integer, "21", 10,
+	10, 20) && long_integer == 12, "long integer range transaction");
+
+    CHECK_READER(bu_arg_unsigned_char_from_str(NULL, &byte, "255", 10) &&
+	byte == UCHAR_MAX, "unsigned byte upper bound");
+    CHECK_READER(!bu_arg_unsigned_char_from_str(NULL, &byte, "256", 10) &&
+	byte == UCHAR_MAX, "unsigned byte overflow transaction");
+    CHECK_READER(bu_arg_size_t_from_str(NULL, &size, "010", 10) && size == 10,
+	"explicit decimal size");
+    CHECK_READER(!bu_arg_size_t_from_str(NULL, &size, " -1", 10) && size == 10,
+	"negative size transaction");
+    CHECK_READER(!bu_arg_size_t_range_from_str(NULL, &size, "11", 10, 0, 10) &&
+	size == 10, "size range transaction");
+
+    CHECK_READER(bu_arg_number_from_str(NULL, &number, "2.5") &&
+	number > 2.49 && number < 2.51, "finite fastf_t number");
+    CHECK_READER(!bu_arg_number_from_str(NULL, &number, "nan") &&
+	number > 2.49 && number < 2.51, "fastf_t NaN transaction");
+    CHECK_READER(!bu_arg_number_range_from_str(NULL, &number, "2", 0, 1) &&
+	number > 2.49 && number < 2.51, "fastf_t range transaction");
+    CHECK_READER(bu_arg_double_from_str(NULL, &double_number, "2.5") &&
+	double_number > 2.49 && double_number < 2.51, "finite double");
+    CHECK_READER(!bu_arg_double_from_str(NULL, &double_number, "nan") &&
+	double_number > 2.49 && double_number < 2.51, "double NaN transaction");
+    CHECK_READER(!bu_arg_double_from_str(NULL, &double_number, "inf") &&
+	double_number > 2.49 && double_number < 2.51,
+	"double infinity transaction");
+    CHECK_READER(!bu_arg_double_from_str(NULL, &double_number, "-inf") &&
+	double_number > 2.49 && double_number < 2.51,
+	"negative double infinity transaction");
+    CHECK_READER(!bu_arg_double_range_from_str(NULL, &double_number, "2", 0, 1) &&
+	double_number > 2.49 && double_number < 2.51,
+	"double range transaction");
+
+    CHECK_READER(bu_arg_bool_from_str(NULL, &boolean, "off") && !boolean,
+	"boolean spelling");
+    CHECK_READER(!bu_arg_bool_from_str(NULL, &boolean, "sometimes") && !boolean,
+	"invalid boolean transaction");
+    CHECK_READER(bu_arg_char_from_str(NULL, &character, "q") && character == 'q',
+	"single character");
+    CHECK_READER(!bu_arg_char_from_str(NULL, &character, "quit") &&
+	character == 'q', "multiple-character transaction");
+
+#undef CHECK_READER
+    bu_vls_free(&msg);
+    return 0;
+}
 
 
 static int
@@ -616,6 +713,9 @@ main(int UNUSED(argc), char **argv)
     const char *split_quaternion[] = {"orient", "1", "2", "3", "4"};
 
     bu_setprogname(argv[0]);
+
+    if (test_scalar_readers())
+	return 1;
 
     {
 	int transaction_failure = 0;

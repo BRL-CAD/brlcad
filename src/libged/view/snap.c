@@ -170,12 +170,12 @@ ged_view_snap(struct ged *gedp, int argc, const char *argv[])
 	point2d_t p2d = {0.0, 0.0};
 	point_t p = VINIT_ZERO;
 	point_t vp = VINIT_ZERO;
-	if (!bu_arg_number_from_str(&p2d[X], argv[0])) {
+	if (!bu_arg_number_from_str(NULL, &p2d[X], argv[0])) {
 	    bu_vls_printf(gedp->ged_result_str, "problem reading X value %s\n", argv[0]);
 	    bu_free((void *)pargv, "view snap native argv");
 	    return BRLCAD_ERROR;
 	}
-	if (!bu_arg_number_from_str(&p2d[Y], argv[1])) {
+	if (!bu_arg_number_from_str(NULL, &p2d[Y], argv[1])) {
 	    bu_vls_printf(gedp->ged_result_str, "problem reading Y value %s\n", argv[1]);
 	    bu_free((void *)pargv, "view snap native argv");
 	    return BRLCAD_ERROR;

@@ -808,7 +808,7 @@ tree_color(struct directory *dp, struct draw_data_t *dd)
 	int region_id = -1;
 	const char *region_id_val = bu_avs_get(&c_avs, "region_id");
 	if (region_id_val) {
-	    (void)bu_arg_integer_from_str(&region_id, region_id_val);
+	    (void)bu_arg_integer_from_str(NULL, &region_id, region_id_val, 0);
 	} else if (dp->d_flags & RT_DIR_REGION) {
 	    // If we have a region flag but no region_id, for color table
 	    // purposes treat the region_id as 0

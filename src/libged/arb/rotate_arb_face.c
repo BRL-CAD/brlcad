@@ -63,7 +63,7 @@ rotate_arb_face_index_validate(struct bu_vls *msg, const char *arg)
 {
     int value;
 
-    if (bu_arg_integer_from_str(&value, arg) && value >= 1 && value <= 6)
+    if (bu_arg_integer_from_str(NULL, &value, arg, 0) && value >= 1 && value <= 6)
 	return 0;
     if (msg)
 	bu_vls_printf(msg, "ARB face must be an integer from 1 through 6: %s\n", arg ? arg : "");
@@ -76,7 +76,7 @@ rotate_arb_vertex_index_validate(struct bu_vls *msg, const char *arg)
 {
     int value;
 
-    if (bu_arg_integer_from_str(&value, arg) && value >= 1 && value <= 8)
+    if (bu_arg_integer_from_str(NULL, &value, arg, 0) && value >= 1 && value <= 8)
 	return 0;
     if (msg)
 	bu_vls_printf(msg, "ARB vertex must be an integer from 1 through 8: %s\n", arg ? arg : "");
@@ -195,7 +195,7 @@ ged_rotate_arb_face_core(struct ged *gedp, int argc, const char *argv[])
 	return BRLCAD_ERROR;
     }
 
-    if (!bu_arg_integer_from_str(&face, argv[2])) {
+    if (!bu_arg_integer_from_str(NULL, &face, argv[2], 0)) {
 	bu_vls_printf(gedp->ged_result_str, "bad face - %s", argv[2]);
 	rt_db_free_internal(&intern);
 
@@ -210,7 +210,7 @@ ged_rotate_arb_face_core(struct ged *gedp, int argc, const char *argv[])
 	return BRLCAD_ERROR;
     }
 
-    if (!bu_arg_integer_from_str(&vi, argv[3])) {
+    if (!bu_arg_integer_from_str(NULL, &vi, argv[3], 0)) {
 	bu_vls_printf(gedp->ged_result_str, "bad vertex index - %s", argv[3]);
 	rt_db_free_internal(&intern);
 

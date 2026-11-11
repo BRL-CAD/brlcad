@@ -134,7 +134,7 @@ polygon_open_close_validate(const struct bu_arg_schema *UNUSED(schema), size_t a
 	    "at most one contour index is accepted");
 	return 0;
     }
-	if (argc && (!bu_arg_integer_from_str(&index, argv[0]) || index < 0)) {
+	if (argc && (!bu_arg_integer_from_str(NULL, &index, argv[0], 0) || index < 0)) {
 	polygon_set_validation(result, BU_ARG_VALIDATE_INVALID, 0, BU_ARG_VALUE_INTEGER,
 	    "contour index must be a nonnegative integer");
 	return 0;
@@ -163,7 +163,7 @@ polygon_fill_validate(const struct bu_arg_schema *UNUSED(schema), size_t argc,
     } else {
 	for (size_t i = 0; i < argc; i++) {
 	    fastf_t value = 0.0;
-	    if (!bu_arg_number_from_str(&value, argv[i])) {
+	    if (!bu_arg_number_from_str(NULL, &value, argv[i])) {
 		state = BU_ARG_VALIDATE_INVALID;
 		hint = "invalid fill parameter";
 		break;
@@ -375,11 +375,11 @@ _poly_cmd_create(void *bs, int argc, const char **argv)
     }
 
     int x,y;
-	if (!bu_arg_integer_from_str(&x, argv[0]) || x < 0) {
+	if (!bu_arg_integer_from_str(NULL, &x, argv[0], 0) || x < 0) {
 	bu_vls_printf(gedp->ged_result_str, "Invalid argument %s\n", argv[0]);
 	return BRLCAD_ERROR;
     }
-	if (!bu_arg_integer_from_str(&y, argv[1]) || y < 0) {
+	if (!bu_arg_integer_from_str(NULL, &y, argv[1], 0) || y < 0) {
 	bu_vls_printf(gedp->ged_result_str, "Invalid argument %s\n", argv[1]);
 	return BRLCAD_ERROR;
     }
@@ -454,7 +454,7 @@ _poly_cmd_select(void *bs, int argc, const char **argv)
     int contour_ind = -1;
     if (argc == 3) {
 	ioffset++;
-	if (!bu_arg_integer_from_str(&contour_ind, argv[0]) || contour_ind < 0) {
+	if (!bu_arg_integer_from_str(NULL, &contour_ind, argv[0], 0) || contour_ind < 0) {
 	    bu_vls_printf(gedp->ged_result_str, "Invalid argument %s\n", argv[0]);
 	    return BRLCAD_ERROR;
 	}
@@ -464,11 +464,11 @@ _poly_cmd_select(void *bs, int argc, const char **argv)
 	p->curr_contour_i = contour_ind;
     }
     int x,y;
-	if (!bu_arg_integer_from_str(&x, argv[ioffset]) || x < 0) {
+	if (!bu_arg_integer_from_str(NULL, &x, argv[ioffset], 0) || x < 0) {
 	bu_vls_printf(gedp->ged_result_str, "Invalid argument %s\n", argv[ioffset]);
 	return BRLCAD_ERROR;
     }
-	if (!bu_arg_integer_from_str(&y, argv[ioffset+1]) || y < 0) {
+	if (!bu_arg_integer_from_str(NULL, &y, argv[ioffset+1], 0) || y < 0) {
 	bu_vls_printf(gedp->ged_result_str, "Invalid argument %s\n", argv[ioffset+1]);
 	return BRLCAD_ERROR;
     }
@@ -520,7 +520,7 @@ _poly_cmd_append(void *bs, int argc, const char **argv)
     int contour_ind = -1;
     if (argc == 3) {
 	ioffset++;
-	if (!bu_arg_integer_from_str(&contour_ind, argv[0]) || contour_ind < 0) {
+	if (!bu_arg_integer_from_str(NULL, &contour_ind, argv[0], 0) || contour_ind < 0) {
 	    bu_vls_printf(gedp->ged_result_str, "Invalid argument %s\n", argv[0]);
 	    return BRLCAD_ERROR;
 	}
@@ -529,11 +529,11 @@ _poly_cmd_append(void *bs, int argc, const char **argv)
 	p->curr_contour_i = 0;
     }
     int x,y;
-	if (!bu_arg_integer_from_str(&x, argv[ioffset]) || x < 0) {
+	if (!bu_arg_integer_from_str(NULL, &x, argv[ioffset], 0) || x < 0) {
 	bu_vls_printf(gedp->ged_result_str, "Invalid argument %s\n", argv[ioffset]);
 	return BRLCAD_ERROR;
     }
-	if (!bu_arg_integer_from_str(&y, argv[ioffset+1]) || y < 0) {
+	if (!bu_arg_integer_from_str(NULL, &y, argv[ioffset+1], 0) || y < 0) {
 	bu_vls_printf(gedp->ged_result_str, "Invalid argument %s\n", argv[ioffset+1]);
 	return BRLCAD_ERROR;
     }
@@ -579,11 +579,11 @@ _poly_cmd_move(void *bs, int argc, const char **argv)
     }
 
     int x,y;
-	if (!bu_arg_integer_from_str(&x, argv[0]) || x < 0) {
+	if (!bu_arg_integer_from_str(NULL, &x, argv[0], 0) || x < 0) {
 	bu_vls_printf(gedp->ged_result_str, "Invalid argument %s\n", argv[0]);
 	return BRLCAD_ERROR;
     }
-	if (!bu_arg_integer_from_str(&y, argv[1]) || y < 0) {
+	if (!bu_arg_integer_from_str(NULL, &y, argv[1], 0) || y < 0) {
 	bu_vls_printf(gedp->ged_result_str, "Invalid argument %s\n", argv[1]);
 	return BRLCAD_ERROR;
     }
@@ -662,7 +662,7 @@ _poly_cmd_close(void *bs, int argc, const char **argv)
     }
 
     int ind = -1;
-    if (argc && !bu_arg_integer_from_str(&ind, argv[0]))
+    if (argc && !bu_arg_integer_from_str(NULL, &ind, argv[0], 0))
 	return BRLCAD_ERROR;
     if (ind >= 0 && (size_t)ind >= p->polygon.num_contours) {
 	bu_vls_printf(gedp->ged_result_str, "Invalid contour index %d\n", ind);
@@ -716,7 +716,7 @@ _poly_cmd_open(void *bs, int argc, const char **argv)
     }
 
     int ind = -1;
-    if (argc && !bu_arg_integer_from_str(&ind, argv[0]))
+    if (argc && !bu_arg_integer_from_str(NULL, &ind, argv[0], 0))
 	return BRLCAD_ERROR;
     if (ind >= 0 && (size_t)ind >= p->polygon.num_contours) {
 	bu_vls_printf(gedp->ged_result_str, "Invalid contour index %d\n", ind);
@@ -991,15 +991,15 @@ _poly_cmd_fill(void *bs, int argc, const char **argv)
 
     vect2d_t vdir;
     fastf_t vdelta;
-	if (!bu_arg_number_from_str(&vdir[0], argv[0])) {
+	if (!bu_arg_number_from_str(NULL, &vdir[0], argv[0])) {
 	bu_vls_printf(gedp->ged_result_str, "Invalid argument %s\n", argv[0]);
 	return BRLCAD_ERROR;
     }
-	if (!bu_arg_number_from_str(&vdir[1], argv[1])) {
+	if (!bu_arg_number_from_str(NULL, &vdir[1], argv[1])) {
 	bu_vls_printf(gedp->ged_result_str, "Invalid argument %s\n", argv[1]);
 	return BRLCAD_ERROR;
     }
-	if (!bu_arg_number_from_str(&vdelta, argv[2])) {
+	if (!bu_arg_number_from_str(NULL, &vdelta, argv[2])) {
 	bu_vls_printf(gedp->ged_result_str, "Invalid argument %s\n", argv[2]);
 	return BRLCAD_ERROR;
     }

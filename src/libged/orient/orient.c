@@ -66,7 +66,7 @@ ged_orient_core(struct ged *gedp, int argc, const char *argv[])
 
 	for (i = 1; i < 5; ++i) {
 	    fastf_t scan;
-	    if (!bu_arg_number_from_str(&scan, argv[i])) {
+	    if (!bu_arg_number_from_str(NULL, &scan, argv[i])) {
 		bu_vls_printf(gedp->ged_result_str,
 		    "orient: invalid quaternion component: %s\n", argv[i]);
 		return BRLCAD_ERROR;
@@ -89,7 +89,7 @@ orient_quaternion_token_validate(struct bu_vls *UNUSED(msg), const char *arg)
     quat_t quat;
     fastf_t component;
 
-    if (bu_arg_number_from_str(&component, arg))
+    if (bu_arg_number_from_str(NULL, &component, arg))
 	return 0;
     return bn_decode_quat(quat, arg) == 4 ? 0 : -1;
 }

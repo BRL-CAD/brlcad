@@ -282,7 +282,7 @@ ged_nirt_core(struct ged *gedp, int argc, const char *argv[])
 	// First, see if they are all numbers
 	for (int i = 0; i < 3; i++) {
 	    fastf_t value;
-	    if (!bu_arg_number_from_str(&value, argv[i])) {
+	    if (!bu_arg_number_from_str(NULL, &value, argv[i])) {
 		have_xyz = 0;
 		break;
 	    }
@@ -293,7 +293,7 @@ ged_nirt_core(struct ged *gedp, int argc, const char *argv[])
 	    bu_log("WARNING: Specifying center with 'x y z' at the end of the nirt command is deprecated - use the --xyz option instead\n");
 	    for (int i = 0; i < 3; i++) {
 		fastf_t val;
-		bu_arg_number_from_str(&val, argv[i]);
+		bu_arg_number_from_str(NULL, &val, argv[i]);
 		nv.center_model[i] = val;
 	    }
 

@@ -62,7 +62,7 @@ static const struct bu_arg_schema autoview2_schema = {
 static int
 _autoview_arg_is_num(const char *s, fastf_t *v)
 {
-    return bu_arg_number_from_str(v, s);
+    return bu_arg_number_from_str(NULL, v, s);
 }
 
 

@@ -83,7 +83,7 @@ metaball_point_schema_validate(const struct bu_arg_schema *schema,
 
     partial = point_count < 3;
     for (size_t pi = 0; partial && pi < point_count; pi++)
-	partial = bu_arg_number_from_str(&point[pi], argv[i + head_count + pi]);
+	partial = bu_arg_number_from_str(NULL, &point[pi], argv[i + head_count + pi]);
     bu_arg_validate_result_clear(result);
     result->state = partial ? BU_ARG_VALIDATE_INCOMPLETE : BU_ARG_VALIDATE_INVALID;
     result->token_start = argc;
@@ -520,7 +520,7 @@ ged_metaball_delete_pnt_core(struct ged *gedp, int argc, const char *argv[])
     }
 
 
-    if (!bu_arg_integer_from_str(&pt_i, argv[2])) {
+    if (!bu_arg_integer_from_str(NULL, &pt_i, argv[2], 0)) {
 	bu_vls_printf(gedp->ged_result_str, "%s: bad metaball point index - %s", argv[0], argv[2]);
 	return BRLCAD_ERROR;
     }
@@ -699,7 +699,7 @@ ged_metaball_move_pnt_core(struct ged *gedp, int argc, const char *argv[])
 	return BRLCAD_ERROR;
     }
 
-    if (!bu_arg_integer_from_str(&seg_i, argv[2])) {
+    if (!bu_arg_integer_from_str(NULL, &seg_i, argv[2], 0)) {
 	bu_vls_printf(gedp->ged_result_str, "%s: bad metaball point index - %s", argv[0], argv[2]);
 	return BRLCAD_ERROR;
     }

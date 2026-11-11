@@ -612,7 +612,7 @@ _nirt_fmt_sp_width_precision_check(struct nirt_state *nss, std::string &fmt_sp)
 	// Width check
 	int w = 0;
 	const char *wn_cstr = wn.c_str();
-	if (!bu_arg_integer_from_str(&w, wn_cstr)) {
+	if (!bu_arg_integer_from_str(NULL, &w, wn_cstr, 0)) {
 	    nerr(nss, "Error: invalid format specifier width substring \"%s\" in specifier \"%s\"\n", wn.c_str(), fmt_sp.c_str());
 	    return -1;
 	}
@@ -625,7 +625,7 @@ _nirt_fmt_sp_width_precision_check(struct nirt_state *nss, std::string &fmt_sp)
 	// Precision check
 	int p_num = 0;
 	const char *pn_cstr = pn.c_str();
-	if (!bu_arg_integer_from_str(&p_num, pn_cstr)) {
+	if (!bu_arg_integer_from_str(NULL, &p_num, pn_cstr, 0)) {
 	    nerr(nss, "Error: invalid format specifier precision substring \"%s\" in specifier \"%s\"\n", pn.c_str(), fmt_sp.c_str());
 	    return -1;
 	}
@@ -1678,7 +1678,7 @@ _nirt_cmd_az_el(void *ns, int argc, const char *argv[])
 	return -1;
     }
 
-    if (!bu_arg_number_from_str(&az, argv[0])) {
+    if (!bu_arg_number_from_str(NULL, &az, argv[0])) {
 	nerr(nss, "Error: invalid azimuth: %s\n", argv[0]);
 	ret = -1;
 	goto azel_done;
@@ -1691,7 +1691,7 @@ _nirt_cmd_az_el(void *ns, int argc, const char *argv[])
     }
 
     argc--; argv++;
-    if (!bu_arg_number_from_str(&el, argv[0])) {
+    if (!bu_arg_number_from_str(NULL, &el, argv[0])) {
 	nerr(nss, "Error: invalid elevation: %s\n", argv[0]);
 	ret = -1;
 	goto azel_done;
@@ -1762,18 +1762,18 @@ _nirt_cmd_grid_coor(void *ns, int argc, const char *argv[])
 	nerr(nss, "Usage:  hv %s\n", _nirt_get_desc_args("hv"));
 	return -1;
     }
-    if (!bu_arg_number_from_str(&grid[0], argv[0])) {
+    if (!bu_arg_number_from_str(NULL, &grid[0], argv[0])) {
 	nerr(nss, "Error: invalid horizontal grid coordinate\n");
 	return -1;
     }
     argc--; argv++;
-    if (!bu_arg_number_from_str(&grid[1], argv[0])) {
+    if (!bu_arg_number_from_str(NULL, &grid[1], argv[0])) {
 	nerr(nss, "Error: invalid vertical grid coordinate\n");
 	return -1;
     }
     argc--; argv++;
     if (argc) {
-	if (!bu_arg_number_from_str(&grid[2], argv[0])) {
+	if (!bu_arg_number_from_str(NULL, &grid[2], argv[0])) {
 	    nerr(nss, "Error: invalid depth grid coordinate\n");
 	    return -1;
 	}
@@ -1969,7 +1969,7 @@ _nirt_cmd_use_air(void *ns, int argc, const char *argv[])
 	nerr(nss, "Usage:  useair %s\n", _nirt_get_desc_args("useair"));
 	return -1;
     }
-    if (!bu_arg_integer_from_str(&nss->i->use_air, argv[1])) {
+    if (!bu_arg_integer_from_str(NULL, &nss->i->use_air, argv[1], 0)) {
 	nerr(nss, "Error: invalid use_air value: %s\n\nUsage:  useair %s\n", argv[1], _nirt_get_desc_args("useair"));
 	return -1;
     }
@@ -2505,7 +2505,7 @@ _nirt_cmd_state(void *ns, int argc, const char *argv[])
 	    nout(nss, "%d\n", nss->i->out_accumulate);
 	    return 0;
 	}
-	(void)bu_arg_integer_from_str(&setting, argv[2]);
+	(void)bu_arg_integer_from_str(NULL, &setting, argv[2], 0);
 	nss->i->out_accumulate = setting;
 	return 0;
     }
@@ -2515,7 +2515,7 @@ _nirt_cmd_state(void *ns, int argc, const char *argv[])
 	    nout(nss, "%d\n", nss->i->err_accumulate);
 	    return 0;
 	}
-	(void)bu_arg_integer_from_str(&setting, argv[2]);
+	(void)bu_arg_integer_from_str(NULL, &setting, argv[2], 0);
 	nss->i->err_accumulate = setting;
 	return 0;
     }

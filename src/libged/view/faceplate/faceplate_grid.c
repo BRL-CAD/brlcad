@@ -70,7 +70,7 @@ _fp_grid_cmd_draw(void *bs, int argc, const char **argv)
 	return BRLCAD_ERROR;
     }
     int val;
-    if (!bu_arg_integer_from_str(&val, argv[0]) || (val != 0 && val != 1)) {
+    if (!bu_arg_integer_from_str(NULL, &val, argv[0], 0) || (val != 0 && val != 1)) {
 	bu_vls_printf(gedp->ged_result_str, "Invalid argument %s\n", argv[0]);
 	return BRLCAD_ERROR;
     }
@@ -106,7 +106,7 @@ _fp_grid_cmd_snap(void *bs, int argc, const char **argv)
 	return BRLCAD_ERROR;
     }
     int val;
-    if (!bu_arg_integer_from_str(&val, argv[0]) || (val != 0 && val != 1)) {
+    if (!bu_arg_integer_from_str(NULL, &val, argv[0], 0) || (val != 0 && val != 1)) {
 	bu_vls_printf(gedp->ged_result_str, "Invalid argument %s\n", argv[0]);
 	return BRLCAD_ERROR;
     }
@@ -178,7 +178,7 @@ _fp_grid_cmd_res_h(void *bs, int argc, const char **argv)
 	return BRLCAD_ERROR;
     }
     fastf_t val;
-    if (!bu_arg_number_from_str(&val, argv[0])) {
+    if (!bu_arg_number_from_str(NULL, &val, argv[0])) {
 	bu_vls_printf(gedp->ged_result_str, "Invalid argument %s\n", argv[0]);
 	return BRLCAD_ERROR;
     }
@@ -219,7 +219,7 @@ _fp_grid_cmd_res_v(void *bs, int argc, const char **argv)
 	return BRLCAD_ERROR;
     }
     fastf_t val;
-    if (!bu_arg_number_from_str(&val, argv[0])) {
+    if (!bu_arg_number_from_str(NULL, &val, argv[0])) {
 	bu_vls_printf(gedp->ged_result_str, "Invalid argument %s\n", argv[0]);
 	return BRLCAD_ERROR;
     }
@@ -260,7 +260,7 @@ _fp_grid_cmd_res_major_h(void *bs, int argc, const char **argv)
 	return BRLCAD_ERROR;
     }
     int val;
-    if (!bu_arg_integer_from_str(&val, argv[0])) {
+    if (!bu_arg_integer_from_str(NULL, &val, argv[0], 0)) {
 	bu_vls_printf(gedp->ged_result_str, "Invalid argument %s\n", argv[0]);
 	return BRLCAD_ERROR;
     }
@@ -301,7 +301,7 @@ _fp_grid_cmd_res_major_v(void *bs, int argc, const char **argv)
 	return BRLCAD_ERROR;
     }
     int val;
-    if (!bu_arg_integer_from_str(&val, argv[0])) {
+    if (!bu_arg_integer_from_str(NULL, &val, argv[0], 0)) {
 	bu_vls_printf(gedp->ged_result_str, "Invalid argument %s\n", argv[0]);
 	return BRLCAD_ERROR;
     }

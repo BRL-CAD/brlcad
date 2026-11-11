@@ -55,13 +55,13 @@ _arb_cmd_create(void *bs, int argc, const char *argv[])
     GED_CHECK_EXISTS(gedp, argv[1], LOOKUP_QUIET, BRLCAD_ERROR);
 
     /* get rotation angle */
-    if (!bu_arg_number_from_str(&rota, argv[2])) {
+    if (!bu_arg_number_from_str(NULL, &rota, argv[2])) {
 	bu_vls_printf(gedp->ged_result_str, "%s: bad rotation angle - %s", argv[0], argv[2]);
 	return BRLCAD_ERROR;
     }
 
     /* get fallback angle */
-    if (!bu_arg_number_from_str(&fb_a, argv[3])) {
+    if (!bu_arg_number_from_str(NULL, &fb_a, argv[3])) {
 	bu_vls_printf(gedp->ged_result_str, "%s: bad fallback angle - %s", argv[0], argv[3]);
 	return BRLCAD_ERROR;
     }

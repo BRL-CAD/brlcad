@@ -459,7 +459,7 @@ mater_audit(struct ged *gedp, size_t argc, const char *argv[])
 	    mat_names.insert(std::string(oname));
 	}
 	if (mat_id) {
-	    if (!bu_arg_long_from_str(&curr_id, mat_id) || curr_id < 0) {
+	    if (!bu_arg_long_from_str(NULL, &curr_id, mat_id, 0) || curr_id < 0) {
 		bu_vls_printf(gedp->ged_result_str, "Object %s has an invalid value set for it's material_id attribute: %s\n", dp->d_namep, mat_id);
 		bu_avs_free(&avs);
 		continue;
@@ -572,7 +572,7 @@ mater_audit(struct ged *gedp, size_t argc, const char *argv[])
 
 		mat_id = bu_avs_get(&avs, "material_id");
 		if (mat_id) {
-		    if (!bu_arg_long_from_str(&curr_id, mat_id) || curr_id < 0) {
+		    if (!bu_arg_long_from_str(NULL, &curr_id, mat_id, 0) || curr_id < 0) {
 			bu_avs_free(&avs);
 			continue;
 		    }
@@ -610,7 +610,7 @@ mater_audit(struct ged *gedp, size_t argc, const char *argv[])
 	    }
 
 	    mat_id = bu_avs_get(&avs, "material_id");
-	    if (!mat_id || !bu_arg_long_from_str(&curr_id, mat_id) || curr_id < 0) {
+	    if (!mat_id || !bu_arg_long_from_str(NULL, &curr_id, mat_id, 0) || curr_id < 0) {
 		bu_avs_free(&avs);
 		continue;
 	    }
@@ -804,7 +804,7 @@ mater_get_id_from_str(struct bu_vls *msg, const char *arg, void *storage)
 	return -1;
     }
 
-    if (!bu_arg_long_from_str(&id, value)) {
+    if (!bu_arg_long_from_str(NULL, &id, value, 0)) {
 	if (storage) {
 	    mater_id_filter filter = {MATER_FILTER_EQUAL, 0, arg, 1};
 	    static_cast<std::vector<mater_id_filter> *>(storage)->push_back(filter);
@@ -828,7 +828,7 @@ mater_get_density_from_str(struct bu_vls *msg, const char *arg, void *storage)
     fastf_t density = 0.0;
 
     if (!arg || !arg[0] || !value || !value[0] ||
-	!bu_arg_number_from_str(&density, value)) {
+	!bu_arg_number_from_str(NULL, &density, value)) {
 	if (msg)
 	    bu_vls_printf(msg, "invalid density filter: %s\n", arg ? arg : "");
 	return -1;
@@ -1064,12 +1064,12 @@ mater_set(struct ged *gedp, size_t argc, const char *argv[])
 	    if (sm.size() == 4) {
 		int parse_error = 0;
 		std::string id_str = sm[1].str();
-		if (!bu_arg_long_from_str(&id, id_str.c_str())) {
+		if (!bu_arg_long_from_str(NULL, &id, id_str.c_str(), 0)) {
 		    bu_vls_printf(gedp->ged_result_str, "Error parsing material id: %s\n", id_str.c_str());
 		    parse_error = 1;
 		}
 		std::string den_str = sm[2].str();
-		if (!bu_arg_number_from_str(&density, den_str.c_str())) {
+		if (!bu_arg_number_from_str(NULL, &density, den_str.c_str())) {
 		    bu_vls_printf(gedp->ged_result_str, "Error parsing density: %s\n", den_str.c_str());
 		    parse_error = 1;
 		}

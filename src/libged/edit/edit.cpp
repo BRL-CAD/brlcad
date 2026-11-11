@@ -435,10 +435,10 @@ edit_reference_token_count(size_t available, const char **argv)
     if (!available || !argv || !argv[0])
 	return 0;
     if (BU_STR_EQUAL(argv[0], ".") ||
-	!bu_arg_number_from_str(&value, argv[0]))
+	!bu_arg_number_from_str(NULL, &value, argv[0]))
 	return 1;
     while (count < available && count < 3 && argv[count] &&
-	bu_arg_number_from_str(&value, argv[count]))
+	bu_arg_number_from_str(NULL, &value, argv[count]))
 	count++;
     return count;
 }
@@ -759,7 +759,7 @@ cmd_translate::exec(struct ged *gedp, void *u_data, int argc, const char **argv)
 			    i += vret;
 			} else {
 			    fastf_t f;
-			    if (bu_arg_number_from_str(&f, argv[i])) {
+			    if (bu_arg_number_from_str(NULL, &f, argv[i])) {
 				to_vec[X] = to_vec[Y] = to_vec[Z] = f;
 				have_to = true;
 				i++;
@@ -772,7 +772,7 @@ cmd_translate::exec(struct ged *gedp, void *u_data, int argc, const char **argv)
 		    } else {
 			/* Per-axis mode: each axis flag consumes one value or object name */
 			if (x_only) {
-			if (bu_arg_number_from_str(&to_vec[X], argv[i])) {
+			if (bu_arg_number_from_str(NULL, &to_vec[X], argv[i])) {
 				i++;
 			    } else {
 				to_name = argv[i];
@@ -780,7 +780,7 @@ cmd_translate::exec(struct ged *gedp, void *u_data, int argc, const char **argv)
 			    }
 			}
 			if (y_only && i < argc) {
-			if (bu_arg_number_from_str(&to_vec[Y], argv[i])) {
+			if (bu_arg_number_from_str(NULL, &to_vec[Y], argv[i])) {
 				i++;
 			    } else if (!to_name) {
 				to_name = argv[i];
@@ -788,7 +788,7 @@ cmd_translate::exec(struct ged *gedp, void *u_data, int argc, const char **argv)
 			    }
 			}
 			if (z_only && i < argc) {
-			if (bu_arg_number_from_str(&to_vec[Z], argv[i])) {
+			if (bu_arg_number_from_str(NULL, &to_vec[Z], argv[i])) {
 				i++;
 			    } else if (!to_name) {
 				to_name = argv[i];
@@ -1032,15 +1032,15 @@ _parse_pos_or_obj(point_t *pos, const char **argv, int argc, struct ged *gedp)
 	return -1;
 
     fastf_t f0;
-	if (bu_arg_number_from_str(&f0, argv[0])) {
+	if (bu_arg_number_from_str(NULL, &f0, argv[0])) {
 	/* Numeric — consume 1–3 floats */
 	(*pos)[X] = (*pos)[Y] = (*pos)[Z] = f0;
 	int n = 1;
 	fastf_t f1, f2;
-	if (n < argc && bu_arg_number_from_str(&f1, argv[n])) {
+	if (n < argc && bu_arg_number_from_str(NULL, &f1, argv[n])) {
 	    (*pos)[Y] = f1;
 	    n++;
-	    if (n < argc && bu_arg_number_from_str(&f2, argv[n])) {
+	    if (n < argc && bu_arg_number_from_str(NULL, &f2, argv[n])) {
 		(*pos)[Z] = f2;
 		n++;
 	    }
@@ -1147,7 +1147,7 @@ cmd_rotate::exec(struct ged *gedp, void *u_data, int argc, const char **argv)
 	/* ---- Two-token options ------------------------------------ */
 	if (BU_STR_EQUAL(argv[i], "-d") && i + 1 < argc) {
 	    i++;
-	    if (!bu_arg_number_from_str(&d_angle, argv[i])) {
+	    if (!bu_arg_number_from_str(NULL, &d_angle, argv[i])) {
 		bu_vls_printf(gedp->ged_result_str,
 		    "rotate: bad -d angle '%s'\n", argv[i]);
 		return BRLCAD_ERROR;
@@ -1263,7 +1263,7 @@ cmd_rotate::exec(struct ged *gedp, void *u_data, int argc, const char **argv)
 		continue;
 	    }
 	    fastf_t angle;
-	    if (bu_arg_number_from_str(&angle, argv[i])) {
+	    if (bu_arg_number_from_str(NULL, &angle, argv[i])) {
 		if (n_angle_vals >= 3) {
 		    bu_vls_printf(gedp->ged_result_str,
 			"rotate: too many angle values\n");
@@ -1609,7 +1609,7 @@ cmd_scale::exec(struct ged *gedp, void *u_data, int argc, const char **argv)
 		i += nr;
 	    } else {
 		fastf_t f = 0.0;
-		if (!bu_arg_number_from_str(&f, argv[i])) {
+		if (!bu_arg_number_from_str(NULL, &f, argv[i])) {
 		    bu_vls_printf(gedp->ged_result_str,
 			"scale: bad -r value '%s'\n", argv[i]);
 		    return BRLCAD_ERROR;
@@ -1651,7 +1651,7 @@ cmd_scale::exec(struct ged *gedp, void *u_data, int argc, const char **argv)
 		i += vret;
 	    } else {
 		fastf_t f = 0.0;
-		if (!bu_arg_number_from_str(&f, argv[i])) {
+		if (!bu_arg_number_from_str(NULL, &f, argv[i])) {
 		    bu_vls_printf(gedp->ged_result_str,
 			"scale: bad factor value '%s'\n", argv[i]);
 		    return BRLCAD_ERROR;
@@ -2187,7 +2187,7 @@ cmd_mat::exec(struct ged *gedp, void *u_data, int argc, const char **argv)
 
     mat_t mat;
     for (int mi = 0; mi < 16; mi++) {
-	if (!bu_arg_number_from_str(&mat[mi], argv[mi])) {
+	if (!bu_arg_number_from_str(NULL, &mat[mi], argv[mi])) {
 	    bu_vls_printf(gedp->ged_result_str,
 		"mat: bad matrix element [%d]: '%s'\n", mi, argv[mi]);
 	    return BRLCAD_ERROR;
@@ -2293,7 +2293,7 @@ cmd_perturb::exec(struct ged *gedp, void *u_data, int argc, const char **argv)
 	return BRLCAD_ERROR;
     }
 
-	if (!bu_arg_number_from_str(&factor, argv[0])) {
+	if (!bu_arg_number_from_str(NULL, &factor, argv[0])) {
 	edit_generic_help_append(gedp, "perturb");
 	return BRLCAD_ERROR;
     }
@@ -2632,7 +2632,7 @@ _parse_desc_cmd_on_edit(struct rt_edit *s, struct ged *gedp,
 		    return BRLCAD_ERROR;
 		}
 		fastf_t val;
-		if (!bu_arg_number_from_str(&val, argv[argi])) {
+		if (!bu_arg_number_from_str(NULL, &val, argv[argi])) {
 		    if (gedp)
 			bu_vls_printf(gedp->ged_result_str,
 			    "edit: cannot parse '%s' as a number for '%s'\n",
@@ -2685,7 +2685,7 @@ _parse_desc_cmd_on_edit(struct rt_edit *s, struct ged *gedp,
 		}
 		for (int ci = 0; ci < 3; ci++) {
 		    fastf_t val;
-		    if (!bu_arg_number_from_str(&val, argv[argi])) {
+		    if (!bu_arg_number_from_str(NULL, &val, argv[argi])) {
 			if (gedp)
 			    bu_vls_printf(gedp->ged_result_str,
 				"edit: cannot parse '%s' as a number\n",
@@ -2712,7 +2712,7 @@ _parse_desc_cmd_on_edit(struct rt_edit *s, struct ged *gedp,
 		}
 		for (int ci = 0; ci < 3; ci++) {
 		    fastf_t val;
-		    if (!bu_arg_number_from_str(&val, argv[argi])) {
+		    if (!bu_arg_number_from_str(NULL, &val, argv[argi])) {
 			if (gedp)
 			    bu_vls_printf(gedp->ged_result_str,
 				"edit: cannot parse color component '%s'\n",
@@ -2738,7 +2738,7 @@ _parse_desc_cmd_on_edit(struct rt_edit *s, struct ged *gedp,
 		}
 		for (int ci = 0; ci < 16; ci++) {
 		    fastf_t val;
-		    if (!bu_arg_number_from_str(&val, argv[argi])) {
+		    if (!bu_arg_number_from_str(NULL, &val, argv[argi])) {
 			if (gedp)
 			    bu_vls_printf(gedp->ged_result_str,
 				"edit: cannot parse matrix element '%s'\n",

@@ -67,11 +67,11 @@ _bot_face_specifiers(std::set<int> &elements, struct bu_vls *vls, int argc,
 	    std::string s2 = s1.substr(0, pos_dash);
 	    s1.erase(0, pos_dash + 1);
 	    int val1, val2, vtmp;
-	    if (!bu_arg_integer_from_str(&val1, s1.c_str())) {
+	    if (!bu_arg_integer_from_str(NULL, &val1, s1.c_str(), 0)) {
 		bu_vls_printf(vls, "Invalid index specification: %s\n", s1.c_str());
 		return BRLCAD_ERROR;
 	    }
-	    if (!bu_arg_integer_from_str(&val2, s2.c_str())) {
+	    if (!bu_arg_integer_from_str(NULL, &val2, s2.c_str(), 0)) {
 		bu_vls_printf(vls, "Invalid index specification: %s\n", s2.c_str());
 		return BRLCAD_ERROR;
 	    }
@@ -90,7 +90,7 @@ _bot_face_specifiers(std::set<int> &elements, struct bu_vls *vls, int argc,
 	while (pos_comma != std::string::npos) {
 	    std::string ss = s1.substr(0, pos_comma);
 	    int val1;
-	    if (!bu_arg_integer_from_str(&val1, ss.c_str())) {
+	    if (!bu_arg_integer_from_str(NULL, &val1, ss.c_str(), 0)) {
 		bu_vls_printf(vls, "Invalid index specification: %s\n", ss.c_str());
 		return BRLCAD_ERROR;
 	    } else {
@@ -101,7 +101,7 @@ _bot_face_specifiers(std::set<int> &elements, struct bu_vls *vls, int argc,
 	}
 	if (s1.length()) {
 	    int val1;
-	    if (!bu_arg_integer_from_str(&val1, s1.c_str())) {
+	    if (!bu_arg_integer_from_str(NULL, &val1, s1.c_str(), 0)) {
 		bu_vls_printf(vls, "Invalid index specification: %s\n", s1.c_str());
 		return BRLCAD_ERROR;
 	    }
@@ -112,7 +112,7 @@ _bot_face_specifiers(std::set<int> &elements, struct bu_vls *vls, int argc,
 
 	// Nothing fancy looking - see if its a number
 	int val = 0;
-	if (bu_arg_integer_from_str(&val, argv[i])) {
+	if (bu_arg_integer_from_str(NULL, &val, argv[i], 0)) {
 	    elements.insert(val);
 	} else {
 	    bu_vls_printf(vls, "Invalid index specification: %s\n", argv[i]);
@@ -432,13 +432,13 @@ bot_set_thickness_valid(const char *value)
 	return 0;
     colon = strchr(value, ':');
     if (!colon)
-	return bu_arg_number_from_str(&thickness, value);
+	return bu_arg_number_from_str(NULL, &thickness, value);
     if (strchr(colon + 1, ':'))
 	return 0;
     std::string face(value, (size_t)(colon - value));
     int face_index = 0;
-    if (!bu_arg_integer_from_str(&face_index, face.c_str()) || face_index < 0 ||
-	!bu_arg_number_from_str(&thickness, colon + 1))
+    if (!bu_arg_integer_from_str(NULL, &face_index, face.c_str(), 0) || face_index < 0 ||
+	!bu_arg_number_from_str(NULL, &thickness, colon + 1))
 	return 0;
     return 1;
 }
@@ -784,12 +784,12 @@ _bot_cmd_set(void *bs, int argc, const char **argv)
 	    c++;
 	    char *thickness_str = c;
 
-	    if (!bu_arg_integer_from_str(&face_id, face_id_str)) {
+	    if (!bu_arg_integer_from_str(NULL, &face_id, face_id_str, 0)) {
 		bu_vls_printf(gedp->ged_result_str, "Invalid face index specification: %s\n", face_id_str);
 		bu_free(targ, "targ");
 		return BRLCAD_ERROR;
 	    }
-	    if (!bu_arg_number_from_str(&thickness, thickness_str)) {
+	    if (!bu_arg_number_from_str(NULL, &thickness, thickness_str)) {
 		bu_vls_printf(gedp->ged_result_str, "Invalid index specification: %s\n", thickness_str);
 		bu_free(targ, "targ");
 		return BRLCAD_ERROR;
@@ -801,7 +801,7 @@ _bot_cmd_set(void *bs, int argc, const char **argv)
 	    }
 	    bot->thickness[face_id] = thickness;
 	} else {
-	    if (!bu_arg_number_from_str(&thickness, targ)) {
+	    if (!bu_arg_number_from_str(NULL, &thickness, targ)) {
 		bu_vls_printf(gedp->ged_result_str, "Invalid thickness specification: %s\n", targ);
 		bu_free(targ, "targ");
 		return BRLCAD_ERROR;
@@ -1902,7 +1902,7 @@ bot_pick_ray_result(struct bu_arg_validate_result *result,
     }
     for (size_t i = start; i < tail.size(); i++) {
 	fastf_t coordinate = 0.0;
-	if (!bu_arg_number_from_str(&coordinate, tail[i])) {
+	if (!bu_arg_number_from_str(NULL, &coordinate, tail[i])) {
 	    bot_pick_validation_result(result, BU_ARG_VALIDATE_INVALID, token,
 		BU_ARG_VALUE_NUMBER, "ray requires finite coordinates", "bot.ray");
 	    return;
@@ -2139,7 +2139,7 @@ _bot_cmd_vertex(void *bs, int argc, const char **argv)
     /* Print coordinates for the specified vertex indices */
     for (int i = 1; i < operand_count; i++) {
 	int idx = 0;
-	if (!bu_arg_integer_from_str(&idx, operands[i])
+	if (!bu_arg_integer_from_str(NULL, &idx, operands[i], 0)
 	    || idx < 0
 	    || (size_t)idx >= bot->num_vertices)
 	{

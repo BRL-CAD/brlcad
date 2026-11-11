@@ -568,7 +568,7 @@ static int
 _pnts_opt_radius(struct bu_vls *msg, const char *arg, void *set_c)
 {
     fastf_t rv = 0.0;
-    if (!arg || !bu_arg_number_from_str(&rv, arg)) {
+    if (!arg || !bu_arg_number_from_str(NULL, &rv, arg)) {
 	if (msg)
 	    bu_vls_printf(msg, "invalid ball radius: %s\n", arg ? arg : "");
 	return -1;
@@ -589,7 +589,7 @@ _pnts_opt_radii(struct bu_vls *msg, const char *arg, void *set_c)
     while (std::getline(ss, item, ',')) {
 	if (item.empty()) continue;
 	fastf_t rv = 0.0;
-	if (!bu_arg_number_from_str(&rv, item.c_str())) {
+	if (!bu_arg_number_from_str(NULL, &rv, item.c_str())) {
 	    if (msg)
 		bu_vls_printf(msg, "invalid ball radius: %s\n", item.c_str());
 	    return -1;
@@ -709,7 +709,7 @@ static int
 _pnts_opt_size_t(struct bu_vls *msg, const char *arg, void *set_c)
 {
     int tmp = 0;
-    if (!arg || !bu_arg_integer_from_str(&tmp, arg) || tmp < 0) {
+    if (!arg || !bu_arg_integer_from_str(NULL, &tmp, arg, 0) || tmp < 0) {
 	if (msg)
 	    bu_vls_printf(msg, "non-negative thread count required: %s\n", arg ? arg : "");
 	return -1;
@@ -1010,7 +1010,7 @@ _pnt_read(struct rt_pnts_internal *pnts, int numcnt, const char **nums, const ch
 	    }
 	}
 
-	if (!bu_arg_number_from_str(&val, num)) {
+	if (!bu_arg_number_from_str(NULL, &val, num)) {
 	    bu_log("Error - failed to read number %s\n", nums[i]);
 	    return BRLCAD_ERROR;
 	}
@@ -1093,7 +1093,7 @@ _ged_pnts_cmd_read(void *bs, int argc, const char **argv)
     /* got a unit, see if we can do something with it */
 	if (bu_vls_strlen(&args.units)) {
 	const char *cunit = bu_vls_addr(&args.units);
-	if (!bu_arg_number_from_str(&conv_factor, cunit)) {
+	if (!bu_arg_number_from_str(NULL, &conv_factor, cunit)) {
 	    conv_factor = bu_mm_value(bu_vls_addr(&args.units));
 	}
 	if (conv_factor < 0) {
@@ -1720,7 +1720,7 @@ ged_make_pnts_core(struct ged *gedp, int argc, const char *argv[])
     }
 
     /* Validate unit */
-	if (!bu_arg_number_from_str(&conv_factor, argv[4])) {
+	if (!bu_arg_number_from_str(NULL, &conv_factor, argv[4])) {
 	conv_factor = bu_mm_value(argv[4]);
     }
     if (conv_factor < 0) {

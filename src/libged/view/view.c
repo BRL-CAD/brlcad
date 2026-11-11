@@ -562,7 +562,7 @@ _view_cmd_vZ(void *bs, int argc, const char **argv)
     // First, see if it's a direct low level view space Z value
     if (argc == 1) {
 	fastf_t val;
-	if (bu_arg_number_from_str(&val, argv[0])) {
+	if (bu_arg_number_from_str(NULL, &val, argv[0])) {
 	    gd->cv->gv_tcl.gv_data_vZ = val;
 	    return BRLCAD_OK;
 	}

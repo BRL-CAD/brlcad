@@ -485,7 +485,7 @@ _fp_cmd_params(void *ds, int argc, const char **argv)
 	}
 	if (argc == 2 && BU_STR_EQUAL("font_size", argv[0])) {
 	    int fsize;
-	    if (!bu_arg_integer_from_str(&fsize, argv[1])) {
+	    if (!bu_arg_integer_from_str(NULL, &fsize, argv[1], 0)) {
 		bu_vls_printf(gedp->ged_result_str, "invalid font size specification\n");
 		return BRLCAD_ERROR;
 	    }

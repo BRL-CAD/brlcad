@@ -51,7 +51,7 @@ png_size_validate(struct bu_vls *msg, const char *arg)
 {
     int size = 0;
 
-    if (bu_arg_integer_from_str(&size, arg) && size >= 50)
+    if (bu_arg_integer_from_str(NULL, &size, arg, 0) && size >= 50)
 	return 0;
     if (msg)
 	bu_vls_printf(msg, "PNG size must be an integer of at least 50 pixels: %s\n", arg ? arg : "");

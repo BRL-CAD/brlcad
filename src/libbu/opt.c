@@ -38,6 +38,8 @@
 #include "bu/str.h"
 #include "bu/vls.h"
 
+#include "arg_private.h"
+
 
 static void
 wrap_help(struct bu_vls *help, size_t indent, size_t offset, size_t len)
@@ -1431,32 +1433,22 @@ bu_opt_man_section(struct bu_vls *msg, size_t argc, const char **argv, void *set
 int
 bu_opt_scan_int_range(const char *str, int *val, int vmin, int vmax, const char *label)
 {
-    long l;
-    char *endptr = NULL;
+    enum bu_arg_parse_status status;
     const char *prog = bu_getprogname();
 
-    if (!val || !str || str[0] == '\0') {
-	if (label)
-	    bu_log("%s: missing %s value\n", prog, label);
-	return 0;
-    }
-
-    errno = 0;
-    l = strtol(str, &endptr, 10);
-    if (endptr == str || *endptr != '\0' || errno != 0 || l < INT_MIN || l > INT_MAX) {
-	if (label)
-	    bu_log("%s: invalid %s '%s'\n", prog, label, str);
-	return 0;
-    }
-    if ((int)l < vmin || (int)l > vmax) {
-	if (label)
-	    bu_log("%s: %s out of range '%s' (expected %d to %d)\n", prog, label, str, vmin, vmax);
-	return 0;
-    }
-
-    *val = (int)l;
-    return 1;
+    status = _bu_arg_integer_range_from_str(val, str, 10, vmin, vmax);
+    if (status == BU_ARG_PARSE_OK)
+	return 1;
+    if (label && status == BU_ARG_PARSE_MISSING)
+	bu_log("%s: missing %s value\n", prog, label);
+    else if (label && status == BU_ARG_PARSE_OUT_OF_RANGE)
+	bu_log("%s: %s out of range '%s' (expected %d to %d)\n",
+	    prog, label, str, vmin, vmax);
+    else if (label)
+	bu_log("%s: invalid %s '%s'\n", prog, label, str ? str : "");
+    return 0;
 }
+
 
 int
 bu_opt_scan_int(const char *str, int *val, const char *label)
@@ -1464,48 +1456,44 @@ bu_opt_scan_int(const char *str, int *val, const char *label)
     return bu_opt_scan_int_range(str, val, INT_MIN, INT_MAX, label);
 }
 
+
 int
 bu_opt_scan_uchar(const char *str, unsigned char *val, const char *label)
 {
-    int i;
+    enum bu_arg_parse_status status;
+    const char *prog = bu_getprogname();
 
-    if (!val)
-	return 0;
-    if (!bu_opt_scan_int_range(str, &i, 0, UCHAR_MAX, label))
-	return 0;
-
-    *val = (unsigned char)i;
-    return 1;
+    status = _bu_arg_unsigned_char_from_str(val, str, 10);
+    if (status == BU_ARG_PARSE_OK)
+	return 1;
+    if (label && status == BU_ARG_PARSE_MISSING)
+	bu_log("%s: missing %s value\n", prog, label);
+    else if (label && status == BU_ARG_PARSE_OUT_OF_RANGE)
+	bu_log("%s: %s out of range '%s' (expected 0 to %u)\n",
+	    prog, label, str, (unsigned int)UCHAR_MAX);
+    else if (label)
+	bu_log("%s: invalid %s '%s'\n", prog, label, str ? str : "");
+    return 0;
 }
+
 
 int
 bu_opt_scan_long_range(const char *str, long *val, long vmin, long vmax, const char *label)
 {
-    long l;
-    char *endptr = NULL;
+    enum bu_arg_parse_status status;
     const char *prog = bu_getprogname();
 
-    if (!val || !str || str[0] == '\0') {
-	if (label)
-	    bu_log("%s: missing %s value\n", prog, label);
-	return 0;
-    }
-
-    errno = 0;
-    l = strtol(str, &endptr, 10);
-    if (endptr == str || *endptr != '\0' || errno != 0) {
-	if (label)
-	    bu_log("%s: invalid %s '%s'\n", prog, label, str);
-	return 0;
-    }
-    if (l < vmin || l > vmax) {
-	if (label)
-	    bu_log("%s: %s out of range '%s' (expected %ld to %ld)\n", prog, label, str, vmin, vmax);
-	return 0;
-    }
-
-    *val = l;
-    return 1;
+    status = _bu_arg_long_range_from_str(val, str, 10, vmin, vmax);
+    if (status == BU_ARG_PARSE_OK)
+	return 1;
+    if (label && status == BU_ARG_PARSE_MISSING)
+	bu_log("%s: missing %s value\n", prog, label);
+    else if (label && status == BU_ARG_PARSE_OUT_OF_RANGE)
+	bu_log("%s: %s out of range '%s' (expected %ld to %ld)\n",
+	    prog, label, str, vmin, vmax);
+    else if (label)
+	bu_log("%s: invalid %s '%s'\n", prog, label, str ? str : "");
+    return 0;
 }
 
 int
@@ -1517,41 +1505,20 @@ bu_opt_scan_long(const char *str, long *val, const char *label)
 int
 bu_opt_scan_size_t_range(const char *str, size_t *val, size_t vmin, size_t vmax, const char *label)
 {
-    unsigned long long ull;
-    char *endptr = NULL;
-    const char *cp = str;
+    enum bu_arg_parse_status status;
     const char *prog = bu_getprogname();
 
-    if (!val || !str || str[0] == '\0') {
-	if (label)
-	    bu_log("%s: missing %s value\n", prog, label);
-	return 0;
-    }
-
-    /* strtoull() silently wraps a leading '-'; reject negative input up front */
-    while (isspace((unsigned char)*cp))
-	cp++;
-    if (*cp == '-') {
-	if (label)
-	    bu_log("%s: invalid %s '%s'\n", prog, label, str);
-	return 0;
-    }
-
-    errno = 0;
-    ull = strtoull(str, &endptr, 10);
-    if (endptr == str || *endptr != '\0' || errno != 0 || ull > (unsigned long long)SIZE_MAX) {
-	if (label)
-	    bu_log("%s: invalid %s '%s'\n", prog, label, str);
-	return 0;
-    }
-    if ((size_t)ull < vmin || (size_t)ull > vmax) {
-	if (label)
-	    bu_log("%s: %s out of range '%s' (expected %zu to %zu)\n", prog, label, str, vmin, vmax);
-	return 0;
-    }
-
-    *val = (size_t)ull;
-    return 1;
+    status = _bu_arg_size_t_range_from_str(val, str, 10, vmin, vmax);
+    if (status == BU_ARG_PARSE_OK)
+	return 1;
+    if (label && status == BU_ARG_PARSE_MISSING)
+	bu_log("%s: missing %s value\n", prog, label);
+    else if (label && status == BU_ARG_PARSE_OUT_OF_RANGE)
+	bu_log("%s: %s out of range '%s' (expected %zu to %zu)\n",
+	    prog, label, str, vmin, vmax);
+    else if (label)
+	bu_log("%s: invalid %s '%s'\n", prog, label, str ? str : "");
+    return 0;
 }
 
 int
@@ -1563,31 +1530,20 @@ bu_opt_scan_size_t(const char *str, size_t *val, const char *label)
 int
 bu_opt_scan_double_range(const char *str, double *val, double vmin, double vmax, const char *label)
 {
-    double d;
-    char *endptr = NULL;
+    enum bu_arg_parse_status status;
     const char *prog = bu_getprogname();
 
-    if (!val || !str || str[0] == '\0') {
-	if (label)
-	    bu_log("%s: missing %s value\n", prog, label);
-	return 0;
-    }
-
-    errno = 0;
-    d = strtod(str, &endptr);
-    if (endptr == str || *endptr != '\0' || errno != 0) {
-	if (label)
-	    bu_log("%s: invalid %s '%s'\n", prog, label, str);
-	return 0;
-    }
-    if (!(d >= vmin && d <= vmax)) {
-	if (label)
-	    bu_log("%s: %s out of range '%s' (expected %g to %g)\n", prog, label, str, vmin, vmax);
-	return 0;
-    }
-
-    *val = d;
-    return 1;
+    status = _bu_arg_double_range_from_str(val, str, vmin, vmax);
+    if (status == BU_ARG_PARSE_OK)
+	return 1;
+    if (label && status == BU_ARG_PARSE_MISSING)
+	bu_log("%s: missing %s value\n", prog, label);
+    else if (label && status == BU_ARG_PARSE_OUT_OF_RANGE)
+	bu_log("%s: %s out of range '%s' (expected %g to %g)\n",
+	    prog, label, str, vmin, vmax);
+    else if (label)
+	bu_log("%s: invalid %s '%s'\n", prog, label, str ? str : "");
+    return 0;
 }
 
 int

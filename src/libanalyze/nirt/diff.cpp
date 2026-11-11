@@ -1133,7 +1133,7 @@ _nirt_diff_cmd_settings(void *ndsv, int argc, const char **argv)
 
 	if (setting_bool) {
 	    int value = 0;
-	    if (!bu_arg_bool_from_str(&value, argv[1])) {
+	    if (!bu_arg_bool_from_str(NULL, &value, argv[1])) {
 		nerr(nss, "Error: invalid boolean value: %s\n", argv[1]);
 		return -1;
 	    }
@@ -1144,7 +1144,7 @@ _nirt_diff_cmd_settings(void *ndsv, int argc, const char **argv)
 	    if (BU_STR_EQUAL(argv[1], "BN_TOL_DIST") || BU_STR_EQUIV(argv[1], "default")) {
 		*setting_fastf_t = BN_TOL_DIST;
 	    } else {
-		if (!bu_arg_number_from_str(setting_fastf_t, argv[1])) {
+		if (!bu_arg_number_from_str(NULL, setting_fastf_t, argv[1])) {
 		    nerr(nss, "Error: invalid numeric value: %s\n", argv[1]);
 		    return -1;
 		}

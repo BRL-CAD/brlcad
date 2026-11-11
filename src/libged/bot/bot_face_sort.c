@@ -104,7 +104,7 @@ ged_bot_face_sort_core(struct ged *gedp, int argc, const char *argv[])
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
     GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
 
-    bu_arg_integer_from_str(&tris_per_piece, argv[0]);
+    bu_arg_integer_from_str(NULL, &tris_per_piece, argv[0], 0);
 
     for (i = 1; i < argc; i++) {
 	struct directory *dp;

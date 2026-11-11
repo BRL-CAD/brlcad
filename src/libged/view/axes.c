@@ -168,7 +168,7 @@ axes_tree_create(void *bs, int argc, const char **argv)
 
     point_t p;
     for (int i = 0; i < 3; i++) {
-	if (!bu_arg_number_from_str(&p[i], argv[i]))
+	if (!bu_arg_number_from_str(NULL, &p[i], argv[i]))
 	    return BRLCAD_ERROR;
     }
 
@@ -232,7 +232,7 @@ axes_tree_pos(void *bs, int argc, const char **argv)
     }
     point_t p;
     for (int i = 0; i < 3; i++) {
-	if (!bu_arg_number_from_str(&p[i], argv[i]))
+	if (!bu_arg_number_from_str(NULL, &p[i], argv[i]))
 	    return BRLCAD_ERROR;
     }
 
@@ -276,7 +276,7 @@ axes_tree_size(void *bs, int argc, const char **argv)
     }
 
     fastf_t val;
-    if (!bu_arg_number_from_str(&val, argv[0]))
+    if (!bu_arg_number_from_str(NULL, &val, argv[0]))
 	return BRLCAD_ERROR;
 
     a->axes_size = val;
@@ -319,7 +319,7 @@ axes_tree_linewidth(void *bs, int argc, const char **argv)
     }
 
     int val;
-    if (!bu_arg_integer_from_str(&val, argv[0]))
+    if (!bu_arg_integer_from_str(NULL, &val, argv[0], 0))
 	return BRLCAD_ERROR;
 
     a->line_width = val;

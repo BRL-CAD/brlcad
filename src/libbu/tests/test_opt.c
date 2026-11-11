@@ -960,24 +960,25 @@ desc_help(void)
 
 
 static int
-scan_double_test(int test_num)
+scan_readers(void)
 {
-    double value = 42.0;
+    int integer = 41;
+    double number = 4.5;
 
-    switch (test_num) {
-	case 0:
-	    return bu_opt_scan_double("nan", &value, NULL) != 0;
-	case 1:
-	    return bu_opt_scan_double("inf", &value, NULL) != 0;
-	case 2:
-	    return bu_opt_scan_double("-inf", &value, NULL) != 0;
-	case 3:
-	    if (!bu_opt_scan_double("1.25", &value, NULL))
-		return 1;
-	    return !NEAR_EQUAL(value, 1.25, SMALL_FASTF);
-    }
-
-    return 1;
+    if (!bu_opt_scan_int("010", &integer, NULL) || integer != 10)
+	return 1;
+    if (bu_opt_scan_int_range("11", &integer, 1, 10, NULL) || integer != 10)
+	return 1;
+    if (bu_opt_scan_double("nan", &number, NULL) ||
+	number < 4.49 || number > 4.51)
+	return 1;
+    if (bu_opt_scan_double("inf", &number, NULL) ||
+	number < 4.49 || number > 4.51)
+	return 1;
+    if (bu_opt_scan_double("-inf", &number, NULL) ||
+	number < 4.49 || number > 4.51)
+	return 1;
+    return 0;
 }
 
 
@@ -1031,7 +1032,7 @@ main(int argc, char *argv[])
 	    return desc_help();
 	    break;
 	case 6:
-	    return scan_double_test(test_num);
+	    return scan_readers();
 	    break;
     }
 

@@ -55,7 +55,7 @@ label_create_validate(const struct bu_arg_schema *UNUSED(schema), size_t argc,
     } else {
 	for (size_t i = 1; i < argc; i++) {
 	    fastf_t value = 0.0;
-	    if (!bu_arg_number_from_str(&value, argv[i])) {
+	    if (!bu_arg_number_from_str(NULL, &value, argv[i])) {
 		state = BU_ARG_VALIDATE_INVALID;
 		hint = "invalid label coordinate";
 		break;
@@ -143,17 +143,17 @@ labels_tree_create(void *bs, int argc, const char **argv)
     }
 
     point_t p;
-    if (!bu_arg_number_from_str(&p[0], argv[1])) {
+    if (!bu_arg_number_from_str(NULL, &p[0], argv[1])) {
 	bu_vls_printf(gedp->ged_result_str, "Invalid argument %s\n", argv[1]);
 	return BRLCAD_ERROR;
     }
-    if (!bu_arg_number_from_str(&p[1], argv[2])) {
+    if (!bu_arg_number_from_str(NULL, &p[1], argv[2])) {
 	bu_vls_printf(gedp->ged_result_str, "Invalid argument %s\n", argv[2]);
 	return BRLCAD_ERROR;
     }
 
     if (argc == 4 || argc == 7) {
-	if (!bu_arg_number_from_str(&p[2], argv[3])) {
+	if (!bu_arg_number_from_str(NULL, &p[2], argv[3])) {
 	    bu_vls_printf(gedp->ged_result_str, "Invalid argument %s\n", argv[3]);
 	    return BRLCAD_ERROR;
 	}
@@ -171,30 +171,30 @@ labels_tree_create(void *bs, int argc, const char **argv)
     }
     point_t target;
     if (argc == 6) {
-	if (!bu_arg_number_from_str(&target[0], argv[3])) {
+	if (!bu_arg_number_from_str(NULL, &target[0], argv[3])) {
 	    bu_vls_printf(gedp->ged_result_str, "Invalid argument %s\n", argv[3]);
 	    return BRLCAD_ERROR;
 	}
-	if (!bu_arg_number_from_str(&target[1], argv[4])) {
+	if (!bu_arg_number_from_str(NULL, &target[1], argv[4])) {
 	    bu_vls_printf(gedp->ged_result_str, "Invalid argument %s\n", argv[4]);
 	    return BRLCAD_ERROR;
 	}
-	if (!bu_arg_number_from_str(&target[2], argv[5])) {
+	if (!bu_arg_number_from_str(NULL, &target[2], argv[5])) {
 	    bu_vls_printf(gedp->ged_result_str, "Invalid argument %s\n", argv[5]);
 	    return BRLCAD_ERROR;
 	}
     }
 
     if (argc == 7) {
-	if (!bu_arg_number_from_str(&target[0], argv[4])) {
+	if (!bu_arg_number_from_str(NULL, &target[0], argv[4])) {
 	    bu_vls_printf(gedp->ged_result_str, "Invalid argument %s\n", argv[4]);
 	    return BRLCAD_ERROR;
 	}
-	if (!bu_arg_number_from_str(&target[1], argv[5])) {
+	if (!bu_arg_number_from_str(NULL, &target[1], argv[5])) {
 	    bu_vls_printf(gedp->ged_result_str, "Invalid argument %s\n", argv[5]);
 	    return BRLCAD_ERROR;
 	}
-	if (!bu_arg_number_from_str(&target[2], argv[6])) {
+	if (!bu_arg_number_from_str(NULL, &target[2], argv[6])) {
 	    bu_vls_printf(gedp->ged_result_str, "Invalid argument %s\n", argv[6]);
 	    return BRLCAD_ERROR;
 	}

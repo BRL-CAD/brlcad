@@ -332,7 +332,7 @@ ged_view_obj_arrow_validate(const struct bu_arg_schema *UNUSED(schema), size_t a
 	    BU_ARG_EXPECT_NONE, BU_ARG_VALUE_STRING, "too many arrow arguments");
 	return 0;
     }
-    if (argc == 2 && !bu_arg_number_from_str(&numeric_value, argv[1])) {
+    if (argc == 2 && !bu_arg_number_from_str(NULL, &numeric_value, argv[1])) {
 	ged_view_obj_set_validation(result, BU_ARG_VALIDATE_INVALID, 1,
 	    BU_ARG_EXPECT_OPERAND, BU_ARG_VALUE_NUMBER, "invalid arrow size");
 	return 0;
@@ -601,7 +601,7 @@ _objs_cmd_arrow(void *bs, int argc, const char **argv)
     }
     if (BU_STR_EQUAL(argv[0], "width"))  {
 	if (argc == 2) {
-	    if (!bu_arg_number_from_str(&s->s_os->s_arrow_tip_width, argv[1])) {
+	    if (!bu_arg_number_from_str(NULL, &s->s_os->s_arrow_tip_width, argv[1])) {
 		bu_vls_printf(gedp->ged_result_str, "Invalid argument %s\n", argv[1]);
 		return BRLCAD_ERROR;
 	    }
@@ -614,7 +614,7 @@ _objs_cmd_arrow(void *bs, int argc, const char **argv)
 
     if (BU_STR_EQUAL(argv[0], "length"))  {
 	if (argc == 2) {
-	    if (!bu_arg_number_from_str(&s->s_os->s_arrow_tip_length, argv[1])) {
+	    if (!bu_arg_number_from_str(NULL, &s->s_os->s_arrow_tip_length, argv[1])) {
 		bu_vls_printf(gedp->ged_result_str, "Invalid argument %s\n", argv[1]);
 		return BRLCAD_ERROR;
 	    }
@@ -703,11 +703,11 @@ _objs_cmd_update(void *bs, int argc, const char **argv)
     struct bview *v = gd->cv;
     if (argc) {
 	int x, y;
-	if (!bu_arg_integer_from_str(&x, argv[0]) || x < 0) {
+	if (!bu_arg_integer_from_str(NULL, &x, argv[0], 0) || x < 0) {
 	    bu_vls_printf(gedp->ged_result_str, "Invalid argument %s\n", argv[0]);
 	    return BRLCAD_ERROR;
 	}
-	if (!bu_arg_integer_from_str(&y, argv[1]) || y < 0) {
+	if (!bu_arg_integer_from_str(NULL, &y, argv[1], 0) || y < 0) {
 	    bu_vls_printf(gedp->ged_result_str, "Invalid argument %s\n", argv[1]);
 	    return BRLCAD_ERROR;
 	}

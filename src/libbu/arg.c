@@ -71,7 +71,7 @@ cmd_schema_counted_vector3_token_count(size_t available, const char **argv)
     int count;
     int consumed;
 
-    if (!available || !argv || !argv[0] || !bu_arg_integer_from_str(&count, argv[0]))
+    if (!available || !argv || !argv[0] || !bu_arg_integer_from_str(NULL, &count, argv[0], 0))
 	return 0;
     if (available == 1)
 	return 1;
@@ -251,7 +251,7 @@ bu_arg_color_optional_validate(size_t argc, const char **argv, size_t cursor_arg
 	int partial = argc < 3;
 	for (size_t i = 0; partial && i < argc; i++) {
 	    fastf_t value;
-	    partial = bu_arg_number_from_str(&value, argv[i]);
+	    partial = bu_arg_number_from_str(NULL, &value, argv[i]);
 	}
 	state = partial ? BU_ARG_VALIDATE_INCOMPLETE : BU_ARG_VALIDATE_INVALID;
 	hint = partial ? "remaining RGB components required" : "invalid color";
@@ -327,19 +327,49 @@ cmd_schema_skip_space(const char *str)
 
 
 static int
-cmd_schema_number_from_prefix(fastf_t *value, const char **str)
+cmd_schema_base_valid(int base)
+{
+    return base == 0 || (base >= 2 && base <= 36);
+}
+
+
+static enum bu_arg_parse_status
+cmd_schema_double_from_prefix(double *value, const char **str,
+	double minimum, double maximum)
 {
     char *end = NULL;
     double parsed;
     const char *start;
 
-    if (!value || !str || !*str)
-	return 0;
+    if (!value || !str || !*str || !**str)
+	return BU_ARG_PARSE_MISSING;
+    if (!isfinite(minimum) || !isfinite(maximum) || minimum > maximum)
+	return BU_ARG_PARSE_INVALID;
     start = *str;
     errno = 0;
     parsed = strtod(start, &end);
-    if (end == start || errno == ERANGE || !isfinite(parsed) ||
-	(sizeof(fastf_t) == sizeof(float) && (parsed > FLT_MAX || parsed < -FLT_MAX)))
+    if (end == start || errno != 0 || !isfinite(parsed))
+	return BU_ARG_PARSE_INVALID;
+    if (parsed < minimum || parsed > maximum)
+	return BU_ARG_PARSE_OUT_OF_RANGE;
+    *value = parsed;
+    *str = end;
+    return BU_ARG_PARSE_OK;
+}
+
+
+static int
+cmd_schema_number_from_prefix(fastf_t *value, const char **str)
+{
+    double parsed;
+    double limit = sizeof(fastf_t) == sizeof(float) ? FLT_MAX : DBL_MAX;
+    const char *end;
+
+    if (!value || !str || !*str)
+	return 0;
+    end = *str;
+    if (cmd_schema_double_from_prefix(&parsed, &end, -limit, limit) !=
+	BU_ARG_PARSE_OK)
 	return 0;
     *value = (fastf_t)parsed;
     *str = end;
@@ -403,7 +433,7 @@ bu_arg_vector3_from_argv(fastf_t *xyz, size_t argc, const char * const *argv)
     if (argc < 3 || !argv[1] || !argv[2])
 	return 0;
     for (size_t i = 0; i < 3; i++) {
-	if (!bu_arg_number_from_str(&parsed[i], argv[i]))
+	if (!bu_arg_number_from_str(NULL, &parsed[i], argv[i]))
 	    return 0;
     }
     VMOVE(xyz, parsed);
@@ -420,7 +450,7 @@ bu_arg_counted_vector3_from_argv(int *count, fastf_t *xyz, size_t argc,
     int consumed;
 
     if (!count || !xyz || !argv || argc < 2 || !argv[0] || !argv[1] ||
-	!bu_arg_integer_from_str(&parsed_count, argv[0]))
+	!bu_arg_integer_from_str(NULL, &parsed_count, argv[0], 0))
 	return 0;
     consumed = bu_arg_vector3_from_argv(parsed_xyz, argc - 1, argv + 1);
     if (consumed <= 0)
@@ -468,7 +498,7 @@ bu_arg_vector3_optional_validate(size_t argc, const char **argv, size_t cursor_a
 	(const char * const *)argv) != (int)argc) {
 	int partial = argc < 3;
 	for (size_t i = 0; partial && i < argc; i++)
-	    partial = bu_arg_number_from_str(&xyz[i], argv[i]);
+	    partial = bu_arg_number_from_str(NULL, &xyz[i], argv[i]);
 	state = partial ? BU_ARG_VALIDATE_INCOMPLETE : BU_ARG_VALIDATE_INVALID;
 	hint = partial ? "remaining XYZ components required" : "invalid XYZ vector";
     }
@@ -504,51 +534,122 @@ bu_arg_vector3_required_validate(size_t argc, const char **argv, size_t cursor_a
 
 
 int
-bu_arg_integer_from_str(int *value, const char *arg)
+bu_arg_integer_from_str(struct bu_vls *msg, int *value, const char *arg,
+	int base)
+{
+    return bu_arg_integer_range_from_str(msg, value, arg, base, INT_MIN,
+	INT_MAX);
+}
+
+
+enum bu_arg_parse_status
+_bu_arg_integer_range_from_str(int *value, const char *arg, int base,
+	int minimum, int maximum)
 {
     char *end = NULL;
     long parsed;
 
     if (!value || !arg || !arg[0])
-	return 0;
+	return BU_ARG_PARSE_MISSING;
+    if (!cmd_schema_base_valid(base) || minimum > maximum)
+	return BU_ARG_PARSE_INVALID;
     errno = 0;
-    parsed = strtol(arg, &end, 0);
-    if (errno == ERANGE || !end || *end || parsed > INT_MAX || parsed < INT_MIN)
-	return 0;
+    parsed = strtol(arg, &end, base);
+    if (errno != 0 || end == arg || *end || parsed > INT_MAX || parsed < INT_MIN)
+	return BU_ARG_PARSE_INVALID;
+    if ((int)parsed < minimum || (int)parsed > maximum)
+	return BU_ARG_PARSE_OUT_OF_RANGE;
     *value = (int)parsed;
-    return 1;
+    return BU_ARG_PARSE_OK;
 }
 
 
 int
-bu_arg_bool_from_str(int *value, const char *arg)
+bu_arg_integer_range_from_str(struct bu_vls *msg, int *value, const char *arg,
+	int base, int minimum, int maximum)
+{
+    enum bu_arg_parse_status status = _bu_arg_integer_range_from_str(value,
+	arg, base, minimum, maximum);
+
+    if (status == BU_ARG_PARSE_OK)
+	return 1;
+    if (msg) {
+	if (status == BU_ARG_PARSE_MISSING)
+	    bu_vls_printf(msg, "expected an integer value\n");
+	else if (status == BU_ARG_PARSE_OUT_OF_RANGE)
+	    bu_vls_printf(msg, "integer value '%s' is outside the range %d to %d\n",
+		arg, minimum, maximum);
+	else
+	    bu_vls_printf(msg, "invalid integer value%s%s\n",
+		arg ? ": " : "", arg ? arg : "");
+    }
+    return 0;
+}
+
+
+int
+bu_arg_bool_from_str(struct bu_vls *msg, int *value, const char *arg)
 {
     int parsed;
 
-    if (!value || !arg || !arg[0])
+    if (!value || !arg || !arg[0]) {
+	if (msg)
+	    bu_vls_printf(msg, "expected a boolean value\n");
 	return 0;
+    }
     parsed = bu_str_true(arg);
-    if (parsed != 0 && parsed != 1)
+    if (parsed != 0 && parsed != 1) {
+	if (msg)
+	    bu_vls_printf(msg, "invalid boolean value: %s\n", arg);
 	return 0;
+    }
     *value = parsed;
     return 1;
 }
 
 
-int
-bu_arg_hex_integer_from_str(unsigned int *value, const char *arg)
+enum bu_arg_parse_status
+_bu_arg_unsigned_integer_from_str(unsigned int *value, const char *arg,
+	int base)
 {
     char *end = NULL;
     unsigned long parsed;
+    const char *cp = arg;
 
-    if (!value || !arg || !arg[0] || arg[0] == '-')
-	return 0;
+    if (!value || !arg || !arg[0])
+	return BU_ARG_PARSE_MISSING;
+    if (!cmd_schema_base_valid(base))
+	return BU_ARG_PARSE_INVALID;
+    while (isspace((unsigned char)*cp))
+	cp++;
+    if (*cp == '-')
+	return BU_ARG_PARSE_INVALID;
     errno = 0;
-    parsed = strtoul(arg, &end, 16);
-    if (errno == ERANGE || !end || *end || parsed > UINT_MAX)
-	return 0;
+    parsed = strtoul(arg, &end, base);
+    if (errno != 0 || end == arg || *end || parsed > UINT_MAX)
+	return BU_ARG_PARSE_INVALID;
     *value = (unsigned int)parsed;
-    return 1;
+    return BU_ARG_PARSE_OK;
+}
+
+
+int
+bu_arg_unsigned_integer_from_str(struct bu_vls *msg, unsigned int *value,
+	const char *arg, int base)
+{
+    enum bu_arg_parse_status status = _bu_arg_unsigned_integer_from_str(value,
+	arg, base);
+
+    if (status == BU_ARG_PARSE_OK)
+	return 1;
+    if (msg) {
+	if (status == BU_ARG_PARSE_MISSING)
+	    bu_vls_printf(msg, "expected an unsigned integer value\n");
+	else
+	    bu_vls_printf(msg, "invalid unsigned integer value%s%s\n",
+		arg ? ": " : "", arg ? arg : "");
+    }
+    return 0;
 }
 
 
@@ -559,8 +660,8 @@ bu_arg_integer_pair_from_argv(int pair[2], size_t argc, const char * const *argv
 
     if (!pair || !argv || argc != 2 || !argv[0] || !argv[1])
 	return 0;
-    if (!bu_arg_integer_from_str(&parsed[0], argv[0]) ||
-	!bu_arg_integer_from_str(&parsed[1], argv[1]))
+    if (!bu_arg_integer_from_str(NULL, &parsed[0], argv[0], 0) ||
+	!bu_arg_integer_from_str(NULL, &parsed[1], argv[1], 0))
 	return 0;
     pair[0] = parsed[0];
     pair[1] = parsed[1];
@@ -586,7 +687,7 @@ bu_arg_integer_pair_optional_validate(size_t argc, const char **argv,
     } else {
 	for (size_t i = 0; i < argc; i++) {
 	    int value = 0;
-	    if (!bu_arg_integer_from_str(&value, argv[i])) {
+	    if (!bu_arg_integer_from_str(NULL, &value, argv[i], 0)) {
 		state = BU_ARG_VALIDATE_INVALID;
 		hint = "invalid integer component";
 		break;
@@ -608,72 +709,277 @@ bu_arg_integer_pair_optional_validate(size_t argc, const char **argv,
 }
 
 
-static int
-cmd_schema_long_from_str(long *value, const char *arg, int base)
+enum bu_arg_parse_status
+_bu_arg_long_range_from_str(long *value, const char *arg, int base,
+	long minimum, long maximum)
 {
     char *end = NULL;
     long parsed;
 
     if (!value || !arg || !arg[0])
-	return 0;
+	return BU_ARG_PARSE_MISSING;
+    if (!cmd_schema_base_valid(base) || minimum > maximum)
+	return BU_ARG_PARSE_INVALID;
     errno = 0;
     parsed = strtol(arg, &end, base);
-    if (errno == ERANGE || !end || *end)
-	return 0;
+    if (errno != 0 || end == arg || *end)
+	return BU_ARG_PARSE_INVALID;
+    if (parsed < minimum || parsed > maximum)
+	return BU_ARG_PARSE_OUT_OF_RANGE;
     *value = parsed;
-    return 1;
+    return BU_ARG_PARSE_OK;
 }
 
 
 int
-bu_arg_long_from_str(long *value, const char *arg)
+bu_arg_long_from_str(struct bu_vls *msg, long *value, const char *arg,
+	int base)
 {
-    return cmd_schema_long_from_str(value, arg, 0);
+    return bu_arg_long_range_from_str(msg, value, arg, base, LONG_MIN,
+	LONG_MAX);
 }
 
 
 int
-bu_arg_hex_long_from_str(long *value, const char *arg)
+bu_arg_long_range_from_str(struct bu_vls *msg, long *value, const char *arg,
+	int base, long minimum, long maximum)
 {
-    return cmd_schema_long_from_str(value, arg, 16);
+    enum bu_arg_parse_status status = _bu_arg_long_range_from_str(value, arg,
+	base, minimum, maximum);
+
+    if (status == BU_ARG_PARSE_OK)
+	return 1;
+    if (msg) {
+	if (status == BU_ARG_PARSE_MISSING)
+	    bu_vls_printf(msg, "expected a long integer value\n");
+	else if (status == BU_ARG_PARSE_OUT_OF_RANGE)
+	    bu_vls_printf(msg, "long integer value '%s' is outside the range %ld to %ld\n",
+		arg, minimum, maximum);
+	else
+	    bu_vls_printf(msg, "invalid long integer value%s%s\n",
+		arg ? ": " : "", arg ? arg : "");
+    }
+    return 0;
+}
+
+
+enum bu_arg_parse_status
+_bu_arg_unsigned_char_from_str(unsigned char *value, const char *arg, int base)
+{
+    int parsed;
+    enum bu_arg_parse_status status;
+
+    if (!value)
+	return BU_ARG_PARSE_MISSING;
+    status = _bu_arg_integer_range_from_str(&parsed, arg, base, 0, UCHAR_MAX);
+    if (status != BU_ARG_PARSE_OK)
+	return status;
+    *value = (unsigned char)parsed;
+    return BU_ARG_PARSE_OK;
 }
 
 
 int
-bu_arg_number_from_str(fastf_t *value, const char *arg)
+bu_arg_unsigned_char_from_str(struct bu_vls *msg, unsigned char *value,
+	const char *arg, int base)
+{
+    enum bu_arg_parse_status status = _bu_arg_unsigned_char_from_str(value,
+	arg, base);
+
+    if (status == BU_ARG_PARSE_OK)
+	return 1;
+    if (msg) {
+	if (status == BU_ARG_PARSE_MISSING)
+	    bu_vls_printf(msg, "expected an unsigned byte value\n");
+	else if (status == BU_ARG_PARSE_OUT_OF_RANGE)
+	    bu_vls_printf(msg, "unsigned byte value '%s' is outside the range 0 to %u\n",
+		arg, (unsigned int)UCHAR_MAX);
+	else
+	    bu_vls_printf(msg, "invalid unsigned byte value%s%s\n",
+		arg ? ": " : "", arg ? arg : "");
+    }
+    return 0;
+}
+
+
+enum bu_arg_parse_status
+_bu_arg_size_t_range_from_str(size_t *value, const char *arg, int base,
+	size_t minimum, size_t maximum)
+{
+    unsigned long long parsed;
+    char *end = NULL;
+    const char *cp = arg;
+
+    if (!value || !arg || !arg[0])
+	return BU_ARG_PARSE_MISSING;
+    if (!cmd_schema_base_valid(base) || minimum > maximum)
+	return BU_ARG_PARSE_INVALID;
+    while (isspace((unsigned char)*cp))
+	cp++;
+    if (*cp == '-')
+	return BU_ARG_PARSE_INVALID;
+    errno = 0;
+    parsed = strtoull(arg, &end, base);
+    if (errno != 0 || end == arg || *end || parsed > (unsigned long long)SIZE_MAX)
+	return BU_ARG_PARSE_INVALID;
+    if ((size_t)parsed < minimum || (size_t)parsed > maximum)
+	return BU_ARG_PARSE_OUT_OF_RANGE;
+    *value = (size_t)parsed;
+    return BU_ARG_PARSE_OK;
+}
+
+
+int
+bu_arg_size_t_range_from_str(struct bu_vls *msg, size_t *value,
+	const char *arg, int base, size_t minimum, size_t maximum)
+{
+    enum bu_arg_parse_status status = _bu_arg_size_t_range_from_str(value,
+	arg, base, minimum, maximum);
+
+    if (status == BU_ARG_PARSE_OK)
+	return 1;
+    if (msg) {
+	if (status == BU_ARG_PARSE_MISSING)
+	    bu_vls_printf(msg, "expected a non-negative integer value\n");
+	else if (status == BU_ARG_PARSE_OUT_OF_RANGE)
+	    bu_vls_printf(msg, "integer value '%s' is outside the range %zu to %zu\n",
+		arg, minimum, maximum);
+	else
+	    bu_vls_printf(msg, "invalid non-negative integer value%s%s\n",
+		arg ? ": " : "", arg ? arg : "");
+    }
+    return 0;
+}
+
+
+int
+bu_arg_size_t_from_str(struct bu_vls *msg, size_t *value, const char *arg,
+	int base)
+{
+    return bu_arg_size_t_range_from_str(msg, value, arg, base, 0, SIZE_MAX);
+}
+
+
+int
+bu_arg_number_range_from_str(struct bu_vls *msg, fastf_t *value,
+	const char *arg, fastf_t minimum, fastf_t maximum)
 {
     const char *end = arg;
     fastf_t parsed;
 
-    if (!value || !arg || !arg[0])
+    if (!value || !arg || !arg[0]) {
+	if (msg)
+	    bu_vls_printf(msg, "expected a finite number\n");
 	return 0;
-    if (!cmd_schema_number_from_prefix(&parsed, &end) || *end)
+    }
+    if (!isfinite(minimum) || !isfinite(maximum) || minimum > maximum ||
+	!cmd_schema_number_from_prefix(&parsed, &end) || *end) {
+	if (msg)
+	    bu_vls_printf(msg, "invalid finite number: %s\n", arg);
 	return 0;
+    }
+    if (parsed < minimum || parsed > maximum) {
+	if (msg)
+	    bu_vls_printf(msg, "number '%s' is outside the range %g to %g\n",
+		arg, (double)minimum, (double)maximum);
+	return 0;
+    }
     *value = parsed;
     return 1;
 }
 
 
 int
-bu_arg_char_from_str(char *value, const char *arg)
+bu_arg_number_from_str(struct bu_vls *msg, fastf_t *value, const char *arg)
 {
-    if (!value || !arg || !arg[0])
+    fastf_t limit = sizeof(fastf_t) == sizeof(float) ? FLT_MAX : DBL_MAX;
+
+    return bu_arg_number_range_from_str(msg, value, arg, -limit, limit);
+}
+
+
+enum bu_arg_parse_status
+_bu_arg_double_range_from_str(double *value, const char *arg,
+	double minimum, double maximum)
+{
+    const char *end = arg;
+    double parsed;
+    enum bu_arg_parse_status status = cmd_schema_double_from_prefix(&parsed,
+	&end, minimum, maximum);
+
+    if (status != BU_ARG_PARSE_OK)
+	return status;
+    if (*end)
+	return BU_ARG_PARSE_INVALID;
+    *value = parsed;
+    return BU_ARG_PARSE_OK;
+}
+
+
+int
+bu_arg_double_range_from_str(struct bu_vls *msg, double *value,
+	const char *arg, double minimum, double maximum)
+{
+    enum bu_arg_parse_status status = _bu_arg_double_range_from_str(value,
+	arg, minimum, maximum);
+
+    if (status == BU_ARG_PARSE_OK)
+	return 1;
+    if (msg) {
+	if (status == BU_ARG_PARSE_MISSING)
+	    bu_vls_printf(msg, "expected a finite number\n");
+	else if (status == BU_ARG_PARSE_OUT_OF_RANGE)
+	    bu_vls_printf(msg, "number '%s' is outside the range %g to %g\n",
+		arg, minimum, maximum);
+	else
+	    bu_vls_printf(msg, "invalid finite number%s%s\n",
+		arg ? ": " : "", arg ? arg : "");
+    }
+    return 0;
+}
+
+
+int
+bu_arg_double_from_str(struct bu_vls *msg, double *value, const char *arg)
+{
+    return bu_arg_double_range_from_str(msg, value, arg, -DBL_MAX, DBL_MAX);
+}
+
+
+int
+bu_arg_char_from_str(struct bu_vls *msg, char *value, const char *arg)
+{
+    if (!value || !arg || !arg[0]) {
+	if (msg)
+	    bu_vls_printf(msg, "expected one character\n");
 	return 0;
+    }
+    if (arg[1]) {
+	if (msg)
+	    bu_vls_printf(msg, "expected one character, received: %s\n", arg);
+	return 0;
+    }
     *value = arg[0];
     return 1;
 }
 
 
 int
-bu_arg_units_from_str(double *value, const char *arg)
+bu_arg_units_from_str(struct bu_vls *msg, double *value, const char *arg)
 {
     double parsed;
 
-    if (!value || !arg || !arg[0])
+    if (!value || !arg || !arg[0]) {
+	if (msg)
+	    bu_vls_printf(msg, "expected a BRL-CAD unit expression\n");
 	return 0;
+    }
     parsed = bu_mm_value(arg);
-    if (!isfinite(parsed) || parsed <= 0.0)
+    if (!isfinite(parsed) || parsed <= 0.0) {
+	if (msg)
+	    bu_vls_printf(msg, "invalid BRL-CAD unit expression: %s\n", arg);
 	return 0;
+    }
     *value = parsed;
     return 1;
 }
@@ -684,7 +990,7 @@ bu_arg_units_validate(struct bu_vls *msg, const char *arg)
 {
     double value;
 
-    if (bu_arg_units_from_str(&value, arg))
+    if (bu_arg_units_from_str(NULL, &value, arg))
 	return 0;
     if (msg)
 	bu_vls_printf(msg, "expected a valid BRL-CAD unit expression: %s\n",
@@ -749,7 +1055,7 @@ cmd_schema_integer_range_validate(struct bu_vls *msg, const char *arg,
     int value;
 
 
-    if (bu_arg_integer_from_str(&value, arg) && value >= minimum)
+    if (bu_arg_integer_from_str(NULL, &value, arg, 0) && value >= minimum)
 	return 0;
     if (msg)
 	bu_vls_printf(msg, "expected %s: %s\n", description, arg ? arg : "");
@@ -764,7 +1070,7 @@ cmd_schema_number_range_validate(struct bu_vls *msg, const char *arg,
     fastf_t value;
 
 
-    if (bu_arg_number_from_str(&value, arg) &&
+    if (bu_arg_number_from_str(NULL, &value, arg) &&
 	(inclusive ? value >= minimum : value > minimum))
 	return 0;
     if (msg)
@@ -960,7 +1266,7 @@ cmd_schema_set_value(const struct bu_arg_option *option, void *data, const char 
 	case BU_ARG_VALUE_BOOL:
 	{
 	    int value;
-	    if (!bu_arg_bool_from_str(&value, arg)) {
+	    if (!bu_arg_bool_from_str(NULL, &value, arg)) {
 		if (msg)
 		    bu_vls_printf(msg, "invalid boolean for --%s: %s\n", cmd_schema_option_name(option), arg);
 		return -1;
@@ -971,7 +1277,7 @@ cmd_schema_set_value(const struct bu_arg_option *option, void *data, const char 
 	case BU_ARG_VALUE_INTEGER:
 	{
 	    int value;
-	    if (!bu_arg_integer_from_str(&value, arg)) {
+	    if (!bu_arg_integer_from_str(NULL, &value, arg, 0)) {
 		if (msg)
 		    bu_vls_printf(msg, "invalid integer for --%s: %s\n", cmd_schema_option_name(option), arg);
 		return -1;
@@ -982,7 +1288,7 @@ cmd_schema_set_value(const struct bu_arg_option *option, void *data, const char 
 	case BU_ARG_VALUE_HEX_INTEGER:
 	{
 	    unsigned int value;
-	    if (!bu_arg_hex_integer_from_str(&value, arg)) {
+	    if (!bu_arg_unsigned_integer_from_str(NULL, &value, arg, 16)) {
 		if (msg)
 		    bu_vls_printf(msg, "invalid hexadecimal integer for --%s: %s\n", cmd_schema_option_name(option), arg);
 		return -1;
@@ -1000,7 +1306,7 @@ cmd_schema_set_value(const struct bu_arg_option *option, void *data, const char 
 		    *((long *)storage) = 1;
 		return 0;
 	    }
-	    if (!bu_arg_long_from_str(&value, arg)) {
+	    if (!bu_arg_long_from_str(NULL, &value, arg, 0)) {
 		if (msg)
 		    bu_vls_printf(msg, "invalid long integer for --%s: %s\n", cmd_schema_option_name(option), arg);
 		return -1;
@@ -1011,7 +1317,7 @@ cmd_schema_set_value(const struct bu_arg_option *option, void *data, const char 
 	case BU_ARG_VALUE_HEX_LONG:
 	{
 	    long value;
-	    if (!bu_arg_hex_long_from_str(&value, arg)) {
+	    if (!bu_arg_long_from_str(NULL, &value, arg, 16)) {
 		if (msg)
 		    bu_vls_printf(msg, "invalid hexadecimal long integer for --%s: %s\n", cmd_schema_option_name(option), arg);
 		return -1;
@@ -1022,7 +1328,7 @@ cmd_schema_set_value(const struct bu_arg_option *option, void *data, const char 
 	case BU_ARG_VALUE_NUMBER:
 	{
 	    fastf_t value;
-	    if (!bu_arg_number_from_str(&value, arg)) {
+	    if (!bu_arg_number_from_str(NULL, &value, arg)) {
 		if (msg)
 		    bu_vls_printf(msg, "invalid number for --%s: %s\n", cmd_schema_option_name(option), arg);
 		return -1;
@@ -1033,7 +1339,7 @@ cmd_schema_set_value(const struct bu_arg_option *option, void *data, const char 
 	case BU_ARG_VALUE_CHAR:
 	{
 	    char value;
-	    if (!bu_arg_char_from_str(&value, arg)) {
+	    if (!bu_arg_char_from_str(NULL, &value, arg)) {
 		if (msg)
 		    bu_vls_printf(msg, "invalid character for --%s: %s\n", cmd_schema_option_name(option), arg);
 		return -1;
@@ -1170,7 +1476,7 @@ cmd_schema_color_partial(const struct bu_arg_option *option, size_t available,
 	return 0;
     for (size_t i = 0; i < available; i++) {
 	fastf_t value;
-	if (!bu_arg_number_from_str(&value, argv[i]))
+	if (!bu_arg_number_from_str(NULL, &value, argv[i]))
 	    return 0;
     }
     return 1;
@@ -1187,7 +1493,7 @@ cmd_schema_vector3_partial(const struct bu_arg_option *option, size_t available,
 	return 0;
     for (size_t i = 0; i < available; i++) {
 	fastf_t value;
-	if (!bu_arg_number_from_str(&value, argv[i]))
+	if (!bu_arg_number_from_str(NULL, &value, argv[i]))
 	    return 0;
     }
     return 1;
@@ -1348,7 +1654,7 @@ cmd_schema_range_valid(const struct bu_arg_value_range *range,
 	    case BU_ARG_VALUE_INTEGER:
 	    {
 		int ivalue;
-		if (!bu_arg_integer_from_str(&ivalue, arg))
+		if (!bu_arg_integer_from_str(NULL, &ivalue, arg, 0))
 		    return 0;
 		value = (long)ivalue;
 		break;
@@ -1356,7 +1662,7 @@ cmd_schema_range_valid(const struct bu_arg_value_range *range,
 	    case BU_ARG_VALUE_HEX_INTEGER:
 	    {
 		unsigned int uvalue;
-		if (!bu_arg_hex_integer_from_str(&uvalue, arg))
+		if (!bu_arg_unsigned_integer_from_str(NULL, &uvalue, arg, 16))
 		    return 0;
 #if LONG_MAX < UINT_MAX
 		if (uvalue > (unsigned int)LONG_MAX)
@@ -1366,11 +1672,11 @@ cmd_schema_range_valid(const struct bu_arg_value_range *range,
 		break;
 	    }
 	    case BU_ARG_VALUE_LONG:
-		if (!bu_arg_long_from_str(&value, arg))
+		if (!bu_arg_long_from_str(NULL, &value, arg, 0))
 		    return 0;
 		break;
 	    case BU_ARG_VALUE_HEX_LONG:
-		if (!bu_arg_hex_long_from_str(&value, arg))
+		if (!bu_arg_long_from_str(NULL, &value, arg, 16))
 		    return 0;
 		break;
 	    default:
@@ -1390,7 +1696,7 @@ cmd_schema_range_valid(const struct bu_arg_value_range *range,
     if (range->kind == BU_ARG_RANGE_NUMBER) {
 	fastf_t value;
 	if (type != BU_ARG_VALUE_NUMBER ||
-	    !bu_arg_number_from_str(&value, arg))
+	    !bu_arg_number_from_str(NULL, &value, arg))
 	    return 0;
 	if (range->has_minimum &&
 	    (range->minimum_inclusive ? value < range->number_minimum :
@@ -1421,43 +1727,43 @@ cmd_schema_value_valid(const struct bu_arg_option *option, const char *arg)
 	case BU_ARG_VALUE_BOOL:
 	{
 	    int value;
-	    valid = bu_arg_bool_from_str(&value, arg);
+	    valid = bu_arg_bool_from_str(NULL, &value, arg);
 	    break;
 	}
 	case BU_ARG_VALUE_INTEGER:
 	{
 	    int value;
-	    valid = bu_arg_integer_from_str(&value, arg);
+	    valid = bu_arg_integer_from_str(NULL, &value, arg, 0);
 	    break;
 	}
 	case BU_ARG_VALUE_HEX_INTEGER:
 	{
 	    unsigned int value;
-	    valid = bu_arg_hex_integer_from_str(&value, arg);
+	    valid = bu_arg_unsigned_integer_from_str(NULL, &value, arg, 16);
 	    break;
 	}
 	case BU_ARG_VALUE_LONG:
 	{
 	    long value;
-	    valid = option->arg_requirement == BU_ARG_NONE || bu_arg_long_from_str(&value, arg);
+	    valid = option->arg_requirement == BU_ARG_NONE || bu_arg_long_from_str(NULL, &value, arg, 0);
 	    break;
 	}
 	case BU_ARG_VALUE_HEX_LONG:
 	{
 	    long value;
-	    valid = bu_arg_hex_long_from_str(&value, arg);
+	    valid = bu_arg_long_from_str(NULL, &value, arg, 16);
 	    break;
 	}
 	case BU_ARG_VALUE_NUMBER:
 	{
 	    fastf_t value;
-	    valid = bu_arg_number_from_str(&value, arg);
+	    valid = bu_arg_number_from_str(NULL, &value, arg);
 	    break;
 	}
 	case BU_ARG_VALUE_CHAR:
 	{
 	    char value;
-	    valid = bu_arg_char_from_str(&value, arg);
+	    valid = bu_arg_char_from_str(NULL, &value, arg);
 	    break;
 	}
 	case BU_ARG_VALUE_STRING:
@@ -1528,7 +1834,7 @@ cmd_schema_dash_numeric_operand_valid(const struct bu_arg_schema *schema,
 	    fastf_t component;
 	    vect_t vector;
 	    const char *words[] = {arg};
-	    return bu_arg_number_from_str(&component, arg) ||
+	    return bu_arg_number_from_str(NULL, &component, arg) ||
 		bu_arg_vector3_from_argv(vector, 1, words) == 1;
 	}
 	default:

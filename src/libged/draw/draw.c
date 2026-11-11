@@ -82,7 +82,7 @@ legacy_draw_mode(struct bu_vls *msg, const char *arg, void *set_var)
 {
     struct legacy_draw_args *args = set_var ? *(struct legacy_draw_args **)set_var : NULL;
     int mode = -1;
-    if (!bu_arg_integer_from_str(&mode, arg)) {
+    if (!bu_arg_integer_from_str(NULL, &mode, arg, 0)) {
 	if (msg)
 	    bu_vls_printf(msg, "expected an integer draw mode\n");
 	return -1;

@@ -253,17 +253,42 @@ BU_EXPORT extern int bu_arg_counted_vector3_from_argv(int *count, fastf_t *xyz,
 /**
  * Strict scalar readers used by native schemas and by command execution when
  * a typed positional role must be stored after schema validation.  They
- * accept BRL-CAD boolean spellings, base-zero integers (or hexadecimal
- * integers where named), and finite floating-point values respectively,
- * return nonzero on success, and leave output storage unchanged on failure.
+ * accept BRL-CAD boolean spellings, explicitly based integers, finite
+ * floating-point values, and exact single characters.  They return nonzero
+ * on success and leave output storage unchanged on failure.
+ * Every reader appends a diagnostic to msg on failure when it is non-NULL.
+ * Integer readers accept an explicit base; valid bases are zero or 2 through
+ * 36.  Range readers additionally require the parsed value to lie within the
+ * supplied inclusive range.
  */
-BU_EXPORT extern int bu_arg_integer_from_str(int *value, const char *arg);
-BU_EXPORT extern int bu_arg_bool_from_str(int *value, const char *arg);
-BU_EXPORT extern int bu_arg_hex_integer_from_str(unsigned int *value, const char *arg);
-BU_EXPORT extern int bu_arg_long_from_str(long *value, const char *arg);
-BU_EXPORT extern int bu_arg_hex_long_from_str(long *value, const char *arg);
-BU_EXPORT extern int bu_arg_number_from_str(fastf_t *value, const char *arg);
-BU_EXPORT extern int bu_arg_char_from_str(char *value, const char *arg);
+BU_EXPORT extern int bu_arg_integer_from_str(struct bu_vls *msg, int *value,
+	const char *arg, int base);
+BU_EXPORT extern int bu_arg_integer_range_from_str(struct bu_vls *msg,
+	int *value, const char *arg, int base, int minimum, int maximum);
+BU_EXPORT extern int bu_arg_unsigned_integer_from_str(struct bu_vls *msg,
+	unsigned int *value, const char *arg, int base);
+BU_EXPORT extern int bu_arg_bool_from_str(struct bu_vls *msg, int *value,
+	const char *arg);
+BU_EXPORT extern int bu_arg_long_from_str(struct bu_vls *msg, long *value,
+	const char *arg, int base);
+BU_EXPORT extern int bu_arg_long_range_from_str(struct bu_vls *msg,
+	long *value, const char *arg, int base, long minimum, long maximum);
+BU_EXPORT extern int bu_arg_unsigned_char_from_str(struct bu_vls *msg,
+	unsigned char *value, const char *arg, int base);
+BU_EXPORT extern int bu_arg_size_t_from_str(struct bu_vls *msg, size_t *value,
+	const char *arg, int base);
+BU_EXPORT extern int bu_arg_size_t_range_from_str(struct bu_vls *msg,
+	size_t *value, const char *arg, int base, size_t minimum, size_t maximum);
+BU_EXPORT extern int bu_arg_number_from_str(struct bu_vls *msg, fastf_t *value,
+	const char *arg);
+BU_EXPORT extern int bu_arg_number_range_from_str(struct bu_vls *msg,
+	fastf_t *value, const char *arg, fastf_t minimum, fastf_t maximum);
+BU_EXPORT extern int bu_arg_double_from_str(struct bu_vls *msg, double *value,
+	const char *arg);
+BU_EXPORT extern int bu_arg_double_range_from_str(struct bu_vls *msg,
+	double *value, const char *arg, double minimum, double maximum);
+BU_EXPORT extern int bu_arg_char_from_str(struct bu_vls *msg, char *value,
+	const char *arg);
 
 /**
  * Read a BRL-CAD unit expression into its conversion factor to the base
@@ -272,7 +297,8 @@ BU_EXPORT extern int bu_arg_char_from_str(char *value, const char *arg);
  * unchanged on failure.  The validator is suitable for a string-valued
  * native-schema option.
  */
-BU_EXPORT extern int bu_arg_units_from_str(double *value, const char *arg);
+BU_EXPORT extern int bu_arg_units_from_str(struct bu_vls *msg, double *value,
+	const char *arg);
 BU_EXPORT extern int bu_arg_units_validate(struct bu_vls *msg, const char *arg);
 
 /** Validate a lower-case ISO 639-1 two-letter language code. */

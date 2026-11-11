@@ -759,12 +759,7 @@ brlcad_add_test(NAME bu_opt_3_vect_03  COMMAND bu_test test_opt 3 V 3)
 brlcad_add_test(NAME bu_opt_3_vect_04  COMMAND bu_test test_opt 3 V 4)
 
 brlcad_add_test(NAME bu_opt_standard_help COMMAND bu_test test_opt 5 h 0)
-
-# Strict floating point scanner testing
-brlcad_add_test(NAME bu_opt_6_double_nan     COMMAND bu_test test_opt 6 d 0)
-brlcad_add_test(NAME bu_opt_6_double_pos_inf COMMAND bu_test test_opt 6 d 1)
-brlcad_add_test(NAME bu_opt_6_double_neg_inf COMMAND bu_test test_opt 6 d 2)
-brlcad_add_test(NAME bu_opt_6_double_finite  COMMAND bu_test test_opt 6 d 3)
+brlcad_add_test(NAME bu_opt_scanners COMMAND bu_test test_opt 6 s 0)
 
 brlcad_add_test(NAME bu_lineedit_completion_mode COMMAND bu_test test_lineedit ${CMAKE_CURRENT_SOURCE_DIR}/lineedit-colors.json)
 

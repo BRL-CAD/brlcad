@@ -125,11 +125,11 @@ _brep_indices(std::set<int> &elements, struct bu_vls *vls, int argc, const char 
 	    std::string s2 = s1.substr(0, pos_dash);
 	    s1.erase(0, pos_dash + 1);
 	    int val1, val2, vtmp;
-	    if (!bu_arg_integer_from_str(&val1, s1.c_str())) {
+	    if (!bu_arg_integer_from_str(NULL, &val1, s1.c_str(), 0)) {
 		bu_vls_printf(vls, "Invalid index specification: %s\n", s1.c_str());
 		return BRLCAD_ERROR;
 	    } 
-	    if (!bu_arg_integer_from_str(&val2, s2.c_str())) {
+	    if (!bu_arg_integer_from_str(NULL, &val2, s2.c_str(), 0)) {
 		bu_vls_printf(vls, "Invalid index specification: %s\n", s2.c_str());
 		return BRLCAD_ERROR;
 	    }
@@ -148,7 +148,7 @@ _brep_indices(std::set<int> &elements, struct bu_vls *vls, int argc, const char 
 	    while (pos_comma != std::string::npos) {
 		std::string ss = s1.substr(0, pos_comma);
 		int val1;
-		if (!bu_arg_integer_from_str(&val1, ss.c_str())) {
+		if (!bu_arg_integer_from_str(NULL, &val1, ss.c_str(), 0)) {
 		    bu_vls_printf(vls, "Invalid index specification: %s\n", ss.c_str());
 		    return BRLCAD_ERROR;
 		} else {
@@ -159,7 +159,7 @@ _brep_indices(std::set<int> &elements, struct bu_vls *vls, int argc, const char 
 	    }
 	    if (s1.length()) {
 		int val1;
-		if (!bu_arg_integer_from_str(&val1, s1.c_str())) {
+		if (!bu_arg_integer_from_str(NULL, &val1, s1.c_str(), 0)) {
 		    bu_vls_printf(vls, "Invalid index specification: %s\n", s1.c_str());
 		    return BRLCAD_ERROR;
 		} 
@@ -170,7 +170,7 @@ _brep_indices(std::set<int> &elements, struct bu_vls *vls, int argc, const char 
 
 	// Nothing fancy looking - see if its a number
 	int val = 0;
-	if (bu_arg_integer_from_str(&val, argv[i])) {
+	if (bu_arg_integer_from_str(NULL, &val, argv[i], 0)) {
 	    elements.insert(val);
 	} else {
 	    bu_vls_printf(vls, "Invalid index specification: %s\n", argv[i]);
@@ -819,11 +819,11 @@ _brep_cmd_intersect(void *bs, int argc, const char **argv)
     }
 
     int i, j;
-    if (!bu_arg_integer_from_str(&i, argv[2])) {
+    if (!bu_arg_integer_from_str(NULL, &i, argv[2], 0)) {
 	bu_vls_printf(gedp->ged_result_str, "invalid integer: %s\n", argv[2]);
 	return BRLCAD_ERROR;
     }
-    if (!bu_arg_integer_from_str(&j, argv[3])) {
+    if (!bu_arg_integer_from_str(NULL, &j, argv[3], 0)) {
 	bu_vls_printf(gedp->ged_result_str, "invalid integer: %s\n", argv[3]);
 	return BRLCAD_ERROR;
     }
@@ -1775,7 +1775,7 @@ static int
 brep_plot_index_value(int *value, const char *text, int limit)
 {
     if (!value || !text || !text[0] || limit <= 0 ||
-	!bu_arg_integer_from_str(value, text) || *value < 0 || *value >= limit)
+	!bu_arg_integer_from_str(NULL, value, text, 0) || *value < 0 || *value >= limit)
 	return 0;
     return 1;
 }

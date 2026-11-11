@@ -428,7 +428,7 @@ _dm_cmd_debug(void *ds, int argc, const char **argv)
     }
 
     int lvl;
-    if (!bu_arg_integer_from_str(&lvl, argv[0]))
+    if (!bu_arg_integer_from_str(NULL, &lvl, argv[0], 0))
 	return BRLCAD_ERROR;
     dm_set_debug(cdmp, lvl);
     return BRLCAD_OK;
