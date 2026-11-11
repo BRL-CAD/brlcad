@@ -46,6 +46,8 @@
 #define HLBVH_STACK_SIZE 256
 #define RT_DEFAULT_MAX_PRIMS_IN_NODE 8
 
+enum { BOT_FACE_UV_SIZE = 3 * ELEMENTS_PER_VECT2D };
+
 static uint32_t
 bot_get_uint32(const unsigned char *cp)
 {
@@ -368,6 +370,7 @@ const struct hit zeroed_hit_s = RT_HIT_INIT_ZERO;
 struct spatial_partition_s {
     struct bvh_flat_node *root;
     triangle_s *tris;
+    fastf_t *vertex_uvs;
     fastf_t *vertex_normals; /* for deallocation, access normals
 				through triangle_s */
 };
@@ -429,9 +432,36 @@ validate_bot_face(fastf_t centroid_out[3], fastf_t bounds_out[6], const struct r
     return 1;
 }
 
+
+static int
+validate_bot_uvs(const struct rt_bot_internal *bot_ip, const struct soltab *stp)
+{
+    if (!(bot_ip->bot_flags & RT_BOT_HAS_TEXTURE_UVS))
+	return 1;
+    if (!bot_ip->uvs || !bot_ip->face_uvs || !bot_ip->num_uvs ||
+	bot_ip->num_face_uvs != bot_ip->num_faces) {
+	bu_log("BOT %s has incomplete texture UV data\n", stp->st_dp ? stp->st_name : "_unnamed_");
+	return 0;
+    }
+    for (size_t face = 0; face < bot_ip->num_faces; ++face) {
+	for (size_t corner = 0; corner < 3; ++corner) {
+	    const int index = bot_ip->face_uvs[face * 3 + corner];
+	    if (index < 0 || (size_t)index >= bot_ip->num_uvs ||
+		VINVALID(&bot_ip->uvs[(size_t)index * ELEMENTS_PER_VECT])) {
+		bu_log("BOT %s face %zu has invalid texture UV data\n",
+		    stp->st_dp ? stp->st_name : "_unnamed_", face);
+		return 0;
+	    }
+	}
+    }
+    return 1;
+}
+
+
 static void
-copy_bot_tri(triangle_s* tris, fastf_t* tri_norms, const struct rt_bot_internal *bot_ip, 
-	     const struct soltab* stp, size_t i, size_t bot_ip_index)
+copy_bot_tri(triangle_s *tris, fastf_t *tri_norms, fastf_t *tri_uvs,
+    const struct rt_bot_internal *bot_ip, const struct soltab *stp,
+    size_t i, size_t bot_ip_index)
 {
     fastf_t *v0, *v1, *v2;
     v0 = (bot_ip->vertices+3*bot_ip->faces[bot_ip_index*3+0]);
@@ -471,6 +501,15 @@ copy_bot_tri(triangle_s* tris, fastf_t* tri_norms, const struct rt_bot_internal 
 	    bu_log("\t%ld %ld %ld a max number of %zu\n", V3ARGS(idx), bot_ip->num_normals);
 	}
     }
+    if (tri_uvs) {
+	for (size_t corner = 0; corner < 3; ++corner) {
+	    // Prepared CW triangles swap their second and third vertices.
+	    const size_t source_corner = bot_ip->orientation == RT_BOT_CW && corner ? 3 - corner : corner;
+	    const size_t uv_index = (size_t)bot_ip->face_uvs[bot_ip_index * 3 + source_corner];
+	    V2MOVE(&tri_uvs[i * BOT_FACE_UV_SIZE + corner * ELEMENTS_PER_VECT2D],
+		&bot_ip->uvs[uv_index * ELEMENTS_PER_VECT]);
+	}
+    }
     tris[i].face_id = bot_ip_index;
 }
 
@@ -494,7 +533,7 @@ rt_bot_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     struct rt_bot_internal *bot_ip = (struct rt_bot_internal *)ip->idb_ptr;
     RT_BOT_CK_MAGIC(bot_ip);
 
-    if (!bot_ip->num_faces || !bot_ip->num_vertices)
+    if (!bot_ip->num_faces || !bot_ip->num_vertices || !validate_bot_uvs(bot_ip, stp))
 	return -1;
 
     struct bn_tol defaults = BN_TOL_INIT_TOL;
@@ -649,6 +688,9 @@ rt_bot_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     if (do_normals) {
 	tri_norms = (fastf_t*) bu_malloc(nvalid * 9 * sizeof(fastf_t), "bot norms");
     }
+    fastf_t *tri_uvs = NULL;
+    if (bot_ip->bot_flags & RT_BOT_HAS_TEXTURE_UVS)
+	tri_uvs = (fastf_t *)bu_malloc(nvalid * BOT_FACE_UV_SIZE * sizeof(fastf_t), "bot texture UVs");
     // copy triangles into order specified by ordered_faces
     if (valid_faces != NULL) {
 	// we have a valid faces array: need to unroll ordered face index -> validated face index
@@ -657,14 +699,14 @@ rt_bot_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 	    size_t ordered_index = (size_t)ordered_faces[i];
 	    size_t bot_ip_index = valid_faces[ordered_index];
 
-	    copy_bot_tri(tris, tri_norms, bot_ip, stp, i, bot_ip_index);
+	    copy_bot_tri(tris, tri_norms, tri_uvs, bot_ip, stp, i, bot_ip_index);
 	}
     } else {
 	for (size_t i = 0; i < nvalid; i++) {
 	    BU_ASSERT(ordered_faces[i] >= 0 && (size_t)ordered_faces[i] < nvalid);
 	    size_t bot_ip_index = (size_t)ordered_faces[i];
 
-	    copy_bot_tri(tris, tri_norms, bot_ip, stp, i, bot_ip_index);
+	    copy_bot_tri(tris, tri_norms, tri_uvs, bot_ip, stp, i, bot_ip_index);
 	}
     }
 
@@ -676,6 +718,7 @@ rt_bot_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     sps->root = flat_root;
     sps->tris = tris;
     sps->vertex_normals = tri_norms;
+    sps->vertex_uvs = tri_uvs;
 
     bot->tie = (void *)sps;
 
@@ -1341,38 +1384,49 @@ rt_bot_curve(struct curvature *cvp, struct hit *hitp, struct soltab *stp)
 
 
 /**
- * For a hit on the surface of an bot, return the (u, v) coordinates
- * of the hit point, 0 <= u, v <= 1.
- *
- * u = azimuth
- * v = elevation
+ * Interpolate authored per-corner BOT texture coordinates. Untextured
+ * faces have a zero mapping. Values outside [0,1] are retained for tiling.
  */
 C_DECL void
 rt_bot_uv(struct application *ap, struct soltab *stp, struct hit *hitp, struct uvcoord *uvp)
 {
-    struct bot_specific *bot;
-    if (ap) RT_CK_APPLICATION(ap);
-
-    if (!stp)
+    if (!uvp)
+	return;
+    uvp->uv_u = uvp->uv_v = uvp->uv_du = uvp->uv_dv = 0;
+    if (!stp || !hitp)
 	return;
     RT_CK_SOLTAB(stp);
-
-    if (hitp) RT_CK_HIT(hitp);
-    if (!uvp) return;
-
-    bot = (struct bot_specific *)stp->st_specific;
-
-    size_t i;
-
-    if (!bot || !hitp || !uvp)
+    RT_CK_HIT(hitp);
+    if (ap) RT_CK_APPLICATION(ap);
+    const struct bot_specific *bot = (const struct bot_specific *)stp->st_specific;
+    if (!bot || !(bot->bot_flags & RT_BOT_HAS_TEXTURE_UVS) || !bot->tie || !hitp->hit_private)
 	return;
-    triangle_s *trip = (triangle_s *)hitp->hit_private;
-    if (!trip)
+    const struct spatial_partition_s *sps = (const struct spatial_partition_s *)bot->tie;
+    const triangle_s *triangle = (const triangle_s *)hitp->hit_private;
+    const size_t index = (size_t)(triangle - sps->tris);
+    if (!sps->vertex_uvs || index >= bot->bot_ntri)
 	return;
+    const fastf_t *uv_a = &sps->vertex_uvs[index * BOT_FACE_UV_SIZE];
+    const fastf_t *uv_b = uv_a + ELEMENTS_PER_VECT2D;
+    const fastf_t *uv_c = uv_b + ELEMENTS_PER_VECT2D;
+    const fastf_t weight_b = hitp->hit_vpriv[Y];
+    const fastf_t weight_c = hitp->hit_vpriv[Z];
+    const fastf_t weight_a = 1.0 - weight_b - weight_c;
+    uvp->uv_u = weight_a * uv_a[X] + weight_b * uv_b[X] + weight_c * uv_c[X];
+    uvp->uv_v = weight_a * uv_a[Y] + weight_b * uv_b[Y] + weight_c * uv_c[Y];
 
-    if ((bot->bot_flags & RT_BOT_HAS_TEXTURE_UVS) /* && trip->tri_uvs */) {
-	for (i = X; i <= Z; i++) {
-	    /* TODO: do stuff */
+    if (ap) {
+	const fastf_t radius = fabs(ap->a_rbeam + ap->a_diverge * hitp->hit_dist);
+	if (radius > 0.0) {
+	    // Barycentric gradients convert the ray beam radius into UV spans.
+	    vect_t gradient_b, gradient_c, gradient;
+	    VCROSS(gradient_b, triangle->AC, triangle->face_norm);
+	    VCROSS(gradient_c, triangle->face_norm, triangle->AB);
+	    const fastf_t scale = 1.0 / triangle->face_norm_scalar;
+	    VCOMB2(gradient, uv_b[X] - uv_a[X], gradient_b, uv_c[X] - uv_a[X], gradient_c);
+	    uvp->uv_du = radius * scale * MAGNITUDE(gradient);
+	    VCOMB2(gradient, uv_b[Y] - uv_a[Y], gradient_b, uv_c[Y] - uv_a[Y], gradient_c);
+	    uvp->uv_dv = radius * scale * MAGNITUDE(gradient);
 	}
     }
 }
@@ -1388,6 +1442,7 @@ rt_bot_free(struct soltab *stp)
 	bu_free(sps->root, "bot bvh flat nodes");
 	bu_free(sps->tris, "bot triangles");
 	bu_free(sps->vertex_normals, "bot normals");
+	bu_free(sps->vertex_uvs, "bot texture UVs");
 	BU_PUT(sps, struct spatial_partition_s);
 	bot->tie = NULL;
     }
@@ -1399,13 +1454,12 @@ rt_bot_free(struct soltab *stp)
     }
 
     if (bot) {
+#ifdef USE_OPENCL
+	clt_bot_free(bot);
+#endif
 	BU_PUT(bot, struct bot_specific);
 	stp->st_specific = NULL;
     }
-
-#ifdef USE_OPENCL
-    clt_bot_free(bot);
-#endif
 }
 
 

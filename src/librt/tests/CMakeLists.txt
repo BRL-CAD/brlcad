@@ -1,5 +1,8 @@
 set(RT_TEST_LIBS "librt;${M_LIBRARY}")
 
+brlcad_addexec(rt_bot_uv bot_uv.cpp "${RT_TEST_LIBS}" TEST)
+brlcad_add_test(NAME rt_bot_uv COMMAND rt_bot_uv)
+
 brlcad_addexec(rt_instance_paths instance_paths.cpp "librt;libwdb;libbu" TEST)
 brlcad_add_test(NAME rt_instance_paths COMMAND rt_instance_paths)
 
@@ -233,6 +236,7 @@ set(
   bound_internal.c
   brep_boolean_tests.g
   brep_import.c
+  bot_uv.cpp
   brep_io.cpp
   crofton.c
   cyclic_tests.g
