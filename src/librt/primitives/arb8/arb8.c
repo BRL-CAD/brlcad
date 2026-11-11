@@ -1532,7 +1532,8 @@ rt_arb_setup(struct soltab *stp, struct rt_arb_internal *aip, struct rt_i *rtip,
 {
     register int i;
     struct prep_arb pa;
-    struct arb_specific *arbp = NULL;;
+    struct arb_specific *arbp = NULL;
+    const int update_planes = !uv_wanted || stp->st_specific == NULL;
 
     RT_ARB_CK_MAGIC(aip);
 
@@ -1563,9 +1564,14 @@ rt_arb_setup(struct soltab *stp, struct rt_arb_internal *aip, struct rt_i *rtip,
 		"arb_specific");
 	    stp->st_specific = (void *)arbp;
 	}
-	arbp->arb_nmfaces = pa.pa_faces;
-	memcpy((char *)arbp->arb_face, (char *)pa.pa_face,
-	       pa.pa_faces * sizeof(struct aface));
+	// Lazy UV setup runs alongside ray queries; prepared planes stay immutable.
+	if (update_planes) {
+	    arbp->arb_nmfaces = pa.pa_faces;
+	    memcpy((char *)arbp->arb_face, (char *)pa.pa_face,
+		pa.pa_faces * sizeof(struct aface));
+	} else if (arbp->arb_nmfaces != pa.pa_faces) {
+	    return -2;
+	}
 
 	if (uv_wanted) {
 	    register struct oface *ofp;
@@ -1584,6 +1590,10 @@ rt_arb_setup(struct soltab *stp, struct rt_arb_internal *aip, struct rt_i *rtip,
 	    arbp->arb_opt = NULL;
 	}
     }
+
+    // A cached UV request must not rewrite planes, bounds, or primitive type.
+    if (!update_planes)
+	return 0;
 
     if (pa.pa_faces == 6 && arb_is_concave(aip, rtip ? &rtip->rti_tol : NULL)) {
 	if (UNLIKELY(RT_G_DEBUG & RT_DEBUG_ARB8)) {
@@ -1898,7 +1908,11 @@ rt_arb_uv(struct application *ap, struct soltab *stp, register struct hit *hitp,
     fastf_t *norm;
     fastf_t min_r_U, min_r_V;
 
-    if (arbp->arb_opt == (struct oface *)0) {
+    struct oface *uv_faces;
+    bu_semaphore_acquire(RT_SEM_MODEL);
+    uv_faces = arbp->arb_opt;
+    bu_semaphore_release(RT_SEM_MODEL);
+    if (!uv_faces) {
 	register int ret = 0;
 	struct rt_db_internal intern;
 	struct rt_arb_internal *aip;
@@ -1912,30 +1926,27 @@ rt_arb_uv(struct application *ap, struct soltab *stp, register struct hit *hitp,
 	aip = (struct rt_arb_internal *)intern.idb_ptr;
 	RT_ARB_CK_MAGIC(aip);
 
-	/*
-	 * The double check of arb_opt is to avoid the case where
-	 * another processor did the UV setup while this processor was
-	 * waiting in bu_semaphore_acquire().
-	 */
+	// Another query may initialize the mapping while the internal is loaded.
 	bu_semaphore_acquire(RT_SEM_MODEL);
 	if (arbp->arb_opt == (struct oface *)0) {
 	    ret = rt_arb_setup(stp, aip, ap->a_rt_i, 1);
 	}
+	uv_faces = arbp->arb_opt;
 	bu_semaphore_release(RT_SEM_MODEL);
 
 	rt_db_free_internal(&intern);
 
-	if (ret != 0 || arbp->arb_opt == (struct oface *)0) {
+	if (ret != 0 || !uv_faces) {
 	    bu_log("rt_arb_uv(%s) dynamic setup failure st_specific=%p, optp=%p\n",
 		   stp->st_name,
-		   stp->st_specific, (void *)arbp->arb_opt);
+		   stp->st_specific, (void *)uv_faces);
 	    return;
 	}
 	if (RT_G_DEBUG&RT_DEBUG_SOLIDS)
 	    rt_pr_soltab(stp);
     }
 
-    ofp = &arbp->arb_opt[hitp->hit_surfno];
+    ofp = &uv_faces[hitp->hit_surfno];
 
     VSUB2(P_A, hitp->hit_point, ofp->arb_UVorig);
     /* Flipping v is an artifact of how the faces are built */
