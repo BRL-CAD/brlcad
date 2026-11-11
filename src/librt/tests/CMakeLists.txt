@@ -3,6 +3,9 @@ set(RT_TEST_LIBS "librt;${M_LIBRARY}")
 brlcad_addexec(rt_arb_uv arb_uv.cpp "librt;libwdb;libbu;Threads::Threads" TEST)
 brlcad_add_test(NAME rt_arb_uv COMMAND rt_arb_uv)
 
+brlcad_addexec(rt_bot_normals bot_normals.cpp "${RT_TEST_LIBS}" TEST)
+brlcad_add_test(NAME rt_bot_normals COMMAND rt_bot_normals)
+
 brlcad_addexec(rt_bot_uv bot_uv.cpp "${RT_TEST_LIBS}" TEST)
 brlcad_add_test(NAME rt_bot_uv COMMAND rt_bot_uv)
 
@@ -240,6 +243,8 @@ set(
   brep_boolean_tests.g
   brep_import.c
   arb_uv.cpp
+  bot_normals.cpp
+  bot_test.h
   bot_uv.cpp
   brep_io.cpp
   crofton.c

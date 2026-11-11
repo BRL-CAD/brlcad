@@ -28,6 +28,7 @@
 #include "bu/log.h"
 #include "raytrace.h"
 #include "rt/geom.h"
+#include "bot_test.h"
 
 namespace {
 constexpr size_t TriangleCount = 12;
@@ -86,29 +87,7 @@ struct Mesh {
     Mesh &operator=(const Mesh &) = delete;
 };
 
-class PreparedBot {
-  public:
-    struct soltab solid = {};
-    int status;
-    PreparedBot(Mesh &mesh, struct rt_i *rtip)
-    {
-	solid.l.magic = RT_SOLTAB_MAGIC;
-	solid.l2.magic = RT_SOLTAB2_MAGIC;
-	solid.st_meth = &OBJ[ID_BOT];
-	solid.st_id = ID_BOT;
-	solid.st_rtip = rtip;
-	struct rt_db_internal internal;
-	RT_DB_INTERNAL_INIT(&internal);
-	internal.idb_major_type = DB5_MAJORTYPE_BRLCAD;
-	internal.idb_type = ID_BOT;
-	internal.idb_meth = &OBJ[ID_BOT];
-	internal.idb_ptr = &mesh.bot;
-	status = OBJ[ID_BOT].ft_prep(&solid, &internal, rtip);
-    }
-    ~PreparedBot() { if (solid.st_specific) OBJ[ID_BOT].ft_free(&solid); }
-    PreparedBot(const PreparedBot &) = delete;
-    PreparedBot &operator=(const PreparedBot &) = delete;
-};
+using bot_test::PreparedBot;
 
 bool
 check_uv(struct application &application, struct soltab *solid, struct xray &ray,
@@ -142,7 +121,7 @@ bool
 check_mesh(struct rt_i *rtip, struct resource *resource, unsigned char orientation, bool textured)
 {
     Mesh mesh(orientation, textured);
-    PreparedBot prepared(mesh, rtip);
+    PreparedBot prepared(mesh.bot, rtip);
     if (prepared.status != 0)
 	return false;
     // Prepared geometry must own its UVs after the database internal is freed.
@@ -247,7 +226,7 @@ check_invalid_uvs(struct rt_i *rtip)
 	    case InvalidUV::MissingUVs: mesh.bot.uvs = nullptr; break;
 	    case InvalidUV::MissingIndices: mesh.bot.face_uvs = nullptr; break;
 	}
-	PreparedBot prepared(mesh, rtip);
+	PreparedBot prepared(mesh.bot, rtip);
 	if (prepared.status == 0) {
 	    bu_log("Malformed BOT UV case %d was accepted\n", static_cast<int>(invalid));
 	    ok = false;

@@ -463,15 +463,13 @@ copy_bot_tri(triangle_s *tris, fastf_t *tri_norms, fastf_t *tri_uvs,
     const struct rt_bot_internal *bot_ip, const struct soltab *stp,
     size_t i, size_t bot_ip_index)
 {
-    fastf_t *v0, *v1, *v2;
-    v0 = (bot_ip->vertices+3*bot_ip->faces[bot_ip_index*3+0]);
-    if (bot_ip->orientation == RT_BOT_CW) {
-	v2 = (bot_ip->vertices+3*bot_ip->faces[bot_ip_index*3+1]);
-	v1 = (bot_ip->vertices+3*bot_ip->faces[bot_ip_index*3+2]);
-    } else {
-	v1 = (bot_ip->vertices+3*bot_ip->faces[bot_ip_index*3+1]);
-	v2 = (bot_ip->vertices+3*bot_ip->faces[bot_ip_index*3+2]);
-    }
+    // Geometry and all per-corner attributes must use the same winding.
+    const size_t corners[3] = {0,
+	bot_ip->orientation == RT_BOT_CW ? 2 : 1,
+	bot_ip->orientation == RT_BOT_CW ? 1 : 2};
+    const fastf_t *v0 = &bot_ip->vertices[3 * bot_ip->faces[bot_ip_index * 3 + corners[0]]];
+    const fastf_t *v1 = &bot_ip->vertices[3 * bot_ip->faces[bot_ip_index * 3 + corners[1]]];
+    const fastf_t *v2 = &bot_ip->vertices[3 * bot_ip->faces[bot_ip_index * 3 + corners[2]]];
     VMOVE(tris[i].A, v0);
     VSUB2(tris[i].AB, v1, v0);
     VSUB2(tris[i].AC, v2, v0);
@@ -493,9 +491,9 @@ copy_bot_tri(triangle_s *tris, fastf_t *tri_norms, fastf_t *tri_uvs,
 	    idx[2] >= 0 && idx[2] < (long)bot_ip->num_normals)
 	{
 	    tris[i].norms = &tri_norms[i*9];
-	    VMOVE(&tris[i].norms[0*3], &bot_ip->normals[idx[0]*3]);
-	    VMOVE(&tris[i].norms[1*3], &bot_ip->normals[idx[1]*3]);
-	    VMOVE(&tris[i].norms[2*3], &bot_ip->normals[idx[2]*3]);
+	    for (size_t corner = 0; corner < 3; ++corner)
+		VMOVE(&tris[i].norms[corner * ELEMENTS_PER_VECT],
+		    &bot_ip->normals[idx[corners[corner]] * ELEMENTS_PER_VECT]);
 	} else if (RT_G_DEBUG & RT_DEBUG_SHOOT) {
 	    bu_log("%s: facet #%zu tried to have normals, but gave incorrect indexes\n", stp->st_dp?stp->st_name:"_unnamed_", bot_ip_index);
 	    bu_log("\t%ld %ld %ld a max number of %zu\n", V3ARGS(idx), bot_ip->num_normals);
@@ -503,9 +501,7 @@ copy_bot_tri(triangle_s *tris, fastf_t *tri_norms, fastf_t *tri_uvs,
     }
     if (tri_uvs) {
 	for (size_t corner = 0; corner < 3; ++corner) {
-	    // Prepared CW triangles swap their second and third vertices.
-	    const size_t source_corner = bot_ip->orientation == RT_BOT_CW && corner ? 3 - corner : corner;
-	    const size_t uv_index = (size_t)bot_ip->face_uvs[bot_ip_index * 3 + source_corner];
+	    const size_t uv_index = (size_t)bot_ip->face_uvs[bot_ip_index * 3 + corners[corner]];
 	    V2MOVE(&tri_uvs[i * BOT_FACE_UV_SIZE + corner * ELEMENTS_PER_VECT2D],
 		&bot_ip->uvs[uv_index * ELEMENTS_PER_VECT]);
 	}
@@ -2437,10 +2433,14 @@ rt_bot_mat(struct rt_db_internal *rop, const mat_t mat, const struct rt_db_inter
 
     if (tip->num_vertices != top->num_vertices)
 	return BRLCAD_ERROR;
+    mat_t inverse;
     if (tip->bot_flags & RT_BOT_HAS_SURFACE_NORMALS) {
 	if (!(top->bot_flags & RT_BOT_HAS_SURFACE_NORMALS))
 	    return BRLCAD_ERROR;
-	if (tip->num_normals != top->num_vertices)
+	if (tip->num_normals != top->num_normals ||
+	    (tip->num_normals && (!tip->normals || !top->normals)))
+	    return BRLCAD_ERROR;
+	if (tip->num_normals && !bn_mat_inverse(inverse, mat))
 	    return BRLCAD_ERROR;
     }
     if (tip->bot_flags & RT_BOT_HAS_TEXTURE_UVS) {
@@ -2461,8 +2461,10 @@ rt_bot_mat(struct rt_db_internal *rop, const mat_t mat, const struct rt_db_inter
     if (tip->bot_flags & RT_BOT_HAS_SURFACE_NORMALS) {
 	vect_t tmp_n;
 	for (size_t i = 0; i < tip->num_normals; i++) {
-	    VMOVE(tmp_n, &(tip->normals[i*ELEMENTS_PER_VECT]));
-	    MAT4X3VEC(&(top->normals[i*ELEMENTS_PER_VECT]), mat, tmp_n);
+	    // Covectors use the inverse transpose under nonuniform scale or shear.
+	    VEC3X4MAT(tmp_n, &tip->normals[i * ELEMENTS_PER_VECT], inverse);
+	    VUNITIZE(tmp_n);
+	    VMOVE(&top->normals[i * ELEMENTS_PER_VECT], tmp_n);
 	}
     }
     if ((tip->bot_flags & RT_BOT_HAS_TEXTURE_UVS) && top->uvs != tip->uvs) {
