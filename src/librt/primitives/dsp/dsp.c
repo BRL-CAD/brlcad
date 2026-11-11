@@ -2766,8 +2766,8 @@ rt_dsp_vshot(struct soltab *stp[], struct xray *rp[], struct seg *segp, int n, s
 /**
  * Given ONE ray distance, return the normal and entry/exit point.
  */
-C_DECL void
-rt_dsp_norm(register struct hit *hitp, struct soltab *stp, register struct xray *rp)
+static void
+rt_dsp_norm_impl(struct hit *hitp, struct soltab *stp, struct xray *rp, int clamp_to_ray)
 {
     vect_t N, t, tmp, A;
     struct dsp_specific *dsp = (struct dsp_specific *)stp->st_specific;
@@ -2919,8 +2919,8 @@ rt_dsp_norm(register struct hit *hitp, struct soltab *stp, register struct xray 
     if (RT_G_DEBUG & RT_DEBUG_HF)
 	bu_log("interpolated %g %g %g  dot:%g\n", V3ARGS(N), dot);
 
-    if ((ZERO(hitp->hit_vpriv[Z]) && dot > 0.0)/* in-hit needs fix */ ||
-	(ZERO(hitp->hit_vpriv[Z] - 1.0) && dot < 0.0)/* out-hit needs fix */) {
+    if (clamp_to_ray && ((ZERO(hitp->hit_vpriv[Z]) && dot > 0.0)/* in-hit needs fix */ ||
+	(ZERO(hitp->hit_vpriv[Z] - 1.0) && dot < 0.0)/* out-hit needs fix */)) {
 	/* bring the normal back to being perpendicular to the ray to
 	 * avoid "flipped normal" warnings
 	 */
@@ -2946,6 +2946,31 @@ rt_dsp_norm(register struct hit *hitp, struct soltab *stp, register struct xray 
 	fclose(fd);
 	bu_semaphore_release(BU_SEM_SYSCALL);
     }
+}
+
+
+C_DECL void
+rt_dsp_norm(struct hit *hitp, struct soltab *stp, struct xray *rp)
+{
+    rt_dsp_norm_impl(hitp, stp, rp, 1);
+}
+
+
+C_DECL int
+rt_dsp_normals(const struct hit *hitp, struct soltab *stp, struct xray *rp,
+    vect_t geometric, vect_t shading)
+{
+    const struct dsp_specific *dsp = (const struct dsp_specific *)stp->st_specific;
+    // Intersection normals are in DSP space; transform them as covectors.
+    VEC3X4MAT(geometric, hitp->hit_normal, dsp->dsp_i.dsp_mtos);
+    if (hitp->hit_surfno != ZTOP || !dsp->dsp_i.dsp_smooth) {
+	VMOVE(shading, geometric);
+    } else {
+	struct hit local = *hitp;
+	rt_dsp_norm_impl(&local, stp, rp, 0);
+	VMOVE(shading, local.hit_normal);
+    }
+    return 0;
 }
 
 

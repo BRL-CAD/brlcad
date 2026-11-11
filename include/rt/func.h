@@ -87,6 +87,26 @@ RT_EXPORT extern int rt_obj_print(const struct soltab *stp);
 RT_EXPORT extern int rt_obj_norm(struct hit *hitp, struct soltab *stp, struct xray *rp);
 
 /**
+ * Return separate unit geometric and shading normals at an unmodified ray
+ * intersection.  The geometric normal describes the intersected boundary;
+ * the shading normal may interpolate authored vertex normals.  It is oriented
+ * into the same hemisphere as the geometric normal.  Both point out of the
+ * primitive before Boolean evaluation.  The caller must apply
+ * the partition's flip flag to both normals when appropriate.
+ *
+ * Pass the hit as returned by ray intersection, before legacy normal queries
+ * modify it.  Smoothed BOT and DSP directions do not use legacy clamping to
+ * the incident ray.  This function leaves the hit and prepared geometry unchanged,
+ * so repeated queries are safe.  All pointers are required and the two
+ * output vectors must be distinct.  Returns 0 on success, < 0 on invalid
+ * arguments, unavailable methods, or nonfinite/zero normals.  Outputs are
+ * unchanged on failure.  Primitive implementations without a separate
+ * normals callback use ft_norm for both outputs.
+ */
+RT_EXPORT extern int rt_obj_normals(const struct hit *hitp, struct soltab *stp,
+    struct xray *rp, vect_t geometric, vect_t shading);
+
+/**
  * calculate object uv parameterization for a given hit point
  */
 RT_EXPORT extern int rt_obj_uv(struct application *ap, struct soltab *stp, struct hit *hitp, struct uvcoord *uvp);

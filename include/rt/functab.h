@@ -332,6 +332,16 @@ struct rt_functab {
     int (*ft_validate)(struct bu_vls *error_msg, const struct rt_db_internal *ip, const struct bn_tol *tol);
 #define RTFUNCTAB_FUNC_VALIDATE_CAST(_func) ((int (*)(struct bu_vls *, const struct rt_db_internal *, const struct bn_tol *))((void (*)(void))_func))
 
+    /**
+     * Optional separate geometric and shading normals for an unmodified ray
+     * intersection.  Return 0 on success, < 0 on failure.  Neither the hit
+     * nor prepared geometry may be changed.  When absent, ft_norm supplies
+     * both normals through rt_obj_normals().
+     */
+    int (*ft_normals)(const struct hit *hitp, struct soltab *stp,
+	struct xray *rp, vect_t geometric, vect_t shading);
+#define RTFUNCTAB_FUNC_NORMALS_CAST(_func) ((int (*)(const struct hit *, struct soltab *, struct xray *, vect_t, vect_t))((void (*)(void))_func))
+
 };
 
 /**

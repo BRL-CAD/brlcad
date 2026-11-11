@@ -64,9 +64,25 @@ struct Mesh {
 };
 
 bool
-same_normal(const fastf_t *actual, const fastf_t *expected)
+same_vector(const fastf_t *actual, const fastf_t *expected)
 {
     return !VINVALID(actual) && VNEAR_EQUAL(actual, expected, NormalTolerance);
+}
+
+bool
+check_hit_normals(struct hit &hit, struct soltab *solid, struct xray *ray, const vect_t expected)
+{
+    const struct hit original = hit;
+    const vect_t expected_geometric = {0, 0, 1};
+    bool ok = true;
+    for (size_t repeat = 0; repeat < 2; ++repeat) {
+	vect_t geometric, shading;
+	ok = rt_obj_normals(&hit, solid, ray, geometric, shading) == 0 &&
+	    same_vector(geometric, expected_geometric) && same_vector(shading, expected) &&
+	    same_vector(hit.hit_normal, original.hit_normal) &&
+	    same_vector(hit.hit_vpriv, original.hit_vpriv) && ok;
+    }
+    return rt_obj_norm(&hit, solid, ray) == 0 && same_vector(hit.hit_normal, expected) && ok;
 }
 
 bool
@@ -100,7 +116,7 @@ check_interpolation(struct rt_i *rtip, struct resource *resource, unsigned char 
 	    ok = false;
 	} else {
 	    struct hit hit = BU_LIST_FIRST(seg, &head.l)->seg_in;
-	    ok = rt_obj_norm(&hit, &prepared.solid, &rays[i]) == 0 && same_normal(hit.hit_normal, expected) && ok;
+	    ok = check_hit_normals(hit, &prepared.solid, &rays[i], expected) && ok;
 	}
 	struct seg *segment;
 	while (BU_LIST_WHILE(segment, seg, &head.l)) {
@@ -114,7 +130,7 @@ check_interpolation(struct rt_i *rtip, struct resource *resource, unsigned char 
 	    ok = false;
 	} else {
 	    auto hit = segments[i].seg_in;
-	    ok = rt_obj_norm(&hit, &prepared.solid, &rays[i]) == 0 && same_normal(hit.hit_normal, expected) && ok;
+	    ok = check_hit_normals(hit, &prepared.solid, &rays[i], expected) && ok;
 	}
     }
     if (!ok) bu_log("BOT normal interpolation failed (orientation=%d)\n", orientation);
@@ -152,12 +168,93 @@ check_transform(bool in_place, bool independent_count, bool shear)
 	if (shear)
 	    VSET(expected, normal[X] / 2, normal[Y] / 3 - normal[X] / 6, normal[Z] / 4);
 	VUNITIZE(expected);
-	ok = same_normal(&result.normals[i * ELEMENTS_PER_VECT], expected) && ok;
+	ok = same_vector(&result.normals[i * ELEMENTS_PER_VECT], expected) && ok;
     }
     if (!in_place) ok = source.normals == original_normals && ok;
     if (!ok) bu_log("BOT normal transform failed (in_place=%d, independent_count=%d, shear=%d)\n", in_place, independent_count, shear);
     return ok;
 }
+bool
+check_view_independent_normals(struct rt_i *rtip, struct resource *resource)
+{
+    Mesh mesh;
+    bot_test::PreparedBot prepared(mesh.bot, rtip);
+    if (prepared.status != 0) return false;
+    const point_t target = {0.6, 1.5, 0};
+    const vect_t directions[] = {{0, 0, -1}, {0, 0, 1}, {1, 0, -0.01}};
+    bool ok = true;
+    for (const auto &direction : directions) {
+	struct application application;
+	RT_APPLICATION_INIT(&application);
+	application.a_rt_i = rtip;
+	application.a_resource = resource;
+	application.a_ray.magic = RT_RAY_MAGIC;
+	VMOVE(application.a_ray.r_dir, direction);
+	VUNITIZE(application.a_ray.r_dir);
+	VJOIN1(application.a_ray.r_pt, target, -2, application.a_ray.r_dir);
+	struct seg head;
+	BU_LIST_INIT(&head.l);
+	bool passed = rt_obj_shot(&prepared.solid, &application.a_ray, &application, &head) > 0 && !BU_LIST_IS_EMPTY(&head.l);
+	if (passed) {
+	    const double side = direction[Z] < 0 ? 1.0 : -1.0;
+	    vect_t expected = {0.18 * side, 0.4 * side, 0.74 * side};
+	    const vect_t expected_geometric = {0, 0, side};
+	    VUNITIZE(expected);
+	    vect_t geometric, shading;
+	    passed = rt_obj_normals(&BU_LIST_FIRST(seg, &head.l)->seg_in, &prepared.solid,
+		&application.a_ray, geometric, shading) == 0 &&
+		same_vector(geometric, expected_geometric) && same_vector(shading, expected);
+	}
+	struct seg *segment;
+	while (BU_LIST_WHILE(segment, seg, &head.l)) {
+	    BU_LIST_DEQUEUE(&segment->l);
+	    RT_FREE_SEG(segment, resource);
+	}
+	if (!passed) bu_log("BOT shading normal changed with view direction (%g %g %g)\n", V3ARGS(direction));
+	ok = passed && ok;
+    }
+    return ok;
+}
+
+bool
+check_invalid_normals(struct rt_i *rtip, struct resource *resource)
+{
+    bool ok = true;
+    for (double invalid : {0.0, static_cast<double>(NAN)}) {
+	Mesh mesh;
+	std::fill(mesh.normals.begin(), mesh.normals.end(), invalid);
+	bot_test::PreparedBot prepared(mesh.bot, rtip);
+	if (prepared.status != 0) return false;
+	struct application application;
+	RT_APPLICATION_INIT(&application);
+	application.a_rt_i = rtip;
+	application.a_resource = resource;
+	application.a_ray.magic = RT_RAY_MAGIC;
+	VSET(application.a_ray.r_pt, 0.6, 1.5, 2);
+	VSET(application.a_ray.r_dir, 0, 0, -1);
+	struct seg head;
+	BU_LIST_INIT(&head.l);
+	const bool hit = rt_obj_shot(&prepared.solid, &application.a_ray, &application, &head) > 0 && !BU_LIST_IS_EMPTY(&head.l);
+	bool rejected = false;
+	if (hit) {
+	    const vect_t sentinel = {2, 3, 4};
+	    vect_t geometric, shading;
+	    VMOVE(geometric, sentinel); VMOVE(shading, sentinel);
+	    rejected = rt_obj_normals(&BU_LIST_FIRST(seg, &head.l)->seg_in, &prepared.solid,
+		&application.a_ray, geometric, shading) < 0 &&
+		same_vector(geometric, sentinel) && same_vector(shading, sentinel);
+	}
+	struct seg *segment;
+	while (BU_LIST_WHILE(segment, seg, &head.l)) {
+	    BU_LIST_DEQUEUE(&segment->l);
+	    RT_FREE_SEG(segment, resource);
+	}
+	ok = rejected && ok;
+    }
+    if (!ok) bu_log("Invalid BOT normals were not rejected with unchanged outputs\n");
+    return ok;
+}
+
 bool
 check_rejected_transforms()
 {
@@ -207,6 +304,8 @@ main(int argc, char **argv)
 	    for (bool shear : {false, true})
 		ok = check_transform(in_place, independent_count, shear) && ok;
     ok = check_rejected_transforms() && ok;
+    ok = check_invalid_normals(rtip, &resource) && ok;
+    ok = check_view_independent_normals(rtip, &resource) && ok;
     rt_i_destroy(rtip);
     rt_clean_resource_basic(nullptr, &resource);
     return ok ? 0 : 1;

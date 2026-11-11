@@ -1299,6 +1299,29 @@ rt_bot_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, str
 }
 
 
+static int
+bot_interpolate_normal(vect_t normal, const struct hit *hitp, const struct bot_specific *bot)
+{
+    const triangle_s *trip = (const triangle_s *)hitp->hit_private;
+    if (!(bot->bot_flags & RT_BOT_HAS_SURFACE_NORMALS) ||
+	!(bot->bot_flags & RT_BOT_USE_NORMALS) || !trip->norms)
+	return 0;
+
+    fastf_t v = hitp->hit_vpriv[Y];
+    if (v < 0.0) v = 0.0;
+    if (v > 1.0) v = 1.0;
+    fastf_t w = hitp->hit_vpriv[Z];
+    if (w < 0.0) w = 0.0;
+    if (w > 1.0) w = 1.0;
+    fastf_t u = 1.0 - v - w;
+    if (u < 0.0) u = 0.0;
+    for (size_t i = X; i <= Z; ++i)
+	normal[i] = u * trip->norms[i] + v * trip->norms[i + 3] + w * trip->norms[i + 6];
+    VUNITIZE(normal);
+    return 1;
+}
+
+
 /**
  * Given ONE ray distance, return the normal and entry/exit point.
  */
@@ -1308,34 +1331,13 @@ rt_bot_norm(struct hit *hitp, struct soltab *stp, struct xray *rp)
     struct bot_specific *bot=(struct bot_specific *)stp->st_specific;
 
     vect_t old_norm;
-    triangle_s *trip=(triangle_s *)hitp->hit_private;
 
     VJOIN1(hitp->hit_point, rp->r_pt, hitp->hit_dist, rp->r_dir);
     VMOVE(old_norm, hitp->hit_normal);
 
-    if ((bot->bot_flags & RT_BOT_HAS_SURFACE_NORMALS) && (bot->bot_flags & RT_BOT_USE_NORMALS) && trip->norms) {
-	fastf_t old_ray_dot_norm, new_ray_dot_norm;
-	fastf_t u, v, w; /*barycentric coords of hit point */
-	size_t i;
-
-	old_ray_dot_norm = VDOT(hitp->hit_normal, rp->r_dir);
-
-	v = hitp->hit_vpriv[Y];
-	if (v < 0.0) v = 0.0;
-	if (v > 1.0) v = 1.0;
-
-	w = hitp->hit_vpriv[Z];
-	if (w < 0.0) w = 0.0;
-	if (w > 1.0) w =  1.0;
-
-	u = 1.0 - v - w;
-	if (u < 0.0) u = 0.0;
-	VSETALL(hitp->hit_normal, 0.0);
-
-	for (i = X; i <= Z; i++) {
-	    hitp->hit_normal[i] = u*trip->norms[i] + v*trip->norms[i+3] + w*trip->norms[i+6];
-	}
-	VUNITIZE(hitp->hit_normal);
+    if (bot_interpolate_normal(hitp->hit_normal, hitp, bot)) {
+	fastf_t old_ray_dot_norm = VDOT(old_norm, rp->r_dir);
+	fastf_t new_ray_dot_norm;
 
 	if (bot->bot_mode == RT_BOT_PLATE || bot->bot_mode == RT_BOT_PLATE_NOCOS) {
 	    if (VDOT(old_norm, hitp->hit_normal) < 0.0) {
@@ -1360,6 +1362,19 @@ rt_bot_norm(struct hit *hitp, struct soltab *stp, struct xray *rp)
 
 	VUNITIZE(hitp->hit_normal);
     }
+}
+
+
+C_DECL int
+rt_bot_normals(const struct hit *hitp, struct soltab *stp, struct xray *UNUSED(rp),
+    vect_t geometric, vect_t shading)
+{
+    const struct bot_specific *bot = (const struct bot_specific *)stp->st_specific;
+    // Segment construction has already oriented the facet for solid/plate mode.
+    VMOVE(geometric, hitp->hit_normal);
+    VMOVE(shading, geometric);
+    bot_interpolate_normal(shading, hitp, bot);
+    return 0;
 }
 
 
