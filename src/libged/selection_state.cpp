@@ -959,6 +959,19 @@ ged_selection_presenter_set_private(struct ged *gedp,
 }
 
 
+void
+ged_selection_presenter_clear_private(struct ged *gedp,
+	ged_selection_present_func_t present, void *client_data)
+{
+    struct ged_selection_state *state = ged_selection_native_state(gedp);
+    if (!state || state->present != present ||
+	state->present_data != client_data)
+	return;
+    state->present = nullptr;
+    state->present_data = nullptr;
+}
+
+
 int
 ged_selection_state_available(struct ged *gedp)
 {

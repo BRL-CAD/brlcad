@@ -51,6 +51,7 @@ extern "C" {
 #include "bv/lod.h"
 #include "raytrace.h"
 #include "ged/defines.h"
+#include "ged/selection.h"
 #include "ged/view.h"
 #include "./ged_private.h"
 
@@ -438,6 +439,8 @@ DbiState::DbiState(struct ged *ged_p)
 	return;
     event_observer = ged_event_observer_add(gedp, GED_EVENT_OBSERVER_INTERNAL,
 	DbiState::event_callback, this);
+    ged_selection_presenter_set_private(gedp, DbiState::selection_present,
+	this);
 
     // Set up cache
     dcache = dbi_cache_open(dbip->dbi_filename);
@@ -451,6 +454,9 @@ DbiState::DbiState(struct ged *ged_p)
 
 DbiState::~DbiState()
 {
+    if (gedp)
+	ged_selection_presenter_clear_private(gedp,
+	    DbiState::selection_present, this);
     if (gedp && event_observer)
 	ged_event_observer_remove(gedp, event_observer);
     bu_vls_free(&path_string);
@@ -465,6 +471,52 @@ DbiState::~DbiState()
 
     if (dcache)
 	dbi_cache_close(dcache);
+}
+
+
+int
+DbiState::selection_present(struct ged *gedp, void *client_data)
+{
+    DbiState *dbis = (DbiState *)client_data;
+    if (!dbis || dbis->gedp != gedp)
+	return 0;
+    return dbis->selection_sync() ? 1 : 0;
+}
+
+
+bool
+DbiState::selection_sync(
+    const std::unordered_set<unsigned long long> *legacy_paths)
+{
+    size_t active_count = ged_selection_hashes(gedp, NULL,
+	GED_SELECTION_HASH_ACTIVE_PATH, NULL, 0);
+    std::vector<ged_db_index_id> active_ids(active_count);
+    if (active_count)
+	(void)ged_selection_hashes(gedp, NULL,
+	    GED_SELECTION_HASH_ACTIVE_PATH, active_ids.data(),
+	    active_ids.size());
+
+    std::unordered_set<unsigned long long> active_paths(active_ids.begin(),
+	active_ids.end());
+    const std::unordered_set<unsigned long long> *compat_paths = legacy_paths;
+    if (!compat_paths && default_selected)
+	compat_paths = &default_selected->active_paths;
+    if (compat_paths)
+	active_paths.insert(compat_paths->begin(), compat_paths->end());
+
+    std::unordered_set<BViewState *> view_states_set;
+    struct bu_ptbl *views = bv_set_views(&gedp->ged_views);
+    for (size_t i = 0; i < BU_PTBL_LEN(views); i++) {
+	struct bview *view = (struct bview *)BU_PTBL_GET(views, i);
+	view_states_set.insert(get_view_state(view));
+    }
+
+    bool illumination_changed = false;
+    for (BViewState *view_state : view_states_set) {
+	if (view_state && view_state->sync_illumination(active_paths))
+	    illumination_changed = true;
+    }
+    return illumination_changed;
 }
 
 
@@ -3771,32 +3823,23 @@ BSelectState::refresh()
 bool
 BSelectState::draw_sync()
 {
+    return dbis->selection_sync(&active_paths);
+}
+
+
+bool
+BViewState::sync_illumination(
+    const std::unordered_set<unsigned long long> &active_paths)
+{
     bool changed = false;
-    std::unordered_set<BViewState *> vstates;
-
-    struct bu_ptbl *views = bv_set_views(&dbis->gedp->ged_views);
-    for (size_t i = 0; i < BU_PTBL_LEN(views); i++) {
-	struct bview *v = (struct bview *)BU_PTBL_GET(views, i);
-	BViewState *vs = dbis->get_view_state(v);
-	vstates.insert(vs);
-    }
-
-    std::unordered_map<unsigned long long, std::unordered_map<int, struct bv_scene_obj *>>::iterator so_it;
-    std::unordered_map<int, struct bv_scene_obj *>::iterator m_it;
-    std::unordered_set<BViewState *>::iterator vs_it;
-    for (vs_it = vstates.begin(); vs_it != vstates.end(); vs_it++) {
-	for (so_it = (*vs_it)->s_map.begin(); so_it != (*vs_it)->s_map.end(); so_it++) {
-	    char ill_state = is_active(so_it->first) ? UP : DOWN;
-	    //bu_log("select ill_state: %s\n", (ill_state == UP) ? "up" : "down");
-	    for (m_it = so_it->second.begin(); m_it != so_it->second.end(); m_it++) {
-		struct bv_scene_obj *so = m_it->second;
-		int ill_changed = bv_illum_obj(so, ill_state);
-		if (ill_changed)
-		    changed = true;
-	    }
+    for (auto &path_entry : s_map) {
+	char ill_state = active_paths.find(path_entry.first) !=
+	    active_paths.end() ? UP : DOWN;
+	for (auto &mode_entry : path_entry.second) {
+	    if (bv_illum_obj(mode_entry.second, ill_state))
+		changed = true;
 	}
     }
-
     return changed;
 }
 

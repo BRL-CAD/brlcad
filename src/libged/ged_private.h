@@ -214,6 +214,8 @@ void ged_selection_database_reset_private(struct ged *gedp);
 typedef int (*ged_selection_present_func_t)(struct ged *, void *);
 void ged_selection_presenter_set_private(struct ged *gedp,
 	ged_selection_present_func_t present, void *client_data);
+void ged_selection_presenter_clear_private(struct ged *gedp,
+	ged_selection_present_func_t present, void *client_data);
 void ged_event_database_set_private(struct ged *gedp, struct db_i *dbip);
 
 #ifndef FALSE

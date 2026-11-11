@@ -272,6 +272,10 @@ class GED_EXPORT BViewState {
 	std::unordered_map<int, std::unordered_set<unsigned long long>> partially_drawn_paths;
 	std::unordered_set<unsigned long long> all_partially_drawn_paths;
 
+	bool sync_illumination(
+		const std::unordered_set<unsigned long long> &active_paths);
+
+	friend class DbiState;
 	friend class BSelectState;
 };
 
@@ -416,6 +420,9 @@ class GED_EXPORT DbiState {
 	void print_dbi_state(struct bu_vls *o = NULL, bool report_view_states = false);
 
     private:
+	static int selection_present(struct ged *, void *);
+	bool selection_sync(
+		const std::unordered_set<unsigned long long> *legacy_paths = NULL);
 	static void event_callback(struct ged *, const struct ged_event *,
 		size_t, const struct ged_event_result *, void *);
 	uint64_t record_changes(const struct ged_event *, size_t);
@@ -428,6 +435,7 @@ class GED_EXPORT DbiState {
 	bool need_update_nref = true;
 
 	friend class BViewState;
+	friend class BSelectState;
 	void gather_cyclic(
 		std::unordered_set<unsigned long long> &cyclic,
 		unsigned long long c_hash,
