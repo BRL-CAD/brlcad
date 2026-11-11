@@ -9,6 +9,9 @@ function(run)
   if(NOT "${result}" STREQUAL "0")
     message(FATAL_ERROR "Command failed (${result}): ${ARGV}\n${output}")
   endif()
+  if(output MATCHES "(error|fatal)[ \t]+[|]")
+    message(FATAL_ERROR "Renderer reported an error: ${ARGV}\n${output}")
+  endif()
 endfunction()
 
 function(expect_failure)
@@ -32,6 +35,13 @@ render_case(perspective_portrait 96 128 85 png)
 render_case(orthographic_landscape 128 96 0 png)
 render_case(orthographic_portrait 96 128 0 png)
 render_case(native_pix 128 96 85 pix)
+
+# Exercise BOT hits through librt as well as native CSG boundaries.
+foreach(workers IN ITEMS 1 2)
+  set(image "${WORK}/mesh_${workers}.png")
+  run("${EXEC}" ${RENDER_ARGS} -P ${workers} -w 96 -n 96 -o "${image}" "${WORK}/scene.g" mesh.r)
+  run("${VEXEC}" check-mesh "${image}" 96 96)
+endforeach()
 
 # A directory at the output file's path must produce a regular error exit.
 file(MAKE_DIRECTORY "${WORK}/blocked.png")

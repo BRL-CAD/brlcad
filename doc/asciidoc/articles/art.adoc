@@ -72,10 +72,11 @@ that have libxml2 enabled.
 |===
 |Capability |Evidence and remaining boundary
 
-|Native Appleseed plastic on librt geometry
-|`regress-art` checks a colored sphere and a Boolean box with an inherited
-color, multiple aspect ratios and projections, PNG/PIX output, and error
-exits.  It does not yet prove OSL material support.
+|OSL plastic on librt geometry
+|`regress-art` checks a colored sphere, a Boolean box with inherited color,
+and a solid BOT.  Coverage includes multiple aspect ratios and projections,
+PNG/PIX output, single/multiple workers, and error exits.  UV mapping,
+custom material assignments, and advanced closures remain unqualified.
 
 |OSL execution and native Appleseed mesh scenes
 |The development validation includes a native JIT probe, material and
@@ -86,6 +87,31 @@ not establish support for BRL-CAD BOT geometry through the librt adapter.
 |The current renderer validation was performed on FreeBSD.  Linux, Windows,
 and macOS runtime qualification and relocatable installation remain open.
 |===
+
+== Basic rendering
+
+A development build with Appleseed enabled can render selected database
+objects with the default OSL plastic material:
+
+----
+art -a 35 -e 25 -w 640 -n 480 -P 4 -c "set samples=64" \
+    -o view.png model.g all.g
+----
+
+Region colors include colors resolved through combination inheritance.
+The default material is a modest specular coat over a diffuse base.  This
+baseline does not yet translate every BRL-CAD optical shader or provide a
+complete custom-material authoring interface.
+
+The material graph connects `as_plastic.out_outColor` to
+`as_closure2surface.in_input`.  A library material node that only returns
+an output closure does not itself set the OSL surface result `Ci`.  A
+controlled comparison with the modern stack produced black material
+surfaces on both a native Appleseed mesh and its procedural sphere when
+that terminal connection was absent; adding it restored shading on both.
+The `art` regression now exercises the connected graph on librt CSG and
+BOT geometry.  This identifies a wiring failure independently of any
+remaining renderer compatibility or geometric-shading issues.
 
 == Development milestones
 

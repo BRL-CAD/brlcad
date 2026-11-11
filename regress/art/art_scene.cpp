@@ -45,6 +45,16 @@ create_scene(const char *path)
     vect_t bore_height = {0, 30, 0};
     const unsigned char red[] = {255, 32, 16};
     const unsigned char blue[] = {32, 64, 255};
+    const unsigned char green[] = {32, 255, 64};
+    fastf_t vertices[] = {
+	-10, -10, -10, 10, -10, -10, 10, 10, -10, -10, 10, -10,
+	-10, -10, 10, 10, -10, 10, 10, 10, 10, -10, 10, 10
+    };
+    int faces[] = {
+	0, 2, 1, 0, 3, 2, 4, 5, 6, 4, 6, 7,
+	0, 1, 5, 0, 5, 4, 1, 2, 6, 1, 6, 5,
+	2, 3, 7, 2, 7, 6, 3, 0, 4, 3, 4, 7
+    };
     struct wmember members;
     bool success = mk_sph(db, "ball.s", center, 10) == 0 &&
 	mk_rpp(db, "box.s", box_min, box_max) == 0 &&
@@ -64,12 +74,18 @@ create_scene(const char *path)
     success = success && mk_addmember("ball.r", &members.l, NULL, WMOP_UNION) &&
 	mk_addmember("blue.g", &members.l, NULL, WMOP_UNION) &&
 	mk_lcomb(db, "all.g", &members, 0, NULL, NULL, NULL, 0) == 0;
+    success = success && mk_bot(db, "mesh.s", RT_BOT_SOLID, RT_BOT_CCW, 0,
+	sizeof(vertices) / (3 * sizeof(vertices[0])),
+	sizeof(faces) / (3 * sizeof(faces[0])), vertices, faces, NULL, NULL) == 0;
+    BU_LIST_INIT(&members.l);
+    success = success && mk_addmember("mesh.s", &members.l, NULL, WMOP_UNION) &&
+	mk_lcomb(db, "mesh.r", &members, 1, "plastic", "", green, 0) == 0;
     wdb_close(db);
     return success ? 0 : 1;
 }
 
 static int
-check_image(const char *path, size_t width, size_t height)
+check_image(const char *path, size_t width, size_t height, bool mesh)
 {
     icv_image_t *image = icv_read(path, BU_MIME_IMAGE_AUTO, width, height);
     if (!image)
@@ -82,8 +98,10 @@ check_image(const char *path, size_t width, size_t height)
 
     const double COLOR_DOMINANCE = 2.0;
     const double ASPECT_TOLERANCE = 0.2;
+    const double MIN_COLOR_COVERAGE = 0.01;
+    const size_t min_color_pixels = static_cast<size_t>(width * height * MIN_COLOR_COVERAGE);
     size_t min_x = width, min_y = height, max_x = 0, max_y = 0;
-    size_t red_pixels = 0, blue_pixels = 0;
+    size_t red_pixels = 0, blue_pixels = 0, green_pixels = 0;
     bool finite = true;
     for (size_t y = 0; y < height; ++y) {
 	for (size_t x = 0; x < width; ++x) {
@@ -98,10 +116,18 @@ check_image(const char *path, size_t width, size_t height)
 	    }
 	    if (pixel[2] > COLOR_DOMINANCE * pixel[0] && pixel[2] > COLOR_DOMINANCE * pixel[1])
 		++blue_pixels;
+	    if (pixel[1] > COLOR_DOMINANCE * pixel[0] && pixel[1] > COLOR_DOMINANCE * pixel[2])
+		++green_pixels;
 	}
     }
     icv_destroy(image);
-    if (!finite || !red_pixels || !blue_pixels) {
+    if (mesh) {
+	if (finite && green_pixels > min_color_pixels)
+	    return 0;
+	bu_log("Missing finite green BOT geometry: %s\n", path);
+	return 1;
+    }
+    if (!finite || red_pixels <= min_color_pixels || blue_pixels <= min_color_pixels) {
 	bu_log("Missing finite red and inherited blue geometry: %s\n", path);
 	return 1;
     }
@@ -122,9 +148,10 @@ main(int argc, char **argv)
     bu_setprogname(argv[0]);
     if (argc == 3 && BU_STR_EQUAL(argv[1], "create"))
 	return create_scene(argv[2]);
-    if (argc == 5 && BU_STR_EQUAL(argv[1], "check")) {
+    if (argc == 5 && (BU_STR_EQUAL(argv[1], "check") || BU_STR_EQUAL(argv[1], "check-mesh"))) {
 	try {
-	    return check_image(argv[2], std::stoul(argv[3]), std::stoul(argv[4]));
+	    return check_image(argv[2], std::stoul(argv[3]), std::stoul(argv[4]),
+		BU_STR_EQUAL(argv[1], "check-mesh"));
 	} catch (const std::exception &error) {
 	    bu_log("Invalid image dimensions: %s\n", error.what());
 	}

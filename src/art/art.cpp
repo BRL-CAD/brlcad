@@ -63,9 +63,8 @@
  *
  * SHADER IMPLEMENTATION NOTES
  * ---------------------------
- * default shader "as_disney_material" is pathed from appleseed root
- * specified when building and pulled from default .oso folder user
- * specified shaders are pathed from build/output/shaders
+ * The default as_plastic material returns a closure that is connected to
+ * as_closure2surface.  Both shaders come from the selected Appleseed install.
  */
 
 #include "common.h"
@@ -102,7 +101,6 @@
 
 
 // appleseed.renderer headers. Only include header files from renderer/api/.
-#include "renderer/api/bsdf.h"
 #include "renderer/api/camera.h"
 #include "renderer/api/color.h"
 #include "renderer/api/environment.h"
@@ -122,6 +120,7 @@
 
 // appleseed.foundation headers.
 #include "foundation/core/appleseed.h"
+#include "foundation/image/colorspace.h"
 #include "foundation/math/matrix.h"
 #include "foundation/math/scalar.h"
 #include "foundation/math/transform.h"
@@ -514,8 +513,7 @@ art_parse_light_intensity(const struct bu_vls* shader, double* bright, double* f
 
 
 /* db_walk_tree() callback to register all regions within the scene
- * using either a disney shader with rgb color set on combination regions
- * or specified material OSL optical shader
+ * using an OSL plastic material with the resolved region color.
  */
 static int
 register_region(struct db_tree_state* tsp,
@@ -622,17 +620,7 @@ register_region(struct db_tree_state* tsp,
 	    asr::ParamArray()));
 
 
-    /* Build a native Appleseed plastic BSDF for this region.
-     *
-     * NOTE: we deliberately do NOT use an OSL shader group here.  Appleseed's
-     * OSL BSDFs evaluate to zero on ProceduralObject hits in this build (the
-     * OSL closure is never populated for procedural surfaces), so an OSL
-     * material renders every surface as an unlit black silhouette.  Native
-     * BSDFs (Lambertian, plastic, Disney, ...) shade procedural surfaces
-     * correctly, so we map the region's optical properties onto a plastic_brdf
-     * -- which matches BRL-CAD's default "plastic" shader closely (diffuse base
-     * color plus a glossy specular coat). */
-    std::string base_name = std::string(name) + "_mat";
+    const std::string material_name = std::string(name) + "_mat";
 
     /* Diffuse base color.  Prefer the tree-state's resolved material color
      * (tsp->ts_mater.ma_color): db_walk_tree accumulates BRL-CAD's color
@@ -654,36 +642,30 @@ register_region(struct db_tree_state* tsp,
     } else {
 	diffuse_rgb[0] = diffuse_rgb[1] = diffuse_rgb[2] = 1.0f;
     }
-    std::string diffuse_col = base_name + "_diffuse";
-    assembly->colors().insert(
-	asr::ColorEntityFactory::create(
-	    diffuse_col.c_str(),
-	    asr::ParamArray().insert("color_space", "srgb"),
-	    asr::ColorValueArray(3, diffuse_rgb)));
+    const asf::Color3f linear_rgb = asf::srgb_to_linear_rgb(
+	asf::Color3f(diffuse_rgb[0], diffuse_rgb[1], diffuse_rgb[2]));
+    struct bu_vls color_parameter = BU_VLS_INIT_ZERO;
+    bu_vls_printf(&color_parameter, "color %g %g %g",
+	linear_rgb[0], linear_rgb[1], linear_rgb[2]);
 
-    static const float WhiteSpec[3] = { 1.0f, 1.0f, 1.0f };
-    std::string spec_col = base_name + "_specular";
-    assembly->colors().insert(
-	asr::ColorEntityFactory::create(
-	    spec_col.c_str(),
-	    asr::ParamArray().insert("color_space", "linear_rgb"),
-	    asr::ColorValueArray(3, WhiteSpec)));
+    const std::string shader_name = material_name + "_shader";
+    asf::auto_release_ptr<asr::ShaderGroup> shader_group(
+	asr::ShaderGroupFactory().create(shader_name.c_str(), asr::ParamArray()));
+    shader_group->add_shader(
+	"shader", "as_plastic", "material",
+	asr::ParamArray()
+	.insert("in_color", bu_vls_cstr(&color_parameter))
+	.insert("in_specular_weight", "float 0.06")
+	.insert("in_specular_roughness", "float 0.08")
+	.insert("in_ior", "float 1.5"));
+    bu_vls_free(&color_parameter);
 
-    std::string brdf_name = base_name + "_brdf";
-    assembly->bsdfs().insert(
-	asr::PlasticBRDFFactory().create(
-	    brdf_name.c_str(),
-	    asr::ParamArray()
-	    .insert("diffuse_reflectance", diffuse_col.c_str())
-	    .insert("diffuse_reflectance_multiplier", "1.0")
-	    /* Keep the specular coat small and tight: a broad, bright white coat
-	     * reflects the (uniform) environment across the whole surface and
-	     * desaturates the diffuse color.  A small multiplier + low roughness
-	     * gives only a subtle glint, preserving the true region color. */
-	    .insert("specular_reflectance", spec_col.c_str())
-	    .insert("specular_reflectance_multiplier", "0.06")
-	    .insert("roughness", "0.08")
-	    .insert("ior", "1.5")));
+    // Library material nodes return closures; the terminal surface must set Ci.
+    shader_group->add_shader(
+	"surface", "as_closure2surface", "surface", asr::ParamArray());
+    shader_group->add_connection(
+	"material", "out_outColor", "surface", "in_input");
+    assembly->shader_groups().insert(shader_group);
 
     // Create a physical surface shader and insert it into the assembly.
     assembly->surface_shaders().insert(
@@ -694,13 +676,12 @@ register_region(struct db_tree_state* tsp,
 	    )
 	);
 
-    // Create the material that binds the BSDF to the surface.
-    std::string material_mat = base_name;
+    // Bind the OSL surface group to the region.
     assembly->materials().insert(
-	asr::GenericMaterialFactory().create(
-	    material_mat.c_str(),
+	asr::OSLMaterialFactory().create(
+	    material_name.c_str(),
 	    asr::ParamArray()
-	    .insert("bsdf", brdf_name.c_str())
+	    .insert("osl_surface", shader_name.c_str())
 	    .insert("surface_shader", "Material_mat_surface_shader")
 	    )
 	);
@@ -717,7 +698,7 @@ register_region(struct db_tree_state* tsp,
 	    name,
 	    asf::Transformd::identity(),
 	    asf::StringDictionary()
-	    .insert("default", material_mat.c_str())
+	    .insert("default", material_name.c_str())
 	    ));
 
     // add assembly to assemblies array in scene
