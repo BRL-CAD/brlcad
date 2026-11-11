@@ -96,7 +96,8 @@ cover grazing incidence, entry/exit and subtraction faces, sphere radii from
 0.01 to one million database units, and a 0.01-unit slab at a coordinate of
 one billion.  UV checks cover sphere entry/exit, a Boolean cut face,
 concurrent first-use ARB mapping, and authored BOT coordinates under
-nonuniform transforms.  Surface derivatives and smooth BOT normals remain
+nonuniform transforms.  Smooth BOT checks distinguish facet and shading
+normals, including inside rays and Boolean cuts.  Surface derivatives remain
 open.
 
 |OSL execution and native Appleseed mesh scenes
@@ -157,6 +158,34 @@ limit remain open; the rounding allowance does not establish those bounds.
 The Appleseed procedural callback signature has changed.  Rebuild applications
 and procedural plugins against the matching renderer headers and library.
 
+== Geometric and shading normals
+
+`art` passes separate normals to Appleseed.  The geometric normal describes
+the actual boundary and controls surface sides and secondary-ray offsets.
+Authored BOT vertex normals interpolate the shading direction independently;
+a smooth appearance does not change the intersected geometry.  Both normals
+receive the Boolean partition's flip when a primitive supplies a cut face.
+
+The public librt `rt_obj_normals` query reads the original intersection
+without changing it.  BOT and DSP provide separate geometric and shading
+normals; other primitives use their existing normal method for both outputs.
+The query rejects nonfinite or zero normals and orients the shading normal
+into the geometric normal's hemisphere.  It preserves authored interpolation
+without the legacy BOT/DSP clamping to the incident ray.  Existing normal
+queries retain their historical behavior.
+
+Exact tests cover smooth BOT entry and exit, nonuniform transforms, Boolean
+subtraction, clockwise winding, and grazing/back-face queries.  An OSL
+emission diagnostic renders the difference between `N` and `Ng` on a smooth
+BOT, checking that the distinction reaches shader execution.  The same
+diagnostic on a flat BOT checks that the normals agree.  DSP ray tests
+also exercise repeatable queries and view-independent shading directions.
+These checks do not yet qualify bump mapping, normal maps, or all light
+transport cases at shading discontinuities.
+
+The librt function table has a new optional normals callback.  Rebuild
+consumers against the matching librt headers and library.
+
 == Surface coordinates
 
 OSL `u` and `v` come from the intersected librt primitive's native mapping.
@@ -181,8 +210,7 @@ concurrent first-use mapping and normal queries.
 
 These checks establish point coordinates.  Appleseed's procedural geometry
 path still supplies an arbitrary tangent basis rather than derivatives of
-the librt mapping.  Texture filtering, bump/normal mapping, and smooth BOT
-geometric versus shading normals need separate qualification.
+the librt mapping.  Texture filtering and bump/normal mapping need separate qualification.
 
 Visible emission is covered by the diagnostic shader, but direct light
 sampling of emissive librt surfaces and their surface-area registration are

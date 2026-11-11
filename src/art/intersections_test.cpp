@@ -45,7 +45,8 @@ static constexpr double INTERSECTION_TOLERANCE = 1.0e-7;
 static bool
 check_ray(BrlcadObject &object, const asf::Vector3d &origin,
     const asf::Vector3d &direction, double tmin, double tmax,
-    bool expected_hit, double distance, const asf::Vector3d &normal)
+    bool expected_hit, double distance, const asf::Vector3d &normal,
+    const asf::Vector3d *shading = nullptr)
 {
     asr::ShadingRay ray;
     ray.m_org = origin;
@@ -63,9 +64,9 @@ check_ray(BrlcadObject &object, const asf::Vector3d &origin,
 	!std::isfinite(asf::norm(result.m_shading_normal)) ||
 	!NEAR_EQUAL(result.m_distance, distance, INTERSECTION_TOLERANCE) ||
 	!VNEAR_EQUAL(result.m_geometric_normal, normal, INTERSECTION_TOLERANCE) ||
-	!VNEAR_EQUAL(result.m_shading_normal, normal, INTERSECTION_TOLERANCE))) {
-	bu_log("Unexpected boundary: t=%g normal=(%g %g %g)\n", result.m_distance,
-	    V3ARGS(result.m_geometric_normal));
+	!VNEAR_EQUAL(result.m_shading_normal, shading ? *shading : normal, INTERSECTION_TOLERANCE))) {
+	bu_log("Unexpected boundary: t=%g geometric=(%g %g %g) shading=(%g %g %g)\n", result.m_distance,
+	    V3ARGS(result.m_geometric_normal), V3ARGS(result.m_shading_normal));
 	return false;
     }
     return true;
@@ -221,8 +222,9 @@ main(int argc, char **argv)
 		mk_lcomb(db, region.c_str(), &members, 1, NULL, NULL, NULL, 0) == 0;
 	}
 	written = written && art_test::make_mesh(db, "mesh.s", art_test::MeshUV::Authored) == 0 &&
-	    art_test::make_mesh(db, "plain_mesh.s", art_test::MeshUV::None) == 0;
-	for (const char *name : {"mesh", "plain_mesh"}) {
+	    art_test::make_mesh(db, "plain_mesh.s", art_test::MeshUV::None) == 0 &&
+	    art_test::make_mesh(db, "smooth_mesh.s", art_test::MeshUV::Authored, art_test::MeshNormals::Authored) == 0;
+	for (const char *name : {"mesh", "plain_mesh", "smooth_mesh"}) {
 	    const std::string solid = std::string(name) + ".s";
 	    const std::string region = std::string(name) + ".r";
 	    BU_LIST_INIT(&members.l);
@@ -237,6 +239,15 @@ main(int argc, char **argv)
 	BU_LIST_INIT(&members.l);
 	written = written && mk_addmember("mesh.r", &members.l, mesh_transform, WMOP_UNION) &&
 	    mk_lcomb(db, "uv_transform.g", &members, 0, NULL, NULL, NULL, 0) == 0;
+	BU_LIST_INIT(&members.l);
+	written = written && mk_addmember("smooth_mesh.r", &members.l, mesh_transform, WMOP_UNION) &&
+	    mk_lcomb(db, "normal_transform.g", &members, 0, NULL, NULL, NULL, 0) == 0;
+	const point_t outer_low = {-20, -20, -20}, outer_high = {20, 20, 20};
+	written = written && mk_rpp(db, "outer.s", outer_low, outer_high) == 0;
+	BU_LIST_INIT(&members.l);
+	written = written && mk_addmember("outer.s", &members.l, NULL, WMOP_UNION) &&
+	    mk_addmember("smooth_mesh.s", &members.l, NULL, WMOP_SUBTRACT) &&
+	    mk_lcomb(db, "cut_mesh.r", &members, 1, NULL, NULL, NULL, 0) == 0;
 	wdb_close(db);
 	if (!written)
 	    throw std::runtime_error("Cannot write intersection fixture");
@@ -304,6 +315,30 @@ main(int argc, char **argv)
 	BrlcadObject plain_mesh("plain_mesh", parameters);
 	ok = check_uv(plain_mesh, asf::Vector3d(5, -5, 20), asf::Vector3d(0, 0, -1), asf::Vector2f(0)) && ok;
 
+	parameters.insert("object_path", "smooth_mesh.r");
+	BrlcadObject smooth_mesh("smooth_mesh", parameters);
+	const auto smooth_normal = asf::normalize(asf::Vector3d(0.5, -0.5, 1));
+	ok = check_ray(smooth_mesh, asf::Vector3d(5, -5, 20), asf::Vector3d(0, 0, -1),
+	    0, 100, true, 10, asf::Vector3d(0, 0, 1), &smooth_normal) && ok;
+	ok = check_ray(smooth_mesh, asf::Vector3d(5, -5, 0), asf::Vector3d(0, 0, 1),
+	    0, 100, true, 10, asf::Vector3d(0, 0, 1), &smooth_normal) && ok;
+	ok = check_offsets(smooth_mesh, asf::Vector3d(5, -5, 10), asf::Vector3d(0, 0, -1),
+	    asf::Vector3d(0, 0, 1), 0.01) && ok;
+	parameters.insert("object_path", "/normal_transform.g/smooth_mesh.r");
+	BrlcadObject transformed_smooth_mesh("transformed_smooth_mesh", parameters);
+	const auto transformed_normal = asf::normalize(asf::Vector3d(0.5 / 2, -0.5 / 3, 1));
+	ok = check_ray(transformed_smooth_mesh, asf::Vector3d(40, -15, 20), asf::Vector3d(0, 0, -1),
+	    0, 100, true, 10, asf::Vector3d(0, 0, 1), &transformed_normal) && ok;
+	ok = check_offsets(transformed_smooth_mesh, asf::Vector3d(40, -15, 10), asf::Vector3d(0, 0, -1),
+	    asf::Vector3d(0, 0, 1), 0.01) && ok;
+	parameters.insert("object_path", "cut_mesh.r");
+	BrlcadObject cut_mesh("cut_mesh", parameters);
+	const auto cut_normal = -smooth_normal;
+	ok = check_ray(cut_mesh, asf::Vector3d(5, -5, 0), asf::Vector3d(0, 0, 1),
+	    0, 100, true, 10, asf::Vector3d(0, 0, -1), &cut_normal) && ok;
+	ok = check_offsets(cut_mesh, asf::Vector3d(5, -5, 10), asf::Vector3d(0, 0, 1),
+	    asf::Vector3d(0, 0, -1), 0.01) && ok;
+
 	// A new worker must reuse a slot after the previous worker has left.
 	std::atomic<bool> workers_ok{true};
 	for (size_t i = 0; i <= MAX_PSW; ++i) {
@@ -317,7 +352,9 @@ main(int argc, char **argv)
 	    workers.emplace_back([&] {
 		for (size_t j = 0; j < RAYS_PER_WORKER; ++j) {
 		    if (!sphere_entry(sphere) || !check_ray(cut, asf::Vector3d(0, 0, 0),
-			asf::Vector3d(1, 0, 0), 0, 100, true, 4, asf::Vector3d(-1, 0, 0)))
+			asf::Vector3d(1, 0, 0), 0, 100, true, 4, asf::Vector3d(-1, 0, 0)) ||
+		    !check_ray(smooth_mesh, asf::Vector3d(5, -5, 20), asf::Vector3d(0, 0, -1),
+			0, 100, true, 10, asf::Vector3d(0, 0, 1), &smooth_normal))
 			workers_ok = false;
 		}
 	    });

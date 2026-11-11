@@ -25,9 +25,10 @@
 
 namespace art_test {
 enum class MeshUV { None, Authored };
+enum class MeshNormals { Facet, Authored };
 
 inline int
-make_mesh(struct rt_wdb *db, const char *name, MeshUV mapping)
+make_mesh(struct rt_wdb *db, const char *name, MeshUV mapping, MeshNormals shading = MeshNormals::Facet)
 {
     fastf_t vertices[] = {
 	-10, -10, -10, 10, -10, -10, 10, 10, -10, -10, 10, -10,
@@ -42,11 +43,20 @@ make_mesh(struct rt_wdb *db, const char *name, MeshUV mapping)
     int face_uvs[sizeof(faces) / sizeof(faces[0])];
     for (size_t corner = 0; corner < sizeof(face_uvs) / sizeof(face_uvs[0]); ++corner)
 	face_uvs[corner] = static_cast<int>(corner % 3);
+    fastf_t normals[sizeof(vertices) / sizeof(vertices[0])];
+    for (size_t vertex = 0; vertex < sizeof(vertices) / (3 * sizeof(vertices[0])); ++vertex) {
+	VMOVE(&normals[vertex * 3], &vertices[vertex * 3]);
+	VUNITIZE(&normals[vertex * 3]);
+    }
     const bool textured = mapping == MeshUV::Authored;
-    return mk_bot_w_normals_and_uvs(db, name, RT_BOT_SOLID, RT_BOT_CCW,
-	textured ? RT_BOT_HAS_TEXTURE_UVS : 0,
+    const bool smooth = shading == MeshNormals::Authored;
+    const unsigned char flags = (textured ? RT_BOT_HAS_TEXTURE_UVS : 0) |
+	(smooth ? RT_BOT_HAS_SURFACE_NORMALS | RT_BOT_USE_NORMALS : 0);
+    return mk_bot_w_normals_and_uvs(db, name, RT_BOT_SOLID, RT_BOT_CCW, flags,
 	sizeof(vertices) / (3 * sizeof(vertices[0])), sizeof(faces) / (3 * sizeof(faces[0])),
-	vertices, faces, nullptr, nullptr, 0, nullptr, nullptr,
+	vertices, faces, nullptr, nullptr,
+	smooth ? sizeof(normals) / (3 * sizeof(normals[0])) : 0,
+	smooth ? normals : nullptr, smooth ? faces : nullptr,
 	textured ? 3 : 0, textured ? uvs : nullptr, textured ? face_uvs : nullptr);
 }
 } // namespace art_test

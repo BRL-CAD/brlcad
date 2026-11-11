@@ -102,7 +102,8 @@ const char *const Model = "brlcad geometry";
 
 struct RayHit {
     double distance;
-    asf::Vector3d normal;
+    asf::Vector3d geometric_normal;
+    asf::Vector3d shading_normal;
     asf::Vector2f uv = asf::Vector2f(0.0f);
     bool compute_shading = false;
     const char *error = nullptr;
@@ -143,12 +144,25 @@ brlcad_hit(struct application *ap, struct partition *head, struct seg *UNUSED(se
 	result.distance = hit->hit_dist;
 	if (!result.compute_shading)
 	    return 1;
-	vect_t normal;
-	RT_HIT_NORMAL(normal, hit, solid, &ap->a_ray, flip);
-	result.normal = asf::Vector3d(V3ARGS(normal));
+	vect_t geometric, shading;
+	struct xray *ray = hit->hit_rayp ? hit->hit_rayp : &ap->a_ray;
+	if (rt_obj_normals(hit, solid, ray, geometric, shading) != 0) {
+	    result.error = "Primitive normal query failed";
+	    return 1;
+	}
+	// Legacy UV callbacks consume a computed point and primitive shading normal.
+	struct hit shading_hit = *hit;
+	VJOIN1(shading_hit.hit_point, ray->r_pt, hit->hit_dist, ray->r_dir);
+	VMOVE(shading_hit.hit_normal, shading);
+	if (flip) {
+	    VREVERSE(geometric, geometric);
+	    VREVERSE(shading, shading);
+	}
+	result.geometric_normal = asf::Vector3d(V3ARGS(geometric));
+	result.shading_normal = asf::Vector3d(V3ARGS(shading));
 	if (solid->st_meth->ft_uv) {
 	    struct uvcoord uv = {0, 0, 0, 0};
-	    if (rt_obj_uv(ap, solid, hit, &uv) != 0) {
+	    if (rt_obj_uv(ap, solid, &shading_hit, &uv) != 0) {
 		result.error = "Primitive UV query failed";
 		return 1;
 	    }
@@ -324,8 +338,8 @@ BrlcadObject::trace(const asr::ShadingRay &ray, IntersectionResult *result) cons
 	    throw std::runtime_error(std::string(hit.error) + " for '" + get_name() + "'");
 	result->m_hit = true;
 	result->m_distance = distance;
-	result->m_geometric_normal = asf::normalize(hit.normal);
-	result->m_shading_normal = result->m_geometric_normal;
+	result->m_geometric_normal = hit.geometric_normal;
+	result->m_shading_normal = hit.shading_normal;
 	result->m_uv = hit.uv;
 	result->m_material_slot = 0;
     }

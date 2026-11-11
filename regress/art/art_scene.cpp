@@ -70,6 +70,11 @@ create_scene(const char *path, const char *shader, const char *output)
     BU_LIST_INIT(&members.l);
     success = success && mk_addmember("mesh.s", &members.l, NULL, WMOP_UNION) &&
 	mk_lcomb(db, "mesh.r", &members, 1, "plastic", "", green, 0) == 0;
+    success = success && art_test::make_mesh(db, "smooth_mesh.s", art_test::MeshUV::Authored,
+	art_test::MeshNormals::Authored) == 0;
+    BU_LIST_INIT(&members.l);
+    success = success && mk_addmember("smooth_mesh.s", &members.l, NULL, WMOP_UNION) &&
+	mk_lcomb(db, "smooth_mesh.r", &members, 1, "plastic", "", green, 0) == 0;
     // Two paths to one region must keep their transforms and inherited colors.
     mat_t translated;
     MAT_IDN(translated);
@@ -102,7 +107,8 @@ create_scene(const char *path, const char *shader, const char *output)
 	    &empty, &empty, &optical, &empty) == 0;
 	success = success && db5_update_attribute("ball.r", "material_name", "osl.material", db->dbip) == 0 &&
 	    db5_update_attribute("box.r", "material_name", "osl.material", db->dbip) == 0 &&
-	    db5_update_attribute("mesh.r", "material_name", "osl.material", db->dbip) == 0;
+	    db5_update_attribute("mesh.r", "material_name", "osl.material", db->dbip) == 0 &&
+	    db5_update_attribute("smooth_mesh.r", "material_name", "osl.material", db->dbip) == 0;
 	bu_avs_free(&optical);
 	bu_avs_free(&empty);
     }
@@ -110,7 +116,7 @@ create_scene(const char *path, const char *shader, const char *output)
     return success ? 0 : 1;
 }
 
-enum class ImageCheck { Regions, Mesh, RepeatedArcs, UV };
+enum class ImageCheck { Regions, Mesh, RepeatedArcs, VaryingRG, FlatNormals };
 
 static int
 check_image(const char *path, size_t width, size_t height, ImageCheck check)
@@ -134,20 +140,23 @@ check_image(const char *path, size_t width, size_t height, ImageCheck check)
     size_t min_x = width, min_y = height, max_x = 0, max_y = 0;
     size_t red_pixels = 0, blue_pixels = 0, green_pixels = 0;
     size_t pair_left = 0, pair_right = 0, pair_center = 0;
-    double min_u = INFINITY, min_v = INFINITY, max_u = 0, max_v = 0;
-    size_t uv_pixels = 0;
-    const double UV_BACKGROUND_LIMIT = 0.05;
-    const double UV_VISIBLE_LIMIT = 0.2;
-    const double MIN_UV_CHANNEL_SPAN = 0.15;
+    double min_r = INFINITY, min_g = INFINITY, max_r = 0, max_g = 0;
+    size_t diagnostic_pixels = 0, black_pixels = 0;
+    const double BLACK_PIXEL_LIMIT = 0.02;
+    const double RG_BACKGROUND_LIMIT = 0.05;
+    const double RG_VISIBLE_LIMIT = 0.2;
+    const double MIN_RG_CHANNEL_SPAN = 0.15;
     bool finite = true;
     for (size_t y = 0; y < height; ++y) {
 	for (size_t x = 0; x < width; ++x) {
 	    const double *pixel = image->data + (y * width + x) * image->channels;
 	    finite = finite && std::isfinite(pixel[0]) && std::isfinite(pixel[1]) && std::isfinite(pixel[2]);
-	    if (pixel[2] < UV_BACKGROUND_LIMIT && std::max(pixel[0], pixel[1]) > UV_VISIBLE_LIMIT) {
-		++uv_pixels;
-		min_u = std::min(min_u, pixel[0]); max_u = std::max(max_u, pixel[0]);
-		min_v = std::min(min_v, pixel[1]); max_v = std::max(max_v, pixel[1]);
+	    if (std::max({pixel[0], pixel[1], pixel[2]}) < BLACK_PIXEL_LIMIT)
+		++black_pixels;
+	    if (pixel[2] < RG_BACKGROUND_LIMIT && std::max(pixel[0], pixel[1]) > RG_VISIBLE_LIMIT) {
+		++diagnostic_pixels;
+		min_r = std::min(min_r, pixel[0]); max_r = std::max(max_r, pixel[0]);
+		min_g = std::min(min_g, pixel[1]); max_g = std::max(max_g, pixel[1]);
 	    }
 	    if (pixel[0] > COLOR_DOMINANCE * pixel[1] && pixel[0] > COLOR_DOMINANCE * pixel[2]) {
 		++red_pixels;
@@ -166,12 +175,18 @@ check_image(const char *path, size_t width, size_t height, ImageCheck check)
 	}
     }
     icv_destroy(image);
-    if (check == ImageCheck::UV) {
-	if (finite && uv_pixels > min_color_pixels && max_u - min_u > MIN_UV_CHANNEL_SPAN &&
-	    max_v - min_v > MIN_UV_CHANNEL_SPAN)
+    if (check == ImageCheck::FlatNormals) {
+	if (finite && black_pixels > min_color_pixels && diagnostic_pixels == 0)
 	    return 0;
-	bu_log("Missing varying UV shader coordinates in %s: pixels=%zu ranges=(%g,%g)\n",
-	    path, uv_pixels, max_u - min_u, max_v - min_v);
+	bu_log("Facet normals differ in %s: black=%zu differing=%zu\n", path, black_pixels, diagnostic_pixels);
+	return 1;
+    }
+    if (check == ImageCheck::VaryingRG) {
+	if (finite && diagnostic_pixels > min_color_pixels && max_r - min_r > MIN_RG_CHANNEL_SPAN &&
+	    max_g - min_g > MIN_RG_CHANNEL_SPAN)
+	    return 0;
+	bu_log("Missing varying red/green diagnostic channels in %s: pixels=%zu ranges=(%g,%g)\n",
+	    path, diagnostic_pixels, max_r - min_r, max_g - min_g);
 	return 1;
     }
     if (check == ImageCheck::RepeatedArcs) {
@@ -210,15 +225,20 @@ main(int argc, char **argv)
 	return create_scene(argv[2], nullptr, nullptr);
     if ((argc == 4 || argc == 5) && BU_STR_EQUAL(argv[1], "create-material"))
 	return create_scene(argv[2], argv[3], argc == 5 ? argv[4] : nullptr);
-    if (argc == 5 && (BU_STR_EQUAL(argv[1], "check") || BU_STR_EQUAL(argv[1], "check-mesh") || BU_STR_EQUAL(argv[1], "check-pair") || BU_STR_EQUAL(argv[1], "check-uv"))) {
-	try {
-	    ImageCheck check = ImageCheck::Regions;
-	    if (BU_STR_EQUAL(argv[1], "check-mesh")) check = ImageCheck::Mesh;
-	    if (BU_STR_EQUAL(argv[1], "check-pair")) check = ImageCheck::RepeatedArcs;
-	    if (BU_STR_EQUAL(argv[1], "check-uv")) check = ImageCheck::UV;
-	    return check_image(argv[2], std::stoul(argv[3]), std::stoul(argv[4]), check);
-	} catch (const std::exception &error) {
-	    bu_log("Invalid image dimensions: %s\n", error.what());
+    if (argc == 5) {
+	const struct { const char *name; ImageCheck check; } checks[] = {
+	    {"check", ImageCheck::Regions}, {"check-mesh", ImageCheck::Mesh},
+	    {"check-pair", ImageCheck::RepeatedArcs}, {"check-uv", ImageCheck::VaryingRG},
+	    {"check-normals", ImageCheck::VaryingRG}, {"check-flat-normals", ImageCheck::FlatNormals}
+	};
+	for (const auto &check : checks) {
+	    if (!BU_STR_EQUAL(argv[1], check.name)) continue;
+	    try {
+		return check_image(argv[2], std::stoul(argv[3]), std::stoul(argv[4]), check.check);
+	    } catch (const std::exception &error) {
+		bu_log("Invalid image dimensions: %s\n", error.what());
+		return 1;
+	    }
 	}
     }
     return 1;
