@@ -167,6 +167,30 @@ invalid_parameter(array_parameter OSL.param.in_array "float[] 1 2")
 invalid_parameter(unknown_osl_property OSL.parameters "float 1")
 invalid_parameter(unknown_osl_version OSL.version 99)
 
+# Unhandled runtime texture errors must not publish a successful image.
+set(TEXTURE_DB "${PORTABLE_PROJECT}/texture.g")
+run("${VEXEC}" create-material "${TEXTURE_DB}" art_texture)
+run("${VEXEC}" set-material "${TEXTURE_DB}" OSL.param.in_filename "string textures/absent image.tx")
+expect_failure("${EXEC}" ${RENDER_ARGS} -w 32 -n 32 -o "${WORK}/missing_texture.png" "${TEXTURE_DB}" ball.r)
+if(EXISTS "${WORK}/missing_texture.png")
+  message(FATAL_ERROR "An unhandled texture error produced an image")
+endif()
+
+# Preserve an existing output as well as avoiding creation of a new image.
+set(EXISTING_OUTPUT "${WORK}/existing_texture_output.png")
+set(OUTPUT_SENTINEL "previous render output")
+file(WRITE "${EXISTING_OUTPUT}" "${OUTPUT_SENTINEL}")
+expect_failure("${EXEC}" ${RENDER_ARGS} -w 32 -n 32 -o "${EXISTING_OUTPUT}" "${TEXTURE_DB}" ball.r)
+file(READ "${EXISTING_OUTPUT}" preserved)
+if(NOT preserved STREQUAL OUTPUT_SENTINEL)
+  message(FATAL_ERROR "An unhandled texture error modified an existing output")
+endif()
+
+# A shader may handle the error and warn while supplying its own fallback.
+run("${VEXEC}" set-material "${TEXTURE_DB}" OSL.param.in_handle_error "int 1")
+run("${EXEC}" ${RENDER_ARGS} -w 96 -n 96 -o "${WORK}/handled_texture_error.png" "${TEXTURE_DB}" ball.r)
+run("${VEXEC}" check-texture-fallback "${WORK}/handled_texture_error.png" 96 96)
+
 # A directory at the output file's path must produce a regular error exit.
 file(MAKE_DIRECTORY "${WORK}/blocked.png")
 expect_failure("${EXEC}" ${RENDER_ARGS} -w 32 -n 32 -o "${WORK}/blocked.png" "${WORK}/scene.g" all.g)

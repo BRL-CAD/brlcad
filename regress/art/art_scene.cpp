@@ -270,7 +270,7 @@ main(int argc, char **argv)
 	    {"check-normals", ImageCheck::VaryingRG}, {"check-flat-normals", ImageCheck::FlatNormals},
 	    {"check-footprints", ImageCheck::GreenDiagnostic}, {"check-zero-footprints", ImageCheck::RedDiagnostic},
 	    {"check-parameters", ImageCheck::GreenDiagnostic}, {"check-default-parameters", ImageCheck::RedDiagnostic},
-	    {"check-material-red", ImageCheck::RedDiagnostic}
+	    {"check-material-red", ImageCheck::RedDiagnostic}, {"check-texture-fallback", ImageCheck::GreenDiagnostic}
 	};
 	for (const auto &check : checks) {
 	    if (!BU_STR_EQUAL(argv[1], check.name)) continue;

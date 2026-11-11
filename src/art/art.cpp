@@ -76,6 +76,7 @@
 #include <string.h>
 #include <stdio.h>
 
+#include <atomic>
 #include <cstddef>
 #include <exception>
 #include <memory>
@@ -1232,6 +1233,27 @@ art_save_image(asr::Project& project, const char* filename)
 }
 
 
+namespace {
+struct ReleaseLogTarget {
+    void operator()(asf::ILogTarget *target) const {
+	asr::global_logger().remove_target(target);
+	target->release();
+    }
+};
+
+class RenderErrors final : public asf::ILogTarget {
+    std::atomic<bool> m_has_errors{false};
+public:
+    void release() override { delete this; }
+    void write(const asf::LogMessage::Category category, const char *UNUSED(file),
+	const size_t UNUSED(line), const char *UNUSED(header), const char *UNUSED(message)) override {
+	if (category >= asf::LogMessage::Error)
+	    m_has_errors.store(true, std::memory_order_relaxed);
+    }
+    bool has_errors() const { return m_has_errors.load(std::memory_order_relaxed); }
+};
+}
+
 static bool
 art_render_image(asr::Project& project, asr::ITileCallback* callback = nullptr)
 {
@@ -1244,17 +1266,27 @@ art_render_image(asr::Project& project, asr::ITileCallback* callback = nullptr)
     path = bu_dir(headers, MAXPATHLEN, APPLESEED_ROOT, "shaders", NULL);
     if (path)
 	resource_search_paths.push_back_explicit_path(path);
-    asr::MasterRenderer renderer(
-	project,
-	project.configurations().get_by_name("final")->get_inherited_parameters(),
-	resource_search_paths,
-	callback);
-
-    if (renderer.render(controller).m_status != asr::MasterRenderer::RenderingResult::Succeeded) {
+    std::unique_ptr<RenderErrors, ReleaseLogTarget> errors(new RenderErrors());
+    asr::global_logger().add_target(errors.get());
+    bool succeeded = false;
+    {
+	asr::MasterRenderer renderer(
+	    project,
+	    project.configurations().get_by_name("final")->get_inherited_parameters(),
+	    resource_search_paths,
+	    callback);
+	succeeded = renderer.render(controller).m_status == asr::MasterRenderer::RenderingResult::Succeeded;
+    }
+    if (!succeeded) {
 	bu_log("art: rendering did not complete successfully\n");
 	return false;
     }
-
+    // Worker and OSL errors can be logged without failing MasterRenderer.
+    // Include renderer cleanup in the observed scope before saving the image.
+    if (errors->has_errors()) {
+	bu_log("art: renderer reported errors; image was not saved\n");
+	return false;
+    }
     return art_save_image(project, outputfile);
 }
 
@@ -1287,12 +1319,8 @@ main(int argc, char **argv)
 	   bu_version()
 	);
 
-    const auto release_log_target = [](asf::ILogTarget *target) {
-	asr::global_logger().remove_target(target);
-	target->release();
-    };
-    std::unique_ptr<asf::ILogTarget, decltype(release_log_target)> log_target(
-	asf::create_console_log_target(stderr), release_log_target);
+    std::unique_ptr<asf::ILogTarget, ReleaseLogTarget> log_target(
+	asf::create_console_log_target(stderr));
     asr::global_logger().add_target(log_target.get());
 
     rt_perspective = 85; // setting the default

@@ -307,6 +307,17 @@ including a string with spaces, before checking rendered shader results.
 Multi-node networks, material-object parent inheritance, and per-instance
 material overrides remain planned capabilities.
 
+Errors reported by the renderer during initialization, worker execution,
+or renderer cleanup stop the render with a nonzero exit status before
+saving an image or replacing an existing output.  This includes unhandled
+OSL texture errors, even when
+Appleseed's render status otherwise reports success.  Warnings alone do
+not fail the render.  A shader may deliberately request the `texture()`
+`errormessage` output and supply its own fallback; handled errors that do
+not reach the renderer error log remain under the shader's control.
+`regress-art` checks both missing-texture behaviors.
+
+
 == Project shader assets
 
 `art` resolves project assets relative to the database directory, including

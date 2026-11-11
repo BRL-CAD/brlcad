@@ -1,4 +1,12 @@
-set(ART_TEST_SHADER_NAMES art_diffuse art_color art_uv art_normals art_footprints art_parameters)
+set(ART_TEST_SHADER_NAMES
+  art_diffuse
+  art_color
+  art_uv
+  art_normals
+  art_footprints
+  art_parameters
+  art_texture
+)
 cmakefiles(CMakeLists.txt art_scene.cpp art_test_mesh.h regress-art.cmake.in)
 foreach(shader IN LISTS ART_TEST_SHADER_NAMES)
   cmakefiles("${shader}.osl")
