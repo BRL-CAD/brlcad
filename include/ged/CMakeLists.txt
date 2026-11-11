@@ -8,6 +8,7 @@ set(
   edit.h
   event.h
   objects.h
+  selection.h
   version.h
   view.h
 )

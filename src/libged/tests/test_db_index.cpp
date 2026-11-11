@@ -309,6 +309,53 @@ check_index_lifecycle(struct ged *gedp, const char *path)
 	"previous database's removed-name records are discarded");
 }
 
+static void
+check_selection(struct ged *gedp)
+{
+    ged_db_index_id path[3] = {0, 0, 0};
+    CHECK(ged_selection_state_available(gedp) == 1,
+	"semantic selection service is available");
+    CHECK(ged_db_index_path_resolve(gedp,
+	"outer.g/inner.g@1/leaf.s@1", path, 3) == 3,
+	"selection fixture path resolves");
+
+    ged_db_index_id selected_hash =
+	ged_db_index_path_hash(gedp, path, 3, 0);
+    ged_db_index_id parent_hash =
+	ged_db_index_path_hash(gedp, path, 3, 2);
+    CHECK(ged_selection_batch_begin(gedp) == 1,
+	"selection batch begins");
+    CHECK(ged_selection_select_path_ids(gedp, NULL, path, 3, 0) == 1,
+	"occurrence-qualified ids are selectable");
+    CHECK(ged_selection_recompute(gedp, NULL) == 1,
+	"selection hierarchy recomputes");
+    CHECK(ged_selection_batch_end(gedp) == 1,
+	"selection batch ends");
+    CHECK(ged_selection_count(gedp, NULL) == 1,
+	"default set contains one selected occurrence");
+    CHECK(ged_selection_is_path_selected(gedp, NULL, selected_hash) == 1,
+	"selected occurrence hash is retained");
+    CHECK(ged_selection_is_path_active_parent(gedp, NULL, parent_hash) == 1,
+	"selected occurrence marks its parent path active");
+    CHECK(ged_selection_is_object_immediate_parent(gedp, NULL,
+	name_id("inner.g")) == 1,
+	"selected occurrence identifies its immediate parent object");
+    CHECK(ged_selection_is_object_grand_parent(gedp, NULL,
+	name_id("outer.g")) == 1,
+	"selected occurrence identifies its grandparent object");
+
+    CHECK(ged_selection_select_path(gedp, "qa_named",
+	"outer.g/inner.g/leaf.s", 1) == 1,
+	"named selection set accepts a canonical path");
+    CHECK(ged_selection_set_match_count(gedp, "qa_*") == 1,
+	"named selection sets support pattern matching");
+    CHECK(ged_selection_clear_matching(gedp, "qa_*") == 1,
+	"matching named selection sets clear together");
+    CHECK(ged_selection_deselect_path_ids(gedp, NULL, path, 3, 1) == 1 &&
+	ged_selection_count(gedp, NULL) == 0,
+	"selected occurrence can be removed independently");
+}
+
 int
 main(int argc, char **argv)
 {
@@ -340,10 +387,17 @@ main(int argc, char **argv)
 	    "outer combination is the sole hierarchy top");
 	check_children(gedp);
 	check_paths(gedp);
+	check_selection(gedp);
 	check_updates(gedp);
 	check_inmem_writes(gedp);
 	check_primitive_reference_tops(gedp);
+	CHECK(ged_selection_select_path(gedp, NULL, "leaf.s", 1) &&
+	    ged_selection_select_path(gedp, "retained", "leaf.s", 1),
+	    "default and named selections exist before switching databases");
 	check_index_lifecycle(gedp, path);
+	CHECK(!ged_selection_count(gedp, NULL) &&
+	    !ged_selection_count(gedp, "retained"),
+	    "selections are discarded even when the next database has the same paths");
 	ged_close(gedp);
     }
 

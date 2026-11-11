@@ -386,6 +386,7 @@ ged_event_database_set_private(struct ged *gedp, struct db_i *dbip)
     if (service->callback_dbip == dbip)
 	return;
     ged_db_index_database_set_private(gedp, dbip);
+    ged_selection_database_reset_private(gedp);
     if (service->callback_dbip)
 	db_rm_changed_clbk(service->callback_dbip, ged_event_librt_changed, gedp);
     service->callback_dbip = nullptr;

@@ -520,6 +520,7 @@ ged_init(struct ged *gedp)
     gedp->i->i->terminal_columns = _GED_TERMINAL_WIDTH;
     gedp->i->ged_event_servicep = ged_event_service_create(gedp);
     gedp->i->ged_db_indexp = ged_db_index_create(gedp);
+    gedp->i->ged_selection_statep = ged_selection_state_create(gedp);
 
     gedp->dbip = NULL;
     gedp->u_data = NULL;
@@ -684,6 +685,8 @@ ged_free(struct ged *gedp)
     bu_ptbl_free(&gedp->ged_uptrs);
 
     /* Free internal containers */
+    ged_selection_state_destroy(gedp->i->ged_selection_statep);
+    gedp->i->ged_selection_statep = NULL;
     ged_db_index_destroy(gedp->i->ged_db_indexp);
     gedp->i->ged_db_indexp = NULL;
     ged_event_service_destroy(gedp->i->ged_event_servicep);

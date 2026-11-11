@@ -348,6 +348,7 @@ set(
   points_eval.c
   polyclip.cpp
   qray.cpp
+  selection_state.cpp
   tab_complete.cpp
   trace.c
   vers.c

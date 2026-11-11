@@ -2850,6 +2850,35 @@ include/ged/objects.h: #define GED_DB_GET_INTERNAL(_gedp, _intern, _dp, _mat, _r
 include/ged/objects.h: #define GED_DB_PUT_INTERNAL(_gedp, _dp, _intern, _resource, _flags) \
 include/ged/objects.h: #define GED_DB_GET_INTERN(_gedp, _intern, _dp, _mat, _flags) \
 include/ged/objects.h: #define GED_DB_PUT_INTERN(_gedp, _dp, _intern, _flags) \
+include/ged/selection.h: GED_EXPORT extern int ged_selection_state_available(struct ged *gedp);
+include/ged/selection.h: GED_EXPORT extern int ged_selection_batch_begin(struct ged *gedp);
+include/ged/selection.h: GED_EXPORT extern int ged_selection_batch_end(struct ged *gedp);
+include/ged/selection.h: GED_EXPORT extern size_t ged_selection_count(struct ged *gedp, const char *set_name);
+include/ged/selection.h: GED_EXPORT extern int ged_selection_list_set_names(struct ged *gedp, struct bu_vls *out);
+include/ged/selection.h: GED_EXPORT extern int ged_selection_list_paths(struct ged *gedp, const char *set_pattern, struct bu_vls *out);
+include/ged/selection.h: GED_EXPORT extern int ged_selection_set_match_count(struct ged *gedp, const char *set_pattern);
+include/ged/selection.h: GED_EXPORT extern unsigned long long ged_selection_state_hash(struct ged *gedp, const char *set_name);
+include/ged/selection.h: GED_EXPORT extern size_t ged_selection_hashes(struct ged *gedp, const char *set_name, enum ged_selection_hash_kind kind, ged_db_index_id *hashes, size_t capacity);
+include/ged/selection.h: GED_EXPORT extern int ged_selection_clear(struct ged *gedp, const char *set_name);
+include/ged/selection.h: GED_EXPORT extern int ged_selection_clear_matching(struct ged *gedp, const char *set_pattern);
+include/ged/selection.h: GED_EXPORT extern int ged_selection_select_path(struct ged *gedp, const char *set_name, const char *path, int recompute_hierarchy);
+include/ged/selection.h: GED_EXPORT extern int ged_selection_select_paths(struct ged *gedp, const char *set_name, const char *const *paths, size_t path_count, int recompute_hierarchy);
+include/ged/selection.h: GED_EXPORT extern int ged_selection_select_path_matching(struct ged *gedp, const char *set_pattern, const char *path, int recompute_hierarchy);
+include/ged/selection.h: GED_EXPORT extern int ged_selection_deselect_path(struct ged *gedp, const char *set_name, const char *path, int recompute_hierarchy);
+include/ged/selection.h: GED_EXPORT extern int ged_selection_deselect_paths(struct ged *gedp, const char *set_name, const char *const *paths, size_t path_count, int recompute_hierarchy);
+include/ged/selection.h: GED_EXPORT extern int ged_selection_deselect_path_matching(struct ged *gedp, const char *set_pattern, const char *path, int recompute_hierarchy);
+include/ged/selection.h: GED_EXPORT extern int ged_selection_select_path_ids(struct ged *gedp, const char *set_name, const ged_db_index_id *path, size_t path_len, int recompute_hierarchy);
+include/ged/selection.h: GED_EXPORT extern int ged_selection_deselect_path_ids(struct ged *gedp, const char *set_name, const ged_db_index_id *path, size_t path_len, int recompute_hierarchy);
+include/ged/selection.h: GED_EXPORT extern int ged_selection_recompute(struct ged *gedp, const char *set_name);
+include/ged/selection.h: GED_EXPORT extern int ged_selection_recompute_matching(struct ged *gedp, const char *set_pattern);
+include/ged/selection.h: GED_EXPORT extern int ged_selection_expand_matching(struct ged *gedp, const char *set_pattern);
+include/ged/selection.h: GED_EXPORT extern int ged_selection_collapse_matching(struct ged *gedp, const char *set_pattern);
+include/ged/selection.h: GED_EXPORT extern int ged_selection_is_path_selected(struct ged *gedp, const char *set_name, ged_db_index_id path_hash);
+include/ged/selection.h: GED_EXPORT extern int ged_selection_is_path_active(struct ged *gedp, const char *set_name, ged_db_index_id path_hash);
+include/ged/selection.h: GED_EXPORT extern int ged_selection_is_path_active_parent(struct ged *gedp, const char *set_name, ged_db_index_id path_hash);
+include/ged/selection.h: GED_EXPORT extern int ged_selection_is_object_parent(struct ged *gedp, const char *set_name, ged_db_index_id object_id);
+include/ged/selection.h: GED_EXPORT extern int ged_selection_is_object_immediate_parent(struct ged *gedp, const char *set_name, ged_db_index_id object_id);
+include/ged/selection.h: GED_EXPORT extern int ged_selection_is_object_grand_parent(struct ged *gedp, const char *set_name, ged_db_index_id object_id);
 include/ged/version.h: GED_EXPORT extern const char *ged_version(void);
 include/ged/view.h: #define GED_CHECK_DRAWABLE(_gedp, _flags) \
 include/ged/view.h: #define GED_CHECK_VIEW(_gedp, _flags) \
