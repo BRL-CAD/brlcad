@@ -1,4 +1,8 @@
-cmakefiles(CMakeLists.txt art_scene.cpp art_test_mesh.h art_diffuse.osl art_color.osl art_uv.osl art_normals.osl art_footprints.osl regress-art.cmake.in)
+set(ART_TEST_SHADER_NAMES art_diffuse art_color art_uv art_normals art_footprints art_parameters)
+cmakefiles(CMakeLists.txt art_scene.cpp art_test_mesh.h regress-art.cmake.in)
+foreach(shader IN LISTS ART_TEST_SHADER_NAMES)
+  cmakefiles("${shader}.osl")
+endforeach()
 
 if(TARGET art AND BUILD_TESTING)
   get_target_property(renderer_prefix art ART_RENDERER_PREFIX)
@@ -7,7 +11,7 @@ if(TARGET art AND BUILD_TESTING)
   find_path(ART_OSL_SHADER_INCLUDE_DIR stdosl.h
     HINTS "${renderer_prefix}/share/OSL/shaders" "${renderer_prefix}/shaders" NO_DEFAULT_PATH REQUIRED)
   set(ART_TEST_SHADERS)
-  foreach(shader IN ITEMS art_diffuse art_color art_uv art_normals art_footprints)
+  foreach(shader IN LISTS ART_TEST_SHADER_NAMES)
     set(compiled "${CMAKE_CURRENT_BINARY_DIR}/${shader}.oso")
     add_custom_command(OUTPUT "${compiled}"
       COMMAND "${ART_OSLC_EXECUTABLE}" -I "${ART_OSL_SHADER_INCLUDE_DIR}"
@@ -18,7 +22,7 @@ if(TARGET art AND BUILD_TESTING)
     list(APPEND ART_TEST_SHADERS "${compiled}")
   endforeach()
   add_custom_target(art_test_shaders DEPENDS ${ART_TEST_SHADERS})
-  brlcad_addexec(art_scene_test art_scene.cpp "libwdb;libicv" TEST)
+  brlcad_addexec(art_scene_test art_scene.cpp "libged;libwdb;libicv" TEST)
   add_dependencies(art_scene_test art_test_shaders)
   brlcad_regression_test(regress-art "art;art_scene_test" EXEC art VEXEC art_scene_test TIMEOUT 120)
   add_test(NAME regress-art-intersections COMMAND art_intersection_test)

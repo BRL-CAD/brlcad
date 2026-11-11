@@ -28,6 +28,7 @@
 #include "bu/log.h"
 #include "bu/str.h"
 #include "icv.h"
+#include "ged.h"
 #include "raytrace.h"
 #include "wdb.h"
 #include "art_test_mesh.h"
@@ -122,8 +123,23 @@ create_scene(const char *path, const char *shader, const char *output)
     return success ? 0 : 1;
 }
 
+static int
+edit_material_property(const char *path, const char *key, const char *value)
+{
+    struct ged *editor = ged_open("db", path, 0);
+    if (!editor)
+	return 1;
+    const char *arguments[] = {"material", value ? "set" : "remove", "osl.material", "optical", key, value};
+    const int argument_count = sizeof(arguments) / sizeof(arguments[0]) - (value ? 0 : 1);
+    const int status = ged_exec_material(editor, argument_count, arguments);
+    if (status != BRLCAD_OK)
+	bu_log("Cannot edit material property '%s': %s\n", key, bu_vls_cstr(editor->ged_result_str));
+    ged_close(editor);
+    return status == BRLCAD_OK ? 0 : 1;
+}
+
 enum class ImageCheck {
-    Regions, Mesh, RepeatedArcs, VaryingRG, FlatNormals, PositiveFootprints, ZeroFootprints
+    Regions, Mesh, RepeatedArcs, VaryingRG, FlatNormals, GreenDiagnostic, RedDiagnostic
 };
 
 static int
@@ -183,14 +199,14 @@ check_image(const char *path, size_t width, size_t height, ImageCheck check)
 	}
     }
     icv_destroy(image);
-    if (check == ImageCheck::PositiveFootprints || check == ImageCheck::ZeroFootprints) {
-	const bool positive = check == ImageCheck::PositiveFootprints;
+    if (check == ImageCheck::GreenDiagnostic || check == ImageCheck::RedDiagnostic) {
+	const bool positive = check == ImageCheck::GreenDiagnostic;
 	const size_t expected = positive ? green_pixels : red_pixels;
 	const size_t unexpected = positive ? red_pixels : green_pixels;
 	if (finite && expected > min_color_pixels && unexpected == 0 && blue_pixels == 0)
 	    return 0;
-	bu_log("Unexpected %s UV footprints in %s: positive=%zu zero=%zu invalid=%zu\n",
-	    positive ? "positive" : "zero", path, green_pixels, red_pixels, blue_pixels);
+	bu_log("Unexpected %s diagnostic in %s: green=%zu red=%zu blue=%zu\n",
+	    positive ? "green" : "red", path, green_pixels, red_pixels, blue_pixels);
 	return 1;
     }
     if (check == ImageCheck::FlatNormals) {
@@ -243,12 +259,18 @@ main(int argc, char **argv)
 	return create_scene(argv[2], nullptr, nullptr);
     if ((argc == 4 || argc == 5) && BU_STR_EQUAL(argv[1], "create-material"))
 	return create_scene(argv[2], argv[3], argc == 5 ? argv[4] : nullptr);
+    if (argc == 4 && BU_STR_EQUAL(argv[1], "remove-material"))
+	return edit_material_property(argv[2], argv[3], nullptr);
+    if (argc == 5 && BU_STR_EQUAL(argv[1], "set-material"))
+	return edit_material_property(argv[2], argv[3], argv[4]);
     if (argc == 5) {
 	const struct { const char *name; ImageCheck check; } checks[] = {
 	    {"check", ImageCheck::Regions}, {"check-mesh", ImageCheck::Mesh},
 	    {"check-pair", ImageCheck::RepeatedArcs}, {"check-uv", ImageCheck::VaryingRG},
 	    {"check-normals", ImageCheck::VaryingRG}, {"check-flat-normals", ImageCheck::FlatNormals},
-	    {"check-footprints", ImageCheck::PositiveFootprints}, {"check-zero-footprints", ImageCheck::ZeroFootprints}
+	    {"check-footprints", ImageCheck::GreenDiagnostic}, {"check-zero-footprints", ImageCheck::RedDiagnostic},
+	    {"check-parameters", ImageCheck::GreenDiagnostic}, {"check-default-parameters", ImageCheck::RedDiagnostic},
+	    {"check-material-red", ImageCheck::RedDiagnostic}
 	};
 	for (const auto &check : checks) {
 	    if (!BU_STR_EQUAL(argv[1], check.name)) continue;

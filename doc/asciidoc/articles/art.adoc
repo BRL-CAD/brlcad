@@ -78,8 +78,9 @@ and a solid BOT.  Coverage includes multiple aspect ratios and projections,
 PNG/PIX output, single/multiple workers, and error exits.  Basic
 material-object selection and custom diffuse surface shaders are covered.
 Native primitive UVs and authored BOT UVs are covered by diagnostic
-emission shaders and exact intersection checks.  Networks, general parameter
-authoring, and advanced closures remain unqualified.
+emission shaders and exact intersection checks.  Typed single-shader
+parameters are validated and persisted through the material command.
+Networks and advanced closures remain unqualified.
 
 |Region instances
 |Full indexed database paths distinguish occurrences under different parents
@@ -269,10 +270,42 @@ Shaders are queried through Appleseed's public metadata interface before
 rendering.  Missing shaders, invalid outputs, and invalid material-object
 references stop the render with an error.  The region's resolved sRGB color
 is converted to linear RGB and supplied to a compatible scalar `in_color`
-input, when present.  Other shader parameters currently retain their
-shader defaults; a complete typed parameter/network interface remains a
-planned milestone.  Material-object parent inheritance and per-instance
-material overrides also require further qualification.
+input, when present.  Explicit typed parameters override this color and the
+compatibility defaults for `as_plastic`.
+
+Version 1 stores typed inputs in optical properties named
+`OSL.param.<input>`.  `OSL.version` can be set to `1`; omitting it retains
+version 1 behavior for existing assignments.  For example:
+
+----
+material set paint.material optical OSL.version 1
+material set paint.material optical OSL.param.in_color "color 0.2 0.4 0.6"
+material set paint.material optical OSL.param.in_specular_roughness "float 0.35"
+material get paint.material optical OSL.param.in_specular_roughness
+material remove paint.material optical OSL.param.in_specular_roughness
+----
+
+Supported input types are `int`, `float`, `color`, `point`, `vector`,
+`normal`, `matrix`, and `string`.  A value starts with its exact OSL type.
+Triples require three components; matrices require sixteen components in
+the renderer's row-major order.  Numeric components must be finite and
+representable in the renderer's `int` or `float` storage.  Explicit colors
+are linear RGB.  Points, vectors, and normals use the shader's common
+coordinate space; no implicit unit or coordinate conversion is applied.
+A string contains the remaining text after `string`, including internal
+spaces; leading and trailing whitespace is trimmed.  Tcl quotes group the
+property value and are not part of the stored string.
+
+Unknown inputs, type mismatches, invalid values, output assignments,
+closures, structures, and arrays stop rendering before an image is written.
+Unknown `OSL.` properties and unsupported format versions also produce an
+error.  Unspecified inputs retain the shader or compatibility defaults;
+removing an input property restores those defaults.  The regression uses
+the material command to persist and reopen every supported input type,
+including a string with spaces, before checking rendered shader results.
+
+Multi-node networks, material-object parent inheritance, and per-instance
+material overrides remain planned capabilities.
 
 == Project shader assets
 
