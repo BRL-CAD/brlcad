@@ -65,28 +65,11 @@
 #  pragma clang diagnostic ignored "-Wignored-qualifiers"
 #endif
 
-/* appleseed.renderer headers */
-#include "renderer/api/object.h"
-#include "renderer/api/project.h"
-#include "renderer/api/rendering.h"
-#include "renderer/api/scene.h"
-#include "renderer/api/types.h"
+#include "renderer/api/log.h"
 #include "renderer/kernel/shading/shadingray.h"
-
-/* appleseed.foundation headers */
 #include "foundation/math/ray.h"
-#include "foundation/math/scalar.h"
 #include "foundation/math/vector.h"
 #include "foundation/utility/api/specializedapiarrays.h"
-#include "foundation/containers/dictionary.h"
-#include "foundation/utility/job/iabortswitch.h"
-#include "foundation/log/consolelogtarget.h"
-#include "foundation/utility/searchpaths.h"
-#include "foundation/string/string.h"
-
-
-/* appleseed.main headers */
-#include "main/dllvisibility.h"
 
 #if defined(__GNUC__) && !defined(__clang__)
 #  pragma GCC diagnostic pop
@@ -97,154 +80,146 @@
 
 
 /* standard library */
-#include <algorithm>
 #include <cmath>
-#include <stdlib.h>
-#include <string.h>
-#include <stdio.h>
-#include <unordered_map>
 #include <mutex>
-#include <thread>
+#include <memory>
+#include <stdexcept>
+#include <string>
+#include <vector>
 
 /* brlcad headers */
 #include "vmath.h"
 #include "raytrace.h"
 #include "brlcadplugin.h"
-#include "bu/str.h"
 
 namespace asf = foundation;
 namespace asr = renderer;
 
-thread_local struct BRLCAD_to_ASR brlcad_ray_info;
+namespace {
+const char *const Model = "brlcad geometry";
 
+struct RayHit {
+    double distance;
+    asf::Vector3d normal;
+};
 
-/* brlcad raytrace hit callback */
-int
-brlcad_hit(struct application* UNUSED(ap), struct partition* PartHeadp, struct seg* UNUSED(segs))
-{
-    struct partition* pp;
-    struct hit* hitp = NULL;
-    struct soltab* stp = NULL;
-    int flip = 0;
-
-    // struct curvature cur = RT_CURVATURE_INIT_ZERO;
-
-    //point_t pt;
-    vect_t inormal;
-
-    // vect_t onormal;
-
-    /* Secondary path-tracing rays may originate inside a region.  In that
-     * case the first partition entry is behind the ray origin, so use its exit
-     * boundary instead.  Appleseed requires every reported distance to be
-     * non-negative. */
-    for (pp = PartHeadp->pt_forw; pp != PartHeadp; pp = pp->pt_forw) {
-	if (pp->pt_inhit && pp->pt_inhit->hit_dist >= 0.0) {
-	    hitp = pp->pt_inhit;
-	    stp = pp->pt_inseg->seg_stp;
-	    flip = pp->pt_inflip;
-	    break;
-	}
-	if (pp->pt_outhit && pp->pt_outhit->hit_dist >= 0.0) {
-	    hitp = pp->pt_outhit;
-	    stp = pp->pt_outseg->seg_stp;
-	    flip = pp->pt_outflip;
-	    break;
-	}
+struct DestroyResource {
+    void operator()(struct resource *resource) const {
+	// rt_i destruction reinitializes resource tables for potential reuse.
+	// Release that final allocation after the geometry no longer uses it.
+	rt_clean_resource_basic(nullptr, resource);
+	delete resource;
     }
-    if (!hitp || !stp)
-	return 0;
+};
 
-    /* construct the actual (entry) hit-point from the ray and the
-     * distance to the intersection point (i.e., the 't' value).
-     */
-    //VJOIN1(pt, ap->a_ray.r_pt, hitp->hit_dist, ap->a_ray.r_dir);
-    brlcad_ray_info.distance = hitp->hit_dist;
+struct DestroyRaytrace {
+    void operator()(struct rt_i *rtip) const { if (rtip) rt_i_destroy(rtip); }
+};
 
-    /* Compute the normal at the selected entry or exit boundary. */
-    RT_HIT_NORMAL(inormal, hitp, stp, &(ap->a_ray), flip);
-
-    brlcad_ray_info.normal[0] = inormal[0];
-    brlcad_ray_info.normal[1] = inormal[1];
-    brlcad_ray_info.normal[2] = inormal[2];
-
-    return 1;
-}
-
-
-/* brlcad raytrace miss callback */
 int
-brlcad_miss(struct application* UNUSED(ap))
+brlcad_hit(struct application *ap, struct partition *head, struct seg *UNUSED(segs))
 {
+    auto &result = *static_cast<RayHit *>(ap->a_uptr);
+    for (struct partition *part = head->pt_forw; part != head; part = part->pt_forw) {
+	struct hit *hit = nullptr;
+	struct soltab *solid = nullptr;
+	int flip = 0;
+	// Rays starting inside a region encounter its exit boundary first.
+	if (part->pt_inhit && part->pt_inhit->hit_dist >= 0.0) {
+	    hit = part->pt_inhit;
+	    solid = part->pt_inseg->seg_stp;
+	    flip = part->pt_inflip;
+	} else if (part->pt_outhit && part->pt_outhit->hit_dist >= 0.0) {
+	    hit = part->pt_outhit;
+	    solid = part->pt_outseg->seg_stp;
+	    flip = part->pt_outflip;
+	}
+	if (!hit || !solid) continue;
+	vect_t normal;
+	RT_HIT_NORMAL(normal, hit, solid, &ap->a_ray, flip);
+	result.distance = hit->hit_dist;
+	result.normal = asf::Vector3d(V3ARGS(normal));
+	return 1;
+    }
     return 0;
 }
 
-
-/* constructor when called from appleseed */
-BrlcadObject::BrlcadObject(
-    const char* bname,
-    const asr::ParamArray& params)
-    : asr::ProceduralObject(bname, params)
+int
+brlcad_miss(struct application *UNUSED(ap))
 {
-    configure_raytrace_application(get_database().c_str(), get_object_count(), get_objects());
-    VSET(min, m_params.get_required<double>("minX"), m_params.get_required<double>("minY"), m_params.get_required<double>("minZ"));
-    VSET(max, m_params.get_required<double>("maxX"), m_params.get_required<double>("maxY"), m_params.get_required<double>("maxZ"));
-    // VMOVE(min, ap->a_uvec);
-    // VMOVE(max, ap->a_vvec);
-
-    this->name = new std::string(m_params.get_required<std::string>("object_path"));
+    return 0;
 }
+} // namespace
 
-
-/* constructor when called from art.cpp */
-BrlcadObject:: BrlcadObject(
-    const char* bname,
-    const asr::ParamArray& params,
-    struct application* p_ap, struct resource* p_resources)
-    : asr::ProceduralObject(bname, params)
+class BrlcadObject::RaytraceState
 {
-    // this->rtip = p_ap->a_rt_i;
-    this->resources = p_resources;
-    // VMOVE(this->min, ap->a_uvec);
-    // VMOVE(this->max, ap->a_vvec);
+public:
+    struct ReturnResource {
+	RaytraceState *state;
+	void operator()(struct resource *resource) const {
+	    std::lock_guard<std::mutex> lock(state->mutex);
+	    state->available.push_back(resource);
+	}
+    };
+    using ResourceLease = std::unique_ptr<struct resource, ReturnResource>;
 
-    this->name = new std::string(m_params.get_required<std::string>("object_path"));
-    VSET(min, m_params.get_required<double>("minX"), m_params.get_required<double>("minY"), m_params.get_required<double>("minZ"));
-    VSET(max, m_params.get_required<double>("maxX"), m_params.get_required<double>("maxY"), m_params.get_required<double>("maxZ"));
-
-    std::string db_file = m_params.get_required<std::string>("database_path");
-    this->rtip = rt_i_create(p_ap->a_rt_i->rti_dbip);
-    if (this->rtip == RTI_NULL) {
-        RENDERER_LOG_INFO("building the database directory for [%s] FAILED\n", db_file.c_str());
-        bu_exit(BRLCAD_ERROR, "building the database directory for [%s] FAILED\n", db_file.c_str());
+    RaytraceState(const asr::ParamArray &params, struct db_i *database)
+	: rtip(database ? rt_i_create(database) : rt_dirbuild_ex(
+	    params.get_required<std::string>("database_path").c_str(), nullptr, 0, DB_OPEN_COMB_INSTANCES))
+    {
+	const std::string path = params.get_required<std::string>("object_path");
+	if (!rtip || path.empty() || rt_gettree(rtip.get(), path.c_str()) < 0)
+	    throw std::runtime_error("Cannot load BRL-CAD object '" + path + "'");
+	rt_prep_parallel(rtip.get(), 1);
+	if (!rtip->stats.nregions || !rtip->stats.nsolids)
+	    throw std::runtime_error("No renderable geometry in BRL-CAD object '" + path + "'");
     }
 
-    for (int ic = 0; ic < MAX_PSW; ic++) {
-	rt_init_resource(&p_resources[ic], ic, this->rtip);
-        RT_CK_RESOURCE(&p_resources[ic]);
+    ResourceLease acquire()
+    {
+	std::lock_guard<std::mutex> lock(mutex);
+	if (!available.empty()) {
+	    auto *resource = available.back();
+	    available.pop_back();
+	    return ResourceLease(resource, ReturnResource{this});
+	}
+	if (resources.size() >= MAX_PSW)
+	    throw std::runtime_error("Too many simultaneous BRL-CAD ray queries");
+	std::unique_ptr<struct resource, DestroyResource> resource(new struct resource{});
+	// Reserve before registering: leases must return without allocation, and
+	// no allocation failure may leave a dangling pointer in rti_resources.
+	resources.reserve(resources.size() + 1);
+	available.reserve(resources.size() + 1);
+	rt_init_resource(resource.get(), static_cast<int>(resources.size()), rtip.get());
+	auto *result = resource.get();
+	resources.push_back(std::move(resource));
+	return ResourceLease(result, ReturnResource{this});
     }
 
-    rt_gettree(this->rtip, this->name->c_str());
-    if (this->rtip->needprep)
-        rt_prep_parallel(this->rtip, 1);
+private:
+    std::mutex mutex;
+    std::vector<struct resource *> available;
+    std::vector<std::unique_ptr<struct resource, DestroyResource>> resources;
+public:
+    // rt_i destruction cleans registered resources; their storage must survive it.
+    std::unique_ptr<struct rt_i, DestroyRaytrace> rtip;
+};
 
-    RT_APPLICATION_INIT(&ap);
-
-    /* configure raytrace application */
-    ap.a_rt_i = this->rtip;
-    ap.a_onehit = 1;
-    ap.a_hit = brlcad_hit;
-    ap.a_miss = brlcad_miss;
+BrlcadObject::BrlcadObject(const char *name, const asr::ParamArray &params)
+    : BrlcadObject(name, params, nullptr)
+{
 }
 
+BrlcadObject::BrlcadObject(const char *name, const asr::ParamArray &params, struct db_i *database)
+    : asr::ProceduralObject(name, params), m_trace(new RaytraceState(params, database))
+{
+}
 
-/* Delete instance */
+BrlcadObject::~BrlcadObject() = default;
+
 void
 BrlcadObject::release()
 {
-    // bu_free(resources, "appleseed");
-    // bu_free(ap, "appleseed");
-    delete this->name;
     delete this;
 }
 
@@ -276,22 +251,8 @@ BrlcadObject::on_frame_begin(
 asr::GAABB3
 BrlcadObject::compute_local_bbox() const
 {
-    if (!this->rtip)
-	return asr::GAABB3(asr::GVector3(0, 0, 0), asr::GVector3(0, 0, 0));
-
-    // const auto r = static_cast<asr::GScalar>(get_uncached_radius());
-    if (this->rtip->needprep)
-	rt_prep_parallel(this->rtip, 1);
-
-    // point_t min;
-    // VSET(min, m_params.get_required<double>("minX"), m_params.get_required<double>("minY"), m_params.get_required<double>("minZ"));
-    // VMOVE(min, ap->a_uvec);
-    // point_t max;
-    // VMOVE(max, ap->a_vvec);
-    // VSET(max, m_params.get_required<double>("maxX"), m_params.get_required<double>("maxY"), m_params.get_required<double>("maxZ"));
-
-    return asr::GAABB3(asr::GVector3(V3ARGS(min)), asr::GVector3(V3ARGS(max)));
-    // return asr::GAABB3(asr::GVector3(-r), asr::GVector3(r));
+    return asr::GAABB3(asr::GVector3(V3ARGS(m_trace->rtip->mdl_min)),
+	asr::GVector3(V3ARGS(m_trace->rtip->mdl_max)));
 }
 
 
@@ -310,89 +271,55 @@ BrlcadObject::get_material_slot(const size_t UNUSED(index)) const
 }
 
 
-/* Compute intersection between ray and object surface (DETAILED) */
-void
-BrlcadObject::intersect(
-    const asr::ShadingRay& ray,
-    IntersectionResult& result) const
+bool
+BrlcadObject::trace(const asr::ShadingRay &ray, IntersectionResult &result) const
 {
+    result.m_hit = false;
+    const double length = asf::norm(ray.m_dir);
+    if (!(length > 0.0) || !std::isfinite(length) || !(ray.m_tmin < ray.m_tmax))
+	return false;
+    auto resource = m_trace->acquire();
     struct application app;
-    app = ap;  /*struct copy*/
-    /* brlcad raytracing */
-    int cpu = get_id();
-    app.a_resource = &resources[cpu];
+    RT_APPLICATION_INIT(&app);
+    app.a_rt_i = m_trace->rtip.get();
+    app.a_resource = resource.get();
+    app.a_onehit = 1;
+    app.a_hit = brlcad_hit;
+    app.a_miss = brlcad_miss;
+    RayHit hit;
+    app.a_uptr = &hit;
 
-    /* Honor the shading ray's valid interval [m_tmin, m_tmax).  m_dir is NOT
-     * guaranteed unit-length and m_tmin/m_tmax are in ray-parameter units
-     * (hit = m_org + t*m_dir).  librt needs a unit direction and reports a
-     * world-space distance, so we start the ray at t=m_tmin (which skips the
-     * surface a secondary ray was spawned from -- otherwise it self-intersects
-     * at t~=0 and every surface reads as occluded and renders black) and
-     * convert the returned distance back to a ray parameter. */
-    const double dlen = std::sqrt(ray.m_dir[0]*ray.m_dir[0] + ray.m_dir[1]*ray.m_dir[1] + ray.m_dir[2]*ray.m_dir[2]);
-    if (dlen <= 0.0) { result.m_hit = false; return; }
-    VSET(app.a_ray.r_dir, ray.m_dir[0]/dlen, ray.m_dir[1]/dlen, ray.m_dir[2]/dlen);
-    VSET(app.a_ray.r_pt,
-	 ray.m_org[0] + ray.m_tmin * ray.m_dir[0],
-	 ray.m_org[1] + ray.m_tmin * ray.m_dir[1],
-	 ray.m_org[2] + ray.m_tmin * ray.m_dir[2]);
-
-    app.a_uptr = (void*)this->name->c_str();
-
-    if (rt_shootray(&app) == 0) {
-	result.m_hit = false;
-	return;
-    }
-
-    const double t = ray.m_tmin + brlcad_ray_info.distance / dlen;
-    if (t >= ray.m_tmax) {
-	result.m_hit = false;
-	return;
-    }
-
-    {
-	result.m_hit = true;
-	result.m_distance = t;
-
-	const asf::Vector3d n = asf::normalize(brlcad_ray_info.normal);
-	result.m_geometric_normal = n;
-	result.m_shading_normal = n;
-
-	result.m_uv[0] = 1.0;
-	result.m_uv[1] = 1.0;
-
-	result.m_material_slot = 0;
-    }
+    // librt requires unit directions and reports distance from the shifted
+    // origin.  Appleseed uses the original ray's parameter interval.
+    const auto direction = ray.m_dir / length;
+    const auto origin = ray.m_org + ray.m_tmin * ray.m_dir;
+    VMOVE(app.a_ray.r_dir, direction);
+    VMOVE(app.a_ray.r_pt, origin);
+    if (!rt_shootray(&app))
+	return false;
+    const double distance = ray.m_tmin + hit.distance / length;
+    if (!(distance < ray.m_tmax))
+	return false;
+    result.m_hit = true;
+    result.m_distance = distance;
+    result.m_geometric_normal = asf::normalize(hit.normal);
+    result.m_shading_normal = result.m_geometric_normal;
+    result.m_uv = asf::Vector2f(1.0f);
+    result.m_material_slot = 0;
+    return true;
 }
 
-
-/* Compute intersection between ray and object surface (SIMPLE) */
-bool
-BrlcadObject::intersect(const asr::ShadingRay& ray) const
+void
+BrlcadObject::intersect(const asr::ShadingRay &ray, IntersectionResult &result) const
 {
-    struct application app;
-    app = ap; /* struct copy */
-    /* brlcad raytracing */
-    int cpu = get_id();
-    app.a_resource = &resources[cpu];
+    trace(ray, result);
+}
 
-    /* Occlusion test over the ray's [m_tmin, m_tmax) interval (see the detailed
-     * overload).  Start at t=m_tmin so shadow rays don't self-intersect the
-     * surface they were spawned from, and only count an occluder that lies
-     * before m_tmax (e.g. before the light for a shadow ray). */
-    const double dlen = std::sqrt(ray.m_dir[0]*ray.m_dir[0] + ray.m_dir[1]*ray.m_dir[1] + ray.m_dir[2]*ray.m_dir[2]);
-    if (dlen <= 0.0) return false;
-    VSET(app.a_ray.r_dir, ray.m_dir[0]/dlen, ray.m_dir[1]/dlen, ray.m_dir[2]/dlen);
-    VSET(app.a_ray.r_pt,
-	 ray.m_org[0] + ray.m_tmin * ray.m_dir[0],
-	 ray.m_org[1] + ray.m_tmin * ray.m_dir[1],
-	 ray.m_org[2] + ray.m_tmin * ray.m_dir[2]);
-
-    if (rt_shootray(&app) == 0)
-	return false;
-
-    const double t = ray.m_tmin + brlcad_ray_info.distance / dlen;
-    return t < ray.m_tmax;
+bool
+BrlcadObject::intersect(const asr::ShadingRay &ray) const
+{
+    IntersectionResult result;
+    return trace(ray, result);
 }
 
 
@@ -423,107 +350,6 @@ BrlcadObject::refine_and_offset(
     obj_inst_geo_normal = -d;
     obj_inst_front_point = obj_inst_ray.m_org - eps * d;   // reflection side (toward viewer)
     obj_inst_back_point  = obj_inst_ray.m_org + eps * d;   // transmission side
-}
-
-
-static std::atomic<int> counter;
-
-int
-BrlcadObject::get_id()
-{
-    thread_local int id = counter++;
-    return id;
-}
-
-
-std::string
-BrlcadObject::get_database() const
-{
-    return m_params.get_required<std::string>("database_path");
-}
-
-
-int
-BrlcadObject::get_object_count() const
-{
-    return m_params.get_required<int>("object_count");
-}
-
-
-std::vector<std::string>
-BrlcadObject::get_objects() const
-{
-    std::vector<std::string> objects;
-    int count = get_object_count();
-
-    for (int i = 0; i < count; i++) {
-	std::string obj_num = "object." + std::to_string(i + 1);
-	objects.push_back(m_params.get_path_required<std::string>(obj_num.c_str(), ""));
-    }
-
-    return objects;
-}
-
-
-/* Set up raytrace application */
-void
-BrlcadObject::configure_raytrace_application(const char* path, int objc, std::vector<std::string> objects)
-{
-    // FIXME: This current implementation below is untested and likely out of sync. It needs to be reworked for plugin use.
-
-    RT_APPLICATION_INIT(&ap);
-
-    /* configure raytrace application */
-    ap.a_rt_i = this->rtip;
-    ap.a_onehit = 1;
-    ap.a_hit = brlcad_hit;
-    ap.a_miss = brlcad_miss;
-    //ap = static_cast<application*>(bu_calloc(1, sizeof(application), "appleseed"));
-    resources = static_cast<resource*>(bu_calloc(1, sizeof(resource) * MAX_PSW, "appleseed"));
-
-    char title[1024] = { 0 }; /* optional database title */
-    size_t npsw = 1; /* default number of worker PSWs*/
-
-    /* load the specified geometry database */
-    rtip = rt_dirbuild_ex(path, title, sizeof(title), DB_OPEN_COMB_INSTANCES);
-    if (rtip == RTI_NULL) {
-	bu_log("Building the database directory for [%s] FAILED\n", path);
-	return;
-    }
-
-    for (size_t i = 0; i < MAX_PSW; i++) {
-	rt_init_resource(&resources[i], (int)i, rtip);
-	RT_CK_RESOURCE(&resources[i]);
-    }
-
-    /* display optional database title */
-    if (title[0]) {
-	bu_log("Database title: %s\n", title);
-    }
-
-    /* parse object arguments */
-    const char** objv = (const char**)bu_calloc((size_t)objc + 1, sizeof(char*), "obj array");
-    for (int i = 0; i < objc; i++) {
-	objv[i] = objects.at(i).c_str();
-    }
-
-    /* include objects from database */
-    if (rt_gettrees(rtip, objc, objv, (int)npsw) < 0) {
-	bu_log("Loading the geometry for [%s] FAILED\n", objects[0].c_str());
-    }
-
-    /* Prepare database for raytracing */
-    if (rtip->needprep)
-	rt_prep_parallel(rtip, 1);
-
-    /* Initialize values in application struct */
-    //RT_APPLICATION_INIT(ap);
-
-    /* configure raytrace application */
-    //ap->a_onehit = -1;
-    //ap->a_rt_i = rtip;
-    //ap->a_hit = brlcad_hit;
-    //ap->a_miss = brlcad_miss;
 }
 
 
@@ -560,21 +386,13 @@ BrlcadObjectFactory::get_input_metadata() const
 {
     asf::DictionaryArray metadata;
 
-    metadata.push_back(
-	asf::Dictionary()
-	.insert("name", "radius")
-	.insert("label", "Radius")
-	.insert("type", "numeric")
-	.insert("min",
-		asf::Dictionary()
-		.insert("value", "0.0")
-		.insert("type", "hard"))
-	.insert("max",
-		asf::Dictionary()
-		.insert("value", "10.0")
-		.insert("type", "soft"))
-	.insert("use", "optional")
-	.insert("default", "1.0"));
+    for (const char *name : {"database_path", "object_path"}) {
+	metadata.push_back(asf::Dictionary()
+	    .insert("name", name)
+	    .insert("label", name)
+	    .insert("type", "text")
+	    .insert("use", "required"));
+    }
 
     return metadata;
 }
@@ -586,7 +404,12 @@ BrlcadObjectFactory::create(
     const char* name,
     const asr::ParamArray& params) const
 {
-    return asf::auto_release_ptr<asr::Object>(new BrlcadObject(name, params));
+    try {
+	return asf::auto_release_ptr<asr::Object>(new BrlcadObject(name, params));
+    } catch (const std::exception &error) {
+	RENDERER_LOG_ERROR("Cannot create BRL-CAD object '%s': %s", name, error.what());
+	return asf::auto_release_ptr<asr::Object>();
+    }
 }
 
 
@@ -599,7 +422,9 @@ BrlcadObjectFactory::create(
     const bool UNUSED(omit_loading_assets),
     asr::ObjectArray& objects) const
 {
-    objects.push_back(create(name, params).release());
+    auto object = create(name, params);
+    if (!object.get()) return false;
+    objects.push_back(object.release());
     return true;
 }
 

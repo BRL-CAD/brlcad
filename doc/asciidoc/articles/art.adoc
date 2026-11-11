@@ -85,6 +85,14 @@ remain unqualified.
 and repeated arcs in one combination.  `regress-art` checks translated
 instances with inherited colors and two separated occurrences of one region.
 
+|Ray boundaries and resource ownership
+|`regress-art-intersections` checks entry/exit and Boolean cut normals,
+non-unit ray directions, clipping intervals, concurrent objects, more than
+`MAX_PSW` sequential worker lifetimes, and repeated object destruction.
+Each procedural object owns its prepared geometry and leases private librt
+resources per query.  Query results have call-local storage.  Large-scale
+and thin-geometry ray offsets, UV mapping, and derivatives remain open.
+
 |OSL execution and native Appleseed mesh scenes
 |The development validation includes a native JIT probe, material and
 texture renders, and selected Appleseed unit suites.  These provide

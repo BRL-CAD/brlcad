@@ -10,6 +10,7 @@ set(
   brlcadplugin.cpp
   tile.h
   tile.cpp
+  intersections_test.cpp
 )
 cmakefiles(${art_ignore_files})
 
@@ -77,6 +78,12 @@ set_target_properties(art PROPERTIES
 )
 target_include_directories(art BEFORE PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 target_include_directories(art SYSTEM PRIVATE ${ART_INCLUDE_DIRS})
+
+if(BUILD_TESTING)
+  brlcad_addexec(art_intersection_test "intersections_test.cpp;brlcadplugin.cpp" "${ART_LIBS};libwdb" TEST)
+  set_target_properties(art_intersection_test PROPERTIES UNITY_BUILD OFF)
+  target_include_directories(art_intersection_test SYSTEM PRIVATE ${ART_INCLUDE_DIRS})
+endif()
 
 # copy precompiled appleseed.dll into same dir as art.exe
 

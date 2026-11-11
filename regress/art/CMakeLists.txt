@@ -21,6 +21,8 @@ if(TARGET art AND BUILD_TESTING)
   brlcad_addexec(art_scene_test art_scene.cpp "libwdb;libicv" TEST)
   add_dependencies(art_scene_test art_test_shaders)
   brlcad_regression_test(regress-art "art;art_scene_test" EXEC art VEXEC art_scene_test TIMEOUT 120)
+  add_test(NAME regress-art-intersections COMMAND art_intersection_test)
+  brlcad_regression_test(regress-art-intersections "art_intersection_test" TEST_DEFINED TIMEOUT 120)
   distclean("${CMAKE_CURRENT_BINARY_DIR}/output")
 endif()
 

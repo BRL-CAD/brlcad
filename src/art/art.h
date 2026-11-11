@@ -84,10 +84,7 @@
 
 /* brlcad headers */
 
-#include <stdlib.h>
-#include <string>
-#include <vector>
-#include <stdio.h>
+#include <memory>
 
 #include "vmath.h"
 #include "raytrace.h"
@@ -95,17 +92,13 @@
 namespace asf = foundation;
 namespace asr = renderer;
 
-int APPLESEED_DLL_EXPORT brlcad_hit(struct application* ap, struct partition* PartHeadp, struct seg* UNUSED(segs));
-int APPLESEED_DLL_EXPORT brlcad_miss(struct application* UNUSED(ap));
-
 class APPLESEED_DLL_EXPORT BrlcadObject : public asr::ProceduralObject
 {
 
 public:
     BrlcadObject(const char* name, const asr::ParamArray& params);
-    BrlcadObject(const char* name, const asr::ParamArray& params, struct application* ap, struct resource* resources);
-
-    std::string *name = nullptr;
+    BrlcadObject(const char* name, const asr::ParamArray& params, struct db_i* database);
+    ~BrlcadObject() override;
 
     void release() override;
     const char* get_model() const override;
@@ -124,20 +117,10 @@ public:
 	asf::Vector3d& obj_inst_geo_normal) const override;
 
 private:
-    /* Object attributes */
-    struct application ap;
-    struct rt_i* rtip;
-    struct resource* resources;
-    point_t min;
-    point_t max;
+    class RaytraceState;
+    std::unique_ptr<RaytraceState> m_trace;
 
-    static int get_id();
-
-    std::string get_database() const;
-    int get_object_count() const;
-    std::vector<std::string> get_objects() const;
-
-    void configure_raytrace_application(const char* path, int objc, std::vector<std::string> objects);
+    bool trace(const asr::ShadingRay& ray, IntersectionResult& result) const;
 };
 
 

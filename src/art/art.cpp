@@ -77,6 +77,8 @@
 #include <stdio.h>
 
 #include <cstddef>
+#include <exception>
+#include <memory>
 #include <set>
 #include <string>
 #include <vector>
@@ -167,7 +169,6 @@
 #define VERBOSE_STATS 0x00000008
 
 
-struct resource* resources;
 size_t samples = 25;
 size_t light_intensity = 200; // make ambient light match rt
 
@@ -513,7 +514,7 @@ struct ArtSceneBuilder {
  * using an OSL plastic material with the resolved region color.
  */
 static int
-register_region(struct db_tree_state* tsp,
+register_region_impl(struct db_tree_state* tsp,
 		const struct db_full_path* pathp,
 		const struct rt_comb_internal* combp,
 		void* data)
@@ -573,28 +574,11 @@ register_region(struct db_tree_state* tsp,
 	return 0;
     }
 
-    /*
-      create object paramArray to pass to constructor
-      NOTE: we will need to eventually match brl geometry to appleseed plugin
-    */
-    renderer::ParamArray geometry_parameters = asr::ParamArray()
+    const asr::ParamArray geometry_parameters = asr::ParamArray()
 	.insert("database_path", tsp->ts_dbip->dbi_filename)
-	.insert("object_path", name)
-	.insert("object_count", objc)
-	.insert("minX", min[X])
-	.insert("minY", min[Y])
-	.insert("minZ", min[Z])
-	.insert("maxX", max[X])
-	.insert("maxY", max[Y])
-	.insert("maxZ", max[Z]);
-
-
-    asf::auto_release_ptr<renderer::Object> brlcad_object(
-	new BrlcadObject{
-	    name,
-	    geometry_parameters,
-	    &APP, resources});
-
+	.insert("object_path", name);
+    asf::auto_release_ptr<asr::Object> brlcad_object(
+	new BrlcadObject(name, geometry_parameters, tsp->ts_dbip));
 
     // create assembly for current object
     std::string assembly_name = std::string(name) + "_object_assembly";
@@ -666,6 +650,20 @@ register_region(struct db_tree_state* tsp,
     builder.scene.assembly_instances().insert(assembly_instance);
 
     return 0;
+}
+
+
+static int
+register_region(struct db_tree_state *state, const struct db_full_path *path,
+    const struct rt_comb_internal *combination, void *data)
+{
+    try {
+	return register_region_impl(state, path, combination, data);
+    } catch (const std::exception &error) {
+	bu_log("art: cannot register region: %s\n", error.what());
+	static_cast<ArtSceneBuilder *>(data)->valid = false;
+	return 0;
+    }
 }
 
 
@@ -1353,7 +1351,6 @@ main(int argc, char **argv)
     }
 
 
-    resources = static_cast<resource*>(bu_calloc(1, sizeof(resource) * MAX_PSW, "appleseed"));
     char title[1024] = { 0 };
 
     /* load the specified geometry database */
@@ -1363,10 +1360,7 @@ main(int argc, char **argv)
 	return -1;
     }
 
-    for (int ic = 0; ic < MAX_PSW; ic++) {
-	rt_init_resource(&resources[ic], ic, rtip);
-	RT_CK_RESOURCE(&resources[ic]);
-    }
+    std::unique_ptr<struct rt_i, decltype(&rt_i_destroy)> database(rtip, rt_i_destroy);
 
     /* print optional title */
     if (title[0]) {
@@ -1379,8 +1373,6 @@ main(int argc, char **argv)
     /* configure raytrace application */
     APP.a_rt_i = rtip;
     APP.a_onehit = 1;
-    APP.a_hit = brlcad_hit;
-    APP.a_miss = brlcad_miss;
 
     if (objv) {
 
@@ -1408,7 +1400,6 @@ main(int argc, char **argv)
 	    if (nret < 0)
 		break;
 	}
-	bu_free(resources, "appleseed");
 	return nret < 0 ? BRLCAD_ERROR : BRLCAD_OK;
     }
 
@@ -1419,7 +1410,6 @@ main(int argc, char **argv)
     // Build the project.
     asf::auto_release_ptr<asr::Project> project(build_project());
     if (!project.get()) {
-	bu_free(resources, "appleseed");
 	return BRLCAD_ERROR;
     }
 
@@ -1431,7 +1421,6 @@ main(int argc, char **argv)
     const bool success = art_render_image(project.ref(), framebuffer ? &artcallback : nullptr);
     if (fbp != FB_NULL)
 	fb_close(fbp);
-    bu_free(resources, "appleseed");
 
     return success ? BRLCAD_OK : BRLCAD_ERROR;
 }
