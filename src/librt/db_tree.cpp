@@ -1909,8 +1909,7 @@ _db_walk_subtree(
 	    /* replace *tp with new subtree */
 	    *tp = *curtree;		/* struct copy */
 	    db_free_combined_tree_state(ctsp);
-	    BU_GET(curtree, union tree);
-	    RT_TREE_INIT(curtree);
+	    BU_PUT(curtree, union tree);
 	    return;
 
 	case OP_NOT:
