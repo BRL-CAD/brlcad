@@ -221,8 +221,12 @@ mapping derivatives; singular mappings report unavailable derivatives.
 
 `art` does not yet fill the new derivative inputs from librt mappings.
 Missing derivatives produce zero UV footprints, with an independent shading
-basis fallback, rather than an arbitrary mapping scale.  Librt derivative
-callbacks and their connection to `art` are the next step.  Texture filtering
+basis fallback, rather than an arbitrary mapping scale.  Librt supplies
+native derivatives for authored BOT UVs, spheres, and ellipsoids.  The
+analytic callbacks preserve the prepared UV frame, including axes accepted
+within preparation tolerances.  Finite-difference tests cover position and
+unit-normal derivatives, rotated frames, inside rays, and singular poles.
+Connecting these callbacks to `art` is the next step.  Texture filtering
 and bump/normal mapping remain unqualified.  Rebuild procedural plugins
 and applications against the matching Appleseed headers and library.
 

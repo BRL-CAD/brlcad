@@ -410,6 +410,36 @@ rt_sph_uv(struct application *ap, struct soltab *stp, register struct hit *hitp,
 }
 
 
+C_DECL int
+rt_sph_surface_derivatives(struct application *UNUSED(ap), struct soltab *stp,
+    const struct hit *hitp, struct rt_surface_derivatives *derivatives)
+{
+    const struct sph_specific *sph = (const struct sph_specific *)stp->st_specific;
+    vect_t offset, point, du, dv;
+    VSUB2(offset, hitp->hit_point, sph->sph_V);
+    MAT4X3VEC(point, sph->sph_SoR, offset);
+    VUNITIZE(point);
+    const int status = rt_unit_sphere_uv_derivatives(point, du, dv);
+    if (status != RT_DERIVATIVES_OK)
+	return status;
+    // Preparation can accept unequal axes within tolerance while retaining
+    // their UV frame.  Project that inverse chart onto the prepared sphere.
+    mat_t inverse;
+    if (!bn_mat_inverse(inverse, sph->sph_SoR))
+	return RT_DERIVATIVES_ERROR;
+    vect_t chart_point, chart_du, chart_dv;
+    MAT4X3VEC(chart_point, inverse, point);
+    MAT4X3VEC(chart_du, inverse, du);
+    MAT4X3VEC(chart_dv, inverse, dv);
+    if (rt_normalize_derivative(derivatives->dndu, chart_point, chart_du) != RT_DERIVATIVES_OK ||
+	rt_normalize_derivative(derivatives->dndv, chart_point, chart_dv) != RT_DERIVATIVES_OK)
+	return RT_DERIVATIVES_ERROR;
+    VSCALE(derivatives->dpdu, derivatives->dndu, sph->sph_rad);
+    VSCALE(derivatives->dpdv, derivatives->dndv, sph->sph_rad);
+    return RT_DERIVATIVES_OK;
+}
+
+
 C_DECL void
 rt_sph_free(register struct soltab *stp)
 {

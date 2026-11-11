@@ -134,6 +134,8 @@ extern "C" {
 
 extern int rt_bot_normals(const struct hit *, struct soltab *, struct xray *, vect_t, vect_t);
 extern int rt_bot_surface_derivatives(struct application *, struct soltab *, const struct hit *, struct rt_surface_derivatives *);
+extern int rt_sph_surface_derivatives(struct application *, struct soltab *, const struct hit *, struct rt_surface_derivatives *);
+extern int rt_ell_surface_derivatives(struct application *, struct soltab *, const struct hit *, struct rt_surface_derivatives *);
 extern int rt_dsp_normals(const struct hit *, struct soltab *, struct xray *, vect_t, vect_t);
 
 /* generics for object manipulation, in generic.c */
@@ -414,7 +416,7 @@ const struct rt_functab OBJ[] = {
 	RTFUNCTAB_FUNC_SCENE_OBJ_CAST(rt_generic_scene_obj),
 	RTFUNCTAB_FUNC_VALIDATE_CAST(rt_ell_functab_validate), /* validate */
 	NULL /* normals */,
-	NULL /* surface_derivatives */
+	RTFUNCTAB_FUNC_SURFACE_DERIVATIVES_CAST(rt_ell_surface_derivatives)
     },
 
     {
@@ -792,7 +794,7 @@ const struct rt_functab OBJ[] = {
 	RTFUNCTAB_FUNC_SCENE_OBJ_CAST(rt_generic_scene_obj),
 	NULL, /* validate */
 	NULL /* normals */,
-	NULL /* surface_derivatives */
+	RTFUNCTAB_FUNC_SURFACE_DERIVATIVES_CAST(rt_sph_surface_derivatives)
     },
 
     {

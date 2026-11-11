@@ -638,6 +638,35 @@ rt_ell_uv(struct application *ap, struct soltab *stp, register struct hit *hitp,
 }
 
 
+C_DECL int
+rt_ell_surface_derivatives(struct application *UNUSED(ap), struct soltab *stp,
+    const struct hit *hitp, struct rt_surface_derivatives *derivatives)
+{
+    const struct ell_specific *ell = (const struct ell_specific *)stp->st_specific;
+    vect_t offset, point, du, dv;
+    VSUB2(offset, hitp->hit_point, ell->ell_V);
+    MAT4X3VEC(point, ell->ell_SoR, offset);
+    VUNITIZE(point);
+    const int status = rt_unit_sphere_uv_derivatives(point, du, dv);
+    if (status != RT_DERIVATIVES_OK)
+	return status;
+    mat_t inverse;
+    if (!bn_mat_inverse(inverse, ell->ell_SoR))
+	return RT_DERIVATIVES_ERROR;
+    MAT4X3VEC(derivatives->dpdu, inverse, du);
+    MAT4X3VEC(derivatives->dpdv, inverse, dv);
+
+    vect_t normal, normal_du, normal_dv;
+    VEC3X4MAT(normal, point, ell->ell_SoR);
+    VEC3X4MAT(normal_du, du, ell->ell_SoR);
+    VEC3X4MAT(normal_dv, dv, ell->ell_SoR);
+    if (rt_normalize_derivative(derivatives->dndu, normal, normal_du) != RT_DERIVATIVES_OK ||
+	rt_normalize_derivative(derivatives->dndv, normal, normal_dv) != RT_DERIVATIVES_OK)
+	return RT_DERIVATIVES_ERROR;
+    return RT_DERIVATIVES_OK;
+}
+
+
 C_DECL void
 rt_ell_free(register struct soltab *stp)
 {

@@ -1269,6 +1269,21 @@ clt_frame(void *pixels, uint8_t o[2], int cur_pixel, int last_pixel,
 
 
 int
+rt_unit_sphere_uv_derivatives(const vect_t point, vect_t dpdu, vect_t dpdv)
+{
+    if (VINVALID(point) || !(MAGSQ(point) > SMALL_FASTF))
+	return RT_DERIVATIVES_ERROR;
+    const fastf_t radial = hypot(point[X], point[Y]);
+    if (!(radial > 0.0))
+	return RT_DERIVATIVES_UNAVAILABLE;
+    VSET(dpdu, -M_2PI * point[Y], M_2PI * point[X], 0.0);
+    VSET(dpdv, -M_PI * point[Z] * point[X] / radial,
+	-M_PI * point[Z] * point[Y] / radial, M_PI * radial);
+    return RT_DERIVATIVES_OK;
+}
+
+
+int
 rt_normalize_derivative(vect_t result, const vect_t normal,
     const vect_t derivative)
 {
