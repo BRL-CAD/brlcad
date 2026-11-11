@@ -101,6 +101,9 @@ add_subdirectory(red)
 # Repository check
 add_subdirectory(repository)
 
+# Appleseed integration
+add_subdirectory(art)
+
 # remrt Network Distributed RT Regression Tests
 add_subdirectory(remrt)
 

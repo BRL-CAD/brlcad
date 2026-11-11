@@ -78,7 +78,7 @@
 #include <stdio.h>
 
 #include <cstddef>
-#include <memory>
+#include <set>
 #include <string>
 #include <vector>
 
@@ -818,7 +818,7 @@ do_ae(double azim, double elev)
 
 
 static asf::auto_release_ptr<asr::Project>
-build_project(const char* file, const char* UNUSED(objects))
+build_project(const char* file)
 {
     /* If user gave no sizing info at all, use 512 as default */
     struct bu_vls dimensions = BU_VLS_INIT_ZERO;
@@ -1033,17 +1033,15 @@ build_project(const char* file, const char* UNUSED(objects))
     // declare camera outside of if-else scope
     asf::auto_release_ptr<asr::Camera> camera;
 
+    const double frame_aspect = static_cast<double>(width) / height;
+
     // check for perspective
     if (rt_perspective > 0.0) {
-	double dim_factor = 1.0;
+	const double film_width = 1.0;
 	struct bu_vls fov = BU_VLS_INIT_ZERO;
 	bu_vls_sprintf(&fov, "%lf", rt_perspective);
         // Create a pinhole camera with film dimensions
-	if(width < height) {
-	    bu_vls_sprintf(&dimensions, "%f %f", dim_factor * (double) width / height, dim_factor);
-	} else {
-	    bu_vls_sprintf(&dimensions, "%f %f", dim_factor * (double) height / width, dim_factor);
-	}
+	bu_vls_sprintf(&dimensions, "%f %f", film_width, film_width / frame_aspect);
         asf::auto_release_ptr<asr::Camera> pinhole(
 	    asr::PinholeCameraFactory().create(
 	        "camera",
@@ -1052,9 +1050,11 @@ build_project(const char* file, const char* UNUSED(objects))
 	        .insert("horizontal_fov", bu_vls_cstr(&fov))
 		));
         camera = pinhole;
+	bu_vls_free(&fov);
     } else {
         // Create an orthographic camera with film dimensions
-        bu_vls_sprintf(&dimensions, "%f %f", 2.0, 2.0);
+        const double film_width = 2.0;
+        bu_vls_sprintf(&dimensions, "%f %f", film_width, film_width / frame_aspect);
         asf::auto_release_ptr<asr::Camera> ortho(
 	    asr::OrthographicCameraFactory().create(
 		"camera",
@@ -1120,6 +1120,7 @@ build_project(const char* file, const char* UNUSED(objects))
 
     // Bind the scene to the project.
     project->set_scene(scene);
+    bu_vls_free(&dimensions);
 
     return project;
 }
@@ -1260,107 +1261,69 @@ def_tree(struct rt_i* rtip)
  * color pipeline is trustworthy -- and convert that to the requested format
  * with libicv (icv reads the sRGB 8-bit PNG and writes by extension).
  */
-static void
+static bool
 art_save_image(asr::Project& project, const char* filename)
 {
     const char* dot = strrchr(filename, '.');
 
-    /* Formats Appleseed writes directly: skip the round-trip. */
-    if (dot && (BU_STR_EQUIV(dot, ".png") || BU_STR_EQUIV(dot, ".exr"))) {
-	project.get_frame()->write_main_image(filename);
-	return;
-    }
+    if (dot && (BU_STR_EQUIV(dot, ".png") || BU_STR_EQUIV(dot, ".exr")))
+	return project.get_frame()->write_main_image(filename);
 
-    /* Otherwise render to a temporary PNG and convert via libicv. */
     struct bu_vls tmpname = BU_VLS_INIT_ZERO;
     bu_vls_sprintf(&tmpname, "%s.tmp.png", filename);
-    project.get_frame()->write_main_image(bu_vls_cstr(&tmpname));
+    if (!project.get_frame()->write_main_image(bu_vls_cstr(&tmpname))) {
+	bu_vls_free(&tmpname);
+	return false;
+    }
 
+    bool success = false;
     icv_image_t* img = icv_read(bu_vls_cstr(&tmpname), BU_MIME_IMAGE_AUTO, 0, 0);
     if (img) {
-	if (icv_write(img, filename, BU_MIME_IMAGE_AUTO) != 0)
-	    bu_log("art: warning: could not write '%s'; PNG left at '%s'\n",
-		   filename, bu_vls_cstr(&tmpname));
-	else
+	success = (icv_write(img, filename, BU_MIME_IMAGE_AUTO) == 0);
+	if (success)
 	    (void)bu_file_delete(bu_vls_cstr(&tmpname));
+	else
+	    bu_log("art: could not write '%s'; PNG left at '%s'\n",
+		   filename, bu_vls_cstr(&tmpname));
 	icv_destroy(img);
     } else {
-	bu_log("art: warning: could not read temporary render '%s'; "
-	       "leaving it in place\n", bu_vls_cstr(&tmpname));
+	bu_log("art: could not read temporary render '%s'\n", bu_vls_cstr(&tmpname));
     }
     bu_vls_free(&tmpname);
+    return success;
+}
+
+
+static bool
+art_render_image(asr::Project& project, asr::ITileCallback* callback = nullptr)
+{
+    asr::DefaultRendererController controller;
+    asf::SearchPaths resource_search_paths;
+    asr::MasterRenderer renderer(
+	project,
+	project.configurations().get_by_name("final")->get_inherited_parameters(),
+	resource_search_paths,
+	callback);
+
+    if (renderer.render(controller).m_status != asr::MasterRenderer::RenderingResult::Succeeded) {
+	bu_log("art: rendering did not complete successfully\n");
+	return false;
+    }
+
+    return art_save_image(project, outputfile);
 }
 
 
 static int
 art_cm_end(const int UNUSED(argc), const char** UNUSED(argv))
 {
-    struct bu_vls str = BU_VLS_INIT_ZERO;
-
-    if (APP.a_rt_i && BU_LIST_IS_EMPTY(&APP.a_rt_i->HeadRegion)) {
-	def_tree(APP.a_rt_i);		/* Load the default trees */
-    }
-
-#if 0
-    vect_t work, temp;
-    mat_t toEye;
-
-    if (viewsize <= 0.0)
-	bu_exit(EXIT_FAILURE, "viewsize <= 0");
-    /* model2view takes us to eye_model location & orientation */
-    MAT_IDN(toEye);
-    MAT_DELTAS_VEC_NEG(toEye, eye_model);
-    Viewrotscale[15] = 0.5 * viewsize;	/* Viewscale */
-    bn_mat_mul(model2view, Viewrotscale, toEye);
-    bn_mat_inv(view2model, model2view);
-
-    VSET(work, 0, 0, 1);
-
-    MAT3X3VEC(temp, view2model, work);
-
-    bn_ae_vec(&azimuth, &elevation, temp);
-    bu_log(
-	"View: %g azimuth, %g elevation off of front view\n",
-	azimuth, elevation);
-#endif
-
-    //if (Viewrotscale[15] <= 0.0) {
-    //RENDERER_LOG_INFO("CALLING DO AEEEEEEEEEE\n");
+    if (APP.a_rt_i && BU_LIST_IS_EMPTY(&APP.a_rt_i->HeadRegion))
+	def_tree(APP.a_rt_i);
 
     do_ae(azimuth, elevation);
-    // }
-    asf::auto_release_ptr<asr::Project> project(build_project(global_title_file, bu_vls_cstr(&str)));
+    asf::auto_release_ptr<asr::Project> project(build_project(global_title_file));
 
-    // Create the master renderer.
-    asr::DefaultRendererController renderer_controller;
-    asf::SearchPaths resource_search_paths;
-    std::unique_ptr<asr::MasterRenderer> renderer(
-	new asr::MasterRenderer(
-	    project.ref(),
-	    project->configurations().get_by_name("final")->get_inherited_parameters(),
-	    resource_search_paths));
-
-    // Render the frame.
-    renderer->render(renderer_controller);
-
-    // Save the frame to disk to the requested output path, honoring its
-    // extension via libicv.
-    art_save_image(project.ref(), outputfile);
-
-    // Save the project to disk.
-    /* Intentionally not writing the .appleseed project file: ProjectFileWriter
-	 * serializes every scene entity, but BrlcadObject (a ProceduralObject) has
-	 * no serializable geometry, so the writer aborts the process (0xC0000409)
-	 * at the end of an otherwise-successful render.  The project file is only a
-	 * debugging convenience and is not needed to produce the output image. */
-
-    // Make sure to delete the master renderer before the project and the logger / log target.
-    renderer.reset();
-
-    // clean up resources
-
-
-    return 0;
+    return art_render_image(project.ref()) ? 0 : -1;
 }
 
 
@@ -1391,7 +1354,6 @@ main(int argc, char **argv)
     struct rt_i* rtip;
     const char *title_file = NULL;
     //const char *title_obj = NULL;	/* name of file and first object */
-    struct bu_vls str = BU_VLS_INIT_ZERO;
     //int objs_free_argv = 0;
 
     bu_setprogname(argv[0]);
@@ -1487,7 +1449,7 @@ main(int argc, char **argv)
 
     if (matflag) {
 	char* buf;
-	int nret;
+	int nret = 0;
 	rt_do_tab[6].ct_func = art_cm_end;
 	rt_do_tab[13].ct_func = art_cm_clean;
 
@@ -1499,88 +1461,27 @@ main(int argc, char **argv)
 		break;
 	}
 	bu_free(resources, "appleseed");
-	return 0;
+	return nret < 0 ? BRLCAD_ERROR : BRLCAD_OK;
     }
 
 
     do_ae(azimuth, elevation);
     // RENDERER_LOG_INFO("View model: (%f, %f, %f)", eye_model[0], eye_model[2], -eye_model[1]);
 
-    bu_vls_from_argv(&str, objc, (const char**)objv);
-
     // Build the project.
-    asf::auto_release_ptr<asr::Project> project(build_project(title_file, bu_vls_cstr(&str)));
+    asf::auto_release_ptr<asr::Project> project(build_project(title_file));
 
     if (framebuffer && !fbp) {
 	RENDERER_LOG_INFO("FRAMEBUFFER IS ON\n");
 	fb_setup();
     }
     ArtTileCallback artcallback;
-    // Create the master renderer.
-    asr::DefaultRendererController renderer_controller;
-    asf::SearchPaths resource_search_paths;
-    if (framebuffer) { // if -F is called
-        std::unique_ptr<asr::MasterRenderer> renderer(
-	    new asr::MasterRenderer(
-		project.ref(),
-		project->configurations().get_by_name("final")->get_inherited_parameters(),
-		resource_search_paths,
-		&artcallback));
-
-        // Render the frame.
-        // Render the frame.
-        renderer->render(renderer_controller);
-
-        // Save the frame to disk to the requested output path, honoring its
-        // extension via libicv.
-        art_save_image(project.ref(), outputfile);
-
-        // Save the project to disk.
-        /* Intentionally not writing the .appleseed project file: ProjectFileWriter
-	 * serializes every scene entity, but BrlcadObject (a ProceduralObject) has
-	 * no serializable geometry, so the writer aborts the process (0xC0000409)
-	 * at the end of an otherwise-successful render.  The project file is only a
-	 * debugging convenience and is not needed to produce the output image. */
-
-        if (fbp != FB_NULL) {
-	    fb_close(fbp);
-        }
-
-        // Make sure to delete the master renderer before the project and the logger / log target.
-        renderer.reset();
-    } else { // if -F is not specified
-        std::unique_ptr<asr::MasterRenderer> renderer(
-	    new asr::MasterRenderer(
-		project.ref(),
-		project->configurations().get_by_name("final")->get_inherited_parameters(),
-		resource_search_paths));
-
-        // Render the frame.
-        // Render the frame.
-        renderer->render(renderer_controller);
-
-        // Save the frame to disk to the requested output path, honoring its
-        // extension via libicv.
-        art_save_image(project.ref(), outputfile);
-
-        // Save the project to disk.
-        /* Intentionally not writing the .appleseed project file: ProjectFileWriter
-	 * serializes every scene entity, but BrlcadObject (a ProceduralObject) has
-	 * no serializable geometry, so the writer aborts the process (0xC0000409)
-	 * at the end of an otherwise-successful render.  The project file is only a
-	 * debugging convenience and is not needed to produce the output image. */
-
-        if (fbp != FB_NULL) {
-	    fb_close(fbp);
-        }
-
-        // Make sure to delete the master renderer before the project and the logger / log target.
-        renderer.reset();
-    }
-    // clean up resources
+    const bool success = art_render_image(project.ref(), framebuffer ? &artcallback : nullptr);
+    if (fbp != FB_NULL)
+	fb_close(fbp);
     bu_free(resources, "appleseed");
 
-    return 0;
+    return success ? BRLCAD_OK : BRLCAD_ERROR;
 }
 
 
