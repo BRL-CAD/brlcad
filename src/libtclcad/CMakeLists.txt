@@ -97,6 +97,10 @@ if(BRLCAD_ENABLE_TCL)
     # disable this test
     NO_STATIC_LINK_TEST
   )
+  if(TKLITEHTML_SOURCES AND BRLCAD_PGO AND BRLCAD_PGO_PHASE STREQUAL "GENERATE" AND CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+    # GCC can mistake placement delete in map node construction for a free.
+    target_link_options(libtclcad PRIVATE -Wno-error=free-nonheap-object)
+  endif()
   set(ptargets libtclcad)
   if(TARGET libtclcad-obj)
     list(APPEND ptargets libtclcad-obj)
