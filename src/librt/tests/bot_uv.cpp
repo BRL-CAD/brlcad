@@ -195,6 +195,43 @@ check_mesh(struct rt_i *rtip, struct resource *resource, unsigned char orientati
 }
 
 bool
+check_transform(bool in_place)
+{
+    Mesh source(RT_BOT_CCW, true), destination(RT_BOT_CCW, true);
+    const auto original_vertices = source.vertices;
+    const auto original_uvs = source.uvs;
+    if (!in_place) std::fill(destination.uvs.begin(), destination.uvs.end(), -1.0);
+    struct rt_db_internal input, output;
+    RT_DB_INTERNAL_INIT(&input);
+    RT_DB_INTERNAL_INIT(&output);
+    input.idb_type = output.idb_type = ID_BOT;
+    input.idb_meth = output.idb_meth = &OBJ[ID_BOT];
+    input.idb_ptr = &source.bot;
+    output.idb_ptr = &destination.bot;
+    mat_t transform;
+    MAT_IDN(transform);
+    transform[0] = transform[5] = 0;
+    transform[1] = -3; transform[4] = 2; transform[10] = 4;
+    MAT_DELTAS(transform, 17, 23, -5);
+    if (OBJ[ID_BOT].ft_mat(in_place ? &input : &output, transform, &input) != BRLCAD_OK)
+	return false;
+    const auto &result = in_place ? source : destination;
+    for (size_t vertex = 0; vertex < source.bot.num_vertices; ++vertex) {
+	point_t expected;
+	MAT4X3PNT(expected, transform, &original_vertices[vertex * 3]);
+	if (!VNEAR_EQUAL(expected, &result.vertices[vertex * 3], UVTolerance)) {
+	    bu_log("BOT geometry was not transformed correctly\n");
+	    return false;
+	}
+    }
+    if (result.uvs != original_uvs) {
+	bu_log("BOT UV coordinates changed under a geometry transform (in_place=%d)\n", in_place);
+	return false;
+    }
+    return true;
+}
+
+bool
 check_invalid_uvs(struct rt_i *rtip)
 {
     bool ok = true;
@@ -234,6 +271,7 @@ main(int argc, char **argv)
 	for (bool textured : {false, true})
 	    ok = check_mesh(rtip, &resource, orientation, textured) && ok;
     ok = check_invalid_uvs(rtip) && ok;
+    ok = check_transform(false) && check_transform(true) && ok;
     rt_i_destroy(rtip);
     rt_clean_resource_basic(nullptr, &resource);
     return ok ? 0 : 1;

@@ -2446,7 +2446,8 @@ rt_bot_mat(struct rt_db_internal *rop, const mat_t mat, const struct rt_db_inter
     if (tip->bot_flags & RT_BOT_HAS_TEXTURE_UVS) {
 	if (!(top->bot_flags & RT_BOT_HAS_TEXTURE_UVS))
 	    return BRLCAD_ERROR;
-	if (tip->num_uvs != top->num_uvs)
+	if (tip->num_uvs != top->num_uvs ||
+	    (tip->num_uvs && (!tip->uvs || !top->uvs)))
 	    return BRLCAD_ERROR;
     }
 
@@ -2464,12 +2465,9 @@ rt_bot_mat(struct rt_db_internal *rop, const mat_t mat, const struct rt_db_inter
 	    MAT4X3VEC(&(top->normals[i*ELEMENTS_PER_VECT]), mat, tmp_n);
 	}
     }
-    if (tip->bot_flags & RT_BOT_HAS_TEXTURE_UVS) {
-	vect_t tmp_uvs;
-	for (size_t i = 0; i < tip->num_uvs; i++) {
-	    VMOVE(tmp_uvs, &(tip->uvs[i*ELEMENTS_PER_VECT]));
-	    MAT4X3VEC(&(top->uvs[i*ELEMENTS_PER_VECT]), mat, tmp_uvs);
-	}
+    if ((tip->bot_flags & RT_BOT_HAS_TEXTURE_UVS) && top->uvs != tip->uvs) {
+	// UVs belong to the texture parameterization, not geometric space.
+	memcpy(top->uvs, tip->uvs, tip->num_uvs * ELEMENTS_PER_VECT * sizeof(fastf_t));
     }
 
     return BRLCAD_OK;
