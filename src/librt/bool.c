@@ -206,11 +206,14 @@ rt_boolweave(struct seg *out_hd, struct seg *in_hd, struct partition *PartHdp, s
 	BU_LIST_DEQUEUE(&(segp->l));
 	BU_LIST_INSERT(&(out_hd->l), &(segp->l));
 
-	/* Make nearly zero be exactly zero */
-	if (NEAR_ZERO(segp->seg_in.hit_dist, tol_dist))
-	    segp->seg_in.hit_dist = 0;
-	if (NEAR_ZERO(segp->seg_out.hit_dist, tol_dist))
-	    segp->seg_out.hit_dist = 0;
+	/* Rendering queries need the sign of boundaries just behind the origin
+	 * to distinguish an inside ray from an immediate forward hit. */
+	if (!ap->a_no_hit_snap) {
+	    if (NEAR_ZERO(segp->seg_in.hit_dist, tol_dist))
+		segp->seg_in.hit_dist = 0;
+	    if (NEAR_ZERO(segp->seg_out.hit_dist, tol_dist))
+		segp->seg_out.hit_dist = 0;
+	}
 
 	/* Totally ignore things behind the start position */
 	if (segp->seg_out.hit_dist < -10.0)
@@ -1559,7 +1562,7 @@ rt_boolfinal(struct partition *InputHdp, struct partition *FinalHdp, fastf_t sta
 	 * Partition may start before current box starts, because it's
 	 * still waiting for all its solids to be shot.
 	 */
-	if (pp->pt_outhit->hit_dist < ap->a_rt_i->rti_tol.dist) {
+	if (pp->pt_outhit->hit_dist < (ap->a_no_hit_snap ? 0.0 : ap->a_rt_i->rti_tol.dist)) {
 	    register struct partition *zap_pp;
 	    if (RT_G_DEBUG&RT_DEBUG_PARTITION)
 		bu_log("discarding partition %p behind ray start, out dist=%g\n",

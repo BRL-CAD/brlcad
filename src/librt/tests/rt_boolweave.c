@@ -293,10 +293,10 @@ reset_region(struct bool_test_context *ctx, int op)
 
 
 static void
-run_case_impl(struct bool_test_context *ctx, const char *case_name,
+run_case_with_snap_policy(struct bool_test_context *ctx, const char *case_name,
 	      struct interval a_interval, struct interval b_interval,
 	      int op, int reverse, const struct interval *expected,
-	      int expected_count)
+	      int expected_count, int no_hit_snap)
 {
     struct seg in_hd;
     struct seg out_hd;
@@ -312,6 +312,7 @@ run_case_impl(struct bool_test_context *ctx, const char *case_name,
     RT_APPLICATION_INIT(&ap);
     ap.a_rt_i = ctx->rtip;
     ap.a_resource = ctx->resp;
+    ap.a_no_hit_snap = no_hit_snap;
 
     BU_LIST_INIT(&in_hd.l);
     BU_LIST_INIT(&out_hd.l);
@@ -355,13 +356,47 @@ run_case_impl(struct bool_test_context *ctx, const char *case_name,
 
 
 static void
+run_default_case(struct bool_test_context *ctx, const char *case_name,
+	      struct interval a_interval, struct interval b_interval,
+	      int op, int reverse, const struct interval *expected, int expected_count)
+{
+    run_case_with_snap_policy(ctx, case_name, a_interval, b_interval,
+	op, reverse, expected, expected_count, 0);
+}
+
+
+static void
+run_unsnapped_origin_cases(struct bool_test_context *ctx)
+{
+    const double near_origin = ctx->rtip->rti_tol.dist / 10.0;
+    const struct interval b = {4.0, 5.0};
+    int sign;
+    for (sign = -1; sign <= 1; sign += 2) {
+	struct interval a = {sign * near_origin, 2.0};
+	struct interval expected[] = {{sign * near_origin, 2.0}, {4.0, 5.0}};
+	run_case_with_snap_policy(ctx, "unsnapped-origin", a, b,
+	    OP_UNION, 0, expected, 2, 1);
+    }
+    struct interval near_exit = {-2.0, near_origin};
+    struct interval behind_exit = {-2.0, -near_origin};
+    struct interval expected[] = {{-2.0, near_origin}, {4.0, 5.0}};
+    run_case_with_snap_policy(ctx, "unsnapped-forward-exit", near_exit, b,
+	OP_UNION, 0, expected, 2, 1);
+    run_case_with_snap_policy(ctx, "unsnapped-behind-exit", behind_exit, b,
+	OP_UNION, 0, &b, 1, 1);
+    run_default_case(ctx, "snapped-forward-exit", near_exit, b,
+	OP_UNION, 0, &b, 1);
+}
+
+
+static void
 run_case(struct bool_test_context *ctx, const struct bool_case *tc, int op, int reverse)
 {
     struct interval expected[4];
     int expected_count;
 
     expected_count = expected_intervals(op, tc->a, tc->b, expected);
-    run_case_impl(ctx, tc->name, tc->a, tc->b, op, reverse,
+    run_default_case(ctx, tc->name, tc->a, tc->b, op, reverse,
 		  expected, expected_count);
 }
 
@@ -443,15 +478,15 @@ run_edge_cases(struct bool_test_context *ctx)
 	} else {
 	    count = 0;
 	}
-	run_case_impl(ctx, zero_a.name, zero_a.a, zero_a.b, op, 0,
+	run_default_case(ctx, zero_a.name, zero_a.a, zero_a.b, op, 0,
 		      expected, count);
-	run_case_impl(ctx, zero_a.name, zero_a.a, zero_a.b, op, 1,
+	run_default_case(ctx, zero_a.name, zero_a.a, zero_a.b, op, 1,
 		      expected, count);
 
 	count = 0;
-	run_case_impl(ctx, negative.name, negative.a, negative.b, op, 0,
+	run_default_case(ctx, negative.name, negative.a, negative.b, op, 0,
 		      negative_expected, count);
-	run_case_impl(ctx, negative.name, negative.a, negative.b, op, 1,
+	run_default_case(ctx, negative.name, negative.a, negative.b, op, 1,
 		      negative_expected, count);
 
 	if (op == OP_UNION || op == OP_XOR) {
@@ -461,25 +496,25 @@ run_edge_cases(struct bool_test_context *ctx)
 	} else {
 	    count = 0;
 	}
-	run_case_impl(ctx, origin.name, origin.a, origin.b, op, 0,
+	run_default_case(ctx, origin.name, origin.a, origin.b, op, 0,
 		      origin_expected, count);
-	run_case_impl(ctx, origin.name, origin.a, origin.b, op, 1,
+	run_default_case(ctx, origin.name, origin.a, origin.b, op, 1,
 		      origin_expected, count);
 
 	if (op == OP_UNION || op == OP_XOR) {
-	    run_case_impl(ctx, tolerance.name, tolerance.a, tolerance.b, op, 0,
+	    run_default_case(ctx, tolerance.name, tolerance.a, tolerance.b, op, 0,
 			  tolerance_union_expected, 1);
-	    run_case_impl(ctx, tolerance.name, tolerance.a, tolerance.b, op, 1,
+	    run_default_case(ctx, tolerance.name, tolerance.a, tolerance.b, op, 1,
 			  tolerance_union_expected, 1);
 	} else if (op == OP_SUBTRACT) {
-	    run_case_impl(ctx, tolerance.name, tolerance.a, tolerance.b, op, 0,
+	    run_default_case(ctx, tolerance.name, tolerance.a, tolerance.b, op, 0,
 			  tolerance_subtract_a_first, 1);
-	    run_case_impl(ctx, tolerance.name, tolerance.a, tolerance.b, op, 1,
+	    run_default_case(ctx, tolerance.name, tolerance.a, tolerance.b, op, 1,
 			  tolerance_subtract_b_first, 1);
 	} else {
-	    run_case_impl(ctx, tolerance.name, tolerance.a, tolerance.b, op, 0,
+	    run_default_case(ctx, tolerance.name, tolerance.a, tolerance.b, op, 0,
 			  tolerance_union_expected, 0);
-	    run_case_impl(ctx, tolerance.name, tolerance.a, tolerance.b, op, 1,
+	    run_default_case(ctx, tolerance.name, tolerance.a, tolerance.b, op, 1,
 			  tolerance_union_expected, 0);
 	}
     }
@@ -570,6 +605,7 @@ main(int ac, char *av[])
 	}
     }
     run_edge_cases(&ctx);
+    run_unsnapped_origin_cases(&ctx);
 
     destroy_context(&ctx);
     return failures ? 1 : 0;
