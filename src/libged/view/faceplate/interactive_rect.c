@@ -70,7 +70,7 @@ _fp_irect_cmd_draw(void *bs, int argc, const char **argv)
 	return BRLCAD_ERROR;
     }
     int val;
-    if (!bu_arg_integer_from_str(&val, argv[0]) || (val != 0 && val != 1)) {
+    if (!bu_arg_integer_from_str(NULL, &val, argv[0], 0) || (val != 0 && val != 1)) {
 	bu_vls_printf(gedp->ged_result_str, "Invalid argument %s\n", argv[0]);
 	return BRLCAD_ERROR;
     }
@@ -106,7 +106,7 @@ _fp_irect_cmd_line_width(void *bs, int argc, const char **argv)
 	return BRLCAD_ERROR;
     }
     int val;
-    if (!bu_arg_integer_from_str(&val, argv[0]) || val < 1) {
+    if (!bu_arg_integer_from_str(NULL, &val, argv[0], 0) || val < 1) {
 	bu_vls_printf(gedp->ged_result_str, "Invalid argument %s\n", argv[0]);
 	return BRLCAD_ERROR;
     }
@@ -142,7 +142,7 @@ _fp_irect_cmd_line_style(void *bs, int argc, const char **argv)
 	return BRLCAD_ERROR;
     }
     int val;
-    if (!bu_arg_integer_from_str(&val, argv[0]) || val < 1) {
+    if (!bu_arg_integer_from_str(NULL, &val, argv[0], 0) || val < 1) {
 	bu_vls_printf(gedp->ged_result_str, "Invalid argument %s\n", argv[0]);
 	return BRLCAD_ERROR;
     }
@@ -178,11 +178,11 @@ _fp_irect_cmd_pos(void *bs, int argc, const char **argv)
     }
 
     int pos[2];
-    if (!bu_arg_integer_from_str(&pos[0], argv[0])) {
+    if (!bu_arg_integer_from_str(NULL, &pos[0], argv[0], 0)) {
 	bu_vls_printf(gedp->ged_result_str, "Invalid argument %s\n", argv[0]);
 	return BRLCAD_ERROR;
     }
-    if (!bu_arg_integer_from_str(&pos[1], argv[1])) {
+    if (!bu_arg_integer_from_str(NULL, &pos[1], argv[1], 0)) {
 	bu_vls_printf(gedp->ged_result_str, "Invalid argument %s\n", argv[1]);
 	return BRLCAD_ERROR;
     }
@@ -218,11 +218,11 @@ _fp_irect_cmd_dim(void *bs, int argc, const char **argv)
     }
 
     int dim[2];
-    if (!bu_arg_integer_from_str(&dim[0], argv[0])) {
+    if (!bu_arg_integer_from_str(NULL, &dim[0], argv[0], 0)) {
 	bu_vls_printf(gedp->ged_result_str, "Invalid argument %s\n", argv[0]);
 	return BRLCAD_ERROR;
     }
-    if (!bu_arg_integer_from_str(&dim[1], argv[1])) {
+    if (!bu_arg_integer_from_str(NULL, &dim[1], argv[1], 0)) {
 	bu_vls_printf(gedp->ged_result_str, "Invalid argument %s\n", argv[1]);
 	return BRLCAD_ERROR;
     }
@@ -417,11 +417,11 @@ _fp_irect_cmd_cdim(void *bs, int argc, const char **argv)
     }
 
     int cdim[2];
-    if (!bu_arg_integer_from_str(&cdim[0], argv[0])) {
+    if (!bu_arg_integer_from_str(NULL, &cdim[0], argv[0], 0)) {
 	bu_vls_printf(gedp->ged_result_str, "Invalid argument %s\n", argv[0]);
 	return BRLCAD_ERROR;
     }
-    if (!bu_arg_integer_from_str(&cdim[1], argv[1])) {
+    if (!bu_arg_integer_from_str(NULL, &cdim[1], argv[1], 0)) {
 	bu_vls_printf(gedp->ged_result_str, "Invalid argument %s\n", argv[1]);
 	return BRLCAD_ERROR;
     }

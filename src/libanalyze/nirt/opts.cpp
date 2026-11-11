@@ -199,7 +199,7 @@ nirt_librt_debug_from_str(struct bu_vls *msg, const char *arg, void *storage)
 {
     int value;
 
-    if (!bu_arg_integer_from_str(&value, arg)) {
+    if (!bu_arg_integer_from_str(NULL, &value, arg, 0)) {
 	if (msg)
 	    bu_vls_printf(msg, "invalid librt debug value: %s\n", arg ? arg : "");
 	return -1;

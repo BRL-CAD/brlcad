@@ -276,7 +276,7 @@ ged_simulate_core(ged * const gedp, const int argc, const char ** const argv)
 	get_debug_mode(args.debug_mode);
 
 	fastf_t seconds = 0.0;
-	if (!bu_arg_number_from_str(&seconds, duration_arg))
+	if (!bu_arg_number_from_str(NULL, &seconds, duration_arg))
 	    throw simulate::InvalidSimulationError("invalid value for 'seconds'");
 
 	db_full_path path;

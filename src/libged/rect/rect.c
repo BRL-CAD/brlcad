@@ -317,7 +317,7 @@ rect_execute(struct ged *gedp,
 	    return BRLCAD_OK;
 	} else if (argc == 1) {
 	    int enabled = 0;
-	    if (!bu_arg_integer_from_str(&enabled, argp[0]) || (enabled != 0 && enabled != 1))
+	    if (!bu_arg_integer_from_str(NULL, &enabled, argp[0], 0) || (enabled != 0 && enabled != 1))
 		goto usage;
 	    gedp->ged_gvp->gv_s->gv_rect.draw = enabled;
 
@@ -446,7 +446,7 @@ rect_execute(struct ged *gedp,
 	    return BRLCAD_OK;
 	} else if (argc == 1) {
 	    int value = 0;
-	    if (!bu_arg_integer_from_str(&value, argp[0]))
+	    if (!bu_arg_integer_from_str(NULL, &value, argp[0], 0))
 		goto usage;
 
 	    if (value <= 0)
@@ -467,7 +467,7 @@ rect_execute(struct ged *gedp,
 	    return BRLCAD_OK;
 	} else if (argc == 1) {
 	    int value = 0;
-	    if (!bu_arg_integer_from_str(&value, argp[0]))
+	    if (!bu_arg_integer_from_str(NULL, &value, argp[0], 0))
 		goto usage;
 
 	    if (value <= 0)
@@ -485,7 +485,7 @@ rect_execute(struct ged *gedp,
     if (BU_STR_EQUAL(parameter, "rt")) {
 	if (argc == 1) {
 	    int port = 0;
-	    if (bu_arg_integer_from_str(&port, argp[0]))
+	    if (bu_arg_integer_from_str(NULL, &port, argp[0], 0))
 		return rect_rt(gedp, port);
 	    goto usage;
 	}

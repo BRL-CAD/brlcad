@@ -143,8 +143,8 @@ ged_dsp_core(struct ged *gedp, int argc, const char *argv[])
 	unsigned short elev;
 	int gx = 0;
 	int gy = 0;
-	if (!bu_arg_integer_from_str(&gx, argv[3]) || gx < 0 ||
-		!bu_arg_integer_from_str(&gy, argv[4]) || gy < 0 ||
+	if (!bu_arg_integer_from_str(NULL, &gx, argv[3], 0) || gx < 0 ||
+		!bu_arg_integer_from_str(NULL, &gy, argv[4], 0) || gy < 0 ||
 		(unsigned int)gx >= dsp->dsp_xcnt || (unsigned int)gy >= dsp->dsp_ycnt) {
 	    bu_vls_printf(gedp->ged_result_str, "Error - xy coordinate (%d,%d) is outside max data bounds of dsp: (%d,%d)", gx, gy, dsp->dsp_xcnt, dsp->dsp_ycnt);
 	    rt_db_free_internal(&intern);
@@ -161,7 +161,7 @@ ged_dsp_core(struct ged *gedp, int argc, const char *argv[])
 	struct rt_db_internal intern2;
 	struct rt_dsp_internal *dsp2;
 	fastf_t min_diff = 0.0;
-	if (argc == 5 && !bu_arg_number_from_str(&min_diff, argv[4])) {
+	if (argc == 5 && !bu_arg_number_from_str(NULL, &min_diff, argv[4])) {
 	    bu_vls_printf(gedp->ged_result_str, "Error - invalid minimum difference: %s", argv[4]);
 	    rt_db_free_internal(&intern);
 	    return BRLCAD_ERROR;

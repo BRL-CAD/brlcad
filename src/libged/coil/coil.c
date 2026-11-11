@@ -73,7 +73,7 @@ coil_cap_type_validate(struct bu_vls *msg, const char *arg)
 {
     int value = 0;
 
-    if (!bu_arg_integer_from_str(&value, arg) || value < 0 || value > 3) {
+    if (!bu_arg_integer_from_str(NULL, &value, arg, 0) || value < 0 || value > 3) {
 	if (msg)
 	    bu_vls_printf(msg, "coil cap type must be an integer from 0 through 3: %s", arg ? arg : "");
 	return -1;

@@ -70,7 +70,7 @@ _fp_axes_cmd_size(void *bs, int argc, const char **argv)
 	return BRLCAD_ERROR;
     }
     fastf_t val;
-    if (!bu_arg_number_from_str(&val, argv[0])) {
+    if (!bu_arg_number_from_str(NULL, &val, argv[0])) {
 	bu_vls_printf(gedp->ged_result_str, "Invalid argument %s\n", argv[0]);
 	return BRLCAD_ERROR;
     }
@@ -106,7 +106,7 @@ _fp_axes_cmd_linewidth(void *bs, int argc, const char **argv)
 	return BRLCAD_ERROR;
     }
     int val;
-    if (!bu_arg_integer_from_str(&val, argv[0])) {
+    if (!bu_arg_integer_from_str(NULL, &val, argv[0], 0)) {
 	bu_vls_printf(gedp->ged_result_str, "Invalid argument %s\n", argv[0]);
 	return BRLCAD_ERROR;
     }
@@ -148,7 +148,7 @@ _fp_axes_cmd_pos_only(void *bs, int argc, const char **argv)
     }
 
     int val;
-    if (!bu_arg_integer_from_str(&val, argv[0]) || (val != 0 && val != 1)) {
+    if (!bu_arg_integer_from_str(NULL, &val, argv[0], 0) || (val != 0 && val != 1)) {
 	bu_vls_printf(gedp->ged_result_str, "Invalid argument %s\n", argv[0]);
 	return BRLCAD_ERROR;
     }
@@ -223,7 +223,7 @@ _fp_axes_cmd_label(void *bs, int argc, const char **argv)
 	return BRLCAD_ERROR;
     }
     int val;
-    if (!bu_arg_integer_from_str(&val, argv[0]) || (val != 0 && val != 1)) {
+    if (!bu_arg_integer_from_str(NULL, &val, argv[0], 0) || (val != 0 && val != 1)) {
 	bu_vls_printf(gedp->ged_result_str, "Invalid argument %s\n", argv[0]);
 	return BRLCAD_ERROR;
     }
@@ -299,7 +299,7 @@ _fp_axes_cmd_triple_color(void *bs, int argc, const char **argv)
 	return BRLCAD_ERROR;
     }
     int val;
-    if (!bu_arg_integer_from_str(&val, argv[0]) || (val != 0 && val != 1)) {
+    if (!bu_arg_integer_from_str(NULL, &val, argv[0], 0) || (val != 0 && val != 1)) {
 	bu_vls_printf(gedp->ged_result_str, "Invalid argument %s\n", argv[0]);
 	return BRLCAD_ERROR;
     }
@@ -335,7 +335,7 @@ _fp_axes_cmd_tick(void *bs, int argc, const char **argv)
 	return BRLCAD_ERROR;
     }
     int val;
-    if (!bu_arg_integer_from_str(&val, argv[0]) || (val != 0 && val != 1)) {
+    if (!bu_arg_integer_from_str(NULL, &val, argv[0], 0) || (val != 0 && val != 1)) {
 	bu_vls_printf(gedp->ged_result_str, "Invalid argument %s\n", argv[0]);
 	return BRLCAD_ERROR;
     }
@@ -371,7 +371,7 @@ _fp_axes_cmd_tick_length(void *bs, int argc, const char **argv)
 	return BRLCAD_ERROR;
     }
     int val;
-    if (!bu_arg_integer_from_str(&val, argv[0])) {
+    if (!bu_arg_integer_from_str(NULL, &val, argv[0], 0)) {
 	bu_vls_printf(gedp->ged_result_str, "Invalid argument %s\n", argv[0]);
 	return BRLCAD_ERROR;
     }
@@ -412,7 +412,7 @@ _fp_axes_cmd_tick_major_length(void *bs, int argc, const char **argv)
 	return BRLCAD_ERROR;
     }
     int val;
-    if (!bu_arg_integer_from_str(&val, argv[0])) {
+    if (!bu_arg_integer_from_str(NULL, &val, argv[0], 0)) {
 	bu_vls_printf(gedp->ged_result_str, "Invalid argument %s\n", argv[0]);
 	return BRLCAD_ERROR;
     }
@@ -453,7 +453,7 @@ _fp_axes_cmd_tick_interval(void *bs, int argc, const char **argv)
 	return BRLCAD_ERROR;
     }
     fastf_t val;
-    if (!bu_arg_number_from_str(&val, argv[0])) {
+    if (!bu_arg_number_from_str(NULL, &val, argv[0])) {
 	bu_vls_printf(gedp->ged_result_str, "Invalid argument %s\n", argv[0]);
 	return BRLCAD_ERROR;
     }
@@ -489,7 +489,7 @@ _fp_axes_cmd_ticks_per_major(void *bs, int argc, const char **argv)
 	return BRLCAD_ERROR;
     }
     int val;
-    if (!bu_arg_integer_from_str(&val, argv[0])) {
+    if (!bu_arg_integer_from_str(NULL, &val, argv[0], 0)) {
 	bu_vls_printf(gedp->ged_result_str, "Invalid argument %s\n", argv[0]);
 	return BRLCAD_ERROR;
     }
@@ -530,7 +530,7 @@ _fp_axes_cmd_tick_threshold(void *bs, int argc, const char **argv)
 	return BRLCAD_ERROR;
     }
     int val;
-    if (!bu_arg_integer_from_str(&val, argv[0])) {
+    if (!bu_arg_integer_from_str(NULL, &val, argv[0], 0)) {
 	bu_vls_printf(gedp->ged_result_str, "Invalid argument %s\n", argv[0]);
 	return BRLCAD_ERROR;
     }

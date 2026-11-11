@@ -70,7 +70,7 @@ bot_path_color(struct bu_color *c, const struct db_full_path *pathp, struct db_i
 
 	    const char *region_id_val = bu_avs_get(&c_avs, "region_id");
 	    if (region_id_val) {
-		(void)bu_arg_integer_from_str(&region_id, region_id_val);
+		(void)bu_arg_integer_from_str(NULL, &region_id, region_id_val, 0);
 	    } else if (pathp->fp_names[i]->d_flags & RT_DIR_REGION) {
 		region_id = 0;
 	    }
@@ -735,7 +735,7 @@ ged_bot_dump_core(struct ged *gedp, int argc, const char *argv[])
 	d->output_type = bot_fmt_type(args.format);
     if (args.units) {
 	double unit_factor;
-	if (!bu_arg_units_from_str(&unit_factor, args.units)) {
+	if (!bu_arg_units_from_str(NULL, &unit_factor, args.units)) {
 	    bu_vls_free(&args.output_file);
 	    bu_vls_free(&args.output_directory);
 	    bot_client_data_cleanup(d);

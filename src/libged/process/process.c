@@ -115,7 +115,7 @@ _ged_process_pabort(struct ged *gedp, int argc, const char **argv)
 	int ppid = bu_process_pid(rrp->p);
 	for (int j = 0; j < argc; j++) {
 	    int pid;
-	    if (!bu_arg_integer_from_str(&pid, argv[j])) {
+	    if (!bu_arg_integer_from_str(NULL, &pid, argv[j], 0)) {
 		bu_vls_printf(gedp->ged_result_str, "PID argument %s is not a valid process id.", argv[j]);
 		return BRLCAD_ERROR;
 	    }

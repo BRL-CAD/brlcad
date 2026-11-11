@@ -73,7 +73,7 @@ who_solids_level(const char *arg, int *lvl)
     if (!arg || !lvl)
 	return 0;
 
-    if (!bu_arg_integer_from_str(lvl, arg))
+    if (!bu_arg_integer_from_str(NULL, lvl, arg, 0))
 	return 0;
 
     if (*lvl > 3)

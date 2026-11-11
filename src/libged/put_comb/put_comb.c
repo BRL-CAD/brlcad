@@ -626,10 +626,10 @@ ged_put_comb_core(struct ged *gedp, int argc, const char *argv[])
 	    put_comb_usage(gedp);
 	    return BRLCAD_ERROR;
 	}
-	if (!bu_arg_integer_from_str(&region_id, argv[7]) ||
-	    !bu_arg_integer_from_str(&air_id, argv[8]) ||
-	    !bu_arg_integer_from_str(&material_id, argv[9]) ||
-	    !bu_arg_integer_from_str(&los, argv[10])) {
+	if (!bu_arg_integer_from_str(NULL, &region_id, argv[7], 0) ||
+	    !bu_arg_integer_from_str(NULL, &air_id, argv[8], 0) ||
+	    !bu_arg_integer_from_str(NULL, &material_id, argv[9], 0) ||
+	    !bu_arg_integer_from_str(NULL, &los, argv[10], 0)) {
 	    bu_vls_printf(gedp->ged_result_str, "%s: invalid region fields\n", cmd_name);
 	    return BRLCAD_ERROR;
 	}

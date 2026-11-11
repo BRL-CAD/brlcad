@@ -82,7 +82,7 @@ voxelize_threshold_validate(struct bu_vls *msg, const char *arg)
 {
     fastf_t threshold;
 
-    if (bu_arg_number_from_str(&threshold, arg) && threshold >= 0.0 && threshold <= 1.0)
+    if (bu_arg_number_from_str(NULL, &threshold, arg) && threshold >= 0.0 && threshold <= 1.0)
 	return 0;
     if (msg)
 	bu_vls_printf(msg, "fill threshold must be a finite number from 0 through 1\n");

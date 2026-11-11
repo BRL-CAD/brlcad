@@ -106,8 +106,8 @@ ged_mat_ae_core(struct ged *gedp,
 
     if (bu_arg_schema_parse_complete(&mat_ae_cmd_schema, NULL, NULL,
 	argc - 1, argv + 1) < 0 ||
-	!bu_arg_number_from_str(&az, argv[1]) ||
-	!bu_arg_number_from_str(&el, argv[2])) {
+	!bu_arg_number_from_str(NULL, &az, argv[1]) ||
+	!bu_arg_number_from_str(NULL, &el, argv[2])) {
 	ged_cmd_help_append(gedp->ged_result_str, argv[0], argv[0]);
 	return BRLCAD_ERROR;
     }
@@ -191,7 +191,7 @@ ged_mat_scale_about_pnt_core(struct ged *gedp,
 
 	if (bu_arg_schema_parse_complete(&mat_scale_about_pnt_cmd_schema, NULL, NULL,
 	argc - 1, argv + 1) < 0 || bn_decode_vect(v, argv[1]) < 3 ||
-	!bu_arg_number_from_str(&scale, argv[2])) {
+	!bu_arg_number_from_str(NULL, &scale, argv[2])) {
 	ged_cmd_help_append(gedp->ged_result_str, argv[0], argv[0]);
 	return BRLCAD_ERROR;
     }

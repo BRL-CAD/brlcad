@@ -127,7 +127,7 @@ ged_adc_core(struct ged *gedp,
     argp += parameter_index + 1;
 
     for (i = 0; i < argc; ++i) {
-	if (!bu_arg_number_from_str(&user_pt[i], argp[i])) {
+	if (!bu_arg_number_from_str(NULL, &user_pt[i], argp[i])) {
 	    adc_usage(gedp->ged_result_str, command);
 	    return BRLCAD_ERROR;
 	}

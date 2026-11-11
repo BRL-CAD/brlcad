@@ -373,7 +373,7 @@ ged_pipe_delete_pnt_core(struct ged *gedp, int argc, const char *argv[])
 	return BRLCAD_ERROR;
     }
 
-    if (!bu_arg_integer_from_str(&seg_i, argv[2])) {
+    if (!bu_arg_integer_from_str(NULL, &seg_i, argv[2], 0)) {
 	bu_vls_printf(gedp->ged_result_str, "%s: bad pipe segment index - %s", argv[0], argv[2]);
 	return BRLCAD_ERROR;
     }
@@ -536,7 +536,7 @@ ged_pipe_move_pnt_core(struct ged *gedp, int argc, const char *argv[])
 	return BRLCAD_ERROR;
     }
 
-    if (!bu_arg_integer_from_str(&seg_i, argv[2])) {
+    if (!bu_arg_integer_from_str(NULL, &seg_i, argv[2], 0)) {
 	bu_vls_printf(gedp->ged_result_str, "%s: bad pipe segment index - %s", argv[0], argv[2]);
 	return BRLCAD_ERROR;
     }

@@ -366,8 +366,8 @@ ged_color_core(struct ged *gedp, int argc, const char *argv[])
 	return _edcolor(gedp, command, NULL);
     }
 
-    if (!bu_arg_integer_from_str(&low, argv[0]) ||
-	!bu_arg_integer_from_str(&high, argv[1]) ||
+    if (!bu_arg_integer_from_str(NULL, &low, argv[0], 0) ||
+	!bu_arg_integer_from_str(NULL, &high, argv[1], 0) ||
 	!bu_rgb_from_argv(rgb, 3, argv + 2)) {
 	color_show_help(gedp, command);
 	return BRLCAD_ERROR;

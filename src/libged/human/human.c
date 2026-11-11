@@ -1587,7 +1587,7 @@ human_args_from_storage(void *storage)
 static int
 human_parse_number(struct bu_vls *msg, const char *arg, fastf_t *value)
 {
-    if (bu_arg_number_from_str(value, arg))
+    if (bu_arg_number_from_str(NULL, value, arg))
 	return 0;
     if (msg)
 	bu_vls_printf(msg, "expected a finite number\n");

@@ -121,7 +121,7 @@ ged_view_knob_validate(const struct bu_arg_schema *schema, size_t argc,
 	}
 	if (want_value) {
 	    fastf_t value;
-	    if (!bu_arg_number_from_str(&value, argv[i])) {
+	    if (!bu_arg_number_from_str(NULL, &value, argv[i])) {
 		ged_view_knob_validation_result(result, BU_ARG_VALIDATE_INVALID, i,
 		    BU_ARG_VALUE_NUMBER, "finite numeric knob value required");
 		return 0;
@@ -150,7 +150,7 @@ ged_view_knob_validate(const struct bu_arg_schema *schema, size_t argc,
 	if (want_value) {
 	    fastf_t value;
 	    ged_view_knob_validation_result(result,
-		bu_arg_number_from_str(&value, current) ? BU_ARG_VALIDATE_VALID :
+		bu_arg_number_from_str(NULL, &value, current) ? BU_ARG_VALIDATE_VALID :
 		BU_ARG_VALIDATE_INVALID, cursor_arg, BU_ARG_VALUE_NUMBER,
 		"finite numeric knob value required");
 	    return 0;
@@ -344,7 +344,7 @@ ged_knob_core(struct ged *gedp, int argc, const char *argv[])
 	 * this defensive check so direct callers cannot reach libbv with bad data
 	 * if the schema is changed in the future. */
 	fastf_t f = 0.0;
-	if (++ai >= action_argc || !bu_arg_number_from_str(&f, action_argv[ai])) {
+	if (++ai >= action_argc || !bu_arg_number_from_str(NULL, &f, action_argv[ai])) {
 	    bu_vls_printf(gedp->ged_result_str, "finite numeric knob value required\n");
 	    bu_free((void *)pargv, "view knob native argv");
 	    return BRLCAD_ERROR;

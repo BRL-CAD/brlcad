@@ -1521,7 +1521,7 @@ clone_mirror_consume(struct bu_vls *msg, size_t argc, const char **argv, void *s
 	    bu_vls_printf(msg, "mirror axis must be x, y, or z\n");
 	return -1;
     }
-    if (!bu_arg_number_from_str(&distance, argv[1])) {
+    if (!bu_arg_number_from_str(NULL, &distance, argv[1])) {
 	if (msg)
 	    bu_vls_printf(msg, "mirror distance must be a number\n");
 	return -1;
@@ -1671,7 +1671,7 @@ clone_axis_int_consume(struct bu_vls *msg, size_t argc, const char **argv, void 
     }
     split_axis_kv(argv[0], kv.axis, rest);
 
-    if (!bu_arg_integer_from_str(&value, rest.c_str())) {
+    if (!bu_arg_integer_from_str(NULL, &value, rest.c_str(), 0)) {
 	if (msg)
 	    bu_vls_printf(msg, "expected integer (or AXIS=integer), got '%s'\n",
 			  argv[0]);
@@ -1698,7 +1698,7 @@ clone_axis_number_consume(struct bu_vls *msg, size_t argc, const char **argv, vo
     }
     split_axis_kv(argv[0], kv.axis, rest);
 
-    if (!bu_arg_number_from_str(&value, rest.c_str())) {
+    if (!bu_arg_number_from_str(NULL, &value, rest.c_str())) {
 	if (msg)
 	    bu_vls_printf(msg, "expected number (or AXIS=number), got '%s'\n",
 			  argv[0]);

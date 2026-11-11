@@ -135,7 +135,7 @@ grid_execute(struct ged *gedp, int argc, const char *argv[])
 	    return BRLCAD_OK;
 	} else if (argc == 1) {
 	    int enabled = 0;
-	    if (!bu_arg_integer_from_str(&enabled, argp[0]) || (enabled != 0 && enabled != 1))
+	    if (!bu_arg_integer_from_str(NULL, &enabled, argp[0], 0) || (enabled != 0 && enabled != 1))
 		goto usage;
 	    gedp->ged_gvp->gv_s->gv_grid.draw = enabled;
 
@@ -162,7 +162,7 @@ grid_execute(struct ged *gedp, int argc, const char *argv[])
 	    return BRLCAD_OK;
 	} else if (argc == 1) {
 	    int enabled = 0;
-	    if (!bu_arg_integer_from_str(&enabled, argp[0]) || (enabled != 0 && enabled != 1))
+	    if (!bu_arg_integer_from_str(NULL, &enabled, argp[0], 0) || (enabled != 0 && enabled != 1))
 		goto usage;
 	    gedp->ged_gvp->gv_s->gv_grid.snap = enabled;
 
@@ -180,7 +180,7 @@ grid_execute(struct ged *gedp, int argc, const char *argv[])
 	    return BRLCAD_OK;
 	} else if (argc == 1) {
 	    fastf_t value = 0.0;
-	    if (!bu_arg_number_from_str(&value, argp[0]))
+	    if (!bu_arg_number_from_str(NULL, &value, argp[0]))
 		goto usage;
 	    gedp->ged_gvp->gv_s->gv_grid.res_h = value * lbval;
 
@@ -198,7 +198,7 @@ grid_execute(struct ged *gedp, int argc, const char *argv[])
 	    return BRLCAD_OK;
 	} else if (argc == 1) {
 	    fastf_t value = 0.0;
-	    if (!bu_arg_number_from_str(&value, argp[0]))
+	    if (!bu_arg_number_from_str(NULL, &value, argp[0]))
 		goto usage;
 	    gedp->ged_gvp->gv_s->gv_grid.res_v = value * lbval;
 
@@ -215,7 +215,7 @@ grid_execute(struct ged *gedp, int argc, const char *argv[])
 	    return BRLCAD_OK;
 	} else if (argc == 1) {
 	    int value = 0;
-	    if (!bu_arg_integer_from_str(&value, argp[0]))
+	    if (!bu_arg_integer_from_str(NULL, &value, argp[0], 0))
 		goto usage;
 	    gedp->ged_gvp->gv_s->gv_grid.res_major_h = value;
 
@@ -232,7 +232,7 @@ grid_execute(struct ged *gedp, int argc, const char *argv[])
 	    return BRLCAD_OK;
 	} else if (argc == 1) {
 	    int value = 0;
-	    if (!bu_arg_integer_from_str(&value, argp[0]))
+	    if (!bu_arg_integer_from_str(NULL, &value, argp[0], 0))
 		goto usage;
 	    gedp->ged_gvp->gv_s->gv_grid.res_major_v = value;
 

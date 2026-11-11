@@ -109,13 +109,13 @@ ged_center_core(struct ged *gedp, int argc, const char *argv[])
 	    const char *xstrptr = bu_vls_cstr(&xvalstr);
 	    const char *ystrptr = bu_vls_cstr(&yvalstr);
 	    const char *zstrptr = bu_vls_cstr(&zvalstr);
-	    if (!bu_arg_number_from_str(&xval, xstrptr)) {
+	    if (!bu_arg_number_from_str(NULL, &xval, xstrptr)) {
 		success = 0;
 	    }
-	    if (!bu_arg_number_from_str(&yval, ystrptr)) {
+	    if (!bu_arg_number_from_str(NULL, &yval, ystrptr)) {
 		success = 0;
 	    }
-	    if (!bu_arg_number_from_str(&zval, zstrptr)) {
+	    if (!bu_arg_number_from_str(NULL, &zval, zstrptr)) {
 		success = 0;
 	    }
 	    VSET(center, xval, yval, zval);

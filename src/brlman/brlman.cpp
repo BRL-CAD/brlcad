@@ -1027,7 +1027,7 @@ static int
 man_text_width(struct bu_vls *msg, const char *arg, void *value)
 {
     int width = 0;
-    if (!bu_arg_integer_from_str(&width, arg) || width <= 0) {
+    if (!bu_arg_integer_from_str(NULL, &width, arg, 0) || width <= 0) {
 	bu_vls_printf(msg, "Text width must be positive\n");
 	return -1;
     }

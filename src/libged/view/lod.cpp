@@ -174,7 +174,7 @@ ged_view_lod_prefix_state(const char * const *operands, size_t count,
     }
     if (BU_STR_EQUAL(action, "bot_threshold")) {
 	int threshold = 0;
-	if (count == 2 && bu_arg_integer_from_str(&threshold, operands[1]) && threshold >= 0) {
+	if (count == 2 && bu_arg_integer_from_str(NULL, &threshold, operands[1], 0) && threshold >= 0) {
 	    ged_view_lod_validation_result(result, BU_ARG_VALIDATE_VALID, token,
 		BU_ARG_VALUE_INTEGER, "nonnegative BoT face threshold");
 	    return 0;
@@ -184,7 +184,7 @@ ged_view_lod_prefix_state(const char * const *operands, size_t count,
 	return 0;
     }
     fastf_t factor = 0.0;
-    if (count == 2 && bu_arg_number_from_str(&factor, operands[1])) {
+    if (count == 2 && bu_arg_number_from_str(NULL, &factor, operands[1])) {
 	ged_view_lod_validation_result(result, BU_ARG_VALIDATE_VALID, token,
 	    BU_ARG_VALUE_NUMBER, "finite LoD scale value");
 	return 0;
@@ -267,14 +267,14 @@ ged_view_lod_validate(const struct bu_arg_schema *schema, size_t argc,
 	    BU_STR_EQUAL(action, "point_scale") || BU_STR_EQUAL(action, "curve_scale"))) {
 	    fastf_t factor = 0.0;
 	    ged_view_lod_validation_result(result,
-		bu_arg_number_from_str(&factor, current) ? BU_ARG_VALIDATE_VALID : BU_ARG_VALIDATE_INVALID,
+		bu_arg_number_from_str(NULL, &factor, current) ? BU_ARG_VALIDATE_VALID : BU_ARG_VALIDATE_INVALID,
 		cursor_arg, BU_ARG_VALUE_NUMBER, "finite LoD scale value required");
 	    return 0;
 	}
 	if (count == 1 && BU_STR_EQUAL(action, "bot_threshold")) {
 	    int threshold = 0;
 	    ged_view_lod_validation_result(result,
-		bu_arg_integer_from_str(&threshold, current) && threshold >= 0 ?
+		bu_arg_integer_from_str(NULL, &threshold, current, 0) && threshold >= 0 ?
 		BU_ARG_VALIDATE_VALID : BU_ARG_VALIDATE_INVALID, cursor_arg,
 		BU_ARG_VALUE_INTEGER, "nonnegative BoT face threshold required");
 	    return 0;
@@ -662,7 +662,7 @@ ged_view_lod_core(struct ged *gedp, struct bview *view, int argc, const char **a
 	    return BRLCAD_OK;
 	}
 	fastf_t scale = 1.0;
-	if (!bu_arg_number_from_str(&scale, argv[1])) {
+	if (!bu_arg_number_from_str(NULL, &scale, argv[1])) {
 	    bu_vls_printf(gedp->ged_result_str, "unknown argument to point_scale: %s\n", argv[1]);
 	    return BRLCAD_ERROR;
 	}
@@ -676,7 +676,7 @@ ged_view_lod_core(struct ged *gedp, struct bview *view, int argc, const char **a
 	    return BRLCAD_OK;
 	}
 	fastf_t scale = 1.0;
-	if (!bu_arg_number_from_str(&scale, argv[1])) {
+	if (!bu_arg_number_from_str(NULL, &scale, argv[1])) {
 	    bu_vls_printf(gedp->ged_result_str, "unknown argument to point_scale: %s\n", argv[1]);
 	    return BRLCAD_ERROR;
 	}
@@ -690,7 +690,7 @@ ged_view_lod_core(struct ged *gedp, struct bview *view, int argc, const char **a
 	    return BRLCAD_OK;
 	}
 	fastf_t scale = 1.0;
-	if (!bu_arg_number_from_str(&scale, argv[1])) {
+	if (!bu_arg_number_from_str(NULL, &scale, argv[1])) {
 	    bu_vls_printf(gedp->ged_result_str, "unknown argument to curve_scale: %s\n", argv[1]);
 	    return BRLCAD_ERROR;
 	}
@@ -704,7 +704,7 @@ ged_view_lod_core(struct ged *gedp, struct bview *view, int argc, const char **a
 	    return BRLCAD_OK;
 	}
 	int bcnt = 0;
-	if (!bu_arg_integer_from_str(&bcnt, argv[1]) || bcnt < 0) {
+	if (!bu_arg_integer_from_str(NULL, &bcnt, argv[1], 0) || bcnt < 0) {
 	    bu_vls_printf(gedp->ged_result_str, "unknown argument to bot_threshold: %s\n", argv[1]);
 	    return BRLCAD_ERROR;
 	}
