@@ -90,6 +90,7 @@ create_scene(const char *path, const char *shader, const char *output)
 	success = success && mk_material(db, "osl.material", "OSL test material", "", "",
 	    &empty, &empty, &optical, &empty) == 0;
 	success = success && db5_update_attribute("ball.r", "material_name", "osl.material", db->dbip) == 0 &&
+	    db5_update_attribute("box.r", "material_name", "osl.material", db->dbip) == 0 &&
 	    db5_update_attribute("mesh.r", "material_name", "osl.material", db->dbip) == 0;
 	bu_avs_free(&optical);
 	bu_avs_free(&empty);

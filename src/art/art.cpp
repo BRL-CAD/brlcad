@@ -154,6 +154,7 @@
 #include "optical/defines.h"
 #include "icv.h"		/* image save/convert */
 #include "bu/file.h"	/* bu_file_delete */
+#include "bu/path.h"
 #include "bu/mime.h"	/* BU_MIME_IMAGE_AUTO */
 #include "bu/str.h"	/* BU_STR_EQUIV */
 
@@ -775,16 +776,25 @@ build_project()
 
     // Create an empty project.
     asf::auto_release_ptr<asr::Project> project(asr::ProjectFactory::create("test project"));
-    project->search_paths().push_back_explicit_path("build/Debug");
-    // add precompiled shaders from appleseed
+    // Keep asset lookup stable when invoked from another directory.
+    char database_path[MAXPATHLEN];
+    struct bu_vls directory = BU_VLS_INIT_ZERO;
+    if (!bu_file_realpath(APP.a_rt_i->rti_dbip->dbi_filename, database_path) ||
+	!bu_path_component(&directory, database_path, BU_PATH_DIRNAME)) {
+	bu_log("art: cannot resolve the database asset directory\n");
+	bu_vls_free(&directory);
+	return asf::auto_release_ptr<asr::Project>();
+    }
+    project->search_paths().set_root_path(bu_vls_cstr(&directory));
+    project->search_paths().push_back_explicit_path("shaders");
+    bu_vls_free(&directory);
+
+    // Add the shader libraries from the selected Appleseed installation.
     char root[MAXPATHLEN];
     const char* sp;
     sp = bu_dir(root, MAXPATHLEN, APPLESEED_ROOT, "shaders/appleseed", NULL);
     if (sp) project->search_paths().push_back_explicit_path(sp);
     sp = bu_dir(root, MAXPATHLEN, APPLESEED_ROOT, "shaders/max", NULL);
-    if (sp) project->search_paths().push_back_explicit_path(sp);
-    // add path for materialX converted shaders
-    sp = bu_dir(root, MAXPATHLEN, BU_DIR_INIT, "output/shaders", NULL);
     if (sp) project->search_paths().push_back_explicit_path(sp);
 
     // Add default configurations to the project.
@@ -1249,6 +1259,13 @@ art_render_image(asr::Project& project, asr::ITileCallback* callback = nullptr)
 {
     asr::DefaultRendererController controller;
     asf::SearchPaths resource_search_paths;
+    char headers[MAXPATHLEN];
+    const char *path = bu_dir(headers, MAXPATHLEN, APPLESEED_ROOT, "share/OSL/shaders", NULL);
+    if (path)
+	resource_search_paths.push_back_explicit_path(path);
+    path = bu_dir(headers, MAXPATHLEN, APPLESEED_ROOT, "shaders", NULL);
+    if (path)
+	resource_search_paths.push_back_explicit_path(path);
     asr::MasterRenderer renderer(
 	project,
 	project.configurations().get_by_name("final")->get_inherited_parameters(),

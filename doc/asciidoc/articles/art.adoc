@@ -76,8 +76,9 @@ that have libxml2 enabled.
 |`regress-art` checks a colored sphere, a Boolean box with inherited color,
 and a solid BOT.  Coverage includes multiple aspect ratios and projections,
 PNG/PIX output, single/multiple workers, and error exits.  Basic
-material-object shader selection is also covered.  UV mapping, networks,
-parameter authoring, and advanced closures remain unqualified.
+material-object selection and custom diffuse surface shaders are covered.
+UV mapping, networks, general parameter authoring, and advanced closures
+remain unqualified.
 
 |OSL execution and native Appleseed mesh scenes
 |The development validation includes a native JIT probe, material and
@@ -140,6 +141,48 @@ input, when present.  Other shader parameters currently retain their
 shader defaults; a complete typed parameter/network interface remains a
 planned milestone.  Material-object parent inheritance and per-instance
 material overrides also require further qualification.
+
+== Project shader assets
+
+`art` resolves project assets relative to the database directory, including
+its `shaders` subdirectory, and also searches the selected Appleseed shader
+libraries.  Build-directory paths and the caller's working directory are
+not part of the project convention.  Keep database-relative asset paths
+when moving a project to another directory.
+
+For a custom surface shader, save this source as `painted.osl`:
+
+[source,c]
+----
+surface painted(color in_color = color(1))
+{
+    Ci = in_color * diffuse(N);
+}
+----
+
+Compile with the OSL compiler and standard headers from the renderer's
+dependency installation.  Here `RENDERER_PREFIX` identifies that installation:
+
+----
+mkdir -p shaders
+"$RENDERER_PREFIX/bin/oslc" -I "$RENDERER_PREFIX/share/OSL/shaders" \
+    -o shaders/painted.oso painted.osl
+----
+
+Place the database beside the `shaders` directory.  Select the shader in
+MGED, removing the closure-output property because this shader writes `Ci`
+directly:
+
+----
+material set paint.material optical OSL painted
+material remove paint.material optical OSL.output
+----
+
+`regress-art` compiles its diffuse shader using the selected dependency
+installation and renders it on a sphere, a Boolean solid, and a BOT.  Its
+project directory contains spaces and is separate from the rendering
+working directory.  A second fixture returns an ordinary color output;
+selecting that output as a material closure is rejected before rendering.
 
 == Development milestones
 

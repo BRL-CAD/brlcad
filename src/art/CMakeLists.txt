@@ -71,7 +71,10 @@ set(
 add_definitions(-DBOOST_ALL_DYN_LINK)
 brlcad_addexec(art "${ART_SRCS}" "${ART_LIBS}" FOLDER Rt)
 # The shared rt sources rely on translation-unit isolation for C globals.
-set_target_properties(art PROPERTIES UNITY_BUILD OFF)
+set_target_properties(art PROPERTIES
+  UNITY_BUILD OFF
+  ART_RENDERER_PREFIX "${Appleseed_ROOT}"
+)
 target_include_directories(art BEFORE PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 target_include_directories(art SYSTEM PRIVATE ${ART_INCLUDE_DIRS})
 
