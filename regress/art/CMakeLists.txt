@@ -6,6 +6,7 @@ set(ART_TEST_SHADER_NAMES
   art_footprints
   art_parameters
   art_texture
+  art_emission
 )
 cmakefiles(CMakeLists.txt art_scene.cpp art_test_mesh.h regress-art.cmake.in)
 foreach(shader IN LISTS ART_TEST_SHADER_NAMES)
@@ -18,6 +19,8 @@ if(TARGET art AND BUILD_TESTING)
     HINTS "${renderer_prefix}/bin" NO_DEFAULT_PATH REQUIRED)
   find_path(ART_OSL_SHADER_INCLUDE_DIR stdosl.h
     HINTS "${renderer_prefix}/share/OSL/shaders" "${renderer_prefix}/shaders" NO_DEFAULT_PATH REQUIRED)
+  find_program(ART_MAKETX_EXECUTABLE NAMES maketx
+    HINTS "${renderer_prefix}/bin" NO_DEFAULT_PATH REQUIRED)
   set(ART_TEST_SHADERS)
   foreach(shader IN LISTS ART_TEST_SHADER_NAMES)
     set(compiled "${CMAKE_CURRENT_BINARY_DIR}/${shader}.oso")

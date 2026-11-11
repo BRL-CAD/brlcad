@@ -191,6 +191,48 @@ run("${VEXEC}" set-material "${TEXTURE_DB}" OSL.param.in_handle_error "int 1")
 run("${EXEC}" ${RENDER_ARGS} -w 96 -n 96 -o "${WORK}/handled_texture_error.png" "${TEXTURE_DB}" ball.r)
 run("${VEXEC}" check-texture-fallback "${WORK}/handled_texture_error.png" 96 96)
 
+# A mipmapped one-texel checker must converge to its linear 0.5 mean.
+file(MAKE_DIRECTORY "${PORTABLE_PROJECT}/textures")
+run("${VEXEC}" create-checker-texture "${WORK}/checker.ppm")
+run("@ART_MAKETX_EXECUTABLE@" -d float --filter box --wrap periodic
+  -o "${PORTABLE_PROJECT}/textures/checker texture.tx" "${WORK}/checker.ppm")
+set(FILTER_DB "${PORTABLE_PROJECT}/filtering.g")
+set(REFERENCE_DB "${PORTABLE_PROJECT}/filter_reference.g")
+run("${VEXEC}" create-material "${FILTER_DB}" art_texture)
+run("${VEXEC}" set-material "${FILTER_DB}" OSL.param.in_filename "string textures/checker texture.tx")
+# Keep even the smallest perspective footprints above the finest mip levels.
+run("${VEXEC}" set-material "${FILTER_DB}" OSL.param.in_uv_scale "float 4")
+run("${VEXEC}" create-material "${REFERENCE_DB}" art_emission)
+run("${VEXEC}" set-material "${REFERENCE_DB}" OSL.param.in_color "color 0.5 0.5 0.5")
+foreach(perspective IN ITEMS 0 85)
+  foreach(object IN ITEMS ball.r ellipsoid.r mesh.r smooth_mesh.r)
+    set(reference "${WORK}/filter_reference_${object}_${perspective}.png")
+    set(image "${WORK}/filtered_${object}_${perspective}.png")
+    run("${EXEC}" ${RENDER_ARGS} -c "set samples=1" -w 64 -n 64 -p ${perspective} -o "${reference}" "${REFERENCE_DB}" "${object}")
+    run("${EXEC}" ${RENDER_ARGS} -c "set samples=1" -w 64 -n 64 -p ${perspective} -o "${image}" "${FILTER_DB}" "${object}")
+    run("${VEXEC}" check-filtered-texture "${image}" "${reference}" 64 64)
+  endforeach()
+endforeach()
+
+# Forcing zero UV footprints must fail the gray-reference expectation.
+set(ALIASED_DB "${PORTABLE_PROJECT}/aliased.g")
+configure_file("${FILTER_DB}" "${ALIASED_DB}" COPYONLY)
+run("${VEXEC}" set-material "${ALIASED_DB}" OSL.param.in_zero_footprints "int 1")
+foreach(perspective IN ITEMS 0 85)
+  set(image "${WORK}/aliased_${perspective}.png")
+  run("${EXEC}" ${RENDER_ARGS} -c "set samples=1" -w 64 -n 64 -p ${perspective} -o "${image}" "${ALIASED_DB}" mesh.r)
+  run("${VEXEC}" check-aliased-texture "${image}" "${WORK}/filter_reference_mesh.r_${perspective}.png" 64 64)
+endforeach()
+
+# A moved project must resolve its own relative texture with the old asset absent.
+set(RELOCATED_PROJECT "${WORK}/relocated texture project")
+file(COPY "${PORTABLE_PROJECT}/" DESTINATION "${RELOCATED_PROJECT}")
+set(ORIGINAL_TEXTURE "${PORTABLE_PROJECT}/textures/checker texture.tx")
+file(RENAME "${ORIGINAL_TEXTURE}" "${ORIGINAL_TEXTURE}.unavailable")
+run("${EXEC}" ${RENDER_ARGS} -c "set samples=1" -w 64 -n 64 -p 0 -o "${WORK}/relocated_texture.png" "${RELOCATED_PROJECT}/filtering.g" mesh.r)
+run("${VEXEC}" check-filtered-texture "${WORK}/relocated_texture.png" "${WORK}/filter_reference_mesh.r_0.png" 64 64)
+file(RENAME "${ORIGINAL_TEXTURE}.unavailable" "${ORIGINAL_TEXTURE}")
+
 # A directory at the output file's path must produce a regular error exit.
 file(MAKE_DIRECTORY "${WORK}/blocked.png")
 expect_failure("${EXEC}" ${RENDER_ARGS} -w 32 -n 32 -o "${WORK}/blocked.png" "${WORK}/scene.g" all.g)

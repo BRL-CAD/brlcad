@@ -238,10 +238,10 @@ An OSL emission diagnostic evaluates `filterwidth(u)` and `filterwidth(v)`
 in actual orthographic and perspective renders.  Spheres, ellipsoids, and
 flat and smooth authored BOTs must produce finite, positive footprints.
 The current ARB/TGC Boolean fixture must produce the zero-footprint fallback.
-These checks establish that the mapping derivatives reach OSL; they do not
-yet qualify texture-filter responses or bump/normal mapping.  Rebuild
-procedural plugins and applications against the matching Appleseed headers
-and library.
+These checks establish that the mapping derivatives reach OSL.  Mipmapped
+texture minification is also checked against a known reference as described
+below.  Bump and normal-map shading remain unqualified.  Rebuild procedural
+plugins and applications against the matching Appleseed headers and library.
 
 Visible emission is covered by the diagnostic shader, but direct light
 sampling of emissive librt surfaces and their surface-area registration are
@@ -359,6 +359,75 @@ installation and renders it on a sphere, a Boolean solid, and a BOT.  Its
 project directory contains spaces and is separate from the rendering
 working directory.  A second fixture returns an ordinary color output;
 selecting that output as a material closure is rejected before rendering.
+
+== Image-texture preview and minification
+
+Prepare color textures in scene-linear RGB.  A generic OSL `texture()`
+lookup uses the stored numeric values; color-space conversion belongs in
+asset preparation or an explicit shader operation.  Mipmapped textures
+provide reduced-resolution image levels for filtered lookups.  The renderer
+dependency installation supplies `maketx`:
+
+----
+mkdir -p textures
+"$RENDERER_PREFIX/bin/maketx" -d float --filter box --wrap periodic \
+    -o textures/wood.tx wood_linear.exr
+----
+
+An emission preview exposes texture values independently of scene lighting.
+Save this shader as `texture_preview.osl`:
+
+[source,c]
+----
+surface texture_preview(string in_filename = "", float in_uv_scale = 1)
+{
+    color texel = texture(in_filename, in_uv_scale * u, in_uv_scale * v,
+        "interp", "closest");
+    Ci = texel * emission();
+}
+----
+
+This diagnostic uses nearest interpolation within each mip level.  Mip
+selection and anisotropic filtering use the automatic OSL derivatives,
+including the UV scaling operation.  Compile and select the preview:
+
+----
+"$RENDERER_PREFIX/bin/oslc" -I "$RENDERER_PREFIX/share/OSL/shaders" \
+    -o shaders/texture_preview.oso texture_preview.osl
+----
+
+In MGED:
+
+----
+material create map.material "Texture preview"
+material set map.material optical OSL texture_preview
+material set map.material optical OSL.version 1
+material set map.material optical OSL.param.in_filename "string textures/wood.tx"
+material set map.material optical OSL.param.in_uv_scale "float 4"
+material assign ball.r map.material
+----
+
+Then render with `art -w 512 -n 512 -o preview.png scene.g ball.r`.
+Relative texture filenames resolve against the project search paths rooted
+at the database directory.  Keep textures and compiled shaders with the
+database when moving the project.  Paths containing spaces are supported.
+
+`regress-art` generates a one-texel black/white checker and converts it to
+floating-point mipmapped data.  Fully minified renders of spheres,
+ellipsoids, and flat and smooth authored BOTs must match an independently
+shaded linear 0.5 emission reference in orthographic and perspective views.
+The comparison bounds both RMS and maximum display-image error.  A control
+with zero UV derivatives must differ substantially, establishing that the
+check detects missing filtering.  A copied project is also rendered while
+the original texture is unavailable, exercising relative asset lookup.
+These checks qualify this minification workflow; LOD transitions, color
+conversion, alpha, and bump/normal mapping need additional coverage.
+
+OpenImageIO currently checks the caller's working directory before its
+configured search paths.  A same-named texture there can override a project
+asset.  A separate collision probe reproduces this behavior; correcting
+that precedence remains open.
+
 
 == Development milestones
 

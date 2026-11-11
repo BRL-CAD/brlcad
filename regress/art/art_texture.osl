@@ -17,18 +17,24 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-surface art_texture(string in_filename = "", int in_handle_error = 0)
+surface art_texture(string in_filename = "", int in_handle_error = 0,
+    int in_zero_footprints = 0, float in_uv_scale = 1)
 {
+    float s = in_uv_scale * u;
+    float t = in_uv_scale * v;
     color texel;
     if (in_handle_error) {
         string texture_error;
-        texel = texture(in_filename, u, v, "errormessage", texture_error);
+        texel = texture(in_filename, s, t, "interp", "closest", "errormessage", texture_error);
         if (texture_error != "") {
             warning("Using explicit texture fallback: %s", texture_error);
             texel = color(0, 1, 0);
         }
+    } else if (in_zero_footprints) {
+        // The control bypasses automatic derivatives while keeping interpolation.
+        texel = texture(in_filename, s, t, 0, 0, 0, 0, "interp", "closest");
     } else {
-        texel = texture(in_filename, u, v);
+        texel = texture(in_filename, s, t, "interp", "closest");
     }
     Ci = texel * emission();
 }
