@@ -208,9 +208,23 @@ Exact intersection tests check coordinates and transformed instances;
 malformed data, and ownership of prepared coordinates.  `rt_arb_uv` exercises
 concurrent first-use mapping and normal queries.
 
-These checks establish point coordinates.  Appleseed's procedural geometry
-path still supplies an arbitrary tangent basis rather than derivatives of
-the librt mapping.  Texture filtering and bump/normal mapping need separate qualification.
+These checks establish point coordinates.  Appleseed now accepts optional
+object-space derivatives of position and the unit shading normal with
+respect to UV.  It preserves them through copied hits and side changes,
+transforms position derivatives as vectors, and differentiates both the
+inverse-transpose normal transform and normalization.  Ray footprints use
+the geometric surface and a double-precision UV solve.  Native renderer
+tests compare normal derivatives to finite differences and check known UV
+footprints, including very small and large scales with analytic inverses.
+Native sphere, rectangle, and disk intersections supply their analytic
+mapping derivatives; singular mappings report unavailable derivatives.
+
+`art` does not yet fill the new derivative inputs from librt mappings.
+Missing derivatives produce zero UV footprints, with an independent shading
+basis fallback, rather than an arbitrary mapping scale.  Librt derivative
+callbacks and their connection to `art` are the next step.  Texture filtering
+and bump/normal mapping remain unqualified.  Rebuild procedural plugins
+and applications against the matching Appleseed headers and library.
 
 Visible emission is covered by the diagnostic shader, but direct light
 sampling of emissive librt surfaces and their surface-area registration are
@@ -321,6 +335,7 @@ has passed, including installation and asset lookup where applicable.
   glass and absorption, transparency, emission, layering, procedural
   patterns, image textures, and bump/normal mapping.  Test secondary rays,
   nested dielectrics, cavities, thin surfaces, and transmitted shadows.
+  Compare emissive surface samples with traced positions, UVs, and normals.
   Expose useful BRL-CAD attributes through renderer services.  Specify color
   spaces and distance units.  Exit when documented materials work on CSG
   and BOT geometry with semantic image checks and defined tolerances.
