@@ -196,11 +196,15 @@ struct ged_impl {
     Ged_Internal *i;
 
     struct ged_drawable *ged_gdp;
+    struct ged_db_index *ged_db_indexp;
     struct ged_event_service *ged_event_servicep;
 };
 
 __BEGIN_DECLS
 
+struct ged_db_index *ged_db_index_create(struct ged *gedp);
+void ged_db_index_destroy(struct ged_db_index *index);
+void ged_db_index_database_set_private(struct ged *gedp, struct db_i *dbip);
 struct ged_event_service *ged_event_service_create(struct ged *gedp);
 void ged_event_service_destroy(struct ged_event_service *service);
 void ged_event_database_set_private(struct ged *gedp, struct db_i *dbip);

@@ -2,6 +2,7 @@ set(
   ged_headers
   commands.h
   database.h
+  db_index.h
   debug.h
   defines.h
   edit.h

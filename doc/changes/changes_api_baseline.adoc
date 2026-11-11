@@ -2728,6 +2728,29 @@ include/ged/database.h: GED_EXPORT extern int ged_path_validate(struct ged *gedp
 include/ged/database.h: GED_EXPORT extern size_t ged_who_argc(struct ged *gedp);
 include/ged/database.h: GED_EXPORT extern int ged_who_argv(struct ged *gedp, char **start, const char **end);
 include/ged/database.h: GED_EXPORT extern int ged_dbcopy(struct ged *from_gedp, struct ged *to_gedp, const char *from, const char *to, int fflag);
+include/ged/db_index.h: #define GED_DB_INDEX_REFRESH_DB_CHANGE   0x01
+include/ged/db_index.h: #define GED_DB_INDEX_REFRESH_VIEW_CHANGE 0x02
+include/ged/db_index.h: #define GED_DB_INDEX_OBJECT_CHANGED 0
+include/ged/db_index.h: #define GED_DB_INDEX_OBJECT_ADDED   1
+include/ged/db_index.h: #define GED_DB_INDEX_OBJECT_REMOVED 2
+include/ged/db_index.h: GED_EXPORT extern int ged_db_index_available(struct ged *gedp);
+include/ged/db_index.h: GED_EXPORT extern unsigned long long ged_db_index_refresh(struct ged *gedp);
+include/ged/db_index.h: GED_EXPORT extern unsigned long long ged_db_index_refresh_flags(struct ged *gedp);
+include/ged/db_index.h: GED_EXPORT extern int ged_db_index_note_object_change(struct ged *gedp, struct directory *dp, int change_kind);
+include/ged/db_index.h: GED_EXPORT extern int ged_db_index_note_object_name_change(struct ged *gedp, const char *name, int change_kind);
+include/ged/db_index.h: GED_EXPORT extern int ged_db_index_record_get(struct ged *gedp, ged_db_index_id id, struct ged_db_index_record *record);
+include/ged/db_index.h: GED_EXPORT extern size_t ged_db_index_tops(struct ged *gedp, int include_cyclic, ged_db_index_id *ids, size_t capacity);
+include/ged/db_index.h: GED_EXPORT extern size_t ged_db_index_child_count(struct ged *gedp, ged_db_index_id parent_id);
+include/ged/db_index.h: GED_EXPORT extern int ged_db_index_child_at(struct ged *gedp, ged_db_index_id parent_id, size_t row, struct ged_db_index_child *child);
+include/ged/db_index.h: GED_EXPORT extern size_t ged_db_index_object_use_count(struct ged *gedp, ged_db_index_id object_id);
+include/ged/db_index.h: GED_EXPORT extern int ged_db_index_object_use_at(struct ged *gedp, ged_db_index_id object_id, size_t row, struct ged_db_index_use *use);
+include/ged/db_index.h: GED_EXPORT extern size_t ged_db_index_affected_path_count(struct ged *gedp, ged_db_index_id object_id, size_t max_depth);
+include/ged/db_index.h: GED_EXPORT extern size_t ged_db_index_affected_path_at(struct ged *gedp, ged_db_index_id object_id, size_t row, ged_db_index_id *ids, size_t capacity, size_t max_depth);
+include/ged/db_index.h: GED_EXPORT extern int ged_db_index_valid_id(struct ged *gedp, ged_db_index_id id);
+include/ged/db_index.h: GED_EXPORT extern int ged_db_index_path_exists(struct ged *gedp, const char *path);
+include/ged/db_index.h: GED_EXPORT extern size_t ged_db_index_path_resolve(struct ged *gedp, const char *path, ged_db_index_id *ids, size_t capacity);
+include/ged/db_index.h: GED_EXPORT extern int ged_db_index_path_print(struct ged *gedp, struct bu_vls *out, const ged_db_index_id *path, size_t path_len, size_t max_len, int verbose);
+include/ged/db_index.h: GED_EXPORT extern ged_db_index_id ged_db_index_path_hash(struct ged *gedp, const ged_db_index_id *path, size_t path_len, size_t max_len);
 include/ged/debug.h: #define _GED_TRACE_MAX_LEVELS 12
 include/ged/debug.h: GED_EXPORT extern void ged_trace(struct directory *dp, int pathpos, const mat_t old_xlate, struct _ged_trace_data *gtdp, int verbose);
 include/ged/defines.h: #    define GED_EXPORT COMPILER_DLLEXPORT
