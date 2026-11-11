@@ -952,6 +952,8 @@ RT_EXPORT extern void rt_alloc_seg_block(struct resource *res);
  * Read named MGED db, build toc.
  */
 RT_EXPORT extern struct rt_i *rt_dirbuild(const char *filename, char *buf, int len);
+/** Build a ray-tracing database using db_open_ex() flags and path policy. */
+RT_EXPORT extern struct rt_i *rt_dirbuild_ex(const char *filename, char *buf, int len, unsigned int flags);
 RT_EXPORT extern struct rt_i *rt_dirbuild_inmem(const void *data, b_off_t data_size, char *buf, int len);
 
 

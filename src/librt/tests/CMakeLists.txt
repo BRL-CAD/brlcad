@@ -3,6 +3,9 @@ set(RT_TEST_LIBS "librt;${M_LIBRARY}")
 brlcad_addexec(rt_instance_paths instance_paths.cpp "librt;libwdb;libbu" TEST)
 brlcad_add_test(NAME rt_instance_paths COMMAND rt_instance_paths)
 
+brlcad_addexec(rt_db_open_modes db_open_modes.cpp "librt;libwdb;libbu" TEST)
+brlcad_add_test(NAME rt_db_open_modes COMMAND rt_db_open_modes)
+
 if(TARGET librt-static)
   brlcad_addexec(rt_static_init static_init.cpp "librt-static;${M_LIBRARY}" TEST)
   brlcad_add_test(NAME rt_static_init COMMAND rt_static_init)
@@ -235,6 +238,7 @@ set(
   cyclic_tests.g
   datum_annot_semantics.c
   db_name.c
+  db_open_modes.cpp
   default_object.c
   dsp_raytrace_check.c
   dsp_sa_vol_check.c

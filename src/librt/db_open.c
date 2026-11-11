@@ -59,8 +59,11 @@
 #define DEFAULT_DB_TITLE "Untitled BRL-CAD Database"
 
 
-struct db_i *
-db_open(const char *name, const char *mode)
+enum { DB_INSTANCE_FROM_ENV = -1 };
+
+static struct db_i *
+db_open_internal(const char *name, const char *mode, const char *cache_type,
+    int instance_specifiers)
 {
     const int sem_uses = BU_SEM_ID_RT_DB_USES;
     register struct db_i *dbip = DBI_NULL;
@@ -79,7 +82,7 @@ db_open(const char *name, const char *mode)
 
 	struct bu_mapped_file *mfp;
 
-	mfp = bu_open_mapped_file(name, "db_i");
+	mfp = bu_open_mapped_file(name, cache_type);
 	if (mfp == NULL) {
 	    if (RT_G_DEBUG & RT_DEBUG_DB) {
 		bu_log("db_open(%s) FAILED, unable to open as a mapped file\n", name);
@@ -147,6 +150,9 @@ db_open(const char *name, const char *mode)
 
 	dbip->dbi_read_only = 0;
     }
+
+    if (instance_specifiers != DB_INSTANCE_FROM_ENV)
+	dbip->i->dbi_use_comb_instance_ids = instance_specifiers;
 
     /* Initialize fields */
     for (i = 0; i < RT_DBNHASH; i++)
@@ -253,6 +259,23 @@ db_open(const char *name, const char *mode)
     wdb_init(dbip->i->dbi_wdbp_inmem_a, dbip, RT_WDB_TYPE_DB_INMEM_APPEND_ONLY);
 
     return dbip;
+}
+
+
+struct db_i *
+db_open(const char *name, const char *mode)
+{
+    return db_open_internal(name, mode, "db_i", DB_INSTANCE_FROM_ENV);
+}
+
+struct db_i *
+db_open_ex(const char *name, const char *mode, unsigned int flags)
+{
+    if (flags & ~DB_OPEN_COMB_INSTANCES)
+	return DBI_NULL;
+    const int indexed = (flags & DB_OPEN_COMB_INSTANCES) != 0;
+    const char *cache_type = indexed ? "db_i_comb_instances" : "db_i_default";
+    return db_open_internal(name, mode, cache_type, indexed);
 }
 
 
