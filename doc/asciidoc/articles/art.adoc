@@ -90,8 +90,10 @@ instances with inherited colors and two separated occurrences of one region.
 non-unit ray directions, clipping intervals, concurrent objects, more than
 `MAX_PSW` sequential worker lifetimes, and repeated object destruction.
 Each procedural object owns its prepared geometry and leases private librt
-resources per query.  Query results have call-local storage.  Large-scale
-and thin-geometry ray offsets, UV mapping, and derivatives remain open.
+resources per query.  Query results have call-local storage.  Offset tests
+cover grazing incidence, entry/exit and subtraction faces, sphere radii from
+0.01 to one million database units, and a 0.01-unit slab at a coordinate of
+one billion.  UV mapping and derivatives remain open.
 
 |OSL execution and native Appleseed mesh scenes
 |The development validation includes a native JIT probe, material and
@@ -127,6 +129,29 @@ that terminal connection was absent; adding it restored shading on both.
 The `art` regression now exercises the connected graph on librt CSG and
 BOT geometry.  This identifies a wiring failure independently of any
 remaining renderer compatibility or geometric-shading issues.
+
+== Geometry boundary handling
+
+The procedural callback receives the original geometric hit normal in object
+space.  Appleseed retains that normal, the shading normal, UVs, and material
+slot as intersection inputs, so copies and side changes can reconstruct
+shading consistently.  The callback returns a normal facing the incoming ray
+and offsets on both sides of that surface.
+
+`art` scales its normal displacement by floating-point precision, hit-point
+coordinates, and prepared object extent.  It rounds each displaced coordinate
+away from the surface, following the directed-rounding approach described in
+https://www.pbr-book.org/4ed/Shapes/Managing_Rounding_Error[Managing Rounding Error].
+Rendering queries opt out of librt's near-origin zero snapping to preserve
+the sign of entry boundaries behind an inside ray.  Boolean coalescing and
+model tolerances still apply.  Positive exits close to the origin remain
+visible.  The regression checks normal orientation and traces reflected and
+transmitted rays to detect self-hits and skipped boundaries.  Formal error bounds from
+each librt primitive and qualification near the representable feature-size
+limit remain open; the rounding allowance does not establish those bounds.
+
+The Appleseed procedural callback signature has changed.  Rebuild applications
+and procedural plugins against the matching renderer headers and library.
 
 == Selecting an OSL material
 

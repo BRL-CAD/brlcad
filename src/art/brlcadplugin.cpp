@@ -83,6 +83,8 @@
 #include <cmath>
 #include <mutex>
 #include <memory>
+#include <limits>
+#include <algorithm>
 #include <stdexcept>
 #include <string>
 #include <vector>
@@ -284,6 +286,7 @@ BrlcadObject::trace(const asr::ShadingRay &ray, IntersectionResult &result) cons
     app.a_rt_i = m_trace->rtip.get();
     app.a_resource = resource.get();
     app.a_onehit = 1;
+    app.a_no_hit_snap = 1;
     app.a_hit = brlcad_hit;
     app.a_miss = brlcad_miss;
     RayHit hit;
@@ -323,33 +326,38 @@ BrlcadObject::intersect(const asr::ShadingRay &ray) const
 }
 
 
-// Compute a front point, a back point and the geometric normal in object
-// instance space for a given ray with origin being a point on the surface
 void
 BrlcadObject::refine_and_offset(
-    const asf::Ray3d& obj_inst_ray,
-    asf::Vector3d& obj_inst_front_point,
-    asf::Vector3d& obj_inst_back_point,
-    asf::Vector3d& obj_inst_geo_normal) const
+    const asf::Ray3d &ray,
+    const asf::Vector3d &geometric_normal,
+    asf::Vector3d &front,
+    asf::Vector3d &back,
+    asf::Vector3d &offset_normal) const
 {
-    /* Offset the spawned-ray origins off the surface so the next path segment
-     * does not immediately self-intersect.  We offset along the incoming ray
-     * direction (front = the side the ray came from), which needs neither the
-     * surface normal nor an extra ray shot. */
-    const double dlen = std::sqrt(obj_inst_ray.m_dir[0]*obj_inst_ray.m_dir[0]
-			       + obj_inst_ray.m_dir[1]*obj_inst_ray.m_dir[1]
-			       + obj_inst_ray.m_dir[2]*obj_inst_ray.m_dir[2]);
-    const double mag = std::sqrt(obj_inst_ray.m_org[0]*obj_inst_ray.m_org[0]
-			       + obj_inst_ray.m_org[1]*obj_inst_ray.m_org[1]
-			       + obj_inst_ray.m_org[2]*obj_inst_ray.m_org[2]);
-    const double eps = 1.0e-4 * (mag > 1.0 ? mag : 1.0);
-    asf::Vector3d d = (dlen > 0.0)
-	? asf::Vector3d(obj_inst_ray.m_dir[0]/dlen, obj_inst_ray.m_dir[1]/dlen, obj_inst_ray.m_dir[2]/dlen)
-	: asf::Vector3d(0.0, 0.0, 1.0);
-
-    obj_inst_geo_normal = -d;
-    obj_inst_front_point = obj_inst_ray.m_org - eps * d;   // reflection side (toward viewer)
-    obj_inst_back_point  = obj_inst_ray.m_org + eps * d;   // transmission side
+    offset_normal = asf::normalize(asf::faceforward(geometric_normal, ray.m_dir));
+    const auto &point = ray.m_org;
+    const auto *rtip = m_trace->rtip.get();
+    const double position_scale = std::max({std::abs(point[0]), std::abs(point[1]), std::abs(point[2])});
+    const double extent = std::max({rtip->mdl_max[0] - rtip->mdl_min[0],
+	rtip->mdl_max[1] - rtip->mdl_min[1], rtip->mdl_max[2] - rtip->mdl_min[2]});
+    // Allow several rounding steps for hit-point reconstruction and placement.
+    // Object extent supplies the scale near zero, without a distance-unit floor.
+    constexpr double OFFSET_ROUNDING_STEPS = 8;
+    const double distance = OFFSET_ROUNDING_STEPS * std::numeric_limits<double>::epsilon() *
+	(position_scale + extent);
+    const auto displacement = distance * offset_normal;
+    front = point + displacement;
+    back = point - displacement;
+    // Round away from the surface so placement cannot cancel a small offset.
+    for (size_t axis = 0; axis < 3; ++axis) {
+	if (offset_normal[axis] > 0.0) {
+	    front[axis] = std::nextafter(front[axis], INFINITY);
+	    back[axis] = std::nextafter(back[axis], -INFINITY);
+	} else if (offset_normal[axis] < 0.0) {
+	    front[axis] = std::nextafter(front[axis], -INFINITY);
+	    back[axis] = std::nextafter(back[axis], INFINITY);
+	}
+    }
 }
 
 
