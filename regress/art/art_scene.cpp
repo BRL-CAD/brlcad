@@ -30,6 +30,7 @@
 #include "icv.h"
 #include "raytrace.h"
 #include "wdb.h"
+#include "art_test_mesh.h"
 
 static int
 create_scene(const char *path, const char *shader, const char *output)
@@ -46,15 +47,6 @@ create_scene(const char *path, const char *shader, const char *output)
     const unsigned char red[] = {255, 32, 16};
     const unsigned char blue[] = {32, 64, 255};
     const unsigned char green[] = {32, 255, 64};
-    fastf_t vertices[] = {
-	-10, -10, -10, 10, -10, -10, 10, 10, -10, -10, 10, -10,
-	-10, -10, 10, 10, -10, 10, 10, 10, 10, -10, 10, 10
-    };
-    int faces[] = {
-	0, 2, 1, 0, 3, 2, 4, 5, 6, 4, 6, 7,
-	0, 1, 5, 0, 5, 4, 1, 2, 6, 1, 6, 5,
-	2, 3, 7, 2, 7, 6, 3, 0, 4, 3, 4, 7
-    };
     struct wmember members;
     bool success = mk_sph(db, "ball.s", center, 10) == 0 &&
 	mk_rpp(db, "box.s", box_min, box_max) == 0 &&
@@ -74,9 +66,7 @@ create_scene(const char *path, const char *shader, const char *output)
     success = success && mk_addmember("ball.r", &members.l, NULL, WMOP_UNION) &&
 	mk_addmember("blue.g", &members.l, NULL, WMOP_UNION) &&
 	mk_lcomb(db, "all.g", &members, 0, NULL, NULL, NULL, 0) == 0;
-    success = success && mk_bot(db, "mesh.s", RT_BOT_SOLID, RT_BOT_CCW, 0,
-	sizeof(vertices) / (3 * sizeof(vertices[0])),
-	sizeof(faces) / (3 * sizeof(faces[0])), vertices, faces, NULL, NULL) == 0;
+    success = success && art_test::make_mesh(db, "mesh.s", art_test::MeshUV::Authored) == 0;
     BU_LIST_INIT(&members.l);
     success = success && mk_addmember("mesh.s", &members.l, NULL, WMOP_UNION) &&
 	mk_lcomb(db, "mesh.r", &members, 1, "plastic", "", green, 0) == 0;
@@ -120,7 +110,7 @@ create_scene(const char *path, const char *shader, const char *output)
     return success ? 0 : 1;
 }
 
-enum class ImageCheck { Regions, Mesh, RepeatedArcs };
+enum class ImageCheck { Regions, Mesh, RepeatedArcs, UV };
 
 static int
 check_image(const char *path, size_t width, size_t height, ImageCheck check)
@@ -144,11 +134,21 @@ check_image(const char *path, size_t width, size_t height, ImageCheck check)
     size_t min_x = width, min_y = height, max_x = 0, max_y = 0;
     size_t red_pixels = 0, blue_pixels = 0, green_pixels = 0;
     size_t pair_left = 0, pair_right = 0, pair_center = 0;
+    double min_u = INFINITY, min_v = INFINITY, max_u = 0, max_v = 0;
+    size_t uv_pixels = 0;
+    const double UV_BACKGROUND_LIMIT = 0.05;
+    const double UV_VISIBLE_LIMIT = 0.2;
+    const double MIN_UV_CHANNEL_SPAN = 0.15;
     bool finite = true;
     for (size_t y = 0; y < height; ++y) {
 	for (size_t x = 0; x < width; ++x) {
 	    const double *pixel = image->data + (y * width + x) * image->channels;
 	    finite = finite && std::isfinite(pixel[0]) && std::isfinite(pixel[1]) && std::isfinite(pixel[2]);
+	    if (pixel[2] < UV_BACKGROUND_LIMIT && std::max(pixel[0], pixel[1]) > UV_VISIBLE_LIMIT) {
+		++uv_pixels;
+		min_u = std::min(min_u, pixel[0]); max_u = std::max(max_u, pixel[0]);
+		min_v = std::min(min_v, pixel[1]); max_v = std::max(max_v, pixel[1]);
+	    }
 	    if (pixel[0] > COLOR_DOMINANCE * pixel[1] && pixel[0] > COLOR_DOMINANCE * pixel[2]) {
 		++red_pixels;
 		if (x < width / 2 - gap_half) ++pair_left;
@@ -166,6 +166,14 @@ check_image(const char *path, size_t width, size_t height, ImageCheck check)
 	}
     }
     icv_destroy(image);
+    if (check == ImageCheck::UV) {
+	if (finite && uv_pixels > min_color_pixels && max_u - min_u > MIN_UV_CHANNEL_SPAN &&
+	    max_v - min_v > MIN_UV_CHANNEL_SPAN)
+	    return 0;
+	bu_log("Missing varying UV shader coordinates in %s: pixels=%zu ranges=(%g,%g)\n",
+	    path, uv_pixels, max_u - min_u, max_v - min_v);
+	return 1;
+    }
     if (check == ImageCheck::RepeatedArcs) {
 	if (finite && pair_left > min_color_pixels && pair_right > min_color_pixels && !pair_center)
 	    return 0;
@@ -202,11 +210,12 @@ main(int argc, char **argv)
 	return create_scene(argv[2], nullptr, nullptr);
     if ((argc == 4 || argc == 5) && BU_STR_EQUAL(argv[1], "create-material"))
 	return create_scene(argv[2], argv[3], argc == 5 ? argv[4] : nullptr);
-    if (argc == 5 && (BU_STR_EQUAL(argv[1], "check") || BU_STR_EQUAL(argv[1], "check-mesh") || BU_STR_EQUAL(argv[1], "check-pair"))) {
+    if (argc == 5 && (BU_STR_EQUAL(argv[1], "check") || BU_STR_EQUAL(argv[1], "check-mesh") || BU_STR_EQUAL(argv[1], "check-pair") || BU_STR_EQUAL(argv[1], "check-uv"))) {
 	try {
 	    ImageCheck check = ImageCheck::Regions;
 	    if (BU_STR_EQUAL(argv[1], "check-mesh")) check = ImageCheck::Mesh;
 	    if (BU_STR_EQUAL(argv[1], "check-pair")) check = ImageCheck::RepeatedArcs;
+	    if (BU_STR_EQUAL(argv[1], "check-uv")) check = ImageCheck::UV;
 	    return check_image(argv[2], std::stoul(argv[3]), std::stoul(argv[4]), check);
 	} catch (const std::exception &error) {
 	    bu_log("Invalid image dimensions: %s\n", error.what());

@@ -58,7 +58,7 @@ run("${VEXEC}" check-mesh "${WORK}/material_mesh.png" 96 96)
 # Assets live beside the database, including in directories containing spaces.
 set(PORTABLE_PROJECT "${WORK}/portable project")
 file(MAKE_DIRECTORY "${PORTABLE_PROJECT}/shaders")
-foreach(shader IN ITEMS art_diffuse art_color)
+foreach(shader IN ITEMS art_diffuse art_color art_uv)
   configure_file("@CMAKE_CURRENT_BINARY_DIR@/${shader}.oso" "${PORTABLE_PROJECT}/shaders/${shader}.oso" COPYONLY)
 endforeach()
 run("${VEXEC}" create-material "${PORTABLE_PROJECT}/scene.g" art_diffuse)
@@ -66,6 +66,14 @@ run("${EXEC}" ${RENDER_ARGS} -w 128 -n 96 -p 85 -o "${PORTABLE_PROJECT}/surface.
 run("${VEXEC}" check "${PORTABLE_PROJECT}/surface.png" 128 96)
 run("${EXEC}" ${RENDER_ARGS} -w 96 -n 96 -o "${PORTABLE_PROJECT}/surface_mesh.png" "${PORTABLE_PROJECT}/scene.g" mesh.r)
 run("${VEXEC}" check-mesh "${PORTABLE_PROJECT}/surface_mesh.png" 96 96)
+
+# Diagnostic emission exposes the supplied UV values independently of lighting.
+run("${VEXEC}" create-material "${PORTABLE_PROJECT}/uv.g" art_uv)
+foreach(object IN ITEMS ball.r box.r mesh.r)
+  set(image "${WORK}/uv_${object}.png")
+  run("${EXEC}" ${RENDER_ARGS} -w 96 -n 96 -p 0 -o "${image}" "${PORTABLE_PROJECT}/uv.g" "${object}")
+  run("${VEXEC}" check-uv "${image}" 96 96)
+endforeach()
 
 function(invalid_material name shader output)
   run("${VEXEC}" create-material "${PORTABLE_PROJECT}/${name}.g" "${shader}" "${output}")

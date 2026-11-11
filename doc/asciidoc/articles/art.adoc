@@ -77,8 +77,9 @@ that have libxml2 enabled.
 and a solid BOT.  Coverage includes multiple aspect ratios and projections,
 PNG/PIX output, single/multiple workers, and error exits.  Basic
 material-object selection and custom diffuse surface shaders are covered.
-UV mapping, networks, general parameter authoring, and advanced closures
-remain unqualified.
+Native primitive UVs and authored BOT UVs are covered by diagnostic
+emission shaders and exact intersection checks.  Networks, general parameter
+authoring, and advanced closures remain unqualified.
 
 |Region instances
 |Full indexed database paths distinguish occurrences under different parents
@@ -93,7 +94,10 @@ Each procedural object owns its prepared geometry and leases private librt
 resources per query.  Query results have call-local storage.  Offset tests
 cover grazing incidence, entry/exit and subtraction faces, sphere radii from
 0.01 to one million database units, and a 0.01-unit slab at a coordinate of
-one billion.  UV mapping and derivatives remain open.
+one billion.  UV checks cover sphere entry/exit, a Boolean cut face,
+concurrent first-use ARB mapping, and authored BOT coordinates under
+nonuniform transforms.  Surface derivatives and smooth BOT normals remain
+open.
 
 |OSL execution and native Appleseed mesh scenes
 |The development validation includes a native JIT probe, material and
@@ -152,6 +156,38 @@ limit remain open; the rounding allowance does not establish those bounds.
 
 The Appleseed procedural callback signature has changed.  Rebuild applications
 and procedural plugins against the matching renderer headers and library.
+
+== Surface coordinates
+
+OSL `u` and `v` come from the intersected librt primitive's native mapping.
+Boolean cut faces retain the mapping of the primitive that supplied the
+boundary.  Sphere and cylindrical mappings have seams, and ARB faces have
+independent planar coordinates; a Boolean operation does not create a new
+continuous parameterization.
+
+BOT meshes with authored texture coordinates interpolate the per-corner
+coordinates of the intersected triangle.  Separate texture indices preserve
+seams.  Coordinates outside the unit square remain available for tiling.
+Database transforms move the geometry without changing its authored UVs.
+A BOT without authored UVs, or a primitive without a supplied mapping,
+returns `(0,0)`; `art` does not generate a projection in that case.
+
+The diagnostic emission shader in `regress-art` renders `(u,v,0)` on a
+sphere, a Boolean solid, and a BOT without depending on illumination.
+Exact intersection tests check coordinates and transformed instances;
+`rt_bot_uv` also checks packet intersections, winding, degenerate faces,
+malformed data, and ownership of prepared coordinates.  `rt_arb_uv` exercises
+concurrent first-use mapping and normal queries.
+
+These checks establish point coordinates.  Appleseed's procedural geometry
+path still supplies an arbitrary tangent basis rather than derivatives of
+the librt mapping.  Texture filtering, bump/normal mapping, and smooth BOT
+geometric versus shading normals need separate qualification.
+
+Visible emission is covered by the diagnostic shader, but direct light
+sampling of emissive librt surfaces and their surface-area registration are
+not implemented.  Emission visibility does not establish an efficient area
+light workflow or area-normalized power controls.
 
 == Selecting an OSL material
 

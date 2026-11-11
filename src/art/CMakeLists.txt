@@ -83,6 +83,7 @@ if(BUILD_TESTING)
   brlcad_addexec(art_intersection_test "intersections_test.cpp;brlcadplugin.cpp" "${ART_LIBS};libwdb" TEST)
   set_target_properties(art_intersection_test PROPERTIES UNITY_BUILD OFF)
   target_include_directories(art_intersection_test SYSTEM PRIVATE ${ART_INCLUDE_DIRS})
+  target_include_directories(art_intersection_test PRIVATE "${CMAKE_SOURCE_DIR}/regress/art")
 endif()
 
 # copy precompiled appleseed.dll into same dir as art.exe

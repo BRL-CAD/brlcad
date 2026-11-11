@@ -103,6 +103,9 @@ const char *const Model = "brlcad geometry";
 struct RayHit {
     double distance;
     asf::Vector3d normal;
+    asf::Vector2f uv = asf::Vector2f(0.0f);
+    bool compute_shading = false;
+    const char *error = nullptr;
 };
 
 struct DestroyResource {
@@ -137,10 +140,22 @@ brlcad_hit(struct application *ap, struct partition *head, struct seg *UNUSED(se
 	    flip = part->pt_outflip;
 	}
 	if (!hit || !solid) continue;
+	result.distance = hit->hit_dist;
+	if (!result.compute_shading)
+	    return 1;
 	vect_t normal;
 	RT_HIT_NORMAL(normal, hit, solid, &ap->a_ray, flip);
-	result.distance = hit->hit_dist;
 	result.normal = asf::Vector3d(V3ARGS(normal));
+	if (solid->st_meth->ft_uv) {
+	    struct uvcoord uv = {0, 0, 0, 0};
+	    if (rt_obj_uv(ap, solid, hit, &uv) != 0) {
+		result.error = "Primitive UV query failed";
+		return 1;
+	    }
+	    result.uv = asf::Vector2f(static_cast<float>(uv.uv_u), static_cast<float>(uv.uv_v));
+	    if (!std::isfinite(result.uv[0]) || !std::isfinite(result.uv[1]))
+		result.error = "Primitive produced nonfinite UV coordinates";
+	}
 	return 1;
     }
     return 0;
@@ -274,9 +289,9 @@ BrlcadObject::get_material_slot(const size_t UNUSED(index)) const
 
 
 bool
-BrlcadObject::trace(const asr::ShadingRay &ray, IntersectionResult &result) const
+BrlcadObject::trace(const asr::ShadingRay &ray, IntersectionResult *result) const
 {
-    result.m_hit = false;
+    if (result) result->m_hit = false;
     const double length = asf::norm(ray.m_dir);
     if (!(length > 0.0) || !std::isfinite(length) || !(ray.m_tmin < ray.m_tmax))
 	return false;
@@ -290,6 +305,7 @@ BrlcadObject::trace(const asr::ShadingRay &ray, IntersectionResult &result) cons
     app.a_hit = brlcad_hit;
     app.a_miss = brlcad_miss;
     RayHit hit;
+    hit.compute_shading = result != nullptr;
     app.a_uptr = &hit;
 
     // librt requires unit directions and reports distance from the shifted
@@ -303,26 +319,29 @@ BrlcadObject::trace(const asr::ShadingRay &ray, IntersectionResult &result) cons
     const double distance = ray.m_tmin + hit.distance / length;
     if (!(distance < ray.m_tmax))
 	return false;
-    result.m_hit = true;
-    result.m_distance = distance;
-    result.m_geometric_normal = asf::normalize(hit.normal);
-    result.m_shading_normal = result.m_geometric_normal;
-    result.m_uv = asf::Vector2f(1.0f);
-    result.m_material_slot = 0;
+    if (result) {
+	if (hit.error)
+	    throw std::runtime_error(std::string(hit.error) + " for '" + get_name() + "'");
+	result->m_hit = true;
+	result->m_distance = distance;
+	result->m_geometric_normal = asf::normalize(hit.normal);
+	result->m_shading_normal = result->m_geometric_normal;
+	result->m_uv = hit.uv;
+	result->m_material_slot = 0;
+    }
     return true;
 }
 
 void
 BrlcadObject::intersect(const asr::ShadingRay &ray, IntersectionResult &result) const
 {
-    trace(ray, result);
+    trace(ray, &result);
 }
 
 bool
 BrlcadObject::intersect(const asr::ShadingRay &ray) const
 {
-    IntersectionResult result;
-    return trace(ray, result);
+    return trace(ray, nullptr);
 }
 
 

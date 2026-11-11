@@ -1,4 +1,4 @@
-cmakefiles(CMakeLists.txt art_scene.cpp art_diffuse.osl art_color.osl regress-art.cmake.in)
+cmakefiles(CMakeLists.txt art_scene.cpp art_test_mesh.h art_diffuse.osl art_color.osl art_uv.osl regress-art.cmake.in)
 
 if(TARGET art AND BUILD_TESTING)
   get_target_property(renderer_prefix art ART_RENDERER_PREFIX)
@@ -7,7 +7,7 @@ if(TARGET art AND BUILD_TESTING)
   find_path(ART_OSL_SHADER_INCLUDE_DIR stdosl.h
     HINTS "${renderer_prefix}/share/OSL/shaders" "${renderer_prefix}/shaders" NO_DEFAULT_PATH REQUIRED)
   set(ART_TEST_SHADERS)
-  foreach(shader IN ITEMS art_diffuse art_color)
+  foreach(shader IN ITEMS art_diffuse art_color art_uv)
     set(compiled "${CMAKE_CURRENT_BINARY_DIR}/${shader}.oso")
     add_custom_command(OUTPUT "${compiled}"
       COMMAND "${ART_OSLC_EXECUTABLE}" -I "${ART_OSL_SHADER_INCLUDE_DIR}"

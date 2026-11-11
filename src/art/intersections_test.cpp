@@ -19,9 +19,14 @@
  */
 #include "common.h"
 
+#include <algorithm>
+#include <array>
 #include <atomic>
+#include <cmath>
+#include <condition_variable>
 #include <exception>
 #include <memory>
+#include <mutex>
 #include <stdexcept>
 #include <thread>
 #include <vector>
@@ -32,6 +37,7 @@
 #include "bu/parallel.h"
 #include "wdb.h"
 #include "art.h"
+#include "art_test_mesh.h"
 #include "renderer/kernel/shading/shadingray.h"
 
 static constexpr double INTERSECTION_TOLERANCE = 1.0e-7;
@@ -52,7 +58,10 @@ check_ray(BrlcadObject &object, const asf::Vector3d &origin,
 	bu_log("Detailed and occlusion intersections must agree with expected hit=%d\n", expected_hit);
 	return false;
     }
-    if (expected_hit && (!NEAR_EQUAL(result.m_distance, distance, INTERSECTION_TOLERANCE) ||
+    if (expected_hit && (!std::isfinite(result.m_distance) ||
+	!std::isfinite(asf::norm(result.m_geometric_normal)) ||
+	!std::isfinite(asf::norm(result.m_shading_normal)) ||
+	!NEAR_EQUAL(result.m_distance, distance, INTERSECTION_TOLERANCE) ||
 	!VNEAR_EQUAL(result.m_geometric_normal, normal, INTERSECTION_TOLERANCE) ||
 	!VNEAR_EQUAL(result.m_shading_normal, normal, INTERSECTION_TOLERANCE))) {
 	bu_log("Unexpected boundary: t=%g normal=(%g %g %g)\n", result.m_distance,
@@ -102,6 +111,62 @@ check_offsets(BrlcadObject &object, const asf::Vector3d &point,
 	return false;
     }
     return true;
+}
+
+static bool
+check_uv(BrlcadObject &object, const asf::Vector3d &origin,
+    const asf::Vector3d &direction, const asf::Vector2f &expected)
+{
+    asr::ShadingRay ray;
+    ray.m_org = origin;
+    ray.m_dir = direction;
+    ray.m_tmin = 0;
+    ray.m_tmax = INFINITY;
+    asr::ProceduralObject::IntersectionResult result;
+    object.intersect(ray, result);
+    if (result.m_hit && std::isfinite(result.m_uv[0]) && std::isfinite(result.m_uv[1]) &&
+	NEAR_EQUAL(result.m_uv[0], expected[0], INTERSECTION_TOLERANCE) &&
+	NEAR_EQUAL(result.m_uv[1], expected[1], INTERSECTION_TOLERANCE))
+	return true;
+    bu_log("Unexpected UV mapping for %s: hit=%d UV=(%g,%g), expected=(%g,%g)\n",
+	object.get_name(), result.m_hit, result.m_hit ? result.m_uv[0] : 0.0,
+	result.m_hit ? result.m_uv[1] : 0.0, expected[0], expected[1]);
+    return false;
+}
+
+static bool
+check_parallel_uv(BrlcadObject &object)
+{
+    constexpr size_t UV_WORKERS = 8;
+    constexpr size_t QUERIES_PER_WORKER = 64;
+    std::array<bool, UV_WORKERS> results;
+    results.fill(true);
+    std::mutex mutex;
+    std::condition_variable start_condition;
+    size_t ready = 0;
+    bool start = false;
+    std::vector<std::thread> workers;
+    for (size_t worker = 0; worker < UV_WORKERS; ++worker) {
+	workers.emplace_back([&, worker] {
+	    {
+		std::unique_lock<std::mutex> lock(mutex);
+		++ready;
+		start_condition.notify_all();
+		start_condition.wait(lock, [&] { return start; });
+	    }
+	    for (size_t query = 0; query < QUERIES_PER_WORKER; ++query)
+		if (!check_uv(object, asf::Vector3d(-1, 0, 0), asf::Vector3d(1, 0, 0), asf::Vector2f(0.5f)))
+		    results[worker] = false;
+	});
+    }
+    {
+	std::unique_lock<std::mutex> lock(mutex);
+	start_condition.wait(lock, [&] { return ready == UV_WORKERS; });
+	start = true;
+	start_condition.notify_all();
+    }
+    for (auto &worker : workers) worker.join();
+    return std::all_of(results.begin(), results.end(), [](bool passed) { return passed; });
 }
 
 int
@@ -155,6 +220,23 @@ main(int argc, char **argv)
 	    written = written && mk_addmember(solid.c_str(), &members.l, NULL, WMOP_UNION) &&
 		mk_lcomb(db, region.c_str(), &members, 1, NULL, NULL, NULL, 0) == 0;
 	}
+	written = written && art_test::make_mesh(db, "mesh.s", art_test::MeshUV::Authored) == 0 &&
+	    art_test::make_mesh(db, "plain_mesh.s", art_test::MeshUV::None) == 0;
+	for (const char *name : {"mesh", "plain_mesh"}) {
+	    const std::string solid = std::string(name) + ".s";
+	    const std::string region = std::string(name) + ".r";
+	    BU_LIST_INIT(&members.l);
+	    written = written && mk_addmember(solid.c_str(), &members.l, NULL, WMOP_UNION) &&
+		mk_lcomb(db, region.c_str(), &members, 1, NULL, NULL, NULL, 0) == 0;
+	}
+	mat_t mesh_transform;
+	MAT_IDN(mesh_transform);
+	mesh_transform[0] = 2;
+	mesh_transform[5] = 3;
+	mesh_transform[MDX] = 30;
+	BU_LIST_INIT(&members.l);
+	written = written && mk_addmember("mesh.r", &members.l, mesh_transform, WMOP_UNION) &&
+	    mk_lcomb(db, "uv_transform.g", &members, 0, NULL, NULL, NULL, 0) == 0;
 	wdb_close(db);
 	if (!written)
 	    throw std::runtime_error("Cannot write intersection fixture");
@@ -189,6 +271,8 @@ main(int argc, char **argv)
 	parameters.insert("object_path", "origin_slab.r");
 	BrlcadObject origin_slab("origin_slab", parameters);
 	ok = check_offsets(origin_slab, asf::Vector3d(0), -grazing, asf::Vector3d(-1, 0, 0), 0.001) && ok;
+	// No UV query has initialized this ARB's optional mapping data yet.
+	ok = check_parallel_uv(origin_slab) && ok;
 	parameters.insert("object_path", "slab.r");
 	BrlcadObject slab("slab", parameters);
 	ok = check_offsets(slab, asf::Vector3d(1.0e9, 0, 0), -grazing,
@@ -204,6 +288,21 @@ main(int argc, char **argv)
 	parameters.insert("object_path", "large.r");
 	BrlcadObject large("large", parameters);
 	ok = check_offsets(large, asf::Vector3d(1.001e9, 0, 0), grazing, asf::Vector3d(1, 0, 0), 0.001) && ok;
+
+	ok = check_uv(sphere, asf::Vector3d(-20, 0, 0), asf::Vector3d(1, 0, 0), asf::Vector2f(0.5f, 0.5f)) && ok;
+	ok = check_uv(sphere, asf::Vector3d(0), asf::Vector3d(1, 0, 0), asf::Vector2f(0, 0.5f)) && ok;
+	ok = check_uv(sphere, asf::Vector3d(0, 20, 0), asf::Vector3d(0, -1, 0), asf::Vector2f(0.25f, 0.5f)) && ok;
+	ok = check_uv(cut, asf::Vector3d(0), asf::Vector3d(1, 0, 0), asf::Vector2f(0.5f, 0.5f)) && ok;
+	parameters.insert("object_path", "mesh.r");
+	BrlcadObject mesh("mesh", parameters);
+	ok = check_uv(mesh, asf::Vector3d(5, -5, 20), asf::Vector3d(0, 0, -1), asf::Vector2f(0.5f, 0.25f)) && ok;
+	ok = check_uv(mesh, asf::Vector3d(5, -5, 0), asf::Vector3d(0, 0, 1), asf::Vector2f(0.5f, 0.25f)) && ok;
+	parameters.insert("object_path", "/uv_transform.g/mesh.r");
+	BrlcadObject transformed_mesh("transformed_mesh", parameters);
+	ok = check_uv(transformed_mesh, asf::Vector3d(40, -15, 20), asf::Vector3d(0, 0, -1), asf::Vector2f(0.5f, 0.25f)) && ok;
+	parameters.insert("object_path", "plain_mesh.r");
+	BrlcadObject plain_mesh("plain_mesh", parameters);
+	ok = check_uv(plain_mesh, asf::Vector3d(5, -5, 20), asf::Vector3d(0, 0, -1), asf::Vector2f(0)) && ok;
 
 	// A new worker must reuse a slot after the previous worker has left.
 	std::atomic<bool> workers_ok{true};

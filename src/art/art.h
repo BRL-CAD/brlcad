@@ -121,7 +121,7 @@ private:
     class RaytraceState;
     std::unique_ptr<RaytraceState> m_trace;
 
-    bool trace(const asr::ShadingRay& ray, IntersectionResult& result) const;
+    bool trace(const asr::ShadingRay& ray, IntersectionResult* result) const;
 };
 
 
