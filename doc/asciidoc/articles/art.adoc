@@ -233,8 +233,14 @@ accepted within preparation tolerances.  Finite-difference tests cover
 position and unit-normal derivatives, rotated frames, inside rays, and
 singular poles.  Art intersection tests check the transferred derivatives
 against known chart tangents and independent nearby-ray normal differences.
-Texture filtering and bump/normal mapping remain unqualified.  Rebuild procedural plugins
-and applications against the matching Appleseed headers and library.
+An OSL emission diagnostic evaluates `filterwidth(u)` and `filterwidth(v)`
+in actual orthographic and perspective renders.  Spheres, ellipsoids, and
+flat and smooth authored BOTs must produce finite, positive footprints.
+The current ARB/TGC Boolean fixture must produce the zero-footprint fallback.
+These checks establish that the mapping derivatives reach OSL; they do not
+yet qualify texture-filter responses or bump/normal mapping.  Rebuild
+procedural plugins and applications against the matching Appleseed headers
+and library.
 
 Visible emission is covered by the diagnostic shader, but direct light
 sampling of emissive librt surfaces and their surface-area registration are

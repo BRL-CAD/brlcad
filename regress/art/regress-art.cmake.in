@@ -58,7 +58,7 @@ run("${VEXEC}" check-mesh "${WORK}/material_mesh.png" 96 96)
 # Assets live beside the database, including in directories containing spaces.
 set(PORTABLE_PROJECT "${WORK}/portable project")
 file(MAKE_DIRECTORY "${PORTABLE_PROJECT}/shaders")
-foreach(shader IN ITEMS art_diffuse art_color art_uv art_normals)
+foreach(shader IN ITEMS art_diffuse art_color art_uv art_normals art_footprints)
   configure_file("@CMAKE_CURRENT_BINARY_DIR@/${shader}.oso" "${PORTABLE_PROJECT}/shaders/${shader}.oso" COPYONLY)
 endforeach()
 run("${VEXEC}" create-material "${PORTABLE_PROJECT}/scene.g" art_diffuse)
@@ -81,6 +81,19 @@ run("${EXEC}" ${RENDER_ARGS} -w 96 -n 96 -p 0 -o "${WORK}/normals.png" "${PORTAB
 run("${VEXEC}" check-normals "${WORK}/normals.png" 96 96)
 run("${EXEC}" ${RENDER_ARGS} -w 96 -n 96 -p 0 -o "${WORK}/flat_normals.png" "${PORTABLE_PROJECT}/normals.g" mesh.r)
 run("${VEXEC}" check-flat-normals "${WORK}/flat_normals.png" 96 96)
+
+# OSL must receive ray footprints for supported charts and zero for others.
+run("${VEXEC}" create-material "${PORTABLE_PROJECT}/footprints.g" art_footprints)
+foreach(perspective IN ITEMS 0 85)
+  foreach(object IN ITEMS ball.r ellipsoid.r mesh.r smooth_mesh.r)
+    set(image "${WORK}/footprints_${object}_${perspective}.png")
+    run("${EXEC}" ${RENDER_ARGS} -w 96 -n 96 -p ${perspective} -o "${image}" "${PORTABLE_PROJECT}/footprints.g" "${object}")
+    run("${VEXEC}" check-footprints "${image}" 96 96)
+  endforeach()
+  set(image "${WORK}/zero_footprints_${perspective}.png")
+  run("${EXEC}" ${RENDER_ARGS} -w 96 -n 96 -p ${perspective} -o "${image}" "${PORTABLE_PROJECT}/footprints.g" box.r)
+  run("${VEXEC}" check-zero-footprints "${image}" 96 96)
+endforeach()
 
 function(invalid_material name shader output)
   run("${VEXEC}" create-material "${PORTABLE_PROJECT}/${name}.g" "${shader}" "${output}")

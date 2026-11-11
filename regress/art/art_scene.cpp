@@ -75,6 +75,11 @@ create_scene(const char *path, const char *shader, const char *output)
     BU_LIST_INIT(&members.l);
     success = success && mk_addmember("smooth_mesh.s", &members.l, NULL, WMOP_UNION) &&
 	mk_lcomb(db, "smooth_mesh.r", &members, 1, "plastic", "", green, 0) == 0;
+    const vect_t ell_a = {8, 0, 0}, ell_b = {0, 10, 0}, ell_c = {0, 0, 6};
+    success = success && mk_ell(db, "ellipsoid.s", center, ell_a, ell_b, ell_c) == 0;
+    BU_LIST_INIT(&members.l);
+    success = success && mk_addmember("ellipsoid.s", &members.l, NULL, WMOP_UNION) &&
+	mk_lcomb(db, "ellipsoid.r", &members, 1, "plastic", "", red, 0) == 0;
     // Two paths to one region must keep their transforms and inherited colors.
     mat_t translated;
     MAT_IDN(translated);
@@ -108,7 +113,8 @@ create_scene(const char *path, const char *shader, const char *output)
 	success = success && db5_update_attribute("ball.r", "material_name", "osl.material", db->dbip) == 0 &&
 	    db5_update_attribute("box.r", "material_name", "osl.material", db->dbip) == 0 &&
 	    db5_update_attribute("mesh.r", "material_name", "osl.material", db->dbip) == 0 &&
-	    db5_update_attribute("smooth_mesh.r", "material_name", "osl.material", db->dbip) == 0;
+	    db5_update_attribute("smooth_mesh.r", "material_name", "osl.material", db->dbip) == 0 &&
+	    db5_update_attribute("ellipsoid.r", "material_name", "osl.material", db->dbip) == 0;
 	bu_avs_free(&optical);
 	bu_avs_free(&empty);
     }
@@ -116,7 +122,9 @@ create_scene(const char *path, const char *shader, const char *output)
     return success ? 0 : 1;
 }
 
-enum class ImageCheck { Regions, Mesh, RepeatedArcs, VaryingRG, FlatNormals };
+enum class ImageCheck {
+    Regions, Mesh, RepeatedArcs, VaryingRG, FlatNormals, PositiveFootprints, ZeroFootprints
+};
 
 static int
 check_image(const char *path, size_t width, size_t height, ImageCheck check)
@@ -175,6 +183,16 @@ check_image(const char *path, size_t width, size_t height, ImageCheck check)
 	}
     }
     icv_destroy(image);
+    if (check == ImageCheck::PositiveFootprints || check == ImageCheck::ZeroFootprints) {
+	const bool positive = check == ImageCheck::PositiveFootprints;
+	const size_t expected = positive ? green_pixels : red_pixels;
+	const size_t unexpected = positive ? red_pixels : green_pixels;
+	if (finite && expected > min_color_pixels && unexpected == 0 && blue_pixels == 0)
+	    return 0;
+	bu_log("Unexpected %s UV footprints in %s: positive=%zu zero=%zu invalid=%zu\n",
+	    positive ? "positive" : "zero", path, green_pixels, red_pixels, blue_pixels);
+	return 1;
+    }
     if (check == ImageCheck::FlatNormals) {
 	if (finite && black_pixels > min_color_pixels && diagnostic_pixels == 0)
 	    return 0;
@@ -229,7 +247,8 @@ main(int argc, char **argv)
 	const struct { const char *name; ImageCheck check; } checks[] = {
 	    {"check", ImageCheck::Regions}, {"check-mesh", ImageCheck::Mesh},
 	    {"check-pair", ImageCheck::RepeatedArcs}, {"check-uv", ImageCheck::VaryingRG},
-	    {"check-normals", ImageCheck::VaryingRG}, {"check-flat-normals", ImageCheck::FlatNormals}
+	    {"check-normals", ImageCheck::VaryingRG}, {"check-flat-normals", ImageCheck::FlatNormals},
+	    {"check-footprints", ImageCheck::PositiveFootprints}, {"check-zero-footprints", ImageCheck::ZeroFootprints}
 	};
 	for (const auto &check : checks) {
 	    if (!BU_STR_EQUAL(argv[1], check.name)) continue;
