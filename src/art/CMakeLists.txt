@@ -11,7 +11,9 @@ set(
 )
 cmakefiles(${art_ignore_files})
 
-set(Appleseed_ROOT "${CMAKE_BINARY_DIR}")
+if(NOT Appleseed_ROOT)
+  set(Appleseed_ROOT "${CMAKE_BINARY_DIR}")
+endif()
 find_package(Appleseed)
 if(NOT Appleseed_FOUND)
   message("'art' appleseed ray tracing is DISABLED")
@@ -19,10 +21,12 @@ if(NOT Appleseed_FOUND)
 endif(NOT Appleseed_FOUND)
 message("Found Appleseed: ${Appleseed_LIBRARIES}")
 
-set(Boost_ROOT "${CMAKE_BINARY_DIR}")
+if(NOT Boost_ROOT)
+  set(Boost_ROOT "${Appleseed_ROOT}")
+endif()
 set(Boost_USE_STATIC_LIBS OFF)
 find_package(
-  Boost
+  Boost CONFIG
   COMPONENTS chrono date_time filesystem regex system thread wave
 )
 if(NOT Boost_FOUND)
