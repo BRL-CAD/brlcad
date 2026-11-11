@@ -1,5 +1,8 @@
 set(RT_TEST_LIBS "librt;${M_LIBRARY}")
 
+brlcad_addexec(rt_instance_paths instance_paths.cpp "librt;libwdb;libbu" TEST)
+brlcad_add_test(NAME rt_instance_paths COMMAND rt_instance_paths)
+
 if(TARGET librt-static)
   brlcad_addexec(rt_static_init static_init.cpp "librt-static;${M_LIBRARY}" TEST)
   brlcad_add_test(NAME rt_static_init COMMAND rt_static_init)
@@ -237,6 +240,7 @@ set(
   dsp_sa_vol_check.c
   extreme_ssi_test.g
   invalid_inmem.c
+  instance_paths.cpp
   lcomb_large.c
   matrix_tests.g
   metaball_adjust.c

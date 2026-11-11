@@ -880,7 +880,7 @@ db_follow_path_for_state(struct db_tree_state *tsp, struct db_full_path *total_p
 }
 
 union tree *
-db_recurse2(struct db_tree_state *tsp, struct db_full_path *pathp, struct combined_tree_state **region_start_statepp,   void *client_data, void *cmap);
+db_recurse2(struct db_tree_state *tsp, struct db_full_path *pathp, struct combined_tree_state **region_start_statepp, void *client_data);
 
 /**
  * Helper routine for db_recurse2()
@@ -936,7 +936,7 @@ _db_recurse_subtree2(union tree *tp, struct db_tree_state *msp, struct db_full_p
 	    }
 
 	    /* Recursive call */
-	    if ((subtree = db_recurse2(&memb_state, pathp, region_start_statepp, client_data, cmap)) != TREE_NULL) {
+	    if ((subtree = db_recurse2(&memb_state, pathp, region_start_statepp, client_data)) != TREE_NULL) {
 		union tree *tmp;
 
 		/* graft subtree on in place of 'tp' leaf node */
@@ -987,7 +987,7 @@ out:
 
 
 union tree *
-db_recurse2(struct db_tree_state *tsp, struct db_full_path *pathp, struct combined_tree_state **region_start_statepp, void *client_data, void *cmap)
+db_recurse2(struct db_tree_state *tsp, struct db_full_path *pathp, struct combined_tree_state **region_start_statepp, void *client_data)
 {
     struct directory *dp;
     struct rt_db_internal intern;
@@ -1101,7 +1101,7 @@ db_recurse2(struct db_tree_state *tsp, struct db_full_path *pathp, struct combin
 	    rt_db_free_internal(&intern);
 	    comb = NULL;
 
-	    _db_recurse_subtree2(curtree, &nts, pathp, region_start_statepp, client_data, cmap);
+	    _db_recurse_subtree2(curtree, &nts, pathp, region_start_statepp, client_data, &c_inst_map);
 	    if (curtree)
 		RT_CK_TREE(curtree);
 	} else {
@@ -1851,8 +1851,7 @@ _db_walk_subtree(
     struct combined_tree_state **region_start_statepp,
     union tree *(*leaf_func)(struct db_tree_state *, const struct db_full_path *, struct rt_db_internal *, void *),
     void *client_data,
-    struct resource *resp,
-    void *cmap)
+    struct resource *resp)
 {
     struct combined_tree_state *ctsp;
     union tree *curtree;
@@ -1891,7 +1890,7 @@ _db_walk_subtree(
 	    else
 		ctsp->cts_s.ts_sofar &= ~TS_SOFAR_REGION;
 	    if (UNLIKELY(ctsp->cts_s.ts_dbip->i->dbi_use_comb_instance_ids)) {
-		curtree = db_recurse2(&ctsp->cts_s, &ctsp->cts_p, region_start_statepp, client_data, cmap);
+		curtree = db_recurse2(&ctsp->cts_s, &ctsp->cts_p, region_start_statepp, client_data);
 	    } else {
 		curtree = db_recurse(&ctsp->cts_s, &ctsp->cts_p, region_start_statepp, client_data);
 	    }
@@ -1917,7 +1916,7 @@ _db_walk_subtree(
 	case OP_NOT:
 	case OP_GUARD:
 	case OP_XNOP:
-	    _db_walk_subtree(tp->tr_b.tb_left, region_start_statepp, leaf_func, client_data, resp, cmap);
+	    _db_walk_subtree(tp->tr_b.tb_left, region_start_statepp, leaf_func, client_data, resp);
 	    return;
 
 	case OP_UNION:
@@ -1925,8 +1924,8 @@ _db_walk_subtree(
 	case OP_SUBTRACT:
 	case OP_XOR:
 	    /* This node is known to be a binary op */
-	    _db_walk_subtree(tp->tr_b.tb_left, region_start_statepp, leaf_func, client_data, resp, cmap);
-	    _db_walk_subtree(tp->tr_b.tb_right, region_start_statepp, leaf_func, client_data, resp, cmap);
+	    _db_walk_subtree(tp->tr_b.tb_left, region_start_statepp, leaf_func, client_data, resp);
+	    _db_walk_subtree(tp->tr_b.tb_right, region_start_statepp, leaf_func, client_data, resp);
 	    return;
 
 	case OP_DB_LEAF:
@@ -1970,8 +1969,6 @@ _db_walk_dispatcher(int cpu, void *arg)
 	    resp = &rt_uniresource;
     }
 
-    struct db_i *dbip = (wps->rtip) ? wps->rtip->rti_dbip : NULL;
-
     while (1) {
 	bu_semaphore_acquire(RT_SEM_WORKER);
 	mine = wps->reg_current++;
@@ -1990,12 +1987,7 @@ _db_walk_dispatcher(int cpu, void *arg)
 	/* Walk the full subtree now */
 	region_start_statep = (struct combined_tree_state *)0;
 
-	if (UNLIKELY(dbip && dbip->i->dbi_use_comb_instance_ids)) {
-	    std::unordered_map<std::string, int> c_inst_map;
-	    _db_walk_subtree(curtree, &region_start_statep, wps->reg_leaf_func, wps->client_data, resp, (void *)&c_inst_map);
-	} else {
-	    _db_walk_subtree(curtree, &region_start_statep, wps->reg_leaf_func, wps->client_data, resp, NULL);
-	}
+	_db_walk_subtree(curtree, &region_start_statep, wps->reg_leaf_func, wps->client_data, resp);
 
 	/* curtree->tr_op may be OP_NOP here.
 	 * It is up to db_reg_end_func() to deal with this,
@@ -2087,8 +2079,7 @@ db_walk_tree(struct db_i *dbip,
 
 	region_start_statep = (struct combined_tree_state *)0;
 	if (UNLIKELY(dbip->i->dbi_use_comb_instance_ids)) {
-	    std::unordered_map<std::string, int> c_inst_map;
-	    curtree = db_recurse2(&ts, &path, &region_start_statep, client_data, (void *)&c_inst_map);
+	    curtree = db_recurse2(&ts, &path, &region_start_statep, client_data);
 	} else {
 	    curtree = db_recurse(&ts, &path, &region_start_statep, client_data);
 	}
