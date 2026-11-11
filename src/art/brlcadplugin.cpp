@@ -105,6 +105,7 @@ struct RayHit {
     asf::Vector3d geometric_normal;
     asf::Vector3d shading_normal;
     asf::Vector2f uv = asf::Vector2f(0.0f);
+    asr::ProceduralObject::SurfaceDerivatives derivatives;
     bool compute_shading = false;
     const char *error = nullptr;
 };
@@ -169,6 +170,21 @@ brlcad_hit(struct application *ap, struct partition *head, struct seg *UNUSED(se
 	    result.uv = asf::Vector2f(static_cast<float>(uv.uv_u), static_cast<float>(uv.uv_v));
 	    if (!std::isfinite(result.uv[0]) || !std::isfinite(result.uv[1]))
 		result.error = "Primitive produced nonfinite UV coordinates";
+	}
+	struct rt_surface_derivatives derivatives = RT_SURFACE_DERIVATIVES_INIT_ZERO;
+	const int status = rt_obj_surface_derivatives(ap, solid, hit, &derivatives);
+	if (status == RT_DERIVATIVES_ERROR) {
+	    result.error = "Primitive surface derivative query failed";
+	    return 1;
+	}
+	if (status == RT_DERIVATIVES_OK) {
+	    result.derivatives.m_valid = true;
+	    result.derivatives.m_dpdu = asf::Vector3d(V3ARGS(derivatives.dpdu));
+	    result.derivatives.m_dpdv = asf::Vector3d(V3ARGS(derivatives.dpdv));
+	    // Boolean cuts reverse the normal field, preserving its UV chart.
+	    const double normal_sign = flip ? -1.0 : 1.0;
+	    result.derivatives.m_dndu = normal_sign * asf::Vector3d(V3ARGS(derivatives.dndu));
+	    result.derivatives.m_dndv = normal_sign * asf::Vector3d(V3ARGS(derivatives.dndv));
 	}
 	return 1;
     }
@@ -341,6 +357,7 @@ BrlcadObject::trace(const asr::ShadingRay &ray, IntersectionResult *result) cons
 	result->m_geometric_normal = hit.geometric_normal;
 	result->m_shading_normal = hit.shading_normal;
 	result->m_uv = hit.uv;
+	result->m_derivatives = hit.derivatives;
 	result->m_material_slot = 0;
     }
     return true;

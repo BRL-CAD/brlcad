@@ -97,8 +97,10 @@ cover grazing incidence, entry/exit and subtraction faces, sphere radii from
 one billion.  UV checks cover sphere entry/exit, a Boolean cut face,
 concurrent first-use ARB mapping, and authored BOT coordinates under
 nonuniform transforms.  Smooth BOT checks distinguish facet and shading
-normals, including inside rays and Boolean cuts.  Surface derivatives remain
-open.
+normals, including inside rays and Boolean cuts.  Derivative checks compare
+unit-normal changes to nearby ray hits on spheres and flat, smooth,
+transformed, and Boolean-cut meshes.  Missing mappings and singular poles
+leave derivative inputs unavailable.
 
 |OSL execution and native Appleseed mesh scenes
 |The development validation includes a native JIT probe, material and
@@ -219,15 +221,19 @@ footprints, including very small and large scales with analytic inverses.
 Native sphere, rectangle, and disk intersections supply their analytic
 mapping derivatives; singular mappings report unavailable derivatives.
 
-`art` does not yet fill the new derivative inputs from librt mappings.
-Missing derivatives produce zero UV footprints, with an independent shading
-basis fallback, rather than an arbitrary mapping scale.  Librt supplies
-native derivatives for authored BOT UVs, spheres, and ellipsoids.  The
-analytic callbacks preserve the prepared UV frame, including axes accepted
-within preparation tolerances.  Finite-difference tests cover position and
-unit-normal derivatives, rotated frames, inside rays, and singular poles.
-Connecting these callbacks to `art` is the next step.  Texture filtering
-and bump/normal mapping remain unqualified.  Rebuild procedural plugins
+`art` fills these inputs from native librt mappings for authored BOT UVs,
+spheres, and ellipsoids.  Boolean cuts reverse normal derivatives while
+preserving position derivatives and UVs.  Missing or singular mappings
+produce zero UV footprints, with an independent shading basis fallback,
+rather than an arbitrary mapping scale.  Other primitives currently supply
+point UVs only where available.
+
+The analytic callbacks preserve the prepared UV frame, including axes
+accepted within preparation tolerances.  Finite-difference tests cover
+position and unit-normal derivatives, rotated frames, inside rays, and
+singular poles.  Art intersection tests check the transferred derivatives
+against known chart tangents and independent nearby-ray normal differences.
+Texture filtering and bump/normal mapping remain unqualified.  Rebuild procedural plugins
 and applications against the matching Appleseed headers and library.
 
 Visible emission is covered by the diagnostic shader, but direct light

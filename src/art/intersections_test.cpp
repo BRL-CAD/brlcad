@@ -114,9 +114,8 @@ check_offsets(BrlcadObject &object, const asf::Vector3d &point,
     return true;
 }
 
-static bool
-check_uv(BrlcadObject &object, const asf::Vector3d &origin,
-    const asf::Vector3d &direction, const asf::Vector2f &expected)
+static asr::ProceduralObject::IntersectionResult
+query_surface(BrlcadObject &object, const asf::Vector3d &origin, const asf::Vector3d &direction)
 {
     asr::ShadingRay ray;
     ray.m_org = origin;
@@ -125,6 +124,14 @@ check_uv(BrlcadObject &object, const asf::Vector3d &origin,
     ray.m_tmax = INFINITY;
     asr::ProceduralObject::IntersectionResult result;
     object.intersect(ray, result);
+    return result;
+}
+
+static bool
+check_uv(BrlcadObject &object, const asf::Vector3d &origin,
+    const asf::Vector3d &direction, const asf::Vector2f &expected)
+{
+    const auto result = query_surface(object, origin, direction);
     if (result.m_hit && std::isfinite(result.m_uv[0]) && std::isfinite(result.m_uv[1]) &&
 	NEAR_EQUAL(result.m_uv[0], expected[0], INTERSECTION_TOLERANCE) &&
 	NEAR_EQUAL(result.m_uv[1], expected[1], INTERSECTION_TOLERANCE))
@@ -133,6 +140,44 @@ check_uv(BrlcadObject &object, const asf::Vector3d &origin,
 	object.get_name(), result.m_hit, result.m_hit ? result.m_uv[0] : 0.0,
 	result.m_hit ? result.m_uv[1] : 0.0, expected[0], expected[1]);
     return false;
+}
+
+static bool
+same_vector(const asf::Vector3d &actual, const asf::Vector3d &expected)
+{
+    return !VINVALID(actual) && !VINVALID(expected) &&
+	VNEAR_EQUAL(actual, expected, INTERSECTION_TOLERANCE * std::max(1.0, asf::norm(expected)));
+}
+
+static bool
+check_derivatives(BrlcadObject &object, const asf::Vector3d &origin,
+    const asf::Vector3d &direction, bool available,
+    const asf::Vector3d &dpdu = asf::Vector3d(0), const asf::Vector3d &dpdv = asf::Vector3d(0))
+{
+    const auto result = query_surface(object, origin, direction);
+    const auto &derivatives = result.m_derivatives;
+    bool passed = result.m_hit && derivatives.m_valid == available &&
+	same_vector(derivatives.m_dpdu, dpdu) && same_vector(derivatives.m_dpdv, dpdv);
+    if (available && passed) {
+	// Shift independent rays along each known chart tangent and differentiate
+	// the returned unit normals.  This also tests Boolean and transform signs.
+	constexpr double DIFFERENCE_STEP = 1.0e-6;
+	const std::array<asf::Vector3d, 2> tangents = {dpdu, dpdv};
+	const std::array<asf::Vector3d, 2> normals = {derivatives.m_dndu, derivatives.m_dndv};
+	for (size_t axis = 0; axis < tangents.size(); ++axis) {
+	    const auto left = query_surface(object, origin - DIFFERENCE_STEP * tangents[axis], direction);
+	    const auto right = query_surface(object, origin + DIFFERENCE_STEP * tangents[axis], direction);
+	    passed = passed && left.m_hit && right.m_hit &&
+		same_vector(normals[axis], (right.m_shading_normal - left.m_shading_normal) / (2 * DIFFERENCE_STEP));
+	}
+    } else if (!available) {
+	passed = passed && same_vector(derivatives.m_dndu, asf::Vector3d(0)) &&
+	    same_vector(derivatives.m_dndv, asf::Vector3d(0));
+    }
+    if (!passed)
+	bu_log("Unexpected surface derivatives for %s: hit=%d available=%d expected=%d\n",
+	    object.get_name(), result.m_hit, derivatives.m_valid, available);
+    return passed;
 }
 
 static bool
@@ -338,6 +383,28 @@ main(int argc, char **argv)
 	    0, 100, true, 10, asf::Vector3d(0, 0, -1), &cut_normal) && ok;
 	ok = check_offsets(cut_mesh, asf::Vector3d(5, -5, 10), asf::Vector3d(0, 0, 1),
 	    asf::Vector3d(0, 0, -1), 0.01) && ok;
+
+	const asf::Vector3d sphere_dpdu(0, 20 * M_PI, 0), sphere_dpdv(0, 0, 10 * M_PI);
+	ok = check_derivatives(sphere, asf::Vector3d(20, 0, 0), asf::Vector3d(-1, 0, 0),
+	    true, sphere_dpdu, sphere_dpdv) && ok;
+	ok = check_derivatives(sphere, asf::Vector3d(0), asf::Vector3d(1, 0, 0),
+	    true, sphere_dpdu, sphere_dpdv) && ok;
+	ok = check_derivatives(sphere, asf::Vector3d(0, 0, 20), asf::Vector3d(0, 0, -1), false) && ok;
+	ok = check_derivatives(origin_slab, asf::Vector3d(-1, 0, 0), asf::Vector3d(1, 0, 0), false) && ok;
+	const asf::Vector3d mesh_dpdu(20, 0, 0), mesh_dpdv(20, 20, 0);
+	for (auto *object : {&mesh, &smooth_mesh}) {
+	    ok = check_derivatives(*object, asf::Vector3d(5, -5, 20), asf::Vector3d(0, 0, -1),
+		true, mesh_dpdu, mesh_dpdv) && ok;
+	    ok = check_derivatives(*object, asf::Vector3d(5, -5, 0), asf::Vector3d(0, 0, 1),
+		true, mesh_dpdu, mesh_dpdv) && ok;
+	}
+	for (double z : {0.0, 15.0})
+	    ok = check_derivatives(cut_mesh, asf::Vector3d(5, -5, z),
+		asf::Vector3d(0, 0, z > 10 ? -1 : 1), true, mesh_dpdu, mesh_dpdv) && ok;
+	for (auto *object : {&transformed_mesh, &transformed_smooth_mesh})
+	    ok = check_derivatives(*object, asf::Vector3d(40, -15, 20), asf::Vector3d(0, 0, -1),
+		true, asf::Vector3d(40, 0, 0), asf::Vector3d(40, 60, 0)) && ok;
+	ok = check_derivatives(plain_mesh, asf::Vector3d(5, -5, 20), asf::Vector3d(0, 0, -1), false) && ok;
 
 	// A new worker must reuse a slot after the previous worker has left.
 	std::atomic<bool> workers_ok{true};
