@@ -237,7 +237,8 @@
     set savestate [$itk_component(table) cget -state]
     setInsertMode 1
 
-    if {[catch {::tk::table::GetSelection $itk_component(table) CLIPBOARD} data]} {
+    if {[catch {selection get -displayof $itk_component(table) -selection CLIPBOARD -type UTF8_STRING} data] &&
+	[catch {selection get -displayof $itk_component(table) -selection CLIPBOARD} data]} {
 	return
     }
 

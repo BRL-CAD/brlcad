@@ -68,17 +68,6 @@ if {[tk windowingsystem] eq "aqua"} {
    ::ttk::style theme use clam
 }
 
-# normalize dir
-if {[info exists argv0]} {
-    set dir [file normalize [file join [file dir $argv0] ..]]
-} else {
-    set dir [file normalize [pwd]]
-}
-
-if {$tcl_platform(platform) == "windows"} {
-    lappend auto_path ${dir}/lib/Tktable2.10
-}
-
 # load archer guts
 if { [catch {package require Archer 1.0} _initialized] } {
     puts "$_initialized"

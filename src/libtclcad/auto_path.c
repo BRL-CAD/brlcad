@@ -172,10 +172,6 @@ tclcad_auto_path(Tcl_Interp *interp)
 	p = bu_strdup(bu_vls_cstr(&buffer));
 	bu_ptbl_ins(&lib_subpaths, (long *)p);
 #endif
-
-	bu_vls_sprintf(&buffer, "Tktable2.10");
-	p = bu_strdup(bu_vls_cstr(&buffer));
-	bu_ptbl_ins(&lib_subpaths, (long *)p);
 #endif
 
 	bu_vls_free(&buffer);
@@ -188,6 +184,8 @@ tclcad_auto_path(Tcl_Interp *interp)
 	struct bu_vls lib_path = BU_VLS_INIT_ZERO;
 	struct bu_ptbl found_subpaths = BU_PTBL_INIT_ZERO;
 	if (strlen(libdir)) {
+	    /* Tcl scans library roots for versioned extension packages. */
+	    bu_ptbl_ins(&paths, (long *)bu_strdup(libdir));
 	    // Have a library directory, see what's in it
 	    for (size_t i = 0; i < BU_PTBL_LEN(&lib_subpaths); i++) {
 		const char *fname = (const char *)BU_PTBL_GET(&lib_subpaths, i);

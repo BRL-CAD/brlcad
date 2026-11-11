@@ -358,13 +358,34 @@ assert_coordinates "CellPlot rectangular coordinate transform" \
 ::itcl::delete object .functional_cell_plot
 
 array set ::cadwidget_table_data {}
+# Match the logical grid size used by Archer's geometry editors.
 cadwidgets::TkTable .functional_tk_table ::cadwidget_table_data \
-    {{Name} {Value}} -rows 3
+    {{Name} {Value}} -rows 100000
 .functional_tk_table setTableVal 1,1 alpha
 assert_equal "TkTable data update" $::cadwidget_table_data(1,1) alpha
 .functional_tk_table selectSingleRow 1
 assert_equal "TkTable row selection" \
     [.functional_tk_table getSelectedRows] 1
+set table_widget [.functional_tk_table component table]
+set table_paste_text "two words \u03bb"
+$table_widget activate 1,1
+clipboard clear -displayof $table_widget
+clipboard append -displayof $table_widget $table_paste_text
+.functional_tk_table handlePaste
+assert_equal "TkTable clipboard paste" $::cadwidget_table_data(1,1) $table_paste_text
+.functional_tk_table configure -validatecommand \
+    [list apply {{row col value clientData} {return 0}}]
+clipboard clear -displayof $table_widget
+clipboard append -displayof $table_widget rejected
+.functional_tk_table handlePaste
+assert_equal "TkTable invalid paste" $::cadwidget_table_data(1,1) $table_paste_text
+set table_last_row [expr {[$table_widget cget -rows] - 1}]
+.functional_tk_table setTableVal $table_last_row,1 last
+.functional_tk_table see $table_last_row,1
+.functional_tk_table selectSingleRow $table_last_row
+assert_equal "TkTable last row selection" \
+    [.functional_tk_table getSelectedRows] $table_last_row
+assert_equal "TkTable last row data" [$table_widget get $table_last_row,1] last
 ::itcl::delete object .functional_tk_table
 unset ::cadwidget_table_data
 
