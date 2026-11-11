@@ -125,6 +125,7 @@
 #include "foundation/math/vector.h"
 #include "foundation/containers/dictionary.h"
 #include "foundation/log/consolelogtarget.h"
+#include "foundation/log/ilogtarget.h"
 #include "foundation/memory/autoreleaseptr.h"
 #include "foundation/utility/searchpaths.h"
 
@@ -1286,11 +1287,13 @@ main(int argc, char **argv)
 	   bu_version()
 	);
 
-    // Create a log target that outputs to stderr, and binds it to the renderer's global logger.
-    // Eventually you will probably want to redirect log messages to your own target. For this
-    // you will need to implement foundation::ILogTarget (foundation/utility/log/ilogtarget.h).
-    asf::ILogTarget* log_target(asf::create_console_log_target(stderr));
-    asr::global_logger().add_target(log_target);
+    const auto release_log_target = [](asf::ILogTarget *target) {
+	asr::global_logger().remove_target(target);
+	target->release();
+    };
+    std::unique_ptr<asf::ILogTarget, decltype(release_log_target)> log_target(
+	asf::create_console_log_target(stderr), release_log_target);
+    asr::global_logger().add_target(log_target.get());
 
     rt_perspective = 85; // setting the default
 
