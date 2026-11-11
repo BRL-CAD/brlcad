@@ -485,7 +485,7 @@ BrlcadObject::configure_raytrace_application(const char* path, int objc, std::ve
     size_t npsw = 1; /* default number of worker PSWs*/
 
     /* load the specified geometry database */
-    rtip = rt_dirbuild(path, title, sizeof(title));
+    rtip = rt_dirbuild_ex(path, title, sizeof(title), DB_OPEN_COMB_INSTANCES);
     if (rtip == RTI_NULL) {
 	bu_log("Building the database directory for [%s] FAILED\n", path);
 	return;

@@ -80,6 +80,11 @@ material-object selection and custom diffuse surface shaders are covered.
 UV mapping, networks, general parameter authoring, and advanced closures
 remain unqualified.
 
+|Region instances
+|Full indexed database paths distinguish occurrences under different parents
+and repeated arcs in one combination.  `regress-art` checks translated
+instances with inherited colors and two separated occurrences of one region.
+
 |OSL execution and native Appleseed mesh scenes
 |The development validation includes a native JIT probe, material and
 texture renders, and selected Appleseed unit suites.  These provide

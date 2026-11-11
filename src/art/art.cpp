@@ -184,15 +184,6 @@ struct ArtLight {
 };
 static std::vector<ArtLight> art_lights;
 
-/* Region names already registered this frame.  db_walk_tree() invokes
- * register_region() once per PATH to a region, so a region shared/referenced
- * from multiple combs is visited multiple times -- re-registering it would
- * insert duplicate-named Appleseed entities (assembly/object/material), which
- * asserts in appleseed's EntityMap (entitymap.cpp) / corrupts state in release.
- * We register each unique region once. */
-#include <set>
-static std::set<std::string> art_seen_regions;
-
 //size_t light_intensity = 30.0;
 const char* global_title_file;
 asf::auto_release_ptr<asr::Project> project_ptr;
@@ -513,6 +504,7 @@ art_parse_light_intensity(const struct bu_vls* shader, double* bright, double* f
 struct ArtSceneBuilder {
     asr::Scene &scene;
     const asf::SearchPaths &search_paths;
+    std::set<std::string> region_paths = {};
     bool valid = true;
 };
 
@@ -528,37 +520,27 @@ register_region(struct db_tree_state* tsp,
 {
     if (!pathp || !combp || !data)
 	return 1;
-    // We open the db using the region path to get objects name
-    struct directory* dp = DB_FULL_PATH_CUR_DIR(pathp);
-    if (!dp)
-	return 1;
-
-    const char* name;
-    name = dp->d_namep;
-
-    // Register each unique region only once: db_walk_tree() revisits a region
-    // once per path to it, and re-registering inserts duplicate-named Appleseed
-    // entities (assert in EntityMap for multi-region models like toyjeep).
-    if (!art_seen_regions.insert(std::string(name)).second)
-	return 0;
-
-    // Strip the objects name to get correct bounding box
+    auto &builder = *static_cast<ArtSceneBuilder *>(data);
     struct bu_vls path = BU_VLS_INIT_ZERO;
     db_path_to_vls(&path, pathp);
-    const char* name_full;
-    std::string conversion_temp = bu_vls_cstr(&path);
+    const std::string region_path = bu_vls_cstr(&path);
     bu_vls_free(&path);
-    name_full = conversion_temp.c_str();
-    bu_log("name: %s\n", conversion_temp.c_str());
+    const char *name = region_path.c_str();
 
-    // get objects bounding box
-    struct ged* gedp;
-    gedp = ged_open("db", tsp->ts_dbip->dbi_filename, 1);
-    point_t min;
-    point_t max;
-    int ret = rt_obj_bounds(gedp->ged_result_str, gedp->dbip, 1, (const char**)&name_full, 1, min, max);
+    // Distinct paths, including repeated-arc indices, are distinct instances.
+    if (!builder.region_paths.insert(region_path).second)
+	return 0;
 
-    bu_log("ged: %i | min: %f %f %f | max: %f %f %f\n", ret, V3ARGS(min), V3ARGS(max));
+    point_t min, max;
+    struct bu_vls bounds_error = BU_VLS_INIT_ZERO;
+    const int status = rt_obj_bounds(&bounds_error, tsp->ts_dbip, 1, &name, 1, min, max);
+    if (status != 0) {
+	bu_log("art: cannot bound region '%s': %s\n", name, bu_vls_cstr(&bounds_error));
+	bu_vls_free(&bounds_error);
+	builder.valid = false;
+	return 0;
+    }
+    bu_vls_free(&bounds_error);
 
     /* If this region uses the BRL-CAD "light" shader, treat it as a light
      * source rather than renderable geometry: record its centroid and color
@@ -588,7 +570,6 @@ register_region(struct db_tree_state* tsp,
 	art_lights.push_back(L);
 	bu_log("art: light source '%s' at %g %g %g (bright=%g)\n",
 	       name, L.pos[0], L.pos[1], L.pos[2], L.bright);
-	ged_close(gedp);
 	return 0;
     }
 
@@ -597,8 +578,8 @@ register_region(struct db_tree_state* tsp,
       NOTE: we will need to eventually match brl geometry to appleseed plugin
     */
     renderer::ParamArray geometry_parameters = asr::ParamArray()
-	.insert("database_path", name)
-	.insert("object_path", name_full)
+	.insert("database_path", tsp->ts_dbip->dbi_filename)
+	.insert("object_path", name)
 	.insert("object_count", objc)
 	.insert("minX", min[X])
 	.insert("minY", min[Y])
@@ -614,7 +595,6 @@ register_region(struct db_tree_state* tsp,
 	    geometry_parameters,
 	    &APP, resources});
 
-    auto &builder = *static_cast<ArtSceneBuilder *>(data);
 
     // create assembly for current object
     std::string assembly_name = std::string(name) + "_object_assembly";
@@ -834,7 +814,6 @@ build_project()
 
     /* discovered lights are collected by register_region() during the walk */
     art_lights.clear();
-    art_seen_regions.clear();
 
     if (objc) {
 	db_walk_tree(APP.a_rt_i->rti_dbip, objc, (const char**)objv, 1, &state, register_region, NULL, NULL, &builder);
@@ -1378,7 +1357,7 @@ main(int argc, char **argv)
     char title[1024] = { 0 };
 
     /* load the specified geometry database */
-    rtip = rt_dirbuild(title_file, title, sizeof(title));
+    rtip = rt_dirbuild_ex(title_file, title, sizeof(title), DB_OPEN_COMB_INSTANCES);
     if (rtip == RTI_NULL) {
 	RENDERER_LOG_INFO("building the database directory for [%s] FAILED\n", title_file);
 	return -1;

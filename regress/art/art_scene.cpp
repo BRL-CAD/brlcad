@@ -80,6 +80,27 @@ create_scene(const char *path, const char *shader, const char *output)
     BU_LIST_INIT(&members.l);
     success = success && mk_addmember("mesh.s", &members.l, NULL, WMOP_UNION) &&
 	mk_lcomb(db, "mesh.r", &members, 1, "plastic", "", green, 0) == 0;
+    // Two paths to one region must keep their transforms and inherited colors.
+    mat_t translated;
+    MAT_IDN(translated);
+    translated[MDX] = 30;
+    BU_LIST_INIT(&members.l);
+    success = success && mk_addmember("ball.r", &members.l, NULL, WMOP_UNION) &&
+	mk_lcomb(db, "instance_left.g", &members, 0, NULL, NULL, red, 1) == 0;
+    BU_LIST_INIT(&members.l);
+    success = success && mk_addmember("ball.r", &members.l, translated, WMOP_UNION) &&
+	mk_lcomb(db, "instance_right.g", &members, 0, NULL, NULL, blue, 1) == 0;
+    BU_LIST_INIT(&members.l);
+    success = success && mk_addmember("instance_left.g", &members.l, NULL, WMOP_UNION) &&
+	mk_addmember("instance_right.g", &members.l, NULL, WMOP_UNION) &&
+	mk_lcomb(db, "instances.g", &members, 0, NULL, NULL, NULL, 0) == 0;
+
+    // Repeated arcs in one combination need their instance index as well.
+    BU_LIST_INIT(&members.l);
+    success = success && mk_addmember("ball.r", &members.l, NULL, WMOP_UNION) &&
+	mk_addmember("ball.r", &members.l, translated, WMOP_UNION) &&
+	mk_lcomb(db, "arcs.g", &members, 0, NULL, NULL, NULL, 0) == 0;
+
     if (shader) {
 	struct bu_attribute_value_set empty, optical;
 	bu_avs_init_empty(&empty);
@@ -99,8 +120,10 @@ create_scene(const char *path, const char *shader, const char *output)
     return success ? 0 : 1;
 }
 
+enum class ImageCheck { Regions, Mesh, RepeatedArcs };
+
 static int
-check_image(const char *path, size_t width, size_t height, bool mesh)
+check_image(const char *path, size_t width, size_t height, ImageCheck check)
 {
     icv_image_t *image = icv_read(path, BU_MIME_IMAGE_AUTO, width, height);
     if (!image)
@@ -114,9 +137,13 @@ check_image(const char *path, size_t width, size_t height, bool mesh)
     const double COLOR_DOMINANCE = 2.0;
     const double ASPECT_TOLERANCE = 0.2;
     const double MIN_COLOR_COVERAGE = 0.01;
+    // The separated arc instances leave a central band free of geometry.
+    const double PAIR_GAP_HALF_FRACTION = 0.05;
+    const size_t gap_half = static_cast<size_t>(width * PAIR_GAP_HALF_FRACTION);
     const size_t min_color_pixels = static_cast<size_t>(width * height * MIN_COLOR_COVERAGE);
     size_t min_x = width, min_y = height, max_x = 0, max_y = 0;
     size_t red_pixels = 0, blue_pixels = 0, green_pixels = 0;
+    size_t pair_left = 0, pair_right = 0, pair_center = 0;
     bool finite = true;
     for (size_t y = 0; y < height; ++y) {
 	for (size_t x = 0; x < width; ++x) {
@@ -124,6 +151,9 @@ check_image(const char *path, size_t width, size_t height, bool mesh)
 	    finite = finite && std::isfinite(pixel[0]) && std::isfinite(pixel[1]) && std::isfinite(pixel[2]);
 	    if (pixel[0] > COLOR_DOMINANCE * pixel[1] && pixel[0] > COLOR_DOMINANCE * pixel[2]) {
 		++red_pixels;
+		if (x < width / 2 - gap_half) ++pair_left;
+		else if (x >= width / 2 + gap_half) ++pair_right;
+		else ++pair_center;
 		min_x = std::min(min_x, x);
 		min_y = std::min(min_y, y);
 		max_x = std::max(max_x, x);
@@ -136,7 +166,14 @@ check_image(const char *path, size_t width, size_t height, bool mesh)
 	}
     }
     icv_destroy(image);
-    if (mesh) {
+    if (check == ImageCheck::RepeatedArcs) {
+	if (finite && pair_left > min_color_pixels && pair_right > min_color_pixels && !pair_center)
+	    return 0;
+	bu_log("Expected two separated red arc instances in %s: left=%zu right=%zu center=%zu\n",
+	    path, pair_left, pair_right, pair_center);
+	return 1;
+    }
+    if (check == ImageCheck::Mesh) {
 	if (finite && green_pixels > min_color_pixels)
 	    return 0;
 	bu_log("Missing finite green BOT geometry: %s\n", path);
@@ -165,10 +202,12 @@ main(int argc, char **argv)
 	return create_scene(argv[2], nullptr, nullptr);
     if ((argc == 4 || argc == 5) && BU_STR_EQUAL(argv[1], "create-material"))
 	return create_scene(argv[2], argv[3], argc == 5 ? argv[4] : nullptr);
-    if (argc == 5 && (BU_STR_EQUAL(argv[1], "check") || BU_STR_EQUAL(argv[1], "check-mesh"))) {
+    if (argc == 5 && (BU_STR_EQUAL(argv[1], "check") || BU_STR_EQUAL(argv[1], "check-mesh") || BU_STR_EQUAL(argv[1], "check-pair"))) {
 	try {
-	    return check_image(argv[2], std::stoul(argv[3]), std::stoul(argv[4]),
-		BU_STR_EQUAL(argv[1], "check-mesh"));
+	    ImageCheck check = ImageCheck::Regions;
+	    if (BU_STR_EQUAL(argv[1], "check-mesh")) check = ImageCheck::Mesh;
+	    if (BU_STR_EQUAL(argv[1], "check-pair")) check = ImageCheck::RepeatedArcs;
+	    return check_image(argv[2], std::stoul(argv[3]), std::stoul(argv[4]), check);
 	} catch (const std::exception &error) {
 	    bu_log("Invalid image dimensions: %s\n", error.what());
 	}

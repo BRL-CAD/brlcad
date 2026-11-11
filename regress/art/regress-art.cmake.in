@@ -43,6 +43,11 @@ foreach(workers IN ITEMS 1 2)
   run("${VEXEC}" check-mesh "${image}" 96 96)
 endforeach()
 
+run("${EXEC}" ${RENDER_ARGS} -w 128 -n 96 -p 0 -o "${WORK}/instances.png" "${WORK}/scene.g" instances.g)
+run("${VEXEC}" check "${WORK}/instances.png" 128 96)
+run("${EXEC}" ${RENDER_ARGS} -w 128 -n 96 -p 0 -o "${WORK}/arcs.png" "${WORK}/scene.g" arcs.g)
+run("${VEXEC}" check-pair "${WORK}/arcs.png" 128 96)
+
 # Material-object selection must use the same validated closure graph.
 run("${VEXEC}" create-material "${WORK}/material.g" as_plastic)
 run("${EXEC}" ${RENDER_ARGS} -w 128 -n 96 -p 85 -o "${WORK}/material.png" "${WORK}/material.g" all.g)
