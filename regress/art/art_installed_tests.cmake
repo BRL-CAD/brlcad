@@ -25,7 +25,14 @@ include("${CMAKE_CURRENT_SOURCE_DIR}/art_test_setup.cmake")
 add_custom_target(art_installed_fixtures ALL DEPENDS art_test_shaders)
 
 enable_testing()
-foreach(test IN LISTS ART_REGRESSION_TEST_NAMES)
+set(installed_tests ${ART_REGRESSION_TEST_NAMES})
+unset(ART_MGED_EXECUTABLE CACHE)
+find_program(ART_MGED_EXECUTABLE NAMES mged
+  HINTS "${renderer_prefix}/bin" NO_DEFAULT_PATH NO_CACHE)
+if(ART_MGED_EXECUTABLE)
+  list(APPEND installed_tests art-installed-material)
+endif()
+foreach(test IN LISTS installed_tests)
   configure_file("${CMAKE_CURRENT_SOURCE_DIR}/${test}.cmake.in"
     "${CMAKE_CURRENT_BINARY_DIR}/${test}.cmake" @ONLY)
   add_test(NAME ${test} COMMAND "${CMAKE_COMMAND}" "-DEXEC=${ART_EXECUTABLE}"

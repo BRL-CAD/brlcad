@@ -1234,7 +1234,11 @@ creates fixture databases and checks their images.  Shader fixtures compile
 with the installed compiler and headers, and all art render commands and
 image-texture preparation tools come from the selected installation.
 The standalone project shares the regression cases with the development
-build and writes its outputs in its own test directory.
+build and writes its outputs in its own test directory.  If the selected
+installation includes `mged`, `art-installed-material` also sources a material
+authoring script, inspects its persisted assignment and parameters in a new
+art process, and compares the rendered result with a libged-authored
+reference.  The project and script paths include spaces.
 
 Loader environment overrides and `BRLCAD_ROOT` are cleared for fixture
 compilation and test execution.  On FreeBSD and Linux, the additional

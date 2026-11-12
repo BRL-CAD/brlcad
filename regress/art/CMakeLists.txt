@@ -56,7 +56,8 @@ if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
 endif()
 
 cmakefiles(CMakeLists.txt art_test_setup.cmake art_installed_tests.cmake
-  art_installed_runtime.cmake.in art_scene.cpp art_test_mesh.h art_test_commands.cmake
+  art_installed_runtime.cmake.in art-installed-material.cmake.in
+  art_scene.cpp art_test_mesh.h art_test_commands.cmake
   regress-art.cmake.in regress-art-bump.cmake.in regress-art-normal.cmake.in
   regress-art-texture.cmake.in regress-art-color.cmake.in
   regress-art-image-maps.cmake.in regress-art-resources.cmake.in
