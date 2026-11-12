@@ -258,7 +258,7 @@ option_term(const json &option)
     const std::string longopt = option.value("long", std::string());
 
     if (!shortopt.empty()) {
-	std::string term = "*-" + shortopt + "*";
+	std::string term = shortopt == "*" ? "`-*`" : "*-" + shortopt + "*";
 	if (requirement == "required")
 	    term += " " + argument;
 	else if (requirement == "optional")
@@ -435,6 +435,7 @@ documented_options(const std::string &page)
     std::istringstream lines(page);
     std::string line;
     const std::regex spelling(R"((^|[*,[:space:]])(--[A-Za-z0-9][A-Za-z0-9_-]*|-[^[:space:],*]))");
+    const std::regex symbolic_short(R"(`(-\*)`)");
     const std::regex argument(R"(_[^_]+_)");
     while (std::getline(lines, line)) {
 	if (line.find("::") == std::string::npos)
@@ -443,6 +444,9 @@ documented_options(const std::string &page)
 	for (std::sregex_iterator match(line.begin(), line.end(), spelling), last;
 	    match != last; ++match)
 	    result[(*match)[2].str()].insert(has_argument);
+	for (std::sregex_iterator match(line.begin(), line.end(), symbolic_short), last;
+	    match != last; ++match)
+	    result[(*match)[1].str()].insert(has_argument);
     }
     return result;
 }
