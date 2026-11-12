@@ -30,7 +30,7 @@ endif()
 set(Boost_USE_STATIC_LIBS OFF)
 find_package(
   Boost CONFIG
-  COMPONENTS chrono date_time filesystem regex system thread wave
+  COMPONENTS chrono date_time filesystem regex system thread
 )
 if(NOT Boost_FOUND)
   message("'art' appleseed ray tracing is DISABLED")

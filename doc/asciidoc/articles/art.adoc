@@ -68,6 +68,12 @@ The modernized dependency build has been exercised with LLVM 23.1.5, OSL
 is disabled.  The OSL compatibility patch also accommodates LLVM builds
 that have libxml2 enabled.
 
+The renderer's shader-query caches now use C++17 `std::optional`, and Wave
+is no longer requested by Appleseed or `art`.  The validated runtime graph
+also no longer loads Boost.Serialization.  Boost remains required for
+atomics, threading, time, filesystems, regular expressions, system support,
+and hash containers; removing Wave does not make this a Boost-free build.
+
 [cols="2,3"]
 |===
 |Capability |Evidence and remaining boundary
