@@ -52,9 +52,9 @@
 #endif
 
 #include "bu/app.h"
+#include "bu/arg.h"
 #include "bu/env.h"
 #include "bu/file.h"
-#include "bu/opt.h"
 #include "bu/datetime.h"
 #include "bg/trimesh.h"
 #include "bv/vlist.h"
@@ -2399,12 +2399,7 @@ audit_brep(struct db_i *dbip, struct directory *dp, const char *db_path,
     return excluded || okay ? 0 : 1;
 }
 
-int
-main(int argc, const char **argv)
-{
-    bu_setprogname(argv[0]);
-    argc--; argv++;
-
+struct brep_audit_args {
     int print_help = 0;
     int list_only = 0;
     int batch = 0;
@@ -2414,145 +2409,212 @@ main(int argc, const char **argv)
     double tess_rel = 0.01;
     double tess_norm = 0.0;
     long memory_limit_mib = 0;
+    const char *mode_name = "both";
     long jobs = 0;
     long max_time_ms = 0;
-    long quality_face_time_ms = 0;
     long max_result_mib = 0;
-    long max_working_mib = 0;
     long max_points = 0;
-    long max_triangles = 0;
-    double display_coarse_rel = 0.0;
-    double display_area_change = 0.0;
     long batch_start = 0;
     long face_index = -1;
     int valid_solids_only = 0;
-    int display_only = 0;
     int quality_repair = 0;
     double repair_hole_area_percent = 1.0;
     long repair_hole_edges = 256;
-    long repair_adaptive_hole_edges = 4096;
-    double repair_adaptive_hole_area_percent = 0.0;
-    double repair_planar_cap_area_percent = 0.0;
     double repair_area_change_percent = 1.0;
     double repair_max_deviation = 0.0;
-    double repair_max_deviation_rel = 0.0;
     long repair_deviation_samples = 4096;
     int repair_allow_untrimmed = 0;
     int repair_full_fast = 0;
-    int repair_full_fast_if_needed = 0;
-    int repair_try_invalid = 0;
     int repair_union_components = 0;
+    int repair_no_fast = 0;
+    const char *batch_object_file = NULL;
+    double repair_max_deviation_rel = 0.0;
     int repair_allow_self_intersections = 0;
     int repair_require_manifold = 0;
-    int repair_no_fast = 0;
+    int repair_full_fast_if_needed = 0;
+    int repair_try_invalid = 0;
     double repair_relaxed_fidelity_factor = 0.0;
+    long repair_adaptive_hole_edges = 4096;
+    long quality_face_time_ms = 0;
+    double repair_adaptive_hole_area_percent = 0.0;
+    long max_working_mib = 0;
+    long max_triangles = 0;
+    double display_coarse_rel = 0.0;
+    double display_area_change = 0.0;
+    int display_only = 0;
     const char *image_dir = NULL;
     long image_size = 1024;
-    const char *batch_object_file = NULL;
-    const char *mode_name = "both";
-    struct bu_opt_desc d[46];
-    BU_OPT(d[0], "h", "help", "", NULL, &print_help, "Print help and exit");
-    BU_OPT(d[1], "l", "list", "", NULL, &list_only, "List BRep primitive names");
-    BU_OPT(d[2], "", "ratio-min", "#", &bu_opt_fastf_t, &ratio_min, "Minimum acceptable generated/reference dimension ratio");
-    BU_OPT(d[3], "", "ratio-max", "#", &bu_opt_fastf_t, &ratio_max, "Maximum acceptable generated/reference dimension ratio");
-    BU_OPT(d[4], "", "tess-abs", "#", &bu_opt_fastf_t, &tess_abs, "Absolute shaded tessellation tolerance");
-    BU_OPT(d[5], "", "tess-rel", "#", &bu_opt_fastf_t, &tess_rel, "Relative shaded tessellation tolerance");
-    BU_OPT(d[6], "", "tess-norm", "#", &bu_opt_fastf_t, &tess_norm, "Normal shaded tessellation tolerance");
-    BU_OPT(d[7], "", "memory-limit-mib", "#", &bu_opt_long, &memory_limit_mib, "Process address-space limit in MiB (zero disables)");
-    BU_OPT(d[8], "m", "mode", "wireframe|shaded|quality|both|all", &bu_opt_str, &mode_name, "Select generators; quality runs the conversion CDT");
-    BU_OPT(d[9], "j", "jobs", "#", &bu_opt_long, &jobs, "Maximum shaded face workers (zero selects the default)");
-    BU_OPT(d[10], "", "max-time-ms", "#", &bu_opt_long, &max_time_ms, "Shaded generation deadline checked between faces");
-    BU_OPT(d[11], "", "max-result-mib", "#", &bu_opt_long, &max_result_mib, "Maximum retained shaded result size");
-    BU_OPT(d[12], "", "max-points", "#", &bu_opt_long, &max_points, "Maximum retained shaded points");
-    BU_OPT(d[13], "", "batch", "", NULL, &batch, "Audit all BReps in one database process");
-    BU_OPT(d[14], "", "batch-start", "#", &bu_opt_long, &batch_start, "First flattened batch task index");
-    BU_OPT(d[15], "", "face-index", "#", &bu_opt_long, &face_index, "Shade only one BRep face (non-batch mode)");
-    BU_OPT(d[16], "", "valid-solids-only", "", NULL,
-	&valid_solids_only,
-	"Exclude inputs outside the rigorous CDT topology contract");
-    BU_OPT(d[17], "", "quality-repair", "", NULL, &quality_repair,
-	"Attempt explicitly bounded mesh repair after quality failure");
-    BU_OPT(d[18], "", "repair-hole-area-percent", "#",
-	&bu_opt_fastf_t, &repair_hole_area_percent,
-	"Maximum area of each repair hole as input mesh percentage");
-    BU_OPT(d[19], "", "repair-hole-edges", "#", &bu_opt_long,
-	&repair_hole_edges, "Maximum boundary edges in each repair hole");
-    BU_OPT(d[20], "", "repair-area-change-percent", "#",
-	&bu_opt_fastf_t, &repair_area_change_percent,
-	"Maximum aggregate repaired mesh area change percentage");
-    BU_OPT(d[21], "", "repair-max-deviation", "#", &bu_opt_fastf_t,
-	&repair_max_deviation,
-	"Maximum sampled repair deviation; zero uses tessellation tolerance");
-    BU_OPT(d[22], "", "repair-deviation-samples", "#", &bu_opt_long,
-	&repair_deviation_samples,
-	"Maximum changed-triangle deviation samples");
-    BU_OPT(d[23], "", "repair-allow-untrimmed", "", NULL,
-	&repair_allow_untrimmed,
-	"Permit and report deviation matches to underlying untrimmed surfaces");
-    BU_OPT(d[24], "", "repair-full-fast", "", NULL,
-	&repair_full_fast,
-	"Use one whole-B-Rep display mesh as the repair input");
-    BU_OPT(d[25], "", "repair-union-components", "", NULL,
-	&repair_union_components,
-	"Regularize closed repair components with a Manifold union");
-    BU_OPT(d[26], "", "repair-no-fast", "", NULL, &repair_no_fast,
-	"Repair only the rigorous face meshes, without display fallback faces");
-    BU_OPT(d[27], "", "batch-object-file", "file", &bu_opt_str,
-	&batch_object_file,
-	"In batch mode, audit only object names listed one per line");
-    BU_OPT(d[28], "", "repair-max-deviation-rel", "fraction",
-	&bu_opt_fastf_t, &repair_max_deviation_rel,
-	"Maximum repair deviation as a boundary bbox diagonal fraction");
-    BU_OPT(d[29], "", "repair-allow-self-intersections", "", NULL,
-	&repair_allow_self_intersections,
-	"Permit repaired manifold topology to contain self-intersections");
-    BU_OPT(d[30], "", "repair-require-manifold", "", NULL,
-	&repair_require_manifold,
-	"Require the bundled Manifold library to import the repaired mesh");
-    BU_OPT(d[31], "", "repair-full-fast-if-needed", "", NULL,
-	&repair_full_fast_if_needed,
-	"Retry whole-B-Rep display repair only after rigorous repair fails");
-    BU_OPT(d[32], "", "repair-try-invalid", "", NULL,
-	&repair_try_invalid,
-	"Try rigorous faces of structurally safe invalid B-Reps before repair");
-    BU_OPT(d[33], "", "repair-relaxed-fidelity-factor", "factor",
-	&bu_opt_fastf_t, &repair_relaxed_fidelity_factor,
-	"Accept and tag Manifold repair within 1 through 4 times strict fidelity");
-    BU_OPT(d[34], "", "repair-adaptive-hole-edges", "#", &bu_opt_long,
-	&repair_adaptive_hole_edges,
-	"Second-pass edge ceiling when only bounded open holes remain");
-    BU_OPT(d[35], "", "quality-face-time-ms", "#", &bu_opt_long,
-	&quality_face_time_ms,
-	"Wall-clock limit for each rigorous quality face (zero disables)");
-    BU_OPT(d[36], "", "repair-adaptive-hole-area-percent", "#",
-	&bu_opt_fastf_t, &repair_adaptive_hole_area_percent,
-	"Final-only hole candidate area ceiling for bounded open-edge repair");
-    BU_OPT(d[37], "", "max-working-mib", "#", &bu_opt_long,
-	&max_working_mib, "Maximum shared temporary generator memory");
-    BU_OPT(d[38], "", "max-triangles", "#", &bu_opt_long,
-	&max_triangles, "Maximum adaptive shaded triangle target");
-    BU_OPT(d[39], "", "display-coarse-rel", "fraction",
-	&bu_opt_fastf_t, &display_coarse_rel,
-	"Initial relative tolerance for adaptive shaded display");
-    BU_OPT(d[40], "", "display-area-change", "fraction",
-	&bu_opt_fastf_t, &display_area_change,
-	"Per-face unsigned area convergence threshold");
-    BU_OPT(d[41], "", "display-only", "", NULL, &display_only,
-	"Run only bounded visualization generators; skip source reference checks");
-	BU_OPT(d[42], "", "image-dir", "directory", &bu_opt_str, &image_dir,
-	"Write successful display geometry images to this directory");
-	BU_OPT(d[43], "", "image-size", "pixels", &bu_opt_long, &image_size,
-	"Square output image size (default 1024)");
-    BU_OPT(d[44], "", "repair-planar-cap-area-percent", "#",
-	&bu_opt_fastf_t, &repair_planar_cap_area_percent,
-	"Opt-in aggregate planar cap area as a percentage of remaining surface area");
-	BU_OPT_NULL(d[45]);
-    int ac = bu_opt_parse(NULL, argc, argv, d);
-    const char *usage =
-	"Usage: brep-audit [options] [--list|--batch] file.g [brep]\n";
-    if (print_help || (list_only && (batch || ac != 1)) ||
-	    (batch && ac != 1) || (!list_only && !batch && ac != 2) ||
-	    ratio_min <= 0.0 || ratio_max < ratio_min || tess_abs < 0.0 ||
+    double repair_planar_cap_area_percent = 0.0;
+};
+
+static const struct bu_arg_value_keyword brep_audit_mode_values[] = {
+    {"wireframe", NULL, "Run wireframe generation"},
+    {"shaded", NULL, "Run shaded display generation"},
+    {"quality", NULL, "Run conversion-quality CDT generation"},
+    {"both", NULL, "Run wireframe and shaded generation"},
+    {"all", NULL, "Run every generator"},
+    {NULL, NULL, NULL}
+};
+
+static const struct bu_arg_option brep_audit_options[] = {
+    BU_ARG_FLAG("h", "help", struct brep_audit_args, print_help, "Print help and exit"),
+    BU_ARG_FLAG("l", "list", struct brep_audit_args, list_only, "List BRep primitive names"),
+    BU_ARG_VALUE(NULL, "ratio-min", struct brep_audit_args, ratio_min, BU_ARG_VALUE_NUMBER, BU_ARG_REQUIRED, "#", "Minimum acceptable generated/reference dimension ratio"),
+    BU_ARG_VALUE(NULL, "ratio-max", struct brep_audit_args, ratio_max, BU_ARG_VALUE_NUMBER, BU_ARG_REQUIRED, "#", "Maximum acceptable generated/reference dimension ratio"),
+    BU_ARG_VALUE(NULL, "tess-abs", struct brep_audit_args, tess_abs, BU_ARG_VALUE_NUMBER, BU_ARG_REQUIRED, "#", "Absolute shaded tessellation tolerance"),
+    BU_ARG_VALUE(NULL, "tess-rel", struct brep_audit_args, tess_rel, BU_ARG_VALUE_NUMBER, BU_ARG_REQUIRED, "#", "Relative shaded tessellation tolerance"),
+    BU_ARG_VALUE(NULL, "tess-norm", struct brep_audit_args, tess_norm, BU_ARG_VALUE_NUMBER, BU_ARG_REQUIRED, "#", "Normal shaded tessellation tolerance"),
+    BU_ARG_VALUE(NULL, "memory-limit-mib", struct brep_audit_args, memory_limit_mib, BU_ARG_VALUE_LONG, BU_ARG_REQUIRED, "#", "Process address-space limit in MiB (zero disables)"),
+    BU_ARG_KEYWORD_VALUES("m", "mode", struct brep_audit_args, mode_name, "mode", "Select generators; quality runs the conversion CDT", brep_audit_mode_values),
+    BU_ARG_VALUE("j", "jobs", struct brep_audit_args, jobs, BU_ARG_VALUE_LONG, BU_ARG_REQUIRED, "#", "Maximum shaded face workers (zero selects the default)"),
+    BU_ARG_VALUE(NULL, "max-time-ms", struct brep_audit_args, max_time_ms, BU_ARG_VALUE_LONG, BU_ARG_REQUIRED, "#", "Shaded generation deadline checked between faces"),
+    BU_ARG_VALUE(NULL, "max-result-mib", struct brep_audit_args, max_result_mib, BU_ARG_VALUE_LONG, BU_ARG_REQUIRED, "#", "Maximum retained shaded result size"),
+    BU_ARG_VALUE(NULL, "max-points", struct brep_audit_args, max_points, BU_ARG_VALUE_LONG, BU_ARG_REQUIRED, "#", "Maximum retained shaded points"),
+    BU_ARG_FLAG(NULL, "batch", struct brep_audit_args, batch, "Audit all BReps in one database process"),
+    BU_ARG_VALUE(NULL, "batch-start", struct brep_audit_args, batch_start, BU_ARG_VALUE_LONG, BU_ARG_REQUIRED, "#", "First flattened batch task index"),
+    BU_ARG_VALUE(NULL, "face-index", struct brep_audit_args, face_index, BU_ARG_VALUE_LONG, BU_ARG_REQUIRED, "#", "Shade only one BRep face (non-batch mode)"),
+    BU_ARG_FLAG(NULL, "valid-solids-only", struct brep_audit_args, valid_solids_only, "Exclude inputs outside the rigorous CDT topology contract"),
+    BU_ARG_FLAG(NULL, "quality-repair", struct brep_audit_args, quality_repair, "Attempt explicitly bounded mesh repair after quality failure"),
+    BU_ARG_VALUE(NULL, "repair-hole-area-percent", struct brep_audit_args, repair_hole_area_percent, BU_ARG_VALUE_NUMBER, BU_ARG_REQUIRED, "#", "Maximum area of each repair hole as input mesh percentage"),
+    BU_ARG_VALUE(NULL, "repair-hole-edges", struct brep_audit_args, repair_hole_edges, BU_ARG_VALUE_LONG, BU_ARG_REQUIRED, "#", "Maximum boundary edges in each repair hole"),
+    BU_ARG_VALUE(NULL, "repair-area-change-percent", struct brep_audit_args, repair_area_change_percent, BU_ARG_VALUE_NUMBER, BU_ARG_REQUIRED, "#", "Maximum aggregate repaired mesh area change percentage"),
+    BU_ARG_VALUE(NULL, "repair-max-deviation", struct brep_audit_args, repair_max_deviation, BU_ARG_VALUE_NUMBER, BU_ARG_REQUIRED, "#", "Maximum sampled repair deviation; zero uses tessellation tolerance"),
+    BU_ARG_VALUE(NULL, "repair-deviation-samples", struct brep_audit_args, repair_deviation_samples, BU_ARG_VALUE_LONG, BU_ARG_REQUIRED, "#", "Maximum changed-triangle deviation samples"),
+    BU_ARG_FLAG(NULL, "repair-allow-untrimmed", struct brep_audit_args, repair_allow_untrimmed, "Permit and report deviation matches to underlying untrimmed surfaces"),
+    BU_ARG_FLAG(NULL, "repair-full-fast", struct brep_audit_args, repair_full_fast, "Use one whole-B-Rep display mesh as the repair input"),
+    BU_ARG_FLAG(NULL, "repair-union-components", struct brep_audit_args, repair_union_components, "Regularize closed repair components with a Manifold union"),
+    BU_ARG_FLAG(NULL, "repair-no-fast", struct brep_audit_args, repair_no_fast, "Repair only the rigorous face meshes, without display fallback faces"),
+    BU_ARG_VALUE(NULL, "batch-object-file", struct brep_audit_args, batch_object_file, BU_ARG_VALUE_FILE, BU_ARG_REQUIRED, "file", "In batch mode, audit only object names listed one per line"),
+    BU_ARG_VALUE(NULL, "repair-max-deviation-rel", struct brep_audit_args, repair_max_deviation_rel, BU_ARG_VALUE_NUMBER, BU_ARG_REQUIRED, "fraction", "Maximum repair deviation as a boundary bbox diagonal fraction"),
+    BU_ARG_FLAG(NULL, "repair-allow-self-intersections", struct brep_audit_args, repair_allow_self_intersections, "Permit repaired manifold topology to contain self-intersections"),
+    BU_ARG_FLAG(NULL, "repair-require-manifold", struct brep_audit_args, repair_require_manifold, "Require the bundled Manifold library to import the repaired mesh"),
+    BU_ARG_FLAG(NULL, "repair-full-fast-if-needed", struct brep_audit_args, repair_full_fast_if_needed, "Retry whole-B-Rep display repair only after rigorous repair fails"),
+    BU_ARG_FLAG(NULL, "repair-try-invalid", struct brep_audit_args, repair_try_invalid, "Try rigorous faces of structurally safe invalid B-Reps before repair"),
+    BU_ARG_VALUE(NULL, "repair-relaxed-fidelity-factor", struct brep_audit_args, repair_relaxed_fidelity_factor, BU_ARG_VALUE_NUMBER, BU_ARG_REQUIRED, "factor", "Accept and tag Manifold repair within 1 through 4 times strict fidelity"),
+    BU_ARG_VALUE(NULL, "repair-adaptive-hole-edges", struct brep_audit_args, repair_adaptive_hole_edges, BU_ARG_VALUE_LONG, BU_ARG_REQUIRED, "#", "Second-pass edge ceiling when only bounded open holes remain"),
+    BU_ARG_VALUE(NULL, "quality-face-time-ms", struct brep_audit_args, quality_face_time_ms, BU_ARG_VALUE_LONG, BU_ARG_REQUIRED, "#", "Wall-clock limit for each rigorous quality face (zero disables)"),
+    BU_ARG_VALUE(NULL, "repair-adaptive-hole-area-percent", struct brep_audit_args, repair_adaptive_hole_area_percent, BU_ARG_VALUE_NUMBER, BU_ARG_REQUIRED, "#", "Final-only hole candidate area ceiling for bounded open-edge repair"),
+    BU_ARG_VALUE(NULL, "max-working-mib", struct brep_audit_args, max_working_mib, BU_ARG_VALUE_LONG, BU_ARG_REQUIRED, "#", "Maximum shared temporary generator memory"),
+    BU_ARG_VALUE(NULL, "max-triangles", struct brep_audit_args, max_triangles, BU_ARG_VALUE_LONG, BU_ARG_REQUIRED, "#", "Maximum adaptive shaded triangle target"),
+    BU_ARG_VALUE(NULL, "display-coarse-rel", struct brep_audit_args, display_coarse_rel, BU_ARG_VALUE_NUMBER, BU_ARG_REQUIRED, "fraction", "Initial relative tolerance for adaptive shaded display"),
+    BU_ARG_VALUE(NULL, "display-area-change", struct brep_audit_args, display_area_change, BU_ARG_VALUE_NUMBER, BU_ARG_REQUIRED, "fraction", "Per-face unsigned area convergence threshold"),
+    BU_ARG_FLAG(NULL, "display-only", struct brep_audit_args, display_only, "Run only bounded visualization generators; skip source reference checks"),
+    BU_ARG_VALUE(NULL, "image-dir", struct brep_audit_args, image_dir, BU_ARG_VALUE_FILE, BU_ARG_REQUIRED, "directory", "Write successful display geometry images to this directory"),
+    BU_ARG_VALUE(NULL, "image-size", struct brep_audit_args, image_size, BU_ARG_VALUE_LONG, BU_ARG_REQUIRED, "pixels", "Square output image size (default 1024)"),
+    BU_ARG_VALUE(NULL, "repair-planar-cap-area-percent", struct brep_audit_args, repair_planar_cap_area_percent, BU_ARG_VALUE_NUMBER, BU_ARG_REQUIRED, "#", "Opt-in aggregate planar cap area as a percentage of remaining surface area"),
+    BU_ARG_OPTION_NULL
+};
+
+static const struct bu_arg_operand brep_audit_database_operand[] = {
+    BU_ARG_OPERAND("file.g", BU_ARG_VALUE_FILE, 1, 1, "Input database", NULL),
+    BU_ARG_OPERAND_NULL
+};
+
+static const struct bu_arg_operand brep_audit_object_operands[] = {
+    BU_ARG_OPERAND("file.g", BU_ARG_VALUE_FILE, 1, 1, "Input database", NULL),
+    BU_ARG_OPERAND("brep", BU_ARG_VALUE_DB_OBJECT, 1, 1, "BRep primitive to audit", NULL),
+    BU_ARG_OPERAND_NULL
+};
+
+static const char * const brep_audit_list_case[] = {"list", NULL};
+static const char * const brep_audit_batch_case[] = {"batch", NULL};
+static const struct bu_arg_schema_case brep_audit_cases[] = {
+    BU_ARG_SCHEMA_CASE("list", "List BRep primitives", BU_ARG_CONDITION_ANY_OPTION_PRESENT, brep_audit_list_case, brep_audit_database_operand, NULL),
+    BU_ARG_SCHEMA_CASE("batch", "Audit every BRep", BU_ARG_CONDITION_ANY_OPTION_PRESENT, brep_audit_batch_case, brep_audit_database_operand, NULL),
+    BU_ARG_SCHEMA_CASE_DEFAULT("object", "Audit one BRep", brep_audit_object_operands, NULL),
+    BU_ARG_SCHEMA_CASE_NULL
+};
+
+static const char * const brep_audit_modes[] = {"list", "batch", NULL};
+static const char * const brep_audit_batch_requirement[] = {"batch-object-file", "batch", NULL};
+static const struct bu_arg_constraint brep_audit_constraints[] = {
+    BU_ARG_CONSTRAINT(BU_ARG_CONSTRAINT_OPTION_COUNT, BU_ARG_CONDITION_ALWAYS, brep_audit_modes, 0, 1, "select list or batch mode, not both"),
+    BU_ARG_CONSTRAINT(BU_ARG_CONSTRAINT_OPTION_REQUIRES, BU_ARG_CONDITION_ALWAYS, brep_audit_batch_requirement, 0, 0, "--batch-object-file requires --batch"),
+    BU_ARG_CONSTRAINT_NULL
+};
+
+static const struct bu_arg_schema brep_audit_schema = BU_ARG_SCHEMA(
+    "brep-audit", "Audit BRep wireframe, display, and certified meshes",
+    brep_audit_options, NULL, BU_ARG_PARSE_INTERSPERSED,
+    BU_ARG_SCHEMA_META_HELP(NULL, brep_audit_constraints, NULL, NULL, brep_audit_cases));
+
+int
+main(int argc, const char **argv)
+{
+    bu_setprogname(argv[0]);
+    const char *invocation = argv[0];
+    argc--; argv++;
+    brep_audit_args args;
+    struct bu_vls parse_msg = BU_VLS_INIT_ZERO;
+    int operand_index = bu_arg_schema_parse_complete(&brep_audit_schema, &args,
+	&parse_msg, argc, argv);
+    if (operand_index < 0) {
+	std::cerr << bu_vls_cstr(&parse_msg) << "\n";
+	bu_vls_free(&parse_msg);
+	char *help = bu_arg_schema_usage(&brep_audit_schema, invocation);
+	if (help) {
+	    std::cerr << help;
+	    bu_free(help, "brep-audit usage");
+	}
+	return 2;
+    }
+    bu_vls_free(&parse_msg);
+    if (args.print_help) {
+	char *help = bu_arg_schema_help(&brep_audit_schema, invocation);
+	if (help) {
+	    std::cout << help;
+	    bu_free(help, "brep-audit help");
+	}
+	return 0;
+    }
+    argc -= operand_index;
+    argv += operand_index;
+
+    const int list_only = args.list_only;
+    const int batch = args.batch;
+    const double ratio_min = args.ratio_min;
+    const double ratio_max = args.ratio_max;
+    const double tess_abs = args.tess_abs;
+    const double tess_rel = args.tess_rel;
+    const double tess_norm = args.tess_norm;
+    const long memory_limit_mib = args.memory_limit_mib;
+    const char *mode_name = args.mode_name;
+    const long jobs = args.jobs;
+    const long max_time_ms = args.max_time_ms;
+    const long max_result_mib = args.max_result_mib;
+    const long max_points = args.max_points;
+    const long batch_start = args.batch_start;
+    const long face_index = args.face_index;
+    const int valid_solids_only = args.valid_solids_only;
+    const int quality_repair = args.quality_repair;
+    const double repair_hole_area_percent = args.repair_hole_area_percent;
+    const long repair_hole_edges = args.repair_hole_edges;
+    const double repair_area_change_percent = args.repair_area_change_percent;
+    const double repair_max_deviation = args.repair_max_deviation;
+    const long repair_deviation_samples = args.repair_deviation_samples;
+    const int repair_allow_untrimmed = args.repair_allow_untrimmed;
+    const int repair_full_fast = args.repair_full_fast;
+    const int repair_union_components = args.repair_union_components;
+    const int repair_no_fast = args.repair_no_fast;
+    const char *batch_object_file = args.batch_object_file;
+    const double repair_max_deviation_rel = args.repair_max_deviation_rel;
+    const int repair_allow_self_intersections = args.repair_allow_self_intersections;
+    const int repair_require_manifold = args.repair_require_manifold;
+    const int repair_full_fast_if_needed = args.repair_full_fast_if_needed;
+    const int repair_try_invalid = args.repair_try_invalid;
+    const double repair_relaxed_fidelity_factor = args.repair_relaxed_fidelity_factor;
+    const long repair_adaptive_hole_edges = args.repair_adaptive_hole_edges;
+    const long quality_face_time_ms = args.quality_face_time_ms;
+    const double repair_adaptive_hole_area_percent = args.repair_adaptive_hole_area_percent;
+    const long max_working_mib = args.max_working_mib;
+    const long max_triangles = args.max_triangles;
+    const double display_coarse_rel = args.display_coarse_rel;
+    const double display_area_change = args.display_area_change;
+    const int display_only = args.display_only;
+    const char *image_dir = args.image_dir;
+    const long image_size = args.image_size;
+    const double repair_planar_cap_area_percent = args.repair_planar_cap_area_percent;
+    if (ratio_min <= 0.0 || ratio_max < ratio_min || tess_abs < 0.0 ||
 	    tess_rel < 0.0 || tess_norm < 0.0 || memory_limit_mib < 0 ||
 	    quality_face_time_ms < 0 ||
 	    jobs < 0 || max_time_ms < 0 || max_result_mib < 0 ||
@@ -2589,20 +2651,18 @@ main(int argc, const char **argv)
 	    (repair_full_fast_if_needed &&
 	    (repair_full_fast)) ||
 	    (repair_try_invalid && (repair_full_fast)) ||
-	    (batch_object_file && !batch) ||
 	    (batch && face_index != -1) ||
 	    (display_only && valid_solids_only) ||
 	    (display_only && (BU_STR_EQUAL(mode_name, "quality") ||
 	    BU_STR_EQUAL(mode_name, "all"))) ||
 	    (quality_repair && face_index != -1) ||
-	    (face_index != -1 && BU_STR_EQUAL(mode_name, "wireframe")) ||
-	    (!BU_STR_EQUAL(mode_name, "wireframe") &&
-	     !BU_STR_EQUAL(mode_name, "shaded") &&
-	     !BU_STR_EQUAL(mode_name, "quality") &&
-	     !BU_STR_EQUAL(mode_name, "both") &&
-	     !BU_STR_EQUAL(mode_name, "all"))) {
-	std::cerr << usage;
-	return print_help ? 0 : 2;
+	    (face_index != -1 && BU_STR_EQUAL(mode_name, "wireframe"))) {
+	char *usage = bu_arg_schema_usage(&brep_audit_schema, invocation);
+	if (usage) {
+	    std::cerr << usage;
+	    bu_free(usage, "brep-audit usage");
+	}
+	return 2;
     }
     if (!set_memory_limit(memory_limit_mib)) {
 	std::cerr << "Unable to set memory limit to " << memory_limit_mib << " MiB\n";
