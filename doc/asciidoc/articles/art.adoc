@@ -134,15 +134,28 @@ leave derivative inputs unavailable.
 texture renders, and selected Appleseed unit suites.  These provide
 independent renderer references; librt BOT coverage comes from `regress-art`.
 
+|Text rendering and Unicode data
+|OpenImageIO and Appleseed use the shared bounded struetype header.  TrueType
+and OpenType/CFF fonts passed sanitizer-enabled adapter probes.  OpenImageIO
+checks cover UTF-8 text, font lookup, metrics, alignment, shadows, and invalid
+fonts and bounds; its FreeType backend remains optional.  Appleseed checks
+cover embedded fonts, bounded custom buffers, kerning, multiline layout,
+clipping, and premultiplied coverage.  Appleseed retains single-byte text
+input.  Both use unhinted rasterization with struetype.
+
 |Installed builds across platforms
-|The current renderer validation was performed on FreeBSD.  Custom shader
-compilation through the selected SDK's installed helper headers and rendering
-are checked.  A finalized SDK copied to a different directory compiles an
-OSL helper shader, builds an installed-API consumer, and renders without
-loading libraries from its producer directory.  The runtime graph still
-loads system FreeType, its PNG support, and ICU, so a self-contained bundle
-is not yet qualified.  Linux, Windows, and macOS runtime qualification
-remain open.
+|The current renderer validation was performed on FreeBSD.  A finalized SDK
+copied to a different directory compiles an OSL helper shader, builds an
+installed-API consumer, and renders.  The checked renderer, shader compiler,
+and texture tools load libraries only from that SDK and the base system,
+with no FreeType or Boost dependency.  Relocated consumers also validate
+Unicode conversion and normalization data, libdeflate's exported include
+paths, and OpenImageIO text rendering with installed fonts.  Bundled ICU
+uses a UTF-8 default charset on FreeBSD even in the C character locale,
+preserving UTF-8 XML filenames without changing application locale settings.
+These checks qualify the tested renderer SDK workflow; a complete installed
+`art` application and Linux, Windows, and macOS runtime qualification remain
+open.
 |===
 
 == Basic rendering
