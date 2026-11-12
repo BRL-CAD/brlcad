@@ -234,6 +234,7 @@ set(
   woodsman.asc
   xmp.asc
 )
+add_subdirectory(art)
 add_subdirectory(chess)
 add_subdirectory(comgeom)
 add_subdirectory(nist)

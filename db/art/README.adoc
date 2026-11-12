@@ -1,0 +1,48 @@
+= art material demonstrations
+
+The moss comparison uses Gary Moss's original "World on a Platter" example.
+Both images were rendered with art at 512 by 384 pixels and 64 samples per
+pixel, using the same camera, geometry, instance placements, and three-point
+studio lighting at azimuth 35 and elevation 25 degrees.  The original
+database remains the input to both versions.
+
+* `moss-before.png` uses the original region colors through art's default
+  OSL plastic material.
+* `moss-after.png` assigns rough gold to the torus, smooth absorbing glass
+  to the ellipsoid, enamel to the box and cone, and dark plastic to the
+  platform.  The original region colors still supply the enamel base colors.
+
+The lighting recipe retains `all.g`, including its member transforms.  It
+sets the original light's brightness to zero and adds three point lights
+inside the original model bounds so automatic framing stays consistent.
+The material recipe uses the installed Appleseed shader library.  No custom
+shader compiler or external texture assets are required.
+
+== Regeneration
+
+An installation needs art, mged, the Appleseed shader library, and the
+standard `share/db/moss.g` example.  From a writable directory, run:
+
+----
+cmake -DBRLCAD_PREFIX="${BRLCAD_PREFIX}" -DOUTPUT_DIR=moss-render \
+    -P "${BRLCAD_PREFIX}/share/db/art/render_moss.cmake"
+----
+
+Use `-DSOURCE_DB=path/to/moss.g` when the example database is elsewhere.
+The driver copies the input database before editing it.  Its output
+contains two material-ready databases, two PNG images, the resolved
+material report, and authoring and rendering logs.  To reopen either
+version, select `art.demo.g` in the generated database.
+
+Increase image resolution and sampling for larger illustrations:
+
+----
+cmake -DBRLCAD_PREFIX="${BRLCAD_PREFIX}" -DOUTPUT_DIR=moss-large \
+    -DWIDTH=1024 -DHEIGHT=768 -DSAMPLES=256 -DWORKERS=4 \
+    -P "${BRLCAD_PREFIX}/share/db/art/render_moss.cmake"
+----
+
+These previews demonstrate material authoring on an existing CSG model.
+They do not qualify general rough glass, overlapping media, or all legacy
+optical shader translations.  See the art article for the tested feature
+boundaries and the integration roadmap.
