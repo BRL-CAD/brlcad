@@ -139,16 +139,8 @@ run_schema_command(const std::vector<std::string> &command)
 }
 
 static const json *
-find_named_schema(const json &value, const std::string &name)
+schema_named(const json &value, const std::string &name)
 {
-    if (value.is_array()) {
-	for (const json &entry : value) {
-	    const json *match = find_named_schema(entry, name);
-	    if (match)
-		return match;
-	}
-	return NULL;
-    }
     if (!value.is_object())
 	return NULL;
     if (value.value("name", std::string()) == name)
@@ -158,6 +150,30 @@ find_named_schema(const json &value, const std::string &name)
     if (value.contains("schema") &&
 	value["schema"].value("name", std::string()) == name)
 	return &value;
+    return NULL;
+}
+
+static const json *
+find_named_schema(const json &value, const std::string &name)
+{
+    if (value.is_array()) {
+	for (const json &entry : value) {
+	    const json *match = schema_named(entry, name);
+	    if (match)
+		return match;
+	}
+	for (const json &entry : value) {
+	    const json *match = find_named_schema(entry, name);
+	    if (match)
+		return match;
+	}
+	return NULL;
+    }
+    if (!value.is_object())
+	return NULL;
+    const json *match = schema_named(value, name);
+    if (match)
+	return match;
     for (const char *member : {"subcommands", "forms"}) {
 	if (!value.contains(member) || !value[member].is_array())
 	    continue;
@@ -468,6 +484,19 @@ schema_arguments(const json &schema, bool include_hidden)
     return result;
 }
 
+static bool
+schema_accepts_opaque_tokens(const json &schema)
+{
+    if (!schema.at("options").empty() ||
+	schema.value("parse_policy", std::string()) != "stop_at_first_operand")
+	return false;
+    for (const json &operand : schema.at("operands")) {
+	if (operand.value("type", std::string()) == "raw")
+	    return true;
+    }
+    return false;
+}
+
 static std::string
 replace_region(const std::string &page, const char *begin, const char *end,
 	const std::string &replacement)
@@ -557,11 +586,14 @@ main(int argc, char **argv)
 	std::set<std::string> expected;
 	std::set<std::string> accepted;
 	std::map<std::string, std::set<bool>> argument_sets;
+	bool accepts_opaque_tokens = false;
 	for (const schema_view &view : views) {
 	    std::set<std::string> view_expected = schema_spellings(*view.schema, false);
 	    std::set<std::string> view_accepted = schema_spellings(*view.schema, true);
 	    expected.insert(view_expected.begin(), view_expected.end());
 	    accepted.insert(view_accepted.begin(), view_accepted.end());
+	    accepts_opaque_tokens = accepts_opaque_tokens ||
+		schema_accepts_opaque_tokens(*view.schema);
 	    for (const auto &entry : schema_arguments(*view.schema, false))
 		argument_sets[entry.first].insert(entry.second);
 	}
@@ -577,7 +609,7 @@ main(int argc, char **argv)
 	    }
 	}
 	for (const std::string &spelling : actual) {
-	    if (!accepted.count(spelling)) {
+	    if (!accepts_opaque_tokens && !accepted.count(spelling)) {
 		std::cerr << config.man_page.string() << ": undocumented by schema " << spelling << "\n";
 		failed = true;
 	    }

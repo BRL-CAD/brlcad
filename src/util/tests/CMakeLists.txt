@@ -47,8 +47,18 @@ brlcad_add_test(
     -P "${CMAKE_CURRENT_SOURCE_DIR}/test_bwscale_endpoints.cmake"
 )
 
+if(TARGET argdoc)
+  brlcad_add_test(
+    NAME util_argdoc_schema_selection
+    COMMAND
+      "${CMAKE_COMMAND}" "-DARGDOC=$<TARGET_FILE:argdoc>" "-DTEST_DIR=${CMAKE_CURRENT_BINARY_DIR}"
+      -P "${CMAKE_CURRENT_SOURCE_DIR}/test_argdoc_schema_selection.cmake"
+  )
+endif()
+
 cmakefiles(
   CMakeLists.txt
+  test_argdoc_schema_selection.cmake
   test_bwcrop_single_axis.cmake
   test_bwscale_endpoints.cmake
   test_bwstat_statistics.cmake
