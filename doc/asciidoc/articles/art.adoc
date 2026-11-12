@@ -91,8 +91,10 @@ depth, zero-valued heights, degenerate footprints, and extreme unit changes.
 `regress-art-normal` checks tangent orientation, mirrored UVs, and native
 normal-map controls against analytic frames.  `regress-art-texture` checks
 fully minified raw image normal and height maps, filtering controls, and
-project relocation.  Image magnification and LOD transitions, baked
-per-vertex tangents, and secondary rays remain unqualified.
+project relocation.  `regress-art-image-maps` checks spatial image
+orientation and magnified linear ramps against position-based references
+on flat and smooth BOTs, including reflected U/V charts.  LOD transitions,
+baked per-vertex tangents, and secondary rays remain unqualified.
 
 |Region instances
 |Full indexed database paths distinguish occurrences under different parents
@@ -523,9 +525,9 @@ crossing zero, and missing or collinear footprints.  Scaling both position
 and depth by each of `1e-25`, `1e-12`, `1e12`, and `1e25` must preserve the
 result.  These checks cover
 first-order bump normals, including CSG surfaces without a UV footprint.
-Image magnification and LOD transitions, mirrored geometry transforms,
-baked per-vertex tangent compatibility, and secondary-ray behavior still
-need dedicated qualification.
+LOD transitions, magnification on curved primitives, mirrored geometry
+transforms, baked per-vertex tangent compatibility, and secondary-ray
+behavior still need dedicated qualification.
 
 For an image normal map, prepare a floating-point mipmapped texture without
 color conversion, keeping its components as data.  Store it under the
@@ -560,9 +562,25 @@ charts, in orthographic and perspective views.  Zero-width filtering must
 produce a visibly different result for both maps; enabling a display
 transfer on normal data must also change the result.  A relocated project
 is rendered with the original textures unavailable.  These checks qualify
-raw data handling and full minification.  They do not establish spatial
-image orientation, magnification behavior, or compatibility with a baked
-tangent frame.
+raw data handling and full minification.
+
+Appleseed uses a lower-left texture origin: increasing U moves right and
+increasing V moves upward through the image.  Its texture system flips the
+image-row direction, which commonly runs from top to bottom.  This controls
+where a normal-map texel is sampled; red and green vector components still
+follow the geometry's U/V tangent frame described above.
+
+`regress-art-image-maps` checks spatial sampling independently of renderer
+UVs on the fixture's +Z BOT faces.  It reconstructs the authored charts from
+position and compares magnified 16-texel linear ramps with native color,
+normal-map, and height-map networks under both projections.  It covers
+clamped linear interpolation, flat and smooth normals, and reflected U/V
+charts.  The height reference uses the ramp's known gradient, without
+screen derivatives.  A control with the opposite image-row convention must
+visibly disagree for all three networks.  These tests establish image
+orientation and this BOT magnification path; they do not qualify LOD
+transitions, curved-primitive magnification, or compatibility with baked
+per-vertex tangent frames.
 
 
 == Project shader assets
