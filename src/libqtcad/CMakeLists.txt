@@ -40,6 +40,8 @@ set(
   QgMeasureFilter.cpp
   QgModel.cpp
   QgPolyFilter.cpp
+  QgPluginCommands.cpp
+  QgPluginManager.cpp
   QgQuadView.cpp
   QgSW.cpp
   QgSelectFilter.cpp
@@ -77,6 +79,7 @@ set(
   QgMeasureFilter
   QgModel
   QgPolyFilter
+  QgPluginManager
   QgQuadView
   QgSW
   QgSelectFilter

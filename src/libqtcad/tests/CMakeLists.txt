@@ -5,6 +5,61 @@ set(QGVIEW_SRCS qgview.cpp)
 set(QSKETCH_SRCS qsketch.cpp)
 set(TEST_QTCAD_SESSION_SRCS test_qtcad_session.cpp)
 set(TEST_QTCAD_CONSOLE_SRCS test_qtcad_console.cpp)
+set(TEST_QTCAD_PLUGIN_MANAGER_SRCS test_qtcad_plugin_manager.cpp)
+set(TEST_QTCAD_PLUGIN_BASE_HDRS test_qtcad_plugin_base.h)
+set(TEST_QTCAD_PLUGIN_VALID_SRCS test_qtcad_plugin_valid.cpp)
+set(TEST_QTCAD_PLUGIN_MISSING_API_SRCS test_qtcad_plugin_missing_api.cpp)
+set(TEST_QTCAD_PLUGIN_METADATA
+  test_qtcad_plugin_valid.json
+  test_qtcad_plugin_missing_api.json
+)
+
+set(QTCAD_TEST_PLUGIN_DIR ${CMAKE_CURRENT_BINARY_DIR}/plugins)
+if(TARGET Qt6::Test)
+  set(QTCAD_TEST_QT_CORE Qt6::Core)
+  set(QTCAD_TEST_QT_TEST Qt6::Test)
+elseif(TARGET Qt5::Test)
+  set(QTCAD_TEST_QT_CORE Qt5::Core)
+  set(QTCAD_TEST_QT_TEST Qt5::Test)
+endif()
+
+if(QTCAD_TEST_QT_TEST)
+  add_library(qtcad_test_plugin_valid MODULE
+    ${TEST_QTCAD_PLUGIN_VALID_SRCS}
+    ${TEST_QTCAD_PLUGIN_BASE_HDRS}
+  )
+  add_library(qtcad_test_plugin_missing_api MODULE
+    ${TEST_QTCAD_PLUGIN_MISSING_API_SRCS}
+    ${TEST_QTCAD_PLUGIN_BASE_HDRS}
+  )
+  foreach(plugin_target qtcad_test_plugin_valid qtcad_test_plugin_missing_api)
+    set_target_properties(${plugin_target} PROPERTIES
+      AUTOMOC ON
+      PREFIX ""
+      LIBRARY_OUTPUT_DIRECTORY ${QTCAD_TEST_PLUGIN_DIR}
+      RUNTIME_OUTPUT_DIRECTORY ${QTCAD_TEST_PLUGIN_DIR}
+    )
+    target_compile_definitions(${plugin_target} PRIVATE BRLCADBUILD HAVE_CONFIG_H)
+    target_link_libraries(${plugin_target} libqtcad ${QTCAD_TEST_QT_CORE})
+  endforeach()
+
+  add_executable(test_qtcad_plugin_manager ${TEST_QTCAD_PLUGIN_MANAGER_SRCS})
+  set_target_properties(test_qtcad_plugin_manager PROPERTIES AUTOMOC ON)
+  target_compile_definitions(test_qtcad_plugin_manager PRIVATE BRLCADBUILD HAVE_CONFIG_H)
+  target_link_libraries(test_qtcad_plugin_manager
+    libqtcad
+    ${QTCAD_TEST_QT_CORE}
+    ${QTCAD_TEST_QT_TEST}
+  )
+  add_dependencies(test_qtcad_plugin_manager
+    qtcad_test_plugin_valid
+    qtcad_test_plugin_missing_api
+  )
+  brlcad_add_test(NAME test_qtcad_plugin_manager COMMAND test_qtcad_plugin_manager)
+  set_property(TEST test_qtcad_plugin_manager APPEND PROPERTY ENVIRONMENT
+    QTCAD_TEST_PLUGIN_DIR=${QTCAD_TEST_PLUGIN_DIR}
+  )
+endif()
 
 if(TARGET Qt6::Test)
   add_executable(test_qtcad_console ${TEST_QTCAD_CONSOLE_SRCS})
@@ -141,6 +196,11 @@ cmakefiles(
   ${QSKETCH_SRCS}
   ${TEST_QTCAD_SESSION_SRCS}
   ${TEST_QTCAD_CONSOLE_SRCS}
+  ${TEST_QTCAD_PLUGIN_MANAGER_SRCS}
+  ${TEST_QTCAD_PLUGIN_BASE_HDRS}
+  ${TEST_QTCAD_PLUGIN_VALID_SRCS}
+  ${TEST_QTCAD_PLUGIN_MISSING_API_SRCS}
+  ${TEST_QTCAD_PLUGIN_METADATA}
 )
 
 # Local Variables:

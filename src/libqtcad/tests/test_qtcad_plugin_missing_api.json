@@ -1,0 +1,6 @@
+{
+  "id": "org.brlcad.qtcad.test.missing_api",
+  "displayName": "Missing API Version",
+  "category": "test.invalid",
+  "sortKey": 10
+}

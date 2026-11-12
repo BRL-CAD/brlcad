@@ -15,6 +15,11 @@ set(
   QgMeasureFilter.h
   QgModel.h
   QgPolyFilter.h
+  QgPluginCommands.h
+  QgPluginDescriptor.h
+  QgPluginInterfaces.h
+  QgPluginManager.h
+  QgPluginVersion.h
   QgQuadView.h
   QgRoles.h
   QgSW.h
