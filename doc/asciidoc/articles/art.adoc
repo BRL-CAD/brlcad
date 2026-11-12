@@ -112,10 +112,13 @@ baked per-vertex tangents, and secondary rays remain unqualified.
 |`regress-art-transmission` compares equal-index homogeneous absorption
 with analytic path lengths through cubes, spheres, ellipsoids, Boolean
 bores, and flat and smooth BOTs under both projections.  Controls check
-zero absorption and material visibility from inside solids.  An index-1.5
-case checks CSG/BOT agreement; it does not independently qualify refractive
-transport.  Nested dielectrics, rough glass, transmitted shadows, and
-normal-mapped transmission remain unqualified.
+zero absorption and material visibility from inside solids.
+`regress-art-refraction` independently compares smooth, directly transmitted
+paths with analytic Snell directions and unpolarized Fresnel weights on
+CSG cubes, flat BOTs, spheres, and ellipsoids.  It covers indices 1.5 and 2,
+both projections, and two view angles.  Nested dielectrics, rough-glass
+transport, transmitted shadows, and normal-mapped transmission remain
+unqualified.
 
 |Region instances
 |Full indexed database paths distinguish occurrences under different parents
@@ -201,7 +204,9 @@ shading consistently.  The callback returns a normal facing the incoming ray
 and offsets on both sides of that surface.
 
 `art` scales its normal displacement by floating-point precision, hit-point
-coordinates, and prepared object extent.  It rounds each displaced coordinate
+coordinates, prepared object extent, and incoming ray travel.  The last term
+accounts for cancellation when reconstructing a nearby surface from a
+distant ray origin.  It rounds each displaced coordinate
 away from the surface, following the directed-rounding approach described in
 https://www.pbr-book.org/4ed/Shapes/Managing_Rounding_Error[Managing Rounding Error].
 Rendering queries opt out of librt's near-origin zero snapping to preserve
@@ -273,6 +278,15 @@ distance disables volume absorption.  Distances use the common-space units
 of the geometry passed to the renderer; material parameters receive no
 implicit distance conversion.
 
+A zero `in_roughness` selects ideal specular reflection and refraction.
+The renderer uses the smooth limit directly, with Fresnel branch sampling,
+surface tint, and the corresponding ray differentials.  Positive roughness
+uses GGX and retains its minimum microfacet width.  Native tests check
+smooth Snell directions, unpolarized Fresnel weights, tinted branch
+sampling, total internal reflection, and both sides of an interface.
+GGX sampling also handles exact back-face normal incidence without a
+singular tangent basis.
+
 When the inside and outside indices match, the glass BSDF transmits straight
 through, including for rough surfaces.  Appleseed samples this as a specular
 delta event because the microfacet transmission density is singular at
@@ -296,12 +310,28 @@ the absorbing reference.  Inside-camera emission checks cover exit-face
 material assignment.  A native transformed-slab test checks actual secondary
 hit positions, copying, side changes, and escape without another hit.
 
-The index-1.5 render compares geometrically identical CSG and BOT cubes.
-That establishes agreement between these geometry paths, rather than an
-independent reference for refraction or energy conservation.  Nested
-indices, rough-glass transport, caustics, transmitted shadows, overlapping
-media, thin surfaces, and bump/normal-mapped transmission need further
-qualification before a general production-glass claim.
+The transmission regression's index-1.5 render compares geometrically
+identical CSG and BOT cubes under a constant environment.  The separate
+`regress-art-refraction` provides an independent reference: it analytically
+traces two smooth interfaces and their Fresnel weights to a finite emissive
+receiver whose color encodes position.  It includes the receiver's side
+faces and rays that miss its bounds.  Reflection tint is zero to isolate
+the directly transmitted paths.  CSG cubes, flat BOT cubes, spheres, and
+ellipsoids are checked at indices 1.5 and 2, in orthographic and perspective
+views at elevations 90 and 65.  A neutral-background emission control proves
+that each view contains the tested solid.  A straight-through reference
+must fail the refracted-path comparison.
+
+Native tests compare reflected and transmitted neighboring directions with
+independent analytic rays on a plane and sphere.  Glass passes the refractive
+ratio, rather than roughness, to its transmitted-differential calculation.
+These checks establish the tested first-order direction changes; filtered
+textures along secondary paths still need image-based qualification.
+
+Nested indices, general rough-glass transport, multiple internal bounces,
+caustics, transmitted shadows, overlapping media, thin surfaces, and
+bump/normal-mapped transmission need further qualification before a general
+production-glass claim.
 
 == Surface coordinates
 

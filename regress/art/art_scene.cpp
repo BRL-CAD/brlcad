@@ -34,6 +34,17 @@
 #include "wdb.h"
 #include "art_test_mesh.h"
 
+static bool
+write_osl_material(struct rt_wdb *db, const char *name, struct bu_attribute_value_set *optical)
+{
+    struct bu_attribute_value_set empty;
+    bu_avs_init_empty(&empty);
+    const bool success = mk_material(db, name, "OSL test material", "", "",
+	&empty, &empty, optical, &empty) == 0;
+    bu_avs_free(&empty);
+    return success;
+}
+
 static int
 create_scene(const char *path, const char *shader, const char *output)
 {
@@ -117,15 +128,26 @@ create_scene(const char *path, const char *shader, const char *output)
 	mk_addmember("ball.r", &members.l, translated, WMOP_UNION) &&
 	mk_lcomb(db, "arcs.g", &members, 0, NULL, NULL, NULL, 0) == 0;
 
+    // Keep the curved test solids centered when a wide receiver sets bounds.
+    const struct { const char *source; const char *name; } centered[] = {
+	{"ball.r", "refraction_ball.g"}, {"ellipsoid.r", "refraction_ellipsoid.g"}
+    };
+    mat_t centering;
+    MAT_IDN(centering);
+    centering[MDX] = 15;
+    for (const auto &object : centered) {
+	BU_LIST_INIT(&members.l);
+	success = success && mk_addmember(object.source, &members.l, centering, WMOP_UNION) &&
+	    mk_lcomb(db, object.name, &members, 0, NULL, NULL, NULL, 0) == 0;
+    }
+
     if (shader) {
-	struct bu_attribute_value_set empty, optical;
-	bu_avs_init_empty(&empty);
+	struct bu_attribute_value_set optical;
 	bu_avs_init_empty(&optical);
 	bu_avs_add(&optical, "OSL", shader);
 	if (output)
 	    bu_avs_add(&optical, "OSL.output", output);
-	success = success && mk_material(db, "osl.material", "OSL test material", "", "",
-	    &empty, &empty, &optical, &empty) == 0;
+	success = success && write_osl_material(db, "osl.material", &optical);
 	success = success && db5_update_attribute("ball.r", "material_name", "osl.material", db->dbip) == 0 &&
 	    db5_update_attribute("box.r", "material_name", "osl.material", db->dbip) == 0 &&
 	    db5_update_attribute("ellipsoid.r", "material_name", "osl.material", db->dbip) == 0 &&
@@ -133,19 +155,33 @@ create_scene(const char *path, const char *shader, const char *output)
 	for (const auto &mesh : meshes)
 	    success = success && db5_update_attribute(mesh.region, "material_name", "osl.material", db->dbip) == 0;
 	bu_avs_free(&optical);
-	bu_avs_free(&empty);
+
+	// The receiver is selected only by the refraction regression.
+	point_t target_min = {-200, -200, -31};
+	point_t target_max = {200, 200, -30};
+	BU_LIST_INIT(&members.l);
+	success = success && mk_rpp(db, "receiver.s", target_min, target_max) == 0 &&
+	    mk_addmember("receiver.s", &members.l, NULL, WMOP_UNION) &&
+	    mk_lcomb(db, "receiver.r", &members, 1, NULL, NULL, NULL, 0) == 0;
+	bu_avs_init_empty(&optical);
+	bu_avs_add(&optical, "OSL", "art_refraction_reference");
+	bu_avs_add(&optical, "OSL.param.in_target", "int 1");
+	success = success && write_osl_material(db, "receiver.material", &optical) &&
+	    db5_update_attribute("receiver.r", "material_name", "receiver.material", db->dbip) == 0;
+	bu_avs_free(&optical);
     }
     wdb_close(db);
     return success ? 0 : 1;
 }
 
 static int
-edit_material_property(const char *path, const char *key, const char *value)
+edit_material_property(const char *path, const char *key, const char *value,
+    const char *material_name = "osl.material")
 {
     struct ged *editor = ged_open("db", path, 0);
     if (!editor)
 	return 1;
-    const char *arguments[] = {"material", value ? "set" : "remove", "osl.material", "optical", key, value};
+    const char *arguments[] = {"material", value ? "set" : "remove", material_name, "optical", key, value};
     const int argument_count = sizeof(arguments) / sizeof(arguments[0]) - (value ? 0 : 1);
     const int status = ged_exec_material(editor, argument_count, arguments);
     if (status != BRLCAD_OK)
@@ -370,6 +406,8 @@ main(int argc, char **argv)
 	return edit_material_property(argv[2], argv[3], nullptr);
     if (argc == 5 && BU_STR_EQUAL(argv[1], "set-material"))
 	return edit_material_property(argv[2], argv[3], argv[4]);
+    if (argc == 6 && BU_STR_EQUAL(argv[1], "set-named-material"))
+	return edit_material_property(argv[2], argv[4], argv[5], argv[3]);
     try {
 	if (argc == 6 && (BU_STR_EQUAL(argv[1], "check-filtered-texture") ||
 	    BU_STR_EQUAL(argv[1], "check-aliased-texture") || BU_STR_EQUAL(argv[1], "check-matching-image") ||
