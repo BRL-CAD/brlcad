@@ -21,45 +21,101 @@
  *
  */
 
-#include <QGroupBox>
-#include <QCheckBox>
+#include <QIcon>
+#include <QPixmap>
+
+#include "qtcad/QgPluginContext.h"
+#include "qtcad/QgPluginInterfaces.h"
+#include "qtcad/QgToolBase.h"
 #include "qtcad/QgToolPalette.h"
-#include "../../plugin.h"
-#include "./CADViewMeasure.h"
+#include "qtcad/QgView.h"
+#include "CADViewMeasure.h"
 
-void *
-view_measure_tool_create()
+class ViewMeasureTool : public QgToolBase, public IQgViewEventFilter
 {
-    QIcon *obj_icon = new QIcon(QPixmap(":measure.svg"));
+    Q_OBJECT
+    Q_INTERFACES(IQgViewEventFilter)
 
-    CADViewMeasure *er = new CADViewMeasure();
+    public:
+	explicit ViewMeasureTool(QgPluginContext *context,
+		QObject *parent = nullptr)
+	    : QgToolBase(context, parent)
+	{
+	}
 
-    QgToolPaletteElement *el = new QgToolPaletteElement(obj_icon, er);
+	QgToolPaletteElement *paletteElement() override
+	{
+	    QgToolPaletteElement *element = QgToolBase::paletteElement();
+	    if (m_measure && element && !m_measureWired) {
+		connect(m_measure, &CADViewMeasure::view_updated,
+			element, &QgToolPaletteElement::element_view_changed);
+		m_measureWired = true;
+	    }
+	    return element;
+	}
 
-    QObject::connect(er, &CADViewMeasure::view_updated, el, &QgToolPaletteElement::element_view_changed);
+	QWidget *createWidget() override
+	{
+	    m_measure = new CADViewMeasure();
+	    m_measure->setContext(context());
+	    return m_measure;
+	}
 
-    // Let the element (and hence the application) know that this tool has a
-    // locally customized event filter to use with the view widget.
-    el->use_event_filter = true;
+	QIcon *createIcon() override
+	{
+	    return new QIcon(QPixmap(":measure.svg"));
+	}
 
-    return el;
-}
+	QObject *viewEventFilter() override { return this; }
 
-extern "C" {
-    struct qged_tool_impl view_measure_tool_impl = {
-	view_measure_tool_create
-    };
+	void attachToView(QgView *view) override
+	{
+	    if (m_measure)
+		m_measure->attachToView(view);
+	}
 
-    const struct qged_tool view_measure_tool = { &view_measure_tool_impl, 3 };
-    const struct qged_tool *view_measure_tools[] = { &view_measure_tool, NULL };
+	void detachFromView(QgView *view) override
+	{
+	    if (m_measure)
+		m_measure->detachFromView(view);
+	}
 
-    static const struct qged_plugin pinfo = { QGED_VC_TOOL_PLUGIN, view_measure_tools, 1 };
+    private:
+	CADViewMeasure *m_measure = nullptr;
+	bool m_measureWired = false;
+};
 
-    COMPILER_DLLEXPORT const struct qged_plugin *qged_plugin_info()
-    {
-	return &pinfo;
-    }
-}
+class ViewMeasureFactory : public QObject, public IQgToolFactory
+{
+    Q_OBJECT
+    Q_INTERFACES(IQgToolFactory)
+    Q_PLUGIN_METADATA(IID QGTCAD_IID("IQgToolFactory") FILE "measure.json")
+
+    public:
+	QgPluginDescriptor descriptor() const override
+	{
+	    QgPluginDescriptor plugin;
+	    plugin.id = QStringLiteral("org.brlcad.qged.view.measure");
+	    plugin.displayName = QStringLiteral("View Measure");
+	    plugin.category = QStringLiteral("qged.view");
+	    plugin.iconName = QStringLiteral(":measure.svg");
+	    plugin.sortKey = 3;
+	    plugin.requiresView = true;
+	    plugin.description = QStringLiteral(
+		    "Measures distances and angles using 2D or 3D points.");
+	    plugin.vendor = QStringLiteral("BRL-CAD");
+	    plugin.version = QStringLiteral("1.0");
+	    return plugin;
+	}
+
+	QgToolBase *create(QgPluginContext *context,
+		QObject *parent = nullptr) override
+	{
+	    return new ViewMeasureTool(context, parent);
+	}
+};
+
+#include "measure.moc"
 
 
 

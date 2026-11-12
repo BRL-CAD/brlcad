@@ -24,20 +24,19 @@
  */
 
 #include "common.h"
-#include <QMouseEvent>
 #include <QVBoxLayout>
 #include <QtGlobal>
-#include "../../../QgEdApp.h"
 
-#include "bu/opt.h"
-#include "bu/malloc.h"
-#include "bu/str.h"
-#include "bg/aabb_ray.h"
-#include "bg/plane.h"
+#include "bu/units.h"
+#include "bu/vls.h"
+#include "ged.h"
+#include "qtcad/QgPluginContext.h"
+#include "qtcad/QgView.h"
 
-#include "./CADViewMeasure.h"
+#include "CADViewMeasure.h"
 
-CADViewMeasure::CADViewMeasure(QWidget *)
+CADViewMeasure::CADViewMeasure(QWidget *parent)
+    : QWidget(parent)
 {
     QVBoxLayout *wl = new QVBoxLayout;
     wl->setAlignment(Qt::AlignTop);
@@ -87,8 +86,30 @@ CADViewMeasure::CADViewMeasure(QWidget *)
 
 CADViewMeasure::~CADViewMeasure()
 {
+    detachFromView();
     if (s)
 	bv_obj_put(s);
+    delete f2d;
+    delete f3d;
+}
+
+void
+CADViewMeasure::attachToView(QgView *view)
+{
+    if (!view || m_view == view)
+	return;
+    detachFromView();
+    m_view = view;
+    m_view->add_event_filter(this);
+}
+
+void
+CADViewMeasure::detachFromView(QgView *view)
+{
+    if (!m_view || (view && m_view != view))
+	return;
+    m_view->clear_event_filter(this);
+    m_view = nullptr;
 }
 
 void
@@ -114,20 +135,17 @@ CADViewMeasure::adjust_text_db(void *)
 void
 CADViewMeasure::adjust_text()
 {
-    QgModel *m = ((QgEdApp *)qApp)->mdl;
-    if (!m)
-	return;
-    struct ged *gedp = m->ged();
-    if (!gedp || !gedp->ged_gvp)
+    struct ged *gedp = m_context ? m_context->getGed() : NULL;
+    if (!gedp || !gedp->dbip || !mf)
 	return;
 
 
     double angle;
     if (report_radians->isChecked()) {
-	ma_label = new QLabel("Measured Angle (rad):");
+	ma_label->setText("Measured Angle (rad):");
 	angle = mf->angle(true);
     } else {
-	ma_label = new QLabel("Measured Angle (deg):");
+	ma_label->setText("Measured Angle (deg):");
 	angle = mf->angle(false);
     }
 
@@ -155,13 +173,10 @@ CADViewMeasure::do_filter_view_update()
 bool
 CADViewMeasure::eventFilter(QObject *, QEvent *e)
 {
-    QgModel *m = ((QgEdApp *)qApp)->mdl;
-    if (!m)
+    struct ged *gedp = m_context ? m_context->getGed() : NULL;
+    struct bview *v = m_context ? m_context->activeViewContext() : NULL;
+    if (!gedp || !v)
 	return false;
-    struct ged *gedp = m->ged();
-    if (!gedp || !gedp->ged_gvp)
-	return false;
-    struct bview *v = gedp->ged_gvp;
 
     f3d->dbip = gedp->dbip;
 

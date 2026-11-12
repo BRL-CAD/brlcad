@@ -22,15 +22,16 @@
  */
 
 #include <QWidget>
-#include <QGroupBox>
 #include <QCheckBox>
 #include <QLabel>
 #include <QLineEdit>
-#include <QLineEdit>
+#include <QPointer>
 #include "bv.h"
-#include "ged.h"
 #include "qtcad/QgColorRGB.h"
 #include "qtcad/QgMeasureFilter.h"
+
+class QgPluginContext;
+class QgView;
 
 class CADViewMeasure : public QWidget
 {
@@ -39,6 +40,9 @@ class CADViewMeasure : public QWidget
     public:
 	CADViewMeasure(QWidget *p = 0);
 	~CADViewMeasure();
+	void setContext(QgPluginContext *context) { m_context = context; }
+	void attachToView(QgView *view);
+	void detachFromView(QgView *view = nullptr);
 
 	QCheckBox *measure_3d;
 
@@ -71,6 +75,8 @@ class CADViewMeasure : public QWidget
 	QgMeasureFilter *mf = NULL;
 	QMeasure2DFilter *f2d = NULL;
 	QMeasure3DFilter *f3d = NULL;
+	QgPluginContext *m_context = nullptr;
+	QPointer<QgView> m_view;
 };
 
 // Local Variables:
