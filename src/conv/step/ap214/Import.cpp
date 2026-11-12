@@ -20,12 +20,12 @@
 #include "step_plugin.h"
 
 #include "bu/app.h"
+#include "bu/arg.h"
 #include "bu/datetime.h"
 #include "bu/env.h"
 #include "bu/file.h"
 #include "bu/interrupt.h"
 #include "bu/log.h"
-#include "bu/opt.h"
 #include "bu/parallel.h"
 #include "bu/process.h"
 #include "bu/vls.h"
@@ -82,13 +82,6 @@ signal_exit_status()
 {
     return caught_signal ? 128 + static_cast<int>(caught_signal) : 0;
 }
-
-struct OutputFile {
-    char *filename = NULL;
-    /* bu_opt's argument-less flag handler stores an int.  Keep flag storage
-     * ABI-compatible with that handler rather than pointing it at a bool. */
-    int overwrite = 0;
-};
 
 class TemporaryPath {
 public:
@@ -205,34 +198,68 @@ private:
 };
 
 int
-parse_output_overwrite(struct bu_vls *message, size_t argc, const char **argv, void *set_var)
+parse_entity_ids(struct bu_vls *message, const char *arg, void *set_var)
 {
-    OutputFile *output = static_cast<OutputFile *>(set_var);
-    BU_OPT_CHECK_ARGV0(message, argc, argv, "-O");
-    if (!output) return -1;
-    output->overwrite = 1;
-    return bu_opt_str(message, argc, argv, &output->filename);
-}
-
-int
-parse_entity_ids(struct bu_vls *message, size_t argc, const char **argv, void *set_var)
-{
-    BU_OPT_CHECK_ARGV0(message, argc, argv, "entity ID list");
-    std::set<int64_t> *entity_ids = static_cast<std::set<int64_t> *>(set_var);
+    std::set<int64_t> **entity_ptr = static_cast<std::set<int64_t> **>(set_var);
+    std::set<int64_t> *entity_ids = entity_ptr ? *entity_ptr : NULL;
     if (!entity_ids) return -1;
     std::string error;
-    if (!brlcad::step::parse_entity_id_list(argv[0], *entity_ids, &error)) {
+    if (!arg || !brlcad::step::parse_entity_id_list(arg, *entity_ids, &error)) {
 	bu_vls_printf(message, "%s\n", error.c_str());
 	return -1;
     }
-    return 1;
+    return 0;
 }
 
+struct ap214_args {
+    int help = 0, dry_run = 0, verbose = 0, exact = 0, strict = 0;
+    int reject_invalid = 0, skip_open_shells = 0, no_item_budget = 0, jobs = 1;
+    const char *output_overwrite = NULL, *output = NULL, *summary = NULL;
+    const char *repair = NULL, *report = NULL;
+    fastf_t absolute_tolerance = 0.0, budget_scale = 0.0;
+    fastf_t item_budget = 0.0, stall_timeout = 0.0;
+    std::set<int64_t> *entities = NULL;
+};
+static const struct bu_arg_value_keyword ap214_repair_values[] = {
+    {"none", NULL, "Disable repair"}, {"safe", NULL, "Use safe repair"}, {NULL, NULL, NULL}
+};
+static const struct bu_arg_option ap214_options[] = {
+    BU_ARG_FLAG("h", "help", struct ap214_args, help, "Show help"),
+    BU_ARG_FLAG("D", "dry-run", struct ap214_args, dry_run, "Validate without writing"),
+    BU_ARG_FLAG("v", "verbose", struct ap214_args, verbose, "Verbose diagnostics"),
+    BU_ARG_VALUE("O", "output-overwrite", struct ap214_args, output_overwrite, BU_ARG_VALUE_FILE, BU_ARG_REQUIRED, "FILE", "Output file and overwrite it"),
+    BU_ARG_VALUE("o", "output", struct ap214_args, output, BU_ARG_VALUE_FILE, BU_ARG_REQUIRED, "FILE", "Output file"),
+    BU_ARG_VALUE("S", "summary", struct ap214_args, summary, BU_ARG_VALUE_FILE, BU_ARG_REQUIRED, "FILE", "Per-instance conversion status CSV"),
+    BU_ARG_CUSTOM("e", "entity", struct ap214_args, entities, parse_entity_ids, "ID[,ID...]", "Representation-item entity IDs"),
+    BU_ARG_INTEGER_RANGE("j", "jobs", struct ap214_args, jobs, 1, 1, 0, 0, "N", "Geometry workers (default: up to 8 CPUs)"),
+    BU_ARG_NUMBER_RANGE(NULL, "abs-tol", struct ap214_args, absolute_tolerance, 1, 0.0, 0, 0.0, "MM", "Absolute tolerance"),
+    BU_ARG_NUMBER_RANGE(NULL, "budget-scale", struct ap214_args, budget_scale, 1, 0.0, 0, 0.0, "FACTOR", "Manual machine-speed budget scale"),
+    BU_ARG_NUMBER_RANGE(NULL, "item-budget", struct ap214_args, item_budget, 1, 0.0, 0, 0.0, "SECONDS", "Ordinary per-item CPU-work budget"),
+    BU_ARG_FLAG(NULL, "no-item-budget", struct ap214_args, no_item_budget, "Disable CPU-work budgets; retain no-progress detection"),
+    BU_ARG_NUMBER_RANGE(NULL, "stall-timeout", struct ap214_args, stall_timeout, 1, 0.0, 0, 0.0, "SECONDS", "No-progress cancellation interval"),
+    BU_ARG_KEYWORD_VALUES(NULL, "repair", struct ap214_args, repair, "MODE", "Repair mode (default: safe)", ap214_repair_values),
+    BU_ARG_FLAG(NULL, "exact", struct ap214_args, exact, "Strictly enforce declared tolerance"),
+    BU_ARG_FLAG(NULL, "strict", struct ap214_args, strict, "Reject partial output"),
+    BU_ARG_FLAG(NULL, "reject-invalid-objs", struct ap214_args, reject_invalid, "Reject B-reps which fail validation"),
+    BU_ARG_FLAG(NULL, "skip-open-shells", struct ap214_args, skip_open_shells, "Exclude standalone open-shell surface geometry"),
+    BU_ARG_VALUE(NULL, "report", struct ap214_args, report, BU_ARG_VALUE_FILE, BU_ARG_REQUIRED, "FILE", "JSON report"),
+    BU_ARG_OPTION_NULL
+};
+static const struct bu_arg_operand ap214_operands[] = {
+    BU_ARG_OPERAND("input.stp", BU_ARG_VALUE_FILE, 1, 1, "Input STEP AP214 file", NULL), BU_ARG_OPERAND_NULL
+};
+static const char * const ap214_outputs[] = {"output", "output-overwrite", NULL};
+static const struct bu_arg_constraint ap214_constraints[] = {
+    BU_ARG_CONSTRAINT(BU_ARG_CONSTRAINT_OPTION_COUNT, BU_ARG_CONDITION_ALWAYS, ap214_outputs, 0, 1, "select at most one output option"), BU_ARG_CONSTRAINT_NULL
+};
+static const struct bu_arg_schema ap214_schema = BU_ARG_SCHEMA(
+    "ap214-g", "Import STEP AP214 geometry", ap214_options, ap214_operands,
+    BU_ARG_PARSE_INTERSPERSED, BU_ARG_SCHEMA_META_HELP(NULL, ap214_constraints, NULL, NULL, NULL));
+
 void
-usage(const char *program, const struct bu_opt_desc *options)
+usage(const char *program)
 {
-    char *help = bu_opt_help(options, program, "input.stp",
-	"Import STEP AP214 geometry");
+    char *help = bu_arg_schema_help(&ap214_schema, program);
     if (help) {
 	std::cerr << help;
 	bu_free(help, "AP214 import help");
@@ -754,73 +781,51 @@ step_ap214_import_cli(int argc, const char *argv[])
     std::signal(SIGINT, record_signal);
     std::signal(SIGTERM, record_signal);
 
-    OutputFile output;
-    int dry_run = 0;
-    int verbose = 0;
-    int exact = 0;
-    int strict = 0;
-    int reject_invalid_objs = 0;
-    int skip_open_shells = 0;
-    int help = 0;
-    int jobs = default_geometry_jobs();
-    fastf_t absolute_tolerance = 0.0;
-    fastf_t budget_scale = 0.0;
-    fastf_t item_budget_seconds = 0.0;
-    fastf_t stall_timeout_seconds = 0.0;
-    int no_item_budget = 0;
-    char *repair_name = NULL;
-    char *report_name = NULL;
-    char *summary_name = NULL;
-    std::set<int64_t> selected_entity_ids;
-    struct bu_vls messages = BU_VLS_INIT_ZERO;
-    struct bu_opt_desc options[] = {
-	{"h", "help", "", NULL, &help, "show help"},
-	{"D", "", "", NULL, &dry_run, "dry run"},
-	{"v", "", "", NULL, &verbose, "verbose diagnostics"},
-	{"O", "", "FILE", parse_output_overwrite, &output, "output file (overwrite)"},
-	{"o", "", "FILE", bu_opt_str, &output.filename, "output file"},
-	{"S", "", "FILE", bu_opt_str, &summary_name, "per-instance conversion status CSV"},
-	{"e", "entity", "ID[,ID...]", parse_entity_ids, &selected_entity_ids,
-	    "representation-item entity IDs"},
-	{"j", "jobs", "N", bu_opt_int, &jobs, "geometry workers (default: up to 8 CPUs)"},
-	{"", "abs-tol", "MM", bu_opt_fastf_t, &absolute_tolerance, "absolute tolerance"},
-	{"", "budget-scale", "FACTOR", bu_opt_fastf_t, &budget_scale,
-	    "manual machine-speed budget scale"},
-	{"", "item-budget", "SECONDS", bu_opt_fastf_t, &item_budget_seconds,
-	    "ordinary per-item CPU-work budget"},
-	{"", "no-item-budget", "", NULL, &no_item_budget,
-	    "disable CPU-work budgets; retain no-progress detection"},
-	{"", "stall-timeout", "SECONDS", bu_opt_fastf_t, &stall_timeout_seconds,
-	    "no-progress cancellation interval"},
-	{"", "repair", "MODE", bu_opt_str, &repair_name, "none or safe (default: safe)"},
-	{"", "exact", "", NULL, &exact, "strictly enforce declared tolerance"},
-	{"", "strict", "", NULL, &strict, "reject partial output"},
-	{"", "reject-invalid-objs", "", NULL, &reject_invalid_objs,
-	    "reject B-reps which fail validation"},
-	{"", "skip-open-shells", "", NULL, &skip_open_shells,
-	    "exclude standalone open-shell surface geometry"},
-	{"", "report", "FILE", bu_opt_str, &report_name, "JSON report"},
-	BU_OPT_DESC_NULL
-    };
-
     const char *program = argv[0];
     ++argv;
     --argc;
-    argc = bu_opt_parse(&messages, argc, argv, options);
-    if (bu_vls_strlen(&messages)) bu_log("%s\n", bu_vls_cstr(&messages));
-    bu_vls_free(&messages);
-    if (help) {
-	usage(program, options);
-	return 0;
-    }
-    if (argc != 1 || (!dry_run && BU_STR_EMPTY(output.filename)) || jobs < 1 ||
-	    absolute_tolerance < 0.0 || budget_scale < 0.0 ||
-	    item_budget_seconds < 0.0 || stall_timeout_seconds < 0.0) {
-	usage(program, options);
+    std::set<int64_t> selected_entity_ids;
+    ap214_args args;
+    args.jobs = default_geometry_jobs();
+    args.entities = &selected_entity_ids;
+    struct bu_vls messages = BU_VLS_INIT_ZERO;
+    const int operand_index = bu_arg_schema_parse_complete(&ap214_schema, &args,
+	&messages, argc, argv);
+    if (operand_index < 0) {
+	if (bu_vls_strlen(&messages)) bu_log("%s\n", bu_vls_cstr(&messages));
+	bu_vls_free(&messages);
+	usage(program);
 	return 2;
     }
-
-    const std::string final_output = output.filename ? output.filename : "";
+    bu_vls_free(&messages);
+    argc -= operand_index;
+    argv += operand_index;
+    if (args.help) {
+	usage(program);
+	return 0;
+    }
+    const char *output_filename = args.output_overwrite ? args.output_overwrite : args.output;
+    if (!args.dry_run && BU_STR_EMPTY(output_filename)) {
+	usage(program);
+	return 2;
+    }
+    const int dry_run = args.dry_run;
+    const int verbose = args.verbose;
+    const int exact = args.exact;
+    const int strict = args.strict;
+    const int reject_invalid_objs = args.reject_invalid;
+    const int skip_open_shells = args.skip_open_shells;
+    const int no_item_budget = args.no_item_budget;
+    const int jobs = args.jobs;
+    const int overwrite = args.output_overwrite != NULL;
+    const fastf_t absolute_tolerance = args.absolute_tolerance;
+    const fastf_t budget_scale = args.budget_scale;
+    const fastf_t item_budget_seconds = args.item_budget;
+    const fastf_t stall_timeout_seconds = args.stall_timeout;
+    const char *repair_name = args.repair;
+    const char *report_name = args.report;
+    char *summary_name = const_cast<char *>(args.summary);
+    const std::string final_output = output_filename ? output_filename : "";
 
     brlcad::step::RepairMode repair = brlcad::step::RepairMode::Safe;
     if (repair_name && BU_STR_EQUAL(repair_name, "none")) repair = brlcad::step::RepairMode::None;
@@ -828,7 +833,7 @@ step_ap214_import_cli(int argc, const char *argv[])
 	bu_log("ERROR: --repair must be 'none' or 'safe'\n");
 	return 2;
     }
-    if (!output.overwrite && !dry_run && bu_file_exists(final_output.c_str(), NULL)) {
+    if (!overwrite && !dry_run && bu_file_exists(final_output.c_str(), NULL)) {
 	bu_log("ERROR: refusing to overwrite '%s'; use -O to replace it\n", final_output.c_str());
 	return 2;
     }
