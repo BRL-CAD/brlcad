@@ -1,0 +1,37 @@
+set(WORK "@CMAKE_CURRENT_BINARY_DIR@/resources-output")
+set(LOG "${WORK}/art.log")
+file(REMOVE_RECURSE "${WORK}")
+file(MAKE_DIRECTORY "${WORK}/project/shaders" "${WORK}/elsewhere")
+include("@CMAKE_CURRENT_SOURCE_DIR@/art_test_commands.cmake")
+
+# This exercises resource lookup; shared libraries still come from the build.
+set(RESOURCE_PREFIX "${WORK}/renderer installation")
+file(MAKE_DIRECTORY "${RESOURCE_PREFIX}/bin")
+get_filename_component(ART_NAME "${EXEC}" NAME)
+configure_file("${EXEC}" "${RESOURCE_PREFIX}/bin/${ART_NAME}" COPYONLY)
+file(COPY "@renderer_prefix@/shaders" DESTINATION "${RESOURCE_PREFIX}")
+file(COPY "@ART_OSL_SHADER_INCLUDE_DIR@/" DESTINATION "${RESOURCE_PREFIX}/share/OSL/shaders")
+if(WIN32)
+  get_filename_component(runtime_bin "${EXEC}" DIRECTORY)
+  set(ENV{PATH} "${runtime_bin};@renderer_prefix@/bin;$ENV{PATH}")
+elseif(APPLE)
+  set(ENV{DYLD_LIBRARY_PATH} "@CMAKE_BINARY_DIR@/@LIB_DIR@:@renderer_prefix@/@LIB_DIR@:$ENV{DYLD_LIBRARY_PATH}")
+else()
+  set(ENV{LD_LIBRARY_PATH} "@CMAKE_BINARY_DIR@/@LIB_DIR@:@renderer_prefix@/@LIB_DIR@:$ENV{LD_LIBRARY_PATH}")
+endif()
+unset(ENV{BRLCAD_ROOT})
+
+# The installed-only shader is absent from both the SDK and the project.
+configure_file("@CMAKE_CURRENT_BINARY_DIR@/art_emission.oso"
+  "${RESOURCE_PREFIX}/shaders/appleseed/art_emission.oso" COPYONLY)
+run("${VEXEC}" create-material "${WORK}/project/installed.g" art_emission)
+run("${VEXEC}" set-material "${WORK}/project/installed.g" OSL.param.in_color "color 0 1 0")
+set(RENDER_ARGS -a 270 -e 20 -P 2 -c "set samples=4" -w 64 -n 64 -p 0)
+run_in("${WORK}/elsewhere" "${RESOURCE_PREFIX}/bin/${ART_NAME}" ${RENDER_ARGS}
+  -o "${WORK}/installed.png" "${WORK}/project/installed.g" mesh.r)
+
+# A project-local shader provides a reference through the original executable.
+configure_file("@CMAKE_CURRENT_BINARY_DIR@/art_emission.oso"
+  "${WORK}/project/shaders/art_emission.oso" COPYONLY)
+run("${EXEC}" ${RENDER_ARGS} -o "${WORK}/reference.png" "${WORK}/project/installed.g" mesh.r)
+run("${VEXEC}" check-matching-image "${WORK}/installed.png" "${WORK}/reference.png" 64 64)

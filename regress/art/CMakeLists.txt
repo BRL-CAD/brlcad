@@ -20,7 +20,7 @@ set(ART_TEST_SHADER_NAMES
 cmakefiles(CMakeLists.txt art_scene.cpp art_test_mesh.h art_test_commands.cmake
   regress-art.cmake.in regress-art-bump.cmake.in regress-art-normal.cmake.in
   regress-art-texture.cmake.in regress-art-color.cmake.in
-  regress-art-image-maps.cmake.in)
+  regress-art-image-maps.cmake.in regress-art-resources.cmake.in)
 foreach(shader IN LISTS ART_TEST_SHADER_NAMES)
   cmakefiles("${shader}.osl")
 endforeach()
@@ -62,12 +62,14 @@ if(TARGET art AND BUILD_TESTING)
   brlcad_regression_test(regress-art-texture "art;art_scene_test" EXEC art VEXEC art_scene_test TIMEOUT 120)
   brlcad_regression_test(regress-art-color "art;art_scene_test" EXEC art VEXEC art_scene_test TIMEOUT 120)
   brlcad_regression_test(regress-art-image-maps "art;art_scene_test" EXEC art VEXEC art_scene_test TIMEOUT 120)
+  brlcad_regression_test(regress-art-resources "art;art_scene_test" EXEC art VEXEC art_scene_test TIMEOUT 120)
   add_test(NAME regress-art-intersections COMMAND art_intersection_test)
   brlcad_regression_test(regress-art-intersections "art_intersection_test" TEST_DEFINED TIMEOUT 120)
   distclean("${CMAKE_CURRENT_BINARY_DIR}/output" "${CMAKE_CURRENT_BINARY_DIR}/bump-output"
     "${CMAKE_CURRENT_BINARY_DIR}/normal-output" "${CMAKE_CURRENT_BINARY_DIR}/texture-output"
     "${CMAKE_CURRENT_BINARY_DIR}/color-output"
-    "${CMAKE_CURRENT_BINARY_DIR}/image-maps-output")
+    "${CMAKE_CURRENT_BINARY_DIR}/image-maps-output"
+    "${CMAKE_CURRENT_BINARY_DIR}/resources-output")
 endif()
 
 # Local Variables:
