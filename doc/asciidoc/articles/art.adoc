@@ -185,18 +185,22 @@ clipping, and premultiplied coverage.  Appleseed retains single-byte text
 input.  Both use unhinted rasterization with struetype.
 
 |Installed builds across platforms
-|The current renderer validation was performed on FreeBSD.  A finalized SDK
-copied to a different directory compiles an OSL helper shader, builds an
-installed-API consumer, and renders.  The checked renderer, shader compiler,
-and texture tools load libraries only from that SDK and the base system,
+|A complete headless art installation passed all 18 installed checks on
+FreeBSD after relocation to a path containing spaces.  Coverage includes
+16 shared rendering and material regressions, persisted material authoring
+through installed mged, and the runtime library audit.  Six geometry and
+procedural-intersection checks also passed against the fresh bundled build.
+A finalized renderer SDK copied to a different directory compiles an OSL
+helper shader, builds an installed-API consumer, and renders.  The checked
+renderer, shader compiler, and texture tools load libraries only from that
+SDK and the base system,
 with no FreeType or Boost dependency.  Relocated consumers also validate
 Unicode conversion and normalization data, libdeflate's exported include
 paths, and OpenImageIO text rendering with installed fonts.  Bundled ICU
 uses a UTF-8 default charset on FreeBSD even in the C character locale,
 preserving UTF-8 XML filenames without changing application locale settings.
-These checks qualify the tested renderer SDK workflow; a complete installed
-`art` application and Linux, Windows, and macOS runtime qualification remain
-open.
+These checks qualify the tested FreeBSD renderer SDK and installed art
+workflows.  Linux, Windows, and macOS runtime qualification remain open.
 |===
 
 == Basic rendering
@@ -1216,6 +1220,16 @@ The environment regression also covers a modern OSL compatibility fix:
 lookup directions without derivative storage supply zero footprints
 instead of dereferencing absent derivatives.
 
+
+== Reproducible example materials
+
+`share/db/art` contains a before-and-after comparison using the original
+moss example database.  Both images use art with the same geometry, instance
+placements, camera, and studio lights.  The before image uses region colors
+through the default plastic material; the after image assigns gold, glass,
+enamel, and a dark platform material.  The installed CMake driver and Tcl
+recipes regenerate copied databases, images, material reports, and logs.
+See `share/db/art/README.adoc` for requirements and rendering commands.
 
 == Validating an installed application
 
