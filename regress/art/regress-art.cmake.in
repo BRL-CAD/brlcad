@@ -269,6 +269,17 @@ foreach(dynamic_name IN ITEMS 0 1)
   run("${VEXEC}" check-matching-image "${image}" "${WORK}/filter_reference_mesh.r_0.png" 64 64)
 endforeach()
 
+# A valid caller-directory shader with a different interface must not supply
+# metadata for the project shader that OSL will actually execute.
+configure_file("@CMAKE_CURRENT_BINARY_DIR@/art_color.oso" "${TEXTURE_CWD}/art_texture.oso" COPYONLY)
+foreach(dynamic_name IN ITEMS 0 1)
+  run("${VEXEC}" set-material "${PATH_DB}" OSL.param.in_dynamic_name "int ${dynamic_name}")
+  set(image "${WORK}/shader_path_${dynamic_name}.png")
+  run_in("${TEXTURE_CWD}" "${EXEC}" ${RENDER_ARGS} -c "set samples=1" -w 64 -n 64 -p 0 -o "${image}" "${PATH_DB}" mesh.r)
+  run("${VEXEC}" check-matching-image "${image}" "${WORK}/filter_reference_mesh.r_0.png" 64 64)
+endforeach()
+file(REMOVE "${TEXTURE_CWD}/art_texture.oso")
+
 # Both metadata-query variants must use the same policy with dynamic filenames.
 foreach(info_mode IN ITEMS 1 2)
   run("${VEXEC}" set-material "${PATH_DB}" OSL.param.in_check_info "int ${info_mode}")

@@ -326,6 +326,12 @@ libraries.  Build-directory paths and the caller's working directory are
 not part of the project convention.  Keep database-relative asset paths
 when moving a project to another directory.
 
+Shader metadata inspection follows the same ordered search paths as OSL
+execution.  A same-named compiled shader in the caller's working directory
+cannot supply a different interface for a project shader.  The regression
+renders with such a collision and compares the result with the independent
+texture reference.
+
 For a custom surface shader, save this source as `painted.osl`:
 
 [source,c]
