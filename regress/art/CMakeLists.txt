@@ -7,6 +7,7 @@ set(ART_TEST_SHADER_NAMES
   art_parameters
   art_texture
   art_emission
+  art_graph_value
 )
 cmakefiles(CMakeLists.txt art_scene.cpp art_test_mesh.h regress-art.cmake.in)
 foreach(shader IN LISTS ART_TEST_SHADER_NAMES)

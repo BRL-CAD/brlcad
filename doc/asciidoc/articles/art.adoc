@@ -304,8 +304,43 @@ removing an input property restores those defaults.  The regression uses
 the material command to persist and reopen every supported input type,
 including a string with spaces, before checking rendered shader results.
 
-Multi-node networks, material-object parent inheritance, and per-instance
-material overrides remain planned capabilities.
+Version 2 adds shader networks.  The `OSL` shader is still the terminal
+material layer, named `material`, and retains its version 1 parameters,
+color defaults, and output rules.  Declare utility nodes with
+`OSL.node.<layer>` and set their inputs with `OSL.param.<layer>.<input>`.
+A property `OSL.connect.<destination-layer>.<input>` names its source as
+`<source-layer>.<output>`.  For example, this network feeds a utility color
+through a native Appleseed plastic shader:
+
+----
+material set paint.material optical OSL.version 2
+material set paint.material optical OSL.node.tint as_blend_color
+material set paint.material optical OSL.param.tint.in_color "color 0.2 0.4 0.6"
+material set paint.material optical OSL.param.tint.in_color2 "color 0.5 0.5 0.5"
+material set paint.material optical OSL.param.tint.in_blend_mode "string Multiply"
+material set paint.material optical OSL.connect.material.in_color tint.out_color
+----
+
+Layer names and connection endpoint names use ASCII letters, digits, and
+underscores, starting with a letter or underscore.  `material` and `surface`
+are reserved layer names.  Nodes are ordered by their dependencies;
+attribute order and lexical layer order do not control execution.  A
+connection overrides an explicit literal or default on the connected input.
+Only the terminal material receives the region-color and plastic
+compatibility defaults; utility nodes retain their shader defaults.
+
+Connections require a declared output and input of the same scalar OSL
+type; closure-color connections are supported.  There are no implicit type
+conversions or array, structure, or component connections.  Only the
+terminal shader can be declared `surface`.  Missing nodes or endpoints,
+invalid node parameters, cycles, and nodes that do not contribute to the
+terminal material are errors.  Version 1 continues to reject network
+properties.  The regression persists and reopens multi-node numeric and
+closure networks and compares them with equivalent single-node materials
+on spheres, ellipsoids, Boolean geometry, and flat and smooth BOTs.
+
+Material-object parent inheritance and per-instance material overrides
+remain planned capabilities.
 
 Errors reported by the renderer during initialization, worker execution,
 or renderer cleanup stop the render with a nonzero exit status before
