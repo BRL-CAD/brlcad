@@ -4647,7 +4647,7 @@ main(int ac, char *av[])
 	    (int)completion_result.completion_count, "-A") != NULL &&
 	find_completion(completion_result.completion_candidates,
 	    (int)completion_result.completion_count, "-P") != NULL,
-	"gqa should publish its bu_opt analysis and processor options");
+	"gqa should publish its analysis and processor options");
     ged_cmd_completion_result_clear(&completion_result);
     CHECK(ged_cmd_validate(gedp, "gqa -n nope tor.r", std::strlen("gqa -n nope tor.r"), &validation) == 0 &&
 	validation.state == BU_ARG_VALIDATE_INVALID,
@@ -4689,7 +4689,7 @@ main(int ac, char *av[])
 	    (int)completion_result.completion_count, "-N") != NULL &&
 	find_completion(completion_result.completion_candidates,
 	    (int)completion_result.completion_count, "-1") != NULL,
-	"human should publish both ordinary and wizard bu_opt options");
+	"human should publish both ordinary and wizard options");
     ged_cmd_completion_result_clear(&completion_result);
     CHECK(ged_cmd_validate(gedp, "human -H nope person", std::strlen("human -H nope person"), &validation) == 0 &&
 	validation.state == BU_ARG_VALIDATE_INVALID,
@@ -5026,7 +5026,7 @@ main(int ac, char *av[])
 	CHECK(ged_exec_get_autoview(gedp, 3, get_autoview_bad_av) == BRLCAD_ERROR,
 		"get_autoview should reject an operand that its native schema does not allow");
 	CHECK(ged_exec_gqa(gedp, 4, gqa_bad_hits_av) == BRLCAD_ERROR,
-		"gqa should reject malformed numeric bu_opt input before ray tracing");
+		"gqa should reject malformed numeric input before ray tracing");
 	CHECK(ged_exec_human(gedp, 2, human_help_av) == GED_HELP &&
 	    std::strstr(bu_vls_cstr(gedp->ged_result_str), "Usage: human") != NULL,
 		"human help should return to its libged caller instead of terminating the process");
@@ -6515,7 +6515,7 @@ main(int ac, char *av[])
 	std::strstr(schema_json, "\"argument_shape\":{\"kind\":\"color\"") &&
 	std::strstr(schema_json, "\"min_tokens\":1") &&
 	std::strstr(schema_json, "\"max_tokens\":3"),
-	"ps should publish the standard bu_opt color shape");
+	"ps should publish the standard compatibility color shape");
     bu_free(schema_json, "ps schema json");
     schema_json = NULL;
 

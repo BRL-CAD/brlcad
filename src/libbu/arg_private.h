@@ -1,9 +1,9 @@
 /*                     A R G _ P R I V A T E . H
  * BRL-CAD
  *
- * Internal adapters for the two public libbu option APIs.  This header is
- * deliberately not installed: bu_opt is a concise facade, while
- * bu_arg_schema is the full public grammar representation.
+ * Internal adapters shared by the native argument API and the deprecated
+ * bu_opt compatibility implementation.  This header is deliberately not
+ * installed.
  */
 
 #ifndef LIBBU_ARG_PRIVATE_H

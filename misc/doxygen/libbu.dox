@@ -105,7 +105,7 @@
 /** @ingroup bu_io */
 /**   @defgroup bu_getopt Basic Command-line Option Parsing*/
 /** @ingroup bu_io */
-/**   @defgroup bu_opt Generalized Command-line Option Parsing*/
+/**   @defgroup bu_opt Deprecated Command-line Option Parsing*/
 /**   @ingroup bu_opt */
 /**     @defgroup bu_opt_arg_process Pre-Defined Option Parsers*/
 /** @ingroup bu_io */

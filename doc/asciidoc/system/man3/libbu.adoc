@@ -17,7 +17,8 @@ Link with *-lbu*.
 
 The public interface is organized across the headers included by
 _bu.h_, including _bu/app.h_, _bu/avs.h_, _bu/bitv.h_, _bu/cmd.h_,
-_bu/color.h_, _bu/list.h_, _bu/log.h_, _bu/malloc.h_, _bu/opt.h_,
+_bu/arg.h_, _bu/color.h_, _bu/list.h_, _bu/log.h_, _bu/malloc.h_,
+_bu/opt.h_,
 _bu/parallel.h_, _bu/ptbl.h_, _bu/str.h_, and _bu/vls.h_, among others.
 
 == DESCRIPTION
@@ -69,19 +70,14 @@ This software is Copyright (c) 2004-2026 United States Government as represented
 
 Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org
 
-== Compact command schemas
+== Command argument schemas
 
-The `bu_arg_schema` API in `bu/arg.h` is the full-description face of the
-command engine, adding typed operands, validation, completion metadata,
-constraints, declarative numeric ranges, and machine-readable publication.
+The `bu_arg_schema` API in `bu/arg.h` is the canonical command argument API.
+It provides typed operands, validation, completion metadata, constraints,
+declarative numeric ranges, and machine-readable publication.
 
-The established `bu_opt` API remains a succinct option-only parser. Its
-descriptor table and `bu_opt_*` reader callbacks are appropriate when a caller
-only needs conventional option parsing and a leftover argument list.
-`bu_opt_usage` and `bu_opt_help` format standard user-facing documentation.
-Callers needing typed operands, alternate scanning policies, validation,
-completion, constraints, or machine-readable publication should use
-`bu_arg_schema` directly.
+The `bu_opt` API is deprecated and remains available only for source
+compatibility. New code must use `bu_arg_schema` directly.
 
 The API provides three views of the same schema:
 

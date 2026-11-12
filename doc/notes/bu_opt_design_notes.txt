@@ -1,3 +1,6 @@
+Historical design notes for the deprecated bu_opt API.  New code uses the
+bu_arg_schema API in bu/arg.h.
+
 Thoughts on expansion of bu_opt capability to include subcommands, other misc
 notes...
 
