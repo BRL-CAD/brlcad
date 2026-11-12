@@ -33,7 +33,9 @@
 
 #include "common.h"
 
+#include <algorithm>
 #include <map>
+#include <memory>
 #include <set>
 #include <unordered_set>
 
@@ -328,6 +330,15 @@ rt_bot_plate_to_vol(struct rt_bot_internal **obot, struct rt_bot_internal *input
 	}
     }
 
+    const auto release_working_bot = [input_bot](struct rt_bot_internal *temporary) {
+	if (temporary != input_bot) {
+	    rt_bot_internal_free(temporary);
+	    bu_free(temporary, "bot");
+	}
+    };
+    std::unique_ptr<struct rt_bot_internal, decltype(release_working_bot)>
+	working_bot(bot, release_working_bot);
+
     // OK, we have volume.  Now we need to build up the manifold definition
     // using unioned CSG elements
     manifold::Manifold c;
@@ -337,46 +348,50 @@ rt_bot_plate_to_vol(struct rt_bot_internal **obot, struct rt_bot_internal *input
     std::set<int> verts;
     std::map<int, double> verts_thickness;
     std::map<int, int> verts_fcnt;
-    std::map<std::pair<int, int>, double> edges_thickness;
-    std::map<std::pair<int, int>, int> edges_fcnt;
-    std::set<std::pair<int, int>> edges;
+    struct EdgeData {
+	double thickness_sum = 0;
+	size_t face_count = 0;
+	vect_t first_normal = VINIT_ZERO;
+	bool has_bend = false;
+    };
+    std::map<std::pair<int, int>, EdgeData> edges;
     for (size_t i = 0; i < bot->num_faces; i++) {
-	point_t eind;
-	double fthickness = 0.5*bot->thickness[i];
-	if (NEAR_ZERO(fthickness, SMALL_FASTF))
+	const double half_thickness = 0.5 * bot->thickness[i];
+	if (NEAR_ZERO(half_thickness, SMALL_FASTF))
 	    continue;
-	for (int j = 0; j < 3; j++) {
-	    verts.insert(bot->faces[i*3+j]);
-	    verts_thickness[bot->faces[i*3+j]] += fthickness;
-	    verts_fcnt[bot->faces[i*3+j]]++;
-	    eind[j] = bot->faces[i*3+j];
+	vect_t normal;
+	if (!bot_face_normal(&normal, bot, i)) {
+	    if (!quiet_mode)
+		bu_log("Cannot compute normal for plate face %zu\n", i);
+	    return -1;
 	}
-	int e11, e12, e21, e22, e31, e32;
-	e11 = (eind[0] < eind[1]) ? eind[0] : eind[1];
-	e12 = (eind[1] < eind[0]) ? eind[0] : eind[1];
-	e21 = (eind[1] < eind[2]) ? eind[1] : eind[2];
-	e22 = (eind[2] < eind[1]) ? eind[1] : eind[2];
-	e31 = (eind[2] < eind[0]) ? eind[2] : eind[0];
-	e32 = (eind[0] < eind[2]) ? eind[2] : eind[0];
-	edges.insert(std::make_pair(e11, e12));
-	edges.insert(std::make_pair(e21, e22));
-	edges.insert(std::make_pair(e31, e32));
-	edges_thickness[std::make_pair(e11, e12)] += fthickness;
-	edges_thickness[std::make_pair(e21, e22)] += fthickness;
-	edges_thickness[std::make_pair(e31, e32)] += fthickness;
-	edges_fcnt[std::make_pair(e11, e12)]++;
-	edges_fcnt[std::make_pair(e21, e22)]++;
-	edges_fcnt[std::make_pair(e31, e32)]++;
+	for (int corner = 0; corner < 3; ++corner) {
+	    const int vertex = bot->faces[3 * i + corner];
+	    const int next = bot->faces[3 * i + (corner + 1) % 3];
+	    verts.insert(vertex);
+	    verts_thickness[vertex] += half_thickness;
+	    verts_fcnt[vertex]++;
+	    auto &edge = edges[std::minmax(vertex, next)];
+	    if (edge.face_count) {
+		vect_t cross;
+		VCROSS(cross, edge.first_normal, normal);
+		if (!VNEAR_ZERO(cross, VUNITIZE_TOL))
+		    edge.has_bend = true;
+	    } else {
+		VMOVE(edge.first_normal, normal);
+	    }
+	    edge.thickness_sum += half_thickness;
+	    ++edge.face_count;
+	}
     }
 
     // Any edge with only one face associated with it is an outer
     // edge.  Vertices on those edges are exterior vertices
     std::unordered_set<int> exterior_verts;
-    std::set<std::pair<int, int>>::iterator e_it;
-    for (e_it = edges.begin(); e_it != edges.end(); e_it++) {
-	if (edges_fcnt[*e_it] == 1) {
-	    exterior_verts.insert(e_it->first);
-	    exterior_verts.insert(e_it->second);
+    for (const auto &edge : edges) {
+	if (edge.second.face_count == 1) {
+	    exterior_verts.insert(edge.first.first);
+	    exterior_verts.insert(edge.first.second);
 	}
     }
 
@@ -417,18 +432,20 @@ rt_bot_plate_to_vol(struct rt_bot_internal **obot, struct rt_bot_internal *input
     fastf_t seconds = 0.0;
     if (!quiet_mode)
 	bu_log("Processing %zd edges... \n" , edges.size());
-    for (e_it = edges.begin(); e_it != edges.end(); e_it++) {
-
-	if (!round_outer_edges) {
-	    if (edges_fcnt[*e_it] == 1)
-		continue;
-	}
+    for (const auto &edge : edges) {
+	const auto &data = edge.second;
+	if (data.face_count == 1 && !round_outer_edges)
+	    continue;
+	// Coplanar prisms already meet.  Rounding their shared tessellation
+	// edge adds geometry outside an otherwise flat plate's outline.
+	if (data.face_count > 1 && !data.has_bend)
+	    continue;
 
 	// Make an rcc along the edge a radius based on the thickness
-	double r = ((double)edges_thickness[*e_it]/(double)(edges_fcnt[*e_it]));
+	const double r = data.thickness_sum / data.face_count;
 	point_t base, v;
-	VMOVE(base, &bot->vertices[3*(*e_it).first]);
-	VMOVE(v, &bot->vertices[3*(*e_it).second]);
+	VMOVE(base, &bot->vertices[3 * edge.first.first]);
+	VMOVE(v, &bot->vertices[3 * edge.first.second]);
 
 	point_t *vertices = NULL;
 	int *faces = NULL;
@@ -624,11 +641,6 @@ rt_bot_plate_to_vol(struct rt_bot_internal **obot, struct rt_bot_internal *input
 
     if (!quiet_mode)
 	bu_log("Extrusion has %ld vertices and %ld faces\n", rbot->num_vertices, rbot->num_faces);
-
-    if (input_bot != bot) {
-	rt_bot_internal_free(bot);
-	bu_free(bot, "bot");
-    }
 
     return 0;
 }
