@@ -119,6 +119,15 @@ response and smooth plastic are checked against hemisphere integrals.
 These checks do not qualify arbitrary coats, anisotropy, colored-metal
 compensation, or denoising albedo.
 
+|Basic coat networks
+|`regress-art-coat` checks persisted `as_glossy_layer` networks against
+independent Beer and smooth Fresnel references.  Cases include emitting
+and lit diffuse substrates, matched-index coats, distinct inner coat
+normals, one through four coats, exact zero transmittance, bypass, ideal
+coat reflection, and a null coat over native plastic.  A fifth active coat
+must report an error and preserve the existing output.  These cases do not
+qualify general rough-coat transport or nested refractive media.
+
 |Basic glass transmission and absorption
 |`regress-art-transmission` compares equal-index homogeneous absorption
 with analytic path lengths through cubes, spheres, ellipsoids, Boolean
@@ -615,6 +624,67 @@ These cases establish the stated single-surface models and tested lighting
 conditions.  General glossy layering, anisotropic roughness, colored-metal
 energy compensation, secondary textured paths, and denoising albedo need
 further qualification.
+
+== Coating networks
+
+The installed `as_glossy_layer` shader exposes Appleseed's coat closure as
+a version 2 network node.  Connect a substrate closure to `in_substrate`
+and select its `out_color` output.  For example, start with an optically
+neutral coat over an explicitly configured plastic:
+
+[source,tcl]
+----
+material create coated.material Coated
+material set coated.material optical OSL as_glossy_layer
+material set coated.material optical OSL.output out_color
+material set coated.material optical OSL.version 2
+material set coated.material optical OSL.node.base as_plastic
+material set coated.material optical OSL.connect.material.in_substrate base.out_outColor
+material set coated.material optical OSL.param.in_ior "float 1"
+material set coated.material optical OSL.param.base.in_color "color 0.3 0.5 0.7"
+material set coated.material optical OSL.param.base.in_specular_color "color 1 1 1"
+material set coated.material optical OSL.param.base.in_specular_weight "float 1"
+material set coated.material optical OSL.param.base.in_specular_roughness "float 0.35"
+material set coated.material optical OSL.param.base.in_scattering "float 1"
+material assign ball.r coated.material
+----
+
+With an air surrounding medium, index one and zero thickness leave the
+substrate unchanged.  Set `in_enable` to `int 0` to bypass a coat regardless
+of its other settings.  `in_roughness` selects finite-width GGX reflection;
+zero selects an ideal specular event.  `in_reflectance` tints the reflected
+coat contribution.  `in_normal` and `in_tangent` set the coat's shading frame.
+
+`in_transmittance` is a scene-linear color defining attenuation per unit of
+`in_thickness`.  Thickness is a material optical parameter and does not add
+geometry.  Zero thickness disables absorption; a zero transmittance channel
+remains exactly zero for positive thickness.  For a matched-index coat,
+Beer attenuation uses the normal-projected path once for emitted light and
+both incoming and outgoing paths for reflected substrate light.  Coat
+attenuation uses the ray's surrounding refractive index.  Each coat can have
+its own normal and optical parameters.
+
+Networks support up to four active coats along a substrate path.  A deeper
+network fails with an explicit coating-depth diagnostic before an image is
+saved or an existing output is replaced.  Renderer closure-count limits also
+apply to larger branched networks.
+
+`regress-art-coat` persists and reopens the networks on CSG cubes, flat BOT
+cubes, spheres, and ellipsoids under both projections.  Independent emission
+references check matched-index Beer absorption, two-pass absorption of a
+point-lit diffuse substrate, and smooth Fresnel attenuation.  Additional
+cases check smooth reflection against the constant environment, a null coat
+over native plastic, a bypassed coat, a zero color channel, different inner
+coat normals, and the four-coat boundary.  Disabled absorption must disagree
+with its absorbing reference.  The fifth-coat failure must preserve the
+previous output byte for byte.
+
+The coat uses Appleseed's layered-BSDF approximation and normal-projected
+optical paths.  Finite-roughness attenuation retains its lookup model.
+Geometric-film refraction requires additional implementation.  General
+nonmatching rough coats, anisotropic coat transport, nested refractive media,
+and coated subsurface materials need further
+qualification; the listed basic cases do not establish those capabilities.
 
 == Native color-texture decoding
 
