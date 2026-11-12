@@ -27,6 +27,8 @@
 
 #include <iostream>
 
+#include "bio.h"
+
 #include <QTimer>
 #include <QCommandLineOption>
 #include <QCommandLineParser>
@@ -67,6 +69,27 @@ static const struct bu_arg_schema qged_schema = {
     BU_ARG_PARSE_STOP_AT_FIRST_OPERAND, BU_ARG_SCHEMA_CONSTRAINTS(NULL, NULL)
 };
 
+static void
+qged_schema_write(int success, const char *output)
+{
+    FILE *stream = success ? stdout : stderr;
+
+#ifdef HAVE_WINDOWS_H
+    /* A GUI-subsystem process inherits redirected standard handles, but the
+     * C runtime does not bind stdout and stderr to them. */
+    HANDLE handle = GetStdHandle(success ? STD_OUTPUT_HANDLE : STD_ERROR_HANDLE);
+    if (_fileno(stream) < 0 && handle && handle != INVALID_HANDLE_VALUE) {
+	int descriptor = _open_osfhandle((intptr_t)handle, _O_WRONLY | _O_TEXT);
+	FILE *inherited_stream = descriptor >= 0 ? _fdopen(descriptor, "w") : NULL;
+	if (inherited_stream)
+	    stream = inherited_stream;
+    }
+#endif
+
+    bu_flog(stream, "%s", output);
+    fflush(stream);
+}
+
 #ifdef HAVE_WINDOWS_H
 int APIENTRY
 WinMain(HINSTANCE hInstance,
@@ -93,6 +116,15 @@ main(int argc, char **argv)
     // All BRL-CAD programs need to set this in order for relative path lookups
     // to work reliably.
     bu_setprogname(argv[0]);
+
+    const struct bu_arg_grammar grammar = {&qged_schema, NULL, NULL};
+    int schema_status = bu_arg_introspect(&msg, &grammar, argc - 1,
+	(const char * const *)(argv + 1));
+    if (schema_status != 0) {
+	qged_schema_write(schema_status > 0, bu_vls_cstr(&msg));
+	bu_vls_free(&msg);
+	return schema_status > 0 ? BRLCAD_OK : BRLCAD_ERROR;
+    }
 
     /* Done with command name argv[0] */
     argc-=(argc>0); argv+=(argc>0);

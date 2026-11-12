@@ -221,6 +221,14 @@ int
 main(int argc, const char **argv)
 {
     bu_setprogname(argv[0]);
+    const struct bu_arg_grammar grammar = {&g_iges_schema, NULL, NULL};
+    Vls schema_output;
+    const int schema_status = bu_arg_introspect(&schema_output.value, &grammar,
+	argc - 1, argv + 1);
+    if (schema_status != 0) {
+	bu_flog(schema_status > 0 ? stdout : stderr, "%s", bu_vls_cstr(&schema_output.value));
+	return schema_status > 0 ? BRLCAD_OK : BRLCAD_ERROR;
+    }
     try {
 	return convert(argc, argv);
     } catch (const std::exception &error) {

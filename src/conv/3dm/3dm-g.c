@@ -93,7 +93,7 @@ main(int argc, char **argv)
     int introspection = bu_arg_introspect(&msg, &grammar, argc - 1,
 	(const char * const *)(argv + 1));
     if (introspection != 0) {
-	fputs(bu_vls_cstr(&msg), introspection > 0 ? stdout : stderr);
+	bu_flog(introspection > 0 ? stdout : stderr, "%s", bu_vls_cstr(&msg));
 	bu_vls_free(&msg);
 	return introspection > 0 ? 0 : 1;
     }

@@ -119,6 +119,7 @@ output_netshort(char *buf, unsigned *nchars, FILE *fpo)
 int
 main(int argc, char **argv)
 {
+    const struct bu_arg_grammar grammar = {&asc2dsp_schema, NULL, NULL};
     FILE *fpi = NULL;
     FILE *fpo = NULL;
     struct asc2dsp_args args = {0};
@@ -127,6 +128,16 @@ main(int argc, char **argv)
     unsigned nchars = 0;
 
     bu_setprogname(argv[0]);
+
+    struct bu_vls schema_output = BU_VLS_INIT_ZERO;
+    int schema_status = bu_arg_introspect(&schema_output, &grammar, argc - 1,
+	(const char * const *)(argv + 1));
+    if (schema_status != 0) {
+	bu_flog(schema_status > 0 ? stdout : stderr, "%s", bu_vls_cstr(&schema_output));
+	bu_vls_free(&schema_output);
+	return schema_status > 0 ? EXIT_SUCCESS : EXIT_FAILURE;
+    }
+    bu_vls_free(&schema_output);
 
     /* Skip first arg */
     argv++; argc--;

@@ -2974,6 +2974,17 @@ main(int argc, char **argv)
 {
     bu_setprogname(argv[0]);
 
+    const struct bu_arg_grammar grammar = {&naca_schema, NULL, NULL};
+    struct bu_vls schema_output = BU_VLS_INIT_ZERO;
+    const int schema_status = bu_arg_introspect(&schema_output, &grammar,
+	argc - 1, (const char * const *)(argv + 1));
+    if (schema_status != 0) {
+	bu_flog(schema_status > 0 ? stdout : stderr, "%s", bu_vls_cstr(&schema_output));
+	bu_vls_free(&schema_output);
+	return schema_status > 0 ? EXIT_SUCCESS : EXIT_FAILURE;
+    }
+    bu_vls_free(&schema_output);
+
     try {
 	const options opts = parse_args(argc, argv);
 	if (!opts.section_file.empty())

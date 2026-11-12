@@ -284,6 +284,7 @@ hexdump(const unsigned char *from, const unsigned char *to)
 int
 main(int argc, char** argv)
 {
+    const struct bu_arg_grammar grammar = {&gex_schema, NULL, NULL};
     // db pointers
     FILE *in = NULL;
     FILE *out = NULL;
@@ -300,6 +301,14 @@ main(int argc, char** argv)
     struct bu_vls db2_fname = BU_VLS_INIT_ZERO;
 
     bu_setprogname(argv[0]);
+
+    int schema_status = bu_arg_introspect(&str, &grammar, argc - 1,
+	(const char * const *)(argv + 1));
+    if (schema_status != 0) {
+	bu_flog(schema_status > 0 ? stdout : stderr, "%s", bu_vls_cstr(&str));
+	bu_vls_free(&str);
+	return schema_status > 0 ? EXIT_SUCCESS : EXIT_FAILURE;
+    }
 
     /* Skip first arg */
     argv++; argc--;
