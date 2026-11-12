@@ -101,6 +101,41 @@ endif(BRLCAD_ENABLE_QT)
 # Core application is defined, now handle plugins
 add_subdirectory(plugins)
 
+if(BRLCAD_ENABLE_QT AND BUILD_TESTING)
+  if(TARGET Qt6::Test)
+    set(QGED_TEST_QT_TEST Qt6::Test)
+    set(QGED_TEST_QT_WIDGETS Qt6::Widgets)
+  elseif(TARGET Qt5::Test)
+    set(QGED_TEST_QT_TEST Qt5::Test)
+    set(QGED_TEST_QT_WIDGETS Qt5::Widgets)
+  endif()
+  if(QGED_TEST_QT_TEST)
+    add_executable(test_qged_native_plugins tests/test_qged_native_plugins.cpp)
+    set_target_properties(test_qged_native_plugins PROPERTIES AUTOMOC ON)
+    target_compile_definitions(test_qged_native_plugins
+      PRIVATE BRLCADBUILD HAVE_CONFIG_H)
+    target_link_libraries(test_qged_native_plugins
+      libqtcad
+      libbu
+      ${QGED_TEST_QT_TEST}
+      ${QGED_TEST_QT_WIDGETS}
+    )
+    add_dependencies(test_qged_native_plugins
+      qged_view_info
+      qged_view_settings
+      qged_select
+      qged_measure
+    )
+    brlcad_add_test(NAME test_qged_native_plugins
+      COMMAND test_qged_native_plugins)
+    set_property(TEST test_qged_native_plugins APPEND PROPERTY ENVIRONMENT
+      QGED_TEST_PLUGIN_DIR=${CMAKE_BINARY_DIR}/${LIBEXEC_DIR}/qged-qt
+      BRLCAD_ROOT=${CMAKE_BINARY_DIR}
+      QT_QPA_PLATFORM=offscreen
+    )
+  endif()
+endif()
+
 # Theme subdirectory handles file bookkeeping for CMake
 add_subdirectory(theme)
 
@@ -116,6 +151,7 @@ set(
   main.cpp
   qged_signals.eps
   qged_signals.dia
+  tests/test_qged_native_plugins.cpp
   view_update_cycle.odg
   view_update_cycle.pdf
 )
