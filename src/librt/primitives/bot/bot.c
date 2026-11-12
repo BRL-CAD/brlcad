@@ -1000,9 +1000,22 @@ bot_ctz64(uint64_t x)
 #if defined(__GNUC__) || defined(__clang__)
     return __builtin_ctzll(x);
 #elif defined(_MSC_VER)
+#if defined(_WIN64)
     unsigned long i;
     _BitScanForward64(&i, x);
     return (int)i;
+#else
+    unsigned long i;
+    // Scan the low 32-bits first
+    if (_BitScanForward(&i, (unsigned long)(x & 0xFFFFFFFF))) {
+        return (int)i;
+    }
+    // Scan the high 32-bits next
+    if (_BitScanForward(&i, (unsigned long)(x >> 32))) {
+        return (int)(i + 32);
+    }
+    return 64;
+#endif
 #else
     int n = 0;
     while (!((x >> n) & 1)) n++;
