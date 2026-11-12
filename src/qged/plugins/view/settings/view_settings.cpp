@@ -1,4 +1,4 @@
-/*                 V I E W _ I N F O . C P P
+/*                 V I E W _ S E T T I N G S . C P P
  * BRL-CAD
  *
  * Copyright (c) 2014-2026 United States Government as represented by
@@ -17,46 +17,103 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file view_info.cpp
+/** @file view_settings.cpp
  *
  */
 
-#include <QGroupBox>
-#include <QCheckBox>
+#include <QIcon>
+#include <QPixmap>
+
+#include "qtcad/QgPluginContext.h"
+#include "qtcad/QgPluginInterfaces.h"
+#include "qtcad/QgToolBase.h"
 #include "qtcad/QgToolPalette.h"
-#include "../../plugin.h"
 #include "CADViewSettings.h"
 
-void *
-view_settings_tool_create()
+class ViewSettingsTool : public QgToolBase
 {
-    QIcon *obj_icon = new QIcon(QPixmap(":settings.svg"));
+    Q_OBJECT
 
-    CADViewSettings *vs = new CADViewSettings();
+    public:
+	explicit ViewSettingsTool(QgPluginContext *context,
+		QObject *parent = nullptr)
+	    : QgToolBase(context, parent)
+	{
+	}
 
-    QgToolPaletteElement *el = new QgToolPaletteElement(obj_icon, vs);
+	QgToolPaletteElement *paletteElement() override
+	{
+	    QgToolPaletteElement *element = QgToolBase::paletteElement();
+	    if (m_settings && element && !m_settingsWired) {
+		connect(m_settings, &CADViewSettings::settings_changed,
+			element, &QgToolPaletteElement::element_view_changed);
+		m_settingsWired = true;
+	    }
+	    return element;
+	}
 
-    QObject::connect(el, &QgToolPaletteElement::element_view_update, vs, &CADViewSettings::checkbox_refresh);
-    QObject::connect(vs, &CADViewSettings::settings_changed, el, &QgToolPaletteElement::element_view_changed);
+	QWidget *createWidget() override
+	{
+	    m_settings = new CADViewSettings();
+	    m_settings->setContext(context());
+	    m_settings->checkbox_refresh(QG_VIEW_REFRESH);
+	    return m_settings;
+	}
 
-    return el;
-}
+	QIcon *createIcon() override
+	{
+	    return new QIcon(QPixmap(":settings.svg"));
+	}
 
-extern "C" {
-    struct qged_tool_impl view_settings_tool_impl = {
-	view_settings_tool_create
-    };
+    public slots:
+	void refresh() override
+	{
+	    if (m_settings)
+		m_settings->checkbox_refresh(QG_VIEW_REFRESH);
+	}
 
-    const struct qged_tool view_settings_tool = { &view_settings_tool_impl, 1 };
-    const struct qged_tool *view_settings_tools[] = { &view_settings_tool, NULL };
+	void onViewChanged() override
+	{
+	    refresh();
+	}
 
-    static const struct qged_plugin pinfo = { QGED_VC_TOOL_PLUGIN, view_settings_tools, 1 };
+    private:
+	CADViewSettings *m_settings = nullptr;
+	bool m_settingsWired = false;
+};
 
-    COMPILER_DLLEXPORT const struct qged_plugin *qged_plugin_info()
-    {
-	return &pinfo;
-    }
-}
+class ViewSettingsFactory : public QObject, public IQgToolFactory
+{
+    Q_OBJECT
+    Q_INTERFACES(IQgToolFactory)
+    Q_PLUGIN_METADATA(IID QGTCAD_IID("IQgToolFactory")
+	FILE "view_settings.json")
+
+    public:
+	QgPluginDescriptor descriptor() const override
+	{
+	    QgPluginDescriptor plugin;
+	    plugin.id = QStringLiteral("org.brlcad.qged.view.settings");
+	    plugin.displayName = QStringLiteral("View Settings");
+	    plugin.category = QStringLiteral("qged.view");
+	    plugin.iconName = QStringLiteral(":settings.svg");
+	    plugin.sortKey = 1;
+	    plugin.requiresView = true;
+	    plugin.description = QStringLiteral(
+		    "Controls faceplate and view parameter display settings.");
+	    plugin.vendor = QStringLiteral("BRL-CAD");
+	    plugin.version = QStringLiteral("1.0");
+	    return plugin;
+	}
+
+	QgToolBase *create(QgPluginContext *context,
+		QObject *parent = nullptr) override
+	{
+	    return new ViewSettingsTool(context, parent);
+	}
+};
+
+#include "view_settings.moc"
 
 
 

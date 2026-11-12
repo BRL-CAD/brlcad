@@ -31,8 +31,8 @@
 #include "bu/opt.h"
 #include "bu/malloc.h"
 #include "bu/str.h"
+#include "qtcad/QgPluginContext.h"
 #include "qtcad/QgSignalFlags.h"
-#include "QgEdApp.h"
 
 #include "CADViewSettings.h"
 
@@ -53,7 +53,8 @@ ckbx_val(QCheckBox *cb)
     return (cb->checkState() == Qt::Checked) ? 1 : 0;
 }
 
-CADViewSettings::CADViewSettings(QWidget *)
+CADViewSettings::CADViewSettings(QWidget *parent)
+    : QWidget(parent)
 {
     QVBoxLayout *wl = new QVBoxLayout;
     wl->setAlignment(Qt::AlignTop);
@@ -181,13 +182,7 @@ CADViewSettings::view_update_int(int)
 void
 CADViewSettings::checkbox_refresh(unsigned long long)
 {
-    QgModel *m = ((QgEdApp *)qApp)->mdl;
-    if (!m)
-	return;
-    struct ged *gedp = m->ged();
-    if (!gedp)
-	return;
-    struct bview *v = gedp->ged_gvp;
+    struct bview *v = m_context ? m_context->activeViewContext() : NULL;
     if (!v)
 	return;
 
@@ -226,13 +221,7 @@ CADViewSettings::checkbox_refresh(unsigned long long)
 void
 CADViewSettings::view_refresh(unsigned long long)
 {
-    QgModel *m = ((QgEdApp *)qApp)->mdl;
-    if (!m)
-	return;
-    struct ged *gedp = m->ged();
-    if (!gedp)
-	return;
-    struct bview *v = gedp->ged_gvp;
+    struct bview *v = m_context ? m_context->activeViewContext() : NULL;
     if (!v)
 	return;
 

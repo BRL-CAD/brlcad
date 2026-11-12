@@ -31,6 +31,8 @@
 #include <QComboBox>
 #include "bv/defines.h"
 
+class QgPluginContext;
+
 class CADViewSettings : public QWidget
 {
     Q_OBJECT
@@ -38,6 +40,7 @@ class CADViewSettings : public QWidget
     public:
 	CADViewSettings(QWidget *p = 0);
 	~CADViewSettings();
+	void setContext(QgPluginContext *context) { m_context = context; }
 
 	/* Top-level faceplate toggles */
 	QCheckBox *acsg_ckbx;
@@ -71,6 +74,9 @@ class CADViewSettings : public QWidget
 	void view_refresh(unsigned long long);
 	void view_update_int(int);
 	void view_update();
+
+    private:
+	QgPluginContext *m_context = nullptr;
 };
 
 // Local Variables:

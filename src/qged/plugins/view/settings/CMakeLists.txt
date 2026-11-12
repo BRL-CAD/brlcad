@@ -11,7 +11,7 @@ if(BRLCAD_ENABLE_QT)
   )
 endif(BRLCAD_ENABLE_QT)
 
-set(view_settings_srcs view_settings.cpp CADViewSettings.cpp)
+set(view_settings_srcs view_settings.cpp CADViewSettings.cpp view_settings.json)
 
 set(view_settings_moc_hdrs CADViewSettings.h)
 
@@ -24,6 +24,7 @@ if(BRLCAD_ENABLE_QT)
     qt5_add_resources(icon_qrc icon.qrc)
   endif(Qt6Widgets_FOUND)
   qged_plugin(qged_view_settings SHARED ${view_settings_srcs} ${view_settings_moc_srcs} ${icon_qrc})
+  set_target_properties(qged_view_settings PROPERTIES AUTOMOC ON)
   if(Qt6Widgets_FOUND)
     target_link_libraries(
       qged_view_settings
@@ -45,11 +46,13 @@ if(BRLCAD_ENABLE_QT)
   endif(Qt6Widgets_FOUND)
   set_property(TARGET qged_view_settings APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
   validate_style(qged_view_settings view_settings.cpp)
-  plugin_setup(qged_view_settings qged)
+  plugin_setup(qged_view_settings qged-qt)
 
   distclean(
     icon.qrc.depends
     moc_CADViewSettings.cpp_parameters
+    "${CMAKE_BINARY_DIR}/${LIBEXEC_DIR}/qged-qt/qged_view_settings.exp"
+    "${CMAKE_BINARY_DIR}/${LIBEXEC_DIR}/qged-qt/qged_view_settings.pdb"
   )
 endif(BRLCAD_ENABLE_QT)
 
@@ -60,6 +63,7 @@ set(
   ${view_settings_moc_hdrs}
   icon.qrc
   settings.svg
+  view_settings.json
   README
 )
 
