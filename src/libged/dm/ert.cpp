@@ -145,11 +145,15 @@ ged_ert_core(struct ged *gedp, int argc, const char *argv[])
     int units_supplied = 0;
     int i = 0;
     for (i = 1; i < argc; i++) {
-	if (BU_STR_EQUAL(argv[1], "-u")) {
-	    units_supplied=1;
-	} else if (argv[i][0] == '-' && argv[i][1] == '-' && argv[i][2] == '\0') {
+	if (argv[i][0] == '-' && argv[i][1] == '-' && argv[i][2] == '\0') {
 	    ++i;
 	    break;
+	}
+	if (BU_STR_EQUAL(argv[i], "-u") ||
+	    BU_STR_EQUAL(argv[i], "--units") ||
+	    (argv[i][0] == '-' && argv[i][1] == 'u' && strlen(argv[i]) > 2) ||
+	    bu_strncmp(argv[i], "--units=", 8) == 0) {
+	    units_supplied = 1;
 	}
 	args.push_back(std::string(argv[i]));
     }
