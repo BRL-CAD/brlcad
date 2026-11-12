@@ -42,9 +42,8 @@
 
 #include "./nirt.h"
 
-/* Native-schema readers.  They deliberately return zero on success, unlike
- * the bu_opt callback convention.  A NULL storage pointer is the
- * side-effect-free validation path used by completion and syntax analysis. */
+/* Native-schema readers return zero on success.  A NULL storage pointer is
+ * the side-effect-free validation path used by completion and syntax analysis. */
 static int
 nirt_cmd_arg_required(struct bu_vls *msg, const char *arg, const char *name)
 {

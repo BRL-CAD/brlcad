@@ -54,7 +54,7 @@ provider.  An option-dependent rule or validator can select the broader
 meaning only when its enabling option is active.
 
 All registered descriptions are linted.  The registry audit intentionally
-rejects a libged command that has only a `bu_opt` parser but no corresponding
+rejects a libged command that has only an imperative parser but no corresponding
 GED metadata: parsing alone does not communicate positional syntax or runtime
 completion policy.
 

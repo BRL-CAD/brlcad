@@ -259,8 +259,8 @@ and extensively improving existing docs.
 	- Cliff Yapp, Sean Morrison
 * fixed gqa exactly symmetric volumetric estimates - Sean Morrison
 * added support to rtedge for perspective renderings - Sean Morrison
-* added bu_arg_schema for full command grammars, completion, and validation;
-  bu_opt remains the concise supported option-only API over the same engine
+* added bu_arg_schema for command grammars, completion, and validation;
+  deprecated bu_opt remains available for source compatibility
   - BRL-CAD
 * rt -l8 rendering time heat graphs - Stephen Kennedy, Sean Morrison
 * added 'icv anim' for APNG and MJPEG animation files - Clifford Yapp

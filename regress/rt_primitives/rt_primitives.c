@@ -411,7 +411,7 @@ int main(int argc, char **argv)
     args.samples = 5;
     args.filters = &filters;
 
-    /* skip the program name, then let bu_opt handle the rest */
+    /* Skip the program name, then parse the command schema. */
     argc--; argv++;
     int operand_index = bu_arg_schema_parse_complete(&rt_primitives_schema, &args,
 	&pmsg, argc, (const char **)argv);

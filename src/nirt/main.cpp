@@ -79,7 +79,7 @@ struct nirt_io_data {
 };
 
 
-/* TODO - need some libbu mechanism for subcommands a.l.a. bu_opt... */
+/* TODO - publish these subcommands using command metadata. */
 struct nirt_help_desc {
     const char *cmd;
     const char *desc;

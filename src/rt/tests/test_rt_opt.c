@@ -21,8 +21,8 @@
  *
  * Comprehensive white-box regression test for get_args() in opt.c.
  *
- * Tests every option (short and long forms) defined in the bu_opt
- * descriptor table, verifying that each one correctly mutates the
+ * Tests every option (short and long forms) defined in the BU_ARG
+ * schema, verifying that each one correctly mutates the
  * corresponding global variable(s).  Special-form edge cases are
  * also covered: -vvvv, -v 0xNN, -T dist/perp, -l 7,..., -+t,
  * negative -P, -Q x,y, and the bu_optind model/object boundary.
