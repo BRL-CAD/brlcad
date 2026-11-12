@@ -40,7 +40,7 @@ With no input file, input is read from standard input.
 [[options]]
 == OPTIONS
 
-*-o* _out.pix_::
+*-o* _out.pix_, *--output-file*=_out.pix_::
   Write the color *pix* output to _out.pix_. May also be supplied as the
   final positional argument instead. If standard output is simultaneously
   redirected or piped, the same data is written to both destinations.

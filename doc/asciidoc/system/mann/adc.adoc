@@ -19,6 +19,13 @@ adc [-i] subcommand
 
 This command controls the angle/distance cursor. A subcommand is required. The _-i_ option, if specified before the subcommand, causes applicable value-setting operations to treat their values as increments. It is ignored by query and reset operations. You can also control the position, angles, and radius of the ADC using a knob or the knob command. This command accepts the following subcommands:
 
+[[options]]
+== OPTIONS
+
+*-i*::
+Interpret applicable values as increments. This option is ignored by query
+and reset operations.
+
 
 *vars*::
 Returns a list of all ADC variables and their values (i.e., var = val).

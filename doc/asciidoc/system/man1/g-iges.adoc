@@ -62,24 +62,27 @@ not an estimate of remaining time.
 [[options]]
 == OPTIONS
 
-*-f*::
+*-h*, *--help*::
+  Print command help and exit.
+
+*-f*, *--faceted*::
   Facetized B-Rep output. Every region is tessellated, its Boolean operations
   are evaluated, and the result is written as a single manifold-solid B-Rep
   object. Tessellation accuracy is governed by *-a*, *-r*, and *-n*.
 
-*-t*::
+*-t*, *--trimmed-surfaces*::
   Trimmed-surface output (experimental). Each region is written as a collection
   of trimmed NURBS derived from the facets of the tessellated, Boolean-evaluated
   region.
 
-*-m*::
+*-m*, *--multi-file*::
   Multi-file output: write a separate IGES file for each converted region occurrence.
   Implies *-t*, and the output destination must name an existing directory in which
   the per-region files are created. Repeated regions retain their individual
   assembly placements. Names are sanitized and numbered to avoid overwriting
   another occurrence or an existing file.
 
-*-s*::
+*-s*, *--nurbs*::
   Write NMG facets using NURBS surfaces and boundary curves instead of analytic
   planes and lines. This does not tessellate native OpenNURBS B-Reps.
 
@@ -91,33 +94,33 @@ not an estimate of remaining time.
   represented explicitly in the file. The faces remain grouped so instances
   reference the entire original object.
 
-*-a* _abs_tol_::
+*-a* _abs_tol_, *--absolute-tolerance*=_abs_tol_::
   Absolute tessellation tolerance, in millimeters. Default 0.0 (disabled).
 
-*-r* _rel_tol_::
+*-r* _rel_tol_, *--relative-tolerance*=_rel_tol_::
   Relative tessellation tolerance, as a fraction of object size. Default 0.01.
 
-*-n* _norm_tol_::
+*-n* _norm_tol_, *--normal-tolerance*=_norm_tol_::
   Surface-normal tessellation tolerance. Default 0.0 (disabled).
 
-*-d* _dist_tol_::
+*-d* _dist_tol_, *--distance-tolerance*=_dist_tol_::
   Minimum distance between distinct points, in millimeters. Default 0.0005.
 
-*-P* _ncpu_::
+*-P* _ncpu_, *--processors*=_ncpu_::
   Requested maximum worker count. Default 1. IGES conversion currently runs
   serially to protect record ordering and NMG error recovery; larger positive
   values are accepted with a diagnostic.
 
-*-v*::
+*-v*, *--verbose*::
   Include entity-type counts in the export summary.
 
-*-x* _rt_debug_::
+*-x* _rt_debug_, *--rt-debug*=_rt_debug_::
   Set the *librt* raytrace debug flag (hexadecimal). See raytrace.h for values.
 
-*-X* _nmg_debug_::
+*-X* _nmg_debug_, *--nmg-debug*=_nmg_debug_::
   Set the NMG debug flag (hexadecimal). See nmg.h for values.
 
-*-o* _output_file_::
+*-o* _output_file_, *--output*=_output_file_::
   Write the IGES output to _output_file_, overriding a positional destination.
   With *-m*,
   this argument must be a directory. File output is staged beside its destination.

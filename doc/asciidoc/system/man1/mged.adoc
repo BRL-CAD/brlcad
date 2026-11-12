@@ -63,6 +63,9 @@ Instructs _MGED_ to start using classic mode instead of the default Tcl/Tk-based
 *-C*, *--gui*::
 Instructs _MGED_ to start in GUI (non-classic) mode. This is the default on platforms that support graphics.
 
+*-o*::
+Uses the legacy GUI implementation. This is a developer compatibility option.
+
 *-p*, *--pipe*::
 Enables pipe mode. In this mode _MGED_ emits a `MGED_CMD_DONE <status>` sentinel to stdout after every command completes on stdin, making it suitable for use as a subprocess driven by an automated tool.
 
@@ -141,8 +144,8 @@ Sets the NMG edge-use distance tolerance.
 
 === Framebuffer
 
-*--fb*, *--no-fb* (via --set)::
-Use `--set fb=1` or `--set fb=0` to enable or disable framebuffer overlay.
+`fb=1` / `fb=0` (via *--set*)::
+Use *--set* with these values to enable or disable framebuffer overlay.
 
 *--fb-overlay* _0|1|2_::
 Sets the framebuffer overlay mode: `0` (framebuffer under geometry), `1` (interleaved), `2` (framebuffer over geometry).
