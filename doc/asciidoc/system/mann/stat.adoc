@@ -56,43 +56,69 @@ Available types reflect geometry object data:
 In addition to the above standard keys, attributes may also be specified. If the desired attribute happens to have the same name as one of the above standard keys, the prefix "attr:" may be added to denote an attribute.
 
 
-[[search_options]]
+[[options]]
 == OPTIONS
 
+// BEGIN GENERATED BU_ARG OPTIONS
+*-h*, *--help*::
+  Print help and exit.
 
-*-h*, *-?*, *--help*::
+*-v*, *--verbosity*::
+  Increase output verbosity. May be repeated.
+
+*-q*, *--quiet*::
+  Decrease output verbosity. May be repeated.
+
+*-r*, *--raw*::
+  Print raw values.
+
+*-F* _expression_, *--filter*=_expression_::
+  Filter using a search expression.
+
+*-C* _columns_, *--columns*=_columns_::
+  Comma-separated output columns. Accepted values: *name*, *uses*, *refs*, *flags*, *major_type*, *minor_type*, *type*, *size*.
+
+*-S* _columns_, *--sort-order*=_columns_::
+  Comma-separated sort columns. Accepted values: *name*, *uses*, *refs*, *flags*, *major_type*, *minor_type*, *type*, *size*.
+
+*-o* _file_, *--output-file*=_file_::
+  Write output to a new file.
+
+// END GENERATED BU_ARG OPTIONS
+
+[[option_details]]
+== OPTION DETAILS
+
+=== *-h*, *-?*, *--help*
 Print help and exit.
 
 
-*-v*, *--verbosity*::
+=== *-v*, *--verbosity*
 Increase output verbosity. Repeating *-v* increases it further.
 
 
-*-q*, *--quiet*::
+=== *-q*, *--quiet*
 Decrease output verbosity. Repeating *-q* decreases it further.
 
 
-*-r*, *--raw*::
+=== *-r*, *--raw*
 Print raw values, instead of human friendly strings (for example, 5195952 for a size instead of 5.0M).
 
 
-*-F*, *--filter*::
+=== *-F*, *--filter*
 Specify *search* style filters to trim down what is reported in *stat* output.
 
 
-*-C*, *--columns*::
+=== *-C*, *--columns*
 Supply a comma separated list of column specifiers or attribute keys to define the table layout for *stat*.
 
 
-*-S*, *--sort-order*::
+=== *-S*, *--sort-order*
 Supply a comma separated list of column specifiers or attribute keys to specify a sorting priority for *stat*. Priority is left to right - sorting will be performed first based on the leftmost specifier, and subsequent specifiers will be used to resolve any ties. To reverse the ordering decisions for a given column, prefix the specifier with a "!" character.
 
 
-*-o*, *--output-file*::
+=== *-o*, *--output-file*
 Write output to _filename_ instead of the command prompt.
-
-
-
 
 [[examples]]
 == EXAMPLES

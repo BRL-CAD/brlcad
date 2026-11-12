@@ -91,6 +91,15 @@ The arguments are:
 
 Other primitive types return an error.
 
+[[options]]
+== OPTIONS
+
+// BEGIN GENERATED BU_ARG OPTIONS
+*-r*::
+  Apply a relative edit.
+
+// END GENERATED BU_ARG OPTIONS
+
 [[examples]]
 == EXAMPLES
 

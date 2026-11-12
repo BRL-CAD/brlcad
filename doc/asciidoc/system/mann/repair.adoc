@@ -22,6 +22,30 @@ This operation is not guaranteed to succeed for all inputs, but can sometimes
 correct "almost" valid shape parameters or otherwise improve them.  The
 specfics of how it works are primitive type dependent.
 
+[[options]]
+== OPTIONS
+
+// BEGIN GENERATED BU_ARG OPTIONS
+*-h*, *--help*::
+  Print command help.
+
+*-o* _name_, *--output-name*=_name_::
+  Write the repaired object to a new object.
+
+*--options-json*::
+  Return the primitive-specific repair options as JSON.
+
+*-t* _distance_, *--tol*=_distance_::
+  Distance tolerance for primitives that support vertex snapping.
+
+*-p* _percent_, *--max-hole-percent*=_percent_::
+  Maximum hole area as a percentage of mesh area.
+
+*-a* _area_, *--max-hole-area*=_area_::
+  Maximum hole area in mm.
+
+// END GENERATED BU_ARG OPTIONS
+
 [[examples]]
 == EXAMPLES
 

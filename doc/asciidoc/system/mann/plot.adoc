@@ -31,6 +31,27 @@ but does use the _dm-plot_ display manager. The dimension options *-2* and
 *-3* are mutually exclusive.
 
 
+[[options]]
+== OPTIONS
+
+// BEGIN GENERATED BU_ARG OPTIONS
+*-2*::
+  Write a 2D plot.
+
+*-3*::
+  Write a 3D plot.
+
+*-f*::
+  Use floating-point plot output.
+
+*-g*::
+  Include a grid.
+
+*-z*::
+  Enable Z clipping.
+
+// END GENERATED BU_ARG OPTIONS
+
 [[examples]]
 == EXAMPLES
 

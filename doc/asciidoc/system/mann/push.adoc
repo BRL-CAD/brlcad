@@ -20,6 +20,18 @@ push [objects]
 Forces the effects of all transformation matrices that appear in any combinations in the trees from the specified _objects_ down to the primitive shapes. This will change the parameters of the _primitive shapes_ if any of the transformation matrices are not identity matrices. All the transformation matrices visited will be set to identity matrices. This command will fail, and no changes will be made, if any primitive shape referenced by the list of _objects_ is positioned differently in two or more _combinations_. The *xpush* command will perform a similar function, even if some shapes are multiply referenced.
 
 
+[[options]]
+== OPTIONS
+
+// BEGIN GENERATED BU_ARG OPTIONS
+*-P* _processors_::
+  Number of processors.
+
+*-d*::
+  Enable tree-walk debugging.
+
+// END GENERATED BU_ARG OPTIONS
+
 [[examples]]
 == EXAMPLES
 

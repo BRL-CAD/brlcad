@@ -20,6 +20,15 @@ pull [objects]
 Pulls the effects of all matrix transformations that appear in any combinations or primitives in the tree from the leaves up to the specified _objects_. This will restore the parameters of the _primitive shapes_ if any of the transformation matrices were not identity matrices. All the transformation matrices visited will be set to the current transformation matrix as it moves up the tree. This command will fail, and no changes will be made, if the specified _object_ is a primitive shape referenced by the list of _objects_.
 
 
+[[options]]
+== OPTIONS
+
+// BEGIN GENERATED BU_ARG OPTIONS
+*-d*::
+  Enable tree-walk debugging.
+
+// END GENERATED BU_ARG OPTIONS
+
 [[examples]]
 == EXAMPLES
 
