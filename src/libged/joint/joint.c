@@ -32,7 +32,6 @@
 
 
 #include "bu/arg.h"
-#include "bu/opt.h"
 
 #include "raytrace.h"
 

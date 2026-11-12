@@ -27,7 +27,6 @@
 
 #include "bu/log.h"
 #include "bu/arg.h"
-#include "bu/opt.h"
 
 #include "../ged_private.h"
 #include "./check_private.h"

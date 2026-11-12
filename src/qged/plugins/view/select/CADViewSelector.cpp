@@ -30,7 +30,6 @@
 #include <set>
 #include "../../../QgEdApp.h"
 
-#include "bu/opt.h"
 #include "bu/malloc.h"
 #include "bu/str.h"
 #include "bg/aabb_ray.h"

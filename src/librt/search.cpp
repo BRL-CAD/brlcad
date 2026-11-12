@@ -108,7 +108,6 @@
 
 #include "bu/cmd.h"
 #include "bu/hash.h"
-#include "bu/opt.h"
 #include "bu/path.h"
 
 #include "rt/db4.h"

@@ -31,7 +31,6 @@
 
 #include "common.h"
 #include "bu/arg.h"
-#include "bu/opt.h"
 #include "ged/defines.h"
 
 

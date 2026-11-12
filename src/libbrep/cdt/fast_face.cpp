@@ -65,7 +65,6 @@
 #include "bu/env.h"
 
 #include "bu/cv.h"
-#include "bu/opt.h"
 #include "bu/str.h"
 #include "bu/datetime.h"
 #include "bn/dvec.h"

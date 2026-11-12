@@ -43,7 +43,6 @@
 
 #include "bu/parallel.h"
 #include "bu/arg.h"
-#include "bu/opt.h"
 #include "vmath.h"
 #include "bn/mat.h"
 #include "raytrace.h"
@@ -2671,7 +2670,7 @@ ged_gqa_core(struct ged *gedp, int argc, const char *argv[])
     plot_expair = (FILE *)0;
     debug = 0;
 
-    /* Parse options after the command name.  bu_opt leaves the object
+    /* Parse options after the command name.  BU_ARG leaves the object
      * operands at the beginning of this subarray. */
     argc--; argv++;
     arg_count = parse_args(gedp, argc, argv);

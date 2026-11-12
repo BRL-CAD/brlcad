@@ -29,7 +29,6 @@
 #include <string.h>
 
 #include "bu/color.h"
-#include "bu/opt.h"
 #include "raytrace.h"
 #include "rt/geom.h"
 #include "wdb.h"

@@ -28,7 +28,6 @@
 #include <QLabel>
 #include <QVBoxLayout>
 
-#include "bu/opt.h"
 #include "bu/malloc.h"
 #include "bu/str.h"
 #include "qtcad/QgSignalFlags.h"

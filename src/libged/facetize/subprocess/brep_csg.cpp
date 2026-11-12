@@ -32,7 +32,6 @@
 
 #include "bu/app.h"
 #include "bu/path.h"
-#include "bu/opt.h"
 #include "rt/primitives/bot.h"
 #include "ged.h"
 #include "./tessellate.h"
