@@ -24,7 +24,7 @@
 #include "wdb.h"
 
 namespace art_test {
-enum class MeshUV { None, Authored };
+enum class MeshUV { None, Authored, MirroredU, MirroredV };
 enum class MeshNormals { Facet, Authored };
 
 inline int
@@ -40,6 +40,13 @@ make_mesh(struct rt_wdb *db, const char *name, MeshUV mapping, MeshNormals shadi
 	2, 3, 7, 2, 7, 6, 3, 0, 4, 3, 4, 7
     };
     fastf_t uvs[] = {0, 0, 0, 1, 0, 0, 0, 1, 0};
+    // Reflect the chart without changing geometry or shading normals.
+    for (size_t corner = 0; corner < 3; ++corner) {
+	if (mapping == MeshUV::MirroredU)
+	    uvs[3 * corner] = 1 - uvs[3 * corner];
+	if (mapping == MeshUV::MirroredV)
+	    uvs[3 * corner + 1] = 1 - uvs[3 * corner + 1];
+    }
     int face_uvs[sizeof(faces) / sizeof(faces[0])];
     for (size_t corner = 0; corner < sizeof(face_uvs) / sizeof(face_uvs[0]); ++corner)
 	face_uvs[corner] = static_cast<int>(corner % 3);
@@ -48,7 +55,7 @@ make_mesh(struct rt_wdb *db, const char *name, MeshUV mapping, MeshNormals shadi
 	VMOVE(&normals[vertex * 3], &vertices[vertex * 3]);
 	VUNITIZE(&normals[vertex * 3]);
     }
-    const bool textured = mapping == MeshUV::Authored;
+    const bool textured = mapping != MeshUV::None;
     const bool smooth = shading == MeshNormals::Authored;
     const unsigned char flags = (textured ? RT_BOT_HAS_TEXTURE_UVS : 0) |
 	(smooth ? RT_BOT_HAS_SURFACE_NORMALS | RT_BOT_USE_NORMALS : 0);

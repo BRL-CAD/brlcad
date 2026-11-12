@@ -68,15 +68,23 @@ create_scene(const char *path, const char *shader, const char *output)
     success = success && mk_addmember("ball.r", &members.l, NULL, WMOP_UNION) &&
 	mk_addmember("blue.g", &members.l, NULL, WMOP_UNION) &&
 	mk_lcomb(db, "all.g", &members, 0, NULL, NULL, NULL, 0) == 0;
-    success = success && art_test::make_mesh(db, "mesh.s", art_test::MeshUV::Authored) == 0;
-    BU_LIST_INIT(&members.l);
-    success = success && mk_addmember("mesh.s", &members.l, NULL, WMOP_UNION) &&
-	mk_lcomb(db, "mesh.r", &members, 1, "plastic", "", green, 0) == 0;
-    success = success && art_test::make_mesh(db, "smooth_mesh.s", art_test::MeshUV::Authored,
-	art_test::MeshNormals::Authored) == 0;
-    BU_LIST_INIT(&members.l);
-    success = success && mk_addmember("smooth_mesh.s", &members.l, NULL, WMOP_UNION) &&
-	mk_lcomb(db, "smooth_mesh.r", &members, 1, "plastic", "", green, 0) == 0;
+    const struct {
+	const char *solid;
+	const char *region;
+	art_test::MeshUV mapping;
+	art_test::MeshNormals normals;
+    } meshes[] = {
+	{"mesh.s", "mesh.r", art_test::MeshUV::Authored, art_test::MeshNormals::Facet},
+	{"smooth_mesh.s", "smooth_mesh.r", art_test::MeshUV::Authored, art_test::MeshNormals::Authored},
+	{"mirror_u_mesh.s", "mirror_u_mesh.r", art_test::MeshUV::MirroredU, art_test::MeshNormals::Facet},
+	{"mirror_v_mesh.s", "mirror_v_mesh.r", art_test::MeshUV::MirroredV, art_test::MeshNormals::Facet}
+    };
+    for (const auto &mesh : meshes) {
+	success = success && art_test::make_mesh(db, mesh.solid, mesh.mapping, mesh.normals) == 0;
+	BU_LIST_INIT(&members.l);
+	success = success && mk_addmember(mesh.solid, &members.l, NULL, WMOP_UNION) &&
+	    mk_lcomb(db, mesh.region, &members, 1, "plastic", "", green, 0) == 0;
+    }
     const vect_t ell_a = {8, 0, 0}, ell_b = {0, 10, 0}, ell_c = {0, 0, 6};
     success = success && mk_ell(db, "ellipsoid.s", center, ell_a, ell_b, ell_c) == 0;
     BU_LIST_INIT(&members.l);
@@ -114,9 +122,9 @@ create_scene(const char *path, const char *shader, const char *output)
 	    &empty, &empty, &optical, &empty) == 0;
 	success = success && db5_update_attribute("ball.r", "material_name", "osl.material", db->dbip) == 0 &&
 	    db5_update_attribute("box.r", "material_name", "osl.material", db->dbip) == 0 &&
-	    db5_update_attribute("mesh.r", "material_name", "osl.material", db->dbip) == 0 &&
-	    db5_update_attribute("smooth_mesh.r", "material_name", "osl.material", db->dbip) == 0 &&
 	    db5_update_attribute("ellipsoid.r", "material_name", "osl.material", db->dbip) == 0;
+	for (const auto &mesh : meshes)
+	    success = success && db5_update_attribute(mesh.region, "material_name", "osl.material", db->dbip) == 0;
 	bu_avs_free(&optical);
 	bu_avs_free(&empty);
     }

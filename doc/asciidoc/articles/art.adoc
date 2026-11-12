@@ -88,8 +88,9 @@ per-instance overrides, and advanced closures remain unqualified.
 `regress-art-bump` checks constant height and independent analytic gradients
 on CSG and flat and smooth BOTs under both projections, including signed
 depth, zero-valued heights, degenerate footprints, and extreme unit changes.
-Image-height filtering, tangent-map handedness, and secondary rays remain
-unqualified.
+`regress-art-normal` checks tangent orientation, mirrored UVs, and native
+normal-map controls against analytic frames.  Image-height filtering,
+baked per-vertex tangents, and secondary rays remain unqualified.
 
 |Region instances
 |Full indexed database paths distinguish occurrences under different parents
@@ -252,7 +253,7 @@ The current ARB/TGC Boolean fixture must produce the zero-footprint fallback.
 These checks establish that the mapping derivatives reach OSL.  Mipmapped
 texture minification is also checked against a known reference as described
 below.  Native bump gradients and normal-map network behavior are checked
-separately.  Tangent-map orientation still needs qualification.
+separately, including chart orientation and mirrored UVs.
 Rebuild procedural
 plugins and applications against the matching Appleseed headers and library.
 
@@ -308,6 +309,11 @@ coordinate space; no implicit unit or coordinate conversion is applied.
 A string contains the remaining text after `string`, including internal
 spaces; leading and trailing whitespace is trimmed.  Tcl quotes group the
 property value and are not part of the stored string.
+
+OSL inputs declared with `lockgeom=0` can read per-hit renderer data.
+Literal parameters are fallback defaults on those inputs; shader
+connections override the per-hit binding.  For example, overriding the
+normal-map `Tn` or `Bn` frame requires a vector-output connection.
 
 Unknown inputs, type mismatches, invalid values, output assignments,
 closures, structures, and arrays stop rendering before an image is written.
@@ -383,14 +389,43 @@ The map stores vector components as data in the range `[0,1]`, decoded to
 `[-1,1]`; do not apply a display-color conversion to these components.
 The native node's default coordinate system is tangent space.  A neutral
 value `(0.5,0.5,1)` preserves the surface normal.  Normals can be chained
-through another node's `in_surface_normal` input.  Zero bump value, zero
-bump depth, and zero normal-map weight preserve that input normal, including
-an upstream perturbation.
+through another node's `in_surface_normal` input.  A constant zero bump
+value, zero bump depth, and zero normal-map weight preserve that input
+normal, including an upstream perturbation.
+
+In tangent space, red follows U and green follows V.  The frame uses the
+per-hit U tangent, projected onto the supplied normal's tangent plane; its
+orthogonal V axis follows the supplied bitangent's orientation.  This
+preserves authored UV mirrors and supports a normal supplied by an upstream
+node.  Baked maps must use a matching tangent convention.  Primitives
+without mapping derivatives need an explicit frame for controlled
+tangent-map orientation.
+
+`in_normal_map_mode` selects `Unsigned` data decoded from `[0,1]` or `Signed`
+data in `[-1,1]`.  Values are clamped to that range.  The red and green
+flip controls apply after decoding, followed by `in_normal_map_swap_rg`.
+The weight mixes the mapped vector with the input normal before
+normalization.  A zero or cancelling result, or an unusable projected U
+tangent, preserves the input normal.
+
+A missing or zero `Bn` retains the older fixed-cross-product orientation.
+For an existing map that needs that convention, connect a zero vector:
+
+----
+material set paint.material optical OSL.node.bitangent as_maya_vectorProduct
+material set paint.material optical OSL.param.bitangent.in_operation "int 0"
+material set paint.material optical OSL.param.bitangent.in_input1 "vector 0 0 0"
+material set paint.material optical OSL.connect.bump.Bn bitangent.out_output
+----
 
 The regression exercises these native nodes on a sphere and flat and smooth
 BOTs.  It requires a tilted normal map to visibly change shading and a
 disabled downstream node to match the upstream result.  These checks qualify
-network wiring and disabled-node behavior.
+network wiring and disabled-node behavior.  `regress-art-normal` also checks
+independent analytic frames on flat and smooth BOTs, reflected U/V charts,
+spheres, and ellipsoids.  It covers nonzero normal chains, signed/unsigned
+encoding, component clamps, channel controls, weighted blends, explicit
+frames at small and large scales, and degenerate inputs.
 
 In `Bump` mode, connect a scalar height output to `in_bump_value` and set
 `in_bump_depth` in the units of `in_surface_point` (the common-space surface
@@ -414,16 +449,16 @@ crossing zero, and missing or collinear footprints.  Scaling both position
 and depth by each of `1e-25`, `1e-12`, `1e12`, and `1e25` must preserve the
 result.  These checks cover
 first-order bump normals, including CSG surfaces without a UV footprint.
-Filtered image-height maps, tangent-map handedness, mirrored mappings,
-image normal maps, and secondary-ray behavior still need dedicated
-qualification.
+Filtered image-height maps, image normal maps, mirrored geometry transforms,
+baked per-vertex tangent compatibility, and secondary-ray behavior still
+need dedicated qualification.
 
 
 == Project shader assets
 
 `art` resolves project assets relative to the database directory, including
-its `shaders` subdirectory, and also searches the selected Appleseed shader
-libraries.  Build-directory paths and the caller's working directory are
+its `shaders` subdirectory, and also searches the selected Appleseed
+`appleseed`, `max`, and `maya` shader libraries.  Build-directory paths and the caller's working directory are
 not part of the project convention.  Keep database-relative asset paths
 when moving a project to another directory.
 
