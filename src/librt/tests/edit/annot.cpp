@@ -235,6 +235,27 @@ rt_edit_test_annot(void)
     bu_log("TEST 6 PASS: get_params(SET_POS) = (%g,%g,%g)\n",
 	   vals[0], vals[1], vals[2]);
 
+    /* ================================================================
+     * Test 7: string current-value readback reports the current label
+     * ================================================================*/
+    {
+	struct txt_seg *tsg = (struct txt_seg *)aip->ant.segments[0];
+	bu_vls_trunc(&tsg->label, 0);
+	bu_vls_strcpy(&tsg->label, "Current label");
+	struct rt_edit_cmd_values string_values = {};
+	int status = rt_edit_cmd_values_get(s, ECMD_ANNOT_SET_TEXT,
+	    &string_values);
+	if (status != RT_EDIT_VALUE_OK || string_values.string_count != 1 ||
+	    !string_values.string_valid[0] ||
+	    bu_strcmp(string_values.strings[0], "Current label") != 0)
+	    bu_exit(1,
+		"ERROR: get_values(SET_TEXT): status=%d value='%s'\n",
+		status, string_values.string_valid[0] ?
+		string_values.strings[0] : "");
+	bu_log("TEST 7 PASS: get_values(SET_TEXT) = '%s'\n",
+	    string_values.strings[0]);
+    }
+
     /* Screen-space offsets are lengths; model-space offsets use the basis. */
     const fastf_t local2base = 25.4;
     s->local2base = local2base;

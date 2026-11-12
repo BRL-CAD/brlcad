@@ -350,40 +350,43 @@ rt_edit_annot_edit_desc(void)
 }
 
 
-static int
-annot_current_numbers(struct rt_edit *s, int cmd_id, fastf_t *vals)
+C_DECL int
+rt_edit_annot_get_values(struct rt_edit *s, int cmd_id,
+	struct rt_edit_cmd_values *result)
 {
-    if (!s || !vals) return 0;
+    if (!s || !result)
+	return RT_EDIT_VALUE_ERROR;
 
     struct rt_annot_internal *aip =
 	(struct rt_annot_internal *)s->es_int.idb_ptr;
 
     switch (cmd_id) {
+	case ECMD_ANNOT_SET_TEXT: {
+	    struct txt_seg *tsg = _annot_first_tseg(aip);
+	    if (!tsg)
+		return RT_EDIT_VALUE_UNAVAILABLE;
+	    rt_edit_cmd_values_set_string(result, 0,
+		bu_vls_cstr(&tsg->label));
+	    return RT_EDIT_VALUE_OK;
+	}
+
 	case ECMD_ANNOT_SET_POS:
-	    vals[0] = aip->V[0] * s->base2local;
-	    vals[1] = aip->V[1] * s->base2local;
-	    vals[2] = aip->V[2] * s->base2local;
-	    return 3;
+	    for (int i = 0; i < 3; i++)
+		rt_edit_cmd_values_set_value(result, i,
+		    aip->V[i] * s->base2local);
+	    return RT_EDIT_VALUE_OK;
 
 	case ECMD_ANNOT_SET_TSEG_TXT_SIZE: {
 	    struct txt_seg *tsg = _annot_first_tseg(aip);
-	    if (!tsg) return 0;
-	    vals[0] = tsg->txt_size;
-	    return 1;
+	    if (!tsg)
+		return RT_EDIT_VALUE_UNAVAILABLE;
+	    rt_edit_cmd_values_set_value(result, 0, tsg->txt_size);
+	    return RT_EDIT_VALUE_OK;
 	}
 
 	default:
-	    return 0;
+	    return RT_EDIT_VALUE_UNAVAILABLE;
     }
-}
-
-
-C_DECL int
-rt_edit_annot_get_values(struct rt_edit *s, int cmd_id,
-	struct rt_edit_cmd_values *result)
-{
-    return edit_current_values_from_numbers(s, cmd_id, result,
-	annot_current_numbers);
 }
 
 /*
