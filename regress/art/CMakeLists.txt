@@ -15,6 +15,7 @@ set(ART_TEST_SHADER_NAMES
   art_color_check
   art_transfer
   art_image_field
+  art_array_values
 )
 cmakefiles(CMakeLists.txt art_scene.cpp art_test_mesh.h art_test_commands.cmake
   regress-art.cmake.in regress-art-bump.cmake.in regress-art-normal.cmake.in

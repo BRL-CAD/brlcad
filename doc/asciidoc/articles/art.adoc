@@ -352,10 +352,11 @@ connection overrides an explicit literal or default on the connected input.
 Only the terminal material receives the region-color and plastic
 compatibility defaults; utility nodes retain their shader defaults.
 
-Connections require a declared output and input of the same scalar OSL
-type; closure-color connections are supported.  There are no implicit type
-conversions or array, structure, or component connections.  Only the
-terminal shader can be declared `surface`.  Missing nodes or endpoints,
+Connections require a declared output and input of the same OSL type;
+closure-color connections are supported.  Whole arrays can connect when
+their element types and fixed lengths match.  Unsized arrays, structures,
+component connections, and implicit type conversions are unsupported.
+Only the terminal shader can be declared `surface`.  Missing nodes or endpoints,
 invalid node parameters, cycles, and nodes that do not contribute to the
 terminal material are errors.  Version 1 continues to reject network
 properties.  The regression persists and reopens multi-node numeric and
@@ -573,14 +574,40 @@ follow the geometry's U/V tangent frame described above.
 `regress-art-image-maps` checks spatial sampling independently of renderer
 UVs on the fixture's +Z BOT faces.  It reconstructs the authored charts from
 position and compares magnified 16-texel linear ramps with native color,
-normal-map, and height-map networks under both projections.  It covers
-clamped linear interpolation, flat and smooth normals, and reflected U/V
+normal-map, and height-map networks under both projections.  It also checks
+positive scaling and translation through a native UV placement node,
+including image-height gradients carried through the array connection.
+A zero-depth control must fail the same height-normal comparison.  The cases
+cover clamped linear interpolation, flat and smooth normals, and reflected U/V
 charts.  The height reference uses the ramp's known gradient, without
 screen derivatives.  A control with the opposite image-row convention must
 visibly disagree for all three networks.  These tests establish image
 orientation and this BOT magnification path; they do not qualify LOD
 transitions, curved-primitive magnification, or compatibility with baked
 per-vertex tangent frames.
+
+
+Native UV placement nodes can feed the image node through a whole
+`float[2]` connection.  For example, extend `normal.material` above:
+
+----
+material set normal.material optical OSL.param.image.in_interpolation_method "int 2"
+material set normal.material optical OSL.node.placement as_max_uv_transform
+material set normal.material optical OSL.param.placement.in_tilingU "float 0.5"
+material set normal.material optical OSL.param.placement.in_tilingV "float 0.25"
+material set normal.material optical OSL.param.placement.in_offsetU "float -0.5"
+material set normal.material optical OSL.param.placement.in_offsetV "float -1"
+material set normal.material optical OSL.connect.image.in_texture_coords placement.out_outUV
+----
+
+This node subtracts the offsets before applying the tiling multipliers and
+then wraps coordinates.  The example samples `[0.25,0.75]` in U and
+`[0.25,0.5]` in V, away from the image edges.  The regression compares color,
+normal, and height results with independent transformed charts on the same
+BOTs and projections.  It rejects mismatched array lengths, element types,
+scalar/array connections, and unsized inputs before shader execution.
+Placement rotation, placement mirroring, and baked tangent-frame changes
+remain unqualified.  Literal array assignments are still unsupported.
 
 
 == Project shader assets

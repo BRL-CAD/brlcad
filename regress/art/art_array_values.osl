@@ -1,0 +1,30 @@
+/*              A R T _ A R R A Y _ V A L U E S . O S L
+ * BRL-CAD
+ *
+ * Copyright (c) 2026 United States Government as represented by
+ * the U.S. Army Research Laboratory.
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public License
+ * version 2.1 as published by the Free Software Foundation.
+ *
+ * This library is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this file; see the file named COPYING for more
+ * information.
+ */
+shader art_array_values(
+    float in_unsized[] = {0},
+    output float out_uv[2] = {0, 0},
+    output float out_three[3] = {0, 0, 0},
+    output int out_ints[2] = {0, 0},
+    output float out_scalar = 0)
+{
+    out_uv[0] = u;
+    out_uv[1] = v;
+    out_scalar = u;
+}

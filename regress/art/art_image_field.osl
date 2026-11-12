@@ -20,6 +20,8 @@
 shader art_image_field(
     int in_mirror_u = 0, int in_mirror_v = 0, int in_flip_t = 1,
     float in_size = 16, float in_depth = 5,
+    float in_scale_u = 1, float in_scale_v = 1,
+    float in_offset_u = 0, float in_offset_v = 0,
     output color out_color = color(0), output vector out_direction = vector(0),
     output normal out_height_normal = N)
 {
@@ -41,6 +43,10 @@ shader art_image_field(
     }
     if (in_mirror_u) { chart_u = 1 - chart_u; grad_u = -grad_u; }
     if (in_mirror_v) { chart_v = 1 - chart_v; grad_v = -grad_v; }
+    chart_u = chart_u * in_scale_u + in_offset_u;
+    chart_v = chart_v * in_scale_v + in_offset_v;
+    grad_u *= in_scale_u;
+    grad_v *= in_scale_v;
     // Image rows run downward; Appleseed texture T runs upward.
     if (in_flip_t) { chart_v = 1 - chart_v; grad_v = -grad_v; }
     // OIIO's fill ramp spans endpoint pixel centers, not image edges.

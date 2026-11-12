@@ -269,6 +269,10 @@ bool
 connection_order(const MaterialShader &shader, const ShaderQueries &queries,
     const char *material_name, std::vector<std::string> &order)
 {
+    auto supported_shape = [](const asf::Dictionary &param) {
+	return !param.get<bool>("isstruct") &&
+	    (!param.get<bool>("isarray") || param.get<int>("arraylen") > 0);
+    };
     std::map<std::string, size_t> incoming;
     std::map<std::string, std::vector<std::string>> consumers, sources;
     for (const auto &query : queries)
@@ -279,12 +283,12 @@ connection_order(const MaterialShader &shader, const ShaderQueries &queries,
 	const auto source = queries.find(src.node), destination = queries.find(dst.node);
 	const asf::Dictionary *output = source == queries.end() ? nullptr : find_parameter(*source->second, src.parameter.c_str());
 	const asf::Dictionary *input = destination == queries.end() ? nullptr : find_parameter(*destination->second, dst.parameter.c_str());
+	// Query type strings include array element types and lengths.
 	if (!output || !input || !output->get<bool>("isoutput") || input->get<bool>("isoutput") ||
-	    output->get<bool>("isarray") || input->get<bool>("isarray") ||
-	    output->get<bool>("isstruct") || input->get<bool>("isstruct") ||
+	    !supported_shape(*output) || !supported_shape(*input) ||
 	    output->get<bool>("isclosure") != input->get<bool>("isclosure") ||
 	    !BU_STR_EQUAL(output->get("type"), input->get("type"))) {
-	    bu_log("art: material '%s' has invalid OSL connection '%s.%s' -> '%s.%s': expected an output and input of the same scalar type\n",
+	    bu_log("art: material '%s' has invalid OSL connection '%s.%s' -> '%s.%s': expected matching output/input types and fixed array lengths\n",
 		material_name, src.node.c_str(), src.parameter.c_str(), dst.node.c_str(), dst.parameter.c_str());
 	    return false;
 	}
