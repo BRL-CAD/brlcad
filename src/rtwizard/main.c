@@ -392,12 +392,32 @@ rtwizard_view_opts_check(struct bu_vls *msg, struct rtwizard_settings *s)
 }
 
 
+static int
+opt_size_t(struct bu_vls *msg, size_t argc, const char **argv, void *set_size)
+{
+    size_t value;
+
+    BU_OPT_CHECK_ARGV0(msg, argc, argv, "non-negative integer");
+
+    if (!bu_opt_scan_size_t(argv[0], &value, NULL)) {
+	if (msg)
+	    bu_vls_sprintf(msg, "Invalid non-negative integer: %s\n", argv[0]);
+	return -1;
+    }
+
+    if (set_size)
+	*(size_t *)set_size = value;
+
+    return 1;
+}
+
+
 int
 opt_width(struct bu_vls *msg, size_t argc, const char **argv, void *settings)
 {
     struct rtwizard_settings *s = (struct rtwizard_settings *)settings;
     if (s) {
-	int ret = bu_opt_int(msg, argc, argv, (void *)&s->width);
+	int ret = opt_size_t(msg, argc, argv, (void *)&s->width);
 	if (ret != -1)
 	    s->width_set = 1;
 	return ret;
@@ -412,7 +432,7 @@ opt_height(struct bu_vls *msg, size_t argc, const char **argv, void *settings)
 {
     struct rtwizard_settings *s = (struct rtwizard_settings *)settings;
     if (s) {
-	int ret = bu_opt_int(msg, argc, argv, (void *)&s->height);
+	int ret = opt_size_t(msg, argc, argv, (void *)&s->height);
 	if (ret != -1)
 	    s->height_set = 1;
 	return ret;
@@ -427,7 +447,7 @@ opt_size(struct bu_vls *msg, size_t argc, const char **argv, void *settings)
 {
     struct rtwizard_settings *s = (struct rtwizard_settings *)settings;
     if (s) {
-	int ret = bu_opt_int(msg, argc, argv, (void *)&s->size);
+	int ret = opt_size_t(msg, argc, argv, (void *)&s->size);
 	if (ret != -1) {
 	    s->size_set = 1;
 	    if (!s->width_set)
@@ -530,7 +550,7 @@ opt_quat(struct bu_vls *msg, size_t argc, const char **argv, void *inq)
     size_t i = 0;
     size_t acnum = 0;
     char *str1 = NULL;
-    char *avnum[5] = {NULL, NULL, NULL, NULL, NULL};
+    char *avnum[6] = {NULL, NULL, NULL, NULL, NULL, NULL};
 
     quat_t *q = (quat_t *)inq;
     BU_OPT_CHECK_ARGV0(msg, argc, argv, "bu_opt_int");
@@ -543,7 +563,7 @@ opt_quat(struct bu_vls *msg, size_t argc, const char **argv, void *inq)
 	if (str1[i] == ',' || str1[i] == '/') str1[i] = ' ';
 	i++;
     }
-    acnum = bu_argv_from_string(avnum, 4, str1);
+    acnum = bu_argv_from_string(avnum, 5, str1);
     if (acnum == 4) {
 	/* We might have four numbers - find out */
 	fastf_t q1, q2, q3, q4;
