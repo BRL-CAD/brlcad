@@ -93,6 +93,8 @@ emission shaders and exact intersection checks.  Typed single-shader
 parameters and version 2 numeric and closure networks are validated and
 persisted through the material command.  Material-parent inheritance,
 per-instance overrides, and advanced closures remain unqualified.
+`regress-art-mixture` checks the energy of ideal-mirror mixtures in single
+shaders and persisted native blend networks against an emission reference.
 
 |Bump and normal-map nodes
 |Native normal-map chains preserve upstream normals when disabled.
@@ -518,6 +520,33 @@ Fill values are used directly.  The regression checks the color and both
 scalar outputs, an empty filename, and preservation of an existing render
 when the requested image is missing.
 
+
+== Reflection mixtures
+
+Version 2 networks can blend closure outputs with `as_blend_shader`.  Its
+terminal output is `out_color`.  Connect the two material closures to
+`material.in_color` and `material.in_color1`, enable the second layer with
+`OSL.param.in_layer_visibility1` set to `int 1`, and set
+`OSL.param.in_weight1` to a float between zero and one.  With the first
+layer's default weight of one, the result is `(1-weight1)*first +
+weight1*second`.  This is a weighted mixture; a physically coated material
+requires its own transport model and qualification.
+
+`regress-art-mixture` uses two half-reflecting ideal mirrors with different
+shading normals under a constant environment of radiance 0.4.  Every mixture
+must return radiance 0.2, independently of the selected closure.  Five
+weights, including both endpoints, are compared with an emission reference
+on CSG cubes, flat BOT cubes, spheres, and ellipsoids in orthographic and
+perspective views.  Both a single surface shader and a persisted network
+using the native blend node are checked.  An intentionally darker material
+must fail the same comparison.
+
+The Appleseed adapter compensates delta samples for closure selection,
+retains eligible closures after mode filtering, and evaluates each continuous
+closure in its own shading frame.  Native tests independently check mixed
+diffuse/mirror throughput, cosine-weighted diffuse mixture densities and
+values, mode masks, and the supported closure-count limit.  These checks do
+not qualify arbitrary layered materials, denoising albedo, or nested media.
 
 == Native color-texture decoding
 
