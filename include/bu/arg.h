@@ -655,6 +655,19 @@ struct bu_arg_forms {
     bu_arg_form_select_t select;
 };
 
+
+/**
+ * One representation-neutral command grammar.  Exactly one declaration must
+ * be non-NULL.  This wrapper lets host-level facilities operate on flat,
+ * nested, and alternative grammars without adding parallel entry points for
+ * every representation.
+ */
+struct bu_arg_grammar {
+    const struct bu_arg_schema *schema;
+    const struct bu_arg_tree *tree;
+    const struct bu_arg_forms *forms;
+};
+
 struct bu_arg_validate_result {
     bu_arg_validate_state_t state;
     size_t token_start;
@@ -1018,6 +1031,21 @@ BU_EXPORT extern int bu_arg_forms_help_append(struct bu_vls *output,
 BU_EXPORT extern char *bu_arg_forms_describe_json(const struct bu_arg_forms *forms);
 BU_EXPORT extern int bu_arg_forms_lint(const struct bu_arg_forms *forms,
 	struct bu_vls *msgs);
+
+/**
+ * Handle BU_ARG's reserved, side-effect-free command introspection request.
+ * argv excludes the program name.  The exact single argument
+ * "--command-schema" appends the selected grammar's JSON and a newline to
+ * output.  Other argument sequences leave output unchanged.
+ *
+ * This routine never logs, writes a stream, or exits.  The host decides where
+ * to publish successful output and how to report an invalid declaration.
+ *
+ * Returns 1 when the request was handled, 0 when argv is not the reserved
+ * request, and -1 when the request was recognized but could not be fulfilled.
+ */
+BU_EXPORT extern int bu_arg_introspect(struct bu_vls *output,
+	const struct bu_arg_grammar *grammar, int argc, const char * const *argv);
 
 /**
  * Validate a cursor position and collect static completion candidates.

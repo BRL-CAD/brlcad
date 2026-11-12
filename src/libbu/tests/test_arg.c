@@ -1427,6 +1427,47 @@ main(int UNUSED(argc), char **argv)
 	bu_vls_free(&appended);
     }
     {
+	const struct bu_arg_grammar schema_grammar = {&grouped_schema, NULL, NULL};
+	const struct bu_arg_grammar tree_grammar = {NULL, &view_tree, NULL};
+	const struct bu_arg_grammar forms_grammar = {NULL, NULL, &quaternion_forms};
+	const struct bu_arg_grammar invalid_grammar = {
+	    &grouped_schema, &view_tree, NULL
+	};
+	const char *request[] = {"--command-schema"};
+	const char *ordinary[] = {"--help"};
+	const char *overfull[] = {"--command-schema", "extra"};
+	struct bu_vls output = BU_VLS_INIT_ZERO;
+
+	bu_vls_strcat(&output, "prefix\n");
+	if (bu_arg_introspect(&output, &schema_grammar, 1, ordinary) != 0 ||
+	    !BU_STR_EQUAL(bu_vls_cstr(&output), "prefix\n") ||
+	    bu_arg_introspect(&output, &schema_grammar, 2, overfull) != 0 ||
+	    !BU_STR_EQUAL(bu_vls_cstr(&output), "prefix\n") ||
+	    bu_arg_introspect(&output, &schema_grammar, 1, request) != 1 ||
+	    !strstr(bu_vls_cstr(&output), "\"kind\":\"native\"") ||
+	    bu_vls_cstr(&output)[bu_vls_strlen(&output) - 1] != '\n') {
+	    bu_log("flat grammar introspection handling failed: %s\n",
+		bu_vls_cstr(&output));
+	    bu_vls_free(&output);
+	    bu_vls_free(&msg);
+	    return 1;
+	}
+	bu_vls_trunc(&output, 0);
+	if (bu_arg_introspect(&output, &tree_grammar, 1, request) != 1 ||
+	    !strstr(bu_vls_cstr(&output), "\"kind\":\"native_tree\"") ||
+	    bu_arg_introspect(&output, &forms_grammar, 1, request) != 1 ||
+	    !strstr(bu_vls_cstr(&output), "\"kind\":\"native_forms\"") ||
+	    bu_arg_introspect(&output, &invalid_grammar, 1, request) != -1 ||
+	    !strstr(bu_vls_cstr(&output), "expected exactly one")) {
+	    bu_log("tree or form grammar introspection handling failed: %s\n",
+		bu_vls_cstr(&output));
+	    bu_vls_free(&output);
+	    bu_vls_free(&msg);
+	    return 1;
+	}
+	bu_vls_free(&output);
+    }
+    {
 	const char *path[] = {"orient"};
 	char *path_help = bu_arg_tree_help_path(&view_tree, "view", 1, path);
 	struct bu_vls appended = BU_VLS_INIT_ZERO;

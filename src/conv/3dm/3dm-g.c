@@ -31,7 +31,6 @@
 #include "bu/exit.h"
 #include "bu/log.h"
 #include "bu/malloc.h"
-#include "bu/str.h"
 #include "gcv/api.h"
 
 struct rhino_args {
@@ -79,6 +78,7 @@ rhino_help(void)
 int
 main(int argc, char **argv)
 {
+    const struct bu_arg_grammar grammar = {&rhino_schema, NULL, NULL};
     const struct gcv_filter *out_filter;
     const struct gcv_filter *in_filter;
 
@@ -90,13 +90,12 @@ main(int argc, char **argv)
 
     bu_setprogname(argv[0]);
 
-    if (argc == 2 && BU_STR_EQUAL(argv[1], "--command-schema")) {
-	char *schema_json = bu_arg_schema_describe_json(&rhino_schema);
-	if (!schema_json)
-	    return 1;
-	printf("%s\n", schema_json);
-	bu_free(schema_json, "3dm-g command schema JSON");
-	return 0;
+    int introspection = bu_arg_introspect(&msg, &grammar, argc - 1,
+	(const char * const *)(argv + 1));
+    if (introspection != 0) {
+	fputs(bu_vls_cstr(&msg), introspection > 0 ? stdout : stderr);
+	bu_vls_free(&msg);
+	return introspection > 0 ? 0 : 1;
     }
 
     gcv_opts_default(&gcv_options);
