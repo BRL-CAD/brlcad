@@ -786,10 +786,12 @@ build_project()
     project->configurations()
 	.get_by_name("final")->get_parameters()
 	.insert_path("uniform_pixel_renderer.samples", samples)
-	.insert_path("rendering_threads", (size_t)npsw);
+	.insert_path("rendering_threads", (size_t)npsw)
+	.insert("project_rooted_textures", true);
     project->configurations()
 	.get_by_name("interactive")->get_parameters()
-	.insert_path("rendering_threads", "1"); /* no multithreading - for debug rendering on appleseed */
+	.insert_path("rendering_threads", "1") /* no multithreading - for debug rendering on appleseed */
+	.insert("project_rooted_textures", true);
 
     // Create a scene.
     asf::auto_release_ptr<asr::Scene> scene(asr::SceneFactory::create());

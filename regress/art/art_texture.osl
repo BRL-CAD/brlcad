@@ -18,23 +18,35 @@
  * information.
  */
 surface art_texture(string in_filename = "", int in_handle_error = 0,
-    int in_zero_footprints = 0, float in_uv_scale = 1)
+    int in_zero_footprints = 0, float in_uv_scale = 1,
+    int in_dynamic_name = 0, string in_alternate_filename = "",
+    int in_check_info = 0, int in_lookup_mode = 0)
 {
     float s = in_uv_scale * u;
     float t = in_uv_scale * v;
+    string filename = in_dynamic_name && u >= 0.5 ? in_alternate_filename : in_filename;
     color texel;
-    if (in_handle_error) {
+    if (in_lookup_mode == 1) {
+        texel = environment(filename, vector(N), "interp", "closest");
+    } else if (in_handle_error) {
         string texture_error;
-        texel = texture(in_filename, s, t, "interp", "closest", "errormessage", texture_error);
+        texel = texture(filename, s, t, "interp", "closest", "errormessage", texture_error);
         if (texture_error != "") {
             warning("Using explicit texture fallback: %s", texture_error);
             texel = color(0, 1, 0);
         }
     } else if (in_zero_footprints) {
         // The control bypasses automatic derivatives while keeping interpolation.
-        texel = texture(in_filename, s, t, 0, 0, 0, 0, "interp", "closest");
+        texel = texture(filename, s, t, 0, 0, 0, 0, "interp", "closest");
     } else {
-        texel = texture(in_filename, s, t, "interp", "closest");
+        texel = texture(filename, s, t, "interp", "closest");
+    }
+    if (in_check_info) {
+        int size[2];
+        int found = in_check_info == 1 ? gettextureinfo(filename, "resolution", size) :
+            gettextureinfo(filename, s, t, "resolution", size);
+        if (!found || size[0] != 512 || size[1] != 512)
+            texel = color(1, 0, 0);
     }
     Ci = texel * emission();
 }

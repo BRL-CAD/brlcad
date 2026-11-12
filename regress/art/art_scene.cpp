@@ -153,17 +153,25 @@ read_image(const char *path, size_t width, size_t height)
     return image;
 }
 
+enum class TexturePattern { Checker, Black, Gray };
+
 static int
-create_checker_texture(const char *path)
+create_texture(const char *path, TexturePattern pattern)
 {
     // A one-texel checker must minify in the smaller regression renders.
-    constexpr size_t TEXTURE_SIZE = 512;
-    ImagePtr image(icv_create(TEXTURE_SIZE, TEXTURE_SIZE, ICV_COLOR_SPACE_RGB), icv_destroy);
+    constexpr size_t CHECKER_SIZE = 512;
+    // Constant fixtures also serve as 2:1 latitude-longitude environments.
+    constexpr size_t ENVIRONMENT_WIDTH = 2;
+    constexpr size_t ENVIRONMENT_HEIGHT = 1;
+    const size_t width = pattern == TexturePattern::Checker ? CHECKER_SIZE : ENVIRONMENT_WIDTH;
+    const size_t height = pattern == TexturePattern::Checker ? CHECKER_SIZE : ENVIRONMENT_HEIGHT;
+    ImagePtr image(icv_create(width, height, ICV_COLOR_SPACE_RGB), icv_destroy);
     if (!image)
 	return 1;
     for (size_t y = 0; y < image->height; ++y) {
 	for (size_t x = 0; x < image->width; ++x) {
-	    const double value = static_cast<double>((x + y) % 2);
+	    const double value = pattern == TexturePattern::Checker ? static_cast<double>((x + y) % 2) :
+		pattern == TexturePattern::Gray ? 0.5 : 0.0;
 	    std::fill_n(image->data + (y * image->width + x) * image->channels, image->channels, value);
 	}
     }
@@ -278,18 +286,18 @@ check_image(const char *path, size_t width, size_t height, ImageCheck check)
 }
 
 static int
-check_texture_filtering(const char *path, const char *reference_path,
-    size_t width, size_t height, bool filtered)
+check_image_difference(const char *path, const char *reference_path,
+    size_t width, size_t height, bool matching)
 {
     auto image = read_image(path, width, height);
     auto reference = read_image(reference_path, width, height);
     if (!image || !reference)
 	return 1;
     // Use the same display pipeline for the texture and its independent
-    // linear 0.5 reference. A reference corner identifies the sky background.
+    // reference. A reference corner identifies the sky background.
     constexpr double MIN_GEOMETRY_CONTRAST = 0.02;
-    constexpr double MAX_FILTERED_RMS = 0.02;
-    constexpr double MAX_FILTERED_ERROR = 0.05;
+    constexpr double MAX_MATCHING_RMS = 0.02;
+    constexpr double MAX_MATCHING_ERROR = 0.05;
     constexpr double MIN_ALIASED_RMS = 0.1;
     double squared_error = 0, max_error = 0;
     size_t geometry_pixels = 0;
@@ -314,11 +322,11 @@ check_texture_filtering(const char *path, const char *reference_path,
 	}
     }
     const double rms = std::sqrt(squared_error / (pixel_count * 3));
-    const bool difference_matches = filtered ?
-	rms <= MAX_FILTERED_RMS && max_error <= MAX_FILTERED_ERROR : rms >= MIN_ALIASED_RMS;
+    const bool difference_matches = matching ?
+	rms <= MAX_MATCHING_RMS && max_error <= MAX_MATCHING_ERROR : rms >= MIN_ALIASED_RMS;
     const bool enough_geometry = geometry_pixels > static_cast<size_t>(pixel_count * MIN_GEOMETRY_COVERAGE);
-    bu_log("Texture comparison %s: rms=%g max=%g geometry=%zu filtered=%d\n",
-	path, rms, max_error, geometry_pixels, filtered);
+    bu_log("Image comparison %s: rms=%g max=%g geometry=%zu matching=%d\n",
+	path, rms, max_error, geometry_pixels, matching);
     return difference_matches && enough_geometry ? 0 : 1;
 }
 
@@ -329,7 +337,11 @@ main(int argc, char **argv)
     if (argc == 3 && BU_STR_EQUAL(argv[1], "create"))
 	return create_scene(argv[2], nullptr, nullptr);
     if (argc == 3 && BU_STR_EQUAL(argv[1], "create-checker-texture"))
-	return create_checker_texture(argv[2]);
+	return create_texture(argv[2], TexturePattern::Checker);
+    if (argc == 3 && BU_STR_EQUAL(argv[1], "create-black-texture"))
+	return create_texture(argv[2], TexturePattern::Black);
+    if (argc == 3 && BU_STR_EQUAL(argv[1], "create-gray-texture"))
+	return create_texture(argv[2], TexturePattern::Gray);
     if ((argc == 4 || argc == 5) && BU_STR_EQUAL(argv[1], "create-material"))
 	return create_scene(argv[2], argv[3], argc == 5 ? argv[4] : nullptr);
     if (argc == 4 && BU_STR_EQUAL(argv[1], "remove-material"))
@@ -338,9 +350,9 @@ main(int argc, char **argv)
 	return edit_material_property(argv[2], argv[3], argv[4]);
     try {
 	if (argc == 6 && (BU_STR_EQUAL(argv[1], "check-filtered-texture") ||
-	    BU_STR_EQUAL(argv[1], "check-aliased-texture")))
-	    return check_texture_filtering(argv[2], argv[3], std::stoul(argv[4]), std::stoul(argv[5]),
-		BU_STR_EQUAL(argv[1], "check-filtered-texture"));
+	    BU_STR_EQUAL(argv[1], "check-aliased-texture") || BU_STR_EQUAL(argv[1], "check-matching-image")))
+	    return check_image_difference(argv[2], argv[3], std::stoul(argv[4]), std::stoul(argv[5]),
+		!BU_STR_EQUAL(argv[1], "check-aliased-texture"));
 	if (argc == 5) {
 	    const struct { const char *name; ImageCheck check; } checks[] = {
 		{"check", ImageCheck::Regions}, {"check-mesh", ImageCheck::Mesh},

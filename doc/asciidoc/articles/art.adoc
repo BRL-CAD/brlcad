@@ -408,8 +408,8 @@ material assign ball.r map.material
 ----
 
 Then render with `art -w 512 -n 512 -o preview.png scene.g ball.r`.
-Relative texture filenames resolve against the project search paths rooted
-at the database directory.  Keep textures and compiled shaders with the
+Relative texture filenames resolve directly against the database directory.
+They do not search the shader-library directories.  Keep textures and compiled shaders with the
 database when moving the project.  Paths containing spaces are supported.
 
 `regress-art` generates a one-texel black/white checker and converts it to
@@ -423,10 +423,18 @@ the original texture is unavailable, exercising relative asset lookup.
 These checks qualify this minification workflow; LOD transitions, color
 conversion, alpha, and bump/normal mapping need additional coverage.
 
-OpenImageIO currently checks the caller's working directory before its
-configured search paths.  A same-named texture there can override a project
-asset.  A separate collision probe reproduces this behavior; correcting
-that precedence remains open.
+`art` enables Appleseed's project-rooted texture lookup for both cached
+constant filenames and dynamic filenames.  A same-named file in the
+caller's working directory cannot override an asset or supply a missing
+project texture.  Explicit absolute filenames retain their meaning.  The
+regression checks these cases for 2D lookups and checks constant and dynamic
+latitude-longitude environment lookups and both texture-metadata query
+variants.  Missing project textures must fail unless the shader explicitly
+handles the lookup error and supplies a fallback.
+
+The environment regression also covers a modern OSL compatibility fix:
+lookup directions without derivative storage supply zero footprints
+instead of dereferencing absent derivatives.
 
 
 == Development milestones
