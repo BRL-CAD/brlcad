@@ -7,7 +7,6 @@ set(
   QgConsole.h
   QgConsoleListener.h
   QgDockWidget.h
-  QgEdit.h
   QgFlowLayout.h
   QgGL.h
   QgGedEventBatch.h
