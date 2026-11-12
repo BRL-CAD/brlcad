@@ -110,6 +110,15 @@ on flat and smooth BOTs, including reflected U/V charts, and on spheres
 and ellipsoids with full-range and transformed UVs.  LOD transitions,
 baked per-vertex tangents, and secondary rays remain unqualified.
 
+|Rough plastic and metal
+|`regress-art-surface` compares native plastic and uncompensated isotropic
+metal with independent Fresnel/GGX direct-light references on cubes, flat
+BOTs, spheres, and ellipsoids under both projections.  Rough-plastic mean
+response and smooth plastic are checked against hemisphere integrals.
+`regress-art-metal-energy` checks white-metal compensation on CSG and BOT cubes.
+These checks do not qualify arbitrary coats, anisotropy, colored-metal
+compensation, or denoising albedo.
+
 |Basic glass transmission and absorption
 |`regress-art-transmission` compares equal-index homogeneous absorption
 with analytic path lengths through cubes, spheres, ellipsoids, Boolean
@@ -547,6 +556,65 @@ closure in its own shading frame.  Native tests independently check mixed
 diffuse/mirror throughput, cosine-weighted diffuse mixture densities and
 values, mode masks, and the supported closure-count limit.  These checks do
 not qualify arbitrary layered materials, denoising albedo, or nested media.
+
+== Plastic and metal surfaces
+
+For a colored plastic with a white specular response, set the library
+shader's inputs explicitly:
+
+[source,tcl]
+----
+material create paint.material Paint
+material set paint.material optical OSL as_plastic
+material set paint.material optical OSL.output out_outColor
+material set paint.material optical OSL.param.in_color "color 0.3 0.5 0.7"
+material set paint.material optical OSL.param.in_specular_color "color 1 1 1"
+material set paint.material optical OSL.param.in_specular_weight "float 1"
+material set paint.material optical OSL.param.in_diffuse_weight "float 1"
+material set paint.material optical OSL.param.in_specular_roughness "float 0.35"
+material set paint.material optical OSL.param.in_ior "float 1.5"
+material set paint.material optical OSL.param.in_scattering "float 1"
+material assign ball.r paint.material
+----
+
+Color inputs are scene-linear.  `in_scattering` controls the existing
+plastic model's internal diffuse correction; the example explicitly uses
+its nonlinear form.  This parameter does not enable participating media.
+An explicit roughness of zero selects ideal specular reflection over the
+diffuse base.  Positive roughness retains GGX's finite minimum width.
+
+Appleseed selects plastic's diffuse and specular lobes using the outgoing
+surface Fresnel estimate, independently of the sampled microfacet normal.
+Continuous samples return the complete enabled response and its marginal
+sampling density.  Ideal specular samples include their lobe-selection
+compensation and cosine normalization.  Native tests check mode restrictions,
+smooth reflection, sampled/evaluated agreement, and independent numerical
+hemisphere integrals for rough plastic.  These changes correct sampling;
+the existing finite-roughness BRDF evaluation model is retained.
+
+For an isotropic metal, select `as_metal` and set
+`OSL.param.in_face_reflectance`, `OSL.param.in_roughness`, and
+`OSL.param.in_energy_compensation`.  Face reflectance is a scene-linear
+color, roughness is a float, and energy compensation defaults to one.
+The independent direct-light comparisons disable compensation to isolate
+Schlick conductor Fresnel and GGX masking.  A separate white-furnace test
+checks that compensated white metal returns the constant incident radiance;
+an uncompensated rough-metal control must disagree.
+
+`regress-art-surface` compares three finite roughnesses with independent
+point-light references on CSG cubes, flat BOT cubes, spheres, and ellipsoids
+under both projections.  Rough plastic at normal incidence also uses a
+numerical hemisphere reference and a one-percent bound on each foreground
+channel's mean through the common display pipeline.  This detects systematic
+brightness errors that the per-pixel noise tolerance alone permits.
+Smooth plastic under constant illumination is checked against independent
+Fresnel and diffuse transmission integrals.  Wrong-roughness and darker-base
+controls must fail their respective checks.
+
+These cases establish the stated single-surface models and tested lighting
+conditions.  General glossy layering, anisotropic roughness, colored-metal
+energy compensation, secondary textured paths, and denoising albedo need
+further qualification.
 
 == Native color-texture decoding
 

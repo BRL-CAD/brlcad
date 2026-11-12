@@ -1,0 +1,105 @@
+/*              A R T _ S U R F A C E _ R E F E R E N C E . O S L
+ * BRL-CAD
+ *
+ * Copyright (c) 2026 United States Government as represented by
+ * the U.S. Army Research Laboratory.
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public License
+ * version 2.1 as published by the Free Software Foundation.
+ *
+ * This library is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this file; see the file named COPYING for more
+ * information.
+ */
+float dielectric_fresnel(float cosine, float ior)
+{
+    float transmitted = sqrt(max(0, 1 - (1 - cosine*cosine) / (ior*ior)));
+    float rs = (cosine - ior*transmitted) / (cosine + ior*transmitted);
+    float rp = (ior*cosine - transmitted) / (ior*cosine + transmitted);
+    return (rs*rs + rp*rp) / 2;
+}
+
+float smith_lambda(float cosine, float alpha)
+{
+    return (sqrt(1 + alpha*alpha * (1 - cosine*cosine) / (cosine*cosine)) - 1) / 2;
+}
+
+surface art_surface_reference(string in_model = "plastic",
+    color in_color = color(0.3, 0.5, 0.7), float in_roughness = 0.5,
+    float in_ior = 1.5, float in_scattering = 1,
+    point in_light_position = point(0, 0, 40), float in_light_intensity = 1000,
+    float in_environment = 0)
+{
+    normal n = normalize(Ng);
+    vector outgoing = -normalize(I);
+    float mu_o = max(dot(outgoing, n), 0);
+    float fdr = -1.4399 / (in_ior*in_ior) + 0.7099 / in_ior + 0.6681 + 0.0636*in_ior;
+    color base = in_color / (in_ior*in_ior * M_PI *
+        (1 - mix(color(1), in_color, in_scattering) * fdr));
+    if (in_environment > 0) {
+        if (in_roughness > 0) {
+            // At normal incidence, both GGX and the diffuse substrate are
+            // axisymmetric.  Reject views outside this reference's contract.
+            if (mu_o < 0.99999) {
+                Ci = color(1, 0, 0) * emission();
+                return;
+            }
+            int PolarCount = 1024;
+            color integral = 0;
+            float alpha = max(0.001, in_roughness*in_roughness);
+            for (int i = 0; i < PolarCount; ++i) {
+                float mu = (i + 0.5) / PolarCount;
+                float mu_h = sqrt((1 + mu) / 2);
+                float f = dielectric_fresnel(mu_h, in_ior);
+                float shape = 1 + (alpha*alpha - 1) * mu_h*mu_h;
+                float d = alpha*alpha / (M_PI * shape*shape);
+                float g = 1 / (1 + smith_lambda(mu, alpha));
+                color value = base * (1 - f)*(1 - f) + f * d * g / (4 * mu);
+                integral += 2 * M_PI * mu * value / PolarCount;
+            }
+            Ci = in_environment * integral * emission();
+            return;
+        }
+        // For a smooth coat, the diffuse Fresnel integral is axisymmetric.
+        // Midpoint quadrature includes the cosine and hemisphere measure.
+        int PolarCount = 128;
+        float transmitted = 0;
+        for (int i = 0; i < PolarCount; ++i) {
+            float mu = (i + 0.5) / PolarCount;
+            transmitted += 2 * mu * (1 - dielectric_fresnel(mu, in_ior)) / PolarCount;
+        }
+        float fo = dielectric_fresnel(mu_o, in_ior);
+        Ci = in_environment * (color(fo) + base * M_PI * (1 - fo) * transmitted) * emission();
+        return;
+    }
+    vector to_light = in_light_position - P;
+    float distance_squared = dot(to_light, to_light);
+    vector incoming = normalize(to_light);
+    float mu_i = dot(incoming, n);
+    if (mu_o <= 0 || mu_i <= 0) {
+        Ci = 0;
+        return;
+    }
+    vector halfway = normalize(incoming + outgoing);
+    float mu_h = dot(halfway, n);
+    float cosine = dot(incoming, halfway);
+    float alpha = max(0.001, in_roughness*in_roughness);
+    float shape = 1 + (alpha*alpha - 1) * mu_h*mu_h;
+    float d = alpha*alpha / (M_PI * shape*shape);
+    float g = 1 / (1 + smith_lambda(mu_i, alpha) + smith_lambda(mu_o, alpha));
+    color value;
+    if (in_model == "metal") {
+        color fresnel = in_color + (1 - in_color) * pow(1 - cosine, 5);
+        value = fresnel * d * g / (4 * mu_i * mu_o);
+    } else {
+        float f = dielectric_fresnel(cosine, in_ior);
+        value = base * (1 - f)*(1 - f) + f * d * g / (4 * mu_i * mu_o);
+    }
+    Ci = value * mu_i * in_light_intensity / distance_squared * emission();
+}

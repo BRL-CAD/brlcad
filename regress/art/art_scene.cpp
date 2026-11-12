@@ -141,6 +141,14 @@ create_scene(const char *path, const char *shader, const char *output)
 	    mk_lcomb(db, object.name, &members, 0, NULL, NULL, NULL, 0) == 0;
     }
 
+    // The surface regression selects this region as a point-light source.
+    const point_t key_position = {0, 0, 40};
+    const unsigned char white[] = {255, 255, 255};
+    BU_LIST_INIT(&members.l);
+    success = success && mk_sph(db, "key_light.s", key_position, 0.25) == 0 &&
+	mk_addmember("key_light.s", &members.l, NULL, WMOP_UNION) &&
+	mk_lcomb(db, "key_light.r", &members, 1, "light", "bright=1", white, 0) == 0;
+
     if (shader) {
 	struct bu_attribute_value_set optical;
 	bu_avs_init_empty(&optical);
@@ -336,7 +344,7 @@ check_image(const char *path, size_t width, size_t height, ImageCheck check)
     return 0;
 }
 
-enum class ImageComparison { Matching, Uniform, Aliased, Changed };
+enum class ImageComparison { Matching, Uniform, Aliased, Changed, Mean };
 
 static int
 check_image_difference(const char *path, const char *reference_path,
@@ -353,7 +361,9 @@ check_image_difference(const char *path, const char *reference_path,
     constexpr double MAX_MATCHING_ERROR = 0.05;
     constexpr double MIN_ALIASED_RMS = 0.1;
     constexpr double MIN_CHANGED_RMS = 0.01;
+    constexpr double MAX_RELATIVE_CHANNEL_MEAN_ERROR = 0.01;
     double squared_error = 0, max_error = 0;
+    double foreground_actual[3] = {}, foreground_expected[3] = {};
     size_t geometry_pixels = 0;
     const size_t pixel_count = width * height;
     for (size_t pixel = 0; pixel < pixel_count; ++pixel) {
@@ -363,7 +373,8 @@ check_image_difference(const char *path, const char *reference_path,
 	for (size_t channel = 0; channel < 3; ++channel)
 	    background_contrast = std::max(background_contrast,
 		std::abs(expected[channel] - reference->data[channel]));
-	if (background_contrast > MIN_GEOMETRY_CONTRAST)
+	const bool foreground = background_contrast > MIN_GEOMETRY_CONTRAST;
+	if (foreground)
 	    ++geometry_pixels;
 	for (size_t channel = 0; channel < 3; ++channel) {
 	    if (!std::isfinite(actual[channel]) || !std::isfinite(expected[channel])) {
@@ -373,6 +384,10 @@ check_image_difference(const char *path, const char *reference_path,
 	    const double error = std::abs(actual[channel] - expected[channel]);
 	    squared_error += error * error;
 	    max_error = std::max(max_error, error);
+	    if (foreground) {
+		foreground_actual[channel] += actual[channel];
+		foreground_expected[channel] += expected[channel];
+	    }
 	}
     }
     const double rms = std::sqrt(squared_error / (pixel_count * 3));
@@ -383,6 +398,20 @@ check_image_difference(const char *path, const char *reference_path,
     // A deliberately uniform reference has no foreground contrast to count.
     const bool enough_geometry = comparison == ImageComparison::Uniform ||
 	geometry_pixels > static_cast<size_t>(pixel_count * MIN_GEOMETRY_COVERAGE);
+    if (comparison == ImageComparison::Mean) {
+	// Both images use the same display pipeline.  Comparing foreground
+	// channel means detects systematic bias that per-pixel noise bounds allow.
+	double max_relative_error = 0;
+	for (size_t channel = 0; channel < 3; ++channel) {
+	    const double relative_error = foreground_expected[channel] > 0 ?
+		std::abs(foreground_actual[channel] - foreground_expected[channel]) /
+		foreground_expected[channel] : INFINITY;
+	    max_relative_error = std::max(max_relative_error, relative_error);
+	}
+	bu_log("Foreground mean comparison %s: relative_error=%g geometry=%zu\n",
+	    path, max_relative_error, geometry_pixels);
+	return enough_geometry && max_relative_error <= MAX_RELATIVE_CHANNEL_MEAN_ERROR ? 0 : 1;
+    }
     bu_log("Image comparison %s: rms=%g max=%g geometry=%zu matching=%d\n",
 	path, rms, max_error, geometry_pixels, matching);
     return difference_matches && enough_geometry ? 0 : 1;
@@ -411,10 +440,12 @@ main(int argc, char **argv)
     try {
 	if (argc == 6 && (BU_STR_EQUAL(argv[1], "check-filtered-texture") ||
 	    BU_STR_EQUAL(argv[1], "check-aliased-texture") || BU_STR_EQUAL(argv[1], "check-matching-image") ||
-	    BU_STR_EQUAL(argv[1], "check-different-image") || BU_STR_EQUAL(argv[1], "check-uniform-image"))) {
+	    BU_STR_EQUAL(argv[1], "check-different-image") || BU_STR_EQUAL(argv[1], "check-uniform-image") ||
+	    BU_STR_EQUAL(argv[1], "check-mean-image"))) {
 	    const ImageComparison comparison = BU_STR_EQUAL(argv[1], "check-aliased-texture") ? ImageComparison::Aliased :
 		BU_STR_EQUAL(argv[1], "check-different-image") ? ImageComparison::Changed :
-		BU_STR_EQUAL(argv[1], "check-uniform-image") ? ImageComparison::Uniform : ImageComparison::Matching;
+		BU_STR_EQUAL(argv[1], "check-uniform-image") ? ImageComparison::Uniform :
+		BU_STR_EQUAL(argv[1], "check-mean-image") ? ImageComparison::Mean : ImageComparison::Matching;
 	    return check_image_difference(argv[2], argv[3], std::stoul(argv[4]), std::stoul(argv[5]), comparison);
 	}
 	if (argc == 5) {
