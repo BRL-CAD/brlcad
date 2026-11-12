@@ -26,14 +26,26 @@
 
 #include "qtcad/defines.h"
 
+class QgPluginContext;
 class QgPluginManager;
 
-/** Standard host-console commands for inspecting a QgPluginManager. */
+/** Host-neutral management and command dispatch for QgPluginManager. */
 class QTCAD_EXPORT QgPluginCommands
 {
     public:
 	/** Run a plugin subcommand, appending text to optional output sinks. */
 	static int run(QgPluginManager *manager, const QStringList &arguments,
+		QString *output, QString *error);
+	/**
+	 * Dispatch a host command supplied by an enabled plugin.
+	 *
+	 * Returns true when a command matched, including ambiguous matches that
+	 * are reported as errors.  Returns false when the host should continue
+	 * with its normal command lookup.
+	 */
+	static bool dispatch(QgPluginManager *manager,
+		QgPluginContext *context, const QString &category,
+		const QStringList &arguments, int *result,
 		QString *output, QString *error);
 	/** Return usage text for the supported plugin subcommands. */
 	static QString helpText();

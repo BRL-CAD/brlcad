@@ -103,6 +103,11 @@ class QgTestCommandPlugin : public QObject, public IQgCommand,
 	    return QStringLiteral("qtcad_test");
 	}
 
+	QStringList aliases() const override
+	{
+	    return QStringList() << QStringLiteral("qtcad_alias");
+	}
+
 	QgToolBase *create(QgPluginContext *context,
 		QObject *parent = nullptr) override
 	{

@@ -14,6 +14,7 @@ set(
   qged_srcs
   QgEdMainWindow.cpp
   QgEdApp.cpp
+  QgEdCategories.h
   QgEdFilter.cpp
   fbserv.cpp
   QgEdPalette.cpp

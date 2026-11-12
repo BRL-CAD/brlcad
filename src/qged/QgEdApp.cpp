@@ -33,11 +33,13 @@
 #include "ged/scene.h"
 #include "ged/selection.h"
 #include "qtcad/QgGeomImport.h"
+#include "qtcad/QgPluginCommands.h"
 #include "qtcad/QgPluginManager.h"
 #include "qtcad/QgSession.h"
 #include "qtcad/QgTreeSelectionModel.h"
 #include "QgEdApp.h"
 #include "fbserv.h"
+#include "QgEdCategories.h"
 #include "QgEdFilter.h"
 
 int
@@ -109,6 +111,22 @@ qt_delete_io_handler(struct ged_subprocess *p, bu_process_io_t t)
 
     emit ca->view_update(QG_VIEW_REFRESH);
 }
+
+struct qged_qcmd_cleanup {
+    const char *cmd = NULL;
+    char *input = NULL;
+    char **argv = NULL;
+
+    ~qged_qcmd_cleanup()
+    {
+	if (cmd)
+	    bu_free((void *)cmd, "cmd");
+	if (input)
+	    bu_free(input, "input copy");
+	if (argv)
+	    bu_free(argv, "input argv");
+    }
+};
 
 
 QgEdApp::QgEdApp(int &argc, char *argv[], const char *g_file, int swrast_mode, int quad_mode) :QApplication(argc, argv)
@@ -565,6 +583,45 @@ QgEdApp::run_qcmd(const QString &command)
     char **av = (char **)bu_calloc(strlen(input) + 1, sizeof(char *), "argv array");
     int ac = bu_argv_from_string(av, strlen(input), input);
     struct bu_vls msg = BU_VLS_INIT_ZERO;
+    struct qged_qcmd_cleanup cleanup = {cmd, input, av};
+
+    /* Once GED requests more input, every subsequent line belongs to that
+     * command until it completes.  Host commands must not intercept an
+     * argument merely because it happens to match a plugin command name. */
+    if (tmp_av.empty() && ac > 0) {
+	QStringList arguments;
+	arguments.reserve(ac);
+	for (int i = 0; i < ac; ++i)
+	    arguments.append(QString::fromLocal8Bit(av[i]));
+
+	QString output;
+	QString error;
+	bool handled = false;
+	if (BU_STR_EQUAL(av[0], "plugins")) {
+	    arguments.removeFirst();
+	    (void)QgPluginCommands::run(m_plugin_manager, arguments,
+		&output, &error);
+	    handled = true;
+	} else {
+	    handled = QgPluginCommands::dispatch(m_plugin_manager,
+		&m_plugin_context, QStringLiteral(QGED_CATEGORY_COMMAND),
+		arguments, NULL, &output, &error);
+	}
+
+	if (handled) {
+	    if (console) {
+		if (!output.isEmpty())
+		    console->printString(output);
+		if (!error.isEmpty())
+		    console->printString(error);
+		console->prompt("$ ");
+	    }
+	    if (mdl && mdl->ged())
+		bu_vls_trunc(mdl->ged()->ged_result_str, 0);
+	    bu_vls_free(&msg);
+	    return;
+	}
+    }
 
     // Run as a GED command.
     int ret = BRLCAD_OK;
@@ -590,10 +647,7 @@ QgEdApp::run_qcmd(const QString &command)
 	bu_vls_trunc(mdl->ged()->ged_result_str, 0);
     }
 
-    bu_free((void *)cmd, "cmd");
     bu_vls_free(&msg);
-    bu_free(input, "input copy");
-    bu_free(av, "input argv");
 }
 
 void

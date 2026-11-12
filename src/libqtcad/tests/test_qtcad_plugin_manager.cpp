@@ -54,6 +54,7 @@ class QgPluginManagerTest : public QObject
 	void publishesAvailabilityChanges();
 	void reloadsPluginCode();
 	void providesHostNeutralCommands();
+	void dispatchesPluginCommands();
 
     private:
 	QString pluginDirectory() const;
@@ -299,6 +300,42 @@ QgPluginManagerTest::providesHostNeutralCommands()
     QCOMPARE(QgPluginCommands::run(&manager,
 	QStringList() << QStringLiteral("unknown"), &output, &error), 1);
     QVERIFY(error.contains(QStringLiteral("unknown subcommand")));
+}
+
+void
+QgPluginManagerTest::dispatchesPluginCommands()
+{
+    QgPluginManager manager(QStringList() << pluginDirectory(),
+	settingsGroup());
+    QgPluginContext context;
+    QString output;
+    QString error;
+    int result = -1;
+
+    QVERIFY(QgPluginCommands::dispatch(&manager, &context,
+	QStringLiteral("test.command"),
+	QStringList() << QStringLiteral("qtcad_test") <<
+	QStringLiteral("argument"), &result, &output, &error));
+    QCOMPARE(result, 0);
+    QCOMPARE(output, QStringLiteral("qtcad_test argument"));
+    QVERIFY(error.isEmpty());
+
+    output.clear();
+    QVERIFY(QgPluginCommands::dispatch(&manager, &context,
+	QStringLiteral("test.command"),
+	QStringList() << QStringLiteral("qtcad_alias"),
+	&result, &output, &error));
+    QCOMPARE(result, 0);
+    QCOMPARE(output, QStringLiteral("qtcad_alias"));
+
+    QVERIFY(!QgPluginCommands::dispatch(&manager, &context,
+	QStringLiteral("test.command"),
+	QStringList() << QStringLiteral("not_a_plugin_command"),
+	&result, &output, &error));
+    QVERIFY(!QgPluginCommands::dispatch(&manager, &context,
+	QStringLiteral("other.command"),
+	QStringList() << QStringLiteral("qtcad_test"),
+	&result, &output, &error));
 }
 
 int

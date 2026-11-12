@@ -31,9 +31,7 @@
 #include "qtcad/QgTreeSelectionModel.h"
 #include "QgEdMainWindow.h"
 #include "QgEdApp.h"
-
-static const char *qged_view_category = "qged.view";
-static const char *qged_object_category = "qged.object";
+#include "QgEdCategories.h"
 
 static int
 qged_dm_during_clbk(int ac, const char **av, void *u1, void *u2)
@@ -150,9 +148,9 @@ QgEdMainWindow::CreateWidgets(int canvas_type)
     vc->makeCurrent(vc);
 
     vc_ctrl = new QgPaletteController(vc, ap->pluginManager(),
-	QString::fromLatin1(qged_view_category), ap->pluginContext(), this);
+	QStringLiteral(QGED_CATEGORY_VIEW), ap->pluginContext(), this);
     oc_ctrl = new QgPaletteController(oc, ap->pluginManager(),
-	QString::fromLatin1(qged_object_category), ap->pluginContext(), this);
+	QStringLiteral(QGED_CATEGORY_OBJECT), ap->pluginContext(), this);
 
     // Command console
     console = new QgConsole(console_dock);

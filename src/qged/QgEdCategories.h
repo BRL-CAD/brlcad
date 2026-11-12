@@ -1,0 +1,42 @@
+/*                 Q G E D C A T E G O R I E S . H
+ * BRL-CAD
+ *
+ * Copyright (c) 2026 United States Government as represented by
+ * the U.S. Army Research Laboratory.
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public License
+ * version 2.1 as published by the Free Software Foundation.
+ *
+ * This library is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this file; see the file named COPYING for more
+ * information.
+ */
+
+#ifndef QGEDCATEGORIES_H
+#define QGEDCATEGORIES_H
+
+/* qged owns these composition categories.  Other libqtcad hosts may use
+ * different names without coupling their plugins to qged. */
+#define QGED_CATEGORY_VIEW "qged.view"
+#define QGED_CATEGORY_OBJECT "qged.object"
+#define QGED_CATEGORY_PANEL "qged.panel"
+#define QGED_CATEGORY_DIALOG "qged.dialog"
+#define QGED_CATEGORY_COMMAND "qged.command"
+
+#endif /* QGEDCATEGORIES_H */
+
+/*
+ * Local Variables:
+ * mode: C
+ * tab-width: 8
+ * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

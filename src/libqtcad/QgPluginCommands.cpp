@@ -21,6 +21,7 @@
 #include "common.h"
 
 #include "qtcad/QgPluginCommands.h"
+#include "qtcad/QgPluginInterfaces.h"
 #include "qtcad/QgPluginManager.h"
 
 static void
@@ -95,6 +96,59 @@ QgPluginCommands::run(QgPluginManager *manager,
 	"plugins: unknown subcommand '%1'\n").arg(command));
     qg_append(error, helpText());
     return 1;
+}
+
+bool
+QgPluginCommands::dispatch(QgPluginManager *manager,
+	QgPluginContext *context, const QString &category,
+	const QStringList &arguments, int *result,
+	QString *output, QString *error)
+{
+    if (!manager || arguments.isEmpty())
+	return false;
+
+    const QString commandName = arguments.first();
+    const QList<IQgCommand *> commands =
+	manager->factories<IQgCommand>(category);
+    IQgCommand *match = nullptr;
+
+    for (IQgCommand *command : commands) {
+	if (!command || command->verb() != commandName)
+	    continue;
+	if (match) {
+	    qg_append(error, QStringLiteral(
+		"%1: multiple plugins define this command\n")
+		.arg(commandName));
+	    if (result)
+		*result = 1;
+	    return true;
+	}
+	match = command;
+    }
+
+    if (!match) {
+	for (IQgCommand *command : commands) {
+	    if (!command || !command->aliases().contains(commandName))
+		continue;
+	    if (match) {
+		qg_append(error, QStringLiteral(
+		    "%1: multiple plugins define this alias\n")
+		    .arg(commandName));
+		if (result)
+		    *result = 1;
+		return true;
+	    }
+	    match = command;
+	}
+    }
+
+    if (!match)
+	return false;
+
+    const int commandResult = match->run(context, arguments, output, error);
+    if (result)
+	*result = commandResult;
+    return true;
 }
 
 QString
