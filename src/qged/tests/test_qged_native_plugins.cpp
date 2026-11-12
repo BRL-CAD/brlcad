@@ -54,7 +54,9 @@ QgedNativePluginTest::discoversCreatesAndUnloadsTools()
 	QStringLiteral("org.brlcad.qged.view.info"),
 	QStringLiteral("org.brlcad.qged.view.settings"),
 	QStringLiteral("org.brlcad.qged.view.select"),
-	QStringLiteral("org.brlcad.qged.view.measure")
+	QStringLiteral("org.brlcad.qged.view.measure"),
+	QStringLiteral("org.brlcad.qged.polygon.create"),
+	QStringLiteral("org.brlcad.qged.polygon.modify")
     };
     for (const QString &id : expectedIds)
 	QVERIFY2(!manager.descriptor(id).id.isEmpty(), qPrintable(id));

@@ -125,6 +125,8 @@ if(BRLCAD_ENABLE_QT AND BUILD_TESTING)
       qged_view_settings
       qged_select
       qged_measure
+      qged_polygon_create
+      qged_polygon_modify
     )
     brlcad_add_test(NAME test_qged_native_plugins
       COMMAND test_qged_native_plugins)

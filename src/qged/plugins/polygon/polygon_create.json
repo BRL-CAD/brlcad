@@ -1,0 +1,13 @@
+{
+    "id": "org.brlcad.qged.polygon.create",
+    "displayName": "Polygon Create",
+    "category": "qged.view",
+    "iconName": ":poly_create.svg",
+    "sortKey": 100,
+    "requiresOpenDb": false,
+    "requiresView": true,
+    "description": "Creates view polygons or imports sketch geometry.",
+    "vendor": "BRL-CAD",
+    "version": "1.0",
+    "apiVersion": 1
+}

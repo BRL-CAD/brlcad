@@ -28,9 +28,22 @@
 #include <QButtonGroup>
 #include <QGroupBox>
 #include <QtGlobal>
-#include "../../QgEdApp.h"
+#include "ged.h"
+#include "qtcad/QgPluginContext.h"
 #include "QPolyCreate.h"
 #include "QPolyMod.h"
+
+struct ged *
+QPolyMod::ged() const
+{
+    return m_context ? m_context->getGed() : GED_NULL;
+}
+
+struct bview *
+QPolyMod::activeView() const
+{
+    return m_context ? m_context->activeViewContext() : NULL;
+}
 
 QPolyMod::QPolyMod()
     : QWidget()
@@ -170,6 +183,12 @@ QPolyMod::QPolyMod()
 
 QPolyMod::~QPolyMod()
 {
+    bu_ptbl_free(&puf->bool_objs);
+    bu_ptbl_free(&pmf->move_objs);
+    delete puf;
+    delete psf;
+    delete ppf;
+    delete pmf;
 }
 
 void
@@ -181,24 +200,22 @@ QPolyMod::app_mod_names_reset(void *)
 void
 QPolyMod::mod_names_reset()
 {
-    QgModel *m = ((QgEdApp *)qApp)->mdl;
-    if (!m)
+    struct bview *view = activeView();
+    if (!view)
 	return;
-    struct ged *gedp = m->ged();
-    if (!gedp)
-	return;
+
+    if (p && p->s_v != view)
+	p = NULL;
 
     // Make sure the Combo box list is current.
     mod_names->blockSignals(true);
     mod_names->clear();
-    if (gedp) {
-	struct bu_ptbl *view_objs = bv_view_objs(gedp->ged_gvp, BV_VIEW_OBJS);
-	if (view_objs) {
-	    for (size_t i = 0; i < BU_PTBL_LEN(view_objs); i++) {
-		struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(view_objs, i);
-		if (s->s_type_flags & BV_POLYGONS) {
-		    mod_names->addItem(bu_vls_cstr(&s->s_name));
-		}
+    struct bu_ptbl *view_objs = bv_view_objs(view, BV_VIEW_OBJS);
+    if (view_objs) {
+	for (size_t i = 0; i < BU_PTBL_LEN(view_objs); i++) {
+	    struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(view_objs, i);
+	    if (s->s_type_flags & BV_POLYGONS) {
+		mod_names->addItem(bu_vls_cstr(&s->s_name));
 	    }
 	}
     }
@@ -252,11 +269,7 @@ QPolyMod::poly_type_settings(struct bv_polygon *ip)
 void
 QPolyMod::polygon_update_props()
 {
-    QgModel *m = ((QgEdApp *)qApp)->mdl;
-    if (!m)
-	return;
-    struct ged *gedp = m->ged();
-    if (!gedp)
+    if (!p)
 	return;
 
     struct bv_polygon *ip = (struct bv_polygon *)p->s_i_data;
@@ -286,19 +299,15 @@ QPolyMod::polygon_update_props()
 void
 QPolyMod::toplevel_config(bool)
 {
-    // Initialize
-    QgModel *m = ((QgEdApp *)qApp)->mdl;
-    if (!m)
-	return;
-    struct ged *gedp = m->ged();
+    struct bview *view = activeView();
     bool draw_change = false;
 
     // This function is called when a top level mode change was initiated
     // by a selection button.  Clear any selected points being displayed -
     // when we're switching modes at this level, we always start with a
     // blank slate for points.
-    if (gedp) {
-	struct bu_ptbl *view_objs = bv_view_objs(gedp->ged_gvp, BV_VIEW_OBJS);
+    if (view) {
+	struct bu_ptbl *view_objs = bv_view_objs(view, BV_VIEW_OBJS);
 	if (view_objs) {
 	    for (size_t i = 0; i < BU_PTBL_LEN(view_objs); i++) {
 		struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(view_objs, i);
@@ -328,7 +337,7 @@ QPolyMod::toplevel_config(bool)
 	poly_type_settings(ip);
     }
 
-    if (draw_change && gedp)
+    if (draw_change)
 	emit view_updated(QG_VIEW_REFRESH);
 }
 
@@ -355,28 +364,18 @@ QPolyMod::clear_pnt_selection(bool checked)
 
     bv_update_polygon(p, p->s_v, BV_POLYGON_UPDATE_PROPS_ONLY);
 
-    QgModel *m = ((QgEdApp *)qApp)->mdl;
-    if (!m)
-	return;
-    struct ged *gedp = m->ged();
-    if (!gedp)
-	return;
-
     emit view_updated(QG_VIEW_REFRESH);
 }
 
 void
 QPolyMod::select(const QString &poly)
 {
-    QgModel *m = ((QgEdApp *)qApp)->mdl;
-    if (!m)
-	return;
-    struct ged *gedp = m->ged();
-    if (!gedp)
+    struct bview *view = activeView();
+    if (!view)
 	return;
 
     p = NULL;
-    struct bu_ptbl *view_objs = bv_view_objs(gedp->ged_gvp, BV_VIEW_OBJS);
+    struct bu_ptbl *view_objs = bv_view_objs(view, BV_VIEW_OBJS);
     if (view_objs) {
 	for (size_t i = 0; i < BU_PTBL_LEN(view_objs); i++) {
 	    struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(view_objs, i);
@@ -464,15 +463,12 @@ QPolyMod::toggle_closed_poly(bool checked)
     append_pnt->blockSignals(false);
     select_pnt->blockSignals(false);
 
-    QgModel *m = ((QgEdApp *)qApp)->mdl;
-    if (!m)
-	return;
-    struct ged *gedp = m->ged();
-    if (!gedp)
+    struct bview *view = activeView();
+    if (!view)
 	return;
 
     if (do_bool && ip->type == BV_POLYGON_GENERAL && close_general_poly->isChecked()) {
-	struct bu_ptbl *view_objs = bv_view_objs(gedp->ged_gvp, BV_VIEW_OBJS);
+	struct bu_ptbl *view_objs = bv_view_objs(view, BV_VIEW_OBJS);
 	if (view_objs) {
 	    bg_clip_t op = bg_Union;
 	    if (do_bool) {
@@ -527,11 +523,8 @@ QPolyMod::toggle_closed_poly(bool checked)
 void
 QPolyMod::apply_bool_op()
 {
-    QgModel *m = ((QgEdApp *)qApp)->mdl;
-    if (!m || !p)
-	return;
-    struct ged *gedp = m->ged();
-    if (!gedp)
+    struct bview *view = activeView();
+    if (!view || !p)
 	return;
 
     struct bv_polygon *ip = (struct bv_polygon *)p->s_i_data;
@@ -554,7 +547,7 @@ QPolyMod::apply_bool_op()
 	op = bg_Intersection;
     }
 
-    struct bu_ptbl *view_objs = bv_view_objs(gedp->ged_gvp, BV_VIEW_OBJS);
+    struct bu_ptbl *view_objs = bv_view_objs(view, BV_VIEW_OBJS);
     if (view_objs) {
 	std::vector<struct bv_scene_obj *> cleanup;
 	for (size_t i = 0; i < BU_PTBL_LEN(view_objs); i++) {
@@ -583,11 +576,8 @@ QPolyMod::apply_bool_op()
 void
 QPolyMod::align_to_poly()
 {
-    QgModel *m = ((QgEdApp *)qApp)->mdl;
-    if (!m || !p)
-	return;
-    struct ged *gedp = m->ged();
-    if (!gedp)
+    struct bview *view = activeView();
+    if (!view || !p)
 	return;
 
     struct bv_polygon *ip = (struct bv_polygon *)p->s_i_data;
@@ -596,12 +586,12 @@ QPolyMod::align_to_poly()
     vect_t dir = VINIT_ZERO;
     VSET(dir, ip->vp[0], ip->vp[1], ip->vp[2]);
     bg_plane_pt_at(&center, &ip->vp, 0, 0);
-    MAT_DELTAS_VEC_NEG(gedp->ged_gvp->gv_center, center);
-    bn_ae_vec(&gedp->ged_gvp->gv_aet[0], &gedp->ged_gvp->gv_aet[1], dir);
-    gedp->ged_gvp->gv_aet[2] = 0;
-    bv_mat_aet(gedp->ged_gvp);
+    MAT_DELTAS_VEC_NEG(view->gv_center, center);
+    bn_ae_vec(&view->gv_aet[0], &view->gv_aet[1], dir);
+    view->gv_aet[2] = 0;
+    bv_mat_aet(view);
 
-    bv_update(gedp->ged_gvp);
+    bv_update(view);
 
     emit view_updated(QG_VIEW_REFRESH);
 }
@@ -609,11 +599,7 @@ QPolyMod::align_to_poly()
 void
 QPolyMod::delete_poly()
 {
-    QgModel *m = ((QgEdApp *)qApp)->mdl;
-    if (!m || !p)
-	return;
-    struct ged *gedp = m->ged();
-    if (!gedp)
+    if (!p)
 	return;
 
     struct bv_polygon *ip = (struct bv_polygon *)p->s_i_data;
@@ -646,10 +632,7 @@ QPolyMod::sketch_name_edit_str(const QString &)
 void
 QPolyMod::sketch_name_edit()
 {
-    QgModel *m = ((QgEdApp *)qApp)->mdl;
-    if (!m)
-	return;
-    struct ged *gedp = m->ged();
+    struct ged *gedp = ged();
     if (!gedp) {
 	ps->sketch_name->setPlaceholderText("No .g file open");
 	ps->sketch_name->setStyleSheet("color: rgb(200,200,200)");
@@ -723,10 +706,7 @@ QPolyMod::sketch_name_edit()
 void
 QPolyMod::sketch_name_update()
 {
-    QgModel *m = ((QgEdApp *)qApp)->mdl;
-    if (!m)
-	return;
-    struct ged *gedp = m->ged();
+    struct ged *gedp = ged();
     if (!gedp)
 	return;
 
@@ -799,14 +779,11 @@ QPolyMod::view_name_edit_str(const QString &)
 void
 QPolyMod::view_name_edit()
 {
-    QgModel *m = ((QgEdApp *)qApp)->mdl;
-    if (!m)
-	return;
-    struct ged *gedp = m->ged();
-    if (!gedp)
+    struct bview *view = activeView();
+    if (!view)
 	return;
 
-    if (!ps->uniq_obj_name(NULL, gedp->ged_gvp)) {
+    if (!ps->uniq_obj_name(NULL, view)) {
 	ps->view_name->setStyleSheet("color: rgb(255,0,0)");
     } else {
 	ps->view_name->setStyleSheet("");
@@ -816,16 +793,13 @@ QPolyMod::view_name_edit()
 void
 QPolyMod::view_name_update()
 {
-    QgModel *m = ((QgEdApp *)qApp)->mdl;
-    if (!m || !p)
-	return;
-    struct ged *gedp = m->ged();
-    if (!gedp)
+    struct bview *view = activeView();
+    if (!view || !p)
 	return;
 
     // Make sure the name is unique
     struct bu_vls vname = BU_VLS_INIT_ZERO;
-    if (!ps->uniq_obj_name(&vname, gedp->ged_gvp)) {
+    if (!ps->uniq_obj_name(&vname, view)) {
 	bu_vls_free(&vname);
 	return;
     }
@@ -890,7 +864,7 @@ QPolyMod::toggle_grid_snapping(bool s)
 void
 QPolyMod::checkbox_refresh(unsigned long long)
 {
-    struct bview *v = (cf) ? cf->v : NULL;
+    struct bview *v = (cf && cf->v) ? cf->v : activeView();
     if (!v)
 	return;
 
@@ -921,12 +895,12 @@ QPolyMod::propagate_update(int)
 bool
 QPolyMod::eventFilter(QObject *, QEvent *e)
 {
-    QgModel *m = ((QgEdApp *)qApp)->mdl;
-    if (!m)
+    struct bview *view = activeView();
+    if (!view)
 	return false;
-    struct ged *gedp = m->ged();
-    if (!gedp)
-	return false;
+
+    if (p && p->s_v != view)
+	p = NULL;
 
     // We might be selecting or modifying - if the former, we may
     // not have a current polygon.
@@ -945,7 +919,7 @@ QPolyMod::eventFilter(QObject *, QEvent *e)
 
     // Set libqtcad know what the current polygon is
     cf->wp = p;
-    cf->v = (p) ? p->s_v : gedp->ged_gvp;
+    cf->v = (p) ? p->s_v : view;
     cf->ptype = (ip) ? ip->type : BV_POLYGON_GENERAL;
     checkbox_refresh(0);
 
