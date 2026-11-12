@@ -89,8 +89,10 @@ per-instance overrides, and advanced closures remain unqualified.
 on CSG and flat and smooth BOTs under both projections, including signed
 depth, zero-valued heights, degenerate footprints, and extreme unit changes.
 `regress-art-normal` checks tangent orientation, mirrored UVs, and native
-normal-map controls against analytic frames.  Image-height filtering,
-baked per-vertex tangents, and secondary rays remain unqualified.
+normal-map controls against analytic frames.  `regress-art-texture` checks
+fully minified raw image normal and height maps, filtering controls, and
+project relocation.  Image magnification and LOD transitions, baked
+per-vertex tangents, and secondary rays remain unqualified.
 
 |Region instances
 |Full indexed database paths distinguish occurrences under different parents
@@ -463,9 +465,46 @@ crossing zero, and missing or collinear footprints.  Scaling both position
 and depth by each of `1e-25`, `1e-12`, `1e12`, and `1e25` must preserve the
 result.  These checks cover
 first-order bump normals, including CSG surfaces without a UV footprint.
-Filtered image-height maps, image normal maps, mirrored geometry transforms,
+Image magnification and LOD transitions, mirrored geometry transforms,
 baked per-vertex tangent compatibility, and secondary-ray behavior still
 need dedicated qualification.
+
+For an image normal map, prepare a floating-point mipmapped texture without
+color conversion, keeping its components as data.  Store it under the
+database directory, for example as `textures/normal.tx`.  In MGED:
+
+----
+material create normal.material "Image normal map"
+material set normal.material optical OSL as_plastic
+material set normal.material optical OSL.version 2
+material set normal.material optical OSL.node.image as_texture
+material set normal.material optical OSL.param.image.in_filename "string textures/normal.tx"
+material set normal.material optical OSL.param.image.in_enable_cms "int 0"
+material set normal.material optical OSL.node.bump as_bump
+material set normal.material optical OSL.param.bump.in_mode "string Normal Map"
+material set normal.material optical OSL.connect.bump.in_normal_map image.out_color
+material set normal.material optical OSL.connect.material.in_bump_normal bump.out_normal
+material assign ball.r normal.material
+----
+
+For an image height map, use `Bump` mode and connect `image.out_channel` to
+`bump.in_bump_value` instead.  A one-channel image supplies its stored value;
+the raw RGB output channel is the mean of the three components.  Set bump
+depth in model units.  Leave color management disabled for both kinds of
+data, even when the file carries color-space metadata.
+
+`regress-art-texture` uses floating-point one-texel checkers tagged as sRGB
+and prepared with box-filtered periodic mipmaps.  Under full minification,
+the normal checker averages to neutral `(0.5,0.5,1)` and the height checker
+to a constant `0.5`.  Both networks must match the original shading normals
+on spheres, ellipsoids, and flat and smooth BOTs, including reflected U/V
+charts, in orthographic and perspective views.  Zero-width filtering must
+produce a visibly different result for both maps; enabling a display
+transfer on normal data must also change the result.  A relocated project
+is rendered with the original textures unavailable.  These checks qualify
+raw data handling and full minification.  They do not establish spatial
+image orientation, magnification behavior, or compatibility with a baked
+tangent frame.
 
 
 == Project shader assets
@@ -584,8 +623,10 @@ The comparison bounds both RMS and maximum display-image error.  A control
 with zero UV derivatives must differ substantially, establishing that the
 check detects missing filtering.  A copied project is also rendered while
 the original texture is unavailable, exercising relative asset lookup.
-These checks qualify this minification workflow; LOD transitions, color
-conversion, alpha, and bump/normal mapping need additional coverage.
+These checks qualify this emission-preview minification workflow; LOD
+transitions, color conversion, and alpha need additional coverage.  Native
+image bump and normal-map minification is covered separately by
+`regress-art-texture`.
 
 `art` enables Appleseed's project-rooted texture lookup for both cached
 constant filenames and dynamic filenames.  A same-named file in the

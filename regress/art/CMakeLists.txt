@@ -30,6 +30,8 @@ if(TARGET art AND BUILD_TESTING)
     HINTS "${renderer_prefix}/shaders/include" NO_DEFAULT_PATH REQUIRED)
   find_program(ART_MAKETX_EXECUTABLE NAMES maketx
     HINTS "${renderer_prefix}/bin" NO_DEFAULT_PATH REQUIRED)
+  find_program(ART_OIIOTOOL_EXECUTABLE NAMES oiiotool
+    HINTS "${renderer_prefix}/bin" NO_DEFAULT_PATH REQUIRED)
   # SDK helper includes are outside the source tree; track their updates too.
   file(GLOB_RECURSE ART_OSL_HELPER_HEADERS CONFIGURE_DEPENDS
     "${ART_OSL_HELPER_INCLUDE_DIR}/appleseed/*.h")
