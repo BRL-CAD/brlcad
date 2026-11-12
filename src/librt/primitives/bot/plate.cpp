@@ -538,8 +538,7 @@ rt_bot_plate_to_vol(struct rt_bot_internal **obot, struct rt_bot_internal *input
 	    vect_t bumpv;
 	    VMOVE(apnt, ((point_t *)pts)[j]);
 	    VSUB2(bumpv, apnt, pcenter);
-	    VUNITIZE(bumpv);
-	    VSCALE(bumpv, bumpv, 1 + VUNITIZE_TOL);
+	    VSCALE(bumpv, bumpv, VUNITIZE_TOL);
 	    VADD2(((point_t *)pts)[j], apnt, bumpv);
 	}
 
