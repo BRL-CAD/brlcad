@@ -20,6 +20,60 @@ e [-A attribute name/value pairs] [-s] [-A -oattribute name/value pairs] [-C#/#/
 Adds the objects in the argument list to the display list so that they will appear on the _MGED_ display. This is a synonym for the *draw* command; see that entry for a full list of options. The _-C_ option provides the user a way to specify a color that overrides all other color specifications including combination colors and region-id-based colors. The _-A_ and _-o_ options allow the user to select objects by attribute. The _-s_ specifies that subtracted and intersected objects should be drawn with solid lines rather than dot-dash lines. The _-m1_ option will display BOTs shaded if the display manager is OpenGL and the zbuffer and lighting is enabled. To enable these settings, from the MGED GUI, choose "Modes/Display Manager/OpenGL", "Misc/Z-buffer" and "Misc/Lighting". If the zbuffer and lighting is already enabled, toggle them off then back on to ensure they are enabled.
 
 
+[[options]]
+== OPTIONS
+
+// BEGIN GENERATED BU_ARG OPTIONS
+*-h*, *--help*, *-?*::
+  Print help and exit.
+
+*-m* _0..5_, *--mode*=_0..5_::
+  0=wireframe; 1=shaded BoTs; 2=shaded; 3=evaluated; 4=hidden-line; 5=points.
+
+*--wireframe*::
+  Draw using only wireframes (mode = 0).
+
+*--shaded*::
+  Shade BoTs, B-reps, and polysolids (mode = 1).
+
+*--shaded-all*::
+  Shade all solids, not evaluated (mode = 2).
+
+*-E*, *--evaluate*::
+  Wireframe with evaluated booleans (mode = 3).
+
+*--hidden-line*::
+  Draw hidden-line wireframes (mode = 4).
+
+*-A*, *--add-mode*::
+  Do not erase other modes for the specified paths.
+
+*-t* _level_, *--transparency*=_level_::
+  Set transparency level (0=clear, 1=opaque).
+
+*-L* _count_::
+  Draw BoT bounding boxes above this face count.
+
+*-S*, *--no-subtract*::
+  Do not draw subtraction solids.
+
+*--no-dash*::
+  Use solid lines for subtraction solids.
+
+*-C* _color_, *--color*=_color_::
+  Override object colors.
+
+*--line-width*=_pixels_::
+  Override default line width.
+
+*-R*, *--no-autoview*::
+  Do not automatically fit an empty scene.
+
+*-V* _name_, *--view*=_name_::
+  Draw on the named view.
+
+// END GENERATED BU_ARG OPTIONS
+
 [[examples]]
 == EXAMPLES
 

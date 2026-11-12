@@ -24,6 +24,15 @@ are decimal integers from 0 through 255.  The `-e` editing form cannot be
 combined with numeric color-record values.
 
 
+[[options]]
+== OPTIONS
+
+// BEGIN GENERATED BU_ARG OPTIONS
+*-e*::
+  Edit the color table interactively.
+
+// END GENERATED BU_ARG OPTIONS
+
 [[examples]]
 == EXAMPLES
 

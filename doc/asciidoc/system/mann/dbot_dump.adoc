@@ -32,31 +32,74 @@ No BOT names are taken as arguments; the set of objects to export is determined 
 
 All other options are identical to *bot_dump*, including `--no-materials` to explicitly suppress color/material export.
 
-=== Options
+[[options]]
+== OPTIONS
 
+// BEGIN GENERATED BU_ARG OPTIONS
 *-h*, *--help*::
-Print command help without requiring a display manager.
+  Print command help.
 
 *-b*::
-Write output in binary format where supported.
+  Use binary output when the selected format supports it.
 
 *-n*, *--normals*::
-Write per-vertex normals if the output format supports them.
+  Write normals when the selected format supports them.
+
+*-m* _directory_, *--output-directory*=_directory_::
+  Write one file per BoT into this directory.
+
+*-o* _file_, *--output-file*=_file_::
+  Write to this output file.
+
+*-t* _format_::
+  Select dxf, glb, gltf, obj, sat, or stl output. Accepted values: *dxf*, *glb*, *gltf*, *obj*, *sat*, *stl*.
+
+*-u* _units_::
+  Scale exported coordinates to these units.
 
 *-F*, *--full-precision*::
+  Write full floating-point precision (nonstandard for glTF).
+
+*--displayed*::
+  Write displayed geometry.
+
+*--viewdata*::
+  Write non-geometry view data.
+
+*--materials*::
+  Write material and color information.
+
+*--no-materials*::
+  Do not write material or color information.
+
+// END GENERATED BU_ARG OPTIONS
+
+[[option_details]]
+== OPTION DETAILS
+
+=== *-h*, *--help*
+Print command help without requiring a display manager.
+
+=== *-b*
+Write output in binary format where supported.
+
+=== *-n*, *--normals*
+Write per-vertex normals if the output format supports them.
+
+=== *-F*, *--full-precision*
 Write full floating-point precision for coordinate values where supported.
 glTF and GLB reject this option.
 
-*-m*, *--output-directory* _dir_::
+=== *-m*, *--output-directory* _dir_
 Write each BOT to a separate file in the specified directory `dir`. Mutually exclusive with `-o`.
 
-*-o*, *--output-file* _file_::
+=== *-o*, *--output-file* _file_
 Write all output to the single specified `file`. Mutually exclusive with `-m`.
 
-*-t* _fmt_::
+=== *-t* _fmt_
 Specify the output format type: `dxf`, `glb`, `gltf`, `obj`, `sat`, or `stl` (default: `stl`).
 
-*-u* _unit_::
+=== *-u* _unit_
 Output coordinate units (e.g., `mm`, `cm`, `in`, `ft`).
 
 [[examples]]

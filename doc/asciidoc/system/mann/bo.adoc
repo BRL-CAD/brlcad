@@ -48,6 +48,18 @@ On output, _destination_ is the path to a host-order file containing the binary
 object specified as _source_.
 
 
+[[options]]
+== OPTIONS
+
+// BEGIN GENERATED BU_ARG OPTIONS
+*-i*::
+  Import a file as a binary object.
+
+*-o*::
+  Export a binary object to a file.
+
+// END GENERATED BU_ARG OPTIONS
+
 [[examples]]
 == EXAMPLES
 

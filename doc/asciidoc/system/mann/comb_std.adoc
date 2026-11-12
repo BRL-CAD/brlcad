@@ -30,6 +30,21 @@ Members are listed in order: the first operator applies between the combination 
 
 The *comb_std* command (alias *c*) is a simplified alternative to *comb* that uses infix Boolean expression parsing similar to traditional MGED syntax.
 
+[[options]]
+== OPTIONS
+
+// BEGIN GENERATED BU_ARG OPTIONS
+*-c*::
+  Create or mark a non-region combination.
+
+*-r*::
+  Create or mark a region.
+
+*-?*::
+  Print command usage.
+
+// END GENERATED BU_ARG OPTIONS
+
 [[examples]]
 == EXAMPLES
 

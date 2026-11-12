@@ -20,6 +20,27 @@ bot_decimate [--help] [-f feature_size | [-c maximum_chord_error] [-n maximum_no
 Reduces the number of triangles in the __old_bot_primitive__ and saves the results to the __new_bot_primitive__. The reduction is accomplished through an edge decimation algorithm. Only changes that do not violate the specified constraints are performed. Specifying the __feature_size__ parameter selects the GCT decimator and is mutually exclusive with the other tolerances. Alternatively, specify one or more of __maximum_chord_error__, __maximum_normal_error__, and __minimum_edge_length__ to select the classical decimator. The chord-error parameter specifies the maximum distance allowed between the original surface and the surface of the new BOT primitive in the current editing units. The normal-error parameter specifies the maximum change in surface normal (degrees) between the old and new surfaces. The minimum-edge-length parameter specifies the length of the longest edge that will be decimated.
 
 
+[[options]]
+== OPTIONS
+
+// BEGIN GENERATED BU_ARG OPTIONS
+*-h*, *--help*::
+  Print command help.
+
+*-c* _error_::
+  Maximum chord error.
+
+*-n* _error_::
+  Maximum normal error.
+
+*-e* _length_::
+  Minimum edge length.
+
+*-f* _size_::
+  Feature size for the GCT decimator.
+
+// END GENERATED BU_ARG OPTIONS
+
 [[examples]]
 == EXAMPLES
 

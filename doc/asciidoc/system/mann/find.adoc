@@ -23,7 +23,19 @@ Note that this command only searches through non-hidden combination nodes unless
 [[options]]
 == OPTIONS
 
+// BEGIN GENERATED BU_ARG OPTIONS
 *-a*::
+  Include hidden combinations.
+
+*-h*, *--help*::
+  Print help.
+
+// END GENERATED BU_ARG OPTIONS
+
+[[option_details]]
+== OPTION DETAILS
+
+=== *-a*
 Include hidden objects in the search.
 
 [[examples]]

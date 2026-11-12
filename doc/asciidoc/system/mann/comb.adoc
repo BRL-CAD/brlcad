@@ -128,6 +128,47 @@ equivalent.
 
 
 
+[[options]]
+== OPTIONS
+
+// BEGIN GENERATED BU_ARG OPTIONS
+=== comb options
+
+*-c*::
+  Clear the region flag.
+
+*-d*::
+  Decimate the combination's BoT members.
+
+*-f*::
+  Flatten a union-only combination.
+
+*-l*::
+  Lift a region flag to the combination.
+
+*-r*::
+  Set the region flag.
+
+*-w*::
+  Wrap the combination contents.
+
+*-S*::
+  Require a new combination name.
+
+=== comb options
+
+*-h*, *--help*::
+  Print command help.
+
+=== Shared options
+
+Applies to *comb rm*, *comb wrap*, *comb flatten*, *comb lift*, *comb region*, *comb unregion*, *comb decimate*, *comb u*, *comb -* and *comb +*.
+
+*-C* _combination_, *--comb*=_combination_::
+  Combination to operate on.
+
+// END GENERATED BU_ARG OPTIONS
+
 [[examples]]
 == EXAMPLES
 

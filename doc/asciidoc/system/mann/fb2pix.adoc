@@ -29,6 +29,30 @@ The available options are:
 
 If size parameters are omitted, it defaults to capturing a 512x512 region.
 
+[[options]]
+== OPTIONS
+
+// BEGIN GENERATED BU_ARG OPTIONS
+*-c*::
+  Crunch the color map.
+
+*-i*::
+  Write upside-down.
+
+*-s* _pixels_::
+  Set both image dimensions.
+
+*-w* _pixels_::
+  Set image width.
+
+*-n* _pixels_::
+  Set image height.
+
+*-h*, *--help*::
+  Print command help.
+
+// END GENERATED BU_ARG OPTIONS
+
 [[examples]]
 == EXAMPLES
 

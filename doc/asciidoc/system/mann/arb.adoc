@@ -28,6 +28,21 @@ Creates a new ARB shape with the specified __arb_name__. The new ARB will be 20 
 Attempts to repair and canonicalize an existing ARB primitive. If `-o output_name` is provided, the repaired ARB is saved as a new object; otherwise, the repair happens in-place. A distance tolerance for snapping vertices can be supplied via the `-t` option. If omitted, the default BRL-CAD editing tolerance is used.
 
 
+[[options]]
+== OPTIONS
+
+// BEGIN GENERATED BU_ARG OPTIONS
+*-h*, *--help*::
+  Print help and exit.
+
+*-o* _name_, *--output-name*=_name_::
+  Write the repaired ARB to a new object.
+
+*-t* _distance_, *--tol*=_distance_::
+  Distance tolerance for snapping vertices.
+
+// END GENERATED BU_ARG OPTIONS
+
 [[examples]]
 == EXAMPLES
 

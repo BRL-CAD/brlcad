@@ -20,6 +20,15 @@ bev [-t] {new_obj} {Boolean_formula}
 Performs the operations indicated in the __Boolean_formula__ and stores the result in __new_obj__. The __new_obj__ will be stored as an NMG shape (it may be converted to a polysolid by using the *nmg_simplify* command). If the -t option is specified, then the resulting object will consist entirely of triangular facets. The default is to allow facets of any complexity, including holes. Only simple __Boolean_formulas__ are allowed. No parentheses are allowed and the operations are performed from left to right with no precedence. More complex expressions must be expressed as BRL-CAD objects using the *r*, *g*, or *c* commands and evaluated using the *facetize* or *ev* commands.
 
 
+[[options]]
+== OPTIONS
+
+// BEGIN GENERATED BU_ARG OPTIONS
+*-t*::
+  Triangulate the result.
+
+// END GENERATED BU_ARG OPTIONS
+
 [[examples]]
 == EXAMPLES
 

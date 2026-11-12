@@ -20,6 +20,15 @@ ae2dir [-i] {azimuth} {elevation}
 Returns the direction vector using the provided azimuth and elevation as input. If the _-i_ option is used the commmand will return the inverse directional vector.
 
 
+[[options]]
+== OPTIONS
+
+// BEGIN GENERATED BU_ARG OPTIONS
+*-i*::
+  Return the inverse direction.
+
+// END GENERATED BU_ARG OPTIONS
+
 [[examples]]
 == EXAMPLES
 

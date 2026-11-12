@@ -36,6 +36,24 @@ flag sorts by ident. The *-n* flag skips the editor step and reports
 only the region names encountered below the specified objects.
 
 
+[[options]]
+== OPTIONS
+
+// BEGIN GENERATED BU_ARG OPTIONS
+*-E* _editor_::
+  Editor command.
+
+*-i*::
+  Sort by identifier.
+
+*-n*::
+  List region names without editing.
+
+*-r*::
+  Sort by region.
+
+// END GENERATED BU_ARG OPTIONS
+
 [[examples]]
 == EXAMPLES
 

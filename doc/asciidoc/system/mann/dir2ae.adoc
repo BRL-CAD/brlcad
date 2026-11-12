@@ -20,6 +20,15 @@ dir2ae [-i] {dx dy dz}
 Returns the azimuth and elevation (AE) using the provided direction vector as input. If the _-i_ option is used the commmand will return the inverse AE.
 
 
+[[options]]
+== OPTIONS
+
+// BEGIN GENERATED BU_ARG OPTIONS
+*-i*::
+  Interpret the inverse direction.
+
+// END GENERATED BU_ARG OPTIONS
+
 [[examples]]
 == EXAMPLES
 

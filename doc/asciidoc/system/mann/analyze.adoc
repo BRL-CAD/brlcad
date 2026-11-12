@@ -68,17 +68,49 @@ subtract from it any subsequently specified objects.
 [[options]]
 == OPTIONS
 
+// BEGIN GENERATED BU_ARG OPTIONS
+=== Shared options
+
+Applies to *analyze* and *analyze*.
+
 *-h*, *--help*::
-Print help.
+  Print command help.
 
 *-v*, *--verbose*::
+  Increase reporting detail.
+
+=== Shared options
+
+Applies to *analyze summarize* and *analyze inside*.
+
+*-h*, *--help*::
+  Print subcommand help.
+
+=== Shared options
+
+Applies to *analyze intersect* and *analyze subtract*.
+
+*-h*, *--help*::
+  Print subcommand help.
+
+*-o* _name_, *--output*=_name_::
+  Specify output object.
+
+// END GENERATED BU_ARG OPTIONS
+
+[[option_details]]
+== OPTION DETAILS
+
+=== *-h*, *--help*
+Print help.
+
+=== *-v*, *--verbose*
 Increase reporting verbosity for the top-level analyze reporting mode.
 
 The *-h*/*--help* option is also accepted by each explicit subcommand.  The
 *-o*/*--output* option of *intersect* and *subtract* names the object to
 receive the Boolean result; it may appear before, between, or after object
 operands.
-
 
 [[examples]]
 == EXAMPLES
