@@ -28,7 +28,20 @@ The full set of operations performed:
 3. *Sketch/extrude cross-reference*: If `from` is a sketch primitive, all extrude objects referencing it by name are also updated.
 4. *Display list update*: Scans the current display list and updates any path component that matches `from` — at any depth in the hierarchy, not just the top level (unlike the basic `move` command).
 
-=== Options
+[[options]]
+== OPTIONS
+
+// BEGIN GENERATED BU_ARG OPTIONS
+*-n*::
+  Report changes without modifying the database.
+
+*-f* _file_::
+  Read old/new name mappings from a file.
+
+// END GENERATED BU_ARG OPTIONS
+
+[[option_details]]
+== OPTION DETAILS
 
 * *-n* : Dry-run mode. Instead of performing the rename, prints a list of all combination names that currently reference `from`. No changes are made to the database.
 * *-f mapping_file* : Read rename pairs from a file instead of the command line. Each line of the file must contain two whitespace-separated names (`from to`). Lines beginning with `#` are treated as comments and ignored.

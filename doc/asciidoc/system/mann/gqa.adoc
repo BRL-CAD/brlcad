@@ -134,7 +134,76 @@ additional density-table inspection, editing, export, and mapping commands.
 [[options]]
 == OPTIONS
 
-*-A* __analysis_flags__::
+// BEGIN GENERATED BU_ARG OPTIONS
+*-A* _types_::
+  Select analyses. Accepted values: *A*, *a*, *b*, *c*, *e*, *g*, *m*, *o*, *p*, *v*, *w*.
+
+*-a* _azimuth_::
+  Set azimuth angle.
+
+*-d*::
+  Enable debug output.
+
+*-e* _elevation_::
+  Set elevation angle.
+
+*-f* _file_::
+  Read densities from file.
+
+*-g* _spacing_::
+  Set grid spacing or range.
+
+*-G*::
+  Create overlap assemblies (not implemented).
+
+*-n* _hits_::
+  Set required hits per region.
+
+*-N* _views_::
+  Set number of views.
+
+*-p* _prefix_::
+  Set plot file prefix.
+
+*-P* _cpus_::
+  Set processor count.
+
+*-q*::
+  Suppress not-hit reporting.
+
+*-r*::
+  Print per-region statistics.
+
+*-S* _samples_::
+  Set minimum samples per model axis.
+
+*-t* _tolerance_::
+  Set overlap tolerance.
+
+*-U* _use_air_::
+  Include air regions.
+
+*-u* _units_::
+  Set reporting units.
+
+*-v*::
+  Enable verbose output.
+
+*-V* _tolerance_::
+  Set volume tolerance.
+
+*-W* _tolerance_::
+  Set weight tolerance.
+
+*-h*, *-?*::
+  Print command help.
+
+// END GENERATED BU_ARG OPTIONS
+
+[[option_details]]
+== OPTION DETAILS
+
+=== *-A* __analysis_flags__
 Selects one or more analyses.  Combine flags without separators:
 +
 
@@ -173,59 +242,58 @@ volume, weight, centroids, and moments of inertia.  Bounding-box reporting is
 not enabled by default.  Use *-AA* for every report, or select only the needed
 analyses to reduce work and avoid requiring densities for non-mass analyses.
 
-*-f* _filename_::
+=== *-f* _filename_
 Reads density values from _filename_ instead of using the normal density-source
 search.
 
-*-g* [__initial_spacing__`,`]__minimum_spacing__::
+=== *-g* [__initial_spacing__`,`]__minimum_spacing__
 Sets the finest permitted ray-grid spacing and, optionally, its initial
 spacing.  A hyphen may replace the comma.  Values accept units, as in
 *-g 1cm,1mm*.  Refinement halves the spacing at each step.  See *gqa*(1) for
 the full refinement rules and defaults.
 
-*-n* __minimum_hits__::
+=== *-n* __minimum_hits__
 Continues weight or volume refinement until every region has at least this many
 ray intersections, subject to the minimum grid spacing.
 
-*-p* __plot_prefix__::
+=== *-p* __plot_prefix__
 Writes analysis results to plot files whose names begin with _plot_prefix_.
 This is distinct from *-Ap*, which draws overlap segments directly in MGED.
 Plot files may be loaded later with *overlay*.
 
-*-P* __ncpus__::
+=== *-P* __ncpus__
 Limits the number of processor cores used.  By default, all available cores
 are used.
 
-*-q*::
+=== *-q*
 Suppresses reports for regions not intersected by a ray.
 
-*-r*::
+=== *-r*
 Reports per-region weight and volume in addition to per-object totals.
 
-*-t* __overlap_tolerance__::
+=== *-t* __overlap_tolerance__
 Ignores overlaps smaller than the specified nonnegative distance.  Units may
 be included, as in *-t 0.1mm*.
 
-*-U* __use_air__::
+=== *-U* __use_air__
 Controls whether air regions participate in raytracing.  Set _use_air_ to _0_
 or _1_; the default is _1_.  Air must remain enabled for exposed-air and
 adjacent-air analyses.
 
-*-u* __distance_units,volume_units,weight_units__::
+=== *-u* __distance_units,volume_units,weight_units__
 Sets report units, in that order.  Empty fields preserve defaults; for example,
 *-u ,,kg* changes only weight units.  Quote the entire value when a unit name
 contains a space, as in *-u "cm,cu ft,kg"*.
 
-*-v*::
+=== *-v*
 Reports refinement progress and the constraints causing further computation.
 
-*-V* __volume_tolerance__::
+=== *-V* __volume_tolerance__
 Sets the maximum permitted difference among volume estimates from the three
 ray directions.
 
-*-W* __weight_tolerance__::
+=== *-W* __weight_tolerance__
 Sets the corresponding tolerance for weight estimates.
-
 
 [[examples]]
 == EXAMPLES

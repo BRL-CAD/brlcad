@@ -26,50 +26,97 @@ The *--raytrace* mode is a special, mutually exclusive operating mode that disab
 [[options]]
 == OPTIONS
 
-
+// BEGIN GENERATED BU_ARG OPTIONS
 *-h*, *--help*::
-Print help message.
+  Print help and exit.
 
 *-v*, *--verbose*::
+  Increase reporting verbosity. May be repeated.
+
+*-C*, *--cyclic*::
+  Check cyclic paths.
+
+*-M*, *--missing*::
+  Check missing references.
+
+*-I* [_check_], *--invalid-shape*[=_check_]::
+  Check invalid shapes, optionally selecting techniques.
+
+*-F* _pattern_, *--filter*=_pattern_::
+  Apply search-style object filters.
+
+*-j* _file_, *--json-file*=_file_::
+  Write full results as JSON.
+
+*-V*, *--visualize*::
+  Visualize reported problems.
+
+*-t* _number_, *--tol*=_number_::
+  Numerical tolerance.
+
+*-g* _name_, *--group*=_name_::
+  Group problematic shapes.
+
+*--min-tri-area*=_number_::
+  Minimum triangle area to report.
+
+*--raytrace*::
+  Use raytrace validation mode.
+
+*--raytrace-tol*=_fraction_::
+  Raytrace comparison tolerance.
+
+*--perturb*::
+  Use perturbation during raytrace facetization.
+
+// END GENERATED BU_ARG OPTIONS
+
+[[option_details]]
+== OPTION DETAILS
+
+=== *-h*, *--help*
+Print help message.
+
+=== *-v*, *--verbose*
 Increase reporting verbosity. Repeating the flag increases the amount of diagnostic detail.
 
 
-*-C*, *--cyclic*::
+=== *-C*, *--cyclic*
 Check for full paths that are cyclic - i.e. a situation where a high level object incorporates in its definition tree a reference to itself. Such definitions are always considered invalid, and are sometimes problematic for tools working with geometry hierarchy.
 
 
-*-M*, *--missing*::
+=== *-M*, *--missing*
 Check for references to objects or files that are missing (not present in the database or on the file system.) Primarily this is a check for comb objects referring to missing objects, but it will also check for and report invalid object and file references in extrude and dsp primitives.
 
 
-*-I*, *--invalid-shape* [_primitive:technique_ [ ... ]]::
+=== *-I*, *--invalid-shape* [_primitive:technique_ [ ... ]]
 Check for shapes in the database that do not satisfy one or more properties required for them to be valid definitions, where correcting the problem requires a change to the object's definition. Individual checks may be selected with _primitive:technique_ names such as *brep:opennurbs*. Objects invalid because they refer to missing objects or files are reported by *-M* instead. The optional selector is consumed only when it contains a colon, so `lint -I object.g` checks `object.g`, while `lint -I bot:empty object.g` selects the `bot:empty` technique before checking `object.g`. Multiple selectors may be supplied as one quoted argument.
 
 
-*-F*, *--filter*::
+=== *-F*, *--filter*
 Apply search command style filters to the set of objects to be tested. Allows, (for example) a user to test only brep objects and not BoT objects or only objects matching a particular name pattern. Does not impact the checks for missing or cylic geometry - the underlying search mechanism assumes inputs do not have those particular categories of problem and thus can't be reliably applied in those cases.
 
-*-j*, *--json-file* _fname_::
+=== *-j*, *--json-file* _fname_
 Write the full lint report data to a JSON file.
 
-*-V*, *--visualize*::
+=== *-V*, *--visualize*
 When a detected problem has a visual representation, draw that representation in the current display.
 
-*-t*, *--tol* _#_::
+=== *-t*, *--tol* _#_
 Override the numerical tolerance used by checks that depend on tolerances. Defaults to *VUNITIZE_TOL* when unspecified.
 
-*-g*, *--group* _name_::
+=== *-g*, *--group* _name_
 Create or update a combination named _name_ containing shape objects that reported issues. Cyclic paths and missing references are not added to this grouping object.
 
-*--min-tri-area* _#_::
+=== *--min-tri-area* _#_
 Units are mm^2. If specified, *lint* will not report sampling problems whose seed triangle is smaller than the supplied area threshold.
 
 
-*--raytrace*::
+=== *--raytrace*
 Enable raytrace validation mode.  All standard lint checks are disabled; instead the command runs the raytrace consistency pipeline described in the *RAYTRACE MODE* section.  Cannot be combined with *-C*, *-M*, or *-I*.
 
 
-*--perturb*::
+=== *--perturb*
 Modifier for *--raytrace* mode.  When present, combs are facetized using the *facetize* default perturbation pass (the same perturbation that *facetize* normally applies to avoid coplanar-face boolean artifacts) rather than the *--no-perturb* mode that is the default for raytrace validation. +
  +
 **Why two modes exist:** Without *--perturb*, the facetized BoT reference is geometrically consistent with the Crofton CSG measurement (both see the exact original geometry).  This makes it easy to detect any mismatch, but it can report coplanar-face artifacts as failures even though *facetize* handles them correctly in practice. +
@@ -77,9 +124,8 @@ Modifier for *--raytrace* mode.  When present, combs are facetized using the *fa
 With *--perturb*, the reference BoT is the actual output that *facetize* would produce for a model.  Mismatches that clear under *--perturb* are coplanar-face artifacts that the perturbation pass resolves (the default *facetize* behavior is correct for these objects).  Mismatches that **persist** under *--perturb* are genuine modeling topology issues that perturbation cannot resolve — these require geometry correction.  See the *COPLANAR INTERFACE PATTERNS* section below for details.
 
 
-*--raytrace-tol* _frac_::
+=== *--raytrace-tol* _frac_
 Fractional tolerance for raytrace validation comparisons (default: *0.10* = 10%).  A value of 0.05 requires the two independent estimates to agree within 5%.  Lower values are stricter.  Only meaningful when *--raytrace* is also specified.
-
 
 [[brep_checks]]
 == B-REP CHECKS

@@ -27,6 +27,15 @@ writes the supporting geometry as needed. The *-R* option disables that
 recursive traversal and keeps only the named objects themselves.
 
 
+[[options]]
+== OPTIONS
+
+// BEGIN GENERATED BU_ARG OPTIONS
+*-R*::
+  Keep only named objects, without descendants.
+
+// END GENERATED BU_ARG OPTIONS
+
 [[examples]]
 == EXAMPLES
 

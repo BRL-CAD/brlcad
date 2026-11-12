@@ -31,28 +31,51 @@ with `man view 3`; the explicit *-S* option is preferred.
 [[options]]
 == OPTIONS
 
-*-h*, *--help*::
-Print help and exit.
+// BEGIN GENERATED BU_ARG OPTIONS
+*-h*, *--help*, *-H*, *-?*::
+  Print help and exit.
 
 *-g*, *--gui*::
+  Force use of the graphical manual-page viewer.
+
+*--no-gui*, *--dump*::
+  Force use of the command-line manual-page viewer.
+
+*--width*=_columns_::
+  Set formatted text width (default: 80).
+
+*-L* _code_, *--language*=_code_::
+  Select a lower-case ISO 639-1 manual language.
+
+*-S* _section_, *--section*=_section_::
+  Select manual section 1, 3, 5, or n.
+
+// END GENERATED BU_ARG OPTIONS
+
+[[option_details]]
+== OPTION DETAILS
+
+=== *-h*, *--help*
+Print help and exit.
+
+=== *-g*, *--gui*
 Force use of the graphical manual page viewer.
 
-*--no-gui*::
+=== *--no-gui*
 Return formatted manual text in the command result, including GUI consoles.
 
-*--dump*::
+=== *--dump*
 Return formatted text, equivalent to *--no-gui*. No external pager is launched.
 
-*--width* _columns_::
+=== *--width* _columns_
 Set the positive wrapping width for text output (default: 80). Literal examples
 retain their original line breaks and may exceed this width.
 
-*-L*, *--language* _lang_::
+=== *-L*, *--language* _lang_
 Select the manual language to request from `brlman`.
 
-*-S*, *--section* _section_::
+=== *-S*, *--section* _section_
 Select manual section `1`, `3`, `5`, or `n` to request from `brlman`.
-
 
 [[examples]]
 == EXAMPLES

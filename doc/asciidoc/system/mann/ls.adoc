@@ -37,6 +37,45 @@ The same listing behavior is also exposed by the separate *t* entry. Note that
 when any of the above options are used, the output is not formatted.
 
 
+[[options]]
+== OPTIONS
+
+// BEGIN GENERATED BU_ARG OPTIONS
+*-h*, *--help*::
+  Print help and exit.
+
+*-a*, *--all*::
+  Do not ignore hidden objects.
+
+*-c*, *--combs*::
+  List combinations.
+
+*-r*, *--regions*::
+  List regions.
+
+*-p*, *--primitives*, *-s*::
+  List primitives.
+
+*-q*, *--quiet*::
+  Suppress informational output messages during database lookup.
+
+*-l*::
+  Use long reporting format.
+
+*-H*, *--human-readable*::
+  When printing in long format, use human-readable object sizes.
+
+*-S*, *--sort*::
+  Sort by object size.
+
+*-A*, *--attributes*::
+  Treat operands as attribute name/value pairs.
+
+*-o*, *--or*::
+  In attribute mode, match any attribute pair.
+
+// END GENERATED BU_ARG OPTIONS
+
 [[examples]]
 == EXAMPLES
 

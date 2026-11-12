@@ -20,6 +20,15 @@ listeval [-t] {path}
 Combinations may include transformation matrices to be applied to their members. A _path_ through a series of _combinations_ and ending with a primitive shape represents that _primitive shape_ with the transformations accumulated through the path applied to it. The *listeval* command displays primitive shape parameters after applying the accumulated transformations from the indicated _path_. If the specified _path_ does not end at a _primitive shape_, then all possible paths from the indicated _path_ to any _primitive shape_ will be evaluated and displayed. The -t option forces a shorter (i.e. terse) list of primitive shape parameters. This option is useful for primitives with potentially long parameter lists, such as BOTs.
 
 
+[[options]]
+== OPTIONS
+
+// BEGIN GENERATED BU_ARG OPTIONS
+*-t*::
+  Use terse evaluated-object output.
+
+// END GENERATED BU_ARG OPTIONS
+
 [[examples]]
 == EXAMPLES
 

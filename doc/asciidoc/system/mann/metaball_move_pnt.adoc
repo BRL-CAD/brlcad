@@ -28,6 +28,15 @@ offset from the current control-point location.
 The alternate command name *mouse_move_metaball_pnt* is also available.
 
 
+[[options]]
+== OPTIONS
+
+// BEGIN GENERATED BU_ARG OPTIONS
+*-r*::
+  Interpret point relative to current point.
+
+// END GENERATED BU_ARG OPTIONS
+
 [[examples]]
 == EXAMPLES
 

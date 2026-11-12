@@ -20,6 +20,15 @@ The *illum* command illuminates (highlights) the specified `object` in the MGED 
 
 If the optional `-n` flag is provided, the command performs the reverse operation, un-illuminating (de-highlighting) the specified object. If the object is not currently in the display list, the command will return an error indicating it was not found.
 
+[[options]]
+== OPTIONS
+
+// BEGIN GENERATED BU_ARG OPTIONS
+*-n*::
+  Disable illumination.
+
+// END GENERATED BU_ARG OPTIONS
+
 [[examples]]
 == EXAMPLES
 

@@ -22,6 +22,15 @@ Removes all references to the specified _objects_ from all combinations in the d
 *Use this command with caution.* Killed objects cannot be recovered so *keep* a backup.
 
 
+[[options]]
+== OPTIONS
+
+// BEGIN GENERATED BU_ARG OPTIONS
+*-n*::
+  Report references without removing them.
+
+// END GENERATED BU_ARG OPTIONS
+
 [[examples]]
 == EXAMPLES
 
