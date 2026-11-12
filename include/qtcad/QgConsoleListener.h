@@ -32,8 +32,7 @@
 #include <iostream>
 
 #ifdef Q_OS_WIN
-#  include <QWinEventNotifier>
-#  include <windows.h>
+#  include <QTimer>
 #else
 #  include <QSocketNotifier>
 #endif
@@ -46,14 +45,17 @@
 class QTCAD_EXPORT QConsoleListener : public QObject
 {
     Q_OBJECT
+    Q_DISABLE_COPY_MOVE(QConsoleListener)
 
     public:
 	QConsoleListener(int fd = -1,
 		struct ged_subprocess *p = NULL,
 		bu_process_io_t t = BU_PROCESS_STDIN,
 		ged_io_func_t c = NULL,
-		void *d = NULL);
-	~QConsoleListener();
+		void *d = NULL,
+		QObject *parent = nullptr);
+	~QConsoleListener() override;
+	void deactivate();
 	void disconnectNotifier();
 
 	// Called by client code when it is done with the process
@@ -78,8 +80,10 @@ Q_SIGNALS:
 	void on_finishedGetLine(const QString &strNewLine);
 
     private:
+	void processReady();
+	int m_fd = -1;
 #ifdef Q_OS_WIN
-	QWinEventNotifier *m_notifier = NULL;
+	QTimer *m_notifier = NULL;
 #else
 	QSocketNotifier *m_notifier = NULL;
 #endif

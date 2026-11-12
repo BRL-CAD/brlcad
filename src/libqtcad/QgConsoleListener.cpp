@@ -29,55 +29,77 @@
 #include <iostream>
 #include "qtcad/QgConsoleListener.h"
 
-#define RT_MAXLINE 10240
+static const int qg_process_poll_interval_ms = 10;
 
 void noMessageOutput(QtMsgType, const QMessageLogContext&, const QString&) {}
 
-QConsoleListener::QConsoleListener(int fd, struct ged_subprocess *p, bu_process_io_t t, ged_io_func_t c, void *d)
+QConsoleListener::QConsoleListener(int fd, struct ged_subprocess *p,
+    bu_process_io_t t, ged_io_func_t c, void *d, QObject *parent)
+    : QObject(parent)
 {
     this->process = p;
     this->callback = c;
     this->data = d;
     this->type = t;
+    m_fd = (fd < 0) ? fileno(stdin) : fd;
     QObject::connect(
 	    this, &QConsoleListener::finishedGetLine,
 	    this, &QConsoleListener::on_finishedGetLine,
 	    Qt::QueuedConnection
 	    );
 #ifdef Q_OS_WIN
-    HANDLE h = (fd < 0) ? GetStdHandle(STD_INPUT_HANDLE) : (HANDLE)_get_osfhandle(fd);
-    m_notifier = new QWinEventNotifier(h, this);
+    m_notifier = new QTimer(this);
+    QObject::connect(m_notifier, &QTimer::timeout, this, [this]() {
+	if (bu_fd_read_ready(m_fd, 0) > 0)
+	    processReady();
+    });
+    m_notifier->start(qg_process_poll_interval_ms);
 #else
-    int lfd = (fd < 0) ? fileno(stdin) : fd;
-    m_notifier = new QSocketNotifier(lfd, QSocketNotifier::Read, this);
+    m_notifier = new QSocketNotifier(m_fd, QSocketNotifier::Read, this);
+    QObject::connect(m_notifier, &QSocketNotifier::activated, this,
+	[this]() { processReady(); });
 #endif
-    /* Socket/event notifiers are asynchronous and do not need a worker
-     * thread.  Keep the notifier and its GED callback in this object's
-     * thread so all Qt and GED state is accessed by its owning GUI thread. */
-#ifdef Q_OS_WIN
-    QObject::connect(m_notifier, &QWinEventNotifier::activated, m_notifier,
-#else
-    QObject::connect(m_notifier, &QSocketNotifier::activated, m_notifier,
-#endif
-	[this]() {
-	if (callback) {
-	  size_t s1 = bu_vls_strlen(process->gedp->ged_result_str);
-	  (*callback)(data, (int)type);
-	  size_t s2 = bu_vls_strlen(process->gedp->ged_result_str);
-	  if (s1 != s2) {
-	    struct bu_vls nstr = BU_VLS_INIT_ZERO;
-	    bu_vls_substr(&nstr, process->gedp->ged_result_str, s1, s2 - s1);
-	    QString strLine = QString::fromStdString(std::string(bu_vls_cstr(&nstr)));
-	    bu_vls_free(&nstr);
-	    Q_EMIT this->finishedGetLine(strLine);
-	  }
-	}
-	});
+}
+
+void QConsoleListener::processReady()
+{
+    if (!callback)
+	return;
+
+    size_t start = bu_vls_strlen(process->gedp->ged_result_str);
+    (*callback)(data, (int)type);
+    size_t end = bu_vls_strlen(process->gedp->ged_result_str);
+    if (start == end)
+	return;
+
+    struct bu_vls output = BU_VLS_INIT_ZERO;
+    bu_vls_substr(&output, process->gedp->ged_result_str, start, end - start);
+    QString line = QString::fromStdString(std::string(bu_vls_cstr(&output)));
+    bu_vls_free(&output);
+    Q_EMIT this->finishedGetLine(line);
 }
 
 QConsoleListener::~QConsoleListener()
 {
     disconnectNotifier();
+}
+
+void QConsoleListener::deactivate()
+{
+    if (!process)
+	return;
+
+    switch (type) {
+	case BU_PROCESS_STDIN:
+	    process->stdin_active = 0;
+	    break;
+	case BU_PROCESS_STDOUT:
+	    process->stdout_active = 0;
+	    break;
+	case BU_PROCESS_STDERR:
+	    process->stderr_active = 0;
+	    break;
+    }
 }
 
 void QConsoleListener::disconnectNotifier()
@@ -93,6 +115,7 @@ void QConsoleListener::on_finishedGetLine(const QString &strNewLine)
 
 void QConsoleListener::on_finished()
 {
+    deactivate();
     Q_EMIT this->is_finished(this->process, (int)this->type);
 }
 

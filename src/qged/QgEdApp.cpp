@@ -97,30 +97,13 @@ qt_delete_io_handler(struct ged_subprocess *p, bu_process_io_t t)
 	return;
 
     QgConsole *c = ca->w->console;
-    int *active = NULL;
-
-    switch (t) {
-	case BU_PROCESS_STDIN:
-	    active = &p->stdin_active;
-	    break;
-	case BU_PROCESS_STDOUT:
-	    active = &p->stdout_active;
-	    break;
-	case BU_PROCESS_STDERR:
-	    active = &p->stderr_active;
-	    break;
-    }
-
-    std::map<std::pair<struct ged_subprocess *, int>, QConsoleListener *>::iterator listener_it;
-    listener_it = c->listeners.find(std::make_pair(p, t));
-    if (active && *active && listener_it != c->listeners.end()) {
+    QConsoleListener *listener = c->findListener(p, (int)t);
+    if (listener) {
 	/* Stop readiness immediately, but queue retirement so this callback
 	 * cannot delete the listener while its activation is still active. */
-	listener_it->second->disconnectNotifier();
-	listener_it->second->on_finished();
+	listener->disconnectNotifier();
+	listener->on_finished();
     }
-    if (active)
-	*active = 0;
 
     emit ca->view_update(QG_VIEW_REFRESH);
 }

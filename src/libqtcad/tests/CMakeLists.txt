@@ -4,6 +4,21 @@ set(QGMODEL_SRCS qgmodel.cpp)
 set(QGVIEW_SRCS qgview.cpp)
 set(QSKETCH_SRCS qsketch.cpp)
 set(TEST_QTCAD_SESSION_SRCS test_qtcad_session.cpp)
+set(TEST_QTCAD_CONSOLE_SRCS test_qtcad_console.cpp)
+
+if(TARGET Qt6::Test)
+  add_executable(test_qtcad_console ${TEST_QTCAD_CONSOLE_SRCS})
+  target_link_libraries(test_qtcad_console libqtcad Qt6::Test Qt6::Widgets)
+elseif(TARGET Qt5::Test)
+  add_executable(test_qtcad_console ${TEST_QTCAD_CONSOLE_SRCS})
+  target_link_libraries(test_qtcad_console libqtcad Qt5::Test Qt5::Widgets)
+endif()
+if(TARGET test_qtcad_console)
+  set_target_properties(test_qtcad_console PROPERTIES AUTOMOC ON)
+  target_compile_definitions(test_qtcad_console PRIVATE BRLCADBUILD HAVE_CONFIG_H)
+  add_dependencies(test_qtcad_console ged_plugins)
+  brlcad_add_test(NAME test_qtcad_console COMMAND test_qtcad_console)
+endif()
 
 if(TARGET Qt6::Test)
   add_executable(test_qtcad_session ${TEST_QTCAD_SESSION_SRCS})
@@ -125,6 +140,7 @@ cmakefiles(
   ${QGVIEW_SRCS}
   ${QSKETCH_SRCS}
   ${TEST_QTCAD_SESSION_SRCS}
+  ${TEST_QTCAD_CONSOLE_SRCS}
 )
 
 # Local Variables:

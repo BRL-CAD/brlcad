@@ -552,6 +552,8 @@ QgConsole::QgConsole(QWidget* Parent) :
 //-----------------------------------------------------------------------------
 QgConsole::~QgConsole()
 {
+    while (!listeners.empty())
+	removeListener(listeners.begin()->first.first, listeners.begin()->first.second);
     delete this->Implementation;
 }
 
@@ -605,7 +607,10 @@ QPoint QgConsole::getCursorPosition()
 //-----------------------------------------------------------------------------
 void QgConsole::listen(int fd, struct ged_subprocess *p, bu_process_io_t t, ged_io_func_t c, void *d)
 {
-    QConsoleListener *l = new QConsoleListener(fd, p, t, c, d);
+    if (findListener(p, (int)t))
+	return;
+
+    QConsoleListener *l = new QConsoleListener(fd, p, t, c, d, this);
     bu_log("Start listening: %d\n", (int)t);
     QObject::connect(l, &QConsoleListener::newLine, this, &QgConsole::printStringBeforePrompt);
     /* EOF may be reported from inside the notifier callback.  Queue detach
@@ -613,6 +618,28 @@ void QgConsole::listen(int fd, struct ged_subprocess *p, bu_process_io_t t, ged_
     QObject::connect(l, &QConsoleListener::is_finished, this, &QgConsole::detach, Qt::QueuedConnection);
     listeners[std::make_pair(p, t)] = l;
 }
+
+//-----------------------------------------------------------------------------
+QConsoleListener *QgConsole::findListener(struct ged_subprocess *p, int t) const
+{
+    auto listener = listeners.find(std::make_pair(p, t));
+    return listener != listeners.end() ? listener->second : nullptr;
+}
+
+//-----------------------------------------------------------------------------
+void QgConsole::removeListener(struct ged_subprocess *p, int t)
+{
+    auto listener = listeners.find(std::make_pair(p, t));
+    if (listener == listeners.end())
+	return;
+
+    QConsoleListener *listener_ptr = listener->second;
+    listeners.erase(listener);
+    listener_ptr->deactivate();
+    listener_ptr->disconnectNotifier();
+    delete listener_ptr;
+}
+
 void QgConsole::detach(struct ged_subprocess *p, int t)
 {
     QTCAD_SLOT("QgConsole::detach", 1);
@@ -630,6 +657,7 @@ void QgConsole::detach(struct ged_subprocess *p, int t)
 	callback = l->callback;
 	gdata = l->data;
 	listeners.erase(l_it);
+	l->deactivate();
 	delete l;
     }
 
