@@ -33,7 +33,7 @@
 
 #include "bu/app.h"
 #include "bu/getopt.h"
-#include "bu/opt.h"
+#include "util_arg.h"
 #include "bu/malloc.h"
 #include "bu/file.h"
 #include "bu/exit.h"
@@ -194,19 +194,19 @@ parse_args(int ac, char **av)
     while ((c=bu_getopt(ac, av, options)) != -1)
 	switch (c) {
 	    case 'f':
-		if (!bu_opt_scan_int_range(bu_optarg, &factor, 1, INT_MAX, "shrink factor") || factor <= 1)
+		if (!util_arg_int_range(bu_optarg, &factor, 1, INT_MAX, "shrink factor") || factor <= 1)
 		    usage();
 		break;
 	    case 'n':
-		if (!bu_opt_scan_int_range(bu_optarg, &height, 1, INT_MAX, "height"))
+		if (!util_arg_int_range(bu_optarg, &height, 1, INT_MAX, "height"))
 		    usage();
 		break;
 	    case 'w':
-		if (!bu_opt_scan_int_range(bu_optarg, &width, 1, INT_MAX, "width"))
+		if (!util_arg_int_range(bu_optarg, &width, 1, INT_MAX, "width"))
 		    usage();
 		break;
 	    case 's':
-		if (!bu_opt_scan_int_range(bu_optarg, &width, 1, INT_MAX, "size"))
+		if (!util_arg_int_range(bu_optarg, &width, 1, INT_MAX, "size"))
 		    usage();
 		height = width;
 		break;

@@ -47,7 +47,7 @@
 
 #include "bu/app.h"
 #include "bu/getopt.h"
-#include "bu/opt.h"
+#include "util_arg.h"
 #include "bu/malloc.h"
 #include "bu/exit.h"
 
@@ -178,15 +178,15 @@ main(int ac, char **av)
     while ((c=bu_getopt(ac, av, options)) != -1)
 	switch (c) {
 	    case 'w' :
-		if (!bu_opt_scan_int_range(bu_optarg, &x, 1, USHRT_MAX, "input width"))
+		if (!util_arg_int_range(bu_optarg, &x, 1, USHRT_MAX, "input width"))
 		    usage();
 		break;
 	    case 'n' :
-		if (!bu_opt_scan_int_range(bu_optarg, &y, 1, USHRT_MAX, "input height"))
+		if (!util_arg_int_range(bu_optarg, &y, 1, USHRT_MAX, "input height"))
 		    usage();
 		break;
 	    case 's' :
-		if (!bu_opt_scan_int_range(bu_optarg, &x, 1, USHRT_MAX, "input size"))
+		if (!util_arg_int_range(bu_optarg, &x, 1, USHRT_MAX, "input size"))
 		    usage();
 		y = x;
 		break;

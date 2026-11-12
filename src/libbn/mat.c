@@ -37,7 +37,7 @@
 #include "bu/debug.h"
 #include "bu/log.h"
 #include "bu/malloc.h"
-#include "bu/opt.h"
+#include "bu/arg.h"
 #include "bu/str.h"
 #include "vmath.h"
 #include "bn/mat.h"
@@ -1401,7 +1401,11 @@ bn_opt_mat(struct bu_vls *msg, size_t argc, const char **argv, void *set_var)
     mat_t mtmp;
     MAT_IDN(mtmp);
 
-    BU_OPT_CHECK_ARGV0(msg, argc, argv, "bn_opt_mat");
+    if (argc < 1 || !argv || !argv[0] || argv[0][0] == '\0') {
+	if (msg)
+	    bu_vls_printf(msg, "ERROR: missing required argument: bn_opt_mat\n");
+	return -1;
+    }
 
     // First, see if we have a matrix defined in a single string
     {
@@ -1437,7 +1441,7 @@ bn_opt_mat(struct bu_vls *msg, size_t argc, const char **argv, void *set_var)
 	    // We have 16 elements - read each one to see if it's a valid fastf_t
 	    for (i = 0; i < ac; i++) {
 		fastf_t mi = 0.0;
-		if (bu_opt_fastf_t(msg, 1, (const char **)&av[i], &mi) == -1) {
+		if (!bu_arg_number_from_str(msg, &mi, av[i])) {
 		    if (msg) {
 			bu_vls_sprintf(msg, "Not a number: %s.\n", av[i]);
 		    }
@@ -1480,7 +1484,7 @@ bn_opt_mat(struct bu_vls *msg, size_t argc, const char **argv, void *set_var)
 	size_t i = 0;
 	for (i = 0; i < argc; i++) {
 	    fastf_t mi = 0.0;
-	    if (bu_opt_fastf_t(msg, 1, &argv[i], &mi) == -1) {
+	    if (!bu_arg_number_from_str(msg, &mi, argv[i])) {
 		if (msg) {
 		    bu_vls_sprintf(msg, "Not a number: %s.\n", argv[i]);
 		}

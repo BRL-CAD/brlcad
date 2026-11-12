@@ -38,7 +38,6 @@
 #include "bio.h"
 
 #include "bu/malloc.h"
-#include "bu/opt.h"
 #include "bu/path.h"
 #include "bu/str.h"
 #include "bu/vls.h"
@@ -53,10 +52,29 @@
 /* options                                                            */
 /* ------------------------------------------------------------------ */
 
-#define SCAD_OPT_COUNT 6		/* number of BU_OPT entries below */
+static const struct bu_arg_option scad_read_options[] = {
+    BU_ARG_VALUE(NULL, "units", struct scad_read_options, units,
+	BU_ARG_VALUE_STRING, BU_ARG_REQUIRED, "unit", "Set the input model units"),
+    BU_ARG_VALUE(NULL, "fn", struct scad_read_options, fn,
+	BU_ARG_VALUE_INTEGER, BU_ARG_REQUIRED, "n", "Set fallback $fn (0=auto)"),
+    BU_ARG_VALUE(NULL, "fa", struct scad_read_options, fa,
+	BU_ARG_VALUE_NUMBER, BU_ARG_REQUIRED, "deg", "Set fallback $fa"),
+    BU_ARG_VALUE(NULL, "fs", struct scad_read_options, fs,
+	BU_ARG_VALUE_NUMBER, BU_ARG_REQUIRED, "len", "Set fallback $fs"),
+    BU_ARG_VALUE(NULL, "facetize", struct scad_read_options, facetize,
+	BU_ARG_VALUE_BOOL, BU_ARG_REQUIRED, "bool", "Emit curved primitives as faceted BoT meshes"),
+    BU_ARG_VALUE(NULL, "facet-max", struct scad_read_options, facet_max,
+	BU_ARG_VALUE_INTEGER, BU_ARG_REQUIRED, "n", "Set the largest faceted n-gon prism"),
+    BU_ARG_OPTION_NULL
+};
+
+static const struct bu_arg_schema scad_read_schema = {
+    "scad-read", "OpenSCAD reader options", scad_read_options, NULL,
+    BU_ARG_PARSE_INTERSPERSED, BU_ARG_SCHEMA_CONSTRAINTS(NULL, NULL)
+};
 
 static void
-scad_read_create_opts(struct bu_opt_desc **options_desc, void **dest_options_data)
+scad_read_create_opts(const struct bu_arg_schema **schema, void **dest_options_data)
 {
     struct scad_read_options *o;
 
@@ -68,30 +86,13 @@ scad_read_create_opts(struct bu_opt_desc **options_desc, void **dest_options_dat
     o->facetize = 0;
     o->facet_max = 12;
     *dest_options_data = o;
-
-    *options_desc = (struct bu_opt_desc *)bu_calloc(SCAD_OPT_COUNT + 1,
-						     sizeof(struct bu_opt_desc), "scad opts");
-
-    BU_OPT((*options_desc)[0], NULL, "units", "unit",
-	   bu_opt_str, &o->units, "units of the input model (default mm)");
-    BU_OPT((*options_desc)[1], NULL, "fn", "n",
-	   bu_opt_int, &o->fn, "fallback $fn when the file leaves it unset (0=auto)");
-    BU_OPT((*options_desc)[2], NULL, "fa", "deg",
-	   bu_opt_fastf_t, &o->fa, "fallback $fa minimum fragment angle (default 12)");
-    BU_OPT((*options_desc)[3], NULL, "fs", "len",
-	   bu_opt_fastf_t, &o->fs, "fallback $fs minimum fragment size (default 2)");
-    BU_OPT((*options_desc)[4], NULL, "facetize", "",
-	   bu_opt_bool, &o->facetize, "emit curved primitives as faceted BoT meshes");
-    BU_OPT((*options_desc)[5], NULL, "facet-max", "n",
-	   bu_opt_int, &o->facet_max,
-	   "largest $fn kept as a faceted n-gon prism (default 12; above this, cylinders become smooth tgc)");
-    BU_OPT_NULL((*options_desc)[6]);
+    *schema = &scad_read_schema;
 }
 
 static void
 scad_read_free_opts(void *options_data)
 {
-    /* units is a non-owning pointer into caller argv (bu_opt_str) */
+    /* units is a non-owning pointer into caller argv */
     bu_free(options_data, "scad opts");
 }
 

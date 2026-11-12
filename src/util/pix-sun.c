@@ -36,7 +36,7 @@
 
 #include "bu/app.h"
 #include "bu/getopt.h"
-#include "bu/opt.h"
+#include "util_arg.h"
 #include "bu/malloc.h"
 #include "bu/exit.h"
 
@@ -344,15 +344,15 @@ main(int ac, char **av)
 	switch (c) {
 	    case 'd'    : dither = !dither; break;
 	    case 'w'    :
-		if (!bu_opt_scan_size_t_range(bu_optarg, &ras.ras_width, 1, SIZE_MAX, "input width"))
+		if (!util_arg_size_t_range(bu_optarg, &ras.ras_width, 1, SIZE_MAX, "input width"))
 		    usage();
 		break;
 	    case 'n'    :
-		if (!bu_opt_scan_size_t_range(bu_optarg, &ras.ras_height, 1, SIZE_MAX, "input height"))
+		if (!util_arg_size_t_range(bu_optarg, &ras.ras_height, 1, SIZE_MAX, "input height"))
 		    usage();
 		break;
 	    case 's'    :
-		if (!bu_opt_scan_size_t_range(bu_optarg, &ras.ras_width, 1, SIZE_MAX, "input size"))
+		if (!util_arg_size_t_range(bu_optarg, &ras.ras_width, 1, SIZE_MAX, "input size"))
 		    usage();
 		ras.ras_height = ras.ras_width;
 		break;

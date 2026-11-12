@@ -33,7 +33,7 @@
 
 #include "bu/app.h"
 #include "bu/getopt.h"
-#include "bu/opt.h"
+#include "util_arg.h"
 #include "bu/malloc.h"
 #include "bu/exit.h"
 
@@ -63,16 +63,16 @@ get_args(int argc, char **argv)
 	switch (c) {
 	    case 's':
 		/* square file size */
-		if (!bu_opt_scan_size_t_range(bu_optarg, &file_width, 1, SIZE_MAX, "input size"))
+		if (!util_arg_size_t_range(bu_optarg, &file_width, 1, SIZE_MAX, "input size"))
 		    return 0;
 		file_height = file_width;
 		break;
 	    case 'w':
-		if (!bu_opt_scan_size_t_range(bu_optarg, &file_width, 1, SIZE_MAX, "input width"))
+		if (!util_arg_size_t_range(bu_optarg, &file_width, 1, SIZE_MAX, "input width"))
 		    return 0;
 		break;
 	    case 'n':
-		if (!bu_opt_scan_size_t_range(bu_optarg, &file_height, 1, SIZE_MAX, "input height"))
+		if (!util_arg_size_t_range(bu_optarg, &file_height, 1, SIZE_MAX, "input height"))
 		    return 0;
 		break;
 	    default:

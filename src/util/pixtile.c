@@ -35,7 +35,7 @@
 
 #include "bu/app.h"
 #include "bu/getopt.h"
-#include "bu/opt.h"
+#include "util_arg.h"
 #include "bu/file.h"
 #include "bu/malloc.h"
 #include "bu/str.h"
@@ -64,33 +64,33 @@ get_args(int argc, char **argv)
 	switch (c) {
 	    case 's':
 		/* square input file size */
-		if (!bu_opt_scan_int_range(bu_optarg, &file_width, 1, INT_MAX, "input size"))
+		if (!util_arg_int_range(bu_optarg, &file_width, 1, INT_MAX, "input size"))
 		    return 0;
 		file_height = file_width;
 		break;
 	    case 'w':
-		if (!bu_opt_scan_int_range(bu_optarg, &file_width, 1, INT_MAX, "input width"))
+		if (!util_arg_int_range(bu_optarg, &file_width, 1, INT_MAX, "input width"))
 		    return 0;
 		break;
 	    case 'n':
-		if (!bu_opt_scan_int_range(bu_optarg, &file_height, 1, INT_MAX, "input height"))
+		if (!util_arg_int_range(bu_optarg, &file_height, 1, INT_MAX, "input height"))
 		    return 0;
 		break;
 	    case 'S':
-		if (!bu_opt_scan_int_range(bu_optarg, &scr_width, 1, INT_MAX, "output size"))
+		if (!util_arg_int_range(bu_optarg, &scr_width, 1, INT_MAX, "output size"))
 		    return 0;
 		scr_height = scr_width;
 		break;
 	    case 'W':
-		if (!bu_opt_scan_int_range(bu_optarg, &scr_width, 1, INT_MAX, "output width"))
+		if (!util_arg_int_range(bu_optarg, &scr_width, 1, INT_MAX, "output width"))
 		    return 0;
 		break;
 	    case 'N':
-		if (!bu_opt_scan_int_range(bu_optarg, &scr_height, 1, INT_MAX, "output height"))
+		if (!util_arg_int_range(bu_optarg, &scr_height, 1, INT_MAX, "output height"))
 		    return 0;
 		break;
 	    case 'o':
-		if (!bu_opt_scan_int_range(bu_optarg, &framenumber, 0, INT_MAX, "start frame"))
+		if (!util_arg_int_range(bu_optarg, &framenumber, 0, INT_MAX, "start frame"))
 		    return 0;
 		break;
 	    default:		/* '?''h' */

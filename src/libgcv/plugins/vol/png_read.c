@@ -33,8 +33,18 @@ struct png_read_opts{
     int coloured;
 };
 
+static const struct bu_arg_option png_read_options[] = {
+    BU_ARG_VALUE("c", "colored", struct png_read_opts, coloured,
+	BU_ARG_VALUE_BOOL, BU_ARG_REQUIRED, "bool", "Specify whether the image is colored"),
+    BU_ARG_OPTION_NULL
+};
 
-static void create_opts(struct bu_opt_desc **opts_desc, void **dest_options_data)
+static const struct bu_arg_schema png_read_schema = {
+    "png-read", "PNG volume reader options", png_read_options, NULL,
+    BU_ARG_PARSE_INTERSPERSED, BU_ARG_SCHEMA_CONSTRAINTS(NULL, NULL)
+};
+
+static void create_opts(const struct bu_arg_schema **schema, void **dest_options_data)
 {
     struct png_read_opts *opts_data;
 
@@ -42,13 +52,9 @@ static void create_opts(struct bu_opt_desc **opts_desc, void **dest_options_data
 
     BU_ALLOC(opts_data, struct png_read_opts);
     *dest_options_data = opts_data;
-    *opts_desc = (struct bu_opt_desc *)bu_calloc(3, sizeof(struct bu_opt_desc), "options_desc");
+    *schema = &png_read_schema;
 
     opts_data->coloured = 0;
-
-    BU_OPT((*opts_desc)[0], "c", "colored", NULL, bu_opt_bool,
-	   &opts_data->coloured, "Check if it is coloured");
-    BU_OPT_NULL((*opts_desc)[1]);
 }
 
 

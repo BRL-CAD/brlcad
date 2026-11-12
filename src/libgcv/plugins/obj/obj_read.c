@@ -3124,167 +3124,150 @@ struct obj_read_options
 
 
 static int
-parse_grouping_option(struct bu_vls *error_msg, size_t argc, const char **argv, void *set_var)
+parse_grouping_option(struct bu_vls *error_msg, const char *arg, void *set_var)
 {
-    char * const value = (char *)set_var;
+    char value;
 
-    BU_OPT_CHECK_ARGV0(error_msg, argc, argv, "parse_grouping_option");
-
-    if (!value) return -1;
-
-    if (!bu_strcmp(argv[0], "group"))
-	*value = 'g';
-    else if (!bu_strcmp(argv[0], "material"))
-	*value = 'm';
-    else if (!bu_strcmp(argv[0], "none"))
-	*value = 'n';
-    else if (!bu_strcmp(argv[0], "object"))
-	*value = 'o';
-    else if (!bu_strcmp(argv[0], "texture"))
-	*value = 't';
+    if (!bu_strcmp(arg, "group"))
+	value = 'g';
+    else if (!bu_strcmp(arg, "material"))
+	value = 'm';
+    else if (!bu_strcmp(arg, "none"))
+	value = 'n';
+    else if (!bu_strcmp(arg, "object"))
+	value = 'o';
+    else if (!bu_strcmp(arg, "texture"))
+	value = 't';
     else {
 	bu_vls_printf(error_msg, "invalid grouping mode\n");
 	return -1;
     }
 
-    return 1;
+    if (set_var)
+	*(char *)set_var = value;
+    return 0;
 }
 
 
 static int
-parse_mode_option(struct bu_vls *error_msg, size_t argc, const char **argv, void *set_var)
+parse_mode_option(struct bu_vls *error_msg, const char *arg, void *set_var)
 {
-    struct obj_read_options * const options = (struct obj_read_options *)set_var;
+    char mode;
 
-    BU_OPT_CHECK_ARGV0(error_msg, argc, argv, "parse_mode_option");
-
-    if (!options) return -1;
-
-    if (!bu_strcmp(argv[0], "bot")) {
-	options->mode_option = 'b';
-    } else if (!bu_strcmp(argv[0], "nmg")) {
-	options->nmg_output_mode = OUT_NMG;
-	options->mode_option = 'n';
-    } else if (!bu_strcmp(argv[0], "nmgbot")) {
-	options->nmg_output_mode = OUT_VBOT;
-	options->mode_option = 'v';
+    if (!bu_strcmp(arg, "bot")) {
+	mode = 'b';
+    } else if (!bu_strcmp(arg, "nmg")) {
+	mode = 'n';
+    } else if (!bu_strcmp(arg, "nmgbot")) {
+	mode = 'v';
     } else {
 	bu_vls_printf(error_msg, "invalid conversion mode\n");
 	return -1;
     }
 
-    return 1;
-}
-
-
-static int
-parse_bot_thickness_option(struct bu_vls *error_msg, size_t argc, const char **argv, void *set_var)
-{
-    struct obj_read_options * const options = (struct obj_read_options *)set_var;
-
-    BU_OPT_CHECK_ARGV0(error_msg, argc, argv, "parse_bot_thickness_option");
-
-    if (!options) return -1;
-
-    if (bu_opt_fastf_t(error_msg, argc, argv, &options->bot_thickness) != 1)
-	return -1;
-
-    if (options->bot_thickness <= 0.0) {
-	bu_vls_printf(error_msg, "invalid bot plate thickness\n");
-	return -1;
-    }
-
-    options->user_bot_thickness_flag = 1;
-
-    return 1;
-}
-
-
-static int
-parse_normal_mode_option(struct bu_vls *UNUSED(error_msg), size_t UNUSED(argc), const char **UNUSED(argv), void *set_var)
-{
-    int * const value = (int *)set_var;
-
-    if (value) {
-	*value = IGNR_NORM;
-    }
+    if (set_var)
+	*(char *)set_var = mode;
     return 0;
 }
 
 
 static int
-parse_open_bot_output_mode_option(struct bu_vls *error_msg, size_t argc, const char **argv, void *set_var)
+parse_bot_thickness_option(struct bu_vls *error_msg, const char *arg, void *set_var)
 {
-    int * const value = (int *)set_var;
+    fastf_t thickness;
 
-    BU_OPT_CHECK_ARGV0(error_msg, argc, argv, "parse_open_bot_output_mode_option");
+    if (!bu_arg_number_from_str(error_msg, &thickness, arg))
+	return -1;
 
-    if (!value ) return -1;
+    if (thickness <= 0.0) {
+	bu_vls_printf(error_msg, "invalid bot plate thickness\n");
+	return -1;
+    }
 
-    if (!bu_strcmp(argv[0], "nocos"))
-	*value = RT_BOT_PLATE_NOCOS;
-    else if (!bu_strcmp(argv[0], "plate"))
-	*value = RT_BOT_PLATE;
-    else if (!bu_strcmp(argv[0], "surface"))
-	*value = RT_BOT_SURFACE;
+    if (set_var)
+	*(fastf_t *)set_var = thickness;
+    return 0;
+}
+
+
+static int
+parse_open_bot_output_mode_option(struct bu_vls *error_msg, const char *arg, void *set_var)
+{
+    int value;
+
+    if (!bu_strcmp(arg, "nocos"))
+	value = RT_BOT_PLATE_NOCOS;
+    else if (!bu_strcmp(arg, "plate"))
+	value = RT_BOT_PLATE;
+    else if (!bu_strcmp(arg, "surface"))
+	value = RT_BOT_SURFACE;
     else {
 	bu_vls_printf(error_msg, "invalid BoT open type\n");
 	return -1;
     }
 
-    return 1;
-}
-
-
-static int
-parse_plot_mode_option(struct bu_vls *UNUSED(error_msg), size_t UNUSED(argc), const char **UNUSED(argv), void *set_var)
-{
-    int * const value = (int *)set_var;
-
-    if (value) {
-	*value = PLOT_ON;
-    }
+    if (set_var)
+	*(int *)set_var = value;
     return 0;
 }
 
 
 static int
-parse_bot_orientation_option(struct bu_vls *error_msg, size_t argc, const char **argv, void *set_var)
+parse_bot_orientation_option(struct bu_vls *error_msg, const char *arg, void *set_var)
 {
-    int have_orientation = 0;
-    int * const value = (int *)set_var;
+    char value;
 
-    BU_OPT_CHECK_ARGV0(error_msg, argc, argv, "parse_bot_orientation_option");
-
-    if (!bu_strcmp(argv[0], "unoriented")) {
-	*value = RT_BOT_UNORIENTED;
-	have_orientation = 1;
-    }
-    if (!bu_strcmp(argv[0], "ccw")) {
-	*value = RT_BOT_CCW;
-	have_orientation = 1;
-    }
-    if (!bu_strcmp(argv[0], "cw")) {
-	*value = RT_BOT_CW;
-	have_orientation = 1;
-    }
-    if (!have_orientation) {
+    if (!bu_strcmp(arg, "unoriented"))
+	value = RT_BOT_UNORIENTED;
+    else if (!bu_strcmp(arg, "ccw"))
+	value = RT_BOT_CCW;
+    else if (!bu_strcmp(arg, "cw"))
+	value = RT_BOT_CW;
+    else {
 	bu_vls_printf(error_msg, "invalid BoT orientation mode\n");
 	return -1;
     }
 
-    return 1;
+    if (set_var)
+	*(char *)set_var = value;
+    return 0;
 }
 
+static const struct bu_arg_option obj_read_option_defs[] = {
+    BU_ARG_FLAG(NULL, "continue", struct obj_read_options, cont_on_nmg_bomb_flag,
+	"Continue processing after an NMG failure"),
+    BU_ARG_FLAG(NULL, "fuse-vertices", struct obj_read_options, fuse_vertices,
+	"Fuse vertices within tolerance"),
+    BU_ARG_CUSTOM(NULL, "grouping", struct obj_read_options, grouping_option,
+	parse_grouping_option, "mode", "Select OBJ face grouping"),
+    BU_ARG_CUSTOM(NULL, "conversion-mode", struct obj_read_options, mode_option,
+	parse_mode_option, "mode", "Select conversion mode"),
+    BU_ARG_CUSTOM(NULL, "bot-plate-thickness", struct obj_read_options, bot_thickness,
+	parse_bot_thickness_option, "thickness", "Set BoT plate thickness"),
+    BU_ARG_FLAG(NULL, "bot-ignore-normals", struct obj_read_options, normal_mode,
+	"Ignore input normals in native BoT mode"),
+    BU_ARG_CUSTOM(NULL, "bot-open-type", struct obj_read_options, open_bot_output_mode,
+	parse_open_bot_output_mode_option, "type", "Select the type for open BoTs"),
+    BU_ARG_FLAG(NULL, "bot-plot", struct obj_read_options, plot_mode,
+	"Plot open edges for non-closed BoTs"),
+    BU_ARG_CUSTOM(NULL, "bot-orientation", struct obj_read_options, bot_orientation,
+	parse_bot_orientation_option, "mode", "Select BoT orientation"),
+    BU_ARG_OPTION_NULL
+};
+
+static const struct bu_arg_schema obj_read_schema = {
+    "obj-read", "OBJ reader options", obj_read_option_defs, NULL,
+    BU_ARG_PARSE_INTERSPERSED, BU_ARG_SCHEMA_CONSTRAINTS(NULL, NULL)
+};
 
 static void
-obj_read_create_opts(struct bu_opt_desc **options_desc, void **dest_options_data)
+obj_read_create_opts(const struct bu_arg_schema **schema, void **dest_options_data)
 {
     struct obj_read_options *options_data;
 
     BU_ALLOC(options_data, struct obj_read_options);
     *dest_options_data = options_data;
-    *options_desc = (struct bu_opt_desc *)bu_malloc(10 * sizeof(struct bu_opt_desc), "options_desc");
+    *schema = &obj_read_schema;
 
     options_data->cont_on_nmg_bomb_flag = 0;
     options_data->fuse_vertices = 0;
@@ -3298,43 +3281,6 @@ obj_read_create_opts(struct bu_opt_desc **options_desc, void **dest_options_data
     options_data->plot_mode = PLOT_OFF;
     options_data->bot_orientation = RT_BOT_UNORIENTED;
 
-    BU_OPT((*options_desc)[0], NULL, "continue", NULL,
-	    NULL, &options_data->cont_on_nmg_bomb_flag,
-	    "continue processing on nmg-bomb; will fall back to native BoT mode if a bu_bomb occurs when using the nmg or BoT via nmg modes");
-
-    BU_OPT((*options_desc)[1], NULL, "fuse-vertices", NULL,
-	    NULL, &options_data->fuse_vertices,
-	    "fuse vertices that are near enough to be considered identical");
-
-    BU_OPT((*options_desc)[2], NULL, "grouping", "mode",
-	    parse_grouping_option, &options_data->grouping_option,
-	    "select OBJ face grouping used to create primitives");
-
-    BU_OPT((*options_desc)[3], NULL, "conversion-mode", "mode",
-	    parse_mode_option, options_data,
-	    "select conversion mode");
-
-    BU_OPT((*options_desc)[4], NULL, "bot-plate-thickness", "thickness",
-	    parse_bot_thickness_option, options_data,
-	    "select conversion mode");
-
-    BU_OPT((*options_desc)[5], NULL, "bot-ignore-normals", NULL,
-	    parse_normal_mode_option, &options_data->normal_mode,
-	    "ignore normals defined in the input file when using native BoT conversion mode");
-
-    BU_OPT((*options_desc)[6], NULL, "bot-open-type", "type",
-	    parse_open_bot_output_mode_option, &options_data->open_bot_output_mode,
-	    "select type used for BoTs that aren't closed volumes");
-
-    BU_OPT((*options_desc)[7], NULL, "bot-plot", NULL,
-	    parse_plot_mode_option, &options_data->plot_mode,
-	    "create a .plot3 file of open edges for BoTs that aren't closed volumes");
-
-    BU_OPT((*options_desc)[8], NULL, "bot-orientation", "mode",
-	    parse_bot_orientation_option, &options_data->bot_orientation,
-	    "select BoT orientation mode");
-
-    BU_OPT_NULL((*options_desc)[9]);
 }
 
 
@@ -3510,10 +3456,13 @@ do_grouping(struct rt_wdb *wdbp, const struct gcv_opts *gcv_options, const struc
 static int
 obj_read(struct gcv_context *context, const struct gcv_opts *gcv_options, const void *options_data, const char *source_path)
 {
-    const struct obj_read_options * const obj_read_options = (struct obj_read_options *)options_data;
+    struct obj_read_options * const obj_read_options = (struct obj_read_options *)options_data;
     struct ga_t ga;
 
     struct bu_list *vlfree = &rt_vlfree;
+
+    obj_read_options->nmg_output_mode = obj_read_options->mode_option == 'n' ? OUT_NMG : OUT_VBOT;
+    obj_read_options->user_bot_thickness_flag = obj_read_options->bot_thickness > 0.0;
 
     if (obj_read_options->open_bot_output_mode == RT_BOT_PLATE || obj_read_options->open_bot_output_mode == RT_BOT_PLATE_NOCOS) {
 	if (!obj_read_options->user_bot_thickness_flag) {

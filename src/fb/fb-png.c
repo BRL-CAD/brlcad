@@ -37,7 +37,7 @@
 
 #include "bu/app.h"
 #include "bu/getopt.h"
-#include "bu/opt.h"
+#include "fb_arg.h"
 #include "bu/log.h"
 #include "bu/malloc.h"
 #include "vmath.h"
@@ -63,7 +63,7 @@ FILE *outfp;
 static int
 parse_pixbytes_arg(const char *arg, int *value)
 {
-    if (!bu_opt_scan_int_range(arg, value, 1, INT_MAX, "bytes per pixel"))
+    if (!fb_arg_int_range(arg, value, 1, INT_MAX, "bytes per pixel"))
 	return 0;
     if (*value != 1 && *value != 3) {
 	bu_log("fb-png: only able to handle 1 and 3 byte pixels, got '%s'\n", arg);
@@ -93,16 +93,16 @@ get_args(int argc, char **argv)
 		break;
 	    case 's':
 		/* square size */
-		if (!bu_opt_scan_int_range(bu_optarg, &screen_width, 1, INT_MAX, "screen size"))
+		if (!fb_arg_int_range(bu_optarg, &screen_width, 1, INT_MAX, "screen size"))
 		    return 0;
 		screen_height = screen_width;
 		break;
 	    case 'w':
-		if (!bu_opt_scan_int_range(bu_optarg, &screen_width, 1, INT_MAX, "screen width"))
+		if (!fb_arg_int_range(bu_optarg, &screen_width, 1, INT_MAX, "screen width"))
 		    return 0;
 		break;
 	    case 'n':
-		if (!bu_opt_scan_int_range(bu_optarg, &screen_height, 1, INT_MAX, "screen height"))
+		if (!fb_arg_int_range(bu_optarg, &screen_height, 1, INT_MAX, "screen height"))
 		    return 0;
 		break;
 	    case 'g':

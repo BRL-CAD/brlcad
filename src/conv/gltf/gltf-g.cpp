@@ -29,11 +29,41 @@
 
 #include "vmath.h"
 #include "bu/app.h"
-#include "bu/opt.h"
+#include "bu/arg.h"
 #include "bg/trimesh.h"
 #include "wdb.h"
 
 #include "gltf_read_util.h"
+
+struct gltf_args {
+    int print_help;
+    long verbosity;
+    const char *output_path;
+    int extensions;
+};
+
+static const struct bu_arg_option gltf_options[] = {
+    BU_ARG_FLAG("h", "help", struct gltf_args, print_help, "Print help and exit"),
+    BU_ARG_ALIAS("?", NULL, "help", 1),
+    BU_ARG_COUNTING_FLAG("v", "verbosity", struct gltf_args, verbosity,
+	BU_ARG_VALUE_LONG, "Increase verbosity level"),
+    BU_ARG_VALUE("o", "output", struct gltf_args, output_path,
+	BU_ARG_VALUE_STRING, BU_ARG_REQUIRED, "file", "Set output filename"),
+    BU_ARG_FLAG("E", "extensions", struct gltf_args, extensions,
+	"Store original JSON for extensions"),
+    BU_ARG_OPTION_NULL
+};
+
+static const struct bu_arg_operand gltf_operands[] = {
+    BU_ARG_OPERAND("input_file", BU_ARG_VALUE_FILE, 1, 1, "Input glTF file", NULL),
+    BU_ARG_OPERAND("output_file.g", BU_ARG_VALUE_FILE, 0, 1, "Output BRL-CAD database", NULL),
+    BU_ARG_OPERAND_NULL
+};
+
+static const struct bu_arg_schema gltf_schema = BU_ARG_SCHEMA(
+    "gltf-g", "Convert glTF geometry to a BRL-CAD database", gltf_options,
+    gltf_operands, BU_ARG_PARSE_INTERSPERSED,
+    BU_ARG_SCHEMA_META_HELP(NULL, NULL, NULL, NULL, NULL));
 
 static bool
 process_mesh(struct rt_wdb *outfp, const tg3_model &model, const tg3_mesh &mesh,
@@ -151,18 +181,8 @@ process_mesh(struct rt_wdb *outfp, const tg3_model &model, const tg3_mesh &mesh,
 int
 main(int argc, char **argv)
 {
-    int verbosity = 0;
-    int print_help = 0;
-    int extensions = 0;
-    struct bu_vls output_path = BU_VLS_INIT_ZERO;
-
-    struct bu_opt_desc d[6];
-    BU_OPT(d[0], "h", "help",       "", NULL,              &print_help,   "Print help and exit");
-    BU_OPT(d[1], "?", "",           "", NULL,              &print_help,   "");
-    BU_OPT(d[2], "v", "verbosity",  "", &bu_opt_incr_long, &verbosity,    "Increase verbosity level");
-    BU_OPT(d[3], "o", "output",     "", &bu_opt_str,       &output_path,  "Set output filename");
-    BU_OPT(d[4], "E", "extensions", "", NULL,              &extensions,   "Store original JSON for extensions");
-    BU_OPT_NULL(d[5]);
+    struct gltf_args args = {};
+    struct bu_vls msg = BU_VLS_INIT_ZERO;
 
     bu_setprogname(argv[0]);
 
@@ -170,60 +190,59 @@ main(int argc, char **argv)
 	--argc;
 	++argv;
     }
-    int opt_ret = bu_opt_parse(NULL, argc, (const char **)argv, d);
+    int operand_index = bu_arg_schema_parse_complete(&gltf_schema, &args, &msg,
+	argc, (const char **)argv);
+    if (operand_index < 0) {
+	bu_exit(BRLCAD_ERROR, "%s\n", bu_vls_cstr(&msg));
+    }
+    bu_vls_free(&msg);
 
-    if (print_help) {
-	char *help = bu_opt_help(d, "gltf-g", "input_file [output_file.g]",
-	    "Convert glTF geometry to a BRL-CAD database");
+    if (args.print_help) {
+	char *help = bu_arg_schema_help(&gltf_schema, "gltf-g");
 	if (help)
 	    bu_log("%s", help);
 	if (help)
 	    bu_free(help, "help str");
-	bu_vls_free(&output_path);
 	return 0;
     }
 
-    argc = opt_ret;
-    if (argc < 2 && !bu_vls_strlen(&output_path))
-	bu_exit(BRLCAD_ERROR, "Need input glTF filename\n");
-    if (argc > 2 || (argc == 2 && bu_vls_strlen(&output_path)))
+    argc -= operand_index;
+    argv += operand_index;
+    if (argc < 2 && !args.output_path)
+	bu_exit(BRLCAD_ERROR, "Need output BRL-CAD filename\n");
+    if (argc == 2 && args.output_path)
 	bu_exit(BRLCAD_ERROR, "Multiple inputs specified.\n");
-    if (argc == 2)
-	bu_vls_sprintf(&output_path, "%s", argv[1]);
+    const char *output_path = args.output_path ? args.output_path : argv[1];
 
     tinygltf3::Model model;
     tinygltf3::ErrorStack errors;
     brlcad_gltf::confined_file_reader reader(argv[0]);
-    tg3_error_code parse_result = reader.parse(model.get(), errors.get(), extensions != 0);
+    tg3_error_code parse_result = reader.parse(model.get(), errors.get(), args.extensions != 0);
     brlcad_gltf::log_errors(*errors.get());
     if (parse_result != TG3_OK) {
 	bu_log("Failed to parse glTF input %s (error %d)\n", argv[0],
 	    static_cast<int>(parse_result));
-	bu_vls_free(&output_path);
 	return BRLCAD_ERROR;
     }
 
-    struct rt_wdb *outfp = wdb_fopen(bu_vls_cstr(&output_path));
+    struct rt_wdb *outfp = wdb_fopen(output_path);
     if (!outfp) {
-	bu_log("Unable to open output file %s\n", bu_vls_cstr(&output_path));
-	bu_vls_free(&output_path);
+	bu_log("Unable to open output file %s\n", output_path);
 	return BRLCAD_ERROR;
     }
     std::string title = "gltf-g import of " + std::string(argv[0]);
     mk_id(outfp, title.c_str());
 
-    if (verbosity)
+    if (args.verbosity)
 	std::cout << "Mesh count: " << model->meshes_count << "\n";
     for (uint32_t i = 0; i < model->meshes_count; ++i) {
-	if (!process_mesh(outfp, *model.get(), model->meshes[i], verbosity, i)) {
+	if (!process_mesh(outfp, *model.get(), model->meshes[i], args.verbosity, i)) {
 	    db_close(outfp->dbip);
-	    bu_vls_free(&output_path);
 	    return BRLCAD_ERROR;
 	}
     }
 
     db_close(outfp->dbip);
-    bu_vls_free(&output_path);
     return BRLCAD_OK;
 }
 

@@ -36,7 +36,7 @@
 #include "vmath.h"
 #include "bu/app.h"
 #include "bu/getopt.h"
-#include "bu/opt.h"
+#include "util_arg.h"
 #include "bu/malloc.h"
 #include "bu/exit.h"
 #include "bn.h"
@@ -67,18 +67,18 @@ get_args(int argc, char **argv)
 		break;
 	    case 's':
 		/* square file size */
-		if (!bu_opt_scan_long_range(bu_optarg, &file_width, 1, LONG_MAX, "input size"))
+		if (!util_arg_long_range(bu_optarg, &file_width, 1, LONG_MAX, "input size"))
 		    return 0;
 		file_height = file_width;
 		autosize = 0;
 		break;
 	    case 'w':
-		if (!bu_opt_scan_long_range(bu_optarg, &file_width, 1, LONG_MAX, "input width"))
+		if (!util_arg_long_range(bu_optarg, &file_width, 1, LONG_MAX, "input width"))
 		    return 0;
 		autosize = 0;
 		break;
 	    case 'n':
-		if (!bu_opt_scan_long_range(bu_optarg, &file_height, 1, LONG_MAX, "input height"))
+		if (!util_arg_long_range(bu_optarg, &file_height, 1, LONG_MAX, "input height"))
 		    return 0;
 		autosize = 0;
 		break;

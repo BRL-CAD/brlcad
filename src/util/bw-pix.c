@@ -33,12 +33,34 @@
 
 #include "bu/app.h"
 #include "bu/file.h"
-#include "bu/getopt.h"
+#include "bu/arg.h"
 #include "bu/str.h"
-#include "bu/opt.h"
 #include "bu/mime.h"
 #include "bu/exit.h"
 #include "icv.h"
+
+struct bw_pix_args {
+    int help;
+    const char *output_file;
+};
+
+static const struct bu_arg_option bw_pix_options[] = {
+    BU_ARG_FLAG("h", "help", struct bw_pix_args, help, "Print help and exit"),
+    BU_ARG_VALUE("o", "output-file", struct bw_pix_args, output_file,
+	BU_ARG_VALUE_STRING, BU_ARG_REQUIRED, "filename", "PIX output file name"),
+    BU_ARG_OPTION_NULL
+};
+
+static const struct bu_arg_operand bw_pix_operands[] = {
+    BU_ARG_OPERAND("file", BU_ARG_VALUE_FILE, 0, 4,
+	"One grayscale input, optional output, or three channel inputs and optional output", NULL),
+    BU_ARG_OPERAND_NULL
+};
+
+static const struct bu_arg_schema bw_pix_schema = BU_ARG_SCHEMA(
+    "bw-pix", "Convert one or three grayscale images to PIX RGB data",
+    bw_pix_options, bw_pix_operands, BU_ARG_PARSE_INTERSPERSED,
+    BU_ARG_SCHEMA_META_HELP(NULL, NULL, NULL, NULL, NULL));
 
 
 void
@@ -86,7 +108,7 @@ main(int argc, char **argv)
     struct bu_vls in_fname = BU_VLS_INIT_ZERO;
     struct bu_vls out_fname = BU_VLS_INIT_ZERO;
     struct bu_vls optparse_msg = BU_VLS_INIT_ZERO;
-    int need_help = 0;
+    struct bw_pix_args args = {0};
     int uac = 0;
     icv_image_t *img;
     const char *rfile = NULL;
@@ -96,27 +118,27 @@ main(int argc, char **argv)
 
     bu_setprogname(argv[0]);
 
-    struct bu_opt_desc d[3];
-    BU_OPT(d[0], "h", "help",        "",         NULL,        &need_help, "Print help and exit");
-    BU_OPT(d[1], "o", "output-file", "filename", &bu_opt_vls, &out_fname, "PIX output file name");
-    BU_OPT_NULL(d[2]);
-
     /* Skip first arg */
     argv++; argc--;
-    uac = bu_opt_parse(&optparse_msg, argc, (const char **)argv, d);
+    int operand_index = bu_arg_schema_parse_complete(&bw_pix_schema, &args,
+	&optparse_msg, argc, (const char **)argv);
 
-    if (uac == -1) {
+    if (operand_index < 0) {
 	bu_exit(EXIT_FAILURE, "%s", bu_vls_addr(&optparse_msg));
     }
     bu_vls_free(&optparse_msg);
 
-    if (need_help) {
+    if (args.help) {
 	bu_vls_free(&out_fname);
-	char *help = bu_opt_help(d, "bw-pix",
-	    "[file.bw [file_green.bw file_blue.bw]]",
-	    "Convert one or three grayscale images to PIX RGB data");
+	char *help = bu_arg_schema_help(&bw_pix_schema, "bw-pix");
 	bu_exit(EXIT_SUCCESS, "%s", help ? help : "");
     }
+
+    argc -= operand_index;
+    argv += operand_index;
+    uac = argc;
+    if (args.output_file)
+	bu_vls_sprintf(&out_fname, "%s", args.output_file);
 
     switch (uac) {
 	case 0:

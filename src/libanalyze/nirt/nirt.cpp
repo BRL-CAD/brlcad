@@ -3228,7 +3228,7 @@ nirt_log(struct bu_vls *o, struct nirt_state *ns, int output_type)
 }
 
 int
-nirt_help(struct bu_vls *h, struct nirt_state *ns,  bu_opt_format_t UNUSED(output_type))
+nirt_help(struct bu_vls *h, struct nirt_state *ns)
 {
     if (!h || !ns) return -1;
     return 0;

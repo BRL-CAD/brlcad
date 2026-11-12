@@ -250,7 +250,7 @@ main(int argc, char *argv[])
     if (BU_STR_EQUAL(argv[1], "init")) {
 	ptbl_size = 100;
 	if (argc > 2) {
-	    if (bu_opt_long(NULL, 2, (const char **) argv, (void *) &ptbl_size) < 0) {
+	    if (!bu_arg_size_t_from_str(NULL, &ptbl_size, argv[2], 0)) {
 		bu_log("\nINFO: init: could not convert argument, using size=100\n");
 	    }
 	}

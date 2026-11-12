@@ -1185,24 +1185,26 @@ vrml_write_make_units_str(double scale_factor)
 }
 
 
+static const struct bu_arg_option vrml_write_options[] = {
+    BU_ARG_FLAG(NULL, "bot-dump", struct vrml_write_options, bot_dump, "BoT dump"),
+    BU_ARG_FLAG(NULL, "evaluate-all", struct vrml_write_options, eval_all,
+	"Evaluate all CSG and BoTs"),
+    BU_ARG_OPTION_NULL
+};
+
+static const struct bu_arg_schema vrml_write_schema = {
+    "vrml-write", "VRML writer options", vrml_write_options, NULL,
+    BU_ARG_PARSE_INTERSPERSED, BU_ARG_SCHEMA_CONSTRAINTS(NULL, NULL)
+};
+
 static void
-vrml_write_create_opts(struct bu_opt_desc **options_desc, void **dest_options_data)
+vrml_write_create_opts(const struct bu_arg_schema **schema, void **dest_options_data)
 {
     struct vrml_write_options *options_data;
 
     BU_ALLOC(options_data, struct vrml_write_options);
     *dest_options_data = options_data;
-    *options_desc = (struct bu_opt_desc *)bu_malloc(3 * sizeof(struct bu_opt_desc), "options_desc");
-
-    BU_OPT((*options_desc)[0], NULL, "bot-dump", NULL,
-	    NULL, &options_data->bot_dump,
-	    "BoT dump");
-
-    BU_OPT((*options_desc)[1], NULL, "evaluate-all", NULL,
-	    NULL, &options_data->eval_all,
-	    "evaluate all, CSG and BoTs");
-
-    BU_OPT_NULL((*options_desc)[2]);
+    *schema = &vrml_write_schema;
 }
 
 

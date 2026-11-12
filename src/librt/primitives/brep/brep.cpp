@@ -50,7 +50,7 @@
 
 #include "bu/cv.h"
 #include "bu/env.h"
-#include "bu/opt.h"
+#include "bu/arg.h"
 #include "bu/datetime.h"
 #include "bu/parallel.h"
 #include "brep.h"
@@ -126,7 +126,7 @@ brep_debug(const char *objname)
 	// TODO - cache previous value of env var in a static buffer
 	// so we can skip doing anything if things haven't changed
 	char *envstr = getenv("LIBRT_BREP_DEBUG");
-	if (bu_opt_int(NULL, 1, (const char **)&envstr, (void *)&debug_output) == -1) {
+	if (!bu_arg_integer_from_str(NULL, &debug_output, envstr, 0)) {
 	    /* If we don't have a number, check if the value matches
 	     * the objname.  If it does, enable all possible debug
 	     * output only when shooting this object.

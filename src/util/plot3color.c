@@ -32,7 +32,7 @@
 #include "bu/app.h"
 #include "bu/exit.h"
 #include "bu/log.h"
-#include "bu/opt.h"
+#include "bu/arg.h"
 #include "vmath.h"
 #include "bv/plot3.h"
 
@@ -44,6 +44,7 @@ main(int argc, char **argv)
 {
     int c;
     int r, g, b;
+    struct bu_vls msg = BU_VLS_INIT_ZERO;
 
     bu_setprogname(argv[0]);
 
@@ -60,11 +61,14 @@ main(int argc, char **argv)
 	    putchar(c);
     }
 
-    if (!bu_opt_scan_int_range(argv[1], &r, 0, 255, "red component") ||
-	!bu_opt_scan_int_range(argv[2], &g, 0, 255, "green component") ||
-	!bu_opt_scan_int_range(argv[3], &b, 0, 255, "blue component")) {
+    if (!bu_arg_integer_range_from_str(&msg, &r, argv[1], 10, 0, 255) ||
+	!bu_arg_integer_range_from_str(&msg, &g, argv[2], 10, 0, 255) ||
+	!bu_arg_integer_range_from_str(&msg, &b, argv[3], 10, 0, 255)) {
+	bu_log("%s: %s\n", bu_getprogname(), bu_vls_cstr(&msg));
+	bu_vls_free(&msg);
 	return 1;
     }
+    bu_vls_free(&msg);
 
     pl_color(stdout, r, g, b);
     return 0;

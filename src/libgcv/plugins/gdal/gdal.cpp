@@ -70,6 +70,21 @@ struct gdal_read_options
     int zone;
 };
 
+static const struct bu_arg_option gdal_read_options_schema[] = {
+    BU_ARG_FLAG("c", "center", struct gdal_read_options, center,
+	"Center the DSP terrain at global coordinates 0,0"),
+    BU_ARG_VALUE(NULL, "utm-zone", struct gdal_read_options, zone,
+	BU_ARG_VALUE_INTEGER, BU_ARG_REQUIRED, "zone", "Set the UTM projection zone"),
+    BU_ARG_VALUE(NULL, "projection", struct gdal_read_options, proj,
+	BU_ARG_VALUE_STRING, BU_ARG_REQUIRED, "proj", "Set the terrain projection"),
+    BU_ARG_OPTION_NULL
+};
+
+static const struct bu_arg_schema gdal_read_schema = {
+    "gdal-read", "GDAL reader options", gdal_read_options_schema, NULL,
+    BU_ARG_PARSE_INTERSPERSED, BU_ARG_SCHEMA_CONSTRAINTS(NULL, NULL)
+};
+
 struct conversion_state {
     const struct gcv_opts *gcv_options;
     const struct gdal_read_options *ops;
@@ -390,22 +405,18 @@ gdal_read(struct gcv_context *context, const struct gcv_opts *gcv_options,
 }
 
 static void
-gdal_read_create_opts(struct bu_opt_desc **odesc, void **dest_options_data)
+gdal_read_create_opts(const struct bu_arg_schema **schema, void **dest_options_data)
 {
     struct gdal_read_options *odata;
 
     BU_ALLOC(odata, struct gdal_read_options);
     *dest_options_data = odata;
-    *odesc = (struct bu_opt_desc *)bu_malloc(4*sizeof(struct bu_opt_desc), "gdal option descriptions");
+    *schema = &gdal_read_schema;
 
     odata->center = 0;
     odata->proj = NULL;
     odata->zone = INT_MAX;
 
-    BU_OPT((*odesc)[0], "c", "center", NULL, NULL, &(odata->center), "Center the dsp terrain at global (0,0)");
-    BU_OPT((*odesc)[1], "",  "utm-zone", "zone", &bu_opt_int, &(odata->zone), "When performing UTM project use the specified zone.");
-    BU_OPT((*odesc)[2], "", "projection", "proj", &bu_opt_str, &(odata->proj), "Projection to apply to the terrain data before exporting to a .g file");
-    BU_OPT_NULL((*odesc)[3]);
 }
 
 static void

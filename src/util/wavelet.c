@@ -52,7 +52,7 @@
 #include "vmath.h"
 #include "bu/app.h"
 #include "bu/getopt.h"
-#include "bu/opt.h"
+#include "bu/arg.h"
 #include "bu/malloc.h"
 #include "bu/exit.h"
 #include "bn.h"
@@ -87,7 +87,14 @@ int decomp_recon;
 static int
 parse_size_arg(const char *arg, size_t *out_value, const char *label, int allow_zero)
 {
-    return bu_opt_scan_size_t_range(arg, out_value, allow_zero ? 0 : 1, SIZE_MAX, label);
+    struct bu_vls msg = BU_VLS_INIT_ZERO;
+    int valid = bu_arg_size_t_range_from_str(&msg, out_value, arg, 10,
+	allow_zero ? 0 : 1, SIZE_MAX);
+
+    if (!valid)
+	bu_log("%s: %s: %s\n", bu_getprogname(), label, bu_vls_cstr(&msg));
+    bu_vls_free(&msg);
+    return valid;
 }
 
 
@@ -129,8 +136,15 @@ parse_args(int ac, char **av)
 	    case 'r': decomp_recon = RECONSTRUCT;
 		break;
 	    case 'D':
-		if (!bu_opt_scan_int(bu_optarg, &debug, "debug level"))
-		    usage("");
+		{
+		    struct bu_vls msg = BU_VLS_INIT_ZERO;
+		    if (!bu_arg_integer_from_str(&msg, &debug, bu_optarg, 10)) {
+			bu_log("%s: debug level: %s\n", bu_getprogname(), bu_vls_cstr(&msg));
+			bu_vls_free(&msg);
+			usage("");
+		    }
+		    bu_vls_free(&msg);
+		}
 		break;
 	    case 'R':
 		if (!parse_size_arg(bu_optarg, &avg_size, "average size", 0))

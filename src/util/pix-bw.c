@@ -35,7 +35,7 @@
 #include "vmath.h"
 #include "bu/app.h"
 #include "bu/getopt.h"
-#include "bu/opt.h"
+#include "util_arg.h"
 #include "bu/str.h"
 #include "bu/log.h"
 #include "bu/mime.h"
@@ -107,33 +107,33 @@ get_args(int argc, char **argv)
 		break;
 	    case 'R' :
 		red++;
-		if (!bu_opt_scan_double(bu_optarg, &rweight, "red weight"))
+		if (!util_arg_double(bu_optarg, &rweight, "red weight"))
 		    return 0;
 		break;
 	    case 'G' :
 		green++;
-		if (!bu_opt_scan_double(bu_optarg, &gweight, "green weight"))
+		if (!util_arg_double(bu_optarg, &gweight, "green weight"))
 		    return 0;
 		break;
 	    case 'B' :
 		blue++;
-		if (!bu_opt_scan_double(bu_optarg, &bweight, "blue weight"))
+		if (!util_arg_double(bu_optarg, &bweight, "blue weight"))
 		    return 0;
 		break;
 	    case 'o' :
 		out_file = bu_optarg;
 		break;
             case 's' :
-	       if (!bu_opt_scan_size_t_range(bu_optarg, &inx, 1, SIZE_MAX, "input size"))
+	       if (!util_arg_size_t_range(bu_optarg, &inx, 1, SIZE_MAX, "input size"))
 		   return 0;
 	       iny = inx;
                break;
             case 'w' :
-	       if (!bu_opt_scan_size_t_range(bu_optarg, &inx, 1, SIZE_MAX, "input width"))
+	       if (!util_arg_size_t_range(bu_optarg, &inx, 1, SIZE_MAX, "input width"))
 		   return 0;
                break;
             case 'n' :
-	       if (!bu_opt_scan_size_t_range(bu_optarg, &iny, 1, SIZE_MAX, "input height"))
+	       if (!util_arg_size_t_range(bu_optarg, &iny, 1, SIZE_MAX, "input height"))
 		   return 0;
                break;
 	    default:		/* '?' 'h' */

@@ -325,24 +325,27 @@ nmg_to_stl(struct nmgregion *r, const struct db_full_path *pathp, struct db_tree
 }
 
 
+static const struct bu_arg_option stl_write_options_schema[] = {
+    BU_ARG_FLAG(NULL, "binary", struct stl_write_options, binary,
+	"Write binary STL data"),
+    BU_ARG_FLAG(NULL, "output-dir", struct stl_write_options, output_directory,
+	"Treat the output path as a directory"),
+    BU_ARG_OPTION_NULL
+};
+
+static const struct bu_arg_schema stl_write_schema = {
+    "stl-write", "STL writer options", stl_write_options_schema, NULL,
+    BU_ARG_PARSE_INTERSPERSED, BU_ARG_SCHEMA_CONSTRAINTS(NULL, NULL)
+};
+
 static void
-stl_write_create_opts(struct bu_opt_desc **options_desc, void **dest_options_data)
+stl_write_create_opts(const struct bu_arg_schema **schema, void **dest_options_data)
 {
     struct stl_write_options *options_data;
 
     BU_ALLOC(options_data, struct stl_write_options);
     *dest_options_data = options_data;
-    *options_desc = (struct bu_opt_desc *)bu_malloc(3 * sizeof(struct bu_opt_desc), "options_desc");
-
-    BU_OPT((*options_desc)[0], NULL, "binary", NULL,
-	    NULL, &options_data->binary,
-	    "specify that the input is in binary STL format");
-
-    BU_OPT((*options_desc)[1], NULL, "output-dir", NULL,
-	    NULL, &options_data->output_directory,
-	    "specify that the output path should be a directory");
-
-    BU_OPT_NULL((*options_desc)[2]);
+    *schema = &stl_write_schema;
 }
 
 

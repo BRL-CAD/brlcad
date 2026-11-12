@@ -36,7 +36,7 @@
 
 #include "bu/app.h"
 #include "bu/getopt.h"
-#include "bu/opt.h"
+#include "fb_arg.h"
 #include "bu/log.h"
 #include "bu/malloc.h"
 #include "vmath.h"
@@ -81,7 +81,7 @@ static int
 parse_positive_double_arg(const char *arg, double *value, const char *label)
 {
     double _d;
-    if (!bu_opt_scan_double(arg, &_d, label))
+    if (!fb_arg_double(arg, &_d, label))
 	return 0;
     if (_d <= 0.0) {
 	bu_log("%s: %s must be positive '%s'\n", bu_getprogname(), label, arg);
@@ -102,7 +102,7 @@ get_args(int argc, char **argv)
 		one_line_only = 1;
 		break;
 	    case 'm':
-		if (!bu_opt_scan_int_range(bu_optarg, &multiple_lines, 0, INT_MAX, "line count"))
+		if (!fb_arg_int_range(bu_optarg, &multiple_lines, 0, INT_MAX, "line count"))
 		    return 0;
 		break;
 	    case 'g':
@@ -128,32 +128,32 @@ get_args(int argc, char **argv)
 		framebuffer = bu_optarg;
 		break;
 	    case 'x':
-		if (!bu_opt_scan_int_range(bu_optarg, &file_xoff, 0, INT_MAX, "file x offset"))
+		if (!fb_arg_int_range(bu_optarg, &file_xoff, 0, INT_MAX, "file x offset"))
 		    return 0;
 		break;
 	    case 'y':
-		if (!bu_opt_scan_int_range(bu_optarg, &file_yoff, 0, INT_MAX, "file y offset"))
+		if (!fb_arg_int_range(bu_optarg, &file_yoff, 0, INT_MAX, "file y offset"))
 		    return 0;
 		break;
 	    case 'X':
-		if (!bu_opt_scan_int(bu_optarg, &scr_xoff, "screen x offset"))
+		if (!fb_arg_int(bu_optarg, &scr_xoff, "screen x offset"))
 		    return 0;
 		break;
 	    case 'Y':
-		if (!bu_opt_scan_int(bu_optarg, &scr_yoff, "screen y offset"))
+		if (!fb_arg_int(bu_optarg, &scr_yoff, "screen y offset"))
 		    return 0;
 		break;
 	    case 'S':
-		if (!bu_opt_scan_int_range(bu_optarg, &scr_width, 0, INT_MAX, "screen size"))
+		if (!fb_arg_int_range(bu_optarg, &scr_width, 0, INT_MAX, "screen size"))
 		    return 0;
 		scr_height = scr_width;
 		break;
 	    case 'W':
-		if (!bu_opt_scan_int_range(bu_optarg, &scr_width, 0, INT_MAX, "screen width"))
+		if (!fb_arg_int_range(bu_optarg, &scr_width, 0, INT_MAX, "screen width"))
 		    return 0;
 		break;
 	    case 'N':
-		if (!bu_opt_scan_int_range(bu_optarg, &scr_height, 0, INT_MAX, "screen height"))
+		if (!fb_arg_int_range(bu_optarg, &scr_height, 0, INT_MAX, "screen height"))
 		    return 0;
 		break;
 

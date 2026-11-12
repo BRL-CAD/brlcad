@@ -29,7 +29,7 @@
 #include <string.h>
 
 #include "bu/cmd.h"
-#include "bu/opt.h"
+#include "bu/arg.h"
 #include "rt/primitives/arb8.h"
 #include "../ged_private.h"
 #include "./ged_edit.h"
@@ -95,8 +95,8 @@ edarb_extrude(void *data, int argc, const char *argv[])
 	return BRLCAD_ERROR;
     }
 
-    if (bu_opt_int(NULL, 1, &argv[3], &face) != 1 ||
-	bu_opt_fastf_t(NULL, 1, &argv[4], &dist) != 1 || !isfinite(dist)) {
+    if (bu_arg_integer_from_str(NULL, (int *)(&face), argv[3], 0) != 1 ||
+	bu_arg_number_from_str(NULL, (fastf_t *)(&dist), argv[4]) != 1 || !isfinite(dist)) {
 	bu_vls_printf(gedp->ged_result_str, "%s %s: invalid face or distance\n",
 		argv[0], argv[1]);
 	return BRLCAD_ERROR;
@@ -162,7 +162,7 @@ edarb_mirface(void *data, int argc, const char *argv[])
 	return BRLCAD_ERROR;
     }
 
-    if (bu_opt_int(NULL, 1, &argv[3], &face) != 1) {
+    if (bu_arg_integer_from_str(NULL, (int *)(&face), argv[3], 0) != 1) {
 	bu_vls_printf(gedp->ged_result_str, "%s %s: invalid face - %s\n",
 		argv[0], argv[1], argv[3]);
 	return BRLCAD_ERROR;
@@ -223,7 +223,7 @@ edarb_edgedir(void *data, int argc, const char *argv[])
 	return BRLCAD_ERROR;
     }
 
-    if (bu_opt_int(NULL, 1, &argv[3], (void *)&edge) != 1) {
+    if (bu_arg_integer_from_str(NULL, (int *)(&edge), argv[3], 0) != 1) {
 	bu_vls_printf(gedp->ged_result_str, "bad edge - %s", argv[3]);
 	return BRLCAD_ERROR;
     }
@@ -253,8 +253,8 @@ edarb_edgedir(void *data, int argc, const char *argv[])
      * else assume delta_x, delta_y, delta_z
      */
     if (argc == 6) {
-	if (bu_opt_fastf_t(NULL, 1, &argv[4], &rot) != 1 ||
-	    bu_opt_fastf_t(NULL, 1, &argv[5], &fb_a) != 1 ||
+	if (bu_arg_number_from_str(NULL, (fastf_t *)(&rot), argv[4]) != 1 ||
+	    bu_arg_number_from_str(NULL, (fastf_t *)(&fb_a), argv[5]) != 1 ||
 	    !isfinite(rot) || !isfinite(fb_a)) {
 	    bu_vls_printf(gedp->ged_result_str,
 		    "%s %s: invalid rotation or fallback angle\n",
@@ -270,7 +270,7 @@ edarb_edgedir(void *data, int argc, const char *argv[])
     } else {
 	for (i=0; i<3; i++) {
 	    /* put edge slope in slope[] array */
-	    if (bu_opt_fastf_t(NULL, 1, &argv[i+4], &slope[i]) != 1 ||
+	    if (bu_arg_number_from_str(NULL, (fastf_t *)(&slope[i]), argv[i+4]) != 1 ||
 		!isfinite(slope[i])) {
 		bu_vls_printf(gedp->ged_result_str,
 			"%s %s: invalid slope component - %s\n",

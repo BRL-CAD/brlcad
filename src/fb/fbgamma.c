@@ -34,7 +34,7 @@
 #include "bu/app.h"
 #include "bu/malloc.h"
 #include "bu/getopt.h"
-#include "bu/opt.h"
+#include "bu/arg.h"
 #include "bu/exit.h"
 #include "dm.h"
 #include "pkg.h"
@@ -64,8 +64,14 @@ checkgamma(double g)
 static int
 parse_gamma(const char *arg, double *g, const char *label)
 {
-    if (!bu_opt_scan_double(arg, g, label))
+    struct bu_vls msg = BU_VLS_INIT_ZERO;
+
+    if (!bu_arg_double_from_str(&msg, g, arg)) {
+	bu_log("%s: %s: %s\n", bu_getprogname(), label, bu_vls_cstr(&msg));
+	bu_vls_free(&msg);
 	return 0;
+    }
+    bu_vls_free(&msg);
 
     checkgamma(*g);
     return 1;

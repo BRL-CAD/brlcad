@@ -34,7 +34,7 @@
 #include "bio.h"   /* for isatty */
 #include "bu/app.h"
 #include "bu/getopt.h"
-#include "bu/opt.h"
+#include "util_arg.h"
 #include "bu/str.h"
 #include "bu/log.h"
 #include "bu/file.h"
@@ -254,7 +254,7 @@ get_args(int argc, char **argv)
 		bn_mat_mul(rmat, tmp, m);
 		break;
 	    case 'a':
-		if (!bu_opt_scan_double(bu_optarg, &mtmp[0], "azimuth"))
+		if (!util_arg_double(bu_optarg, &mtmp[0], "azimuth"))
 		    return 0;
 		bn_mat_angles(tmp, 0.0, 0.0, -mtmp[0]);
 		MAT_COPY(m, rmat);
@@ -262,7 +262,7 @@ get_args(int argc, char **argv)
 		rpp++;
 		break;
 	    case 'e':
-		if (!bu_opt_scan_double(bu_optarg, &mtmp[0], "elevation"))
+		if (!util_arg_double(bu_optarg, &mtmp[0], "elevation"))
 		    return 0;
 		bn_mat_angles(tmp, 0.0, -mtmp[0], 0.0);
 		MAT_COPY(m, rmat);
@@ -270,21 +270,21 @@ get_args(int argc, char **argv)
 		rpp++;
 		break;
 	    case 'x':
-		if (!bu_opt_scan_double(bu_optarg, &mtmp[0], "x rotation"))
+		if (!util_arg_double(bu_optarg, &mtmp[0], "x rotation"))
 		    return 0;
 		bn_mat_angles(tmp, mtmp[0], 0.0, 0.0);
 		MAT_COPY(m, rmat);
 		bn_mat_mul(rmat, tmp, m);
 		break;
 	    case 'y':
-		if (!bu_opt_scan_double(bu_optarg, &mtmp[0], "y rotation"))
+		if (!util_arg_double(bu_optarg, &mtmp[0], "y rotation"))
 		    return 0;
 		bn_mat_angles(tmp, 0.0, mtmp[0], 0.0);
 		MAT_COPY(m, rmat);
 		bn_mat_mul(rmat, tmp, m);
 		break;
 	    case 'z':
-		if (!bu_opt_scan_double(bu_optarg, &mtmp[0], "z rotation"))
+		if (!util_arg_double(bu_optarg, &mtmp[0], "z rotation"))
 		    return 0;
 		bn_mat_angles(tmp, 0.0, 0.0, mtmp[0]);
 		MAT_COPY(m, rmat);
@@ -303,27 +303,27 @@ get_args(int argc, char **argv)
 		break;
 	    case 'X':
 		MAT_IDN(tmp);
-		if (!bu_opt_scan_double(bu_optarg, &tmp[MDX], "x translation"))
+		if (!util_arg_double(bu_optarg, &tmp[MDX], "x translation"))
 		    return 0;
 		MAT_COPY(m, rmat);
 		bn_mat_mul(rmat, tmp, m);
 		break;
 	    case 'Y':
 		MAT_IDN(tmp);
-		if (!bu_opt_scan_double(bu_optarg, &tmp[MDY], "y translation"))
+		if (!util_arg_double(bu_optarg, &tmp[MDY], "y translation"))
 		    return 0;
 		MAT_COPY(m, rmat);
 		bn_mat_mul(rmat, tmp, m);
 		break;
 	    case 'Z':
 		MAT_IDN(tmp);
-		if (!bu_opt_scan_double(bu_optarg, &tmp[MDZ], "z translation"))
+		if (!util_arg_double(bu_optarg, &tmp[MDZ], "z translation"))
 		    return 0;
 		MAT_COPY(m, rmat);
 		bn_mat_mul(rmat, tmp, m);
 		break;
 	    case 's':
-		if (!bu_opt_scan_double(bu_optarg, &mtmp[0], "scale factor") || ZERO(mtmp[0]))
+		if (!util_arg_double(bu_optarg, &mtmp[0], "scale factor") || ZERO(mtmp[0]))
 		    return 0;
 		scale *= mtmp[0];
 		/*

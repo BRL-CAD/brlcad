@@ -99,8 +99,6 @@ public:
     struct bu_vls value = BU_VLS_INIT_ZERO;
 };
 
-int parse_debug_mask(struct bu_vls *message, size_t argc, const char **argv, void *destination);
-
 } // namespace iges
 } // namespace brlcad
 #endif

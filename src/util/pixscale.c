@@ -43,7 +43,7 @@
 
 #include "bu/app.h"
 #include "bu/getopt.h"
-#include "bu/opt.h"
+#include "util_arg.h"
 #include "bu/malloc.h"
 #include "bu/log.h"
 #include "bu/file.h"
@@ -394,30 +394,30 @@ get_args(int argc, char **argv)
 		break;
 	    case 'S':
 		/* square size */
-		if (!bu_opt_scan_int_range(bu_optarg, &outx, 1, INT_MAX, "output size"))
+		if (!util_arg_int_range(bu_optarg, &outx, 1, INT_MAX, "output size"))
 		    return 0;
 		outy = outx;
 		break;
 	    case 's':
 		/* square size */
-		if (!bu_opt_scan_int_range(bu_optarg, &inx, 1, INT_MAX, "input size"))
+		if (!util_arg_int_range(bu_optarg, &inx, 1, INT_MAX, "input size"))
 		    return 0;
 		iny = inx;
 		break;
 	    case 'W':
-		if (!bu_opt_scan_int_range(bu_optarg, &outx, 1, INT_MAX, "output width"))
+		if (!util_arg_int_range(bu_optarg, &outx, 1, INT_MAX, "output width"))
 		    return 0;
 		break;
 	    case 'w':
-		if (!bu_opt_scan_int_range(bu_optarg, &inx, 1, INT_MAX, "input width"))
+		if (!util_arg_int_range(bu_optarg, &inx, 1, INT_MAX, "input width"))
 		    return 0;
 		break;
 	    case 'N':
-		if (!bu_opt_scan_int_range(bu_optarg, &outy, 1, INT_MAX, "output height"))
+		if (!util_arg_int_range(bu_optarg, &outy, 1, INT_MAX, "output height"))
 		    return 0;
 		break;
 	    case 'n':
-		if (!bu_opt_scan_int_range(bu_optarg, &iny, 1, INT_MAX, "input height"))
+		if (!util_arg_int_range(bu_optarg, &iny, 1, INT_MAX, "input height"))
 		    return 0;
 		break;
 
@@ -433,13 +433,13 @@ get_args(int argc, char **argv)
 	    bu_log("pixscale: cannot open \"%s\" for reading\n", file_name);
 	    return 0;
 	}
-	if (!bu_opt_scan_int_range(argv[bu_optind++], &inx, 1, INT_MAX, "input width"))
+	if (!util_arg_int_range(argv[bu_optind++], &inx, 1, INT_MAX, "input width"))
 	    return 0;
-	if (!bu_opt_scan_int_range(argv[bu_optind++], &iny, 1, INT_MAX, "input height"))
+	if (!util_arg_int_range(argv[bu_optind++], &iny, 1, INT_MAX, "input height"))
 	    return 0;
-	if (!bu_opt_scan_int_range(argv[bu_optind++], &outx, 1, INT_MAX, "output width"))
+	if (!util_arg_int_range(argv[bu_optind++], &outx, 1, INT_MAX, "output width"))
 	    return 0;
-	if (!bu_opt_scan_int_range(argv[bu_optind++], &outy, 1, INT_MAX, "output height"))
+	if (!util_arg_int_range(argv[bu_optind++], &outy, 1, INT_MAX, "output height"))
 	    return 0;
 	return 1;
     }

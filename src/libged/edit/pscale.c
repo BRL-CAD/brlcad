@@ -28,7 +28,7 @@
 #include <string.h>
 
 #include "bu/cmd.h"
-#include "bu/opt.h"
+#include "bu/arg.h"
 #include "rt/geom.h"
 #include "raytrace.h"
 
@@ -38,7 +38,7 @@
 int
 _ged_pscale_factor_parse(fastf_t *factor, const char *arg)
 {
-    return bu_opt_fastf_t(NULL, 1, &arg, factor) == 1 &&
+    return bu_arg_number_from_str(NULL, factor, arg) &&
 	isfinite(*factor) && *factor > SQRT_SMALL_FASTF;
 }
 

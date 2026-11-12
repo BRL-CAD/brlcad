@@ -34,11 +34,18 @@
 #include "wdb.h"
 #include "rply.h"
 
-double scale_factor;                    // without refactor to callbacks there's no easy way to avoid this global
 struct ply_read_options
 {
+    fastf_t scale_factor;               /* input units to millimeters */
     int verbose;                        /* verbose output flag */
     int debug;                          /* debug output flag */
+};
+
+struct vertex_callback_state
+{
+    struct rt_bot_internal *bot;
+    fastf_t scale_factor;
+    int current_vertex;
 };
 
 struct conversion_state
@@ -91,21 +98,19 @@ log_elements(p_ply ply_fp)
 static int
 vertex_cb(p_ply_argument argument)
 {
-    static int cur_vertex = -1;
+    struct vertex_callback_state *state = NULL;
     long vert_index;
-    struct rt_bot_internal bot;
-    struct rt_bot_internal *pbot = &bot;
     double botval = ply_get_argument_value(argument);
-    if (!ply_get_argument_user_data(argument, (void **)&pbot, &vert_index)) {
+    if (!ply_get_argument_user_data(argument, (void **)&state, &vert_index)) {
 	bu_bomb("Unable to import BOT");
     }
     if (vert_index == 0) {
-	cur_vertex++;
-	pbot->vertices[cur_vertex*3] = botval * scale_factor;
+	state->current_vertex++;
+	state->bot->vertices[state->current_vertex*3] = botval * state->scale_factor;
     } else if (vert_index == 1) {
-	pbot->vertices[cur_vertex*3+1] = botval * scale_factor;
+	state->bot->vertices[state->current_vertex*3+1] = botval * state->scale_factor;
     } else if (vert_index == 2) {
-	pbot->vertices[cur_vertex*3+2] = botval * scale_factor;
+	state->bot->vertices[state->current_vertex*3+2] = botval * state->scale_factor;
     }
     return 1;
 }
@@ -183,6 +188,7 @@ face_cb(p_ply_argument argument)
 static void
 convert_input(struct conversion_state* pstate)
 {
+    struct vertex_callback_state vertex_state = {pstate->bot, pstate->ply_read_options->scale_factor, -1};
     p_ply ply_fp;
     unsigned char rgb[3];
     int irgb[4] = {-1, -1, -1, 0};
@@ -212,9 +218,9 @@ convert_input(struct conversion_state* pstate)
     }
 
     // actual conversion starts here
-    pstate->bot->num_vertices = ply_set_read_cb(ply_fp, "vertex", "x", vertex_cb, pstate->bot, 0);
-    ply_set_read_cb(ply_fp, "vertex", "y", vertex_cb, pstate->bot, 1);
-    ply_set_read_cb(ply_fp, "vertex", "z", vertex_cb, pstate->bot, 2);
+    pstate->bot->num_vertices = ply_set_read_cb(ply_fp, "vertex", "x", vertex_cb, &vertex_state, 0);
+    ply_set_read_cb(ply_fp, "vertex", "y", vertex_cb, &vertex_state, 1);
+    ply_set_read_cb(ply_fp, "vertex", "z", vertex_cb, &vertex_state, 2);
 
     ply_set_read_cb(ply_fp, "face", "red", color_cb, &irgb, 0);
     ply_set_read_cb(ply_fp, "face", "green", color_cb, &irgb, 1);
@@ -310,23 +316,32 @@ ply_can_read(const char* data)
     return 1;
 }
 
+static const struct bu_arg_option ply_read_options[] = {
+    BU_ARG_VALUE("s", "scale_factor", struct ply_read_options, scale_factor,
+	BU_ARG_VALUE_NUMBER, BU_ARG_REQUIRED, "float", "Specify the scale factor"),
+    BU_ARG_FLAG("v", "verbose", struct ply_read_options, verbose,
+	"Run with verbose output"),
+    BU_ARG_FLAG("d", "debug", struct ply_read_options, debug,
+	"Run with debug output"),
+    BU_ARG_OPTION_NULL
+};
+
+static const struct bu_arg_schema ply_read_schema = {
+    "ply-read", "PLY reader options", ply_read_options, NULL,
+    BU_ARG_PARSE_INTERSPERSED, BU_ARG_SCHEMA_CONSTRAINTS(NULL, NULL)
+};
+
 static void
-ply_read_create_opts(struct bu_opt_desc** options_desc, void** dest_options_data)
+ply_read_create_opts(const struct bu_arg_schema **schema, void** dest_options_data)
 {
     struct ply_read_options *options_data;
 
     BU_ALLOC(options_data, struct ply_read_options);
     *dest_options_data = options_data;
-    *options_desc = (struct bu_opt_desc *)bu_malloc(4 * sizeof(struct bu_opt_desc), "options_desc");
-
-    scale_factor = 1000.0;                      /* default units are meters */
+    options_data->scale_factor = 1000.0;        /* default units are meters */
     options_data->verbose = 0;                  /* default flag = off */
     options_data->debug = 0;                    /* default flag = off */
-
-    BU_OPT((*options_desc)[0], "s", "scale_factor", "float", bu_opt_fastf_t, &scale_factor, "specify the scale factor");
-    BU_OPT((*options_desc)[1], "v", "verbose",      "",      NULL,           &options_data->verbose,      "specify to run with verbose output");
-    BU_OPT((*options_desc)[2], "d", "debug",        "",      NULL,           &options_data->debug,        "specify specify to run with debug output");
-    BU_OPT_NULL((*options_desc)[3]);
+    *schema = &ply_read_schema;
 }
 
 static void

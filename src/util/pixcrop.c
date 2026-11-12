@@ -44,7 +44,7 @@
 #include "bu/file.h"
 #include "bu/malloc.h"
 #include "bu/exit.h"
-#include "bu/opt.h"
+#include "util_arg.h"
 
 
 #define round(x) ((int)(x+0.5))
@@ -69,7 +69,7 @@ static int
 parse_positive_ssize_arg(const char *arg, ssize_t *out_value, const char *label)
 {
     size_t _s;
-    if (!bu_opt_scan_size_t_range(arg, &_s, 1, SIZE_MAX, label))
+    if (!util_arg_size_t_range(arg, &_s, 1, SIZE_MAX, label))
 	return 0;
     *out_value = (ssize_t)_s;
     return 1;
@@ -79,7 +79,7 @@ static int
 parse_output_dim_arg(const char *arg, unsigned long *out_value, const char *label)
 {
     size_t _s;
-    if (!bu_opt_scan_size_t_range(arg, &_s, 1, SIZE_MAX, label))
+    if (!util_arg_size_t_range(arg, &_s, 1, SIZE_MAX, label))
 	return 0;
     if (_s > (size_t)(INT_MAX - 1))
 	_s = (size_t)(INT_MAX - 1);
@@ -91,7 +91,7 @@ static int
 parse_float_arg(const char *arg, float *out_value, const char *label)
 {
     double _d;
-    if (!bu_opt_scan_double(arg, &_d, label))
+    if (!util_arg_double(arg, &_d, label))
 	return 0;
     *out_value = (float)_d;
     return 1;

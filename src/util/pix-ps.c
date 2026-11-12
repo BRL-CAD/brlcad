@@ -33,7 +33,7 @@
 #include "bio.h"
 #include "bu/app.h"
 #include "bu/getopt.h"
-#include "bu/opt.h"
+#include "util_arg.h"
 #include "bu/exit.h"
 
 
@@ -67,7 +67,7 @@ parse_positive_double_arg(const char *arg, double *value, const char *label)
 {
     double _d;
 
-    if (!bu_opt_scan_double(arg, &_d, label))
+    if (!util_arg_double(arg, &_d, label))
 	return 0;
     if (_d <= 0.0) {
 	bu_log("%s: %s must be positive '%s'\n", bu_getprogname(), label, arg);
@@ -173,16 +173,16 @@ get_args(int argc, char **argv)
 		break;
 	    case 's':
 		/* square file size */
-		if (!bu_opt_scan_size_t_range(bu_optarg, &width, 1, SIZE_MAX, "input size"))
+		if (!util_arg_size_t_range(bu_optarg, &width, 1, SIZE_MAX, "input size"))
 		    return 0;
 		height = width;
 		break;
 	    case 'w':
-		if (!bu_opt_scan_size_t_range(bu_optarg, &width, 1, SIZE_MAX, "input width"))
+		if (!util_arg_size_t_range(bu_optarg, &width, 1, SIZE_MAX, "input width"))
 		    return 0;
 		break;
 	    case 'n':
-		if (!bu_opt_scan_size_t_range(bu_optarg, &height, 1, SIZE_MAX, "input height"))
+		if (!util_arg_size_t_range(bu_optarg, &height, 1, SIZE_MAX, "input height"))
 		    return 0;
 		break;
 	    case 'S':

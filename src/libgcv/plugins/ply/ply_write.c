@@ -570,14 +570,42 @@ leaf_stub(struct db_tree_state *UNUSED(tsp), const struct db_full_path *UNUSED(p
     return (union tree *)NULL; /* just to keep the compilers happy */
 }
 
+static const struct bu_arg_option ply_write_options[] = {
+    BU_ARG_VALUE("r", "rel_tess_tol", struct ply_write_options, rel,
+	BU_ARG_VALUE_NUMBER, BU_ARG_REQUIRED, "decimal", "Specify the relative tessellation tolerance"),
+    BU_ARG_VALUE("a", "abs_tess_tol", struct ply_write_options, abs,
+	BU_ARG_VALUE_NUMBER, BU_ARG_REQUIRED, "decimal", "Specify the absolute tessellation tolerance"),
+    BU_ARG_VALUE("n", "norm_tess_tol", struct ply_write_options, norm,
+	BU_ARG_VALUE_NUMBER, BU_ARG_REQUIRED, "decimal", "Specify the surface normal tessellation tolerance"),
+    BU_ARG_VALUE("D", "dist_calc_tol", struct ply_write_options, dist,
+	BU_ARG_VALUE_NUMBER, BU_ARG_REQUIRED, "decimal", "Specify the distance calculation tolerance"),
+    BU_ARG_VALUE("o", "output_file", struct ply_write_options, o_file,
+	BU_ARG_VALUE_STRING, BU_ARG_REQUIRED, "str", "Specify the output file name"),
+    BU_ARG_VALUE("t", "type", struct ply_write_options, type,
+	BU_ARG_VALUE_STRING, BU_ARG_REQUIRED, "str", "Specify the output file type (asc, le, or be)"),
+    BU_ARG_FLAG("s", "separate", struct ply_write_options, separate,
+	"Generate a separate file per object"),
+    BU_ARG_FLAG("v", "verbose", struct ply_write_options, verbose,
+	"Enable verbose output"),
+    BU_ARG_VALUE("x", "rt_debug", struct ply_write_options, x,
+	BU_ARG_VALUE_STRING, BU_ARG_REQUIRED, "str", "Specify an rt_debug script"),
+    BU_ARG_VALUE("X", "nmg_debug", struct ply_write_options, X,
+	BU_ARG_VALUE_STRING, BU_ARG_REQUIRED, "str", "Specify an nmg_debug script"),
+    BU_ARG_OPTION_NULL
+};
+
+static const struct bu_arg_schema ply_write_schema = {
+    "ply-write", "PLY writer options", ply_write_options, NULL,
+    BU_ARG_PARSE_INTERSPERSED, BU_ARG_SCHEMA_CONSTRAINTS(NULL, NULL)
+};
+
 static void
-ply_write_create_opts(struct bu_opt_desc **options_desc, void **dest_options_data)
+ply_write_create_opts(const struct bu_arg_schema **schema, void **dest_options_data)
 {
     struct ply_write_options *options_data;
 
     BU_ALLOC(options_data, struct ply_write_options);
     *dest_options_data = options_data;
-    *options_desc = (struct bu_opt_desc *)bu_malloc(11 * sizeof(struct bu_opt_desc), "options_desc");
 
     /* most options defaults are handled by gcv_opts */
     options_data->rel = -1;
@@ -591,17 +619,7 @@ ply_write_create_opts(struct bu_opt_desc **options_desc, void **dest_options_dat
     options_data->x = NULL;
     options_data->X = NULL;
 
-    BU_OPT((*options_desc)[0],  "r", "rel_tess_tol",  "decimal", bu_opt_fastf_t, &options_data->rel,       "specify the relative tessolation tolerance");
-    BU_OPT((*options_desc)[1],  "a", "abs_tess_tol",  "decimal", bu_opt_fastf_t, &options_data->abs,       "specify the absolute tessolation tolerance");
-    BU_OPT((*options_desc)[2],  "n", "norm_tess_tol", "decimal", bu_opt_fastf_t, &options_data->norm,      "specify the surface normal tessolation tolerance");
-    BU_OPT((*options_desc)[3],  "D", "dist_calc_tol", "decimal", bu_opt_fastf_t, &options_data->dist,      "specify the distance calculation tolerance");
-    BU_OPT((*options_desc)[4],  "o", "output_file",   "str",   bu_opt_str,     &options_data->o_file,    "specify the output file name");
-    BU_OPT((*options_desc)[5],  "t", "type",          "str",   bu_opt_str,     &options_data->type,      "specify the output file type (asc: ascii), (le: little endian), (be: big endian)");
-    BU_OPT((*options_desc)[6],  "s", "separate",      "",      NULL,           &options_data->separate, "specify a flag to generate a separate file per object");
-    BU_OPT((*options_desc)[7],  "v", "verbose",       "",      NULL,           &options_data->verbose,   "specify a flag for verbose output");
-    BU_OPT((*options_desc)[8],  "x", "rt_dubug",      "str",   bu_opt_str,     &options_data->o_file,    "specify debug script for rt_debug");
-    BU_OPT((*options_desc)[9],  "X", "nmg_debug",     "str",   bu_opt_str,     &options_data->o_file,    "specify debug script for nmg_debug");
-    BU_OPT_NULL((*options_desc)[10]);
+    *schema = &ply_write_schema;
 }
 
 static void

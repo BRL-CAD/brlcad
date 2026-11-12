@@ -36,7 +36,7 @@
 #include "vmath.h"
 #include "bu/app.h"
 #include "bu/getopt.h"
-#include "bu/opt.h"
+#include "util_arg.h"
 #include "bu/log.h"
 #include "bu/malloc.h"
 #include "bn.h"
@@ -55,7 +55,7 @@ static int pixbytes = 3;
 static int
 parse_pixbytes_arg(const char *arg, int *value)
 {
-    if (!bu_opt_scan_int_range(arg, value, 1, INT_MAX, "bytes per pixel"))
+    if (!util_arg_int_range(arg, value, 1, INT_MAX, "bytes per pixel"))
 	return 0;
 
     if (*value != 1 && *value != 3) {
@@ -83,18 +83,18 @@ get_args(int argc, char *argv[], long *width, long *height)
 		break;
 	    case 's':
 		/* square file size */
-		if (!bu_opt_scan_long_range(bu_optarg, width, 1, LONG_MAX, "input size"))
+		if (!util_arg_long_range(bu_optarg, width, 1, LONG_MAX, "input size"))
 		    return 0;
 		*height = *width;
 		autosize = 0;
 		break;
 	    case 'w':
-		if (!bu_opt_scan_long_range(bu_optarg, width, 1, LONG_MAX, "input width"))
+		if (!util_arg_long_range(bu_optarg, width, 1, LONG_MAX, "input width"))
 		    return 0;
 		autosize = 0;
 		break;
 	    case 'n':
-		if (!bu_opt_scan_long_range(bu_optarg, height, 1, LONG_MAX, "input height"))
+		if (!util_arg_long_range(bu_optarg, height, 1, LONG_MAX, "input height"))
 		    return 0;
 		autosize = 0;
 		break;

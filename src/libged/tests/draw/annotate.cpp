@@ -375,28 +375,49 @@ verify_geometry_update(struct ged *gedp)
 }
 
 
+struct annotate_test_args {
+    int generate;
+    int keep_images;
+    int continue_on_failure;
+};
+
+static const struct bu_arg_option annotate_test_options[] = {
+    BU_ARG_FLAG("G", "generate", struct annotate_test_args, generate,
+	"Generate PNG frames without comparing controls"),
+    BU_ARG_FLAG("k", "keep", struct annotate_test_args, keep_images,
+	"Keep generated PNG frames"),
+    BU_ARG_FLAG("c", "continue", struct annotate_test_args, continue_on_failure,
+	"Continue after an image mismatch"),
+    BU_ARG_OPTION_NULL
+};
+
+static const struct bu_arg_operand annotate_test_operands[] = {
+    BU_ARG_OPERAND("control-directory", BU_ARG_VALUE_STRING, 1, 1, "Control image directory", NULL),
+    BU_ARG_OPERAND("m35.g", BU_ARG_VALUE_FILE, 1, 1, "Test geometry database", NULL),
+    BU_ARG_OPERAND_NULL
+};
+
+static const struct bu_arg_schema annotate_test_schema = BU_ARG_SCHEMA(
+    "ged_test_annotate", "Exercise annotation drawing", annotate_test_options,
+    annotate_test_operands, BU_ARG_PARSE_INTERSPERSED,
+    BU_ARG_SCHEMA_META_HELP(NULL, NULL, NULL, NULL, NULL));
+
 int
 main(int argc, const char **argv)
 {
-    int generate = 0;
-    int keep_images = 0;
-    int continue_on_failure = 0;
+    struct annotate_test_args args = {};
     int ret = BRLCAD_OK;
-    struct bu_opt_desc options[4];
-    BU_OPT(options[0], "G", "generate", "", NULL, &generate,
-	"Generate PNG frames without comparing controls");
-    BU_OPT(options[1], "k", "keep", "", NULL, &keep_images,
-	"Keep generated PNG frames");
-    BU_OPT(options[2], "c", "continue", "", NULL, &continue_on_failure,
-	"Continue after an image mismatch");
-    BU_OPT_NULL(options[3]);
+    struct bu_vls msg = BU_VLS_INIT_ZERO;
 
     bu_setprogname(argv[0]);
     argc--; argv++;
-    int remaining = bu_opt_parse(NULL, argc, argv, options);
-    if (remaining != 2)
-	bu_exit(EXIT_FAILURE,
-	    "Usage: ged_test_annotate [-G] [-k] [-c] control-directory m35.g\n");
+    int operand_index = bu_arg_schema_parse_complete(&annotate_test_schema, &args,
+	&msg, argc, argv);
+    if (operand_index < 0)
+	bu_exit(EXIT_FAILURE, "%s\n", bu_vls_cstr(&msg));
+    bu_vls_free(&msg);
+    argc -= operand_index;
+    argv += operand_index;
     const char *control_dir = argv[0];
     const char *m35_path = argv[1];
     if (!bu_file_directory(control_dir) || !bu_file_exists(m35_path, NULL))
@@ -422,7 +443,7 @@ main(int argc, const char **argv)
     bu_mkdir(runtime_cache);
     bu_setenv("BU_DIR_CACHE", runtime_cache, 1);
     bu_setenv("DM_SWRAST", "1", 1);
-    if (!generate && unpack_apng(control_dir, "annotate.apng", cache_dir,
+    if (!args.generate && unpack_apng(control_dir, "annotate.apng", cache_dir,
 	"annotate"))
 	bu_exit(EXIT_FAILURE, "Unable to unpack annotation controls\n");
 
@@ -476,10 +497,10 @@ main(int argc, const char **argv)
 	    bu_vls_cstr(gedp->ged_result_str));
     (void)ged_exec_autoview(gedp, 1, autoview_argv);
     (void)ged_exec_ae(gedp, 3, ae_argv);
-    if (generate)
+    if (args.generate)
 	capture_image(gedp, 1);
     else
-	ret += img_cmp(1, gedp, cache_dir, false, !keep_images, continue_on_failure,
+	ret += img_cmp(1, gedp, cache_dir, false, !args.keep_images, args.continue_on_failure,
 	    ADIFF_THRESHOLD, "annotate_clear", "annotate");
 
     const char *hide_aabb_argv[] = {"annotate", "hide", "component-dim", NULL};
@@ -495,10 +516,10 @@ main(int argc, const char **argv)
 	    bu_vls_cstr(gedp->ged_result_str));
     (void)ged_exec_autoview(gedp, 1, autoview_argv);
     (void)ged_exec_ae(gedp, 3, ae_argv);
-    if (generate)
+    if (args.generate)
 	capture_image(gedp, 2);
     else
-	ret += img_cmp(2, gedp, cache_dir, false, !keep_images, continue_on_failure,
+	ret += img_cmp(2, gedp, cache_dir, false, !args.keep_images, args.continue_on_failure,
 	    ADIFF_THRESHOLD, "annotate_clear", "annotate");
 
     const char *updated_ae_argv[] = {"ae", "125", "25", NULL};
@@ -510,10 +531,10 @@ main(int argc, const char **argv)
 	bu_exit(EXIT_FAILURE, "Unable to update autodim for the current view: %s\n",
 	    bu_vls_cstr(gedp->ged_result_str));
     (void)ged_exec_autoview(gedp, 1, autoview_argv);
-    if (generate)
+    if (args.generate)
 	capture_image(gedp, 3);
     else
-	ret += img_cmp(3, gedp, cache_dir, false, !keep_images, continue_on_failure,
+	ret += img_cmp(3, gedp, cache_dir, false, !args.keep_images, args.continue_on_failure,
 	    ADIFF_THRESHOLD, "annotate_clear", "annotate");
 
     const char *hide_argv[] = {"annotate", "hide", "component", NULL};
@@ -576,10 +597,10 @@ main(int argc, const char **argv)
 	    bu_vls_cstr(gedp->ged_result_str));
     if (!annotation_is_screen_space(gedp, "component-screen-note"))
 	bu_exit(EXIT_FAILURE, "screen-space leader was stored in model space\n");
-    if (generate)
+    if (args.generate)
 	capture_image(gedp, 4);
     else
-	ret += img_cmp(4, gedp, cache_dir, false, !keep_images, continue_on_failure,
+	ret += img_cmp(4, gedp, cache_dir, false, !args.keep_images, args.continue_on_failure,
 	    ADIFF_THRESHOLD, "annotate_clear", "annotate");
 
     const char *screen_ae_argv[] = {"ae", "-70", "40", NULL};
@@ -593,10 +614,10 @@ main(int argc, const char **argv)
 	    bu_vls_cstr(gedp->ged_result_str));
     if (!annotation_is_screen_space(gedp, "component-screen-note"))
 	bu_exit(EXIT_FAILURE, "screen-space update changed annotation coordinates\n");
-    if (generate)
+    if (args.generate)
 	capture_image(gedp, 5);
     else
-	ret += img_cmp(5, gedp, cache_dir, false, !keep_images, continue_on_failure,
+	ret += img_cmp(5, gedp, cache_dir, false, !args.keep_images, args.continue_on_failure,
 	    ADIFF_THRESHOLD, "annotate_clear", "annotate");
 
     const char *hide_existing_argv[] = {
@@ -638,10 +659,10 @@ main(int argc, const char **argv)
 	    bu_vls_cstr(gedp->ged_result_str));
     (void)ged_exec_autoview(gedp, 1, autoview_argv);
     (void)ged_exec_ae(gedp, 3, direct_ae_argv);
-    if (generate)
+    if (args.generate)
 	capture_image(gedp, 6);
     else
-	ret += img_cmp(6, gedp, cache_dir, false, !keep_images, continue_on_failure,
+	ret += img_cmp(6, gedp, cache_dir, false, !args.keep_images, args.continue_on_failure,
 	    ADIFF_THRESHOLD, "annotate_clear", "annotate");
 
     const fastf_t sphere_radius = std::min(bmax[X] - bmin[X], bmax[Z] - bmin[Z]) * 0.12;
@@ -697,10 +718,10 @@ main(int argc, const char **argv)
     (void)ged_exec_autoview(gedp, 1, autoview_argv);
     const char *primitive_ae_argv[] = {"ae", "0", "90", NULL};
     (void)ged_exec_ae(gedp, 3, primitive_ae_argv);
-    if (generate)
+    if (args.generate)
 	capture_image(gedp, 7);
     else
-	ret += img_cmp(7, gedp, cache_dir, false, !keep_images, continue_on_failure,
+	ret += img_cmp(7, gedp, cache_dir, false, !args.keep_images, args.continue_on_failure,
 	    ADIFF_THRESHOLD, "annotate_clear", "annotate");
 
     verify_geometry_update(gedp);
@@ -722,3 +743,4 @@ main(int argc, const char **argv)
  * End:
  * ex: shiftwidth=4 tabstop=8
  */
+#include "bu/arg.h"

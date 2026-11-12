@@ -46,7 +46,7 @@
 
 #include "bu/app.h"
 #include "bu/log.h"
-#include "bu/opt.h"
+#include "util_arg.h"
 #include "bu/str.h"
 
 #define INTEGER 0
@@ -114,9 +114,9 @@ main(int argc, char *argv[])
 
 	if (status == CHAR)
 	    break;
-	if (bu_opt_scan_long(argv[i], &ival, NULL))
+	if (util_arg_long(argv[i], &ival, NULL))
 	    continue;
-	if (!bu_opt_scan_double(argv[i], &dval, NULL)) {
+	if (!util_arg_double(argv[i], &dval, NULL)) {
 	    usage();
 	    return 9;
 	}
@@ -129,16 +129,16 @@ main(int argc, char *argv[])
     }
 
     if (status == REAL) {
-	if (!bu_opt_scan_double(argv[1], &dstart, "start")) {
+	if (!util_arg_double(argv[1], &dstart, "start")) {
 	    return 1;
 	}
 
-	if (!bu_opt_scan_double(argv[2], &dfinish, "finish")) {
+	if (!util_arg_double(argv[2], &dfinish, "finish")) {
 	    return 1;
 	}
 
 	if (argc == 4) {
-	    if (!bu_opt_scan_double(argv[3], &dincr, "incr")) {
+	    if (!util_arg_double(argv[3], &dincr, "incr")) {
 		return 1;
 	    }
 	} else {
@@ -210,14 +210,14 @@ main(int argc, char *argv[])
 	    bu_strlcpy(fmt_string, "%d\n", sizeof(fmt_string));
 	fmt_string[50-1] = '\0'; /* sanity */
 
-	if (!bu_opt_scan_long(argv[1], &start, "start"))
+	if (!util_arg_long(argv[1], &start, "start"))
 	    return 1;
 	if ((start < INT_MIN) || (start > INT_MAX)) {
 	    bu_log("'start' out of range of signed integer.\n");
 	    return 1;
 	}
 
-	if (!bu_opt_scan_long(argv[2], &finish, "finish"))
+	if (!util_arg_long(argv[2], &finish, "finish"))
 	    return 1;
 	if ((finish < INT_MIN) || (finish > INT_MAX)) {
 	    bu_log("'finish' out of range of signed integer.\n");
@@ -225,7 +225,7 @@ main(int argc, char *argv[])
 	}
 
 	if (argc == 4) {
-	    if (!bu_opt_scan_long(argv[3], &incr, "incr"))
+	    if (!util_arg_long(argv[3], &incr, "incr"))
 		return 1;
 	    if ((incr < INT_MIN) || (incr > INT_MAX)) {
 		bu_log("'incr' out of range of signed integer.\n");
@@ -264,7 +264,7 @@ main(int argc, char *argv[])
 	    cfinish = ULONG_MAX-1;
 
 	if (argc == 5) {
-	    if (!bu_opt_scan_long(argv[4], &cincr, "incr"))
+	    if (!util_arg_long(argv[4], &cincr, "incr"))
 		return 1;
 	    if ((cincr < -UCHAR_MAX) || (cincr > UCHAR_MAX)) {
 		bu_log("'incr' out of range of char.\n");

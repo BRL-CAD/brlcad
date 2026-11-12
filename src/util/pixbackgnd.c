@@ -37,7 +37,7 @@
 #include "vmath.h"
 #include "bu/app.h"
 #include "bu/getopt.h"
-#include "bu/opt.h"
+#include "util_arg.h"
 #include "bu/malloc.h"
 #include "bu/exit.h"
 
@@ -187,29 +187,29 @@ get_args(int argc, char **argv)
 		break;
 	    case 's':
 		/* square file size */
-		if (!bu_opt_scan_int_range(bu_optarg, &file_width, 1, INT_MAX, "size"))
+		if (!util_arg_int_range(bu_optarg, &file_width, 1, INT_MAX, "size"))
 		    return 0;
 		file_height = file_width;
 		break;
 	    case 'w':
-		if (!bu_opt_scan_int_range(bu_optarg, &file_width, 1, INT_MAX, "width"))
+		if (!util_arg_int_range(bu_optarg, &file_width, 1, INT_MAX, "width"))
 		    return 0;
 		break;
 	    case 'n':
-		if (!bu_opt_scan_int_range(bu_optarg, &file_height, 1, INT_MAX, "height"))
+		if (!util_arg_int_range(bu_optarg, &file_height, 1, INT_MAX, "height"))
 		    return 0;
 		break;
 	    case 't':
 		/* Title area size */
-		if (!bu_opt_scan_int_range(bu_optarg, &title_height, 1, INT_MAX, "title height"))
+		if (!util_arg_int_range(bu_optarg, &title_height, 1, INT_MAX, "title height"))
 		    return 0;
 		break;
 	    case 'a':
-		if (!bu_opt_scan_int(bu_optarg, &h_start, "top intensity"))
+		if (!util_arg_int(bu_optarg, &h_start, "top intensity"))
 		    return 0;
 		break;
 	    case 'b':
-		if (!bu_opt_scan_int(bu_optarg, &h_end, "bottom intensity"))
+		if (!util_arg_int(bu_optarg, &h_end, "bottom intensity"))
 		    return 0;
 		break;
 
@@ -220,17 +220,17 @@ get_args(int argc, char **argv)
     remaining = argc - bu_optind;
     if (remaining == 2) {
 	/* Parameters are H S */
-	if (!bu_opt_scan_double(argv[bu_optind++], &HSV[0], "hue") ||
-	    !bu_opt_scan_double(argv[bu_optind], &HSV[1], "saturation"))
+	if (!util_arg_double(argv[bu_optind++], &HSV[0], "hue") ||
+	    !util_arg_double(argv[bu_optind], &HSV[1], "saturation"))
 	    return 0;
 	HSV[2] = h_start;
 
 	hsvrgb(HSV, RGB);
     } else if (remaining == 3) {
 	/* parameters are R G B */
-	if (!bu_opt_scan_double(argv[bu_optind++], &RGB[0], "red") ||
-	    !bu_opt_scan_double(argv[bu_optind++], &RGB[1], "green") ||
-	    !bu_opt_scan_double(argv[bu_optind++], &RGB[2], "blue"))
+	if (!util_arg_double(argv[bu_optind++], &RGB[0], "red") ||
+	    !util_arg_double(argv[bu_optind++], &RGB[1], "green") ||
+	    !util_arg_double(argv[bu_optind++], &RGB[2], "blue"))
 	    return 0;
 
 	rgbhsv(RGB, HSV);

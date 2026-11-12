@@ -44,7 +44,7 @@
 #include "bu/app.h"
 #include "bu/log.h"
 #include "bu/malloc.h"
-#include "bu/opt.h"
+#include "util_arg.h"
 
 static char usage[] = "\
 Usage: decimate nbytes/pixel width height [outwidth outheight]\n\
@@ -83,15 +83,15 @@ main(int argc, char **argv)
 	bu_exit (1, "%s", usage);
     }
 
-    if (!bu_opt_scan_size_t_range(argv[1], &nbytes, 1, SIZE_MAX, "bytes per pixel") ||
-	!bu_opt_scan_size_t_range(argv[2], &iwidth, 1, SIZE_MAX, "input width") ||
-	!bu_opt_scan_size_t_range(argv[3], &iheight, 1, SIZE_MAX, "input height")) {
+    if (!util_arg_size_t_range(argv[1], &nbytes, 1, SIZE_MAX, "bytes per pixel") ||
+	!util_arg_size_t_range(argv[2], &iwidth, 1, SIZE_MAX, "input width") ||
+	!util_arg_size_t_range(argv[3], &iheight, 1, SIZE_MAX, "input height")) {
 	bu_exit(EXIT_FAILURE, "%s", usage);
     }
 
     if (argc >= 6) {
-	if (!bu_opt_scan_size_t_range(argv[4], &owidth, 1, SIZE_MAX, "output width") ||
-	    !bu_opt_scan_size_t_range(argv[5], &oheight, 1, SIZE_MAX, "output height")) {
+	if (!util_arg_size_t_range(argv[4], &owidth, 1, SIZE_MAX, "output width") ||
+	    !util_arg_size_t_range(argv[5], &oheight, 1, SIZE_MAX, "output height")) {
 	    bu_exit(EXIT_FAILURE, "%s", usage);
 	}
     }

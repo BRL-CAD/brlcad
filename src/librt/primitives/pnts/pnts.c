@@ -32,7 +32,7 @@
 
 /* common headers */
 #include "bu/cv.h"
-#include "bu/opt.h"
+#include "bu/arg.h"
 #include "bn.h"
 
 #include "raytrace.h"
@@ -1147,10 +1147,10 @@ rt_pnts_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, c
 	     * do not store it here, so a 'count' supplied without 'data'
 	     * cannot leave count > 0 with an empty point list. */
 	    int cnt = 0;
-	    (void)bu_opt_int(NULL, 1, &argv[1], (void *)&cnt);
+	    (void)bu_arg_integer_from_str(NULL, (int *)(&cnt), argv[1], 0);
 	} else if (BU_STR_EQUAL(argv[0], "type")) {
 	    int t = 0;
-	    (void)bu_opt_int(NULL, 1, &argv[1], (void *)&t);
+	    (void)bu_arg_integer_from_str(NULL, (int *)(&t), argv[1], 0);
 	    if (t < RT_PNT_TYPE_PNT || t > RT_PNT_TYPE_COL_SCA_NRM) {
 		bu_vls_printf(logstr, "ERROR: invalid pnts type %d (valid range is %d-%d)\n",
 			      t, RT_PNT_TYPE_PNT, RT_PNT_TYPE_COL_SCA_NRM);
@@ -1158,7 +1158,7 @@ rt_pnts_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, c
 	    }
 	    pnts->type = (rt_pnt_type)t;
 	} else if (BU_STR_EQUAL(argv[0], "scale")) {
-	    (void)bu_opt_fastf_t(NULL, 1, &argv[1], (void *)&pnts->scale);
+	    (void)bu_arg_number_from_str(NULL, (fastf_t *)(&pnts->scale), argv[1]);
 	} else if (BU_STR_EQUAL(argv[0], "data")) {
 	    datastr = argv[1];
 	} else {

@@ -34,7 +34,7 @@
 #include "bu/app.h"
 #include "bu/exit.h"
 #include "bu/getopt.h"
-#include "bu/opt.h"
+#include "fb_arg.h"
 #include "dm.h"
 #include "bn/spm.h"
 
@@ -68,16 +68,16 @@ get_args(int argc, char **argv)
 		square = 1;
 		break;
 	    case 'S':
-		if (!bu_opt_scan_int_range(bu_optarg, &scr_width, 1, INT_MAX, "screen size"))
+		if (!fb_arg_int_range(bu_optarg, &scr_width, 1, INT_MAX, "screen size"))
 		    return 0;
 		scr_height = scr_width;
 		break;
 	    case 'W':
-		if (!bu_opt_scan_int_range(bu_optarg, &scr_width, 1, INT_MAX, "screen width"))
+		if (!fb_arg_int_range(bu_optarg, &scr_width, 1, INT_MAX, "screen width"))
 		    return 0;
 		break;
 	    case 'N':
-		if (!bu_opt_scan_int_range(bu_optarg, &scr_height, 1, INT_MAX, "screen height"))
+		if (!fb_arg_int_range(bu_optarg, &scr_height, 1, INT_MAX, "screen height"))
 		    return 0;
 		break;
 
@@ -88,7 +88,7 @@ get_args(int argc, char **argv)
 
     if (bu_optind >= argc)
 	return 0;		/* missing positional arg */
-    if (!bu_opt_scan_int_range(argv[bu_optind++], &vsize, 1, INT_MAX, "vsize"))
+    if (!fb_arg_int_range(argv[bu_optind++], &vsize, 1, INT_MAX, "vsize"))
 	return 0;
 
     if (bu_optind >= argc) {

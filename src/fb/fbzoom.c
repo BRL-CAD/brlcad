@@ -35,7 +35,7 @@
 
 #include "bu/app.h"
 #include "bu/getopt.h"
-#include "bu/opt.h"
+#include "fb_arg.h"
 #include "bu/log.h"
 #include "vmath.h"
 
@@ -94,10 +94,10 @@ main(int argc, char **argv)
     }
 
     if (remaining == 4) {
-	if (!bu_opt_scan_int(argv[bu_optind+0], &xPan, "x pan")
-	    || !bu_opt_scan_int(argv[bu_optind+1], &yPan, "y pan")
-	    || !bu_opt_scan_int_range(argv[bu_optind+2], &xZoom, 1, INT_MAX, "x zoom")
-	    || !bu_opt_scan_int_range(argv[bu_optind+3], &yZoom, 1, INT_MAX, "y zoom")) {
+	if (!fb_arg_int(argv[bu_optind+0], &xPan, "x pan")
+	    || !fb_arg_int(argv[bu_optind+1], &yPan, "y pan")
+	    || !fb_arg_int_range(argv[bu_optind+2], &xZoom, 1, INT_MAX, "x zoom")
+	    || !fb_arg_int_range(argv[bu_optind+3], &yZoom, 1, INT_MAX, "y zoom")) {
 	    (void)fputs(usage, stderr);
 	    bu_exit(1, NULL);
 	}
@@ -335,18 +335,18 @@ pars_Argv(int argc, char **argv)
 		break;
 	    case 's':
 	    case 'S':
-		if (!bu_opt_scan_int_range(bu_optarg, &scr_width, 1, INT_MAX, "screen size"))
+		if (!fb_arg_int_range(bu_optarg, &scr_width, 1, INT_MAX, "screen size"))
 		    return 0;
 		scr_height = scr_width;
 		break;
 	    case 'w':
 	    case 'W':
-		if (!bu_opt_scan_int_range(bu_optarg, &scr_width, 1, INT_MAX, "screen width"))
+		if (!fb_arg_int_range(bu_optarg, &scr_width, 1, INT_MAX, "screen width"))
 		    return 0;
 		break;
 	    case 'n':
 	    case 'N':
-		if (!bu_opt_scan_int_range(bu_optarg, &scr_height, 1, INT_MAX, "screen height"))
+		if (!fb_arg_int_range(bu_optarg, &scr_height, 1, INT_MAX, "screen height"))
 		    return 0;
 		break;
 

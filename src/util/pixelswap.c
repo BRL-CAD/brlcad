@@ -34,7 +34,7 @@
 
 #include "bu/app.h"
 #include "bu/getopt.h"
-#include "bu/opt.h"
+#include "util_arg.h"
 #include "bu/exit.h"
 #include "dm.h"
 
@@ -75,7 +75,7 @@ parse_args(int ac, char **av)
     while ((c=bu_getopt(ac, av, options)) != -1) {
 	switch (c) {
 	    case 'd':
-		if (!bu_opt_scan_int_range(bu_optarg, &depth, 1, INT_MAX, "pixel depth"))
+		if (!util_arg_int_range(bu_optarg, &depth, 1, INT_MAX, "pixel depth"))
 		    usage("");
 
 		break;
@@ -115,12 +115,12 @@ int main(int ac, char **av)
 	usage("Redirect standard input and output\n");
 
     /* get pixel values */
-    if (!bu_opt_scan_uchar(av[i++], &r, "input red value") ||
-	!bu_opt_scan_uchar(av[i++], &g, "input green value") ||
-	!bu_opt_scan_uchar(av[i++], &b, "input blue value") ||
-	!bu_opt_scan_uchar(av[i++], &R, "output red value") ||
-	!bu_opt_scan_uchar(av[i++], &G, "output green value") ||
-	!bu_opt_scan_uchar(av[i], &B, "output blue value")) {
+    if (!util_arg_uchar(av[i++], &r, "input red value") ||
+	!util_arg_uchar(av[i++], &g, "input green value") ||
+	!util_arg_uchar(av[i++], &b, "input blue value") ||
+	!util_arg_uchar(av[i++], &R, "output red value") ||
+	!util_arg_uchar(av[i++], &G, "output green value") ||
+	!util_arg_uchar(av[i], &B, "output blue value")) {
 	return 1;
     }
 

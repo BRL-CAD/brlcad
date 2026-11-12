@@ -26,12 +26,53 @@
 
 #include "common.h"
 
+#include "bu/arg.h"
 #include "bu/app.h"
 #include "bu/exit.h"
-#include "bu/getopt.h"
 #include "bu/log.h"
 #include "bu/malloc.h"
 #include "gcv/api.h"
+
+struct rhino_args {
+    int randomize_colors;
+    int verbosity;
+    const char *output_path;
+    int print_help;
+};
+
+static const struct bu_arg_option rhino_options[] = {
+    BU_ARG_FLAG("r", NULL, struct rhino_args, randomize_colors,
+	"Randomize object colors"),
+    BU_ARG_COUNTING_FLAG("v", "verbosity", struct rhino_args, verbosity,
+	BU_ARG_VALUE_INTEGER, "Increase verbosity level"),
+    BU_ARG_VALUE("o", "output", struct rhino_args, output_path,
+	BU_ARG_VALUE_FILE, BU_ARG_REQUIRED, "file.g", "Set output filename"),
+    BU_ARG_FLAG("h", "help", struct rhino_args, print_help, "Print help and exit"),
+    BU_ARG_ALIAS("?", NULL, "help", 1),
+    BU_ARG_OPTION_NULL
+};
+
+static const struct bu_arg_operand rhino_operands[] = {
+    BU_ARG_OPERAND("input_file.3dm", BU_ARG_VALUE_FILE, 1, 1,
+	"Input Rhino database", NULL),
+    BU_ARG_OPERAND("output_file.g", BU_ARG_VALUE_FILE, 0, 1,
+	"Output BRL-CAD database", NULL),
+    BU_ARG_OPERAND_NULL
+};
+
+static const struct bu_arg_schema rhino_schema = BU_ARG_SCHEMA(
+    "3dm-g", "Convert Rhino 3DM geometry to a BRL-CAD database", rhino_options,
+    rhino_operands, BU_ARG_PARSE_INTERSPERSED,
+    BU_ARG_SCHEMA_META_HELP(NULL, NULL, NULL, NULL, NULL));
+
+static void
+rhino_help(void)
+{
+    char *help = bu_arg_schema_help(&rhino_schema, bu_getprogname());
+    if (help)
+	bu_log("%s", help);
+    bu_free(help, "help str");
+}
 
 
 int
@@ -42,38 +83,44 @@ main(int argc, char **argv)
 
     struct gcv_context context;
     struct gcv_opts gcv_options;
-    const char *output_path = NULL;
+    struct rhino_args args = {0};
     const char *input_path;
-    int print_help = 0;
+    struct bu_vls msg = BU_VLS_INIT_ZERO;
 
     bu_setprogname(argv[0]);
     gcv_opts_default(&gcv_options);
 
-    struct bu_opt_desc d[6];
-    BU_OPT(d[0], "r", "",          "", NULL,              &gcv_options.randomize_colors, "Randomize object colors");
-    BU_OPT(d[1], "v", "verbosity", "", &bu_opt_incr_long, &gcv_options.verbosity_level,  "Increase verbosity level");
-    BU_OPT(d[2], "o", "output",    "", &bu_opt_str,       &output_path,                  "Set output filename");
-    BU_OPT(d[3], "h", "help",      "", NULL,              &print_help,                   "Print help and exit");
-    BU_OPT(d[4], "?", "",          "", NULL,              &print_help,                   "");
-    BU_OPT_NULL(d[5]);
-
     /* parse standard options */
     argc--; argv++;
-    int opt_ret = bu_opt_parse(NULL, argc, (const char**)argv, d);
+    int operand_index = bu_arg_schema_parse_complete(&rhino_schema, &args, &msg,
+	argc, (const char **)argv);
 
     /* requested help or bad usage */
-    if (print_help || (opt_ret == 1 && !output_path) || (opt_ret == 2 && output_path) || opt_ret < 1 || opt_ret > 2) {
-	char *help = bu_opt_help(d, "3dm-g", "input_file.3dm [output_file.g]",
-	    "Convert Rhino 3DM geometry to a BRL-CAD database");
-	if (help)
-	    bu_log("%s", help);
-	if (help) bu_free(help, "help str");
-	return print_help ? 0 : 1;
+    if (operand_index < 0) {
+	bu_log("%s", bu_vls_cstr(&msg));
+	bu_vls_free(&msg);
+	return 1;
+    }
+    bu_vls_free(&msg);
+    if (args.print_help) {
+	rhino_help();
+	return 0;
+    }
+
+    argc -= operand_index;
+    argv += operand_index;
+    if ((argc == 1 && !args.output_path) || (argc == 2 && args.output_path)) {
+	bu_log("specify the output exactly once, either positionally or with --output\n");
+	rhino_help();
+	return 1;
     }
 
     input_path = argv[0];
-    if (!output_path)
-	output_path = argv[1];
+    if (!args.output_path)
+	args.output_path = argv[1];
+
+    gcv_options.randomize_colors = (unsigned)args.randomize_colors;
+    gcv_options.verbosity_level = (unsigned)args.verbosity;
 
     gcv_context_init(&context);
 
@@ -99,7 +146,7 @@ main(int argc, char **argv)
 
     gcv_options.debug_mode = 0;
 
-    if (!gcv_execute(&context, out_filter, &gcv_options, 0, NULL, output_path)) {
+    if (!gcv_execute(&context, out_filter, &gcv_options, 0, NULL, args.output_path)) {
 	gcv_context_destroy(&context);
 	bu_exit(1, "failed to export to output file");
     }

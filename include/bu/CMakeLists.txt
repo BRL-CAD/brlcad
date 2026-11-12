@@ -32,7 +32,6 @@ set(
   mime.h
   num.h
   observer.h
-  opt.h
   parallel.h
   parse.h
   path.h

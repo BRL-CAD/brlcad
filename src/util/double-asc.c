@@ -35,7 +35,7 @@
 #include "vmath.h"
 #include "bu/app.h"
 #include "bu/getopt.h"
-#include "bu/opt.h"
+#include "util_arg.h"
 #include "bu/malloc.h"
 #include "bu/file.h"
 #include "bu/log.h"
@@ -87,18 +87,18 @@ get_args(int argc, char **argv)
 		break;
 	    case 's':
 		/* square file size */
-		if (!bu_opt_scan_long_range(bu_optarg, &file_width, 1, LONG_MAX, "input size"))
+		if (!util_arg_long_range(bu_optarg, &file_width, 1, LONG_MAX, "input size"))
 		    print_usage();
 		file_height = file_width;
 		autosize = 0;
 		break;
 	    case 'n':
-		if (!bu_opt_scan_long_range(bu_optarg, &file_height, 1, LONG_MAX, "input height"))
+		if (!util_arg_long_range(bu_optarg, &file_height, 1, LONG_MAX, "input height"))
 		    print_usage();
 		autosize = 0;
 		break;
 	    case 'w':
-		if (!bu_opt_scan_long_range(bu_optarg, &file_width, 1, LONG_MAX, "input width"))
+		if (!util_arg_long_range(bu_optarg, &file_width, 1, LONG_MAX, "input width"))
 		    print_usage();
 		autosize = 0;
 		break;
@@ -114,7 +114,7 @@ get_args(int argc, char **argv)
 		bu_strlcpy(format, bu_optarg, strlen(bu_optarg)+1);
 		break;
 	    case '#':
-		if (!bu_opt_scan_int_range(bu_optarg, &d_per_l, 1, INT_MAX, "doubles per line"))
+		if (!util_arg_int_range(bu_optarg, &d_per_l, 1, INT_MAX, "doubles per line"))
 		    print_usage();
 		break;
 	    default:

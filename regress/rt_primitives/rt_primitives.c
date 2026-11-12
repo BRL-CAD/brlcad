@@ -55,7 +55,7 @@
 #include "bu/app.h"
 #include "bu/log.h"
 #include "bu/malloc.h"
-#include "bu/opt.h"
+#include "bu/arg.h"
 #include "bu/ptbl.h"
 #include "bu/str.h"
 #include "bu/datetime.h"
@@ -333,21 +333,60 @@ static int filter_match(const char *name, const char *type, struct bu_ptbl *filt
     return 0;
 }
 
-/* bu_opt callback for the repeatable -p/--prim filter; stores the argv string
- * (which outlives the run) directly, no copy needed. */
-static int add_filter(struct bu_vls *msg, size_t argc, const char **argv, void *set_var) {
-    struct bu_ptbl *filters = (struct bu_ptbl *)set_var;
-    BU_OPT_CHECK_ARGV0(msg, argc, argv, "prim");
-    bu_ptbl_ins(filters, (long *)argv[0]);
-    return 1;
+struct rt_primitives_args {
+    int print_help;
+    int nrays;
+    int warmup;
+    int samples;
+    struct bu_ptbl *filters;
+    const char *csv_path;
+};
+
+static int
+add_filter(struct bu_vls *msg, const char *arg, void *storage)
+{
+    struct bu_ptbl *filters = *((struct bu_ptbl **)storage);
+
+    if (!arg || !filters) {
+	if (msg)
+	    bu_vls_printf(msg, "missing primitive filter");
+	return -1;
+    }
+    bu_ptbl_ins(filters, (long *)arg);
+    return 0;
 }
 
-static void usage(const struct bu_opt_desc *d) {
-    char *opts = bu_opt_describe((struct bu_opt_desc *)d, NULL);
-    bu_log("Usage: %s [options] primitives.g\n", bu_getprogname());
-    bu_log("  Per-primitive functab coverage + validity + rays/sec over a .g database.\n\n");
-    bu_log("Options:\n%s", opts);
-    bu_free(opts, "opt usage");
+static const struct bu_arg_option rt_primitives_options[] = {
+    BU_ARG_FLAG("h", "help", struct rt_primitives_args, print_help, "Print help and exit"),
+    BU_ARG_INTEGER_RANGE("n", "rays", struct rt_primitives_args, nrays,
+	1, 1, 0, 0, "count", "Rays per primitive"),
+    BU_ARG_INTEGER_RANGE("w", "warmup", struct rt_primitives_args, warmup,
+	1, 0, 0, 0, "count", "Discarded warmup passes"),
+    BU_ARG_INTEGER_RANGE("s", "samples", struct rt_primitives_args, samples,
+	1, 1, 0, 0, "count", "Measured passes"),
+    BU_ARG_CUSTOM("p", "prim", struct rt_primitives_args, filters, add_filter,
+	"name", "Restrict raytrace pass to object name/type; repeatable"),
+    BU_ARG_VALUE(NULL, "csv", struct rt_primitives_args, csv_path,
+	BU_ARG_VALUE_STRING, BU_ARG_REQUIRED, "file", "Write results as CSV"),
+    BU_ARG_OPTION_NULL
+};
+
+static const struct bu_arg_operand rt_primitives_operands[] = {
+    BU_ARG_OPERAND("primitives.g", BU_ARG_VALUE_FILE, 1, 1, "Primitive database", NULL),
+    BU_ARG_OPERAND_NULL
+};
+
+static const struct bu_arg_schema rt_primitives_schema = BU_ARG_SCHEMA(
+    "rt_primitives", "Per-primitive coverage, validity, and performance",
+    rt_primitives_options, rt_primitives_operands, BU_ARG_PARSE_INTERSPERSED,
+    BU_ARG_SCHEMA_META_HELP(NULL, NULL, NULL, NULL, NULL));
+
+static void
+usage(void)
+{
+    char *help = bu_arg_schema_help(&rt_primitives_schema, bu_getprogname());
+    bu_log("%s", help ? help : "");
+    bu_free(help, "argument help");
 }
 
 int main(int argc, char **argv)
@@ -359,56 +398,45 @@ int main(int argc, char **argv)
     size_t nrows = 0, i, fails = 0;
     int id;
     const char *dbpath = NULL;
-    const char *csv_path = NULL;
+    struct rt_primitives_args args = {0};
     struct db_i *dbip;
     struct directory *dp;
 
-    int print_help = 0;
-    int nrays = 10000, warmup = 2, samples = 5;
-    int uac;
     struct bu_vls pmsg = BU_VLS_INIT_ZERO;
-    struct bu_opt_desc d[7];
 
     bu_setprogname(argv[0]);
     bu_ptbl_init(&filters, 8, "prim filters");
-
-    BU_OPT(d[0], "h", "help",    "",     NULL,        &print_help, "Print help and exit");
-    BU_OPT(d[1], "n", "rays",    "#",    &bu_opt_int, &nrays,      "rays per primitive (default 10000)");
-    BU_OPT(d[2], "w", "warmup",  "#",    &bu_opt_int, &warmup,     "discarded warmup passes (default 2)");
-    BU_OPT(d[3], "s", "samples", "#",    &bu_opt_int, &samples,    "measured passes (default 5)");
-    BU_OPT(d[4], "p", "prim",    "name", &add_filter, &filters,    "restrict raytrace pass to object name/type (repeatable)");
-    BU_OPT(d[5], "",  "csv",     "file", &bu_opt_str, &csv_path,   "write results as CSV");
-    BU_OPT_NULL(d[6]);
+    args.nrays = 10000;
+    args.warmup = 2;
+    args.samples = 5;
+    args.filters = &filters;
 
     /* skip the program name, then let bu_opt handle the rest */
     argc--; argv++;
-    uac = bu_opt_parse(&pmsg, (size_t)argc, (const char **)argv, d);
-    if (uac < 0) {
+    int operand_index = bu_arg_schema_parse_complete(&rt_primitives_schema, &args,
+	&pmsg, argc, (const char **)argv);
+    if (operand_index < 0) {
 	bu_log("%s", bu_vls_cstr(&pmsg));
 	bu_vls_free(&pmsg);
-	usage(d);
+	usage();
 	bu_ptbl_free(&filters);
 	return 1;
     }
     bu_vls_free(&pmsg);
 
-    if (print_help) {
-	usage(d);
+    if (args.print_help) {
+	usage();
 	bu_ptbl_free(&filters);
 	return 0;
     }
 
-    /* assume leftover is .g */
-    if (uac < 1) {
-	usage(d);
-	bu_ptbl_free(&filters);
-	return 1;
-    }
+    argc -= operand_index;
+    argv += operand_index;
     dbpath = argv[0];
 
-    o.nrays   = (nrays   > 0) ? (size_t)nrays   : 0;
-    o.warmup  = (warmup  > 0) ? (size_t)warmup  : 0;
-    o.samples = (samples > 0) ? (size_t)samples : 0;
+    o.nrays = (size_t)args.nrays;
+    o.warmup = (size_t)args.warmup;
+    o.samples = (size_t)args.samples;
 
     /* open samples db */
     dbip = db_open(dbpath, DB_OPEN_READONLY);
@@ -512,11 +540,11 @@ int main(int argc, char **argv)
     prim_report_sort(rows, nrows);
     prim_report_console(rows, nrows);
     prim_report_coverage(rows, nrows);
-    if (csv_path) {
-	if (prim_report_csv(csv_path, rows, nrows) < 0)
-	    bu_log("ERROR: could not write CSV to %s\n", csv_path);
+    if (args.csv_path) {
+	if (prim_report_csv(args.csv_path, rows, nrows) < 0)
+	    bu_log("ERROR: could not write CSV to %s\n", args.csv_path);
 	else
-	    bu_log("CSV written to %s\n", csv_path);
+	    bu_log("CSV written to %s\n", args.csv_path);
     }
 
     /* count failures */

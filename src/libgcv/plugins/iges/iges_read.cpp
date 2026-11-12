@@ -9,15 +9,13 @@
 
 #include "common.h"
 
-#include <algorithm>
 #include <memory>
 #include <stdexcept>
 #include <string>
 
 #include "brep.h"
+#include "bu/arg.h"
 #include "bu/log.h"
-#include "bu/malloc.h"
-#include "bu/opt.h"
 #include "bu/path.h"
 #include "wdb.h"
 
@@ -40,25 +38,34 @@ struct IgesReadOptions {
     const char *repair = nullptr;
 };
 
+const struct bu_arg_option iges_read_options[] = {
+    BU_ARG_FLAG(NULL, "drawings-only", IgesReadOptions, drawings_only,
+	"Import drawing and annotation entities only"),
+    BU_ARG_FLAG(NULL, "breps-only", IgesReadOptions, breps_only,
+	"Import solid and surface geometry only, including native CSG"),
+    BU_ARG_FLAG(NULL, "3d-drawings", IgesReadOptions, drawings_3d,
+	"Preserve drawing model-space planes"),
+    BU_ARG_FLAG(NULL, "exact", IgesReadOptions, exact, "Disallow source-data repairs"),
+    BU_ARG_FLAG(NULL, "strict", IgesReadOptions, strict, "Reject repaired or partial imports"),
+    BU_ARG_VALUE(NULL, "repair", IgesReadOptions, repair, BU_ARG_VALUE_STRING,
+	BU_ARG_REQUIRED, "MODE", "Use none, safe, or best-effort repair mode"),
+    BU_ARG_VALUE(NULL, "max-repair-tolerance", IgesReadOptions, maximum_repair_tolerance,
+	BU_ARG_VALUE_NUMBER, BU_ARG_REQUIRED, "MM", "Permit and flag boundary repairs up to this tolerance"),
+    BU_ARG_VALUE(NULL, "relative-tolerance", IgesReadOptions, relative_tolerance,
+	BU_ARG_VALUE_NUMBER, BU_ARG_REQUIRED, "FRACTION", "Set the local boundary repair target"),
+    BU_ARG_OPTION_NULL
+};
+
+const struct bu_arg_schema iges_read_schema = {
+    "iges-read", "IGES reader options", iges_read_options, NULL,
+    BU_ARG_PARSE_INTERSPERSED, BU_ARG_SCHEMA_CONSTRAINTS(NULL, NULL)
+};
+
 void
-iges_create_options(struct bu_opt_desc **descriptions, void **options_data)
+iges_create_options(const struct bu_arg_schema **schema, void **options_data)
 {
     auto options = std::make_unique<IgesReadOptions>();
-    struct bu_opt_desc descriptors[] = {
-	{"", "drawings-only", "", nullptr, &options->drawings_only, "import drawing and annotation entities only"},
-	{"", "breps-only", "", nullptr, &options->breps_only, "import solid and surface geometry only, including native CSG"},
-	{"", "3d-drawings", "", nullptr, &options->drawings_3d, "preserve drawing model-space planes"},
-	{"", "exact", "", nullptr, &options->exact, "disallow source-data repairs"},
-	{"", "strict", "", nullptr, &options->strict, "reject repaired or partial imports"},
-	{"", "repair", "MODE", bu_opt_str, &options->repair, "none, safe, or best-effort (default)"},
-	{"", "max-repair-tolerance", "MM", bu_opt_fastf_t, &options->maximum_repair_tolerance,
-	    "permit and flag boundary repairs up to this tolerance"},
-	{"", "relative-tolerance", "FRACTION", bu_opt_fastf_t, &options->relative_tolerance,
-	    "local boundary repair target (default: 0.0001)"},
-	BU_OPT_DESC_NULL
-    };
-    *descriptions = static_cast<struct bu_opt_desc *>(bu_malloc(sizeof(descriptors), "IGES reader options"));
-    std::copy_n(descriptors, sizeof(descriptors) / sizeof(descriptors[0]), *descriptions);
+    *schema = &iges_read_schema;
     *options_data = options.release();
 }
 

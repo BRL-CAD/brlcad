@@ -38,7 +38,7 @@
 #include "bu/str.h"
 #include "bu/exit.h"
 #include "bu/getopt.h"
-#include "bu/opt.h"
+#include "fb_arg.h"
 #include "vmath.h"
 #include "dm.h"
 #define LIBTERMIO_IMPLEMENTATION
@@ -167,7 +167,7 @@ main(int argc, char **argv)
 		break;
 	    case 's':
 	    case 'S':
-		if (!bu_opt_scan_int_range(bu_optarg, &width, 1, INT_MAX, "screen size")) {
+		if (!fb_arg_int_range(bu_optarg, &width, 1, INT_MAX, "screen size")) {
 		    fprintf(stderr, "%s", usage);
 		    return 1;
 		}
@@ -175,14 +175,14 @@ main(int argc, char **argv)
 		break;
 	    case 'w':
 	    case 'W':
-		if (!bu_opt_scan_int_range(bu_optarg, &width, 1, INT_MAX, "screen width")) {
+		if (!fb_arg_int_range(bu_optarg, &width, 1, INT_MAX, "screen width")) {
 		    fprintf(stderr, "%s", usage);
 		    return 1;
 		}
 		break;
 	    case 'n':
 	    case 'N':
-		if (!bu_opt_scan_int_range(bu_optarg, &height, 1, INT_MAX, "screen height")) {
+		if (!fb_arg_int_range(bu_optarg, &height, 1, INT_MAX, "screen height")) {
 		    fprintf(stderr, "%s", usage);
 		    return 1;
 		}
@@ -218,13 +218,13 @@ main(int argc, char **argv)
 	bu_exit(1, "%s", usage);
     }
     if (argc > 0) {
-	if (!bu_opt_scan_int(argv[0], &curX, "initial x")) {
+	if (!fb_arg_int(argv[0], &curX, "initial x")) {
 	    fprintf(stderr, "%s", usage);
 	    return 1;
 	}
     }
     if (argc > 1) {
-	if (!bu_opt_scan_int(argv[1], &curY, "initial y")) {
+	if (!fb_arg_int(argv[1], &curY, "initial y")) {
 	    fprintf(stderr, "%s", usage);
 	    return 1;
 	}

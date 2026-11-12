@@ -36,7 +36,7 @@
 #include "bu/malloc.h"
 #include "bu/exit.h"
 #include "bu/log.h"
-#include "bu/opt.h"
+#include "bu/arg.h"
 
 
 #define MAX_LINE 10000		/* Max pixels/line */
@@ -111,8 +111,12 @@ main(int argc, char **argv)
     bu_free(ifname, "ifname alloc from bu_file_realpath");
 
     if (argc == 5) {
-	if (!bu_opt_scan_int_range(argv[4], &nlines, 1, INT_MAX, "width"))
+	struct bu_vls msg = BU_VLS_INIT_ZERO;
+	if (!bu_arg_integer_range_from_str(&msg, &nlines, argv[4], 10, 1, INT_MAX)) {
+	    bu_log("%s: width: %s\n", bu_getprogname(), bu_vls_cstr(&msg));
 	    bu_exit(1, "%s", usage);
+	}
+	bu_vls_free(&msg);
     }
 
     pix_line = nlines;	/* Square pictures */

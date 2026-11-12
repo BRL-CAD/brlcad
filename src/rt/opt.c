@@ -590,11 +590,11 @@ static int
 rt_opt_ambient(struct bu_vls *msg, size_t argc, const char **argv, void *UNUSED(set_var))
 {
     fastf_t tmp = (fastf_t)0.0;
-    int ret;
-    ret = bu_opt_fastf_t(msg, argc, argv, &tmp);
-    if (ret > 0)
-	AmbientIntensity = tmp;
-    return ret;
+    BU_OPT_CHECK_ARGV0(msg, argc, argv, "ambient intensity");
+    if (!bu_arg_number_from_str(msg, &tmp, argv[0]))
+	return -1;
+    AmbientIntensity = tmp;
+    return 1;
 }
 
 

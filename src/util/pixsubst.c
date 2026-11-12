@@ -29,7 +29,17 @@
 
 #include "bu/app.h"
 #include "bu/log.h"
-#include "bu/opt.h"
+#include "bu/arg.h"
+
+static void
+read_channel(unsigned char *channel, const char *value, const char *label)
+{
+    struct bu_vls msg = BU_VLS_INIT_ZERO;
+
+    if (!bu_arg_unsigned_char_from_str(&msg, channel, value, 10))
+	bu_exit(1, "%s: %s\n", label, bu_vls_cstr(&msg));
+    bu_vls_free(&msg);
+}
 
 
 int
@@ -51,25 +61,19 @@ main(int argc, char **argv)
 
     if (argc == 7) {
 	argv++;
-	if (!bu_opt_scan_uchar(*argv, &pixin[0], "input red value"))
-	    bu_exit(1, NULL);
+	read_channel(&pixin[0], *argv, "input red value");
 	argv++;
-	if (!bu_opt_scan_uchar(*argv, &pixin[1], "input green value"))
-	    bu_exit(1, NULL);
+	read_channel(&pixin[1], *argv, "input green value");
 	argv++;
-	if (!bu_opt_scan_uchar(*argv, &pixin[2], "input blue value"))
-	    bu_exit(1, NULL);
+	read_channel(&pixin[2], *argv, "input blue value");
     }
 
     argv++;
-    if (!bu_opt_scan_uchar(*argv, &pixout[0], "output red value"))
-	bu_exit(1, NULL);
+    read_channel(&pixout[0], *argv, "output red value");
     argv++;
-    if (!bu_opt_scan_uchar(*argv, &pixout[1], "output green value"))
-	bu_exit(1, NULL);
+    read_channel(&pixout[1], *argv, "output green value");
     argv++;
-    if (!bu_opt_scan_uchar(*argv, &pixout[2], "output blue value"))
-	bu_exit(1, NULL);
+    read_channel(&pixout[2], *argv, "output blue value");
 
     if (argc == 4) {
 	if ((npixels=fread(pixin, sizeof(unsigned char), 3, stdin)) != 3) {

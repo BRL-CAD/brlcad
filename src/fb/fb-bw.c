@@ -36,7 +36,7 @@
 #include "bu/app.h"
 #include "bu/color.h"
 #include "bu/getopt.h"
-#include "bu/opt.h"
+#include "fb_arg.h"
 #include "bu/exit.h"
 #include "vmath.h"
 #include "dm.h"
@@ -70,25 +70,25 @@ get_args(int argc, char **argv)
 		framebuffer = bu_optarg;
 		break;
 	    case 'X':
-		if (!bu_opt_scan_int_range(bu_optarg, &scr_xoff, 0, INT_MAX, "screen x offset"))
+		if (!fb_arg_int_range(bu_optarg, &scr_xoff, 0, INT_MAX, "screen x offset"))
 		    return 0;
 		break;
 	    case 'Y':
-		if (!bu_opt_scan_int_range(bu_optarg, &scr_yoff, 0, INT_MAX, "screen y offset"))
+		if (!fb_arg_int_range(bu_optarg, &scr_yoff, 0, INT_MAX, "screen y offset"))
 		    return 0;
 		break;
 	    case 's':
 		/* square size */
-		if (!bu_opt_scan_int_range(bu_optarg, &width, 1, INT_MAX, "image size"))
+		if (!fb_arg_int_range(bu_optarg, &width, 1, INT_MAX, "image size"))
 		    return 0;
 		height = width;
 		break;
 	    case 'w':
-		if (!bu_opt_scan_int_range(bu_optarg, &width, 1, INT_MAX, "image width"))
+		if (!fb_arg_int_range(bu_optarg, &width, 1, INT_MAX, "image width"))
 		    return 0;
 		break;
 	    case 'n':
-		if (!bu_opt_scan_int_range(bu_optarg, &height, 1, INT_MAX, "image height"))
+		if (!fb_arg_int_range(bu_optarg, &height, 1, INT_MAX, "image height"))
 		    return 0;
 		break;
 

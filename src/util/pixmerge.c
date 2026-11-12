@@ -40,7 +40,7 @@
 
 #include "bu/app.h"
 #include "bu/getopt.h"
-#include "bu/opt.h"
+#include "bu/arg.h"
 #include "bu/malloc.h"
 #include "bu/str.h"
 #include "bu/exit.h"
@@ -143,9 +143,15 @@ get_args(int argc, char **argv)
 		seen_formula = 1;
 		break;
 	    case 'w':
-		if (!bu_opt_scan_int_range(bu_optarg, &width, 1, INT_MAX, "element width")) {
-		    (void)fputs(usage, stderr);
-		    bu_exit(1, NULL);
+		{
+		    struct bu_vls msg = BU_VLS_INIT_ZERO;
+		    if (!bu_arg_integer_range_from_str(&msg, &width, bu_optarg, 10, 1, INT_MAX)) {
+			bu_log("%s: element width: %s\n", bu_getprogname(), bu_vls_cstr(&msg));
+			bu_vls_free(&msg);
+			(void)fputs(usage, stderr);
+			bu_exit(1, NULL);
+		    }
+		    bu_vls_free(&msg);
 		}
 		if (width < 1 || width >= EL_WIDTH){
 		    (void)fputs("pixmerge: illegal width specified\n",stderr);

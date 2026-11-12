@@ -38,7 +38,7 @@
 #include "bnetwork.h"
 
 #include "bu/cv.h"
-#include "bu/opt.h"
+#include "bu/arg.h"
 #include "bu/str.h"
 #include "vmath.h"
 
@@ -4852,7 +4852,7 @@ rt_pipe_get(
 	int curr_seg = 0;
 	const char *index_arg = &attr[1];
 
-	if (bu_opt_int(NULL, 1, &index_arg, &seg_no) != 1) {
+	if (bu_arg_integer_from_str(NULL, (int *)(&seg_no), index_arg, 0) != 1) {
 	    bu_vls_printf(logstr, "invalid segment number");
 	    return BRLCAD_ERROR;
 	}
@@ -4915,7 +4915,7 @@ pipe_parse_point(point_t point, const char *value)
     const char **argv = NULL;
     int result = BRLCAD_ERROR;
     if (bu_argv_from_tcl_list(copy, &argc, &argv) == 0 && argc == 3 &&
-	bu_opt_vect_t(NULL, argc, argv, point) == argc &&
+	bu_arg_vector3_from_argv((fastf_t *)(point), argc, argv) == argc &&
 	isfinite(point[X]) && isfinite(point[Y]) && isfinite(point[Z]))
 	result = BRLCAD_OK;
 
@@ -4958,7 +4958,7 @@ rt_pipe_adjust(
 	}
 
 	const char *index_arg = &argv[0][1];
-	if (bu_opt_int(NULL, 1, &index_arg, &seg_no) != 1) {
+	if (bu_arg_integer_from_str(NULL, (int *)(&seg_no), index_arg, 0) != 1) {
 	    bu_vls_printf(logstr, "no vertex number specified");
 	    return BRLCAD_ERROR;
 	}
@@ -4976,21 +4976,21 @@ rt_pipe_adjust(
 		}
 		break;
 	    case 'I':
-		if (bu_opt_fastf_t(NULL, 1, &argv[1], &tmp) != 1 ||
+		if (bu_arg_number_from_str(NULL, (fastf_t *)(&tmp), argv[1]) != 1 ||
 		    !isfinite(tmp)) {
 		    bu_vls_printf(logstr, "invalid inner diameter");
 		    return BRLCAD_ERROR;
 		}
 		break;
 	    case 'O':
-		if (bu_opt_fastf_t(NULL, 1, &argv[1], &tmp) != 1 ||
+		if (bu_arg_number_from_str(NULL, (fastf_t *)(&tmp), argv[1]) != 1 ||
 		    !isfinite(tmp) || tmp <= 0.0) {
 		    bu_vls_printf(logstr, "outer diameter cannot be 0.0 or less");
 		    return BRLCAD_ERROR;
 		}
 		break;
 	    case 'R':
-		if (bu_opt_fastf_t(NULL, 1, &argv[1], &tmp) != 1 ||
+		if (bu_arg_number_from_str(NULL, (fastf_t *)(&tmp), argv[1]) != 1 ||
 		    !isfinite(tmp)) {
 		    bu_vls_printf(logstr, "invalid bend radius");
 		    return BRLCAD_ERROR;

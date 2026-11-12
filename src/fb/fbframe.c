@@ -36,7 +36,7 @@
 #include "bu/app.h"
 #include "bu/color.h"
 #include "bu/getopt.h"
-#include "bu/opt.h"
+#include "fb_arg.h"
 #include "bu/exit.h"
 #include "bu/malloc.h"
 #include "dm.h"
@@ -72,21 +72,21 @@ main(int argc, char **argv)
 	    case 's':
 	    case 'S':
 		/* square file size */
-		if (bu_opt_scan_int_range(bu_optarg, &len, 1, INT_MAX, "square frame size"))
+		if (fb_arg_int_range(bu_optarg, &len, 1, INT_MAX, "square frame size"))
 		    xsize = ysize = len;
 		else
 		    USAGE_EXIT(*argv);
 		break;
 	    case 'w':
 	    case 'W':
-		if (bu_opt_scan_int_range(bu_optarg, &len, 1, INT_MAX, "frame width"))
+		if (fb_arg_int_range(bu_optarg, &len, 1, INT_MAX, "frame width"))
 		    xsize = len;
 		else
 		    USAGE_EXIT(*argv);
 		break;
 	    case 'n':
 	    case 'N':
-		if (bu_opt_scan_int_range(bu_optarg, &len, 1, INT_MAX, "frame height"))
+		if (fb_arg_int_range(bu_optarg, &len, 1, INT_MAX, "frame height"))
 		    ysize = len;
 		else
 		    USAGE_EXIT(*argv);

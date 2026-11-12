@@ -16,21 +16,78 @@
 #include "bu/debug.h"
 #include "bu/log.h"
 #include "bu/malloc.h"
-#include "bu/opt.h"
+#include "bu/arg.h"
 #include "nmg.h"
 #include "wdb.h"
 
 namespace {
 using namespace brlcad::iges;
 
+struct iges_g_args {
+    int help;
+    int drawing_3d;
+    int drawing;
+    int mesh;
+    int nurbs;
+    int trimmed;
+    int polygon;
+    const char *output_path;
+    const char *root;
+    int rt_debug_mask;
+    int nmg_debug_mask;
+    int exact;
+    int strict;
+    fastf_t default_plate_thickness;
+    fastf_t maximum_repair_tolerance;
+    fastf_t relative_tolerance;
+    const char *repair;
+    const char *report_path;
+    const char *orientation_path;
+    int wire;
+};
+
+static const struct bu_arg_option iges_g_options[] = {
+    BU_ARG_FLAG("h", "help", struct iges_g_args, help, "Print help and exit"),
+    BU_ARG_ALIAS("?", NULL, "help", 1),
+    BU_ARG_FLAG("3", "3d-drawings", struct iges_g_args, drawing_3d, "Preserve drawing model-space planes"),
+    BU_ARG_FLAG("d", "drawings", struct iges_g_args, drawing, "Import drawings and annotations"),
+    BU_ARG_FLAG("m", "mesh", struct iges_g_args, mesh, "Write boundary representations as BoT meshes"),
+    BU_ARG_FLAG("n", "nurbs", struct iges_g_args, nurbs, "Import spline surfaces as B-Reps"),
+    BU_ARG_FLAG("t", "trimmed-surfaces", struct iges_g_args, trimmed, "Import trimmed surfaces as B-Reps"),
+    BU_ARG_FLAG("p", "polygonal", struct iges_g_args, polygon, "Write boundary representations as polygonal NMG solids"),
+    BU_ARG_VALUE("o", "output", struct iges_g_args, output_path, BU_ARG_VALUE_STRING, BU_ARG_REQUIRED, "FILE", "BRL-CAD output database"),
+    BU_ARG_VALUE("N", "name", struct iges_g_args, root, BU_ARG_VALUE_STRING, BU_ARG_REQUIRED, "NAME", "Name of imported geometry root"),
+    BU_ARG_VALUE("x", "rt-debug", struct iges_g_args, rt_debug_mask, BU_ARG_VALUE_HEX_INTEGER, BU_ARG_REQUIRED, "HEX", "librt hexadecimal debug mask"),
+    BU_ARG_VALUE("X", "nmg-debug", struct iges_g_args, nmg_debug_mask, BU_ARG_VALUE_HEX_INTEGER, BU_ARG_REQUIRED, "HEX", "NMG hexadecimal debug mask"),
+    BU_ARG_FLAG(NULL, "exact", struct iges_g_args, exact, "Disallow source-data repairs"),
+    BU_ARG_FLAG(NULL, "strict", struct iges_g_args, strict, "Reject repaired or partial imports"),
+    BU_ARG_VALUE(NULL, "default-plate-thickness", struct iges_g_args, default_plate_thickness, BU_ARG_VALUE_NUMBER, BU_ARG_REQUIRED, "MM", "Thickness assigned to imported non-solid B-Reps"),
+    BU_ARG_VALUE(NULL, "max-repair-tolerance", struct iges_g_args, maximum_repair_tolerance, BU_ARG_VALUE_NUMBER, BU_ARG_REQUIRED, "MM", "Maximum permitted boundary repair tolerance"),
+    BU_ARG_VALUE(NULL, "relative-tolerance", struct iges_g_args, relative_tolerance, BU_ARG_VALUE_NUMBER, BU_ARG_REQUIRED, "FRACTION", "Local boundary repair target"),
+    BU_ARG_VALUE(NULL, "repair", struct iges_g_args, repair, BU_ARG_VALUE_STRING, BU_ARG_REQUIRED, "MODE", "Repair mode: none, safe, or best-effort"),
+    BU_ARG_VALUE(NULL, "report", struct iges_g_args, report_path, BU_ARG_VALUE_STRING, BU_ARG_REQUIRED, "FILE", "Structured JSON import report"),
+    BU_ARG_VALUE(NULL, "check-orientation", struct iges_g_args, orientation_path, BU_ARG_VALUE_STRING, BU_ARG_REQUIRED, "FILE.g", "Read-only orientation check of an existing database"),
+    BU_ARG_FLAG(NULL, "legacy-drawings", struct iges_g_args, wire, "Write drawing curves as NMG wire geometry"),
+    BU_ARG_OPTION_NULL
+};
+
+static const struct bu_arg_operand iges_g_operands[] = {
+    BU_ARG_OPERAND("input-or-output", BU_ARG_VALUE_FILE, 0, 2, "Input IGES and optional output database", NULL),
+    BU_ARG_OPERAND_NULL
+};
+
+static const struct bu_arg_schema iges_g_schema = BU_ARG_SCHEMA(
+    "iges-g", "Import IGES geometry into a BRL-CAD database", iges_g_options,
+    iges_g_operands, BU_ARG_PARSE_INTERSPERSED,
+    BU_ARG_SCHEMA_META_HELP(NULL, NULL, NULL, NULL, NULL));
+
 void
-usage(const char *program, const struct bu_opt_desc *options)
+usage(const char *program)
 {
-    char *description = bu_opt_describe(options, nullptr);
-    bu_log("Usage: %s [options] [-o output.g] input.iges [output.g]\n%s", program,
-	description ? description : "");
-    bu_log("       %s --check-orientation input.g [--report report.json]\n", program);
-    bu_free(description, "IGES option description");
+    char *help = bu_arg_schema_help(&iges_g_schema, program);
+    bu_log("%s", help ? help : "");
+    bu_log("Orientation check: %s --check-orientation input.g [--report report.json]\n", program);
+    bu_free(help, "IGES help");
 }
 
 template <typename Result, typename ReportWriter>
@@ -97,86 +154,70 @@ int
 convert(int argc, const char **argv)
 {
     const char *program = argv[0];
-    int help = 0, drawing = 0, drawing_3d = 0, nurbs = 0, trimmed = 0;
-    int mesh = 0, polygon = 0, exact = 0, strict = 0, wire = 0;
-    const char *output_path = nullptr, *report_path = nullptr, *root = nullptr, *repair = nullptr;
-    const char *orientation_path = nullptr;
     ImportOptions settings;
-    struct bu_opt_desc options[] = {
-	{"h", "help", "", nullptr, &help, "print help and exit"},
-	{"?", "", "", nullptr, &help, ""},
-	{"3", "3d-drawings", "", nullptr, &drawing_3d, "preserve drawing model-space planes"},
-	{"d", "drawings", "", nullptr, &drawing, "import drawings and annotations"},
-	{"m", "mesh", "", nullptr, &mesh, "write boundary representations as BoT meshes"},
-	{"n", "nurbs", "", nullptr, &nurbs, "import spline surfaces as B-Reps"},
-	{"t", "trimmed-surfaces", "", nullptr, &trimmed, "import trimmed surfaces as B-Reps"},
-	{"p", "polygonal", "", nullptr, &polygon, "write boundary representations as polygonal NMG solids"},
-	{"o", "output", "FILE", bu_opt_str, &output_path, "BRL-CAD output database"},
-	{"N", "name", "NAME", bu_opt_str, &root, "name of imported geometry root"},
-	{"x", "rt-debug", "HEX", parse_debug_mask, &rt_debug, "librt hexadecimal debug mask"},
-	{"X", "nmg-debug", "HEX", parse_debug_mask, &nmg_debug, "NMG hexadecimal debug mask"},
-	{"", "exact", "", nullptr, &exact, "disallow source-data repairs"},
-	{"", "strict", "", nullptr, &strict, "reject repaired or partial imports"},
-	{"", "default-plate-thickness", "MM", bu_opt_fastf_t, &settings.default_plate_thickness,
-	    "assign this thickness to imported non-solid B-Reps"},
-	{"", "max-repair-tolerance", "MM", bu_opt_fastf_t, &settings.maximum_repair_tolerance,
-	    "permit and flag boundary repairs up to this tolerance"},
-	{"", "relative-tolerance", "FRACTION", bu_opt_fastf_t, &settings.relative_tolerance,
-	    "local boundary repair target (default 0.0001 of box diagonal; 0 disables)"},
-	{"", "repair", "MODE", bu_opt_str, &repair, "none, safe, or best-effort (default)"},
-	{"", "report", "FILE", bu_opt_str, &report_path, "structured JSON import report"},
-	{"", "check-orientation", "FILE.g", bu_opt_str, &orientation_path, "read-only orientation check of an existing database"},
-	{"", "legacy-drawings", "", nullptr, &wire, "write drawing curves as NMG wire geometry"},
-	BU_OPT_DESC_NULL
-    };
+    struct iges_g_args args = {};
+    args.default_plate_thickness = settings.default_plate_thickness;
+    args.maximum_repair_tolerance = settings.maximum_repair_tolerance;
+    args.relative_tolerance = settings.relative_tolerance;
+    args.rt_debug_mask = rt_debug;
+    args.nmg_debug_mask = nmg_debug;
     Vls messages;
-    argc = bu_opt_parse(&messages.value, argc - 1, argv + 1, options);
+    int operand_index = bu_arg_schema_parse_complete(&iges_g_schema, &args,
+	&messages.value, argc - 1, argv + 1);
     ++argv;
-    if (help) {
-	usage(program, options);
+    if (args.help) {
+	usage(program);
 	return BRLCAD_OK;
     }
-    if (argc < 0 || bu_vls_strlen(&messages.value))
+    if (operand_index < 0)
 	throw std::invalid_argument(bu_vls_cstr(&messages.value));
-    if (orientation_path) {
-	if (argc || output_path || root || repair || drawing || drawing_3d || nurbs || trimmed ||
-	    mesh || polygon || exact || strict || wire || !ZERO(settings.default_plate_thickness) ||
+    argc = argc - 1 - operand_index;
+    argv += operand_index;
+    settings.default_plate_thickness = args.default_plate_thickness;
+    settings.maximum_repair_tolerance = args.maximum_repair_tolerance;
+    settings.relative_tolerance = args.relative_tolerance;
+    rt_debug = args.rt_debug_mask;
+    nmg_debug = args.nmg_debug_mask;
+    if (args.orientation_path) {
+        if (argc || args.output_path || args.root || args.repair || args.drawing || args.drawing_3d || args.nurbs || args.trimmed ||
+	    args.mesh || args.polygon || args.exact || args.strict || args.wire || !ZERO(settings.default_plate_thickness) ||
 	    !ZERO(settings.maximum_repair_tolerance) || !EQUAL(settings.relative_tolerance, DEFAULT_RELATIVE_TOLERANCE))
 	    throw std::invalid_argument("--check-orientation accepts only --report and debug options; it never writes geometry");
-	return check_existing(orientation_path, report_path);
+	return check_existing(args.orientation_path, args.report_path);
     }
-    drawing = drawing || drawing_3d;
+    int drawing = args.drawing || args.drawing_3d;
+    const char *output_path = args.output_path;
     if (argc == 2 && !output_path)
 	output_path = argv[1];
-    if ((argc != 1 && argc != 2) || !output_path || drawing + nurbs + trimmed > 1 || mesh + polygon > 1) {
-	usage(program, options);
+    if ((argc != 1 && argc != 2) || !output_path || drawing + args.nurbs + args.trimmed > 1 || args.mesh + args.polygon > 1) {
+	usage(program);
 	return BRLCAD_ERROR;
     }
-    settings.repair = parse_repair_mode(repair);
-    settings.output = mesh ? GeometryOutput::Mesh : polygon ? GeometryOutput::Polygon : GeometryOutput::Brep;
-    settings.exact = exact != 0;
-    settings.strict = strict != 0;
+    settings.repair = parse_repair_mode(args.repair);
+    settings.output = args.mesh ? GeometryOutput::Mesh : args.polygon ? GeometryOutput::Polygon : GeometryOutput::Brep;
+    settings.exact = args.exact != 0;
+    settings.strict = args.strict != 0;
     validate_import_options(settings, drawing != 0);
-    settings.project_drawings = !drawing_3d;
-    settings.wire_drawings = wire != 0;
-    settings.root_name = root ? root : drawing ? "iges_drawing" : "iges_geometry";
-    validate_paths(argv[0], {output_path, report_path ? report_path : ""});
+    settings.project_drawings = !args.drawing_3d;
+    settings.wire_drawings = args.wire != 0;
+    settings.root_name = args.root ? args.root : drawing ? "iges_drawing" : "iges_geometry";
+    validate_paths(argv[0], {output_path, args.report_path ? args.report_path : ""});
     ProgressReporter progress;
     settings.progress = [&](const char *stage, const char *activity, size_t completed,
 	size_t total, int64_t entity) { progress.update(stage, activity, completed, total, entity); };
     ON::Begin();
     const Document document = Document::parse_file(argv[0]);
-    if (document.valid() && !drawing && !nurbs && !trimmed && !mesh && !polygon &&
+    if (document.valid() && !drawing && !args.nurbs && !args.trimmed && !args.mesh && !args.polygon &&
 	!has_model_geometry(document)) {
 	drawing = 1;
 	settings.project_drawings = false;
-	settings.root_name = root ? root : "iges_drawing";
+	settings.root_name = args.root ? args.root : "iges_drawing";
 	bu_log("IGES: no bounded surfaces or solids; importing model-space drawings and datums\n");
     }
     StagedFile output(output_path);
     std::unique_ptr<StagedFile> report;
-    if (report_path)
-	report = std::make_unique<StagedFile>(report_path);
+    if (args.report_path)
+	report = std::make_unique<StagedFile>(args.report_path);
     std::unique_ptr<struct rt_wdb, decltype(&wdb_close)> database(wdb_fopen(output.path().c_str()), wdb_close);
     if (!database)
 	throw std::runtime_error("cannot create output database");

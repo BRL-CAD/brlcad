@@ -43,7 +43,7 @@
 
 #include "bu/app.h"
 #include "bu/getopt.h"
-#include "bu/opt.h"
+#include "fb_arg.h"
 #include "bu/malloc.h"
 #include "bu/file.h"
 #include "bu/exit.h"
@@ -99,7 +99,7 @@ get_args(int argc, char **argv)
 		one_line_only = 1;
 		break;
 	    case 'm':
-		if (!bu_opt_scan_int_range(bu_optarg, &multiple_lines, 0, INT_MAX, "line count"))
+		if (!fb_arg_int_range(bu_optarg, &multiple_lines, 0, INT_MAX, "line count"))
 		    return 0;
 		break;
 	    case 'a':
@@ -119,52 +119,52 @@ get_args(int argc, char **argv)
 		break;
 	    case 's':
 		/* square file size */
-		if (!bu_opt_scan_size_t_range(bu_optarg, &file_width, 1, SIZE_MAX, "file size"))
+		if (!fb_arg_size_t_range(bu_optarg, &file_width, 1, SIZE_MAX, "file size"))
 		    return 0;
 		file_height = file_width;
 		autosize = 0;
 		break;
 	    case 'w':
-		if (!bu_opt_scan_size_t_range(bu_optarg, &file_width, 1, SIZE_MAX, "file width"))
+		if (!fb_arg_size_t_range(bu_optarg, &file_width, 1, SIZE_MAX, "file width"))
 		    return 0;
 		autosize = 0;
 		break;
 	    case 'n':
-		if (!bu_opt_scan_size_t_range(bu_optarg, &file_height, 1, SIZE_MAX, "file height"))
+		if (!fb_arg_size_t_range(bu_optarg, &file_height, 1, SIZE_MAX, "file height"))
 		    return 0;
 		autosize = 0;
 		break;
 	    case 'x':
-		if (!bu_opt_scan_int_range(bu_optarg, &file_xoff, 0, INT_MAX, "file x offset"))
+		if (!fb_arg_int_range(bu_optarg, &file_xoff, 0, INT_MAX, "file x offset"))
 		    return 0;
 		break;
 	    case 'y':
-		if (!bu_opt_scan_int_range(bu_optarg, &file_yoff, 0, INT_MAX, "file y offset"))
+		if (!fb_arg_int_range(bu_optarg, &file_yoff, 0, INT_MAX, "file y offset"))
 		    return 0;
 		break;
 	    case 'X':
-		if (!bu_opt_scan_int(bu_optarg, &scr_xoff, "screen x offset"))
+		if (!fb_arg_int(bu_optarg, &scr_xoff, "screen x offset"))
 		    return 0;
 		break;
 	    case 'Y':
-		if (!bu_opt_scan_int(bu_optarg, &scr_yoff, "screen y offset"))
+		if (!fb_arg_int(bu_optarg, &scr_yoff, "screen y offset"))
 		    return 0;
 		break;
 	    case 'S':
-		if (!bu_opt_scan_int_range(bu_optarg, &scr_width, 0, INT_MAX, "screen size"))
+		if (!fb_arg_int_range(bu_optarg, &scr_width, 0, INT_MAX, "screen size"))
 		    return 0;
 		scr_height = scr_width;
 		break;
 	    case 'W':
-		if (!bu_opt_scan_int_range(bu_optarg, &scr_width, 0, INT_MAX, "screen width"))
+		if (!fb_arg_int_range(bu_optarg, &scr_width, 0, INT_MAX, "screen width"))
 		    return 0;
 		break;
 	    case 'N':
-		if (!bu_opt_scan_int_range(bu_optarg, &scr_height, 0, INT_MAX, "screen height"))
+		if (!fb_arg_int_range(bu_optarg, &scr_height, 0, INT_MAX, "screen height"))
 		    return 0;
 		break;
 	    case 'p':
-		if (!bu_opt_scan_int_range(bu_optarg, &pause_sec, 0, INT_MAX, "pause duration"))
+		if (!fb_arg_int_range(bu_optarg, &pause_sec, 0, INT_MAX, "pause duration"))
 		    return 0;
 		break;
 

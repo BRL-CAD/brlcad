@@ -27,7 +27,7 @@
 #include <math.h>
 
 #include "vmath.h"
-#include "bu/opt.h"
+#include "bu/arg.h"
 #include "rt/geom.h"
 #include "raytrace.h"
 #include "./mged.h"
@@ -75,7 +75,7 @@ parse_fastf_args(struct mged_state *s, fastf_t *values, size_t count,
 	const char *argv[])
 {
     for (size_t i = 0; i < count; ++i) {
-	if (bu_opt_fastf_t(NULL, 1, &argv[i], &values[i]) != 1 ||
+	if (!bu_arg_number_from_str(NULL, &values[i], argv[i]) ||
 	    !isfinite(values[i])) {
 	    Tcl_AppendResult(s->interp, "Facedef: bad numeric value - ",
 		    argv[i], "\n", (char *)NULL);
@@ -154,7 +154,7 @@ f_facedef(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[
     bu_vls_free(&error_msg);
 
     /* get face, initialize args and argcnt */
-    if (bu_opt_int(NULL, 1, &argv[1], &face) != 1) {
+    if (!bu_arg_integer_from_str(NULL, &face, argv[1], 0)) {
 	Tcl_AppendResult(interp, "Facedef: bad face - ", argv[1], "\n",
 		(char *)NULL);
 	return TCL_ERROR;
@@ -445,7 +445,7 @@ get_rotfb(struct mged_state *s, fastf_t *plane, const char *argv[], const struct
 	int vertex;
 	const char *vertex_arg = argv[2] + 1;
 
-	if (bu_opt_int(NULL, 1, &vertex_arg, &vertex) != 1 ||
+	if (!bu_arg_integer_from_str(NULL, &vertex, vertex_arg, 0) ||
 	    vertex < 1 || vertex > 8) {
 	    Tcl_AppendResult(s->interp, "Facedef: bad vertex - ", argv[2], "\n", (char *)NULL);
 	    return -1;

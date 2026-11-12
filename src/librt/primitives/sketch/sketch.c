@@ -38,7 +38,7 @@
 #include "vmath.h"
 #include "bu/debug.h"
 #include "bu/cv.h"
-#include "bu/opt.h"
+#include "bu/arg.h"
 #include "rt/db4.h"
 #include "nmg.h"
 #include "rt/geom.h"
@@ -2436,10 +2436,10 @@ get_tcl_curve(struct bu_vls *logstr, struct rt_curve *crv, const char *argv1)
 		sval = seg_argv[k+1];
 		switch (*elem) {
 		    case 'S':
-			(void)bu_opt_int(NULL, 1, &sval, (void *)&lsg->start);
+			(void)bu_arg_integer_from_str(NULL, (int *)(&lsg->start), sval, 0);
 			break;
 		    case 'E':
-			(void)bu_opt_int(NULL, 1, &sval, (void *)&lsg->end);
+			(void)bu_arg_integer_from_str(NULL, (int *)(&lsg->end), sval, 0);
 			break;
 		}
 	    }
@@ -2455,7 +2455,7 @@ get_tcl_curve(struct bu_vls *logstr, struct rt_curve *crv, const char *argv1)
 		sval = seg_argv[k+1];
 		switch (*elem) {
 		    case 'D': /* degree */
-			(void)bu_opt_int(NULL, 1, &sval, (void *)&bsg->degree);
+			(void)bu_arg_integer_from_str(NULL, (int *)(&bsg->degree), sval, 0);
 			break;
 		    case 'P': /* list of control points */
 			num_points = 0;
@@ -2479,19 +2479,19 @@ get_tcl_curve(struct bu_vls *logstr, struct rt_curve *crv, const char *argv1)
 		sval = seg_argv[k+1];
 		switch (*elem) {
 		    case 'S':
-			(void)bu_opt_int(NULL, 1, &sval, (void *)&csg->start);
+			(void)bu_arg_integer_from_str(NULL, (int *)(&csg->start), sval, 0);
 			break;
 		    case 'E':
-			(void)bu_opt_int(NULL, 1, &sval, (void *)&csg->end);
+			(void)bu_arg_integer_from_str(NULL, (int *)(&csg->end), sval, 0);
 			break;
 		    case 'R':
-			(void)bu_opt_fastf_t(NULL, 1, &sval, (void *)&csg->radius);
+			(void)bu_arg_number_from_str(NULL, (fastf_t *)(&csg->radius), sval);
 			break;
 		    case 'L' :
-			(void)bu_opt_bool(NULL, 1, &sval, (void *)&csg->center_is_left);
+			(void)bu_arg_bool_from_str(NULL, (int *)(&csg->center_is_left), sval);
 			break;
 		    case 'O':
-			(void)bu_opt_bool(NULL, 1, &sval, (void *)&csg->orientation);
+			(void)bu_arg_bool_from_str(NULL, (int *)(&csg->orientation), sval);
 			break;
 		}
 	    }
@@ -2506,10 +2506,10 @@ get_tcl_curve(struct bu_vls *logstr, struct rt_curve *crv, const char *argv1)
 		sval = seg_argv[k+1];
 		switch (*elem) {
 		    case 'O':
-			(void)bu_opt_int(NULL, 1, &sval, (void *)&nsg->order);
+			(void)bu_arg_integer_from_str(NULL, (int *)(&nsg->order), sval, 0);
 			break;
 		    case 'T':
-			(void)bu_opt_int(NULL, 1, &sval, (void *)&nsg->pt_type);
+			(void)bu_arg_integer_from_str(NULL, (int *)(&nsg->pt_type), sval, 0);
 			break;
 		    case 'K':
 			(void)_rt_tcl_list_to_fastf_array(sval, &nsg->k.knots, &nsg->k.k_size);
