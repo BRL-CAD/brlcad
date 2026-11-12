@@ -48,6 +48,7 @@
 #include <vector>
 
 #include "bu/app.h"
+#include "bu/arg.h"
 #include "bu/process.h"
 
 #include "../libbu/json.hpp"
@@ -61,9 +62,11 @@ static const char *options_begin = "// BEGIN GENERATED BU_ARG OPTIONS";
 static const char *options_end = "// END GENERATED BU_ARG OPTIONS";
 
 struct settings {
-    enum class mode { check, render, update } operation = mode::check;
+    enum class mode { check, render, update, audit } operation = mode::check;
     fs::path schema_file;
     fs::path man_page;
+    fs::path man_directory;
+    fs::path undocumented_file;
     std::string schema_name;
     std::string invocation;
     std::vector<std::string> command;
@@ -76,6 +79,7 @@ struct documented_option {
 struct schema_view {
     std::string invocation;
     const json *schema;
+    bool required = true;
 };
 
 static void
@@ -84,7 +88,9 @@ usage(const char *program)
     std::cerr
 	<< "Usage: " << program
 	<< " [--check|--render|--update] [--schema file] [--man-page file]\n"
-	<< "       [--name schema-name] [--invocation text] [-- command [args ...]]\n";
+	<< "       [--name schema-name] [--invocation text] [-- command [args ...]]\n"
+	<< "       " << program << " --audit-directory dir --allow-undocumented file\n"
+	<< "       [--schema file | -- command [args ...]]\n";
 }
 
 static std::string
@@ -226,6 +232,22 @@ collect_schema_views(const json &grammar, const std::string &invocation,
 	    collect_schema_views(form.at("grammar"), forms_invocation, views);
 	return;
     }
+    if (kind == "edit" && grammar.contains("root")) {
+	const json &root = grammar.at("root");
+	const std::string edit_invocation = invocation.empty() ?
+	    root.value("name", std::string()) : invocation;
+	collect_schema_views(root, edit_invocation, views);
+	if (grammar.contains("generic_operations"))
+	    collect_schema_views(grammar.at("generic_operations"),
+		edit_invocation, views);
+	return;
+    }
+    if (kind == "grammar_adapter" || kind == "native_action_grammar" ||
+	kind == "delegated_grammar") {
+	views.push_back({invocation.empty() ?
+	    grammar.value("name", std::string()) : invocation, &grammar});
+	return;
+    }
     if (grammar.contains("schema")) {
 	const json &schema = grammar.at("schema");
 	const std::string node_invocation = append_word(invocation,
@@ -236,6 +258,54 @@ collect_schema_views(const json &grammar, const std::string &invocation,
 		collect_schema_views(node, node_invocation, views);
 	}
     }
+}
+
+static void
+collect_audit_views(const json &grammar, const std::string &invocation,
+	std::vector<schema_view> &views)
+{
+    const std::string kind = grammar.value("kind", std::string());
+    if (kind == "native_forms" && grammar.contains("forms")) {
+	for (const json &form : grammar.at("forms"))
+	    collect_audit_views(form.at("grammar"), invocation, views);
+	return;
+    }
+    if (kind == "native_tree" || kind == "edit") {
+	const size_t first = views.size();
+	collect_schema_views(grammar, invocation, views);
+	for (size_t i = first + 1; i < views.size(); i++)
+	    views[i].required = false;
+	return;
+    }
+    collect_schema_views(grammar, invocation, views);
+}
+
+static std::string
+grammar_name(const json &grammar)
+{
+    if (!grammar.is_object())
+	return std::string();
+    const std::string kind = grammar.value("kind", std::string());
+    if (kind == "native" || kind == "native_forms")
+	return grammar.value("name", std::string());
+    if ((kind == "native_tree" || kind == "edit") &&
+	grammar.contains("root") && grammar.at("root").is_object())
+	return grammar.at("root").value("name", std::string());
+    if (grammar.contains("schema") && grammar.at("schema").is_object())
+	return grammar.at("schema").value("name", std::string());
+    return grammar.value("name", std::string());
+}
+
+static void
+require_supported_version(const json &grammar)
+{
+    if (!grammar.is_object() || !grammar.contains("schema_version") ||
+	!grammar.at("schema_version").is_number_integer())
+	throw std::runtime_error("command grammar has no integer schema_version");
+    const int version = grammar.at("schema_version").get<int>();
+    if (version != BU_ARG_SCHEMA_JSON_VERSION)
+	throw std::runtime_error("unsupported command grammar schema_version " +
+	    std::to_string(version));
 }
 
 static std::string
@@ -455,6 +525,8 @@ static std::set<std::string>
 schema_spellings(const json &schema, bool include_hidden)
 {
     std::set<std::string> result;
+    if (!schema.contains("options") || !schema.at("options").is_array())
+	return result;
     for (const documented_option &option : collect_options(schema, include_hidden))
 	result.insert(option.spellings.begin(), option.spellings.end());
     return result;
@@ -465,6 +537,8 @@ schema_arguments(const json &schema, bool include_hidden)
 {
     std::map<std::string, bool> canonical;
     std::map<std::string, bool> result;
+    if (!schema.contains("options") || !schema.at("options").is_array())
+	return result;
     for (const json &option : schema.at("options")) {
 	if (!option.value("alias_of", std::string()).empty())
 	    continue;
@@ -491,6 +565,12 @@ schema_arguments(const json &schema, bool include_hidden)
 static bool
 schema_accepts_opaque_tokens(const json &schema)
 {
+    const std::string kind = schema.value("kind", std::string());
+    if (kind == "grammar_adapter" || kind == "native_action_grammar" ||
+	kind == "delegated_grammar")
+	return true;
+    if (!schema.contains("options") || !schema.contains("operands"))
+	return false;
     if (!schema.at("options").empty() ||
 	schema.value("parse_policy", std::string()) != "stop_at_first_operand")
 	return false;
@@ -517,6 +597,162 @@ replace_region(const std::string &page, const char *begin, const char *end,
     return page.substr(0, first) + replacement + page.substr(last);
 }
 
+static bool
+check_page(const fs::path &path, const std::vector<schema_view> &views)
+{
+    const std::string page = slurp(path);
+    std::set<std::string> expected;
+    std::set<std::string> accepted;
+    std::map<std::string, std::set<bool>> argument_sets;
+    bool accepts_opaque_tokens = false;
+
+    for (const schema_view &view : views) {
+	std::set<std::string> view_expected = schema_spellings(*view.schema, false);
+	std::set<std::string> view_accepted = schema_spellings(*view.schema, true);
+	if (view.required)
+	    expected.insert(view_expected.begin(), view_expected.end());
+	accepted.insert(view_accepted.begin(), view_accepted.end());
+	accepts_opaque_tokens = accepts_opaque_tokens ||
+	    schema_accepts_opaque_tokens(*view.schema);
+	if (view.required) {
+	    for (const auto &entry : schema_arguments(*view.schema, false))
+		argument_sets[entry.first].insert(entry.second);
+	}
+    }
+
+    std::map<std::string, std::set<bool>> documented = documented_options(page);
+    std::set<std::string> actual;
+    for (const auto &entry : documented)
+	actual.insert(entry.first);
+    bool failed = false;
+    for (const std::string &spelling : expected) {
+	if (!actual.count(spelling)) {
+	    std::cerr << path.string() << ": missing option " << spelling << "\n";
+	    failed = true;
+	}
+    }
+    for (const std::string &spelling : actual) {
+	if (!accepts_opaque_tokens && !accepted.count(spelling)) {
+	    std::cerr << path.string() << ": undocumented by schema " << spelling << "\n";
+	    failed = true;
+	}
+    }
+    for (const auto &entry : argument_sets) {
+	if (entry.second.size() == 1 && documented.count(entry.first) &&
+	    !documented[entry.first].count(*entry.second.begin())) {
+	    std::cerr << path.string() << ": option " << entry.first
+		<< (*entry.second.begin() ? " requires an argument" : " takes no argument") << "\n";
+	    failed = true;
+	}
+    }
+    return failed;
+}
+
+static std::map<std::string, std::string>
+read_undocumented(const fs::path &path)
+{
+    std::map<std::string, std::string> result;
+    std::istringstream input(slurp(path));
+    std::string line;
+
+    while (std::getline(input, line)) {
+	if (!line.empty() && line.back() == '\r')
+	    line.pop_back();
+	if (line.empty() || line[0] == '#')
+	    continue;
+	const size_t separator = line.find('\t');
+	if (separator == std::string::npos || separator == 0 ||
+	    separator + 1 == line.size())
+	    throw std::runtime_error(path.string() +
+		": expected schema name, tab, and reason");
+	const std::string name = line.substr(0, separator);
+	if (!result.emplace(name, line.substr(separator + 1)).second)
+	    throw std::runtime_error(path.string() +
+		": duplicate undocumented schema " + name);
+    }
+    return result;
+}
+
+static int
+audit_directory(const json &document, const settings &config)
+{
+    std::vector<const json *> grammars;
+    if (document.is_array()) {
+	for (const json &grammar : document)
+	    grammars.push_back(&grammar);
+    } else {
+	grammars.push_back(&document);
+    }
+
+    std::map<std::string, std::vector<const json *>> published;
+    for (const json *grammar : grammars) {
+	const std::string name = grammar_name(*grammar);
+	if (name.empty())
+	    throw std::runtime_error("published command grammar has no name");
+	published[name].push_back(grammar);
+    }
+
+    std::map<std::string, std::vector<schema_view>> schemas;
+    for (const auto &entry : published) {
+	const std::string &name = entry.first;
+	std::vector<schema_view> views;
+	for (const json *grammar : entry.second) {
+	    std::vector<schema_view> declaration_views;
+	    collect_audit_views(*grammar, name, declaration_views);
+	    views.insert(views.end(), declaration_views.begin(), declaration_views.end());
+	}
+	if (views.empty())
+	    throw std::runtime_error("published command grammar has no renderable schemas: " + name);
+	auto &destination = schemas[name];
+	destination.insert(destination.end(), views.begin(), views.end());
+    }
+
+    std::map<std::string, std::string> undocumented =
+	read_undocumented(config.undocumented_file);
+    std::map<std::string, fs::path> pages;
+    for (const fs::directory_entry &entry :
+	fs::directory_iterator(config.man_directory)) {
+	if (entry.is_regular_file() && entry.path().extension() == ".adoc")
+	    pages[entry.path().filename().string()] = entry.path();
+    }
+    std::set<std::string> used_exemptions;
+    size_t checked = 0;
+    bool failed = false;
+    for (const auto &entry : schemas) {
+	const std::string filename = entry.first + ".adoc";
+	auto page_entry = pages.find(filename);
+	if (page_entry != pages.end()) {
+	    checked++;
+	    failed = check_page(page_entry->second, entry.second) || failed;
+	    if (undocumented.count(entry.first)) {
+		std::cerr << config.undocumented_file.string()
+		    << ": stale exemption for documented schema " << entry.first << "\n";
+		failed = true;
+	    }
+	    continue;
+	}
+	if (!undocumented.count(entry.first)) {
+	    std::cerr << (config.man_directory / filename).string()
+		<< ": no man page or documented exemption\n";
+	    failed = true;
+	    continue;
+	}
+	used_exemptions.insert(entry.first);
+    }
+    for (const auto &entry : undocumented) {
+	if (!schemas.count(entry.first)) {
+	    std::cerr << config.undocumented_file.string()
+		<< ": exemption does not match a published schema: " << entry.first << "\n";
+	    failed = true;
+	}
+    }
+    if (!failed)
+	std::cout << "Checked " << checked << " man pages for " << schemas.size()
+	    << " published command schemas; " << used_exemptions.size()
+	    << " schemas are explicitly undocumented\n";
+    return failed ? 1 : 0;
+}
+
 static settings
 parse_settings(int argc, char **argv)
 {
@@ -534,6 +770,12 @@ parse_settings(int argc, char **argv)
 	    result.operation = settings::mode::render;
 	else if (arg == "--update")
 	    result.operation = settings::mode::update;
+	else if (arg == "--audit-directory" && i + 1 < argc) {
+	    result.operation = settings::mode::audit;
+	    result.man_directory = argv[++i];
+	}
+	else if (arg == "--allow-undocumented" && i + 1 < argc)
+	    result.undocumented_file = argv[++i];
 	else if ((arg == "--schema" || arg == "--man-page" || arg == "--name" ||
 		arg == "--invocation") && i + 1 < argc) {
 	    std::string value = argv[++i];
@@ -547,8 +789,15 @@ parse_settings(int argc, char **argv)
     }
     if (result.schema_file.empty() == result.command.empty())
 	throw std::runtime_error("specify exactly one of --schema or a command after --");
-    if (result.operation != settings::mode::render && result.man_page.empty())
+    if (result.operation == settings::mode::audit) {
+	if (result.man_directory.empty() || result.undocumented_file.empty())
+	    throw std::runtime_error("--audit-directory requires --allow-undocumented");
+	if (!result.man_page.empty() || !result.schema_name.empty() ||
+	    !result.invocation.empty())
+	    throw std::runtime_error("directory audits do not accept page or schema selection");
+    } else if (result.operation != settings::mode::render && result.man_page.empty()) {
 	throw std::runtime_error("--check and --update require --man-page");
+    }
     return result;
 }
 
@@ -561,6 +810,14 @@ main(int argc, char **argv)
 	std::string schema_text = config.schema_file.empty() ?
 	    run_schema_command(config.command) : slurp(config.schema_file);
 	json document = json::parse(schema_text);
+	if (document.is_array()) {
+	    for (const json &grammar_entry : document)
+		require_supported_version(grammar_entry);
+	} else {
+	    require_supported_version(document);
+	}
+	if (config.operation == settings::mode::audit)
+	    return audit_directory(document, config);
 	const json *grammar = &document;
 	if (!config.schema_name.empty()) {
 	    grammar = find_named_schema(document, config.schema_name);
@@ -587,46 +844,7 @@ main(int argc, char **argv)
 	    return 0;
 	}
 
-	std::set<std::string> expected;
-	std::set<std::string> accepted;
-	std::map<std::string, std::set<bool>> argument_sets;
-	bool accepts_opaque_tokens = false;
-	for (const schema_view &view : views) {
-	    std::set<std::string> view_expected = schema_spellings(*view.schema, false);
-	    std::set<std::string> view_accepted = schema_spellings(*view.schema, true);
-	    expected.insert(view_expected.begin(), view_expected.end());
-	    accepted.insert(view_accepted.begin(), view_accepted.end());
-	    accepts_opaque_tokens = accepts_opaque_tokens ||
-		schema_accepts_opaque_tokens(*view.schema);
-	    for (const auto &entry : schema_arguments(*view.schema, false))
-		argument_sets[entry.first].insert(entry.second);
-	}
-	std::map<std::string, std::set<bool>> documented = documented_options(page);
-	std::set<std::string> actual;
-	for (const auto &entry : documented)
-	    actual.insert(entry.first);
-	bool failed = false;
-	for (const std::string &spelling : expected) {
-	    if (!actual.count(spelling)) {
-		std::cerr << config.man_page.string() << ": missing option " << spelling << "\n";
-		failed = true;
-	    }
-	}
-	for (const std::string &spelling : actual) {
-	    if (!accepts_opaque_tokens && !accepted.count(spelling)) {
-		std::cerr << config.man_page.string() << ": undocumented by schema " << spelling << "\n";
-		failed = true;
-	    }
-	}
-	for (const auto &entry : argument_sets) {
-	    if (entry.second.size() == 1 && documented.count(entry.first) &&
-		!documented[entry.first].count(*entry.second.begin())) {
-		std::cerr << config.man_page.string() << ": option " << entry.first
-		    << (*entry.second.begin() ? " requires an argument" : " takes no argument") << "\n";
-		failed = true;
-	    }
-	}
-	return failed ? 1 : 0;
+	return check_page(config.man_page, views) ? 1 : 0;
     } catch (const std::exception &error) {
 	std::cerr << argv[0] << ": " << error.what() << "\n";
 	usage(argv[0]);

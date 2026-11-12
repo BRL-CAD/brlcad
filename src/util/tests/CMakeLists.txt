@@ -58,6 +58,7 @@ endif()
 
 cmakefiles(
   CMakeLists.txt
+  argdoc_ged_undocumented.txt
   test_argdoc_schema_selection.cmake
   test_bwcrop_single_axis.cmake
   test_bwscale_endpoints.cmake
