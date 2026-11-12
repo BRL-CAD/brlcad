@@ -29,6 +29,7 @@
 #include <QGroupBox>
 #include <QtGlobal>
 #include "ged.h"
+#include "qtcad/QgGedEventBatch.h"
 #include "qtcad/QgPluginContext.h"
 #include "QPolyCreate.h"
 #include "QPolyMod.h"
@@ -737,6 +738,7 @@ QPolyMod::sketch_name_update()
     if (!sk_name)
 	return;
 
+    QgGedEventBatch event_batch(gedp);
     struct bv_polygon *ip = (struct bv_polygon *)p->s_i_data;
     if (ip->u_data) {
 	// remove previous dp, if name is different.  If name
@@ -763,7 +765,9 @@ QPolyMod::sketch_name_update()
     }
 
     ip->u_data = (void *)db_scene_obj_to_sketch(gedp->dbip, sk_name, p);
-    emit view_updated(QG_VIEW_DB);
+    event_batch.end();
+    if (ip->u_data)
+	emit view_updated(QG_VIEW_DB);
 
     bu_free(sk_name, "name copy");
 }

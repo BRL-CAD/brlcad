@@ -10,6 +10,7 @@ set(
   QgEdit.h
   QgFlowLayout.h
   QgGL.h
+  QgGedEventBatch.h
   QgGeomImport.h
   QgKeyVal.h
   QgMeasureFilter.h

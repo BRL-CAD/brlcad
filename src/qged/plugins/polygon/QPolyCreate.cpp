@@ -29,6 +29,7 @@
 #include <QGroupBox>
 #include <QtGlobal>
 #include "ged.h"
+#include "qtcad/QgGedEventBatch.h"
 #include "qtcad/QgPluginContext.h"
 #include "QPolyCreate.h"
 #include "qtcad/QgSignalFlags.h"
@@ -209,8 +210,13 @@ QPolyCreate::finalize(bool)
 	}
 	if (sk_name && db_lookup(gedp->dbip, sk_name, LOOKUP_QUIET) == RT_DIR_NULL) {
 	    struct bv_polygon *ip = (struct bv_polygon *)p->s_i_data;
-	    ip->u_data = (void *)db_scene_obj_to_sketch(gedp->dbip, sk_name, p);
-	    emit view_updated(QG_VIEW_DB);
+	    {
+		QgGedEventBatch event_batch(gedp);
+		ip->u_data = (void *)db_scene_obj_to_sketch(gedp->dbip,
+			sk_name, p);
+	    }
+	    if (ip->u_data)
+		emit view_updated(QG_VIEW_DB);
 	}
 	bu_free(sk_name, "name cpy");
     }

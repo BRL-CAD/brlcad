@@ -35,6 +35,7 @@ set(
   QgConsoleListener.cpp
   QgDockWidget.cpp
   QgFlowLayout.cpp
+  QgGedEventBatch.cpp
   QgGeomImport.cpp
   QgKeyVal.cpp
   QgMeasureFilter.cpp

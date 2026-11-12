@@ -23,6 +23,7 @@
 #include "ged/scene.h"
 #include "ged/selection.h"
 #include "qtcad/QgAttributesModel.h"
+#include "qtcad/QgGedEventBatch.h"
 #include "qtcad/QgModel.h"
 #include "qtcad/QgSession.h"
 #include "qtcad/QgSignalFlags.h"
@@ -34,11 +35,27 @@ class QgSessionTest : public QObject
 private slots:
     void ownsGedContext();
     void publishesChanges();
+    void batchesGedEvents();
     void suppliesModelContext();
     void reconcilesModelEvents();
     void tracksDuplicateSelectionOccurrences();
     void tracksSessionAttributes();
 };
+
+struct qg_event_observer_state {
+    int calls = 0;
+    size_t events = 0;
+};
+
+static void
+qg_event_observer(struct ged *, const struct ged_event *, size_t event_count,
+	const struct ged_event_result *, void *client_data)
+{
+    qg_event_observer_state *state =
+	static_cast<qg_event_observer_state *>(client_data);
+    state->calls++;
+    state->events += event_count;
+}
 
 static bool
 no_pending_db_changes(struct ged *gedp)
@@ -81,6 +98,44 @@ QgSessionTest::publishesChanges()
 
     QCOMPARE(databaseChanges, 1);
     QCOMPARE(viewChanges, 1);
+}
+
+void
+QgSessionTest::batchesGedEvents()
+{
+    QgSession session;
+    qg_event_observer_state state;
+    ged_event_observer_token token = ged_event_observer_add(session.ged(),
+	GED_EVENT_OBSERVER_POST_RECONCILE, qg_event_observer, &state);
+    QVERIFY(token != 0);
+
+    QgGedEventBatch batch(session.ged());
+    QVERIFY(batch.started());
+    struct ged_event events[2];
+    ged_event_init(&events[0]);
+    events[0].kind = GED_EVENT_OBJECT_ADDED;
+    events[0].name = "first.s";
+    ged_event_init(&events[1]);
+    events[1].kind = GED_EVENT_OBJECT_ADDED;
+    events[1].name = "second.s";
+    QCOMPARE(ged_event_publish(session.ged(), events, 2, nullptr),
+	GED_EVENT_OK);
+    QCOMPARE(state.calls, 0);
+
+    struct ged_event_result *result = ged_event_result_create();
+    QVERIFY(result != nullptr);
+    QCOMPARE(batch.end(result), GED_EVENT_OK);
+    QCOMPARE(state.calls, 1);
+    QCOMPARE(state.events, size_t(2));
+    QCOMPARE(ged_event_result_event_count(result), size_t(2));
+    QCOMPARE(batch.end(result), GED_EVENT_OK);
+    QCOMPARE(state.calls, 1);
+    ged_event_result_destroy(result);
+    QVERIFY(ged_event_observer_remove(session.ged(), token));
+
+    QgGedEventBatch unavailable(nullptr);
+    QVERIFY(!unavailable.started());
+    QCOMPARE(unavailable.end(), GED_EVENT_OK);
 }
 
 void
