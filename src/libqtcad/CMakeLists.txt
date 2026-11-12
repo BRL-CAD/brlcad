@@ -56,6 +56,7 @@ set(
   QgUtil.cpp
   QgView.cpp
   QgViewCtrl.cpp
+  QgWindowExtensionController.cpp
 )
 if(BRLCAD_ENABLE_OPENGL AND OPENGL_TARGETS)
   set(qtcad_srcs ${qtcad_srcs} QgGL.cpp)

@@ -29,6 +29,7 @@
 #include "qtcad/QgSession.h"
 #include "qtcad/QgViewCtrl.h"
 #include "qtcad/QgTreeSelectionModel.h"
+#include "qtcad/QgWindowExtensionController.h"
 #include "QgEdMainWindow.h"
 #include "QgEdApp.h"
 #include "QgEdCategories.h"
@@ -297,6 +298,14 @@ QgEdMainWindow::ConnectWidgets()
     vc_ctrl->populate();
     oc_ctrl->populate();
 
+    extension_ctrl = new QgWindowExtensionController(this,
+	ap->pluginManager(), ap->pluginContext(), this);
+    extension_ctrl->setPanelMenu(vm_panels,
+	QStringLiteral(QGED_CATEGORY_PANEL));
+    extension_ctrl->setDialogMenu(tm_dialogs,
+	QStringLiteral(QGED_CATEGORY_DIALOG));
+    extension_ctrl->rebuild();
+
     // The tools in the view and edit panels may have consequences for the view.
     // Connect to the palette signals and slots (the individual tool connections
     // are handled by the palette container.)
@@ -377,6 +386,10 @@ QgEdMainWindow::SetupMenu()
     vm_treeview_mode_toggle = new QAction("Toggle Hierarchy (ls/tops)", this);
     view_menu->addAction(vm_treeview_mode_toggle);
     vm_panels = view_menu->addMenu("Panels");
+
+    tm_dialogs = menuBar()->addMenu("Tools");
+    tm_dialogs->setEnabled(false);
+    tm_dialogs->menuAction()->setVisible(false);
 
     menuBar()->addSeparator();
 

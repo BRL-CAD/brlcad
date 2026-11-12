@@ -21,6 +21,10 @@
 #include "common.h"
 
 #include <QApplication>
+#include <QDialog>
+#include <QDockWidget>
+#include <QMainWindow>
+#include <QMenu>
 #include <QPointer>
 #include <QPushButton>
 #include <QSettings>
@@ -37,10 +41,13 @@
 #include "qtcad/QgToolBase.h"
 #include "qtcad/QgToolPalette.h"
 #include "qtcad/QgView.h"
+#include "qtcad/QgWindowExtensionController.h"
 
 static const char *valid_plugin_id = "org.brlcad.qtcad.test.command";
 static const char *missing_api_plugin_id =
     "org.brlcad.qtcad.test.missing_api";
+static const char *panel_plugin_id = "org.brlcad.qtcad.test.panel";
+static const char *dialog_plugin_id = "org.brlcad.qtcad.test.dialog";
 
 class QgPluginManagerTest : public QObject
 {
@@ -55,6 +62,7 @@ class QgPluginManagerTest : public QObject
 	void reloadsPluginCode();
 	void providesHostNeutralCommands();
 	void dispatchesPluginCommands();
+	void hostsWindowExtensions();
 
     private:
 	QString pluginDirectory() const;
@@ -95,9 +103,11 @@ QgPluginManagerTest::discoversAndLoadsPlugins()
     QgPluginManager manager(QStringList() << pluginDirectory(),
 	settingsGroup());
     const QList<QgPluginDescriptor> plugins = manager.descriptors();
-    QCOMPARE(plugins.size(), 2);
+    QCOMPARE(plugins.size(), 4);
     QCOMPARE(plugins.at(0).id, QString::fromLatin1(missing_api_plugin_id));
     QCOMPARE(plugins.at(1).id, QString::fromLatin1(valid_plugin_id));
+    QCOMPARE(plugins.at(2).id, QString::fromLatin1(panel_plugin_id));
+    QCOMPARE(plugins.at(3).id, QString::fromLatin1(dialog_plugin_id));
 
     QList<IQgCommand *> commands = manager.factories<IQgCommand>(
 	QStringLiteral("test.command"));
@@ -110,7 +120,7 @@ QgPluginManagerTest::discoversAndLoadsPlugins()
     QCOMPARE(output, QStringLiteral("one two"));
 
     manager.rescan();
-    QCOMPARE(manager.descriptors().size(), 2);
+    QCOMPARE(manager.descriptors().size(), 4);
 }
 
 void
@@ -273,8 +283,8 @@ QgPluginManagerTest::reloadsPluginCode()
     QVERIFY(original.isNull());
     QCOMPARE(unloadSpy.size(), 1);
     QCOMPARE(catalogSpy.size(), 1);
-    QCOMPARE(registeredSpy.size(), 2);
-    QCOMPARE(unregisteredSpy.size(), 2);
+    QCOMPARE(registeredSpy.size(), 4);
+    QCOMPARE(unregisteredSpy.size(), 4);
     QVERIFY(manager.instance(id) != nullptr);
 }
 
@@ -336,6 +346,89 @@ QgPluginManagerTest::dispatchesPluginCommands()
 	QStringLiteral("other.command"),
 	QStringList() << QStringLiteral("qtcad_test"),
 	&result, &output, &error));
+}
+
+void
+QgPluginManagerTest::hostsWindowExtensions()
+{
+    QgPluginManager manager(QStringList() << pluginDirectory(),
+	settingsGroup());
+    QgPluginContext context;
+    QMainWindow window;
+    QMenu panelMenu(&window);
+    QMenu dialogMenu(&window);
+    QgWindowExtensionController controller(&window, &manager, &context);
+    controller.setPanelMenu(&panelMenu, QStringLiteral("test.panel"));
+    controller.setDialogMenu(&dialogMenu, QStringLiteral("test.dialog"));
+    QVERIFY(!dialogMenu.menuAction()->isVisible());
+    controller.rebuild();
+
+    QDockWidget *panel = window.findChild<QDockWidget *>(
+	QString::fromLatin1(panel_plugin_id));
+    QVERIFY(panel != nullptr);
+    QCOMPARE(panel->windowTitle(), QStringLiteral("Test Panel"));
+    QCOMPARE(panel->property("qgPluginId").toString(),
+	QString::fromLatin1(panel_plugin_id));
+    QCOMPARE(panel->property("qgTestId").toString(),
+	QString::fromLatin1(panel_plugin_id) + QStringLiteral(".panel"));
+    QCOMPARE(panelMenu.actions().size(), 2);
+    QCOMPARE(panel->toggleViewAction()->property("qgTestId").toString(),
+	QString::fromLatin1(panel_plugin_id) + QStringLiteral(".activate"));
+
+    QVERIFY(dialogMenu.isEnabled());
+    QVERIFY(dialogMenu.menuAction()->isVisible());
+    QCOMPARE(dialogMenu.actions().size(), 1);
+    QAction *dialogAction = dialogMenu.actions().first();
+    QCOMPARE(dialogAction->data().toString(),
+	QString::fromLatin1(dialog_plugin_id));
+    QCOMPARE(dialogAction->property("qgTestId").toString(),
+	QString::fromLatin1(dialog_plugin_id) + QStringLiteral(".activate"));
+    dialogAction->trigger();
+    QApplication::processEvents();
+
+    QDialog *dialog = nullptr;
+    for (QDialog *candidate : window.findChildren<QDialog *>()) {
+	if (candidate->property("qgPluginId").toString() ==
+		QString::fromLatin1(dialog_plugin_id)) {
+	    dialog = candidate;
+	    break;
+	}
+    }
+    QVERIFY(dialog != nullptr);
+    QCOMPARE(dialog->windowTitle(), QStringLiteral("Test Dialog"));
+    QCOMPARE(dialog->property("qgTestId").toString(),
+	QString::fromLatin1(dialog_plugin_id) + QStringLiteral(".dialog"));
+
+    QPointer<QDockWidget> panelDuringCommandToggle = panel;
+    QPointer<QDialog> dialogDuringCommandToggle = dialog;
+    QVERIFY(manager.disable(QString::fromLatin1(valid_plugin_id)));
+    QVERIFY(!panelDuringCommandToggle.isNull());
+    QVERIFY(!dialogDuringCommandToggle.isNull());
+    QVERIFY(manager.enable(QString::fromLatin1(valid_plugin_id)));
+
+    QPointer<QDialog> dialogDuringPanelToggle = dialog;
+    QVERIFY(manager.disable(QString::fromLatin1(panel_plugin_id)));
+    QVERIFY(panelDuringCommandToggle.isNull());
+    QVERIFY(!dialogDuringPanelToggle.isNull());
+    QVERIFY(panelMenu.actions().isEmpty());
+    QVERIFY(manager.enable(QString::fromLatin1(panel_plugin_id)));
+    panel = window.findChild<QDockWidget *>(
+	QString::fromLatin1(panel_plugin_id));
+    QVERIFY(panel != nullptr);
+
+    QPointer<QDockWidget> oldPanel = panel;
+    QPointer<QDialog> oldDialog = dialog;
+    QPointer<QAction> oldAction = dialogAction;
+    QStringList errors;
+    QVERIFY2(manager.reload(&errors),
+	qPrintable(errors.join(QLatin1Char('\n'))));
+    QVERIFY(oldPanel.isNull());
+    QVERIFY(oldDialog.isNull());
+    QVERIFY(oldAction.isNull());
+    QVERIFY(window.findChild<QDockWidget *>(
+	QString::fromLatin1(panel_plugin_id)) != nullptr);
+    QVERIFY(dialogMenu.isEnabled());
+    QCOMPARE(dialogMenu.actions().size(), 1);
 }
 
 int

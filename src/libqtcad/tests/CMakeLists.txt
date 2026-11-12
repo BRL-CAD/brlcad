@@ -10,9 +10,13 @@ set(TEST_QTCAD_PLUGIN_CONTEXT_SRCS test_qtcad_plugin_context.cpp)
 set(TEST_QTCAD_PLUGIN_BASE_HDRS test_qtcad_plugin_base.h)
 set(TEST_QTCAD_PLUGIN_VALID_SRCS test_qtcad_plugin_valid.cpp)
 set(TEST_QTCAD_PLUGIN_MISSING_API_SRCS test_qtcad_plugin_missing_api.cpp)
+set(TEST_QTCAD_PLUGIN_PANEL_SRCS test_qtcad_plugin_panel.cpp)
+set(TEST_QTCAD_PLUGIN_DIALOG_SRCS test_qtcad_plugin_dialog.cpp)
 set(TEST_QTCAD_PLUGIN_METADATA
   test_qtcad_plugin_valid.json
   test_qtcad_plugin_missing_api.json
+  test_qtcad_plugin_panel.json
+  test_qtcad_plugin_dialog.json
 )
 
 set(QTCAD_TEST_PLUGIN_DIR ${CMAKE_CURRENT_BINARY_DIR}/plugins)
@@ -45,7 +49,17 @@ if(QTCAD_TEST_QT_TEST)
     ${TEST_QTCAD_PLUGIN_MISSING_API_SRCS}
     ${TEST_QTCAD_PLUGIN_BASE_HDRS}
   )
-  foreach(plugin_target qtcad_test_plugin_valid qtcad_test_plugin_missing_api)
+  add_library(qtcad_test_plugin_panel MODULE
+    ${TEST_QTCAD_PLUGIN_PANEL_SRCS}
+  )
+  add_library(qtcad_test_plugin_dialog MODULE
+    ${TEST_QTCAD_PLUGIN_DIALOG_SRCS}
+  )
+  foreach(plugin_target
+      qtcad_test_plugin_valid
+      qtcad_test_plugin_missing_api
+      qtcad_test_plugin_panel
+      qtcad_test_plugin_dialog)
     set_target_properties(${plugin_target} PROPERTIES
       AUTOMOC ON
       PREFIX ""
@@ -72,6 +86,8 @@ if(QTCAD_TEST_QT_TEST)
   add_dependencies(test_qtcad_plugin_manager
     qtcad_test_plugin_valid
     qtcad_test_plugin_missing_api
+    qtcad_test_plugin_panel
+    qtcad_test_plugin_dialog
   )
   brlcad_add_test(NAME test_qtcad_plugin_manager COMMAND test_qtcad_plugin_manager)
   set_property(TEST test_qtcad_plugin_manager APPEND PROPERTY ENVIRONMENT
@@ -221,6 +237,8 @@ cmakefiles(
   ${TEST_QTCAD_PLUGIN_BASE_HDRS}
   ${TEST_QTCAD_PLUGIN_VALID_SRCS}
   ${TEST_QTCAD_PLUGIN_MISSING_API_SRCS}
+  ${TEST_QTCAD_PLUGIN_PANEL_SRCS}
+  ${TEST_QTCAD_PLUGIN_DIALOG_SRCS}
   ${TEST_QTCAD_PLUGIN_METADATA}
 )
 

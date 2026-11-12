@@ -56,6 +56,7 @@
 #include "QgEdPalette.h"
 
 class QgPaletteController;
+class QgWindowExtensionController;
 
 class QgEdMainWindow : public QMainWindow
 {
@@ -143,8 +144,10 @@ class QgEdMainWindow : public QMainWindow
 	QDockWidget *uattrd = NULL;
 	QDockWidget *vcd = NULL;
 	QMenu *vm_panels = NULL;
+	QMenu *tm_dialogs = NULL;
 	QgDockWidget *console_dock = NULL;
 	QgDockWidget *tree_dock = NULL;
+	QgWindowExtensionController *extension_ctrl = NULL;
 };
 
 #endif /* QGEDMAINWINDOW_H */

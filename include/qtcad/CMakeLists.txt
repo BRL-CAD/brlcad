@@ -37,6 +37,7 @@ set(
   QgUtil.h
   QgView.h
   QgViewCtrl.h
+  QgWindowExtensionController.h
   defines.h
 )
 brlcad_manage_files(qtcad_headers ${INCLUDE_DIR}/brlcad/qtcad REQUIRED libqtcad)
