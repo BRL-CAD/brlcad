@@ -92,8 +92,9 @@ Native primitive UVs and authored BOT UVs are covered by diagnostic
 emission shaders and exact intersection checks.  Typed single-shader
 parameters and version 2 numeric and closure networks are validated and
 persisted through the material command.  `regress-art-materials` checks
-material-parent inheritance, child overrides, and replacement shader roots.
-Per-instance overrides and advanced closures remain unqualified.
+material-parent inheritance, child overrides, replacement shader roots,
+and material assignments along full instance paths.  Advanced closures
+remain only partially qualified.
 `regress-art-mixture` checks the energy of ideal-mirror mixtures in single
 shaders and persisted native blend networks against an emission reference.
 
@@ -145,6 +146,8 @@ unqualified.
 |Full indexed database paths distinguish occurrences under different parents
 and repeated arcs in one combination.  `regress-art` checks translated
 instances with inherited colors and two separated occurrences of one region.
+`regress-art-materials` checks distinct parent assignments for occurrences
+of the same region, assignment precedence, and explicit path selection.
 
 |Ray boundaries and resource ownership
 |`regress-art-intersections` checks entry/exit and Boolean cut normals,
@@ -512,6 +515,50 @@ properties.  The regression persists and reopens multi-node numeric and
 closure networks and compares them with equivalent single-node materials
 on spheres, ellipsoids, Boolean geometry, and flat and smooth BOTs.
 
+=== Material assignments along instance paths
+
+A combination's material reference applies to regions reached through it.
+With `inherit` unset or zero, a lower combination or the region can supply
+an overriding reference.  Setting `inherit` to one on a combination with
+a material reference locks that assignment for the remainder of the path.
+For example, given an existing material and region:
+
+[source,tcl]
+----
+g painted.g ball.r
+material assign painted.g paint.material
+attr set painted.g inherit 1
+----
+
+Rendering `painted.g` uses `paint.material` even if `ball.r` has its own
+material reference.  Setting `painted.g`'s `inherit` to zero lets the
+region's reference take precedence.  If the region has no reference, it
+still receives the parent's assignment.  An empty reference does not clear
+an ancestor assignment or lock inheritance.  If the full path has no
+assignment, the default OSL plastic uses the resolved region color.
+Color inheritance remains independent of named-material inheritance.
+
+Separate parent combinations can assign different materials to occurrences
+of the same region.  Repeated arcs under one combination share that
+combination's assignment; wrap occurrences in separate combinations when
+they need different materials.  These rules select the region's material;
+they do not assign materials to individual Boolean faces or solids below
+the region boundary.  Legacy `light` region conversion is a separate path.
+
+Resolution starts at the first object in the selected path.  Selecting
+`ball.r` directly does not include assignments from parents elsewhere in
+the database.  Selecting a full path such as `/painted.g/ball.r` includes
+that parent and its assignment.  Only the effective reference is loaded
+and validated: an overridden reference or one suppressed by a locked
+ancestor does not cause an error.  The selected material's complete parent
+chain must be valid, as described below.
+
+The material regression checks lower overrides, ancestor locks, missing
+references, empty assignments, repeated arcs, and selection of a region,
+parent, or full path under both camera projections.  It also moves a project
+containing inherited networks and custom shaders to a new directory and
+renders from a separate working directory.
+
 === Material parents
 
 A material object's `parent` names another material object in the same
@@ -547,8 +594,6 @@ properties stored on the named object.  `regress-art-materials` persists
 and reopens inherited single-shader and network definitions on CSG cubes,
 flat BOTs, spheres, and ellipsoids under both projections, including a
 32-link chain and error-output preservation.
-
-Per-instance material assignment overrides remain planned capabilities.
 
 Errors reported by the renderer during initialization, worker execution,
 or renderer cleanup stop the render with a nonzero exit status before

@@ -613,7 +613,7 @@ register_region_impl(struct db_tree_state* tsp,
 	diffuse_rgb[0] = diffuse_rgb[1] = diffuse_rgb[2] = 1.0f;
     }
     if (!art_add_material(assembly.ref(), material_name.c_str(), diffuse_rgb,
-	    tsp->ts_dbip, combp, builder.search_paths)) {
+	    tsp->ts_dbip, pathp, combp, builder.search_paths)) {
 	builder.valid = false;
 	return 0;
     }

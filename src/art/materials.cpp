@@ -36,6 +36,7 @@
 #include "foundation/image/colorspace.h"
 #include "foundation/memory/autoreleaseptr.h"
 
+#include "bu/avs.h"
 #include "bu/log.h"
 #include "bu/str.h"
 #include "bu/vls.h"
@@ -174,6 +175,51 @@ struct DatabaseInternal {
     DatabaseInternal(const DatabaseInternal &) = delete;
     DatabaseInternal &operator=(const DatabaseInternal &) = delete;
 };
+
+struct CombinationAttributes {
+    struct bu_attribute_value_set attributes = BU_AVS_INIT_ZERO;
+    struct rt_comb_internal value;
+
+    CombinationAttributes() { RT_COMB_INTERNAL_INIT(&value); }
+    ~CombinationAttributes()
+    {
+	RT_FREE_COMB_INTERNAL(&value);
+	bu_avs_free(&attributes);
+    }
+    CombinationAttributes(const CombinationAttributes &) = delete;
+    CombinationAttributes &operator=(const CombinationAttributes &) = delete;
+};
+
+bool
+resolve_assignment(struct db_i *db, const struct db_full_path *path,
+    const struct rt_comb_internal *region, std::string &material)
+{
+    if (!path || !path->fp_len) {
+	bu_log("art: cannot resolve a material without an instance path\n");
+	return false;
+    }
+    for (size_t i = 0; i + 1 < path->fp_len; ++i) {
+	struct directory *dp = DB_FULL_PATH_GET(path, i);
+	CombinationAttributes ancestor;
+	if (db5_get_attributes(db, &ancestor.attributes, dp) < 0) {
+	    bu_log("art: cannot read material assignment on '%s'\n", dp->d_namep);
+	    return false;
+	}
+	// Use canonical attribute parsing without importing ancestor Boolean trees.
+	(void)db5_standardize_avs(&ancestor.attributes);
+	// Attribute synchronization updates directory flags; keep this read local.
+	struct directory local_directory = *dp;
+	db5_sync_attr_to_comb(&ancestor.value, &ancestor.attributes, &local_directory);
+	if (!bu_vls_strlen(&ancestor.value.material))
+	    continue;
+	material = bu_vls_cstr(&ancestor.value.material);
+	if (ancestor.value.inherit)
+	    return true;
+    }
+    if (bu_vls_strlen(&region->material))
+	material = bu_vls_cstr(&region->material);
+    return true;
+}
 
 bool
 is_osl_property(const std::string &name)
@@ -375,11 +421,14 @@ set_parameters(const MaterialNode &node, const asr::ShaderQuery &query,
 
 bool
 art_add_material(asr::Assembly &assembly, const char *name,
-    const float srgb[3], struct db_i *db, const struct rt_comb_internal *comb,
-    const asf::SearchPaths &search_paths)
+    const float srgb[3], struct db_i *db, const struct db_full_path *path,
+    const struct rt_comb_internal *comb, const asf::SearchPaths &search_paths)
 {
+    std::string assignment;
+    if (!resolve_assignment(db, path, comb, assignment))
+	return false;
     MaterialShader shader;
-    if (!read_shader(db, bu_vls_cstr(&comb->material), shader))
+    if (!read_shader(db, assignment.c_str(), shader))
 	return false;
 
     std::map<std::string, MaterialNode> nodes = shader.nodes;

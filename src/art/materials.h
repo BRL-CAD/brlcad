@@ -23,13 +23,14 @@
 namespace renderer { class Assembly; }
 namespace foundation { class SearchPaths; }
 struct db_i;
+struct db_full_path;
 struct rt_comb_internal;
 
-/** Create a region material from its resolved sRGB color and material object.
+/** Create a region material from its resolved sRGB color and instance assignment.
  * Return false for an invalid explicit assignment or unusable shader.
  */
 bool art_add_material(renderer::Assembly &assembly, const char *name,
-    const float srgb[3], struct db_i *db, const struct rt_comb_internal *comb,
-    const foundation::SearchPaths &search_paths);
+    const float srgb[3], struct db_i *db, const struct db_full_path *path,
+    const struct rt_comb_internal *comb, const foundation::SearchPaths &search_paths);
 
 #endif
