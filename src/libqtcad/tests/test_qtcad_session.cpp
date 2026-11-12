@@ -19,13 +19,12 @@
 #include <QtTest/QTest>
 
 #include "ged.h"
+#include "ged/database.h"
 #include "ged/scene.h"
 #include "ged/selection.h"
 #include "qtcad/QgModel.h"
 #include "qtcad/QgSession.h"
 #include "qtcad/QgSignalFlags.h"
-
-#include "../../libged/dbi.h"
 
 class QgSessionTest : public QObject
 {
@@ -39,6 +38,17 @@ private slots:
     void tracksDuplicateSelectionOccurrences();
 };
 
+static bool
+no_pending_db_changes(struct ged *gedp)
+{
+    struct ged_db_change_set *changes = ged_db_change_set_create(gedp, 0);
+    if (!changes)
+	return false;
+    bool empty = !ged_db_change_set_revision(changes);
+    ged_db_change_set_destroy(changes);
+    return empty;
+}
+
 void
 QgSessionTest::ownsGedContext()
 {
@@ -48,7 +58,7 @@ QgSessionTest::ownsGedContext()
     QVERIFY(session.dbip() == nullptr);
     QVERIFY(session.activeView() != nullptr);
     QCOMPARE(session.activeView(), session.ged()->ged_gvp);
-    QVERIFY(session.ged()->dbi_state == nullptr);
+    QVERIFY(!ged_db_change_available(session.ged()));
     QCOMPARE(session.ged()->new_cmd_forms, 1);
 }
 
@@ -106,7 +116,7 @@ QgSessionTest::reconcilesModelEvents()
     const char *openArguments[] = {"open", databasePath.constData()};
     QCOMPARE(model.run_cmd(model.ged()->ged_result_str, 2, openArguments),
 	BRLCAD_OK);
-    QVERIFY(model.ged()->dbi_state != nullptr);
+    QVERIFY(ged_db_change_available(model.ged()));
     QCOMPARE(model.rowCount(), 0);
 
     QSignalSpy changes(model.session(), &QgSession::db_changed);
@@ -140,8 +150,7 @@ QgSessionTest::reconcilesModelEvents()
     QCOMPARE(model.topItems().size(), size_t(1));
     QVERIFY(model.hasItem(eventItem));
 
-    DbiState *state = static_cast<DbiState *>(model.ged()->dbi_state);
-    QVERIFY(state->change_snapshots().empty());
+    QVERIFY(no_pending_db_changes(model.ged()));
     QVERIFY(db_lookup(model.ged()->dbip, "event.s", LOOKUP_QUIET) !=
 	RT_DIR_NULL);
 
@@ -291,7 +300,7 @@ QgSessionTest::reconcilesModelEvents()
     QVERIFY(!model.hasItem(groupItem));
     QVERIFY(persistentKeepIndex.isValid());
     QCOMPARE(model.getItem(persistentKeepIndex), keepItem);
-    QVERIFY(state->change_snapshots().empty());
+    QVERIFY(no_pending_db_changes(model.ged()));
     QVERIFY(db_lookup(model.ged()->dbip, "event.g", LOOKUP_QUIET) ==
 	RT_DIR_NULL);
 

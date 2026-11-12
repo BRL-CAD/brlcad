@@ -41,6 +41,7 @@
 
 #include <algorithm>
 #include <cctype>
+#include <memory>
 #include <set>
 #include <unordered_map>
 #include <unordered_set>
@@ -50,6 +51,7 @@
 
 #include "bu/env.h"
 #include "bu/sort.h"
+#include "ged/database.h"
 #include "ged/db_index.h"
 #include "ged/scene.h"
 #include "ged/selection.h"
@@ -57,16 +59,33 @@
 #define ALPHANUM_IMPL
 #include "../libged/alphanum.h"
 
-// Hierarchy reads use the public GED database index.  The private state is
-// retained temporarily for its batched change snapshot and acknowledgement
-// lifecycle, which will migrate separately from the query path.
-#include "../libged/dbi.h"
-
-
 #include "qtcad/QgModel.h"
 #include "qtcad/QgSession.h"
 #include "qtcad/QgUtil.h"
 #include "qtcad/QgSignalFlags.h"
+
+using QgDbChangeSet = std::unique_ptr<struct ged_db_change_set,
+    decltype(&ged_db_change_set_destroy)>;
+
+static QgDbChangeSet
+qg_db_changes(struct ged *gedp)
+{
+    return QgDbChangeSet(ged_db_change_set_create(gedp, 0),
+	ged_db_change_set_destroy);
+}
+
+static void
+qg_db_change_names(std::set<std::string> &names,
+    const struct ged_db_change_set *changes,
+    enum ged_db_change_object_kind kind)
+{
+    const size_t count = ged_db_change_set_object_count(changes, kind);
+    for (size_t i = 0; i < count; i++) {
+	const char *name = ged_db_change_set_object_at(changes, kind, i);
+	if (name)
+	    names.insert(name);
+    }
+}
 
 struct QgItem_cmp {
     inline bool operator() (const QgItem *i1, const QgItem *i2)
@@ -838,24 +857,29 @@ QgModel::items_changed_notify(const std::set<std::string> &names)
 bool
 QgModel::change_deltas_apply()
 {
-    DbiState *dbis = (DbiState *)ged()->dbi_state;
-    std::vector<DbiStateChange> changes = dbis->change_snapshots();
-    if (changes.empty())
+    QgDbChangeSet changes = qg_db_changes(ged());
+    if (!changes || !ged_db_change_set_revision(changes.get()))
 	return false;
 
-    bool structural = false;
+    const unsigned int flags = ged_db_change_set_flags(changes.get());
+    if ((flags & GED_DB_CHANGE_REBUILD) ||
+	ged_db_change_set_rename_count(changes.get()))
+	return false;
+
+    const bool structural = flags & GED_DB_CHANGE_STRUCTURAL;
     std::set<std::string> added;
     std::set<std::string> modified;
     std::set<std::string> removed;
     std::set<std::string> paths;
-    for (const DbiStateChange &change : changes) {
-	if (change.rebuild || !change.renamed.empty())
-	    return false;
-	structural = structural || change.structural;
-	added.insert(change.added.begin(), change.added.end());
-	modified.insert(change.modified.begin(), change.modified.end());
-	removed.insert(change.removed.begin(), change.removed.end());
-	paths.insert(change.paths.begin(), change.paths.end());
+    qg_db_change_names(added, changes.get(), GED_DB_CHANGE_OBJECT_ADDED);
+    qg_db_change_names(modified, changes.get(),
+	GED_DB_CHANGE_OBJECT_MODIFIED);
+    qg_db_change_names(removed, changes.get(), GED_DB_CHANGE_OBJECT_REMOVED);
+    const size_t path_count = ged_db_change_set_path_count(changes.get());
+    for (size_t i = 0; i < path_count; i++) {
+	const char *path = ged_db_change_set_path_at(changes.get(), i);
+	if (path)
+	    paths.insert(path);
     }
 
     if (structural && added.empty() && modified.empty() &&
@@ -916,7 +940,7 @@ QgModel::change_deltas_apply()
 	}
     }
 
-    dbis->reconcile_changes();
+    (void)ged_db_change_reconcile(ged());
     if (!structural) {
 	items_changed_notify(modified);
 	return true;
@@ -1065,18 +1089,15 @@ QgModel::g_update(struct db_i *n_dbip)
 	m_session->notifyDbChanged(nullptr);
 	emit view_change(QG_VIEW_DRAWN);
 	changed_db_flag = 0;
-	model_revision = 0;
 	endResetModel();
 	model_structure_change_in_progress = false;
 	notifySelectionItemsChanged();
 	return;
     }
 
-    DbiState *dbis = static_cast<DbiState *>(ged()->dbi_state);
-    const uint64_t revision = dbis->change_revision();
-
-    // A revision remains visible even if another GED consumer reconciled it.
-    if (new_database || revision != model_revision)
+    QgDbChangeSet changes = qg_db_changes(ged());
+    uint64_t change_revision = ged_db_change_set_revision(changes.get());
+    if (new_database || change_revision)
 	changed_db_flag = 1;
 
     bool deltas_applied = false;
@@ -1090,7 +1111,7 @@ QgModel::g_update(struct db_i *n_dbip)
 
 	// Step 1 - make sure our instances are current - i.e. they match the
 	// .g database state
-	dbis->reconcile_changes();
+	(void)ged_db_change_reconcile(ged());
 
 	std::vector<unsigned long long> tops = qg_index_tops(ged());
 	std::unordered_set<unsigned long long> top_hashes(tops.begin(), tops.end());
@@ -1202,9 +1223,10 @@ QgModel::g_update(struct db_i *n_dbip)
 	emit mdl_changed_db((void *)ged());
 	m_session->notifyDbChanged(n_dbip);
 	emit check_highlights();
-	dbis->acknowledge_changes(revision);
-	model_revision = revision;
     }
+
+    if (change_revision)
+	(void)ged_db_change_acknowledge(ged(), change_revision);
 
     // Reset flag - we're in sync now
     changed_db_flag = 0;

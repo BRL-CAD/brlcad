@@ -33,7 +33,7 @@
 
 #include "bu/app.h"
 #include "bu/log.h"
-#include "../../libged/dbi.h"
+#include "ged/db_index.h"
 #include "qtcad/QgModel.h"
 
 
@@ -87,12 +87,13 @@ print_children(QgItem *itm, QgModel *s, int depth)
     if (depth)
 	std::cout << "* ";
 
-    struct bu_vls path_str = BU_VLS_INIT_ZERO;
     std::vector<unsigned long long> path_hashes = itm->path_items();
-    DbiState *dbis = (DbiState *)itm->model()->ged()->dbi_state;
-    dbis->print_hash(&path_str, path_hashes[path_hashes.size()-1]);
-    std::cout << bu_vls_cstr(&path_str) << "\n";
-    bu_vls_free(&path_str);
+    struct ged_db_index_record record;
+    if (ged_db_index_record_get(itm->model()->ged(), path_hashes.back(),
+	    &record) && record.name)
+	std::cout << record.name << "\n";
+    else
+	std::cout << path_hashes.back() << "\n";
 
     for (size_t j = 0; j < itm->childItems().size(); j++) {
 	QgItem *c = itm->child(j);
