@@ -112,6 +112,20 @@ Standalone programs participating in this audit reserve the exact invocation
 schema JSON and exits successfully. GED command descriptions are available
 collectively from `gsh --command-schema all`.
 
+The published JSON object contains `schema_version`. Consumers must reject
+versions they do not understand rather than inferring compatibility from
+individual members. Additive changes retain the current version; incompatible
+changes require a version increment and coordinated consumer updates.
+
+With testing enabled, the repository registers `argdoc_*` tests for every
+introspection-enabled standalone program and one `argdoc_ged_commands` test for
+the complete GED registry. The GED audit matches top-level schema names to
+`mann` page filenames and requires a reason for every intentionally
+undocumented internal schema in
+`src/util/tests/argdoc_ged_undocumented.txt`. New public schemas therefore
+cannot silently omit documentation, and stale exemptions fail once a page is
+added.
+
 Standalone hosts use one representation-neutral `bu_arg_grammar` declaration
 and call `bu_arg_introspect` before ordinary parsing. The helper recognizes and
 generates the reserved response but does not print, log, or exit; stream and
