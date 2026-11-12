@@ -26,20 +26,15 @@
 #include <vector>
 
 #include "bu/app.h"
+#include "bu/arg.h"
 #include "bu/file.h"
 #include "bu/log.h"
 #include "bu/malloc.h"
-#include "bu/opt.h"
 #include "bu/parallel.h"
 #include "bu/vls.h"
 #include "vmath.h"
 
 namespace {
-
-struct OutputFile {
-    char *filename = NULL;
-    int overwrite = 0;
-};
 
 struct TemporaryInput {
     std::string path;
@@ -59,34 +54,79 @@ plugin_log(int, const char *message)
 }
 
 int
-parse_output_overwrite(struct bu_vls *error, size_t argc, const char **argv, void *data)
+parse_entity_ids(struct bu_vls *error, const char *arg, void *data)
 {
-    BU_OPT_CHECK_ARGV0(error, argc, argv, "-O");
-    OutputFile *output = static_cast<OutputFile *>(data);
-    if (!output) return -1;
-    output->overwrite = 1;
-    return bu_opt_str(error, argc, argv, &output->filename);
-}
-
-int
-parse_entity_ids(struct bu_vls *error, size_t argc, const char **argv, void *data)
-{
-    BU_OPT_CHECK_ARGV0(error, argc, argv, "entity ID list");
-    std::set<int64_t> *identifiers = static_cast<std::set<int64_t> *>(data);
+    std::set<int64_t> **identifier_ptr = static_cast<std::set<int64_t> **>(data);
+    std::set<int64_t> *identifiers = identifier_ptr ? *identifier_ptr : NULL;
     std::string detail;
-    if (!identifiers || !brlcad::step::parse_entity_id_list(argv[0], *identifiers, &detail)) {
+    if (!identifiers || !arg || !brlcad::step::parse_entity_id_list(arg, *identifiers, &detail)) {
 	bu_vls_printf(error, "%s\n", detail.c_str());
 	return -1;
     }
-    return 1;
+    return 0;
 }
 
+struct step_import_args {
+    int help = 0, dry_run = 0, verbose = 0, exact = 0, strict = 0;
+    int reject_invalid = 0, skip_open_shells = 0, no_item_budget = 0;
+    int force = 0, jobs = 1;
+    fastf_t absolute_tolerance = 0.0, budget_scale = 0.0;
+    fastf_t item_budget = 0.0, stall_timeout = 0.0;
+    const char *repair = NULL, *report = NULL, *output_overwrite = NULL;
+    const char *output = NULL, *summary = NULL, *schema_override = NULL;
+    std::set<int64_t> *entity_set = NULL;
+};
+
+static const struct bu_arg_value_keyword repair_values[] = {
+    {"none", NULL, "Disable repair"}, {"safe", NULL, "Use safe repair"},
+    {NULL, NULL, NULL}
+};
+
+static const struct bu_arg_option step_import_options[] = {
+    BU_ARG_FLAG("h", "help", struct step_import_args, help, "Print help and exit"),
+    BU_ARG_ALIAS("?", NULL, "help", 1),
+    BU_ARG_FLAG("D", "dry-run", struct step_import_args, dry_run, "Validate without writing a database"),
+    BU_ARG_FLAG("v", "verbose", struct step_import_args, verbose, "Report entity-level diagnostics"),
+    BU_ARG_FLAG(NULL, "exact", struct step_import_args, exact, "Strictly enforce the declared model tolerance"),
+    BU_ARG_FLAG(NULL, "strict", struct step_import_args, strict, "Reject partial output"),
+    BU_ARG_FLAG(NULL, "reject-invalid-objs", struct step_import_args, reject_invalid, "Reject invalid B-reps"),
+    BU_ARG_FLAG(NULL, "skip-open-shells", struct step_import_args, skip_open_shells, "Exclude standalone open-shell surface geometry"),
+    BU_ARG_NUMBER_RANGE(NULL, "abs-tol", struct step_import_args, absolute_tolerance, 1, 0.0, 0, 0.0, "MM", "Absolute output tolerance"),
+    BU_ARG_NUMBER_RANGE(NULL, "budget-scale", struct step_import_args, budget_scale, 1, 0.0, 0, 0.0, "FACTOR", "Manual budget scale"),
+    BU_ARG_NUMBER_RANGE(NULL, "item-budget", struct step_import_args, item_budget, 1, 0.0, 0, 0.0, "SECONDS", "Per-item CPU-work budget"),
+    BU_ARG_FLAG(NULL, "no-item-budget", struct step_import_args, no_item_budget, "Disable per-item CPU budgets"),
+    BU_ARG_NUMBER_RANGE(NULL, "stall-timeout", struct step_import_args, stall_timeout, 1, 0.0, 0, 0.0, "SECONDS", "No-progress timeout"),
+    BU_ARG_KEYWORD_VALUES(NULL, "repair", struct step_import_args, repair, "MODE", "Repair mode (default: safe)", repair_values),
+    BU_ARG_VALUE(NULL, "report", struct step_import_args, report, BU_ARG_VALUE_FILE, BU_ARG_REQUIRED, "FILE", "Structured JSON report"),
+    BU_ARG_FLAG("f", "force", struct step_import_args, force, "Overwrite output"),
+    BU_ARG_VALUE("O", "output-overwrite", struct step_import_args, output_overwrite, BU_ARG_VALUE_FILE, BU_ARG_REQUIRED, "FILE", "Output file and overwrite it"),
+    BU_ARG_VALUE("o", "output", struct step_import_args, output, BU_ARG_VALUE_FILE, BU_ARG_REQUIRED, "FILE", "Output file"),
+    BU_ARG_VALUE("S", "summary", struct step_import_args, summary, BU_ARG_VALUE_FILE, BU_ARG_REQUIRED, "FILE", "Legacy entity summary"),
+    BU_ARG_VALUE(NULL, "schema", struct step_import_args, schema_override, BU_ARG_VALUE_STRING, BU_ARG_REQUIRED, "AP", "Schema edition override (ap242e1 through ap242e4, or auto)"),
+    BU_ARG_CUSTOM("e", "entity", struct step_import_args, entity_set, parse_entity_ids, "ID[,ID...]", "Selected representation-item IDs"),
+    BU_ARG_INTEGER_RANGE("j", "jobs", struct step_import_args, jobs, 1, 1, 0, 0, "N", "Geometry worker count"),
+    BU_ARG_OPTION_NULL
+};
+
+static const struct bu_arg_operand step_import_operands[] = {
+    BU_ARG_OPERAND("input.step", BU_ARG_VALUE_FILE, 1, 1, "Input STEP file, or - for standard input", NULL),
+    BU_ARG_OPERAND("output.g", BU_ARG_VALUE_FILE, 0, 1, "Output BRL-CAD database", NULL),
+    BU_ARG_OPERAND_NULL
+};
+static const char * const output_options[] = {"output", "output-overwrite", NULL};
+static const struct bu_arg_constraint step_import_constraints[] = {
+    BU_ARG_CONSTRAINT(BU_ARG_CONSTRAINT_OPTION_COUNT, BU_ARG_CONDITION_ALWAYS, output_options, 0, 1, "select at most one output option"),
+    BU_ARG_CONSTRAINT_NULL
+};
+static const struct bu_arg_schema step_import_schema = BU_ARG_SCHEMA(
+    "step-g", "Convert STEP geometry to a BRL-CAD database", step_import_options,
+    step_import_operands, BU_ARG_PARSE_INTERSPERSED,
+    BU_ARG_SCHEMA_META_HELP(NULL, step_import_constraints, NULL, NULL, NULL));
+
 void
-usage(const struct bu_opt_desc *options)
+usage(const char *invocation)
 {
-    char *help = bu_opt_help(options, "step-g",
-	"input.step [output.g]\n       step-g [options] -o output.g input.step",
-	"Convert STEP geometry to a BRL-CAD database");
+    char *help = bu_arg_schema_help(&step_import_schema, invocation);
     if (help)
 	bu_log("%s", help);
     bu_free(help, "option description");
@@ -124,80 +164,57 @@ main(int argc, const char **argv)
 {
     bu_setprogname(argv[0]);
 
-    OutputFile output;
-    int help = 0;
-    int dry_run = 0;
-    int verbose = 0;
-    int exact = 0;
-    int strict = 0;
-    int reject_invalid = 0;
-    int skip_open_shells = 0;
-    int no_item_budget = 0;
-    int jobs = default_jobs();
-    fastf_t absolute_tolerance = 0.0;
-    fastf_t budget_scale = 0.0;
-    fastf_t item_budget = 0.0;
-    fastf_t stall_timeout = 0.0;
-    char *repair = NULL;
-    char *report = NULL;
-    char *summary = NULL;
-    char *schema_override = NULL;
-    std::set<int64_t> entity_set;
-    struct bu_vls messages = BU_VLS_INIT_ZERO;
-    struct bu_opt_desc options[] = {
-	{"h", "help", "", NULL, &help, "print help and exit"},
-	{"?", "", "", NULL, &help, ""},
-	{"D", "dry-run", "", NULL, &dry_run, "validate without writing a database"},
-	{"v", "verbose", "", NULL, &verbose, "report entity-level diagnostics"},
-	{"", "exact", "", NULL, &exact, "strictly enforce the declared model tolerance"},
-	{"", "strict", "", NULL, &strict, "reject partial output"},
-	{"", "reject-invalid-objs", "", NULL, &reject_invalid, "reject invalid B-reps"},
-	{"", "skip-open-shells", "", NULL, &skip_open_shells,
-	    "exclude standalone open-shell surface geometry"},
-	{"", "abs-tol", "MM", bu_opt_fastf_t, &absolute_tolerance, "absolute output tolerance"},
-	{"", "budget-scale", "FACTOR", bu_opt_fastf_t, &budget_scale, "manual budget scale"},
-	{"", "item-budget", "SECONDS", bu_opt_fastf_t, &item_budget, "per-item CPU-work budget"},
-	{"", "no-item-budget", "", NULL, &no_item_budget, "disable per-item CPU budgets"},
-	{"", "stall-timeout", "SECONDS", bu_opt_fastf_t, &stall_timeout, "no-progress timeout"},
-	{"", "repair", "MODE", bu_opt_str, &repair, "none or safe (default: safe)"},
-	{"", "report", "FILE", bu_opt_str, &report, "structured JSON report"},
-	{"f", "force", "", NULL, &output.overwrite, "overwrite output"},
-	{"O", "output-overwrite", "FILE", parse_output_overwrite, &output, "output file (overwrite)"},
-	{"o", "output", "FILE", bu_opt_str, &output.filename, "output file"},
-	{"S", "summary", "FILE", bu_opt_str, &summary, "legacy entity summary"},
-	{"", "schema", "AP", bu_opt_str, &schema_override,
-	    "schema edition override (ap242e1 through ap242e4, or auto)"},
-	{"e", "entity", "ID[,ID...]", parse_entity_ids, &entity_set, "selected representation-item IDs"},
-	{"j", "jobs", "N", bu_opt_int, &jobs, "geometry worker count"},
-	BU_OPT_DESC_NULL
-    };
-
+    const char *invocation = argv[0];
     ++argv;
     --argc;
-    argc = bu_opt_parse(&messages, argc, argv, options);
-    if (bu_vls_strlen(&messages)) bu_log("%s\n", bu_vls_cstr(&messages));
-    if (help) {
-	usage(options);
+    std::set<int64_t> entity_set;
+    step_import_args args;
+    args.jobs = default_jobs();
+    args.entity_set = &entity_set;
+    struct bu_vls messages = BU_VLS_INIT_ZERO;
+    const int operand_index = bu_arg_schema_parse_complete(&step_import_schema,
+	&args, &messages, argc, argv);
+    if (operand_index < 0) {
+	if (bu_vls_strlen(&messages)) bu_log("%s\n", bu_vls_cstr(&messages));
 	bu_vls_free(&messages);
+	usage(invocation);
+	return 2;
+    }
+    bu_vls_free(&messages);
+    argc -= operand_index;
+    argv += operand_index;
+    if (args.help) {
+	usage(invocation);
 	return 0;
     }
-    if (bu_vls_strlen(&messages) || jobs < 1 || absolute_tolerance < 0.0 ||
-	budget_scale < 0.0 || item_budget < 0.0 || stall_timeout < 0.0) {
-	usage(options);
-	bu_vls_free(&messages);
-	return 2;
-    }
-    const bool option_output = output.filename && output.filename[0];
-    if ((option_output && argc != 1) ||
-	(!option_output && argc != 2 && !(dry_run && argc == 1))) {
-	bu_log("ERROR: specify one input and one output (or only an input with -D)\n");
-	usage(options);
-	bu_vls_free(&messages);
-	return 2;
-    }
-    if (!option_output && argc == 2) output.filename = const_cast<char *>(argv[1]);
-    bu_vls_free(&messages);
 
+    const char *output_filename = args.output_overwrite ?
+	args.output_overwrite : args.output;
+    const bool option_output = output_filename && output_filename[0];
+    if ((option_output && argc != 1) ||
+	    (!option_output && argc != 2 && !(args.dry_run && argc == 1))) {
+	bu_log("ERROR: specify one input and one output (or only an input with -D)\n");
+	usage(invocation);
+	return 2;
+    }
+    if (!option_output && argc == 2) output_filename = argv[1];
+    const int overwrite = args.force || args.output_overwrite;
+    const int dry_run = args.dry_run;
+    const int verbose = args.verbose;
+    const int exact = args.exact;
+    const int strict = args.strict;
+    const int reject_invalid = args.reject_invalid;
+    const int skip_open_shells = args.skip_open_shells;
+    const int no_item_budget = args.no_item_budget;
+    const int jobs = args.jobs;
+    const fastf_t absolute_tolerance = args.absolute_tolerance;
+    const fastf_t budget_scale = args.budget_scale;
+    const fastf_t item_budget = args.item_budget;
+    const fastf_t stall_timeout = args.stall_timeout;
+    const char *repair = args.repair;
+    const char *report = args.report;
+    const char *summary = args.summary;
+    const char *schema_override = args.schema_override;
     const std::string requested_input = argv[0];
     std::string input = requested_input;
     TemporaryInput temporary;
@@ -277,7 +294,7 @@ main(int argc, const char **argv)
     import_options.exact = exact;
     import_options.strict = strict;
     import_options.reject_invalid_objects = reject_invalid;
-    import_options.overwrite = output.overwrite;
+    import_options.overwrite = overwrite;
     import_options.requested_jobs = static_cast<uint32_t>(jobs);
     import_options.disable_item_budgets = no_item_budget;
     import_options.absolute_tolerance_mm = absolute_tolerance;
@@ -298,7 +315,7 @@ main(int argc, const char **argv)
     request.struct_size = sizeof(request);
     request.operation = STEP_OPERATION_IMPORT;
     request.input_path = input.c_str();
-    request.output_path = output.filename ? output.filename : "";
+    request.output_path = output_filename ? output_filename : "";
     request.import_options = &import_options;
 
     char diagnostic[1024] = {0};
