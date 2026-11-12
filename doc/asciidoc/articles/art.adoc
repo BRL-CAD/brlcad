@@ -91,8 +91,9 @@ material-object selection and custom diffuse surface shaders are covered.
 Native primitive UVs and authored BOT UVs are covered by diagnostic
 emission shaders and exact intersection checks.  Typed single-shader
 parameters and version 2 numeric and closure networks are validated and
-persisted through the material command.  Material-parent inheritance,
-per-instance overrides, and advanced closures remain unqualified.
+persisted through the material command.  `regress-art-materials` checks
+material-parent inheritance, child overrides, and replacement shader roots.
+Per-instance overrides and advanced closures remain unqualified.
 `regress-art-mixture` checks the energy of ideal-mirror mixtures in single
 shaders and persisted native blend networks against an emission reference.
 
@@ -511,8 +512,43 @@ properties.  The regression persists and reopens multi-node numeric and
 closure networks and compares them with equivalent single-node materials
 on spheres, ellipsoids, Boolean geometry, and flat and smooth BOTs.
 
-Material-object parent inheritance and per-instance material overrides
-remain planned capabilities.
+=== Material parents
+
+A material object's `parent` names another material object in the same
+database.  Omit `OSL` on a child to inherit its parent's shader definition;
+local optical properties override matching inherited keys.  For example:
+
+[source,tcl]
+----
+material create base.material Base
+material set base.material optical OSL as_plastic
+material set base.material optical OSL.param.in_specular_roughness "float 0.35"
+material create blue.material Blue
+material set blue.material parent base.material
+material set blue.material optical OSL.param.in_color "color 0.1 0.3 0.7"
+material assign ball.r blue.material
+----
+
+Version 2 node declarations, parameters, and connections can be inherited
+and overridden by key.  An explicit `OSL` property starts a fresh definition,
+including when it repeats the parent's shader name.  Its own parameters and
+network replace the inherited OSL definition, which prevents stale inputs
+or connections from an earlier shader from leaking into the replacement.
+Removing a local override exposes the inherited value again.
+
+Resolution follows the complete parent chain and reports missing parents,
+non-material objects, and cycles.  Invalid parent links are errors even
+when a child declares a replacement shader.  Errors stop rendering before
+an existing output is replaced.  Parent chains are resolved iteratively;
+they do not themselves add shader or coat layers.
+
+These rules apply to `art`'s OSL definitions.  `material get` reports the
+properties stored on the named object.  `regress-art-materials` persists
+and reopens inherited single-shader and network definitions on CSG cubes,
+flat BOTs, spheres, and ellipsoids under both projections, including a
+32-link chain and error-output preservation.
+
+Per-instance material assignment overrides remain planned capabilities.
 
 Errors reported by the renderer during initialization, worker execution,
 or renderer cleanup stop the render with a nonzero exit status before

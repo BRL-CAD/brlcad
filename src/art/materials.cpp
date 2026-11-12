@@ -166,33 +166,60 @@ parse_shader(const std::map<std::string, std::string> &properties,
     return true;
 }
 
+struct DatabaseInternal {
+    struct rt_db_internal value;
+
+    DatabaseInternal() { RT_DB_INTERNAL_INIT(&value); }
+    ~DatabaseInternal() { rt_db_free_internal(&value); }
+    DatabaseInternal(const DatabaseInternal &) = delete;
+    DatabaseInternal &operator=(const DatabaseInternal &) = delete;
+};
+
 bool
-read_shader(struct db_i *db, const struct rt_comb_internal *comb, MaterialShader &shader)
+is_osl_property(const std::string &name)
 {
-    std::map<std::string, std::string> properties;
-    const char *material_name = bu_vls_cstr(&comb->material);
-    if (!material_name[0])
-	return true;
+    return name == "OSL" || name.compare(0, sizeof(PropertyPrefix) - 1, PropertyPrefix) == 0;
+}
 
-    struct directory *dp = db_lookup(db, material_name, LOOKUP_QUIET);
-    struct rt_db_internal intern;
-    RT_DB_INTERNAL_INIT(&intern);
-    if (!dp || rt_db_get_internal(&intern, dp, db, NULL) < 0) {
-	bu_log("art: cannot read material '%s'\n", material_name);
-	return false;
+bool
+read_shader(struct db_i *db, const char *material_name, MaterialShader &shader)
+{
+    using Properties = std::map<std::string, std::string>;
+    std::vector<Properties> layers;
+    std::set<std::string> visited;
+    std::string current = material_name;
+    while (!current.empty()) {
+	if (!visited.insert(current).second) {
+	    bu_log("art: material '%s' has a parent cycle at '%s'\n", material_name, current.c_str());
+	    return false;
+	}
+	struct directory *dp = db_lookup(db, current.c_str(), LOOKUP_QUIET);
+	DatabaseInternal object;
+	if (!dp || rt_db_get_internal(&object.value, dp, db, NULL) < 0) {
+	    bu_log("art: cannot read material '%s' referenced by '%s'\n", current.c_str(), material_name);
+	    return false;
+	}
+	if (object.value.idb_type != ID_MATERIAL) {
+	    bu_log("art: '%s' referenced by material '%s' is not a material object\n", current.c_str(), material_name);
+	    return false;
+	}
+	const auto *material = static_cast<const struct rt_material_internal *>(object.value.idb_ptr);
+	auto &properties = layers.emplace_back();
+	const struct bu_attribute_value_pair *property;
+	for (BU_AVS_FOR(property, &material->opticalProperties))
+	    if (is_osl_property(property->name))
+		properties.emplace(property->name, property->value ? property->value : "");
+	current = bu_vls_cstr(&material->parent);
     }
-    if (intern.idb_type != ID_MATERIAL) {
-	bu_log("art: '%s' is not a material object\n", material_name);
-	rt_db_free_internal(&intern);
-	return false;
+
+    Properties properties;
+    for (auto layer = layers.rbegin(); layer != layers.rend(); ++layer) {
+	// A replacement root must not retain another definition's graph or inputs.
+	if (layer->find("OSL") != layer->end())
+	    properties.clear();
+	for (const auto &property : *layer)
+	    properties[property.first] = property.second;
     }
-
-    const auto *material = static_cast<const struct rt_material_internal *>(intern.idb_ptr);
-    const struct bu_attribute_value_pair *property;
-    for (BU_AVS_FOR(property, &material->opticalProperties))
-	properties.emplace(property->name, property->value ? property->value : "");
-    rt_db_free_internal(&intern);
-
     return parse_shader(properties, material_name, shader);
 }
 
@@ -352,7 +379,7 @@ art_add_material(asr::Assembly &assembly, const char *name,
     const asf::SearchPaths &search_paths)
 {
     MaterialShader shader;
-    if (!read_shader(db, comb, shader))
+    if (!read_shader(db, bu_vls_cstr(&comb->material), shader))
 	return false;
 
     std::map<std::string, MaterialNode> nodes = shader.nodes;

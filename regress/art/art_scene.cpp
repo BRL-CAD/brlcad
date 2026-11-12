@@ -24,6 +24,7 @@
 #include <exception>
 #include <memory>
 #include <string>
+#include <vector>
 
 #include "bu/app.h"
 #include "bu/log.h"
@@ -183,19 +184,26 @@ create_scene(const char *path, const char *shader, const char *output)
 }
 
 static int
-edit_material_property(const char *path, const char *key, const char *value,
-    const char *material_name = "osl.material")
+edit_database_command(const char *path, int argc, const char *argv[])
 {
     struct ged *editor = ged_open("db", path, 0);
     if (!editor)
 	return 1;
-    const char *arguments[] = {"material", value ? "set" : "remove", material_name, "optical", key, value};
-    const int argument_count = sizeof(arguments) / sizeof(arguments[0]) - (value ? 0 : 1);
-    const int status = ged_exec_material(editor, argument_count, arguments);
+    const int status = BU_STR_EQUAL(argv[0], "material") ?
+	ged_exec_material(editor, argc, argv) : ged_exec_attr(editor, argc, argv);
     if (status != BRLCAD_OK)
-	bu_log("Cannot edit material property '%s': %s\n", key, bu_vls_cstr(editor->ged_result_str));
+	bu_log("Cannot edit database: %s\n", bu_vls_cstr(editor->ged_result_str));
     ged_close(editor);
     return status == BRLCAD_OK ? 0 : 1;
+}
+
+static int
+edit_material_property(const char *path, const char *key, const char *value,
+    const char *material_name = "osl.material")
+{
+    const char *arguments[] = {"material", value ? "set" : "remove", material_name, "optical", key, value};
+    const int argument_count = sizeof(arguments) / sizeof(arguments[0]) - (value ? 0 : 1);
+    return edit_database_command(path, argument_count, arguments);
 }
 
 static constexpr double MIN_GEOMETRY_COVERAGE = 0.01;
@@ -429,6 +437,11 @@ main(int argc, char **argv)
 	return create_texture(argv[2], TexturePattern::Black);
     if (argc == 3 && BU_STR_EQUAL(argv[1], "create-gray-texture"))
 	return create_texture(argv[2], TexturePattern::Gray);
+    if (argc >= 4 && (BU_STR_EQUAL(argv[1], "material") || BU_STR_EQUAL(argv[1], "attr"))) {
+	std::vector<const char *> command{argv[1]};
+	command.insert(command.end(), argv + 3, argv + argc);
+	return edit_database_command(argv[2], static_cast<int>(command.size()), command.data());
+    }
     if ((argc == 4 || argc == 5) && BU_STR_EQUAL(argv[1], "create-material"))
 	return create_scene(argv[2], argv[3], argc == 5 ? argv[4] : nullptr);
     if (argc == 4 && BU_STR_EQUAL(argv[1], "remove-material"))
