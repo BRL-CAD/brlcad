@@ -17,7 +17,17 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
+// Hold the analytic footprint fixed while measuring spatial texture slopes.
+float art_reference_height(string filename, float s, float t, vector dx, vector dy)
+{
+    return texture(filename, s, t, dx[0], dx[1], dy[0], dy[1], "interp", "linear");
+}
+
 shader art_image_field(
+    int in_chart = 0,
+    string in_height_filename = "",
+    // A 1/512-texel step for the 16-texel source; also checked at half step.
+    float in_difference_step = 1.0 / 8192,
     int in_mirror_u = 0, int in_mirror_v = 0, int in_flip_t = 1,
     float in_size = 16, float in_depth = 5,
     float in_scale_u = 1, float in_scale_v = 1,
@@ -25,12 +35,27 @@ shader art_image_field(
     output color out_color = color(0), output vector out_direction = vector(0),
     output normal out_height_normal = N)
 {
-    // Recover the authored +Z-face chart from position, without renderer UVs.
+    // Recover fixture charts from position, without renderer UVs.
     float face_span = 20;
     float half_span = face_span / 2;
     float chart_u, chart_v;
-    vector grad_u, grad_v;
-    if (P[1] <= P[0]) {
+    vector grad_u = vector(0), grad_v = vector(0);
+    if (in_chart) {
+        // Longitude/elevation on the normalized sphere or ellipsoid.
+        vector axes = in_chart == 1 ? vector(10) : vector(8, 10, 6);
+        vector q = vector(P - point(-15, 0, 0)) / axes;
+        float rho2 = q[0] * q[0] + q[1] * q[1];
+        float rho = sqrt(rho2);
+        float radius2 = rho2 + q[2] * q[2];
+        chart_u = atan2(q[1], q[0]) / (2 * M_PI);
+        if (chart_u < 0) chart_u += 1;
+        chart_v = atan2(q[2], rho) / M_PI + 0.5;
+        if (rho2 > 0) {
+            grad_u = vector(-q[1] / rho2, q[0] / rho2, 0) / (2 * M_PI) / axes;
+            grad_v = vector(-q[2] * q[0] / rho, -q[2] * q[1] / rho, rho) /
+                (M_PI * radius2) / axes;
+        }
+    } else if (P[1] <= P[0]) {
         chart_u = (P[0] - P[1]) / face_span;
         chart_v = (P[1] + half_span) / face_span;
         grad_u = vector(1, -1, 0) / face_span;
@@ -47,6 +72,21 @@ shader art_image_field(
     chart_v = chart_v * in_scale_v + in_offset_v;
     grad_u *= in_scale_u;
     grad_v *= in_scale_v;
+    vector gradient = vector(0);
+    if (in_height_filename != "") {
+        // Clamping and mip filtering can change the affine source slope.
+        // Measure that slope from values, independently of texture partials
+        // and the renderer's UV/normal derivative implementation.
+        vector dx = vector(dot(grad_u, Dx(P)), dot(grad_v, Dx(P)), 0);
+        vector dy = vector(dot(grad_u, Dy(P)), dot(grad_v, Dy(P)), 0);
+        float step = in_difference_step;
+        float h_plus = art_reference_height(in_height_filename, chart_u + step, chart_v, dx, dy);
+        float h_minus = art_reference_height(in_height_filename, chart_u - step, chart_v, dx, dy);
+        float v_plus = art_reference_height(in_height_filename, chart_u, chart_v + step, dx, dy);
+        float v_minus = art_reference_height(in_height_filename, chart_u, chart_v - step, dx, dy);
+        gradient = in_depth * ((h_plus - h_minus) * grad_u + (v_plus - v_minus) * grad_v) /
+            (2 * step);
+    }
     // Image rows run downward; Appleseed texture T runs upward.
     if (in_flip_t) { chart_v = 1 - chart_v; grad_v = -grad_v; }
     // OIIO's fill ramp spans endpoint pixel centers, not image edges.
@@ -54,8 +94,9 @@ shader art_image_field(
     float t = (in_size * chart_v - 0.5) / (in_size - 1);
     // The height ramp's known ambient gradient is projected onto the
     // supplied normal's plane along Ng, including smooth BOT normals.
-    vector gradient = in_depth * in_size / (in_size - 1) *
-        ((s > 0 && s < 1 ? 0.4 : 0) * grad_u + (t > 0 && t < 1 ? 0.2 : 0) * grad_v);
+    if (in_height_filename == "")
+        gradient = in_depth * in_size / (in_size - 1) *
+            ((s > 0 && s < 1 ? 0.4 : 0) * grad_u + (t > 0 && t < 1 ? 0.2 : 0) * grad_v);
     gradient -= vector(Ng) * dot(gradient, N) / dot(Ng, N);
     out_height_normal = normalize(N - normal(gradient));
     s = clamp(s, 0, 1);

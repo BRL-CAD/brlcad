@@ -93,7 +93,8 @@ normal-map controls against analytic frames.  `regress-art-texture` checks
 fully minified raw image normal and height maps, filtering controls, and
 project relocation.  `regress-art-image-maps` checks spatial image
 orientation and magnified linear ramps against position-based references
-on flat and smooth BOTs, including reflected U/V charts.  LOD transitions,
+on flat and smooth BOTs, including reflected U/V charts, and on spheres
+and ellipsoids with full-range and transformed UVs.  LOD transitions,
 baked per-vertex tangents, and secondary rays remain unqualified.
 
 |Region instances
@@ -526,9 +527,9 @@ crossing zero, and missing or collinear footprints.  Scaling both position
 and depth by each of `1e-25`, `1e-12`, `1e12`, and `1e25` must preserve the
 result.  These checks cover
 first-order bump normals, including CSG surfaces without a UV footprint.
-LOD transitions, magnification on curved primitives, mirrored geometry
-transforms, baked per-vertex tangent compatibility, and secondary-ray
-behavior still need dedicated qualification.
+LOD transitions, image mapping on other curved primitives, mirrored
+geometry transforms, baked per-vertex tangent compatibility, and
+secondary-ray behavior still need dedicated qualification.
 
 For an image normal map, prepare a floating-point mipmapped texture without
 color conversion, keeping its components as data.  Store it under the
@@ -582,9 +583,26 @@ cover clamped linear interpolation, flat and smooth normals, and reflected U/V
 charts.  The height reference uses the ramp's known gradient, without
 screen derivatives.  A control with the opposite image-row convention must
 visibly disagree for all three networks.  These tests establish image
-orientation and this BOT magnification path; they do not qualify LOD
-transitions, curved-primitive magnification, or compatibility with baked
-per-vertex tangent frames.
+orientation and these BOT magnification paths.
+
+The same regression also reconstructs sphere and ellipsoid longitude and
+elevation from position.  Full-range and transformed image maps are checked
+under both projections in oblique and near-pole views.  Color and normal
+maps use the analytic ramp values and independent tangent frames.  The
+transformed height map uses a known analytic spatial gradient.
+
+For full-range height maps, clamping and mip filtering change the slope
+near image borders.  The reference measures that filtered slope with
+central differences of texture values, holding its analytically derived
+footprint fixed.  It does not use texture output derivatives or the native
+bump implementation.  A `1/8192` UV step is checked against `1/16384` on the
+pole-facing ellipsoid.  These cases validate the sampled height gradients,
+including changed slopes at filtered borders; they do not independently
+validate the texture library's filtering algorithm.
+
+Dedicated LOD transitions, periodically wrapped seams, exact UV poles,
+image mapping on other curved primitives, and compatibility with baked
+per-vertex tangent frames remain unqualified.
 
 
 Native UV placement nodes can feed the image node through a whole
