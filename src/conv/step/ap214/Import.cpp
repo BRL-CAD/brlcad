@@ -201,11 +201,12 @@ int
 parse_entity_ids(struct bu_vls *message, const char *arg, void *set_var)
 {
     std::set<int64_t> **entity_ptr = static_cast<std::set<int64_t> **>(set_var);
-    std::set<int64_t> *entity_ids = entity_ptr ? *entity_ptr : NULL;
+    std::set<int64_t> validation_ids;
+    std::set<int64_t> *entity_ids = entity_ptr ? *entity_ptr : &validation_ids;
     if (!entity_ids) return -1;
     std::string error;
     if (!arg || !brlcad::step::parse_entity_id_list(arg, *entity_ids, &error)) {
-	bu_vls_printf(message, "%s\n", error.c_str());
+	if (message) bu_vls_printf(message, "%s\n", error.c_str());
 	return -1;
     }
     return 0;

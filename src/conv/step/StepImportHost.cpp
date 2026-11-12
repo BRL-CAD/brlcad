@@ -57,10 +57,11 @@ int
 parse_entity_ids(struct bu_vls *error, const char *arg, void *data)
 {
     std::set<int64_t> **identifier_ptr = static_cast<std::set<int64_t> **>(data);
-    std::set<int64_t> *identifiers = identifier_ptr ? *identifier_ptr : NULL;
+    std::set<int64_t> validation_ids;
+    std::set<int64_t> *identifiers = identifier_ptr ? *identifier_ptr : &validation_ids;
     std::string detail;
     if (!identifiers || !arg || !brlcad::step::parse_entity_id_list(arg, *identifiers, &detail)) {
-	bu_vls_printf(error, "%s\n", detail.c_str());
+	if (error) bu_vls_printf(error, "%s\n", detail.c_str());
 	return -1;
     }
     return 0;

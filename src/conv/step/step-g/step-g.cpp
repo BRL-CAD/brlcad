@@ -38,12 +38,12 @@
 #include <string>
 
 #include "bu/app.h"
+#include "bu/arg.h"
 #include "bu/datetime.h"
 #include "bu/env.h"
 #include "bu/file.h"
 #include "bu/interrupt.h"
 #include "bu/log.h"
-#include "bu/opt.h"
 #include "bu/parallel.h"
 #include "bu/process.h"
 #include "bu/vls.h"
@@ -545,24 +545,6 @@ write_report(const std::string &path, const std::string &input,
 
 }
 
-void
-usage(const struct bu_opt_desc *options)
-{
-    char *help = bu_opt_help(options, "step-g",
-	"input.stp [output.g]\n       step-g [options] -o output.g input.stp\n       step-g -D [options] input.stp",
-	"Convert STEP geometry to a BRL-CAD database");
-    if (help)
-	bu_log("%s", help);
-    if (help) bu_free(help, "step-g option description");
-}
-
-struct OutputFile {
-    char *filename;
-    /* bu_opt's argument-less flag handler stores an int.  Keep flag storage
-     * ABI-compatible with that handler rather than pointing it at a bool. */
-    int overwrite;
-};
-
 struct TemporaryOutput {
     std::string path;
     bool keep = false;
@@ -586,34 +568,76 @@ temporary_output_name(const std::string &output)
 }
 
 static int
-parse_opt_O(struct bu_vls *error_msg, size_t argc, const char **argv, void *set_var)
+parse_entity_ids(struct bu_vls *error_msg, const char *arg, void *set_var)
 {
-    int ret;
-    OutputFile *ofile = (OutputFile *)set_var;
-
-    BU_OPT_CHECK_ARGV0(error_msg, argc, argv, "-O");
-
-    ofile->overwrite = true;
-    if (ofile) {
-	ret = bu_opt_str(error_msg, argc, argv, &ofile->filename);
-	return ret;
-    } else {
-	return -1;
-    }
-}
-
-static int
-parse_entity_ids(struct bu_vls *error_msg, size_t argc, const char **argv, void *set_var)
-{
-    BU_OPT_CHECK_ARGV0(error_msg, argc, argv, "entity ID list");
-    std::set<int64_t> *entity_ids = static_cast<std::set<int64_t> *>(set_var);
+    std::set<int64_t> **entity_ptr = static_cast<std::set<int64_t> **>(set_var);
+    std::set<int64_t> validation_ids;
+    std::set<int64_t> *entity_ids = entity_ptr ? *entity_ptr : &validation_ids;
     if (!entity_ids) return -1;
     std::string error;
-    if (!brlcad::step::parse_entity_id_list(argv[0], *entity_ids, &error)) {
-	bu_vls_printf(error_msg, "%s\n", error.c_str());
+    if (!arg || !brlcad::step::parse_entity_id_list(arg, *entity_ids, &error)) {
+	if (error_msg) bu_vls_printf(error_msg, "%s\n", error.c_str());
 	return -1;
     }
-    return 1;
+    return 0;
+}
+
+struct step_schema_args {
+    int help = 0, dry_run = 0, verbose = 0, exact = 0, strict = 0;
+    int reject_invalid = 0, skip_open_shells = 0, no_item_budget = 0;
+    int force = 0, jobs = 1;
+    fastf_t absolute_tolerance = 0.0, budget_scale = 0.0;
+    fastf_t item_budget = 0.0, stall_timeout = 0.0;
+    const char *repair = NULL, *report = NULL, *output_overwrite = NULL;
+    const char *output = NULL, *summary = NULL;
+    std::set<int64_t> *entities = NULL;
+};
+static const struct bu_arg_value_keyword step_repair_values[] = {
+    {"none", NULL, "Disable repair"}, {"safe", NULL, "Use safe repair"}, {NULL, NULL, NULL}
+};
+static const struct bu_arg_option step_schema_options[] = {
+    BU_ARG_FLAG("h", "help", struct step_schema_args, help, "Print help and exit"),
+    BU_ARG_ALIAS("?", NULL, "help", 1),
+    BU_ARG_FLAG("D", "dry-run", struct step_schema_args, dry_run, "Validate without writing a database"),
+    BU_ARG_FLAG("v", "verbose", struct step_schema_args, verbose, "Report entity-level diagnostics"),
+    BU_ARG_FLAG(NULL, "exact", struct step_schema_args, exact, "Strictly enforce the declared model tolerance"),
+    BU_ARG_FLAG(NULL, "strict", struct step_schema_args, strict, "Reject partial output"),
+    BU_ARG_FLAG(NULL, "reject-invalid-objs", struct step_schema_args, reject_invalid, "Reject B-reps which fail validation"),
+    BU_ARG_FLAG(NULL, "skip-open-shells", struct step_schema_args, skip_open_shells, "Exclude standalone open-shell surface geometry"),
+    BU_ARG_NUMBER_RANGE(NULL, "abs-tol", struct step_schema_args, absolute_tolerance, 1, 0.0, 0, 0.0, "MM", "Absolute output tolerance"),
+    BU_ARG_NUMBER_RANGE(NULL, "budget-scale", struct step_schema_args, budget_scale, 1, 0.0, 0, 0.0, "FACTOR", "Manual machine-speed budget scale"),
+    BU_ARG_NUMBER_RANGE(NULL, "item-budget", struct step_schema_args, item_budget, 1, 0.0, 0, 0.0, "SECONDS", "Ordinary per-item CPU-work budget"),
+    BU_ARG_FLAG(NULL, "no-item-budget", struct step_schema_args, no_item_budget, "Disable CPU-work budgets; retain no-progress detection"),
+    BU_ARG_NUMBER_RANGE(NULL, "stall-timeout", struct step_schema_args, stall_timeout, 1, 0.0, 0, 0.0, "SECONDS", "No-progress cancellation interval"),
+    BU_ARG_KEYWORD_VALUES(NULL, "repair", struct step_schema_args, repair, "MODE", "Repair mode (default: safe)", step_repair_values),
+    BU_ARG_VALUE(NULL, "report", struct step_schema_args, report, BU_ARG_VALUE_FILE, BU_ARG_REQUIRED, "FILE", "Structured JSON report"),
+    BU_ARG_FLAG("f", "force", struct step_schema_args, force, "Overwrite a positional or -o output"),
+    BU_ARG_VALUE("O", "output-overwrite", struct step_schema_args, output_overwrite, BU_ARG_VALUE_FILE, BU_ARG_REQUIRED, "FILE", "Output file and overwrite it"),
+    BU_ARG_VALUE("o", "output", struct step_schema_args, output, BU_ARG_VALUE_FILE, BU_ARG_REQUIRED, "FILE", "Output file"),
+    BU_ARG_VALUE("S", "summary", struct step_schema_args, summary, BU_ARG_VALUE_FILE, BU_ARG_REQUIRED, "FILE", "Per-instance conversion status CSV"),
+    BU_ARG_CUSTOM("e", "entity", struct step_schema_args, entities, parse_entity_ids, "ID[,ID...]", "Convert only listed representation-item IDs"),
+    BU_ARG_INTEGER_RANGE("j", "jobs", struct step_schema_args, jobs, 1, 1, 0, 0, "N", "Bounded geometry worker count (default: up to 8 CPUs)"),
+    BU_ARG_OPTION_NULL
+};
+static const struct bu_arg_operand step_schema_operands[] = {
+    BU_ARG_OPERAND("input.stp", BU_ARG_VALUE_FILE, 1, 1, "Input STEP file, or - for standard input", NULL),
+    BU_ARG_OPERAND("output.g", BU_ARG_VALUE_FILE, 0, 1, "Output BRL-CAD database", NULL), BU_ARG_OPERAND_NULL
+};
+static const char * const step_output_options[] = {"output", "output-overwrite", NULL};
+static const struct bu_arg_constraint step_schema_constraints[] = {
+    BU_ARG_CONSTRAINT(BU_ARG_CONSTRAINT_OPTION_COUNT, BU_ARG_CONDITION_ALWAYS, step_output_options, 0, 1, "select at most one output option"), BU_ARG_CONSTRAINT_NULL
+};
+static const struct bu_arg_schema step_cli_schema = BU_ARG_SCHEMA(
+    "step-g", "Convert STEP geometry to a BRL-CAD database", step_schema_options,
+    step_schema_operands, BU_ARG_PARSE_INTERSPERSED,
+    BU_ARG_SCHEMA_META_HELP(NULL, step_schema_constraints, NULL, NULL, NULL));
+
+void
+usage(const char *invocation)
+{
+    char *help = bu_arg_schema_help(&step_cli_schema, invocation);
+    if (help) bu_log("%s", help);
+    bu_free(help, "step-g argument description");
 }
 
 #if defined(AP203e2)
@@ -653,107 +677,66 @@ STEP_IMPORT_CLI_NAME(int argc, const char *argv[])
     // STEPfile sfile (registry, instance_list);
 
     // process command line arguments
-    OutputFile ofile = {NULL, 0};
-    int verbose = 0;
-    int dry_run = 0;
-    int exact = 0;
-    int strict = 0;
-    int reject_invalid_objs = 0;
-    int skip_open_shells = 0;
-    int help = 0;
-    int jobs = default_geometry_jobs();
-    fastf_t absolute_tolerance = 0.0;
-    fastf_t budget_scale = 0.0;
-    fastf_t item_budget_seconds = 0.0;
-    fastf_t stall_timeout_seconds = 0.0;
-    int no_item_budget = 0;
-    char *repair_name = NULL;
-    char *report_name = NULL;
-    char *summary_log_file = (char *)NULL;
+    const char *invocation = argv[0];
+    ++argv;
+    --argc;
     std::set<int64_t> selected_entity_ids;
+    step_schema_args args;
+    args.jobs = default_geometry_jobs();
+    args.entities = &selected_entity_ids;
     struct bu_vls parse_msgs = BU_VLS_INIT_ZERO;
-    struct bu_opt_desc options[] = {
-	{"h", "help", "",       NULL,        &help,             "print help and exit"},
-	{"?", "", "",           NULL,        &help,             ""},
-	{"D", "dry-run", "",    NULL,        &dry_run,          "validate without writing a database"},
-	{"v", "verbose", "",    NULL,        &verbose,          "report entity-level diagnostics"},
-	{"", "exact", "",       NULL,        &exact,            "strictly enforce the declared model tolerance"},
-	{"", "strict", "",      NULL,        &strict,           "reject partial output"},
-	{"", "reject-invalid-objs", "", NULL, &reject_invalid_objs,
-	    "reject B-reps which fail validation"},
-	{"", "skip-open-shells", "", NULL, &skip_open_shells,
-	    "exclude standalone open-shell surface geometry"},
-	{"", "abs-tol", "MM",   bu_opt_fastf_t, &absolute_tolerance, "absolute output tolerance"},
-	{"", "budget-scale", "FACTOR", bu_opt_fastf_t, &budget_scale,
-	    "manual machine-speed budget scale (default: startup calibration)"},
-	{"", "item-budget", "SECONDS", bu_opt_fastf_t, &item_budget_seconds,
-	    "override the ordinary per-item CPU-work budget"},
-	{"", "no-item-budget", "", NULL, &no_item_budget,
-	    "disable CPU-work budgets; no-progress detection remains active"},
-	{"", "stall-timeout", "SECONDS", bu_opt_fastf_t, &stall_timeout_seconds,
-	    "override the no-progress cancellation interval"},
-	{"", "repair", "MODE",  bu_opt_str,  &repair_name,      "none or safe (default: safe)"},
-	{"", "report", "FILE",  bu_opt_str,  &report_name,      "structured JSON report"},
-	{"f", "force", "",      NULL,        &ofile.overwrite,  "overwrite a positional or -o output"},
-	{"O", "output-overwrite", "FILE", parse_opt_O, &ofile, "output file (overwrite)"},
-	{"o", "output", "FILE", bu_opt_str,  &ofile.filename,   "output file"},
-	{"S", "summary", "FILE", bu_opt_str, &summary_log_file, "per-instance conversion status CSV"},
-	{"e", "entity", "ID[,ID...]", parse_entity_ids, &selected_entity_ids,
-	    "convert only listed representation-item IDs (repeatable)"},
-	{"j", "jobs", "N", bu_opt_int, &jobs,
-	    "bounded geometry worker count (default: up to 8 CPUs)"},
-	BU_OPT_DESC_NULL
-    };
-
-    ++argv; --argc;
-    argc = bu_opt_parse(&parse_msgs, argc, argv, options);
-
-    if (bu_vls_strlen(&parse_msgs) > 0) {
-	bu_log("%s\n", bu_vls_cstr(&parse_msgs));
-    }
-    if (help) {
-	usage(options);
+    const int operand_index = bu_arg_schema_parse_complete(&step_cli_schema, &args,
+	&parse_msgs, argc, argv);
+    if (operand_index < 0) {
+	if (bu_vls_strlen(&parse_msgs)) bu_log("%s\n", bu_vls_cstr(&parse_msgs));
 	bu_vls_free(&parse_msgs);
-	return 0;
-    }
-    if (bu_vls_strlen(&parse_msgs) > 0 || jobs < 1 ||
-	    absolute_tolerance < 0.0 || budget_scale < 0.0 ||
-	    item_budget_seconds < 0.0 || stall_timeout_seconds < 0.0) {
-	usage(options);
-	bu_vls_free(&parse_msgs);
+	usage(invocation);
 	return 2;
     }
-
+    bu_vls_free(&parse_msgs);
+    argc -= operand_index;
+    argv += operand_index;
+    if (args.help) {
+	usage(invocation);
+	return 0;
+    }
+    const char *output_filename = args.output_overwrite ? args.output_overwrite : args.output;
+    const bool option_output = !BU_STR_EMPTY(output_filename);
+    if ((option_output && argc != 1) ||
+	    (!option_output && argc != 2 && !(args.dry_run && argc == 1))) {
+	bu_log("ERROR: specify one input and one output (or only an input with -D)\n");
+	usage(invocation);
+	return 2;
+    }
+    if (!option_output && argc == 2) output_filename = argv[1];
+    if (args.dry_run && BU_STR_EMPTY(output_filename)) output_filename = "(dry-run)";
+    const int verbose = args.verbose;
+    const int dry_run = args.dry_run;
+    const int exact = args.exact;
+    const int strict = args.strict;
+    const int reject_invalid_objs = args.reject_invalid;
+    const int skip_open_shells = args.skip_open_shells;
+    const int no_item_budget = args.no_item_budget;
+    const int jobs = args.jobs;
+    const int overwrite = args.force || args.output_overwrite;
+    const fastf_t absolute_tolerance = args.absolute_tolerance;
+    const fastf_t budget_scale = args.budget_scale;
+    const fastf_t item_budget_seconds = args.item_budget;
+    const fastf_t stall_timeout_seconds = args.stall_timeout;
+    const char *repair_name = args.repair;
+    const char *report_name = args.report;
+    char *summary_log_file = const_cast<char *>(args.summary);
     brlcad::step::RepairMode repair = brlcad::step::RepairMode::Safe;
     if (repair_name && BU_STR_EQUAL(repair_name, "none"))
 	repair = brlcad::step::RepairMode::None;
-    else if (repair_name && !BU_STR_EQUAL(repair_name, "safe")) {
-	bu_log("ERROR: --repair must be 'none' or 'safe'\n");
-	usage(options);
-	bu_vls_free(&parse_msgs);
-	return 2;
-    }
 
-    const bool option_output = !BU_STR_EMPTY(ofile.filename);
-    if ((option_output && argc != 1) || (!option_output && argc != 2 && !(dry_run && argc == 1))) {
-	bu_log("ERROR: specify one input and one output (or only an input with -D)\n");
-	usage(options);
-	bu_vls_free(&parse_msgs);
-	return 2;
-    }
-    if (!option_output && argc == 2)
-	ofile.filename = const_cast<char *>(argv[1]);
-    if (dry_run && BU_STR_EMPTY(ofile.filename))
-	ofile.filename = const_cast<char *>("(dry-run)");
-    bu_vls_free(&parse_msgs);
-
-    if (!ofile.overwrite && !dry_run) {
+    if (!overwrite && !dry_run) {
 	/* check our inputs/outputs */
-	if (bu_file_exists(ofile.filename, NULL)) {
+	if (bu_file_exists(output_filename, NULL)) {
 	    bu_log("ERROR: refusing to overwrite existing output file:"
 		   "\"%s\". Please remove the existing file, change the "
 		   "output file name, or use the '-O' option to force an"
-		   " overwrite.\n", ofile.filename);
+		   " overwrite.\n", output_filename);
 	    return 2;
 	}
     }
@@ -763,7 +746,7 @@ STEP_IMPORT_CLI_NAME(int argc, const char *argv[])
     }
 
     std::string iflnm = argv[0];
-    std::string oflnm = ofile.filename;
+    std::string oflnm = output_filename;
 
     TemporaryOutput temporary_output;
     if (!dry_run) temporary_output.path = temporary_output_name(oflnm);
