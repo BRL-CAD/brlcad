@@ -57,6 +57,7 @@ class QgPluginManagerTest : public QObject
 	void initTestCase();
 	void discoversAndLoadsPlugins();
 	void managesToolPalettes();
+	void tearsDownPaletteBeforeController();
 	void rejectsMissingApiVersions();
 	void publishesAvailabilityChanges();
 	void reloadsPluginCode();
@@ -157,6 +158,10 @@ QgPluginManagerTest::managesToolPalettes()
     QCOMPARE(palette.findChildren<QgToolPaletteElement *>().size(), 1);
     QVERIFY(controller.currentTool() == nullptr);
 
+    palette.resize(1, 100);
+    palette.button_layout_resize();
+    QCOMPARE(palette.findChildren<QgToolPaletteElement *>().size(), 1);
+
     QgToolPaletteButton *activateButton = nullptr;
     const QList<QgToolPaletteButton *> buttons =
 	palette.findChildren<QgToolPaletteButton *>();
@@ -224,6 +229,30 @@ QgPluginManagerTest::managesToolPalettes()
     QVERIFY2(manager.unloadAll(&errors),
 	qPrintable(errors.join(QLatin1Char('\n'))));
     QCOMPARE(palette.findChildren<QgToolPaletteElement *>().size(), 0);
+}
+
+void
+QgPluginManagerTest::tearsDownPaletteBeforeController()
+{
+    QgPluginManager manager(QStringList() << pluginDirectory(),
+	settingsGroup());
+    QgPluginContext context;
+    QgToolPalette *palette = new QgToolPalette;
+    QgPaletteController *controller = new QgPaletteController(palette,
+	&manager, QStringLiteral("test.command"), &context);
+    controller->populate();
+
+    const QList<QgToolBase *> tools =
+	controller->findChildren<QgToolBase *>(QString(),
+	    Qt::FindDirectChildrenOnly);
+    QCOMPARE(tools.size(), 1);
+    QPointer<QgToolBase> tool = tools.first();
+
+    delete palette;
+    QVERIFY(tool.isNull());
+    QVERIFY(controller->palette() == nullptr);
+    QVERIFY(controller->currentTool() == nullptr);
+    delete controller;
 }
 
 void
