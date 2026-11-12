@@ -48,7 +48,7 @@ __declspec(dllimport) int __stdcall SetHandleInformation(void *, unsigned long, 
 #include "bu/log.h"
 #include "bu/path.h"
 #include "bu/ptbl.h"
-#include "bu/opt.h"
+#include "bu/arg.h"
 #include "bu/str.h"
 #include "bv/vlist.h"
 #include "icv.h"
@@ -392,89 +392,74 @@ rtwizard_view_opts_check(struct bu_vls *msg, struct rtwizard_settings *s)
 }
 
 
+struct rtwizard_args {
+    int help;
+    int help_dev;
+    struct bu_vls input_file;
+    struct bu_vls output_file;
+    size_t size;
+    size_t width;
+    size_t height;
+    char type;
+    struct bu_ptbl *color;
+    struct bu_ptbl *line;
+    struct bu_ptbl *ghost;
+    fastf_t azimuth;
+    fastf_t elevation;
+    fastf_t twist;
+    fastf_t zoom;
+    vect_t center;
+    vect_t eye_pt;
+    fastf_t viewsize;
+    quat_t orientation;
+    fastf_t perspective;
+    struct bu_color background_color;
+    struct bu_color line_color;
+    struct bu_color non_line_color;
+    fastf_t ghost_intensity;
+    int occlusion;
+    int use_gui;
+    int no_gui;
+    struct bu_vls fb_device;
+    int port;
+    int benchmark;
+    int cpus;
+    struct bu_vls pid_file;
+    struct bu_vls log_file;
+    int verbose;
+    int cut_steps;
+    vect_t cut_direction;
+    int animation_fps;
+    int ao_samples;
+    fastf_t ao_radius;
+};
+
+
 static int
-opt_size_t(struct bu_vls *msg, size_t argc, const char **argv, void *set_size)
+rtwizard_size_from_str(struct bu_vls *msg, const char *arg, void *storage)
 {
     size_t value;
-
-    BU_OPT_CHECK_ARGV0(msg, argc, argv, "non-negative integer");
-
-    if (!bu_opt_scan_size_t(argv[0], &value, NULL)) {
-	if (msg)
-	    bu_vls_sprintf(msg, "Invalid non-negative integer: %s\n", argv[0]);
-	return -1;
-    }
-
-    if (set_size)
-	*(size_t *)set_size = value;
-
-    return 1;
+    size_t *target = storage ? (size_t *)storage : &value;
+    return bu_arg_size_t_from_str(msg, target, arg, 0) ? 0 : -1;
 }
 
 
-int
-opt_width(struct bu_vls *msg, size_t argc, const char **argv, void *settings)
+static int
+rtwizard_objects_from_str(struct bu_vls *msg, const char *arg, void *storage)
 {
-    struct rtwizard_settings *s = (struct rtwizard_settings *)settings;
-    if (s) {
-	int ret = opt_size_t(msg, argc, argv, (void *)&s->width);
-	if (ret != -1)
-	    s->width_set = 1;
-	return ret;
-    } else {
-	return -1;
-    }
-}
-
-
-int
-opt_height(struct bu_vls *msg, size_t argc, const char **argv, void *settings)
-{
-    struct rtwizard_settings *s = (struct rtwizard_settings *)settings;
-    if (s) {
-	int ret = opt_size_t(msg, argc, argv, (void *)&s->height);
-	if (ret != -1)
-	    s->height_set = 1;
-	return ret;
-    } else {
-	return -1;
-    }
-}
-
-
-int
-opt_size(struct bu_vls *msg, size_t argc, const char **argv, void *settings)
-{
-    struct rtwizard_settings *s = (struct rtwizard_settings *)settings;
-    if (s) {
-	int ret = opt_size_t(msg, argc, argv, (void *)&s->size);
-	if (ret != -1) {
-	    s->size_set = 1;
-	    if (!s->width_set)
-		s->width = s->size;
-	    if (!s->height_set)
-		s->height = s->size;
-	}
-	return ret;
-    } else {
-	return -1;
-    }
-}
-
-
-int
-opt_objs(struct bu_vls *msg, size_t argc, const char **argv, void *obj_tbl)
-{
-    /* argv[0] should be either an object or a list. */
     size_t i = 0;
     char *objs = NULL;
     size_t acnum = 0;
     char **avnum;
-    struct bu_ptbl *t = (struct bu_ptbl *)obj_tbl;
+    struct bu_ptbl *table = storage ? *(struct bu_ptbl **)storage : NULL;
 
-    BU_OPT_CHECK_ARGV0(msg, argc, argv, "opt_objs");
+    if (!arg || !arg[0]) {
+	if (msg)
+	    bu_vls_printf(msg, "expected an object name or object list\n");
+	return -1;
+    }
 
-    objs = bu_strdup(argv[0]);
+    objs = bu_strdup(arg);
 
     while (objs[i]) {
 	/* If we have a separator or a quote, replace with a space */
@@ -491,153 +476,213 @@ opt_objs(struct bu_vls *msg, size_t argc, const char **argv, void *obj_tbl)
     /* TODO - use quote/unquote routines to scrub names... */
 
     for (i = 0; i < acnum; i++) {
-	if (t) {
-	    bu_ptbl_ins(t, (long *)bu_strdup(avnum[i]));
-	}
+	if (table)
+	    bu_ptbl_ins(table, (long *)bu_strdup(avnum[i]));
     }
     bu_free(objs, "string dup");
     bu_free(avnum, "array memory");
 
-    return (acnum > 0) ? 1 : -1;
+    if (!acnum && msg)
+	bu_vls_printf(msg, "expected at least one object name\n");
+    return acnum > 0 ? 0 : -1;
 }
 
 
-int
-opt_letter(struct bu_vls *msg, size_t argc, const char **argv, void *l)
+static int
+rtwizard_type_from_str(struct bu_vls *msg, const char *arg, void *storage)
 {
-    char *letter = (char *)l;
-    BU_OPT_CHECK_ARGV0(msg, argc, argv, "bu_opt_int");
-
-    if (strlen(argv[0]) != 1) {
+    if (!arg || strlen(arg) != 1) {
 	if (msg)
-	    bu_vls_printf(msg, "Invalid letter specifier for rtwizard type: %s\n", argv[0]);
+	    bu_vls_printf(msg, "invalid RtWizard picture type: %s\n", arg ? arg : "");
 	return -1;
     }
 
-    if (argv[0][0] != 'A' && argv[0][0] != 'B' && argv[0][0] != 'C' && argv[0][0] != 'D' && argv[0][0] != 'E' && argv[0][0] != 'F') {
+    if (arg[0] < 'A' || arg[0] > 'F') {
 	if (msg)
-	    bu_vls_printf(msg, "Invalid letter specifier for rtwizard type: %c\n", argv[0][0]);
+	    bu_vls_printf(msg, "invalid RtWizard picture type: %c\n", arg[0]);
 	return -1;
     }
 
-    if (letter) {
-	(*letter) = argv[0][0];
+    if (storage)
+	*(char *)storage = arg[0];
+    return 0;
+}
+
+
+static int
+rtwizard_quaternion_packed(struct bu_vls *msg, const char *arg, fastf_t *quaternion)
+{
+    char *copy;
+    char *values[5] = {NULL, NULL, NULL, NULL, NULL};
+    fastf_t parsed[4];
+    size_t count;
+    size_t i;
+
+    if (!arg || !arg[0])
+	return 0;
+
+    copy = bu_strdup(arg);
+    for (i = 0; copy[i]; i++) {
+	if (copy[i] == ',' || copy[i] == '/')
+	    copy[i] = ' ';
+    }
+    count = bu_argv_from_string(values, 5, copy);
+    if (count != 4) {
+	bu_free(copy, "quaternion parse buffer");
+	return 0;
     }
 
+    for (i = 0; i < 4; i++) {
+	if (!bu_arg_number_from_str(msg, &parsed[i], values[i])) {
+	    bu_free(copy, "quaternion parse buffer");
+	    return 0;
+	}
+    }
+    if (quaternion)
+	HMOVE(quaternion, parsed);
+    bu_free(copy, "quaternion parse buffer");
     return 1;
 }
 
 
-int
-opt_cut_direction(struct bu_vls *msg, size_t argc, const char **argv, void *settings)
+static size_t
+rtwizard_quaternion_count(size_t available, const char **argv)
 {
-    struct rtwizard_settings *s = (struct rtwizard_settings *)settings;
-    int ret;
-
-    if (!s)
-	return -1;
-
-    ret = bu_opt_vect_t(msg, argc, argv, (void *)&s->cut_direction);
-    if (ret != -1)
-	s->cut_direction_set = 1;
-    return ret;
-}
-
-
-int
-opt_quat(struct bu_vls *msg, size_t argc, const char **argv, void *inq)
-{
-    size_t i = 0;
-    size_t acnum = 0;
-    char *str1 = NULL;
-    char *avnum[6] = {NULL, NULL, NULL, NULL, NULL, NULL};
-
-    quat_t *q = (quat_t *)inq;
-    BU_OPT_CHECK_ARGV0(msg, argc, argv, "bu_opt_int");
-
-
-    /* First, see if the first string converts to a quat_t*/
-    str1 = bu_strdup(argv[0]);
-    while (str1[i]) {
-	/* If we have a separator, replace with a space */
-	if (str1[i] == ',' || str1[i] == '/') str1[i] = ' ';
-	i++;
-    }
-    acnum = bu_argv_from_string(avnum, 5, str1);
-    if (acnum == 4) {
-	/* We might have four numbers - find out */
-	fastf_t q1, q2, q3, q4;
-	int have_four = 1;
-	if (bu_opt_fastf_t(msg, 1, (const char **)&avnum[0], &q1) == -1) {
-	    if (msg)
-		bu_vls_sprintf(msg, "Not a number: %s.\n", avnum[0]);
-	    have_four = 0;
-	}
-	if (bu_opt_fastf_t(msg, 1, (const char **)&avnum[1], &q2) == -1) {
-	    if (msg)
-		bu_vls_sprintf(msg, "Not a number: %s.\n", avnum[1]);
-	    have_four = 0;
-	}
-	if (bu_opt_fastf_t(msg, 1, (const char **)&avnum[2], &q3) == -1) {
-	    if (msg) bu_vls_sprintf(msg, "Not a number: %s.\n", avnum[2]);
-	    have_four = 0;
-	}
-	if (bu_opt_fastf_t(msg, 1, (const char **)&avnum[3], &q4) == -1) {
-	    if (msg) bu_vls_sprintf(msg, "Not a number: %s.\n", avnum[3]);
-	    have_four = 0;
-	}
-	bu_free(str1, "free tmp str");
-	/* If we got here, we do have four numbers */
-	if (have_four) {
-	    if (q) {
-		(*q)[0] = q1;
-		(*q)[1] = q2;
-		(*q)[2] = q3;
-		(*q)[3] = q4;
-	    }
-	    return 1;
-	}
-    } else {
-	/* Can't be just the first arg */
-	bu_free(str1, "free tmp str");
-    }
-    /* First string didn't have the numbers - maybe we have 4 args ? */
-    if (argc >= 4) {
-	/* We might have four numbers - find out */
-	fastf_t q1, q2, q3, q4;
-	if (bu_opt_fastf_t(msg, 1, &argv[0], &q1) == -1) {
-	    if (msg)
-		bu_vls_sprintf(msg, "Not a number: %s.\n", argv[0]);
-	    return -1;
-	}
-	if (bu_opt_fastf_t(msg, 1, &argv[1], &q2) == -1) {
-	    if (msg)
-		bu_vls_sprintf(msg, "Not a number: %s.\n", argv[1]);
-	    return -1;
-	}
-	if (bu_opt_fastf_t(msg, 1, &argv[2], &q3) == -1) {
-	    if (msg)
-		bu_vls_sprintf(msg, "Not a number: %s.\n", argv[2]);
-	    return -1;
-	}
-	if (bu_opt_fastf_t(msg, 1, &argv[3], &q4) == -1) {
-	    if (msg)
-		bu_vls_sprintf(msg, "Not a number: %s.\n", argv[3]);
-	    return -1;
-	}
-	if (q) {
-	    (*q)[0] = q1;
-	    (*q)[1] = q2;
-	    (*q)[2] = q3;
-	    (*q)[3] = q4;
-	}
+    if (!available || !argv || !argv[0])
+	return 0;
+    if (rtwizard_quaternion_packed(NULL, argv[0], NULL))
 	return 1;
-    } else {
+    return available < 4 ? available : 4;
+}
+
+
+static int
+rtwizard_quaternion_consume(struct bu_vls *msg, size_t argc, const char **argv, void *storage)
+{
+    fastf_t parsed[4];
+    fastf_t *quaternion = storage ? (fastf_t *)storage : parsed;
+    size_t i;
+
+    if (argc == 1 && rtwizard_quaternion_packed(msg, argv[0], quaternion))
+	return 0;
+    if (argc != 4) {
 	if (msg)
-	    bu_vls_sprintf(msg, "No valid quaternion found: %s\n", argv[0]);
+	    bu_vls_printf(msg, "expected a quaternion as qx/qy/qz/qw or four numbers\n");
 	return -1;
     }
+    for (i = 0; i < 4; i++) {
+	if (!bu_arg_number_from_str(msg, &quaternion[i], argv[i]))
+	    return -1;
+    }
+    return 0;
 }
+
+
+static const struct bu_arg_variant rtwizard_quaternion_variants[] = {
+    BU_ARG_VARIANT("packed", "qx/qy/qz/qw", 1, "Packed quaternion"),
+    BU_ARG_VARIANT("components", "qx qy qz qw", 4, "Four quaternion components"),
+    BU_ARG_VARIANT_NULL
+};
+
+static const struct bu_arg_shape rtwizard_quaternion_shape = BU_ARG_SHAPE(
+    BU_ARG_SHAPE_CUSTOM, 1, 4, "a quaternion", rtwizard_quaternion_count,
+    rtwizard_quaternion_variants);
+
+
+static const struct bu_arg_option rtwizard_options[] = {
+    BU_ARG_FLAG("h", "help", struct rtwizard_args, help,
+	"Print options help and exit"),
+    BU_ARG_ALIAS("?", NULL, "help", 1),
+    BU_ARG_FLAG(NULL, "help-dev", struct rtwizard_args, help_dev,
+	"Print development and programmatic options"),
+    BU_ARG_VALUE("i", "input-file", struct rtwizard_args, input_file,
+	BU_ARG_VALUE_VLS, BU_ARG_REQUIRED, "filename", "Input .g database file"),
+    BU_ARG_VALUE("o", "output-file", struct rtwizard_args, output_file,
+	BU_ARG_VALUE_VLS, BU_ARG_REQUIRED, "filename", "Image output file name"),
+    BU_ARG_CUSTOM("s", "size", struct rtwizard_args, size,
+	rtwizard_size_from_str, "pixels", "Output width and height for a square image"),
+    BU_ARG_CUSTOM("w", "width", struct rtwizard_args, width,
+	rtwizard_size_from_str, "pixels", "Output image width (overrides --size)"),
+    BU_ARG_CUSTOM("n", "height", struct rtwizard_args, height,
+	rtwizard_size_from_str, "pixels", "Output image height (overrides --size)"),
+    BU_ARG_CUSTOM("t", "type", struct rtwizard_args, type,
+	rtwizard_type_from_str, "A|B|C|D|E|F", "Specify RtWizard picture type"),
+    BU_ARG_CUSTOM("c", "color-objects", struct rtwizard_args, color,
+	rtwizard_objects_from_str, "object-list", "List of color objects"),
+    BU_ARG_CUSTOM("l", "line-objects", struct rtwizard_args, line,
+	rtwizard_objects_from_str, "object-list", "List of line objects"),
+    BU_ARG_CUSTOM("g", "ghost-objects", struct rtwizard_args, ghost,
+	rtwizard_objects_from_str, "object-list", "List of ghost objects"),
+    BU_ARG_VALUE("a", "azimuth", struct rtwizard_args, azimuth,
+	BU_ARG_VALUE_NUMBER, BU_ARG_REQUIRED, "degrees", "Set azimuth"),
+    BU_ARG_VALUE("e", "elevation", struct rtwizard_args, elevation,
+	BU_ARG_VALUE_NUMBER, BU_ARG_REQUIRED, "degrees", "Set elevation"),
+    BU_ARG_VALUE(NULL, "twist", struct rtwizard_args, twist,
+	BU_ARG_VALUE_NUMBER, BU_ARG_REQUIRED, "degrees", "Set twist"),
+    BU_ARG_VALUE("z", "zoom", struct rtwizard_args, zoom,
+	BU_ARG_VALUE_NUMBER, BU_ARG_REQUIRED, "factor", "Set zoom"),
+    BU_ARG_VECTOR3(NULL, "center", struct rtwizard_args, center, "x/y/z",
+	"Set view center"),
+    BU_ARG_VECTOR3(NULL, "eye_pt", struct rtwizard_args, eye_pt, "x/y/z",
+	"Set eye point"),
+    BU_ARG_VALUE(NULL, "viewsize", struct rtwizard_args, viewsize,
+	BU_ARG_VALUE_NUMBER, BU_ARG_REQUIRED, "size", "Set view size"),
+    BU_ARG_OPTION_SHAPED(NULL, "orientation", "orientation",
+	struct rtwizard_args, orientation, BU_ARG_VALUE_VECTOR, "quaternion",
+	"Set view orientation", BU_ARG_REQUIRED, &rtwizard_quaternion_shape,
+	rtwizard_quaternion_consume),
+    BU_ARG_VALUE("P", "perspective", struct rtwizard_args, perspective,
+	BU_ARG_VALUE_NUMBER, BU_ARG_REQUIRED, "degrees", "Set perspective"),
+    BU_ARG_COLOR_COMPAT("C", "background-color", struct rtwizard_args,
+	background_color, "color", "Background image color"),
+    BU_ARG_COLOR_COMPAT(NULL, "line-color", struct rtwizard_args, line_color,
+	"color", "Color used for line rendering"),
+    BU_ARG_COLOR_COMPAT(NULL, "non-line-color", struct rtwizard_args,
+	non_line_color, "color", "Color used for non-line rendering"),
+    BU_ARG_VALUE("G", "ghost-intensity", struct rtwizard_args, ghost_intensity,
+	BU_ARG_VALUE_NUMBER, BU_ARG_REQUIRED, "value", "Intensity of ghost objects"),
+    BU_ARG_VALUE("O", "occlusion", struct rtwizard_args, occlusion,
+	BU_ARG_VALUE_INTEGER, BU_ARG_REQUIRED, "mode", "Occlusion mode (1 to 3)"),
+    BU_ARG_FLAG(NULL, "gui", struct rtwizard_args, use_gui, "Force use of GUI"),
+    BU_ARG_FLAG(NULL, "no-gui", struct rtwizard_args, no_gui,
+	"Do not use the GUI"),
+    BU_ARG_VALUE("d", "fbserv-device", struct rtwizard_args, fb_device,
+	BU_ARG_VALUE_VLS, BU_ARG_REQUIRED, "device", "Framebuffer device"),
+    BU_ARG_VALUE("p", "fbserv-port", struct rtwizard_args, port,
+	BU_ARG_VALUE_INTEGER, BU_ARG_REQUIRED, "port", "Framebuffer port"),
+    BU_ARG_FLAG(NULL, "benchmark", struct rtwizard_args, benchmark,
+	"Benchmark mode (no randomness)"),
+    BU_ARG_VALUE(NULL, "cpu-count", struct rtwizard_args, cpus,
+	BU_ARG_VALUE_INTEGER, BU_ARG_REQUIRED, "count", "Number of CPUs to use"),
+    BU_ARG_VALUE(NULL, "pid-file", struct rtwizard_args, pid_file,
+	BU_ARG_VALUE_VLS, BU_ARG_REQUIRED, "filename", "PID tracking file"),
+    BU_ARG_VALUE(NULL, "log-file", struct rtwizard_args, log_file,
+	BU_ARG_VALUE_VLS, BU_ARG_REQUIRED, "filename", "Debug log file"),
+    BU_ARG_VALUE("v", "verbose", struct rtwizard_args, verbose,
+	BU_ARG_VALUE_INTEGER, BU_ARG_REQUIRED, "level", "Verbosity"),
+    BU_ARG_VALUE(NULL, "cut-steps", struct rtwizard_args, cut_steps,
+	BU_ARG_VALUE_INTEGER, BU_ARG_REQUIRED, "count", "Cutting-plane animation frame count"),
+    BU_ARG_VECTOR3(NULL, "cut-direction", struct rtwizard_args, cut_direction,
+	"x/y/z", "Direction in which the cutting plane advances"),
+    BU_ARG_VALUE(NULL, "animation-fps", struct rtwizard_args, animation_fps,
+	BU_ARG_VALUE_INTEGER, BU_ARG_REQUIRED, "fps", "Animation frames per second"),
+    BU_ARG_VALUE(NULL, "ao-samples", struct rtwizard_args, ao_samples,
+	BU_ARG_VALUE_INTEGER, BU_ARG_REQUIRED, "count", "Ambient occlusion samples per ray"),
+    BU_ARG_VALUE(NULL, "ao-radius", struct rtwizard_args, ao_radius,
+	BU_ARG_VALUE_NUMBER, BU_ARG_REQUIRED, "radius", "Ambient occlusion maximum radius"),
+    BU_ARG_OPTION_NULL
+};
+
+static const struct bu_arg_operand rtwizard_operands[] = {
+    BU_ARG_OPERAND("input-or-object", BU_ARG_VALUE_RAW, 0, BU_ARG_COUNT_UNLIMITED,
+	"Input database, output image, or color object", NULL),
+    BU_ARG_OPERAND_NULL
+};
+
+static const struct bu_arg_schema rtwizard_schema = BU_ARG_SCHEMA(
+    "rtwizard", "Generate raytraced model visualizations", rtwizard_options,
+    rtwizard_operands, BU_ARG_PARSE_INTERSPERSED,
+    BU_ARG_SCHEMA_META_HELP(NULL, NULL, NULL, NULL, NULL));
 
 
 void print_rtwizard_state(struct rtwizard_settings *s) {
@@ -1275,97 +1320,94 @@ Init_RtWizard_Vars(Tcl_Interp *interp, struct rtwizard_settings *s)
 }
 
 
-/* Help message printed when -h option is supplied */
-void
-rtwizard_help(struct bu_opt_desc *d)
+#define RTWIZARD_HELP_GROUP_MAX 16
+
+static void
+rtwizard_help_group(struct bu_vls *output, const char *heading,
+	const char * const *names)
 {
-    struct bu_opt_desc_opts settings = BU_OPT_DESC_OPTS_INIT_ZERO;
-    struct bu_vls str = BU_VLS_INIT_ZERO;
-    struct bu_vls filtered = BU_VLS_INIT_ZERO;
-    char *option_help;
-    char *usage = bu_opt_usage(d, "rtwizard", NULL);
+    struct bu_arg_option selected[RTWIZARD_HELP_GROUP_MAX];
+    struct bu_arg_schema view = rtwizard_schema;
+    size_t count = 0;
+    size_t i;
+    char *description;
 
-    bu_vls_sprintf(&str, "%s\n", usage ? usage : "");
-    if (usage)
-	bu_free(usage, "rtwizard usage");
-
-    /* I/O options */
-    bu_vls_sprintf(&filtered, "h help-dev i o s w n cut-steps cut-direction animation-fps");
-    settings.accept = bu_vls_addr(&filtered);
-    option_help = bu_opt_describe(d, &settings);
-    if (option_help) {
-	bu_vls_printf(&str, "Input/Output Options:\n%s\n", option_help);
+    for (i = 0; names[i]; i++) {
+	size_t option_index;
+	for (option_index = 0; bu_arg_option_is_valid(&rtwizard_options[option_index]);
+		option_index++) {
+	    const char *canonical = bu_arg_option_canonical(&rtwizard_options[option_index]);
+	    if (canonical && BU_STR_EQUAL(canonical, names[i])) {
+		if (count + 1 >= RTWIZARD_HELP_GROUP_MAX)
+		    bu_bomb("RtWizard help group exceeds its fixed capacity");
+		selected[count++] = rtwizard_options[option_index];
+		break;
+	    }
+	}
     }
-    bu_free(option_help, "help str");
-
-    /* Visualization options */
-    bu_vls_sprintf(&filtered, "t c l g");
-    settings.accept = bu_vls_addr(&filtered);
-    option_help = bu_opt_describe(d, &settings);
-    if (option_help) {
-	bu_vls_printf(&str, "Visualization Options:\n%s\n", option_help);
+    selected[count] = (struct bu_arg_option)BU_ARG_OPTION_NULL;
+    view.options = selected;
+    view.operands = NULL;
+    description = bu_arg_schema_describe(&view);
+    if (description) {
+	bu_vls_printf(output, "%s:\n%s\n", heading, description);
+	bu_free(description, "RtWizard option help");
     }
-    bu_free(option_help, "help str");
-
-    /* View setup options */
-    bu_vls_sprintf(&filtered, "a e twist z center eye_pt viewsize orientation P");
-    settings.accept = bu_vls_addr(&filtered);
-    option_help = bu_opt_describe(d, &settings);
-    if (option_help) {
-	bu_vls_printf(&str, "View Setup Options:\n%s\n", option_help);
-    }
-    bu_free(option_help, "help str");
-
-    /* Style options */
-    bu_vls_sprintf(&filtered, "C line-color non-line-color G O ao-samples ao-radius");
-    settings.accept = bu_vls_addr(&filtered);
-    option_help = bu_opt_describe(d, &settings);
-    if (option_help) {
-	bu_vls_printf(&str, "Style Options:\n%s\n", option_help);
-    }
-    bu_free(option_help, "help str");
-
-    /* Display options */
-    bu_vls_sprintf(&filtered, "gui no-gui d p v");
-    settings.accept = bu_vls_addr(&filtered);
-    option_help = bu_opt_describe(d, &settings);
-    if (option_help) {
-	bu_vls_printf(&str, "Display Options:\n%s\n", option_help);
-    }
-    bu_free(option_help, "help str");
-
-    bu_log("%s", bu_vls_addr(&str));
-    bu_vls_free(&str);
-    bu_vls_free(&filtered);
 }
 
 
-/* Help message printed when --help-dev option is supplied */
-void
-rtwizard_help_dev(struct bu_opt_desc *d)
+static void
+rtwizard_help(void)
 {
-    struct bu_opt_desc_opts settings = BU_OPT_DESC_OPTS_INIT_ZERO;
-    struct bu_vls str = BU_VLS_INIT_ZERO;
-    struct bu_vls filtered = BU_VLS_INIT_ZERO;
-    char *option_help = NULL;
-    char *usage = bu_opt_usage(d, "rtwizard", NULL);
-    const char *devopts = "benchmark cpu-count pid-file log-file";
+    static const char * const io_options[] = {
+	"help", "help-dev", "input-file", "output-file", "size", "width",
+	"height", "cut-steps", "cut-direction", "animation-fps", NULL
+    };
+    static const char * const visualization_options[] = {
+	"type", "color-objects", "line-objects", "ghost-objects", NULL
+    };
+    static const char * const view_options[] = {
+	"azimuth", "elevation", "twist", "zoom", "center", "eye_pt",
+	"viewsize", "orientation", "perspective", NULL
+    };
+    static const char * const style_options[] = {
+	"background-color", "line-color", "non-line-color", "ghost-intensity",
+	"occlusion", "ao-samples", "ao-radius", NULL
+    };
+    static const char * const display_options[] = {
+	"gui", "no-gui", "fbserv-device", "fbserv-port", "verbose", NULL
+    };
+    struct bu_vls output = BU_VLS_INIT_ZERO;
+    char *usage = bu_arg_schema_usage(&rtwizard_schema, "rtwizard");
 
-    bu_vls_sprintf(&str, "%s\n", usage ? usage : "");
+    bu_vls_printf(&output, "%s\n", usage ? usage : "");
     if (usage)
-	bu_free(usage, "rtwizard developer usage");
+	bu_free(usage, "RtWizard usage");
+    rtwizard_help_group(&output, "Input/Output Options", io_options);
+    rtwizard_help_group(&output, "Visualization Options", visualization_options);
+    rtwizard_help_group(&output, "View Setup Options", view_options);
+    rtwizard_help_group(&output, "Style Options", style_options);
+    rtwizard_help_group(&output, "Display Options", display_options);
+    bu_log("%s", bu_vls_cstr(&output));
+    bu_vls_free(&output);
+}
 
-    bu_vls_sprintf(&filtered, "%s", devopts);
-    settings.accept = bu_vls_addr(&filtered);
-    option_help = bu_opt_describe(d, &settings);
-    if (option_help) {
-	bu_vls_printf(&str, "Options for developers:\n%s\n", option_help);
-    }
-    bu_free(option_help, "help str");
 
-    bu_log("%s", bu_vls_addr(&str));
-    bu_vls_free(&str);
-    bu_vls_free(&filtered);
+static void
+rtwizard_help_dev(void)
+{
+    static const char * const developer_options[] = {
+	"benchmark", "cpu-count", "pid-file", "log-file", NULL
+    };
+    struct bu_vls output = BU_VLS_INIT_ZERO;
+    char *usage = bu_arg_schema_usage(&rtwizard_schema, "rtwizard");
+
+    bu_vls_printf(&output, "%s\n", usage ? usage : "");
+    if (usage)
+	bu_free(usage, "RtWizard developer usage");
+    rtwizard_help_group(&output, "Options for developers", developer_options);
+    bu_log("%s", bu_vls_cstr(&output));
+    bu_vls_free(&output);
 }
 
 
@@ -1419,71 +1461,139 @@ rtwizard_rc(Tcl_Interp *interp)
 }
 
 
+static void
+rtwizard_args_init(struct rtwizard_args *args, const struct rtwizard_settings *settings)
+{
+    memset(args, 0, sizeof(*args));
+    bu_vls_init(&args->input_file);
+    bu_vls_init(&args->output_file);
+    bu_vls_init(&args->fb_device);
+    bu_vls_init(&args->pid_file);
+    bu_vls_init(&args->log_file);
+    bu_vls_vlscat(&args->input_file, settings->input_file);
+    bu_vls_vlscat(&args->output_file, settings->output_file);
+    bu_vls_vlscat(&args->fb_device, settings->fb_dev);
+    bu_vls_vlscat(&args->pid_file, settings->pid_file);
+    bu_vls_vlscat(&args->log_file, settings->log_file);
+    args->size = settings->size;
+    args->width = settings->width;
+    args->height = settings->height;
+    args->color = settings->color;
+    args->line = settings->line;
+    args->ghost = settings->ghost;
+    args->azimuth = settings->az;
+    args->elevation = settings->el;
+    args->twist = settings->tw;
+    args->zoom = settings->zoom;
+    VMOVE(args->center, settings->center);
+    VMOVE(args->eye_pt, settings->eye_pt);
+    args->viewsize = settings->viewsize;
+    HMOVE(args->orientation, settings->orientation);
+    args->perspective = settings->perspective;
+    args->background_color = *settings->bkg_color;
+    args->line_color = *settings->line_color;
+    args->non_line_color = *settings->non_line_color;
+    args->ghost_intensity = settings->ghost_intensity;
+    args->occlusion = settings->occlusion;
+    args->use_gui = settings->use_gui;
+    args->no_gui = settings->no_gui;
+    args->port = settings->port;
+    args->benchmark = settings->benchmark;
+    args->cpus = settings->cpus;
+    args->verbose = settings->verbose;
+    args->cut_steps = settings->cut_steps;
+    VMOVE(args->cut_direction, settings->cut_direction);
+    args->animation_fps = settings->animation_fps;
+    args->ao_samples = settings->ao_samples;
+    args->ao_radius = settings->ao_radius;
+}
+
+
+static void
+rtwizard_args_apply(struct rtwizard_settings *settings,
+	const struct rtwizard_args *args, int size_set, int width_set,
+	int height_set, int cut_direction_set)
+{
+    bu_vls_strcpy(settings->input_file, bu_vls_cstr(&args->input_file));
+    bu_vls_strcpy(settings->output_file, bu_vls_cstr(&args->output_file));
+    bu_vls_strcpy(settings->fb_dev, bu_vls_cstr(&args->fb_device));
+    bu_vls_strcpy(settings->pid_file, bu_vls_cstr(&args->pid_file));
+    bu_vls_strcpy(settings->log_file, bu_vls_cstr(&args->log_file));
+    if (size_set) {
+	settings->size = args->size;
+	settings->size_set = 1;
+	if (!width_set)
+	    settings->width = args->size;
+	if (!height_set)
+	    settings->height = args->size;
+    }
+    if (width_set) {
+	settings->width = args->width;
+	settings->width_set = 1;
+    }
+    if (height_set) {
+	settings->height = args->height;
+	settings->height_set = 1;
+    }
+    settings->az = args->azimuth;
+    settings->el = args->elevation;
+    settings->tw = args->twist;
+    settings->zoom = args->zoom;
+    VMOVE(settings->center, args->center);
+    VMOVE(settings->eye_pt, args->eye_pt);
+    settings->viewsize = args->viewsize;
+    HMOVE(settings->orientation, args->orientation);
+    settings->perspective = args->perspective;
+    *settings->bkg_color = args->background_color;
+    *settings->line_color = args->line_color;
+    *settings->non_line_color = args->non_line_color;
+    settings->ghost_intensity = args->ghost_intensity;
+    settings->occlusion = args->occlusion;
+    settings->use_gui = args->use_gui;
+    settings->no_gui = args->no_gui;
+    settings->port = args->port;
+    settings->benchmark = args->benchmark;
+    settings->cpus = args->cpus;
+    settings->verbose = args->verbose;
+    settings->cut_steps = args->cut_steps;
+    VMOVE(settings->cut_direction, args->cut_direction);
+    settings->cut_direction_set = cut_direction_set;
+    settings->animation_fps = args->animation_fps;
+    settings->ao_samples = args->ao_samples;
+    settings->ao_radius = args->ao_radius;
+}
+
+
+static void
+rtwizard_args_free(struct rtwizard_args *args)
+{
+    bu_vls_free(&args->input_file);
+    bu_vls_free(&args->output_file);
+    bu_vls_free(&args->fb_device);
+    bu_vls_free(&args->pid_file);
+    bu_vls_free(&args->log_file);
+}
+
+
 int
 main(int argc, char **argv)
 {
     char *av0;
     char type = '\0';
     int i = 0;
-    int need_help = 0;
-    int need_help_dev = 0;
     int uac = 0;
+    int operand_index;
+    int size_set;
+    int width_set;
+    int height_set;
+    int cut_direction_set;
 
     struct bu_vls optparse_msg = BU_VLS_INIT_ZERO;
     struct bu_vls info_msg = BU_VLS_INIT_ZERO;
     struct rtwizard_settings *s = rtwizard_settings_create();
-    struct bu_opt_desc d[40];
+    struct rtwizard_args args;
 
-    BU_OPT(d[0],  "h", "help",          "",             NULL,            &need_help,     "Print options help and exit");
-    BU_OPT(d[1],  "",  "help-dev",      "",             NULL,            &need_help_dev, "Print development and programmatic options.");
-
-    /* I/O FILE OPTIONS */
-    BU_OPT(d[2],  "i", "input-file",    "<filename>",   &bu_opt_vls,     s->input_file,  "Input .g database file");
-    BU_OPT(d[3],  "o", "output-file",   "<filename>",   &bu_opt_vls,     s->output_file, "Image output file name");
-    BU_OPT(d[4],  "s", "size",          "#",            &opt_size,       s,              "Output width & height (for square image)");
-    BU_OPT(d[5],  "w", "width",         "#",            &opt_width,      s,              "Output image width (overrides -s)");
-    BU_OPT(d[6],  "n", "height",        "#",            &opt_height,     s,              "Output image height (overrides -s)");
-
-    /* VISUALIZATION OPTIONS */
-    BU_OPT(d[7],  "t", "type",          "A|B|C|D|E|F",  &opt_letter,     &type,          "Specify RtWizard picture type");
-    BU_OPT(d[8],  "c", "color-objects", "<obj_list>",   &opt_objs,       s->color,       "List of color objects (e.g., -c obj1,obj2)");
-    BU_OPT(d[9],  "l", "line-objects",  "<obj_list>",   &opt_objs,       s->line,        "List of line objects");
-    BU_OPT(d[10], "g", "ghost-objects", "<obj_list>",   &opt_objs,       s->ghost,       "List of ghost objects");
-
-    /* VIEW SETUP OPTIONS */
-    BU_OPT(d[11], "a", "azimuth",       "<float>",      &bu_opt_fastf_t, &s->az,         "Set azimuth");
-    BU_OPT(d[12], "e", "elevation",     "<float>",      &bu_opt_fastf_t, &s->el,         "Set elevation");
-    BU_OPT(d[13], "",  "twist",         "<float>",      &bu_opt_fastf_t, &s->tw,         "Set twist");
-    BU_OPT(d[14], "z", "zoom",          "<float>",      &bu_opt_fastf_t, &s->zoom,       "Set zoom");
-    BU_OPT(d[15], "",  "center",        "<point>",      &bu_opt_vect_t,  &s->center,     "Set view center (e.g., -center 1.2/3.4/5)");
-    BU_OPT(d[16], "",  "eye_pt",        "<point>",      &bu_opt_vect_t,  &s->eye_pt,     "Set eye point (e.g., -eye_pt 1.0/2.0/3.0)");
-    BU_OPT(d[17], "",  "viewsize",      "<float>",      &bu_opt_fastf_t, &s->viewsize,   "Set view size");
-    BU_OPT(d[18], "",  "orientation",   "<quat>",       &opt_quat,       &s->orientation, "Set view orientation (e.g., -orientation 1/2/3/4)");
-    BU_OPT(d[19], "P", "perspective",   "<float>",      &bu_opt_fastf_t, &s->perspective, "Set perspective");
-
-    /* STYLE OPTIONS */
-    BU_OPT(d[20], "C", "background-color", "<color>",   &bu_opt_color,   s->bkg_color,   "Background image color (e.g., -C 255/0/0)");
-    BU_OPT(d[21], "",  "line-color",       "<color>",   &bu_opt_color,   s->line_color,  "Color used for line rendering");
-    BU_OPT(d[22], "",  "non-line-color",   "<color>",   &bu_opt_color,   s->non_line_color, "Color used for non-line rendering");
-    BU_OPT(d[23], "G", "ghost-intensity",  "<float>",   &bu_opt_fastf_t, &s->ghost_intensity,"Intensity of ghost objects");
-    BU_OPT(d[24], "O", "occlusion",     "#",            &bu_opt_int,     &s->occlusion,  "Occlusion mode (1 to 3, e.g., -O 1)");
-
-    /* RUNTIME BEHAVIOR (dev and non-dev) */
-    BU_OPT(d[25],  "",  "gui",           "",             NULL,            &s->use_gui,    "Force use of GUI.");
-    BU_OPT(d[26],  "",  "no-gui",        "",             NULL,            &s->no_gui,     "Do not use GUI, even if available information is insufficient to generate image.");
-    BU_OPT(d[27], "d", "fbserv-device", "<device>",     &bu_opt_vls,     s->fb_dev,      "Device for framebuffer viewing (e.g., -d /dev/wgl)");
-    BU_OPT(d[28], "p", "fbserv-port",   "#",            &bu_opt_int,     &s->port,       "Port # for framebuffer");
-    BU_OPT(d[29], "",  "benchmark",     "",             NULL,            &s->benchmark,  "Benchmark mode (no randomness)");
-    BU_OPT(d[30], "",  "cpu-count",     "#",            &bu_opt_int,     &s->cpus,       "Specify the number of CPUs to use");
-    BU_OPT(d[31], "",  "pid-file",      "<filename>",   &bu_opt_vls,     s->pid_file,    "File used for tracking PID numbers");
-    BU_OPT(d[32], "",  "log-file",      "<filename>",   &bu_opt_vls,     s->log_file,    "Log debugging output to this file");
-    BU_OPT(d[33], "v", "verbose",       "#",            &bu_opt_int,     &s->verbose,    "Verbosity");
-    BU_OPT(d[34], "",  "cut-steps",     "#",            &bu_opt_int,     &s->cut_steps,  "Generate a cutting-plane animation with this many frames");
-    BU_OPT(d[35], "",  "cut-direction", "<vector>",     &opt_cut_direction, s,            "Model-space direction in which the cutting plane advances");
-    BU_OPT(d[36], "",  "animation-fps", "#",            &bu_opt_int,     &s->animation_fps, "Animation frames per second");
-    BU_OPT(d[37], "",  "ao-samples",    "#",            &bu_opt_int,     &s->ao_samples, "Ambient occlusion samples per ray");
-    BU_OPT(d[38], "",  "ao-radius",     "<float>",      &bu_opt_fastf_t, &s->ao_radius,  "Ambient occlusion maximum radius");
-    BU_OPT_NULL(d[39]);
+    rtwizard_args_init(&args, s);
 
     /* initialize progname for run-time resource finding */
     bu_setprogname(argv[0]);
@@ -1501,41 +1611,36 @@ main(int argc, char **argv)
     /* Skip first arg */
     argv++; argc--;
 
-    uac = bu_opt_parse(&optparse_msg, argc, (const char **)argv, d);
-
-    if (uac == -1) {
-	bu_exit(EXIT_FAILURE, "%s", bu_vls_addr(&optparse_msg));
+    size_set = bu_arg_schema_option_present(&rtwizard_schema, argc,
+	(const char **)argv, "size");
+    width_set = bu_arg_schema_option_present(&rtwizard_schema, argc,
+	(const char **)argv, "width");
+    height_set = bu_arg_schema_option_present(&rtwizard_schema, argc,
+	(const char **)argv, "height");
+    cut_direction_set = bu_arg_schema_option_present(&rtwizard_schema, argc,
+	(const char **)argv, "cut-direction");
+    operand_index = bu_arg_schema_parse(&rtwizard_schema, &args, &optparse_msg,
+	argc, (const char **)argv);
+    if (operand_index < 0) {
+	bu_exit(EXIT_FAILURE, "%s", bu_vls_cstr(&optparse_msg));
     }
     bu_vls_free(&optparse_msg);
 
-    if (need_help) {
-	rtwizard_help((struct bu_opt_desc *)&d);
+    if (args.help) {
+	rtwizard_help();
+	bu_exit(EXIT_SUCCESS, NULL);
+    }
+    if (args.help_dev) {
+	rtwizard_help_dev();
 	bu_exit(EXIT_SUCCESS, NULL);
     }
 
-    if (need_help_dev) {
-	rtwizard_help_dev((struct bu_opt_desc *)&d);
-	bu_exit(EXIT_SUCCESS, NULL);
-    }
-
-    {
-	int stop = 0;
-	for (i = 0; i < uac; i++) {
-	    if (argv[i][0] == '-' && argv[i][1] == '?') {
-		need_help=1;
-	    } else if (argv[i][0] == '-') {
-		bu_log("ERROR: unknown option %s.\n", argv[i]);
-		stop++;
-	    }
-	}
-	if (stop && !need_help)
-	    bu_exit(EXIT_FAILURE, "Halting.  Unknown options encountered.\n");
-    }
-
-    if (need_help) {
-	rtwizard_help((struct bu_opt_desc *)&d);
-	bu_exit(EXIT_SUCCESS, NULL);
-    }
+    type = args.type;
+    rtwizard_args_apply(s, &args, size_set, width_set, height_set,
+	cut_direction_set);
+    rtwizard_args_free(&args);
+    argv += operand_index;
+    uac = argc - operand_index;
 
     if (type != '\0') {
 	bu_log("Image type: %c\n", type);
@@ -1615,8 +1720,6 @@ main(int argc, char **argv)
 	}
     }
     bu_vls_free(&info_msg);
-
-    /*print_rtwizard_state(s);*/
 
     /* For now, all roads lead to Tcl. */
 
