@@ -388,6 +388,64 @@ scalar outputs, an empty filename, and preservation of an existing render
 when the requested image is missing.
 
 
+== Native color-texture decoding
+
+Prefer scene-linear color textures prepared before building mipmaps, with
+`as_texture.in_enable_cms` left at `0`.  For an encoded RGB source, the
+native node can explicitly decode its sampled values by enabling CMS and
+selecting `in_eotf`:
+
+[cols="1,2"]
+|===
+|Value |Input transfer
+|0 |Raw
+|1 |sRGB
+|2 |Rec.709 inverse camera transfer
+|3 |Gamma 2.2
+|4 |Gamma 2.4
+|5 |Gamma 2.6 (DCI)
+|6 |Rec.1886, normalized black and white
+|7 |Rec.2020 inverse camera transfer, 12-bit coefficients
+|===
+
+For example, select an encoded sRGB color image on a new material:
+
+----
+material create color.material "Image color"
+material set color.material optical OSL as_plastic
+material set color.material optical OSL.version 2
+material set color.material optical OSL.node.image as_texture
+material set color.material optical OSL.param.image.in_filename "string textures/color.tif"
+material set color.material optical OSL.param.image.in_enable_cms "int 1"
+material set color.material optical OSL.param.image.in_eotf "int 1"
+material set color.material optical OSL.param.image.in_rgb_primaries "string sRGB/Rec.709"
+material set color.material optical OSL.param.image.in_workingspace_rgb_primaries "string sRGB/Rec.709"
+material set color.material optical OSL.connect.material.in_color image.out_color
+material assign ball.r color.material
+----
+
+The settings are explicit; file color-space metadata does not select the
+transfer.  `in_rgb_primaries` set to `Raw` bypasses conversion of primaries
+while retaining the selected transfer.  The decoded `out_channel` uses the
+working-space luminance coefficients.  One-channel data images retain
+their scalar values, and fill colors bypass decoding.
+
+Decoding happens after the texture lookup.  It cannot correct mipmaps or
+interpolation performed on encoded values.  Convert color images to linear
+values before filtering when preparing production assets, and retain raw
+values for height and normal data.
+
+`regress-art-color` checks all eight transfers against independent linear
+RGB reference values, using constant floating-point images and raw
+primaries to isolate the transfer.  It checks invalid transfer selections,
+CMS bypass, the Rec.709 encoding helper, and the Rec.2020 decoding helper
+with both supported coefficient sets.  Checks run in the shader before
+display conversion and allow `1e-5` absolute error for float power
+approximations.  These tests cover sampled values at the toe and higher
+levels; they do not qualify conversions between primaries, HDR and
+negative-value handling, or filtering encoded color images.
+
+
 == Bump and normal-map networks
 
 Version 2 can connect native Appleseed normal nodes to a material.  For
