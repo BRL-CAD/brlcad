@@ -1204,6 +1204,44 @@ lookup directions without derivative storage supply zero footprints
 instead of dereferencing absent derivatives.
 
 
+== Validating an installed application
+
+Build the development `art_scene_test` target, then configure the art
+regression directory as a standalone test project against the installed
+application:
+
+----
+cmake -S brlcad/regress/art -B installed-art-tests \
+    -DART_INSTALLED_PREFIX="${ART_PREFIX}" \
+    -DART_SCENE_TEST="${BRLCAD_BUILD}/regress/art/art_scene_test"
+cmake --build installed-art-tests --parallel 2
+ctest --test-dir installed-art-tests --parallel 2 --output-on-failure
+----
+
+`ART_PREFIX` contains the installed `art`, `oslc`, `maketx`, and `oiiotool`
+programs, renderer libraries, and shader resources.  The development helper
+creates fixture databases and checks their images.  Shader fixtures compile
+with the installed compiler and headers, and all art render commands and
+image-texture preparation tools come from the selected installation.
+The standalone project shares the regression cases with the development
+build and writes its outputs in its own test directory.
+
+Loader environment overrides and `BRLCAD_ROOT` are cleared for fixture
+compilation and test execution.  On FreeBSD and Linux, the additional
+`art-installed-runtime` test audits the dynamically linked application and
+tools with `ldd`.  It rejects unresolved dependencies, Boost, and libraries
+outside the installation and the base system library directories.  Runtime
+logs are saved alongside the test outputs.  Other platforms require their
+own loader audit before recording a portable-installation result.
+
+Qualify relocation by moving the complete installation to another directory,
+including a path containing spaces, and running a fresh standalone test
+build against that directory.  Keep database-relative project assets with
+their databases.  Record the platform, install configuration, runtime audit,
+and regression results with the qualification evidence.  The lower-level
+librt and procedural-intersection tests continue to run in the development
+build.
+
 == Development milestones
 
 Each milestone requires source changes, documentation, and appropriate

@@ -1,3 +1,8 @@
+if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
+  cmake_minimum_required(VERSION 3.22)
+  project(art_installed_regressions NONE)
+endif()
+
 set(ART_TEST_SHADER_NAMES
   art_diffuse
   art_color
@@ -25,7 +30,32 @@ set(ART_TEST_SHADER_NAMES
   art_coat_reference
   art_instance_materials
 )
-cmakefiles(CMakeLists.txt art_scene.cpp art_test_mesh.h art_test_commands.cmake
+set(ART_REGRESSION_TIMEOUT 180)
+set(ART_REGRESSION_TEST_NAMES
+  regress-art
+  regress-art-bump
+  regress-art-normal
+  regress-art-texture
+  regress-art-color
+  regress-art-image-maps
+  regress-art-resources
+  regress-art-transmission
+  regress-art-refraction
+  regress-art-mixture
+  regress-art-surface
+  regress-art-metal-energy
+  regress-art-coat
+  regress-art-materials
+  regress-art-inspect
+)
+
+if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
+  include("${CMAKE_CURRENT_SOURCE_DIR}/art_installed_tests.cmake")
+  return()
+endif()
+
+cmakefiles(CMakeLists.txt art_test_setup.cmake art_installed_tests.cmake
+  art_installed_runtime.cmake.in art_scene.cpp art_test_mesh.h art_test_commands.cmake
   regress-art.cmake.in regress-art-bump.cmake.in regress-art-normal.cmake.in
   regress-art-texture.cmake.in regress-art-color.cmake.in
   regress-art-image-maps.cmake.in regress-art-resources.cmake.in
@@ -39,50 +69,12 @@ endforeach()
 
 if(TARGET art AND BUILD_TESTING)
   get_target_property(renderer_prefix art ART_RENDERER_PREFIX)
-  find_program(ART_OSLC_EXECUTABLE NAMES oslc
-    HINTS "${renderer_prefix}/bin" NO_DEFAULT_PATH REQUIRED)
-  find_path(ART_OSL_SHADER_INCLUDE_DIR stdosl.h
-    HINTS "${renderer_prefix}/share/OSL/shaders" "${renderer_prefix}/shaders" NO_DEFAULT_PATH REQUIRED)
-  find_path(ART_OSL_HELPER_INCLUDE_DIR NAMES appleseed/as_osl_extensions.h
-    HINTS "${renderer_prefix}/shaders/include" NO_DEFAULT_PATH REQUIRED)
-  find_program(ART_MAKETX_EXECUTABLE NAMES maketx
-    HINTS "${renderer_prefix}/bin" NO_DEFAULT_PATH REQUIRED)
-  find_program(ART_OIIOTOOL_EXECUTABLE NAMES oiiotool
-    HINTS "${renderer_prefix}/bin" NO_DEFAULT_PATH REQUIRED)
-  # SDK helper includes are outside the source tree; track their updates too.
-  file(GLOB_RECURSE ART_OSL_HELPER_HEADERS CONFIGURE_DEPENDS
-    "${ART_OSL_HELPER_INCLUDE_DIR}/appleseed/*.h")
-  set(ART_TEST_SHADERS)
-  foreach(shader IN LISTS ART_TEST_SHADER_NAMES)
-    set(compiled "${CMAKE_CURRENT_BINARY_DIR}/${shader}.oso")
-    add_custom_command(OUTPUT "${compiled}"
-      COMMAND "${ART_OSLC_EXECUTABLE}" "-I${ART_OSL_SHADER_INCLUDE_DIR}"
-        "-I${ART_OSL_HELPER_INCLUDE_DIR}"
-        -o "${compiled}" "${CMAKE_CURRENT_SOURCE_DIR}/${shader}.osl"
-      DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/${shader}.osl"
-        "${ART_OSLC_EXECUTABLE}" "${ART_OSL_SHADER_INCLUDE_DIR}/stdosl.h"
-        ${ART_OSL_HELPER_HEADERS}
-      VERBATIM)
-    list(APPEND ART_TEST_SHADERS "${compiled}")
-  endforeach()
-  add_custom_target(art_test_shaders DEPENDS ${ART_TEST_SHADERS})
+  include("${CMAKE_CURRENT_SOURCE_DIR}/art_test_setup.cmake")
   brlcad_addexec(art_scene_test art_scene.cpp "libged;libwdb;libicv" TEST)
   add_dependencies(art_scene_test art_test_shaders)
-  brlcad_regression_test(regress-art "art;art_scene_test" EXEC art VEXEC art_scene_test TIMEOUT 120)
-  brlcad_regression_test(regress-art-bump "art;art_scene_test" EXEC art VEXEC art_scene_test TIMEOUT 120)
-  brlcad_regression_test(regress-art-normal "art;art_scene_test" EXEC art VEXEC art_scene_test TIMEOUT 120)
-  brlcad_regression_test(regress-art-texture "art;art_scene_test" EXEC art VEXEC art_scene_test TIMEOUT 120)
-  brlcad_regression_test(regress-art-color "art;art_scene_test" EXEC art VEXEC art_scene_test TIMEOUT 120)
-  brlcad_regression_test(regress-art-image-maps "art;art_scene_test" EXEC art VEXEC art_scene_test TIMEOUT 120)
-  brlcad_regression_test(regress-art-resources "art;art_scene_test" EXEC art VEXEC art_scene_test TIMEOUT 120)
-  brlcad_regression_test(regress-art-transmission "art;art_scene_test" EXEC art VEXEC art_scene_test TIMEOUT 120)
-  brlcad_regression_test(regress-art-refraction "art;art_scene_test" EXEC art VEXEC art_scene_test TIMEOUT 120)
-  brlcad_regression_test(regress-art-mixture "art;art_scene_test" EXEC art VEXEC art_scene_test TIMEOUT 120)
-  brlcad_regression_test(regress-art-surface "art;art_scene_test" EXEC art VEXEC art_scene_test TIMEOUT 120)
-  brlcad_regression_test(regress-art-metal-energy "art;art_scene_test" EXEC art VEXEC art_scene_test TIMEOUT 120)
-  brlcad_regression_test(regress-art-coat "art;art_scene_test" EXEC art VEXEC art_scene_test TIMEOUT 120)
-  brlcad_regression_test(regress-art-materials "art;art_scene_test" EXEC art VEXEC art_scene_test TIMEOUT 120)
-  brlcad_regression_test(regress-art-inspect "art;art_scene_test" EXEC art VEXEC art_scene_test TIMEOUT 120)
+  foreach(test IN LISTS ART_REGRESSION_TEST_NAMES)
+    brlcad_regression_test(${test} "art;art_scene_test" EXEC art VEXEC art_scene_test TIMEOUT ${ART_REGRESSION_TIMEOUT})
+  endforeach()
   add_test(NAME regress-art-intersections COMMAND art_intersection_test)
   brlcad_regression_test(regress-art-intersections "art_intersection_test" TEST_DEFINED TIMEOUT 120)
   distclean("${CMAKE_CURRENT_BINARY_DIR}/output" "${CMAKE_CURRENT_BINARY_DIR}/bump-output"
