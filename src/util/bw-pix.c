@@ -103,6 +103,7 @@ write_output(FILE *outfp, const unsigned char *buf, size_t len, int dup_stdout)
 int
 main(int argc, char **argv)
 {
+    const struct bu_arg_grammar grammar = {&bw_pix_schema, NULL, NULL};
     FILE *in_std = NULL;
     FILE *out_std = NULL;
     struct bu_vls in_fname = BU_VLS_INIT_ZERO;
@@ -117,6 +118,14 @@ main(int argc, char **argv)
     char usage[] = "Usage: bw-pix [-o out_file.pix] [file.bw] [file_green.bw file_blue.bw] [ > out_file.pix]\n";
 
     bu_setprogname(argv[0]);
+
+    int schema_status = bu_arg_introspect(&optparse_msg, &grammar, argc - 1,
+	(const char * const *)(argv + 1));
+    if (schema_status != 0) {
+	bu_flog(schema_status > 0 ? stdout : stderr, "%s", bu_vls_cstr(&optparse_msg));
+	bu_vls_free(&optparse_msg);
+	return schema_status > 0 ? EXIT_SUCCESS : EXIT_FAILURE;
+    }
 
     /* Skip first arg */
     argv++; argc--;

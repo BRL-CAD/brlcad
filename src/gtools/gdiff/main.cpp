@@ -339,6 +339,7 @@ gdiff_usage(const char *cmd) {
 int
 main(int argc, const char **argv)
 {
+    const struct bu_arg_grammar grammar = {&gdiff_schema, NULL, NULL};
     int diff_return = 0;
     struct gdiff_args args = {};
     struct diff_state *state;
@@ -349,6 +350,14 @@ main(int argc, const char **argv)
     struct gdiff_group_opts gopts = GDIFF_GROUP_OPTS_DEFAULT;
 
     bu_setprogname(argv[0]);
+
+    int schema_status = bu_arg_introspect(&msg, &grammar, argc - 1,
+	argv + 1);
+    if (schema_status != 0) {
+	bu_flog(schema_status > 0 ? stdout : stderr, "%s", bu_vls_cstr(&msg));
+	bu_vls_free(&msg);
+	return schema_status > 0 ? BRLCAD_OK : BRLCAD_ERROR;
+    }
 
     // Name stashed, move on
     argc--; argv++;

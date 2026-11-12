@@ -181,10 +181,19 @@ process_mesh(struct rt_wdb *outfp, const tg3_model &model, const tg3_mesh &mesh,
 int
 main(int argc, char **argv)
 {
+    const struct bu_arg_grammar grammar = {&gltf_schema, NULL, NULL};
     struct gltf_args args = {};
     struct bu_vls msg = BU_VLS_INIT_ZERO;
 
     bu_setprogname(argv[0]);
+
+    int schema_status = bu_arg_introspect(&msg, &grammar, argc - 1,
+	(const char * const *)(argv + 1));
+    if (schema_status != 0) {
+	bu_flog(schema_status > 0 ? stdout : stderr, "%s", bu_vls_cstr(&msg));
+	bu_vls_free(&msg);
+	return schema_status > 0 ? BRLCAD_OK : BRLCAD_ERROR;
+    }
 
     if (argc > 0) {
 	--argc;

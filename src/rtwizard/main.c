@@ -1578,6 +1578,7 @@ rtwizard_args_free(struct rtwizard_args *args)
 int
 main(int argc, char **argv)
 {
+    const struct bu_arg_grammar grammar = {&rtwizard_schema, NULL, NULL};
     char *av0;
     char type = '\0';
     int i = 0;
@@ -1590,14 +1591,22 @@ main(int argc, char **argv)
 
     struct bu_vls optparse_msg = BU_VLS_INIT_ZERO;
     struct bu_vls info_msg = BU_VLS_INIT_ZERO;
-    struct rtwizard_settings *s = rtwizard_settings_create();
-    struct rtwizard_args args;
-
-    rtwizard_args_init(&args, s);
 
     /* initialize progname for run-time resource finding */
     bu_setprogname(argv[0]);
     av0 = argv[0];
+
+    int schema_status = bu_arg_introspect(&optparse_msg, &grammar, argc - 1,
+	(const char * const *)(argv + 1));
+    if (schema_status != 0) {
+	bu_flog(schema_status > 0 ? stdout : stderr, "%s", bu_vls_cstr(&optparse_msg));
+	bu_vls_free(&optparse_msg);
+	return schema_status > 0 ? EXIT_SUCCESS : EXIT_FAILURE;
+    }
+
+    struct rtwizard_settings *s = rtwizard_settings_create();
+    struct rtwizard_args args;
+    rtwizard_args_init(&args, s);
 
     /* Change the working directory to BU_DIR_HOME if we are invoking
      * without any arguments. */

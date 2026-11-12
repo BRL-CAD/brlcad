@@ -564,6 +564,7 @@ icv_convert_help(void)
 int
 main(int ac, const char **av)
 {
+    const struct bu_arg_grammar grammar = {&icv_convert_schema, NULL, NULL};
     struct icv_convert_args args = {};
     int ret = 0;
     int operand_index = 0;
@@ -582,6 +583,17 @@ main(int ac, const char **av)
     struct bu_vls in_path = BU_VLS_INIT_ZERO;
     struct bu_vls out_path = BU_VLS_INIT_ZERO;
     struct bu_vls slog = BU_VLS_INIT_ZERO;
+
+    int schema_status = bu_arg_introspect(&parse_msgs, &grammar, ac - 1,
+	av + 1);
+    if (schema_status != 0) {
+	bu_flog(schema_status > 0 ? stdout : stderr, "%s", bu_vls_cstr(&parse_msgs));
+	bu_vls_free(&parse_msgs);
+	bu_vls_free(&in_path);
+	bu_vls_free(&out_path);
+	bu_vls_free(&slog);
+	return schema_status > 0 ? 0 : 1;
+    }
 
     ac-=(ac>0);
     av+=(ac>0); /* skip program name argv[0] if present */

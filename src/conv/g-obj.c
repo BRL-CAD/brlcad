@@ -443,12 +443,22 @@ obj_write_region_material(const struct db_full_path *pathp, const struct db_tree
 int
 main(int argc, const char **argv)
 {
+    const struct bu_arg_grammar grammar = {&obj_schema, NULL, NULL};
     int c;
     double percent;
     struct obj_args args = {0};
     struct bu_vls parse_msgs = BU_VLS_INIT_ZERO;
 
     bu_setprogname(argv[0]);
+
+    int schema_status = bu_arg_introspect(&parse_msgs, &grammar, argc - 1,
+	argv + 1);
+    if (schema_status != 0) {
+	bu_flog(schema_status > 0 ? stdout : stderr, "%s", bu_vls_cstr(&parse_msgs));
+	bu_vls_free(&parse_msgs);
+	return schema_status > 0 ? EXIT_SUCCESS : EXIT_FAILURE;
+    }
+
     bu_setlinebuf(stderr);
 
     RT_DBTS_INIT(&tree_state);

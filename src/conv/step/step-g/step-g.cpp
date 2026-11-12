@@ -658,6 +658,18 @@ STEP_IMPORT_CLI_NAME(int argc, const char *argv[])
     if (argc < 1 || !argv || !argv[0]) return 2;
     caught_signal = 0;
     bu_setprogname(argv[0]);
+
+    const struct bu_arg_grammar grammar = {&step_cli_schema, NULL, NULL};
+    struct bu_vls schema_output = BU_VLS_INIT_ZERO;
+    const int schema_status = bu_arg_introspect(&schema_output, &grammar,
+	argc - 1, argv + 1);
+    if (schema_status != 0) {
+	bu_flog(schema_status > 0 ? stdout : stderr, "%s", bu_vls_cstr(&schema_output));
+	bu_vls_free(&schema_output);
+	return schema_status > 0 ? 0 : 2;
+    }
+    bu_vls_free(&schema_output);
+
     std::signal(SIGINT, record_signal);
     std::signal(SIGTERM, record_signal);
 

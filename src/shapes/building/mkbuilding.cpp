@@ -25,6 +25,7 @@
 #include "bu/app.h"
 #include "bu/arg.h"
 #include "bu/exit.h"
+#include "bu/log.h"
 #include "bu/malloc.h"
 #include "bu/str.h"
 #include "bu/vls.h"
@@ -293,6 +294,17 @@ int
 main(int argc, const char **argv)
 {
     bu_setprogname(argv[0]);
+    const struct bu_arg_grammar grammar = {&building_schema, NULL, NULL};
+    struct bu_vls schema_output = BU_VLS_INIT_ZERO;
+    const int schema_status = bu_arg_introspect(&schema_output, &grammar,
+	argc - 1, argv + 1);
+    if (schema_status != 0) {
+	bu_flog(schema_status > 0 ? stdout : stderr, "%s", bu_vls_cstr(&schema_output));
+	bu_vls_free(&schema_output);
+	return schema_status > 0 ? EXIT_SUCCESS : EXIT_FAILURE;
+    }
+    bu_vls_free(&schema_output);
+
     try {
 	const options opts = parse_options(argc, argv);
 	if (opts.print_schema) {

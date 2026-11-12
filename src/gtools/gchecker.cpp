@@ -92,6 +92,7 @@ gchecker_help(void)
 int
 main(int argc, const char **argv)
 {
+    const struct bu_arg_grammar grammar = {&gchecker_schema, NULL, NULL};
     struct gchecker_args args = {};
     int &dry_run = args.dry_run;
     int &verbose = args.verbose;
@@ -103,6 +104,16 @@ main(int argc, const char **argv)
 
 
     bu_setprogname(argv[0]);
+
+    struct bu_vls schema_output = BU_VLS_INIT_ZERO;
+    int schema_status = bu_arg_introspect(&schema_output, &grammar, argc - 1,
+	argv + 1);
+    if (schema_status != 0) {
+	bu_flog(schema_status > 0 ? stdout : stderr, "%s", bu_vls_cstr(&schema_output));
+	bu_vls_free(&schema_output);
+	return schema_status > 0 ? 0 : 1;
+    }
+    bu_vls_free(&schema_output);
 
     argc-=(argc>0); argv+=(argc>0);
 

@@ -1072,6 +1072,18 @@ static const struct bu_arg_schema brlman_schema = {
 int
 main(int argc, char **argv_input)
 {
+    bu_setprogname(argv_input[0]);
+    const struct bu_arg_grammar grammar = {&brlman_schema, NULL, NULL};
+    struct bu_vls schema_output = BU_VLS_INIT_ZERO;
+    int schema_status = bu_arg_introspect(&schema_output, &grammar, argc - 1,
+	(const char * const *)(argv_input + 1));
+    if (schema_status != 0) {
+	bu_flog(schema_status > 0 ? stdout : stderr, "%s", bu_vls_cstr(&schema_output));
+	bu_vls_free(&schema_output);
+	return schema_status > 0 ? EXIT_SUCCESS : EXIT_FAILURE;
+    }
+    bu_vls_free(&schema_output);
+
     std::vector<const char *> arguments(argv_input, argv_input + argc);
     const char **argv = arguments.data();
     std::setlocale(LC_CTYPE, "");
@@ -1097,9 +1109,6 @@ main(int argc, char **argv_input)
     struct bu_vls search_query = BU_VLS_INIT_ZERO;
     struct bu_vls &lang = args.lang;
     struct bu_vls optparse_msg = BU_VLS_INIT_ZERO;
-
-    /* initialize progname for run-time resource finding */
-    bu_setprogname(argv[0]);
 
     /* Skip first arg */
     argv++; argc--;

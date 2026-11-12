@@ -484,6 +484,7 @@ usage(void)
 int
 main(int ac, const char **av)
 {
+    const struct bu_arg_grammar grammar = {&gcv_schema, NULL, NULL};
     size_t i;
     int fmt = 0;
     int ret = 0;
@@ -516,6 +517,14 @@ main(int ac, const char **av)
     BU_ASSERT(ac > 0 && av);
 
     bu_setprogname(av[0]);
+
+    int schema_status = bu_arg_introspect(&parse_msgs, &grammar, ac - 1,
+	av + 1);
+    if (schema_status != 0) {
+	bu_flog(schema_status > 0 ? stdout : stderr, "%s", bu_vls_cstr(&parse_msgs));
+	bu_vls_free(&parse_msgs);
+	return schema_status > 0 ? 0 : 1;
+    }
 
     args.input_type = BU_MIME_MODEL_UNKNOWN;
     args.output_type = BU_MIME_MODEL_UNKNOWN;
