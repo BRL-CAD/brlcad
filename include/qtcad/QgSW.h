@@ -109,6 +109,7 @@ class QTCAD_EXPORT QgSW : public QWidget
 
 	bool use_default_keybindings = true;
 	bool use_default_mousebindings = true;
+	bool m_fb_opened = false;
 	int lmouse_mode = BV_SCALE;
 
 	bool m_init = false;
