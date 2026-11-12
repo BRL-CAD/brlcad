@@ -23,6 +23,18 @@ The optional *-E editor* argument selects a specific editor command instead of
 the default.  With no options, *edcolor* opens the default editor.
 
 
+[[options]]
+== OPTIONS
+
+// BEGIN GENERATED BU_ARG OPTIONS
+*-E* _editor_::
+  Editor command.
+
+*-h*, *--help*, *-?*::
+  Print command help.
+
+// END GENERATED BU_ARG OPTIONS
+
 [[examples]]
 == EXAMPLES
 

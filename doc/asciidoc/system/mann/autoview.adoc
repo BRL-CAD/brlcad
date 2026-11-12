@@ -27,7 +27,25 @@ displayed. The objects' bounding box is computed directly from the database.
 [[options]]
 == OPTIONS
 
-*-s*, *--scale* _scale_::
+// BEGIN GENERATED BU_ARG OPTIONS
+*-h*, *--help*::
+  Print help.
+
+*--all-objs*::
+  Bound all non-faceplate view objects.
+
+*-s* _number_, *--scale*=_number_::
+  View scale.
+
+*-V* _name_, *--view*=_name_::
+  Target view.
+
+// END GENERATED BU_ARG OPTIONS
+
+[[option_details]]
+== OPTION DETAILS
+
+=== *-s*, *--scale* _scale_
 Set the view scale: the model scale relative to the view size. A smaller value
 zooms in, a larger value zooms out; the default is 0.5 model scale (so the
 model occupies half the view).
@@ -36,7 +54,6 @@ For backward compatibility a bare leading numeric argument is also accepted as
 the scale, but only when *-s* is not given and no object of that name exists
 (an object with a purely numeric name always takes precedence). Use *-s* to
 avoid the ambiguity.
-
 
 [[examples]]
 == EXAMPLES

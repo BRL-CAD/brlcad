@@ -25,6 +25,15 @@ by the environment variable _EDITOR_, or _/bin/ed_ when it is unset. The
 optional `-E editor` argument supplies the editor command for this invocation.
 
 
+[[options]]
+== OPTIONS
+
+// BEGIN GENERATED BU_ARG OPTIONS
+*-E* _editor_::
+  Editor command.
+
+// END GENERATED BU_ARG OPTIONS
+
 [[examples]]
 == EXAMPLES
 

@@ -32,7 +32,11 @@ Output formats supported:
 * *glb* — glTF binary format.
 * *gltf* — glTF JSON format.
 
-=== Options
+[[options]]
+== OPTIONS
+
+*-h*, *--help*::
+Print command help.
 
 *-b*::
 Write output in binary format where supported (e.g., binary STL, binary glTF/GLB).
@@ -62,6 +66,12 @@ Export resolved color and material information when the selected format supports
 
 *--no-materials*::
 Disable color and material export and write geometry only.
+
+*--displayed*::
+Export displayed geometry.
+
+*--viewdata*::
+Include non-geometry view data in formats that support it.
 
 [[examples]]
 == EXAMPLES

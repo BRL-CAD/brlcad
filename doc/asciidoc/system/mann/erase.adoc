@@ -40,6 +40,31 @@ Those options are not available in the legacy command form; conversely, the
 legacy *-r*, *-A*, and *-o* modes are not available in the new command form.
 
 
+[[options]]
+== OPTIONS
+
+// BEGIN GENERATED BU_ARG OPTIONS
+=== erase options
+
+*-r*::
+  Erase all displayed paths associated with each object.
+
+*-A*::
+  Select objects by attribute name/value pairs.
+
+*-o*::
+  In attribute mode, match any supplied pair.
+
+=== erase options
+
+*-V* _name_, *--view*=_name_::
+  Specify the independent view to modify.
+
+*-m* _number_, *--mode*=_number_::
+  Erase objects drawn in the specified drawing mode.
+
+// END GENERATED BU_ARG OPTIONS
+
 [[examples]]
 == EXAMPLES
 
