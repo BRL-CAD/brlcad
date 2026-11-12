@@ -25,7 +25,6 @@ cmakefiles(${plugin_ignore_files})
 # Plugins
 add_subdirectory(polygon)
 add_subdirectory(view)
-add_subdirectory(edit)
 
 # Local Variables:
 # tab-width: 8
