@@ -33,6 +33,7 @@
 #include <QMap>
 #include <QSet>
 #include <QModelIndex>
+#include <QPointer>
 
 #include "bv.h"
 #include "raytrace.h"
@@ -112,6 +113,7 @@ class QgEdApp : public QApplication
 	QgPluginContext m_plugin_context;
 	QgPluginNotifier *m_plugin_notifier = NULL;
 	QgPluginManager *m_plugin_manager = NULL;
+	QPointer<QObject> m_legacy_event_filter;
 };
 
 #endif // QGEDAPP_H

@@ -604,14 +604,14 @@ QgEdApp::element_selected(QgToolPaletteElement *el)
 
     QgView *curr_view = w->CurrentDisplay();
 
-    if (curr_view->curr_event_filter) {
-	curr_view->clear_event_filter(curr_view->curr_event_filter);
-	curr_view->curr_event_filter = NULL;
+    if (m_legacy_event_filter) {
+	curr_view->clear_event_filter(m_legacy_event_filter);
+	m_legacy_event_filter = NULL;
     }
 
     if (el->use_event_filter) {
 	curr_view->add_event_filter(el->controls);
-	curr_view->curr_event_filter = el->controls;
+	m_legacy_event_filter = el->controls;
     }
     if (curr_view->view()) {
 	curr_view->view()->gv_width = curr_view->width();

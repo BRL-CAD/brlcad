@@ -344,7 +344,17 @@ QgView::clear_event_filter(QObject *o)
 	    filters.clear();
 	}
     }
-    curr_event_filter = NULL;
+    if (o) {
+	for (std::vector<QObject *>::iterator it = filters.begin();
+		it != filters.end();) {
+	    if (*it == o)
+		it = filters.erase(it);
+	    else
+		++it;
+	}
+    }
+    if (!o || curr_event_filter == o)
+	curr_event_filter = NULL;
 }
 
 void

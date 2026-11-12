@@ -180,7 +180,17 @@ QgPluginManagerTest::managesToolPalettes()
     QPointer<QObject> filter = tool->viewEventFilter();
     QVERIFY(qobject_cast<IQgViewEventFilter *>(filter.data()) != nullptr);
 
+    QObject firstFilter;
+    QObject secondFilter;
     QgView view(nullptr, QgView_SW);
+    view.add_event_filter(&firstFilter);
+    view.add_event_filter(&secondFilter);
+    QCOMPARE(view.curr_event_filter, &secondFilter);
+    view.clear_event_filter(&firstFilter);
+    QCOMPARE(view.curr_event_filter, &secondFilter);
+    view.clear_event_filter(&secondFilter);
+    QVERIFY(view.curr_event_filter == nullptr);
+
     controller.setActiveView(&view);
     QCOMPARE(filter->property("attachCount").toInt(), 1);
     controller.setActiveView(nullptr);
