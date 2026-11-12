@@ -56,11 +56,11 @@ display window of its own.
   update logic instead of the traditional command set. Primarily of use for
   development and testing of the next-generation command behavior.
 
-*--completion-mode=mode*::
+*--completion-mode*=_mode_::
   Select the interactive completion policy.  Supported values are *filter*,
   *cycle*, *prefix*, *legacy*, and *off*.  See *brlcad-completion*(5).
 
-*--command-schema=command|all*::
+*--command-schema*=_command|all_::
   Print the registered static command grammar as JSON and exit.  A command
   name prints one grammar; *all* prints a JSON array for the full discoverable
   LIBGED registry.  Runtime-dependent semantic providers are identified by

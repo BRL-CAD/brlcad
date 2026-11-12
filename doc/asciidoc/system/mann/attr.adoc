@@ -33,6 +33,12 @@ A newly formed region always has four attributes automatically assigned to it:
 
 The 'region' attribute is the 'region flag' mentioned in the edcomb command.
 
+[[options]]
+== OPTIONS
+
+*-c* _separator_::
+Separate output fields with the specified character.
+
 
 [[attr_subcommands]]
 == SUB-COMMANDS

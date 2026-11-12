@@ -102,7 +102,7 @@ A geometry specifier identifies the object to act on.  Supported forms:
   only; do not write to the database or close the session.  Use the lifecycle
   subcommands to inspect, commit, or discard the pending state.
 
-*-O key=value*, *--option key=value*::
+*-O* _key=value_, *--option*=_key=value_::
   Pass a dynamic option to the edit session.  The available options depend on
   the selected primitive and operation.
 
@@ -128,7 +128,7 @@ A geometry specifier identifies the object to act on.  Supported forms:
   Print a human-readable list of available descriptor-defined edit
   operations for all primitive types.
 
-*--list-all-prim-ops=json*::
+*--list-all-prim-ops*=_json_::
   Print the same information as a JSON array.
 
 

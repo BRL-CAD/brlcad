@@ -66,6 +66,12 @@ and *spsr*.  For compatibility, the method may be omitted when using the
 `pnts tri unit input_pnts output_bot`.  Interactive completion presents the
 explicit method names, while the omitted form remains accepted.
 
+[[options]]
+== OPTIONS
+
+*-h*, *--help*::
+Print command help.
+
 
 [[subcommands]]
 == SUBCOMMANDS

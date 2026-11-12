@@ -160,10 +160,13 @@ geometry in the other direction, see *g-iges*(1).
 [[options]]
 == OPTIONS
 
-*-3*::
+*-h*, *--help*::
+  Print command help and exit.
+
+*-3*, *--3d-drawings*::
   Preserve drawing model-space planes instead of projecting them to XY.
 
-*-d*::
+*-d*, *--drawings*::
   Convert IGES drawings to native BRL-CAD sketch and annotation objects,
   preserving text, leaders, grouping, and style metadata when possible.
 
@@ -172,19 +175,19 @@ geometry in the other direction, see *g-iges*(1).
   option uses the C++ document reader; it does not select a separate parser.
   Use with *-d* or *-3* to select drawing import explicitly.
 
-*-n*::
+*-n*, *--nurbs*::
   Import supported surfaces directly as OpenNURBS BReps, as in the default
   mode. Native CSG members and their assembly placements are also retained.
 
-*-t*::
+*-t*, *--trimmed-surfaces*::
   Import supported trimmed surfaces directly as OpenNURBS BReps, as in the
   default mode, retaining native CSG members and assembly placements. Shared
   topology is assembled without using NMG.
 
-*-p*::
+*-p*, *--polygonal*::
   Write BREP objects as polygonal NMG solids instead of native BRep objects.
 
-*-m*::
+*-m*, *--mesh*::
   Write BREP objects as triangulated BOT solids instead of native BRep objects.
 
 *--exact*::
@@ -244,23 +247,23 @@ geometry in the other direction, see *g-iges*(1).
   the scan completed without read errors, not that all shells were outward or
   valid. This mode never applies the proposed corrections.
 
-*-o* _database.g_::
+*-o* _database.g_, *--output*=_database.g_::
   Specify the output BRL-CAD database file, overriding any positional output.
   Required only when no output filename follows the input filename.
   Conversion is staged beside the destination; a failed conversion leaves
   an existing database untouched. The input, output, and report must identify
   distinct files, including through symbolic links or hard links.
 
-*-N* _solid_name_::
+*-N* _solid_name_, *--name*=_solid_name_::
   Name the output root combination. The default is *iges_geometry* for solid
   and surface imports or *iges_drawing* for drawings, with a unique suffix if
   needed. This option applies to all import modes.
 
-*-x* _rt_debug_flag_::
+*-x* _rt_debug_flag_, *--rt-debug*=_rt_debug_flag_::
   Set the librt debug flag, given as a hexadecimal value. See _raytrace.h_ for
   the bit definitions.
 
-*-X* _nmg_debug_flag_::
+*-X* _nmg_debug_flag_, *--nmg-debug*=_nmg_debug_flag_::
   Set the NMG routine debug flag, given as a hexadecimal value. See _nmg.h_
   for the bit definitions.
 
