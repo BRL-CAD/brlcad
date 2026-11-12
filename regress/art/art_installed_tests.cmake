@@ -30,7 +30,7 @@ unset(ART_MGED_EXECUTABLE CACHE)
 find_program(ART_MGED_EXECUTABLE NAMES mged
   HINTS "${renderer_prefix}/bin" NO_DEFAULT_PATH NO_CACHE)
 if(ART_MGED_EXECUTABLE)
-  list(APPEND installed_tests art-installed-material)
+  list(APPEND installed_tests art-installed-material art-installed-plate)
 endif()
 foreach(test IN LISTS installed_tests)
   configure_file("${CMAKE_CURRENT_SOURCE_DIR}/${test}.cmake.in"

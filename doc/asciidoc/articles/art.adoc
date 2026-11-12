@@ -164,8 +164,9 @@ concurrent first-use ARB mapping, and authored BOT coordinates under
 nonuniform transforms.  Smooth BOT checks distinguish facet and shading
 normals, including inside rays and Boolean cuts.  A centered, unoriented
 plate BOT checks front/back thickness boundaries, oblique and non-unit rays,
-clipped intervals, and secondary-ray offsets.  Rendered plate transmission
-remains unqualified.  Derivative checks compare
+clipped intervals, and secondary-ray offsets.  Straight plate absorption and
+explicit conversion to a refractive volume are covered by the installed
+plate workflow described below.  Derivative checks compare
 unit-normal changes to nearby ray hits on spheres and flat, smooth,
 transformed, and Boolean-cut meshes.  Missing mappings and singular poles
 leave derivative inputs unavailable.
@@ -185,16 +186,16 @@ clipping, and premultiplied coverage.  Appleseed retains single-byte text
 input.  Both use unhinted rasterization with struetype.
 
 |Installed builds across platforms
-|A complete headless art installation passed all 18 installed checks on
+|A complete headless art installation passed all 19 installed checks on
 FreeBSD after relocation to a path containing spaces.  Coverage includes
-16 shared rendering and material regressions, persisted material authoring
-through installed mged, and the runtime library audit.  Six geometry and
-procedural-intersection checks also passed against the fresh bundled build.
+16 shared rendering and material regressions, persisted material authoring,
+plate conversion through installed mged, and the runtime library audit.
+Seven geometry and procedural-intersection checks also passed against the
+fresh bundled build.
 A finalized renderer SDK copied to a different directory compiles an OSL
 helper shader, builds an installed-API consumer, and renders.  The checked
 renderer, shader compiler, and texture tools load libraries only from that
-SDK and the base system,
-with no FreeType or Boost dependency.  Relocated consumers also validate
+SDK and the base system, with no FreeType or Boost dependency.  Relocated consumers also validate
 Unicode conversion and normalization data, libdeflate's exported include
 paths, and OpenImageIO text rendering with installed fonts.  Bundled ICU
 uses a UTF-8 default charset on FreeBSD even in the C character locale,
@@ -375,6 +376,46 @@ Nested indices, general rough-glass transport, multiple internal bounces,
 caustics, transmitted shadows, overlapping media, thin surfaces, and
 bump/normal-mapped transmission need further qualification before a general
 production-glass claim.
+
+=== Plate-mode BOTs
+
+Plate mode constructs entry and exit distances around each ray's crossing
+of a triangle.  Straight transmission through centered plates agrees with
+analytic Beer attenuation.  Refraction can bend a ray past the face that
+would supply its exit, producing edge artifacts.  The raw plate-mode
+representation is not qualified as a refractive volume.
+
+Author an explicit physical volume before assigning refractive glass.  In a
+copy of the database, this command replaces the plate primitive while
+preserving references from its regions and combinations:
+
+[source,tcl]
+----
+bot extrude --max-area-delta 0 -i windscreen.bot
+----
+
+The zero area-change setting disables simplification.  This workflow is
+qualified for centered `plate` mode; appended thickness and `plate_nocos`
+require separate geometry decisions.  Conversion is an explicit authoring
+operation because a closed volume has different edge boundaries from the
+shotline-based plate representation.  art continues to trace the authored
+BRL-CAD geometry with librt.
+
+`rt_bot_plate_volume` checks dimensions, volume, manifoldness, and input
+preservation at three scales and translated coordinates.  Coplanar faces
+with consistent or reversed winding retain their planar outline; actual
+bends retain the rounded join.  The conversion's coplanarity adjustment is
+fractional, avoiding a fixed millimeter displacement of small plates.
+`art-installed-plate` uses installed mged to create and convert a plate,
+then compares raw and converted equal-index absorption and converted-volume
+refraction with independent references.  Its 20 image comparisons cover
+both projections, both sides for absorption, two view angles for refraction,
+and indices 1.5 and 2.  A wrong-index control must fail.  The fixture retains
+FASTGEN `P` region metadata while replacing its primitive in place;
+inter-region FASTGEN overlaps remain unqualified.  Conversion creates new
+topology and does not preserve authored BOT normals or UVs.  These renders
+use uniform glass and facet normals.  Curved converted plates, variable
+thickness, and general rough glass remain unqualified.
 
 == Surface coordinates
 
@@ -1256,6 +1297,9 @@ installation includes `mged`, `art-installed-material` also sources a material
 authoring script, inspects its persisted assignment and parameters in a new
 art process, and compares the rendered result with a libged-authored
 reference.  The project and script paths include spaces.
+`art-installed-plate` additionally exercises plate creation and physical
+volume conversion through installed mged before checking absorption and
+refraction renders.
 
 Loader environment overrides and `BRLCAD_ROOT` are cleared for fixture
 compilation and test execution.  On FreeBSD and Linux, the additional
@@ -1337,6 +1381,8 @@ has passed, including installation and asset lookup where applicable.
 . *Production qualification.*  Exercise relocatable installed builds on
   FreeBSD, Linux, Windows, and macOS.  Validate shader/compiler compatibility,
   caches, assets, cancellation, cleanup, malformed input, and large scenes.
+  Check library precedence with another installation present at the original
+  configured prefix; the relocated bundle must use its own libraries.
   Record scene-preparation time, memory, intersections, shader execution, and
   thread scaling before optimizing measured bottlenecks.  Finish user and
   developer documentation and legacy migration guidance.  Exit when fresh

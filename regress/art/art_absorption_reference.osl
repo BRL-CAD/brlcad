@@ -30,7 +30,9 @@ surface art_absorption_reference(
     vector direction = normalize(I);
     vector offset = P - in_center;
     float thickness = 0;
-    if (in_shape == "ellipsoid") {
+    if (in_shape == "plate") {
+        thickness = 2 * in_axes[2] / abs(direction[2]);
+    } else if (in_shape == "ellipsoid") {
         vector scaled_direction = direction / in_axes;
         thickness = -2 * dot(offset / in_axes, scaled_direction)
             / dot(scaled_direction, scaled_direction);
