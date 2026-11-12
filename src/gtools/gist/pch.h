@@ -65,7 +65,7 @@
 
 // BRL-CAD header files
 #include "bio.h"
-#include "bu/opt.h"
+#include "bu/arg.h"
 #include "bu/app.h"
 #include "bu/file.h"
 #include "bu/log.h"

@@ -54,59 +54,107 @@ Options::~Options()
 
 }
 
-static int _param_set_std_str(struct bu_vls *msg, size_t argc, const char **argv, void *set_var) {
-    std::string* s_set = (std::string*)set_var;
+struct gist_args {
+    const char *input_file;
+    const char *output_file;
+    const char *input_folder;
+    const char *output_folder;
+    int open_gui;
+    int overwrite;
+    int reuse_images;
+    const char *top_component;
+    const char *logo_path;
+    int ppi;
+    const char *preparer;
+    const char *owner;
+    const char *executable_dir;
+    const char *classification;
+    const char *notes;
+    int left_handed;
+    int y_up;
+    const char *density_file;
+    const char *length_units;
+    const char *mass_units;
+    const char *working_dir;
+    int cpu_count;
+    int preview;
+    int verbose;
+    int print_help;
+};
 
-    BU_OPT_CHECK_ARGV0(msg, argc, argv, "_param_set_std_str");
+static const struct bu_arg_option gist_options[] = {
+    BU_ARG_VALUE("i", "input", struct gist_args, input_file,
+	BU_ARG_VALUE_FILE, BU_ARG_REQUIRED, "filename.g", "Input database"),
+    BU_ARG_VALUE("o", "output", struct gist_args, output_file,
+	BU_ARG_VALUE_FILE, BU_ARG_REQUIRED, "filename.png", "Output report filename"),
+    BU_ARG_VALUE("F", "folder", struct gist_args, input_folder,
+	BU_ARG_VALUE_FILE, BU_ARG_REQUIRED, "folder", "Folder of databases to process"),
+    BU_ARG_VALUE("e", "output-folder", struct gist_args, output_folder,
+	BU_ARG_VALUE_FILE, BU_ARG_REQUIRED, "dir_name", "Output folder name"),
+    BU_ARG_FLAG("g", "gui", struct gist_args, open_gui, "Display report in a popup window"),
+    BU_ARG_FLAG("f", "force", struct gist_args, overwrite, "Overwrite an existing report"),
+    BU_ARG_FLAG("Z", "reuse-images", struct gist_args, reuse_images,
+	"Reuse renders from an existing working directory"),
+    BU_ARG_VALUE("t", "top-component", struct gist_args, top_component,
+	BU_ARG_VALUE_DB_OBJECT, BU_ARG_REQUIRED, "component", "Primary report component"),
+    BU_ARG_VALUE("m", "logo", struct gist_args, logo_path,
+	BU_ARG_VALUE_FILE, BU_ARG_REQUIRED, "image", "Logo image for the report"),
+    BU_ARG_INTEGER_RANGE("p", "ppi", struct gist_args, ppi,
+	1, 1, 0, 0, "#", "Pixels per inch"),
+    BU_ARG_VALUE("n", "preparer", struct gist_args, preparer,
+	BU_ARG_VALUE_STRING, BU_ARG_REQUIRED, "name", "Report preparer name"),
+    BU_ARG_VALUE("r", "owner", struct gist_args, owner,
+	BU_ARG_VALUE_STRING, BU_ARG_REQUIRED, "name", "Model owner name"),
+    BU_ARG_VALUE("T", "executables", struct gist_args, executable_dir,
+	BU_ARG_VALUE_FILE, BU_ARG_REQUIRED, "directory", "Directory containing BRL-CAD executables"),
+    BU_ARG_VALUE("c", "classification", struct gist_args, classification,
+	BU_ARG_VALUE_STRING, BU_ARG_REQUIRED, "classification", "Report banner classification"),
+    BU_ARG_VALUE("N", "notes", struct gist_args, notes,
+	BU_ARG_VALUE_STRING, BU_ARG_REQUIRED, "text", "Additional report notes"),
+    BU_ARG_FLAG("L", "left-handed", struct gist_args, left_handed,
+	"Use a left-handed coordinate system"),
+    BU_ARG_FLAG("A", "y-up", struct gist_args, y_up, "Use +Y as the up axis"),
+    BU_ARG_VALUE("d", "density-file", struct gist_args, density_file,
+	BU_ARG_VALUE_FILE, BU_ARG_REQUIRED, "file|0", "Material density file, or 0 to skip densities"),
+    BU_ARG_VALUE("l", "length-units", struct gist_args, length_units,
+	BU_ARG_VALUE_STRING, BU_ARG_REQUIRED, "units", "Length units"),
+    BU_ARG_VALUE("w", "mass-units", struct gist_args, mass_units,
+	BU_ARG_VALUE_STRING, BU_ARG_REQUIRED, "units", "Mass units"),
+    BU_ARG_VALUE("a", "working-directory", struct gist_args, working_dir,
+	BU_ARG_VALUE_FILE, BU_ARG_REQUIRED, "directory", "Directory for cached work"),
+    BU_ARG_INTEGER_RANGE("P", "cpu-count", struct gist_args, cpu_count,
+	1, 0, 0, 0, "#", "Number of CPUs to use (0 selects all available)"),
+    BU_ARG_FLAG("Q", "preview", struct gist_args, preview,
+	"Use lower render quality and skip verification"),
+    BU_ARG_FLAG("v", "verbose", struct gist_args, verbose, "Print verbose status"),
+    BU_ARG_FLAG("h", "help", struct gist_args, print_help, "Print help and exit"),
+    BU_ARG_ALIAS("?", NULL, "help", 1),
+    BU_ARG_OPTION_NULL
+};
 
-    if (s_set)
-	*s_set = std::string(argv[0]);
-    return 1;
+static const struct bu_arg_operand gist_operands[] = {
+    BU_ARG_OPERAND("model.g", BU_ARG_VALUE_FILE, 0, 1, "Input database", NULL),
+    BU_ARG_OPERAND_NULL
+};
+
+static const struct bu_arg_schema gist_schema = BU_ARG_SCHEMA(
+    "gist", "Generate a geometry information summary report", gist_options,
+    gist_operands, BU_ARG_PARSE_INTERSPERSED,
+    BU_ARG_SCHEMA_META_HELP(NULL, NULL, NULL, NULL, NULL));
+
+static void
+gist_help(const char *program)
+{
+    char *help = bu_arg_schema_help(&gist_schema, program);
+    if (help)
+	bu_log("%s", help);
+    bu_free(help, "options help str");
 }
 
 bool Options::readParameters(int argc, const char **argv) {
     const char* usage = "[options] (-F model/dir | model.g)";
-
-    int print_help = 0;			// user requested help
-    int param_overwrite = 0;		// user requested to overwrite existing report
-    int param_ppi = -1;			// user requested ppi
-    int param_Lhand = 0;		// user requested left-handed coordinates
-    int param_Yup = 0;			// user requested y-up
-    std::string param_Ulength = "";	// user requested length units
-    std::string param_Umass = "";	// user requested mass units
-    std::string param_oFile = "";	// user supplied output file
-    std::string param_densityFile = "";	// user requested density file
-    int param_ncpu = 0;			// user requested num CPUs to use
-
-    struct bu_opt_desc options[27] = {
-	{"i", "",     "filename.g",        &_param_set_std_str,     &this->inFile,         "input .g"					    },
-	{"o", "",     "filename.png",      &_param_set_std_str,     &param_oFile,          "output file name"				    },
-	{"F", "",     "folder",            &_param_set_std_str,     &this->inFolderName,   "folder of .g models to generate"		    },
-	{"e", "",     "dir_name",          &_param_set_std_str,     &this->outFolderName,  "set export folder's name"			    },
-	{"g", "",     "",                  NULL,                    &this->openGUI,        "display report in popup window"		    },
-	{"f", "",     "",                  NULL,                    &param_overwrite,      "overwrite existing report if it exists"	    },
-	{"Z", "",     "",                  NULL,                    &this->reuseImages,    "reuse renders if .working directory is found"   },
-	{"t", "",     "component",         &_param_set_std_str,     &this->topComp,        "specify primary component of the report"	    },
-	{"m", "",     "path/to/image",     &_param_set_std_str,     &this->logopath,       "path to logo image to be used in report"	    },
-	{"p", "",     "#",		   &bu_opt_int,             &param_ppi,            "pixels per inch (default 300ppi)"		    },
-	{"n", "",     "\"preparer name\"", &_param_set_std_str,     &this->preparer,       "name of preparer, to be used in report"	    },
-	{"r", "",     "\"owner name\"",    &_param_set_std_str,     &this->owner,          "name of model's owner, to be used in report"    },
-	{"T", "",     "path/to/rt",        &_param_set_std_str,     &this->exeDir,         "path to rt and rtwizard executables"	    },
-	{"c", "",     "classification",    &_param_set_std_str,     &this->classification, "classification displayed in top/bottom banner"  },
-	{"N", "",     "\"extra notes\"",   &_param_set_std_str,     &this->notes,          "add additional notes to report"		    },
-	{"L", "",     "",                  NULL,                    &param_Lhand,          "use left-handed coordinate system"		    },
-	{"A", "",     "",                  NULL,                    &param_Yup,            "use +Y-up geometry axis (default is +Z-up)"	    },
-	{"d", "",     "densityFile",	   &_param_set_std_str,	    &param_densityFile,	   "specify density file for materials (or '0' to skip density calculations)"    },
-	{"l", "",     "len_units",         &_param_set_std_str,     &param_Ulength,        "specify length units"			    },
-	{"w", "",     "wt_units",          &_param_set_std_str,     &param_Umass,          "specify weight units"			    },
-	{"a", "",     "path/to/dir",	   &_param_set_std_str,     &this->workingDir,     "specify dir to write c(a)ched work to"	    },
-	{"P", "",     "#cpus",             &bu_opt_int,             &param_ncpu,           "number of CPUs to use"			    },
-	{"Q", "preview", "",              NULL,                    &this->previewMode,    "fast preview: lower render quality and skip verification"},
-	{"v", "",     "",                  NULL,                    &this->verbosePrint,   "verbose printing"				    },
-	{"h", "help", "",                  NULL,                    &print_help,           "Print help and exit"			    },
-	{"?", "",     "",                  NULL,                    &print_help,           ""						    },
-	BU_OPT_DESC_NULL
-    };
+    struct gist_args args = {};
+    args.ppi = -1;
 
     /* set progname and move on */
     const char* cmd_progname = argv[0];
@@ -115,72 +163,93 @@ bool Options::readParameters(int argc, const char **argv) {
 
     /* parse options */
     struct bu_vls msg = BU_VLS_INIT_ZERO;
-    int ret_ac = bu_opt_parse(&msg, argc, argv, options);
-
-    if (ret_ac) {   // assume a leftover option is a .g file
-	setInFile(argv[0]);
-	ret_ac--;
-    }
+    int operand_index = bu_arg_schema_parse_complete(&gist_schema, &args,
+	&msg, argc, argv);
 
     /* usage help */
-    if (ret_ac < 0) {		// error in parsing
+    if (operand_index < 0) {
 	bu_log("ERROR: option parsing failed\n");
 	if (msg.vls_len > 0)
-	    bu_log("%s\n", bu_vls_cstr(&msg));
-
-	bu_vls_free(&msg);
-	return false;
-    } else if (ret_ac != 0) {	// extra / bad options
-	bu_log("ERROR: bad / unknown option (%s). Use -h for all options\n", argv[0]);
-	if (msg.vls_len > 0)
-	    bu_log("%s\n", bu_vls_cstr(&msg));
+	    bu_log("%s", bu_vls_cstr(&msg));
 
 	bu_vls_free(&msg);
 	return false;
     }
-    if (print_help) {
-	char *help = bu_opt_help(options, cmd_progname, usage,
-	    "Generate a geometry information summary report");
-
-        if (help)
-	    bu_log("%s", help);
-
-	bu_vls_free(&msg);
-        bu_free(help, "options help str");
+    bu_vls_free(&msg);
+    if (args.print_help) {
+	gist_help(cmd_progname);
 	return false;
     }
+
+    argc -= operand_index;
+    argv += operand_index;
+    int input_count = (args.input_file ? 1 : 0) +
+	(args.input_folder ? 1 : 0) + argc;
+    if (input_count != 1) {
+	bu_log("Usage: %s %s\n\n", cmd_progname, usage);
+	bu_log("ERROR: specify exactly one input database or folder\n");
+	return false;
+    }
+
+    if (args.input_file)
+	setInFile(args.input_file);
+    else if (args.input_folder)
+	setInFolder(args.input_folder);
+    else
+	setInFile(argv[0]);
+    if (args.output_folder)
+	setOutFolder(args.output_folder);
+    if (args.open_gui)
+	setOpenGUI();
+    setReuseImages(args.reuse_images != 0);
+    if (args.top_component)
+	setTopComp(args.top_component);
+    if (args.logo_path)
+	setLogopath(args.logo_path);
+    if (args.preparer)
+	setPreparer(args.preparer);
+    if (args.owner)
+	setOwner(args.owner);
+    if (args.executable_dir)
+	setExeDir(args.executable_dir);
+    if (args.classification)
+	setClassification(args.classification);
+    if (args.notes)
+	setNotes(args.notes);
+    if (args.working_dir)
+	workingDir = args.working_dir;
+    previewMode = args.preview;
+    verbosePrint = args.verbose;
+
+    const std::string output_file = args.output_file ? args.output_file : "";
+    const std::string length_units = args.length_units ? args.length_units : "";
+    const std::string mass_units = args.mass_units ? args.mass_units : "";
+    const std::string density_file = args.density_file ? args.density_file : "";
 
     /* use internal setters for options that require extra attention */
-    if (param_oFile.empty() && this->inFolderName.empty()) {
+    if (output_file.empty() && this->inFolderName.empty()) {
 	// no output file supplied, and not working with folder: default to gui pop-up
 	bu_log("WARNING: no output file given, use (-o) to save report\n");
 	setOpenGUI();
-    } else if (!setOutFile(param_oFile))    // out file was supplied, make sure .png
+    } else if (!setOutFile(output_file))    // out file was supplied, make sure .png
 	return false;
-    if (param_ppi != -1) {
-	if (param_ppi <= 0) {
-	    bu_log("ERROR: pixels per inch must be greater than zero\n");
-	    return false;
-	}
-	setPPI(param_ppi);
-    }
-    if (param_Lhand)
+    if (args.ppi != -1)
+	setPPI(args.ppi);
+    if (args.left_handed)
 	setCoordSystem(LEFT_HAND);
-    if (param_Yup)
+    if (args.y_up)
 	setUpAxis(POS_Y_UP);
-    if (!param_Ulength.empty())
-	setUnitLength(param_Ulength);
-    if (!param_Umass.empty())
-	setUnitMass(param_Umass);
+    if (!length_units.empty())
+	setUnitLength(length_units);
+    if (!mass_units.empty())
+	setUnitMass(mass_units);
     if (!this->inFolderName.empty()) {
 	setIsFolder();
 	setExportToFile();  // dont want to flood screen with gui popups if we're using a folder
     }
-    if (!this->exeDir.empty())
-	setExeDir(this->exeDir);
-    setNCPU(param_ncpu);
-    if (!param_densityFile.empty())
-	setDensityFile(param_densityFile);
+    setNCPU(args.cpu_count);
+    if (!density_file.empty())
+	setDensityFile(density_file);
 
     /* make sure valid input .g or folder is supplied */
     if ((getIsFolder() && !bu_file_directory(this->inFolderName.c_str())) ||
@@ -200,14 +269,14 @@ bool Options::readParameters(int argc, const char **argv) {
 
     /* make sure we're not unintentionally overwriting an existing report */
     if (bu_file_exists(this->outFile.c_str(), NULL)) {
-	if (!param_overwrite) {
+	if (!args.overwrite) {
 	    bu_log("ERROR: output file \"%s\" already exists. Re-run with force flag (-f) or remove file.", this->outFile.c_str());
 	    return false;
 	} else {
 	    bu_file_delete(this->outFile.c_str());
 	}
     } else if (bu_file_directory(this->outFolderName.c_str())) {
-	if (!param_overwrite) {
+	if (!args.overwrite) {
 	    bu_log("ERROR: output folder \"%s\" already exists. Re-run with force flag (-f) or remove directory.", this->outFolderName.c_str());
 	    return false;
 	} else {
