@@ -771,11 +771,11 @@ build_project()
 
     // Add the shader libraries from the selected Appleseed installation.
     char root[MAXPATHLEN];
-    const char* sp;
-    sp = bu_dir(root, MAXPATHLEN, APPLESEED_ROOT, "shaders/appleseed", NULL);
-    if (sp) project->search_paths().push_back_explicit_path(sp);
-    sp = bu_dir(root, MAXPATHLEN, APPLESEED_ROOT, "shaders/max", NULL);
-    if (sp) project->search_paths().push_back_explicit_path(sp);
+    const char *libraries[] = {"shaders/appleseed", "shaders/max", "shaders/maya"};
+    for (const char *library : libraries) {
+	const char *path = bu_dir(root, MAXPATHLEN, APPLESEED_ROOT, library, NULL);
+	if (path) project->search_paths().push_back_explicit_path(path);
+    }
 
     // Add default configurations to the project.
     project->add_default_configurations();
