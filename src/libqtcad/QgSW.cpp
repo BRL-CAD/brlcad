@@ -52,6 +52,8 @@ extern "C" {
 QgSW::QgSW(QWidget *parent, struct fb *fbp)
     : QWidget(parent), ifp(fbp)
 {
+    setProperty("qgTestCanvas", true);
+
     // Provide a view specific to this widget - set gedp->ged_gvp to v
     // if this is the current view
     BU_GET(local_v, struct bview);

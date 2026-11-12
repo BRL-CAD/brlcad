@@ -47,6 +47,8 @@ extern "C" {
 QgGL::QgGL(QWidget *parent, struct fb *fbp)
     : QOpenGLWidget(parent), ifp(fbp)
 {
+    setProperty("qgTestCanvas", true);
+
     // Provide a view specific to this widget - set gedp->ged_gvp to v
     // if this is the current view
     BU_GET(local_v, struct bview);

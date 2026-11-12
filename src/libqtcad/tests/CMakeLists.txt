@@ -12,6 +12,7 @@ set(TEST_QTCAD_PLUGIN_VALID_SRCS test_qtcad_plugin_valid.cpp)
 set(TEST_QTCAD_PLUGIN_MISSING_API_SRCS test_qtcad_plugin_missing_api.cpp)
 set(TEST_QTCAD_PLUGIN_PANEL_SRCS test_qtcad_plugin_panel.cpp)
 set(TEST_QTCAD_PLUGIN_DIALOG_SRCS test_qtcad_plugin_dialog.cpp)
+set(TEST_QTCAD_EVENT_PLAYER_SRCS test_qtcad_event_player.cpp)
 set(TEST_QTCAD_PLUGIN_METADATA
   test_qtcad_plugin_valid.json
   test_qtcad_plugin_missing_api.json
@@ -123,6 +124,22 @@ if(TARGET test_qtcad_session)
   target_compile_definitions(test_qtcad_session PRIVATE BRLCADBUILD HAVE_CONFIG_H)
   add_dependencies(test_qtcad_session ged_plugins)
   brlcad_add_test(NAME test_qtcad_session COMMAND test_qtcad_session)
+endif()
+
+if(TARGET Qt6::Widgets)
+  add_executable(test_qtcad_event_player ${TEST_QTCAD_EVENT_PLAYER_SRCS})
+  target_link_libraries(test_qtcad_event_player libqtcad Qt6::Widgets)
+elseif(TARGET Qt5::Widgets)
+  add_executable(test_qtcad_event_player ${TEST_QTCAD_EVENT_PLAYER_SRCS})
+  target_link_libraries(test_qtcad_event_player libqtcad Qt5::Widgets)
+endif()
+if(TARGET test_qtcad_event_player)
+  target_compile_definitions(test_qtcad_event_player PRIVATE BRLCADBUILD HAVE_CONFIG_H)
+  brlcad_add_test(NAME test_qtcad_event_player COMMAND test_qtcad_event_player)
+  set_property(TEST test_qtcad_event_player APPEND PROPERTY ENVIRONMENT
+    BRLCAD_ROOT=${CMAKE_BINARY_DIR}
+    QT_QPA_PLATFORM=offscreen
+  )
 endif()
 
 if(TARGET Qt6::Test)
@@ -239,6 +256,7 @@ cmakefiles(
   ${TEST_QTCAD_PLUGIN_MISSING_API_SRCS}
   ${TEST_QTCAD_PLUGIN_PANEL_SRCS}
   ${TEST_QTCAD_PLUGIN_DIALOG_SRCS}
+  ${TEST_QTCAD_EVENT_PLAYER_SRCS}
   ${TEST_QTCAD_PLUGIN_METADATA}
 )
 
