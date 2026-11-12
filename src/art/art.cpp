@@ -157,6 +157,7 @@
 #include "ged/commands.h"
 #include "ged/defines.h"
 #include "rt/db_fullpath.h"
+#include "rt/mater.h"
 #include "rt/calc.h"
 #include "optical/defines.h"
 #include "icv.h"		/* image save/convert */
@@ -511,6 +512,22 @@ art_parse_light_intensity(const struct bu_vls* shader, double* bright, double* f
 }
 
 
+static void
+art_region_color(const struct db_tree_state *state, float rgb[ELEMENTS_PER_VECT])
+{
+    struct region resolved = {};
+    BU_LIST_INIT_MAGIC(&resolved.l, RT_REGION_MAGIC);
+    resolved.reg_regionid = state->ts_regionid;
+    resolved.reg_mater = state->ts_mater;
+    // Match librt's table fallback after explicit and inherited colors.
+    if (!resolved.reg_mater.ma_color_valid)
+	db_mater_color_region(state->ts_dbip, &resolved);
+    for (size_t channel = 0; channel < ELEMENTS_PER_VECT; ++channel)
+	rgb[channel] = resolved.reg_mater.ma_color_valid ?
+	    static_cast<float>(resolved.reg_mater.ma_color[channel]) : 1.0f;
+}
+
+
 struct ArtSceneBuilder {
     asr::Scene &scene;
     const asf::SearchPaths &search_paths;
@@ -540,6 +557,9 @@ register_region_impl(struct db_tree_state* tsp,
     if (!builder.region_paths.insert(region_path).second)
 	return 0;
 
+    float region_rgb[ELEMENTS_PER_VECT];
+    art_region_color(tsp, region_rgb);
+
     // Legacy light geometry becomes a point light.  Rendering the solid
     // would make it shadow its own source.
     if (bu_vls_strlen(&combp->shader) >= 5 &&
@@ -564,13 +584,7 @@ register_region_impl(struct db_tree_state* tsp,
 	L.pos[0] = (min[X] + max[X]) * 0.5;
 	L.pos[1] = (min[Y] + max[Y]) * 0.5;
 	L.pos[2] = (min[Z] + max[Z]) * 0.5;
-	if (combp->rgb_valid) {
-	    L.color[0] = (float)(combp->rgb[0] / 255.0);
-	    L.color[1] = (float)(combp->rgb[1] / 255.0);
-	    L.color[2] = (float)(combp->rgb[2] / 255.0);
-	} else {
-	    L.color[0] = L.color[1] = L.color[2] = 1.0f;
-	}
+	VMOVE(L.color, region_rgb);
 	art_parse_light_intensity(&combp->shader, &L.bright, &L.fract);
 	art_lights.push_back(L);
 	bu_log("art: light source '%s' at %g %g %g (bright=%g)\n",
@@ -588,27 +602,7 @@ register_region_impl(struct db_tree_state* tsp,
 
     const std::string material_name = std::string(name) + "_mat";
 
-    /* Diffuse base color.  Prefer the tree-state's resolved material color
-     * (tsp->ts_mater.ma_color): db_walk_tree accumulates BRL-CAD's color
-     * INHERITANCE into it as it descends, so a region that inherits its color
-     * from a parent combination (e.g. every region under havoc) gets the right
-     * color here -- exactly what rt/liboptical uses (region reg_mater.ma_color).
-     * combp->rgb is only the region comb's OWN color and is empty for inherited
-     * colors, which is why art used to render such models as flat grey.  Fall
-     * back to the comb's own rgb, then to white (rt's default for no color). */
-    float diffuse_rgb[3];
-    if (tsp && tsp->ts_mater.ma_color_valid) {
-	diffuse_rgb[0] = (float)tsp->ts_mater.ma_color[0];
-	diffuse_rgb[1] = (float)tsp->ts_mater.ma_color[1];
-	diffuse_rgb[2] = (float)tsp->ts_mater.ma_color[2];
-    } else if (combp->rgb_valid) {
-	diffuse_rgb[0] = (float)(combp->rgb[0] / 255.0);
-	diffuse_rgb[1] = (float)(combp->rgb[1] / 255.0);
-	diffuse_rgb[2] = (float)(combp->rgb[2] / 255.0);
-    } else {
-	diffuse_rgb[0] = diffuse_rgb[1] = diffuse_rgb[2] = 1.0f;
-    }
-    if (!art_add_material(assembly.ref(), material_name.c_str(), diffuse_rgb,
+    if (!art_add_material(assembly.ref(), material_name.c_str(), region_rgb,
 	    tsp->ts_dbip, pathp, combp, builder.search_paths, builder.report)) {
 	builder.valid = false;
 	return 0;

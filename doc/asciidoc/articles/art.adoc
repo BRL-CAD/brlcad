@@ -206,7 +206,17 @@ art -a 35 -e 25 -w 640 -n 480 -P 4 -c "set samples=64" \
     -o view.png model.g all.g
 ----
 
-Region colors include colors resolved through combination inheritance.
+Region colors follow combination inheritance.  When no explicit or inherited
+color is available, a matching region-ID color-table entry supplies the
+fallback; an unmatched region defaults to white.  Explicit black is a valid
+color and suppresses the table fallback.  Light regions use the same resolved
+colors.  The region color supplies a shader's default `in_color` input when
+that input exists; an explicit OSL parameter overrides it.
+`regress-art-region-colors` compares table colors and inheritance with
+independent emission and point-light scenes on CSG and BOT geometry under
+both camera projections, including table updates, missing ranges, explicit
+black, material overrides, and light-color precedence.
+
 The default material is a modest specular coat over a diffuse base.  This
 baseline does not yet translate every BRL-CAD optical shader or provide a
 complete custom-material authoring interface.

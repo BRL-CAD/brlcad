@@ -153,6 +153,9 @@ create_scene(const char *path, const char *shader, const char *output)
     success = success && mk_sph(db, "key_light.s", key_position, 0.25) == 0 &&
 	mk_addmember("key_light.s", &members.l, NULL, WMOP_UNION) &&
 	mk_lcomb(db, "key_light.r", &members, 1, "light", "bright=1", white, 0) == 0;
+    BU_LIST_INIT(&members.l);
+    success = success && mk_addmember("key_light.r", &members.l, NULL, WMOP_UNION) &&
+	mk_lcomb(db, "key_light.g", &members, 0, NULL, NULL, red, 1) == 0;
 
     if (shader) {
 	struct bu_attribute_value_set optical;
@@ -193,8 +196,13 @@ edit_database_command(const char *path, int argc, const char *argv[])
     struct ged *editor = ged_open("db", path, 0);
     if (!editor)
 	return 1;
-    const int status = BU_STR_EQUAL(argv[0], "material") ?
-	ged_exec_material(editor, argc, argv) : ged_exec_attr(editor, argc, argv);
+    int status;
+    if (BU_STR_EQUAL(argv[0], "material"))
+	status = ged_exec_material(editor, argc, argv);
+    else if (BU_STR_EQUAL(argv[0], "color"))
+	status = ged_exec_color(editor, argc, argv);
+    else
+	status = ged_exec_attr(editor, argc, argv);
     if (status != BRLCAD_OK)
 	bu_log("Cannot edit database: %s\n", bu_vls_cstr(editor->ged_result_str));
     ged_close(editor);
@@ -441,7 +449,8 @@ main(int argc, char **argv)
 	return create_texture(argv[2], TexturePattern::Black);
     if (argc == 3 && BU_STR_EQUAL(argv[1], "create-gray-texture"))
 	return create_texture(argv[2], TexturePattern::Gray);
-    if (argc >= 4 && (BU_STR_EQUAL(argv[1], "material") || BU_STR_EQUAL(argv[1], "attr"))) {
+    if (argc >= 4 && (BU_STR_EQUAL(argv[1], "material") ||
+	BU_STR_EQUAL(argv[1], "attr") || BU_STR_EQUAL(argv[1], "color"))) {
 	std::vector<const char *> command{argv[1]};
 	command.insert(command.end(), argv + 3, argv + argc);
 	return edit_database_command(argv[2], static_cast<int>(command.size()), command.data());

@@ -47,6 +47,7 @@ set(ART_REGRESSION_TEST_NAMES
   regress-art-coat
   regress-art-materials
   regress-art-inspect
+  regress-art-region-colors
 )
 
 if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
@@ -62,7 +63,8 @@ cmakefiles(CMakeLists.txt art_test_setup.cmake art_installed_tests.cmake
   regress-art-transmission.cmake.in regress-art-refraction.cmake.in
   regress-art-mixture.cmake.in regress-art-surface.cmake.in
   regress-art-metal-energy.cmake.in regress-art-coat.cmake.in
-  regress-art-materials.cmake.in regress-art-inspect.cmake.in)
+  regress-art-materials.cmake.in regress-art-inspect.cmake.in
+  regress-art-region-colors.cmake.in)
 foreach(shader IN LISTS ART_TEST_SHADER_NAMES)
   cmakefiles("${shader}.osl")
 endforeach()
@@ -89,7 +91,8 @@ if(TARGET art AND BUILD_TESTING)
     "${CMAKE_CURRENT_BINARY_DIR}/metal-energy-output"
     "${CMAKE_CURRENT_BINARY_DIR}/coat-output"
     "${CMAKE_CURRENT_BINARY_DIR}/materials-output"
-    "${CMAKE_CURRENT_BINARY_DIR}/inspect-output")
+    "${CMAKE_CURRENT_BINARY_DIR}/inspect-output"
+    "${CMAKE_CURRENT_BINARY_DIR}/region-colors-output")
 endif()
 
 # Local Variables:
