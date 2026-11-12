@@ -23,16 +23,15 @@
 #include <vector>
 
 #include "bu/app.h"
+#include "bu/arg.h"
 #include "bu/exit.h"
 #include "bu/malloc.h"
-#include "bu/opt.h"
+#include "bu/str.h"
 #include "bu/vls.h"
 
 #include "building.h"
 
 namespace {
-
-constexpr size_t OPTION_DESCRIPTION_COUNT = 25;
 
 struct options {
     std::string output = "mkbuilding.g";
@@ -60,65 +59,125 @@ struct options {
     int help = 0;
 };
 
+struct building_args {
+    int help;
+    const char *output;
+    const char *spec_file;
+    const char *preset;
+    const char *name;
+    const char *type;
+    int levels;
+    fastf_t width;
+    fastf_t depth;
+    fastf_t floor_height;
+    const char *roof_shape;
+    fastf_t roof_height;
+    fastf_t wall_thickness;
+    const char *structure;
+    int no_auto_openings;
+    int force;
+    int append;
+    int validate_only;
+    const char *effective_spec_file;
+    const char *demo_file;
+    int print_schema;
+    int list_types;
+    int list_roofs;
+};
+
+static const struct bu_arg_option building_options[] = {
+    BU_ARG_FLAG("h", "help", struct building_args, help, "Print help and exit"),
+    BU_ARG_ALIAS("?", nullptr, "help", 1),
+    BU_ARG_VALUE("o", "output", struct building_args, output,
+	BU_ARG_VALUE_FILE, BU_ARG_REQUIRED, "file.g", "Output BRL-CAD database"),
+    BU_ARG_VALUE("s", "spec", struct building_args, spec_file,
+	BU_ARG_VALUE_FILE, BU_ARG_REQUIRED, "file.json", "Native, GeoJSON, Overpass, or CityJSON input"),
+    BU_ARG_VALUE("p", "preset", struct building_args, preset,
+	BU_ARG_VALUE_STRING, BU_ARG_REQUIRED, "name", "Building preset or OSM building type"),
+    BU_ARG_VALUE("n", "name", struct building_args, name,
+	BU_ARG_VALUE_STRING, BU_ARG_REQUIRED, "name", "Top-level building object name"),
+    BU_ARG_VALUE("t", "type", struct building_args, type,
+	BU_ARG_VALUE_STRING, BU_ARG_REQUIRED, "OSM-value", "OSM building=* taxonomy value"),
+    BU_ARG_INTEGER_RANGE("L", "levels", struct building_args, levels,
+	1, 0, 0, 0, "count", "Number of above-ground floors"),
+    BU_ARG_NUMBER_RANGE("W", "width", struct building_args, width,
+	1, 0.0, 0, 0.0, "meters", "Rectangular footprint width"),
+    BU_ARG_NUMBER_RANGE("D", "depth", struct building_args, depth,
+	1, 0.0, 0, 0.0, "meters", "Rectangular footprint depth"),
+    BU_ARG_NUMBER_RANGE("H", "floor-height", struct building_args, floor_height,
+	1, 0.0, 0, 0.0, "meters", "Uniform floor-to-floor height"),
+    BU_ARG_VALUE("R", "roof-shape", struct building_args, roof_shape,
+	BU_ARG_VALUE_STRING, BU_ARG_REQUIRED, "shape", "OSM roof:shape value"),
+    BU_ARG_NUMBER_RANGE(nullptr, "roof-height", struct building_args, roof_height,
+	1, 0.0, 0, 0.0, "meters", "Roof height above facade"),
+    BU_ARG_NUMBER_RANGE(nullptr, "wall-thickness", struct building_args, wall_thickness,
+	1, 0.0, 0, 0.0, "meters", "Exterior wall thickness"),
+    BU_ARG_VALUE(nullptr, "structure", struct building_args, structure,
+	BU_ARG_VALUE_STRING, BU_ARG_REQUIRED, "system", "Structural system; enables columns and beams"),
+    BU_ARG_FLAG(nullptr, "no-auto-openings", struct building_args, no_auto_openings,
+	"Do not synthesize doors and windows"),
+    BU_ARG_FLAG("f", "force", struct building_args, force, "Replace an existing output database"),
+    BU_ARG_FLAG("j", "append", struct building_args, append, "Append to an existing output database"),
+    BU_ARG_FLAG(nullptr, "validate-only", struct building_args, validate_only,
+	"Validate and normalize input without generating geometry"),
+    BU_ARG_VALUE(nullptr, "effective-spec", struct building_args, effective_spec_file,
+	BU_ARG_VALUE_FILE, BU_ARG_REQUIRED, "file.json", "Write fully resolved native specification"),
+    BU_ARG_VALUE(nullptr, "demo-file", struct building_args, demo_file,
+	BU_ARG_VALUE_FILE, BU_ARG_REQUIRED, "file.g", "Write a broad building and roof taxonomy sampler"),
+    BU_ARG_FLAG(nullptr, "schema", struct building_args, print_schema, "Print the native JSON Schema and exit"),
+    BU_ARG_FLAG(nullptr, "list-types", struct building_args, list_types,
+	"List covered OSM building values and exit"),
+    BU_ARG_FLAG(nullptr, "list-roofs", struct building_args, list_roofs,
+	"List covered OSM roof shapes and exit"),
+    BU_ARG_OPTION_NULL
+};
+
+static const struct bu_arg_operand building_operands[] = {
+    BU_ARG_OPERAND("output.g", BU_ARG_VALUE_FILE, 0, 1, "Output BRL-CAD database", nullptr),
+    BU_ARG_OPERAND_NULL
+};
+
+static int
+building_schema_validate(const struct bu_arg_schema *, size_t argc,
+    const char **argv, size_t cursor_arg, struct bu_arg_validate_result *result)
+{
+    bool width = false;
+    bool depth = false;
+
+    if (!result || cursor_arg < argc)
+	return 0;
+    for (size_t i = 0; i < argc; ++i) {
+	const char *arg = argv[i];
+	if (!arg)
+	    continue;
+	if (BU_STR_EQUAL(arg, "-W") || BU_STR_EQUAL(arg, "--width") ||
+		bu_strncmp(arg, "--width=", 8) == 0 ||
+		(bu_strncmp(arg, "-W", 2) == 0 && arg[2]))
+	    width = true;
+	if (BU_STR_EQUAL(arg, "-D") || BU_STR_EQUAL(arg, "--depth") ||
+		bu_strncmp(arg, "--depth=", 8) == 0 ||
+		(bu_strncmp(arg, "-D", 2) == 0 && arg[2]))
+	    depth = true;
+    }
+    if (width != depth) {
+	result->state = BU_ARG_VALIDATE_INVALID;
+	result->hint = "--width and --depth must be specified together";
+    }
+    return 0;
+}
+
+static const struct bu_arg_schema building_schema = BU_ARG_SCHEMA(
+    "mkbuilding",
+    "Generate physically dimensioned building geometry from presets or structured input",
+    building_options, building_operands, BU_ARG_PARSE_INTERSPERSED,
+    BU_ARG_SCHEMA_META_HELP(nullptr, nullptr, building_schema_validate, nullptr, nullptr));
+
 void
-usage(const char *program, struct bu_opt_desc *descriptions)
+usage(const char *program)
 {
-    char *help = bu_opt_describe(descriptions, nullptr);
-    std::cerr
-	<< "Usage: " << program << " [options] [output.g]\n"
-	<< "Generate physically dimensioned building geometry from presets, the native JSON schema,\n"
-	<< "OSM GeoJSON/Overpass JSON, or OGC CityJSON 2.x input. Native and imported lengths\n"
-	<< "are meters unless their schema states otherwise.\n\n"
-	<< (help ? help : "");
+    char *help = bu_arg_schema_help(&building_schema, program);
+    std::cerr << (help ? help : "");
     bu_free(help, "option help");
-}
-
-struct bu_opt_desc *
-option_descriptions(
-    options &opts,
-    struct bu_vls &output,
-    struct bu_vls &spec,
-    struct bu_vls &preset,
-    struct bu_vls &name,
-    struct bu_vls &type,
-    struct bu_vls &roof,
-    struct bu_vls &structure,
-    struct bu_vls &effective,
-    struct bu_vls &demo)
-{
-    static struct bu_opt_desc descriptions[OPTION_DESCRIPTION_COUNT];
-    BU_OPT(descriptions[0], "h", "help", "", nullptr, &opts.help, "Print help and exit");
-    BU_OPT(descriptions[1], "?", "", "", nullptr, &opts.help, "");
-    BU_OPT(descriptions[2], "o", "output", "file.g", &bu_opt_vls, &output, "Output BRL-CAD database");
-    BU_OPT(descriptions[3], "s", "spec", "file.json", &bu_opt_vls, &spec, "Native, GeoJSON, Overpass, or CityJSON input");
-    BU_OPT(descriptions[4], "p", "preset", "name", &bu_opt_vls, &preset, "Building preset or OSM building type");
-    BU_OPT(descriptions[5], "n", "name", "name", &bu_opt_vls, &name, "Top-level building object name");
-    BU_OPT(descriptions[6], "t", "type", "OSM-value", &bu_opt_vls, &type, "OSM building=* taxonomy value");
-    BU_OPT(descriptions[7], "L", "levels", "count", &bu_opt_int, &opts.levels, "Number of above-ground floors");
-    BU_OPT(descriptions[8], "W", "width", "meters", &bu_opt_fastf_t, &opts.width, "Rectangular footprint width");
-    BU_OPT(descriptions[9], "D", "depth", "meters", &bu_opt_fastf_t, &opts.depth, "Rectangular footprint depth");
-    BU_OPT(descriptions[10], "H", "floor-height", "meters", &bu_opt_fastf_t, &opts.floor_height, "Uniform floor-to-floor height");
-    BU_OPT(descriptions[11], "R", "roof-shape", "shape", &bu_opt_vls, &roof, "OSM roof:shape value");
-    BU_OPT(descriptions[12], "", "roof-height", "meters", &bu_opt_fastf_t, &opts.roof_height, "Roof height above facade");
-    BU_OPT(descriptions[13], "", "wall-thickness", "meters", &bu_opt_fastf_t, &opts.wall_thickness, "Exterior wall thickness");
-    BU_OPT(descriptions[14], "", "structure", "system", &bu_opt_vls, &structure, "Structural system; enables columns and beams");
-    BU_OPT(descriptions[15], "", "no-auto-openings", "", nullptr, &opts.no_auto_openings, "Do not synthesize doors and windows");
-    BU_OPT(descriptions[16], "f", "force", "", nullptr, &opts.force, "Replace an existing output database");
-    BU_OPT(descriptions[17], "j", "append", "", nullptr, &opts.append, "Append to an existing output database");
-    BU_OPT(descriptions[18], "", "validate-only", "", nullptr, &opts.validate_only, "Validate and normalize input without generating geometry");
-    BU_OPT(descriptions[19], "", "effective-spec", "file.json", &bu_opt_vls, &effective, "Write fully resolved native specification");
-    BU_OPT(descriptions[20], "", "demo-file", "file.g", &bu_opt_vls, &demo, "Write a broad building and roof taxonomy sampler");
-    BU_OPT(descriptions[21], "", "schema", "", nullptr, &opts.print_schema, "Print the native JSON Schema and exit");
-    BU_OPT(descriptions[22], "", "list-types", "", nullptr, &opts.list_types, "List covered OSM building values and exit");
-    BU_OPT(descriptions[23], "", "list-roofs", "", nullptr, &opts.list_roofs, "List covered OSM roof shapes and exit");
-    BU_OPT_NULL(descriptions[24]);
-    return descriptions;
-}
-
-std::string
-vls_string(struct bu_vls &value, const std::string &fallback = std::string())
-{
-    return bu_vls_strlen(&value) > 0 ? std::string(bu_vls_cstr(&value)) : fallback;
 }
 
 options
@@ -126,47 +185,58 @@ parse_options(int argc, const char **argv)
 {
     options opts;
     const char **arguments = argv + 1;
-    struct bu_vls output = BU_VLS_INIT_ZERO;
-    struct bu_vls spec = BU_VLS_INIT_ZERO;
-    struct bu_vls preset = BU_VLS_INIT_ZERO;
-    struct bu_vls name = BU_VLS_INIT_ZERO;
-    struct bu_vls type = BU_VLS_INIT_ZERO;
-    struct bu_vls roof = BU_VLS_INIT_ZERO;
-    struct bu_vls structure = BU_VLS_INIT_ZERO;
-    struct bu_vls effective = BU_VLS_INIT_ZERO;
-    struct bu_vls demo = BU_VLS_INIT_ZERO;
+    struct building_args args = {};
+    args.levels = opts.levels;
+    args.width = opts.width;
+    args.depth = opts.depth;
+    args.floor_height = opts.floor_height;
+    args.roof_height = opts.roof_height;
+    args.wall_thickness = opts.wall_thickness;
     struct bu_vls message = BU_VLS_INIT_ZERO;
-    struct bu_opt_desc *descriptions = option_descriptions(opts, output, spec, preset, name, type, roof, structure, effective, demo);
-    const int positional = bu_opt_parse(&message, argc - 1, arguments, descriptions);
-    if (positional < 0) {
+    const int operand_index = bu_arg_schema_parse_complete(&building_schema,
+	&args, &message, argc - 1, arguments);
+    if (operand_index < 0) {
 	const std::string error = bu_vls_cstr(&message);
 	bu_vls_free(&message);
 	throw std::runtime_error(error.empty() ? "option parsing failed" : error);
     }
     bu_vls_free(&message);
-    opts.output = vls_string(output, opts.output);
-    opts.spec_file = vls_string(spec);
-    opts.preset = vls_string(preset, opts.preset);
-    opts.name = vls_string(name);
-    opts.type = vls_string(type);
-    opts.roof_shape = vls_string(roof);
-    opts.structure = vls_string(structure);
-    opts.effective_spec_file = vls_string(effective);
-    opts.demo_file = vls_string(demo);
-    bu_vls_free(&output); bu_vls_free(&spec); bu_vls_free(&preset); bu_vls_free(&name);
-    bu_vls_free(&type); bu_vls_free(&roof); bu_vls_free(&structure); bu_vls_free(&effective); bu_vls_free(&demo);
 
-    if (opts.help) {
-	usage(argv[0], descriptions);
+    if (args.help) {
+	usage(argv[0]);
 	bu_exit(EXIT_SUCCESS, nullptr);
     }
-    if (positional > 1)
-	throw std::runtime_error("at most one positional output file may be specified");
-    if (positional == 1) {
-	if (opts.output != "mkbuilding.g")
+
+    argc -= operand_index + 1;
+    arguments += operand_index;
+    if (args.output)
+	opts.output = args.output;
+    if (argc == 1) {
+	if (args.output)
 	    throw std::runtime_error("output file was specified both positionally and with --output");
 	opts.output = arguments[0];
     }
+    if (args.spec_file) opts.spec_file = args.spec_file;
+    if (args.preset) opts.preset = args.preset;
+    if (args.name) opts.name = args.name;
+    if (args.type) opts.type = args.type;
+    if (args.roof_shape) opts.roof_shape = args.roof_shape;
+    if (args.structure) opts.structure = args.structure;
+    if (args.effective_spec_file) opts.effective_spec_file = args.effective_spec_file;
+    if (args.demo_file) opts.demo_file = args.demo_file;
+    opts.levels = args.levels;
+    opts.width = args.width;
+    opts.depth = args.depth;
+    opts.floor_height = args.floor_height;
+    opts.roof_height = args.roof_height;
+    opts.wall_thickness = args.wall_thickness;
+    opts.no_auto_openings = args.no_auto_openings;
+    opts.force = args.force;
+    opts.append = args.append;
+    opts.validate_only = args.validate_only;
+    opts.print_schema = args.print_schema;
+    opts.list_types = args.list_types;
+    opts.list_roofs = args.list_roofs;
     return opts;
 }
 
