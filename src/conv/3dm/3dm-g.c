@@ -31,6 +31,7 @@
 #include "bu/exit.h"
 #include "bu/log.h"
 #include "bu/malloc.h"
+#include "bu/str.h"
 #include "gcv/api.h"
 
 struct rhino_args {
@@ -88,6 +89,16 @@ main(int argc, char **argv)
     struct bu_vls msg = BU_VLS_INIT_ZERO;
 
     bu_setprogname(argv[0]);
+
+    if (argc == 2 && BU_STR_EQUAL(argv[1], "--command-schema")) {
+	char *schema_json = bu_arg_schema_describe_json(&rhino_schema);
+	if (!schema_json)
+	    return 1;
+	printf("%s\n", schema_json);
+	bu_free(schema_json, "3dm-g command schema JSON");
+	return 0;
+    }
+
     gcv_opts_default(&gcv_options);
 
     /* parse standard options */

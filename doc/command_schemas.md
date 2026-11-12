@@ -93,3 +93,33 @@ Registered schemas participate in `ged_cmd_schema_json`, `ged_cmd_help`,
 `ged_cmd_schema_lint`. Grammar adapters should delegate to native schema/tree
 functions wherever possible and implement only syntax that cannot be modeled
 natively.
+
+## Documentation auditing
+
+The `argdoc` maintenance executable renders canonical AsciiDoc synopsis and
+option fragments from the JSON description of a BU_ARG schema. It can read a
+saved JSON file or run a command whose standard output is the description:
+
+```
+argdoc --render -- 3dm-g --command-schema
+argdoc --check --man-page doc/asciidoc/system/man1/3dm-g.adoc \
+  -- 3dm-g --command-schema
+argdoc --render --name draw -- gsh --command-schema all
+```
+
+Standalone programs participating in this audit reserve the exact invocation
+`--command-schema` as a hidden, side-effect-free request that prints their
+schema JSON and exits successfully. GED command descriptions are available
+collectively from `gsh --command-schema all`.
+
+Audit mode compares documented option spellings and argument presence with the
+schema. Hidden aliases may be documented but are not required. Update mode only
+replaces regions explicitly delimited by these markers, so manually maintained
+prose is never inferred or overwritten:
+
+```
+// BEGIN GENERATED BU_ARG SYNOPSIS
+// END GENERATED BU_ARG SYNOPSIS
+// BEGIN GENERATED BU_ARG OPTIONS
+// END GENERATED BU_ARG OPTIONS
+```
