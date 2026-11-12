@@ -162,7 +162,10 @@ cover grazing incidence, entry/exit and subtraction faces, sphere radii from
 one billion.  UV checks cover sphere entry/exit, a Boolean cut face,
 concurrent first-use ARB mapping, and authored BOT coordinates under
 nonuniform transforms.  Smooth BOT checks distinguish facet and shading
-normals, including inside rays and Boolean cuts.  Derivative checks compare
+normals, including inside rays and Boolean cuts.  A centered, unoriented
+plate BOT checks front/back thickness boundaries, oblique and non-unit rays,
+clipped intervals, and secondary-ray offsets.  Rendered plate transmission
+remains unqualified.  Derivative checks compare
 unit-normal changes to nearby ray hits on spheres and flat, smooth,
 transformed, and Boolean-cut meshes.  Missing mappings and singular poles
 leave derivative inputs unavailable.

@@ -33,6 +33,7 @@
 #include <vector>
 
 #include "bu/app.h"
+#include "bu/bitv.h"
 #include "bu/file.h"
 #include "bu/log.h"
 #include "bu/parallel.h"
@@ -42,6 +43,20 @@
 #include "renderer/kernel/shading/shadingray.h"
 
 static constexpr double INTERSECTION_TOLERANCE = 1.0e-7;
+static constexpr fastf_t PLATE_THICKNESS = 2;
+
+static int
+make_plate(struct rt_wdb *db)
+{
+    fastf_t vertices[] = {-10, -10, 0, 10, -10, 0, 10, 10, 0};
+    int faces[] = {0, 1, 2};
+    fastf_t thickness[] = {PLATE_THICKNESS};
+    struct bu_bitv *face_mode = bu_bitv_new(1);
+    const int result = mk_bot(db, "plate.s", RT_BOT_PLATE, RT_BOT_UNORIENTED,
+	0, 3, 1, vertices, faces, thickness, face_mode);
+    bu_bitv_free(face_mode);
+    return result;
+}
 
 static bool
 check_ray(BrlcadObject &object, const asf::Vector3d &origin,
@@ -120,6 +135,33 @@ check_offsets(BrlcadObject &object, const asf::Vector3d &point,
     }
     return true;
 }
+
+static bool
+check_plate(BrlcadObject &plate)
+{
+    bool passed = true;
+    const double half_thickness = PLATE_THICKNESS / 2;
+    const asf::Vector3d plate_top(0, 0, 1), plate_bottom(0, 0, -1);
+    for (const double side : {-1.0, 1.0}) {
+        const asf::Vector3d normal(0, 0, side);
+        passed = check_ray(plate, asf::Vector3d(5, -5, side * 3), -normal,
+            0, 10, true, 3 - half_thickness, normal) && passed;
+        passed = check_ray(plate, asf::Vector3d(5, -5, side * 0.5), normal,
+            0, 10, true, half_thickness - 0.5, normal) && passed;
+    }
+    passed = check_ray(plate, asf::Vector3d(5, -5, 3), asf::Vector3d(0, 0, -2),
+        0, 10, true, (3 - half_thickness) / 2, plate_top) && passed;
+    passed = check_ray(plate, asf::Vector3d(0, -5, 3), asf::Vector3d(1, 0, -1),
+        0, 10, true, 3 - half_thickness, plate_top) && passed;
+    passed = check_ray(plate, asf::Vector3d(5, -5, 3), asf::Vector3d(0, 0, -1),
+        2.5, 10, true, 3 + half_thickness, plate_bottom) && passed;
+    passed = check_ray(plate, asf::Vector3d(5, -5, 3), asf::Vector3d(0, 0, -1),
+        0, 1.5, false, 0, plate_top) && passed;
+    passed = check_offsets(plate, asf::Vector3d(5, -5, half_thickness),
+        asf::Vector3d(0, 0, -1), plate_top, 1.0e-4) && passed;
+    return passed;
+}
+
 
 static asr::ProceduralObject::IntersectionResult
 query_surface(BrlcadObject &object, const asf::Vector3d &origin, const asf::Vector3d &direction)
@@ -273,10 +315,11 @@ main(int argc, char **argv)
 	    written = written && mk_addmember(solid.c_str(), &members.l, NULL, WMOP_UNION) &&
 		mk_lcomb(db, region.c_str(), &members, 1, NULL, NULL, NULL, 0) == 0;
 	}
-	written = written && art_test::make_mesh(db, "mesh.s", art_test::MeshUV::Authored) == 0 &&
+	written = written && make_plate(db) == 0 &&
+	    art_test::make_mesh(db, "mesh.s", art_test::MeshUV::Authored) == 0 &&
 	    art_test::make_mesh(db, "plain_mesh.s", art_test::MeshUV::None) == 0 &&
 	    art_test::make_mesh(db, "smooth_mesh.s", art_test::MeshUV::Authored, art_test::MeshNormals::Authored) == 0;
-	for (const char *name : {"mesh", "plain_mesh", "smooth_mesh"}) {
+	for (const char *name : {"mesh", "plain_mesh", "smooth_mesh", "plate"}) {
 	    const std::string solid = std::string(name) + ".s";
 	    const std::string region = std::string(name) + ".r";
 	    BU_LIST_INIT(&members.l);
@@ -308,6 +351,9 @@ main(int argc, char **argv)
 	parameters.insert("database_path", filename).insert("object_path", "sphere.r");
 	BrlcadObject sphere("sphere", parameters);
 	ok = sphere_entry(sphere) && ok;
+	parameters.insert("object_path", "plate.r");
+	BrlcadObject plate("plate", parameters);
+	ok = check_plate(plate) && ok;
 	// Distant origins must not lose the small sphere discriminant when
 	// large quadratic terms cancel. Check distance and the boundary normal.
 	constexpr double FAR_ORIGIN = 1.0e8;
