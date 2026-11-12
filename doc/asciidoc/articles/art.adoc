@@ -372,6 +372,20 @@ not reach the renderer error log remain under the shader's control.
 `regress-art` checks both missing-texture behaviors.
 
 
+== Native image-node failures
+
+A native `as_texture` node reports a missing named file or failed lookup as
+an OSL error by default.  `art` then exits without creating or replacing an
+image.  An unassigned filename uses the node's fill defaults.
+
+To deliberately render a fill when a named texture is unavailable, set
+`OSL.param.<node>.in_error_on_missing` to `int 0`.  The node then supplies
+`in_color`, `in_alpha`, and the raw RGB mean of `in_color` on `out_channel`.
+Fill values are used directly.  The regression checks the color and both
+scalar outputs, an empty filename, and preservation of an existing render
+when the requested image is missing.
+
+
 == Bump and normal-map networks
 
 Version 2 can connect native Appleseed normal nodes to a material.  For
