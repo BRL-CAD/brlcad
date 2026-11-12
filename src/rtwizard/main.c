@@ -513,7 +513,7 @@ static int
 rtwizard_quaternion_packed(struct bu_vls *msg, const char *arg, fastf_t *quaternion)
 {
     char *copy;
-    char *values[5] = {NULL, NULL, NULL, NULL, NULL};
+    char *values[6] = {NULL, NULL, NULL, NULL, NULL, NULL};
     fastf_t parsed[4];
     size_t count;
     size_t i;
