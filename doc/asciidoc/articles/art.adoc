@@ -148,6 +148,8 @@ and repeated arcs in one combination.  `regress-art` checks translated
 instances with inherited colors and two separated occurrences of one region.
 `regress-art-materials` checks distinct parent assignments for occurrences
 of the same region, assignment precedence, and explicit path selection.
+`regress-art-inspect` checks the resolved-material report and static validation
+without preparing or rendering geometry.
 
 |Ray boundaries and resource ownership
 |`regress-art-intersections` checks entry/exit and Boolean cut normals,
@@ -605,6 +607,61 @@ not fail the render.  A shader may deliberately request the `texture()`
 not reach the renderer error log remain under the shader's control.
 `regress-art` checks both missing-texture behaviors.
 
+
+=== Inspecting resolved materials
+
+Inspect the selected region instances before committing to a render:
+
+----
+art -c "set inspect_materials=1" model.g all.g > materials.txt
+----
+
+The report goes to standard output; diagnostics go to standard error.
+It records the project directory and shader search path, then identifies
+each region by its full indexed instance path.  Each material record gives
+the selected assignment and source path, whether that assignment locks
+inheritance, the material-parent chain from child to oldest parent, shader
+layers, typed input bindings, connections, and the terminal surface result.
+Legacy light regions are identified separately as point lights.
+
+Input bindings include the resolved region color, plastic compatibility
+defaults, and inherited and local parameter assignments.  Inputs supplied
+by a connection mark their literal binding as overridden.  Inputs not
+listed retain their shader defaults.  For example, part of an inherited
+plastic network report could read:
+
+----
+region "/painted.g/ball.r"
+  assignment "paint.material" from "/painted.g" inherit higher
+  material_chain "paint.material" "base.material"
+  shader "tint" "as_blend_color" shader
+  shader "material" "as_plastic" shader
+  connect "tint.out_color" -> "material.in_color"
+  connect "material.out_outColor" -> "surface.in_input"
+  shader "surface" "as_closure2surface" surface
+  result "surface.Ci"
+----
+
+Inspection uses the same assignment, inheritance, parameter, connection,
+and shader-interface validation as rendering.  A bad selected material or
+object path exits with an error and publishes no partial report, including
+when an earlier region was valid.  A selection with no regions is an error.
+No image or framebuffer is opened, even if `-o` or `-F` is present.  Geometry
+preparation is skipped, so material inspection also works on empty regions.
+The stdin `end` command uses the same inspection path when this mode is set.
+
+This is static material validation.  Shaders are not executed and texture
+files are not opened; a valid report cannot establish that a texture exists
+or that a closure works during rendering.  The report retains authored
+string values, including asset filenames, and quotes embedded quotes and
+backslashes.  Run a render to validate texture loading and shader execution.
+
+`regress-art-inspect` checks assignment sources and parent chains, inherited
+network parameters, overridden literals, closure adapters and direct `Ci`
+shaders, quoted string values, empty regions, light classification, invalid
+paths and graphs, output preservation, and stdin inspection.  A moved
+project with a conflicting shader in the caller's working directory must
+still resolve its own shader interface.
 
 == Native image-node failures
 

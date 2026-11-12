@@ -108,6 +108,10 @@ create_scene(const char *path, const char *shader, const char *output)
     BU_LIST_INIT(&members.l);
     success = success && mk_addmember("ellipsoid.s", &members.l, NULL, WMOP_UNION) &&
 	mk_lcomb(db, "ellipsoid.r", &members, 1, "plastic", "", red, 0) == 0;
+    // Material inspection must not require geometry that can be raytraced.
+    BU_LIST_INIT(&members.l);
+    success = success && mk_lcomb(db, "empty.r", &members, 1, NULL, NULL, NULL, 0) == 0;
+
     // Two paths to one region must keep their transforms and inherited colors.
     mat_t translated;
     MAT_IDN(translated);

@@ -24,8 +24,11 @@ _objects_ in the input _model.g_ database.
 
 *art* shoots rays into the database with *librt*(3) to derive each region's
 geometry, then builds an equivalent Appleseed scene. Each region becomes an
-Appleseed procedural object with a native plastic-like surface. Region RGB
+Appleseed procedural object with an OSL plastic surface by default. Region RGB
 colors, including colors inherited from parent combinations, are honored.
+Material objects can select custom OSL shaders and networks. Assignments follow
+the selected instance path and combination inheritance; material objects can
+inherit shader definitions from parent material objects.
 Regions using BRL-CAD's *light* shader become colored point lights located at
 their model-space centroids; their *bright* and *fract* values scale the light
 intensity. If the database has no light regions, *art* supplies a default point
@@ -67,7 +70,7 @@ currently supported.
 
 *-C* _#/#/#_::
   Background (sky) color as R/G/B, either 0-255 or 0.0-1.0.
-  Default 191/204/255 (light blue).
+  Default 255/255/255 (white).
 
 *-R*::
   Disable reporting of overlapping region names.
@@ -92,6 +95,11 @@ currently supported.
   pixel (the main quality/time tradeoff, default 25); *background* (or
   *bg*) sets the sky color as an R/G/B string; and *light_intensity*
   (or *li*) scales the point-light brightness (default 200).
+  Set *inspect_materials=1* to report resolved material assignments and
+  validated shader networks on standard output instead of rendering.
+  This mode skips geometry preparation and image/framebuffer output;
+  diagnostics remain on standard error. Texture loading and shader
+  execution require a render.
 
 *-M*::
   Read a model-to-view matrix and animation commands from standard input,
@@ -141,6 +149,18 @@ $ art -p 0 -c "set samples=100" -o ortho.png moss.g all.g
 Sets the perspective angle to 0 (orthographic projection) and raises the
 per-pixel sample count to 100 for a smoother, less noisy image at the cost
 of longer render time.
+====
+
+.Inspect material assignments and shader networks
+====
+[source,console]
+----
+$ art -c "set inspect_materials=1" model.g all.g > materials.txt
+----
+Reports each region instance's full path, effective assignment and source,
+material-parent chain, typed bindings, connections, and surface result.
+Unlisted inputs retain their shader defaults. Invalid selected materials,
+shader interfaces, or object paths fail without publishing a partial report.
 ====
 
 .Render an mged saveview script

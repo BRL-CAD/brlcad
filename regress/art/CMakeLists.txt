@@ -32,7 +32,7 @@ cmakefiles(CMakeLists.txt art_scene.cpp art_test_mesh.h art_test_commands.cmake
   regress-art-transmission.cmake.in regress-art-refraction.cmake.in
   regress-art-mixture.cmake.in regress-art-surface.cmake.in
   regress-art-metal-energy.cmake.in regress-art-coat.cmake.in
-  regress-art-materials.cmake.in)
+  regress-art-materials.cmake.in regress-art-inspect.cmake.in)
 foreach(shader IN LISTS ART_TEST_SHADER_NAMES)
   cmakefiles("${shader}.osl")
 endforeach()
@@ -82,6 +82,7 @@ if(TARGET art AND BUILD_TESTING)
   brlcad_regression_test(regress-art-metal-energy "art;art_scene_test" EXEC art VEXEC art_scene_test TIMEOUT 120)
   brlcad_regression_test(regress-art-coat "art;art_scene_test" EXEC art VEXEC art_scene_test TIMEOUT 120)
   brlcad_regression_test(regress-art-materials "art;art_scene_test" EXEC art VEXEC art_scene_test TIMEOUT 120)
+  brlcad_regression_test(regress-art-inspect "art;art_scene_test" EXEC art VEXEC art_scene_test TIMEOUT 120)
   add_test(NAME regress-art-intersections COMMAND art_intersection_test)
   brlcad_regression_test(regress-art-intersections "art_intersection_test" TEST_DEFINED TIMEOUT 120)
   distclean("${CMAKE_CURRENT_BINARY_DIR}/output" "${CMAKE_CURRENT_BINARY_DIR}/bump-output"
@@ -95,7 +96,8 @@ if(TARGET art AND BUILD_TESTING)
     "${CMAKE_CURRENT_BINARY_DIR}/surface-output"
     "${CMAKE_CURRENT_BINARY_DIR}/metal-energy-output"
     "${CMAKE_CURRENT_BINARY_DIR}/coat-output"
-    "${CMAKE_CURRENT_BINARY_DIR}/materials-output")
+    "${CMAKE_CURRENT_BINARY_DIR}/materials-output"
+    "${CMAKE_CURRENT_BINARY_DIR}/inspect-output")
 endif()
 
 # Local Variables:

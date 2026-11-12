@@ -79,8 +79,11 @@
 #include <atomic>
 #include <cstddef>
 #include <exception>
+#include <iomanip>
+#include <locale>
 #include <memory>
 #include <set>
+#include <sstream>
 #include <string>
 #include <vector>
 
@@ -170,6 +173,8 @@
 
 #define VERBOSE_STATS 0x00000008
 
+
+static int inspect_materials = 0;
 
 size_t samples = 25;
 size_t light_intensity = 200; // make ambient light match rt
@@ -286,6 +291,7 @@ extern "C" {
 	{"%f", 3, "bg", 0, color_hook, NULL, NULL},
 	{"%d", 1, "light_intensity", 0, BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
 	{"%d", 1, "li", 0, BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
+	{"%d", 1, "inspect_materials", 0, BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
 	{"",	0, (char *)0,	0,	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
     };
 }
@@ -308,6 +314,7 @@ init_defaults(void)
     view_parse[3].sp_offset = bu_byteoffset(background[0]);
     view_parse[4].sp_offset = bu_byteoffset(light_intensity);
     view_parse[5].sp_offset = bu_byteoffset(light_intensity);
+    view_parse[6].sp_offset = bu_byteoffset(inspect_materials);
 
     // default output file name
     outputfile = (char*)"art.png";
@@ -338,7 +345,7 @@ init_defaults(void)
     option("Raytrace", "-P #", "Specify number of processors to use (default: all available)", 100);
     option("Raytrace", "-T # or -T #/#", "Tolerance as distance or distance/angular", 100);
 
-    option("Advanced", "-c \"command\"", "Run a semicolon-separated list of rt commands", 0);
+    option("Advanced", "-c \"command\"", "Run rt commands; set inspect_materials=1 to inspect without rendering", 0);
     option("Advanced", "-M", "Read matrix + commands on stdin (RT 'saveview' scripts)", 100);
     option("Advanced", "-D #", "Specify starting frame number (ending is specified via -K #)", 100);
     option("Advanced", "-K #", "Specify ending frame number (starting is specified via -D #)", 100);
@@ -507,14 +514,13 @@ art_parse_light_intensity(const struct bu_vls* shader, double* bright, double* f
 struct ArtSceneBuilder {
     asr::Scene &scene;
     const asf::SearchPaths &search_paths;
+    std::ostream *report;
     std::set<std::string> region_paths = {};
     bool valid = true;
 };
 
 
-/* db_walk_tree() callback to register all regions within the scene
- * using an OSL plastic material with the resolved region color.
- */
+/* Share the full-path material walk between inspection and rendering. */
 static int
 register_region_impl(struct db_tree_state* tsp,
 		const struct db_full_path* pathp,
@@ -534,29 +540,25 @@ register_region_impl(struct db_tree_state* tsp,
     if (!builder.region_paths.insert(region_path).second)
 	return 0;
 
-    point_t min, max;
-    struct bu_vls bounds_error = BU_VLS_INIT_ZERO;
-    const int status = rt_obj_bounds(&bounds_error, tsp->ts_dbip, 1, &name, 1, min, max);
-    if (status != 0) {
-	bu_log("art: cannot bound region '%s': %s\n", name, bu_vls_cstr(&bounds_error));
-	bu_vls_free(&bounds_error);
-	builder.valid = false;
-	return 0;
-    }
-    bu_vls_free(&bounds_error);
-
-    /* If this region uses the BRL-CAD "light" shader, treat it as a light
-     * source rather than renderable geometry: record its centroid and color
-     * for build_project() to turn into an Appleseed light.  We intentionally
-     * do NOT emit geometry for it -- otherwise the light solid would be an
-     * opaque blob shadowing its own light.
-     *
-     * NOTE: position (region centroid) and color (region rgb) are honored;
-     * per-light "bright"/"fract" intensity from the shader string is not yet
-     * mapped -- all discovered lights share the light_intensity multiplier.
-     */
+    // Legacy light geometry becomes a point light.  Rendering the solid
+    // would make it shadow its own source.
     if (bu_vls_strlen(&combp->shader) >= 5 &&
 	bu_strncmp(bu_vls_cstr(&combp->shader), "light", 5) == 0) {
+	if (builder.report) {
+	    *builder.report << "light " << std::quoted(region_path)
+		<< " point shader " << std::quoted(bu_vls_cstr(&combp->shader)) << '\n';
+	    return 0;
+	}
+	point_t min, max;
+	struct bu_vls bounds_error = BU_VLS_INIT_ZERO;
+	const int status = rt_obj_bounds(&bounds_error, tsp->ts_dbip, 1, &name, 1, min, max);
+	if (status != 0) {
+	    bu_log("art: cannot bound light region '%s': %s\n", name, bu_vls_cstr(&bounds_error));
+	    bu_vls_free(&bounds_error);
+	    builder.valid = false;
+	    return 0;
+	}
+	bu_vls_free(&bounds_error);
 	ArtLight L;
 	L.name = std::string(name) + "_light";
 	L.pos[0] = (min[X] + max[X]) * 0.5;
@@ -575,12 +577,6 @@ register_region_impl(struct db_tree_state* tsp,
 	       name, L.pos[0], L.pos[1], L.pos[2], L.bright);
 	return 0;
     }
-
-    const asr::ParamArray geometry_parameters = asr::ParamArray()
-	.insert("database_path", tsp->ts_dbip->dbi_filename)
-	.insert("object_path", name);
-    asf::auto_release_ptr<asr::Object> brlcad_object(
-	new BrlcadObject(name, geometry_parameters, tsp->ts_dbip));
 
     // create assembly for current object
     std::string assembly_name = std::string(name) + "_object_assembly";
@@ -613,10 +609,19 @@ register_region_impl(struct db_tree_state* tsp,
 	diffuse_rgb[0] = diffuse_rgb[1] = diffuse_rgb[2] = 1.0f;
     }
     if (!art_add_material(assembly.ref(), material_name.c_str(), diffuse_rgb,
-	    tsp->ts_dbip, pathp, combp, builder.search_paths)) {
+	    tsp->ts_dbip, pathp, combp, builder.search_paths, builder.report)) {
 	builder.valid = false;
 	return 0;
     }
+
+    if (builder.report)
+	return 0;
+
+    const asr::ParamArray geometry_parameters = asr::ParamArray()
+	.insert("database_path", tsp->ts_dbip->dbi_filename)
+	.insert("object_path", name);
+    asf::auto_release_ptr<asr::Object> brlcad_object(
+	new BrlcadObject(name, geometry_parameters, tsp->ts_dbip));
 
     // insert object into object array in assembly
     assembly->objects().insert(brlcad_object);
@@ -762,7 +767,7 @@ art_renderer_root()
 
 
 static asf::auto_release_ptr<asr::Project>
-build_project()
+build_project(std::ostream *report)
 {
     /* If user gave no sizing info at all, use 512 as default */
     struct bu_vls dimensions = BU_VLS_INIT_ZERO;
@@ -795,6 +800,12 @@ build_project()
 	if (path) project->search_paths().push_back_explicit_path(path);
     }
 
+    if (report) {
+	*report << "project_root " << std::quoted(project->search_paths().get_root_path().c_str()) << '\n'
+	    << "shader_search_path " << std::quoted(project->search_paths().to_string_reversed(
+		asf::SearchPaths::osl_path_separator()).c_str()) << '\n';
+    }
+
     // Add default configurations to the project.
     project->add_default_configurations();
 
@@ -825,7 +836,7 @@ build_project()
     // Materials
     //------------------------------------------------------------------------
 
-    ArtSceneBuilder builder{scene.ref(), project->search_paths()};
+    ArtSceneBuilder builder{scene.ref(), project->search_paths(), report};
 
     // walk the db to register all regions
     struct db_tree_state state;
@@ -836,19 +847,29 @@ build_project()
     art_lights.clear();
 
     if (objc) {
-	db_walk_tree(APP.a_rt_i->rti_dbip, objc, (const char**)objv, 1, &state, register_region, NULL, NULL, &builder);
+	if (db_walk_tree(APP.a_rt_i->rti_dbip, objc, (const char**)objv, 1, &state, register_region, NULL, NULL, &builder) < 0)
+	    builder.valid = false;
     }
     if (cmd_objs) {
 
 	size_t cmdobjc = BU_PTBL_LEN(cmd_objs);
 	const char** cmdobjv = (const char**)cmd_objs->buffer;
 	if (cmdobjc) {
-	    db_walk_tree(APP.a_rt_i->rti_dbip, (int)cmdobjc, cmdobjv, 1, &state, register_region, NULL, NULL, &builder);
+	    if (db_walk_tree(APP.a_rt_i->rti_dbip, (int)cmdobjc, cmdobjv, 1, &state, register_region, NULL, NULL, &builder) < 0)
+		builder.valid = false;
 	}
     }
 
+    if (builder.region_paths.empty()) {
+	bu_log("art: selection contains no regions\n");
+	builder.valid = false;
+    }
     if (!builder.valid)
 	return asf::auto_release_ptr<asr::Project>();
+    if (report) {
+	project->set_scene(scene);
+	return project;
+    }
 
     //------------------------------------------------------------------------
     // Light
@@ -1312,18 +1333,43 @@ art_render_image(asr::Project& project, asr::ITileCallback* callback = nullptr)
 }
 
 
+static bool
+art_process_scene(bool display_framebuffer)
+{
+    if (!inspect_materials)
+	do_ae(azimuth, elevation);
+    std::ostringstream report;
+    report.imbue(std::locale::classic());
+    auto project = build_project(inspect_materials ? &report : nullptr);
+    if (!project.get())
+	return false;
+    if (inspect_materials) {
+	const std::string text = report.str();
+	if (fwrite(text.data(), 1, text.size(), stdout) != text.size() || fflush(stdout) != 0) {
+	    bu_log("art: cannot write material inspection report\n");
+	    return false;
+	}
+	return true;
+    }
+    if (display_framebuffer && !fbp) {
+	RENDERER_LOG_INFO("FRAMEBUFFER IS ON\n");
+	if (fb_setup() != 0)
+	    return false;
+    }
+    ArtTileCallback callback;
+    const bool success = art_render_image(project.ref(), display_framebuffer ? &callback : nullptr);
+    if (fbp != FB_NULL)
+	fb_close(fbp);
+    return success;
+}
+
+
 static int
 art_cm_end(const int UNUSED(argc), const char** UNUSED(argv))
 {
-    if (APP.a_rt_i && BU_LIST_IS_EMPTY(&APP.a_rt_i->HeadRegion))
+    if (!inspect_materials && APP.a_rt_i && BU_LIST_IS_EMPTY(&APP.a_rt_i->HeadRegion))
 	def_tree(APP.a_rt_i);
-
-    do_ae(azimuth, elevation);
-    asf::auto_release_ptr<asr::Project> project(build_project());
-    if (!project.get())
-	return -1;
-
-    return art_render_image(project.ref()) ? 0 : -1;
+    return art_process_scene(false) ? 0 : -1;
 }
 
 
@@ -1426,7 +1472,7 @@ main(int argc, char **argv)
     APP.a_rt_i = rtip;
     APP.a_onehit = 1;
 
-    if (objv) {
+    if (objv && !inspect_materials) {
 
 	/* include objects from database */
 	if (rt_gettrees(rtip, objc, (const char**)objv, (int)npsw) < 0) {
@@ -1456,25 +1502,7 @@ main(int argc, char **argv)
     }
 
 
-    do_ae(azimuth, elevation);
-    // RENDERER_LOG_INFO("View model: (%f, %f, %f)", eye_model[0], eye_model[2], -eye_model[1]);
-
-    // Build the project.
-    asf::auto_release_ptr<asr::Project> project(build_project());
-    if (!project.get()) {
-	return BRLCAD_ERROR;
-    }
-
-    if (framebuffer && !fbp) {
-	RENDERER_LOG_INFO("FRAMEBUFFER IS ON\n");
-	fb_setup();
-    }
-    ArtTileCallback artcallback;
-    const bool success = art_render_image(project.ref(), framebuffer ? &artcallback : nullptr);
-    if (fbp != FB_NULL)
-	fb_close(fbp);
-
-    return success ? BRLCAD_OK : BRLCAD_ERROR;
+    return art_process_scene(framebuffer != nullptr) ? BRLCAD_OK : BRLCAD_ERROR;
 }
 
 

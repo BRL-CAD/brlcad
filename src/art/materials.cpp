@@ -20,9 +20,11 @@
 #include "common.h"
 
 #include <cmath>
+#include <iomanip>
 #include <locale>
 #include <map>
 #include <memory>
+#include <ostream>
 #include <set>
 #include <sstream>
 #include <string>
@@ -50,6 +52,8 @@ namespace {
 
 constexpr char TerminalLayer[] = "material";
 constexpr char SurfaceLayer[] = "surface";
+constexpr char SurfaceShader[] = "as_closure2surface";
+constexpr char SurfaceInput[] = "in_input";
 constexpr char PropertyPrefix[] = "OSL.";
 constexpr char ParameterPrefix[] = "OSL.param.";
 constexpr char NodePrefix[] = "OSL.node.";
@@ -78,6 +82,7 @@ struct MaterialShader {
     bool output_explicit = false;
     std::map<std::string, MaterialNode> nodes;
     std::vector<Connection> connections;
+    std::vector<std::string> material_chain;
 };
 
 bool
@@ -190,9 +195,15 @@ struct CombinationAttributes {
     CombinationAttributes &operator=(const CombinationAttributes &) = delete;
 };
 
+struct MaterialAssignment {
+    std::string name;
+    size_t source_depth = 0;
+    bool locked = false;
+};
+
 bool
 resolve_assignment(struct db_i *db, const struct db_full_path *path,
-    const struct rt_comb_internal *region, std::string &material)
+    const struct rt_comb_internal *region, MaterialAssignment &assignment)
 {
     if (!path || !path->fp_len) {
 	bu_log("art: cannot resolve a material without an instance path\n");
@@ -212,12 +223,17 @@ resolve_assignment(struct db_i *db, const struct db_full_path *path,
 	db5_sync_attr_to_comb(&ancestor.value, &ancestor.attributes, &local_directory);
 	if (!bu_vls_strlen(&ancestor.value.material))
 	    continue;
-	material = bu_vls_cstr(&ancestor.value.material);
-	if (ancestor.value.inherit)
+	assignment.name = bu_vls_cstr(&ancestor.value.material);
+	assignment.source_depth = i + 1;
+	assignment.locked = ancestor.value.inherit;
+	if (assignment.locked)
 	    return true;
     }
-    if (bu_vls_strlen(&region->material))
-	material = bu_vls_cstr(&region->material);
+    if (bu_vls_strlen(&region->material)) {
+	assignment.name = bu_vls_cstr(&region->material);
+	assignment.source_depth = path->fp_len;
+	assignment.locked = region->inherit;
+    }
     return true;
 }
 
@@ -250,6 +266,7 @@ read_shader(struct db_i *db, const char *material_name, MaterialShader &shader)
 	    return false;
 	}
 	const auto *material = static_cast<const struct rt_material_internal *>(object.value.idb_ptr);
+	shader.material_chain.push_back(current);
 	auto &properties = layers.emplace_back();
 	const struct bu_attribute_value_pair *property;
 	for (BU_AVS_FOR(property, &material->opticalProperties))
@@ -417,18 +434,78 @@ set_parameters(const MaterialNode &node, const asr::ShaderQuery &query,
     return true;
 }
 
+std::string
+instance_path(const struct db_full_path *path, size_t depth)
+{
+    struct db_full_path prefix = *path;
+    prefix.fp_len = depth;
+    struct bu_vls text = BU_VLS_INIT_ZERO;
+    db_path_to_vls(&text, &prefix);
+    const std::string result = bu_vls_cstr(&text);
+    bu_vls_free(&text);
+    return result;
+}
+
+void
+report_material(std::ostream &out, const struct db_full_path *path,
+    const MaterialAssignment &assignment, const MaterialShader &shader,
+    const ShaderQueries &queries, const std::map<std::string, asr::ParamArray> &parameters,
+    const std::vector<std::string> &order)
+{
+    out << "region " << std::quoted(instance_path(path, path->fp_len)) << '\n';
+    if (assignment.source_depth) {
+	out << "  assignment " << std::quoted(assignment.name) << " from "
+	    << std::quoted(instance_path(path, assignment.source_depth))
+	    << " inherit " << (assignment.locked ? "higher" : "lower") << '\n';
+    } else {
+	out << "  assignment default\n";
+    }
+    if (!shader.material_chain.empty()) {
+	out << "  material_chain";
+	for (const auto &parent : shader.material_chain)
+	    out << ' ' << std::quoted(parent);
+	out << '\n';
+    }
+    for (const auto &node : order) {
+	const auto &query = *queries.at(node);
+	const auto &shader_name = node == TerminalLayer ? shader.root.name : shader.nodes.at(node).name;
+	out << "  shader " << std::quoted(node) << ' '
+	    << std::quoted(shader_name) << ' ' << query.get_shader_type() << '\n';
+	for (const auto &parameter : parameters.at(node).strings()) {
+	    out << "    input " << std::quoted(parameter.key()) << ' ' << std::quoted(parameter.value());
+	    for (const auto &connection : shader.connections)
+		if (connection.destination.node == node && connection.destination.parameter == parameter.key())
+		    out << " (overridden by connection)";
+	    out << '\n';
+	}
+    }
+    for (const auto &connection : shader.connections) {
+	out << "  connect " << std::quoted(connection.source.node + "." + connection.source.parameter)
+	    << " -> " << std::quoted(connection.destination.node + "." + connection.destination.parameter) << '\n';
+    }
+    if (BU_STR_EQUAL(queries.at(TerminalLayer)->get_shader_type(), "surface")) {
+	out << "  result " << std::quoted(std::string(TerminalLayer) + ".Ci") << '\n';
+    } else {
+	out << "  connect " << std::quoted(std::string(TerminalLayer) + "." + shader.output)
+	    << " -> " << std::quoted(std::string(SurfaceLayer) + "." + SurfaceInput) << '\n'
+	    << "  shader " << std::quoted(SurfaceLayer) << ' ' << std::quoted(SurfaceShader) << " surface\n"
+	    << "  result " << std::quoted(std::string(SurfaceLayer) + ".Ci") << '\n';
+    }
+}
+
 }
 
 bool
 art_add_material(asr::Assembly &assembly, const char *name,
     const float srgb[3], struct db_i *db, const struct db_full_path *path,
-    const struct rt_comb_internal *comb, const asf::SearchPaths &search_paths)
+    const struct rt_comb_internal *comb, const asf::SearchPaths &search_paths,
+    std::ostream *report)
 {
-    std::string assignment;
+    MaterialAssignment assignment;
     if (!resolve_assignment(db, path, comb, assignment))
 	return false;
     MaterialShader shader;
-    if (!read_shader(db, assignment.c_str(), shader))
+    if (!read_shader(db, assignment.name.c_str(), shader))
 	return false;
 
     std::map<std::string, MaterialNode> nodes = shader.nodes;
@@ -460,7 +537,7 @@ art_add_material(asr::Assembly &assembly, const char *name,
     }
     if (!surface) {
 	auto terminal = asr::ShaderQueryFactory::create(search_paths);
-	if (!terminal->open("as_closure2surface")) {
+	if (!terminal->open(SurfaceShader)) {
 	    bu_log("art: cannot find the as_closure2surface terminal shader\n");
 	    return false;
 	}
@@ -491,6 +568,10 @@ art_add_material(asr::Assembly &assembly, const char *name,
     std::vector<std::string> order;
     if (!connection_order(shader, queries, name, order))
 	return false;
+    if (report) {
+	report_material(*report, path, assignment, shader, queries, parameters, order);
+	return static_cast<bool>(*report);
+    }
     const std::string group_name = std::string(name) + "_shader";
     auto group = asr::ShaderGroupFactory().create(group_name.c_str(), asr::ParamArray());
     for (const auto &node : order) {
@@ -502,8 +583,8 @@ art_add_material(asr::Assembly &assembly, const char *name,
 	group->add_connection(connection.source.node.c_str(), connection.source.parameter.c_str(),
 	    connection.destination.node.c_str(), connection.destination.parameter.c_str());
     if (!surface) {
-	group->add_shader("surface", "as_closure2surface", SurfaceLayer, asr::ParamArray());
-	group->add_connection(TerminalLayer, shader.output.c_str(), SurfaceLayer, "in_input");
+	group->add_shader("surface", SurfaceShader, SurfaceLayer, asr::ParamArray());
+	group->add_connection(TerminalLayer, shader.output.c_str(), SurfaceLayer, SurfaceInput);
     }
     assembly.shader_groups().insert(group);
 
