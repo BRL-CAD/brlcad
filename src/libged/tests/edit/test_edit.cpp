@@ -1176,10 +1176,18 @@ test_p1_edit_session_api(struct ged *gedp)
 	edit_session_cb, std::addressof(observer));
     CHECK(observer_token != 0, __func__);
     ged_edit_session_ref session = GED_EDIT_SESSION_REF_NULL;
+    ged_edit_session_ref default_session = GED_EDIT_SESSION_REF_NULL;
     ged_edit_session_ref joined = GED_EDIT_SESSION_REF_NULL;
-    CHECK(ged_edit_session_begin(gedp, "tor.s", GED_EDIT_TARGET_OBJECT, &session) == GED_EDIT_OK &&
+    CHECK(ged_edit_session_default_get(gedp, "tor.s", GED_EDIT_TARGET_OBJECT,
+	1, &session) == GED_EDIT_OK &&
 	!ged_edit_session_ref_is_null(session),
-	"edit session begin returns an opaque reference");
+	"default edit session creation returns an opaque reference");
+    CHECK(ged_edit_session_default_get(gedp, "/tor.s",
+	GED_EDIT_TARGET_OBJECT, 0, &default_session) == GED_EDIT_OK &&
+	default_session.owner == session.owner &&
+	default_session.id == session.id &&
+	default_session.generation == session.generation,
+	"default edit session lookup reuses the designated session");
     CHECK(ged_edit_session_begin(gedp, "tor.s", GED_EDIT_TARGET_OBJECT, &joined) == GED_EDIT_OK &&
 	joined.owner == session.owner && joined.id != session.id,
 	"beginning the same path creates an independent session");

@@ -655,10 +655,6 @@ GED_EXPORT extern void            ged_edit_buf_flush(struct ged *gedp);
 GED_EXPORT extern void            ged_edit_buf_notify_update(struct ged *gedp, const struct db_full_path *dfp, int command_id);
 GED_EXPORT extern void            ged_edit_buf_notify_checkpoint(struct ged *gedp, const struct db_full_path *dfp);
 GED_EXPORT extern void            ged_edit_buf_notify_revert(struct ged *gedp, const struct db_full_path *dfp);
-GED_EXPORT extern enum ged_edit_status ged_edit_session_default_get(
-	struct ged *gedp, const char *path,
-	enum ged_edit_session_target target, int create,
-	struct ged_edit_session_ref *session);
 GED_EXPORT extern void            ged_edit_sessions_database_close_private(struct ged *gedp);
 GED_EXPORT extern void            ged_edit_sessions_close_private(struct ged *gedp);
 

@@ -2820,6 +2820,7 @@ include/ged/edit.h: #  define GED_EDIT_SESSION_REF_NULL ged_edit_session_ref{0, 
 include/ged/edit.h: #  define GED_EDIT_SESSION_REF_NULL ((ged_edit_session_ref){0, 0, 0})
 include/ged/edit.h: GED_EXPORT extern int ged_edit_session_ref_is_null(ged_edit_session_ref session);
 include/ged/edit.h: GED_EXPORT extern enum ged_edit_status ged_edit_session_begin(struct ged *gedp, const char *path, enum ged_edit_session_target target, ged_edit_session_ref *session);
+include/ged/edit.h: GED_EXPORT extern enum ged_edit_status ged_edit_session_default_get(struct ged *gedp, const char *path, enum ged_edit_session_target target, int create_if_missing, ged_edit_session_ref *session);
 include/ged/edit.h: GED_EXPORT extern enum ged_edit_status ged_edit_sessions_get(struct ged *gedp, const char *path, enum ged_edit_session_target target, ged_edit_session_ref *sessions, size_t capacity, size_t *count);
 include/ged/edit.h: GED_EXPORT extern enum ged_edit_status ged_edit_session_occurrence_matrix_get(struct ged *gedp, ged_edit_session_ref session, mat_t matrix);
 include/ged/edit.h: GED_EXPORT extern enum ged_edit_status ged_edit_session_occurrence_matrix_set(struct ged *gedp, ged_edit_session_ref session, const mat_t matrix);

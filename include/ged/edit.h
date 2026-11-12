@@ -149,6 +149,19 @@ ged_edit_session_begin(struct ged *gedp, const char *path,
 	enum ged_edit_session_target target, ged_edit_session_ref *session);
 
 /**
+ * Return the designated default session for @p path and @p target.
+ *
+ * Default command and GUI workflows use this session to share one active edit
+ * object.  Set @p create_if_missing non-zero to begin and designate a session
+ * when none exists.  Use ged_edit_session_begin() when an independent session
+ * is required instead.
+ */
+GED_EXPORT extern enum ged_edit_status
+ged_edit_session_default_get(struct ged *gedp, const char *path,
+	enum ged_edit_session_target target, int create_if_missing,
+	ged_edit_session_ref *session);
+
+/**
  * List active sessions for @p path and @p target.
  *
  * @p count receives the total number of matching sessions.  Up to @p capacity

@@ -697,7 +697,7 @@ ged_edit_sessions_get(struct ged *gedp, const char *path,
 
 enum ged_edit_status
 ged_edit_session_default_get(struct ged *gedp, const char *path,
-	enum ged_edit_session_target target, int create,
+	enum ged_edit_session_target target, int create_if_missing,
 	ged_edit_session_ref *session)
 {
     if (session)
@@ -713,7 +713,7 @@ ged_edit_session_default_get(struct ged *gedp, const char *path,
 	*session = _edit_ref(internal, entry->second);
 	return GED_EDIT_OK;
     }
-    if (!create)
+    if (!create_if_missing)
 	return GED_EDIT_NOT_FOUND;
     enum ged_edit_status status = ged_edit_session_begin(gedp, path, target,
 	session);
