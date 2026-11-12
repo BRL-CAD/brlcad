@@ -20,6 +20,15 @@ qvrot {dx dy dz angle}
 Adjusts the current MGED viewing direction such that the eye is positioned along the direction vector (_dx dy dz_) from the view center and is looking towards the view center. The _angle_ (in degrees) allows for a twist about the viewing direction. The *ae* command provides a similar capability. See also the *ae2dir* and *viewdir* commands.
 
 
+[[options]]
+== OPTIONS
+
+// BEGIN GENERATED BU_ARG OPTIONS
+*-i*::
+  Apply an incremental change.
+
+// END GENERATED BU_ARG OPTIONS
+
 [[examples]]
 == EXAMPLES
 

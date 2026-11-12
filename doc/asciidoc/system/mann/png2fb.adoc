@@ -25,42 +25,88 @@ If no `file.png` is given, *png2fb* reads from standard input.
 
 This command requires the current display manager to have an associated framebuffer. If no framebuffer is available, an error is returned.
 
-=== Options
+[[options]]
+== OPTIONS
 
-*-H*::
-Read the PNG header only; do not load image pixels into the framebuffer.
-
-*-i*::
-Invert the image (flip vertically when reading from file).
-
-*-c*::
-Clear the framebuffer to black before displaying the image.
-
-*-v*::
-Verbose mode: print additional information while loading.
-
-*-z*::
-Zoom the image to fill the framebuffer.
-
+// BEGIN GENERATED BU_ARG OPTIONS
 *-1*::
-Use a single line at a time for I/O (slower but uses less memory).
+  Use one-line writes.
 
 *-m* _lines_::
+  Draw multiple lines per write.
+
+*-g* _gamma_::
+  Set screen gamma.
+
+*-H*::
+  Read the PNG header only.
+
+*-i*::
+  Draw upside-down.
+
+*-c*::
+  Clear the framebuffer.
+
+*-v*::
+  Print verbose reporting.
+
+*-z*::
+  Zoom to fill the screen.
+
+*-x* _pixels_::
+  Set input X offset.
+
+*-y* _pixels_::
+  Set input Y offset.
+
+*-X* _pixels_::
+  Set framebuffer X offset.
+
+*-Y* _pixels_::
+  Set framebuffer Y offset.
+
+*-h*, *--help*::
+  Print command help.
+
+// END GENERATED BU_ARG OPTIONS
+
+[[option_details]]
+== OPTION DETAILS
+
+=== *-H*
+Read the PNG header only; do not load image pixels into the framebuffer.
+
+=== *-i*
+Invert the image (flip vertically when reading from file).
+
+=== *-c*
+Clear the framebuffer to black before displaying the image.
+
+=== *-v*
+Verbose mode: print additional information while loading.
+
+=== *-z*
+Zoom the image to fill the framebuffer.
+
+=== *-1*
+Use a single line at a time for I/O (slower but uses less memory).
+
+=== *-m* _lines_
 Read `lines` lines at a time from the PNG file (default: vary).
 
-*-g* _screen_gamma_::
+=== *-g* _screen_gamma_
 Apply the specified positive gamma correction value to the display.
 
-*-x* _file_xoff_::
+=== *-x* _file_xoff_
 Horizontal offset (in pixels) into the PNG file to start reading.
 
-*-y* _file_yoff_::
+=== *-y* _file_yoff_
 Vertical offset (in pixels) into the PNG file to start reading.
 
-*-X* _scr_xoff_::
+=== *-X* _scr_xoff_
 Horizontal offset on the framebuffer screen to begin writing.
 
-*-Y* _scr_yoff_::
+=== *-Y* _scr_yoff_
 Vertical offset on the framebuffer screen to begin writing.
 
 [[examples]]

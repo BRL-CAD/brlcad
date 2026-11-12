@@ -26,6 +26,36 @@ _r;g;b_ form, or as three separate arguments (_r g b_).
 See *postscript* for the detailed behavior and option meanings.
 
 
+[[options]]
+== OPTIONS
+
+// BEGIN GENERATED BU_ARG OPTIONS
+*-a* _author_::
+  Document author.
+
+*-b*::
+  Draw a border.
+
+*-c* _r/g/b_::
+  Border color.
+
+*-f* _font_::
+  PostScript font.
+
+*-s* _size_::
+  Image size in inches.
+
+*-t* _title_::
+  Document title.
+
+*-x* _offset_::
+  Horizontal offset in inches.
+
+*-y* _offset_::
+  Vertical offset in inches.
+
+// END GENERATED BU_ARG OPTIONS
+
 [[examples]]
 == EXAMPLES
 

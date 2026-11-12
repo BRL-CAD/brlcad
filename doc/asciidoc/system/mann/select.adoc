@@ -56,6 +56,31 @@ The screen-space and selection-set forms are context-selected by the GED
 frontend; their option vocabularies are intentionally not interchangeable.
 
 
+[[options]]
+== OPTIONS
+
+// BEGIN GENERATED BU_ARG OPTIONS
+=== select options
+
+*-b* _bot_::
+  Select points from a BOT object or path.
+
+*-p*::
+  Select partial display paths.
+
+*-z* _vminz_::
+  Minimum view-space Z coordinate.
+
+=== select options
+
+*-h*, *--help*::
+  Print help and exit.
+
+*-S* _name_, *--set*=_name_::
+  Specify the selection set to operate on.
+
+// END GENERATED BU_ARG OPTIONS
+
 [[examples]]
 == EXAMPLES
 

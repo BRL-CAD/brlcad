@@ -30,6 +30,18 @@ necessary to be in an editing mode to run this command. The *rm, r, comb, c,*
 and *g* commands provide some basic combination editing capabilities.
 
 
+[[options]]
+== OPTIONS
+
+// BEGIN GENERATED BU_ARG OPTIONS
+*-E* _editor_::
+  Editor command.
+
+*-f*, *--force*::
+  Replace an existing renamed combination.
+
+// END GENERATED BU_ARG OPTIONS
+
 [[examples]]
 == EXAMPLES
 

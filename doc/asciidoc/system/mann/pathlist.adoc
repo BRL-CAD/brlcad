@@ -23,6 +23,15 @@ each reported path.  The historical *-noleaf* spelling remains accepted for
 compatibility.
 
 
+[[options]]
+== OPTIONS
+
+// BEGIN GENERATED BU_ARG OPTIONS
+*-n*, *--noleaf*::
+  Omit leaf names from reported paths.
+
+// END GENERATED BU_ARG OPTIONS
+
 [[examples]]
 == EXAMPLES
 

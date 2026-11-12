@@ -27,6 +27,15 @@ The *redraw* command does not change what is displayed (no objects are added or 
 
 To add a new object to the display, use `draw` or `e`. To force an update with different display options, use `draw` again (which first erases then re-draws the object).
 
+[[options]]
+== OPTIONS
+
+// BEGIN GENERATED BU_ARG OPTIONS
+*-V* _name_, *--view*=_name_::
+  Redraw on the named view.
+
+// END GENERATED BU_ARG OPTIONS
+
 [[examples]]
 == EXAMPLES
 

@@ -28,6 +28,18 @@ The implementation supports the following options:
 Without options, the command writes a 512x512 PNG image with a white background.
 
 
+[[options]]
+== OPTIONS
+
+// BEGIN GENERATED BU_ARG OPTIONS
+*-c* _r/g/b_::
+  Set background color.
+
+*-s* _pixels_::
+  Set square image size (at least 50).
+
+// END GENERATED BU_ARG OPTIONS
+
 [[examples]]
 == EXAMPLES
 

@@ -27,10 +27,84 @@ Additional arguments may be supplied on the command line. See the *nirt(1)* man 
 
 
 [[options]]
-== Options
+== OPTIONS
+
+// BEGIN GENERATED BU_ARG OPTIONS
+*-h*, *--help*, *-?*::
+  Print help and exit.
+
+*-A* _name_::
+  Add an attribute to report.
+
+*-M*::
+  Read a view matrix from standard input.
+
+*-b*::
+  Deprecated no-op; backing out is now the default.
+
+*-c*::
+  Shoot from the current center.
+
+*-e* _script_::
+  Run a script before interacting.
+
+*-f* _format_::
+  Load a predefined format or script file.
+
+*-E*::
+  Ignore earlier -e and -f options.
+
+*-L*::
+  List output formatting options.
+
+*-s*::
+  Run in silent mode.
+
+*-v*::
+  Run in verbose mode.
+
+*-H* _n_::
+  Enable or disable the informational header.
+
+*-u* _n_::
+  Set use_air.
+
+*-O* _action_::
+  Set overlap handling.
+
+*-x* _value_::
+  Set librt diagnostic flags.
+
+*-X* _value_::
+  Set nirt diagnostic flags.
+
+*--center*=_x,y,z_, *--xyz*::
+  Set the ray center.
+
+*--plotfile*=_filename_::
+  Write graphical plot output.
+
+*--color_odd*=_r/g/b_::
+  Color for odd segments.
+
+*--color_even*=_r/g/b_::
+  Color for even segments.
+
+*--color_gap*=_r/g/b_::
+  Color for gaps.
+
+*--color_ovlp*=_r/g/b_::
+  Color for overlap segments.
+
+*-B*::
+  Deprecated no-op.
+
+// END GENERATED BU_ARG OPTIONS
+
+[[option_details]]
+== OPTION DETAILS
 
 See the _nirt(1)_ man page for options documentation.
-
 
 [[examples]]
 == EXAMPLES

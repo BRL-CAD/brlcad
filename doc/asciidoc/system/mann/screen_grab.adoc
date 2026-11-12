@@ -10,6 +10,24 @@ screen_grab - grab the current screen or view and save it to a file
 
 The *screen_grab* command is an alias for the *screengrab* command. See *screengrab*(nged) for full documentation.
 
+[[options]]
+== OPTIONS
+
+// BEGIN GENERATED BU_ARG OPTIONS
+*-h*, *--help*::
+  Print command help.
+
+*-F*, *--fb*::
+  Capture the framebuffer instead of the scene display.
+
+*-D* _name_, *--dm*=_name_::
+  Display manager to capture.
+
+*--format*=_format_::
+  Output image format.
+
+// END GENERATED BU_ARG OPTIONS
+
 [[author]]
 == AUTHOR
 

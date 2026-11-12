@@ -28,6 +28,15 @@ offset from the current control-point location.
 The alternate command name *mouse_move_pipe_pnt* is also available.
 
 
+[[options]]
+== OPTIONS
+
+// BEGIN GENERATED BU_ARG OPTIONS
+*-r*::
+  Interpret the point relative to the pipe point.
+
+// END GENERATED BU_ARG OPTIONS
+
 [[examples]]
 == EXAMPLES
 

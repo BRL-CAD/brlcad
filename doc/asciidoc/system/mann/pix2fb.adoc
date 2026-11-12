@@ -18,7 +18,68 @@ pix2fb [options] [file.pix]
 
 The *pix2fb* command reads a raw RGB pixel file (bottom-up row order) and sends it to the display manager's framebuffer. If no filename is given and standard input is not a terminal, pixels are read from standard input. The command requires an active display manager with a framebuffer; it will return an error if no framebuffer is available.
 
-=== Options
+[[options]]
+== OPTIONS
+
+// BEGIN GENERATED BU_ARG OPTIONS
+*-1*::
+  Use one-line writes.
+
+*-m* _lines_::
+  Set multiple-line write count.
+
+*-a*::
+  Autosize the input.
+
+*-i*::
+  Draw upside-down.
+
+*-c*::
+  Clear the framebuffer.
+
+*-z*::
+  Zoom to fill the screen.
+
+*-s* _pixels_::
+  Set both input dimensions.
+
+*-w* _pixels_::
+  Set input width.
+
+*-n* _pixels_::
+  Set input height.
+
+*-x* _pixels_::
+  Set input X offset.
+
+*-y* _pixels_::
+  Set input Y offset.
+
+*-X* _pixels_::
+  Set framebuffer X offset.
+
+*-Y* _pixels_::
+  Set framebuffer Y offset.
+
+*-S* _pixels_::
+  Set both framebuffer dimensions.
+
+*-W* _pixels_::
+  Set framebuffer width.
+
+*-N* _pixels_::
+  Set framebuffer height.
+
+*-p* _seconds_::
+  Pause before returning.
+
+*-h*, *--help*::
+  Print command help.
+
+// END GENERATED BU_ARG OPTIONS
+
+[[option_details]]
+== OPTION DETAILS
 
 *Input size*
 
