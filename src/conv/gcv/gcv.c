@@ -31,86 +31,79 @@
 
 #include "gcv/api.h"
 
-struct fmt_opts {
-    struct bu_ptbl *args;
-    struct bu_opt_desc *ds;
+struct gcv_help {
+    int requested;
+    const char *format;
+};
+
+struct gcv_args {
+    struct gcv_help help;
+    const char *input;
+    const char *output;
+    bu_mime_model_t input_type;
+    bu_mime_model_t output_type;
+    struct bu_ptbl input_only;
+    struct bu_ptbl output_only;
+    struct bu_ptbl input_and_output;
 };
 
 
-static void
-fmt_opts_init(struct fmt_opts *gfo, struct bu_opt_desc *ds)
+static int
+gcv_top_level_option(const char *arg)
 {
-    BU_GET(gfo->args, struct bu_ptbl);
-    bu_ptbl_init(gfo->args, 8, "init opts tbl");
-    gfo->ds = ds;
+    static const char * const long_options[] = {
+	"help", "input", "output", "input-format", "output-format",
+	"input-only-opts", "output-only-opts", "input-and-output-opts", NULL
+    };
+    const char *name;
+    size_t length;
+    size_t i;
+
+    if (!arg || arg[0] != '-' || !arg[1])
+	return 0;
+    if (arg[1] != '-')
+	return strchr("h?ioIOB", arg[1]) != NULL;
+
+    name = arg + 2;
+    length = strcspn(name, "=");
+    for (i = 0; long_options[i]; i++) {
+	if (strlen(long_options[i]) == length && strncmp(name, long_options[i], length) == 0)
+	    return 1;
+    }
+    return 0;
 }
 
 
-static void
-fmt_opts_free(struct fmt_opts *gfo)
+static size_t
+gcv_filter_option_count(size_t available, const char **argv)
 {
-    bu_ptbl_free(gfo->args);
-    BU_PUT(gfo->args, struct bu_ptbl);
-    gfo->ds = NULL;
-    gfo->args = NULL;
+    size_t count;
+
+    for (count = 0; count < available; count++) {
+	if (gcv_top_level_option(argv[count]))
+	    break;
+    }
+    return count;
 }
 
 
 static int
-fmt_fun(struct bu_vls *msgs, size_t argc, const char **argv, void *set_var)
+gcv_filter_options_consume(struct bu_vls *msg, size_t argc, const char **argv,
+	void *storage)
 {
-    size_t i = 0;
-    int args_used = 0;
-    struct fmt_opts *gfo = (struct fmt_opts *)set_var;
+    struct bu_ptbl *options = (struct bu_ptbl *)storage;
+    size_t i;
 
-    if (!gfo)
+    if (!argc) {
+	if (msg)
+	    bu_vls_printf(msg, "expected at least one filter option\n");
 	return -1;
-
-    if (!argv || argc < 1) {
-	if (msgs)
-	    bu_vls_printf(msgs, "expected at least one filter option\n");
-	return msgs ? -1 : 0;
     }
-
-    for (i = 0; i < argc; i++) {
-	struct bu_vls cmp_arg = BU_VLS_INIT_ZERO;
-	const char *arg = argv[i];
-	const char *equal_pos;
-	int d_ind = 0;
-	int in_desc = 0;
-	struct bu_opt_desc *d = &(gfo->ds[d_ind]);
-
-	/* Values such as "0" are filter arguments, not an empty spelling of
-	 * a top-level option.  Strip dashes only from actual option tokens. */
-	if (arg[0] != '-' || arg[1] == '\0') {
-	    bu_ptbl_ins(gfo->args, (long *)argv[i]);
-	    args_used++;
-	    continue;
-	}
-	arg++;
-	if (arg[0] == '-')
-	    arg++;
-	equal_pos = strchr(arg, '=');
-	bu_vls_sprintf(&cmp_arg, "%s", arg);
-	if (equal_pos)
-	    bu_vls_trunc(&cmp_arg, (int)strlen(equal_pos) * -1);
-
-	while (((d->shortopt && strlen(d->shortopt) > 0) || (d->longopt && strlen(d->longopt) > 0)) && !in_desc) {
-	    if (BU_STR_EQUAL(bu_vls_addr(&cmp_arg), d->shortopt) || BU_STR_EQUAL(bu_vls_addr(&cmp_arg), d->longopt)) {
-		/* Top level option hit - we're done */
-		bu_vls_free(&cmp_arg);
-		return args_used;
-	    } else {
-		d_ind++;
-		d = &(gfo->ds[d_ind]);
-	    }
-	}
-	bu_ptbl_ins(gfo->args, (long *)argv[i]);
-	args_used++;
-	bu_vls_free(&cmp_arg);
+    if (options) {
+	for (i = 0; i < argc; i++)
+	    bu_ptbl_ins(options, (long *)argv[i]);
     }
-
-    return args_used;
+    return 0;
 }
 
 
@@ -282,100 +275,134 @@ parse_model_string(struct bu_vls *format, struct bu_vls *slog, const char *opt, 
 
 
 static int
-file_stat(struct bu_vls *msg, size_t argc, const char **argv, void *set_var)
+gcv_input_from_str(struct bu_vls *msg, const char *arg, void *storage)
 {
-    char **file_set = (char **)set_var;
-
-    BU_OPT_CHECK_ARGV0(msg, argc, argv, "input file");
-
-    if (!bu_file_exists(argv[0], NULL)) {
-	if (msg) {
-	    bu_vls_sprintf(msg, "Error - file %s does not exist!\n", argv[0]);
-	}
+    if (!arg || !arg[0] || !bu_file_exists(arg, NULL)) {
+	if (msg)
+	    bu_vls_printf(msg, "input file does not exist: %s\n", arg ? arg : "");
 	return -1;
     }
-
-    if (file_set) {
-	if (*file_set)
-	    bu_free(*file_set, "previous input file option");
-	(*file_set) = bu_strdup(argv[0]);
-    }
-
-    return 1;
+    if (storage)
+	*(const char **)storage = arg;
+    return 0;
 }
 
 
 static int
-file_null(struct bu_vls *msg, size_t argc, const char **argv, void *set_var)
+gcv_output_from_str(struct bu_vls *msg, const char *arg, void *storage)
 {
-    char **file_set = (char **)set_var;
-
-    BU_OPT_CHECK_ARGV0(msg, argc, argv, "output file");
-
-    if (bu_file_exists(argv[0], NULL)) {
-	if (msg) {
-	    bu_vls_sprintf(msg, "Note - file %s already exists, appending conversion output\n", argv[0]);
-	}
+    if (!arg || !arg[0]) {
+	if (msg)
+	    bu_vls_printf(msg, "expected an output file\n");
+	return -1;
     }
-
-    if (file_set) {
-	if (*file_set)
-	    bu_free(*file_set, "previous output file option");
-	(*file_set) = bu_strdup(argv[0]);
+    if (storage) {
+	if (msg && bu_file_exists(arg, NULL))
+	    bu_vls_printf(msg, "Note - file %s already exists, appending conversion output\n", arg);
+	*(const char **)storage = arg;
     }
-
-    return 1;
+    return 0;
 }
 
 
 static int
-model_mime(struct bu_vls *msg, size_t argc, const char **argv, void *set_mime)
+gcv_model_mime_from_str(struct bu_vls *msg, const char *arg, void *storage)
 {
     int type_int;
     bu_mime_model_t type = BU_MIME_MODEL_UNKNOWN;
-    bu_mime_model_t *set_type = (bu_mime_model_t *)set_mime;
 
-    BU_OPT_CHECK_ARGV0(msg, argc, argv, "mime format");
-
-    type_int = bu_file_mime(argv[0], BU_MIME_MODEL);
-    type = (type_int < 0) ? BU_MIME_MODEL_UNKNOWN : (bu_mime_model_t)type_int;
-    if (type == BU_MIME_MODEL_UNKNOWN) {
-	if (msg) {
-	    bu_vls_sprintf(msg, "Error - unknown geometry file type: %s \n", argv[0]);
-	}
+    if (!arg || !arg[0]) {
+	if (msg)
+	    bu_vls_printf(msg, "expected a model format\n");
 	return -1;
     }
-    if (set_type)
-	(*set_type) = type;
-    return 1;
+    type_int = bu_file_mime(arg, BU_MIME_MODEL);
+    type = (type_int < 0) ? BU_MIME_MODEL_UNKNOWN : (bu_mime_model_t)type_int;
+    if (type == BU_MIME_MODEL_UNKNOWN) {
+	if (msg)
+	    bu_vls_printf(msg, "unknown geometry file type: %s\n", arg);
+	return -1;
+    }
+    if (storage)
+	*(bu_mime_model_t *)storage = type;
+    return 0;
 }
-
-
-struct help_state {
-    int showhelp;
-    char *format;
-};
 
 
 static int
-help(struct bu_vls *msg, size_t argc, const char **argv, void *set_var)
+gcv_help_consume(struct bu_vls *UNUSED(msg), size_t argc, const char **argv,
+	void *storage)
 {
-    struct help_state *gs = (struct help_state *)set_var;
-    if (!argv || !argv[0] || argv[0][0] == '\0' || argv[0][0] == '-' || argc == 0) {
-	if (gs && msg)
-	    gs->showhelp = 1;
-	return 0;
-    }
+    struct gcv_help *help_state = (struct gcv_help *)storage;
 
-    if (gs && msg) {
-	gs->showhelp = 1;
-	if (gs->format)
-	    bu_free(gs->format, "previous help format");
-	gs->format = bu_strdup(argv[0]);
+    if (argc > 1)
+	return -1;
+    if (help_state) {
+	help_state->requested = 1;
+	help_state->format = argc == 1 ? argv[0] : NULL;
     }
-
-    return 1;
+    return 0;
 }
+
+
+#define GCV_HELP_TEXT "Print help and exit.  With a format, print format-specific help"
+#define GCV_INPUT_OPTIONS_TEXT "Options applied only while processing the input"
+#define GCV_OUTPUT_OPTIONS_TEXT "Options applied only while preparing the output"
+#define GCV_BOTH_OPTIONS_TEXT "Options applied during both input and output handling"
+
+static size_t
+gcv_help_format_count(size_t available, const char **argv)
+{
+    return available && argv && argv[0] && argv[0][0] != '-' ? 1 : 0;
+}
+
+static const struct bu_arg_shape gcv_help_format_shape = BU_ARG_SHAPE(
+    BU_ARG_SHAPE_SCALAR, 0, 1, "an optional model format",
+    gcv_help_format_count, NULL);
+
+static const struct bu_arg_shape gcv_filter_options_shape = BU_ARG_SHAPE(
+    BU_ARG_SHAPE_TOKEN_SEQUENCE, 1, BU_ARG_COUNT_UNLIMITED,
+    "filter options continuing until the next top-level option",
+    gcv_filter_option_count, NULL);
+
+static const struct bu_arg_option gcv_options[] = {
+    BU_ARG_OPTION_SHAPED("h", "help", "help", struct gcv_args, help,
+	BU_ARG_VALUE_STRING, "format", GCV_HELP_TEXT, BU_ARG_OPTIONAL,
+	&gcv_help_format_shape, gcv_help_consume),
+    BU_ARG_ALIAS("?", NULL, "help", 1),
+    BU_ARG_CUSTOM("i", "input", struct gcv_args, input, gcv_input_from_str,
+	"file", "Input file"),
+    BU_ARG_CUSTOM("o", "output", struct gcv_args, output, gcv_output_from_str,
+	"file", "Output file"),
+    BU_ARG_CUSTOM(NULL, "input-format", struct gcv_args, input_type,
+	gcv_model_mime_from_str, "format", "Input file format"),
+    BU_ARG_CUSTOM(NULL, "output-format", struct gcv_args, output_type,
+	gcv_model_mime_from_str, "format", "Output file format"),
+    BU_ARG_OPTION_SHAPED("I", "input-only-opts", "input-only-opts",
+	struct gcv_args, input_only, BU_ARG_VALUE_RAW, "option ...",
+	GCV_INPUT_OPTIONS_TEXT, BU_ARG_REQUIRED, &gcv_filter_options_shape,
+	gcv_filter_options_consume),
+    BU_ARG_OPTION_SHAPED("O", "output-only-opts", "output-only-opts",
+	struct gcv_args, output_only, BU_ARG_VALUE_RAW, "option ...",
+	GCV_OUTPUT_OPTIONS_TEXT, BU_ARG_REQUIRED, &gcv_filter_options_shape,
+	gcv_filter_options_consume),
+    BU_ARG_OPTION_SHAPED("B", "input-and-output-opts", "input-and-output-opts",
+	struct gcv_args, input_and_output, BU_ARG_VALUE_RAW, "option ...",
+	GCV_BOTH_OPTIONS_TEXT, BU_ARG_REQUIRED, &gcv_filter_options_shape,
+	gcv_filter_options_consume),
+    BU_ARG_OPTION_NULL
+};
+
+static const struct bu_arg_operand gcv_operands[] = {
+    BU_ARG_OPERAND("argument", BU_ARG_VALUE_RAW, 0, BU_ARG_COUNT_UNLIMITED,
+	"Filter option, input path, or output path", NULL),
+    BU_ARG_OPERAND_NULL
+};
+
+static const struct bu_arg_schema gcv_schema = BU_ARG_SCHEMA(
+    "gcv", "Convert geometry between supported model formats", gcv_options,
+    gcv_operands, BU_ARG_PARSE_INTERSPERSED,
+    BU_ARG_SCHEMA_META_HELP(NULL, NULL, NULL, NULL, NULL));
 
 
 static int
@@ -443,13 +470,13 @@ do_conversion(
 }
 
 
-void
-usage(const struct bu_opt_desc *opts) {
-    char *help = bu_opt_help(opts, "gcv", "[input [output]]",
-	"Convert geometry between supported model formats");
-    if (help) {
-	bu_log("%s", help);
-	bu_free(help, "help str");
+static void
+usage(void)
+{
+    char *help_text = bu_arg_schema_help(&gcv_schema, "gcv");
+    if (help_text) {
+	bu_log("%s", help_text);
+	bu_free(help_text, "gcv help");
     }
 }
 
@@ -460,23 +487,16 @@ main(int ac, const char **av)
     size_t i;
     int fmt = 0;
     int ret = 0;
+    int operand_index;
 
-    static bu_mime_model_t in_type = BU_MIME_MODEL_UNKNOWN;
-    static bu_mime_model_t out_type = BU_MIME_MODEL_UNKNOWN;
-
-    static struct fmt_opts in_only_opts;
-    static struct fmt_opts out_only_opts;
-    static struct fmt_opts both_opts;
-    static struct help_state hs;
+    bu_mime_model_t in_type = BU_MIME_MODEL_UNKNOWN;
+    bu_mime_model_t out_type = BU_MIME_MODEL_UNKNOWN;
+    struct gcv_args args = {0};
 
     const char *in_fmt = NULL;
     const char *out_fmt = NULL;
     struct bu_vls in_format = BU_VLS_INIT_ZERO;
     struct bu_vls out_format = BU_VLS_INIT_ZERO;
-
-    /* input/output file names as read by bu_opt */
-    static char *in_str = NULL;
-    static char *out_str = NULL;
 
     /* input/output file names at end of argv */
     struct bu_vls in_path_raw = BU_VLS_INIT_ZERO;
@@ -493,57 +513,38 @@ main(int ac, const char **av)
     struct bu_vls parse_msgs = BU_VLS_INIT_ZERO;
     int unknown_ac = 0;
 
-#define STR_HELP "Print help and exit.  If a format is specified to --help, print help specific to that format"
-#define STR_INOPT "Options to apply only while processing input file.  Accepts options until another toplevel option is encountered."
-#define STR_OUTOPT "Options to apply only while preparing output file.  Accepts options until another toplevel option is encountered."
-#define STR_BOTH "Options to apply both during input and output handling.  Accepts options until another toplevel option is encountered."
-
-    struct bu_opt_desc options[] = {
-	{"h", "help",             "[format]",  &help,    (void *)&hs,            STR_HELP,                     },
-	{"?", "",                 "[format]",  &help,    (void *)&hs,            "",                           },
-	{"i", "input",            "file",      &file_stat,   (void *)&in_str,    "Input file.",                },
-	{"o", "output",           "file",      &file_null,   (void *)&out_str,   "Output file.",               },
-	{"",  "input-format",     "format",    &model_mime,  (void *)&in_type,   "File format of input file.", },
-	{"",  "output-format",    "format",    &model_mime,  (void *)&out_type,  "File format of output file." },
-	{"I", "input-only-opts",  "opts",      &fmt_fun, (void *)&in_only_opts,  STR_INOPT,                    },
-	{"O", "output-only-opts", "opts",      &fmt_fun, (void *)&out_only_opts, STR_OUTOPT,                   },
-	{"B", "input-and-output-opts", "opts", &fmt_fun, (void *)&both_opts,     STR_BOTH,                     },
-	BU_OPT_DESC_NULL
-    };
-
     BU_ASSERT(ac > 0 && av);
 
     bu_setprogname(av[0]);
 
-    fmt_opts_init(&in_only_opts, options);
-    fmt_opts_init(&out_only_opts, options);
-    fmt_opts_init(&both_opts, options);
-
-    hs.showhelp = 0;
-    hs.format = NULL;
+    args.input_type = BU_MIME_MODEL_UNKNOWN;
+    args.output_type = BU_MIME_MODEL_UNKNOWN;
+    bu_ptbl_init(&args.input_only, 8, "gcv input filter options");
+    bu_ptbl_init(&args.output_only, 8, "gcv output filter options");
+    bu_ptbl_init(&args.input_and_output, 8, "gcv shared filter options");
 
     /* skip program name */
     ac--; av++;
 
     if (ac == 0) {
-	usage(options);
+	usage();
 	goto cleanup;
     }
 
-    unknown_ac = bu_opt_parse(&parse_msgs, ac, av, options);
-
-    if (unknown_ac < 0) {
+    operand_index = bu_arg_schema_parse_known(&gcv_schema, &args, &parse_msgs,
+	ac, av);
+    if (operand_index < 0) {
         bu_log("ERROR: option parsing failed\n%s", bu_vls_addr(&parse_msgs));
 	ret = 1;
 	goto cleanup;
     }
 
     /* First, see if help was supplied */
-    if (hs.showhelp) {
-	if (hs.format) {
+    if (args.help.requested) {
+	if (args.help.format) {
 	    /* TODO - generate format-specific help */
 	}
-	usage(options);
+	usage();
 
 #if 0
 	/* TODO - figure out how to get this info from each plugin to construct this table */
@@ -566,32 +567,35 @@ main(int ac, const char **av)
 	goto cleanup;
     }
 
-    // Remaining av handling will use the ac count from bu_opt_parse
-    ac = unknown_ac;
+    av += operand_index;
+    ac -= operand_index;
+    unknown_ac = ac;
+    in_type = args.input_type;
+    out_type = args.output_type;
 
     /* Did we get explicit options for an input and/or output file? */
-    if (in_str) {
-	bu_vls_sprintf(&in_path_raw, "%s", in_str);
+    if (args.input) {
+	bu_vls_sprintf(&in_path_raw, "%s", args.input);
     }
-    if (out_str) {
-	bu_vls_sprintf(&out_path_raw, "%s", out_str);
+    if (args.output) {
+	bu_vls_sprintf(&out_path_raw, "%s", args.output);
     }
 
     /* If not specified explicitly with -i or -o, the input and output paths must always
      * be the last arguments supplied */
-    if (in_str && !out_str && ac > 0) {
+    if (args.input && !args.output && ac > 0) {
 	bu_vls_sprintf(&out_path_raw, "%s", av[ac - 1]);
 	av[ac - 1] = NULL;
 	ac--;
 	unknown_ac--;
     }
-    if (!in_str && out_str && ac > 0) {
+    if (!args.input && args.output && ac > 0) {
 	bu_vls_sprintf(&in_path_raw, "%s", av[ac - 1]);
 	av[ac - 1] = NULL;
 	ac--;
 	unknown_ac--;
     }
-    if (!in_str && !out_str) {
+    if (!args.input && !args.output) {
 	if (ac > 1) {
 	    bu_vls_sprintf(&in_path_raw, "%s", av[ac - 2]);
 	    bu_vls_sprintf(&out_path_raw, "%s", av[ac - 1]);
@@ -618,17 +622,17 @@ main(int ac, const char **av)
     /* Same for any options that were supplied explicitly to go to
      * both input and output.
      */
-    if (BU_PTBL_LEN(both_opts.args) > 0) {
-	bu_ptbl_cat(&in_opts, both_opts.args);
-	bu_ptbl_cat(&out_opts, both_opts.args);
+    if (BU_PTBL_LEN(&args.input_and_output) > 0) {
+	bu_ptbl_cat(&in_opts, &args.input_and_output);
+	bu_ptbl_cat(&out_opts, &args.input_and_output);
     }
 
     /* If we have input and/or output specific options, append them now */
-    if (BU_PTBL_LEN(in_only_opts.args) > 0) {
-	bu_ptbl_cat(&in_opts, in_only_opts.args);
+    if (BU_PTBL_LEN(&args.input_only) > 0) {
+	bu_ptbl_cat(&in_opts, &args.input_only);
     }
-    if (BU_PTBL_LEN(out_only_opts.args) > 0) {
-	bu_ptbl_cat(&out_opts, out_only_opts.args);
+    if (BU_PTBL_LEN(&args.output_only) > 0) {
+	bu_ptbl_cat(&out_opts, &args.output_only);
     }
 
     /* See if we have input and output files specified */
@@ -732,19 +736,11 @@ cleanup:
     bu_vls_free(&slog);
     bu_vls_free(&parse_msgs);
 
-    if (hs.format)
-	bu_free(hs.format, "help format");
-    if (in_str)
-	bu_free(in_str, "input file option");
-    if (out_str)
-	bu_free(out_str, "output file option");
-
     bu_ptbl_free(&in_opts);
     bu_ptbl_free(&out_opts);
-
-    fmt_opts_free(&in_only_opts);
-    fmt_opts_free(&out_only_opts);
-    fmt_opts_free(&both_opts);
+    bu_ptbl_free(&args.input_only);
+    bu_ptbl_free(&args.output_only);
+    bu_ptbl_free(&args.input_and_output);
 
     return ret;
 }
