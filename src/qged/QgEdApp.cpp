@@ -154,7 +154,7 @@ QgEdApp::QgEdApp(int &argc, char *argv[], const char *g_file, int swrast_mode, i
     };
 
     char plugin_dir[MAXPATHLEN] = {0};
-    bu_dir(plugin_dir, MAXPATHLEN, BU_DIR_LIBEXEC, "qged", NULL);
+    bu_dir(plugin_dir, MAXPATHLEN, BU_DIR_LIBEXEC, "qged-qt", NULL);
     QStringList plugin_search_dirs;
     if (plugin_dir[0])
 	plugin_search_dirs.append(QString::fromLocal8Bit(plugin_dir));

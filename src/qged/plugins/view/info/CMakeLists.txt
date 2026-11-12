@@ -15,7 +15,7 @@ endif(BRLCAD_ENABLE_QT)
 # because most of BRL-CAD's targets are not Qt targets.  We don't
 # want to run the automatic moc logic for all of them.
 
-set(view_info_srcs view_info.cpp CADViewModel.cpp)
+set(view_info_srcs view_info.cpp CADViewModel.cpp view_info.json)
 
 set(view_info_moc_headers CADViewModel.h)
 
@@ -29,6 +29,7 @@ if(BRLCAD_ENABLE_QT)
   endif(Qt6Widgets_FOUND)
 
   qged_plugin(qged_view_info SHARED ${view_info_srcs} ${view_info_moc_srcs} ${icon_qrc})
+  set_target_properties(qged_view_info PROPERTIES AUTOMOC ON)
   if(Qt6Widgets_FOUND)
     target_link_libraries(
       qged_view_info
@@ -50,11 +51,13 @@ if(BRLCAD_ENABLE_QT)
   endif(Qt6Widgets_FOUND)
   set_property(TARGET qged_view_info APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
   validate_style(qged_view_info view_info.cpp)
-  plugin_setup(qged_view_info qged)
+  plugin_setup(qged_view_info qged-qt)
 
   distclean(
     icon.qrc.depends
     moc_CADViewModel.cpp_parameters
+    "${CMAKE_BINARY_DIR}/${LIBEXEC_DIR}/qged-qt/qged_view_info.exp"
+    "${CMAKE_BINARY_DIR}/${LIBEXEC_DIR}/qged-qt/qged_view_info.pdb"
   )
 endif(BRLCAD_ENABLE_QT)
 
@@ -65,6 +68,7 @@ set(
   ${view_info_moc_headers}
   icon.qrc
   info.svg
+  view_info.json
   README
 )
 

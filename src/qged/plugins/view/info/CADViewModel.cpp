@@ -25,19 +25,17 @@
 
 #include <QPainter>
 #include <QString>
+#include <bv.h>
 
-#include "bu/sort.h"
-#include "bu/avs.h"
-#include "bu/malloc.h"
+#include "bu/vls.h"
 #include "qtcad/QgSignalFlags.h"
-#include "QgEdApp.h"
+#include "qtcad/QgPluginContext.h"
 #include "CADViewModel.h"
 
 CADViewModel::CADViewModel(QObject *parentobj)
     : QgKeyValModel(parentobj)
 {
     m_root = NULL;
-    refresh(QG_VIEW_REFRESH);
 }
 
 CADViewModel::~CADViewModel()
@@ -49,51 +47,45 @@ CADViewModel::~CADViewModel()
 void
 CADViewModel::update()
 {
-    printf("view model update\n");
     refresh(QG_VIEW_REFRESH);
 }
 
 void
 CADViewModel::refresh(unsigned long long)
 {
-    QgModel *m = ((QgEdApp *)qApp)->mdl;
-    if (!m)
-	return;
-    struct ged *gedp = m->ged();
-    if (!gedp)
+    struct bview *view = m_context ? m_context->activeViewContext() : NULL;
+    if (!view)
 	return;
 
-    struct bview *v = gedp->ged_gvp;
     struct bu_vls val = BU_VLS_INIT_ZERO;
-    QMap<QString, QgKeyValNode*> standard_nodes;
     int i = 0;
+    beginResetModel();
     if (m_root)
 	delete m_root;
     m_root = new QgKeyValNode();
-    beginResetModel();
 
-    standard_nodes.insert("Name", add_pair("Name", bu_vls_cstr(&v->gv_name), m_root, i));
-    bu_vls_sprintf(&val, "%g", v->gv_size);
-    standard_nodes.insert("Size", add_pair("Size", bu_vls_cstr(&val), m_root, i));
-    bu_vls_sprintf(&val, "%d", v->gv_width);
-    standard_nodes.insert("Width", add_pair("Width", bu_vls_cstr(&val), m_root, i));
-    bu_vls_sprintf(&val, "%d", v->gv_height);
-    standard_nodes.insert("Height", add_pair("Height", bu_vls_cstr(&val), m_root, i));
-    bu_vls_sprintf(&val, "%g", v->gv_aet[0]);
-    standard_nodes.insert("Az", add_pair("Az", bu_vls_cstr(&val), m_root, i));
-    bu_vls_sprintf(&val, "%g", v->gv_aet[1]);
-    standard_nodes.insert("El", add_pair("El", bu_vls_cstr(&val), m_root, i));
-    bu_vls_sprintf(&val, "%g", v->gv_aet[2]);
-    standard_nodes.insert("Tw", add_pair("Tw", bu_vls_cstr(&val), m_root, i));
+    add_pair("Name", bu_vls_cstr(&view->gv_name), m_root, i);
+    bu_vls_sprintf(&val, "%g", view->gv_size);
+    add_pair("Size", bu_vls_cstr(&val), m_root, i);
+    bu_vls_sprintf(&val, "%d", view->gv_width);
+    add_pair("Width", bu_vls_cstr(&val), m_root, i);
+    bu_vls_sprintf(&val, "%d", view->gv_height);
+    add_pair("Height", bu_vls_cstr(&val), m_root, i);
+    bu_vls_sprintf(&val, "%g", view->gv_aet[0]);
+    add_pair("Az", bu_vls_cstr(&val), m_root, i);
+    bu_vls_sprintf(&val, "%g", view->gv_aet[1]);
+    add_pair("El", bu_vls_cstr(&val), m_root, i);
+    bu_vls_sprintf(&val, "%g", view->gv_aet[2]);
+    add_pair("Tw", bu_vls_cstr(&val), m_root, i);
 
     vect_t center;
-    MAT_DELTAS_GET_NEG(center, v->gv_center);
+    MAT_DELTAS_GET_NEG(center, view->gv_center);
     bu_vls_sprintf(&val, "%g", center[0]);
-    standard_nodes.insert("Center[X]", add_pair("Center[X]", bu_vls_cstr(&val), m_root, i));
+    add_pair("Center[X]", bu_vls_cstr(&val), m_root, i);
     bu_vls_sprintf(&val, "%g", center[1]);
-    standard_nodes.insert("Center[Y]", add_pair("Center[Y]", bu_vls_cstr(&val), m_root, i));
+    add_pair("Center[Y]", bu_vls_cstr(&val), m_root, i);
     bu_vls_sprintf(&val, "%g", center[2]);
-    standard_nodes.insert("Center[Z]", add_pair("Center[Z]", bu_vls_cstr(&val), m_root, i));
+    add_pair("Center[Z]", bu_vls_cstr(&val), m_root, i);
 
     endResetModel();
 

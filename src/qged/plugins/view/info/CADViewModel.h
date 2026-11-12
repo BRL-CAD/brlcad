@@ -28,12 +28,7 @@
 
 #include "qtcad/QgKeyVal.h"
 
-#ifndef Q_MOC_RUN
-#include "bu/avs.h"
-#include "bv.h"
-#include "raytrace.h"
-#include "ged.h"
-#endif
+class QgPluginContext;
 
 class CADViewModel : public QgKeyValModel
 {
@@ -42,10 +37,14 @@ class CADViewModel : public QgKeyValModel
     public:
 	explicit CADViewModel(QObject *parent = 0);
 	~CADViewModel();
+	void setContext(QgPluginContext *context) { m_context = context; }
 
     public slots:
 	void refresh(unsigned long long);
 	void update();
+
+    private:
+	QgPluginContext *m_context = nullptr;
 };
 
 #endif /*CADVIEWMODEL_H*/

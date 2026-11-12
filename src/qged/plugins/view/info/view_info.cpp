@@ -21,40 +21,94 @@
  *
  */
 
-#include "qtcad/QgToolPalette.h"
-#include "../../plugin.h"
+#include <QIcon>
+#include <QPixmap>
+#include <QSizePolicy>
+
+#include "qtcad/QgKeyVal.h"
+#include "qtcad/QgPluginContext.h"
+#include "qtcad/QgPluginInterfaces.h"
+#include "qtcad/QgToolBase.h"
 #include "CADViewModel.h"
 
-void *
-view_info_tool_create()
+class ViewInfoTool : public QgToolBase
 {
-    CADViewModel *vmodel = new CADViewModel();
-    QIcon *obj_icon = new QIcon(QPixmap(":info.svg"));
-    QgKeyValView *vview = new QgKeyValView(NULL, 0);
-    vview->setModel(vmodel);
-    vview->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
-    vview->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
-    QgToolPaletteElement *el = new QgToolPaletteElement(obj_icon, vview);
-    QObject::connect(el, &QgToolPaletteElement::element_view_update, vmodel, &CADViewModel::refresh);
+    Q_OBJECT
 
-    return el;
-}
+    public:
+	explicit ViewInfoTool(QgPluginContext *context,
+		QObject *parent = nullptr)
+	    : QgToolBase(context, parent)
+	{
+	}
 
-extern "C" {
-    struct qged_tool_impl view_info_tool_impl = {
-	view_info_tool_create
-    };
+	QWidget *createWidget() override
+	{
+	    m_model = new CADViewModel(this);
+	    m_model->setContext(context());
+	    m_model->refresh(QG_VIEW_REFRESH);
 
-    const struct qged_tool view_info_tool = { &view_info_tool_impl, 0 };
-    const struct qged_tool *view_info_tools[] = { &view_info_tool, NULL };
+	    QgKeyValView *view = new QgKeyValView(nullptr, 0);
+	    view->setModel(m_model);
+	    view->setSizePolicy(QSizePolicy::Expanding,
+		    QSizePolicy::Expanding);
+	    view->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+	    return view;
+	}
 
-    static const struct qged_plugin pinfo = { QGED_VC_TOOL_PLUGIN, view_info_tools, 1 };
+	QIcon *createIcon() override
+	{
+	    return new QIcon(QPixmap(":info.svg"));
+	}
 
-    COMPILER_DLLEXPORT const struct qged_plugin *qged_plugin_info()
-    {
-	return &pinfo;
-    }
-}
+    public slots:
+	void refresh() override
+	{
+	    if (m_model)
+		m_model->refresh(QG_VIEW_REFRESH);
+	}
+
+	void onViewChanged() override
+	{
+	    refresh();
+	}
+
+    private:
+	CADViewModel *m_model = nullptr;
+};
+
+class ViewInfoFactory : public QObject, public IQgToolFactory
+{
+    Q_OBJECT
+    Q_INTERFACES(IQgToolFactory)
+    Q_PLUGIN_METADATA(IID QGTCAD_IID("IQgToolFactory")
+	FILE "view_info.json")
+
+    public:
+	QgPluginDescriptor descriptor() const override
+	{
+	    QgPluginDescriptor plugin;
+	    plugin.id = QStringLiteral("org.brlcad.qged.view.info");
+	    plugin.displayName = QStringLiteral("View Info");
+	    plugin.category = QStringLiteral("qged.view");
+	    plugin.iconName = QStringLiteral(":info.svg");
+	    plugin.sortKey = 0;
+	    plugin.requiresView = true;
+	    plugin.description = QStringLiteral(
+		    "Displays parameters of the active view.");
+	    plugin.vendor = QStringLiteral("BRL-CAD");
+	    plugin.version = QStringLiteral("1.0");
+	    return plugin;
+	}
+
+	QgToolBase *create(QgPluginContext *context,
+		QObject *parent = nullptr) override
+	{
+	    return new ViewInfoTool(context, parent);
+	}
+};
+
+#include "view_info.moc"
 
 
 
