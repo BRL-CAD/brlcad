@@ -20,6 +20,15 @@ lt [char]
 The *lt* command generates a list of the children found in a combination object specified by the user. By default it will print a curly bracket bound set of objects and their boolean flags. If the *-c* option is specified, it will instead use the character supplied to the *-c* option as the separator in the list of objects. In the latter mode the boolean flags will not be printed.
 
 
+[[options]]
+== OPTIONS
+
+// BEGIN GENERATED BU_ARG OPTIONS
+*-c* _separator_::
+  Output separator character.
+
+// END GENERATED BU_ARG OPTIONS
+
 [[examples]]
 == EXAMPLES
 

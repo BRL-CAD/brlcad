@@ -22,6 +22,15 @@ It returns a numerical code representing the object's current display mode (e.g.
 
 If the *-b* ("both") flag is provided, the command returns two space-separated values: the numerical display mode and the object's floating-point transparency value.
 
+[[options]]
+== OPTIONS
+
+// BEGIN GENERATED BU_ARG OPTIONS
+*-b*::
+  Report both display mode and transparency.
+
+// END GENERATED BU_ARG OPTIONS
+
 [[examples]]
 == EXAMPLES
 

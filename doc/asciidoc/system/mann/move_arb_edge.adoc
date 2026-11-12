@@ -32,7 +32,17 @@ The command supports all ARB subtypes. Edge indices are 1-based and the valid ra
 | ARB8     | 1–12
 |===
 
-=== Options
+[[options]]
+== OPTIONS
+
+// BEGIN GENERATED BU_ARG OPTIONS
+*-r*::
+  Interpret point relative to current edge.
+
+// END GENERATED BU_ARG OPTIONS
+
+[[option_details]]
+== OPTION DETAILS
 
 * *-r* : Relative mode. Treats the given point as an *offset* from the current position of the edge's first vertex, rather than as an absolute model-space coordinate. The offset is added to the existing vertex position before the move is performed.
 

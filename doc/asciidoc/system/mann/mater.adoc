@@ -130,6 +130,69 @@ Exactly one of *--ids-from-names* and *--names-from-ids* is required for a
 mapping operation.
 
 
+[[options]]
+== OPTIONS
+
+// BEGIN GENERATED BU_ARG OPTIONS
+=== Shared options
+
+Applies to *mater density get* and *mater get*.
+
+*--id*=_id-or-pattern_::
+  Match a material id, range, or glob pattern.
+
+*--density*=_comparison_::
+  Match a density value or range.
+
+*--name*=_pattern_::
+  Match a material name glob pattern.
+
+*--tol*=_tolerance_::
+  Density equality tolerance (default is BN_TOL_DIST).
+
+=== Shared options
+
+Applies to *mater density import* and *mater import*.
+
+*-v*::
+  Validate the density file before importing it.
+
+=== Shared options
+
+Applies to *mater density map* and *mater map*.
+
+*--ids-from-names*::
+  Assign material_id values from material_name attributes.
+
+*--names-from-ids*::
+  Assign material_name values from material_id attributes.
+
+*-d* _file_, *--density-file*=_file_::
+  Use this density data file.
+
+*-m* _file_, *--map-file*=_file_::
+  Use this material-name mapping file.
+
+=== mater options
+
+*-d*::
+  Select density-table management mode.
+
+=== mater options
+
+*-s*::
+  Force shader mode when the object name resembles a density subcommand.
+
+=== mater options
+
+*-d*::
+  Select density-table management mode.
+
+*-s*::
+  Force shader mode.
+
+// END GENERATED BU_ARG OPTIONS
+
 [[examples]]
 == EXAMPLES
 
