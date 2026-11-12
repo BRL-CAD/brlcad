@@ -50,6 +50,9 @@ __BEGIN_DECLS
 
 struct bu_color;
 
+/** Version of the machine-readable command grammar emitted by BU_ARG. */
+#define BU_ARG_SCHEMA_JSON_VERSION 1
+
 /** Values accepted by a compact command-schema option. */
 typedef enum {
     BU_ARG_VALUE_FLAG = 0,

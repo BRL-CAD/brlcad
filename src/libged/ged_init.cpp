@@ -41,6 +41,7 @@
 #include <vector>
 
 #include "bu/app.h"
+#include "bu/arg.h"
 #include "bu/dylib.h"
 #include "bu/file.h"
 #include "bu/str.h"
@@ -706,13 +707,30 @@ ged_cmd_schema_json(const char *cmd)
     ged_registry_reference reference;
     if (!reference.acquired())
 	return NULL;
+    char *description = NULL;
     const struct ged_cmd_grammar *grammar = _ged_cmd_grammar(cmd);
     if (grammar && grammar->describe_json)
-	return grammar->describe_json();
+	description = grammar->describe_json();
     const struct bu_arg_schema *native_schema = _ged_cmd_native_schema(cmd);
-    if (native_schema)
-	return bu_arg_schema_describe_json(native_schema);
-    return NULL;
+    if (!description && native_schema)
+	description = bu_arg_schema_describe_json(native_schema);
+    if (!description || description[0] != '{')
+	return description;
+    static const char version_prefix[] = "{\"schema_version\":";
+    if (bu_strncmp(description, version_prefix, sizeof(version_prefix) - 1) == 0)
+	return description;
+
+    struct bu_vls published = BU_VLS_INIT_ZERO;
+    bu_vls_printf(&published, "{\"schema_version\":%d,",
+	BU_ARG_SCHEMA_JSON_VERSION);
+    if (!strstr(description, "\"name\":")) {
+	bu_vls_strcat(&published, "\"name\":");
+	bu_arg_json_string(&published, cmd);
+	bu_vls_putc(&published, ',');
+    }
+    bu_vls_strcat(&published, description + 1);
+    bu_free(description, "unversioned GED command schema JSON");
+    return bu_vls_strgrab(&published);
 }
 
 extern "C" char *

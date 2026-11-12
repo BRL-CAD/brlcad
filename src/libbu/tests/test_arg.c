@@ -1444,6 +1444,7 @@ main(int UNUSED(argc), char **argv)
 	    bu_arg_introspect(&output, &schema_grammar, 2, overfull) != 0 ||
 	    !BU_STR_EQUAL(bu_vls_cstr(&output), "prefix\n") ||
 	    bu_arg_introspect(&output, &schema_grammar, 1, request) != 1 ||
+	    !strstr(bu_vls_cstr(&output), "\"schema_version\":1") ||
 	    !strstr(bu_vls_cstr(&output), "\"kind\":\"native\"") ||
 	    bu_vls_cstr(&output)[bu_vls_strlen(&output) - 1] != '\n') {
 	    bu_log("flat grammar introspection handling failed: %s\n",

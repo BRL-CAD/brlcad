@@ -548,6 +548,15 @@ static const struct bu_arg_schema icv_convert_schema = BU_ARG_SCHEMA(
     icv_convert_operands, BU_ARG_PARSE_INTERSPERSED,
     BU_ARG_SCHEMA_META_HELP(NULL, NULL, NULL, NULL, NULL));
 
+static const struct bu_arg_form icv_forms[] = {
+    BU_ARG_FORM("convert", "Convert an image", &icv_convert_schema, NULL),
+    BU_ARG_FORM("diff", "Compare two images", &icv_diff_schema, NULL),
+    BU_ARG_FORM_NULL
+};
+
+static const struct bu_arg_forms icv_grammar = BU_ARG_FORMS(
+    "icv", "Convert, inspect, or compare images", icv_forms, NULL);
+
 static void
 icv_convert_help(void)
 {
@@ -564,7 +573,7 @@ icv_convert_help(void)
 int
 main(int ac, const char **av)
 {
-    const struct bu_arg_grammar grammar = {&icv_convert_schema, NULL, NULL};
+    const struct bu_arg_grammar grammar = {NULL, NULL, &icv_grammar};
     struct icv_convert_args args = {};
     int ret = 0;
     int operand_index = 0;
