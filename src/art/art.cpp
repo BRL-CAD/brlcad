@@ -47,10 +47,10 @@
  *
  * COMPILATION NOTES
  * -----------------
- * Once you have Appleseed and a corresponding Boost installed, run
+ * Once you have Appleseed and its dependencies installed, run
  * BRL-CAD's CMake with Appleseed enabled:
  *
- * cmake .. -DAppleseed_ROOT=/path/to/appleseed -DBOOST_ROOT=/path/to/boost
+ * cmake .. -DAppleseed_ROOT=/path/to/appleseed
  *
  * (appleseed root path should contain bin, lib and include dirs)
  *
