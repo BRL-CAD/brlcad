@@ -70,6 +70,18 @@ __Units_type__ strings that may be used, but will not be remembered as the prefe
 * parsec
 
 
+[[options]]
+== OPTIONS
+
+// BEGIN GENERATED BU_ARG OPTIONS
+*-s*::
+  Print only the current unit name.
+
+*-t*::
+  List valid unit names.
+
+// END GENERATED BU_ARG OPTIONS
+
 [[examples]]
 == EXAMPLES
 

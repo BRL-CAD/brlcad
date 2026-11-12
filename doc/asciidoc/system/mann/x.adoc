@@ -47,6 +47,21 @@ The optional `level` argument controls how much detail is shown:
 
 If `level` is omitted, the default level `0` is used.
 
+[[options]]
+== OPTIONS
+
+// BEGIN GENERATED BU_ARG OPTIONS
+*-h*, *--help*::
+  Print help.
+
+*-V* _name_, *--view*=_name_::
+  Specify the view.
+
+*-m* _number_, *--mode*=_number_::
+  Restrict the drawing mode.
+
+// END GENERATED BU_ARG OPTIONS
+
 [[examples]]
 == EXAMPLES
 

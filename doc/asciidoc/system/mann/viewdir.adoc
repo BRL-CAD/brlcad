@@ -20,6 +20,15 @@ viewdir [-i]
 Returns the direction vector using the current azimuth and elevation as input. If the _-i_ option is used the commmand will return the inverse directional vector.
 
 
+[[options]]
+== OPTIONS
+
+// BEGIN GENERATED BU_ARG OPTIONS
+*-i*::
+  Apply an incremental change.
+
+// END GENERATED BU_ARG OPTIONS
+
 [[examples]]
 == EXAMPLES
 
