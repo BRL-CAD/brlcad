@@ -43,6 +43,30 @@ Clear shared and independent views. This takes precedence over `--view`.
 
 `--shared` cannot be combined with `--view`.
 
+[[options]]
+== OPTIONS
+
+// BEGIN GENERATED BU_ARG OPTIONS
+*-h*, *--help*::
+  Print help and exit.
+
+*-V* _name_, *--view*=_name_::
+  Specify view to clear.
+
+*-S*, *--shared*::
+  Clear shared view objects.
+
+*-v*, *--view-objs*::
+  Clear view-local objects.
+
+*-g*, *--solid-objs*::
+  Clear database solid objects.
+
+*--all*::
+  Clear all scene objects.
+
+// END GENERATED BU_ARG OPTIONS
+
 [[examples]]
 == EXAMPLES
 

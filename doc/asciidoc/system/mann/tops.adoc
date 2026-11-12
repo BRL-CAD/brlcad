@@ -31,6 +31,24 @@ The following options are supported:
 The *-h* and *-p* filters may be combined to include both hidden and phony top-level entries. If *-a* is specified, it overrides those filters and reports all top-level entries.
 
 
+[[options]]
+== OPTIONS
+
+// BEGIN GENERATED BU_ARG OPTIONS
+*-a*::
+  Include all top-level objects.
+
+*-h*::
+  Include hidden top-level objects.
+
+*-n*::
+  Do not decorate object names.
+
+*-p*::
+  Include phony top-level objects.
+
+// END GENERATED BU_ARG OPTIONS
+
 [[examples]]
 == EXAMPLES
 

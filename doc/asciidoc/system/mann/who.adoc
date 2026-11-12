@@ -27,6 +27,44 @@ The *solids* subcommand reports the fully expanded set of displayed solids. The 
 When the application enables the newer command form, *who* also accepts `--view name`, `--mode number`, and `--expand`. `--view` selects a named view, `--mode` restricts the report to one drawing mode, and `--expand` reports individual drawn objects. These options also apply to *who solids*. The original form accepts only the display-kind selection and `who solids [level]`.
 
 
+[[options]]
+== OPTIONS
+
+// BEGIN GENERATED BU_ARG OPTIONS
+=== Shared options
+
+Applies to *who* and *who solids*.
+
+*-h*, *--help*::
+  Print command help.
+
+=== who options
+
+*-h*, *--help*::
+  Print help and exit.
+
+*-V* _name_, *--view*=_name_::
+  Specify the view.
+
+*-m* _number_, *--mode*=_number_::
+  Restrict the drawing mode.
+
+*-E*, *--expand*::
+  Report individual drawn objects.
+
+=== who solids options
+
+*-h*, *--help*::
+  Print help.
+
+*-V* _name_, *--view*=_name_::
+  Specify the view.
+
+*-m* _number_, *--mode*=_number_::
+  Restrict the drawing mode.
+
+// END GENERATED BU_ARG OPTIONS
+
 [[examples]]
 == EXAMPLES
 
