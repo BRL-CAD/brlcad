@@ -285,9 +285,11 @@ check_image(const char *path, size_t width, size_t height, ImageCheck check)
     return 0;
 }
 
+enum class ImageComparison { Matching, Aliased, Changed };
+
 static int
 check_image_difference(const char *path, const char *reference_path,
-    size_t width, size_t height, bool matching)
+    size_t width, size_t height, ImageComparison comparison)
 {
     auto image = read_image(path, width, height);
     auto reference = read_image(reference_path, width, height);
@@ -299,6 +301,7 @@ check_image_difference(const char *path, const char *reference_path,
     constexpr double MAX_MATCHING_RMS = 0.02;
     constexpr double MAX_MATCHING_ERROR = 0.05;
     constexpr double MIN_ALIASED_RMS = 0.1;
+    constexpr double MIN_CHANGED_RMS = 0.01;
     double squared_error = 0, max_error = 0;
     size_t geometry_pixels = 0;
     const size_t pixel_count = width * height;
@@ -322,8 +325,10 @@ check_image_difference(const char *path, const char *reference_path,
 	}
     }
     const double rms = std::sqrt(squared_error / (pixel_count * 3));
+    const bool matching = comparison == ImageComparison::Matching;
+    const double min_difference = comparison == ImageComparison::Aliased ? MIN_ALIASED_RMS : MIN_CHANGED_RMS;
     const bool difference_matches = matching ?
-	rms <= MAX_MATCHING_RMS && max_error <= MAX_MATCHING_ERROR : rms >= MIN_ALIASED_RMS;
+	rms <= MAX_MATCHING_RMS && max_error <= MAX_MATCHING_ERROR : rms >= min_difference;
     const bool enough_geometry = geometry_pixels > static_cast<size_t>(pixel_count * MIN_GEOMETRY_COVERAGE);
     bu_log("Image comparison %s: rms=%g max=%g geometry=%zu matching=%d\n",
 	path, rms, max_error, geometry_pixels, matching);
@@ -350,9 +355,12 @@ main(int argc, char **argv)
 	return edit_material_property(argv[2], argv[3], argv[4]);
     try {
 	if (argc == 6 && (BU_STR_EQUAL(argv[1], "check-filtered-texture") ||
-	    BU_STR_EQUAL(argv[1], "check-aliased-texture") || BU_STR_EQUAL(argv[1], "check-matching-image")))
-	    return check_image_difference(argv[2], argv[3], std::stoul(argv[4]), std::stoul(argv[5]),
-		!BU_STR_EQUAL(argv[1], "check-aliased-texture"));
+	    BU_STR_EQUAL(argv[1], "check-aliased-texture") || BU_STR_EQUAL(argv[1], "check-matching-image") ||
+	    BU_STR_EQUAL(argv[1], "check-different-image"))) {
+	    const ImageComparison comparison = BU_STR_EQUAL(argv[1], "check-aliased-texture") ? ImageComparison::Aliased :
+		BU_STR_EQUAL(argv[1], "check-different-image") ? ImageComparison::Changed : ImageComparison::Matching;
+	    return check_image_difference(argv[2], argv[3], std::stoul(argv[4]), std::stoul(argv[5]), comparison);
+	}
 	if (argc == 5) {
 	    const struct { const char *name; ImageCheck check; } checks[] = {
 		{"check", ImageCheck::Regions}, {"check-mesh", ImageCheck::Mesh},

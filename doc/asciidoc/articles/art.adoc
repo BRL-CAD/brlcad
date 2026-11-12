@@ -240,7 +240,9 @@ flat and smooth authored BOTs must produce finite, positive footprints.
 The current ARB/TGC Boolean fixture must produce the zero-footprint fallback.
 These checks establish that the mapping derivatives reach OSL.  Mipmapped
 texture minification is also checked against a known reference as described
-below.  Bump and normal-map shading remain unqualified.  Rebuild procedural
+below.  Bump slopes and tangent-map orientation still need qualification.
+Native normal-map wiring and disabled-node behavior are checked separately.
+Rebuild procedural
 plugins and applications against the matching Appleseed headers and library.
 
 Visible emission is covered by the diagnostic shader, but direct light
@@ -351,6 +353,37 @@ not fail the render.  A shader may deliberately request the `texture()`
 `errormessage` output and supply its own fallback; handled errors that do
 not reach the renderer error log remain under the shader's control.
 `regress-art` checks both missing-texture behaviors.
+
+
+== Bump and normal-map networks
+
+Version 2 can connect native Appleseed normal nodes to a material.  For
+`as_plastic`, the input is `in_bump_normal`.  For example, add a constant
+normal-map perturbation to the material above:
+
+----
+material set paint.material optical OSL.node.bump as_bump
+material set paint.material optical OSL.param.bump.in_mode "string Normal Map"
+material set paint.material optical OSL.param.bump.in_normal_map "color 0.85 0.65 1"
+material set paint.material optical OSL.connect.material.in_bump_normal bump.out_normal
+----
+
+The map stores vector components as data in the range `[0,1]`, decoded to
+`[-1,1]`; do not apply a display-color conversion to these components.
+The native node's default coordinate system is tangent space.  A neutral
+value `(0.5,0.5,1)` preserves the surface normal.  Normals can be chained
+through another node's `in_surface_normal` input.  Zero bump value, zero
+bump depth, and zero normal-map weight preserve that input normal, including
+an upstream perturbation.
+
+The regression exercises these native nodes on a sphere and flat and smooth
+BOTs.  It requires a tilted normal map to visibly change shading and a
+disabled downstream node to match the upstream result.  These checks qualify
+network wiring and disabled-node behavior.  Spatially varying bump slopes,
+tangent-map handedness, mirrored mappings, image normal maps, and secondary
+ray behavior still need dedicated qualification.  A separate probe found
+that a nonzero constant bump can discard the smooth shading normal on a
+BOT; bump-mode preservation of smooth normals remains a known issue.
 
 
 == Project shader assets
