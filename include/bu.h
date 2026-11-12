@@ -90,7 +90,6 @@
 #include "./bu/mime.h"
 #include "./bu/num.h"
 #include "./bu/observer.h"
-#include "./bu/opt.h"
 #include "./bu/parallel.h"
 #include "./bu/parse.h"
 #include "./bu/path.h"

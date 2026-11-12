@@ -36,7 +36,7 @@
 #include "bu/app.h"
 #include "bu/color.h"
 #include "bu/getopt.h"
-#include "bu/opt.h"
+#include "fb_arg.h"
 #include "bu/exit.h"
 #include "vmath.h"
 #include "dm.h"
@@ -186,18 +186,18 @@ get_args(int argc, char **argv)
 	switch (c) {
 	    case 'S':
 	    case 's':
-		if (!bu_opt_scan_int_range(bu_optarg, &screen_width, 1, INT_MAX, "screen size"))
+		if (!fb_arg_int_range(bu_optarg, &screen_width, 1, INT_MAX, "screen size"))
 		    return 0;
 		screen_height = screen_width;
 		break;
 	    case 'W':
 	    case 'w':
-		if (!bu_opt_scan_int_range(bu_optarg, &screen_width, 1, INT_MAX, "screen width"))
+		if (!fb_arg_int_range(bu_optarg, &screen_width, 1, INT_MAX, "screen width"))
 		    return 0;
 		break;
 	    case 'N':
 	    case 'n':
-		if (!bu_opt_scan_int_range(bu_optarg, &screen_height, 1, INT_MAX, "screen height"))
+		if (!fb_arg_int_range(bu_optarg, &screen_height, 1, INT_MAX, "screen height"))
 		    return 0;
 		break;
 	    case 'c':
@@ -207,15 +207,15 @@ get_args(int argc, char **argv)
 		framebuffer = bu_optarg;
 		break;
 	    case 'r':
-		if (!bu_opt_scan_uchar(bu_optarg, &pixcolor[RED], "red value"))
+		if (!fb_arg_uchar(bu_optarg, &pixcolor[RED], "red value"))
 		    return 0;
 		break;
 	    case 'g':
-		if (!bu_opt_scan_uchar(bu_optarg, &pixcolor[GRN], "green value"))
+		if (!fb_arg_uchar(bu_optarg, &pixcolor[GRN], "green value"))
 		    return 0;
 		break;
 	    case 'b':
-		if (!bu_opt_scan_uchar(bu_optarg, &pixcolor[BLU], "blue value"))
+		if (!fb_arg_uchar(bu_optarg, &pixcolor[BLU], "blue value"))
 		    return 0;
 		break;
 	    default:		/* '?' */
@@ -225,10 +225,10 @@ get_args(int argc, char **argv)
 
     if (argc - bu_optind != 4)
 	return 0;		/* BAD */
-    if (!bu_opt_scan_int_range(argv[bu_optind++], &fbx1, SHRT_MIN, SHRT_MAX, "x1")
-	|| !bu_opt_scan_int_range(argv[bu_optind++], &fby1, SHRT_MIN, SHRT_MAX, "y1")
-	|| !bu_opt_scan_int_range(argv[bu_optind++], &fbx2, SHRT_MIN, SHRT_MAX, "x2")
-	|| !bu_opt_scan_int_range(argv[bu_optind++], &fby2, SHRT_MIN, SHRT_MAX, "y2"))
+    if (!fb_arg_int_range(argv[bu_optind++], &fbx1, SHRT_MIN, SHRT_MAX, "x1")
+	|| !fb_arg_int_range(argv[bu_optind++], &fby1, SHRT_MIN, SHRT_MAX, "y1")
+	|| !fb_arg_int_range(argv[bu_optind++], &fbx2, SHRT_MIN, SHRT_MAX, "x2")
+	|| !fb_arg_int_range(argv[bu_optind++], &fby2, SHRT_MIN, SHRT_MAX, "y2"))
 	return 0;
 
     return 1;		/* OK */

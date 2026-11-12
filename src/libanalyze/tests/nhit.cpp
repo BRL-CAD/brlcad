@@ -37,7 +37,7 @@
 #include <fstream>
 
 #include "bu/app.h"
-#include "bu/opt.h"
+#include "bu/arg.h"
 #include "analyze.h"
 
 #define IO_DATA_NULL { NULL, NULL }
@@ -71,6 +71,42 @@ nirt_stderr_hook(struct nirt_state *ns, void *u_data)
     return 0;
 }
 
+struct nhit_args {
+    int print_help;
+    int backout;
+    int should_miss;
+    int use_air;
+    fastf_t los;
+};
+
+static const struct bu_arg_option nhit_options[] = {
+    BU_ARG_FLAG("h", "help", struct nhit_args, print_help, "Print help and exit"),
+    BU_ARG_ALIAS("?", NULL, "help", 1),
+    BU_ARG_FLAG("b", "backout", struct nhit_args, backout, "Back out of geometry before shot"),
+    BU_ARG_FLAG("M", "miss", struct nhit_args, should_miss, "Expect the ray to miss"),
+    BU_ARG_VALUE("u", "use-air", struct nhit_args, use_air, BU_ARG_VALUE_INTEGER,
+	BU_ARG_REQUIRED, "n", "Set use_air"),
+    BU_ARG_VALUE("L", "los", struct nhit_args, los, BU_ARG_VALUE_NUMBER,
+	BU_ARG_REQUIRED, "distance", "Expected line-of-sight distance"),
+    BU_ARG_OPTION_NULL
+};
+
+static const struct bu_arg_operand nhit_operands[] = {
+    BU_ARG_OPERAND("model.g", BU_ARG_VALUE_FILE, 1, 1, "BRL-CAD database", NULL),
+    BU_ARG_OPERAND("object", BU_ARG_VALUE_DB_OBJECT, 1, 1, "Object to query", NULL),
+    BU_ARG_OPERAND("X", BU_ARG_VALUE_NUMBER, 1, 1, "Ray origin X coordinate", NULL),
+    BU_ARG_OPERAND("Y", BU_ARG_VALUE_NUMBER, 1, 1, "Ray origin Y coordinate", NULL),
+    BU_ARG_OPERAND("Z", BU_ARG_VALUE_NUMBER, 1, 1, "Ray origin Z coordinate", NULL),
+    BU_ARG_OPERAND("AZ", BU_ARG_VALUE_NUMBER, 1, 1, "Ray azimuth", NULL),
+    BU_ARG_OPERAND("EL", BU_ARG_VALUE_NUMBER, 1, 1, "Ray elevation", NULL),
+    BU_ARG_OPERAND_NULL
+};
+
+static const struct bu_arg_schema nhit_schema = BU_ARG_SCHEMA(
+    "nhit", "Report NIRT hit information for a ray", nhit_options,
+    nhit_operands, BU_ARG_PARSE_INTERSPERSED,
+    BU_ARG_SCHEMA_META_HELP(NULL, NULL, NULL, NULL, NULL));
+
 int
 main(int argc, const char **argv)
 {
@@ -82,23 +118,13 @@ main(int argc, const char **argv)
     struct bu_vls ncmd = BU_VLS_INIT_ZERO;
 
     int ret = EXIT_FAILURE;
-    int backout = 0;
-    int print_help = 0;
-    int should_miss= 0;
-    int use_air = 0;
-    fastf_t los = -1;
+    struct nhit_args args = {0, 0, 0, 0, -1.0};
+    int &backout = args.backout;
+    int &should_miss = args.should_miss;
+    int &use_air = args.use_air;
+    fastf_t &los = args.los;
 
     bu_setprogname(argv[0]);
-
-    struct bu_opt_desc d[7] = {BU_OPT_DESC_NULL};
-
-    BU_OPT(d[0],  "?", "help",     "",       NULL,             &print_help,   "print help and exit");
-    BU_OPT(d[1],  "h", "help",     "",       NULL,             &print_help,   "print help and exit");
-    BU_OPT(d[2],  "b", "backout",  "",       NULL,             &backout,      "back out of geometry before shot");
-    BU_OPT(d[3],  "M", "miss",     "",       NULL, 	       &should_miss,  "expected result is a miss");
-    BU_OPT(d[4],  "u", "use-air",  "n",      &bu_opt_int,      &use_air,      "set use_air=n (default 0)");
-    BU_OPT(d[5],  "L", "los",      "n",      &bu_opt_fastf_t,  &los,          "expected Line-of-Sight distance");
-    BU_OPT_NULL(d[6]);
 
     if (argc == 0 || !argv)
 	return -1;
@@ -109,11 +135,15 @@ main(int argc, const char **argv)
     argv++; argc--;
 
     struct bu_vls msg = BU_VLS_INIT_ZERO;
-    int ac = bu_opt_parse(&msg, argc, (const char **)argv, d);
-    if (ac < 0) {
+    int operand_index = bu_arg_schema_parse_complete(&nhit_schema, &args,
+	&msg, argc, argv);
+    if (operand_index < 0) {
 	bu_exit(EXIT_FAILURE, "ERROR: option parsing failed\n%s", bu_vls_addr(&msg));
     }
     bu_vls_free(&msg);
+
+    argc -= operand_index;
+    argv += operand_index;
 
     BU_GET(io_data.out, struct bu_vls);
     BU_GET(io_data.err, struct bu_vls);
@@ -122,10 +152,9 @@ main(int argc, const char **argv)
 
     /* If we've been asked to print help or don't know what to do, print help
      * and exit */
-    if (print_help || argc < 7) {
-	char *help = bu_opt_help(d, "nhit", "model.g object X Y Z AZ EL",
-	    "Report NIRT hit information for a ray");
-	ret = (argc < 2) ? EXIT_FAILURE : EXIT_SUCCESS;
+    if (args.print_help) {
+	char *help = bu_arg_schema_help(&nhit_schema, "nhit");
+	ret = EXIT_SUCCESS;
 	if (help)
 	    bu_log("%s", help);
 	if (help)

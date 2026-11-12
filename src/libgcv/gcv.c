@@ -222,23 +222,21 @@ _gcv_filter_register(struct bu_ptbl *filter_table,
 
 static void
 _gcv_filter_options_create(const struct gcv_filter *filter,
-			   struct bu_opt_desc **options_desc, void **options_data)
+			   const struct bu_arg_schema **options_schema, void **options_data)
 {
-    if (!filter || !options_desc || !options_data)
+    if (!filter || !options_schema || !options_data)
 	bu_bomb("missing arguments");
 
     if (filter->create_opts_fn) {
-	*options_desc = NULL;
+	*options_schema = NULL;
 	*options_data = NULL;
 
-	filter->create_opts_fn(options_desc, options_data);
+	filter->create_opts_fn(options_schema, options_data);
 
-	if (!*options_desc || !*options_data)
+	if (!*options_schema || !*options_data)
 	    bu_bomb("filter->create_opts_fn() set null result");
     } else {
-	*options_desc = (struct bu_opt_desc *)bu_malloc(sizeof(struct bu_opt_desc),
-			"options_desc");
-	BU_OPT_NULL(**options_desc);
+	*options_schema = NULL;
 	*options_data = NULL;
     }
 }
@@ -260,7 +258,7 @@ _gcv_filter_options_process(const struct gcv_filter *filter, size_t argc,
 			    const char * const *argv, void **options_data)
 {
     int ret_argc;
-    struct bu_opt_desc *options_desc;
+    const struct bu_arg_schema *options_schema;
     struct bu_vls messages;
     const char **temp;
     int i;
@@ -273,16 +271,21 @@ _gcv_filter_options_process(const struct gcv_filter *filter, size_t argc,
     for (i = 0; (size_t)i < argc; ++i)
 	temp[i] = argv[i];
 
-    _gcv_filter_options_create(filter, &options_desc, options_data);
+    _gcv_filter_options_create(filter, &options_schema, options_data);
     BU_VLS_INIT(&messages);
-    ret_argc = argc ? bu_opt_parse(&messages, argc, temp, options_desc) : 0;
-    bu_free(options_desc, "options_desc");
+    if (options_schema) {
+	int operand_index = bu_arg_schema_parse_complete(options_schema,
+		*options_data, &messages, (int)argc, temp);
+	ret_argc = operand_index < 0 ? -1 : (int)argc - operand_index;
+    } else {
+	ret_argc = (int)argc;
+    }
     bu_log("%s", bu_vls_addr(&messages));
     bu_vls_free(&messages);
 
     if (ret_argc) {
 	if (ret_argc == -1)
-	    bu_log("fatal error in bu_opt_parse()\n");
+	    bu_log("fatal error parsing filter options\n");
 	else {
 	    bu_log("unknown arguments: ");
 

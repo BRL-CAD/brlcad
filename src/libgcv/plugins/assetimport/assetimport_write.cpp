@@ -45,6 +45,19 @@ typedef struct assetimport_write_options {
     const char* model_workaround;       /* once gcv can specify models to convert, this should go away */
 } assetimport_write_options_t;
 
+static const struct bu_arg_option assetimport_write_options[] = {
+    BU_ARG_VALUE(NULL, "format", assetimport_write_options_t, format,
+	BU_ARG_VALUE_STRING, BU_ARG_REQUIRED, "string", "Specify the output file format"),
+    BU_ARG_VALUE(NULL, "model", assetimport_write_options_t, model_workaround,
+	BU_ARG_VALUE_STRING, BU_ARG_REQUIRED, "string", "Specify a single object to convert"),
+    BU_ARG_OPTION_NULL
+};
+
+static const struct bu_arg_schema assetimport_write_schema = {
+    "assetimport-write", "AssetImport writer options", assetimport_write_options, NULL,
+    BU_ARG_PARSE_INTERSPERSED, BU_ARG_SCHEMA_CONSTRAINTS(NULL, NULL)
+};
+
 typedef struct assetimport_write_state {
     const struct gcv_opts *gcv_options;
     assetimport_write_options_t* assetimport_write_options;
@@ -427,20 +440,17 @@ nmg_to_assetimport(struct nmgregion *r, const struct db_full_path *pathp, struct
 }
 
 static void
-assetimport_write_create_opts(struct bu_opt_desc **options_desc, void **dest_options_data)
+assetimport_write_create_opts(const struct bu_arg_schema **schema, void **dest_options_data)
 {
     assetimport_write_options_t* options_data;
 
     BU_ALLOC(options_data, assetimport_write_options_t);
     *dest_options_data = options_data;
-    *options_desc = (struct bu_opt_desc *)bu_malloc(3 * sizeof(struct bu_opt_desc), "options_desc");
+    *schema = &assetimport_write_schema;
 
     options_data->format = NULL;
     options_data->model_workaround = NULL;
 
-    BU_OPT((*options_desc)[0], NULL, "format", "string", bu_opt_str, &options_data->format, "specify the output file format");
-    BU_OPT((*options_desc)[1], NULL, "model", "string", bu_opt_str, &options_data->model_workaround, "specify a single object to convert");
-    BU_OPT_NULL((*options_desc)[2]);
 }
 
 

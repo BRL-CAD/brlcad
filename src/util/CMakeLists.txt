@@ -141,7 +141,7 @@ brlcad_adddata(roots_example.c sample_applications)
 
 add_subdirectory(tests)
 
-cmakefiles(bombardier.h morphedit.tcl)
+cmakefiles(bombardier.h morphedit.tcl util_arg.h)
 cmakefiles(CMakeLists.txt ttcp/CMakeLists.txt ttcp/ttcp.c ttcp/ttcp_config.h.in)
 
 # Local Variables:

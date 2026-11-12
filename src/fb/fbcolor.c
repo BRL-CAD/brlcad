@@ -45,7 +45,7 @@
 #include "bu/app.h"
 #include "bu/color.h"
 #include "bu/getopt.h"
-#include "bu/opt.h"
+#include "fb_arg.h"
 #include "bu/exit.h"
 #include "dm.h"
 
@@ -321,18 +321,18 @@ pars_Argv(int argc, char **argv)
 		break;
 	    case 's':
 	    case 'S':
-		if (!bu_opt_scan_int_range(bu_optarg, &scr_width, 0, INT_MAX, "screen size"))
+		if (!fb_arg_int_range(bu_optarg, &scr_width, 0, INT_MAX, "screen size"))
 		    return 0;
 		scr_height = scr_width;
 		break;
 	    case 'w':
 	    case 'W':
-		if (!bu_opt_scan_int_range(bu_optarg, &scr_width, 0, INT_MAX, "screen width"))
+		if (!fb_arg_int_range(bu_optarg, &scr_width, 0, INT_MAX, "screen width"))
 		    return 0;
 		break;
 	    case 'n':
 	    case 'N':
-		if (!bu_opt_scan_int_range(bu_optarg, &scr_height, 0, INT_MAX, "screen height"))
+		if (!fb_arg_int_range(bu_optarg, &scr_height, 0, INT_MAX, "screen height"))
 		    return 0;
 		break;
 	    default :

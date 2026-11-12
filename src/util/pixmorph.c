@@ -50,7 +50,7 @@
 #include "bu/app.h"
 #include "bu/color.h"
 #include "bu/getopt.h"
-#include "bu/opt.h"
+#include "util_arg.h"
 #include "bu/malloc.h"
 #include "bu/exit.h"
 #include "bn.h"
@@ -364,12 +364,12 @@ get_args(int argc, char **argv, char **picAnamep, char **picBnamep, char **lines
     while ((c = bu_getopt(argc, argv, "w:n:h?")) != -1) {
 	switch (c) {
 	    case 'w':
-		if (!bu_opt_scan_size_t_range(bu_optarg, widthp, 1, SIZE_MAX, "width"))
+		if (!util_arg_size_t_range(bu_optarg, widthp, 1, SIZE_MAX, "width"))
 		    return 0;
 		*autosizep = 0;
 		break;
 	    case 'n':
-		if (!bu_opt_scan_size_t_range(bu_optarg, heightp, 1, SIZE_MAX, "height"))
+		if (!util_arg_size_t_range(bu_optarg, heightp, 1, SIZE_MAX, "height"))
 		    return 0;
 		*autosizep = 0;
 		break;
@@ -384,9 +384,9 @@ get_args(int argc, char **argv, char **picAnamep, char **picBnamep, char **lines
     *picAnamep = argv[bu_optind];
     *picBnamep = argv[bu_optind+1];
     *linesfilenamep = argv[bu_optind+2];
-    if (!bu_opt_scan_double_range(argv[bu_optind+3], warpfracp, 0.0, 1.0, "warpfrac"))
+    if (!util_arg_double_range(argv[bu_optind+3], warpfracp, 0.0, 1.0, "warpfrac"))
 	return 0;
-    if (!bu_opt_scan_double_range(argv[bu_optind+4], &dissolvefrac, 0.0, 1.0, "dissolvefrac"))
+    if (!util_arg_double_range(argv[bu_optind+4], &dissolvefrac, 0.0, 1.0, "dissolvefrac"))
 	return 0;
     *dissolvefracp = (int)(255.0*dissolvefrac + 0.5);
 

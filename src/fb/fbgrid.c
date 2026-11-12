@@ -33,7 +33,7 @@
 #include "bu/app.h"
 #include "bu/color.h"
 #include "bu/getopt.h"
-#include "bu/opt.h"
+#include "fb_arg.h"
 #include "bu/exit.h"
 #include "dm.h"
 
@@ -83,18 +83,18 @@ get_args(int argc, char **argv)
 	    case 'S':
 	    case 's':
 		/* square size */
-		if (!bu_opt_scan_int_range(bu_optarg, &fbwidth, 1, INT_MAX, "size"))
+		if (!fb_arg_int_range(bu_optarg, &fbwidth, 1, INT_MAX, "size"))
 		    return 0;
 		fbheight = fbwidth;
 		break;
 	    case 'W':
 	    case 'w':
-		if (!bu_opt_scan_int_range(bu_optarg, &fbwidth, 1, INT_MAX, "width"))
+		if (!fb_arg_int_range(bu_optarg, &fbwidth, 1, INT_MAX, "width"))
 		    return 0;
 		break;
 	    case 'N':
 	    case 'n':
-		if (!bu_opt_scan_int_range(bu_optarg, &fbheight, 1, INT_MAX, "height"))
+		if (!fb_arg_int_range(bu_optarg, &fbheight, 1, INT_MAX, "height"))
 		    return 0;
 		break;
 

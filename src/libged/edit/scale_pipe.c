@@ -32,7 +32,7 @@
 #include <string.h>
 
 #include "vmath.h"
-#include "bu/opt.h"
+#include "bu/arg.h"
 #include "nmg.h"
 #include "rt/geom.h"
 #include "ged.h"
@@ -271,7 +271,7 @@ _ged_scale_pipe(struct ged *gedp, struct rt_pipe_internal *pipeip, const char *a
 		seg_i = 0;
 	    else {
 		const char *index = attribute + 1;
-		if (bu_opt_int(NULL, 1, &index, &seg_i) != 1)
+		if (!bu_arg_integer_from_str(NULL, &seg_i, index, 0))
 		    return BRLCAD_ERROR;
 	    }
 
@@ -289,7 +289,7 @@ _ged_scale_pipe(struct ged *gedp, struct rt_pipe_internal *pipeip, const char *a
 		seg_i = 0;
 	    else {
 		const char *index = attribute + 1;
-		if (bu_opt_int(NULL, 1, &index, &seg_i) != 1)
+		if (!bu_arg_integer_from_str(NULL, &seg_i, index, 0))
 		    return BRLCAD_ERROR;
 	    }
 
@@ -306,7 +306,7 @@ _ged_scale_pipe(struct ged *gedp, struct rt_pipe_internal *pipeip, const char *a
 		seg_i = 0;
 	    else {
 		const char *index = attribute + 1;
-		if (bu_opt_int(NULL, 1, &index, &seg_i) != 1)
+		if (!bu_arg_integer_from_str(NULL, &seg_i, index, 0))
 		    return BRLCAD_ERROR;
 	    }
 

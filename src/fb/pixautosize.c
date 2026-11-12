@@ -36,7 +36,8 @@
 #include "vmath.h"
 #include "bu/app.h"
 #include "bu/getopt.h"
-#include "bu/opt.h"
+#include "bu/arg.h"
+#include "bu/log.h"
 #include "bn.h"
 #include "dm.h"
 
@@ -47,6 +48,18 @@ static char *file_name;
 
 static size_t width;
 static size_t height;
+
+static int
+parse_positive_int(const char *arg, int *value, const char *label)
+{
+    struct bu_vls msg = BU_VLS_INIT_ZERO;
+    int valid = bu_arg_integer_range_from_str(&msg, value, arg, 10, 1, INT_MAX);
+
+    if (!valid)
+	bu_log("%s: %s: %s\n", bu_getprogname(), label, bu_vls_cstr(&msg));
+    bu_vls_free(&msg);
+    return valid;
+}
 
 static char usage[] = "\
 Usage:	pixautosize [-b bytes_per_sample] [-f file_name]\n\
@@ -60,14 +73,14 @@ get_args(int argc, char **argv)
     while ((c = bu_getopt(argc, argv, "b:f:l:h?")) != -1) {
 	switch (c) {
 	    case 'b':
-		if (!bu_opt_scan_int_range(bu_optarg, &bytes_per_sample, 1, INT_MAX, "bytes_per_sample"))
+		if (!parse_positive_int(bu_optarg, &bytes_per_sample, "bytes_per_sample"))
 		    return 0;
 		break;
 	    case 'f':
 		file_name = bu_optarg;
 		break;
 	    case 'l':
-		if (!bu_opt_scan_int_range(bu_optarg, &file_length, 1, INT_MAX, "file_length"))
+		if (!parse_positive_int(bu_optarg, &file_length, "file_length"))
 		    return 0;
 		break;
 	    default:		/* '?' 'h' */

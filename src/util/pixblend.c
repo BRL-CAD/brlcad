@@ -46,7 +46,7 @@
 
 #include "bu/app.h"
 #include "bu/getopt.h"
-#include "bu/opt.h"
+#include "util_arg.h"
 #include "bu/str.h"
 #include "bu/exit.h"
 
@@ -89,7 +89,7 @@ get_args(int argc, char **argv)
 	    case 'r':
 		if (iflg)
 		    return 0;
-		if (!bu_opt_scan_double(bu_optarg, &value, "blend value"))
+		if (!util_arg_double(bu_optarg, &value, "blend value"))
 		    return 0;
 		++rflg;
 		break;
@@ -100,7 +100,7 @@ get_args(int argc, char **argv)
 		    fprintf(stderr, "The -g and -i options do not make sense together.\n");
 		    return 0;
 		}
-		if (!bu_opt_scan_double(bu_optarg, &value, "interpolate value"))
+		if (!util_arg_double(bu_optarg, &value, "interpolate value"))
 		    return 0;
 		++iflg;
 		break;
@@ -108,7 +108,7 @@ get_args(int argc, char **argv)
 		seed = timeseed();
 		break;
 	    case 's':
-		if (!bu_opt_scan_int(bu_optarg, &seed, "seed"))
+		if (!util_arg_int(bu_optarg, &seed, "seed"))
 		    return 0;
 		break;
 	    case 'g':
@@ -117,7 +117,7 @@ get_args(int argc, char **argv)
 		    return 0;
 		}
 		++gflg;
-		if (!bu_opt_scan_double(bu_optarg, &gvalue, "glitter value"))
+		if (!util_arg_double(bu_optarg, &gvalue, "glitter value"))
 		    return 0;
 		break;
 	    default:		/* 'h' '?' */

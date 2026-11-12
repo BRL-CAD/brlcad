@@ -37,82 +37,55 @@
 
 #include "bio.h"
 #include "bu.h"
+#include "bu/arg.h"
 #include "icv.h"
 
 
 /* ---- shared option-parsing helpers ------------------------------------ */
 
-int
-file_stat(struct bu_vls *msg, size_t argc, const char **argv, void *set_var)
+static int
+file_stat(struct bu_vls *msg, const char *arg, void *storage)
 {
-    char **file_set = (char **)set_var;
-
-    BU_OPT_CHECK_ARGV0(msg, argc, argv, "input file");
-
-    if (!bu_file_exists(argv[0], NULL)) {
-	if (msg) bu_vls_sprintf(msg, "Error - file %s does not exist!\n", argv[0]);
+    if (!bu_file_exists(arg, NULL)) {
+	if (msg)
+	    bu_vls_sprintf(msg, "input file %s does not exist\n", arg);
 	return -1;
     }
 
-    if (file_set)(*file_set) = bu_strdup(argv[0]);
+    if (storage)
+	*(const char **)storage = arg;
 
-    return 1;
+    return 0;
 }
-
-int
-file_null(struct bu_vls *msg, size_t argc, const char **argv, void *set_var)
-{
-    char **file_set = (char **)set_var;
-
-    BU_OPT_CHECK_ARGV0(msg, argc, argv, "output file");
-
-    if (bu_file_exists(argv[0], NULL)) {
-	if (msg) bu_vls_sprintf(msg, "Error - file %s already exists!\n", argv[0]);
-	return -1;
-    }
-
-    if (file_set)(*file_set) = bu_strdup(argv[0]);
-
-    return 1;
-}
-
-int
-image_mime(struct bu_vls *msg, size_t argc, const char **argv, void *set_mime)
-{
-    int type_int;
-    bu_mime_image_t type = BU_MIME_IMAGE_UNKNOWN;
-    bu_mime_image_t *set_type = (bu_mime_image_t *)set_mime;
-
-    BU_OPT_CHECK_ARGV0(msg, argc, argv, "mime format");
-
-    type_int = bu_file_mime(argv[0], BU_MIME_IMAGE);
-    type = (type_int < 0) ? BU_MIME_IMAGE_UNKNOWN : (bu_mime_image_t)type_int;
-    if (type == BU_MIME_IMAGE_UNKNOWN) {
-	if (msg) bu_vls_sprintf(msg, "Error - unknown geometry file type: %s \n", argv[0]);
-	return -1;
-    }
-    if (set_type)(*set_type) = type;
-    return 1;
-}
-
 
 static int
-positive_size(struct bu_vls *msg, size_t argc, const char **argv, void *set_size)
+file_null(struct bu_vls *msg, const char *arg, void *storage)
 {
-    size_t value;
-
-    BU_OPT_CHECK_ARGV0(msg, argc, argv, "positive integer");
-
-    if (!bu_opt_scan_size_t_range(argv[0], &value, 1, SIZE_MAX, NULL)) {
+    if (bu_file_exists(arg, NULL)) {
 	if (msg)
-	    bu_vls_sprintf(msg, "Invalid positive integer: %s\n", argv[0]);
+	    bu_vls_sprintf(msg, "output file %s already exists\n", arg);
 	return -1;
     }
 
-    if (set_size)
-	*(size_t *)set_size = value;
+    if (storage)
+	*(const char **)storage = arg;
 
-    return 1;
+    return 0;
+}
+
+static int
+image_mime(struct bu_vls *msg, const char *arg, void *storage)
+{
+    int type_int = bu_file_mime(arg, BU_MIME_IMAGE);
+    bu_mime_image_t type = (type_int < 0) ? BU_MIME_IMAGE_UNKNOWN : (bu_mime_image_t)type_int;
+    if (type == BU_MIME_IMAGE_UNKNOWN) {
+	if (msg)
+	    bu_vls_sprintf(msg, "unknown image file type: %s\n", arg);
+	return -1;
+    }
+    if (storage)
+	*(bu_mime_image_t *)storage = type;
+    return 0;
 }
 
 
@@ -212,56 +185,95 @@ cmd_info(int ac, const char **av)
 
 /* ---- icv diff subcommand ---------------------------------------------- */
 
+struct icv_diff_args {
+    int print_help;
+    const char *output_path;
+    bu_mime_image_t output_type;
+    bu_mime_image_t input_type1;
+    bu_mime_image_t input_type2;
+    int width1;
+    int height1;
+    int width2;
+    int height2;
+};
+
+static const struct bu_arg_option icv_diff_options[] = {
+    BU_ARG_FLAG("h", "help", struct icv_diff_args, print_help, "Print help and exit"),
+    BU_ARG_ALIAS("?", NULL, "help", 1),
+    BU_ARG_VALUE("o", "output", struct icv_diff_args, output_path,
+	BU_ARG_VALUE_FILE, BU_ARG_REQUIRED, "file", "Output diff image file"),
+    BU_ARG_CUSTOM(NULL, "output-format", struct icv_diff_args, output_type,
+	image_mime, "format", "File format for output image"),
+    BU_ARG_CUSTOM(NULL, "format-img1", struct icv_diff_args, input_type1,
+	image_mime, "format", "File format of first input image"),
+    BU_ARG_CUSTOM(NULL, "format-img2", struct icv_diff_args, input_type2,
+	image_mime, "format", "File format of second input image"),
+    BU_ARG_INTEGER_RANGE(NULL, "width-img1", struct icv_diff_args, width1,
+	1, 0, 0, 0, "pixels", "Width of first input image (raw formats only)"),
+    BU_ARG_INTEGER_RANGE(NULL, "height-img1", struct icv_diff_args, height1,
+	1, 0, 0, 0, "pixels", "Height of first input image (raw formats only)"),
+    BU_ARG_INTEGER_RANGE(NULL, "width-img2", struct icv_diff_args, width2,
+	1, 0, 0, 0, "pixels", "Width of second input image (raw formats only)"),
+    BU_ARG_INTEGER_RANGE(NULL, "height-img2", struct icv_diff_args, height2,
+	1, 0, 0, 0, "pixels", "Height of second input image (raw formats only)"),
+    BU_ARG_OPTION_NULL
+};
+
+static const struct bu_arg_operand icv_diff_operands[] = {
+    BU_ARG_OPERAND("img1", BU_ARG_VALUE_FILE, 1, 1, "First image", NULL),
+    BU_ARG_OPERAND("img2", BU_ARG_VALUE_FILE, 1, 1, "Second image", NULL),
+    BU_ARG_OPERAND_NULL
+};
+
+static const struct bu_arg_schema icv_diff_schema = BU_ARG_SCHEMA(
+    "icv diff",
+    "Compare two images and report pixel differences. With no -o option the "
+    "difference image is written as raw PIX data to stdout.",
+    icv_diff_options, icv_diff_operands, BU_ARG_PARSE_INTERSPERSED,
+    BU_ARG_SCHEMA_META_HELP(NULL, NULL, NULL, NULL, NULL));
+
+static void
+icv_diff_help(void)
+{
+    char *help = bu_arg_schema_help(&icv_diff_schema, "icv diff");
+    if (help)
+	bu_log("%s", help);
+    bu_free(help, "help str");
+}
+
 static int
 cmd_diff(int ac, const char **av)
 {
-    int need_help = 0;
+    struct icv_diff_args args = {};
     int ret = 0;
-    const char *out_path_str = NULL;
-    bu_mime_image_t out_type  = BU_MIME_IMAGE_UNKNOWN;
-    bu_mime_image_t in_type_1 = BU_MIME_IMAGE_UNKNOWN;
-    bu_mime_image_t in_type_2 = BU_MIME_IMAGE_UNKNOWN;
-    size_t width1 = 0, height1 = 0;
-    size_t width2 = 0, height2 = 0;
+    const char *&out_path_str = args.output_path;
+    bu_mime_image_t &out_type = args.output_type;
+    bu_mime_image_t &in_type_1 = args.input_type1;
+    bu_mime_image_t &in_type_2 = args.input_type2;
 
     struct bu_vls parse_msgs = BU_VLS_INIT_ZERO;
 
-    struct bu_opt_desc diff_opt_desc[] = {
-	{"h", "help",          "",       NULL,         &need_help,            "Print help and exit."                             },
-	{"?", "",              "",       NULL,         &need_help,            "",                                                },
-	{"o", "output",        "file",   &bu_opt_str, (void *)&out_path_str, "Output diff image file."                         },
-	{"",  "output-format", "format", &image_mime, (void *)&out_type,     "File format for output image."                   },
-	{"",  "format-img1",   "format", &image_mime, (void *)&in_type_1,    "File format of first input image."               },
-	{"",  "format-img2",   "format", &image_mime, (void *)&in_type_2,    "File format of second input image."              },
-	{"",  "width-img1",    "#",      &positive_size, (void *)&width1,    "Width of first input image (raw formats only)."  },
-	{"",  "height-img1",   "#",      &positive_size, (void *)&height1,   "Height of first input image (raw formats only)." },
-	{"",  "width-img2",    "#",      &positive_size, (void *)&width2,    "Width of second input image (raw formats only)." },
-	{"",  "height-img2",   "#",      &positive_size, (void *)&height2,   "Height of second input image (raw formats only)."},
-	BU_OPT_DESC_NULL
-    };
-
-    int uac = bu_opt_parse(&parse_msgs, ac, av, diff_opt_desc);
-    if (uac == -1) {
-	bu_log("Parsing error: %s\n", bu_vls_addr(&parse_msgs));
+    int operand_index = bu_arg_schema_parse_complete(&icv_diff_schema, &args,
+	&parse_msgs, ac, av);
+    if (operand_index < 0) {
+	bu_log("Parsing error: %s", bu_vls_addr(&parse_msgs));
 	bu_vls_free(&parse_msgs);
 	return 1;
     }
     bu_vls_free(&parse_msgs);
 
-    if (need_help || uac < 2) {
-	char *help = bu_opt_help(diff_opt_desc, "icv diff", "img1 img2",
-	       "Compare two images and report pixel differences.  With no -o option the\n"
-	       "difference image is written as raw PIX data to stdout (compatible with\n"
-	       "pixdiff).  Use -o to write the diff image to a named file; the output\n"
-	       "format is inferred from the file extension.");
-	if (help)
-	    bu_log("%s", help);
-	bu_free(help, "help str");
-	return need_help ? 0 : 1;
+    if (args.print_help) {
+	icv_diff_help();
+	return 0;
     }
 
-    const char *img_path_1 = av[uac - 2];
-    const char *img_path_2 = av[uac - 1];
+    av += operand_index;
+    const char *img_path_1 = av[0];
+    const char *img_path_2 = av[1];
+    size_t width1 = (size_t)args.width1;
+    size_t height1 = (size_t)args.height1;
+    size_t width2 = (size_t)args.width2;
+    size_t height2 = (size_t)args.height2;
 
     /* Determine input formats from file extensions when not specified */
     if (in_type_1 == BU_MIME_IMAGE_UNKNOWN)
@@ -497,44 +509,79 @@ print_usage(void)
 
 /* ---- conversion (original functionality) ------------------------------ */
 
+struct icv_convert_args {
+    int print_help;
+    const char *input_path;
+    const char *output_path;
+    int width;
+    int height;
+    bu_mime_image_t input_type;
+    bu_mime_image_t output_type;
+};
+
+static const struct bu_arg_option icv_convert_options[] = {
+    BU_ARG_FLAG("h", "help", struct icv_convert_args, print_help, "Print help and exit"),
+    BU_ARG_ALIAS("?", NULL, "help", 1),
+    BU_ARG_CUSTOM("i", "input", struct icv_convert_args, input_path,
+	file_stat, "file", "Input file"),
+    BU_ARG_CUSTOM("o", "output", struct icv_convert_args, output_path,
+	file_null, "file", "Output file"),
+    BU_ARG_INTEGER_RANGE("w", "width", struct icv_convert_args, width,
+	1, 0, 0, 0, "pixels", "Image width"),
+    BU_ARG_INTEGER_RANGE("n", "height", struct icv_convert_args, height,
+	1, 0, 0, 0, "pixels", "Image height"),
+    BU_ARG_CUSTOM(NULL, "input-format", struct icv_convert_args, input_type,
+	image_mime, "format", "File format of input file"),
+    BU_ARG_CUSTOM(NULL, "output-format", struct icv_convert_args, output_type,
+	image_mime, "format", "File format of output file"),
+    BU_ARG_OPTION_NULL
+};
+
+static const struct bu_arg_operand icv_convert_operands[] = {
+    BU_ARG_OPERAND("path", BU_ARG_VALUE_FILE, 0, 2,
+	"Input and output paths not supplied by options", NULL),
+    BU_ARG_OPERAND_NULL
+};
+
+static const struct bu_arg_schema icv_convert_schema = BU_ARG_SCHEMA(
+    "icv", "Convert images between supported formats", icv_convert_options,
+    icv_convert_operands, BU_ARG_PARSE_INTERSPERSED,
+    BU_ARG_SCHEMA_META_HELP(NULL, NULL, NULL, NULL, NULL));
+
+static void
+icv_convert_help(void)
+{
+    char *help = bu_arg_schema_help(&icv_convert_schema, bu_getprogname());
+    if (help)
+	bu_log("%s", help);
+    bu_free(help, "help str");
+    bu_log("\nSubcommands:\n"
+	   "  info                               Report image information\n"
+	   "  diff [options] img1 img2           Compare two images\n"
+	   "  anim action anim_file [args ...]   Manage animation files\n");
+}
+
 int
 main(int ac, const char **av)
 {
-    int uac = 0;
+    struct icv_convert_args args = {};
     int ret = 0;
+    int operand_index = 0;
+    size_t positional_index = 0;
     size_t width = 0;
     size_t height = 0;
     const char *in_fmt = NULL;
     const char *out_fmt = NULL;
-    static bu_mime_image_t in_type = BU_MIME_IMAGE_UNKNOWN;
-    static bu_mime_image_t out_type = BU_MIME_IMAGE_UNKNOWN;
-    static char *in_path_str = NULL;
-    static char *out_path_str = NULL;
-    int need_help = 0;
-    int skip_in = 0;
-    int skip_out = 0;
+    bu_mime_image_t &in_type = args.input_type;
+    bu_mime_image_t &out_type = args.output_type;
     icv_image_t *img = NULL;
 
     bu_setprogname(av[0]);
 
     struct bu_vls parse_msgs = BU_VLS_INIT_ZERO;
-    struct bu_vls in_format = BU_VLS_INIT_ZERO;
     struct bu_vls in_path = BU_VLS_INIT_ZERO;
-    struct bu_vls out_format = BU_VLS_INIT_ZERO;
     struct bu_vls out_path = BU_VLS_INIT_ZERO;
     struct bu_vls slog = BU_VLS_INIT_ZERO;
-
-    struct bu_opt_desc icv_opt_desc[] = {
-	{"h", "help",             "",           NULL,          &need_help,            "Print help and exit."        },
-	{"?", "",                 "",           NULL,          &need_help,            "",                           },
-	{"i", "input",            "file",       &file_stat, (void *)&in_path_str,   "Input file.",                },
-	{"o", "output",           "file",       &file_null, (void *)&out_path_str,  "Output file.",               },
-	{"w", "width",            "#",          &positive_size, (void *)&width,      "Image width.",               },
-	{"n", "height",           "#",          &positive_size, (void *)&height,     "Image height.",              },
-	{"",  "input-format",     "format",     &image_mime, (void *)&in_type,       "File format of input file.", },
-	{"",  "output-format",    "format",     &image_mime, (void *)&out_type,      "File format of output file." },
-	BU_OPT_DESC_NULL
-    };
 
     ac-=(ac>0);
     av+=(ac>0); /* skip program name argv[0] if present */
@@ -552,56 +599,37 @@ main(int ac, const char **av)
     if (BU_STR_EQUAL(av[0], "anim"))
 	return cmd_anim(ac - 1, av + 1);
 
-    uac = bu_opt_parse(&parse_msgs, ac, av, icv_opt_desc);
-
-    if (uac == -1) {
-	bu_log("Parsing error: %s\n", bu_vls_addr(&parse_msgs));
+    operand_index = bu_arg_schema_parse_complete(&icv_convert_schema, &args,
+	&parse_msgs, ac, av);
+    if (operand_index < 0) {
+	bu_log("Parsing error: %s", bu_vls_addr(&parse_msgs));
 	ret = 1;
 	goto cleanup;
     }
 
-    /* First, see if help was requested or needed */
-    if (need_help) {
-	char *help = bu_opt_help(icv_opt_desc, "icv", "input output",
-	    "Convert images between supported formats");
-	if (help)
-	    bu_log("%s", help);
-	bu_log("\nSubcommands:\n"
-	       "  info                               Report image information\n"
-	       "  diff [options] img1 img2           Compare two images\n"
-	       "  anim action anim_file [args ...]   Manage animation files\n");
-	bu_free(help, "help str");
+    if (args.print_help) {
+	icv_convert_help();
 	goto cleanup;
     }
 
-    /* Did we get explicit options for an input and/or output file? */
-    if (in_path_str) {
-	bu_vls_sprintf(&in_path, "%s", in_path_str);
-	skip_in++;
-    }
-    if (out_path_str) {
-	bu_vls_sprintf(&out_path, "%s", out_path_str);
-	skip_out++;
+    ac -= operand_index;
+    av += operand_index;
+    if (args.input_path)
+	bu_vls_sprintf(&in_path, "%s", args.input_path);
+    if (args.output_path)
+	bu_vls_sprintf(&out_path, "%s", args.output_path);
+
+    if (!args.input_path && positional_index < (size_t)ac)
+	bu_vls_sprintf(&in_path, "%s", av[positional_index++]);
+    if (!args.output_path && positional_index < (size_t)ac)
+	bu_vls_sprintf(&out_path, "%s", av[positional_index++]);
+    if (positional_index != (size_t)ac) {
+	bu_vls_printf(&slog, "Too many image paths supplied\n");
+	ret = 1;
     }
 
-    /* If not specified explicitly with -i or -o, the input and output paths must always
-     * be the last two arguments supplied */
-    if (!(skip_in && skip_out)) {
-	if (skip_in && !skip_out) {
-	    bu_vls_sprintf(&out_path, "%s", av[uac - 1]);
-	}
-	if (!skip_in && skip_out) {
-	    bu_vls_sprintf(&in_path, "%s", av[uac - 1]);
-	}
-	if (!skip_in && !skip_out) {
-	    if (ac > 1) {
-		bu_vls_sprintf(&in_path, "%s", av[uac - 2]);
-		bu_vls_sprintf(&out_path, "%s", av[uac - 1]);
-	    } else {
-		bu_vls_sprintf(&in_path, "%s", av[uac - 1]);
-	    }
-	}
-    }
+    width = (size_t)args.width;
+    height = (size_t)args.height;
 
     /* Make sure we have distinct input and output paths */
     if (bu_vls_strlen(&in_path) > 0 && BU_STR_EQUAL(bu_vls_addr(&in_path), bu_vls_addr(&out_path))) {
@@ -669,11 +697,10 @@ cleanup:
 	bu_log("%s", bu_vls_addr(&slog));
     bu_free((char *)in_fmt, "input format string");
     bu_free((char *)out_fmt, "output format string");
-    bu_vls_free(&in_format);
     bu_vls_free(&in_path);
-    bu_vls_free(&out_format);
     bu_vls_free(&out_path);
     bu_vls_free(&slog);
+    bu_vls_free(&parse_msgs);
     return ret;
 }
 

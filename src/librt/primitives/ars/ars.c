@@ -38,7 +38,7 @@
 #include "bnetwork.h"
 
 #include "bu/cv.h"
-#include "bu/opt.h"
+#include "bu/arg.h"
 #include "vmath.h"
 #include "rt/db4.h"
 #include "nmg.h"
@@ -959,7 +959,7 @@ ars_adjust_coordinates(fastf_t *values, size_t count, const char *input)
 	result = BRLCAD_ERROR;
     } else {
 	for (size_t i = 0; i < count; i++) {
-	    if (bu_opt_fastf_t(NULL, 1, &args[i], &values[i]) != 1 ||
+	    if (bu_arg_number_from_str(NULL, (fastf_t *)(&values[i]), args[i]) != 1 ||
 		!isfinite(values[i])) {
 		result = BRLCAD_ERROR;
 		break;

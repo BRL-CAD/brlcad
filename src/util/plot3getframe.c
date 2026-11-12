@@ -33,7 +33,7 @@
 #include "bio.h"
 
 #include "bu/app.h"
-#include "bu/opt.h"
+#include "bu/arg.h"
 #include "bu/str.h"
 #include "bu/log.h"
 
@@ -123,6 +123,7 @@ main(int argc, char **argv)
     int desired_frame = 0;
     int current_frame = 0;
     size_t ret;
+    struct bu_vls msg = BU_VLS_INIT_ZERO;
 
     bu_setprogname(argv[0]);
 
@@ -141,9 +142,12 @@ main(int argc, char **argv)
     if (argc != 2 || isatty(fileno(stdin))) {
 	bu_exit(1, "Usage: plot3getframe [-v] desired_frame < unix_plot\n");
     }
-    if (!bu_opt_scan_int_range(argv[1], &desired_frame, 0, INT_MAX, "desired frame")) {
+    if (!bu_arg_integer_range_from_str(&msg, &desired_frame, argv[1], 10, 0, INT_MAX)) {
+	bu_log("%s: %s\n", bu_getprogname(), bu_vls_cstr(&msg));
+	bu_vls_free(&msg);
 	return 1;
     }
+    bu_vls_free(&msg);
     current_frame = 0;
 
     while ((c = getchar()) != EOF) {

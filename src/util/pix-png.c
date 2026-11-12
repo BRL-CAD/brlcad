@@ -43,7 +43,7 @@
 #include "vmath.h"
 #include "bu/app.h"
 #include "bu/getopt.h"
-#include "bu/opt.h"
+#include "util_arg.h"
 #include "bu/log.h"
 #include "bu/malloc.h"
 #include "bn.h"
@@ -78,23 +78,23 @@ get_args(int argc, char **argv, size_t *width, size_t *height, FILE **infp, FILE
 		autosize = 1;
 		break;
 	    case 'g':
-		if (!bu_opt_scan_double(bu_optarg, &out_gamma, "gamma"))
+		if (!util_arg_double(bu_optarg, &out_gamma, "gamma"))
 		    return 0;
 		break;
 	    case 's':
 		/* square file size */
-		if (!bu_opt_scan_size_t_range(bu_optarg, width, 1, SIZE_MAX, "input size"))
+		if (!util_arg_size_t_range(bu_optarg, width, 1, SIZE_MAX, "input size"))
 		    return 0;
 		*height = *width;
 		autosize = 0;
 		break;
 	    case 'w':
-		if (!bu_opt_scan_size_t_range(bu_optarg, width, 1, SIZE_MAX, "input width"))
+		if (!util_arg_size_t_range(bu_optarg, width, 1, SIZE_MAX, "input width"))
 		    return 0;
 		autosize = 0;
 		break;
 	    case 'n':
-		if (!bu_opt_scan_size_t_range(bu_optarg, height, 1, SIZE_MAX, "input height"))
+		if (!util_arg_size_t_range(bu_optarg, height, 1, SIZE_MAX, "input height"))
 		    return 0;
 		autosize = 0;
 		break;

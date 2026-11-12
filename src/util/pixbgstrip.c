@@ -34,7 +34,7 @@
 #include "vmath.h"
 #include "bu/app.h"
 #include "bu/getopt.h"
-#include "bu/opt.h"
+#include "util_arg.h"
 #include "bu/malloc.h"
 #include "bu/exit.h"
 #include "bn.h"
@@ -72,12 +72,12 @@ get_args(int argc, char **argv)
 		break;
 	    case 's':
 		/* square file size */
-		if (!bu_opt_scan_size_t_range(bu_optarg, &file_width, 1, SIZE_MAX, "input size"))
+		if (!util_arg_size_t_range(bu_optarg, &file_width, 1, SIZE_MAX, "input size"))
 		    return 0;
 		autosize = 0;
 		break;
 	    case 'w':
-		if (!bu_opt_scan_size_t_range(bu_optarg, &file_width, 1, SIZE_MAX, "input width"))
+		if (!util_arg_size_t_range(bu_optarg, &file_width, 1, SIZE_MAX, "input width"))
 		    return 0;
 		autosize = 0;
 		break;
@@ -85,11 +85,11 @@ get_args(int argc, char **argv)
 		autosize = 0;
 		break;
 	    case 't':
-		if (!bu_opt_scan_int_range(bu_optarg, &thresh, 0, INT_MAX, "threshold"))
+		if (!util_arg_int_range(bu_optarg, &thresh, 0, INT_MAX, "threshold"))
 		    return 0;
 		break;
 	    case 'x':
-		if (!bu_opt_scan_int_range(bu_optarg, &bg_x_offset, 0, INT_MAX, "background x offset"))
+		if (!util_arg_int_range(bu_optarg, &bg_x_offset, 0, INT_MAX, "background x offset"))
 		    return 0;
 		break;
 

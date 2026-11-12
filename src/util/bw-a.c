@@ -45,7 +45,7 @@
 #include "vmath.h"
 #include "bu/app.h"
 #include "bu/getopt.h"
-#include "bu/opt.h"
+#include "util_arg.h"
 #include "bu/exit.h"
 #include "bn.h"
 #include "dm.h"
@@ -73,18 +73,18 @@ get_args(int argc, char **argv)
 		autosize = 1;
 		break;
 	    case 's':
-		if (!bu_opt_scan_long_range(bu_optarg, &file_width, 1, LONG_MAX, "square size"))
+		if (!util_arg_long_range(bu_optarg, &file_width, 1, LONG_MAX, "square size"))
 		    return 0;
 		file_height = file_width;
 		autosize = 0;
 		break;
 	    case 'n':
-		if (!bu_opt_scan_long_range(bu_optarg, &file_height, 1, LONG_MAX, "input height"))
+		if (!util_arg_long_range(bu_optarg, &file_height, 1, LONG_MAX, "input height"))
 		    return 0;
 		autosize = 0;
 		break;
 	    case 'w':
-		if (!bu_opt_scan_long_range(bu_optarg, &file_width, 1, LONG_MAX, "input width"))
+		if (!util_arg_long_range(bu_optarg, &file_width, 1, LONG_MAX, "input width"))
 		    return 0;
 		autosize = 0;
 		break;

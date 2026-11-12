@@ -35,7 +35,7 @@
 #include "bu/app.h"
 #include "bu/log.h"
 #include "bu/malloc.h"
-#include "bu/opt.h"
+#include "util_arg.h"
 #include "bu/str.h"
 #include "vmath.h"
 #include "bn.h"
@@ -101,19 +101,19 @@ main(int argc, char **argv)
 		case 'R':
 		    red++;
 		    if (argv[1][2] != '\0')
-			if (!bu_opt_scan_double(&argv[1][2], &rweight, "red weight"))
+			if (!util_arg_double(&argv[1][2], &rweight, "red weight"))
 			    bu_exit(EXIT_FAILURE, "Invalid option\n");
 		    break;
 		case 'G':
 		    green++;
 		    if (argv[1][2] != '\0')
-			if (!bu_opt_scan_double(&argv[1][2], &gweight, "green weight"))
+			if (!util_arg_double(&argv[1][2], &gweight, "green weight"))
 			    bu_exit(EXIT_FAILURE, "Invalid option\n");
 		    break;
 		case 'B':
 		    blue++;
 		    if (argv[1][2] != '\0')
-			if (!bu_opt_scan_double(&argv[1][2], &bweight, "blue weight"))
+			if (!util_arg_double(&argv[1][2], &bweight, "blue weight"))
 			    bu_exit(EXIT_FAILURE, "Invalid option\n");
 		    break;
 		default:

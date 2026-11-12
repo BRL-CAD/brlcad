@@ -34,7 +34,7 @@
 #include "bu/app.h"
 #include "bu/color.h"
 #include "bu/getopt.h"
-#include "bu/opt.h"
+#include "fb_arg.h"
 #include "bu/exit.h"
 #include "dm.h"
 #include "pkg.h"
@@ -71,18 +71,18 @@ get_args(int argc, char **argv)
 		break;
 	    case 's':
 	    case 'S':
-		if (!bu_opt_scan_int_range(bu_optarg, &scr_width, 1, INT_MAX, "screen size"))
+		if (!fb_arg_int_range(bu_optarg, &scr_width, 1, INT_MAX, "screen size"))
 		    return 0;
 		scr_height = scr_width;
 		break;
 	    case 'w':
 	    case 'W':
-		if (!bu_opt_scan_int_range(bu_optarg, &scr_width, 1, INT_MAX, "screen width"))
+		if (!fb_arg_int_range(bu_optarg, &scr_width, 1, INT_MAX, "screen width"))
 		    return 0;
 		break;
 	    case 'n':
 	    case 'N':
-		if (!bu_opt_scan_int_range(bu_optarg, &scr_height, 1, INT_MAX, "screen height"))
+		if (!fb_arg_int_range(bu_optarg, &scr_height, 1, INT_MAX, "screen height"))
 		    return 0;
 		break;
 
@@ -109,15 +109,15 @@ main(int argc, char **argv)
 
     remaining = argc - bu_optind;
     if (remaining == 3) {
-	if (!bu_opt_scan_uchar(argv[bu_optind+0], &pixel[RED], "red value")
-	    || !bu_opt_scan_uchar(argv[bu_optind+1], &pixel[GRN], "green value")
-	    || !bu_opt_scan_uchar(argv[bu_optind+2], &pixel[BLU], "blue value")) {
+	if (!fb_arg_uchar(argv[bu_optind+0], &pixel[RED], "red value")
+	    || !fb_arg_uchar(argv[bu_optind+1], &pixel[GRN], "green value")
+	    || !fb_arg_uchar(argv[bu_optind+2], &pixel[BLU], "blue value")) {
 	    (void)fputs(usage, stderr);
 	    bu_exit(1, NULL);
 	}
 	use_custom_pixel = 1;
     } else if (remaining == 1) {
-	if (!bu_opt_scan_uchar(argv[bu_optind+0], &pixel[RED], "gray value")) {
+	if (!fb_arg_uchar(argv[bu_optind+0], &pixel[RED], "gray value")) {
 	    (void)fputs(usage, stderr);
 	    bu_exit(1, NULL);
 	}

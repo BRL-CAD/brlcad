@@ -50,9 +50,38 @@
 #include "bio.h"
 
 #include "bu/app.h"
-#include "bu/opt.h"
+#include "bu/arg.h"
 #include "bu/str.h"
 #include "raytrace.h"
+
+struct gex_args {
+    int help;
+    int force;
+    int compress;
+    const char *dump_object;
+};
+
+static const struct bu_arg_option gex_options[] = {
+    BU_ARG_FLAG("h", "help", struct gex_args, help, "Print help and exit"),
+    BU_ARG_VALUE("f", "force", struct gex_args, force, BU_ARG_VALUE_BOOL,
+	BU_ARG_REQUIRED, "bool", "Allow overwriting existing files"),
+    BU_ARG_VALUE("c", "compress", struct gex_args, compress, BU_ARG_VALUE_BOOL,
+	BU_ARG_REQUIRED, "bool", "Create a copy with no free space"),
+    BU_ARG_VALUE("d", "dump", struct gex_args, dump_object, BU_ARG_VALUE_STRING,
+	BU_ARG_REQUIRED, "object", "Hexdump a specific object"),
+    BU_ARG_OPTION_NULL
+};
+
+static const struct bu_arg_operand gex_operands[] = {
+    BU_ARG_OPERAND("input.g", BU_ARG_VALUE_FILE, 1, 1, "Input BRL-CAD database", NULL),
+    BU_ARG_OPERAND("output.g", BU_ARG_VALUE_FILE, 0, 1, "Optional output database", NULL),
+    BU_ARG_OPERAND_NULL
+};
+
+static const struct bu_arg_schema gex_schema = BU_ARG_SCHEMA(
+    "gex", "Inspect, copy, compress, or dump a BRL-CAD database", gex_options,
+    gex_operands, BU_ARG_PARSE_INTERSPERSED,
+    BU_ARG_SCHEMA_META_HELP(NULL, NULL, NULL, NULL, NULL));
 
 
 std::string
@@ -266,44 +295,34 @@ main(int argc, char** argv)
     struct bu_vls str = BU_VLS_INIT_ZERO;
 
     // vars expected from cmd line parsing
-    int arg_err             = 0;
-    int has_force           = 0;
-    int has_help            = 0;
-    int has_compress        = 0;
-    const char *dump_obj    = NULL;
+    struct gex_args args = {};
     struct bu_vls db_fname  = BU_VLS_INIT_ZERO;
     struct bu_vls db2_fname = BU_VLS_INIT_ZERO;
 
     bu_setprogname(argv[0]);
 
-    struct bu_opt_desc d[6];
-    BU_OPT(d[0], "h", "help",     "",     NULL,         &has_help,     "Print help and exit");
-    BU_OPT(d[1], "f", "force",    "bool", &bu_opt_bool, &has_force,    "Allow overwriting existing files.");
-    BU_OPT(d[2], "c", "compress", "bool", &bu_opt_bool, &has_compress, "Create a copy with no free space.");
-    BU_OPT(d[3], "d", "dump",     "str",  &bu_opt_str,  &dump_obj,     "Hexdump a specific object.");
-    BU_OPT_NULL(d[4]);
-
     /* Skip first arg */
     argv++; argc--;
-    arg_err = bu_opt_parse(&str, argc, (const char **)argv, d);
+    int operand_index = bu_arg_schema_parse_complete(&gex_schema, &args, &str,
+	argc, (const char **)argv);
 
-    if (arg_err < 0) {
+    if (operand_index < 0) {
 	bu_exit(EXIT_FAILURE, "%s", bu_vls_addr(&str));
     }
     bu_vls_free(&str);
 
-    if (has_help) {
-	char *help = bu_opt_help(d, argv0, "input.g [output.g]",
-	    "Inspect, copy, compress, or dump a BRL-CAD database");
+    if (args.help) {
+	char *help = bu_arg_schema_help(&gex_schema, argv0);
 	bu_exit(EXIT_SUCCESS, "%s", help ? help : "");
     }
 
-    /* If the input and output files weren't specified from args, get them
-     * from the bu_opt leftovers */
+    argc -= operand_index;
+    argv += operand_index;
+
+    /* Read input and output files from the validated operands. */
     if (!argc) {
 	bu_log("ERROR: input geometry file not specified\n");
-	char *help = bu_opt_help(d, argv0, "input.g [output.g]",
-	    "Inspect, copy, compress, or dump a BRL-CAD database");
+	char *help = bu_arg_schema_help(&gex_schema, argv0);
 	bu_exit(EXIT_FAILURE, "%s", help ? help : "");
     }
     bu_vls_sprintf(&db_fname, "%s", argv[0]);
@@ -317,7 +336,7 @@ main(int argc, char** argv)
 
     // take appropriate action...
 
-    if (has_compress && bu_vls_strlen(&db2_fname) == 0) {
+    if (args.compress && bu_vls_strlen(&db2_fname) == 0) {
 	bu_vls_sprintf(&db2_fname, "%s%s", bu_vls_addr(&db_fname), DBSUF);
     }
 
@@ -331,13 +350,13 @@ main(int argc, char** argv)
         bu_exit(EXIT_FAILURE, "ERROR: input file [%s] open failure\n", bu_vls_addr(&db_fname));
     }
 
-    if (has_compress) {
+    if (args.compress) {
         if (BU_STR_EQUAL(bu_vls_addr(&db_fname), bu_vls_addr(&db2_fname))) {
             bu_exit(EXIT_FAILURE, "ERROR: output file cannot be same as input file\n");
         }
         // check for existing file
 	if (bu_file_exists(bu_vls_cstr(&db2_fname), NULL)) {
-            if (has_force) {
+            if (args.force) {
                 printf("WARNING: overwriting existing file [%s]...\n", bu_vls_addr(&db2_fname));
                 bu_file_delete(bu_vls_addr(&db2_fname));
             } else {
@@ -465,13 +484,13 @@ main(int argc, char** argv)
             // free space, count bytes (object counted above)
             free_bytes += static_cast<int>(r.object_length);
             ++fobj;
-        } else if (has_compress) {
+        } else if (args.compress) {
             // write the object to the output file
             size_t nw = fwrite(r.buf, 1, r.object_length, out);
             if (nw != r.object_length)
                 bu_bomb("nw != r.object_length");
         }
-	if (dump_obj && BU_STR_EQUAL(dump_obj, name.c_str())) {
+	if (args.dump_object && BU_STR_EQUAL(args.dump_object, name.c_str())) {
 	    printf("  Hex Dumping %zu bytes\n", r.object_length);
 	    hexdump(r.buf, r.buf+r.object_length);
 	}
@@ -560,7 +579,7 @@ main(int argc, char** argv)
     else
         printf("\nNote: file read ended early with an error!\n");
 
-    if (has_compress)
+    if (args.compress)
         printf("See compressed file '%s'.\n", bu_vls_addr(&db2_fname));
 
     return 0;

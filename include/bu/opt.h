@@ -21,6 +21,8 @@
 #ifndef BU_OPT_H
 #define BU_OPT_H
 
+#error "The deprecated BU_OPT API is temporarily disabled during BU_ARG migration"
+
 #include "common.h"
 #include "bu/defines.h"
 #include "bu/ptbl.h"

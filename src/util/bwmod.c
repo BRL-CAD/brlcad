@@ -46,7 +46,7 @@
 #include "bu/file.h"
 #include "bu/malloc.h"
 #include "bu/getopt.h"
-#include "bu/opt.h"
+#include "util_arg.h"
 #include "bu/exit.h"
 
 
@@ -119,25 +119,25 @@ get_args(int argc, char **argv)
 	switch (c) {
 	case 'a':
 	    op[numop] = ADD;
-	    if (!bu_opt_scan_double(bu_optarg, &val[numop], "add value"))
+	    if (!util_arg_double(bu_optarg, &val[numop], "add value"))
 		return 0;
 	    numop++;
 	    break;
 	case 's':
 	    op[numop] = ADD;
-	    if (!bu_opt_scan_double(bu_optarg, &val[numop], "subtract value"))
+	    if (!util_arg_double(bu_optarg, &val[numop], "subtract value"))
 		return 0;
 	    val[numop] = -val[numop];
 	    numop++;
 	    break;
 	case 'm':
 	    op[numop] = MULT;
-	    if (!bu_opt_scan_double(bu_optarg, &val[numop], "multiply value"))
+	    if (!util_arg_double(bu_optarg, &val[numop], "multiply value"))
 		return 0;
 	    numop++;
 	    break;
 	case 'd':
-	    if (!bu_opt_scan_double(bu_optarg, &d, "divide value"))
+	    if (!util_arg_double(bu_optarg, &d, "divide value"))
 		return 0;
 	    if (ZERO(d)) {
 		bu_exit(2, "bwmod: cannot divide by zero!\n");
@@ -156,12 +156,12 @@ get_args(int argc, char **argv)
 	    break;
 	case 'e':
 	    op[numop] = POW;
-	    if (!bu_opt_scan_double(bu_optarg, &val[numop], "exponent"))
+	    if (!util_arg_double(bu_optarg, &val[numop], "exponent"))
 		return 0;
 	    numop++;
 	    break;
 	case 'r':
-	    if (!bu_opt_scan_double(bu_optarg, &d, "root"))
+	    if (!util_arg_double(bu_optarg, &d, "root"))
 		return 0;
 	    if (ZERO(d)) {
 		bu_exit(2, "bwmod: zero root!\n");
@@ -174,25 +174,25 @@ get_args(int argc, char **argv)
 	    break;
 	case 'S':
 	    op[numop] = SHIFT;
-	    if (!bu_opt_scan_double(bu_optarg, &val[numop], "shift value"))
+	    if (!util_arg_double(bu_optarg, &val[numop], "shift value"))
 		return 0;
 	    numop++;
 	    break;
 	case 'M':
 	    op[numop] = AND;
-	    if (!bu_opt_scan_double(bu_optarg, &val[numop], "and value"))
+	    if (!util_arg_double(bu_optarg, &val[numop], "and value"))
 		return 0;
 	    numop++;
 	    break;
 	case 'O':
 	    op[numop] = OR;
-	    if (!bu_opt_scan_double(bu_optarg, &val[numop], "or value"))
+	    if (!util_arg_double(bu_optarg, &val[numop], "or value"))
 		return 0;
 	    numop++;
 	    break;
 	case 'X':
 	    op[numop] = XOR;
-	    if (!bu_opt_scan_double(bu_optarg, &val[numop], "xor value"))
+	    if (!util_arg_double(bu_optarg, &val[numop], "xor value"))
 		return 0;
 	    numop++;
 	    break;

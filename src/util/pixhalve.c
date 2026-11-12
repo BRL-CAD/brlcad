@@ -39,7 +39,8 @@
 #include "vmath.h"
 #include "bu/app.h"
 #include "bu/getopt.h"
-#include "bu/opt.h"
+#include "bu/arg.h"
+#include "bu/log.h"
 #include "bu/malloc.h"
 #include "bu/exit.h"
 #include "bn.h"
@@ -53,6 +54,18 @@ static int fileinput = 0;	/* file or pipe on input? */
 static int autosize = 0;	/* !0 to autosize input */
 
 static size_t file_width = 512; /* default input width */
+
+static int
+parse_dimension(const char *arg, size_t *value, const char *label)
+{
+    struct bu_vls msg = BU_VLS_INIT_ZERO;
+    int valid = bu_arg_size_t_range_from_str(&msg, value, arg, 10, 1, SIZE_MAX);
+
+    if (!valid)
+	bu_log("%s: %s: %s\n", bu_getprogname(), label, bu_vls_cstr(&msg));
+    bu_vls_free(&msg);
+    return valid;
+}
 
 static char usage[] = "\
 Usage: pixhalve [-a] [-s squaresize] [-w file_width] [-n file_height] [file.pix]\n";
@@ -73,12 +86,12 @@ get_args(int argc, char **argv)
 		break;
 	    case 's':
 		/* square file size */
-		if (!bu_opt_scan_size_t_range(bu_optarg, &file_width, 1, SIZE_MAX, "input size"))
+		if (!parse_dimension(bu_optarg, &file_width, "input size"))
 		    return 0;
 		autosize = 0;
 		break;
 	    case 'w':
-		if (!bu_opt_scan_size_t_range(bu_optarg, &file_width, 1, SIZE_MAX, "input width"))
+		if (!parse_dimension(bu_optarg, &file_width, "input width"))
 		    return 0;
 		autosize = 0;
 		break;

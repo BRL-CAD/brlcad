@@ -45,7 +45,7 @@ extern "C" {
 #include "bu/app.h"
 #include "bu/color.h"
 #include "bu/hash.h"
-#include "bu/opt.h"
+#include "bu/arg.h"
 #include "bu/path.h"
 #include "bu/sort.h"
 #include "bv/lod.h"
@@ -919,7 +919,7 @@ DbiState::update_dp(struct directory *dp, int reset)
 	// Check for region id.  For drawing purposes this needs to be a number.
 	const char *region_id_val = bu_avs_get(&c_avs, "region_id");
 	if (region_id_val)
-	    (void)bu_opt_int(NULL, 1, &region_id_val, (void *)&attr_region_id);
+	    (void)bu_arg_integer_from_str(NULL, (int *)(&attr_region_id), region_id_val, 0);
 
 	std::stringstream s;
 	s.write(reinterpret_cast<const char *>(&attr_region_id), sizeof(attr_region_id));
@@ -951,7 +951,7 @@ DbiState::update_dp(struct directory *dp, int reset)
 	const char *color_val = bu_avs_get(&c_avs, "color");
 	if (!color_val)
 	    color_val = bu_avs_get(&c_avs, "rgb");
-	if (color_val && bu_opt_color(NULL, 1, &color_val, (void *)&c) > 0) {
+	if (color_val && bu_arg_color_from_argv((struct bu_color *)(&c), 1, &color_val) > 0) {
 	    cval = color_int(&c);
 	}
 

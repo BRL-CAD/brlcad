@@ -1065,10 +1065,7 @@ main(int argc, char **argv)
     bu_mkdir(cache_dir);
 
     if (argc > 1) {
-	const char *av[2] = {NULL};
-	av[0] = argv[1];
-	int iret = bu_opt_int(NULL, 1, av, &item_cnt);
-	if (iret != 1)
+	if (!bu_arg_integer_from_str(NULL, &item_cnt, argv[1], 0))
 	    bu_exit(-1, "Invalid item count specifier\n");
     }
 

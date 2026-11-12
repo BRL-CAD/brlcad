@@ -40,7 +40,7 @@
 #include "bu/app.h"
 #include "bu/log.h"
 #include "bu/malloc.h"
-#include "bu/opt.h"
+#include "bu/arg.h"
 #include "bu/str.h"
 
 
@@ -49,7 +49,13 @@
 static int
 parse_threshold_arg(const char *arg, int *out_value)
 {
-    return bu_opt_scan_int_range(arg, out_value, 0, 255, "threshold");
+    struct bu_vls msg = BU_VLS_INIT_ZERO;
+    int valid = bu_arg_integer_range_from_str(&msg, out_value, arg, 10, 0, 255);
+
+    if (!valid)
+	bu_log("%s: threshold: %s\n", bu_getprogname(), bu_vls_cstr(&msg));
+    bu_vls_free(&msg);
+    return valid;
 }
 
 

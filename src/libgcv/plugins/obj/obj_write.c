@@ -123,7 +123,7 @@ obj_get_path_color(struct db_i *dbip, const struct db_full_path *pathp, unsigned
 	    const struct mater *mp;
 
 	    if (region_id_val) {
-		bu_opt_int(NULL, 1, &region_id_val, (void *)&region_id);
+		bu_arg_integer_from_str(NULL, &region_id, region_id_val, 10);
 	    } else if (pathp->fp_names[i]->d_flags & RT_DIR_REGION) {
 		region_id = 0;
 	    }
@@ -756,21 +756,27 @@ do_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union
 }
 
 
+static const struct bu_arg_option obj_write_options[] = {
+    BU_ARG_FLAG(NULL, "vertex-normals", struct obj_write_options, do_normals,
+	"Output vertex normals"),
+    BU_ARG_FLAG(NULL, "usemtl", struct obj_write_options, usemtl,
+	"Write usemtl statements and a companion material library"),
+    BU_ARG_OPTION_NULL
+};
+
+static const struct bu_arg_schema obj_write_schema = {
+    "obj-write", "OBJ writer options", obj_write_options, NULL,
+    BU_ARG_PARSE_INTERSPERSED, BU_ARG_SCHEMA_CONSTRAINTS(NULL, NULL)
+};
+
 static void
-obj_write_create_opts(struct bu_opt_desc **options_desc, void **dest_options_data)
+obj_write_create_opts(const struct bu_arg_schema **schema, void **dest_options_data)
 {
     struct obj_write_options *options_data;
 
     BU_ALLOC(options_data, struct obj_write_options);
     *dest_options_data = options_data;
-    *options_desc = (struct bu_opt_desc *)bu_malloc(3 * sizeof(struct bu_opt_desc), "options_desc");
-
-    BU_OPT((*options_desc)[0], NULL, "vertex-normals", NULL, NULL, &options_data->do_normals, "Output vertex normals.");
-    BU_OPT((*options_desc)[1], NULL, "usemtl", NULL, NULL, &options_data->usemtl,
-	    "Place usemtl statements in the output file. When BRL-CAD colors are present, "
-	    "a companion .mtl file is generated with matching RGB values. Material names "
-	    "also preserve the BRL-CAD air/LOS/material codes.");
-    BU_OPT_NULL((*options_desc)[2]);
+    *schema = &obj_write_schema;
 }
 
 

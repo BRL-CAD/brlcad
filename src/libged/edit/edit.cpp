@@ -41,7 +41,6 @@
 
 #include "bu/cmd.h"
 #include "bu/arg.h"
-#include "bu/opt.h"
 #include "bn/rand.h"
 #include "rt/db4.h"
 #include "rt/edit.h"
@@ -2658,7 +2657,7 @@ _parse_desc_cmd_on_edit(struct rt_edit *s, struct ged *gedp,
 		}
 		for (int component = 0; component < 2; ++component) {
 		    fastf_t value;
-		    if (bu_opt_fastf_t(NULL, 1, argv + argi, &value) < 0) {
+		    if (!bu_arg_number_from_str(NULL, &value, argv[argi])) {
 			if (gedp)
 			    bu_vls_printf(gedp->ged_result_str,
 				"edit: cannot parse '%s' as a number\n",
@@ -2783,7 +2782,7 @@ _parse_desc_cmd_on_edit(struct rt_edit *s, struct ged *gedp,
 		}
 		for (int list_index = 0; list_index < count; ++list_index) {
 		    fastf_t value;
-		    if (bu_opt_fastf_t(NULL, 1, argv + argi, &value) < 0) {
+		    if (!bu_arg_number_from_str(NULL, &value, argv[argi])) {
 			if (gedp)
 			    bu_vls_printf(gedp->ged_result_str,
 				"edit: cannot parse '%s' as a number for '%s'\n",

@@ -35,7 +35,7 @@
 
 #include "bu/app.h"
 #include "bu/getopt.h"
-#include "bu/opt.h"
+#include "util_arg.h"
 #include "bu/malloc.h"
 #include "bu/mime.h"
 #include "bu/log.h"
@@ -134,27 +134,27 @@ get_args(int argc, char **argv)
 		break;
 	    case 'd':
 		dflag++;
-		if (!bu_opt_scan_int(bu_optarg, &kerndiv, "divisor") || kerndiv == 0)
+		if (!util_arg_int(bu_optarg, &kerndiv, "divisor") || kerndiv == 0)
 		    return 0;
 		break;
 	    case 'O':
 		oflag++;
-		if (!bu_opt_scan_int(bu_optarg, &kernoffset, "offset"))
+		if (!util_arg_int(bu_optarg, &kernoffset, "offset"))
 		    return 0;
 		break;
 	    case 'w':
-		if (!bu_opt_scan_int_range(bu_optarg, &inx, 1, INT_MAX, "width"))
+		if (!util_arg_int_range(bu_optarg, &inx, 1, INT_MAX, "width"))
 		    return 0;
 		break;
 	    case 'o':
 		out_file = bu_optarg;
 		break;
 	    case 'n':
-		if (!bu_opt_scan_int_range(bu_optarg, &iny, 1, INT_MAX, "height"))
+		if (!util_arg_int_range(bu_optarg, &iny, 1, INT_MAX, "height"))
 		    return 0;
 		break;
 	    case 's':
-		if (!bu_opt_scan_int_range(bu_optarg, &inx, 1, INT_MAX, "size"))
+		if (!util_arg_int_range(bu_optarg, &inx, 1, INT_MAX, "size"))
 		    return 0;
 		iny = inx;
 		break;

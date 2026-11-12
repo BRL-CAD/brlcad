@@ -41,7 +41,7 @@
 #include "bu/app.h"
 #include "bu/getopt.h"
 #include "bu/log.h"
-#include "bu/opt.h"
+#include "util_arg.h"
 #include "bu/file.h"
 
 
@@ -94,24 +94,24 @@ get_args(int argc, char **argv)
 		invert++;
 		break;
 	    case '#':
-		if (!bu_opt_scan_int_range(bu_optarg, &pixbytes, 1, INT_MAX, "bytes-per-pixel"))
+		if (!util_arg_int_range(bu_optarg, &pixbytes, 1, INT_MAX, "bytes-per-pixel"))
 		    return 0;
 		break;
 	    case 'S':
 	    case 's':
 		/* square size */
-		if (!bu_opt_scan_int_range(bu_optarg, &nxin, 1, INT_MAX, "input size"))
+		if (!util_arg_int_range(bu_optarg, &nxin, 1, INT_MAX, "input size"))
 		    return 0;
 		nyin = nxin;
 		break;
 	    case 'W':
 	    case 'w':
-		if (!bu_opt_scan_int_range(bu_optarg, &nxin, 1, INT_MAX, "input width"))
+		if (!util_arg_int_range(bu_optarg, &nxin, 1, INT_MAX, "input width"))
 		    return 0;
 		break;
 	    case 'N':
 	    case 'n':
-		if (!bu_opt_scan_int_range(bu_optarg, &nyin, 1, INT_MAX, "input height"))
+		if (!util_arg_int_range(bu_optarg, &nyin, 1, INT_MAX, "input height"))
 		    return 0;
 		break;
 
@@ -122,9 +122,9 @@ get_args(int argc, char **argv)
 
     /* XXX - backward compatibility hack */
     if (bu_optind+2 == argc) {
-	if (!bu_opt_scan_int_range(argv[bu_optind++], &nxin, 1, INT_MAX, "input width"))
+	if (!util_arg_int_range(argv[bu_optind++], &nxin, 1, INT_MAX, "input width"))
 	    return 0;
-	if (!bu_opt_scan_int_range(argv[bu_optind++], &nyin, 1, INT_MAX, "input height"))
+	if (!util_arg_int_range(argv[bu_optind++], &nyin, 1, INT_MAX, "input height"))
 	    return 0;
     }
     if (bu_optind >= argc) {

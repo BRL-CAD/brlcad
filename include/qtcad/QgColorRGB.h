@@ -35,7 +35,7 @@
 #include <QLineEdit>
 
 #include "bu/color.h"
-#include "bu/opt.h"
+#include "bu/arg.h"
 #include "qtcad/defines.h"
 
 class QTCAD_EXPORT QgColorRGB: public QWidget

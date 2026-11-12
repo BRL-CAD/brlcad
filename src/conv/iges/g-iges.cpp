@@ -14,12 +14,60 @@
 #include "bu/debug.h"
 #include "bu/log.h"
 #include "bu/malloc.h"
-#include "bu/opt.h"
+#include "bu/arg.h"
 #include "bu/str.h"
 #include "nmg/globals.h"
 
 namespace {
 using namespace brlcad::iges;
+
+struct g_iges_args {
+    int help;
+    int faceted;
+    int trimmed;
+    int multi_file;
+    int nurbs;
+    int flatten;
+    int verbose;
+    fastf_t absolute_tolerance;
+    fastf_t relative_tolerance;
+    fastf_t normal_tolerance;
+    fastf_t distance_tolerance;
+    int rt_debug_mask;
+    int nmg_debug_mask;
+    const char *output_path;
+    int processors;
+};
+
+static const struct bu_arg_option g_iges_options[] = {
+    BU_ARG_FLAG("h", "help", struct g_iges_args, help, "Print help and exit"),
+    BU_ARG_ALIAS("?", NULL, "help", 1),
+    BU_ARG_FLAG("f", "faceted", struct g_iges_args, faceted, "Tessellate each region to a faceted B-Rep"),
+    BU_ARG_FLAG("t", "trimmed-surfaces", struct g_iges_args, trimmed, "Tessellate regions to trimmed surfaces"),
+    BU_ARG_FLAG("m", "multi-file", struct g_iges_args, multi_file, "Write one trimmed-surface file per region"),
+    BU_ARG_FLAG("s", "nurbs", struct g_iges_args, nurbs, "Write NMG facets using NURBS geometry"),
+    BU_ARG_FLAG(NULL, "flatten-brep", struct g_iges_args, flatten, "Write exact B-Reps as IGES 144 surfaces"),
+    BU_ARG_FLAG("v", "verbose", struct g_iges_args, verbose, "Enable verbose diagnostics"),
+    BU_ARG_VALUE("a", "absolute-tolerance", struct g_iges_args, absolute_tolerance, BU_ARG_VALUE_NUMBER, BU_ARG_REQUIRED, "MM", "Absolute tessellation tolerance"),
+    BU_ARG_VALUE("r", "relative-tolerance", struct g_iges_args, relative_tolerance, BU_ARG_VALUE_NUMBER, BU_ARG_REQUIRED, "FRACTION", "Relative tessellation tolerance"),
+    BU_ARG_VALUE("n", "normal-tolerance", struct g_iges_args, normal_tolerance, BU_ARG_VALUE_NUMBER, BU_ARG_REQUIRED, "RADIANS", "Surface-normal tessellation tolerance"),
+    BU_ARG_VALUE("d", "distance-tolerance", struct g_iges_args, distance_tolerance, BU_ARG_VALUE_NUMBER, BU_ARG_REQUIRED, "MM", "Minimum distance between distinct points"),
+    BU_ARG_VALUE("x", "rt-debug", struct g_iges_args, rt_debug_mask, BU_ARG_VALUE_HEX_INTEGER, BU_ARG_REQUIRED, "HEX", "librt hexadecimal debug mask"),
+    BU_ARG_VALUE("X", "nmg-debug", struct g_iges_args, nmg_debug_mask, BU_ARG_VALUE_HEX_INTEGER, BU_ARG_REQUIRED, "HEX", "NMG hexadecimal debug mask"),
+    BU_ARG_VALUE("o", "output", struct g_iges_args, output_path, BU_ARG_VALUE_STRING, BU_ARG_REQUIRED, "FILE", "Output file, or directory in multi-file mode"),
+    BU_ARG_INTEGER_RANGE("P", "processors", struct g_iges_args, processors, 1, 1, 0, 0, "COUNT", "Maximum worker count (IGES conversion is serialized)"),
+    BU_ARG_OPTION_NULL
+};
+
+static const struct bu_arg_operand g_iges_operands[] = {
+    BU_ARG_OPERAND("database.g", BU_ARG_VALUE_FILE, 1, 1, "Input BRL-CAD database", NULL),
+    BU_ARG_OPERAND("output-or-object", BU_ARG_VALUE_STRING, 0, BU_ARG_COUNT_UNLIMITED, "Output path followed by optional object names", NULL),
+    BU_ARG_OPERAND_NULL
+};
+
+static const struct bu_arg_schema g_iges_schema = BU_ARG_SCHEMA(
+    "g-iges", "Export BRL-CAD geometry to IGES", g_iges_options, g_iges_operands,
+    BU_ARG_PARSE_INTERSPERSED, BU_ARG_SCHEMA_META_HELP(NULL, NULL, NULL, NULL, NULL));
 
 bool
 iges_output_name(const char *name)
@@ -59,44 +107,42 @@ convert(int argc, const char **argv)
 {
     const char *program = argv[0];
     ExportOptions settings;
-    int processors = 1;
-    int help = 0, faceted = 0, trimmed = 0, multi_file = 0, nurbs = 0, flatten = 0, verbose = 0;
-    const char *output_path = nullptr;
-    struct bu_opt_desc options[] = {
-	{"h", "help", "", nullptr, &help, "print help and exit"},
-	{"?", "", "", nullptr, &help, ""},
-	{"f", "faceted", "", nullptr, &faceted, "tessellate each region to a faceted B-Rep"},
-	{"t", "trimmed-surfaces", "", nullptr, &trimmed, "tessellate regions to trimmed surfaces"},
-	{"m", "multi-file", "", nullptr, &multi_file, "write one trimmed-surface file per region"},
-	{"s", "nurbs", "", nullptr, &nurbs, "write NMG facets using NURBS geometry"},
-	{"", "flatten-brep", "", nullptr, &flatten, "write exact B-Reps as IGES 144 surfaces"},
-	{"v", "verbose", "", nullptr, &verbose, "enable verbose diagnostics"},
-	{"a", "absolute-tolerance", "MM", bu_opt_fastf_t, &settings.tessellation.abs, "absolute tessellation tolerance"},
-	{"r", "relative-tolerance", "FRACTION", bu_opt_fastf_t, &settings.tessellation.rel, "relative tessellation tolerance"},
-	{"n", "normal-tolerance", "RADIANS", bu_opt_fastf_t, &settings.tessellation.norm, "surface-normal tessellation tolerance"},
-	{"d", "distance-tolerance", "MM", bu_opt_fastf_t, &settings.tolerance.dist, "minimum distance between distinct points"},
-	{"x", "rt-debug", "HEX", parse_debug_mask, &rt_debug, "librt hexadecimal debug mask"},
-	{"X", "nmg-debug", "HEX", parse_debug_mask, &nmg_debug, "NMG hexadecimal debug mask"},
-	{"o", "output", "FILE", bu_opt_str, &output_path, "output file, or directory in multi-file mode"},
-	{"P", "processors", "COUNT", bu_opt_int, &processors, "maximum worker count (IGES conversion is serialized)"},
-	BU_OPT_DESC_NULL
-    };
+    struct g_iges_args args = {};
+    args.absolute_tolerance = settings.tessellation.abs;
+    args.relative_tolerance = settings.tessellation.rel;
+    args.normal_tolerance = settings.tessellation.norm;
+    args.distance_tolerance = settings.tolerance.dist;
+    args.rt_debug_mask = rt_debug;
+    args.nmg_debug_mask = nmg_debug;
+    args.processors = 1;
     Vls messages;
-    argc = bu_opt_parse(&messages.value, argc - 1, argv + 1, options);
+    int operand_index = bu_arg_schema_parse_complete(&g_iges_schema, &args,
+	&messages.value, argc - 1, argv + 1);
     ++argv;
-    if (help || argc < 1 || bu_vls_strlen(&messages.value)) {
-	char *description = bu_opt_describe(options, nullptr);
-	bu_log("Usage: %s [options] database.g [output.igs] [object ...]\n%s", program, description ? description : "");
-	bu_free(description, "IGES option description");
-	if (bu_vls_strlen(&messages.value))
-	    bu_log("%s\n", bu_vls_cstr(&messages.value));
-	return help ? BRLCAD_OK : BRLCAD_ERROR;
+    if (operand_index < 0) {
+	bu_log("%s\n", bu_vls_cstr(&messages.value));
+	return BRLCAD_ERROR;
     }
+    if (args.help) {
+	char *help = bu_arg_schema_help(&g_iges_schema, program);
+	bu_log("%s", help ? help : "");
+	bu_free(help, "IGES help");
+	return BRLCAD_OK;
+    }
+    argc = argc - 1 - operand_index;
+    argv += operand_index;
+    settings.tessellation.abs = args.absolute_tolerance;
+    settings.tessellation.rel = args.relative_tolerance;
+    settings.tessellation.norm = args.normal_tolerance;
+    settings.tolerance.dist = args.distance_tolerance;
+    rt_debug = args.rt_debug_mask;
+    nmg_debug = args.nmg_debug_mask;
+    const char *output_path = args.output_path;
     validate_paths(argv[0], {});
     std::unique_ptr<struct db_i, decltype(&db_close)> database(db_open(argv[0], DB_OPEN_READONLY), db_close);
     if (!database || db_dirbuild(database.get()) < 0)
 	throw std::runtime_error("cannot open geometry database");
-    bool paired_output = argc > 1 && (multi_file ?
+    bool paired_output = argc > 1 && (args.multi_file ?
 	std::filesystem::is_directory(argv[1]) : iges_output_name(argv[1]));
     if (paired_output && db_lookup(database.get(), argv[1], LOOKUP_QUIET) != RT_DIR_NULL) {
 	if (!output_path)
@@ -108,18 +154,18 @@ convert(int argc, const char **argv)
     const int first_object = paired_output ? 2 : 1;
     if (!output_path && argc == first_object)
 	throw std::invalid_argument("specify an output file or at least one object for stdout export");
-    if (faceted + trimmed + multi_file > 1 || (multi_file && !output_path) || processors < 1)
+    if (args.faceted + args.trimmed + args.multi_file > 1 || (args.multi_file && !output_path))
 	throw std::invalid_argument("invalid output mode or worker count");
     validate_export_options(settings);
-    settings.mode = faceted ? ExportOptions::Mode::Faceted :
-	trimmed || multi_file ? ExportOptions::Mode::Trimmed : ExportOptions::Mode::Csg;
-    settings.nurbs_facets = nurbs != 0;
-    settings.flatten_brep = flatten != 0;
-    settings.verbose = verbose != 0;
-    if (processors > 1)
+    settings.mode = args.faceted ? ExportOptions::Mode::Faceted :
+	args.trimmed || args.multi_file ? ExportOptions::Mode::Trimmed : ExportOptions::Mode::Csg;
+    settings.nurbs_facets = args.nurbs != 0;
+    settings.flatten_brep = args.flatten != 0;
+    settings.verbose = args.verbose != 0;
+    if (args.processors > 1)
 	bu_log("IGES: serializing conversion to protect NMG recovery and record ordering\n");
-    validate_paths(argv[0], !multi_file && output_path ? std::vector<std::string>{output_path} : std::vector<std::string>{});
-    if (multi_file && !std::filesystem::is_directory(output_path))
+    validate_paths(argv[0], !args.multi_file && output_path ? std::vector<std::string>{output_path} : std::vector<std::string>{});
+    if (args.multi_file && !std::filesystem::is_directory(output_path))
 	throw std::invalid_argument("multi-file output must be an existing directory");
     ProgressReporter progress;
     settings.progress = [&](const char *stage, const char *activity, size_t completed, size_t total) {
@@ -128,7 +174,7 @@ convert(int argc, const char **argv)
     std::vector<std::string> roots(argv + first_object, argv + argc);
     if (roots.empty())
 	roots = top_level_objects(database.get());
-    if (multi_file) {
+    if (args.multi_file) {
 	const auto regions = collect_regions(database.get(), roots);
 	bool success = !regions.empty();
 	size_t completed = 0;

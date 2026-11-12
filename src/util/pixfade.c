@@ -55,7 +55,7 @@
 
 #include "bu/app.h"
 #include "bu/getopt.h"
-#include "bu/opt.h"
+#include "util_arg.h"
 #include "bu/log.h"
 #include "bu/mime.h"
 
@@ -84,30 +84,30 @@ get_args(int argc, char **argv)
     while ((c = bu_getopt(argc, argv, "p:f:s:w:n:o:m:h?")) != -1) {
 	switch (c) {
             case 'p':
-		if (!bu_opt_scan_double_range(bu_optarg, &multiplier, 0.0,
+		if (!util_arg_double_range(bu_optarg, &multiplier, 0.0,
 			PIXFADE_PERCENT_MAX, "percentage")) {
 		    bu_exit(1, NULL);
 		}
 		multiplier /= 100.0;
 		break;
 	    case 'f':
-		if (!bu_opt_scan_double_range(bu_optarg, &multiplier, 0.0, 1.0, "fraction")) {
+		if (!util_arg_double_range(bu_optarg, &multiplier, 0.0, 1.0, "fraction")) {
 		    bu_exit(1, NULL);
 		}
 		break;
     	    case 's':
-		if (!bu_opt_scan_int_range(bu_optarg, &inx, 1, INT_MAX, "input size")) {
+		if (!util_arg_int_range(bu_optarg, &inx, 1, INT_MAX, "input size")) {
 		    bu_exit(1, NULL);
 		}
 		iny = inx;
 		break;
 	    case 'w':
-		if (!bu_opt_scan_int_range(bu_optarg, &inx, 1, INT_MAX, "input width")) {
+		if (!util_arg_int_range(bu_optarg, &inx, 1, INT_MAX, "input width")) {
 		    bu_exit(1, NULL);
 		}
 		break;
 	    case 'n':
-		if (!bu_opt_scan_int_range(bu_optarg, &iny, 1, INT_MAX, "input height")) {
+		if (!util_arg_int_range(bu_optarg, &iny, 1, INT_MAX, "input height")) {
 		    bu_exit(1, NULL);
 		}
 		break;
@@ -115,7 +115,7 @@ get_args(int argc, char **argv)
 		out_file = bu_optarg;
 		break;
 	    case 'm':
-		if (!bu_opt_scan_int(bu_optarg, &max, "max value")) {
+		if (!util_arg_int(bu_optarg, &max, "max value")) {
 		    bu_exit(1, NULL);
 		}
 		if (max < 0 )

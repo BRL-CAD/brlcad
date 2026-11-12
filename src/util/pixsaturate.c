@@ -39,7 +39,7 @@
 
 #include "bu/app.h"
 #include "bu/log.h"
-#include "bu/opt.h"
+#include "bu/arg.h"
 #include "bu/str.h"
 #include "bu/exit.h"
 
@@ -85,9 +85,10 @@ main(int argc, char **argv)
     	fprintf(stderr,"pixsaturate: need pipes for stdin and stdout\n");
 	printusage ();
     }
-    if (!bu_opt_scan_double(argv[1], &sat, "saturation")) {
-	return 1;
-    }
+    struct bu_vls msg = BU_VLS_INIT_ZERO;
+    if (!bu_arg_double_from_str(&msg, &sat, argv[1]))
+	bu_exit(1, "%s: saturation: %s\n", bu_getprogname(), bu_vls_cstr(&msg));
+    bu_vls_free(&msg);
     if (sat < 0.0) {
 	bu_log("pixsaturate: saturation must be non-negative, got '%s'\n", argv[1]);
 	return 1;

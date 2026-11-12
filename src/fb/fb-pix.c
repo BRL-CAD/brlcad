@@ -35,7 +35,7 @@
 
 #include "bu/app.h"
 #include "bu/getopt.h"
-#include "bu/opt.h"
+#include "fb_arg.h"
 #include "bu/exit.h"
 #include "bu/malloc.h"
 #include "vmath.h"
@@ -74,16 +74,16 @@ get_args(int argc, char **argv)
 		break;
 	    case 's':
 		/* square size */
-		if (!bu_opt_scan_int_range(bu_optarg, &screen_width, 1, INT_MAX, "screen size"))
+		if (!fb_arg_int_range(bu_optarg, &screen_width, 1, INT_MAX, "screen size"))
 		    return 0;
 		screen_height = screen_width;
 		break;
 	    case 'w':
-		if (!bu_opt_scan_int_range(bu_optarg, &screen_width, 1, INT_MAX, "screen width"))
+		if (!fb_arg_int_range(bu_optarg, &screen_width, 1, INT_MAX, "screen width"))
 		    return 0;
 		break;
 	    case 'n':
-		if (!bu_opt_scan_int_range(bu_optarg, &screen_height, 1, INT_MAX, "screen height"))
+		if (!fb_arg_int_range(bu_optarg, &screen_height, 1, INT_MAX, "screen height"))
 		    return 0;
 		break;
 

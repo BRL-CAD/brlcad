@@ -32,7 +32,7 @@
 
 #include "bu/app.h"
 #include "bu/getopt.h"
-#include "bu/opt.h"
+#include "util_arg.h"
 #include "bu/log.h"
 #include "bu/mime.h"
 
@@ -58,37 +58,37 @@ get_args(int argc, char **argv)
     while ((c = bu_getopt(argc, argv, "s:w:n:S:W:N:x:y:o:h?")) != -1) {
 	switch (c) {
 	    case 's':
-		if (!bu_opt_scan_int_range(bu_optarg, &inx, 1, INT_MAX, "input size"))
+		if (!util_arg_int_range(bu_optarg, &inx, 1, INT_MAX, "input size"))
 		    return 0;
 		iny = inx;
 		break;
 	    case 'w':
-		if (!bu_opt_scan_int_range(bu_optarg, &inx, 1, INT_MAX, "input width"))
+		if (!util_arg_int_range(bu_optarg, &inx, 1, INT_MAX, "input width"))
 		    return 0;
 		break;
 	    case 'n':
-		if (!bu_opt_scan_int_range(bu_optarg, &iny, 1, INT_MAX, "input height"))
+		if (!util_arg_int_range(bu_optarg, &iny, 1, INT_MAX, "input height"))
 		    return 0;
 		break;
 	    case 'S':
-		if (!bu_opt_scan_int_range(bu_optarg, &outx, 1, INT_MAX, "output size"))
+		if (!util_arg_int_range(bu_optarg, &outx, 1, INT_MAX, "output size"))
 		    return 0;
 		outy = outx;
 		break;
 	    case 'W':
-		if (!bu_opt_scan_int_range(bu_optarg, &outx, 1, INT_MAX, "output width"))
+		if (!util_arg_int_range(bu_optarg, &outx, 1, INT_MAX, "output width"))
 		    return 0;
 		break;
 	    case 'N':
-		if (!bu_opt_scan_int_range(bu_optarg, &outy, 1, INT_MAX, "output height"))
+		if (!util_arg_int_range(bu_optarg, &outy, 1, INT_MAX, "output height"))
 		    return 0;
 		break;
 	    case 'x':
-		if (!bu_opt_scan_int_range(bu_optarg, &xorig, 0, INT_MAX, "x origin"))
+		if (!util_arg_int_range(bu_optarg, &xorig, 0, INT_MAX, "x origin"))
 		    return 0;
 		break;
 	    case 'y':
-		if (!bu_opt_scan_int_range(bu_optarg, &yorig, 0, INT_MAX, "y origin"))
+		if (!util_arg_int_range(bu_optarg, &yorig, 0, INT_MAX, "y origin"))
 		    return 0;
 		break;
 	    case 'o':

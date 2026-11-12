@@ -37,8 +37,8 @@
 #include "gcv/api.h"
 #include "wdb.h"
 #include "bg/trimesh.h"
+#include "bu/arg.h"
 #include "bu/color.h"
-#include "bu/opt.h"
 #include "bu/path.h"
 #include "bu/str.h"
 #include "bu/vls.h"
@@ -74,6 +74,24 @@ typedef struct assetimport_read_options {
     int verbose;                                    /* verbose flag */
     char* format;                                   /* output file format */
 } assetimport_read_options_t;
+
+static const struct bu_arg_option assetimport_read_options[] = {
+    BU_ARG_VALUE(NULL, "starting-ident", assetimport_read_options_t, starting_id,
+	BU_ARG_VALUE_INTEGER, BU_ARG_REQUIRED, "number", "Set the first generated region ident"),
+    BU_ARG_FLAG(NULL, "constant-ident", assetimport_read_options_t, const_id,
+	"Keep the starting ident constant"),
+    BU_ARG_VALUE(NULL, "material", assetimport_read_options_t, mat_code,
+	BU_ARG_VALUE_INTEGER, BU_ARG_REQUIRED, "number", "Set the generated region material code"),
+    BU_ARG_FLAG("v", "verbose", assetimport_read_options_t, verbose, "Enable verbose output"),
+    BU_ARG_VALUE(NULL, "format", assetimport_read_options_t, format,
+	BU_ARG_VALUE_STRING, BU_ARG_REQUIRED, "format", "Specify the input file format"),
+    BU_ARG_OPTION_NULL
+};
+
+static const struct bu_arg_schema assetimport_read_schema = {
+    "assetimport-read", "AssetImport reader options", assetimport_read_options, NULL,
+    BU_ARG_PARSE_INTERSPERSED, BU_ARG_SCHEMA_CONSTRAINTS(NULL, NULL)
+};
 
 typedef struct assetimport_read_state {
     const struct gcv_opts* gcv_options;             /* global options */
@@ -363,9 +381,8 @@ x3d_parse_doubles(const char *text)
 
     for (size_t i = 0; i < argc; i++) {
 	fastf_t val = 0.0;
-	const char *av = argv[i];
 	struct bu_vls msg = BU_VLS_INIT_ZERO;
-	if (bu_opt_fastf_t(&msg, 1, &av, &val) == 1) {
+	if (bu_arg_number_from_str(&msg, &val, argv[i])) {
 	    ret.push_back((double)val);
 	} else {
 	    bu_vls_trimspace(&msg);
@@ -393,9 +410,8 @@ x3d_attr_int(const pugi::xml_node &node, const char *name, int def)
     if (!attr)
 	return def;
 
-    const char *av = attr.value();
     struct bu_vls msg = BU_VLS_INIT_ZERO;
-    if (bu_opt_int(&msg, 1, &av, &val) == 1) {
+    if (bu_arg_integer_from_str(&msg, &val, attr.value(), 10)) {
 	bu_vls_free(&msg);
 	return val;
     }
@@ -431,9 +447,9 @@ x3d_vec3_attr(const pugi::xml_node &node, const char *name, vect_t v, const vect
 	return;
 
     vect_t parsed;
-    const char *av = attr.value();
     struct bu_vls msg = BU_VLS_INIT_ZERO;
-    if (bu_opt_vect_t(&msg, 1, &av, (void *)&parsed) > 0) {
+    const char *av[] = {attr.value()};
+    if (bu_arg_vector3_consume(&msg, 1, av, parsed) > 0) {
 	VMOVE(v, parsed);
     } else {
 	bu_vls_trimspace(&msg);
@@ -1291,13 +1307,13 @@ convert_input(assetimport_read_state_t* pstate)
 }
 
 static void
-assetimport_read_create_opts(struct bu_opt_desc **options_desc, void **dest_options_data)
+assetimport_read_create_opts(const struct bu_arg_schema **schema, void **dest_options_data)
 {
     assetimport_read_options_t* options_data;
 
     BU_ALLOC(options_data, assetimport_read_options_t);
     *dest_options_data = options_data;
-    *options_desc = (struct bu_opt_desc *)bu_malloc(6 * sizeof(struct bu_opt_desc), "options_desc");
+    *schema = &assetimport_read_schema;
 
     options_data->starting_id = 1000;
     options_data->const_id = 0;
@@ -1305,12 +1321,6 @@ assetimport_read_create_opts(struct bu_opt_desc **options_desc, void **dest_opti
     options_data->verbose = 0;
     options_data->format = NULL;
 
-    BU_OPT((*options_desc)[0], NULL, "starting-ident", "number", bu_opt_int, options_data, "specify the starting ident for the regions created");
-    BU_OPT((*options_desc)[1], NULL, "constant-ident", NULL, NULL, &options_data->const_id, "specify that the starting ident should remain constant");
-    BU_OPT((*options_desc)[2], NULL, "material", "number", bu_opt_int, &options_data->mat_code, "specify the material code that will be assigned to created regions");
-    BU_OPT((*options_desc)[3], "v", "verbose", NULL, NULL, &options_data->verbose, "specify for verbose output");
-    BU_OPT((*options_desc)[4], NULL, "format", NULL, bu_opt_str, &options_data->format, "specify the output file format");
-    BU_OPT_NULL((*options_desc)[5]);
 }
 
 static void

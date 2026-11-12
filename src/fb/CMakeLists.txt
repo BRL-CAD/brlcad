@@ -76,6 +76,7 @@ add_target_deps(spm-fb dm_plugins)
 
 cmakefiles(
   CMakeLists.txt
+  fb_arg.h
   fbcolor.c
   fbpoint.c
   fbzoom.c

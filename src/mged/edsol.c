@@ -32,7 +32,7 @@
 
 #include "vmath.h"
 #include "bn.h"
-#include "bu/opt.h"
+#include "bu/arg.h"
 #include "nmg.h"
 #include "rt/geom.h"
 #include "raytrace.h"
@@ -55,7 +55,7 @@ static int init_oedit_guts(struct mged_state *);
 static int
 mged_parse_int(const char *value, int *result)
 {
-    return value && bu_opt_int(NULL, 1, &value, result) == 1;
+    return value && bu_arg_integer_from_str(NULL, result, value, 0);
 }
 
 /* if (!both) then set only MEDIT(s)->curr_e_axes_pos, otherwise
@@ -1416,7 +1416,7 @@ f_param(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
     }
 
     for (i = 1; i < argc && i <= 3; i++) {
-	if (bu_opt_fastf_t(NULL, 1, &argv[i], &argvect[i-1]) != 1 ||
+	if (!bu_arg_number_from_str(NULL, &argvect[i-1], argv[i]) ||
 	    !isfinite(argvect[i-1])) {
 	    Tcl_AppendResult(interp, "Invalid numeric parameter: ", argv[i],
 		    "\n", (char *)NULL);
@@ -1507,7 +1507,7 @@ f_keypoint(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv
 	    break;
 	case 3:
 	    for (int i = 0; i < ELEMENTS_PER_VECT; ++i) {
-		if (bu_opt_fastf_t(NULL, 1, &argv[i + 1], &keypoint[i]) != 1 ||
+		if (!bu_arg_number_from_str(NULL, &keypoint[i], argv[i + 1]) ||
 		    !isfinite(keypoint[i])) {
 		    Tcl_AppendResult(interp, "Invalid keypoint coordinate: ",
 			    argv[i + 1], "\n", (char *)NULL);
@@ -1942,14 +1942,14 @@ f_extrude(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[
 	return TCL_ERROR;
     }
 
-    if (bu_opt_int(NULL, 1, &argv[1], &face) != 1) {
+    if (!bu_arg_integer_from_str(NULL, &face, argv[1], 0)) {
 	Tcl_AppendResult(interp, "Extrude: invalid face - ", argv[1], "\n",
 		(char *)NULL);
 	return TCL_ERROR;
     }
 
     /* get distance to project face */
-    if (bu_opt_fastf_t(NULL, 1, &argv[2], &dist) != 1 || !isfinite(dist)) {
+    if (!bu_arg_number_from_str(NULL, &dist, argv[2]) || !isfinite(dist)) {
 	Tcl_AppendResult(interp, "Extrude: invalid distance - ", argv[2], "\n",
 		(char *)NULL);
 	return TCL_ERROR;
@@ -2029,7 +2029,7 @@ f_mirface(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[
     struct rt_arb_internal *arb = (struct rt_arb_internal *)MEDIT(s)->es_int.idb_ptr;
     RT_ARB_CK_MAGIC(arb);
 
-    if (bu_opt_int(NULL, 1, &argv[1], &face) != 1) {
+    if (!bu_arg_integer_from_str(NULL, &face, argv[1], 0)) {
 	Tcl_AppendResult(interp, "Mirface: invalid face - ", argv[1], "\n",
 		(char *)NULL);
 	return TCL_ERROR;

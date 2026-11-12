@@ -90,7 +90,6 @@ set(
   mread.c
   num.c
   observer.c
-  opt.c
   parallel.c
   parallel_cpp11thread.cpp
   parse.c

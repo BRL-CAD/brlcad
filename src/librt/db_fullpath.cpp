@@ -38,7 +38,7 @@
 
 #include "vmath.h"
 #include "bu/color.h"
-#include "bu/opt.h"
+#include "bu/arg.h"
 #include "raytrace.h"
 #include "./librt_private.h"
 
@@ -452,7 +452,7 @@ dp_instance(int *comb_instance_index, const struct db_i *dbip, const char *cp)
     if (atp) {
 	*atp = '\0';
 	atp++;
-	if (bu_opt_int(NULL, 1, (const char **)&atp, (void *)comb_instance_index) == -1) {
+	if (!bu_arg_integer_from_str(NULL, comb_instance_index, atp, 0)) {
 	    bu_log("invalid comb instance index: %s\n", atp);
 	    bu_free(lcp, "lcp");
 	    return dp;
@@ -1147,7 +1147,7 @@ db_full_path_color(
 	    int region_id = -1;
 	    const char *region_id_val = bu_avs_get(&c_avs, "region_id");
 	    if (region_id_val) {
-		bu_opt_int(NULL, 1, &region_id_val, (void *)&region_id);
+		bu_arg_integer_from_str(NULL, (int *)(&region_id), region_id_val, 0);
 	    } else if (pathp->fp_names[i]->d_flags & RT_DIR_REGION) {
 		// If we have a region flag but no region_id, for color table
 		// purposes treat the region_id as 0
@@ -1185,7 +1185,7 @@ db_full_path_color(
 	    color_val = bu_avs_get(&c_avs, "rgb");
 	}
 	if (color_val) {
-	    bu_opt_color(NULL, 1, &color_val, (void *)c);
+	    bu_arg_color_from_argv((struct bu_color *)(c), 1, &color_val);
 	    have_color = 1;
 	}
 

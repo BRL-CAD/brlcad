@@ -33,7 +33,7 @@
 #include "bu/app.h"
 #include "bu/exit.h"
 #include "bu/log.h"
-#include "bu/opt.h"
+#include "bu/arg.h"
 #include "bn/spm.h"
 #include "dm.h"
 
@@ -43,6 +43,7 @@ main(int argc, char **argv)
 {
     int size;
     bn_spm_map_t *mp;
+    struct bu_vls msg = BU_VLS_INIT_ZERO;
 
     bu_setprogname(argv[0]);
 
@@ -50,9 +51,12 @@ main(int argc, char **argv)
 	bu_exit(1, "Usage: pix-spm file.pix size > file.spm\n");
     }
 
-    if (!bu_opt_scan_int_range(argv[2], &size, 1, INT_MAX, "size")) {
+    if (!bu_arg_integer_range_from_str(&msg, &size, argv[2], 10, 1, INT_MAX)) {
+	bu_log("%s: size: %s\n", bu_getprogname(), bu_vls_cstr(&msg));
+	bu_vls_free(&msg);
 	return 1;
     }
+    bu_vls_free(&msg);
     mp = bn_spm_init(size, sizeof(RGBpixel));
     bn_spm_pix_load(mp, argv[1], size, size);
     bn_spm_save(mp, "-");

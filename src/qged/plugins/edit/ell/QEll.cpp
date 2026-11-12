@@ -204,7 +204,7 @@ QEll::update_obj_wireframe()
     const char *wcolor = "255/255/255";
     const char *av[2] = {wcolor, NULL};
     struct bu_color cval;
-    bu_opt_color(NULL, 1, (const char **)&av[0], (void *)&cval);
+    bu_arg_color_from_argv(&cval, 1, &av[0]);
     bu_color_to_rgb_chars(&cval, p->s_color);
 
     // When editing, we show the labels (if any)

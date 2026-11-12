@@ -36,7 +36,7 @@
 #include "vmath.h"
 #include "bu/app.h"
 #include "bu/getopt.h"
-#include "bu/opt.h"
+#include "util_arg.h"
 #include "bu/process.h"
 #include "bu/log.h"
 #include "bn.h"
@@ -69,12 +69,12 @@ main(int argc, char *argv[])
     while ((c = bu_getopt(argc, argv, "vugs:c:h?")) != -1) {
 	switch (c) {
 	    case 's':
-		if (!bu_opt_scan_int(bu_optarg, &seed, "seed")) {
+		if (!util_arg_int(bu_optarg, &seed, "seed")) {
 		    bu_exit(1, NULL);
 		}
 		break;
 	    case 'c':
-		if (!bu_opt_scan_double(bu_optarg, &center, "center")) {
+		if (!util_arg_double(bu_optarg, &center, "center")) {
 		    bu_exit(1, NULL);
 		}
 		cdone = 1;
@@ -106,8 +106,8 @@ main(int argc, char *argv[])
     }
     if (gauss == 0 && uniform == 0)
 	uniform = 1;
-    if (!bu_opt_scan_int(argv[bu_optind], &low, "low value") ||
-	!bu_opt_scan_int(argv[bu_optind+1], &high, "high value")) {
+    if (!util_arg_int(argv[bu_optind], &low, "low value") ||
+	!util_arg_int(argv[bu_optind+1], &high, "high value")) {
 	bu_exit(1, NULL);
     }
     if (low > high)

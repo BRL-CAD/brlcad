@@ -34,7 +34,6 @@
 #include "rt/geom.h"
 #include "rt/primitives/arb8.h"
 #include "bu/arg.h"
-#include "bu/opt.h"
 #include "rt/db4.h"
 #include "rt/edit.h"
 #include "../edit_private.h"
@@ -2376,7 +2375,7 @@ rt_arb_f_eqn(struct rt_edit *s, int argc, const char **argv)
     RT_ARB_CK_MAGIC(arb);
 
     for (int i = 0; i < 3; i++) {
-	if (bu_opt_fastf_t(NULL, 1, &argv[i + 1], &normal[i]) != 1 ||
+	if (bu_arg_number_from_str(NULL, (fastf_t *)(&normal[i]), argv[i + 1]) != 1 ||
 	    !isfinite(normal[i])) {
 	    bu_vls_printf(s->log_str, "Eqn: invalid plane normal\n");
 	    return BRLCAD_ERROR;
@@ -2430,8 +2429,8 @@ rt_arb_edgedir(struct rt_edit *s, int argc, const char **argv)
      * else assume delta_x, delta_y, delta_z
      */
     if (argc == 3) {
-	if (bu_opt_fastf_t(NULL, 1, &argv[1], &rot) != 1 ||
-	    bu_opt_fastf_t(NULL, 1, &argv[2], &fb_a) != 1 ||
+	if (bu_arg_number_from_str(NULL, (fastf_t *)(&rot), argv[1]) != 1 ||
+	    bu_arg_number_from_str(NULL, (fastf_t *)(&fb_a), argv[2]) != 1 ||
 	    !isfinite(rot) || !isfinite(fb_a)) {
 	    bu_vls_printf(s->log_str, "Edgedir: invalid angle\n");
 	    return BRLCAD_ERROR;
@@ -2443,7 +2442,7 @@ rt_arb_edgedir(struct rt_edit *s, int argc, const char **argv)
 	slope[2] = sin(fb_a);
     } else {
 	for (int i = 0; i < 3; i++) {
-	    if (bu_opt_fastf_t(NULL, 1, &argv[i + 1], &slope[i]) != 1 ||
+	    if (bu_arg_number_from_str(NULL, (fastf_t *)(&slope[i]), argv[i + 1]) != 1 ||
 		!isfinite(slope[i])) {
 		bu_vls_printf(s->log_str, "Edgedir: invalid slope\n");
 		return BRLCAD_ERROR;
