@@ -20,8 +20,9 @@
 
 #include "common.h"
 
-#include <QCoreApplication>
+#include <QApplication>
 #include <QPointer>
+#include <QPushButton>
 #include <QSettings>
 #include <QSignalSpy>
 #include <QTemporaryDir>
@@ -29,8 +30,13 @@
 
 #include "bu/app.h"
 #include "qtcad/QgPluginCommands.h"
+#include "qtcad/QgPluginContext.h"
 #include "qtcad/QgPluginInterfaces.h"
 #include "qtcad/QgPluginManager.h"
+#include "qtcad/QgPaletteController.h"
+#include "qtcad/QgToolBase.h"
+#include "qtcad/QgToolPalette.h"
+#include "qtcad/QgView.h"
 
 static const char *valid_plugin_id = "org.brlcad.qtcad.test.command";
 static const char *missing_api_plugin_id =
@@ -43,6 +49,7 @@ class QgPluginManagerTest : public QObject
     private slots:
 	void initTestCase();
 	void discoversAndLoadsPlugins();
+	void managesToolPalettes();
 	void rejectsMissingApiVersions();
 	void publishesAvailabilityChanges();
 	void reloadsPluginCode();
@@ -115,6 +122,87 @@ QgPluginManagerTest::rejectsMissingApiVersions()
     QVERIFY(manager.diagnosticInfo(QString::fromLatin1(
 	missing_api_plugin_id)).contains(
 	QStringLiteral("does not declare apiVersion")));
+}
+
+void
+QgPluginManagerTest::managesToolPalettes()
+{
+    QgPluginManager manager(QStringList() << pluginDirectory(),
+	settingsGroup());
+    QgPluginNotifier notifier;
+    QgPluginContext context;
+    context.notifier = &notifier;
+    QgToolPalette palette;
+    palette.setAlwaysSelected(0);
+    palette.setIconWidth(41);
+    palette.setIconHeight(37);
+    palette.addElement(nullptr);
+    QgPaletteController controller(&palette, &manager,
+	QStringLiteral("test.command"), &context);
+
+    controller.populate();
+    QCOMPARE(manager.factories<IQgToolFactory>(
+	QStringLiteral("test.command")).size(), 1);
+    QCOMPARE(palette.findChildren<QgToolPaletteElement *>().size(), 1);
+    QVERIFY(controller.currentTool() == nullptr);
+
+    QgToolPaletteButton *activateButton = nullptr;
+    const QList<QgToolPaletteButton *> buttons =
+	palette.findChildren<QgToolPaletteButton *>();
+    for (QgToolPaletteButton *button : buttons) {
+	if (button->property("qgTestId").toString().endsWith(
+		QStringLiteral(".activate"))) {
+	    activateButton = button;
+	    break;
+	}
+    }
+    QVERIFY(activateButton != nullptr);
+    QCOMPARE(activateButton->minimumWidth(), 41);
+    QCOMPARE(activateButton->maximumWidth(), 41);
+    QCOMPARE(activateButton->minimumHeight(), 37);
+    QCOMPARE(activateButton->maximumHeight(), 37);
+    activateButton->click();
+
+    QPointer<QgToolBase> tool = controller.currentTool();
+    QVERIFY(!tool.isNull());
+    QVERIFY(tool->isActive());
+    QCOMPARE(tool->property("refreshCount").toInt(), 0);
+    palette.do_view_update(1);
+    QCOMPARE(tool->property("refreshCount").toInt(), 1);
+
+    emit notifier.dbChanged();
+    emit notifier.viewChanged();
+    emit notifier.settingsChanged();
+    QCOMPARE(tool->property("dbChangeCount").toInt(), 1);
+    QCOMPARE(tool->property("viewChangeCount").toInt(), 1);
+    QCOMPARE(tool->property("settingsChangeCount").toInt(), 1);
+
+    QPointer<QObject> filter = tool->viewEventFilter();
+    QVERIFY(qobject_cast<IQgViewEventFilter *>(filter.data()) != nullptr);
+
+    QgView view(nullptr, QgView_SW);
+    controller.setActiveView(&view);
+    QCOMPARE(filter->property("attachCount").toInt(), 1);
+    controller.setActiveView(nullptr);
+    QCOMPARE(filter->property("detachCount").toInt(), 1);
+    controller.setActiveView(&view);
+    QCOMPARE(filter->property("attachCount").toInt(), 2);
+    controller.setActiveView(nullptr);
+    QCOMPARE(filter->property("detachCount").toInt(), 2);
+
+    const QString id = QString::fromLatin1(valid_plugin_id);
+    QVERIFY(manager.disable(id));
+    QVERIFY(tool.isNull());
+    QVERIFY(filter.isNull());
+    QVERIFY(controller.currentTool() == nullptr);
+    QVERIFY(palette.selectedElement() == nullptr);
+
+    QVERIFY(manager.enable(id));
+    QCOMPARE(palette.findChildren<QgToolPaletteElement *>().size(), 1);
+    QStringList errors;
+    QVERIFY2(manager.unloadAll(&errors),
+	qPrintable(errors.join(QLatin1Char('\n'))));
+    QCOMPARE(palette.findChildren<QgToolPaletteElement *>().size(), 0);
 }
 
 void
@@ -207,7 +295,8 @@ int
 main(int argc, char **argv)
 {
     bu_setprogname(argv[0]);
-    QCoreApplication application(argc, argv);
+    qputenv("QT_QPA_PLATFORM", QByteArrayLiteral("offscreen"));
+    QApplication application(argc, argv);
     QgPluginManagerTest test;
     return QTest::qExec(&test, argc, argv);
 }

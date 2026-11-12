@@ -25,13 +25,14 @@
 
 #include "common.h"
 
+#include <algorithm>
 #include <QScrollBar>
-#include <iostream>
 #include "qtcad/QgToolPalette.h"
 
 QgToolPaletteButton::QgToolPaletteButton(QWidget *bparent, QIcon *iicon, QgToolPaletteElement *eparent) : QPushButton(bparent)
 {
-    setIcon(*iicon);
+    if (iicon)
+	setIcon(*iicon);
     element = eparent;
     QObject::connect(this, &QgToolPaletteButton::clicked, this, &QgToolPaletteButton::select_element);
 }
@@ -47,7 +48,8 @@ QgToolPaletteButton::select_element()
 void
 QgToolPaletteButton::setButtonElement(QIcon *iicon, QgToolPaletteElement *n_element)
 {
-    setIcon(*iicon);
+    if (iicon)
+	setIcon(*iicon);
     element = n_element;
 }
 
@@ -57,27 +59,16 @@ QgToolPaletteElement::QgToolPaletteElement(QIcon *iicon, QWidget *control)
     button = new QgToolPaletteButton(this, iicon, this);
     button->setCheckable(true);
     controls = control;
-    controls->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Minimum);
+    if (controls)
+	controls->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Minimum);
     this->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Minimum);
 }
 
 QgToolPaletteElement::~QgToolPaletteElement()
 {
-    delete button;
+    delete button.data();
+    delete controls.data();
 }
-
-#if 0
-bool
-QgToolPaletteElement::eventFilter(QObject *o, QEvent *e)
-{
-    if (!o || !e)
-	return false;
-
-    printf("palette element filter\n");
-
-    return controls->eventFilter(o, e);
-}
-#endif
 
 void
 QgToolPaletteElement::setButton(QgToolPaletteButton *n_button)
@@ -92,14 +83,14 @@ QgToolPaletteElement::setControls(QWidget *n_control)
 }
 
 void
-QgToolPaletteElement::element_view_changed(unsigned long long flags)
+QgToolPaletteElement::element_view_changed(QgViewUpdateFlags flags)
 {
     QTCAD_SLOT("QgToolPaletteElement::element_view_changed", 1);
     emit view_changed(flags);
 }
 
 void
-QgToolPaletteElement::do_view_update(unsigned long long flags)
+QgToolPaletteElement::do_view_update(QgViewUpdateFlags flags)
 {
     QTCAD_SLOT("QgToolPaletteElement::do_view_update", 1);
     // TODO - do any element level updating (button highlighting?)
@@ -154,8 +145,9 @@ void
 QgToolPalette::button_layout_resize()
 {
     QTCAD_SLOT("QgToolPalette::button_layout_resize", 1);
-    div_t layout_dim = div(button_container->size().width()-1, icon_width);
-    div_t layout_grid = div((int)elements.count(), (int)layout_dim.quot);
+    const int columns = std::max(1,
+	(button_container->size().width() - 1) / icon_width);
+    div_t layout_grid = div((int)elements.count(), columns);
     if (layout_grid.rem > 0) {
 	button_container->setMinimumHeight((layout_grid.quot + 1) * icon_height);
 	button_container->setMaximumHeight((layout_grid.quot + 1) * icon_height);
@@ -175,10 +167,10 @@ QgToolPalette::resizeEvent(QResizeEvent *pevent)
 void
 QgToolPalette::setIconWidth(int iwidth)
 {
-    icon_width = iwidth;
+    icon_width = std::max(1, iwidth);
     foreach(QgToolPaletteElement *el, elements) {
-	el->button->setMinimumWidth(icon_height);
-	el->button->setMaximumWidth(icon_height);
+	el->button->setMinimumWidth(icon_width);
+	el->button->setMaximumWidth(icon_width);
     }
     updateGeometry();
 }
@@ -186,7 +178,7 @@ QgToolPalette::setIconWidth(int iwidth)
 void
 QgToolPalette::setIconHeight(int iheight)
 {
-    icon_height = iheight;
+    icon_height = std::max(1, iheight);
     foreach(QgToolPaletteElement *el, elements) {
 	el->button->setMinimumHeight(icon_height);
 	el->button->setMaximumHeight(icon_height);
@@ -199,13 +191,13 @@ void
 QgToolPalette::setAlwaysSelected(int toggle)
 {
     always_selected = toggle;
-    if (always_selected && selected == NULL) {
+    if (always_selected && selected == NULL && !elements.isEmpty()) {
 	palette_displayElement(*(elements.begin()));
     }
 }
 
 void
-QgToolPalette::do_view_update(unsigned long long flags)
+QgToolPalette::do_view_update(QgViewUpdateFlags flags)
 {
     QTCAD_SLOT("QgToolPalette::do_element_unhide", 1);
     emit palette_view_update(flags);
@@ -213,7 +205,7 @@ QgToolPalette::do_view_update(unsigned long long flags)
 
 
 void
-QgToolPalette::palette_do_view_changed(unsigned long long flags)
+QgToolPalette::palette_do_view_changed(QgViewUpdateFlags flags)
 {
     QTCAD_SLOT("QgToolPalette::palette_do_view_changed", 1);
     emit view_changed(flags);
@@ -222,6 +214,9 @@ QgToolPalette::palette_do_view_changed(unsigned long long flags)
 void
 QgToolPalette::addElement(QgToolPaletteElement *element)
 {
+    if (!element || !element->buttonWidget() || elements.contains(element))
+	return;
+    element->setParent(this);
     element->button->setMinimumWidth(icon_width);
     element->button->setMaximumWidth(icon_width);
     element->button->setMinimumHeight(icon_height);
@@ -243,15 +238,48 @@ QgToolPalette::addElement(QgToolPaletteElement *element)
 }
 
 void
-QgToolPalette::deleteElement(QgToolPaletteElement *element)
+QgToolPalette::deleteElement(QgToolPaletteElement *element,
+	bool selectReplacement)
 {
-    elements.remove(element);
-    if (selected == element) {
-	palette_displayElement(*elements.begin());
+    if (!element || !elements.contains(element))
+	return;
+    const bool wasSelected = selected == element;
+    if (wasSelected) {
+	if (control_container->widget() == element->controlsWidget())
+	    control_container->takeWidget();
+	selected = NULL;
     }
+    elements.remove(element);
     button_layout->removeWidget(element->button);
-    updateGeometry();
     delete element;
+    if (wasSelected) {
+	if (selectReplacement && always_selected && !elements.isEmpty())
+	    palette_displayElement(*elements.begin());
+	else
+	    emit palette_element_selected(NULL);
+    }
+    button_layout_resize();
+    updateGeometry();
+}
+
+void
+QgToolPalette::clearSelection()
+{
+    if (!selected)
+	return;
+
+    QgToolPaletteElement *old_selected = selected;
+    if (control_container->widget() == old_selected->controls)
+	control_container->takeWidget();
+    if (old_selected->controls)
+	old_selected->controls->hide();
+    if (old_selected->button) {
+	old_selected->button->setChecked(false);
+	old_selected->button->setDown(false);
+	old_selected->button->setStyleSheet("");
+    }
+    selected = NULL;
+    emit palette_element_selected(NULL);
 }
 
 void
@@ -262,7 +290,8 @@ QgToolPalette::palette_displayElement(QgToolPaletteElement *element)
 	if (element == selected) {
 	    if (!always_selected) {
 		if (element->button->isChecked()) element->button->setChecked(false);
-		element->controls->hide();
+		if (element->controls)
+		    element->controls->hide();
 		selected = NULL;
 	    } else {
 		element->button->setStyleSheet(selected_style);
@@ -271,13 +300,16 @@ QgToolPalette::palette_displayElement(QgToolPaletteElement *element)
 	    if (!element->button->isChecked()) element->button->setChecked(true);
 	    if (selected && element != selected) {
 		selected->scroll_pos = control_container->verticalScrollBar()->sliderPosition();
-		selected->controls->hide();
+		if (selected->controls)
+		    selected->controls->hide();
 		if (selected->button->isChecked()) selected->button->setChecked(false);
 	    }
 	    control_container->takeWidget();
-	    control_container->setWidget(element->controls);
-	    element->controls->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Minimum);
-	    element->controls->show();
+	    if (element->controls) {
+		control_container->setWidget(element->controls);
+		element->controls->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Minimum);
+		element->controls->show();
+	    }
 	    element->do_element_unhide(NULL);
 	    control_container->verticalScrollBar()->setSliderPosition(element->scroll_pos);
 	    selected = element;
@@ -290,7 +322,7 @@ QgToolPalette::palette_displayElement(QgToolPaletteElement *element)
 		}
 	    }
 	}
-	emit palette_element_selected(element);
+	emit palette_element_selected(selected);
     }
 }
 

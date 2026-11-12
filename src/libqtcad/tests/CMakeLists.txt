@@ -19,9 +19,11 @@ set(QTCAD_TEST_PLUGIN_DIR ${CMAKE_CURRENT_BINARY_DIR}/plugins)
 if(TARGET Qt6::Test)
   set(QTCAD_TEST_QT_CORE Qt6::Core)
   set(QTCAD_TEST_QT_TEST Qt6::Test)
+  set(QTCAD_TEST_QT_WIDGETS Qt6::Widgets)
 elseif(TARGET Qt5::Test)
   set(QTCAD_TEST_QT_CORE Qt5::Core)
   set(QTCAD_TEST_QT_TEST Qt5::Test)
+  set(QTCAD_TEST_QT_WIDGETS Qt5::Widgets)
 endif()
 
 if(QTCAD_TEST_QT_TEST)
@@ -51,7 +53,11 @@ if(QTCAD_TEST_QT_TEST)
       RUNTIME_OUTPUT_DIRECTORY ${QTCAD_TEST_PLUGIN_DIR}
     )
     target_compile_definitions(${plugin_target} PRIVATE BRLCADBUILD HAVE_CONFIG_H)
-    target_link_libraries(${plugin_target} libqtcad ${QTCAD_TEST_QT_CORE})
+    target_link_libraries(${plugin_target}
+      libqtcad
+      ${QTCAD_TEST_QT_CORE}
+      ${QTCAD_TEST_QT_WIDGETS}
+    )
   endforeach()
 
   add_executable(test_qtcad_plugin_manager ${TEST_QTCAD_PLUGIN_MANAGER_SRCS})
@@ -61,6 +67,7 @@ if(QTCAD_TEST_QT_TEST)
     libqtcad
     ${QTCAD_TEST_QT_CORE}
     ${QTCAD_TEST_QT_TEST}
+    ${QTCAD_TEST_QT_WIDGETS}
   )
   add_dependencies(test_qtcad_plugin_manager
     qtcad_test_plugin_valid
@@ -69,6 +76,8 @@ if(QTCAD_TEST_QT_TEST)
   brlcad_add_test(NAME test_qtcad_plugin_manager COMMAND test_qtcad_plugin_manager)
   set_property(TEST test_qtcad_plugin_manager APPEND PROPERTY ENVIRONMENT
     QTCAD_TEST_PLUGIN_DIR=${QTCAD_TEST_PLUGIN_DIR}
+    BRLCAD_ROOT=${CMAKE_BINARY_DIR}
+    QT_QPA_PLATFORM=offscreen
   )
 endif()
 

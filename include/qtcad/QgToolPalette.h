@@ -42,6 +42,7 @@
 #include <QWidget>
 #include <QVBoxLayout>
 #include <QPushButton>
+#include <QPointer>
 #include <QSet>
 #include <QIcon>
 #include <QScrollArea>
@@ -83,6 +84,10 @@ class QTCAD_EXPORT QgToolPaletteElement: public QWidget
 
 	void setButton(QgToolPaletteButton *n_button);
 	void setControls(QWidget *n_controls);
+	QgToolPaletteButton *buttonWidget() const { return button; }
+	QWidget *controlsWidget() const { return controls; }
+	int scrollPosition() const { return scroll_pos; }
+	void setScrollPosition(int position) { scroll_pos = position; }
 
     signals:
 	// PUBLIC, for palette:
@@ -90,7 +95,7 @@ class QTCAD_EXPORT QgToolPaletteElement: public QWidget
 	// changed anything in the view.  Emitted by element_do_view_update slot,
 	// which is connected to internal widget signals in the controls. This
 	// provide a generic, public "signal interface" for widget internals.
-	void view_changed(unsigned long long);
+	void view_changed(QgViewUpdateFlags);
 
     public slots:
 	// PUBLIC, for palette:
@@ -100,7 +105,7 @@ class QTCAD_EXPORT QgToolPaletteElement: public QWidget
 	// hide any internal signal/slot implementation details from the
 	// application while still allowing changes at the app level to drive
 	// updates in the Element contents.
-	void do_view_update(unsigned long long);
+	void do_view_update(QgViewUpdateFlags);
 
 
 	void do_element_unhide(void *);
@@ -117,17 +122,17 @@ class QTCAD_EXPORT QgToolPaletteElement: public QWidget
 	// Note that these signals should NEVER be emitted directly by any of
 	// the Element subcomponents.  Nor should they be connected to by
 	// application code.
-	void element_view_update(unsigned long long);
+	void element_view_update(QgViewUpdateFlags);
 
 	void element_unhide();
 
     public slots:
 	// INTERNAL:
-	void element_view_changed(unsigned long long);
+	void element_view_changed(QgViewUpdateFlags);
 
     public:
-	QgToolPaletteButton *button;
-	QWidget *controls;
+	QPointer<QgToolPaletteButton> button;
+	QPointer<QWidget> controls;
 	int scroll_pos = 0;
 
 	bool use_event_filter = false;
@@ -142,10 +147,16 @@ class QTCAD_EXPORT QgToolPalette: public QWidget
 	QgToolPalette(QWidget *pparent = 0);
 	~QgToolPalette();
 	void addElement(QgToolPaletteElement *element);
-	void deleteElement(QgToolPaletteElement *element);
+	void deleteElement(QgToolPaletteElement *element,
+		bool selectReplacement = true);
+	void clearSelection();
 	void setIconWidth(int iwidth);
 	void setIconHeight(int iheight);
 	void setAlwaysSelected(int iheight);  // If 0 can disable all tools, if 1 some tool is always selected
+	int iconWidth() const { return icon_width; }
+	int iconHeight() const { return icon_height; }
+	int alwaysSelected() const { return always_selected; }
+	QgToolPaletteElement *selectedElement() const { return selected; }
 
 	void resizeEvent(QResizeEvent *pevent);
 
@@ -159,7 +170,7 @@ class QTCAD_EXPORT QgToolPalette: public QWidget
 	// PUBLIC, for parent application:
 	// Signal the application can listen to to see if any Element has
 	// changed anything in the view.
-	void view_changed(unsigned long long);
+	void view_changed(QgViewUpdateFlags);
 
 
 	// INTERNAL, for elements:
@@ -172,13 +183,13 @@ class QTCAD_EXPORT QgToolPalette: public QWidget
 	// parent applications view changed signal (which they can't do without
 	// knowing about the parent applications top level class, or requiring
 	// the application to individually connect directly to each element.)
-	void palette_view_update(unsigned long long);
+	void palette_view_update(QgViewUpdateFlags);
 
    public slots:
        // PUBLIC, for parent application:
        // Trigger any needed updates in any elements in response to an
        // app level view change. 
-       void do_view_update(unsigned long long);
+	void do_view_update(QgViewUpdateFlags);
 
 
         // INTERNAL
@@ -192,7 +203,7 @@ class QTCAD_EXPORT QgToolPalette: public QWidget
 	// is actually selected.
 	void palette_displayElement(QgToolPaletteElement *);
 	void button_layout_resize();
-	void palette_do_view_changed(unsigned long long);
+	void palette_do_view_changed(QgViewUpdateFlags);
 
     private:
 	int always_selected;

@@ -14,6 +14,7 @@ set(
   QgKeyVal.h
   QgMeasureFilter.h
   QgModel.h
+  QgPaletteController.h
   QgPolyFilter.h
   QgPluginApi.h
   QgPluginCommands.h
@@ -29,6 +30,7 @@ set(
   QgSession.h
   QgSignalFlags.h
   QgSketchFilter.h
+  QgToolBase.h
   QgToolPalette.h
   QgTreeSelectionModel.h
   QgTreeView.h

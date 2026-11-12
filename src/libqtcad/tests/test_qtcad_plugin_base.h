@@ -22,13 +22,69 @@
 #define TEST_QTCAD_PLUGIN_BASE_H
 
 #include <QObject>
+#include <QWidget>
 
 #include "qtcad/QgPluginApi.h"
+#include "qtcad/QgToolBase.h"
 
-class QgTestCommandPlugin : public QObject, public IQgCommand
+class QgTestViewFilter : public QObject, public IQgViewEventFilter
 {
     Q_OBJECT
-    Q_INTERFACES(IQgCommand)
+    Q_INTERFACES(IQgViewEventFilter)
+
+    public:
+	explicit QgTestViewFilter(QObject *parent = nullptr)
+	    : QObject(parent)
+	{
+	}
+
+	void attachToView(QgView *) override
+	{
+	    setProperty("attachCount", property("attachCount").toInt() + 1);
+	}
+
+	void detachFromView(QgView *) override
+	{
+	    setProperty("detachCount", property("detachCount").toInt() + 1);
+	}
+};
+
+class QgTestTool : public QgToolBase
+{
+    public:
+	QgTestTool(QgPluginContext *context, QObject *parent = nullptr)
+	    : QgToolBase(context, parent)
+	{
+	}
+
+	QWidget *createWidget() override
+	{
+	    QWidget *widget = new QWidget();
+	    widget->setObjectName(QStringLiteral("qtcadTestToolWidget"));
+	    return widget;
+	}
+
+	QObject *viewEventFilter() override { return &filter; }
+
+	void refresh() override { increment("refreshCount"); }
+	void onDbChanged() override { increment("dbChangeCount"); }
+	void onViewChanged() override { increment("viewChangeCount"); }
+	void onSettingsChanged() override { increment("settingsChangeCount"); }
+
+    private:
+	void increment(const char *name)
+	{
+	    setProperty(name, property(name).toInt() + 1);
+	}
+
+	QgTestViewFilter filter;
+};
+
+class QgTestCommandPlugin : public QObject, public IQgCommand,
+    public IQgToolFactory
+{
+    Q_OBJECT
+    Q_INTERFACES(IQgCommand IQgToolFactory)
 
     public:
 	QgTestCommandPlugin() = default;
@@ -45,6 +101,12 @@ class QgTestCommandPlugin : public QObject, public IQgCommand
 	QString verb() const override
 	{
 	    return QStringLiteral("qtcad_test");
+	}
+
+	QgToolBase *create(QgPluginContext *context,
+		QObject *parent = nullptr) override
+	{
+	    return new QgTestTool(context, parent);
 	}
 
 	int run(QgPluginContext *, const QStringList &arguments,
