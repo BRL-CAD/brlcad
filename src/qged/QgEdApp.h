@@ -38,10 +38,13 @@
 #include "raytrace.h"
 #include "ged.h"
 #include "qtcad/QgModel.h"
+#include "qtcad/QgPluginContext.h"
 #include "qtcad/QgTreeView.h"
 #include "qtcad/QgSignalFlags.h"
 
 #include "QgEdMainWindow.h"
+
+class QgPluginManager;
 
 /* Command type for application level commands */
 
@@ -61,6 +64,9 @@ class QgEdApp : public QApplication
 
 	int run_cmd(struct bu_vls *msg, int argc, const char **argv);
 	int load_g_file(const char *gfile = NULL, bool do_conversion = true);
+	QgPluginContext *pluginContext() { return &m_plugin_context; }
+	QgPluginManager *pluginManager() const { return m_plugin_manager; }
+	QgPluginNotifier *pluginNotifier() const { return m_plugin_notifier; }
 
 	QgModel *mdl = NULL;
 
@@ -103,6 +109,9 @@ class QgEdApp : public QApplication
 	unsigned long long select_hash = 0;
 	long history_mark_start = -1;
 	long history_mark_end = -1;
+	QgPluginContext m_plugin_context;
+	QgPluginNotifier *m_plugin_notifier = NULL;
+	QgPluginManager *m_plugin_manager = NULL;
 };
 
 #endif // QGEDAPP_H

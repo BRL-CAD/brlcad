@@ -25,11 +25,15 @@
 
 #include <QTimer>
 #include <QMessageBox>
+#include "qtcad/QgPaletteController.h"
 #include "qtcad/QgSession.h"
 #include "qtcad/QgViewCtrl.h"
 #include "qtcad/QgTreeSelectionModel.h"
 #include "QgEdMainWindow.h"
 #include "QgEdApp.h"
+
+static const char *qged_view_category = "qged.view";
+static const char *qged_object_category = "qged.object";
 
 static int
 qged_dm_during_clbk(int ac, const char **av, void *u1, void *u2)
@@ -144,6 +148,11 @@ QgEdMainWindow::CreateWidgets(int canvas_type)
     // We start out with the View Control panel as the current panel - by
     // default we are viewing, not editing
     vc->makeCurrent(vc);
+
+    vc_ctrl = new QgPaletteController(vc, ap->pluginManager(),
+	QString::fromLatin1(qged_view_category), ap->pluginContext(), this);
+    oc_ctrl = new QgPaletteController(oc, ap->pluginManager(),
+	QString::fromLatin1(qged_object_category), ap->pluginContext(), this);
 
     // Command console
     console = new QgConsole(console_dock);
@@ -284,6 +293,12 @@ QgEdMainWindow::ConnectWidgets()
     QObject::connect(vc, &QgToolPalette::palette_element_selected, ap, &QgEdApp::element_selected);
     QObject::connect(oc, &QgToolPalette::palette_element_selected, ap, &QgEdApp::element_selected);
 
+    QgView *active_view = c4->curr_view();
+    vc_ctrl->setActiveView(active_view);
+    oc_ctrl->setActiveView(active_view);
+    vc_ctrl->populate();
+    oc_ctrl->populate();
+
     // The tools in the view and edit panels may have consequences for the view.
     // Connect to the palette signals and slots (the individual tool connections
     // are handled by the palette container.)
@@ -319,6 +334,15 @@ QgEdMainWindow::ConnectWidgets()
     QObject::connect(treeview, &QgTreeView::clicked, stdpropmodel, &QgAttributesModel::refresh);
     QObject::connect(treeview, &QgTreeView::clicked, userpropmodel, &QgAttributesModel::refresh);
 
+}
+
+void
+QgEdMainWindow::setActiveView(QgView *view)
+{
+    if (vc_ctrl)
+	vc_ctrl->setActiveView(view);
+    if (oc_ctrl)
+	oc_ctrl->setActiveView(view);
 }
 
 void

@@ -33,6 +33,8 @@
 #include "ged/scene.h"
 #include "ged/selection.h"
 #include "qtcad/QgGeomImport.h"
+#include "qtcad/QgPluginManager.h"
+#include "qtcad/QgSession.h"
 #include "qtcad/QgTreeSelectionModel.h"
 #include "QgEdApp.h"
 #include "fbserv.h"
@@ -124,6 +126,40 @@ QgEdApp::QgEdApp(int &argc, char *argv[], const char *g_file, int swrast_mode, i
     bu_setenv("LIBRT_USE_COMB_INSTANCE_SPECIFIERS", "1", 1);
 
     mdl = new QgModel();
+    m_plugin_notifier = new QgPluginNotifier(this);
+    QObject::connect(mdl->session(), &QgSession::db_changed,
+	m_plugin_notifier, &QgPluginNotifier::dbChanged);
+    QObject::connect(this, &QgEdApp::view_update,
+	m_plugin_notifier, &QgPluginNotifier::viewUpdated);
+    m_plugin_context.gedAccessor = [this]() -> struct ged * {
+	return mdl ? mdl->ged() : GED_NULL;
+    };
+    m_plugin_context.viewWidgetAccessor = [this]() -> QgView * {
+	return w ? w->CurrentDisplay() : NULL;
+    };
+    m_plugin_context.viewContextAccessor = [this]() -> ged_view_context * {
+	if (w)
+	    return w->CurrentView();
+	return (mdl && mdl->session()) ? mdl->session()->activeView() : NULL;
+    };
+    m_plugin_context.model = mdl;
+    m_plugin_context.notifier = m_plugin_notifier;
+    m_plugin_context.hostName = QStringLiteral("qged");
+    m_plugin_context.log = [this](const QString &message) {
+	if (w && w->console) {
+	    w->console->printStringBeforePrompt(message);
+	    return;
+	}
+	bu_log("%s", message.toLocal8Bit().constData());
+    };
+
+    char plugin_dir[MAXPATHLEN] = {0};
+    bu_dir(plugin_dir, MAXPATHLEN, BU_DIR_LIBEXEC, "qged", NULL);
+    QStringList plugin_search_dirs;
+    if (plugin_dir[0])
+	plugin_search_dirs.append(QString::fromLocal8Bit(plugin_dir));
+    m_plugin_manager = new QgPluginManager(plugin_search_dirs,
+	QStringLiteral("qged/plugins"), this);
 
     // Install a filter to handle the top level key bindings and other
     // interactive event management requiring global application knowledge.
@@ -268,7 +304,16 @@ QgEdApp::QgEdApp(int &argc, char *argv[], const char *g_file, int swrast_mode, i
 QgEdApp::~QgEdApp() {
     if (mdl && mdl->ged())
 	ged_subprocesses_terminate(mdl->ged());
+    QgEdMainWindow *window = w;
+    w = NULL;
+    m_plugin_context.viewWidgetAccessor = {};
+    m_plugin_context.viewContextAccessor = {};
+    m_plugin_context.model = NULL;
+    delete window;
     delete mdl;
+    mdl = NULL;
+    m_plugin_context.gedAccessor = {};
+    m_plugin_context.log = {};
     // TODO - free rt_vlfree?
 }
 
@@ -277,6 +322,11 @@ QgEdApp::do_quad_view_change(QgView *cv)
 {
     QTCAD_SLOT("QgEdApp::do_quad_view_change", 1);
     mdl->ged()->ged_gvp = cv->view();
+    mdl->session()->setActiveView(cv->view());
+    if (w)
+	w->setActiveView(cv);
+    if (m_plugin_notifier)
+	emit m_plugin_notifier->viewChanged();
     emit view_update(QG_VIEW_REFRESH);
 }
 
@@ -577,6 +627,8 @@ QgEdApp::write_settings()
 
     // TODO - write user settings here.  Window state saving is handled by
     // QgEdMainWindow closeEvent
+    if (m_plugin_notifier)
+	emit m_plugin_notifier->settingsChanged();
 }
 
 // Local Variables:

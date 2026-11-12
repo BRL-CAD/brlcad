@@ -55,6 +55,8 @@
 #include "plugins/plugin.h"
 #include "QgEdPalette.h"
 
+class QgPaletteController;
+
 class QgEdMainWindow : public QMainWindow
 {
     Q_OBJECT
@@ -87,6 +89,7 @@ class QgEdMainWindow : public QMainWindow
 
 	// Determine interaction mode based on selected palettes and the supplied point
 	int InteractionMode(QPoint &gpos);
+	void setActiveView(QgView *view);
 
 	// Utility wrapper for the closeEvent to save windowing dimensions
 	void closeEvent(QCloseEvent* e);
@@ -127,6 +130,8 @@ class QgEdMainWindow : public QMainWindow
 	QgAttributesModel *userpropmodel = NULL;
 	QgEdPalette *oc = NULL;
 	QgEdPalette *vc = NULL;
+	QgPaletteController *oc_ctrl = NULL;
+	QgPaletteController *vc_ctrl = NULL;
 	QgTreeView *treeview = NULL;
 
 	// Action for toggling treeview's ls or tree view
