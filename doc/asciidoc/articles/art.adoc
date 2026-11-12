@@ -240,8 +240,8 @@ flat and smooth authored BOTs must produce finite, positive footprints.
 The current ARB/TGC Boolean fixture must produce the zero-footprint fallback.
 These checks establish that the mapping derivatives reach OSL.  Mipmapped
 texture minification is also checked against a known reference as described
-below.  Bump slopes and tangent-map orientation still need qualification.
-Native normal-map wiring and disabled-node behavior are checked separately.
+below.  Native bump gradients and normal-map network behavior are checked
+separately.  Tangent-map orientation still needs qualification.
 Rebuild procedural
 plugins and applications against the matching Appleseed headers and library.
 
@@ -379,11 +379,33 @@ an upstream perturbation.
 The regression exercises these native nodes on a sphere and flat and smooth
 BOTs.  It requires a tilted normal map to visibly change shading and a
 disabled downstream node to match the upstream result.  These checks qualify
-network wiring and disabled-node behavior.  Spatially varying bump slopes,
-tangent-map handedness, mirrored mappings, image normal maps, and secondary
-ray behavior still need dedicated qualification.  A separate probe found
-that a nonzero constant bump can discard the smooth shading normal on a
-BOT; bump-mode preservation of smooth normals remains a known issue.
+network wiring and disabled-node behavior.
+
+In `Bump` mode, connect a scalar height output to `in_bump_value` and set
+`in_bump_depth` in the units of `in_surface_point` (the common-space surface
+position by default).  The node retains its signed depth and height
+saturation at `[-1,1]`.  Bump mapping changes the shading normal; silhouettes
+and CSG boundaries follow the original geometry.
+
+Appleseed now uses a surface-gradient perturbation of the input normal,
+preserving smooth BOT normals and previously mapped normals.  A constant
+height preserves that normal.  Zero height can still have a nonzero slope
+and is evaluated.  Absent or degenerate position footprints preserve the
+input normal, and negative depth reverses the perturbation.  The formulation
+follows Mikkelsen's _Surface Gradient-Based Bump Mapping Framework_,
+https://jcgt.org/published/0009/03/04/[equation (4)].
+
+`regress-art-bump` compares native bump output with independent analytic
+normal references on spheres, ellipsoids, Boolean geometry, and flat and
+smooth BOTs under orthographic and perspective cameras.  It checks constant
+height, affine position-based height, signed depth, a sphere UV height
+crossing zero, and missing or collinear footprints.  Scaling both position
+and depth by each of `1e-25`, `1e-12`, `1e12`, and `1e25` must preserve the
+result.  These checks cover
+first-order bump normals, including CSG surfaces without a UV footprint.
+Filtered image-height maps, tangent-map handedness, mirrored mappings,
+image normal maps, and secondary-ray behavior still need dedicated
+qualification.
 
 
 == Project shader assets

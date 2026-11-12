@@ -1,0 +1,33 @@
+function(run_command directory should_fail)
+  execute_process(COMMAND ${ARGN} WORKING_DIRECTORY "${directory}"
+    RESULT_VARIABLE result OUTPUT_VARIABLE output ERROR_VARIABLE output TIMEOUT 30)
+  file(APPEND "${LOG}" "cwd=${directory}\n${ARGN}\n${output}\n")
+  if(should_fail)
+    if("${result}" STREQUAL "0" OR NOT "${result}" MATCHES "^[0-9]+$")
+      message(FATAL_ERROR "Expected a nonzero exit status, received '${result}': ${ARGN}\n${output}")
+    endif()
+  else()
+    if(NOT "${result}" STREQUAL "0")
+      message(FATAL_ERROR "Command failed (${result}): ${ARGN}\n${output}")
+    endif()
+    if(output MATCHES "(error|fatal)[ \t]+[|]")
+      message(FATAL_ERROR "Renderer reported an error: ${ARGN}\n${output}")
+    endif()
+  endif()
+endfunction()
+
+function(run)
+  run_command("${CMAKE_CURRENT_BINARY_DIR}" FALSE ${ARGV})
+endfunction()
+
+function(run_in directory)
+  run_command("${directory}" FALSE ${ARGN})
+endfunction()
+
+function(expect_failure)
+  run_command("${CMAKE_CURRENT_BINARY_DIR}" TRUE ${ARGV})
+endfunction()
+
+function(expect_failure_in directory)
+  run_command("${directory}" TRUE ${ARGN})
+endfunction()
