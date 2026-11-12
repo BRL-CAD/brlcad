@@ -6,6 +6,7 @@ set(QSKETCH_SRCS qsketch.cpp)
 set(TEST_QTCAD_SESSION_SRCS test_qtcad_session.cpp)
 set(TEST_QTCAD_CONSOLE_SRCS test_qtcad_console.cpp)
 set(TEST_QTCAD_PLUGIN_MANAGER_SRCS test_qtcad_plugin_manager.cpp)
+set(TEST_QTCAD_PLUGIN_CONTEXT_SRCS test_qtcad_plugin_context.cpp)
 set(TEST_QTCAD_PLUGIN_BASE_HDRS test_qtcad_plugin_base.h)
 set(TEST_QTCAD_PLUGIN_VALID_SRCS test_qtcad_plugin_valid.cpp)
 set(TEST_QTCAD_PLUGIN_MISSING_API_SRCS test_qtcad_plugin_missing_api.cpp)
@@ -24,6 +25,16 @@ elseif(TARGET Qt5::Test)
 endif()
 
 if(QTCAD_TEST_QT_TEST)
+  add_executable(test_qtcad_plugin_context ${TEST_QTCAD_PLUGIN_CONTEXT_SRCS})
+  set_target_properties(test_qtcad_plugin_context PROPERTIES AUTOMOC ON)
+  target_compile_definitions(test_qtcad_plugin_context PRIVATE BRLCADBUILD HAVE_CONFIG_H)
+  target_link_libraries(test_qtcad_plugin_context
+    libqtcad
+    ${QTCAD_TEST_QT_CORE}
+    ${QTCAD_TEST_QT_TEST}
+  )
+  brlcad_add_test(NAME test_qtcad_plugin_context COMMAND test_qtcad_plugin_context)
+
   add_library(qtcad_test_plugin_valid MODULE
     ${TEST_QTCAD_PLUGIN_VALID_SRCS}
     ${TEST_QTCAD_PLUGIN_BASE_HDRS}
@@ -197,6 +208,7 @@ cmakefiles(
   ${TEST_QTCAD_SESSION_SRCS}
   ${TEST_QTCAD_CONSOLE_SRCS}
   ${TEST_QTCAD_PLUGIN_MANAGER_SRCS}
+  ${TEST_QTCAD_PLUGIN_CONTEXT_SRCS}
   ${TEST_QTCAD_PLUGIN_BASE_HDRS}
   ${TEST_QTCAD_PLUGIN_VALID_SRCS}
   ${TEST_QTCAD_PLUGIN_MISSING_API_SRCS}

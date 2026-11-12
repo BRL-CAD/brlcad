@@ -78,9 +78,12 @@
  * can share a common, mutually understood convention.
  */
 
+#ifndef QGSIGNALFLAGS_H
+#define QGSIGNALFLAGS_H
+
 #include "common.h"
 
-#ifndef QGSIGNALFLAGS_H
+typedef unsigned long long QgViewUpdateFlags;
 
 #define QG_VIEW_REFRESH  0x00000001  // Potential camera updates, no structural changes
 #define QG_VIEW_DRAWN    0x00000002  // Used when what is drawn in the scene changes

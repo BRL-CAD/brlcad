@@ -23,7 +23,7 @@
 
 #include <QObject>
 
-#include "qtcad/QgPluginInterfaces.h"
+#include "qtcad/QgPluginApi.h"
 
 class QgTestCommandPlugin : public QObject, public IQgCommand
 {
