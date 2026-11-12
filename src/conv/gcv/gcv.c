@@ -67,7 +67,7 @@ gcv_top_level_option(const char *arg)
     name = arg + 2;
     length = strcspn(name, "=");
     for (i = 0; long_options[i]; i++) {
-	if (strlen(long_options[i]) == length && strncmp(name, long_options[i], length) == 0)
+	if (strlen(long_options[i]) == length && bu_strncmp(name, long_options[i], length) == 0)
 	    return 1;
     }
     return 0;
