@@ -57,7 +57,7 @@ fmt_opts_free(struct fmt_opts *gfo)
 
 
 static int
-fmt_fun(struct bu_vls *UNUSED(msgs), size_t argc, const char **argv, void *set_var)
+fmt_fun(struct bu_vls *msgs, size_t argc, const char **argv, void *set_var)
 {
     size_t i = 0;
     int args_used = 0;
@@ -66,8 +66,11 @@ fmt_fun(struct bu_vls *UNUSED(msgs), size_t argc, const char **argv, void *set_v
     if (!gfo)
 	return -1;
 
-    if (!argv || argc < 1)
-	return 0;
+    if (!argv || argc < 1) {
+	if (msgs)
+	    bu_vls_printf(msgs, "expected at least one filter option\n");
+	return msgs ? -1 : 0;
+    }
 
     for (i = 0; i < argc; i++) {
 	struct bu_vls cmp_arg = BU_VLS_INIT_ZERO;
@@ -292,8 +295,11 @@ file_stat(struct bu_vls *msg, size_t argc, const char **argv, void *set_var)
 	return -1;
     }
 
-    if (file_set)
+    if (file_set) {
+	if (*file_set)
+	    bu_free(*file_set, "previous input file option");
 	(*file_set) = bu_strdup(argv[0]);
+    }
 
     return 1;
 }
@@ -312,8 +318,11 @@ file_null(struct bu_vls *msg, size_t argc, const char **argv, void *set_var)
 	}
     }
 
-    if (file_set)
+    if (file_set) {
+	if (*file_set)
+	    bu_free(*file_set, "previous output file option");
 	(*file_set) = bu_strdup(argv[0]);
+    }
 
     return 1;
 }
@@ -349,19 +358,22 @@ struct help_state {
 
 
 static int
-help(struct bu_vls *UNUSED(msg), size_t argc, const char **argv, void *set_var)
+help(struct bu_vls *msg, size_t argc, const char **argv, void *set_var)
 {
     struct help_state *gs = (struct help_state *)set_var;
-    if (gs)
-	gs->showhelp = 1;
-
-    if (!argv || !argv[0] || strlen(argv[0]) || argc == 0) {
+    if (!argv || !argv[0] || argv[0][0] == '\0' || argv[0][0] == '-' || argc == 0) {
+	if (gs && msg)
+	    gs->showhelp = 1;
 	return 0;
-    } else {
-	if (gs) {
-	    gs->format = bu_strdup(argv[0]);
-	}
     }
+
+    if (gs && msg) {
+	gs->showhelp = 1;
+	if (gs->format)
+	    bu_free(gs->format, "previous help format");
+	gs->format = bu_strdup(argv[0]);
+    }
+
     return 1;
 }
 
@@ -521,6 +533,7 @@ main(int ac, const char **av)
 
     if (unknown_ac < 0) {
         bu_log("ERROR: option parsing failed\n%s", bu_vls_addr(&parse_msgs));
+	ret = 1;
 	goto cleanup;
     }
 
@@ -716,6 +729,14 @@ cleanup:
     bu_vls_free(&out_path);
     bu_vls_free(&out_path_raw);
     bu_vls_free(&slog);
+    bu_vls_free(&parse_msgs);
+
+    if (hs.format)
+	bu_free(hs.format, "help format");
+    if (in_str)
+	bu_free(in_str, "input file option");
+    if (out_str)
+	bu_free(out_str, "output file option");
 
     bu_ptbl_free(&in_opts);
     bu_ptbl_free(&out_opts);
