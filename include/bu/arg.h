@@ -22,9 +22,9 @@
  *
  * A schema records command syntax, validation metadata, and storage bindings
  * in one table.  bu_arg_schema_parse is the execution-facing parser; command
- * registries publish this native representation directly.  The succinct
- * bu_opt API remains available as an option-only facade over the same parsing
- * engine for callers that do not need operands, completion, or publication.
+ * registries publish this native representation directly.  The deprecated
+ * bu_opt API remains available only for source compatibility with existing
+ * callers.
  */
 
 #ifndef BU_ARG_H

@@ -35,6 +35,7 @@ set(
   test_lineedit.c
   test_mappedfile.c
   test_observer.c
+  test_opt.c
   test_parallel.c
   test_path_component.c
   test_vls_incr.c
@@ -665,7 +666,6 @@ brlcad_add_test(NAME bu_vls_simplify_11 COMMAND bu_test test_vls_simplify "^%tes
 #  *********** test_opt.c tests ************
 #
 
-if(FALSE) # Temporarily disable the deprecated BU_OPT API tests during migration.
 brlcad_add_test(NAME bu_opt_null  COMMAND bu_test test_opt 0 0 0)
 
 # Verbosity (custom handler) testing
@@ -760,7 +760,6 @@ brlcad_add_test(NAME bu_opt_3_vect_04  COMMAND bu_test test_opt 3 V 4)
 
 brlcad_add_test(NAME bu_opt_standard_help COMMAND bu_test test_opt 5 h 0)
 brlcad_add_test(NAME bu_opt_scanners COMMAND bu_test test_opt 6 s 0)
-endif()
 
 brlcad_add_test(NAME bu_lineedit_completion_mode COMMAND bu_test test_lineedit ${CMAKE_CURRENT_SOURCE_DIR}/lineedit-colors.json)
 
