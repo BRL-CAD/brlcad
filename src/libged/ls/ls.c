@@ -29,7 +29,6 @@
 #include <string.h>
 
 #include "bu/cmd.h"
-#include "bu/opt.h"
 #include "bu/sort.h"
 #include "bu/units.h"
 

@@ -37,7 +37,6 @@
 
 #include "bu/cmd.h"
 #include "bu/getopt.h"
-#include "bu/opt.h"
 #include "bu/path.h"
 #include "bu/sort.h"
 #include "bu/defines.h"

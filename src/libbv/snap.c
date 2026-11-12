@@ -30,7 +30,6 @@
 #include <string.h>
 #include <errno.h>
 
-#include "bu/opt.h"
 #include "bu/ptbl.h"
 #include "bu/vls.h"
 #include "bn/tol.h"

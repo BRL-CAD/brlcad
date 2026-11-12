@@ -30,7 +30,6 @@
 
 
 #include "bu/arg.h"
-#include "bu/opt.h"
 #include "bu/parallel.h"
 #include "bu/datetime.h"
 #include "raytrace.h"

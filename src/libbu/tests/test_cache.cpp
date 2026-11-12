@@ -48,6 +48,7 @@
 #include <limits.h>
 #include <string.h>
 #include "bu.h"
+#include "bu/arg.h"
 
 /* how many debug items to print */
 #define PRINT_LIMIT 10

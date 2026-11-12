@@ -85,7 +85,6 @@
 #include <limits.h>
 
 #include "bu/arg.h"
-#include "bu/opt.h"
 #include "vmath.h"
 #include "bn.h"
 #include "raytrace.h"

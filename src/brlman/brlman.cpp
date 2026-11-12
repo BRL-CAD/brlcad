@@ -63,7 +63,6 @@
 #include "bu/log.h"
 #include "bu/malloc.h"
 #include "bu/mapped_file.h"
-#include "bu/opt.h"
 #include "bu/path.h"
 #include "bu/str.h"
 #include "bu/vls.h"
@@ -80,6 +79,7 @@
 #endif
 
 /* Supported man sections */
+static const char MAN_SECTIONS[] = "135n";
 
 struct man_page {
     std::string name;
@@ -539,7 +539,7 @@ man_section_dir(struct bu_vls *mdir, const char *lang, char section, bool html)
 static size_t
 collect_man_pages(std::vector<man_page> &pages, const char *lang, char wanted_section, bool html, int include_full_text)
 {
-    const char sections[] = BRLCAD_MAN_SECTIONS;
+    const char *sections = MAN_SECTIONS;
     size_t total = 0;
 
     for (size_t si = 0; sections[si] != '\0'; si++) {
@@ -1225,7 +1225,7 @@ main(int argc, char **argv_input)
     if (man_section != '\0') {
 	man_file = find_man_file(man_name, bu_vls_addr(&lang), man_section, man_cmd ? 0 : 1);
     } else {
-	const char sections[] = BRLCAD_MAN_SECTIONS;
+	const char *sections = MAN_SECTIONS;
 	i = 0;
 	while(sections[i] != '\0') {
 	    man_file = find_man_file(man_name, bu_vls_addr(&lang), sections[i], man_cmd ? 0 : 1);
@@ -1250,7 +1250,7 @@ main(int argc, char **argv_input)
 	    if (man_section != '\0') {
 		man_file = find_man_file(man_name, bu_vls_addr(&lang), man_section, true);
 	    } else {
-		const char sections[] = BRLCAD_MAN_SECTIONS;
+		const char *sections = MAN_SECTIONS;
 		for (size_t si = 0; sections[si] && !man_file; si++)
 		    man_file = find_man_file(man_name, bu_vls_addr(&lang), sections[si], 1);
 	    }
