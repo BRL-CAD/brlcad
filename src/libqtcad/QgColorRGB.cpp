@@ -63,7 +63,7 @@ QgColorRGB::QgColorRGB(QWidget *p, QString lstr, QColor dcolor) : QWidget(p)
     this->setLayout(mlayout);
 
     QObject::connect(rgbcolor, &QPushButton::clicked, this, &QgColorRGB::set_color_from_button);
-    QObject::connect(rgbtext, &QLineEdit::returnPressed, this, &QgColorRGB::set_color_from_text);
+    QObject::connect(rgbtext, &QLineEdit::editingFinished, this, &QgColorRGB::set_color_from_text);
 }
 
 QgColorRGB::~QgColorRGB()
