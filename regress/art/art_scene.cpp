@@ -44,6 +44,8 @@ create_scene(const char *path, const char *shader, const char *output)
     point_t center = {-15, 0, 0};
     point_t box_min = {5, -10, -10};
     point_t box_max = {25, 10, 10};
+    point_t cube_min = {-10, -10, -10};
+    point_t cube_max = {10, 10, 10};
     point_t bore_base = {15, -15, 0};
     vect_t bore_height = {0, 30, 0};
     const unsigned char red[] = {255, 32, 16};
@@ -52,6 +54,7 @@ create_scene(const char *path, const char *shader, const char *output)
     struct wmember members;
     bool success = mk_sph(db, "ball.s", center, 10) == 0 &&
 	mk_rpp(db, "box.s", box_min, box_max) == 0 &&
+	mk_rpp(db, "cube.s", cube_min, cube_max) == 0 &&
 	mk_rcc(db, "bore.s", bore_base, bore_height, 4) == 0;
 
     BU_LIST_INIT(&members.l);
@@ -68,6 +71,9 @@ create_scene(const char *path, const char *shader, const char *output)
     success = success && mk_addmember("ball.r", &members.l, NULL, WMOP_UNION) &&
 	mk_addmember("blue.g", &members.l, NULL, WMOP_UNION) &&
 	mk_lcomb(db, "all.g", &members, 0, NULL, NULL, NULL, 0) == 0;
+    BU_LIST_INIT(&members.l);
+    success = success && mk_addmember("cube.s", &members.l, NULL, WMOP_UNION) &&
+	mk_lcomb(db, "cube.r", &members, 1, "plastic", "", green, 0) == 0;
     const struct {
 	const char *solid;
 	const char *region;
@@ -122,7 +128,8 @@ create_scene(const char *path, const char *shader, const char *output)
 	    &empty, &empty, &optical, &empty) == 0;
 	success = success && db5_update_attribute("ball.r", "material_name", "osl.material", db->dbip) == 0 &&
 	    db5_update_attribute("box.r", "material_name", "osl.material", db->dbip) == 0 &&
-	    db5_update_attribute("ellipsoid.r", "material_name", "osl.material", db->dbip) == 0;
+	    db5_update_attribute("ellipsoid.r", "material_name", "osl.material", db->dbip) == 0 &&
+	    db5_update_attribute("cube.r", "material_name", "osl.material", db->dbip) == 0;
 	for (const auto &mesh : meshes)
 	    success = success && db5_update_attribute(mesh.region, "material_name", "osl.material", db->dbip) == 0;
 	bu_avs_free(&optical);
@@ -293,7 +300,7 @@ check_image(const char *path, size_t width, size_t height, ImageCheck check)
     return 0;
 }
 
-enum class ImageComparison { Matching, Aliased, Changed };
+enum class ImageComparison { Matching, Uniform, Aliased, Changed };
 
 static int
 check_image_difference(const char *path, const char *reference_path,
@@ -333,11 +340,13 @@ check_image_difference(const char *path, const char *reference_path,
 	}
     }
     const double rms = std::sqrt(squared_error / (pixel_count * 3));
-    const bool matching = comparison == ImageComparison::Matching;
+    const bool matching = comparison == ImageComparison::Matching || comparison == ImageComparison::Uniform;
     const double min_difference = comparison == ImageComparison::Aliased ? MIN_ALIASED_RMS : MIN_CHANGED_RMS;
     const bool difference_matches = matching ?
 	rms <= MAX_MATCHING_RMS && max_error <= MAX_MATCHING_ERROR : rms >= min_difference;
-    const bool enough_geometry = geometry_pixels > static_cast<size_t>(pixel_count * MIN_GEOMETRY_COVERAGE);
+    // A deliberately uniform reference has no foreground contrast to count.
+    const bool enough_geometry = comparison == ImageComparison::Uniform ||
+	geometry_pixels > static_cast<size_t>(pixel_count * MIN_GEOMETRY_COVERAGE);
     bu_log("Image comparison %s: rms=%g max=%g geometry=%zu matching=%d\n",
 	path, rms, max_error, geometry_pixels, matching);
     return difference_matches && enough_geometry ? 0 : 1;
@@ -364,9 +373,10 @@ main(int argc, char **argv)
     try {
 	if (argc == 6 && (BU_STR_EQUAL(argv[1], "check-filtered-texture") ||
 	    BU_STR_EQUAL(argv[1], "check-aliased-texture") || BU_STR_EQUAL(argv[1], "check-matching-image") ||
-	    BU_STR_EQUAL(argv[1], "check-different-image"))) {
+	    BU_STR_EQUAL(argv[1], "check-different-image") || BU_STR_EQUAL(argv[1], "check-uniform-image"))) {
 	    const ImageComparison comparison = BU_STR_EQUAL(argv[1], "check-aliased-texture") ? ImageComparison::Aliased :
-		BU_STR_EQUAL(argv[1], "check-different-image") ? ImageComparison::Changed : ImageComparison::Matching;
+		BU_STR_EQUAL(argv[1], "check-different-image") ? ImageComparison::Changed :
+		BU_STR_EQUAL(argv[1], "check-uniform-image") ? ImageComparison::Uniform : ImageComparison::Matching;
 	    return check_image_difference(argv[2], argv[3], std::stoul(argv[4]), std::stoul(argv[5]), comparison);
 	}
 	if (argc == 5) {

@@ -1,0 +1,70 @@
+/*              A R T _ A B S O R P T I O N _ R E F E R E N C E . O S L
+ * BRL-CAD
+ *
+ * Copyright (c) 2026 United States Government as represented by
+ * the U.S. Army Research Laboratory.
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public License
+ * version 2.1 as published by the Free Software Foundation.
+ *
+ * This library is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this file; see the file named COPYING for more
+ * information.
+ */
+// Predict homogeneous Beer attenuation from analytic forward intersections,
+// independently of the renderer's medium stack and absorption implementation.
+surface art_absorption_reference(
+    color in_volume_transmittance = color(0.25, 0.5, 0.8),
+    float in_volume_transmittance_distance = 20,
+    string in_shape = "box",
+    point in_center = point(0),
+    vector in_axes = vector(10),
+    float in_bore_radius = 4)
+{
+    vector direction = normalize(I);
+    vector offset = P - in_center;
+    float thickness = 0;
+    if (in_shape == "ellipsoid") {
+        vector scaled_direction = direction / in_axes;
+        thickness = -2 * dot(offset / in_axes, scaled_direction)
+            / dot(scaled_direction, scaled_direction);
+    } else {
+        thickness = 2 * length(in_axes);
+        for (int axis = 0; axis < 3; ++axis) {
+            if (direction[axis] > 0)
+                thickness = min(thickness,
+                    (in_axes[axis] - offset[axis]) / direction[axis]);
+            else if (direction[axis] < 0)
+                thickness = min(thickness,
+                    (-in_axes[axis] - offset[axis]) / direction[axis]);
+        }
+        if (in_shape == "bored_box") {
+            float a = direction[0] * direction[0] + direction[2] * direction[2];
+            float b = offset[0] * direction[0] + offset[2] * direction[2];
+            float c = offset[0] * offset[0] + offset[2] * offset[2]
+                - in_bore_radius * in_bore_radius;
+            float discriminant = b * b - a * c;
+            if (a > 0 && discriminant > 0) {
+                float root = sqrt(discriminant);
+                float near_hit = max(0, (-b - root) / a);
+                float far_hit = min(thickness, (-b + root) / a);
+                thickness -= max(0, far_hit - near_hit);
+            }
+        }
+    }
+    thickness = max(0, thickness);
+    float exponent = in_volume_transmittance_distance > 0
+        ? thickness / in_volume_transmittance_distance : 0;
+    color attenuation = color(
+        pow(in_volume_transmittance[0], exponent),
+        pow(in_volume_transmittance[1], exponent),
+        pow(in_volume_transmittance[2], exponent));
+    // art's neutral environment has linear radiance 0.4.
+    Ci = 0.4 * attenuation * emission();
+}

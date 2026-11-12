@@ -623,15 +623,17 @@ register_region_impl(struct db_tree_state* tsp,
 
     // create an instance for our newly created object within the assembly
     const std::string instance_name = std::string(assembly_name) + "_brlcad_inst";
+    // A region material applies at both entry and exit boundaries.
+    const asf::StringDictionary material_mapping = asf::StringDictionary()
+	.insert("default", material_name.c_str());
     assembly->object_instances().insert(
 	asr::ObjectInstanceFactory::create(
 	    instance_name.c_str(),
 	    asr::ParamArray(),
 	    name,
 	    asf::Transformd::identity(),
-	    asf::StringDictionary()
-	    .insert("default", material_name.c_str())
-	    ));
+	    material_mapping,
+	    material_mapping));
 
     // add assembly to assemblies array in scene
     builder.scene.assemblies().insert(assembly);

@@ -108,6 +108,15 @@ on flat and smooth BOTs, including reflected U/V charts, and on spheres
 and ellipsoids with full-range and transformed UVs.  LOD transitions,
 baked per-vertex tangents, and secondary rays remain unqualified.
 
+|Basic glass transmission and absorption
+|`regress-art-transmission` compares equal-index homogeneous absorption
+with analytic path lengths through cubes, spheres, ellipsoids, Boolean
+bores, and flat and smooth BOTs under both projections.  Controls check
+zero absorption and material visibility from inside solids.  An index-1.5
+case checks CSG/BOT agreement; it does not independently qualify refractive
+transport.  Nested dielectrics, rough glass, transmitted shadows, and
+normal-mapped transmission remain unqualified.
+
 |Region instances
 |Full indexed database paths distinguish occurrences under different parents
 and repeated arcs in one combination.  `regress-art` checks translated
@@ -233,6 +242,66 @@ transport cases at shading discontinuities.
 
 The librt function table has a new optional normals callback.  Rebuild
 consumers against the matching librt headers and library.
+
+== Transmission and absorption
+
+A region's material is assigned to both its entry and exit faces.  This
+allows a shader to run when looking out of a solid and at the exit boundary
+of a transmitted path.  Surface sides and medium transitions still follow
+the geometric normal; assigning both faces does not make every surface a
+thin sheet.
+
+For an initial glass material, select `as_glass` and its closure output:
+
+----
+material create glass.material Glass
+material set glass.material optical OSL as_glass
+material set glass.material optical OSL.output out_outColor
+material set glass.material optical OSL.param.in_ior "float 1.5"
+material set glass.material optical OSL.param.in_roughness "float 0"
+material set glass.material optical OSL.param.in_transmittance_amount "float 1"
+material set glass.material optical OSL.param.in_surface_transmittance "color 1 1 1"
+material set glass.material optical OSL.param.in_volume_transmittance "color 0.25 0.5 0.8"
+material set glass.material optical OSL.param.in_volume_transmittance_distance "float 20"
+material assign ball.r glass.material
+----
+
+Volume transmittance specifies the surviving linear RGB fraction over the
+given distance.  A path of length `d` has attenuation `T^(d/D)`, per channel,
+for transmittance `T` and positive reference distance `D`.  A zero reference
+distance disables volume absorption.  Distances use the common-space units
+of the geometry passed to the renderer; material parameters receive no
+implicit distance conversion.
+
+When the inside and outside indices match, the glass BSDF transmits straight
+through, including for rough surfaces.  Appleseed samples this as a specular
+delta event because the microfacet transmission density is singular at
+matching indices.  The modern OSL integration also preserves explicit
+function signatures for native closure prepare/setup callbacks; opaque LLVM
+pointer values alone do not provide those signatures.
+
+Secondary procedural intersections preserve the hit point from the actual
+offset ray.  Reconstructing it from the original, unshifted origin can put
+an exit point inside the solid, causing repeated self-intersections and dark
+artifacts.  The renderer preserves the actual point through copies and side
+changes and uses it when computing subsequent offsets.
+
+`regress-art-transmission` isolates absorption by matching the glass index
+to the environment's index of one.  It compares rendered attenuation with
+independent analytic solid path lengths under a constant environment, for
+orthographic and perspective views.  The cases cover CSG cubes, spheres,
+ellipsoids, a box with a cylindrical bore, and flat and smooth solid BOTs.
+A disabled-absorption control must match the environment and disagree with
+the absorbing reference.  Inside-camera emission checks cover exit-face
+material assignment.  A native transformed-slab test checks actual secondary
+hit positions, copying, side changes, and escape without another hit.
+
+The index-1.5 render compares geometrically identical CSG and BOT cubes.
+That establishes agreement between these geometry paths, rather than an
+independent reference for refraction or energy conservation.  Nested
+indices, rough-glass transport, caustics, transmitted shadows, overlapping
+media, thin surfaces, and bump/normal-mapped transmission need further
+qualification before a general production-glass claim.
 
 == Surface coordinates
 
