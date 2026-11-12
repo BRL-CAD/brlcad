@@ -68,11 +68,16 @@ The modernized dependency build has been exercised with LLVM 23.1.5, OSL
 is disabled.  The OSL compatibility patch also accommodates LLVM builds
 that have libxml2 enabled.
 
-The renderer's shader-query caches now use C++17 `std::optional`, and Wave
-is no longer requested by Appleseed or `art`.  The validated runtime graph
-also no longer loads Boost.Serialization.  Boost remains required for
-atomics, threading, time, filesystems, regular expressions, system support,
-and hash containers; removing Wave does not make this a Boost-free build.
+Appleseed's core and `art` no longer require Boost.  Fixed internal patterns,
+filesystem, threading, time, atomics, and utility helpers use standard C++17.
+Public Perl-style filters use PCRE2; its documented newline edge semantics
+replace engine-specific Boost behavior.  Optional Appleseed Python bindings
+still require Boost and are disabled in the bext renderer stack.
+
+The sandbox and installed shader standard headers come from the selected
+OSL package.  Appleseed's older copies are no longer distributed.  Custom
+shaders that need Appleseed closure declarations should explicitly include
+`appleseed/as_osl_extensions.h` through the installed helper namespace.
 
 [cols="2,3"]
 |===
@@ -132,8 +137,12 @@ independent renderer references; librt BOT coverage comes from `regress-art`.
 |Installed builds across platforms
 |The current renderer validation was performed on FreeBSD.  Custom shader
 compilation through the selected SDK's installed helper headers and rendering
-are checked.  Linux, Windows, and macOS runtime qualification and relocatable
-installation remain open.
+are checked.  A finalized SDK copied to a different directory compiles an
+OSL helper shader, builds an installed-API consumer, and renders without
+loading libraries from its producer directory.  The runtime graph still
+loads system FreeType, its PNG support, and ICU, so a self-contained bundle
+is not yet qualified.  Linux, Windows, and macOS runtime qualification
+remain open.
 |===
 
 == Basic rendering
@@ -638,7 +647,16 @@ remain unqualified.  Literal array assignments are still unsupported.
 
 `art` resolves project assets relative to the database directory, including
 its `shaders` subdirectory, and also searches the selected Appleseed
-`appleseed`, `max`, and `maya` shader libraries.  Build-directory paths and the caller's working directory are
+`appleseed`, `max`, and `maya` shader libraries.  An installation containing
+`shaders/appleseed` beside its `bin` directory supplies these libraries and
+its OSL headers relative to the running application.  Development builds
+without staged renderer resources use the configured Appleseed prefix.
+`regress-art-resources` renders a shader available only in a separate
+installation directory, using an independent project-local reference.
+This test qualifies resource lookup while retaining build-tree libraries;
+it does not establish a self-contained binary distribution.
+
+Build-directory paths and the caller's working directory are
 not part of the project convention.  Keep database-relative asset paths
 when moving a project to another directory.
 
