@@ -63,10 +63,10 @@ struct gex_args {
 
 static const struct bu_arg_option gex_options[] = {
     BU_ARG_FLAG("h", "help", struct gex_args, help, "Print help and exit"),
-    BU_ARG_VALUE("f", "force", struct gex_args, force, BU_ARG_VALUE_BOOL,
-	BU_ARG_REQUIRED, "bool", "Allow overwriting existing files"),
-    BU_ARG_VALUE("c", "compress", struct gex_args, compress, BU_ARG_VALUE_BOOL,
-	BU_ARG_REQUIRED, "bool", "Create a copy with no free space"),
+    BU_ARG_FLAG("f", "force", struct gex_args, force,
+	"Allow overwriting existing files"),
+    BU_ARG_FLAG("c", "compress", struct gex_args, compress,
+	"Create a copy with no free space"),
     BU_ARG_VALUE("d", "dump", struct gex_args, dump_object, BU_ARG_VALUE_STRING,
 	BU_ARG_REQUIRED, "object", "Hexdump a specific object"),
     BU_ARG_OPTION_NULL

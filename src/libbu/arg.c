@@ -3206,7 +3206,8 @@ bu_arg_schema_describe_json(const struct bu_arg_schema *schema)
     if (!schema)
 	return NULL;
 
-    bu_vls_strcat(&out, "{\"kind\":\"native\",\"name\":");
+    bu_vls_printf(&out, "{\"schema_version\":%d,\"kind\":\"native\",\"name\":",
+	BU_ARG_SCHEMA_JSON_VERSION);
     bu_arg_json_string(&out, schema->name);
     bu_vls_strcat(&out, ",\"help\":");
     bu_arg_json_string(&out, schema->help);
@@ -5466,7 +5467,8 @@ bu_arg_tree_describe_json(const struct bu_arg_tree *tree)
     if (!tree || !tree->root_schema)
 	return NULL;
     root_json = bu_arg_schema_describe_json(tree->root_schema);
-    bu_vls_strcat(&out, "{\"kind\":\"native_tree\",\"root\":");
+    bu_vls_printf(&out, "{\"schema_version\":%d,\"kind\":\"native_tree\",\"root\":",
+	BU_ARG_SCHEMA_JSON_VERSION);
     bu_vls_strcat(&out, root_json ? root_json : "{}");
     bu_vls_strcat(&out, ",\"child_phase\":");
     bu_arg_json_string(&out, cmd_tree_phase_name(tree->child_phase));
@@ -6675,7 +6677,8 @@ bu_arg_forms_describe_json(const struct bu_arg_forms *forms)
 
     if (!forms || BU_STR_EMPTY(forms->name) || !forms->forms)
 	return NULL;
-    bu_vls_strcat(&out, "{\"kind\":\"native_forms\",\"name\":");
+    bu_vls_printf(&out, "{\"schema_version\":%d,\"kind\":\"native_forms\",\"name\":",
+	BU_ARG_SCHEMA_JSON_VERSION);
     bu_arg_json_string(&out, forms->name);
     bu_vls_strcat(&out, ",\"help\":");
     bu_arg_json_string(&out, forms->help);

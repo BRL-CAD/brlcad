@@ -2967,7 +2967,7 @@ static const struct bu_arg_option edit_options[] = {
     BU_ARG_FLAG("F", "abandon", struct ged_edit_ctx, flag_F, "Abandon: discard intermediate state, use on-disk"),
     BU_ARG_FLAG("i", "intermediate", struct ged_edit_ctx, flag_i, "Intermediate: apply to temp buffer only (no disk write)"),
     BU_ARG_FLAG(NULL, "occurrence", struct ged_edit_ctx, occurrence, "Edit the final combination arc"),
-    {NULL, "list-all-prim-ops", "list-all-prim-ops", "[=json]", "List all available primitive edit operations (use =json for JSON)",
+    {NULL, "list-all-prim-ops", "list-all-prim-ops", "=json", "List all available primitive edit operations (use =json for JSON)",
 	BU_ARG_VALUE_CUSTOM, offsetof(struct ged_edit_ctx, list_all_prim_ops), _parse_edit_list_all, NULL, NULL, NULL,
 	0, 0, NULL, BU_ARG_OPTIONAL, &edit_attached_only_arg_shape, NULL, NULL,
 	BU_ARG_VALUE_RANGE_NONE, BU_ARG_SHAPE_SCALAR},
@@ -3613,8 +3613,9 @@ edit_grammar_json(void)
 	    bu_free(operations, "edit operation schema JSON");
 	return NULL;
     }
-    bu_vls_printf(&json, "{\"kind\":\"edit\",\"root\":%s,"
-	"\"generic_operations\":%s}", root, operations);
+    bu_vls_printf(&json, "{\"schema_version\":%d,\"kind\":\"edit\",\"root\":%s,"
+	"\"generic_operations\":%s}", BU_ARG_SCHEMA_JSON_VERSION, root,
+	operations);
     bu_free(root, "edit root schema JSON");
     bu_free(operations, "edit operation schema JSON");
     return bu_vls_strgrab(&json);

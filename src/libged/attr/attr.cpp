@@ -73,7 +73,7 @@ ged_attr_core(struct ged *gedp, int argc, const char *argv[])
 #include "../include/plugin.h"
 
 static const struct bu_arg_option attr_schema_options[] = {
-    BU_ARG_UNBOUND("c", NULL, "c", BU_ARG_VALUE_INTEGER, BU_ARG_REQUIRED, "sep_char",
+    BU_ARG_UNBOUND("c", NULL, "c", BU_ARG_VALUE_CHAR, BU_ARG_REQUIRED, "separator",
 	"Separate output fields with this character", NULL),
     BU_ARG_OPTION_NULL
 };
