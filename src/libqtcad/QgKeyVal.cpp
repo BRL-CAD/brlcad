@@ -43,7 +43,7 @@ QgKeyValNode::~QgKeyValNode()
 // *********** Model **************
 
 QgKeyValModel::QgKeyValModel(QObject *aParent)
-: QAbstractItemModel(aParent)
+: QAbstractItemModel(aParent), m_root(nullptr)
 {
 }
 
@@ -65,6 +65,7 @@ QgKeyValModel::data(const QModelIndex & idx, int role) const
 {
     if (!idx.isValid()) return QVariant();
     QgKeyValNode *curr_node = IndexNode(idx);
+    if (!curr_node) return QVariant();
     if (role == Qt::DisplayRole && idx.column() == 0) return QVariant(curr_node->name);
     if (role == Qt::DisplayRole && idx.column() == 1) return QVariant(curr_node->value);
     return QVariant();
@@ -77,6 +78,7 @@ QgKeyValModel::setData(const QModelIndex & idx, const QVariant & value, int role
     QVector<int> roles;
     bool ret = false;
     QgKeyValNode *curr_node = IndexNode(idx);
+    if (!curr_node) return false;
     if (role == Qt::DisplayRole) {
 	curr_node->name = value.toString();
 	roles.append(Qt::DisplayRole);
@@ -88,30 +90,38 @@ QgKeyValModel::setData(const QModelIndex & idx, const QVariant & value, int role
 
 void QgKeyValModel::setRootNode(QgKeyValNode *root)
 {
-    m_root = root;
     beginResetModel();
+    m_root = root;
     endResetModel();
 }
 
 QModelIndex QgKeyValModel::index(int row, int column, const QModelIndex &parent_idx) const
 {
-    if (hasIndex(row, column, parent_idx)) {
-	QgKeyValNode *cnode = IndexNode(parent_idx)->children.at(row);
-	return createIndex(row, column, cnode);
-    }
-    return QModelIndex();
+    if (!hasIndex(row, column, parent_idx)) return QModelIndex();
+    QgKeyValNode *parent_node = IndexNode(parent_idx);
+    if (!parent_node || row >= parent_node->children.count())
+	return QModelIndex();
+    return createIndex(row, column, parent_node->children.at(row));
 }
 
 QModelIndex QgKeyValModel::parent(const QModelIndex &child) const
 {
-    QgKeyValNode *pnode = IndexNode(child)->parent;
-    if (pnode == m_root) return QModelIndex();
-    return createIndex(NodeRow(pnode), 0, pnode);
+    if (!child.isValid() || child.model() != this) return QModelIndex();
+    QgKeyValNode *child_node = IndexNode(child);
+    if (!child_node || child_node == m_root || !child_node->parent)
+	return QModelIndex();
+    QgKeyValNode *parent_node = child_node->parent;
+    if (parent_node == m_root) return QModelIndex();
+    const int parent_row = NodeRow(parent_node);
+    return parent_row >= 0 ? createIndex(parent_row, 0, parent_node) :
+	QModelIndex();
 }
 
 int QgKeyValModel::rowCount(const QModelIndex &parent_idx) const
 {
-    return IndexNode(parent_idx)->children.count();
+    if (parent_idx.isValid() && parent_idx.column() != 0) return 0;
+    QgKeyValNode *parent_node = IndexNode(parent_idx);
+    return parent_node ? parent_node->children.count() : 0;
 }
 
 int QgKeyValModel::columnCount(const QModelIndex &parent_idx) const
@@ -122,13 +132,15 @@ int QgKeyValModel::columnCount(const QModelIndex &parent_idx) const
 
 QModelIndex QgKeyValModel::NodeIndex(QgKeyValNode *node) const
 {
-    if (node == m_root) return QModelIndex();
-    return createIndex(NodeRow(node), 0, node);
+    if (!node || node == m_root) return QModelIndex();
+    const int row = NodeRow(node);
+    return row >= 0 ? createIndex(row, 0, node) : QModelIndex();
 }
 
 QgKeyValNode * QgKeyValModel::IndexNode(const QModelIndex &idx) const
 {
     if (idx.isValid()) {
+	if (idx.model() != this) return nullptr;
 	return static_cast<QgKeyValNode *>(idx.internalPointer());
     }
     return m_root;
@@ -136,6 +148,7 @@ QgKeyValNode * QgKeyValModel::IndexNode(const QModelIndex &idx) const
 
 int QgKeyValModel::NodeRow(QgKeyValNode *node) const
 {
+    if (!node || !node->parent) return -1;
     return node->parent->children.indexOf(node);
 }
 

@@ -22,6 +22,7 @@
 #include "ged/database.h"
 #include "ged/scene.h"
 #include "ged/selection.h"
+#include "qtcad/QgAttributesModel.h"
 #include "qtcad/QgModel.h"
 #include "qtcad/QgSession.h"
 #include "qtcad/QgSignalFlags.h"
@@ -36,6 +37,7 @@ private slots:
     void suppliesModelContext();
     void reconcilesModelEvents();
     void tracksDuplicateSelectionOccurrences();
+    void tracksSessionAttributes();
 };
 
 static bool
@@ -458,6 +460,70 @@ QgSessionTest::tracksDuplicateSelectionOccurrences()
     QCOMPARE(model.rowCount(firstInnerIndex), 0);
     QCOMPARE(model.rowCount(secondInnerIndex), 0);
     QCOMPARE(layoutChanges.count(), 0);
+}
+
+void
+QgSessionTest::tracksSessionAttributes()
+{
+    QTemporaryDir temporaryDirectory;
+    QVERIFY(temporaryDirectory.isValid());
+    QByteArray databasePath = QFile::encodeName(
+	temporaryDirectory.filePath("attributes.g"));
+    constexpr int databaseVersion = 5;
+    struct db_i *created = db_create(databasePath.constData(),
+	databaseVersion);
+    QVERIFY(created != DBI_NULL);
+    db_close(created);
+
+    QgModel model;
+    const char *openArguments[] = {"open", databasePath.constData()};
+    QCOMPARE(model.run_cmd(model.ged()->ged_result_str, 2, openArguments),
+	BRLCAD_OK);
+    const char *makeArguments[] = {"make", "attribute.s", "sph"};
+    QCOMPARE(model.run_cmd(model.ged()->ged_result_str, 3, makeArguments),
+	BRLCAD_OK);
+    const char *firstAttribute[] = {
+	"attr", "set", "attribute.s", "test", "first"
+    };
+    QCOMPARE(model.run_cmd(model.ged()->ged_result_str, 5, firstAttribute),
+	BRLCAD_OK);
+    QgAttributesModel attributes(model.session(), nullptr, nullptr, 0, 1);
+    QAbstractItemModelTester tester(&attributes,
+	QAbstractItemModelTester::FailureReportingMode::QtTest);
+    QModelIndex objectIndex = static_cast<QAbstractItemModel *>(&model)->index(
+	0, 0);
+    QVERIFY(objectIndex.isValid());
+    attributes.refresh(objectIndex);
+    QCOMPARE(attributes.rowCount(QModelIndex()), 1);
+    QCOMPARE(attributes.data(attributes.index(0, 0, QModelIndex())).toString(),
+	QString("test"));
+    QCOMPARE(attributes.data(attributes.index(0, 1, QModelIndex())).toString(),
+	QString("first"));
+
+    QSignalSpy resets(&attributes, &QAbstractItemModel::modelReset);
+    const char *secondAttribute[] = {
+	"attr", "set", "attribute.s", "test", "second"
+    };
+    QCOMPARE(model.run_cmd(model.ged()->ged_result_str, 5, secondAttribute),
+	BRLCAD_OK);
+    QCOMPARE(resets.count(), 1);
+    QCOMPARE(attributes.data(attributes.index(0, 1, QModelIndex())).toString(),
+	QString("second"));
+
+    model.session()->notifyViewChanged(1);
+    QCOMPARE(resets.count(), 1);
+
+    const char *killArguments[] = {"kill", "attribute.s"};
+    QCOMPARE(model.run_cmd(model.ged()->ged_result_str, 2, killArguments),
+	BRLCAD_OK);
+    QCOMPARE(resets.count(), 2);
+    QCOMPARE(attributes.rowCount(QModelIndex()), 0);
+
+    const char *closeArguments[] = {"closedb"};
+    QCOMPARE(model.run_cmd(model.ged()->ged_result_str, 1, closeArguments),
+	BRLCAD_OK);
+    QCOMPARE(resets.count(), 3);
+    QCOMPARE(attributes.rowCount(QModelIndex()), 0);
 }
 
 QTEST_APPLESS_MAIN(QgSessionTest)

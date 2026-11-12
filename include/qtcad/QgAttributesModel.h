@@ -26,25 +26,32 @@
 #ifndef QGATTRIBUTESMODEL_H
 #define QGATTRIBUTESMODEL_H
 
-#ifndef Q_MOC_RUN
-#include "bu/avs.h"
-#include "bv.h"
-#include "raytrace.h"
-#include "ged.h"
-#endif
+#include <QByteArray>
+#include <QStringList>
 
 #include "qtcad/defines.h"
 #include "qtcad/QgKeyVal.h"
 
+struct bu_attribute_value_set;
+struct db_i;
+struct directory;
+class QgSession;
+
 class QTCAD_EXPORT QgAttributesModel : public QgKeyValModel
 {
     Q_OBJECT
+    Q_DISABLE_COPY_MOVE(QgAttributesModel)
 
     public:  // "standard" custom tree model functions
-	explicit QgAttributesModel(QObject *parent = 0, struct db_i *dbip = DBI_NULL, struct directory *dp = RT_DIR_NULL, int show_std = 0, int show_user = 0);
-	~QgAttributesModel();
+	explicit QgAttributesModel(QObject *parent = nullptr,
+		struct db_i *dbip = nullptr, struct directory *dp = nullptr,
+		int show_std = 0, int show_user = 0);
+	explicit QgAttributesModel(QgSession *session, QObject *parent,
+		struct directory *dp = nullptr,
+		int show_std = 0, int show_user = 0);
+	~QgAttributesModel() override;
 
-	bool hasChildren(const QModelIndex &parent) const;
+	bool hasChildren(const QModelIndex &parent) const override;
 	int update(struct db_i *new_dbip, struct directory *dp);
 
     public slots:
@@ -56,16 +63,17 @@ class QTCAD_EXPORT QgAttributesModel : public QgKeyValModel
 	void do_dbi_update(struct db_i *dbip);
 
     protected:
-	bool canFetchMore(const QModelIndex &parent) const;
-	void fetchMore(const QModelIndex &parent);
+	bool canFetchMore(const QModelIndex &parent) const override;
+	void fetchMore(const QModelIndex &parent) override;
 
     private:
-	void add_Children(const char *name, QgKeyValNode *curr_node);
-	struct db_i *current_dbip;
-	struct directory *current_dp;
-	struct bu_attribute_value_set *avs;
-	int std_visible;
-	int user_visible;
+	void add_standard_nodes(QgKeyValNode *root);
+	void add_children(QgKeyValNode *node, const QStringList &values);
+	struct db_i *current_dbip = nullptr;
+	struct bu_attribute_value_set *avs = nullptr;
+	QByteArray current_name;
+	bool std_visible = false;
+	bool user_visible = false;
 };
 
 #endif /* QGATTRIBUTESMODEL */

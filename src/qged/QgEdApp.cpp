@@ -39,12 +39,6 @@
 #include "QgEdFilter.h"
 
 int
-qged_pre_opendb_clbk(int UNUSED(ac), const char **UNUSED(av), void *UNUSED(gedp), void *UNUSED(ctx))
-{
-    return BRLCAD_OK;
-}
-
-int
 qged_post_opendb_clbk(int UNUSED(ac), const char **UNUSED(av), void *UNUSED(gedp), void *ctx)
 {
     QgEdApp *a = (QgEdApp *)ctx;
@@ -54,7 +48,6 @@ qged_post_opendb_clbk(int UNUSED(ac), const char **UNUSED(av), void *UNUSED(gedp
     if (ged_results_ret(a->mdl->ged()->ged_results) != BRLCAD_OK)
 	return BRLCAD_OK;
 
-    emit a->dbi_update(a->mdl->ged()->dbip);
     if (!a->w)
 	return BRLCAD_OK;
     if (!a->mdl->ged()->dbip) {
@@ -63,21 +56,6 @@ qged_post_opendb_clbk(int UNUSED(ac), const char **UNUSED(av), void *UNUSED(gedp
     }
     QString fileName(a->mdl->ged()->dbip->dbi_filename);
     a->w->statusBar()->showMessage(fileName);
-    return BRLCAD_OK;
-}
-
-int
-qged_pre_closedb_clbk(int UNUSED(ac), const char **UNUSED(av), void *UNUSED(gedp), void *UNUSED(ctx))
-{
-    return BRLCAD_OK;
-}
-
-int
-qged_post_closedb_clbk(int UNUSED(ac), const char **UNUSED(av), void *UNUSED(gedp), void *ctx)
-{
-    QgEdApp *a = (QgEdApp *)ctx;
-    if (a)
-	emit a->dbi_update(DBI_NULL);
     return BRLCAD_OK;
 }
 
@@ -247,10 +225,7 @@ QgEdApp::QgEdApp(int &argc, char *argv[], const char *g_file, int swrast_mode, i
     }
 
     // Assign QGED specific open/close db handlers to the gedp
-    ged_clbk_set(mdl->ged(), "opendb", BU_CLBK_PRE, &qged_pre_opendb_clbk, (void *)qApp);
     ged_clbk_set(mdl->ged(), "opendb", BU_CLBK_POST, &qged_post_opendb_clbk, (void *)qApp);
-    ged_clbk_set(mdl->ged(), "closedb", BU_CLBK_PRE, &qged_pre_closedb_clbk, (void *)qApp);
-    ged_clbk_set(mdl->ged(), "closedb", BU_CLBK_POST, &qged_post_closedb_clbk, (void *)qApp);
 
     // Assign QGED specific I/O handlers to the gedp
     mdl->ged()->ged_create_io_handler = &qt_create_io_handler;
@@ -275,7 +250,6 @@ QgEdApp::QgEdApp(int &argc, char *argv[], const char *g_file, int swrast_mode, i
 	    bu_exit(EXIT_FAILURE, "Error opening file %s\n", fname);
 	}
 	bu_free(fname, "path");
-	emit dbi_update(mdl->ged()->dbip);
     }
 
     // Send a view_change signal so widgets depending on view information
