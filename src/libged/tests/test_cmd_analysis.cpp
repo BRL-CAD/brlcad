@@ -975,9 +975,13 @@ main(int ac, char *av[])
     char *tree_help = NULL;
     int completion_count = 0;
     int argv_completion_count = 0;
+    char savekey_path[MAXPATHLEN] = "gca_savekey";
+    char wcodes_path[MAXPATHLEN] = "gca_wcodes";
     std::string completed_input;
 
     bu_setprogname(av[0]);
+    bu_temp_file_name(savekey_path, sizeof(savekey_path));
+    bu_temp_file_name(wcodes_path, sizeof(wcodes_path));
 
     if (ac != 2 && ac != 3) {
 	bu_log("Usage: %s moss.g [m35.g]\n", av[0]);
@@ -4819,7 +4823,7 @@ main(int ac, char *av[])
 	const char *adc_incomplete_hv_av[] = {"adc", "hv", "1"};
 	const char *tops_cluster_av[] = {"tops", "-an"};
 	const char *showmats_av[] = {"showmats", "-a", "all.g/tor.r"};
-	const char *wcodes_av[] = {"wcodes", "/tmp/ged_test_cmd_analysis_wcodes.txt", "all.g"};
+	const char *wcodes_av[] = {"wcodes", wcodes_path, "all.g"};
 	const char *cc_bad_av[] = {"cc", "only_name"};
 	const char *cpi_bad_av[] = {"cpi", "tor.r", "new.tgc", "unexpected"};
 	const char *cat_help_av[] = {"cat"};
@@ -4918,8 +4922,8 @@ main(int ac, char *av[])
 	    "0", "0", "0", "45", "30", "x", "1", "1", "y", "1", "1", "z", "1", "1", "0"};
 	const char *rfarb_valid_av[] = {"rfarb", "native_rfarb_for_schema.s",
 	    "0", "0", "0", "45", "30", "x", "1", "1", "y", "1", "1", "z", "1", "1", "1"};
-	const char *savekey_bad_time_av[] = {"savekey", "/tmp/ged_test_cmd_analysis_savekey.txt", "1oops"};
-	const char *savekey_valid_av[] = {"savekey", "/tmp/ged_test_cmd_analysis_savekey.txt", "1.5"};
+	const char *savekey_bad_time_av[] = {"savekey", savekey_path, "1oops"};
+	const char *savekey_valid_av[] = {"savekey", savekey_path, "1.5"};
 	const char *importfg4_bad_section_av[] = {"importFg4Section", "native_importfg4.s", "nope"};
 	const char *mrot_bad_angle_av[] = {"mrot", "0", "0", "nope"};
 	const char *mrot_angles_av[] = {"mrot", "0", "0", "0"};
@@ -8343,6 +8347,10 @@ cleanup:
 	bu_free(schema_json, "schema json");
     if (tree_help)
 	bu_free(tree_help, "native tree help");
+    if (bu_file_exists(savekey_path, NULL))
+	(void)bu_file_delete(savekey_path);
+    if (bu_file_exists(wcodes_path, NULL))
+	(void)bu_file_delete(wcodes_path);
     ged_cmd_analysis_clear(&analysis);
     if (gedp)
 	ged_close(gedp);
