@@ -70,6 +70,26 @@ image_mime(struct bu_vls *msg, size_t argc, const char **argv, void *set_mime)
 }
 
 
+static int
+positive_size(struct bu_vls *msg, size_t argc, const char **argv, void *set_size)
+{
+    size_t value;
+
+    BU_OPT_CHECK_ARGV0(msg, argc, argv, "positive integer");
+
+    if (!bu_opt_scan_size_t_range(argv[0], &value, 1, SIZE_MAX, NULL)) {
+	if (msg)
+	    bu_vls_sprintf(msg, "Invalid positive integer: %s\n", argv[0]);
+	return -1;
+    }
+
+    if (set_size)
+	*(size_t *)set_size = value;
+
+    return 1;
+}
+
+
 int
 main(int ac, const char **av)
 {
@@ -109,10 +129,10 @@ main(int ac, const char **av)
 	{"?", "",                 "",           NULL,         &need_help,             "",                                         },
 	{"o", "output",           "file",       &file_null,   (void *)&out_path,      "Output diff image file.",                  },
 	{"n", "nirt-output",      "prefix",     &bu_opt_str,  (void *)&nirt_prefix,   "Write nirt shotline script(s) for differing pixels. One file is produced per image that has PNG render metadata: <prefix>_img1.nirt and/or <prefix>_img2.nirt." },
-	{"",  "width-img1",       "#",          &bu_opt_int,  (void *)&width1,        "Image width of first image.",              },
-	{"",  "height-img1",      "#",          &bu_opt_int,  (void *)&height1,       "Image height of first image.",             },
-	{"",  "width-img2",       "#",          &bu_opt_int,  (void *)&width2,        "Image width of second image.",             },
-	{"",  "height-img2",      "#",          &bu_opt_int,  (void *)&height2,       "Image height of second image.",            },
+	{"",  "width-img1",       "#",          &positive_size, (void *)&width1,     "Image width of first image.",              },
+	{"",  "height-img1",      "#",          &positive_size, (void *)&height1,    "Image height of first image.",             },
+	{"",  "width-img2",       "#",          &positive_size, (void *)&width2,     "Image width of second image.",             },
+	{"",  "height-img2",      "#",          &positive_size, (void *)&height2,    "Image height of second image.",            },
 	{"",  "format-img1",      "format",     &image_mime,  (void *)&in_type_1,     "File format of first input file.",         },
 	{"",  "format-img2",      "format",     &image_mime,  (void *)&in_type_2,     "File format of second input file.",        },
 	{"",  "output-format",    "format",     &image_mime,  (void *)&out_type,      "File format of output file."               },
@@ -127,6 +147,7 @@ main(int ac, const char **av)
 
     if (uac == -1) {
 	bu_log("Parsing error: %s\n", bu_vls_addr(&parse_msgs));
+	ret = 1;
 	goto cleanup;
     }
 

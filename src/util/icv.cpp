@@ -96,6 +96,26 @@ image_mime(struct bu_vls *msg, size_t argc, const char **argv, void *set_mime)
 }
 
 
+static int
+positive_size(struct bu_vls *msg, size_t argc, const char **argv, void *set_size)
+{
+    size_t value;
+
+    BU_OPT_CHECK_ARGV0(msg, argc, argv, "positive integer");
+
+    if (!bu_opt_scan_size_t_range(argv[0], &value, 1, SIZE_MAX, NULL)) {
+	if (msg)
+	    bu_vls_sprintf(msg, "Invalid positive integer: %s\n", argv[0]);
+	return -1;
+    }
+
+    if (set_size)
+	*(size_t *)set_size = value;
+
+    return 1;
+}
+
+
 /* ---- internal utilities ----------------------------------------------- */
 
 /* Derive a MIME image type from a file's extension. */
@@ -213,10 +233,10 @@ cmd_diff(int ac, const char **av)
 	{"",  "output-format", "format", &image_mime, (void *)&out_type,     "File format for output image."                   },
 	{"",  "format-img1",   "format", &image_mime, (void *)&in_type_1,    "File format of first input image."               },
 	{"",  "format-img2",   "format", &image_mime, (void *)&in_type_2,    "File format of second input image."              },
-	{"",  "width-img1",    "#",      &bu_opt_int, (void *)&width1,       "Width of first input image (raw formats only)."  },
-	{"",  "height-img1",   "#",      &bu_opt_int, (void *)&height1,      "Height of first input image (raw formats only)." },
-	{"",  "width-img2",    "#",      &bu_opt_int, (void *)&width2,       "Width of second input image (raw formats only)." },
-	{"",  "height-img2",   "#",      &bu_opt_int, (void *)&height2,      "Height of second input image (raw formats only)."},
+	{"",  "width-img1",    "#",      &positive_size, (void *)&width1,    "Width of first input image (raw formats only)."  },
+	{"",  "height-img1",   "#",      &positive_size, (void *)&height1,   "Height of first input image (raw formats only)." },
+	{"",  "width-img2",    "#",      &positive_size, (void *)&width2,    "Width of second input image (raw formats only)." },
+	{"",  "height-img2",   "#",      &positive_size, (void *)&height2,   "Height of second input image (raw formats only)."},
 	BU_OPT_DESC_NULL
     };
 
@@ -508,8 +528,8 @@ main(int ac, const char **av)
 	{"?", "",                 "",           NULL,          &need_help,            "",                           },
 	{"i", "input",            "file",       &file_stat, (void *)&in_path_str,   "Input file.",                },
 	{"o", "output",           "file",       &file_null, (void *)&out_path_str,  "Output file.",               },
-	{"w", "width",            "#",          &bu_opt_int, (void *)&width,         "Image width.",               },
-	{"n", "height",           "#",          &bu_opt_int, (void *)&height,        "Image height.",              },
+	{"w", "width",            "#",          &positive_size, (void *)&width,      "Image width.",               },
+	{"n", "height",           "#",          &positive_size, (void *)&height,     "Image height.",              },
 	{"",  "input-format",     "format",     &image_mime, (void *)&in_type,       "File format of input file.", },
 	{"",  "output-format",    "format",     &image_mime, (void *)&out_type,      "File format of output file." },
 	BU_OPT_DESC_NULL
@@ -535,6 +555,7 @@ main(int ac, const char **av)
 
     if (uac == -1) {
 	bu_log("Parsing error: %s\n", bu_vls_addr(&parse_msgs));
+	ret = 1;
 	goto cleanup;
     }
 
