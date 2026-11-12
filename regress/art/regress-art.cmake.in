@@ -31,6 +31,21 @@ run("${VEXEC}" check "${WORK}/instances.png" 128 96)
 run("${EXEC}" ${RENDER_ARGS} -w 128 -n 96 -p 0 -o "${WORK}/arcs.png" "${WORK}/scene.g" arcs.g)
 run("${VEXEC}" check-pair "${WORK}/arcs.png" 128 96)
 
+# Custom shader compilation must work through the installed helper namespace.
+set(SDK_PROJECT "${WORK}/installed helpers")
+file(MAKE_DIRECTORY "${SDK_PROJECT}/shaders")
+foreach(shader IN ITEMS art_sdk_helpers art_emission)
+  configure_file("@CMAKE_CURRENT_BINARY_DIR@/${shader}.oso" "${SDK_PROJECT}/shaders/${shader}.oso" COPYONLY)
+endforeach()
+set(SDK_DB "${SDK_PROJECT}/helper.g")
+set(SDK_REFERENCE_DB "${SDK_PROJECT}/reference.g")
+run("${VEXEC}" create-material "${SDK_DB}" art_sdk_helpers)
+run("${VEXEC}" create-material "${SDK_REFERENCE_DB}" art_emission)
+run("${VEXEC}" set-material "${SDK_REFERENCE_DB}" OSL.param.in_color "color 0 1 0")
+run("${EXEC}" ${RENDER_ARGS} -w 64 -n 64 -p 0 -o "${WORK}/sdk_helper.png" "${SDK_DB}" mesh.r)
+run("${EXEC}" ${RENDER_ARGS} -w 64 -n 64 -p 0 -o "${WORK}/sdk_reference.png" "${SDK_REFERENCE_DB}" mesh.r)
+run("${VEXEC}" check-matching-image "${WORK}/sdk_helper.png" "${WORK}/sdk_reference.png" 64 64)
+
 # Material-object selection must use the same validated closure graph.
 run("${VEXEC}" create-material "${WORK}/material.g" as_plastic)
 run("${EXEC}" ${RENDER_ARGS} -w 128 -n 96 -p 85 -o "${WORK}/material.png" "${WORK}/material.g" all.g)

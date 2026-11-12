@@ -79,8 +79,17 @@ PNG/PIX output, single/multiple workers, and error exits.  Basic
 material-object selection and custom diffuse surface shaders are covered.
 Native primitive UVs and authored BOT UVs are covered by diagnostic
 emission shaders and exact intersection checks.  Typed single-shader
-parameters are validated and persisted through the material command.
-Networks and advanced closures remain unqualified.
+parameters and version 2 numeric and closure networks are validated and
+persisted through the material command.  Material-parent inheritance,
+per-instance overrides, and advanced closures remain unqualified.
+
+|Bump and normal-map nodes
+|Native normal-map chains preserve upstream normals when disabled.
+`regress-art-bump` checks constant height and independent analytic gradients
+on CSG and flat and smooth BOTs under both projections, including signed
+depth, zero-valued heights, degenerate footprints, and extreme unit changes.
+Image-height filtering, tangent-map handedness, and secondary rays remain
+unqualified.
 
 |Region instances
 |Full indexed database paths distinguish occurrences under different parents
@@ -109,8 +118,10 @@ texture renders, and selected Appleseed unit suites.  These provide
 independent renderer references; librt BOT coverage comes from `regress-art`.
 
 |Installed builds across platforms
-|The current renderer validation was performed on FreeBSD.  Linux, Windows,
-and macOS runtime qualification and relocatable installation remain open.
+|The current renderer validation was performed on FreeBSD.  Custom shader
+compilation through the selected SDK's installed helper headers and rendering
+are checked.  Linux, Windows, and macOS runtime qualification and relocatable
+installation remain open.
 |===
 
 == Basic rendering
@@ -416,6 +427,14 @@ libraries.  Build-directory paths and the caller's working directory are
 not part of the project convention.  Keep database-relative asset paths
 when moving a project to another directory.
 
+For shaders that include Appleseed helper headers, also pass
+`"-I$RENDERER_PREFIX/shaders/include"` to `oslc`.  The installed namespace
+includes the generated `appleseed/as_osl_extensions.h`.  Keep each `-I`
+joined to its directory; this compiler does not consume a separate directory
+argument.  The regression compiles a shader through the installed Maya
+helper header and renders an extension-function result against an
+independent emission reference.
+
 Shader metadata inspection follows the same ordered search paths as OSL
 execution.  A same-named compiled shader in the caller's working directory
 cannot supply a different interface for a project shader.  The regression
@@ -437,7 +456,7 @@ dependency installation.  Here `RENDERER_PREFIX` identifies that installation:
 
 ----
 mkdir -p shaders
-"$RENDERER_PREFIX/bin/oslc" -I "$RENDERER_PREFIX/share/OSL/shaders" \
+"$RENDERER_PREFIX/bin/oslc" "-I$RENDERER_PREFIX/share/OSL/shaders" \
     -o shaders/painted.oso painted.osl
 ----
 
@@ -488,7 +507,7 @@ selection and anisotropic filtering use the automatic OSL derivatives,
 including the UV scaling operation.  Compile and select the preview:
 
 ----
-"$RENDERER_PREFIX/bin/oslc" -I "$RENDERER_PREFIX/share/OSL/shaders" \
+"$RENDERER_PREFIX/bin/oslc" "-I$RENDERER_PREFIX/share/OSL/shaders" \
     -o shaders/texture_preview.oso texture_preview.osl
 ----
 
