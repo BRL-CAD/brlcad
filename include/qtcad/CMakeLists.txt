@@ -16,6 +16,7 @@ set(
   QgModel.h
   QgPolyFilter.h
   QgQuadView.h
+  QgRoles.h
   QgSW.h
   QgSelectFilter.h
   QgSession.h

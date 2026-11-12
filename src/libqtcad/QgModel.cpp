@@ -552,7 +552,8 @@ QgModel::notifySelectionItemsChanged()
 	load_hashes(GED_SELECTION_HASH_GRAND_PARENT_OBJECT);
 
     QVector<int> roles;
-    roles << SelectDisplayRole << HighlightDisplayRole;
+    roles << QgDataRoles::SelectDisplayRole
+	<< QgDataRoles::HighlightDisplayRole;
     std::unordered_set<QgItem *> notified;
     auto notify_item = [this, &roles, &notified](QgItem *item) {
 	if (!item || !notified.insert(item).second)
@@ -597,7 +598,7 @@ void
 QgModel::notifyDrawnItemsChanged()
 {
     QVector<int> roles;
-    roles << DrawnDisplayRole;
+    roles << QgDataRoles::DrawnDisplayRole;
     for (QgItem *item : allItems()) {
 	QModelIndex index = NodeIndex(item);
 	if (index.isValid())
@@ -1400,22 +1401,22 @@ QgModel::data(const QModelIndex &index, int role) const
     QgItem *qi= getItem(index);
     if (role == Qt::DisplayRole)
 	return QVariant(qi->displayName());
-    if (role == BoolInternalRole)
+    if (role == QgDataRoles::BoolInternalRole)
 	return QVariant(qi->booleanOperation());
-    if (role == DirectoryInternalRole)
+    if (role == QgDataRoles::DirectoryInternalRole)
 	return QVariant::fromValue((void *)(qi->directoryEntry()));
-    if (role == DrawnDisplayRole) {
+    if (role == QgDataRoles::DrawnDisplayRole) {
 	std::vector<unsigned long long> path = qi->path_items();
 	return QVariant(ged_scene_path_state_ids(ged(), ged()->ged_gvp,
 	    path.data(), path.size(), GED_SCENE_DRAW_DEFAULT));
     }
-    if (role == SelectDisplayRole)
+    if (role == QgDataRoles::SelectDisplayRole)
 	return QVariant(itemSelected(qi));
 
-    if (role == TypeIconDisplayRole)
+    if (role == QgDataRoles::TypeIconDisplayRole)
 	return QVariant(qi->typeIcon());
 
-    if (role == HighlightDisplayRole)
+    if (role == QgDataRoles::HighlightDisplayRole)
 	return QVariant(itemHighlight(qi));
 
     return QVariant();

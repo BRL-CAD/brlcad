@@ -35,6 +35,7 @@
 #include <QUrl>
 #include "ged/scene.h"
 #include "qtcad/QgModel.h"
+#include "qtcad/QgRoles.h"
 #include "qtcad/QgTreeSelectionModel.h"
 #include "qtcad/QgTreeView.h"
 #include "qtcad/QgSignalFlags.h"
@@ -45,13 +46,13 @@ void gObjDelegate::paint(QPainter *painter, const QStyleOptionViewItem &option, 
     if (!cadtreeview)
 	return;
 
-    int sflag = index.data(QgModel::SelectDisplayRole).toInt();
+    int sflag = index.data(QgDataRoles::SelectDisplayRole).toInt();
     if (sflag == 1) {
 	painter->fillRect(option.rect, option.palette.highlight());
 	goto text_string;
     }
 
-    aflag = index.data(QgModel::HighlightDisplayRole).toInt();
+    aflag = index.data(QgDataRoles::HighlightDisplayRole).toInt();
     if (aflag == 1) {
 	painter->fillRect(option.rect, QBrush(QColor(220, 200, 30)));
 	goto text_string;
@@ -68,7 +69,7 @@ void gObjDelegate::paint(QPainter *painter, const QStyleOptionViewItem &option, 
 
 text_string:
     QString text = index.data().toString();
-    int bool_op = index.data(QgModel::BoolInternalRole).toInt();
+    int bool_op = index.data(QgDataRoles::BoolInternalRole).toInt();
     switch (bool_op) {
 	case DB_OP_INTERSECT:
 	    text.prepend("  + ");
@@ -87,7 +88,7 @@ text_string:
     //
     // draw text label
 
-    QImage type_icon = index.data(QgModel::TypeIconDisplayRole).value<QImage>().scaledToHeight(option.rect.height()-2);
+    QImage type_icon = index.data(QgDataRoles::TypeIconDisplayRole).value<QImage>().scaledToHeight(option.rect.height()-2);
     QRect image_rect = type_icon.rect();
     image_rect.moveTo(option.rect.topLeft());
     image_rect.translate(0, 1);
@@ -100,7 +101,7 @@ text_string:
     painter->setFont(f);
 #endif
     QPen tpen = painter->pen();
-    int drawn_state = index.data(QgModel::DrawnDisplayRole).toInt();
+    int drawn_state = index.data(QgDataRoles::DrawnDisplayRole).toInt();
     if (drawn_state == 1) {
 	if (sflag) {
 	    painter->setPen(QColor(0, 70, 0));
@@ -119,7 +120,7 @@ QSize gObjDelegate::sizeHint(const QStyleOptionViewItem &option, const QModelInd
 {
     QSize name_size = option.fontMetrics.size(Qt::TextSingleLine, index.data().toString());
     QSize bool_size;
-    int bool_op = index.data(QgModel::BoolInternalRole).toInt();
+    int bool_op = index.data(QgDataRoles::BoolInternalRole).toInt();
     switch (bool_op) {
 	case DB_OP_UNION:
 	    bool_size = option.fontMetrics.size(Qt::TextSingleLine, " ");
@@ -173,11 +174,11 @@ QgTreeView::QgTreeView(QWidget *pparent, QgModel *treemodel) : QTreeView(pparent
 void
 QgTreeView::drawBranches(QPainter* painter, const QRect& rrect, const QModelIndex& index) const
 {
-    int selected_state = index.data(QgModel::SelectDisplayRole).toInt();
+    int selected_state = index.data(QgDataRoles::SelectDisplayRole).toInt();
     if (selected_state) {
 	painter->fillRect(rrect, palette().highlight());
     } else {
-	int aflag = index.data(QgModel::HighlightDisplayRole).toInt();
+	int aflag = index.data(QgDataRoles::HighlightDisplayRole).toInt();
 	if (!(QgTreeView *)this->isExpanded(index) && aflag == 1) {
 	    painter->fillRect(rrect, QBrush(QColor(220, 200, 30)));
 	}
@@ -297,7 +298,7 @@ QgTreeView::do_draw_toggle(const QModelIndex &index)
     QTCAD_SLOT("QgTreeView::do_draw_toggle", 1);
     QgItem *cnode = static_cast<QgItem *>(index.internalPointer());
 
-    int state = index.data(QgModel::DrawnDisplayRole).toInt();
+    int state = index.data(QgDataRoles::DrawnDisplayRole).toInt();
     if (state == GED_SCENE_PATH_NOT_DRAWN)
 	(void)m->draw(cnode);
     if (state == GED_SCENE_PATH_DRAWN ||

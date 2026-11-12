@@ -33,7 +33,7 @@
 #include "bu/malloc.h"
 #include "raytrace.h"
 #include "qtcad/QgAttributesModel.h"
-#include "qtcad/QgModel.h"
+#include "qtcad/QgRoles.h"
 #include "qtcad/QgSession.h"
 
 QgAttributesModel::QgAttributesModel(QObject *parentobj, struct db_i *dbip,
@@ -178,7 +178,7 @@ QgAttributesModel::refresh(const QModelIndex &idx)
 {
     QTCAD_SLOT("QgAttributesModel::refresh", 1);
     struct directory *selected = static_cast<struct directory *>(
-	idx.data(QgModel::DirectoryInternalRole).value<void *>());
+	idx.data(QgDataRoles::DirectoryInternalRole).value<void *>());
     update(current_dbip, selected);
 }
 

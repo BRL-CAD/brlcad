@@ -78,6 +78,7 @@
 #include <QModelIndex>
 
 #include "qtcad/defines.h"
+#include "qtcad/QgRoles.h"
 
 class QgSession;
 
@@ -286,13 +287,13 @@ class QTCAD_EXPORT QgModel : public QAbstractItemModel
 	QgItem *getItem(const QModelIndex &index) const;
 
 	enum CADDataRoles {
-	    BoolInternalRole = Qt::UserRole + 1000,
-	    BoolDisplayRole = Qt::UserRole + 1001,
-	    DirectoryInternalRole = Qt::UserRole + 1002,
-	    TypeIconDisplayRole = Qt::UserRole + 1003,
-	    HighlightDisplayRole = Qt::UserRole + 1004,
-	    DrawnDisplayRole = Qt::UserRole + 1005,
-	    SelectDisplayRole = Qt::UserRole + 1006
+	    BoolInternalRole = QgDataRoles::BoolInternalRole,
+	    BoolDisplayRole = QgDataRoles::BoolDisplayRole,
+	    DirectoryInternalRole = QgDataRoles::DirectoryInternalRole,
+	    TypeIconDisplayRole = QgDataRoles::TypeIconDisplayRole,
+	    HighlightDisplayRole = QgDataRoles::HighlightDisplayRole,
+	    DrawnDisplayRole = QgDataRoles::DrawnDisplayRole,
+	    SelectDisplayRole = QgDataRoles::SelectDisplayRole
 	};
 
 	// Return data used for displaying each individual entry
