@@ -23,14 +23,9 @@
  *
  * Reference HYP: Vi=(0,0,0), Hi=(0,0,10), A=(4,0,0), b=3, bnr=0.5
  *
- * Note on e_inpara convention for HYP:
- *   For ECMD_HYP_H/SCALE_A/SCALE_B/C, e_para[0] is used as es_scale
- *   directly (multiplies the current parameter), NOT as an absolute value.
- *   This differs from EPA/EHY where e_para[0] sets an absolute length.
- *
- * Expected values are derived from the MGED editing code in
- * brlcad/src/mged/edsol.c (search for MENU_HYP_*), confirmed by
- * analytical tracing of the same code path.
+ * HYP descriptors specify absolute lengths in local units for H/A/B and
+ * absolute dimensionless ratios for C.  MGED and mouse scale factors are
+ * relative.
  *
  * Bug fixed: MAT4X3VEC aliasing in ecmd_hyp_rot_h.
  * MGED has the identical bug.  Fix justified: pure rotation must
@@ -193,10 +188,9 @@ rt_edit_test_hyp(void)
     }
 
     /* ================================================================
-     * ECMD_HYP_H  (scale Hi; note: e_para[0] is es_scale, not |Hi|)
-     * MGED: es_scale = e_para[0] (scale factor); Hi' = Hi * es_scale
-     * es_scale=2: Hi'=(0,0,20)
-     * Restore: e_para[0]=0.5, es_scale=0.5, Hi'=(0,0,10)
+     * ECMD_HYP_H  (scale Hi; typed e_para[0] is absolute |Hi|)
+     * Interactive es_scale=2: Hi'=(0,0,20)
+     * Restore: e_para[0]=10, derived es_scale=0.5, Hi'=(0,0,10)
      * ================================================================*/
     EDOBJ[dp->d_minor_type].ft_set_edit_mode(s, ECMD_HYP_H);
     s->e_inpara = 0;
@@ -208,14 +202,21 @@ rt_edit_test_hyp(void)
 	bu_exit(1, "ERROR: ECMD_HYP_H failed\n");
     bu_log("ECMD_HYP_H SUCCESS: Hi=%g,%g,%g\n", V3ARGS(edit_hyp->hyp_Hi));
 
-    /* Restore via e_inpara (e_para[0] = scale factor 0.5, Hi goes from 20→10) */
-    s->e_inpara = 1;
-    s->e_para[0] = 0.5;
+    /* Restore via the absolute current-value contract. */
+    s->e_typed_input = 1;    s->e_inpara = 1;
+    s->e_para[0] = 10.0;
     VMOVE(cmp_hyp->hyp_Hi, orig_hyp->hyp_Hi);
     rt_edit_process(s);
     if (hyp_diff("ECMD_HYP_H restore", cmp_hyp, edit_hyp))
 	bu_exit(1, "ERROR: ECMD_HYP_H restore failed\n");
     bu_log("ECMD_HYP_H SUCCESS: Hi restored to %g,%g,%g\n", V3ARGS(edit_hyp->hyp_Hi));
+
+    s->e_inpara = 1;
+    s->e_para[0] = 2.0;
+    VSCALE(cmp_hyp->hyp_Hi, orig_hyp->hyp_Hi, s->e_para[0]);
+    if (rt_edit_process(s) != BRLCAD_OK ||
+	hyp_diff("ECMD_HYP_H legacy scale factor", cmp_hyp, edit_hyp))
+	bu_exit(1, "ERROR: Legacy HYP keyboard input did not use a scale factor\n");
 
     /* ================================================================
      * ECMD_HYP_SCALE_A  (scale semi-major axis A)
@@ -231,8 +232,9 @@ rt_edit_test_hyp(void)
 	bu_exit(1, "ERROR: ECMD_HYP_SCALE_A failed\n");
     bu_log("ECMD_HYP_SCALE_A SUCCESS: A=%g,%g,%g\n", V3ARGS(edit_hyp->hyp_A));
 
+    s->e_typed_input = 1;
     s->e_inpara = 1;
-    s->e_para[0] = 0.5;
+    s->e_para[0] = 4.0;
     VMOVE(cmp_hyp->hyp_A, orig_hyp->hyp_A);
     rt_edit_process(s);
     if (hyp_diff("ECMD_HYP_SCALE_A restore", cmp_hyp, edit_hyp))
@@ -253,8 +255,9 @@ rt_edit_test_hyp(void)
 	bu_exit(1, "ERROR: ECMD_HYP_SCALE_B failed\n");
     bu_log("ECMD_HYP_SCALE_B SUCCESS: b=%g\n", edit_hyp->hyp_b);
 
+    s->e_typed_input = 1;
     s->e_inpara = 1;
-    s->e_para[0] = 0.5;
+    s->e_para[0] = 3.0;
     cmp_hyp->hyp_b = 3;
     rt_edit_process(s);
     if (hyp_diff("ECMD_HYP_SCALE_B restore", cmp_hyp, edit_hyp))
@@ -262,10 +265,9 @@ rt_edit_test_hyp(void)
     bu_log("ECMD_HYP_SCALE_B SUCCESS: b restored to %g\n", edit_hyp->hyp_b);
 
     /* ================================================================
-     * ECMD_HYP_C  (scale bnr; allowed only if bnr*s <= 1.0)
+     * ECMD_HYP_C  (set bnr; absolute typed value must be <= 1.0)
      * Initial bnr=0.5; es_scale=1.5: bnr'=0.5*1.5=0.75 <= 1.0 ✓
-     * Restore: e_para[0] = 1/1.5 * 1/(0.75/0.5) = e_para[0] to get bnr=0.5
-     *   es_scale = 1/1.5 ≈ 0.6667; bnr'=0.75*(1/1.5)=0.5 ✓
+     * Restore: e_para[0]=0.5 sets the ratio directly.
      * ================================================================*/
     hyp_reset(s, edit_hyp, orig_hyp, cmp_hyp);
     EDOBJ[dp->d_minor_type].ft_set_edit_mode(s, ECMD_HYP_C);
@@ -278,47 +280,74 @@ rt_edit_test_hyp(void)
 	bu_exit(1, "ERROR: ECMD_HYP_C failed\n");
     bu_log("ECMD_HYP_C SUCCESS: bnr=%g\n", edit_hyp->hyp_bnr);
 
-    /* Restore: scale by 1/1.5 to go from 0.75 back to 0.5 */
-    s->e_inpara = 1;
-    s->e_para[0] = 1.0 / 1.5;
+    /* Restore the absolute ratio. */
+    s->e_typed_input = 1;    s->e_inpara = 1;
+    s->e_para[0] = 0.5;
     cmp_hyp->hyp_bnr = 0.5;
     rt_edit_process(s);
     if (hyp_diff("ECMD_HYP_C restore", cmp_hyp, edit_hyp))
 	bu_exit(1, "ERROR: ECMD_HYP_C restore failed\n");
     bu_log("ECMD_HYP_C SUCCESS: bnr restored to %g\n", edit_hyp->hyp_bnr);
 
-    /* Scale factors must be independent of database and path scale. */
+    /* Numeric lengths are absolute local values.  Database and path scales
+     * convert them to the primitive's base-space target; C stays unitless. */
     const fastf_t local2base = 25.4;
-    const int scale_cmds[] = {
-	ECMD_HYP_H, ECMD_HYP_SCALE_A, ECMD_HYP_SCALE_B, ECMD_HYP_C
+    const fastf_t path_scale = 0.5;
+    const fastf_t requested_local = 1.5;
+    const fastf_t expected_base = requested_local * local2base * path_scale;
+    const int length_cmds[] = {
+	ECMD_HYP_H, ECMD_HYP_SCALE_A, ECMD_HYP_SCALE_B
     };
-    for (size_t i = 0; i < sizeof(scale_cmds) / sizeof(scale_cmds[0]); i++) {
+    for (size_t i = 0; i < sizeof(length_cmds) / sizeof(length_cmds[0]); i++) {
 	hyp_reset(s, edit_hyp, orig_hyp, cmp_hyp);
 	s->local2base = local2base;
 	s->base2local = 1.0 / local2base;
 	MAT_IDN(s->e_mat);
 	MAT_IDN(s->e_invmat);
-	s->e_mat[15] = 0.5;
-	s->e_invmat[15] = 2.0;
-	EDOBJ[dp->d_minor_type].ft_set_edit_mode(s, scale_cmds[i]);
-	s->e_inpara = 1;
-	s->e_para[0] = 1.5;
-	switch (scale_cmds[i]) {
-	    case ECMD_HYP_H: VSCALE(cmp_hyp->hyp_Hi, cmp_hyp->hyp_Hi, 1.5); break;
-	    case ECMD_HYP_SCALE_A: VSCALE(cmp_hyp->hyp_A, cmp_hyp->hyp_A, 1.5); break;
-	    case ECMD_HYP_SCALE_B: cmp_hyp->hyp_b *= 1.5; break;
-	    case ECMD_HYP_C: cmp_hyp->hyp_bnr *= 1.5; break;
+	s->e_mat[15] = path_scale;
+	s->e_invmat[15] = 1.0 / path_scale;
+	EDOBJ[dp->d_minor_type].ft_set_edit_mode(s, length_cmds[i]);
+	s->e_typed_input = 1;	s->e_inpara = 1;
+	s->e_para[0] = requested_local;
+	switch (length_cmds[i]) {
+	    case ECMD_HYP_H:
+		VSCALE(cmp_hyp->hyp_Hi, orig_hyp->hyp_Hi,
+			expected_base / MAGNITUDE(orig_hyp->hyp_Hi));
+		break;
+	    case ECMD_HYP_SCALE_A:
+		VSCALE(cmp_hyp->hyp_A, orig_hyp->hyp_A,
+			expected_base / MAGNITUDE(orig_hyp->hyp_A));
+		break;
+	    case ECMD_HYP_SCALE_B:
+		cmp_hyp->hyp_b = expected_base;
+		break;
 	}
 	rt_edit_process(s);
-	if (hyp_diff("non-mm scale factor", cmp_hyp, edit_hyp))
-	    bu_exit(1, "ERROR: HYP scale command %d changed with units or path\n",
-		    scale_cmds[i]);
+	if (hyp_diff("non-mm absolute length", cmp_hyp, edit_hyp))
+	    bu_exit(1, "ERROR: HYP length command %d ignored units or path scale\n",
+		    length_cmds[i]);
     }
+
+    hyp_reset(s, edit_hyp, orig_hyp, cmp_hyp);
+    s->local2base = local2base;
+    s->base2local = 1.0 / local2base;
+    MAT_IDN(s->e_mat);
+    MAT_IDN(s->e_invmat);
+    s->e_mat[15] = path_scale;
+    s->e_invmat[15] = 1.0 / path_scale;
+    EDOBJ[dp->d_minor_type].ft_set_edit_mode(s, ECMD_HYP_C);
+    s->e_typed_input = 1;    s->e_inpara = 1;
+    s->e_para[0] = 1.0;
+    cmp_hyp->hyp_bnr = 1.0;
+    rt_edit_process(s);
+    if (hyp_diff("dimensionless neck ratio", cmp_hyp, edit_hyp))
+	bu_exit(1, "ERROR: HYP neck ratio changed with units or path scale\n");
+
     MAT_IDN(s->e_mat);
     MAT_IDN(s->e_invmat);
     s->local2base = 1.0;
     s->base2local = 1.0;
-    bu_log("HYP non-mm/path scale factors SUCCESS\n");
+    bu_log("HYP non-mm/path absolute values SUCCESS\n");
 
     /* ================================================================
      * ECMD_HYP_ROT_H  (rotate Hi vector; MAT4X3VEC aliasing bug fixed)

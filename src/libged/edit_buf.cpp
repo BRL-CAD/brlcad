@@ -1100,6 +1100,7 @@ ged_edit_session_apply(struct ged *gedp, ged_edit_session_ref session,
     }
 
     rt_edit_set_edflag(state, command->cmd_id);
+    state->e_typed_input = 1;
     const int process_result = rt_edit_process(state);
     if (process_result != BRLCAD_OK) {
 	if (state->log_str && bu_vls_strlen(state->log_str) &&

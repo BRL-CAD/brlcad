@@ -95,20 +95,20 @@ rt_edit_hyp_menu_item(const struct bn_tol *UNUSED(tol))
 /* ft_edit_desc descriptor for the Hyperboloid of One Sheet primitive */
 
 static const struct rt_edit_param_desc hyp_h_params[] = {
-    { "h", "Height Scale Factor", RT_EDIT_PARAM_SCALAR, 0, 1e-10, RT_EDIT_PARAM_NO_LIMIT,
-      "", 0, NULL, NULL, NULL }
+    { "h", "Height (magnitude)", RT_EDIT_PARAM_SCALAR, 0, 1e-10, RT_EDIT_PARAM_NO_LIMIT,
+      "length", 0, NULL, NULL, NULL }
 };
 static const struct rt_edit_param_desc hyp_a_params[] = {
-    { "a", "A Scale Factor", RT_EDIT_PARAM_SCALAR, 0, 1e-10, RT_EDIT_PARAM_NO_LIMIT,
-      "", 0, NULL, NULL, NULL }
+    { "a", "Semi-Axis A", RT_EDIT_PARAM_SCALAR, 0, 1e-10, RT_EDIT_PARAM_NO_LIMIT,
+      "length", 0, NULL, NULL, NULL }
 };
 static const struct rt_edit_param_desc hyp_b_params[] = {
-    { "b", "B Scale Factor", RT_EDIT_PARAM_SCALAR, 0, 1e-10, RT_EDIT_PARAM_NO_LIMIT,
-      "", 0, NULL, NULL, NULL }
+    { "b", "Semi-Axis B", RT_EDIT_PARAM_SCALAR, 0, 1e-10, RT_EDIT_PARAM_NO_LIMIT,
+      "length", 0, NULL, NULL, NULL }
 };
 static const struct rt_edit_param_desc hyp_c_params[] = {
-    { "c", "Neck Ratio Scale Factor", RT_EDIT_PARAM_SCALAR, 0, 1e-10, RT_EDIT_PARAM_NO_LIMIT,
-      "", 0, NULL, NULL, NULL }
+    { "c", "Neck Ratio c (0..1)", RT_EDIT_PARAM_SCALAR, 0, 1e-10, 1.0,
+      "fraction", 0, NULL, NULL, NULL }
 };
 static const struct rt_edit_param_desc hyp_rot_deg_params[] = {
     { "rot_xyz", "Rotation X Y Z (deg)", RT_EDIT_PARAM_VECTOR, 0,
@@ -225,64 +225,6 @@ rt_edit_hyp_read_params(
     return BRLCAD_OK;
 }
 
-/* scale height of HYP */
-void
-ecmd_hyp_h(struct rt_edit *s)
-{
-    struct rt_hyp_internal *hyp =
-	(struct rt_hyp_internal *)s->es_int.idb_ptr;
-
-    RT_HYP_CK_MAGIC(hyp);
-    if (s->e_inpara) {
-	s->es_scale = s->e_para[0];
-    }
-    VSCALE(hyp->hyp_Hi, hyp->hyp_Hi, s->es_scale);
-}
-
-/* scale A vector of HYP */
-void
-ecmd_hyp_scale_a(struct rt_edit *s)
-{
-    struct rt_hyp_internal *hyp =
-	(struct rt_hyp_internal *)s->es_int.idb_ptr;
-
-    RT_HYP_CK_MAGIC(hyp);
-    if (s->e_inpara) {
-	s->es_scale = s->e_para[0];
-    }
-    VSCALE(hyp->hyp_A, hyp->hyp_A, s->es_scale);
-}
-
-/* scale B vector of HYP */
-void
-ecmd_hyp_scale_b(struct rt_edit *s)
-{
-    struct rt_hyp_internal *hyp =
-	(struct rt_hyp_internal *)s->es_int.idb_ptr;
-
-    RT_HYP_CK_MAGIC(hyp);
-    if (s->e_inpara) {
-	s->es_scale = s->e_para[0];
-    }
-    hyp->hyp_b = hyp->hyp_b * s->es_scale;
-}
-
-/* scale Neck to Base ratio of HYP */
-void
-ecmd_hyp_c(struct rt_edit *s)
-{
-    struct rt_hyp_internal *hyp =
-	(struct rt_hyp_internal *)s->es_int.idb_ptr;
-
-    RT_HYP_CK_MAGIC(hyp);
-    if (s->e_inpara) {
-	s->es_scale = s->e_para[0];
-    }
-    if (hyp->hyp_bnr * s->es_scale <= 1.0) {
-	hyp->hyp_bnr = hyp->hyp_bnr * s->es_scale;
-    }
-}
-
 /* rotate hyperboloid height vector */
 int
 ecmd_hyp_rot_h(struct rt_edit *s)
@@ -356,33 +298,61 @@ ecmd_hyp_rot_h(struct rt_edit *s)
 static int
 rt_edit_hyp_pscale(struct rt_edit *s)
 {
+    struct rt_hyp_internal *hyp =
+	(struct rt_hyp_internal *)s->es_int.idb_ptr;
+    RT_HYP_CK_MAGIC(hyp);
+
+    if (!s->e_inpara && ZERO(s->es_scale))
+	return BRLCAD_OK;
     if (s->e_inpara > 1) {
-	bu_vls_printf(s->log_str, "ERROR: only one argument needed\n");
-	s->e_inpara = 0;
-	return BRLCAD_ERROR;
-    }
-    if (s->e_inpara && s->e_para[0] <= 0.0) {
-	bu_vls_printf(s->log_str, "ERROR: SCALE FACTOR <= 0\n");
-	s->e_inpara = 0;
+	bu_vls_printf(s->log_str, "Exactly one scale parameter is required\n");
 	return BRLCAD_ERROR;
     }
 
+    if (s->e_inpara && s->e_typed_input) {
+	switch (s->edit_flag) {
+	    case ECMD_HYP_H:
+		return edit_scale_length(s, &hyp->hyp_Hi, NULL);
+	    case ECMD_HYP_SCALE_A:
+		return edit_scale_length(s, &hyp->hyp_A, NULL);
+	    case ECMD_HYP_SCALE_B:
+		return edit_scale_length(s, NULL, &hyp->hyp_b);
+	    case ECMD_HYP_C:
+		if (s->e_para[0] <= 0.0 || s->e_para[0] > 1.0) {
+		    bu_vls_printf(s->log_str,
+			    "Neck ratio must be positive and no greater than 1\n");
+		    return BRLCAD_ERROR;
+		}
+		hyp->hyp_bnr = s->e_para[0];
+		return BRLCAD_OK;
+	}
+    }
+
+    /* MGED parameter input and mouse input both supply relative factors. */
+    const fastf_t scale = s->e_inpara ? s->e_para[0] : s->es_scale;
+    if (!isfinite(scale) || scale <= 0.0) {
+	bu_vls_printf(s->log_str, "Scale must be finite and positive\n");
+	return BRLCAD_ERROR;
+    }
     switch (s->edit_flag) {
 	case ECMD_HYP_H:
-	    ecmd_hyp_h(s);
+	    VSCALE(hyp->hyp_Hi, hyp->hyp_Hi, scale);
 	    break;
 	case ECMD_HYP_SCALE_A:
-	    ecmd_hyp_scale_a(s);
+	    VSCALE(hyp->hyp_A, hyp->hyp_A, scale);
 	    break;
 	case ECMD_HYP_SCALE_B:
-	    ecmd_hyp_scale_b(s);
+	    hyp->hyp_b *= scale;
 	    break;
-	case ECMD_HYP_C:
-	    ecmd_hyp_c(s);
+	case ECMD_HYP_C: {
+	    const fastf_t ratio = hyp->hyp_bnr * scale;
+	    if (ratio <= 1.0)
+		hyp->hyp_bnr = ratio;
 	    break;
-    };
+	}
+    }
 
-    return 0;
+    return BRLCAD_OK;
 }
 
 C_DECL int
