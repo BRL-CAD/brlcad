@@ -74,9 +74,6 @@ set(
   archlinux/PKGBUILD
   archlinux/brlcad.install
   astyle.opt
-  auto-man-page/BIN_OPT_ARG_ANALYSIS.txt
-  auto-man-page/README.auto-man-page-handling
-  auto-man-page/auto-man-progs.txt
   batch-indent-region.el
   brlcad.spec.in
   bugs/CMakeLists.txt
