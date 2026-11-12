@@ -21,8 +21,6 @@
 #ifndef BU_OPT_H
 #define BU_OPT_H
 
-#error "The deprecated BU_OPT API is temporarily disabled during BU_ARG migration"
-
 #include "common.h"
 #include "bu/defines.h"
 #include "bu/ptbl.h"
@@ -32,7 +30,10 @@ __BEGIN_DECLS
 
 /** @addtogroup bu_opt
  * @brief
- * Generalized option handling.
+ * Deprecated generalized option handling.
+ *
+ * @deprecated Use the native bu/arg.h API.  This interface remains available
+ * only for source compatibility and must not be used by active BRL-CAD code.
  *
  * This module implements a callback and assignment based mechanism
  * for generalized handling of option handling.  Functionally it is
@@ -225,18 +226,18 @@ struct bu_opt_desc {
  *                     unused args to the beginning of the array
  * @param[in] ds       option structure
  */
-BU_EXPORT extern int bu_opt_parse(struct bu_vls *msgs, size_t ac, const char **argv, const struct bu_opt_desc *ds);
+DEPRECATED BU_EXPORT extern int bu_opt_parse(struct bu_vls *msgs, size_t ac, const char **argv, const struct bu_opt_desc *ds);
 
 /** Build a standard one-line synopsis for an option-only declaration.  The
  * caller supplies the program or command spelling and any positional operand
  * synopsis because bu_opt_desc intentionally describes options only.  The
  * returned string begins with "Usage:" and ends with a newline. */
-BU_EXPORT extern char *bu_opt_usage(const struct bu_opt_desc *descs,
+DEPRECATED BU_EXPORT extern char *bu_opt_usage(const struct bu_opt_desc *descs,
 	const char *invocation, const char *operands);
 /** Build standard user-facing help from a bu_opt declaration.  The result
  * contains the generated synopsis, optional summary, and an Options section.
  * The caller owns the returned string. */
-BU_EXPORT extern char *bu_opt_help(const struct bu_opt_desc *descs,
+DEPRECATED BU_EXPORT extern char *bu_opt_help(const struct bu_opt_desc *descs,
 	const char *invocation, const char *operands, const char *summary);
 /** Output format options for bu_opt documentation generation */
 typedef enum {
@@ -361,7 +362,7 @@ struct bu_opt_desc_opts {
  * memory and it is the responsibility of the caller to free it with
  * @link bu_free @endlink.
  */
-BU_EXPORT extern char *bu_opt_describe(const struct bu_opt_desc *ds, struct bu_opt_desc_opts *settings);
+DEPRECATED BU_EXPORT extern char *bu_opt_describe(const struct bu_opt_desc *ds, struct bu_opt_desc_opts *settings);
 
 
 /** @} */
@@ -387,55 +388,55 @@ BU_EXPORT extern char *bu_opt_describe(const struct bu_opt_desc *ds, struct bu_o
 /**
  * Process 1 argument to set a boolean type
  */
-BU_EXPORT extern int bu_opt_bool(struct bu_vls *msg, size_t argc, const char **argv, void *set_var);
+DEPRECATED BU_EXPORT extern int bu_opt_bool(struct bu_vls *msg, size_t argc, const char **argv, void *set_var);
 
 /**
  * Process 1 argument to set an integer
  */
-BU_EXPORT extern int bu_opt_int(struct bu_vls *msg, size_t argc, const char **argv, void *set_var);
+DEPRECATED BU_EXPORT extern int bu_opt_int(struct bu_vls *msg, size_t argc, const char **argv, void *set_var);
 
 /**
  * Process 1 argument to set a long
  */
-BU_EXPORT extern int bu_opt_long(struct bu_vls *msg, size_t argc, const char **argv, void *set_var);
+DEPRECATED BU_EXPORT extern int bu_opt_long(struct bu_vls *msg, size_t argc, const char **argv, void *set_var);
 /**
  * Process 1 argument (hex style) to set a long
  */
-BU_EXPORT extern int bu_opt_long_hex(struct bu_vls *msg, size_t argc, const char **argv, void *set_var);
+DEPRECATED BU_EXPORT extern int bu_opt_long_hex(struct bu_vls *msg, size_t argc, const char **argv, void *set_var);
 
 /**
  * Process 1 argument to set a @link fastf_t @endlink (either a float
  * or a double, depending on how BRL-CAD was compiled)
  */
-BU_EXPORT extern int bu_opt_fastf_t(struct bu_vls *msg, size_t argc, const char **argv, void *set_var);
+DEPRECATED BU_EXPORT extern int bu_opt_fastf_t(struct bu_vls *msg, size_t argc, const char **argv, void *set_var);
 
 /**
  * Process 1 argument to set a char
  */
-BU_EXPORT extern int bu_opt_char(struct bu_vls *msg, size_t argc, const char **argv, void *set_var);
+DEPRECATED BU_EXPORT extern int bu_opt_char(struct bu_vls *msg, size_t argc, const char **argv, void *set_var);
 
 /**
  * Process 1 argument to set a char pointer (uses the original argv
  * string, does not make a copy)
  */
-BU_EXPORT extern int bu_opt_str(struct bu_vls *msg, size_t argc, const char **argv, void *set_var);
+DEPRECATED BU_EXPORT extern int bu_opt_str(struct bu_vls *msg, size_t argc, const char **argv, void *set_var);
 
 /**
  * Process 1 argument to append to a vls (places a space before the
  * new entry if the target vls is not empty)
  */
-BU_EXPORT extern int bu_opt_vls(struct bu_vls *msg, size_t argc, const char **argv, void *set_var);
+DEPRECATED BU_EXPORT extern int bu_opt_vls(struct bu_vls *msg, size_t argc, const char **argv, void *set_var);
 
 /**
  * Process one packed color or three separate arguments to set a bu_color.
  * Packed integer RGB accepts slash, comma, and semicolon separators.
  */
-BU_EXPORT extern int bu_opt_color(struct bu_vls *msg, size_t argc, const char **argv, void *set_var);
+DEPRECATED BU_EXPORT extern int bu_opt_color(struct bu_vls *msg, size_t argc, const char **argv, void *set_var);
 
 /**
  * Process 1 or 3 arguments to set a vect_t
  */
-BU_EXPORT extern int bu_opt_vect_t(struct bu_vls *msg, size_t argc, const char **argv, void *set_var);
+DEPRECATED BU_EXPORT extern int bu_opt_vect_t(struct bu_vls *msg, size_t argc, const char **argv, void *set_var);
 
 /** @} */
 
@@ -445,19 +446,19 @@ BU_EXPORT extern int bu_opt_vect_t(struct bu_vls *msg, size_t argc, const char *
  * intended to change output, such as multiple -v options to increase
  * verbosity.
  */
-BU_EXPORT extern int bu_opt_incr_long(struct bu_vls *msg, size_t argc, const char **argv, void *set_var);
+DEPRECATED BU_EXPORT extern int bu_opt_incr_long(struct bu_vls *msg, size_t argc, const char **argv, void *set_var);
 
 /**
  * Looking for a string that defines a language per ISO 639-1 language codes.
  */
-BU_EXPORT extern int bu_opt_lang(struct bu_vls *msg, size_t argc, const char **argv, void *set_var);
+DEPRECATED BU_EXPORT extern int bu_opt_lang(struct bu_vls *msg, size_t argc, const char **argv, void *set_var);
 
 /**
  * Look for a valid man page section identifier (for BRL-CAD purposes valid
  * choices are 1, 3, 5, n)
  */
 #define BRLCAD_MAN_SECTIONS {'1', '3', '5', 'n', '\0'}
-BU_EXPORT extern int bu_opt_man_section(struct bu_vls *msg, size_t argc, const char **argv, void *set_var);
+DEPRECATED BU_EXPORT extern int bu_opt_man_section(struct bu_vls *msg, size_t argc, const char **argv, void *set_var);
 
 
 /** @addtogroup bu_opt_scan
@@ -491,28 +492,28 @@ BU_EXPORT extern int bu_opt_man_section(struct bu_vls *msg, size_t argc, const c
 /** @{ */
 
 /** Scan one base-10 string into an int. */
-BU_EXPORT extern int bu_opt_scan_int(const char *str, int *val, const char *label);
+DEPRECATED BU_EXPORT extern int bu_opt_scan_int(const char *str, int *val, const char *label);
 /** Scan one base-10 string into an int, requiring vmin <= val <= vmax. */
-BU_EXPORT extern int bu_opt_scan_int_range(const char *str, int *val, int vmin, int vmax, const char *label);
+DEPRECATED BU_EXPORT extern int bu_opt_scan_int_range(const char *str, int *val, int vmin, int vmax, const char *label);
 
 /** Scan one base-10 string into a long. */
-BU_EXPORT extern int bu_opt_scan_long(const char *str, long *val, const char *label);
+DEPRECATED BU_EXPORT extern int bu_opt_scan_long(const char *str, long *val, const char *label);
 /** Scan one base-10 string into a long, requiring vmin <= val <= vmax. */
-BU_EXPORT extern int bu_opt_scan_long_range(const char *str, long *val, long vmin, long vmax, const char *label);
+DEPRECATED BU_EXPORT extern int bu_opt_scan_long_range(const char *str, long *val, long vmin, long vmax, const char *label);
 
 /** Scan one base-10 string into an unsigned char (0 to UCHAR_MAX),
  * the common case for a color component or byte value. */
-BU_EXPORT extern int bu_opt_scan_uchar(const char *str, unsigned char *val, const char *label);
+DEPRECATED BU_EXPORT extern int bu_opt_scan_uchar(const char *str, unsigned char *val, const char *label);
 
 /** Scan one base-10 string into a size_t (negative input is rejected). */
-BU_EXPORT extern int bu_opt_scan_size_t(const char *str, size_t *val, const char *label);
+DEPRECATED BU_EXPORT extern int bu_opt_scan_size_t(const char *str, size_t *val, const char *label);
 /** Scan one base-10 string into a size_t, requiring vmin <= val <= vmax. */
-BU_EXPORT extern int bu_opt_scan_size_t_range(const char *str, size_t *val, size_t vmin, size_t vmax, const char *label);
+DEPRECATED BU_EXPORT extern int bu_opt_scan_size_t_range(const char *str, size_t *val, size_t vmin, size_t vmax, const char *label);
 
 /** Scan one string into a double. */
-BU_EXPORT extern int bu_opt_scan_double(const char *str, double *val, const char *label);
+DEPRECATED BU_EXPORT extern int bu_opt_scan_double(const char *str, double *val, const char *label);
 /** Scan one string into a double, requiring vmin <= val <= vmax. */
-BU_EXPORT extern int bu_opt_scan_double_range(const char *str, double *val, double vmin, double vmax, const char *label);
+DEPRECATED BU_EXPORT extern int bu_opt_scan_double_range(const char *str, double *val, double vmin, double vmax, const char *label);
 
 /** @} */
 
