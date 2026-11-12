@@ -112,6 +112,11 @@ Standalone programs participating in this audit reserve the exact invocation
 schema JSON and exits successfully. GED command descriptions are available
 collectively from `gsh --command-schema all`.
 
+Standalone hosts use one representation-neutral `bu_arg_grammar` declaration
+and call `bu_arg_introspect` before ordinary parsing. The helper recognizes and
+generates the reserved response but does not print, log, or exit; stream and
+process policy remain with the program.
+
 Audit mode compares documented option spellings and argument presence with the
 schema. Hidden aliases may be documented but are not required. Update mode only
 replaces regions explicitly delimited by these markers, so manually maintained

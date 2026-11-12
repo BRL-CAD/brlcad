@@ -6704,6 +6704,51 @@ bu_arg_forms_describe_json(const struct bu_arg_forms *forms)
 
 
 int
+bu_arg_introspect(struct bu_vls *output, const struct bu_arg_grammar *grammar,
+	int argc, const char * const *argv)
+{
+    char *description = NULL;
+    int declarations = 0;
+
+    if (argc != 1 || !argv || !argv[0] ||
+	!BU_STR_EQUAL(argv[0], "--command-schema"))
+	return 0;
+    if (!output || !grammar) {
+	if (output)
+	    bu_vls_strcat(output,
+		"--command-schema: command grammar declaration is missing\n");
+	return -1;
+    }
+
+    declarations += grammar->schema ? 1 : 0;
+    declarations += grammar->tree ? 1 : 0;
+    declarations += grammar->forms ? 1 : 0;
+    if (declarations != 1) {
+	bu_vls_strcat(output,
+	    "--command-schema: expected exactly one command grammar declaration\n");
+	return -1;
+    }
+
+    if (grammar->schema)
+	description = bu_arg_schema_describe_json(grammar->schema);
+    else if (grammar->tree)
+	description = bu_arg_tree_describe_json(grammar->tree);
+    else
+	description = bu_arg_forms_describe_json(grammar->forms);
+    if (!description) {
+	bu_vls_strcat(output,
+	    "--command-schema: could not describe the command grammar\n");
+	return -1;
+    }
+
+    bu_vls_strcat(output, description);
+    bu_vls_putc(output, '\n');
+    bu_free(description, "BU_ARG introspection JSON");
+    return 1;
+}
+
+
+int
 bu_arg_forms_lint(const struct bu_arg_forms *forms, struct bu_vls *msgs)
 {
     int failures = 0;
