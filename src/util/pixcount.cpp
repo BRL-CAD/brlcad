@@ -27,45 +27,51 @@
 
 #include <cstdio>
 #include <cstdlib>
-#include <cerrno>
 #include <climits>
 #include <vector>
 #include <map>
 #include <string>
-#include <iostream>
-#include <fstream>
-#include <iterator>
 
+#include "bu/arg.h"
 #include "bu/app.h"
-#include "bu/getopt.h"
 #include "bu/log.h"
+#include "bu/malloc.h"
 
-static void print_usage()
-{
-    static const char usage[] = "Usage: pixcount [-# bytes_per_pixel] [infile.pix [outfile]]\n";
-    bu_exit(1, "%s", usage);
-}
+struct pixcount_args {
+    int help;
+    int pixel_size;
+};
 
-static int
-parse_positive_int_arg(const char *arg, int *out_value, const char *label)
-{
-    char *end = nullptr;
-    long int value = 0;
+static const struct bu_arg_option pixcount_options[] = {
+    BU_ARG_FLAG("h", "help", struct pixcount_args, help,
+	"Print help and exit"),
+    BU_ARG_ALIAS("?", NULL, "help", 1),
+    BU_ARG_INTEGER_RANGE("#", "bytes-per-pixel", struct pixcount_args,
+	pixel_size, 1, 1, 1, INT_MAX, "bytes", "Bytes in each pixel"),
+    BU_ARG_OPTION_NULL
+};
 
-    errno = 0;
-    value = strtol(arg, &end, 10);
-    if (errno != 0 || end == arg || *end != '\0' || value <= 0 || value > INT_MAX) {
-	bu_log("pixcount: invalid %s '%s'\n", label, arg);
-	return 0;
-    }
+static const struct bu_arg_operand pixcount_operands[] = {
+    BU_ARG_OPERAND("input", BU_ARG_VALUE_FILE, 0, 1,
+	"Input image (default: standard input)", NULL),
+    BU_ARG_OPERAND("output", BU_ARG_VALUE_FILE, 0, 1,
+	"Output tally (default: standard output)", NULL),
+    BU_ARG_OPERAND_NULL
+};
 
-    *out_value = (int)value;
-    return 1;
-}
+static const struct bu_arg_schema pixcount_schema = BU_ARG_SCHEMA(
+    "pixcount", "Count occurrences of each unique pixel value",
+    pixcount_options, pixcount_operands, BU_ARG_PARSE_OPTIONS_FIRST,
+    BU_ARG_SCHEMA_META_HELP(NULL, NULL, NULL, NULL, NULL));
+
+static const struct bu_arg_grammar pixcount_grammar = {
+    &pixcount_schema, NULL, NULL
+};
 
 int main(int argc, char **argv)
 {
-    int pixel_size = 3; // Bytes per pixel
+    struct pixcount_args args = {0, 3};
+    struct bu_vls msg = BU_VLS_INIT_ZERO;
     FILE *outfp = nullptr;
 
     bu_setprogname(argv[0]);
@@ -75,56 +81,62 @@ int main(int argc, char **argv)
     setmode(fileno(stdout), O_BINARY);
 #endif
 
-    // Parse options
-    int ch;
-    while ((ch = bu_getopt(argc, argv, "#:h?")) != -1) {
-	switch (ch) {
-	    case '#':
-		if (!parse_positive_int_arg(bu_optarg, &pixel_size, "pixel size")) {
-		    print_usage();
-		}
-		break;
-	    default:
-		print_usage();
-	}
+    int introspection = bu_arg_introspect(&msg, &pixcount_grammar, argc - 1,
+	(const char * const *)(argv + 1));
+    if (introspection != 0) {
+	bu_flog(introspection > 0 ? stdout : stderr, "%s", bu_vls_cstr(&msg));
+	bu_vls_free(&msg);
+	return introspection > 0 ? 0 : 1;
     }
+    int operand_index = bu_arg_schema_parse_complete(&pixcount_schema, &args,
+	&msg, argc - 1, (const char **)(argv + 1));
+    if (operand_index < 0)
+	bu_exit(1, "%s", bu_vls_cstr(&msg));
+    bu_vls_free(&msg);
+    if (args.help) {
+	char *help = bu_arg_schema_help(&pixcount_schema, "pixcount");
+	bu_flog(stdout, "%s", help ? help : "");
+	bu_free(help, "pixcount help");
+	return 0;
+    }
+
+    argc -= operand_index + 1;
+    argv += operand_index + 1;
 
     FILE *infp = nullptr;
     std::string inf_name, outf_name;
-    switch (argc - bu_optind) {
+    switch (argc) {
 	case 0:
 	    infp = stdin;
 	    outfp = stdout;
 	    break;
 	case 1:
-	    inf_name = argv[bu_optind];
+	    inf_name = argv[0];
 	    infp = fopen(inf_name.c_str(), "rb");
 	    if (!infp) bu_exit(1, "Cannot open input file '%s'\n", inf_name.c_str());
 	    outfp = stdout;
 	    break;
 	case 2:
-	    inf_name = argv[bu_optind];
-	    outf_name = argv[bu_optind + 1];
+	    inf_name = argv[0];
+	    outf_name = argv[1];
 	    infp = fopen(inf_name.c_str(), "rb");
 	    if (!infp) bu_exit(1, "Cannot open input file '%s'\n", inf_name.c_str());
 	    outfp = fopen(outf_name.c_str(), "wb");
 	    if (!outfp) bu_exit(1, "Cannot open output file '%s'\n", outf_name.c_str());
 	    break;
-	default:
-	    print_usage();
     }
 
     if (infp == stdin && isatty(fileno(stdin))) {
 	bu_log("FATAL: pixcount reads only from file or pipe\n");
-	print_usage();
+	return 1;
     }
 
     // Use std::map to store pixel color (as vector) -> count
     std::map<std::vector<unsigned char>, int> palette;
 
     // Read pixels
-    std::vector<unsigned char> buf(pixel_size);
-    while (fread(buf.data(), pixel_size, 1, infp) == 1) {
+    std::vector<unsigned char> buf(args.pixel_size);
+    while (fread(buf.data(), args.pixel_size, 1, infp) == 1) {
 	palette[buf]++;
     }
 
@@ -133,7 +145,7 @@ int main(int argc, char **argv)
 
     // Output sorted by color
     for (const auto &kv : palette) {
-	for (int i = 0; i < pixel_size; ++i)
+	for (int i = 0; i < args.pixel_size; ++i)
 	    fprintf(outfp, "%3d ", kv.first[i]);
 	fprintf(outfp, " %d\n", kv.second);
     }
