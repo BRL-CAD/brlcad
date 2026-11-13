@@ -64,7 +64,6 @@ struct snapshot_tessellation_policy {
 typedef int (*snapshot_tessellation_attempt_fn)(
     void *context,
     const struct snapshot_tessellation_attempt *attempt,
-    size_t maximum_facet_count,
     struct snapshot_mesh_capture *mesh);
 
 
@@ -90,7 +89,6 @@ int creo_brl_capture_tessellation_data(
     int surface_count,
     double model_to_mm,
     int write_normals,
-    size_t maximum_facet_count,
     struct snapshot_mesh_capture *mesh);
 int creo_brl_run_tessellation_policy(
     const struct snapshot_tessellation_policy *policy,

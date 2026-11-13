@@ -371,7 +371,6 @@ make_triangle_mesh(struct snapshot_mesh_capture *mesh, double marker, int is_sol
 static int
 fake_tessellation_attempt(void *context,
                           const struct snapshot_tessellation_attempt *attempt,
-                          size_t UNUSED(maximum_facet_count),
                           struct snapshot_mesh_capture *mesh)
 {
     struct attempt_fixture *fixture = static_cast<struct attempt_fixture *>(context);
@@ -379,6 +378,22 @@ fake_tessellation_attempt(void *context,
 
     make_triangle_mesh(mesh, attempt->chord, call >= 2u);
     return call != 0u;
+}
+
+
+static int
+fake_oversized_tessellation_attempt(void *context,
+                                    const struct snapshot_tessellation_attempt *attempt,
+                                    struct snapshot_mesh_capture *mesh)
+{
+    struct attempt_fixture *fixture = static_cast<struct attempt_fixture *>(context);
+    const size_t call = fixture->call_count++;
+    struct creo_brl_snapshot_triangle triangle = {{0u, 1u, 2u}};
+
+    make_triangle_mesh(mesh, attempt->chord, 0);
+    if (call >= 1u)
+        mesh->triangles.assign(3u, triangle);
+    return 1;
 }
 
 
@@ -423,6 +438,23 @@ test_tessellation_policy()
                 "non-solid tessellation was rejected when solidity was disabled") ||
         !expect(fixture.call_count == 2u && !mesh.is_solid,
                 "solidity policy used the wrong disabled stop condition"))
+        return 0;
+
+    policy.maximum_facet_count = 2u;
+    fixture = {};
+    if (!expect(!creo_brl_run_tessellation_policy(
+                    &policy, 1, fake_oversized_tessellation_attempt, &fixture, &mesh),
+                "non-solid tessellation exceeding facet limit was accepted when solidity was required") ||
+        !expect(fixture.call_count == 2u,
+                "facet limit did not stop refinement retries on non-solid mesh"))
+        return 0;
+
+    fixture = {1u};
+    if (!expect(creo_brl_run_tessellation_policy(
+                    &policy, 0, fake_oversized_tessellation_attempt, &fixture, &mesh),
+                "dense tessellation exceeding retry facet limit was rejected when solidity was disabled") ||
+        !expect(fixture.call_count == 2u && mesh.triangles.size() == 3u,
+                "dense tessellation did not accept the first valid attempt"))
         return 0;
 
     settings.chord_mode = CREO_BRL_SNAPSHOT_CHORD_ABSOLUTE;
@@ -475,7 +507,7 @@ test_tessellation_data_transaction()
     surface.facets = tetrahedron;
     const double inch_to_mm = bu_units_conversion("in");
     if (!expect(creo_brl_capture_tessellation_data(
-                    &surface, 1, inch_to_mm, 1, 100000u, &mesh),
+                    &surface, 1, inch_to_mm, 1, &mesh),
                 "valid tessellation data was rejected") ||
         !expect(mesh.vertices.size() == 4u && mesh.triangles.size() == 4u &&
                     mesh.normals.size() == 12u && mesh.normal_indices.size() == 12u &&
@@ -486,7 +518,7 @@ test_tessellation_data_transaction()
     surface.n_facets = 2;
     surface.facets = partially_invalid;
     if (!expect(!creo_brl_capture_tessellation_data(
-                    &surface, 1, inch_to_mm, 1, 100000u, &mesh),
+                    &surface, 1, inch_to_mm, 1, &mesh),
                 "late invalid facet was accepted") ||
         !expect(mesh.vertices.empty() && mesh.triangles.empty() &&
                     mesh.normals.empty() && mesh.normal_indices.empty(),
@@ -496,8 +528,8 @@ test_tessellation_data_transaction()
     surface.n_facets = 100001;
     surface.facets = NULL;
     if (!expect(!creo_brl_capture_tessellation_data(
-                    &surface, 1, inch_to_mm, 0, 100000u, &mesh),
-                "facet limit did not reject oversized output"))
+                    &surface, 1, inch_to_mm, 0, &mesh),
+                "missing facet array was accepted"))
         return 0;
 
     struct creo_brl_shim_model fallback_model = {};
@@ -572,7 +604,7 @@ test_capture_uses_replay_vertex_tolerance()
     surface.facets = facets;
 
     return expect(creo_brl_capture_tessellation_data(
-                      &surface, 1, 1.0, 0, 100000u, &mesh),
+                      &surface, 1, 1.0, 0, &mesh),
                   "near-coincident closed tessellation was rejected") &&
            expect(mesh.vertices.size() == 4u && mesh.triangles.size() == 4u &&
                       mesh.is_solid,
@@ -605,7 +637,7 @@ test_capture_rejects_replay_collapsed_facet()
     surface.n_facets = 4;
     surface.facets = facets;
     captured = creo_brl_capture_tessellation_data(
-        &surface, 1, 1.0, 0, 100000u, &mesh);
+        &surface, 1, 1.0, 0, &mesh);
 
     return expect(captured && mesh.triangles.size() == 2u,
                   "capture discarded valid facets while removing collapsed facets") &&

@@ -542,7 +542,6 @@ creo_brl_capture_tessellation_data(const ProSurfaceTessellationData *tessellatio
                                     int surface_count,
                                     double model_to_mm,
                                     int write_normals,
-                                    size_t maximum_facet_count,
                                     struct snapshot_mesh_capture *mesh)
 {
     std::vector<struct creo_brl_snapshot_vector> source_vertices;
@@ -556,15 +555,14 @@ creo_brl_capture_tessellation_data(const ProSurfaceTessellationData *tessellatio
     if (!mesh)
         return 0;
     *mesh = snapshot_mesh_capture();
-    if (!tessellation || surface_count <= 0 || !std::isfinite(model_to_mm) ||
-        model_to_mm <= 0.0 || maximum_facet_count == 0u)
+    if (!tessellation || surface_count <= 0 || !std::isfinite(model_to_mm) || model_to_mm <= 0.0)
         return 0;
 
     for (int surface = 0; surface < surface_count; ++surface) {
         const ProSurfaceTessellationData& data = tessellation[surface];
 
         if (data.n_vertices < 0 || data.n_facets < 0 ||
-            static_cast<size_t>(data.n_facets) > maximum_facet_count - facet_count ||
+            static_cast<size_t>(data.n_facets) > (std::numeric_limits<size_t>::max)() - facet_count ||
             (data.n_facets > 0 && (!data.vertices || !data.facets ||
                                    (write_normals && !data.normals))))
             return 0;
@@ -689,12 +687,17 @@ creo_brl_run_tessellation_policy(const struct snapshot_tessellation_policy *poli
     for (size_t index = 0; index < policy->attempts.size(); ++index) {
         struct snapshot_mesh_capture attempt_mesh = {};
 
-        if (!capture_attempt(context, &policy->attempts[index],
-                             policy->maximum_facet_count, &attempt_mesh) ||
-            attempt_mesh.vertices.empty() || attempt_mesh.triangles.empty() ||
-            attempt_mesh.triangles.size() > policy->maximum_facet_count ||
-            (require_solidity && !attempt_mesh.is_solid))
+        if (!capture_attempt(context, &policy->attempts[index], &attempt_mesh) ||
+            attempt_mesh.vertices.empty() || attempt_mesh.triangles.empty())
             continue;
+
+        const int exceeded_facet_limit =
+            attempt_mesh.triangles.size() > policy->maximum_facet_count;
+        if (require_solidity && !attempt_mesh.is_solid) {
+            if (exceeded_facet_limit)
+                break;
+            continue;
+        }
 
         if (!attempt_mesh.incomplete_tessellation &&
             attempt_mesh.captured_surface_count >= attempt_mesh.total_surface_count) {
@@ -712,6 +715,8 @@ creo_brl_run_tessellation_policy(const struct snapshot_tessellation_policy *poli
                 return 1;
             }
         }
+        if (exceeded_facet_limit)
+            break;
     }
 
     if (have_partial_mesh) {
@@ -731,7 +736,6 @@ struct toolkit_tessellation_context {
     int saw_surfaces;
     int saw_facets;
     int saw_non_solid_mesh;
-    int exceeded_facet_limit;
     int rejected_degenerate_facets;
     int saw_tessellation_error;
 };
@@ -743,8 +747,6 @@ describe_tessellation_failure(const struct toolkit_tessellation_context& context
 {
     if (require_solidity && context.saw_non_solid_mesh)
         return "mesh failed solidity check (non-solid BoT rejected)";
-    if (context.exceeded_facet_limit)
-        return "tessellation exceeded maximum facet limit (100000)";
     if (context.rejected_degenerate_facets)
         return "all tessellated facets were degenerate below vertex tolerance";
     if (!context.saw_surfaces || !context.saw_facets)
@@ -775,7 +777,6 @@ format_incomplete_tessellation_note(const struct snapshot_mesh_capture& mesh)
 static int
 capture_toolkit_tessellation_attempt(void *context,
                                      const struct snapshot_tessellation_attempt *attempt,
-                                     size_t maximum_facet_count,
                                      struct snapshot_mesh_capture *mesh)
 {
     struct toolkit_tessellation_context *toolkit =
@@ -805,14 +806,12 @@ capture_toolkit_tessellation_attempt(void *context,
         }
         result = creo_brl_capture_tessellation_data(
             tessellation, surface_count, toolkit->model_to_mm,
-            toolkit->write_normals, maximum_facet_count, mesh);
+            toolkit->write_normals, mesh);
         if (result) {
             if (error == PRO_TK_INCOMPLETE_TESS)
                 mesh->incomplete_tessellation = 1;
             if (!mesh->is_solid)
                 toolkit->saw_non_solid_mesh = 1;
-        } else if (raw_facets > maximum_facet_count) {
-            toolkit->exceeded_facet_limit = 1;
         } else if (raw_facets > 0u) {
             toolkit->rejected_degenerate_facets = 1;
         }
