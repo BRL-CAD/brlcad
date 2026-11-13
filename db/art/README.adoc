@@ -1,4 +1,4 @@
-= art material demonstrations
+= art rendering demonstrations
 
 The moss comparison uses Gary Moss's original "World on a Platter" example.
 Both images were rendered with art at 512 by 384 pixels and 64 samples per
@@ -46,3 +46,72 @@ These previews demonstrate material authoring on an existing CSG model.
 They do not qualify general rough glass, overlapping media, or all legacy
 optical shader translations.  See the art article for the tested feature
 boundaries and the integration roadmap.
+
+== Replacing a legacy sky shell
+
+`star.g` (the Enterprise and shuttlecraft) supplies a worked sky migration.
+Its `all` assembly includes `clouds.r`, a very large spherical shell.  The
+shell uses a checker shader with both colors set to `0/0/150`: despite its
+name, this is a constant-blue backdrop, rather than a procedural cloud sky.
+
+The comparison uses the same subject-framed camera for all three images:
+
+* `star-before.png` uses rt, the original liboptical shaders, the original
+  light, and the original shell.
+* `star-after.png` uses art, retaining the ship and shuttle instances,
+  their transforms and region colors, with a polished OSL plastic surface.
+  A blue camera backdrop replaces the shell.  A white environment dome
+  supplies neutral illumination and reflections independently of that blue.
+  Warm key and cool rim point lights replace the original light's contribution.
+* `star-space.png` changes only the camera backdrop to black.  Lighting and
+  material settings remain identical to `star-after.png`.
+
+The art images illustrate material, lighting, and background authoring,
+without claiming exact translation of liboptical's plastic parameters or
+identical shading between rt and art.
+The art previews use 512 by 384 pixels and 64 samples per pixel.  Art's
+point-light proxy spheres do not appear as visible geometry.
+The point-light multiplier is calibrated for this model's millimeter
+coordinates; it is not a portable physical intensity for arbitrary models.
+The dome intensity is 0.08 and the backdrop multiplier is one.
+
+An installation needs rt and the standard `share/db/star.g` example in
+addition to art and mged.  Regenerate from a writable directory:
+
+----
+cmake -DBRLCAD_PREFIX="${BRLCAD_PREFIX}" -DOUTPUT_DIR=star-render \
+    -P "${BRLCAD_PREFIX}/share/db/art/render_star.cmake"
+----
+
+The same `SOURCE_DB`, `WIDTH`, `HEIGHT`, `SAMPLES`, and `WORKERS` options
+used by the moss example apply.  The driver copies its input twice and
+checks the expected constant-blue shader before modifying the art copy.
+It leaves the shell objects available for inspection and excludes them
+from the `art.demo.g` render selection.  The before copy retains `all`
+unchanged.  Logs, a resolved material/environment report, and a reusable
+`star-camera.view` stream accompany the images.  The `star-after.view` and
+`star-space.view` streams include the complete camera, sampling, lighting,
+and background settings.  From the output directory, rerender directly:
+
+----
+art -M -w 512 -n 384 -P 2 -o another-view.png star-after.g art.demo.g \
+    < star-after.view
+----
+
+Frame the subjects before adding the environment.  Including a surrounding
+shell in automatic bounds can make the intended subject too small.  The
+recipe obtains a camera from mged with just `ncc1701` and `shuttle` drawn,
+then uses that same saved camera for both renderers.
+
+=== Other sample sky candidates
+
+`cube.g` registers `envmap.r` with the `envmap cloud` shader and also
+retains a `cloud.r.bak` shell setup.  `sphflake.g` registers `environ.r`
+with `envmap cloud`.  In liboptical, an `envmap` region registers a shader
+for ray misses and is removed from the traced geometry.  These are useful
+follow-on examples for a procedural or image-based art environment; a
+constant color is not an equivalent replacement for their cloud pattern.
+
+`earth.g` has a cloud/glass stack on `troposphere.c`.  Treat that as an
+atmosphere/material case: removing a physical layer requires separate
+analysis of the intended transparency and cloud effects.

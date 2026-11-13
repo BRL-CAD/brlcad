@@ -1,6 +1,13 @@
 set(art_example_files
   README.adoc
+  render_common.cmake
   render_moss.cmake
+  render_star.cmake
+  star_sky.tcl
+  star-before.png
+  star-after.png
+  star-space.png
+  studio_lights.tcl
   moss_studio.tcl
   moss_materials.tcl
   moss-before.png
