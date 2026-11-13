@@ -18,8 +18,7 @@
  * information.
  */
 
-/* interface header */
-#include "tile.h"
+#include "common.h"
 
 #if defined(__GNUC__) && !defined(__clang__)
 #  pragma GCC diagnostic push
@@ -39,7 +38,9 @@
 #  pragma clang diagnostic ignored "-Wignored-qualifiers"
 #endif
 
-#include "renderer/modeling/frame/frame.h"
+#include "tile.h"
+#include "renderer/api/frame.h"
+#include "foundation/image/conversion.h"
 #include "foundation/image/pixel.h"
 #include "foundation/image/image.h"
 #include "foundation/image/tile.h"
@@ -51,29 +52,71 @@
 #  pragma clang diagnostic pop
 #endif
 
+#include "bu/log.h"
 #include "dm.h"
 
 
-using namespace foundation;
+ArtTileCallback::~ArtTileCallback()
+{
+    finish();
+}
 
-extern struct fb *fbp;	/* Framebuffer handle */
+
+bool
+ArtTileCallback::flush()
+{
+    if (m_framebuffer && fb_flush(m_framebuffer) < 0) {
+	bu_log("art: could not flush framebuffer\n");
+	m_failed = true;
+    }
+    return !m_failed;
+}
+
+
+bool
+ArtTileCallback::finish()
+{
+    if (m_framebuffer) {
+	if (fb_close(m_framebuffer) < 0) {
+	    bu_log("art: could not close framebuffer\n");
+	    m_failed = true;
+	}
+	m_framebuffer = FB_NULL;
+    }
+    return !m_failed;
+}
 
 
 void
 ArtTileCallback::on_tile_end(const renderer::Frame* frame, const size_t tile_x, const size_t tile_y)
 {
-    foundation::Tile& t = frame->image().tile(tile_x, tile_y);
-    const foundation::Tile rgb(t, PixelFormatUInt8);
-    // fb_write(fbp, tile_x, tile_y, rgb.get_storage(), rgb.get_size());
-    // printf("yay!\n");
-    // printf("%lu %lu \n", tile_x, tile_y);
-    // printf("%lu %lu \n", rgb.get_width(), rgb.get_height());
-    for (size_t y = 0; y < rgb.get_height(); y++) {
-	for (size_t x = 0; x < rgb.get_width(); x++) {
-	    size_t x_coord = tile_x * rgb.get_width() + x;
-	    size_t y_coord = tile_y * rgb.get_height() + y;
-	    size_t img_h = frame->image().properties().m_canvas_height;
-	    fb_write(fbp, (int)x_coord, (int)(img_h - y_coord), rgb.get_storage()+((y * rgb.get_width() * 4) + (x * 4)), 1);
+    if (m_failed || !m_framebuffer)
+	return;
+    const auto& image = frame->image();
+    const auto& properties = image.properties();
+    const auto& tile = image.tile(tile_x, tile_y);
+    if (tile.get_channel_count() != 4) {
+	bu_log("art: framebuffer requires an RGBA beauty image\n");
+	m_failed = true;
+	return;
+    }
+
+    // Match the half-float and sRGB path used by Frame::write_main_image.
+    // The PNG writer can differ by a byte through dithering and rounding.
+    foundation::Tile display(tile, foundation::PixelFormatHalf);
+    foundation::convert_linear_rgb_to_srgb(display);
+    const size_t rgb_channels[] = {0, 1, 2, foundation::Pixel::SkipChannel};
+    const foundation::Tile rgb(display, foundation::PixelFormatUInt8, rgb_channels);
+    const size_t x_origin = tile_x * properties.m_tile_width;
+    const size_t y_origin = tile_y * properties.m_tile_height;
+    for (size_t y = 0; y < rgb.get_height(); ++y) {
+	const size_t fb_y = properties.m_canvas_height - 1 - (y_origin + y);
+	const ssize_t written = fb_write(m_framebuffer, static_cast<int>(x_origin),
+	    static_cast<int>(fb_y), rgb.pixel(0, y), rgb.get_width());
+	if (written != static_cast<ssize_t>(rgb.get_width())) {
+	    bu_log("art: could not write framebuffer scanline\n");
+	    m_failed = true;
+	    return;
 	}
     }
 }

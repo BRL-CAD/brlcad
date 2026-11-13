@@ -249,7 +249,6 @@ static std::vector<ArtLight> art_lights;
 
 const char* global_title_file;
 asf::auto_release_ptr<asr::Project> project_ptr;
-struct fb* fbp = FB_NULL;
 
 
 extern "C" {
@@ -1180,48 +1179,39 @@ build_project(std::ostream *report)
 }
 
 
-static int
-fb_setup() {
-    /* Framebuffer is desired */
-    size_t xx, yy;
-    int zoom;
-
-    /* Ask for a fb big enough to hold the image, at least 512. */
-    /* This is so MGED-invoked "postage stamps" get zoomed up big
-     * enough to see.
-     */
-    xx = yy = 512;
-    if (width > xx || height > yy) {
-	xx = width;
-	yy = height;
+static struct fb *
+fb_setup()
+{
+    // Keep small MGED-invoked renders large enough to see with integer zoom.
+    constexpr size_t MIN_FRAMEBUFFER_SIZE = 512;
+    const size_t fb_width = std::max(width, MIN_FRAMEBUFFER_SIZE);
+    const size_t fb_height = std::max(height, MIN_FRAMEBUFFER_SIZE);
+    const size_t max_dimension = static_cast<size_t>(std::numeric_limits<int>::max());
+    if (!width || !height || fb_width > max_dimension || fb_height > max_dimension) {
+	bu_log("art: image dimensions exceed framebuffer limits\n");
+	return FB_NULL;
     }
-    bu_semaphore_acquire(BU_SEM_SYSCALL);
-    fbp = fb_open(framebuffer, (int)xx, (int)yy);
-    bu_semaphore_release(BU_SEM_SYSCALL);
-    if (fbp == FB_NULL) {
-	fprintf(stderr, "rt:  can't open frame buffer\n");
-	return 12;
+    struct fb *fbp = fb_open(framebuffer, static_cast<int>(fb_width), static_cast<int>(fb_height));
+    if (!fbp) {
+	bu_log("art: cannot open framebuffer\n");
+	return FB_NULL;
     }
-
-    bu_semaphore_acquire(BU_SEM_SYSCALL);
-    /* If fb came out smaller than requested, do less work */
-    if ((size_t)fb_getwidth(fbp) < width)
-	width = fb_getwidth(fbp);
-    if ((size_t)fb_getheight(fbp) < height)
-	height = fb_getheight(fbp);
-
-    /* If the fb is lots bigger (>= 2X), zoom up & center */
-    if (width > 0 && height > 0) {
-	zoom = (int)(fb_getwidth(fbp) / width);
-	if ((size_t)fb_getheight(fbp) / height < (size_t)zoom)
-	    zoom = (int)(fb_getheight(fbp) / height);
+    const int actual_width = fb_getwidth(fbp);
+    const int actual_height = fb_getheight(fbp);
+    if (actual_width <= 0 || actual_height <= 0 ||
+	static_cast<size_t>(actual_width) < width || static_cast<size_t>(actual_height) < height) {
+	bu_log("art: framebuffer is smaller than the requested image\n");
+	fb_close(fbp);
+	return FB_NULL;
     }
-    else {
-	zoom = 1;
+    const int zoom = static_cast<int>(std::min(static_cast<size_t>(actual_width) / width,
+	static_cast<size_t>(actual_height) / height));
+    if (fb_view(fbp, static_cast<int>(width / 2), static_cast<int>(height / 2), zoom, zoom) < 0) {
+	bu_log("art: could not configure framebuffer view\n");
+	fb_close(fbp);
+	return FB_NULL;
     }
-    (void)fb_view(fbp, (int)(width / 2), (int)(height / 2), (int)zoom, (int)zoom);
-    bu_semaphore_release(BU_SEM_SYSCALL);
-    return 0;
+    return fbp;
 }
 
 
@@ -1383,7 +1373,7 @@ public:
 }
 
 static bool
-art_render_image(asr::Project& project, const char *filename, asr::ITileCallback* callback = nullptr)
+art_render_image(asr::Project& project, const char *filename, ArtTileCallback* callback = nullptr)
 {
     asr::DefaultRendererController controller;
     asf::SearchPaths resource_search_paths;
@@ -1416,7 +1406,12 @@ art_render_image(asr::Project& project, const char *filename, asr::ITileCallback
 	bu_log("art: renderer reported errors; image was not saved\n");
 	return false;
     }
-    return art_save_image(project, filename);
+    if (callback && !callback->flush())
+	return false;
+    const bool saved = art_save_image(project, filename);
+    // Some framebuffer backends linger until their window is closed.
+    const bool closed = !callback || callback->finish();
+    return saved && closed;
 }
 
 
@@ -1447,16 +1442,11 @@ art_process_scene(bool display_framebuffer, const char *filename)
 	}
 	return true;
     }
-    if (display_framebuffer && !fbp) {
-	RENDERER_LOG_INFO("FRAMEBUFFER IS ON\n");
-	if (fb_setup() != 0)
-	    return false;
-    }
-    ArtTileCallback callback;
-    const bool success = art_render_image(project.ref(), filename, display_framebuffer ? &callback : nullptr);
-    if (fbp != FB_NULL)
-	fb_close(fbp);
-    return success;
+    struct fb *fbp = display_framebuffer ? fb_setup() : FB_NULL;
+    if (display_framebuffer && !fbp)
+	return false;
+    ArtTileCallback callback(fbp);
+    return art_render_image(project.ref(), filename, display_framebuffer ? &callback : nullptr);
 }
 
 
@@ -1551,7 +1541,7 @@ art_cm_end(const int UNUSED(argc), const char** UNUSED(argv))
     if (!inspect_materials && !art_prepare_geometry(APP.a_rt_i))
 	return -1;
     const std::string filename = art_frame_filename(outputfile, curframe);
-    return art_process_scene(false, filename.c_str()) ? 0 : -1;
+    return art_process_scene(framebuffer != nullptr, filename.c_str()) ? 0 : -1;
 }
 
 

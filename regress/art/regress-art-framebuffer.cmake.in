@@ -1,0 +1,58 @@
+set(WORK "@CMAKE_CURRENT_BINARY_DIR@/framebuffer-output")
+set(LOG "${WORK}/art.log")
+file(REMOVE_RECURSE "${WORK}")
+file(MAKE_DIRECTORY "${WORK}/shaders" "${WORK}/cache")
+set(ENV{BU_DIR_CACHE} "${WORK}/cache")
+include("@CMAKE_CURRENT_SOURCE_DIR@/art_test_commands.cmake")
+configure_file("@CMAKE_CURRENT_BINARY_DIR@/art_emission.oso"
+  "${WORK}/shaders/art_emission.oso" COPYONLY)
+set(DB "${WORK}/scene.g")
+run("${VEXEC}" create-material "${DB}" art_emission)
+run("${VEXEC}" set-material "${DB}" in_color "color 0.18 0.35 1.5")
+set(RENDER_ARGS -c "set samples=4 background_color=0.2/0.4/0.6"
+  -c "viewsize 80" -c "eye_pt 0 0 40" -c "orientation 0 0 0 1")
+
+# Odd dimensions exercise partial tiles on both axes, and the asymmetric
+# subject distinguishes a row offset or inversion from display conversion.
+foreach(dimensions IN ITEMS "37;35" "65;49" "61;91" "513;35")
+  list(GET dimensions 0 width)
+  list(GET dimensions 1 height)
+  foreach(workers IN ITEMS 1 2)
+    set(stem "${WORK}/display-${width}-${height}-${workers}")
+    run("${EXEC}" ${RENDER_ARGS} -w ${width} -n ${height} -P ${workers}
+      -F "${stem}.fb" -o "${stem}.png" "${DB}" all.g)
+    # Small framebuffer requests retain the postage-stamp zoom convention.
+    set(fb_width 512)
+    if(width GREATER fb_width)
+      set(fb_width ${width})
+    endif()
+    run("${VEXEC}" check-framebuffer "${stem}.fb" "${stem}.png" ${width} ${height} ${fb_width} 512)
+  endforeach()
+endforeach()
+
+# A second frame must open its own device, with its own dimensions and
+# background.  It must never write through the preceding frame's handle.
+set(stream "${WORK}/frames.view")
+file(WRITE "${stream}" "start 0; end;\n"
+  "start 1; set width=37 height=35 background_color=0.7/0.1/0.3; end;\n")
+run(INPUT_FILE "${stream}" "${EXEC}" ${RENDER_ARGS} -w 65 -n 49 -P 2 -M
+  -F "${WORK}/frames.fb" -o "${WORK}/frames.png" "${DB}" all.g)
+run("${VEXEC}" check-image "${WORK}/frames.png" 65 49)
+run("${VEXEC}" check-framebuffer "${WORK}/frames.fb" "${WORK}/frames.1.png" 37 35 512 512)
+expect_failure("${VEXEC}" check-framebuffer "${WORK}/frames.fb" "${WORK}/frames.png" 65 49 512 512)
+
+# Both open and write failures must fail the command and preserve output.
+# A directory cannot accept disk-framebuffer writes; some platforms reject
+# opening it instead, which is also a valid failure before publishing.
+file(MAKE_DIRECTORY "${WORK}/unwritable.fb")
+foreach(device IN ITEMS "${WORK}/missing/device.fb" "${WORK}/unwritable.fb")
+  set(output "${WORK}/failed.png")
+  set(sentinel "preserve existing output")
+  file(WRITE "${output}" "${sentinel}")
+  expect_failure_matching("art: (cannot open framebuffer|could not write framebuffer)"
+    "${EXEC}" ${RENDER_ARGS} -w 37 -n 35 -P 2 -F "${device}" -o "${output}" "${DB}" all.g)
+  file(READ "${output}" retained)
+  if(NOT retained STREQUAL sentinel)
+    message(FATAL_ERROR "Framebuffer failure replaced existing image output")
+  endif()
+endforeach()

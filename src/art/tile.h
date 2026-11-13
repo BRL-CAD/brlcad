@@ -18,50 +18,45 @@
  * information.
  */
 
+#ifndef ART_TILE_H
+#define ART_TILE_H
+
+#include "common.h"
+
+#include <cstdint>
+
 #include "renderer/kernel/rendering/itilecallback.h"
 
-class ArtTileCallback
-   :public renderer::ITileCallback
+struct fb;
+
+// MasterRenderer serializes calls when given a single ITileCallback.
+// Own the framebuffer for exactly one render, including failure cleanup.
+class ArtTileCallback final : public renderer::ITileCallback
 {
-    public:
-	//
-	// Methods called by tile-based renderers.
-	//
+public:
+    explicit ArtTileCallback(struct fb *framebuffer) : m_framebuffer(framebuffer) {}
+    ~ArtTileCallback() override;
+    ArtTileCallback(const ArtTileCallback&) = delete;
+    ArtTileCallback& operator=(const ArtTileCallback&) = delete;
 
-	// This method is called before a frame is rendered.
-	void on_tiled_frame_begin(const renderer::Frame*) {;}
+    void on_tiled_frame_begin(const renderer::Frame*) override {}
+    void on_tiled_frame_end(const renderer::Frame*) override {}
+    void on_tile_begin(const renderer::Frame*, size_t, size_t, size_t, size_t) override {}
+    void on_tile_end(const renderer::Frame*, size_t, size_t) override;
+    void on_progressive_frame_update(const renderer::Frame&, double, std::uint64_t,
+	double, std::uint64_t) override {}
 
-	// This method is called after a frame is rendered.
-	void on_tiled_frame_end(const renderer::Frame*) {;}
+    // The callback lives on the caller's stack.
+    void release() override {}
+    bool flush();
+    bool finish();
 
-	// This method is called before a tile is rendered.
-	void on_tile_begin(
-		const renderer::Frame*,           //frame
-		const size_t,           //tile_x
-		const size_t,           //tile_y
-		const size_t,           //thread_index
-		const size_t            //thread_count
-		) {;}
-
-	// This method is called after a tile is rendered.
-	void on_tile_end(
-		const renderer::Frame*,           //frame
-		const size_t,           //tile_x
-		const size_t            //tile_y
-		);
-
-	// This method is called after the frame has been updated.
-	void on_progressive_frame_update(
-		const renderer::Frame&,           //frame
-		const double,           //time
-		const std::uint64_t,    //samples
-		const double,           //samples_per_pixel
-		const std::uint64_t     //samples_per_second
-		) {;}
-
-
-	void release() {};
+private:
+    struct fb *m_framebuffer;
+    bool m_failed = false;
 };
+
+#endif
 
 /*
  * Local Variables:

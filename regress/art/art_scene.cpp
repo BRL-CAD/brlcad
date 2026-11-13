@@ -442,6 +442,33 @@ check_image_difference(const char *path, const char *reference_path,
     return difference_matches && enough_geometry ? 0 : 1;
 }
 
+
+static int
+check_framebuffer(const char *path, const char *image_path, size_t width, size_t height,
+    size_t framebuffer_width, size_t framebuffer_height)
+{
+    auto expected = read_image(image_path, width, height);
+    ImagePtr actual(icv_read(path, BU_MIME_IMAGE_PIX, framebuffer_width, framebuffer_height), icv_destroy);
+    if (!expected || !actual || actual->channels != 3 || width > actual->width || height > actual->height)
+	return 1;
+    // Framebuffer conversion and PNG output quantize and dither separately.
+    constexpr double MAX_DISPLAY_ERROR = 2.0 / 255.0;
+    double max_error = 0;
+    for (size_t y = 0; y < height; ++y) {
+	for (size_t x = 0; x < width; ++x) {
+	    for (size_t channel = 0; channel < actual->channels; ++channel) {
+		const double value = actual->data[(y * actual->width + x) * actual->channels + channel];
+		const double reference = expected->data[(y * width + x) * expected->channels + channel];
+		if (!std::isfinite(value) || !std::isfinite(reference))
+		    return 1;
+		max_error = std::max(max_error, std::abs(value - reference));
+	    }
+	}
+    }
+    bu_log("Framebuffer comparison %s: max_error=%g\n", path, max_error);
+    return max_error <= MAX_DISPLAY_ERROR ? 0 : 1;
+}
+
 int
 main(int argc, char **argv)
 {
@@ -469,6 +496,9 @@ main(int argc, char **argv)
     if (argc == 6 && BU_STR_EQUAL(argv[1], "set-named-material"))
 	return edit_material_property(argv[2], argv[4], argv[5], argv[3]);
     try {
+	if (argc == 8 && BU_STR_EQUAL(argv[1], "check-framebuffer"))
+	    return check_framebuffer(argv[2], argv[3], std::stoul(argv[4]), std::stoul(argv[5]),
+		std::stoul(argv[6]), std::stoul(argv[7]));
 	if (argc == 6 && (BU_STR_EQUAL(argv[1], "check-filtered-texture") ||
 	    BU_STR_EQUAL(argv[1], "check-aliased-texture") || BU_STR_EQUAL(argv[1], "check-matching-image") ||
 	    BU_STR_EQUAL(argv[1], "check-different-image") || BU_STR_EQUAL(argv[1], "check-uniform-image") ||

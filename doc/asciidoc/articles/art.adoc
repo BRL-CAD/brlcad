@@ -388,6 +388,25 @@ frame persistence, rooted asset lookup, and invalid-image handling.
 Native Appleseed tests check filtered sampling/evaluation consistency away
 from texel centers, longitude interpolation, and zero-shift pole handling.
 
+== Framebuffer display
+
+`-F device` displays completed tiles while rendering and can be combined
+with `-o image.png` or `-o image.exr`.  The display uses the beauty image's
+sRGB conversion, matching PNG output within 8-bit rounding and dithering.
+HDR EXR output retains scene-linear radiance; the framebuffer clips values
+outside its display range.  Alpha is omitted from framebuffer RGB pixels.
+
+Each image uses its own framebuffer connection, including successive
+frames from a saved-view stream.  Small renders request a device at least
+512 pixels in each dimension and use integer zoom.  A device smaller than
+the requested image is an error; it does not change the saved image size.
+Open, view, tile-write, and flush failures fail the render before saving
+its image.  Art saves the image before closing the device, so a lingering
+window does not delay the saved file.  A close failure returns an error,
+but the image can already have been saved.  A framebuffer can also contain
+completed tiles when a later error occurs.
+
+
 == Camera pose
 
 `art` accepts rt camera commands either through separate `-c` options or
