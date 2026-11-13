@@ -25,7 +25,6 @@
 
 #include "common.h"
 
-#include <errno.h>
 #include <limits.h>
 #include <stdlib.h>
 #include <math.h>
@@ -34,90 +33,121 @@
 #include "bio.h"
 
 #include "vmath.h"
+#include "bu/arg.h"
 #include "bu/app.h"
-#include "bu/getopt.h"
-#include "util_arg.h"
-#include "bu/malloc.h"
 #include "bu/exit.h"
+#include "bu/log.h"
+#include "bu/malloc.h"
 #include "bn.h"
 #include "dm.h"
 
 
 #define BYTESPERPIXEL 1
 
-static long int file_width = 512;		/* default input width */
-static long int file_height = 512;		/* default input height */
-static int autosize = 0;			/* !0 to autosize input */
-static int fileinput = 0;			/* file of pipe on input? */
-static const char *file_name;
-static FILE *infp;
+struct bw_png_args {
+    struct bw_png_args *self;
+    int help;
+    int autosize;
+    long width;
+    long height;
+};
 
-static char usage[] = "Usage: bw-png [-a] [-w file_width] [-n file_height]\n\
-	[-s square_file_size] [file.bw]\n";
+enum bw_png_dimension {
+    BW_PNG_WIDTH = -1,
+    BW_PNG_SIZE,
+    BW_PNG_HEIGHT
+};
 
-int
-get_args(int argc, char **argv)
+static struct bw_png_args *
+bw_png_args_from_storage(void *storage)
 {
-    int c;
-
-    while ((c = bu_getopt(argc, argv, "as:w:n:h?")) != -1) {
-	switch (c) {
-	    case 'a':
-		autosize = 1;
-		break;
-	    case 's':
-		/* square file size */
-		if (!util_arg_long_range(bu_optarg, &file_width, 1, LONG_MAX, "input size"))
-		    return 0;
-		file_height = file_width;
-		autosize = 0;
-		break;
-	    case 'w':
-		if (!util_arg_long_range(bu_optarg, &file_width, 1, LONG_MAX, "input width"))
-		    return 0;
-		autosize = 0;
-		break;
-	    case 'n':
-		if (!util_arg_long_range(bu_optarg, &file_height, 1, LONG_MAX, "input height"))
-		    return 0;
-		autosize = 0;
-		break;
-
-	    default: /* 'h' '?' */
-		return 0;
-	}
-    }
-
-    if (bu_optind >= argc) {
-	if (isatty(fileno(stdin)))
-	    return 0;
-	file_name = "-";
-	infp = stdin;
-    } else {
-	file_name = argv[bu_optind];
-	bu_optind++;
-	if (argc > bu_optind) {
-	    fprintf(stderr, "bw-png: excess argument(s) not supported\n");
-	    return 0;
-	}
-	if ((infp = fopen(file_name, "rb")) == NULL) {
-	    perror(file_name);
-	    fprintf(stderr,
-		    "bw-png: cannot open \"%s\" for reading\n",
-		    file_name);
-	    bu_exit (1, NULL);
-	}
-	fileinput++;
-    }
-
-    if (argc > bu_optind) {
-	fprintf(stderr, "bw-png: excess argument(s) not supported\n");
-	return 0;
-    }
-
-    return 1;		/* OK */
+    return storage ? *(struct bw_png_args **)storage : NULL;
 }
 
+static int
+bw_png_autosize(struct bu_vls *UNUSED(msg), const char *UNUSED(arg),
+	void *storage)
+{
+    struct bw_png_args *args = bw_png_args_from_storage(storage);
+    if (args)
+	args->autosize = 1;
+    return 0;
+}
+
+static int
+bw_png_dimension(struct bu_vls *msg, const char *arg, void *storage,
+	enum bw_png_dimension dimension)
+{
+    long value;
+    struct bw_png_args *args = bw_png_args_from_storage(storage);
+
+    if (!bu_arg_long_range_from_str(msg, &value, arg, 10, 1, LONG_MAX))
+	return -1;
+    if (args) {
+	switch (dimension) {
+	    case BW_PNG_WIDTH:
+		args->width = value;
+		break;
+	    case BW_PNG_SIZE:
+		args->width = value;
+		args->height = value;
+		break;
+	    case BW_PNG_HEIGHT:
+		args->height = value;
+		break;
+	}
+	args->autosize = 0;
+    }
+    return 0;
+}
+
+static int
+bw_png_size(struct bu_vls *msg, const char *arg, void *storage)
+{
+    return bw_png_dimension(msg, arg, storage, BW_PNG_SIZE);
+}
+
+static int
+bw_png_width(struct bu_vls *msg, const char *arg, void *storage)
+{
+    return bw_png_dimension(msg, arg, storage, BW_PNG_WIDTH);
+}
+
+static int
+bw_png_height(struct bu_vls *msg, const char *arg, void *storage)
+{
+    return bw_png_dimension(msg, arg, storage, BW_PNG_HEIGHT);
+}
+
+static const struct bu_arg_option bw_png_options[] = {
+    BU_ARG_FLAG("h", "help", struct bw_png_args, help,
+	"Print help and exit"),
+    BU_ARG_ALIAS("?", NULL, "help", 1),
+    BU_ARG_CUSTOM_FLAG("a", "autosize", "autosize", struct bw_png_args,
+	self, bw_png_autosize, "Derive dimensions from a named input file"),
+    BU_ARG_CUSTOM("s", "size", struct bw_png_args, self, bw_png_size,
+	"pixels", "Set both input dimensions"),
+    BU_ARG_CUSTOM("w", "width", struct bw_png_args, self, bw_png_width,
+	"pixels", "Set the input width"),
+    BU_ARG_CUSTOM("n", "height", struct bw_png_args, self, bw_png_height,
+	"scanlines", "Set the input height"),
+    BU_ARG_OPTION_NULL
+};
+
+static const struct bu_arg_operand bw_png_operands[] = {
+    BU_ARG_OPERAND("input", BU_ARG_VALUE_FILE, 0, 1,
+	"BW input file (default: standard input)", NULL),
+    BU_ARG_OPERAND_NULL
+};
+
+static const struct bu_arg_schema bw_png_schema = BU_ARG_SCHEMA(
+    "bw-png", "Convert a BRL-CAD BW image to PNG",
+    bw_png_options, bw_png_operands, BU_ARG_PARSE_OPTIONS_FIRST,
+    BU_ARG_SCHEMA_META_HELP(NULL, NULL, NULL, NULL, NULL));
+
+static const struct bu_arg_grammar bw_png_grammar = {
+    &bw_png_schema, NULL, NULL
+};
 
 int
 main(int argc, char **argv)
@@ -130,32 +160,62 @@ main(int argc, char **argv)
     FILE *outfp = stdout;
     size_t row_size;
     size_t image_size;
+    const char *file_name = "-";
+    FILE *infp = stdin;
+    int fileinput = 0;
+    struct bw_png_args args = {NULL, 0, 0, 512, 512};
+    struct bu_vls msg = BU_VLS_INIT_ZERO;
+    args.self = &args;
 
     bu_setprogname(argv[0]);
 
-    if (!get_args(argc, argv)) {
-	(void)fputs(usage, stderr);
-	bu_exit (1, NULL);
+    int introspection = bu_arg_introspect(&msg, &bw_png_grammar, argc - 1,
+	(const char * const *)(argv + 1));
+    if (introspection != 0) {
+	bu_flog(introspection > 0 ? stdout : stderr, "%s", bu_vls_cstr(&msg));
+	bu_vls_free(&msg);
+	return introspection > 0 ? 0 : 1;
+    }
+    int operand_index = bu_arg_schema_parse_complete(&bw_png_schema, &args,
+	&msg, argc - 1, (const char **)(argv + 1));
+    if (operand_index < 0)
+	bu_exit(1, "%s", bu_vls_cstr(&msg));
+    bu_vls_free(&msg);
+    if (args.help) {
+	char *help = bu_arg_schema_help(&bw_png_schema, "bw-png");
+	bu_flog(stdout, "%s", help ? help : "");
+	bu_free(help, "bw-png help");
+	return 0;
+    }
+
+    if (argc - operand_index - 1 == 1) {
+	file_name = argv[operand_index + 1];
+	infp = fopen(file_name, "rb");
+	if (!infp)
+	    bu_exit(1, "bw-png: cannot open '%s' for reading\n", file_name);
+	fileinput = 1;
+    } else if (isatty(fileno(stdin))) {
+	bu_exit(1, "bw-png requires an input file or redirected input\n");
     }
 
     /* autosize input? */
-    if (fileinput && autosize) {
+    if (fileinput && args.autosize) {
 	size_t w, h;
 	if (fb_common_file_size(&w, &h, file_name, 1)) {
-	    file_width = (long)w;
-	    file_height = (long)h;
+	    args.width = (long)w;
+	    args.height = (long)h;
 	} else {
 	    fprintf(stderr, "bw-png: unable to autosize\n");
 	}
     }
 
-    if (file_width > (long)PNG_UINT_31_MAX ||
-	file_height > (long)PNG_UINT_31_MAX)
+    if (args.width > (long)PNG_UINT_31_MAX ||
+	args.height > (long)PNG_UINT_31_MAX)
 	bu_exit(EXIT_FAILURE, "bw-png: image dimensions exceed PNG limits\n");
-    row_size = (size_t)file_width * BYTESPERPIXEL;
-    if ((size_t)file_height > SIZE_MAX / row_size)
+    row_size = (size_t)args.width * BYTESPERPIXEL;
+    if ((size_t)args.height > SIZE_MAX / row_size)
 	bu_exit(EXIT_FAILURE, "bw-png: image dimensions are too large\n");
-    image_size = (size_t)file_height * row_size;
+    image_size = (size_t)args.height * row_size;
 
     setmode(fileno(outfp), O_BINARY);
 
@@ -176,9 +236,9 @@ main(int argc, char **argv)
     scanbuf = (unsigned char *)bu_calloc(image_size, sizeof(unsigned char), "scanbuf");
 
     /* create array of pointers to rows for libpng */
-    rows = (unsigned char **)bu_calloc(file_height, sizeof(unsigned char *), "rows");
-    for (i=0; i<file_height; i++)
-	rows[i] = scanbuf + ((size_t)(file_height-i-1) * row_size);
+    rows = (unsigned char **)bu_calloc(args.height, sizeof(unsigned char *), "rows");
+    for (i=0; i<args.height; i++)
+	rows[i] = scanbuf + ((size_t)(args.height-i-1) * row_size);
 
     /* read the bw file */
     if (fread(scanbuf, image_size, 1, infp) != 1)
@@ -187,7 +247,7 @@ main(int argc, char **argv)
     png_init_io(png_p, outfp);
     png_set_filter(png_p, 0, PNG_FILTER_NONE);
     png_set_compression_level(png_p, 9);
-    png_set_IHDR(png_p, info_p, file_width, file_height, 8,
+    png_set_IHDR(png_p, info_p, args.width, args.height, 8,
 		 PNG_COLOR_TYPE_GRAY, PNG_INTERLACE_NONE,
 		 PNG_COMPRESSION_TYPE_DEFAULT, PNG_FILTER_TYPE_DEFAULT);
 
