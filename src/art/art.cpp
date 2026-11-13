@@ -590,6 +590,13 @@ register_region_impl(struct db_tree_state* tsp,
     if (!builder.region_paths.insert(region_path).second)
 	return 0;
 
+    // Match librt's default air exclusion before resolving materials or objects.
+    if (tsp->ts_aircode != 0) {
+	if (builder.report)
+	    *builder.report << "air_region " << std::quoted(region_path) << " skipped\n";
+	return 0;
+    }
+
     float region_rgb[ELEMENTS_PER_VECT];
     art_region_color(tsp, region_rgb);
 

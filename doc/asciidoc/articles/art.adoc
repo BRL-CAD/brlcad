@@ -481,6 +481,15 @@ preserving existing output files. The same test runs against installed art.
 The shared command handlers also have a native `rt_command_selection`
 regression with deterministic pixel comparisons.
 
+Air regions are excluded consistently with librt's default tracing policy.
+The scene and material walk skips every nonzero air code before resolving a
+material or constructing a renderer object.  Inspection reports these paths
+as `air_region ... skipped`.  Selecting an assembly containing air therefore
+does not make excluded regions fail object loading or material validation.
+`-U` remains unsupported; this exclusion does not provide participating media.
+The selection regression checks direct and transformed nested air regions
+with different air codes and deliberately invalid material assignments.
+
 === Command-stream frames
 
 A `start N; ...; end;` block renders frame _N_.  Frame zero uses the requested
