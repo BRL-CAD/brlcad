@@ -40,6 +40,7 @@
 
 #include <errno.h>
 #include <limits.h>
+#include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
 #include "bio.h"
@@ -74,10 +75,15 @@ doit(void)
 {
     struct aliashead ah;
     char *image;
-    unsigned bufsize, idx, cpix, cnt;
+    size_t bufsize, idx, cpix;
+    unsigned cnt;
     int n;
 
-    bufsize=(x*y*3);
+    if ((size_t)x > SIZE_MAX / 3 / (size_t)y) {
+	(void) fprintf(stderr, "Error: image dimensions are too large\n");
+	bu_exit(-2, NULL);
+    }
+    bufsize = (size_t)x * (size_t)y * 3;
 
     /* allocate a buffer for the image */
     if ((image = (char *)bu_calloc(bufsize, 1, "image")) == (char *)NULL) {
@@ -87,7 +93,7 @@ doit(void)
     /* read in the image (reverse the order of the scanlines) */
     for (n=y-1; n >= 0; --n)
 	if (fread(&image[n*x*3], x*3, 1, stdin) != 1) {
-	    (void) fprintf(stderr, "Error reading image at scanline %u\n", n);
+	    (void) fprintf(stderr, "Error reading image at scanline %d\n", n);
 	    bu_free(image, "image alloc from malloc");
 	    bu_exit (-2, NULL);
 	}
@@ -167,15 +173,15 @@ main(int ac, char **av)
     while ((c=bu_getopt(ac, av, options)) != -1)
 	switch (c) {
 	    case 'w' :
-		if (!bu_opt_scan_int_range(bu_optarg, &x, 1, INT_MAX, "input width"))
+		if (!bu_opt_scan_int_range(bu_optarg, &x, 1, USHRT_MAX, "input width"))
 		    usage();
 		break;
 	    case 'n' :
-		if (!bu_opt_scan_int_range(bu_optarg, &y, 1, INT_MAX, "input height"))
+		if (!bu_opt_scan_int_range(bu_optarg, &y, 1, USHRT_MAX, "input height"))
 		    usage();
 		break;
 	    case 's' :
-		if (!bu_opt_scan_int_range(bu_optarg, &x, 1, INT_MAX, "input size"))
+		if (!bu_opt_scan_int_range(bu_optarg, &x, 1, USHRT_MAX, "input size"))
 		    usage();
 		y = x;
 		break;
