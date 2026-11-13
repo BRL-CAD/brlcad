@@ -10,7 +10,7 @@ pixstat - list statistics related to a color pix image
 
 [source]
 ----
-pixstat [-v] [file.pix]
+pixstat [-v|--verbose] [file.pix]
 ----
 
 
@@ -33,10 +33,12 @@ sums rather than on individual samples.
 [[options]]
 == OPTIONS
 
-*-v*::
+*-v*, *--verbose*::
   Verbose. In addition to the summary statistics, dump the full histogram, one
   line per intensity value (0-255) giving the red, green, and blue bin counts.
-  This flag must precede the optional input file name.
+
+*-h*, *--help*::
+  Print help and exit.  *-?* is accepted as a compatibility alias.
 
 [[examples]]
 == EXAMPLES

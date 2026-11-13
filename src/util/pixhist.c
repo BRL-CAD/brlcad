@@ -26,131 +26,154 @@
 
 #include "common.h"
 
-#include <stdlib.h>
-#include <string.h>
-
 #include "bio.h"
 
+#include "bu/arg.h"
 #include "bu/app.h"
 #include "bu/color.h"
+#include "bu/exit.h"
 #include "bu/log.h"
-#include "bu/str.h"
+#include "bu/malloc.h"
 #include "dm.h"
 
 
-#define IBUFSIZE 3*2048		/* Max read size in rgb pixels */
-unsigned char ibuf[IBUFSIZE];	/* Input buffer */
+#define FRAMEBUFFER_DIMENSION 512
+#define HISTOGRAM_BINS 256
+#define INPUT_PIXEL_COUNT 2048
+#define RGB_CHANNEL_COUNT 3
 
-long bin_r[256];		/* Histogram bins */
-long bin_g[256];
-long bin_b[256];
-int verbose = 0;
+struct pixhist_args {
+    int help;
+    int verbose;
+};
 
-struct fb *fbp;
+static const struct bu_arg_option pixhist_options[] = {
+    BU_ARG_FLAG("h", "help", struct pixhist_args, help,
+	"Print help and exit"),
+    BU_ARG_ALIAS("?", NULL, "help", 1),
+    BU_ARG_FLAG("v", "verbose", struct pixhist_args, verbose,
+	"Print per-channel histogram counts"),
+    BU_ARG_OPTION_NULL
+};
 
-static long max;
-static double scalefactor;
-static unsigned char line[512*3];
-static FILE *fp;
+static const struct bu_arg_operand pixhist_operands[] = {
+    BU_ARG_OPERAND("input", BU_ARG_VALUE_FILE, 0, 1,
+	"PIX input file (default: standard input)", NULL),
+    BU_ARG_OPERAND_NULL
+};
+
+static const struct bu_arg_schema pixhist_schema = BU_ARG_SCHEMA(
+    "pixhist", "Display PIX channel histograms on a framebuffer",
+    pixhist_options, pixhist_operands, BU_ARG_PARSE_OPTIONS_FIRST,
+    BU_ARG_SCHEMA_META_HELP(NULL, NULL, NULL, NULL, NULL));
+
+static const struct bu_arg_grammar pixhist_grammar = {
+    &pixhist_schema, NULL, NULL
+};
 
 
 int
 main(int argc, char **argv)
 {
-    int i;
+    long red_histogram[HISTOGRAM_BINS] = {0};
+    long green_histogram[HISTOGRAM_BINS] = {0};
+    long blue_histogram[HISTOGRAM_BINS] = {0};
+    unsigned char input[INPUT_PIXEL_COUNT * RGB_CHANNEL_COUNT];
+    unsigned char line[FRAMEBUFFER_DIMENSION * RGB_CHANNEL_COUNT] = {0};
+    FILE *input_file = stdin;
+    struct pixhist_args args = {0};
+    struct bu_vls msg = BU_VLS_INIT_ZERO;
 
     bu_setprogname(argv[0]);
 
-    setmode(fileno(stdin), O_BINARY);
+    int introspection = bu_arg_introspect(&msg, &pixhist_grammar, argc - 1,
+	(const char * const *)(argv + 1));
+    if (introspection != 0) {
+	bu_flog(introspection > 0 ? stdout : stderr, "%s", bu_vls_cstr(&msg));
+	bu_vls_free(&msg);
+	return introspection > 0 ? 0 : 1;
+    }
+    int operand_index = bu_arg_schema_parse_complete(&pixhist_schema, &args,
+	&msg, argc - 1, (const char **)(argv + 1));
+    if (operand_index < 0)
+	bu_exit(1, "%s", bu_vls_cstr(&msg));
+    bu_vls_free(&msg);
+    if (args.help) {
+	char *help = bu_arg_schema_help(&pixhist_schema, "pixhist");
+	bu_flog(stdout, "%s", help ? help : "");
+	bu_free(help, "pixhist help");
+	return 0;
+    }
+
+    if (argc - operand_index - 1 == 1) {
+	const char *path = argv[operand_index + 1];
+	input_file = fopen(path, "rb");
+	if (!input_file)
+	    bu_exit(1, "pixhist: cannot open '%s' for reading\n", path);
+    } else if (isatty(fileno(stdin))) {
+	bu_exit(1, "pixhist requires an input file or redirected input\n");
+    }
+
+    setmode(fileno(input_file), O_BINARY);
     setmode(fileno(stdout), O_BINARY);
 
-    /* check for verbose flag */
-    if (argc > 1 && BU_STR_EQUAL(argv[1], "-v")) {
-	verbose++;
-	argv++;
-	argc--;
-    }
-
-    /* look for optional input file */
-    if (argc > 1) {
-	if ((fp = fopen(argv[1], "rb")) == 0) {
-	    bu_exit(1, "pixhist: can't open \"%s\"\n", argv[1]);
-	}
-	argv++;
-	argc--;
-    } else
-	fp = stdin;
-
-    /* check usage */
-    if (argc > 1 || isatty(fileno(fp))) {
-	bu_exit(1, "Usage: pixhist [-v] [file.pix]\n");
-    }
-
-    while ((i = fread(&ibuf[0], sizeof(*ibuf), sizeof(ibuf), fp)) > 0) {
-	unsigned char *bp;
-	int j;
-
-	if (i % 3)
+    size_t bytes;
+    while ((bytes = fread(input, 1, sizeof(input), input_file)) > 0) {
+	if (bytes % RGB_CHANNEL_COUNT)
 	    bu_exit(1, "pixhist: input ends with an incomplete pixel\n");
-	bp = &ibuf[0];
-	for (j = i/3; j > 0; j--) {
-	    bin_r[ *bp++ ]++;
-	    bin_g[ *bp++ ]++;
-	    bin_b[ *bp++ ]++;
+	for (size_t offset = 0; offset < bytes; offset += RGB_CHANNEL_COUNT) {
+	    red_histogram[input[offset + RED]]++;
+	    green_histogram[input[offset + GRN]]++;
+	    blue_histogram[input[offset + BLU]]++;
 	}
     }
-    if (ferror(fp))
+    if (ferror(input_file))
 	bu_exit(1, "pixhist: error reading input\n");
-    if (fp != stdin && fclose(fp) == EOF)
+    if (input_file != stdin && fclose(input_file) == EOF)
 	bu_exit(1, "pixhist: error closing input\n");
 
-    /* find max */
-    max = 1;
-    for (i = 0; i < 256; i++) {
-	if (bin_r[i] > max) max = bin_r[i];
-	if (bin_g[i] > max) max = bin_g[i];
-	if (bin_b[i] > max) max = bin_b[i];
+    long maximum = 1;
+    for (size_t index = 0; index < HISTOGRAM_BINS; index++) {
+	if (red_histogram[index] > maximum)
+	    maximum = red_histogram[index];
+	if (green_histogram[index] > maximum)
+	    maximum = green_histogram[index];
+	if (blue_histogram[index] > maximum)
+	    maximum = blue_histogram[index];
     }
-    scalefactor = 511.0 / ((double)max);
+    double scale = (FRAMEBUFFER_DIMENSION - 1) / (double)maximum;
+    bu_log("Max bin count=%ld.  %g count/pixel\n", maximum, scale);
 
-    /* Display the max? */
-    bu_log("Max bin count=%ld.  %g count/pixel\n", max, scalefactor);
+    struct fb *framebuffer = fb_open(NULL, FRAMEBUFFER_DIMENSION,
+	FRAMEBUFFER_DIMENSION);
+    if (!framebuffer)
+	bu_exit(12, "pixhist: framebuffer open failed\n");
 
-    if ((fbp = fb_open(NULL, 512, 512)) == NULL) {
-	bu_exit(12, "fb_open failed\n");
+    for (size_t index = 0; index < HISTOGRAM_BINS; index++) {
+	int red_level = (int)(red_histogram[index] * scale);
+	int green_level = (int)(green_histogram[index] * scale);
+	int blue_level = (int)(blue_histogram[index] * scale);
+	for (int pixel = 0; pixel < FRAMEBUFFER_DIMENSION; pixel++) {
+	    line[pixel * RGB_CHANNEL_COUNT + RED] = pixel < red_level ? 255 : 0;
+	    line[pixel * RGB_CHANNEL_COUNT + GRN] = pixel < green_level ? 255 : 0;
+	    line[pixel * RGB_CHANNEL_COUNT + BLU] = pixel < blue_level ? 255 : 0;
+	}
+	int line_length = red_level;
+	if (green_level > line_length)
+	    line_length = green_level;
+	if (blue_level > line_length)
+	    line_length = blue_level;
+
+	fb_write(framebuffer, 0, (int)(2 * index), line, line_length);
+	fb_write(framebuffer, 0, (int)(2 * index + 1), line, line_length);
+	if (args.verbose) {
+	    bu_log("%3zu: %10ld %10ld %10ld (%d)\n", index,
+		red_histogram[index], green_histogram[index],
+		blue_histogram[index], line_length);
+	}
     }
 
-    /* Display them */
-    for (i = 0; i < 256; i++) {
-	int j;
-	int level;
-	long npix;
-
-	level = (int)((double)bin_r[i]*scalefactor);
-	if (level > 511) level = 511;
-	for (j = 0; j < level; j++) line[j*3+RED] = 255;
-	for (; j < 512; j++) line[j*3+RED] = 0;
-	npix = level;
-
-	level = (int)((double)bin_g[i]*scalefactor);
-	if (level > 511) level = 511;
-	for (j = 0; j < level; j++) line[j*3+GRN] = 255;
-	for (; j < 512; j++) line[j*3+GRN] = 0;
-	if (level > npix) npix = level;
-
-	level = (int)((double)bin_b[i]*scalefactor);
-	if (level > 511) level = 511;
-	for (j = 0; j < level; j++) line[j*3+BLU] = 255;
-	for (; j < 512; j++) line[j*3+BLU] = 0;
-	if (level > npix) npix = level;
-
-	fb_write(fbp, 0, 2*i, line, npix);
-	fb_write(fbp, 0, 2*i+1, line, npix);
-	if (verbose)
-	    bu_log("%3d: %10ld %10ld %10ld (%ld)\n",
-		   i, bin_r[i], bin_g[i], bin_b[i], npix);
-    }
-    fb_close(fbp);
+    fb_close(framebuffer);
     return 0;
 }
 
