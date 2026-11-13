@@ -51,7 +51,6 @@ main(int argc, char **argv)
     int i = 0;
     int n = 0;
     long r = 0;
-    size_t ret = 0;
     unsigned char *bp = NULL;
 
 #define BUFSIZE 512
@@ -88,6 +87,8 @@ main(int argc, char **argv)
 	    bin[ *bp++ ]++;
 	havg += n;
     }
+    if (ferror(fp))
+	bu_exit(1, "bwhisteq: error reading input\n");
     havg /= (double)BINSIZE;
 
     r = 0;
@@ -108,7 +109,8 @@ main(int argc, char **argv)
 	    fprintf(stderr, "result[%d] = %d\n", i, result[i]);
     }
 
-    bu_fseek(fp, 0, 0);
+    if (bu_fseek(fp, 0, SEEK_SET) != 0)
+	bu_exit(1, "bwhisteq: error rewinding input\n");
     while ((n = fread(buf, 1, BUFSIZE, fp)) > 0) {
 	for (i = 0; i < n; i++) {
 	    long idx = buf[i];
@@ -124,12 +126,15 @@ main(int argc, char **argv)
 		obuf[i] = result[idx];
 	    }
 	}
-	ret = fwrite(obuf, 1, n, stdout);
-	if (ret == 0) {
-	    perror("fwrite");
-	    break;
-	}
+	if (fwrite(obuf, 1, n, stdout) != (size_t)n)
+	    bu_exit(1, "bwhisteq: error writing output\n");
     }
+    if (ferror(fp))
+	bu_exit(1, "bwhisteq: error rereading input\n");
+    if (fclose(fp) == EOF)
+	bu_exit(1, "bwhisteq: error closing input\n");
+    if (ferror(stdout) || fflush(stdout) == EOF)
+	bu_exit(1, "bwhisteq: error writing output\n");
     return 0;
 }
 
