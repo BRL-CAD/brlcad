@@ -23,7 +23,7 @@ if(BRLCAD_ENABLE_QT)
 endif(BRLCAD_ENABLE_QT)
 
 # Console subsystem is required for shell invocation and redirected output.
-brlcad_addexec(brlman "brlman.cpp;html_text.cpp;console.cpp" "${brlman_libs};gumbo" "")
+brlcad_addexec(brlman "brlman.cpp;html_text.cpp;console.cpp" "${brlman_libs};gumbo" ARG_SCHEMA)
 target_include_directories(brlman PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../libtermio)
 if(BRLMAN_HAVE_WCWIDTH)
   target_compile_definitions(brlman PRIVATE BRLMAN_HAVE_WCWIDTH)

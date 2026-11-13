@@ -8,7 +8,7 @@ if(TARGET libtclcad)
     set(RTWIZARD_SRCS ${RTWIZARD_SRCS} rtwizard.rc)
   endif(HAVE_WINDOWS_H)
 
-  brlcad_addexec(rtwizard "${RTWIZARD_SRCS}" "libtclcad;librt;libdm;liboptical;libicv;Threads::Threads;${M_LIBRARY}")
+  brlcad_addexec(rtwizard "${RTWIZARD_SRCS}" "libtclcad;librt;libdm;liboptical;libicv;Threads::Threads;${M_LIBRARY}" ARG_SCHEMA)
   target_include_directories(rtwizard BEFORE PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
   add_target_deps(rtwizard rt rtedge fbserv fb-png fb-pix fbclear fblabel fbfree fbline fb-fb pix-bw bwmod bw-pix pixmatte pix-fb tkpng TclIndexBld dm_plugins)
 

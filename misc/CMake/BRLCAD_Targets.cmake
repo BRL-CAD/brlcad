@@ -315,8 +315,24 @@ endfunction(BRLCAD_INCLUDE_DIRS)
 #--------------------------------------------------------------------
 # Core routines for adding executables and libraries to the build and
 # install lists of CMake
+function(BRLCAD_REGISTER_ARG_SCHEMA targetname)
+  if(NOT TARGET ${targetname})
+    message(FATAL_ERROR "Cannot register missing BU_ARG target ${targetname}")
+  endif()
+  get_target_property(_arg_schema_registered ${targetname} BRLCAD_ARG_SCHEMA)
+  if(_arg_schema_registered)
+    return()
+  endif()
+  set_target_properties(${targetname} PROPERTIES BRLCAD_ARG_SCHEMA TRUE)
+  set_property(GLOBAL APPEND PROPERTY BRLCAD_ARG_SCHEMA_TARGETS "${targetname}")
+endfunction(BRLCAD_REGISTER_ARG_SCHEMA)
+
 function(BRLCAD_ADDEXEC execname srcslist libslist)
-  cmake_parse_arguments(E "TEST;TEST_USESDATA;NO_INSTALL;NO_MAN;NO_STRICT;ALL_CXX;NO_CXX;NO_STRICT_CXX;GUI" "FOLDER;UNITY_BUILD_CODE_BEFORE_INCLUDE" "UNITY_BUILD_SKIP" ${ARGN})
+  cmake_parse_arguments(E "TEST;TEST_USESDATA;NO_INSTALL;NO_MAN;NO_STRICT;ALL_CXX;NO_CXX;NO_STRICT_CXX;GUI;ARG_SCHEMA;NO_OPTIONS" "FOLDER;UNITY_BUILD_CODE_BEFORE_INCLUDE" "UNITY_BUILD_SKIP" ${ARGN})
+
+  if(E_ARG_SCHEMA AND E_NO_OPTIONS)
+    message(FATAL_ERROR "${execname} cannot declare both ARG_SCHEMA and NO_OPTIONS")
+  endif()
 
   # Let CMAKEFILES know what's going on
   cmakefiles(${srcslist})
@@ -346,6 +362,12 @@ function(BRLCAD_ADDEXEC execname srcslist libslist)
   else(E_GUI)
     add_executable(${execname} ${srcslist})
   endif(E_GUI)
+
+  if(E_ARG_SCHEMA)
+    brlcad_register_arg_schema(${execname})
+  elseif(E_NO_OPTIONS)
+    set_target_properties(${execname} PROPERTIES BRLCAD_NO_OPTIONS TRUE)
+  endif()
 
   # Set the standard build definitions for all BRL-CAD targets
   target_compile_definitions(${execname} PRIVATE BRLCADBUILD HAVE_CONFIG_H)

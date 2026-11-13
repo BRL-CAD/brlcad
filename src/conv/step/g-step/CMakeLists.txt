@@ -43,7 +43,7 @@ if(BRLCAD_ENABLE_STEP)
     ${CMAKE_SOURCE_DIR}/src/libbrep # for PullbackCurve.h
   )
 
-  brlcad_addexec(g-step "../StepExportHost.cpp" "libbu" NO_STRICT FOLDER Conv)
+  brlcad_addexec(g-step "../StepExportHost.cpp" "libbu" NO_STRICT FOLDER Conv ARG_SCHEMA)
   target_include_directories(g-step BEFORE PRIVATE ${gstep_INCLUDE_DIRS})
 
   if (TARGET mged)

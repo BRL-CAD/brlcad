@@ -8,7 +8,7 @@ set(
   utility.c
 )
 
-brlcad_addexec(gdiff "${gdiff_srcs}" "librt;Threads::Threads")
+brlcad_addexec(gdiff "${gdiff_srcs}" "librt;Threads::Threads" ARG_SCHEMA)
 target_include_directories(gdiff BEFORE PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 
 cmakefiles(
