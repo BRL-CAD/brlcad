@@ -890,7 +890,7 @@ QPolyMod::checkbox_refresh(unsigned long long)
 }
 
 void
-QPolyMod::propagate_update(int)
+QPolyMod::propagate_update(QgViewUpdateFlags)
 {
     emit view_updated(QG_VIEW_REFRESH);
 }

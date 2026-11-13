@@ -29,6 +29,7 @@
 #include "bv.h"
 #include "qtcad/QgColorRGB.h"
 #include "qtcad/QgMeasureFilter.h"
+#include "qtcad/QgSignalFlags.h"
 
 class QgPluginContext;
 class QgView;
@@ -57,7 +58,7 @@ class CADViewMeasure : public QWidget
 	QgColorRGB *color_3d;
 
     signals:
-	void view_updated(unsigned long long);
+	void view_updated(QgViewUpdateFlags);
 
     public slots:
         void adjust_text();

@@ -295,7 +295,7 @@ CADViewSelector::disable_useall_opt(bool)
 }
 
 void
-CADViewSelector::do_view_update(unsigned long long flags)
+CADViewSelector::do_view_update(QgViewUpdateFlags flags)
 {
     struct ged *gedp = m_context ? m_context->getGed() : NULL;
     if (!gedp)

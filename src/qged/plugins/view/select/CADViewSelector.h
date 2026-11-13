@@ -30,6 +30,7 @@
 #include <QPointer>
 #include <QRadioButton>
 #include "qtcad/QgSelectFilter.h"
+#include "qtcad/QgSignalFlags.h"
 
 class QgPluginContext;
 class QgView;
@@ -62,7 +63,7 @@ class CADViewSelector : public QWidget
 
 
     signals:
-	void view_changed(unsigned long long);
+	void view_changed(QgViewUpdateFlags);
 
     public slots:
 	void enable_groups(bool);
@@ -71,7 +72,7 @@ class CADViewSelector : public QWidget
     	void disable_raytrace_opt(bool);
 	void enable_useall_opt(bool);
     	void disable_useall_opt(bool);
-	void do_view_update(unsigned long long);
+	void do_view_update(QgViewUpdateFlags);
 	void do_draw_selections();
 	void do_erase_selections();
 

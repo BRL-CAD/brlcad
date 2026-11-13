@@ -522,7 +522,7 @@ QgQuadView::get_selected()
 }
 
 void
-QgQuadView::do_view_update(unsigned long long flags)
+QgQuadView::do_view_update(QgViewUpdateFlags flags)
 {
     bv_log(4, "QgQuadView::do_view_update");
     QTCAD_SLOT("QgQuadView::do_view_update", 1);

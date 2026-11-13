@@ -39,6 +39,7 @@ extern "C" {
 #include <QObject>
 #include <QWidget>
 #include "qtcad/defines.h"
+#include "qtcad/QgSignalFlags.h"
 
 // Filters designed for specific editing modes
 class QTCAD_EXPORT QgPolyFilter : public QObject
@@ -55,7 +56,7 @@ class QTCAD_EXPORT QgPolyFilter : public QObject
 	virtual bool eventFilter(QObject *, QEvent *) { return false; };
 
     signals:
-        void view_updated(int);
+        void view_updated(QgViewUpdateFlags);
         void finalized(bool);
 
     public:

@@ -41,6 +41,7 @@ extern "C" {
 #include <QObject>
 #include <QWidget>
 #include "qtcad/defines.h"
+#include "qtcad/QgSignalFlags.h"
 
 // Filters designed for specific editing modes
 class QTCAD_EXPORT QgSelectFilter : public QObject
@@ -67,7 +68,7 @@ class QTCAD_EXPORT QgSelectFilter : public QObject
 	bool first_only = false;
 
     signals:
-        void view_updated(int);
+        void view_updated(QgViewUpdateFlags);
 };
 
 class QTCAD_EXPORT QgSelectPntFilter: public QgSelectFilter

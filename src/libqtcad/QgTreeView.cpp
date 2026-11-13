@@ -377,7 +377,7 @@ void QgTreeView::qgitem_select_sync(QgItem *)
 	m->notifySelectionItemsChanged();
 }
 
-void QgTreeView::do_view_update(unsigned long long flags)
+void QgTreeView::do_view_update(QgViewUpdateFlags flags)
 {
     QTCAD_SLOT("QgTreeView::do_view_update", 1);
     if (!m)

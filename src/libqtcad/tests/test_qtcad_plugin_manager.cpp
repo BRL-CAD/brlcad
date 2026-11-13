@@ -183,7 +183,7 @@ QgPluginManagerTest::managesToolPalettes()
     QVERIFY(!tool.isNull());
     QVERIFY(tool->isActive());
     QCOMPARE(tool->property("refreshCount").toInt(), 0);
-    palette.do_view_update(1);
+    palette.do_view_update(QG_VIEW_REFRESH);
     QCOMPARE(tool->property("refreshCount").toInt(), 1);
 
     emit notifier.dbChanged();

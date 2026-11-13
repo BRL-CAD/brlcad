@@ -33,6 +33,7 @@
 #include <QWidget>
 #include "ged.h"
 #include "qtcad/defines.h"
+#include "qtcad/QgSignalFlags.h"
 
 // TODO - add save scene image
 //
@@ -54,7 +55,7 @@ class QTCAD_EXPORT QgViewCtrl : public QToolBar
 	int icon_size = 25;
 
     signals:
-	void view_changed(unsigned long long);
+	void view_changed(QgViewUpdateFlags);
 	void lmouse_mode(int);
 
     public slots:
@@ -68,7 +69,7 @@ class QTCAD_EXPORT QgViewCtrl : public QToolBar
 
 	void fb_mode_cmd();
 
-	void do_view_update(unsigned long long);
+	void do_view_update(QgViewUpdateFlags);
 
 	// Unlike the other commands, the raytrace button
 	// has to reflect a potentially long-running state -

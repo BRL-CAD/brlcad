@@ -37,6 +37,7 @@
 
 #include "qtcad/defines.h"
 #include "qtcad/QgModel.h"
+#include "qtcad/QgSignalFlags.h"
 
 
 class QTCAD_EXPORT QgTreeView : public QTreeView
@@ -57,7 +58,7 @@ class QTCAD_EXPORT QgTreeView : public QTreeView
 	void mousePressEvent(QMouseEvent *e) override;
 
     signals:
-	void view_changed(unsigned long long);
+	void view_changed(QgViewUpdateFlags);
 
     public slots:
 	void tree_column_size(const QModelIndex &index);
@@ -70,7 +71,7 @@ class QTCAD_EXPORT QgTreeView : public QTreeView
 		const QItemSelection &deselected) override;
 	void do_draw_toggle(const QModelIndex &index);
 	void qgitem_select_sync(QgItem *);
-	void do_view_update(unsigned long long);
+	void do_view_update(QgViewUpdateFlags);
 
     private:
 	void header_state();

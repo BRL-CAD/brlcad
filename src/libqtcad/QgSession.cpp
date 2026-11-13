@@ -61,7 +61,7 @@ QgSession::notifyDbChanged(struct db_i *dbip)
 }
 
 void
-QgSession::notifyViewChanged(unsigned long long flags)
+QgSession::notifyViewChanged(QgViewUpdateFlags flags)
 {
     emit view_changed(flags);
 }

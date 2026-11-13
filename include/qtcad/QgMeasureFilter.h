@@ -42,6 +42,7 @@ extern "C" {
 #include <QObject>
 #include <QWidget>
 #include "qtcad/defines.h"
+#include "qtcad/QgSignalFlags.h"
 
 // Filters designed for specific editing modes
 class QTCAD_EXPORT QgMeasureFilter : public QObject
@@ -82,7 +83,7 @@ class QTCAD_EXPORT QgMeasureFilter : public QObject
 	bool length_only = false;
 
     signals:
-        void view_updated(int);
+        void view_updated(QgViewUpdateFlags);
 
     public:
 	struct bview *v = NULL;

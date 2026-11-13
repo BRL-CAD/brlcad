@@ -76,26 +76,24 @@
  *
  * We make these defines in this header file so all widgets and applications
  * can share a common, mutually understood convention.
+ *
+ * QgViewUpdateFlags is a strongly typed Qt flags value.  Public signals and
+ * slots carrying these flags should use that type rather than an integer so
+ * unrelated hashes, identifiers, and bit fields cannot be connected by
+ * accident.
  */
 
 #ifndef QGSIGNALFLAGS_H
 #define QGSIGNALFLAGS_H
 
 #include "common.h"
-
-typedef unsigned long long QgViewUpdateFlags;
-
-#define QG_VIEW_REFRESH  0x00000001  // Potential camera updates, no structural changes
-#define QG_VIEW_DRAWN    0x00000002  // Used when what is drawn in the scene changes
-#define QG_VIEW_SELECT   0x00000004  // Used when what is selected changes
-#define QG_VIEW_MODE     0x00000008  // Used when mode-aware highlighting or drawing changes
-#define QG_VIEW_DB       0x00000010  // Used when .g database content changes
+#include "qtcad/QgTypes.h"
 
 #endif // QGSIGNALFLAGS_H
 /*
  * Local Variables:
  * tab-width: 8
- * mode: C
+ * mode: C++
  * indent-tabs-mode: t
  * c-file-style: "stroustrup"
  * End:

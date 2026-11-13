@@ -39,6 +39,7 @@ extern "C" {
 #include <QObject>
 #include <QWidget>
 #include "qtcad/defines.h"
+#include "qtcad/QgSignalFlags.h"
 #include "qtcad/QgSW.h"
 #ifdef BRLCAD_OPENGL
 #  include "qtcad/QgGL.h"
@@ -106,7 +107,7 @@ class QTCAD_EXPORT QgView : public QWidget
 	void init_done();
 
     public slots:
-	void need_update(unsigned long long);
+	void need_update(QgViewUpdateFlags);
 	void do_view_changed();
 	void do_init_done();
 	void set_lmouse_move_default(int);

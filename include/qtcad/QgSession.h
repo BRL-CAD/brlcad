@@ -19,6 +19,7 @@
 #include <QObject>
 
 #include "qtcad/defines.h"
+#include "qtcad/QgSignalFlags.h"
 
 struct bview;
 struct db_i;
@@ -39,11 +40,11 @@ public:
     void setActiveView(struct bview *view);
 
     void notifyDbChanged(struct db_i *dbip);
-    void notifyViewChanged(unsigned long long flags);
+    void notifyViewChanged(QgViewUpdateFlags flags);
 
 signals:
     void db_changed(struct db_i *dbip);
-    void view_changed(unsigned long long flags);
+    void view_changed(QgViewUpdateFlags flags);
 
 private:
     struct ged *m_gedp = nullptr;

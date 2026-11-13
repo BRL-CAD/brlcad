@@ -124,7 +124,7 @@ QgViewCtrl::fb_mode_cmd()
 }
 
 void
-QgViewCtrl::do_view_update(unsigned long long flags)
+QgViewCtrl::do_view_update(QgViewUpdateFlags flags)
 {
     QTCAD_SLOT("QgViewCtrl::do_view_update", 1);
     if (!gedp->ged_gvp || !flags)

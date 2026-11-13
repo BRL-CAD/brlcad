@@ -30,6 +30,7 @@
 #include <QCheckBox>
 #include <QComboBox>
 #include "bv/defines.h"
+#include "qtcad/QgSignalFlags.h"
 
 class QgPluginContext;
 
@@ -66,7 +67,7 @@ class CADViewSettings : public QWidget
 	QCheckBox *params_fps_ckbx;
 
     signals:
-	void settings_changed(unsigned long long);
+	void settings_changed(QgViewUpdateFlags);
 
     public slots:
 	void checkbox_refresh(unsigned long long);

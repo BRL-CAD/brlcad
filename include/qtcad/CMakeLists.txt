@@ -35,6 +35,7 @@ set(
   QgTreeSelectionModel.h
   QgTreeView.h
   QgTestEvent.h
+  QgTypes.h
   QgUtil.h
   QgView.h
   QgViewCtrl.h

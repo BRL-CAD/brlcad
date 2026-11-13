@@ -515,7 +515,7 @@ QgModel::itemDeselect(QgItem *item)
 	path.data(), path.size(), 0);
 }
 
-unsigned long long
+QgViewUpdateFlags
 QgModel::selectionCommit()
 {
     (void)ged_selection_recompute(ged(), selectionSetKey());

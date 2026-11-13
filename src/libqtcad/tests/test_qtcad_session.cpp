@@ -91,10 +91,10 @@ QgSessionTest::publishesChanges()
     connect(&session, &QgSession::db_changed, this,
 	[&databaseChanges](struct db_i *) { databaseChanges++; });
     connect(&session, &QgSession::view_changed, this,
-	[&viewChanges](unsigned long long) { viewChanges++; });
+	[&viewChanges](QgViewUpdateFlags) { viewChanges++; });
 
     session.notifyDbChanged(nullptr);
-    session.notifyViewChanged(1);
+    session.notifyViewChanged(QG_VIEW_REFRESH);
 
     QCOMPARE(databaseChanges, 1);
     QCOMPARE(viewChanges, 1);
@@ -458,7 +458,7 @@ QgSessionTest::tracksDuplicateSelectionOccurrences()
     QSignalSpy layoutChanges(&model, &QAbstractItemModel::layoutChanged);
 
     model.itemSelect(firstLeafItem);
-    unsigned long long selectionFlags = model.selectionCommit();
+    QgViewUpdateFlags selectionFlags = model.selectionCommit();
     QVERIFY(selectionFlags & QG_VIEW_SELECT);
     QCOMPARE(model.selectionCount(), size_t(1));
     QVERIFY(model.itemSelected(firstLeafItem));
@@ -572,7 +572,7 @@ QgSessionTest::tracksSessionAttributes()
     QCOMPARE(attributes.data(attributes.index(0, 1, QModelIndex())).toString(),
 	QString("second"));
 
-    model.session()->notifyViewChanged(1);
+    model.session()->notifyViewChanged(QG_VIEW_REFRESH);
     QCOMPARE(resets.count(), 1);
 
     const char *killArguments[] = {"kill", "attribute.s"};

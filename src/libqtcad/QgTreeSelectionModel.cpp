@@ -35,7 +35,7 @@ qg_selection_commit(QgTreeView *treeview, QgModel *model)
     if (!treeview || !model)
 	return;
 
-    unsigned long long flags = model->selectionCommit();
+    QgViewUpdateFlags flags = model->selectionCommit();
     emit treeview->view_changed(flags);
 }
 

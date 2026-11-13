@@ -75,8 +75,8 @@ class QPolyCreate : public QWidget
 
     signals:
 	void poly_added();
-	void settings_changed(unsigned long long);
-	void view_updated(unsigned long long);
+	void settings_changed(QgViewUpdateFlags);
+	void view_updated(QgViewUpdateFlags);
 
     public slots:
 	void checkbox_refresh(unsigned long long);
@@ -86,7 +86,7 @@ class QPolyCreate : public QWidget
 	void finalize(bool);
 	void do_import_sketch();
 	void do_vpoly_copy();
-	void propagate_update(int);
+	void propagate_update(QgViewUpdateFlags);
 
 	void sketch_sync_bool(bool);
 	void sketch_sync_str(const QString &);

@@ -79,6 +79,7 @@
 
 #include "qtcad/defines.h"
 #include "qtcad/QgRoles.h"
+#include "qtcad/QgSignalFlags.h"
 
 class QgSession;
 
@@ -362,7 +363,7 @@ class QTCAD_EXPORT QgModel : public QAbstractItemModel
 	/** Remove @p item from the default semantic selection. */
 	void itemDeselect(QgItem *item);
 	/** Finalize selection metadata and return the required view flags. */
-	unsigned long long selectionCommit();
+	QgViewUpdateFlags selectionCommit();
 	/** Notify only rows whose selection presentation may have changed. */
 	void notifySelectionItemsChanged();
 	/** Notify loaded rows that their drawn-state role may have changed. */
@@ -387,11 +388,11 @@ class QTCAD_EXPORT QgModel : public QAbstractItemModel
 	// (it is sometimes extremely difficult to know if a complex command
 	// will alter the view) but if a particular method knows it will
 	// do so, it may emit this signal
-	void view_change(unsigned long long);
+	void view_change(QgViewUpdateFlags);
 
 	// Emit when some model action change will require a view to update
 	// its awareness of what is drawn
-	void view_changed(unsigned long long);
+	void view_changed(QgViewUpdateFlags);
 
 	// Let the tree view know it has highlighting work to do it wouldn't
 	// otherwise see

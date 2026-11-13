@@ -88,7 +88,7 @@ QgPluginContextTest::resolvesChangingHostState()
 void
 QgPluginContextTest::relaysHostNotifications()
 {
-    const QgViewUpdateFlags expectedFlags = 17;
+    const QgViewUpdateFlags expectedFlags = QG_VIEW_REFRESH | QG_VIEW_DB;
     QgPluginNotifier notifier;
     QSignalSpy databaseSpy(&notifier, &QgPluginNotifier::dbChanged);
     QSignalSpy viewSpy(&notifier, &QgPluginNotifier::viewChanged);
@@ -103,7 +103,7 @@ QgPluginContextTest::relaysHostNotifications()
     QCOMPARE(databaseSpy.size(), 1);
     QCOMPARE(viewSpy.size(), 1);
     QCOMPARE(updateSpy.size(), 1);
-    QCOMPARE(updateSpy.first().first().toULongLong(), expectedFlags);
+    QCOMPARE(updateSpy.first().first().toInt(), expectedFlags.toInt());
     QCOMPARE(settingsSpy.size(), 1);
 }
 

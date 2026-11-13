@@ -34,8 +34,9 @@
  *  3. Instantiate whichever filter(s) you need, setting the .v and
  *     .es public members.
  *  4. Install the active filter:  view->add_event_filter(filter);
- *  5. Connect filter->view_updated(int) to your view's need_update(ull)
- *     slot, and filter->sketch_changed() to whatever slot performs a
+ *  5. Connect filter->view_updated(QgViewUpdateFlags) to your view's
+ *     need_update(QgViewUpdateFlags) slot, and filter->sketch_changed()
+ *     to whatever slot performs a
  *     wireframe refresh.
  *  6. To switch mode, clear the old filter and install the new one.
  *
@@ -60,6 +61,7 @@ extern "C" {
 #include <QMouseEvent>
 #include <QObject>
 #include "qtcad/defines.h"
+#include "qtcad/QgSignalFlags.h"
 
 /**
  * QgSketchFilter — base class for sketch editing mouse-event filters.
@@ -133,10 +135,10 @@ signals:
     /**
      * Emitted when the view image needs refreshing (e.g. after a
      * vertex move that should be reflected immediately in the viewport).
-     * The integer argument carries QG_VIEW_* flag bits from
-     * QgSignalFlags.h; typically QG_VIEW_REFRESH.
+     * The argument carries QG_VIEW_* flags from QgSignalFlags.h;
+     * typically QG_VIEW_REFRESH.
      */
-    void view_updated(int);
+    void view_updated(QgViewUpdateFlags);
 
     /**
      * Emitted when the sketch data has been structurally changed (a

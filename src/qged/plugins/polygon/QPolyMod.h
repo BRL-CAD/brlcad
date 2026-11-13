@@ -73,15 +73,15 @@ class QPolyMod : public QWidget
 	QPushButton *remove_poly;
 
     signals:
-	void settings_changed(unsigned long long);
-	void view_updated(unsigned long long);
+	void settings_changed(QgViewUpdateFlags);
+	void view_updated(QgViewUpdateFlags);
 
     public slots:
 	void app_mod_names_reset(void *);
 	void checkbox_refresh(unsigned long long);
 	void mod_names_reset();
 	void polygon_update_props();
-	void propagate_update(int);
+	void propagate_update(QgViewUpdateFlags);
 
     private slots:
 	void toplevel_config(bool);
