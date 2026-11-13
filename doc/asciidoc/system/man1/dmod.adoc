@@ -34,29 +34,29 @@ and *d-i*(1) for converting between doubles and other numeric formats.
 [[options]]
 == OPTIONS
 
-*-a* _val_::
+*-a* _val_, *--add* _val_::
   Add _val_ to each number.
 
-*-s* _val_::
+*-s* _val_, *--subtract* _val_::
   Subtract _val_ from each number.
 
-*-m* _val_::
+*-m* _val_, *--multiply* _val_::
   Multiply each number by _val_.
 
-*-d* _val_::
+*-d* _val_, *--divide* _val_::
   Divide each number by _val_. A _val_ of zero is rejected.
 
-*-A*::
+*-A*, *--absolute*::
   Replace each number with its absolute value.
 
-*-e* _val_::
+*-e* _val_, *--exponent* _val_::
   Raise each number to the power _val_.
 
-*-r* _val_::
+*-r* _val_, *--root* _val_::
   Take the _val_-th root of each number (raise to the power 1/_val_). A
   _val_ of zero is rejected.
 
-*-h*, *-?*::
+*-h*, *-?*, *--help*::
   Print a usage message and exit.
 
 [[examples]]

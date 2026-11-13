@@ -28,104 +28,13 @@
 
 #include "common.h"
 
-#include <stdlib.h>
-#include <string.h>
 #include <math.h>
 #include "bio.h"
 
 #include "bu/app.h"
-#include "bu/malloc.h"
-#include "bu/getopt.h"
 #include "bu/exit.h"
-#include "vmath.h"
 
-
-#define ADD 1
-#define MULT 2
-#define ABS 3
-#define POW 4
-
-
-static const char usage[] = "Usage: dmod [-a add | -s sub | -m mult | -d div | -A | -e exp | -r root] [doubles]\n";
-static const char progname[] = "dmod";
-static FILE *infp = NULL;
-static int numop = 0;		/* number of operations */
-static int op[256] = {0};		/* operations */
-static double val[256] = {0.0};		/* arguments to operations */
-
-
-static int
-get_args(int argc, char *argv[])
-{
-    int c;
-    double d;
-
-    while ((c = bu_getopt(argc, argv, "a:s:m:d:Ae:r:h?")) != -1) {
-	switch (c) {
-	    case 'a':
-		op[ numop ] = ADD;
-		val[ numop++ ] = atof(bu_optarg);
-		break;
-	    case 's':
-		op[ numop ] = ADD;
-		val[ numop++ ] = - atof(bu_optarg);
-		break;
-	    case 'm':
-		op[ numop ] = MULT;
-		val[ numop++ ] = atof(bu_optarg);
-		break;
-	    case 'd':
-		op[ numop ] = MULT;
-		d = atof(bu_optarg);
-		if (ZERO(d)) {
-		    bu_exit(2, "%s: divide by zero!\n", progname);
-		}
-		val[ numop++ ] = 1.0 / d;
-		break;
-	    case 'A':
-		op[ numop ] = ABS;
-		val[ numop++ ] = 0;
-		break;
-	    case 'e':
-		op[ numop ] = POW;
-		val[ numop++ ] = atof(bu_optarg);
-		break;
-	    case 'r':
-		op[ numop ] = POW;
-		d = atof(bu_optarg);
-		if (ZERO(d)) {
-		    bu_exit(2, "%s: zero root!\n", progname);
-		}
-		val[ numop++ ] = 1.0 / d;
-		break;
-
-	    default:		/* '?' */
-		bu_exit(1, "%s", usage);
-	}
-    }
-
-    if (bu_optind >= argc) {
-	if (isatty(fileno(stdin)))
-	    return 0;
-	infp = stdin;
-	setmode(fileno(stdin), O_BINARY);
-    } else {
-	static char *file_name = NULL;
-	file_name = argv[bu_optind];
-	infp = fopen(file_name, "rb");
-	if (!infp) {
-	    fprintf(stderr,
-		    "%s: cannot open \"%s\" for reading\n",
-		    progname, file_name);
-	    return 0;
-	}
-    }
-
-    if (argc > ++bu_optind)
-	fprintf(stderr, "%s: excess argument(s) ignored\n", progname);
-
-    return 1;		/* OK */
-}
+#include "mod_args.h"
 
 
 int
@@ -136,56 +45,53 @@ main(int argc, char *argv[])
     double arg;
     int j;
     size_t ret;
-
-    int infpfd = 1; /* default stdin */
-    int soutfd = 0; /* default stdout */
-
+    FILE *infp = stdin;
+    const char *input_file = NULL;
+    struct sig_mod_args args = {0};
     double buf[BU_PAGE_SIZE] = {0.0};		/* working buffer */
 
     bu_setprogname(argv[0]);
 
-    if (infp)
-	infpfd = fileno(infp);
-    if (stdout)
-	soutfd = fileno(stdout);
-
-    if (!get_args(argc, argv)
-	|| !infp
-	|| !stdout
-	|| isatty(infpfd)
-	|| isatty(soutfd))
-    {
-	bu_exit(1, "%s", usage);
+    int parse_status = sig_mod_args_parse(&args, &input_file, "dmod",
+	"Apply ordered arithmetic operations to binary doubles", argc, argv);
+    if (parse_status <= 0)
+	return parse_status < 0 ? 1 : 0;
+    if (input_file) {
+	infp = fopen(input_file, "rb");
+	if (!infp)
+	    bu_exit(1, "dmod: cannot open \"%s\" for reading\n", input_file);
     }
-
-    setmode(soutfd, O_BINARY);
+    if (isatty(fileno(infp)) || isatty(fileno(stdout)))
+	bu_exit(1, "dmod requires redirected binary input and output\n");
+    setmode(fileno(infp), O_BINARY);
+    setmode(fileno(stdout), O_BINARY);
 
     while ((n = fread(buf, sizeof(*buf), BU_PAGE_SIZE, infp)) > 0) {
-	for (i = 0; i < numop; i++) {
-	    arg = val[ i ];
-	    switch (op[i]) {
+	for (i = 0; i < (int)args.operations.count; i++) {
+	    arg = args.operations.values[i].value;
+	    switch (args.operations.values[i].type) {
 		double d;
 
-		case ADD:
+		case SIG_MOD_ADD:
 		    bp = &buf[0];
 		    for (j = n; j > 0; j--) {
 			*bp++ += arg;
 		    }
 		    break;
-		case MULT:
+		case SIG_MOD_MULTIPLY:
 		    bp = &buf[0];
 		    for (j = n; j > 0; j--) {
 			*bp++ *= arg;
 		    }
 		    break;
-		case POW:
+		case SIG_MOD_POWER:
 		    bp = &buf[0];
 		    for (j = n; j > 0; j--) {
 			d = pow(*bp, arg);
 			*bp++ = d;
 		    }
 		    break;
-		case ABS:
+		case SIG_MOD_ABSOLUTE:
 		    bp = &buf[0];
 		    for (j = n; j > 0; j--) {
 			if (*bp < 0.0)
