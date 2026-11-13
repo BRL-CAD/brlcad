@@ -86,7 +86,7 @@ get_args(int argc, char **argv)
 	}
 	bu_optind++;
     }
-    if (argc > ++bu_optind) {
+    if (argc > bu_optind) {
 	(void) fprintf(stderr, "pixinterp2x: excess argument(s) not supported\n");
 	return 0;
     }
