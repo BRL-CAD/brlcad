@@ -37,25 +37,40 @@ standard output must be redirected.
 [[options]]
 == OPTIONS
 
-*-w*::
+*-w*, *--cosine*::
   Apply an 80% split cosine (Tukey) window.
 
-*-H*::
+*-H*, *--hamming*::
   Apply a Hamming window.
 
-*-b*::
+*-b*, *--bartlett*::
   Apply a Bartlett (triangle) window.
 
-*-B*::
+*-B*, *--bias*::
   Apply a bias window (half triangle).
 
-*-e*::
+These four window-function options are mutually exclusive.
+
+*-e*, *--end-aligned*::
   Position the first window so its trailing sample aligns with the start
   of the input (the window begins ahead of the first data point).
 
-*-m*::
+*-m*, *--midpoint-aligned*::
   Position the first window so its midpoint aligns with the start of the
   input.
+
+The two alignment options are mutually exclusive.
+
+*-h*, *--help*::
+  Print command help and exit.
+
+_width_::
+  Samples per output window, from 1 through 16384. Defaults to 1024.
+
+_step_::
+  Positive window advance. Values below 1 are fractions of _width_; values
+  of 1 or greater are absolute sample counts. Fractional results are rounded
+  down and must resolve to at least one sample. Defaults to _width_.
 
 [[examples]]
 == EXAMPLES
