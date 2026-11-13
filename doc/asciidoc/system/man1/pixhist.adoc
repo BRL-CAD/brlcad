@@ -10,7 +10,7 @@ pixhist - display a color histogram of a pix file on a framebuffer
 
 [source]
 ----
-pixhist [-v] [file.pix]
+pixhist [-v|--verbose] [file.pix]
 ----
 
 
@@ -38,10 +38,13 @@ standard error.
 [[options]]
 == OPTIONS
 
-*-v*::
+*-v*, *--verbose*::
   Verbose. In addition to the framebuffer display, print the red, green,
   and blue counts (and the bar length) for each of the 256 levels on standard
-  error. If present, this flag must appear before the optional file name.
+  error.
+
+*-h*, *--help*::
+  Print help and exit.  *-?* is accepted as a compatibility alias.
 
 
 [[examples]]
