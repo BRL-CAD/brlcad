@@ -33,6 +33,7 @@
 #include "raytrace.h"
 #include "rt/geom.h"
 #include "rt/nongeom.h"
+#include "rt/primitives/bot.h"
 #include "rt/tree.h"
 #include "shared/core_api.h"
 
@@ -1365,6 +1366,9 @@ normalize_output_manifest(const char *fixture_name,
         if (solid_internal.idb_type == ID_BOT) {
             struct rt_bot_internal *bot = static_cast<struct rt_bot_internal *>(solid_internal.idb_ptr);
 
+            if (bot->num_faces >= 4u && rt_bot_inside_out(bot) > 0)
+                goto cleanup;
+
             manifest->append(solid_name);
             manifest->append("=bot vertices=");
             manifest->append(std::to_string(bot->num_vertices));
@@ -1604,6 +1608,18 @@ main(int argument_count, char *arguments[])
          {{0.0, 0.0, 0.0}}, {{0.0, 0.0, 100.0}}, {{0.0, 100.0, 0.0}},
          {{100.0, 0.0, 0.0}}, {{0.0, 100.0, 0.0}}, {{0.0, 0.0, 100.0}}},
         {{{0u, 1u, 2u}}, {{3u, 4u, 5u}}, {{6u, 7u, 8u}}, {{9u, 10u, 11u}}},
+        {}, {}, 100.0, 100.0, 100.0);
+    const fixture_definition inside_out_solid_fixture = make_mesh_fixture(
+        "scene_solid_mesh",
+        "creo_phase3_inside_out_solid.snapshot",
+        "creo_phase3_inside_out_solid.g",
+        "scene_solid_mesh.manifest",
+        CREO_BRL_SNAPSHOT_SETTING_CHECK_SOLIDITY,
+        {{{0.0, 0.0, 0.0}}, {{0.0, 100.0, 0.0}}, {{100.0, 0.0, 0.0}},
+         {{0.0, 0.0, 0.0}}, {{100.0, 0.0, 0.0}}, {{0.0, 0.0, 100.0}},
+         {{0.0, 0.0, 0.0}}, {{0.0, 0.0, 100.0}}, {{0.0, 100.0, 0.0}},
+         {{100.0, 0.0, 0.0}}, {{0.0, 100.0, 0.0}}, {{0.0, 0.0, 100.0}}},
+        {{{0u, 2u, 1u}}, {{3u, 5u, 4u}}, {{6u, 8u, 7u}}, {{9u, 10u, 11u}}},
         {}, {}, 100.0, 100.0, 100.0);
     const fixture_definition fallback_fixture = make_mesh_fixture(
         "scene_box_fallback",
@@ -1958,6 +1974,7 @@ main(int argument_count, char *arguments[])
     if (!run_fixture(working_directory, fixtures_directory, normalized_mesh_fixture) ||
         !run_fixture(working_directory, fixtures_directory, normals_fixture) ||
         !run_fixture(working_directory, fixtures_directory, solid_fixture) ||
+        !run_fixture(working_directory, fixtures_directory, inside_out_solid_fixture) ||
         !run_fixture(working_directory, fixtures_directory, fallback_fixture) ||
         !run_fixture(working_directory, fixtures_directory, bbox_fixture) ||
         !run_phase4_fixture(working_directory, metadata_fixture, 0,

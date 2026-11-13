@@ -23,13 +23,17 @@
 #include <algorithm>
 #include <cmath>
 #include <iomanip>
+#include <limits>
 #include <sstream>
 #include <string.h>
 
 #include "vmath.h"
 #include "conversion/name_allocator.h"
+#include "bg/trimesh.h"
 #include "bg/vert_tree.h"
 #include "bu/avs.h"
+#include "rt/geom.h"
+#include "rt/primitives/bot.h"
 #include "shared/core_api.h"
 #include "shared/mesh_normalization.h"
 #include "wdb.h"
@@ -378,42 +382,6 @@ snapshot_write_tgc_subtractions(const struct snapshot_part_capture& part_capture
 
 
 static int
-facet_winds_ccw(uint32_t v1, uint32_t v2, uint32_t v3,
-                size_t n1, size_t n2, size_t n3,
-                const std::vector<fastf_t>& vertices,
-                const struct bg_vert_tree *normals)
-{
-    vect_t point1, point2, point3;
-    vect_t normal1, normal2, normal3;
-    vect_t edge12, edge13;
-    vect_t facet_normal, average_normal;
-
-    VMOVE(point1, &vertices[(size_t)v1 * 3]);
-    VMOVE(point2, &vertices[(size_t)v2 * 3]);
-    VMOVE(point3, &vertices[(size_t)v3 * 3]);
-    VMOVE(normal1, &normals->the_array[n1 * 3]);
-    VMOVE(normal2, &normals->the_array[n2 * 3]);
-    VMOVE(normal3, &normals->the_array[n3 * 3]);
-
-    VSUB2(edge12, point2, point1);
-    VSUB2(edge13, point3, point1);
-    VCROSS(facet_normal, edge12, edge13);
-    if (VNEAR_ZERO(facet_normal, VUNITIZE_TOL))
-        return 0;
-    VUNITIZE(facet_normal);
-
-    average_normal[0] = (normal1[0] + normal2[0] + normal3[0]) / 3.0;
-    average_normal[1] = (normal1[1] + normal2[1] + normal3[1]) / 3.0;
-    average_normal[2] = (normal1[2] + normal2[2] + normal3[2]) / 3.0;
-    if (VNEAR_ZERO(average_normal, VUNITIZE_TOL))
-        return 0;
-    VUNITIZE(average_normal);
-
-    return VDOT(facet_normal, average_normal) > 0.0;
-}
-
-
-static int
 normalize_snapshot_mesh(const struct snapshot_part_capture& part_capture,
                         const struct creo_brl_snapshot_settings& settings,
                         struct normalized_mesh *mesh)
@@ -430,6 +398,7 @@ normalize_snapshot_mesh(const struct snapshot_part_capture& part_capture,
     const double vertex_tolerance_squared = CREO_BRL_MESH_VERTEX_TOLERANCE_MM *
                                             CREO_BRL_MESH_VERTEX_TOLERANCE_MM;
     struct creo_brl_mesh_normalization normalization = {};
+    struct rt_bot_internal bot = {};
 
     if (!mesh ||
         (use_normals &&
@@ -511,23 +480,13 @@ normalize_snapshot_mesh(const struct snapshot_part_capture& part_capture,
                                   vertex_tolerance_squared);
         }
 
-        if (use_normals && facet_winds_ccw(v1, v3, v2, n1, n3, n2,
-                                           mesh->vertices, normal_tree)) {
-            mesh->faces.push_back((int)v1);
-            mesh->faces.push_back((int)v3);
-            mesh->faces.push_back((int)v2);
+        mesh->faces.push_back((int)v1);
+        mesh->faces.push_back((int)v2);
+        mesh->faces.push_back((int)v3);
+        if (use_normals) {
             mesh->face_normals.push_back((int)n1);
-            mesh->face_normals.push_back((int)n3);
             mesh->face_normals.push_back((int)n2);
-        } else {
-            mesh->faces.push_back((int)v1);
-            mesh->faces.push_back((int)v2);
-            mesh->faces.push_back((int)v3);
-            if (use_normals) {
-                mesh->face_normals.push_back((int)n1);
-                mesh->face_normals.push_back((int)n2);
-                mesh->face_normals.push_back((int)n3);
-            }
+            mesh->face_normals.push_back((int)n3);
         }
     }
 
@@ -536,11 +495,49 @@ normalize_snapshot_mesh(const struct snapshot_part_capture& part_capture,
     if (use_normals && mesh->face_normals.empty())
         goto cleanup;
 
+    bot.magic = RT_BOT_INTERNAL_MAGIC;
+    bot.mode = RT_BOT_SOLID;
+    bot.orientation = RT_BOT_CCW;
+    bot.num_vertices = normalization.vertices.size();
+    bot.num_faces = normalization.triangles.size();
+    bot.vertices = mesh->vertices.data();
+    bot.faces = mesh->faces.data();
+
+    if (bot.num_faces <= static_cast<size_t>((std::numeric_limits<int>::max)()) &&
+        bg_trimesh_sync(bot.faces, bot.faces, static_cast<int>(bot.num_faces)) > 0 &&
+        use_normals) {
+        for (size_t triangle_index = 0;
+             triangle_index < normalization.triangles.size(); ++triangle_index) {
+            if (mesh->faces[triangle_index * 3] !=
+                static_cast<int>(normalization.triangles[triangle_index].vertices[0])) {
+                std::swap(mesh->face_normals[triangle_index * 3],
+                          mesh->face_normals[triangle_index * 3 + 1]);
+            }
+        }
+    }
+    if (rt_bot_inside_out(&bot) > 0) {
+        (void)rt_bot_flip(&bot);
+        if (use_normals) {
+            for (size_t triangle_index = 0;
+                 triangle_index < normalization.triangles.size(); ++triangle_index) {
+                std::swap(mesh->face_normals[triangle_index * 3 + 1],
+                          mesh->face_normals[triangle_index * 3 + 2]);
+            }
+        }
+    }
+
     if (use_normals) {
         mesh->normals.assign(normal_tree->the_array,
                              normal_tree->the_array + normal_tree->curr_vert * 3);
     }
-    mesh->is_solid = normalization.is_solid;
+
+    mesh->is_solid =
+        (bot.num_vertices <= static_cast<size_t>((std::numeric_limits<int>::max)()) &&
+         bot.num_faces <= static_cast<size_t>((std::numeric_limits<int>::max)())) ?
+            !bg_trimesh_solid2(static_cast<int>(bot.num_vertices),
+                               static_cast<int>(bot.num_faces),
+                               bot.vertices, bot.faces, NULL) :
+            normalization.is_solid;
 
     if (normal_tree)
         bg_vert_tree_destroy(normal_tree);
