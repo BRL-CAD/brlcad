@@ -35,11 +35,12 @@
 
 #include "vmath.h"
 
+#include "bu/arg.h"
 #include "bu/app.h"
-#include "bu/getopt.h"
+#include "bu/exit.h"
 #include "bu/file.h"
-#include "bu/malloc.h"
 #include "bu/log.h"
+#include "bu/malloc.h"
 #include "bu/str.h"
 #include "bn.h"
 #include "dm.h"
@@ -50,16 +51,60 @@
 #define BELIEVE_STAT 1
 #define DFLT_PIXEL_SIZE 3
 
-static char usage[] = "\
-Usage: imgdims [-ns] [-# bytes/pixel] file_name\n\
-    or imgdims [-# bytes/pixel] num_bytes\n";
-#define OPT_STRING "ns#:h?"
+struct imgdims_args {
+    int help;
+    int how;
+    int bytes_per_pixel;
+};
 
-
-static void print_usage (void)
+static int
+imgdims_believe_name(struct bu_vls *UNUSED(msg), const char *UNUSED(arg),
+	void *storage)
 {
-    bu_exit(1, "%s", usage);
+    if (storage)
+	*(int *)storage = BELIEVE_NAME;
+    return 0;
 }
+
+static int
+imgdims_believe_stat(struct bu_vls *UNUSED(msg), const char *UNUSED(arg),
+	void *storage)
+{
+    if (storage)
+	*(int *)storage = BELIEVE_STAT;
+    return 0;
+}
+
+static const struct bu_arg_option imgdims_options[] = {
+    BU_ARG_FLAG("h", "help", struct imgdims_args, help,
+	"Print help and exit"),
+    BU_ARG_ALIAS("?", NULL, "help", 1),
+    BU_ARG_CUSTOM_FLAG("n", "believe-name", "believe-name",
+	struct imgdims_args, how, imgdims_believe_name,
+	"Prefer dimensions encoded in the file name"),
+    BU_ARG_CUSTOM_FLAG("s", "believe-stat", "believe-stat",
+	struct imgdims_args, how, imgdims_believe_stat,
+	"Use the file byte size"),
+    BU_ARG_INTEGER_RANGE("#", "bytes-per-pixel", struct imgdims_args,
+	bytes_per_pixel, 1, 1, 1, INT_MAX, "bytes",
+	"Set the number of bytes per pixel"),
+    BU_ARG_OPTION_NULL
+};
+
+static const struct bu_arg_operand imgdims_operands[] = {
+    BU_ARG_OPERAND("file-or-byte-count", BU_ARG_VALUE_STRING, 1, 1,
+	"Image file name or positive byte count", NULL),
+    BU_ARG_OPERAND_NULL
+};
+
+static const struct bu_arg_schema imgdims_schema = BU_ARG_SCHEMA(
+    "imgdims", "Guess the dimensions of an image",
+    imgdims_options, imgdims_operands, BU_ARG_PARSE_OPTIONS_FIRST,
+    BU_ARG_SCHEMA_META_HELP(NULL, NULL, NULL, NULL, NULL));
+
+static const struct bu_arg_grammar imgdims_grammar = {
+    &imgdims_schema, NULL, NULL
+};
 
 static int
 parse_positive_int_arg(const char *buf, int *np, const char *label)
@@ -79,9 +124,9 @@ parse_positive_int_arg(const char *buf, int *np, const char *label)
 }
 
 
-static int grab_number (char *buf, int *np)
+static int grab_number (const char *buf, int *np)
 {
-    char *bp;
+    const char *bp;
 
     for (bp = buf; *bp != '\0'; ++bp)
 	if (!isdigit((int)*bp))
@@ -91,7 +136,7 @@ static int grab_number (char *buf, int *np)
 }
 
 
-static int pixel_size (char *buf)
+static int pixel_size (const char *buf)
 {
     char *ep;
     struct assoc {
@@ -121,78 +166,73 @@ int
 main (int argc, char **argv)
 {
     char *argument;		/* file name or size */
-    int bytes_per_pixel = -1;
-    int ch;
-    int how = NONE;
     int nm_bytes = -1;
     int nm_pixels = 0;
     size_t width;
     size_t height;
     struct stat stat_buf;
+    struct imgdims_args args = {0, NONE, -1};
+    struct bu_vls msg = BU_VLS_INIT_ZERO;
 
     bu_setprogname(argv[0]);
 
-    /*
-     * Process the command line
-     */
-    while ((ch = bu_getopt(argc, argv, OPT_STRING)) != -1)
-	switch (ch) {
-	    case 'n':
-		how = BELIEVE_NAME;
-		break;
-	    case 's':
-		how = BELIEVE_STAT;
-		break;
-	    case '#':
-		if (!parse_positive_int_arg(bu_optarg, &bytes_per_pixel, "pixel size")) {
-		    print_usage();
-		}
-		break;
-	    default:
-		print_usage();
-	}
-    if (argc - bu_optind != 1) {
-	print_usage();
+    int introspection = bu_arg_introspect(&msg, &imgdims_grammar, argc - 1,
+	(const char * const *)(argv + 1));
+    if (introspection != 0) {
+	bu_flog(introspection > 0 ? stdout : stderr, "%s", bu_vls_cstr(&msg));
+	bu_vls_free(&msg);
+	return introspection > 0 ? 0 : 1;
+    }
+    int operand_index = bu_arg_schema_parse_complete(&imgdims_schema, &args,
+	&msg, argc - 1, (const char **)(argv + 1));
+    if (operand_index < 0)
+	bu_exit(1, "%s", bu_vls_cstr(&msg));
+    bu_vls_free(&msg);
+    if (args.help) {
+	char *help = bu_arg_schema_help(&imgdims_schema, "imgdims");
+	bu_flog(stdout, "%s", help ? help : "");
+	bu_free(help, "imgdims help");
+	return 0;
     }
 
-    argument = bu_file_realpath(argv[bu_optind], NULL);
-    if (how != NONE && !bu_file_exists(argument, NULL)) {
+    argument = bu_file_realpath(argv[operand_index + 1], NULL);
+    if (args.how != NONE && !bu_file_exists(argument, NULL)) {
 	bu_log("image file [%s] does not exist\n", argument);
 	bu_free(argument, "argument realpath");
-	bu_exit(1,NULL);
+	bu_exit(1, NULL);
     }
 
     if ((stat(argument, &stat_buf) != 0)
-	&& (!grab_number(argv[bu_optind], &nm_bytes)))
+	&& (!grab_number(argv[operand_index + 1], &nm_bytes)))
     {
 	bu_log("Cannot find file '%s'\n", argument);
 	bu_free(argument, "argument realpath");
-	print_usage();
+	return 1;
     }
 
     /*
      * If the user specified a file, determine its size.
      */
     if (nm_bytes == -1) {
-	if ((how == BELIEVE_NAME)
+	if ((args.how == BELIEVE_NAME)
 	    && fb_common_name_size(&width, &height, argument))
 	    goto done;
 
 	nm_bytes = (int)stat_buf.st_size;
-	if (bytes_per_pixel == -1)
-		bytes_per_pixel = pixel_size(argument);
+	if (args.bytes_per_pixel == -1)
+	    args.bytes_per_pixel = pixel_size(argument);
 
     }
 
     bu_free(argument, "argument realpath");
 
-    if (bytes_per_pixel == -1)
-	bytes_per_pixel = DFLT_PIXEL_SIZE;
+    if (args.bytes_per_pixel == -1)
+	args.bytes_per_pixel = DFLT_PIXEL_SIZE;
 
-    if (nm_bytes % bytes_per_pixel != 0)
-	bu_exit (1, "Image size (%d bytes) is not a multiple of pixel size (%d bytes)\n", nm_bytes, bytes_per_pixel);
+    if (nm_bytes % args.bytes_per_pixel != 0)
+	bu_exit (1, "Image size (%d bytes) is not a multiple of pixel size (%d bytes)\n", nm_bytes, args.bytes_per_pixel);
 
-    nm_pixels = nm_bytes / bytes_per_pixel;
+    nm_pixels = nm_bytes / args.bytes_per_pixel;
 
     if (!fb_common_image_size(&width, &height, nm_pixels))
 	bu_exit (0, NULL);

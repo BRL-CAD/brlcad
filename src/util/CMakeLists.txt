@@ -62,7 +62,7 @@ brlcad_addexec(icv icv.cpp "libicv;libbu" FOLDER Util ARG_SCHEMA)
 # flexible about input and output formats...
 brlcad_addexec(imgdiff imgdiff.cpp "libicv;libbu" FOLDER Util ARG_SCHEMA)
 
-brlcad_addexec(imgdims imgdims.c "libdm;libbu" FOLDER Util)
+brlcad_addexec(imgdims imgdims.c "libdm;libbu" FOLDER Util ARG_SCHEMA)
 add_target_deps(imgdims dm_plugins)
 brlcad_addexec(loop loop.c libbu FOLDER Util)
 brlcad_addexec(lowp lowp.c libbu FOLDER Util)
