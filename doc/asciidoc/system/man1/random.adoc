@@ -10,7 +10,9 @@ random - generate a random integer between two values
 
 [source]
 ----
-random [-u] [-g [-c center]] [-s seed] [-v] low high
+random [-u | --uniform] [-g | --gaussian
+       [-c center | --center center]] [-s seed | --seed seed]
+       [-v | --verbose] low high
 ----
 
 
@@ -26,23 +28,23 @@ The random sequence is seeded from the process ID unless a fixed *-s* _seed_ is 
 [[options]]
 == OPTIONS
 
-*-u*::
+*-u*, *--uniform*::
   Draw from a uniform distribution across the range. This is the default when neither *-u* nor *-g* is given.
 
-*-g*::
+*-g*, *--gaussian*::
   Draw from a gaussian distribution centered on the range midpoint (or on *-c* _center_) and clamped to _low_ and _high_.
 
-*-c* _center_::
+*-c* _center_, *--center* _center_::
   Set the gaussian center to the given (possibly fractional) value instead of the range midpoint. Only meaningful with *-g*.
 
-*-s* _seed_::
+*-s* _seed_, *--seed* _seed_::
   Use the given integer to seed the random number generator. The same seed yields the same value, allowing reproducible runs. Defaults to the process ID.
 
-*-v*::
+*-v*, *--verbose*::
   Print verbose diagnostics (seed, mode, and parameters) to standard error before the result.
 
-*-h*, *-?*::
-  Print a usage message and exit.
+*-h*, *-?*, *--help*::
+  Print command help and exit.
 
 [[examples]]
 == EXAMPLES
