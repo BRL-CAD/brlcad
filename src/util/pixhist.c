@@ -90,6 +90,8 @@ main(int argc, char **argv)
 	unsigned char *bp;
 	int j;
 
+	if (i % 3)
+	    bu_exit(1, "pixhist: input ends with an incomplete pixel\n");
 	bp = &ibuf[0];
 	for (j = i/3; j > 0; j--) {
 	    bin_r[ *bp++ ]++;
@@ -97,6 +99,10 @@ main(int argc, char **argv)
 	    bin_b[ *bp++ ]++;
 	}
     }
+    if (ferror(fp))
+	bu_exit(1, "pixhist: error reading input\n");
+    if (fp != stdin && fclose(fp) == EOF)
+	bu_exit(1, "pixhist: error closing input\n");
 
     /* find max */
     max = 1;
