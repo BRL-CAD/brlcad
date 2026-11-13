@@ -25,28 +25,22 @@
 
 #include "common.h"
 
-#include <errno.h>
-#include <limits.h>
 #include <stdlib.h>
-#include <string.h>
 #include "bio.h"
 
+#include "bu/arg.h"
 #include "bu/app.h"
-#include "bu/getopt.h"
-#include "util_arg.h"
-#include "bu/malloc.h"
-#include "bu/file.h"
 #include "bu/exit.h"
+#include "bu/file.h"
+#include "bu/log.h"
+#include "bu/malloc.h"
+
+#include "shrink_args.h"
 
 
 #define UCHAR unsigned char
 
-/* declarations to support use of bu_getopt() system call */
-char options[] = "us:w:n:f:h?";
-
-char noname[]  = "(noname)";
 char Stdin[]   = "(stdin)";
-char *progname = noname;
 char *filename = Stdin;
 
 void shrink_image(int scanlen, int Width, int Height, unsigned char *buffer, int Factor), usample_image(int scanlen, int Width, int Height, unsigned char *buffer, int Factor);
@@ -62,7 +56,7 @@ UCHAR *read_image(int scanlen, int Width, int Height, unsigned char *buffer)
     if (!buffer &&
 	(buffer=(UCHAR *)calloc(scanlen, Height)) == (UCHAR *)NULL) {
 	fprintf(stderr, "%s: cannot allocate input buffer\n",
-		progname);
+		bu_getprogname());
 	bu_exit (-1, NULL);
     }
 
@@ -168,76 +162,20 @@ int height = 512;
 int scanlen;
 int factor = 2;
 
-#define METH_BOXCAR 1
-#define METH_UNDERSAMPLE 2
-int method = METH_BOXCAR;
+static const struct bu_arg_operand pixshrink_operands[] = {
+    BU_ARG_OPERAND("input", BU_ARG_VALUE_FILE, 0, 1,
+	"PIX input file (default: standard input)", NULL),
+    BU_ARG_OPERAND_NULL
+};
 
-void
-usage(void)
-{
-    (void) fprintf(stderr,
-		   "Usage: %s [-u] [-w width] [-n scanlines] [-s squaresize]\n\
-		 [-f shrink_factor] [pixfile] > pixfile\n", progname);
-    bu_exit (1, NULL);
-}
+static const struct bu_arg_schema pixshrink_schema = BU_ARG_SCHEMA(
+    "pixshrink", "Shrink a PIX image by an integer factor",
+    shrink_options, pixshrink_operands, BU_ARG_PARSE_OPTIONS_FIRST,
+    BU_ARG_SCHEMA_META_HELP(NULL, NULL, NULL, NULL, NULL));
 
-
-void
-parse_args(int ac, char **av)
-{
-    int c;
-
-    if (!(progname = strrchr(*av, '/')))
-	progname = *av;
-
-    /* get all the option flags from the command line */
-    while ((c=bu_getopt(ac, av, options)) != -1)
-	switch (c) {
-	    case 'f':
-		if (!util_arg_int_range(bu_optarg, &factor, 1, INT_MAX, "shrink factor") || factor <= 1)
-		    usage();
-		break;
-	    case 'n':
-		if (!util_arg_int_range(bu_optarg, &height, 1, INT_MAX, "height"))
-		    usage();
-		break;
-	    case 'w':
-		if (!util_arg_int_range(bu_optarg, &width, 1, INT_MAX, "width"))
-		    usage();
-		break;
-	    case 's':
-		if (!util_arg_int_range(bu_optarg, &width, 1, INT_MAX, "size"))
-		    usage();
-		height = width;
-		break;
-	    case 'u':
-		method = METH_UNDERSAMPLE;
-		break;
-	    default:
-		usage();
-		break;
-	}
-
-    if (bu_optind >= ac) {
-	if (isatty(fileno(stdout)))
-	    usage();
-    }
-    if (bu_optind < ac) {
-	char *ifname = bu_file_realpath(av[bu_optind], NULL);
-	if (freopen(ifname, "rb", stdin) == (FILE *)NULL) {
-	    perror(ifname);
-	    bu_free(ifname, "ifname alloc from bu_file_realpath");
-	    bu_exit (-1, NULL);
-	} else
-	    filename = av[bu_optind];
-	bu_free(ifname, "ifname alloc from bu_file_realpath");
-    }
-    if (bu_optind+1 < ac) {
-	fprintf(stderr, "%s: excess argument(s) not supported\n", progname);
-	usage();
-    }
-
-}
+static const struct bu_arg_grammar pixshrink_grammar = {
+    &pixshrink_schema, NULL, NULL
+};
 
 
 /*
@@ -247,23 +185,59 @@ parse_args(int ac, char **av)
 int main(int ac, char **av)
 {
     UCHAR *buffer = (UCHAR *)NULL;
+    struct shrink_args args = {NULL, 0, 512, 512, 2, SHRINK_METHOD_BOXCAR};
+    struct bu_vls msg = BU_VLS_INIT_ZERO;
+    args.self = &args;
 
     bu_setprogname(av[0]);
 
     setmode(fileno(stdin), O_BINARY);
     setmode(fileno(stdout), O_BINARY);
 
-    (void)parse_args(ac, av);
+    int introspection = bu_arg_introspect(&msg, &pixshrink_grammar, ac - 1,
+	(const char * const *)(av + 1));
+    if (introspection != 0) {
+	bu_flog(introspection > 0 ? stdout : stderr, "%s", bu_vls_cstr(&msg));
+	bu_vls_free(&msg);
+	return introspection > 0 ? 0 : 1;
+    }
+    int operand_index = bu_arg_schema_parse_complete(&pixshrink_schema, &args,
+	&msg, ac - 1, (const char **)(av + 1));
+    if (operand_index < 0)
+	bu_exit(1, "%s", bu_vls_cstr(&msg));
+    bu_vls_free(&msg);
+    if (args.help) {
+	char *help = bu_arg_schema_help(&pixshrink_schema, "pixshrink");
+	bu_flog(stdout, "%s", help ? help : "");
+	bu_free(help, "pixshrink help");
+	return 0;
+    }
+    if (ac - operand_index - 1 == 1) {
+	char *ifname = bu_file_realpath(av[operand_index + 1], NULL);
+	if (freopen(ifname, "rb", stdin) == NULL) {
+	    perror(ifname);
+	    bu_free(ifname, "pixshrink input path");
+	    return 1;
+	}
+	bu_free(ifname, "pixshrink input path");
+	filename = av[operand_index + 1];
+    }
+    if (isatty(fileno(stdout)))
+	bu_exit(1, "pixshrink requires redirected standard output\n");
     if (isatty(fileno(stdin)))
-	usage();
+	bu_exit(1, "pixshrink requires an input file or redirected input\n");
+
+    width = args.width;
+    height = args.height;
+    factor = args.factor;
 
     /* process stdin */
     scanlen = width * 3;
     buffer = read_image(scanlen, width, height, buffer);
 
-    switch (method) {
-	case METH_BOXCAR : shrink_image(scanlen, width, height, buffer, factor); break;
-	case METH_UNDERSAMPLE : usample_image(scanlen, width, height, buffer, factor); break;
+    switch (args.method) {
+	case SHRINK_METHOD_BOXCAR : shrink_image(scanlen, width, height, buffer, factor); break;
+	case SHRINK_METHOD_UNDERSAMPLE : usample_image(scanlen, width, height, buffer, factor); break;
 	default: bu_free(buffer, "buffer alloc from malloc"); return -1;
     }
 

@@ -10,7 +10,9 @@ bwshrink - shrink a black and white bw file
 
 [source]
 ----
-bwshrink [-u] [-w _in_width_] [-n _in_height_] [-s _squaresize_] [-f _shrink_factor_] [_infile.bw_] > _outfile.bw_
+bwshrink [-u|--undersample] [-w|--width _in_width_]
+         [-n|--height _in_height_] [-s|--size _squaresize_]
+         [-f|--factor _shrink_factor_] [_infile.bw_] > _outfile.bw_
 ----
 
 
@@ -22,25 +24,25 @@ bwshrink [-u] [-w _in_width_] [-n _in_height_] [-s _squaresize_] [-f _shrink_fac
 [[options]]
 == OPTIONS
 
-*-u*::
+*-u*, *--undersample*::
   Use pixel undersampling (nearest-neighbor decimation) instead of the
   default boxcar averaging.
 
-*-w* _in_width_::
+*-w* _in_width_, *--width* _in_width_::
   Specify the input file width in pixels. The default is 512.
 
-*-n* _in_height_::
+*-n* _in_height_, *--height* _in_height_::
   Specify the input file height (number of scanlines) in pixels. The
   default is 512.
 
-*-s* _squaresize_::
+*-s* _squaresize_, *--size* _squaresize_::
   Set both the input file width and height to the given size in pixels.
 
-*-f* _shrink_factor_::
+*-f* _shrink_factor_, *--factor* _shrink_factor_::
   Set the integer scaling factor. Must be greater than 1. The default
   factor is 2.
 
-*-h*, *-?*::
+*-h*, *-?*, *--help*::
   Print a usage message and exit.
 
 [[examples]]

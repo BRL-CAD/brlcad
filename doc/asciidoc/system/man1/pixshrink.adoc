@@ -10,7 +10,9 @@ pixshrink - shrink a color pix file by an integer factor
 
 [source]
 ----
-pixshrink [-u] [-w _in_width_] [-n _in_height_] [-s _squaresize_] [-f _shrink_factor_] [_infile.pix_] > _outfile.pix_
+pixshrink [-u|--undersample] [-w|--width _in_width_]
+          [-n|--height _in_height_] [-s|--size _squaresize_]
+          [-f|--factor _shrink_factor_] [_infile.pix_] > _outfile.pix_
 ----
 
 
@@ -34,25 +36,25 @@ pixels; the *-u* option selects faster undersampling (point sampling) instead.
 [[options]]
 == OPTIONS
 
-*-w* _in_width_::
+*-w* _in_width_, *--width* _in_width_::
   Set the input image width in pixels (default 512).
 
-*-n* _in_height_::
+*-n* _in_height_, *--height* _in_height_::
   Set the input image height in scan lines (default 512).
 
-*-s* _squaresize_::
+*-s* _squaresize_, *--size* _squaresize_::
   Set both the input width and height to _squaresize_ pixels (shorthand for a
   square image).
 
-*-f* _shrink_factor_::
+*-f* _shrink_factor_, *--factor* _shrink_factor_::
   Set the integer scaling factor (default 2). Each output dimension becomes
   1/_shrink_factor_ of the input. Must be greater than 1.
 
-*-u*::
+*-u*, *--undersample*::
   Use image undersampling (point sampling) rather than the default boxcar
   averaging.
 
-*-h*, *-?*::
+*-h*, *-?*, *--help*::
   Print a usage message and exit.
 
 [[examples]]
