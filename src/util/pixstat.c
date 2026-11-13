@@ -82,6 +82,7 @@ main(int argc, char **argv)
     int i, n, num;
     double d;
     long num_pixels = 0L ;
+    long median_rank;
     unsigned char *bp;
     FILE *fp;
 
@@ -116,6 +117,8 @@ main(int argc, char **argv)
      * Build the histogram. (num_pixels initialized to 0)
      */
     while ((n = fread(&buf[0], sizeof(*buf), IBUFSIZE, fp)) > 0) {
+	if (n % 3)
+	    bu_exit(1, "pixstat: input ends with an incomplete pixel\n");
 	num = n/3;
 	num_pixels += num;
 	bp = &buf[0];
@@ -125,6 +128,13 @@ main(int argc, char **argv)
 	    b.bin[ *bp++ ]++;
 	}
     }
+    if (ferror(fp))
+	bu_exit(1, "pixstat: error reading input\n");
+    if (fp != stdin && fclose(fp) == EOF)
+	bu_exit(1, "pixstat: error closing input\n");
+    if (num_pixels == 0)
+	bu_exit(1, "pixstat: input contains no pixels\n");
+    median_rank = num_pixels / 2 + num_pixels % 2;
 
     /*
      * Find sum, min, max, mode.
@@ -170,17 +180,20 @@ main(int argc, char **argv)
      */
     for (i = 0; i < 256; i++) {
 	/* median */
-	if (r.partial_sum < r.sum/2.0) {
-	    r.partial_sum += i * r.bin[i];
-	    r.median = i;
+	if (r.partial_sum < median_rank) {
+	    r.partial_sum += r.bin[i];
+	    if (r.partial_sum >= median_rank)
+		r.median = i;
 	}
-	if (g.partial_sum < g.sum/2.0) {
-	    g.partial_sum += i * g.bin[i];
-	    g.median = i;
+	if (g.partial_sum < median_rank) {
+	    g.partial_sum += g.bin[i];
+	    if (g.partial_sum >= median_rank)
+		g.median = i;
 	}
-	if (b.partial_sum < b.sum/2.0) {
-	    b.partial_sum += i * b.bin[i];
-	    b.median = i;
+	if (b.partial_sum < median_rank) {
+	    b.partial_sum += b.bin[i];
+	    if (b.partial_sum >= median_rank)
+		b.median = i;
 	}
 	/* var and skew */
 	d = (double)i - r.mean;
