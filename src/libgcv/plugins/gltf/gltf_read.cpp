@@ -22,6 +22,7 @@
 #include "common.h"
 
 #include <climits>
+#include <cmath>
 #include <cstdint>
 #include <limits>
 #include <set>
@@ -31,9 +32,12 @@
 #include "gcv/api.h"
 #include "vmath.h"
 #include "rt/geom.h"
+#include "rt/object_io.h"
+#include "rt/primitives/joint.h"
 #include "raytrace.h"
 #include "wdb.h"
 
+#include "gltf_data.h"
 #include "gltf_read_util.h"
 
 struct conversion_state
@@ -41,8 +45,75 @@ struct conversion_state
     std::string input_file; /* name of the input file */
     struct rt_wdb *fd_out;  /* Resulting BRL-CAD file */
     struct wmember scene;
+    std::set<std::string> joint_names;
 };
-#define CONVERSION_STATE_ZERO {"", NULL, WMEMBER_INIT_ZERO}
+#define CONVERSION_STATE_ZERO {"", NULL, WMEMBER_INIT_ZERO, {}}
+
+static constexpr double gltf_meters_to_millimeters = 1000.0;
+
+static std::string
+gltf_string(tg3_str value)
+{
+    return value.data ? std::string(value.data, value.len) : std::string();
+}
+
+static bool
+import_joint(struct conversion_state *state, const tg3_node &node)
+{
+    static const char *joint_extras_name = "BRL-CAD_joint";
+    const tg3_value *description = brlcad_gltf::value_object_get(node.ext.extras,
+	joint_extras_name);
+
+    if (!description)
+	return true;
+    const tg3_value *name_value = brlcad_gltf::value_object_get(description, "name");
+    const tg3_value *data_value = brlcad_gltf::value_object_get(description, "data");
+    if (!name_value || name_value->type != TG3_VALUE_STRING || !data_value) {
+	bu_log("Invalid BRL-CAD joint metadata in glTF node\n");
+	return false;
+    }
+    std::string name = gltf_string(name_value->string_val);
+    if (name.empty()) {
+	bu_log("BRL-CAD joint metadata has no object name\n");
+	return false;
+    }
+    if (!state->joint_names.insert(name).second) {
+	bu_log("Duplicate BRL-CAD joint metadata for '%s'\n", name.c_str());
+	return false;
+    }
+    if (db_lookup(state->fd_out->dbip, name.c_str(), LOOKUP_QUIET)) {
+	bu_log("Cannot import glTF joint '%s': object already exists\n", name.c_str());
+	return false;
+    }
+    struct rt_data_node *data = brlcad_gltf::data_from_value(data_value);
+    struct rt_data_context context = RT_DATA_CONTEXT_INIT;
+    struct rt_db_internal internal;
+    point_t origin = VINIT_ZERO;
+    RT_DB_INTERNAL_INIT(&internal);
+    context.media_type = "model/gltf+json";
+    context.dbip = state->fd_out->dbip;
+    context.local2base = state->fd_out->dbip->dbi_local2base;
+    context.base2local = state->fd_out->dbip->dbi_base2local;
+    const char *failure = nullptr;
+    if (!data)
+	failure = "decode neutral data";
+    else if (OBJ[ID_JOINT].ft_make(&OBJ[ID_JOINT], &internal, nullptr,
+	    origin, 1.0) != BRLCAD_OK)
+	failure = "create joint object";
+    else if (rt_obj_data_import(&internal, data, &context) != BRLCAD_OK)
+	failure = "import neutral data";
+    else if (wdb_put_internal(state->fd_out, name.c_str(), &internal, 1.0) < 0)
+	failure = "write joint object";
+    if (failure) {
+	bu_log("Unable to import glTF joint '%s': %s\n", name.c_str(), failure);
+	rt_data_free(data);
+	rt_db_free_internal(&internal);
+	return false;
+    }
+    rt_data_free(data);
+    rt_db_free_internal(&internal);
+    return true;
+}
 
 
 static bool
@@ -96,7 +167,8 @@ generate_geometry(struct conversion_state *state, const tg3_model &model,
 			positions.data + vertex * positions.stride + axis * component_size,
 			positions.accessor->component_type, coordinate))
 		    return false;
-		vertices[vertex * 3 + axis] = static_cast<fastf_t>(coordinate);
+		vertices[vertex * 3 + axis] = static_cast<fastf_t>(
+		    coordinate * gltf_meters_to_millimeters);
 	    }
 	}
 
@@ -150,6 +222,64 @@ generate_geometry(struct conversion_state *state, const tg3_model &model,
 
 
 static bool
+node_matrix(mat_t matrix, const tg3_node &node)
+{
+    if (node.has_matrix) {
+	for (size_t row = 0; row < 4; ++row) {
+	    for (size_t column = 0; column < 4; ++column) {
+		double entry = node.matrix[column * 4 + row];
+		if (!std::isfinite(entry))
+		    return false;
+		matrix[row * 4 + column] = static_cast<fastf_t>(entry);
+	    }
+	}
+	matrix[MDX] *= gltf_meters_to_millimeters;
+	matrix[MDY] *= gltf_meters_to_millimeters;
+	matrix[MDZ] *= gltf_meters_to_millimeters;
+	return true;
+    }
+
+    const double x = node.rotation[X];
+    const double y = node.rotation[Y];
+    const double z = node.rotation[Z];
+    const double w = node.rotation[W];
+    const double magnitude = std::sqrt(x * x + y * y + z * z + w * w);
+    if (!std::isfinite(magnitude) || ZERO(magnitude))
+	return false;
+    const double qx = x / magnitude;
+    const double qy = y / magnitude;
+    const double qz = z / magnitude;
+    const double qw = w / magnitude;
+    const double sx = node.scale[X];
+    const double sy = node.scale[Y];
+    const double sz = node.scale[Z];
+    if (!std::isfinite(sx) || !std::isfinite(sy) || !std::isfinite(sz) ||
+	!std::isfinite(node.translation[X]) ||
+	!std::isfinite(node.translation[Y]) ||
+	!std::isfinite(node.translation[Z]))
+	return false;
+
+    MAT_IDN(matrix);
+    matrix[0] = static_cast<fastf_t>((1.0 - 2.0 * (qy * qy + qz * qz)) * sx);
+    matrix[1] = static_cast<fastf_t>(2.0 * (qx * qy - qz * qw) * sy);
+    matrix[2] = static_cast<fastf_t>(2.0 * (qx * qz + qy * qw) * sz);
+    matrix[4] = static_cast<fastf_t>(2.0 * (qx * qy + qz * qw) * sx);
+    matrix[5] = static_cast<fastf_t>((1.0 - 2.0 * (qx * qx + qz * qz)) * sy);
+    matrix[6] = static_cast<fastf_t>(2.0 * (qy * qz - qx * qw) * sz);
+    matrix[8] = static_cast<fastf_t>(2.0 * (qx * qz - qy * qw) * sx);
+    matrix[9] = static_cast<fastf_t>(2.0 * (qy * qz + qx * qw) * sy);
+    matrix[10] = static_cast<fastf_t>((1.0 - 2.0 * (qx * qx + qy * qy)) * sz);
+    matrix[MDX] = static_cast<fastf_t>(
+	node.translation[X] * gltf_meters_to_millimeters);
+    matrix[MDY] = static_cast<fastf_t>(
+	node.translation[Y] * gltf_meters_to_millimeters);
+    matrix[MDZ] = static_cast<fastf_t>(
+	node.translation[Z] * gltf_meters_to_millimeters);
+    return true;
+}
+
+
+static bool
 handle_node(struct conversion_state *state, const tg3_model &model,
     int32_t node_index, struct wmember &regions, std::set<int32_t> &active_nodes)
 {
@@ -168,6 +298,8 @@ handle_node(struct conversion_state *state, const tg3_model &model,
     } guard = {active_nodes, node_index};
 
     const tg3_node &node = model.nodes[node_index];
+    if (!import_joint(state, node))
+	return false;
     if (node.children_count == 0 && node.mesh == TG3_INDEX_NONE)
 	return true;
 
@@ -205,22 +337,13 @@ handle_node(struct conversion_state *state, const tg3_model &model,
     if (comb_result < 0)
 	return false;
 
-    fastf_t matrix[16];
-    fastf_t *member_matrix = NULL;
-    if (node.has_matrix) {
-	for (size_t i = 0; i < 16; ++i)
-	    matrix[i] = static_cast<fastf_t>(node.matrix[i]);
-	member_matrix = matrix;
-    } else if (!ZERO(node.translation[0]) || !ZERO(node.translation[1]) ||
-	!ZERO(node.translation[2])) {
-	MAT_IDN(matrix);
-	matrix[3] = static_cast<fastf_t>(node.translation[0]);
-	matrix[7] = static_cast<fastf_t>(node.translation[1]);
-	matrix[11] = static_cast<fastf_t>(node.translation[2]);
-	member_matrix = matrix;
+    mat_t matrix;
+    if (!node_matrix(matrix, node)) {
+	bu_log("glTF node %d has an invalid transform\n", node_index);
+	return false;
     }
 
-    return mk_addmember(region_name.c_str(), &regions.l, member_matrix, WMOP_UNION) != NULL;
+    return mk_addmember(region_name.c_str(), &regions.l, matrix, WMOP_UNION) != NULL;
 }
 
 
@@ -254,12 +377,12 @@ gltf_read(struct gcv_context *context, const struct gcv_opts *UNUSED(gcv_options
     tinygltf3::Model model;
     tinygltf3::ErrorStack errors;
     brlcad_gltf::confined_file_reader reader(source_path);
-    tg3_error_code parse_result = reader.parse(model.get(), errors.get());
+    tg3_error_code parse_result = reader.parse(model.get(), errors.get(), true);
     brlcad_gltf::log_errors(*errors.get());
     if (parse_result != TG3_OK) {
 	bu_log("Failed to parse glTF input %s (error %d)\n", source_path,
 	    static_cast<int>(parse_result));
-	return -1;
+	return 0;
     }
 
     struct conversion_state state = CONVERSION_STATE_ZERO;
@@ -271,11 +394,12 @@ gltf_read(struct gcv_context *context, const struct gcv_opts *UNUSED(gcv_options
     mk_id(state.fd_out, title.c_str());
     if (!convert_from_gltf(&state, *model.get())) {
 	mk_freemembers(&state.scene.l);
-	return -1;
+	return 0;
     }
 
-    if (mk_lcomb(state.fd_out, "all", &state.scene, 0, NULL, NULL, NULL, 0) < 0)
-	return -1;
+    if (!BU_LIST_IS_EMPTY(&state.scene.l) &&
+	mk_lcomb(state.fd_out, "all", &state.scene, 0, NULL, NULL, NULL, 0) < 0)
+	return 0;
 
     return 1;
 }
@@ -290,12 +414,15 @@ gltf_can_read(const char *UNUSED(data))
 
 extern "C"
 {
+    extern const struct gcv_filter gcv_conv_gltf_write;
     static const struct gcv_filter gcv_conv_gltf_read = {
 	"GLTF Reader", GCV_FILTER_READ, BU_MIME_MODEL_GLTF, gltf_can_read,
 	NULL, NULL, gltf_read
     };
 
-    static const struct gcv_filter * const filters[] = { &gcv_conv_gltf_read, NULL, NULL };
+    static const struct gcv_filter * const filters[] = {
+	&gcv_conv_gltf_read, &gcv_conv_gltf_write, NULL
+    };
 
     const struct gcv_plugin gcv_plugin_info_s = { filters };
 
