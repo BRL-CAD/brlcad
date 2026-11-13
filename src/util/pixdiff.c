@@ -32,10 +32,11 @@
 #include <stdlib.h>
 #include "bio.h"
 
+#include "bu/arg.h"
 #include "bu/app.h"
-#include "bu/getopt.h"
-#include "bu/str.h"
 #include "bu/exit.h"
+#include "bu/malloc.h"
+#include "bu/str.h"
 
 
 #define PIX_CHANNELS 3
@@ -49,9 +50,36 @@
 #define GRAYSCALE_BLUE_WEIGHT 6553
 #define GRAYSCALE_SHIFT 17
 
-static const char usage[] =
-    "Usage: pixdiff [-b] file1 file2 > diff\n"
-    "       (default: PIX input/output; -b: BW input/output; -: standard input)\n";
+struct pixdiff_args {
+    int help;
+    int bw_mode;
+};
+
+static const struct bu_arg_option pixdiff_options[] = {
+    BU_ARG_FLAG("h", "help", struct pixdiff_args, help,
+	"Print help and exit"),
+    BU_ARG_ALIAS("?", NULL, "help", 1),
+    BU_ARG_FLAG("b", "bw", struct pixdiff_args, bw_mode,
+	"Compare one-byte BW samples instead of RGB pixels"),
+    BU_ARG_OPTION_NULL
+};
+
+static const struct bu_arg_operand pixdiff_operands[] = {
+    BU_ARG_OPERAND("file1", BU_ARG_VALUE_FILE, 1, 1,
+	"First input image, or - for standard input", NULL),
+    BU_ARG_OPERAND("file2", BU_ARG_VALUE_FILE, 1, 1,
+	"Second input image, or - for standard input", NULL),
+    BU_ARG_OPERAND_NULL
+};
+
+static const struct bu_arg_schema pixdiff_schema = BU_ARG_SCHEMA(
+    "pixdiff", "Highlight differences between two PIX or BW images",
+    pixdiff_options, pixdiff_operands, BU_ARG_PARSE_OPTIONS_FIRST,
+    BU_ARG_SCHEMA_META_HELP(NULL, NULL, NULL, NULL, NULL));
+
+static const struct bu_arg_grammar pixdiff_grammar = {
+    &pixdiff_schema, NULL, NULL
+};
 
 
 static size_t
@@ -116,8 +144,8 @@ main(int argc, char *argv[])
     unsigned char buffer2[BUFFER_SIZE];
     const char *file1;
     const char *file2;
-    int bw_mode = 0;
-    int option;
+    struct pixdiff_args args = {0};
+    struct bu_vls msg = BU_VLS_INIT_ZERO;
 
     FILE *f1, *f2;
 
@@ -126,24 +154,30 @@ main(int argc, char *argv[])
     setmode(fileno(stdin), O_BINARY);
     setmode(fileno(stdout), O_BINARY);
 
-    bu_optind = 1;
-    while ((option = bu_getopt(argc, argv, "bh")) != -1) {
-	switch (option) {
-	    case 'b':
-		bw_mode = 1;
-		break;
-	    case 'h':
-		bu_exit(0, "%s", usage);
-	    default:
-		bu_exit(1, "%s", usage);
-	}
+    int introspection = bu_arg_introspect(&msg, &pixdiff_grammar, argc - 1,
+	(const char * const *)(argv + 1));
+    if (introspection != 0) {
+	bu_flog(introspection > 0 ? stdout : stderr, "%s", bu_vls_cstr(&msg));
+	bu_vls_free(&msg);
+	return introspection > 0 ? 0 : 1;
+    }
+    int operand_index = bu_arg_schema_parse_complete(&pixdiff_schema, &args,
+	&msg, argc - 1, (const char **)(argv + 1));
+    if (operand_index < 0)
+	bu_exit(1, "%s", bu_vls_cstr(&msg));
+    bu_vls_free(&msg);
+    if (args.help) {
+	char *help = bu_arg_schema_help(&pixdiff_schema, "pixdiff");
+	bu_flog(stdout, "%s", help ? help : "");
+	bu_free(help, "pixdiff help");
+	return 0;
     }
 
-    if (argc - bu_optind != 2 || isatty(fileno(stdout)))
-	bu_exit(1, "%s", usage);
+    if (isatty(fileno(stdout)))
+	bu_exit(1, "pixdiff requires redirected binary output\n");
 
-    file1 = argv[bu_optind];
-    file2 = argv[bu_optind + 1];
+    file1 = argv[operand_index + 1];
+    file2 = argv[operand_index + 2];
 
     if (BU_STR_EQUAL(file1, "-") && BU_STR_EQUAL(file2, "-")) {
 	bu_exit(1, "pixdiff: standard input cannot supply both images\n");
@@ -173,10 +207,10 @@ main(int argc, char *argv[])
 	    bu_exit(1, "pixdiff: input sizes differ\n");
 	if (count1 == 0)
 	    break;
-	if (!bw_mode && count1 % PIX_CHANNELS != 0)
+	if (!args.bw_mode && count1 % PIX_CHANNELS != 0)
 	    bu_exit(1, "pixdiff: input contains an incomplete PIX pixel\n");
 
-	if (bw_mode) {
+	if (args.bw_mode) {
 	    for (i = 0; i < count1; i++)
 		write_byte_diff(buffer1[i], buffer2[i], buffer1[i] / CONTEXT_DIVISOR,
 				stdout, &offmany, &off1, &matching);
