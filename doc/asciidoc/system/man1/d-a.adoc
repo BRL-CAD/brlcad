@@ -43,9 +43,12 @@ prints a deprecation warning when run.
 [[options]]
 == OPTIONS
 
-*-n*::
+*-n*, *--number*::
   Number the output.  Each line is prefixed with a zero-based index
   giving the position of the value within the stream.
+
+*-h*, *--help*::
+  Print command help and exit.
 
 [[examples]]
 == EXAMPLES

@@ -29,7 +29,7 @@ For every input pair, the requested components are emitted, in the order
 the corresponding options appear below, so that selecting more than one
 component multiplies the output length accordingly.
 
-If no option is given, *c-d* consumes its input but produces no output.
+At least one component-selection option is required.
 The interleaved complex data that *c-d* expects is the same format
 produced by *d2-c*(1), which packs a stream of real doubles and a stream
 of imaginary doubles into complex pairs.
@@ -41,22 +41,25 @@ a terminal.
 [[options]]
 == OPTIONS
 
-*-r*::
+*-r*, *--real*::
   Output the real part of each complex number.
 
-*-i*::
+*-i*, *--imaginary*::
   Output the imaginary part of each complex number.
 
-*-m*::
+*-m*, *--magnitude*::
   Output the magnitude (modulus), computed as the hypotenuse of the real
   and imaginary parts.
 
-*-p*::
+*-p*, *--phase*::
   Output the phase angle, computed with atan2(); a complex value of zero
   yields a phase of zero.
 
-*-z*::
+*-z*, *--zero*::
   Output a constant zero for each complex number.
+
+*-h*, *--help*::
+  Print command help and exit.
 
 [[examples]]
 == EXAMPLES
