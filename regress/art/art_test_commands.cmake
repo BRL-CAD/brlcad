@@ -1,6 +1,11 @@
 function(run_command directory should_fail)
-  execute_process(COMMAND ${ARGN} WORKING_DIRECTORY "${directory}"
-    RESULT_VARIABLE result OUTPUT_VARIABLE output ERROR_VARIABLE output TIMEOUT 30)
+  cmake_parse_arguments(PARSE_ARGV 2 options "" "INPUT_FILE" "")
+  set(input_arguments)
+  if(DEFINED options_INPUT_FILE)
+    list(APPEND input_arguments INPUT_FILE "${options_INPUT_FILE}")
+  endif()
+  execute_process(COMMAND ${options_UNPARSED_ARGUMENTS} WORKING_DIRECTORY "${directory}"
+    RESULT_VARIABLE result OUTPUT_VARIABLE output ERROR_VARIABLE output TIMEOUT 30 ${input_arguments})
   file(APPEND "${LOG}" "cwd=${directory}\n${ARGN}\n${output}\n")
   set(command_output "${output}" PARENT_SCOPE)
   if(should_fail)

@@ -78,6 +78,7 @@
 
 #include <atomic>
 #include <cstddef>
+#include <cmath>
 #include <exception>
 #include <iomanip>
 #include <locale>
@@ -204,9 +205,7 @@ extern "C" {
     extern char* framebuffer;
     extern char* outputfile;
     extern char** objv;
-    extern fastf_t aspect;
     extern fastf_t azimuth, elevation;
-    extern fastf_t eye_backoff; /* dist from eye to center */
     extern fastf_t rt_perspective;
     extern fastf_t viewsize;
     extern int matflag;
@@ -218,9 +217,7 @@ extern "C" {
     extern size_t width, height;
     extern struct bu_ptbl* cmd_objs;
     extern struct command_tab rt_do_tab[];
-    extern mat_t model2view;
-    extern mat_t view2model;
-    extern point_t viewbase_model;
+    extern void do_view_finalize(double azim, double elev);
 
     /* Options parsed by the shared rt/opt.c but NOT honored by art's
      * Appleseed backend.  Declared here so art_validate_options() can
@@ -670,80 +667,51 @@ register_region(struct db_tree_state *state, const struct db_full_path *path,
 }
 
 
-static void
-do_ae(double azim, double elev)
+static bool
+art_camera_transform(mat_t camera_to_world)
 {
-    vect_t temp;
-    vect_t diag;
-    mat_t toEye;
-    struct rt_i* rtip = APP.a_rt_i;
-
-    if (rtip == NULL)
-	return;
-
-    if (rtip->stats.nsolids <= 0)
-	bu_exit(EXIT_FAILURE, "ERROR: no primitives active\n");
-
-    if (rtip->stats.nregions <= 0)
-	bu_exit(EXIT_FAILURE, "ERROR: no regions active\n");
-
-    if (rtip->mdl_max[X] >= INFINITY) {
-	bu_log("do_ae: infinite model bounds? setting a unit minimum\n");
-	VSETALL(rtip->mdl_min, -1);
+    constexpr double MAX_HORIZONTAL_FOV = 180.0;
+    if (!std::isfinite(viewsize) || viewsize <= 0.0) {
+	bu_log("art: camera viewsize must be finite and positive\n");
+	return false;
     }
-    if (rtip->mdl_max[X] <= -INFINITY) {
-	bu_log("do_ae: infinite model bounds? setting a unit maximum\n");
-	VSETALL(rtip->mdl_max, 1);
+    if (!std::isfinite(rt_perspective) || rt_perspective < 0.0 ||
+	rt_perspective >= MAX_HORIZONTAL_FOV) {
+	bu_log("art: camera perspective must be finite and in [0, 180) degrees\n");
+	return false;
     }
-
-    /*
-     * Enlarge the model RPP just slightly, to avoid nasty effects
-     * with a solid's face being exactly on the edge NOTE: This code
-     * is duplicated out of librt/tree.c/rt_prep(), and has to appear
-     * here to enable the viewsize calculation to match the final RPP.
-     */
-    rtip->mdl_min[X] = floor(rtip->mdl_min[X]);
-    rtip->mdl_min[Y] = floor(rtip->mdl_min[Y]);
-    rtip->mdl_min[Z] = floor(rtip->mdl_min[Z]);
-    rtip->mdl_max[X] = ceil(rtip->mdl_max[X]);
-    rtip->mdl_max[Y] = ceil(rtip->mdl_max[Y]);
-    rtip->mdl_max[Z] = ceil(rtip->mdl_max[Z]);
-
-    MAT_IDN(Viewrotscale);
-    bn_mat_angles(Viewrotscale, 270.0 + elev, 0.0, 270.0 - azim);
-
-    /* Look at the center of the model */
-    MAT_IDN(toEye);
-    toEye[MDX] = -((rtip->mdl_max[X] + rtip->mdl_min[X]) / 2.0);
-    toEye[MDY] = -((rtip->mdl_max[Y] + rtip->mdl_min[Y]) / 2.0);
-    toEye[MDZ] = -((rtip->mdl_max[Z] + rtip->mdl_min[Z]) / 2.0);
-
-    /* Fit a sphere to the model RPP, diameter is viewsize, unless
-     * viewsize command used to override.
-     */
-    if (viewsize <= 0) {
-	VSUB2(diag, rtip->mdl_max, rtip->mdl_min);
-	viewsize = MAGNITUDE(diag);
-	if (aspect > 1) {
-	    /* don't clip any of the image when autoscaling */
-	    viewsize *= aspect;
+    for (double coordinate : eye_model) {
+	if (!std::isfinite(coordinate)) {
+	    bu_log("art: camera eye point must be finite\n");
+	    return false;
+	}
+    }
+    for (double coefficient : Viewrotscale) {
+	if (!std::isfinite(coefficient)) {
+	    bu_log("art: camera orientation must be finite\n");
+	    return false;
+	}
+    }
+    for (int axis : {X, Y, Z}) {
+	if (!ZERO(Viewrotscale[axis * ELEMENTS_PER_HVECT + W]) ||
+	    !ZERO(Viewrotscale[W * ELEMENTS_PER_HVECT + axis])) {
+	    bu_log("art: camera viewrot must contain an affine orientation\n");
+	    return false;
 	}
     }
 
-    /* sanity check: make sure viewsize still isn't zero in case
-     * bounding box is empty, otherwise bn_mat_int() will bomb.
-     */
-    if (viewsize < 0 || ZERO(viewsize)) {
-	viewsize = 2.0; /* arbitrary so Viewrotscale is normal */
+    // BRL-CAD's homogeneous view scale belongs in the film dimensions.
+    // Appleseed needs an affine camera pose with a model-space eye point.
+    mat_t orientation;
+    MAT_COPY(orientation, Viewrotscale);
+    orientation[MSA] = 1.0;
+    if (!bn_mat_inverse(camera_to_world, orientation)) {
+	bu_log("art: camera orientation must be nonsingular\n");
+	return false;
     }
-
-    Viewrotscale[15] = viewsize * 0.5; /* view scale */
-    bn_mat_mul(model2view, Viewrotscale, toEye);
-    bn_mat_inv(view2model, model2view);
-    VSET(temp, 0, 0, eye_backoff);
-    MAT4X3PNT(eye_model, view2model, temp);
+    MAT_DELTAS_VEC(camera_to_world, eye_model);
+    return true;
 }
-
 
 static std::string
 art_renderer_root()
@@ -1007,73 +975,34 @@ build_project(std::ostream *report)
     // declare camera outside of if-else scope
     asf::auto_release_ptr<asr::Camera> camera;
 
-    const double frame_aspect = static_cast<double>(width) / height;
+    mat_t camera_to_world;
+    if (!art_camera_transform(camera_to_world))
+	return asf::auto_release_ptr<asr::Project>();
 
-    // check for perspective
-    if (rt_perspective > 0.0) {
-	const double film_width = 1.0;
+    const double frame_aspect = static_cast<double>(width) / height;
+    const bool perspective = rt_perspective > 0.0;
+    const double film_width = perspective ? 1.0 : viewsize;
+    // Preserve small model dimensions when passing them to the renderer.
+    bu_vls_sprintf(&dimensions, "%.17g %.17g", film_width, film_width / frame_aspect);
+    if (perspective) {
 	struct bu_vls fov = BU_VLS_INIT_ZERO;
-	bu_vls_sprintf(&fov, "%lf", rt_perspective);
-        // Create a pinhole camera with film dimensions
-	bu_vls_sprintf(&dimensions, "%f %f", film_width, film_width / frame_aspect);
-        asf::auto_release_ptr<asr::Camera> pinhole(
-	    asr::PinholeCameraFactory().create(
-	        "camera",
-	        asr::ParamArray()
-	        .insert("film_dimensions", bu_vls_cstr(&dimensions))
-	        .insert("horizontal_fov", bu_vls_cstr(&fov))
-		));
-        camera = pinhole;
+	bu_vls_sprintf(&fov, "%.17g", rt_perspective);
+	camera = asr::PinholeCameraFactory().create(
+	    "camera",
+	    asr::ParamArray()
+	    .insert("film_dimensions", bu_vls_cstr(&dimensions))
+	    .insert("horizontal_fov", bu_vls_cstr(&fov)));
 	bu_vls_free(&fov);
     } else {
-        // Create an orthographic camera with film dimensions
-        const double film_width = 2.0;
-        bu_vls_sprintf(&dimensions, "%f %f", film_width, film_width / frame_aspect);
-        asf::auto_release_ptr<asr::Camera> ortho(
-	    asr::OrthographicCameraFactory().create(
-		"camera",
-		asr::ParamArray()
-		.insert("film_dimensions", bu_vls_cstr(&dimensions))
-		));
-        camera = ortho;
+	camera = asr::OrthographicCameraFactory().create(
+	    "camera",
+	    asr::ParamArray()
+	    .insert("film_dimensions", bu_vls_cstr(&dimensions)));
     }
-
-    /*
-      bu_log("EYE: %lf, %lf, %lf\n", V3ARGS(eye_model));
-      bu_log("VIEWSIZE: %lf\n", viewsize);
-      bn_mat_print("VIEWROTSCALE: ", Viewrotscale);
-      bn_mat_print("model2view: ", model2view);
-      bn_mat_print("view2model BEFORE: ", view2model);
-    */
-
-    /* appleseed's not happy with translation being non-homogenized */
-    if (rt_perspective > 0.0) {
-	view2model[MDX] = eye_model[X];
-	view2model[MDY] = eye_model[Y];
-	view2model[MDZ] = eye_model[Z];
-	view2model[MSA] = 1.0;
-    }
-
     camera->transform_sequence().set_transform(
 	0.0f,
 	asf::Transformd::from_local_to_parent(
-	    asf::Matrix<double, 4, 4>::from_array(view2model)
-	    ));
-
-    float time0;
-    asf::Transformd t;
-    camera->transform_sequence().get_transform(0, time0, t);
-
-    /*
-    const asf::Matrix<double, 4, 4>& l2p = t.get_local_to_parent();
-    const asf::Matrix<double, 4, 4>& p2l = t.get_parent_to_local();
-    mat_t ml2p, mp2l;
-    MAT_COPY(ml2p, l2p);
-    MAT_COPY(mp2l, p2l);
-      bn_mat_print("view2model AFTER: ", view2model);
-      bn_mat_print("L2P TRANSFORM: ", ml2p);
-      bn_mat_print("P2L TRANSFORM: ", mp2l);
-    */
+	    asf::Matrix<double, 4, 4>::from_array(camera_to_world)));
 
     // Bind the camera to the scene.
     scene->cameras().insert(camera);
@@ -1330,8 +1259,17 @@ art_render_image(asr::Project& project, asr::ITileCallback* callback = nullptr)
 static bool
 art_process_scene(bool display_framebuffer)
 {
-    if (!inspect_materials)
-	do_ae(azimuth, elevation);
+    if (!inspect_materials) {
+	if (!std::isfinite(azimuth) || !std::isfinite(elevation)) {
+	    bu_log("art: camera azimuth and elevation must be finite\n");
+	    return false;
+	}
+	if (APP.a_rt_i->stats.nsolids <= 0 || APP.a_rt_i->stats.nregions <= 0) {
+	    bu_log("art: no active geometry to render\n");
+	    return false;
+	}
+	do_view_finalize(azimuth, elevation);
+    }
     std::ostringstream report;
     report.imbue(std::locale::classic());
     auto project = build_project(inspect_materials ? &report : nullptr);

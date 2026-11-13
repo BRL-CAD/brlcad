@@ -186,10 +186,11 @@ clipping, and premultiplied coverage.  Appleseed retains single-byte text
 input.  Both use unhinted rasterization with struetype.
 
 |Installed builds across platforms
-|A complete headless art installation passed all 19 installed checks on
+|A complete headless art installation passed all 20 installed checks on
 FreeBSD after relocation to a path containing spaces.  Coverage includes
-16 shared rendering and material regressions, persisted material authoring,
-plate conversion through installed mged, and the runtime library audit.
+17 shared rendering, camera, and material regressions, persisted material
+authoring, plate conversion through installed mged, and the runtime library
+audit.
 The ELF install policy uses paths relative to each executable, library, or
 plugin.  A separate collision regression exercises `lib`, `lib64`, and
 nested installation layouts with a conflicting library still present at
@@ -243,6 +244,42 @@ that terminal connection was absent; adding it restored shading on both.
 The `art` regression now exercises the connected graph on librt CSG and
 BOT geometry.  This identifies a wiring failure independently of any
 remaining renderer compatibility or geometric-shading issues.
+
+== Camera pose
+
+`art` accepts rt camera commands either through separate `-c` options or
+as a semicolon-terminated `-M` command stream.  A complete explicit pose
+supplies a positive `viewsize`, an `eye_pt` in database model coordinates,
+and either an `orientation` quaternion, a `viewrot` matrix, or a
+`lookat_pt`.  Quaternions use BRL-CAD's `(x, y, z, w)` convention.
+For example, an orthographic view down the negative Z axis is:
+
+----
+art -p 0 -w 640 -n 480 -P 4 \
+    -c "viewsize 80" -c "eye_pt 0 0 60" \
+    -c "orientation 0 0 0 1" -o view.png model.g all.g
+----
+
+The equivalent pose can appear between `start 0;` and `end;` in an
+`-M` stream.  Supplied camera fields survive scene preparation; the
+azimuth/elevation defaults no longer replace an explicit pose.  A zero
+perspective angle selects the orthographic camera.  Positive angles below
+180 degrees select a pinhole camera and specify its horizontal field of
+view.  Orthographic film width equals `viewsize`, and image dimensions
+supply the film aspect ratio.  An explicit perspective eye controls its
+distance independently of `viewsize`.
+
+The renderer receives an affine camera pose.  BRL-CAD's homogeneous view
+scale is expressed through film dimensions instead of a projective camera
+transform.  Before rendering, `art` rejects nonfinite camera state, singular
+orientations, and invalid view sizes or fields of view without replacing an
+existing output.  The shared rt parsers retain their legacy warnings and
+coercions; strict validation of every command and option spelling remains
+open.
+`regress-art-view` compares command-stream and command-line poses with
+independent azimuth/elevation views on asymmetric geometry.  It covers
+both projections, quaternion handedness, matrix and look-at commands,
+perspective eye distance, and a known two-axis orthographic image shift.
 
 == Geometry boundary handling
 
