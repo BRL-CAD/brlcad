@@ -110,6 +110,15 @@ main(int argc, const char **argv)
     constexpr int titleWidth = 1000;
 
     IFPainter painter(Options::CANONICAL_REPORT_LENGTH, Options::CANONICAL_REPORT_WIDTH);
+    const int regularWidth = painter.getTextWidth(22, titleWidth, "Geometry Type", 0);
+    const int boldWidth = painter.getTextWidth(22, titleWidth, "Geometry Type", TO_BOLD);
+    const int mainTitleWidth = painter.getTextWidth(50, titleWidth, "Geometry Type", TO_BOLD);
+    if (regularWidth <= 0 || boldWidth <= regularWidth || mainTitleWidth <= boldWidth) {
+	std::cerr << "Unexpected text widths: regular=" << regularWidth
+		  << " bold=" << boldWidth << " title=" << mainTitleWidth << "\n";
+	return 1;
+    }
+
     const int pageRight = Options::CANONICAL_REPORT_WIDTH - pageMargin;
     painter.drawRect(pageMargin, pageMargin, pageRight, bannerBottom, -1, cv::Scalar(0, 0, 0));
     painter.drawRect(factsLeft, factsTop, pageRight, factsBottom, -1, cv::Scalar(220, 220, 220));

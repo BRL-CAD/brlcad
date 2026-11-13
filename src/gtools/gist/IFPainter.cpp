@@ -21,14 +21,32 @@
 #include "IFPainter.h"
 
 
+/* Static fonts (like .ttf) do not define a variable 'weight' axis,
+ * synthesize bold weight by overstriking
+ */
+int
+IFPainter::boldSpread(int fontSize, int flags) const
+{
+    if (!(flags & TO_BOLD) || fontSize <= 0)
+	return 0;
+
+    return std::max(2, fontSize / pixelsPerBoldPass);
+}
+
 IFPainter::IFPainter(int width, int height)
     : img(width, height, CV_8UC3, cv::Scalar(255, 255, 255))
-    , standardTextWeight(2)
-    , boldTextWeight(4)
+    , fontFace("sans")
     , heightToFontSizeMap()
 {
     if (img.empty()) {
 	bu_log("ERROR: Image Frame failed to load\n");
+    }
+
+    // try to use the font we bundle with librt; fallback to openCV default (sans).
+    char fontPath[MAXPATHLEN] = {0};
+    if (!bu_dir(fontPath, sizeof(fontPath), BU_DIR_DATA, "fonts", "osifont-lgpl3fe.ttf", NULL) ||
+	!bu_file_exists(fontPath, NULL) || !fontFace.set(fontPath)) {
+	fontFace.set("sans");
     }
 }
 
@@ -249,15 +267,31 @@ IFPainter::drawImageTransparentFitted(int x, int y, int width, int height, std::
 int
 IFPainter::getFontSizeFromHeight(int height)
 {
+    if (height <= 0)
+	return 0;
+
     if (heightToFontSizeMap.find(height) != heightToFontSizeMap.end()) {
 	return heightToFontSizeMap[height];
     }
 
+    // getTextSize() returns the height with potentially padding. Draw "I"
+    // into a padded scratch buffer and measure its pixel bounding box; measuring
+    // against targetCapHeight keeps text proportions consistent across different
+    // fonts and resolutions.
+    const int targetCapHeight = std::max(1, static_cast<int>(height * capHeightRatio));
+    const int margin = 8;
     int fontSize = 1;
-    while (getTextSize("I", cv::FONT_HERSHEY_DUPLEX, fontSize, standardTextWeight, 0).height < height) {
-	fontSize++;
+    while (true) {
+	int next = fontSize + 1;
+	int canvasDim = next * 2 + margin * 2;
+	cv::Mat scratch(canvasDim, canvasDim, CV_8UC1, cv::Scalar(0));
+	cv::putText(scratch, "I", cv::Point(margin, next + margin), cv::Scalar(255), fontFace, next, 0, cv::PUT_TEXT_ALIGN_LEFT);
+	cv::Rect bbox = cv::boundingRect(scratch);
+	if (bbox.height > targetCapHeight) {
+	    break;
+	}
+	fontSize = next;
     }
-    fontSize--;
 
     heightToFontSizeMap[height] = fontSize;
     return fontSize;
@@ -266,13 +300,14 @@ IFPainter::getFontSizeFromHeight(int height)
 int
 IFPainter::drawDiagramFitted(int x, int y, int width, int height, std::string imgPath, std::string text, bool centerImage)
 {
-    const int titleHeight = 50;
+    const int titleHeight = std::max(1, img.rows / 35);
+    const int lineGap = std::max(1, titleHeight / 14);
     const double maxTitleFontShrinkFrac = 0.10;
     const double titleFontShrinkStepFrac = 0.025;
     const int titleWidth = width;
     const int titleCenterX = x + titleWidth / 2;
-    y += 65;
-    height -= 65;
+    y += titleHeight;
+    height -= titleHeight;
     if (imgPath.empty()) {
 	return static_cast<int>(text.length());
     }
@@ -327,16 +362,16 @@ IFPainter::drawDiagramFitted(int x, int y, int width, int height, std::string im
     }
     resized_image.copyTo(destRoi);
 
-    double titleFontSize = static_cast<double>(getFontSizeFromHeight(titleHeight));
-    auto titlePixelWidth = [&](double fontSize, const std::string& titleText) {
-	return getTextSize(titleText, cv::FONT_HERSHEY_DUPLEX, fontSize, boldTextWeight, 0).width;
+    int titleFontSize = getFontSizeFromHeight(titleHeight);
+    auto titlePixelWidth = [&](int fontSize, const std::string& titleText) {
+	return getTextWidthAtScale(fontSize, titleText, TO_BOLD);
     };
 
     bool fitsWithNudge = false;
-    double nudgedFontSize = titleFontSize;
+    int nudgedFontSize = titleFontSize;
     for (double shrinkFrac = 0.0; shrinkFrac <= maxTitleFontShrinkFrac + 0.001; shrinkFrac += titleFontShrinkStepFrac) {
-	double candidateFontSize = titleFontSize * (1.0 - shrinkFrac);
-	if (candidateFontSize <= 0.0) {
+	int candidateFontSize = static_cast<int>(titleFontSize * (1.0 - shrinkFrac));
+	if (candidateFontSize <= 0) {
 	    break;
 	}
 	if (titlePixelWidth(candidateFontSize, text) <= titleWidth) {
@@ -366,15 +401,9 @@ IFPainter::drawDiagramFitted(int x, int y, int width, int height, std::string im
     }
 
     // now, draw text and line
-    this->drawLine(x, y + heightOffset - 5, x + titleWidth, y + heightOffset - 5, 5, cv::Scalar(0, 0, 0));
+    this->drawLine(x, y + heightOffset - lineGap, x + titleWidth, y + heightOffset - lineGap, lineGap, cv::Scalar(0, 0, 0));
     int centeredTextWidth = titlePixelWidth(nudgedFontSize, titleText);
-    cv::putText(img,
-		titleText,
-		cv::Point(titleCenterX - centeredTextWidth / 2, y + heightOffset - 65 + titleHeight),
-		cv::FONT_HERSHEY_DUPLEX,
-		nudgedFontSize,
-		cv::Scalar(0, 0, 0),
-		boldTextWeight);
+    drawTextAtScale(titleCenterX - centeredTextWidth / 2, y + heightOffset - 4 * lineGap, nudgedFontSize, titleText, TO_BOLD);
 
     return countCharDisplayedText;
 }
@@ -383,142 +412,76 @@ IFPainter::drawDiagramFitted(int x, int y, int width, int height, std::string im
 int
 IFPainter::getTextWidth(int height, int width, std::string text, int flags)
 {
-    int fontWeight = (flags & TO_BOLD) ? boldTextWeight : standardTextWeight;
-    int fontSize = getFontSizeFromHeightAndWidth(height, width, text);
-    int textWidth = getTextSize(text, cv::FONT_HERSHEY_DUPLEX, fontSize, fontWeight, 0).width;
-    return textWidth;
+    int fontSize = getFontSizeFromHeightAndWidth(height, width, text, flags);
+    return getTextWidthAtScale(fontSize, text, flags);
 }
 
 int
-IFPainter::getTextWidthAtScale(double fontScale, std::string text, int flags)
+IFPainter::getTextWidthAtScale(int fontSize, std::string text, int flags)
 {
-    int fontWeight = (flags & TO_BOLD) ? boldTextWeight : standardTextWeight;
-    return getTextSize(text, cv::FONT_HERSHEY_DUPLEX, fontScale, fontWeight, 0).width;
+    if (text.empty() || fontSize <= 0) {
+	return 0;
+    }
+    cv::Rect r = cv::getTextSize(cv::Size(), text, cv::Point(0, 0), fontFace, fontSize, 0, cv::PUT_TEXT_ALIGN_LEFT);
+    return r.width + boldSpread(fontSize, flags);
 }
 
 int
-IFPainter::getFontSizeFromHeightAndWidth(int height, int width, std::string text)
+IFPainter::getFontSizeFromHeightAndWidth(int height, int width, std::string text, int flags)
 {
     int fontSize = getFontSizeFromHeight(height);
-    while (getTextSize(text, cv::FONT_HERSHEY_DUPLEX, fontSize, standardTextWeight, 0).width > width) {
-	fontSize--;
+    if (width > 0) {
+	while (fontSize > 1 && getTextWidthAtScale(fontSize, text, flags) > width) {
+	    fontSize--;
+	}
     }
     return fontSize;
 }
 
 void
-IFPainter::drawText(int x, int y, int height, int width, std::string text, int flags)
+IFPainter::drawTextAtScale(int x, int baselineY, int fontSize, std::string text, int flags)
 {
-    // for now, italic text is omitted
-    int fontWeight = standardTextWeight;
-    bool isUnderline = false;
-    if ((flags & TO_BOLD)) {
-	fontWeight = boldTextWeight;
+    if (text.empty() || fontSize <= 0) {
+	return;
+    }
+    int spread = boldSpread(fontSize, flags);
+    int vSpread = (spread > 0) ? std::max(1, spread / 2) : 0;
+    cv::Scalar color = (flags & TO_WHITE) ? cv::Scalar(255, 255, 255) : (flags & TO_BLUE ? cv::Scalar(160, 0, 0) : cv::Scalar(0, 0, 0));
+
+    for (int dy = 0; dy <= vSpread; ++dy) {
+	for (int dx = 0; dx <= spread; ++dx) {
+	    cv::putText(img, text, cv::Point(x + dx, baselineY - dy), color, fontFace, fontSize, 0, cv::PUT_TEXT_ALIGN_LEFT);
+	}
     }
 
     if (flags & TO_UNDERLINE) {
-	isUnderline = true;
-    }
-
-
-    cv::Scalar color = (flags & TO_WHITE) ? cv::Scalar(255, 255, 255) : (flags & TO_BLUE ? cv::Scalar(160, 0, 0) : cv::Scalar(0, 0, 0));
-    int fontSize = getFontSizeFromHeightAndWidth(height, width, text);
-
-    cv::Point textOrigin(x, y + height);
-    cv::putText(img, text, cv::Point(x, y + height), cv::FONT_HERSHEY_DUPLEX, fontSize, color, fontWeight);
-
-    if (isUnderline) {
-	// Compute the position of the line below the text
-	int baseline = 0;
-	cv::Size textSize = cv::getTextSize(text, cv::FONT_HERSHEY_PLAIN, fontSize, fontWeight, &baseline);
-	int underlineY = textOrigin.y + baseline + 2;
-	int underlineX1 = textOrigin.x;
-	int underlineX2 = underlineX1 + textSize.width;
-
-	// Draw the line using the same color as the text
-	cv::line(img, cv::Point(underlineX1, underlineY), cv::Point(underlineX2, underlineY), color, 1);
+	cv::Rect r = cv::getTextSize(cv::Size(), text, cv::Point(0, 0), fontFace, fontSize, 0, cv::PUT_TEXT_ALIGN_LEFT);
+	int underlineY = baselineY + (r.y + r.height) + 2;
+	cv::line(img, cv::Point(x, underlineY), cv::Point(x + r.width + spread, underlineY), color, 1);
     }
 }
 
 void
-IFPainter::drawTextAtScale(int x, int baselineY, double fontScale, std::string text, int flags)
+IFPainter::drawText(int x, int y, int height, int width, std::string text, int flags)
 {
-    int fontWeight = (flags & TO_BOLD) ? boldTextWeight : standardTextWeight;
-    cv::Scalar color = (flags & TO_WHITE) ? cv::Scalar(255, 255, 255) : (flags & TO_BLUE ? cv::Scalar(160, 0, 0) : cv::Scalar(0, 0, 0));
-    cv::putText(img, text, cv::Point(x, baselineY), cv::FONT_HERSHEY_DUPLEX, fontScale, color, fontWeight);
+    int fontSize = getFontSizeFromHeightAndWidth(height, width, text, flags);
+    drawTextAtScale(x, y + height, fontSize, text, flags);
 }
 
 void
 IFPainter::drawTextCentered(int x, int y, int height, int width, std::string text, int flags)
 {
-    // for now, italic text is omitted
-    int fontWeight = standardTextWeight;
-    bool isUnderline = false;
-    if ((flags & TO_BOLD)) {
-	fontWeight = boldTextWeight;
-    }
-
-    if (flags & TO_UNDERLINE) {
-	isUnderline = true;
-    }
-
-
-    cv::Scalar color = (flags & TO_WHITE) ? cv::Scalar(255, 255, 255) : (flags & TO_BLUE ? cv::Scalar(160, 0, 0) : cv::Scalar(0, 0, 0));
-    int fontSize = getFontSizeFromHeightAndWidth(height, width, text);
-
-    int textWidth = getTextSize(text, cv::FONT_HERSHEY_DUPLEX, fontSize, fontWeight, 0).width;
-
-    cv::Point textOrigin(x - textWidth/2, y + height);
-    cv::putText(img, text, cv::Point(x - textWidth/2, y + height), cv::FONT_HERSHEY_DUPLEX, fontSize, color, fontWeight);
-
-    if (isUnderline) {
-	// Compute the position of the line below the text
-	int baseline = 0;
-	cv::Size textSize = cv::getTextSize(text, cv::FONT_HERSHEY_PLAIN, fontSize, fontWeight, &baseline);
-	int underlineY = textOrigin.y + baseline + 2;
-	int underlineX1 = textOrigin.x;
-	int underlineX2 = underlineX1 + textSize.width;
-
-	// Draw the line using the same color as the text
-	cv::line(img, cv::Point(underlineX1, underlineY), cv::Point(underlineX2, underlineY), color, 1);
-    }
+    int fontSize = getFontSizeFromHeightAndWidth(height, width, text, flags);
+    int textWidth = getTextWidthAtScale(fontSize, text, flags);
+    drawTextAtScale(x - textWidth / 2, y + height, fontSize, text, flags);
 }
-
 
 void
 IFPainter::drawTextRightAligned(int x, int y, int height, int width, std::string text, int flags)
 {
-    // for now, italic text is omitted
-    int fontWeight = standardTextWeight;
-    bool isUnderline = false;
-    if ((flags & TO_BOLD)) {
-	fontWeight = boldTextWeight;
-    }
-
-    if (flags & TO_UNDERLINE) {
-	isUnderline = true;
-    }
-
-
-    cv::Scalar color = (flags & TO_WHITE) ? cv::Scalar(255, 255, 255) : cv::Scalar(0, 0, 0);
-    int fontSize = getFontSizeFromHeightAndWidth(height, width, text);
-
-    int textWidth = getTextSize(text, cv::FONT_HERSHEY_DUPLEX, fontSize, fontWeight, 0).width;
-
-    cv::Point textOrigin(x - textWidth, y + height);
-    cv::putText(img, text, cv::Point(x - textWidth, y + height), cv::FONT_HERSHEY_DUPLEX, fontSize, color, fontWeight);
-
-    if (isUnderline) {
-        // Compute the position of the line below the text
-        int baseline = 0;
-        cv::Size textSize = cv::getTextSize(text, cv::FONT_HERSHEY_PLAIN, fontSize, fontWeight, &baseline);
-        int underlineY = textOrigin.y + baseline + 2;
-        int underlineX1 = textOrigin.x;
-        int underlineX2 = underlineX1 + textSize.width;
-
-        // Draw the line using the same color as the text
-        cv::line(img, cv::Point(underlineX1, underlineY), cv::Point(underlineX2, underlineY), color, 1);
-    }
+    int fontSize = getFontSizeFromHeightAndWidth(height, width, text, flags);
+    int textWidth = getTextWidthAtScale(fontSize, text, flags);
+    drawTextAtScale(x - textWidth, y + height, fontSize, text, flags);
 }
 
 
@@ -535,22 +498,21 @@ IFPainter::justify(int x, int y, int height, int width, std::vector<std::string>
 	totalTextWidth += getTextWidth(height, width, text[i], flags);
     }
     bool hasSuffix = !suffix.empty() && suffixFontScale > 0.0;
-    int suffixWidth = hasSuffix ? getTextWidthAtScale(suffixFontScale, suffix, flags & ~TO_BOLD) : 0;
+    int suffixFontSize = hasSuffix ? std::max(1, static_cast<int>(getFontSizeFromHeight(height) * suffixFontScale + 0.5)) : 0;
+    int suffixWidth = hasSuffix ? getTextWidthAtScale(suffixFontSize, suffix, flags & ~TO_BOLD) : 0;
     totalTextWidth += suffixWidth;
     if (totalTextWidth >= width) {
 	throw std::invalid_argument("Text is larger than the bounding box");
 	return -1;
     }
-    int fontWeight = (flags & TO_BOLD) ? boldTextWeight : standardTextWeight;
-    cv::Scalar color = (flags & TO_WHITE) ? cv::Scalar(255, 255, 255) : cv::Scalar(0, 0, 0);
     int spacing = (width - totalTextWidth) / (text.size() + 1);
     int xPosition = x + spacing;
     for (size_t i = 0; i < text.size(); i++) {
-	int fontSize = getFontSizeFromHeightAndWidth(height, width, text[i]);
-	cv::putText(img, text[i], cv::Point(xPosition, y + height), cv::FONT_HERSHEY_DUPLEX, fontSize, color, fontWeight);
-	xPosition += getTextWidth(height, width, text[i], flags);
+	int fontSize = getFontSizeFromHeightAndWidth(height, width, text[i], flags);
+	drawTextAtScale(xPosition, y + height, fontSize, text[i], flags);
+	xPosition += getTextWidthAtScale(fontSize, text[i], flags);
 	if (hasSuffix && i == text.size() - 1) {
-	    drawTextAtScale(xPosition, y + height, suffixFontScale, suffix, flags & ~TO_BOLD);
+	    drawTextAtScale(xPosition, y + height, suffixFontSize, suffix, flags & ~TO_BOLD);
 	    xPosition += suffixWidth;
 	}
 	xPosition += spacing;
@@ -580,7 +542,8 @@ IFPainter::justifyWithCenterWord(int UNUSED(x), int y, int height, int width, st
 	totalRightWidth += getTextWidth(height, width, rightText[i], flags);
     }
     bool hasSuffix = !suffix.empty() && suffixFontScale > 0.0;
-    int suffixWidth = hasSuffix ? getTextWidthAtScale(suffixFontScale, suffix, flags & ~TO_BOLD) : 0;
+    int suffixFontSize = hasSuffix ? std::max(1, static_cast<int>(getFontSizeFromHeight(height) * suffixFontScale + 0.5)) : 0;
+    int suffixWidth = hasSuffix ? getTextWidthAtScale(suffixFontSize, suffix, flags & ~TO_BOLD) : 0;
     totalRightWidth += suffixWidth;
     if (totalLeftWidth >= (width / 2) - (confidentialWidth / 2) || totalRightWidth >= (width / 2) - (confidentialWidth / 2)) {
 	throw std::invalid_argument("Text is larger than either the left or right side");
@@ -595,22 +558,20 @@ IFPainter::justifyWithCenterWord(int UNUSED(x), int y, int height, int width, st
 	spacing = leftSpacing;
     }
 
-    int fontWeight = (flags & TO_BOLD) ? boldTextWeight : standardTextWeight;
-    cv::Scalar color = (flags & TO_WHITE) ? cv::Scalar(255, 255, 255) : cv::Scalar(0, 0, 0);
     int xPosition = width / 2 - confidentialWidth / 2;
     for (int i = leftText.size() - 1; i >= 0; i--) {
-	xPosition = xPosition - spacing - getTextWidth(height, width, leftText[i], flags);
-	int fontSize = getFontSizeFromHeightAndWidth(height, width, leftText[i]);
-	cv::putText(img, leftText[i], cv::Point(xPosition, y + height), cv::FONT_HERSHEY_DUPLEX, fontSize, color, fontWeight);
+	int fontSize = getFontSizeFromHeightAndWidth(height, width, leftText[i], flags);
+	xPosition = xPosition - spacing - getTextWidthAtScale(fontSize, leftText[i], flags);
+	drawTextAtScale(xPosition, y + height, fontSize, leftText[i], flags);
     }
 
     xPosition = width / 2 + confidentialWidth / 2 + spacing;
     for (size_t i = 0; i < rightText.size(); i++) {
-	int fontSize = getFontSizeFromHeightAndWidth(height, width, rightText[i]);
-	cv::putText(img, rightText[i], cv::Point(xPosition, y + height), cv::FONT_HERSHEY_DUPLEX, fontSize, color, fontWeight);
-	xPosition += getTextWidth(height, width, rightText[i], flags);
+	int fontSize = getFontSizeFromHeightAndWidth(height, width, rightText[i], flags);
+	drawTextAtScale(xPosition, y + height, fontSize, rightText[i], flags);
+	xPosition += getTextWidthAtScale(fontSize, rightText[i], flags);
 	if (hasSuffix && i == rightText.size() - 1) {
-	    drawTextAtScale(xPosition, y + height, suffixFontScale, suffix, flags & ~TO_BOLD);
+	    drawTextAtScale(xPosition, y + height, suffixFontSize, suffix, flags & ~TO_BOLD);
 	    xPosition += suffixWidth;
 	}
 	xPosition += spacing;

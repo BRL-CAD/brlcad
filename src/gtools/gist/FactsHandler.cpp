@@ -133,8 +133,8 @@ makeFileInfoSection(IFPainter& img, InformationGatherer& info, int offsetX, int 
 
     int headerOffset = width / 20;
     int textOffset = width / 10;
-    int textHeight = height / 50;
-    int textYOffset = textHeight * 8 / 5;
+    int textHeight = height / 40;
+    int textYOffset = textHeight * 5 / 4;
 
     int curiX = 1;
 

@@ -50,6 +50,11 @@ brlcad_addexec(gist "${GIST_SRCS}" "libbu;librt;libged;${OpenCV_LIBRARIES}")
 target_include_directories(gist BEFORE PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 target_include_directories(gist SYSTEM PRIVATE ${OpenCV_INCLUDE_DIRS})
 
+# use our bundled font
+if(TARGET osifont_osifont-lgpl3fe_ttf_cp)
+  add_dependencies(gist osifont_osifont-lgpl3fe_ttf_cp)
+endif()
+
 if(CMAKE_SHARED_LIBRARY_SUFFIX STREQUAL ".dll")
   add_custom_command(
     TARGET gist

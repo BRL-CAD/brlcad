@@ -42,16 +42,18 @@ class IFPainter
 
 private:
     cv::Mat img;
-
-    int standardTextWeight;
-    int boldTextWeight;
+    cv::FontFace fontFace;
+    // "control" knobs
+    const double capHeightRatio = 0.70;	    // ratio of font default height to our largest letter on page
+    const int pixelsPerBoldPass = 24;	    // fewer = bolder
 
     std::map<int, int> heightToFontSizeMap;
 
+    int boldSpread(int fontSize, int flags) const;
     int getFontSizeFromHeight(int height);
-    int getFontSizeFromHeightAndWidth(int height, int width, std::string text);
-    int getTextWidthAtScale(double fontScale, std::string text, int flags);
-    void drawTextAtScale(int x, int baselineY, double fontScale, std::string text, int flags);
+    int getFontSizeFromHeightAndWidth(int height, int width, std::string text, int flags = 0);
+    int getTextWidthAtScale(int fontSize, std::string text, int flags);
+    void drawTextAtScale(int x, int baselineY, int fontSize, std::string text, int flags);
 
 public:
     IFPainter(int width, int height);
