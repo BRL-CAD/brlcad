@@ -42,7 +42,6 @@
 
 
 static const char CREO_BRL_CORE_TOP_LEVEL_NAME[] = "all";
-static const size_t CREO_BRL_MATERIAL_LINE_SIZE = 4096u;
 static const char CREO_BRL_MATERIAL_COMMENT_CHARACTERS[] = "!@#$%^&*/<>?";
 
 
@@ -82,10 +81,29 @@ snapshot_open_log_file(const char *log_path, FILE **log_file)
 }
 
 
+static int
+read_material_line(FILE *material_file, std::string *line_out)
+{
+    int ch = EOF;
+
+    if (!material_file || !line_out)
+        return 0;
+
+    line_out->clear();
+    while ((ch = std::fgetc(material_file)) != EOF) {
+        line_out->push_back(static_cast<char>(ch));
+        if (ch == '\n')
+            break;
+    }
+
+    return !line_out->empty();
+}
+
+
 static void
 load_material_translations(const std::string& path, material_translation_map *translations)
 {
-    char line[CREO_BRL_MATERIAL_LINE_SIZE] = {'\0'};
+    std::string line;
     FILE *material_file = NULL;
 
     if (!translations)
@@ -95,7 +113,7 @@ load_material_translations(const std::string& path, material_translation_map *tr
         !(material_file = creo_brl_open_utf8_file(path.c_str(), L"rb", "rb")))
         return;
 
-    while (bu_fgets(line, sizeof(line), material_file)) {
+    while (read_material_line(material_file, &line)) {
         std::istringstream input(line);
         std::string material_name;
         struct snapshot_material_translation translation = {};
