@@ -11,19 +11,38 @@ joint - manage kinematic joint and constraint data for articulated models
 [source]
 ----
 joint subcommand [args]
+joint object joint_name operation [args]
+joint legacy subcommand [args]
 ----
 
 
 [[description]]
 == DESCRIPTION
 
-The *joint* command manages kinematic joint and constraint data used to describe articulated geometry models. Joints define degrees of freedom between parts, and constraints restrict that motion.
+The *joint* command is the front door for articulated model operations.
+The *object* namespace operates on persistent database-backed joint objects.
+The *legacy* namespace explicitly selects the transient file-loaded joint and
+constraint implementation.  Existing unnamespaced legacy forms remain aliases
+for compatibility.
+
+Database-backed joints define stable parent and child links, optional geometry
+path bindings, rigid attachment frames, ordered degrees of freedom, and an
+affine pose.  Object operations include `show`, `validate`, `matrix`, `apply`,
+`position`, and `pose`; see *joint2*(nged) for their current behavior.
 
 === Subcommands
 
 [cols="1,2,3"]
 |===
 |Subcommand |Arguments |Description
+
+|`object`
+|joint_name operation [args]
+|Operate on a persistent database-backed joint object.
+
+|`legacy`
+|subcommand [args]
+|Explicitly select the transient legacy implementation.
 
 |`?`
 |[commands]
@@ -92,6 +111,18 @@ mged> joint load arm_joints.jnt
 Loads joint definitions from `arm_joints.jnt`.
 ====
 
+.Position a database-backed joint
+====
+[source,console]
+----
+mged> joint object elbow.j position 0 45
+mged> joint object elbow.j apply
+----
+
+Sets the first degree of freedom and applies the resulting relationship matrix
+to the bound child geometry instance.
+====
+
 .List joints
 ====
 [source,console]
@@ -125,7 +156,7 @@ Commits all pending joint moves to the model.
 [[see_also]]
 == SEE ALSO
 
-*constraint*(nged)
+*constraint*(nged), *joint2*(nged)
 
 
 [[author]]

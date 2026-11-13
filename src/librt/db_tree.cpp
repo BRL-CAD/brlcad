@@ -400,8 +400,9 @@ db_apply_state_from_one_member2(
 }
 
 
-union tree *
-db_find_named_leaf(union tree *tp, const char *cp)
+static union tree *
+db_find_named_leaf_instance_impl(union tree *tp, const char *cp,
+	size_t instance, size_t *current)
 {
     union tree *ret;
 
@@ -412,21 +413,44 @@ db_find_named_leaf(union tree *tp, const char *cp)
 	case OP_DB_LEAF:
 	    if (!BU_STR_EQUAL(cp, tp->tr_l.tl_name))
 		return TREE_NULL;
-	    return tp;
+	    if (*current == instance)
+		return tp;
+	    (*current)++;
+	    return TREE_NULL;
 
 	case OP_UNION:
 	case OP_INTERSECT:
 	case OP_SUBTRACT:
 	case OP_XOR:
-	    ret = db_find_named_leaf(tp->tr_b.tb_left, cp);
+	    ret = db_find_named_leaf_instance_impl(tp->tr_b.tb_left, cp,
+		    instance, current);
 	    if (ret != TREE_NULL) return ret;
-	    return db_find_named_leaf(tp->tr_b.tb_right, cp);
+	    return db_find_named_leaf_instance_impl(tp->tr_b.tb_right, cp,
+		    instance, current);
 
 	default:
 	    bu_log("db_find_named_leaf: bad op %d\n", tp->tr_op);
 	    bu_bomb("db_find_named_leaf\n");
     }
     return TREE_NULL;
+}
+
+
+union tree *
+db_find_named_leaf_instance(union tree *tp, const char *cp, size_t instance)
+{
+    size_t current = 0;
+
+    if (!tp || !cp)
+	return TREE_NULL;
+    return db_find_named_leaf_instance_impl(tp, cp, instance, &current);
+}
+
+
+union tree *
+db_find_named_leaf(union tree *tp, const char *cp)
+{
+    return db_find_named_leaf_instance(tp, cp, 0);
 }
 
 

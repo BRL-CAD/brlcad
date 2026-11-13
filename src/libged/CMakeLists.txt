@@ -337,6 +337,7 @@ set(
   draw.cpp
   ged.cpp
   ged_inside.c
+  joint_object.c
   ged_track.c
   ged_util.cpp
   get_obj_bounds.c

@@ -4,7 +4,7 @@
 :manmanual: BRL-CAD User Commands
 
 == NAME
-joint2 - inspect and position articulation joints
+joint2 - compatibility alias for database-backed articulation joints
 
 == SYNOPSIS
 
@@ -13,6 +13,7 @@ joint2 - inspect and position articulation joints
 joint2 joint_name show
 joint2 joint_name validate
 joint2 joint_name matrix
+joint2 joint_name apply
 joint2 joint_name position index [value]
 joint2 joint_name pose [translation|rotation|scale [values...]]
 ----
@@ -20,8 +21,9 @@ joint2 joint_name pose [translation|rotation|scale [values...]]
 [[description]]
 == DESCRIPTION
 
-The *joint2* command is an experimental interface for inspecting and positioning
-database-backed articulation joints.  A joint relates stable parent and child
+The *joint2* command is a deprecated compatibility alias for
+`joint object`.  New scripts should use `joint object joint_name operation`.
+A database-backed joint relates stable parent and child
 link identifiers, may bind those links to geometry paths, and defines rigid
 attachment frames, ordered mechanical degrees of freedom (DOFs), and an affine
 pose.
@@ -31,6 +33,10 @@ The operations are:
 * *show* prints the complete joint definition.
 * *validate* checks the joint definition and resolves any geometry path bindings.
 * *matrix* prints the child-to-parent relationship matrix.
+* *apply* replaces the bound child combination-instance matrix with the
+  evaluated relationship matrix.  The child path must directly descend from
+  the parent path.  Repeated application is idempotent; transforms do not
+  accumulate.
 * *position index* reports a DOF position.  Supplying `value` updates it.
   Rotational values use degrees; translational values use database local units.
 * *pose* reports translation, rotation, and scale.  A component name reports
@@ -50,6 +56,7 @@ order.  The pose matrix uses translation, then quaternion rotation, then scale.
 [source,console]
 ----
 mged> joint2 elbow.j position 0 45
+mged> joint2 elbow.j apply
 mged> joint2 elbow.j position 0
 45
 ----

@@ -219,6 +219,8 @@ set(
   primitives/hyp/hyp_brep.cpp
   primitives/hyp/hyp_mirror.c
   primitives/joint/joint.c
+  primitives/joint/joint_graph.cpp
+  primitives/joint/joint_problem.cpp
   primitives/joint/joint_brep.cpp
   primitives/joint/joint_mirror.c
   primitives/metaball/metaball.c
