@@ -33,47 +33,34 @@
 #include <math.h>
 #include "bio.h"
 
+#include "bu/arg.h"
 #include "bu/app.h"
-#include "bu/getopt.h"
 #include "bu/malloc.h"
 #include "bu/file.h"
 #include "bu/exit.h"
 
+struct istats_args {
+    int help;
+};
 
-/*
- * Tell user how to invoke this program, then exit
- */
-static void
-usage(const char *progname)
-{
-    bu_exit(1, "Usage: %s [ file ]\n", progname);
-}
+static const struct bu_arg_option istats_options[] = {
+    BU_ARG_FLAG("h", "help", struct istats_args, help, "Print help and exit"),
+    BU_ARG_ALIAS("?", NULL, "help", 1),
+    BU_ARG_OPTION_NULL
+};
 
+static const struct bu_arg_operand istats_operands[] = {
+    BU_ARG_OPERAND("file", BU_ARG_VALUE_FILE, 0, 1,
+	"Input signed-short data; standard input if omitted", NULL),
+    BU_ARG_OPERAND_NULL
+};
 
-/*
- * Parse through command line flags
- */
-static int
-parse_args(int ac, char **av, const char **progname)
-{
-    const char optstring[] = "h?";
-    int c;
+static const struct bu_arg_schema istats_schema = BU_ARG_SCHEMA(
+    "istats", "Compute statistics for signed-short values",
+    istats_options, istats_operands, BU_ARG_PARSE_OPTIONS_FIRST,
+    BU_ARG_SCHEMA_META_HELP(NULL, NULL, NULL, NULL, NULL));
 
-    if (!(*progname=strrchr(*av, '/')))
-	*progname = *av;
-
-    /* Turn off bu_getopt's error messages */
-    bu_opterr = 0;
-
-    /* get all the option flags from the command line */
-    while ((c=bu_getopt(ac, av, optstring)) != -1)
-	switch (c) {
-	    default: usage(*progname);
-		break;
-	}
-
-    return bu_optind;
-}
+static const struct bu_arg_grammar istats_grammar = {&istats_schema, NULL, NULL};
 
 
 static void
@@ -117,16 +104,36 @@ comp_stats(FILE *fd)
 int
 main(int ac, char *av[])
 {
-    const char *progname = "istats";
-    int arg_index;
+    struct istats_args args = {0};
+    struct bu_vls msg = BU_VLS_INIT_ZERO;
 
     bu_setprogname(av[0]);
 
-    /* parse command flags
-     */
-    arg_index = parse_args(ac, av, &progname);
-    if (arg_index < ac) {
-	char *ifname = bu_file_realpath(av[arg_index], NULL);
+    int introspection = bu_arg_introspect(&msg, &istats_grammar, ac - 1,
+	(const char * const *)(av + 1));
+    if (introspection != 0) {
+	bu_flog(introspection > 0 ? stdout : stderr, "%s", bu_vls_cstr(&msg));
+	bu_vls_free(&msg);
+	return introspection > 0 ? 0 : 1;
+    }
+
+    ac--; av++;
+    int operand_index = bu_arg_schema_parse_complete(&istats_schema, &args,
+	&msg, ac, (const char **)av);
+    if (operand_index < 0)
+	bu_exit(1, "%s", bu_vls_cstr(&msg));
+    bu_vls_free(&msg);
+    if (args.help) {
+	char *help = bu_arg_schema_help(&istats_schema, "istats");
+	bu_flog(stdout, "%s", help ? help : "");
+	bu_free(help, "istats help");
+	return 0;
+    }
+
+    ac -= operand_index;
+    av += operand_index;
+    if (ac == 1) {
+	char *ifname = bu_file_realpath(av[0], NULL);
 	/* open file of shorts */
 	if (freopen(ifname, "r", stdin) == (FILE *)NULL) {
 	    perror(ifname);
@@ -135,7 +142,8 @@ main(int ac, char *av[])
 	}
 	bu_free(ifname, "ifname alloc from bu_file_realpath");
     } else if (isatty((int)fileno(stdin))) {
-	usage(progname);
+	char *help = bu_arg_schema_help(&istats_schema, "istats");
+	bu_exit(1, "%s", help ? help : "");
     }
 
     comp_stats(stdin);

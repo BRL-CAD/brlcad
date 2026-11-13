@@ -29,16 +29,34 @@
 #include <math.h>
 #include "bio.h"
 
+#include "bu/arg.h"
 #include "bu/app.h"
-#include "bu/str.h"
 #include "bu/exit.h"
+#include "bu/malloc.h"
 
+struct ihist_args {
+    int help;
+    int verbose;
+};
+
+static const struct bu_arg_option ihist_options[] = {
+    BU_ARG_FLAG("h", "help", struct ihist_args, help, "Print help and exit"),
+    BU_ARG_ALIAS("?", NULL, "help", 1),
+    BU_ARG_FLAG("v", "verbose", struct ihist_args, verbose,
+	"Print the complete value histogram"),
+    BU_ARG_OPTION_NULL
+};
+
+static const struct bu_arg_schema ihist_schema = BU_ARG_SCHEMA(
+    "ihist", "Report histogram and bit usage for signed-short values",
+    ihist_options, NULL, BU_ARG_PARSE_OPTIONS_FIRST,
+    BU_ARG_SCHEMA_META_HELP(NULL, NULL, NULL, NULL, NULL));
+
+static const struct bu_arg_grammar ihist_grammar = {&ihist_schema, NULL, NULL};
 
 int
 main(int argc, char *argv[])
 {
-    static const char usage[] = "Usage: ihist [-v] < shorts\n";
-
     long i, bit;
     int n;
     int max, min;
@@ -49,20 +67,33 @@ main(int argc, char *argv[])
     long *zerop;
     short ibuf[1024] = {0};
 
-    int verbose = 0;
+    struct ihist_args args = {0};
+    struct bu_vls msg = BU_VLS_INIT_ZERO;
 
     bu_setprogname(argv[0]);
 
-    while (argc > 1) {
-	if (BU_STR_EQUAL(argv[1], "-v")) {
-	    verbose++;
-	} else
-	    break;
-	argc--;
-	argv++;
+    int introspection = bu_arg_introspect(&msg, &ihist_grammar, argc - 1,
+	(const char * const *)(argv + 1));
+    if (introspection != 0) {
+	bu_flog(introspection > 0 ? stdout : stderr, "%s", bu_vls_cstr(&msg));
+	bu_vls_free(&msg);
+	return introspection > 0 ? 0 : 1;
     }
-    if (argc > 1 || isatty(fileno(stdin))) {
-	bu_exit(1, "%s", usage);
+
+    int operand_index = bu_arg_schema_parse_complete(&ihist_schema, &args,
+	&msg, argc - 1, (const char **)(argv + 1));
+    if (operand_index < 0)
+	bu_exit(1, "%s", bu_vls_cstr(&msg));
+    bu_vls_free(&msg);
+    if (args.help) {
+	char *help = bu_arg_schema_help(&ihist_schema, "ihist");
+	bu_flog(stdout, "%s", help ? help : "");
+	bu_free(help, "ihist help");
+	return 0;
+    }
+    if (isatty(fileno(stdin))) {
+	char *help = bu_arg_schema_help(&ihist_schema, "ihist");
+	bu_exit(1, "%s", help ? help : "");
     }
 
     num = 0;
@@ -107,7 +138,7 @@ main(int argc, char *argv[])
     }
 
     printf("%ld levels used (%04.2f %%)\n", levels, levels/65535.0 * 100.0);
-    if (verbose) {
+    if (args.verbose) {
 	for (i = -32768; i < 32768; i++) {
 	    if (zerop[i]) {
 		printf("%ld %ld\n", i, zerop[i]);

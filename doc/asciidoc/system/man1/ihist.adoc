@@ -32,7 +32,10 @@ applies arithmetic operations to it.
 [[options]]
 == OPTIONS
 
-*-v*::
+*-h*, *--help*::
+  Print command help and exit.
+
+*-v*, *--verbose*::
   Verbose. In addition to the summary statistics, print the full histogram as
   one "value count" pair per line for every distinct value that occurred.
 

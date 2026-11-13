@@ -29,11 +29,33 @@
 #include <math.h>
 #include "bio.h"
 
+#include "bu/arg.h"
 #include "bu/app.h"
-#include "bu/str.h"
 #include "bu/exit.h"
 #include "bu/malloc.h"
 
+struct dsel_args {
+    int help;
+};
+
+static const struct bu_arg_option dsel_options[] = {
+    BU_ARG_FLAG("h", "help", struct dsel_args, help, "Print help and exit"),
+    BU_ARG_ALIAS("?", NULL, "help", 0),
+    BU_ARG_OPTION_NULL
+};
+
+static const struct bu_arg_operand dsel_operands[] = {
+    BU_ARG_OPERAND("count", BU_ARG_VALUE_INTEGER, 1, BU_ARG_COUNT_UNLIMITED,
+	"One keep count, or alternating skip and keep counts", NULL),
+    BU_ARG_OPERAND_NULL
+};
+
+static const struct bu_arg_schema dsel_schema = BU_ARG_SCHEMA(
+    "dsel", "Select runs of double-precision values from a stream",
+    dsel_options, dsel_operands, BU_ARG_PARSE_OPTIONS_FIRST,
+    BU_ARG_SCHEMA_META_HELP(NULL, NULL, NULL, NULL, NULL));
+
+static const struct bu_arg_grammar dsel_grammar = {&dsel_schema, NULL, NULL};
 
 static void
 skip(int num)
@@ -72,32 +94,56 @@ keep(int num)
 int
 main(int argc, char *argv[])
 {
-    static char usage[]="Usage: dsel keep ...\n       or\n       dsel skip keep ...\n\n(must use <inputfile >outputfile)\n";
-
     int nskip;	/* number to skip */
     int nkeep;	/* number to keep */
+    struct dsel_args args = {0};
+    struct bu_vls msg = BU_VLS_INIT_ZERO;
 
     bu_setprogname(argv[0]);
 
-    if (isatty(fileno(stdin)) || isatty(fileno(stdout)))
-	bu_exit(1, "%s", usage);
-    if (BU_STR_EQUAL(argv[1], "-h") || BU_STR_EQUAL(argv[1], "-?"))
-	bu_exit(1, "%s", usage);
+    int introspection = bu_arg_introspect(&msg, &dsel_grammar, argc - 1,
+	(const char * const *)(argv + 1));
+    if (introspection != 0) {
+	bu_flog(introspection > 0 ? stdout : stderr, "%s", bu_vls_cstr(&msg));
+	bu_vls_free(&msg);
+	return introspection > 0 ? 0 : 1;
+    }
 
-    if (argc == 2) {
-	keep(atoi(argv[1]));
+    argc--; argv++;
+    int operand_index = bu_arg_schema_parse_complete(&dsel_schema, &args,
+	&msg, argc, (const char **)argv);
+    if (operand_index < 0)
+	bu_exit(1, "%s", bu_vls_cstr(&msg));
+    bu_vls_free(&msg);
+    if (args.help) {
+	char *help = bu_arg_schema_help(&dsel_schema, "dsel");
+	bu_flog(stdout, "%s", help ? help : "");
+	bu_free(help, "dsel help");
+	return 0;
+    }
+
+    argc -= operand_index;
+    argv += operand_index;
+    if (isatty(fileno(stdin)) || isatty(fileno(stdout))) {
+	char *help = bu_arg_schema_help(&dsel_schema, "dsel");
+	bu_exit(1, "%s", help ? help : "");
+    }
+
+    if (argc == 1) {
+	keep(atoi(argv[0]));
 	exit(0);
     }
 
-    while (argc > 1) {
-	nskip = atoi(argv[1]);
+
+    while (argc > 0) {
+	nskip = atoi(argv[0]);
 	argc--;
 	argv++;
 	if (nskip > 0)
 	    skip(nskip);
 
-	if (argc > 1) {
-	    nkeep = atoi(argv[1]);
+	if (argc > 0) {
+	    nkeep = atoi(argv[0]);
 	    argc--;
 	    argv++;
 	} else {

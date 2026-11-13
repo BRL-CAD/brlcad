@@ -33,7 +33,7 @@ The unsigned-char and short-integer analogues are *ustats*(1) and *istats*(1).
 [[options]]
 == OPTIONS
 
-*-h*::
+*-h*, *--help*::
   Print a usage message and exit. The synonym *-?* is also accepted.
 
 [[examples]]
