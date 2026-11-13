@@ -43,6 +43,7 @@
 #include "bu/units.h"
 #include "nmg.h"
 #include "rt/geom.h"
+#include "rt/primitives/bot.h"
 #include "raytrace.h"
 #include "wdb.h"
 
@@ -133,23 +134,7 @@ clean_pmp(struct plate_mode *pmp)
     int i;
 
     for (i = 0; i < pmp->num_bots; i++) {
-	bu_free(pmp->bots[i]->faces, "pmp->bots[i]->faces");
-	bu_free(pmp->bots[i]->vertices, "pmp->bots[i]->vertices");
-	if ((pmp->bots[i]->bot_flags & RT_BOT_PLATE) ||
-	    (pmp->bots[i]->bot_flags & RT_BOT_PLATE_NOCOS)) {
-	    bu_free(pmp->bots[i]->thickness, "pmp->bots[i]->thickness");
-	}
-	if (pmp->bots[i]->bot_flags & RT_BOT_HAS_SURFACE_NORMALS) {
-	    bu_free(pmp->bots[i]->normals, "pmp->bots[i]->normals");
-	}
-	if ((pmp->bots[i]->bot_flags & RT_BOT_PLATE) ||
-	    (pmp->bots[i]->bot_flags & RT_BOT_PLATE_NOCOS)) {
-	    /* dup_bot() only sets face_mode when the source had one, so
-	     * it may legitimately be NULL here; guard the free.
-	     */
-	    if (pmp->bots[i]->face_mode)
-		bu_bitv_free(pmp->bots[i]->face_mode);
-	}
+	rt_bot_internal_free(pmp->bots[i]);
 	bu_free(pmp->bots[i], "bots");
 	pmp->bots[i] = (struct rt_bot_internal *)NULL;
     }
@@ -163,56 +148,8 @@ clean_pmp(struct plate_mode *pmp)
 struct rt_bot_internal *
 dup_bot(struct rt_bot_internal *bot_in)
 {
-    struct rt_bot_internal *bot;
-    size_t i;
-
     RT_BOT_CK_MAGIC(bot_in);
-
-    BU_ALLOC(bot, struct rt_bot_internal);
-    bot->face_mode = NULL;
-
-    bot->magic = bot_in->magic;
-    bot->mode = bot_in->mode;
-    bot->orientation = bot_in->orientation;
-    bot->bot_flags = bot_in->bot_flags;
-    bot->num_vertices = bot_in->num_vertices;
-    bot->num_faces = bot_in->num_faces;
-    bot->num_normals = bot_in->num_normals;
-    bot->num_face_normals = bot_in->num_face_normals;
-
-    bot->faces = (int *)bu_calloc(bot_in->num_faces * 3, sizeof(int), "bot faces");
-    for (i = 0; i < bot_in->num_faces * 3; i++) {
-	bot->faces[i] = bot_in->faces[i];
-    }
-
-    bot->vertices = (fastf_t *)bu_calloc(bot_in->num_vertices * 3, sizeof(fastf_t), "bot verts");
-    for (i = 0; i < bot_in->num_vertices * 3; i++) {
-	bot->vertices[i] = bot_in->vertices[i];
-    }
-
-    if ((bot_in->bot_flags & RT_BOT_PLATE) || (bot_in->bot_flags & RT_BOT_PLATE_NOCOS)) {
-	if (bot_in->thickness) {
-	    bot->thickness = (fastf_t *)bu_calloc(bot_in->num_faces, sizeof(fastf_t), "bot thickness");
-	    for (i = 0; i < bot_in->num_faces; i++) {
-		bot->thickness[i] = bot_in->thickness[i];
-	    }
-	} else {
-	    bu_bomb("dup_bot(): flag should not say plate but thickness is null\n");
-	}
-    }
-
-    if (bot_in->face_mode) {
-	bot->face_mode = bu_bitv_dup(bot_in->face_mode);
-    }
-
-    if (bot_in->bot_flags & RT_BOT_HAS_SURFACE_NORMALS) {
-	bot->num_normals = bot_in->num_normals;
-	bot->normals = (fastf_t *)bu_calloc(bot_in->num_normals * 3, sizeof(fastf_t), "BOT normals");
-	bot->face_normals = (int *)bu_calloc(bot_in->num_faces * 3, sizeof(int), "BOT face normals");
-	memcpy(bot->face_normals, bot_in->face_normals, bot_in->num_faces * 3 * sizeof(int));
-    }
-
-    return bot;
+    return rt_bot_dup(bot_in);
 }
 
 

@@ -44,6 +44,7 @@
 #include "bu/units.h"
 #include "nmg.h"
 #include "rt/geom.h"
+#include "rt/primitives/bot.h"
 #include "raytrace.h"
 #include "wdb.h"
 
@@ -175,34 +176,8 @@ clean_pmp(struct plate_mode *pmp)
 struct rt_bot_internal *
 dup_bot(struct rt_bot_internal *bot_in)
 {
-    struct rt_bot_internal *bot;
-    size_t i;
-
     RT_BOT_CK_MAGIC(bot_in);
-
-    BU_ALLOC(bot, struct rt_bot_internal);
-
-    *bot = *bot_in;	/* struct copy */
-
-    bot->faces = (int *)bu_calloc(bot_in->num_faces*3, sizeof(int), "bot faces");
-    for (i=0; i<bot_in->num_faces*3; i++)
-	bot->faces[i] = bot_in->faces[i];
-
-    bot->vertices = (fastf_t *)bu_calloc(bot_in->num_vertices*3, sizeof(fastf_t), "bot verts");
-    for (i=0; i<bot_in->num_vertices*3; i++)
-	bot->vertices[i] = bot_in->vertices[i];
-
-    if (bot_in->thickness) {
-	bot->thickness = (fastf_t *)bu_calloc(bot_in->num_faces, sizeof(fastf_t), "bot thickness");
-	for (i=0; i<bot_in->num_faces; i++)
-	    bot->thickness[i] = bot_in->thickness[i];
-    }
-
-    if (bot_in->face_mode) {
-	bot->face_mode = bu_bitv_dup(bot_in->face_mode);
-    }
-
-    return bot;
+    return rt_bot_dup(bot_in);
 }
 
 
