@@ -338,6 +338,7 @@ set(
   ged.cpp
   ged_inside.c
   joint_object.c
+  joint_system.cpp
   ged_track.c
   ged_util.cpp
   get_obj_bounds.c
