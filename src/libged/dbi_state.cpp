@@ -1676,7 +1676,7 @@ DbiState::reconcile(const DbiStateChange &change)
     std::vector<unsigned long long> unused;
     std::unordered_map<unsigned long long, unsigned long long>::iterator im_it;
     for (im_it = i_map.begin(); im_it != i_map.end(); im_it++) {
-	if (used.find(im_it->first) != used.end())
+	if (used.find(im_it->first) == used.end())
 	    unused.push_back(im_it->first);
     }
     for (size_t i = 0; i < unused.size(); i++) {
@@ -3201,6 +3201,14 @@ BViewState::print_view_state(struct bu_vls *outvls)
 
 /* Handle selection status for various instances in the database */
 
+static unsigned long long
+dbi_definition_hash(DbiState *state, unsigned long long instance_hash)
+{
+    auto instance_it = state->i_map.find(instance_hash);
+    return (instance_it == state->i_map.end()) ? instance_hash :
+	instance_it->second;
+}
+
 BSelectState::BSelectState(DbiState *s)
 {
     dbis = s;
@@ -3237,6 +3245,7 @@ BSelectState::select_hpath(std::vector<unsigned long long> &hpath)
     for (size_t i = 1; i < hpath.size(); i++) {
 	unsigned long long phash = hpath[i-1];
 	unsigned long long chash = hpath[i];
+	phash = dbi_definition_hash(dbis, phash);
 	if (dbis->p_c.find(phash) == dbis->p_c.end())
 	    return false;
 	if (dbis->p_c[phash].find(chash) == dbis->p_c[phash].end())
@@ -3259,7 +3268,9 @@ BSelectState::select_hpath(std::vector<unsigned long long> &hpath)
     // Clear any active children of the selected path
     pitems = hpath;
     std::unordered_map<unsigned long long, std::unordered_set<unsigned long long>>::iterator pc_it;
-    pc_it = dbis->p_c.find(pitems[pitems.size() -1]);
+    unsigned long long child_parent = dbi_definition_hash(dbis,
+	pitems[pitems.size() - 1]);
+    pc_it = dbis->p_c.find(child_parent);
     if (pc_it != dbis->p_c.end()) {
 	std::unordered_set<unsigned long long>::iterator c_it;
 	for (c_it = pc_it->second.begin(); c_it != pc_it->second.end(); c_it++)
@@ -3303,7 +3314,9 @@ BSelectState::deselect_hpath(std::vector<unsigned long long> &hpath)
     // below this path (if any)
     std::vector<unsigned long long> pitems = hpath;
     std::unordered_map<unsigned long long, std::unordered_set<unsigned long long>>::iterator pc_it;
-    pc_it = dbis->p_c.find(pitems[pitems.size() -1]);
+    unsigned long long child_parent = dbi_definition_hash(dbis,
+	pitems[pitems.size() - 1]);
+    pc_it = dbis->p_c.find(child_parent);
     if (pc_it != dbis->p_c.end()) {
 	std::unordered_set<unsigned long long>::iterator c_it;
 	for (c_it = pc_it->second.begin(); c_it != pc_it->second.end(); c_it++)
@@ -3422,7 +3435,7 @@ BSelectState::add_paths(
 	)
 {
     std::unordered_map<unsigned long long, std::unordered_set<unsigned long long>>::iterator pc_it;
-    pc_it = dbis->p_c.find(c_hash);
+    pc_it = dbis->p_c.find(dbi_definition_hash(dbis, c_hash));
 
     path_hashes.push_back(c_hash);
     unsigned long long phash = dbis->path_hash(path_hashes, 0);
@@ -3448,7 +3461,7 @@ BSelectState::clear_paths(
 	)
 {
     std::unordered_map<unsigned long long, std::unordered_set<unsigned long long>>::iterator pc_it;
-    pc_it = dbis->p_c.find(c_hash);
+    pc_it = dbis->p_c.find(dbi_definition_hash(dbis, c_hash));
     path_hashes.push_back(c_hash);
 
     unsigned long long phash = dbis->path_hash(path_hashes, 0);
@@ -3476,7 +3489,7 @@ BSelectState::expand_paths(
 	)
 {
     std::unordered_map<unsigned long long, std::unordered_set<unsigned long long>>::iterator pc_it;
-    pc_it = dbis->p_c.find(c_hash);
+    pc_it = dbis->p_c.find(dbi_definition_hash(dbis, c_hash));
 
     path_hashes.push_back(c_hash);
 
@@ -3580,7 +3593,10 @@ BSelectState::collapse()
 	    // Do the check against the .g comb children info - the "ground truth"
 	    // that defines what must be present for a fully drawn comb
 	    bool is_fully_selected = true;
-	    std::unordered_set<unsigned long long> &ground_truth = dbis->p_c[pcomb[pg_it->first]];
+	    unsigned long long definition_hash = dbi_definition_hash(dbis,
+		pcomb[pg_it->first]);
+	    std::unordered_set<unsigned long long> &ground_truth =
+		dbis->p_c[definition_hash];
 	    for (u_it = ground_truth.begin(); u_it != ground_truth.end(); u_it++) {
 		if (g_children.find(*u_it) == g_children.end()) {
 		    is_fully_selected = false;
@@ -3726,6 +3742,7 @@ BSelectState::refresh()
 	for (size_t i = 1; i < cpath.size(); i++) {
 	    unsigned long long phash = cpath[i-1];
 	    unsigned long long chash = cpath[i];
+	    phash = dbi_definition_hash(dbis, phash);
 	    if (dbis->p_c.find(phash) == dbis->p_c.end()) {
 		to_clear.push_back(s_it->first);
 		continue;

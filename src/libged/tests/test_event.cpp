@@ -510,6 +510,54 @@ test_dbi_change_inventory(void)
 }
 
 static void
+test_dbi_duplicate_instances(void)
+{
+    struct db_i *dbip = db_open_inmem();
+    CHECK(dbip != DBI_NULL, "duplicate instance database opens");
+    if (dbip == DBI_NULL)
+	return;
+
+    struct bu_vls address = BU_VLS_INIT_ZERO;
+    bu_vls_sprintf(&address, "%p", (void *)dbip);
+    struct ged *gedp = ged_open("inmem", bu_vls_cstr(&address), 0);
+    bu_vls_free(&address);
+    CHECK(gedp != GED_NULL, "duplicate instance GED context opens");
+    if (gedp == GED_NULL) {
+	db_close(dbip);
+	return;
+    }
+
+    DbiState *dbis = new DbiState(gedp);
+    gedp->dbi_state = dbis;
+    const char *make_args[] = {"make", "duplicate.s", "sph"};
+    CHECK(ged_exec(gedp, 3, make_args) == BRLCAD_OK,
+	"duplicate instance solid is created");
+    const char *group_args[] = {
+	"g", "duplicate.g", "duplicate.s", "duplicate.s"
+    };
+    CHECK(ged_exec(gedp, 4, group_args) == BRLCAD_OK,
+	"combination with duplicate members is created");
+    dbis->reconcile_changes();
+
+    unsigned long long group_hash = bu_data_hash("duplicate.g",
+	std::strlen("duplicate.g"));
+    auto children_it = dbis->p_v.find(group_hash);
+    CHECK(children_it != dbis->p_v.end() && children_it->second.size() == 2,
+	"DbiState records both duplicate members");
+    if (children_it != dbis->p_v.end()) {
+	for (unsigned long long child_hash : children_it->second)
+	    CHECK(dbis->valid_hash(child_hash),
+		"duplicate member hash remains resolvable");
+    }
+    CHECK(dbis->i_map.size() == 1 && dbis->i_str.size() == 1,
+	"used duplicate instance metadata survives garbage collection");
+
+    gedp->dbi_state = nullptr;
+    delete dbis;
+    ged_close(gedp);
+}
+
+static void
 test_concurrent_publication(struct ged *gedp)
 {
     constexpr size_t thread_count = 4;
@@ -561,6 +609,7 @@ main(int argc, char **argv)
     test_reentrant_batch(&context);
     test_librt_bridge();
     test_dbi_change_inventory();
+    test_dbi_duplicate_instances();
 
     CHECK(ged_event_batch_end(&context, nullptr) == GED_EVENT_INVALID,
 	"ending a nonexistent batch is rejected");
