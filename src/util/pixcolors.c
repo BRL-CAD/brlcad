@@ -46,7 +46,6 @@ char verbose = 0;
 char noname[] = "(noname)";
 char *progname = noname;
 
-#define PIXELS 1024
 unsigned char pixbuf[BUFSIZ*3];
 
 /* This grotesque array provides 1 bit for each of the 2^24 possible pixel
@@ -61,19 +60,23 @@ unsigned char vals[1L << (24-3)];
 /*
  * Main function of program
  */
-void
+int
 doit(FILE *fd)
 {
     unsigned long pixel, count;
-    int bytes;
+    size_t bytes;
     int mask, i;
     unsigned long k;
     int r, g, b;
 
 
     count = 0;
-    while ((bytes = fread(pixbuf, 3, PIXELS, fd)) > 0) {
-	for (i = (bytes-1)*3; i >= 0; i -= 3) {
+    while ((bytes = fread(pixbuf, 1, sizeof(pixbuf), fd)) > 0) {
+	if (bytes % 3) {
+	    fprintf(stderr, "%s: input ends with an incomplete pixel\n", progname);
+	    return 0;
+	}
+	for (i = (int)bytes - 3; i >= 0; i -= 3) {
 	    r = pixbuf[i];
 	    g = pixbuf[i+1];
 	    b = pixbuf[i+2];
@@ -98,6 +101,10 @@ doit(FILE *fd)
 	    }
 	}
     }
+    if (ferror(fd)) {
+	perror("pixcolors read");
+	return 0;
+    }
     printf("%lu\n", (long unsigned)count);
     if (verbose)
 	for (i = 0; i < 1<<24; ++i)
@@ -106,6 +113,7 @@ doit(FILE *fd)
 		       i & 0x0ff,
 		       (i >> 8) & 0x0ff,
 		       (i >> 16) & 0x0ff);
+    return 1;
 }
 
 
@@ -123,6 +131,7 @@ void usage(void)
 int main(int ac, char **av)
 {
     int c, isatty(int);
+    int success;
 
     bu_setprogname(av[0]);
 
@@ -154,16 +163,17 @@ int main(int ac, char **av)
 	    perror(av[bu_optind]);
 	    bu_exit (1, NULL);
 	}
-	doit(fd);
+	success = doit(fd);
+	(void)fclose(fd);
     }
 /* (bu_optind >= ac) if arriving here */
     else {
 	if (isatty(fileno(stdin)))
 	    usage();
-	doit(stdin);
+	success = doit(stdin);
     }
 
-    return 0;
+    return success ? 0 : 1;
 }
 
 
