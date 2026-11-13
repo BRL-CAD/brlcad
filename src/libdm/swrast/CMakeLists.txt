@@ -40,6 +40,7 @@ add_definitions(-DUSE_MGL_NAMESPACE)
 set(SWRAST_SRCS ${SWRAST_SRCS} ${swrast_moc_srcs})
 
 dm_plugin_library(dm-swrast SHARED ${SWRAST_SRCS})
+target_link_libraries(dm-swrast STRUETYPE::STRUETYPE)
 if(BRLCAD_ENABLE_QT)
   if(Qt6Widgets_FOUND)
     target_link_libraries(

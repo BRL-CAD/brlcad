@@ -11,17 +11,16 @@ use the implementation in this directory.
 - linking it from annotation geometry would create an inappropriate
   `librt`-to-`libdm` dependency and would discard scalable outlines.
 
-BRL-CAD's private `libbu` source tree instead holds `struetype.h`, the compact,
-size-aware font parser and outline/raster API used by Fontstash.  Annotation
-geometry may share that lower-level parser and its metrics/outlines without
-depending on Fontstash.
+The bext struetype dependency supplies `struetype.h`, the compact, size-aware
+font parser and outline/raster API used by Fontstash and annotation geometry.
+Both consumers use the installed header without depending on each other.
 
 ## BRL-CAD changes
 
 This copy has diverged substantially from the historical Fontstash code.  In
 particular, it:
 
-- uses BRL-CAD's size-aware `struetype.h` rather than `stb_truetype.h`;
+- uses the size-aware `struetype.h` rather than `stb_truetype.h`;
 - validates font buffers and atlas dimensions before parsing or allocation;
 - owns renderer state through a copied `FONSparams` value;
 - performs atlas expansion and reset transactionally;
@@ -67,8 +66,8 @@ colors.
 The original Fontstash implementation is by Mikko Mononen.  The atlas is
 based on Jukka Jylanki's public-domain Skyline Bin Packer, and the UTF-8 state
 machine is by Bjoern Hoehrmann.  Complete notices and source locations are in
-`doc/legal/embedded/fontstash.txt`; struetype is recorded separately in
-`doc/legal/embedded/struetype.txt`.
+`doc/legal/embedded/fontstash.txt`.  The bext-managed struetype dependency
+provides its own license in the installed `doc/legal/other/struetype.txt`.
 
 The note in the original BRL-CAD integration still applies: a future modern
 OpenGL renderer must coexist with the compatibility path because the software

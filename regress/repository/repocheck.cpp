@@ -564,7 +564,6 @@ init_repo_config(RepoConfig &cfg)
 	    "rt_ecmd_scanner.cpp",
 	    // The private SHA-1 test does not link libbu.
 	    "src/libbu/tests/test_sha1.c",
-	    "struetype.h",
 	    "ttcp.c",
 	    nullptr
 	};

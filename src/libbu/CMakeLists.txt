@@ -246,7 +246,6 @@ set(
   parallel_cpp11thread.cpp
   process_private.h
   sha1.h
-  struetype.h
   vfont.h
   vls_vprintf.h
   TODO.binary_attributes

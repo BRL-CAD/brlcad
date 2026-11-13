@@ -39,6 +39,7 @@ set_property(
 )
 
 brlcad_find_package(PNG REQUIRED)
+brlcad_find_package(STRUETYPE REQUIRED)
 find_package(OpenSSL QUIET)
 
 set(DM_LOCAL_INCLUDE_DIRS

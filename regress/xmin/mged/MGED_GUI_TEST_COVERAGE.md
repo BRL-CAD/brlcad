@@ -194,9 +194,8 @@ drop-in replacement for `XLoadQueryFont`: the X DMs would need glyph
 rasterization, caching, color/clip handling, and upload/compositing of glyph
 images.  The maintainable follow-on is a shared libdm portable-text backend
 used by all non-native-font renderers, rather than a second X-only font stack.
-The bundled `src/libbu/struetype.h` already has the newer buffer-size-aware
-interfaces; updating it and adding malformed-font tests should be handled as a
-separate, focused dependency change.
+The bext struetype dependency provides the buffer-size-aware font parsing
+interfaces shared by Fontstash and annotation geometry.
 
 ## Test tiers and completeness
 

@@ -216,7 +216,7 @@ set(CMAKE_FIND_USE_PACKAGE_REGISTRY FALSE)
 # Prepare to manage and build BRL-CAD's external dependencies. Specifies a
 # specific commit hash to use in the 'bext' repository.
 include(BRLCAD_ExternalDeps)
-brlcad_bext_init(1ca6692da4174cfde569b873b1874beb3297146e)
+brlcad_bext_init(7371cff1783a9baf670ef965e2b53c5ffe34e85b)
 
 #---------------------------------------------------------------------
 # Define various utilities.
@@ -3152,11 +3152,12 @@ set(
   "${BRLCAD_CMAKE_DIR}/FindOPENNURBS.cmake"
   "${BRLCAD_CMAKE_DIR}/FindPNG.cmake"
   "${BRLCAD_CMAKE_DIR}/FindREGEX.cmake"
+  "${BRLCAD_CMAKE_DIR}/FindSTRUETYPE.cmake"
   "${BRLCAD_CMAKE_DIR}/FindTCL.cmake"
   "${BRLCAD_CMAKE_DIR}/FindZLIB.cmake"
 )
 
-foreach(_brlcad_dep ZLIB LMDB MANIFOLD MMESH REGEX PNG NETPBM OPENNURBS)
+foreach(_brlcad_dep ZLIB LMDB MANIFOLD MMESH REGEX STRUETYPE PNG NETPBM OPENNURBS)
   if("${${_brlcad_dep}_STATUS}" STREQUAL "Bundled")
     set(BRLCAD_FIND_DEP_${_brlcad_dep} "find_dependency(${_brlcad_dep} MODULE)")
   else()
