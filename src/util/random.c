@@ -110,8 +110,10 @@ main(int argc, char *argv[])
 	!bu_opt_scan_int(argv[bu_optind+1], &high, "high value")) {
 	bu_exit(1, NULL);
     }
+    if (low > high)
+	bu_exit(1, "random: low bound must not exceed high bound\n");
     if (!cdone) {
-	center = ((double)(high + low)) / 2.0;
+	center = ((double)high + (double)low) / 2.0;
     }
     if (verbose) {
 	bu_log("%s: seed=%d %s %d %f %d\n", argv[0], seed, (gauss) ? "Gauss" : "Uniform", low, center, high);
@@ -136,7 +138,7 @@ main(int argc, char *argv[])
     if (uniform) {
 	double tmp;
 	up = bn_unif_init(seed, 0);
-	tmp = high-low + 1.0;
+	tmp = (double)high - (double)low + 1.0;
 	tmp*=BN_UNIF_DOUBLE(up)+0.5;
 	fprintf(stdout, "%d\n", low +(int)tmp);
 	return 0;
