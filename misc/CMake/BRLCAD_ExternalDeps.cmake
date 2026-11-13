@@ -2262,22 +2262,20 @@ macro(find_package_opencv)
 
   # First, see if we have a bundled version
   set(OpenCV_DIR_TMP "${OpenCV_DIR}")
+  # TODO: bext manually creates cmake/opencv4 regardless of versison
+  # - need to bump the created path to make it clear we're working with 5
   set(OpenCV_DIR "${CMAKE_BINARY_DIR}/${LIB_DIR}/cmake/opencv4")
   set(OpenCV_ROOT ${CMAKE_BINARY_DIR})
-  find_package(OpenCV CONFIG COMPONENTS core imgproc imgcodecs highgui)
-  if(OpenCV_FOUND AND OpenCV_VERSION_MAJOR GREATER_EQUAL 5)
-    # OpenCV 5 moved boundingRect from imgproc to geometry.
-    find_package(OpenCV CONFIG COMPONENTS geometry)
-  endif()
+  find_package(OpenCV 5 CONFIG COMPONENTS core imgproc imgcodecs highgui geometry)
   unset(OpenCV_ROOT)
 
   # If no bundled copy, see what the system has
   if(NOT OpenCV_FOUND)
     set(OpenCV_DIR "${OpenCV_DIR_TMP}")
     if(F_REQUIRED)
-      find_package(OpenCV REQUIRED)
+      find_package(OpenCV 5 REQUIRED COMPONENTS core imgproc imgcodecs highgui geometry)
     else()
-      find_package(OpenCV)
+      find_package(OpenCV 5 COMPONENTS core imgproc imgcodecs highgui geometry)
     endif()
     if(OpenCV_FOUND)
       set(OPENCV_STATUS "System" CACHE STRING "OpenCV is bundled" FORCE)
