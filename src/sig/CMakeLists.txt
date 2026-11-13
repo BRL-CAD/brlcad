@@ -2,15 +2,15 @@ set(SIG_INCLUDE_DIRS ${BU_INCLUDE_DIRS} ${DM_INCLUDE_DIRS} ${FFT_INCLUDE_DIRS})
 list(REMOVE_DUPLICATES SIG_INCLUDE_DIRS)
 include_directories(${SIG_INCLUDE_DIRS})
 
-brlcad_addexec(damdf damdf.c libbu FOLDER Sig)
-brlcad_addexec(dauto dauto.c libbu FOLDER Sig)
-brlcad_addexec(dauto2 dauto2.c libbu FOLDER Sig)
+brlcad_addexec(damdf damdf.c libbu FOLDER Sig ARG_SCHEMA)
+brlcad_addexec(dauto dauto.c libbu FOLDER Sig ARG_SCHEMA)
+brlcad_addexec(dauto2 dauto2.c libbu FOLDER Sig ARG_SCHEMA)
 brlcad_addexec(dconv dconv.c "libbu;libfft" FOLDER Sig)
 brlcad_addexec(ddisp ddisp.c libdm FOLDER Sig)
 add_target_deps(ddisp dm_plugins)
 brlcad_addexec(dfft "dfft.c;interp.c;butter.c" "libbu;libfft;${M_LIBRARY}" FOLDER Sig)
 brlcad_addexec(dmod dmod.c "libbu;${M_LIBRARY}" FOLDER Sig)
-brlcad_addexec(dpeak dpeak.c libbu FOLDER Sig)
+brlcad_addexec(dpeak dpeak.c libbu FOLDER Sig ARG_SCHEMA)
 brlcad_addexec(dsel dsel.c libbu FOLDER Sig ARG_SCHEMA)
 brlcad_addexec(dstats dstats.c "libbu;${M_LIBRARY}" FOLDER Sig ARG_SCHEMA)
 brlcad_addexec(dwin "dwin.c;coswin.c;hamwin.c" "libbu;${M_LIBRARY}" FOLDER Sig)
@@ -41,7 +41,7 @@ brlcad_addexec(u-bw u-bw.c libbu FOLDER Sig)
 brlcad_addexec(u-d u-d.c libbu FOLDER Sig ARG_SCHEMA)
 brlcad_addexec(u-f u-f.c libbu FOLDER Sig ARG_SCHEMA)
 
-cmakefiles(CMakeLists.txt scale_args.h)
+cmakefiles(CMakeLists.txt scale_args.h window_args.h)
 
 # Local Variables:
 # tab-width: 8
