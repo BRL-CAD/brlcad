@@ -53,6 +53,20 @@ test_ext(const char *str, bu_mime_context_t context, int expected)
 	status = 1;
     }
 
+    if (status == 0 && type >= 0) {
+	const char *name = bu_file_mime_str(type, context);
+	const char *extensions = bu_file_mime_ext(type, context);
+	if (!name || bu_file_mime_int(name) != type) {
+	    bu_log("MIME name does not roundtrip for type %d\n", type);
+	    status = 1;
+	}
+	if (!extensions) {
+	    bu_log("MIME type %d has no extension mapping\n", type);
+	    status = 1;
+	}
+	bu_free((char *)name, "MIME name");
+	bu_free((char *)extensions, "MIME extensions");
+    }
     return status;
 }
 

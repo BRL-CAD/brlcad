@@ -40,10 +40,11 @@ __BEGIN_DECLS
  * is a copy of the Apache file and is not changed locally:
  * http://svn.apache.org/repos/asf/httpd/httpd/trunk/docs/conf/mime.types
  *
- * Customizations for BRL-CAD are maintained in misc/mime_cad.types
- * and any types not covered by the standard mime set (such as
- * the majority of geometry formats) are added there instead of
- * changing mime.types.
+ * Historical BRL-CAD customizations are in misc/mime_cad.types. New formats
+ * in existing contexts belong in misc/mime_extensions.types, whose append-only
+ * order preserves published enum values. A format's _UNKNOWN identifier is
+ * not an upper bound on valid identifiers; later formats may follow it.
+ * Do not change the standard registry to add local formats.
  */
 /** @{ */
 /** @file bu/mime.h */

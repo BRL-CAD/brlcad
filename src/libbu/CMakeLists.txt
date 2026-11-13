@@ -11,6 +11,7 @@ endif(BRLCAD_ENABLE_BINARY_ATTRIBUTES)
 # if they are edited.
 configure_file(${BRLCAD_SOURCE_DIR}/misc/mime.types ${CMAKE_CURRENT_BINARY_DIR}/mime.tmp COPYONLY)
 configure_file(${BRLCAD_SOURCE_DIR}/misc/mime_cad.types ${CMAKE_CURRENT_BINARY_DIR}/mime.tmp COPYONLY)
+configure_file(${BRLCAD_SOURCE_DIR}/misc/mime_extensions.types ${CMAKE_CURRENT_BINARY_DIR}/mime.tmp COPYONLY)
 execute_process(COMMAND ${CMAKE_COMMAND} -E remove ${CMAKE_CURRENT_BINARY_DIR}/mime.tmp)
 
 # Run the generation process

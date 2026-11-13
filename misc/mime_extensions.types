@@ -1,0 +1,9 @@
+# Additional MIME types in existing contexts. This file is in the public domain.
+#
+# Entries are appended after the historical UNKNOWN identifier in each context.
+# Keep existing entries in order and append new ones to preserve numeric IDs.
+# The legacy mime.types and mime_cad.types registries retain their established
+# order; new codecs should be registered here rather than inserted there.
+#
+# MIME type (lowercased)                         Extensions
+image/exr                                       exr
