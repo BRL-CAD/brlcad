@@ -353,7 +353,20 @@ extern "C" void ProPartTessellationFree(ProSurfaceTessellationData **tessellatio
     shim_active_tessellation = NULL;
     shim_active_tessellation_count = 0;
 }
-extern "C" void ProStringToWstring(wchar_t *, char *) {}
+extern "C" void ProStringToWstring(wchar_t *destination, char *source)
+{
+    size_t index = 0u;
+
+    if (!destination)
+        return;
+    if (source) {
+        while (source[index] != '\0') {
+            destination[index] = static_cast<unsigned char>(source[index]);
+            ++index;
+        }
+    }
+    destination[index] = L'\0';
+}
 extern "C" void ProUIInputpanelMaxlenSet(const char *, const char *, int) {}
 extern "C" void ProWstringToString(char *destination, wchar_t *source)
 {
