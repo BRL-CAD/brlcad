@@ -57,14 +57,15 @@ static const char *Usage = "Usage: bwstat [-v] [file.bw]\n";
  * Display the histogram values.
  */
 void
-show_hist(long int *histogram, int sum)
+show_hist(long int *histogram, long int pixel_count)
 {
     int i;
 
     printf("Histogram:\n");
 
     for (i = 0; i < 256; i++) {
-	printf("%3d: %10ld (%10f)\n", i, histogram[i], (float)histogram[i]/sum * 100.0);
+	printf("%3d: %10ld (%10f)\n", i, histogram[i],
+	       (double)histogram[i] / (double)pixel_count * 100.0);
     }
 }
 
@@ -184,7 +185,7 @@ main(int argc, char **argv)
     printf("Skew    %14.3f\n", skew);
 
     if (verbose)
-	show_hist(bin, sum);
+	show_hist(bin, num_pixels);
 
     return 0;
 }
