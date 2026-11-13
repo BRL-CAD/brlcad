@@ -10,7 +10,7 @@ pixcolors - count or list the distinct colors used in a pix image
 
 [source]
 ----
-pixcolors [-v] [file.pix]
+pixcolors [-v|--verbose] [file.pix]
 ----
 
 
@@ -26,9 +26,12 @@ as a 24-bit RGB value, so the count ranges from 1 to 16,777,216.
 [[options]]
 == OPTIONS
 
-*-v*::
+*-v*, *--verbose*::
   Verbose. In addition to the color count, print a sorted list of every unique
   color used, one per line, as three decimal *R G B* component values.
+
+*-h*, *--help*::
+  Print help and exit.  *-?* is accepted as a compatibility alias.
 
 
 [[examples]]

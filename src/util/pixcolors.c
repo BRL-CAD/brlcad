@@ -20,161 +20,155 @@
 /** @file util/pixcolors.c
  *
  * Count the number of different pixel values in a PIX format image.
- * If the "-v" option is selected, list each unique pixel value to the
- * standard output.
- *
- * Options
- * v list colors
  *
  */
 
 #include "common.h"
 
-#include <stdlib.h>
 #include <limits.h>
+
 #include "bio.h"
 
+#include "bu/arg.h"
 #include "bu/app.h"
-#include "bu/color.h"
-#include "bu/getopt.h"
 #include "bu/exit.h"
+#include "bu/malloc.h"
 
 
-/* declarations to support use of bu_getopt() system call */
-char options[] = "v";
-char verbose = 0;
-char noname[] = "(noname)";
-char *progname = noname;
+#define RGB_CHANNEL_COUNT 3
+#define PIX_COLOR_BITS 24
+#define PIX_COLOR_COUNT ((size_t)1 << PIX_COLOR_BITS)
+#define COLOR_SET_BYTES (PIX_COLOR_COUNT / CHAR_BIT)
+#define PIXEL_BUFFER_COUNT 1024
 
-unsigned char pixbuf[BUFSIZ*3];
+struct pixcolors_args {
+    int help;
+    int verbose;
+};
 
-/* This grotesque array provides 1 bit for each of the 2^24 possible pixel
- * values.
- * The "NOBASE" comment below allows compilation on the Gould 9000 series
- * of computers.
- */
-/*NOBASE*/
-unsigned char vals[1L << (24-3)];
+static const struct bu_arg_option pixcolors_options[] = {
+    BU_ARG_FLAG("h", "help", struct pixcolors_args, help,
+	"Print help and exit"),
+    BU_ARG_ALIAS("?", NULL, "help", 1),
+    BU_ARG_FLAG("v", "verbose", struct pixcolors_args, verbose,
+	"List each distinct RGB color"),
+    BU_ARG_OPTION_NULL
+};
+
+static const struct bu_arg_operand pixcolors_operands[] = {
+    BU_ARG_OPERAND("input", BU_ARG_VALUE_FILE, 0, 1,
+	"PIX input file (default: standard input)", NULL),
+    BU_ARG_OPERAND_NULL
+};
+
+static const struct bu_arg_schema pixcolors_schema = BU_ARG_SCHEMA(
+    "pixcolors", "Count or list distinct colors in a BRL-CAD PIX image",
+    pixcolors_options, pixcolors_operands, BU_ARG_PARSE_OPTIONS_FIRST,
+    BU_ARG_SCHEMA_META_HELP(NULL, NULL, NULL, NULL, NULL));
+
+static const struct bu_arg_grammar pixcolors_grammar = {
+    &pixcolors_schema, NULL, NULL
+};
 
 
-/*
- * Main function of program
- */
-int
-doit(FILE *fd)
+static int
+count_colors(FILE *input, unsigned char *color_set, int verbose)
 {
-    unsigned long pixel, count;
+    unsigned char pixels[PIXEL_BUFFER_COUNT * RGB_CHANNEL_COUNT];
     size_t bytes;
-    int mask, i;
-    unsigned long k;
-    int r, g, b;
+    size_t color_count = 0;
 
-
-    count = 0;
-    while ((bytes = fread(pixbuf, 1, sizeof(pixbuf), fd)) > 0) {
-	if (bytes % 3) {
-	    fprintf(stderr, "%s: input ends with an incomplete pixel\n", progname);
+    while ((bytes = fread(pixels, 1, sizeof(pixels), input)) > 0) {
+	if (bytes % RGB_CHANNEL_COUNT) {
+	    bu_flog(stderr, "pixcolors: input ends with an incomplete pixel\n");
 	    return 0;
 	}
-	for (i = (int)bytes - 3; i >= 0; i -= 3) {
-	    r = pixbuf[i];
-	    g = pixbuf[i+1];
-	    b = pixbuf[i+2];
-	    if (r < 0)
-		r = 0;
-	    else if (r > UCHAR_MAX)
-		r = UCHAR_MAX;
-	    if (g < 0)
-		g = 0;
-	    else if (g > UCHAR_MAX)
-		g = UCHAR_MAX;
-	    if (b < 0)
-		b = 0;
-	    else if (b > UCHAR_MAX)
-		b = UCHAR_MAX;
-	    pixel = r +	(g << 8) + (b << 16);
-
-	    if (!(vals[k=(pixel >> 3)] &
-		  (mask = (1 << (pixel & 0x07))))) {
-		vals[k] |= (unsigned char)mask;
-		++count;
+	for (size_t offset = 0; offset < bytes; offset += RGB_CHANNEL_COUNT) {
+	    unsigned int color = (unsigned int)pixels[offset] |
+		((unsigned int)pixels[offset + 1] << 8) |
+		((unsigned int)pixels[offset + 2] << 16);
+	    size_t byte_index = color / CHAR_BIT;
+	    unsigned char mask = (unsigned char)(1u << (color % CHAR_BIT));
+	    if (!(color_set[byte_index] & mask)) {
+		color_set[byte_index] |= mask;
+		color_count++;
 	    }
 	}
     }
-    if (ferror(fd)) {
-	perror("pixcolors read");
+    if (ferror(input)) {
+	bu_flog(stderr, "pixcolors: error reading input\n");
 	return 0;
     }
-    printf("%lu\n", (long unsigned)count);
-    if (verbose)
-	for (i = 0; i < 1<<24; ++i)
-	    if ((vals[i>>3] & (1<<(i & 0x07))))
-		printf("%3d %3d %3d\n",
-		       i & 0x0ff,
-		       (i >> 8) & 0x0ff,
-		       (i >> 16) & 0x0ff);
+
+    printf("%zu\n", color_count);
+    if (verbose) {
+	for (size_t color = 0; color < PIX_COLOR_COUNT; color++) {
+	    unsigned char mask = (unsigned char)(1u << (color % CHAR_BIT));
+	    if (color_set[color / CHAR_BIT] & mask) {
+		printf("%3u %3u %3u\n",
+		    (unsigned int)(color & 0xff),
+		    (unsigned int)((color >> 8) & 0xff),
+		    (unsigned int)((color >> 16) & 0xff));
+	    }
+	}
+    }
     if (ferror(stdout) || fflush(stdout) == EOF) {
-	perror("pixcolors write");
+	bu_flog(stderr, "pixcolors: error writing output\n");
 	return 0;
     }
     return 1;
 }
 
 
-void usage(void)
+int
+main(int argc, char **argv)
 {
-    fprintf(stderr, "Usage: %s [ -v ] < PIXfile\n", progname);
-    bu_exit (1, NULL);
-}
+    FILE *input = stdin;
+    struct pixcolors_args args = {0};
+    struct bu_vls msg = BU_VLS_INIT_ZERO;
 
+    bu_setprogname(argv[0]);
 
-/*
- * Perform miscellaneous tasks such as argument parsing and
- * I/O setup and then call "doit" to perform the task at hand
- */
-int main(int ac, char **av)
-{
-    int c, isatty(int);
-    int success;
+    int introspection = bu_arg_introspect(&msg, &pixcolors_grammar, argc - 1,
+	(const char * const *)(argv + 1));
+    if (introspection != 0) {
+	bu_flog(introspection > 0 ? stdout : stderr, "%s", bu_vls_cstr(&msg));
+	bu_vls_free(&msg);
+	return introspection > 0 ? 0 : 1;
+    }
+    int operand_index = bu_arg_schema_parse_complete(&pixcolors_schema, &args,
+	&msg, argc - 1, (const char **)(argv + 1));
+    if (operand_index < 0)
+	bu_exit(1, "%s", bu_vls_cstr(&msg));
+    bu_vls_free(&msg);
+    if (args.help) {
+	char *help = bu_arg_schema_help(&pixcolors_schema, "pixcolors");
+	bu_flog(stdout, "%s", help ? help : "");
+	bu_free(help, "pixcolors help");
+	return 0;
+    }
 
-    bu_setprogname(av[0]);
+    int operand_count = argc - operand_index - 1;
+    if (operand_count == 1) {
+	const char *path = argv[operand_index + 1];
+	input = fopen(path, "rb");
+	if (!input)
+	    bu_exit(1, "pixcolors: cannot open '%s' for reading\n", path);
+    } else if (isatty(fileno(stdin))) {
+	bu_exit(1, "pixcolors requires an input file or redirected input\n");
+    }
 
-    progname = *av;
-
-    setmode(fileno(stdin), O_BINARY);
+    setmode(fileno(input), O_BINARY);
     setmode(fileno(stdout), O_BINARY);
 
-    /* Get # of options & turn all the option flags off
-     */
+    unsigned char *color_set = (unsigned char *)bu_calloc(
+	COLOR_SET_BYTES, 1, "pixcolors color set");
+    int success = count_colors(input, color_set, args.verbose);
+    bu_free(color_set, "pixcolors color set");
 
-    /* Turn off bu_getopt's error messages */
-    bu_opterr = 0;
-
-    /* get all the option flags from the command line
-     */
-    while ((c=bu_getopt(ac, av, options)) != -1) {
-	if (c != 'v')
-	    usage();
-	verbose = ! verbose;
-    }
-
-
-    if (bu_optind < ac-1)
-	usage();
-    if (bu_optind == ac-1) {
-	FILE *fd;
-	if ((fd=fopen(av[bu_optind], "rb")) == (FILE *)NULL) {
-	    perror(av[bu_optind]);
-	    bu_exit (1, NULL);
-	}
-	success = doit(fd);
-	(void)fclose(fd);
-    }
-/* (bu_optind >= ac) if arriving here */
-    else {
-	if (isatty(fileno(stdin)))
-	    usage();
-	success = doit(stdin);
+    if (input != stdin && fclose(input) == EOF) {
+	bu_flog(stderr, "pixcolors: error closing input\n");
+	success = 0;
     }
 
     return success ? 0 : 1;
