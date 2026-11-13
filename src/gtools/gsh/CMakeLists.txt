@@ -2,6 +2,9 @@ brlcad_addexec(gsh "gsh.cpp" "libged;libdm;libbu;Threads::Threads")
 target_include_directories(gsh BEFORE PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../../libtermio)
 add_dependencies(gsh dm_plugins ged_plugins)
 
+brlcad_add_test(NAME gsh_new_commands_db
+  COMMAND gsh --new-cmds "${PROJECT_SOURCE_DIR}/src/libged/tests/draw/moss.g" draw all.g)
+
 if(BUILD_TESTING AND UNIX)
   find_package(Python3 COMPONENTS Interpreter QUIET)
   if(Python3_Interpreter_FOUND)

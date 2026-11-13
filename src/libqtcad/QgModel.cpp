@@ -246,8 +246,6 @@ QgModel::QgModel(QObject *p, const char *npath)
     BU_GET(gedp, struct ged);
     ged_init(gedp);
 
-    // Set up new cmd data (not yet done by default in ged_init
-    gedp->dbi_state = new DbiState(gedp);
     gedp->new_cmd_forms = 1;
     bu_setenv("DM_SWRAST", "1", 1);
 

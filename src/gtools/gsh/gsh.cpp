@@ -835,10 +835,7 @@ main(int argc, const char **argv)
     // of setup to do at the moment (eventually, once this cmd
     // behavior is the default, ged setup will do this automatically)
     gs->new_cmd_forms = (new_cmd_forms) ? true : false;
-    if (gs->new_cmd_forms) {
-	gs->gedp->dbi_state = new DbiState(gs->gedp);
-	gs->gedp->new_cmd_forms = 1;
-    }
+    gs->gedp->new_cmd_forms = new_cmd_forms;
 
     // If we're non-interactive, just evaluate and exit without getting into
     // linenoise and threading.  First, see if we've got a viable .g file.

@@ -34,8 +34,6 @@
 
 #include "../ged_private.h"
 
-#include "../dbi.h"
-
 extern "C" int
 ged_opendb_core(struct ged *gedp, int argc, const char *argv[])
 {
@@ -144,7 +142,7 @@ ged_opendb_core(struct ged *gedp, int argc, const char *argv[])
 
     // If enabled, set up the DbiState container for fast structure access
     if (gedp->new_cmd_forms)
-	gedp->dbi_state = new DbiState(gedp);
+	ged_dbi_state_create_private(gedp);
 
     // Set the view units, if we have a view
     if (gedp->ged_gvp) {
