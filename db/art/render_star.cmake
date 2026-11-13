@@ -35,21 +35,7 @@ run_tool(studio "art sky demo ready" "${CMAKE_COMMAND}" -E env
 
 # Use mged's subject-framed camera for both renderers.  Including the huge
 # legacy shell in automatic framing would make the ship disappear.
-file(READ "${OUTPUT_DIR}/star-camera.sh" saved)
-string(REPLACE "\r\n" "\n" saved "${saved}")
-set(marker "<<EOF\n")
-string(FIND "${saved}" "${marker}" begin)
-if(begin LESS 0)
-  message(FATAL_ERROR "Saved view has no command-stream delimiter")
-endif()
-string(LENGTH "${marker}" marker_length)
-math(EXPR begin "${begin} + ${marker_length}")
-string(SUBSTRING "${saved}" ${begin} -1 stream)
-string(FIND "${stream}" "\nEOF" end)
-if(end LESS 0)
-  message(FATAL_ERROR "Saved view has no command-stream terminator")
-endif()
-string(SUBSTRING "${stream}" 0 ${end} stream)
+read_saved_view("${OUTPUT_DIR}/star-camera.sh" stream)
 set(camera "${OUTPUT_DIR}/star-camera.view")
 file(WRITE "${camera}" "${stream}\n")
 # Native rt can resume an existing output as raw scanlines.  Start clean

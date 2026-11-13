@@ -8,6 +8,7 @@ set(art_example_files
   star-after.png
   star-space.png
   studio_lights.tcl
+  studio_materials.tcl
   moss_studio.tcl
   moss_materials.tcl
   moss-before.png

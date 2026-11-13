@@ -35,13 +35,11 @@ zoom 1.6
 saveview -e art -o star.png [file join $::env(ART_DEMO_OUTPUT_DIR) star-camera.sh]
 
 # Keep subject instances and their region colors while polishing the surface.
-material create star.surface.material {Star demonstration plastic}
-material set star.surface.material optical OSL as_plastic
-material set star.surface.material optical OSL.output out_outColor
-material set star.surface.material optical OSL.param.in_specular_weight {float 1}
-material set star.surface.material optical OSL.param.in_specular_roughness {float 0.2}
-material assign ncc1701 star.surface.material
-material assign shuttle star.surface.material
+source studio_materials.tcl
+art_demo::make_material star.surface.material as_plastic {
+    in_specular_weight {float 1}
+    in_specular_roughness {float 0.2}
+} {ncc1701 shuttle}
 
 # The studio coordinates use BRL-CAD's millimeter base units.  Leave the old
 # shell and light available for inspection, outside the art illumination.
