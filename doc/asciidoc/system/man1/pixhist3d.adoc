@@ -10,7 +10,7 @@ pixhist3d - display RGB color space utilization
 
 [source]
 ----
-pixhist3d [file.pix]
+pixhist3d [-h|-?|--help] [file.pix]
 ----
 
 
@@ -33,7 +33,7 @@ The environment variable `FB_FILE` is used to select the display device (see *br
 [[options]]
 == OPTIONS
 
-*-h*, *-?*::
+*-h*, *-?*, *--help*::
   Print a usage message and exit.
 
 
