@@ -27,14 +27,14 @@
 
 #include "common.h"
 
-#include <stdlib.h>
-#include <string.h>
 #include "bio.h"
 
+#include "bu/arg.h"
 #include "bu/app.h"
-#include "bu/str.h"
 #include "bu/cv.h"
 #include "bu/exit.h"
+#include "bu/log.h"
+#include "bu/malloc.h"
 
 
 struct uplot {
@@ -123,7 +123,6 @@ struct uplot letters[] = {
 
 
 double getieee(void);
-int verbose;
 double arg[6];			/* parsed plot command arguments */
 double sp[6];			/* space command */
 char strarg[512];		/* string buffer */
@@ -136,36 +135,69 @@ int noflush = 1;
 int nocolor = 1;
 int no3d = 1;
 
-static const char usage[] = "\
-Usage: plot3-plot3 [-v] [-S] < unix_plot > unix_plot\n";
+struct plot3_plot3_args {
+    int help;
+    int verbose;
+    int scale;
+};
+
+static const struct bu_arg_option plot3_plot3_options[] = {
+    BU_ARG_FLAG("h", "help", struct plot3_plot3_args, help,
+	"Print help and exit"),
+    BU_ARG_ALIAS("?", NULL, "help", 1),
+    BU_ARG_FLAG("v", "verbose", struct plot3_plot3_args, verbose,
+	"Print command names while converting"),
+    BU_ARG_FLAG("S", "scale", struct plot3_plot3_args, scale,
+	"Center and scale using the PLOT3 space command"),
+    BU_ARG_OPTION_NULL
+};
+
+static const struct bu_arg_schema plot3_plot3_schema = BU_ARG_SCHEMA(
+    "plot3-plot3", "Reduce extended PLOT3 commands to classic UnixPlot",
+    plot3_plot3_options, NULL, BU_ARG_PARSE_OPTIONS_FIRST,
+    BU_ARG_SCHEMA_META_HELP(NULL, NULL, NULL, NULL, NULL));
+
+static const struct bu_arg_grammar plot3_plot3_grammar = {
+    &plot3_plot3_schema, NULL, NULL
+};
 
 int
 main(int argc, char **argv)
 {
     int c;
     struct uplot *up;
+    struct plot3_plot3_args args = {0};
+    struct bu_vls msg = BU_VLS_INIT_ZERO;
 
     bu_setprogname(argv[0]);
+
+    int introspection = bu_arg_introspect(&msg, &plot3_plot3_grammar,
+	argc - 1, (const char * const *)(argv + 1));
+    if (introspection != 0) {
+	bu_flog(introspection > 0 ? stdout : stderr, "%s", bu_vls_cstr(&msg));
+	bu_vls_free(&msg);
+	return introspection > 0 ? 0 : 1;
+    }
+    int operand_index = bu_arg_schema_parse_complete(&plot3_plot3_schema,
+	&args, &msg, argc - 1, (const char **)(argv + 1));
+    if (operand_index < 0)
+	bu_exit(1, "%s", bu_vls_cstr(&msg));
+    bu_vls_free(&msg);
+    if (args.help) {
+	char *help = bu_arg_schema_help(&plot3_plot3_schema, "plot3-plot3");
+	bu_flog(stdout, "%s", help ? help : "");
+	bu_free(help, "plot3-plot3 help");
+	return 0;
+    }
+
+    if (isatty(fileno(stdin)))
+	bu_exit(1, "plot3-plot3 requires redirected input\n");
 
     setmode(fileno(stdin), O_BINARY);
     setmode(fileno(stdout), O_BINARY);
 
-    while (argc > 1) {
-	if (BU_STR_EQUAL(argv[1], "-v")) {
-	    verbose++;
-	} else if (BU_STR_EQUAL(argv[1], "-S")) {
-	    scale = 1;
-	} else if (BU_STR_EQUAL(argv[1], "-h") || BU_STR_EQUAL(argv[1], "-?")) {
-	    bu_exit(0, "%s", usage);
-	} else
-	    break;
-
-	argc--;
-	argv++;
-    }
-    if (isatty(fileno(stdin))) {
-	bu_exit(1, "%s", usage);
-    }
+    if (args.scale)
+	scale = 1.0;
 
     /* Assume default space, in case one is not provided */
     sp[0] = sp[1] = sp[2] = -32767;
@@ -339,7 +371,7 @@ main(int argc, char **argv)
 		break;
 	}
 
-	if (verbose)
+	if (args.verbose)
 	    printf("%s\n", up->desc);
     }
 
