@@ -172,3 +172,59 @@ model's existing CSG solids and does not change their thickness.
 The model is framed before adding the larger floor.  The canopy close-up
 uses the same assembly and environment as the overall after image.  See the
 art article for glass and secondary-ray qualification boundaries.
+
+== m35: preserving color tables while authoring surfaces
+
+The m35 truck illustrates a database that combines a broad region-ID color
+table with explicit region colors.  The table supplies the amber paint;
+explicit gray and black colors take precedence.  The after recipe leaves
+`in_color` unspecified on its paint material, retaining those resolved
+colors while changing the specular response and roughness.
+
+Both versions include the truck's `component` assembly and four existing
+glass regions, `r682`, `r683`, `r684`, and `r685`.  These glass regions are
+unreferenced by the original `component`, `all.g`, and `cab.g` assemblies.
+The studio recipe includes them explicitly in both comparison databases.
+The input database and the original object trees remain unchanged.
+
+* `m35-before.png` uses the original region colors through default plastic,
+  including the explicitly included window solids.
+* `m35-after.png` adds polished paint, rough chrome bumper surfaces, smooth
+  metal mirrors, rubber, and smooth glass.
+* `m35-detail.png` shows the same materials and lighting around the cab.
+
+[cols="1,1"]
+|===
+|Original color treatment |Authored surfaces
+a|image::m35-before.png[m35 with default materials]
+a|image::m35-after.png[m35 with authored materials]
+|===
+
+image::m35-detail.png[m35 cab and glazing detail]
+
+The full-model pair uses identical geometry, camera, illumination, and
+sampling.  A larger floor receives shadows without affecting the saved
+camera.  Air regions remain excluded consistently with librt's default
+policy.  The supplied previews use 512 by 384 pixels and 256 samples.
+
+----
+cmake -DBRLCAD_PREFIX="${BRLCAD_PREFIX}" -DOUTPUT_DIR=m35-render \
+    -DSAMPLES=256 -P "${BRLCAD_PREFIX}/share/db/art/render_m35.cmake"
+----
+
+The usual `SOURCE_DB`, `WIDTH`, `HEIGHT`, `SAMPLES`, and `WORKERS` options
+apply.  The driver generates `m35-studio.exr`, two copied databases, three
+images, reusable view streams, and a material report.  Keep the map beside
+the databases when moving the project.  For a direct HDR cab render:
+
+----
+art -M -w 512 -n 384 -P 2 -o cab.exr m35-after.g art.demo.g \
+    < m35-detail.view
+----
+
+The environment multiplier is two and point lights are disabled.  Paint
+colors follow the database's sRGB interpretation; explicit OSL material
+colors are scene-linear RGB.  Distances use millimeters.  Glass has index
+1.5 and its volume transmittance is specified over 100 mm.  Rubber regions
+are selected by the source database's `material_id=18`; the recipe assigns
+chrome and mirror materials to the identified bumper and mirror objects.

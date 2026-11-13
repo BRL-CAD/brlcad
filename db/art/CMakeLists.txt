@@ -8,6 +8,12 @@ set(art_example_files
   havoc-before.png
   havoc-after.png
   havoc-detail.png
+  render_m35.cmake
+  m35_studio.tcl
+  m35_materials.tcl
+  m35-before.png
+  m35-after.png
+  m35-detail.png
   render_star.cmake
   star_sky.tcl
   star-before.png

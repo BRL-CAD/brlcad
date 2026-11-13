@@ -1560,6 +1560,10 @@ before/after camera and a canopy close-up.  It preserves the original CSG
 geometry while authoring paint, rotor and tire finishes, and smooth glazing.
 Its lighting panorama is generated locally, and saved view streams retain
 relative asset lookup when moving the project.
+The m35 workflow retains the source region-ID color table and explicit
+region colors while authoring paint, rubber, chrome, mirrors, and glass.
+It explicitly includes the source's unreferenced window regions in both
+comparison versions.
 A black-backdrop variant retains the same art lighting.  The cube and
 sphflake procedural `envmap cloud` setups are recorded as follow-on
 migration cases; earth's cloud/glass atmosphere requires material handling.
