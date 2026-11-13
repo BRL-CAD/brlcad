@@ -193,11 +193,11 @@ clipping, and premultiplied coverage.  Appleseed retains single-byte text
 input.  Both use unhinted rasterization with struetype.
 
 |Installed builds across platforms
-|A complete headless art installation passed all 27 installed checks on
-FreeBSD.  After relocation to a path containing spaces, eight camera,
-frame, selection, lighting, output, settings, environment, and runtime checks
-passed.
-Coverage includes 23 shared rendering, camera, and material regressions, persisted material
+|A complete headless art installation passed all 28 installed checks on
+FreeBSD.  After relocation to a path containing spaces, nine camera,
+frame, selection, lighting, output, settings, constant and image environment,
+and runtime checks passed.
+Coverage includes 24 shared rendering, camera, and material regressions, persisted material
 authoring, plate conversion and saved-view execution through installed
 mged, and the runtime library audit.
 The ELF install policy uses paths relative to each executable, library, or
@@ -308,9 +308,10 @@ Each control defaults to `inherit`, and assigning that literal clears its
 override.  Inherited colors use the legacy `background`/`bg` value, also
 set by `-C` or `-W`.  Inherited environment intensity uses `-A`.  Inherited
 background intensity uses one when `background_color` is explicit and
-otherwise uses `-A`.  With all four controls inherited, art retains its
-original combined environment and background, including the original AOV
-behavior.  With any override, art uses an independent background shader.
+otherwise uses `-A`.  With `environment_map=inherit` and
+`background_source=inherit`, all four inherited controls retain the original
+combined environment and background, including the original AOV behavior.
+An override among these four controls selects an independent color backdrop.
 `-A` must remain finite, nonnegative, and renderer-representable; legacy
 point-light scaling by `-A` is unchanged.
 
@@ -321,6 +322,71 @@ persist across frames, skipped frames, and `clean`.  Reset all four to
 independent backdrop and illumination changes on diffuse and mirror CSG
 and BOT surfaces, an analytic radiance reference, frame persistence,
 resetting, and invalid-input output preservation.
+
+==== Image-based environments
+
+`environment_map` selects an RGB or RGBA latitude-longitude panorama for
+illumination, reflections, and refractions.  Relative paths resolve beside
+the database; a same-named file in the caller's working directory cannot
+replace or supply a missing map.  Explicit absolute paths retain their
+meaning.  Quote filenames containing spaces.  Set `environment_map=inherit`
+to return to constant illumination; `environment_color` applies to that
+constant mode and is retained while a map is active.
+
+----
+art -c 'set environment_map="lighting/studio.exr"' \
+    -c "set environment_intensity=1 light_intensity=0" \
+    -o illuminated.exr model.g subject.g
+----
+
+Map values retain HDR radiance.  `environment_map_colorspace=linear` is the
+default and expects scene-linear RGB with sRGB/Rec.709 primaries.  Use
+`environment_map_colorspace=srgb` for an encoded sRGB image.  Embedded color
+profiles do not select a transform automatically; convert other primaries
+before use.  Alpha does not attenuate environment radiance.  Images need
+nonzero dimensions and three or four channels; invalid maps fail without
+replacing an existing output image.
+
+Panorama north points along +Z.  At zero rotation, +X samples the middle of
+the image, +Y samples one quarter of its width, and -X lies on the longitude
+seam.  `environment_rotation` rotates the map around +Z in degrees; positive
+90 degrees moves a feature from +X toward +Y.  Rotations must be finite and
+are normalized to one turn.  Longitude wraps with bilinear filtering across
+the seam; latitude clamps at the two poles.
+
+`background_source` selects the camera backdrop:
+
+* `inherit` retains the original constant-mode rules above.  With a map,
+  the panorama is visible unless `background_color` has an explicit value.
+* `color` always uses the resolved `background_color` and its color-mode
+  intensity rules, while illumination still uses the selected environment.
+* `environment` always shows the illumination environment, retaining
+  `background_color` as an inactive color-mode setting.
+
+For an environment backdrop, `background_intensity=inherit` follows
+`environment_intensity`.  An explicit value supplies an independent
+absolute radiance multiplier for the visible environment.  It does not
+change illumination or secondary rays.  For example, retain the panorama's
+reflection and lighting while displaying a black background:
+
+----
+art -c 'set environment_map="lighting/studio.exr"' \
+    -c "set environment_intensity=1 background_color=black" \
+    -o black-background.exr model.g subject.g
+----
+
+All map controls persist through command-stream frames and `clean`, and
+inspection reports the resolved file, color space, rotation, backdrop
+source, and powers.  These controls do not translate liboptical's
+`envmap cloud` shader.  Exclude its registration geometry from the art
+selection and provide an environment explicitly.
+
+`regress-art-environment-map` checks cardinal directions and poles,
+rotation, HDR radiance, linear and sRGB inputs, mirror reflection and
+analytic diffuse illumination on CSG and BOTs, independent backdrop power,
+frame persistence, rooted asset lookup, and invalid-image handling.
+Native Appleseed tests check filtered sampling/evaluation consistency away
+from texel centers, longitude interpolation, and zero-shift pole handling.
 
 == Camera pose
 
@@ -936,6 +1002,14 @@ when the requested image is missing.
 
 
 == Reflection mixtures
+
+Zero-roughness glossy and metal BSDFs sample ideal reflection.  Their
+continuous evaluation and PDF return zero, matching that discrete sampling
+contract.  Evaluating a narrow finite lobe instead can add spurious energy
+through next-event estimation.  Native tests cover both entry points, and
+the mapped-environment regression checks absolute reflected radiance.
+This preserves the sharp reflection described by the
+https://open-shading-language.readthedocs.io/en/stable/stdlib.html[OSL closure reference].
 
 Version 2 networks can blend closure outputs with `as_blend_shader`.  Its
 terminal output is `out_color`.  Connect the two material closures to
