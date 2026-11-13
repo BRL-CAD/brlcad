@@ -10,7 +10,7 @@ dauto2 - compute the center-clipped autocorrelation function of doubles
 
 [source]
 ----
-dauto2 [window_size] < input.doubles > output.doubles
+dauto2 [window-size] < input.doubles > output.doubles
 ----
 
 
@@ -35,9 +35,12 @@ as those produced by other tools in the BRL-CAD signal-processing suite.
 [[options]]
 == OPTIONS
 
-*window_size*::
+*-h*, *--help*::
+  Print command help and exit.
+
+_window-size_::
   Number of samples per processing window (default 512). Given as a single
-  optional positional argument; *dauto2* takes no flag options.
+  optional positional argument. Must be an integer from 1 through 2048.
 
 [[examples]]
 == EXAMPLES

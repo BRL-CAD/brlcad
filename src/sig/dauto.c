@@ -30,21 +30,19 @@
 #include "common.h"
 
 #include <string.h>
-#include <stdlib.h>
 #include <math.h>
 #include "bio.h"
 
 #include "bu/app.h"
 #include "bu/exit.h"
 #include "bu/malloc.h"
-#include "bu/exit.h"
+
+#include "window_args.h"
 
 
 int
 main(int argc, char *argv[])
 {
-    static const char usage[] = "Usage: dauto [window_size (512)] < doubles >outputfile\n";
-
     double *data;		/* Input buffer */
     double *r;			/* autocor output */
     double *weight;		/* weights to unbias estimation */
@@ -55,13 +53,13 @@ main(int argc, char *argv[])
 
     bu_setprogname(argv[0]);
 
-    if (isatty(fileno(stdin)) || isatty(fileno(stdout))) {
-	bu_exit(1, "%s", usage);
-    }
+    int parse_status = sig_window_args_parse(&L, "dauto",
+	"Compute an unbiased autocorrelation function", 0, argc, argv);
+    if (parse_status <= 0)
+	return parse_status < 0 ? 1 : 0;
 
-    L = (argc > 1) ? atoi(argv[1]) : 512;
-    if (L <= 0) {
-	bu_exit(1, "Invalid window size \"%s\" supplied, quitting", argv[1]);
+    if (isatty(fileno(stdin)) || isatty(fileno(stdout))) {
+	bu_exit(1, "dauto requires redirected binary input and output\n");
     }
     data = (double *)bu_calloc(L, sizeof(double), "data");
     r = (double *)bu_calloc(L, sizeof(double), "r");

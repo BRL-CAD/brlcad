@@ -10,7 +10,7 @@ dauto - compute the unbiased autocorrelation function of a stream of doubles
 
 [source]
 ----
-dauto [window_size] < input.doubles > output.doubles
+dauto [window-size] < input.doubles > output.doubles
 ----
 
 
@@ -38,7 +38,10 @@ a biased variant.
 [[options]]
 == OPTIONS
 
-_window_size_::
+*-h*, *--help*::
+  Print command help and exit.
+
+_window-size_::
   Number of samples per record, controlling the maximum lag computed.
   Must be a positive integer. Defaults to 512 if omitted.
 

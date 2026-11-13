@@ -10,7 +10,7 @@ dpeak - find the dominant peak in each window of a stream of doubles
 
 [source]
 ----
-dpeak [window_size] < input.doubles > output.doubles
+dpeak [window-size] < input.doubles > output.doubles
 ----
 
 
@@ -35,7 +35,10 @@ and *dstats*(1) in the *sig* signal-processing suite.
 [[options]]
 == OPTIONS
 
-*window_size*::
+*-h*, *--help*::
+  Print command help and exit.
+
+_window-size_::
   The number of samples per processing window. Defaults to 512 if not given.
   The internal buffers limit the usable window size to 2048 samples.
 

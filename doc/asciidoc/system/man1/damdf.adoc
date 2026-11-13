@@ -10,7 +10,7 @@ damdf - compute the average magnitude difference function of a stream of doubles
 
 [source]
 ----
-damdf [window_size] < input.doubles > output.doubles
+damdf [window-size] < input.doubles > output.doubles
 ----
 
 
@@ -28,8 +28,18 @@ Input is processed in fixed blocks of _window_size_ samples (default 512). A
 final partial block is zero-padded to a full window. Each block produces
 _window_size_ output values. Because both streams are raw binary doubles,
 *damdf* refuses to run if either standard input or standard output is a
-terminal. It does not take any option flags; the only argument is the optional
-positional _window_size_.
+terminal. The only data-processing argument is the optional positional
+_window_size_.
+
+[[options]]
+== OPTIONS
+
+*-h*, *--help*::
+  Print command help and exit.
+
+_window-size_::
+  Number of samples per processing window. Must be an integer from 1 through
+  2048. Defaults to 512.
 
 [[examples]]
 == EXAMPLES
