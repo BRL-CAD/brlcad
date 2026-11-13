@@ -93,18 +93,17 @@ parse_args(int ac, char **av)
  */
 int main(int ac, char **av)
 {
-    int i, pixels;
+    int i;
+    size_t bytes, pixel;
     unsigned char r, g, b, R, G, B;
-    size_t ret;
 
     bu_setprogname(av[0]);
 
     setmode(fileno(stdin), O_BINARY);
     setmode(fileno(stdout), O_BINARY);
 
-   i=parse_args(ac, av);
-/* if ac == 1, there is only 1 argument; i.e., run-with-no-arguments
- */
+    i = parse_args(ac, av);
+    /* if ac == 1, there is only 1 argument; i.e., run-with-no-arguments */
     if (ac == 1) usage("");
 
     if (i+6 > ac)
@@ -126,30 +125,39 @@ int main(int ac, char **av)
     }
 
     /* process stdin */
-    while ((pixels = fread(ibuf, 3, sizeof(ibuf)/3, stdin)) > 0) {
-	for (i = 0; i < pixels; i++) {
-	    if (ibuf[i*3] == r &&
-		ibuf[i*3+1] == g &&
-		ibuf[i*3+2] == b) {
-		obuf[i*3] = R;
-		obuf[i*3+1] = G;
-		obuf[i*3+2] = B;
-	    } else if (ibuf[i*3] == R &&
-		       ibuf[i*3+1] == G &&
-		       ibuf[i*3+2] == B) {
-		obuf[i*3] = r;
-		obuf[i*3+1] = g;
-		obuf[i*3+2] = b;
+    while ((bytes = fread(ibuf, 1, sizeof(ibuf), stdin)) > 0) {
+	if (bytes % 3) {
+	    fprintf(stderr, "%s: input ends with an incomplete pixel\n", progname);
+	    return 1;
+	}
+	for (pixel = 0; pixel < bytes / 3; pixel++) {
+	    if (ibuf[pixel*3] == r &&
+		ibuf[pixel*3+1] == g &&
+		ibuf[pixel*3+2] == b) {
+		obuf[pixel*3] = R;
+		obuf[pixel*3+1] = G;
+		obuf[pixel*3+2] = B;
+	    } else if (ibuf[pixel*3] == R &&
+		       ibuf[pixel*3+1] == G &&
+		       ibuf[pixel*3+2] == B) {
+		obuf[pixel*3] = r;
+		obuf[pixel*3+1] = g;
+		obuf[pixel*3+2] = b;
 	    } else {
-		obuf[i*3] = ibuf[i*3];
-		obuf[i*3+1] = ibuf[i*3+1];
-		obuf[i*3+2] = ibuf[i*3+2];
+		obuf[pixel*3] = ibuf[pixel*3];
+		obuf[pixel*3+1] = ibuf[pixel*3+1];
+		obuf[pixel*3+2] = ibuf[pixel*3+2];
 	    }
 	}
 
-	ret = fwrite(obuf, 3, pixels, stdout);
-	if (ret != (size_t)pixels)
-	    perror("fwrite");
+	if (fwrite(obuf, 1, bytes, stdout) != bytes) {
+	    perror("pixelswap write");
+	    return 1;
+	}
+    }
+    if (ferror(stdin)) {
+	perror("pixelswap read");
+	return 1;
     }
     return 0;
 }

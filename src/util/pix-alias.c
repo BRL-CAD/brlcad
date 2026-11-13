@@ -135,6 +135,11 @@ doit(void)
 	(void) putchar(image[cpix+1]);
 	(void) putchar(image[cpix]);
     }
+    if (ferror(stdout) || fflush(stdout) == EOF) {
+	perror("pix-alias write");
+	bu_free(image, "image alloc from malloc");
+	bu_exit(-2, NULL);
+    }
     bu_free(image, "image alloc from malloc");
 }
 

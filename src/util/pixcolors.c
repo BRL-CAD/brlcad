@@ -113,6 +113,10 @@ doit(FILE *fd)
 		       i & 0x0ff,
 		       (i >> 8) & 0x0ff,
 		       (i >> 16) & 0x0ff);
+    if (ferror(stdout) || fflush(stdout) == EOF) {
+	perror("pixcolors write");
+	return 0;
+    }
     return 1;
 }
 
