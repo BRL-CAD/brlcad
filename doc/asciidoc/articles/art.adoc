@@ -252,6 +252,14 @@ The `art` regression now exercises the connected graph on librt CSG and
 BOT geometry.  This identifies a wiring failure independently of any
 remaining renderer compatibility or geometric-shading issues.
 
+For formats converted through libicv, such as PIX and PPM, `art` reserves a
+unique temporary PNG and removes it after successful or failed conversion.
+The intermediate uses the renderer's 8-bit sRGB output pipeline; native
+OpenEXR output retains HDR data.  Existing `<output>.tmp.png` files,
+directories, and symbolic links are unrelated inputs and are left intact.
+`regress-art-output` checks converted images against native PNG output,
+failed destination writes, temporary-file cleanup, and repeated frames.
+
 == Camera pose
 
 `art` accepts rt camera commands either through separate `-c` options or

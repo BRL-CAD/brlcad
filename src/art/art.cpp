@@ -1173,6 +1173,7 @@ art_prepare_geometry(struct rt_i* rtip)
  * ...).  For anything else we let Appleseed produce a temporary PNG -- its
  * color pipeline is trustworthy -- and convert that to the requested format
  * with libicv (icv reads the sRGB 8-bit PNG and writes by extension).
+ * The intermediate name is exclusively reserved and released on every path.
  */
 static bool
 art_save_image(asr::Project& project, const char* filename)
@@ -1182,27 +1183,35 @@ art_save_image(asr::Project& project, const char* filename)
     if (dot && (BU_STR_EQUIV(dot, ".png") || BU_STR_EQUIV(dot, ".exr")))
 	return project.get_frame()->write_main_image(filename);
 
-    struct bu_vls tmpname = BU_VLS_INIT_ZERO;
-    bu_vls_sprintf(&tmpname, "%s.tmp.png", filename);
-    if (!project.get_frame()->write_main_image(bu_vls_cstr(&tmpname))) {
-	bu_vls_free(&tmpname);
+    struct TemporaryRender {
+	char path[MAXPATHLEN] = {0};
+	// Keep the reservation open while the renderer and codec access its path.
+	FILE *stream = bu_temp_file_suffix(path, sizeof(path), ".png");
+	~TemporaryRender() {
+	    if (!stream)
+		return;
+	    if (fclose(stream) != 0)
+		bu_log("art: could not close temporary render '%s'\n", path);
+	    if (bu_file_exists(path, NULL) && !bu_file_delete(path))
+		bu_log("art: could not remove temporary render '%s'\n", path);
+	}
+    } temporary;
+    if (!temporary.stream) {
+	bu_log("art: could not create temporary render for '%s'\n", filename);
 	return false;
     }
+    if (!project.get_frame()->write_main_image(temporary.path))
+	return false;
 
-    bool success = false;
-    icv_image_t* img = icv_read(bu_vls_cstr(&tmpname), BU_MIME_IMAGE_AUTO, 0, 0);
-    if (img) {
-	success = (icv_write(img, filename, BU_MIME_IMAGE_AUTO) == 0);
-	if (success)
-	    (void)bu_file_delete(bu_vls_cstr(&tmpname));
-	else
-	    bu_log("art: could not write '%s'; PNG left at '%s'\n",
-		   filename, bu_vls_cstr(&tmpname));
-	icv_destroy(img);
-    } else {
-	bu_log("art: could not read temporary render '%s'\n", bu_vls_cstr(&tmpname));
+    std::unique_ptr<icv_image_t, decltype(&icv_destroy)> image(
+	icv_read(temporary.path, BU_MIME_IMAGE_PNG, 0, 0), icv_destroy);
+    if (!image) {
+	bu_log("art: could not read temporary render '%s'\n", temporary.path);
+	return false;
     }
-    bu_vls_free(&tmpname);
+    const bool success = icv_write(image.get(), filename, BU_MIME_IMAGE_AUTO) == 0;
+    if (!success)
+	bu_log("art: could not write '%s'\n", filename);
     return success;
 }
 

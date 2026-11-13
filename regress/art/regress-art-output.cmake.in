@@ -1,0 +1,119 @@
+# R E G R E S S - A R T - O U T P U T . C M A K E
+# BRL-CAD
+#
+# Copyright (c) 2026 United States Government as represented by
+# the U.S. Army Research Laboratory.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions
+# are met:
+#
+# 1. Redistributions of source code must retain the above copyright
+# notice, this list of conditions and the following disclaimer.
+#
+# 2. Redistributions in binary form must reproduce the above
+# copyright notice, this list of conditions and the following
+# disclaimer in the documentation and/or other materials provided
+# with the distribution.
+#
+# 3. The name of the author may not be used to endorse or promote
+# products derived from this software without specific prior written
+# permission.
+#
+# THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS
+# OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+# WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+# ARE DISCLAIMED. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY
+# DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+# DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
+# GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+# INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+# WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+# NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+# SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+#
+set(WORK "@CMAKE_CURRENT_BINARY_DIR@/image-output")
+set(LOG "${WORK}/art.log")
+file(REMOVE_RECURSE "${WORK}")
+file(MAKE_DIRECTORY "${WORK}/shaders" "${WORK}/cache" "${WORK}/temporary images")
+set(ENV{BU_DIR_CACHE} "${WORK}/cache")
+set(ENV{TMPDIR} "${WORK}/temporary images")
+set(ENV{TEMP} "$ENV{TMPDIR}")
+set(ENV{TMP} "$ENV{TMPDIR}")
+include("@CMAKE_CURRENT_SOURCE_DIR@/art_test_commands.cmake")
+configure_file("@CMAKE_CURRENT_BINARY_DIR@/art_emission.oso"
+  "${WORK}/shaders/art_emission.oso" COPYONLY)
+set(DB "${WORK}/scene.g")
+run("${VEXEC}" create-material "${DB}" art_emission)
+set(RENDER_ARGS -P 2 -w 64 -n 64 -p 85 -a 270 -e 20 -c "set samples=4")
+run("${EXEC}" ${RENDER_ARGS} -o "${WORK}/reference.png" "${DB}" all.g)
+
+set(sentinel "preserve this unrelated file\n")
+file(WRITE "$ENV{TMPDIR}/unrelated.txt" "${sentinel}")
+function(check_temporary_directory)
+  file(GLOB contents "$ENV{TMPDIR}/*")
+  if(NOT contents STREQUAL "$ENV{TMPDIR}/unrelated.txt")
+    message(FATAL_ERROR "Render conversion left unexpected temporary files: ${contents}")
+  endif()
+  file(READ "$ENV{TMPDIR}/unrelated.txt" retained)
+  if(NOT retained STREQUAL sentinel)
+    message(FATAL_ERROR "Render conversion changed an unrelated temporary file")
+  endif()
+endfunction()
+function(matches image)
+  run("${VEXEC}" check-matching-image "${image}" "${WORK}/reference.png" 64 64)
+endfunction()
+function(preserved path)
+  file(READ "${path}" retained)
+  if(NOT retained STREQUAL sentinel)
+    message(FATAL_ERROR "Render conversion changed an unrelated file: ${path}")
+  endif()
+endfunction()
+
+# The old predictable intermediate name belongs to the caller, if it exists.
+foreach(extension IN ITEMS pix ppm)
+  set(image "${WORK}/converted.${extension}")
+  file(WRITE "${image}.tmp.png" "${sentinel}")
+  run("${EXEC}" ${RENDER_ARGS} -o "${image}" "${DB}" all.g)
+  preserved("${image}.tmp.png")
+  matches("${image}")
+  check_temporary_directory()
+endforeach()
+set(image "${WORK}/directory.pix")
+file(MAKE_DIRECTORY "${image}.tmp.png")
+file(WRITE "${image}.tmp.png/unrelated.txt" "${sentinel}")
+run("${EXEC}" ${RENDER_ARGS} -o "${image}" "${DB}" all.g)
+preserved("${image}.tmp.png/unrelated.txt")
+matches("${image}")
+if(UNIX)
+  set(image "${WORK}/symlink.pix")
+  file(WRITE "${WORK}/symlink-target.txt" "${sentinel}")
+  file(CREATE_LINK "${WORK}/symlink-target.txt" "${image}.tmp.png" SYMBOLIC)
+  run("${EXEC}" ${RENDER_ARGS} -o "${image}" "${DB}" all.g)
+  if(NOT IS_SYMLINK "${image}.tmp.png")
+    message(FATAL_ERROR "Render conversion removed the unrelated symbolic link")
+  endif()
+  preserved("${WORK}/symlink-target.txt")
+  matches("${image}")
+endif()
+
+# Failed destination writes must also release the owned intermediate.
+file(WRITE "${WORK}/blocked" "${sentinel}")
+expect_failure_matching("could not write" "${EXEC}" ${RENDER_ARGS}
+  -o "${WORK}/blocked/image.pix" "${DB}" all.g)
+preserved("${WORK}/blocked")
+check_temporary_directory()
+
+# Exceed the temporary-file registry's initial capacity in one process.
+set(stream "${WORK}/frames.view")
+file(WRITE "${stream}" "")
+foreach(frame RANGE 0 11)
+  file(APPEND "${stream}" "start ${frame}; end;\n")
+endforeach()
+run(INPUT_FILE "${stream}" "${EXEC}" ${RENDER_ARGS} -M
+  -o "${WORK}/frames.pix" "${DB}" all.g)
+matches("${WORK}/frames.pix")
+foreach(frame RANGE 1 11)
+  matches("${WORK}/frames.${frame}.pix")
+endforeach()
+check_temporary_directory()
