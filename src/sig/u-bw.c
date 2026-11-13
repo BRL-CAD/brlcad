@@ -28,24 +28,32 @@
 #include "bio.h"
 
 #include "bu/app.h"
+#include "bu/str.h"
 
 int
 main(int ac, char *av[])
 {
     unsigned short ibuf[512];
     unsigned char obuf[512];
+    int low_byte = 0;
 
     size_t num, i;
 
     bu_setprogname(av[0]);
 
+    if (ac > 2 || (ac == 2 && !BU_STR_EQUAL(av[1], "-l"))) {
+	fprintf(stderr, "Usage: %s [-l] < u_shorts > bwfile\n", *av);
+	return -1;
+    }
+    low_byte = (ac == 2);
+
     if (isatty(fileno(stdin)) || isatty(fileno(stdout))) {
-	fprintf(stderr, "Usage: %s < u_shorts > bwfile\n",
+	fprintf(stderr, "Usage: %s [-l] < u_shorts > bwfile\n",
 		*av);
 	return -1;
     }
 
-    if (ac > 1 && *av[1] == '-' && *av[2] == 'l') {
+    if (low_byte) {
 	while ((num = fread(&ibuf[0], sizeof(*ibuf), 512, stdin)) > 0) {
 	    for (i=0; i < num; i++)
 		obuf[i] = (unsigned char)ibuf[i];
