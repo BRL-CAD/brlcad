@@ -38,10 +38,34 @@
 #include <math.h>
 #include "bio.h"
 
+#include "bu/arg.h"
 #include "bu/app.h"
-#include "bu/malloc.h"
 #include "bu/exit.h"
+#include "bu/malloc.h"
 #include "fft.h"
+
+struct dconv_args {
+    int help;
+};
+
+static const struct bu_arg_option dconv_options[] = {
+    BU_ARG_FLAG("h", "help", struct dconv_args, help, "Print help and exit"),
+    BU_ARG_ALIAS("?", NULL, "help", 1),
+    BU_ARG_OPTION_NULL
+};
+
+static const struct bu_arg_operand dconv_operands[] = {
+    BU_ARG_OPERAND("filter-file", BU_ARG_VALUE_FILE, 1, 1,
+	"Binary double-precision convolution kernel", NULL),
+    BU_ARG_OPERAND_NULL
+};
+
+static const struct bu_arg_schema dconv_schema = BU_ARG_SCHEMA(
+    "dconv", "Convolve a double stream with a filter kernel", dconv_options,
+    dconv_operands, BU_ARG_PARSE_OPTIONS_FIRST,
+    BU_ARG_SCHEMA_META_HELP(NULL, NULL, NULL, NULL, NULL));
+
+static const struct bu_arg_grammar dconv_grammar = {&dconv_schema, NULL, NULL};
 
 
 /*
@@ -80,12 +104,35 @@ main(int argc, char *argv[])
     int N, L;
     FILE *fp;
     size_t ret;
+    struct dconv_args args = {0};
+    struct bu_vls msg = BU_VLS_INIT_ZERO;
 
     bu_setprogname(argv[0]);
 
-    if (argc != 2 || isatty(fileno(stdin)) || isatty(fileno(stdout))) {
-	bu_exit(1, "Usage: dconv filterfile < doubles > doubles\n       WARNING: kernel size must be 2^i - 1\n");
+    int introspection = bu_arg_introspect(&msg, &dconv_grammar, argc - 1,
+	(const char * const *)(argv + 1));
+    if (introspection != 0) {
+	bu_flog(introspection > 0 ? stdout : stderr, "%s", bu_vls_cstr(&msg));
+	bu_vls_free(&msg);
+	return introspection > 0 ? 0 : 1;
     }
+    argc--; argv++;
+    int operand_index = bu_arg_schema_parse_complete(&dconv_schema, &args,
+	&msg, argc, (const char **)argv);
+    if (operand_index < 0)
+	bu_exit(1, "%s", bu_vls_cstr(&msg));
+    bu_vls_free(&msg);
+    if (args.help) {
+	char *help = bu_arg_schema_help(&dconv_schema, "dconv");
+	bu_flog(stdout, "%s", help ? help : "");
+	bu_free(help, "dconv help");
+	return 0;
+    }
+    argc -= operand_index;
+    argv += operand_index;
+
+    if (isatty(fileno(stdin)) || isatty(fileno(stdout)))
+	bu_exit(1, "dconv requires redirected binary input and output\n");
 
 #ifdef never
     N = 2*M;	/* input sub-section length (fft size) */
@@ -103,8 +150,8 @@ main(int argc, char *argv[])
     }
 #endif /* never */
 
-    if ((fp = fopen(argv[1], "r")) == NULL) {
-	bu_exit(2, "dconv: can't open \"%s\"\n", argv[1]);
+    if ((fp = fopen(argv[0], "r")) == NULL) {
+	bu_exit(2, "dconv: can't open \"%s\"\n", argv[0]);
     }
     if ((M = fread(ibuf, sizeof(*ibuf), 2*BU_PAGE_SIZE, fp)) == 0) {
 	bu_exit(3, "dconv: problem reading filter file\n");

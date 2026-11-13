@@ -33,6 +33,16 @@ The number of kernel elements in _filterfile_ must be one less than a power of
 two (2^i - 1, e.g. 127, 255, 511). The kernel may contain at most BU_PAGE_SIZE
 elements.
 
+[[options]]
+== OPTIONS
+
+*-h*, *--help*::
+  Print command help and exit.
+
+_filter-file_::
+  Binary double-precision convolution kernel. Its element count must be one
+  less than a power of two and may not exceed `BU_PAGE_SIZE`.
+
 [[examples]]
 == EXAMPLES
 

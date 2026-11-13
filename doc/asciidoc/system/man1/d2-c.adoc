@@ -37,6 +37,20 @@ signal.
 This command is deprecated and scheduled for removal; contact the
 developers if you depend on it.
 
+[[options]]
+== OPTIONS
+
+*-h*, *--help*::
+  Print command help and exit.
+
+_real-file_::
+  Binary double stream supplying the real components. Use *-* for standard
+  input or *.* for an all-zero stream.
+
+_imaginary-file_::
+  Binary double stream supplying the imaginary components. Use *-* for
+  standard input or *.* for an all-zero stream.
+
 [[examples]]
 == EXAMPLES
 

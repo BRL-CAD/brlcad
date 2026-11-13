@@ -35,6 +35,16 @@ to ASCII, is performed by *d-a*(1).
 This command is *deprecated* and is scheduled for removal; it prints a
 deprecation warning on startup.
 
+[[options]]
+== OPTIONS
+
+*-h*, *--help*::
+  Print command help and exit.
+
+_value_::
+  Finite numeric value to convert. May be repeated. If omitted, values are
+  read from standard input.
+
 [[deprecation]]
 == DEPRECATION
 
