@@ -27,19 +27,50 @@
 #include <QMouseEvent>
 #include <QVBoxLayout>
 #include <string>
-#include <set>
+#include <vector>
 #include "../../../QgEdApp.h"
 
-#include "bu/opt.h"
 #include "bu/malloc.h"
-#include "bu/str.h"
 #include "bg/aabb_ray.h"
 #include "bg/plane.h"
-
-#include "../../../../libged/dbi.h"
+#include "ged/selection.h"
 
 #include "qtcad/QgSelectFilter.h"
 #include "./CADViewSelector.h"
+
+static const char *
+cad_selection_set_name()
+{
+    QgEdApp *app = (QgEdApp *)qApp;
+    if (!app || !app->mdl || app->mdl->selectionSetName().empty())
+	return NULL;
+    return app->mdl->selectionSetName().c_str();
+}
+
+
+static std::vector<std::string>
+cad_selected_paths(struct ged *gedp)
+{
+    std::vector<std::string> paths;
+    struct bu_vls selected = BU_VLS_INIT_ZERO;
+    (void)ged_selection_list_paths(gedp, cad_selection_set_name(), &selected);
+
+    const char *selected_str = bu_vls_cstr(&selected);
+    const char *start = selected_str;
+    for (const char *current = selected_str; ; current++) {
+	if (*current == '\n' || *current == '\r' || *current == '\0') {
+	    if (current > start)
+		paths.push_back(std::string(start,
+			(size_t)(current - start)));
+	    if (*current == '\0')
+		break;
+	    start = current + 1;
+	}
+    }
+
+    bu_vls_free(&selected);
+    return paths;
+}
 
 CADViewSelector::CADViewSelector(QWidget *)
 {
@@ -194,80 +225,53 @@ CADViewSelector::disable_useall_opt(bool)
 void
 CADViewSelector::do_view_update(unsigned long long flags)
 {
-    if (!gedp || !gedp->dbi_state)
+    if (!gedp)
 	return;
 
-    DbiState *dbis = (DbiState *)gedp->dbi_state;
-    BSelectState *ss = dbis->find_selected_state(NULL);
-    if (!ss)
-	return;
-
-    unsigned long long chash = ss->state_hash();
+    unsigned long long chash = ged_selection_state_hash(gedp,
+	cad_selection_set_name());
     if ((flags & QG_VIEW_SELECT) || chash != ohash) {
 	group_contents->clear();
 	ohash = chash;
 
-	std::set<std::string> ordered_paths;
-	std::unordered_map<unsigned long long, std::vector<unsigned long long>>::iterator s_it;
-	for (s_it = ss->selected.begin(); s_it != ss->selected.end(); s_it++) {
-	    std::string spath = std::string(dbis->pathstr(s_it->second));
-	    ordered_paths.insert(spath);
-	}
-	std::set<std::string>::iterator o_it;
-	for (o_it = ordered_paths.begin(); o_it != ordered_paths.end(); o_it++) {
-	    group_contents->addItem(QString(o_it->c_str()));
-	}
+	std::vector<std::string> paths = cad_selected_paths(gedp);
+	for (const std::string &path : paths)
+	    group_contents->addItem(QString(path.c_str()));
     }
 }
 
 void
 CADViewSelector::select_objs()
 {
-    DbiState *dbis = (DbiState *)gedp->dbi_state;
-    BSelectState *ss = dbis->find_selected_state(NULL);
-    if (!ss)
-	return;
-
-    struct bu_vls dpath = BU_VLS_INIT_ZERO;
+    const char *set_name = cad_selection_set_name();
+    (void)ged_selection_batch_begin(gedp);
     for (size_t i = 0; i < BU_PTBL_LEN(&cf->selected_set); i++) {
 	struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(&cf->selected_set, i);
-	bu_vls_sprintf(&dpath, "%s",  bu_vls_cstr(&s->s_name));
-	if (bu_vls_cstr(&dpath)[0] != '/')
-	    bu_vls_prepend(&dpath, "/");
-	if (!ss->select_path(bu_vls_cstr(&dpath), false)) {
-	    bu_vls_free(&dpath);
+	if (!s || !ged_selection_select_path(gedp, set_name,
+		bu_vls_cstr(&s->s_name), 0)) {
+	    (void)ged_selection_batch_end(gedp);
 	    return;
 	}
     }
-
-    bu_vls_free(&dpath);
-    ss->characterize();
-    ss->draw_sync();
+    (void)ged_selection_recompute(gedp, set_name);
+    (void)ged_selection_batch_end(gedp);
 }
 
 void
 CADViewSelector::deselect_objs()
 {
-    DbiState *dbis = (DbiState *)gedp->dbi_state;
-    BSelectState *ss = dbis->find_selected_state(NULL);
-    if (!ss)
-	return;
-
-    struct bu_vls dpath = BU_VLS_INIT_ZERO;
+    const char *set_name = cad_selection_set_name();
+    (void)ged_selection_batch_begin(gedp);
     for (size_t i = 0; i < BU_PTBL_LEN(&cf->selected_set); i++) {
 	struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(&cf->selected_set, i);
-	bu_vls_sprintf(&dpath, "%s",  bu_vls_cstr(&s->s_name));
-	if (bu_vls_cstr(&dpath)[0] != '/')
-	    bu_vls_prepend(&dpath, "/");
-	if (!ss->deselect_path(bu_vls_cstr(&dpath), false)) {
-	    bu_vls_free(&dpath);
+	if (!s || !ged_selection_deselect_path(gedp, set_name,
+		bu_vls_cstr(&s->s_name), 0)) {
+	    (void)ged_selection_batch_end(gedp);
 	    return;
 	}
     }
-
-    bu_vls_free(&dpath);
-    ss->characterize();
-    ss->draw_sync();
+    (void)ged_selection_recompute(gedp, set_name);
+    (void)ged_selection_batch_end(gedp);
 }
 
 
@@ -295,26 +299,14 @@ CADViewSelector::do_draw_selections()
     if (!gedp || !gedp->ged_gvp)
 	return;
 
-    DbiState *dbis = (DbiState *)gedp->dbi_state;
-    BSelectState *ss = dbis->find_selected_state(NULL);
-    if (!ss || !ss->selected.size())
+    std::vector<std::string> paths = cad_selected_paths(gedp);
+    if (paths.empty())
 	return;
 
-    const char **av = (const char **)bu_calloc(ss->selected.size()+2, sizeof(char *), "av");
-    av[0] = bu_strdup("draw");
-
-    int i = 0;
-    std::unordered_map<unsigned long long, std::vector<unsigned long long>>::iterator s_it;
-    for (s_it = ss->selected.begin(); s_it != ss->selected.end(); s_it++) {
-	av[i+1] = bu_strdup(dbis->pathstr(s_it->second));
-	i++;
-    }
-
-    ged_exec_draw(gedp, (int)(ss->selected.size()+1), av);
-    for (size_t j = 0; j < ss->selected.size()+1; j++) {
-	bu_free((void *)av[j], "path");
-    }
-    bu_free(av, "av");
+    std::vector<const char *> argv = {"draw"};
+    for (const std::string &path : paths)
+	argv.push_back(path.c_str());
+    ged_exec_draw(gedp, (int)argv.size(), argv.data());
 
     emit view_changed(QG_VIEW_DRAWN|QG_VIEW_SELECT);
 }
@@ -325,26 +317,14 @@ CADViewSelector::do_erase_selections()
     if (!gedp || !gedp->ged_gvp)
 	return;
 
-    DbiState *dbis = (DbiState *)gedp->dbi_state;
-    BSelectState *ss = dbis->find_selected_state(NULL);
-    if (!ss || !ss->selected.size())
+    std::vector<std::string> paths = cad_selected_paths(gedp);
+    if (paths.empty())
 	return;
 
-    const char **av = (const char **)bu_calloc(ss->selected.size()+2, sizeof(char *), "av");
-    av[0] = bu_strdup("erase");
-
-    int i = 0;
-    std::unordered_map<unsigned long long, std::vector<unsigned long long>>::iterator s_it;
-    for (s_it = ss->selected.begin(); s_it != ss->selected.end(); s_it++) {
-	av[i+1] = bu_strdup(dbis->pathstr(s_it->second));
-	i++;
-    }
-
-    ged_exec_erase(gedp, (int)(ss->selected.size()+1), av);
-    for (size_t j = 0; j < ss->selected.size()+1; j++) {
-	bu_free((void *)av[j], "path");
-    }
-    bu_free(av, "av");
+    std::vector<const char *> argv = {"erase"};
+    for (const std::string &path : paths)
+	argv.push_back(path.c_str());
+    ged_exec_erase(gedp, (int)argv.size(), argv.data());
 
     emit view_changed(QG_VIEW_DRAWN|QG_VIEW_SELECT);
 }

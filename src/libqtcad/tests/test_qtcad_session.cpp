@@ -19,6 +19,7 @@
 #include <QtTest/QTest>
 
 #include "ged.h"
+#include "ged/selection.h"
 #include "qtcad/QgModel.h"
 #include "qtcad/QgSession.h"
 #include "qtcad/QgSignalFlags.h"
@@ -371,6 +372,31 @@ QgSessionTest::tracksDuplicateSelectionOccurrences()
     firstInnerItem->setOpen(false);
     model.itemSelect(secondLeafItem);
     model.selectionCommit();
+    QCOMPARE(model.selectionCount(), size_t(2));
+    QVERIFY(model.itemSelected(firstLeafItem));
+    QVERIFY(model.itemSelected(secondLeafItem));
+
+    const char *clearDefault[] = {"select", "clear", "default"};
+    QCOMPARE(model.run_cmd(model.ged()->ged_result_str, 3, clearDefault),
+	BRLCAD_OK);
+    QCOMPARE(model.selectionCount(), size_t(0));
+    QVERIFY(!model.itemSelected(firstLeafItem));
+    QVERIFY(!model.itemSelected(secondLeafItem));
+
+    model.itemSelect(firstLeafItem);
+    model.itemSelect(secondLeafItem);
+    model.selectionCommit();
+    QCOMPARE(ged_selection_count(model.ged(), nullptr), size_t(2));
+
+    model.setSelectionSetName("alternate");
+    QCOMPARE(model.selectionCount(), size_t(0));
+    model.itemSelect(firstLeafItem);
+    model.selectionCommit();
+    QCOMPARE(model.selectionCount(), size_t(1));
+    QCOMPARE(ged_selection_count(model.ged(), nullptr), size_t(2));
+    QCOMPARE(ged_selection_count(model.ged(), "alternate"), size_t(1));
+
+    model.setSelectionSetName(nullptr);
     QCOMPARE(model.selectionCount(), size_t(2));
     QVERIFY(model.itemSelected(firstLeafItem));
     QVERIFY(model.itemSelected(secondLeafItem));

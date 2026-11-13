@@ -265,6 +265,10 @@ class QTCAD_EXPORT QgModel : public QAbstractItemModel
 	void setInteractionMode(int mode);
 	/** Return the mode used to derive hierarchy highlighting. */
 	int interactionMode() const { return interaction_mode; }
+	/** Target an exact GED selection set; NULL or empty selects default. */
+	void setSelectionSetName(const char *set_name);
+	/** Return the exact GED selection set used by this model. */
+	const std::string &selectionSetName() const { return selection_set_name; }
 
 	// Qt Model interface
 
@@ -419,6 +423,8 @@ class QTCAD_EXPORT QgModel : public QAbstractItemModel
 		const std::vector<unsigned long long> &children);
 	bool change_deltas_apply();
 	void items_changed_notify(const std::set<std::string> &names);
+	const char *selectionSetKey() const;
+	void selectionBatchBegin();
 
 	QgItem *rootItem;
 	std::unordered_map<unsigned long long, std::unordered_set<QgItem *>> items_by_instance_hash;
@@ -427,13 +433,15 @@ class QTCAD_EXPORT QgModel : public QAbstractItemModel
 	std::unordered_map<QgItem *, unsigned long long> item_path_hashes;
 	std::unordered_set<unsigned long long> selected_path_hashes;
 	std::unordered_set<unsigned long long> active_parent_path_hashes;
-	std::unordered_set<unsigned long long> immediate_parent_instance_hashes;
-	std::unordered_set<unsigned long long> grand_parent_instance_hashes;
+	std::unordered_set<unsigned long long> immediate_parent_object_ids;
+	std::unordered_set<unsigned long long> grand_parent_object_ids;
 	QgSession *m_session = NULL;
 	struct db_i *model_dbip = NULL;
 	uint64_t model_revision = 0;
 	uintptr_t event_observer = 0;
 	int interaction_mode = 0;
+	std::string selection_set_name;
+	bool selection_batch_open = false;
 	bool model_structure_change_in_progress = false;
 };
 

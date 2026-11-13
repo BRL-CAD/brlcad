@@ -49,6 +49,8 @@
 
 #include "bu/env.h"
 #include "bu/sort.h"
+#include "ged/db_index.h"
+#include "ged/selection.h"
 #include "raytrace.h"
 #define ALPHANUM_IMPL
 #include "../libged/alphanum.h"
@@ -315,6 +317,8 @@ QgModel::QgModel(QObject *p, const char *npath)
 
 QgModel::~QgModel()
 {
+    if (selection_batch_open)
+	(void)ged_selection_batch_end(ged());
     if (event_observer)
 	ged_event_observer_remove(ged(), event_observer);
     items_clear();
@@ -336,55 +340,76 @@ QgModel::ged() const
     return m_session ? m_session->ged() : NULL;
 }
 
-static BSelectState *
-qg_selection_state(const QgModel *model)
+const char *
+QgModel::selectionSetKey() const
 {
-    if (!model || !model->ged() || !model->ged()->dbi_state)
-	return NULL;
+    return selection_set_name.empty() ? NULL : selection_set_name.c_str();
+}
 
-    DbiState *dbis = static_cast<DbiState *>(model->ged()->dbi_state);
-    return dbis->find_selected_state(NULL);
+
+void
+QgModel::selectionBatchBegin()
+{
+    if (!selection_batch_open && ged_selection_batch_begin(ged()))
+	selection_batch_open = true;
+}
+
+
+void
+QgModel::setSelectionSetName(const char *set_name)
+{
+    std::string new_name = set_name ? set_name : "";
+    if (new_name == selection_set_name)
+	return;
+
+    if (selection_batch_open) {
+	(void)ged_selection_recompute(ged(), selectionSetKey());
+	(void)ged_selection_batch_end(ged());
+	selection_batch_open = false;
+    }
+
+    selection_set_name = new_name;
+    notifySelectionItemsChanged();
 }
 
 size_t
 QgModel::selectionCount() const
 {
-    BSelectState *state = qg_selection_state(this);
-    return state ? state->selected.size() : 0;
+    return ged_selection_count(ged(), selectionSetKey());
 }
 
 bool
 QgModel::itemSelected(const QgItem *item) const
 {
-    BSelectState *state = qg_selection_state(this);
-    return state && item && state->is_selected(item->path_hash());
+    return item && ged_selection_is_path_selected(ged(), selectionSetKey(),
+	item->path_hash());
 }
 
 int
 QgModel::itemHighlight(const QgItem *item) const
 {
-    BSelectState *state = qg_selection_state(this);
-    if (!state || !item)
+    if (!item)
 	return 0;
+
+    struct ged_db_index_record record;
+    ged_db_index_id object_id = item->instanceHash();
+    if (ged_db_index_record_get(ged(), object_id, &record))
+	object_id = record.object_id;
 
     switch (interaction_mode) {
 	case 0:
 	    return (!item->isOpen() &&
-		state->is_active_parent(item->path_hash())) ? 1 : 0;
-	case 1: {
-	    unsigned long long definition_hash = qg_definition_hash(
-		static_cast<DbiState *>(ged()->dbi_state),
-		item->instanceHash());
-	    return state->is_parent_obj(definition_hash) ? 2 : 0;
-	}
-	case 2: {
-	    unsigned long long definition_hash = qg_definition_hash(
-		static_cast<DbiState *>(ged()->dbi_state),
-		item->instanceHash());
-	    if (state->is_immediate_parent_obj(definition_hash))
+		ged_selection_is_path_active_parent(ged(), selectionSetKey(),
+		    item->path_hash())) ? 1 : 0;
+	case 1:
+	    return ged_selection_is_object_parent(ged(), selectionSetKey(),
+		object_id) ? 2 : 0;
+	case 2:
+	    if (ged_selection_is_object_immediate_parent(ged(),
+		    selectionSetKey(), object_id))
 		return 3;
-	    return state->is_grand_parent_obj(definition_hash) ? 2 : 0;
-	}
+	    return ged_selection_is_object_grand_parent(ged(),
+		selectionSetKey(), object_id) ? 2 : 0;
 	default:
 	    return 0;
     }
@@ -393,46 +418,44 @@ QgModel::itemHighlight(const QgItem *item) const
 void
 QgModel::selectionClear()
 {
-    BSelectState *state = qg_selection_state(this);
-    if (state)
-	state->clear();
+    selectionBatchBegin();
+    (void)ged_selection_clear(ged(), selectionSetKey());
 }
 
 void
 QgModel::itemSelect(QgItem *item)
 {
-    BSelectState *state = qg_selection_state(this);
-    if (!state || !hasItem(item))
+    if (!hasItem(item))
 	return;
 
+    selectionBatchBegin();
     std::vector<unsigned long long> path = item->path_items();
-    state->select_hpath(path);
+    (void)ged_selection_select_path_ids(ged(), selectionSetKey(), path.data(),
+	path.size(), 0);
 }
 
 void
 QgModel::itemDeselect(QgItem *item)
 {
-    BSelectState *state = qg_selection_state(this);
-    if (!state || !hasItem(item))
+    if (!hasItem(item))
 	return;
 
+    selectionBatchBegin();
     std::vector<unsigned long long> path = item->path_items();
-    state->deselect_hpath(path);
+    (void)ged_selection_deselect_path_ids(ged(), selectionSetKey(),
+	path.data(), path.size(), 0);
 }
 
 unsigned long long
 QgModel::selectionCommit()
 {
-    BSelectState *state = qg_selection_state(this);
-    if (!state)
-	return QG_VIEW_SELECT;
-
-    state->characterize();
-    unsigned long long flags = QG_VIEW_SELECT;
-    if (state->draw_sync())
-	flags |= QG_VIEW_REFRESH;
+    (void)ged_selection_recompute(ged(), selectionSetKey());
+    if (selection_batch_open) {
+	(void)ged_selection_batch_end(ged());
+	selection_batch_open = false;
+    }
     notifySelectionItemsChanged();
-    return flags;
+    return QG_VIEW_SELECT | QG_VIEW_REFRESH;
 }
 
 void
@@ -442,22 +465,32 @@ QgModel::notifySelectionItemsChanged()
     HashSet old_selected = std::move(selected_path_hashes);
     HashSet old_active_parents = std::move(active_parent_path_hashes);
     HashSet old_immediate_parents =
-	std::move(immediate_parent_instance_hashes);
-    HashSet old_grand_parents = std::move(grand_parent_instance_hashes);
+	std::move(immediate_parent_object_ids);
+    HashSet old_grand_parents = std::move(grand_parent_object_ids);
 
     selected_path_hashes.clear();
     active_parent_path_hashes.clear();
-    immediate_parent_instance_hashes.clear();
-    grand_parent_instance_hashes.clear();
+    immediate_parent_object_ids.clear();
+    grand_parent_object_ids.clear();
 
-    BSelectState *state = qg_selection_state(this);
-    if (state) {
-	for (const auto &entry : state->selected)
-	    selected_path_hashes.insert(entry.first);
-	active_parent_path_hashes = state->active_parents;
-	immediate_parent_instance_hashes = state->immediate_parents;
-	grand_parent_instance_hashes = state->grand_parents;
-    }
+    auto load_hashes = [this](enum ged_selection_hash_kind kind) {
+	HashSet hashes;
+	size_t count = ged_selection_hashes(ged(), selectionSetKey(), kind,
+	    NULL, 0);
+	std::vector<ged_db_index_id> values(count);
+	if (count)
+	    (void)ged_selection_hashes(ged(), selectionSetKey(), kind,
+		values.data(), values.size());
+	hashes.insert(values.begin(), values.end());
+	return hashes;
+    };
+    selected_path_hashes = load_hashes(GED_SELECTION_HASH_SELECTED_PATH);
+    active_parent_path_hashes =
+	load_hashes(GED_SELECTION_HASH_ACTIVE_PARENT_PATH);
+    immediate_parent_object_ids =
+	load_hashes(GED_SELECTION_HASH_IMMEDIATE_PARENT_OBJECT);
+    grand_parent_object_ids =
+	load_hashes(GED_SELECTION_HASH_GRAND_PARENT_OBJECT);
 
     QVector<int> roles;
     roles << SelectDisplayRole << HighlightDisplayRole;
@@ -478,12 +511,15 @@ QgModel::notifySelectionItemsChanged()
 		notify_item(item);
 	}
     };
-    auto notify_instances = [this, &notify_item](const HashSet &hashes) {
-	for (unsigned long long hash : hashes) {
-	    auto item_it = items_by_instance_hash.find(hash);
-	    if (item_it == items_by_instance_hash.end())
-		continue;
-	    for (QgItem *item : item_it->second)
+    auto notify_objects = [this, &notify_item](const HashSet &hashes) {
+	if (hashes.empty())
+	    return;
+	for (QgItem *item : allItems()) {
+	    struct ged_db_index_record record;
+	    ged_db_index_id object_id = item->instanceHash();
+	    if (ged_db_index_record_get(ged(), object_id, &record))
+		object_id = record.object_id;
+	    if (hashes.find(object_id) != hashes.end())
 		notify_item(item);
 	}
     };
@@ -492,10 +528,10 @@ QgModel::notifySelectionItemsChanged()
     notify_paths(selected_path_hashes);
     notify_paths(old_active_parents);
     notify_paths(active_parent_path_hashes);
-    notify_instances(old_immediate_parents);
-    notify_instances(immediate_parent_instance_hashes);
-    notify_instances(old_grand_parents);
-    notify_instances(grand_parent_instance_hashes);
+    notify_objects(old_immediate_parents);
+    notify_objects(immediate_parent_object_ids);
+    notify_objects(old_grand_parents);
+    notify_objects(grand_parent_object_ids);
 }
 
 void
@@ -1112,11 +1148,7 @@ QgModel::g_update(struct db_i *n_dbip)
 
     // If we did change something, we need to let the application know
     if (changed_db_flag) {
-	BSelectState *selection_state = qg_selection_state(this);
-	if (selection_state) {
-	    selection_state->refresh();
-	    selection_state->characterize();
-	}
+	(void)ged_selection_recompute(ged(), selectionSetKey());
 	notifySelectionItemsChanged();
 	emit mdl_changed_db((void *)ged());
 	m_session->notifyDbChanged(n_dbip);

@@ -31,6 +31,7 @@
 #include <QTextStream>
 #include "bu/malloc.h"
 #include "bu/file.h"
+#include "ged/selection.h"
 #include "qtcad/QgGeomImport.h"
 #include "qtcad/QgTreeSelectionModel.h"
 #include "QgEdApp.h"
@@ -432,8 +433,7 @@ QgEdApp::run_cmd(struct bu_vls *msg, int argc, const char **argv)
 
     struct ged *gedp = mdl->ged();
 
-    BSelectState *ss = (gedp->dbi_state) ? ((DbiState *)gedp->dbi_state)->find_selected_state(NULL) : NULL;
-    select_hash = (ss) ? ss->state_hash() : 0;
+    select_hash = ged_selection_state_hash(gedp, NULL);
 
     /* Set the local unit conversions */
     if (gedp->dbip) {
@@ -448,8 +448,6 @@ QgEdApp::run_cmd(struct bu_vls *msg, int argc, const char **argv)
 	// stash the view state(s) for later comparison and make
 	// sure our unit conversions are right
 	w->DisplayCheckpoint();
-	//select_hash = ged_selection_hash_sets(gedp->ged_selection_sets);
-
 	// If we need command-specific subprocess awareness for
 	// a command, set it up
 	if (BU_STR_EQUAL(argv[0], "ert")) {
@@ -491,13 +489,9 @@ QgEdApp::run_cmd(struct bu_vls *msg, int argc, const char **argv)
 	if (w->DisplayDiff())
 	    view_flags |= QG_VIEW_DRAWN;
 
-	unsigned long long cs_hash = (ss) ? ss->state_hash() : 0;
+	unsigned long long cs_hash = ged_selection_state_hash(gedp, NULL);
 	if (cs_hash != select_hash) {
 	    view_flags |= QG_VIEW_SELECT;
-	    // This is what notifies currently drawn solids to update
-	    // in response to a command line selection change
-	    if (ss && ss->draw_sync())
-		view_flags |= QG_VIEW_DRAWN;
 	}
     }
 
