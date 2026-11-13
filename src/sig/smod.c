@@ -208,9 +208,9 @@ main(int argc, char *argv[])
 
 	    iobuf[idx] = mapbuf[mdx];
 
-	    if (clip_h[idx])
+	    if (clip_h[mdx])
 		clip_high++;
-	    else if (clip_l[idx])
+	    else if (clip_l[mdx])
 		clip_low++;
 	}
 	/* output */
