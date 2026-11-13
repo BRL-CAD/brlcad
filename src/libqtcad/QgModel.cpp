@@ -307,18 +307,28 @@ QgItem::path_items() const
 unsigned long long
 QgItem::path_hash() const
 {
+    if (path_hash_valid)
+	return cached_path_hash;
+
     std::vector<unsigned long long> pitems = path_items();
-    return ged_db_index_path_hash(mdl->ged(), pitems.data(), pitems.size(),
-	0);
+    cached_path_hash = ged_db_index_path_hash(mdl->ged(), pitems.data(),
+	pitems.size(), 0);
+    path_hash_valid = true;
+    return cached_path_hash;
 }
 
-extern "C" void
-qgmodel_event_callback(struct ged *UNUSED(gedp),
+void
+QgModel::event_callback(struct ged *gedp,
 	const struct ged_event *UNUSED(events), size_t UNUSED(event_count),
 	const struct ged_event_result *UNUSED(result), void *client_data)
 {
     QgModel *mdl = static_cast<QgModel *>(client_data);
+    if (!mdl || !gedp)
+	return;
     mdl->changed_db_flag = 1;
+    mdl->database_event_pending = true;
+    if (!mdl->command_running)
+	mdl->refresh_database();
 }
 
 extern "C" void
@@ -343,7 +353,7 @@ QgModel::QgModel(QObject *p, const char *npath)
     QObject::connect(this, &QgModel::view_change,
 	m_session, &QgSession::notifyViewChanged);
     event_observer = ged_event_observer_add(ged(),
-	GED_EVENT_OBSERVER_POST_RECONCILE, qgmodel_event_callback, this);
+	GED_EVENT_OBSERVER_POST_RECONCILE, event_callback, this);
     scene_observer = ged_scene_observer_add(ged(), qgmodel_scene_callback,
 	this);
     bu_setenv("DM_SWRAST", "1", 1);
@@ -572,14 +582,11 @@ QgModel::notifySelectionItemsChanged()
 	}
     };
     auto notify_objects = [this, &notify_item](const HashSet &hashes) {
-	if (hashes.empty())
-	    return;
-	for (QgItem *item : allItems()) {
-	    struct ged_db_index_record record;
-	    ged_db_index_id object_id = item->instanceHash();
-	    if (ged_db_index_record_get(ged(), object_id, &record))
-		object_id = record.object_id;
-	    if (hashes.find(object_id) != hashes.end())
+	for (unsigned long long object_id : hashes) {
+	    auto object_it = items_by_object_id.find(object_id);
+	    if (object_it == items_by_object_id.end())
+		continue;
+	    for (QgItem *item : object_it->second)
 		notify_item(item);
 	}
     };
@@ -625,8 +632,23 @@ QgModel::item_register(QgItem *item)
 	return;
 
     items_by_instance_hash[item->ihash].insert(item);
+    struct ged_db_index_record record = {};
+    unsigned long long object_id = item->ihash;
+    if (ged() && ged_db_index_record_get(ged(), item->ihash, &record))
+	object_id = record.object_id;
+    items_by_object_id[object_id].insert(item);
+    item_object_ids[item] = object_id;
     if (item->dp)
 	items_by_directory[item->dp].insert(item);
+    item_path_index_insert(item);
+}
+
+void
+QgModel::item_path_index_insert(QgItem *item)
+{
+    if (!item || item == rootItem)
+	return;
+
     unsigned long long path_hash = item->path_hash();
     if (path_hash) {
 	items_by_path_hash[path_hash].insert(item);
@@ -647,6 +669,17 @@ QgModel::item_unregister(QgItem *item)
 	    items_by_instance_hash.erase(instance_it);
     }
 
+    auto object_id_it = item_object_ids.find(item);
+    if (object_id_it != item_object_ids.end()) {
+	auto object_it = items_by_object_id.find(object_id_it->second);
+	if (object_it != items_by_object_id.end()) {
+	    object_it->second.erase(item);
+	    if (object_it->second.empty())
+		items_by_object_id.erase(object_it);
+	}
+	item_object_ids.erase(object_id_it);
+    }
+
     if (item->dp) {
 	auto directory_it = items_by_directory.find(item->dp);
 	if (directory_it != items_by_directory.end()) {
@@ -655,28 +688,71 @@ QgModel::item_unregister(QgItem *item)
 		items_by_directory.erase(directory_it);
 	}
     }
-
-    auto item_path_it = item_path_hashes.find(item);
-    if (item_path_it != item_path_hashes.end()) {
-	unsigned long long path_hash = item_path_it->second;
-	auto path_it = items_by_path_hash.find(path_hash);
-	if (path_it != items_by_path_hash.end()) {
-	    path_it->second.erase(item);
-	    if (path_it->second.empty())
-		items_by_path_hash.erase(path_it);
-	}
-	item_path_hashes.erase(item_path_it);
-    }
+    item_path_index_remove(item);
 
     items->erase(item);
+}
+
+void
+QgModel::item_path_index_remove(QgItem *item)
+{
+    if (!item || item == rootItem)
+	return;
+
+    auto item_path_it = item_path_hashes.find(item);
+    if (item_path_it == item_path_hashes.end())
+	return;
+    auto path_it = items_by_path_hash.find(item_path_it->second);
+    if (path_it != items_by_path_hash.end()) {
+	path_it->second.erase(item);
+	if (path_it->second.empty())
+	    items_by_path_hash.erase(path_it);
+    }
+    item_path_hashes.erase(item_path_it);
+}
+
+void
+QgModel::item_path_index_insert_subtree(QgItem *item)
+{
+    if (!item || item == rootItem)
+	return;
+
+    item_path_index_insert(item);
+    for (QgItem *child : item->children)
+	item_path_index_insert_subtree(child);
+}
+
+void
+QgModel::item_path_index_remove_subtree(QgItem *item)
+{
+    if (!item || item == rootItem)
+	return;
+
+    for (QgItem *child : item->children)
+	item_path_index_remove_subtree(child);
+    item_path_index_remove(item);
+}
+
+void
+QgModel::item_path_hash_invalidate_subtree(QgItem *item)
+{
+    if (!item)
+	return;
+
+    item->cached_path_hash = 0;
+    item->path_hash_valid = false;
+    for (QgItem *child : item->children)
+	item_path_hash_invalidate_subtree(child);
 }
 
 void
 QgModel::item_indexes_clear()
 {
     items_by_instance_hash.clear();
+    items_by_object_id.clear();
     items_by_path_hash.clear();
     items_by_directory.clear();
+    item_object_ids.clear();
     item_path_hashes.clear();
 }
 
@@ -708,6 +784,14 @@ QgModel::item_is_indexed(QgItem *item) const
     auto instance_it = items_by_instance_hash.find(item->ihash);
     if (instance_it == items_by_instance_hash.end() ||
 	instance_it->second.find(item) == instance_it->second.end())
+	return false;
+
+    auto object_id_it = item_object_ids.find(item);
+    if (object_id_it == item_object_ids.end())
+	return false;
+    auto object_it = items_by_object_id.find(object_id_it->second);
+    if (object_it == items_by_object_id.end() ||
+	object_it->second.find(item) == object_it->second.end())
 	return false;
 
     auto item_path_it = item_path_hashes.find(item);
@@ -863,19 +947,28 @@ QgModel::change_deltas_apply()
 	return false;
 
     const unsigned int flags = ged_db_change_set_flags(changes.get());
-    if ((flags & GED_DB_CHANGE_REBUILD) ||
-	ged_db_change_set_rename_count(changes.get()))
+    if (flags & GED_DB_CHANGE_REBUILD)
 	return false;
 
-    const bool structural = flags & GED_DB_CHANGE_STRUCTURAL;
     std::set<std::string> added;
     std::set<std::string> modified;
     std::set<std::string> removed;
+    std::set<std::string> renamed;
     std::set<std::string> paths;
     qg_db_change_names(added, changes.get(), GED_DB_CHANGE_OBJECT_ADDED);
     qg_db_change_names(modified, changes.get(),
 	GED_DB_CHANGE_OBJECT_MODIFIED);
     qg_db_change_names(removed, changes.get(), GED_DB_CHANGE_OBJECT_REMOVED);
+    const size_t rename_count =
+	ged_db_change_set_rename_count(changes.get());
+    for (size_t i = 0; i < rename_count; i++) {
+	const char *old_name = ged_db_change_set_rename_old_at(changes.get(), i);
+	const char *new_name = ged_db_change_set_rename_new_at(changes.get(), i);
+	if (old_name)
+	    renamed.insert(old_name);
+	if (new_name)
+	    renamed.insert(new_name);
+    }
     const size_t path_count = ged_db_change_set_path_count(changes.get());
     for (size_t i = 0; i < path_count; i++) {
 	const char *path = ged_db_change_set_path_at(changes.get(), i);
@@ -883,15 +976,29 @@ QgModel::change_deltas_apply()
 	    paths.insert(path);
     }
 
+    const bool structural = (flags & GED_DB_CHANGE_STRUCTURAL) ||
+	rename_count;
     if (structural && added.empty() && modified.empty() &&
-	    removed.empty() && paths.empty())
+	    removed.empty() && renamed.empty() && paths.empty())
 	return false;
 
     std::unordered_set<QgItem *> parent_candidates;
     if (structural)
 	parent_candidates.insert(rootItem);
 
+    for (size_t i = 0; i < rename_count; i++) {
+	const char *old_name = ged_db_change_set_rename_old_at(changes.get(), i);
+	if (!old_name)
+	    continue;
+	for (QgItem *item : *items) {
+	    if (qgmodel_item_matches_name(item, old_name) && item->parent())
+		parent_candidates.insert(item->parent());
+	}
+    }
+
     for (const std::string &name : modified) {
+	if (renamed.find(name) != renamed.end())
+	    continue;
 	struct directory *dp = db_lookup(ged()->dbip, name.c_str(), LOOKUP_QUIET);
 	if (dp) {
 	    auto directory_it = items_by_directory.find(dp);
@@ -954,6 +1061,10 @@ QgModel::change_deltas_apply()
     }
     parents.push_back(rootItem);
 
+    std::unordered_map<QgItem *, std::vector<unsigned long long>>
+	desired_children;
+    std::unordered_map<QgItem *,
+	std::unordered_map<unsigned long long, db_op_t>> desired_operations;
     for (QgItem *parent : parents) {
 	if (parent != rootItem && items->find(parent) == items->end())
 	    continue;
@@ -974,10 +1085,119 @@ QgModel::change_deltas_apply()
 			NULL) < 0;
 		});
 	} else {
-	    if (!qg_index_children(ged(), parent->ihash, children))
+	    if (!qg_index_children(ged(), parent->ihash, children,
+		    &desired_operations[parent]))
 		return false;
 	}
-	if (!item_children_sync(parent, children))
+	desired_children[parent] = std::move(children);
+    }
+
+    struct CrossParentRemoval {
+	QgItem *parent = NULL;
+	QgItem *item = NULL;
+    };
+    struct CrossParentInsertion {
+	QgItem *parent = NULL;
+	int row = -1;
+    };
+    std::unordered_map<unsigned long long,
+	std::vector<CrossParentRemoval>> removals;
+    std::unordered_map<unsigned long long,
+	std::vector<CrossParentInsertion>> insertions;
+
+    for (const auto &plan : desired_children) {
+	QgItem *parent = plan.first;
+	if (!parent || parent == rootItem ||
+		(parent->children.empty() && !parent->open_itm))
+	    continue;
+
+	std::unordered_map<unsigned long long, size_t> old_counts;
+	std::unordered_map<unsigned long long, size_t> new_counts;
+	for (QgItem *child : parent->children) {
+	    if (child)
+		old_counts[child->ihash]++;
+	}
+	for (unsigned long long child_hash : plan.second)
+	    new_counts[child_hash]++;
+
+	for (QgItem *child : parent->children) {
+	    if (!child || old_counts[child->ihash] != 1 ||
+		    new_counts[child->ihash] != 0)
+		continue;
+	    removals[child->ihash].push_back({parent, child});
+	}
+	for (size_t row = 0; row < plan.second.size(); row++) {
+	    unsigned long long child_hash = plan.second[row];
+	    if (new_counts[child_hash] != 1 || old_counts[child_hash] != 0)
+		continue;
+	    insertions[child_hash].push_back({parent, (int)row});
+	}
+    }
+
+    for (const auto &removal_entry : removals) {
+	auto insertion_it = insertions.find(removal_entry.first);
+	if (removal_entry.second.size() != 1 ||
+		insertion_it == insertions.end() ||
+		insertion_it->second.size() != 1)
+	    continue;
+
+	const CrossParentRemoval &removal = removal_entry.second[0];
+	const CrossParentInsertion &insertion = insertion_it->second[0];
+	if (!removal.parent || !removal.item || !insertion.parent ||
+		removal.parent == insertion.parent)
+	    continue;
+
+	bool creates_cycle = false;
+	for (QgItem *ancestor = insertion.parent; ancestor;
+		ancestor = ancestor->parent()) {
+	    if (ancestor == removal.item) {
+		creates_cycle = true;
+		break;
+	    }
+	}
+	if (creates_cycle)
+	    continue;
+
+	auto source_it = std::find(removal.parent->children.begin(),
+	    removal.parent->children.end(), removal.item);
+	if (source_it == removal.parent->children.end())
+	    return false;
+	int source_row = (int)std::distance(removal.parent->children.begin(),
+	    source_it);
+	int destination_row = std::min(insertion.row,
+	    (int)insertion.parent->children.size());
+	QModelIndex source_index = NodeIndex(removal.parent);
+	QModelIndex destination_index = NodeIndex(insertion.parent);
+
+	model_structure_change_in_progress = true;
+	if (!beginMoveRows(source_index, source_row, source_row,
+		destination_index, destination_row)) {
+	    model_structure_change_in_progress = false;
+	    return false;
+	}
+	item_path_index_remove_subtree(removal.item);
+	removal.parent->children.erase(source_it);
+	removal.item->parentItem = insertion.parent;
+	item_path_hash_invalidate_subtree(removal.item);
+	auto operation_it = desired_operations[insertion.parent].find(
+	    removal.item->ihash);
+	if (operation_it != desired_operations[insertion.parent].end())
+	    removal.item->op = operation_it->second;
+	insertion.parent->children.insert(
+	    insertion.parent->children.begin() + destination_row,
+	    removal.item);
+	item_rows_rebuild(removal.parent);
+	item_rows_rebuild(insertion.parent);
+	item_path_index_insert_subtree(removal.item);
+	endMoveRows();
+	model_structure_change_in_progress = false;
+    }
+
+    for (QgItem *parent : parents) {
+	auto desired_it = desired_children.find(parent);
+	if (desired_it == desired_children.end())
+	    continue;
+	if (!item_children_sync(parent, desired_it->second))
 	    return false;
     }
 
@@ -1260,8 +1480,30 @@ QgModel::NodeIndex(QgItem *node) const
 
 
 bool
+QgModel::hasChildren(const QModelIndex &idx) const
+{
+    if (idx.column() > 0)
+	return false;
+
+    if (!idx.isValid())
+	return rootItem && rootItem->childCount() > 0;
+
+    QgItem *item = static_cast<QgItem*>(idx.internalPointer());
+    if (!item || item == rootItem)
+	return false;
+
+    if (item->childCount() > 0)
+	return true;
+
+    return ged_db_index_child_count(ged(), item->ihash) > 0;
+}
+
+bool
 QgModel::canFetchMore(const QModelIndex &idx) const
 {
+    if (model_structure_change_in_progress)
+	return false;
+
     if (!idx.isValid())
 	return false;
 
@@ -1279,6 +1521,9 @@ QgModel::canFetchMore(const QModelIndex &idx) const
 void
 QgModel::fetchMore(const QModelIndex &idx)
 {
+    if (model_structure_change_in_progress)
+	return;
+
     if (!idx.isValid())
 	return;
 
@@ -1459,6 +1704,22 @@ QgModel::columnCount(const QModelIndex &p) const
 ///////////////////////////////////////////////////////////////////////
 //                  .g Centric Methods
 ///////////////////////////////////////////////////////////////////////
+void
+QgModel::refresh_database()
+{
+    if (database_refresh_in_progress) {
+	database_event_pending = true;
+	return;
+    }
+
+    do {
+	database_event_pending = false;
+	database_refresh_in_progress = true;
+	g_update(ged()->dbip);
+	database_refresh_in_progress = false;
+    } while (database_event_pending);
+}
+
 int
 QgModel::run_cmd(struct bu_vls *msg, int argc, const char **argv)
 {
@@ -1477,15 +1738,26 @@ QgModel::run_cmd(struct bu_vls *msg, int argc, const char **argv)
 	return BRLCAD_ERROR;
     }
 
+    command_running = true;
     int ret = ged_exec(gedp, argc, argv);
+    command_running = false;
 
     // If this is one of the GED commands supporting incremental input, this
     // return code means we need more input from the application before any
     // command can be run - no need to do the remainder of the logic below.
-    if (ret & GED_MORE)
-	return ret;
 
-    g_update(gedp->dbip);
+    if (ret & GED_MORE) {
+	if (database_event_pending)
+	    refresh_database();
+	return ret;
+    }
+
+    // If we have a new .g file, set the changed flag
+    if (model_dbip != gedp->dbip)
+	changed_db_flag = 1;
+
+    // Assuming we're not doing a full rebuild, trigger the post-cmd updates
+    refresh_database();
 
     if (msg && gedp)
 	bu_vls_printf(msg, "%s", bu_vls_cstr(gedp->ged_result_str));

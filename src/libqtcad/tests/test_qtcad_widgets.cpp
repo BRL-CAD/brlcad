@@ -22,11 +22,19 @@
 
 #include <QApplication>
 #include <QFocusEvent>
+#include <QHeaderView>
 #include <QLineEdit>
+#include <QTemporaryDir>
 #include <QtTest/QTest>
+
+#include <memory>
 
 #include "bu/app.h"
 #include "qtcad/QgColorRGB.h"
+#include "qtcad/QgModel.h"
+#include "qtcad/QgTreeView.h"
+#include "qtcad/QgUtil.h"
+#include "wdb.h"
 
 class QgWidgetTest : public QObject
 {
@@ -34,6 +42,8 @@ class QgWidgetTest : public QObject
 
     private slots:
 	void commitsTypedColorOnFocusLoss();
+	void stretchesHierarchyColumn();
+	void usesGenericIconForBinaryObjects();
 };
 
 void
@@ -64,6 +74,43 @@ QgWidgetTest::commitsTypedColorOnFocusLoss()
     QCOMPARE(red, expected_red);
     QCOMPARE(green, expected_green);
     QCOMPARE(blue, expected_blue);
+}
+
+void
+QgWidgetTest::stretchesHierarchyColumn()
+{
+    QgModel model;
+    QgTreeView tree(nullptr, &model);
+
+    QCOMPARE(tree.header()->sectionResizeMode(0), QHeaderView::Stretch);
+    tree.tree_column_size(QModelIndex());
+    QCOMPARE(tree.header()->sectionResizeMode(0), QHeaderView::Stretch);
+}
+
+void
+QgWidgetTest::usesGenericIconForBinaryObjects()
+{
+    QTemporaryDir temporary_directory;
+    QVERIFY(temporary_directory.isValid());
+    QByteArray database_path = QFile::encodeName(
+	temporary_directory.filePath(QStringLiteral("icons.g")));
+    std::unique_ptr<struct rt_wdb, decltype(&wdb_close)> database(
+	wdb_fopen(database_path.constData()), wdb_close);
+    QVERIFY(database != nullptr);
+
+    const unsigned char data[] = {0};
+    QCOMPARE(mk_binunif(database.get(), "data.bin", data,
+	WDB_BINUNIF_UINT8, 1), 0);
+    struct directory *binary_object = db_lookup(database->dbip, "data.bin",
+	LOOKUP_QUIET);
+    QVERIFY(binary_object != RT_DIR_NULL);
+    QCOMPARE(binary_object->d_major_type, DB5_MAJORTYPE_BINARY_UNIF);
+    QCOMPARE(binary_object->d_minor_type, DB5_MINORTYPE_BRLCAD_ARB8);
+
+    QImage expected(QStringLiteral(":/images/primitives/other.png"));
+    QVERIFY(!expected.isNull());
+    QVERIFY(QgIcon(binary_object, database->dbip) == expected);
+    QCOMPARE(QgCombType(binary_object, database->dbip), G_STANDARD_OBJ);
 }
 
 int

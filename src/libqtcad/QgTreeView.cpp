@@ -162,7 +162,7 @@ QgTreeView::QgTreeView(QWidget *pparent, QgModel *treemodel) : QTreeView(pparent
 
     setItemDelegate(new gObjDelegate(this));
 
-    header()->setSectionResizeMode(0, QHeaderView::ResizeToContents);
+    header()->setSectionResizeMode(0, QHeaderView::Stretch);
     header()->setStretchLastSection(true);
     QObject::connect(this, &QgTreeView::expanded, this, &QgTreeView::tree_column_size);
     QObject::connect(this, &QgTreeView::collapsed, this, &QgTreeView::tree_column_size);
@@ -204,7 +204,7 @@ void QgTreeView::header_state()
     // update somewhere - the scrollbar doesn't appear until the tree
     // is selected...
 
-    header()->setSectionResizeMode(QHeaderView::ResizeToContents);
+    header()->setSectionResizeMode(0, QHeaderView::Stretch);
     header()->setStretchLastSection(false);
     if (header()->count() == 1) {
 	header()->setStretchLastSection(false);

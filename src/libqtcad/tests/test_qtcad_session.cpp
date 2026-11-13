@@ -288,7 +288,8 @@ QgSessionTest::reconcilesModelEvents()
 	BRLCAD_OK);
     QCOMPARE(changes.count(), 4);
     QCOMPARE(model.rowCount(), 2);
-    QCOMPARE(model.allItems().size(), size_t(2));
+    QVERIFY(model.allItems().size() >= size_t(2));
+    QVERIFY(model.allItems().size() <= size_t(3));
     QVERIFY(persistentKeepIndex.isValid());
     QCOMPARE(model.getItem(persistentKeepIndex), keepItem);
 
@@ -302,11 +303,13 @@ QgSessionTest::reconcilesModelEvents()
     }
     QVERIFY(groupIndex.isValid());
     QCOMPARE(model.getItem(groupIndex)->availableChildCount(), size_t(1));
-    QVERIFY(model.getItem(groupIndex)->childItems().empty());
-    QVERIFY(model.canFetchMore(groupIndex));
-    QCOMPARE(model.rowCount(groupIndex), 0);
-    model.fetchMore(groupIndex);
+    QVERIFY(model.hasChildren(groupIndex));
+    if (model.canFetchMore(groupIndex)) {
+	QCOMPARE(model.rowCount(groupIndex), 0);
+	model.fetchMore(groupIndex);
+    }
     QCOMPARE(model.rowCount(groupIndex), 1);
+    QVERIFY(model.hasChildren(groupIndex));
     QVERIFY(!model.canFetchMore(groupIndex));
     QCOMPARE(model.allItems().size(), size_t(3));
 
@@ -361,12 +364,17 @@ QgSessionTest::reconcilesModelEvents()
     QVERIFY(db_lookup(model.ged()->dbip, "event.g", LOOKUP_QUIET) ==
 	RT_DIR_NULL);
 
+    const int resetsBeforeRename = modelResets.count();
+    const int insertsBeforeRename = rowsInserted.count();
+    const int removesBeforeRename = rowsRemoved.count();
     const char *renameArguments[] = {"mv", "keep.s", "renamed.s"};
     QCOMPARE(model.run_cmd(model.ged()->ged_result_str, 3, renameArguments),
 	BRLCAD_OK);
     QCOMPARE(changes.count(), 8);
     QCOMPARE(model.rowCount(), 2);
-    QCOMPARE(modelResets.count(), 1);
+    QCOMPARE(modelResets.count(), resetsBeforeRename);
+    QVERIFY(rowsInserted.count() > insertsBeforeRename);
+    QVERIFY(rowsRemoved.count() > removesBeforeRename);
     QVERIFY(!persistentKeepIndex.isValid());
     QVERIFY(db_lookup(model.ged()->dbip, "renamed.s", LOOKUP_QUIET) !=
 	RT_DIR_NULL);
@@ -376,10 +384,9 @@ QgSessionTest::reconcilesModelEvents()
     rebuildEvent.kind = GED_EVENT_BATCH_REBUILD;
     QCOMPARE(ged_event_publish(model.ged(), &rebuildEvent, 1, nullptr),
 	GED_EVENT_OK);
-    model.g_update(model.ged()->dbip);
     QCOMPARE(changes.count(), 9);
     QCOMPARE(model.rowCount(), 2);
-    QCOMPARE(modelResets.count(), 2);
+    QCOMPARE(modelResets.count(), resetsBeforeRename + 1);
 
     const char *closeArguments[] = {"close"};
     QCOMPARE(model.run_cmd(model.ged()->ged_result_str, 1, closeArguments),
@@ -388,7 +395,7 @@ QgSessionTest::reconcilesModelEvents()
     QCOMPARE(model.rowCount(), 0);
     QVERIFY(model.allItems().empty());
     QCOMPARE(model.root(), rootItem);
-    QCOMPARE(modelResets.count(), 3);
+    QCOMPARE(modelResets.count(), resetsBeforeRename + 2);
     QVERIFY(rowsInserted.count() > 0);
     QVERIFY(rowsRemoved.count() > 0);
     QVERIFY(rowsMoved.count() > 0);

@@ -4,6 +4,7 @@ set(QGMODEL_SRCS qgmodel.cpp)
 set(QGVIEW_SRCS qgview.cpp)
 set(QSKETCH_SRCS qsketch.cpp)
 set(TEST_QTCAD_SESSION_SRCS test_qtcad_session.cpp)
+set(TEST_QTCAD_MODEL_INVARIANTS_SRCS test_qtcad_model_invariants.cpp)
 set(TEST_QTCAD_CONSOLE_SRCS test_qtcad_console.cpp)
 set(TEST_QTCAD_WIDGETS_SRCS test_qtcad_widgets.cpp)
 set(TEST_QTCAD_PLUGIN_MANAGER_SRCS test_qtcad_plugin_manager.cpp)
@@ -33,6 +34,25 @@ elseif(TARGET Qt5::Test)
 endif()
 
 if(QTCAD_TEST_QT_TEST)
+  add_executable(test_qtcad_model_invariants ${TEST_QTCAD_MODEL_INVARIANTS_SRCS})
+  set_target_properties(test_qtcad_model_invariants PROPERTIES AUTOMOC ON)
+  target_compile_definitions(test_qtcad_model_invariants PRIVATE BRLCADBUILD HAVE_CONFIG_H)
+  target_link_libraries(test_qtcad_model_invariants
+    libqtcad
+    libged
+    libwdb
+    librt
+    libbu
+    ${QTCAD_TEST_QT_TEST}
+    ${QTCAD_TEST_QT_WIDGETS}
+  )
+  add_dependencies(test_qtcad_model_invariants ged_plugins)
+  brlcad_add_test(NAME test_qtcad_model_invariants COMMAND test_qtcad_model_invariants)
+  set_property(TEST test_qtcad_model_invariants APPEND PROPERTY ENVIRONMENT
+    BRLCAD_ROOT=${CMAKE_BINARY_DIR}
+    QT_QPA_PLATFORM=offscreen
+  )
+
   add_executable(test_qtcad_plugin_context ${TEST_QTCAD_PLUGIN_CONTEXT_SRCS})
   set_target_properties(test_qtcad_plugin_context PROPERTIES AUTOMOC ON)
   target_compile_definitions(test_qtcad_plugin_context PRIVATE BRLCADBUILD HAVE_CONFIG_H)
@@ -115,10 +135,10 @@ endif()
 
 if(TARGET Qt6::Test)
   add_executable(test_qtcad_widgets ${TEST_QTCAD_WIDGETS_SRCS})
-  target_link_libraries(test_qtcad_widgets libqtcad Qt6::Test Qt6::Widgets)
+  target_link_libraries(test_qtcad_widgets libqtcad libwdb Qt6::Test Qt6::Widgets)
 elseif(TARGET Qt5::Test)
   add_executable(test_qtcad_widgets ${TEST_QTCAD_WIDGETS_SRCS})
-  target_link_libraries(test_qtcad_widgets libqtcad Qt5::Test Qt5::Widgets)
+  target_link_libraries(test_qtcad_widgets libqtcad libwdb Qt5::Test Qt5::Widgets)
 endif()
 if(TARGET test_qtcad_widgets)
   set_target_properties(test_qtcad_widgets PROPERTIES AUTOMOC ON)
@@ -265,6 +285,7 @@ cmakefiles(
   ${QGVIEW_SRCS}
   ${QSKETCH_SRCS}
   ${TEST_QTCAD_SESSION_SRCS}
+  ${TEST_QTCAD_MODEL_INVARIANTS_SRCS}
   ${TEST_QTCAD_CONSOLE_SRCS}
   ${TEST_QTCAD_PLUGIN_MANAGER_SRCS}
   ${TEST_QTCAD_PLUGIN_CONTEXT_SRCS}

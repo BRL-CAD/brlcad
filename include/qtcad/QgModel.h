@@ -198,8 +198,8 @@ class QTCAD_EXPORT QgItem
 	struct directory *dp = NULL;
 	QImage icon;
 	bool open_itm = false;
-	//int draw_state = 0;
-	//bool select_state = false;
+	mutable unsigned long long cached_path_hash = 0;
+	mutable bool path_hash_valid = false;
 };
 
 /* The primary expression in a Qt context of a .g database and its contents.
@@ -316,6 +316,7 @@ class QTCAD_EXPORT QgModel : public QAbstractItemModel
 
 	// These functions tell the model and view that an entry has children
 	// to display and how to retrieve them.
+	bool hasChildren(const QModelIndex &idx = QModelIndex()) const override;
 	bool canFetchMore(const QModelIndex &idx) const override;
 	void fetchMore(const QModelIndex &idx) override;
 
@@ -411,6 +412,10 @@ class QTCAD_EXPORT QgModel : public QAbstractItemModel
 	void item_expanded(const QModelIndex &index);
 
     private:
+	static void event_callback(struct ged *gedp,
+		const struct ged_event *events, size_t event_count,
+		const struct ged_event_result *result, void *client_data);
+	void refresh_database();
 	int NodeRow(QgItem *node) const;
 	QModelIndex index(int row, int column, const QModelIndex &p) const override;
 	QModelIndex parent(const QModelIndex &child) const override;
@@ -419,6 +424,11 @@ class QTCAD_EXPORT QgModel : public QAbstractItemModel
 	void item_rebuild(QgItem *item, std::unordered_set<QgItem *> &invalid);
 	void item_register(QgItem *item);
 	void item_unregister(QgItem *item);
+	void item_path_index_insert(QgItem *item);
+	void item_path_index_remove(QgItem *item);
+	void item_path_index_insert_subtree(QgItem *item);
+	void item_path_index_remove_subtree(QgItem *item);
+	void item_path_hash_invalidate_subtree(QgItem *item);
 	void item_indexes_clear();
 	void items_clear();
 	bool item_is_indexed(QgItem *item) const;
@@ -433,8 +443,10 @@ class QTCAD_EXPORT QgModel : public QAbstractItemModel
 
 	QgItem *rootItem;
 	std::unordered_map<unsigned long long, std::unordered_set<QgItem *>> items_by_instance_hash;
+	std::unordered_map<unsigned long long, std::unordered_set<QgItem *>> items_by_object_id;
 	std::unordered_map<unsigned long long, std::unordered_set<QgItem *>> items_by_path_hash;
 	std::unordered_map<struct directory *, std::unordered_set<QgItem *>> items_by_directory;
+	std::unordered_map<QgItem *, unsigned long long> item_object_ids;
 	std::unordered_map<QgItem *, unsigned long long> item_path_hashes;
 	std::unordered_set<unsigned long long> selected_path_hashes;
 	std::unordered_set<unsigned long long> active_parent_path_hashes;
@@ -448,6 +460,9 @@ class QTCAD_EXPORT QgModel : public QAbstractItemModel
 	std::string selection_set_name;
 	bool selection_batch_open = false;
 	bool model_structure_change_in_progress = false;
+	bool command_running = false;
+	bool database_refresh_in_progress = false;
+	bool database_event_pending = false;
 };
 
 #endif //QGMODEL_H
