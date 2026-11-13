@@ -11,8 +11,9 @@ imgdims - guess the width and height of an image file
 
 [source]
 ----
-imgdims [-n | -s] [-# _bytes_per_pixel_] _file_name_
-imgdims [-# _bytes_per_pixel_] _num_bytes_
+imgdims [-n|--believe-name | -s|--believe-stat]
+        [-#|--bytes-per-pixel _bytes_per_pixel_] _file_name_
+imgdims [-#|--bytes-per-pixel _bytes_per_pixel_] _num_bytes_
 ----
 
 
@@ -36,23 +37,23 @@ The result is printed to standard output as two space-separated numbers, "width 
 [[options]]
 == OPTIONS
 
-*-n*::
+*-n*, *--believe-name*::
   Believe the file name. Try to extract the dimensions directly from the _file_name_
-  if it encodes a standard BRL-CAD resolution (e.g. an embedded "1024x768"). If the
-  name carries no usable resolution, fall back to guessing from the file size.
+  if it encodes a standard BRL-CAD resolution (e.g. "-w1024-n768"). If the name
+  carries no usable resolution, fall back to guessing from the file size.
 
-*-s*::
+*-s*, *--believe-stat*::
   Believe the stat. Ignore any dimensions encoded in the file name and use the file
   size in bytes to determine the pixel count and guess the width and height. This is
   the default behavior.
 
-*-#* _bytes_per_pixel_::
+*-#* _bytes_per_pixel_, *--bytes-per-pixel* _bytes_per_pixel_::
   Specify the size of each pixel in bytes, as a positive integer. Common values are
   1 (black-and-white images) and 3 (RGB images). If omitted, the pixel size is taken
   from the file extension (.bw = 1, .pix = 3); any unrecognized extension, or an
   explicit _num_bytes_ argument, defaults to 3.
 
-*-h*, *-?*::
+*-h*, *-?*, *--help*::
   Print usage information and exit.
 
 [[examples]]
@@ -75,9 +76,9 @@ then be passed to *pix-fb*(1) to display the image.
 ====
 [source,console]
 ----
-$ imgdims -n moss_1024x1024.bw
+$ imgdims -n moss-w1024-n1024.bw
 ----
-With *-n*, *imgdims* pulls the "1024x1024" resolution straight out of the file name
+With *-n*, *imgdims* pulls the 1024x1024 resolution straight out of the file name
 rather than inferring it from the file size, which is reliable even when the byte
 count is ambiguous between several common resolutions.
 ====
