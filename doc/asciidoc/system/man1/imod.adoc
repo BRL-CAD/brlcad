@@ -38,29 +38,29 @@ operating on the same kind of data used by tools such as *dsp*(5).
 [[options]]
 == OPTIONS
 
-*-a* _val_::
+*-a* _val_, *--add* _val_::
   Add _val_ to each value.
 
-*-s* _val_::
+*-s* _val_, *--subtract* _val_::
   Subtract _val_ from each value.
 
-*-m* _val_::
+*-m* _val_, *--multiply* _val_::
   Multiply each value by _val_.
 
-*-d* _val_::
+*-d* _val_, *--divide* _val_::
   Divide each value by _val_. A _val_ of zero aborts the program.
 
-*-A*::
+*-A*, *--absolute*::
   Replace each value with its absolute value.
 
-*-e* _val_::
+*-e* _val_, *--exponent* _val_::
   Raise each value to the power _val_ (exponentiation).
 
-*-r* _val_::
+*-r* _val_, *--root* _val_::
   Take the _val_-th root of each value (equivalent to raising to the
   power 1/_val_). A _val_ of zero aborts the program.
 
-*-h*, *-?*::
+*-h*, *-?*, *--help*::
   Print a usage message and exit.
 
 [[examples]]

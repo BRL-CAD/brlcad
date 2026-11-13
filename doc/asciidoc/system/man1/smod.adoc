@@ -37,29 +37,29 @@ output must be redirected; *smod* refuses to read from or write to a terminal.
 [[options]]
 == OPTIONS
 
-*-a* _add_::
+*-a* _add_, *--add* _add_::
   Add _add_ to each value.
 
-*-s* _sub_::
+*-s* _sub_, *--subtract* _sub_::
   Subtract _sub_ from each value.
 
-*-m* _mult_::
+*-m* _mult_, *--multiply* _mult_::
   Multiply each value by _mult_.
 
-*-d* _div_::
+*-d* _div_, *--divide* _div_::
   Divide each value by _div_. A divisor of zero is an error.
 
-*-A*::
+*-A*, *--absolute*::
   Replace each value with its absolute value.
 
-*-e* _exp_::
+*-e* _exp_, *--exponent* _exp_::
   Raise each value to the power _exp_.
 
-*-r* _root_::
+*-r* _root_, *--root* _root_::
   Take the _root_ root of each value (equivalent to raising to the power
   1/_root_). A root of zero is an error.
 
-*-h*, *-?*::
+*-h*, *-?*, *--help*::
   Print a usage message and exit.
 
 [[examples]]

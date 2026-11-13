@@ -9,16 +9,16 @@ brlcad_addexec(dconv dconv.c "libbu;libfft" FOLDER Sig ARG_SCHEMA)
 brlcad_addexec(ddisp ddisp.c libdm FOLDER Sig ARG_SCHEMA)
 add_target_deps(ddisp dm_plugins)
 brlcad_addexec(dfft "dfft.c;interp.c;butter.c" "libbu;libfft;${M_LIBRARY}" FOLDER Sig ARG_SCHEMA)
-brlcad_addexec(dmod dmod.c "libbu;${M_LIBRARY}" FOLDER Sig)
+brlcad_addexec(dmod dmod.c "libbu;${M_LIBRARY}" FOLDER Sig ARG_SCHEMA)
 brlcad_addexec(dpeak dpeak.c libbu FOLDER Sig ARG_SCHEMA)
 brlcad_addexec(dsel dsel.c libbu FOLDER Sig ARG_SCHEMA)
 brlcad_addexec(dstats dstats.c "libbu;${M_LIBRARY}" FOLDER Sig ARG_SCHEMA)
 brlcad_addexec(dwin "dwin.c;coswin.c;hamwin.c" "libbu;${M_LIBRARY}" FOLDER Sig ARG_SCHEMA)
 brlcad_addexec(ihist ihist.c libbu FOLDER Sig ARG_SCHEMA)
-brlcad_addexec(imod imod.c "libbu;${M_LIBRARY}" FOLDER Sig)
+brlcad_addexec(imod imod.c "libbu;${M_LIBRARY}" FOLDER Sig ARG_SCHEMA)
 brlcad_addexec(istats istats.c "libbu;${M_LIBRARY}" FOLDER Sig ARG_SCHEMA)
-brlcad_addexec(smod smod.c "libbu;${M_LIBRARY}" FOLDER Sig)
-brlcad_addexec(umod umod.c "libbu;${M_LIBRARY}" FOLDER Sig)
+brlcad_addexec(smod smod.c "libbu;${M_LIBRARY}" FOLDER Sig ARG_SCHEMA)
+brlcad_addexec(umod umod.c "libbu;${M_LIBRARY}" FOLDER Sig ARG_SCHEMA)
 brlcad_addexec(ustats ustats.c "libbu;${M_LIBRARY}" FOLDER Sig ARG_SCHEMA)
 
 # Deprecated
@@ -41,7 +41,7 @@ brlcad_addexec(u-bw u-bw.c libbu FOLDER Sig)
 brlcad_addexec(u-d u-d.c libbu FOLDER Sig ARG_SCHEMA)
 brlcad_addexec(u-f u-f.c libbu FOLDER Sig ARG_SCHEMA)
 
-cmakefiles(CMakeLists.txt scale_args.h window_args.h)
+cmakefiles(CMakeLists.txt mod_args.h scale_args.h window_args.h)
 
 # Local Variables:
 # tab-width: 8
