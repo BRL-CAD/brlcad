@@ -1555,6 +1555,11 @@ enamel, and a dark platform material.  The installed CMake driver and Tcl
 recipes regenerate copied databases, images, material reports, and logs.
 The star example additionally compares rt's original constant-blue sky
 shell with an art camera backdrop and independently lit environment.
+The Havoc example adds a reproducible HDR studio workflow with an identical
+before/after camera and a canopy close-up.  It preserves the original CSG
+geometry while authoring paint, rotor and tire finishes, and smooth glazing.
+Its lighting panorama is generated locally, and saved view streams retain
+relative asset lookup when moving the project.
 A black-backdrop variant retains the same art lighting.  The cube and
 sphflake procedural `envmap cloud` setups are recorded as follow-on
 migration cases; earth's cloud/glass atmosphere requires material handling.

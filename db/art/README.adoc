@@ -115,3 +115,58 @@ constant color is not an equivalent replacement for their cloud pattern.
 `earth.g` has a cloud/glass stack on `troposphere.c`.  Treat that as an
 atmosphere/material case: removing a physical layer requires separate
 analysis of the intended transparency and cloud effects.
+
+== Havoc: paint, glazing, and HDR studio lighting
+
+The Havoc comparison keeps the original helicopter geometry, including its
+Boolean regions and instance placements.  A generated scene-linear HDR
+panorama supplies broad studio lights and reflections; a separate floor
+receives the model's shadows.  All three images use art:
+
+* `havoc-before.png` retains the original region colors through the default
+  OSL plastic material.
+* `havoc-after.png` assigns olive paint, dark rotor and tire finishes, and
+  smooth refractive glass to the canopy and laser-sight glazing.
+* `havoc-detail.png` shows the same authored materials and lighting with a
+  closer camera centered on the canopy.
+
+The full-model pair uses identical geometry, camera, lighting, and sampling.
+The after version deliberately changes paint colors as well as surface
+response.  These are explicit material assignments, rather than an automatic
+translation of every legacy liboptical shader.  The original database is
+copied before authoring.  The only added geometry is the studio floor, and
+it is present in both generated databases.
+
+Regenerate using an installation containing `havoc.g`, art, mged, oiiotool,
+and the Appleseed shader library:
+
+----
+cmake -DBRLCAD_PREFIX="${BRLCAD_PREFIX}" -DOUTPUT_DIR=havoc-render \
+    -DSAMPLES=256 -P "${BRLCAD_PREFIX}/share/db/art/render_havoc.cmake"
+----
+
+The `SOURCE_DB`, `WIDTH`, `HEIGHT`, `SAMPLES`, and `WORKERS` options have the
+same meaning as in the moss example.  The supplied previews use 512 by 384
+pixels and 256 samples per pixel.  The driver generates `havoc-studio.exr`
+locally; no downloaded textures or additional shader compilation are needed.
+It creates two material-ready databases, three PNG images, complete saved
+view streams, a material inspection report, and authoring/rendering logs.
+
+Keep the HDR map beside the generated databases when moving the project.
+From that directory, render another output, including an HDR EXR if desired:
+
+----
+art -M -w 512 -n 384 -P 2 -o canopy.exr havoc-after.g art.demo.g \
+    < havoc-detail.view
+----
+
+The environment multiplier is two and the point-light multiplier is zero.
+The panorama uses linear RGB with sRGB/Rec.709 primaries.  Material color
+parameters are also scene-linear RGB.  Geometry and absorption distances use
+BRL-CAD's millimeter base coordinates.  The glass index is 1.5; volume
+transmittance is specified over 100 mm.  The canopy treatment uses the
+model's existing CSG solids and does not change their thickness.
+
+The model is framed before adding the larger floor.  The canopy close-up
+uses the same assembly and environment as the overall after image.  See the
+art article for glass and secondary-ray qualification boundaries.

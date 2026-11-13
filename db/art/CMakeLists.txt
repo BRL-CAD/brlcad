@@ -2,6 +2,12 @@ set(art_example_files
   README.adoc
   render_common.cmake
   render_moss.cmake
+  render_havoc.cmake
+  havoc_studio.tcl
+  havoc_materials.tcl
+  havoc-before.png
+  havoc-after.png
+  havoc-detail.png
   render_star.cmake
   star_sky.tcl
   star-before.png
