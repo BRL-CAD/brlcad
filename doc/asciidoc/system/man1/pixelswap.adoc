@@ -10,7 +10,7 @@ pixelswap - interchange two pixel colors in a pix image
 
 [source]
 ----
-pixelswap [-d _pixeldepth_] _r_ _g_ _b_ _R_ _G_ _B_ < input.pix > output.pix
+pixelswap [-d|--depth _bytes_] _r_ _g_ _b_ _R_ _G_ _B_ < input.pix > output.pix
 ----
 
 
@@ -27,19 +27,16 @@ Each of the six color components is an integer in the range 0-255.  Both
 standard input and standard output must be redirected; *pixelswap* refuses to
 run if either is a terminal.
 
-Although a pixel depth may be specified with *-d*, the current implementation
-always processes 3-byte RGB pixels and ignores the requested depth.
+The only supported pixel depth is three bytes per RGB pixel.
 
 [[options]]
 == OPTIONS
 
-*-d* _pixeldepth_::
-  Number of bytes per pixel (must be a positive integer).  Accepted for
-  forward compatibility but currently ignored; pixels are always treated as
-  3-byte RGB.
+*-d*, *--depth* _bytes_::
+  Set the number of bytes per pixel.  The value must be 3.
 
-*-h*, *-?*::
-  Print a usage message and exit.
+*-h*, *--help*::
+  Print help and exit.  *-?* is accepted as a compatibility alias.
 
 [[examples]]
 == EXAMPLES

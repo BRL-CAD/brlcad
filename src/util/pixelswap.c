@@ -25,140 +25,128 @@
 
 #include "common.h"
 
-#include <errno.h>
-#include <limits.h>
-#include <stdlib.h>
 #include <string.h>
 
 #include "bio.h"
 
+#include "bu/arg.h"
 #include "bu/app.h"
-#include "bu/getopt.h"
-#include "util_arg.h"
 #include "bu/exit.h"
-#include "dm.h"
+#include "bu/malloc.h"
 
 
-char options[] = "d:h?";
-char noname[] = "(noname)";
-char *progname = noname;
+#define RGB_CHANNEL_COUNT 3
+#define PIXEL_BUFFER_COUNT 32767
 
-int depth = 3;
-unsigned char ibuf[32767 * 3];
-unsigned char obuf[32767 * 3];
-#define RGBCMP(a, b) ((a) == (b)[0] && \
-		      (a)[1] == (b)[1] && \
-		      (a)[2] == (b)[2])
+struct pixelswap_args {
+    int help;
+    int pixel_depth;
+};
 
-void
-usage(const char *s)
-{
-    if (s) (void)fputs(s, stderr);
+static const struct bu_arg_option pixelswap_options[] = {
+    BU_ARG_FLAG("h", "help", struct pixelswap_args, help,
+	"Print help and exit"),
+    BU_ARG_ALIAS("?", NULL, "help", 1),
+    BU_ARG_INTEGER_RANGE("d", "depth", struct pixelswap_args, pixel_depth,
+	1, RGB_CHANNEL_COUNT, 1, RGB_CHANNEL_COUNT, "bytes",
+	"Bytes per pixel (only RGB depth 3 is supported)"),
+    BU_ARG_OPTION_NULL
+};
 
-    (void) fprintf(stderr, "Usage: %s [ -d  pixeldepth ] r g b R G B < infile > outfile\n",
-		   progname);
-    bu_exit (1, NULL);
-}
+static const struct bu_arg_operand pixelswap_operands[] = {
+    BU_ARG_OPERAND_INTEGER_RANGE("source-red", 1, 1, 1, 0, 1, 255,
+	"Red component of the first color", NULL),
+    BU_ARG_OPERAND_INTEGER_RANGE("source-green", 1, 1, 1, 0, 1, 255,
+	"Green component of the first color", NULL),
+    BU_ARG_OPERAND_INTEGER_RANGE("source-blue", 1, 1, 1, 0, 1, 255,
+	"Blue component of the first color", NULL),
+    BU_ARG_OPERAND_INTEGER_RANGE("replacement-red", 1, 1, 1, 0, 1, 255,
+	"Red component of the second color", NULL),
+    BU_ARG_OPERAND_INTEGER_RANGE("replacement-green", 1, 1, 1, 0, 1, 255,
+	"Green component of the second color", NULL),
+    BU_ARG_OPERAND_INTEGER_RANGE("replacement-blue", 1, 1, 1, 0, 1, 255,
+	"Blue component of the second color", NULL),
+    BU_ARG_OPERAND_NULL
+};
+
+static const struct bu_arg_schema pixelswap_schema = BU_ARG_SCHEMA(
+    "pixelswap", "Exchange two RGB colors in a BRL-CAD PIX stream",
+    pixelswap_options, pixelswap_operands, BU_ARG_PARSE_OPTIONS_FIRST,
+    BU_ARG_SCHEMA_META_HELP(NULL, NULL, NULL, NULL, NULL));
+
+static const struct bu_arg_grammar pixelswap_grammar = {
+    &pixelswap_schema, NULL, NULL
+};
 
 
 int
-parse_args(int ac, char **av)
+main(int argc, char **argv)
 {
-    int c;
+    size_t bytes, pixel;
+    unsigned char source[RGB_CHANNEL_COUNT];
+    unsigned char replacement[RGB_CHANNEL_COUNT];
+    unsigned char input[PIXEL_BUFFER_COUNT * RGB_CHANNEL_COUNT];
+    unsigned char output[PIXEL_BUFFER_COUNT * RGB_CHANNEL_COUNT];
+    struct pixelswap_args args = {0, RGB_CHANNEL_COUNT};
+    struct bu_vls msg = BU_VLS_INIT_ZERO;
 
-    if (! (progname=strrchr(*av, '/')))
-	progname = *av;
-    else
-	++progname;
+    bu_setprogname(argv[0]);
 
-    /* get all the option flags from the command line */
-    while ((c=bu_getopt(ac, av, options)) != -1) {
-	switch (c) {
-	    case 'd':
-		if (!util_arg_int_range(bu_optarg, &depth, 1, INT_MAX, "pixel depth"))
-		    usage("");
-
-		break;
-
-	    default:
-		usage(""); break;
-	}
+    int introspection = bu_arg_introspect(&msg, &pixelswap_grammar, argc - 1,
+	(const char * const *)(argv + 1));
+    if (introspection != 0) {
+	bu_flog(introspection > 0 ? stdout : stderr, "%s", bu_vls_cstr(&msg));
+	bu_vls_free(&msg);
+	return introspection > 0 ? 0 : 1;
+    }
+    int operand_index = bu_arg_schema_parse_complete(&pixelswap_schema, &args,
+	&msg, argc - 1, (const char **)(argv + 1));
+    if (operand_index < 0)
+	bu_exit(1, "%s", bu_vls_cstr(&msg));
+    bu_vls_free(&msg);
+    if (args.help) {
+	char *help = bu_arg_schema_help(&pixelswap_schema, "pixelswap");
+	bu_flog(stdout, "%s", help ? help : "");
+	bu_free(help, "pixelswap help");
+	return 0;
     }
 
-    return bu_optind;
-}
-/*
- * Call parse_args to handle command line arguments first, then
- * process input.
- */
-int main(int ac, char **av)
-{
-    int i;
-    size_t bytes, pixel;
-    unsigned char r, g, b, R, G, B;
+    const char **operands = (const char **)(argv + operand_index + 1);
+    if (!bu_arg_unsigned_char_from_str(&msg, &source[0], operands[0], 10) ||
+	!bu_arg_unsigned_char_from_str(&msg, &source[1], operands[1], 10) ||
+	!bu_arg_unsigned_char_from_str(&msg, &source[2], operands[2], 10) ||
+	!bu_arg_unsigned_char_from_str(&msg, &replacement[0], operands[3], 10) ||
+	!bu_arg_unsigned_char_from_str(&msg, &replacement[1], operands[4], 10) ||
+	!bu_arg_unsigned_char_from_str(&msg, &replacement[2], operands[5], 10))
+	bu_exit(1, "pixelswap: color: %s", bu_vls_cstr(&msg));
+    bu_vls_free(&msg);
 
-    bu_setprogname(av[0]);
+    if (isatty(fileno(stdout)) || isatty(fileno(stdin)))
+	bu_exit(1, "pixelswap requires redirected binary input and output\n");
 
     setmode(fileno(stdin), O_BINARY);
     setmode(fileno(stdout), O_BINARY);
 
-    i = parse_args(ac, av);
-    /* if ac == 1, there is only 1 argument; i.e., run-with-no-arguments */
-    if (ac == 1) usage("");
-
-    if (i+6 > ac)
-	usage("missing pixel value(s)\n");
-    if (i+6 < ac)
-	usage("excess pixel value(s)\n");
-
-    if (isatty(fileno(stdout)) || isatty(fileno(stdin)))
-	usage("Redirect standard input and output\n");
-
-    /* get pixel values */
-    if (!util_arg_uchar(av[i++], &r, "input red value") ||
-	!util_arg_uchar(av[i++], &g, "input green value") ||
-	!util_arg_uchar(av[i++], &b, "input blue value") ||
-	!util_arg_uchar(av[i++], &R, "output red value") ||
-	!util_arg_uchar(av[i++], &G, "output green value") ||
-	!util_arg_uchar(av[i], &B, "output blue value")) {
-	return 1;
-    }
-
-    /* process stdin */
-    while ((bytes = fread(ibuf, 1, sizeof(ibuf), stdin)) > 0) {
-	if (bytes % 3) {
-	    fprintf(stderr, "%s: input ends with an incomplete pixel\n", progname);
-	    return 1;
-	}
-	for (pixel = 0; pixel < bytes / 3; pixel++) {
-	    if (ibuf[pixel*3] == r &&
-		ibuf[pixel*3+1] == g &&
-		ibuf[pixel*3+2] == b) {
-		obuf[pixel*3] = R;
-		obuf[pixel*3+1] = G;
-		obuf[pixel*3+2] = B;
-	    } else if (ibuf[pixel*3] == R &&
-		       ibuf[pixel*3+1] == G &&
-		       ibuf[pixel*3+2] == B) {
-		obuf[pixel*3] = r;
-		obuf[pixel*3+1] = g;
-		obuf[pixel*3+2] = b;
-	    } else {
-		obuf[pixel*3] = ibuf[pixel*3];
-		obuf[pixel*3+1] = ibuf[pixel*3+1];
-		obuf[pixel*3+2] = ibuf[pixel*3+2];
-	    }
+    while ((bytes = fread(input, 1, sizeof(input), stdin)) > 0) {
+	if (bytes % RGB_CHANNEL_COUNT)
+	    bu_exit(1, "pixelswap: input ends with an incomplete pixel\n");
+	for (pixel = 0; pixel < bytes / RGB_CHANNEL_COUNT; pixel++) {
+	    unsigned char *input_pixel = &input[pixel * RGB_CHANNEL_COUNT];
+	    unsigned char *output_pixel = &output[pixel * RGB_CHANNEL_COUNT];
+	    if (memcmp(input_pixel, source, RGB_CHANNEL_COUNT) == 0)
+		memcpy(output_pixel, replacement, RGB_CHANNEL_COUNT);
+	    else if (memcmp(input_pixel, replacement, RGB_CHANNEL_COUNT) == 0)
+		memcpy(output_pixel, source, RGB_CHANNEL_COUNT);
+	    else
+		memcpy(output_pixel, input_pixel, RGB_CHANNEL_COUNT);
 	}
 
-	if (fwrite(obuf, 1, bytes, stdout) != bytes) {
-	    perror("pixelswap write");
-	    return 1;
-	}
+	if (fwrite(output, 1, bytes, stdout) != bytes)
+	    bu_exit(1, "pixelswap: error writing output\n");
     }
-    if (ferror(stdin)) {
-	perror("pixelswap read");
-	return 1;
-    }
+    if (ferror(stdin))
+	bu_exit(1, "pixelswap: error reading input\n");
+
     return 0;
 }
 
