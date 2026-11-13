@@ -10,7 +10,7 @@ ap-pix - convert an Applicon color ink jet printer file to a pix file
 
 [source]
 ----
-ap-pix [-v] file.ap > file.pix
+ap-pix [-v | --verbose] _file.ap_ > _file.pix_
 ----
 
 
@@ -25,11 +25,11 @@ The Applicon file holds three interleaved color separations (magenta, yellow, an
 [[options]]
 == OPTIONS
 
-*-v*::
+*-v*, *--verbose*::
   Verbose. Print "wrote line _N_" to standard error as each scanline is written.
 
-*-h*, *-?*::
-  Print a usage message and exit.
+*-h*, *--help*::
+  Print help and exit.
 
 
 [[examples]]

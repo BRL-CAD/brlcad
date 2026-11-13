@@ -10,7 +10,8 @@ bwdiff - compare two black and white files
 
 [source]
 ----
-bwdiff [-b] [-m | -g | -l | -e | -n] file1 file2
+bwdiff [-b | --background] [-m | --magnitude | -g | --greater |
+       -l | --less | -e | --equal | -n | --not-equal] _file1_ _file2_
 ----
 
 
@@ -27,23 +28,26 @@ Note that this program also produces useful results on color *pix*(5) files.
 [[options]]
 == OPTIONS
 
-*-m*::
+*-m*, *--magnitude*::
 Calculates the magnitude of the difference. No offset or division is applied. Brighter pixels indicate larger differences in value, and black indicates no difference.
 
-*-g*::
+*-g*, *--greater*::
 Greater-than relational operation. Outputs a full-white (255) pixel if the value of the pixel in _file1_ is greater than the corresponding pixel in _file2_. Cannot be combined with other relational flags.
 
-*-l*::
+*-l*, *--less*::
 Less-than relational operation. Outputs a full-white (255) pixel if the value of the pixel in _file1_ is less than the corresponding pixel in _file2_. Cannot be combined with other relational flags.
 
-*-e*::
+*-e*, *--equal*::
 Equal-to relational operation. Outputs a full-white (255) pixel if the value of the pixel in _file1_ is equal to the corresponding pixel in _file2_. Cannot be combined with other relational flags.
 
-*-n*::
+*-n*, *--not-equal*::
 Not-equal-to relational operation. Outputs a full-white (255) pixel if the value of the pixel in _file1_ is not equal to the corresponding pixel in _file2_. Cannot be combined with other relational flags.
 
-*-b*::
+*-b*, *--background*::
 Sets the background to the corresponding pixels of _file1_ at a lowered intensity instead of the default black background. This option only applies when using one of the relational operation flags (*-g*, *-l*, *-e*, or *-n*).
+
+*-h*, *--help*::
+Print help and exit.
 
 
 [[examples]]

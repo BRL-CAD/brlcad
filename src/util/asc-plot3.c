@@ -26,15 +26,15 @@
 
 #include "common.h"
 
-#include <stdlib.h>
 #include <string.h>
-#include <ctype.h>
 #include "bio.h"
 
 #include "bv/plot3.h"
 
+#include "bu/arg.h"
 #include "bu/app.h"
 #include "bu/log.h"
+#include "bu/malloc.h"
 #include "bu/str.h"
 
 #define BUF_LEN 512
@@ -42,11 +42,33 @@
 #define FP_OUT 1
 
 
-static void
-printusage (void)
-{
-    bu_exit(1, "Usage: asc-plot3 [file.in [file.plot3]]\n");
-}
+struct asc_plot3_args {
+    int help;
+};
+
+static const struct bu_arg_option asc_plot3_options[] = {
+    BU_ARG_FLAG("h", "help", struct asc_plot3_args, help,
+	"Print help and exit"),
+    BU_ARG_ALIAS("?", NULL, "help", 1),
+    BU_ARG_OPTION_NULL
+};
+
+static const struct bu_arg_operand asc_plot3_operands[] = {
+    BU_ARG_OPERAND("input", BU_ARG_VALUE_FILE, 0, 1,
+	"ASCII input file (default: standard input)", NULL),
+    BU_ARG_OPERAND("output", BU_ARG_VALUE_FILE, 0, 1,
+	"PLOT3 output file (default: standard output)", NULL),
+    BU_ARG_OPERAND_NULL
+};
+
+static const struct bu_arg_schema asc_plot3_schema = BU_ARG_SCHEMA(
+    "asc-plot3", "Convert ASCII plot commands to binary PLOT3",
+    asc_plot3_options, asc_plot3_operands, BU_ARG_PARSE_OPTIONS_FIRST,
+    BU_ARG_SCHEMA_META_HELP(NULL, NULL, NULL, NULL, NULL));
+
+static const struct bu_arg_grammar asc_plot3_grammar = {
+    &asc_plot3_schema, NULL, NULL
+};
 
 
 static int
@@ -65,43 +87,52 @@ main (int argc, char **argv)
     char *bp = NULL;
     char buf[BUF_LEN] = {'\0'};
     char sarg[BUF_LEN] = {'\0'};
-    static const char *fm[] = { "rb", "wb" };
     double darg[6] = {0.0};
-    static FILE *fp[2];
-    int i =0;
+    FILE *fp[2] = {stdin, stdout};
     int iarg[6] = {0};
     int line_nm = 0;
     int nm_args = 0;
+    struct asc_plot3_args args = {0};
+    struct bu_vls msg = BU_VLS_INIT_ZERO;
 
     bu_setprogname(argv[0]);
 
-    if (argc > 1 &&
-	(BU_STR_EQUAL(argv[1], "-h") || BU_STR_EQUAL(argv[1], "-?"))) {
-	printusage();
+    int introspection = bu_arg_introspect(&msg, &asc_plot3_grammar, argc - 1,
+	(const char * const *)(argv + 1));
+    if (introspection != 0) {
+	bu_flog(introspection > 0 ? stdout : stderr, "%s", bu_vls_cstr(&msg));
+	bu_vls_free(&msg);
+	return introspection > 0 ? 0 : 1;
     }
-
-    /* Handle command-line syntax */
-    if (argc > 3) {
-	printusage();
+    int operand_index = bu_arg_schema_parse_complete(&asc_plot3_schema, &args,
+	&msg, argc - 1, (const char **)(argv + 1));
+    if (operand_index < 0)
+	bu_exit(1, "%s", bu_vls_cstr(&msg));
+    bu_vls_free(&msg);
+    if (args.help) {
+	char *help = bu_arg_schema_help(&asc_plot3_schema, "asc-plot3");
+	bu_flog(stdout, "%s", help ? help : "");
+	bu_free(help, "asc-plot3 help");
+	return 0;
     }
 
     setmode(fileno(stdin), O_BINARY);
     setmode(fileno(stdout), O_BINARY);
 
-    fp[0] = stdin;
-    fp[1] = stdout;
-    for (i = 0; (i < 2) && (--argc > 0); ++i) {
-	if ((**++argv == '-') && (*(*argv + 1) == '\0'))
-	    continue;
-	if ((fp[i] = fopen(*argv, fm[i])) == NULL) {
-	    bu_log("Cannot open file '%s'\n", *argv);
-	    printusage();
-	}
+    int operand_count = argc - operand_index - 1;
+    const char **operands = (const char **)(argv + operand_index + 1);
+    if (operand_count > 0 && !BU_STR_EQUAL(operands[0], "-")) {
+	fp[FP_IN] = fopen(operands[0], "rb");
+	if (!fp[FP_IN])
+	    bu_exit(1, "asc-plot3: cannot open '%s' for reading\n", operands[0]);
+    }
+    if (operand_count > 1 && !BU_STR_EQUAL(operands[1], "-")) {
+	fp[FP_OUT] = fopen(operands[1], "wb");
+	if (!fp[FP_OUT])
+	    bu_exit(1, "asc-plot3: cannot open '%s' for writing\n", operands[1]);
     }
     if (isatty(fileno(fp[FP_OUT]))) {
-	bu_log("%s: Will not write to a TTY\n", bu_getprogname());
-	printusage();
-	return 1;
+	bu_exit(1, "asc-plot3: will not write binary output to a terminal\n");
     }
 
     for (line_nm = 1; bu_fgets(buf, BUF_LEN - 1, fp[FP_IN]) != NULL; ++line_nm) {

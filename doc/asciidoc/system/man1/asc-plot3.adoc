@@ -10,7 +10,7 @@ asc-plot3 - produce Plot3 instructions from ASCII representation
 
 [source]
 ----
-asc-plot3 [-h] [-?] [file.in [file.plot3]]
+asc-plot3 [-h | --help] [_file.in_ [_file.plot3_]]
 ----
 
 
@@ -32,8 +32,8 @@ where _c_ is one of the single-character Plot3 command names, followed by white-
 [[options]]
 == OPTIONS
 
-*-h*, *-?*::
-    Print a usage message and exit.
+*-h*, *--help*::
+    Print help and exit.
 
 _file.in_::
     Input ASCII file containing plot3 instructions. If not specified or if '-' is specified, standard input is read.
