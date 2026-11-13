@@ -56,16 +56,18 @@ static const char usage[] =
     "Usage: bwdiff [-b -m -g -l -e -n] file1.bw file2.bw > diff.bw\n\t(use - for stdin, . for the null device)\n";
 
 void
-open_file(FILE **fp, char *name)
+open_file(FILE **fp, const char *name)
 {
     /* check for special names */
     if (BU_STR_EQUAL(name, "-")) {
 	*fp = stdin;
     } else if (BU_STR_EQUAL(name, ".")) {
 	*fp = fopen(bu_file_null(), "rb");
-    } else if ((*fp = fopen(name, "rb")) == NULL) {
-	bu_exit(2, "bwdiff: Can't open \"%s\"\n", name);
+    } else {
+	*fp = fopen(name, "rb");
     }
+    if (!*fp)
+	bu_exit(2, "bwdiff: Can't open \"%s\"\n", name);
 }
 
 
@@ -74,7 +76,6 @@ main(int argc, char **argv)
 {
     unsigned char *p1, *p2, *op;
     size_t i, n, m;
-    size_t ret;
 
     bu_setprogname(argv[0]);
     setmode(fileno(stdin), O_BINARY);
@@ -109,6 +110,8 @@ main(int argc, char **argv)
     while (1) {
 	n = fread(ibuf1, 1, 512, fp1);
 	m = fread(ibuf2, 1, 512, fp2);
+	if (ferror(fp1) || ferror(fp2))
+	    bu_exit(1, "bwdiff: error reading input\n");
 	if ((n == 0) && (m == 0))
 	    break;
 	p1 = &ibuf1[0];
@@ -188,12 +191,18 @@ main(int argc, char **argv)
 		}
 		break;
 	}
-	ret = fwrite(&obuf[0], 1, n, stdout);
-	if (ret == 0) {
-	    perror("fwrite");
-	    break;
-	}
+	if (fwrite(&obuf[0], 1, n, stdout) != n)
+	    bu_exit(1, "bwdiff: error writing output\n");
     }
+    int close_failed = 0;
+    if (fp1 != stdin && fclose(fp1) == EOF)
+	close_failed = 1;
+    if (fp2 != stdin && fclose(fp2) == EOF)
+	close_failed = 1;
+    if (close_failed)
+	bu_exit(1, "bwdiff: error closing input\n");
+    if (fflush(stdout) == EOF)
+	bu_exit(1, "bwdiff: error writing output\n");
     return 0;
 }
 
