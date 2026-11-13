@@ -10,7 +10,7 @@ plot3getframe - extract one frame from a multi-frame plot3 file
 
 [source]
 ----
-plot3getframe [-v] desired_frame < unix_plot > frame_plot
+plot3getframe [-v | --verbose] _desired_frame_ < _unix_plot_ > _frame_plot_
 ----
 
 
@@ -30,9 +30,12 @@ this program can process ordinary 2-D plot files as well.
 [[options]]
 == OPTIONS
 
-*-v*::
+*-v*, *--verbose*::
   Verbose. Print the number of each frame as it is counted, to standard
   error.
+
+*-h*, *--help*::
+  Print help and exit.
 
 
 [[examples]]

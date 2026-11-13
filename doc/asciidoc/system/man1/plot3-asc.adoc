@@ -10,7 +10,7 @@ plot3-asc - convert a binary plot3 stream to an editable ASCII listing
 
 [source]
 ----
-plot3-asc [-v] [unix_plot]
+plot3-asc [-v | --verbose] [_unix_plot_]
 ----
 
 
@@ -30,11 +30,14 @@ from standard input. The ASCII listing is written to standard output.
 [[options]]
 == OPTIONS
 
-*-v*::
+*-v*, *--verbose*::
   Verbose mode. Replace each single-character plot command with its mnemonic
   name (for example *move*, *line*, *space*, *color*) rather than the raw
   letter, and on completion write a summary of how many times each command was
   used to standard error.
+
+*-h*, *--help*::
+  Print help and exit.
 
 
 [[examples]]

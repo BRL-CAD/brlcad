@@ -26,16 +26,14 @@
 
 #include "common.h"
 
-#include <errno.h>
 #include <limits.h>
-#include <string.h>
-#include <stdlib.h>
 #include "bio.h"
 
-#include "bu/app.h"
 #include "bu/arg.h"
-#include "bu/str.h"
+#include "bu/app.h"
+#include "bu/exit.h"
 #include "bu/log.h"
+#include "bu/malloc.h"
 
 #define TBAD	0	/* no such command */
 #define TNONE	1	/* no arguments */
@@ -49,8 +47,8 @@ struct uplot {
     int narg;	/* number or args */
     const char *desc;	/* description */
 };
-struct uplot uerror = { 0, 0, 0 };
-struct uplot letters[] = {
+static const struct uplot uerror = { 0, 0, 0 };
+static const struct uplot letters[] = {
     /*A*/	{ 0, 0, 0 },
     /*B*/	{ 0, 0, 0 },
     /*C*/	{ TCHAR, 3, "color" },
@@ -112,41 +110,78 @@ struct uplot letters[] = {
 };
 
 
-int verbose;
-char buf[8*32];
+struct plot3getframe_args {
+    int help;
+    int verbose;
+};
+
+static const struct bu_arg_option plot3getframe_options[] = {
+    BU_ARG_FLAG("h", "help", struct plot3getframe_args, help,
+	"Print help and exit"),
+    BU_ARG_ALIAS("?", NULL, "help", 1),
+    BU_ARG_FLAG("v", "verbose", struct plot3getframe_args, verbose,
+	"Report frame numbers while scanning"),
+    BU_ARG_OPTION_NULL
+};
+
+static const struct bu_arg_operand plot3getframe_operands[] = {
+    BU_ARG_OPERAND_INTEGER_RANGE("frame", 1, 1, 1, 0, 1, INT_MAX,
+	"Zero-based frame number to extract", NULL),
+    BU_ARG_OPERAND_NULL
+};
+
+static const struct bu_arg_schema plot3getframe_schema = BU_ARG_SCHEMA(
+    "plot3getframe", "Extract one frame from a multi-frame PLOT3 stream",
+    plot3getframe_options, plot3getframe_operands, BU_ARG_PARSE_OPTIONS_FIRST,
+    BU_ARG_SCHEMA_META_HELP(NULL, NULL, NULL, NULL, NULL));
+
+static const struct bu_arg_grammar plot3getframe_grammar = {
+    &plot3getframe_schema, NULL, NULL
+};
 
 int
 main(int argc, char **argv)
 {
     int c;
-    struct uplot *up;
+    const struct uplot *up;
     int desired_frame = 0;
     int current_frame = 0;
     size_t ret;
+    char buf[8*32];
+    struct plot3getframe_args args = {0};
     struct bu_vls msg = BU_VLS_INIT_ZERO;
 
     bu_setprogname(argv[0]);
 
+    int introspection = bu_arg_introspect(&msg, &plot3getframe_grammar,
+	argc - 1, (const char * const *)(argv + 1));
+    if (introspection != 0) {
+	bu_flog(introspection > 0 ? stdout : stderr, "%s", bu_vls_cstr(&msg));
+	bu_vls_free(&msg);
+	return introspection > 0 ? 0 : 1;
+    }
+    int operand_index = bu_arg_schema_parse_complete(&plot3getframe_schema,
+	&args, &msg, argc - 1, (const char **)(argv + 1));
+    if (operand_index < 0)
+	bu_exit(1, "%s", bu_vls_cstr(&msg));
+    bu_vls_free(&msg);
+    if (args.help) {
+	char *help = bu_arg_schema_help(&plot3getframe_schema, "plot3getframe");
+	bu_flog(stdout, "%s", help ? help : "");
+	bu_free(help, "plot3getframe help");
+	return 0;
+    }
+
+    if (isatty(fileno(stdin)))
+	bu_exit(1, "plot3getframe requires redirected input\n");
+
     setmode(fileno(stdin), O_BINARY);
     setmode(fileno(stdout), O_BINARY);
 
-    while (argc > 1) {
-	if (BU_STR_EQUAL(argv[1], "-v")) {
-	    verbose++;
-	} else
-	    break;
-
-	argc--;
-	argv++;
-    }
-    if (argc != 2 || isatty(fileno(stdin))) {
-	bu_exit(1, "Usage: plot3getframe [-v] desired_frame < unix_plot\n");
-    }
-    if (!bu_arg_integer_range_from_str(&msg, &desired_frame, argv[1], 10, 0, INT_MAX)) {
-	bu_log("%s: %s\n", bu_getprogname(), bu_vls_cstr(&msg));
-	bu_vls_free(&msg);
-	return 1;
-    }
+    const char *frame = argv[operand_index + 1];
+    if (!bu_arg_integer_range_from_str(&msg, &desired_frame, frame, 10, 0,
+	INT_MAX))
+	bu_exit(1, "plot3getframe: frame: %s\n", bu_vls_cstr(&msg));
     bu_vls_free(&msg);
     current_frame = 0;
 
@@ -159,7 +194,7 @@ main(int argc, char **argv)
 	}
 	if (c == 'e') {
 	    current_frame++;
-	    if (verbose) {
+	    if (args.verbose) {
 		bu_log("%d, ", current_frame);
 	    }
 	    if (current_frame > desired_frame)

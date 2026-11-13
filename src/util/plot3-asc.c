@@ -26,14 +26,14 @@
 
 #include "common.h"
 
-#include <stdlib.h>
-#include <string.h>
 #include "bio.h"
 
+#include "bu/arg.h"
 #include "bu/app.h"
 #include "bu/cv.h"
-#include "bu/str.h"
 #include "bu/exit.h"
+#include "bu/log.h"
+#include "bu/malloc.h"
 
 
 #define TBAD	0	/* no such command */
@@ -48,8 +48,8 @@ struct uplot {
     int narg;	/* number or args */
     const char *desc;	/* description */
 };
-struct uplot uerror = { 0, 0, 0 };
-struct uplot letters[] = {
+static const struct uplot uerror = { 0, 0, 0 };
+static const struct uplot letters[] = {
     /*A*/	{ 0, 0, 0 },
     /*B*/	{ 0, 0, 0 },
     /*C*/	{ TCHAR, 3, "color" },
@@ -111,49 +111,85 @@ struct uplot letters[] = {
 };
 
 
-int verbose;
-long counts['z'-'A'+1];	/* for counting command usage */
-FILE *fp;
+static FILE *fp;
 
-void outchar(int n);
-void outstring(int n);
-void outshort(int n);
-void outfloat(int n);
+static void outchar(int n);
+static void outstring(int n);
+static void outshort(int n);
+static void outfloat(int n);
 
-static const char usage[] = "\
-Usage: plot3-asc [-v] [unix_plot]\n";
+struct plot3_asc_args {
+    int help;
+    int verbose;
+};
+
+static const struct bu_arg_option plot3_asc_options[] = {
+    BU_ARG_FLAG("h", "help", struct plot3_asc_args, help,
+	"Print help and exit"),
+    BU_ARG_ALIAS("?", NULL, "help", 1),
+    BU_ARG_FLAG("v", "verbose", struct plot3_asc_args, verbose,
+	"Print command names and a usage summary"),
+    BU_ARG_OPTION_NULL
+};
+
+static const struct bu_arg_operand plot3_asc_operands[] = {
+    BU_ARG_OPERAND("input", BU_ARG_VALUE_FILE, 0, 1,
+	"PLOT3 input file (default: standard input)", NULL),
+    BU_ARG_OPERAND_NULL
+};
+
+static const struct bu_arg_schema plot3_asc_schema = BU_ARG_SCHEMA(
+    "plot3-asc", "Convert binary PLOT3 commands to an ASCII listing",
+    plot3_asc_options, plot3_asc_operands, BU_ARG_PARSE_OPTIONS_FIRST,
+    BU_ARG_SCHEMA_META_HELP(NULL, NULL, NULL, NULL, NULL));
+
+static const struct bu_arg_grammar plot3_asc_grammar = {
+    &plot3_asc_schema, NULL, NULL
+};
 
 int
 main(int argc, char **argv)
 {
     int c;
-    struct uplot *up;
+    const struct uplot *up;
     int i;
+    long counts['z'-'A'+1] = {0};
+    struct plot3_asc_args args = {0};
+    struct bu_vls msg = BU_VLS_INIT_ZERO;
 
     bu_setprogname(argv[0]);
+
+    int introspection = bu_arg_introspect(&msg, &plot3_asc_grammar, argc - 1,
+	(const char * const *)(argv + 1));
+    if (introspection != 0) {
+	bu_flog(introspection > 0 ? stdout : stderr, "%s", bu_vls_cstr(&msg));
+	bu_vls_free(&msg);
+	return introspection > 0 ? 0 : 1;
+    }
+    int operand_index = bu_arg_schema_parse_complete(&plot3_asc_schema, &args,
+	&msg, argc - 1, (const char **)(argv + 1));
+    if (operand_index < 0)
+	bu_exit(1, "%s", bu_vls_cstr(&msg));
+    bu_vls_free(&msg);
+    if (args.help) {
+	char *help = bu_arg_schema_help(&plot3_asc_schema, "plot3-asc");
+	bu_flog(stdout, "%s", help ? help : "");
+	bu_free(help, "plot3-asc help");
+	return 0;
+    }
 
     setmode(fileno(stdin), O_BINARY);
     setmode(fileno(stdout), O_BINARY);
 
-    while (argc > 1) {
-	if (BU_STR_EQUAL(argv[1], "-v")) {
-	    verbose++;
-	} else
-	    break;
-
-	argc--;
-	argv++;
-    }
-    if (argc == 2) {
-	if ((fp = fopen(argv[1], "rb")) == NULL) {
-	    perror("plot3-asc");
-	    return 1;
-	}
+    if (argc - operand_index - 1 == 1) {
+	const char *path = argv[operand_index + 1];
+	fp = fopen(path, "rb");
+	if (!fp)
+	    bu_exit(1, "plot3-asc: cannot open '%s' for reading\n", path);
     } else {
 	fp = stdin;
-	if (argc > 1 || isatty(fileno(stdin))) {
-	    bu_exit(1, "%s", usage);
-	}
+	if (isatty(fileno(stdin)))
+	    bu_exit(1, "plot3-asc requires an input file or redirected input\n");
     }
 
     while ((c = getc(fp)) != EOF) {
@@ -170,7 +206,7 @@ main(int argc, char **argv)
 	    continue;
 	}
 
-	if (verbose) {
+	if (args.verbose) {
 	    counts[ c - 'A' ]++;
 	    printf("%s\t", up->desc);
 	} else {
@@ -199,7 +235,7 @@ main(int argc, char **argv)
 	putchar('\n');
     }
 
-    if (verbose) {
+    if (args.verbose) {
 	/* write command usage summary */
 	for (i = 0; i < 'z'-'A'+1; i++) {
 	    if (counts[i] != 0) {
@@ -211,7 +247,7 @@ main(int argc, char **argv)
 }
 
 
-void
+static void
 outchar(int n)
 {
     int i, c;
@@ -225,7 +261,7 @@ outchar(int n)
 }
 
 
-void
+static void
 outstring(int UNUSED(n))
 {
     int c;
@@ -237,7 +273,7 @@ outstring(int UNUSED(n))
 }
 
 
-short
+static short
 getshort(void)
 {
     long v, w;
@@ -253,7 +289,7 @@ getshort(void)
 }
 
 
-void
+static void
 outshort(int n)
 {
     int i;
@@ -268,7 +304,7 @@ outshort(int n)
 }
 
 
-void
+static void
 outfloat(int n)
 {
     int i;
