@@ -1,4 +1,4 @@
-brlcad_addexec(gcv gcv.c "libgcv;libbn;libbu;${M_LIBRARY}" FOLDER Conv)
+brlcad_addexec(gcv gcv.c "libgcv;libbn;libbu;${M_LIBRARY}" FOLDER Conv ARG_SCHEMA)
 add_dependencies(gcv gcv_plugins)
 
 cmakefiles(gcv.sh)

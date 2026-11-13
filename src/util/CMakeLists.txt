@@ -28,7 +28,7 @@ brlcad_addexec(ap-pix ap-pix.c libbu FOLDER Util)
 brlcad_addexec(asc-plot3 asc-plot3.c "libbv;libbn;libbu" FOLDER Util)
 brlcad_addexec(bw-a bw-a.c "libdm;libbu" FOLDER Util)
 add_target_deps(bw-a dm_plugins)
-brlcad_addexec(bw-pix bw-pix.c "libbu;libicv" FOLDER Util)
+brlcad_addexec(bw-pix bw-pix.c "libbu;libicv" FOLDER Util ARG_SCHEMA)
 brlcad_addexec(bw-png bw-png.c "libdm;libbu;PNG::PNG" FOLDER Util)
 target_include_directories(bw-png BEFORE PRIVATE ${PNG_INCLUDE_DIRS})
 add_target_deps(bw-png dm_plugins)
@@ -56,11 +56,11 @@ brlcad_addexec(halftone halftone.c "librt;libdm;libbu" FOLDER Util)
 add_target_deps(halftone dm_plugins)
 
 # This is intended to replace all of the img-img utils eventually
-brlcad_addexec(icv icv.cpp "libicv;libbu" FOLDER Util)
+brlcad_addexec(icv icv.cpp "libicv;libbu" FOLDER Util ARG_SCHEMA)
 
 # Should (eventually) have the pixdiff functionality, but be more
 # flexible about input and output formats...
-brlcad_addexec(imgdiff imgdiff.cpp "libicv;libbu" FOLDER Util)
+brlcad_addexec(imgdiff imgdiff.cpp "libicv;libbu" FOLDER Util ARG_SCHEMA)
 
 brlcad_addexec(imgdims imgdims.c "libdm;libbu" FOLDER Util)
 add_target_deps(imgdims dm_plugins)

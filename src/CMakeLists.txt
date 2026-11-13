@@ -32,55 +32,26 @@ else(BRLCAD_COMPONENTS)
   endforeach(od ${ordered_dirs})
 endif(BRLCAD_COMPONENTS)
 
-# Keep command schemas and their manual pages synchronized from one central
-# registry.  Individual executable directories only declare their targets;
-# documentation coverage belongs to the repository-wide audit.
+# Keep registered command schemas and their manual pages synchronized.
+# BRLCAD_ADDEXEC records schema-capable targets as they are declared; tests are
+# created here after all source subdirectories and the argdoc target exist.
 if(BUILD_TESTING AND TARGET argdoc AND NOT CMAKE_CROSSCOMPILING)
-  set(
-    bu_arg_documented_targets
-    3dm-g
-    asc2dsp
-    brlman
-    bw-pix
-    g-iges
-    g-obj
-    g2asc
-    gchecker
-    gcv
-    gdiff
-    gex
-    gltf-g
-    gsh
-    g-step
-    icv
-    iges-g
-    imgdiff
-    mged
-    mkbuilding
-    naca456
-    nirt
-    rtwizard
-    step-g
-  )
-  foreach(arg_target ${bu_arg_documented_targets})
-    if(TARGET ${arg_target})
-      string(REPLACE "-" "_" arg_test_name ${arg_target})
+  get_property(bu_arg_targets GLOBAL PROPERTY BRLCAD_ARG_SCHEMA_TARGETS)
+  list(REMOVE_DUPLICATES bu_arg_targets)
+  list(SORT bu_arg_targets)
+  foreach(arg_target ${bu_arg_targets})
+    string(REPLACE "-" "_" arg_test_name ${arg_target})
+    set(arg_man_page "${CMAKE_SOURCE_DIR}/doc/asciidoc/system/man1/${arg_target}.adoc")
+    if(EXISTS "${arg_man_page}")
       brlcad_add_test(
         NAME argdoc_${arg_test_name}
         COMMAND
           "$<TARGET_FILE:argdoc>" --check
-          --man-page "${CMAKE_SOURCE_DIR}/doc/asciidoc/system/man1/${arg_target}.adoc"
+          --man-page "${arg_man_page}"
           -- "$<TARGET_FILE:${arg_target}>" --command-schema
       )
       set_tests_properties(argdoc_${arg_test_name} PROPERTIES TIMEOUT 30)
-    endif()
-  endforeach()
-
-  # These executables publish schemas for tooling, but intentionally have no
-  # standalone manual page: brep-audit is not installed and qged is a GUI.
-  foreach(arg_target brep-audit qged)
-    if(TARGET ${arg_target})
-      string(REPLACE "-" "_" arg_test_name ${arg_target})
+    else()
       brlcad_add_test(
         NAME argdoc_${arg_test_name}_schema
         COMMAND "$<TARGET_FILE:argdoc>" --render -- "$<TARGET_FILE:${arg_target}>" --command-schema

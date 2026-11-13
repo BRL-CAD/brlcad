@@ -83,7 +83,7 @@ if(BRLCAD_ENABLE_TCL)
     ${TK_INCLUDE_PATH}
     ${BRLCAD_X11_INCLUDE_DIRS}
   )
-  brlcad_addexec(mged "${MGED_SOURCES}" "${mged_libs}")
+  brlcad_addexec(mged "${MGED_SOURCES}" "${mged_libs}" ARG_SCHEMA)
   if(TK_LIBRARY)
     target_compile_definitions(mged PRIVATE HAVE_TK=1)
   endif(TK_LIBRARY)

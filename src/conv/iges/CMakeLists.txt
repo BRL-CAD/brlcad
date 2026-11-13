@@ -1,5 +1,5 @@
-brlcad_addexec(iges-g iges-g.cpp gcv_iges_core FOLDER Conv)
-brlcad_addexec(g-iges g-iges.cpp gcv_iges_core FOLDER Conv)
+brlcad_addexec(iges-g iges-g.cpp gcv_iges_core FOLDER Conv ARG_SCHEMA)
+brlcad_addexec(g-iges g-iges.cpp gcv_iges_core FOLDER Conv ARG_SCHEMA)
 
 cmakefiles(CMakeLists.txt)
 

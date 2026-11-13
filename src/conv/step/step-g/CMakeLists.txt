@@ -502,7 +502,7 @@ if(BRLCAD_ENABLE_STEP)
 
   step_use_import_common_objects(stepg_TARGET_SOURCES stepg_SOURCES)
   step_record_schema_sources(AP203 IMPORT stepg_TARGET_SOURCES)
-  brlcad_addexec(step-g "../StepImportHost.cpp" "libbu" NO_STRICT FOLDER Conv
+  brlcad_addexec(step-g "../StepImportHost.cpp" "libbu" NO_STRICT FOLDER Conv ARG_SCHEMA
     # Entity source files each define CLASSNAME and ENTITYNAME macros.  Undef
     # them before each file's include so they don't collide when the unity
     # build batches multiple entity files into one compilation unit.

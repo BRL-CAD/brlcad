@@ -8,7 +8,7 @@ set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS ${CMAKE_CURRENT_S
 file(READ ${CMAKE_CURRENT_SOURCE_DIR}/building.schema.json building_schema_json)
 configure_file(building_schema.h.in ${CMAKE_CURRENT_BINARY_DIR}/building_schema.h @ONLY)
 
-brlcad_addexec(mkbuilding "${building_srcs}" "libwdb;${M_LIBRARY}" FOLDER Shapes)
+brlcad_addexec(mkbuilding "${building_srcs}" "libwdb;${M_LIBRARY}" FOLDER Shapes ARG_SCHEMA)
 target_include_directories(mkbuilding PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
 
 brlcad_add_test(
