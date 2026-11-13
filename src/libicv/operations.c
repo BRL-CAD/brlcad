@@ -147,6 +147,21 @@ int icv_pow_val(icv_image_t* img, double val)
     return 0;
 }
 
+/* Preserve explicit unbounded arithmetic for HDR inputs while retaining the
+ * established display-range behavior when neither input requests it. */
+static icv_image_t *
+icv_finish_arithmetic(icv_image_t *out, const icv_image_t *left, const icv_image_t *right)
+{
+    if ((left->flags | right->flags) & ICV_OPERATIONS_MODE) {
+	out->flags |= ICV_OPERATIONS_MODE;
+	out->flags &= ~ICV_SANITIZED;
+    } else {
+	icv_sanitize(out);
+    }
+    return out;
+}
+
+
 icv_image_t *icv_add(icv_image_t *img1, icv_image_t *img2)
 {
     double *data1, *data2, *out_data;
@@ -173,9 +188,7 @@ icv_image_t *icv_add(icv_image_t *img1, icv_image_t *img2)
     for (size = img1->width*img1->height*img1->channels; size>0; size--)
 	*out_data++ = *data1++ + *data2++;
 
-    icv_sanitize(out_img);
-
-    return out_img;
+    return icv_finish_arithmetic(out_img, img1, img2);
 }
 
 icv_image_t *icv_sub(icv_image_t *img1, icv_image_t *img2)
@@ -204,9 +217,7 @@ icv_image_t *icv_sub(icv_image_t *img1, icv_image_t *img2)
     for (size = img1->width*img1->height*img1->channels; size>0; size--)
 	*out_data++ = *data1++ - *data2++;
 
-    icv_sanitize(out_img);
-
-    return out_img;
+    return icv_finish_arithmetic(out_img, img1, img2);
 }
 
 icv_image_t *icv_multiply(icv_image_t *img1, icv_image_t *img2)
@@ -235,9 +246,7 @@ icv_image_t *icv_multiply(icv_image_t *img1, icv_image_t *img2)
     for (size = img1->width*img1->height*img1->channels; size>0; size--)
 	*out_data++ = *data1++ * *data2++;
 
-    icv_sanitize(out_img);
-
-    return out_img;
+    return icv_finish_arithmetic(out_img, img1, img2);
 }
 
 
@@ -267,9 +276,7 @@ icv_image_t *icv_divide(icv_image_t *img1, icv_image_t *img2)
     for (size = img1->width*img1->height*img1->channels; size>0; size--)
 	*out_data++ = *data1++ / (*data2++ + VDIVIDE_TOL);
 
-    icv_sanitize(out_img);
-
-    return out_img;
+    return icv_finish_arithmetic(out_img, img1, img2);
 }
 
 int icv_saturate(icv_image_t* img, double sat)

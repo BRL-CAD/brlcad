@@ -216,7 +216,7 @@ set(CMAKE_FIND_USE_PACKAGE_REGISTRY FALSE)
 # Prepare to manage and build BRL-CAD's external dependencies. Specifies a
 # specific commit hash to use in the 'bext' repository.
 include(BRLCAD_ExternalDeps)
-brlcad_bext_init(7371cff1783a9baf670ef965e2b53c5ffe34e85b)
+brlcad_bext_init(61f76df70eeb09add9dc1e1e5afe142becc082b8)
 
 #---------------------------------------------------------------------
 # Define various utilities.
@@ -3166,6 +3166,10 @@ foreach(_brlcad_dep ZLIB LMDB MANIFOLD MMESH REGEX STRUETYPE PNG NETPBM OPENNURB
 endforeach()
 
 set(BRLCAD_FIND_DEP_JPEG "find_dependency(JPEG)")
+set(BRLCAD_FIND_DEP_OPENEXR "")
+if(TARGET libicv)
+  set(BRLCAD_FIND_DEP_OPENEXR "find_dependency(OpenEXR 3.5 CONFIG)")
+endif()
 
 set(BRLCAD_HAVE_TCL FALSE)
 if(BRLCAD_ENABLE_TCL)

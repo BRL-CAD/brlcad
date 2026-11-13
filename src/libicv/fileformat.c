@@ -124,6 +124,7 @@ icv_guess_file_format(const char *filename, struct bu_vls *trimmedname)
 	{"BMP:", BU_MIME_IMAGE_BMP},
 	{"BW:", BU_MIME_IMAGE_BW},
 	{"DPIX:", BU_MIME_IMAGE_DPIX},
+	{"EXR:", BU_MIME_IMAGE_EXR},
 	{"RLE:", BU_MIME_IMAGE_RLE}
     };
     struct bu_vls ext = BU_VLS_INIT_ZERO;
@@ -185,6 +186,9 @@ icv_read(const char *filename, bu_mime_image_t format, size_t width, size_t heig
 
     icv_image_t *oimg = NULL;
     switch (format) {
+	case BU_MIME_IMAGE_EXR:
+	    oimg = exr_read(fp);
+	    break;
 	case BU_MIME_IMAGE_PNG:
 	    oimg = png_read(fp);
 	    break;
@@ -233,6 +237,9 @@ icv_read_mem(const unsigned char *buffer, size_t size, bu_mime_image_t format, s
 
     icv_image_t *oimg = NULL;
     switch (format) {
+	case BU_MIME_IMAGE_EXR:
+	    oimg = exr_read_mem(buffer, size);
+	    break;
 	case BU_MIME_IMAGE_JPEG:
 	    oimg = jpeg_read_mem(buffer, size);
 	    break;
@@ -285,9 +292,15 @@ icv_write(icv_image_t *bif, const char *filename, bu_mime_image_t format)
 	return BRLCAD_ERROR;
     }
 
+    if (!ofname)
+	setmode(fileno(fp), O_BINARY);
+
     switch (format) {
 	/* case BU_MIME_IMAGE_BMP:
 	   return bmp_write(bif, ofname); */
+	case BU_MIME_IMAGE_EXR:
+	    ret = exr_write(bif, fp);
+	    break;
 	case BU_MIME_IMAGE_PPM:
 	    ret = ppm_write(bif, fp);
 	    break;
@@ -341,6 +354,9 @@ icv_write_mem(icv_image_t *bif, unsigned char **buffer, size_t *size, bu_mime_im
     ICV_IMAGE_VAL_INT(bif);
 
     switch (format) {
+	case BU_MIME_IMAGE_EXR:
+	    ret = exr_write_mem(bif, buffer, size);
+	    break;
 	case BU_MIME_IMAGE_JPEG:
 	    ret = jpeg_write_mem(bif, buffer, size, 90);
 	    break;

@@ -64,6 +64,12 @@ extern icv_image_t *jpeg_read_mem(const unsigned char *buffer, size_t size);
 extern int jpeg_write(icv_image_t *bif, FILE *fp, int quality);
 extern int jpeg_write_mem(icv_image_t *bif, unsigned char **outbuffer, size_t *outsize, int quality);
 
+/* defined in exr.cpp */
+extern icv_image_t *exr_read(FILE *fp);
+extern icv_image_t *exr_read_mem(const unsigned char *buffer, size_t size);
+extern int exr_write(icv_image_t *image, FILE *fp);
+extern int exr_write_mem(icv_image_t *image, unsigned char **buffer, size_t *size);
+
 /* defined in png.cpp */
 extern icv_image_t* png_read(FILE *fp);
 extern icv_image_t* png_read_mem(const unsigned char *buffer, size_t size);

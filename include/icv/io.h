@@ -95,6 +95,16 @@ ICV_EXPORT extern int icv_image_size(const char *label, size_t dpi, size_t data_
  * The data is packed in icv_image struct in double format with varied
  * channels as per the specification of image to be loaded.
  *
+ * EXR reads support flat, single-part RGB(A) and Y(A) images, including tiled
+ * input and offset data windows. Samples are stored bottom-up as doubles,
+ * retaining HDR values and alpha without gamma or alpha-association conversion.
+ * The data window becomes the image extent; display-window and other EXR
+ * metadata are not retained. Auxiliary, subsampled, multipart, and deep data
+ * require a richer representation and are rejected rather than discarded.
+ * Imported EXR images enable ICV_OPERATIONS_MODE to retain unclamped arithmetic.
+ * ICV_COLOR_SPACE identifies channel layout, not EXR chromaticities or a
+ * complete color-management description; callers must interpret raw samples.
+ *
  * To read stream from stdin pass NULL pointer for filename.
  *
  * In case of bw and pix image if size is unknown pass 0 for width and
@@ -132,6 +142,11 @@ ICV_EXPORT extern icv_image_t *icv_read_mem(const unsigned char *buffer, size_t 
  * Writers do not modify the input image. If a format requires a different
  * channel layout, conversion is performed on a temporary image; alpha is
  * dropped only for formats that cannot represent it.
+ *
+ * EXR output uses lossless ZIP compression and FLOAT channels. Values outside
+ * finite FLOAT range are rejected; double-to-float rounding is otherwise the
+ * only sample conversion. No gamma or alpha-association conversion is applied.
+ * File and memory APIs have the same EXR behavior.
  *
  * @param bif Image structure of file.
  * @param filename Filename of the file to be written.
