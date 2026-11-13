@@ -163,7 +163,7 @@ main (int argc, char **argv)
     }
 
     if ((stat(argument, &stat_buf) != 0)
-	&& (!grab_number(argument, &nm_bytes)))
+	&& (!grab_number(argv[bu_optind], &nm_bytes)))
     {
 	bu_log("Cannot find file '%s'\n", argument);
 	bu_free(argument, "argument realpath");
