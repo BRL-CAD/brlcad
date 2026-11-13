@@ -10,7 +10,7 @@ ddisp - plot a stream of doubles on a framebuffer
 
 [source]
 ----
-ddisp [-v] [-b] [-p] [-c] [-H] [width] < input.doubles
+ddisp [-v | -b] [-p] [-c] [width] < input.doubles
 ----
 
 
@@ -37,26 +37,26 @@ usage and exits.
 [[options]]
 == OPTIONS
 
-*-v*::
+*-v*, *--vertical*::
   Vertical (point) plot mode. Each value is plotted as a single green pixel
   whose height above or below the center row is proportional to its value.
-  This option also disables pausing and clearing.
+  This option cannot be combined with *--bars*.
 
-*-b*::
+*-b*, *--bars*::
   Bar graph mode. Like *-v*, but draws a solid green vertical bar from the
   center row out to each value, clamped to the +/- 128 pixel range.
+  This option cannot be combined with *--vertical*.
 
-*-p*::
+*-p*, *--pause*::
   Pause for 3 seconds after drawing each record. Useful for animating
   successive records frame by frame.
 
-*-c*::
+*-c*, *--clear*::
   Clear the framebuffer before drawing each record. Most useful with *-v* or
   *-b* to produce a clean animation of each frame.
 
-*-H*::
-  Print the usage message and exit. The *-h* and *-?* flags behave the same
-  way.
+*-h*, *-H*, *-?*, *--help*::
+  Print command help and exit.
 
 _width_::
   Number of input values in each display record. Must be an integer from 1
