@@ -26,104 +26,133 @@
 
 #include "common.h"
 
-#include <stdlib.h>
-#include <ctype.h>
 #include <string.h>
 
 #include "bio.h"
 
+#include "bu/arg.h"
 #include "bu/app.h"
-#include "bu/str.h"
 #include "bu/exit.h"
+#include "bu/malloc.h"
 #include "dm.h"
 
 
-long bin[256];
-int verbose = 0;
-struct fb *fbp;
+#define FRAMEBUFFER_DIMENSION 512
+#define HISTOGRAM_BINS 256
+#define INPUT_BUFFER_SIZE 512
+#define RGB_CHANNEL_COUNT 3
 
-static const char *Usage = "Usage: bwhist [-v] [file.bw]\n";
+struct bwhist_args {
+    int help;
+    int verbose;
+};
+
+static const struct bu_arg_option bwhist_options[] = {
+    BU_ARG_FLAG("h", "help", struct bwhist_args, help,
+	"Print help and exit"),
+    BU_ARG_ALIAS("?", NULL, "help", 1),
+    BU_ARG_FLAG("v", "verbose", struct bwhist_args, verbose,
+	"Print counts and relative frequencies"),
+    BU_ARG_OPTION_NULL
+};
+
+static const struct bu_arg_operand bwhist_operands[] = {
+    BU_ARG_OPERAND("input", BU_ARG_VALUE_FILE, 0, 1,
+	"BW input file (default: standard input)", NULL),
+    BU_ARG_OPERAND_NULL
+};
+
+static const struct bu_arg_schema bwhist_schema = BU_ARG_SCHEMA(
+    "bwhist", "Display a BW intensity histogram on a framebuffer",
+    bwhist_options, bwhist_operands, BU_ARG_PARSE_OPTIONS_FIRST,
+    BU_ARG_SCHEMA_META_HELP(NULL, NULL, NULL, NULL, NULL));
+
+static const struct bu_arg_grammar bwhist_grammar = {
+    &bwhist_schema, NULL, NULL
+};
 
 
 int
 main(int argc, char **argv)
 {
-    size_t i;
-    size_t n;
-    long max;
-    static double scale;
-    unsigned char buf[512];
-    unsigned char *bp;
-    unsigned char white[3*512];
-    FILE *fp;
+    long histogram[HISTOGRAM_BINS] = {0};
+    unsigned char input[INPUT_BUFFER_SIZE];
+    unsigned char white[RGB_CHANNEL_COUNT * FRAMEBUFFER_DIMENSION];
+    FILE *input_file = stdin;
+    struct bwhist_args args = {0};
+    struct bu_vls msg = BU_VLS_INIT_ZERO;
 
     bu_setprogname(argv[0]);
-    setmode(fileno(stdin), O_BINARY);
+
+    int introspection = bu_arg_introspect(&msg, &bwhist_grammar, argc - 1,
+	(const char * const *)(argv + 1));
+    if (introspection != 0) {
+	bu_flog(introspection > 0 ? stdout : stderr, "%s", bu_vls_cstr(&msg));
+	bu_vls_free(&msg);
+	return introspection > 0 ? 0 : 1;
+    }
+    int operand_index = bu_arg_schema_parse_complete(&bwhist_schema, &args,
+	&msg, argc - 1, (const char **)(argv + 1));
+    if (operand_index < 0)
+	bu_exit(1, "%s", bu_vls_cstr(&msg));
+    bu_vls_free(&msg);
+    if (args.help) {
+	char *help = bu_arg_schema_help(&bwhist_schema, "bwhist");
+	bu_flog(stdout, "%s", help ? help : "");
+	bu_free(help, "bwhist help");
+	return 0;
+    }
+
+    if (argc - operand_index - 1 == 1) {
+	const char *path = argv[operand_index + 1];
+	input_file = fopen(path, "rb");
+	if (!input_file)
+	    bu_exit(1, "bwhist: cannot open '%s' for reading\n", path);
+    } else if (isatty(fileno(stdin))) {
+	bu_exit(1, "bwhist requires an input file or redirected input\n");
+    }
+
+    setmode(fileno(input_file), O_BINARY);
     setmode(fileno(stdout), O_BINARY);
 
-    if (argc > 1 &&
-	(BU_STR_EQUAL(argv[1], "-h") || BU_STR_EQUAL(argv[1], "-?")))
-	bu_exit(1, "%s", Usage);
-
-    /* check for verbose flag */
-    if (argc > 1 && BU_STR_EQUAL(argv[1], "-v")) {
-	verbose++;
-	argv++;
-	argc--;
+    size_t count;
+    while ((count = fread(input, 1, sizeof(input), input_file)) > 0) {
+	for (size_t index = 0; index < count; index++)
+	    histogram[input[index]]++;
     }
-
-    /* look for optional input file */
-    if (argc > 1) {
-	if ((fp = fopen(argv[1], "rb")) == 0) {
-	    bu_exit(1, "bwhist: can't open '%s'\n", argv[1]);
-	}
-	argv++;
-	argc--;
-    } else {
-	fp = stdin;
-    }
-    /* check usage */
-    if (argc > 1 || isatty(fileno(fp)))
-	bu_exit(1, "%s", Usage);
-
-    for (i = 0; i < 3*512; i++)
-	white[i] = 255;
-
-    while ((n = fread(buf, sizeof(*buf), sizeof(buf), fp)) > 0) {
-	bp = &buf[0];
-	for (i = 0; i < n; i++)
-	    bin[ *bp++ ]++;
-    }
-    if (ferror(fp))
+    if (ferror(input_file))
 	bu_exit(1, "bwhist: error reading input\n");
-    if (fp != stdin && fclose(fp) == EOF)
+    if (input_file != stdin && fclose(input_file) == EOF)
 	bu_exit(1, "bwhist: error closing input\n");
 
-    /* find max */
-    max = 1;
-    for (i = 0; i < 256; i++)
-	if (bin[i] > max) max = bin[i];
-    scale = 511.0 / (double)max;
+    long maximum = 1;
+    for (size_t index = 0; index < HISTOGRAM_BINS; index++) {
+	if (histogram[index] > maximum)
+	    maximum = histogram[index];
+    }
+    double scale = (FRAMEBUFFER_DIMENSION - 1) / (double)maximum;
 
-    /* Display the max? */
-    printf("Full screen = %ld pixels\n", max);
+    printf("Full screen = %ld pixels\n", maximum);
+    memset(white, 255, sizeof(white));
 
-    if ((fbp = fb_open(NULL, 512, 512)) == NULL) {
-	bu_exit(12, "fb_open failed\n");
+    struct fb *framebuffer = fb_open(NULL, FRAMEBUFFER_DIMENSION,
+	FRAMEBUFFER_DIMENSION);
+    if (!framebuffer)
+	bu_exit(12, "bwhist: framebuffer open failed\n");
+
+    for (size_t index = 0; index < HISTOGRAM_BINS; index++) {
+	int value = (int)(histogram[index] * scale);
+	if (value == 0 && histogram[index] != 0)
+	    value = 1;
+	fb_write(framebuffer, 0, (int)(2 * index), white, value);
+	fb_write(framebuffer, 0, (int)(2 * index + 1), white, value);
+	if (args.verbose) {
+	    printf("%3zu: %10ld (%10f)\n", index, histogram[index],
+		(double)histogram[index] / (double)maximum);
+	}
     }
 
-    /* Display them */
-    for (i = 0; i < 256; i++) {
-	int value;
-	value = bin[i]*scale;
-	if (value == 0 && bin[i] != 0) value = 1;
-	fb_write(fbp, 0, 2*i, white, value);
-	fb_write(fbp, 0, 2*i+1, white, value);
-	if (verbose)
-	    printf("%3lu: %10ld (%10f)\n", (long unsigned)i, bin[i], (float)bin[i]/(float)max);
-    }
-
-    fb_close(fbp);
+    fb_close(framebuffer);
     return 0;
 }
 

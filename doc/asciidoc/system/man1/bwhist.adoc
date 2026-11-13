@@ -10,7 +10,7 @@ bwhist - display a histogram of a black and white bw file on a framebuffer
 
 [source]
 ----
-bwhist [-v] [file.bw]
+bwhist [-v|--verbose] [file.bw]
 ----
 
 
@@ -25,13 +25,12 @@ The relative frequency of each pixel value is drawn as a horizontal bar of white
 [[options]]
 == OPTIONS
 
-*-v*::
+*-v*, *--verbose*::
   Verbose: in addition to displaying the histogram, print each pixel value, its
-  count, and its relative frequency to standard output. Must appear before the
-  optional file argument.
+  count, and its relative frequency to standard output.
 
-*-h*, *-?*::
-  Print a usage summary and exit.
+*-h*, *--help*::
+  Print help and exit.  *-?* is accepted as a compatibility alias.
 
 
 [[examples]]
