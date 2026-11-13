@@ -2850,6 +2850,44 @@ include/ged/objects.h: #define GED_DB_GET_INTERNAL(_gedp, _intern, _dp, _mat, _r
 include/ged/objects.h: #define GED_DB_PUT_INTERNAL(_gedp, _dp, _intern, _resource, _flags) \
 include/ged/objects.h: #define GED_DB_GET_INTERN(_gedp, _intern, _dp, _mat, _flags) \
 include/ged/objects.h: #define GED_DB_PUT_INTERN(_gedp, _dp, _intern, _flags) \
+include/ged/scene.h: GED_EXPORT void ged_scene_style_init(struct ged_scene_style *style);
+include/ged/scene.h: GED_EXPORT void ged_scene_realization_policy_init( struct ged_scene_realization_policy *policy);
+include/ged/scene.h: GED_EXPORT void ged_scene_draw_request_init( struct ged_scene_draw_request *request);
+include/ged/scene.h: GED_EXPORT void ged_scene_erase_request_init( struct ged_scene_erase_request *request);
+include/ged/scene.h: GED_EXPORT void ged_scene_redraw_request_init( struct ged_scene_redraw_request *request);
+include/ged/scene.h: GED_EXPORT struct ged_scene_result *ged_scene_result_create(void);
+include/ged/scene.h: GED_EXPORT void ged_scene_result_clear(struct ged_scene_result *result);
+include/ged/scene.h: GED_EXPORT void ged_scene_result_destroy(struct ged_scene_result *result);
+include/ged/scene.h: GED_EXPORT enum ged_scene_status ged_scene_result_status( const struct ged_scene_result *result);
+include/ged/scene.h: GED_EXPORT int ged_scene_result_changed( const struct ged_scene_result *result);
+include/ged/scene.h: GED_EXPORT size_t ged_scene_result_path_count( const struct ged_scene_result *result);
+include/ged/scene.h: GED_EXPORT const char *ged_scene_result_path_at( const struct ged_scene_result *result, size_t index);
+include/ged/scene.h: GED_EXPORT size_t ged_scene_result_group_count( const struct ged_scene_result *result);
+include/ged/scene.h: GED_EXPORT size_t ged_scene_result_shape_count( const struct ged_scene_result *result);
+include/ged/scene.h: GED_EXPORT size_t ged_scene_result_conflict_count( const struct ged_scene_result *result);
+include/ged/scene.h: GED_EXPORT uint64_t ged_scene_result_revision_before( const struct ged_scene_result *result);
+include/ged/scene.h: GED_EXPORT uint64_t ged_scene_result_revision_after( const struct ged_scene_result *result);
+include/ged/scene.h: GED_EXPORT const char *ged_scene_result_diagnostic( const struct ged_scene_result *result);
+include/ged/scene.h: GED_EXPORT enum ged_scene_status ged_scene_draw( struct ged *gedp, const struct ged_scene_draw_request *request, struct ged_scene_result *result);
+include/ged/scene.h: GED_EXPORT enum ged_scene_status ged_scene_erase( struct ged *gedp, const struct ged_scene_erase_request *request, struct ged_scene_result *result);
+include/ged/scene.h: GED_EXPORT enum ged_scene_status ged_scene_redraw( struct ged *gedp, const struct ged_scene_redraw_request *request, struct ged_scene_result *result);
+include/ged/scene.h: GED_EXPORT uint64_t ged_scene_revision(const struct ged *gedp);
+include/ged/scene.h: GED_EXPORT int ged_scene_available(const struct ged *gedp);
+include/ged/scene.h: GED_EXPORT enum ged_scene_path_state ged_scene_path_state_get( struct ged *gedp, ged_view_context *view, const char *path, enum ged_scene_draw_mode mode);
+include/ged/scene.h: GED_EXPORT enum ged_scene_path_state ged_scene_path_state_ids( struct ged *gedp, ged_view_context *view, const unsigned long long *ids, size_t count, enum ged_scene_draw_mode mode);
+include/ged/scene.h: GED_EXPORT enum ged_scene_delta_kind ged_scene_delta_kind( const struct ged_scene_delta *delta);
+include/ged/scene.h: GED_EXPORT ged_view_context *ged_scene_delta_view( const struct ged_scene_delta *delta);
+include/ged/scene.h: GED_EXPORT size_t ged_scene_delta_path_count( const struct ged_scene_delta *delta);
+include/ged/scene.h: GED_EXPORT const char *ged_scene_delta_path_at( const struct ged_scene_delta *delta, size_t index);
+include/ged/scene.h: GED_EXPORT int ged_scene_delta_affects_all( const struct ged_scene_delta *delta);
+include/ged/scene.h: GED_EXPORT size_t ged_scene_delta_group_count( const struct ged_scene_delta *delta);
+include/ged/scene.h: GED_EXPORT size_t ged_scene_delta_shape_count( const struct ged_scene_delta *delta);
+include/ged/scene.h: GED_EXPORT int ged_scene_delta_is_presentation_only( const struct ged_scene_delta *delta);
+include/ged/scene.h: GED_EXPORT uint64_t ged_scene_delta_revision_before( const struct ged_scene_delta *delta);
+include/ged/scene.h: GED_EXPORT uint64_t ged_scene_delta_revision_after( const struct ged_scene_delta *delta);
+include/ged/scene.h: GED_EXPORT const char *ged_scene_delta_diagnostic( const struct ged_scene_delta *delta);
+include/ged/scene.h: GED_EXPORT ged_scene_observer_token ged_scene_observer_add( struct ged *gedp, ged_scene_observer_func_t callback, void *client_data);
+include/ged/scene.h: GED_EXPORT int ged_scene_observer_remove( struct ged *gedp, ged_scene_observer_token token);
 include/ged/selection.h: GED_EXPORT extern int ged_selection_state_available(struct ged *gedp);
 include/ged/selection.h: GED_EXPORT extern int ged_selection_batch_begin(struct ged *gedp);
 include/ged/selection.h: GED_EXPORT extern int ged_selection_batch_end(struct ged *gedp);

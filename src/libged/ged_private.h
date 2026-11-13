@@ -42,6 +42,7 @@
 #include "bv/util.h"
 #include "ged.h"
 #include "ged/edit.h"
+#include "ged/scene.h"
 #include "include/plugin.h"
 
 #ifdef __cplusplus
@@ -183,6 +184,11 @@ class Ged_Internal {
 	std::vector<ged_edit_pending_event> edit_pending_events;
 	struct db_i *edit_dbip = nullptr;
 	bool edit_closing = false;
+
+	uint64_t scene_revision = 0;
+	ged_scene_observer_token scene_next_observer = 1;
+	std::map<ged_scene_observer_token,
+	    std::pair<ged_scene_observer_func_t, void *> > scene_observers;
 };
 
 #else

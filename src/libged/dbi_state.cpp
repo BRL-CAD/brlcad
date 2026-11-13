@@ -2429,6 +2429,8 @@ BViewState::cache_collapsed()
     // Having processed all the modes, we now do the same thing without regards to
     // drawing mode, to provide "who" with a mode-agnostic list of drawn paths.
     all_collapsed.clear();
+    all_drawn_paths.clear();
+    all_partially_drawn_paths.clear();
     std::map<size_t, std::unordered_set<unsigned long long>> all_depth_groups;
     for (mm_it = mode_map.begin(); mm_it != mode_map.end(); mm_it++) {
 	// Group paths of the same depth.  Depth == 1 paths are already
@@ -2448,9 +2450,6 @@ BViewState::cache_collapsed()
 	    }
 	}
     }
-
-    all_drawn_paths.clear();
-    all_partially_drawn_paths.clear();
     depth_group_collapse(all_collapsed, all_drawn_paths, all_partially_drawn_paths, all_depth_groups);
 }
 

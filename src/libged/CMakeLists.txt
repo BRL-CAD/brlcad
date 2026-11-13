@@ -341,6 +341,7 @@ set(
   ged_inside.c
   ged_track.c
   ged_util.cpp
+  ged_scene_api.cpp
   get_obj_bounds.c
   get_solid_kp.c
   path.c

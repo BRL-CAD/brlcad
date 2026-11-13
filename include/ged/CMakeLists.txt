@@ -8,6 +8,8 @@ set(
   edit.h
   event.h
   objects.h
+  scene.h
+  scene_types.h
   selection.h
   version.h
   view.h

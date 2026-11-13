@@ -15,6 +15,16 @@ if(TARGET ged_test_event)
   )
 endif()
 
+brlcad_addexec(ged_test_scene test_scene.cpp
+  "libged;libwdb;librt;libbu" TEST)
+if(TARGET ged_test_scene)
+  add_dependencies(ged_test_scene ged_plugins)
+endif(TARGET ged_test_scene)
+brlcad_add_test(NAME ged_test_scene COMMAND ged_test_scene)
+if(TARGET ged_test_scene)
+  set_property(TEST ged_test_scene APPEND PROPERTY
+    ENVIRONMENT BRLCAD_ROOT=${CMAKE_BINARY_DIR})
+endif(TARGET ged_test_scene)
 
 brlcad_addexec(ged_test_tops test_tops.c libged TEST)
 if(TARGET ged_test_tops)
@@ -175,6 +185,7 @@ cmakefiles(
   pnts_in_out.g
   test_bo.c
   test_db_index.cpp
+  test_scene.cpp
 )
 
 cmakefiles(CMakeLists.txt)
