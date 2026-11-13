@@ -10,7 +10,7 @@ pixsaturate - adjust the color saturation of a pix file
 
 [source]
 ----
-pixsaturate [-h | -?] _saturation_ < infile.pix > outfile.pix
+pixsaturate [-h | --help] _saturation_ < infile.pix > outfile.pix
 ----
 
 
@@ -35,9 +35,8 @@ Both standard input and standard output must be pipes or redirected files;
 [[options]]
 == OPTIONS
 
-*-h*, *-?*::
-  Print a usage message and exit. These are the only flags accepted; any other
-  argument beginning with `-` is rejected.
+*-h*, *--help*::
+  Print help and exit.
 
 
 [[examples]]
