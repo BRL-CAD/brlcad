@@ -22,6 +22,13 @@ icv anim <action> <anim_file> ...
 
 Without a subcommand, *icv* acts as an image format converter, reading the input image and writing it to the output file. Image formats are auto-detected from file extensions unless overridden with *--input-format* / *--output-format*. To stream through standard input or output (a path of which carries no extension) the corresponding format must be given explicitly. This tool is intended to eventually replace the family of single-purpose *pix-png*(1), *png-pix*(1), *bw-pix*(1) and similar converters.
 
+Conversion accepts up to two positional paths, filling input and output
+paths that were not specified with `-i` or `-o`. An omitted path selects
+standard input or standard output when its format is supplied explicitly.
+The `-o` option refuses an existing destination. Parsing, input, and output
+failures return a nonzero exit status; a failed input does not open or
+replace the requested output.
+
 === Supported Formats
 
 [cols="2*"]

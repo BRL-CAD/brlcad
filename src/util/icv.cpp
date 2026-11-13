@@ -483,23 +483,17 @@ main(int ac, const char **av)
     int ret = 0;
     size_t width = 0;
     size_t height = 0;
-    const char *in_fmt = NULL;
-    const char *out_fmt = NULL;
-    static bu_mime_image_t in_type = BU_MIME_IMAGE_UNKNOWN;
-    static bu_mime_image_t out_type = BU_MIME_IMAGE_UNKNOWN;
-    static char *in_path_str = NULL;
-    static char *out_path_str = NULL;
+    bu_mime_image_t in_type = BU_MIME_IMAGE_UNKNOWN;
+    bu_mime_image_t out_type = BU_MIME_IMAGE_UNKNOWN;
+    char *in_path_str = NULL;
+    char *out_path_str = NULL;
     int need_help = 0;
-    int skip_in = 0;
-    int skip_out = 0;
     icv_image_t *img = NULL;
 
     bu_setprogname(av[0]);
 
     struct bu_vls parse_msgs = BU_VLS_INIT_ZERO;
-    struct bu_vls in_format = BU_VLS_INIT_ZERO;
     struct bu_vls in_path = BU_VLS_INIT_ZERO;
-    struct bu_vls out_format = BU_VLS_INIT_ZERO;
     struct bu_vls out_path = BU_VLS_INIT_ZERO;
     struct bu_vls slog = BU_VLS_INIT_ZERO;
 
@@ -535,6 +529,7 @@ main(int ac, const char **av)
 
     if (uac == -1) {
 	bu_log("Parsing error: %s\n", bu_vls_addr(&parse_msgs));
+	ret = 1;
 	goto cleanup;
     }
 
@@ -547,32 +542,21 @@ main(int ac, const char **av)
 	goto cleanup;
     }
 
-    /* Did we get explicit options for an input and/or output file? */
-    if (in_path_str) {
-	bu_vls_sprintf(&in_path, "%s", in_path_str);
-	skip_in++;
-    }
-    if (out_path_str) {
-	bu_vls_sprintf(&out_path, "%s", out_path_str);
-	skip_out++;
-    }
+    if (in_path_str)
+	bu_vls_strcpy(&in_path, in_path_str);
+    if (out_path_str)
+	bu_vls_strcpy(&out_path, out_path_str);
 
-    /* If not specified explicitly with -i or -o, the input and output paths must always
-     * be the last two arguments supplied */
-    if (!(skip_in && skip_out)) {
-	if (skip_in && !skip_out) {
-	    bu_vls_sprintf(&out_path, "%s", av[uac - 1]);
-	}
-	if (!skip_in && skip_out) {
-	    bu_vls_sprintf(&in_path, "%s", av[uac - 1]);
-	}
-	if (!skip_in && !skip_out) {
-	    if (ac > 1) {
-		bu_vls_sprintf(&in_path, "%s", av[uac - 2]);
-		bu_vls_sprintf(&out_path, "%s", av[uac - 1]);
-	    } else {
-		bu_vls_sprintf(&in_path, "%s", av[uac - 1]);
-	    }
+    {
+	int positional = 0;
+	if (!in_path_str && positional < uac)
+	    bu_vls_strcpy(&in_path, av[positional++]);
+	if (!out_path_str && positional < uac)
+	    bu_vls_strcpy(&out_path, av[positional++]);
+	if (positional != uac) {
+	    bu_vls_printf(&slog, "Unexpected positional arguments: expected input and output paths\n");
+	    ret = 1;
+	    goto cleanup;
 	}
     }
 
@@ -617,34 +601,44 @@ main(int ac, const char **av)
     /* If everything isn't OK, we're done - report and clean up memory */
     if (ret == 1) goto cleanup;
 
-    in_fmt = bu_file_mime_str((int)in_type, BU_MIME_IMAGE);
-    out_fmt = bu_file_mime_str((int)out_type, BU_MIME_IMAGE);
-
     /* If we have no width or height specified, and we have an input format that
      * does not encode that information, make an educated guess */
     if (!width && !height && (in_type == BU_MIME_IMAGE_PIX || in_type == BU_MIME_IMAGE_BW)) {
 	struct stat sbuf;
+	if (!bu_vls_strlen(&in_path)) {
+	    bu_vls_printf(&slog, "Raw input streams require image width and height\n");
+	    ret = 1;
+	    goto cleanup;
+	}
 	if (stat(bu_vls_addr(&in_path), &sbuf) < 0) {
-	    bu_exit(1, "Unable to stat input file");
+	    bu_vls_printf(&slog, "Unable to stat input file %s\n", bu_vls_addr(&in_path));
+	    ret = 1;
+	    goto cleanup;
 	}
 	if (!icv_image_size(NULL, 0, (size_t)sbuf.st_size, in_type, &width, &height)) {
 	    bu_log("Error - input image type does not have dimension information encoded, and icv was not able to deduce a size.  Please specify image width in pixels with the \"-w\" option and image height in pixels with the \"-n\" option.\n");
-	    bu_exit(1, "image dimensional information insufficient");
+	    ret = 1;
+	    goto cleanup;
 	}
     }
 
-    img = icv_read(bu_vls_addr(&in_path), in_type, width, height);
-    icv_write(img, bu_vls_addr(&out_path), out_type);
+    img = icv_read(bu_vls_strlen(&in_path) ? bu_vls_addr(&in_path) : NULL,
+	in_type, width, height);
+    if (!img) {
+	ret = 1;
+	goto cleanup;
+    }
+    if (icv_write(img, bu_vls_strlen(&out_path) ? bu_vls_addr(&out_path) : NULL, out_type) != BRLCAD_OK)
+	ret = 1;
 
     /* Clean up */
 cleanup:
     if (bu_vls_strlen(&slog) > 0)
 	bu_log("%s", bu_vls_addr(&slog));
-    bu_free((char *)in_fmt, "input format string");
-    bu_free((char *)out_fmt, "output format string");
-    bu_vls_free(&in_format);
+    if (img)
+	icv_destroy(img);
+    bu_vls_free(&parse_msgs);
     bu_vls_free(&in_path);
-    bu_vls_free(&out_format);
     bu_vls_free(&out_path);
     bu_vls_free(&slog);
     return ret;
