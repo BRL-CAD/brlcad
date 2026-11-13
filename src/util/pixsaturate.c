@@ -32,77 +32,104 @@
 
 #include "common.h"
 
-#include <errno.h>
-#include <stdlib.h>
-#include <math.h>
 #include "bio.h"
 
-#include "bu/app.h"
-#include "bu/log.h"
 #include "bu/arg.h"
-#include "bu/str.h"
+#include "bu/app.h"
 #include "bu/exit.h"
+#include "bu/log.h"
+#include "bu/malloc.h"
 
 
 #define RINTLUM (79)
 #define GINTLUM (156)
 #define BINTLUM (21)
+#define RGB_CHANNEL_COUNT 3
+#define INPUT_PIXEL_COUNT (16 * 1024)
+#define INPUT_BUFFER_SIZE (RGB_CHANNEL_COUNT * INPUT_PIXEL_COUNT)
+#define PIXEL_MAX 255
 
-char buf[3*16*1024];
+struct pixsaturate_args {
+    int help;
+};
 
-void
-printusage(void)
-{
-    bu_exit(1, "Usage: pixsaturate saturation < infile.pix > outfile.pix\n");
-}
+static const struct bu_arg_option pixsaturate_options[] = {
+    BU_ARG_FLAG("h", "help", struct pixsaturate_args, help,
+	"Print help and exit"),
+    BU_ARG_ALIAS("?", NULL, "help", 1),
+    BU_ARG_OPTION_NULL
+};
+
+static const struct bu_arg_operand pixsaturate_operands[] = {
+    BU_ARG_OPERAND_NUMBER_RANGE("saturation", 1, 1, 1, 0.0, 0, 0.0,
+	"Non-negative color saturation factor", NULL),
+    BU_ARG_OPERAND_NULL
+};
+
+static const struct bu_arg_schema pixsaturate_schema = BU_ARG_SCHEMA(
+    "pixsaturate", "Adjust the color saturation of a PIX image",
+    pixsaturate_options, pixsaturate_operands, BU_ARG_PARSE_OPTIONS_FIRST,
+    BU_ARG_SCHEMA_META_HELP(NULL, NULL, NULL, NULL, NULL));
+
+static const struct bu_arg_grammar pixsaturate_grammar = {
+    &pixsaturate_schema, NULL, NULL
+};
 
 int
 main(int argc, char **argv)
 {
+    unsigned char pixels[INPUT_BUFFER_SIZE];
     double sat;			/* saturation */
     int bw;			/* monochrome intensity */
     int rwgt, gwgt, bwgt;
     int rt, gt, bt;
-    int n;
-    size_t nby;
     unsigned char *cp;
-    size_t ret;
+    struct pixsaturate_args args = {0};
+    struct bu_vls msg = BU_VLS_INIT_ZERO;
 
     bu_setprogname(argv[0]);
 
-    setmode(fileno(stdin), O_BINARY);
-    setmode(fileno(stdout), O_BINARY);
+    int introspection = bu_arg_introspect(&msg, &pixsaturate_grammar, argc - 1,
+	(const char * const *)(argv + 1));
+    if (introspection != 0) {
+	bu_flog(introspection > 0 ? stdout : stderr, "%s", bu_vls_cstr(&msg));
+	bu_vls_free(&msg);
+	return introspection > 0 ? 0 : 1;
+    }
+    int operand_index = bu_arg_schema_parse_complete(&pixsaturate_schema, &args,
+	&msg, argc - 1, (const char **)(argv + 1));
+    if (operand_index < 0)
+	bu_exit(1, "%s", bu_vls_cstr(&msg));
+    bu_vls_free(&msg);
+    if (args.help) {
+	char *help = bu_arg_schema_help(&pixsaturate_schema, "pixsaturate");
+	bu_flog(stdout, "%s", help ? help : "");
+	bu_free(help, "pixsaturate help");
+	return 0;
+    }
 
-    if (argc != 2)
-	printusage ();
-    if ( BU_STR_EQUAL(argv[1], "-h") || BU_STR_EQUAL(argv[1], "-?") )
-	printusage ();
-    if (argv[1][0] == '-') {
-    	fprintf(stderr,"pixsaturate: no options except -h or -?\n");
-	printusage ();
-    }
-    if ( isatty(fileno(stdin)) || isatty(fileno(stdout)) ) {
-    	fprintf(stderr,"pixsaturate: need pipes for stdin and stdout\n");
-	printusage ();
-    }
-    struct bu_vls msg = BU_VLS_INIT_ZERO;
-    if (!bu_arg_double_from_str(&msg, &sat, argv[1]))
+    const char *saturation = argv[operand_index + 1];
+    if (!bu_arg_double_from_str(&msg, &sat, saturation))
 	bu_exit(1, "%s: saturation: %s\n", bu_getprogname(), bu_vls_cstr(&msg));
     bu_vls_free(&msg);
-    if (sat < 0.0) {
-	bu_log("pixsaturate: saturation must be non-negative, got '%s'\n", argv[1]);
-	return 1;
-    }
+
+    if (isatty(fileno(stdin)) || isatty(fileno(stdout)))
+	bu_exit(1, "pixsaturate requires redirected input and output\n");
+
+    setmode(fileno(stdin), O_BINARY);
+    setmode(fileno(stdout), O_BINARY);
 
     rwgt = RINTLUM*(1.0-sat);
     gwgt = GINTLUM*(1.0-sat);
     bwgt = BINTLUM*(1.0-sat);
 
-    while ((nby = fread(buf, 1, sizeof(buf), stdin)) > 0) {
-	if (nby % 3)
+    size_t bytes_read;
+    while ((bytes_read = fread(pixels, 1, sizeof(pixels), stdin)) > 0) {
+	if (bytes_read % RGB_CHANNEL_COUNT)
 	    bu_exit(1, "pixsaturate: input ends with an incomplete pixel\n");
-	cp = (unsigned char *)buf;
-	for (n = (int)nby; n > 0; n -= 3) {
+	cp = pixels;
+	for (size_t bytes_left = bytes_read; bytes_left > 0;
+	     bytes_left -= RGB_CHANNEL_COUNT) {
 	    rt = cp[0];
 	    gt = cp[1];
 	    bt = cp[2];
@@ -110,18 +137,15 @@ main(int argc, char **argv)
 	    rt = bw+sat*rt;
 	    gt = bw+sat*gt;
 	    bt = bw+sat*bt;
-	    if (rt<0) rt = 0; else if (rt>255) rt=255;
-	    if (gt<0) gt = 0; else if (gt>255) gt=255;
-	    if (bt<0) bt = 0; else if (bt>255) bt=255;
+	    if (rt < 0) rt = 0; else if (rt > PIXEL_MAX) rt = PIXEL_MAX;
+	    if (gt < 0) gt = 0; else if (gt > PIXEL_MAX) gt = PIXEL_MAX;
+	    if (bt < 0) bt = 0; else if (bt > PIXEL_MAX) bt = PIXEL_MAX;
 	    *cp++ = rt;
 	    *cp++ = gt;
 	    *cp++ = bt;
 	}
-	ret = fwrite(buf, 1, nby, stdout);
-	if (ret != nby) {
-	    perror("fwrite");
-	    return 1;
-	}
+	if (fwrite(pixels, 1, bytes_read, stdout) != bytes_read)
+	    bu_exit(1, "pixsaturate: error writing output\n");
     }
     if (ferror(stdin))
 	bu_exit(1, "pixsaturate: error reading input\n");
