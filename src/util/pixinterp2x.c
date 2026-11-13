@@ -31,11 +31,11 @@
 #include <stdlib.h>
 #include "bio.h"
 
+#include "bu/arg.h"
 #include "bu/app.h"
-#include "bu/getopt.h"
-#include "util_arg.h"
-#include "bu/malloc.h"
 #include "bu/exit.h"
+#include "bu/log.h"
+#include "bu/malloc.h"
 
 
 FILE *infp;
@@ -51,50 +51,87 @@ void widen_line(unsigned char *cp, int y);
 
 void interp_lines(int out, int i1, int i2);
 
-char usage[] =
-"Usage: pixinterp2x [-s squarefilesize] [-w file_width] [-n file_height] [file.pix] > outfile.pix\n";
+struct pixinterp2x_args {
+    struct pixinterp2x_args *self;
+    int help;
+    size_t width;
+    size_t height;
+};
+
+enum pixinterp2x_dimension {
+    PIXINTERP2X_SIZE,
+    PIXINTERP2X_WIDTH,
+    PIXINTERP2X_HEIGHT
+};
+
 
 static int
-get_args(int argc, char **argv)
+pixinterp2x_dimension(struct bu_vls *msg, const char *arg, void *storage,
+	enum pixinterp2x_dimension dimension)
 {
-    int c;
+    struct pixinterp2x_args *args = storage ? *(struct pixinterp2x_args **)storage : NULL;
+    size_t value;
 
-    while ((c = bu_getopt(argc, argv, "s:w:n:h?")) != -1) {
-	switch (c) {
-	    case 's':
-		/* square file size */
-		if (!util_arg_size_t_range(bu_optarg, &file_width, 1, SIZE_MAX, "input size"))
-		    return 0;
-		file_height = file_width;
-		break;
-	    case 'w':
-		if (!util_arg_size_t_range(bu_optarg, &file_width, 1, SIZE_MAX, "input width"))
-		    return 0;
-		break;
-	    case 'n':
-		if (!util_arg_size_t_range(bu_optarg, &file_height, 1, SIZE_MAX, "input height"))
-		    return 0;
-		break;
-	    default:
-		return 0;
-	}
+    if (!bu_arg_size_t_range_from_str(msg, &value, arg, 10, 1, SIZE_MAX))
+	return -1;
+    if (args) {
+	if (dimension != PIXINTERP2X_HEIGHT)
+	    args->width = value;
+	if (dimension != PIXINTERP2X_WIDTH)
+	    args->height = value;
     }
-    if (argv[bu_optind] != NULL) {
-	if ((infp = fopen(argv[bu_optind], "rb")) == NULL) {
-	    perror(argv[bu_optind]);
-	    return 0;
-	}
-	bu_optind++;
-    }
-    if (argc > bu_optind) {
-	(void) fprintf(stderr, "pixinterp2x: excess argument(s) not supported\n");
-	return 0;
-    }
-
-    if (isatty(fileno(infp)) || isatty(fileno(stdout)))
-	return 0;
-    return 1;
+    return 0;
 }
+
+
+static int
+pixinterp2x_size(struct bu_vls *msg, const char *arg, void *storage)
+{
+    return pixinterp2x_dimension(msg, arg, storage, PIXINTERP2X_SIZE);
+}
+
+
+static int
+pixinterp2x_width(struct bu_vls *msg, const char *arg, void *storage)
+{
+    return pixinterp2x_dimension(msg, arg, storage, PIXINTERP2X_WIDTH);
+}
+
+
+static int
+pixinterp2x_height(struct bu_vls *msg, const char *arg, void *storage)
+{
+    return pixinterp2x_dimension(msg, arg, storage, PIXINTERP2X_HEIGHT);
+}
+
+
+static const struct bu_arg_option pixinterp2x_options[] = {
+    BU_ARG_FLAG("h", "help", struct pixinterp2x_args, help,
+	"Print help and exit"),
+    BU_ARG_ALIAS("?", NULL, "help", 1),
+    BU_ARG_CUSTOM("s", "size", struct pixinterp2x_args, self,
+	pixinterp2x_size, "pixels", "Set both input dimensions"),
+    BU_ARG_CUSTOM("w", "width", struct pixinterp2x_args, self,
+	pixinterp2x_width, "pixels", "Set the input image width"),
+    BU_ARG_CUSTOM("n", "height", struct pixinterp2x_args, self,
+	pixinterp2x_height, "pixels", "Set the input image height"),
+    BU_ARG_OPTION_NULL
+};
+
+static const struct bu_arg_operand pixinterp2x_operands[] = {
+    BU_ARG_OPERAND("input", BU_ARG_VALUE_FILE, 0, 1,
+	"PIX input file (default: standard input)", NULL),
+    BU_ARG_OPERAND_NULL
+};
+
+static const struct bu_arg_schema pixinterp2x_schema = BU_ARG_SCHEMA(
+    "pixinterp2x", "Double a PIX image using bilinear interpolation",
+    pixinterp2x_options, pixinterp2x_operands, BU_ARG_PARSE_OPTIONS_FIRST,
+    BU_ARG_SCHEMA_META_HELP(NULL, NULL, NULL, NULL, NULL));
+
+static const struct bu_arg_grammar pixinterp2x_grammar = {
+    &pixinterp2x_schema, NULL, NULL
+};
 
 
 int
@@ -103,6 +140,9 @@ main(int argc, char **argv)
     size_t iny, outy;
     unsigned char *inbuf;
     size_t ret;
+    struct pixinterp2x_args args = {NULL, 0, 512, 512};
+    struct bu_vls msg = BU_VLS_INIT_ZERO;
+    args.self = &args;
 
     bu_setprogname(argv[0]);
 
@@ -110,10 +150,34 @@ main(int argc, char **argv)
     setmode(fileno(stdout), O_BINARY);
 
     infp = stdin;
-    if (!get_args(argc, argv)) {
-	(void)fputs(usage, stderr);
-	bu_exit (1, NULL);
+    int introspection = bu_arg_introspect(&msg, &pixinterp2x_grammar,
+	argc - 1, (const char * const *)(argv + 1));
+    if (introspection != 0) {
+	bu_flog(introspection > 0 ? stdout : stderr, "%s", bu_vls_cstr(&msg));
+	bu_vls_free(&msg);
+	return introspection > 0 ? 0 : 1;
     }
+    int operand_index = bu_arg_schema_parse_complete(&pixinterp2x_schema,
+	&args, &msg, argc - 1, (const char **)(argv + 1));
+    if (operand_index < 0)
+	bu_exit(1, "%s", bu_vls_cstr(&msg));
+    bu_vls_free(&msg);
+    if (args.help) {
+	char *help = bu_arg_schema_help(&pixinterp2x_schema, "pixinterp2x");
+	bu_flog(stdout, "%s", help ? help : "");
+	bu_free(help, "pixinterp2x help");
+	return 0;
+    }
+    if (argc - operand_index - 1 == 1) {
+	if ((infp = fopen(argv[operand_index + 1], "rb")) == NULL)
+	    bu_exit(1, "pixinterp2x: cannot open '%s' for reading\n",
+		argv[operand_index + 1]);
+    }
+    if (isatty(fileno(infp)) || isatty(fileno(stdout)))
+	bu_exit(1, "pixinterp2x requires redirected input and output\n");
+
+    file_width = args.width;
+    file_height = args.height;
 
     inbytes = file_width * 3;	/* bytes/ input line */
     inbuf = (unsigned char *)malloc(inbytes);
