@@ -40,6 +40,7 @@
 #include "common.h"
 
 #include <algorithm>
+#include <cctype>
 #include <set>
 #include <unordered_set>
 #include <vector>
@@ -79,23 +80,15 @@ struct QgItem_cmp {
 	    return true;
 	if (i1 && !i2)
 	    return false;
-	if (!i1->ihash && !i2->ihash)
+	if (!i1->instanceHash() && !i2->instanceHash())
 	    return false;
-	if (!i1->ihash && i2->ihash)
+	if (!i1->instanceHash() && i2->instanceHash())
 	    return true;
-	if (i1->ihash && !i2->ihash)
+	if (i1->instanceHash() && !i2->instanceHash())
 	    return false;
 
-	struct directory *inst1 = NULL;
-	struct directory *inst2 = NULL;
-	DbiState *ctx1 = (DbiState *)i1->mdl->ged()->dbi_state;
-	DbiState *ctx2 = (DbiState *)i2->mdl->ged()->dbi_state;
-	if (ctx1->d_map.find(i1->ihash) != ctx1->d_map.end()) {
-	    inst1 = ctx1->d_map[i1->ihash];
-	}
-	if (ctx2->d_map.find(i2->ihash) != ctx2->d_map.end()) {
-	    inst2 = ctx2->d_map[i2->ihash];
-	}
+	struct directory *inst1 = i1->directoryEntry();
+	struct directory *inst2 = i2->directoryEntry();
 
 	if (!inst1 && !inst2)
 	    return false;
@@ -113,6 +106,49 @@ struct QgItem_cmp {
     }
 };
 
+static unsigned long long
+qg_definition_hash(DbiState *state, unsigned long long instance_hash)
+{
+    auto instance_it = state->i_map.find(instance_hash);
+    return (instance_it == state->i_map.end()) ? instance_hash :
+	instance_it->second;
+}
+
+static db_op_t
+qg_boolean_operation(DbiState *state, unsigned long long parent_hash,
+	unsigned long long child_hash)
+{
+    return state->bool_op(qg_definition_hash(state, parent_hash), child_hash);
+}
+
+static void
+qgmodel_mark_invalid_subtree(std::unordered_set<QgItem *> &invalid,
+	QgItem *item)
+{
+    if (!item || !invalid.insert(item).second)
+	return;
+
+    for (QgItem *child : item->childItems())
+	qgmodel_mark_invalid_subtree(invalid, child);
+}
+
+static bool
+qgmodel_item_matches_name(const QgItem *item, const std::string &name)
+{
+    if (!item)
+	return false;
+
+    std::string item_name = item->displayName();
+    if (item_name == name)
+	return true;
+    if (item_name.size() <= name.size() + 1 ||
+	item_name.compare(0, name.size(), name) ||
+	item_name[name.size()] != '@')
+	return false;
+    return std::all_of(item_name.begin() + name.size() + 1,
+	item_name.end(), [](unsigned char c) { return std::isdigit(c); });
+}
+
 QgItem::QgItem(unsigned long long hash, QgModel *ictx)
 {
     mdl = ictx;
@@ -122,14 +158,12 @@ QgItem::QgItem(unsigned long long hash, QgModel *ictx)
     if (!ctx)
 	return;
 
-    // Get the child count from the .g info
-    std::unordered_map<unsigned long long, std::unordered_set<unsigned long long>>::iterator pc_it;
-    pc_it = ctx->p_c.find(ihash);
-    if (pc_it != ctx->p_c.end()) {
-	c_count = pc_it->second.size();
-    } else {
-	c_count = 0;
-    }
+    // Child definitions are keyed by object identity, while this item may
+    // represent a uniquely numbered occurrence of that object.
+    unsigned long long definition_hash = qg_definition_hash(ctx, ihash);
+    auto children_it = ctx->p_v.find(definition_hash);
+    c_count = (children_it == ctx->p_v.end()) ? 0 :
+	children_it->second.size();
 
     // Local item information
     ctx->print_hash(&name, ihash);
@@ -147,7 +181,7 @@ QgItem::open()
 {
     if (!mdl)
 	return;
-    open_itm = true;
+    setOpen(true);
     QModelIndex ind = mdl->NodeIndex(this);
     mdl->fetchMore(ind);
 }
@@ -156,7 +190,7 @@ QgItem::open()
 void
 QgItem::close()
 {
-    open_itm = false;
+    setOpen(false);
 }
 
 void
@@ -166,7 +200,7 @@ QgItem::appendChild(QgItem *c)
 }
 
 QgItem *
-QgItem::child(int n)
+QgItem::child(int n) const
 {
     if (n < 0 || n >= (int)children.size())
 	return NULL;
@@ -177,13 +211,7 @@ QgItem::child(int n)
 int
 QgItem::childCount() const
 {
-    if (!mdl)
-	return 0;
-
-    if (this == mdl->root())
-	return children.size();
-
-    return (int)c_count;
+    return children.size();
 }
 
 int
@@ -193,7 +221,7 @@ QgItem::columnCount() const
 }
 
 QgItem *
-QgItem::parent()
+QgItem::parent() const
 {
     return parentItem;
 }
@@ -213,10 +241,10 @@ QgItem::childNumber() const
 }
 
 std::vector<unsigned long long>
-QgItem::path_items()
+QgItem::path_items() const
 {
     std::vector<unsigned long long> pitems;
-    QgItem *citem = this;
+    const QgItem *citem = this;
     pitems.push_back(this->ihash);
     while (citem->parent()) {
 	citem = citem->parent();
@@ -228,7 +256,7 @@ QgItem::path_items()
 }
 
 unsigned long long
-QgItem::path_hash()
+QgItem::path_hash() const
 {
     std::vector<unsigned long long> pitems = path_items();
     DbiState *dbis = (DbiState *)mdl->ged()->dbi_state;
@@ -289,8 +317,11 @@ QgModel::~QgModel()
 {
     if (event_observer)
 	ged_event_observer_remove(ged(), event_observer);
+    items_clear();
     delete items;
+    items = NULL;
     delete rootItem;
+    rootItem = NULL;
 }
 
 QgSession *
@@ -305,28 +336,579 @@ QgModel::ged() const
     return m_session ? m_session->ged() : NULL;
 }
 
+static BSelectState *
+qg_selection_state(const QgModel *model)
+{
+    if (!model || !model->ged() || !model->ged()->dbi_state)
+	return NULL;
+
+    DbiState *dbis = static_cast<DbiState *>(model->ged()->dbi_state);
+    return dbis->find_selected_state(NULL);
+}
+
+size_t
+QgModel::selectionCount() const
+{
+    BSelectState *state = qg_selection_state(this);
+    return state ? state->selected.size() : 0;
+}
+
+bool
+QgModel::itemSelected(const QgItem *item) const
+{
+    BSelectState *state = qg_selection_state(this);
+    return state && item && state->is_selected(item->path_hash());
+}
+
+int
+QgModel::itemHighlight(const QgItem *item) const
+{
+    BSelectState *state = qg_selection_state(this);
+    if (!state || !item)
+	return 0;
+
+    switch (interaction_mode) {
+	case 0:
+	    return (!item->isOpen() &&
+		state->is_active_parent(item->path_hash())) ? 1 : 0;
+	case 1: {
+	    unsigned long long definition_hash = qg_definition_hash(
+		static_cast<DbiState *>(ged()->dbi_state),
+		item->instanceHash());
+	    return state->is_parent_obj(definition_hash) ? 2 : 0;
+	}
+	case 2: {
+	    unsigned long long definition_hash = qg_definition_hash(
+		static_cast<DbiState *>(ged()->dbi_state),
+		item->instanceHash());
+	    if (state->is_immediate_parent_obj(definition_hash))
+		return 3;
+	    return state->is_grand_parent_obj(definition_hash) ? 2 : 0;
+	}
+	default:
+	    return 0;
+    }
+}
+
+void
+QgModel::selectionClear()
+{
+    BSelectState *state = qg_selection_state(this);
+    if (state)
+	state->clear();
+}
+
+void
+QgModel::itemSelect(QgItem *item)
+{
+    BSelectState *state = qg_selection_state(this);
+    if (!state || !hasItem(item))
+	return;
+
+    std::vector<unsigned long long> path = item->path_items();
+    state->select_hpath(path);
+}
+
+void
+QgModel::itemDeselect(QgItem *item)
+{
+    BSelectState *state = qg_selection_state(this);
+    if (!state || !hasItem(item))
+	return;
+
+    std::vector<unsigned long long> path = item->path_items();
+    state->deselect_hpath(path);
+}
+
+unsigned long long
+QgModel::selectionCommit()
+{
+    BSelectState *state = qg_selection_state(this);
+    if (!state)
+	return QG_VIEW_SELECT;
+
+    state->characterize();
+    unsigned long long flags = QG_VIEW_SELECT;
+    if (state->draw_sync())
+	flags |= QG_VIEW_REFRESH;
+    notifySelectionItemsChanged();
+    return flags;
+}
+
+void
+QgModel::notifySelectionItemsChanged()
+{
+    using HashSet = std::unordered_set<unsigned long long>;
+    HashSet old_selected = std::move(selected_path_hashes);
+    HashSet old_active_parents = std::move(active_parent_path_hashes);
+    HashSet old_immediate_parents =
+	std::move(immediate_parent_instance_hashes);
+    HashSet old_grand_parents = std::move(grand_parent_instance_hashes);
+
+    selected_path_hashes.clear();
+    active_parent_path_hashes.clear();
+    immediate_parent_instance_hashes.clear();
+    grand_parent_instance_hashes.clear();
+
+    BSelectState *state = qg_selection_state(this);
+    if (state) {
+	for (const auto &entry : state->selected)
+	    selected_path_hashes.insert(entry.first);
+	active_parent_path_hashes = state->active_parents;
+	immediate_parent_instance_hashes = state->immediate_parents;
+	grand_parent_instance_hashes = state->grand_parents;
+    }
+
+    QVector<int> roles;
+    roles << SelectDisplayRole << HighlightDisplayRole;
+    std::unordered_set<QgItem *> notified;
+    auto notify_item = [this, &roles, &notified](QgItem *item) {
+	if (!item || !notified.insert(item).second)
+	    return;
+	QModelIndex index = NodeIndex(item);
+	if (index.isValid())
+	    emit dataChanged(index, index, roles);
+    };
+    auto notify_paths = [this, &notify_item](const HashSet &hashes) {
+	for (unsigned long long hash : hashes) {
+	    auto item_it = items_by_path_hash.find(hash);
+	    if (item_it == items_by_path_hash.end())
+		continue;
+	    for (QgItem *item : item_it->second)
+		notify_item(item);
+	}
+    };
+    auto notify_instances = [this, &notify_item](const HashSet &hashes) {
+	for (unsigned long long hash : hashes) {
+	    auto item_it = items_by_instance_hash.find(hash);
+	    if (item_it == items_by_instance_hash.end())
+		continue;
+	    for (QgItem *item : item_it->second)
+		notify_item(item);
+	}
+    };
+
+    notify_paths(old_selected);
+    notify_paths(selected_path_hashes);
+    notify_paths(old_active_parents);
+    notify_paths(active_parent_path_hashes);
+    notify_instances(old_immediate_parents);
+    notify_instances(immediate_parent_instance_hashes);
+    notify_instances(old_grand_parents);
+    notify_instances(grand_parent_instance_hashes);
+}
+
+void
+QgModel::notifyDrawnItemsChanged()
+{
+    QVector<int> roles;
+    roles << DrawnDisplayRole;
+    for (QgItem *item : allItems()) {
+	QModelIndex index = NodeIndex(item);
+	if (index.isValid())
+	    emit dataChanged(index, index, roles);
+    }
+}
+
+void
+QgModel::setInteractionMode(int mode)
+{
+    if (interaction_mode == mode)
+	return;
+    interaction_mode = mode;
+    notifySelectionItemsChanged();
+}
+
+void
+QgModel::item_register(QgItem *item)
+{
+    if (!item || item == rootItem || !items)
+	return;
+
+    if (!items->insert(item).second)
+	return;
+
+    items_by_instance_hash[item->ihash].insert(item);
+    if (item->dp)
+	items_by_directory[item->dp].insert(item);
+    unsigned long long path_hash = item->path_hash();
+    if (path_hash) {
+	items_by_path_hash[path_hash].insert(item);
+	item_path_hashes[item] = path_hash;
+    }
+}
+
+void
+QgModel::item_unregister(QgItem *item)
+{
+    if (!item || item == rootItem || !items)
+	return;
+
+    auto instance_it = items_by_instance_hash.find(item->ihash);
+    if (instance_it != items_by_instance_hash.end()) {
+	instance_it->second.erase(item);
+	if (instance_it->second.empty())
+	    items_by_instance_hash.erase(instance_it);
+    }
+
+    if (item->dp) {
+	auto directory_it = items_by_directory.find(item->dp);
+	if (directory_it != items_by_directory.end()) {
+	    directory_it->second.erase(item);
+	    if (directory_it->second.empty())
+		items_by_directory.erase(directory_it);
+	}
+    }
+
+    auto item_path_it = item_path_hashes.find(item);
+    if (item_path_it != item_path_hashes.end()) {
+	unsigned long long path_hash = item_path_it->second;
+	auto path_it = items_by_path_hash.find(path_hash);
+	if (path_it != items_by_path_hash.end()) {
+	    path_it->second.erase(item);
+	    if (path_it->second.empty())
+		items_by_path_hash.erase(path_it);
+	}
+	item_path_hashes.erase(item_path_it);
+    }
+
+    items->erase(item);
+}
+
+void
+QgModel::item_indexes_clear()
+{
+    items_by_instance_hash.clear();
+    items_by_path_hash.clear();
+    items_by_directory.clear();
+    item_path_hashes.clear();
+}
+
+void
+QgModel::items_clear()
+{
+    if (!items)
+	return;
+
+    for (QgItem *item : *items)
+	delete item;
+
+    items->clear();
+    item_indexes_clear();
+    tops_items.clear();
+    if (rootItem) {
+	rootItem->children.clear();
+	rootItem->c_noderow.clear();
+	rootItem->c_count = 0;
+    }
+}
+
+bool
+QgModel::item_is_indexed(QgItem *item) const
+{
+    if (!item || !items || items->find(item) == items->end())
+	return false;
+
+    auto instance_it = items_by_instance_hash.find(item->ihash);
+    if (instance_it == items_by_instance_hash.end() ||
+	instance_it->second.find(item) == instance_it->second.end())
+	return false;
+
+    auto item_path_it = item_path_hashes.find(item);
+    if (item_path_it == item_path_hashes.end())
+	return false;
+    unsigned long long path_hash = item_path_it->second;
+    auto path_it = items_by_path_hash.find(path_hash);
+    return path_hash && path_it != items_by_path_hash.end() &&
+	path_it->second.find(item) != path_it->second.end();
+}
+
+void
+QgModel::item_rows_rebuild(QgItem *item)
+{
+    if (!item)
+	return;
+
+    item->c_noderow.clear();
+    for (size_t i = 0; i < item->children.size(); i++)
+	item->c_noderow[item->children[i]] = (int)i;
+    item->c_count = item->children.size();
+}
+
+void
+QgModel::item_subtree_delete(QgItem *item)
+{
+    if (!item || item == rootItem)
+	return;
+
+    std::vector<QgItem *> children = item->children;
+    for (QgItem *child : children)
+	item_subtree_delete(child);
+
+    item_unregister(item);
+    delete item;
+}
+
+bool
+QgModel::item_children_sync(QgItem *item,
+	const std::vector<unsigned long long> &children)
+{
+    if (!item)
+	return false;
+
+    DbiState *dbis = (DbiState *)ged()->dbi_state;
+    if (item != rootItem && item->children.empty() && !item->open_itm) {
+	item->c_count = children.size();
+	return true;
+    }
+
+    QModelIndex parent_index = NodeIndex(item);
+    for (size_t row = 0; row < children.size(); row++) {
+	unsigned long long child_hash = children[row];
+	if (row < item->children.size() &&
+		item->children[row]->ihash == child_hash) {
+	    item->children[row]->op = qg_boolean_operation(dbis,
+		item->ihash, child_hash);
+	    continue;
+	}
+
+	size_t source_row = row;
+	while (source_row < item->children.size() &&
+		item->children[source_row]->ihash != child_hash)
+	    source_row++;
+
+	if (source_row < item->children.size()) {
+	    model_structure_change_in_progress = true;
+	    if (!beginMoveRows(parent_index, (int)source_row, (int)source_row,
+		    parent_index, (int)row)) {
+		model_structure_change_in_progress = false;
+		return false;
+	    }
+	    QgItem *child = item->children[source_row];
+	    item->children.erase(item->children.begin() + source_row);
+	    item->children.insert(item->children.begin() + row, child);
+	    child->op = qg_boolean_operation(dbis, item->ihash, child_hash);
+	    item_rows_rebuild(item);
+	    endMoveRows();
+	    model_structure_change_in_progress = false;
+	    continue;
+	}
+
+	QgItem *child = new QgItem(child_hash, this);
+	child->parentItem = item;
+	child->op = qg_boolean_operation(dbis, item->ihash, child_hash);
+	model_structure_change_in_progress = true;
+	beginInsertRows(parent_index, (int)row, (int)row);
+	item->children.insert(item->children.begin() + row, child);
+	item_register(child);
+	item_rows_rebuild(item);
+	endInsertRows();
+	model_structure_change_in_progress = false;
+    }
+
+    while (item->children.size() > children.size()) {
+	int row = (int)item->children.size() - 1;
+	QgItem *child = item->children[row];
+	model_structure_change_in_progress = true;
+	beginRemoveRows(parent_index, row, row);
+	item->children.pop_back();
+	item_rows_rebuild(item);
+	item_subtree_delete(child);
+	endRemoveRows();
+	model_structure_change_in_progress = false;
+    }
+
+    item_rows_rebuild(item);
+    if (item == rootItem)
+	tops_items = rootItem->children;
+    return true;
+}
+
+void
+QgModel::items_changed_notify(const std::set<std::string> &names)
+{
+    for (const std::string &name : names) {
+	std::unordered_set<QgItem *> changed_items;
+	struct directory *dp = db_lookup(ged()->dbip, name.c_str(), LOOKUP_QUIET);
+	if (dp) {
+	    auto directory_it = items_by_directory.find(dp);
+	    if (directory_it != items_by_directory.end())
+		changed_items = directory_it->second;
+	}
+	if (changed_items.empty()) {
+	    for (QgItem *item : *items) {
+		if (qgmodel_item_matches_name(item, name))
+		    changed_items.insert(item);
+	    }
+	}
+	for (QgItem *item : changed_items) {
+	    if (!item_is_indexed(item))
+		continue;
+	    item->icon = QgIcon(item->dp, ged()->dbip);
+	    QModelIndex index = NodeIndex(item);
+	    if (index.isValid())
+		emit dataChanged(index, index);
+	}
+    }
+}
+
+bool
+QgModel::change_deltas_apply()
+{
+    DbiState *dbis = (DbiState *)ged()->dbi_state;
+    std::vector<DbiStateChange> changes = dbis->change_snapshots();
+    if (changes.empty())
+	return false;
+
+    bool structural = false;
+    std::set<std::string> added;
+    std::set<std::string> modified;
+    std::set<std::string> removed;
+    std::set<std::string> paths;
+    for (const DbiStateChange &change : changes) {
+	if (change.rebuild || !change.renamed.empty())
+	    return false;
+	structural = structural || change.structural;
+	added.insert(change.added.begin(), change.added.end());
+	modified.insert(change.modified.begin(), change.modified.end());
+	removed.insert(change.removed.begin(), change.removed.end());
+	paths.insert(change.paths.begin(), change.paths.end());
+    }
+
+    if (structural && added.empty() && modified.empty() &&
+	    removed.empty() && paths.empty())
+	return false;
+
+    std::unordered_set<QgItem *> parent_candidates;
+    if (structural)
+	parent_candidates.insert(rootItem);
+
+    for (const std::string &name : modified) {
+	struct directory *dp = db_lookup(ged()->dbip, name.c_str(), LOOKUP_QUIET);
+	if (dp) {
+	    auto directory_it = items_by_directory.find(dp);
+	    if (directory_it != items_by_directory.end()) {
+		for (QgItem *item : directory_it->second) {
+		    // librt's legacy rename notification reports the renamed
+		    // directory as modified.  Its pointer identity is unchanged,
+		    // but its name-derived instance hash is not.  Do not partially
+		    // reconcile that ambiguous identity transition.
+		    if (!qgmodel_item_matches_name(item, name))
+			return false;
+		    parent_candidates.insert(item);
+		}
+	    }
+	}
+	if (!dp || items_by_directory.find(dp) == items_by_directory.end()) {
+	    for (QgItem *item : *items) {
+		if (qgmodel_item_matches_name(item, name))
+		    parent_candidates.insert(item);
+	    }
+	}
+    }
+
+    for (const std::string &name : removed) {
+	for (QgItem *item : *items) {
+	    if (qgmodel_item_matches_name(item, name) && item->parent())
+		parent_candidates.insert(item->parent());
+	}
+    }
+
+    for (const std::string &path : paths) {
+	std::vector<unsigned long long> path_items = dbis->digest_path(path.c_str());
+	if (path_items.empty())
+	    continue;
+	unsigned long long path_hash = dbis->path_hash(path_items, 0);
+	auto path_it = items_by_path_hash.find(path_hash);
+	if (path_it == items_by_path_hash.end())
+	    continue;
+	for (QgItem *item : path_it->second) {
+	    parent_candidates.insert(item);
+	    if (item->parent())
+		parent_candidates.insert(item->parent());
+	}
+    }
+
+    dbis->reconcile_changes();
+    if (!structural) {
+	items_changed_notify(modified);
+	return true;
+    }
+
+    std::vector<QgItem *> parents;
+    for (QgItem *parent : parent_candidates) {
+	if (parent && parent != rootItem)
+	    parents.push_back(parent);
+    }
+    parents.push_back(rootItem);
+
+    for (QgItem *parent : parents) {
+	if (parent != rootItem && items->find(parent) == items->end())
+	    continue;
+
+	std::vector<unsigned long long> children;
+	if (parent == rootItem) {
+	    children = dbis->tops(true);
+	    std::sort(children.begin(), children.end(),
+		[dbis](unsigned long long left, unsigned long long right) {
+		    struct directory *left_dp = dbis->get_hdp(left);
+		    struct directory *right_dp = dbis->get_hdp(right);
+		    if (!left_dp || !right_dp)
+			return left < right;
+		    return alphanum_impl(left_dp->d_namep, right_dp->d_namep,
+			NULL) < 0;
+		});
+	} else {
+	    unsigned long long definition_hash = qg_definition_hash(dbis,
+		parent->ihash);
+	    auto children_it = dbis->p_v.find(definition_hash);
+	    if (children_it != dbis->p_v.end())
+		children.assign(children_it->second.rbegin(),
+		    children_it->second.rend());
+	}
+	if (!item_children_sync(parent, children))
+	    return false;
+    }
+
+    items_changed_notify(modified);
+    return true;
+}
+
 // Note - this is a private method and must be run from within g_update's
 // begin/end RebuildModel block.  Also, it assumes all invalid QgItem pointers
 // have been removed from the children arrays. (The ability to recognize an
 // invalid QgItem is defined at that level - we don't want to re-create it
 // here.)
 void
-QgModel::item_rebuild(QgItem *item)
+QgModel::item_rebuild(QgItem *item, std::unordered_set<QgItem *> &invalid)
 {
     // Top level is a special case and is handled separately
     if (item == rootItem) {
 	return;
     }
 
-    unsigned long long chash = item->ihash;
     DbiState *dbis = (DbiState *)ged()->dbi_state;
+    unsigned long long chash = qg_definition_hash(dbis, item->ihash);
     if (dbis->p_v.find(chash) == dbis->p_v.end()) {
-	// TODO - invalid hash
+	for (QgItem *old_child : item->children)
+	    qgmodel_mark_invalid_subtree(invalid, old_child);
+	item->children.clear();
+	item->c_noderow.clear();
+	item->c_count = 0;
 	return;
     }
 
     // Get the current child instances
     std::vector<unsigned long long> &nh = dbis->p_v[chash];
+
+    if (nh.empty()) {
+	for (QgItem *old_child : item->children)
+	    qgmodel_mark_invalid_subtree(invalid, old_child);
+	item->children.clear();
+	item->c_noderow.clear();
+	item->c_count = 0;
+	return;
+    }
 
     // If we have no cached children, update only the child count - fetchMore
     // will populate it if and when it is expanded, and there will be no
@@ -359,9 +941,9 @@ QgModel::item_rebuild(QgItem *item)
 	    // make a new one
 	    QgItem *nitem = new QgItem(*nh_it, this);
 	    nitem->parentItem = item;
-	    nitem->op = dbis->bool_op(item->ihash, *nh_it);
+	    nitem->op = qg_boolean_operation(dbis, item->ihash, *nh_it);
 	    nc.push_back(nitem);
-	    items->insert(nitem);
+	    item_register(nitem);
 	}
     }
     item->c_count = nc.size();
@@ -370,7 +952,12 @@ QgModel::item_rebuild(QgItem *item)
     // replace children's contents with the new vector.  This is being run
     // inside g_update's beginRebuildModel block, so we don't need to try and
     // manage individual rows here.
-     if (nc != item->children) {
+    if (nc != item->children) {
+	std::unordered_set<QgItem *> reused(nc.begin(), nc.end());
+	for (QgItem *old_child : item->children) {
+	    if (reused.find(old_child) == reused.end())
+		qgmodel_mark_invalid_subtree(invalid, old_child);
+	}
 	item->children = nc;
 	// define a map for quick QgItem * -> index lookups
 	item->c_noderow.clear();
@@ -387,37 +974,42 @@ QgModel::g_update(struct db_i *n_dbip)
     model_dbip = n_dbip;
     if (!n_dbip) {
 	// if we have no dbip, clear out everything
+	model_structure_change_in_progress = true;
 	beginResetModel();
-	std::unordered_set<QgItem *>::iterator s_it;
-	for (s_it = items->begin(); s_it != items->end(); s_it++) {
-	    QgItem *itm = *s_it;
-	    delete itm;
-	}
-	// Deleted all items, but we need a root item regardless
-	// of whether a .g is open - recreate it
-	rootItem = new QgItem(0, this);
-	rootItem->mdl = this;
-
-	items->clear();
-	tops_items.clear();
+	items_clear();
 	emit mdl_changed_db((void *)ged());
 	m_session->notifyDbChanged(nullptr);
 	emit view_change(QG_VIEW_DRAWN);
 	changed_db_flag = 0;
 	model_revision = 0;
 	endResetModel();
+	model_structure_change_in_progress = false;
+	notifySelectionItemsChanged();
 	return;
     }
 
     DbiState *dbis = static_cast<DbiState *>(ged()->dbi_state);
-    dbis->update();
     const uint64_t revision = dbis->change_revision();
 
     // A revision remains visible even if another GED consumer reconciled it.
-    if (new_database || changed_db_flag || revision != model_revision) {
-	model_revision = revision;
+    if (new_database || revision != model_revision)
 	changed_db_flag = 1;
+
+    bool deltas_applied = false;
+    if (changed_db_flag && !new_database)
+	deltas_applied = change_deltas_apply();
+
+    // If we have a dbip and the changed flag is set, figure out what's different
+    if (changed_db_flag && !deltas_applied) {
+	model_structure_change_in_progress = true;
 	beginResetModel();
+
+	// Step 1 - make sure our instances are current - i.e. they match the
+	// .g database state
+	dbis->reconcile_changes();
+
+	std::vector<unsigned long long> tops = dbis->tops(true);
+	std::unordered_set<unsigned long long> top_hashes(tops.begin(), tops.end());
 
 	// Clear out any QgItems with invalid info.  We need to be fairly
 	// aggressive here - first we find all the existing invalid ones, and
@@ -426,12 +1018,18 @@ QgModel::g_update(struct db_i *n_dbip)
 	std::queue<QgItem *> to_clear;
 	std::unordered_set<QgItem *> invalid;
 	std::unordered_set<QgItem *>::iterator s_it;
+	for (QgItem *top_item : tops_items) {
+	    if (top_hashes.find(top_item->ihash) == top_hashes.end())
+		to_clear.push(top_item);
+	}
 	for (s_it = items->begin(); s_it != items->end(); s_it++) {
 	    QgItem *itm = *s_it;
+	    unsigned long long definition_hash = qg_definition_hash(dbis,
+		itm->ihash);
+	    struct directory *current_dp = dbis->get_hdp(itm->ihash);
 	    if (new_database ||
-		(dbis->p_v.find(itm->ihash) == dbis->p_v.end() &&
-		    dbis->d_map.find(itm->ihash) == dbis->d_map.end()) ||
-		itm->dp != dbis->get_hdp(itm->ihash))
+		(dbis->p_v.find(definition_hash) == dbis->p_v.end() &&
+		    !current_dp) || itm->dp != current_dp)
 		to_clear.push(itm);
 	}
 	while (!to_clear.empty()) {
@@ -458,37 +1056,34 @@ QgModel::g_update(struct db_i *n_dbip)
 	    i_itm->children = vchildren;
 	    // Child QgItem pointers are now all valid - rebuild full children
 	    // array to match current .g state
-	    item_rebuild(i_itm);
+	    item_rebuild(i_itm, invalid);
 	}
 
 	// Validate existing tops QgItems based on the tops data.
-	std::vector<unsigned long long> tops = dbis->tops(true);
-	std::unordered_set<unsigned long long> tset(tops.begin(), tops.end());
-	std::unordered_map<unsigned long long, QgItem *> vtops_items;
-	for (size_t i = 0; i < tops_items.size(); i++) {
-	    QgItem *titem = tops_items[i];
-	    if (tset.count(titem->ihash) && !invalid.count(titem)) {
-		// Still a tops item
-		vtops_items[titem->ihash] = titem;
-	    }
-	}
-
 	// Using tops_instances, construct a new tops vector.  Reuse any still valid
 	// QgItems, and make new ones 
 	std::vector<QgItem *> ntops_items;
 
 	for (size_t i = 0; i < tops.size(); i++) {
-	    std::unordered_map<unsigned long long, QgItem *>::iterator v_it;
-	    v_it = vtops_items.find(tops[i]);
-	    if (v_it != vtops_items.end()) {
-		ntops_items.push_back(v_it->second);
-	    } else {
+	    QgItem *top_item = NULL;
+	    auto instance_it = items_by_instance_hash.find(tops[i]);
+	    if (instance_it != items_by_instance_hash.end()) {
+		for (QgItem *candidate : instance_it->second) {
+		    if (candidate->parentItem == rootItem &&
+			invalid.find(candidate) == invalid.end()) {
+			top_item = candidate;
+			break;
+		    }
+		}
+	    }
+	    if (!top_item) {
 		QgItem *nitem = new QgItem(tops[i], this);
 		nitem->parentItem = rootItem;
 		nitem->op = dbis->bool_op(0, tops[i]);
-		ntops_items.push_back(nitem);
-		items->insert(nitem);
+		item_register(nitem);
+		top_item = nitem;
 	    }
+	    ntops_items.push_back(top_item);
 	}
 
 	// Set the new tops items as children of the rootItem.
@@ -507,18 +1102,27 @@ QgModel::g_update(struct db_i *n_dbip)
 	std::unordered_set<QgItem *>::iterator iv_it;
 	for (iv_it = invalid.begin(); iv_it != invalid.end(); iv_it++) {
 	    QgItem *iv_itm = *iv_it;
-	    items->erase(iv_itm);
+	    item_unregister(iv_itm);
 	    delete iv_itm;
 	}
 
 	endResetModel();
+	model_structure_change_in_progress = false;
     }
 
     // If we did change something, we need to let the application know
     if (changed_db_flag) {
+	BSelectState *selection_state = qg_selection_state(this);
+	if (selection_state) {
+	    selection_state->refresh();
+	    selection_state->characterize();
+	}
+	notifySelectionItemsChanged();
 	emit mdl_changed_db((void *)ged());
 	m_session->notifyDbChanged(n_dbip);
 	emit check_highlights();
+	dbis->acknowledge_changes(revision);
+	model_revision = revision;
     }
 
     // Reset flag - we're in sync now
@@ -542,6 +1146,8 @@ QgModel::NodeIndex(QgItem *node) const
 {
     if (node == rootItem)
 	return QModelIndex();
+    if (!item_is_indexed(node))
+	return QModelIndex();
     int nr = NodeRow(node);
     if (nr == -1)
 	return QModelIndex();
@@ -559,12 +1165,16 @@ QgModel::canFetchMore(const QModelIndex &idx) const
     if (item == rootItem)
        	return false;
 
+    if (item->children.size())
+	return false;
+
     // If there are children to be fetched, we can fetch them
     DbiState *dbis = (DbiState *)ged()->dbi_state;
-    if (dbis->p_v.find(item->ihash) != dbis->p_v.end()) {
-	if (dbis->p_v[item->ihash].size())
-	    return true;
-    }
+    unsigned long long definition_hash = qg_definition_hash(dbis,
+	item->ihash);
+    auto children_it = dbis->p_v.find(definition_hash);
+    if (children_it != dbis->p_v.end() && !children_it->second.empty())
+	return true;
 
     return false;
 }
@@ -586,7 +1196,7 @@ QgModel::fetchMore(const QModelIndex &idx)
 	return;
 
     DbiState *dbis = (DbiState *)ged()->dbi_state;
-    unsigned long long chash = item->ihash;
+    unsigned long long chash = qg_definition_hash(dbis, item->ihash);
     if (dbis->p_v.find(chash) == dbis->p_v.end()) {
 	// TODO - invalid hash
 	return;
@@ -598,12 +1208,16 @@ QgModel::fetchMore(const QModelIndex &idx)
     for (nh_it = nh.rbegin(); nh_it != nh.rend(); nh_it++) {
 	QgItem *nitem = new QgItem(*nh_it, this);
 	nitem->parentItem = item;
-	nitem->op = dbis->bool_op(item->ihash, *nh_it);
+	nitem->op = qg_boolean_operation(dbis, item->ihash, *nh_it);
 	nc.push_back(nitem);
-	items->insert(nitem);
+	item_register(nitem);
     }
 
+    if (nc.empty())
+	return;
+
     // All done - let the Qt model know
+    model_structure_change_in_progress = true;
     beginInsertRows(idx, 0, nc.size() - 1);
     item->children = nc;
     // define a map for quick QgItem * -> index lookups
@@ -612,6 +1226,7 @@ QgModel::fetchMore(const QModelIndex &idx)
 	item->c_noderow[nc[i]] = i;
     }
     endInsertRows();
+    model_structure_change_in_progress = false;
     emit check_highlights();
     emit item->mdl->opened_item(item);
 }
@@ -689,49 +1304,25 @@ QgModel::data(const QModelIndex &index, int role) const
     if (!index.isValid())
 	return QVariant();
     QgItem *qi= getItem(index);
-    DbiState *dbis = (DbiState *)qi->mdl->ged()->dbi_state;
+    DbiState *dbis = (DbiState *)qi->model()->ged()->dbi_state;
     if (role == Qt::DisplayRole)
-	return QVariant(bu_vls_cstr(&qi->name));
+	return QVariant(qi->displayName());
     if (role == BoolInternalRole)
-	return QVariant(qi->op);
+	return QVariant(qi->booleanOperation());
     if (role == DirectoryInternalRole)
-	return QVariant::fromValue((void *)(qi->dp));
+	return QVariant::fromValue((void *)(qi->directoryEntry()));
     if (role == DrawnDisplayRole) {
 	BViewState *vs = dbis->get_view_state(ged()->ged_gvp);
 	return QVariant(vs->is_hdrawn(-1, qi->path_hash()));
     }
-    if (role == SelectDisplayRole) {
-	BSelectState *ss = dbis->find_selected_state(NULL);
-	if (ss)
-	    return QVariant(ss->is_selected(qi->path_hash()));
-    }
+    if (role == SelectDisplayRole)
+	return QVariant(itemSelected(qi));
 
     if (role == TypeIconDisplayRole)
-	return QVariant(qi->icon);
+	return QVariant(qi->typeIcon());
 
-    if (role == HighlightDisplayRole) {
-	BSelectState *ss = dbis->find_selected_state(NULL);
-	if (!ss)
-	    return QVariant();
-	switch (qi->mdl->interaction_mode) {
-	    case 0:
-		if (qi->open_itm == false && ss->is_active_parent(qi->path_hash()))
-		    return QVariant(1);
-		return QVariant(0);
-	    case 1:
-		if (ss->is_parent_obj(qi->ihash))
-		    return QVariant(2);
-		return QVariant(0);
-	    case 2:
-		if (ss->is_immediate_parent_obj(qi->ihash))
-		    return QVariant(3);
-		if (ss->is_grand_parent_obj(qi->ihash))
-		    return QVariant(2);
-		return QVariant(0);
-	    default:
-		return QVariant(0);
-	}
-    }
+    if (role == HighlightDisplayRole)
+	return QVariant(itemHighlight(qi));
 
     return QVariant();
 }
@@ -895,7 +1486,7 @@ QgModel::item_collapsed(const QModelIndex &index)
 {
     QTCAD_SLOT("QgModel::item_collapsed", 1);
     QgItem *itm = getItem(index);
-    itm->open_itm = false;
+    itm->setOpen(false);
 }
 
 void
@@ -903,7 +1494,7 @@ QgModel::item_expanded(const QModelIndex &index)
 {
     QTCAD_SLOT("QgModel::item_expanded", 1);
     QgItem *itm = getItem(index);
-    itm->open_itm = true;
+    itm->setOpen(true);
 }
 
 // Local Variables:

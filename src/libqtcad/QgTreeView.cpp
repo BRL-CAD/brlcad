@@ -174,8 +174,10 @@ QgTreeView::QgTreeView(QWidget *pparent, QgModel *treemodel) : QTreeView(pparent
 void
 QgTreeView::drawBranches(QPainter* painter, const QRect& rrect, const QModelIndex& index) const
 {
-    QModelIndex selected_idx = ((QgTreeView *)this)->selected();
-    if (!(index == selected_idx)) {
+    int selected_state = index.data(QgModel::SelectDisplayRole).toInt();
+    if (selected_state) {
+	painter->fillRect(rrect, palette().highlight());
+    } else {
 	int aflag = index.data(QgModel::HighlightDisplayRole).toInt();
 	if (!(QgTreeView *)this->isExpanded(index) && aflag == 1) {
 	    painter->fillRect(rrect, QBrush(QColor(220, 200, 30)));
@@ -212,10 +214,10 @@ void QgTreeView::header_state()
     header()->setMaximumHeight(1);
 }
 
-void QgTreeView::resizeEvent(QResizeEvent *)
+void QgTreeView::resizeEvent(QResizeEvent *event)
 {
+    QTreeView::resizeEvent(event);
     header_state();
-    emit m->layoutChanged();
 }
 
 void QgTreeView::mousePressEvent(QMouseEvent *e)
@@ -274,15 +276,10 @@ void QgTreeView::context_menu(const QPoint &point)
     delete menu;
 }
 
-void QgTreeView::selectionChanged(const QItemSelection &selected, const QItemSelection &deselected)
+void
+QgTreeView::selectionChanged(const QItemSelection &selected,
+	const QItemSelection &deselected)
 {
-    QTCAD_SLOT("QgTreeView::selectionChanged", 1);
-    if (selected.indexes().size()) {
-	// Stash a valid selection for potential post-model rebuild restoration.
-	QModelIndex nindex = selected.indexes().first();
-	if (nindex.isValid())
-	    cached_selection_idx = nindex;
-    }
     QTreeView::selectionChanged(selected, deselected);
 }
 
@@ -332,36 +329,22 @@ void
 QgTreeView::redo_expansions(void *)
 {
     QTCAD_SLOT("QgTreeView::redo_expansions", 1);
-    std::unordered_set<QgItem *>::iterator i_it;
-    for (i_it = m->items->begin(); i_it != m->items->end(); i_it++) {
-	QgItem *itm = *i_it;
+    const std::unordered_set<QgItem *> &items = m->allItems();
+    for (QgItem *itm : items) {
 	QModelIndex idx = m->NodeIndex(itm);
-	if (itm->open_itm && !isExpanded(idx)) {
+	if (itm->isOpen() && !isExpanded(idx)) {
 	    setExpanded(idx, true);
 	}
     }
 }
 
 
-// TODO - probably no longer needed?
 void
 QgTreeView::redo_highlights()
 {
     QTCAD_SLOT("QgTreeView::redo_highlights", 1);
-    // Restore the previous selection, if we have no replacement and its still valid
-    QModelIndex selected_idx = selected();
-    if (!selected_idx.isValid()) {
-	QgItem *cnode = static_cast<QgItem *>(cached_selection_idx.internalPointer());
-	if (m->items->find(cnode) != m->items->end()) {
-	    selected_idx = cached_selection_idx;
-	    selectionModel()->select(selected_idx, QItemSelectionModel::Select | QItemSelectionModel::Rows);
-	} else {
-	    cached_selection_idx = QModelIndex();
-	}
-    }
-
-    //QgTreeSelectionModel *selm = (QgTreeSelectionModel *)selectionModel();
-    //selm->update_selected_node_relationships(selected_idx);
+    if (m)
+	m->notifySelectionItemsChanged();
 }
 
 #if 0
@@ -409,15 +392,22 @@ void QgTreeView::expand_link(const QUrl &link)
 void QgTreeView::qgitem_select_sync(QgItem *)
 {
     QTCAD_SLOT("QgTreeView::qgitem_select_sync", 1);
-    emit m->layoutChanged();
+    if (m)
+	m->notifySelectionItemsChanged();
 }
 
-void QgTreeView::do_view_update(unsigned long long UNUSED(flags))
+void QgTreeView::do_view_update(unsigned long long flags)
 {
     QTCAD_SLOT("QgTreeView::do_view_update", 1);
-    // TODO - can the mode logic be triggered from here as well?
+    if (!m)
+	return;
 
-    emit m->layoutChanged();
+    if (!flags || (flags & (QG_VIEW_SELECT | QG_VIEW_MODE | QG_VIEW_DB)))
+	m->notifySelectionItemsChanged();
+    if (!flags || (flags & (QG_VIEW_DRAWN | QG_VIEW_DB)))
+	m->notifyDrawnItemsChanged();
+    if (!flags || (flags & QG_VIEW_REFRESH))
+	viewport()->update();
 }
 
 // Local Variables:

@@ -68,6 +68,7 @@
 #define QGMODEL_H
 
 #include <cstdint>
+#include <set>
 #include <string>
 #include <vector>
 #include <unordered_map>
@@ -126,12 +127,15 @@ class QTCAD_EXPORT QgItem
 	 * combination of the ihash and ctx points to the BRL-CAD specific data
 	 * for this instance.
 	 */
-	unsigned long long ihash = 0;
-	QgModel *mdl = NULL;
+	/** Return the database instance identity represented by this item. */
+	unsigned long long instanceHash() const { return ihash; }
+	/** Return the model that owns this item. */
+	QgModel *model() const { return mdl; }
 
-	QgItem *parentItem = NULL;
-	std::vector<unsigned long long> path_items();
-	unsigned long long path_hash();
+	/** Return the instance identities from the root through this item. */
+	std::vector<unsigned long long> path_items() const;
+	/** Return the stable hash for this item's full manifested path. */
+	unsigned long long path_hash() const;
 
 	/* Flag to determine if this QgItem should be viewed as opened or closed -
 	 * in order to preserve subtree state, we don't want to obliterate the
@@ -145,18 +149,43 @@ class QTCAD_EXPORT QgItem
 	 * involved.  Give we already have some separation between this logic
 	 * and the instance logic which is the real wrapper around the .g
 	 * information, going with the simple approach for now. */
-	bool open_itm = false;
+	/** Return whether a view has marked this hierarchy item open. */
+	bool isOpen() const { return open_itm; }
+	/** Set the cached open state without materializing children. */
+	void setOpen(bool open) { open_itm = open; }
 
 	// Qt related elements
-	QgItem *parent();
+	/** Return this item's manifested parent, or NULL for the root. */
+	QgItem *parent() const;
 	int childNumber() const;
-	void appendChild(QgItem *C);
-	QgItem *child(int n);
+	/** Return a loaded child by row, or NULL if @p n is invalid. */
+	QgItem *child(int n) const;
+	/** Return the number of currently loaded children. */
 	int childCount() const;
+	/** Return the currently loaded child-item collection. */
+	const std::vector<QgItem *> &childItems() const { return children; }
+	/** Return the number of children available from the database. */
+	size_t availableChildCount() const { return c_count; }
 	// NOTE - for now this is 1 - the model will have to
 	// incorporate some notion of exposed attributes and
 	// their ordering before that changes
 	int columnCount() const;
+	/** Return the cached display name. */
+	const char *displayName() const { return bu_vls_cstr(&name); }
+	/** Return the cached boolean operation relative to the parent. */
+	db_op_t booleanOperation() const { return op; }
+	/** Return the represented database directory entry. */
+	struct directory *directoryEntry() const { return dp; }
+	/** Return the cached database-type icon. */
+	const QImage &typeIcon() const { return icon; }
+
+    private:
+	friend class QgModel;
+
+	void appendChild(QgItem *C);
+	unsigned long long ihash = 0;
+	QgModel *mdl = NULL;
+	QgItem *parentItem = NULL;
 	std::vector<QgItem *> children;
 	std::unordered_map<QgItem *, int> c_noderow;
 	size_t c_count = 0;
@@ -167,6 +196,7 @@ class QTCAD_EXPORT QgItem
 	db_op_t op = DB_OP_UNION;
 	struct directory *dp = NULL;
 	QImage icon;
+	bool open_itm = false;
 	//int draw_state = 0;
 	//bool select_state = false;
 };
@@ -231,12 +261,10 @@ class QTCAD_EXPORT QgModel : public QAbstractItemModel
 	// update the model, or upon startup.
 	void g_update(struct db_i *n_dbip);
 
-	// This is a bit of a cheat in that an interaction mode isn't really
-	// part of the .g state, but we want the tree highlighting logic to
-	// reflect such a state and to have that logic reusable at the library
-	// level it needs to be available in a container readily accessible at
-	// that level.
-	int interaction_mode = 0;
+	/** Set the mode used to derive hierarchy highlighting. */
+	void setInteractionMode(int mode);
+	/** Return the mode used to derive hierarchy highlighting. */
+	int interactionMode() const { return interaction_mode; }
 
 	// Qt Model interface
 
@@ -294,9 +322,46 @@ class QTCAD_EXPORT QgModel : public QAbstractItemModel
 
 	// Convenience container holding all active QgItems
 	std::unordered_set<QgItem *> *items = NULL;
+	/** Return all currently active items owned by this model. */
+	const std::unordered_set<QgItem *> &allItems() const
+	{
+	    static const std::unordered_set<QgItem *> empty_items;
+	    return items ? *items : empty_items;
+	}
+	/** Return whether @p item is currently owned by this model. */
+	bool hasItem(QgItem *item) const
+	{
+	    return items && item && items->find(item) != items->end();
+	}
 
 	// Sorted QgItem pointers corresponding to the tops instances
 	std::vector<QgItem *> tops_items;
+	/** Return the sorted top-level items. */
+	const std::vector<QgItem *> &topItems() const { return tops_items; }
+
+	/** Return the number of paths in the default semantic selection. */
+	size_t selectionCount() const;
+	/** Return whether @p item is in the default semantic selection. */
+	bool itemSelected(const QgItem *item) const;
+	/** Return the mode-dependent highlight state for @p item. */
+	int itemHighlight(const QgItem *item) const;
+	/** Clear the default semantic selection. */
+	void selectionClear();
+	/** Add @p item to the default semantic selection. */
+	void itemSelect(QgItem *item);
+	/** Remove @p item from the default semantic selection. */
+	void itemDeselect(QgItem *item);
+	/** Finalize selection metadata and return the required view flags. */
+	unsigned long long selectionCommit();
+	/** Notify only rows whose selection presentation may have changed. */
+	void notifySelectionItemsChanged();
+	/** Notify loaded rows that their drawn-state role may have changed. */
+	void notifyDrawnItemsChanged();
+	/** Return true while Qt is reconciling model rows or indexes. */
+	bool structureChangeInProgress() const
+	{
+	    return model_structure_change_in_progress;
+	}
 
 	// Toggle for whether or not the model should be viewed using a tops
 	// listing or the full object listing as the "seed" set
@@ -342,13 +407,34 @@ class QTCAD_EXPORT QgModel : public QAbstractItemModel
 	QModelIndex parent(const QModelIndex &child) const override;
 	Qt::ItemFlags flags(const QModelIndex &index) const override;
 
-	void item_rebuild(QgItem *item);
+	void item_rebuild(QgItem *item, std::unordered_set<QgItem *> &invalid);
+	void item_register(QgItem *item);
+	void item_unregister(QgItem *item);
+	void item_indexes_clear();
+	void items_clear();
+	bool item_is_indexed(QgItem *item) const;
+	void item_rows_rebuild(QgItem *item);
+	void item_subtree_delete(QgItem *item);
+	bool item_children_sync(QgItem *item,
+		const std::vector<unsigned long long> &children);
+	bool change_deltas_apply();
+	void items_changed_notify(const std::set<std::string> &names);
 
 	QgItem *rootItem;
+	std::unordered_map<unsigned long long, std::unordered_set<QgItem *>> items_by_instance_hash;
+	std::unordered_map<unsigned long long, std::unordered_set<QgItem *>> items_by_path_hash;
+	std::unordered_map<struct directory *, std::unordered_set<QgItem *>> items_by_directory;
+	std::unordered_map<QgItem *, unsigned long long> item_path_hashes;
+	std::unordered_set<unsigned long long> selected_path_hashes;
+	std::unordered_set<unsigned long long> active_parent_path_hashes;
+	std::unordered_set<unsigned long long> immediate_parent_instance_hashes;
+	std::unordered_set<unsigned long long> grand_parent_instance_hashes;
 	QgSession *m_session = NULL;
 	struct db_i *model_dbip = NULL;
 	uint64_t model_revision = 0;
 	uintptr_t event_observer = 0;
+	int interaction_mode = 0;
+	bool model_structure_change_in_progress = false;
 };
 
 #endif //QGMODEL_H

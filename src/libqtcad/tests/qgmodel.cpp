@@ -40,7 +40,7 @@
 void
 open_children(QgItem *itm, QgModel *s, int depth, int max_depth)
 {
-    if (!itm || !itm->ihash)
+    if (!itm || !itm->instanceHash())
 	return;
 
     if (max_depth > 0 && depth >= max_depth)
@@ -48,7 +48,7 @@ open_children(QgItem *itm, QgModel *s, int depth, int max_depth)
 
     itm->open();
 
-    for (size_t j = 0; j < itm->children.size(); j++) {
+    for (size_t j = 0; j < itm->childItems().size(); j++) {
 	QgItem *c = itm->child(j);
 	open_children(c, s, depth+1, max_depth);
     }
@@ -57,9 +57,8 @@ open_children(QgItem *itm, QgModel *s, int depth, int max_depth)
 void
 open_tops(QgModel *s, int depth)
 {
-    for (size_t i = 0; i < s->tops_items.size(); i++) {
-	QgItem *itm = s->tops_items[i];
-	if (!itm->ihash)
+    for (QgItem *itm : s->topItems()) {
+	if (!itm->instanceHash())
 	    continue;
 	open_children(itm, s, 0, depth);
     }
@@ -69,7 +68,7 @@ void
 close_children(QgItem *itm)
 {
     itm->close();
-    for (size_t j = 0; j < itm->children.size(); j++) {
+    for (size_t j = 0; j < itm->childItems().size(); j++) {
 	QgItem *c = itm->child(j);
 	close_children(c);
     }
@@ -78,7 +77,7 @@ close_children(QgItem *itm)
 void
 print_children(QgItem *itm, QgModel *s, int depth)
 {
-    if (!itm || !itm->ihash)
+    if (!itm || !itm->instanceHash())
 	return;
 
 
@@ -90,15 +89,15 @@ print_children(QgItem *itm, QgModel *s, int depth)
 
     struct bu_vls path_str = BU_VLS_INIT_ZERO;
     std::vector<unsigned long long> path_hashes = itm->path_items();
-    DbiState *dbis = (DbiState *)itm->mdl->ged()->dbi_state;
+    DbiState *dbis = (DbiState *)itm->model()->ged()->dbi_state;
     dbis->print_hash(&path_str, path_hashes[path_hashes.size()-1]);
     std::cout << bu_vls_cstr(&path_str) << "\n";
     bu_vls_free(&path_str);
 
-    for (size_t j = 0; j < itm->children.size(); j++) {
+    for (size_t j = 0; j < itm->childItems().size(); j++) {
 	QgItem *c = itm->child(j);
 
-	if (!itm->open_itm) {
+	if (!itm->isOpen()) {
 	    continue;
 	}
 
@@ -109,9 +108,8 @@ print_children(QgItem *itm, QgModel *s, int depth)
 void
 print_tops(QgModel *s)
 {
-    for (size_t i = 0; i < s->tops_items.size(); i++) {
-	QgItem *itm = s->tops_items[i];
-	if (!itm->ihash)
+    for (QgItem *itm : s->topItems()) {
+	if (!itm->instanceHash())
 	    continue;
 	print_children(itm, s, 0);
     }
@@ -145,8 +143,7 @@ int main(int argc, char *argv[])
 
     // Close top level
     std::cout << "\nTop level closed:\n";
-    for (size_t i = 0; i < s->tops_items.size(); i++) {
-	QgItem *itm = s->tops_items[i];
+    for (QgItem *itm : s->topItems()) {
 	itm->close();
     }
     print_tops(s);
@@ -160,8 +157,7 @@ int main(int argc, char *argv[])
 
     // Close everything
     std::cout << "\nEverything closed:\n";
-    for (size_t i = 0; i < s->tops_items.size(); i++) {
-	QgItem *itm = s->tops_items[i];
+    for (QgItem *itm : s->topItems()) {
 	close_children(itm);
     }
     print_tops(s);

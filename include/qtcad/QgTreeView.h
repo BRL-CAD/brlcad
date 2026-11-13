@@ -66,14 +66,14 @@ class QTCAD_EXPORT QgTreeView : public QTreeView
 	//void expand_link(const QUrl &link);
 	void redo_expansions(void *);
 	void redo_highlights();
-	void selectionChanged(const QItemSelection &selected, const QItemSelection &deselected) override;
+	void selectionChanged(const QItemSelection &selected,
+		const QItemSelection &deselected) override;
 	void do_draw_toggle(const QModelIndex &index);
 	void qgitem_select_sync(QgItem *);
 	void do_view_update(unsigned long long);
 
     private:
 	void header_state();
-	QModelIndex cached_selection_idx = QModelIndex();
 };
 
 class QTCAD_EXPORT gObjDelegate : public QStyledItemDelegate

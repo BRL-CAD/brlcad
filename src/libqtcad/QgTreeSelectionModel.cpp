@@ -22,159 +22,109 @@
  */
 
 #include "common.h"
-#include <algorithm>
-#include <queue>
 #include <unordered_set>
-#include <stack>
-#include <vector>
 #include <QGuiApplication>
 #include "qtcad/QgUtil.h"
 #include "qtcad/QgModel.h"
 #include "qtcad/QgTreeSelectionModel.h"
 #include "qtcad/QgSignalFlags.h"
 
-#include "../libged/dbi.h"
+static void
+qg_selection_commit(QgTreeView *treeview, QgModel *model)
+{
+    if (!treeview || !model)
+	return;
+
+    unsigned long long flags = model->selectionCommit();
+    emit treeview->view_changed(flags);
+}
 
 void
 QgTreeSelectionModel::clear_all()
 {
-    QgModel *m = treeview->m;
+    if (!treeview || !treeview->m)
+	return;
 
-    DbiState *dbis = (DbiState *)m->ged()->dbi_state;
-    std::vector<BSelectState *> sv = dbis->get_selected_states(NULL);
-    BSelectState *ss = sv[0];
-    ss->clear();
-    ss->characterize();
+    treeview->m->selectionClear();
+    qg_selection_commit(treeview, treeview->m);
 }
 
 void
 QgTreeSelectionModel::select(const QItemSelection &selection, QItemSelectionModel::SelectionFlags flags)
 {
     QTCAD_SLOT("QgTreeSelectionModel::select QItemSelection", 1);
-    QgModel *m = treeview->m;
-    struct ged *gedp = m->ged();
-
-    DbiState *dbis = (DbiState *)gedp->dbi_state;
-    std::vector<BSelectState *> ssv = dbis->get_selected_states(NULL);
-
-    if (ssv.size() != 1)
+    QgModel *m = treeview ? treeview->m : NULL;
+    if (!m || m->structureChangeInProgress()) {
+	QItemSelectionModel::select(selection, flags);
 	return;
+    }
 
-    BSelectState *ss = ssv[0];
-
-#if 0
-    QModelIndexList dl = selection.indexes();
-    for (long int i = 0; i < dl.size(); i++) {
-	QgItem *snode = static_cast<QgItem *>(dl.at(i).internalPointer());
-#else
-    // Above should work (and does on Linux) - using a Windows workaround from
-    // https://stackoverflow.com/q/15123109/2037687 for the moment...
-    QModelIndexList *dl = new QModelIndexList(selection.indexes());
-    for (long int i = 0; i < dl->size(); i++) {
-	QgItem *snode = static_cast<QgItem *>(dl->at(i).internalPointer());
-#endif
+    QModelIndexList indexes = selection.indexes();
+    std::unordered_set<QgItem *> visited;
+    for (const QModelIndex &index : indexes) {
+	QgItem *snode = static_cast<QgItem *>(index.internalPointer());
+	if (!snode || !visited.insert(snode).second)
+	    continue;
 
 	// If we are selecting an already selected node, clear it
-	if (flags & QItemSelectionModel::Select && ss->is_selected(snode->path_hash())) {
+	if (flags & QItemSelectionModel::Select && m->itemSelected(snode)) {
 	    if (!(QGuiApplication::keyboardModifiers().testFlag(Qt::ShiftModifier))) {
-		if (flags & QItemSelectionModel::Clear && ss->selected.size() > 1) {
-		    ss->clear();
-		    std::vector<unsigned long long> path_hashes = snode->path_items();
-		    ss->select_hpath(path_hashes);
+		if (flags & QItemSelectionModel::Clear && m->selectionCount() > 1) {
+		    m->selectionClear();
+		    m->itemSelect(snode);
 		} else {
-		    std::vector<unsigned long long> path_hashes = snode->path_items();
-		    ss->deselect_hpath(path_hashes);
+		    m->itemDeselect(snode);
 		}
 	    }
 	} else {
 	    if (flags & QItemSelectionModel::Clear)
-		ss->clear();
+		m->selectionClear();
 
-	    std::vector<unsigned long long> path_hashes = snode->path_items();
-	    ss->select_hpath(path_hashes);
+	    m->itemSelect(snode);
 	}
     }
 
-    // Done manipulating paths - update metadata
-    ss->characterize();
-
-    unsigned long long sflags = QG_VIEW_SELECT;
-    if (ss->draw_sync())
-	sflags |= QG_VIEW_REFRESH;
-
-    emit treeview->view_changed(sflags);
-    emit treeview->m->layoutChanged();
+    qg_selection_commit(treeview, m);
 }
 
 void
 QgTreeSelectionModel::select(const QModelIndex &index, QItemSelectionModel::SelectionFlags flags)
 {
     QTCAD_SLOT("QgTreeSelectionModel::select QModelIndex", 1);
-    QgModel *m = treeview->m;
-    struct ged *gedp = m->ged();
-
-    DbiState *dbis = (DbiState *)gedp->dbi_state;
-    std::vector<BSelectState *> ssv = dbis->get_selected_states(NULL);
-
-    if (ssv.size() != 1)
+    QgModel *m = treeview ? treeview->m : NULL;
+    if (!m || m->structureChangeInProgress()) {
+	QItemSelectionModel::select(index, flags);
 	return;
-
-    BSelectState *ss = ssv[0];
+    }
 
     if (flags & QItemSelectionModel::Clear)
-	ss->clear();
+	m->selectionClear();
 
     QgItem *snode = static_cast<QgItem *>(index.internalPointer());
     if (!snode) {
-	ss->clear();
-
-	// Done manipulating paths - update metadata
-	ss->characterize();
-
-	unsigned long long sflags = QG_VIEW_SELECT;
-	if (ss->draw_sync())
-	    sflags |= QG_VIEW_REFRESH;
-
-	emit treeview->view_changed(sflags);
-	emit treeview->m->layoutChanged();
+	m->selectionClear();
+	qg_selection_commit(treeview, m);
 	return;
     }
 
     if (!(flags & QItemSelectionModel::Deselect)) {
 
 	// If we are selecting an already selected node, clear it
-	if (flags & QItemSelectionModel::Select && ss->is_selected(snode->path_hash())) {
-	    std::vector<unsigned long long> path_hashes = snode->path_items();
-	    ss->deselect_hpath(path_hashes);
-	    // Done manipulating paths - update metadata
-	    ss->characterize();
-	    unsigned long long sflags = QG_VIEW_SELECT;
-	    if (ss->draw_sync())
-		sflags |= QG_VIEW_REFRESH;
-	    emit treeview->view_changed(sflags);
-	    emit treeview->m->layoutChanged();
+	if (flags & QItemSelectionModel::Select && m->itemSelected(snode)) {
+	    m->itemDeselect(snode);
+	    qg_selection_commit(treeview, m);
 	    return;
 	}
 
-	std::vector<unsigned long long> path_hashes = snode->path_items();
-	ss->select_hpath(path_hashes);
+	m->itemSelect(snode);
 
     } else {
 
-	std::vector<unsigned long long> path_hashes = snode->path_items();
-	ss->deselect_hpath(path_hashes);
+	m->itemDeselect(snode);
 
     }
 
-    // Done manipulating paths - update metadata
-    ss->characterize();
-
-    unsigned long long sflags = QG_VIEW_SELECT;
-    if (ss->draw_sync())
-	sflags |= QG_VIEW_REFRESH;
-
-    emit treeview->view_changed(sflags);
-    emit treeview->m->layoutChanged();
+    qg_selection_commit(treeview, m);
 }
 
 // Local Variables:
