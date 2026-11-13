@@ -39,6 +39,7 @@ model/step					stp step
 model/stl					stl
 model/vnd.brlcad+binary				g brlcad
 model/vnd.brlcad+asc				asc
+model/vnd.brlcad+json				gson
 model/vnd.fastgen				bdf fas fg fg4
 model/vnd.gift					cg comgeom
 model/vnd.intaval				tgf

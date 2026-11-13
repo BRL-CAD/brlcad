@@ -130,6 +130,8 @@ __BEGIN_DECLS
 
 #include "./rt/overlap.h"
 
+#include "./rt/object_io.h"
+
 #include "./rt/pattern.h"
 
 #include "./rt/shoot.h"
