@@ -10,7 +10,7 @@ u-bw - convert unsigned shorts to unsigned chars (8-bit bw data)
 
 [source]
 ----
-u-bw [-l] < u_shorts > bwfile
+u-bw [-l | --low-byte] < u_shorts > bwfile
 ----
 
 
@@ -35,10 +35,13 @@ host machine.
 [[options]]
 == OPTIONS
 
-*-l*::
+*-l*, *--low-byte*::
   Keep the low-order (least significant) byte of each unsigned short
   rather than the default high-order byte. This is equivalent to taking
   each input value modulo 256.
+
+*-h*, *-?*, *--help*::
+  Print command help and exit.
 
 [[examples]]
 == EXAMPLES
