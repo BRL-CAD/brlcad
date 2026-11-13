@@ -10,7 +10,7 @@ alias-pix - convert an Alias(tm) pix image to a BRL-CAD PIX(5) image
 
 [source]
 ----
-alias-pix [-v] < ALIASpixfile > BRLpixfile
+alias-pix [-v | --verbose] < ALIASpixfile > BRLpixfile
 ----
 
 
@@ -29,9 +29,12 @@ rejected. Input may not be read from a terminal.
 [[options]]
 == OPTIONS
 
-*-v*::
+*-v*, *--verbose*::
   Print a summary of the Alias pix file header (image dimensions, X and Y
   offsets, and bits per pixel) to standard error.
+
+*-h*, *-?*, *--help*::
+  Print command help and exit.
 
 
 [[examples]]

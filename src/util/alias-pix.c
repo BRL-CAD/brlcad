@@ -28,55 +28,82 @@
 #include <stdlib.h>
 #include <ctype.h>
 #include "bio.h"
+#include "bu/arg.h"
 #include "bu/app.h"
 #include "bu/malloc.h"
 #include "bu/exit.h"
-
-
-char noname[] = "(noname)";
-char *progname = noname;
-
-
-void usage(void)
-{
-    bu_exit(1, "Usage: %s [ -v ] < ALIASpixfile >BRLpixfile\n", progname);
-}
-
 
 struct aliashead {
     short x, y;		/* dimensions of this image in X and Y */
     short xoff, yoff;	/* offsets of pixels */
     short bitplanes;	/* the number of bits per pixel */
-} hdr;
+};
 
 #define BUFCNT 256
 struct pixel {
     unsigned char len, b, g, r;
-} buf[BUFCNT];
+};
 
-int verbose = 0;
+struct alias_pix_args {
+    int help;
+    int verbose;
+};
 
-char *image;
+static const struct bu_arg_option alias_pix_options[] = {
+    BU_ARG_FLAG("h", "help", struct alias_pix_args, help,
+	"Print help and exit"),
+    BU_ARG_ALIAS("?", NULL, "help", 1),
+    BU_ARG_FLAG("v", "verbose", struct alias_pix_args, verbose,
+	"Print the Alias image header"),
+    BU_ARG_OPTION_NULL
+};
+
+static const struct bu_arg_schema alias_pix_schema = BU_ARG_SCHEMA(
+    "alias-pix", "Convert an Alias PIX image to BRL-CAD PIX format",
+    alias_pix_options, NULL, BU_ARG_PARSE_OPTIONS_FIRST,
+    BU_ARG_SCHEMA_META_HELP(NULL, NULL, NULL, NULL, NULL));
+
+static const struct bu_arg_grammar alias_pix_grammar = {
+    &alias_pix_schema, NULL, NULL
+};
 
 int
-main(int ac, char **av)
+main(int argc, char **argv)
 {
     int pixcnt, i;
     char *p;
+    char *image;
+    struct aliashead hdr = {0};
+    struct pixel buf[BUFCNT];
+    struct alias_pix_args args = {0};
+    struct bu_vls msg = BU_VLS_INIT_ZERO;
 
-    bu_setprogname(av[0]);
-    progname = *av;
+    bu_setprogname(argv[0]);
 
-    if (ac > 2 || isatty(fileno(stdin))) usage();
+    int introspection = bu_arg_introspect(&msg, &alias_pix_grammar, argc - 1,
+	(const char * const *)(argv + 1));
+    if (introspection != 0) {
+	bu_flog(introspection > 0 ? stdout : stderr, "%s", bu_vls_cstr(&msg));
+	bu_vls_free(&msg);
+	return introspection > 0 ? 0 : 1;
+    }
+    int operand_index = bu_arg_schema_parse_complete(&alias_pix_schema,
+	&args, &msg, argc - 1, (const char **)(argv + 1));
+    if (operand_index < 0)
+	bu_exit(1, "%s", bu_vls_cstr(&msg));
+    bu_vls_free(&msg);
+    if (args.help) {
+	char *help = bu_arg_schema_help(&alias_pix_schema, "alias-pix");
+	bu_flog(stdout, "%s", help ? help : "");
+	bu_free(help, "alias-pix help");
+	return 0;
+    }
+
+    if (isatty(fileno(stdin)))
+	bu_exit(1, "alias-pix requires redirected binary input\n");
 
     setmode(fileno(stdin), O_BINARY);
     setmode(fileno(stdout), O_BINARY);
-
-    if (ac > 1) {
-	p = av[1];
-	if (*p == '-' && *(p+1) == 'v') verbose = 1;
-	else usage();
-    }
 
 
     /* read header in architecture-independent fashion */
@@ -103,7 +130,7 @@ main(int ac, char **av)
 	bu_exit(-1, "ERROR: unexpected image file\n");
     }
 
-    if (verbose) {
+	    if (args.verbose) {
 	(void) fprintf(stderr,
 		       "X: %d Y: %d xoff: %d yoff: %d bits/pixel: %d\n",
 		       hdr.x, hdr.y, hdr.xoff, hdr.yoff, hdr.bitplanes);
@@ -127,7 +154,7 @@ main(int ac, char **av)
 
     for (i=hdr.y-1; i >= 0; --i) {
 	if (fwrite(&image[i*hdr.x*3], hdr.x*3, 1, stdout) != 1) {
-	    bu_exit(-1, "%s: Error writing image\n", *av);
+	    bu_exit(-1, "%s: Error writing image\n", argv[0]);
 	}
     }
 
