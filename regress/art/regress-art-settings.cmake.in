@@ -1,0 +1,132 @@
+# R E G R E S S - A R T - S E T T I N G S . C M A K E
+# BRL-CAD
+#
+# Copyright (c) 2026 United States Government as represented by
+# the U.S. Army Research Laboratory.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions
+# are met:
+#
+# 1. Redistributions of source code must retain the above copyright
+# notice, this list of conditions and the following disclaimer.
+#
+# 2. Redistributions in binary form must reproduce the above
+# copyright notice, this list of conditions and the following
+# disclaimer in the documentation and/or other materials provided
+# with the distribution.
+#
+# 3. The name of the author may not be used to endorse or promote
+# products derived from this software without specific prior written
+# permission.
+#
+# THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS
+# OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+# WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+# ARE DISCLAIMED. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY
+# DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+# DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
+# GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+# INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+# WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+# NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+# SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+#
+set(WORK "@CMAKE_CURRENT_BINARY_DIR@/settings-output")
+set(LOG "${WORK}/art.log")
+file(REMOVE_RECURSE "${WORK}")
+file(MAKE_DIRECTORY "${WORK}/shaders" "${WORK}/cache")
+set(ENV{BU_DIR_CACHE} "${WORK}/cache")
+include("@CMAKE_CURRENT_SOURCE_DIR@/art_test_commands.cmake")
+foreach(shader IN ITEMS art_emission art_diffuse)
+  configure_file("@CMAKE_CURRENT_BINARY_DIR@/${shader}.oso"
+    "${WORK}/shaders/${shader}.oso" COPYONLY)
+endforeach()
+set(DB "${WORK}/scene.g")
+run("${VEXEC}" create-material "${DB}" art_emission)
+set(RENDER_ARGS -P 2 -w 64 -n 64 -p 85 -a 270 -e 20 -c "set samples=4")
+set(sentinel "preserve existing output")
+set(image "${WORK}/invalid.png")
+
+# Inspection avoids launching a huge render if an old parser accepts bad counts.
+foreach(setting IN ITEMS "samples=0" "samples=-1" "s=4junk" "samples=2147483648"
+    "samples=18446744073709551616" "samples=1.5" "samples=1e2" "samples=!"
+    "samples=+-0" "samples=" "samples" "samplez=4" "samples=4 unknown=1"
+    "width=0" "width=-1" "height=2147483648" "height=64junk"
+    "light_intensity=-1" "li=nan" "li=inf" "li=-inf" "li=1e100" "li=1e-100"
+    "li=1e9999" "li=0.5junk" "li=1/2" "inspect_materials=2" "save_overlaps=-1"
+    "save_overlaps=2" "perspective=180" "angle=-1" "angle=nan" "angle=50junk"
+    "rt_cline_radius=inf" "rt_bot_minpieces=1junk" "background=bad-color"
+    "bg=1/0" "bg=1/0/0junk" "bg=nan/0/0")
+  file(WRITE "${image}" "${sentinel}")
+  expect_failure_matching("invalid setting" "${EXEC}" ${RENDER_ARGS}
+    -c "set inspect_materials=1" -c "set ${setting}" -o "${image}" "${DB}" all.g)
+  file(READ "${image}" retained)
+  if(NOT retained STREQUAL sentinel)
+    message(FATAL_ERROR "Invalid setting changed existing output: ${setting}")
+  endif()
+endforeach()
+
+# Query the exact stored values without allocating images with extreme counts.
+run_command("${CMAKE_CURRENT_BINARY_DIR}" FALSE "${EXEC}" ${RENDER_ARGS}
+  -c "set inspect_materials=1 samples=2147483647 li=0.25 width=2147483647 height=45"
+  -c set "${DB}" all.g)
+foreach(pattern IN ITEMS "width=2147483647 height=45" "samples=2147483647" "light_intensity=0[.]25")
+  if(NOT command_output MATCHES "${pattern}")
+    message(FATAL_ERROR "Settings query missed '${pattern}': ${command_output}")
+  endif()
+endforeach()
+run_command("${CMAKE_CURRENT_BINARY_DIR}" FALSE "${EXEC}" ${RENDER_ARGS}
+  -c "set inspect_materials=0 save_overlaps=0" -c "set inspect_materials=! save_overlaps=!"
+  -c set "${DB}" all.g)
+if(NOT command_output MATCHES "inspect_materials=1" OR NOT command_output MATCHES "save_overlaps=1")
+  message(FATAL_ERROR "Boolean setting toggles did not persist: ${command_output}")
+endif()
+
+run("${EXEC}" ${RENDER_ARGS} -C 255/0/0 -o "${WORK}/reference.png" "${DB}" all.g)
+foreach(color IN ITEMS "255/0/0" "1.0/0.0/0.0" "red" "#ff0000" "rgb(255, 0, 0)" "1.0 0.0 0.0")
+  run("${EXEC}" ${RENDER_ARGS} -C 0/0/0 -c "set bg=\"${color}\""
+    -o "${WORK}/color.png" "${DB}" all.g)
+  run("${VEXEC}" check-matching-image "${WORK}/color.png" "${WORK}/reference.png" 64 64)
+endforeach()
+# Preserve aliases, whitespace, quoted values, and last-assignment precedence.
+run("${EXEC}" ${RENDER_ARGS} -C 255/0/0
+  -c "set samples = 1 s=+0004 li = 0.25 width=32 height=32 width=64 height=64"
+  -o "${WORK}/aliases.png" "${DB}" all.g)
+run("${VEXEC}" check-matching-image "${WORK}/aliases.png" "${WORK}/reference.png" 64 64)
+
+file(WRITE "${WORK}/valid.view"
+  "start 0; set s=4 width=64 height=64 bg=red; end;\nstart 1; set bg=\"1.0 0.0 0.0\"; end;\n")
+run(INPUT_FILE "${WORK}/valid.view" "${EXEC}" ${RENDER_ARGS} -M
+  -o "${WORK}/stream.png" "${DB}" all.g)
+foreach(image IN ITEMS stream.png stream.1.png)
+  run("${VEXEC}" check-matching-image "${WORK}/${image}" "${WORK}/reference.png" 64 64)
+endforeach()
+foreach(setting IN ITEMS "s=4junk" "li=-1" "samplez=4" "width=-1")
+  file(WRITE "${WORK}/invalid.view" "start 0; set ${setting}; end; start 1; end;\n")
+  expect_failure_matching("invalid setting" INPUT_FILE "${WORK}/invalid.view"
+    "${EXEC}" ${RENDER_ARGS} -c "set inspect_materials=1" -M -D 1 "${DB}" all.g)
+endforeach()
+
+# Fractional point-light power must produce the same energy as scaling albedo.
+set(DIFFUSE_DB "${WORK}/diffuse.g")
+run("${VEXEC}" create-material "${DIFFUSE_DB}" art_diffuse)
+set(LIGHT_ARGS -P 2 -w 64 -n 64 -C 0/0/0 -p 0 -a 0 -e 45
+  -c "set samples=16" -c "viewsize 50" -c "eye_pt 13.284271247461902 0 28.284271247461902")
+foreach(kind IN ITEMS actual reference)
+  if(kind STREQUAL "actual")
+    set(power 0.5)
+    set(albedo "color 0.5 0.5 0.5")
+  else()
+    set(power 1)
+    set(albedo "color 0.25 0.25 0.25")
+  endif()
+  run("${VEXEC}" set-material "${DIFFUSE_DB}" OSL.param.in_color "${albedo}")
+  run("${EXEC}" ${LIGHT_ARGS} -c "set light_intensity=${power}"
+    -o "${WORK}/${kind}.exr" "${DIFFUSE_DB}" ball.r key_light.r)
+  # Bring dark linear HDR values into the foreground check's contrast range.
+  set(HDR_COMPARISON_SCALE 10000)
+  run("@ART_OIIOTOOL_EXECUTABLE@" "${WORK}/${kind}.exr" --mulc "${HDR_COMPARISON_SCALE}"
+    -o "${WORK}/${kind}-scaled.exr")
+endforeach()
+run("${VEXEC}" check-mean-image "${WORK}/actual-scaled.exr" "${WORK}/reference-scaled.exr" 64 64)

@@ -193,9 +193,10 @@ clipping, and premultiplied coverage.  Appleseed retains single-byte text
 input.  Both use unhinted rasterization with struetype.
 
 |Installed builds across platforms
-|A complete headless art installation passed all 21 installed checks on
-FreeBSD after relocation to a path containing spaces.  Coverage includes
-17 shared rendering, camera, and material regressions, persisted material
+|A complete headless art installation passed all 26 installed checks on
+FreeBSD.  After relocation to a path containing spaces, seven camera,
+frame, selection, lighting, output, settings, and runtime checks passed.
+Coverage includes 22 shared rendering, camera, and material regressions, persisted material
 authoring, plate conversion and saved-view execution through installed
 mged, and the runtime library audit.
 The ELF install policy uses paths relative to each executable, library, or
@@ -226,6 +227,27 @@ objects with the default OSL plastic material:
 art -a 35 -e 25 -w 640 -n 480 -P 4 -c "set samples=64" \
     -o view.png model.g all.g
 ----
+
+`set` validates every assignment before applying it.  Unknown names,
+trailing numeric text, overflow, and nonfinite numbers are errors.  Samples
+(`samples` or `s`) and dimensions (`width`, `height`) must be positive decimal
+integers within `int` range.  Light power (`light_intensity` or `li`) accepts
+zero and positive fractional values representable by the renderer's float
+multiplier.  `inspect_materials` and `save_overlaps` accept `0`, `1`, or `!`
+to toggle.  Perspective (`perspective` or `angle`) must satisfy
+`0 <= angle < 180` degrees.  `rt_cline_radius` accepts finite numbers;
+negative values retain the shared command's no-override meaning.  The shared
+`save_overlaps` and `rt_cline_radius` settings are stored for command
+compatibility and produce warnings: their rendering effects are not yet
+implemented in art's procedural geometry.
+
+Background (`background` or `bg`) accepts libbu color syntax, including
+byte RGB triples, normalized fractional RGB triples, names, and hex colors.
+Quote values containing spaces, for example `set bg="1.0 0.0 0.0"`.
+`set` without assignments reports the current settings.  These rules apply
+to inline `-c` commands and `-M` streams, including skipped frames.
+`regress-art-settings` checks invalid-input output preservation, stored
+values, aliases, color forms, frame changes, and fractional-light energy.
 
 Region colors follow combination inheritance.  When no explicit or inherited
 color is available, a matching region-ID color-table entry supplies the
