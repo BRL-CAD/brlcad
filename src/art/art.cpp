@@ -848,14 +848,14 @@ build_project(std::ostream *report)
 	// single default point light so the scene is still lit (this preserves
 	// the previous behavior for scenes without explicit lights).
 	static const float LightRadiance[] = { 1.0f, 1.0f, 1.0f };
-	light_intensity *= AmbientIntensity; // multiplying by factor
-	// FIXME
+	// Building a frame must not change the intensity used by later frames.
+	const double fallback_intensity = static_cast<double>(light_intensity) * AmbientIntensity;
 	assembly->colors().insert(
 	    asr::ColorEntityFactory::create(
 		"light_intensity",
 		asr::ParamArray()
 		.insert("color_space", "srgb")
-		.insert("multiplier", light_intensity),
+		.insert("multiplier", fallback_intensity),
 		asr::ColorValueArray(3, LightRadiance)));
 
 	// Create a point light called "light" and insert it into the assembly.

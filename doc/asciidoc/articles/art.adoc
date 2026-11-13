@@ -142,6 +142,13 @@ both projections, and two view angles.  Nested dielectrics, rough-glass
 transport, transmitted shadows, and normal-mapped transmission remain
 unqualified.
 
+|Lighting across frames
+|`regress-art-lighting` compares diffuse HDR frame sequences with fresh-process
+references.  It checks repeated fallback and explicit point-light frames,
+changes between those selections, and explicit `clean`.  Fallback lighting
+scales the configured intensity for each project without changing the
+intensity used by later frames.
+
 |Region instances
 |Full indexed database paths distinguish occurrences under different parents
 and repeated arcs in one combination.  `regress-art` checks translated
