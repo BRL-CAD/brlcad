@@ -304,6 +304,9 @@ test_joint_problem(void)
     struct rt_joint_problem *problem = NULL;
     struct rt_joint_eval_options options = RT_JOINT_EVAL_OPTIONS_INIT;
     struct rt_joint_point_constraint constraint = RT_JOINT_POINT_CONSTRAINT_INIT;
+    struct rt_joint_solve_options solve_options = RT_JOINT_SOLVE_OPTIONS_INIT;
+    struct rt_joint_solve_options limited_options = RT_JOINT_SOLVE_OPTIONS_INIT;
+    struct rt_joint_solve_result solve_result = RT_JOINT_SOLVE_RESULT_INIT;
     fastf_t residuals[3];
     fastf_t jacobian[6];
     fastf_t values[2];
@@ -338,6 +341,100 @@ test_joint_problem(void)
     if (rt_joint_problem_set_values(problem, values, 2) != BRLCAD_OK ||
 	rt_joint_problem_evaluate(problem, residuals, 3, NULL, 0) != BRLCAD_OK ||
 	!close_enough(residuals[X], 0.0) || !close_enough(residuals[Z], 0.0))
+	goto cleanup;
+    V2SET(values, 5.0, 2.0);
+    limited_options.max_iterations = 1;
+    if (rt_joint_problem_set_values(problem, values, 2) != BRLCAD_OK ||
+	rt_joint_problem_solve(problem, &limited_options, &solve_result) != BRLCAD_OK ||
+	solve_result.status != RT_JOINT_SOLVE_MAX_ITERATIONS ||
+	solve_result.iterations != 1 || solve_result.accepted_steps != 1)
+	goto cleanup;
+    V2SET(values, 5.0, 2.0);
+    if (rt_joint_problem_set_values(problem, values, 2) != BRLCAD_OK ||
+	rt_joint_problem_solve(problem, &solve_options, &solve_result) != BRLCAD_OK ||
+	solve_result.status != RT_JOINT_SOLVE_CONVERGED_RESIDUAL ||
+	solve_result.rank != 2 || solve_result.accepted_steps == 0 ||
+	rt_joint_problem_values(problem, values, 2) != BRLCAD_OK ||
+	!NEAR_EQUAL(values[0], 7.0, 1.0e-8) ||
+	!NEAR_EQUAL(values[1], 3.0, 1.0e-8))
+	goto cleanup;
+    result = BRLCAD_OK;
+
+cleanup:
+    rt_joint_problem_destroy(problem);
+    rt_db_free_internal(&second);
+    rt_db_free_internal(&first);
+    return result;
+}
+
+static int
+test_joint_solver_bounds(void)
+{
+    struct rt_db_internal intern;
+    struct rt_joint_internal *joints[1];
+    struct rt_joint_problem *problem = NULL;
+    struct rt_joint_eval_options eval_options = RT_JOINT_EVAL_OPTIONS_INIT;
+    struct rt_joint_point_constraint constraint = RT_JOINT_POINT_CONSTRAINT_INIT;
+    struct rt_joint_solve_options solve_options = RT_JOINT_SOLVE_OPTIONS_INIT;
+    struct rt_joint_solve_result solve_result = RT_JOINT_SOLVE_RESULT_INIT;
+    fastf_t value;
+    int result = BRLCAD_ERROR;
+
+    if (make_graph_joint(&intern, "base", "tool",
+	    "translation limited {1 0 0} -1 1 0") != BRLCAD_OK)
+	return BRLCAD_ERROR;
+    joints[0] = (struct rt_joint_internal *)intern.idb_ptr;
+    eval_options.root_link = "base";
+    constraint.link = "tool";
+    constraint.target[X] = 3.0;
+    if (rt_joint_problem_create(&problem, joints, 1, &eval_options) != BRLCAD_OK ||
+	rt_joint_problem_add_point(problem, &constraint) != BRLCAD_OK ||
+	rt_joint_problem_solve(problem, &solve_options, &solve_result) != BRLCAD_OK ||
+	solve_result.status != RT_JOINT_SOLVE_CONVERGED_STEP ||
+	rt_joint_problem_values(problem, &value, 1) != BRLCAD_OK ||
+	!close_enough(value, 1.0))
+	goto cleanup;
+    result = BRLCAD_OK;
+
+cleanup:
+    rt_joint_problem_destroy(problem);
+    rt_db_free_internal(&intern);
+    return result;
+}
+
+static int
+test_joint_solver_rank_deficient(void)
+{
+    struct rt_db_internal first;
+    struct rt_db_internal second;
+    struct rt_joint_internal *joints[2];
+    struct rt_joint_problem *problem = NULL;
+    struct rt_joint_eval_options eval_options = RT_JOINT_EVAL_OPTIONS_INIT;
+    struct rt_joint_point_constraint constraint = RT_JOINT_POINT_CONSTRAINT_INIT;
+    struct rt_joint_solve_options solve_options = RT_JOINT_SOLVE_OPTIONS_INIT;
+    struct rt_joint_solve_result solve_result = RT_JOINT_SOLVE_RESULT_INIT;
+    fastf_t values[2];
+    int result = BRLCAD_ERROR;
+
+    if (make_graph_joint(&first, "base", "middle",
+	    "translation unlimited {1 0 0} 0 0 0") != BRLCAD_OK)
+	return BRLCAD_ERROR;
+    if (make_graph_joint(&second, "middle", "tool",
+	    "translation unlimited {1 0 0} 0 0 0") != BRLCAD_OK)
+	goto cleanup;
+    joints[0] = (struct rt_joint_internal *)first.idb_ptr;
+    joints[1] = (struct rt_joint_internal *)second.idb_ptr;
+    eval_options.root_link = "base";
+    constraint.link = "tool";
+    constraint.target[X] = 2.0;
+    if (rt_joint_problem_create(&problem, joints, 2, &eval_options) != BRLCAD_OK ||
+	rt_joint_problem_add_point(problem, &constraint) != BRLCAD_OK ||
+	rt_joint_problem_solve(problem, &solve_options, &solve_result) != BRLCAD_OK ||
+	solve_result.status != RT_JOINT_SOLVE_CONVERGED_RESIDUAL ||
+	solve_result.rank != 1 ||
+	!(solve_result.flags & RT_JOINT_SOLVE_RESULT_USED_SVD) ||
+	rt_joint_problem_values(problem, values, 2) != BRLCAD_OK ||
+	!NEAR_EQUAL(values[0] + values[1], 2.0, 1.0e-8))
 	goto cleanup;
     result = BRLCAD_OK;
 
@@ -382,6 +479,14 @@ main(int argc, char **argv)
     }
     if (test_joint_problem() != BRLCAD_OK) {
 	bu_log("joint residual and Jacobian problem failed\n");
+	failures++;
+    }
+    if (test_joint_solver_bounds() != BRLCAD_OK) {
+	bu_log("joint bounded solver failed\n");
+	failures++;
+    }
+    if (test_joint_solver_rank_deficient() != BRLCAD_OK) {
+	bu_log("joint rank-deficient solver failed\n");
 	failures++;
     }
     return failures;

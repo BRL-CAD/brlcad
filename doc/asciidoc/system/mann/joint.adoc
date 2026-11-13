@@ -12,6 +12,8 @@ joint - manage kinematic joint and constraint data for articulated models
 ----
 joint subcommand [args]
 joint object joint_name operation [args]
+joint graph evaluate root_link joint_name [joint_name ...]
+joint solve point root_link target_link px py pz tx ty tz joint_name [joint_name ...]
 joint legacy subcommand [args]
 ----
 
@@ -43,6 +45,14 @@ affine pose.  Object operations include `show`, `validate`, `matrix`, `apply`,
 |`legacy`
 |subcommand [args]
 |Explicitly select the transient legacy implementation.
+
+|`graph evaluate`
+|root_link joint_name [joint_name ...]
+|Evaluate and print root-to-link matrices for a persistent joint graph.
+
+|`solve point`
+|root_link target_link px py pz tx ty tz joint_name [joint_name ...]
+|Position persistent joint DOFs so a link-local point reaches a world target.
 
 |`?`
 |[commands]
@@ -88,9 +98,9 @@ affine pose.  Object operations include `show`, `validate`, `matrix`, `apply`,
 |file_name
 |Save current joint and constraint definitions to a file.
 
-|`solve`
+|`legacy solve`
 |constraint
-|Solve one or all loaded constraints.
+|Run the quarantined legacy heuristic solver for loaded constraints.
 
 |`unload`
 |
@@ -121,6 +131,21 @@ mged> joint object elbow.j apply
 
 Sets the first degree of freedom and applies the resulting relationship matrix
 to the bound child geometry instance.
+====
+
+.Solve a point target
+====
+[source,console]
+----
+mged> joint solve point base tool 0 0 0 100 25 50 shoulder.j elbow.j
+mged> joint object shoulder.j apply
+mged> joint object elbow.j apply
+----
+
+Uses bounded damped least squares to move the origin of `tool` to the target
+point.  Coordinates use database local units.  Solved joint objects are stored
+in the database; `apply` updates their bound geometry instances for drawing and
+ray tracing.
 ====
 
 .List joints
