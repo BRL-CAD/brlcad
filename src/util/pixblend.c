@@ -35,7 +35,6 @@
 #include "common.h"
 
 #include <errno.h>
-#include <limits.h>
 #include <stdlib.h>
 #ifdef HAVE_SYS_TIME_H
 #  include <sys/time.h>
@@ -45,120 +44,94 @@
 #include "bio.h"
 
 #include "bu/app.h"
-#include "bu/getopt.h"
-#include "util_arg.h"
-#include "bu/str.h"
+#include "bu/arg.h"
 #include "bu/exit.h"
+#include "bu/log.h"
+#include "bu/malloc.h"
+#include "bu/str.h"
 
 #if defined(HAVE_SRAND48) && !defined(HAVE_DECL_SRAND48)
 extern void srand48(long int seedval);
 #endif
 
-static char *f1_name;
-static char *f2_name;
-static FILE *f1;
-static FILE *f2;
-
 /* CHUNK should be a multiple of 3 (the pixel size) */
-#define CHUNK 3*1024
-static char *b1;			/* fg input buffer */
-static char *b2;			/* bg input buffer */
-static char *b3;			/* output buffer */
+#define CHUNK (3 * 1024)
 
-double value = 0.0 , gvalue = 0.0;
-int iflg = 0 , rflg = 0 , gflg = 0;
-int seed = 0;
-
-static char usage[] = "\
-Usage: pixblend [-{r|i} value] [-s seed] [-S] [-g gvalue] file1.pix file2.pix > out.pix\n";
-
-int
+static int
 timeseed(void)
 {
     return time(0);
 }
 
+struct pixblend_args {
+    int help;
+    fastf_t random_value;
+    fastf_t interpolate_value;
+    int seed;
+    fastf_t glitter_value;
+};
 
-int
-get_args(int argc, char **argv)
+static int
+pixblend_time_seed(struct bu_vls *UNUSED(msg), const char *UNUSED(arg),
+	void *storage)
 {
-    int c;
-
-    while ((c = bu_getopt(argc, argv, "r:i:Ss:g:h?")) != -1) {
-	switch (c) {
-	    case 'r':
-		if (iflg)
-		    return 0;
-		if (!util_arg_double(bu_optarg, &value, "blend value"))
-		    return 0;
-		++rflg;
-		break;
-	    case 'i':
-		if (rflg)
-		    return 0;
-		if (gflg) {
-		    fprintf(stderr, "The -g and -i options do not make sense together.\n");
-		    return 0;
-		}
-		if (!util_arg_double(bu_optarg, &value, "interpolate value"))
-		    return 0;
-		++iflg;
-		break;
-	    case 'S':
-		seed = timeseed();
-		break;
-	    case 's':
-		if (!util_arg_int(bu_optarg, &seed, "seed"))
-		    return 0;
-		break;
-	    case 'g':
-		if (iflg) {
-		    fprintf(stderr, "The -g and -i options do not make sense together.\n");
-		    return 0;
-		}
-		++gflg;
-		if (!util_arg_double(bu_optarg, &gvalue, "glitter value"))
-		    return 0;
-		break;
-	    default:		/* 'h' '?' */
-		return 0;
-	}
-    }
-
-    if (bu_optind+2 > argc)
-	return 0;
-    if (bu_optind+2 < argc) {
-	fprintf(stderr, "pixblend: excess argument(s) not supported\n");
-	return 0;
-    }
-
-    f1_name = argv[bu_optind++];
-    if (BU_STR_EQUAL(f1_name, "-"))
-	f1 = stdin;
-    else if ((f1 = fopen(f1_name, "rb")) == NULL) {
-	perror(f1_name);
-	fprintf(stderr,
-		"pixblend: cannot open \"%s\" for reading\n",
-		f1_name);
-	return 0;
-    }
-
-    f2_name = argv[bu_optind++];
-    if (BU_STR_EQUAL(f2_name, "-"))
-	f2 = stdin;
-    else if ((f2 = fopen(f2_name, "rb")) == NULL) {
-	perror(f2_name);
-	fprintf(stderr,
-		"pixblend: cannot open \"%s\" for reading\n",
-		f2_name);
-	return 0;
-    }
-
-    /* Adjust value upwards if glitterize option is used */
-    value += gvalue * (1 - value);
-
-    return 1;		/* OK */
+    if (!storage)
+	return -1;
+    *(int *)storage = timeseed();
+    return 0;
 }
+
+static const struct bu_arg_option pixblend_options[] = {
+    BU_ARG_FLAG("h", "help", struct pixblend_args, help,
+	"Print help and exit"),
+    BU_ARG_ALIAS("?", NULL, "help", 1),
+    BU_ARG_NUMBER_RANGE("r", "random", struct pixblend_args, random_value,
+	1, 0.0, 1, 1.0, "value", "Randomly select pixels from the two inputs"),
+    BU_ARG_NUMBER_RANGE("i", "interpolate", struct pixblend_args,
+	interpolate_value, 1, 0.0, 1, 1.0, "value",
+	"Linearly interpolate corresponding input values"),
+    BU_ARG_VALUE("s", "seed", struct pixblend_args, seed,
+	BU_ARG_VALUE_INTEGER, BU_ARG_REQUIRED, "seed", "Set the random seed"),
+    BU_ARG_CUSTOM_FLAG("S", "time-seed", "time-seed", struct pixblend_args,
+	seed, pixblend_time_seed, "Seed the random generator from the system clock"),
+    BU_ARG_NUMBER_RANGE("g", "glitter", struct pixblend_args, glitter_value,
+	1, 0.0, 1, 1.0, "gvalue", "Set the fraction of differing pixels to white"),
+    BU_ARG_OPTION_NULL
+};
+
+static const struct bu_arg_operand pixblend_operands[] = {
+    BU_ARG_OPERAND("first-input", BU_ARG_VALUE_FILE, 1, 1,
+	"First PIX or BW input; - reads standard input", NULL),
+    BU_ARG_OPERAND("second-input", BU_ARG_VALUE_FILE, 1, 1,
+	"Second PIX or BW input; - reads standard input", NULL),
+    BU_ARG_OPERAND_NULL
+};
+
+static const char * const pixblend_blend_conflicts[] = {
+    "random", "interpolate", NULL
+};
+static const char * const pixblend_glitter_conflicts[] = {
+    "glitter", "interpolate", NULL
+};
+
+static const struct bu_arg_constraint pixblend_constraints[] = {
+    BU_ARG_CONSTRAINT(BU_ARG_CONSTRAINT_OPTION_CONFLICTS,
+	BU_ARG_CONDITION_ALWAYS, pixblend_blend_conflicts, 0, 0,
+	"--random cannot be combined with --interpolate"),
+    BU_ARG_CONSTRAINT(BU_ARG_CONSTRAINT_OPTION_CONFLICTS,
+	BU_ARG_CONDITION_ALWAYS, pixblend_glitter_conflicts, 0, 0,
+	"--glitter cannot be combined with --interpolate"),
+    BU_ARG_CONSTRAINT_NULL
+};
+
+static const struct bu_arg_schema pixblend_schema = BU_ARG_SCHEMA(
+    "pixblend", "Blend two PIX or BW image streams",
+    pixblend_options, pixblend_operands, BU_ARG_PARSE_OPTIONS_FIRST,
+    BU_ARG_SCHEMA_META_HELP(NULL, pixblend_constraints, NULL, NULL, NULL));
+
+static const struct bu_arg_grammar pixblend_grammar = {
+    &pixblend_schema, NULL, NULL
+};
 
 
 int
@@ -169,38 +142,77 @@ main(int argc, char **argv)
     int gthreshold = 0;
 #endif
     size_t ret;
+    const char *f1_name;
+    const char *f2_name;
+    FILE *f1;
+    FILE *f2;
+    char *b1;
+    char *b2;
+    char *b3;
+    struct pixblend_args args = {0, -1.0, -1.0, 0, -1.0};
+    struct bu_vls msg = BU_VLS_INIT_ZERO;
 
     bu_setprogname(argv[0]);
 
-    if (!get_args(argc, argv) || isatty(fileno(stdout))) {
-	(void)fputs(usage, stderr);
-	bu_exit (1, NULL);
+    int introspection = bu_arg_introspect(&msg, &pixblend_grammar, argc - 1,
+	(const char * const *)(argv + 1));
+    if (introspection != 0) {
+	bu_flog(introspection > 0 ? stdout : stderr, "%s", bu_vls_cstr(&msg));
+	bu_vls_free(&msg);
+	return introspection > 0 ? 0 : 1;
     }
+    int operand_index = bu_arg_schema_parse_complete(&pixblend_schema, &args,
+	&msg, argc - 1, (const char **)(argv + 1));
+    if (operand_index < 0)
+	bu_exit(1, "%s", bu_vls_cstr(&msg));
+    bu_vls_free(&msg);
+    if (args.help) {
+	char *help = bu_arg_schema_help(&pixblend_schema, "pixblend");
+	bu_flog(stdout, "%s", help ? help : "");
+	bu_free(help, "pixblend help");
+	return 0;
+    }
+    if (isatty(fileno(stdout)))
+	bu_exit(1, "pixblend requires redirected standard output\n");
 
     setmode(fileno(stdin), O_BINARY);
     setmode(fileno(stdout), O_BINARY);
 
-    if (!iflg && !rflg) {
-	if (gflg) {
-	    rflg = 1;
-	} else {
-	    /* Default action: interpolate by 50% */
-	    iflg = 1;
-	    value = 0.5;
-	}
+    f1_name = argv[operand_index + 1];
+    if (BU_STR_EQUAL(f1_name, "-")) {
+	f1 = stdin;
+    } else if ((f1 = fopen(f1_name, "rb")) == NULL) {
+	bu_exit(1, "pixblend: cannot open \"%s\" for reading: %s\n",
+	    f1_name, strerror(errno));
     }
-    else if (value < 0.0 || value > 1.0) {
-	fprintf(stderr, "pixblend: Blend value must be between 0.0 and 1.0\n");
-	bu_exit (0, NULL);
+    f2_name = argv[operand_index + 2];
+    if (BU_STR_EQUAL(f2_name, "-")) {
+	f2 = stdin;
+    } else if ((f2 = fopen(f2_name, "rb")) == NULL) {
+	bu_exit(1, "pixblend: cannot open \"%s\" for reading: %s\n",
+	    f2_name, strerror(errno));
     }
 
-    if (rflg) {
+    int interpolate = args.interpolate_value >= 0.0;
+    int random_blend = args.random_value >= 0.0 || args.glitter_value >= 0.0;
+    double value = args.random_value >= 0.0 ? args.random_value : 0.0;
+    double gvalue = args.glitter_value >= 0.0 ? args.glitter_value : 0.0;
+    if (!interpolate && !random_blend) {
+	interpolate = 1;
+	value = 0.5;
+    } else if (interpolate) {
+	value = args.interpolate_value;
+    } else {
+	value += gvalue * (1.0 - value);
+    }
+
+    if (random_blend) {
 #ifdef HAVE_DRAND48
-	srand48((long)seed);
+	srand48((long)args.seed);
 #else
 	threshold = (int) (value * 65536.0);
 	gthreshold = (int) (gvalue * 65536.0);
-	srandom(seed);
+	srandom(args.seed);
 #endif
     }
 
@@ -228,7 +240,7 @@ main(int argc, char **argv)
 	cb2 = (unsigned char *)b2;
 	cb3 = (unsigned char *)b3;
 	todo = len;
-	if (iflg) {
+	if (interpolate) {
 	    while (todo--) {
 		*cb3++ = (char) ((1.0 - value) * (*cb1++) +
 				 value * (*cb2++));

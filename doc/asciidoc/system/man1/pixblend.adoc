@@ -28,30 +28,30 @@ interpolation with a value of 0.5 (an even mix of the two images).
 [[options]]
 == OPTIONS
 
-*-r* _value_::
+*-r*, *--random* _value_::
   Random blending. For each pixel a number is drawn uniformly from
   [0, 1]; if it exceeds _value_ the pixel from _file1_ is output,
   otherwise the pixel from _file2_. A _value_ of 0 yields _file1_ and 1
   yields _file2_. Mutually exclusive with *-i*.
 
-*-i* _value_::
+*-i*, *--interpolate* _value_::
   Linear interpolation. Each output pixel is
   (1.0 - _value_) * pixel1 + _value_ * pixel2. A _value_ of 0 yields
   _file1_ and 1 yields _file2_. Mutually exclusive with *-r*.
 
-*-s* _seed_::
+*-s*, *--seed* _seed_::
   Set the random number seed to _seed_ (default 0). Affects *-r*.
 
-*-S*::
+*-S*, *--time-seed*::
   Seed the random number generator from the system clock instead of a
   fixed value.
 
-*-g* _gvalue_::
+*-g*, *--glitter* _gvalue_::
   Glitterize. When the random draw for a pixel falls below _gvalue_ the
   output pixel is set to white; otherwise the pixel is chosen as for
   *-r*. Cannot be combined with *-i*.
 
-*-h*, *-?*::
+*-h*, *--help*, *-?*::
   Print a usage message and exit.
 
 
