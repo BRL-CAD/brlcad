@@ -61,7 +61,8 @@ main(int argc, char **argv)
     setmode(fileno(stdin), O_BINARY);
     setmode(fileno(stdout), O_BINARY);
 
-    if (BU_STR_EQUAL(argv[1], "-h") || BU_STR_EQUAL(argv[1], "-?"))
+    if (argc > 1 &&
+	(BU_STR_EQUAL(argv[1], "-h") || BU_STR_EQUAL(argv[1], "-?")))
 	bu_exit(1, "%s", Usage);
 
     /* check for verbose flag */
@@ -93,6 +94,10 @@ main(int argc, char **argv)
 	for (i = 0; i < n; i++)
 	    bin[ *bp++ ]++;
     }
+    if (ferror(fp))
+	bu_exit(1, "bwhist: error reading input\n");
+    if (fp != stdin && fclose(fp) == EOF)
+	bu_exit(1, "bwhist: error closing input\n");
 
     /* find max */
     max = 1;
