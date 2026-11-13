@@ -88,8 +88,17 @@ ArtTileCallback::finish()
 
 
 void
+ArtTileCallback::on_tiled_frame_begin(const renderer::Frame* frame)
+{
+    m_completed_tiles = 0;
+    m_total_tiles = frame->image().properties().m_tile_count;
+}
+
+
+void
 ArtTileCallback::on_tile_end(const renderer::Frame* frame, const size_t tile_x, const size_t tile_y)
 {
+    ++m_completed_tiles;
     if (m_failed || !m_framebuffer)
 	return;
     const auto& image = frame->image();

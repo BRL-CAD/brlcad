@@ -57,7 +57,11 @@ set(ART_REGRESSION_TEST_NAMES
   regress-art-environment
   regress-art-environment-map
   regress-art-framebuffer
+  regress-art-progress
 )
+if(UNIX)
+  list(APPEND ART_REGRESSION_TEST_NAMES regress-art-cancel)
+endif()
 
 if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
   include("${CMAKE_CURRENT_SOURCE_DIR}/art_installed_tests.cmake")
@@ -79,7 +83,7 @@ cmakefiles(CMakeLists.txt art_test_setup.cmake art_installed_tests.cmake
   regress-art-frames.cmake.in regress-art-selection.cmake.in
   regress-art-lighting.cmake.in regress-art-output.cmake.in regress-art-settings.cmake.in
   regress-art-environment.cmake.in regress-art-environment-map.cmake.in
-  regress-art-framebuffer.cmake.in)
+  regress-art-framebuffer.cmake.in regress-art-progress.cmake.in regress-art-cancel.cmake.in)
 foreach(shader IN LISTS ART_TEST_SHADER_NAMES)
   cmakefiles("${shader}.osl")
 endforeach()
@@ -92,6 +96,8 @@ if(TARGET art AND BUILD_TESTING)
   foreach(test IN LISTS ART_REGRESSION_TEST_NAMES)
     brlcad_regression_test(${test} "art;art_scene_test" EXEC art VEXEC art_scene_test TIMEOUT ${ART_REGRESSION_TIMEOUT})
   endforeach()
+  add_test(NAME regress-art-render-control COMMAND art_render_control_test)
+  brlcad_regression_test(regress-art-render-control "art_render_control_test" TEST_DEFINED TIMEOUT 30)
   add_test(NAME regress-art-intersections COMMAND art_intersection_test)
   brlcad_regression_test(regress-art-intersections "art_intersection_test" TEST_DEFINED TIMEOUT 120)
   distclean("${CMAKE_CURRENT_BINARY_DIR}/output" "${CMAKE_CURRENT_BINARY_DIR}/bump-output"
@@ -113,7 +119,8 @@ if(TARGET art AND BUILD_TESTING)
     "${CMAKE_CURRENT_BINARY_DIR}/lighting-output" "${CMAKE_CURRENT_BINARY_DIR}/image-output" "${CMAKE_CURRENT_BINARY_DIR}/settings-output"
     "${CMAKE_CURRENT_BINARY_DIR}/environment-output"
     "${CMAKE_CURRENT_BINARY_DIR}/environment-map-output"
-    "${CMAKE_CURRENT_BINARY_DIR}/framebuffer-output")
+    "${CMAKE_CURRENT_BINARY_DIR}/framebuffer-output"
+    "${CMAKE_CURRENT_BINARY_DIR}/progress-output" "${CMAKE_CURRENT_BINARY_DIR}/cancel-output")
 endif()
 
 # Local Variables:

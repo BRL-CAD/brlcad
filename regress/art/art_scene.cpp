@@ -20,6 +20,7 @@
 #include "common.h"
 
 #include <algorithm>
+#include <chrono>
 #include <cmath>
 #include <exception>
 #include <memory>
@@ -28,12 +29,19 @@
 
 #include "bu/app.h"
 #include "bu/log.h"
+#include "bu/process.h"
+#include "bu/snooze.h"
 #include "bu/str.h"
 #include "icv.h"
 #include "ged.h"
 #include "raytrace.h"
 #include "wdb.h"
 #include "art_test_mesh.h"
+
+#ifndef _WIN32
+#include <csignal>
+#include <unistd.h>
+#endif
 
 static bool
 write_osl_material(struct rt_wdb *db, const char *name, struct bu_attribute_value_set *optical)
@@ -469,10 +477,101 @@ check_framebuffer(const char *path, const char *image_path, size_t width, size_t
     return max_error <= MAX_DISPLAY_ERROR ? 0 : 1;
 }
 
+#ifndef _WIN32
+static int
+interrupt_render_process(const char *log_path, const char *ready, const char *input_path, const char **arguments)
+{
+    struct Child {
+	struct bu_process *process = nullptr;
+	~Child() {
+	    if (process) {
+		bu_process_terminate(process);
+		// Reap a forcibly stopped test child within one second.
+		bu_process_wait_n(&process, 1000);
+	    }
+	}
+    } child;
+    bu_process_create(&child.process, arguments, BU_PROCESS_OUT_EQ_ERR);
+    if (!child.process)
+	return 1;
+    constexpr size_t PIPE_BUFFER_SIZE = 4096;
+    FILE *pipe = bu_process_file_open(child.process, BU_PROCESS_STDIN);
+    if (!pipe)
+	return 1;
+    if (!BU_STR_EQUAL(input_path, "-")) {
+	std::unique_ptr<FILE, decltype(&fclose)> input(fopen(input_path, "rb"), fclose);
+	if (!input)
+	    return 1;
+	char buffer[PIPE_BUFFER_SIZE];
+	size_t count;
+	while ((count = fread(buffer, 1, sizeof(buffer), input.get())) > 0)
+	    if (fwrite(buffer, 1, count, pipe) != count)
+		return 1;
+	if (ferror(input.get()) || fflush(pipe) != 0)
+	    return 1;
+    }
+    bu_process_file_close(child.process, BU_PROCESS_STDIN);
+    using Clock = std::chrono::steady_clock;
+    constexpr auto PROCESS_TIMEOUT = std::chrono::seconds(20);
+    constexpr unsigned int POLL_INTERVAL_USEC = 5000;
+    const auto deadline = Clock::now() + PROCESS_TIMEOUT;
+    const int output_fd = bu_process_fileno(child.process, BU_PROCESS_STDOUT);
+    std::string captured;
+    bool interrupted = false;
+    int status = 0, poll_result = 0;
+    do {
+	while (bu_process_pending(output_fd)) {
+	    char buffer[PIPE_BUFFER_SIZE];
+	    const int count = bu_process_read_n(child.process, BU_PROCESS_STDOUT, sizeof(buffer), buffer);
+	    if (count < 0)
+		return 1;
+	    if (count == 0)
+		break;
+	    captured.append(buffer, static_cast<size_t>(count));
+	    if (!interrupted && captured.find(ready) != std::string::npos) {
+		if (kill(bu_process_pid(child.process), SIGINT) != 0)
+		    return 1;
+		interrupted = true;
+	    }
+	}
+	poll_result = bu_process_poll(child.process, &status);
+	if (poll_result == 0)
+	    bu_snooze(POLL_INTERVAL_USEC);
+    } while (poll_result == 0 && Clock::now() < deadline);
+    // Drain any last diagnostics after completion, before wait releases pipes.
+    while (poll_result == 1 && bu_process_pending(output_fd)) {
+	char buffer[PIPE_BUFFER_SIZE];
+	const int count = bu_process_read_n(child.process, BU_PROCESS_STDOUT, sizeof(buffer), buffer);
+	if (count < 0)
+	    return 1;
+	if (count == 0)
+	    break;
+	captured.append(buffer, static_cast<size_t>(count));
+    }
+    std::unique_ptr<FILE, decltype(&fclose)> log(fopen(log_path, "wb"), fclose);
+    if (!log || fwrite(captured.data(), 1, captured.size(), log.get()) != captured.size())
+	return 1;
+    if (fclose(log.release()) != 0)
+	return 1;
+    if (poll_result != 1 || !interrupted || status != 1 ||
+	captured.find("art: rendering cancelled; image was not saved") == std::string::npos) {
+	bu_log("Render did not cancel cleanly: interrupt=%d poll=%d status=%d\n%s\n",
+	    interrupted, poll_result, status, captured.c_str());
+	return 1;
+    }
+    return bu_process_wait_n(&child.process, 0) == 1 ? 0 : 1;
+}
+#endif
+
+
 int
 main(int argc, char **argv)
 {
     bu_setprogname(argv[0]);
+#ifndef _WIN32
+    if (argc > 5 && BU_STR_EQUAL(argv[1], "interrupt-render"))
+	return interrupt_render_process(argv[2], argv[3], argv[4], const_cast<const char **>(argv + 5));
+#endif
     if (argc == 3 && BU_STR_EQUAL(argv[1], "create"))
 	return create_scene(argv[2], nullptr, nullptr);
     if (argc == 3 && BU_STR_EQUAL(argv[1], "create-checker-texture"))

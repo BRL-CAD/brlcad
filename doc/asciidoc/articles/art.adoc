@@ -388,6 +388,36 @@ frame persistence, rooted asset lookup, and invalid-image handling.
 Native Appleseed tests check filtered sampling/evaluation consistency away
 from texel centers, longitude interpolation, and zero-shift pole handling.
 
+== Progress and cancellation
+
+Art reports the frame number when rendering starts, completed tiles during
+long renders, and the final tile count and elapsed time after saving the
+image.  Intermediate reports appear at most once per second.  Tile
+percentages count image work completed; sampling quality is controlled
+separately.  Each saved-view frame starts a fresh count, including partial
+edge tiles.
+
+`set progress=0` disables these art status messages; `set progress=1`
+enables them and `set progress=!` toggles the current value.  The default
+is enabled.  The setting persists across saved-view frames and geometry
+cleanup.  Native renderer diagnostics remain available with progress off.
+
+Press Ctrl-C during rendering to request cancellation.  Art asks the
+renderer to stop, waits for its workers and resources to finish cleanup,
+and returns failure without saving the cancelled frame.  Existing output
+for that frame remains unchanged.  Earlier completed frames remain
+available and later frames in the stream are not rendered.  Cancellation
+also works with progress disabled and with framebuffer output enabled;
+the framebuffer can retain tiles already completed.
+
+The interrupt handler belongs to one render and restores the caller's
+previous handler afterward.  Geometry loading before renderer setup and
+image saving after the render retain their usual process signal behavior.
+The command-line interruption regression uses POSIX signals.  Native
+Windows console delivery and interactive framebuffer windows still need
+platform qualification.
+
+
 == Framebuffer display
 
 `-F device` displays completed tiles while rendering and can be combined

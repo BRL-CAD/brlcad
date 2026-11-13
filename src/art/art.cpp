@@ -182,12 +182,14 @@
 
 #include "dm.h"
 #include "tile.h"
+#include "render_control.h"
 
 
 #define VERBOSE_STATS 0x00000008
 
 
 static int inspect_materials = 0;
+static int render_progress = 1;
 
 static int samples = 25;
 static double light_intensity = 200.0;
@@ -325,6 +327,7 @@ extern "C" {
 	{"%g", 1, "light_intensity", 0, BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
 	{"%g", 1, "li", 0, BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
 	{"%d", 1, "inspect_materials", 0, BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
+	{"%d", 1, "progress", 0, BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
 	{"",	0, (char *)0,	0,	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
     };
 }
@@ -348,6 +351,7 @@ init_defaults(void)
     view_parse[4].sp_offset = bu_byteoffset(light_intensity);
     view_parse[5].sp_offset = bu_byteoffset(light_intensity);
     view_parse[6].sp_offset = bu_byteoffset(inspect_materials);
+    view_parse[7].sp_offset = bu_byteoffset(render_progress);
 
     // default output file name
     outputfile = (char*)"art.png";
@@ -362,7 +366,7 @@ init_defaults(void)
     background[2] = 1.0;
 
     option("", "-o filename", "Render to specified image file (e.g., image.png or image.pix)", 0);
-    option("", "-F framebuffer", "Render to a framebuffer (defaults to a window)", 100);
+    option("", "-F framebuffer", "Render to a framebuffer (defaults to a window)", 0);
     // option("", "-s #", "Square image size (default: 512 - implies 512x512 image)", 100);
     // option("", "-w # -n #", "Image pixel dimensions as width and height", 100);
     option("", "-C #/#/#", "Set legacy background/environment color to R/G/B values (default: white)", 0);
@@ -1373,9 +1377,11 @@ public:
 }
 
 static bool
-art_render_image(asr::Project& project, const char *filename, ArtTileCallback* callback = nullptr)
+art_render_image(asr::Project& project, const char *filename, ArtTileCallback& callback)
 {
-    asr::DefaultRendererController controller;
+    ArtRenderControl controller(callback, curframe, render_progress != 0);
+    if (!controller.valid())
+	return false;
     asf::SearchPaths resource_search_paths;
     const std::string renderer_root = art_renderer_root();
     char headers[MAXPATHLEN];
@@ -1393,9 +1399,16 @@ art_render_image(asr::Project& project, const char *filename, ArtTileCallback* c
 	    project,
 	    project.configurations().get_by_name("final")->get_inherited_parameters(),
 	    resource_search_paths,
-	    callback);
+	    &callback);
 	succeeded = renderer.render(controller).m_status == asr::MasterRenderer::RenderingResult::Succeeded;
     }
+    const bool restored = controller.restore();
+    if (controller.cancelled()) {
+	bu_log("art: rendering cancelled; image was not saved\n");
+	return false;
+    }
+    if (!restored)
+	return false;
     if (!succeeded) {
 	bu_log("art: rendering did not complete successfully\n");
 	return false;
@@ -1406,11 +1419,13 @@ art_render_image(asr::Project& project, const char *filename, ArtTileCallback* c
 	bu_log("art: renderer reported errors; image was not saved\n");
 	return false;
     }
-    if (callback && !callback->flush())
+    if (!callback.flush())
 	return false;
     const bool saved = art_save_image(project, filename);
+    if (saved)
+	controller.complete();
     // Some framebuffer backends linger until their window is closed.
-    const bool closed = !callback || callback->finish();
+    const bool closed = callback.finish();
     return saved && closed;
 }
 
@@ -1446,7 +1461,7 @@ art_process_scene(bool display_framebuffer, const char *filename)
     if (display_framebuffer && !fbp)
 	return false;
     ArtTileCallback callback(fbp);
-    return art_render_image(project.ref(), filename, display_framebuffer ? &callback : nullptr);
+    return art_render_image(project.ref(), filename, callback);
 }
 
 
@@ -1794,7 +1809,7 @@ art_cm_set(const int argc, const char **argv)
 	    canonical << name << "=\"" << color[0] << '/' << color[1]
 		<< '/' << color[2] << "\" ";
 	} else if (field->sp_fmt[1] == 'd' && field->sp_count == 1) {
-	    const bool boolean = name == "inspect_materials" || name == "save_overlaps";
+	    const bool boolean = name == "inspect_materials" || name == "save_overlaps" || name == "progress";
 	    if (boolean && value == "!") {
 		canonical << name << "=! ";
 		continue;
