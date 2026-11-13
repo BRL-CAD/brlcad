@@ -26,8 +26,6 @@
 
 #include "common.h"
 
-#include <errno.h>
-#include <stdlib.h> /* for atof() */
 #include <math.h>
 #include <time.h>
 #include <string.h>
@@ -37,8 +35,10 @@
 #include "bu/app.h"
 #include "bu/getopt.h"
 #include "bu/cv.h"
-#include "bu/str.h"
 #include "bu/exit.h"
+#include "bu/log.h"
+#include "bu/opt.h"
+#include "bu/str.h"
 
 
 #define TBAD	0	/* no such command */
@@ -361,11 +361,21 @@ getargs(struct uplot *up)
 }
 
 
+static int
+parse_dimension(double *value, const char *arg, const char *name)
+{
+    if (!bu_opt_scan_double(arg, value, NULL) || *value <= 0.0) {
+	bu_flog(stderr, "plot3-ps: invalid output %s '%s'\n", name, arg);
+	return 0;
+    }
+    return 1;
+}
+
+
 int
 get_args(int argc, char **argv)
 {
     int c;
-    char *end = NULL;
     double parsed = 0.0;
 
     while ((c = bu_getopt(argc, argv, "ecs:w:n:S:W:N:h?")) != -1) {
@@ -380,35 +390,20 @@ get_args(int argc, char **argv)
 	    case 'S':
 	    case 's':
 		/* square file size */
-		errno = 0;
-		end = NULL;
-		parsed = strtod(bu_optarg, &end);
-		if (bu_optarg[0] == '\0' || end == bu_optarg || *end != '\0' || errno != 0 || parsed <= 0.0) {
-		    fprintf(stderr, "plot3-ps: invalid output size '%s'\n", bu_optarg);
+		if (!parse_dimension(&parsed, bu_optarg, "size"))
 		    return 0;
-		}
 		outheight = outwidth = parsed;
 		break;
 	    case 'W':
 	    case 'w':
-		errno = 0;
-		end = NULL;
-		parsed = strtod(bu_optarg, &end);
-		if (bu_optarg[0] == '\0' || end == bu_optarg || *end != '\0' || errno != 0 || parsed <= 0.0) {
-		    fprintf(stderr, "plot3-ps: invalid output width '%s'\n", bu_optarg);
+		if (!parse_dimension(&parsed, bu_optarg, "width"))
 		    return 0;
-		}
 		outwidth = parsed;
 		break;
 	    case 'N':
 	    case 'n':
-		errno = 0;
-		end = NULL;
-		parsed = strtod(bu_optarg, &end);
-		if (bu_optarg[0] == '\0' || end == bu_optarg || *end != '\0' || errno != 0 || parsed <= 0.0) {
-		    fprintf(stderr, "plot3-ps: invalid output height '%s'\n", bu_optarg);
+		if (!parse_dimension(&parsed, bu_optarg, "height"))
 		    return 0;
-		}
 		outheight = parsed;
 		break;
 
