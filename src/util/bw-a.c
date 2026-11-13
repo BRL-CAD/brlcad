@@ -53,7 +53,6 @@
 
 static long int file_width = 512L;
 static long int file_height = 512L;
-static long int squarefilesize = 512L;
 static int autosize = 0;
 static const char *file_name;
 static FILE *infp;
@@ -74,8 +73,9 @@ get_args(int argc, char **argv)
 		autosize = 1;
 		break;
 	    case 's':
-		if (!bu_opt_scan_long_range(bu_optarg, &squarefilesize, 1, LONG_MAX, "square size"))
+		if (!bu_opt_scan_long_range(bu_optarg, &file_width, 1, LONG_MAX, "square size"))
 		    return 0;
+		file_height = file_width;
 		autosize = 0;
 		break;
 	    case 'n':

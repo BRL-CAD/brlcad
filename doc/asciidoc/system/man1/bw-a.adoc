@@ -41,8 +41,8 @@ X bitmap.
   the file size rather than the default or supplied dimensions.
 
 *-s* _squaresize_::
-  Accepted for compatibility, but has no effect on the output; only the input
-  width (see *-w*) is used when emitting scanlines.
+  Set the input width and nominal height to _squaresize_ pixels. The width
+  determines where output scanlines are split.
 
 *-w* _file_width_::
   Set the width of the input to _file_width_ pixels (default 512). A newline is
