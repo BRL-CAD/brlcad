@@ -1142,6 +1142,29 @@ main(int UNUSED(argc), char **argv)
 	return 1;
     }
     bu_vls_trunc(&msg, 0);
+    args.level = 4;
+    if (bu_arg_schema_parse_complete(&ranged_schema, &args, &msg, 2,
+	range_parse_low) != -1 || args.level != 4 ||
+	!strstr(bu_vls_cstr(&msg), "outside its legal range")) {
+	bu_log("complete parser did not report a precise range error: %s\n",
+	    bu_vls_cstr(&msg));
+	bu_vls_free(&msg);
+	return 1;
+    }
+    bu_vls_trunc(&msg, 0);
+    {
+	const char *range_after_valid[] = {"--level", "3", "--level", "0"};
+	args.level = 4;
+	if (bu_arg_schema_parse_complete(&ranged_schema, &args, &msg, 4,
+		range_after_valid) != -1 || args.level != 4 ||
+	    !strstr(bu_vls_cstr(&msg), "outside its legal range")) {
+	    bu_log("complete parser mutated storage while reporting a later range error: %s\n",
+		bu_vls_cstr(&msg));
+	    bu_vls_free(&msg);
+	    return 1;
+	}
+    }
+    bu_vls_trunc(&msg, 0);
     if (bu_arg_schema_parse_complete(&ranged_schema, &args, &msg, 2,
 	range_valid) != 2 || args.level != 5) {
 	bu_log("declarative integer range rejected or failed to store a valid value\n");

@@ -36,6 +36,13 @@ static int cmd_schema_range_valid(const struct bu_arg_value_range *range,
 	bu_arg_value_t type, const char *arg);
 static const struct bu_arg_operand *cmd_schema_operand(
 	const struct bu_arg_schema *schema, size_t operand_index);
+static const struct bu_arg_schema *cmd_schema_case_view(
+	const struct bu_arg_schema *schema, size_t argc, const char **argv,
+	struct bu_arg_schema *view);
+int _bu_arg_schema_validate_structure(const struct bu_arg_schema *schema,
+	size_t argc, const char **argv, size_t cursor_arg,
+	struct bu_arg_validate_result *result,
+	const struct bu_arg_option **active_option);
 
 
 const char *
@@ -2338,11 +2345,94 @@ bu_arg_schema_parse_known(const struct bu_arg_schema *schema, void *data,
 }
 
 
+static size_t
+cmd_schema_invalid_option_start(const struct bu_arg_schema *schema,
+	const struct bu_arg_option *active_option, size_t token, int argc,
+	const char **argv)
+{
+    const char *canonical = bu_arg_option_canonical(active_option);
+
+    if (!schema || !active_option || !argv || token >= (size_t)argc)
+	return token;
+    for (size_t i = token + 1; i > 0; i--) {
+	size_t index = i - 1;
+	const char *attached = NULL;
+	const struct bu_arg_option *option = cmd_schema_lookup_token(schema,
+	    argv[index]);
+	if (!option)
+	    option = cmd_schema_attached_short_option(schema, argv[index],
+		&attached);
+	if (option && BU_STR_EQUAL(bu_arg_option_canonical(option), canonical))
+	    return index;
+    }
+    return token;
+}
+
+
+static int
+cmd_schema_report_invalid_option(const struct bu_arg_schema *schema, void *data,
+	struct bu_vls *msg, int argc, const char **argv,
+	const struct bu_arg_validate_result *result,
+	const struct bu_arg_option *active_option)
+{
+    const char *attached = NULL;
+    const char **arguments = NULL;
+    size_t argument_count = 0;
+    size_t start;
+    size_t original_length;
+
+    if (!schema || !msg || !result || !argv || argc <= 0)
+	return 0;
+    start = cmd_schema_invalid_option_start(schema, active_option,
+	result->token_start, argc, argv);
+    if (start >= (size_t)argc)
+	return 0;
+    original_length = bu_vls_strlen(msg);
+
+    if (active_option) {
+	const char *eq = strchr(argv[start], '=');
+	if (!eq)
+	    (void)cmd_schema_attached_short_option(schema, argv[start],
+		&attached);
+	if (eq) {
+	    attached = eq + 1;
+	    arguments = &attached;
+	    argument_count = 1;
+	} else if (attached) {
+	    arguments = &attached;
+	    argument_count = 1;
+	} else if (active_option->arg_requirement != BU_ARG_NONE) {
+	    arguments = argv + start + 1;
+	    argument_count = cmd_schema_option_argument_count(active_option,
+		(size_t)argc - start - 1, arguments);
+	}
+
+	if (active_option->consume) {
+	    (void)active_option->consume(msg, argument_count, arguments, NULL);
+	} else if (active_option->custom_parse && argument_count == 1) {
+	    (void)active_option->custom_parse(msg, arguments[0], NULL);
+	} else if (active_option->validate && argument_count == 1) {
+	    (void)active_option->validate(msg, arguments[0]);
+	}
+    }
+    if (bu_vls_strlen(msg) == original_length &&
+	(!active_option || (!active_option->consume &&
+	    !active_option->custom_parse && !active_option->validate)))
+	(void)bu_arg_schema_parse(schema, data, msg, argc - (int)start,
+	    argv + start);
+    return bu_vls_strlen(msg) > original_length;
+}
+
+
 int
 bu_arg_schema_parse_complete(const struct bu_arg_schema *schema, void *data,
 	struct bu_vls *msg, int argc, const char *argv[])
 {
     struct bu_arg_validate_result result = BU_ARG_VALIDATE_RESULT_NULL;
+    struct bu_arg_validate_result detail = BU_ARG_VALIDATE_RESULT_NULL;
+    struct bu_arg_schema view;
+    const struct bu_arg_schema *effective = schema;
+    const struct bu_arg_option *active_option = NULL;
     int operand_index;
 
     if (argc < 0 || (argc > 0 && !argv))
@@ -2350,8 +2440,20 @@ bu_arg_schema_parse_complete(const struct bu_arg_schema *schema, void *data,
 
     if (bu_arg_schema_validate(schema, (size_t)argc, argv, (size_t)argc, &result) != 0 ||
 	result.state != BU_ARG_VALIDATE_VALID) {
-	if (msg && result.hint)
+	int detailed = 0;
+	if (msg && result.state == BU_ARG_VALIDATE_INVALID &&
+		(result.expected & (BU_ARG_EXPECT_OPTION |
+		BU_ARG_EXPECT_OPTION_ARG))) {
+	    effective = cmd_schema_case_view(schema, (size_t)argc, argv, &view);
+	    if (_bu_arg_schema_validate_structure(effective, (size_t)argc,
+		    argv, (size_t)argc, &detail, &active_option) == 0 &&
+		    detail.state == BU_ARG_VALIDATE_INVALID)
+		detailed = cmd_schema_report_invalid_option(effective, data, msg,
+		    argc, argv, &detail, active_option);
+	}
+	if (msg && !detailed && result.hint)
 	    bu_vls_printf(msg, "%s\n", result.hint);
+	bu_arg_validate_result_clear(&detail);
 	bu_arg_validate_result_clear(&result);
 	return -1;
     }
