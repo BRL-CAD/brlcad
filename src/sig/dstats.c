@@ -32,16 +32,33 @@
 #include <float.h>
 #include "bio.h"
 
+#include "bu/arg.h"
 #include "bu/app.h"
-#include "bu/str.h"
 #include "bu/exit.h"
+#include "bu/malloc.h"
 
+struct dstats_args {
+    int help;
+};
 
-static void
-printusage(void)
-{
-    bu_exit(1, "Usage: dstats [file.doubles]\n");
-}
+static const struct bu_arg_option dstats_options[] = {
+    BU_ARG_FLAG("h", "help", struct dstats_args, help, "Print help and exit"),
+    BU_ARG_ALIAS("?", NULL, "help", 1),
+    BU_ARG_OPTION_NULL
+};
+
+static const struct bu_arg_operand dstats_operands[] = {
+    BU_ARG_OPERAND("file.doubles", BU_ARG_VALUE_FILE, 0, 1,
+	"Input double data; standard input if omitted", NULL),
+    BU_ARG_OPERAND_NULL
+};
+
+static const struct bu_arg_schema dstats_schema = BU_ARG_SCHEMA(
+    "dstats", "Compute statistics for double-precision values",
+    dstats_options, dstats_operands, BU_ARG_PARSE_OPTIONS_FIRST,
+    BU_ARG_SCHEMA_META_HELP(NULL, NULL, NULL, NULL, NULL));
+
+static const struct bu_arg_grammar dstats_grammar = {&dstats_schema, NULL, NULL};
 
 
 int
@@ -59,23 +76,45 @@ main(int ac, char *av[])
     double max = DBL_MIN;
     double mean, var;
     FILE *fp;
+    struct dstats_args args = {0};
+    struct bu_vls msg = BU_VLS_INIT_ZERO;
 
     bu_setprogname(av[0]);
 
-    if (ac == 1 && isatty(fileno(stdin)) && isatty(fileno(stdout)))
-	printusage();
+    int introspection = bu_arg_introspect(&msg, &dstats_grammar, ac - 1,
+	(const char * const *)(av + 1));
+    if (introspection != 0) {
+	bu_flog(introspection > 0 ? stdout : stderr, "%s", bu_vls_cstr(&msg));
+	bu_vls_free(&msg);
+	return introspection > 0 ? 0 : 1;
+    }
 
-    /* look for optional input file, after checking for -h and -? */
-    if (ac > 1) {
-	if (BU_STR_EQUAL(av[1], "-h") ||  BU_STR_EQUAL(av[1], "-?"))
-	    printusage();
-	if ((fp = fopen(av[1], "r")) == 0) {
-	    bu_exit(1, "dstats: can't open \"%s\"\n", av[1]);
+    ac--; av++;
+    int operand_index = bu_arg_schema_parse_complete(&dstats_schema, &args,
+	&msg, ac, (const char **)av);
+    if (operand_index < 0)
+	bu_exit(1, "%s", bu_vls_cstr(&msg));
+    bu_vls_free(&msg);
+    if (args.help) {
+	char *help = bu_arg_schema_help(&dstats_schema, "dstats");
+	bu_flog(stdout, "%s", help ? help : "");
+	bu_free(help, "dstats help");
+	return 0;
+    }
+
+    ac -= operand_index;
+    av += operand_index;
+    if (ac == 1) {
+	if ((fp = fopen(av[0], "r")) == 0) {
+	    bu_exit(1, "dstats: can't open \"%s\"\n", av[0]);
 	}
-	av++;
-	ac--;
     } else
 	fp = stdin;
+
+    if (ac == 0 && isatty(fileno(stdin)) && isatty(fileno(stdout))) {
+	char *help = bu_arg_schema_help(&dstats_schema, "dstats");
+	bu_exit(1, "%s", help ? help : "");
+    }
 
     /*
      * Find min, max.

@@ -43,7 +43,7 @@ pairs well with *dconv*(1), *dmod*(1), and *dstats*(1).
 [[options]]
 == OPTIONS
 
-*-h*, *-?*::
+*-h*, *-?*, *--help*::
   Print a usage message and exit.
 
 *skip*::

@@ -32,7 +32,7 @@ operate on streams of doubles and unsigned chars respectively.
 [[options]]
 == OPTIONS
 
-*-h*::
+*-h*, *--help*::
   Print a usage message and exit. The *-?* form is also accepted.
 
 [[examples]]

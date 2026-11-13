@@ -32,7 +32,7 @@ as *istats*(1) (signed shorts) and *dstats*(1) (doubles).
 [[options]]
 == OPTIONS
 
-*-h*::
+*-h*, *--help*::
   Print a usage message and exit.
 
 [[examples]]
