@@ -35,6 +35,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include "bio.h"
 
 #include "bu/app.h"
 #include "bu/log.h"
@@ -62,6 +63,8 @@ main (int argc, char **argv)
     unsigned char *bin_color = (unsigned char *)0;/* resultant pixel values */
 
     bu_setprogname(argv[0]);
+    setmode(fileno(stdin), O_BINARY);
+    setmode(fileno(stdout), O_BINARY);
 
     if (argc == 2 && (BU_STR_EQUAL(argv[1], "-h") || BU_STR_EQUAL(argv[1], "-?")))
 	bu_exit(1, "%s", USAGE);
@@ -72,7 +75,7 @@ main (int argc, char **argv)
 	bu_exit(1, "bwthresh: Too many thresholds!\n");
     }
     thresh_val = (int *)bu_malloc((unsigned) (nm_threshs * sizeof(int)), "thresh_val");
-    bin_color = (unsigned char *)bu_malloc((unsigned) ((nm_threshs + 1) * sizeof(int)), "bin_color");
+    bin_color = (unsigned char *)bu_malloc((unsigned) ((nm_threshs + 1) * sizeof(unsigned char)), "bin_color");
 
     for (i = 0; i < nm_threshs; ++i) {
 	if (!parse_threshold_arg(*++argv, thresh_val + i)) {
@@ -96,8 +99,13 @@ main (int argc, char **argv)
 	for (i = 0; i < nm_threshs; ++i)
 	    if (Ch < thresh_val[i])
 		break;
-	(void) putchar(bin_color[i]);
+	if (putchar(bin_color[i]) == EOF)
+	    bu_exit(1, "bwthresh: error writing output\n");
     }
+    if (ferror(stdin))
+	bu_exit(1, "bwthresh: error reading input\n");
+    if (fflush(stdout) == EOF)
+	bu_exit(1, "bwthresh: error writing output\n");
 
     bu_free(thresh_val, "thresh_val");
     bu_free(bin_color, "bin_color");
