@@ -243,14 +243,25 @@ struct rt_grip_internal {
  */
 struct rt_joint_internal {
     uint32_t magic;
-    point_t location;
-    struct bu_vls reference_path_1;
-    struct bu_vls reference_path_2;
-
-    /* Remaining elements are used for display purposes only */
-    vect_t vector1;
-    vect_t vector2;
-    fastf_t value;
+    uint32_t type;
+    struct bu_vls parent_link;
+    struct bu_vls child_link;
+    struct bu_vls parent_path;
+    struct bu_vls child_path;
+    mat_t parent_frame;
+    mat_t child_frame;
+    vect_t pose_translation;
+    quat_t pose_rotation; /**< x, y, z, w Hamilton quaternion */
+    vect_t pose_scale;
+    size_t dof_count;
+    struct rt_joint_dof {
+        uint32_t motion;
+        uint32_t flags;
+        vect_t axis;
+        fastf_t lower;
+        fastf_t upper;
+        fastf_t current;
+    } dofs[6];
 };
 #define RT_JOINT_CK_MAGIC(_p) BU_CKMAG(_p, RT_JOINT_INTERNAL_MAGIC, "rt_joint_internal")
 /** @} */

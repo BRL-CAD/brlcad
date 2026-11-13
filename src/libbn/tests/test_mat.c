@@ -1124,6 +1124,70 @@ test_mat_eigen(void)
 
 
 static int
+test_mat_rigid(void)
+{
+    int failures = 0;
+    const char *test = "mat_rigid";
+    struct bn_tol tol = BN_TOL_INIT_TOL;
+    mat_t matrix = MAT_INIT_IDN;
+
+    if (!bn_mat_is_rigid(NULL, &tol) || !bn_mat_is_rigid(matrix, &tol)) {
+	report_failure(test, "identity was not recognized as rigid");
+	failures++;
+    }
+
+    MAT_DELTAS(matrix, 10.0, -20.0, 30.0);
+    if (!bn_mat_is_rigid(matrix, &tol)) {
+	report_failure(test, "translation was not recognized as rigid");
+	failures++;
+    }
+
+    bn_mat_zrot(matrix, sin(M_PI_4), cos(M_PI_4));
+    MAT_DELTAS(matrix, 1.0, 2.0, 3.0);
+    if (!bn_mat_is_rigid(matrix, &tol)) {
+	report_failure(test, "rotation and translation were not recognized as rigid");
+	failures++;
+    }
+
+    matrix[0] *= 2.0;
+    if (bn_mat_is_rigid(matrix, &tol)) {
+	report_failure(test, "scale was accepted as rigid");
+	failures++;
+    }
+
+    MAT_IDN(matrix);
+    matrix[1] = 0.25;
+    if (bn_mat_is_rigid(matrix, &tol)) {
+	report_failure(test, "shear was accepted as rigid");
+	failures++;
+    }
+
+    MAT_IDN(matrix);
+    matrix[0] = -1.0;
+    if (bn_mat_is_rigid(matrix, &tol)) {
+	report_failure(test, "reflection was accepted as rigid");
+	failures++;
+    }
+
+    MAT_IDN(matrix);
+    matrix[12] = 0.1;
+    if (bn_mat_is_rigid(matrix, &tol)) {
+	report_failure(test, "perspective was accepted as rigid");
+	failures++;
+    }
+
+    MAT_IDN(matrix);
+    matrix[3] = NAN;
+    if (bn_mat_is_rigid(matrix, &tol)) {
+	report_failure(test, "non-finite matrix was accepted as rigid");
+	failures++;
+    }
+
+    return failures;
+}
+
+
+static int
 test_mat_opt(void)
 {
     int failures = 0;
@@ -1188,6 +1252,7 @@ static const struct bn_api_case mat_cases[] = {
     {"orientation", test_mat_orientation},
     {"transform", test_mat_transform},
     {"eigen", test_mat_eigen},
+    {"rigid", test_mat_rigid},
     {"opt", test_mat_opt},
     {NULL, NULL}
 };

@@ -183,6 +183,10 @@ extern int rt_metaball_form(struct bu_vls *logstr, const struct rt_functab *ftp)
 extern int rt_pnts_form(struct bu_vls *logstr, const struct rt_functab *ftp);
 extern int rt_script_form(struct bu_vls *logstr, const struct rt_functab *ftp);
 extern int rt_sketch_form(struct bu_vls *logstr, const struct rt_functab *ftp);
+extern int rt_joint_form(struct bu_vls *logstr, const struct rt_functab *ftp);
+extern int rt_joint_functab_validate(struct bu_vls *error_msg, const struct rt_db_internal *ip, const struct bn_tol *tol);
+extern int rt_joint_data_export(struct rt_data_node **result, const struct rt_db_internal *ip, const struct rt_data_context *context);
+extern int rt_joint_data_import(struct rt_db_internal *ip, const struct rt_data_node *data, const struct rt_data_context *context);
 
 } // extern "C"
 
@@ -1420,12 +1424,12 @@ const struct rt_functab OBJ[] = {
 	RTFUNCTAB_FUNC_IFREE_CAST(rt_joint_ifree),
 	RTFUNCTAB_FUNC_DESCRIBE_CAST(rt_joint_describe),
 	RTFUNCTAB_FUNC_XFORM_CAST(rt_generic_xform),
-	rt_joint_parse,
+	NULL, /* parse */
 	sizeof(struct rt_joint_internal),
 	RT_JOINT_INTERNAL_MAGIC,
-	RTFUNCTAB_FUNC_GET_CAST(rt_generic_get),
-	RTFUNCTAB_FUNC_ADJUST_CAST(rt_generic_adjust),
-	RTFUNCTAB_FUNC_FORM_CAST(rt_generic_form),
+	RTFUNCTAB_FUNC_GET_CAST(rt_joint_get),
+	RTFUNCTAB_FUNC_ADJUST_CAST(rt_joint_adjust),
+	RTFUNCTAB_FUNC_FORM_CAST(rt_joint_form),
 	RTFUNCTAB_FUNC_MAKE_CAST(rt_joint_make),
 	RTFUNCTAB_FUNC_PARAMS_CAST(rt_joint_params),
 	NULL, /* bbox */
@@ -1433,16 +1437,18 @@ const struct rt_functab OBJ[] = {
 	NULL, /* surf_area */
 	NULL, /* centroid */
 	NULL, /* oriented_bbox */
-	RTFUNCTAB_FUNC_FIND_SELECTIONS_CAST(rt_joint_find_selections),
+	NULL, /* find_selections */
 	NULL, /* evaluate_selections */
-	RTFUNCTAB_FUNC_PROCESS_SELECTION_CAST(rt_joint_process_selection),
+	NULL, /* process_selection */
 	NULL, /* serialize */
 	NULL, /* label */
 	RTFUNCTAB_FUNC_KEYPOINT_CAST(rt_joint_keypoint), /* keypoint */
 	RTFUNCTAB_FUNC_MAT_CAST(rt_joint_mat),
 	NULL, /* perturb */
 	RTFUNCTAB_FUNC_SCENE_OBJ_CAST(rt_generic_scene_obj),
-	NULL /* validate */
+	RTFUNCTAB_FUNC_VALIDATE_CAST(rt_joint_functab_validate),
+	RTFUNCTAB_FUNC_DATA_EXPORT_CAST(rt_joint_data_export),
+	RTFUNCTAB_FUNC_DATA_IMPORT_CAST(rt_joint_data_import)
     },
 
     {

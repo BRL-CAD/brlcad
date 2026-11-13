@@ -146,6 +146,7 @@ set(
   memalloc.c
   mkbundle.c
   op.c
+  object_io.cpp
   pr.c
   prep.cpp
   ${LIBRT_PRIMEDIT_SOURCES}

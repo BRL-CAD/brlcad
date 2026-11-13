@@ -11,6 +11,7 @@ set(
   ell.h
   epa.h
   hf.h
+  joint.h
   metaball.h
   nmg.h
   pg.h

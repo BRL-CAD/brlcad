@@ -1083,18 +1083,23 @@ in handle grip  0 0 0  0 0 1  2.0
 
 === joint -- Joint
 
-A joint marks an articulation between two referenced paths in the model tree --
-the scaffolding for kinematics and assembly articulation.  It stores a
-location, two vectors defining the joint's motion frame, a joint value, and the
-two reference paths it connects.
+A joint defines a non-geometric articulation relationship between stable parent
+and child link identifiers.  Optional model-tree paths bind those links to
+geometry without making path text their identity.  Rigid attachment frames,
+ordered mechanical degrees of freedom, and an affine pose define the current
+child-to-parent transform.
 
 [cols="1,1,4"]
 |===
 |Parameter |Type |Description
-|location |point |Position of the joint.
-|vector1, vector2 |vectors |Define the joint's motion/reference frame.
-|value |scalar |Current joint parameter value.
-|reference path 1/2 |names |The two model paths the joint connects.
+|parent/child links |names |Stable identifiers for the connected links.
+|parent/child paths |paths |Optional geometry instance bindings.
+|attachment frames |rigid matrices |Joint frames in parent and child link coordinates.
+|joint type |enumeration |Mechanical preset such as fixed, revolute, prismatic, spherical, or floating.
+|degrees of freedom |ordered records |Rotation or translation axis, current position, and optional limits.
+|pose translation |vector |Affine translation applied after mechanical motion.
+|pose rotation |quaternion |Unit Hamilton quaternion stored in `x y z w` order.
+|pose scale |vector |Finite, possibly non-uniform affine scale.
 |===
 
 === annot -- Annotation

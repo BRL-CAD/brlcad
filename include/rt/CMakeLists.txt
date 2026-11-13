@@ -37,6 +37,7 @@ set(
   nongeom.h
   op.h
   overlap.h
+  object_io.h
   pattern.h
   piece.h
   prep.h

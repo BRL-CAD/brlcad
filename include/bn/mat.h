@@ -452,6 +452,18 @@ BN_EXPORT extern int bn_mat_ck(const char *title,
 			       const mat_t m);
 
 /**
+ * Test whether a matrix is a finite, right-handed rigid transform.
+ * Translation is permitted; perspective, reflection, scale, and shear are
+ * not.  A NULL matrix is treated as identity.  The angular tolerance from
+ * tol is used for unit-length, perpendicularity, and determinant checks.
+ *
+ * @return 0 not rigid
+ * @return 1 rigid
+ */
+BN_EXPORT extern int bn_mat_is_rigid(const mat_t m,
+				     const struct bn_tol *tol);
+
+/**
  * Calculates the determinant of the 3X3 "rotation" part of the passed
  * matrix.
  */
