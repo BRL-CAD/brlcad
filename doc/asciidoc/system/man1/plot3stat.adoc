@@ -10,7 +10,7 @@ plot3stat - print statistics about a plot3 format file
 
 [source]
 ----
-plot3stat [-v] [unix_plot.plot3]
+plot3stat [-v | --verbose] [_unix_plot.plot3_]
 ----
 
 
@@ -28,10 +28,13 @@ standard input.
 [[options]]
 == OPTIONS
 
-*-v*::
+*-v*, *--verbose*::
   Verbose. As the file is parsed, print the name of each plot command
   encountered, in order, to standard output. The statistical summary is still
   written to standard error.
+
+*-h*, *--help*::
+  Print help and exit.
 
 [[examples]]
 == EXAMPLES
