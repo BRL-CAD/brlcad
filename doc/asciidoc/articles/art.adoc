@@ -190,6 +190,11 @@ input.  Both use unhinted rasterization with struetype.
 FreeBSD after relocation to a path containing spaces.  Coverage includes
 16 shared rendering and material regressions, persisted material authoring,
 plate conversion through installed mged, and the runtime library audit.
+The ELF install policy uses paths relative to each executable, library, or
+plugin.  A separate collision regression exercises `lib`, `lib64`, and
+nested installation layouts with a conflicting library still present at
+the configured prefix; both executable and plugin controls verify that the
+old search order selects the conflicting version.
 Seven geometry and procedural-intersection checks also passed against the
 fresh bundled build.
 A finalized renderer SDK copied to a different directory compiles an OSL
@@ -1304,10 +1309,21 @@ refraction renders.
 Loader environment overrides and `BRLCAD_ROOT` are cleared for fixture
 compilation and test execution.  On FreeBSD and Linux, the additional
 `art-installed-runtime` test audits the dynamically linked application and
-tools with `ldd`.  It rejects unresolved dependencies, Boost, and libraries
-outside the installation and the base system library directories.  Runtime
-logs are saved alongside the test outputs.  Other platforms require their
-own loader audit before recording a portable-installation result.
+tools with `ldd`, including the BOT command plugin when installed.  It
+rejects unresolved dependencies, Boost, and libraries outside the
+installation and the base system library directories.  It also inspects
+these objects and their bundled dependencies with `readelf`, rejecting
+absolute runtime search paths, empty entries, and relative paths that escape
+the installation.  Runtime logs are saved alongside the test outputs.
+Other platforms require their own loader audit before recording a
+portable-installation result.
+
+The development `regress-rpath` target separately tests executable and plugin
+lookup with conflicting libraries at the configured prefix.  It installs and
+moves small fixtures under default, `lib64`, and nested directory layouts,
+including paths containing spaces.  Prefix-first controls must select the
+conflicting library, while the production relative paths must select the
+relocated copy.
 
 Qualify relocation by moving the complete installation to another directory,
 including a path containing spaces, and running a fresh standalone test
