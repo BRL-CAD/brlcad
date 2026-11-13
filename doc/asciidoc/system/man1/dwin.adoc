@@ -24,7 +24,8 @@ apply a tapering window function to the extracted samples to attenuate
 edge effects prior to spectral analysis, such as the discrete Fourier
 transform performed by *dfft*(1).
 
-The _width_ argument sets the number of samples per window (default 1024).
+The _width_ argument sets the number of samples per window (default 1024) and
+must be an integer from 1 through 16384.
 The _step_ argument controls how far the window advances each iteration:
 if it is less than 1.0 it is treated as a fraction of _width_ (e.g. 0.5
 overlaps each window by half), and if it is 1.0 or greater it is the

@@ -26,8 +26,10 @@
 
 #include "common.h"
 
+#include <errno.h>
+#include <limits.h>
 #include <string.h>
-#include <stdlib.h> /* for atof() */
+#include <stdlib.h>
 #include <math.h>
 #include "bio.h"
 
@@ -43,12 +45,46 @@ void coswin(double *data, int length, double percent); /* in coswin.c */
 
 #define START_IN_BUFFER (xform_start < buf_start+buf_num)
 #define END_NOT_IN_BUFFER (xform_end >= buf_start+buf_num)
+#define BSIZE 16*1024
+
+
+static int
+parse_width(const char *arg)
+{
+    char *end = NULL;
+    long width;
+
+    errno = 0;
+    width = strtol(arg, &end, 10);
+    if (!arg[0] || end == arg || *end || errno || width < 1 ||
+	width > BSIZE || width > INT_MAX)
+	bu_exit(1, "dwin: width must be an integer from 1 through %d\n", BSIZE);
+    return (int)width;
+}
+
+
+static int
+parse_step(const char *arg, int width)
+{
+    char *end = NULL;
+    double parsed;
+
+    errno = 0;
+    parsed = strtod(arg, &end);
+    if (!arg[0] || end == arg || *end || errno || !isfinite(parsed) ||
+	parsed <= 0.0)
+	bu_exit(1, "dwin: step must be a positive finite number\n");
+    if (parsed < 1.0)
+	parsed *= width;
+    if (parsed < 1.0 || parsed > INT_MAX)
+	bu_exit(1, "dwin: step resolves outside the integer range\n");
+    return (int)parsed;
+}
 
 
 /*
  * Buffering stuff
  */
-#define BSIZE 16*1024		/* Must be AT LEAST 2*Points in spectrum */
 static double buf[BSIZE];		/* input data buffer */
 static double temp[BSIZE];		/* windowed data buffer */
 static int input_sample = 0;	/* The *next* input sample ("file pointer") */
@@ -144,7 +180,7 @@ int
 main(int argc, char *argv[])
 {
     static const char usage[] =
-	"Usage: dwin [options] [width (1024)] [step (width)] [start] <inputfile >outputfile\n"
+	"Usage: dwin [options] [width (1024)] [step (width)] <inputfile >outputfile\n"
 	"\n"
 	"Options:\n"
 	"  -w  apply window (80% split Cosine)\n"
@@ -172,7 +208,7 @@ main(int argc, char *argv[])
     if (isatty(fileno(stdin)) || isatty(fileno(stdout)))
 	bu_exit(1, "%s", usage);
 
-    while (argc > 1) {
+    while (argc > 1 && argv[1][0] == '-') {
 	if (BU_STR_EQUAL(argv[1], "-w")) {
 	    window++;
 	} else if (BU_STR_EQUAL(argv[1], "-H")) {
@@ -197,16 +233,10 @@ main(int argc, char *argv[])
 	argv++;
     }
 
-    L = (argc > 1) ? atoi(argv[1]) : 1024;
-    if (argc > 2) {
-	double f;
-	f = atof(argv[2]);
-	if (f < 1.0)
-	    step = f * L;
-	else
-	    step = f;
-    } else
-	step = L;
+    if (argc > 3)
+	bu_exit(1, "%s", usage);
+    L = argc > 1 ? parse_width(argv[1]) : 1024;
+    step = argc > 2 ? parse_step(argv[2], L) : L;
 
     /* compute xform start/end */
     if (endwin)

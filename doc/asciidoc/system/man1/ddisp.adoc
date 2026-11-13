@@ -10,7 +10,7 @@ ddisp - plot a stream of doubles on a framebuffer
 
 [source]
 ----
-ddisp [-v] [-b] [-p] [-c] [-H] < input.doubles
+ddisp [-v] [-b] [-p] [-c] [-H] [width] < input.doubles
 ----
 
 
@@ -19,8 +19,9 @@ ddisp [-v] [-b] [-p] [-c] [-H] < input.doubles
 
 *ddisp* reads a continuous stream of host double-precision floating-point
 numbers from standard input and plots them onto a 512x512 BRL-CAD
-framebuffer. The data is processed in records of _BU_PAGE_SIZE_ values at a
-time, with each record clamped to the 512-pixel framebuffer width.
+framebuffer. The data is processed in records of _width_ values at a time,
+with each record clamped to the 512-pixel framebuffer width. _width_ defaults
+to 512 and may not exceed `BU_PAGE_SIZE`.
 
 In the default mode, each record is drawn as one horizontal grayscale line.
 Every value is scaled (magnitude 0.0 to 1.0 mapped to intensity 0-255) and
@@ -56,6 +57,10 @@ usage and exits.
 *-H*::
   Print the usage message and exit. The *-h* and *-?* flags behave the same
   way.
+
+_width_::
+  Number of input values in each display record. Must be an integer from 1
+  through `BU_PAGE_SIZE` and defaults to 512.
 
 [[examples]]
 == EXAMPLES

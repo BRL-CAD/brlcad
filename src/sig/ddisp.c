@@ -25,6 +25,8 @@
 
 #include "common.h"
 
+#include <errno.h>
+#include <limits.h>
 #include <string.h>
 #include <stdlib.h>
 
@@ -41,6 +43,23 @@
 
 #define VERT 1
 #define BARS 2
+#define DEFAULT_WIDTH 512
+
+
+static int
+parse_width(const char *arg)
+{
+    char *end = NULL;
+    long width;
+
+    errno = 0;
+    width = strtol(arg, &end, 10);
+    if (!arg[0] || end == arg || *end || errno || width < 1 ||
+	width > BU_PAGE_SIZE || width > INT_MAX)
+	bu_exit(1, "ddisp: width must be an integer from 1 through %d\n",
+	    BU_PAGE_SIZE);
+    return (int)width;
+}
 
 
 static void
@@ -148,7 +167,7 @@ main(int argc, char **argv)
     int Clear = 0;
     int pause_time = 0;
     int mode = 0;
-    int fbsize = 512;
+    int fbsize = DEFAULT_WIDTH;
 
     bu_setprogname(argv[0]);
 
@@ -156,7 +175,7 @@ main(int argc, char **argv)
 	bu_exit(1, "%s", usage);
     }
 
-    while (argc > 1) {
+    while (argc > 1 && argv[1][0] == '-') {
 	if (BU_STR_EQUAL(argv[1], "-v")) {
 	    mode = VERT;
 	    pause_time = 0;
@@ -178,11 +197,13 @@ main(int argc, char **argv)
 	argv++;
     }
 
+    if (argc > 2)
+	bu_exit(1, "%s", usage);
+    L = argc > 1 ? parse_width(argv[1]) : DEFAULT_WIDTH;
+
     if ((fbp = fb_open(NULL, fbsize, fbsize)) == FB_NULL) {
 	bu_exit(2, "Unable to open framebuffer\n");
     }
-
-    L = (argc > 1) ? atoi(argv[1]) : BU_PAGE_SIZE;
 
     while ((n = fread(buf, sizeof(*buf), L, stdin)) > 0) {
 	/* XXX - width hack */
