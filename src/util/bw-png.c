@@ -44,8 +44,6 @@
 
 
 #define BYTESPERPIXEL 1
-#define ROWSIZE (file_width * BYTESPERPIXEL)
-#define SIZE (file_height * ROWSIZE)
 
 static long int file_width = 512;		/* default input width */
 static long int file_height = 512;		/* default input height */
@@ -130,6 +128,8 @@ main(int argc, char **argv)
     png_structp png_p;
     png_infop info_p;
     FILE *outfp = stdout;
+    size_t row_size;
+    size_t image_size;
 
     bu_setprogname(argv[0]);
 
@@ -149,6 +149,14 @@ main(int argc, char **argv)
 	}
     }
 
+    if (file_width > (long)PNG_UINT_31_MAX ||
+	file_height > (long)PNG_UINT_31_MAX)
+	bu_exit(EXIT_FAILURE, "bw-png: image dimensions exceed PNG limits\n");
+    row_size = (size_t)file_width * BYTESPERPIXEL;
+    if ((size_t)file_height > SIZE_MAX / row_size)
+	bu_exit(EXIT_FAILURE, "bw-png: image dimensions are too large\n");
+    image_size = (size_t)file_height * row_size;
+
     setmode(fileno(outfp), O_BINARY);
 
     if (isatty(fileno(outfp))) {
@@ -165,15 +173,15 @@ main(int argc, char **argv)
 	bu_exit(EXIT_FAILURE, "Could not create PNG info structure\n");
 
     /* allocate space for the image */
-    scanbuf = (unsigned char *)bu_calloc(SIZE, sizeof(unsigned char), "scanbuf");
+    scanbuf = (unsigned char *)bu_calloc(image_size, sizeof(unsigned char), "scanbuf");
 
     /* create array of pointers to rows for libpng */
     rows = (unsigned char **)bu_calloc(file_height, sizeof(unsigned char *), "rows");
     for (i=0; i<file_height; i++)
-	rows[i] = scanbuf + ((file_height-i-1)*ROWSIZE);
+	rows[i] = scanbuf + ((size_t)(file_height-i-1) * row_size);
 
     /* read the bw file */
-    if (fread(scanbuf, SIZE, 1, infp) != 1)
+    if (fread(scanbuf, image_size, 1, infp) != 1)
 	bu_exit(EXIT_FAILURE, "bw-png: Short read\n");
 
     png_init_io(png_p, outfp);
