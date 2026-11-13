@@ -228,3 +228,64 @@ colors are scene-linear RGB.  Distances use millimeters.  Glass has index
 1.5 and its volume transmittance is specified over 100 mm.  Rubber regions
 are selected by the source database's `material_id=18`; the recipe assigns
 chrome and mirror materials to the identified bumper and mirror objects.
+
+== Generic_Twin: authoring a mesh aircraft and converting its windscreen
+
+The Generic_Twin workflow uses the FAA aircraft example from
+`share/db/faa/Generic_Twin.g`, retaining its original position and assemblies.
+The before view uses the original region colors through default plastic.
+The after view authors a pearl airframe, blue wing, tail, lower-fuselage and
+engine panels, dark tires, metal rims and fan parts, and refractive cockpit
+glazing.  A separate detail view shows the cockpit treatment.  All use the
+same generated studio environment and an added floor.
+
+[cols="1,1"]
+|===
+|Default material treatment |Authored aircraft surfaces
+a|image::twin-before.png[Generic Twin with default materials]
+a|image::twin-after.png[Generic Twin with authored materials]
+|===
+
+image::twin-detail.png[Generic Twin cockpit and glazing detail]
+
+The source windscreen, `21.1.t0` under `Wind_Screen`, is an unoriented plate
+BOT with centered 50.8 mm thickness.  The studio recipe converts it in the
+copied database before making either comparison version:
+
+[source,tcl]
+----
+bot extrude --max-area-delta 0 -i 21.1.t0
+----
+
+The conversion supplies explicit entry and exit boundaries for refraction.
+The recipe requires an oriented, topologically closed result.  It retains
+the original plate thickness, disables simplification, and preserves the
+region's existing FASTGEN metadata.  Both before and after databases use
+the same converted mesh.  The input database is unchanged, and every other
+original primitive and Boolean tree is preserved.  This is explicit geometry
+authoring, rather than treating a raw plate as a refractive volume.
+
+----
+cmake -DBRLCAD_PREFIX="${BRLCAD_PREFIX}" -DOUTPUT_DIR=twin-render \
+    -DSAMPLES=256 -P "${BRLCAD_PREFIX}/share/db/art/render_twin.cmake"
+----
+
+Use `-DSOURCE_DB=path/to/Generic_Twin.g` for a database outside the installed
+FAA directory.  The usual image, sampling, and worker options apply.  The
+supplied `twin-before.png`, `twin-after.png`, and `twin-detail.png` previews
+use 512 by 384 pixels and 256 samples.  The driver creates copied databases,
+`twin-studio.exr`, complete view streams, and inspection and rendering logs.
+Keep the map with the databases.  From the generated project directory:
+
+----
+art -M -w 512 -n 384 -P 2 -o cockpit.exr twin-after.g art.demo.g \
+    < twin-detail.view
+----
+
+The environment multiplier is one and point lights are disabled.  Material
+colors are scene-linear RGB.  Geometry and absorption distances use
+millimeters.  The smooth glass index is 1.5, with volume transmittance
+specified over 1000 mm for the model's thick windscreen.
+The existing source produces nonplanar-ARB preparation warnings; the recipe
+does not repair those source solids.  See the art article for geometry,
+glass, and secondary-ray qualification boundaries.

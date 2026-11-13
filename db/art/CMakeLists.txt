@@ -14,6 +14,12 @@ set(art_example_files
   m35-before.png
   m35-after.png
   m35-detail.png
+  render_twin.cmake
+  twin_studio.tcl
+  twin_materials.tcl
+  twin-before.png
+  twin-after.png
+  twin-detail.png
   render_star.cmake
   star_sky.tcl
   star-before.png

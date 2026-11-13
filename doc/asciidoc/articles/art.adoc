@@ -689,8 +689,12 @@ and indices 1.5 and 2.  A wrong-index control must fail.  The fixture retains
 FASTGEN `P` region metadata while replacing its primitive in place;
 inter-region FASTGEN overlaps remain unqualified.  Conversion creates new
 topology and does not preserve authored BOT normals or UVs.  These renders
-use uniform glass and facet normals.  Curved converted plates, variable
-thickness, and general rough glass remain unqualified.
+use uniform glass and facet normals.  The Generic_Twin demonstration additionally
+checks its actual converted windscreen for closure and manifoldness and
+compares equal-index transmission with an unobstructed target.  An opaque
+control distinguishes transmission through its authored index-1.5 glass.
+This qualifies that specific uniform-glass workflow; general curved plates,
+variable thickness, and rough glass remain unqualified.
 
 == Surface coordinates
 
@@ -1564,6 +1568,11 @@ The m35 workflow retains the source region-ID color table and explicit
 region colors while authoring paint, rubber, chrome, mirrors, and glass.
 It explicitly includes the source's unreferenced window regions in both
 comparison versions.
+The Generic_Twin workflow authors the FAA mesh example and converts its
+centered plate windscreen to a validated closed
+volume before assigning refractive glass.  Its original other primitives
+and Boolean trees remain unchanged.  Both workflows retain full and detail
+views, copied databases, and locally generated HDR environments.
 A black-backdrop variant retains the same art lighting.  The cube and
 sphflake procedural `envmap cloud` setups are recorded as follow-on
 migration cases; earth's cloud/glass atmosphere requires material handling.
