@@ -34,17 +34,13 @@
 #include <string.h>
 #include "bio.h"
 #include "bu/app.h"
+#include "bu/arg.h"
+#include "bu/exit.h"
 #include "bu/log.h"
+#include "bu/malloc.h"
 #include "bu/str.h"
-#include "bu/getopt.h"
-#include "util_arg.h"
 
 #define MAX_BYTES (128*1024)
-
-static const char Usage[] =
-"Usage: gencolor [-r#] [-p -b]\n\
-                [-s|S squaresize] [-w|W width] [-n|N height]\n\
-                [val1 .. valN] > output_file\n";
 
 int32_t count = -1;
 int outputtype = 1; /* 1 for pix, 2 for bw */
@@ -55,81 +51,122 @@ int setrcount = 0; /* set to 1 if -r is detected */
 
 unsigned char buf[MAX_BYTES];
 
+struct gencolor_args {
+    struct gencolor_args *self;
+    int help;
+};
+
+enum gencolor_dimension {
+    GENCOLOR_SIZE,
+    GENCOLOR_WIDTH,
+    GENCOLOR_HEIGHT
+};
+
+static struct gencolor_args *
+gencolor_args_from_storage(void *storage)
+{
+    return storage ? *(struct gencolor_args **)storage : NULL;
+}
+
 static int
-parse_nonnegative_int32_arg(const char *arg, int32_t *out_value, const char *label)
+gencolor_repeat(struct bu_vls *msg, const char *arg, void *UNUSED(storage))
 {
     int value;
 
-    if (!util_arg_int_range(arg, &value, 0, INT32_MAX, label))
-	return 0;
-
-    *out_value = (int32_t)value;
-    return 1;
+    if (!bu_arg_integer_range_from_str(msg, &value, arg, 10, 0, INT32_MAX))
+	return -1;
+    count = (int32_t)value;
+    setrcount = 1;
+    return 0;
 }
 
-void
-printusage(int i)
+static int
+gencolor_format(struct bu_vls *UNUSED(msg), const char *UNUSED(arg),
+	void *storage, int format)
 {
-    bu_log("%s\n", Usage);
-    bu_log("       (Must redirect output; cannot send to tty)\n");
-    if (i != 3)
-	bu_exit(i, NULL);
-    else
-	bu_log("Writing pattern to your redirected output\n");
+    if (gencolor_args_from_storage(storage)) {
+	outputtype = format;
+	typeselected = 1;
+    }
+    return 0;
 }
 
-void
-get_args(int argc, char **argv)
+static int
+gencolor_pix(struct bu_vls *msg, const char *arg, void *storage)
 {
-    int c;
+    return gencolor_format(msg, arg, storage, 1);
+}
 
-    bu_optind = 1;
-    while ((c = bu_getopt(argc, argv, "r:pbs:S:n:N:w:W:h?")) != -1) {
-	switch (c) {
-	    case 'r':
-		if (!parse_nonnegative_int32_arg(bu_optarg, &count, "repeat count"))
-		    printusage(0);
-		setrcount = 1;
-		break;
-	    case 'p':
-		outputtype = 1;
-		typeselected = 1;
-		break;
-	    case 'b':
-		outputtype = 2;
-		typeselected = 1;
-		break;
-	    case 's':
-	    case 'S':
-		if (!util_arg_int_range(bu_optarg, &width, 1, INT_MAX, "size"))
-		    printusage(0);
-		height = width;
-		typeselected = 1;
-		break;
-	    case 'n':
-	    case 'N':
-		if (!util_arg_int_range(bu_optarg, &height, 1, INT_MAX, "height"))
-		    printusage(0);
-		typeselected = 1;
-		break;
-	    case 'w':
-	    case 'W':
-		if (!util_arg_int_range(bu_optarg, &width, 1, INT_MAX, "width"))
-		    printusage(0);
-		typeselected = 1;
-		break;
-	    default:		/* 'h' '?' */
-		printusage(0);
-	}
+static int
+gencolor_bw(struct bu_vls *msg, const char *arg, void *storage)
+{
+    return gencolor_format(msg, arg, storage, 2);
+}
+
+static int
+gencolor_dimension(struct bu_vls *msg, const char *arg, void *storage,
+	enum gencolor_dimension dimension)
+{
+    int value;
+
+    if (!bu_arg_integer_range_from_str(msg, &value, arg, 10, 1, INT_MAX))
+	return -1;
+    if (gencolor_args_from_storage(storage)) {
+	if (dimension != GENCOLOR_HEIGHT)
+	    width = value;
+	if (dimension != GENCOLOR_WIDTH)
+	    height = value;
+	typeselected = 1;
+    }
+    return 0;
+}
+
+#define GENCOLOR_DIMENSION_CALLBACK(_name, _dimension) \
+    static int _name(struct bu_vls *msg, const char *arg, void *storage) \
+    { \
+	return gencolor_dimension(msg, arg, storage, _dimension); \
     }
 
-    if (isatty(fileno(stdout)))
-	printusage(1);
-    if (argc == 1 )
-	printusage(3);
+GENCOLOR_DIMENSION_CALLBACK(gencolor_size, GENCOLOR_SIZE)
+GENCOLOR_DIMENSION_CALLBACK(gencolor_width, GENCOLOR_WIDTH)
+GENCOLOR_DIMENSION_CALLBACK(gencolor_height, GENCOLOR_HEIGHT)
 
-    return;
-}
+static const struct bu_arg_option gencolor_options[] = {
+    BU_ARG_FLAG("h", "help", struct gencolor_args, help,
+	"Print help and exit"),
+    BU_ARG_ALIAS("?", NULL, "help", 1),
+    BU_ARG_CUSTOM("r", "repeat", struct gencolor_args, self,
+	gencolor_repeat, "count", "Repeat the pattern a fixed number of times"),
+    BU_ARG_CUSTOM_FLAG("p", "pix", "pix", struct gencolor_args, self,
+	gencolor_pix, "Generate three-byte PIX pixels"),
+    BU_ARG_CUSTOM_FLAG("b", "bw", "bw", struct gencolor_args, self,
+	gencolor_bw, "Generate one-byte BW pixels"),
+    BU_ARG_CUSTOM("s", "size", struct gencolor_args, self,
+	gencolor_size, "pixels", "Set both image dimensions"),
+    BU_ARG_ALIAS("S", NULL, "size", 1),
+    BU_ARG_CUSTOM("w", "width", struct gencolor_args, self,
+	gencolor_width, "pixels", "Set the image width"),
+    BU_ARG_ALIAS("W", NULL, "width", 1),
+    BU_ARG_CUSTOM("n", "height", struct gencolor_args, self,
+	gencolor_height, "pixels", "Set the image height"),
+    BU_ARG_ALIAS("N", NULL, "height", 1),
+    BU_ARG_OPTION_NULL
+};
+
+static const struct bu_arg_operand gencolor_operands[] = {
+    BU_ARG_OPERAND_INTEGER_RANGE("byte", 0, MAX_BYTES - 1,
+	1, 0, 1, UCHAR_MAX, "Pattern byte values", NULL),
+    BU_ARG_OPERAND_NULL
+};
+
+static const struct bu_arg_schema gencolor_schema = BU_ARG_SCHEMA(
+    "gencolor", "Generate a repeated byte pattern",
+    gencolor_options, gencolor_operands, BU_ARG_PARSE_OPTIONS_FIRST,
+    BU_ARG_SCHEMA_META_HELP(NULL, NULL, NULL, NULL, NULL));
+
+static const struct bu_arg_grammar gencolor_grammar = {
+    &gencolor_schema, NULL, NULL
+};
 
 int
 main(int argc, char **argv)
@@ -137,23 +174,51 @@ main(int argc, char **argv)
     int i, len, times, bytes_in_buf, copies_per_buf;
     int remainder = 0;
     unsigned char *bp;
+    struct gencolor_args args = {NULL, 0};
+    struct bu_vls msg = BU_VLS_INIT_ZERO;
+    args.self = &args;
 
     bu_setprogname(argv[0]);
 
     setmode(fileno(stdin), O_BINARY);
     setmode(fileno(stdout), O_BINARY);
 
-    get_args(argc, argv);
-    argc = argc - bu_optind + 1;
-    argv = argv + bu_optind - 1;
+    int introspection = bu_arg_introspect(&msg, &gencolor_grammar, argc - 1,
+	(const char * const *)(argv + 1));
+    if (introspection != 0) {
+	bu_flog(introspection > 0 ? stdout : stderr, "%s", bu_vls_cstr(&msg));
+	bu_vls_free(&msg);
+	return introspection > 0 ? 0 : 1;
+    }
+    int operand_index = bu_arg_schema_parse_complete(&gencolor_schema, &args,
+	&msg, argc - 1, (const char **)(argv + 1));
+    if (operand_index < 0)
+	bu_exit(1, "%s", bu_vls_cstr(&msg));
+    bu_vls_free(&msg);
+    if (args.help) {
+	char *help = bu_arg_schema_help(&gencolor_schema, "gencolor");
+	bu_flog(stdout, "%s", help ? help : "");
+	bu_free(help, "gencolor help");
+	return 0;
+    }
+    if (isatty(fileno(stdout)))
+	bu_exit(1, "gencolor requires redirected standard output\n");
+    if (argc == 1) {
+	char *help = bu_arg_schema_help(&gencolor_schema, "gencolor");
+	bu_flog(stderr, "%sWriting pattern to redirected standard output\n",
+	    help ? help : "");
+	bu_free(help, "gencolor implicit help");
+    }
 
-    if (argc > 1) {
+    int operand_count = argc - operand_index - 1;
+
+    if (operand_count > 0) {
 	/* get values from the command line */
 	i = 0;
-	while (argc > 1 && i < MAX_BYTES - 1) {
-	    if (!util_arg_uchar(argv[i+1], &buf[i], "byte value"))
-		return 1;
-	    argc--;
+	while (i < operand_count) {
+	    if (!bu_arg_unsigned_char_from_str(NULL, &buf[i],
+		    argv[operand_index + i + 1], 10))
+		bu_exit(1, "gencolor: internal operand validation failure\n");
 	    i++;
 	}
 	len = i;
@@ -161,7 +226,7 @@ main(int argc, char **argv)
 	/* get values from stdin */
 	len = fread((char *)buf, 1, MAX_BYTES, stdin);
 	if (len <= 0)
-	    printusage(2);
+	    bu_exit(2, "gencolor: no pattern bytes received on standard input\n");
     } else {
 	/* assume black */
 	buf[0] = 0;

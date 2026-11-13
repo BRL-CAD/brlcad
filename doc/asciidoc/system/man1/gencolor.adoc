@@ -11,7 +11,9 @@ gencolor - output a repeated pattern of byte values
 
 [source]
 ----
-gencolor [-p | -b] [-r _count_] [-s _squaresize_ | -S _squaresize_] [-w _width_ | -W _width_] [-n _height_ | -N _height_] [_val1_ ... _valN_] > _output_file_
+gencolor [-p|--pix | -b|--bw] [-r|--repeat _count_]
+         [-s|--size _squaresize_] [-w|--width _width_]
+         [-n|--height _height_] [_val1_ ... _valN_] > _output_file_
 ----
 
 
@@ -27,29 +29,25 @@ By default the pattern repeats forever. The *-r* option limits the output to a f
 [[options]]
 == OPTIONS
 
-*-p*::
+*-p*, *--pix*::
   Assume *pix*(5) output (3 bytes per pixel). This is the default and affects only the byte count computed when an image geometry is requested without *-r*.
 
-*-b*::
+*-b*, *--bw*::
   Assume *bw*(5) output (1 byte per pixel).
 
-*-r* _count_::
+*-r* _count_, *--repeat* _count_::
   Repeat the pattern _count_ times. The default is to repeat forever (unless an image geometry option supplies a count instead).
 
-*-w* _width_::
-*-W* _width_::
+*-w* _width_, *-W* _width_, *--width* _width_::
   Set the image width in pixels. The default is 512.
 
-*-n* _height_::
-*-N* _height_::
+*-n* _height_, *-N* _height_, *--height* _height_::
   Set the image height in pixels. The default is 512.
 
-*-s* _squaresize_::
-*-S* _squaresize_::
+*-s* _squaresize_, *-S* _squaresize_, *--size* _squaresize_::
   Set both the image width and height to _squaresize_ pixels.
 
-*-h*::
-*-?*::
+*-h*, *-?*, *--help*::
   Print the usage message and exit.
 
 [[examples]]
