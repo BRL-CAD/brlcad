@@ -3018,38 +3018,11 @@ rt_bot_xform(struct rt_db_internal *op, const fastf_t *mat, struct rt_db_interna
 	return -1;
     }
 
-    if (op != ip && !release) {
+    if (op != ip) {
 	RT_DB_INTERNAL_INIT(op);
-	BU_ALLOC(botop, struct rt_bot_internal);
-	botop->magic = RT_BOT_INTERNAL_MAGIC;
-	botop->mode = botip->mode;
-	botop->orientation = botip->orientation;
-	botop->bot_flags = botip->bot_flags;
-	botop->num_vertices = botip->num_vertices;
-	botop->num_faces = botip->num_faces;
-	if (botop->num_vertices > 0) {
-	    botop->vertices = (fastf_t *)bu_malloc(botip->num_vertices * ELEMENTS_PER_POINT * sizeof(fastf_t), "botop->vertices");
-	}
-	if (botop->num_faces > 0) {
-	    botop->faces = (int *)bu_malloc(botip->num_faces * 3 * sizeof(int), "botop->faces");
-	    memcpy(botop->faces, botip->faces, botop->num_faces * 3 * sizeof(int));
-	}
-	if (botip->thickness)
-	    botop->thickness = (fastf_t *)bu_malloc(botip->num_faces * sizeof(fastf_t), "botop->thickness");
-	if (botip->face_mode)
-	    botop->face_mode = bu_bitv_dup(botip->face_mode);
-	if (botip->thickness) {
-	    for (i = 0; i < botip->num_faces; i++)
-		botop->thickness[i] = botip->thickness[i];
-	}
-
-	if (botop->bot_flags & RT_BOT_HAS_SURFACE_NORMALS) {
-	    botop->num_normals = botip->num_normals;
-	    botop->num_face_normals = botip->num_face_normals;
-	    botop->normals = (fastf_t *)bu_calloc(botop->num_normals * 3, sizeof(fastf_t), "BOT normals");
-	    botop->face_normals = (int *)bu_calloc(botop->num_face_normals * 3, sizeof(int), "BOT face normals");
-	    memcpy(botop->face_normals, botip->face_normals, botop->num_face_normals * 3 * sizeof(int));
-	}
+	botop = rt_bot_dup(botip);
+	if (!botop)
+	    return -1;
 	op->idb_ptr = (void *)botop;
 	op->idb_major_type = DB5_MAJORTYPE_BRLCAD;
 	op->idb_type = ID_BOT;
