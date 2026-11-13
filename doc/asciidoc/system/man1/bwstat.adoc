@@ -10,7 +10,7 @@ bwstat - display statistics of a black and white image
 
 [source]
 ----
-bwstat [-v] [file.bw]
+bwstat [-v|--verbose] [file.bw]
 ----
 
 
@@ -24,13 +24,13 @@ bwstat [-v] [file.bw]
 [[options]]
 == OPTIONS
 
-*-v*::
+*-v*, *--verbose*::
   Verbose mode. After the statistics, print the full histogram of pixel
   values: each intensity from 0 to 255, its pixel count, and its percentage
   of the total.
 
-*-h*, *-?*::
-  Print a usage message and exit.
+*-h*, *--help*::
+  Print help and exit.  *-?* is accepted as a compatibility alias.
 
 _file.bw_::
   Optional input file. If not provided, *bwstat* reads from standard input.

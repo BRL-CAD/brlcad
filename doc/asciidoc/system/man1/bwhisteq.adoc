@@ -10,7 +10,7 @@ bwhisteq - equalize the histogram of a black and white image
 
 [source]
 ----
-bwhisteq [-v] file.bw > file.equalized
+bwhisteq [-v|--verbose] file.bw > file.equalized
 ----
 
 
@@ -22,8 +22,11 @@ bwhisteq [-v] file.bw > file.equalized
 [[options]]
 == OPTIONS
 
-*-v*::
+*-v*, *--verbose*::
   Print the pixel value mapping to standard error. For each original pixel value (0-255), it displays the corresponding new equalized value as _result[N] = value_.
+
+*-h*, *--help*::
+  Print help and exit.  *-?* is accepted as a compatibility alias.
 
 
 [[examples]]
