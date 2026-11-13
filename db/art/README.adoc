@@ -29,7 +29,9 @@ cmake -DBRLCAD_PREFIX="${BRLCAD_PREFIX}" -DOUTPUT_DIR=moss-render \
 ----
 
 Use `-DSOURCE_DB=path/to/moss.g` when the example database is elsewhere.
-The driver copies the input database before editing it.  Its output
+The driver copies the input database before editing it.  Keep `SOURCE_DB`
+outside `OUTPUT_DIR`; the generated directory contains replaceable assets
+and logs.  This rule applies to every example driver.  Its output
 contains two material-ready databases, two PNG images, the resolved
 material report, and authoring and rendering logs.  To reopen either
 version, select `art.demo.g` in the generated database.

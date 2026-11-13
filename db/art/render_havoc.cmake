@@ -24,7 +24,8 @@ include("${CMAKE_CURRENT_LIST_DIR}/render_common.cmake")
 find_program(oiiotool NAMES oiiotool HINTS "${BRLCAD_PREFIX}/bin" NO_DEFAULT_PATH NO_CACHE REQUIRED)
 
 file(REMOVE "${OUTPUT_DIR}/havoc-before.g" "${OUTPUT_DIR}/havoc-after.g"
-  "${OUTPUT_DIR}/havoc-camera.sh" "${OUTPUT_DIR}/havoc-detail-camera.sh")
+  "${OUTPUT_DIR}/havoc-camera.sh" "${OUTPUT_DIR}/havoc-detail-camera.sh"
+  "${OUTPUT_DIR}/havoc-studio.exr")
 configure_file("${source_database}" "${OUTPUT_DIR}/havoc-before.g" COPYONLY)
 run_tool(studio "art havoc studio ready" "${CMAKE_COMMAND}" -E env
   "ART_DEMO_OUTPUT_DIR=${OUTPUT_DIR}" -- "${mged}" -c "${OUTPUT_DIR}/havoc-before.g"
@@ -56,7 +57,7 @@ foreach(variant IN ITEMS before after detail)
   endif()
   set(view "${OUTPUT_DIR}/havoc-${variant}.view")
   set(image "${OUTPUT_DIR}/havoc-${variant}.png")
-  file(WRITE "${view}" "set ${settings};\n${camera}\n")
+  write_example_file("${view}" "set ${settings};\n${camera}\n")
   file(REMOVE "${image}")
   run_tool(${variant} "" INPUT_FILE "${view}" "${art}" -P ${WORKERS} -w ${WIDTH} -n ${HEIGHT}
     -M -o "${image}" "${database}" art.demo.g)

@@ -12,6 +12,7 @@ set(camera_azimuth 35)
 set(camera_elevation 25)
 set(light_intensity 10000)
 foreach(variant IN ITEMS before after)
+  file(REMOVE "${OUTPUT_DIR}/moss-${variant}.png")
   run_tool(${variant} "" "${art}" -a ${camera_azimuth} -e ${camera_elevation} -w ${WIDTH} -n ${HEIGHT} -P ${WORKERS}
     -c "set samples=${SAMPLES} light_intensity=${light_intensity}"
     -o "${OUTPUT_DIR}/moss-${variant}.png" "${OUTPUT_DIR}/moss-${variant}.g" art.demo.g)

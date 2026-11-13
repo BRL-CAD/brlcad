@@ -37,7 +37,7 @@ run_tool(studio "art sky demo ready" "${CMAKE_COMMAND}" -E env
 # legacy shell in automatic framing would make the ship disappear.
 read_saved_view("${OUTPUT_DIR}/star-camera.sh" stream)
 set(camera "${OUTPUT_DIR}/star-camera.view")
-file(WRITE "${camera}" "${stream}\n")
+write_example_file("${camera}" "${stream}\n")
 # Native rt can resume an existing output as raw scanlines.  Start clean
 # rather than letting a previous PNG be interpreted as a partial PIX file.
 file(REMOVE "${OUTPUT_DIR}/star-before.png" "${OUTPUT_DIR}/star-after.png"
@@ -57,7 +57,7 @@ foreach(variant IN ITEMS after space)
     set(background "background_color=black background_intensity=1")
   endif()
   set(view "${OUTPUT_DIR}/star-${variant}.view")
-  file(WRITE "${view}" "set samples=${SAMPLES} ${lighting} ${background};\n${stream}\n")
+  write_example_file("${view}" "set samples=${SAMPLES} ${lighting} ${background};\n${stream}\n")
   run_tool(${variant} "" INPUT_FILE "${view}" "${art}" ${render_args}
     -o "${OUTPUT_DIR}/star-${variant}.png" "${OUTPUT_DIR}/star-after.g" art.demo.g)
 endforeach()

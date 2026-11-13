@@ -35,9 +35,13 @@ if(NOT DEFINED OUTPUT_DIR)
 endif()
 file(MAKE_DIRECTORY "${OUTPUT_DIR}")
 file(REAL_PATH "${OUTPUT_DIR}" OUTPUT_DIR)
-foreach(variant IN ITEMS before after)
-  if(source_database STREQUAL "${OUTPUT_DIR}/${example_name}-${variant}.g")
-    message(FATAL_ERROR "The source database must be separate from the generated databases")
+# The driver owns generated files and logs in this directory.  Keep its input
+# outside that ownership boundary, including aliases resolved by REAL_PATH.
+get_filename_component(source_name "${SOURCE_DB}" ABSOLUTE)
+foreach(input_path IN ITEMS "${source_name}" "${source_database}")
+  file(RELATIVE_PATH source_relative "${OUTPUT_DIR}" "${input_path}")
+  if(NOT IS_ABSOLUTE "${source_relative}" AND NOT source_relative MATCHES "^\\.\\.(/|$)")
+    message(FATAL_ERROR "SOURCE_DB must be outside the generated OUTPUT_DIR")
   endif()
 endforeach()
 set(default_WIDTH 512)
@@ -57,6 +61,12 @@ foreach(variable IN ITEMS BRLCAD_ROOT LD_LIBRARY_PATH LD_PRELOAD DYLD_LIBRARY_PA
   list(APPEND tool_environment "--unset=${variable}")
 endforeach()
 list(APPEND tool_environment --)
+# Replace owned files without following an existing symbolic or hard link.
+function(write_example_file path content)
+  file(REMOVE "${path}")
+  file(WRITE "${path}" "${content}")
+endfunction()
+
 function(run_tool label sentinel)
   cmake_parse_arguments(PARSE_ARGV 2 tool "" "INPUT_FILE" "")
   set(input)
@@ -66,7 +76,7 @@ function(run_tool label sentinel)
   execute_process(COMMAND ${tool_environment} ${tool_UNPARSED_ARGUMENTS} ${input}
     WORKING_DIRECTORY "${CMAKE_CURRENT_LIST_DIR}"
     RESULT_VARIABLE status OUTPUT_VARIABLE output ERROR_VARIABLE output)
-  file(WRITE "${OUTPUT_DIR}/${label}.log" "${output}")
+  write_example_file("${OUTPUT_DIR}/${label}.log" "${output}")
   if(NOT "${status}" STREQUAL "0")
     message(FATAL_ERROR "${label} failed (${status}):\n${output}")
   endif()
