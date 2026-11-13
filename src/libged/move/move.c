@@ -30,6 +30,7 @@
 
 #include "bu/cmd.h"
 #include "bu/str.h"
+#include "ged/event.h"
 
 #include "../ged_private.h"
 
@@ -40,6 +41,7 @@ ged_move_core(struct ged *gedp, int argc, const char *argv[])
     struct display_list *gdlp;
     struct directory *dp;
     struct rt_db_internal intern;
+    int event_batch = 0;
     static const char *usage = "from to";
 
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
@@ -82,15 +84,21 @@ ged_move_core(struct ged *gedp, int argc, const char *argv[])
 	return BRLCAD_ERROR;
     }
 
+    event_batch = ged_event_batch_begin(gedp) == GED_EVENT_OK;
+
     /* Change object name in the in-memory directory. */
     if (db_rename(gedp->dbip, dp, argv[2]) < 0) {
 	rt_db_free_internal(&intern);
+	if (event_batch)
+	    (void)ged_event_batch_end(gedp, NULL);
 	bu_vls_printf(gedp->ged_result_str, "error in db_rename to %s, aborting", argv[2]);
 	return BRLCAD_ERROR;
     }
 
     /* Re-write to the database.  New name is applied on the way out. */
     if (rt_db_put_internal(dp, gedp->dbip, &intern) < 0) {
+	if (event_batch)
+	    (void)ged_event_batch_end(gedp, NULL);
 	bu_vls_printf(gedp->ged_result_str, "Database write error, aborting");
 	return BRLCAD_ERROR;
     }
@@ -127,6 +135,15 @@ ged_move_core(struct ged *gedp, int argc, const char *argv[])
 	bu_vls_free(&new_path);
     }
     _ged_dl_path_invalidate(gedp);
+
+    struct ged_event event;
+    ged_event_init(&event);
+    event.kind = GED_EVENT_OBJECT_RENAMED;
+    event.name = argv[1];
+    event.new_name = argv[2];
+    (void)ged_event_publish(gedp, &event, 1, NULL);
+    if (event_batch)
+	(void)ged_event_batch_end(gedp, NULL);
 
     return BRLCAD_OK;
 }

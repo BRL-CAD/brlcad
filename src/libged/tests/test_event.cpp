@@ -12,12 +12,14 @@
 #include "common.h"
 
 #include <atomic>
+#include <cstdio>
 #include <cstring>
 #include <string>
 #include <thread>
 #include <vector>
 
 #include "bu/app.h"
+#include "bu/file.h"
 #include "bv/lod.h"
 #include "ged.h"
 
@@ -35,6 +37,7 @@ static int failures = 0;
 struct observation {
     std::vector<std::string> calls;
     std::vector<std::string> names;
+    std::vector<std::string> new_names;
     std::vector<enum ged_event_kind> kinds;
     ged_event_observer_token self = 0;
     ged_event_observer_token other = 0;
@@ -52,8 +55,21 @@ record_events(struct ged *UNUSED(gedp), const struct ged_event *events,
 	"observer result describes delivered events");
     for (size_t i = 0; i < event_count; i++) {
 	state->names.push_back(events[i].name ? events[i].name : "");
+	state->new_names.push_back(events[i].new_name ? events[i].new_name : "");
 	state->kinds.push_back(events[i].kind);
     }
+}
+
+static bool
+observed_rename(const observation &state, const char *old_name,
+	const char *new_name)
+{
+    for (size_t i = 0; i < state.kinds.size(); i++) {
+	if (state.kinds[i] == GED_EVENT_OBJECT_RENAMED &&
+		state.names[i] == old_name && state.new_names[i] == new_name)
+	    return true;
+    }
+    return false;
 }
 
 static void
@@ -558,6 +574,84 @@ test_dbi_duplicate_instances(void)
 }
 
 static void
+test_move_all_events(void)
+{
+    struct db_i *dbip = db_open_inmem();
+    CHECK(dbip != DBI_NULL, "move_all event database opens");
+    if (dbip == DBI_NULL)
+	return;
+
+    struct bu_vls address = BU_VLS_INIT_ZERO;
+    bu_vls_sprintf(&address, "%p", (void *)dbip);
+    struct ged *gedp = ged_open("inmem", bu_vls_cstr(&address), 0);
+    bu_vls_free(&address);
+    CHECK(gedp != GED_NULL, "move_all event GED context opens");
+    if (gedp == GED_NULL) {
+	db_close(dbip);
+	return;
+    }
+
+    const char *direct_old = "move_all_direct_old.s";
+    const char *direct_new = "move_all_direct_new.s";
+    const char *make_direct[] = {"make", direct_old, "sph"};
+    CHECK(ged_exec(gedp, 3, make_direct) == BRLCAD_OK,
+	"move_all direct source is created");
+
+    observation direct;
+    ged_event_observer_token direct_observer = ged_event_observer_add(gedp,
+	GED_EVENT_OBSERVER_POST_RECONCILE, record_events, &direct);
+    CHECK(direct_observer != 0, "move_all direct observer registers");
+    const char *move_direct[] = {"move_all", direct_old, direct_new};
+    CHECK(ged_exec(gedp, 3, move_direct) == BRLCAD_OK,
+	"move_all direct rename succeeds");
+    CHECK(direct.calls.size() == 1,
+	"move_all direct rename dispatches one event batch");
+    CHECK(observed_rename(direct, direct_old, direct_new),
+	"move_all direct rename publishes old and new identities");
+    CHECK(db_lookup(gedp->dbip, direct_new, LOOKUP_QUIET) != RT_DIR_NULL,
+	"move_all direct rename updates the database directory");
+    CHECK(ged_event_observer_remove(gedp, direct_observer) == 1,
+	"move_all direct observer is removed");
+
+    const char *file_old_a = "move_all_file_old_a.s";
+    const char *file_old_b = "move_all_file_old_b.s";
+    const char *file_new_a = "move_all_file_new_a.s";
+    const char *file_new_b = "move_all_file_new_b.s";
+    const char *make_file_a[] = {"make", file_old_a, "sph"};
+    const char *make_file_b[] = {"make", file_old_b, "sph"};
+    CHECK(ged_exec(gedp, 3, make_file_a) == BRLCAD_OK &&
+	ged_exec(gedp, 3, make_file_b) == BRLCAD_OK,
+	"move_all file sources are created");
+
+    char mapping_path[MAXPATHLEN] = {0};
+    FILE *mapping = bu_temp_file(mapping_path, MAXPATHLEN);
+    CHECK(mapping != NULL, "move_all mapping file is created");
+    if (mapping) {
+	std::fprintf(mapping, "%s %s\n", file_old_a, file_new_a);
+	std::fprintf(mapping, "%s %s\n", file_old_b, file_new_b);
+	std::fclose(mapping);
+
+	observation grouped;
+	ged_event_observer_token grouped_observer = ged_event_observer_add(gedp,
+	    GED_EVENT_OBSERVER_POST_RECONCILE, record_events, &grouped);
+	CHECK(grouped_observer != 0, "move_all file observer registers");
+	const char *move_file[] = {"move_all", "-f", mapping_path};
+	CHECK(ged_exec(gedp, 3, move_file) == BRLCAD_OK,
+	    "move_all file renames succeed");
+	CHECK(grouped.calls.size() == 1,
+	    "move_all file renames dispatch one event batch");
+	CHECK(observed_rename(grouped, file_old_a, file_new_a) &&
+	    observed_rename(grouped, file_old_b, file_new_b),
+	    "move_all file batch publishes both rename identities");
+	CHECK(ged_event_observer_remove(gedp, grouped_observer) == 1,
+	    "move_all file observer is removed");
+	(void)bu_file_delete(mapping_path);
+    }
+
+    ged_close(gedp);
+}
+
+static void
 test_concurrent_publication(struct ged *gedp)
 {
     constexpr size_t thread_count = 4;
@@ -610,6 +704,7 @@ main(int argc, char **argv)
     test_librt_bridge();
     test_dbi_change_inventory();
     test_dbi_duplicate_instances();
+    test_move_all_events();
 
     CHECK(ged_event_batch_end(&context, nullptr) == GED_EVENT_INVALID,
 	"ending a nonexistent batch is rejected");
