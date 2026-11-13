@@ -340,6 +340,7 @@ set(
   draw.cpp
   ged.cpp
   ged_inside.c
+  joint_object.c
   ged_track.c
   ged_util.cpp
   ged_scene_api.cpp

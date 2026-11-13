@@ -337,6 +337,14 @@ RT_EXPORT extern int db_apply_state_from_comb(struct db_tree_state *tsp,
 RT_EXPORT extern union tree *db_find_named_leaf(union tree *tp, const char *cp);
 
 /**
+ * Return the indexed occurrence of a named leaf.  Occurrences are numbered
+ * from zero in boolean-tree traversal order.
+ */
+RT_EXPORT extern union tree *db_find_named_leaf_instance(union tree *tp,
+						 const char *cp,
+						 size_t instance);
+
+/**
  * The search stops on the first match.
  *
  * Returns -
