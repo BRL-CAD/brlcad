@@ -98,6 +98,8 @@ main(int argc, char **argv)
     bwgt = BINTLUM*(1.0-sat);
 
     while ((nby = fread(buf, 1, sizeof(buf), stdin)) > 0) {
+	if (nby % 3)
+	    bu_exit(1, "pixsaturate: input ends with an incomplete pixel\n");
 	cp = (unsigned char *)buf;
 	for (n = (int)nby; n > 0; n -= 3) {
 	    rt = cp[0];
@@ -120,6 +122,8 @@ main(int argc, char **argv)
 	    return 1;
 	}
     }
+    if (ferror(stdin))
+	bu_exit(1, "pixsaturate: error reading input\n");
 
     return 0;
 }
