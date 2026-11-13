@@ -784,8 +784,6 @@ static struct bu_lex_key lex_solids[] = {
 #define SYM_MINUS	9
 #define SYM_PLUS	10
 
-#define COMMA ','
-
 static struct bu_lex_key animsyms[] = {
     {SYM_OP_GROUP,	"{"},
     {SYM_CL_GROUP,	"}"},
@@ -794,7 +792,7 @@ static struct bu_lex_key animsyms[] = {
     {SYM_EQ,	"="},
     {SYM_ARC,	"/"},
     {SYM_END,	";"},
-    {SYM_COMMA,	CPP_XSTR(COMMA)},
+    {SYM_COMMA,	","},
     {SYM_MINUS,	"-"},
     {SYM_PLUS,	"+"},
     {0, 0}};
@@ -3535,7 +3533,12 @@ ged_joint_core(struct ged *gedp, int argc, const char *argv[])
     argc--;
     argv++;
 
-    status = joint_cmd(gedp, argc, argv, &joint_tab[0]);
+    if (argc > 0 && BU_STR_EQUAL(argv[0], "object"))
+	status = _ged_joint_object_core(gedp, argc - 1, argv + 1);
+    else if (argc > 0 && BU_STR_EQUAL(argv[0], "legacy"))
+	status = joint_cmd(gedp, argc - 1, argv + 1, &joint_tab[0]);
+    else
+	status = joint_cmd(gedp, argc, argv, &joint_tab[0]);
 
     if (status == BRLCAD_OK)
 	return BRLCAD_OK;

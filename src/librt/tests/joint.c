@@ -192,6 +192,162 @@ cleanup:
     return result;
 }
 
+static int
+make_graph_joint(struct rt_db_internal *intern, const char *parent,
+	const char *child, const char *dof)
+{
+    const char *arguments[] = {
+	"type", "general",
+	"parent", parent,
+	"child", child,
+	"dof0", dof
+    };
+    struct bu_vls messages = BU_VLS_INIT_ZERO;
+    point_t origin = VINIT_ZERO;
+    int result;
+
+    RT_DB_INTERNAL_INIT(intern);
+    result = OBJ[ID_JOINT].ft_make(&OBJ[ID_JOINT], intern, NULL, origin, 1.0);
+    if (result == BRLCAD_OK)
+	result = OBJ[ID_JOINT].ft_adjust(&messages, intern,
+		(int)(sizeof(arguments) / sizeof(arguments[0])), arguments);
+    if (result != BRLCAD_OK)
+	bu_log("graph joint setup failed: %s\n", bu_vls_cstr(&messages));
+    bu_vls_free(&messages);
+    return result;
+}
+
+static int
+test_forward_kinematics(void)
+{
+    struct rt_db_internal first;
+    struct rt_db_internal second;
+    const struct rt_joint_internal *joints[2];
+    struct rt_joint_eval *evaluation = NULL;
+    struct rt_joint_eval_options options = RT_JOINT_EVAL_OPTIONS_INIT;
+    struct bu_vls messages = BU_VLS_INIT_ZERO;
+    mat_t matrix;
+    mat_t root_matrix = MAT_INIT_IDN;
+    int result = BRLCAD_ERROR;
+
+    if (make_graph_joint(&first, "base", "slide",
+	    "translation unlimited {0 0 1} 0 0 5") != BRLCAD_OK)
+	return BRLCAD_ERROR;
+    if (make_graph_joint(&second, "slide", "tool",
+	    "translation unlimited {1 0 0} 0 0 2") != BRLCAD_OK)
+	goto cleanup;
+    joints[0] = (const struct rt_joint_internal *)first.idb_ptr;
+    joints[1] = (const struct rt_joint_internal *)second.idb_ptr;
+    options.root_link = "base";
+    MAT_DELTAS(root_matrix, 10.0, 0.0, 0.0);
+    options.root_matrix = root_matrix;
+    options.messages = &messages;
+    if (rt_joint_eval_create(&evaluation, joints, 2, &options) != BRLCAD_OK) {
+	bu_log("forward kinematics failed: %s\n", bu_vls_cstr(&messages));
+	goto cleanup;
+    }
+    if (rt_joint_eval_count(evaluation) != 3 ||
+	rt_joint_eval_find(matrix, evaluation, "tool") != BRLCAD_OK ||
+	!close_enough(matrix[3], 12.0) ||
+	!close_enough(matrix[7], 0.0) ||
+	!close_enough(matrix[11], 5.0))
+	goto cleanup;
+    result = BRLCAD_OK;
+
+cleanup:
+    rt_joint_eval_destroy(evaluation);
+    bu_vls_free(&messages);
+    rt_db_free_internal(&second);
+    rt_db_free_internal(&first);
+    return result;
+}
+
+static int
+test_forward_kinematics_cycle(void)
+{
+    struct rt_db_internal first;
+    struct rt_db_internal second;
+    const struct rt_joint_internal *joints[2];
+    struct rt_joint_eval *evaluation = NULL;
+    struct rt_joint_eval_options options = RT_JOINT_EVAL_OPTIONS_INIT;
+    struct bu_vls messages = BU_VLS_INIT_ZERO;
+    int result = BRLCAD_ERROR;
+
+    if (make_graph_joint(&first, "base", "slide",
+	    "translation unlimited {0 0 1} 0 0 5") != BRLCAD_OK)
+	return BRLCAD_ERROR;
+    if (make_graph_joint(&second, "slide", "base",
+	    "translation unlimited {1 0 0} 0 0 2") != BRLCAD_OK)
+	goto cleanup;
+    joints[0] = (const struct rt_joint_internal *)first.idb_ptr;
+    joints[1] = (const struct rt_joint_internal *)second.idb_ptr;
+    options.root_link = "base";
+    options.messages = &messages;
+    if (rt_joint_eval_create(&evaluation, joints, 2, &options) == BRLCAD_ERROR &&
+	strstr(bu_vls_cstr(&messages), "cycle"))
+	result = BRLCAD_OK;
+
+cleanup:
+    rt_joint_eval_destroy(evaluation);
+    bu_vls_free(&messages);
+    rt_db_free_internal(&second);
+    rt_db_free_internal(&first);
+    return result;
+}
+
+static int
+test_joint_problem(void)
+{
+    struct rt_db_internal first;
+    struct rt_db_internal second;
+    struct rt_joint_internal *joints[2];
+    struct rt_joint_problem *problem = NULL;
+    struct rt_joint_eval_options options = RT_JOINT_EVAL_OPTIONS_INIT;
+    struct rt_joint_point_constraint constraint = RT_JOINT_POINT_CONSTRAINT_INIT;
+    fastf_t residuals[3];
+    fastf_t jacobian[6];
+    fastf_t values[2];
+    int result = BRLCAD_ERROR;
+
+    if (make_graph_joint(&first, "base", "slide",
+	    "translation unlimited {0 0 1} 0 0 5") != BRLCAD_OK)
+	return BRLCAD_ERROR;
+    if (make_graph_joint(&second, "slide", "tool",
+	    "translation unlimited {1 0 0} 0 0 2") != BRLCAD_OK)
+	goto cleanup;
+    joints[0] = (struct rt_joint_internal *)first.idb_ptr;
+    joints[1] = (struct rt_joint_internal *)second.idb_ptr;
+    options.root_link = "base";
+    if (rt_joint_problem_create(&problem, joints, 2, &options) != BRLCAD_OK)
+	goto cleanup;
+    constraint.link = "tool";
+    VSET(constraint.target, 3.0, 0.0, 7.0);
+    if (rt_joint_problem_add_point(problem, &constraint) != BRLCAD_OK ||
+	rt_joint_problem_variable_count(problem) != 2 ||
+	rt_joint_problem_residual_count(problem) != 3 ||
+	rt_joint_problem_evaluate(problem, residuals, 3, jacobian, 6) != BRLCAD_OK ||
+	!close_enough(residuals[X], -1.0) ||
+	!close_enough(residuals[Y], 0.0) ||
+	!close_enough(residuals[Z], -2.0) ||
+	!close_enough(jacobian[0], 0.0) ||
+	!close_enough(jacobian[1], 1.0) ||
+	!close_enough(jacobian[4], 1.0) ||
+	!close_enough(jacobian[5], 0.0))
+	goto cleanup;
+    V2SET(values, 7.0, 3.0);
+    if (rt_joint_problem_set_values(problem, values, 2) != BRLCAD_OK ||
+	rt_joint_problem_evaluate(problem, residuals, 3, NULL, 0) != BRLCAD_OK ||
+	!close_enough(residuals[X], 0.0) || !close_enough(residuals[Z], 0.0))
+	goto cleanup;
+    result = BRLCAD_OK;
+
+cleanup:
+    rt_joint_problem_destroy(problem);
+    rt_db_free_internal(&second);
+    rt_db_free_internal(&first);
+    return result;
+}
+
 int
 main(int argc, char **argv)
 {
@@ -214,6 +370,18 @@ main(int argc, char **argv)
     }
     if (test_relative_matrix() != BRLCAD_OK) {
 	bu_log("relative matrix evaluation failed\n");
+	failures++;
+    }
+    if (test_forward_kinematics() != BRLCAD_OK) {
+	bu_log("forward kinematics failed\n");
+	failures++;
+    }
+    if (test_forward_kinematics_cycle() != BRLCAD_OK) {
+	bu_log("forward kinematics cycle detection failed\n");
+	failures++;
+    }
+    if (test_joint_problem() != BRLCAD_OK) {
+	bu_log("joint residual and Jacobian problem failed\n");
 	failures++;
     }
     return failures;

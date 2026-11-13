@@ -4,6 +4,24 @@ if(TARGET ged_test_terminal_columns)
 endif()
 brlcad_add_test(NAME ged_terminal_columns COMMAND ged_test_terminal_columns)
 
+brlcad_addexec(ged_test_joint2 test_joint2.c "libged;libwdb;librt;libbu" TEST)
+if(TARGET ged_test_joint2)
+  add_dependencies(ged_test_joint2 ged_plugins)
+endif()
+brlcad_add_test(NAME ged_test_joint2 COMMAND ged_test_joint2)
+if(TARGET ged_test_joint2)
+  set_property(TEST ged_test_joint2 APPEND PROPERTY ENVIRONMENT BRLCAD_ROOT=${CMAKE_BINARY_DIR})
+endif()
+
+brlcad_addexec(ged_test_joint_legacy test_joint_legacy.c "libged;libwdb;librt;libbu" TEST)
+if(TARGET ged_test_joint_legacy)
+  add_dependencies(ged_test_joint_legacy ged_plugins)
+endif()
+brlcad_add_test(NAME ged_test_joint_legacy COMMAND ged_test_joint_legacy)
+if(TARGET ged_test_joint_legacy)
+  set_property(TEST ged_test_joint_legacy APPEND PROPERTY ENVIRONMENT BRLCAD_ROOT=${CMAKE_BINARY_DIR})
+endif()
+
 brlcad_addexec(ged_test_tops test_tops.c libged TEST)
 if(TARGET ged_test_tops)
   add_dependencies(ged_test_tops ged_plugins)
@@ -144,6 +162,8 @@ cmakefiles(
   ged_tests.g
   pnts_in_out.g
   test_bo.c
+  test_joint2.c
+  test_joint_legacy.c
 )
 
 cmakefiles(CMakeLists.txt)

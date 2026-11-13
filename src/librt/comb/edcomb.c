@@ -460,33 +460,6 @@ ecmd_comb_set_matrix(struct rt_edit *s)
 }
 
 
-static union tree *
-comb_instance_leaf(union tree *tree, const char *name, int target, int *current)
-{
-    if (!tree || !name || !current)
-	return TREE_NULL;
-    switch (tree->tr_op) {
-	case OP_DB_LEAF:
-	    if (BU_STR_EQUAL(tree->tr_l.tl_name, name)) {
-		if (*current == target)
-		    return tree;
-		(*current)++;
-	    }
-	    return TREE_NULL;
-	case OP_UNION:
-	case OP_INTERSECT:
-	case OP_SUBTRACT: {
-	    union tree *leaf = comb_instance_leaf(tree->tr_b.tb_left, name,
-		target, current);
-	    return leaf ? leaf : comb_instance_leaf(tree->tr_b.tb_right, name,
-		target, current);
-	}
-	default:
-	    return TREE_NULL;
-    }
-}
-
-
 int
 rt_edit_comb_instance_matrix_get(struct rt_edit *s, const char *name,
 	int instance, mat_t matrix)
@@ -496,9 +469,8 @@ rt_edit_comb_instance_matrix_get(struct rt_edit *s, const char *name,
 	return BRLCAD_ERROR;
     struct rt_comb_internal *comb =
 	(struct rt_comb_internal *)s->es_int.idb_ptr;
-    int current = 0;
-    union tree *leaf = comb_instance_leaf(comb->tree, name, instance,
-	&current);
+    union tree *leaf = db_find_named_leaf_instance(comb->tree, name,
+	(size_t)instance);
     if (!leaf)
 	return BRLCAD_ERROR;
     if (leaf->tr_l.tl_mat)
@@ -514,8 +486,8 @@ rt_edit_comb_instance_matrix_set(struct rt_edit *s, const char *name, int instan
     if (!s || !name || !matrix || instance < 0 || !s->es_int.idb_ptr || s->es_int.idb_type != ID_COMBINATION)
 	return BRLCAD_ERROR;
     struct rt_comb_internal *comb = (struct rt_comb_internal *)s->es_int.idb_ptr;
-    int current = 0;
-    union tree *leaf = comb_instance_leaf(comb->tree, name, instance, &current);
+    union tree *leaf = db_find_named_leaf_instance(comb->tree, name,
+	(size_t)instance);
     if (!leaf)
 	return BRLCAD_ERROR;
     if (!leaf->tr_l.tl_mat)
