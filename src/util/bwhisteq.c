@@ -64,6 +64,7 @@ main(int argc, char **argv)
     int right[BINSIZE] = {0};
 
     bu_setprogname(argv[0]);
+    setmode(fileno(stdout), O_BINARY);
 
     if (argc > 1 && BU_STR_EQUAL(argv[1], "-v")) {
 	verbose++;
