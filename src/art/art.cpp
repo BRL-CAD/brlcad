@@ -77,6 +77,7 @@
 #include <stdio.h>
 
 #include <algorithm>
+#include <array>
 #include <atomic>
 #include <charconv>
 #include <cctype>
@@ -91,6 +92,7 @@
 #include <set>
 #include <sstream>
 #include <string>
+#include <utility>
 #include <vector>
 
 #if defined(__GNUC__) && !defined(__clang__)
@@ -185,6 +187,23 @@ static int inspect_materials = 0;
 
 static int samples = 25;
 static double light_intensity = 200.0;
+
+struct ArtEnvironmentControls {
+    std::optional<std::array<double, 3>> environment_color;
+    std::optional<std::array<double, 3>> background_color;
+    std::optional<double> environment_intensity;
+    std::optional<double> background_intensity;
+};
+static ArtEnvironmentControls environment_controls;
+
+static bool
+art_valid_power(double value)
+{
+    return std::isfinite(value) && value >= 0.0 &&
+	value <= std::numeric_limits<float>::max() &&
+	(value <= 0.0 || static_cast<float>(value) > 0.0);
+}
+
 
 /* Light-source regions discovered while walking the .g database in
  * register_region().  build_project() turns each into an Appleseed light at
@@ -318,7 +337,7 @@ init_defaults(void)
     option("", "-F framebuffer", "Render to a framebuffer (defaults to a window)", 100);
     // option("", "-s #", "Square image size (default: 512 - implies 512x512 image)", 100);
     // option("", "-w # -n #", "Image pixel dimensions as width and height", 100);
-    option("", "-C #/#/#", "Set background image color to R/G/B values (default: 191/204/255)", 0);
+    option("", "-C #/#/#", "Set legacy background/environment color to R/G/B values (default: white)", 0);
     // option("", "-W", "Set background image color to white", 0);
     option("", "-R", "Disable reporting of overlaps", 100);
     // option("", "-? or -h", "Display help", 1);
@@ -731,6 +750,17 @@ art_selected_objects(const char ***objects)
 static asf::auto_release_ptr<asr::Project>
 build_project(std::ostream *report)
 {
+    if (!art_valid_power(AmbientIntensity)) {
+	bu_log("art: ambient intensity must be finite, nonnegative, and representable by the renderer\n");
+	return asf::auto_release_ptr<asr::Project>();
+    }
+    const std::array<double, 3> legacy_color = {background[0], background[1], background[2]};
+    const auto environment_color = environment_controls.environment_color.value_or(legacy_color);
+    const auto background_color = environment_controls.background_color.value_or(legacy_color);
+    const double environment_power = environment_controls.environment_intensity.value_or(AmbientIntensity);
+    const double background_power = environment_controls.background_intensity.value_or(
+	environment_controls.background_color ? 1.0 : AmbientIntensity);
+
     /* If user gave no sizing info at all, use 512 as default */
     struct bu_vls dimensions = BU_VLS_INIT_ZERO;
     if (width <= 0)
@@ -766,6 +796,10 @@ build_project(std::ostream *report)
 	*report << "project_root " << std::quoted(project->search_paths().get_root_path().c_str()) << '\n'
 	    << "shader_search_path " << std::quoted(project->search_paths().to_string_reversed(
 		asf::SearchPaths::osl_path_separator()).c_str()) << '\n';
+	*report << "environment_color " << environment_color[0] << ' ' << environment_color[1]
+	    << ' ' << environment_color[2] << " intensity " << environment_power << '\n'
+	    << "background_color " << background_color[0] << ' ' << background_color[1]
+	    << ' ' << background_color[2] << " intensity " << background_power << '\n';
     }
 
     // Add default configurations to the project.
@@ -836,6 +870,10 @@ build_project(std::ostream *report)
 	static const float LightRadiance[] = { 1.0f, 1.0f, 1.0f };
 	// Building a frame must not change the intensity used by later frames.
 	const double fallback_intensity = static_cast<double>(light_intensity) * AmbientIntensity;
+	if (!art_valid_power(fallback_intensity)) {
+	    bu_log("art: fallback light power is outside the renderer's range\n");
+	    return asf::auto_release_ptr<asr::Project>();
+	}
 	assembly->colors().insert(
 	    asr::ColorEntityFactory::create(
 		"light_intensity",
@@ -872,7 +910,11 @@ build_project(std::ostream *report)
 	for (size_t i = 0; i < art_lights.size(); i++) {
 	    const ArtLight& L = art_lights[i];
 	    double fract = (L.fract > 0.0) ? L.fract : (L.bright / max_bright);
-	    double multiplier = (double)light_intensity * fract;
+	    const double multiplier = light_intensity * fract;
+	    if (!art_valid_power(multiplier)) {
+		bu_log("art: light '%s' power is outside the renderer's range\n", L.name.c_str());
+		return asf::auto_release_ptr<asr::Project>();
+	    }
 
 	    std::string color_name = L.name + "_color";
 	    assembly->colors().insert(
@@ -922,21 +964,15 @@ build_project(std::ostream *report)
     // Environment
     //------------------------------------------------------------------------
 
-    float float_bgcolor[ELEMENTS_PER_VECT] = {0};
-    VMOVE(float_bgcolor, background);
-
-    // Create a color called "sky_radiance" and insert it into the scene
-    // to set the background color. By default we use a blue
-    // background { 0.75f, 0.80f, 1.0f } *see line 153*. This can be
-    // updated while running using -C and -W
-
-    scene->colors().insert(
-	asr::ColorEntityFactory::create(
-	    "sky_radiance",
-	    asr::ParamArray()
-	    .insert("color_space", "srgb")
-	    .insert("multiplier", AmbientIntensity),
-	    asr::ColorValueArray(3, float_bgcolor)));
+    const auto add_environment_color = [&scene](const char *name,
+	const std::array<double, 3>& color, double power) {
+	const float components[] = {
+	    static_cast<float>(color[0]), static_cast<float>(color[1]), static_cast<float>(color[2])};
+	scene->colors().insert(asr::ColorEntityFactory::create(name,
+	    asr::ParamArray().insert("color_space", "srgb").insert("multiplier", power),
+	    asr::ColorValueArray(3, components)));
+    };
+    add_environment_color("sky_radiance", environment_color, environment_power);
 
     // Create an environment EDF called "sky_edf" and insert it into the scene.
     scene->environment_edfs().insert(
@@ -945,12 +981,18 @@ build_project(std::ostream *report)
 	    asr::ParamArray()
 	    .insert("radiance", "sky_radiance")));
 
-    // Create an environment shader called "sky_shader" and insert it into the scene.
-    scene->environment_shaders().insert(
-	asr::EDFEnvironmentShaderFactory().create(
-	    "sky_shader",
-	    asr::ParamArray()
-	    .insert("environment_edf", "sky_edf")));
+    const bool independent_background = environment_controls.environment_color ||
+	environment_controls.environment_intensity || environment_controls.background_color ||
+	environment_controls.background_intensity;
+    if (independent_background) {
+	add_environment_color("background_radiance", background_color, background_power);
+	scene->environment_shaders().insert(asr::BackgroundEnvironmentShaderFactory().create(
+	    "sky_shader", asr::ParamArray().insert("color", "background_radiance")));
+    } else {
+	// Keep the legacy EDF background, including its AOV behavior, without overrides.
+	scene->environment_shaders().insert(asr::EDFEnvironmentShaderFactory().create(
+	    "sky_shader", asr::ParamArray().insert("environment_edf", "sky_edf")));
+    }
 
     // Create an environment called "sky" and bind it to the scene.
     scene->set_environment(
@@ -1449,6 +1491,28 @@ art_setting_real(const std::string& value, double& number)
     return input.eof();
 }
 
+static bool
+art_setting_color(const std::string& value, std::array<double, 3>& rgb)
+{
+    struct bu_color color = BU_COLOR_INIT_ZERO;
+    if (!bu_color_from_str(&color, value.c_str()))
+	return false;
+    rgb = {color.buc_rgb[0], color.buc_rgb[1], color.buc_rgb[2]};
+    return true;
+}
+
+static void
+art_print_color_setting(const char *name, const double *rgb)
+{
+    if (!rgb) {
+	bu_log("%s=inherit\n", name);
+	return;
+    }
+    const int digits = std::numeric_limits<double>::max_digits10;
+    bu_log("%s=%#.*g/%#.*g/%#.*g\n", name,
+	digits, rgb[0], digits, rgb[1], digits, rgb[2]);
+}
+
 static int
 art_cm_set(const int argc, const char **argv)
 {
@@ -1460,9 +1524,7 @@ art_cm_set(const int argc, const char **argv)
 	    if (BU_STR_EQUAL(field->sp_name, "width") || BU_STR_EQUAL(field->sp_name, "height"))
 		continue;
 	    if (BU_STR_EQUAL(field->sp_name, "background") || BU_STR_EQUAL(field->sp_name, "bg")) {
-		const int digits = std::numeric_limits<double>::max_digits10;
-		bu_log("%s=%#.*g/%#.*g/%#.*g\n", field->sp_name,
-		    digits, background[0], digits, background[1], digits, background[2]);
+		art_print_color_setting(field->sp_name, background);
 		continue;
 	    }
 	    // Print from the actual field address instead of a null structure base.
@@ -1472,6 +1534,19 @@ art_cm_set(const int argc, const char **argv)
 	    bu_vls_struct_item(&value, &printable, reinterpret_cast<const char *>(field->sp_offset), '/');
 	    bu_log("%s=%s\n", field->sp_name, bu_vls_cstr(&value));
 	    bu_vls_free(&value);
+	}
+	art_print_color_setting("environment_color", environment_controls.environment_color ?
+	    environment_controls.environment_color->data() : nullptr);
+	art_print_color_setting("background_color", environment_controls.background_color ?
+	    environment_controls.background_color->data() : nullptr);
+	const std::pair<const char *, std::optional<double>> powers[] = {
+	    {"environment_intensity", environment_controls.environment_intensity},
+	    {"background_intensity", environment_controls.background_intensity}};
+	for (const auto& power : powers) {
+	    if (power.second)
+		bu_log("%s=%.*g\n", power.first, std::numeric_limits<double>::max_digits10, *power.second);
+	    else
+		bu_log("%s=inherit\n", power.first);
 	}
 	return 0;
     }
@@ -1502,6 +1577,7 @@ art_cm_set(const int argc, const char **argv)
     canonical.imbue(std::locale::classic());
     canonical << std::showpoint << std::setprecision(std::numeric_limits<double>::max_digits10);
     std::optional<size_t> new_width, new_height;
+    ArtEnvironmentControls new_environment = environment_controls;
     std::set<std::string> compatibility_settings;
     size_t cursor = 0;
     while (cursor < input.size()) {
@@ -1532,6 +1608,32 @@ art_cm_set(const int argc, const char **argv)
 	    return art_setting_error(name, value, "expected whitespace after closing quote");
 	if (value.empty())
 	    return art_setting_error(name, value, "a value is required");
+	if (name == "environment_color" || name == "background_color") {
+	    auto& color = name == "environment_color" ? new_environment.environment_color :
+		new_environment.background_color;
+	    if (value == "inherit") {
+		color.reset();
+	    } else {
+		std::array<double, 3> rgb;
+		if (!art_setting_color(value, rgb))
+		    return art_setting_error(name, value, "expected a valid color or inherit");
+		color = rgb;
+	    }
+	    continue;
+	}
+	if (name == "environment_intensity" || name == "background_intensity") {
+	    auto& power = name == "environment_intensity" ? new_environment.environment_intensity :
+		new_environment.background_intensity;
+	    if (value == "inherit") {
+		power.reset();
+	    } else {
+		double number;
+		if (!art_setting_real(value, number) || !art_valid_power(number))
+		    return art_setting_error(name, value, "expected nonnegative power representable by the renderer, or inherit");
+		power = number;
+	    }
+	    continue;
+	}
 	const auto found = std::find_if(fields.begin(), fields.end(), [&name](const auto *entry) {
 	    return name == entry->sp_name;
 	});
@@ -1542,11 +1644,11 @@ art_cm_set(const int argc, const char **argv)
 	    compatibility_settings.insert(name);
 
 	if (name == "background" || name == "bg") {
-	    struct bu_color color = BU_COLOR_INIT_ZERO;
-	    if (!bu_color_from_str(&color, value.c_str()))
+	    std::array<double, 3> color;
+	    if (!art_setting_color(value, color))
 		return art_setting_error(name, value, "expected a valid color");
-	    canonical << name << "=\"" << color.buc_rgb[0] << '/' << color.buc_rgb[1]
-		<< '/' << color.buc_rgb[2] << "\" ";
+	    canonical << name << "=\"" << color[0] << '/' << color[1]
+		<< '/' << color[2] << "\" ";
 	} else if (field->sp_fmt[1] == 'd' && field->sp_count == 1) {
 	    const bool boolean = name == "inspect_materials" || name == "save_overlaps";
 	    if (boolean && value == "!") {
@@ -1571,8 +1673,7 @@ art_cm_set(const int argc, const char **argv)
 	    if (!art_setting_real(value, number))
 		return art_setting_error(name, value, "expected a complete finite number");
 	    if (name == "light_intensity" || name == "li") {
-		if (number < 0.0 || number > std::numeric_limits<float>::max() ||
-		    (number > 0.0 && static_cast<float>(number) <= 0.0))
+		if (!art_valid_power(number))
 		    return art_setting_error(name, value, "expected nonnegative power representable by the renderer");
 	    } else if ((name == "perspective" || name == "angle") && (number < 0.0 || number >= 180.0)) {
 		return art_setting_error(name, value, "expected 0 <= perspective < 180 degrees");
@@ -1595,6 +1696,7 @@ art_cm_set(const int argc, const char **argv)
 	width = *new_width;
     if (new_height)
 	height = *new_height;
+    environment_controls = new_environment;
     for (const auto& name : compatibility_settings)
 	bu_log("art: warning: unsupported rendering setting '%s'; value stored for command compatibility\n", name.c_str());
     return 0;

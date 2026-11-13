@@ -54,6 +54,7 @@ set(ART_REGRESSION_TEST_NAMES
   regress-art-lighting
   regress-art-output
   regress-art-settings
+  regress-art-environment
 )
 
 if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
@@ -74,7 +75,8 @@ cmakefiles(CMakeLists.txt art_test_setup.cmake art_installed_tests.cmake
   regress-art-materials.cmake.in regress-art-inspect.cmake.in
   regress-art-region-colors.cmake.in regress-art-view.cmake.in
   regress-art-frames.cmake.in regress-art-selection.cmake.in
-  regress-art-lighting.cmake.in regress-art-output.cmake.in regress-art-settings.cmake.in)
+  regress-art-lighting.cmake.in regress-art-output.cmake.in regress-art-settings.cmake.in
+  regress-art-environment.cmake.in)
 foreach(shader IN LISTS ART_TEST_SHADER_NAMES)
   cmakefiles("${shader}.osl")
 endforeach()
@@ -105,7 +107,8 @@ if(TARGET art AND BUILD_TESTING)
     "${CMAKE_CURRENT_BINARY_DIR}/region-colors-output"
     "${CMAKE_CURRENT_BINARY_DIR}/view-output"
     "${CMAKE_CURRENT_BINARY_DIR}/frames-output" "${CMAKE_CURRENT_BINARY_DIR}/selection-output"
-    "${CMAKE_CURRENT_BINARY_DIR}/lighting-output" "${CMAKE_CURRENT_BINARY_DIR}/image-output" "${CMAKE_CURRENT_BINARY_DIR}/settings-output")
+    "${CMAKE_CURRENT_BINARY_DIR}/lighting-output" "${CMAKE_CURRENT_BINARY_DIR}/image-output" "${CMAKE_CURRENT_BINARY_DIR}/settings-output"
+    "${CMAKE_CURRENT_BINARY_DIR}/environment-output")
 endif()
 
 # Local Variables:
