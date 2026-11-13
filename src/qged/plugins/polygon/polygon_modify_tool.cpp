@@ -27,6 +27,7 @@
 #include "qtcad/QgToolBase.h"
 #include "qtcad/QgToolPalette.h"
 #include "qtcad/QgView.h"
+#include "QgEdCategories.h"
 #include "QPolyMod.h"
 
 class PolygonModifyTool : public QgToolBase, public IQgViewEventFilter
@@ -116,7 +117,7 @@ class PolygonModifyFactory : public QObject, public IQgToolFactory
 	    QgPluginDescriptor plugin;
 	    plugin.id = QStringLiteral("org.brlcad.qged.polygon.modify");
 	    plugin.displayName = QStringLiteral("Polygon Modify");
-	    plugin.category = QStringLiteral("qged.view");
+	    plugin.category = QStringLiteral(QGED_CATEGORY_VIEW);
 	    plugin.iconName = QStringLiteral(":poly_modify.svg");
 	    plugin.sortKey = 101;
 	    plugin.requiresView = true;

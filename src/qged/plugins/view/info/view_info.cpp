@@ -29,6 +29,7 @@
 #include "qtcad/QgPluginContext.h"
 #include "qtcad/QgPluginInterfaces.h"
 #include "qtcad/QgToolBase.h"
+#include "QgEdCategories.h"
 #include "CADViewModel.h"
 
 class ViewInfoTool : public QgToolBase
@@ -90,7 +91,7 @@ class ViewInfoFactory : public QObject, public IQgToolFactory
 	    QgPluginDescriptor plugin;
 	    plugin.id = QStringLiteral("org.brlcad.qged.view.info");
 	    plugin.displayName = QStringLiteral("View Info");
-	    plugin.category = QStringLiteral("qged.view");
+	    plugin.category = QStringLiteral(QGED_CATEGORY_VIEW);
 	    plugin.iconName = QStringLiteral(":info.svg");
 	    plugin.sortKey = 0;
 	    plugin.requiresView = true;

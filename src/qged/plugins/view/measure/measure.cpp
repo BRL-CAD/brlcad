@@ -29,6 +29,7 @@
 #include "qtcad/QgToolBase.h"
 #include "qtcad/QgToolPalette.h"
 #include "qtcad/QgView.h"
+#include "QgEdCategories.h"
 #include "CADViewMeasure.h"
 
 class ViewMeasureTool : public QgToolBase, public IQgViewEventFilter
@@ -97,7 +98,7 @@ class ViewMeasureFactory : public QObject, public IQgToolFactory
 	    QgPluginDescriptor plugin;
 	    plugin.id = QStringLiteral("org.brlcad.qged.view.measure");
 	    plugin.displayName = QStringLiteral("View Measure");
-	    plugin.category = QStringLiteral("qged.view");
+	    plugin.category = QStringLiteral(QGED_CATEGORY_VIEW);
 	    plugin.iconName = QStringLiteral(":measure.svg");
 	    plugin.sortKey = 3;
 	    plugin.requiresView = true;

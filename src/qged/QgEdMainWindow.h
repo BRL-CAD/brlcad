@@ -49,13 +49,10 @@
 #include "qtcad/QgSignalFlags.h"
 #include "qtcad/QgTreeView.h"
 #include "qtcad/QgView.h"
-#include "qtcad/QgView.h"
 #include "qtcad/QgViewCtrl.h"
 
-#include "plugins/plugin.h"
-#include "QgEdPalette.h"
-
 class QgPaletteController;
+class QgToolPalette;
 class QgWindowExtensionController;
 
 class QgEdMainWindow : public QMainWindow
@@ -130,8 +127,8 @@ class QgEdMainWindow : public QMainWindow
 	// Docked widgets
 	QgAttributesModel *stdpropmodel = NULL;
 	QgAttributesModel *userpropmodel = NULL;
-	QgEdPalette *oc = NULL;
-	QgEdPalette *vc = NULL;
+	QgToolPalette *oc = NULL;
+	QgToolPalette *vc = NULL;
 	QgPaletteController *oc_ctrl = NULL;
 	QgPaletteController *vc_ctrl = NULL;
 	QgTreeView *treeview = NULL;

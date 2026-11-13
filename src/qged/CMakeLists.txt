@@ -17,7 +17,6 @@ set(
   QgEdCategories.h
   QgEdFilter.cpp
   fbserv.cpp
-  QgEdPalette.cpp
 )
 
 set(
@@ -26,21 +25,12 @@ set(
   QgEdFilter
   fbserv
   QgEdMainWindow
-  QgEdPalette
 )
 foreach(qh ${qth_names})
   set(moc_headers ${moc_headers} ${qh}.h)
 endforeach(qh ${qth_names})
 
 if(BRLCAD_ENABLE_QT)
-  # Let the plugin lookup know what the platform's extension is so it knows
-  # what plugin filenames to look for
-  set_property(
-    SOURCE QgEdPalette.cpp
-    APPEND
-    PROPERTY COMPILE_DEFINITIONS "QGED_PLUGIN_SUFFIX=\"${CMAKE_SHARED_LIBRARY_SUFFIX}\""
-  )
-
   include(CheckLinkerFlag)
   check_linker_flag(CXX "-pie" QGED_LINK_PIE_SUPPORTED)
   if(Qt6Widgets_FOUND)

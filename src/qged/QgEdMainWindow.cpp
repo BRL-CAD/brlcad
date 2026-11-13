@@ -27,6 +27,7 @@
 #include <QMessageBox>
 #include "qtcad/QgPaletteController.h"
 #include "qtcad/QgSession.h"
+#include "qtcad/QgToolPalette.h"
 #include "qtcad/QgViewCtrl.h"
 #include "qtcad/QgTreeSelectionModel.h"
 #include "qtcad/QgWindowExtensionController.h"
@@ -136,17 +137,15 @@ QgEdMainWindow::CreateWidgets(QgViewType canvas_type)
     // attached and detached from the main window.
 
     // Palettes and their associated dock widgets
-    vc = new QgEdPalette(QGED_VC_TOOL_PLUGIN, this);
+    vc = new QgToolPalette(this);
     vcd = new QDockWidget("View Controls", this);
     vcd->setObjectName("View_Controls");
     vcd->setWidget(vc);
-    oc = new QgEdPalette(QGED_OC_TOOL_PLUGIN, this);
+    oc = new QgToolPalette(this);
+    oc->setAlwaysSelected(0);
     ocd = new QDockWidget("Object Editing", this);
     ocd->setObjectName("Object_Editing");
     ocd->setWidget(oc);
-    // We start out with the View Control panel as the current panel - by
-    // default we are viewing, not editing
-    vc->makeCurrent(vc);
 
     vc_ctrl = new QgPaletteController(vc, ap->pluginManager(),
 	QStringLiteral(QGED_CATEGORY_VIEW), ap->pluginContext(), this);
@@ -274,21 +273,8 @@ QgEdMainWindow::ConnectWidgets()
     // Make the connection so the view control can change the mouse mode of the Quad View
     QObject::connect(vcw, &QgViewCtrl::lmouse_mode, c4, &QgQuadView::set_lmouse_move_default);
 
-    // The makeCurrent connections enforce an either/or paradigm
-    // for the view and object editing panels.
-    connect(vc, &QgEdPalette::current, oc, &QgEdPalette::makeCurrent);
-    connect(vc, &QgEdPalette::current, vc, &QgEdPalette::makeCurrent);
-    connect(oc, &QgEdPalette::current, oc, &QgEdPalette::makeCurrent);
-    connect(oc, &QgEdPalette::current, vc, &QgEdPalette::makeCurrent);
-
-    // Now that we've got everything set up, connect the palette selection
-    // signals so they can update the view event filter as needed.  We don't do
-    // this before populating the palettes with tools since the initial
-    // addition would trigger a selection which we're not going to use.  (We
-    // default to selecting the default view tool at the end of this
-    // procedure by making vc the current palette.)
-    // TODO - need to figure out how this should (or shouldn't) be rolled into
-    // do_view_changed
+    // Palette selections update application-level view dimensions.  Tool
+    // activation and view event filters are owned by QgPaletteController.
     QObject::connect(vc, &QgToolPalette::palette_element_selected, ap, &QgEdApp::element_selected);
     QObject::connect(oc, &QgToolPalette::palette_element_selected, ap, &QgEdApp::element_selected);
 

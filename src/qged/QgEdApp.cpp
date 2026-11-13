@@ -27,6 +27,7 @@
 #include <QFile>
 #include <QPlainTextEdit>
 #include <QTextStream>
+#include "brlcad_version.h"
 #include "bu/malloc.h"
 #include "bu/file.h"
 #include "ged/db_index.h"
@@ -36,8 +37,10 @@
 #include "qtcad/QgPluginCommands.h"
 #include "qtcad/QgPluginManager.h"
 #include "qtcad/QgSession.h"
+#include "qtcad/QgToolPalette.h"
 #include "qtcad/QgTreeSelectionModel.h"
 #include "QgEdApp.h"
+#include "QgEdMainWindow.h"
 #include "fbserv.h"
 #include "QgEdCategories.h"
 #include "QgEdFilter.h"

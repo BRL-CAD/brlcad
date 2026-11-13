@@ -29,6 +29,7 @@
 #include "qtcad/QgToolBase.h"
 #include "qtcad/QgToolPalette.h"
 #include "qtcad/QgView.h"
+#include "QgEdCategories.h"
 #include "CADViewSelector.h"
 
 class ViewSelectTool : public QgToolBase, public IQgViewEventFilter
@@ -110,7 +111,7 @@ class ViewSelectFactory : public QObject, public IQgToolFactory
 	    QgPluginDescriptor plugin;
 	    plugin.id = QStringLiteral("org.brlcad.qged.view.select");
 	    plugin.displayName = QStringLiteral("View Select");
-	    plugin.category = QStringLiteral("qged.view");
+	    plugin.category = QStringLiteral(QGED_CATEGORY_VIEW);
 	    plugin.iconName = QStringLiteral(":selective-tool.svg");
 	    plugin.sortKey = 2;
 	    plugin.requiresOpenDb = true;

@@ -28,6 +28,7 @@
 #include "qtcad/QgPluginInterfaces.h"
 #include "qtcad/QgToolBase.h"
 #include "qtcad/QgToolPalette.h"
+#include "QgEdCategories.h"
 #include "CADViewSettings.h"
 
 class ViewSettingsTool : public QgToolBase
@@ -95,7 +96,7 @@ class ViewSettingsFactory : public QObject, public IQgToolFactory
 	    QgPluginDescriptor plugin;
 	    plugin.id = QStringLiteral("org.brlcad.qged.view.settings");
 	    plugin.displayName = QStringLiteral("View Settings");
-	    plugin.category = QStringLiteral("qged.view");
+	    plugin.category = QStringLiteral(QGED_CATEGORY_VIEW);
 	    plugin.iconName = QStringLiteral(":settings.svg");
 	    plugin.sortKey = 1;
 	    plugin.requiresView = true;

@@ -27,6 +27,7 @@
 #include "qtcad/QgToolBase.h"
 #include "qtcad/QgToolPalette.h"
 #include "qtcad/QgView.h"
+#include "QgEdCategories.h"
 #include "QPolyCreate.h"
 
 class PolygonCreateTool : public QgToolBase, public IQgViewEventFilter
@@ -109,7 +110,7 @@ class PolygonCreateFactory : public QObject, public IQgToolFactory
 	    QgPluginDescriptor plugin;
 	    plugin.id = QStringLiteral("org.brlcad.qged.polygon.create");
 	    plugin.displayName = QStringLiteral("Polygon Create");
-	    plugin.category = QStringLiteral("qged.view");
+	    plugin.category = QStringLiteral(QGED_CATEGORY_VIEW);
 	    plugin.iconName = QStringLiteral(":poly_create.svg");
 	    plugin.sortKey = 100;
 	    plugin.requiresView = true;

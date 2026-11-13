@@ -19,7 +19,7 @@ endfunction(qged_plugin name)
 add_custom_target(qged_plugins ALL DEPENDS qged_plugins_sentinel)
 set_target_properties(qged_plugins PROPERTIES FOLDER "BRL-CAD Plugins")
 
-set(plugin_ignore_files CMakeLists.txt plugin.h)
+set(plugin_ignore_files CMakeLists.txt)
 cmakefiles(${plugin_ignore_files})
 
 # Plugins

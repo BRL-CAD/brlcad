@@ -28,6 +28,7 @@
 #include <QMouseEvent>
 #include <QtGlobal>
 #include "QgEdApp.h"
+#include "QgEdMainWindow.h"
 #include "QgEdFilter.h"
 #include "qtcad/QgModel.h"
 

@@ -42,9 +42,9 @@
 #include "qtcad/QgTreeView.h"
 #include "qtcad/QgSignalFlags.h"
 
-#include "QgEdMainWindow.h"
-
+class QgEdMainWindow;
 class QgPluginManager;
+class QgToolPaletteElement;
 
 /* Command type for application level commands */
 
