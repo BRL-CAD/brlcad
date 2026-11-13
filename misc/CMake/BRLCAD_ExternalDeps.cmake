@@ -733,6 +733,13 @@ endfunction(tp_compare_state)
 
 # The relative RPATH is specific to the location and platform
 function(find_relative_rpath fp rp)
+  if(NOT APPLE)
+    include("${CMAKE_CURRENT_FUNCTION_LIST_DIR}/RPath_Setup.cmake")
+    get_filename_component(install_directory "${fp}" DIRECTORY)
+    relative_rpath(runtime_path SUFFIX "${install_directory}")
+    set(${rp} "${runtime_path}" PARENT_SCOPE)
+    return()
+  endif()
   # We don't want the filename to count, so offset our directory count
   # down by 1
   set(dcnt -1)
@@ -742,11 +749,7 @@ function(find_relative_rpath fp rp)
     set(fp_cpy ${pdir})
     math(EXPR dcnt "${dcnt} + 1")
   endwhile(NOT "${fp_cpy}" STREQUAL "")
-  if(APPLE)
-    set(RELATIVE_RPATH "@executable_path")
-  else(APPLE)
-    set(RELATIVE_RPATH ":\\$ORIGIN")
-  endif(APPLE)
+  set(RELATIVE_RPATH "@executable_path")
   set(acnt 0)
   while(acnt LESS dcnt)
     set(RELATIVE_RPATH "${RELATIVE_RPATH}/..")
@@ -1214,8 +1217,8 @@ function(brlcad_install_binary_postprocess stamp_dir strclear source install_fil
     # Clear the old build path before writing the new RPATH: an install
     # prefix may itself be below the build library directory.
     _brlcad_install_binary_clear("${strclear}" "${_brlcad_physical_file}" "${build_lib_path}" "${verbose}")
-    # Install the exact project-defined search order.  A selective update can
-    # leave an existing relative-only RPATH without the canonical install path.
+    # Replace the complete search path so producer and configured-prefix
+    # directories cannot take precedence over the installed bundle.
     execute_process(
       COMMAND "${rpath_tool}" --set-rpath "${install_rpath}" "${_brlcad_physical_file}"
       RESULT_VARIABLE _brlcad_result
@@ -1889,7 +1892,10 @@ endfunction()
       if(P_RPATH_EXECUTABLE)
         set(_brlcad_install_postprocess_mode "RPATH_TOOL")
         set(_brlcad_install_postprocess_tool "${P_RPATH_EXECUTABLE}")
-        set(_brlcad_install_postprocess_rpath "\${CMAKE_INSTALL_PREFIX}/${LIB_DIR}${REL_RPATH}")
+        set(_brlcad_install_postprocess_rpath "${REL_RPATH}")
+        if(APPLE)
+          set(_brlcad_install_postprocess_rpath "\${CMAKE_INSTALL_PREFIX}/${LIB_DIR}${REL_RPATH}")
+        endif()
       elseif(APPLE)
         set(_brlcad_install_postprocess_mode "APPLE")
       endif(P_RPATH_EXECUTABLE)

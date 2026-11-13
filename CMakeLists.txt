@@ -354,8 +354,10 @@ set(CMAKE_INSTALL_RPATH_USE_LINK_PATH FALSE)
 # relative position to LIB_DIR using the INSTALL_RPATH target property.
 # However, we can cover the most common case for RPATH setting using the
 # global default.
+include(RPath_Setup)
 if(NOT APPLE)
-  set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/${LIB_DIR}:$ORIGIN/../${LIB_DIR}")
+  # A relocated installation must not load libraries from another prefix.
+  std_build_rpath()
 else(NOT APPLE)
   # For OSX, use the INSTALL_NAME_DIR target property
   set(CMAKE_INSTALL_RPATH "@executable_path/../${LIB_DIR}")

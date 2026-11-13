@@ -109,6 +109,12 @@ set(
   distclean.cmake.in
   source_archive_setup.cmake.in
   tcltest.tcl.in
+  rpath_validation/CMakeLists.txt
+  rpath_validation/version.cpp
+  rpath_validation/driver.cpp
+  rpath_validation/module.cpp
+  rpath_validation/host.cpp
+  rpath_validation/validate.cmake
   probe_validation/README.md
   probe_validation/CMakeLists.txt
   probe_validation/probe_validation.cpp

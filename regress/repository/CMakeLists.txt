@@ -19,6 +19,16 @@ if(TARGET repocheck)
 endif(TARGET repocheck)
 distclean(${LOG_FILE})
 
+# Exercise ELF lookup with a conflicting installation still present.
+if(BUILD_TESTING AND (CMAKE_SYSTEM_NAME STREQUAL "FreeBSD" OR CMAKE_SYSTEM_NAME STREQUAL "Linux"))
+  add_test(NAME regress-rpath COMMAND "${CMAKE_COMMAND}"
+    "-DTEST_ROOT=${CMAKE_CURRENT_BINARY_DIR}/rpath-validation"
+    "-DTEST_CXX_COMPILER=${CMAKE_CXX_COMPILER}"
+    -P "${BRLCAD_SOURCE_DIR}/misc/CMake/rpath_validation/validate.cmake")
+  brlcad_regression_test(regress-rpath "" TEST_DEFINED)
+  distclean("${CMAKE_CURRENT_BINARY_DIR}/rpath-validation")
+endif()
+
 cmakefiles(
   CMakeLists.txt
   repocheck.cpp
