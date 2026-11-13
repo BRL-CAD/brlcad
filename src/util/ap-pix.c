@@ -28,6 +28,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include "bio.h"
 
 #include "bu/app.h"
 #include "bu/file.h"
@@ -44,6 +45,8 @@ usage(const char *argv0) {
 int
 main(int argc, char **argv)
 {
+    static const int separation_records = 50;
+
     /* Dots are least most significant bit first in increasing index */
     struct app_record {
 	unsigned char ml[432];
@@ -57,13 +60,13 @@ main(int argc, char **argv)
 
     FILE *magfp, *yelfp, *cyafp;
 
-    size_t ret;
     int i, bit;
     int line;
     const char *argv0 = argv[0];
     int verbose = 0;
 
     bu_setprogname(argv[0]);
+    setmode(fileno(stdout), O_BINARY);
 
     if (argc > 1) {
 	if (BU_STR_EQUAL(argv[1], "-h") ||  BU_STR_EQUAL(argv[1], "-?"))
@@ -79,22 +82,24 @@ main(int argc, char **argv)
 	usage(argv0);
 
     magfp = fopen(argv[1], "rb");
-    if (magfp == NULL) {
+    if (!magfp)
 	bu_exit(2, "%s: can't open \"%s\"\n", argv0, argv[1]);
-    }
     yelfp = fopen(argv[1], "rb");
-    bu_fseek(yelfp, 50*sizeof(yelline), 0);
+    if (!yelfp)
+	bu_exit(2, "%s: can't open \"%s\"\n", argv0, argv[1]);
     cyafp = fopen(argv[1], "rb");
-    bu_fseek(cyafp, 100*sizeof(cyaline), 0);
+    if (!cyafp)
+	bu_exit(2, "%s: can't open \"%s\"\n", argv0, argv[1]);
+    if (bu_fseek(yelfp, separation_records * sizeof(yelline), SEEK_SET) != 0 ||
+	bu_fseek(cyafp, 2 * separation_records * sizeof(cyaline), SEEK_SET) != 0)
+	bu_exit(1, "%s: seek failure\n", argv0);
 
     line = 0;
-    while ((int)fread(&cyaline, sizeof(cyaline), 1, cyafp) > 0) {
-	ret = fread(&magline, sizeof(magline), 1, magfp);
-	ret += fread(&yelline, sizeof(yelline), 1, yelfp);
-	if (ret == 0) {
-	    perror("fread");
-	    bu_exit(1, "%s: read failure\n", argv0);
-	}
+    size_t cyan_bytes;
+    while ((cyan_bytes = fread(&cyaline, 1, sizeof(cyaline), cyafp)) == sizeof(cyaline)) {
+	if (fread(&magline, sizeof(magline), 1, magfp) != 1 ||
+	    fread(&yelline, sizeof(yelline), 1, yelfp) != 1)
+	    bu_exit(1, "%s: incomplete color separation data\n", argv0);
 
 	line++;
 
@@ -103,16 +108,28 @@ main(int argc, char **argv)
 		out.red = ((cyaline.cl[i]>>bit)&1) ? 0 : 255;
 		out.green = ((magline.ml[i]>>bit)&1) ? 0 : 255;
 		out.blue = ((yelline.yl[i]>>bit)&1) ? 0 : 255;
-		ret = fwrite(&out, sizeof(out), 1, stdout);
-		if (ret == 0) {
-		    perror("fwrite");
-		    bu_exit(1, "%s: read failure\n", argv0);
-		}
+		if (fwrite(&out, sizeof(out), 1, stdout) != 1)
+		    bu_exit(1, "%s: write failure\n", argv0);
 	    }
 	}
 	if (verbose)
 	    fprintf(stderr, "wrote line %d\n", line);
     }
+    if (cyan_bytes != 0)
+	bu_exit(1, "%s: incomplete cyan separation record\n", argv0);
+    if (ferror(cyafp))
+	bu_exit(1, "%s: read failure\n", argv0);
+    int close_failed = 0;
+    if (fclose(magfp) == EOF)
+	close_failed = 1;
+    if (fclose(yelfp) == EOF)
+	close_failed = 1;
+    if (fclose(cyafp) == EOF)
+	close_failed = 1;
+    if (close_failed)
+	bu_exit(1, "%s: input close failure\n", argv0);
+    if (fflush(stdout) == EOF)
+	bu_exit(1, "%s: write failure\n", argv0);
     return 0;
 }
 
