@@ -197,7 +197,8 @@ QgEdApp::QgEdApp(int &argc, char *argv[], const char *g_file, int swrast_mode, i
     setStyleSheet(stream.readAll());
 
     // Create the windows
-    w = new QgEdMainWindow(swrast_mode, quad_mode);
+    QgViewType canvas_type = swrast_mode ? QgViewType::SW : QgViewType::Auto;
+    w = new QgEdMainWindow(canvas_type, quad_mode);
 
     /* GED needs some information and methods from QGED - make
      * those assignment */
@@ -215,14 +216,14 @@ QgEdApp::QgEdApp(int &argc, char *argv[], const char *g_file, int swrast_mode, i
     // Unfortunately, there are technical differences involved with
     // the embedded fb mechanisms depending on whether we are using
     // the system native OpenGL or our fallback software rasterizer
-    int type = w->CurrentDisplay()->view_type();
+    QgViewType type = w->CurrentDisplay()->view_type();
 #ifdef BRLCAD_OPENGL
-    if (type == QgView_GL) {
+    if (type == QgViewType::GL) {
 	gedp->ged_fbs->fbs_open_client_handler     = &qdm_open_client_handler;
 	gedp->ged_fbs->fbs_open_ipc_client_handler = &qdm_open_ipc_client_handler;
     }
 #endif
-    if (type == QgView_SW) {
+    if (type == QgViewType::SW) {
 	gedp->ged_fbs->fbs_open_client_handler     = &qdm_open_sw_client_handler;
 	gedp->ged_fbs->fbs_open_ipc_client_handler = &qdm_open_ipc_sw_client_handler;
     }

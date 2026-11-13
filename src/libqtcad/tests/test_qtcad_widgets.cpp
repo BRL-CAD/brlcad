@@ -110,7 +110,8 @@ QgWidgetTest::usesGenericIconForBinaryObjects()
     QImage expected(QStringLiteral(":/images/primitives/other.png"));
     QVERIFY(!expected.isNull());
     QVERIFY(QgIcon(binary_object, database->dbip) == expected);
-    QCOMPARE(QgCombType(binary_object, database->dbip), G_STANDARD_OBJ);
+    QCOMPARE(QgCombType(binary_object, database->dbip),
+	QgCombTypeId::StandardObj);
 }
 
 int

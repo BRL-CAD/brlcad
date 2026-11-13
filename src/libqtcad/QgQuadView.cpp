@@ -51,14 +51,31 @@
 
 static const char *VIEW_NAMES[] = {"Q1", "Q2", "Q3", "Q4"};
 
+static constexpr int
+qg_quadrant_index(QgQuadrantId quadrant)
+{
+    return static_cast<int>(quadrant);
+}
+
+static constexpr int UPPER_RIGHT_QUADRANT =
+    qg_quadrant_index(QgQuadrantId::UpperRight);
+static constexpr int UPPER_LEFT_QUADRANT =
+    qg_quadrant_index(QgQuadrantId::UpperLeft);
+static constexpr int LOWER_LEFT_QUADRANT =
+    qg_quadrant_index(QgQuadrantId::LowerLeft);
+static constexpr int LOWER_RIGHT_QUADRANT =
+    qg_quadrant_index(QgQuadrantId::LowerRight);
+static constexpr int kQuadrantCount = LOWER_RIGHT_QUADRANT + 1;
+
 /**
  * @brief Construct a new Qt C A D Quad:: Qt C A D Quad object
  *
  * @param parent   Parent Qt widget
  * @param gedpRef  Associated GED struct
- * @param type     Requesting either a GL or SWRAST display mechanism
+ * @param type     Requested display mechanism, or automatic selection
  */
-QgQuadView::QgQuadView(QWidget *parent, struct ged *gedpRef, int type) : QWidget(parent)
+QgQuadView::QgQuadView(QWidget *parent, struct ged *gedpRef,
+	QgViewType type) : QWidget(parent)
 {
     gedp = gedpRef;
     graphicsType = type;
@@ -97,8 +114,7 @@ QgQuadView::~QgQuadView()
 QgView *
 QgQuadView::curr_view()
 {
-    int s = get_selected();
-    return get(s);
+    return get(get_selected());
 }
 
 /**
@@ -301,7 +317,7 @@ QgQuadView::changeToQuadFrame()
     }
 
     // Current view selection pieces
-    select(UPPER_RIGHT_QUADRANT);
+    select(QgQuadrantId::UpperRight);
     gedp->ged_gvp = views[UPPER_RIGHT_QUADRANT]->view();
     views[UPPER_RIGHT_QUADRANT]->set_current(1);
     currentView = views[UPPER_RIGHT_QUADRANT];
@@ -330,7 +346,7 @@ QgQuadView::eventFilter(QObject *t, QEvent *e)
     if (e->type() == QEvent::KeyPress || e->type() == QEvent::MouseButtonPress) {
 	for (int i = UPPER_RIGHT_QUADRANT; i < LOWER_RIGHT_QUADRANT + 1; i++) {
 	    if (views[i] != nullptr && t == views[i]) {
-		select(i);
+		select(static_cast<QgQuadrantId>(i));
 		break;
 	    }
 	}
@@ -361,24 +377,30 @@ QgQuadView::default_views(int all_views)
 }
 
 struct bview *
-QgQuadView::view(int quadrantId)
+QgQuadView::view(QgQuadrantId quadrant)
 {
-    if (quadrantId > LOWER_RIGHT_QUADRANT || quadrantId < UPPER_RIGHT_QUADRANT) quadrantId = UPPER_RIGHT_QUADRANT;
+    const int quadrant_index = qg_quadrant_index(quadrant);
+    if (quadrant_index < UPPER_RIGHT_QUADRANT ||
+	quadrant_index >= kQuadrantCount)
+	return currentView->view();
 
-    if (views[quadrantId] != nullptr) {
-	return views[quadrantId]->view();
+    if (views[quadrant_index] != nullptr) {
+	return views[quadrant_index]->view();
     }
 
     return currentView->view();
 }
 
 QgView *
-QgQuadView::get(int quadrantId)
+QgQuadView::get(QgQuadrantId quadrant)
 {
-    if (quadrantId > LOWER_RIGHT_QUADRANT || quadrantId < UPPER_RIGHT_QUADRANT) quadrantId = UPPER_RIGHT_QUADRANT;
+    const int quadrant_index = qg_quadrant_index(quadrant);
+    if (quadrant_index < UPPER_RIGHT_QUADRANT ||
+	quadrant_index >= kQuadrantCount)
+	return currentView;
 
-    if (views[quadrantId] != nullptr) {
-	return views[quadrantId];
+    if (views[quadrant_index] != nullptr) {
+	return views[quadrant_index];
     }
 
     return currentView;
@@ -420,15 +442,18 @@ QgQuadView::get(QEvent *e)
 }
 
 void
-QgQuadView::select(int quadrantId)
+QgQuadView::select(QgQuadrantId quadrant)
 {
-    if (quadrantId > LOWER_RIGHT_QUADRANT || quadrantId < UPPER_RIGHT_QUADRANT) quadrantId = UPPER_RIGHT_QUADRANT;
+    const int quadrant_index = qg_quadrant_index(quadrant);
+    if (quadrant_index < UPPER_RIGHT_QUADRANT ||
+	quadrant_index >= kQuadrantCount)
+	return;
 
     QgView *oc = currentView;
 
     // Set new selection
-    if (views[quadrantId] != nullptr) {
-	currentView = views[quadrantId];
+    if (views[quadrant_index] != nullptr) {
+	currentView = views[quadrant_index];
     }
 
     // Clear any old selections
@@ -442,36 +467,36 @@ QgQuadView::select(int quadrantId)
 	spacerRight->setStyleSheet("");
 
     // If we're not in Quad mode, done
-    if (views[1] == nullptr)
+    if (views[UPPER_LEFT_QUADRANT] == nullptr)
 	return;
 
     // If we're in quad mode, more work to do
     currentView->set_current(1);
 
     for (int i = UPPER_RIGHT_QUADRANT; i < LOWER_RIGHT_QUADRANT + 1; i++) {
-	if (i == quadrantId)
+	if (i == quadrant_index)
 	    continue;
 	if (views[i] != nullptr) {
 	    views[i]->set_current(0);
 	}
     }
 
-    if (quadrantId == UPPER_RIGHT_QUADRANT) {
+    if (quadrant == QgQuadrantId::UpperRight) {
 	spacerTop->setStyleSheet("background-color:yellow;");
 	spacerRight->setStyleSheet("background-color:yellow;");
     }
 
-    if (quadrantId == UPPER_LEFT_QUADRANT) {
+    if (quadrant == QgQuadrantId::UpperLeft) {
 	spacerTop->setStyleSheet("background-color:yellow;");
 	spacerLeft->setStyleSheet("background-color:yellow;");
     }
 
-    if (quadrantId == LOWER_LEFT_QUADRANT) {
+    if (quadrant == QgQuadrantId::LowerLeft) {
 	spacerBottom->setStyleSheet("background-color:yellow;");
 	spacerLeft->setStyleSheet("background-color:yellow;");
     }
 
-    if (quadrantId == LOWER_RIGHT_QUADRANT) {
+    if (quadrant == QgQuadrantId::LowerRight) {
 	spacerBottom->setStyleSheet("background-color:yellow;");
 	spacerRight->setStyleSheet("background-color:yellow;");
     }
@@ -484,41 +509,41 @@ void
 QgQuadView::select(const char *quadrant_id)
 {
     if (BU_STR_EQUIV(quadrant_id, "ur")) {
-	select(UPPER_RIGHT_QUADRANT);
+	select(QgQuadrantId::UpperRight);
 	return;
     }
     if (BU_STR_EQUIV(quadrant_id, "ul")) {
-	select(UPPER_LEFT_QUADRANT);
+	select(QgQuadrantId::UpperLeft);
 	return;
     }
     if (BU_STR_EQUIV(quadrant_id, "ll")) {
-	select(LOWER_LEFT_QUADRANT);
+	select(QgQuadrantId::LowerLeft);
 	return;
     }
     if (BU_STR_EQUIV(quadrant_id, "lr")) {
-	select(LOWER_RIGHT_QUADRANT);
+	select(QgQuadrantId::LowerRight);
 	return;
     }
 }
 
 
-int
+QgQuadrantId
 QgQuadView::get_selected()
 {
     if (currentView == views[UPPER_RIGHT_QUADRANT]) {
-	return 0;
+	return QgQuadrantId::UpperRight;
     }
     if (currentView == views[UPPER_LEFT_QUADRANT]) {
-	return 1;
+	return QgQuadrantId::UpperLeft;
     }
     if (currentView == views[LOWER_LEFT_QUADRANT]) {
-	return 2;
+	return QgQuadrantId::LowerLeft;
     }
     if (currentView == views[LOWER_RIGHT_QUADRANT]) {
-	return 3;
+	return QgQuadrantId::LowerRight;
     }
 
-    return 0;
+    return QgQuadrantId::UpperRight;
 }
 
 void

@@ -62,7 +62,8 @@ class QgEdMainWindow : public QMainWindow
 {
     Q_OBJECT
     public:
-	QgEdMainWindow(int canvas_type = 0, int quad_view = 0);
+	QgEdMainWindow(QgViewType canvas_type = QgViewType::Auto,
+		int quad_view = 0);
 
 	QgConsole *console;
 
@@ -106,7 +107,7 @@ class QgEdMainWindow : public QMainWindow
 
     private:
 
-	void CreateWidgets(int canvas_type);
+	void CreateWidgets(QgViewType canvas_type);
 	void LocateWidgets();
 	void ConnectWidgets();
 	void SetupMenu();

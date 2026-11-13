@@ -77,7 +77,7 @@ QgedNativePluginTest::discoversCreatesAndUnloadsTools()
     palette.setAlwaysSelected(0);
     QgPaletteController controller(&palette, &manager,
 	QStringLiteral("qged.view"), &context);
-    QgView view(nullptr, QgView_SW);
+    QgView view(nullptr, QgViewType::SW);
     context.viewWidgetAccessor = [&view]() { return &view; };
     controller.setActiveView(&view);
     controller.populate();

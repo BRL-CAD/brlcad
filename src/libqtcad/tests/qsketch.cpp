@@ -173,7 +173,7 @@ sketch_create_empty(struct db_i *dbip, const char *name)
 
 /*
  * Draw the sketch wireframe directly via ft_plot into the swrast dm.
- * This is the custom draw callback registered with QgView_SW: it bypasses
+ * This is the custom draw callback registered with QgViewType::SW: it bypasses
  * the scene-object machinery and renders the sketch vlist directly,
  * which is both simpler and faster for a single-primitive editor.
  */
@@ -492,7 +492,7 @@ QSketchEditWindow::QSketchEditWindow(struct db_i *dbip,
     rt_edit_checkpoint(m_es);
 
     /* ----  QgView ---- */
-    m_view = new QgView(this, QgView_SW);
+    m_view = new QgView(this, QgViewType::SW);
     m_view->set_view(m_bv);
 
     /* Register our custom draw callback so ft_plot renders the sketch */

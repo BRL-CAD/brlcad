@@ -40,15 +40,10 @@ extern "C" {
 #include <QWidget>
 #include "qtcad/defines.h"
 #include "qtcad/QgSignalFlags.h"
+#include "qtcad/QgTypes.h"
 #include "qtcad/QgSW.h"
 #ifdef BRLCAD_OPENGL
 #  include "qtcad/QgGL.h"
-#endif
-
-#define QgView_AUTO 0
-#define QgView_SW 1
-#ifdef BRLCAD_OPENGL
-#  define QgView_GL 2
 #endif
 
 class QTCAD_EXPORT QgView : public QWidget
@@ -56,10 +51,11 @@ class QTCAD_EXPORT QgView : public QWidget
     Q_OBJECT
 
     public:
-	explicit QgView(QWidget *parent = nullptr, int type = 0, struct fb *fbp = NULL);
+	explicit QgView(QWidget *parent = nullptr,
+		QgViewType type = QgViewType::Auto, struct fb *fbp = NULL);
 	~QgView();
 
-	int view_type();
+	QgViewType view_type() const;
 	void set_current(int);
 	int current();
 

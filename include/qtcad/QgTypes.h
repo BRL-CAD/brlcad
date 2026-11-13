@@ -27,6 +27,27 @@
 
 #include <QtGlobal>
 
+enum class QgViewType : int {
+    Auto = 0,
+    SW = 1,
+    GL = 2
+};
+
+enum class QgQuadrantId : int {
+    UpperRight = 0,
+    UpperLeft = 1,
+    LowerLeft = 2,
+    LowerRight = 3
+};
+
+enum class QgCombTypeId : int {
+    StandardObj = 0,
+    Region = 1,
+    Air = 2,
+    AirRegion = 3,
+    Assembly = 4
+};
+
 enum class QgViewUpdateFlag : int {
     Refresh = 0x00000001,
     Drawn = 0x00000002,

@@ -37,7 +37,7 @@ extern "C" {
 }
 
 
-QgView::QgView(QWidget *parent, int type, struct fb *fbp)
+QgView::QgView(QWidget *parent, QgViewType type, struct fb *fbp)
     : QWidget(parent)
 {
     this->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
@@ -47,7 +47,7 @@ QgView::QgView(QWidget *parent, int type, struct fb *fbp)
 
     switch (type) {
 #ifdef BRLCAD_OPENGL
-	case QgView_GL:
+	case QgViewType::GL:
 	    canvas_gl = new QgGL(this, fbp);
 	    canvas_gl->setMinimumSize(50,50);
 	    canvas_gl->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
@@ -56,7 +56,7 @@ QgView::QgView(QWidget *parent, int type, struct fb *fbp)
 	    QObject::connect(canvas_gl, &QgGL::init_done, this, &QgView::do_init_done);
 	    break;
 #endif
-	case QgView_SW:
+	case QgViewType::SW:
 	    canvas_sw = new QgSW(this, fbp);
 	    canvas_sw->setMinimumSize(50,50);
 	    canvas_sw->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
@@ -108,17 +108,17 @@ QgView::isValid()
     return false;
 }
 
-int
-QgView::view_type()
+QgViewType
+QgView::view_type() const
 {
 #ifdef BRLCAD_OPENGL
     if (canvas_gl)
-	return QgView_GL;
+	return QgViewType::GL;
 #endif
     if (canvas_sw)
-	return QgView_SW;
+	return QgViewType::SW;
 
-    return -1;
+    return QgViewType::Auto;
 }
 
 

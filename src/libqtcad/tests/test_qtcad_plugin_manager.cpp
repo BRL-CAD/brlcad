@@ -198,7 +198,8 @@ QgPluginManagerTest::managesToolPalettes()
 
     QObject firstFilter;
     QObject secondFilter;
-    QgView view(nullptr, QgView_SW);
+    QgView view(nullptr, QgViewType::SW);
+    QCOMPARE(view.view_type(), QgViewType::SW);
     view.add_event_filter(&firstFilter);
     view.add_event_filter(&secondFilter);
     QCOMPARE(view.curr_event_filter, &secondFilter);
