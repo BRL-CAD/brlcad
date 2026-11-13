@@ -108,3 +108,50 @@ function(read_saved_view path output)
   string(SUBSTRING "${stream}" 0 ${end} stream)
   set(${output} "${stream}" PARENT_SCOPE)
 endfunction()
+
+
+function(render_studio_comparison environment_intensity)
+  find_program(oiiotool NAMES oiiotool HINTS "${BRLCAD_PREFIX}/bin" NO_DEFAULT_PATH NO_CACHE REQUIRED)
+
+  file(REMOVE "${OUTPUT_DIR}/${example_name}-before.g" "${OUTPUT_DIR}/${example_name}-after.g"
+    "${OUTPUT_DIR}/${example_name}-camera.sh" "${OUTPUT_DIR}/${example_name}-detail-camera.sh"
+    "${OUTPUT_DIR}/${example_name}-studio.exr")
+  configure_file("${source_database}" "${OUTPUT_DIR}/${example_name}-before.g" COPYONLY)
+  run_tool(studio "art ${example_name} studio ready" "${CMAKE_COMMAND}" -E env
+    "ART_DEMO_OUTPUT_DIR=${OUTPUT_DIR}" -- "${mged}" -c "${OUTPUT_DIR}/${example_name}-before.g"
+    "source ${example_name}_studio.tcl")
+  configure_file("${OUTPUT_DIR}/${example_name}-before.g" "${OUTPUT_DIR}/${example_name}-after.g" COPYONLY)
+  run_tool(materials "art ${example_name} materials ready" "${mged}" -c "${OUTPUT_DIR}/${example_name}-after.g"
+    "source ${example_name}_materials.tcl")
+
+  # A small scene-linear HDR panorama supplies broad warm, cool, and neutral
+  # studio panels.  Generating it here keeps the project independent of downloads.
+  run_tool(environment "" "${oiiotool}" --pattern constant:color=0.12,0.15,0.2 512x256 3
+    --fill:color=5,4.5,4 60x40+200+40 --fill:color=2,3,4 35x50+320+55
+    --fill:color=3,3,3 100x30+20+65 -d float -o "${OUTPUT_DIR}/${example_name}-studio.exr")
+  set(settings "samples=${SAMPLES} light_intensity=0 environment_map=${example_name}-studio.exr environment_intensity=${environment_intensity}")
+  run_tool(materials-inspection "" "${art}" -c "set inspect_materials=1" -c "set ${settings}"
+    "${OUTPUT_DIR}/${example_name}-after.g" art.demo.g)
+  read_saved_view("${OUTPUT_DIR}/${example_name}-camera.sh" full_camera)
+  read_saved_view("${OUTPUT_DIR}/${example_name}-detail-camera.sh" detail_camera)
+  foreach(variant IN ITEMS before after detail)
+    if(variant STREQUAL "before")
+      set(database "${OUTPUT_DIR}/${example_name}-before.g")
+    else()
+      set(database "${OUTPUT_DIR}/${example_name}-after.g")
+    endif()
+    if(variant STREQUAL "detail")
+      set(camera "${detail_camera}")
+    else()
+      set(camera "${full_camera}")
+    endif()
+    set(view "${OUTPUT_DIR}/${example_name}-${variant}.view")
+    set(image "${OUTPUT_DIR}/${example_name}-${variant}.png")
+    write_example_file("${view}" "set ${settings};\n${camera}\n")
+    file(REMOVE "${image}")
+    message(STATUS "Rendering ${example_name}-${variant}: ${WIDTH}x${HEIGHT}, ${SAMPLES} samples")
+    run_tool(${variant} "" INPUT_FILE "${view}" "${art}" -P ${WORKERS} -w ${WIDTH} -n ${HEIGHT}
+      -M -o "${image}" "${database}" art.demo.g)
+  endforeach()
+  message(STATUS "Rendered ${example_name} material comparison in ${OUTPUT_DIR}")
+endfunction()
