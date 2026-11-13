@@ -177,7 +177,7 @@ fftphase(double *dat, int N)
 	out[i] = value * M_1_PI;
     }
     /* DC */
-    out[i] = 0;
+    out[0] = 0;
 
     ret = fwrite(out, sizeof(*out), N/2, stdout);
     if (ret != (size_t)(N/2))
@@ -238,7 +238,7 @@ main(int argc, char **argv)
     while ((n = fread(data, sizeof(*data), L, stdin)) > 0) {
 	if (n != L) {
 	    fprintf(stderr, "dfft: warning - partial record, adding %d zeros\n", L-n);
-	    memset((char *)&data[n], 0, L-n);
+	    memset((char *)&data[n], 0, (L-n) * sizeof(*data));
 	}
 
 	/* Do a spectrum */
