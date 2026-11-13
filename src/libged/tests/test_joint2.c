@@ -11,10 +11,14 @@
 
 #include "common.h"
 
+#include <string.h>
+
 #include "bu/app.h"
 #include "ged.h"
 #include "raytrace.h"
 #include "wdb.h"
+
+#define JOINT_SOLVE_TOLERANCE 1.0e-8
 
 static int
 create_joint(struct rt_wdb *wdbp)
@@ -83,17 +87,20 @@ check_child_position(struct db_i *dbip, fastf_t expected)
 	    "assembly.c/parent.c/child.s") != 0 ||
 	db_path_to_mat(dbip, &path, matrix, 0) != 1)
 	goto cleanup;
-    if (NEAR_EQUAL(matrix[3], 0.0, SMALL_FASTF) &&
-	NEAR_EQUAL(matrix[7], 0.0, SMALL_FASTF) &&
-	NEAR_EQUAL(matrix[11], expected, SMALL_FASTF) &&
+    if (NEAR_EQUAL(matrix[3], 0.0, JOINT_SOLVE_TOLERANCE) &&
+	NEAR_EQUAL(matrix[7], 0.0, JOINT_SOLVE_TOLERANCE) &&
+	NEAR_EQUAL(matrix[11], expected, JOINT_SOLVE_TOLERANCE) &&
 	!(rt_obj_bounds(&messages, dbip, 1, objects, 1, minimum, maximum) & BRLCAD_ERROR) &&
-	NEAR_EQUAL(minimum[Z], expected - 1.0, SMALL_FASTF) &&
-	NEAR_EQUAL(maximum[Z], expected + 1.0, SMALL_FASTF))
+	NEAR_EQUAL(minimum[Z], expected - 1.0, JOINT_SOLVE_TOLERANCE) &&
+	NEAR_EQUAL(maximum[Z], expected + 1.0, JOINT_SOLVE_TOLERANCE))
 	result = BRLCAD_OK;
 
 cleanup:
-    if (result != BRLCAD_OK && bu_vls_strlen(&messages))
-	bu_log("bounds check failed: %s\n", bu_vls_cstr(&messages));
+    if (result != BRLCAD_OK) {
+	bu_log("position check failed: matrix=(%.17g %.17g %.17g) bounds=(%.17g %.17g) expected=%.17g messages=%s\n",
+		matrix[3], matrix[7], matrix[11], minimum[Z], maximum[Z], expected,
+		bu_vls_cstr(&messages));
+    }
     bu_vls_free(&messages);
     db_free_full_path(&path);
     return result;
@@ -115,6 +122,27 @@ set_and_apply(struct ged *gedp, const char *position, int compatibility_alias)
     if ((!compatibility_alias && ged_exec_joint(gedp, 4, joint_apply_arguments) != BRLCAD_OK) ||
 	(compatibility_alias && ged_exec_joint2(gedp, 3, joint2_apply_arguments) != BRLCAD_OK)) {
 	bu_log("apply failed: %s\n", bu_vls_cstr(gedp->ged_result_str));
+	return BRLCAD_ERROR;
+    }
+    return BRLCAD_OK;
+}
+
+static int
+solve_and_apply(struct ged *gedp)
+{
+    const char *solve_arguments[] = {
+	"joint", "solve", "point", "parent", "child",
+	"0", "0", "0", "0", "0", "7", "slide.j"
+    };
+    const char *graph_arguments[] = {"joint", "graph", "evaluate", "parent", "slide.j"};
+    const char *apply_arguments[] = {"joint", "object", "slide.j", "apply"};
+
+    if (ged_exec_joint(gedp, 12, solve_arguments) != BRLCAD_OK ||
+	!strstr(bu_vls_cstr(gedp->ged_result_str), "converged") ||
+	ged_exec_joint(gedp, 5, graph_arguments) != BRLCAD_OK ||
+	!strstr(bu_vls_cstr(gedp->ged_result_str), "child") ||
+	ged_exec_joint(gedp, 4, apply_arguments) != BRLCAD_OK) {
+	bu_log("solve/apply failed: %s\n", bu_vls_cstr(gedp->ged_result_str));
 	return BRLCAD_ERROR;
     }
     return BRLCAD_OK;
@@ -146,7 +174,9 @@ main(int argc, char **argv)
 	set_and_apply(gedp, "5", 0) != BRLCAD_OK ||
 	check_child_position(gedp->dbip, 5.0) != BRLCAD_OK ||
 	set_and_apply(gedp, "10", 1) != BRLCAD_OK ||
-	check_child_position(gedp->dbip, 10.0) != BRLCAD_OK)
+	check_child_position(gedp->dbip, 10.0) != BRLCAD_OK ||
+	solve_and_apply(gedp) != BRLCAD_OK ||
+	check_child_position(gedp->dbip, 7.0) != BRLCAD_OK)
 	goto cleanup;
     result = BRLCAD_OK;
 

@@ -221,6 +221,7 @@ set(
   primitives/joint/joint.c
   primitives/joint/joint_graph.cpp
   primitives/joint/joint_problem.cpp
+  primitives/joint/joint_solver.cpp
   primitives/joint/joint_brep.cpp
   primitives/joint/joint_mirror.c
   primitives/metaball/metaball.c
@@ -453,6 +454,7 @@ set(
   ${BRLCAD_SOURCE_DIR}/src/libbu
   ${BRLCAD_SOURCE_DIR}/src/libbg
   ${REGEX_INCLUDE_DIRS}
+  ${EIGEN3_INCLUDE_DIR}
 )
 # FIXME: needs materialX
 #  ${CMAKE_CURRENT_SOURCE_DIR}/../../../MaterialXSource/source

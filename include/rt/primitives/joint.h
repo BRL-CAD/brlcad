@@ -163,6 +163,84 @@ RT_EXPORT extern int rt_joint_problem_evaluate(const struct rt_joint_problem *pr
 				       fastf_t *residuals, size_t residual_count,
 				       fastf_t *jacobian, size_t jacobian_count);
 
+enum rt_joint_solve_status {
+    RT_JOINT_SOLVE_CONVERGED_RESIDUAL = 0,
+    RT_JOINT_SOLVE_CONVERGED_GRADIENT,
+    RT_JOINT_SOLVE_CONVERGED_STEP,
+    RT_JOINT_SOLVE_MAX_ITERATIONS,
+    RT_JOINT_SOLVE_NUMERICAL_FAILURE
+};
+
+/**
+ * Versioned controls for the bounded damped-least-squares solver.
+ * Initialize this structure with RT_JOINT_SOLVE_OPTIONS_INIT and change only
+ * documented fields.  Unknown flags and unsupported versions are rejected.
+ */
+#define RT_JOINT_SOLVE_OPTIONS_VERSION 1u
+#define RT_JOINT_SOLVE_OPTIONS_RESERVED 4u
+
+struct rt_joint_solve_options {
+    size_t size;
+    uint32_t version;
+    uint64_t flags;
+    size_t max_iterations;
+    fastf_t initial_damping;
+    fastf_t damping_increase;
+    fastf_t damping_decrease;
+    fastf_t residual_tolerance;
+    fastf_t gradient_tolerance;
+    fastf_t step_tolerance;
+    void *reserved[RT_JOINT_SOLVE_OPTIONS_RESERVED];
+};
+
+#define RT_JOINT_SOLVE_OPTIONS_INIT { \
+    sizeof(struct rt_joint_solve_options), RT_JOINT_SOLVE_OPTIONS_VERSION, 0, \
+    100, 1.0e-3, 10.0, 0.3, 1.0e-9, 1.0e-10, 1.0e-10, \
+    {NULL, NULL, NULL, NULL} \
+}
+
+/** The solve used the SVD fallback for a rank-deficient Jacobian. */
+#define RT_JOINT_SOLVE_RESULT_USED_SVD 0x1u
+
+/**
+ * Versioned solver diagnostics.  Initialize this structure with
+ * RT_JOINT_SOLVE_RESULT_INIT before each call.  The solver replaces flags and
+ * all diagnostic fields.  iterations is the number of candidate steps
+ * attempted; an initially converged problem reports zero.
+ */
+#define RT_JOINT_SOLVE_RESULT_VERSION 1u
+struct rt_joint_solve_result {
+    size_t size;
+    uint32_t version;
+    uint64_t flags;
+    uint32_t status;
+    size_t iterations;
+    size_t accepted_steps;
+    size_t rejected_steps;
+    size_t rank;
+    fastf_t initial_cost;
+    fastf_t final_cost;
+    fastf_t gradient_norm;
+    fastf_t step_norm;
+    fastf_t damping;
+};
+
+#define RT_JOINT_SOLVE_RESULT_INIT { \
+    sizeof(struct rt_joint_solve_result), RT_JOINT_SOLVE_RESULT_VERSION, 0, \
+    RT_JOINT_SOLVE_NUMERICAL_FAILURE, 0, 0, 0, 0, 0.0, 0.0, 0.0, 0.0, 0.0 \
+}
+
+/**
+ * Solve the current problem in place using projected bounds.  BRLCAD_OK means
+ * the solve ran to a reported status, which may include MAX_ITERATIONS.
+ * BRLCAD_ERROR indicates invalid input, evaluation failure, or numerical
+ * failure.  Rejected or failed candidates never replace the last accepted
+ * problem values.
+ */
+RT_EXPORT extern int rt_joint_problem_solve(struct rt_joint_problem *problem,
+				    const struct rt_joint_solve_options *options,
+				    struct rt_joint_solve_result *result);
+
 __END_DECLS
 
 #endif /* RT_PRIMITIVES_JOINT_H */

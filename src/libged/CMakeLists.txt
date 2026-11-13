@@ -341,6 +341,7 @@ set(
   ged.cpp
   ged_inside.c
   joint_object.c
+  joint_system.cpp
   ged_track.c
   ged_util.cpp
   ged_scene_api.cpp
