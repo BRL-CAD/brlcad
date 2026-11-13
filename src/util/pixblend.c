@@ -181,16 +181,18 @@ main(int argc, char **argv)
     setmode(fileno(stdout), O_BINARY);
 
     if (!iflg && !rflg) {
-	/* Default action: interpolate by 50% */
-	iflg = 1;
-	value = 0.5;
+	if (gflg) {
+	    rflg = 1;
+	} else {
+	    /* Default action: interpolate by 50% */
+	    iflg = 1;
+	    value = 0.5;
+	}
     }
     else if (value < 0.0 || value > 1.0) {
 	fprintf(stderr, "pixblend: Blend value must be between 0.0 and 1.0\n");
 	bu_exit (0, NULL);
     }
-
-    gvalue = 0.0;
 
     if (rflg) {
 #ifdef HAVE_DRAND48
