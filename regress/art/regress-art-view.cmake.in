@@ -54,6 +54,29 @@ foreach(perspective IN ITEMS 0 60)
     "${WORK}/rolled_reference_${perspective}.png" 64 64)
 endforeach()
 
+# art and rt must agree on the default projection used by saved views.
+run("${EXEC}" ${RENDER_ARGS} -a 270 -e 90 -c "viewsize 80"
+  -o "${WORK}/default.png" "${DB}" all.g)
+run("${VEXEC}" check-matching-image "${WORK}/default.png" "${WORK}/reference_0.png" 64 64)
+
+# prep must remain the real rt command. Retain its selected objects across
+# cleanup, even when the process did not receive any command-line objects.
+set(input "${WORK}/draw-prep.view")
+file(WRITE "${input}"
+  "viewsize 80; eye_pt 0 0 ${EYE_Z}; ${IDENTITY}; start 0; draw all.g; prep; end;\n"
+  "start 1; clean; end;\n")
+run(INPUT_FILE "${input}" "${EXEC}" ${RENDER_ARGS} -p 0 -M
+  -o "${WORK}/draw-prep.png" "${DB}")
+run("${VEXEC}" check-matching-image "${WORK}/draw-prep.png" "${WORK}/reference_0.png" 64 64)
+
+set(input "${WORK}/empty.view")
+file(WRITE "${input}" "end;\n")
+expect_failure_matching("no objects selected for rendering" INPUT_FILE "${input}"
+  "${EXEC}" ${RENDER_ARGS} -M -o "${WORK}/empty.png" "${DB}")
+if(EXISTS "${WORK}/empty.png")
+  message(FATAL_ERROR "An empty selection produced an image")
+endif()
+
 # Moving the perspective eye changes framing independently of viewsize.
 run("${EXEC}" ${RENDER_ARGS} -p 60 -a 270 -e 90 -E 2.8284271247461903
   -c "viewsize 80" -o "${WORK}/far_reference.png" "${DB}" all.g)

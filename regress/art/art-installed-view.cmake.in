@@ -1,0 +1,67 @@
+cmake_minimum_required(VERSION 3.22)
+set(WORK "@CMAKE_CURRENT_BINARY_DIR@/installed-view-output/saved view project")
+set(LOG "${WORK}/art.log")
+file(REMOVE_RECURSE "${WORK}")
+file(MAKE_DIRECTORY "${WORK}/shaders" "${WORK}/cache")
+set(ENV{BU_DIR_CACHE} "${WORK}/cache")
+include("@CMAKE_CURRENT_SOURCE_DIR@/art_test_commands.cmake")
+configure_file("@CMAKE_CURRENT_BINARY_DIR@/art_emission.oso"
+  "${WORK}/shaders/art_emission.oso" COPYONLY)
+set(DB "${WORK}/scene.g")
+run("${VEXEC}" create-material "${DB}" art_emission)
+file(WRITE "${WORK}/camera.tcl" [=[
+draw all.g
+ae 270 90
+size 80
+center 0 0 0
+saveview -e art -o saved.png saved.sh
+]=])
+run_in("${WORK}" "@ART_MGED_EXECUTABLE@" -c "${DB}" "source camera.tcl")
+if(NOT EXISTS "${WORK}/saved.sh")
+  message(FATAL_ERROR "Installed mged did not produce a saved view")
+endif()
+
+# Read mged's actual command stream on every platform. Unix also executes
+# the generated shell wrapper, using the selected art executable via PATH.
+file(READ "${WORK}/saved.sh" saved)
+string(REPLACE "\r\n" "\n" saved "${saved}")
+set(marker "<<EOF\n")
+string(FIND "${saved}" "${marker}" begin)
+if(begin LESS 0)
+  message(FATAL_ERROR "Saved view has no command-stream delimiter")
+endif()
+string(LENGTH "${marker}" marker_length)
+math(EXPR begin "${begin} + ${marker_length}")
+string(SUBSTRING "${saved}" ${begin} -1 stream)
+string(FIND "${stream}" "\nEOF" end)
+if(end LESS 0)
+  message(FATAL_ERROR "Saved view has no command-stream terminator")
+endif()
+string(SUBSTRING "${stream}" 0 ${end} stream)
+file(WRITE "${WORK}/saved.view" "${stream}\n")
+set(RENDER_ARGS -P 2 -w 64 -n 64 -C 0/0/0)
+run("${EXEC}" ${RENDER_ARGS} -p 0 -a 270 -e 90 -c "viewsize 80"
+  -o "${WORK}/reference.png" "${DB}" all.g)
+run(INPUT_FILE "${WORK}/saved.view" "${EXEC}" ${RENDER_ARGS} -M
+  -o "${WORK}/stream.png" "${DB}" all.g)
+run("${VEXEC}" check-matching-image "${WORK}/stream.png" "${WORK}/reference.png" 64 64)
+
+if(UNIX)
+  find_program(shell NAMES sh REQUIRED NO_CACHE)
+  get_filename_component(program_directory "${EXEC}" DIRECTORY)
+  run_in("${WORK}" "${CMAKE_COMMAND}" -E env "PATH=${program_directory}:$ENV{PATH}"
+    -- "${shell}" saved.sh ${RENDER_ARGS})
+  run("${VEXEC}" check-matching-image "${WORK}/saved.png" "${WORK}/reference.png" 64 64)
+endif()
+
+# Both renders must finish in one process, with the saved camera retained
+# while cleanup discards and reloads the prepared geometry.
+file(WRITE "${WORK}/repeated.view" "${stream}\nstart 1; clean; end;\n")
+run_command("${WORK}" FALSE INPUT_FILE "${WORK}/repeated.view" "${EXEC}" ${RENDER_ARGS}
+  -M -o "${WORK}/repeated.png" "${DB}" all.g)
+string(REGEX MATCHALL "wrote image file " writes "${command_output}")
+list(LENGTH writes count)
+if(NOT count EQUAL 2)
+  message(FATAL_ERROR "Expected two completed frame writes, found ${count}")
+endif()
+run("${VEXEC}" check-matching-image "${WORK}/repeated.png" "${WORK}/reference.png" 64 64)

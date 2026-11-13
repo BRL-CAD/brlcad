@@ -336,7 +336,7 @@ init_defaults(void)
     // option("", "-? or -h", "Display help", 1);
 
     option("Raytrace", "-a # -e #", "Azimuth and elevation in degrees (default: -a 0 -e 0)", 0);
-    option("Raytrace", "-p #", "Perspective angle, degrees side to side (0 <= # < 180)", 100);
+    option("Raytrace", "-p #", "Perspective angle in degrees (default: 0, orthographic)", 0);
     // option("Raytrace", "-E #", "Set perspective eye distance from model (default: 1.414)", 100);
     option("Raytrace", "-H #", "Specify number of hypersample rays per pixel (default: 0)", 100);
     option("Raytrace", "-J #", "Specify a \"jitter\" pattern (default: 0 - no jitter)", 100);
@@ -344,7 +344,7 @@ init_defaults(void)
     option("Raytrace", "-T # or -T #/#", "Tolerance as distance or distance/angular", 100);
 
     option("Advanced", "-c \"command\"", "Run rt commands; set inspect_materials=1 to inspect without rendering", 0);
-    option("Advanced", "-M", "Read matrix + commands on stdin (RT 'saveview' scripts)", 100);
+    option("Advanced", "-M", "Read matrix + commands on stdin (RT 'saveview' scripts)", 0);
     option("Advanced", "-D #", "Specify starting frame number (ending is specified via -K #)", 100);
     option("Advanced", "-K #", "Specify ending frame number (starting is specified via -D #)", 100);
     option("Advanced", "-g #", "Specify grid cell (pixel) width, in millimeters", 100);
@@ -1097,7 +1097,7 @@ view_end(struct application* UNUSED(ap)) {
 extern "C" void
 view_cleanup(struct rt_i* UNUSED(rtip))
 {
-    bu_bomb("in cleanup, Don't call me!");
+    // Projects and their procedural objects are released after each render.
 }
 
 
@@ -1105,13 +1105,6 @@ extern "C" void
 do_run(int UNUSED(a), int UNUSED(b))
 {
     bu_bomb("in run, Don't call me!");
-}
-
-
-static int
-art_cm_clean(const int UNUSED(argc), const char** UNUSED(argv))
-{
-    return 0;
 }
 
 
@@ -1133,23 +1126,38 @@ memory_summary(void)
 }
 
 
-static void
-def_tree(struct rt_i* rtip)
+static bool
+art_prepare_geometry(struct rt_i* rtip)
 {
-    struct bu_vls times = BU_VLS_INIT_ZERO;
-
     RT_CK_RTI(rtip);
 
-    rt_prep_timer();
-    if (rt_gettrees(rtip, objc, (const char**)objv, (int)npsw) < 0) {
-	bu_log("rt_gettrees(%s) FAILED\n", (objv && objv[0]) ? objv[0] : "ERROR");
+    if (BU_LIST_IS_EMPTY(&rtip->HeadRegion)) {
+	int count = objc;
+	const char **objects = (const char **)objv;
+	if (count == 0 && cmd_objs) {
+	    count = static_cast<int>(BU_PTBL_LEN(cmd_objs));
+	    objects = (const char **)cmd_objs->buffer;
+	}
+	if (count <= 0 || !objects) {
+	    bu_log("art: no objects selected for rendering\n");
+	    return false;
+	}
+	struct bu_vls times = BU_VLS_INIT_ZERO;
+	rt_prep_timer();
+	const int result = rt_gettrees(rtip, count, objects, static_cast<size_t>(npsw));
+	(void)rt_get_timer(&times, NULL);
+	if (rt_verbosity & VERBOSE_STATS)
+	    bu_log("GETTREE: %s\n", bu_vls_addr(&times));
+	bu_vls_free(&times);
+	memory_summary();
+	if (result < 0) {
+	    bu_log("art: loading geometry for '%s' failed\n", objects[0]);
+	    return false;
+	}
     }
-    (void)rt_get_timer(&times, NULL);
-
-    if (rt_verbosity & VERBOSE_STATS)
-	bu_log("GETTREE: %s\n", bu_vls_addr(&times));
-    bu_vls_free(&times);
-    memory_summary();
+    if (rtip->needprep)
+	rt_prep_parallel(rtip, 1);
+    return true;
 }
 
 
@@ -1299,8 +1307,8 @@ art_process_scene(bool display_framebuffer)
 static int
 art_cm_end(const int UNUSED(argc), const char** UNUSED(argv))
 {
-    if (!inspect_materials && APP.a_rt_i && BU_LIST_IS_EMPTY(&APP.a_rt_i->HeadRegion))
-	def_tree(APP.a_rt_i);
+    if (!inspect_materials && !art_prepare_geometry(APP.a_rt_i))
+	return -1;
     return art_process_scene(false) ? 0 : -1;
 }
 
@@ -1321,8 +1329,6 @@ main(int argc, char **argv)
     std::unique_ptr<asf::ILogTarget, ReleaseLogTarget> log_target(
 	asf::create_console_log_target(stderr));
     asr::global_logger().add_target(log_target.get());
-
-    rt_perspective = 85; // setting the default
 
     // Print appleseed's version string.
     RENDERER_LOG_INFO("%s\n", asf::Appleseed::get_synthetic_version_string());
@@ -1404,24 +1410,20 @@ main(int argc, char **argv)
     APP.a_rt_i = rtip;
     APP.a_onehit = 1;
 
-    if (objv && !inspect_materials) {
-
-	/* include objects from database */
-	if (rt_gettrees(rtip, objc, (const char**)objv, (int)npsw) < 0) {
-	    RENDERER_LOG_INFO("loading the geometry for [%s...] FAILED\n", objv[0]);
-	    return -1;
-	}
-
-	/* prepare database for raytracing */
-	if (rtip->needprep)
-	    rt_prep_parallel(rtip, 1);
-    }
+    if (objv && !inspect_materials && !art_prepare_geometry(rtip))
+	return BRLCAD_ERROR;
 
     if (matflag) {
 	char* buf;
 	int nret = 0;
-	rt_do_tab[6].ct_func = art_cm_end;
-	rt_do_tab[13].ct_func = art_cm_clean;
+	auto *end_command = rt_do_tab;
+	while (end_command->ct_cmd && !BU_STR_EQUAL(end_command->ct_cmd, "end"))
+	    ++end_command;
+	if (!end_command->ct_cmd) {
+	    bu_log("art: ray tracing command table has no end command\n");
+	    return BRLCAD_ERROR;
+	}
+	end_command->ct_func = art_cm_end;
 
 	while ((buf = rt_read_cmd(stdin)) != (char*)0) {
 	    RENDERER_LOG_INFO("cmd: %s \n", buf);

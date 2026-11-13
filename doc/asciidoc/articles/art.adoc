@@ -186,11 +186,11 @@ clipping, and premultiplied coverage.  Appleseed retains single-byte text
 input.  Both use unhinted rasterization with struetype.
 
 |Installed builds across platforms
-|A complete headless art installation passed all 20 installed checks on
+|A complete headless art installation passed all 21 installed checks on
 FreeBSD after relocation to a path containing spaces.  Coverage includes
 17 shared rendering, camera, and material regressions, persisted material
-authoring, plate conversion through installed mged, and the runtime library
-audit.
+authoring, plate conversion and saved-view execution through installed
+mged, and the runtime library audit.
 The ELF install policy uses paths relative to each executable, library, or
 plugin.  A separate collision regression exercises `lib`, `lib64`, and
 nested installation layouts with a conflicting library still present at
@@ -263,9 +263,10 @@ art -p 0 -w 640 -n 480 -P 4 \
 The equivalent pose can appear between `start 0;` and `end;` in an
 `-M` stream.  Supplied camera fields survive scene preparation; the
 azimuth/elevation defaults no longer replace an explicit pose.  A zero
-perspective angle selects the orthographic camera.  Positive angles below
-180 degrees select a pinhole camera and specify its horizontal field of
-view.  Orthographic film width equals `viewsize`, and image dimensions
+perspective angle selects the orthographic camera, which is also the default
+as in rt.  The prototype's earlier default can be requested with `-p 85`.
+Positive angles below 180 degrees select a pinhole camera and specify its
+horizontal field of view.  Orthographic film width equals `viewsize`, and image dimensions
 supply the film aspect ratio.  An explicit perspective eye controls its
 distance independently of `viewsize`.
 
@@ -280,6 +281,29 @@ open.
 independent azimuth/elevation views on asymmetric geometry.  It covers
 both projections, quaternion handedness, matrix and look-at commands,
 perspective eye distance, and a known two-axis orthographic image shift.
+
+=== Saved views and cleanup
+
+In mged, `saveview -e art -o view.png view.sh` creates a rendering script
+using the current view and displayed objects.  Execute that script with a
+shell and add art's pixel dimensions and worker count as arguments.  Keep
+`art` on `PATH` when executing the script.  An orthographic saved view needs no perspective override; a perspective saved
+view includes its field of view.
+
+The generated `-M` command stream contains `clean` before rendering.  `art`
+releases each render's project and procedural objects when the render ends;
+`clean` discards the prepared librt geometry, which is loaded and prepared
+again for the next render.  Camera commands survive this cleanup.  The
+original `prep` command remains available for object lists built with
+`draw`.  Both command-line selections and retained command object lists
+are covered by cleanup regressions.
+
+`art-installed-view` generates the saved view through installed mged,
+compares the rendered result with an independent camera setup, and executes
+the complete generated shell script on Unix.  It also checks two clean/render
+cycles within one art process.  Frame numbering, range termination, and
+changes to the active tree list remain unqualified.  Multiple `end`
+commands currently write the same output path.
 
 == Geometry boundary handling
 
