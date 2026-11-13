@@ -75,7 +75,8 @@ main (int argc, char **argv)
 
     bu_setprogname(argv[0]);
 
-    if (BU_STR_EQUAL(argv[1], "-h") || BU_STR_EQUAL(argv[1], "-?")) {
+    if (argc > 1 &&
+	(BU_STR_EQUAL(argv[1], "-h") || BU_STR_EQUAL(argv[1], "-?"))) {
 	printusage();
     }
 
@@ -98,7 +99,7 @@ main (int argc, char **argv)
 	}
     }
     if (isatty(fileno(fp[FP_OUT]))) {
-	bu_log("%s: Will not write to a TTY\n", argv[0]);
+	bu_log("%s: Will not write to a TTY\n", bu_getprogname());
 	printusage();
 	return 1;
     }
