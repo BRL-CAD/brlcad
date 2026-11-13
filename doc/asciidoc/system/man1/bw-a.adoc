@@ -10,7 +10,9 @@ bw-a - convert a BRL-CAD BW image to an ASCII bitmap
 
 [source]
 ----
-bw-a [-a] [-s squaresize] [-w file_width] [-n file_height] [file.bw] > file.abm
+bw-a [-a|--autosize] [-s|--size squaresize]
+     [-w|--width file_width] [-n|--height file_height]
+     [file.bw] > file.abm
 ----
 
 
@@ -36,23 +38,23 @@ X bitmap.
 [[options]]
 == OPTIONS
 
-*-a*::
+*-a*, *--autosize*::
   Autosize the input. When a named file is given, the width is determined from
   the file size rather than the default or supplied dimensions.
 
-*-s* _squaresize_::
+*-s* _squaresize_, *--size* _squaresize_::
   Set the input width and nominal height to _squaresize_ pixels. The width
   determines where output scanlines are split.
 
-*-w* _file_width_::
+*-w* _file_width_, *--width* _file_width_::
   Set the width of the input to _file_width_ pixels (default 512). A newline is
   emitted after every _file_width_ characters.
 
-*-n* _file_height_::
+*-n* _file_height_, *--height* _file_height_::
   Accepted for compatibility, but has no effect on the output; the number of
   scanlines is determined solely by the amount of input read.
 
-*-h*, *-?*::
+*-h*, *-?*, *--help*::
   Print a usage message and exit.
 
 
