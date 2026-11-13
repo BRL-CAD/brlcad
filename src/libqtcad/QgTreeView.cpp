@@ -138,7 +138,8 @@ QSize gObjDelegate::sizeHint(const QStyleOptionViewItem &option, const QModelInd
 }
 
 
-QgTreeView::QgTreeView(QWidget *pparent, QgModel *treemodel) : QTreeView(pparent)
+QgTreeView::QgTreeView(QWidget *pparent, QgModel *treemodel) :
+    QTreeView(pparent), m_model(treemodel)
 {
     this->setContextMenuPolicy(Qt::CustomContextMenu);
 
@@ -151,7 +152,6 @@ QgTreeView::QgTreeView(QWidget *pparent, QgModel *treemodel) : QTreeView(pparent
     setExpandsOnDoubleClick(false);
 
     // Set model
-    m = treemodel;
     setModel(treemodel);
 
     // Set custom selection model
@@ -255,7 +255,7 @@ void QgTreeView::context_menu(const QPoint &point)
     draw_action_v = QVariant::fromValue((void *)cnode);
 #endif
     draw_action->setData(draw_action_v);
-    connect(draw_action, &QAction::triggered, m, &QgModel::draw_action);
+    connect(draw_action, &QAction::triggered, m_model, &QgModel::draw_action);
 
 
     QAction* erase_action = new QAction("Erase", NULL);
@@ -266,7 +266,7 @@ void QgTreeView::context_menu(const QPoint &point)
     erase_action_v = QVariant::fromValue((void *)cnode);
 #endif
     erase_action->setData(erase_action_v);
-    connect(erase_action, &QAction::triggered, m, &QgModel::erase_action);
+    connect(erase_action, &QAction::triggered, m_model, &QgModel::erase_action);
 
 
     QMenu *menu = new QMenu("Object Actions", NULL);
@@ -277,22 +277,6 @@ void QgTreeView::context_menu(const QPoint &point)
 }
 
 void
-QgTreeView::selectionChanged(const QItemSelection &selected,
-	const QItemSelection &deselected)
-{
-    QTreeView::selectionChanged(selected, deselected);
-}
-
-QModelIndex QgTreeView::selected()
-{
-    if (selectedIndexes().count() == 1) {
-	return selectedIndexes().first();
-    } else {
-	return QModelIndex();
-    }
-}
-
-void
 QgTreeView::do_draw_toggle(const QModelIndex &index)
 {
     QTCAD_SLOT("QgTreeView::do_draw_toggle", 1);
@@ -300,19 +284,19 @@ QgTreeView::do_draw_toggle(const QModelIndex &index)
 
     int state = index.data(QgDataRoles::DrawnDisplayRole).toInt();
     if (state == GED_SCENE_PATH_NOT_DRAWN)
-	(void)m->draw(cnode);
+	(void)m_model->draw(cnode);
     if (state == GED_SCENE_PATH_DRAWN ||
 	state == GED_SCENE_PATH_PARTIALLY_DRAWN)
-	(void)m->erase(cnode);
+	(void)m_model->erase(cnode);
 }
 
 void
 QgTreeView::redo_expansions(void *)
 {
     QTCAD_SLOT("QgTreeView::redo_expansions", 1);
-    const std::unordered_set<QgItem *> &items = m->allItems();
+    const std::unordered_set<QgItem *> &items = m_model->allItems();
     for (QgItem *itm : items) {
-	QModelIndex idx = m->NodeIndex(itm);
+	QModelIndex idx = m_model->NodeIndex(itm);
 	if (itm->isOpen() && !isExpanded(idx)) {
 	    setExpanded(idx, true);
 	}
@@ -324,8 +308,8 @@ void
 QgTreeView::redo_highlights()
 {
     QTCAD_SLOT("QgTreeView::redo_highlights", 1);
-    if (m)
-	m->notifySelectionItemsChanged();
+    if (m_model)
+	m_model->notifySelectionItemsChanged();
 }
 
 #if 0
@@ -337,7 +321,7 @@ void QgTreeView::expand_path(QString path)
 #else
     QStringList path_items = path.split("/", Qt::SkipEmptyParts);
 #endif
-    QgItem *r = m->root();
+    QgItem *r = m_model->root();
     while (i < path_items.size()) {
 
 	for (int j = 0; j < r->childCount(); j++) {
@@ -348,7 +332,7 @@ void QgTreeView::expand_path(QString path)
 	    if (QString::fromStdString(g->dp_name) != path_items.at(i)) {
 		continue;
 	    }
-	    QModelIndex path_component = m->NodeIndex(c);
+	    QModelIndex path_component = m_model->NodeIndex(c);
 	    if (i == path_items.size() - 1) {
 		selectionModel()->clearSelection();
 		selectionModel()->select(path_component, QItemSelectionModel::Select | QItemSelectionModel::Rows);
@@ -373,20 +357,20 @@ void QgTreeView::expand_link(const QUrl &link)
 void QgTreeView::qgitem_select_sync(QgItem *)
 {
     QTCAD_SLOT("QgTreeView::qgitem_select_sync", 1);
-    if (m)
-	m->notifySelectionItemsChanged();
+    if (m_model)
+	m_model->notifySelectionItemsChanged();
 }
 
 void QgTreeView::do_view_update(QgViewUpdateFlags flags)
 {
     QTCAD_SLOT("QgTreeView::do_view_update", 1);
-    if (!m)
+    if (!m_model)
 	return;
 
     if (!flags || (flags & (QG_VIEW_SELECT | QG_VIEW_MODE | QG_VIEW_DB)))
-	m->notifySelectionItemsChanged();
+	m_model->notifySelectionItemsChanged();
     if (!flags || (flags & (QG_VIEW_DRAWN | QG_VIEW_DB)))
-	m->notifyDrawnItemsChanged();
+	m_model->notifyDrawnItemsChanged();
     if (!flags || (flags & QG_VIEW_REFRESH))
 	viewport()->update();
 }

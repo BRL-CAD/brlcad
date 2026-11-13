@@ -27,34 +27,36 @@
 #include "qtcad/QgUtil.h"
 #include "qtcad/QgModel.h"
 #include "qtcad/QgTreeSelectionModel.h"
+#include "qtcad/QgTreeView.h"
 #include "qtcad/QgSignalFlags.h"
 
 static void
-qg_selection_commit(QgTreeView *treeview, QgModel *model)
+qg_selection_commit(QgTreeView *tree_view, QgModel *model)
 {
-    if (!treeview || !model)
+    if (!tree_view || !model)
 	return;
 
     QgViewUpdateFlags flags = model->selectionCommit();
-    emit treeview->view_changed(flags);
+    emit tree_view->view_changed(flags);
 }
 
 void
 QgTreeSelectionModel::clear_all()
 {
-    if (!treeview || !treeview->m)
+    QgModel *model = m_tree_view ? m_tree_view->cadModel() : nullptr;
+    if (!model)
 	return;
 
-    treeview->m->selectionClear();
-    qg_selection_commit(treeview, treeview->m);
+    model->selectionClear();
+    qg_selection_commit(m_tree_view, model);
 }
 
 void
 QgTreeSelectionModel::select(const QItemSelection &selection, QItemSelectionModel::SelectionFlags flags)
 {
     QTCAD_SLOT("QgTreeSelectionModel::select QItemSelection", 1);
-    QgModel *m = treeview ? treeview->m : NULL;
-    if (!m || m->structureChangeInProgress()) {
+    QgModel *model = m_tree_view ? m_tree_view->cadModel() : nullptr;
+    if (!model || model->structureChangeInProgress()) {
 	QItemSelectionModel::select(selection, flags);
 	return;
     }
@@ -67,64 +69,64 @@ QgTreeSelectionModel::select(const QItemSelection &selection, QItemSelectionMode
 	    continue;
 
 	// If we are selecting an already selected node, clear it
-	if (flags & QItemSelectionModel::Select && m->itemSelected(snode)) {
+	if (flags & QItemSelectionModel::Select && model->itemSelected(snode)) {
 	    if (!(QGuiApplication::keyboardModifiers().testFlag(Qt::ShiftModifier))) {
-		if (flags & QItemSelectionModel::Clear && m->selectionCount() > 1) {
-		    m->selectionClear();
-		    m->itemSelect(snode);
+		if (flags & QItemSelectionModel::Clear && model->selectionCount() > 1) {
+		    model->selectionClear();
+		    model->itemSelect(snode);
 		} else {
-		    m->itemDeselect(snode);
+		    model->itemDeselect(snode);
 		}
 	    }
 	} else {
 	    if (flags & QItemSelectionModel::Clear)
-		m->selectionClear();
+		model->selectionClear();
 
-	    m->itemSelect(snode);
+	    model->itemSelect(snode);
 	}
     }
 
-    qg_selection_commit(treeview, m);
+    qg_selection_commit(m_tree_view, model);
 }
 
 void
 QgTreeSelectionModel::select(const QModelIndex &index, QItemSelectionModel::SelectionFlags flags)
 {
     QTCAD_SLOT("QgTreeSelectionModel::select QModelIndex", 1);
-    QgModel *m = treeview ? treeview->m : NULL;
-    if (!m || m->structureChangeInProgress()) {
+    QgModel *model = m_tree_view ? m_tree_view->cadModel() : nullptr;
+    if (!model || model->structureChangeInProgress()) {
 	QItemSelectionModel::select(index, flags);
 	return;
     }
 
     if (flags & QItemSelectionModel::Clear)
-	m->selectionClear();
+	model->selectionClear();
 
     QgItem *snode = static_cast<QgItem *>(index.internalPointer());
     if (!snode) {
-	m->selectionClear();
-	qg_selection_commit(treeview, m);
+	model->selectionClear();
+	qg_selection_commit(m_tree_view, model);
 	return;
     }
 
     if (!(flags & QItemSelectionModel::Deselect)) {
 
 	// If we are selecting an already selected node, clear it
-	if (flags & QItemSelectionModel::Select && m->itemSelected(snode)) {
-	    m->itemDeselect(snode);
-	    qg_selection_commit(treeview, m);
+	if (flags & QItemSelectionModel::Select && model->itemSelected(snode)) {
+	    model->itemDeselect(snode);
+	    qg_selection_commit(m_tree_view, model);
 	    return;
 	}
 
-	m->itemSelect(snode);
+	model->itemSelect(snode);
 
     } else {
 
-	m->itemDeselect(snode);
+	model->itemDeselect(snode);
 
     }
 
-    qg_selection_commit(treeview, m);
+    qg_selection_commit(m_tree_view, model);
 }
 
 // Local Variables:

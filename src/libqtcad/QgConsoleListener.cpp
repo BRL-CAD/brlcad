@@ -31,9 +31,7 @@
 
 static const int qg_process_poll_interval_ms = 10;
 
-void noMessageOutput(QtMsgType, const QMessageLogContext&, const QString&) {}
-
-QConsoleListener::QConsoleListener(int fd, struct ged_subprocess *p,
+QgConsoleListener::QgConsoleListener(int fd, struct ged_subprocess *p,
     bu_process_io_t t, ged_io_func_t c, void *d, QObject *parent)
     : QObject(parent)
 {
@@ -43,8 +41,8 @@ QConsoleListener::QConsoleListener(int fd, struct ged_subprocess *p,
     this->type = t;
     m_fd = (fd < 0) ? fileno(stdin) : fd;
     QObject::connect(
-	    this, &QConsoleListener::finishedGetLine,
-	    this, &QConsoleListener::on_finishedGetLine,
+	    this, &QgConsoleListener::finishedGetLine,
+	    this, &QgConsoleListener::on_finishedGetLine,
 	    Qt::QueuedConnection
 	    );
 #ifdef Q_OS_WIN
@@ -61,7 +59,7 @@ QConsoleListener::QConsoleListener(int fd, struct ged_subprocess *p,
 #endif
 }
 
-void QConsoleListener::processReady()
+void QgConsoleListener::processReady()
 {
     if (!callback)
 	return;
@@ -79,12 +77,12 @@ void QConsoleListener::processReady()
     Q_EMIT this->finishedGetLine(line);
 }
 
-QConsoleListener::~QConsoleListener()
+QgConsoleListener::~QgConsoleListener()
 {
     disconnectNotifier();
 }
 
-void QConsoleListener::deactivate()
+void QgConsoleListener::deactivate()
 {
     if (!process)
 	return;
@@ -102,18 +100,18 @@ void QConsoleListener::deactivate()
     }
 }
 
-void QConsoleListener::disconnectNotifier()
+void QgConsoleListener::disconnectNotifier()
 {
     if (m_notifier)
 	m_notifier->disconnect();
 }
 
-void QConsoleListener::on_finishedGetLine(const QString &strNewLine)
+void QgConsoleListener::on_finishedGetLine(const QString &strNewLine)
 {
     Q_EMIT this->newLine(strNewLine);
 }
 
-void QConsoleListener::on_finished()
+void QgConsoleListener::on_finished()
 {
     deactivate();
     Q_EMIT this->is_finished(this->process, (int)this->type);

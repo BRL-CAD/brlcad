@@ -552,8 +552,8 @@ QgConsole::QgConsole(QWidget* Parent) :
 //-----------------------------------------------------------------------------
 QgConsole::~QgConsole()
 {
-    while (!listeners.empty())
-	removeListener(listeners.begin()->first.first, listeners.begin()->first.second);
+    while (!m_listeners.empty())
+	removeListener(m_listeners.begin()->first.first, m_listeners.begin()->first.second);
     delete this->Implementation;
 }
 
@@ -610,31 +610,31 @@ void QgConsole::listen(int fd, struct ged_subprocess *p, bu_process_io_t t, ged_
     if (findListener(p, (int)t))
 	return;
 
-    QConsoleListener *l = new QConsoleListener(fd, p, t, c, d, this);
+    QgConsoleListener *l = new QgConsoleListener(fd, p, t, c, d, this);
     bu_log("Start listening: %d\n", (int)t);
-    QObject::connect(l, &QConsoleListener::newLine, this, &QgConsole::printStringBeforePrompt);
+    QObject::connect(l, &QgConsoleListener::newLine, this, &QgConsole::printStringBeforePrompt);
     /* EOF may be reported from inside the notifier callback.  Queue detach
      * so the listener is not deleted while that callback is still active. */
-    QObject::connect(l, &QConsoleListener::is_finished, this, &QgConsole::detach, Qt::QueuedConnection);
-    listeners[std::make_pair(p, t)] = l;
+    QObject::connect(l, &QgConsoleListener::is_finished, this, &QgConsole::detach, Qt::QueuedConnection);
+    m_listeners[std::make_pair(p, (int)t)] = l;
 }
 
 //-----------------------------------------------------------------------------
-QConsoleListener *QgConsole::findListener(struct ged_subprocess *p, int t) const
+QgConsoleListener *QgConsole::findListener(struct ged_subprocess *p, int t) const
 {
-    auto listener = listeners.find(std::make_pair(p, t));
-    return listener != listeners.end() ? listener->second : nullptr;
+    auto listener = m_listeners.find(std::make_pair(p, t));
+    return listener != m_listeners.end() ? listener->second : nullptr;
 }
 
 //-----------------------------------------------------------------------------
 void QgConsole::removeListener(struct ged_subprocess *p, int t)
 {
-    auto listener = listeners.find(std::make_pair(p, t));
-    if (listener == listeners.end())
+    auto listener = m_listeners.find(std::make_pair(p, t));
+    if (listener == m_listeners.end())
 	return;
 
-    QConsoleListener *listener_ptr = listener->second;
-    listeners.erase(listener);
+    QgConsoleListener *listener_ptr = listener->second;
+    m_listeners.erase(listener);
     listener_ptr->deactivate();
     listener_ptr->disconnectNotifier();
     delete listener_ptr;
@@ -643,33 +643,33 @@ void QgConsole::removeListener(struct ged_subprocess *p, int t)
 void QgConsole::detach(struct ged_subprocess *p, int t)
 {
     QTCAD_SLOT("QgConsole::detach", 1);
-    std::map<std::pair<struct ged_subprocess *, int>, QConsoleListener *>::iterator l_it, si_it, so_it, e_it;
-    l_it = listeners.find(std::make_pair(p,t));
+    std::map<std::pair<struct ged_subprocess *, int>, QgConsoleListener *>::iterator l_it, si_it, so_it, e_it;
+    l_it = m_listeners.find(std::make_pair(p,t));
 
     struct ged_subprocess *process = NULL;
     ged_io_func_t callback = NULL;
     void *gdata = NULL;
 
-    if (l_it != listeners.end()) {
+    if (l_it != m_listeners.end()) {
 	bu_log("Stop listening: %d\n", (int)t);
-	QConsoleListener *l = l_it->second;
+	QgConsoleListener *l = l_it->second;
 	process = l->process;
 	callback = l->callback;
 	gdata = l->data;
-	listeners.erase(l_it);
+	m_listeners.erase(l_it);
 	l->deactivate();
 	delete l;
     }
 
     if (process) {
-	si_it = listeners.find(std::make_pair(p,(int)BU_PROCESS_STDIN));
-	so_it = listeners.find(std::make_pair(p,(int)BU_PROCESS_STDOUT));
-	e_it = listeners.find(std::make_pair(p,(int)BU_PROCESS_STDERR));
+	si_it = m_listeners.find(std::make_pair(p,(int)BU_PROCESS_STDIN));
+	so_it = m_listeners.find(std::make_pair(p,(int)BU_PROCESS_STDOUT));
+	e_it = m_listeners.find(std::make_pair(p,(int)BU_PROCESS_STDERR));
 
 	// We don't want to destroy the process until all the listeners are removed.
 	// If they all have been, do a final callback call with -1 key to instruct
 	// the callback to finalize process and memory removal.
-	if (si_it == listeners.end() && so_it == listeners.end() && e_it == listeners.end() && callback) {
+	if (si_it == m_listeners.end() && so_it == m_listeners.end() && e_it == m_listeners.end() && callback) {
 	    (*callback)(gdata, -1);
 	    // This is also the point at which we know any output from the subprocess
 	    // is at an end.  Finalize the before-prompt printing.

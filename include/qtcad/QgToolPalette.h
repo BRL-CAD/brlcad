@@ -56,6 +56,7 @@ class QTCAD_EXPORT QgToolPaletteElement;
 class QTCAD_EXPORT QgToolPaletteButton: public QPushButton
 {
     Q_OBJECT
+    Q_DISABLE_COPY_MOVE(QgToolPaletteButton)
 
     public:
 	QgToolPaletteButton(QWidget *bparent, QIcon *iicon = 0, QgToolPaletteElement *eparent = 0);
@@ -77,15 +78,14 @@ class QTCAD_EXPORT QgToolPaletteButton: public QPushButton
 class QTCAD_EXPORT QgToolPaletteElement: public QWidget
 {
     Q_OBJECT
+    Q_DISABLE_COPY_MOVE(QgToolPaletteElement)
 
     public:
 	QgToolPaletteElement(QIcon *iicon = 0, QWidget *control = 0);
 	~QgToolPaletteElement();
 
-	void setButton(QgToolPaletteButton *n_button);
-	void setControls(QWidget *n_controls);
-	QgToolPaletteButton *buttonWidget() const { return button; }
-	QWidget *controlsWidget() const { return controls; }
+	QgToolPaletteButton *buttonWidget() const { return button.data(); }
+	QWidget *controlsWidget() const { return controls.data(); }
 	int scrollPosition() const { return scroll_pos; }
 	void setScrollPosition(int position) { scroll_pos = position; }
 
@@ -130,18 +130,16 @@ class QTCAD_EXPORT QgToolPaletteElement: public QWidget
 	// INTERNAL:
 	void element_view_changed(QgViewUpdateFlags);
 
-    public:
+    private:
 	QPointer<QgToolPaletteButton> button;
 	QPointer<QWidget> controls;
 	int scroll_pos = 0;
-
-	bool use_event_filter = false;
-
 };
 
 class QTCAD_EXPORT QgToolPalette: public QWidget
 {
     Q_OBJECT
+    Q_DISABLE_COPY_MOVE(QgToolPalette)
 
     public:
 	QgToolPalette(QWidget *pparent = 0);
@@ -159,11 +157,6 @@ class QTCAD_EXPORT QgToolPalette: public QWidget
 	QgToolPaletteElement *selectedElement() const { return selected; }
 
 	void resizeEvent(QResizeEvent *pevent);
-
-	QgToolPaletteElement *selected;
-	QString selected_style = QString("");
-
-	QVBoxLayout *mlayout;
 
    signals:
 
@@ -209,7 +202,8 @@ class QTCAD_EXPORT QgToolPalette: public QWidget
 	int always_selected;
 	int icon_width;
 	int icon_height;
-	QSplitter *splitter;
+	QgToolPaletteElement *selected;
+	QString selected_style = QString("");
 	QWidget *button_container;
 	QgFlowLayout *button_layout;
 	QScrollArea *control_container;

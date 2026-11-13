@@ -33,12 +33,13 @@
 class QTCAD_EXPORT QgDockWidget : public QDockWidget
 {
     Q_OBJECT
+    Q_DISABLE_COPY_MOVE(QgDockWidget)
 
     public:
 	QgDockWidget(const QString &title, QWidget *parent);
 	bool event(QEvent *e);
 
-	QgModel *m = NULL;
+	void setModel(QgModel *model_ptr) { m = model_ptr; }
 
     signals:
 	void banner_click();
@@ -48,6 +49,7 @@ class QTCAD_EXPORT QgDockWidget : public QDockWidget
 
     private:
         bool moving = false;
+	QgModel *m = NULL;
 };
 
 #endif /* QGDOCKWIDGET_H */

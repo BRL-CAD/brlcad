@@ -170,7 +170,7 @@ QgEdMainWindow::CreateWidgets(QgViewType canvas_type)
     tree_dock = new QgDockWidget("Hierarchy", this);
     tree_dock->setObjectName("Hierarchy");
     tree_dock->setWidget(treeview);
-    tree_dock->m = ap->mdl;
+    tree_dock->setModel(ap->mdl);
 
     /* Object Attribute widgets */
     sattrd = new QDockWidget("Standard Attributes", this);

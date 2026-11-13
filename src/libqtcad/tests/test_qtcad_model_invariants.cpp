@@ -108,6 +108,14 @@ main(int argc, char **argv)
 	QAbstractItemModel *abstract_model = &model;
 	QAbstractItemModelTester tester(&model,
 	    QAbstractItemModelTester::FailureReportingMode::Fatal);
+	CHECK(!model.flattenHierarchy(),
+	    "model initially presents the hierarchy");
+	model.toggle_hierarchy();
+	CHECK(model.flattenHierarchy(),
+	    "hierarchy toggle exposes flattened model state");
+	model.toggle_hierarchy();
+	CHECK(!model.flattenHierarchy(),
+	    "second hierarchy toggle restores hierarchical state");
 	QSignalSpy reset_spy(&model, &QAbstractItemModel::modelReset);
 	QSignalSpy rows_inserted_spy(&model,
 	    &QAbstractItemModel::rowsInserted);

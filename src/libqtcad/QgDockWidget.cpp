@@ -77,7 +77,7 @@ QgDockWidget::event(QEvent *e)
     emit banner_click();
 
     if (m) {
-	if (m->flatten_hierarchy) {
+	if (m->flattenHierarchy()) {
 	    setWindowTitle("Objects");
 	} else {
 	    setWindowTitle("Hierarchy");

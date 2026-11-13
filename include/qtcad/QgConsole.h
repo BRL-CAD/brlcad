@@ -111,8 +111,7 @@ public:
   std::string historyAt(size_t ind);
 
   void listen(int fd, struct ged_subprocess *p, bu_process_io_t t, ged_io_func_t c, void *d);
-  QConsoleListener *findListener(struct ged_subprocess *p, int t) const;
-  std::map<std::pair<struct ged_subprocess *, int>, QConsoleListener *> listeners;
+  QgConsoleListener *findListener(struct ged_subprocess *p, int t) const;
 
   // When inserting a completion, need a setting to control
   // how we handle slashes
@@ -157,6 +156,8 @@ private:
   QgConsole(const QgConsole&);
   QgConsole& operator=(const QgConsole&);
   void removeListener(struct ged_subprocess *p, int t);
+
+  std::map<std::pair<struct ged_subprocess *, int>, QgConsoleListener *> m_listeners;
 
   // Used by printStringBeforePrompt to queue up a timed repetition of printing
   // to catch anything recently added but not subsequently printed successfully

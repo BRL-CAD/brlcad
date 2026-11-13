@@ -23,40 +23,33 @@
 #ifndef QGTREESELECTIONMODEL_H
 #define QGTREESELECTIONMODEL_H
 
-#include <string>
-#include <vector>
-#include <unordered_map>
-#include <unordered_set>
-#include <QAbstractItemModel>
 #include <QItemSelectionModel>
-#include <QModelIndex>
-#include <QObject>
-#include "ged.h"
-#include "qtcad/defines.h"
-#include "qtcad/QgModel.h"
-#include "qtcad/QgTreeView.h"
 
-#define QgViewMode 0
-#define QgInstanceEditMode 1
-#define QgPrimitiveEditMode 2
+#include "qtcad/defines.h"
+
+class QgTreeView;
 
 class QTCAD_EXPORT QgTreeSelectionModel : public QItemSelectionModel
 {
     Q_OBJECT
+    Q_DISABLE_COPY_MOVE(QgTreeSelectionModel)
 
     public:
 
-	QgTreeSelectionModel(QAbstractItemModel *model, QObject* parent, QgTreeView *tv): QItemSelectionModel(model, parent) {treeview = tv;}
-	QgTreeSelectionModel(QAbstractItemModel *model = nullptr, QgTreeView *tv = nullptr): QItemSelectionModel(model) {treeview = tv;}
+	QgTreeSelectionModel(QAbstractItemModel *model, QObject *parent, QgTreeView *tree_view) :
+	    QItemSelectionModel(model, parent), m_tree_view(tree_view) {}
+	QgTreeSelectionModel(QAbstractItemModel *model = nullptr, QgTreeView *tree_view = nullptr) :
+	    QItemSelectionModel(model), m_tree_view(tree_view) {}
 
 	void clear_all();
+	QgTreeView *treeView() const { return m_tree_view; }
 
     public slots:
 	void select(const QItemSelection &selection, QItemSelectionModel::SelectionFlags flags) override;
-        void select(const QModelIndex &index, QItemSelectionModel::SelectionFlags flags) override;
+	void select(const QModelIndex &index, QItemSelectionModel::SelectionFlags flags) override;
 
-    public:
-	QgTreeView *treeview;
+    private:
+	QgTreeView *m_tree_view = nullptr;
 };
 
 #endif //QGTREESELECTIONMODEL_H

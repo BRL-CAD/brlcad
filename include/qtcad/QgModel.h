@@ -373,10 +373,11 @@ class QTCAD_EXPORT QgModel : public QAbstractItemModel
 	{
 	    return model_structure_change_in_progress;
 	}
-
-	// Toggle for whether or not the model should be viewed using a tops
-	// listing or the full object listing as the "seed" set
-	int flatten_hierarchy = 0;
+	/** Return true when the model presents a flattened object list. */
+	bool flattenHierarchy() const
+	{
+	    return flatten_hierarchy != 0;
+	}
 
     signals:
 	// Emitted if the commands think they may have changed the database
@@ -461,6 +462,7 @@ class QTCAD_EXPORT QgModel : public QAbstractItemModel
 	std::string selection_set_name;
 	bool selection_batch_open = false;
 	bool model_structure_change_in_progress = false;
+	int flatten_hierarchy = 0;
 	bool command_running = false;
 	bool database_refresh_in_progress = false;
 	bool database_event_pending = false;

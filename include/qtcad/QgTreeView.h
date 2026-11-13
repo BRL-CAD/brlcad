@@ -28,32 +28,28 @@
 
 #include "common.h"
 
-#include <string>
-#include <vector>
-#include <unordered_map>
-#include <unordered_set>
 #include <QStyledItemDelegate>
 #include <QTreeView>
 
 #include "qtcad/defines.h"
-#include "qtcad/QgModel.h"
 #include "qtcad/QgSignalFlags.h"
 
+class QgItem;
+class QgModel;
 
 class QTCAD_EXPORT QgTreeView : public QTreeView
 {
     Q_OBJECT
+    Q_DISABLE_COPY_MOVE(QgTreeView)
 
     public:
 	QgTreeView(QWidget *pparent, QgModel *treemodel);
-	~QgTreeView() {};
+	~QgTreeView() override = default;
 
-	QModelIndex selected();
-
-	void drawBranches(QPainter* painter, const QRect& rrect, const QModelIndex& index) const override;
-	QgModel *m = NULL;
+	QgModel *cadModel() const { return m_model; }
 
     protected:
+	void drawBranches(QPainter *painter, const QRect &rect, const QModelIndex &index) const override;
 	void resizeEvent(QResizeEvent *pevent) override;
 	void mousePressEvent(QMouseEvent *e) override;
 
@@ -67,19 +63,19 @@ class QTCAD_EXPORT QgTreeView : public QTreeView
 	//void expand_link(const QUrl &link);
 	void redo_expansions(void *);
 	void redo_highlights();
-	void selectionChanged(const QItemSelection &selected,
-		const QItemSelection &deselected) override;
 	void do_draw_toggle(const QModelIndex &index);
 	void qgitem_select_sync(QgItem *);
 	void do_view_update(QgViewUpdateFlags);
 
     private:
 	void header_state();
+	QgModel *m_model = nullptr;
 };
 
 class QTCAD_EXPORT gObjDelegate : public QStyledItemDelegate
 {
     Q_OBJECT
+    Q_DISABLE_COPY_MOVE(gObjDelegate)
 
     public:
 	gObjDelegate(QgTreeView *tv = NULL, QWidget *pparent = 0) : QStyledItemDelegate(pparent) {cadtreeview = tv  ;}

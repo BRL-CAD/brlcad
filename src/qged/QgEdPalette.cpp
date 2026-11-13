@@ -129,13 +129,14 @@ void
 QgEdPalette::makeCurrent(QWidget *w)
 {
     QTCAD_SLOT("QgEdPalette::makeCurrent", 1);
+    QgToolPaletteElement *selected = selectedElement();
     if (w == this) {
 	if (selected)
 	    palette_displayElement(selected);
 	emit interaction_mode(m_mode);
     } else {
 	if (selected)
-	    selected->button->setStyleSheet("");
+	    selected->buttonWidget()->setStyleSheet("");
     }
 }
 

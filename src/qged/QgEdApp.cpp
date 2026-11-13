@@ -101,7 +101,7 @@ qt_delete_io_handler(struct ged_subprocess *p, bu_process_io_t t)
 	return;
 
     QgConsole *c = ca->w->console;
-    QConsoleListener *listener = c->findListener(p, (int)t);
+    QgConsoleListener *listener = c->findListener(p, (int)t);
     if (listener) {
 	/* Stop readiness immediately, but queue retirement so this callback
 	 * cannot delete the listener while its activation is still active. */
@@ -655,25 +655,15 @@ void
 QgEdApp::element_selected(QgToolPaletteElement *el)
 {
     QTCAD_SLOT("QgEdApp::element_selected", 1);
-    if (!el->controls->isVisible()) {
+    QWidget *controls = el ? el->controlsWidget() : nullptr;
+    if (!controls || !controls->isVisible()) {
 	// Apparently this can happen when we have docked widgets
 	// closed and we click on the border between the view and
-	// the dock - need to avoid messing with the event filters
-	// if that happens or we break the user interactions.
+	// the dock.  Ignore such selections until the controls are visible.
 	return;
     }
 
     QgView *curr_view = w->CurrentDisplay();
-
-    if (m_legacy_event_filter) {
-	curr_view->clear_event_filter(m_legacy_event_filter);
-	m_legacy_event_filter = NULL;
-    }
-
-    if (el->use_event_filter) {
-	curr_view->add_event_filter(el->controls);
-	m_legacy_event_filter = el->controls;
-    }
     if (curr_view->view()) {
 	curr_view->view()->gv_width = curr_view->width();
 	curr_view->view()->gv_height = curr_view->height();
