@@ -248,6 +248,10 @@ class QTCAD_EXPORT QgModel : public QAbstractItemModel
 	~QgModel();
 	QgSession *session() const;
 	struct ged *ged() const;
+	/** Draw the database path represented by @p item. */
+	int draw(QgItem *item);
+	/** Erase the database path represented by @p item. */
+	int erase(QgItem *item);
 
 	// .g Db interface and containers
 	int run_cmd(struct bu_vls *msg, int argc, const char **argv);
@@ -439,6 +443,7 @@ class QTCAD_EXPORT QgModel : public QAbstractItemModel
 	struct db_i *model_dbip = NULL;
 	uint64_t model_revision = 0;
 	uintptr_t event_observer = 0;
+	uintptr_t scene_observer = 0;
 	int interaction_mode = 0;
 	std::string selection_set_name;
 	bool selection_batch_open = false;

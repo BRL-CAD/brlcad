@@ -30,9 +30,9 @@
 #include <vector>
 #include "../../../QgEdApp.h"
 
-#include "bu/malloc.h"
 #include "bg/aabb_ray.h"
 #include "bg/plane.h"
+#include "ged/scene.h"
 #include "ged/selection.h"
 
 #include "qtcad/QgSelectFilter.h"
@@ -70,6 +70,68 @@ cad_selected_paths(struct ged *gedp)
 
     bu_vls_free(&selected);
     return paths;
+}
+
+static enum ged_scene_status
+cad_scene_draw_paths(struct ged *gedp, ged_view_context *view,
+	const std::vector<std::string> &paths, int *changed)
+{
+    if (changed)
+	*changed = 0;
+    if (!gedp || !view || paths.empty())
+	return GED_SCENE_INVALID;
+
+    std::vector<const char *> path_values;
+    path_values.reserve(paths.size());
+    for (const std::string &path : paths)
+	path_values.push_back(path.c_str());
+
+    struct ged_scene_draw_request request;
+    ged_scene_draw_request_init(&request);
+    request.view = view;
+    request.paths = path_values.data();
+    request.path_count = path_values.size();
+
+    struct ged_scene_result *result = ged_scene_result_create();
+    if (!result)
+	return GED_SCENE_ERROR;
+    const enum ged_scene_status status = ged_scene_draw(gedp, &request,
+	result);
+    if (changed)
+	*changed = ged_scene_result_changed(result);
+    ged_scene_result_destroy(result);
+    return status;
+}
+
+static enum ged_scene_status
+cad_scene_erase_paths(struct ged *gedp, ged_view_context *view,
+	const std::vector<std::string> &paths, int *changed)
+{
+    if (changed)
+	*changed = 0;
+    if (!gedp || !view || paths.empty())
+	return GED_SCENE_INVALID;
+
+    struct ged_scene_result *result = ged_scene_result_create();
+    if (!result)
+	return GED_SCENE_ERROR;
+
+    enum ged_scene_status status = GED_SCENE_OK;
+    int scene_changed = 0;
+    for (const std::string &path : paths) {
+	struct ged_scene_erase_request request;
+	ged_scene_erase_request_init(&request);
+	request.view = view;
+	request.path = path.c_str();
+	status = ged_scene_erase(gedp, &request, result);
+	if (status != GED_SCENE_OK)
+	    break;
+	scene_changed |= ged_scene_result_changed(result);
+    }
+    if (changed)
+	*changed = scene_changed;
+    ged_scene_result_destroy(result);
+    return status;
 }
 
 CADViewSelector::CADViewSelector(QWidget *)
@@ -275,22 +337,24 @@ CADViewSelector::deselect_objs()
 }
 
 
-void
+int
 CADViewSelector::erase_objs()
 {
-    // erase_obj_bbox
-    const char **av = (const char **)bu_calloc(BU_PTBL_LEN(&cf->selected_set)+2, sizeof(char *), "av");
-    av[0] = "erase";
-    int scnt = 1;
+    if (!gedp || !gedp->ged_gvp)
+	return 0;
+
+    std::vector<std::string> paths;
+    paths.reserve(BU_PTBL_LEN(&cf->selected_set));
     for (size_t i = 0; i < BU_PTBL_LEN(&cf->selected_set); i++) {
 	struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(&cf->selected_set, i);
 	if (!s)
 	    continue;
-	av[i+1] = bu_vls_cstr(&s->s_name);
-	scnt++;
+	paths.push_back(bu_vls_cstr(&s->s_name));
     }
-    ged_exec_erase(gedp, scnt, av);
-    bu_free(av, "av");
+
+    int changed = 0;
+    return cad_scene_erase_paths(gedp, gedp->ged_gvp, paths, &changed) ==
+	GED_SCENE_OK && changed;
 }
 
 void
@@ -303,12 +367,10 @@ CADViewSelector::do_draw_selections()
     if (paths.empty())
 	return;
 
-    std::vector<const char *> argv = {"draw"};
-    for (const std::string &path : paths)
-	argv.push_back(path.c_str());
-    ged_exec_draw(gedp, (int)argv.size(), argv.data());
-
-    emit view_changed(QG_VIEW_DRAWN|QG_VIEW_SELECT);
+    int changed = 0;
+    if (cad_scene_draw_paths(gedp, gedp->ged_gvp, paths, &changed) ==
+	GED_SCENE_OK && changed)
+	emit view_changed(QG_VIEW_DRAWN|QG_VIEW_SELECT);
 }
 
 void
@@ -321,12 +383,10 @@ CADViewSelector::do_erase_selections()
     if (paths.empty())
 	return;
 
-    std::vector<const char *> argv = {"erase"};
-    for (const std::string &path : paths)
-	argv.push_back(path.c_str());
-    ged_exec_erase(gedp, (int)argv.size(), argv.data());
-
-    emit view_changed(QG_VIEW_DRAWN|QG_VIEW_SELECT);
+    int changed = 0;
+    if (cad_scene_erase_paths(gedp, gedp->ged_gvp, paths, &changed) ==
+	GED_SCENE_OK && changed)
+	emit view_changed(QG_VIEW_DRAWN|QG_VIEW_SELECT);
 }
 
 bool
@@ -363,8 +423,8 @@ CADViewSelector::eventFilter(QObject *o, QEvent *e)
 	return false;
 
     if (erase_from_scene_button->isChecked()) {
-	erase_objs();
-	emit view_changed(QG_VIEW_DRAWN);
+	if (erase_objs())
+	    emit view_changed(QG_VIEW_DRAWN);
 	bu_ptbl_reset(&cf->selected_set);
 	return true;
     }

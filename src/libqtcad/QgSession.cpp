@@ -16,7 +16,6 @@
 #include "common.h"
 
 #include "ged.h"
-#include "../libged/dbi.h"
 #include "qtcad/QgSession.h"
 
 QgSession::QgSession(QObject *parent)
@@ -27,8 +26,6 @@ QgSession::QgSession(QObject *parent)
 
 QgSession::~QgSession()
 {
-    delete static_cast<DbiState *>(m_gedp->dbi_state);
-    m_gedp->dbi_state = nullptr;
     ged_close(m_gedp);
     m_gedp = nullptr;
 }

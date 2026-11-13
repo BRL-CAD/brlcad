@@ -33,12 +33,11 @@
 #include <QMenu>
 #include <QMouseEvent>
 #include <QUrl>
+#include "ged/scene.h"
 #include "qtcad/QgModel.h"
 #include "qtcad/QgTreeSelectionModel.h"
 #include "qtcad/QgTreeView.h"
 #include "qtcad/QgSignalFlags.h"
-
-#include "../libged/dbi.h"
 
 void gObjDelegate::paint(QPainter *painter, const QStyleOptionViewItem &option, const QModelIndex &index) const
 {
@@ -298,31 +297,12 @@ QgTreeView::do_draw_toggle(const QModelIndex &index)
     QTCAD_SLOT("QgTreeView::do_draw_toggle", 1);
     QgItem *cnode = static_cast<QgItem *>(index.internalPointer());
 
-    struct ged *gedp = m->ged();
-    if (!gedp)
-	return;
-
-    struct bview *v = gedp->ged_gvp;
-    if (!v)
-	return;
-
-    DbiState *dbis = (DbiState *)gedp->dbi_state;
-    BViewState *sv =  dbis->get_view_state(v);
-    if (!sv)
-	return;
-
-    std::vector<unsigned long long> path_hashes = cnode->path_items();
-    unsigned long long phash = dbis->path_hash(path_hashes, 0);
-    if (!sv->is_hdrawn(-1, phash)) {
-	sv->add_hpath(path_hashes);
-	std::unordered_set<struct bview *> views;
-	views.insert(v);
-	sv->redraw(NULL, views, 1);
-    } else {
-	unsigned long long c_hash = path_hashes[path_hashes.size() - 1];
-	path_hashes.pop_back();
-	sv->erase_hpath(-1, c_hash, path_hashes, true);
-    }
+    int state = index.data(QgModel::DrawnDisplayRole).toInt();
+    if (state == GED_SCENE_PATH_NOT_DRAWN)
+	(void)m->draw(cnode);
+    if (state == GED_SCENE_PATH_DRAWN ||
+	state == GED_SCENE_PATH_PARTIALLY_DRAWN)
+	(void)m->erase(cnode);
 }
 
 void

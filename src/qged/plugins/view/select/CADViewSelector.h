@@ -82,7 +82,7 @@ signals:
     private:
 	void select_objs();
 	void deselect_objs();
-	void erase_objs();
+	int erase_objs();
 
 	QgSelectFilter *cf = NULL;
 	QgSelectPntFilter *pf;

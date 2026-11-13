@@ -19,6 +19,7 @@
 #include <QtTest/QTest>
 
 #include "ged.h"
+#include "ged/scene.h"
 #include "ged/selection.h"
 #include "qtcad/QgModel.h"
 #include "qtcad/QgSession.h"
@@ -178,12 +179,43 @@ QgSessionTest::reconcilesModelEvents()
     QVERIFY(dataChanges.count() > changesBeforeAttribute);
     QVERIFY(persistentKeepIndex.isValid());
 
+    QCOMPARE(model.data(eventIndex, QgModel::DrawnDisplayRole).toInt(),
+	int(GED_SCENE_PATH_NOT_DRAWN));
+    int dataChangesBeforeDraw = dataChanges.count();
     QCOMPARE(model.draw("event.s"), BRLCAD_OK);
     QCOMPARE(viewChanges.count(), 1);
     QCOMPARE(compatibilityViewChanges.count(), 1);
+    QCOMPARE(model.data(eventIndex, QgModel::DrawnDisplayRole).toInt(),
+	int(GED_SCENE_PATH_DRAWN));
+    QVERIFY(dataChanges.count() > dataChangesBeforeDraw);
+    int dataChangesBeforeErase = dataChanges.count();
     QCOMPARE(model.erase("event.s"), BRLCAD_OK);
     QCOMPARE(viewChanges.count(), 2);
     QCOMPARE(compatibilityViewChanges.count(), 2);
+    QCOMPARE(model.data(eventIndex, QgModel::DrawnDisplayRole).toInt(),
+	int(GED_SCENE_PATH_NOT_DRAWN));
+    QVERIFY(dataChanges.count() > dataChangesBeforeErase);
+
+    const char *presentPaths[] = {"event.s"};
+    struct ged_scene_draw_request sceneRequest;
+    ged_scene_draw_request_init(&sceneRequest);
+    sceneRequest.view = model.ged()->ged_gvp;
+    sceneRequest.paths = presentPaths;
+    sceneRequest.path_count = 1;
+    sceneRequest.autoview = 1;
+    struct ged_scene_result *sceneResult = ged_scene_result_create();
+    QVERIFY(sceneResult != nullptr);
+    int dataChangesBeforeFacadeDraw = dataChanges.count();
+    QCOMPARE(ged_scene_draw(model.ged(), &sceneRequest, sceneResult),
+	GED_SCENE_OK);
+    QCOMPARE(ged_scene_result_changed(sceneResult), 1);
+    ged_scene_result_destroy(sceneResult);
+    QVERIFY(dataChanges.count() > dataChangesBeforeFacadeDraw);
+    QCOMPARE(model.data(eventIndex, QgModel::DrawnDisplayRole).toInt(),
+	int(GED_SCENE_PATH_DRAWN));
+    QCOMPARE(viewChanges.count(), 2);
+    QCOMPARE(compatibilityViewChanges.count(), 2);
+    QCOMPARE(model.erase("event.s"), BRLCAD_OK);
 
     const char *groupArguments[] = {"g", "event.g", "event.s"};
     QCOMPARE(model.run_cmd(model.ged()->ged_result_str, 3, groupArguments),

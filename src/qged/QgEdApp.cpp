@@ -23,22 +23,20 @@
  *
  */
 
-#include <set>
-#include <unordered_set>
 #include <QFileInfo>
 #include <QFile>
 #include <QPlainTextEdit>
 #include <QTextStream>
 #include "bu/malloc.h"
 #include "bu/file.h"
+#include "ged/db_index.h"
+#include "ged/scene.h"
 #include "ged/selection.h"
 #include "qtcad/QgGeomImport.h"
 #include "qtcad/QgTreeSelectionModel.h"
 #include "QgEdApp.h"
 #include "fbserv.h"
 #include "QgEdFilter.h"
-
-#include "../libged/dbi.h"
 
 int
 qged_pre_opendb_clbk(int UNUSED(ac), const char **UNUSED(av), void *UNUSED(gedp), void *UNUSED(ctx))
@@ -332,24 +330,11 @@ QgEdApp::do_view_changed(unsigned long long flags)
     QTCAD_SLOT("QgEdApp::do_view_changed", 1);
 
     if (flags & QG_VIEW_DRAWN) {
-	// For all associated view states, execute any necessary changes to
-	// view objects and lists
-	std::unordered_map<BViewState *, std::unordered_set<struct bview *>> vmap;
-	struct bu_ptbl *views = bv_set_views(&mdl->ged()->ged_views);
-	if (mdl->ged()->dbi_state) {
-	    DbiState *dbis = (DbiState *)mdl->ged()->dbi_state;
-	    for (size_t i = 0; i < BU_PTBL_LEN(views); i++) {
-		struct bview *v = (struct bview *)BU_PTBL_GET(views, i);
-		BViewState *bvs = dbis->get_view_state(v);
-		if (!bvs)
-		    continue;
-		vmap[bvs].insert(v);
-	    }
-	    std::unordered_map<BViewState *, std::unordered_set<struct bview *>>::iterator bv_it;
-	    for (bv_it = vmap.begin(); bv_it != vmap.end(); bv_it++) {
-		bv_it->first->redraw(NULL, bv_it->second, 1);
-	    }
-	}
+	struct ged_scene_redraw_request request;
+	ged_scene_redraw_request_init(&request);
+	if (ged_scene_available(mdl->ged()) &&
+		ged_scene_redraw(mdl->ged(), &request, NULL) != GED_SCENE_OK)
+	    bu_log("Unable to refresh the retained scene\n");
     }
 
     emit view_update(flags);
@@ -392,12 +377,8 @@ qged_view_update(struct ged *gedp)
 {
     int view_flags = 0;
 
-    if (!gedp->dbi_state)
-	return view_flags;
-
-    DbiState *dbis = (DbiState *)gedp->dbi_state;
-    unsigned long long updated = dbis->update();
-    if (updated & GED_DBISTATE_VIEW_CHANGE)
+    unsigned long long updated = ged_db_index_refresh_flags(gedp);
+    if (updated & GED_DB_INDEX_REFRESH_VIEW_CHANGE)
 	view_flags |= QG_VIEW_DRAWN;
 
     return view_flags;
