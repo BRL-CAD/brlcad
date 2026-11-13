@@ -18,12 +18,26 @@
 #ifndef CREO_SHARED_CONVERSION_OPTIONS_H
 #define CREO_SHARED_CONVERSION_OPTIONS_H
 
+#include <stddef.h>
 #include <stdint.h>
-#include <bu/str.h>
 
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+static inline int
+creo_brl_token_equals(const char *left, const char *right)
+{
+    size_t index = 0;
+
+    if (!left || !right)
+        return 0;
+
+    while (left[index] != '\0' && left[index] == right[index])
+        ++index;
+
+    return left[index] == right[index];
+}
 
 enum creo_brl_conversion_log_type {
     CREO_BRL_CONVERSION_LOG_NONE = -1,
@@ -91,13 +105,13 @@ creo_brl_parse_log_type_token(const char *token, int32_t *log_type)
     if (!token || !log_type)
         return 0;
 
-    if (bu_strcmp(token, CREO_BRL_OPTION_TOKEN_LOG_FAILURE) == 0) 
+    if (creo_brl_token_equals(token, CREO_BRL_OPTION_TOKEN_LOG_FAILURE))
         *log_type = CREO_BRL_CONVERSION_LOG_FAILURE;
-    else if (bu_strcmp(token, CREO_BRL_OPTION_TOKEN_LOG_SUCCESS) == 0)
+    else if (creo_brl_token_equals(token, CREO_BRL_OPTION_TOKEN_LOG_SUCCESS))
         *log_type = CREO_BRL_CONVERSION_LOG_SUCCESS;
-    else if (bu_strcmp(token, CREO_BRL_OPTION_TOKEN_LOG_FAILURE_OR_SUCCESS) == 0)
+    else if (creo_brl_token_equals(token, CREO_BRL_OPTION_TOKEN_LOG_FAILURE_OR_SUCCESS))
         *log_type = CREO_BRL_CONVERSION_LOG_FAILURE_OR_SUCCESS;
-    else if (bu_strcmp(token, CREO_BRL_OPTION_TOKEN_LOG_ALL) == 0)
+    else if (creo_brl_token_equals(token, CREO_BRL_OPTION_TOKEN_LOG_ALL))
         *log_type = CREO_BRL_CONVERSION_LOG_ALL;
     else
         return 0;
@@ -124,11 +138,11 @@ creo_brl_parse_xform_mode_token(const char *token, int32_t *xform_mode)
     if (!token || !xform_mode)
         return 0;
 
-    if (bu_strcmp(token, CREO_BRL_OPTION_TOKEN_XFORM_X_TO_Z) == 0)
+    if (creo_brl_token_equals(token, CREO_BRL_OPTION_TOKEN_XFORM_X_TO_Z))
         *xform_mode = CREO_BRL_CONVERSION_XFORM_X_TO_Z;
-    else if (bu_strcmp(token, CREO_BRL_OPTION_TOKEN_XFORM_Y_TO_Z) == 0)
+    else if (creo_brl_token_equals(token, CREO_BRL_OPTION_TOKEN_XFORM_Y_TO_Z))
         *xform_mode = CREO_BRL_CONVERSION_XFORM_Y_TO_Z;
-    else if (bu_strcmp(token, CREO_BRL_OPTION_TOKEN_XFORM_NONE) == 0)
+    else if (creo_brl_token_equals(token, CREO_BRL_OPTION_TOKEN_XFORM_NONE))
         *xform_mode = CREO_BRL_CONVERSION_XFORM_NONE;
     else
         return 0;
@@ -150,9 +164,9 @@ creo_brl_parse_chord_mode_token(const char *token, int32_t *chord_mode)
     if (!token || !chord_mode)
         return 0;
 
-    if (bu_strcmp(token, CREO_BRL_OPTION_TOKEN_CHORD_ABSOLUTE) == 0)
+    if (creo_brl_token_equals(token, CREO_BRL_OPTION_TOKEN_CHORD_ABSOLUTE))
         *chord_mode = CREO_BRL_CONVERSION_CHORD_ABSOLUTE;
-    else if (bu_strcmp(token, CREO_BRL_OPTION_TOKEN_CHORD_RELATIVE) == 0)
+    else if (creo_brl_token_equals(token, CREO_BRL_OPTION_TOKEN_CHORD_RELATIVE))
         *chord_mode = CREO_BRL_CONVERSION_CHORD_RELATIVE;
     else
         return 0;
