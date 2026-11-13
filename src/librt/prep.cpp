@@ -214,7 +214,9 @@ rt_i_clear(struct rt_i *rtip)
 {
     RT_CK_RTI(rtip);
 
-    rt_clean(rtip);
+    // Animation belongs to the shared database, not this instance. The final
+    // database close releases it; explicit rt_clean() still resets articulation.
+    rt_clean_geometry(rtip);
 
     db_close_client(rtip->rti_dbip, (long *)rtip);
     rtip->rti_dbip = (struct db_i *)NULL;
@@ -1131,8 +1133,8 @@ rt_get_solidbitv(size_t nbits, struct resource *resp)
  * Note that an animation script can invoke a "clean" operation before
  * anything has been prepped.
  */
-void
-rt_clean(struct rt_i *rtip)
+static void
+rt_clean_impl(struct rt_i *rtip, bool clear_animations)
 {
     struct region *regp;
     struct bu_list *head;
@@ -1193,7 +1195,7 @@ rt_clean(struct rt_i *rtip)
 
     /* Free animation structures */
     /* XXX modify to only free those from this rtip */
-    if (rtip->rti_dbip)
+    if (clear_animations && rtip->rti_dbip)
 	db_free_anim(rtip->rti_dbip);
 
     /* Free array of solid table pointers indexed by solid ID */
@@ -1284,6 +1286,20 @@ rt_clean(struct rt_i *rtip)
 
     rtip->rti_magic = RTI_MAGIC;
     rtip->needprep = 1;
+}
+
+
+void
+rt_clean(struct rt_i *rtip)
+{
+    rt_clean_impl(rtip, true);
+}
+
+
+void
+rt_clean_geometry(struct rt_i *rtip)
+{
+    rt_clean_impl(rtip, false);
 }
 
 

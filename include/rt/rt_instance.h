@@ -298,6 +298,15 @@ int rt_plot_solid(
 
 /* Release storage assoc with rt_i */
 RT_EXPORT extern void rt_clean(struct rt_i *rtip);
+
+/**
+ * Invalidate prepared geometry and release its resources as rt_clean() does,
+ * retaining database animation commands for the next rt_gettrees() call.
+ * Use this when changing the selected objects without resetting articulation.
+ * Call only when no raytracing or tree loading is in progress.
+ */
+RT_EXPORT extern void rt_clean_geometry(struct rt_i *rtip);
+
 RT_EXPORT extern int rt_del_regtree(struct rt_i *rtip,
 				    struct region *delregp);
 

@@ -1,5 +1,8 @@
 set(RT_TEST_LIBS "librt;${M_LIBRARY}")
 
+brlcad_addexec(rt_animation_lifetime animation_lifetime.cpp "librt;libwdb;libbu" TEST)
+brlcad_add_test(NAME rt_animation_lifetime COMMAND rt_animation_lifetime)
+
 brlcad_addexec(rt_arb_uv arb_uv.cpp "librt;libwdb;libbu;Threads::Threads" TEST)
 brlcad_add_test(NAME rt_arb_uv COMMAND rt_arb_uv)
 
