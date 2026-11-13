@@ -107,12 +107,35 @@ then uses that same saved camera for both renderers.
 
 === Other sample sky candidates
 
-`cube.g` registers `envmap.r` with the `envmap cloud` shader and also
-retains a `cloud.r.bak` shell setup.  `sphflake.g` registers `environ.r`
-with `envmap cloud`.  In liboptical, an `envmap` region registers a shader
-for ray misses and is removed from the traced geometry.  These are useful
-follow-on examples for a procedural or image-based art environment; a
-constant color is not an equivalent replacement for their cloud pattern.
+The sample databases contain two distinct legacy sky arrangements:
+
+[cols="1,1,2",options="header"]
+|===
+|Database |Sky object |Legacy arrangement
+|`galileo.g` |`clouds` |`cloud` shader on an outer sphere minus an inner sphere
+|`cray.g` |`cloud.r` |`cloud` shell, additionally clipped by `plate`
+|`world.g` |`cloud.r` |`cloud` shader on a spherical shell
+|`wave.g` |`clouds.r` |`cloud` shader on a spherical shell
+|`bldg391.g` |`cloud.r` |`cloud` shader on an offset spherical shell
+|`cube.g` |`envmap.r` |`envmap cloud`; also retains a `cloud.r.bak` shell
+|`sphflake.g` |`environ.r` |`envmap cloud`, using `light0` as its registration geometry
+|===
+
+In liboptical, an `envmap` region registers a shader for ray misses and is
+removed from the traced geometry.  Its registration geometry should not
+become an ordinary art surface.  By contrast, the `cloud` shells above
+are traced geometry.  The legacy `cloud` shader produces a UV-based color
+pattern; it does not itself describe a participating cloud volume.
+
+`sphflake.g` is a useful next environment example because its reflective
+subjects can demonstrate the same cloud pattern in the background and
+reflections.  `bldg391.g` would then demonstrate replacing a surrounding
+shell in an architectural scene.  Both need a procedural or image-based
+art environment: a constant color does not preserve their cloud pattern.
+Keep subject framing independent of the removed sky geometry, preserve
+that geometry in the authored database for inspection, and check panorama
+seams, poles, reflections, and illumination as well as camera appearance.
+These are follow-on candidates; Star is the completed sky recipe here.
 
 `earth.g` has a cloud/glass stack on `troposphere.c`.  Treat that as an
 atmosphere/material case: removing a physical layer requires separate
