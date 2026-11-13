@@ -30,33 +30,67 @@
 
 #include "common.h"
 
-#include <errno.h>
-#include <limits.h>
 #include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
 #include "bio.h"
 
+#include "bu/arg.h"
 #include "bu/app.h"
+#include "bu/exit.h"
 #include "bu/log.h"
 #include "bu/malloc.h"
-#include "bu/arg.h"
 #include "bu/str.h"
 
 
-#define USAGE "Usage: bwthresh values ...\n"
+struct bwthresh_args {
+    int help;
+};
+
+static const struct bu_arg_option bwthresh_options[] = {
+    BU_ARG_FLAG("h", "help", struct bwthresh_args, help,
+	"Print help and exit"),
+    BU_ARG_ALIAS("?", NULL, "help", 1),
+    BU_ARG_OPTION_NULL
+};
+
+static const struct bu_arg_operand bwthresh_operands[] = {
+    BU_ARG_OPERAND_INTEGER_RANGE("threshold", 1, 255, 1, 0, 1, 255,
+	"Strictly increasing grayscale threshold", NULL),
+    BU_ARG_OPERAND_NULL
+};
 
 static int
-parse_threshold_arg(const char *arg, int *out_value)
+bwthresh_validate(const struct bu_arg_schema *UNUSED(schema), size_t argc,
+	const char **argv, size_t cursor_arg, struct bu_arg_validate_result *result)
 {
-    struct bu_vls msg = BU_VLS_INIT_ZERO;
-    int valid = bu_arg_integer_range_from_str(&msg, out_value, arg, 10, 0, 255);
+    if (!result || cursor_arg < argc || result->state == BU_ARG_VALIDATE_INVALID)
+	return 0;
 
-    if (!valid)
-	bu_log("%s: threshold: %s\n", bu_getprogname(), bu_vls_cstr(&msg));
-    bu_vls_free(&msg);
-    return valid;
+    size_t index = argc > 0 && BU_STR_EQUAL(argv[0], "--") ? 1 : 0;
+    int previous = -1;
+    for (; index < argc; index++) {
+	int threshold;
+	if (!bu_arg_integer_range_from_str(NULL, &threshold, argv[index], 10, 0, 255))
+	    return 0;
+	if (threshold <= previous) {
+	    result->state = BU_ARG_VALIDATE_INVALID;
+	    result->token_start = index;
+	    result->token_end = index + 1;
+	    result->hint = "threshold values must be strictly increasing";
+	    return 0;
+	}
+	previous = threshold;
+    }
+    return 0;
 }
+
+static const struct bu_arg_schema bwthresh_schema = BU_ARG_SCHEMA(
+    "bwthresh", "Quantize a BW stream into intensity bins",
+    bwthresh_options, bwthresh_operands, BU_ARG_PARSE_OPTIONS_FIRST,
+    BU_ARG_SCHEMA_META_HELP(NULL, NULL, bwthresh_validate, NULL, NULL));
+
+static const struct bu_arg_grammar bwthresh_grammar = {
+    &bwthresh_schema, NULL, NULL
+};
 
 
 int
@@ -67,38 +101,44 @@ main (int argc, char **argv)
     int nm_threshs;	/* How many thresholds? */
     int i;
     unsigned char *bin_color = (unsigned char *)0;/* resultant pixel values */
+    struct bwthresh_args args = {0};
+    struct bu_vls msg = BU_VLS_INIT_ZERO;
 
     bu_setprogname(argv[0]);
+
+    int introspection = bu_arg_introspect(&msg, &bwthresh_grammar, argc - 1,
+	(const char * const *)(argv + 1));
+    if (introspection != 0) {
+	bu_flog(introspection > 0 ? stdout : stderr, "%s", bu_vls_cstr(&msg));
+	bu_vls_free(&msg);
+	return introspection > 0 ? 0 : 1;
+    }
+    int operand_index = bu_arg_schema_parse_complete(&bwthresh_schema, &args,
+	&msg, argc - 1, (const char **)(argv + 1));
+    if (operand_index < 0)
+	bu_exit(1, "%s", bu_vls_cstr(&msg));
+    bu_vls_free(&msg);
+    if (args.help) {
+	char *help = bu_arg_schema_help(&bwthresh_schema, "bwthresh");
+	bu_flog(stdout, "%s", help ? help : "");
+	bu_free(help, "bwthresh help");
+	return 0;
+    }
+
     setmode(fileno(stdin), O_BINARY);
     setmode(fileno(stdout), O_BINARY);
 
-    if (argc == 2 && (BU_STR_EQUAL(argv[1], "-h") || BU_STR_EQUAL(argv[1], "-?")))
-	bu_exit(1, "%s", USAGE);
-    if ((nm_threshs = argc - 1) < 1)
-	bu_exit(1, "%s", USAGE);
-
-    if (nm_threshs > 255) {
-	bu_exit(1, "bwthresh: Too many thresholds!\n");
-    }
+    nm_threshs = argc - operand_index - 1;
     thresh_val = (int *)bu_malloc((unsigned) (nm_threshs * sizeof(int)), "thresh_val");
     bin_color = (unsigned char *)bu_malloc((unsigned) ((nm_threshs + 1) * sizeof(unsigned char)), "bin_color");
 
     for (i = 0; i < nm_threshs; ++i) {
-	if (!parse_threshold_arg(*++argv, thresh_val + i)) {
-	    bu_log("bwthresh: Illegal threshold value: '%s'\n", *argv);
-	    bu_exit(1, "%s", USAGE);
-	}
-	if ((unsigned char) thresh_val[i] != thresh_val[i]) {
-	    bu_exit(1, "bwthresh: Threshold[%d] value %d out of range.  Need 0 <= value <= 255\n",
-		    i, thresh_val[i]);
-	}
-	if (i > 0) {
-	    if (thresh_val[i] <= thresh_val[i - 1]) {
-		bu_exit(1, "bwthresh: Threshold values not strictly increasing\n");
-	    }
-	}
+	const char *value = argv[operand_index + i + 1];
+	if (!bu_arg_integer_range_from_str(&msg, thresh_val + i, value, 10, 0, 255))
+	    bu_exit(1, "bwthresh: threshold: %s\n", bu_vls_cstr(&msg));
 	bin_color[i] = 256 * i / nm_threshs;
     }
+    bu_vls_free(&msg);
     bin_color[i] = 255;
 
     while ((Ch = getchar()) != EOF) {

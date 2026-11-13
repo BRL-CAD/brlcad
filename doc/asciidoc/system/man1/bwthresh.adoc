@@ -10,7 +10,7 @@ bwthresh - threshold a black-and-white bw file into intensity bins
 
 [source]
 ----
-bwthresh [-h | -?] _val_... < file.bw > output.bw
+bwthresh [-h | --help] _threshold_... < _file.bw_ > _output.bw_
 ----
 
 [[description]]
@@ -34,9 +34,8 @@ supplied.
 [[options]]
 == OPTIONS
 
-*-h*, *-?*::
-  Print a usage message and exit.  Recognized only when given as the sole
-  argument.
+*-h*, *--help*::
+  Print help and exit.
 
 _val_...::
   One or more threshold values.  Each must be an integer between 0 and 255
