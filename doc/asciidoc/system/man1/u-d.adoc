@@ -34,7 +34,10 @@ shorts is that of the host machine.
 [[options]]
 == OPTIONS
 
-*-n*::
+*-h*, *--help*::
+  Print command help and exit.
+
+*-n*, *--normalize*::
   Normalize the data. Each unsigned short is multiplied by 1/65536,
   mapping the full 0-65535 input range into the half-open interval
   [0.0, 1.0). This is mutually exclusive with an explicit _scale_.

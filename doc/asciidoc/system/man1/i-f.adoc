@@ -41,7 +41,10 @@ such as *dmod*(1) and *dconv*(1).
 [[options]]
 == OPTIONS
 
-*-n*::
+*-h*, *--help*::
+  Print command help and exit.
+
+*-n*, *--normalize*::
   Normalize: use a scale of 1/32768 so that full-range 16-bit signed
   input is mapped onto the range -1.0 to +1.0.  Mutually exclusive with
   a numeric _scale_ argument.

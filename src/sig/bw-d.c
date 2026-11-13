@@ -29,22 +29,14 @@
 
 #include "common.h"
 
-#include <stdlib.h> /* for atof() */
-#include <string.h>
 #include "bio.h"
 
 #include "bu/app.h"
 #include "bu/exit.h"
-#include "bu/str.h"
 #include "bu/snooze.h"
 #include "vmath.h"
 
-
-static void
-printusage(void)
-{
-    bu_exit(1, "Usage: bw-d [-n || scale] < unsigned_chars > doubles\n");
-}
+#include "scale_args.h"
 
 
 int
@@ -56,30 +48,24 @@ main(int argc, char **argv)
     int i, num;
     double scale = 1.0;
     size_t ret;
+    struct sig_scale_args args = {0};
 
     bu_setprogname(argv[0]);
+
+    int parse_status = sig_scale_args_parse(&args, "bw-d",
+	"Convert unsigned bytes to double-precision values", argc, argv);
+    if (parse_status <= 0)
+	return parse_status < 0 ? 1 : 0;
+    if (args.normalize)
+	scale = 1.0 / 255.0;
+    else if (args.has_scale)
+	scale = args.scale;
 
     fprintf(stderr,"DEPRECATION WARNING:  This command is scheduled for removal.  Please contact the developers if you use this command.\n\n");
     bu_snooze(BU_SEC2USEC(1));
 
-    if (argc == 1 && isatty(fileno(stdin)))
-	printusage();
-
-    if (BU_STR_EQUAL(argv[1], "-h") || BU_STR_EQUAL(argv[1], "-?"))
-	printusage();
-
-    if (argc > 1) {
-	if (BU_STR_EQUAL(argv[1], "-n"))
-	    scale = 1.0/255.0;
-	else
-	    scale = atof(argv[1]);
-	argc--;
-    }
-
-    if (argc > 1 || ZERO(scale) || isatty(fileno(stdin))) {
-	fprintf(stderr, "bad argument\n");
-	printusage();
-    }
+    if (isatty(fileno(stdin)))
+	bu_exit(1, "bw-d requires redirected binary input\n");
 
     while ((num = fread(&ibuf[0], sizeof(ibuf[0]), 512, stdin)) > 0) {
 	if (EQUAL(scale, 1.0)) {

@@ -29,14 +29,13 @@
 
 #include "common.h"
 
-#include <stdlib.h> /* for atof() */
-#include <string.h>
 #include "bio.h"
 
 #include "bu/app.h"
-#include "bu/str.h"
 #include "bu/exit.h"
 #include "vmath.h"
+
+#include "scale_args.h"
 
 
 int
@@ -48,20 +47,21 @@ main(int argc, char *argv[])
     int i, num;
     double scale = 1.0;
     size_t ret;
+    struct sig_scale_args args = {0};
 
     bu_setprogname(argv[0]);
 
-    if (argc > 1) {
-	if (BU_STR_EQUAL(argv[1], "-n"))
-	    scale = 1.0 / 65536.0;
-	else
-	    scale = atof(argv[1]);
-	argc--;
-    }
+    int parse_status = sig_scale_args_parse(&args, "u-d",
+	"Convert unsigned shorts to double-precision values", argc, argv);
+    if (parse_status <= 0)
+	return parse_status < 0 ? 1 : 0;
+    if (args.normalize)
+	scale = 1.0 / 65536.0;
+    else if (args.has_scale)
+	scale = args.scale;
 
-    if (argc > 1 || ZERO(scale) || isatty(fileno(stdin))) {
-	bu_exit(1, "Usage: u-d [-n || scale] < shorts > doubles\n");
-    }
+    if (isatty(fileno(stdin)))
+	bu_exit(1, "u-d requires redirected binary input\n");
 
     while ((num = fread(&ibuf[0], sizeof(ibuf[0]), 512, stdin)) > 0) {
 	if (EQUAL(scale, 1.0)) {

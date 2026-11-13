@@ -36,7 +36,10 @@ binary unsigned-short stream include *u-a*(1), *u-bw*(1), and *u-d*(1).
 [[options]]
 == OPTIONS
 
-*-n*::
+*-h*, *--help*::
+  Print command help and exit.
+
+*-n*, *--normalize*::
   Normalize the data, scaling every sample by 1/65536 so that the
   output values fall roughly between 0.0 and 1.0.
 
