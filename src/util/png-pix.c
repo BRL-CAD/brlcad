@@ -26,28 +26,51 @@
 #include "common.h"
 
 #include <stdlib.h>
-#include <math.h>
 #include "png.h"
 #include "bio.h"
 
-#include "vmath.h"
+#include "bu/arg.h"
 #include "bu/app.h"
-#include "bu/getopt.h"
+#include "bu/exit.h"
 #include "bu/log.h"
 #include "bu/malloc.h"
-#include "bn.h"
 
 
 static png_color_16 def_backgrd={ 0, 0, 0, 0, 0 };
-static int verbose=0;
 
-static const char *usage = "Usage: %s [-v] [png_input_file] > pix_output_file\n";
+struct png_pix_args {
+    int help;
+    int verbose;
+};
+
+static const struct bu_arg_option png_pix_options[] = {
+    BU_ARG_FLAG("h", "help", struct png_pix_args, help,
+	"Print help and exit"),
+    BU_ARG_ALIAS("?", NULL, "help", 1),
+    BU_ARG_FLAG("v", "verbose", struct png_pix_args, verbose,
+	"Print PNG metadata"),
+    BU_ARG_OPTION_NULL
+};
+
+static const struct bu_arg_operand png_pix_operands[] = {
+    BU_ARG_OPERAND("png-input-file", BU_ARG_VALUE_FILE, 0, 1,
+	"PNG input file (default: standard input)", NULL),
+    BU_ARG_OPERAND_NULL
+};
+
+static const struct bu_arg_schema png_pix_schema = BU_ARG_SCHEMA(
+    "png-pix", "Convert a PNG image to BRL-CAD PIX format",
+    png_pix_options, png_pix_operands, BU_ARG_PARSE_OPTIONS_FIRST,
+    BU_ARG_SCHEMA_META_HELP(NULL, NULL, NULL, NULL, NULL));
+
+static const struct bu_arg_grammar png_pix_grammar = {
+    &png_pix_schema, NULL, NULL
+};
 
 int
 main(int argc, char **argv)
 {
     int i;
-    int c;
     FILE *fp_in;
     png_structp png_p;
     png_infop info_p;
@@ -60,40 +83,46 @@ main(int argc, char **argv)
     unsigned char *image;
     unsigned char **rows;
     size_t ret;
+    struct png_pix_args args = {0};
+    struct bu_vls msg = BU_VLS_INIT_ZERO;
 
     bu_setprogname(argv[0]);
 
-    while ((c=bu_getopt(argc, argv, "v")) != -1) {
-	switch (c) {
-	    case 'v':
-		verbose = 1;
-		break;
-	    default:
-		bu_log("Illegal option (%c)\n", c);
-		bu_log(usage, argv[0]);
-		bu_exit(EXIT_FAILURE, "png-pix: Illegal option\n");
-	}
+    int introspection = bu_arg_introspect(&msg, &png_pix_grammar, argc - 1,
+	(const char * const *)(argv + 1));
+    if (introspection != 0) {
+	bu_flog(introspection > 0 ? stdout : stderr, "%s", bu_vls_cstr(&msg));
+	bu_vls_free(&msg);
+	return introspection > 0 ? 0 : 1;
+    }
+    int operand_index = bu_arg_schema_parse_complete(&png_pix_schema, &args,
+	&msg, argc - 1, (const char **)(argv + 1));
+    if (operand_index < 0)
+	bu_exit(1, "%s", bu_vls_cstr(&msg));
+    bu_vls_free(&msg);
+    if (args.help) {
+	char *help = bu_arg_schema_help(&png_pix_schema, "png-pix");
+	bu_flog(stdout, "%s", help ? help : "");
+	bu_free(help, "png-pix help");
+	return 0;
     }
 
-    if (bu_optind >= argc) {
+    argc -= operand_index + 1;
+    argv += operand_index + 1;
+
+    if (argc == 0) {
 	if (isatty(fileno(stdin))) {
-	    bu_log(usage, argv[0]);
 	    bu_exit(EXIT_FAILURE, "png-pix: Are you intending to type in a PNG format file??\n");
 	}
 	fp_in = stdin;
     } else {
-	if (argc > bu_optind + 1) {
-	    fprintf(stderr, "png-pix: excess argument(s) not supported\n");
-	    return 1;
-	}
-	if ((fp_in = fopen(argv[bu_optind], "rb")) == NULL) {
-	    perror(argv[bu_optind]);
+	if ((fp_in = fopen(argv[0], "rb")) == NULL) {
+	    perror(argv[0]);
 	    fprintf(stderr,
 		    "png-pix: cannot open \"%s\" for reading\n",
-		    argv[bu_optind]);
+		    argv[0]);
 	    return 1;
 	}
-	bu_optind++;
     }
 
     setmode(fileno(fp_in), O_BINARY);
@@ -134,7 +163,7 @@ main(int argc, char **argv)
     file_width = png_get_image_width(png_p, info_p);
     file_height = png_get_image_height(png_p, info_p);
 
-    if (verbose) {
+    if (args.verbose) {
 	switch (color_type) {
 	    case PNG_COLOR_TYPE_GRAY:
 		bu_log("color type: b/w (bit depth=%d)\n", bit_depth);
@@ -159,7 +188,7 @@ main(int argc, char **argv)
     }
 
     if (png_get_bKGD(png_p, info_p, &input_backgrd)) {
-	if (verbose && (color_type == PNG_COLOR_TYPE_GRAY_ALPHA ||
+	if (args.verbose && (color_type == PNG_COLOR_TYPE_GRAY_ALPHA ||
 			color_type == PNG_COLOR_TYPE_RGB_ALPHA))
 	    bu_log("background color: %d %d %d\n", input_backgrd->red, input_backgrd->green, input_backgrd->blue);
 	png_set_background(png_p, input_backgrd, PNG_BACKGROUND_GAMMA_FILE, 1, 1.0);
@@ -167,12 +196,12 @@ main(int argc, char **argv)
 	png_set_background(png_p, &def_backgrd, PNG_BACKGROUND_GAMMA_FILE, 0, 1.0);
 
     if (png_get_gAMA(png_p, info_p, &gammaval)) {
-	if (verbose)
+	if (args.verbose)
 	    bu_log("gamma: %g\n", gammaval);
 	png_set_gAMA(png_p, info_p, gammaval);
     }
 
-    if (verbose) {
+    if (args.verbose) {
 	if (png_get_interlace_type(png_p, info_p) == PNG_INTERLACE_NONE)
 	    bu_log("not interlaced\n");
 	else
@@ -193,9 +222,9 @@ main(int argc, char **argv)
 
     ret = fwrite(image, file_width*file_height*3, 1, stdout);
     if (ret < 1)
-	perror("fwrite");
+	bu_exit(EXIT_FAILURE, "png-pix: error writing output\n");
 
-    if (verbose) {
+    if (args.verbose) {
 	png_timep mod_time;
 	png_textp text;
 	int num_text;
@@ -209,6 +238,12 @@ main(int argc, char **argv)
 	    bu_log("Last modified: %d/%d/%d %d:%d:%d\n", mod_time->month, mod_time->day,
 		   mod_time->year, mod_time->hour, mod_time->minute, mod_time->second);
     }
+    png_destroy_read_struct(&png_p, &info_p, NULL);
+    bu_free(rows, "rows");
+    bu_free(image, "image");
+    if (fp_in != stdin)
+	fclose(fp_in);
+
     return 0;
 }
 

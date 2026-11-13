@@ -10,7 +10,7 @@ png-pix - convert a PNG image to a BRL-CAD pix image
 
 [source]
 ----
-png-pix [-v] [png_input_file] > pix_output_file
+png-pix [-v | --verbose] [png_input_file] > pix_output_file
 ----
 
 
@@ -29,10 +29,13 @@ bits, and any alpha channel is composited over the image background color.
 [[options]]
 == OPTIONS
 
-*-v*::
+*-v*, *--verbose*::
   Verbose. Print the PNG color type, bit depth, image dimensions, background
   color, gamma, interlace status, embedded text chunks, and modification time to
   standard error.
+
+*-h*, *-?*, *--help*::
+  Print command help and exit.
 
 [[examples]]
 == EXAMPLES
