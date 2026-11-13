@@ -46,9 +46,9 @@ run(INPUT_FILE "${WORK}/saved.view" "${EXEC}" ${RENDER_ARGS} -M
   -o "${WORK}/stream.png" "${DB}" all.g)
 run("${VEXEC}" check-matching-image "${WORK}/stream.png" "${WORK}/reference.png" 64 64)
 
+get_filename_component(program_directory "${EXEC}" DIRECTORY)
 if(UNIX)
   find_program(shell NAMES sh REQUIRED NO_CACHE)
-  get_filename_component(program_directory "${EXEC}" DIRECTORY)
   run_in("${WORK}" "${CMAKE_COMMAND}" -E env "PATH=${program_directory}:$ENV{PATH}"
     -- "${shell}" saved.sh ${RENDER_ARGS})
   run("${VEXEC}" check-matching-image "${WORK}/saved.png" "${WORK}/reference.png" 64 64)
@@ -65,3 +65,35 @@ if(NOT count EQUAL 2)
   message(FATAL_ERROR "Expected two completed frame writes, found ${count}")
 endif()
 run("${VEXEC}" check-matching-image "${WORK}/repeated.png" "${WORK}/reference.png" 64 64)
+
+# Output options are parsed from temporary command buffers. Exercise the
+# shared parser through art and, when installed, the native rt frontend.
+find_program(native_rt NAMES rt HINTS "${program_directory}" NO_DEFAULT_PATH NO_CACHE)
+set(OPTION_DB "${WORK}/output-options.g")
+run("${VEXEC}" create "${OPTION_DB}")
+set(OUTPUT_ARGS -P 2 -w 64 -n 64 -o discarded-initial-output.png)
+set(programs "${EXEC}")
+if(native_rt)
+  list(APPEND programs "${native_rt}")
+endif()
+foreach(program IN LISTS programs)
+  get_filename_component(name "${program}" NAME_WE)
+  set(directory "${WORK}/${name} output options")
+  file(MAKE_DIRECTORY "${directory}")
+  foreach(option IN ITEMS o O)
+    set(image "command selected ${option}.png")
+    set(input "${directory}/${option}.view")
+    # Switch output modes and replace a longer name before selecting the
+    # final one; later commands force reuse of released parser buffers.
+    file(WRITE "${input}" "opt -O discarded-longer-output-name.dpix;\n"
+      "opt -${option} \"${image}\"; viewsize 40; eye_pt 0 0 60;\n"
+      "orientation 0 0 0 1; start 0; clean; end;\n")
+    run_in("${directory}" INPUT_FILE "${input}" "${program}" ${OUTPUT_ARGS}
+      -M "${OPTION_DB}" mesh.r)
+    run("${VEXEC}" check-image "${directory}/${image}" 64 64)
+    if(EXISTS "${directory}/discarded-longer-output-name.dpix" OR
+        EXISTS "${directory}/discarded-initial-output.png")
+      message(FATAL_ERROR "Replaced output name was used by ${name}")
+    endif()
+  endforeach()
+endforeach()

@@ -290,6 +290,10 @@ shell and add art's pixel dimensions and worker count as arguments.  Keep
 `art` on `PATH` when executing the script.  An orthographic saved view needs no perspective override; a perspective saved
 view includes its field of view.
 
+Use `opt -o "image name.png";` in a command stream to change the output
+path for subsequent renders.  Output paths remain valid after the option
+command finishes, including quoted names containing spaces.
+
 The generated `-M` command stream contains `clean` before rendering.  `art`
 releases each render's project and procedural objects when the render ends;
 `clean` discards the prepared librt geometry, which is loaded and prepared
