@@ -730,6 +730,18 @@ art_renderer_root()
 }
 
 
+static int
+art_selected_objects(const char ***objects)
+{
+    if (cmd_objs) {
+	*objects = (const char **)cmd_objs->buffer;
+	return static_cast<int>(BU_PTBL_LEN(cmd_objs));
+    }
+    *objects = (const char **)objv;
+    return objc;
+}
+
+
 static asf::auto_release_ptr<asr::Project>
 build_project(std::ostream *report)
 {
@@ -810,19 +822,11 @@ build_project(std::ostream *report)
     /* discovered lights are collected by register_region() during the walk */
     art_lights.clear();
 
-    if (objc) {
-	if (db_walk_tree(APP.a_rt_i->rti_dbip, objc, (const char**)objv, 1, &state, register_region, NULL, NULL, &builder) < 0)
-	    builder.valid = false;
-    }
-    if (cmd_objs) {
-
-	size_t cmdobjc = BU_PTBL_LEN(cmd_objs);
-	const char** cmdobjv = (const char**)cmd_objs->buffer;
-	if (cmdobjc) {
-	    if (db_walk_tree(APP.a_rt_i->rti_dbip, (int)cmdobjc, cmdobjv, 1, &state, register_region, NULL, NULL, &builder) < 0)
-		builder.valid = false;
-	}
-    }
+    const char **objects = nullptr;
+    const int count = art_selected_objects(&objects);
+    if (count && db_walk_tree(APP.a_rt_i->rti_dbip, count, objects, 1,
+	&state, register_region, NULL, NULL, &builder) < 0)
+	builder.valid = false;
 
     if (builder.region_paths.empty()) {
 	bu_log("art: selection contains no regions\n");
@@ -1133,17 +1137,13 @@ art_prepare_geometry(struct rt_i* rtip)
 {
     RT_CK_RTI(rtip);
 
+    const char **objects = nullptr;
+    const int count = art_selected_objects(&objects);
+    if (count <= 0 || !objects) {
+	bu_log("art: no objects selected for rendering\n");
+	return false;
+    }
     if (BU_LIST_IS_EMPTY(&rtip->HeadRegion)) {
-	int count = objc;
-	const char **objects = (const char **)objv;
-	if (count == 0 && cmd_objs) {
-	    count = static_cast<int>(BU_PTBL_LEN(cmd_objs));
-	    objects = (const char **)cmd_objs->buffer;
-	}
-	if (count <= 0 || !objects) {
-	    bu_log("art: no objects selected for rendering\n");
-	    return false;
-	}
 	struct bu_vls times = BU_VLS_INIT_ZERO;
 	rt_prep_timer();
 	const int result = rt_gettrees(rtip, count, objects, static_cast<size_t>(npsw));
@@ -1339,9 +1339,22 @@ art_frame_filename(const char *filename, int frame)
 }
 
 
+static bool
+art_frame_command_ready()
+{
+    if (APP.a_rt_i)
+	return true;
+    bu_log("art: frame commands require -M input after database loading\n");
+    return false;
+}
+
+
 static int
 art_cm_start(const int UNUSED(argc), const char **argv)
 {
+    if (!art_frame_command_ready())
+	return -1;
+
     if (command_frames.pending) {
 	bu_log("art: frame %d has no end command before start\n", curframe);
 	return -1;
@@ -1368,6 +1381,9 @@ art_cm_start(const int UNUSED(argc), const char **argv)
 static int
 art_cm_end(const int UNUSED(argc), const char** UNUSED(argv))
 {
+    if (!art_frame_command_ready())
+	return -1;
+
     command_frames.pending = false;
     if (!art_frame_range_valid())
 	return -1;
@@ -1382,6 +1398,39 @@ art_cm_end(const int UNUSED(argc), const char** UNUSED(argv))
 	return -1;
     const std::string filename = art_frame_filename(outputfile, curframe);
     return art_process_scene(false, filename.c_str()) ? 0 : -1;
+}
+
+
+static int
+art_cm_unsupported(const int UNUSED(argc), const char **argv)
+{
+    bu_log("art: command '%s' is not supported\n", argv[0]);
+    return -1;
+}
+
+
+static bool
+art_bind_commands()
+{
+    bool have_start = false;
+    bool have_end = false;
+    for (auto *command = rt_do_tab; command->ct_cmd; ++command) {
+	if (BU_STR_EQUAL(command->ct_cmd, "start")) {
+	    command->ct_func = art_cm_start;
+	    have_start = true;
+	} else if (BU_STR_EQUAL(command->ct_cmd, "end")) {
+	    command->ct_func = art_cm_end;
+	    have_end = true;
+	} else if (BU_STR_EQUAL(command->ct_cmd, "multiview") ||
+	    BU_STR_EQUAL(command->ct_cmd, "_closedb")) {
+	    command->ct_func = art_cm_unsupported;
+	}
+    }
+    if (!have_start || !have_end) {
+	bu_log("art: ray tracing command table is missing frame commands\n");
+	return false;
+    }
+    return true;
 }
 
 
@@ -1407,13 +1456,26 @@ main(int argc, char **argv)
 
     struct rt_i* rtip;
     const char *title_file = NULL;
-    //const char *title_obj = NULL;	/* name of file and first object */
-    //int objs_free_argv = 0;
 
     bu_setprogname(argv[0]);
 
+    // Shared command handlers allocate the active selection lazily.
+    struct CommandObjectsGuard {
+	~CommandObjectsGuard() {
+	    if (!cmd_objs)
+		return;
+	    for (size_t index = 0; index < BU_PTBL_LEN(cmd_objs); ++index)
+		bu_free((char *)BU_PTBL_GET(cmd_objs, index), "command object");
+	    bu_ptbl_free(cmd_objs);
+	    BU_PUT(cmd_objs, struct bu_ptbl);
+	    cmd_objs = nullptr;
+	}
+    } command_objects_guard;
+
     // initialize options and overload menu before parsing
     init_defaults();
+    if (!art_bind_commands())
+	return BRLCAD_ERROR;
 
     /* Process command line options */
     int i = get_args(argc, (const char**)argv);
@@ -1441,23 +1503,14 @@ main(int argc, char **argv)
 
     title_file = argv[bu_optind];
     global_title_file = title_file;
-    //title_obj = argv[bu_optind + 1];
     if (!objv) {
 	objc = argc - bu_optind - 1;
 	if (objc) {
 	    objv = (char **)&(argv[bu_optind+1]);
-	} else {
-	    /* No objects in either input file or argv - try getting objs from
-	     * command processing.  Initialize the table. */
-	    BU_GET(cmd_objs, struct bu_ptbl);
-	    bu_ptbl_init(cmd_objs, 8, "initialize cmdobjs table");
-	    if (!matflag) {
-		// log and gracefully exit for now
-		bu_exit(EXIT_FAILURE, "No Region specified\n");
-	    }
+	} else if (!matflag) {
+	    bu_log("No Region specified\n");
+	    return BRLCAD_ERROR;
 	}
-    } else {
-	//objs_free_argv = 1;
     }
 
 
@@ -1490,30 +1543,14 @@ main(int argc, char **argv)
     if (matflag) {
 	char* buf;
 	int nret = 0;
-	bool have_start = false;
-	bool have_end = false;
-	for (auto *command = rt_do_tab; command->ct_cmd; ++command) {
-	    if (BU_STR_EQUAL(command->ct_cmd, "start")) {
-		command->ct_func = art_cm_start;
-		have_start = true;
-	    } else if (BU_STR_EQUAL(command->ct_cmd, "end")) {
-		command->ct_func = art_cm_end;
-		have_end = true;
-	    }
-	}
-	if (!have_start || !have_end) {
-	    bu_log("art: ray tracing command table is missing frame commands\n");
-	    return BRLCAD_ERROR;
-	}
-
 	while ((buf = rt_read_cmd(stdin)) != (char*)0) {
 	    RENDERER_LOG_INFO("cmd: %s \n", buf);
 	    nret = rt_do_cmd(APP.a_rt_i, buf, rt_do_tab);
 	    bu_free(buf, "rt_read_cmd command buffer");
-	    if (nret < 0 || command_frames.finished)
+	    if (nret != 0 || command_frames.finished)
 		break;
 	}
-	if (nret < 0)
+	if (nret != 0)
 	    return BRLCAD_ERROR;
 	if (ferror(stdin)) {
 	    bu_log("art: cannot read frame command stream\n");

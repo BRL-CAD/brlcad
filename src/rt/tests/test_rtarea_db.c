@@ -92,6 +92,8 @@ main(int argc, char **argv)
     failed |= make_region(wdbp, "back.r", "back.s");
     failed |= make_group(wdbp, "occluded.g", "front.r", "back.r");
 
+    failed |= db5_update_attribute("_GLOBAL", "default_object", "sphere.r", wdbp->dbip);
+
     wdb_close(wdbp);
     if (failed)
 	bu_log("Failed to create rtarea analytic regression geometry\n");

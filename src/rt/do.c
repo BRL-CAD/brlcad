@@ -93,6 +93,16 @@ enum view_command_flag {
 static unsigned int view_command_flags = 0;
 
 
+static int
+command_database_ready(const char *command)
+{
+    if (APP.a_rt_i)
+	return 1;
+    bu_log("%s requires an open database; use a command input stream\n", command);
+    return 0;
+}
+
+
 /**
  * Acquire particulars about a frame, in the old format.  Returns -1
  * if unable to acquire info, 0 if successful.
@@ -183,6 +193,9 @@ old_way(FILE *fp)
  */
 int cm_start(const int argc, const char **argv)
 {
+    if (!command_database_ready("start"))
+	return -1;
+
     char *buf = (char *)NULL;
     int frame;
 
@@ -314,6 +327,9 @@ int cm_orientation(const int argc, const char **argv)
 
 int cm_end(const int UNUSED(argc), const char **UNUSED(argv))
 {
+    if (!command_database_ready("end"))
+	return -1;
+
     struct rt_i *rtip = APP.a_rt_i;
 
     if (rtip && BU_LIST_IS_EMPTY(&rtip->HeadRegion) && !def_tree(rtip, NULL)) {
@@ -330,52 +346,89 @@ int cm_end(const int UNUSED(argc), const char **UNUSED(argv))
 
 
 
+static int
+command_object_add(const char *name)
+{
+    for (size_t index = 0; index < BU_PTBL_LEN(cmd_objs); ++index) {
+	const char *object = (const char *)BU_PTBL_GET(cmd_objs, index);
+	if (BU_STR_EQUAL(object, name))
+	    return 0;
+    }
+    bu_ptbl_ins(cmd_objs, (long *)bu_strdup(name));
+    return 1;
+}
+
+
+/* The command list becomes authoritative on the first selection edit.
+ * Keep owned copies: command buffers are released before the frame renders.
+ */
+static int
+command_objects_init(const char *command)
+{
+    if (!command_database_ready(command))
+	return 0;
+    if (!cmd_objs) {
+	BU_GET(cmd_objs, struct bu_ptbl);
+	bu_ptbl_init(cmd_objs, objc > 0 ? (size_t)objc : 0, "command objects");
+	for (int i = 0; i < objc; ++i)
+	    command_object_add(objv[i]);
+    }
+    return 1;
+}
+
+
+static void
+command_geometry_reset(void)
+{
+    if (BU_LIST_IS_EMPTY(&APP.a_rt_i->HeadRegion) && APP.a_rt_i->stats.nsolids == 0)
+	return;
+    view_cleanup(APP.a_rt_i);
+    rt_clean_geometry(APP.a_rt_i);
+}
+
+
 int cm_draw(const int argc, const char **argv)
 {
-    int i = 0;
-    size_t j = 0;
-    if (!cmd_objs || argc < 2) {
+    int changed = 0;
+    if (argc < 2)
 	return 0;
-    }
-    for (i = 1; i < argc; i++) {
-	int is_drawn = 0;
-	for (j = 0; j < BU_PTBL_LEN(cmd_objs); j++) {
-	    const char *dobj = (const char *)BU_PTBL_GET(cmd_objs, j);
-	    if (BU_STR_EQUAL(dobj, argv[1])) {
-		is_drawn = 1;
-		break;
-	    }
-	}
-	if (!is_drawn) {
-	    const char *ndraw = bu_strdup(argv[1]);
-	    bu_ptbl_ins(cmd_objs, (long *)ndraw);
-	}
-    }
+    if (!command_objects_init(argv[0]))
+	return -1;
+    for (int i = 1; i < argc; ++i)
+	changed |= command_object_add(argv[i]);
+    if (changed)
+	command_geometry_reset();
     return 0;
 }
 
+
 int cm_erase(const int argc, const char **argv)
 {
-    int i = 0;
-    size_t j = 0;
-    if (!cmd_objs) {
-	return 0;
-    }
-    for (i = 1; i < argc; i++) {
-	for (j = 0; j < BU_PTBL_LEN(cmd_objs); j++) {
-	    char *dobj = (char *)BU_PTBL_GET(cmd_objs, j);
-	    if (BU_STR_EQUAL(dobj, argv[1])) {
-		bu_ptbl_rm(cmd_objs, (long *)dobj);
-		bu_free(dobj, "free name");
+    int changed = 0;
+    if (!command_objects_init(argv[0]))
+	return -1;
+    for (int i = 1; i < argc; ++i) {
+	for (size_t j = 0; j < BU_PTBL_LEN(cmd_objs); ++j) {
+	    char *object = (char *)BU_PTBL_GET(cmd_objs, j);
+	    if (BU_STR_EQUAL(object, argv[i])) {
+		bu_ptbl_rm(cmd_objs, (long *)object);
+		bu_free(object, "command object");
+		changed = 1;
+		break;
 	    }
 	}
     }
+    if (changed)
+	command_geometry_reset();
     return 0;
 }
 
 
 int cm_prep(const int UNUSED(argc), const char **UNUSED(argv))
 {
+    if (!command_database_ready("prep"))
+	return -1;
+
     register struct rt_i *rtip = APP.a_rt_i;
     struct bu_vls times = BU_VLS_INIT_ZERO;
     int objcnt = 0;
@@ -390,14 +443,15 @@ int cm_prep(const int UNUSED(argc), const char **UNUSED(argv))
     objargv = (const char **)cmd_objs->buffer;
 
     rt_prep_timer();
-    if (rt_gettrees(rtip, objcnt, objargv, (size_t)npsw) < 0)
+    const int result = rt_gettrees(rtip, objcnt, objargv, (size_t)npsw);
+    if (result < 0)
 	bu_log("rt_gettrees() FAILED\n");
     (void)rt_get_timer(&times, NULL);
 
     if (rt_verbosity & VERBOSE_STATS)
 	bu_log("GETTREE: %s\n", bu_vls_addr(&times));
     bu_vls_free(&times);
-    return 0;
+    return result < 0 ? -1 : 0;
 }
 
 /* Object list for the "autoview" command: render the full tree but
@@ -434,28 +488,25 @@ int cm_autoview(const int argc, const char **argv)
 
 int cm_tree(const int argc, const char **argv)
 {
-    int i = 0;
-    size_t j = 0;
-
-    if (argc <= 1) {
+    if (argc <= 1)
 	return 0;
-    }
+    if (!command_objects_init(argv[0]))
+	return -1;
 
-    for (j = 0; j < BU_PTBL_LEN(cmd_objs); i++) {
-	char *dobj = (char *)BU_PTBL_GET(cmd_objs, i);
-	bu_free(dobj, "free object name");
-    }
+    for (size_t i = 0; i < BU_PTBL_LEN(cmd_objs); ++i)
+	bu_free((char *)BU_PTBL_GET(cmd_objs, i), "command object");
     bu_ptbl_reset(cmd_objs);
-    for (i = 1; i < argc; i++) {
-	const char *ndraw = bu_strdup(argv[i]);
-	bu_ptbl_ins(cmd_objs, (long *)ndraw);
-    }
-
-    return cm_prep(0,NULL);
+    if (cm_draw(argc, argv) < 0)
+	return -1;
+    return cm_prep(0, NULL);
 }
+
 
 int cm_multiview(const int UNUSED(argc), const char **UNUSED(argv))
 {
+    if (!command_database_ready("multiview"))
+	return -1;
+
     register struct rt_i *rtip = APP.a_rt_i;
     size_t i;
     static int a[] = {
@@ -487,11 +538,13 @@ int cm_multiview(const int UNUSED(argc), const char **UNUSED(argv))
  */
 int cm_anim(const int argc, const char **argv)
 {
-
+    if (!command_database_ready(argv[0]))
+	return -1;
     if (db_parse_anim(APP.a_rt_i->rti_dbip, argc, argv) < 0) {
 	bu_log("cm_anim:  %s %s failed\n", argv[1], argv[2]);
 	return -1;		/* BAD */
     }
+    command_geometry_reset();
     return 0;
 }
 
@@ -501,6 +554,9 @@ int cm_anim(const int argc, const char **argv)
  */
 int cm_clean(const int UNUSED(argc), const char **UNUSED(argv))
 {
+    if (!command_database_ready("clean"))
+	return -1;
+
     /* Allow lighting model clean up (e.g. lights, materials, etc.) */
     view_cleanup(APP.a_rt_i);
 
@@ -518,6 +574,9 @@ int cm_clean(const int UNUSED(argc), const char **UNUSED(argv))
  */
 int cm_closedb(const int UNUSED(argc), const char **UNUSED(argv))
 {
+    if (!command_database_ready("closedb"))
+	return -1;
+
     rt_i_destroy(APP.a_rt_i);
     APP.a_rt_i = RTI_NULL;
 
@@ -622,6 +681,19 @@ rtuif_tree_list(register struct rt_i *rtip, int *treec, const char ***treev, con
     if (first_obj)
 	*first_obj = NULL;
 
+    if (cmd_objs) {
+	const size_t count = BU_PTBL_LEN(cmd_objs);
+	if (!count)
+	    return 0;
+	if (treec)
+	    *treec = (int)count;
+	if (treev)
+	    *treev = (const char **)cmd_objs->buffer;
+	if (first_obj)
+	    *first_obj = (const char *)BU_PTBL_GET(cmd_objs, 0);
+	return 1;
+    }
+
     if (objv && objc > 0) {
 	if (treec)
 	    *treec = objc;
@@ -637,6 +709,12 @@ rtuif_tree_list(register struct rt_i *rtip, int *treec, const char ***treev, con
 
     ret = db_default_object(rtip->rti_dbip, &dp, &msg);
     if (ret == 1) {
+	/* Later edits must start with the default that was actually loaded. */
+	if (!command_objects_init("default selection")) {
+	    bu_vls_free(&msg);
+	    return 0;
+	}
+	command_object_add(dp->d_namep);
 	default_objv[0] = dp->d_namep;
 	default_objv[1] = NULL;
 	if (treec)
@@ -657,9 +735,8 @@ rtuif_tree_list(register struct rt_i *rtip, int *treec, const char ***treev, con
 /**
  * Load the active tree list from explicit objects or an automatic default.
  *
- * Returns non-zero when one or more objects were available and tree loading
- * was attempted.  Returns 0 when no explicit objects were provided and no
- * deterministic default object could be resolved.
+ * Returns non-zero when the selected or default objects loaded successfully.
+ * Returns 0 for an empty selection, an unresolved default, or a load failure.
  */
 int
 def_tree(register struct rt_i *rtip, const char **first_obj)
@@ -677,7 +754,8 @@ def_tree(register struct rt_i *rtip, const char **first_obj)
     rtip->rti_max_beam_radius = rt_app_cline_radius;
 
     rt_prep_timer();
-    if (rt_gettrees(rtip, treec, treev, (size_t)npsw) < 0) {
+    const int result = rt_gettrees(rtip, treec, treev, (size_t)npsw);
+    if (result < 0) {
 	bu_log("rt_gettrees(%s) FAILED\n", (treev && treev[0]) ? treev[0] : "ERROR");
     }
     (void)rt_get_timer(&times, NULL);
@@ -687,7 +765,7 @@ def_tree(register struct rt_i *rtip, const char **first_obj)
     bu_vls_free(&times);
     memory_summary();
 
-    return 1;
+    return result < 0 ? 0 : 1;
 }
 
 

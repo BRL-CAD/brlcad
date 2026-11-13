@@ -967,6 +967,14 @@ test_opt_command(void)
     reset_globals();
     MAKE_ARGV(av2, "rt", "--command", "set background=0/0/0");
     CALL_GET_ARGS(av2, 1);
+
+    reset_globals();
+    MAKE_ARGV(invalid, "rt", "-c", "not-a-command");
+    CALL_GET_ARGS(invalid, -1);
+
+    reset_globals();
+    MAKE_ARGV(selection, "rt", "-c", "tree all.g");
+    CALL_GET_ARGS(selection, -1);
 }
 
 

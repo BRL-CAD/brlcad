@@ -1,0 +1,134 @@
+# R E G R E S S - A R T - S E L E C T I O N . C M A K E
+# BRL-CAD
+#
+# Copyright (c) 2026 United States Government as represented by
+# the U.S. Army Research Laboratory.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions
+# are met:
+#
+# 1. Redistributions of source code must retain the above copyright
+# notice, this list of conditions and the following disclaimer.
+#
+# 2. Redistributions in binary form must reproduce the above
+# copyright notice, this list of conditions and the following
+# disclaimer in the documentation and/or other materials provided
+# with the distribution.
+#
+# 3. The name of the author may not be used to endorse or promote
+# products derived from this software without specific prior written
+# permission.
+#
+# THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS
+# OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+# WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+# ARE DISCLAIMED. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY
+# DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+# DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
+# GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+# INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+# WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+# NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+# SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+#
+set(WORK "@CMAKE_CURRENT_BINARY_DIR@/selection-output")
+set(LOG "${WORK}/art.log")
+file(REMOVE_RECURSE "${WORK}")
+file(MAKE_DIRECTORY "${WORK}/shaders" "${WORK}/cache")
+set(ENV{BU_DIR_CACHE} "${WORK}/cache")
+include("@CMAKE_CURRENT_SOURCE_DIR@/art_test_commands.cmake")
+configure_file("@CMAKE_CURRENT_BINARY_DIR@/art_emission.oso"
+  "${WORK}/shaders/art_emission.oso" COPYONLY)
+set(DB "${WORK}/scene.g")
+run("${VEXEC}" create-material "${DB}" art_emission)
+# Match the animated region's material and color in the authored reference.
+run("${VEXEC}" attr "${DB}" set instance_right.g rgb 255/32/16)
+set(RENDER_ARGS -P 2 -w 64 -n 64 -C 0/0/0 -p 0 -c "set samples=4"
+  -c "viewsize 80" -c "eye_pt 0 0 56.568542494923804" -c "orientation 0 0 0 1")
+foreach(object IN ITEMS all.g ball.r box.r cube.r instance_right.g)
+  run("${EXEC}" ${RENDER_ARGS} -o "${WORK}/${object}.png" "${DB}" "${object}")
+endforeach()
+
+function(render_stream name stream)
+  set(input "${WORK}/${name}.view")
+  file(WRITE "${input}" "${stream}\n")
+  run(INPUT_FILE "${input}" "${EXEC}" ${RENDER_ARGS} -M
+    -o "${WORK}/${name}.png" "${DB}" ${ARGN})
+endfunction()
+function(matches actual reference)
+  run("${VEXEC}" check-matching-image "${WORK}/${actual}.png" "${WORK}/${reference}.png" 64 64)
+endfunction()
+
+# An initially empty stream must keep every draw argument and deduplicate it.
+render_stream(draw "start 0; draw ball.r blue.g ball.r; prep; end;")
+matches(draw all.g)
+
+# A command-line selection seeds edits; both geometry and material walks change.
+render_stream(add "start 0; draw blue.g; end;" ball.r)
+matches(add all.g)
+file(WRITE "${WORK}/objects.txt" "ball.r\ncube.r\n")
+file(WRITE "${WORK}/object-file.view" "start 0; erase cube.r; draw blue.g; end;\n")
+run(INPUT_FILE "${WORK}/object-file.view" "${EXEC}" ${RENDER_ARGS}
+  -I "${WORK}/objects.txt" -M -o "${WORK}/object-file.png" "${DB}")
+matches(object-file all.g)
+render_stream(erase "start 0; erase ball.r blue.g; end;" ball.r blue.g cube.r)
+matches(erase cube.r)
+render_stream(duplicates "start 0; erase ball.r; end;" ball.r ball.r cube.r)
+matches(duplicates cube.r)
+render_stream(replace
+  "start 0; tree box.r; end; start 1; tree ball.r; end; start 2; tree ball.r blue.g; end;" all.g)
+matches(replace box.r)
+matches(replace.1 ball.r)
+matches(replace.2 all.g)
+
+# Matrix animation has an independently authored translated instance as a reference.
+# Selection edits retain it; explicit clean resets it without losing the selection.
+render_stream(articulation
+  "start 0; anim /ball.r matrix rmul translate 30 0 0; draw mesh.r; erase mesh.r; end;
+   start 1; tree box.r; end; start 2; tree ball.r; end; start 3; clean; end;" ball.r)
+matches(articulation instance_right.g)
+matches(articulation.1 box.r)
+matches(articulation.2 instance_right.g)
+matches(articulation.3 ball.r)
+render_stream(animation_only "start 0; anim /ball.r matrix rmul translate 30 0 0; end;" ball.r)
+matches(animation_only instance_right.g)
+
+# Material inspection must traverse the current selection.
+foreach(object IN ITEMS box.r empty.r)
+  set(input "${WORK}/inspect.view")
+  file(WRITE "${input}" "tree ${object}; end;\n")
+  run_command("${CMAKE_CURRENT_BINARY_DIR}" FALSE INPUT_FILE "${input}"
+    "${EXEC}" ${RENDER_ARGS} -c "set inspect_materials=1" -M "${DB}" all.g)
+  string(FIND "${command_output}" "region \"/${object}\"" selected_region)
+  if(selected_region EQUAL -1 OR command_output MATCHES "/all.g/ball.r")
+    message(FATAL_ERROR "Material inspection did not use the replacement selection: ${command_output}")
+  endif()
+endforeach()
+
+set(sentinel "preserve existing output")
+function(invalid_stream name diagnostic stream)
+  set(input "${WORK}/${name}.view")
+  set(image "${WORK}/${name}.png")
+  file(WRITE "${input}" "${stream}\n")
+  file(WRITE "${image}" "${sentinel}")
+  expect_failure_matching("${diagnostic}" INPUT_FILE "${input}" "${EXEC}" ${RENDER_ARGS}
+    -M -o "${image}" "${DB}" ball.r)
+  file(READ "${image}" retained)
+  if(NOT retained STREQUAL sentinel)
+    message(FATAL_ERROR "Invalid selection replaced existing output: ${name}")
+  endif()
+endfunction()
+invalid_stream(empty "no objects selected for rendering" "start 0; erase ball.r; end;")
+invalid_stream(missing_tree "rt_gettrees.*FAILED" "start 0; tree missing-object.r; end;")
+invalid_stream(missing_draw "loading geometry.*failed" "start 0; draw missing-object.r; end;")
+invalid_stream(missing_prep "rt_gettrees.*FAILED" "start 0; draw missing-object.r; prep; end;")
+foreach(command IN ITEMS "tree box.r" "draw box.r" "erase ball.r" "anim /ball.r matrix rmul translate 30 0 0" "start 0" "end" "prep" "clean" "multiview" "_closedb" "unknown-command")
+  expect_failure_matching("command failed" "${EXEC}" ${RENDER_ARGS} -c "${command}"
+    -o "${WORK}/invalid-inline.png" "${DB}" ball.r)
+endforeach()
+invalid_stream(unsupported_multiview "command 'multiview' is not supported" "multiview;")
+invalid_stream(unsupported_closedb "command '_closedb' is not supported" "_closedb;")
+if(EXISTS "${WORK}/invalid-inline.png")
+  message(FATAL_ERROR "An invalid inline command produced an image")
+endif()
