@@ -32,12 +32,12 @@
 #include "bio.h"
 
 #include "vmath.h"
+#include "bu/arg.h"
 #include "bu/app.h"
-#include "bu/getopt.h"
 #include "bu/cv.h"
 #include "bu/exit.h"
 #include "bu/log.h"
-#include "bu/opt.h"
+#include "bu/malloc.h"
 #include "bu/str.h"
 
 
@@ -124,6 +124,72 @@ char strarg[512];		/* string buffer */
 
 #define DEFAULT_SIZE 6.75	/* default output size in inches */
 
+struct plot3_ps_dimensions {
+    double width;
+    double height;
+};
+
+struct plot3_ps_args {
+    int help;
+    int encapsulated;
+    int center;
+    struct plot3_ps_dimensions dimensions;
+};
+
+static int
+plot3_ps_size_from_str(struct bu_vls *msg, const char *arg, void *storage)
+{
+    double size;
+
+    if (bu_arg_positive_number_validate(msg, arg) < 0 ||
+	!bu_arg_double_from_str(msg, &size, arg))
+	return -1;
+    if (storage) {
+	struct plot3_ps_dimensions *dimensions =
+	    (struct plot3_ps_dimensions *)storage;
+	dimensions->width = size;
+	dimensions->height = size;
+    }
+    return 0;
+}
+
+static const struct bu_arg_option plot3_ps_options[] = {
+    BU_ARG_FLAG("h", "help", struct plot3_ps_args, help,
+	"Print help and exit"),
+    BU_ARG_ALIAS("?", NULL, "help", 1),
+    BU_ARG_FLAG("e", "encapsulated", struct plot3_ps_args, encapsulated,
+	"Produce Encapsulated PostScript output"),
+    BU_ARG_FLAG("c", "center", struct plot3_ps_args, center,
+	"Center output on an 8.5 by 11 inch page"),
+    BU_ARG_CUSTOM("s", "size", struct plot3_ps_args, dimensions,
+	plot3_ps_size_from_str, "inches", "Set both output dimensions"),
+    BU_ARG_ALIAS("S", NULL, "size", 0),
+    BU_ARG_VALUE_VALIDATE("w", "width", struct plot3_ps_args,
+	dimensions.width, BU_ARG_VALUE_NUMBER, bu_arg_positive_number_validate,
+	"inches", "Set the output width"),
+    BU_ARG_ALIAS("W", NULL, "width", 0),
+    BU_ARG_VALUE_VALIDATE("n", "height", struct plot3_ps_args,
+	dimensions.height, BU_ARG_VALUE_NUMBER, bu_arg_positive_number_validate,
+	"inches", "Set the output height"),
+    BU_ARG_ALIAS("N", NULL, "height", 0),
+    BU_ARG_OPTION_NULL
+};
+
+static const struct bu_arg_operand plot3_ps_operands[] = {
+    BU_ARG_OPERAND("input", BU_ARG_VALUE_FILE, 0, 1,
+	"PLOT3 input file (default: standard input)", NULL),
+    BU_ARG_OPERAND_NULL
+};
+
+static const struct bu_arg_schema plot3_ps_schema = BU_ARG_SCHEMA(
+    "plot3-ps", "Convert a PLOT3 stream to PostScript",
+    plot3_ps_options, plot3_ps_operands, BU_ARG_PARSE_OPTIONS_FIRST,
+    BU_ARG_SCHEMA_META_HELP(NULL, NULL, NULL, NULL, NULL));
+
+static const struct bu_arg_grammar plot3_ps_grammar = {
+    &plot3_ps_schema, NULL, NULL
+};
+
 int encapsulated = 0;	/* encapsulated PostScript */
 int center = 0;		/* center output on 8.5 x 11 page */
 int width = 4096;		/* Our integer plotting space */
@@ -134,13 +200,9 @@ int xpoints;		/* output plot size in points */
 int ypoints;
 int page_dirty = 0;		/* to skip extra erases */
 
-static char Stdin[] = "[stdin]";
-static char *file_name;
+static const char Stdin[] = "[stdin]";
+static const char *file_name;
 static FILE *infp;
-
-static char usage[] = "\
-Usage: plot3-ps [-e] [-c] [-s|S inches_square]\n\
-	[-w|W width_inches] [-n|N height_inches] [<] file.plot3\n";
 
 int
 getshort(void)
@@ -287,7 +349,7 @@ NV\n\
 ";
 
 void
-prolog(FILE *fp, char *name, int w, int h)
+prolog(FILE *fp, const char *name, int w, int h)
 
 
 /* in points */
@@ -361,102 +423,56 @@ getargs(struct uplot *up)
 }
 
 
-static int
-parse_dimension(double *value, const char *arg, const char *name)
-{
-    if (!bu_opt_scan_double(arg, value, NULL) || *value <= 0.0) {
-	bu_flog(stderr, "plot3-ps: invalid output %s '%s'\n", name, arg);
-	return 0;
-    }
-    return 1;
-}
-
-
-int
-get_args(int argc, char **argv)
-{
-    int c;
-    double parsed = 0.0;
-
-    while ((c = bu_getopt(argc, argv, "ecs:w:n:S:W:N:h?")) != -1) {
-	switch (c) {
-	    case 'e':
-		/* Encapsulated PostScript */
-		encapsulated++;
-		break;
-	    case 'c':
-		center = 1;
-		break;
-	    case 'S':
-	    case 's':
-		/* square file size */
-		if (!parse_dimension(&parsed, bu_optarg, "size"))
-		    return 0;
-		outheight = outwidth = parsed;
-		break;
-	    case 'W':
-	    case 'w':
-		if (!parse_dimension(&parsed, bu_optarg, "width"))
-		    return 0;
-		outwidth = parsed;
-		break;
-	    case 'N':
-	    case 'n':
-		if (!parse_dimension(&parsed, bu_optarg, "height"))
-		    return 0;
-		outheight = parsed;
-		break;
-
-	    default:		/* 'h' '?' */
-		return 0;
-	}
-    }
-
-    if (bu_optind >= argc) {
-	if (isatty(fileno(stdin)))
-	    return 0;
-	file_name = Stdin;
-	infp = stdin;
-    } else {
-	file_name = argv[bu_optind];
-	bu_optind++;
-	if (argc > bu_optind) {
-	    fprintf(stderr, "plot3-ps: excess argument(s) not supported\n");
-	    return 0;
-	}
-	if ((infp = fopen(file_name, "rb")) == NULL) {
-	    fprintf(stderr,
-		    "plot3-ps: cannot open \"%s\" for reading\n",
-		    file_name);
-	    return 0;
-	}
-	/*fileinput++;*/
-    }
-
-    if (argc > bu_optind) {
-	fprintf(stderr, "plot3-ps: excess argument(s) not supported\n");
-	return 0;
-    }
-
-    return 1;		/* OK */
-}
-
-
 int
 main(int argc, char **argv)
 {
     int c;
     struct uplot *up;
+    struct plot3_ps_args args = {
+	0, 0, 0, {DEFAULT_SIZE, DEFAULT_SIZE}
+    };
+    struct bu_vls msg = BU_VLS_INIT_ZERO;
 
     bu_setprogname(argv[0]);
 
-    setmode(fileno(stdin), O_BINARY);
-    setmode(fileno(stdout), O_BINARY);
-
-    if (!get_args(argc, argv)) {
-	(void)fputs(usage, stderr);
-	bu_exit (1, NULL);
+    int introspection = bu_arg_introspect(&msg, &plot3_ps_grammar, argc - 1,
+	(const char * const *)(argv + 1));
+    if (introspection != 0) {
+	bu_flog(introspection > 0 ? stdout : stderr, "%s", bu_vls_cstr(&msg));
+	bu_vls_free(&msg);
+	return introspection > 0 ? 0 : 1;
     }
+    int operand_index = bu_arg_schema_parse_complete(&plot3_ps_schema, &args,
+	&msg, argc - 1, (const char **)(argv + 1));
+    if (operand_index < 0)
+	bu_exit(1, "%s", bu_vls_cstr(&msg));
+    bu_vls_free(&msg);
+    if (args.help) {
+	char *help = bu_arg_schema_help(&plot3_ps_schema, "plot3-ps");
+	bu_flog(stdout, "%s", help ? help : "");
+	bu_free(help, "plot3-ps help");
+	return 0;
+    }
+
+    encapsulated = args.encapsulated;
+    center = args.center;
+    outwidth = args.dimensions.width;
+    outheight = args.dimensions.height;
+
+    if (argc - operand_index - 1 == 1) {
+	file_name = argv[operand_index + 1];
+	infp = fopen(file_name, "rb");
+	if (!infp)
+	    bu_exit(1, "plot3-ps: cannot open '%s' for reading\n", file_name);
+    } else {
+	file_name = Stdin;
+	infp = stdin;
+	if (isatty(fileno(stdin)))
+	    bu_exit(1, "plot3-ps requires an input file or redirected input\n");
+    }
+
+    setmode(fileno(infp), O_BINARY);
+    setmode(fileno(stdout), O_BINARY);
 
     /* Default space */
     sp[0] = sp[1] = sp[2] = 0.0;	/* minimum */

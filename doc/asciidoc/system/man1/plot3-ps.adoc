@@ -10,7 +10,10 @@ plot3-ps - convert a plot3 UnixPlot file to PostScript
 
 [source]
 ----
-plot3-ps [-e] [-c] [-s|-S _inches_] [-w|-W _inches_] [-n|-N _inches_] [_file.plot3_]
+plot3-ps [-e|--encapsulated] [-c|--center]
+         [-s|-S|--size _inches_]
+         [-w|-W|--width _inches_]
+         [-n|-N|--height _inches_] [_file.plot3_]
 ----
 
 
@@ -35,23 +38,23 @@ plotting units by its bounding box.
 [[options]]
 == OPTIONS
 
-*-e*::
+*-e*, *--encapsulated*::
   Produce an Encapsulated PostScript (EPS) file rather than a complete
   page. Output size options are ignored in this mode.
 
-*-c*::
+*-c*, *--center*::
   Center the output on an 8.5 x 11 inch page. Has no effect with *-e*.
 
-*-s* _inches_, *-S* _inches_::
+*-s* _inches_, *-S* _inches_, *--size* _inches_::
   Set both the output width and height to _inches_ (a square image).
 
-*-w* _inches_, *-W* _inches_::
+*-w* _inches_, *-W* _inches_, *--width* _inches_::
   Set the output width to _inches_.
 
-*-n* _inches_, *-N* _inches_::
+*-n* _inches_, *-N* _inches_, *--height* _inches_::
   Set the output height to _inches_.
 
-*-h*, *-?*::
+*-h*, *-?*, *--help*::
   Print a usage message and exit.
 
 [[examples]]
