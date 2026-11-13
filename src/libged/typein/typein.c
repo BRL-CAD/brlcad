@@ -592,18 +592,11 @@ static const char *p_hrt[] = {
 };
 
 static const char *p_joint[] = {
-    "Enter X, Y, Z of the joint location: ",
+    "Parent instance path (empty for world): ",
+    "Child instance path: ",
+    "Enter X, Y, Z of the attachment location: ",
     "Enter Y: ",
-    "Enter Z: ",
-    "Enter X, Y, Z of vector1: ",
-    "Enter Y: ",
-    "Enter Z: ",
-    "Enter X, Y, Z of vector2: ",
-    "Enter Y: ",
-    "Enter Z: ",
-    "Enter joint value: ",
-    "Reference Path 1: ",
-    "Reference Path 2: "
+    "Enter Z: "
 };
 
 static const char *p_datum[] = {
@@ -3088,31 +3081,22 @@ hrt_in(struct ged *gedp, const char *cmd_argv[], struct rt_db_internal *intern)
 static int
 joint_in(struct ged *gedp, const char *cmd_argv[], struct rt_db_internal *intern)
 {
-    fastf_t vals[10];
-    int i, n;
     struct rt_joint_internal *jip;
-    n = 10;
+    point_t location = VINIT_ZERO;
 
-    intern->idb_major_type = DB5_MAJORTYPE_BRLCAD;
-    intern->idb_type = ID_JOINT;
-    intern->idb_meth = &OBJ[ID_JOINT];
-    intern->idb_ptr = bu_malloc(sizeof(struct rt_joint_internal), "rt_joint_internal");
+    if (OBJ[ID_JOINT].ft_make(&OBJ[ID_JOINT], intern, NULL, location, 1.0) != BRLCAD_OK)
+	return BRLCAD_ERROR;
     jip = (struct rt_joint_internal *)intern->idb_ptr;
-    jip->magic = RT_JOINT_INTERNAL_MAGIC;
-
-    for (i = 0; i < n - 1; i++) {
-	vals[i] = atof(cmd_argv[3 + i]) * gedp->dbip->dbi_local2base;
-    }
-    vals[n-1] = atof(cmd_argv[3 + n - 1]);
-
-    VMOVE(jip->location, &vals[0]);
-    VMOVE(jip->vector1, &vals[3]);
-    VMOVE(jip->vector2, &vals[6]);
-    jip->value = vals[9];
-    bu_vls_init(&jip->reference_path_1);
-    bu_vls_strcpy(&jip->reference_path_1, cmd_argv[3 + n]);
-    bu_vls_init(&jip->reference_path_2);
-    bu_vls_strcpy(&jip->reference_path_2, cmd_argv[3 + n + 1]);
+    bu_vls_strcpy(&jip->parent_link, cmd_argv[3]);
+    bu_vls_strcpy(&jip->child_link, cmd_argv[4]);
+    bu_vls_strcpy(&jip->parent_path, cmd_argv[3]);
+    bu_vls_strcpy(&jip->child_path, cmd_argv[4]);
+    VSET(location,
+	    atof(cmd_argv[5]) * gedp->dbip->dbi_local2base,
+	    atof(cmd_argv[6]) * gedp->dbip->dbi_local2base,
+	    atof(cmd_argv[7]) * gedp->dbip->dbi_local2base);
+    MAT_DELTAS_VEC(jip->parent_frame, location);
+    MAT_DELTAS_VEC(jip->child_frame, location);
 
     return BRLCAD_OK;
 }
@@ -3622,7 +3606,7 @@ ged_in_core(struct ged *gedp, int argc, const char *argv[])
 	menu = p_hrt;
 	fn_in = hrt_in;
     }else if (BU_STR_EQUAL(argv[2], "joint")) {
-	nvals = 3*3 + 1 + 2;
+	nvals = 5;
 	menu = p_joint;
 	fn_in = joint_in;
     } else if (BU_STR_EQUAL(argv[2], "annot")) {

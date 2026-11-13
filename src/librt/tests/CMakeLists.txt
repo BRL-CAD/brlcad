@@ -217,6 +217,9 @@ brlcad_add_test(NAME rt_test_invalid_in_memory COMMAND rt_invalid_inmem)
 brlcad_addexec(rt_metaball_adjust metaball_adjust.c "${RT_TEST_LIBS}" TEST)
 brlcad_add_test(NAME rt_metaball_adjust COMMAND rt_metaball_adjust)
 
+brlcad_addexec(rt_joint joint.c "${RT_TEST_LIBS}" TEST)
+brlcad_add_test(NAME rt_joint COMMAND rt_joint)
+
 set(
   distcheck_files
   CMakeLists.txt
@@ -237,6 +240,7 @@ set(
   dsp_sa_vol_check.c
   extreme_ssi_test.g
   invalid_inmem.c
+  joint.c
   lcomb_large.c
   matrix_tests.g
   metaball_adjust.c

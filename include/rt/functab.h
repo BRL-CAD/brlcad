@@ -61,6 +61,8 @@
 __BEGIN_DECLS
 
 struct rt_piecestate; /* forward declaration for ft_piece_shot / ft_piece_hitsegs */
+struct rt_data_context;
+struct rt_data_node;
 
 /**
  * This needs to be at the end of the raytrace.h header file, so that
@@ -331,6 +333,13 @@ struct rt_functab {
      */
     int (*ft_validate)(struct bu_vls *error_msg, const struct rt_db_internal *ip, const struct bn_tol *tol);
 #define RTFUNCTAB_FUNC_VALIDATE_CAST(_func) ((int (*)(struct bu_vls *, const struct rt_db_internal *, const struct bn_tol *))((void (*)(void))_func))
+
+    /** Export and import a format-neutral typed representation. */
+    int (*ft_data_export)(struct rt_data_node **result, const struct rt_db_internal *ip, const struct rt_data_context *context);
+#define RTFUNCTAB_FUNC_DATA_EXPORT_CAST(_func) ((int (*)(struct rt_data_node **, const struct rt_db_internal *, const struct rt_data_context *))((void (*)(void))_func))
+
+    int (*ft_data_import)(struct rt_db_internal *ip, const struct rt_data_node *data, const struct rt_data_context *context);
+#define RTFUNCTAB_FUNC_DATA_IMPORT_CAST(_func) ((int (*)(struct rt_db_internal *, const struct rt_data_node *, const struct rt_data_context *))((void (*)(void))_func))
 
 };
 

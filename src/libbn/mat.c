@@ -1149,6 +1149,47 @@ bn_mat_ck(const char *title, const mat_t m)
 }
 
 
+int
+bn_mat_is_rigid(const mat_t m, const struct bn_tol *tol)
+{
+    const double epsilon = tol ? tol->perp : 1.0e-6;
+    vect_t xaxis;
+    vect_t yaxis;
+    vect_t zaxis;
+    size_t i;
+
+    if (!m)
+	return 1;
+    if (tol)
+	BN_CK_TOL(tol);
+
+    for (i = 0; i < ELEMENTS_PER_MAT; i++) {
+	if (!isfinite(m[i]))
+	    return 0;
+    }
+
+    if (!NEAR_ZERO(m[12], epsilon) ||
+	!NEAR_ZERO(m[13], epsilon) ||
+	!NEAR_ZERO(m[14], epsilon) ||
+	!NEAR_EQUAL(m[15], 1.0, epsilon))
+	return 0;
+
+    VMOVE(xaxis, &m[0]);
+    VMOVE(yaxis, &m[4]);
+    VMOVE(zaxis, &m[8]);
+    if (!NEAR_EQUAL(MAGNITUDE(xaxis), 1.0, epsilon) ||
+	!NEAR_EQUAL(MAGNITUDE(yaxis), 1.0, epsilon) ||
+	!NEAR_EQUAL(MAGNITUDE(zaxis), 1.0, epsilon) ||
+	!NEAR_ZERO(VDOT(xaxis, yaxis), epsilon) ||
+	!NEAR_ZERO(VDOT(yaxis, zaxis), epsilon) ||
+	!NEAR_ZERO(VDOT(xaxis, zaxis), epsilon) ||
+	!NEAR_EQUAL(bn_mat_det3(m), 1.0, epsilon))
+	return 0;
+
+    return 1;
+}
+
+
 fastf_t
 bn_mat_det3(const mat_t m)
 {
