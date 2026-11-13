@@ -1,0 +1,13 @@
+{
+    "id": "org.brlcad.qged.view.select",
+    "displayName": "View Select",
+    "category": "qged.view",
+    "iconName": ":selective-tool.svg",
+    "sortKey": 2,
+    "requiresOpenDb": true,
+    "requiresView": true,
+    "description": "Selects, draws, or erases geometry using view gestures.",
+    "vendor": "BRL-CAD",
+    "version": "1.0",
+    "apiVersion": 1
+}

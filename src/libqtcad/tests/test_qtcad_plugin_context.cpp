@@ -45,6 +45,7 @@ QgPluginContextTest::defaultsAreNullSafe()
     QVERIFY(context.getGed() == nullptr);
     QVERIFY(context.activeViewContext() == nullptr);
     QVERIFY(context.getViewWidget() == nullptr);
+    QVERIFY(context.selectionSetName().isEmpty());
     context.logMessage(QStringLiteral("discarded"));
 }
 
@@ -54,6 +55,7 @@ QgPluginContextTest::resolvesChangingHostState()
     QgSession firstSession;
     QgSession secondSession;
     QgSession *activeSession = &firstSession;
+    QString selectionSet = QStringLiteral("first");
     QString loggedMessage;
 
     QgPluginContext context;
@@ -63,15 +65,21 @@ QgPluginContextTest::resolvesChangingHostState()
     context.viewContextAccessor = [&activeSession]() {
 	return activeSession->activeView();
     };
+    context.selectionSetAccessor = [&selectionSet]() {
+	return selectionSet;
+    };
     context.log = [&loggedMessage](const QString &message) {
 	loggedMessage = message;
     };
 
     QCOMPARE(context.getGed(), firstSession.ged());
     QCOMPARE(context.activeViewContext(), firstSession.activeView());
+    QCOMPARE(context.selectionSetName(), QStringLiteral("first"));
     activeSession = &secondSession;
+    selectionSet = QStringLiteral("second");
     QCOMPARE(context.getGed(), secondSession.ged());
     QCOMPARE(context.activeViewContext(), secondSession.activeView());
+    QCOMPARE(context.selectionSetName(), QStringLiteral("second"));
 
     context.logMessage(QStringLiteral("context message"));
     QCOMPARE(loggedMessage, QStringLiteral("context message"));

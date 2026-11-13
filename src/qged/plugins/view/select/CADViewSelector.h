@@ -25,16 +25,14 @@
 
 #include <QWidget>
 #include <QPushButton>
-#include <QButtonGroup>
-#include <QGroupBox>
 #include <QCheckBox>
-#include <QComboBox>
-#include <QLabel>
-#include <QLineEdit>
 #include <QListWidget>
+#include <QPointer>
 #include <QRadioButton>
-#include "ged.h"
 #include "qtcad/QgSelectFilter.h"
+
+class QgPluginContext;
+class QgView;
 
 class CADViewSelector : public QWidget
 {
@@ -43,6 +41,9 @@ class CADViewSelector : public QWidget
     public:
 	CADViewSelector(QWidget *p = 0);
 	~CADViewSelector();
+	void setContext(QgPluginContext *context) { m_context = context; }
+	void attachToView(QgView *view);
+	void detachFromView(QgView *view = nullptr);
 
 	QRadioButton *use_pnt_select_button;
 	QRadioButton *use_rect_select_button;
@@ -53,16 +54,14 @@ class CADViewSelector : public QWidget
 	QRadioButton *erase_from_scene_button;
 	QRadioButton *add_to_group_button;
 	QRadioButton *rm_from_group_button;
-	//QComboBox *current_group;
 	QListWidget *group_contents;
-	//QPushButton *add_new_group;
-	//QPushButton *rm_group;
 
 	QPushButton *draw_selections;
 	QPushButton *erase_selections;
 
 
-signals:
+
+    signals:
 	void view_changed(unsigned long long);
 
     public slots:
@@ -84,14 +83,14 @@ signals:
 	void deselect_objs();
 	int erase_objs();
 
-	QgSelectFilter *cf = NULL;
-	QgSelectPntFilter *pf;
-	QgSelectBoxFilter *bf;
-	QgSelectRayFilter *rf;
+	QgSelectFilter *cf = nullptr;
+	QgSelectPntFilter *pf = nullptr;
+	QgSelectBoxFilter *bf = nullptr;
+	QgSelectRayFilter *rf = nullptr;
 
-	struct ged *gedp = NULL;
+	QgPluginContext *m_context = nullptr;
+	QPointer<QgView> m_view;
 	unsigned long long ohash = 0;
-	unsigned long long omhash = 0;
 };
 
 // Local Variables:

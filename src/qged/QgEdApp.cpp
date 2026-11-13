@@ -142,6 +142,11 @@ QgEdApp::QgEdApp(int &argc, char *argv[], const char *g_file, int swrast_mode, i
 	    return w->CurrentView();
 	return (mdl && mdl->session()) ? mdl->session()->activeView() : NULL;
     };
+    m_plugin_context.selectionSetAccessor = [this]() -> QString {
+	if (!mdl || mdl->selectionSetName().empty())
+	    return QString();
+	return QString::fromLocal8Bit(mdl->selectionSetName().c_str());
+    };
     m_plugin_context.model = mdl;
     m_plugin_context.notifier = m_plugin_notifier;
     m_plugin_context.hostName = QStringLiteral("qged");
@@ -308,6 +313,7 @@ QgEdApp::~QgEdApp() {
     w = NULL;
     m_plugin_context.viewWidgetAccessor = {};
     m_plugin_context.viewContextAccessor = {};
+    m_plugin_context.selectionSetAccessor = {};
     m_plugin_context.model = NULL;
     delete window;
     delete mdl;

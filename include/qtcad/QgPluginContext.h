@@ -88,6 +88,12 @@ class QgPluginContext
 	    return viewWidgetAccessor ? viewWidgetAccessor() : nullptr;
 	}
 
+	/** Resolve the host's active semantic selection-set name. */
+	QString selectionSetName() const
+	{
+	    return selectionSetAccessor ? selectionSetAccessor() : QString();
+	}
+
 	/** Send a diagnostic to the host when it provides a log sink. */
 	void logMessage(const QString &message) const
 	{
@@ -101,6 +107,8 @@ class QgPluginContext
 	std::function<ged_view_context *()> viewContextAccessor;
 	/** Late-bound access to the active Qt view widget. */
 	std::function<QgView *()> viewWidgetAccessor;
+	/** Late-bound access to the active semantic selection set. */
+	std::function<QString()> selectionSetAccessor;
 	/** Optional host tree model. */
 	QgModel *model = nullptr;
 	/** Host-owned notification relay. */

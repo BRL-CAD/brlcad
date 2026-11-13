@@ -24,36 +24,37 @@
  */
 
 #include "common.h"
-#include <QMouseEvent>
+
+#include <QApplication>
+#include <QButtonGroup>
+#include <QGroupBox>
 #include <QVBoxLayout>
 #include <string>
 #include <vector>
-#include "../../../QgEdApp.h"
 
-#include "bg/aabb_ray.h"
-#include "bg/plane.h"
+#include "bu/vls.h"
+#include "ged.h"
 #include "ged/scene.h"
 #include "ged/selection.h"
 
+#include "qtcad/QgPluginContext.h"
 #include "qtcad/QgSelectFilter.h"
-#include "./CADViewSelector.h"
+#include "qtcad/QgView.h"
+#include "CADViewSelector.h"
 
-static const char *
-cad_selection_set_name()
+static QByteArray
+cad_selection_set_name(const QgPluginContext *context)
 {
-    QgEdApp *app = (QgEdApp *)qApp;
-    if (!app || !app->mdl || app->mdl->selectionSetName().empty())
-	return NULL;
-    return app->mdl->selectionSetName().c_str();
+    return context ? context->selectionSetName().toLocal8Bit() : QByteArray();
 }
 
 
 static std::vector<std::string>
-cad_selected_paths(struct ged *gedp)
+cad_selected_paths(struct ged *gedp, const char *set_name)
 {
     std::vector<std::string> paths;
     struct bu_vls selected = BU_VLS_INIT_ZERO;
-    (void)ged_selection_list_paths(gedp, cad_selection_set_name(), &selected);
+    (void)ged_selection_list_paths(gedp, set_name, &selected);
 
     const char *selected_str = bu_vls_cstr(&selected);
     const char *start = selected_str;
@@ -134,13 +135,14 @@ cad_scene_erase_paths(struct ged *gedp, ged_view_context *view,
     return status;
 }
 
-CADViewSelector::CADViewSelector(QWidget *)
+CADViewSelector::CADViewSelector(QWidget *parent)
+    : QWidget(parent)
 {
     QVBoxLayout *wl = new QVBoxLayout;
     wl->setAlignment(Qt::AlignTop);
 
     QGroupBox *sstyle_box = new QGroupBox("Selection Style");
-    QButtonGroup *sstyle_grp = new QButtonGroup();
+    QButtonGroup *sstyle_grp = new QButtonGroup(this);
     QVBoxLayout *sstyle_gl = new QVBoxLayout;
     sstyle_gl->setAlignment(Qt::AlignTop);
 
@@ -167,7 +169,7 @@ CADViewSelector::CADViewSelector(QWidget *)
     QVBoxLayout *smode_gl = new QVBoxLayout;
     smode_gl->setAlignment(Qt::AlignTop);
 
-    QButtonGroup *smode_grp = new QButtonGroup();
+    QButtonGroup *smode_grp = new QButtonGroup(this);
     erase_from_scene_button = new QRadioButton("Erase from Scene");
     erase_from_scene_button->setChecked(true);
     smode_grp->addButton(erase_from_scene_button);
@@ -194,18 +196,6 @@ CADViewSelector::CADViewSelector(QWidget *)
     sgrp_gl->addWidget(erase_selections);
     QObject::connect(erase_selections, &QPushButton::clicked, this, &CADViewSelector::do_erase_selections);
 
-
-    QWidget *sgrp = new QWidget();
-    QHBoxLayout *groups_gl = new QHBoxLayout;
-    groups_gl->setAlignment(Qt::AlignLeft);
-    //current_group = new QComboBox();
-    //groups_gl->addWidget(current_group);
-    //add_new_group = new QPushButton("+");
-    //groups_gl->addWidget(add_new_group);
-    //rm_group = new QPushButton("-");
-    //groups_gl->addWidget(rm_group);
-    sgrp->setLayout(groups_gl);
-    sgrp_gl->addWidget(sgrp);
 
     group_contents = new QListWidget();
     sgrp_gl->addWidget(group_contents);
@@ -236,15 +226,38 @@ CADViewSelector::CADViewSelector(QWidget *)
 
 CADViewSelector::~CADViewSelector()
 {
+    detachFromView();
+    bu_ptbl_free(&pf->selected_set);
+    bu_ptbl_free(&bf->selected_set);
+    bu_ptbl_free(&rf->selected_set);
+    delete pf;
+    delete bf;
+    delete rf;
+}
+
+void
+CADViewSelector::attachToView(QgView *view)
+{
+    if (!view || m_view == view)
+	return;
+    detachFromView();
+    m_view = view;
+    m_view->add_event_filter(this);
+}
+
+void
+CADViewSelector::detachFromView(QgView *view)
+{
+    if (!m_view || (view && m_view != view))
+	return;
+    m_view->clear_event_filter(this);
+    m_view = nullptr;
 }
 
 void
 CADViewSelector::enable_groups(bool)
 {
-    //current_group->setEnabled(true);
     group_contents->setEnabled(true);
-    //add_new_group->setEnabled(true);
-    //rm_group->setEnabled(true);
     draw_selections->setEnabled(true);
     erase_selections->setEnabled(true);
 }
@@ -252,10 +265,7 @@ CADViewSelector::enable_groups(bool)
 void
 CADViewSelector::disable_groups(bool)
 {
-    //current_group->setEnabled(false);
     group_contents->setEnabled(false);
-    //add_new_group->setEnabled(false);
-    //rm_group->setEnabled(false);
     draw_selections->setEnabled(false);
     erase_selections->setEnabled(false);
 }
@@ -287,52 +297,62 @@ CADViewSelector::disable_useall_opt(bool)
 void
 CADViewSelector::do_view_update(unsigned long long flags)
 {
+    struct ged *gedp = m_context ? m_context->getGed() : NULL;
     if (!gedp)
 	return;
 
-    unsigned long long chash = ged_selection_state_hash(gedp,
-	cad_selection_set_name());
+    const QByteArray set_name = cad_selection_set_name(m_context);
+    const char *set_key = set_name.isEmpty() ? NULL : set_name.constData();
+    unsigned long long chash = ged_selection_state_hash(gedp, set_key);
     if ((flags & QG_VIEW_SELECT) || chash != ohash) {
 	group_contents->clear();
 	ohash = chash;
 
-	std::vector<std::string> paths = cad_selected_paths(gedp);
+	std::vector<std::string> paths = cad_selected_paths(gedp, set_key);
 	for (const std::string &path : paths)
-	    group_contents->addItem(QString(path.c_str()));
+	    group_contents->addItem(QString::fromLocal8Bit(path.c_str()));
     }
 }
 
 void
 CADViewSelector::select_objs()
 {
-    const char *set_name = cad_selection_set_name();
+    struct ged *gedp = m_context ? m_context->getGed() : NULL;
+    if (!gedp || !cf)
+	return;
+    const QByteArray set_name = cad_selection_set_name(m_context);
+    const char *set_key = set_name.isEmpty() ? NULL : set_name.constData();
     (void)ged_selection_batch_begin(gedp);
     for (size_t i = 0; i < BU_PTBL_LEN(&cf->selected_set); i++) {
 	struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(&cf->selected_set, i);
-	if (!s || !ged_selection_select_path(gedp, set_name,
+	if (!s || !ged_selection_select_path(gedp, set_key,
 		bu_vls_cstr(&s->s_name), 0)) {
 	    (void)ged_selection_batch_end(gedp);
 	    return;
 	}
     }
-    (void)ged_selection_recompute(gedp, set_name);
+    (void)ged_selection_recompute(gedp, set_key);
     (void)ged_selection_batch_end(gedp);
 }
 
 void
 CADViewSelector::deselect_objs()
 {
-    const char *set_name = cad_selection_set_name();
+    struct ged *gedp = m_context ? m_context->getGed() : NULL;
+    if (!gedp || !cf)
+	return;
+    const QByteArray set_name = cad_selection_set_name(m_context);
+    const char *set_key = set_name.isEmpty() ? NULL : set_name.constData();
     (void)ged_selection_batch_begin(gedp);
     for (size_t i = 0; i < BU_PTBL_LEN(&cf->selected_set); i++) {
 	struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(&cf->selected_set, i);
-	if (!s || !ged_selection_deselect_path(gedp, set_name,
+	if (!s || !ged_selection_deselect_path(gedp, set_key,
 		bu_vls_cstr(&s->s_name), 0)) {
 	    (void)ged_selection_batch_end(gedp);
 	    return;
 	}
     }
-    (void)ged_selection_recompute(gedp, set_name);
+    (void)ged_selection_recompute(gedp, set_key);
     (void)ged_selection_batch_end(gedp);
 }
 
@@ -340,7 +360,9 @@ CADViewSelector::deselect_objs()
 int
 CADViewSelector::erase_objs()
 {
-    if (!gedp || !gedp->ged_gvp)
+    struct ged *gedp = m_context ? m_context->getGed() : NULL;
+    ged_view_context *view = m_context ? m_context->activeViewContext() : NULL;
+    if (!gedp || !view || !cf)
 	return 0;
 
     std::vector<std::string> paths;
@@ -353,22 +375,26 @@ CADViewSelector::erase_objs()
     }
 
     int changed = 0;
-    return cad_scene_erase_paths(gedp, gedp->ged_gvp, paths, &changed) ==
+    return cad_scene_erase_paths(gedp, view, paths, &changed) ==
 	GED_SCENE_OK && changed;
 }
 
 void
 CADViewSelector::do_draw_selections()
 {
-    if (!gedp || !gedp->ged_gvp)
+    struct ged *gedp = m_context ? m_context->getGed() : NULL;
+    ged_view_context *view = m_context ? m_context->activeViewContext() : NULL;
+    if (!gedp || !view)
 	return;
 
-    std::vector<std::string> paths = cad_selected_paths(gedp);
+    const QByteArray set_name = cad_selection_set_name(m_context);
+    const char *set_key = set_name.isEmpty() ? NULL : set_name.constData();
+    std::vector<std::string> paths = cad_selected_paths(gedp, set_key);
     if (paths.empty())
 	return;
 
     int changed = 0;
-    if (cad_scene_draw_paths(gedp, gedp->ged_gvp, paths, &changed) ==
+    if (cad_scene_draw_paths(gedp, view, paths, &changed) ==
 	GED_SCENE_OK && changed)
 	emit view_changed(QG_VIEW_DRAWN|QG_VIEW_SELECT);
 }
@@ -376,15 +402,19 @@ CADViewSelector::do_draw_selections()
 void
 CADViewSelector::do_erase_selections()
 {
-    if (!gedp || !gedp->ged_gvp)
+    struct ged *gedp = m_context ? m_context->getGed() : NULL;
+    ged_view_context *view = m_context ? m_context->activeViewContext() : NULL;
+    if (!gedp || !view)
 	return;
 
-    std::vector<std::string> paths = cad_selected_paths(gedp);
+    const QByteArray set_name = cad_selection_set_name(m_context);
+    const char *set_key = set_name.isEmpty() ? NULL : set_name.constData();
+    std::vector<std::string> paths = cad_selected_paths(gedp, set_key);
     if (paths.empty())
 	return;
 
     int changed = 0;
-    if (cad_scene_erase_paths(gedp, gedp->ged_gvp, paths, &changed) ==
+    if (cad_scene_erase_paths(gedp, view, paths, &changed) ==
 	GED_SCENE_OK && changed)
 	emit view_changed(QG_VIEW_DRAWN|QG_VIEW_SELECT);
 }
@@ -395,26 +425,25 @@ CADViewSelector::eventFilter(QObject *o, QEvent *e)
     if (QApplication::keyboardModifiers() != Qt::NoModifier)
 	return false;
 
-    QgModel *m = ((QgEdApp *)qApp)->mdl;
-    if (!m)
+    struct ged *gedp = m_context ? m_context->getGed() : NULL;
+    struct bview *v = m_context ? m_context->activeViewContext() : NULL;
+    if (!gedp || !v)
 	return false;
-    gedp = m->ged();
-    if (!gedp || !gedp->ged_gvp)
-	return false;
-    struct bview *v = gedp->ged_gvp;
 
     // Set the libqtcad filter based on current options
     cf = pf;
     if (use_rect_select_button->isChecked())
 	cf = bf;
-    if (use_ray_test_ckbx->isChecked()) {
+    if (use_pnt_select_button->isChecked() &&
+	use_ray_test_ckbx->isChecked()) {
 	rf->dbip = gedp->dbip;
 	cf = rf;
     }
 
     // Inform the filter of the current settings and view
     cf->v = v;
-    cf->first_only = select_all_depth_ckbx->isChecked() ? false : true;
+    cf->first_only = use_rect_select_button->isChecked() ? false :
+	!select_all_depth_ckbx->isChecked();
 
     // TODO - create and/or connect the signals and slots so cf can
     // properly trigger updating and drawing
@@ -431,14 +460,14 @@ CADViewSelector::eventFilter(QObject *o, QEvent *e)
 
     if (add_to_group_button->isChecked()) {
 	select_objs();
-	emit view_changed(QG_VIEW_DRAWN);
+	emit view_changed(QG_VIEW_DRAWN|QG_VIEW_SELECT);
 	bu_ptbl_reset(&cf->selected_set);
 	return true;
     }
 
     if (rm_from_group_button->isChecked()) {
 	deselect_objs();
-	emit view_changed(QG_VIEW_DRAWN);
+	emit view_changed(QG_VIEW_DRAWN|QG_VIEW_SELECT);
 	bu_ptbl_reset(&cf->selected_set);
 	return true;
     }
