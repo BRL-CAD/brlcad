@@ -10,7 +10,11 @@ pixrect - extract a rectangular region from a color pix file
 
 [source]
 ----
-pixrect [-s squaresize] [-w width] [-n height] [-S out_squaresize] [-W out_width] [-N out_height] [-x xorig] [-y yorig] [-o out_file.pix] [file.pix] [> out_file.pix]
+pixrect [-s|--input-size _squaresize_] [-w|--input-width _width_]
+        [-n|--input-height _height_] [-S|--output-size _out_squaresize_]
+        [-W|--output-width _out_width_] [-N|--output-height _out_height_]
+        [-x|--x-origin _xorig_] [-y|--y-origin _yorig_]
+        [-o|--output _out_file.pix_] [_file.pix_] [> _out_file.pix_]
 ----
 
 
@@ -36,33 +40,36 @@ Output is written to standard output and/or to the file named with *-o*.
 [[options]]
 == OPTIONS
 
-*-s* _squaresize_::
+*-s* _squaresize_, *--input-size* _squaresize_::
   Set both the input width and height to _squaresize_ pixels.
 
-*-w* _width_::
+*-w* _width_, *--input-width* _width_::
   Set the input scanline width, in pixels (default 512).
 
-*-n* _height_::
+*-n* _height_, *--input-height* _height_::
   Set the input height, in scanlines (default 512).
 
-*-S* _out_squaresize_::
+*-S* _out_squaresize_, *--output-size* _out_squaresize_::
   Set both the output width and height to _out_squaresize_ pixels.
 
-*-W* _out_width_::
+*-W* _out_width_, *--output-width* _out_width_::
   Set the output width, in pixels.
 
-*-N* _out_height_::
+*-N* _out_height_, *--output-height* _out_height_::
   Set the output height, in scanlines.
 
-*-x* _xorig_::
+*-x* _xorig_, *--x-origin* _xorig_::
   Set the x coordinate of the lower left corner of the region to extract (default 0).
 
-*-y* _yorig_::
+*-y* _yorig_, *--y-origin* _yorig_::
   Set the y coordinate of the lower left corner of the region to extract (default 0).
 
-*-o* _out_file.pix_::
+*-o* _out_file.pix_, *--output* _out_file.pix_::
   Write the extracted image to _out_file.pix_. If standard output is also
   redirected or piped, the same image is written to both destinations.
+
+*-h*, *-?*, *--help*::
+  Print usage information and exit.
 
 
 [[examples]]
