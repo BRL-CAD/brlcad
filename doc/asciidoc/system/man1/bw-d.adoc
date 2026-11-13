@@ -39,7 +39,7 @@ deprecation warning on startup.
 [[options]]
 == OPTIONS
 
-*-n*::
+*-n*, *--normalize*::
   Normalize the data by scaling the 0-255 input byte range to the
   0.0-1.0 output range (equivalent to a _scale_ of 1/255).
 
@@ -48,7 +48,7 @@ deprecation warning on startup.
   writing it.  Defaults to 1.0 (a straight 0-255 copy).  Cannot be
   combined with *-n*.
 
-*-h*, *-?*::
+*-h*, *-?*, *--help*::
   Print a usage message and exit.
 
 [[examples]]
