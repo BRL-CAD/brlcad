@@ -136,7 +136,8 @@ BU_EXPORT extern const char *bu_whereis(const char *cmd);
  *
  * The name of the temporary file will be copied into a user-provided
  * (filepath) buffer if it is a non-NULL pointer and of a sufficient
- * (len) length to contain the filename.
+ * (len) length to contain the filename and its terminating null byte.
+ * An insufficient buffer returns NULL without creating a file.
  *
  * This routine is guaranteed to return a new unique file or return
  * NULL on failure.  The file should be closed via fclose() when it is
@@ -169,6 +170,20 @@ BU_EXPORT extern const char *bu_whereis(const char *cmd);
  * @endcode
  */
 BU_EXPORT extern FILE *bu_temp_file(char *filepath, size_t len);
+
+
+/**
+ * Create a unique temporary file with a filename suffix, such as ".png".
+ * The suffix is part of the exclusively created name, not appended after
+ * opening the file.  It must not contain directory separators.  A NULL or
+ * empty suffix has the same meaning as bu_temp_file().
+ *
+ * Directory selection, binary mode, lifetime, and thread-safety are as
+ * documented for bu_temp_file().  If filepath is non-NULL, len must include
+ * room for the complete filename and its terminating null byte; insufficient
+ * space returns NULL without creating a file.
+ */
+BU_EXPORT extern FILE *bu_temp_file_suffix(char *filepath, size_t len, const char *suffix);
 
 
 /**

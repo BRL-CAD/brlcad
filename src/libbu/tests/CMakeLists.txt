@@ -213,6 +213,11 @@ brlcad_add_test(NAME bu_file_mime_png   COMMAND bu_test test_file_mime png 3 BU_
 ####################################
 brlcad_add_test(NAME bu_temp_filename  COMMAND bu_test test_temp_filename "single")
 brlcad_add_test(NAME bu_temp_binary    COMMAND bu_test test_temp_filename "binary")
+brlcad_add_test(NAME bu_temp_suffix    COMMAND bu_test test_temp_filename "suffix")
+brlcad_add_test(NAME bu_temp_cleanup COMMAND "${CMAKE_COMMAND}"
+  "-DBU_TEST=$<TARGET_FILE:bu_test>" "-DWORK=${CMAKE_CURRENT_BINARY_DIR}/temporary-files"
+  -P "${CMAKE_CURRENT_SOURCE_DIR}/temp_cleanup.cmake")
+cmakefiles(temp_cleanup.cmake)
 #BRLCAD_ADD_TEST(NAME bu_temp_filename  COMMAND bu_test test_temp_filename "parallel")
 
 #

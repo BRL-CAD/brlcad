@@ -20,6 +20,7 @@
 
 #include "common.h"
 
+#include <errno.h>
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
@@ -130,12 +131,17 @@ temp_add_to_list(const char *fn, int fd)
     if (all_temp_files.capacity == 0) {
 	all_temp_files.capacity = NUM_INITIAL_TEMP_FILES;
 	all_temp_files.temp_files = initial_temp_files;
-    } else if (all_temp_files.size == NUM_INITIAL_TEMP_FILES) {
-	all_temp_files.capacity *= 2;
-	all_temp_files.temp_files = (struct temp_file *)bu_malloc(all_temp_files.capacity * sizeof(struct temp_file), "initial resize of temp file list");
     } else if (all_temp_files.size == all_temp_files.capacity) {
 	all_temp_files.capacity *= 2;
-	all_temp_files.temp_files = (struct temp_file *)bu_realloc(all_temp_files.temp_files, all_temp_files.capacity * sizeof(struct temp_file), "additional resize of temp file list");
+	const size_t bytes = all_temp_files.capacity * sizeof(struct temp_file);
+	if (all_temp_files.temp_files == initial_temp_files) {
+	    all_temp_files.temp_files = (struct temp_file *)bu_malloc(bytes, "temp file list");
+	    memcpy(all_temp_files.temp_files, initial_temp_files,
+		all_temp_files.size * sizeof(struct temp_file));
+	} else {
+	    all_temp_files.temp_files = (struct temp_file *)bu_realloc(all_temp_files.temp_files,
+		bytes, "temp file list");
+	}
     }
 
     if (all_temp_files.size == 0) {
@@ -174,54 +180,50 @@ bu_temp_file_name(char* filename, size_t len)
     return buf;
 }
 
-#ifndef HAVE_MKSTEMP
-static int
-mkstemp(char *file_template)
-{
-    int fd = -1;
-    int counter = 0;
-    int i;
-    size_t start, end;
-    size_t len;
-
-    static const char replace[] = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-    static int replacelen = sizeof(replace) - 1;
-
-    if (!file_template || file_template[0] == '\0')
-	return -1;
-
-    /* last 6 chars must be X */
-    len = strlen(file_template);
-    if (len < 6 || memcmp(file_template + (len - 6), "XXXXXX", 6))
-	return -1;
-
-    /* identify the replacement suffix */
-    start = end = len-1;
-    for (i=(int)len-1; i>=0; i--) {
-	if (file_template[i] != 'X') {
-	    break;
-	}
-	end = i;
-    }
-
-    do {
-	/* replace the template with random chars */
-	srand((unsigned)(bu_gettime() % UINT_MAX));
-	for (i=(int)start; i>=(int)end; i--) {
-	    file_template[i] = replace[(int)(replacelen * ((double)rand() / (double)RAND_MAX))];
-	}
-	fd = open(file_template, O_CREAT | O_EXCL | O_TRUNC | O_RDWR | O_BINARY, S_IRUSR | S_IWUSR);
-    } while ((fd == -1) && (counter++ < 1000));
-
-    return fd;
-}
-#else
-/* for c99 strict, doesn't declare */
+/* Strict C modes may omit the platform declarations. */
+#ifdef HAVE_MKSTEMPS
+extern int mkstemps(char *, int);
+#elif defined(HAVE_MKSTEMP)
 extern int mkstemp(char *);
 #endif
 
+static int
+temp_open_unique(char *file_template, size_t suffix_length)
+{
+#ifdef HAVE_MKSTEMPS
+    return mkstemps(file_template, (int)suffix_length);
+#else
+#  ifdef HAVE_MKSTEMP
+    if (suffix_length == 0)
+	return mkstemp(file_template);
+#  endif
+    /* Preserve exclusive creation on platforms without suffix-aware mkstemp. */
+    static const char replacements[] = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+    const size_t minimum_placeholders = 6;
+    const int maximum_attempts = 1000;
+    const size_t end = strlen(file_template) - suffix_length;
+    size_t start = end;
+    while (start > 0 && file_template[start - 1] == 'X')
+	--start;
+    if (end - start < minimum_placeholders) {
+	errno = EINVAL;
+	return -1;
+    }
+
+    srand((unsigned)(bu_gettime() % UINT_MAX));
+    for (int attempt = 0; attempt < maximum_attempts; ++attempt) {
+	for (size_t i = start; i < end; ++i)
+	    file_template[i] = replacements[(size_t)rand() % (sizeof(replacements) - 1)];
+	int fd = open(file_template, O_CREAT | O_EXCL | O_RDWR | O_BINARY, S_IRUSR | S_IWUSR);
+	if (fd != -1 || errno != EEXIST)
+	    return fd;
+    }
+    return -1;
+#endif
+}
+
 FILE *
-bu_temp_file(char *filepath, size_t len)
+bu_temp_file_suffix(char *filepath, size_t len, const char *suffix)
 {
     FILE *fp = NULL;
     int i;
@@ -240,47 +242,49 @@ bu_temp_file(char *filepath, size_t len)
 	NULL
     };
 
-    if (len > MAXPATHLEN) {
-	len = MAXPATHLEN;
+    if (!suffix)
+	suffix = "";
+    if (strchr(suffix, '/') || strchr(suffix, '\\')) {
+	bu_log("Temporary filename suffix must not contain directory separators\n");
+	return NULL;
     }
 
-    /* check environment variable directories */
-    for (i=0; envdirs[i]; i++) {
-	dir = getenv(envdirs[i]);
-	if (dir && dir[0] != '\0' && bu_file_writable(dir) && bu_file_executable(dir)) {
+    /* Check each candidate, retaining only a usable directory. */
+    for (i = 0; envdirs[i]; ++i) {
+	const char *candidate = getenv(envdirs[i]);
+	if (candidate && candidate[0] && bu_file_directory(candidate) &&
+	    bu_file_writable(candidate) && bu_file_executable(candidate)) {
+	    dir = candidate;
 	    break;
 	}
     }
-
-    if (!dir) {
-	/* try various directories */
-	for (i=0; trydirs[i]; i++) {
+    for (i = 0; !dir && trydirs[i]; ++i) {
+	if (bu_file_directory(trydirs[i]) && bu_file_writable(trydirs[i]) &&
+	    bu_file_executable(trydirs[i]))
 	    dir = trydirs[i];
-	    if (dir && dir[0] != '\0' && bu_file_writable(dir) && bu_file_executable(dir)) {
-		break;
-	    }
-	}
     }
-
-    if (UNLIKELY(!dir)) {
-	/* give up */
+    if (!dir) {
 	bu_log("Unable to find a suitable temp directory\n");
 	bu_log(_TF_FAIL);
 	return NULL;
     }
 
-    if (strlen(dir) > 1 && dir[strlen(dir)-1] == BU_DIR_SEPARATOR)
-	snprintf(tempfile, MAXPATHLEN, "%s" PACKAGE_NAME "_temp_XXXXXXX", dir);
-    else
-	snprintf(tempfile, MAXPATHLEN, "%s%c" PACKAGE_NAME "_temp_XXXXXXX", dir, BU_DIR_SEPARATOR);
+    const char native_separator[] = {BU_DIR_SEPARATOR, '\0'};
+    const char *separator = dir[strlen(dir) - 1] == BU_DIR_SEPARATOR ? "" : native_separator;
+    int length = snprintf(tempfile, sizeof(tempfile), "%s%s" PACKAGE_NAME "_temp_XXXXXXX%s", dir, separator, suffix);
+    if (length < 0 || (size_t)length >= sizeof(tempfile) ||
+	(filepath && len <= (size_t)length)) {
+	bu_log("Temporary filename buffer is too small\n");
+	return NULL;
+    }
 
     /* secure the temp file with user read-write only */
     mask = umask(S_IXUSR | S_IRGRP | S_IWGRP | S_IXGRP | S_IROTH | S_IWOTH | S_IXOTH);
-    fd = mkstemp(tempfile);
+    fd = temp_open_unique(tempfile, strlen(suffix));
     (void)umask(mask); /* restore */
 
     if (UNLIKELY(fd == -1)) {
-	perror("mkstemp");
+	perror("temporary file creation");
 	bu_log(_TF_FAIL);
 	return NULL;
     }
@@ -294,18 +298,15 @@ bu_temp_file(char *filepath, size_t len)
 	return NULL;
     }
 
-    if (filepath) {
-	if (UNLIKELY(len < strlen(tempfile))) {
-	    bu_log("INTERNAL ERROR: bu_temp_file filepath buffer size is insufficient (%zu < %zu)\n", len, strlen(tempfile));
-	}
-	snprintf(filepath, len, "%s", tempfile);
-    }
+    if (filepath)
+	memcpy(filepath, tempfile, (size_t)length + 1);
 
     fp = fdopen(fd, "wb+");
     if (UNLIKELY(fp == NULL)) {
 	perror("fdopen");
 	bu_log(_TF_FAIL);
 	close(fd);
+	bu_file_delete(tempfile);
 	return NULL;
     }
 
@@ -314,6 +315,13 @@ bu_temp_file(char *filepath, size_t len)
 
     return fp;
 }
+
+FILE *
+bu_temp_file(char *filepath, size_t len)
+{
+    return bu_temp_file_suffix(filepath, len, NULL);
+}
+
 
 /*
  * Local Variables:
