@@ -10,7 +10,8 @@ pixcount - count occurrences of each unique pixel color in an image stream
 
 [source]
 ----
-pixcount [-#_bytes_per_pixel_] [_infile.pix_ [_outfile_]]
+pixcount [-# _bytes_per_pixel_ | --bytes-per-pixel _bytes_per_pixel_]
+         [_infile.pix_ [_outfile_]]
 ----
 
 
@@ -34,13 +35,13 @@ or any other fixed-width pixel data.
 [[options]]
 == OPTIONS
 
-*-#* _bytes_per_pixel_::
+*-#* _bytes_per_pixel_, *--bytes-per-pixel* _bytes_per_pixel_::
   Number of bytes that make up one pixel. Must be a positive integer. The
   default is 3, matching standard *pix*(5) RGB data. Use 1 for *bw*(5) grayscale
   or 4 for RGBA.
 
-*-h*, *-?*::
-  Print a usage message and exit.
+*-h*, *-?*, *--help*::
+  Print command help and exit.
 
 [[examples]]
 == EXAMPLES
