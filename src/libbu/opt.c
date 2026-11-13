@@ -1606,7 +1606,7 @@ bu_opt_scan_double_range(const char *str, double *val, double vmin, double vmax,
 	    bu_log("%s: invalid %s '%s'\n", prog, label, str);
 	return 0;
     }
-    if (d < vmin || d > vmax) {
+    if (!(d >= vmin && d <= vmax)) {
 	if (label)
 	    bu_log("%s: %s out of range '%s' (expected %g to %g)\n", prog, label, str, vmin, vmax);
 	return 0;

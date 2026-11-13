@@ -749,6 +749,12 @@ brlcad_add_test(NAME bu_opt_3_vect_02  COMMAND bu_test test_opt 3 V 2)
 brlcad_add_test(NAME bu_opt_3_vect_03  COMMAND bu_test test_opt 3 V 3)
 brlcad_add_test(NAME bu_opt_3_vect_04  COMMAND bu_test test_opt 3 V 4)
 
+# Strict floating point scanner testing
+brlcad_add_test(NAME bu_opt_4_double_nan     COMMAND bu_test test_opt 4 d 0)
+brlcad_add_test(NAME bu_opt_4_double_pos_inf COMMAND bu_test test_opt 4 d 1)
+brlcad_add_test(NAME bu_opt_4_double_neg_inf COMMAND bu_test test_opt 4 d 2)
+brlcad_add_test(NAME bu_opt_4_double_finite  COMMAND bu_test test_opt 4 d 3)
+
 #
 #  *********** test_datetime.c tests ************
 #

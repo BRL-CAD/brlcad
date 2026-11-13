@@ -912,6 +912,28 @@ desc_3(int test_num)
 }
 
 
+static int
+scan_double_test(int test_num)
+{
+    double value = 42.0;
+
+    switch (test_num) {
+	case 0:
+	    return bu_opt_scan_double("nan", &value, NULL) != 0;
+	case 1:
+	    return bu_opt_scan_double("inf", &value, NULL) != 0;
+	case 2:
+	    return bu_opt_scan_double("-inf", &value, NULL) != 0;
+	case 3:
+	    if (!bu_opt_scan_double("1.25", &value, NULL))
+		return 1;
+	    return !NEAR_EQUAL(value, 1.25, SMALL_FASTF);
+    }
+
+    return 1;
+}
+
+
 int
 main(int argc, char *argv[])
 {
@@ -957,6 +979,9 @@ main(int argc, char *argv[])
 	    break;
 	case 3:
 	    return desc_3(test_num);
+	    break;
+	case 4:
+	    return scan_double_test(test_num);
 	    break;
     }
 
