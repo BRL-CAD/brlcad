@@ -2723,6 +2723,20 @@ include/ged/commands.h: GED_EXPORT extern int ged_track2(struct bu_vls *log_str,
 include/ged/commands.h: GED_EXPORT int wdb_importFg4Section_cmd(void *data, int argc, const char *argv[]);
 include/ged/commands.h: GED_EXPORT extern int ged_inside_internal(struct ged *gedp, struct rt_db_internal *ip, int argc, const char *argv[], int arg, char *o_name);
 include/ged/commands.h: GED_EXPORT void draw_scene(struct bv_scene_obj *s, struct bview *v);
+include/ged/database.h: GED_EXPORT extern int ged_db_change_available(struct ged *gedp);
+include/ged/database.h: GED_EXPORT extern struct ged_db_change_set * ged_db_change_set_create(struct ged *gedp, uint64_t after_revision);
+include/ged/database.h: GED_EXPORT extern void ged_db_change_set_destroy(struct ged_db_change_set *changes);
+include/ged/database.h: GED_EXPORT extern uint64_t ged_db_change_set_revision(const struct ged_db_change_set *changes);
+include/ged/database.h: GED_EXPORT extern unsigned int ged_db_change_set_flags(const struct ged_db_change_set *changes);
+include/ged/database.h: GED_EXPORT extern size_t ged_db_change_set_object_count(const struct ged_db_change_set *changes, enum ged_db_change_object_kind kind);
+include/ged/database.h: GED_EXPORT extern const char * ged_db_change_set_object_at(const struct ged_db_change_set *changes, enum ged_db_change_object_kind kind, size_t index);
+include/ged/database.h: GED_EXPORT extern size_t ged_db_change_set_rename_count(const struct ged_db_change_set *changes);
+include/ged/database.h: GED_EXPORT extern const char * ged_db_change_set_rename_old_at(const struct ged_db_change_set *changes, size_t index);
+include/ged/database.h: GED_EXPORT extern const char * ged_db_change_set_rename_new_at(const struct ged_db_change_set *changes, size_t index);
+include/ged/database.h: GED_EXPORT extern size_t ged_db_change_set_path_count(const struct ged_db_change_set *changes);
+include/ged/database.h: GED_EXPORT extern const char * ged_db_change_set_path_at(const struct ged_db_change_set *changes, size_t index);
+include/ged/database.h: GED_EXPORT extern unsigned int ged_db_change_reconcile(struct ged *gedp);
+include/ged/database.h: GED_EXPORT extern int ged_db_change_acknowledge(struct ged *gedp, uint64_t revision);
 include/ged/database.h: #define GED_CHECK_DATABASE_OPEN(_gedp, _flags) \
 include/ged/database.h: GED_EXPORT extern int ged_path_validate(struct ged *gedp, const struct db_full_path * const path);
 include/ged/database.h: GED_EXPORT extern size_t ged_who_argc(struct ged *gedp);

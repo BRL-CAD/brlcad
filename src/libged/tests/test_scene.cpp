@@ -168,6 +168,16 @@ main(int argc, char **argv)
 	CHECK(ged_scene_draw(gedp, &draw_request, result) == GED_SCENE_OK &&
 	    observer.calls == observer_calls_after_redraw + 1,
 	    "removed observer receives no delta");
+	const char *kill[] = {"kill", "sphere.s"};
+	CHECK(ged_exec(gedp, 2, kill) == BRLCAD_OK,
+	    "delete a displayed primitive");
+	const unsigned int effects = ged_db_change_reconcile(gedp);
+	CHECK((effects & (GED_DB_CHANGE_EFFECT_DATABASE | GED_DB_CHANGE_EFFECT_VIEW)) ==
+	    (GED_DB_CHANGE_EFFECT_DATABASE | GED_DB_CHANGE_EFFECT_VIEW),
+	    "reconciliation reports database and view changes for a deleted primitive");
+	CHECK(ged_scene_path_state_get(gedp, gedp->ged_gvp, "sphere.s",
+	    GED_SCENE_DRAW_DEFAULT) == GED_SCENE_PATH_NOT_DRAWN,
+	    "reconciliation removes the deleted primitive from the view");
 	ged_scene_result_destroy(result);
 
 	delete static_cast<DbiState *>(gedp->dbi_state);

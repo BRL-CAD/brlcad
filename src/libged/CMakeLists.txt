@@ -333,6 +333,7 @@ set(
   exec.cpp
   ged_init.cpp
   columns.c
+  db_change.cpp
   db_index.cpp
   dbi_state.cpp
   display_list.c

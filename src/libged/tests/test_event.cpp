@@ -379,6 +379,29 @@ test_librt_bridge(void)
 	state.names[1] == "direct.s",
 	"direct librt removal publishes a GED event");
 
+    struct ged_db_change_set *public_changes =
+	ged_db_change_set_create(gedp, 0);
+    CHECK(public_changes != nullptr &&
+	ged_db_change_set_revision(public_changes) != 0 &&
+	ged_db_change_set_object_count(public_changes,
+	    GED_DB_CHANGE_OBJECT_ADDED) == 1 &&
+	ged_db_change_set_object_count(public_changes,
+	    GED_DB_CHANGE_OBJECT_REMOVED) == 1 &&
+	BU_STR_EQUAL(ged_db_change_set_object_at(public_changes,
+	    GED_DB_CHANGE_OBJECT_ADDED, 0), "direct.s") &&
+	BU_STR_EQUAL(ged_db_change_set_object_at(public_changes,
+	    GED_DB_CHANGE_OBJECT_REMOVED, 0), "direct.s"),
+	"public change set owns classified direct librt changes");
+    const uint64_t public_revision =
+	ged_db_change_set_revision(public_changes);
+    struct ged_db_change_set *later_changes =
+	ged_db_change_set_create(gedp, public_revision);
+    CHECK(later_changes != nullptr &&
+	ged_db_change_set_revision(later_changes) == 0,
+	"public change sets filter already observed revisions");
+    ged_db_change_set_destroy(later_changes);
+    ged_db_change_set_destroy(public_changes);
+
     std::vector<DbiStateChange> changes = dbis->change_snapshots();
     CHECK(changes.size() == 2 &&
 	changes[0].added.count("direct.s") == 1 &&
@@ -462,6 +485,22 @@ test_dbi_change_inventory(void)
 
     CHECK(ged_event_publish(gedp, events, 5, nullptr) == GED_EVENT_OK,
 	"mixed mutation batch publishes");
+    struct ged_db_change_set *public_changes =
+	ged_db_change_set_create(gedp, 0);
+    CHECK(public_changes != nullptr &&
+	(ged_db_change_set_flags(public_changes) &
+	    (GED_DB_CHANGE_STRUCTURAL | GED_DB_CHANGE_NREF_DIRTY)) ==
+	    (GED_DB_CHANGE_STRUCTURAL | GED_DB_CHANGE_NREF_DIRTY) &&
+	ged_db_change_set_rename_count(public_changes) == 1 &&
+	BU_STR_EQUAL(ged_db_change_set_rename_old_at(public_changes, 0),
+	    "old.s") &&
+	BU_STR_EQUAL(ged_db_change_set_rename_new_at(public_changes, 0),
+	    "new.s") &&
+	ged_db_change_set_path_count(public_changes) == 1 &&
+	BU_STR_EQUAL(ged_db_change_set_path_at(public_changes, 0),
+	    "parent.c/child.s"),
+	"public change set preserves flags, renames, and paths");
+    ged_db_change_set_destroy(public_changes);
     std::vector<DbiStateChange> changes = dbis->change_snapshots();
     CHECK(changes.size() == 1, "one event batch creates one revision");
     if (changes.size() == 1) {
