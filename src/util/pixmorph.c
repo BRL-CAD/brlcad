@@ -47,12 +47,12 @@
 #include "bio.h"
 
 #include "vmath.h"
+#include "bu/arg.h"
 #include "bu/app.h"
 #include "bu/color.h"
-#include "bu/getopt.h"
-#include "util_arg.h"
-#include "bu/malloc.h"
 #include "bu/exit.h"
+#include "bu/log.h"
+#include "bu/malloc.h"
 #include "bn.h"
 #include "dm.h"
 
@@ -87,6 +87,88 @@
    which range from 0 to MAXLEN.) Truncating them to integers changes things
    *very* little...trust me. */
 double weightlookup[MAXLEN];
+
+struct pixmorph_args {
+    struct pixmorph_args *self;
+    int help;
+    long autosize;
+    size_t width;
+    size_t height;
+};
+
+enum pixmorph_dimension {
+    PIXMORPH_WIDTH,
+    PIXMORPH_HEIGHT
+};
+
+
+static int
+pixmorph_dimension(struct bu_vls *msg, const char *arg, void *storage,
+	enum pixmorph_dimension dimension)
+{
+    struct pixmorph_args *args = storage ? *(struct pixmorph_args **)storage : NULL;
+    size_t value;
+
+    if (!bu_arg_size_t_range_from_str(msg, &value, arg, 10, 1, SIZE_MAX))
+	return -1;
+    if (args) {
+	if (dimension == PIXMORPH_WIDTH)
+	    args->width = value;
+	else
+	    args->height = value;
+	args->autosize = 0;
+    }
+    return 0;
+}
+
+
+static int
+pixmorph_width(struct bu_vls *msg, const char *arg, void *storage)
+{
+    return pixmorph_dimension(msg, arg, storage, PIXMORPH_WIDTH);
+}
+
+
+static int
+pixmorph_height(struct bu_vls *msg, const char *arg, void *storage)
+{
+    return pixmorph_dimension(msg, arg, storage, PIXMORPH_HEIGHT);
+}
+
+
+static const struct bu_arg_option pixmorph_options[] = {
+    BU_ARG_FLAG("h", "help", struct pixmorph_args, help,
+	"Print help and exit"),
+    BU_ARG_ALIAS("?", NULL, "help", 1),
+    BU_ARG_CUSTOM("w", "width", struct pixmorph_args, self,
+	pixmorph_width, "pixels", "Set the input image width"),
+    BU_ARG_CUSTOM("n", "height", struct pixmorph_args, self,
+	pixmorph_height, "pixels", "Set the input image height"),
+    BU_ARG_OPTION_NULL
+};
+
+static const struct bu_arg_operand pixmorph_operands[] = {
+    BU_ARG_OPERAND("first-image", BU_ARG_VALUE_FILE, 1, 1,
+	"First PIX input image", NULL),
+    BU_ARG_OPERAND("second-image", BU_ARG_VALUE_FILE, 1, 1,
+	"Second PIX input image", NULL),
+    BU_ARG_OPERAND("lines-file", BU_ARG_VALUE_FILE, 1, 1,
+	"Feature correspondence file", NULL),
+    BU_ARG_OPERAND_NUMBER_RANGE("warp-fraction", 1, 1, 1, 0.0, 1, 1.0,
+	"Feature warp fraction", NULL),
+    BU_ARG_OPERAND_NUMBER_RANGE("dissolve-fraction", 1, 1, 1, 0.0, 1, 1.0,
+	"Cross-dissolve fraction", NULL),
+    BU_ARG_OPERAND_NULL
+};
+
+static const struct bu_arg_schema pixmorph_schema = BU_ARG_SCHEMA(
+    "pixmorph", "Morph between two PIX images",
+    pixmorph_options, pixmorph_operands, BU_ARG_PARSE_OPTIONS_FIRST,
+    BU_ARG_SCHEMA_META_HELP(NULL, NULL, NULL, NULL, NULL));
+
+static const struct bu_arg_grammar pixmorph_grammar = {
+    &pixmorph_schema, NULL, NULL
+};
 
 /* Basically, we throw *everything* that doesn't need to be recalculated
  * into this structure.  Makes things go faster later.
@@ -350,50 +432,6 @@ lines_headerinfo(FILE *fp, double *ap, double *bp, double *pp, long int *np)
     }
 }
 
-int
-get_args(int argc, char **argv, char **picAnamep, char **picBnamep, char **linesfilenamep,
-	 double *warpfracp, int *dissolvefracp, long int *autosizep,
-	 size_t *widthp, size_t *heightp)
-{
-    long int c;
-    double dissolvefrac = 0.0;
-
-    *autosizep = 1;
-    *widthp = *heightp = 0;
-
-    while ((c = bu_getopt(argc, argv, "w:n:h?")) != -1) {
-	switch (c) {
-	    case 'w':
-		if (!util_arg_size_t_range(bu_optarg, widthp, 1, SIZE_MAX, "width"))
-		    return 0;
-		*autosizep = 0;
-		break;
-	    case 'n':
-		if (!util_arg_size_t_range(bu_optarg, heightp, 1, SIZE_MAX, "height"))
-		    return 0;
-		*autosizep = 0;
-		break;
-	    default:
-		return 0;
-	}
-    }
-
-    if (argc != bu_optind+5)
-	return 0;
-
-    *picAnamep = argv[bu_optind];
-    *picBnamep = argv[bu_optind+1];
-    *linesfilenamep = argv[bu_optind+2];
-    if (!util_arg_double_range(argv[bu_optind+3], warpfracp, 0.0, 1.0, "warpfrac"))
-	return 0;
-    if (!util_arg_double_range(argv[bu_optind+4], &dissolvefrac, 0.0, 1.0, "dissolvefrac"))
-	return 0;
-    *dissolvefracp = (int)(255.0*dissolvefrac + 0.5);
-
-    return 1;
-}
-
-
 size_t
 pix_readpixels(FILE *fp, long int numpix, unsigned char *pixarray)
 {
@@ -411,29 +449,52 @@ pix_writepixels(long int numpix, unsigned char *pixarray)
 int
 main(int argc, char **argv)
 {
-    char *picAname, *picBname, *linesfilename;
+    const char *picAname, *picBname, *linesfilename;
     FILE *picA, *picB, *linesfile;
-    size_t pa_width = 0, pa_height = 0;
     int dissolvefrac;
     double warpfrac;
+    double dissolve;
     unsigned char *pa, *pb, *wa, *wb, *morph;
     double a, b, p;
     long int numlines;
     struct lineseg *lines;
     long int i;
-    long int autosize;
+    struct pixmorph_args args = {NULL, 0, 1L, 0, 0};
+    struct bu_vls msg = BU_VLS_INIT_ZERO;
+    args.self = &args;
 
     bu_setprogname(argv[0]);
 
-    autosize = 1L;
-    pa_width = pa_height = 0;
-    if (get_args(argc, argv, &picAname, &picBname, &linesfilename,
-		 &warpfrac, &dissolvefrac, &autosize, &pa_width, &pa_height) == 0
-	|| isatty(fileno(stdout))) {
-	fprintf(stderr,
-		"Usage: pixmorph [-w width] [-n height] picA.pix picB.pix linesfile warpfrac dissolvefrac > out.pix\n");
-	return 1;
+    int introspection = bu_arg_introspect(&msg, &pixmorph_grammar, argc - 1,
+	(const char * const *)(argv + 1));
+    if (introspection != 0) {
+	bu_flog(introspection > 0 ? stdout : stderr, "%s", bu_vls_cstr(&msg));
+	bu_vls_free(&msg);
+	return introspection > 0 ? 0 : 1;
     }
+    int operand_index = bu_arg_schema_parse_complete(&pixmorph_schema, &args,
+	&msg, argc - 1, (const char **)(argv + 1));
+    if (operand_index < 0)
+	bu_exit(1, "%s", bu_vls_cstr(&msg));
+    bu_vls_free(&msg);
+    if (args.help) {
+	char *help = bu_arg_schema_help(&pixmorph_schema, "pixmorph");
+	bu_flog(stdout, "%s", help ? help : "");
+	bu_free(help, "pixmorph help");
+	return 0;
+    }
+    if (isatty(fileno(stdout)))
+	bu_exit(1, "pixmorph requires redirected standard output\n");
+
+    picAname = argv[operand_index + 1];
+    picBname = argv[operand_index + 2];
+    linesfilename = argv[operand_index + 3];
+    if (!bu_arg_double_range_from_str(NULL, &warpfrac,
+	    argv[operand_index + 4], 0.0, 1.0)
+	|| !bu_arg_double_range_from_str(NULL, &dissolve,
+	    argv[operand_index + 5], 0.0, 1.0))
+	bu_exit(1, "pixmorph: internal operand validation failure\n");
+    dissolvefrac = (int)(255.0*dissolve + 0.5);
 
     picA = fopen(picAname, "rb");
     if (picA == NULL) {
@@ -451,8 +512,8 @@ main(int argc, char **argv)
 	return 1;
     }
 
-    if (autosize) {
-	if (fb_common_file_size(&pa_width, &pa_height, picAname, 3) == 0) {
+    if (args.autosize) {
+	if (fb_common_file_size(&args.width, &args.height, picAname, 3) == 0) {
 	    fprintf(stderr, "pixmorph: unable to autosize\n");
 	    return 1;
 	}
@@ -464,25 +525,25 @@ main(int argc, char **argv)
 	    return 1;
 	}
 
-	if (pa_width > 0) {
-	    pa_height = sb.st_size/(3*pa_width);
+	if (args.width > 0) {
+	    args.height = sb.st_size/(3*args.width);
 	    fprintf(stderr, "width = %lu, size = %ld, so height = %lu\n",
-		    (unsigned long)pa_width, (long)sb.st_size, (unsigned long)pa_height);
-	} else if (pa_height > 0) pa_width = sb.st_size/(3*pa_height);
+		    (unsigned long)args.width, (long)sb.st_size, (unsigned long)args.height);
+	} else if (args.height > 0) args.width = sb.st_size/(3*args.height);
 
-	if (pa_width <= 0 || pa_height <= 0) {
+	if (args.width == 0 || args.height == 0) {
 	    fprintf(stderr, "pixmorph: Bogus image dimensions: %lu %lu\n",
-		    (unsigned long)pa_width, (unsigned long)pa_height);
+		    (unsigned long)args.width, (unsigned long)args.height);
 	    return 1;
 	}
     }
 
     /* Allocate memory for our bag o' pixels. */
-    pa = (unsigned char *)bu_malloc(pa_width*pa_height*3, "pa");
-    pb = (unsigned char *)bu_malloc(pa_width*pa_height*3, "pb");
-    wa = (unsigned char *)bu_malloc(pa_width*pa_height*3, "wa");
-    wb = (unsigned char *)bu_malloc(pa_width*pa_height*3, "wb");
-    morph = (unsigned char *)bu_malloc(pa_width*pa_height*3, "morph");
+    pa = (unsigned char *)bu_malloc(args.width*args.height*3, "pa");
+    pb = (unsigned char *)bu_malloc(args.width*args.height*3, "pb");
+    wa = (unsigned char *)bu_malloc(args.width*args.height*3, "wa");
+    wb = (unsigned char *)bu_malloc(args.width*args.height*3, "wb");
+    morph = (unsigned char *)bu_malloc(args.width*args.height*3, "morph");
 
     /* The following is our memorizing table for weight calculation. */
     for (i = 0; i < MAXLEN; i++)
@@ -490,14 +551,14 @@ main(int argc, char **argv)
 
     fprintf(stderr, "pixmorph: Reading images and lines file.\n");
 
-    if (pix_readpixels(picA, pa_width*pa_height, pa) < pa_width*pa_height) {
+    if (pix_readpixels(picA, args.width*args.height, pa) < args.width*args.height) {
 	fprintf(stderr, "Error reading %zu pixels from %s\n",
-		pa_width*pa_height, picAname);
+		args.width*args.height, picAname);
 	return 1;
     }
-    if (pix_readpixels(picB, pa_width*pa_height, pb) < pa_width*pa_height) {
+    if (pix_readpixels(picB, args.width*args.height, pb) < args.width*args.height) {
 	fprintf(stderr, "Error reading %zu pixels from %s\n",
-		pa_width*pa_height,  picBname);
+		args.width*args.height,  picBname);
 	return 1;
     }
     fclose(picA);
@@ -508,28 +569,28 @@ main(int argc, char **argv)
     lines_headerinfo(linesfile, &a, &b, &p, &numlines);
     lines = (struct lineseg *)bu_malloc(numlines * sizeof(struct lineseg), "lines");
     numlines = lines_read(linesfile, numlines, lines,
-			  pa_width, pa_height, warpfrac, p*b);
+			  args.width, args.height, warpfrac, p*b);
     fprintf(stderr, "pixmorph: %ld line segments read\n", numlines);
 
     /* Warp the images */
 
     fprintf(stderr,
 	    "pixmorph: Warping first image into first intermediate image.\n");
-    warp_image(wa, pa, lines, FIRST, pa_width, pa_height, numlines, a, b);
+    warp_image(wa, pa, lines, FIRST, args.width, args.height, numlines, a, b);
     fprintf(stderr,
 	    "pixmorph: Warping second image into second intermediate image.\n");
-    warp_image(wb, pb, lines, LAST, pa_width, pa_height, numlines, a, b);
+    warp_image(wb, pb, lines, LAST, args.width, args.height, numlines, a, b);
 
     /* Do the dissolve */
 
     fprintf(stderr,
 	    "pixmorph: Performing cross-dissolve between first and second\n");
     fprintf(stderr, "pixmorph: intermediate images.\n");
-    cross_dissolve(morph, wa, wb, dissolvefrac, pa_width*pa_height);
+    cross_dissolve(morph, wa, wb, dissolvefrac, args.width*args.height);
 
     /* All done.  Write everything out to a file and quit. */
 
-    pix_writepixels(pa_width*pa_height, morph);
+    pix_writepixels(args.width*args.height, morph);
 
     fprintf(stderr, "pixmorph: Morph complete.\n");
 

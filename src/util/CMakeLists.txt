@@ -105,7 +105,7 @@ brlcad_addexec(pixhist3d-plot3 pixhist3d-plot3.c "libbv;libbn;libbu" FOLDER Util
 brlcad_addexec(pixinterp2x pixinterp2x.c libbu FOLDER Util)
 brlcad_addexec(pixmatte pixmatte.c libbu FOLDER Util)
 brlcad_addexec(pixmerge pixmerge.c libbu FOLDER Util)
-brlcad_addexec(pixmorph pixmorph.c "libdm;libbu;${M_LIBRARY}" FOLDER Util)
+brlcad_addexec(pixmorph pixmorph.c "libdm;libbu;${M_LIBRARY}" FOLDER Util ARG_SCHEMA)
 add_target_deps(pixmorph dm_plugins)
 brlcad_addexec(pixrect pixrect.c "libbu;libicv" FOLDER Util)
 brlcad_addexec(pixrot pixrot.c libbu FOLDER Util)
