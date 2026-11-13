@@ -1,0 +1,121 @@
+set(WORK "@CMAKE_CURRENT_BINARY_DIR@/frames-output")
+set(LOG "${WORK}/art.log")
+file(REMOVE_RECURSE "${WORK}")
+file(MAKE_DIRECTORY "${WORK}/shaders" "${WORK}/cache" "${WORK}/formats.v1")
+set(ENV{BU_DIR_CACHE} "${WORK}/cache")
+include("@CMAKE_CURRENT_SOURCE_DIR@/art_test_commands.cmake")
+configure_file("@CMAKE_CURRENT_BINARY_DIR@/art_emission.oso"
+  "${WORK}/shaders/art_emission.oso" COPYONLY)
+set(DB "${WORK}/scene.g")
+run("${VEXEC}" create-material "${DB}" art_emission)
+set(RENDER_ARGS -P 2 -w 64 -n 64 -C 0/0/0 -p 0 -c "set samples=4")
+set(POSE "viewsize 80; eye_pt 0 0 56.568542494923804; orientation 0 0 0 1")
+set(reference "${WORK}/reference.png")
+run("${EXEC}" ${RENDER_ARGS} -c "viewsize 80" -a 270 -e 90
+  -o "${reference}" "${DB}" all.g)
+set(offset_reference "${WORK}/offset-reference.png")
+run("${EXEC}" ${RENDER_ARGS} -c "viewsize 80" -c "orientation 0 0 0 1"
+  -c "eye_pt 10 0 56.568542494923804"
+  -o "${offset_reference}" "${DB}" all.g)
+
+# Each explicit frame receives its own name; changed camera state persists.
+set(input "${WORK}/sequence.view")
+file(WRITE "${input}"
+  "start 0; ${POSE}; end;\n"
+  "start 1; eye_pt 10 0 56.568542494923804; end;\n"
+  "start 2; end;\n")
+run(INPUT_FILE "${input}" "${EXEC}" ${RENDER_ARGS} -M
+  -o "${WORK}/sequence.png" "${DB}" all.g)
+run("${VEXEC}" check-matching-image "${WORK}/sequence.png" "${reference}" 64 64)
+foreach(frame IN ITEMS 1 2)
+  run("${VEXEC}" check-matching-image "${WORK}/sequence.${frame}.png" "${offset_reference}" 64 64)
+endforeach()
+run("${VEXEC}" check-different-image "${WORK}/sequence.png" "${WORK}/sequence.1.png" 64 64)
+
+# Skipped frames still establish camera state and apply geometry cleanup.
+# Reaching the first frame past -K must stop successfully before later commands.
+set(input "${WORK}/range.view")
+file(WRITE "${input}"
+  "start 0; ${POSE}; end;\nstart 1; clean; end;\nstart 2; end;\n"
+  "start 3; deliberately_invalid_command; end;\n")
+set(sentinel "preserve excluded frame")
+foreach(name IN ITEMS range.png range.1.png range.3.png)
+  file(WRITE "${WORK}/${name}" "${sentinel}")
+endforeach()
+run(INPUT_FILE "${input}" "${EXEC}" ${RENDER_ARGS} -M -D 2 -K 2
+  -o "${WORK}/range.png" "${DB}" all.g)
+run("${VEXEC}" check-matching-image "${WORK}/range.2.png" "${reference}" 64 64)
+foreach(name IN ITEMS range.png range.1.png range.3.png)
+  file(READ "${WORK}/${name}" retained)
+  if(NOT retained STREQUAL sentinel)
+    message(FATAL_ERROR "A frame outside the selected range was replaced: ${name}")
+  endif()
+endforeach()
+
+# Preserve writer selection when inserting a frame number into quoted paths.
+foreach(extension IN ITEMS png pix exr)
+  set(input "${WORK}/format-${extension}.view")
+  set(base "${WORK}/formats.v1/frame output.${extension}")
+  file(WRITE "${input}" "start 08; ${POSE}; opt -o \"${base}\"; end;\n")
+  run(INPUT_FILE "${input}" "${EXEC}" ${RENDER_ARGS} -M "${DB}" all.g)
+  set(image "${WORK}/formats.v1/frame output.8.${extension}")
+  if(extension STREQUAL exr)
+    # libicv does not read EXR; validate its float pixels before conversion.
+    run(@ART_TEST_TOOL_ENV@ "@ART_OIIOTOOL_EXECUTABLE@" "${image}"
+      --fixnan error -o "${WORK}/exr-check.png")
+    set(image "${WORK}/exr-check.png")
+  endif()
+  run("${VEXEC}" check-image "${image}" 64 64)
+  if(EXISTS "${base}")
+    message(FATAL_ERROR "A numbered frame overwrote the unnumbered output: ${base}")
+  endif()
+endforeach()
+
+# Legacy streams may render an implicit frame zero without a start command.
+set(input "${WORK}/implicit.view")
+file(WRITE "${input}" "${POSE}; end;\n")
+run(INPUT_FILE "${input}" "${EXEC}" ${RENDER_ARGS} -M
+  -o "${WORK}/implicit.png" "${DB}" all.g)
+run("${VEXEC}" check-matching-image "${WORK}/implicit.png" "${reference}" 64 64)
+
+set(input "${WORK}/below-range.view")
+file(WRITE "${input}" "start 0; ${POSE}; end;\n")
+run(INPUT_FILE "${input}" "${EXEC}" ${RENDER_ARGS} -M -D 9
+  -o "${WORK}/absent.png" "${DB}" all.g)
+if(EXISTS "${WORK}/absent.png")
+  message(FATAL_ERROR "A stream below the selected range produced an image")
+endif()
+
+function(invalid_stream name diagnostic stream)
+  set(input "${WORK}/${name}.view")
+  set(base "${WORK}/${name}.png")
+  file(WRITE "${input}" "${stream}\n")
+  file(WRITE "${base}" "${sentinel}")
+  expect_failure_matching("${diagnostic}" INPUT_FILE "${input}"
+    "${EXEC}" ${RENDER_ARGS} -M -o "${base}" "${DB}" all.g)
+  file(READ "${base}" retained)
+  if(NOT retained STREQUAL sentinel)
+    message(FATAL_ERROR "An invalid frame stream replaced existing output: ${name}")
+  endif()
+endfunction()
+invalid_stream(missing_end "frame 0 has no end command" "start 0; ${POSE};")
+invalid_stream(nested_start "frame 0 has no end command before start" "start 0; start 1; end;")
+foreach(number IN ITEMS -1 1x 2147483648 not-a-number)
+  invalid_stream("invalid-${number}" "start requires a nonnegative decimal frame number"
+    "start ${number}; ${POSE}; end;")
+endforeach()
+invalid_stream(changed_range "frame range requires" "start 0; opt -D 3 -K 1; end;")
+foreach(range IN ITEMS negative_start negative_end reversed)
+  if(range STREQUAL negative_start)
+    set(options -D -1)
+  elseif(range STREQUAL negative_end)
+    set(options -K -2)
+  else()
+    set(options -D 3 -K 1)
+  endif()
+  expect_failure_matching("frame range requires" INPUT_FILE "${input}"
+    "${EXEC}" ${RENDER_ARGS} -M ${options} -o "${WORK}/invalid-range.png" "${DB}" all.g)
+endforeach()
+if(EXISTS "${WORK}/invalid-range.png")
+  message(FATAL_ERROR "Invalid frame options produced an image")
+endif()
