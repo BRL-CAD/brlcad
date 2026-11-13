@@ -35,9 +35,12 @@
 #include "icv.h"
 #include "vmath.h"
 #include "rt/geom.h"
+#include "rt/object_io.h"
+#include "rt/primitives/joint.h"
 #include "raytrace.h"
 #include "wdb.h"
 
+#include "gltf_data.h"
 #include "gltf_read_util.h"
 
 struct mesh_members
@@ -53,9 +56,8 @@ struct conversion_state
     std::vector<mesh_members> meshes;
     std::vector<std::string> image_shaders;
     struct wmember scene;
+    std::set<std::string> joint_names;
 };
-
-
 static void
 free_image_bytes(void *data)
 {
@@ -164,6 +166,65 @@ texture_shader(struct conversion_state &state, const tg3_model &model, uint32_t 
     shader = "obj=" + name + " w=" + std::to_string(image->width) +
 	" n=" + std::to_string(image->height);
     return shader;
+}
+
+
+static bool
+import_joint(struct conversion_state &state, const tg3_node &node)
+{
+    static const char *joint_extras_name = "BRL-CAD_joint";
+    const tg3_value *description = brlcad_gltf::value_object_get(node.ext.extras,
+	joint_extras_name);
+
+    if (!description)
+	return true;
+    const tg3_value *name_value = brlcad_gltf::value_object_get(description, "name");
+    const tg3_value *data_value = brlcad_gltf::value_object_get(description, "data");
+    if (!name_value || name_value->type != TG3_VALUE_STRING || !data_value) {
+	bu_log("Invalid BRL-CAD joint metadata in glTF node\n");
+	return false;
+    }
+    std::string name = brlcad_gltf::to_string(name_value->string_val);
+    if (name.empty()) {
+	bu_log("BRL-CAD joint metadata has no object name\n");
+	return false;
+    }
+    if (!state.joint_names.insert(name).second) {
+	bu_log("Duplicate BRL-CAD joint metadata for '%s'\n", name.c_str());
+	return false;
+    }
+    if (db_lookup(state.fd_out->dbip, name.c_str(), LOOKUP_QUIET)) {
+	bu_log("Cannot import glTF joint '%s': object already exists\n", name.c_str());
+	return false;
+    }
+    struct rt_data_node *data = brlcad_gltf::data_from_value(data_value);
+    struct rt_data_context context = RT_DATA_CONTEXT_INIT;
+    struct rt_db_internal internal;
+    point_t origin = VINIT_ZERO;
+    RT_DB_INTERNAL_INIT(&internal);
+    context.media_type = "model/gltf+json";
+    context.dbip = state.fd_out->dbip;
+    context.local2base = state.fd_out->dbip->dbi_local2base;
+    context.base2local = state.fd_out->dbip->dbi_base2local;
+    const char *failure = nullptr;
+    if (!data)
+	failure = "decode neutral data";
+    else if (OBJ[ID_JOINT].ft_make(&OBJ[ID_JOINT], &internal, nullptr,
+	    origin, 1.0) != BRLCAD_OK)
+	failure = "create joint object";
+    else if (rt_obj_data_import(&internal, data, &context) != BRLCAD_OK)
+	failure = "import neutral data";
+    else if (wdb_put_internal(state.fd_out, name.c_str(), &internal, 1.0) < 0)
+	failure = "write joint object";
+    if (failure) {
+	bu_log("Unable to import glTF joint '%s': %s\n", name.c_str(), failure);
+	rt_data_free(data);
+	rt_db_free_internal(&internal);
+	return false;
+    }
+    rt_data_free(data);
+    rt_db_free_internal(&internal);
+    return true;
 }
 
 
@@ -314,6 +375,8 @@ handle_node(struct conversion_state &state, const tg3_model &model,
     const tg3_node *node = active.get();
     if (!node)
 	return false;
+    if (!import_joint(state, *node))
+	return false;
     if (node->children_count == 0 && node->mesh == TG3_INDEX_NONE)
 	return true;
 
@@ -375,7 +438,7 @@ gltf_read(struct gcv_context *context, const struct gcv_opts *UNUSED(gcv_options
     tinygltf3::Model model;
     tinygltf3::ErrorStack errors;
     brlcad_gltf::confined_file_reader reader(source_path);
-    tg3_error_code parse_result = reader.parse(model.get(), errors.get());
+    tg3_error_code parse_result = reader.parse(model.get(), errors.get(), true);
     brlcad_gltf::log_errors(*errors.get());
     if (parse_result != TG3_OK) {
 	bu_log("Failed to parse glTF input %s (error %d)\n", source_path,
@@ -399,7 +462,8 @@ gltf_read(struct gcv_context *context, const struct gcv_opts *UNUSED(gcv_options
     }
 
     const std::string scene_name = brlcad_gltf::unique_object_name(context->dbip, "all", 0);
-    if (mk_lcomb(state.fd_out, scene_name.c_str(), &state.scene, 0, NULL, NULL, NULL, 0) < 0)
+    if (!BU_LIST_IS_EMPTY(&state.scene.l) &&
+	mk_lcomb(state.fd_out, scene_name.c_str(), &state.scene, 0, NULL, NULL, NULL, 0) < 0)
 	return 0;
 
     return 1;
@@ -415,12 +479,15 @@ gltf_can_read(const char *UNUSED(data))
 
 extern "C"
 {
+    extern const struct gcv_filter gcv_conv_gltf_write;
     static const struct gcv_filter gcv_conv_gltf_read = {
 	"GLTF Reader", GCV_FILTER_READ, BU_MIME_MODEL_GLTF, gltf_can_read,
 	NULL, NULL, gltf_read
     };
 
-    static const struct gcv_filter * const filters[] = { &gcv_conv_gltf_read, NULL, NULL };
+    static const struct gcv_filter * const filters[] = {
+	&gcv_conv_gltf_read, &gcv_conv_gltf_write, NULL
+    };
 
     const struct gcv_plugin gcv_plugin_info_s = { filters };
 
