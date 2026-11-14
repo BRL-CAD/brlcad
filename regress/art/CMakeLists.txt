@@ -76,6 +76,7 @@ set(ART_REGRESSION_TEST_NAMES
   regress-art-photon-csg-20
   regress-art-photon-bot-15
   regress-art-photon-bot-20
+  regress-art-photon-controls
   regress-art-refraction
   regress-art-nested
   regress-art-mixture
@@ -102,7 +103,7 @@ set(ART_REGRESSION_TEST_NAMES
   regress-art-exposure
 )
 if(UNIX)
-  list(APPEND ART_REGRESSION_TEST_NAMES regress-art-cancel)
+  list(APPEND ART_REGRESSION_TEST_NAMES regress-art-cancel regress-art-photon-cancel)
 endif()
 
 if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
@@ -120,6 +121,8 @@ cmakefiles(CMakeLists.txt art_test_setup.cmake art_installed_tests.cmake
   regress-art-photon-csg-20.cmake.in
   regress-art-photon-bot-15.cmake.in
   regress-art-photon-bot-20.cmake.in
+  regress-art-photon-controls.cmake.in
+  regress-art-photon-cancel.cmake.in
   art_scene.cpp art_test_mesh.h art_glass_reference.h art_test_commands.cmake
   regress-art.cmake.in regress-art-bump.cmake.in regress-art-normal.cmake.in
   regress-art-texture.cmake.in regress-art-color.cmake.in
@@ -175,6 +178,8 @@ if(TARGET art AND BUILD_TESTING)
     "${CMAKE_CURRENT_BINARY_DIR}/regress-art-photon-csg-20-output"
     "${CMAKE_CURRENT_BINARY_DIR}/regress-art-photon-bot-15-output"
     "${CMAKE_CURRENT_BINARY_DIR}/regress-art-photon-bot-20-output"
+    "${CMAKE_CURRENT_BINARY_DIR}/photon-controls-output"
+    "${CMAKE_CURRENT_BINARY_DIR}/photon-cancel-output"
     "${CMAKE_CURRENT_BINARY_DIR}/refraction-output"
     "${CMAKE_CURRENT_BINARY_DIR}/nested-output"
     "${CMAKE_CURRENT_BINARY_DIR}/mixture-output"
