@@ -388,6 +388,82 @@ frame persistence, rooted asset lookup, and invalid-image handling.
 Native Appleseed tests check filtered sampling/evaluation consistency away
 from texel centers, longitude interpolation, and zero-shift pole handling.
 
+== Sampling and path limits
+
+The default `sampling=uniform` traces exactly `samples` camera samples per
+pixel (`s` is an alias).  The default remains 25.  To spend less work on
+converged image regions, select adaptive sampling:
+
+----
+art -c "set sampling=adaptive samples=256 min_samples=16 batch_size=16 noise_threshold=0.1" \
+    -o view.exr model.g all.g
+----
+
+In adaptive mode, `samples` is the maximum per-pixel budget.  `min_samples`
+is an optional initial uniform pass; its default of zero skips that pass.
+`batch_size` controls subsequent sample batches and defaults to 16.  The
+renderer compares full and half-sample estimates within image blocks,
+then refines noisy blocks until they converge or exhaust the budget.
+`noise_threshold` defaults to 0.1; smaller values demand closer estimates
+and generally do more work.  This is the renderer's weighted block error
+threshold, not a percentage or a guaranteed bound on image error.
+The accepted range is 0.0001 through 10000.
+
+The initial pass is followed by a comparison batch when budget remains.
+For example, `min_samples=6 batch_size=4` needs at least ten samples to
+make its first comparison.  Batches are clipped to the budget, including
+budgets that are not batch multiples.  `min_samples=samples` requests a
+fixed budget.  Minimum samples must be nonnegative, batch size must be
+positive, and the adaptive minimum must not exceed `samples`.  An unused
+minimum may exceed the budget in uniform mode; switching to adaptive
+validates the complete assignment list before changing any settings.
+
+Path controls pass through to Appleseed's path tracer.  They default to
+`inherit`, which retains the renderer's defaults:
+
+[cols="1,1,3",options="header"]
+|===
+|Setting |Native default |Meaning
+|`max_bounces` |8 |Overall limit, excluding the first lighting bounce
+|`max_diffuse_bounces` |3 |Diffuse limit, excluding the first diffuse bounce
+|`max_glossy_bounces` |8 |Number of rough reflection or transmission continuations
+|`max_specular_bounces` |8 |Number of ideal reflection or refraction continuations
+|`rr_min_path_length` |6 |Path length before Russian roulette may prune paths
+|`next_event_estimation` |1 |Estimate lighting explicitly at surface vertices
+|===
+
+The four bounce limits accept nonnegative integers, `-1` to remove that
+individual cap, or `inherit` to restore the native default.  Caps combine:
+removing a specular cap does not remove the overall cap or Russian
+roulette.  Native global and diffuse limits of zero retain direct
+lighting; glossy and specular limits of zero disable continuations of
+those types.  Two ideal refractions are needed to pass through a solid
+glass slab, so `max_specular_bounces=1` blocks that transmitted view while
+`max_specular_bounces=2` permits it.  Rough glass uses glossy events.
+Explicit lighting and surface emission are evaluated before continuation
+limits, so a zero cap need not make a surface black.
+
+`rr_min_path_length=0` disables Russian roulette; positive values select
+the minimum path length, and `inherit` restores the default.
+`next_event_estimation` accepts `0`, `1`, or `inherit`.  Leave it enabled
+for normal rendering; disabling it can help isolate sampled continuation
+paths during shader diagnosis.  These controls do not enable participating
+media, thin glass, or transport features that the geometry adapter has
+not yet qualified.
+
+`renderer_log=debug|info|warning|error` selects native renderer diagnostics;
+the default is `info`.  Debug includes shader `printf` messages and native
+sampling statistics and can produce substantial output.  It does not
+suppress art's own errors or its separate progress reports.  Sampling,
+path limits, and logging persist across saved-view frames and geometry
+cleanup, and `set` without assignments reports their current values.
+
+`regress-art-sampling` counts actual camera shader evaluations to verify
+uniform budgets, adaptive early stopping, strict thresholds, initial
+passes, clipped batches, frame changes, and native logging.
+`regress-art-bounces` checks glossy reflection and two-interface ideal
+glass on CSG and BOT geometry, including inherited and unlimited limits.
+
 == Progress and cancellation
 
 Art reports the frame number when rendering starts, completed tiles during

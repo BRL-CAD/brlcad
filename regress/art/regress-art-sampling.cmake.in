@@ -1,0 +1,99 @@
+set(WORK "@CMAKE_CURRENT_BINARY_DIR@/sampling-output")
+set(LOG "${WORK}/art.log")
+file(REMOVE_RECURSE "${WORK}")
+file(MAKE_DIRECTORY "${WORK}/shaders" "${WORK}/cache")
+set(ENV{BU_DIR_CACHE} "${WORK}/cache")
+include("@CMAKE_CURRENT_SOURCE_DIR@/art_test_commands.cmake")
+configure_file("@CMAKE_CURRENT_BINARY_DIR@/art_sampling.oso"
+  "${WORK}/shaders/art_sampling.oso" COPYONLY)
+set(DB "${WORK}/scene.g")
+run("${VEXEC}" create-material "${DB}" art_sampling)
+set(RENDER_ARGS -P 1 -w 1 -n 1 -c "set renderer_log=debug light_intensity=0 progress=0"
+  -c "viewsize 4" -c "eye_pt 0 0 40" -c "orientation 0 0 0 1")
+
+function(render_count name expected settings)
+  run_command("${CMAKE_CURRENT_BINARY_DIR}" FALSE "${EXEC}" ${RENDER_ARGS}
+    -c "set ${settings}" -o "${WORK}/${name}.exr" "${DB}" cube.r)
+  string(REGEX MATCHALL "art_sampling_evaluation" evaluations "${command_output}")
+  list(LENGTH evaluations count)
+  if(NOT count EQUAL expected)
+    message(FATAL_ERROR "${name}: expected ${expected} camera samples, received ${count}")
+  endif()
+endfunction()
+
+render_count(uniform-seven 7 "samples=7")
+render_count(uniform-alias 31 "s=31")
+render_count(adaptive-flat 4 "sampling=adaptive samples=64 batch_size=4")
+render_count(adaptive-minimum 10 "sampling=adaptive samples=64 min_samples=6 batch_size=4")
+render_count(adaptive-fixed 29 "sampling=adaptive samples=29 min_samples=29 batch_size=4")
+run("${VEXEC}" set-material "${DB}" OSL.param.in_varying "int 1")
+render_count(adaptive-loose 4 "sampling=adaptive samples=64 batch_size=4 noise_threshold=10000")
+render_count(adaptive-strict 64 "sampling=adaptive samples=64 batch_size=4 noise_threshold=0.0001")
+render_count(adaptive-clipped 29 "sampling=adaptive samples=29 batch_size=4 noise_threshold=0.0001")
+render_count(uniform-variable 29 "samples=29")
+# The final assignment list, rather than its order or alias, defines the budget.
+render_count(adaptive-order 29 "min_samples=29 sampling=adaptive s=29 batch_size=4")
+render_count(dormant-minimum 7 "min_samples=29 samples=7")
+run("@ART_OIIOTOOL_EXECUTABLE@" --fail 0 --hardfail 0 --warn 0 --hardwarn 0
+  "${WORK}/uniform-variable.exr" "${WORK}/adaptive-order.exr" --diff)
+
+foreach(level IN ITEMS info warning error)
+  run_command("${CMAKE_CURRENT_BINARY_DIR}" FALSE "${EXEC}" ${RENDER_ARGS}
+    -c "set renderer_log=${level} samples=1" -o "${WORK}/${level}.exr" "${DB}" cube.r)
+  if(command_output MATCHES "art_sampling_evaluation")
+    message(FATAL_ERROR "Debug shader messages escaped renderer_log=${level}")
+  endif()
+endforeach()
+
+# Lower verbosity must still fail on shader errors without replacing output.
+configure_file("@CMAKE_CURRENT_BINARY_DIR@/art_color_check.oso"
+  "${WORK}/shaders/art_color_check.oso" COPYONLY)
+set(ERROR_DB "${WORK}/error.g")
+run("${VEXEC}" create-material "${ERROR_DB}" art_color_check)
+run("${VEXEC}" set-material "${ERROR_DB}" OSL.param.in_expected "color 1 1 1")
+foreach(level IN ITEMS info warning error)
+  set(image "${WORK}/error-${level}.exr")
+  file(WRITE "${image}" "preserve existing output")
+  expect_failure_matching("Color mismatch" "${EXEC}" ${RENDER_ARGS}
+    -c "set renderer_log=${level} samples=1" -o "${image}" "${ERROR_DB}" cube.r)
+  file(READ "${image}" retained)
+  if(NOT retained STREQUAL "preserve existing output")
+    message(FATAL_ERROR "Shader error replaced output with renderer_log=${level}")
+  endif()
+endforeach()
+
+file(WRITE "${WORK}/frames.view"
+  "start 0; set samples=7; end;\n"
+  "start 1; set sampling=adaptive samples=29 min_samples=29 batch_size=4; end;\n"
+  "start 2; clean; end;\n"
+  "start 3; set sampling=uniform samples=5; end;\n")
+run_command("${CMAKE_CURRENT_BINARY_DIR}" FALSE INPUT_FILE "${WORK}/frames.view"
+  "${EXEC}" ${RENDER_ARGS} -M -o "${WORK}/frames.exr" "${DB}" cube.r)
+string(REGEX MATCHALL "art_sampling_evaluation" evaluations "${command_output}")
+list(LENGTH evaluations count)
+if(NOT count EQUAL 70)
+  message(FATAL_ERROR "Saved-view sampling changes or clean lost settings: ${count}")
+endif()
+
+run_command("${CMAKE_CURRENT_BINARY_DIR}" FALSE "${EXEC}" -c "set inspect_materials=1"
+  -c set "${DB}" cube.r)
+foreach(pattern IN ITEMS "sampling=uniform" "min_samples=0" "batch_size=16"
+    "noise_threshold=0[.]1" "renderer_log=info")
+  if(NOT command_output MATCHES "${pattern}")
+    message(FATAL_ERROR "Sampling query missed '${pattern}'")
+  endif()
+endforeach()
+set(image "${WORK}/invalid.exr")
+foreach(setting IN ITEMS "sampling=random" "sampling=!" "min_samples=-1" "batch_size=0"
+    "batch_size=2147483648" "noise_threshold=0" "noise_threshold=0.00001"
+    "noise_threshold=10001" "noise_threshold=nan" "noise_threshold=inf"
+    "noise_threshold=1e100" "noise_threshold=0.1junk" "renderer_log=verbose"
+    "sampling=adaptive min_samples=30 samples=29" "sampling=adaptive min_samples=30 s=29")
+  file(WRITE "${image}" "preserve existing output")
+  expect_failure_matching("invalid setting" "${EXEC}" -c "set ${setting}"
+    -o "${image}" "${DB}" cube.r)
+  file(READ "${image}" retained)
+  if(NOT retained STREQUAL "preserve existing output")
+    message(FATAL_ERROR "Invalid sampling setting replaced existing output")
+  endif()
+endforeach()
