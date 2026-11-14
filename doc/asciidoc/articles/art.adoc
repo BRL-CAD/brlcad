@@ -438,6 +438,7 @@ Path controls pass through to Appleseed's path tracer.  They default to
 |`max_specular_bounces` |8 |Number of ideal reflection or refraction continuations
 |`rr_min_path_length` |6 |Path length before Russian roulette may prune paths
 |`next_event_estimation` |1 |Estimate lighting explicitly at surface vertices
+|`enable_caustics` |0 |Allow glossy/specular paths after diffuse or volume scattering
 |===
 
 The four bounce limits accept nonnegative integers, `-1` to remove that
@@ -453,7 +454,8 @@ limits, so a zero cap need not make a surface black.
 
 `rr_min_path_length=0` disables Russian roulette; positive values select
 the minimum path length, and `inherit` restores the default.
-`next_event_estimation` accepts `0`, `1`, or `inherit`.  Leave it enabled
+`next_event_estimation` and `enable_caustics` accept `0`, `1`, or `inherit`.
+Leave next-event estimation enabled
 for normal rendering; disabling it can help isolate sampled continuation
 paths during shader diagnosis.  These controls do not enable participating
 media, thin glass, or transport features that the geometry adapter has
@@ -979,6 +981,34 @@ per-pixel bound limits stochastic differences.  A zero-absorption control
 must disagree with the absorbing reference.  This qualifies the tested
 closed-box paths; curved or nested rough interfaces, transmitted shadows,
 and caustic lighting remain outside these cases.
+
+=== Illumination through glass
+
+Use `set enable_caustics=1` when light paths must continue from a diffuse
+surface through ideal or rough glass.  The native path-tracer default is
+off.  With that default, a visible surface beneath a glass cover can stay
+dark even when the environment illuminates the outside of the cover.
+The option permits the missing scattering sequences; it can also increase
+noise and the sampling budget needed for convergence.  `0` disables them,
+and `inherit` restores the native default.  Assignments persist across
+frames and `clean`, like the other path controls.
+
+The `regress-art-caustics-clear` and `regress-art-caustics-absorption`
+checks compare smooth-slab illumination with an independent
+Lambert/Fresnel/Beer hemisphere integral.  The reference sums the internal
+reflection series between the parallel interfaces.  CSG and solid BOT
+slabs cover indices 1.5 and 2, clear and absorbing volumes, disabled/enabled
+paths.  `regress-art-caustics-state` checks frame/reset behavior, and
+`regress-art-caustics-rough` compares a rough absorbing slab with
+a separate native Appleseed triangle scene.  Receiver channel means agree
+within 1 percent; disabled controls retain only the bounded contribution
+from grazing rays that miss the finite slab.  The fixture isolates one
+diffuse bounce and allows up to 64 dielectric continuations.
+
+These cases establish illumination through glass from a broad environment.
+Point/directional-light caustics, general caustic focusing, and photon
+mapping still need their own integration and qualification.  The option
+does not replace that work.
 
 === Nested optical volumes
 
