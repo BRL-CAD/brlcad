@@ -74,7 +74,7 @@ surface art_nested_reference(
             Ci = 0;
             return;
         }
-        weight *= interface_transmission(indices[i], indices[i + 1], -direction[2], -transmitted[2]);
+        weight *= interface_radiance_transmission(indices[i], indices[i + 1], -direction[2], -transmitted[2]);
         direction = transmitted;
     }
     // The finite receiver's top is Z=-30 and its half width is 200.

@@ -865,6 +865,13 @@ sampling, total internal reflection, and both sides of an interface.
 GGX sampling also handles exact back-face normal incidence without a
 singular tangent basis.
 
+Glass applies the squared index-ratio correction for radiance at refractive
+boundaries and uses its adjoint form for importance transport.  These
+factors cancel on complete air-to-air paths and remain observable for a
+camera inside a dielectric.  The analytic references include this optical
+measure, following
+https://pbr-book.org/4ed/Reflection_Models/Dielectric_BSDF[Dielectric BSDF].
+
 When the inside and outside indices match, the glass BSDF transmits straight
 through, including for rough surfaces.  Appleseed samples this as a specular
 delta event because the microfacet transmission density is singular at
