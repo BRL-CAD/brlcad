@@ -17,20 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-// Trace the two ideal interfaces analytically, without renderer queries.
-float interface_transmission(float ni, float nt, float ci, float ct)
-{
-    float rs = (ni * ci - nt * ct) / (ni * ci + nt * ct);
-    float rp = (nt * ci - ni * ct) / (nt * ci + ni * ct);
-    return 1 - 0.5 * (rs * rs + rp * rp);
-}
-
-color target_color(point position)
-{
-    return color(0.35 + 0.25 * sin(0.17 * position[0]),
-        0.35 + 0.25 * sin(0.19 * position[1]),
-        0.35 + 0.25 * cos(0.11 * position[0] + 0.13 * position[1]));
-}
+#include "art_glass_reference.h"
 
 surface art_refraction_reference(
     int in_target = 0,

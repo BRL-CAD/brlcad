@@ -25,6 +25,7 @@ foreach(shader IN LISTS ART_TEST_SHADER_NAMES)
       -o "${compiled}" "${CMAKE_CURRENT_SOURCE_DIR}/${shader}.osl"
     DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/${shader}.osl"
       "${ART_OSLC_EXECUTABLE}" "${ART_OSL_SHADER_INCLUDE_DIR}/stdosl.h"
+      "${CMAKE_CURRENT_SOURCE_DIR}/art_glass_reference.h"
       ${ART_OSL_HELPER_HEADERS}
     VERBATIM)
   list(APPEND ART_TEST_SHADERS "${compiled}")

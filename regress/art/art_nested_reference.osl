@@ -1,0 +1,87 @@
+/*              A R T _ N E S T E D _ R E F E R E N C E . O S L
+ * BRL-CAD
+ *
+ * Copyright (c) 2026 United States Government as represented by
+ * the U.S. Army Research Laboratory.
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public License
+ * version 2.1 as published by the Free Software Foundation.
+ *
+ * This library is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this file; see the file named COPYING for more
+ * information.
+ */
+#include "art_glass_reference.h"
+
+surface art_nested_reference(
+    float in_outer_ior = 1.5,
+    float in_inner_ior = 2.4,
+    float in_core_ior = 1,
+    int in_core = 0,
+    color in_outer_transmittance = color(1),
+    color in_inner_transmittance = color(1),
+    color in_core_transmittance = color(1),
+    float in_outer_distance = 0,
+    float in_inner_distance = 0,
+    float in_core_distance = 0)
+{
+    // The fixture is three concentric boxes with half widths 10, 5, and 2.
+    // Tested cameras cross their Z faces, away from all edges.
+    float planes[6] = {10, 5, 2, -2, -5, -10};
+    float indices[7] = {1, in_outer_ior, in_inner_ior, in_core_ior,
+        in_inner_ior, in_outer_ior, 1};
+    color transmittance[6] = {in_outer_transmittance, in_inner_transmittance,
+        in_core_transmittance, in_inner_transmittance, in_outer_transmittance, color(1)};
+    float reference_distance[6] = {in_outer_distance, in_inner_distance, in_core_distance,
+        in_inner_distance, in_outer_distance, 0};
+    float extent[6] = {10, 5, 2, 2, 5, 10};
+    int count = 6;
+    if (!in_core) {
+        count = 4;
+        planes[2] = -5;
+        planes[3] = -10;
+        indices[3] = in_outer_ior;
+        indices[4] = 1;
+        transmittance[2] = in_outer_transmittance;
+        reference_distance[2] = in_outer_distance;
+        extent[2] = 5;
+        extent[3] = 10;
+    }
+    point position = P;
+    vector direction = normalize(I);
+    color weight = color(1);
+    for (int i = 0; i < count; ++i) {
+        if (i > 0) {
+            float segment_length = (planes[i] - position[2]) / direction[2];
+            position += segment_length * direction;
+            if (reference_distance[i - 1] > 0)
+                weight *= pow(transmittance[i - 1], segment_length / reference_distance[i - 1]);
+        }
+        if (abs(position[2] - planes[i]) > 1.0e-4 ||
+            abs(position[0]) >= extent[i] || abs(position[1]) >= extent[i]) {
+            error("Nested reference ray left its supported slab faces");
+            Ci = 0;
+            return;
+        }
+        vector transmitted = refract(direction, normal(0, 0, 1), indices[i] / indices[i + 1]);
+        if (dot(transmitted, transmitted) == 0) {
+            Ci = 0;
+            return;
+        }
+        weight *= interface_transmission(indices[i], indices[i + 1], -direction[2], -transmitted[2]);
+        direction = transmitted;
+    }
+    // The finite receiver's top is Z=-30 and its half width is 200.
+    position += (-30 - position[2]) / direction[2] * direction;
+    if (abs(position[0]) > 200 || abs(position[1]) > 200) {
+        Ci = 0;
+        return;
+    }
+    Ci = weight * target_color(position) * emission();
+}

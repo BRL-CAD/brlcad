@@ -199,6 +199,69 @@ create_scene(const char *path, const char *shader, const char *output)
 }
 
 static int
+create_nested_scene(const char *path)
+{
+    struct rt_wdb *db = wdb_fopen(path);
+    if (!db)
+	return 1;
+    const point_t low = {-10, -10, -10}, high = {10, 10, 10};
+    const point_t target_low = {-200, -200, -31}, target_high = {200, 200, -30};
+    bool success = mk_rpp(db, "nested.box", low, high) == 0 &&
+	art_test::make_mesh(db, "nested.mesh", art_test::MeshUV::None) == 0 &&
+	mk_rpp(db, "nested.target", target_low, target_high) == 0;
+    const struct { const char *name; double scale; } layers[] = {
+	{"outer", 1.0}, {"inner", 0.5}, {"core", 0.2}
+    };
+    struct wmember members;
+    for (const auto& layer : layers) {
+	const std::string material = std::string(layer.name) + ".material";
+	struct bu_attribute_value_set optical;
+	bu_avs_init_empty(&optical);
+	bu_avs_add(&optical, "OSL", "as_glass");
+	success = success && write_osl_material(db, material.c_str(), &optical);
+	bu_avs_free(&optical);
+	for (const char *kind : {"box", "mesh"}) {
+	    const std::string region = std::string(kind) + "." + layer.name + ".r";
+	    const std::string solid = std::string("nested.") + kind;
+	    mat_t scale;
+	    MAT_IDN(scale);
+	    scale[0] = scale[5] = scale[10] = layer.scale;
+	    BU_LIST_INIT(&members.l);
+	    success = success && mk_addmember(solid.c_str(), &members.l, scale, WMOP_UNION) &&
+		mk_lcomb(db, region.c_str(), &members, 1, NULL, NULL, NULL, 0) == 0 &&
+		db5_update_attribute(region.c_str(), "material_name", material.c_str(), db->dbip) == 0;
+	}
+    }
+    struct bu_attribute_value_set optical;
+    bu_avs_init_empty(&optical);
+    bu_avs_add(&optical, "OSL", "art_refraction_reference");
+    bu_avs_add(&optical, "OSL.param.in_target", "int 1");
+    success = success && write_osl_material(db, "target.material", &optical);
+    bu_avs_free(&optical);
+    BU_LIST_INIT(&members.l);
+    success = success && mk_addmember("nested.target", &members.l, NULL, WMOP_UNION) &&
+	mk_lcomb(db, "target.r", &members, 1, NULL, NULL, NULL, 0) == 0 &&
+	db5_update_attribute("target.r", "material_name", "target.material", db->dbip) == 0;
+    for (const char *kind : {"box", "mesh"}) {
+	for (bool core : {false, true}) {
+	    BU_LIST_INIT(&members.l);
+	    for (const auto& layer : layers) {
+		if (!core && BU_STR_EQUAL(layer.name, "core"))
+		    continue;
+		const std::string region = std::string(kind) + "." + layer.name + ".r";
+		success = success && mk_addmember(region.c_str(), &members.l, NULL, WMOP_UNION);
+	    }
+	    const std::string group = std::string(kind) + (core ? ".core.g" : ".nested.g");
+	    success = success && mk_addmember("target.r", &members.l, NULL, WMOP_UNION) &&
+		mk_lcomb(db, group.c_str(), &members, 0, NULL, NULL, NULL, 0) == 0;
+	}
+    }
+    wdb_close(db);
+    return success ? 0 : 1;
+}
+
+
+static int
 edit_database_command(const char *path, int argc, const char *argv[])
 {
     struct ged *editor = ged_open("db", path, 0);
@@ -572,6 +635,8 @@ main(int argc, char **argv)
     if (argc > 5 && BU_STR_EQUAL(argv[1], "interrupt-render"))
 	return interrupt_render_process(argv[2], argv[3], argv[4], const_cast<const char **>(argv + 5));
 #endif
+    if (argc == 3 && BU_STR_EQUAL(argv[1], "create-nested"))
+	return create_nested_scene(argv[2]);
     if (argc == 3 && BU_STR_EQUAL(argv[1], "create"))
 	return create_scene(argv[2], nullptr, nullptr);
     if (argc == 3 && BU_STR_EQUAL(argv[1], "create-checker-texture"))

@@ -872,10 +872,56 @@ ratio, rather than roughness, to its transmitted-differential calculation.
 These checks establish the tested first-order direction changes; filtered
 textures along secondary paths still need image-based qualification.
 
-Nested indices, general rough-glass transport, multiple internal bounces,
-caustics, transmitted shadows, overlapping media, thin surfaces, and
+General rough-glass transport, multiple internal bounces, caustics,
+transmitted shadows, general overlapping media, thin surfaces, and
 bump/normal-mapped transmission need further qualification before a general
-production-glass claim.
+production-glass claim.  The distinct-priority nested-volume case below
+has independent image references.
+
+=== Nested optical volumes
+
+`OSL.medium_priority` assigns Appleseed's medium priority to each region
+instance using a material.  It is material metadata, separate from shader
+inputs.  For example:
+
+[source,tcl]
+----
+material set glass.material optical OSL.medium_priority 1
+material set liquid.material optical OSL.medium_priority 2
+material set bubble.material optical OSL.medium_priority 3
+----
+
+The value is a bare integer from -128 through 127 and defaults to zero.
+Higher priorities select the active medium where optical volumes overlap;
+a lower-priority contained region is displaced by its surrounding medium.
+Use distinct increasing priorities for successively nested media.
+Equal priorities do not establish the required ordering for nested indices
+and absorption.  Negative priorities are supported.  Material inheritance
+and child overrides follow the normal OSL definition rules; replacing a
+root shader resets the inherited definition, including priority.
+`inspect_materials=1` reports the effective priority before rendering.
+Invalid priorities fail without replacing an existing image.
+
+The qualified representation uses full, deliberately overlapping closed
+volumes: the outer volume contains the complete inner volume, and an
+optional higher-priority air-like core can be placed inside it.  The
+priority controls which volume supplies the index and absorption on each
+path segment.  This does not qualify coincident interfaces between a CSG
+shell and a separately modeled filling.  Those shared boundaries require
+separate handling.  Optical air-like regions in this workflow remain
+ordinary regions with an index of one; BRL-CAD air regions continue to be
+excluded from art rendering.
+
+`regress-art-nested` compares two- and three-layer CSG and solid BOT boxes
+with a separate shader that traces their interfaces analytically.  It
+checks Snell directions, Fresnel transmission, and colored Beer absorption
+at each segment, including different indices, orthographic and perspective
+views, oblique rays, negative priorities, inherited settings, and hidden
+lower-priority regions.  Reflection tint is zero to isolate directly
+transmitted paths.  The reference checks its slab-face bounds explicitly;
+these tests do not establish rough, multiply reflected, or arbitrary
+interpenetrating-volume transport.  A tied-priority control must fail the
+physical nested-absorption comparison.
 
 === Plate-mode BOTs
 

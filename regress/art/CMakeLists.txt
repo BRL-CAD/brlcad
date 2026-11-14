@@ -24,6 +24,7 @@ set(ART_TEST_SHADER_NAMES
   art_array_values
   art_absorption_reference
   art_refraction_reference
+  art_nested_reference
   art_mirror_mixture
   art_mirror_node
   art_surface_reference
@@ -42,6 +43,7 @@ set(ART_REGRESSION_TEST_NAMES
   regress-art-resources
   regress-art-transmission
   regress-art-refraction
+  regress-art-nested
   regress-art-mixture
   regress-art-surface
   regress-art-metal-energy
@@ -76,12 +78,12 @@ endif()
 cmakefiles(CMakeLists.txt art_test_setup.cmake art_installed_tests.cmake
   art_installed_runtime.cmake.in art-installed-material.cmake.in
   art-installed-plate.cmake.in art-installed-view.cmake.in
-  art_scene.cpp art_test_mesh.h art_test_commands.cmake
+  art_scene.cpp art_test_mesh.h art_glass_reference.h art_test_commands.cmake
   regress-art.cmake.in regress-art-bump.cmake.in regress-art-normal.cmake.in
   regress-art-texture.cmake.in regress-art-color.cmake.in
   regress-art-image-maps.cmake.in regress-art-resources.cmake.in
   regress-art-transmission.cmake.in regress-art-refraction.cmake.in
-  regress-art-mixture.cmake.in regress-art-surface.cmake.in
+  regress-art-mixture.cmake.in regress-art-surface.cmake.in regress-art-nested.cmake.in
   regress-art-metal-energy.cmake.in regress-art-coat.cmake.in
   regress-art-materials.cmake.in regress-art-inspect.cmake.in
   regress-art-region-colors.cmake.in regress-art-view.cmake.in
@@ -113,6 +115,7 @@ if(TARGET art AND BUILD_TESTING)
     "${CMAKE_CURRENT_BINARY_DIR}/resources-output"
     "${CMAKE_CURRENT_BINARY_DIR}/transmission-output"
     "${CMAKE_CURRENT_BINARY_DIR}/refraction-output"
+    "${CMAKE_CURRENT_BINARY_DIR}/nested-output"
     "${CMAKE_CURRENT_BINARY_DIR}/mixture-output"
     "${CMAKE_CURRENT_BINARY_DIR}/surface-output"
     "${CMAKE_CURRENT_BINARY_DIR}/metal-energy-output"
