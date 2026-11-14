@@ -79,7 +79,7 @@ ArtRenderControl::cancelled() const
 ArtRenderControl::Status
 ArtRenderControl::get_status() const
 {
-    return cancelled() || m_callback.failed() ? AbortRendering : ContinueRendering;
+    return cancelled() || failed() || m_callback.failed() ? AbortRendering : ContinueRendering;
 }
 
 void

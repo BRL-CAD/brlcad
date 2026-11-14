@@ -78,7 +78,6 @@
 
 #include <algorithm>
 #include <array>
-#include <atomic>
 #include <charconv>
 #include <cctype>
 #include <cstddef>
@@ -1569,15 +1568,15 @@ struct ReleaseLogTarget {
 };
 
 class RenderErrors final : public asf::ILogTarget {
-    std::atomic<bool> m_has_errors{false};
+    ArtRenderControl& m_controller;
 public:
+    explicit RenderErrors(ArtRenderControl& controller) : m_controller(controller) {}
     void release() override { delete this; }
     void write(const asf::LogMessage::Category category, const char *UNUSED(file),
 	const size_t UNUSED(line), const char *UNUSED(header), const char *UNUSED(message)) override {
 	if (category >= asf::LogMessage::Error)
-	    m_has_errors.store(true, std::memory_order_relaxed);
+	    m_controller.fail();
     }
-    bool has_errors() const { return m_has_errors.load(std::memory_order_relaxed); }
 };
 }
 
@@ -1596,7 +1595,7 @@ art_render_image(asr::Project& project, const char *filename, ArtTileCallback& c
     path = bu_dir(headers, MAXPATHLEN, renderer_root.c_str(), "shaders", NULL);
     if (path)
 	resource_search_paths.push_back_explicit_path(path);
-    std::unique_ptr<RenderErrors, ReleaseLogTarget> errors(new RenderErrors());
+    std::unique_ptr<RenderErrors, ReleaseLogTarget> errors(new RenderErrors(controller));
     asr::global_logger().add_target(errors.get());
     bool succeeded = false;
     {
@@ -1614,14 +1613,14 @@ art_render_image(asr::Project& project, const char *filename, ArtTileCallback& c
     }
     if (!restored)
 	return false;
-    if (!succeeded) {
-	bu_log("art: rendering did not complete successfully\n");
+    // Worker failures can exhaust a photon job pool before later passes run.
+    // Abort on logged errors, and include renderer cleanup in the observed scope.
+    if (controller.failed()) {
+	bu_log("art: renderer reported errors; image was not saved\n");
 	return false;
     }
-    // Worker and OSL errors can be logged without failing MasterRenderer.
-    // Include renderer cleanup in the observed scope before saving the image.
-    if (errors->has_errors()) {
-	bu_log("art: renderer reported errors; image was not saved\n");
+    if (!succeeded) {
+	bu_log("art: rendering did not complete successfully\n");
 	return false;
     }
     if (!callback.flush())

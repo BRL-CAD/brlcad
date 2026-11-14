@@ -23,6 +23,7 @@
 
 #include "common.h"
 
+#include <atomic>
 #include <chrono>
 #include <csignal>
 #include "renderer/kernel/rendering/defaultrenderercontroller.h"
@@ -40,6 +41,8 @@ public:
 
     bool valid() const { return m_previous != SIG_ERR; }
     bool cancelled() const;
+    void fail() { m_failed.store(true, std::memory_order_relaxed); }
+    bool failed() const { return m_failed.load(std::memory_order_relaxed); }
     bool restore();
     void complete();
     void on_rendering_begin() override;
@@ -53,6 +56,7 @@ private:
     const int m_frame;
     const bool m_progress;
     SignalHandler m_previous;
+    std::atomic<bool> m_failed{false};
     Clock::time_point m_started = Clock::now();
     Clock::time_point m_last_update = m_started;
     size_t m_last_completed = 0;
