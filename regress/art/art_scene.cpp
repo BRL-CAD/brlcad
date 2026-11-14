@@ -520,7 +520,7 @@ interrupt_render_process(const char *log_path, const char *ready, const char *in
     bool interrupted = false;
     int status = 0, poll_result = 0;
     do {
-	while (bu_process_pending(output_fd)) {
+	while (bu_process_pending(output_fd) && Clock::now() < deadline) {
 	    char buffer[PIPE_BUFFER_SIZE];
 	    const int count = bu_process_read_n(child.process, BU_PROCESS_STDOUT, sizeof(buffer), buffer);
 	    if (count < 0)
