@@ -56,6 +56,7 @@ set(ART_REGRESSION_TEST_NAMES
   regress-art-curved-contact
   regress-art-rough-glass
   regress-art-rough-energy
+  regress-art-rough-paths
   regress-art-refraction
   regress-art-nested
   regress-art-mixture
@@ -92,6 +93,7 @@ endif()
 
 cmakefiles(CMakeLists.txt art_test_setup.cmake art_installed_tests.cmake
   art_nested_test_commands.cmake art_curved_test_commands.cmake
+  art_rough_box.appleseed.in art_rough_box.obj
   art_installed_runtime.cmake.in art-installed-material.cmake.in
   art-installed-plate.cmake.in art-installed-view.cmake.in
   art_scene.cpp art_test_mesh.h art_glass_reference.h art_test_commands.cmake
@@ -101,7 +103,7 @@ cmakefiles(CMakeLists.txt art_test_setup.cmake art_installed_tests.cmake
   regress-art-transmission.cmake.in regress-art-absorption.cmake.in regress-art-initial-media.cmake.in regress-art-medium-priority.cmake.in
   regress-art-shared-media.cmake.in regress-art-curved-media.cmake.in
   regress-art-curved-contact.cmake.in regress-art-rough-glass.cmake.in
-  regress-art-rough-energy.cmake.in
+  regress-art-rough-energy.cmake.in regress-art-rough-paths.cmake.in
   regress-art-refraction.cmake.in
   regress-art-mixture.cmake.in regress-art-surface.cmake.in regress-art-nested.cmake.in
   regress-art-metal-energy.cmake.in regress-art-coat.cmake.in
@@ -138,6 +140,7 @@ if(TARGET art AND BUILD_TESTING)
     "${CMAKE_CURRENT_BINARY_DIR}/curved-media-output" "${CMAKE_CURRENT_BINARY_DIR}/curved-contact-output"
     "${CMAKE_CURRENT_BINARY_DIR}/rough-glass-output"
     "${CMAKE_CURRENT_BINARY_DIR}/rough-energy-output"
+    "${CMAKE_CURRENT_BINARY_DIR}/rough-paths-output"
     "${CMAKE_CURRENT_BINARY_DIR}/refraction-output"
     "${CMAKE_CURRENT_BINARY_DIR}/nested-output"
     "${CMAKE_CURRENT_BINARY_DIR}/mixture-output"

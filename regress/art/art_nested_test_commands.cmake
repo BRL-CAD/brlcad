@@ -51,3 +51,11 @@ function(compare_optical_transport actual reference)
     "${reference}" --abs --mulc ${HALF_RELATIVE_STEP} --addc ${TOLERANCE} --div
     --pattern constant:color=0,0,0,0 ${SIZE}x${SIZE} 4 --diff)
 endfunction()
+
+function(compare_radiance_mean image reference bound should_fail)
+  run_command("${CMAKE_CURRENT_BINARY_DIR}" "${should_fail}" "${TOOL}"
+    --fail ${bound} --hardfail ${bound} --warn ${bound} --hardwarn ${bound}
+    "${image}" --ch R,G,B --resize:filter=box 1x1 "${reference}" --ch R,G,B --resize:filter=box 1x1 --absdiff
+    "${reference}" --ch R,G,B --resize:filter=box 1x1 --abs --div
+    --pattern constant:color=0,0,0 1x1 3 --diff)
+endfunction()

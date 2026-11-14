@@ -5,6 +5,7 @@ file(REMOVE_RECURSE "${WORK}")
 file(MAKE_DIRECTORY "${WORK}/shaders" "${WORK}/cache")
 set(ENV{BU_DIR_CACHE} "${WORK}/cache")
 include("@CMAKE_CURRENT_SOURCE_DIR@/art_test_commands.cmake")
+include("@CMAKE_CURRENT_SOURCE_DIR@/art_nested_test_commands.cmake")
 configure_file("@CMAKE_CURRENT_BINARY_DIR@/art_rough_furnace_reference.oso"
   "${WORK}/shaders/art_rough_furnace_reference.oso" COPYONLY)
 configure_file("@CMAKE_CURRENT_BINARY_DIR@/art_refraction_reference.oso"
@@ -35,21 +36,14 @@ set(SAMPLING_RELATIVE_BOUND 0.01)
 # Reference images are binary16; allow one relative representable step
 # plus the much smaller quadrature and shader arithmetic error.
 set(REFERENCE_RELATIVE_BOUND 0.0011)
-function(compare_mean image reference bound should_fail)
-  run_command("${CMAKE_CURRENT_BINARY_DIR}" "${should_fail}" "${TOOL}"
-    --fail ${bound} --hardfail ${bound} --warn ${bound} --hardwarn ${bound}
-    "${image}" --ch R,G,B --resize:filter=box 1x1 "${reference}" --ch R,G,B --absdiff
-    "${reference}" --ch R,G,B --abs --div
-    --pattern constant:color=0,0,0 1x1 3 --diff)
-endfunction()
 # A spatially varying image must reduce to its arithmetic channel means.
 # The wrong-mean control proves that averaging still detects energy bias.
 run("${TOOL}" --pattern checker:width=1:height=1:color1=0,0,0:color2=1,2,4
   ${SIZE}x${SIZE} 3 -d float -o "${WORK}/checker.exr")
 run("${TOOL}" --pattern constant:color=0.5,1,2 1x1 3 -d float -o "${WORK}/checker-mean.exr")
-compare_mean("${WORK}/checker.exr" "${WORK}/checker-mean.exr" ${MIS_RELATIVE_BOUND} FALSE)
+compare_radiance_mean("${WORK}/checker.exr" "${WORK}/checker-mean.exr" ${MIS_RELATIVE_BOUND} FALSE)
 run("${TOOL}" "${WORK}/checker.exr" --mulc 1.05 -o "${WORK}/wrong-mean.exr")
-compare_mean("${WORK}/wrong-mean.exr" "${WORK}/checker-mean.exr" ${SAMPLING_RELATIVE_BOUND} TRUE)
+compare_radiance_mean("${WORK}/wrong-mean.exr" "${WORK}/checker-mean.exr" ${SAMPLING_RELATIVE_BOUND} TRUE)
 
 # Independent double-precision Simpson integration with 131072 intervals,
 # ordered by index (1.5, 2) and roughness (0.35, 0.7), at environment 0.4.
@@ -72,10 +66,10 @@ foreach(ior IN ITEMS 1.5 2)
       run("${EXEC}" ${RENDER_ARGS} -w 1 -n 1 -c "set samples=1"
         -o "${stem}-reference-${intervals}.exr" "${REFERENCE_DB}" cube.r)
       run("${VEXEC}" check-image "${stem}-reference-${intervals}.exr" 1 1)
-      compare_mean("${stem}-reference-${intervals}.exr" "${stem}-double-reference.exr"
+      compare_radiance_mean("${stem}-reference-${intervals}.exr" "${stem}-double-reference.exr"
         ${REFERENCE_RELATIVE_BOUND} FALSE)
     endforeach()
-    compare_mean("${stem}-reference-4096.exr" "${stem}-reference-8192.exr"
+    compare_radiance_mean("${stem}-reference-4096.exr" "${stem}-reference-8192.exr"
       ${REFERENCE_RELATIVE_BOUND} FALSE)
     foreach(object IN ITEMS cube.r mesh.r)
       foreach(estimation IN ITEMS 0 1)
@@ -88,7 +82,7 @@ foreach(ior IN ITEMS 1.5 2)
         else()
           set(bound ${SAMPLING_RELATIVE_BOUND})
         endif()
-        compare_mean("${image}" "${stem}-reference-8192.exr" ${bound} FALSE)
+        compare_radiance_mean("${image}" "${stem}-reference-8192.exr" ${bound} FALSE)
       endforeach()
     endforeach()
   endforeach()
