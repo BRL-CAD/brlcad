@@ -942,10 +942,11 @@ root shader resets the inherited definition, including priority.
 `inspect_materials=1` reports the effective priority before rendering.
 Invalid priorities fail without replacing an existing image.
 
-Native priority filtering can currently skip an enclosed opaque BSDF whose
-priority is lower than the surrounding glass.  Assign such opaque parts a
-higher priority while that filtering is being corrected.  This limitation
-also affects materials combining emission with a diffuse or glossy BSDF.
+Priority displacement applies to optical interiors.  An enclosed opaque
+part remains a visible surface regardless of its priority relative to the
+glass.  `regress-art-medium-priority` checks diffuse and emissive opaque
+parts in CSG and solid BOT glass from outside and inside, including
+independent Beer attenuation and normal-incidence interface transmission.
 
 The qualified representation uses full, deliberately overlapping closed
 volumes: the outer volume contains the complete inner volume, and an

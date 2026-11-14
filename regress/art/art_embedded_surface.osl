@@ -1,0 +1,26 @@
+/*              A R T _ E M B E D D E D _ S U R F A C E . O S L
+ * BRL-CAD
+ *
+ * Copyright (c) 2026 United States Government as represented by
+ * the U.S. Army Research Laboratory.
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public License
+ * version 2.1 as published by the Free Software Foundation.
+ *
+ * This library is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this file; see the file named COPYING for more
+ * information.
+ */
+surface art_embedded_surface(
+    color in_emission = color(0.2, 0.8, 0.1))
+{
+    // A diffuse closure keeps the opaque material's BSDF present even when
+    // emission supplies the controlled observable in an unlit scene.
+    Ci = color(0.8, 0.1, 0.05) * diffuse(N) + in_emission * emission();
+}
