@@ -1,0 +1,4 @@
+cmake_minimum_required(VERSION 3.22)
+set(WORK "@CMAKE_CURRENT_BINARY_DIR@/regress-art-photon-bot-20-output")
+include("@CMAKE_CURRENT_BINARY_DIR@/art_photon_test_commands.cmake")
+qualify_photon_energy(mesh 2)

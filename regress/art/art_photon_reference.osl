@@ -1,0 +1,42 @@
+/*              A R T _ P H O T O N _ R E F E R E N C E . O S L
+ * BRL-CAD
+ *
+ * Copyright (c) 2026 United States Government as represented by
+ * the U.S. Army Research Laboratory.
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public License
+ * version 2.1 as published by the Free Software Foundation.
+ *
+ * This library is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this file; see the file named COPYING for more
+ * information.
+ */
+#include "stdosl.h"
+
+surface art_photon_reference(
+    color in_color = color(0.25, 0.5, 0.75),
+    float in_ior = 1.5,
+    float in_intensity = 1000,
+    float in_external_distance = 9,
+    float in_thickness = 1)
+{
+    if (in_ior < 1 || in_intensity < 0 || in_external_distance < 0 || in_thickness <= 0) {
+        error("Invalid point-light slab reference parameters");
+        Ci = 0;
+        return;
+    }
+    // Two photon bounces admit one entry/exit and stop at the first diffuse hit.
+    // Near the axis, Snell's law maps solid angle to area with this distance.
+    float optical_distance = in_external_distance + in_thickness / in_ior;
+    float fresnel_reflectance = (in_ior - 1) / (in_ior + 1);
+    fresnel_reflectance *= fresnel_reflectance;
+    float power_transmittance = 1 - fresnel_reflectance;
+    Ci = in_color * in_intensity * power_transmittance * power_transmittance /
+        (M_PI * optical_distance * optical_distance) * emission();
+}
