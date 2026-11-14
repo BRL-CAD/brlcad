@@ -3,7 +3,11 @@ function(set_nested_parameter db material name value)
 endfunction()
 
 function(set_nested_profile name)
-  foreach(layer IN ITEMS outer inner core)
+  set(layers outer inner core)
+  if(ARGN)
+    set(layers ${ARGN})
+  endif()
+  foreach(layer IN LISTS layers)
     if(name STREQUAL "equal" OR layer STREQUAL "core")
       set(ior 1)
     elseif(layer STREQUAL "outer")
@@ -35,4 +39,15 @@ function(set_nested_profile name)
     set_nested_parameter("${REFERENCE_DB}" outer "in_${layer}_transmittance" "color ${color}")
     set_nested_parameter("${REFERENCE_DB}" outer "in_${layer}_distance" "float ${distance}")
   endforeach()
+endfunction()
+
+# Independent shader and BSDF arithmetic can straddle a binary16 rounding
+# boundary, particularly in HDR and translated scenes. Allow one relative
+# half-float step (ten fraction bits) plus the absolute arithmetic bound.
+function(compare_optical_transport actual reference)
+  set(HALF_RELATIVE_STEP 0.0009765625)
+  run("${TOOL}" --fail 1 --hardfail 1 --warn 1 --hardwarn 1
+    "${actual}" "${reference}" --absdiff
+    "${reference}" --abs --mulc ${HALF_RELATIVE_STEP} --addc ${TOLERANCE} --div
+    --pattern constant:color=0,0,0,0 ${SIZE}x${SIZE} 4 --diff)
 endfunction()
