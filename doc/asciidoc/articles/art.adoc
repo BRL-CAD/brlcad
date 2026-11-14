@@ -954,6 +954,19 @@ single-scatter model's direct-light response.  They do not establish
 multiple scattering within rough glass, transmitted shadows, rough nested
 interfaces, or filtered textures along refracted paths.
 
+`regress-art-rough-energy` checks the integrated radiance leaving a rough
+interface into air, with the camera inside glass.  An independent
+normal-incidence hemisphere integral supplies the reference.  Simpson
+quadrature is refined and compared with double-precision reference values.
+The test reduces complete linear HDR images to channel means with a box
+filter, checking that operation with a known checker pattern and rejecting
+a deliberately wrong mean.  CSG and solid BOT cases cover indices 1.5
+and 2, roughness 0.35 and 0.7, and next-event estimation both on and off.
+The relative mean bounds are 0.2 percent with importance sampling and
+1 percent for sampled continuations; reference comparisons allow binary16
+rounding.  These cases exercise the single exiting interface and do not
+establish a complete rough-glass volume workflow.
+
 === Nested optical volumes
 
 `OSL.medium_priority` assigns Appleseed's medium priority to each region
