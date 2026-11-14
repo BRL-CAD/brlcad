@@ -1010,6 +1010,76 @@ Point/directional-light caustics, general caustic focusing, and photon
 mapping still need their own integration and qualification.  The option
 does not replace that work.
 
+=== Photon mapping for point-light transmission
+
+`set integrator=sppm` selects Appleseed's stochastic progressive photon
+mapper.  `integrator=pt` retains the default path tracer.  Photon mapping
+can illuminate receivers through ideal glass from point emitters, whose
+refracted paths cannot be found by ordinary camera path tracing.  The
+first qualified scenes use emitters outside the glass; this does not yet
+qualify general focusing or light origins inside optical volumes.
+
+Use uniform sampling for photon mapping.  `samples` is the camera sample
+budget per pixel per pass; `passes` controls the number of passes.  More
+photons and passes reduce sampling error, while the photon lookup radius
+controls spatial smoothing.  These controls are independent of the camera
+sample budget.  The existing progress report counts tiles across all
+passes, and cancellation preserves existing output files.
+
+[cols="1,1,3",options="header"]
+|===
+|Setting |Native default |Meaning
+|`passes` |1 |Uniform rendering passes, for either integrator
+|`light_photons` |1000000 |Photons emitted by scene lights per pass
+|`environment_photons` |1000000 |Environment photons per pass
+|`photon_max_bounces` |-1 |Photon-path bounce limit; -1 is unbounded
+|`photon_rr_min_path_length` |6 |Photon roulette threshold; 0 disables roulette
+|`photon_max_estimate` |100 |Maximum photons in a density estimate
+|`photon_importons` |1 |Enable photon storage guided by camera-visible points
+|`photon_radius_percent` |0.1 |Initial lookup radius as a percentage of the scene bounding-box diagonal
+|`photon_alpha` |0.7 |Progressive radius reduction parameter, greater than 0 and at most 1
+|===
+
+All numeric controls accept `inherit`.  Photon counts may be zero to
+disable that emitter class; the estimate limit and pass count must be
+positive.  The initial radius must be positive and at most 100 percent.
+Photon-specific assignments require `integrator=sppm`.  Reset them to
+`inherit` when switching to `pt`, in the same `set` command if necessary.
+Settings persist across frames and `clean`.
+
+`max_bounces` and `rr_min_path_length` control camera paths in either
+integrator.  Photon paths have their own corresponding controls above.
+`enable_caustics` applies to the selected integrator; the native default
+is off for PT and on for SPPM.  Per-type camera bounce caps and
+`next_event_estimation` are PT controls and must be reset to `inherit`
+before switching to SPPM.  Unsupported combinations fail before rendering
+or replacing output, rather than being silently ignored.  Adaptive
+sampling and multiple uniform passes are distinct modes; adaptive
+sampling currently requires PT and one pass.
+
+For example, after assigning physical glass and selecting point emitters:
+
+----
+set integrator=sppm sampling=uniform samples=1 passes=32 light_photons=1000000 environment_photons=0 photon_radius_percent=0.05 photon_max_estimate=10000
+----
+
+Radius percentages depend on the entire scene bounds.  A very large
+surrounding object can make the same percentage too broad for a small
+mechanism.  Inspect scene bounds and adjust the radius for the intended
+detail; increased photon counts cannot undo excessive spatial smoothing.
+
+The four `regress-art-photon-csg-*` and `regress-art-photon-bot-*` checks
+compare point-lit slab transmission at IORs 1.5 and 2 with an independent
+axial Lambert/Fresnel reference.  Each uses 32 passes of one million
+photons, with a 1-percent channel-mean bound.  Their two-bounce photon cap permits one
+entry and exit before the first diffuse hit, excluding later diffuse
+interreflection and internally reflected bundles.  This bounded case
+qualifies initial transmitted photon transport on CSG and BOT geometry;
+rough or nested photon paths, general caustic focusing, participating
+media, and photon emission from inside glass remain open qualification.
+Separate checks exercise control errors, repeated frames, engine changes,
+cumulative progress and cancellation, including framebuffer cleanup.
+
 === Nested optical volumes
 
 `OSL.medium_priority` assigns Appleseed's medium priority to each region
