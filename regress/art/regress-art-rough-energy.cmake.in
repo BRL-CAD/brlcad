@@ -1,0 +1,95 @@
+cmake_minimum_required(VERSION 3.22)
+set(WORK "@CMAKE_CURRENT_BINARY_DIR@/rough-energy-output")
+set(LOG "${WORK}/art.log")
+file(REMOVE_RECURSE "${WORK}")
+file(MAKE_DIRECTORY "${WORK}/shaders" "${WORK}/cache")
+set(ENV{BU_DIR_CACHE} "${WORK}/cache")
+include("@CMAKE_CURRENT_SOURCE_DIR@/art_test_commands.cmake")
+configure_file("@CMAKE_CURRENT_BINARY_DIR@/art_rough_furnace_reference.oso"
+  "${WORK}/shaders/art_rough_furnace_reference.oso" COPYONLY)
+configure_file("@CMAKE_CURRENT_BINARY_DIR@/art_refraction_reference.oso"
+  "${WORK}/shaders/art_refraction_reference.oso" COPYONLY)
+set(TOOL "@ART_OIIOTOOL_EXECUTABLE@")
+set(ACTUAL_DB "${WORK}/actual.g")
+set(REFERENCE_DB "${WORK}/reference.g")
+run("${VEXEC}" create-material "${ACTUAL_DB}" as_glass)
+run("${VEXEC}" create-material "${REFERENCE_DB}" art_rough_furnace_reference)
+foreach(parameter IN ITEMS "in_transmittance_amount;float 1"
+    "in_surface_transmittance;color 1 1 1"
+    "in_reflection_tint;color 1 1 1" "in_refraction_tint;color 1 1 1"
+    "in_volume_transmittance_distance;float 0")
+  list(GET parameter 0 name)
+  list(GET parameter 1 value)
+  run("${VEXEC}" set-material "${ACTUAL_DB}" "OSL.param.${name}" "${value}")
+endforeach()
+set(SIZE 16)
+# A narrow perspective view keeps every primary ray effectively normal
+# while preserving the camera origin inside the dielectric.
+set(RENDER_ARGS -P 2 -w ${SIZE} -n ${SIZE} -p 0.02 -c "viewsize 0.001"
+  -c "eye_pt 0 0 7" -c "orientation 0 1 0 0"
+  -c "set sampling=uniform samples=1024 light_intensity=0 environment_color=white environment_intensity=0.4 background_color=black max_bounces=0 rr_min_path_length=0")
+# Importance sampling substantially reduces furnace variance. The sampled
+# continuation control has its own wider bound, using the same path budget.
+set(MIS_RELATIVE_BOUND 0.002)
+set(SAMPLING_RELATIVE_BOUND 0.01)
+# Reference images are binary16; allow one relative representable step
+# plus the much smaller quadrature and shader arithmetic error.
+set(REFERENCE_RELATIVE_BOUND 0.0011)
+function(compare_mean image reference bound should_fail)
+  run_command("${CMAKE_CURRENT_BINARY_DIR}" "${should_fail}" "${TOOL}"
+    --fail ${bound} --hardfail ${bound} --warn ${bound} --hardwarn ${bound}
+    "${image}" --ch R,G,B --resize:filter=box 1x1 "${reference}" --ch R,G,B --absdiff
+    "${reference}" --ch R,G,B --abs --div
+    --pattern constant:color=0,0,0 1x1 3 --diff)
+endfunction()
+# A spatially varying image must reduce to its arithmetic channel means.
+# The wrong-mean control proves that averaging still detects energy bias.
+run("${TOOL}" --pattern checker:width=1:height=1:color1=0,0,0:color2=1,2,4
+  ${SIZE}x${SIZE} 3 -d float -o "${WORK}/checker.exr")
+run("${TOOL}" --pattern constant:color=0.5,1,2 1x1 3 -d float -o "${WORK}/checker-mean.exr")
+compare_mean("${WORK}/checker.exr" "${WORK}/checker-mean.exr" ${MIS_RELATIVE_BOUND} FALSE)
+run("${TOOL}" "${WORK}/checker.exr" --mulc 1.05 -o "${WORK}/wrong-mean.exr")
+compare_mean("${WORK}/wrong-mean.exr" "${WORK}/checker-mean.exr" ${SAMPLING_RELATIVE_BOUND} TRUE)
+
+# Independent double-precision Simpson integration with 131072 intervals,
+# ordered by index (1.5, 2) and roughness (0.35, 0.7), at environment 0.4.
+set(EXPECTED_RADIANCES 0.8458029609644625 0.6436506095800633
+  1.35417494314814 0.7874178658623249)
+set(profile_index 0)
+foreach(ior IN ITEMS 1.5 2)
+  foreach(roughness IN ITEMS 0.35 0.7)
+    foreach(db IN ITEMS "${ACTUAL_DB}" "${REFERENCE_DB}")
+      run("${VEXEC}" set-material "${db}" OSL.param.in_ior "float ${ior}")
+      run("${VEXEC}" set-material "${db}" OSL.param.in_roughness "float ${roughness}")
+    endforeach()
+    set(stem "${WORK}/${ior}-${roughness}")
+    list(GET EXPECTED_RADIANCES ${profile_index} expected)
+    math(EXPR profile_index "${profile_index} + 1")
+    run("${TOOL}" --pattern "constant:color=${expected},${expected},${expected}" 1x1 3
+      -d float -o "${stem}-double-reference.exr")
+    foreach(intervals IN ITEMS 4096 8192)
+      run("${VEXEC}" set-material "${REFERENCE_DB}" OSL.param.in_intervals "int ${intervals}")
+      run("${EXEC}" ${RENDER_ARGS} -w 1 -n 1 -c "set samples=1"
+        -o "${stem}-reference-${intervals}.exr" "${REFERENCE_DB}" cube.r)
+      run("${VEXEC}" check-image "${stem}-reference-${intervals}.exr" 1 1)
+      compare_mean("${stem}-reference-${intervals}.exr" "${stem}-double-reference.exr"
+        ${REFERENCE_RELATIVE_BOUND} FALSE)
+    endforeach()
+    compare_mean("${stem}-reference-4096.exr" "${stem}-reference-8192.exr"
+      ${REFERENCE_RELATIVE_BOUND} FALSE)
+    foreach(object IN ITEMS cube.r mesh.r)
+      foreach(estimation IN ITEMS 0 1)
+        set(image "${stem}-${object}-${estimation}.exr")
+        run("${EXEC}" ${RENDER_ARGS} -c "set next_event_estimation=${estimation}"
+          -o "${image}" "${ACTUAL_DB}" "${object}")
+        run("${VEXEC}" check-image "${image}" ${SIZE} ${SIZE})
+        if(estimation)
+          set(bound ${MIS_RELATIVE_BOUND})
+        else()
+          set(bound ${SAMPLING_RELATIVE_BOUND})
+        endif()
+        compare_mean("${image}" "${stem}-reference-8192.exr" ${bound} FALSE)
+      endforeach()
+    endforeach()
+  endforeach()
+endforeach()
