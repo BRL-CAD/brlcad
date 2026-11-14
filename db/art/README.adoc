@@ -318,7 +318,7 @@ glass, and secondary-ray qualification boundaries.
 The engineering take uses a presentation palette to separate the aircraft's
 modeled structure and systems.  A blue translucent envelope retains the
 exterior shape while exposing the frames, spars, propulsion components, and
-system runs.  Its face opacity is 0.18 and increases at grazing angles;
+system runs.  Its face opacity is 0.28 and increases at grazing angles;
 light blue contour lines keep the envelope distinct from the dark backdrop.
 
 image::twin-structure-overview.png[Generic Twin with a visible translucent exterior and colored internal assemblies]
@@ -361,6 +361,9 @@ follow object/material boundaries and normal creases.  Depth contours are
 available through `in_depth_contours` and its millimeter threshold; they
 are disabled in these views to retain clean lines on sloped surfaces.
 Translucent covers draw their front-face contours.
+For separate shading and contour passes, add
+`-c "set aovs=npr_shading,npr_contour"` when rendering to EXR.  The
+additional files use the `.npr_shading.exr` and `.npr_contour.exr` suffixes.
 
 The usual `SOURCE_DB`, `WIDTH`, `HEIGHT`, `SAMPLES`, and `WORKERS` options
 apply.  `SAMPLES` is the adaptive ceiling; the initial batch and minimum
@@ -370,7 +373,9 @@ example, in the generated database:
 
 [source,tcl]
 ----
-material set art.engineering.skin.material optical OSL.param.in_opacity "float 0.25"
+material set art.engineering.skin.material optical OSL.param.in_opacity "float 0.35"
+material set art.engineering.skin.material optical OSL.param.in_contour_width "float 1"
+material set art.engineering.skin.material optical OSL.param.in_contour_color "color 0.45 0.7 0.95"
 ----
 
 The project contains one authored database, the compiled shader, both PNG
@@ -397,7 +402,8 @@ assemblies.  Its gray exterior supplies context around gold rotor
 load-bearing parts, cyan pitch linkages and dampers, green landing gear,
 orange weapon mechanisms, and purple sensor/antenna assemblies.
 Translucent blue caps and covers retain the rotor-head and weapon-housing
-shapes while revealing their contents.
+shapes while revealing their contents.  Their face opacity is 0.25 and
+increases at grazing angles; pale blue contours reinforce their boundaries.
 
 image::havoc-structure-overview.png[Havoc engineering overview with colored mechanisms and translucent covers]
 
