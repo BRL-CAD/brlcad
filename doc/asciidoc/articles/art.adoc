@@ -147,9 +147,9 @@ reflection, total internal reflection, and primary geometry-pass ownership.
 `regress-art-curved-media` and `regress-art-curved-contact` compare concentric
 quadric transmission and opaque contacts with independent analytic paths.
 `regress-art-rough-glass` checks the direct-light GGX response on CSG and
-solid BOT faces, from both sides of an interface.  Multiple rough-interface
-transport, transmitted shadows, and normal-mapped transmission remain
-unqualified.
+solid BOT faces, from both sides of an interface.  `regress-art-rough-paths` compares complete absorbing closed-box paths
+with native Appleseed geometry.  Rough curved/nested interfaces, transmitted
+shadows, and normal-mapped transmission remain unqualified.
 
 |Lighting across frames
 |`regress-art-lighting` compares diffuse HDR frame sequences with fresh-process
@@ -921,7 +921,7 @@ ratio, rather than roughness, to its transmitted-differential calculation.
 These checks establish the tested first-order direction changes; filtered
 textures along secondary paths still need image-based qualification.
 
-Multiple rough-interface transport, multiple internal bounces, caustics,
+Rough curved/nested interfaces, caustics,
 transmitted shadows, general overlapping media, thin surfaces, and
 bump/normal-mapped transmission need further qualification before a general
 production-glass claim.  The distinct-priority nested-volume case below
@@ -951,7 +951,7 @@ Native tests also compare sampling, evaluation, and sampling-density
 entry points across both interface sides, radiance/importance transport,
 and isotropic/anisotropic roughness.  These checks qualify the current
 single-scatter model's direct-light response.  They do not establish
-multiple scattering within rough glass, transmitted shadows, rough nested
+multiple microfacet scattering, transmitted shadows, rough nested
 interfaces, or filtered textures along refracted paths.
 
 `regress-art-rough-energy` checks the integrated radiance leaving a rough
@@ -966,6 +966,19 @@ The relative mean bounds are 0.2 percent with importance sampling and
 1 percent for sampled continuations; reference comparisons allow binary16
 rounding.  These cases exercise the single exiting interface and do not
 establish a complete rough-glass volume workflow.
+
+`regress-art-rough-paths` compares complete rough-glass paths with a
+separate Appleseed CLI project using a native triangle box.  The reference
+shares the renderer and OSL glass model while using its native geometry
+path; the art cases use CSG and solid BOT boxes through librt.  Both paths
+include entry/exit events, colored volume absorption, reflection, and
+cameras inside and outside glass.  Cases cover indices 1.5 and 2 and
+roughness 0.35 and 0.7, with matching explicit eight-bounce limits.
+Linear HDR channel means must agree within 0.2 percent, and a separate
+per-pixel bound limits stochastic differences.  A zero-absorption control
+must disagree with the absorbing reference.  This qualifies the tested
+closed-box paths; curved or nested rough interfaces, transmitted shadows,
+and caustic lighting remain outside these cases.
 
 === Nested optical volumes
 
@@ -2053,8 +2066,8 @@ cmake --build installed-art-tests --parallel 2
 ctest --test-dir installed-art-tests --parallel 2 --output-on-failure
 ----
 
-`ART_PREFIX` contains the installed `art`, `oslc`, `maketx`, and `oiiotool`
-programs, renderer libraries, and shader resources.  The development helper
+`ART_PREFIX` contains the installed `art`, `oslc`, `maketx`, `oiiotool`,
+and `appleseed.cli` programs, renderer libraries, and shader resources.  The development helper
 creates fixture databases and checks their images.  Shader fixtures compile
 with the installed compiler and headers, and all art render commands and
 image-texture preparation tools come from the selected installation.
