@@ -7,6 +7,10 @@ set(art_example_files
   twin_structure.tcl
   twin-structure-overview.png
   twin-structure-detail.png
+  render_havoc_structure.cmake
+  havoc_structure.tcl
+  havoc-structure-overview.png
+  havoc-structure-detail.png
   render_moss.cmake
   render_havoc.cmake
   havoc_studio.tcl

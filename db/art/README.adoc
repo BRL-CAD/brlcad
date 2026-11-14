@@ -389,3 +389,33 @@ the overview from its generated project directory:
 art -M -w 1024 -n 768 -P 6 -o structure.exr twin-structure.g art.context.g \
     < twin-structure-overview.view
 ----
+
+== Engineering views of Havoc's mechanisms
+
+Havoc's engineering take emphasizes its modeled rotor, gear, and armament
+assemblies.  Its gray exterior supplies context around gold rotor
+load-bearing parts, cyan pitch linkages and dampers, green landing gear,
+orange weapon mechanisms, and purple sensor/antenna assemblies.
+Translucent blue caps and covers retain the rotor-head and weapon-housing
+shapes while revealing their contents.
+
+image::havoc-structure-overview.png[Havoc engineering overview with colored mechanisms and translucent covers]
+
+The detail isolates the rotor head with forward and middle fuselage context.
+It retains the source placements while omitting the tail, gear, and weapons
+from that close-up selection.  The original model supplies the visible
+parts; the recipe adds presentation materials and selection groups.
+
+image::havoc-structure-detail.png[Havoc rotor head with translucent caps and visible pitch mechanisms]
+
+----
+cmake -DBRLCAD_PREFIX="${BRLCAD_PREFIX}" -DOUTPUT_DIR=havoc-structure \
+    -DWIDTH=1024 -DHEIGHT=768 -DSAMPLES=64 -DWORKERS=6 \
+    -P "${BRLCAD_PREFIX}/share/db/art/render_havoc_structure.cmake"
+----
+
+The requirements, adaptive budget, shader, and output conventions are the
+same as for Generic_Twin.  `SOURCE_DB` defaults to `share/db/havoc.g`.
+`art.context.g` retains Havoc, and `art.structure.g` copies its top-level
+tree while removing only the members excluded from the close-up.  All
+original geometry, trees, and instance placements remain unchanged.
