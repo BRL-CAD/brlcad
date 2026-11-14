@@ -532,6 +532,10 @@ respective direct and indirect components.  Glossy includes ideal
 specular reflection and refraction.
 |`direct_diffuse`, `indirect_diffuse` |Separate diffuse lighting components.
 |`direct_glossy`, `indirect_glossy` |Separate glossy lighting components.
+|`npr_shading` |Linear RGBA illustrative shading before contours, supplied
+by `as_npr_shading()` closures.
+|`npr_contour` |RGBA contour color and stroke coverage supplied by
+`as_npr_contour()` closures.
 |`emission` |Linear RGBA emission directly visible to the camera.  Emission
 reached through reflection or refraction contributes to indirect lighting.
 |===
@@ -551,6 +555,36 @@ interface does not represent their arbitrary channel layouts.  Art does
 not apply display conversion to AOV data.  Use the appropriate channels
 explicitly when inspecting EXR; for example, a reader may present depth's
 A channel before Z.
+
+Appleseed's NPR closures can replace the physical beauty and add ray-traced
+contours based on object or material boundaries, depth differences, and
+normal creases.  Their line width, color, opacity, and thresholds are shader
+parameters.  Depth thresholds use database base units (millimeters).
+Orthographic contours use parallel stencil rays; perspective contours use
+diverging rays.  `regress-art-npr` checks both projections on equal CSG and
+BOT boxes, with separate object-boundary and crease controls and analytic
+alpha coverage.  Physical lighting AOVs retain the pre-NPR contributions;
+they do not decompose the replaced NPR beauty.  Use the NPR passes when
+inspecting that replacement.  Contour coverage and surface opacity are
+separate quantities, so the contour pass is not a general transparent-layer
+beauty reconstruction mask.
+
+For built-in toon shading with object and crease outlines, assign
+`as_toon` and enable its contour controls:
+
+[source,tcl]
+----
+material create linework.material Linework
+material set linework.material optical OSL as_toon
+material set linework.material optical OSL.output out_outColor
+material set linework.material optical OSL.param.in_contour_object "int 1"
+material set linework.material optical OSL.param.in_contour_creases "int 1"
+material set linework.material optical OSL.param.in_contour_width "float 1"
+material assign model.g linework.material
+----
+
+The engineering recipes in `share/db/art` use the same contour closure
+with illustrative shading and translucent envelopes.
 
 Cancelled renders and shader errors leave existing beauty and sidecars
 unchanged.  AOVs are saved before the beauty; a sidecar write failure

@@ -45,7 +45,8 @@
 namespace {
 constexpr const char *supported_aovs[] = {
     "depth", "normal", "position", "uv", "albedo", "diffuse", "direct_diffuse",
-    "indirect_diffuse", "glossy", "direct_glossy", "indirect_glossy", "emission"
+    "indirect_diffuse", "glossy", "direct_glossy", "indirect_glossy", "emission",
+    "npr_shading", "npr_contour"
 };
 }
 

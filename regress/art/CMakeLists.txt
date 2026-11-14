@@ -12,6 +12,7 @@ set(ART_TEST_SHADER_NAMES
   art_parameters
   art_texture
   art_emission
+  art_npr
   art_sampling
   art_graph_value
   art_bump_field
@@ -65,6 +66,7 @@ set(ART_REGRESSION_TEST_NAMES
   regress-art-sampling
   regress-art-bounces
   regress-art-aovs
+  regress-art-npr
   regress-art-exposure
 )
 if(UNIX)
@@ -92,7 +94,7 @@ cmakefiles(CMakeLists.txt art_test_setup.cmake art_installed_tests.cmake
   regress-art-lighting.cmake.in regress-art-output.cmake.in regress-art-settings.cmake.in
   regress-art-environment.cmake.in regress-art-environment-map.cmake.in
   regress-art-framebuffer.cmake.in regress-art-progress.cmake.in regress-art-cancel.cmake.in
-  regress-art-sampling.cmake.in regress-art-bounces.cmake.in regress-art-aovs.cmake.in regress-art-exposure.cmake.in)
+  regress-art-sampling.cmake.in regress-art-bounces.cmake.in regress-art-aovs.cmake.in regress-art-npr.cmake.in regress-art-exposure.cmake.in)
 foreach(shader IN LISTS ART_TEST_SHADER_NAMES)
   cmakefiles("${shader}.osl")
 endforeach()
@@ -133,7 +135,7 @@ if(TARGET art AND BUILD_TESTING)
     "${CMAKE_CURRENT_BINARY_DIR}/framebuffer-output"
     "${CMAKE_CURRENT_BINARY_DIR}/progress-output" "${CMAKE_CURRENT_BINARY_DIR}/cancel-output"
     "${CMAKE_CURRENT_BINARY_DIR}/sampling-output" "${CMAKE_CURRENT_BINARY_DIR}/bounces-output"
-    "${CMAKE_CURRENT_BINARY_DIR}/aovs-output" "${CMAKE_CURRENT_BINARY_DIR}/exposure-output")
+    "${CMAKE_CURRENT_BINARY_DIR}/aovs-output" "${CMAKE_CURRENT_BINARY_DIR}/npr-output" "${CMAKE_CURRENT_BINARY_DIR}/exposure-output")
 endif()
 
 # Local Variables:

@@ -256,6 +256,85 @@ create_nested_scene(const char *path)
 		mk_lcomb(db, group.c_str(), &members, 0, NULL, NULL, NULL, 0) == 0;
 	}
     }
+    // A curved foreground cover exercises contour visibility for an inner
+    // part; the existing nested groups intentionally leave this cover out.
+    const point_t cover_center = {0, 0, 0};
+    const double cover_radius = 15;
+    struct bu_attribute_value_set cover_optical;
+    bu_avs_init_empty(&cover_optical);
+    bu_avs_add(&cover_optical, "OSL", "art_npr");
+    bu_avs_add(&cover_optical, "OSL.param.in_color", "color 0 0 0.5");
+    bu_avs_add(&cover_optical, "OSL.param.in_opacity", "float 0.2");
+    bu_avs_add(&cover_optical, "OSL.param.in_contours", "int 0");
+    success = success && mk_sph(db, "npr.cover.s", cover_center, cover_radius) == 0 &&
+	write_osl_material(db, "npr.cover.material", &cover_optical);
+    bu_avs_free(&cover_optical);
+    BU_LIST_INIT(&members.l);
+    success = success && mk_addmember("npr.cover.s", &members.l, NULL, WMOP_UNION) &&
+	mk_lcomb(db, "npr.cover.r", &members, 1, NULL, NULL, NULL, 0) == 0 &&
+	db5_update_attribute("npr.cover.r", "material_name", "npr.cover.material", db->dbip) == 0;
+    const vect_t contour_translation = {10000, -40000, 5000};
+    mat_t translated;
+    MAT_IDN(translated);
+    MAT_DELTAS_VEC(translated, contour_translation);
+    for (const char *kind : {"box", "mesh"}) {
+	const std::string region = std::string(kind) + ".inner.r";
+	const std::string group = std::string("npr.") + kind + ".translated.g";
+	BU_LIST_INIT(&members.l);
+	success = success && mk_addmember("npr.cover.r", &members.l, translated, WMOP_UNION) &&
+	    mk_addmember(region.c_str(), &members.l, translated, WMOP_UNION) &&
+	    mk_lcomb(db, group.c_str(), &members, 0, NULL, NULL, NULL, 0) == 0;
+    }
+    wdb_close(db);
+    return success ? 0 : 1;
+}
+
+
+static int
+create_contour_limit_scene(const char *path)
+{
+    struct rt_wdb *db = wdb_fopen(path);
+    if (!db)
+	return 1;
+    struct bu_attribute_value_set optical;
+    bu_avs_init_empty(&optical);
+    bu_avs_add(&optical, "OSL", "art_npr");
+    bool success = write_osl_material(db, "reference.material", &optical);
+    bu_avs_add(&optical, "OSL.param.in_opacity", "float 0");
+    bu_avs_add(&optical, "OSL.param.in_contours", "int 0");
+    success = success && write_osl_material(db, "cover.material", &optical);
+    bu_avs_free(&optical);
+
+    const point_t reference_low = {-0.01, -0.01, 0};
+    const point_t reference_high = {0.01, 0.01, 0.1};
+    struct wmember members;
+    BU_LIST_INIT(&members.l);
+    success = success && mk_rpp(db, "reference.s", reference_low, reference_high) == 0 &&
+	mk_addmember("reference.s", &members.l, NULL, WMOP_UNION) &&
+	mk_lcomb(db, "reference.r", &members, 1, NULL, NULL, NULL, 0) == 0 &&
+	db5_update_attribute("reference.r", "material_name", "reference.material", db->dbip) == 0;
+
+    // Sixty closed slabs exceed the default stencil limit of 100 crossings.
+    // The primary ray hits the small reference first; its stencil misses it.
+    constexpr size_t COVER_COUNT = 60;
+    for (size_t i = 0; i < COVER_COUNT; ++i) {
+	const double top = -1.0 - static_cast<double>(i);
+	const point_t low = {-10, -10, top - 0.01}, high = {10, 10, top};
+	const std::string solid = "cover" + std::to_string(i) + ".s";
+	const std::string region = "cover" + std::to_string(i) + ".r";
+	BU_LIST_INIT(&members.l);
+	success = success && mk_rpp(db, solid.c_str(), low, high) == 0 &&
+	    mk_addmember(solid.c_str(), &members.l, NULL, WMOP_UNION) &&
+	    mk_lcomb(db, region.c_str(), &members, 1, NULL, NULL, NULL, 0) == 0 &&
+	    db5_update_attribute(region.c_str(), "material_name", "cover.material", db->dbip) == 0;
+    }
+    BU_LIST_INIT(&members.l);
+    success = success && mk_addmember("reference.r", &members.l, NULL, WMOP_UNION);
+    for (size_t i = 0; i < COVER_COUNT; ++i) {
+	const std::string region = "cover" + std::to_string(i) + ".r";
+	success = success && mk_addmember(region.c_str(), &members.l, NULL, WMOP_UNION);
+    }
+    success = success && mk_lcomb(db, "npr.limit.g", &members, 0, NULL, NULL, NULL, 0) == 0;
     wdb_close(db);
     return success ? 0 : 1;
 }
@@ -635,6 +714,8 @@ main(int argc, char **argv)
     if (argc > 5 && BU_STR_EQUAL(argv[1], "interrupt-render"))
 	return interrupt_render_process(argv[2], argv[3], argv[4], const_cast<const char **>(argv + 5));
 #endif
+    if (argc == 3 && BU_STR_EQUAL(argv[1], "create-contour-limit"))
+	return create_contour_limit_scene(argv[2]);
     if (argc == 3 && BU_STR_EQUAL(argv[1], "create-nested"))
 	return create_nested_scene(argv[2]);
     if (argc == 3 && BU_STR_EQUAL(argv[1], "create"))
