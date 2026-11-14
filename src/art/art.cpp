@@ -243,6 +243,7 @@ struct ArtRenderSettings {
     std::optional<int> rr_min_path_length;
     std::optional<int> next_event_estimation;
     std::optional<int> enable_caustics;
+    std::optional<int> passes;
 
     bool valid_budget(int budget) const {
 	return sampling != ArtSamplingMode::Adaptive || min_samples <= budget;
@@ -269,7 +270,8 @@ constexpr ArtRenderIntegerSetting render_integer_settings[] = {
     {"max_specular_bounces", "pt.max_specular_bounces", -1, MAX_RENDER_INTEGER, &ArtRenderSettings::max_specular_bounces},
     {"rr_min_path_length", "pt.rr_min_path_length", 0, MAX_RENDER_INTEGER, &ArtRenderSettings::rr_min_path_length},
     {"next_event_estimation", "pt.next_event_estimation", 0, 1, &ArtRenderSettings::next_event_estimation},
-    {"enable_caustics", "pt.enable_caustics", 0, 1, &ArtRenderSettings::enable_caustics}
+    {"enable_caustics", "pt.enable_caustics", 0, 1, &ArtRenderSettings::enable_caustics},
+    {"passes", "passes", 1, MAX_RENDER_INTEGER, &ArtRenderSettings::passes}
 };
 constexpr std::pair<const char *, foundation::LogMessage::Category> render_log_levels[] = {
     {"debug", foundation::LogMessage::Debug}, {"info", foundation::LogMessage::Info},
@@ -1570,7 +1572,7 @@ art_process_scene(bool display_framebuffer, const char *filename)
     struct fb *fbp = display_framebuffer ? fb_setup() : FB_NULL;
     if (display_framebuffer && !fbp)
 	return false;
-    ArtTileCallback callback(fbp, display_exposure);
+    ArtTileCallback callback(fbp, display_exposure, static_cast<size_t>(render_settings.passes.value_or(1)));
     return art_render_image(project.ref(), filename, callback);
 }
 
