@@ -144,6 +144,8 @@ both projections, and two view angles.  `regress-art-nested` and
 solid BOT volumes, including camera origins within them.
 `regress-art-shared-media` checks matching shell/filling interfaces,
 reflection, total internal reflection, and primary geometry-pass ownership.
+`regress-art-curved-media` and `regress-art-curved-contact` compare concentric
+quadric transmission and opaque contacts with independent analytic paths.
 Rough-glass transport, transmitted shadows, and normal-mapped transmission
 remain unqualified.
 
@@ -1028,8 +1030,9 @@ priority at a visible interface identifies the material that supplies its
 surface properties.  Visible tied priorities, different tangent planes,
 partial coverage, and non-glass transmissive layers are outside this
 shared-interface workflow; ambiguous groups fail with a diagnostic.
-Opaque contacts and arbitrary interpenetrating-volume arrangements still
-need separate qualification.
+The opaque contact cases below retain the incident medium when reflecting.
+Arbitrary interpenetrating-volume arrangements still need separate
+qualification.
 
 Lower-priority optical boundaries displaced by the active medium do not
 own primary shading or geometry passes.  This applies to individual
@@ -1049,9 +1052,24 @@ reflection, real air gaps, hidden-boundary depth/position ownership, and
 output preservation on ambiguous ownership or primary-budget exhaustion.
 Per-pixel transport comparisons allow binary16 output rounding, including
 HDR values; independent center-ray energy and full-float geometry checks
-retain their absolute bounds.  This does not establish rough or arbitrary
-curved shared-interface transport, native triangle/Embree boundary
-coalescing, transmitted shadows, or caustics.
+retain their absolute bounds.  This does not establish rough shared-interface transport, native
+triangle/Embree boundary coalescing, transmitted shadows, or caustics.
+
+`regress-art-curved-media` extends the independent optical reference to
+concentric spheres and ellipsoids.  It solves quadratic intersections and
+Snell/Fresnel/Beer transport in the reference shader, covering overlapping
+volumes and matching shell/filling boundaries in both orders.  Equal-index,
+clear, and absorbing materials are checked with camera origins outside,
+in the shell, and in the filling, including oblique rays.
+
+`regress-art-curved-contact` places opaque emitting or mirror surfaces at
+the curved cavity boundary.  It checks both object orders, outside and
+inside-glass cameras, and four view angles.  Physical procedural bounces
+use one outgoing world-space offset for all objects at the contact.  A
+per-object offset could re-hit the touching neighbor, introducing extra
+emission or black mirror pixels.  Pure coverage traversal retains its
+layer-by-layer behavior.  These cases qualify smooth concentric quadric
+contacts; arbitrary curved contacts remain to be tested.
 
 === Plate-mode BOTs
 
