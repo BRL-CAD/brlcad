@@ -726,11 +726,15 @@ main(int argc, char **argv)
 	return create_texture(argv[2], TexturePattern::Black);
     if (argc == 3 && BU_STR_EQUAL(argv[1], "create-gray-texture"))
 	return create_texture(argv[2], TexturePattern::Gray);
-    if (argc >= 4 && (BU_STR_EQUAL(argv[1], "material") ||
-	BU_STR_EQUAL(argv[1], "attr") || BU_STR_EQUAL(argv[1], "color"))) {
-	std::vector<const char *> command{argv[1]};
-	command.insert(command.end(), argv + 3, argv + argc);
-	return edit_database_command(argv[2], static_cast<int>(command.size()), command.data());
+    if (argc >= 4) {
+	const char *const database_commands[] = {"material", "attr", "color", "in", "r", "comb"};
+	for (const char *name : database_commands) {
+	    if (BU_STR_EQUAL(argv[1], name)) {
+		std::vector<const char *> command{argv[1]};
+		command.insert(command.end(), argv + 3, argv + argc);
+		return edit_database_command(argv[2], static_cast<int>(command.size()), command.data());
+	    }
+	}
     }
     if ((argc == 4 || argc == 5) && BU_STR_EQUAL(argv[1], "create-material"))
 	return create_scene(argv[2], argv[3], argc == 5 ? argv[4] : nullptr);

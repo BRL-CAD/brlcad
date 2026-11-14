@@ -193,20 +193,19 @@ clipping, and premultiplied coverage.  Appleseed retains single-byte text
 input.  Both use unhinted rasterization with struetype.
 
 |Installed builds across platforms
-|A complete headless art installation passed all 28 installed checks on
-FreeBSD.  After relocation to a path containing spaces, nine camera,
-frame, selection, lighting, output, settings, constant and image environment,
-and runtime checks passed.
-Coverage includes 24 shared rendering, camera, and material regressions, persisted material
-authoring, plate conversion and saved-view execution through installed
-mged, and the runtime library audit.
+|A complete headless art installation has been qualified on FreeBSD after
+relocation to a path containing spaces.  The installed suite covers shared
+rendering, camera, and material regressions, including initial optical
+media, refraction, nested volumes, and NPR contours.  It also exercises
+persisted material authoring, plate conversion, and saved-view execution
+through installed mged, and audits runtime library locations.
 The ELF install policy uses paths relative to each executable, library, or
 plugin.  A separate collision regression exercises `lib`, `lib64`, and
 nested installation layouts with a conflicting library still present at
 the configured prefix; both executable and plugin controls verify that the
 old search order selects the conflicting version.
-Seven geometry and procedural-intersection checks also passed against the
-fresh bundled build.
+Development-build adapter checks exercise procedural intersections and
+rendering controls alongside the installed rendering suite.
 A finalized renderer SDK copied to a different directory compiles an OSL
 helper shader, builds an installed-API consumer, and renders.  The checked
 renderer, shader compiler, and texture tools load libraries only from that
@@ -943,6 +942,11 @@ root shader resets the inherited definition, including priority.
 `inspect_materials=1` reports the effective priority before rendering.
 Invalid priorities fail without replacing an existing image.
 
+Native priority filtering can currently skip an enclosed opaque BSDF whose
+priority is lower than the surrounding glass.  Assign such opaque parts a
+higher priority while that filtering is being corrected.  This limitation
+also affects materials combining emission with a diffuse or glossy BSDF.
+
 The qualified representation uses full, deliberately overlapping closed
 volumes: the outer volume contains the complete inner volume, and an
 optional higher-priority air-like core can be placed inside it.  The
@@ -971,9 +975,31 @@ limits and indirect glossy diagnostic passes.  Both orthographic and
 perspective center rays are checked; disabling absorption recovers the
 emitter's full HDR radiance.
 
-Cameras starting inside absorbing glass still need initial-medium
-handling.  Surface visibility from inside a solid does not establish
-correct absorption or refraction for such a camera.
+Art initializes optical media at each primary ray's actual origin.  It
+identifies containing, consistently oriented closed volumes before shading
+any surface, evaluates their glass interiors, and orders them by medium
+priority.  This applies absorption even when the first visible surface is
+an emitter inside the glass.  Index-one absorbing glass is still an optical
+medium; opaque, emissive, and illustrative materials do not acquire a glass
+interior merely because the ray starts inside their geometry.
+
+The native medium list holds eight volumes.  Discovering more containing
+optical volumes fails without replacing an existing image.  Touching or
+coincident boundaries, open surfaces, and plate-mode representations are
+outside this qualification.  Use distinct priorities and homogeneous glass
+interiors for the qualified nested workflow.
+
+A pinhole ray starts at the camera's eye point.  Appleseed places an
+orthographic ray a scene diameter behind its nominal eye point, so moving
+that eye inside a solid need not put the ray origin inside it.
+`regress-art-initial-media` compares pinhole views starting in outer glass,
+inner liquid, and an air-like core with analytic Snell, Fresnel, and Beer
+references, and retains orthographic views as outside-origin controls.
+It covers CSG and solid BOTs, oblique views, equal and distinct indices,
+internal emission, unrelated foreground geometry, and capacity failures.
+
+The renderer's BSDF interface now reports whether evaluated inputs define
+an optical interior.  Rebuild plug-ins that subclass that interface.
 
 === Plate-mode BOTs
 
