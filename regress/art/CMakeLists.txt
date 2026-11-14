@@ -29,6 +29,7 @@ set(ART_TEST_SHADER_NAMES
   art_refraction_reference
   art_nested_reference
   art_curved_reference
+  art_rough_glass_reference
   art_mirror_mixture
   art_mirror_node
   art_surface_reference
@@ -52,6 +53,7 @@ set(ART_REGRESSION_TEST_NAMES
   regress-art-shared-media
   regress-art-curved-media
   regress-art-curved-contact
+  regress-art-rough-glass
   regress-art-refraction
   regress-art-nested
   regress-art-mixture
@@ -96,7 +98,8 @@ cmakefiles(CMakeLists.txt art_test_setup.cmake art_installed_tests.cmake
   regress-art-image-maps.cmake.in regress-art-resources.cmake.in
   regress-art-transmission.cmake.in regress-art-absorption.cmake.in regress-art-initial-media.cmake.in regress-art-medium-priority.cmake.in
   regress-art-shared-media.cmake.in regress-art-curved-media.cmake.in
-  regress-art-curved-contact.cmake.in regress-art-refraction.cmake.in
+  regress-art-curved-contact.cmake.in regress-art-rough-glass.cmake.in
+  regress-art-refraction.cmake.in
   regress-art-mixture.cmake.in regress-art-surface.cmake.in regress-art-nested.cmake.in
   regress-art-metal-energy.cmake.in regress-art-coat.cmake.in
   regress-art-materials.cmake.in regress-art-inspect.cmake.in
@@ -130,6 +133,7 @@ if(TARGET art AND BUILD_TESTING)
     "${CMAKE_CURRENT_BINARY_DIR}/transmission-output"
     "${CMAKE_CURRENT_BINARY_DIR}/absorption-output" "${CMAKE_CURRENT_BINARY_DIR}/initial-media-output" "${CMAKE_CURRENT_BINARY_DIR}/medium-priority-output" "${CMAKE_CURRENT_BINARY_DIR}/shared-media-output"
     "${CMAKE_CURRENT_BINARY_DIR}/curved-media-output" "${CMAKE_CURRENT_BINARY_DIR}/curved-contact-output"
+    "${CMAKE_CURRENT_BINARY_DIR}/rough-glass-output"
     "${CMAKE_CURRENT_BINARY_DIR}/refraction-output"
     "${CMAKE_CURRENT_BINARY_DIR}/nested-output"
     "${CMAKE_CURRENT_BINARY_DIR}/mixture-output"

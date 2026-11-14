@@ -1,0 +1,74 @@
+/*              A R T _ R O U G H _ G L A S S _ R E F E R E N C E . O S L
+ * BRL-CAD
+ *
+ * Copyright (c) 2026 United States Government as represented by
+ * the U.S. Army Research Laboratory.
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public License
+ * version 2.1 as published by the Free Software Foundation.
+ *
+ * This library is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this file; see the file named COPYING for more
+ * information.
+ */
+#include "art_glass_reference.h"
+
+// Independent single-scatter GGX evaluation for a clear planar interface.
+// The point light is visible without crossing another boundary; its
+// radiance contribution is BSDF * cosine * intensity / distance squared.
+surface art_rough_glass_reference(
+    point in_light = point(9.8, 0, 8),
+    float in_intensity = 1000,
+    float in_roughness = 0.5,
+    float in_incident_ior = 1,
+    float in_transmitted_ior = 1.5)
+{
+    normal n = faceforward(normalize(Ng), I);
+    vector outgoing = -normalize(I);
+    vector light = in_light - P;
+    float distance_squared = dot(light, light);
+    vector incoming = normalize(light);
+    float outgoing_cosine = dot(outgoing, n);
+    float incoming_cosine = dot(incoming, n);
+    int is_reflection = incoming_cosine > 0;
+    float index_ratio = in_transmitted_ior / in_incident_ior;
+    vector facet = normalize(outgoing + (is_reflection ? 1 : index_ratio) * incoming);
+    if (dot(facet, n) < 0)
+        facet = -facet;
+    float outgoing_facet_cosine = dot(outgoing, facet);
+    float incoming_facet_cosine = dot(incoming, facet);
+    // Both rays must see the same side of their facet and macro normals.
+    if (incoming_cosine == 0 || outgoing_cosine == 0 || outgoing_facet_cosine <= 0 ||
+        incoming_facet_cosine * incoming_cosine <= 0) {
+        Ci = 0;
+        return;
+    }
+    float transmitted_sine_squared = (1-outgoing_facet_cosine*outgoing_facet_cosine) /
+        (index_ratio*index_ratio);
+    float reflectance = 1;
+    if (transmitted_sine_squared < 1) {
+        float transmitted_cosine = sqrt(1-transmitted_sine_squared);
+        reflectance = 1 - interface_transmission(in_incident_ior, in_transmitted_ior,
+            outgoing_facet_cosine, transmitted_cosine);
+    }
+    float alpha = max(0.001, in_roughness*in_roughness);
+    float distribution = isotropic_ggx_distribution(dot(n, facet), alpha);
+    float masking = 1 / (1 + smith_lambda(outgoing_cosine, alpha) + smith_lambda(incoming_cosine, alpha));
+    float f;
+    if (is_reflection) {
+        f = distribution * masking * reflectance / abs(4*incoming_cosine*outgoing_cosine);
+    } else {
+        float denominator = incoming_facet_cosine + outgoing_facet_cosine/index_ratio;
+        f = distribution * masking * (1-reflectance) *
+            abs(incoming_facet_cosine*outgoing_facet_cosine /
+                (denominator*denominator*incoming_cosine*outgoing_cosine)) /
+            (index_ratio*index_ratio);
+    }
+    Ci = color(in_intensity/distance_squared * abs(incoming_cosine) * f) * emission();
+}
