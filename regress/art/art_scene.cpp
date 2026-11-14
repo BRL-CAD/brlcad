@@ -54,6 +54,19 @@ write_osl_material(struct rt_wdb *db, const char *name, struct bu_attribute_valu
     return success;
 }
 
+static bool
+create_key_light(struct rt_wdb *db, const point_t position)
+{
+    constexpr double LIGHT_RADIUS = 0.25;
+    const unsigned char white[] = {255, 255, 255};
+    struct wmember members;
+    BU_LIST_INIT(&members.l);
+    // The sphere supplies a centroid for ART's translated point emitter.
+    return mk_sph(db, "key_light.s", position, LIGHT_RADIUS) == 0 &&
+	mk_addmember("key_light.s", &members.l, NULL, WMOP_UNION) &&
+	mk_lcomb(db, "key_light.r", &members, 1, "light", "bright=1", white, 0) == 0;
+}
+
 static int
 create_scene(const char *path, const char *shader, const char *output)
 {
@@ -156,11 +169,7 @@ create_scene(const char *path, const char *shader, const char *output)
 
     // The surface regression selects this region as a point-light source.
     const point_t key_position = {0, 0, 40};
-    const unsigned char white[] = {255, 255, 255};
-    BU_LIST_INIT(&members.l);
-    success = success && mk_sph(db, "key_light.s", key_position, 0.25) == 0 &&
-	mk_addmember("key_light.s", &members.l, NULL, WMOP_UNION) &&
-	mk_lcomb(db, "key_light.r", &members, 1, "light", "bright=1", white, 0) == 0;
+    success = success && create_key_light(db, key_position);
     BU_LIST_INIT(&members.l);
     success = success && mk_addmember("key_light.r", &members.l, NULL, WMOP_UNION) &&
 	mk_lcomb(db, "key_light.g", &members, 0, NULL, NULL, red, 1) == 0;
@@ -290,6 +299,8 @@ create_lit_glass_scene(const char *path)
 		db5_update_attribute(region.c_str(), "material_name", layer.material, db->dbip) == 0;
 	}
     }
+    const point_t key_position = {0, 0, 10};
+    success = success && create_key_light(db, key_position);
     wdb_close(db);
     return success ? 0 : 1;
 }
