@@ -140,6 +140,29 @@ foreach(kind IN ITEMS box mesh)
   endforeach()
 endforeach()
 
+# A camera in the filling of a hollow shell must discover the filling's
+# exit even when a shell entry occupies exactly the same ray distance.
+# The emitter ends the path before that interface, isolating initialization.
+set_nested_parameter("${ACTUAL_DB}" inner in_volume_transmittance "color 0.2 0.4 0.6")
+set_nested_parameter("${ACTUAL_DB}" inner in_volume_transmittance_distance "float 2")
+run("${TOOL}" --pattern constant:color=0,0.4,0 1x1 3 -o "${WORK}/shared-initial-reference.exr")
+foreach(kind IN ITEMS box mesh)
+  set(shell "${kind}.shell.r")
+  run("${VEXEC}" r "${ACTUAL_DB}" "${shell}" u "${kind}.outer.r" - "${kind}.inner.r")
+  run("${VEXEC}" material "${ACTUAL_DB}" assign "${shell}" outer.material)
+  foreach(order IN ITEMS shell_first filling_first)
+    if(order STREQUAL "shell_first")
+      set(objects "${shell}" "${kind}.inner.r")
+    else()
+      set(objects "${kind}.inner.r" "${shell}")
+    endif()
+    set(image "${WORK}/shared-initial-${kind}-${order}.exr")
+    run("${EXEC}" ${CENTER_ARGS} -c "eye_pt 0 0 4" -c "set environment_intensity=0"
+      -o "${image}" "${ACTUAL_DB}" ${objects} "${kind}.core.r")
+    run("${TOOL}" ${DIFF_ARGS} "${image}" --ch R,G,B "${WORK}/shared-initial-reference.exr" --diff)
+  endforeach()
+endforeach()
+
 # Sixty unrelated closed solids have more than 100 crossings. They must
 # not consume the discovery budget for the enclosing glass at the origin.
 set(STRESS_DB "${WORK}/stress.g")

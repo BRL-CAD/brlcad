@@ -985,9 +985,12 @@ medium; opaque, emissive, and illustrative materials do not acquire a glass
 interior merely because the ray starts inside their geometry.
 
 The native medium list holds eight volumes.  Discovering more containing
-optical volumes fails without replacing an existing image.  Touching or
-coincident boundaries, open surfaces, and plate-mode representations are
-outside this qualification.  Use distinct priorities and homogeneous glass
+optical volumes fails without replacing an existing image.  Initial-medium
+discovery classifies every procedural object at a coincident boundary;
+a camera inside a filled CSG or solid BOT shell therefore retains the
+filling's absorption before its first exit.  Transport across shared shell
+and filling interfaces remains unqualified, as do open surfaces and
+plate-mode representations.  Use distinct priorities and homogeneous glass
 interiors for the qualified nested workflow.
 
 A pinhole ray starts at the camera's eye point.  Appleseed places an
@@ -997,7 +1000,8 @@ that eye inside a solid need not put the ray origin inside it.
 inner liquid, and an air-like core with analytic Snell, Fresnel, and Beer
 references, and retains orthographic views as outside-origin controls.
 It covers CSG and solid BOTs, oblique views, equal and distinct indices,
-internal emission, unrelated foreground geometry, and capacity failures.
+internal emission, coincident shell/filling discovery in either object
+selection order, unrelated foreground geometry, and capacity failures.
 
 The renderer's BSDF interface now reports whether evaluated inputs define
 an optical interior.  Rebuild plug-ins that subclass that interface.
