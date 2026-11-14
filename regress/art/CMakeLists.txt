@@ -42,6 +42,7 @@ set(ART_REGRESSION_TEST_NAMES
   regress-art-image-maps
   regress-art-resources
   regress-art-transmission
+  regress-art-absorption
   regress-art-refraction
   regress-art-nested
   regress-art-mixture
@@ -82,7 +83,7 @@ cmakefiles(CMakeLists.txt art_test_setup.cmake art_installed_tests.cmake
   regress-art.cmake.in regress-art-bump.cmake.in regress-art-normal.cmake.in
   regress-art-texture.cmake.in regress-art-color.cmake.in
   regress-art-image-maps.cmake.in regress-art-resources.cmake.in
-  regress-art-transmission.cmake.in regress-art-refraction.cmake.in
+  regress-art-transmission.cmake.in regress-art-absorption.cmake.in regress-art-refraction.cmake.in
   regress-art-mixture.cmake.in regress-art-surface.cmake.in regress-art-nested.cmake.in
   regress-art-metal-energy.cmake.in regress-art-coat.cmake.in
   regress-art-materials.cmake.in regress-art-inspect.cmake.in
@@ -114,6 +115,7 @@ if(TARGET art AND BUILD_TESTING)
     "${CMAKE_CURRENT_BINARY_DIR}/image-maps-output"
     "${CMAKE_CURRENT_BINARY_DIR}/resources-output"
     "${CMAKE_CURRENT_BINARY_DIR}/transmission-output"
+    "${CMAKE_CURRENT_BINARY_DIR}/absorption-output"
     "${CMAKE_CURRENT_BINARY_DIR}/refraction-output"
     "${CMAKE_CURRENT_BINARY_DIR}/nested-output"
     "${CMAKE_CURRENT_BINARY_DIR}/mixture-output"

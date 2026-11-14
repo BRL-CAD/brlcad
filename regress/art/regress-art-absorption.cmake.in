@@ -1,0 +1,88 @@
+cmake_minimum_required(VERSION 3.22)
+
+set(WORK "@CMAKE_CURRENT_BINARY_DIR@/absorption-output")
+set(LOG "${WORK}/art.log")
+file(REMOVE_RECURSE "${WORK}")
+file(MAKE_DIRECTORY "${WORK}/shaders" "${WORK}/cache")
+set(ENV{BU_DIR_CACHE} "${WORK}/cache")
+include("@CMAKE_CURRENT_SOURCE_DIR@/art_test_commands.cmake")
+set(TOOL "@ART_OIIOTOOL_EXECUTABLE@")
+configure_file("@CMAKE_CURRENT_BINARY_DIR@/art_emission.oso"
+  "${WORK}/shaders/art_emission.oso" COPYONLY)
+set(DB "${WORK}/absorbing.g")
+run("${VEXEC}" create-nested "${DB}")
+foreach(layer IN ITEMS outer inner)
+  foreach(parameter IN ITEMS "in_ior;float 1" "in_roughness;float 0"
+      "in_transmittance_amount;float 1" "in_surface_transmittance;color 1 1 1"
+      "in_reflection_tint;color 0 0 0")
+    list(GET parameter 0 name)
+    list(GET parameter 1 value)
+    run("${VEXEC}" set-named-material "${DB}" "${layer}.material" "OSL.param.${name}" "${value}")
+  endforeach()
+endforeach()
+run("${VEXEC}" set-named-material "${DB}" outer.material OSL.medium_priority 1)
+run("${VEXEC}" set-named-material "${DB}" inner.material OSL.medium_priority 2)
+run("${VEXEC}" set-named-material "${DB}" core.material OSL.medium_priority 3)
+run("${VEXEC}" set-named-material "${DB}" outer.material OSL.param.in_volume_transmittance "color 0.25 0.5 0.8")
+run("${VEXEC}" set-named-material "${DB}" outer.material OSL.param.in_volume_transmittance_distance "float 20")
+run("${VEXEC}" set-named-material "${DB}" inner.material OSL.param.in_volume_transmittance "color 0.8 0.6 0.4")
+run("${VEXEC}" set-named-material "${DB}" inner.material OSL.param.in_volume_transmittance_distance "float 10")
+set(EMISSION "0.5,1,2,1")
+run("${VEXEC}" set-named-material "${DB}" core.material OSL art_emission)
+run("${VEXEC}" set-named-material "${DB}" core.material OSL.param.in_color "color 0.5 1 2")
+
+# Normal center rays traverse Z=10 to Z=2. With an inner volume they
+# traverse outer glass from 10 to 5, then inner glass from 5 to 2.
+set(SINGLE_EXPONENT 0.4)  # 8 / 20
+set(OUTER_EXPONENT 0.25) # 5 / 20
+set(INNER_EXPONENT 0.3)  # 3 / 10
+run("${TOOL}" --pattern constant:color=0.25,0.5,0.8,1 1x1 4
+  --powc ${SINGLE_EXPONENT} --mulc ${EMISSION} -o "${WORK}/single-reference.exr")
+run("${TOOL}" --pattern constant:color=0.25,0.5,0.8,1 1x1 4 --powc ${OUTER_EXPONENT}
+  --pattern constant:color=0.8,0.6,0.4,1 1x1 4 --powc ${INNER_EXPONENT}
+  --mul --mulc ${EMISSION} -o "${WORK}/nested-reference.exr")
+run("${TOOL}" --pattern constant:color=${EMISSION} 1x1 4 -o "${WORK}/clear-reference.exr")
+set(TOLERANCE 0.0005)
+set(DIFF_ARGS --fail ${TOLERANCE} --hardfail ${TOLERANCE}
+  --warn ${TOLERANCE} --hardwarn ${TOLERANCE})
+set(RENDER_ARGS -P 1 -w 1 -n 1 -c "viewsize 1" -c "eye_pt 0 0 40"
+  -c "orientation 0 0 0 1"
+  -c "set samples=1 light_intensity=0 environment_intensity=0 background_color=black rr_min_path_length=0")
+foreach(kind IN ITEMS box mesh)
+  foreach(layers IN ITEMS single nested)
+    set(objects "${kind}.outer.r" "${kind}.core.r")
+    set(bounce_limit 0)
+    if(layers STREQUAL "nested")
+      list(APPEND objects "${kind}.inner.r")
+      set(bounce_limit 1)
+    endif()
+    foreach(perspective IN ITEMS 0 2)
+      foreach(limit IN ITEMS -1 ${bounce_limit})
+        set(image "${WORK}/${kind}-${layers}-${perspective}-${limit}.exr")
+        run("${EXEC}" ${RENDER_ARGS} -p ${perspective} -c "set max_bounces=${limit}"
+          -o "${image}" "${DB}" ${objects})
+        run("${TOOL}" ${DIFF_ARGS} "${image}" "${WORK}/${layers}-reference.exr" --diff)
+        expect_failure("${TOOL}" ${DIFF_ARGS} "${image}" "${WORK}/clear-reference.exr" --diff)
+      endforeach()
+    endforeach()
+  endforeach()
+endforeach()
+
+# The energy reaching an internal emitter belongs to indirect glossy
+# transport, and the raw HDR beauty must agree with its diagnostic pass.
+set(image "${WORK}/diagnostic.exr")
+run("${EXEC}" ${RENDER_ARGS} -p 2 -c "set aovs=glossy,indirect_glossy,emission"
+  -o "${image}" "${DB}" box.outer.r box.inner.r box.core.r)
+foreach(pass IN ITEMS glossy indirect_glossy)
+  run("${TOOL}" ${DIFF_ARGS} "${image}" "${WORK}/diagnostic.${pass}.exr" --diff)
+endforeach()
+run("${TOOL}" --pattern constant:color=0,0,0,1 1x1 4 -o "${WORK}/black.exr")
+run("${TOOL}" ${DIFF_ARGS} "${WORK}/diagnostic.emission.exr" "${WORK}/black.exr" --diff)
+
+# Disabling both absorption distances recovers unattenuated emission.
+foreach(layer IN ITEMS outer inner)
+  run("${VEXEC}" set-named-material "${DB}" "${layer}.material" OSL.param.in_volume_transmittance_distance "float 0")
+endforeach()
+run("${EXEC}" ${RENDER_ARGS} -p 2 -o "${WORK}/clear.exr"
+  "${DB}" box.outer.r box.inner.r box.core.r)
+run("${TOOL}" ${DIFF_ARGS} "${WORK}/clear.exr" "${WORK}/clear-reference.exr" --diff)
