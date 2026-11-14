@@ -13,6 +13,7 @@ set(ART_TEST_SHADER_NAMES
   art_texture
   art_emission
   art_embedded_surface
+  art_shared_layer
   art_npr
   art_sampling
   art_graph_value

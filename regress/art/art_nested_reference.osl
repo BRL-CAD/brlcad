@@ -21,6 +21,7 @@
 
 surface art_nested_reference(
     int in_initial_camera = 0,
+    point in_offset = point(0),
     float in_outer_ior = 1.5,
     float in_inner_ior = 2.4,
     float in_core_ior = 1,
@@ -54,7 +55,7 @@ surface art_nested_reference(
         extent[2] = 5;
         extent[3] = 10;
     }
-    point position = P;
+    point position = P - in_offset;
     vector direction = normalize(I);
     color weight = color(1);
     int first_boundary = 0;
@@ -96,5 +97,5 @@ surface art_nested_reference(
         Ci = 0;
         return;
     }
-    Ci = weight * target_color(position) * emission();
+    Ci = weight * target_color(position + in_offset) * emission();
 }
