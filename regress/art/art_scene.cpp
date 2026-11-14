@@ -252,7 +252,7 @@ create_shared_nested_groups(struct rt_wdb *db, const char *kind,
 
 
 static int
-create_lit_glass_scene(const char *path)
+create_lit_glass_scene(const char *path, const bool light_inside = false)
 {
     struct rt_wdb *db = wdb_fopen(path);
     if (!db)
@@ -299,7 +299,8 @@ create_lit_glass_scene(const char *path)
 		db5_update_attribute(region.c_str(), "material_name", layer.material, db->dbip) == 0;
 	}
     }
-    const point_t key_position = {0, 0, 10};
+    constexpr double EXTERNAL_LIGHT_Z = 10;
+    const point_t key_position = {0, 0, light_inside ? SLAB_BASE + THICKNESS / 2 : EXTERNAL_LIGHT_Z};
     success = success && create_key_light(db, key_position);
     wdb_close(db);
     return success ? 0 : 1;
@@ -826,6 +827,8 @@ main(int argc, char **argv)
 #endif
     if (argc == 3 && BU_STR_EQUAL(argv[1], "create-contour-limit"))
 	return create_contour_limit_scene(argv[2]);
+    if (argc == 3 && BU_STR_EQUAL(argv[1], "create-lit-glass-inside"))
+	return create_lit_glass_scene(argv[2], true);
     if (argc == 3 && BU_STR_EQUAL(argv[1], "create-lit-glass"))
 	return create_lit_glass_scene(argv[2]);
     if (argc == 3 && BU_STR_EQUAL(argv[1], "create-nested"))

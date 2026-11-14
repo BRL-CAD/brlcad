@@ -75,3 +75,30 @@ run_command("${CMAKE_CURRENT_BINARY_DIR}" FALSE "${EXEC}" ${BASE_ARGS} -c "set $
 run("${VEXEC}" check-image "${WORK}/disabled.exr" ${SIZE} ${SIZE})
 run("${TOOL}" --fail 0.000001 --hardfail 0.000001 "${WORK}/disabled.exr" --ch R,G,B
   --pattern constant:color=0,0,0 ${SIZE}x${SIZE} 3 --diff)
+
+# A photon worker cannot continue with a truncated initial medium list.
+# The camera is outside this stack; the point emitter is inside all nine layers.
+set(members)
+set(LIGHT_Z 10)
+foreach(half_width RANGE 1 9)
+  math(EXPR lower "${LIGHT_Z} - ${half_width}")
+  math(EXPR upper "${LIGHT_Z} + ${half_width}")
+  run("${VEXEC}" in "${ACTUAL_DB}" "stack${half_width}.s" rpp
+    -${half_width} ${half_width} -${half_width} ${half_width} ${lower} ${upper})
+  run("${VEXEC}" r "${ACTUAL_DB}" "stack${half_width}.r" u "stack${half_width}.s")
+  run("${VEXEC}" material "${ACTUAL_DB}" assign "stack${half_width}.r" glass.material)
+  list(APPEND members u "stack${half_width}.r")
+endforeach()
+run("${VEXEC}" comb "${ACTUAL_DB}" stack.g ${members})
+set(image "${WORK}/overflow.exr")
+file(WRITE "${image}" "preserve existing output")
+run_command("${CMAKE_CURRENT_BINARY_DIR}" TRUE "${EXEC}" ${BASE_ARGS} -w 1 -n 1
+  -c "eye_pt 0 0 30" -c "set ${PHOTON_CONTROLS}"
+  -o "${image}" "${ACTUAL_DB}" stack.g key_light.r)
+if(NOT command_output MATCHES "worker thread [0-9]+: job was terminated [(]too many initial optical media[)]")
+  message(FATAL_ERROR "Initial photon media overflow did not report a worker error: ${command_output}")
+endif()
+file(READ "${image}" retained)
+if(NOT retained STREQUAL "preserve existing output")
+  message(FATAL_ERROR "A photon worker failure replaced existing output")
+endif()

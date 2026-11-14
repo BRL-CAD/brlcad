@@ -1,0 +1,5 @@
+cmake_minimum_required(VERSION 3.22)
+set(WORK "@CMAKE_CURRENT_BINARY_DIR@/regress-art-photon-inside-csg-15-output")
+set(PHOTON_LIGHT_INSIDE TRUE)
+include("@CMAKE_CURRENT_BINARY_DIR@/art_photon_test_commands.cmake")
+qualify_photon_initial_media(box 1.5)

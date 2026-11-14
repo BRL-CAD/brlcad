@@ -43,8 +43,12 @@ set(ART_TEST_SHADER_NAMES
 set(ART_REGRESSION_TIMEOUT 180)
 # The energy cases use 32 million photons to bound estimator error at 1 percent.
 set(ART_PHOTON_REGRESSION_TIMEOUT 420)
+# Inside-light cases compare clear and absorbing transport in separate batches.
+set(ART_PHOTON_INSIDE_REGRESSION_TIMEOUT 1560)
 function(art_regression_timeout name result)
-  if(name MATCHES "^regress-art-photon-(csg|bot)-")
+  if(name MATCHES "^regress-art-photon-inside-(csg|bot)-")
+    set(${result} ${ART_PHOTON_INSIDE_REGRESSION_TIMEOUT} PARENT_SCOPE)
+  elseif(name MATCHES "^regress-art-photon-(csg|bot)-")
     set(${result} ${ART_PHOTON_REGRESSION_TIMEOUT} PARENT_SCOPE)
   else()
     set(${result} ${ART_REGRESSION_TIMEOUT} PARENT_SCOPE)
@@ -76,6 +80,10 @@ set(ART_REGRESSION_TEST_NAMES
   regress-art-photon-csg-20
   regress-art-photon-bot-15
   regress-art-photon-bot-20
+  regress-art-photon-inside-csg-15
+  regress-art-photon-inside-csg-20
+  regress-art-photon-inside-bot-15
+  regress-art-photon-inside-bot-20
   regress-art-photon-controls
   regress-art-refraction
   regress-art-nested
@@ -121,6 +129,10 @@ cmakefiles(CMakeLists.txt art_test_setup.cmake art_installed_tests.cmake
   regress-art-photon-csg-20.cmake.in
   regress-art-photon-bot-15.cmake.in
   regress-art-photon-bot-20.cmake.in
+  regress-art-photon-inside-csg-15.cmake.in
+  regress-art-photon-inside-csg-20.cmake.in
+  regress-art-photon-inside-bot-15.cmake.in
+  regress-art-photon-inside-bot-20.cmake.in
   regress-art-photon-controls.cmake.in
   regress-art-photon-cancel.cmake.in
   art_scene.cpp art_test_mesh.h art_glass_reference.h art_test_commands.cmake

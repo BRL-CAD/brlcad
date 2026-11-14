@@ -24,19 +24,69 @@ surface art_photon_reference(
     float in_ior = 1.5,
     float in_intensity = 1000,
     float in_external_distance = 9,
-    float in_thickness = 1)
+    float in_thickness = 1,
+    int in_source_inside = 0,
+    color in_volume_transmittance = color(1),
+    float in_volume_transmittance_distance = 0)
 {
-    if (in_ior < 1 || in_intensity < 0 || in_external_distance < 0 || in_thickness <= 0) {
+    if (in_ior < 1 || in_intensity < 0 || in_external_distance < 0 || in_thickness <= 0 ||
+        in_volume_transmittance_distance < 0 || (in_source_inside != 0 && in_source_inside != 1)) {
         error("Invalid point-light slab reference parameters");
         Ci = 0;
         return;
     }
-    // Two photon bounces admit one entry/exit and stop at the first diffuse hit.
-    // Near the axis, Snell's law maps solid angle to area with this distance.
-    float optical_distance = in_external_distance + in_thickness / in_ior;
+    for (int channel = 0; channel < 3; ++channel) {
+        if (in_volume_transmittance[channel] < 0 || in_volume_transmittance[channel] > 1) {
+            error("Invalid point-light volume transmittance");
+            Ci = 0;
+            return;
+        }
+    }
+    float optical_distance = in_source_inside
+        ? in_thickness + in_ior * in_external_distance
+        : in_external_distance + in_thickness / in_ior;
+    float density = 1 / (optical_distance * optical_distance);
     float fresnel_reflectance = (in_ior - 1) / (in_ior + 1);
     fresnel_reflectance *= fresnel_reflectance;
+    float glass_distance = in_thickness;
+    float radius = sqrt(P[0] * P[0] + P[1] * P[1]);
+    float AxialThreshold = 1e-6;
+    if (in_source_inside && radius > AxialThreshold * optical_distance) {
+        // Invert r = h tan(theta_glass) + d tan(theta_air), with Snell's law.
+        // Bisection reaches float precision without relying on the renderer.
+        int SnellIterations = 32;
+        float lower = 0;
+        float upper = asin(1 / in_ior);
+        for (int iteration = 0; iteration < SnellIterations; ++iteration) {
+            float angle = (lower + upper) / 2;
+            float sine = sin(angle);
+            float cosine = cos(angle);
+            float air_cosine = sqrt(1 - in_ior * in_ior * sine * sine);
+            float projected_radius = in_thickness * sine / cosine +
+                in_external_distance * in_ior * sine / air_cosine;
+            if (projected_radius < radius)
+                lower = angle;
+            else
+                upper = angle;
+        }
+        float angle = (lower + upper) / 2;
+        float sine = sin(angle);
+        float cosine = cos(angle);
+        float air_cosine = sqrt(1 - in_ior * in_ior * sine * sine);
+        float radial_derivative = in_thickness / (cosine * cosine) +
+            in_external_distance * in_ior * cosine / (air_cosine * air_cosine * air_cosine);
+        // Convert emitted solid angle to receiver area: dOmega/dA = sin(theta)/(r dr/dtheta).
+        density = sine / (radius * radial_derivative);
+        float rs = (in_ior * cosine - air_cosine) / (in_ior * cosine + air_cosine);
+        float rp = (cosine - in_ior * air_cosine) / (cosine + in_ior * air_cosine);
+        fresnel_reflectance = (rs * rs + rp * rp) / 2;
+        glass_distance /= cosine;
+    }
     float power_transmittance = 1 - fresnel_reflectance;
-    Ci = in_color * in_intensity * power_transmittance * power_transmittance /
-        (M_PI * optical_distance * optical_distance) * emission();
+    if (!in_source_inside)
+        power_transmittance *= power_transmittance;
+    color absorption = color(1);
+    if (in_volume_transmittance_distance > 0)
+        absorption = pow(in_volume_transmittance, glass_distance / in_volume_transmittance_distance);
+    Ci = in_color * in_intensity * power_transmittance * absorption * density / M_PI * emission();
 }

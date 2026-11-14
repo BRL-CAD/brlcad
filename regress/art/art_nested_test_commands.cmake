@@ -58,4 +58,7 @@ function(compare_radiance_mean image reference bound should_fail)
     "${image}" --ch R,G,B --resize:filter=box 1x1 "${reference}" --ch R,G,B --resize:filter=box 1x1 --absdiff
     "${reference}" --ch R,G,B --resize:filter=box 1x1 --abs --div
     --pattern constant:color=0,0,0 1x1 3 --diff)
+  if(should_fail AND NOT command_output MATCHES "FAILURE")
+    message(FATAL_ERROR "Radiance comparison did not report an image mismatch: ${command_output}")
+  endif()
 endfunction()

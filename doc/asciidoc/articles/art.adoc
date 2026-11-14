@@ -1006,9 +1006,9 @@ from grazing rays that miss the finite slab.  The fixture isolates one
 diffuse bounce and allows up to 64 dielectric continuations.
 
 These cases establish illumination through glass from a broad environment.
-Point/directional-light caustics, general caustic focusing, and photon
-mapping still need their own integration and qualification.  The option
-does not replace that work.
+Point-light transmission is covered by the photon mapper below.
+Directional emitters and general caustic focusing still need separate
+integration and qualification.
 
 === Photon mapping for point-light transmission
 
@@ -1016,8 +1016,9 @@ does not replace that work.
 mapper.  `integrator=pt` retains the default path tracer.  Photon mapping
 can illuminate receivers through ideal glass from point emitters, whose
 refracted paths cannot be found by ordinary camera path tracing.  The
-first qualified scenes use emitters outside the glass; this does not yet
-qualify general focusing or light origins inside optical volumes.
+qualified scenes use emitters outside a homogeneous slab and at its
+midplane.  These checks do not qualify arbitrary caustic focusing,
+rough or nested photon paths, or area emitters.
 
 Use uniform sampling for photon mapping.  `samples` is the camera sample
 budget per pixel per pass; `passes` controls the number of passes.  More
@@ -1071,14 +1072,36 @@ detail; increased photon counts cannot undo excessive spatial smoothing.
 The four `regress-art-photon-csg-*` and `regress-art-photon-bot-*` checks
 compare point-lit slab transmission at IORs 1.5 and 2 with an independent
 axial Lambert/Fresnel reference.  Each uses 32 passes of one million
-photons, with a 1-percent channel-mean bound.  Their two-bounce photon cap permits one
-entry and exit before the first diffuse hit, excluding later diffuse
-interreflection and internally reflected bundles.  This bounded case
-qualifies initial transmitted photon transport on CSG and BOT geometry;
-rough or nested photon paths, general caustic focusing, participating
-media, and photon emission from inside glass remain open qualification.
+photons, with a 1-percent channel-mean bound.  Their two-bounce photon cap
+permits one entry and exit before the first diffuse hit, excluding later
+diffuse interreflection and internally reflected bundles.
+
+The four `regress-art-photon-inside-*` checks put the point emitter at the
+slab's midplane and keep the camera outside the glass.  Both geometry kinds
+cover indices 1.5 and 2 with clear and absorbing glass.  Each render uses
+32 passes of 500000 photons and a 1-percent channel-mean bound.  A wider
+receiver view averages distinct photon neighborhoods.  The independent
+reference inverts Snell's law, converts emitted solid angle to receiver
+area, evaluates angular Fresnel transmission, and applies Beer attenuation
+over the actual oblique glass path.  An index-one control first compares
+that spatial reference with direct point-light illumination in air.
+The one-bounce photon cap admits one exit before the first diffuse hit;
+wrong-IOR and missing-absorption controls must fail.
+
+Appleseed discovers containing closed optical media at physical path
+origins, including photon emitters, before tracing the first segment.
+Correcting only the IOR at the first exit would omit absorption between
+an interior source and that boundary.  These cases qualify initial smooth
+slab photon transport on CSG and solid BOT geometry.  Rough or nested
+photon paths, general caustic focusing, participating media, and sampled
+emission from librt surfaces remain open qualification.
 Separate checks exercise control errors, repeated frames, engine changes,
 cumulative progress and cancellation, including framebuffer cleanup.
+Initial state is limited to eight containing optical objects, including
+subordinate media.  Exceeding that limit at a photon emitter reports a
+worker error, aborts the render, and preserves existing output.  Renderer
+errors are observed during rendering as well as cleanup; later passes must
+not wait indefinitely after photon workers fail.
 
 === Nested optical volumes
 
