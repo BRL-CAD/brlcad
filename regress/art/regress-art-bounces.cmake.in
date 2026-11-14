@@ -77,7 +77,7 @@ foreach(kind IN ITEMS glossy glass)
 endforeach()
 
 set(controls max_bounces max_diffuse_bounces max_glossy_bounces max_specular_bounces
-  rr_min_path_length next_event_estimation)
+  rr_min_path_length next_event_estimation enable_caustics)
 run_command("${CMAKE_CURRENT_BINARY_DIR}" FALSE "${EXEC}" -c "set inspect_materials=1"
   -c set "${DB}" cube.r)
 foreach(control IN LISTS controls)
@@ -104,7 +104,9 @@ set(image "${WORK}/invalid.exr")
 foreach(setting IN ITEMS "max_bounces=-2" "max_diffuse_bounces=-2" "max_glossy_bounces=2147483648"
     "max_specular_bounces=1junk" "max_bounces=1.5" "rr_min_path_length=-1"
     "next_event_estimation=-1" "next_event_estimation=2" "next_event_estimation=!"
-    "max_bounces=0 next_event_estimation=2")
+    "max_bounces=0 next_event_estimation=2"
+    "enable_caustics=-1" "enable_caustics=2" "enable_caustics=1junk"
+    "max_bounces=0 enable_caustics=2")
   file(WRITE "${image}" "preserve existing output")
   expect_failure_matching("invalid setting" "${EXEC}" -c "set ${setting}"
     -o "${image}" "${DB}" cube.r)

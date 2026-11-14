@@ -242,6 +242,7 @@ struct ArtRenderSettings {
     std::optional<int> max_specular_bounces;
     std::optional<int> rr_min_path_length;
     std::optional<int> next_event_estimation;
+    std::optional<int> enable_caustics;
 
     bool valid_budget(int budget) const {
 	return sampling != ArtSamplingMode::Adaptive || min_samples <= budget;
@@ -267,7 +268,8 @@ constexpr ArtRenderIntegerSetting render_integer_settings[] = {
     {"max_glossy_bounces", "pt.max_glossy_bounces", -1, MAX_RENDER_INTEGER, &ArtRenderSettings::max_glossy_bounces},
     {"max_specular_bounces", "pt.max_specular_bounces", -1, MAX_RENDER_INTEGER, &ArtRenderSettings::max_specular_bounces},
     {"rr_min_path_length", "pt.rr_min_path_length", 0, MAX_RENDER_INTEGER, &ArtRenderSettings::rr_min_path_length},
-    {"next_event_estimation", "pt.next_event_estimation", 0, 1, &ArtRenderSettings::next_event_estimation}
+    {"next_event_estimation", "pt.next_event_estimation", 0, 1, &ArtRenderSettings::next_event_estimation},
+    {"enable_caustics", "pt.enable_caustics", 0, 1, &ArtRenderSettings::enable_caustics}
 };
 constexpr std::pair<const char *, foundation::LogMessage::Category> render_log_levels[] = {
     {"debug", foundation::LogMessage::Debug}, {"info", foundation::LogMessage::Info},
