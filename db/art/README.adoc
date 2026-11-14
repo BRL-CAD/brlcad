@@ -312,3 +312,80 @@ specified over 1000 mm for the model's thick windscreen.
 The existing source produces nonplanar-ARB preparation warnings; the recipe
 does not repair those source solids.  See the art article for geometry,
 glass, and secondary-ray qualification boundaries.
+
+== Engineering views of Generic_Twin
+
+The engineering take uses a presentation palette to separate the aircraft's
+modeled structure and systems.  A blue translucent envelope retains the
+exterior shape while exposing the frames, spars, propulsion components, and
+system runs.  Its face opacity is 0.18 and increases at grazing angles;
+light blue contour lines keep the envelope distinct from the dark backdrop.
+
+image::twin-structure-overview.png[Generic Twin with a visible translucent exterior and colored internal assemblies]
+
+The center-section detail omits the exterior and crew from its render
+selection.  Frames, wing structure, engines, controls, fuel systems, gear,
+electrics, and cockpit components remain available.  Translucent fuel
+volumes, floor panels, and engine cases reveal the parts behind them.
+
+image::twin-structure-detail.png[Generic Twin internal structure and center-section detail]
+
+[cols="1,2,1",options="header"]
+|===
+|Color |Presentation category |Source grouping
+|Amber |Frames and ribs |`7xxx_series`
+|Blue |Spars |Named spar regions
+|Orange |Propulsion components |`1xxx_series`
+|Cyan |Controls and hydraulic mechanisms |`3xxx_series`
+|Purple |Fuel components and runs |`4xxx_series`
+|Green |Landing gear |`5xxx_series`
+|Yellow |Electrical and control runs |`8xxx_series`
+|Steel gray |Cockpit equipment |`9xxx_series`
+|Translucent blue |Exterior and selected cases |`0xxx_series` and named covers
+|===
+
+Regenerate the supplied 1024 by 768 views with an adaptive budget of
+64 samples per pixel:
+
+----
+cmake -DBRLCAD_PREFIX="${BRLCAD_PREFIX}" -DOUTPUT_DIR=twin-structure \
+    -DWIDTH=1024 -DHEIGHT=768 -DSAMPLES=64 -DWORKERS=6 \
+    -P "${BRLCAD_PREFIX}/share/db/art/render_twin_structure.cmake"
+----
+
+The driver needs art, mged, oslc, the installed OSL headers, and the standard
+Generic_Twin database.  It compiles `art_engineering.osl` into the generated
+project's `shaders` directory.  The shader uses illustrative fill and
+view-facing shading, plus Appleseed's ray-traced NPR contours.  Contours
+follow object/material boundaries and normal creases.  Depth contours are
+available through `in_depth_contours` and its millimeter threshold; they
+are disabled in these views to retain clean lines on sloped surfaces.
+Translucent covers draw their front-face contours.
+
+The usual `SOURCE_DB`, `WIDTH`, `HEIGHT`, `SAMPLES`, and `WORKERS` options
+apply.  `SAMPLES` is the adaptive ceiling; the initial batch and minimum
+produce at least eight samples when that budget allows it.  The shader's
+color and opacity controls are ordinary OSL material parameters.  For
+example, in the generated database:
+
+[source,tcl]
+----
+material set art.engineering.skin.material optical OSL.param.in_opacity "float 0.25"
+----
+
+The project contains one authored database, the compiled shader, both PNG
+images, complete saved-view streams, and separate material reports for
+both selections.  `art.context.g` retains the complete source assembly;
+`art.structure.g` copies its tree and removes the exterior and crew members
+for the detail.  Source member transforms are retained.  Every original
+primitive and Boolean tree is preserved, including the windscreen's
+plate representation: this illustrative transparency uses coverage rather
+than refractive glass.  The input database is unchanged.
+
+Keep `shaders/art_engineering.oso` beside the authored database.  Rerender
+the overview from its generated project directory:
+
+----
+art -M -w 1024 -n 768 -P 6 -o structure.exr twin-structure.g art.context.g \
+    < twin-structure-overview.view
+----

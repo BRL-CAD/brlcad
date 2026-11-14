@@ -1,6 +1,12 @@
 set(art_example_files
   README.adoc
   render_common.cmake
+  engineering_materials.tcl
+  art_engineering.osl
+  render_twin_structure.cmake
+  twin_structure.tcl
+  twin-structure-overview.png
+  twin-structure-detail.png
   render_moss.cmake
   render_havoc.cmake
   havoc_studio.tcl

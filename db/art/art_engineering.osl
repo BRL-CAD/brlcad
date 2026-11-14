@@ -1,0 +1,59 @@
+/*              A R T _ E N G I N E E R I N G . O S L
+ * BRL-CAD
+ *
+ * Copyright (c) 2026 United States Government as represented by
+ * the U.S. Army Research Laboratory.
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public License
+ * version 2.1 as published by the Free Software Foundation.
+ *
+ * This library is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this file; see the file named COPYING for more
+ * information.
+ */
+#include "appleseed/as_osl_extensions.h"
+
+shader art_engineering(
+    color in_color = color(0.5),
+    float in_opacity = 1,
+    float in_edge_opacity = 0.3,
+    float in_edge_power = 4,
+    int in_contours = 1,
+    color in_contour_color = color(0.015, 0.025, 0.045),
+    float in_contour_width = 0.75,
+    int in_depth_contours = 0,
+    float in_contour_depth_threshold = 100,
+    float in_contour_crease_angle = 30,
+    output closure color out_outColor = 0)
+{
+    vector viewer = -normalize(I);
+    normal oriented = faceforward(normalize(N), I);
+    float facing = clamp(dot(oriented, viewer), 0, 1);
+    vector key_direction = normalize(vector(0.35, -0.45, 1));
+    // Illustrative fill preserves small parts even inside unlit assemblies.
+    float fill = 0.24;
+    float key = 0.56 * max(0, dot(oriented, key_direction));
+    float headlight = 0.20 * facing;
+    float shading = fill + key + headlight;
+    float outline = pow(1 - facing, in_edge_power);
+    float opacity = clamp(in_opacity + in_edge_opacity * outline, 0, 1);
+    out_outColor = (1 - opacity) * transparent();
+    if (raytype("transparency") || raytype("shadow"))
+        return;
+    if (raytype("npr")) {
+        // Coverage is applied by the surface shader after NPR compositing.
+        out_outColor = in_color * shading * as_npr_shading();
+        if (in_contours && (in_opacity >= 1 || !backfacing()))
+            out_outColor += as_npr_contour(in_contour_color, 1,
+                in_contour_width, 1, 1, in_depth_contours, in_contour_depth_threshold,
+                1, in_contour_crease_angle);
+    } else {
+        out_outColor += in_color * shading * emission();
+    }
+}
