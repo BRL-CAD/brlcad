@@ -5,6 +5,7 @@ endif()
 
 set(ART_TEST_SHADER_NAMES
   art_diffuse
+  art_trace_queries
   art_color
   art_uv
   art_normals
@@ -59,6 +60,7 @@ set(ART_REGRESSION_TEST_NAMES
   regress-art-bump
   regress-art-normal
   regress-art-texture
+  regress-art-trace
   regress-art-color
   regress-art-image-maps
   regress-art-resources
@@ -137,6 +139,7 @@ cmakefiles(CMakeLists.txt art_test_setup.cmake art_installed_tests.cmake
   regress-art-photon-cancel.cmake.in
   art_scene.cpp art_test_mesh.h art_glass_reference.h art_test_commands.cmake
   regress-art.cmake.in regress-art-bump.cmake.in regress-art-normal.cmake.in
+  regress-art-trace.cmake.in
   regress-art-texture.cmake.in regress-art-color.cmake.in
   regress-art-image-maps.cmake.in regress-art-resources.cmake.in
   regress-art-transmission.cmake.in regress-art-absorption.cmake.in regress-art-initial-media.cmake.in regress-art-medium-priority.cmake.in
@@ -173,6 +176,7 @@ if(TARGET art AND BUILD_TESTING)
   brlcad_regression_test(regress-art-intersections "art_intersection_test" TEST_DEFINED TIMEOUT 120)
   distclean("${CMAKE_CURRENT_BINARY_DIR}/output" "${CMAKE_CURRENT_BINARY_DIR}/bump-output"
     "${CMAKE_CURRENT_BINARY_DIR}/normal-output" "${CMAKE_CURRENT_BINARY_DIR}/texture-output"
+    "${CMAKE_CURRENT_BINARY_DIR}/trace-output"
     "${CMAKE_CURRENT_BINARY_DIR}/color-output"
     "${CMAKE_CURRENT_BINARY_DIR}/image-maps-output"
     "${CMAKE_CURRENT_BINARY_DIR}/resources-output"
