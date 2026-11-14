@@ -1,0 +1,4 @@
+cmake_minimum_required(VERSION 3.22)
+set(CAUSTIC_TEST rough)
+set(WORK "@CMAKE_CURRENT_BINARY_DIR@/caustics-rough-output")
+include("@CMAKE_CURRENT_BINARY_DIR@/art_caustic_test_commands.cmake")

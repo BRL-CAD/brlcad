@@ -1,0 +1,123 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+A R T _ L I T _ G L A S S
+BRL-CAD
+
+Copyright (c) 2026 United States Government as represented by
+the U.S. Army Research Laboratory.
+
+This library is free software; you can redistribute it and/or
+modify it under the terms of the GNU Lesser General Public License
+version 2.1 as published by the Free Software Foundation.
+
+This library is distributed in the hope that it will be useful, but
+WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+Lesser General Public License for more details.
+
+You should have received a copy of the GNU Lesser General Public
+License along with this file; see the file named COPYING for more
+information.
+-->
+<project format_revision="33">
+  <search_paths>
+    <search_path>shaders</search_path>
+    <search_path>@REFERENCE_SHADER_PATH@</search_path>
+  </search_paths>
+  <scene>
+    <camera name="camera" model="pinhole_camera">
+      <parameter name="film_dimensions" value="1 1" />
+      <parameter name="horizontal_fov" value="0.02" />
+      <transform>
+        <matrix>1 0 0 0 0 1 0 0 0 0 1 2 0 0 0 1</matrix>
+      </transform>
+    </camera>
+    <color name="sky">
+      <parameter name="color_space" value="linear_rgb" />
+      <values>@ENVIRONMENT_POWER@ @ENVIRONMENT_POWER@ @ENVIRONMENT_POWER@</values>
+    </color>
+    <environment_edf name="sky_edf" model="constant_environment_edf">
+      <parameter name="radiance" value="sky" />
+    </environment_edf>
+    <environment name="environment" model="generic_environment">
+      <parameter name="environment_edf" value="sky_edf" />
+    </environment>
+    <assembly name="assembly">
+      <surface_shader name="surface" model="physical_surface_shader" />
+      <shader_group name="receiver_group">
+        <shader type="surface" name="art_diffuse" layer="receiver">
+          <parameter name="in_color" value="color @RECEIVER_COLOR@" />
+        </shader>
+      </shader_group>
+      <material name="receiver_material" model="osl_material">
+        <parameter name="osl_surface" value="receiver_group" />
+        <parameter name="surface_shader" value="surface" />
+      </material>
+      <shader_group name="glass_group">
+        <shader type="shader" name="as_glass" layer="glass">
+          <parameter name="in_ior" value="float @REFERENCE_IOR@" />
+          <parameter name="in_roughness" value="float @REFERENCE_ROUGHNESS@" />
+          <parameter name="in_transmittance_amount" value="float 1" />
+          <parameter name="in_surface_transmittance" value="color 1 1 1" />
+          <parameter name="in_volume_transmittance_distance" value="float @REFERENCE_DISTANCE@" />
+          <parameter name="in_volume_transmittance" value="color @VOLUME_COLOR@" />
+        </shader>
+        <shader type="surface" name="as_closure2surface" layer="surface" />
+        <connect_shaders src_layer="glass" src_param="out_outColor" dst_layer="surface" dst_param="in_input" />
+      </shader_group>
+      <material name="glass_material" model="osl_material">
+        <parameter name="osl_surface" value="glass_group" />
+        <parameter name="surface_shader" value="surface" />
+      </material>
+      <object name="geometry" model="mesh_object">
+        <parameter name="filename" value="art_rough_box.obj" />
+      </object>
+      <object_instance name="ground" object="geometry.cube">
+        <transform>
+          <matrix>100 0 0 0 0 100 0 0 0 0 0.05 -0.5 0 0 0 1</matrix>
+        </transform>
+        <assign_material slot="default" side="front" material="receiver_material" />
+        <assign_material slot="default" side="back" material="receiver_material" />
+      </object_instance>
+      <object_instance name="slab" object="geometry.cube">
+        <transform>
+          <matrix>100 0 0 0 0 100 0 0 0 0 0.05 5.5 0 0 0 1</matrix>
+        </transform>
+        <assign_material slot="default" side="front" material="glass_material" />
+        <assign_material slot="default" side="back" material="glass_material" />
+      </object_instance>
+    </assembly>
+    <assembly_instance name="assembly_instance" assembly="assembly" />
+  </scene>
+  <output>
+    <frame name="beauty">
+      <parameter name="camera" value="camera" />
+      <parameter name="resolution" value="@SIZE@ @SIZE@" />
+      <parameter name="tile_size" value="@SIZE@ @SIZE@" />
+      <parameter name="filter" value="box" />
+      <parameter name="filter_size" value="0.5" />
+    </frame>
+  </output>
+  <configurations>
+    <configuration name="final" base="base_final">
+      <parameter name="lighting_engine" value="pt" />
+      <parameter name="pixel_renderer" value="uniform" />
+      <parameter name="spectrum_mode" value="rgb" />
+      <parameter name="tile_renderer" value="generic" />
+      <parameter name="rendering_threads" value="@WORKERS@" />
+      <parameters name="uniform_pixel_renderer">
+        <parameter name="samples" value="@SAMPLES@" />
+      </parameters>
+      <parameters name="pt">
+        <parameter name="max_bounces" value="-1" />
+        <parameter name="max_diffuse_bounces" value="0" />
+        <parameter name="max_glossy_bounces" value="@SURFACE_BOUNCES@" />
+        <parameter name="max_specular_bounces" value="@SURFACE_BOUNCES@" />
+        <parameter name="rr_min_path_length" value="0" />
+        <parameter name="next_event_estimation" value="true" />
+        <parameter name="enable_caustics" value="true" />
+      </parameters>
+    </configuration>
+    <configuration name="interactive" base="base_interactive" />
+  </configurations>
+</project>

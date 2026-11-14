@@ -31,6 +31,7 @@ set(ART_TEST_SHADER_NAMES
   art_curved_reference
   art_rough_glass_reference
   art_rough_furnace_reference
+  art_glass_lighting_reference
   art_mirror_mixture
   art_mirror_node
   art_surface_reference
@@ -57,6 +58,10 @@ set(ART_REGRESSION_TEST_NAMES
   regress-art-rough-glass
   regress-art-rough-energy
   regress-art-rough-paths
+  regress-art-caustics-clear
+  regress-art-caustics-absorption
+  regress-art-caustics-state
+  regress-art-caustics-rough
   regress-art-refraction
   regress-art-nested
   regress-art-mixture
@@ -93,7 +98,8 @@ endif()
 
 cmakefiles(CMakeLists.txt art_test_setup.cmake art_installed_tests.cmake
   art_nested_test_commands.cmake art_curved_test_commands.cmake
-  art_rough_box.appleseed.in art_rough_box.obj
+  art_caustic_test_commands.cmake.in
+  art_rough_box.appleseed.in art_rough_box.obj art_lit_glass.appleseed.in
   art_installed_runtime.cmake.in art-installed-material.cmake.in
   art-installed-plate.cmake.in art-installed-view.cmake.in
   art_scene.cpp art_test_mesh.h art_glass_reference.h art_test_commands.cmake
@@ -104,6 +110,7 @@ cmakefiles(CMakeLists.txt art_test_setup.cmake art_installed_tests.cmake
   regress-art-shared-media.cmake.in regress-art-curved-media.cmake.in
   regress-art-curved-contact.cmake.in regress-art-rough-glass.cmake.in
   regress-art-rough-energy.cmake.in regress-art-rough-paths.cmake.in
+  regress-art-caustics-clear.cmake.in regress-art-caustics-absorption.cmake.in regress-art-caustics-state.cmake.in regress-art-caustics-rough.cmake.in
   regress-art-refraction.cmake.in
   regress-art-mixture.cmake.in regress-art-surface.cmake.in regress-art-nested.cmake.in
   regress-art-metal-energy.cmake.in regress-art-coat.cmake.in
@@ -141,6 +148,10 @@ if(TARGET art AND BUILD_TESTING)
     "${CMAKE_CURRENT_BINARY_DIR}/rough-glass-output"
     "${CMAKE_CURRENT_BINARY_DIR}/rough-energy-output"
     "${CMAKE_CURRENT_BINARY_DIR}/rough-paths-output"
+    "${CMAKE_CURRENT_BINARY_DIR}/caustics-clear-output"
+    "${CMAKE_CURRENT_BINARY_DIR}/caustics-absorption-output"
+    "${CMAKE_CURRENT_BINARY_DIR}/caustics-state-output"
+    "${CMAKE_CURRENT_BINARY_DIR}/caustics-rough-output"
     "${CMAKE_CURRENT_BINARY_DIR}/refraction-output"
     "${CMAKE_CURRENT_BINARY_DIR}/nested-output"
     "${CMAKE_CURRENT_BINARY_DIR}/mixture-output"

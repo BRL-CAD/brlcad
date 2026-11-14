@@ -243,6 +243,59 @@ create_shared_nested_groups(struct rt_wdb *db, const char *kind,
 
 
 static int
+create_lit_glass_scene(const char *path)
+{
+    struct rt_wdb *db = wdb_fopen(path);
+    if (!db)
+	return 1;
+    constexpr double SOURCE_HALF_WIDTH = 10;
+    // A wide slab bounds the omitted grazing irradiance below 0.01 percent.
+    constexpr double PLANE_HALF_WIDTH = 1000;
+    constexpr double THICKNESS = 1;
+    constexpr double SLAB_BASE = 5;
+    const point_t low = {-SOURCE_HALF_WIDTH, -SOURCE_HALF_WIDTH, -SOURCE_HALF_WIDTH};
+    const point_t high = {SOURCE_HALF_WIDTH, SOURCE_HALF_WIDTH, SOURCE_HALF_WIDTH};
+    bool success = mk_rpp(db, "source.box", low, high) == 0 &&
+	art_test::make_mesh(db, "source.mesh", art_test::MeshUV::None) == 0;
+    const struct { const char *name; const char *shader; const char *color; } materials[] = {
+	{"receiver.material", "art_diffuse", "color 0.25 0.5 0.75"},
+	{"glass.material", "as_glass", nullptr}
+    };
+    for (const auto& material : materials) {
+	struct bu_attribute_value_set optical;
+	bu_avs_init_empty(&optical);
+	bu_avs_add(&optical, "OSL", material.shader);
+	if (material.color)
+	    bu_avs_add(&optical, "OSL.param.in_color", material.color);
+	success = success && write_osl_material(db, material.name, &optical);
+	bu_avs_free(&optical);
+    }
+    const struct { const char *name; double center; const char *material; } layers[] = {
+	{"receiver", -THICKNESS / 2, "receiver.material"},
+	{"slab", SLAB_BASE + THICKNESS / 2, "glass.material"}
+    };
+    struct wmember members;
+    for (const char *kind : {"box", "mesh"}) {
+	const std::string solid = std::string("source.") + kind;
+	for (const auto& layer : layers) {
+	    mat_t transform;
+	    MAT_IDN(transform);
+	    transform[0] = transform[5] = PLANE_HALF_WIDTH / SOURCE_HALF_WIDTH;
+	    transform[10] = THICKNESS / (2 * SOURCE_HALF_WIDTH);
+	    transform[MDZ] = layer.center;
+	    const std::string region = std::string(layer.name) + "." + kind + ".r";
+	    BU_LIST_INIT(&members.l);
+	    success = success && mk_addmember(solid.c_str(), &members.l, transform, WMOP_UNION) &&
+		mk_lcomb(db, region.c_str(), &members, 1, NULL, NULL, NULL, 0) == 0 &&
+		db5_update_attribute(region.c_str(), "material_name", layer.material, db->dbip) == 0;
+	}
+    }
+    wdb_close(db);
+    return success ? 0 : 1;
+}
+
+
+static int
 create_nested_scene(const char *path)
 {
     struct rt_wdb *db = wdb_fopen(path);
@@ -762,6 +815,8 @@ main(int argc, char **argv)
 #endif
     if (argc == 3 && BU_STR_EQUAL(argv[1], "create-contour-limit"))
 	return create_contour_limit_scene(argv[2]);
+    if (argc == 3 && BU_STR_EQUAL(argv[1], "create-lit-glass"))
+	return create_lit_glass_scene(argv[2]);
     if (argc == 3 && BU_STR_EQUAL(argv[1], "create-nested"))
 	return create_nested_scene(argv[2]);
     if (argc == 3 && BU_STR_EQUAL(argv[1], "create"))
