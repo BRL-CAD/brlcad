@@ -10,6 +10,8 @@ set(
   brlcadplugin.cpp
   tile.h
   tile.cpp
+  aov_output.h
+  aov_output.cpp
   render_control.h
   render_control.cpp
   render_control_test.cpp
@@ -56,6 +58,7 @@ set(
   brlcadplugin.cpp
   tile.cpp
   render_control.cpp
+  aov_output.cpp
 )
 
 brlcad_addexec(art "${ART_SRCS}" "${ART_LIBS}" FOLDER Rt)

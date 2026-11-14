@@ -464,6 +464,74 @@ passes, clipped batches, frame changes, and native logging.
 `regress-art-bounces` checks glossy reflection and two-interface ideal
 glass on CSG and BOT geometry, including inherited and unlimited limits.
 
+== Auxiliary image output
+
+Auxiliary output variables (AOVs) expose geometry and lighting separately
+from the beauty image.  They are disabled by default.  Select a
+comma-separated list with `aovs`, or use `aovs=none` to disable them:
+
+----
+art -c "set samples=64 aovs=depth,normal,position,uv,diffuse,glossy,emission" \
+    -o view.exr model.g all.g
+----
+
+This writes the beauty to `view.exr` and selected passes to files such as
+`view.depth.exr` and `view.diffuse.exr`.  A PNG or BRL-CAD image output uses
+the same EXR sidecars: `-o view.png` still writes `view.depth.exr`.
+Saved-view frame numbers remain before the pass name, for example
+`view.7.normal.exr`.  Names are case sensitive, duplicates and unknown
+names are errors, and the entire `set` assignment is validated before
+changing state.  Selection persists through saved-view frames and `clean`.
+Skipped frames produce no images.
+
+[cols="1,3",options="header"]
+|===
+|AOV |Data
+|`depth` |Full-float `Z` and `A`: negative camera-space Z in database base
+units (millimeters), with A=1 for a surface hit.  Misses have zero Z and A.
+|`position` |Full-float world-space XYZ in RGB channels, in millimeters.
+Negative coordinates and values above one remain intact.  Misses are zero.
+|`normal` |World-space shading normal encoded as `0.5 * N + 0.5` in
+full-float RGB.  Decode with `N = 2 * RGB - 1`; a miss is `(0.5,0.5,0.5)`.
+|`uv` |Full-float U and V in R and G; B is zero.  Values are not clamped.
+|`albedo` |Linear RGBA surface reflectance supplied by the shading system.
+|`diffuse`, `glossy` |Linear RGBA lighting contributions, including their
+respective direct and indirect components.  Glossy includes ideal
+specular reflection and refraction.
+|`direct_diffuse`, `indirect_diffuse` |Separate diffuse lighting components.
+|`direct_glossy`, `indirect_glossy` |Separate glossy lighting components.
+|`emission` |Linear RGBA emission directly visible to the camera.  Emission
+reached through reflection or refraction contributes to indirect lighting.
+|===
+
+Geometry passes are unfiltered diagnostic samples.  They retain the last
+sample written at each pixel rather than a filtered mean; through alpha
+transparency, a later primary-ray surface can replace an earlier one.
+They describe the primary visibility path, not the secondary surface seen
+inside a mirror or through refractive glass.  Camera-space depth is stable
+when orthographic tracing moves ray origins according to scene bounds;
+for perspective views it is axial Z, not Euclidean range.
+
+Color passes use the beauty image's reconstruction filter, preserve HDR
+radiance, and are stored as half-float linear EXR.  Geometry passes retain
+full float precision.  These are separate EXR files; libicv's RGB image
+interface does not represent their arbitrary channel layouts.  Art does
+not apply display conversion to AOV data.  Use the appropriate channels
+explicitly when inspecting EXR; for example, a reader may present depth's
+A channel before Z.
+
+Cancelled renders and shader errors leave existing beauty and sidecars
+unchanged.  AOVs are saved before the beauty; a sidecar write failure
+returns failure and leaves the existing beauty unchanged.  Writing the
+set of files is not atomic: earlier sidecars can exist if a later write
+fails.  Successful completion is reported only after all selected output
+has been saved.
+
+`regress-art-aovs` checks analytic depth, position, normals, and UVs on CSG
+and BOTs; HDR emission; diffuse albedo; direct/indirect reconstruction;
+lighting reached through two refractive interfaces; frame selection;
+format-independent sidecar naming; cancellation; and output failures.
+
 == Progress and cancellation
 
 Art reports the frame number when rendering starts, completed tiles during

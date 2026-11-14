@@ -117,6 +117,7 @@
 
 
 // appleseed.renderer headers. Only include header files from renderer/api/.
+#include "renderer/api/aov.h"
 #include "renderer/api/camera.h"
 #include "renderer/api/color.h"
 #include "renderer/api/environment.h"
@@ -183,6 +184,7 @@
 #include "dm.h"
 #include "tile.h"
 #include "render_control.h"
+#include "aov_output.h"
 
 
 #define VERBOSE_STATS 0x00000008
@@ -247,6 +249,7 @@ struct ArtRenderSettings {
     void write(std::ostream& output) const;
 };
 ArtRenderSettings render_settings;
+ArtAOVOutput aov_output;
 
 struct ArtRenderIntegerSetting {
     const char *name;
@@ -1258,6 +1261,9 @@ build_project(std::ostream *report)
     //------------------------------------------------------------------------
 
     // Create a frame and bind it to the project.
+    asr::AOVContainer aovs;
+    if (!aov_output.populate(aovs))
+	return asf::auto_release_ptr<asr::Project>();
     bu_vls_sprintf(&dimensions, "%zd %zd", width, height);
     project->set_frame(
 	asr::FrameFactory::create(
@@ -1265,7 +1271,7 @@ build_project(std::ostream *report)
 	    asr::ParamArray()
 	    .insert("camera", "camera")
 	    .insert("tile_size", "32 32")
-	    .insert("resolution", bu_vls_cstr(&dimensions))));
+	    .insert("resolution", bu_vls_cstr(&dimensions)), aovs));
 
     // Bind the scene to the project.
     project->set_scene(scene);
@@ -1513,7 +1519,7 @@ art_render_image(asr::Project& project, const char *filename, ArtTileCallback& c
     }
     if (!callback.flush())
 	return false;
-    const bool saved = art_save_image(project, filename);
+    const bool saved = aov_output.write(*project.get_frame(), filename) && art_save_image(project, filename);
     if (saved)
 	controller.complete();
     // Some framebuffer backends linger until their window is closed.
@@ -1770,6 +1776,7 @@ art_cm_set(const int argc, const char **argv)
 	std::ostringstream controls;
 	controls.imbue(std::locale::classic());
 	render_settings.write(controls);
+	controls << "aovs=" << aov_output.value() << '\n';
 	bu_log("%s", controls.str().c_str());
 	return 0;
     }
@@ -1804,6 +1811,7 @@ art_cm_set(const int argc, const char **argv)
     std::optional<size_t> new_width, new_height;
     ArtEnvironmentControls new_environment = environment_controls;
     ArtRenderSettings new_render_settings = render_settings;
+    ArtAOVOutput new_aov_output = aov_output;
     int new_sample_budget = samples;
     std::set<std::string> compatibility_settings;
     size_t cursor = 0;
@@ -1835,6 +1843,12 @@ art_cm_set(const int argc, const char **argv)
 	    return art_setting_error(name, value, "expected whitespace after closing quote");
 	if (value.empty())
 	    return art_setting_error(name, value, "a value is required");
+	if (name == "aovs") {
+	    std::string reason;
+	    if (!new_aov_output.assign(value, reason))
+		return art_setting_error(name, value, reason.c_str());
+	    continue;
+	}
 	if (name == "sampling") {
 	    if (value == "uniform")
 		new_render_settings.sampling = ArtSamplingMode::Uniform;
@@ -2005,6 +2019,7 @@ art_cm_set(const int argc, const char **argv)
 	height = *new_height;
     environment_controls = new_environment;
     render_settings = new_render_settings;
+    aov_output = std::move(new_aov_output);
     for (const auto& name : compatibility_settings)
 	bu_log("art: warning: unsupported rendering setting '%s'; value stored for command compatibility\n", name.c_str());
     return 0;
