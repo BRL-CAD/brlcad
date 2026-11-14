@@ -464,6 +464,38 @@ passes, clipped batches, frame changes, and native logging.
 `regress-art-bounces` checks glossy reflection and two-interface ideal
 glass on CSG and BOT geometry, including inherited and unlimited limits.
 
+== Display exposure
+
+`display_exposure` adjusts PNG output, images converted through libicv,
+and framebuffer display in photographic stops.  The default is zero;
+positive stops brighten the display and negative stops darken it.  One
+stop doubles linear RGB before sRGB conversion, while minus one stop
+halves it.  For example:
+
+----
+art -c "set samples=64 display_exposure=1.5" -o view.png model.g all.g
+----
+
+The transform leaves alpha unchanged and clips display RGB to its valid
+range after exposure.  Finite fractional stop values are accepted;
+nonfinite values and incomplete numbers are errors.  Extreme finite
+values saturate safely, including channels that are exactly zero.
+`display_exposure=0` restores the original display pipeline.
+
+EXR beauty images and diagnostic passes retain their original linear HDR
+radiance and geometric data.  An EXR render with `-F` therefore provides
+an exposed framebuffer preview alongside the original HDR file.
+Exposure does not change lighting, materials, sampling, or convergence.
+For saved-view streams, it persists until changed, including across
+`clean`; skipped frames still update the setting.  `set` without
+assignments reports the current value.
+
+`regress-art-exposure` compares displayed images with independently scaled
+emissive materials, checks fractional and extreme stops, framebuffer
+agreement and alpha preservation, and verifies unchanged EXR and AOV data.
+It also covers converted formats, saved-view frames, skipped settings,
+invalid values, and shader-error output preservation.
+
 == Auxiliary image output
 
 Auxiliary output variables (AOVs) expose geometry and lighting separately

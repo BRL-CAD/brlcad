@@ -112,7 +112,12 @@ ArtTileCallback::on_tile_end(const renderer::Frame* frame, const size_t tile_x, 
 
     // Match the half-float and sRGB path used by Frame::write_main_image.
     // The PNG writer can differ by a byte through dithering and rounding.
-    foundation::Tile display(tile, foundation::PixelFormatHalf);
+    foundation::Tile exposed(tile, foundation::PixelFormatFloat);
+    if (!m_exposure.apply(exposed)) {
+	m_failed = true;
+	return;
+    }
+    foundation::Tile display(exposed, foundation::PixelFormatHalf);
     foundation::convert_linear_rgb_to_srgb(display);
     const size_t rgb_channels[] = {0, 1, 2, foundation::Pixel::SkipChannel};
     const foundation::Tile rgb(display, foundation::PixelFormatUInt8, rgb_channels);

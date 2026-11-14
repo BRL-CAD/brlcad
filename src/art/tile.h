@@ -26,6 +26,8 @@
 #include <atomic>
 #include <cstdint>
 
+#include "display_exposure.h"
+
 #include "renderer/kernel/rendering/itilecallback.h"
 
 struct fb;
@@ -35,7 +37,8 @@ struct fb;
 class ArtTileCallback final : public renderer::ITileCallback
 {
 public:
-    explicit ArtTileCallback(struct fb *framebuffer) : m_framebuffer(framebuffer) {}
+    explicit ArtTileCallback(struct fb *framebuffer, double exposure = 0.0)
+	: m_framebuffer(framebuffer), m_exposure(exposure) {}
     ~ArtTileCallback() override;
     ArtTileCallback(const ArtTileCallback&) = delete;
     ArtTileCallback& operator=(const ArtTileCallback&) = delete;
@@ -57,6 +60,7 @@ public:
 
 private:
     struct fb *m_framebuffer;
+    const ArtDisplayExposure m_exposure;
     std::atomic<bool> m_failed{false};
     size_t m_completed_tiles = 0;
     size_t m_total_tiles = 0;

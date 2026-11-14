@@ -185,6 +185,7 @@
 #include "tile.h"
 #include "render_control.h"
 #include "aov_output.h"
+#include "display_exposure.h"
 
 
 #define VERBOSE_STATS 0x00000008
@@ -250,6 +251,7 @@ struct ArtRenderSettings {
 };
 ArtRenderSettings render_settings;
 ArtAOVOutput aov_output;
+double display_exposure = 0.0;
 
 struct ArtRenderIntegerSetting {
     const char *name;
@@ -1417,7 +1419,13 @@ art_save_image(asr::Project& project, const char* filename)
 {
     const char* dot = strrchr(filename, '.');
 
-    if (dot && (BU_STR_EQUIV(dot, ".png") || BU_STR_EQUIV(dot, ".exr")))
+    if (dot && BU_STR_EQUIV(dot, ".exr"))
+	return project.get_frame()->write_main_image(filename);
+
+    // Diagnostic sidecars have already been saved from the linear frame.
+    if (!ArtDisplayExposure(display_exposure).apply(project.get_frame()->image()))
+	return false;
+    if (dot && BU_STR_EQUIV(dot, ".png"))
 	return project.get_frame()->write_main_image(filename);
 
     struct TemporaryRender {
@@ -1559,7 +1567,7 @@ art_process_scene(bool display_framebuffer, const char *filename)
     struct fb *fbp = display_framebuffer ? fb_setup() : FB_NULL;
     if (display_framebuffer && !fbp)
 	return false;
-    ArtTileCallback callback(fbp);
+    ArtTileCallback callback(fbp, display_exposure);
     return art_render_image(project.ref(), filename, callback);
 }
 
@@ -1776,7 +1784,8 @@ art_cm_set(const int argc, const char **argv)
 	std::ostringstream controls;
 	controls.imbue(std::locale::classic());
 	render_settings.write(controls);
-	controls << "aovs=" << aov_output.value() << '\n';
+	controls << "aovs=" << aov_output.value() << '\n'
+	    << "display_exposure=" << display_exposure << '\n';
 	bu_log("%s", controls.str().c_str());
 	return 0;
     }
@@ -1812,6 +1821,7 @@ art_cm_set(const int argc, const char **argv)
     ArtEnvironmentControls new_environment = environment_controls;
     ArtRenderSettings new_render_settings = render_settings;
     ArtAOVOutput new_aov_output = aov_output;
+    double new_display_exposure = display_exposure;
     int new_sample_budget = samples;
     std::set<std::string> compatibility_settings;
     size_t cursor = 0;
@@ -1843,6 +1853,11 @@ art_cm_set(const int argc, const char **argv)
 	    return art_setting_error(name, value, "expected whitespace after closing quote");
 	if (value.empty())
 	    return art_setting_error(name, value, "a value is required");
+	if (name == "display_exposure") {
+	    if (!art_setting_real(value, new_display_exposure))
+		return art_setting_error(name, value, "expected a finite exposure in stops");
+	    continue;
+	}
 	if (name == "aovs") {
 	    std::string reason;
 	    if (!new_aov_output.assign(value, reason))
@@ -2020,6 +2035,7 @@ art_cm_set(const int argc, const char **argv)
     environment_controls = new_environment;
     render_settings = new_render_settings;
     aov_output = std::move(new_aov_output);
+    display_exposure = new_display_exposure;
     for (const auto& name : compatibility_settings)
 	bu_log("art: warning: unsupported rendering setting '%s'; value stored for command compatibility\n", name.c_str());
     return 0;

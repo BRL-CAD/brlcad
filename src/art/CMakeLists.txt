@@ -10,6 +10,8 @@ set(
   brlcadplugin.cpp
   tile.h
   tile.cpp
+  display_exposure.h
+  display_exposure.cpp
   aov_output.h
   aov_output.cpp
   render_control.h
@@ -59,6 +61,7 @@ set(
   tile.cpp
   render_control.cpp
   aov_output.cpp
+  display_exposure.cpp
 )
 
 brlcad_addexec(art "${ART_SRCS}" "${ART_LIBS}" FOLDER Rt)
@@ -71,7 +74,7 @@ target_include_directories(art BEFORE PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 target_include_directories(art SYSTEM PRIVATE ${ART_INCLUDE_DIRS})
 
 if(BUILD_TESTING)
-  brlcad_addexec(art_render_control_test "render_control_test.cpp;render_control.cpp;tile.cpp" "${ART_LIBS}" TEST)
+  brlcad_addexec(art_render_control_test "render_control_test.cpp;render_control.cpp;tile.cpp;display_exposure.cpp" "${ART_LIBS}" TEST)
   set_target_properties(art_render_control_test PROPERTIES UNITY_BUILD OFF)
   target_include_directories(art_render_control_test SYSTEM PRIVATE ${ART_INCLUDE_DIRS})
   brlcad_addexec(art_intersection_test "intersections_test.cpp;brlcadplugin.cpp" "${ART_LIBS};libwdb" TEST)
