@@ -135,6 +135,7 @@
 // appleseed.foundation headers.
 #include "foundation/core/appleseed.h"
 #include "foundation/image/canvasproperties.h"
+#include "foundation/image/colorspace.h"
 #include "foundation/math/matrix.h"
 #include "foundation/math/scalar.h"
 #include "foundation/math/transform.h"
@@ -751,6 +752,39 @@ art_region_color(const struct db_tree_state *state, float rgb[ELEMENTS_PER_VECT]
 }
 
 
+/* Snapshot shader data before worker threads begin using the region. */
+static bool
+art_region_attributes(asr::Object &object, const struct db_tree_state *state,
+    const struct db_full_path *path, const float srgb[ELEMENTS_PER_VECT],
+    const std::string &assigned_material)
+{
+    auto &attributes = object.get_attributes();
+    const struct directory *region = DB_FULL_PATH_CUR_DIR(path);
+    attributes.attribute("brlcad:region_name", region->d_namep);
+    attributes.attribute("brlcad:region_path", object.get_name());
+    attributes.attribute("brlcad:region_id", state->ts_regionid);
+    attributes.attribute("brlcad:material_id", state->ts_gmater);
+    attributes.attribute("brlcad:los", state->ts_los);
+    attributes.attribute("brlcad:material_name", assigned_material);
+    const asf::Color3f linear = asf::srgb_to_linear_rgb(asf::Color3f(V3ARGS(srgb)));
+    attributes.attribute("brlcad:region_color", OIIO::TypeColor, &linear[0]);
+
+    struct bu_attribute_value_set authored = BU_AVS_INIT_ZERO;
+    std::unique_ptr<struct bu_attribute_value_set, decltype(&bu_avs_free)>
+	attribute_guard(&authored, &bu_avs_free);
+    if (db5_get_attributes(state->ts_dbip, &authored, region) < 0) {
+	bu_log("art: cannot read shader attributes on '%s'\n", object.get_name());
+	return false;
+    }
+    const struct bu_attribute_value_pair *attribute;
+    for (BU_AVS_FOR(attribute, &authored)) {
+	const std::string name = std::string("brlcad:attribute:") + attribute->name;
+	attributes.attribute(name, attribute->value);
+    }
+    return true;
+}
+
+
 struct ArtSceneBuilder {
     asr::Scene &scene;
     const asf::SearchPaths &search_paths;
@@ -833,8 +867,9 @@ register_region_impl(struct db_tree_state* tsp,
     const std::string material_name = std::string(name) + "_mat";
 
     int medium_priority = 0;
+    std::string assigned_material;
     if (!art_add_material(assembly.ref(), material_name.c_str(), region_rgb,
-	    tsp->ts_dbip, pathp, combp, builder.search_paths, medium_priority, builder.report)) {
+	    tsp->ts_dbip, pathp, combp, builder.search_paths, medium_priority, assigned_material, builder.report)) {
 	builder.valid = false;
 	return 0;
     }
@@ -847,6 +882,11 @@ register_region_impl(struct db_tree_state* tsp,
 	.insert("object_path", name);
     asf::auto_release_ptr<asr::Object> brlcad_object(
 	new BrlcadObject(name, geometry_parameters, tsp->ts_dbip));
+
+    if (!art_region_attributes(*brlcad_object, tsp, pathp, region_rgb, assigned_material)) {
+	builder.valid = false;
+	return 0;
+    }
 
     // insert object into object array in assembly
     assembly->objects().insert(brlcad_object);

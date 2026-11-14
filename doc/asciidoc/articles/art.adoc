@@ -1380,6 +1380,61 @@ geometry.  Query `shade` execution, named `traceset` filtering, hit object
 names, arbitrary attributes, and shader outputs are not implemented.
 These remain separate renderer-service integration work.
 
+== Region data in OSL shaders
+
+`getattribute` exposes the current region's data without database access
+from shader workers.  These values are uniform over the region instance,
+have zero derivatives, and retain their exact types:
+
+[cols="2,1,4",options="header"]
+|===
+|Name |OSL type |Meaning
+|`brlcad:region_name` |`string` |Leaf region name.
+|`brlcad:region_path` |`string` |Full instance path, including repeated-arc indices.
+|`brlcad:region_id` |`int` |Resolved region ID.
+|`brlcad:material_id` |`int` |Legacy numeric material code.
+|`brlcad:los` |`int` |Region line-of-sight estimate.
+|`brlcad:material_name` |`string` |Resolved named material assignment, or an empty string for the default material.
+|`brlcad:region_color` |`color` |Resolved region color converted from sRGB to linear RGB.
+|`brlcad:attribute:`_name_ |`string` |Exact authored value of an attribute on the leaf region.
+|===
+
+The typed fields use the same path, color-table fallback, and material
+inheritance rules as rendering.  `brlcad:region_color` describes the region
+color independently of explicit shader color parameters.  Raw attributes
+are not automatically inherited from ancestor combinations or parsed as
+numbers.  A part number such as `00042` remains a string.  Standard region
+attributes are also available under their exact stored names through the
+raw attribute namespace; the typed fields describe resolved values.
+
+For example, a surface shader can use the resolved region color directly:
+
+[source,osl]
+----
+surface region_color()
+{
+    color tint = color(0.5);
+    getattribute("brlcad:region_color", tint);
+    Ci = tint * diffuse(N);
+}
+----
+
+Missing names and mismatched types return zero and leave the destination
+unchanged.  Current-object lookup is supported; named-object lookup is
+not.  Built-in `object:object_name` identifies the same full region path,
+and `camera:projection` reports the active projection.  String callbacks
+use the current OSL runtime representation rather than the older pointer
+representation.
+
+`regress-art-attributes` checks CSG, BOT, Boolean cuts, inherited and table
+colors, explicit colors, material inheritance, repeated instances and
+arcs, perspective and orthographic cameras, and one and two workers.
+A queried-color emission shader must match an ordinary emission reference,
+including a receiver reached through two transparent boundaries;
+wrong region IDs and missing raw attributes must fail that comparison.
+Native tests additionally cover typed scalar and array data, string
+representation, derivatives, and unchanged destinations.
+
 == Selecting an OSL material
 
 The existing `material` command can select a compiled OSL shader for a

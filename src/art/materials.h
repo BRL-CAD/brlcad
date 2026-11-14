@@ -21,6 +21,7 @@
 #define ART_MATERIALS_H
 
 #include <iosfwd>
+#include <string>
 
 namespace renderer { class Assembly; }
 namespace foundation { class SearchPaths; }
@@ -31,12 +32,12 @@ struct rt_comb_internal;
 /** Create a region material from its resolved sRGB color and instance assignment.
  * If report is supplied, describe the resolved assignment and validated shader
  * graph instead of adding a renderer material.  No shader execution is performed.
- * Set medium_priority from validated material metadata for the region instance.
+ * Set medium_priority and assigned_material from the resolved assignment.
  * Return false for an invalid explicit assignment or unusable shader.
  */
 bool art_add_material(renderer::Assembly &assembly, const char *name,
     const float srgb[3], struct db_i *db, const struct db_full_path *path,
     const struct rt_comb_internal *comb, const foundation::SearchPaths &search_paths,
-    int& medium_priority, std::ostream *report);
+    int& medium_priority, std::string &assigned_material, std::ostream *report);
 
 #endif

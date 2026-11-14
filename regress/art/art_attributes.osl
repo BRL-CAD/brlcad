@@ -1,0 +1,71 @@
+/*              A R T _ A T T R I B U T E S . O S L
+ * BRL-CAD
+ *
+ * Copyright (c) 2026 United States Government as represented by
+ * the U.S. Army Research Laboratory.
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public License
+ * version 2.1 as published by the Free Software Foundation.
+ *
+ * This library is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this file; see the file named COPYING for more
+ * information.
+ */
+surface art_attributes(
+    string in_expected_name = "",
+    string in_expected_path = "",
+    string in_expected_other_path = "",
+    int in_split_paths = 0,
+    string in_expected_material = "osl.material",
+    string in_expected_projection = "orthographic",
+    int in_expected_region_id = 1701,
+    int in_expected_material_id = 42,
+    int in_expected_los = 75,
+    int in_min_depth = 0)
+{
+    string region_name = "";
+    string region_path = "";
+    string material_name = "";
+    string object_name = "";
+    string projection = "";
+    color region_color = color(-1);
+    int region_id = -1;
+    int material_id = -1;
+    int los = -1;
+    int depth = -1;
+    int valid = getattribute("path:ray_depth", depth) && depth >= in_min_depth;
+    valid &= getattribute("brlcad:region_name", region_name)
+	&& region_name == in_expected_name;
+    string expected_path = in_split_paths && P[0] > 0 ?
+	in_expected_other_path : in_expected_path;
+    valid &= getattribute("brlcad:region_path", region_path)
+	&& region_path == expected_path;
+    valid &= getattribute("object:object_name", object_name) && object_name == region_path;
+    valid &= getattribute("camera:projection", projection) && projection == in_expected_projection;
+    valid &= getattribute("brlcad:material_name", material_name)
+	&& material_name == in_expected_material;
+    valid &= getattribute("brlcad:region_id", region_id) && region_id == in_expected_region_id;
+    valid &= getattribute("brlcad:material_id", material_id) && material_id == in_expected_material_id;
+    valid &= getattribute("brlcad:los", los) && los == in_expected_los;
+    valid &= getattribute("brlcad:region_color", region_color);
+    valid &= length(Dx(region_color)) == 0 && length(Dy(region_color)) == 0;
+
+    string label = "";
+    string part_number = "";
+    valid &= getattribute("brlcad:attribute:label", label) && label == "painted panel";
+    valid &= getattribute("brlcad:attribute:part_number", part_number) && part_number == "00042";
+    string unchanged = "unchanged";
+    valid &= !getattribute("brlcad:attribute:missing", unchanged) && unchanged == "unchanged";
+    int numeric = -1;
+    valid &= !getattribute("brlcad:attribute:part_number", numeric) && numeric == -1;
+    float scalar = -1;
+    valid &= !getattribute("brlcad:region_id", scalar) && scalar == -1;
+
+    Ci = (valid ? region_color : color(1, 0, 1)) * emission();
+}
