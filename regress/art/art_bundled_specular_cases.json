@@ -1,0 +1,201 @@
+[
+  {
+    "name": "standard-glossy",
+    "shader": "as_standard_surface",
+    "normal": "in_bump_normal_substrate",
+    "output": "out_outColor",
+    "parameters": {
+      "in_diffuse_weight": "float 0",
+      "in_specular_roughness": "float 0",
+      "in_ior": "float 1.5"
+    },
+    "reflection": 1,
+    "unweighted": false,
+    "canonical": "",
+    "canonical_parameters": {}
+  },
+  {
+    "name": "standard-metal",
+    "shader": "as_standard_surface",
+    "normal": "in_bump_normal_substrate",
+    "output": "out_outColor",
+    "unweighted": true,
+    "parameters": {
+      "in_diffuse_weight": "float 0",
+      "in_specular_roughness": "float 0",
+      "in_fresnel_type": "int 1",
+      "in_face_tint": "color 1 1 1",
+      "in_edge_tint": "color 1 1 1"
+    },
+    "reflection": 1,
+    "canonical": "",
+    "canonical_parameters": {}
+  },
+  {
+    "name": "sbs-metal",
+    "shader": "as_sbs_pbrmaterial",
+    "normal": "in_normal",
+    "output": "out_outColor",
+    "canonical": "as_metal",
+    "parameters": {
+      "in_baseColor": "color 1 1 1",
+      "in_metallic": "float 1",
+      "in_roughness": "float 0"
+    },
+    "canonical_parameters": {
+      "in_face_reflectance": "color 1 1 1",
+      "in_edge_reflectance": "color 1 1 1",
+      "in_edge_reflectance_weight": "float 0",
+      "in_roughness": "float 0.01",
+      "in_energy_compensation": "float 0"
+    },
+    "reflection": 1,
+    "unweighted": false,
+    "canonical_output": "out_outColor"
+  },
+  {
+    "name": "sbs-glossy",
+    "shader": "as_sbs_pbrmaterial",
+    "normal": "in_normal",
+    "output": "out_outColor",
+    "canonical": "art_specular_footprint",
+    "parameters": {
+      "in_baseColor": "color 0 0 0",
+      "in_specularLevel": "float 0.5",
+      "in_roughness": "float 0"
+    },
+    "canonical_parameters": {
+      "in_glossy": "int 1",
+      "in_ior": "float 1.5",
+      "in_roughness": "float 0.01"
+    },
+    "reflection": 1,
+    "unweighted": false,
+    "canonical_output": ""
+  },
+  {
+    "name": "max-metal",
+    "shader": "as_max_metal_material",
+    "normal": "Normal",
+    "output": "ClosureOut",
+    "unweighted": true,
+    "parameters": {
+      "Reflectance": "float 1",
+      "NormalReflectance": "color 1 1 1",
+      "EdgeTint": "color 1 1 1",
+      "Roughness": "float 0"
+    },
+    "reflection": 1,
+    "canonical": "",
+    "canonical_parameters": {}
+  },
+  {
+    "name": "max-plastic",
+    "shader": "as_max_plastic_material",
+    "normal": "Normal",
+    "output": "ClosureOut",
+    "parameters": {
+      "SpecularColor": "color 1 1 1",
+      "SpecularWeight": "float 1",
+      "DiffuseWeight": "float 0",
+      "Roughness": "float 0",
+      "IOR": "float 1.5"
+    },
+    "reflection": 1,
+    "unweighted": false,
+    "canonical": "",
+    "canonical_parameters": {}
+  },
+  {
+    "name": "max-sss-specular",
+    "shader": "as_max_sss_material",
+    "normal": "Normal",
+    "output": "ClosureOut",
+    "parameters": {
+      "SSSReflectance": "float 0",
+      "SpecularReflectance": "float 1",
+      "SpecularColor": "color 1 1 1",
+      "Roughness": "float 0",
+      "Ior": "float 1.5"
+    },
+    "reflection": 1,
+    "unweighted": false,
+    "canonical": "",
+    "canonical_parameters": {}
+  },
+  {
+    "name": "blackbody-specular",
+    "shader": "as_blackbody",
+    "normal": "in_bump_normal",
+    "output": "out_color",
+    "parameters": {
+      "in_color": "color 0 0 0",
+      "in_incandescence_amount": "float 1",
+      "in_specular_amount": "float 1",
+      "in_specular_roughness": "float 0",
+      "in_ior": "float 1.5"
+    },
+    "reflection": 1,
+    "unweighted": false,
+    "canonical": "",
+    "canonical_parameters": {}
+  },
+  {
+    "name": "standard-transmission",
+    "shader": "as_standard_surface",
+    "normal": "in_bump_normal_substrate",
+    "output": "out_outColor",
+    "parameters": {
+      "in_diffuse_weight": "float 0",
+      "in_specular_color": "color 0 0 0",
+      "in_specular_roughness": "float 0",
+      "in_ior": "float 1.5",
+      "in_refraction_amount": "float 1"
+    },
+    "reflection": 0,
+    "unweighted": false,
+    "canonical": "",
+    "canonical_output": "",
+    "canonical_parameters": {}
+  },
+  {
+    "name": "max-transmission",
+    "shader": "as_max_glass_material",
+    "normal": "Normal",
+    "output": "ClosureOut",
+    "parameters": {
+      "Roughness": "float 0",
+      "Ior": "float 1.5",
+      "ReflectionTint": "color 0 0 0",
+      "RefractionTint": "color 1 1 1"
+    },
+    "reflection": 0,
+    "unweighted": false,
+    "canonical": "",
+    "canonical_output": "",
+    "canonical_parameters": {}
+  },
+  {
+    "name": "sbs-transmission",
+    "shader": "as_sbs_pbrmaterial",
+    "normal": "in_normal",
+    "output": "out_outColor",
+    "parameters": {
+      "in_specularLevel": "float 0",
+      "in_baseColor": "color 1 1 1",
+      "in_refraction": "float 1",
+      "in_refractionIOR": "float 1.5"
+    },
+    "reflection": 0,
+    "unweighted": false,
+    "canonical": "as_glass",
+    "canonical_output": "out_outColor",
+    "canonical_parameters": {
+      "in_roughness": "float 0.01",
+      "in_ior": "float 1.5",
+      "in_reflection_tint": "color 0 0 0",
+      "in_refraction_tint": "color 1 1 1",
+      "in_transmittance_amount": "float 1"
+    }
+  }
+]

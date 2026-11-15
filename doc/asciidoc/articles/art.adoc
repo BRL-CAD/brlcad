@@ -1058,6 +1058,33 @@ ray derivatives with finite differences for both unit and scaled raw
 normal fields and both transport directions. Microfacet normal-mapping
 wrapper closures have a distinct frame selection and remain unqualified.
 
+`regress-art-bundled-specular` checks the derivative wiring in Standard
+Surface, Substance-style PBR, Max metal/plastic/glass, the isolated specular
+lobe of Max SSS, and Blackbody's specular lobe. Its 352 comparisons cover
+planar CSG and solid BOTs with original, direct and world normal-map inputs,
+plus original normals on spheres and ellipsoids. Both projections include
+footprint and hit-position controls. The 256 smooth comparisons use the
+independent analytic reference and its existing first-order error budget.
+The 96 Substance-style comparisons use matched canonical shader graphs at
+that material's minimum roughness of 0.01, allowing binary16 rounding;
+they check wrapper wiring rather than independently establish rough-path
+footprint growth. Legacy Max vector inputs use an explicit normal-to-vector
+adapter to preserve strict graph typing.
+
+All remaining bundled calls to the canonical glass, glossy, metal and
+plastic closures supply their selected normal derivatives. Updated default
+normal inputs use `as_shading_normal()`. The Subsurface, Maya PhongE, and
+Toon shader changes are compiler checked; these checks do not qualify
+their complete transport behavior. Toon is already included in the
+installed catalogue.
+
+Standard Surface's legacy coat still calls the standard OSL `microfacet`
+closure, which this renderer does not register. Enabling that coat reports
+an unsupported-closure error and saves no image. Use the separately
+qualified `as_glossy_layer` network for a coat while that legacy path is
+modernized. Maya refraction and complete subsurface transport also need
+separate qualification.
+
 These checks qualify smooth ray footprints for the tested normal fields;
 they do not qualify all filtered secondary textures. A separate
 high-frequency image study reproduces a discontinuity in OIIO's

@@ -19,8 +19,11 @@ function(set_footprint_reference name value)
   run("${VEXEC}" set-material "${REFERENCE_DB}" "OSL.param.in_${name}" "${value}")
 endfunction()
 function(set_footprint_mapping mapping center reflection curved normal_input)
-  foreach(name IN ITEMS OSL.connect.material.in_bump_normal OSL.param.in_bump_normal
-      OSL.connect.material.in_normal OSL.param.in_normal
+  set(update_reference TRUE)
+  if(ARGC GREATER 5)
+    set(update_reference "${ARGV5}")
+  endif()
+  foreach(name IN ITEMS "OSL.connect.material.${normal_input}" "OSL.param.${normal_input}"
       OSL.connect.bump.in_normal_map OSL.node.bump OSL.node.field OSL.param.field.in_center
       OSL.param.field.in_base OSL.param.bump.in_mode OSL.param.bump.in_normal_map_mode
       OSL.param.bump.in_normal_map_coordsys)
@@ -56,8 +59,10 @@ function(set_footprint_mapping mapping center reflection curved normal_input)
     set(slope 0)
     run("${VEXEC}" set-material "${ACTUAL_DB}" "OSL.param.${normal_input}" "normal 0.3 0 1")
   endif()
-  set_footprint_reference(mapped "int ${mapped}")
-  set_footprint_reference(slope "float ${slope}")
+  if(update_reference)
+    set_footprint_reference(mapped "int ${mapped}")
+    set_footprint_reference(slope "float ${slope}")
+  endif()
 endfunction()
 
 function(compare_footprint_paths label size projection eye_x shape target mode relative_bound)
