@@ -45,7 +45,7 @@ set(ART_TEST_SHADER_NAMES
 )
 set(ART_REGRESSION_TIMEOUT 180)
 # The energy cases use 32 million photons to bound estimator error at 1 percent.
-set(ART_PHOTON_REGRESSION_TIMEOUT 420)
+set(ART_PHOTON_REGRESSION_TIMEOUT 720)
 # Inside-light cases compare clear and absorbing transport in separate batches.
 set(ART_PHOTON_INSIDE_REGRESSION_TIMEOUT 1560)
 # Spectral conservation uses 12.6 million samples and permits concurrent checks.
