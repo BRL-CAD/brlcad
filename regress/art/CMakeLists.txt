@@ -227,7 +227,7 @@ cmakefiles(CMakeLists.txt art_test_setup.cmake art_installed_tests.cmake
   regress-art-photon-controls.cmake.in
   regress-art-photon-cancel.cmake.in
   art_scene.cpp art_test_mesh.h art_glass_reference.h art_test_commands.cmake
-  art_footprint_test_commands.cmake art_bundled_specular_cases.json
+  art_footprint_test_commands.cmake art_rough_test_commands.cmake art_bundled_specular_cases.json
   regress-art.cmake.in regress-art-bump.cmake.in regress-art-normal.cmake.in
   regress-art-trace.cmake.in
   regress-art-attributes.cmake.in
