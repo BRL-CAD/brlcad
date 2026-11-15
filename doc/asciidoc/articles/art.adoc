@@ -1584,9 +1584,19 @@ reevaluates the shader with `I` pointing into the emitting surface from
 the sampled outgoing direction and with `raytype("light")` enabled.  A
 zero emission weight along the surface normal therefore does not suppress
 light emitted at oblique angles.  The renderer sums the emission closures
-at that direction.  Visible evaluation retains its original ray type,
-path metadata, and texture footprint; a new photon launch begins at path
-length and depth zero, without a camera footprint.
+at that direction.  Visible evaluation retains its path metadata and
+texture footprint; a new photon launch begins at path length and depth
+zero, without a camera footprint.  Appleseed uses `raytype("light")` to
+select emission closures, including evaluation of a visible emitter.
+That tag identifies emission evaluation, rather than the origin of the
+physical path.
+
+Before evaluating a launch shader, the renderer finds the closed optical
+media surrounding its sampled outgoing ray.  The shader's
+`getattribute("path:ray_ior", value)` query and subsequent photon transport
+use the same medium stack and sampled IOR.  This matters for emitters
+inside glass, and for materials whose glass closures offer several IORs.
+The launched ray retains the time used to sample the emitter geometry.
 
 `regress-art-emission` compares received linear radiance with independent
 analytic integrals for a sphere, a hollow sphere, a recessed box, and a
@@ -1608,6 +1618,15 @@ over a wider receiver footprint.  Each uses 16 million photons, with a
 three-percent bound for photon noise and finite-radius estimation.  This
 qualifies directional surface emission through an optically neutral cover;
 it does not qualify general refractive area-light focusing.
+
+`regress-art-emission-medium` compares an IOR-querying shader with a
+fixed-color control on both CSG and BOT emitters.  Cameras inside and
+outside a glass host and photons launched inside that host must produce
+matching images with positive radiance.  A separate neutral cover checks
+photon launches in vacuum.  These are shader-context diagnostics; they do
+not measure refractive area-light energy or general caustic focusing.
+Native renderer tests also check mixed glass closures, launch time, path
+metadata, geometry, and removal of the camera footprint.
 
 The emitter contract supports static geometry.  Qualification of moving
 emitters, participating media, and general area-lit caustic focusing
