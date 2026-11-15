@@ -90,15 +90,21 @@ foreach(half_width RANGE 1 9)
   list(APPEND members u "stack${half_width}.r")
 endforeach()
 run("${VEXEC}" comb "${ACTUAL_DB}" stack.g ${members})
-set(image "${WORK}/overflow.exr")
-file(WRITE "${image}" "preserve existing output")
-run_command("${CMAKE_CURRENT_BINARY_DIR}" TRUE "${EXEC}" ${BASE_ARGS} -w 1 -n 1
-  -c "eye_pt 0 0 30" -c "set ${PHOTON_CONTROLS}"
-  -o "${image}" "${ACTUAL_DB}" stack.g key_light.r)
-if(NOT command_output MATCHES "worker thread [0-9]+: job was terminated [(]too many initial optical media[)]")
-  message(FATAL_ERROR "Initial photon media overflow did not report a worker error: ${command_output}")
-endif()
-file(READ "${image}" retained)
-if(NOT retained STREQUAL "preserve existing output")
-  message(FATAL_ERROR "A photon worker failure replaced existing output")
-endif()
+# Vary the number of worker threads and passes: a worker failure must
+# cancel later scheduling even when the first failed job exhausts the pool.
+foreach(workers IN ITEMS 1 2 4)
+  foreach(passes IN ITEMS 2 5)
+    set(image "${WORK}/overflow-${workers}-${passes}.exr")
+    file(WRITE "${image}" "preserve existing output")
+    run_command("${CMAKE_CURRENT_BINARY_DIR}" TRUE "${EXEC}" ${BASE_ARGS} -P ${workers} -w 1 -n 1
+      -c "eye_pt 0 0 30" -c "set ${PHOTON_CONTROLS} passes=${passes}"
+      -o "${image}" "${ACTUAL_DB}" stack.g key_light.r)
+    if(NOT command_output MATCHES "worker thread [0-9]+: job was terminated [(]too many initial optical media[)]")
+      message(FATAL_ERROR "Initial photon media overflow did not report a worker error: ${command_output}")
+    endif()
+    file(READ "${image}" retained)
+    if(NOT retained STREQUAL "preserve existing output")
+      message(FATAL_ERROR "A photon worker failure replaced existing output")
+    endif()
+  endforeach()
+endforeach()
