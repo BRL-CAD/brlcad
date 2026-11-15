@@ -50,6 +50,7 @@ set(
   shoot.h
   soltab.h
   space_partition.h
+  surface.h
   tie.h
   timer.h
   tol.h

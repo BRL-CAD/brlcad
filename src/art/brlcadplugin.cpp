@@ -92,6 +92,7 @@
 /* brlcad headers */
 #include "vmath.h"
 #include "raytrace.h"
+#include "rt/surface.h"
 #include "brlcadplugin.h"
 
 namespace asf = foundation;
@@ -145,46 +146,22 @@ brlcad_hit(struct application *ap, struct partition *head, struct seg *UNUSED(se
 	result.distance = hit->hit_dist;
 	if (!result.compute_shading)
 	    return 1;
-	vect_t geometric, shading;
-	struct xray *ray = hit->hit_rayp ? hit->hit_rayp : &ap->a_ray;
-	if (rt_obj_normals(hit, solid, ray, geometric, shading) != 0) {
-	    result.error = "Primitive normal query failed";
+	struct rt_surface_attributes surface;
+	if (rt_obj_surface_attributes(&surface, ap, solid, hit, flip) != 0) {
+	    result.error = "Primitive surface query failed";
 	    return 1;
 	}
-	// Legacy UV callbacks consume a computed point and primitive shading normal.
-	struct hit shading_hit = *hit;
-	VJOIN1(shading_hit.hit_point, ray->r_pt, hit->hit_dist, ray->r_dir);
-	VMOVE(shading_hit.hit_normal, shading);
-	if (flip) {
-	    VREVERSE(geometric, geometric);
-	    VREVERSE(shading, shading);
-	}
-	result.geometric_normal = asf::Vector3d(V3ARGS(geometric));
-	result.shading_normal = asf::Vector3d(V3ARGS(shading));
-	if (solid->st_meth->ft_uv) {
-	    struct uvcoord uv = {0, 0, 0, 0};
-	    if (rt_obj_uv(ap, solid, &shading_hit, &uv) != 0) {
-		result.error = "Primitive UV query failed";
-		return 1;
-	    }
-	    result.uv = asf::Vector2f(static_cast<float>(uv.uv_u), static_cast<float>(uv.uv_v));
-	    if (!std::isfinite(result.uv[0]) || !std::isfinite(result.uv[1]))
-		result.error = "Primitive produced nonfinite UV coordinates";
-	}
-	struct rt_surface_derivatives derivatives = RT_SURFACE_DERIVATIVES_INIT_ZERO;
-	const int status = rt_obj_surface_derivatives(ap, solid, hit, &derivatives);
-	if (status == RT_DERIVATIVES_ERROR) {
-	    result.error = "Primitive surface derivative query failed";
-	    return 1;
-	}
-	if (status == RT_DERIVATIVES_OK) {
+	result.geometric_normal = asf::Vector3d(V3ARGS(surface.geometric_normal));
+	result.shading_normal = asf::Vector3d(V3ARGS(surface.shading_normal));
+	result.uv = asf::Vector2f(static_cast<float>(surface.uv[0]), static_cast<float>(surface.uv[1]));
+	if (!std::isfinite(result.uv[0]) || !std::isfinite(result.uv[1]))
+	    result.error = "Primitive produced nonfinite UV coordinates";
+	if (surface.derivatives_available) {
 	    result.derivatives.m_valid = true;
-	    result.derivatives.m_dpdu = asf::Vector3d(V3ARGS(derivatives.dpdu));
-	    result.derivatives.m_dpdv = asf::Vector3d(V3ARGS(derivatives.dpdv));
-	    // Boolean cuts reverse the normal field, preserving its UV chart.
-	    const double normal_sign = flip ? -1.0 : 1.0;
-	    result.derivatives.m_dndu = normal_sign * asf::Vector3d(V3ARGS(derivatives.dndu));
-	    result.derivatives.m_dndv = normal_sign * asf::Vector3d(V3ARGS(derivatives.dndv));
+	    result.derivatives.m_dpdu = asf::Vector3d(V3ARGS(surface.derivatives.dpdu));
+	    result.derivatives.m_dpdv = asf::Vector3d(V3ARGS(surface.derivatives.dpdv));
+	    result.derivatives.m_dndu = asf::Vector3d(V3ARGS(surface.derivatives.dndu));
+	    result.derivatives.m_dndv = asf::Vector3d(V3ARGS(surface.derivatives.dndv));
 	}
 	return 1;
     }
