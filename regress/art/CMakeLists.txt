@@ -70,6 +70,7 @@ set(ART_REGRESSION_TEST_NAMES
   regress-art-transmission
   regress-art-absorption
   regress-art-initial-media
+  regress-art-volume
   regress-art-medium-priority
   regress-art-shared-media
   regress-art-curved-media
@@ -128,6 +129,7 @@ cmakefiles(CMakeLists.txt art_test_setup.cmake art_installed_tests.cmake
   art_nested_test_commands.cmake art_curved_test_commands.cmake
   art_caustic_test_commands.cmake.in art_photon_test_commands.cmake.in
   art_rough_box.appleseed.in art_rough_box.obj art_lit_glass.appleseed.in
+  art_initial_volume.appleseed.in regress-art-volume.cmake.in
   art_installed_runtime.cmake.in art-installed-material.cmake.in
   art-installed-plate.cmake.in art-installed-view.cmake.in
   regress-art-photon-csg-15.cmake.in
@@ -188,7 +190,7 @@ if(TARGET art AND BUILD_TESTING)
     "${CMAKE_CURRENT_BINARY_DIR}/image-maps-output"
     "${CMAKE_CURRENT_BINARY_DIR}/resources-output"
     "${CMAKE_CURRENT_BINARY_DIR}/transmission-output"
-    "${CMAKE_CURRENT_BINARY_DIR}/absorption-output" "${CMAKE_CURRENT_BINARY_DIR}/initial-media-output" "${CMAKE_CURRENT_BINARY_DIR}/medium-priority-output" "${CMAKE_CURRENT_BINARY_DIR}/shared-media-output"
+    "${CMAKE_CURRENT_BINARY_DIR}/absorption-output" "${CMAKE_CURRENT_BINARY_DIR}/initial-media-output" "${CMAKE_CURRENT_BINARY_DIR}/volume-output" "${CMAKE_CURRENT_BINARY_DIR}/medium-priority-output" "${CMAKE_CURRENT_BINARY_DIR}/shared-media-output"
     "${CMAKE_CURRENT_BINARY_DIR}/curved-media-output" "${CMAKE_CURRENT_BINARY_DIR}/curved-contact-output"
     "${CMAKE_CURRENT_BINARY_DIR}/rough-glass-output"
     "${CMAKE_CURRENT_BINARY_DIR}/rough-energy-output"

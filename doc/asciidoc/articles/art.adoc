@@ -151,6 +151,20 @@ solid BOT faces, from both sides of an interface.  `regress-art-rough-paths` com
 with native Appleseed geometry.  Rough curved/nested interfaces, transmitted
 shadows, and normal-mapped transmission remain unqualified.
 
+|Participating-media renderer foundation
+|`regress-art-volume` checks native Appleseed cameras within a standalone
+homogeneous volume, including attenuation before the first surface, fully
+transparent and partially opaque foreground covers, and single scattering
+with exponential and combined distance sampling.  Absorption is compared
+with Beer absorption; the primary-ray check also covers a BSDF-only absorbing
+interior.  Scattering uses independent solid-angle quadrature with extinction
+on both camera and shadow segments.  Native unit tests also
+check initial-medium discovery, clipped search intervals, retained path data,
+overall scattering limits, both path-tracing entry points, and adjoint
+attenuation.  These renderer checks precede a
+BRL-CAD material binding and complete CSG/BOT volume workflow; those remain
+open integration work.
+
 |Lighting across frames
 |`regress-art-lighting` compares diffuse HDR frame sequences with fresh-process
 references.  It checks repeated fallback and explicit point-light frames,
