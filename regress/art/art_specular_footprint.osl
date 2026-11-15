@@ -26,7 +26,8 @@ surface art_specular_footprint(normal in_bump_normal = as_shading_normal(),
     if (in_glossy)
         Ci = as_glossy(in_bump_normal, Tn, in_roughness, 0, in_ior,
             "normal_derivatives", 1, "dNdx", vector(Dx(in_bump_normal)),
-            "dNdy", vector(Dy(in_bump_normal)));
+            "dNdy", vector(Dy(in_bump_normal)),
+            "dTdx", Dx(Tn), "dTdy", Dy(Tn));
     else
         Ci = as_reflection(in_bump_normal, in_ior);
 }
