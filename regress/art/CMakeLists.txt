@@ -81,6 +81,7 @@ set(ART_REGRESSION_TEST_NAMES
   regress-art-volume-scattering
   regress-art-volume-energy
   regress-art-volume-energy-spectral
+  regress-art-volume-overlap
   regress-art-medium-priority
   regress-art-shared-media
   regress-art-curved-media
@@ -144,6 +145,7 @@ cmakefiles(CMakeLists.txt art_test_setup.cmake art_installed_tests.cmake
   regress-art-volume-materials.cmake.in regress-art-volume-scattering.cmake.in
   art_volume_test_commands.cmake.in art_volume_energy_test_commands.cmake.in
   regress-art-volume-energy.cmake.in regress-art-volume-energy-spectral.cmake.in
+  regress-art-volume-overlap.cmake.in
   art_installed_runtime.cmake.in art-installed-material.cmake.in
   art-installed-plate.cmake.in art-installed-view.cmake.in
   regress-art-photon-csg-15.cmake.in
@@ -205,7 +207,7 @@ if(TARGET art AND BUILD_TESTING)
     "${CMAKE_CURRENT_BINARY_DIR}/image-maps-output"
     "${CMAKE_CURRENT_BINARY_DIR}/resources-output"
     "${CMAKE_CURRENT_BINARY_DIR}/transmission-output"
-    "${CMAKE_CURRENT_BINARY_DIR}/absorption-output" "${CMAKE_CURRENT_BINARY_DIR}/initial-media-output" "${CMAKE_CURRENT_BINARY_DIR}/volume-output" "${CMAKE_CURRENT_BINARY_DIR}/volume-materials-output" "${CMAKE_CURRENT_BINARY_DIR}/volume-scattering-output" "${CMAKE_CURRENT_BINARY_DIR}/volume-energy-output" "${CMAKE_CURRENT_BINARY_DIR}/volume-energy-spectral-output" "${CMAKE_CURRENT_BINARY_DIR}/medium-priority-output" "${CMAKE_CURRENT_BINARY_DIR}/shared-media-output"
+    "${CMAKE_CURRENT_BINARY_DIR}/absorption-output" "${CMAKE_CURRENT_BINARY_DIR}/initial-media-output" "${CMAKE_CURRENT_BINARY_DIR}/volume-output" "${CMAKE_CURRENT_BINARY_DIR}/volume-materials-output" "${CMAKE_CURRENT_BINARY_DIR}/volume-scattering-output" "${CMAKE_CURRENT_BINARY_DIR}/volume-energy-output" "${CMAKE_CURRENT_BINARY_DIR}/volume-energy-spectral-output" "${CMAKE_CURRENT_BINARY_DIR}/volume-overlap-output" "${CMAKE_CURRENT_BINARY_DIR}/medium-priority-output" "${CMAKE_CURRENT_BINARY_DIR}/shared-media-output"
     "${CMAKE_CURRENT_BINARY_DIR}/curved-media-output" "${CMAKE_CURRENT_BINARY_DIR}/curved-contact-output"
     "${CMAKE_CURRENT_BINARY_DIR}/rough-glass-output"
     "${CMAKE_CURRENT_BINARY_DIR}/rough-energy-output"

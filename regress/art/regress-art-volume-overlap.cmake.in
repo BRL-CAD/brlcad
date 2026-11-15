@@ -1,0 +1,100 @@
+# REGRESS-ART-VOLUME-OVERLAP.CMAKE.IN
+# BRL-CAD
+#
+# Copyright (c) 2026 United States Government as represented by
+# the U.S. Army Research Laboratory.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions
+# are met:
+#
+# 1. Redistributions of source code must retain the above copyright
+# notice, this list of conditions and the following disclaimer.
+#
+# 2. Redistributions in binary form must reproduce the above
+# copyright notice, this list of conditions and the following
+# disclaimer in the documentation and/or other materials provided
+# with the distribution.
+#
+# 3. The name of the author may not be used to endorse or promote
+# products derived from this software without specific prior written
+# permission.
+#
+# THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS
+# OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+# WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+# ARE DISCLAIMED. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY
+# DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+# DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
+# GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+# INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+# WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+# NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+# SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+#
+cmake_minimum_required(VERSION 3.22)
+set(WORK "@CMAKE_CURRENT_BINARY_DIR@/volume-overlap-output")
+set(LOG "${WORK}/art.log")
+file(REMOVE_RECURSE "${WORK}")
+file(MAKE_DIRECTORY "${WORK}/shaders" "${WORK}/cache")
+set(ENV{BU_DIR_CACHE} "${WORK}/cache")
+include("@CMAKE_CURRENT_SOURCE_DIR@/art_test_commands.cmake")
+include("@CMAKE_CURRENT_SOURCE_DIR@/art_nested_test_commands.cmake")
+include("@CMAKE_CURRENT_BINARY_DIR@/art_volume_test_commands.cmake")
+run("${VEXEC}" set-named-material "${DB}" fog.material OSL.medium_priority 1)
+run("${VEXEC}" material "${DB}" create inner.material Inner)
+run("${VEXEC}" set-named-material "${DB}" inner.material OSL.volume homogeneous)
+run("${VEXEC}" set-named-material "${DB}" inner.material OSL.volume.absorption "color 0.03 0.01 0.02")
+# Unit-distance factors for the inner coefficients, in RGB order.
+set(INNER_UNIT_BEER_RGB "0.9704455335485082,0.9900498337491681,0.9801986733067553")
+function(render_overlap label object inner eye outer_length inner_length)
+  set(image "${WORK}/${label}.exr")
+  run("${EXEC}" ${RENDER_ARGS} -p 0.02 -c "eye_pt 0 0 ${eye}"
+    -o "${image}" "${DB}" "${object}" "${inner}" receiver.r)
+  run("${VEXEC}" check-image "${image}" 1 1)
+  run("${TOOL}" --pattern "constant:color=${UNIT_BEER_RGB}" 1x1 3 --powc ${outer_length}
+    --pattern "constant:color=${INNER_UNIT_BEER_RGB}" 1x1 3 --powc ${inner_length}
+    --mul -d float -o "${WORK}/reference.exr")
+  compare_radiance_mean("${image}" "${WORK}/reference.exr" ${HALF_RELATIVE_BOUND} FALSE)
+endfunction()
+foreach(layout IN ITEMS nested overlap)
+  set(zmin -4)
+  set(zmax 4)
+  if(layout STREQUAL overlap)
+    set(zmin -14)
+    set(zmax -2)
+  endif()
+  # Create distinct solids: ARB8 does not provide editable min/max fields.
+  run("${VEXEC}" in "${DB}" "${layout}.s" rpp -6 6 -6 6 ${zmin} ${zmax})
+  run("${VEXEC}" r "${DB}" "${layout}.r" u "${layout}.s")
+  run("${VEXEC}" material "${DB}" assign "${layout}.r" inner.material)
+  foreach(priority IN ITEMS 2 0)
+    run("${VEXEC}" set-named-material "${DB}" inner.material OSL.medium_priority ${priority})
+    # The outer interval is [-10,10]. Higher priority replaces its overlap;
+    # lower priority contributes only beyond the outer boundary at z=-10.
+    if(priority EQUAL 0)
+      set(outside_outer 20)
+      set(inside_outer 10)
+      set(inner_length 0)
+      if(layout STREQUAL overlap)
+        set(inner_length 4)
+      endif()
+      set(outside_inner ${inner_length})
+      set(inside_inner ${inner_length})
+    elseif(layout STREQUAL nested)
+      set(outside_outer 12)
+      set(outside_inner 8)
+      set(inside_outer 6)
+      set(inside_inner 4)
+    else()
+      set(outside_outer 12)
+      set(outside_inner 12)
+      set(inside_outer 2)
+      set(inside_inner 12)
+    endif()
+    foreach(object IN ITEMS cube.r mesh.r)
+      render_overlap("${layout}-${priority}-${object}-outside" "${object}" "${layout}.r" 40 ${outside_outer} ${outside_inner})
+      render_overlap("${layout}-${priority}-${object}-inside" "${object}" "${layout}.r" 0 ${inside_outer} ${inside_inner})
+    endforeach()
+  endforeach()
+endforeach()

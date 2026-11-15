@@ -1248,9 +1248,18 @@ Both use a 1.5-percent relative mean-energy bound.  A finite continuation cap
 still truncates higher scattering orders; the uniform-field cases use 64
 volume continuations and disable Russian roulette to isolate transport.
 
+Purely absorbing homogeneous regions use the highest-priority medium in
+an overlap; coefficients are not added.  `regress-art-volume-overlap`
+checks nested and interpenetrating intervals with higher and lower inner
+priorities, CSG and solid BOT outer boundaries, and outside and inside
+pinhole origins.  Its sixteen Beer comparisons use independently computed
+active-medium lengths and a 0.1-percent relative energy bound.  This
+qualifies absorption and priority transitions; overlapping scattering
+transport remains separate work.
+
 This workflow is limited to path tracing.  SPPM volume materials fail with
 an explicit diagnostic.  General absorbing multiple-scattering energy,
-overlapping participating media, combined glass/volume boundaries,
+overlapping scattering media, combined glass/volume boundaries,
 heterogeneous fields and volume-aware compositing alpha still need
 qualification.  An EXR alpha channel must not yet be treated as a qualified
 fog-compositing mask.
