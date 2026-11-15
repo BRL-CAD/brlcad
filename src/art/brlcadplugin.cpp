@@ -93,6 +93,7 @@
 #include "vmath.h"
 #include "raytrace.h"
 #include "rt/surface.h"
+#include "rt/primitives/bot.h"
 #include "brlcadplugin.h"
 
 namespace asf = foundation;
@@ -100,6 +101,41 @@ namespace asr = renderer;
 
 namespace {
 const char *const Model = "brlcad geometry";
+
+void
+validate_volume_geometry(struct rt_i *rtip, const std::string &path)
+{
+    point_t minimum, maximum;
+    if (rtip->stats.nregions != 1 || BU_LIST_IS_EMPTY(&rtip->HeadRegion))
+	throw std::runtime_error("Participating volume requires one region: " + path);
+    const struct region *region = BU_LIST_FIRST(region, &rtip->HeadRegion);
+    if (!region->reg_treetop || rt_bound_tree(region->reg_treetop, minimum, maximum) < 0 ||
+	VINVALID(minimum) || VINVALID(maximum))
+	throw std::runtime_error("Participating volume requires finite bounded geometry: " + path);
+    for (size_t axis = 0; axis < ELEMENTS_PER_VECT; ++axis)
+	if (!(maximum[axis] > minimum[axis]))
+	    throw std::runtime_error("Participating volume requires nonzero extent: " + path);
+
+    struct soltab *solid;
+    RT_VISIT_ALL_SOLTABS_START(solid, rtip) {
+	if (solid->st_id != ID_BOT)
+	    continue;
+	struct rt_db_internal internal;
+	RT_DB_INTERNAL_INIT(&internal);
+	bool valid = false;
+	if (rt_db_get_internal(&internal, solid->st_dp, rtip->rti_dbip, NULL) >= 0 &&
+	    internal.idb_type == ID_BOT && internal.idb_ptr && internal.idb_meth) {
+	    auto *bot = static_cast<struct rt_bot_internal *>(internal.idb_ptr);
+	    valid = bot->mode == RT_BOT_SOLID && bot->orientation != RT_BOT_UNORIENTED &&
+		internal.idb_meth->ft_validate &&
+		internal.idb_meth->ft_validate(nullptr, &internal, &rtip->rti_tol) == 0 &&
+		rt_bot_inside_out(bot) == 0;
+	}
+	rt_db_free_internal(&internal);
+	if (!valid)
+	    throw std::runtime_error("Participating volume requires a closed outward-oriented solid BOT: " + path);
+    } RT_VISIT_ALL_SOLTABS_END;
+}
 
 struct RayHit {
     double distance;
@@ -205,6 +241,8 @@ public:
 	sampler_ready = rt_surface_sampler_init(&sampler, rtip.get()) == 0;
 	if (!rtip->stats.nregions || !rtip->stats.nsolids)
 	    throw std::runtime_error("No renderable geometry in BRL-CAD object '" + path + "'");
+	if (params.get_optional<bool>("require_closed_volume", false))
+	    validate_volume_geometry(rtip.get(), path);
     }
 
     ResourceLease acquire()

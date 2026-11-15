@@ -19,6 +19,7 @@
  */
 #include "common.h"
 
+#include <array>
 #include <cmath>
 #include <cstdint>
 #include <limits>
@@ -26,17 +27,20 @@
 #include <locale>
 #include <map>
 #include <memory>
+#include <optional>
 #include <ostream>
 #include <set>
 #include <sstream>
 #include <string>
 #include <vector>
 
+#include "renderer/api/color.h"
 #include "renderer/api/scene.h"
 #include "renderer/api/material.h"
 #include "renderer/api/shadergroup.h"
 #include "renderer/api/surfaceshader.h"
 #include "renderer/api/utility.h"
+#include "renderer/api/volume.h"
 #include "foundation/image/colorspace.h"
 #include "foundation/memory/autoreleaseptr.h"
 
@@ -60,6 +64,7 @@ constexpr char PropertyPrefix[] = "OSL.";
 constexpr char ParameterPrefix[] = "OSL.param.";
 constexpr char NodePrefix[] = "OSL.node.";
 constexpr char ConnectionPrefix[] = "OSL.connect.";
+constexpr char VolumeRoot[] = "OSL.volume";
 constexpr char SingleNodeVersion[] = "1";
 constexpr char NetworkVersion[] = "2";
 
@@ -78,11 +83,19 @@ struct Connection {
     Endpoint destination;
 };
 
-struct MaterialShader {
+struct HomogeneousVolume {
+    std::array<float, 3> absorption = {};
+    std::array<float, 3> scattering = {};
+    std::string phase_function = "isotropic";
+    float average_cosine = 0.0f;
+};
+
+struct MaterialDefinition {
     MaterialNode root{"as_plastic", {}};
     std::string output = "out_outColor";
     bool output_explicit = false;
     int medium_priority = 0;
+    std::optional<HomogeneousVolume> volume;
     std::map<std::string, MaterialNode> nodes;
     std::vector<Connection> connections;
     std::vector<std::string> material_chain;
@@ -112,8 +125,99 @@ parse_endpoint(const std::string &text, Endpoint &endpoint)
 }
 
 bool
-parse_shader(const std::map<std::string, std::string> &properties,
-    const char *material_name, MaterialShader &shader)
+parse_components(const std::string &value, const char *expected_type, float *components, size_t count)
+{
+    std::istringstream input(value);
+    input.imbue(std::locale::classic());
+    std::string type;
+    if (!(input >> type) || type != expected_type)
+	return false;
+    for (size_t i = 0; i < count; ++i)
+	if (!(input >> components[i]) || !std::isfinite(components[i]))
+	    return false;
+    input >> std::ws;
+    return input.eof();
+}
+
+bool
+parse_coefficient(const std::string &value, std::array<float, 3> &components)
+{
+    if (parse_components(value, "float", components.data(), 1))
+	components.fill(components.front());
+    else if (!parse_components(value, "color", components.data(), components.size()))
+	return false;
+    for (const float component : components)
+	if (component < 0.0f)
+	    return false;
+    return true;
+}
+
+bool
+parse_medium_priority(const std::map<std::string, std::string> &properties,
+    const char *material_name, int &priority)
+{
+    const auto property = properties.find("OSL.medium_priority");
+    if (property == properties.end())
+	return true;
+    std::istringstream input(property->second);
+    input.imbue(std::locale::classic());
+    const bool parsed = static_cast<bool>(input >> priority);
+    input >> std::ws;
+    constexpr int minimum = std::numeric_limits<std::int8_t>::min();
+    constexpr int maximum = std::numeric_limits<std::int8_t>::max();
+    if (!parsed || !input.eof() || priority < minimum || priority > maximum) {
+	bu_log("art: material '%s' has invalid OSL.medium_priority '%s': expected an integer from %d through %d\n",
+	    material_name, property->second.c_str(), minimum, maximum);
+	return false;
+    }
+    return true;
+}
+
+bool
+parse_volume(const std::map<std::string, std::string> &properties,
+    const char *material_name, HomogeneousVolume &volume)
+{
+    for (const auto &property : properties) {
+	const std::string &key = property.first;
+	const std::string &value = property.second;
+	bool valid = true;
+	if (key == VolumeRoot) {
+	    valid = value == "homogeneous";
+	} else if (key == "OSL.volume.absorption") {
+	    valid = parse_coefficient(value, volume.absorption);
+	} else if (key == "OSL.volume.scattering") {
+	    valid = parse_coefficient(value, volume.scattering);
+	} else if (key == "OSL.volume.phase_function") {
+	    valid = value == "isotropic" || value == "henyey";
+	    if (valid) volume.phase_function = value;
+	} else if (key == "OSL.volume.average_cosine") {
+	    // Match the renderer's supported range without silently clamping.
+	    constexpr float MaximumAverageCosine = 0.99f;
+	    valid = parse_components(value, "float", &volume.average_cosine, 1) &&
+		volume.average_cosine >= -MaximumAverageCosine && volume.average_cosine <= MaximumAverageCosine;
+	} else if (key == "OSL.version") {
+	    valid = value == SingleNodeVersion;
+	} else if (key != "OSL.medium_priority") {
+	    valid = false;
+	}
+	if (!valid) {
+	    bu_log("art: material '%s' has invalid volume property '%s' with value '%s'\n",
+		material_name, key.c_str(), value.c_str());
+	    return false;
+	}
+    }
+    for (size_t i = 0; i < volume.absorption.size(); ++i) {
+	if (!std::isfinite(volume.absorption[i] + volume.scattering[i])) {
+	    bu_log("art: material '%s' has an unrepresentable volume extinction coefficient\n", material_name);
+	    return false;
+	}
+    }
+    return true;
+}
+
+bool
+parse_material(const std::map<std::string, std::string> &properties,
+    const char *material_name, MaterialDefinition &shader)
 {
     const auto version = properties.find("OSL.version");
     const bool network = version != properties.end() && version->second == NetworkVersion;
@@ -125,6 +229,11 @@ parse_shader(const std::map<std::string, std::string> &properties,
 	bu_log("art: material '%s' has invalid or unsupported OSL property '%s'\n", material_name, key.c_str());
 	return false;
     };
+
+    if (!parse_medium_priority(properties, material_name, shader.medium_priority))
+	return false;
+    if (properties.find(VolumeRoot) != properties.end())
+	return parse_volume(properties, material_name, shader.volume.emplace());
 
     // Declarations are independent of the attribute order in the database.
     if (network) {
@@ -143,19 +252,7 @@ parse_shader(const std::map<std::string, std::string> &properties,
 	if (key == "OSL") {
 	    shader.root.name = value;
 	} else if (key == "OSL.medium_priority") {
-	    std::istringstream input(value);
-	    input.imbue(std::locale::classic());
-	    int priority = 0;
-	    const bool parsed = static_cast<bool>(input >> priority);
-	    input >> std::ws;
-	    constexpr int minimum = std::numeric_limits<std::int8_t>::min();
-	    constexpr int maximum = std::numeric_limits<std::int8_t>::max();
-	    if (!parsed || !input.eof() || priority < minimum || priority > maximum) {
-		bu_log("art: material '%s' has invalid OSL.medium_priority '%s': expected an integer from %d through %d\n",
-		    material_name, value.c_str(), minimum, maximum);
-		return false;
-	    }
-	    shader.medium_priority = priority;
+	    continue;
 	} else if (key == "OSL.output") {
 	    shader.output = value;
 	    shader.output_explicit = true;
@@ -261,7 +358,7 @@ is_osl_property(const std::string &name)
 }
 
 bool
-read_shader(struct db_i *db, const char *material_name, MaterialShader &shader)
+read_material(struct db_i *db, const char *material_name, MaterialDefinition &shader)
 {
     using Properties = std::map<std::string, std::string>;
     std::vector<Properties> layers;
@@ -294,13 +391,13 @@ read_shader(struct db_i *db, const char *material_name, MaterialShader &shader)
 
     Properties properties;
     for (auto layer = layers.rbegin(); layer != layers.rend(); ++layer) {
-	// A replacement root must not retain another definition's graph or inputs.
-	if (layer->find("OSL") != layer->end())
+	// A replacement root must not retain another model's graph or volume inputs.
+	if (layer->find("OSL") != layer->end() || layer->find(VolumeRoot) != layer->end())
 	    properties.clear();
 	for (const auto &property : *layer)
 	    properties[property.first] = property.second;
     }
-    return parse_shader(properties, material_name, shader);
+    return parse_material(properties, material_name, shader);
 }
 
 const asf::Dictionary *
@@ -373,7 +470,7 @@ using QueryPtr = std::unique_ptr<asr::ShaderQuery, ReleaseQuery>;
 using ShaderQueries = std::map<std::string, QueryPtr>;
 
 bool
-connection_order(const MaterialShader &shader, const ShaderQueries &queries,
+connection_order(const MaterialDefinition &shader, const ShaderQueries &queries,
     const char *material_name, std::vector<std::string> &order)
 {
     auto supported_shape = [](const asf::Dictionary &param) {
@@ -464,10 +561,8 @@ instance_path(const struct db_full_path *path, size_t depth)
 }
 
 void
-report_material(std::ostream &out, const struct db_full_path *path,
-    const MaterialAssignment &assignment, const MaterialShader &shader,
-    const ShaderQueries &queries, const std::map<std::string, asr::ParamArray> &parameters,
-    const std::vector<std::string> &order)
+report_assignment(std::ostream &out, const struct db_full_path *path,
+    const MaterialAssignment &assignment, const MaterialDefinition &shader)
 {
     out << "region " << std::quoted(instance_path(path, path->fp_len)) << '\n';
     if (assignment.source_depth) {
@@ -484,6 +579,15 @@ report_material(std::ostream &out, const struct db_full_path *path,
 	out << '\n';
     }
     out << "  medium_priority " << shader.medium_priority << '\n';
+}
+
+void
+report_material(std::ostream &out, const struct db_full_path *path,
+    const MaterialAssignment &assignment, const MaterialDefinition &shader,
+    const ShaderQueries &queries, const std::map<std::string, asr::ParamArray> &parameters,
+    const std::vector<std::string> &order)
+{
+    report_assignment(out, path, assignment, shader);
     for (const auto &node : order) {
 	const auto &query = *queries.at(node);
 	const auto &shader_name = node == TerminalLayer ? shader.root.name : shader.nodes.at(node).name;
@@ -517,16 +621,53 @@ bool
 art_add_material(asr::Assembly &assembly, const char *name,
     const float srgb[3], struct db_i *db, const struct db_full_path *path,
     const struct rt_comb_internal *comb, const asf::SearchPaths &search_paths,
-    int& medium_priority, std::string &assigned_material, std::ostream *report)
+    ArtMaterialProperties &resolved, std::ostream *report)
 {
     MaterialAssignment assignment;
     if (!resolve_assignment(db, path, comb, assignment))
 	return false;
-    MaterialShader shader;
-    if (!read_shader(db, assignment.name.c_str(), shader))
+    MaterialDefinition shader;
+    if (!read_material(db, assignment.name.c_str(), shader))
 	return false;
-    medium_priority = shader.medium_priority;
-    assigned_material = assignment.name;
+    resolved.medium_priority = shader.medium_priority;
+    resolved.assigned_material = assignment.name;
+    resolved.requires_closed_volume = shader.volume.has_value();
+
+    if (shader.volume) {
+	const HomogeneousVolume &volume = *shader.volume;
+	if (report) {
+	    report_assignment(*report, path, assignment, shader);
+	    *report << "  volume homogeneous\n";
+	    auto coefficient = [&](const char *key, const std::array<float, 3> &values) {
+		std::ostringstream value;
+		value.imbue(std::locale::classic());
+		value << "color";
+		for (const float component : values) value << ' ' << component;
+		*report << "    input " << std::quoted(key) << ' ' << std::quoted(value.str()) << '\n';
+	    };
+	    coefficient("absorption", volume.absorption);
+	    coefficient("scattering", volume.scattering);
+	    *report << "    input phase_function " << volume.phase_function << '\n'
+		<< "    input average_cosine float " << volume.average_cosine << '\n';
+	    return static_cast<bool>(*report);
+	}
+	auto coefficient = [&](const char *suffix, const std::array<float, 3> &values) {
+	    const std::string color_name = std::string(name) + suffix;
+	    assembly.colors().insert(asr::ColorEntityFactory::create(color_name.c_str(),
+		asr::ParamArray().insert("color_space", "linear_rgb"),
+		asr::ColorValueArray(values.size(), values.data())));
+	    return color_name;
+	};
+	const std::string volume_name = std::string(name) + "_volume";
+	assembly.volumes().insert(asr::GenericVolumeFactory().create(volume_name.c_str(),
+	    asr::ParamArray().insert("absorption", coefficient("_absorption", volume.absorption))
+		.insert("scattering", coefficient("_scattering", volume.scattering))
+		.insert("phase_function_model", volume.phase_function)
+		.insert("average_cosine", volume.average_cosine)));
+	assembly.materials().insert(asr::GenericMaterialFactory().create(name,
+	    asr::ParamArray().insert("volume", volume_name)));
+	return true;
+    }
 
     std::map<std::string, MaterialNode> nodes = shader.nodes;
     nodes.emplace(TerminalLayer, shader.root);

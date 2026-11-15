@@ -248,6 +248,9 @@ struct ArtRenderSettings {
     std::optional<int> max_diffuse_bounces;
     std::optional<int> max_glossy_bounces;
     std::optional<int> max_specular_bounces;
+    std::optional<int> max_volume_bounces;
+    std::optional<int> volume_distance_samples;
+    std::optional<int> volume_exponential_only;
     std::optional<int> rr_min_path_length;
     std::optional<int> next_event_estimation;
     std::optional<int> enable_caustics;
@@ -290,6 +293,12 @@ constexpr ArtRenderIntegerSetting render_integer_settings[] = {
 	&ArtRenderSettings::max_glossy_bounces},
     {"max_specular_bounces", "pt.max_specular_bounces", nullptr, -1, MAX_RENDER_INTEGER,
 	&ArtRenderSettings::max_specular_bounces},
+    {"max_volume_bounces", "pt.max_volume_bounces", nullptr, -1, MAX_RENDER_INTEGER,
+	&ArtRenderSettings::max_volume_bounces},
+    {"volume_distance_samples", "pt.volume_distance_samples", nullptr, 1, MAX_RENDER_INTEGER,
+	&ArtRenderSettings::volume_distance_samples},
+    {"volume_exponential_only", "pt.optimize_for_lights_outside_volumes", nullptr, 0, 1,
+	&ArtRenderSettings::volume_exponential_only},
     {"rr_min_path_length", "pt.rr_min_path_length", "sppm.path_tracing_rr_min_path_length", 0, MAX_RENDER_INTEGER,
 	&ArtRenderSettings::rr_min_path_length},
     {"next_event_estimation", "pt.next_event_estimation", nullptr, 0, 1,
@@ -866,24 +875,29 @@ register_region_impl(struct db_tree_state* tsp,
 
     const std::string material_name = std::string(name) + "_mat";
 
-    int medium_priority = 0;
-    std::string assigned_material;
+    ArtMaterialProperties material;
     if (!art_add_material(assembly.ref(), material_name.c_str(), region_rgb,
-	    tsp->ts_dbip, pathp, combp, builder.search_paths, medium_priority, assigned_material, builder.report)) {
+	    tsp->ts_dbip, pathp, combp, builder.search_paths, material, builder.report)) {
 	builder.valid = false;
 	return 0;
     }
 
+    if (material.requires_closed_volume && render_settings.integrator != ArtIntegrator::PathTracing) {
+	bu_log("art: participating volume material '%s' requires integrator=pt\n", material.assigned_material.c_str());
+	builder.valid = false;
+	return 0;
+    }
     if (builder.report)
 	return 0;
 
     const asr::ParamArray geometry_parameters = asr::ParamArray()
 	.insert("database_path", tsp->ts_dbip->dbi_filename)
-	.insert("object_path", name);
+	.insert("object_path", name)
+	.insert("require_closed_volume", material.requires_closed_volume);
     asf::auto_release_ptr<asr::Object> brlcad_object(
 	new BrlcadObject(name, geometry_parameters, tsp->ts_dbip));
 
-    if (!art_region_attributes(*brlcad_object, tsp, pathp, region_rgb, assigned_material)) {
+    if (!art_region_attributes(*brlcad_object, tsp, pathp, region_rgb, material.assigned_material)) {
 	builder.valid = false;
 	return 0;
     }
@@ -899,7 +913,7 @@ register_region_impl(struct db_tree_state* tsp,
     assembly->object_instances().insert(
 	asr::ObjectInstanceFactory::create(
 	    instance_name.c_str(),
-	    asr::ParamArray().insert("medium_priority", medium_priority),
+	    asr::ParamArray().insert("medium_priority", material.medium_priority),
 	    name,
 	    asf::Transformd::identity(),
 	    material_mapping,
