@@ -169,6 +169,7 @@ cmakefiles(CMakeLists.txt art_test_setup.cmake art_installed_tests.cmake
   art_initial_volume.appleseed.in regress-art-volume.cmake.in
   regress-art-volume-materials.cmake.in regress-art-volume-scattering.cmake.in
   art_volume_test_commands.cmake.in art_volume_energy_test_commands.cmake.in
+  art_volume_reference.json
   regress-art-volume-energy.cmake.in regress-art-volume-energy-spectral.cmake.in
   regress-art-volume-overlap.cmake.in regress-art-volume-glass.cmake.in
   art_installed_runtime.cmake.in art-installed-material.cmake.in
@@ -214,6 +215,7 @@ if(TARGET art AND BUILD_TESTING)
   get_target_property(renderer_prefix art ART_RENDERER_PREFIX)
   include("${CMAKE_CURRENT_SOURCE_DIR}/art_test_setup.cmake")
   brlcad_addexec(art_scene_test art_scene.cpp "libged;libwdb;libicv" TEST)
+  brlcad_addexec(art_volume_reference art_volume_reference.cpp libbu TEST)
   add_dependencies(art_scene_test art_test_shaders)
   foreach(test IN LISTS ART_REGRESSION_TEST_NAMES)
     art_regression_timeout("${test}" timeout)
