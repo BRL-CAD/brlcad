@@ -1,0 +1,28 @@
+/*              A R T _ M A P P E D _ G L A S S _ F I E L D . O S L
+ * BRL-CAD
+ *
+ * Copyright (c) 2026 United States Government as represented by
+ * the U.S. Army Research Laboratory.
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public License
+ * version 2.1 as published by the Free Software Foundation.
+ *
+ * This library is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this file; see the file named COPYING for more
+ * information.
+ */
+shader art_mapped_glass_field(
+    int in_uv = 0,
+    output color out_map = color(0, 0, 1))
+{
+    // The authored field varies between slab faces or across each UV chart.
+    float x = in_uv ? 2 * u - 1 : P[2] / 10;
+    float y = in_uv ? 2 * v - 1 : P[2] / 10;
+    out_map = color(0.04 + 0.1 * x, -0.03 + 0.05 * y, 1);
+}

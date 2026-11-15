@@ -1,0 +1,108 @@
+/*              A R T _ M A P P E D _ G L A S S _ R E F E R E N C E . O S L
+ * BRL-CAD
+ *
+ * Copyright (c) 2026 United States Government as represented by
+ * the U.S. Army Research Laboratory.
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public License
+ * version 2.1 as published by the Free Software Foundation.
+ *
+ * This library is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this file; see the file named COPYING for more
+ * information.
+ */
+#include "art_glass_reference.h"
+
+normal mapped_interface_normal(point position, float extent, int top, int tangent_map, float weight)
+{
+    float mapped_u = 0.04 + 0.1 * position[2] / 10;
+    float mapped_v = -0.03 + 0.05 * position[2] / 10;
+    vector t = vector(1, 0, 0);
+    vector b = vector(0, 1, 0);
+    // Independent frames and coordinates of the fixture triangles on +/-Z.
+    if (tangent_map) {
+        float chart_u, chart_v;
+        if (position[1] <= position[0]) {
+            chart_u = top ? (position[0] - position[1]) / (2 * extent) : (position[1] + extent) / (2 * extent);
+            chart_v = top ? (position[1] + extent) / (2 * extent) : (position[0] - position[1]) / (2 * extent);
+            if (!top) {
+                t = vector(1, 1, 0) / sqrt(2.0);
+                b = vector(1, -1, 0) / sqrt(2.0);
+            }
+        } else {
+            chart_u = top ? (position[0] + extent) / (2 * extent) : (position[1] - position[0]) / (2 * extent);
+            chart_v = top ? (position[1] - position[0]) / (2 * extent) : (position[0] + extent) / (2 * extent);
+            if (top) {
+                t = vector(1, 1, 0) / sqrt(2.0);
+                b = vector(-1, 1, 0) / sqrt(2.0);
+            } else {
+                t = vector(0, 1, 0);
+                b = vector(1, 0, 0);
+            }
+        }
+        mapped_u = 0.04 + 0.1 * (2 * chart_u - 1);
+        mapped_v = -0.03 + 0.05 * (2 * chart_v - 1);
+    }
+    return normalize(normal(0, 0, 1) + weight * normal(mapped_u * t + mapped_v * b));
+}
+
+surface art_mapped_glass_reference(
+    int in_tangent_map = 0,
+    float in_weight = 1,
+    float in_outer_ior = 1.5,
+    float in_inner_ior = 2.4,
+    color in_outer_transmittance = color(0.25, 0.5, 0.8),
+    color in_inner_transmittance = color(0.8, 0.6, 0.4),
+    float in_outer_distance = 20,
+    float in_inner_distance = 10)
+{
+    float planes[4] = {10, 5, -5, -10};
+    float indices[5] = {1, in_outer_ior, in_inner_ior, in_outer_ior, 1};
+    float extent[4] = {10, 5, 5, 10};
+    color transmittance[4] = {in_outer_transmittance, in_inner_transmittance, in_outer_transmittance, color(1)};
+    float reference_distance[4] = {in_outer_distance, in_inner_distance, in_outer_distance, 0};
+    float ray_length = 0;
+    if (!getattribute("path:ray_length", ray_length)) {
+        error("Mapped-glass reference needs the initial ray length");
+        Ci = 0;
+        return;
+    }
+    vector direction = normalize(I);
+    point position = P - ray_length * direction;
+    color throughput = 1;
+    int first = 0;
+    while (first < 4 && planes[first] >= position[2])
+        ++first;
+    for (int index = first; index < 4; ++index) {
+        float segment = (planes[index] - position[2]) / direction[2];
+        position += segment * direction;
+        if (index > 0 && reference_distance[index - 1] > 0)
+            throughput *= pow(transmittance[index - 1], segment / reference_distance[index - 1]);
+        if (abs(position[0]) >= extent[index] || abs(position[1]) >= extent[index]) {
+            error("Mapped-glass reference left its supported slab faces");
+            Ci = 0;
+            return;
+        }
+        normal n = mapped_interface_normal(position, extent[index], index < 2, in_tangent_map, in_weight);
+        vector transmitted = refract(direction, n, indices[index] / indices[index + 1]);
+        if (dot(transmitted, transmitted) == 0) {
+            Ci = 0;
+            return;
+        }
+        throughput *= interface_radiance_transmission(indices[index], indices[index + 1],
+            -dot(direction, n), -dot(transmitted, n));
+        direction = transmitted;
+    }
+    position += (-30 - position[2]) / direction[2] * direction;
+    if (abs(position[0]) > 200 || abs(position[1]) > 200) {
+        Ci = 0;
+        return;
+    }
+    Ci = throughput * target_color(position) * emission();
+}

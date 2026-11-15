@@ -110,7 +110,9 @@ project relocation.  `regress-art-image-maps` checks spatial image
 orientation and magnified linear ramps against position-based references
 on flat and smooth BOTs, including reflected U/V charts, and on spheres
 and ellipsoids with full-range and transformed UVs.  LOD transitions,
-baked per-vertex tangents, and secondary rays remain unqualified.
+baked per-vertex tangents, and filtered secondary textures remain
+unqualified.  The mapped-glass cases below separately qualify analytic
+normal fields along smooth transmission paths.
 
 |Rough plastic and metal
 |`regress-art-surface` compares native plastic and uncompensated isotropic
@@ -148,8 +150,13 @@ reflection, total internal reflection, and primary geometry-pass ownership.
 quadric transmission and opaque contacts with independent analytic paths.
 `regress-art-rough-glass` checks the direct-light GGX response on CSG and
 solid BOT faces, from both sides of an interface.  `regress-art-rough-paths` compares complete absorbing closed-box paths
-with native Appleseed geometry.  Rough curved/nested interfaces, transmitted
-shadows, and normal-mapped transmission remain unqualified.
+with native Appleseed geometry.  `regress-art-mapped-glass` checks smooth,
+mapped transmission and absorption through nested CSG and solid BOT boxes,
+including initial interior cameras and native BOT UV charts.
+`regress-art-glass-sides` prevents smooth or rough reflection from leaking
+through geometric surfaces when normals are mapped.  Rough curved/nested
+interfaces, transmitted shadows, and filtered secondary normal textures
+remain unqualified.
 
 |Participating-media renderer foundation
 |`regress-art-volume` checks native Appleseed cameras within a standalone
@@ -974,17 +981,43 @@ views at elevations 90 and 65.  A neutral-background emission control proves
 that each view contains the tested solid.  A straight-through reference
 must fail the refracted-path comparison.
 
+Mapped surface normals change scattering directions while geometric
+boundaries define the occupied media.  Glass sampling, evaluation, and
+probability evaluation require reflection to remain on the incident
+geometric side and transmission to cross it.  These checks prevent a
+reflected ray from crossing the current boundary and acquiring its
+transmitted medium.  This geometric-side distinction also underlies the
+https://www.pbr-book.org/3ed-2018/Materials/BSDFs[PBRT BSDF model].
+
+`regress-art-glass-sides` checks reflection-only CSG and solid BOT objects
+with mapped normals tilted from 0 through 75 degrees, at zero and finite
+roughness.  A white receiver behind each closed solid must remain invisible.
+Positive front-reflection and straight-transmission controls check Fresnel
+energy.  Native tests additionally check both sides, radiance and adjoint
+sampling, and rejection of incompatible evaluation directions and PDFs.
+
+`regress-art-mapped-glass` compares 78 smooth nested-glass paths with
+independent Snell/Fresnel/Beer transport and analytic receiver positions.
+The authored world-space normal field changes across the interfaces;
+the tangent-space field uses the BOT's UV coordinates and independently
+known front/back triangle frames.  Cases cover clear and RGB-absorbing CSG
+and solid BOT boxes, outer indices 1.5 and 2, an inner index of 2.4,
+outside and initial interior origins, both projections, and disabled and
+quarter-weight normal maps.  Comparisons allow one binary16 relative step
+plus a 0.00002 absolute arithmetic bound.  These cases do not qualify rough
+mapped transmission, filtered secondary image maps, or arbitrary curved
+normal fields.
+
 Native tests compare reflected and transmitted neighboring directions with
 independent analytic rays on a plane and sphere.  Glass passes the refractive
 ratio, rather than roughness, to its transmitted-differential calculation.
 These checks establish the tested first-order direction changes; filtered
 textures along secondary paths still need image-based qualification.
 
-Rough curved/nested interfaces, caustics,
-transmitted shadows, general overlapping media, thin surfaces, and
-bump/normal-mapped transmission need further qualification before a general
-production-glass claim.  The distinct-priority nested-volume case below
-has independent image references.
+Rough curved/nested interfaces, general caustic focusing, transmitted
+shadows, arbitrary overlapping media, thin refractive surfaces, and filtered
+secondary image maps need further qualification.  The distinct-priority
+nested-volume case below has independent image references.
 
 === Rough glass under direct lighting
 
