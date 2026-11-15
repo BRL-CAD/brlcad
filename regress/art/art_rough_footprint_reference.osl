@@ -53,6 +53,8 @@ color diagnostic(point hit, int position, float scale)
 }
 surface art_rough_footprint_reference(float in_roughness = 0.6, float in_anisotropy = 0.5,
     int in_reference = 0, int in_receiver = 0, int in_position = 0,
+    int in_curved = 0, int in_mapped_normal = 0, int in_tangent_source = 0,
+    point in_center = point(-15, 0, 0), vector in_axes = vector(10),
     int in_seed = 17, float in_scale = 20, int in_tangent_gradient = 1, int in_mode = 0)
 {
     // A bounded position or footprint diagnostic avoids unbounded grazing-ray
@@ -63,6 +65,29 @@ surface art_rough_footprint_reference(float in_roughness = 0.6, float in_anisotr
     }
     normal n = normalize(normal(0.3 + 0.05 * P[0], 0.04 * P[1], 1));
     vector tangent = vector(1, 0.3 + in_tangent_gradient * 0.15 * P[0], 0.2 + in_tangent_gradient * 0.15 * P[1]);
+    normal geometric = normal(0, 0, 1);
+    if (in_curved) {
+        vector offset = P - in_center;
+        geometric = normalize(normal(offset / (in_axes * in_axes)));
+        n = in_reference ? geometric : as_shading_normal();
+        // The reference differentiates the quadric's chart independently.
+        tangent = normalize(vector(-in_axes[0] / in_axes[1] * offset[1],
+            in_axes[1] / in_axes[0] * offset[0], 0));
+        if (!in_reference) {
+            if (in_tangent_source == 1)
+                getattribute("Tn", tangent);
+            else
+                tangent = vector(0);
+        }
+        if (in_mapped_normal == 1)
+            n = normalize(n + normal(0.45 + 0.05 * offset[0], 0.04 * offset[1], 0));
+        else if (in_mapped_normal == 2)
+            n = normalize(normal(0.9, 0.25, 0.25));
+        if (in_tangent_source == 2)
+            tangent = vector(1, 0.3 + 0.15 * offset[0], 0.2 + 0.15 * offset[1]);
+        else if (in_tangent_source == 3)
+            tangent = vector(0, 1, 0);
+    }
     if (!in_reference) {
         if (in_mode == 0)
             Ci = as_metal(n, tangent, color(1), color(1), 0, in_roughness, in_anisotropy,
@@ -91,7 +116,7 @@ surface art_rough_footprint_reference(float in_roughness = 0.6, float in_anisotr
     float transmitted_cosine = sqrt(max(0, 1 - (1 - cosine * cosine) / (1.5 * 1.5)));
     vector incoming = in_mode == 2 ? (cosine / 1.5 - transmitted_cosine) * m - outgoing / 1.5 :
         2 * cosine * m - outgoing;
-    vector ng = to_local(vector(0, 0, 1), basis_u, n, basis_v);
+    vector ng = to_local(vector(geometric), basis_u, n, basis_v);
     if (in_mode == 0) {
         float correction = 0.0001 - dot(incoming, ng);
         if (correction > 0) {
@@ -116,11 +141,17 @@ surface art_rough_footprint_reference(float in_roughness = 0.6, float in_anisotr
     if (in_mode == 2) {
         // The diagnostic box lies inside the glass. Its first intersection
         // must precede the enclosing glass box's exit.
-        vector target_min = vector(-9, -9, 0);
-        vector target_max = vector(9, 9, 1);
+        vector target_min = in_curved ? in_center + vector(-0.6 * in_axes[0], -6, 0) : vector(-9, -9, 0);
+        vector target_max = in_curved ? in_center + vector(0.6 * in_axes[0], 6, 1) : vector(9, 9, 1);
         float near = 0;
         float far = 1e30;
         float glass_exit = 1e30;
+        if (in_curved) {
+            vector q = (P - in_center) / in_axes;
+            vector d = direction / in_axes;
+            float a = dot(d, d), b = dot(q, d);
+            glass_exit = (-b + sqrt(max(0, b * b - a * (dot(q, q) - 1)))) / a;
+        }
         for (int axis = 0; axis < 3; ++axis) {
             if (direction[axis] == 0) {
                 if (P[axis] < target_min[axis] || P[axis] > target_max[axis]) { Ci = 0; return; }
@@ -129,7 +160,8 @@ surface art_rough_footprint_reference(float in_roughness = 0.6, float in_anisotr
                 float t1 = (target_max[axis] - P[axis]) / direction[axis];
                 near = max(near, min(t0, t1));
                 far = min(far, max(t0, t1));
-                glass_exit = min(glass_exit, ((direction[axis] > 0 ? 10 : -10) - P[axis]) / direction[axis]);
+                if (!in_curved)
+                    glass_exit = min(glass_exit, ((direction[axis] > 0 ? 10 : -10) - P[axis]) / direction[axis]);
             }
         }
         if (far < near || near > glass_exit) { Ci = 0; return; }
@@ -140,8 +172,10 @@ surface art_rough_footprint_reference(float in_roughness = 0.6, float in_anisotr
         float leave = (31 - P[2]) / direction[2];
         hit = P + enter * direction;
         if (abs(hit[0]) > 200 || abs(hit[1]) > 200) { Ci = 0; return; }
-        if (hit[0] > 1 && hit[0] < 3 && hit[1] > -3 && hit[1] < -1) {
-            float tx = direction[0] == 0 ? 1e30 : ((direction[0] > 0 ? 3 : 1) - P[0]) / direction[0];
+        float hole_min = in_curved ? in_center[0] + 1 : 1;
+        float hole_max = hole_min + 2;
+        if (hit[0] > hole_min && hit[0] < hole_max && hit[1] > -3 && hit[1] < -1) {
+            float tx = direction[0] == 0 ? 1e30 : ((direction[0] > 0 ? hole_max : hole_min) - P[0]) / direction[0];
             float ty = direction[1] == 0 ? 1e30 : ((direction[1] > 0 ? -1 : -3) - P[1]) / direction[1];
             float wall = min(tx, ty);
             if (wall > leave) { Ci = 0; return; }

@@ -1,0 +1,43 @@
+/*              A R T _ F R A M E _ R E F E R E N C E . O S L
+ * BRL-CAD
+ *
+ * Copyright (c) 2026 United States Government as represented by
+ * the U.S. Army Research Laboratory.
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public License
+ * version 2.1 as published by the Free Software Foundation.
+ *
+ * This library is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this file; see the file named COPYING for more
+ * information.
+ */
+#include "appleseed/as_osl_extensions.h"
+surface art_frame_reference(int in_reference = 0, int in_mode = 0,
+    point in_center = point(-15, 0, 0), vector in_axes = vector(10))
+{
+    vector offset = P - in_center;
+    normal analytic_normal = normalize(normal(offset / (in_axes * in_axes)));
+    vector analytic_tangent = normalize(vector(-in_axes[0] / in_axes[1] * offset[1],
+        in_axes[1] / in_axes[0] * offset[0], 0));
+    vector analytic_bitangent = normalize(cross(analytic_normal, analytic_tangent));
+    vector tangent = vector(0), bitangent = vector(0);
+    int tangent_available = getattribute("Tn", tangent);
+    int bitangent_available = getattribute("Bn", bitangent);
+    if (!in_reference && (!tangent_available || !bitangent_available)) { Ci = color(1, 0, 1) * emission(); return; }
+    normal selected_normal = as_shading_normal();
+    if (in_reference) {
+        tangent = analytic_tangent;
+        bitangent = analytic_bitangent;
+        selected_normal = analytic_normal;
+    }
+    vector value = in_mode < 2 ? tangent : (in_mode < 4 ? bitangent : vector(selected_normal));
+    color result = in_mode % 2 == 0 ? 0.5 * (1 + color(value)) :
+        100 * color(length(Dx(value)), length(Dy(value)), length(Dx(value) + Dy(value)));
+    Ci = result * emission();
+}
