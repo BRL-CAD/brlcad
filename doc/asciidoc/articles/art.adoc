@@ -1094,6 +1094,14 @@ passes, and cancellation preserves existing output files.
 |`photon_alpha` |0.7 |Progressive radius reduction parameter, greater than 0 and at most 1
 |===
 
+Importon guidance uses an initial setup pass before tracing lighting.
+When `passes` is inherited, art selects two total passes for SPPM with
+importons enabled, so the default produces a lighting result.  An explicit
+pass count includes the setup pass and must be at least two in this mode.
+`photon_importons=0` disables the setup pass; its inherited pass count is
+one, as for PT.  The setup pass contributes to progress but is cleared from
+the final image.  These rules also apply after engine changes and `clean`.
+
 All numeric controls accept `inherit`.  Photon counts may be zero to
 disable that emitter class; the estimate limit and pass count must be
 positive.  The initial radius must be positive and at most 100 percent.
