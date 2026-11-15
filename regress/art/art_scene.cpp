@@ -953,7 +953,7 @@ main(int argc, char **argv)
     if (argc == 3 && BU_STR_EQUAL(argv[1], "create-gray-texture"))
 	return create_texture(argv[2], TexturePattern::Gray);
     if (argc >= 4) {
-	const char *const database_commands[] = {"material", "attr", "color", "in", "r", "comb"};
+	const char *const database_commands[] = {"material", "attr", "color", "in", "r", "comb", "cp", "adjust"};
 	for (const char *name : database_commands) {
 	    if (BU_STR_EQUAL(argv[1], name)) {
 		std::vector<const char *> command{argv[1]};

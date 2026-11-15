@@ -1,0 +1,186 @@
+# REGRESS-ART-VOLUME-MATERIALS.CMAKE.IN
+# BRL-CAD
+#
+# Copyright (c) 2026 United States Government as represented by
+# the U.S. Army Research Laboratory.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions
+# are met:
+#
+# 1. Redistributions of source code must retain the above copyright
+# notice, this list of conditions and the following disclaimer.
+#
+# 2. Redistributions in binary form must reproduce the above
+# copyright notice, this list of conditions and the following
+# disclaimer in the documentation and/or other materials provided
+# with the distribution.
+#
+# 3. The name of the author may not be used to endorse or promote
+# products derived from this software without specific prior written
+# permission.
+#
+# THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS
+# OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+# WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+# ARE DISCLAIMED. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY
+# DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+# DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
+# GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+# INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+# WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+# NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+# SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+#
+cmake_minimum_required(VERSION 3.22)
+set(WORK "@CMAKE_CURRENT_BINARY_DIR@/volume-materials-output")
+set(LOG "${WORK}/art.log")
+file(REMOVE_RECURSE "${WORK}")
+file(MAKE_DIRECTORY "${WORK}/shaders" "${WORK}/cache")
+set(ENV{BU_DIR_CACHE} "${WORK}/cache")
+include("@CMAKE_CURRENT_SOURCE_DIR@/art_test_commands.cmake")
+include("@CMAKE_CURRENT_SOURCE_DIR@/art_nested_test_commands.cmake")
+include("@CMAKE_CURRENT_BINARY_DIR@/art_volume_test_commands.cmake")
+foreach(object IN ITEMS cube.r mesh.r)
+  # Orthographic cameras retain the established outside-origin backoff.
+  render_beer("${object}-orthographic" "${object}" 0 0 20 1 receiver.r)
+  render_beer("${object}-outside" "${object}" 40 0.02 20 1 receiver.r)
+  render_beer("${object}-inside" "${object}" 0 0.02 10 1 receiver.r)
+endforeach()
+
+# An opaque emitter inside the medium terminates the first segment early.
+run("${VEXEC}" in "${DB}" inner.emitter.s rpp -1 1 -1 1 -5.1 -5)
+run("${VEXEC}" r "${DB}" inner.emitter.r u inner.emitter.s)
+run("${VEXEC}" material "${DB}" assign inner.emitter.r receiver.material)
+foreach(object IN ITEMS cube.r mesh.r)
+  render_beer("${object}-inner-emitter" "${object}" 0 0.02 5 1 inner.emitter.r)
+endforeach()
+
+# Subtracting a cavity changes path length and initial containment.
+run("${VEXEC}" in "${DB}" cavity.s rpp -4 4 -4 4 -4 4)
+run("${VEXEC}" r "${DB}" shell.r u cube.s - cavity.s)
+run("${VEXEC}" material "${DB}" assign shell.r fog.material)
+render_beer(shell-outside shell.r 40 0.02 12 1 receiver.r)
+render_beer(shell-cavity shell.r 0 0.02 6 1 receiver.r)
+
+# Alpha surfaces must not shorten the segment used for medium attenuation.
+run("${VEXEC}" in "${DB}" cover.s rpp -2 2 -2 2 -2 -1.9)
+run("${VEXEC}" r "${DB}" cover.r u cover.s)
+run("${VEXEC}" material "${DB}" create cover.material Cover)
+run("${VEXEC}" set-named-material "${DB}" cover.material OSL art_alpha)
+run("${VEXEC}" material "${DB}" assign cover.r cover.material)
+foreach(opacity IN ITEMS 0 0.25)
+  run("${VEXEC}" set-named-material "${DB}" cover.material OSL.param.in_opacity "float ${opacity}")
+  set(coverage 1)
+  if(opacity EQUAL 0.25)
+    # Two quarter-opaque faces leave (1 - 0.25)^2 of the background.
+    set(coverage 0.5625)
+  endif()
+  foreach(object IN ITEMS cube.r mesh.r)
+    render_beer("${object}-covered-${opacity}" "${object}" 0 0.02 10 ${coverage} receiver.r cover.r)
+  endforeach()
+endforeach()
+
+function(require_material_report)
+  run_command("${CMAKE_CURRENT_BINARY_DIR}" FALSE "${EXEC}" -c "set inspect_materials=1" "${DB}" cube.r)
+  foreach(expected IN LISTS ARGN)
+    string(FIND "${command_output}" "${expected}" position)
+    if(position LESS 0)
+      message(FATAL_ERROR "Missing material inspection text: ${expected}\n${command_output}")
+    endif()
+  endforeach()
+endfunction()
+require_material_report("volume homogeneous" "input \"absorption\" \"color 0.01 0.02 0.03\""
+  "input \"scattering\" \"color 0 0 0\"" "input phase_function isotropic")
+
+# A parameter-only child retains the parent's model and other coefficients.
+run("${VEXEC}" material "${DB}" create fog.child Child)
+run("${VEXEC}" material "${DB}" set fog.child parent fog.material)
+run("${VEXEC}" set-named-material "${DB}" fog.child OSL.volume.absorption "float 0.02")
+run("${VEXEC}" set-named-material "${DB}" fog.child OSL.medium_priority 7)
+run("${VEXEC}" material "${DB}" assign cube.r fog.child)
+require_material_report("material_chain \"fog.child\" \"fog.material\""
+  "medium_priority 7" "input \"absorption\" \"color 0.02 0.02 0.02\"")
+set(saved_beer "${UNIT_BEER_RGB}")
+set(UNIT_BEER_RGB "0.9801986733067553,0.9801986733067553,0.9801986733067553")
+render_beer(child cube.r 0 0.02 10 1 receiver.r)
+set(UNIT_BEER_RGB "${saved_beer}")
+
+# Explicit surface and volume roots replace incompatible inherited properties.
+run("${VEXEC}" set-named-material "${DB}" fog.child OSL art_emission)
+run("${VEXEC}" set-named-material "${DB}" fog.child OSL.param.in_color "color 1 1 1")
+# Remove local volume overrides: a single layer cannot declare both models.
+run("${VEXEC}" material "${DB}" remove fog.child optical OSL.volume.absorption)
+require_material_report("shader \"material\" \"art_emission\" surface" "medium_priority 7")
+run("${VEXEC}" material "${DB}" create clear.material Clear)
+run("${VEXEC}" material "${DB}" set clear.material parent receiver.material)
+run("${VEXEC}" set-named-material "${DB}" clear.material OSL.volume homogeneous)
+run("${VEXEC}" material "${DB}" assign cube.r clear.material)
+require_material_report("volume homogeneous" "input \"absorption\" \"color 0 0 0\"")
+render_beer(clear-defaults cube.r 0 0.02 0 1 receiver.r)
+run("${VEXEC}" material "${DB}" assign cube.r fog.material)
+
+# Bad persisted properties must fail both preflight and rendering, preserving
+# an existing output. Inspection must publish no partial material report.
+set(invalid_db "${WORK}/invalid.g")
+set(preserved "${WORK}/preserved.exr")
+file(WRITE "${preserved}" "preserve existing output")
+file(SHA256 "${preserved}" preserved_digest)
+function(require_preserved_output)
+  file(SHA256 "${preserved}" after)
+  if(NOT after STREQUAL preserved_digest)
+    message(FATAL_ERROR "A failed volume render replaced an existing output")
+  endif()
+endfunction()
+function(reject_property name value diagnostic)
+  file(COPY_FILE "${DB}" "${invalid_db}")
+  run("${VEXEC}" set-named-material "${invalid_db}" fog.material "${name}" "${value}")
+  execute_process(COMMAND "${EXEC}" -c "set inspect_materials=1" -o "${preserved}"
+    "${invalid_db}" cube.r WORKING_DIRECTORY "${WORK}"
+    RESULT_VARIABLE result OUTPUT_VARIABLE report ERROR_VARIABLE messages TIMEOUT 30)
+  file(APPEND "${LOG}" "invalid ${name}=${value}: ${result}\n${report}\n${messages}\n")
+  if("${result}" STREQUAL "0" OR NOT "${result}" MATCHES "^[0-9]+$" OR
+      NOT report STREQUAL "" OR NOT messages MATCHES "${diagnostic}")
+    message(FATAL_ERROR "Invalid property did not fail cleanly: ${name}=${value}\n${report}\n${messages}")
+  endif()
+  expect_failure_matching("${diagnostic}" "${EXEC}" ${RENDER_ARGS}
+    -o "${preserved}" "${invalid_db}" cube.r)
+  require_preserved_output()
+endfunction()
+foreach(value IN ITEMS "float -0.01" "color 0 -1 0" "float nan" "float inf" "float 1e100"
+    "float 1 2" "color 1 2" "color 1 2 3 4" "float 0.01junk" "vector 1 2 3" "0.01")
+  foreach(coefficient IN ITEMS absorption scattering)
+    reject_property("OSL.volume.${coefficient}" "${value}" "invalid volume property")
+  endforeach()
+endforeach()
+foreach(property IN ITEMS "OSL.volume;heterogeneous" "OSL.volume.phase_function;unknown"
+    "OSL.volume.average_cosine;float 1" "OSL.volume.average_cosine;float -1"
+    "OSL.volume.average_cosine;float nan" "OSL.volume.average_cosine;float 0 1"
+    "OSL.volume.unknown;float 1" "OSL.param.in_color;color 1 1 1"
+    "OSL.node.test;art_emission" "OSL;art_emission" "OSL.version;2")
+  list(GET property 0 name)
+  list(GET property 1 value)
+  reject_property("${name}" "${value}" "invalid volume property")
+endforeach()
+reject_property(OSL.medium_priority 128 "invalid OSL.medium_priority")
+# Each coefficient fits in float; their extinction sum must fit as well.
+run("${VEXEC}" set-named-material "${DB}" fog.material OSL.volume.scattering "float 3e38")
+reject_property(OSL.volume.absorption "float 3e38" "unrepresentable volume extinction coefficient")
+run("${VEXEC}" set-named-material "${DB}" fog.material OSL.volume.scattering "float 0")
+
+# A volume boundary must be a closed, consistently oriented solid mesh.
+foreach(geometry IN ITEMS "sheet;mode;surf" "inward;orient;lh" "unoriented;orient;no" "open;F0;0 3 2")
+  list(GET geometry 0 label)
+  list(GET geometry 1 property)
+  list(GET geometry 2 value)
+  run("${VEXEC}" cp "${DB}" mesh.s "${label}.s")
+  run("${VEXEC}" adjust "${DB}" "${label}.s" "${property}" "${value}")
+  run("${VEXEC}" r "${DB}" "${label}.r" u "${label}.s")
+  run("${VEXEC}" material "${DB}" assign "${label}.r" fog.material)
+  expect_failure_matching("closed outward-oriented solid BOT" "${EXEC}" ${RENDER_ARGS}
+    -o "${preserved}" "${DB}" "${label}.r")
+  require_preserved_output()
+endforeach()
+expect_failure_matching("requires integrator=pt" "${EXEC}"
+  -c "set integrator=sppm inspect_materials=1" -o "${preserved}" "${DB}" cube.r)
+require_preserved_output()

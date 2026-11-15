@@ -1,0 +1,67 @@
+# ART_VOLUME_TEST_COMMANDS.CMAKE.IN
+# BRL-CAD
+#
+# Copyright (c) 2026 United States Government as represented by
+# the U.S. Army Research Laboratory.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions
+# are met:
+#
+# 1. Redistributions of source code must retain the above copyright
+# notice, this list of conditions and the following disclaimer.
+#
+# 2. Redistributions in binary form must reproduce the above
+# copyright notice, this list of conditions and the following
+# disclaimer in the documentation and/or other materials provided
+# with the distribution.
+#
+# 3. The name of the author may not be used to endorse or promote
+# products derived from this software without specific prior written
+# permission.
+#
+# THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS
+# OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+# WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+# ARE DISCLAIMED. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY
+# DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+# DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
+# GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+# INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+# WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+# NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+# SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+#
+set(TOOL "@ART_OIIOTOOL_EXECUTABLE@")
+foreach(shader IN ITEMS art_emission art_alpha)
+  configure_file("@CMAKE_CURRENT_BINARY_DIR@/${shader}.oso" "${WORK}/shaders/${shader}.oso" COPYONLY)
+endforeach()
+set(DB "${WORK}/fog.g")
+run("${VEXEC}" create-material "${DB}" art_emission)
+run("${VEXEC}" material "${DB}" create fog.material Fog)
+run("${VEXEC}" set-named-material "${DB}" fog.material OSL.volume homogeneous)
+run("${VEXEC}" set-named-material "${DB}" fog.material OSL.volume.absorption "color 0.01 0.02 0.03")
+run("${VEXEC}" set-named-material "${DB}" fog.material OSL.volume.scattering "float 0")
+foreach(object IN ITEMS cube.r mesh.r)
+  run("${VEXEC}" material "${DB}" assign "${object}" fog.material)
+endforeach()
+run("${VEXEC}" material "${DB}" remove receiver.material optical OSL.param.in_target)
+run("${VEXEC}" set-named-material "${DB}" receiver.material OSL art_emission)
+run("${VEXEC}" set-named-material "${DB}" receiver.material OSL.param.in_color "color 1 1 1")
+set(RENDER_ARGS -P 1 -w 1 -n 1 -c "viewsize 0.01" -c "orientation 0 0 0 1"
+  -c "set samples=16 max_volume_bounces=0 light_intensity=0 environment_intensity=0 background_color=black")
+# Per-millimeter Beer factors exp(-0.01), exp(-0.02), exp(-0.03).
+set(UNIT_BEER_RGB "0.9900498337491681,0.9801986733067553,0.9704455335485082")
+set(HALF_RELATIVE_BOUND 0.001)
+function(check_beer image length coverage)
+  run("${TOOL}" --pattern "constant:color=${UNIT_BEER_RGB}" 1x1 3 -d float
+    --powc ${length} --mulc ${coverage} -o "${WORK}/reference.exr")
+  compare_radiance_mean("${image}" "${WORK}/reference.exr" ${HALF_RELATIVE_BOUND} FALSE)
+endfunction()
+function(render_beer label object eye projection length coverage)
+  set(image "${WORK}/${label}.exr")
+  run("${EXEC}" ${RENDER_ARGS} -p ${projection} -c "eye_pt 0 0 ${eye}"
+    -o "${image}" "${DB}" "${object}" ${ARGN})
+  run("${VEXEC}" check-image "${image}" 1 1)
+  check_beer("${image}" ${length} ${coverage})
+endfunction()

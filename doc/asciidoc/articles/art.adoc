@@ -161,9 +161,14 @@ interior.  Scattering uses independent solid-angle quadrature with extinction
 on both camera and shadow segments.  Native unit tests also
 check initial-medium discovery, clipped search intervals, retained path data,
 overall scattering limits, both path-tracing entry points, and adjoint
-attenuation.  These renderer checks precede a
-BRL-CAD material binding and complete CSG/BOT volume workflow; those remain
-open integration work.
+attenuation.  `regress-art-volume-materials` adds persisted BRL-CAD material
+bindings, inside/outside CSG and solid BOT absorption, cavities, internal
+emitters, alpha covers, inheritance, and invalid-input/geometry checks.
+`regress-art-volume-scattering` compares point-lit CSG and BOT single
+scattering with independent quadrature for both phase functions and both
+distance sampling modes, with transparent and partially opaque covers on
+camera and shadow segments.  Multiple scattering, overlapping media and volume
+compositing alpha need further qualification.
 
 |Lighting across frames
 |`regress-art-lighting` compares diffuse HDR frame sequences with fresh-process
@@ -450,12 +455,15 @@ Path controls pass through to Appleseed's path tracer.  They default to
 |`max_diffuse_bounces` |3 |Diffuse limit, excluding the first diffuse bounce
 |`max_glossy_bounces` |8 |Number of rough reflection or transmission continuations
 |`max_specular_bounces` |8 |Number of ideal reflection or refraction continuations
+|`max_volume_bounces` |8 |Number of sampled volume-scattering continuations
+|`volume_distance_samples` |2 |Positive number of volume distance samples per lighting estimate
+|`volume_exponential_only` |0 |Use exponential distance sampling alone instead of combined equiangular/exponential sampling
 |`rr_min_path_length` |6 |Path length before Russian roulette may prune paths
-|`next_event_estimation` |1 |Estimate lighting explicitly at surface vertices
+|`next_event_estimation` |1 |Estimate lighting explicitly at surface and volume vertices
 |`enable_caustics` |0 |Allow glossy/specular paths after diffuse or volume scattering
 |===
 
-The four bounce limits accept nonnegative integers, `-1` to remove that
+The five bounce limits accept nonnegative integers, `-1` to remove that
 individual cap, or `inherit` to restore the native default.  Caps combine:
 removing a specular cap does not remove the overall cap or Russian
 roulette.  Native global and diffuse limits of zero retain direct
@@ -471,9 +479,14 @@ the minimum path length, and `inherit` restores the default.
 `next_event_estimation` and `enable_caustics` accept `0`, `1`, or `inherit`.
 Leave next-event estimation enabled
 for normal rendering; disabling it can help isolate sampled continuation
-paths during shader diagnosis.  These controls do not enable participating
-media, thin glass, or transport features that the geometry adapter has
-not yet qualified.
+paths during shader diagnosis.  These controls do not enable
+thin glass or transport features that the geometry adapter has not yet
+qualified.  Participating media use the explicit material model below.
+`max_volume_bounces=0` retains direct single-scattering lighting while
+excluding sampled phase-function continuations.  `volume_distance_samples`
+accepts positive integers; `volume_exponential_only` accepts `0` or `1`.
+Both also accept `inherit`.  These three volume controls require
+`integrator=pt`.
 
 `renderer_log=debug|info|warning|error` selects native renderer diagnostics;
 the default is `info`.  Debug includes shader `printf` messages and native
@@ -1116,6 +1129,84 @@ subordinate media.  Exceeding that limit at a photon emitter reports a
 worker error, aborts the render, and preserves existing output.  Renderer
 errors are observed during rendering as well as cleanup; later passes must
 not wait indefinitely after photon workers fail.
+
+=== Homogeneous participating media
+
+A material object's optical `OSL.volume` property selects an Appleseed
+homogeneous volume.  This uses the same persisted assignments and inheritance
+as surface OSL materials; its coefficients configure a native Appleseed
+volume rather than an OSL surface shader.  For example, assign a bounded
+region containing fog:
+
+[source,tcl]
+----
+material create fog.material Fog
+material set fog.material optical OSL.volume homogeneous
+material set fog.material optical OSL.volume.absorption "color 0.001 0.002 0.003"
+material set fog.material optical OSL.volume.scattering "float 0.004"
+material set fog.material optical OSL.volume.phase_function henyey
+material set fog.material optical OSL.volume.average_cosine "float 0.4"
+material assign fog.r fog.material
+----
+
+Use `set integrator=pt` in art.  The region boundary defines where the medium
+exists and has no reflecting surface of its own.  It must be an ordinary
+rendered region: air-code regions retain art's existing exclusion behavior.
+Boolean CSG cavities are supported.  Solid BOT boundaries must be closed,
+consistently oriented and outward facing; surface, plate, open and inward
+meshes are rejected.  The Boolean region must have finite bounds with nonzero
+extent on all three axes.  Inspection validates the material definition;
+geometry validation runs when preparing the render.
+
+[cols="2,1,3",options="header"]
+|===
+|Optical property |Default |Meaning
+|`OSL.volume` |None |Required model selector; currently `homogeneous`
+|`OSL.volume.absorption` |`float 0` |Nonnegative absorption coefficient
+|`OSL.volume.scattering` |`float 0` |Nonnegative scattering coefficient
+|`OSL.volume.phase_function` |`isotropic` |`isotropic` or `henyey`
+|`OSL.volume.average_cosine` |`float 0` |Henyey asymmetry from -0.99 through 0.99
+|`OSL.medium_priority` |`0` |Existing signed integer medium priority
+|===
+
+Coefficients are inverse millimeters in art's common/world coordinate space,
+regardless of the database's display units.  `float` broadcasts one value to
+all three channels; `color` specifies three linear RGB coefficients.  These
+are physical coefficients and receive no sRGB conversion.  A camera segment
+of length _d_ with absorption _a_ and no scattering transmits `exp(-a*d)`.
+Values and each channel's absorption-plus-scattering sum must fit in a finite
+float.  Unknown properties, malformed typed values and negative coefficients
+fail before replacing an existing image.
+
+The Henyey average cosine is a typed `float`; positive values favor forward
+scattering and negative values favor backscattering.  The isotropic model
+ignores it.  Volume materials use `OSL.version=1` or an omitted version.
+Surface shader roots, shader inputs and graph properties cannot coexist in
+the same volume definition.  A child that changes only volume parameters
+inherits the parent's other parameters.  An explicit `OSL` or `OSL.volume`
+root replaces the inherited definition, preventing surface graph inputs from
+leaking into a volume or volume coefficients from leaking into a surface.
+`inspect_materials=1` reports the resolved model, coefficients, phase and
+priority without rendering.
+
+The CSG and BOT regressions compare Beer attenuation from outside and true
+inside pinhole cameras, internal emitters, Boolean cavities, and transparent
+or partially opaque covers.  Orthographic cameras retain the existing librt
+origin backoff; a nominal eye point inside a region does not establish a
+physical inside camera in that projection.  Point-lit single scattering is
+checked against independent line quadrature, including shadow extinction,
+isotropic and Henyey phases, combined or exponential distance sampling,
+and alpha covers on both camera and shadow segments.
+The combined proposal also covers exact and near alignment of a light with
+the camera ray; guide positions and angular intervals retain double precision
+to avoid both collapsed ranges and biased distance proposals.  Existing surface glass and alpha workflows remain separate regression
+coverage.
+
+This initial workflow is limited to path tracing.  SPPM volume materials fail
+with an explicit diagnostic.  General multiple-scattering energy, overlapping
+participating media, combined glass/volume boundaries, heterogeneous fields,
+and volume-aware compositing alpha still need qualification.  An EXR alpha
+channel must not yet be treated as a qualified fog-compositing mask.
 
 === Nested optical volumes
 
