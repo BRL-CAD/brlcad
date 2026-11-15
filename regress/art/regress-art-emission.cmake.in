@@ -5,15 +5,15 @@ file(MAKE_DIRECTORY "${WORK}/shaders" "${WORK}/cache")
 set(ENV{BU_DIR_CACHE} "${WORK}/cache")
 set(ART_COMMAND_TIMEOUT 90)
 include("@CMAKE_CURRENT_SOURCE_DIR@/art_test_commands.cmake")
-foreach(shader IN ITEMS art_diffuse art_emission art_attributes)
+foreach(shader IN ITEMS art_diffuse art_emission art_attributes art_shared_layer)
   configure_file("@CMAKE_CURRENT_BINARY_DIR@/${shader}.oso" "${WORK}/shaders/${shader}.oso" COPYONLY)
 endforeach()
 set(view "${WORK}/receiver.view")
 file(WRITE "${view}" "viewsize 0.001; eye_pt 0 2 0; lookat_pt 0 0 0; start 0; end;\n")
 function(render_emitter database image view)
   run(INPUT_FILE "${view}" "${EXEC}" -M -p 0.02 -P 2 -w 1 -n 1 -C 0/0/0
-    -c "set samples=65536 max_bounces=0 light_intensity=0 environment_intensity=0"
-    -o "${image}" "${database}" receiver.r emitter.r)
+    -c "set samples=65536 max_bounces=1 light_intensity=0 environment_intensity=0"
+    -o "${image}" "${database}" receiver.r emitter.r ${ARGN})
 endfunction()
 foreach(kind IN ITEMS sphere cavity box mesh)
   set(database "${WORK}/${kind}.g")
@@ -64,4 +64,20 @@ foreach(property IN ITEMS "in_expected_name;string emitter.r" "in_expected_path;
 endforeach()
 set(image "${WORK}/sphere-attributes.exr")
 render_emitter("${database}" "${image}" "${view}")
+run("${VEXEC}" check-emitter-image "${image}" sphere)
+
+# Both cover boundaries are transparent. Their traversal must preserve the
+# distance from the diffuse receiver when weighting paths that hit the light.
+# Place the cover just below the sphere's lower Y=2.5 surface to amplify any
+# erroneous conversion that uses only the final short segment to the emitter.
+set(database "${WORK}/sphere-covered.g")
+run("${VEXEC}" create-emitter "${database}" sphere)
+run("${VEXEC}" in "${database}" cover.s rpp -10 10 2.48 2.49 -10 10)
+run("${VEXEC}" r "${database}" cover.r u cover.s)
+run("${VEXEC}" material "${database}" create cover.material Clear_cover)
+run("${VEXEC}" material "${database}" set cover.material optical OSL art_shared_layer)
+run("${VEXEC}" material "${database}" set cover.material optical OSL.param.in_opacity "float 0")
+run("${VEXEC}" material "${database}" assign cover.r cover.material)
+set(image "${WORK}/sphere-covered.exr")
+render_emitter("${database}" "${image}" "${view}" cover.r)
 run("${VEXEC}" check-emitter-image "${image}" sphere)

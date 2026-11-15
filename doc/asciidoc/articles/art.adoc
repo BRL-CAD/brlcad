@@ -1390,8 +1390,10 @@ solid BOT.  Additional sphere and cavity checks exercise area-normalized
 `as_maya_areaLight` emission on sampled light hits and directly visible surfaces.  A
 sampled-emission metadata check evaluates region identity,
 material identity, region color, numeric identifiers, and raw attributes
-on the manufactured light hit.  These complement the ordinary camera and
-post-transmission query checks.
+on the manufactured light hit.  A fully transparent cover between the
+receiver and emitter must preserve the analytic illumination, including
+paths that hit the light after passing through both cover boundaries.
+These complement the ordinary camera and post-transmission query checks.
 
 The emitter contract supports static geometry.  Qualification of moving
 emitters, participating media, and general area-lit caustic focusing
