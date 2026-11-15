@@ -19,6 +19,7 @@ function(render_count name expected settings)
   if(NOT count EQUAL expected)
     message(FATAL_ERROR "${name}: expected ${expected} camera samples, received ${count}")
   endif()
+  set(sample_output "${command_output}" PARENT_SCOPE)
 endfunction()
 
 render_count(uniform-seven 7 "samples=7")
@@ -36,6 +37,52 @@ render_count(adaptive-order 29 "min_samples=29 sampling=adaptive s=29 batch_size
 render_count(dormant-minimum 7 "min_samples=29 samples=7")
 run("@ART_OIIOTOOL_EXECUTABLE@" --fail 0 --hardfail 0 --warn 0 --hardwarn 0
   "${WORK}/uniform-variable.exr" "${WORK}/adaptive-order.exr" --diff)
+
+# Uniform rendering importance-samples the pixel filter and adds each
+# recorded camera sample with equal weight. Retaining only the final pass
+# produces a different answer even though the total evaluation count is right.
+function(sampling_average output)
+  set(arguments)
+  set(count 0)
+  foreach(evaluation IN LISTS ARGN)
+    string(REPLACE "art_sampling_evaluation " "" rgb "${evaluation}")
+    string(REPLACE " " "," rgb "${rgb}")
+    list(APPEND arguments --pattern "constant:color=${rgb}" 1x1 3)
+    if(count GREATER 0)
+      list(APPEND arguments --add)
+    endif()
+    math(EXPR count "${count}+1")
+  endforeach()
+  run("@ART_OIIOTOOL_EXECUTABLE@" ${arguments} --divc ${count} -d float -o "${output}")
+endfunction()
+set(ACCUMULATION_PASSES 4)
+set(SAMPLES_PER_PASS 2)
+math(EXPR TOTAL_SAMPLES "${ACCUMULATION_PASSES}*${SAMPLES_PER_PASS}")
+math(EXPR LAST_PASS_OFFSET "${TOTAL_SAMPLES}-${SAMPLES_PER_PASS}")
+set(ACCUMULATION_ABSOLUTE_BOUND 0.0005)
+foreach(integrator IN ITEMS pt sppm)
+  set(photon_controls)
+  if(integrator STREQUAL "sppm")
+    set(photon_controls "light_photons=0 environment_photons=0 photon_importons=0")
+  endif()
+  render_count("multipass-${integrator}" ${TOTAL_SAMPLES}
+    "integrator=${integrator} samples=${SAMPLES_PER_PASS} passes=${ACCUMULATION_PASSES} ${photon_controls}")
+  string(REGEX MATCHALL "art_sampling_evaluation [-+0-9.eE]+ [-+0-9.eE]+ [-+0-9.eE]+" values "${sample_output}")
+  list(LENGTH values count)
+  if(NOT count EQUAL TOTAL_SAMPLES)
+    message(FATAL_ERROR "Multi-pass sampling did not report every RGB value")
+  endif()
+  set(reference "${WORK}/multipass-${integrator}-reference.exr")
+  sampling_average("${reference}" ${values})
+  list(SUBLIST values ${LAST_PASS_OFFSET} ${SAMPLES_PER_PASS} last_pass)
+  set(last_reference "${WORK}/multipass-${integrator}-last-pass.exr")
+  sampling_average("${last_reference}" ${last_pass})
+  expect_failure("@ART_OIIOTOOL_EXECUTABLE@" --fail ${ACCUMULATION_ABSOLUTE_BOUND}
+    --hardfail ${ACCUMULATION_ABSOLUTE_BOUND} "${reference}" "${last_reference}" --diff)
+  run("@ART_OIIOTOOL_EXECUTABLE@" --fail ${ACCUMULATION_ABSOLUTE_BOUND}
+    --hardfail ${ACCUMULATION_ABSOLUTE_BOUND}
+    "${WORK}/multipass-${integrator}.exr" --ch R,G,B "${reference}" --diff)
+endforeach()
 
 foreach(level IN ITEMS info warning error)
   run_command("${CMAKE_CURRENT_BINARY_DIR}" FALSE "${EXEC}" ${RENDER_ARGS}

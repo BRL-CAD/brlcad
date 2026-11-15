@@ -387,6 +387,8 @@ ArtRenderSettings::apply(renderer::ParamArray& parameters, int budget) const
 {
     parameters.insert("lighting_engine", art_integrator_name(integrator));
     parameters.insert("tile_renderer", sampling == ArtSamplingMode::Adaptive ? "adaptive" : "generic");
+    // Later passes must add to the existing sample sums rather than replace them.
+    parameters.insert("shading_result_framebuffer", passes.value_or(1) > 1 ? "permanent" : "ephemeral");
     if (sampling == ArtSamplingMode::Adaptive) {
 	parameters.insert_path("adaptive_tile_renderer.min_samples", min_samples)
 	    .insert_path("adaptive_tile_renderer.max_samples", budget)
