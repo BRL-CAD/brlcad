@@ -24,6 +24,9 @@ configure_file("${CMAKE_CURRENT_SOURCE_DIR}/art_photon_test_commands.cmake.in"
 configure_file("${CMAKE_CURRENT_SOURCE_DIR}/art_volume_test_commands.cmake.in"
   "${CMAKE_CURRENT_BINARY_DIR}/art_volume_test_commands.cmake" @ONLY)
 
+configure_file("${CMAKE_CURRENT_SOURCE_DIR}/art_volume_energy_test_commands.cmake.in"
+  "${CMAKE_CURRENT_BINARY_DIR}/art_volume_energy_test_commands.cmake" @ONLY)
+
 # SDK helper includes are outside the source tree; track their updates too.
 file(GLOB_RECURSE ART_OSL_HELPER_HEADERS CONFIGURE_DEPENDS
   "${ART_OSL_HELPER_INCLUDE_DIR}/appleseed/*.h")

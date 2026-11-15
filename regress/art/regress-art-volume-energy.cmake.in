@@ -1,0 +1,110 @@
+# REGRESS-ART-VOLUME-ENERGY.CMAKE.IN
+# BRL-CAD
+#
+# Copyright (c) 2026 United States Government as represented by
+# the U.S. Army Research Laboratory.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions
+# are met:
+#
+# 1. Redistributions of source code must retain the above copyright
+# notice, this list of conditions and the following disclaimer.
+#
+# 2. Redistributions in binary form must reproduce the above
+# copyright notice, this list of conditions and the following
+# disclaimer in the documentation and/or other materials provided
+# with the distribution.
+#
+# 3. The name of the author may not be used to endorse or promote
+# products derived from this software without specific prior written
+# permission.
+#
+# THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS
+# OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+# WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+# ARE DISCLAIMED. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY
+# DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+# DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
+# GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+# INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+# WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+# NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+# SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+#
+cmake_minimum_required(VERSION 3.22)
+set(ENERGY_TEST volume-energy)
+set(ENERGY_SAMPLES 32768)
+set(ENERGY_SIZE 1)
+include("@CMAKE_CURRENT_BINARY_DIR@/art_volume_energy_test_commands.cmake")
+run("${VEXEC}" set-named-material "${DB}" fog.material OSL.volume.scattering "float 0.1")
+# A bounded conservative medium in a uniform radiance field leaves it unchanged.
+# Optical thickness two exercises repeated scattering; a zero-bounce control
+# without explicit sampling would instead transmit only exp(-2).
+check_conservation()
+
+# A constant HDR panorama exercises the same transport through map sampling.
+run("${TOOL}" --pattern constant:color=0.25,0.5,4 4x2 3 -d float -o "${WORK}/environment.exr")
+list(APPEND ENERGY_ARGS -c "set environment_map=\"${WORK}/environment.exr\" environment_map_colorspace=linear")
+energy_phase(0)
+energy_reference("0.25,0.5,4")
+foreach(object IN ITEMS cube.r mesh.r)
+  foreach(eye IN ITEMS 40 0)
+    render_energy("map-${object}-${eye}" "${object}" ${eye} 64 1)
+  endforeach()
+endforeach()
+# Bilinear filtering creates radiance inside zero-density importance cells.
+# Phase-only paths provide an independent estimator for those contributions.
+run("${TOOL}" --pattern constant:color=0,0,0 4x2 3
+  --fill:color=1,1,1 4x1+0+0 -d float -o "${WORK}/environment.exr")
+foreach(g IN ITEMS 0 0.4 -0.4)
+  energy_phase("${g}")
+  foreach(object IN ITEMS cube.r mesh.r)
+    render_energy_image("support-reference-${g}-${object}" "${object}" 0 64 0)
+    run("${TOOL}" "${WORK}/support-reference-${g}-${object}.exr" --ch R,G,B
+      --resize:filter=box 1x1 -d float -o "${WORK}/reference.exr")
+    render_energy("support-${g}-${object}" "${object}" 0 64 1)
+  endforeach()
+endforeach()
+list(APPEND ENERGY_ARGS -c "set environment_map=inherit")
+
+# Direct single scattering has an independent two-dimensional reference:
+# exp(-sigma_t*d) + sigma_s*integral_0^d exp(-sigma_t*s)*
+# integral_-1^1 phase(mu)*exp(-sigma_t*exit_length(s,mu))*2*pi dmu ds.
+# A radius-10 sphere gives exit_length=-z*mu+sqrt(100-z*z*(1-mu*mu)).
+# Gauss-Legendre orders 128 and 256 agree to better than 5e-10 absolute.
+run("${VEXEC}" in "${DB}" sphere.s sph 0 0 0 10)
+run("${VEXEC}" r "${DB}" sphere.r u sphere.s)
+run("${VEXEC}" material "${DB}" assign sphere.r fog.material)
+run("${VEXEC}" set-named-material "${DB}" fog.material OSL.volume.absorption "float 0.02")
+run("${VEXEC}" set-named-material "${DB}" fog.material OSL.volume.scattering "float 0.03")
+set(OUTSIDE_REFERENCES 0.6187975134513237 0.6086562259701498 0.6249278800070097)
+set(INSIDE_REFERENCES 0.7605966795618289 0.7734896084992410 0.7456596299570979)
+set(BLOCKED_REFERENCES 0.6924546707227686 0.7421953254354431 0.6448300666381410)
+set(index 0)
+foreach(g IN ITEMS 0 0.4 -0.4)
+  energy_phase("${g}")
+  list(GET OUTSIDE_REFERENCES ${index} outside)
+  list(GET INSIDE_REFERENCES ${index} inside)
+  energy_reference("${outside},${outside},${outside}")
+  render_energy("single-outside-${g}" sphere.r 40 0 1)
+  energy_reference("${inside},${inside},${inside}")
+  render_energy("single-inside-${g}" sphere.r 0 0 1)
+  math(EXPR index "${index}+1")
+endforeach()
+# The blocker lies behind both cameras and removes the positive-Z hemisphere
+# from illumination. Its finite width omits less than 1e-4 of solid angle.
+run("${VEXEC}" in "${DB}" blocker.s rpp -1000000 1000000 -1000000 1000000 60 61)
+run("${VEXEC}" r "${DB}" blocker.r u blocker.s)
+run("${VEXEC}" material "${DB}" create blocker.material Blocker)
+run("${VEXEC}" set-named-material "${DB}" blocker.material OSL art_alpha)
+run("${VEXEC}" set-named-material "${DB}" blocker.material OSL.param.in_opacity "float 1")
+run("${VEXEC}" material "${DB}" assign blocker.r blocker.material)
+set(index 0)
+foreach(g IN ITEMS 0 0.4 -0.4)
+  energy_phase("${g}")
+  list(GET BLOCKED_REFERENCES ${index} expected)
+  energy_reference("${expected},${expected},${expected}")
+  render_energy("shadowed-${g}" sphere.r 0 0 1 blocker.r)
+  math(EXPR index "${index}+1")
+endforeach()

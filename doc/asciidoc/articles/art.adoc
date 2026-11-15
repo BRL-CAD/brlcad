@@ -1228,11 +1228,32 @@ the camera ray; guide positions and angular intervals retain double precision
 to avoid both collapsed ranges and biased distance proposals.  Existing surface glass and alpha workflows remain separate regression
 coverage.
 
-This initial workflow is limited to path tracing.  SPPM volume materials fail
-with an explicit diagnostic.  General multiple-scattering energy, overlapping
-participating media, combined glass/volume boundaries, heterogeneous fields,
-and volume-aware compositing alpha still need qualification.  An EXR alpha
-channel must not yet be treated as a qualified fog-compositing mask.
+Constant domes and HDR panoramas illuminate participating media.  With
+next-event estimation enabled, art samples environment lighting along each
+medium segment, including extinction and occlusion toward the environment.
+Continued phase-function paths supply the complementary sampling proposal;
+at the volume-bounce limit, a local phase sample retains direct single
+scattering.  Environment and phase proposals must both contribute: weighting
+only escaped phase paths loses energy even under uniform illumination.
+
+`regress-art-volume-energy` checks conservative multiple scattering under
+uniform radiance on CSG and BOT cubes, outside and inside pinhole cameras,
+isotropic and forward/backward Henyey phases, and both next-event settings.
+It also checks constant HDR panoramas, filtered radiance in zero-density
+importance cells, and absorbing-sphere single scattering
+against independent line/angular quadrature, including an environment
+blocker.  `regress-art-volume-energy-spectral` exercises unequal RGB
+scattering coefficients and a zero-extinction channel with more samples.
+Both use a 1.5-percent relative mean-energy bound.  A finite continuation cap
+still truncates higher scattering orders; the uniform-field cases use 64
+volume continuations and disable Russian roulette to isolate transport.
+
+This workflow is limited to path tracing.  SPPM volume materials fail with
+an explicit diagnostic.  General absorbing multiple-scattering energy,
+overlapping participating media, combined glass/volume boundaries,
+heterogeneous fields and volume-aware compositing alpha still need
+qualification.  An EXR alpha channel must not yet be treated as a qualified
+fog-compositing mask.
 
 === Nested optical volumes
 
