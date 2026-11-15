@@ -38,6 +38,9 @@ set(ENERGY_TEST volume-energy-spectral)
 # Increase sampling rather than loosening the conservation bound.
 set(ENERGY_SAMPLES 131072)
 set(ENERGY_SIZE 2)
+# High-sample spectral renders need more time than ordinary fixture commands,
+# especially when the installed regression suite runs concurrently.
+set(ART_COMMAND_TIMEOUT 90)
 include("@CMAKE_CURRENT_BINARY_DIR@/art_volume_energy_test_commands.cmake")
 run("${VEXEC}" set-named-material "${DB}" fog.material OSL.volume.scattering "color 0 0.04 0.1")
 check_conservation()
