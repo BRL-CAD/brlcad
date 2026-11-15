@@ -94,6 +94,7 @@ set(ART_REGRESSION_TEST_NAMES
   regress-art-volume-glass
   regress-art-medium-priority
   regress-art-shared-media
+  regress-art-transparent-contact
   regress-art-curved-media
   regress-art-curved-contact
   regress-art-rough-glass
@@ -177,7 +178,7 @@ cmakefiles(CMakeLists.txt art_test_setup.cmake art_installed_tests.cmake
   regress-art-texture.cmake.in regress-art-color.cmake.in
   regress-art-image-maps.cmake.in regress-art-resources.cmake.in
   regress-art-transmission.cmake.in regress-art-absorption.cmake.in regress-art-initial-media.cmake.in regress-art-medium-priority.cmake.in
-  regress-art-shared-media.cmake.in regress-art-curved-media.cmake.in
+  regress-art-shared-media.cmake.in regress-art-transparent-contact.cmake.in regress-art-curved-media.cmake.in
   regress-art-curved-contact.cmake.in regress-art-rough-glass.cmake.in
   regress-art-rough-energy.cmake.in regress-art-rough-paths.cmake.in
   regress-art-caustics-clear.cmake.in regress-art-caustics-absorption.cmake.in regress-art-caustics-state.cmake.in regress-art-caustics-rough.cmake.in
@@ -221,7 +222,7 @@ if(TARGET art AND BUILD_TESTING)
     "${CMAKE_CURRENT_BINARY_DIR}/image-maps-output"
     "${CMAKE_CURRENT_BINARY_DIR}/resources-output"
     "${CMAKE_CURRENT_BINARY_DIR}/transmission-output"
-    "${CMAKE_CURRENT_BINARY_DIR}/absorption-output" "${CMAKE_CURRENT_BINARY_DIR}/initial-media-output" "${CMAKE_CURRENT_BINARY_DIR}/volume-output" "${CMAKE_CURRENT_BINARY_DIR}/volume-materials-output" "${CMAKE_CURRENT_BINARY_DIR}/volume-scattering-output" "${CMAKE_CURRENT_BINARY_DIR}/volume-energy-output" "${CMAKE_CURRENT_BINARY_DIR}/volume-energy-spectral-output" "${CMAKE_CURRENT_BINARY_DIR}/volume-overlap-output" "${CMAKE_CURRENT_BINARY_DIR}/volume-glass-output" "${CMAKE_CURRENT_BINARY_DIR}/medium-priority-output" "${CMAKE_CURRENT_BINARY_DIR}/shared-media-output"
+    "${CMAKE_CURRENT_BINARY_DIR}/absorption-output" "${CMAKE_CURRENT_BINARY_DIR}/initial-media-output" "${CMAKE_CURRENT_BINARY_DIR}/volume-output" "${CMAKE_CURRENT_BINARY_DIR}/volume-materials-output" "${CMAKE_CURRENT_BINARY_DIR}/volume-scattering-output" "${CMAKE_CURRENT_BINARY_DIR}/volume-energy-output" "${CMAKE_CURRENT_BINARY_DIR}/volume-energy-spectral-output" "${CMAKE_CURRENT_BINARY_DIR}/volume-overlap-output" "${CMAKE_CURRENT_BINARY_DIR}/volume-glass-output" "${CMAKE_CURRENT_BINARY_DIR}/medium-priority-output" "${CMAKE_CURRENT_BINARY_DIR}/shared-media-output" "${CMAKE_CURRENT_BINARY_DIR}/transparent-contact-output"
     "${CMAKE_CURRENT_BINARY_DIR}/curved-media-output" "${CMAKE_CURRENT_BINARY_DIR}/curved-contact-output"
     "${CMAKE_CURRENT_BINARY_DIR}/rough-glass-output"
     "${CMAKE_CURRENT_BINARY_DIR}/rough-energy-output"

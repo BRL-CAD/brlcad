@@ -1399,7 +1399,10 @@ priority supplies the interface's surface properties.  A surface-free fog
 interior can therefore have higher priority than the glass surface around
 it.  Visible tied priorities, different tangent planes, partial coverage,
 and non-glass transmissive layers are outside this shared-interface
-workflow; ambiguous groups fail with a diagnostic.
+workflow; ambiguous groups fail with a diagnostic.  Partial coverage needs
+a layer order: moving a transparent filter just inside or outside a glass
+boundary changes how reflection and transmission traverse that filter.
+Keep such surfaces distinct on the intended side of the interface.
 The opaque contact cases below retain the incident medium when reflecting.
 Arbitrary interpenetrating-volume arrangements still need separate
 qualification.
@@ -1424,6 +1427,15 @@ Per-pixel transport comparisons allow binary16 output rounding, including
 HDR values; independent center-ray energy and full-float geometry checks
 retain their absolute bounds.  This does not establish rough shared-interface transport, native
 triangle/Embree boundary coalescing, transmitted shadows, or caustics.
+
+A fully transparent cover does not own a coincident surface or optical
+boundary.  `regress-art-transparent-contact` compares covered and uncovered
+CSG and solid BOT glass, fog, and emissive surfaces, with cameras inside and
+outside and both object-selection orders.  The images must match exactly.
+Native tests also force the invisible cover to be the first hit and check
+glass entry/exit media and ordinary opaque ownership.  A partially covered
+optical contact must diagnose ambiguity in either hit order and preserve
+existing output, rather than silently skipping the glass.
 
 `regress-art-curved-media` extends the independent optical reference to
 concentric spheres and ellipsoids.  It solves quadratic intersections and
