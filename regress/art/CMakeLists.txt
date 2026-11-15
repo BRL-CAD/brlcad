@@ -66,6 +66,7 @@ set(ART_REGRESSION_TEST_NAMES
   regress-art-attributes
   regress-art-emission
   regress-art-color
+  regress-art-color-metadata
   regress-art-image-maps
   regress-art-resources
   regress-art-transmission
@@ -132,6 +133,7 @@ cmakefiles(CMakeLists.txt art_test_setup.cmake art_installed_tests.cmake
   art_nested_test_commands.cmake art_curved_test_commands.cmake
   art_caustic_test_commands.cmake.in art_photon_test_commands.cmake.in
   art_rough_box.appleseed.in art_rough_box.obj art_lit_glass.appleseed.in
+  regress-art-color-metadata.cmake.in
   art_initial_volume.appleseed.in regress-art-volume.cmake.in
   regress-art-volume-materials.cmake.in regress-art-volume-scattering.cmake.in
   art_volume_test_commands.cmake.in
@@ -192,6 +194,7 @@ if(TARGET art AND BUILD_TESTING)
     "${CMAKE_CURRENT_BINARY_DIR}/emission-output"
     "${CMAKE_CURRENT_BINARY_DIR}/trace-output"
     "${CMAKE_CURRENT_BINARY_DIR}/color-output"
+    "${CMAKE_CURRENT_BINARY_DIR}/color-metadata-output"
     "${CMAKE_CURRENT_BINARY_DIR}/image-maps-output"
     "${CMAKE_CURRENT_BINARY_DIR}/resources-output"
     "${CMAKE_CURRENT_BINARY_DIR}/transmission-output"

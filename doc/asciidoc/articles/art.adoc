@@ -533,6 +533,32 @@ agreement and alpha preservation, and verifies unchanged EXR and AOV data.
 It also covers converted formats, saved-view frames, skipped settings,
 invalid values, and shader-error output preservation.
 
+=== Color interpretation of saved images
+
+Renderer RGB uses linear-light sRGB/Rec.709 primaries and a D65 white point.
+EXR beauty and color AOV files declare `colorInteropID=lin_rec709_scene`,
+matching their chromaticities.  The tag is independent of an OCIO
+configuration's `scene_linear` role, which may name a different gamut such
+as ACEScg.  Interpreting the file as that role would change its colors.
+Image writing declares the existing pixel space; it does not convert the
+rendered RGB into ACEScg or apply display exposure to EXR.
+
+Numeric geometry passes declare `colorInteropID=data`; their depth,
+position, normal and UV values must not undergo a color transformation.
+Native multipart and checkpoint files identify color and data parts
+individually, so data does not inherit the beauty part's color space.
+Cryptomatte identifiers and coverage also use the data interpretation.
+PNG display output uses encoded sRGB, as described above.
+
+`regress-art-color-metadata` verifies actual CSG and BOT beauty and AOV
+metadata, unchanged HDR values, independent sRGB transfer values, metadata-driven
+transfer and gamut round trips, untransformed numeric
+passes, and PNG agreement within an 8-bit quantization step.  OIIO color
+conversion invalidates stale identities, updates standard chromaticities,
+and preserves auxiliary channels outside RGB and alpha.  Native writer
+tests also cover mixed color/data multipart images and preservation of explicitly
+supplied wider-gamut color-space labels.
+
 == Auxiliary image output
 
 Auxiliary output variables (AOVs) expose geometry and lighting separately
