@@ -216,7 +216,7 @@ set(CMAKE_FIND_USE_PACKAGE_REGISTRY FALSE)
 # Prepare to manage and build BRL-CAD's external dependencies. Specifies a
 # specific commit hash to use in the 'bext' repository.
 include(BRLCAD_ExternalDeps)
-brlcad_bext_init(4b6d734c2198b3e21f9b71970166ba69bed36ed8)
+brlcad_bext_init(c5423f1a5068f28e41bc056c097919e6b1c77090)
 
 #---------------------------------------------------------------------
 # Define various utilities.
