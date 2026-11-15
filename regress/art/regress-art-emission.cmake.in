@@ -1,0 +1,67 @@
+set(WORK "@CMAKE_CURRENT_BINARY_DIR@/emission-output")
+set(LOG "${WORK}/art.log")
+file(REMOVE_RECURSE "${WORK}")
+file(MAKE_DIRECTORY "${WORK}/shaders" "${WORK}/cache")
+set(ENV{BU_DIR_CACHE} "${WORK}/cache")
+set(ART_COMMAND_TIMEOUT 90)
+include("@CMAKE_CURRENT_SOURCE_DIR@/art_test_commands.cmake")
+foreach(shader IN ITEMS art_diffuse art_emission art_attributes)
+  configure_file("@CMAKE_CURRENT_BINARY_DIR@/${shader}.oso" "${WORK}/shaders/${shader}.oso" COPYONLY)
+endforeach()
+set(view "${WORK}/receiver.view")
+file(WRITE "${view}" "viewsize 0.001; eye_pt 0 2 0; lookat_pt 0 0 0; start 0; end;\n")
+function(render_emitter database image view)
+  run(INPUT_FILE "${view}" "${EXEC}" -M -p 0.02 -P 2 -w 1 -n 1 -C 0/0/0
+    -c "set samples=65536 max_bounces=0 light_intensity=0 environment_intensity=0"
+    -o "${image}" "${database}" receiver.r emitter.r)
+endfunction()
+foreach(kind IN ITEMS sphere cavity box mesh)
+  set(database "${WORK}/${kind}.g")
+  set(image "${WORK}/${kind}.exr")
+  run("${VEXEC}" create-emitter "${database}" "${kind}")
+  render_emitter("${database}" "${image}" "${view}")
+  run("${VEXEC}" check-emitter-image "${image}" "${kind}")
+endforeach()
+
+# Register both emitting sides. Multiplying unit radiance by their known
+# total area must recover the same illumination when surfacearea() divides it.
+foreach(kind IN ITEMS sphere cavity)
+  if(kind STREQUAL "sphere")
+    # 2 * 4*pi * 0.5^2.
+    set(area 6.283185307179586)
+  else()
+    # 2 * 4*pi * (10^2 + 9^2), including the subtraction boundary.
+    set(area 4549.026162398021)
+  endif()
+  set(database "${WORK}/${kind}.g")
+  run("${VEXEC}" material "${database}" set emitter.material optical OSL as_maya_areaLight)
+  run("${VEXEC}" material "${database}" set emitter.material optical OSL.param.in_normalize "int 1")
+  run("${VEXEC}" material "${database}" set emitter.material optical OSL.param.in_color "color ${area} ${area} ${area}")
+  set(image "${WORK}/${kind}-normalized.exr")
+  render_emitter("${database}" "${image}" "${view}")
+  run("${VEXEC}" check-emitter-image "${image}" "${kind}")
+  set(source_view "${WORK}/source.view")
+  file(WRITE "${source_view}" "viewsize 0.001; eye_pt 0 2 0; lookat_pt 1.5 3 0; start 0; end;\n")
+  set(image "${WORK}/${kind}-normalized-visible.exr")
+  render_emitter("${database}" "${image}" "${source_view}")
+  run("@ART_OIIOTOOL_EXECUTABLE@" --fail 0.025 --hardfail 0.025 "${image}" --ch R,G,B
+    --pattern constant:color=1,1,1 1x1 3 --diff)
+endforeach()
+
+# Emission evaluated on a manufactured light hit must retain the same
+# region/material metadata as ordinary camera and secondary intersections.
+set(database "${WORK}/sphere-attributes.g")
+run("${VEXEC}" create-emitter "${database}" sphere)
+run("${VEXEC}" attr "${database}" set emitter.r region_id 1701 material_id 42 los 75
+  label "painted panel" part_number 00042 color 255/255/255)
+run("${VEXEC}" material "${database}" remove emitter.material optical OSL.param.in_color)
+run("${VEXEC}" material "${database}" set emitter.material optical OSL art_attributes)
+foreach(property IN ITEMS "in_expected_name;string emitter.r" "in_expected_path;string /emitter.r"
+    "in_expected_material;string emitter.material" "in_expected_projection;string perspective")
+  list(GET property 0 name)
+  list(GET property 1 value)
+  run("${VEXEC}" material "${database}" set emitter.material optical "OSL.param.${name}" "${value}")
+endforeach()
+set(image "${WORK}/sphere-attributes.exr")
+render_emitter("${database}" "${image}" "${view}")
+run("${VEXEC}" check-emitter-image "${image}" sphere)

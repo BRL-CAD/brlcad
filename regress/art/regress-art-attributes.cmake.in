@@ -112,6 +112,8 @@ expect_failure_matching("FAILURE" "@ART_OIIOTOOL_EXECUTABLE@" --fail 0.001 --har
   "${WORK}/missing-attribute.exr" "${WORK}/arcs-1-50-reference.exr" --diff)
 
 # Query context must follow the receiver after two transparent boundaries.
+# Disable explicit light connections here: sampled emission begins at depth
+# zero, outside the camera path whose post-transmission depth is being tested.
 foreach(database IN ITEMS "${DB}" "${REFERENCE_DB}")
   run("${VEXEC}" in "${database}" front.s rpp -100 100 -100 100 15 16)
   run("${VEXEC}" r "${database}" front.r u front.s)
@@ -135,7 +137,7 @@ foreach(form IN ITEMS actual reference)
   endif()
   run_in("${WORK}" "${EXEC}" -P 2 -w ${SIZE} -n ${SIZE} -c "viewsize 40"
     -c "eye_pt 0 0 30" -c "orientation 0 0 0 1"
-    -c "set samples=1 max_bounces=8 background_color=black light_intensity=0"
+    -c "set samples=1 max_bounces=8 next_event_estimation=0 background_color=black light_intensity=0"
     -o "${WORK}/secondary-${form}.exr" "${database}" cube.r front.r)
 endforeach()
 run("${VEXEC}" check-matching-image "${WORK}/secondary-actual.exr"
