@@ -1,0 +1,208 @@
+# REGRESS-ART-VOLUME-GLASS.CMAKE.IN
+# BRL-CAD
+#
+# Copyright (c) 2026 United States Government as represented by
+# the U.S. Army Research Laboratory.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions
+# are met:
+#
+# 1. Redistributions of source code must retain the above copyright
+# notice, this list of conditions and the following disclaimer.
+#
+# 2. Redistributions in binary form must reproduce the above
+# copyright notice, this list of conditions and the following
+# disclaimer in the documentation and/or other materials provided
+# with the distribution.
+#
+# 3. The name of the author may not be used to endorse or promote
+# products derived from this software without specific prior written
+# permission.
+#
+# THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS
+# OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+# WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+# ARE DISCLAIMED. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY
+# DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+# DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
+# GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+# INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+# WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+# NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+# SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+#
+cmake_minimum_required(VERSION 3.22)
+set(WORK "@CMAKE_CURRENT_BINARY_DIR@/volume-glass-output")
+set(LOG "${WORK}/art.log")
+file(REMOVE_RECURSE "${WORK}")
+file(MAKE_DIRECTORY "${WORK}/shaders" "${WORK}/cache")
+set(ENV{BU_DIR_CACHE} "${WORK}/cache")
+include("@CMAKE_CURRENT_SOURCE_DIR@/art_test_commands.cmake")
+include("@CMAKE_CURRENT_SOURCE_DIR@/art_nested_test_commands.cmake")
+set(TOOL "@ART_OIIOTOOL_EXECUTABLE@")
+foreach(shader IN ITEMS art_nested_reference art_refraction_reference art_emission)
+  configure_file("@CMAKE_CURRENT_BINARY_DIR@/${shader}.oso"
+    "${WORK}/shaders/${shader}.oso" COPYONLY)
+endforeach()
+set(ACTUAL_DB "${WORK}/actual.g")
+set(REFERENCE_DB "${WORK}/reference.g")
+foreach(db IN ITEMS "${ACTUAL_DB}" "${REFERENCE_DB}")
+  run("${VEXEC}" create-nested "${db}")
+endforeach()
+function(set_optical_property db material name value)
+  run("${VEXEC}" set-named-material "${db}" "${material}.material" "${name}" "${value}")
+endfunction()
+set_optical_property("${ACTUAL_DB}" outer OSL.medium_priority 1)
+set_optical_property("${ACTUAL_DB}" inner OSL.medium_priority 2)
+set_nested_parameter("${ACTUAL_DB}" outer in_roughness "float 0")
+set_nested_parameter("${ACTUAL_DB}" outer in_transmittance_amount "float 1")
+set_nested_parameter("${ACTUAL_DB}" outer in_surface_transmittance "color 1 1 1")
+set_nested_parameter("${ACTUAL_DB}" outer in_reflection_tint "color 0 0 0")
+set_nested_parameter("${ACTUAL_DB}" outer in_volume_transmittance "color 0.5 0.75 0.9")
+set_nested_parameter("${ACTUAL_DB}" outer in_volume_transmittance_distance "float 10")
+run("${VEXEC}" material "${ACTUAL_DB}" remove inner.material optical OSL)
+set_optical_property("${ACTUAL_DB}" inner OSL.volume homogeneous)
+set_optical_property("${ACTUAL_DB}" inner OSL.volume.absorption "color 0.01 0.02 0.03")
+set_optical_property("${REFERENCE_DB}" outer OSL art_nested_reference)
+set_nested_parameter("${REFERENCE_DB}" outer in_initial_camera "int 1")
+set_nested_parameter("${REFERENCE_DB}" outer in_inner_ior "float 1")
+set_nested_parameter("${REFERENCE_DB}" outer in_outer_transmittance "color 0.5 0.75 0.9")
+set_nested_parameter("${REFERENCE_DB}" outer in_outer_distance "float 10")
+# Beer factors for ten model units with the fog's RGB absorption rates.
+set_nested_parameter("${REFERENCE_DB}" outer in_inner_transmittance
+  "color 0.9048374180359595 0.8187307530779818 0.7408182206817179")
+set_nested_parameter("${REFERENCE_DB}" outer in_inner_distance "float 10")
+foreach(kind IN ITEMS box mesh)
+  foreach(layer IN ITEMS outer inner)
+    run("${VEXEC}" material "${REFERENCE_DB}" assign "${kind}.${layer}.r" outer.material)
+  endforeach()
+endforeach()
+set(SIZE 8)
+set(TOLERANCE 0.0005)
+set(RENDER_ARGS -P 1 -w ${SIZE} -n ${SIZE} -p 0.02 -c "viewsize 0.1"
+  -c "set samples=1 max_bounces=128 max_volume_bounces=0 rr_min_path_length=0 light_intensity=0 environment_intensity=0 background_color=black")
+run("${TOOL}" --pattern constant:color=0,0,0 ${SIZE}x${SIZE} 3 -o "${WORK}/black.exr")
+foreach(ior IN ITEMS 1 1.5)
+  set_nested_parameter("${ACTUAL_DB}" outer in_ior "float ${ior}")
+  set_nested_parameter("${REFERENCE_DB}" outer in_outer_ior "float ${ior}")
+  foreach(transform IN ITEMS original translated)
+    set(x 0)
+    set(y 0)
+    set(z_offset 0)
+    set(suffix "")
+    if(transform STREQUAL translated)
+      set(x 10000)
+      set(y -40000)
+      set(z_offset 5000)
+      set(suffix .translated)
+    endif()
+    set_nested_parameter("${REFERENCE_DB}" outer in_offset "point ${x} ${y} ${z_offset}")
+    foreach(kind IN ITEMS box mesh)
+      foreach(eye IN ITEMS 12 8 0)
+        math(EXPR z "${z_offset} + ${eye}")
+        foreach(tilt IN ITEMS 0 10)
+          set(orientation "0 0 0 1")
+          if(tilt EQUAL 10)
+            set(orientation "0 0.08715574274765817 0 0.9961946980917455")
+          endif()
+          set(label "${ior}-${transform}-${kind}-eye${eye}-tilt${tilt}")
+          set(view_args -c "eye_pt ${x} ${y} ${z}" -c "orientation ${orientation}")
+          set(reference "${WORK}/reference-${label}.exr")
+          run("${EXEC}" ${RENDER_ARGS} ${view_args} -o "${reference}" "${REFERENCE_DB}"
+            "${kind}.shared.overlap${suffix}.g")
+          run("${VEXEC}" check-image "${reference}" ${SIZE} ${SIZE})
+          expect_failure_matching("FAILURE" "${TOOL}" --fail ${TOLERANCE} --hardfail ${TOLERANCE}
+            "${reference}" --ch R,G,B "${WORK}/black.exr" --diff)
+          foreach(layout IN ITEMS overlap shell_first filling_first)
+            set(image "${WORK}/${layout}-${label}.exr")
+            run("${EXEC}" ${RENDER_ARGS} ${view_args} -o "${image}" "${ACTUAL_DB}"
+              "${kind}.shared.${layout}${suffix}.g")
+            run("${VEXEC}" check-image "${image}" ${SIZE} ${SIZE})
+            compare_optical_transport("${image}" "${reference}")
+          endforeach()
+        endforeach()
+      endforeach()
+    endforeach()
+  endforeach()
+endforeach()
+
+set(HIDDEN_DB "${WORK}/hidden.g")
+run("${VEXEC}" create-nested "${HIDDEN_DB}")
+# A subordinate glass boundary must not interrupt a fog segment. Uniform
+# white emission separates missing Beer attenuation from target refraction.
+run("${VEXEC}" material "${HIDDEN_DB}" remove outer.material optical OSL)
+set_optical_property("${HIDDEN_DB}" outer OSL.volume homogeneous)
+set_optical_property("${HIDDEN_DB}" outer OSL.volume.absorption "color 0.01 0.02 0.03")
+set_optical_property("${HIDDEN_DB}" outer OSL.medium_priority 2)
+set_optical_property("${HIDDEN_DB}" inner OSL as_glass)
+set_optical_property("${HIDDEN_DB}" inner OSL.medium_priority 1)
+set_nested_parameter("${HIDDEN_DB}" inner in_ior "float 1.5")
+set_nested_parameter("${HIDDEN_DB}" inner in_roughness "float 0")
+set_nested_parameter("${HIDDEN_DB}" inner in_transmittance_amount "float 1")
+set_nested_parameter("${HIDDEN_DB}" inner in_surface_transmittance "color 1 1 1")
+set_nested_parameter("${HIDDEN_DB}" inner in_volume_transmittance "color 0.5 0.75 0.9")
+set_nested_parameter("${HIDDEN_DB}" inner in_volume_transmittance_distance "float 10")
+run("${VEXEC}" material "${HIDDEN_DB}" remove target.material optical OSL.param.in_target)
+set_optical_property("${HIDDEN_DB}" target OSL art_emission)
+set_nested_parameter("${HIDDEN_DB}" target in_color "color 1 1 1")
+set(UNIT_BEER_RGB "0.9900498337491681,0.9801986733067553,0.9704455335485082")
+set(HALF_RELATIVE_BOUND 0.001)
+set(eyes 12 8 0)
+set(lengths 20 18 10)
+foreach(kind IN ITEMS box mesh)
+  foreach(eye length IN ZIP_LISTS eyes lengths)
+    set(image "${WORK}/hidden-${kind}-eye${eye}.exr")
+    run("${EXEC}" -P 1 -w 1 -n 1 -p 0.02 -c "viewsize 0.001"
+      -c "eye_pt 0 0 ${eye}" -c "orientation 0 0 0 1"
+      -c "set samples=1 max_bounces=128 max_volume_bounces=0 rr_min_path_length=0 light_intensity=0 environment_intensity=0 background_color=black"
+      -o "${image}" "${HIDDEN_DB}" "${kind}.shared.overlap.g")
+    run("${VEXEC}" check-image "${image}" 1 1)
+    run("${TOOL}" --pattern "constant:color=${UNIT_BEER_RGB}" 1x1 3 --powc ${length}
+      -d float -o "${WORK}/reference.exr")
+    compare_radiance_mean("${image}" "${WORK}/reference.exr" ${HALF_RELATIVE_BOUND} FALSE)
+  endforeach()
+endforeach()
+
+# Force reflection at the fog interface and intercept the ray before it
+# leaves its incident medium. This isolates both the Fresnel weight and
+# the incident interior's absorption from any later interface choices.
+set_nested_parameter("${ACTUAL_DB}" outer in_reflection_tint "color 1 1 1")
+set_nested_parameter("${ACTUAL_DB}" outer in_refraction_tint "color 0 0 0")
+run("${VEXEC}" material "${ACTUAL_DB}" create mirror.receiver.material Receiver)
+set_optical_property("${ACTUAL_DB}" mirror.receiver OSL art_emission)
+set_nested_parameter("${ACTUAL_DB}" mirror.receiver in_color "color 0 1 0")
+run("${VEXEC}" in "${ACTUAL_DB}" glass.receiver.s rpp -200 200 -200 200 9 9.1)
+run("${VEXEC}" in "${ACTUAL_DB}" fog.receiver.s rpp -200 200 -200 200 2 3)
+foreach(medium IN ITEMS glass fog)
+  run("${VEXEC}" r "${ACTUAL_DB}" "${medium}.receiver.r" u "${medium}.receiver.s")
+  run("${VEXEC}" material "${ACTUAL_DB}" assign "${medium}.receiver.r" mirror.receiver.material)
+endforeach()
+# R=((1.5-1)/(1.5+1))^2. At normal incidence the glass path is
+# (8-5)+(9-5)=7, while the fog path is (0-(-5))+(2-(-5))=12.
+set(INTERFACE_REFLECTANCE 0.04)
+run("${TOOL}" --pattern constant:color=0.5,0.75,0.9 1x1 3 --powc 0.7
+  --mulc 0,1,0 --mulc ${INTERFACE_REFLECTANCE} -d float -o "${WORK}/glass-reflection-reference.exr")
+run("${TOOL}" --pattern "constant:color=${UNIT_BEER_RGB}" 1x1 3 --powc 12
+  --mulc 0,1,0 --mulc ${INTERFACE_REFLECTANCE} -d float -o "${WORK}/fog-reflection-reference.exr")
+# Sixty-degree glass-to-fog incidence is above the critical angle. The
+# ray starts at (-4,0,8), hits the fog's Z=5 face, and then the Z=9
+# receiver. Its glass distance is (8-5)/cos(60)+(9-5)/cos(60)=14.
+run("${TOOL}" --pattern constant:color=0.5,0.75,0.9 1x1 3 --powc 1.4
+  --mulc 0,1,0 -d float -o "${WORK}/tir-reference.exr")
+function(check_volume_reflection label kind layout eye orientation reference)
+  set(image "${WORK}/${label}-${kind}-${layout}.exr")
+  run("${EXEC}" -P 1 -w 1 -n 1 -p 0.02 -c "viewsize 0.001"
+    -c "eye_pt ${eye}" -c "orientation ${orientation}"
+    -c "set samples=1 max_bounces=128 max_volume_bounces=0 rr_min_path_length=0 light_intensity=0 environment_intensity=0 background_color=black"
+    -o "${image}" "${ACTUAL_DB}" "${kind}.shared.${layout}.g" glass.receiver.r fog.receiver.r)
+  run("${VEXEC}" check-image "${image}" 1 1)
+  compare_radiance_mean("${image}" "${WORK}/${reference}.exr" ${HALF_RELATIVE_BOUND} FALSE)
+endfunction()
+foreach(kind IN ITEMS box mesh)
+  foreach(layout IN ITEMS overlap shell_first filling_first)
+    check_volume_reflection(glass-reflection "${kind}" "${layout}" "0 0 8" "0 0 0 1" glass-reflection-reference)
+    check_volume_reflection(fog-reflection "${kind}" "${layout}" "0 0 0" "0 0 0 1" fog-reflection-reference)
+    check_volume_reflection(tir "${kind}" "${layout}" "-4 0 8" "0 -0.5 0 0.8660254037844386" tir-reference)
+  endforeach()
+endforeach()

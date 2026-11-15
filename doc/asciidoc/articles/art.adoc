@@ -1257,12 +1257,33 @@ active-medium lengths and a 0.1-percent relative energy bound.  This
 qualifies absorption and priority transitions; overlapping scattering
 transport remains separate work.
 
+A homogeneous region has refractive index one.  It may fill a glass
+shell's cavity or overlap a closed glass region.  Declare distinct medium
+priorities so the fog replaces the glass interior where they overlap.
+The active glass material supplies the interface's surface response even
+when the geometric boundary belongs to the fog.  The incident and
+transmitted media supply their actual refractive indices; the borrowed
+glass material's index does not turn the fog into glass.  Reflections keep
+the incident medium, and transmission exchanges the active interiors.
+
+`regress-art-volume-glass` compares smooth glass around absorbing fog with
+an independent Snell/Fresnel/Beer reference.  Equal-index and index-1.5
+glass cases cover CSG and solid BOTs, overlapping regions and touching
+shell/filling layouts in both orders, translated assemblies, oblique rays,
+and pinhole origins in air, glass and fog.  These per-pixel comparisons
+allow binary16 rounding.  Separate 0.1-percent energy comparisons check
+reflection from either side, total internal reflection from glass into
+fog, and Beer attenuation beyond hidden, lower-priority glass boundaries.
+Reflected rays retain their incident medium and its absorption.  These
+checks establish the tested smooth, directly transmitted and singly
+reflected paths; rough, multiply reflected and scattering glass/fog
+transport still needs separate qualification.
+
 This workflow is limited to path tracing.  SPPM volume materials fail with
 an explicit diagnostic.  General absorbing multiple-scattering energy,
-overlapping scattering media, combined glass/volume boundaries,
-heterogeneous fields and volume-aware compositing alpha still need
-qualification.  An EXR alpha channel must not yet be treated as a qualified
-fog-compositing mask.
+overlapping scattering media, heterogeneous fields and volume-aware
+compositing alpha still need qualification.  An EXR alpha channel must not
+yet be treated as a qualified fog-compositing mask.
 
 === Nested optical volumes
 
@@ -1364,11 +1385,13 @@ capacity.  Reflection retains the incident state; transmission receives
 the complete updated state.  Absorption distances retain the physical
 surface points while outgoing rays clear the shared boundary group.
 
-Declare distinct medium priorities for the optical materials.  The highest
-priority at a visible interface identifies the material that supplies its
-surface properties.  Visible tied priorities, different tangent planes,
-partial coverage, and non-glass transmissive layers are outside this
-shared-interface workflow; ambiguous groups fail with a diagnostic.
+Declare distinct medium priorities for the optical materials.  Priority
+selects the active interior.  Among active glass boundaries, the highest
+priority supplies the interface's surface properties.  A surface-free fog
+interior can therefore have higher priority than the glass surface around
+it.  Visible tied priorities, different tangent planes, partial coverage,
+and non-glass transmissive layers are outside this shared-interface
+workflow; ambiguous groups fail with a diagnostic.
 The opaque contact cases below retain the incident medium when reflecting.
 Arbitrary interpenetrating-volume arrangements still need separate
 qualification.

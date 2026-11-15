@@ -260,7 +260,7 @@ foreach(kind IN ITEMS box mesh)
     foreach(path IN ITEMS partial.exr partial.depth.exr)
       file(WRITE "${WORK}/${path}" "preserve existing output")
     endforeach()
-    expect_failure_matching("shared optical interfaces require opaque coverage and glass interiors"
+    expect_failure_matching("shared optical interfaces require opaque coverage and supported glass or volume interiors"
       "${EXEC}" ${CENTER_ARGS} -c "eye_pt 0 0 8" -c "set aovs=depth"
       -o "${WORK}/partial.exr" "${ACTUAL_DB}" "${kind}.shared.${order}.g")
     foreach(path IN ITEMS partial.exr partial.depth.exr)
