@@ -1,0 +1,145 @@
+# ART_VOLUME_WALK_TEST_COMMANDS.CMAKE.IN
+# BRL-CAD
+#
+# Copyright (c) 2026 United States Government as represented by
+# the U.S. Army Research Laboratory.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions
+# are met:
+#
+# 1. Redistributions of source code must retain the above copyright
+# notice, this list of conditions and the following disclaimer.
+#
+# 2. Redistributions in binary form must reproduce the above
+# copyright notice, this list of conditions and the following
+# disclaimer in the documentation and/or other materials provided
+# with the distribution.
+#
+# 3. The name of the author may not be used to endorse or promote
+# products derived from this software without specific prior written
+# permission.
+#
+# THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS
+# OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+# WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+# ARE DISCLAIMED. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY
+# DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+# DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
+# GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+# INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+# WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+# NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+# SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+#
+set(WORK "@CMAKE_CURRENT_BINARY_DIR@/${WALK_TEST}-output")
+set(LOG "${WORK}/art.log")
+file(REMOVE_RECURSE "${WORK}")
+file(MAKE_DIRECTORY "${WORK}/shaders" "${WORK}/cache")
+set(ENV{BU_DIR_CACHE} "${WORK}/cache")
+# Each stochastic pixel integrates many complete scattering paths.
+set(ART_COMMAND_TIMEOUT 120)
+include("@CMAKE_CURRENT_SOURCE_DIR@/art_test_commands.cmake")
+include("@CMAKE_CURRENT_SOURCE_DIR@/art_nested_test_commands.cmake")
+file(READ "@CMAKE_CURRENT_SOURCE_DIR@/art_volume_reference.json" WALK_REFERENCE)
+string(JSON controls GET "${WALK_REFERENCE}" controls_pass)
+string(JSON samples GET "${WALK_REFERENCE}" samples)
+if(NOT controls OR samples LESS 2000000)
+  message(FATAL_ERROR "Volume random-walk references need qualified two-million-path estimates")
+endif()
+set(TOOL "@ART_OIIOTOOL_EXECUTABLE@")
+set(DB "${WORK}/fog.g")
+run("${VEXEC}" create-material "${DB}" art_emission)
+set(RELATIVE_ENERGY_BOUND 0.015)
+set(RENDER_ARGS -P 1 -w 1 -n 1 -p 0.02 -c "viewsize 0.001"
+  -c "orientation 0 0 0 1"
+  -c "set sampling=uniform samples=131072 max_bounces=128 max_volume_bounces=64 rr_min_path_length=0 light_intensity=0 environment_color=white environment_intensity=1 background_source=environment")
+
+function(reference_color result)
+  set(channels)
+  foreach(channel RANGE 0 2)
+    string(JSON value GET "${WALK_REFERENCE}" ${ARGN} ${channel})
+    list(APPEND channels "${value}")
+  endforeach()
+  string(JOIN "," color ${channels})
+  set(${result} "${color}" PARENT_SCOPE)
+endfunction()
+
+foreach(medium IN ITEMS outer inner)
+  string(JSON radius GET "${WALK_REFERENCE}" "${medium}_radius")
+  run("${VEXEC}" in "${DB}" "${medium}.s" sph 0 0 0 "${radius}")
+  run("${VEXEC}" r "${DB}" "${medium}.r" u "${medium}.s")
+  run("${VEXEC}" material "${DB}" create "${medium}.material" "${medium}")
+  run("${VEXEC}" set-named-material "${DB}" "${medium}.material" OSL.volume homogeneous)
+  foreach(coefficient IN ITEMS absorption scattering)
+    reference_color(color "${medium}_${coefficient}")
+    string(REPLACE "," " " color "${color}")
+    run("${VEXEC}" set-named-material "${DB}" "${medium}.material"
+      "OSL.volume.${coefficient}" "color ${color}")
+  endforeach()
+  run("${VEXEC}" material "${DB}" assign "${medium}.r" "${medium}.material")
+endforeach()
+run("${VEXEC}" set-named-material "${DB}" outer.material OSL.medium_priority 1)
+function(set_phase medium phase)
+  set(model henyey)
+  if(phase EQUAL 0)
+    set(model isotropic)
+  endif()
+  run("${VEXEC}" set-named-material "${DB}" "${medium}.material" OSL.volume.phase_function "${model}")
+  run("${VEXEC}" set-named-material "${DB}" "${medium}.material" OSL.volume.average_cosine "float ${phase}")
+endfunction()
+
+string(JSON count LENGTH "${WALK_REFERENCE}" profiles)
+math(EXPR last "${count}-1")
+foreach(profile RANGE 0 ${last})
+  string(JSON overlap GET "${WALK_REFERENCE}" profiles ${profile} overlap)
+  if((WALK_TEST STREQUAL "volume-walk" AND overlap) OR
+      (WALK_TEST STREQUAL "volume-walk-overlap" AND NOT overlap))
+    continue()
+  endif()
+  string(JSON outer_phase GET "${WALK_REFERENCE}" profiles ${profile} outer_phase)
+  string(JSON inner_phase GET "${WALK_REFERENCE}" profiles ${profile} inner_phase)
+  set_phase(outer "${outer_phase}")
+  set_phase(inner "${inner_phase}")
+  set(objects outer.r)
+  set(priorities 2)
+  if(overlap)
+    list(APPEND objects inner.r)
+    set(priorities 2 0)
+  endif()
+  foreach(priority IN LISTS priorities)
+    run("${VEXEC}" set-named-material "${DB}" inner.material OSL.medium_priority "${priority}")
+    set(reference_profile ${profile})
+    if(overlap AND priority EQUAL 0)
+      # A hidden inner medium must recover the homogeneous outer result,
+      # including when the hidden phase function differs from that outside.
+      foreach(candidate RANGE 0 ${last})
+        string(JSON candidate_overlap GET "${WALK_REFERENCE}" profiles ${candidate} overlap)
+        string(JSON candidate_phase GET "${WALK_REFERENCE}" profiles ${candidate} outer_phase)
+        if(NOT candidate_overlap AND candidate_phase EQUAL outer_phase)
+          set(reference_profile ${candidate})
+          break()
+        endif()
+      endforeach()
+      if(reference_profile EQUAL profile)
+        message(FATAL_ERROR "Missing homogeneous reference for hidden inner medium")
+      endif()
+    endif()
+    foreach(origin IN ITEMS outside inside)
+      set(eye 40)
+      if(origin STREQUAL "inside")
+        set(eye 0)
+      endif()
+      reference_color(expected profiles ${reference_profile} ${origin} mean)
+      set(reference "${WORK}/reference.exr")
+      run("${TOOL}" --pattern "constant:color=${expected}" 1x1 3 -d float -o "${reference}")
+      foreach(nee IN ITEMS 0 1)
+        set(image "${WORK}/profile${profile}-priority${priority}-${origin}-nee${nee}.exr")
+        run("${EXEC}" ${RENDER_ARGS} -c "eye_pt 0 0 ${eye}" -c "set next_event_estimation=${nee}"
+          -o "${image}" "${DB}" ${objects})
+        run("${VEXEC}" check-image "${image}" 1 1)
+        compare_radiance_mean("${image}" "${reference}" ${RELATIVE_ENERGY_BOUND} FALSE)
+      endforeach()
+    endforeach()
+  endforeach()
+endforeach()

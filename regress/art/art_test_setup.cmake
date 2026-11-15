@@ -47,3 +47,6 @@ foreach(shader IN LISTS ART_TEST_SHADER_NAMES)
   list(APPEND ART_TEST_SHADERS "${compiled}")
 endforeach()
 add_custom_target(art_test_shaders DEPENDS ${ART_TEST_SHADERS})
+
+configure_file("${CMAKE_CURRENT_SOURCE_DIR}/art_volume_walk_test_commands.cmake.in"
+  "${CMAKE_CURRENT_BINARY_DIR}/art_volume_walk_test_commands.cmake" @ONLY)

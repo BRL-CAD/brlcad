@@ -167,8 +167,12 @@ emitters, alpha covers, inheritance, and invalid-input/geometry checks.
 `regress-art-volume-scattering` compares point-lit CSG and BOT single
 scattering with independent quadrature for both phase functions and both
 distance sampling modes, with transparent and partially opaque covers on
-camera and shadow segments.  Multiple scattering, overlapping media and volume
-compositing alpha need further qualification.
+camera and shadow segments.  Conservative multiple scattering has uniform-field
+and single-scattering quadrature checks.  `regress-art-volume-walk` and
+`regress-art-volume-walk-overlap` compare absorbing RGB multiple scattering
+with independent random walks, including priority and phase-function changes
+in concentric CSG media.  Interpenetrating scattering regions, arbitrary
+illumination fields, and volume compositing alpha need further qualification.
 
 |Lighting across frames
 |`regress-art-lighting` compares diffuse HDR frame sequences with fresh-process
@@ -1262,8 +1266,40 @@ checks nested and interpenetrating intervals with higher and lower inner
 priorities, CSG and solid BOT outer boundaries, and outside and inside
 pinhole origins.  Its sixteen Beer comparisons use independently computed
 active-medium lengths and a 0.1-percent relative energy bound.  This
-qualifies absorption and priority transitions; overlapping scattering
-transport remains separate work.
+qualifies absorption and priority transitions; the random-walk cases below
+separately check concentric overlapping scattering.
+
+`regress-art-volume-walk` compares absorbing RGB multiple scattering in a
+radius-10 CSG sphere with an independent channel-by-channel survival-weighted
+random walk.  `regress-art-volume-walk-overlap` adds a concentric radius-5
+medium with distinct coefficients and higher or lower priority.  Both check
+inside and outside pinhole origins and direct light sampling on and off.
+The overlapping cases include different forward/backward Henyey phase
+functions on the two sides; a hidden inner region must recover the outer
+homogeneous result.  Together these cases compare 52 rendered views with
+the reference means at the existing 1.5-percent relative energy bound.
+
+The checked-in `art_volume_reference.json` records means, standard errors,
+sample counts, coefficients, and collision/crossing statistics.  Its 48
+channel estimates each use two million independent paths.  The development
+`art_volume_reference` target regenerates this data without linking the
+renderer or reusing its transport code:
+
+----
+cmake --build BRLCAD_BUILD --target art_volume_reference
+BRLCAD_BUILD/regress/art/art_volume_reference > regenerated-volume-reference.json
+----
+
+The utility first requires analytic Beer, conservative-field, and
+homogeneous-medium recovery controls to pass.  It applies absorption as
+survival weight at each sampled collision and switches coefficients and
+phase functions at explicit sphere crossings.  The rendered tests use 64
+volume continuations with Russian roulette disabled.  At their maximum
+single-scattering albedo of 0.8, the remaining reference-path weight after
+64 collisions is below 0.000001.  These cases qualify constant-white
+boundary illumination and concentric CSG regions; they do not establish
+arbitrary light fields, interpenetrating scattering regions, BOT scattering
+overlaps, or volume compositing alpha.
 
 A homogeneous region has refractive index one.  It may fill a glass
 shell's cavity or overlap a closed glass region.  Declare distinct medium
