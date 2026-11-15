@@ -97,6 +97,9 @@ and material assignments along full instance paths.  Advanced closures
 remain only partially qualified.
 `regress-art-mixture` checks the energy of ideal-mirror mixtures in single
 shaders and persisted native blend networks against an emission reference.
+`regress-art-reflection-energy` checks explicit-IOR mirror energy against
+independent Fresnel references on CSG and solid BOTs, including the
+unweighted default, matched indices, and total internal reflection.
 
 |Bump and normal-map nodes
 |Native normal-map chains preserve upstream normals when disabled.
@@ -2131,6 +2134,15 @@ terminal output is `out_color`.  Connect the two material closures to
 layer's default weight of one, the result is `(1-weight1)*first +
 weight1*second`.  This is a weighted mixture; a physically coated material
 requires its own transport model and qualification.
+
+The standard OSL `reflection(N)` closure is an unweighted ideal mirror.
+`reflection(N, eta)` with a positive index uses dielectric Fresnel
+attenuation. At normal incidence and incident index one, index 1.5 reflects
+0.04 of the incident radiance; a matched index reflects zero.
+`regress-art-reflection-energy` compares 20 CSG/BOT views with independent
+unpolarized Fresnel equations, covering indices 0, 0.5, 1, 1.5, and 2 at
+normal and oblique incidence. Zero checks the unweighted mirror convention;
+index 0.5 also checks total internal reflection at the oblique view.
 
 `regress-art-mixture` uses two half-reflecting ideal mirrors with different
 shading normals under a constant environment of radiance 0.4.  Every mixture

@@ -43,6 +43,7 @@ set(ART_TEST_SHADER_NAMES
   art_glass_lighting_reference
   art_photon_reference
   art_area_exit_reference
+  art_reflection_energy
   art_mirror_mixture
   art_mirror_node
   art_surface_reference
@@ -144,6 +145,7 @@ set(ART_REGRESSION_TEST_NAMES
   regress-art-glass-sides
   regress-art-mapped-glass
   regress-art-glass-footprints
+  regress-art-reflection-energy
   regress-art-nested
   regress-art-mixture
   regress-art-surface
@@ -221,7 +223,7 @@ cmakefiles(CMakeLists.txt art_test_setup.cmake art_installed_tests.cmake
   regress-art-caustics-clear.cmake.in regress-art-caustics-absorption.cmake.in regress-art-caustics-state.cmake.in regress-art-caustics-rough.cmake.in
   regress-art-refraction.cmake.in
   regress-art-glass-sides.cmake.in regress-art-mapped-glass.cmake.in
-  regress-art-glass-footprints.cmake.in
+  regress-art-glass-footprints.cmake.in regress-art-reflection-energy.cmake.in
   regress-art-mixture.cmake.in regress-art-surface.cmake.in regress-art-nested.cmake.in
   regress-art-metal-energy.cmake.in regress-art-coat.cmake.in
   regress-art-materials.cmake.in regress-art-inspect.cmake.in
@@ -287,6 +289,7 @@ if(TARGET art AND BUILD_TESTING)
     "${CMAKE_CURRENT_BINARY_DIR}/glass-sides-output"
     "${CMAKE_CURRENT_BINARY_DIR}/mapped-glass-output"
     "${CMAKE_CURRENT_BINARY_DIR}/glass-footprints-output"
+    "${CMAKE_CURRENT_BINARY_DIR}/reflection-energy-output"
     "${CMAKE_CURRENT_BINARY_DIR}/nested-output"
     "${CMAKE_CURRENT_BINARY_DIR}/mixture-output"
     "${CMAKE_CURRENT_BINARY_DIR}/surface-output"

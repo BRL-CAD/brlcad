@@ -1,0 +1,41 @@
+/*              A R T _ R E F L E C T I O N _ E N E R G Y . O S L
+ * BRL-CAD
+ *
+ * Copyright (c) 2026 United States Government as represented by
+ * the U.S. Army Research Laboratory.
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public License
+ * version 2.1 as published by the Free Software Foundation.
+ *
+ * This library is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this file; see the file named COPYING for more
+ * information.
+ */
+surface art_reflection_energy(float in_ior = 0, int in_reference = 0)
+{
+    if (!in_reference) {
+        Ci = reflection(N, in_ior);
+        return;
+    }
+    // Zero selects OSL's unweighted mirror overload.
+    float reflectance = 1;
+    if (in_ior > 0) {
+        float cosine = abs(dot(normalize(N), normalize(I)));
+        float sine_transmitted_squared = (1 - cosine * cosine) / (in_ior * in_ior);
+        if (sine_transmitted_squared < 1) {
+            float transmitted_cosine = sqrt(1 - sine_transmitted_squared);
+            float perpendicular = (cosine - in_ior * transmitted_cosine) /
+                (cosine + in_ior * transmitted_cosine);
+            float parallel = (in_ior * cosine - transmitted_cosine) /
+                (in_ior * cosine + transmitted_cosine);
+            reflectance = 0.5 * (perpendicular * perpendicular + parallel * parallel);
+        }
+    }
+    Ci = reflectance * emission();
+}
