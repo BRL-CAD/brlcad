@@ -1571,6 +1571,15 @@ tightness of its bound.  It is not an exact CAD area measurement.
 Lighting samples retain the crossing weights and missed attempts of the
 Boolean surface sampler independently of that area estimate.
 
+Emission weights may depend on the outgoing direction.  Photon emission
+reevaluates the shader with `I` pointing into the emitting surface from
+the sampled outgoing direction and with `raytype("light")` enabled.  A
+zero emission weight along the surface normal therefore does not suppress
+light emitted at oblique angles.  The renderer sums the emission closures
+at that direction.  Visible evaluation retains its original ray type,
+path metadata, and texture footprint; a new photon launch begins at path
+length and depth zero, without a camera footprint.
+
 `regress-art-emission` compares received linear radiance with independent
 analytic integrals for a sphere, a hollow sphere, a recessed box, and a
 solid BOT.  Additional sphere and cavity checks exercise area-normalized
@@ -1581,6 +1590,16 @@ on the manufactured light hit.  A fully transparent cover between the
 receiver and emitter must preserve the analytic illumination, including
 paths that hit the light after passing through both cover boundaries.
 These complement the ordinary camera and post-transmission query checks.
+
+`regress-art-directional-emission` checks constant and annular emission on
+a recessed CSG box and a solid BOT.  The annular profile is dark along the
+normal.  A center-point PT render must match the square's analytic
+irradiance minus the excluded normal cone.  Separate photon renders pass
+through index-one clear glass and compare mean linear radiance with PT
+over a wider receiver footprint.  Each uses 16 million photons, with a
+three-percent bound for photon noise and finite-radius estimation.  This
+qualifies directional surface emission through an optically neutral cover;
+it does not qualify general refractive area-light focusing.
 
 The emitter contract supports static geometry.  Qualification of moving
 emitters, participating media, and general area-lit caustic focusing

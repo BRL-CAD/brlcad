@@ -15,6 +15,7 @@ set(ART_TEST_SHADER_NAMES
   art_parameters
   art_texture
   art_emission
+  art_directional_emission
   art_embedded_surface
   art_shared_layer
   art_npr
@@ -50,9 +51,13 @@ set(ART_PHOTON_REGRESSION_TIMEOUT 720)
 set(ART_PHOTON_INSIDE_REGRESSION_TIMEOUT 1560)
 # Spectral conservation uses 12.6 million samples and permits concurrent checks.
 set(ART_VOLUME_ENERGY_REGRESSION_TIMEOUT 720)
+# Two area emitters each qualify constant and angular photon emission.
+set(ART_DIRECTIONAL_EMISSION_REGRESSION_TIMEOUT 1200)
 function(art_regression_timeout name result)
   if(name MATCHES "^regress-art-photon-inside-(csg|bot)-")
     set(${result} ${ART_PHOTON_INSIDE_REGRESSION_TIMEOUT} PARENT_SCOPE)
+  elseif(name STREQUAL "regress-art-directional-emission")
+    set(${result} ${ART_DIRECTIONAL_EMISSION_REGRESSION_TIMEOUT} PARENT_SCOPE)
   elseif(name STREQUAL "regress-art-volume-energy-spectral")
     set(${result} ${ART_VOLUME_ENERGY_REGRESSION_TIMEOUT} PARENT_SCOPE)
   elseif(name MATCHES "^regress-art-photon-(csg|bot)-")
@@ -69,6 +74,7 @@ set(ART_REGRESSION_TEST_NAMES
   regress-art-trace
   regress-art-attributes
   regress-art-emission
+  regress-art-directional-emission
   regress-art-color
   regress-art-color-metadata
   regress-art-image-maps
@@ -163,7 +169,7 @@ cmakefiles(CMakeLists.txt art_test_setup.cmake art_installed_tests.cmake
   regress-art.cmake.in regress-art-bump.cmake.in regress-art-normal.cmake.in
   regress-art-trace.cmake.in
   regress-art-attributes.cmake.in
-  regress-art-emission.cmake.in
+  regress-art-emission.cmake.in regress-art-directional-emission.cmake.in
   regress-art-texture.cmake.in regress-art-color.cmake.in
   regress-art-image-maps.cmake.in regress-art-resources.cmake.in
   regress-art-transmission.cmake.in regress-art-absorption.cmake.in regress-art-initial-media.cmake.in regress-art-medium-priority.cmake.in
@@ -202,6 +208,7 @@ if(TARGET art AND BUILD_TESTING)
     "${CMAKE_CURRENT_BINARY_DIR}/normal-output" "${CMAKE_CURRENT_BINARY_DIR}/texture-output"
     "${CMAKE_CURRENT_BINARY_DIR}/attributes-output"
     "${CMAKE_CURRENT_BINARY_DIR}/emission-output"
+    "${CMAKE_CURRENT_BINARY_DIR}/directional-emission-output"
     "${CMAKE_CURRENT_BINARY_DIR}/trace-output"
     "${CMAKE_CURRENT_BINARY_DIR}/color-output"
     "${CMAKE_CURRENT_BINARY_DIR}/color-metadata-output"

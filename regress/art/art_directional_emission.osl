@@ -1,0 +1,27 @@
+/*              A R T _ D I R E C T I O N A L _ E M I S S I O N . O S L
+ * BRL-CAD
+ *
+ * Copyright (c) 2026 United States Government as represented by
+ * the U.S. Army Research Laboratory.
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public License
+ * version 2.1 as published by the Free Software Foundation.
+ *
+ * This library is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this file; see the file named COPYING for more
+ * information.
+ */
+surface art_directional_emission(
+    color in_color = color(1),
+    float in_normal_cone_cosine = 1)
+{
+    float cosine = abs(dot(normalize(Ng), -normalize(I)));
+    float strength = in_normal_cone_cosine >= 1 || cosine < in_normal_cone_cosine ? 1 : 0;
+    Ci = in_color * strength * emission();
+}
