@@ -1,0 +1,31 @@
+/*              A R T _ S P E C U L A R _ F O O T P R I N T . O S L
+ * BRL-CAD
+ *
+ * Copyright (c) 2026 United States Government as represented by
+ * the U.S. Army Research Laboratory.
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public License
+ * version 2.1 as published by the Free Software Foundation.
+ *
+ * This library is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this file; see the file named COPYING for more
+ * information.
+ */
+#include "appleseed/as_osl_extensions.h"
+
+surface art_specular_footprint(normal in_bump_normal = as_shading_normal(),
+    float in_ior = 1.5, int in_glossy = 0)
+{
+    if (in_glossy)
+        Ci = as_glossy(in_bump_normal, dPdu, 0, 0, in_ior,
+            "normal_derivatives", 1, "dNdx", vector(Dx(in_bump_normal)),
+            "dNdy", vector(Dy(in_bump_normal)));
+    else
+        Ci = as_reflection(in_bump_normal, in_ior);
+}

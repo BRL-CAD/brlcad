@@ -1038,6 +1038,26 @@ Custom shaders calling the `as_glass` closure directly can opt in with
 compiled shaders without these optional keywords retain the original
 surface-derivative behavior.
 
+`regress-art-specular-footprints` applies the same analytic method to
+unweighted mirrors, explicit-IOR reflection, canonical glossy reflection,
+white metal, specular-only plastic, and an empty glossy coat. Its 312
+comparisons cover the same four shapes, normal sources, projections,
+footprint and hit-position controls, with refined curved perspective
+footprints. These cases qualify smooth reflection; colored metal and
+substrate transport require their separate energy tests.
+
+The bundled `as_metal`, `as_plastic`, and `as_glossy_layer` shaders also
+supply their selected normal derivatives and obtain default surface
+normals through `as_shading_normal()`. Custom shaders can use the same
+optional keywords with the canonical `as_glossy`, `as_metal`, `as_plastic`,
+and `as_glossy_layer` closures. The standard `reflection` closure accepts
+these keywords in its two-argument form; the `as_reflection(normal)` and
+`as_reflection(normal, ior)` helpers supply them automatically, preserving
+the zero-IOR unweighted mirror convention. Native tests compare reflected
+ray derivatives with finite differences for both unit and scaled raw
+normal fields and both transport directions. Microfacet normal-mapping
+wrapper closures have a distinct frame selection and remain unqualified.
+
 These checks qualify smooth ray footprints for the tested normal fields;
 they do not qualify all filtered secondary textures. A separate
 high-frequency image study reproduces a discontinuity in OIIO's

@@ -30,7 +30,7 @@ normal path_normal(point position, point center, vector axes, int mapped, int ex
 
 surface art_glass_footprint_reference(float in_slope = 0.05, float in_ior = 1.5,
     int in_mode = 0, int in_mapped = 1, int in_reflection = 0, int in_curved = 0,
-    point in_center = point(0), vector in_axes = vector(10), int in_receiver = 0)
+    point in_center = point(0), vector in_axes = vector(10), int in_receiver = 0, int in_unweighted = 0)
 {
     point position = P;
     vector direction = normalize(I);
@@ -42,6 +42,7 @@ surface art_glass_footprint_reference(float in_slope = 0.05, float in_ior = 1.5,
         if (in_reflection) {
             vector transmitted = refract(direction, n, 1 / in_ior);
             throughput = 1 - interface_transmission(1, in_ior, -dot(direction, n), -dot(transmitted, n));
+            if (in_unweighted) throughput = 1;
             direction = reflect(direction, n);
         } else {
             vector transmitted = refract(direction, n, 1 / in_ior);
