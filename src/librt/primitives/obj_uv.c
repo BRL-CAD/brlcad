@@ -75,6 +75,24 @@ rt_obj_surface_derivatives(struct application *ap, struct soltab *stp,
     if (VINVALID(result.dpdu) || VINVALID(result.dpdv) ||
 	VINVALID(result.dndu) || VINVALID(result.dndv))
 	return RT_DERIVATIVES_ERROR;
+    const unsigned int known_flags = RT_DERIVATIVES_HAS_TANGENT_PARTIALS |
+	RT_DERIVATIVES_HAS_GEOMETRIC_NORMAL_PARTIALS;
+    if (result.flags & ~known_flags)
+	return RT_DERIVATIVES_ERROR;
+    if (result.flags & RT_DERIVATIVES_HAS_TANGENT_PARTIALS) {
+	if (VINVALID(result.d2pduu) || VINVALID(result.d2pduv))
+	    return RT_DERIVATIVES_ERROR;
+    } else {
+	VSETALL(result.d2pduu, 0.0);
+	VSETALL(result.d2pduv, 0.0);
+    }
+    if (result.flags & RT_DERIVATIVES_HAS_GEOMETRIC_NORMAL_PARTIALS) {
+	if (VINVALID(result.dngdu) || VINVALID(result.dngdv))
+	    return RT_DERIVATIVES_ERROR;
+    } else {
+	VSETALL(result.dngdu, 0.0);
+	VSETALL(result.dngdv, 0.0);
+    }
     *derivatives = result;
     return RT_DERIVATIVES_OK;
 }

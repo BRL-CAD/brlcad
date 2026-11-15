@@ -1269,7 +1269,8 @@ clt_frame(void *pixels, uint8_t o[2], int cur_pixel, int last_pixel,
 
 
 int
-rt_unit_sphere_uv_derivatives(const vect_t point, vect_t dpdu, vect_t dpdv)
+rt_unit_sphere_uv_derivatives(const vect_t point, vect_t dpdu, vect_t dpdv,
+    vect_t d2pduu, vect_t d2pduv)
 {
     if (VINVALID(point) || !(MAGSQ(point) > SMALL_FASTF))
 	return RT_DERIVATIVES_ERROR;
@@ -1279,6 +1280,8 @@ rt_unit_sphere_uv_derivatives(const vect_t point, vect_t dpdu, vect_t dpdv)
     VSET(dpdu, -M_2PI * point[Y], M_2PI * point[X], 0.0);
     VSET(dpdv, -M_PI * point[Z] * point[X] / radial,
 	-M_PI * point[Z] * point[Y] / radial, M_PI * radial);
+    VSET(d2pduu, -M_2PI * M_2PI * point[X], -M_2PI * M_2PI * point[Y], 0.0);
+    VSET(d2pduv, -M_2PI * dpdv[Y], M_2PI * dpdv[X], 0.0);
     return RT_DERIVATIVES_OK;
 }
 
@@ -1297,6 +1300,28 @@ rt_normalize_derivative(vect_t result, const vect_t normal,
     VSCALE(result, result, 1.0 / length);
     return VINVALID(result) ? RT_DERIVATIVES_ERROR : RT_DERIVATIVES_OK;
 }
+
+int
+rt_normalize_second_derivative(vect_t result, const vect_t normal,
+    const vect_t du, const vect_t dv, const vect_t duv)
+{
+    vect_t normal_u, normal_v;
+    if (VINVALID(duv) ||
+	rt_normalize_derivative(normal_u, normal, du) != RT_DERIVATIVES_OK ||
+	rt_normalize_derivative(normal_v, normal, dv) != RT_DERIVATIVES_OK)
+	return RT_DERIVATIVES_ERROR;
+    const fastf_t length = MAGNITUDE(normal);
+    vect_t unit;
+    VSCALE(unit, normal, 1.0 / length);
+    const fastf_t length_u = VDOT(unit, du);
+    const fastf_t length_v = VDOT(unit, dv);
+    const fastf_t length_uv = VDOT(normal_v, du) + VDOT(unit, duv);
+    for (size_t axis = 0; axis < ELEMENTS_PER_VECT; ++axis)
+	result[axis] = (duv[axis] - normal_u[axis] * length_v -
+	    normal_v[axis] * length_u - unit[axis] * length_uv) / length;
+    return VINVALID(result) ? RT_DERIVATIVES_ERROR : RT_DERIVATIVES_OK;
+}
+
 
 /*
  * Local Variables:

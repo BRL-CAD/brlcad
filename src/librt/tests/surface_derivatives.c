@@ -29,6 +29,9 @@
 
 static const point_t Center = {17, -23, 31};
 static const double DifferenceStep = 1.0e-6;
+// Second differences amplify position rounding by the inverse squared step.
+static const double SecondDifferenceStep = 1.0e-4;
+static const double SecondRelativeTolerance = 1.0e-5;
 static const double RelativeTolerance = 1.0e-8;
 static const double RayStartOffset = 1.0;
 static const double PreparationTolerance = 0.001;
@@ -39,6 +42,31 @@ same_vector(const vect_t actual, const vect_t expected, double tolerance)
     if (VINVALID(actual) || VINVALID(expected))
 	return 0;
     return VNEAR_EQUAL(actual, expected, tolerance * fmax(1.0, MAGNITUDE(expected)));
+}
+
+static struct rt_surface_derivatives
+derivative_marker(void)
+{
+    const struct rt_surface_derivatives result = {
+	{1, 0, 0}, {0, 1, 0}, {0, 0, 1}, {1, 1, 1},
+	{1, 2, 3}, {3, 2, 1}, {2, 3, 1}, {3, 1, 2},
+	RT_DERIVATIVES_HAS_TANGENT_PARTIALS | RT_DERIVATIVES_HAS_GEOMETRIC_NORMAL_PARTIALS};
+    return result;
+}
+
+static int
+same_derivatives(const struct rt_surface_derivatives *actual,
+    const struct rt_surface_derivatives *expected, double tolerance, double second_tolerance)
+{
+    return actual->flags == expected->flags &&
+	same_vector(actual->dpdu, expected->dpdu, tolerance) &&
+	same_vector(actual->dpdv, expected->dpdv, tolerance) &&
+	same_vector(actual->dndu, expected->dndu, tolerance) &&
+	same_vector(actual->dndv, expected->dndv, tolerance) &&
+	same_vector(actual->d2pduu, expected->d2pduu, second_tolerance) &&
+	same_vector(actual->d2pduv, expected->d2pduv, second_tolerance) &&
+	same_vector(actual->dngdu, expected->dngdu, tolerance) &&
+	same_vector(actual->dngdv, expected->dngdv, tolerance);
 }
 
 static void
@@ -89,6 +117,24 @@ chart_differences(const fastf_t axes[3][3], int primitive, double u, double v, s
     VSUB2SCALE(expected->dpdv, up, down, 0.5 / DifferenceStep);
     VSUB2SCALE(expected->dndu, nright, nleft, 0.5 / DifferenceStep);
     VSUB2SCALE(expected->dndv, nup, ndown, 0.5 / DifferenceStep);
+    VMOVE(expected->dngdu, expected->dndu);
+    VMOVE(expected->dngdv, expected->dndv);
+    point_t center, upper_left, upper_right, lower_left, lower_right;
+    vect_t unused;
+    chart_geometry(axes, primitive, u, v, center, unused);
+    chart_geometry(axes, primitive, u - SecondDifferenceStep, v, left, unused);
+    chart_geometry(axes, primitive, u + SecondDifferenceStep, v, right, unused);
+    chart_geometry(axes, primitive, u - SecondDifferenceStep, v + SecondDifferenceStep, upper_left, unused);
+    chart_geometry(axes, primitive, u + SecondDifferenceStep, v + SecondDifferenceStep, upper_right, unused);
+    chart_geometry(axes, primitive, u - SecondDifferenceStep, v - SecondDifferenceStep, lower_left, unused);
+    chart_geometry(axes, primitive, u + SecondDifferenceStep, v - SecondDifferenceStep, lower_right, unused);
+    for (size_t axis = 0; axis < ELEMENTS_PER_VECT; ++axis) {
+	expected->d2pduu[axis] = ((right[axis] - center[axis]) + (left[axis] - center[axis])) /
+	    (SecondDifferenceStep * SecondDifferenceStep);
+	expected->d2pduv[axis] = ((upper_right[axis] - lower_right[axis]) -
+	    (upper_left[axis] - lower_left[axis])) / (4.0 * SecondDifferenceStep * SecondDifferenceStep);
+    }
+    expected->flags = RT_DERIVATIVES_HAS_TANGENT_PARTIALS | RT_DERIVATIVES_HAS_GEOMETRIC_NORMAL_PARTIALS;
 }
 
 static int
@@ -122,23 +168,22 @@ check_chart(const char *label, const fastf_t axes[3][3], struct rt_i *rtip,
 	// Full ray tracing sets this pointer after the primitive shot callback.
 	// Exercise both an explicit defining ray and the application fallback.
 	hit.hit_rayp = inside ? &application.a_ray : NULL;
-	const struct rt_surface_derivatives marker = {{1,0,0}, {0,1,0}, {0,0,1}, {1,1,1}};
+	const struct rt_surface_derivatives marker = derivative_marker();
 	struct rt_surface_derivatives actual = marker;
 	struct rt_surface_derivatives expected = marker;
 	status = rt_obj_surface_derivatives(&application, solid, &hit, &actual);
 	if (expected_status == RT_DERIVATIVES_OK)
 	    chart_differences(axes, solid->st_id, u, v, &expected);
 	const double tolerance = expected_status == RT_DERIVATIVES_OK ? RelativeTolerance : SMALL_FASTF;
-	passed = status == expected_status &&
-	    same_vector(actual.dpdu, expected.dpdu, tolerance) &&
-	    same_vector(actual.dpdv, expected.dpdv, tolerance) &&
-	    same_vector(actual.dndu, expected.dndu, tolerance) &&
-	    same_vector(actual.dndv, expected.dndv, tolerance);
+	const double second_tolerance = expected_status == RT_DERIVATIVES_OK ? SecondRelativeTolerance : SMALL_FASTF;
+	passed = status == expected_status && same_derivatives(&actual, &expected, tolerance, second_tolerance);
 	if (!passed && status == RT_DERIVATIVES_OK) {
 	    bu_log("%s dpdu=(%g %g %g), expected=(%g %g %g)\n", label, V3ARGS(actual.dpdu), V3ARGS(expected.dpdu));
 	    bu_log("%s dpdv=(%g %g %g), expected=(%g %g %g)\n", label, V3ARGS(actual.dpdv), V3ARGS(expected.dpdv));
 	    bu_log("%s dndu=(%g %g %g), expected=(%g %g %g)\n", label, V3ARGS(actual.dndu), V3ARGS(expected.dndu));
 	    bu_log("%s dndv=(%g %g %g), expected=(%g %g %g)\n", label, V3ARGS(actual.dndv), V3ARGS(expected.dndv));
+	    bu_log("%s d2pduu=(%g %g %g), expected=(%g %g %g)\n", label, V3ARGS(actual.d2pduu), V3ARGS(expected.d2pduu));
+	    bu_log("%s d2pduv=(%g %g %g), expected=(%g %g %g)\n", label, V3ARGS(actual.d2pduv), V3ARGS(expected.d2pduv));
 	}
     }
     RT_FREE_SEG_LIST(&head, resource);
@@ -198,6 +243,87 @@ check_shape(const char *label, const fastf_t axes[3][3], int expected_type)
     return passed;
 }
 
+enum optional_query_case {
+    OPTIONAL_FIELDS_ABSENT,
+    OPTIONAL_TANGENT_INVALID,
+    OPTIONAL_GEOMETRIC_NORMAL_INVALID,
+    OPTIONAL_FLAGS_UNKNOWN
+};
+
+static int
+optional_derivative_callback(struct application *UNUSED(ap), struct soltab *UNUSED(solid),
+    const struct hit *hit, struct rt_surface_derivatives *result)
+{
+    VSET(result->dpdu, 1, 0, 0);
+    VSET(result->dpdv, 0, 1, 0);
+    switch (hit->hit_surfno) {
+	case OPTIONAL_FIELDS_ABSENT:
+	    // Unclaimed storage must not become available derivative data.
+	    VSETALL(result->d2pduu, NAN);
+	    VSETALL(result->d2pduv, NAN);
+	    VSETALL(result->dngdu, NAN);
+	    VSETALL(result->dngdv, NAN);
+	    break;
+	case OPTIONAL_TANGENT_INVALID:
+	    result->flags = RT_DERIVATIVES_HAS_TANGENT_PARTIALS;
+	    VSETALL(result->d2pduv, NAN);
+	    break;
+	case OPTIONAL_GEOMETRIC_NORMAL_INVALID:
+	    result->flags = RT_DERIVATIVES_HAS_GEOMETRIC_NORMAL_PARTIALS;
+	    VSETALL(result->dngdu, NAN);
+	    break;
+	case OPTIONAL_FLAGS_UNKNOWN:
+	    result->flags = RT_DERIVATIVES_HAS_GEOMETRIC_NORMAL_PARTIALS << 1;
+	    break;
+	default:
+	    return RT_DERIVATIVES_ERROR;
+    }
+    return RT_DERIVATIVES_OK;
+}
+
+static int
+check_optional_fields(void)
+{
+    struct application application;
+    RT_APPLICATION_INIT(&application);
+    application.a_ray.magic = RT_RAY_MAGIC;
+    struct rt_functab methods = OBJ[ID_SPH];
+    methods.ft_surface_derivatives = optional_derivative_callback;
+    struct soltab solid = {0};
+    solid.l.magic = RT_SOLTAB_MAGIC;
+    solid.l2.magic = RT_SOLTAB2_MAGIC;
+    solid.st_meth = &methods;
+    solid.st_id = ID_SPH;
+    struct hit hit = RT_HIT_INIT_ZERO;
+    const struct {
+	enum optional_query_case fault;
+	int status;
+    } cases[] = {
+	{OPTIONAL_FIELDS_ABSENT, RT_DERIVATIVES_OK},
+	{OPTIONAL_TANGENT_INVALID, RT_DERIVATIVES_ERROR},
+	{OPTIONAL_GEOMETRIC_NORMAL_INVALID, RT_DERIVATIVES_ERROR},
+	{OPTIONAL_FLAGS_UNKNOWN, RT_DERIVATIVES_ERROR}
+    };
+    int passed = 1;
+    for (size_t index = 0; index < sizeof(cases) / sizeof(cases[0]); ++index) {
+	hit.hit_surfno = cases[index].fault;
+	struct rt_surface_derivatives actual = derivative_marker();
+	struct rt_surface_derivatives expected = derivative_marker();
+	if (cases[index].status == RT_DERIVATIVES_OK) {
+	    const struct rt_surface_derivatives zero = RT_SURFACE_DERIVATIVES_INIT_ZERO;
+	    expected = zero;
+	    VSET(expected.dpdu, 1, 0, 0);
+	    VSET(expected.dpdv, 0, 1, 0);
+	}
+	const int status = rt_obj_surface_derivatives(&application, &solid, &hit, &actual);
+	if (status != cases[index].status || !same_derivatives(&actual, &expected, SMALL_FASTF, SMALL_FASTF)) {
+	    bu_log("Optional derivative validation case %d failed with status %d\n", cases[index].fault, status);
+	    passed = 0;
+	}
+    }
+    return passed;
+}
+
 int
 main(int argc, char **argv)
 {
@@ -218,7 +344,7 @@ main(int argc, char **argv)
 	{"nearly orthogonal ellipsoid", {{2,0,0}, {0.0003,3,0}, {0,0,4}}, ID_ELL},
 	{"large sphere", {{1.0e6,0,0}, {0,1.0e6,0}, {0,0,1.0e6}}, ID_SPH}
     };
-    int passed = 1;
+    int passed = check_optional_fields();
     for (size_t i = 0; i < sizeof(cases) / sizeof(cases[0]); ++i)
 	passed = check_shape(cases[i].label, cases[i].axes, cases[i].primitive) && passed;
     return passed ? 0 : 1;

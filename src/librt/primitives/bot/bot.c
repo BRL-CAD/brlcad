@@ -1488,6 +1488,13 @@ rt_bot_surface_derivatives(struct application *UNUSED(ap), struct soltab *stp,
     VCOMB2(derivatives->dpdv, weight_b_dv, triangle->AB, weight_c_dv, triangle->AC);
     VSETALL(derivatives->dndu, 0.0);
     VSETALL(derivatives->dndv, 0.0);
+    // Position is affine in triangle UVs; the geometric normal is constant
+    // even when authored shading normals vary across the triangle.
+    VSETALL(derivatives->d2pduu, 0.0);
+    VSETALL(derivatives->d2pduv, 0.0);
+    VSETALL(derivatives->dngdu, 0.0);
+    VSETALL(derivatives->dngdv, 0.0);
+    derivatives->flags = RT_DERIVATIVES_HAS_TANGENT_PARTIALS | RT_DERIVATIVES_HAS_GEOMETRIC_NORMAL_PARTIALS;
 
     vect_t normal;
     if (bot_interpolate_normal(normal, hitp, bot)) {

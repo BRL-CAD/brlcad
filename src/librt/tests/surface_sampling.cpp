@@ -169,12 +169,23 @@ integrate(PreparedRegion &object, const SurfaceCase &geometry, size_t begin, siz
 	    !VINVALID(surface.derivatives.dndv);
 	if (shell) {
 	    if (surface.derivatives_available) {
-		vect_t expected_u, expected_v;
+		vect_t expected_u, expected_v, expected_uu, expected_uv;
 		const double orientation = cavity ? -1.0 : 1.0;
+		// Boolean subtraction reverses normals, but not the position chart.
+		VSET(expected_uu, -M_2PI * M_2PI * surface.point[X],
+		    -M_2PI * M_2PI * surface.point[Y], 0.0);
+		VSET(expected_uv, -M_2PI * surface.derivatives.dpdv[Y],
+		    M_2PI * surface.derivatives.dpdv[X], 0.0);
 		VSCALE(expected_u, surface.derivatives.dpdu, orientation / radius);
 		VSCALE(expected_v, surface.derivatives.dpdv, orientation / radius);
 		sum.valid = sum.valid && VNEAR_EQUAL(surface.derivatives.dndu, expected_u, SurfaceTolerance) &&
-		    VNEAR_EQUAL(surface.derivatives.dndv, expected_v, SurfaceTolerance);
+		    VNEAR_EQUAL(surface.derivatives.dndv, expected_v, SurfaceTolerance) &&
+		    (surface.derivatives.flags & RT_DERIVATIVES_HAS_GEOMETRIC_NORMAL_PARTIALS) &&
+		    VNEAR_EQUAL(surface.derivatives.dngdu, expected_u, SurfaceTolerance) &&
+		    VNEAR_EQUAL(surface.derivatives.dngdv, expected_v, SurfaceTolerance) &&
+		    (surface.derivatives.flags & RT_DERIVATIVES_HAS_TANGENT_PARTIALS) &&
+		    VNEAR_EQUAL(surface.derivatives.d2pduu, expected_uu, SurfaceTolerance) &&
+		    VNEAR_EQUAL(surface.derivatives.d2pduv, expected_uv, SurfaceTolerance);
 	    }
 	    sum.valid = sum.valid &&
 		BU_STR_EQUAL(sample.solid->st_name, cavity ? "inner.s" : "outer.s") &&

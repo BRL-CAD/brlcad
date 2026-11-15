@@ -51,7 +51,8 @@ struct rt_surface_attributes {
 
 /**
  * Evaluate a native primitive hit without modifying the hit or geometry.
- * Apply the supplied Boolean flip to normals and normal derivatives only.
+ * Apply the supplied Boolean flip to both normals and their derivatives.
+ * Position derivatives, including optional tangent partials, are not flipped.
  * Missing UV callbacks and singular or unavailable derivatives have availability zero
  * and zero values; failure to evaluate available data is an error.
  * All pointers are required.  Return 0 on success, -1 on failure, preserving

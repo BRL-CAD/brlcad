@@ -98,6 +98,7 @@ check_uv(struct application &application, struct soltab *solid, struct xray &ray
     struct rt_surface_derivatives expected_derivatives = RT_SURFACE_DERIVATIVES_INIT_ZERO;
     VSET(expected_derivatives.dpdu, EdgeX, 0, 0);
     VSET(expected_derivatives.dpdv, 0, EdgeY, 0);
+    expected_derivatives.flags = RT_DERIVATIVES_HAS_TANGENT_PARTIALS | RT_DERIVATIVES_HAS_GEOMETRIC_NORMAL_PARTIALS;
     const bool derivative_ok = textured
 	? derivative_status == RT_DERIVATIVES_OK &&
 	    bot_test::same_derivatives(derivatives, expected_derivatives, UVTolerance)

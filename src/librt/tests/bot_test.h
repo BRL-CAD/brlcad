@@ -29,7 +29,9 @@ inline struct rt_surface_derivatives
 derivative_marker()
 {
     // Nonzero vectors reveal accidental output replacement on failed queries.
-    return {{1, 0, 0}, {0, 1, 0}, {0, 0, 1}, {1, 1, 1}};
+    return {{1, 0, 0}, {0, 1, 0}, {0, 0, 1}, {1, 1, 1},
+	{1, 2, 3}, {3, 2, 1}, {2, 3, 1}, {3, 1, 2},
+	RT_DERIVATIVES_HAS_TANGENT_PARTIALS | RT_DERIVATIVES_HAS_GEOMETRIC_NORMAL_PARTIALS};
 }
 
 inline bool
@@ -41,7 +43,14 @@ same_derivatives(const struct rt_surface_derivatives &actual,
 	VNEAR_EQUAL(actual.dpdu, expected.dpdu, tolerance) &&
 	VNEAR_EQUAL(actual.dpdv, expected.dpdv, tolerance) &&
 	VNEAR_EQUAL(actual.dndu, expected.dndu, tolerance) &&
-	VNEAR_EQUAL(actual.dndv, expected.dndv, tolerance);
+	VNEAR_EQUAL(actual.dndv, expected.dndv, tolerance) &&
+	!VINVALID(actual.d2pduu) && !VINVALID(actual.d2pduv) &&
+	!VINVALID(actual.dngdu) && !VINVALID(actual.dngdv) &&
+	VNEAR_EQUAL(actual.d2pduu, expected.d2pduu, tolerance) &&
+	VNEAR_EQUAL(actual.d2pduv, expected.d2pduv, tolerance) &&
+	VNEAR_EQUAL(actual.dngdu, expected.dngdu, tolerance) &&
+	VNEAR_EQUAL(actual.dngdv, expected.dngdv, tolerance) &&
+	actual.flags == expected.flags;
 }
 
 class Shot {
