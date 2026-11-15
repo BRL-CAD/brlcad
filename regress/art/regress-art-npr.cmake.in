@@ -107,6 +107,50 @@ foreach(object IN ITEMS cube.r mesh.r)
   run("${TOOL}" ${DIFF_ARGS} "${WORK}/${object}-0.exr" --ch R,G,B "${WORK}/black.exr" --diff)
 endforeach()
 
+# Use the showcase shader itself: illustrative color must not make every
+# part a physical area light. Its coverage must still survive NPR compositing.
+run("@ART_OSLC_EXECUTABLE@" "-I@ART_OSL_SHADER_INCLUDE_DIR@"
+  "-I@ART_OSL_HELPER_INCLUDE_DIR@" -o "${WORK}/shaders/art_engineering.oso"
+  "@CMAKE_CURRENT_SOURCE_DIR@/../../db/art/art_engineering.osl")
+set(ENGINEERING_DB "${WORK}/engineering.g")
+run("${VEXEC}" create-material "${ENGINEERING_DB}" art_engineering)
+run("${VEXEC}" set-material "${ENGINEERING_DB}" OSL.param.in_color "color 0.5 0.5 0.5")
+run("${VEXEC}" set-material "${ENGINEERING_DB}" OSL.param.in_contours "int 0")
+run("${VEXEC}" set-material "${ENGINEERING_DB}" OSL.param.in_edge_opacity "float 0")
+# A front-facing gray surface has color 0.5 * (fill + key + headlight),
+# where key = 0.56 / sqrt(1 + 0.35^2 + 0.45^2).
+set(engineering_gray 0.4632484559473188)
+run("${TOOL}" --pattern "constant:color=${engineering_gray},${engineering_gray},${engineering_gray}"
+  1x1 3 -o "${WORK}/engineering-reference.exr")
+run("${TOOL}" --pattern constant:color=0,0,0 1x1 3 -o "${WORK}/black.exr")
+foreach(object IN ITEMS cube.r mesh.r)
+  foreach(opacity IN ITEMS 1 0.25 0)
+    run("${VEXEC}" set-material "${ENGINEERING_DB}" OSL.param.in_opacity "float ${opacity}")
+    set(stem "${WORK}/engineering-${object}-${opacity}")
+    run_command("${CMAKE_CURRENT_BINARY_DIR}" FALSE "${EXEC}" -P 1 -w 1 -n 1
+      -c "viewsize 1" -c "eye_pt 0 0 40" -c "orientation 0 0 0 1"
+      -c "set samples=1 max_bounces=0 light_intensity=0 environment_intensity=0 background_color=black aovs=npr_shading,emission"
+      -o "${stem}.exr" "${ENGINEERING_DB}" "${object}")
+    if(NOT command_output MATCHES "0 emitting shape[.]")
+      message(FATAL_ERROR "Engineering materials were collected as physical emitters")
+    endif()
+    run("${TOOL}" ${DIFF_ARGS} "${stem}.emission.exr" --ch R,G,B "${WORK}/black.exr" --diff)
+    set(coverage 1)
+    if(opacity EQUAL 0.25)
+      # Two quarter-opaque faces cover 1 - (1 - 0.25)^2 of the image.
+      set(coverage 0.4375)
+    elseif(opacity EQUAL 0)
+      set(coverage 0)
+    endif()
+    run("${TOOL}" "${WORK}/engineering-reference.exr" --mulc ${coverage}
+      -o "${WORK}/engineering-coverage.exr")
+    run("${TOOL}" ${DIFF_ARGS} "${stem}.exr" --ch R,G,B
+      "${WORK}/engineering-coverage.exr" --diff)
+    run("${TOOL}" ${DIFF_ARGS} "${stem}.npr_shading.exr" --ch R,G,B
+      "${WORK}/engineering-coverage.exr" --diff)
+  endforeach()
+endforeach()
+
 # A curved transparent foreground must not become a false opaque boundary
 # of the inner flat part. All stencil samples here lie away from its edges.
 set(COVER_DB "${WORK}/cover.g")
